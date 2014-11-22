@@ -1,0 +1,66 @@
+html,body {
+  height: 100%;
+  margin: 0;
+  background-color: #E5E5E5;
+  font-family: 'RobotoDraft', sans-serif;
+}
+
+.container {
+  width: 80%;
+  margin: 50px auto;
+}
+@media (min-width: 481px) {
+  #tabs {
+    width: 200px;
+  }
+  .container {
+    width: 400px;
+  }
+}
+
+core-header-panel {
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch; 
+}
+core-toolbar {
+  background: #cccccc;
+  color: white;
+}
+#tabs {
+  width: 100%;
+  margin: 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  text-transform: uppercase;
+}
+
+.icon-larger {
+  width: 200px;
+  height: 200px;
+  color: #9ed000;
+}
+
+[main] {
+  background-color: #aaaaaa;
+}
+
+[drawer] {
+  background-color: #bbbbbb;
+}
+
+core-drawer-panel:not([narrow]) #navicon {
+  display: none;
+}
+
+core-drawer-panel:not([narrow]) #seni-main-label {
+  display: none;
+}
+
+#render-canvas {
+  border: none;
+  margin-left: 2em;
+  margin-top: 1em;
+}

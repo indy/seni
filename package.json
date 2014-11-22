@@ -1,0 +1,35 @@
+{
+  "name": "seni",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/indy/seni"
+  },
+  "author": "",
+  "license": "MIT",
+  "homepage": "https://github.com/indy/seni",
+  "devDependencies": {
+    "pipe": "angular/pipe#add-sauce-browsers",
+    "rtts-assert": "angular/assert",
+    "gulp": "~3.8.10",
+    "gulp-traceur": "vojtajina/gulp-traceur#traceur-as-peer",
+    "gulp-jshint": "~1.5.3",
+    "jshint-stylish": "~0.1.5",
+    "karma": "^0.12.1",
+    "karma-script-launcher": "~0.1.0",
+    "karma-chrome-launcher": "~0.1.2",
+    "karma-requirejs": "~0.2.1",
+    "karma-html2js-preprocessor": "~0.1.0",
+    "karma-jasmine": "~0.1.5",
+    "karma-traceur-preprocessor": "vojtajina/karma-traceur-preprocessor#traceur-as-peer",
+    "karma-coverage": "~0.2.0",
+    "es6-shim": "~0.9.3",
+    "requirejs": "2.1.10",
+    "traceur": "vojtajina/traceur-compiler#add-es6-pure-transformer-dist"
+  }
+}

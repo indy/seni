@@ -1,0 +1,7 @@
+/node_modules
+/coverage
+sauce_connect.log
+.DS_Store
+.idea
+/dist
+bower_components/
