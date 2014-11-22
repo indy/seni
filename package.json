@@ -30,6 +30,7 @@
     "karma-coverage": "~0.2.0",
     "es6-shim": "~0.9.3",
     "requirejs": "2.1.10",
-    "traceur": "vojtajina/traceur-compiler#add-es6-pure-transformer-dist"
+    "traceur": "vojtajina/traceur-compiler#add-es6-pure-transformer-dist",
+    "gulp-webserver": "^0.8.7"
   }
 }

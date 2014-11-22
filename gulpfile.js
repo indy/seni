@@ -4,9 +4,20 @@ var gulp = require('gulp'),
     traceur = require('gulp-traceur'),
     jshint = require('gulp-jshint');
 
+var webserver = require('gulp-webserver');
+
 var paths = {
   src: 'src/*.js'
 };
+
+gulp.task('webserver', function() {
+  gulp.src('.')
+    .pipe(webserver({
+//      livereload: true,
+      directoryListing: true,
+//      open: true
+    }));
+});
 
 gulp.task('lint', function() {
   gulp.src(paths.src)
