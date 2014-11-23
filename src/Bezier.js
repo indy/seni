@@ -3,7 +3,8 @@ import { Buffer } from './Buffer';
 
 export class Bezier {
   doubler(d) {
-    return d * 2;
+    let answer = d * 2;
+    return answer;
   }
 
   foofoo(a, b, ...rest) {

@@ -28,19 +28,21 @@ gulp.task('lint', function() {
 
 gulp.task('build:amd', function() {
   gulp.src(paths.src)
-  .pipe(traceur(pipe.traceur()))
+    .pipe(traceur(pipe.traceur({experimental: true})))
   .pipe(gulp.dest('dist/amd'));
 });
 
 gulp.task('build:cjs', function() {
   gulp.src(paths.src)
-  .pipe(traceur(pipe.traceur({modules: 'commonjs'})))
+    .pipe(traceur(pipe.traceur({modules: 'commonjs',
+                               experimental: true})))
   .pipe(gulp.dest('dist/cjs'));
 });
 
 gulp.task('build:es6', function() {
   gulp.src(paths.src)
-  .pipe(traceur(pipe.traceur({outputLanguage: 'es6'})))
+    .pipe(traceur(pipe.traceur({outputLanguage: 'es6',
+                               experimental: true})))
   .pipe(gulp.dest('dist/es6'));
 });
 

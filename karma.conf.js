@@ -25,6 +25,16 @@ module.exports = function(config) {
       'node_modules/rtts-assert/src/**/*.js': ['traceur']
     },
 
+    traceurPreprocessor: {
+      // options passed to the traceur-compiler
+      // see traceur --longhelp for list of options
+      options: {
+        sourceMaps: false,
+        modules: 'amd',
+        experimental: true
+      },
+    },
+
     coverageReporter: {
       reporters: [
         { type: 'text' },
@@ -33,7 +43,7 @@ module.exports = function(config) {
     }
   });
 
-  config.sauceLabs.testName = 'AngularJS v2 - watchtower';
+//  config.sauceLabs.testName = 'AngularJS v2 - watchtower';
 
   function arrayRemove(array, item) {
     var index = array.indexOf(item);
