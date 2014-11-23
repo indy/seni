@@ -1,5 +1,6 @@
 import { GLContainer } from './GLContainer';
 import { Buffer } from './Buffer';
+import { renderBezier } from './Bezier';
 
 export class Renderer {
     constructor(canvasElement) {
@@ -53,8 +54,37 @@ export class Renderer {
         buffer.addVertex([100, 500], [1.0, 0.0, 0.6, 1.0]);
 
         buffer.addVertex([200, 500], [1.0, 0.0, 0.2, 1.0]);
-        buffer.addVertex([100, 600], [1.0, 0.0, 0.4, 1.0]);
-        buffer.addVertex([200, 600], [1.0, 0.0, 0.6, 1.0]);
+        buffer.addVertex([100, 700], [1.0, 0.0, 0.4, 1.0]);
+      buffer.addVertex([200, 800], [1.0, 0.0, 0.6, 1.0]);
+
+      renderBezier(glContainer, buffer, {});
+      renderBezier(glContainer, buffer, {coords: [[440, 200],
+                                                  [533, 500],
+                                                  [766, 0],
+                                                  [900, 300]]});
+
+
+      buffer.prepareToAddTriangleStrip(glContainer, 6, [300, 100]);
+
+        buffer.addVertex([300, 100], [1.0, 0.0, 0.0, 1.0]);
+        buffer.addVertex([400, 100], [1.0, 0.2, 0.0, 1.0]);
+        buffer.addVertex([300, 200], [1.0, 0.4, 0.0, 1.0]);
+
+        buffer.addVertex([400, 200], [1.0, 0.0, 0.2, 1.0]);
+        buffer.addVertex([300, 300], [1.0, 0.0, 0.4, 1.0]);
+        buffer.addVertex([400, 300], [1.0, 0.0, 0.6, 1.0]);
+
+
+        buffer.prepareToAddTriangleStrip(glContainer, 6, [300, 400]);
+
+        buffer.addVertex([300, 400], [1.0, 0.0, 0.2, 1.0]);
+        buffer.addVertex([400, 400], [1.0, 0.0, 0.4, 1.0]);
+        buffer.addVertex([300, 500], [1.0, 0.0, 0.6, 1.0]);
+
+        buffer.addVertex([400, 500], [1.0, 0.0, 0.2, 1.0]);
+        buffer.addVertex([300, 700], [1.0, 0.0, 0.4, 1.0]);
+      buffer.addVertex([400, 800], [1.0, 0.0, 0.6, 1.0]);
+
     }
 
     postDrawScene() {
