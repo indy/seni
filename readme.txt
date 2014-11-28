@@ -36,3 +36,7 @@ quick feedback
 ecmascript 6
 testing
 web components/polymer/material design
+
+--------------------------------------------------------------------------------
+
+karma (was called testacular) is the test runner which can run javascript code on real browsers

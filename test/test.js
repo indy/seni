@@ -8,6 +8,9 @@
 
   Object.keys(window.__karma__.files).forEach(function(file) {
     if (TEST_REGEXP.test(file)) {
+      
+      console.log("before: " + file);
+      console.log("after: " + pathToModule(file));
       // Normalize paths to RequireJS module names.
       allTestFiles.push(pathToModule(file));
     }
@@ -15,6 +18,10 @@
 
   require.config({
     // Karma serves files under /base, which is the basePath from your config file
+
+    // isg: http://karma-runner.github.io/0.12/plus/requirejs.html
+    // isg: try to change to base url of src/main.js so that relative
+    // isg: requires in the source won't need to change.
     baseUrl: '/base',
 
     paths: {

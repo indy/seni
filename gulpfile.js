@@ -7,7 +7,7 @@ var gulp = require('gulp'),
 var webserver = require('gulp-webserver');
 
 var paths = {
-  src: 'src/*.js'
+  src: 'src/**/*.js'
 };
 
 gulp.task('webserver', function() {

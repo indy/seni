@@ -4,6 +4,7 @@ module.exports = function(config) {
   sharedConfig(config);
 
   config.set({
+//    basePath: '.',
     files: [
       'test/test.js',
 
