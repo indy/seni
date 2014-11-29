@@ -1,16 +1,17 @@
-export class Token {
+export var TokenType = {
+  UNKNOWN: 0,
+  LIST_START: 1,
+  LIST_END: 2,
+  BRACKET_START: 3,
+  BRACKET_END: 4,
+  INT: 5,
+  FLOAT: 6,
+  NAME: 7,
+  STRING: 8,
+  QUOTE_ABBREVIATION: 9
+};
 
-  // constants
-  get UNKNOWN()            { return 0; }
-  get LIST_START()         { return 1; }
-  get LIST_END()           { return 2; }
-  get BRACKET_START()      { return 3; }
-  get BRACKET_END()        { return 4; }
-  get INT()                { return 5; }
-  get FLOAT()              { return 6; }
-  get NAME()               { return 7; }
-  get STRING()             { return 8; }
-  get QUOTE_ABBREVIATION() { return 9; }
+export class Token {
   
   constructor(type, value = undefined) {
     this.type = type;
