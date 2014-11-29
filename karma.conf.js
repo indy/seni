@@ -9,8 +9,6 @@ module.exports = function(config) {
       'test/test.js',
 
       { pattern: 'src/**/*.js', included: false },
-      { pattern: 'test/**/matchers.js', included: false },
-      { pattern: 'test/**/helpers.js', included: false },
       { pattern: 'test/**/*spec.js', included: false },
       { pattern: 'node_modules/es6-shim/es6-shim.js', included: false },
       { pattern: 'node_modules/rtts-assert/src/**/*.js', included: false }
@@ -21,8 +19,6 @@ module.exports = function(config) {
     preprocessors: {
       'src/**/*.js': ['traceur', 'coverage'],
       'test/**/*.spec.js': ['traceur'],
-      'test/matchers.js': ['traceur'],
-      'test/helpers.js': ['traceur'],
       'node_modules/rtts-assert/src/**/*.js': ['traceur']
     },
 

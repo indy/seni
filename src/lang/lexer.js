@@ -1,7 +1,7 @@
 
 export class Lexer {
   doubler(d) {
-    let answer = d * 2;
+    let answer = d * 2;    
     return answer;
   }
 

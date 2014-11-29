@@ -8,9 +8,6 @@
 
   Object.keys(window.__karma__.files).forEach(function(file) {
     if (TEST_REGEXP.test(file)) {
-      
-      console.log("before: " + file);
-      console.log("after: " + pathToModule(file));
       // Normalize paths to RequireJS module names.
       allTestFiles.push(pathToModule(file));
     }
@@ -29,7 +26,7 @@
     },
 
     // Dynamically load all test files and ES6 polyfill.
-    deps: allTestFiles.concat(['node_modules/es6-shim/es6-shim', 'test/matchers']),
+    deps: allTestFiles.concat(['node_modules/es6-shim/es6-shim']),
 
     // we have to kickoff jasmine, as it is asynchronous
     callback: window.__karma__.start
