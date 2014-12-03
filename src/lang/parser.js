@@ -5,6 +5,7 @@ import {
 
 import {
   Node,
+  NodeList,
   NodeType
 } from './node';
 
@@ -28,20 +29,20 @@ function consumeItem(tokens, alterable) {
   if(tokenType === TokenType.LIST_START) {
     return consumeList(tokens, alterable);
   } else if(tokenType === TokenType.INT) {
-    // return new NodeInt(token.getValue(), alterable)
+    return new Node(NodeType.INT, token.getValue(), alterable)
   } else if(tokenType === TokenType.FLOAT) {
-    // return new NodeFloat(token.getValue(), alterable)
+    return new Node(NodeType.FLOAT, token.getValue(), alterable)
   } else if(tokenType === TokenType.NAME) {
     let val = token.getValue();
     if(val === "true") {
-      // return new NodeBoolean(true, alterable)
+      return new Node(NodeType.BOOLEAN, true, alterable)
     } else if (val === "false") {
-      // return new NodeBoolean(false, alterable)
+      return new Node(NodeType.BOOLEAN, false, alterable)
     } else {
-      // return new NodeName(token.getValue(), alterable)
+      return new Node(NodeType.NAME, token.getValue(), alterable)
     }
   } else if(tokenType === TokenType.STRING) {
-    // return new NodeString(token.getValue(), alterable)
+    return new Node(NodeType.STRING, token.getValue(), alterable)
   } else if(tokenType === TokenType.QUOTE_ABBREVIATION) {
     return consumeQuotedForm(tokens);
   } else if(tokenType === TokenType.BRACKET_START) {
@@ -67,11 +68,9 @@ function consumeBracketForm(tokens) {
     // throw an error - non-mutable node within square brackets
   }
 
-  let nodeMutate = (NodeMutate)node; // ???
-  // todo: think about the best way to implement this in js
   let parameter = consumeItem(tokens, false);
   while(parameter !== null) {
-    nodeMutate.addParameterNode(parameter);
+    node.addParameterNode(parameter);
     parameter = consumeItem(tokens, false);
   }
 
@@ -84,14 +83,14 @@ function consumeQuotedForm(tokens) {
 
   let node = new NodeList();
 
-  node.addChild(new NodeName("quote"));
+  node.addChild(new Node(NodeType.NAME, "quote", false));
   node.addChild(consumeItem(tokens, false));
 
   return node;
 }
 
 function consumeList(tokens, alterable) {
-  let node  = new NodeList();
+  let node = new NodeList();
 
   while(true) {
     let token = tokens[0];

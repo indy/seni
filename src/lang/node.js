@@ -13,12 +13,65 @@ export var NodeType = {
 
 export class Node {
 
+  constructor(type, value, alterable) {
+    this.type = type;
+    this.value = value;
+    this.alterable = alterable;
+
+    // node mutate specific
+    this.parameterAST = [];
+    this.genSym = "";
+  }
 
   getType() {
     return this.type;
   }
 
-  // todo: should this go in NodeList?
+  getValue() {
+    return this.value;
+  }
+
+  isAlterable() {
+    return this.alterable;
+  }
+
+  getGenSym() {
+    return this.getGenSym;
+  }
+
+  setGenSym(genSym) {
+    this.getGenSym = genSym;
+  }
+
+  addParameterNode(parameter) {
+    this.parameterAST.push(parameter);
+  }
+
+  getParameterNodes() {
+    return this.parameterAST;
+  }
+}
+
+export class NodeList extends Node {
+
+  constructor() {
+    this.type = NodeType.LIST;
+    this.children = [];
+  }
+
   addChild(child) {
+    this.children.push(child);
+  }
+
+  getChild(nth) {
+    return this.children[nth];
+  }
+
+  getChildren() {
+    return this.children;
+  }
+
+  size() {
+    return this.children.length;
   }
 }
