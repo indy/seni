@@ -17,7 +17,8 @@ export class Node {
     this.type = type;
     this.value = value;
     this.alterable = alterable;
-
+    this.children = [];
+    
     // node mutate specific
     this.parameterAST = [];
     this.genSym = "";
@@ -34,6 +35,23 @@ export class Node {
   isAlterable() {
     return this.alterable;
   }
+
+  addChild(child) {
+    this.children.push(child);
+  }
+
+  getChild(nth) {
+    return this.children[nth];
+  }
+
+  getChildren() {
+    return this.children;
+  }
+
+  size() {
+    return this.children.length;
+  }
+
 
   getGenSym() {
     return this.getGenSym;
@@ -52,26 +70,3 @@ export class Node {
   }
 }
 
-export class NodeList extends Node {
-
-  constructor() {
-    this.type = NodeType.LIST;
-    this.children = [];
-  }
-
-  addChild(child) {
-    this.children.push(child);
-  }
-
-  getChild(nth) {
-    return this.children[nth];
-  }
-
-  getChildren() {
-    return this.children;
-  }
-
-  size() {
-    return this.children.length;
-  }
-}

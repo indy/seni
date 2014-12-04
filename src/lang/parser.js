@@ -5,7 +5,6 @@ import {
 
 import {
   Node,
-  NodeList,
   NodeType
 } from './node';
 
@@ -81,7 +80,7 @@ function consumeBracketForm(tokens) {
 function consumeQuotedForm(tokens) {
   // '(2 3 4) -> (quote (2 3 4))
 
-  let node = new NodeList();
+  let node = new Node(NodeType.LIST);
 
   node.addChild(new Node(NodeType.NAME, "quote", false));
   node.addChild(consumeItem(tokens, false));
@@ -90,7 +89,7 @@ function consumeQuotedForm(tokens) {
 }
 
 function consumeList(tokens, alterable) {
-  let node = new NodeList();
+  let node = new Node(NodeType.LIST);
 
   while(true) {
     let token = tokens[0];
