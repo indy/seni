@@ -3,11 +3,12 @@
   <head>
     <title>polyjs</title>
 
-    <script src="traceur-rt/traceur.js"></script>
-    <script src="traceur-rt/bootstrap.js"></script>
+    <script src="lib/traceur-rt/traceur.js"></script>
+    <script src="lib/traceur-rt/bootstrap.js"></script>
 
     <script>
       traceur.options.experimental = true;
+      traceur.System.baseURL = 'src/';
     </script>
 
     <meta charset="utf-8">
@@ -68,7 +69,7 @@
 
       <core-header-panel main>
         <core-toolbar>
-          <core-icon-button id="navicon" icon="menu"></core-icon-button>
+          <core-icon-button core-drawer-toggle icon="menu"></core-icon-button>
           <div id="seni-main-label">Seni</div>
           <span flex></span>
           <paper-icon-button icon="search"></paper-icon-button>
@@ -83,7 +84,8 @@
       </core-header-panel>
     </core-drawer-panel>
 
-    <script type="module" src="main.js"></script>
+    <script type="module" src="src/main.js"></script>
   </body>
+
 
 </html>

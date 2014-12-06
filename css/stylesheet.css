@@ -51,10 +51,6 @@ core-toolbar {
   background-color: #bbbbbb;
 }
 
-core-drawer-panel:not([narrow]) #navicon {
-  display: none;
-}
-
 core-drawer-panel:not([narrow]) #seni-main-label {
   display: none;
 }
