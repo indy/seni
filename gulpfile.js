@@ -4,6 +4,9 @@ var gulp = require('gulp'),
     traceur = require('gulp-traceur'),
     jshint = require('gulp-jshint');
 
+var browserify = require('browserify');
+var source = require('vinyl-source-stream');
+
 var webserver = require('gulp-webserver');
 
 var paths = {
@@ -44,6 +47,14 @@ gulp.task('build:es6', function() {
     .pipe(traceur(pipe.traceur({outputLanguage: 'es6',
                                experimental: true})))
   .pipe(gulp.dest('dist/es6'));
+});
+
+
+gulp.task('browserify', function() {
+    return browserify('./dist/cjs/main.js')
+        .bundle()
+        .pipe(source('bundle.js'))
+        .pipe(gulp.dest('./dist/cjs/'));
 });
 
 // todo: add lint as the first subtask of build

@@ -16,6 +16,8 @@
   "devDependencies": {
     "pipe": "angular/pipe#add-sauce-browsers",
     "rtts-assert": "angular/assert",
+    "browserify": "~5.10.1",
+    "vinyl-source-stream": "~0.1.1",
     "gulp": "~3.8.10",
     "gulp-traceur": "vojtajina/gulp-traceur#traceur-as-peer",
     "gulp-jshint": "~1.5.3",

@@ -8,24 +8,11 @@ bower update
 gulp test
 
 gulp build
+gulp browserify
 
-
-
-
-
-
-
-// current crappy way of viewing the page:
-
-⇒  cd dist/es6
-⇒  ln -s ../../bower_components .
-⇒  ln -s ../../css .
-⇒  ln -s ../../elements.html .
-⇒  ln -s ../../index.html .
-⇒  ln -s ../../lib/traceur-rt .
 
 python -m SimpleHTTPServer
-visit http://localhost:8000
+visit http://localhost:8000/cjsindex.html
 
 
 
@@ -40,3 +27,11 @@ web components/polymer/material design
 --------------------------------------------------------------------------------
 
 karma (was called testacular) is the test runner which can run javascript code on real browsers
+
+
+--------------------------------------------------------------------------------
+
+cd dist/cjs
+browserify main.js -o bundle.js
+
+
