@@ -1,5 +1,0 @@
-#!/bin/bash
-
-set -e
-
-gulp build test --browsers SL_Chrome,SL_Safari,SL_Firefox,SL_IE_10,SL_IE_11
