@@ -1,6 +1,6 @@
 export class Buffer {
     constructor(glContainer) {
-      // each buffer can hold 1000 'items' where an item is a vertex, colour etc
+        // each buffer can hold 1000 'items' where an item is a vertex, colour etc
         this.bufferSize = 1000; 
         this.vertexItemSize = 3; // xyz
         this.colourItemSize = 4; // rgba
@@ -8,8 +8,8 @@ export class Buffer {
         this.colourBuffer = new Float32Array(this.colourItemSize * this.bufferSize);
 
         // the level of both the vertex and colour buffer
-      // to find the actual index position multiply bufferLevel
-      // by the relevant itemSize of the buffer
+        // to find the actual index position multiply bufferLevel
+        // by the relevant itemSize of the buffer
         this.bufferLevel = 0;
 
         var {glVertexBuffer, glColourBuffer} = initGLBuffers(glContainer.gl);
@@ -35,12 +35,12 @@ export class Buffer {
             var lastVertexIndex = (this.bufferLevel - 1) * this.vertexItemSize;
             this.addVertex([this.vertexBuffer[lastVertexIndex + 0],
                             this.vertexBuffer[lastVertexIndex + 1]],
-                            [0, 0, 0, 0]);
+                           [0, 0, 0, 0]);
 
             this.addVertex(p0, [0, 0, 0, 0]);
 
-          // Note: still need to call addVertex on the first
-          // vertex when we 'really' render the strip
+            // Note: still need to call addVertex on the first
+            // vertex when we 'really' render the strip
         }
     }
 
@@ -79,13 +79,13 @@ export class Buffer {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.vertexBuffer, gl.STATIC_DRAW);
-      gl.vertexAttribPointer(shaderProgram.positionAttribute,
-                             this.vertexItemSize, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(shaderProgram.positionAttribute,
+                               this.vertexItemSize, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.colourBuffer, gl.STATIC_DRAW);
-      gl.vertexAttribPointer(shaderProgram.colourAttribute,
-                             this.colourItemSize, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(shaderProgram.colourAttribute,
+                               this.colourItemSize, gl.FLOAT, false, 0, 0);
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.bufferLevel);
 

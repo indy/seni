@@ -55,16 +55,16 @@ export class Renderer {
 
         buffer.addVertex([200, 500], [1.0, 0.0, 0.2, 1.0]);
         buffer.addVertex([100, 700], [1.0, 0.0, 0.4, 1.0]);
-      buffer.addVertex([200, 800], [1.0, 0.0, 0.6, 1.0]);
+        buffer.addVertex([200, 800], [1.0, 0.0, 0.6, 1.0]);
 
-      renderBezier(glContainer, buffer, {});
-      renderBezier(glContainer, buffer, {coords: [[440, 200],
-                                                  [533, 500],
-                                                  [766, 0],
-                                                  [900, 300]]});
+        renderBezier(glContainer, buffer, {});
+        renderBezier(glContainer, buffer, {coords: [[440, 200],
+                                                    [533, 500],
+                                                    [766, 0],
+                                                    [900, 300]]});
 
 
-      buffer.prepareToAddTriangleStrip(glContainer, 6, [300, 100]);
+        buffer.prepareToAddTriangleStrip(glContainer, 6, [300, 100]);
 
         buffer.addVertex([300, 100], [1.0, 0.0, 0.0, 1.0]);
         buffer.addVertex([400, 100], [1.0, 0.2, 0.0, 1.0]);
@@ -83,7 +83,7 @@ export class Renderer {
 
         buffer.addVertex([400, 500], [1.0, 0.0, 0.2, 1.0]);
         buffer.addVertex([300, 700], [1.0, 0.0, 0.4, 1.0]);
-      buffer.addVertex([400, 800], [1.0, 0.0, 0.6, 1.0]);
+        buffer.addVertex([400, 800], [1.0, 0.0, 0.6, 1.0]);
 
     }
 
