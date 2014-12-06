@@ -8,8 +8,6 @@ bower update
 gulp test
 
 gulp build
-gulp browserify
-
 
 python -m SimpleHTTPServer
 visit http://localhost:8000/cjsindex.html

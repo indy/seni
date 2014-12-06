@@ -36,10 +36,10 @@ gulp.task('build:amd', function() {
 });
 
 gulp.task('build:cjs', function() {
-  gulp.src(paths.src)
+  return gulp.src(paths.src)
     .pipe(traceur(pipe.traceur({modules: 'commonjs',
-                               experimental: true})))
-  .pipe(gulp.dest('dist/cjs'));
+                                experimental: true})))
+    .pipe(gulp.dest('dist/cjs'));
 });
 
 gulp.task('build:es6', function() {
@@ -50,7 +50,7 @@ gulp.task('build:es6', function() {
 });
 
 
-gulp.task('browserify', function() {
+gulp.task('browserify', ['build:cjs'], function() {
     return browserify('./dist/cjs/main.js')
         .bundle()
         .pipe(source('bundle.js'))
@@ -58,7 +58,7 @@ gulp.task('browserify', function() {
 });
 
 // todo: add lint as the first subtask of build
-gulp.task('build', ['build:amd', 'build:cjs', 'build:es6']);
+gulp.task('build', ['build:amd', 'build:cjs', 'build:es6', 'browserify']);
 
 gulp.task('test', function(done) {
   var options = {
