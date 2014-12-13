@@ -52,7 +52,6 @@ export class Node {
         return this.children.length;
     }
 
-
     getGenSym() {
         return this.getGenSym;
     }
@@ -69,4 +68,5 @@ export class Node {
         return this.parameterAST;
     }
 }
+
 

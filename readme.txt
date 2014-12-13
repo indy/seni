@@ -33,3 +33,9 @@ cd dist/cjs
 browserify main.js -o bundle.js
 
 
+--------------------------------------------------------------------------------
+
+when npm installing something that's project specific use the --save-dev option e.g.
+
+npm install --save-dev gulp-webserver
+
