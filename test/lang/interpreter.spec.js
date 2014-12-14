@@ -163,4 +163,14 @@ describe('eval', function () {
         expect(e.hasBinding('monkey')).toEqual(true);
         expect(e.lookup('monkey').getValue()).toEqual(42);
     });
+
+    it('should test set!', function () {
+        expect(e.hasBinding('foo')).toEqual(true);
+        expect(e.lookup('foo').getValue()).toEqual(5);
+
+        let res = evalForm(e, "(set! foo 42)");
+
+        expect(e.hasBinding('foo')).toEqual(true);
+        expect(e.lookup('foo').getValue()).toEqual(42);
+    });
 });

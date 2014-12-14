@@ -112,6 +112,12 @@ let specialForm = {
         }
         let val = expr.getChild(2);
         env.addBinding(name.getValue(),evaluate(env, val));
+    },
+    'set!': function(env, expr) {
+        // (set! foo 42)
+        let name = expr.getChild(1);
+        let val = expr.getChild(2);
+        env.mutate(name.getValue(), evaluate(env, val));
     }
 }
 
