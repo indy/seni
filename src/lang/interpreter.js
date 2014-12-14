@@ -87,6 +87,13 @@ function evalMutableNode(env, expr) {
     }
 }
 
+function addBindings(env, exprs) {
+    let children = exprs.getChildren();
+    return children.reduce((a, b) => a.addBinding(b.getChild(0).getValue(),
+                                                  evaluate(a, b.getChild(1))),
+                           env);
+}
+
 let specialForm = {
     'if': function(env, expr) {
         let conditional = evaluate(env, expr.getChild(1));
@@ -123,6 +130,22 @@ let specialForm = {
         // (begin (f1 1) (f2 3) (f3 5))
         let children = expr.getChildren();
         return children.slice(1).reduce((a, b) => evaluate(env, b), null);
+    },
+    'let': function(env, expr) {
+        // (let ((a 12) (b 24)) (+ a b foo))
+        return evaluate(addBindings(env.newScope(), expr.getChild(1)),
+                        expr.getChild(2));
+    },
+    'lambda': function(env, expr) {
+        // (lambda (x y z) (+ x y z))
+        return function(args) {
+            let newEnv = env.newScope();
+
+            let binds = expr.getChild(1).getChildren();
+            binds.forEach((b, i) => newEnv.addBinding(b.getValue(),
+                                                      args[i]));
+            return evaluate(newEnv, expr.getChild(2));
+        };
     }
 }
 

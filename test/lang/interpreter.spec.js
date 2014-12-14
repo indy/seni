@@ -189,4 +189,26 @@ describe('eval', function () {
         expect(e.hasBinding('foo')).toEqual(true);
         expect(e.lookup('foo').getValue()).toEqual(5);
     });
+
+    it('should test let', function () {
+        let res = evalForm(e, "(let ((a 12) (b 24)) (+ a b foo))");
+
+        expect(e.hasBinding('foo')).toEqual(true);
+        expect(e.lookup('foo').getValue()).toEqual(5);
+
+        expect(res.getValue()).toEqual(41);
+
+        res = evalForm(e, "(let ((a 2) (b (+ a a))) (+ a b foo))");
+        expect(res.getValue()).toEqual(11);
+    });
+
+    it('should test lambda', function () {
+        // (lambda (x y z) (+ x y z))
+        let res = evalForm(e, "((lambda (x y z) (+ x y z)) 2 3 4)");
+        expect(res.getValue()).toEqual(9);
+
+        res = evalForm(e, "((lambda (x y) (+ x y foo)) 2 3)");
+        expect(res.getValue()).toEqual(10);
+    });
+    
 });
