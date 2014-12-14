@@ -157,4 +157,10 @@ describe('eval', function () {
         let res = evalForm(e, "(quote (+ 4 2))");
         expect(res.getType()).toEqual(NodeType.LIST);
     });
+
+    it('should test define', function () {
+        let res = evalForm(e, "(define monkey 42)");
+        expect(e.hasBinding('monkey')).toEqual(true);
+        expect(e.lookup('monkey').getValue()).toEqual(42);
+    });
 });

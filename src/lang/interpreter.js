@@ -103,6 +103,15 @@ let specialForm = {
     },
     'quote': function(env, expr) {
         return expr.getChild(1);       
+    },
+    'define': function(env, expr) {
+        // (define foo 12)
+        let name = expr.getChild(1);
+        if(name.getType() !== NodeType.NAME) {
+            // something weird has happened
+        }
+        let val = expr.getChild(2);
+        env.addBinding(name.getValue(),evaluate(env, val));
     }
 }
 
