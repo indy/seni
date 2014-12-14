@@ -35,15 +35,16 @@ export function evaluate(env, expr) {
 }
 
 export function bindRequiredFunctions(env) {
-    for(let key in requiredFunctions) {
-        env.addBinding(key, requiredFunctions[key]);
-    }
-    return env;
+    return binder(env, requiredFunctions);
 }
 
 export function bindSpecialForms(env) {
-    for(let key in specialForm) {
-        env.addBinding(key, specialForm[key])
+    return binder(env, specialForm);
+}
+
+function binder(env, obj) {
+    for(let key in obj) {
+        env.addBinding(key, obj[key])
     }
     return env;
 }
@@ -107,11 +108,51 @@ let specialForm = {
 
 let requiredFunctions = {
     '+': function(args) {
-        let res = args.reduce(function(a, b) {return a + b.getValue();}, 0);
+        let res = args.reduce((a, b) => a + b.getValue(), 0);
         return new Node(NodeType.FLOAT, res, false);        
     },
     '*': function(args) {
-        let res = args.reduce(function(a, b) {return a * b.getValue();}, 1);
+        let res = args.reduce((a, b) => a * b.getValue(), 1);
         return new Node(NodeType.FLOAT, res, false);
-    }    
+    },
+    '-': function(args) {
+        if(args.length === 1) {
+            return new Node(NodeType.FLOAT, -args[0].getValue(), false);
+        }
+        let first = args[0].getValue();
+        let res = args.slice(1).reduce((a, b) => a - b.getValue(), first);
+        return new Node(NodeType.FLOAT, res, false);
+    },
+    '/': function(args) {
+        let first = args[0].getValue();
+        let res = args.slice(1).reduce((a, b) => a / b.getValue(), first);
+        return new Node(NodeType.FLOAT, res, false);
+    },
+    '=': function(args) {
+        let first = args[0].getValue();
+        let res = args.slice(1).every(a => a.getValue() === first);
+        return new Node(NodeType.BOOLEAN, res, false);
+    },
+    '<': function(args) {
+        let prev = args[0].getValue();
+        for(let i = 1;i<args.length;i++) {
+            let current = args[i].getValue();
+            if(!(current < prev)) {
+                return new Node(NodeType.BOOLEAN, false, false);
+            }
+            prev = current;
+        }
+        return new Node(NodeType.BOOLEAN, true, false);
+    },
+    '>': function(args) {
+        let prev = args[0].getValue();
+        for(let i = 1;i<args.length;i++) {
+            let current = args[i].getValue();
+            if(!(current > prev)) {
+                return new Node(NodeType.BOOLEAN, false, false);
+            }
+            prev = current;
+        }
+        return new Node(NodeType.BOOLEAN, true, false);
+    }
 }

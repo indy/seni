@@ -79,11 +79,59 @@ describe('eval', function () {
         res = evalForm(e, "(+ 2 4)");
         expect(res.getValue()).toBeCloseTo(6);
 
+        res = evalForm(e, "(- 10 3)");
+        expect(res.getValue()).toBeCloseTo(7);
+
+        res = evalForm(e, "(- 10 3 5)");
+        expect(res.getValue()).toBeCloseTo(2);
+
+        res = evalForm(e, "(- 42)");
+        expect(res.getValue()).toBeCloseTo(-42);
+
         res = evalForm(e, "(+ 2 foo)");
         expect(res.getValue()).toBeCloseTo(7);
 
         res = evalForm(e, "(+ (* 2 2) (* 3 3))");
         expect(res.getValue()).toBeCloseTo(13);
+
+        res = evalForm(e, "(/ 90 10)");
+        expect(res.getValue()).toBeCloseTo(9);
+
+        res = evalForm(e, "(/ 90 10 3)");
+        expect(res.getValue()).toBeCloseTo(3);
+
+        res = evalForm(e, "(= 90 90)");
+        expect(res.getValue()).toEqual(true);
+
+        res = evalForm(e, "(= 90 90 90)");
+        expect(res.getValue()).toEqual(true);
+
+        res = evalForm(e, "(= 90 3)");
+        expect(res.getValue()).toEqual(false);
+
+        res = evalForm(e, "(< 54 30)");
+        expect(res.getValue()).toEqual(true);
+
+        res = evalForm(e, "(< 54 30 20)");
+        expect(res.getValue()).toEqual(true);
+
+        res = evalForm(e, "(< 54 54)");
+        expect(res.getValue()).toEqual(false);
+
+        res = evalForm(e, "(< 54 540)");
+        expect(res.getValue()).toEqual(false);
+
+        res = evalForm(e, "(> 54 30)");
+        expect(res.getValue()).toEqual(false);
+
+        res = evalForm(e, "(> 54 62 72)");
+        expect(res.getValue()).toEqual(true);
+
+        res = evalForm(e, "(> 54 54)");
+        expect(res.getValue()).toEqual(false);
+
+        res = evalForm(e, "(> 54 540)");
+        expect(res.getValue()).toEqual(true);
     });
 
     function getAst(env, form) {
@@ -99,5 +147,14 @@ describe('eval', function () {
 
         res = evalForm(e, "(if false 2 4)");
         expect(res.getValue()).toEqual(4);
+    });
+
+    it('should test quote', function () {
+        let res = evalForm(e, "(quote something)");
+        expect(res.getType()).toEqual(NodeType.NAME);
+        expect(res.getValue()).toEqual("something");
+
+        let res = evalForm(e, "(quote (+ 4 2))");
+        expect(res.getType()).toEqual(NodeType.LIST);
     });
 });

@@ -39,3 +39,8 @@ when npm installing something that's project specific use the --save-dev option 
 
 npm install --save-dev gulp-webserver
 
+--------------------------------------------------------------------------------
+
+* notes
+- the interpreter should be able to return raw values without the need to box them up in Node objects
+
