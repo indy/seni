@@ -118,6 +118,11 @@ let specialForm = {
         let name = expr.getChild(1);
         let val = expr.getChild(2);
         env.mutate(name.getValue(), evaluate(env, val));
+    },
+    'begin': function(env, expr) {
+        // (begin (f1 1) (f2 3) (f3 5))
+        let children = expr.getChildren();
+        return children.slice(1).reduce((a, b) => evaluate(env, b), null);
     }
 }
 

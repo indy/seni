@@ -173,4 +173,20 @@ describe('eval', function () {
         expect(e.hasBinding('foo')).toEqual(true);
         expect(e.lookup('foo').getValue()).toEqual(42);
     });
+
+    it('should test begin', function () {
+        expect(e.hasBinding('foo')).toEqual(true);
+        expect(e.lookup('foo').getValue()).toEqual(5);
+        let res = evalForm(e, "(begin (set! foo 1) (+ 1 1) (+ 2 2))");
+        expect(e.hasBinding('foo')).toEqual(true);
+        expect(e.lookup('foo').getValue()).toEqual(1);
+
+        res = evalForm(e, "(begin (+ 1 1) (set! foo 3) (+ 2 2))");
+        expect(e.hasBinding('foo')).toEqual(true);
+        expect(e.lookup('foo').getValue()).toEqual(3);
+
+        res = evalForm(e, "(begin (+ 1 1) (+ 2 2) (set! foo 5))");
+        expect(e.hasBinding('foo')).toEqual(true);
+        expect(e.lookup('foo').getValue()).toEqual(5);
+    });
 });
