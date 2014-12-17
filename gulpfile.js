@@ -18,7 +18,7 @@ gulp.task('webserver', function() {
         .pipe(webserver({
             //      livereload: true,
             directoryListing: true,
-            //      open: true
+            open: "http://localhost:8000/index.cjs.html"
         }));
 });
 
