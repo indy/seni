@@ -50,4 +50,9 @@ describe('env', function () {
         expect(e2.lookup(key)).toEqual(laterVal);
     });  
 
+    it('should mutate bindings', function () {
+        e.mutate(key, 3);
+        expect(e.lookup(key)).toEqual(3);
+    });  
+
 });

@@ -4,27 +4,11 @@ import {
     bindRequiredFunctions
 } from '../../src/lang/interpreter';
 
-import {
-    Env
-} from '../../src/lang/env';
-
-import {
-    Node,
-    NodeType
-} from '../../src/lang/node';
-
-import {
-  parse
-} from '../../src/lang/parser';
-
-import {
-  Token,
-  TokenType
-} from '../../src/lang/token';
-
-import {
-  tokenise,
-} from '../../src/lang/lexer';
+import {Env} from '../../src/lang/env';
+import {Node, NodeType} from '../../src/lang/node';
+import {parse} from '../../src/lang/parser';
+import {Token, TokenType} from '../../src/lang/token';
+import {tokenise} from '../../src/lang/lexer';
 
 
 describe('eval', function () {
