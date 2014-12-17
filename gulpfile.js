@@ -1,13 +1,12 @@
-var gulp = require('gulp'),
-pipe = require('pipe/gulp'),
-karma = require('./lib/gulp/karma'),
-traceur = require('gulp-traceur'),
-jshint = require('gulp-jshint');
-
+var gulp = require('gulp');
+var pipe = require('pipe/gulp');
+var traceur = require('gulp-traceur');
+var jshint = require('gulp-jshint');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
-
 var webserver = require('gulp-webserver');
+
+var karma = require('./tools/gulp/karma');
 
 var paths = {
     src: 'src/**/*.js'
