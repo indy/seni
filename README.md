@@ -1,18 +1,30 @@
 
+## Build
+
+### Prerequisites:
+
+1. `npm install`
+2. `npm install -g gulp bower`
+3. `bower update`
+4. `gulp build`
 
 
+### Folder structure
 
-npm install
-bower update
+### Build:
 
-gulp test
+1. `gulp build` -> result is in `dist` folder
+2. `gulp clean` -> cleans the `dist` folder
 
-gulp build
+### Tests:
+
+1. `gulp test`
+
+
+### Wip
 
 python -m SimpleHTTPServer
 visit http://localhost:8000/cjsindex.html
-
-
 
 --------------------------------------------------------------------------------
 
@@ -26,12 +38,10 @@ web components/polymer/material design
 
 karma (was called testacular) is the test runner which can run javascript code on real browsers
 
-
 --------------------------------------------------------------------------------
 
 cd dist/cjs
 browserify main.js -o bundle.js
-
 
 --------------------------------------------------------------------------------
 
