@@ -1,10 +1,10 @@
 import {
     evaluate,
-    bindSpecialForms,
-    bindRequiredFunctions
+    requiredFunctions,
+    specialForms
 } from '../../src/lang/interpreter';
 
-import {Env} from '../../src/lang/env';
+import {Env, bind} from '../../src/lang/env';
 import {Node, NodeType} from '../../src/lang/node';
 import {parse} from '../../src/lang/parser';
 import {Token, TokenType} from '../../src/lang/token';
@@ -24,8 +24,8 @@ describe('eval', function () {
     var val;
 
     beforeEach(function () {
-        e = bindSpecialForms(new Env());
-        e = bindRequiredFunctions(e);
+        e = bind(new Env(), [specialForms,
+                             requiredFunctions]);
 
         key = "foo";
         val = new Node(NodeType.INT, 5, false);

@@ -1,7 +1,7 @@
 import {
     Node,
     NodeType
-} from '../../src/lang/node';
+} from './node';
 
 export function evaluate(env, expr) {
     switch(expr.getType()) {
@@ -34,21 +34,6 @@ export function evaluate(env, expr) {
     return null;
 }
 
-export function bindRequiredFunctions(env) {
-    return binder(env, requiredFunctions);
-}
-
-export function bindSpecialForms(env) {
-    return binder(env, specialForm);
-}
-
-function binder(env, obj) {
-    for(let key in obj) {
-        env.addBinding(key, obj[key])
-    }
-    return env;
-}
-
 function funApplication(env, listExpr) {
     if(isSpecialForm(listExpr)) {
         let specialFn = evaluate(env, listExpr.getChild(0));
@@ -63,7 +48,7 @@ function isSpecialForm(listExpr) {
     if(node.getType === NodeType.LIST) {
         return false;
     }
-    if(specialForm[node.getValue()] !== undefined) {
+    if(specialForms[node.getValue()] !== undefined) {
         return true;
     }
     return false;
@@ -94,7 +79,7 @@ function addBindings(env, exprs) {
                            env);
 }
 
-let specialForm = {
+export var specialForms = {
     'if': function(env, expr) {
         let conditional = evaluate(env, expr.getChild(1));
         if(conditional.getType() !== NodeType.BOOLEAN) {
@@ -149,7 +134,7 @@ let specialForm = {
     }
 }
 
-let requiredFunctions = {
+export var requiredFunctions = {
     '+': function(args) {
         let res = args.reduce((a, b) => a + b.getValue(), 0);
         return new Node(NodeType.FLOAT, res, false);        
