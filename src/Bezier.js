@@ -34,6 +34,12 @@ function normals(x1, y1, x2, y2) {
     return [normalize(-dy, dx), normalize(dy, -dx)];
 }
 
+export function getBezierFn(glContainer, buffer) {
+    return function(params) {
+        renderBezier(glContainer, buffer, params);
+    }
+}
+
 export function renderBezier(glContainer,
                              buffer,
                              {tesselation = 15,

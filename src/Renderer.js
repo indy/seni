@@ -1,6 +1,6 @@
 import { GLContainer } from './GLContainer';
 import { Buffer } from './Buffer';
-import { renderBezier } from './Bezier';
+import { renderBezier, getBezierFn } from './Bezier';
 
 export class Renderer {
     constructor(canvasElement) {
@@ -34,7 +34,7 @@ export class Renderer {
     drawScene() {
         var buffer = this.buffer;
         var glContainer = this.glContainer;
-
+        var bezier = getBezierFn(glContainer, buffer);
 
         buffer.prepareToAddTriangleStrip(glContainer, 6, [100, 100]);
 
@@ -57,11 +57,11 @@ export class Renderer {
         buffer.addVertex([100, 700], [1.0, 0.0, 0.4, 1.0]);
         buffer.addVertex([200, 800], [1.0, 0.0, 0.6, 1.0]);
 
-        renderBezier(glContainer, buffer, {});
-        renderBezier(glContainer, buffer, {coords: [[440, 200],
-                                                    [533, 500],
-                                                    [766, 0],
-                                                    [900, 300]]});
+        bezier({tesselation: 30});
+        bezier({coords: [[440, 200],
+                         [533, 500],
+                         [766, 0],
+                         [900, 300]]});
 
 
         buffer.prepareToAddTriangleStrip(glContainer, 6, [300, 100]);
