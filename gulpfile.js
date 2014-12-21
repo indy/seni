@@ -67,10 +67,10 @@ var CONFIG = {
   },
   transpile: {
     src: {
-      js: ['modules/**/*.js', 'modules/**/*.es6']
+      js: ['app/**/*.js', 'app/**/*.es6']
     },
     copy: {
-      js: ['modules/**/*.es5']
+      js: ['app/**/*.es5']
     },
     options: {
       js: {
@@ -86,7 +86,7 @@ var CONFIG = {
   },
   html: {
     src: {
-      js: ['modules/*/src/**/*.html']
+      js: ['app/*/src/**/*.html']
     },
     scriptsPerFolder: {
       js: {

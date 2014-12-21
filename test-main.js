@@ -8,7 +8,7 @@ register(System);
 __karma__.loaded = function() {};
 
 
-System.baseURL = '/base/modules/';
+System.baseURL = '/base/app/';
 
 // So that we can import packages like `core/foo`, instead of `core/src/foo`.
 System.paths = {
