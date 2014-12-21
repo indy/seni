@@ -6,6 +6,7 @@ var gulpTraceur = require('./tools/transpiler/gulp-traceur');
 
 var clean = require('./tools/build/clean');
 var deps = require('./tools/build/deps');
+var css = require('./tools/build/css');
 var transpile = require('./tools/build/transpile');
 var html = require('./tools/build/html');
 var jsserve = require('./tools/build/jsserve');
@@ -83,6 +84,9 @@ var CONFIG = {
       }
     }
   },
+  css: {
+    src: 'app/css/*.css'
+  },
   html: {
     src: {
       js: ['app/*/src/**/*.html', 'app/*.html']
@@ -102,6 +106,19 @@ gulp.task('build/clean.js', clean(gulp, gulpPlugins, {
   path: CONFIG.dest.js.all
 }));
 
+
+// ------------
+// css
+
+gulp.task('build/css.js.dev', css(gulp, gulpPlugins, {
+  src: CONFIG.css.src,
+  dest: CONFIG.dest.js.dev
+}));
+
+gulp.task('build/css.js.prod', css(gulp, gulpPlugins, {
+  src: CONFIG.css.src,
+  dest: CONFIG.dest.js.prod
+}));
 
 // ------------
 // deps
@@ -241,12 +258,18 @@ gulp.task('test', function(done) {
 
 gulp.task('build.js.dev', function() {
   return runSequence(
-    ['build/deps.js.dev', 'build/transpile.js.dev', 'build/html.js.dev']);
+    ['build/deps.js.dev',
+     'build/transpile.js.dev',
+     'build/html.js.dev',
+     'build/css.js.dev']);
 });
 
 gulp.task('build.js.prod', function() {
   return runSequence(
-    ['build/deps.js.prod', 'build/transpile.js.prod', 'build/html.js.prod']);
+    ['build/deps.js.prod',
+     'build/transpile.js.prod',
+     'build/html.js.prod',
+     'build/css.js.prod']);
 });
 
 gulp.task('build.js', ['build.js.dev', 'build.js.prod']);
