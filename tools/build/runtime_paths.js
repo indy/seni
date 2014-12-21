@@ -1,5 +1,4 @@
 System.paths = {
-  'core/*': '/core/lib/*.js',
   'seni/*': '/seni/lib/*.js',
   'lang/*': '/lang/lib/*.js',
   'facade/*': '/facade/lib/*.js',

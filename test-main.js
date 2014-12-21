@@ -10,11 +10,8 @@ __karma__.loaded = function() {};
 
 System.baseURL = '/base/app/';
 
-// So that we can import packages like `core/foo`, instead of `core/src/foo`.
+// So that we can import packages like `seni/foo`, instead of `seni/src/foo`.
 System.paths = {
-  'core/*': './core/src/*.js',
-  'core/test/*': './core/test/*.js',
-
   'seni/*': './seni/src/*.js',
   'seni/test/*': './seni/test/*.js',
 
