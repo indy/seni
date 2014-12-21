@@ -50,8 +50,7 @@ var CONFIG = {
     }
   },
   srcFolderMapping: {
-    'default': 'lib',
-    '**/example*/**': 'web'
+    'default': 'lib'
   },
   deps: {
     js: [
@@ -86,7 +85,7 @@ var CONFIG = {
   },
   html: {
     src: {
-      js: ['app/*/src/**/*.html']
+      js: ['app/*/src/**/*.html', 'app/*.html']
     },
     scriptsPerFolder: {
       js: {

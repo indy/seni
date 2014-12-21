@@ -4,7 +4,6 @@ System.paths = {
   'lang/*': '/lang/lib/*.js',
   'facade/*': '/facade/lib/*.js',
   'rtts_assert/*': '/rtts_assert/lib/*.js',
-  'test_lib/*': '/test_lib/lib/*.js',
-  'examples/*': '/examples/web/*.js'
+  'test_lib/*': '/test_lib/lib/*.js'
 };
 register(System);
