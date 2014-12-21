@@ -1,0 +1,54 @@
+npm install
+gulp build
+karma start karma-js.conf.js
+gulp serve.js.dev
+
+launch web server from dist/js/dev
+http://localhost:8000/core/lib/index.html
+
+
+--------------------------------------------------
+
+
+| clean.js           | 
+| file2modulename.js | removes modules, tools, src, test, lib from module names
+| jsserve.js         |
+| transpile.js       |
+| deps.js            |
+| html.js            |
+| runtime_paths.js   |System.paths: core, facase, rtts_assert, test_lib, examples
+| util.js            |
+
+test-main.js : System.paths import packages like `core/foo`, instead of `core/src/foo`.
+
+--------------------------------------------------
+
+Q. runtime_paths.js assumes that a lib folders will be created for each module (e.g. 'core/*' -> '/core/lib/*.js') how is this created?
+A. 
+
+
+
+
+
+
+graphics in webgl
+quick feedback
+ecmascript 6
+testing
+web components/polymer/material design
+
+--------------------------------------------------------------------------------
+
+karma (was called testacular) is the test runner which can run javascript code on real browsers
+
+--------------------------------------------------------------------------------
+
+when npm installing something that's project specific use the --save-dev option e.g.
+
+npm install --save-dev gulp-webserver
+
+--------------------------------------------------------------------------------
+
+* notes
+- the interpreter should be able to return raw values without the need to box them up in Node objects
+
