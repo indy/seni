@@ -45,9 +45,9 @@ var _HTLM_DEFAULT_SCRIPTS_JS = [
 var CONFIG = {
   dest: {
     js: {
-      all: 'dist/js',
-      dev: 'dist/js/dev',
-      prod: 'dist/js/prod'
+      all: 'dist',
+      dev: 'dist/dev',
+      prod: 'dist/prod'
     }
   },
   srcFolderMapping: {
