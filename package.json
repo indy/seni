@@ -29,7 +29,6 @@
     "through2": "^0.6.1",
     "traceur": "0.0.74",
     "which": "~1",
-    "zone.js": "0.3.0",
     "gl-matrix": "2.1.0"
   },
   "devDependencies": {
