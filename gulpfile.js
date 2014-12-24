@@ -28,7 +28,7 @@ var _COMPILER_CONFIG_JS_DEFAULT = {
 
 var _HTLM_DEFAULT_SCRIPTS_JS = [
   {src: '/js/deps/traceur-runtime.js', mimeType: 'text/javascript'},
-  {src: '/js/rtts_assert/lib/rtts_assert.js', mimeType: 'text/javascript'},
+  {src: '/js/rtts_assert/rtts_assert.js', mimeType: 'text/javascript'},
   {src: '/js/deps/es6-module-loader-sans-promises.src.js', mimeType: 'text/javascript'},
   {src: '/js/deps/system.src.js', mimeType: 'text/javascript'},
   {src: '/js/deps/extension-register.js', mimeType: 'text/javascript'},
@@ -48,7 +48,7 @@ var CONFIG = {
     prod: 'dist/prod'
   },
   srcFolderMapping: {
-    'default': 'lib'
+    'default': '.'
   },
   deps: {
     js: [
