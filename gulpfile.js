@@ -12,6 +12,7 @@ var html = require('./tools/build/html');
 var jsserve = require('./tools/build/jsserve');
 
 var karma = require('./tools/build/karma');
+var path = require('path');
 
 // -----------------------
 // configuration
@@ -26,13 +27,13 @@ var _COMPILER_CONFIG_JS_DEFAULT = {
 };
 
 var _HTLM_DEFAULT_SCRIPTS_JS = [
-  {src: '/deps/traceur-runtime.js', mimeType: 'text/javascript'},
-  {src: '/rtts_assert/lib/rtts_assert.js', mimeType: 'text/javascript'},
-  {src: '/deps/es6-module-loader-sans-promises.src.js', mimeType: 'text/javascript'},
-  {src: '/deps/system.src.js', mimeType: 'text/javascript'},
-  {src: '/deps/extension-register.js', mimeType: 'text/javascript'},
-  {src: '/deps/runtime_paths.js', mimeType: 'text/javascript'},
-  {src: '/deps/gl-matrix.js', mimeType: 'text/javascript'},
+  {src: '/js/deps/traceur-runtime.js', mimeType: 'text/javascript'},
+  {src: '/js/rtts_assert/lib/rtts_assert.js', mimeType: 'text/javascript'},
+  {src: '/js/deps/es6-module-loader-sans-promises.src.js', mimeType: 'text/javascript'},
+  {src: '/js/deps/system.src.js', mimeType: 'text/javascript'},
+  {src: '/js/deps/extension-register.js', mimeType: 'text/javascript'},
+  {src: '/js/deps/runtime_paths.js', mimeType: 'text/javascript'},
+  {src: '/js/deps/gl-matrix.js', mimeType: 'text/javascript'},
   {
     inline: 'System.import(\'$MODULENAME$\').then(function(m) { m.main(); }, console.log.bind(console))',
     mimeType: 'text/javascript'
@@ -63,10 +64,10 @@ var CONFIG = {
   },
   transpile: {
     src: {
-      js: ['app/**/*.js', 'app/**/*.es6']
+      js: ['app/js/**/*.js', 'app/js/**/*.es6']
     },
     copy: {
-      js: ['app/**/*.es5']
+      js: ['app/js/**/*.es5']
     },
     options: {
       js: {
@@ -121,12 +122,12 @@ gulp.task('build/css.js.prod', css(gulp, gulpPlugins, {
 
 gulp.task('build/deps.js.dev', deps(gulp, gulpPlugins, {
   src: CONFIG.deps.js,
-  dest: CONFIG.dest.js.dev
+  dest: path.join(CONFIG.dest.js.dev, 'js')
 }));
 
 gulp.task('build/deps.js.prod', deps(gulp, gulpPlugins, {
   src: CONFIG.deps.js,
-  dest: CONFIG.dest.js.prod
+  dest: path.join(CONFIG.dest.js.prod, 'js')
 }));
 
 // ------------
@@ -135,7 +136,7 @@ gulp.task('build/deps.js.prod', deps(gulp, gulpPlugins, {
 gulp.task('build/transpile.js.dev', transpile(gulp, gulpPlugins, {
   src: CONFIG.transpile.src.js,
   copy: CONFIG.transpile.copy.js,
-  dest: CONFIG.dest.js.dev,
+  dest: path.join(CONFIG.dest.js.dev, 'js'),
   outputExt: 'js',
   options: CONFIG.transpile.options.js.dev,
   srcFolderMapping: CONFIG.srcFolderMapping
@@ -144,7 +145,7 @@ gulp.task('build/transpile.js.dev', transpile(gulp, gulpPlugins, {
 gulp.task('build/transpile.js.prod', transpile(gulp, gulpPlugins, {
   src: CONFIG.transpile.src.js,
   copy: CONFIG.transpile.copy.js,
-  dest: CONFIG.dest.js.prod,
+  dest: path.join(CONFIG.dest.js.prod, 'js'),
   outputExt: 'js',
   options: CONFIG.transpile.options.js.prod,
   srcFolderMapping: CONFIG.srcFolderMapping
