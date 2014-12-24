@@ -8,7 +8,7 @@ register(System);
 __karma__.loaded = function() {};
 
 
-System.baseURL = '/base/app/';
+System.baseURL = 'base/app/js/';
 
 // So that we can import packages like `seni/foo`, instead of `seni/src/foo`.
 System.paths = {
@@ -27,7 +27,7 @@ System.paths = {
   'test_lib/*': './test_lib/src/*.js',
   'test_lib/test/*': './test_lib/test/*.js',
 
-  'transpiler/*': '../tools/transpiler/*.js'
+  'transpiler/*': '../../tools/transpiler/*.js'
 }
 
 
