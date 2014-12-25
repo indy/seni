@@ -4,7 +4,7 @@
 
 1. `npm install`
 2. `npm install -g gulp karma karma-cli`
-3. `gulp build`
+3. `gulp cleanbuild`
 
 
 ### Folder structure
@@ -23,10 +23,11 @@
 1. `gulp build` -> result is in `dist` folder
 
 2. `gulp clean` -> cleans the `dist` folder
+   (run `gulp cleanbuild` afterwards)
 
 ### Tests:
 
-1. `karma start karma-js.conf.js`: JS tests
+1. `gulp test`: JS tests
 
 Notes for all tests:
 
@@ -35,17 +36,10 @@ the transpiler is reloaded. With that it is possible to make changes
 to the preprocessor and run the tests without exiting karma
 (just touch a test file that you would like to run).
 
-### Examples:
+### Dev
 
-To see the examples, first build the project as described above.
+1. `gulp watch`: Watches `app` folder for changes to js, html or css files
 
-#### Hello World Example
-This example consists of three basic pieces - a component, a decorator and a service.
-They are all constructed via injection. For more information see the comments in the
-source `modules/examples/src/hello_world/index.js`.
-
-You can build this example as either JS or Dart app:
-* (JS) `gulp serve.js.dev` and open `localhost:8000/examples/web/hello_world/` in Chrome.
 
 ## Debug the transpiler
 
