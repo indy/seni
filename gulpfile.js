@@ -1,5 +1,6 @@
 var gulp = require('gulp');
 var gulpPlugins = require('gulp-load-plugins')();
+var symlink = require('gulp-symlink');
 var runSequence = require('run-sequence');
 var merge = require('merge');
 var gulpTraceur = require('./tools/transpiler/gulp-traceur');
@@ -13,6 +14,7 @@ var jsserve = require('./tools/build/jsserve');
 
 var karma = require('./tools/build/karma');
 var path = require('path');
+
 
 // -----------------------
 // configuration
@@ -211,4 +213,19 @@ gulp.task('clean', ['build/clean.js']);
 gulp.task('build', ['build.js']);
 
 
+gulp.task('symlink.ext.dev', function() {
+  return gulp.src('bower_components')
+    .pipe(symlink(path.join(CONFIG.dest.dev, '/bower_components')))
+});
 
+gulp.task('symlink.ext.prod', function() {
+  return gulp.src('bower_components')
+    .pipe(symlink(path.join(CONFIG.dest.prod, '/bower_components')))
+});
+
+gulp.task('symlink.ext', ['symlink.ext.dev', 'symlink.ext.prod']);
+
+gulp.task('cleanbuild', function() {
+  return runSequence(
+    ['clean', 'symlink.ext', 'build']);
+});

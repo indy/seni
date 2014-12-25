@@ -8,12 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <!-- 
   <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
-  -->
-
-  <!-- 
-       <script src="js/glMatrix-0.9.5.min.js"></script> -->
 
   <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
@@ -43,12 +38,35 @@
   <link rel="import" href="elements.html"> 
   <link rel="stylesheet" href="css/stylesheet.css">
   
-  <body>
+  <body fullbleed layout vertical>
 
-    <div class="content">
-      <h1 id="message"></h1>
-      <canvas id="render-canvas" width="500" height="500"></canvas>
-    </div>
+        <core-drawer-panel id="drawerPanel">
+
+      <core-header-panel drawer>
+        <core-toolbar><span id="seni-drawer-label">Seni</span></core-toolbar>
+        <core-menu>
+          <core-item label="one"></core-item>
+          <core-item label="two"></core-item>          
+        </core-menu>
+      </core-header-panel>
+
+
+      <core-header-panel main>
+        <core-toolbar>
+          <core-icon-button core-drawer-toggle icon="menu"></core-icon-button>
+          <div id="seni-main-label">Seni</div>
+          <span flex></span>
+          <paper-icon-button icon="search"></paper-icon-button>
+          <paper-icon-button icon="more-vert" role="button"></paper-icon-button>
+          <!-- <paper-progress class="bottom fit" value="30"></paper-progress> -->
+        </core-toolbar>
+
+        <div class="content">
+          <h1 id="message"></h1>
+          <canvas id="render-canvas" width="500" height="500"></canvas>
+        </div>
+      </core-header-panel>
+    </core-drawer-panel>
 
     $SCRIPTS$
 
