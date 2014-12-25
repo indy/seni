@@ -13,10 +13,12 @@ module.exports = function(gulp, plugins, config) {
         var moduleNameWithoutPath = path.basename(moduleName);
         var scripts = util.filterByFile(config.scriptsPerFolder, fileName).map(function(script) {
           var scriptTag;
+          var mimeType = script.mimeType || 'text/javascript';
+          
           if (script.src) {
-            scriptTag = '<script src="'+script.src+'" type="'+script.mimeType+'"></script>';
+            scriptTag = '<script src="'+script.src+'" type="'+mimeType+'"></script>';
           } else {
-            scriptTag = '<script type="'+script.mimeType+'">'+script.inline+'</script>';
+            scriptTag = '<script type="'+mimeType+'">'+script.inline+'</script>';
           }
           return scriptTag
             .replace('$MODULENAME_WITHOUT_PATH$', moduleNameWithoutPath)

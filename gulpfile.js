@@ -26,18 +26,14 @@ var _COMPILER_CONFIG_JS_DEFAULT = {
   modules: 'instantiate'
 };
 
-var _HTLM_DEFAULT_SCRIPTS_JS = [
-  {src: '/js/deps/traceur-runtime.js', mimeType: 'text/javascript'},
-  {src: '/js/rtts_assert/rtts_assert.js', mimeType: 'text/javascript'},
-  {src: '/js/deps/es6-module-loader-sans-promises.src.js', mimeType: 'text/javascript'},
-  {src: '/js/deps/system.src.js', mimeType: 'text/javascript'},
-  {src: '/js/deps/extension-register.js', mimeType: 'text/javascript'},
-  {src: '/js/deps/runtime_paths.js', mimeType: 'text/javascript'},
-  {src: '/js/deps/gl-matrix.js', mimeType: 'text/javascript'},
-  {
-    inline: 'System.import(\'$MODULENAME$\').then(function(m) { m.main(); }, console.log.bind(console))',
-    mimeType: 'text/javascript'
-  }
+var _HTML_DEFAULT_SCRIPTS_JS = [
+  {src: '/js/deps/traceur-runtime.js'},
+  {src: '/js/rtts_assert/rtts_assert.js'},
+  {src: '/js/deps/es6-module-loader-sans-promises.src.js'},
+  {src: '/js/deps/system.src.js'},
+  {src: '/js/deps/extension-register.js'},
+  {src: '/js/deps/runtime_paths.js'},
+  {src: '/js/deps/gl-matrix.js'}
 ];
 
 
@@ -83,12 +79,10 @@ var CONFIG = {
     src: 'app/css/*.css'
   },
   html: {
-    src: {
-      js: ['app/*/src/**/*.html', 'app/*.html']
-    },
+    src: ['app/*.html'],
     scriptsPerFolder: {
       js: {
-        default: _HTLM_DEFAULT_SCRIPTS_JS
+        default: _HTML_DEFAULT_SCRIPTS_JS
       }
     }
   }
@@ -153,14 +147,14 @@ gulp.task('build/transpile.js.prod', transpile(gulp, gulpPlugins, {
 // html
 
 gulp.task('build/html.js.dev', html(gulp, gulpPlugins, {
-  src: CONFIG.html.src.js,
+  src: CONFIG.html.src,
   dest: CONFIG.dest.dev,
   srcFolderMapping: CONFIG.srcFolderMapping,
   scriptsPerFolder: CONFIG.html.scriptsPerFolder.js
 }));
 
 gulp.task('build/html.js.prod', html(gulp, gulpPlugins, {
-  src: CONFIG.html.src.js,
+  src: CONFIG.html.src,
   dest: CONFIG.dest.prod,
   srcFolderMapping: CONFIG.srcFolderMapping,
   scriptsPerFolder: CONFIG.html.scriptsPerFolder.js
