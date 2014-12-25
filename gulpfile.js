@@ -232,15 +232,11 @@ gulp.task('cleanbuild', function() {
 
 
 gulp.task('watch', function() {
-  var jsWatcher = gulp.watch('app/**/*.js', ['build/transpile.js.dev']);
-  var cssWatcher = gulp.watch('app/**/*.css', ['build/css.js.dev']);
-  var htmlWatcher = gulp.watch('app/**/*.html', ['build/html.js.dev']);
-
   var changeFn = function(event) {
     console.log('File ' + event.path + ' was ' + event.type);
   };
-  
-  jsWatcher.on('change', changeFn);
-  cssWatcher.on('change', changeFn);
-  htmlWatcher.on('change', changeFn);
+
+  gulp.watch('app/**/*.js', ['build/transpile.js.dev']).on('change', changeFn);
+  gulp.watch('app/**/*.css', ['build/css.js.dev']).on('change', changeFn);
+  gulp.watch('app/**/*.html', ['build/html.js.dev']).on('change', changeFn);
 });
