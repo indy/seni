@@ -34,9 +34,9 @@ function consumeItem(tokens, alterable) {
     } else if(tokenType === TokenType.NAME) {
         let val = token.getValue();
         if(val === "true") {
-            return new Node(NodeType.BOOLEAN, true, alterable)
+            return new Node(NodeType.BOOLEAN, '#t', alterable)
         } else if (val === "false") {
-            return new Node(NodeType.BOOLEAN, false, alterable)
+            return new Node(NodeType.BOOLEAN, '#f', alterable)
         } else {
             return new Node(NodeType.NAME, token.getValue(), alterable)
         }

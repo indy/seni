@@ -59,13 +59,13 @@ describe('parse', () => {
     let res = parse(ts);
     expect(res.length).toEqual(1);
     expect(res[0].getType()).toEqual(NodeType.BOOLEAN);
-    expect(res[0].getValue()).toEqual(true);
+    expect(res[0].getValue()).toEqual('#t');
 
     ts = [new Token(TokenType.NAME, "false")];
     res = parse(ts);
     expect(res.length).toEqual(1);
     expect(res[0].getType()).toEqual(NodeType.BOOLEAN);
-    expect(res[0].getValue()).toEqual(false);
+    expect(res[0].getValue()).toEqual('#f');
   });
 
   it('should parse a list', () => {
