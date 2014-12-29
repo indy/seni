@@ -92,7 +92,7 @@ function addBindings(env, exprs) {
 }
 
 export var specialForms = {
-  'if': function(env, expr) {
+  'if': (env, expr) => {
     let conditional = evaluate(env, expr.getChild(1));
     // todo: only a value of #t is truthy, change this so that
     // any non-zero, non-falsy value is truthy
@@ -104,10 +104,10 @@ export var specialForms = {
       }
     }
   },
-  'quote': function(env, expr) {
+  'quote': (env, expr) => {
     return expr.getChild(1);       
   },
-  'define': function(env, expr) {
+  'define': (env, expr) => {
     // (define foo 12)
     let name = expr.getChild(1);
     if(name.getType() !== NodeType.NAME) {
@@ -116,23 +116,23 @@ export var specialForms = {
     let val = expr.getChild(2);
     env.addBinding(name.getValue(),evaluate(env, val));
   },
-  'set!': function(env, expr) {
+  'set!': (env, expr) => {
     // (set! foo 42)
     let name = expr.getChild(1);
     let val = expr.getChild(2);
     env.mutate(name.getValue(), evaluate(env, val));
   },
-  'begin': function(env, expr) {
+  'begin': (env, expr) => {
     // (begin (f1 1) (f2 3) (f3 5))
     let children = expr.getChildren();
     return children.slice(1).reduce((a, b) => evaluate(env, b), null);
   },
-  'let': function(env, expr) {
+  'let': (env, expr) => {
     // (let ((a 12) (b 24)) (+ a b foo))
     return evaluate(addBindings(env.newScope(), expr.getChild(1)),
                     expr.getChild(2));
   },
-  'lambda': function(env, expr) {
+  'lambda': (env, expr) => {
     // (lambda (x y z) (+ x y z))
     return function(args) {
       let newEnv = env.newScope();
@@ -146,33 +146,27 @@ export var specialForms = {
 }
 
 export var requiredFunctions = {
-  '+': function(args) {
-    let res = args.reduce((a, b) => a + b, 0);
-    return res;
+  '+': (args) => {
+    return args.reduce((a, b) => a + b, 0);
   },
-  '*': function(args) {
-    let res = args.reduce((a, b) => a * b, 1);
-    return res;
+  '*': (args) => {
+    return args.reduce((a, b) => a * b, 1);
   },
-  '-': function(args) {
+  '-': (args) => {
     if(args.length === 1) {
       return -args[0];
     }
-    let first = args[0];
-    let res = args.slice(1).reduce((a, b) => a - b, first);
-    return res;
+    return args.slice(1).reduce((a, b) => a - b, args[0]);
   },
-  '/': function(args) {
-    let first = args[0];
-    let res = args.slice(1).reduce((a, b) => a / b, first);
-    return res;
+  '/': (args) => {
+    return args.slice(1).reduce((a, b) => a / b, args[0]);
   },
-  '=': function(args) {
+  '=': (args) => {
     let first = args[0];
     let res = args.slice(1).every(a => a === first);
     return res ? '#t' : '#f';
   },
-  '<': function(args) {
+  '<': (args) => {
     let prev = args[0];
     for(let i = 1;i<args.length;i++) {
       let current = args[i];
@@ -183,7 +177,7 @@ export var requiredFunctions = {
     }
     return '#t';
   },
-  '>': function(args) {
+  '>': (args) => {
     let prev = args[0];
     for(let i = 1;i<args.length;i++) {
       let current = args[i];
