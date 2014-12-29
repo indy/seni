@@ -1,52 +1,21 @@
-import {
-  Node,
-  NodeType
-} from './node';
-
 export function evaluate(env, expr) {
-/*
+
   // todo: may need something like:
   if (typeof expr === 'number') {
     return expr;
   }
   if (typeof expr === 'string') {
+    if(expr === '#t' || expr === '#f') {
+      return expr;
+    }
     return env.lookup(expr);
   }
-*/
-  
-  switch(expr.getType()) {
-  case NodeType.INT:
-    return evalMutableNode(env, expr);
-    break;
-  case NodeType.FLOAT:
-    return evalMutableNode(env, expr);
-    break;
-  case NodeType.BOOLEAN:
-    return evalMutableNode(env, expr);
-    break;
-  case NodeType.STRING:
-    return evalMutableNode(env, expr);
-    break;
-  case NodeType.COLOUR:
-    return expr;
-    break;
-  case NodeType.NULL:
-    return expr;
-    break;
-  case NodeType.NAME:
-    let nodeName = evalMutableNode(env, expr);
-    return env.lookup(nodeName);
-    break;
-  case NodeType.LIST:
-    return funApplication(env, expr);
-    break;
-  }
-  return null;
+  return funApplication(env, expr);
 }
 
 function funApplication(env, listExpr) {
   if(isSpecialForm(listExpr)) {
-    let specialFn = evaluate(env, listExpr.getChild(0));
+    let specialFn = evaluate(env, listExpr[0]);
     return specialFn(env, listExpr);
   }
 
@@ -54,11 +23,8 @@ function funApplication(env, listExpr) {
 }
 
 function isSpecialForm(listExpr) {
-  let node = listExpr.getChild(0);
-  if(node.getType === NodeType.LIST) {
-    return false;
-  }
-  if(specialForms[node.getValue()] !== undefined) {
+  let node = listExpr[0];
+  if(specialForms[node] !== undefined) {
     return true;
   }
   return false;
@@ -66,81 +32,61 @@ function isSpecialForm(listExpr) {
 
 function generalApplication(env, listExpr) {
 
-  let children = listExpr.getChildren();
-
-  let fun = evaluate(env, children[0]);
-  let args = children.slice(1).map(n => evaluate(env, n));
+  let fun = evaluate(env, listExpr[0]);
+  let args = listExpr.slice(1).map(n => evaluate(env, n));
 
   return fun(args);
 }
 
-function evalMutableNode(env, expr) {
-  let node = expr;
-  if(expr.isAlterable()) {
-    // todo: assuming that the env.lookup will return a node?
-    // might just be better to store the actual value
-    node = env.lookup(expr.getGenSym());
-  }
-  return node.getValue();
-}
-
 function addBindings(env, exprs) {
-  let children = exprs.getChildren();
-  return children.reduce((a, b) => a.addBinding(b.getChild(0).getValue(),
-                                                evaluate(a, b.getChild(1))),
-                         env);
+  return exprs.reduce((a, b) => a.addBinding(b[0], evaluate(a, b[1])),
+                      env);
 }
 
 export var specialForms = {
   'if': (env, expr) => {
-    let conditional = evaluate(env, expr.getChild(1));
+    let conditional = evaluate(env, expr[1]);
     // todo: only a value of #t is truthy, change this so that
     // any non-zero, non-falsy value is truthy
     if(conditional === '#t') {
-      return evaluate(env, expr.getChild(2));
+      return evaluate(env, expr[2]);
     } else {
-      if(expr.getChildren().length == 4) {
-        return evaluate(env, expr.getChild(3));
+      if(expr.length == 4) {
+        return evaluate(env, expr[3]);
       }
     }
   },
   'quote': (env, expr) => {
-    return expr.getChild(1);       
+    return expr[1];       
   },
   'define': (env, expr) => {
     // (define foo 12)
-    let name = expr.getChild(1);
-    if(name.getType() !== NodeType.NAME) {
-      // something weird has happened
-    }
-    let val = expr.getChild(2);
-    env.addBinding(name.getValue(),evaluate(env, val));
+    let name = expr[1];
+    let val = expr[2];
+    env.addBinding(name, evaluate(env, val));
   },
   'set!': (env, expr) => {
     // (set! foo 42)
-    let name = expr.getChild(1);
-    let val = expr.getChild(2);
-    env.mutate(name.getValue(), evaluate(env, val));
+    let name = expr[1];
+    let val = expr[2];
+    env.mutate(name, evaluate(env, val));
   },
   'begin': (env, expr) => {
     // (begin (f1 1) (f2 3) (f3 5))
-    let children = expr.getChildren();
-    return children.slice(1).reduce((a, b) => evaluate(env, b), null);
+    return expr.slice(1).reduce((a, b) => evaluate(env, b), null);
   },
   'let': (env, expr) => {
     // (let ((a 12) (b 24)) (+ a b foo))
-    return evaluate(addBindings(env.newScope(), expr.getChild(1)),
-                    expr.getChild(2));
+    return evaluate(addBindings(env.newScope(), expr[1]), expr[2]);
   },
   'lambda': (env, expr) => {
     // (lambda (x y z) (+ x y z))
     return function(args) {
       let newEnv = env.newScope();
 
-      let binds = expr.getChild(1).getChildren();
-      binds.forEach((b, i) => newEnv.addBinding(b.getValue(),
-                                                args[i]));
-      return evaluate(newEnv, expr.getChild(2));
+      let binds = expr[1];
+      binds.forEach((b, i) => newEnv.addBinding(b, args[i]));
+      return evaluate(newEnv, expr[2]);
     };
   }
 }

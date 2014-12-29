@@ -5,10 +5,11 @@ import {
 } from 'lang/interpreter';
 
 import {Env, bind} from 'lang/env';
-import {Node, NodeType} from 'lang/node';
 import {parse} from 'lang/parser';
 import {Token, TokenType} from 'lang/token';
 import {tokenise} from 'lang/lexer';
+
+import {compile} from 'lang/compiler'
 
 export function main() {
   describe('eval', () => {
@@ -16,7 +17,8 @@ export function main() {
     function evalForm(env, form) {
       let ts = tokenise(form);
       let ast = parse(ts);
-      return evaluate(env, ast[0]);
+      let compiled = compile(ast);
+      return evaluate(env, compiled[0]);
     }
 
     var e;
@@ -33,28 +35,21 @@ export function main() {
     });
 
     it('should evaluate simple nodes', () => {
-      let nodeInt = new Node(NodeType.INT, 4, false);
-      let res = evaluate(null, nodeInt);
+      let res = evaluate(null, 4);
       expect(res).toEqual(4);
 
-      let nodeFloat = new Node(NodeType.FLOAT, 12.34, false);
-      res = evaluate(null, nodeFloat);
+      res = evaluate(null, 12.34);
       expect(res).toBeCloseTo(12.34);
 
-      let nodeBoolean = new Node(NodeType.BOOLEAN, true, false);
-      res = evaluate(null, nodeBoolean);
-      expect(res).toEqual(true);
-
-      let nodeString = new Node(NodeType.STRING, "some string", false);
-      res = evaluate(null, nodeString);
+      res = evaluate(e, ["quote", "some string"]);
       expect(res).toEqual("some string");
     });
 
     it('should lookup names in the env', () => {
-      let nodeName = new Node(NodeType.NAME, key, false);
-      let res = evaluate(e, nodeName);
+      let res = evaluate(e, key);
       expect(res).toEqual(val);
     });
+
 
     it('should test required functions', () => {
       let res = evalForm(e, "(* 2 4)");
@@ -118,12 +113,6 @@ export function main() {
       expect(res).toEqual('#t');
     });
 
-    function getAst(env, form) {
-      let ts = tokenise(form);
-      let ast = parse(ts);
-      return ast;
-
-    }
 
     it('should test if', () => {
       let res = evalForm(e, "(if true 2 4)");
@@ -135,12 +124,13 @@ export function main() {
 
     it('should test quote', () => {
       let res = evalForm(e, "(quote something)");
-      expect(res.getType()).toEqual(NodeType.NAME);
-      expect(res.getValue()).toEqual("something");
+      expect(res).toEqual("something");
 
       res = evalForm(e, "(quote (+ 4 2))");
-      expect(res.getType()).toEqual(NodeType.LIST);
+      console.log(res);
+      expect(res).toEqual(["+", 4, 2]);
     });
+    
 
     it('should test define', () => {
       let res = evalForm(e, "(define monkey 42)");
@@ -195,6 +185,5 @@ export function main() {
       res = evalForm(e, "((lambda (x y) (+ x y foo)) 2 3)");
       expect(res).toEqual(10);
     });
-
   });
 }
