@@ -39,7 +39,7 @@ to the preprocessor and run the tests without exiting karma
 ### Dev
 
 1. `gulp watch`: Watches `app` folder for changes to js, html or css files
-2. `gulp serve.js.dev`
+2. `gulp serve`
 3. open http://localhost:8000
 
 ## Debug the transpiler
