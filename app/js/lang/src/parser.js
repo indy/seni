@@ -40,6 +40,8 @@ function consumeItem(tokens, alterable) {
         } else {
             return new Node(NodeType.NAME, token.getValue(), alterable)
         }
+    } else if(tokenType === TokenType.LABEL) {
+        return new Node(NodeType.LABEL, token.getValue(), alterable)
     } else if(tokenType === TokenType.STRING) {
         return new Node(NodeType.STRING, token.getValue(), alterable)
     } else if(tokenType === TokenType.QUOTE_ABBREVIATION) {

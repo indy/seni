@@ -16,6 +16,14 @@ export function main() {
       return compiled[0];
     }
 
+    it('should ', () => {
+      let form = "(go arg1: 45 arg2: 11)";
+      let ts = tokenise(form);
+      let ast = parse(ts);
+      let compiled = compile(ast);
+      expect(1).toEqual(1);
+    });
+       
     it('should test required functions', () => {
 
       expect(simpleCompile("4")).
@@ -44,6 +52,9 @@ export function main() {
 
       expect(simpleCompile("(how \"something\" 4)")).
         toEqual(["how", ["quote", 'something'], 4]);
+      
+      expect(simpleCompile("(go arg1: 45 arg2: 11)")).
+        toEqual(["go", {arg1: 45, arg2: 11}]);
     });
   })
 }

@@ -22,7 +22,19 @@ function funApplication(env, listExpr) {
     return specialFn(env, listExpr);
   }
 
-  return generalApplication(env, listExpr);
+  // base functions that don't require named arguments
+  if(isRequiredFunction(listExpr)) {
+    return basicApplication(env, listExpr);
+  }
+
+  // normal functions that require named arguments
+  let fun = evaluate(env, listExpr[0]);
+  let argObj = listExpr[1];
+  let args = {};
+  for(let k in argObj) {
+    args[k] = evaluate(env, argObj[k]);
+  }
+  return fun(args);
 }
 
 function isSpecialForm(listExpr) {
@@ -33,8 +45,15 @@ function isSpecialForm(listExpr) {
   return false;
 }
 
-function generalApplication(env, listExpr) {
+function isRequiredFunction(listExpr) {
+  let node = listExpr[0];
+  if(requiredFunctions[node] !== undefined) {
+    return true;
+  }
+  return false;
+}
 
+function basicApplication(env, listExpr) {
   let fun = evaluate(env, listExpr[0]);
   let args = listExpr.slice(1).map(n => evaluate(env, n));
   return fun(args);
@@ -82,12 +101,18 @@ export var specialForms = {
     return evaluate(addBindings(env.newScope(), expr[1]), expr[2]);
   },
   'lambda': (env, expr) => {
-    // (lambda (x y z) (+ x y z))
+    // (lambda (x: 0 y: 0) (+ x y))
     return function(args) {
       let newEnv = env.newScope();
 
-      let binds = expr[1];
-      binds.forEach((b, i) => newEnv.addBinding(b, args[i]));
+      let defaultArgValues = expr[1];
+      for(let k in defaultArgValues) {
+        if(args[k] !== undefined) {
+          newEnv.addBinding(k, args[k]);
+        } else {
+          newEnv.addBinding(k, defaultArgValues[k]);
+        }
+      }
       return evaluate(newEnv, expr[2]);
     };
   }

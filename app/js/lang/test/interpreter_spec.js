@@ -134,7 +134,6 @@ export function main() {
       expect(res).toEqual("something");
 
       res = evalForm(e, "(quote (+ 4 2))");
-      console.log(res);
       expect(res).toEqual(["+", 4, 2]);
     });
     
@@ -186,10 +185,16 @@ export function main() {
 
     it('should test lambda', () => {
       // (lambda (x y z) (+ x y z))
-      let res = evalForm(e, "((lambda (x y z) (+ x y z)) 2 3 4)");
-      expect(res).toEqual(9);
+      let res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y)) x: 2 y: 3)");
+      expect(res).toEqual(5);
 
-      res = evalForm(e, "((lambda (x y) (+ x y foo)) 2 3)");
+      res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y)) x: (+ 3 2) y: 3)");
+      expect(res).toEqual(8);
+
+      res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y)) y: 3)");
+      expect(res).toEqual(3);
+
+      res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y foo)) x: 2 y: 3)");
       expect(res).toEqual(10);
     });
   });
