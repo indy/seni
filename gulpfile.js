@@ -240,3 +240,5 @@ gulp.task('watch', function() {
   gulp.watch('app/**/*.css', ['build/css.js.dev']).on('change', changeFn);
   gulp.watch('app/**/*.html', ['build/html.js.dev']).on('change', changeFn);
 });
+
+gulp.task('serve', ['serve.js.dev']);
