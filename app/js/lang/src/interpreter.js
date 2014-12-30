@@ -1,3 +1,6 @@
+const TRUE_STRING = '#t';
+const FALSE_STRING = '#f';
+
 export function evaluate(env, expr) {
 
   // todo: may need something like:
@@ -5,7 +8,7 @@ export function evaluate(env, expr) {
     return expr;
   }
   if (typeof expr === 'string') {
-    if(expr === '#t' || expr === '#f') {
+    if(expr === TRUE_STRING || expr === FALSE_STRING) {
       return expr;
     }
     return env.lookup(expr);
@@ -34,7 +37,6 @@ function generalApplication(env, listExpr) {
 
   let fun = evaluate(env, listExpr[0]);
   let args = listExpr.slice(1).map(n => evaluate(env, n));
-
   return fun(args);
 }
 
@@ -48,7 +50,7 @@ export var specialForms = {
     let conditional = evaluate(env, expr[1]);
     // todo: only a value of #t is truthy, change this so that
     // any non-zero, non-falsy value is truthy
-    if(conditional === '#t') {
+    if(conditional === TRUE_STRING) {
       return evaluate(env, expr[2]);
     } else {
       if(expr.length == 4) {
@@ -92,46 +94,40 @@ export var specialForms = {
 }
 
 export var requiredFunctions = {
-  '+': (args) => {
-    return args.reduce((a, b) => a + b, 0);
-  },
-  '*': (args) => {
-    return args.reduce((a, b) => a * b, 1);
-  },
-  '-': (args) => {
-    if(args.length === 1) {
-      return -args[0];
-    }
-    return args.slice(1).reduce((a, b) => a - b, args[0]);
-  },
-  '/': (args) => {
-    return args.slice(1).reduce((a, b) => a / b, args[0]);
-  },
+  '+': (args) => args.reduce((a, b) => a + b, 0),
+
+  '*': (args) => args.reduce((a, b) => a * b, 1),
+  
+  '-': (args) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
+
+  '/': (args) => args.reduce((a, b) => a / b),
+  
   '=': (args) => {
     let first = args[0];
     let res = args.slice(1).every(a => a === first);
-    return res ? '#t' : '#f';
+    return res ? TRUE_STRING : FALSE_STRING;
   },
   '<': (args) => {
     let prev = args[0];
-    for(let i = 1;i<args.length;i++) {
+    for(let i = 1; i < args.length; i++) {
       let current = args[i];
       if(!(current < prev)) {
-        return '#f'
+        return FALSE_STRING
       }
       prev = current;
     }
-    return '#t';
+    return TRUE_STRING;
   },
   '>': (args) => {
     let prev = args[0];
-    for(let i = 1;i<args.length;i++) {
+    for(let i = 1; i < args.length; i++) {
       let current = args[i];
       if(!(current > prev)) {
-        return '#f';
+        return FALSE_STRING;
       }
       prev = current;
     }
-    return '#t';
-  }
+    return TRUE_STRING;
+  },
+  'list' : (args) => args
 }

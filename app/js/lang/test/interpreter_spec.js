@@ -51,7 +51,7 @@ export function main() {
     });
 
 
-    it('should test required functions', () => {
+    it('should test required mathematical functions', () => {
       let res = evalForm(e, "(* 2 4)");
       expect(res).toBeCloseTo(8);
 
@@ -78,8 +78,11 @@ export function main() {
 
       res = evalForm(e, "(/ 90 10 3)");
       expect(res).toBeCloseTo(3);
+    });
 
-      res = evalForm(e, "(= 90 90)");
+
+    it('should test required comparison functions', () => {
+      let res = evalForm(e, "(= 90 90)");
       expect(res).toEqual('#t');
 
       res = evalForm(e, "(= 90 90 90)");
@@ -113,7 +116,11 @@ export function main() {
       expect(res).toEqual('#t');
     });
 
-
+    it('should test list', () => {
+      let res = evalForm(e, "(list 90 90)");
+      expect(res).toEqual([90, 90]);
+    });
+    
     it('should test if', () => {
       let res = evalForm(e, "(if true 2 4)");
       expect(res).toEqual(2);
