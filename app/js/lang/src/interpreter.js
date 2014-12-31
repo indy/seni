@@ -17,18 +17,22 @@ export function evaluate(env, expr) {
 }
 
 function funApplication(env, listExpr) {
+
+  let fun = evaluate(env, listExpr[0]);
+
+  // special forms that manipulate the listExpr
   if(isSpecialForm(listExpr)) {
     let specialFn = evaluate(env, listExpr[0]);
-    return specialFn(env, listExpr);
+    return fun(env, listExpr);
   }
 
-  // base functions that don't require named arguments
-  if(isRequiredFunction(listExpr)) {
-    return basicApplication(env, listExpr);
+  // classic functions that don't require named arguments
+  if(isClassicFunction(listExpr)) {
+    let args = listExpr.slice(1).map(n => evaluate(env, n));
+    return fun(args);
   }
 
   // normal functions that require named arguments
-  let fun = evaluate(env, listExpr[0]);
   let args = {};
   if(listExpr.length > 1) {
     let argObj = listExpr[1];
@@ -47,18 +51,12 @@ function isSpecialForm(listExpr) {
   return false;
 }
 
-function isRequiredFunction(listExpr) {
+function isClassicFunction(listExpr) {
   let node = listExpr[0];
-  if(requiredFunctions[node] !== undefined) {
+  if(classicFunctions[node] !== undefined) {
     return true;
   }
   return false;
-}
-
-function basicApplication(env, listExpr) {
-  let fun = evaluate(env, listExpr[0]);
-  let args = listExpr.slice(1).map(n => evaluate(env, n));
-  return fun(args);
 }
 
 function addBindings(env, exprs) {
@@ -117,10 +115,10 @@ export var specialForms = {
       }
       return evaluate(newEnv, expr[2]);
     };
-  }
+  },
 }
 
-export var requiredFunctions = {
+export var classicFunctions = {
   '+': (args) => args.reduce((a, b) => a + b, 0),
 
   '*': (args) => args.reduce((a, b) => a * b, 1),

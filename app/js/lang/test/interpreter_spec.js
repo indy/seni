@@ -1,6 +1,6 @@
 import {
   evaluate,
-  requiredFunctions,
+  classicFunctions,
   specialForms
 } from 'lang/interpreter';
 
@@ -26,9 +26,7 @@ export function main() {
     var val;
 
     beforeEach(() => {
-      e = bind(new Env(), [specialForms,
-                           requiredFunctions]);
-
+      e = bind(new Env(), [specialForms, classicFunctions]);
       key = "foo";
       val = 5;
       e.addBinding(key, val);
