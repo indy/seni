@@ -63,8 +63,8 @@ export function renderBezier(glContainer,
                                         coords[2][1],
                                         coords[3][1], i));
 
-  let c = [1.0, 0.0, 0.0, 1.0]; // colour
-
+  let c = [1.0, 0.0, 0.0, 0.5]; // colour
+  
   for(let i=0; i<tVals.length - 1; i++) {  
     let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
         i0 = xs[i],

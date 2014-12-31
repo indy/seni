@@ -1,36 +1,3 @@
-npm install
-gulp build
-gulp test
-
-
-gulp serve.js.dev
-visit: http://localhost:8000/seni/lib/index.html
-
-
---------------------------------------------------
-
-
-| clean.js           | 
-| file2modulename.js | removes modules, tools, src, test, lib from module names
-| jsserve.js         |
-| transpile.js       |
-| deps.js            |
-| html.js            |
-| runtime_paths.js   |System.paths: core, facase, rtts_assert, test_lib, examples
-| util.js            |
-
-test-main.js : System.paths import packages like `core/foo`, instead of `core/src/foo`.
-
---------------------------------------------------
-
-Q. runtime_paths.js assumes that a lib folders will be created for each module (e.g. 'core/*' -> '/core/lib/*.js') how is this created?
-A. 
-
-
-
-
-
-
 graphics in webgl
 quick feedback
 ecmascript 6
@@ -50,7 +17,6 @@ npm install --save-dev gulp-webserver
 --------------------------------------------------------------------------------
 
 * notes
-
 
 seni-lang will have labels as well as names, every argument to a function will have to be preceeded with it's label. e.g:
 

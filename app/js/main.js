@@ -16,7 +16,7 @@ function setupUI(renderer) {
   let textArea = d.getElementById("textarea");
   //let autogrow = d.getElementById("autogrow-textarea");  
 
-  textArea.value = "(bezier tessellation: 15 lineWidth: 20 coords: (list (list 440 400) (list 533 700) (list 766 200) (list 900 500)) tStart: 0 tEnd: 1)";
+  textArea.value = "(loop (h from: 0 to: 500 step: 90)(loop (w from: 0 to: 400 step: 90)(bezier tessellation: 35 lineWidth: 20 coords: (list (list (- 440 w) (+ h 400))(list (- 533 w) (+ h 700))(list (- 766 w) (+ h 200))(list (- 900 w) (+ h 500))) tStart: 0 tEnd: 1)))";
 
   //autogrow.update();
 

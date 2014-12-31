@@ -93,7 +93,6 @@ export class Buffer {
     }
 }
 
-
 function initGLBuffers(gl) {
 
     var glVertexBuffer = gl.createBuffer();
