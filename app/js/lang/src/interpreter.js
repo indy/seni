@@ -29,10 +29,12 @@ function funApplication(env, listExpr) {
 
   // normal functions that require named arguments
   let fun = evaluate(env, listExpr[0]);
-  let argObj = listExpr[1];
   let args = {};
-  for(let k in argObj) {
-    args[k] = evaluate(env, argObj[k]);
+  if(listExpr.length > 1) {
+    let argObj = listExpr[1];
+    for(let k in argObj) {
+      args[k] = evaluate(env, argObj[k]);
+    }
   }
   return fun(args);
 }

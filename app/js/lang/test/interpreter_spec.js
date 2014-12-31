@@ -196,6 +196,9 @@ export function main() {
 
       res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y foo)) x: 2 y: 3)");
       expect(res).toEqual(10);
+      
+      res = evalForm(e, "((lambda (x: 3 y: 4) (+ x y)))");
+      expect(res).toEqual(7);
     });
   });
 }

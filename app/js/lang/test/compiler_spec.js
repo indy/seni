@@ -55,6 +55,9 @@ export function main() {
       
       expect(simpleCompile("(go arg1: 45 arg2: 11)")).
         toEqual(["go", {arg1: 45, arg2: 11}]);
+
+      expect(simpleCompile("(go)")).
+        toEqual(["go"]);
     });
   })
 }

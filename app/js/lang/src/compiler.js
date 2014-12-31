@@ -39,7 +39,8 @@ function _compileList(node) {
 }
 
 function isFunctionInvocation(children) {
-  return children[1].getType() === NodeType.LABEL;
+  // note: this will return false for functions where 0 arguments are given
+  return children.length > 1 && children[1].getType() === NodeType.LABEL;
 }
 
 function isFunctionParameterDeclaration(children) {
