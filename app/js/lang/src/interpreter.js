@@ -116,6 +116,24 @@ export var specialForms = {
       return evaluate(newEnv, expr[2]);
     };
   },
+  'loop': (env, expr) => {
+    // (loop (a from: 1 to: 30 step: 2)
+    //   (+ a a))
+    let [varName, varParameters] = expr[1];
+    let newEnv = env.newScope();
+    return loopingFn(newEnv, expr[2], varName, varParameters);
+  }
+}
+
+function loopingFn(env, expr, varName, {from = 0,
+                                        to = 10,
+                                        step = 1}) {
+  var res;
+  for(let i=from;i<to;i+=step) {
+    env.addBinding(varName, i);
+    res = evaluate(env, expr);
+  }
+  return res;
 }
 
 export var classicFunctions = {

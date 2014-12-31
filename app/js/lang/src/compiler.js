@@ -29,26 +29,27 @@ function _compile(node) {
 function _compileList(node) {
   let children = node.getChildren();
 
-  if(isFunctionInvocation(children)) {
-    return compileFunctionInvocation(children);
-  } else if(isFunctionParameterDeclaration(children)) {
-    return compileFunctionParameterDeclaration(children);
+  if(usingNamedParameters(children)) {
+    return compileFormUsingNamedParameters(children);
+  } else if(allNamedParameters(children)) {
+    return compileAllNamedParameters(children);
   } else {
     return children.map((child) => _compile(child));
   }
 }
 
-function isFunctionInvocation(children) {
+function usingNamedParameters(children) {
   // note: this will return false for functions where 0 arguments are given
   return children.length > 1 && children[1].getType() === NodeType.LABEL;
 }
 
-function isFunctionParameterDeclaration(children) {
+function allNamedParameters(children) {
+  // a basic test, but if it passes this it should be all <label,value> pairs 
   return children[0].getType() === NodeType.LABEL;
 }
   
-function compileFunctionInvocation(children) {
-  // can assume this is of the form (foo arg1: 3 arg2: 5)
+function compileFormUsingNamedParameters(children) {
+  // this is a form that has the pattern (foo arg1: 3 arg2: 5)
   // combine the labels + arguments into an object
 
   if(!(children.length & 1)) {
@@ -68,7 +69,7 @@ function compileFunctionInvocation(children) {
   return [_compile(children[0]), args];
 }
 
-function compileFunctionParameterDeclaration(children) {
+function compileAllNamedParameters(children) {
   // can assume this is of the form (arg1: 3 arg2: 5)
   // combine the labels + arguments into an object
 

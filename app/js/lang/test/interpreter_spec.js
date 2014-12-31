@@ -198,5 +198,20 @@ export function main() {
       res = evalForm(e, "((lambda (x: 3 y: 4) (+ x y)))");
       expect(res).toEqual(7);
     });
+
+    it('should test loop', () => {
+      e.addBinding('bar', 0);
+      let res = evalForm(e, "(loop (a from: 0 to: 4 step: 1) (set! bar (+ bar a)))");
+      expect(e.lookup('bar')).toEqual(6);
+
+      e.addBinding('bar', 0);
+      res = evalForm(e, "(loop (a to: 5) (set! bar (+ bar a)))");
+      expect(e.lookup('bar')).toEqual(10);
+
+      e.addBinding('bar', 0);
+      res = evalForm(e, "(loop (a to: 5 step: 2) (set! bar (+ bar a)))");
+      expect(e.lookup('bar')).toEqual(6);
+    });
+    
   });
 }
