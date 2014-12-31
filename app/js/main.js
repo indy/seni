@@ -14,13 +14,11 @@ function setupUI(renderer) {
   let d = document;
 
   let textArea = d.getElementById("textarea");
-  let autogrow = d.getElementById("autogrow-textarea");  
+  //let autogrow = d.getElementById("autogrow-textarea");  
 
-  textArea.value = "(bezier tesselation: 15 lineWidth: 20 coords: (list (list 440 400) (list 533 700) (list 766 200) (list 900 500)) tStart: 0 tEnd: 1)";
+  textArea.value = "(bezier tessellation: 15 lineWidth: 20 coords: (list (list 440 400) (list 533 700) (list 766 200) (list 900 500)) tStart: 0 tEnd: 1)";
 
-
-  //   textArea.value = "(bezier 15 20 (list (list 440 400) (list 533 700) (list 766 200) (list 900 500)) 0 1)";
-  autogrow.update();
+  //autogrow.update();
 
   d.getElementById("my-button").addEventListener("click", (e) => {
     renderScript(renderer, textArea.value);
