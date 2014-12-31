@@ -56,6 +56,8 @@ export function main() {
     it('should skip whitespace', () => {
       expect(skipWhitespace('hello')).toEqual("hello");
       expect(skipWhitespace('     hello')).toEqual("hello");
+      expect(skipWhitespace(',     hello')).toEqual("hello");
+      expect(skipWhitespace('     ,hello')).toEqual("hello");
       expect(skipWhitespace('\t\thello')).toEqual("hello");
     });
 

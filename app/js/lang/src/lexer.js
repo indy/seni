@@ -257,7 +257,7 @@ function isLabel(s) {
   return i < s.length && s[i] === ':';
 }
 
-var sWhitespaceSet = characterSet(" \t\n");
+var sWhitespaceSet = characterSet(" \t\n,");
 var sDigitSet = characterSet("0123456789");
 var sAlphaSet = characterSet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=");
 var sSymbolSet = characterSet("-!@#$%^&*<>?");
