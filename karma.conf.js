@@ -21,6 +21,8 @@ module.exports = function(config) {
       'node_modules/systemjs/dist/system.src.js',
       'node_modules/systemjs/lib/extension-register.js',
 
+      "node_modules/gl-matrix/dist/gl-matrix.js",
+      
       'tools/build/file2modulename.js',
       'test-main.js'
     ],

@@ -5,12 +5,10 @@ import { renderBezier, getBezierFn } from './Bezier';
 export class Renderer {
   constructor(canvasElement) {
     this.glContainer = new GLContainer(canvasElement);
-    this.buffer = new Buffer(this.glContainer);
+    this.matrixStack = new MatrixStack();
+    this.buffer = new Buffer(this.glContainer, this.matrixStack);
 
-    var mvMatrix = mat4.create();
-    mat4.identity(mvMatrix);
-    this.mvMatrix = mvMatrix;
-
+    this.mvMatrix = mat4.create();
     this.pMatrix = mat4.create();
     mat4.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
 

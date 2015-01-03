@@ -17,7 +17,6 @@ export class Buffer {
     this.glColourBuffer = gl.createBuffer();
   }
 
-  
   /**
    * make sure the buffer has enough space to add n vertices 
    * which will be rendered as a triangle strip
