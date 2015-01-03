@@ -3,6 +3,10 @@
 export class MatrixStack {
 
   constructor() {
+    this.reset();
+  }
+
+  reset() {
     this.stack = [mat4.create()];
     this.out = vec3.create();   // only pay the cost of construction once
   }

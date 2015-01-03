@@ -16,8 +16,12 @@ export class Renderer {
     initGLState(this.glContainer.gl);
 
 
-    this.matrixStack.translate(-40, -50);
-    this.matrixStack.rotate(0.2);
+//    this.matrixStack.translate(-40, -50);
+//    this.matrixStack.rotate(0.2);
+  }
+
+  getMatrixStack() {
+    return this.matrixStack;
   }
 
   getGLContainer() {
@@ -40,6 +44,7 @@ export class Renderer {
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, this.pMatrix);
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, this.mvMatrix);
 
+    this.matrixStack.reset();
   }
 
   postDrawScene() {
