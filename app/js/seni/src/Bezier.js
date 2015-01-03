@@ -5,43 +5,13 @@ import {
   stepsInclusive
 } from './MathUtil';
 
-export class Bezier {
-  doubler(d) {
-    let answer = d * 2;
-    return answer;
-  }
-
-  foofoo(a, b, ...rest) {
-    return a + b;
-  }
-}
-
-
-function bezierPoint(a, b, c, d, t) {
-  let t1 = 1 - t;
-
-  return (a * t1 * t1 * t1) +
-    (3 * b * t * t1 * t1) +
-    (3 * c * t * t * t1) +
-    (d * t * t * t);
-}
-
-
-function normals(x1, y1, x2, y2) {
-  let dx = x2 - x1;
-  let dy = y2 - y1;
-
-  return [normalize(-dy, dx), normalize(dy, -dx)];
-}
-
-export function getBezierFn(glContainer, buffer) {
+export function getBezierFn(renderer) {
   return function(params) {
-    renderBezier(glContainer, buffer, params);
+    renderBezier(renderer, params);
   }
 }
 
-export function renderBezier(glContainer,
-                             buffer,
+export function renderBezier(renderer,
                              {tessellation = 15,
                               lineWidth = 20,
                               coords = [[440, 400],
@@ -50,6 +20,9 @@ export function renderBezier(glContainer,
                                         [900, 500]],
                               tStart = 0,
                               tEnd = 1}) {
+
+  var glContainer = renderer.getGLContainer();
+  var buffer = renderer.getBuffer();
 
   let halfWidth = lineWidth / 2;
   let tVals = stepsInclusive(tStart, tEnd, tessellation);
@@ -73,11 +46,12 @@ export function renderBezier(glContainer,
     if(i === 0) {
       buffer.prepareToAddTriangleStrip(glContainer, tessellation * 2,
                                        [(xn1 * halfWidth) + i0,
-                                        (yn1 * halfWidth) + i1]);
+                                        (yn1 * halfWidth) + i1,
+                                        0.0]);
     }
 
-    buffer.addVertex([(xn1 * halfWidth) + i0, (yn1 * halfWidth) + i1], c);
-    buffer.addVertex([(xn2 * halfWidth) + i0, (yn2 * halfWidth) + i1], c);
+    buffer.addVertex([(xn1 * halfWidth) + i0, (yn1 * halfWidth) + i1, 0.0], c);
+    buffer.addVertex([(xn2 * halfWidth) + i0, (yn2 * halfWidth) + i1, 0.0], c);
   }
 
   // final 2 vertices for the end point
@@ -86,7 +60,22 @@ export function renderBezier(glContainer,
       i2 = xs[i+1],
       i3 = ys[i+1];
   
-  buffer.addVertex([(xn1 * halfWidth) + i2, (yn1 * halfWidth) + i3], c);
-  buffer.addVertex([(xn2 * halfWidth) + i2, (yn2 * halfWidth) + i3], c);
+  buffer.addVertex([(xn1 * halfWidth) + i2, (yn1 * halfWidth) + i3, 0.0], c);
+  buffer.addVertex([(xn2 * halfWidth) + i2, (yn2 * halfWidth) + i3, 0.0], c);
 }
 
+function bezierPoint(a, b, c, d, t) {
+  let t1 = 1 - t;
+
+  return (a * t1 * t1 * t1) +
+    (3 * b * t * t1 * t1) +
+    (3 * c * t * t * t1) +
+    (d * t * t * t);
+}
+
+function normals(x1, y1, x2, y2) {
+  let dx = x2 - x1;
+  let dy = y2 - y1;
+
+  return [normalize(-dy, dx), normalize(dy, -dx)];
+}

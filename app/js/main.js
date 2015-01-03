@@ -6,7 +6,6 @@ export function main() {
 
   var renderer = new Renderer("render-canvas");
   setupUI(renderer);
-
 }
 
 
@@ -23,6 +22,9 @@ function setupUI(renderer) {
   d.getElementById("my-button").addEventListener("click", (e) => {
     renderScript(renderer, textArea.value);
   });
+
+  // show something on the canvas at startup
+  renderScript(renderer, textArea.value);
 }
 
 function renderScript(renderer, form) {

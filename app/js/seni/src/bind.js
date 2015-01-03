@@ -5,14 +5,11 @@ import { remapFn } from './MathUtil';
 
 export function addBindings(env, renderer) {
 
-  var glContainer = renderer.getGLContainer();
-  var buffer = renderer.getBuffer();
-  var bezier = getBezierFn(glContainer, buffer);
-  
   env.addBinding('remapFn', function(args) {
     return remapFn(args);
   });
 
+  let bezier = getBezierFn(renderer);
   env.addBinding('bezier', function(args) {
     bezier(args);
   });

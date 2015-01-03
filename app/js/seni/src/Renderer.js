@@ -1,5 +1,6 @@
 import { GLContainer } from './GLContainer';
 import { Buffer } from './Buffer';
+import { MatrixStack } from './MatrixStack';
 import { renderBezier, getBezierFn } from './Bezier';
 
 export class Renderer {
@@ -13,6 +14,10 @@ export class Renderer {
     mat4.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
 
     initGLState(this.glContainer.gl);
+
+
+    this.matrixStack.translate(-40, -50);
+    this.matrixStack.rotate(0.2);
   }
 
   getGLContainer() {

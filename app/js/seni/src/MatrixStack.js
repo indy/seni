@@ -4,6 +4,7 @@ export class MatrixStack {
 
   constructor() {
     this.stack = [mat4.create()];
+    this.out = vec3.create();   // only pay the cost of construction once
   }
 
   getHead() {
@@ -33,5 +34,10 @@ export class MatrixStack {
   rotate(a) {
     let m = this.getHead();
     mat4.rotateZ(m, m, a);
+  }
+
+  transformVector(v) {
+    let m = this.getHead();
+    return vec3.transformMat4(this.out, v, m);
   }
 }

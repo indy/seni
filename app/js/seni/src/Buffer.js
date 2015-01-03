@@ -15,6 +15,8 @@ export class Buffer {
     let gl = glContainer.gl;
     this.glVertexBuffer = gl.createBuffer();
     this.glColourBuffer = gl.createBuffer();
+
+    this.matrixStack = matrixStack;
   }
 
   /**
@@ -32,9 +34,12 @@ export class Buffer {
     if(this.bufferLevel !== 0) {
       // add two vertex entries which will form degenerate triangles
       var lastVertexIndex = (this.bufferLevel - 1) * this.vertexItemSize;
-      this.addVertex([this.vertexBuffer[lastVertexIndex + 0],
-                      this.vertexBuffer[lastVertexIndex + 1]],
-                     [0, 0, 0, 0]);
+      // just copy the previous entries
+      this.addVertexWithoutMatrixMultiply(
+        [this.vertexBuffer[lastVertexIndex + 0],
+         this.vertexBuffer[lastVertexIndex + 1],
+         this.vertexBuffer[lastVertexIndex + 2]],
+        [0, 0, 0, 0]);
 
       this.addVertex(p0, [0, 0, 0, 0]);
 
@@ -50,10 +55,29 @@ export class Buffer {
    * @param c
    */
   addVertex(p, c) {
+
+    let res = this.matrixStack.transformVector(p);
+    
+    var bl = this.bufferLevel * this.vertexItemSize;
+    this.vertexBuffer[bl + 0] = res[0];
+    this.vertexBuffer[bl + 1] = res[1];
+    this.vertexBuffer[bl + 2] = res[2];
+
+    bl = this.bufferLevel * this.colourItemSize;
+    this.colourBuffer[bl + 0] = c[0];
+    this.colourBuffer[bl + 1] = c[1];
+    this.colourBuffer[bl + 2] = c[2];
+    this.colourBuffer[bl + 3] = c[3];
+
+    this.bufferLevel += 1;
+  }
+
+  
+  addVertexWithoutMatrixMultiply(p, c) {
     var bl = this.bufferLevel * this.vertexItemSize;
     this.vertexBuffer[bl + 0] = p[0];
     this.vertexBuffer[bl + 1] = p[1];
-    this.vertexBuffer[bl + 2] = 0;
+    this.vertexBuffer[bl + 2] = p[2];
 
     bl = this.bufferLevel * this.colourItemSize;
     this.colourBuffer[bl + 0] = c[0];
