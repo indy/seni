@@ -13,18 +13,20 @@ function setupUI(renderer) {
   let d = document;
 
   let textArea = d.getElementById("textarea");
-  //let autogrow = d.getElementById("autogrow-textarea");  
 
-  textArea.value = "(loop (h from: 0 to: 500 step: 90)(loop (w from: 0 to: 400 step: 90)(bezier tessellation: 35 lineWidth: 20 coords: (list (list (- 440 w) (+ h 400))(list (- 533 w) (+ h 700))(list (- 766 w) (+ h 200))(list (- 900 w) (+ h 500))) tStart: 0 tEnd: 1)))";
+  textArea.value = initialCode();
 
-  //autogrow.update();
+  var editor = CodeMirror.fromTextArea(textArea, {
+    lineNumbers: true,
+    mode: "scheme"
+  });
 
   d.getElementById("my-button").addEventListener("click", (e) => {
-    renderScript(renderer, textArea.value);
+    renderScript(renderer, editor.getValue());
   });
 
   // show something on the canvas at startup
-  renderScript(renderer, textArea.value);
+  renderScript(renderer, editor.getValue());
 }
 
 function renderScript(renderer, form) {
@@ -36,19 +38,16 @@ function renderScript(renderer, form) {
   renderer.postDrawScene();
 }
 
-
-/*
+function initialCode() {
+    return `
 (loop (h from: 0 to: 500 step: 90)
   (loop (w from: 0 to: 400 step: 90)
-    (bezier tessellation: 35
-               lineWidth: 20
-               coords: (list (list (- 440 w) (+ h 400))
-                                 (list (- 533 w) (+ h 700))
-                                 (list (- 766 w) (+ h 200))
-                                 (list (- 900 w) (+ h 500)))
-               tStart: 0
-               tEnd: 1)))
-
-
-
-*/
+    (bezier tessellation: 35 
+            lineWidth: 20 
+            coords: (list (list (- 440 w) (+ h 400))
+                          (list (- 533 w) (+ h 700))
+                          (list (- 766 w) (+ h 200))
+                          (list (- 900 w) (+ h 500))) 
+            tStart: 0 
+            tEnd: 1)))`;
+}

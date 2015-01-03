@@ -10,6 +10,11 @@
 
   <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
 
+
+  <link rel="stylesheet" href="bower_components/codemirror/lib/codemirror.css">
+  <script src="bower_components/codemirror/lib/codemirror.js"></script>
+  <script src="bower_components/codemirror/mode/scheme/scheme.js"></script>
+
   <link rel="import" href="elements.html"> 
   <link rel="stylesheet" href="css/stylesheet.css">
   
@@ -37,9 +42,11 @@
 
         <div class="content">
           <h1 id="message"></h1>
-          <canvas id="render-canvas" width="500" height="500"></canvas>
-          <paper-button raised role="button" tabindex="0" class="colored" id="my-button">Eval</paper-button>
-            <textarea id="textarea" rows="10" columns="60"></textarea>
+          <div horizontal layout>
+            <textarea id="textarea" rows="10" columns="40"></textarea>
+            <paper-button raised role="button" tabindex="0" class="colored" id="my-button">Eval</paper-button>
+            <canvas id="render-canvas" width="500" height="500"></canvas>
+          </div>
         </div>
       </core-header-panel>
     </core-drawer-panel>

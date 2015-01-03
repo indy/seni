@@ -26,18 +26,27 @@ export class MatrixStack {
   }
 
   scale(sx, sy) {
+    let r = mat4.create();
+    mat4.scale(r, r, [sx, sy, 1.0]);
+
     let m = this.getHead();
-    mat4.scale(m, m, [sx, sy, 1.0]);
+    mat4.mul(m, m, r);
   }
 
   translate(tx, ty) {
+    let r = mat4.create();
+    mat4.translate(r, r, [tx, ty, 0.0]);
+
     let m = this.getHead();
-    mat4.translate(m, m, [tx, ty, 0.0]);
+    mat4.mul(m, m, r);
   }
 
   rotate(a) {
+    let r = mat4.create();
+    mat4.rotateZ(r, r, a);
+
     let m = this.getHead();
-    mat4.rotateZ(m, m, a);
+    mat4.mul(m, m, r);
   }
 
   transformVector(v) {

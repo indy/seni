@@ -4,19 +4,14 @@
 
 1. `npm install`
 2. `npm install -g gulp karma karma-cli`
-3. `gulp cleanbuild`
-
+3. `bower install`
+4. `gulp symlink.ext`
+5. `gulp build`
 
 ### Folder structure
 
 * `modules/*`: modules that will be loaded in the browser
 * `tools/*`: tools that are needed to build Angular
-
-### File endings
-
-* `*.js`: javascript files that get transpiled to Dart and EcmaScript 5
-* `*.es6`: javascript files that get transpiled only to EcmaScript 5
-* `*.es5`: javascript files that don't get transpiled
 
 ### Build:
 
