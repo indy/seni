@@ -29,7 +29,7 @@ export function main() {
       e = bind(new Env(), [specialForms, classicFunctions]);
       key = "foo";
       val = 5;
-      e.addBinding(key, val);
+      e.add(key, val);
     });
 
     it('should evaluate simple nodes', () => {
@@ -200,15 +200,15 @@ export function main() {
     });
 
     it('should test loop', () => {
-      e.addBinding('bar', 0);
+      e.add('bar', 0);
       let res = evalForm(e, "(loop (a from: 0 to: 4 step: 1) (set! bar (+ bar a)))");
       expect(e.lookup('bar')).toEqual(6);
 
-      e.addBinding('bar', 0);
+      e.add('bar', 0);
       res = evalForm(e, "(loop (a to: 5) (set! bar (+ bar a)))");
       expect(e.lookup('bar')).toEqual(10);
 
-      e.addBinding('bar', 0);
+      e.add('bar', 0);
       res = evalForm(e, "(loop (a to: 5 step: 2) (set! bar (+ bar a)))");
       expect(e.lookup('bar')).toEqual(6);
     });

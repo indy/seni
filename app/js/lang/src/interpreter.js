@@ -60,7 +60,7 @@ function isClassicFunction(listExpr) {
 }
 
 function addBindings(env, exprs) {
-  return exprs.reduce((a, b) => a.addBinding(b[0], evaluate(a, b[1])),
+  return exprs.reduce((a, b) => a.add(b[0], evaluate(a, b[1])),
                       env);
 }
 
@@ -84,7 +84,7 @@ export var specialForms = {
     // (define foo 12)
     let name = expr[1];
     let val = expr[2];
-    env.addBinding(name, evaluate(env, val));
+    env.add(name, evaluate(env, val));
   },
   'set!': (env, expr) => {
     // (set! foo 42)
@@ -108,9 +108,9 @@ export var specialForms = {
       let defaultArgValues = expr[1];
       for(let k in defaultArgValues) {
         if(args[k] !== undefined) {
-          newEnv.addBinding(k, args[k]);
+          newEnv.add(k, args[k]);
         } else {
-          newEnv.addBinding(k, defaultArgValues[k]);
+          newEnv.add(k, defaultArgValues[k]);
         }
       }
       return evaluate(newEnv, expr[2]);
@@ -130,7 +130,7 @@ function loopingFn(env, expr, varName, {from = 0,
                                         step = 1}) {
   var res;
   for(let i=from;i<to;i+=step) {
-    env.addBinding(varName, i);
+    env.add(varName, i);
     res = evaluate(env, expr);
   }
   return res;

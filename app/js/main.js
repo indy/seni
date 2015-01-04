@@ -39,15 +39,16 @@ function renderScript(renderer, form) {
 }
 
 function initialCode() {
-    return `
-(loop (h from: 0 to: 500 step: 90)
-  (loop (w from: 0 to: 400 step: 90)
-    (bezier tessellation: 35 
-            lineWidth: 20 
-            coords: (list (list (- 440 w) (+ h 400))
-                          (list (- 533 w) (+ h 700))
-                          (list (- 766 w) (+ h 200))
-                          (list (- 900 w) (+ h 500))) 
-            tStart: 0 
-            tEnd: 1)))`;
+  return `
+(scale x: 2.5 y: 2.5)
+(rotate angle: (/ 3.14 4))
+(translate x: 300)
+(bezier tessellation: 35 
+        lineWidth: 20 
+        coords: (list (list -100    0)
+                      (list  -30 -100)
+                      (list   30  100)
+                      (list  100    0)) 
+        tStart: 0 
+        tEnd: 1)`;
 }

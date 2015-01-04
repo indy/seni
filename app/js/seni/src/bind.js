@@ -1,4 +1,4 @@
-import { renderBezier, getBezierFn } from './Bezier';
+import { renderBezier, getBezierFn } from './shapes';
 import { MatrixStack } from './MatrixStack';
 import { Env } from 'lang/env';
 import { Node, NodeType } from 'lang/node';
@@ -6,7 +6,7 @@ import { remapFn } from './MathUtil';
 
 export function addBindings(env, renderer) {
 
-  env.addBinding('remapFn', function(args) {
+  env.add('remapFn', function(args) {
     return remapFn(args);
   });
 
@@ -17,30 +17,19 @@ export function addBindings(env, renderer) {
 }
 
 function bindMatrixStack(env, matrixStack) {
-  env.addBinding('pushMatrix', function(args) {
-    return matrixStack.pushMatrix();
-  });
+  env.add('pushMatrix', () => matrixStack.pushMatrix());
 
-  env.addBinding('popMatrix', function(args) {
-    return matrixStack.popMatrix();
-  });
+  env.add('popMatrix', () => matrixStack.popMatrix());
 
-  env.addBinding('scale', function(args) {
-    return matrixStack.scale(args.x, args.y);
-  });
+  env.add('scale', ({x = 1.0, y = 1.0}) =>  matrixStack.scale(x, y));
 
-  env.addBinding('translate', function(args) {
-    return matrixStack.translate(args.x, args.y);
-  });
+  env.add('translate', ({x = 0.0, y = 0.0}) => matrixStack.translate(x, y));
 
-  env.addBinding('rotate', function(args) {
-    return matrixStack.rotate(args.rad);
-  });
+  env.add('rotate', ({angle = 0.0}) => matrixStack.rotate(angle));
 }
 
 function bindBezier(env, renderer) {
   let bezier = getBezierFn(renderer);
-  env.addBinding('bezier', function(args) {
-    bezier(args);
-  });
+
+  env.add('bezier', (args) => bezier(args));
 }

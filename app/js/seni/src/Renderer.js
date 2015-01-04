@@ -1,7 +1,7 @@
 import { GLContainer } from './GLContainer';
 import { Buffer } from './Buffer';
 import { MatrixStack } from './MatrixStack';
-import { renderBezier, getBezierFn } from './Bezier';
+import { renderBezier, getBezierFn } from './shapes';
 
 export class Renderer {
   constructor(canvasElement) {

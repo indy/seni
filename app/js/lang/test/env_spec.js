@@ -17,7 +17,7 @@ export function main() {
             key = "number";
             val = 5;
 
-            e.addBinding(key, val);
+            e.add(key, val);
         });
 
 
@@ -48,7 +48,7 @@ export function main() {
             let laterVal = 42,
                 e2 = new Env(e);
 
-            e2.addBinding(key, laterVal);
+            e2.add(key, laterVal);
             
             expect(e2.lookup(key)).toEqual(laterVal);
         });  

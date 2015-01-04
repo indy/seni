@@ -3,7 +3,7 @@ export function bind(env, objs) {
     // add every key,val pair in obj as a binding to env
     let bindAll = function(obj) {
         for(let key in obj) {
-            env.addBinding(key, obj[key])
+            env.add(key, obj[key])
         }
     };
     
@@ -22,7 +22,7 @@ export class Env {
         return new Env(this);
     }
 
-    addBinding(key, val) {
+    add(key, val) {
         this.bindings.set(key, val);
         return this;
     }
@@ -65,6 +65,6 @@ export class Env {
 
         // the key did not exist in this env
         // so create a new binding
-        return this.addBinding(key, val);
+        return this.add(key, val);
     }
 }
