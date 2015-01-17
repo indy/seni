@@ -54,7 +54,7 @@ export function compare(c, d) {
 }
 
 
-export function addAngleToHSL(c, delta) {
+function addAngleToHSL(c, delta) {
   let d = cloneAs(c, Format.HSL);
 
   // rotate the hue by the given delta
@@ -64,7 +64,7 @@ export function addAngleToHSL(c, delta) {
 }
 
 // Return the 2 colours either side of this that are 'ang' degrees away
-export function pair(c, ang) {
+function pair(c, ang) {
   let ret = [addAngleToHSL(c, -ang), addAngleToHSL(c, ang)];
   return ret;
 }
@@ -147,10 +147,10 @@ function XYZToLAB(c) {
   let zz = axisToLABComponent(c.val[Z] / 108.883);
 
   return {format: Format.LAB,
-          val:[((116.0 * yy) - 16.0,
+          val:[(116.0 * yy) - 16.0,
                 500.0 * (xx - yy),
                 200.0 * (yy - zz),
-                c.val[ALPHA])]};
+                c.val[ALPHA]]};
 }
 
 function AxisToColour(a) {
@@ -257,7 +257,6 @@ function CHMToRGB(c, chroma, h, m) {
     return {format: Format.RGB,
             val: [m, m, m, c.val[ALPHA]]}
   }
-
   let hprime = h / 60.0;
   let x = chroma * (1.0 - Math.abs((hprime % 2) - 1.0));
   let r = 0.0;
@@ -300,7 +299,9 @@ function HSLToRGB(c) {
   let l = c.val[2]; // L already defined for LAB ...bugger
   let chroma = (1.0 - Math.abs((2.0 * l) - 1.0)) * s;
   let m = l - (0.5 * chroma);
-  return CHMToRGB(c, chroma, h, m);
+  return CHMToRGB({format: c.format,
+                   val: c.val,
+                   validHue: true}, chroma, h, m);
 }
 
 
