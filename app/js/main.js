@@ -50,5 +50,6 @@ function initialCode() {
                       (list   30  100)
                       (list  100    0)) 
         tStart: 0 
-        tEnd: 1)`;
+        tEnd: 1
+        colour: (rgbColour r: 0.5 g: 0.1 b: 1.0))`;
 }

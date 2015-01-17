@@ -6,6 +6,8 @@ export var Format = {
   XYZ: 4
 };
 
+
+
 /*
     public static Colour interpolate(Colour a, Colour b, float t, Format space) {
 
@@ -28,6 +30,14 @@ let sampleColour = {
   validHue: true                // optional
 };
 */
+
+
+export function rgbColour({r = 1.0,
+                           g = 0.5,
+                           b = 0.5,
+                           a = 1.0}) {
+  return make(Format.RGB, [r, g, b, a]);
+}
 
 export function make(format, vals) {
   let col = {format: format, val: vals};

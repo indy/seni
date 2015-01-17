@@ -3,6 +3,7 @@ import { MatrixStack } from './MatrixStack';
 import { Env } from 'lang/env';
 import { Node, NodeType } from 'lang/node';
 import { remapFn } from './MathUtil';
+import { rgbColour } from './Colour';
 
 export function addBindings(env, renderer) {
 
@@ -12,6 +13,7 @@ export function addBindings(env, renderer) {
 
   bindMatrixStack(env, renderer.getMatrixStack());
   bindBezier(env, renderer);
+  bindColour(env);
 
   return env;
 }
@@ -32,4 +34,8 @@ function bindBezier(env, renderer) {
   let bezier = getBezierFn(renderer);
 
   env.add('bezier', (args) => bezier(args));
+}
+
+function bindColour(env) {
+  env.add('rgbColour', (args) => rgbColour(args));
 }
