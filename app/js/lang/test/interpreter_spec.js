@@ -181,6 +181,11 @@ export function main() {
       expect(res).toEqual(11);
     });
 
+    it('should test destructuring let', () => {
+      let res = evalForm(e, "(let (((x y) (list 3 4))) (+ x y foo))");
+      expect(res).toEqual(12);
+    });
+
     it('should test lambda', () => {
       // (lambda (x y z) (+ x y z))
       let res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y)) x: 2 y: 3)");

@@ -60,8 +60,21 @@ function isClassicFunction(listExpr) {
 }
 
 function addBindings(env, exprs) {
-  return exprs.reduce((a, b) => a.add(b[0], evaluate(a, b[1])),
-                      env);
+
+  let addBinding = function(name, value) {
+    let v = evaluate(env, value);
+    if(name.constructor === Array) {
+      // destructure
+      // todo: error check if size of name array !== size of v
+      name.forEach((n, i) => env.add(n, v[i]));
+    } else {
+      env.add(name, v);
+    }
+  }
+
+  exprs.forEach(([name, value]) => addBinding(name, value));
+
+  return env;
 }
 
 export var specialForms = {
