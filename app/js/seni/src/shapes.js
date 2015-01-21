@@ -15,10 +15,6 @@ export function coords(...args) {
   for(let i=0;i<args.length;i+=2) {
     res.push([args[i], args[i+1]]);
   }
-  console.log(res);
-  //return res;
-
-  console.log("hello from coords");
   return res;
 }
 
@@ -123,7 +119,8 @@ export function renderBezierTrailing(renderer,
                           lineWidthMapping: "linear",
                           coords: coords,
                           tStart: tStart,
-                          tEnd: tEnd});
+                          tEnd: tEnd,
+                          colour: colour});
 }
 
 export function renderBezierBulging(renderer,
@@ -144,13 +141,15 @@ export function renderBezierBulging(renderer,
                           lineWidthEnd: lineWidth,
                           coords: coords,
                           tStart: tStart,
-                          tEnd: tMid});
+                          tEnd: tMid,
+                          colour: colour});
   renderBezier(renderer, {tessellation: tessellation / 2.0,
                           lineWidthStart: lineWidth,
                           lineWidthEnd: 0.0,
                           coords: coords,
                           tStart: tMid,
-                          tEnd: tEnd});
+                          tEnd: tEnd,
+                          colour: colour});
 }
 
 

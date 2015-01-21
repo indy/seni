@@ -57,7 +57,7 @@ Notes:
 
 If you need to debug the tests:
 
-- add a `debugger;` statement to the test you want to debug (oe the source code),
+- add a `debugger;` statement to the test you want to debug (or the source code),
 - execute karma `node_modules/karma/bin/karma start karma-js.conf.js`,
 - press the top right "DEBUG" button,
 - open the dev tools and press F5,
