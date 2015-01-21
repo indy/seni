@@ -44,9 +44,8 @@ function initialCode() {
 (scale x: 2.5 y: 2.5)
 (rotate angle: (/ 3.14 4))
 (translate x: 300)
-(bezier tessellation: 35 
-        lineWidthStart: 20
-        lineWidthEnd: 30
+(bezierBulging tessellation: 35 
+        lineWidth: 20
         coords: (pair -100    0
                        -30 -100
                         30  100

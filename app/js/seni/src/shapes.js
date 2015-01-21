@@ -7,6 +7,7 @@ import {
 } from './MathUtil';
 import * as Colour from './Colour';
 
+
 // partitions the given arguments into an array containing pairs of co-ordinates
 export function coords(...args) {
 
@@ -19,12 +20,6 @@ export function coords(...args) {
 
   console.log("hello from coords");
   return res;
-}
-
-export function getBezierFn(renderer) {
-  return function(params) {
-    renderBezier(renderer, params);
-  }
 }
 
 export function renderBezier(renderer,
@@ -111,6 +106,53 @@ export function renderBezier(renderer,
   buffer.addVertex([(xn2 * halfWidthEnd) + i2, (yn2 * halfWidthEnd) + i3, 0.0],
                    colour.val);
 }
+
+export function renderBezierTrailing(renderer,
+                                     {tessellation = 15,
+                                      lineWidth = 20,
+                                      coords = [[440, 400],
+                                                [533, 700],
+                                                [766, 200],
+                                                [900, 500]],
+                                      tStart = 0,
+                                      tEnd = 1,
+                                      colour = undefined}) {
+  renderBezier(renderer, {tessellation: tessellation,
+                          lineWidthStart: lineWidth,
+                          lineWidthEnd: 0.0,
+                          lineWidthMapping: "linear",
+                          coords: coords,
+                          tStart: tStart,
+                          tEnd: tEnd});
+}
+
+export function renderBezierBulging(renderer,
+                                     {tessellation = 15,
+                                      lineWidth = 20,
+                                      coords = [[440, 400],
+                                                [533, 700],
+                                                [766, 200],
+                                                [900, 500]],
+                                      tStart = 0,
+                                      tEnd = 1,
+                                      colour = undefined}) {
+
+  let tMid = (tStart + tEnd) / 2.0;
+  
+  renderBezier(renderer, {tessellation: tessellation / 2.0,
+                          lineWidthStart: 0.0,
+                          lineWidthEnd: lineWidth,
+                          coords: coords,
+                          tStart: tStart,
+                          tEnd: tMid});
+  renderBezier(renderer, {tessellation: tessellation / 2.0,
+                          lineWidthStart: lineWidth,
+                          lineWidthEnd: 0.0,
+                          coords: coords,
+                          tStart: tMid,
+                          tEnd: tEnd});
+}
+
 
 function bezierPoint(a, b, c, d, t) {
   let t1 = 1 - t;

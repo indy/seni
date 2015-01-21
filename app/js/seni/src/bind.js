@@ -1,4 +1,4 @@
-import { getBezierFn, getBezierFn2, coords } from './shapes';
+import * as Shapes from './shapes';
 import { MatrixStack } from './MatrixStack';
 import { Env } from 'lang/env';
 import { Node, NodeType } from 'lang/node';
@@ -32,8 +32,12 @@ function bindMatrixStack(env, matrixStack) {
 }
 
 function bindShapes(env, renderer) {
-  let bezier = getBezierFn(renderer);
-  env.add('bezier', (args) => bezier(args));
+  env.add('bezier',
+          (args) => Shapes.renderBezier(renderer, args));
+  env.add('bezierTrailing',
+          (args) => Shapes.renderBezierTrailing(renderer, args));
+  env.add('bezierBulging',
+          (args) => Shapes.renderBezierBulging(renderer, args));
 }
 
 function bindColour(env) {
