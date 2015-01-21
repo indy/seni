@@ -1,21 +1,22 @@
-import { renderBezier, getBezierFn } from './shapes';
+import { getBezierFn, getBezierFn2, coords } from './shapes';
 import { MatrixStack } from './MatrixStack';
 import { Env } from 'lang/env';
 import { Node, NodeType } from 'lang/node';
 import { remapFn } from './MathUtil';
-import { rgbColour } from './Colour';
+import * as Colour from './Colour';
 
 export function addBindings(env, renderer) {
 
-  env.add('remapFn', function(args) {
-    return remapFn(args);
-  });
-
+  bindMath(env);
   bindMatrixStack(env, renderer.getMatrixStack());
-  bindBezier(env, renderer);
+  bindShapes(env, renderer);
   bindColour(env);
 
   return env;
+}
+
+function bindMath(env) {
+  env.add('remapFn', (args) => remapFn(args));
 }
 
 function bindMatrixStack(env, matrixStack) {
@@ -30,12 +31,27 @@ function bindMatrixStack(env, matrixStack) {
   env.add('rotate', ({angle = 0.0}) => matrixStack.rotate(angle));
 }
 
-function bindBezier(env, renderer) {
+function bindShapes(env, renderer) {
   let bezier = getBezierFn(renderer);
-
   env.add('bezier', (args) => bezier(args));
 }
 
 function bindColour(env) {
-  env.add('rgbColour', (args) => rgbColour(args));
+  env.add('rgbColour', (args) => Colour.rgbColour(args));
+
+  env.add('hslColour', (args) => Colour.hslColour(args));
+
+  env.add('labColour', (args) => Colour.labColour(args));
+
+  env.add('hsvColour', (args) => Colour.hsvColour(args));
+
+  env.add('RGB', Colour.Format.RGB);
+  
+  env.add('HSL', Colour.Format.HSL);
+  
+  env.add('LAB', Colour.Format.LAB);
+  
+  env.add('HSV', Colour.Format.HSV);
+
+  env.add('colourConvert', (args) => Colour.colourConvert(args));
 }

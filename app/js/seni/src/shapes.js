@@ -2,9 +2,24 @@ import { GLContainer } from './GLContainer';
 import { Buffer } from './Buffer';
 import {
   normalize,
-  stepsInclusive
+  stepsInclusive,
+  remapFn
 } from './MathUtil';
 import * as Colour from './Colour';
+
+// partitions the given arguments into an array containing pairs of co-ordinates
+export function coords(...args) {
+
+  let res = [];
+  for(let i=0;i<args.length;i+=2) {
+    res.push([args[i], args[i+1]]);
+  }
+  console.log(res);
+  //return res;
+
+  console.log("hello from coords");
+  return res;
+}
 
 export function getBezierFn(renderer) {
   return function(params) {
@@ -14,7 +29,10 @@ export function getBezierFn(renderer) {
 
 export function renderBezier(renderer,
                              {tessellation = 15,
-                              lineWidth = 20,
+                              lineWidth = undefined,
+                              lineWidthStart = 20,
+                              lineWidthEnd = 20,
+                              lineWidthMapping = "slow-in-out",
                               coords = [[440, 400],
                                         [533, 700],
                                         [766, 200],
@@ -26,7 +44,23 @@ export function renderBezier(renderer,
   var glContainer = renderer.getGLContainer();
   var buffer = renderer.getBuffer();
 
-  let halfWidth = lineWidth / 2;
+  var halfWidthEnd, remap;
+
+  if(lineWidth !== undefined) {
+    // user has given a constant lineWidth parameter
+    halfWidthEnd  = lineWidth / 2.0;
+    remap = () => halfWidthEnd;
+
+  } else {
+    // use the default start and end line widths
+    let halfWidthStart  = lineWidthStart / 2.0;
+    halfWidthEnd  = lineWidthEnd / 2.0;
+    remap = remapFn({from: [tStart, tEnd],
+                     to: [halfWidthStart, halfWidthEnd],
+                     mapping: lineWidthMapping});
+    
+  }
+
   let tVals = stepsInclusive(tStart, tEnd, tessellation);
 
   let xs = tVals.map((i) => bezierPoint(coords[0][0],
@@ -50,18 +84,19 @@ export function renderBezier(renderer,
   for(let i=0; i<tVals.length - 1; i++) {  
     let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
         i0 = xs[i],
-        i1 = ys[i];
+        i1 = ys[i],
+        t = tVals[i];
 
     if(i === 0) {
       buffer.prepareToAddTriangleStrip(glContainer, tessellation * 2,
-                                       [(xn1 * halfWidth) + i0,
-                                        (yn1 * halfWidth) + i1,
+                                       [(xn1 * remap({val: t})) + i0,
+                                        (yn1 * remap({val: t})) + i1,
                                         0.0]);
     }
 
-    buffer.addVertex([(xn1 * halfWidth) + i0, (yn1 * halfWidth) + i1, 0.0], 
+    buffer.addVertex([(xn1 * remap({val: t})) + i0, (yn1 * remap({val: t})) + i1, 0.0], 
                      colour.val);
-    buffer.addVertex([(xn2 * halfWidth) + i0, (yn2 * halfWidth) + i1, 0.0], 
+    buffer.addVertex([(xn2 * remap({val: t})) + i0, (yn2 * remap({val: t})) + i1, 0.0], 
                      colour.val);
   }
 
@@ -71,9 +106,9 @@ export function renderBezier(renderer,
       i2 = xs[i+1],
       i3 = ys[i+1];
   
-  buffer.addVertex([(xn1 * halfWidth) + i2, (yn1 * halfWidth) + i3, 0.0], 
+  buffer.addVertex([(xn1 * halfWidthEnd) + i2, (yn1 * halfWidthEnd) + i3, 0.0], 
                    colour.val);
-  buffer.addVertex([(xn2 * halfWidth) + i2, (yn2 * halfWidth) + i3, 0.0],
+  buffer.addVertex([(xn2 * halfWidthEnd) + i2, (yn2 * halfWidthEnd) + i3, 0.0],
                    colour.val);
 }
 

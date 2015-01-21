@@ -61,8 +61,6 @@ export function main() {
       compCol(Colour.cloneAs(lab, Colour.Format.HSL), hsl);
       compCol(Colour.cloneAs(lab, Colour.Format.LAB), lab);
     });
-
-
   });
 }
 

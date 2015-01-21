@@ -8,7 +8,6 @@ export function main() {
   setupUI(renderer);
 }
 
-
 function setupUI(renderer) {
   let d = document;
 
@@ -40,16 +39,20 @@ function renderScript(renderer, form) {
 
 function initialCode() {
   return `
+
+
 (scale x: 2.5 y: 2.5)
 (rotate angle: (/ 3.14 4))
 (translate x: 300)
 (bezier tessellation: 35 
-        lineWidth: 20 
-        coords: (list (list -100    0)
-                      (list  -30 -100)
-                      (list   30  100)
-                      (list  100    0)) 
+        lineWidthStart: 20
+        lineWidthEnd: 30
+        coords: (pair -100    0
+                       -30 -100
+                        30  100
+                       100    0)
         tStart: 0 
         tEnd: 1
-        colour: (rgbColour r: 0.5 g: 0.1 b: 1.0))`;
+        colour: (rgbColour r: 0.5 g: 0.1 b: 1.0))
+`;
 }

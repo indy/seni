@@ -136,6 +136,10 @@ function loopingFn(env, expr, varName, {from = 0,
   return res;
 }
 
+// todo: classic functions are here because it wouldn't make sense to use named parameters for these functions.
+// perhaps there should by a syntax like prefixing with @ to indicate that the function takes a variable number of non-named paramters?
+// could get rid of the concept of classic functions and allow the user to create @ functions at the expense of having code like: (@+ 4 3 7 4) rather than (+ 4 3 7 4)
+
 export var classicFunctions = {
   '+': (args) => args.reduce((a, b) => a + b, 0),
 
@@ -172,5 +176,15 @@ export var classicFunctions = {
     }
     return TRUE_STRING;
   },
-  'list' : (args) => args
+  'list' : (args) => args,
+  'pair' : (args) => {
+    let res = [];
+    for(let i=0;i<args.length;i+=2) {
+      res.push([args[i], args[i+1]]);
+    }
+    return res;
+  }
 }
+
+
+

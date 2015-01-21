@@ -32,12 +32,22 @@ let sampleColour = {
 */
 
 
-export function rgbColour({r = 1.0,
-                           g = 0.5,
-                           b = 0.5,
-                           a = 1.0}) {
+export function rgbColour({r = 1.0, g = 0.5, b = 0.5, a = 1.0}) {
   return make(Format.RGB, [r, g, b, a]);
 }
+
+export function hslColour({h = 1.0, s = 0.5, l = 0.5, a = 1.0}) {
+  return make(Format.HSL, [h, s, l, a]);
+}
+
+export function labColour({l = 1.0, a = 0.5, b = 0.5, alpha = 1.0}) {
+  return make(Format.LAB, [l, a, b, alpha]);
+}
+
+export function hsvColour({h = 1.0, s = 0.5, v = 0.5, a = 1.0}) {
+  return make(Format.HSV, [h, s, v, a]);
+}
+
 
 export function make(format, vals) {
   let col = {format: format, val: vals};
@@ -350,6 +360,13 @@ function HSVToRGB(c) {
   let chroma = v * s;
   let m = v - chroma;
   return CHMToRGB(c, chroma, h, m);
+}
+
+export function colourConvert({format = Format.RGB, colour = undefined}) {
+  if(colour === undefined) {
+    return;
+  }
+  return cloneAs(colour, format);
 }
 
 export function cloneAs(c, newFormat) {

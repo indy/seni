@@ -67,7 +67,6 @@ export function remapFn({from = [0, 1],
                          to = [0, 100],
                          clamping = false,
                          mapping = "linear"}) {
-  //console.log("calling remapFn");
   let [fromA, fromB] = from,
       [toA, toB] = to,
       [fromM, fromC] = mc([fromA, 0], [fromB, 1]),
@@ -75,12 +74,10 @@ export function remapFn({from = [0, 1],
       normalisedMappingFn = mappingLookup.get(mapping);
 
   if(normalisedMappingFn === undefined) {
-    // console.log("unknown mapping method given to remapFn: " + mapping
     normalisedMappingFn = mappingLookup.get("linear");
   }
 
   return function({val = 0.5}) {
-    //console.log("calling fn returned by remapFn");
     let fromInterp = (fromM * val) + fromC,
         toInterp = normalisedMappingFn(fromInterp),
         res = (toM * toInterp) + toC;
