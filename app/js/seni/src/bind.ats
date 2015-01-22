@@ -3,7 +3,8 @@ import { MatrixStack } from './MatrixStack';
 import { Env } from 'lang/env';
 import { Node, NodeType } from 'lang/node';
 import { remapFn } from './MathUtil';
-import * as Colour from './Colour';
+import * as ColourNS from './Colour';
+import { perlin } from './Perlin';
 
 export function addBindings(env, renderer) {
 
@@ -11,6 +12,7 @@ export function addBindings(env, renderer) {
   bindMatrixStack(env, renderer.getMatrixStack());
   bindShapes(env, renderer);
   bindColour(env);
+  bindPerlin(env);
 
   return env;
 }
@@ -41,21 +43,25 @@ function bindShapes(env, renderer) {
 }
 
 function bindColour(env) {
-  env.add('rgbColour', (args) => Colour.rgbColour(args));
+  env.add('rgbColour', (args) => ColourNS.rgbColour(args));
 
-  env.add('hslColour', (args) => Colour.hslColour(args));
+  env.add('hslColour', (args) => ColourNS.hslColour(args));
 
-  env.add('labColour', (args) => Colour.labColour(args));
+  env.add('labColour', (args) => ColourNS.labColour(args));
 
-  env.add('hsvColour', (args) => Colour.hsvColour(args));
+  env.add('hsvColour', (args) => ColourNS.hsvColour(args));
 
-  env.add('RGB', Colour.Format.RGB);
+  env.add('RGB', ColourNS.Format.RGB);
   
-  env.add('HSL', Colour.Format.HSL);
+  env.add('HSL', ColourNS.Format.HSL);
   
-  env.add('LAB', Colour.Format.LAB);
+  env.add('LAB', ColourNS.Format.LAB);
   
-  env.add('HSV', Colour.Format.HSV);
+  env.add('HSV', ColourNS.Format.HSV);
 
-  env.add('colourConvert', (args) => Colour.colourConvert(args));
+  env.add('colourConvert', (args) => ColourNS.colourConvert(args));
+}
+
+function bindPerlin(env) {
+  env.add('perlin', (args) => perlin(args));
 }

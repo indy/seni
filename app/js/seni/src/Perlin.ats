@@ -1,0 +1,7 @@
+
+
+export function perlin({x, y, z}): number {
+  // todo: actually implement perlin noise
+  let v = Math.random();
+  return v;
+}

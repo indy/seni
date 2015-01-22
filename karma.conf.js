@@ -32,6 +32,7 @@ module.exports = function(config) {
     preprocessors: {
       'app/js/**/*.js': ['traceur'],
       'app/js/**/*.es6': ['traceur'],
+      'app/js/**/*.ats': ['traceur'],
       'tools/transpiler/**/*.js': ['traceur'],
       'tools/transpiler/**/*.es6': ['traceur'],
     },
@@ -50,7 +51,7 @@ module.exports = function(config) {
       },
       resolveModuleName: file2moduleName,
       transformPath: function(fileName) {
-        return fileName.replace(/\.es6$/, '.js');
+        return fileName.replace(/\.es6$/, '.js').replace(/\.ats$/, '.js');
       }
     },
 

@@ -13,7 +13,6 @@ export var NodeType = {
 };
 
 export class Node {
-
   constructor(type, value, alterable) {
     this.type = type;
     this.value = value;

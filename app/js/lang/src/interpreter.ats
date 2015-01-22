@@ -1,6 +1,30 @@
 const TRUE_STRING = '#t';
 const FALSE_STRING = '#f';
 
+export class Arg {
+  constructor(what: number, working: boolean) {
+    this.what = what;
+  };
+
+  getWhat() : number {
+    return this.what;
+  }
+}
+
+export class Something {
+  sum(a: number, b: number): number {
+    return a + b;
+  }
+
+  fooBar(a: Arg) : number {
+    return a.getWhat();
+  }
+
+  barbaz(as: Array<Arg>) : number {
+    return as.length;
+  }
+}
+
 export function evaluate(env, expr) {
 
   // todo: may need something like:
@@ -43,7 +67,7 @@ function funApplication(env, listExpr) {
   return fun(args);
 }
 
-function isSpecialForm(listExpr) {
+function isSpecialForm(listExpr) : boolean {
   let node = listExpr[0];
   if(specialForms[node] !== undefined) {
     return true;
@@ -51,7 +75,7 @@ function isSpecialForm(listExpr) {
   return false;
 }
 
-function isClassicFunction(listExpr) {
+function isClassicFunction(listExpr) : boolean {
   let node = listExpr[0];
   if(classicFunctions[node] !== undefined) {
     return true;

@@ -1,4 +1,6 @@
 import {
+  Arg,
+  Something,
   evaluate,
   classicFunctions,
   specialForms
@@ -30,6 +32,15 @@ export function main() {
       key = "foo";
       val = 5;
       e.add(key, val);
+    });
+
+    it('should do something', () => {
+      let something = new Something();
+      let a = new Arg(2, false);
+      expect(a.what).toBe(2);
+      expect(something.sum(1, a.getWhat())).toBe(3);
+      expect(something.fooBar(a)).toBe(2);
+      expect(something.barbaz([a, a, a])).toBe(3);
     });
 
     it('should evaluate simple nodes', () => {

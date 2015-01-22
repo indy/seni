@@ -16,6 +16,16 @@ npm install --save-dev gulp-webserver
 
 --------------------------------------------------------------------------------
 
+
+* atscript
+
+the primitive types are: 
+    any, boolean, number, string, symbol, void
+this is taken from ~/code/es6/traceur-compiler/src/runtime/type-assertions.js
+
+Array, Map
+
+
 * notes
 
 seni-lang will have labels as well as names, every argument to a function will have to be preceeded with it's label. e.g:
