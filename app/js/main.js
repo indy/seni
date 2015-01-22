@@ -40,10 +40,73 @@ function renderScript(renderer, form) {
 function initialCode() {
   return `
 
+(scale x: 2.5 y: 2.5)
+(rotate angle: (/ 3.14 4))
+(translate x: 300)
+(rect width: 200 height: 200 
+      colour: (rgbColour r: (perlin) 
+                         g: (perlin) 
+                         b: (perlin)
+                         a: 0.5))
+`;
+}
+
+
+/*
+
+
+
+(rect x: 500 y: 500 width: 200 height: 200 
+      colour: (rgbColour r: (perlin) 
+                         g: (perlin) 
+                         b: (perlin)))
+(scale x: 2.5 y: 2.5)
+(rotate angle: (/ 3.14 4))
+(translate x: 300)
+(rect width: 200 height: 200 
+      colour: (rgbColour r: (perlin) 
+                         g: (perlin) 
+                         b: (perlin)
+                         a: 0.5))
+(bezierBulging tessellation: 35 
+        lineWidth: 20
+        coords: (pair -100    0
+                       -30 -100
+                        30  100
+                       100    0)
+        tStart: 0 
+        tEnd: 1
+        colour: (rgbColour r: 0.5 
+                           g: 0.1 
+                           b: 1.0
+                           a: 0.4))
+
+
+
+
+
+
+
+
+
 
 (scale x: 2.5 y: 2.5)
 (rotate angle: (/ 3.14 4))
 (translate x: 300)
+(rect width: 200 height: 200 
+      colour: (rgbColour r: (perlin) 
+                         g: (perlin) 
+                         b: (perlin)
+                         a: 0.5))
+
+
+
+
+(rect x: 500 y: 500 width: 200 height: 200 colour: (rgbColour r: (perlin) g: (perlin) b: (perlin)))
+(scale x: 2.5 y: 2.5)
+(rotate angle: (/ 3.14 4))
+(translate x: 300)
+(rect width: 200 height: 200 colour: (rgbColour r: (perlin) g: (perlin) b: (perlin)))
 (bezierBulging tessellation: 35 
         lineWidth: 20
         coords: (pair -100    0
@@ -53,5 +116,8 @@ function initialCode() {
         tStart: 0 
         tEnd: 1
         colour: (rgbColour r: 0.5 g: 0.1 b: 1.0))
-`;
-}
+
+
+
+                
+                */

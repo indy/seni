@@ -1,3 +1,4 @@
+import { Renderer } from './Renderer';
 import { GLContainer } from './GLContainer';
 import { Buffer } from './Buffer';
 import {
@@ -5,7 +6,7 @@ import {
   stepsInclusive,
   remapFn
 } from './MathUtil';
-import * as Colour from './Colour';
+import {Colour, Format} from './Colour';
 
 
 // partitions the given arguments into an array containing pairs of co-ordinates
@@ -18,24 +19,52 @@ export function coords(...args) {
   return res;
 }
 
-export function renderBezier(renderer,
-                             {tessellation = 15,
-                              lineWidth = undefined,
-                              lineWidthStart = 20,
-                              lineWidthEnd = 20,
-                              lineWidthMapping = "slow-in-out",
-                              coords = [[440, 400],
-                                        [533, 700],
-                                        [766, 200],
-                                        [900, 500]],
-                              tStart = 0,
-                              tEnd = 1,
-                              colour = undefined}) {
+export function renderRect(renderer: Renderer,
+                           { x = 0,
+                             y = 0,
+                             width = 100,
+                             height = 100,
+                             colour = undefined}) {
+  let glContainer = renderer.getGLContainer();
+  let buffer = renderer.getBuffer();
 
-  var glContainer = renderer.getGLContainer();
-  var buffer = renderer.getBuffer();
+  let halfWidth = (width / 2);
+  let halfHeight = (height / 2);
+  let px = x - halfWidth;
+  let py = y - halfHeight;
+  
+  if(colour === undefined) {
+    colour = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+  } else if(colour.format !== Format.RGB) {
+    colour = colour.cloneAs(Format.RGB);
+  }
 
-  var halfWidthEnd, remap;
+  buffer.prepareToAddTriangleStrip(glContainer, 4,
+                                   [x - halfWidth, y - halfHeight, 0.0]);
+  buffer.addVertex([x - halfWidth, y - halfHeight, 0.0], colour.val);
+  buffer.addVertex([x + halfWidth, y - halfHeight, 0.0], colour.val);
+  buffer.addVertex([x - halfWidth, y + halfHeight, 0.0], colour.val);
+  buffer.addVertex([x + halfWidth, y + halfHeight, 0.0], colour.val);
+}
+
+export function renderBezier(renderer: Renderer,
+                             { tessellation = 15,
+                               lineWidth = undefined,
+                               lineWidthStart = 20,
+                               lineWidthEnd = 20,
+                               lineWidthMapping = "slow-in-out",
+                               coords = [[440, 400],
+                                         [533, 700],
+                                         [766, 200],
+                                         [900, 500]],
+                               tStart = 0,
+                               tEnd = 1,
+                               colour = undefined}) {
+
+  let glContainer = renderer.getGLContainer();
+  let buffer = renderer.getBuffer();
+
+  let halfWidthEnd, remap;
 
   if(lineWidth !== undefined) {
     // user has given a constant lineWidth parameter
@@ -64,12 +93,9 @@ export function renderBezier(renderer,
                                         coords[3][1], i));
 
   if(colour === undefined) {
-    colour = {
-      format: Colour.Format.RGB,
-      val:  [1.0, 0.0, 0.0, 1.0]
-    };
-  } else if(colour.format !== Colour.Format.RGB) {
-    colour = Colour.cloneAs(colour, Colour.Format.RGB).val;
+    colour = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+  } else if(colour.format !== Format.RGB) {
+    colour = colour.cloneAs(Format.RGB);
   }
   
   for(let i=0; i<tVals.length - 1; i++) {  
@@ -103,16 +129,16 @@ export function renderBezier(renderer,
                    colour.val);
 }
 
-export function renderBezierTrailing(renderer,
-                                     {tessellation = 15,
-                                      lineWidth = 20,
-                                      coords = [[440, 400],
-                                                [533, 700],
-                                                [766, 200],
-                                                [900, 500]],
-                                      tStart = 0,
-                                      tEnd = 1,
-                                      colour = undefined}) {
+export function renderBezierTrailing(renderer: Renderer,
+                                     { tessellation = 15,
+                                       lineWidth = 20,
+                                       coords = [[440, 400],
+                                                 [533, 700],
+                                                 [766, 200],
+                                                 [900, 500]],
+                                       tStart = 0,
+                                       tEnd = 1,
+                                       colour = undefined}) {
   renderBezier(renderer, {tessellation: tessellation,
                           lineWidthStart: lineWidth,
                           lineWidthEnd: 0.0,
@@ -123,7 +149,7 @@ export function renderBezierTrailing(renderer,
                           colour: colour});
 }
 
-export function renderBezierBulging(renderer,
+export function renderBezierBulging(renderer: Renderer,
                                      {tessellation = 15,
                                       lineWidth = 20,
                                       coords = [[440, 400],
@@ -153,7 +179,7 @@ export function renderBezierBulging(renderer,
 }
 
 
-function bezierPoint(a, b, c, d, t) {
+function bezierPoint(a: number, b: number, c: number, d: number, t: number): number {
   let t1 = 1 - t;
 
   return (a * t1 * t1 * t1) +
@@ -162,7 +188,7 @@ function bezierPoint(a, b, c, d, t) {
     (d * t * t * t);
 }
 
-function normals(x1, y1, x2, y2) {
+function normals(x1: number, y1: number, x2: number, y2: number): Array<number> {
   let dx = x2 - x1;
   let dy = y2 - y1;
 

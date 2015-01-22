@@ -34,6 +34,8 @@ function bindMatrixStack(env, matrixStack) {
 }
 
 function bindShapes(env, renderer) {
+  env.add('rect',
+          (args) => Shapes.renderRect(renderer, args));
   env.add('bezier',
           (args) => Shapes.renderBezier(renderer, args));
   env.add('bezierTrailing',
