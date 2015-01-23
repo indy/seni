@@ -25,13 +25,11 @@ export function renderRect(renderer: Renderer,
                              width = 100,
                              height = 100,
                              colour = undefined}) {
-  let glContainer = renderer.getGLContainer();
-  let buffer = renderer.getBuffer();
+  const glContainer = renderer.getGLContainer();
+  const buffer = renderer.getBuffer();
 
-  let halfWidth = (width / 2);
-  let halfHeight = (height / 2);
-  let px = x - halfWidth;
-  let py = y - halfHeight;
+  const halfWidth = (width / 2);
+  const halfHeight = (height / 2);
   
   if(colour === undefined) {
     colour = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);

@@ -42,24 +42,23 @@ export function evaluate(env, expr) {
 
 function funApplication(env, listExpr) {
 
-  let fun = evaluate(env, listExpr[0]);
+  const fun = evaluate(env, listExpr[0]);
 
   // special forms that manipulate the listExpr
   if(isSpecialForm(listExpr)) {
-    let specialFn = evaluate(env, listExpr[0]);
     return fun(env, listExpr);
   }
 
   // classic functions that don't require named arguments
   if(isClassicFunction(listExpr)) {
-    let args = listExpr.slice(1).map(n => evaluate(env, n));
+    const args = listExpr.slice(1).map(n => evaluate(env, n));
     return fun(args);
   }
 
   // normal functions that require named arguments
   let args = {};
   if(listExpr.length > 1) {
-    let argObj = listExpr[1];
+    const argObj = listExpr[1];
     for(let k in argObj) {
       args[k] = evaluate(env, argObj[k]);
     }
@@ -68,25 +67,19 @@ function funApplication(env, listExpr) {
 }
 
 function isSpecialForm(listExpr) : boolean {
-  let node = listExpr[0];
-  if(specialForms[node] !== undefined) {
-    return true;
-  }
-  return false;
+  const node = listExpr[0];
+  return specialForms[node] !== undefined;
 }
 
 function isClassicFunction(listExpr) : boolean {
-  let node = listExpr[0];
-  if(classicFunctions[node] !== undefined) {
-    return true;
-  }
-  return false;
+  const node = listExpr[0];
+  return classicFunctions[node] !== undefined;
 }
 
 function addBindings(env, exprs) {
 
-  let addBinding = function(name, value) {
-    let v = evaluate(env, value);
+  const addBinding = function(name, value) {
+    const v = evaluate(env, value);
     if(name.constructor === Array) {
       // destructure
       // todo: error check if size of name array !== size of v
@@ -103,7 +96,7 @@ function addBindings(env, exprs) {
 
 export var specialForms = {
   'if': (env, expr) => {
-    let conditional = evaluate(env, expr[1]);
+    const conditional = evaluate(env, expr[1]);
     // todo: only a value of #t is truthy, change this so that
     // any non-zero, non-falsy value is truthy
     if(conditional === TRUE_STRING) {
@@ -119,14 +112,14 @@ export var specialForms = {
   },
   'define': (env, expr) => {
     // (define foo 12)
-    let name = expr[1];
-    let val = expr[2];
+    const name = expr[1];
+    const val = expr[2];
     env.add(name, evaluate(env, val));
   },
   'set!': (env, expr) => {
     // (set! foo 42)
-    let name = expr[1];
-    let val = expr[2];
+    const name = expr[1];
+    const val = expr[2];
     env.mutate(name, evaluate(env, val));
   },
   'begin': (env, expr) => {
@@ -140,9 +133,9 @@ export var specialForms = {
   'lambda': (env, expr) => {
     // (lambda (x: 0 y: 0) (+ x y))
     return function(args) {
-      let newEnv = env.newScope();
+      const newEnv = env.newScope();
 
-      let defaultArgValues = expr[1];
+      const defaultArgValues = expr[1];
       for(let k in defaultArgValues) {
         if(args[k] !== undefined) {
           newEnv.add(k, args[k]);
@@ -156,8 +149,8 @@ export var specialForms = {
   'loop': (env, expr) => {
     // (loop (a from: 1 to: 30 step: 2)
     //   (+ a a))
-    let [varName, varParameters] = expr[1];
-    let newEnv = env.newScope();
+    const [varName, varParameters] = expr[1];
+    const newEnv = env.newScope();
     return loopingFn(newEnv, expr[2], varName, varParameters);
   }
 }
@@ -187,14 +180,14 @@ export var classicFunctions = {
   '/': (args) => args.reduce((a, b) => a / b),
   
   '=': (args) => {
-    let first = args[0];
-    let res = args.slice(1).every(a => a === first);
+    const first = args[0];
+    const res = args.slice(1).every(a => a === first);
     return res ? TRUE_STRING : FALSE_STRING;
   },
   '<': (args) => {
     let prev = args[0];
     for(let i = 1; i < args.length; i++) {
-      let current = args[i];
+      const current = args[i];
       if(!(current < prev)) {
         return FALSE_STRING
       }
@@ -205,7 +198,7 @@ export var classicFunctions = {
   '>': (args) => {
     let prev = args[0];
     for(let i = 1; i < args.length; i++) {
-      let current = args[i];
+      const current = args[i];
       if(!(current > prev)) {
         return FALSE_STRING;
       }

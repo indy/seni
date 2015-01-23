@@ -114,10 +114,10 @@ export function consumeBracketEnd(s) {
 
 export function consumeString(s) {
   let val = s.substring(1); // skip first \"
-  let nextQuote = val.indexOf('\"');
+  const nextQuote = val.indexOf('\"');
   val = val.substring(0, nextQuote);
 
-  let token = new Token(TokenType.STRING, val);
+  const token = new Token(TokenType.STRING, val);
   return [token, s.substring(nextQuote + 2)];
 }
 

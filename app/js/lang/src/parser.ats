@@ -21,10 +21,10 @@ export function parse(tokens) {
 
 function consumeItem(tokens, alterable) {
 
-    let token = tokens[0];
+    const token = tokens[0];
     tokens.shift();            // remove the first token
 
-    let tokenType = token.getType();
+    const tokenType = token.getType();
     if(tokenType === TokenType.LIST_START) {
         return consumeList(tokens, alterable);
     } else if(tokenType === TokenType.INT) {

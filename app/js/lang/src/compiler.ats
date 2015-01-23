@@ -27,7 +27,7 @@ function _compile(node) {
 }
 
 function _compileList(node) {
-  let children = node.getChildren();
+  const children = node.getChildren();
 
   if(usingNamedParameters(children)) {
     return compileFormUsingNamedParameters(children);
@@ -58,7 +58,7 @@ function compileFormUsingNamedParameters(children) {
 
   let args = {};
   for(let i=1; i < children.length; i+=2) {
-    let label = children[i];
+    const label = children[i];
     if(label.getType() != NodeType.LABEL) {
       console.log("error: expecting a label, actual: " + label.getValue());
     }
@@ -79,7 +79,7 @@ function compileAllNamedParameters(children) {
 
   let args = {};
   for(let i=0; i < children.length; i+=2) {
-    let label = children[i];
+    const label = children[i];
     if(label.getType() != NodeType.LABEL) {
       console.log("error: expecting a label, actual: " + label.getValue());
     }
