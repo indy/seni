@@ -54,7 +54,18 @@ function initialCode() {
 
 /*
 
+(let ((c 50))
+  (loop (j from: (/ c 2) to: 1000 step: c)
+        (loop (i from: (/ c 2) to: 1000 step: c) 
+              (rect width: c height: c
+                    x: i y: j
+                    colour: (rgbColour r: (perlin) 
+                                       g: (perlin) 
+                                       b: (perlin)
+                             a: 0.5)))))
 
+
+ 
 
 (rect x: 500 y: 500 width: 200 height: 200 
       colour: (rgbColour r: (perlin) 

@@ -1,30 +1,6 @@
 const TRUE_STRING = '#t';
 const FALSE_STRING = '#f';
 
-export class Arg {
-  constructor(what: number, working: boolean) {
-    this.what = what;
-  };
-
-  getWhat() : number {
-    return this.what;
-  }
-}
-
-export class Something {
-  sum(a: number, b: number): number {
-    return a + b;
-  }
-
-  fooBar(a: Arg) : number {
-    return a.getWhat();
-  }
-
-  barbaz(as: Array<Arg>) : number {
-    return as.length;
-  }
-}
-
 export function evaluate(env, expr) {
 
   // todo: may need something like:
@@ -146,23 +122,42 @@ export var specialForms = {
       return evaluate(newEnv, expr[2]);
     };
   },
+  'log': (env, expr) => { console.log(evaluate(env, expr[1]))},
   'loop': (env, expr) => {
-    // (loop (a from: 1 to: 30 step: 2)
-    //   (+ a a))
+    // (loop (a from: 1 to: 30 step: 2) (+ a a))
     const [varName, varParameters] = expr[1];
-    const newEnv = env.newScope();
-    return loopingFn(newEnv, expr[2], varName, varParameters);
+    for(let k in varParameters) {
+      varParameters[k] = evaluate(env, varParameters[k]);
+    }
+    return loopingFn(env.newScope(), expr.slice(2), varName, varParameters);
   }
 }
 
 function loopingFn(env, expr, varName, {from = 0,
                                         to = 10,
+                                        until = undefined,
                                         step = 1}) {
-  var res;
-  for(let i=from;i<to;i+=step) {
-    env.add(varName, i);
-    res = evaluate(env, expr);
+  // todo: 'to' should be <=, and 'until' should be '<'
+
+  if(step === 0) {
+    console.log("step size of 0 given");
+    return;
   }
+
+  var res;
+
+  if(until !== undefined) {
+    for(let i=from;i<=until;i+=step) {
+      env.add(varName, i);
+      res = expr.reduce((a, b) => evaluate(env, b), null);
+    }
+  } else {
+    for(let i=from;i<to;i+=step) {
+      env.add(varName, i);
+      res = expr.reduce((a, b) => evaluate(env, b), null);
+    }
+  }
+
   return res;
 }
 

@@ -34,15 +34,6 @@ export function main() {
       e.add(key, val);
     });
 
-    it('should do something', () => {
-      let something = new Something();
-      let a = new Arg(2, false);
-      expect(a.what).toBe(2);
-      expect(something.sum(1, a.getWhat())).toBe(3);
-      expect(something.fooBar(a)).toBe(2);
-      expect(something.barbaz([a, a, a])).toBe(3);
-    });
-
     it('should evaluate simple nodes', () => {
       let res = evaluate(null, 4);
       expect(res).toEqual(4);
@@ -220,6 +211,11 @@ export function main() {
       let res = evalForm(e, "(loop (a from: 0 to: 4 step: 1) (set! bar (+ bar a)))");
       expect(e.lookup('bar')).toEqual(6);
 
+      // ''until' for <= loop ('to' for < loop)
+      e.add('bar', 0);
+      res = evalForm(e, "(loop (a from: 0 until: 4 step: 1) (set! bar (+ bar a)))");
+      expect(e.lookup('bar')).toEqual(10);
+      
       e.add('bar', 0);
       res = evalForm(e, "(loop (a to: 5) (set! bar (+ bar a)))");
       expect(e.lookup('bar')).toEqual(10);
@@ -227,7 +223,16 @@ export function main() {
       e.add('bar', 0);
       res = evalForm(e, "(loop (a to: 5 step: 2) (set! bar (+ bar a)))");
       expect(e.lookup('bar')).toEqual(6);
+
+      // loop should eval it's arguments
+      e.add('bar', 0);
+      res = evalForm(e, "(let ((x 2)) (loop (a to: 5 step: x) (set! bar (+ bar a))))");
+      expect(e.lookup('bar')).toEqual(6);
+
+      // loop's body should be treated as though it is wrapped in a 'begin'
+      e.add('bar', 0);
+      res = evalForm(e, "(let ((x 2) (y 4)) (loop (a to: 5 step: x) (+ y y) (set! bar (+ bar a))))");
+      expect(e.lookup('bar')).toEqual(6);
     });
-    
   });
 }
