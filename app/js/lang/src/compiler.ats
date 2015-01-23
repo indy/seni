@@ -11,23 +11,23 @@ export function compile(ast) {
 }
 
 function _compile(node) {
-  if(node.getType() === NodeType.LIST) {
+  if(node.type === NodeType.LIST) {
     return _compileList(node);
-  } else if(node.getType() === NodeType.STRING) {
+  } else if(node.type === NodeType.STRING) {
     // without this the following forms will compile to the same thing:
     //     (foo "hello")
     //     (foo hello)
     //
     // we need to wrap the string form in a quote to prevent the interpreter
     // from trying to lookup the contents of the string
-    return ["quote", node.getValue()];
+    return ["quote", node.value];
   } else {
-    return node.getValue();
+    return node.value;
   }
 }
 
 function _compileList(node) {
-  const children = node.getChildren();
+  const children = node.children;
 
   if(usingNamedParameters(children)) {
     return compileFormUsingNamedParameters(children);
@@ -40,12 +40,12 @@ function _compileList(node) {
 
 function usingNamedParameters(children) {
   // note: this will return false for functions where 0 arguments are given
-  return children.length > 1 && children[1].getType() === NodeType.LABEL;
+  return children.length > 1 && children[1].type === NodeType.LABEL;
 }
 
 function allNamedParameters(children) {
   // a basic test, but if it passes this it should be all <label,value> pairs 
-  return children[0].getType() === NodeType.LABEL;
+  return children[0].type === NodeType.LABEL;
 }
   
 function compileFormUsingNamedParameters(children) {
@@ -59,11 +59,11 @@ function compileFormUsingNamedParameters(children) {
   let args = {};
   for(let i=1; i < children.length; i+=2) {
     const label = children[i];
-    if(label.getType() != NodeType.LABEL) {
-      console.log("error: expecting a label, actual: " + label.getValue());
+    if(label.type != NodeType.LABEL) {
+      console.log("error: expecting a label, actual: " + label.value);
     }
     let arg = _compile(children[i+1]);
-    args[label.getValue()] = arg;
+    args[label.value] = arg;
   }
 
   return [_compile(children[0]), args];
@@ -80,11 +80,11 @@ function compileAllNamedParameters(children) {
   let args = {};
   for(let i=0; i < children.length; i+=2) {
     const label = children[i];
-    if(label.getType() != NodeType.LABEL) {
-      console.log("error: expecting a label, actual: " + label.getValue());
+    if(label.type != NodeType.LABEL) {
+      console.log("error: expecting a label, actual: " + label.value);
     }
     let arg = _compile(children[i+1]);
-    args[label.getValue()] = arg;
+    args[label.value] = arg;
   }
 
   return args;

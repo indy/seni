@@ -24,26 +24,26 @@ function consumeItem(tokens, alterable) {
     const token = tokens[0];
     tokens.shift();            // remove the first token
 
-    const tokenType = token.getType();
+    const tokenType = token.type;
     if(tokenType === TokenType.LIST_START) {
         return consumeList(tokens, alterable);
     } else if(tokenType === TokenType.INT) {
-        return new Node(NodeType.INT, token.getValue(), alterable)
+        return new Node(NodeType.INT, token.value, alterable)
     } else if(tokenType === TokenType.FLOAT) {
-        return new Node(NodeType.FLOAT, token.getValue(), alterable)
+        return new Node(NodeType.FLOAT, token.value, alterable)
     } else if(tokenType === TokenType.NAME) {
-        let val = token.getValue();
+        let val = token.value;
         if(val === "true") {
             return new Node(NodeType.BOOLEAN, '#t', alterable)
         } else if (val === "false") {
             return new Node(NodeType.BOOLEAN, '#f', alterable)
         } else {
-            return new Node(NodeType.NAME, token.getValue(), alterable)
+            return new Node(NodeType.NAME, token.value, alterable)
         }
     } else if(tokenType === TokenType.LABEL) {
-        return new Node(NodeType.LABEL, token.getValue(), alterable)
+        return new Node(NodeType.LABEL, token.value, alterable)
     } else if(tokenType === TokenType.STRING) {
-        return new Node(NodeType.STRING, token.getValue(), alterable)
+        return new Node(NodeType.STRING, token.value, alterable)
     } else if(tokenType === TokenType.QUOTE_ABBREVIATION) {
         return consumeQuotedForm(tokens);
     } else if(tokenType === TokenType.BRACKET_START) {
@@ -59,7 +59,7 @@ function consumeItem(tokens, alterable) {
 
 function consumeBracketForm(tokens) {
     let node = consumeItem(tokens, true),
-    nodeType = node.getType();
+    nodeType = node.type;
 
     if(nodeType != NodeType.BOOLEAN &&
        nodeType != NodeType.INT &&
@@ -95,7 +95,7 @@ function consumeList(tokens, alterable) {
 
     while(true) {
         let token = tokens[0];
-        if(token.getType() === TokenType.LIST_END) {
+        if(token.type === TokenType.LIST_END) {
             tokens.shift();
             return node;
         } else {

@@ -24,18 +24,6 @@ export class Node {
     this.genSym = "";
   }
 
-  getType() {
-    return this.type;
-  }
-
-  getValue() {
-    return this.value;
-  }
-
-  isAlterable() {
-    return this.alterable;
-  }
-
   addChild(child) {
     this.children.push(child);
   }
@@ -44,28 +32,12 @@ export class Node {
     return this.children[nth];
   }
 
-  getChildren() {
-    return this.children;
-  }
-
   size() {
     return this.children.length;
   }
 
-  getGenSym() {
-    return this.getGenSym;
-  }
-
-  setGenSym(genSym) {
-    this.getGenSym = genSym;
-  }
-
   addParameterNode(parameter) {
     this.parameterAST.push(parameter);
-  }
-
-  getParameterNodes() {
-    return this.parameterAST;
   }
 }
 

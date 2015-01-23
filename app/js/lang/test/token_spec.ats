@@ -8,11 +8,11 @@ export function main() {
 
         it('should be created with a type and an optional value', () => {
             let t = new Token(TokenType.INT, 4);
-            expect(t.getValue()).toEqual(4);
-            expect(t.getType()).toEqual(TokenType.INT);
+            expect(t.value).toEqual(4);
+            expect(t.type).toEqual(TokenType.INT);
 
             t = new Token(TokenType.UNKNOWN);
-            expect(t.getValue()).toEqual(undefined);
+            expect(t.value).toEqual(undefined);
         });
 
         it('should get values for the constants', () => {

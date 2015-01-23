@@ -18,12 +18,4 @@ export class Token {
     this.type = type;
     this.value = value;
   }
-
-  getValue() {
-    return this.value;
-  }
-
-  getType() {
-    return this.type;
-  }
 }
