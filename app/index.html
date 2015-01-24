@@ -20,21 +20,11 @@
   
   <body fullbleed layout vertical>
 
-    <core-drawer-panel id="drawerPanel">
-
-      <core-header-panel drawer>
-        <core-toolbar><span id="seni-drawer-label">Seni</span></core-toolbar>
-        <core-menu>
-          <core-item label="one"></core-item>
-          <core-item label="two"></core-item>          
-        </core-menu>
-      </core-header-panel>
-
       <core-header-panel main>
         <core-toolbar>
-          <core-icon-button core-drawer-toggle icon="menu"></core-icon-button>
           <div id="seni-main-label">Seni</div>
           <span flex></span>
+          <paper-button raised role="button" tabindex="0" class="colored" id="my-button">Eval</paper-button>
           <paper-icon-button icon="search"></paper-icon-button>
           <paper-icon-button icon="more-vert" role="button"></paper-icon-button>
           <!-- <paper-progress class="bottom fit" value="30"></paper-progress> -->
@@ -43,13 +33,12 @@
         <div class="content">
           <h1 id="message"></h1>
           <div horizontal layout>
-            <textarea id="textarea" rows="10" columns="40"></textarea>
-            <paper-button raised role="button" tabindex="0" class="colored" id="my-button">Eval</paper-button>
             <canvas id="render-canvas" width="500" height="500"></canvas>
+            <textarea id="textarea" rows="10" columns="40"></textarea>
           </div>
         </div>
       </core-header-panel>
-    </core-drawer-panel>
+
 
     $SCRIPTS$
 
