@@ -3,15 +3,17 @@ import { createEnv, evalForm } from 'lang/runtime';
 import * as seniBind from 'seni/bind';
 
 export function main() {
-
   var renderer = new Renderer("render-canvas");
   setupUI(renderer);
+
+  // show something on the canvas at startup
+  renderScript(renderer, initialCode());
 }
 
 function setupUI(renderer) {
   let d = document;
 
-  let textArea = d.getElementById("textarea");
+  let textArea = d.getElementById("codemirror-textarea");
 
   textArea.value = initialCode();
 
@@ -20,12 +22,9 @@ function setupUI(renderer) {
     mode: "scheme"
   });
 
-  d.getElementById("my-button").addEventListener("click", (e) => {
+  d.getElementById("eval-button").addEventListener("click", (e) => {
     renderScript(renderer, editor.getValue());
   });
-
-  // show something on the canvas at startup
-  renderScript(renderer, editor.getValue());
 }
 
 function renderScript(renderer, form) {

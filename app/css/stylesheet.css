@@ -48,22 +48,77 @@ core-toolbar {
   background-color: #aaaaaa;
 }
 
-[drawer] {
-  background-color: #bbbbbb;
-}
 
-core-drawer-panel:not([narrow]) #seni-main-label {
-  display: none;
-}
-
-#render-canvas {
-  border: none;
-  margin-left: 2em;
-  margin-top: 1em;
-}
-
-#my-button {
+#eval-button {
   background: green;
   color: yellow;
 }
 
+
+
+.content {
+  height: 100%;
+}
+
+.flex-cell-canvas {
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+
+  width: 30px; /* To make the transition work nicely.  (Transitions to/from
+                  "width:auto" are buggy in Gecko and Webkit, at least.
+                  See http://bugzil.la/731886 for more info.) */
+
+
+  /* this flex cell is also a flex container for the render-canvas */
+  display: -webkit-flex;
+  -webkit-flex-direction: row;
+  
+  display: flex;
+  flex-direction: row;
+  
+  align-items: center;
+  justify-content: center;
+}
+.flex-cell {
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+  
+  width: 30px; /* To make the transition work nicely.  (Transitions to/from
+                  "width:auto" are buggy in Gecko and Webkit, at least.
+                  See http://bugzil.la/731886 for more info.) */
+}
+
+#codemirror-textarea {
+  width: 100%;
+  height: 100%;
+}
+
+#render-canvas {
+  border: none;
+  margin: 2em;
+
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+
+  width: 500px;
+  height: 500px;
+}
+
+#scribbler {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #555;
+  font: 14px Arial;
+  
+  /* flexbox setup */
+  display: -webkit-flex;
+  -webkit-flex-direction: row;
+  
+  display: flex;
+  flex-direction: row;
+}
+
+.CodeMirror {
+  height: 100%;
+  background: white;
+}
