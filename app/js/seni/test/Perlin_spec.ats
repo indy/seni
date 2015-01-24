@@ -11,6 +11,14 @@ export function main() {
         expect(v).toBeLessThan(1.0);
       }
     });
+
+    it('should output the same number given the same arguments', () => {
+      let v = perlin({x: 0.1, y: 0.3, z: 0.5});
+      let w = perlin({x: 0.1, y: 0.3, z: 0.5});
+
+      expect(v).toBeCloseTo(w, 3);
+    });
+
   });
 }
 
