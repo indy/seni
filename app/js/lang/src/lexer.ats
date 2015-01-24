@@ -3,7 +3,7 @@ import {
   TokenType
 } from './token';
 
-export function tokenise(input) {
+export function tokenise(input: string) : Array<Token> {
   let q = [],   // queue of tokens to return
       p = [];       // [token, remaining] pair
 

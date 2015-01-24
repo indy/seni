@@ -6,11 +6,11 @@ import {
 // the world's simplest compiler, just converts Node objects into a json-like structure
 
 
-export function compile(ast) {
+export function compile(ast: Array<Node>) {
   return ast.map((node) => _compile(node));
 }
 
-function _compile(node) {
+function _compile(node: Node) {
   if(node.type === NodeType.LIST) {
     return _compileList(node);
   } else if(node.type === NodeType.STRING) {
@@ -26,7 +26,7 @@ function _compile(node) {
   }
 }
 
-function _compileList(node) {
+function _compileList(node: Node) {
   const children = node.children;
 
   if(usingNamedParameters(children)) {
@@ -38,17 +38,17 @@ function _compileList(node) {
   }
 }
 
-function usingNamedParameters(children) {
+function usingNamedParameters(children: Array<Node>) : boolean {
   // note: this will return false for functions where 0 arguments are given
   return children.length > 1 && children[1].type === NodeType.LABEL;
 }
 
-function allNamedParameters(children) {
+function allNamedParameters(children: Array<Node>) : boolean {
   // a basic test, but if it passes this it should be all <label,value> pairs 
   return children[0].type === NodeType.LABEL;
 }
   
-function compileFormUsingNamedParameters(children) {
+function compileFormUsingNamedParameters(children: Array<Node>) {
   // this is a form that has the pattern (foo arg1: 3 arg2: 5)
   // combine the labels + arguments into an object
 
@@ -69,7 +69,7 @@ function compileFormUsingNamedParameters(children) {
   return [_compile(children[0]), args];
 }
 
-function compileAllNamedParameters(children) {
+function compileAllNamedParameters(children: Array<Node>) {
   // can assume this is of the form (arg1: 3 arg2: 5)
   // combine the labels + arguments into an object
 

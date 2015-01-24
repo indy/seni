@@ -40,14 +40,15 @@ function renderScript(renderer, form) {
 function initialCode() {
   return `
 
-(scale x: 2.5 y: 2.5)
-(rotate angle: (/ 3.14 4))
-(translate x: 300)
-(rect width: 200 height: 200 
-      colour: (rgbColour r: (perlin) 
-                         g: (perlin) 
-                         b: (perlin)
-                         a: 0.5))
+(let ((c 50))
+  (loop (j from: (/ c 2) to: 1000 step: c)
+        (loop (i from: (/ c 2) to: 1000 step: c) 
+              (rect width: c height: c
+                    x: i y: j
+                    colour: (rgbColour r: (perlin) 
+                                       g: (perlin) 
+                                       b: (perlin)
+                             a: 0.5)))))
 `;
 }
 
@@ -130,5 +131,33 @@ function initialCode() {
 
 
 
+
+(let ((c 50) (m 1.2))
+  (loop (j from: (/ c 2) to: 1000 step: c)
+        (loop (i from: (/ c 2) to: 1000 step: c) 
+              (pushMatrix)
+              (translate x: i y: j)
+              (rotate angle: (/ 3.14 4))
+              (rect width: (* c m) height: (* c m)
+                    colour: (rgbColour r: (perlin) 
+                                       g: (perlin) 
+                                       b: (perlin)
+                             a: 0.7))
+              (popMatrix))))
+
+
                 
-                */
+(let ((c 50) (m 1.2))
+  (loop (j from: (/ c 2) to: 1000 step: c)
+        (loop (i from: (/ c 2) to: 1000 step: c) 
+              (pushMatrix) 
+               (translate x: i y: j)
+               (rotate angle: (/ 3.14 4))
+               (rect width: (* c m) height: (* c m)
+                     colour: (rgbColour r: (perlin) 
+                                        g: (perlin) 
+                                        b: (perlin)
+                                        a: 0.7))
+              
+             (popMatrix) 
+              )))                */
