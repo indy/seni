@@ -3,6 +3,11 @@ const FALSE_STRING = '#f';
 
 export function evaluate(env, expr) {
 
+  if(expr === undefined) {
+    // in case of non-existent else clause in if statement
+    return;
+  }
+
   // todo: may need something like:
   if (typeof expr === 'number') {
     return expr;
@@ -71,47 +76,37 @@ function addBindings(env, exprs) {
 }
 
 export var specialForms = {
-  'if': (env, expr) => {
-    const conditional = evaluate(env, expr[1]);
-    // todo: only a value of #t is truthy, change this so that
-    // any non-zero, non-falsy value is truthy
-    if(conditional === TRUE_STRING) {
-      return evaluate(env, expr[2]);
-    } else {
-      if(expr.length == 4) {
-        return evaluate(env, expr[3]);
-      }
-    }
-  },
-  'quote': (env, expr) => {
-    return expr[1];       
-  },
-  'define': (env, expr) => {
-    // (define foo 12)
-    const name = expr[1];
-    const val = expr[2];
-    env.add(name, evaluate(env, val));
-  },
-  'set!': (env, expr) => {
-    // (set! foo 42)
-    const name = expr[1];
-    const val = expr[2];
-    env.mutate(name, evaluate(env, val));
-  },
-  'begin': (env, expr) => {
-    // (begin (f1 1) (f2 3) (f3 5))
-    return expr.slice(1).reduce((a, b) => evaluate(env, b), null);
-  },
-  'let': (env, expr) => {
-    // (let ((a 12) (b 24)) (+ a b foo))
-    return evaluate(addBindings(env.newScope(), expr[1]), expr[2]);
-  },
-  'lambda': (env, expr) => {
-    // (lambda (x: 0 y: 0) (+ x y))
-    return function(args) {
-      const newEnv = env.newScope();
 
-      const defaultArgValues = expr[1];
+  // (if something truthy falsey) || (if something truthy)
+  'if': (env, [_, cond, t, f]) => 
+    evaluate(env, evaluate(env, cond) === TRUE_STRING ? t : f),
+
+  // (quote (age 99))
+  'quote': (env, [_, form]) => 
+    form,
+
+  // (define foo 12)
+  'define': (env, [_, name, val]) => 
+    env.add(name, evaluate(env, val)),
+
+  // (set! foo 42)
+  'set!': (env, [_, name, val]) => 
+    env.mutate(name, evaluate(env, val)),
+
+  // (begin (f1 1) (f2 3) (f3 5))
+  'begin': (env, [_, ...body]) => 
+    body.reduce((a, b) => evaluate(env, b), null),
+
+  // (let ((a 12) (b 24)) (+ a b foo))
+  'let': (env, [_, args, ...body]) => {
+    let e = addBindings(env.newScope(), args);
+    return body.reduce((a, b) => evaluate(e, b), null);
+  },
+
+  // (lambda (x: 0 y: 0) (+ x y))
+  'lambda': (env, [_, defaultArgValues, body]) => 
+    function(args) {
+      const newEnv = env.newScope();
       for(let k in defaultArgValues) {
         if(args[k] !== undefined) {
           newEnv.add(k, args[k]);
@@ -119,17 +114,19 @@ export var specialForms = {
           newEnv.add(k, defaultArgValues[k]);
         }
       }
-      return evaluate(newEnv, expr[2]);
-    };
-  },
-  'log': (env, expr) => { console.log(evaluate(env, expr[1]))},
-  'loop': (env, expr) => {
-    // (loop (a from: 1 to: 30 step: 2) (+ a a))
-    const [varName, varParameters] = expr[1];
+      return evaluate(newEnv, body);
+    },
+
+  // (log "hello world")
+  'log': (env, [_, msg]) => 
+    console.log(evaluate(env, msg)),
+
+  // (loop (a from: 1 to: 30 step: 2) (+ a a))
+  'loop': (env, [_, [varName, varParameters], ...body]) => {
     for(let k in varParameters) {
       varParameters[k] = evaluate(env, varParameters[k]);
     }
-    return loopingFn(env.newScope(), expr.slice(2), varName, varParameters);
+    return loopingFn(env.newScope(), body, varName, varParameters);
   }
 }
 
@@ -166,19 +163,21 @@ function loopingFn(env, expr, varName, {from = 0,
 // could get rid of the concept of classic functions and allow the user to create @ functions at the expense of having code like: (@+ 4 3 7 4) rather than (+ 4 3 7 4)
 
 export var classicFunctions = {
-  '+': (args) => args.reduce((a, b) => a + b, 0),
+  '+': (args) => 
+    args.reduce((a, b) => a + b, 0),
 
-  '*': (args) => args.reduce((a, b) => a * b, 1),
+  '*': (args) => 
+    args.reduce((a, b) => a * b, 1),
   
-  '-': (args) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
+  '-': (args) => 
+    args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
 
-  '/': (args) => args.reduce((a, b) => a / b),
+  '/': (args) => 
+    args.reduce((a, b) => a / b),
   
-  '=': (args) => {
-    const first = args[0];
-    const res = args.slice(1).every(a => a === first);
-    return res ? TRUE_STRING : FALSE_STRING;
-  },
+  '=': ([first, ...rest]) => 
+    rest.every(a => a === first) ? TRUE_STRING : FALSE_STRING,
+
   '<': (args) => {
     let prev = args[0];
     for(let i = 1; i < args.length; i++) {
@@ -190,6 +189,7 @@ export var classicFunctions = {
     }
     return TRUE_STRING;
   },
+
   '>': (args) => {
     let prev = args[0];
     for(let i = 1; i < args.length; i++) {
@@ -201,7 +201,10 @@ export var classicFunctions = {
     }
     return TRUE_STRING;
   },
-  'list' : (args) => args,
+
+  'list' : (args) => 
+    args,
+
   'pair' : (args) => {
     let res = [];
     for(let i=0;i<args.length;i+=2) {

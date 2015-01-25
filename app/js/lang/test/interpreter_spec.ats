@@ -179,8 +179,13 @@ export function main() {
 
       expect(res).toEqual(41);
 
+      // let bindings can refer to earlier bindings
       res = evalForm(e, "(let ((a 2) (b (+ a a))) (+ a b foo))");
       expect(res).toEqual(11);
+
+      // the body of let can contain multiple forms
+      res = evalForm(e, "(let ((a 2) (b (+ a a))) (set! a 100) (+ a b foo))");
+      expect(res).toEqual(109);
     });
 
     it('should test destructuring let', () => {
