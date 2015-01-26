@@ -98,6 +98,7 @@ function consumeQuotedForm(tokens: Array<Token>) : Node {
 
 function consumeList(tokens: Array<Token>, alterable: boolean) : Node {
   let node = new Node(NodeType.LIST);
+  let n;
 
   while(true) {
     let token = tokens[0];
@@ -105,7 +106,10 @@ function consumeList(tokens: Array<Token>, alterable: boolean) : Node {
       tokens.shift();
       return node;
     } else {
-      node.addChild(consumeItem(tokens, false));
+      n = consumeItem(tokens, false);
+      if(n) {
+        node.addChild(n);
+      }
     }
   }
 }
