@@ -31,9 +31,10 @@
         </core-toolbar>
 
         <div class="content">
+
           <div id="scribbler">
             <div class="flex-cell-canvas">
-              <canvas id="render-canvas"></canvas>
+              <canvas id="render-canvas" width="500" height="500"></canvas>
             </div>
             <div class="flex-cell">
               <textarea id="codemirror-textarea"></textarea>
@@ -42,9 +43,7 @@
         </div>
       </core-header-panel>
 
-
     $SCRIPTS$
-
-    <script type="text/javascript">System.import('main').then(function(m) { m.main(); }, console.log.bind(console))</script>
+      <script type="text/javascript">System.import('main').then(function(m) { m.main(); }, console.log.bind(console))</script>
   </body>
 </html>
