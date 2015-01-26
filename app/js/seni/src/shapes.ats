@@ -98,9 +98,9 @@ export function renderBezier(renderer: Renderer,
   
   for(let i=0; i<tVals.length - 1; i++) {  
     let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
-        i0 = xs[i],
-        i1 = ys[i],
-        t = tVals[i];
+    i0 = xs[i],
+    i1 = ys[i],
+    t = tVals[i];
 
     if(i === 0) {
       buffer.prepareToAddTriangleStrip(glContainer, tessellation * 2,
@@ -117,9 +117,9 @@ export function renderBezier(renderer: Renderer,
 
   // final 2 vertices for the end point
   let i = tVals.length - 2,
-      [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
-      i2 = xs[i+1],
-      i3 = ys[i+1];
+  [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
+  i2 = xs[i+1],
+  i3 = ys[i+1];
   
   buffer.addVertex([(xn1 * halfWidthEnd) + i2, (yn1 * halfWidthEnd) + i3, 0.0], 
                    colour.val);
@@ -148,15 +148,15 @@ export function renderBezierTrailing(renderer: Renderer,
 }
 
 export function renderBezierBulging(renderer: Renderer,
-                                     {tessellation = 15,
-                                      lineWidth = 20,
-                                      coords = [[440, 400],
-                                                [533, 700],
-                                                [766, 200],
-                                                [900, 500]],
-                                      tStart = 0,
-                                      tEnd = 1,
-                                      colour = undefined}) {
+                                    {tessellation = 15,
+                                     lineWidth = 20,
+                                     coords = [[440, 400],
+                                               [533, 700],
+                                               [766, 200],
+                                               [900, 500]],
+                                     tStart = 0,
+                                     tEnd = 1,
+                                     colour = undefined}) {
 
   let tMid = (tStart + tEnd) / 2.0;
   

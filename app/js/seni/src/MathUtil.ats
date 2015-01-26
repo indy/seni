@@ -68,10 +68,10 @@ export function remapFn({from = [0, 1],
                          clamping = false,
                          mapping = "linear"}) {
   let [fromA, fromB] = from,
-      [toA, toB] = to,
-      [fromM, fromC] = mc([fromA, 0], [fromB, 1]),
-      [toM, toC] = mc([0, toA], [1, toB]),
-      normalisedMappingFn = mappingLookup.get(mapping);
+  [toA, toB] = to,
+  [fromM, fromC] = mc([fromA, 0], [fromB, 1]),
+  [toM, toC] = mc([0, toA], [1, toB]),
+  normalisedMappingFn = mappingLookup.get(mapping);
 
   if(normalisedMappingFn === undefined) {
     normalisedMappingFn = mappingLookup.get("linear");
@@ -79,8 +79,8 @@ export function remapFn({from = [0, 1],
 
   return function({val = 0.5}) {
     let fromInterp = (fromM * val) + fromC,
-        toInterp = normalisedMappingFn(fromInterp),
-        res = (toM * toInterp) + toC;
+    toInterp = normalisedMappingFn(fromInterp),
+    res = (toM * toInterp) + toC;
     if(clamping) {
       return fromInterp < 0 ? toA : (fromInterp > 1) ? toB : res;
     } else {

@@ -23,7 +23,7 @@ export function main() {
       let compiled = compile(ast);
       expect(1).toEqual(1);
     });
-       
+    
     it('should test required functions', () => {
 
       expect(simpleCompile("4")).

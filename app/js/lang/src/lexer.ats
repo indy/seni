@@ -5,7 +5,7 @@ import {
 
 export function tokenise(input: string) : Array<Token> {
   let q = [],   // queue of tokens to return
-      p = [];       // [token, remaining] pair
+  p = [];       // [token, remaining] pair
 
   let s = skipWhitespace(input);
 

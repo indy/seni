@@ -16,8 +16,8 @@ export class Renderer {
     initGLState(this.glContainer.gl);
 
 
-//    this.matrixStack.translate(-40, -50);
-//    this.matrixStack.rotate(0.2);
+    //    this.matrixStack.translate(-40, -50);
+    //    this.matrixStack.rotate(0.2);
   }
 
   getMatrixStack() {

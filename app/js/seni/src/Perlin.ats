@@ -5,9 +5,9 @@
 export function perlin({x = Math.random(), 
                         y = Math.random(),
                         z = Math.random()}) : number {
-  let v = noise(x, y, z);
-  return (v + 1) / 2.0;
-}
+                          let v = noise(x, y, z);
+                          return (v + 1) / 2.0;
+                        }
 
 // A basic translation of Ken Perlin's Java reference implementation of improved noise (C) 2002
 
