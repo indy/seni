@@ -41,20 +41,19 @@ function initialCode() {
 
 
 
+
+
 (let ((c 30) (m 2.2))
   (loop (j from: (/ c 2) to: 1100 step: c)
-        (loop (i from: (/ c 2) to: 1100 step: c) 
-              (pushMatrix) 
-               (translate x: i y: j)
-               (rotate angle: (/ 3.14 4.1))
-               (rect width: (* c m) height: (* c m)
-                     colour: (rgbColour r: (perlin) 
-                                        g: (perlin) 
-                                        b: (perlin)
-                                        a: 0.7))
-              
-             (popMatrix) 
-              )))
+    (loop (i from: (/ c 2) to: 1100 step: c) 
+      (onMatrixStack 
+        (translate x: i y: j)
+        (rotate angle: (/ 3.14 4.1))
+        (rect width: (* c m) height: (* c m)
+              colour: (rgbColour r: (perlin) 
+                                 g: (perlin) 
+                                 b: (perlin)
+                                 a: 0.7))))))
 
 `;
 }

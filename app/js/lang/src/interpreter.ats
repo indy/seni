@@ -127,7 +127,16 @@ export var specialForms = {
       varParameters[k] = evaluate(env, varParameters[k]);
     }
     return loopingFn(env.newScope(), body, varName, varParameters);
-  }
+  },
+
+  // (onMatrixStack (f1 1) (f2 3) (f3 5))
+  'onMatrixStack': (env, [_, ...body]) => {
+    env.lookup('pushMatrix')();
+    let res =  body.reduce((a, b) => evaluate(env, b), null);
+    env.lookup('popMatrix')();
+    return res;
+  },
+
 }
 
 function loopingFn(env, expr, varName, {from = 0,
