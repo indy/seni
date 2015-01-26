@@ -10,11 +10,15 @@ import {
 
 export function parse(tokens: Array<Token>) : Array<Node> {
 
-    let nodes = [];
+  let nodes = [];
+  let n;
     
-    while(tokens.length != 0) {
-        nodes.push(consumeItem(tokens, false));
+  while(tokens.length != 0) {
+    n = consumeItem(tokens, false);
+    if(n) {
+      nodes.push(n);
     }
+  }
 
     return nodes;
 }
@@ -50,6 +54,8 @@ function consumeItem(tokens: Array<Token>, alterable: boolean) : Node {
         return consumeBracketForm(tokens);
     } else if(tokenType === TokenType.BRACKET_END) {
         return null;
+    } else if(tokenType === TokenType.COMMENT) {
+      return null;
     }
     // todo: throw an error?
 

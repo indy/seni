@@ -9,7 +9,8 @@ export var TokenType = {
   NAME: 7,
   STRING: 8,
   QUOTE_ABBREVIATION: 9,
-  LABEL: 10
+  LABEL: 10,
+  COMMENT: 11
 };
 
 export class Token {
