@@ -19,7 +19,8 @@ function setupUI(renderer) {
 
   var editor = CodeMirror.fromTextArea(textArea, {
     lineNumbers: true,
-    mode: "scheme"
+    mode: "scheme",
+    autoMatchParens: true
   });
 
   d.getElementById("eval-button").addEventListener("click", (e) => {
@@ -38,23 +39,19 @@ function renderScript(renderer, form) {
 
 function initialCode() {
   return `
+(define wash (lambda (c: 60 m: 2.2)
+		(loop (j from: (/ c 2) to: 1100 step: c)
+			(loop (i from: (/ c 2) to: 1100 step: c) 
+   				(onMatrixStack
+                	(translate x: j y: i)
+   	         		(rotate angle: (/ 3.14 (+ 0.26 (* 0.2 (perlin)))))
+   	         		(rect width: (* c m) height: (* c m)
+       	    			colour: (rgbColour r: (+ 0.5 (* 0.1 (perlin))) 
+            	        	               g: (+ 0.5 (* 0.1 (perlin))) 
+            	            	           b: (+ 0.5 (* 0.3 (perlin)))
+            	                	       a: 0.9)))))))
 
-
-
-
-
-(let ((c 30) (m 2.2))
-  (loop (j from: (/ c 2) to: 1100 step: c)
-    (loop (i from: (/ c 2) to: 1100 step: c) 
-      (onMatrixStack 
-        (translate x: i y: j)
-        (rotate angle: (/ 3.14 4.1))
-        (rect width: (* c m) height: (* c m)
-              colour: (rgbColour r: (perlin) 
-                                 g: (perlin) 
-                                 b: (perlin)
-                                 a: 0.7))))))
-
+(wash)
 `;
 }
 
@@ -118,22 +115,37 @@ function initialCode() {
               )))
 
 
-// another good wash background:
+
+
 (let ((c 30) (m 2.2))
   (loop (j from: (/ c 2) to: 1100 step: c)
-        (loop (i from: (/ c 2) to: 1100 step: c) 
-              (pushMatrix) 
-               (translate x: j y: i)
-               (rotate angle: (/ 3.14 (+ 0.26 (* 0.2 (perlin)))))
-               (rect width: (* c m) height: (* c m)
-                     colour: (rgbColour r: (+ 0.5 (* 0.1 (perlin))) 
-                                        g: (+ 0.5 (* 0.1 (perlin))) 
-                                        b: (+ 0.5 (* 0.3 (perlin)))
-                                        a: 0.9))
-              
-             (popMatrix) 
-              )))
+    (loop (i from: (/ c 2) to: 1100 step: c) 
+      (onMatrixStack 
+        (translate x: i y: j)
+        (rotate angle: (/ 3.14 4.1))
+        (rect width: (* c m) height: (* c m)
+              colour: (rgbColour r: (perlin) 
+                                 g: (perlin) 
+                                 b: (perlin)
+                                 a: 0.7))))))
 
 
+
+
+
+// another good wash background:
+(define wash (lambda (c: 60 m: 2.2)
+		(loop (j from: (/ c 2) to: 1100 step: c)
+			(loop (i from: (/ c 2) to: 1100 step: c) 
+   				(onMatrixStack
+                	(translate x: j y: i)
+   	         		(rotate angle: (/ 3.14 (+ 0.26 (* 0.2 (perlin)))))
+   	         		(rect width: (* c m) height: (* c m)
+       	    			colour: (rgbColour r: (+ 0.5 (* 0.1 (perlin))) 
+            	        	               g: (+ 0.5 (* 0.1 (perlin))) 
+            	            	           b: (+ 0.5 (* 0.3 (perlin)))
+            	                	       a: 0.9)))))))
+
+(wash)
 
 */

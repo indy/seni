@@ -40,12 +40,18 @@ function _compileList(node: Node) {
 
 function usingNamedParameters(children: Array<Node>) : boolean {
   // note: this will return false for functions where 0 arguments are given
-  return children.length > 1 && children[1].type === NodeType.LABEL;
+  if(children.length > 1) {
+    return children[1].type === NodeType.LABEL;
+  }
+  return false;
 }
 
 function allNamedParameters(children: Array<Node>) : boolean {
-  // a basic test, but if it passes this it should be all <label,value> pairs 
-  return children[0].type === NodeType.LABEL;
+  // a basic test, but if it passes this it should be all <label,value> pairs
+  if(children.length > 0) {
+    return children[0].type === NodeType.LABEL;
+  }
+  return false;
 }
 
 function compileFormUsingNamedParameters(children: Array<Node>) {

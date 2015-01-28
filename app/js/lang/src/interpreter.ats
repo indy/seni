@@ -94,17 +94,16 @@ export var specialForms = {
     env.mutate(name, evaluate(env, val)),
 
   // (begin (f1 1) (f2 3) (f3 5))
-  'begin': (env, [_, ...body]) => 
-    body.reduce((a, b) => evaluate(env, b), null),
+  'begin': (env, [_, ...body]) =>
+    evalBodyForms(env, body),
 
   // (let ((a 12) (b 24)) (+ a b foo))
   'let': (env, [_, args, ...body]) => {
-    let e = addBindings(env.newScope(), args);
-    return body.reduce((a, b) => evaluate(e, b), null);
+    return evalBodyForms(addBindings(env.newScope(), args), body);
   },
 
   // (lambda (x: 0 y: 0) (+ x y))
-  'lambda': (env, [_, defaultArgValues, body]) => 
+  'lambda': (env, [_, defaultArgValues, ...body]) => 
     function(args) {
       const newEnv = env.newScope();
       for(let k in defaultArgValues) {
@@ -114,9 +113,9 @@ export var specialForms = {
           newEnv.add(k, defaultArgValues[k]);
         }
       }
-      return evaluate(newEnv, body);
+      return evalBodyForms(newEnv, body);
     },
-
+  
   // (log "hello world")
   'log': (env, [_, msg]) => 
     console.log(evaluate(env, msg)),
@@ -132,11 +131,16 @@ export var specialForms = {
   // (onMatrixStack (f1 1) (f2 3) (f3 5))
   'onMatrixStack': (env, [_, ...body]) => {
     env.lookup('pushMatrix')();
-    let res =  body.reduce((a, b) => evaluate(env, b), null);
+    let res =  evalBodyForms(env, body);
     env.lookup('popMatrix')();
     return res;
   },
 
+}
+
+// whoa bodyform, bodyform for you
+function evalBodyForms(env, bodyForms) {
+  return bodyForms.reduce((a, b) => evaluate(env, b), null);  
 }
 
 function loopingFn(env, expr, varName, {from = 0,
