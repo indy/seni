@@ -39,20 +39,35 @@ function renderScript(renderer, form) {
 
 function initialCode() {
   return `
-(define wash (lambda (c: 60 m: 2.2)
-		(loop (j from: (/ c 2) to: 1100 step: c)
-			(loop (i from: (/ c 2) to: 1100 step: c) 
-   				(onMatrixStack
-                	(translate x: j y: i)
-   	         		(rotate angle: (/ 3.14 (+ 0.26 (* 0.2 (perlin)))))
-   	         		(rect width: (* c m) height: (* c m)
-       	    			colour: (rgbColour r: (+ 0.5 (* 0.1 (perlin))) 
-            	        	               g: (+ 0.5 (* 0.1 (perlin))) 
-            	            	           b: (+ 0.5 (* 0.3 (perlin)))
-            	                	       a: 0.9)))))))
 
-(wash)
-`;
+(define vary (lambda (x: 0 y: 0 z: 0 scale: 1)
+               (+ y (* scale (perlin2 x: x y: y z: z)))))
+
+
+(define wash (lambda (variation: 200
+                      lineWidth: 70
+                      lineSegments: 5
+                      seed: 272)
+               (loop (h from: -20 to: 1020 step: 20)
+        (bezier tesselation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair 0 (vary x: 0.10 y: h z: seed scale: variation)
+                              333 (vary x: 333.33 y: h z: seed scale: variation)
+                              666 (vary x: 666.66 y: h z: seed scale: variation)
+                              1000 (vary x: 1000.10 y: h z: seed scale: variation))
+                colour: (rgbColour r: 0.15 g: 0.15 b: 0.15 a: 0.1))
+        (bezier tesselation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair (vary x: 0.10 y: h z: seed scale: variation) 0
+                              (vary x: 333.33 y: h z: seed scale: variation) 333
+                              (vary x: 666.66 y: h z: seed scale: variation) 666
+                              (vary x: 1000.10 y: h z: seed scale: variation) 1000)
+                colour: (rgbColour r: 0.15 g: 0.15 b: 0.15 a: 0.1)))))
+
+
+  (wash)
+  
+  `;
 }
 
 
@@ -147,5 +162,38 @@ function initialCode() {
             	                	       a: 0.9)))))))
 
 (wash)
+
+
+
+
+; a decent replication of the original clj wash
+(define vary (lambda (x: 0 y: 0 z: 0 scale: 1)
+               (+ y (* scale (perlin x: x y: y z: z)))))
+
+
+(define wash (lambda (variation: 200
+                      lineWidth: 70
+                      lineSegments: 5
+                      seed: 200)
+               (loop (h from: -20 to: 1020 step: 20)
+        (bezier tesselation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair 0 (vary x: 0.10 y: h z: seed scale: variation)
+                              333 (vary x: 333.33 y: h z: seed scale: variation)
+                              666 (vary x: 666.66 y: h z: seed scale: variation)
+                              1000 (vary x: 1000.10 y: h z: seed scale: variation))
+                colour: (rgbColour r: 0.6 g: 0.6 b: 0.6 a: 0.4))
+        (bezier tesselation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair (vary x: 0.10 y: h z: seed scale: variation) 0
+                              (vary x: 333.33 y: h z: seed scale: variation) 333
+                              (vary x: 666.66 y: h z: seed scale: variation) 666
+                              (vary x: 1000.10 y: h z: seed scale: variation) 1000)
+                colour: (rgbColour r: 0.6 g: 0.6 b: 0.6 a: 0.4)))))
+
+
+(wash)
+
+
 
 */

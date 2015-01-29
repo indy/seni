@@ -2,6 +2,12 @@
 
 
 // accepts named parameters and returns a value in the range 0..1
+export function perlin2({x = Math.random(), 
+                        y = Math.random(),
+                        z = Math.random()}) : number {
+                          return noise(x, y, z);
+                        }
+
 export function perlin({x = Math.random(), 
                         y = Math.random(),
                         z = Math.random()}) : number {

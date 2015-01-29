@@ -4,7 +4,7 @@ import { Env } from 'lang/env';
 import { Node, NodeType } from 'lang/node';
 import { remapFn } from './MathUtil';
 import * as ColourNS from './Colour';
-import { perlin } from './Perlin';
+import { perlin, perlin2 } from './Perlin';
 
 export function addBindings(env, renderer) {
 
@@ -66,4 +66,5 @@ function bindColour(env) {
 
 function bindPerlin(env) {
   env.add('perlin', (args) => perlin(args));
+  env.add('perlin2', (args) => perlin2(args));
 }
