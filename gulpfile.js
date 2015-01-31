@@ -231,7 +231,7 @@ gulp.task('cleanbuild', function() {
 });
 
 
-gulp.task('watch', function() {
+gulp.task('watch.dev', function() {
   var changeFn = function(event) {
     console.log('File ' + event.path + ' was ' + event.type);
   };
@@ -240,5 +240,12 @@ gulp.task('watch', function() {
   gulp.watch('app/**/*.css', ['build/css.js.dev']).on('change', changeFn);
   gulp.watch('app/**/*.html', ['build/html.js.dev']).on('change', changeFn);
 });
+
+gulp.task('watch', function() {
+  return runSequence(
+    ['build.js.dev',
+     'watch.dev']);
+});
+
 
 gulp.task('serve', ['serve.js.dev']);
