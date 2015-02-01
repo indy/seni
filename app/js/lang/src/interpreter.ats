@@ -103,18 +103,24 @@ export var specialForms = {
   },
 
   // (lambda (x: 0 y: 0) (+ x y))
-  'lambda': (env, [_, defaultArgValues, ...body]) => 
-    function(args) {
+  'lambda': (env, [_, defaultArgValues, ...body]) => {
+
+    let evaldDefaultArgValues = {};
+    for(let k in defaultArgValues) {
+      evaldDefaultArgValues[k] = evaluate(env, defaultArgValues[k]);
+    }    
+  
+    return function(args) {
       const newEnv = env.newScope();
-      for(let k in defaultArgValues) {
+      for(let k in evaldDefaultArgValues) {
         if(args[k] !== undefined) {
           newEnv.add(k, args[k]);
         } else {
-          newEnv.add(k, defaultArgValues[k]);
+          newEnv.add(k, evaldDefaultArgValues[k]);
         }
       }
       return evalBodyForms(newEnv, body);
-    },
+    }},
   
   // (log "hello world")
   'log': (env, [_, msg]) => 
