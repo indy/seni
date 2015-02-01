@@ -14,9 +14,6 @@ import {
 export function main() {
   describe('parse', () => {
 
-    // todo: parser should treat commas as whitespace
-    
-
     it('should parse an int', () => {
       let ts = [new Token(TokenType.INT, 4)];
 
