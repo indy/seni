@@ -102,8 +102,8 @@ export var specialForms = {
     return evalBodyForms(addBindings(env.newScope(), args), body);
   },
 
-  // (lambda (x: 0 y: 0) (+ x y))
-  'lambda': (env, [_, defaultArgValues, ...body]) => {
+  // (fn (x: 0 y: 0) (+ x y))
+  'fn': (env, [_, defaultArgValues, ...body]) => {
 
     let evaldDefaultArgValues = {};
     for(let k in defaultArgValues) {

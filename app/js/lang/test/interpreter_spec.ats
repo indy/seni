@@ -193,32 +193,32 @@ export function main() {
       expect(res).toEqual(12);
     });
 
-    it('should test lambda', () => {
-      // (lambda (x y z) (+ x y z))
-      let res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y)) x: 2 y: 3)");
+    it('should test fn', () => {
+      // (fn (x y z) (+ x y z))
+      let res = evalForm(e, "((fn (x: 0 y: 0) (+ x y)) x: 2 y: 3)");
       expect(res).toEqual(5);
 
-      res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y)) x: (+ 3 2) y: 3)");
+      res = evalForm(e, "((fn (x: 0 y: 0) (+ x y)) x: (+ 3 2) y: 3)");
       expect(res).toEqual(8);
 
       // body can contain multiple forms
-      res = evalForm(e, "((lambda (x: 0 y: 0) (+ 1 1) (+ x y)) x: (+ 3 2) y: 3)");
+      res = evalForm(e, "((fn (x: 0 y: 0) (+ 1 1) (+ x y)) x: (+ 3 2) y: 3)");
       expect(res).toEqual(8);
 
-      res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y)) y: 3)");
+      res = evalForm(e, "((fn (x: 0 y: 0) (+ x y)) y: 3)");
       expect(res).toEqual(3);
 
-      res = evalForm(e, "((lambda (x: 0 y: 0) (+ x y foo)) x: 2 y: 3)");
+      res = evalForm(e, "((fn (x: 0 y: 0) (+ x y foo)) x: 2 y: 3)");
       expect(res).toEqual(10);
       
-      res = evalForm(e, "((lambda (x: 3 y: 4) (+ x y)))");
+      res = evalForm(e, "((fn (x: 3 y: 4) (+ x y)))");
       expect(res).toEqual(7);
 
       // the default values may need to be eval'd
-      res = evalForm(e, "((lambda (x: 3 y: (+ 2 2)) (+ x y)))");
+      res = evalForm(e, "((fn (x: 3 y: (+ 2 2)) (+ x y)))");
       expect(res).toEqual(7);
 
-      res = evalForm(e, "((lambda () 3))");
+      res = evalForm(e, "((fn () 3))");
       expect(res).toEqual(3);
     });
 
