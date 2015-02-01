@@ -103,21 +103,17 @@ export var specialForms = {
   },
 
   // (fn (x: 0 y: 0) (+ x y))
-  'fn': (env, [_, defaultArgValues, ...body]) => {
-
-    let evaldDefaultArgValues = {};
-    for(let k in defaultArgValues) {
-      evaldDefaultArgValues[k] = evaluate(env, defaultArgValues[k]);
-    }    
+  'fn': (env, [_, defaultArgForms, ...body]) => {
+    
+    let defaultArgValues = {};
+    for(let k in defaultArgForms) {
+      defaultArgValues[k] = evaluate(env, defaultArgForms[k]);
+    }
   
     return function(args) {
       const newEnv = env.newScope();
-      for(let k in evaldDefaultArgValues) {
-        if(args[k] !== undefined) {
-          newEnv.add(k, args[k]);
-        } else {
-          newEnv.add(k, evaldDefaultArgValues[k]);
-        }
+      for(let k in defaultArgValues) {
+        newEnv.add(k, args[k] === undefined ? defaultArgValues[k] : args[k]);
       }
       return evalBodyForms(newEnv, body);
     }},
