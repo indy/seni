@@ -2,7 +2,7 @@ import * as Shapes from './shapes';
 import { MatrixStack } from './MatrixStack';
 import { Env } from 'lang/env';
 import { Node, NodeType } from 'lang/node';
-import { remapFn } from './MathUtil';
+import { remapFn, PI, twoPI, PIbyTwo } from './MathUtil';
 import * as ColourNS from './Colour';
 import { perlin, perlin2 } from './Perlin';
 
@@ -19,6 +19,9 @@ export function addBindings(env, renderer) {
 
 function bindMath(env) {
   env.add('remapFn', (args) => remapFn(args));
+  env.add('PI', () => PI);
+  env.add('twoPI', () => twoPI);
+  env.add('PIbyTwo', () => PIbyTwo);
 }
 
 function bindMatrixStack(env, matrixStack) {
@@ -62,6 +65,8 @@ function bindColour(env) {
   env.add('HSV', ColourNS.Format.HSV);
 
   env.add('colourConvert', (args) => ColourNS.colourConvert(args));
+
+  env.add('analagous', (args) => args.analagous());
 }
 
 function bindPerlin(env) {

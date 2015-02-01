@@ -1,6 +1,6 @@
-var PI = Math.PI;
-var twoPI = PI * 2;
-var PIbyTwo = PI / 2;
+export var PI = Math.PI;
+export var twoPI = PI * 2;
+export var PIbyTwo = PI / 2;
 
 export function stepsInclusive(start, end, num) {
   var unit = (end - start) / (num - 1);
