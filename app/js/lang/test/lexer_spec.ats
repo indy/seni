@@ -23,6 +23,23 @@ import {
 export function main() {
   describe('Lexer', () => {
 
+    it('should error handle', () => {
+      // '|' is a character that currently isn't recognised by seni
+
+      let q = tokenise("|");
+      expect(q.length).toEqual(1);
+      expect(q[0].type).toEqual(TokenType.UNKNOWN);
+      expect(q[0].value).toEqual("|");
+
+      // if an illegal character is found in any part of the input, only that
+      // character will be returned as the result of the lexing operation
+      //
+      q = tokenise("(foo bar baz) | ");
+      expect(q.length).toEqual(1);
+      expect(q[0].type).toEqual(TokenType.UNKNOWN);
+      expect(q[0].value).toEqual("|");
+    });
+
     it('should tokenise strings', () => {
       let q = tokenise("(go 42 3.14)");
       expect(q.length).toEqual(5);

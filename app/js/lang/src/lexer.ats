@@ -44,9 +44,10 @@ export function tokenise(input: string) : Array<Token> {
     case TokenType.COMMENT :
       p = consumeComment(s);
       break;
-      
-      // todo: add a default that throws an exception?
-      // todo: or just add an UNKNOWN token to q
+    default:
+      // read the unknown token and return it
+      let tok = consumeUnknown(s)[0]
+      return [tok];
     };
 
     let [token, remaining] = p;
@@ -98,6 +99,10 @@ export function consumeFloat(s: string) {
   
   let token = new Token(TokenType.FLOAT, parseFloat(s.substring(0, i)));
   return [token, s.substring(i, s.length)];
+}
+
+export function consumeUnknown(s: string) {
+  return [new Token(TokenType.UNKNOWN, s[0]), s.substring(1)];
 }
 
 export function consumeListStart(s: string) {
