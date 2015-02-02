@@ -148,7 +148,7 @@ export function renderBezierTrailing(renderer: Renderer,
 }
 
 export function renderBezierBulging(renderer: Renderer,
-                                    {tessellation = 15,
+                                    {tessellation = 16,
                                      lineWidth = 20,
                                      coords = [[440, 400],
                                                [533, 700],
@@ -159,15 +159,17 @@ export function renderBezierBulging(renderer: Renderer,
                                      colour = undefined}) {
 
   let tMid = (tStart + tEnd) / 2.0;
+  // tessellation should be an even number
+  let newTess = tessellation & 2 ? tessellation : tessellation + 1;
   
-  renderBezier(renderer, {tessellation: tessellation / 2.0,
+  renderBezier(renderer, {tessellation: newTess / 2,
                           lineWidthStart: 0.0,
                           lineWidthEnd: lineWidth,
                           coords: coords,
                           tStart: tStart,
                           tEnd: tMid,
                           colour: colour});
-  renderBezier(renderer, {tessellation: tessellation / 2.0,
+  renderBezier(renderer, {tessellation: newTess / 2,
                           lineWidthStart: lineWidth,
                           lineWidthEnd: 0.0,
                           coords: coords,
