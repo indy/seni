@@ -40,11 +40,11 @@ function renderScript(renderer, form) {
 function initialCode() {
   return `
 
-(define vary (lambda (x: 0 y: 0 z: 0 scale: 1)
+(define vary (fn (x: 0 y: 0 z: 0 scale: 1)
                (+ y (* scale (perlin2 x: x y: y z: z)))))
 
 
-(define wash (lambda (variation: 200
+(define wash (fn (variation: 200
                       lineWidth: 70
                       lineSegments: 5
                       seed: 272)
@@ -149,7 +149,7 @@ function initialCode() {
 
 
 // another good wash background:
-(define wash (lambda (c: 60 m: 2.2)
+(define wash (fn (c: 60 m: 2.2)
 		(loop (j from: (/ c 2) to: 1100 step: c)
 			(loop (i from: (/ c 2) to: 1100 step: c) 
    				(onMatrixStack
@@ -167,11 +167,11 @@ function initialCode() {
 
 
 ; a decent replication of the original clj wash
-(define vary (lambda (x: 0 y: 0 z: 0 scale: 1)
+(define vary (fn (x: 0 y: 0 z: 0 scale: 1)
                (+ y (* scale (perlin x: x y: y z: z)))))
 
 
-(define wash (lambda (variation: 200
+(define wash (fn (variation: 200
                       lineWidth: 70
                       lineSegments: 5
                       seed: 200)

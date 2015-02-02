@@ -19,9 +19,9 @@ export function addBindings(env, renderer) {
 
 function bindMath(env) {
   env.add('remapFn', (args) => remapFn(args));
-  env.add('PI', () => PI);
-  env.add('twoPI', () => twoPI);
-  env.add('PIbyTwo', () => PIbyTwo);
+  env.add('PI', PI);
+  env.add('twoPI', twoPI);
+  env.add('PIbyTwo', PIbyTwo);
 }
 
 function bindMatrixStack(env, matrixStack) {
@@ -48,6 +48,9 @@ function bindShapes(env, renderer) {
 }
 
 function bindColour(env) {
+  // default colour
+  let dc = ColourNS.rgbColour({r: 1.0 g: 0.0 b: 0.0 a: 1.0});
+  
   env.add('rgbColour', (args) => ColourNS.rgbColour(args));
 
   env.add('hslColour', (args) => ColourNS.hslColour(args));
@@ -66,7 +69,13 @@ function bindColour(env) {
 
   env.add('colourConvert', (args) => ColourNS.colourConvert(args));
 
-  env.add('analagous', (args) => args.analagous());
+  env.add('complementary', ({colour = dc}) => colour.complementary());
+
+  env.add('splitComplementary', ({colour = dc}) => colour.splitComplementary());
+
+  env.add('analagous', ({colour = dc}) => colour.analagous());
+
+  env.add('triad', ({colour = dc}) => colour.triad());
 }
 
 function bindPerlin(env) {
