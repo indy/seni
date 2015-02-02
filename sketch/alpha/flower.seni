@@ -57,8 +57,6 @@
        (let ((strokes petals)
              (rem (remapFn from: (list 0 strokes) to: (list 0 6.28318))))
          (loop (i from: 0 to: strokes)
-               (log i)
-               (log (rem val: i))
                (petal-2 angle: (rem val: i) colour: colour))))))
 
 (define circ-2
