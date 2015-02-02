@@ -25,6 +25,12 @@ function funApplication(env, listExpr) {
 
   const fun = evaluate(env, listExpr[0]);
 
+  if(fun === undefined) {
+    // todo: use something better than console.log
+    console.log(listExpr[0] + " is undefined");
+    return;
+  }
+
   // special forms that manipulate the listExpr
   if(isSpecialForm(listExpr)) {
     return fun(env, listExpr);
