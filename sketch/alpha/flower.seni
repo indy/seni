@@ -1,7 +1,4 @@
 
-
-
-
 (define v
 	(fn (x: 0 y: 0 z: 0 scale: 1)
 		(+ y (* scale (perlin2 x: x y: y z: z)))))
@@ -14,7 +11,7 @@
          colour: (rgbColour r: 0.15 g: 0.15 b: 0.15 a: 0.1)
          seed: 272)
 		(loop (h from: -20 to: 1020 step: 20)
-        	(bezier tesselation: lineSegments
+        	(bezier tessellation: lineSegments
                 lineWidth: lineWidth
                 coords: (pair 
                          	0 (v x: 0.10 y: h z: seed scale: variation)
@@ -22,7 +19,7 @@
                             666 (v x: 666.66 y: h z: seed scale: variation)
                             1000 (v x: 1000.10 y: h z: seed scale: variation))
                 colour: colour)
-        	(bezier tesselation: lineSegments
+        	(bezier tessellation: lineSegments
                 lineWidth: lineWidth
                 coords: (pair 
                         	(v x: 0.10 y: h z: seed scale: variation) 0
