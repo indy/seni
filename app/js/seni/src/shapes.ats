@@ -80,7 +80,6 @@ export function renderBezier(renderer: Renderer,
   }
 
   let tVals = stepsInclusive(tStart, tEnd, tessellation);
-
   let xs = tVals.map((i) => bezierPoint(coords[0][0],
                                         coords[1][0],
                                         coords[2][0],
@@ -125,6 +124,10 @@ export function renderBezier(renderer: Renderer,
                    colour.val);
   buffer.addVertex([(xn2 * halfWidthEnd) + i2, (yn2 * halfWidthEnd) + i3, 0.0],
                    colour.val);
+
+  //let blue = new Colour(Format.RGB, [0.0, 0.0, 1.0, 1.0]);
+  //renderRect(renderer, {x: coords[0][0], y: coords[0][1], width: 10, height: 10, colour: blue});
+  //renderRect(renderer, {x: coords[3][0], y: coords[3][1], width: 10, height: 10, colour: blue});
 }
 
 export function renderBezierTrailing(renderer: Renderer,
@@ -160,8 +163,12 @@ export function renderBezierBulging(renderer: Renderer,
 
   let tMid = (tStart + tEnd) / 2.0;
   // tessellation should be an even number
-  let newTess = tessellation & 2 ? tessellation : tessellation + 1;
-  
+  let newTess = tessellation & 1 ? tessellation + 1: tessellation;
+
+  //let red = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+  //renderRect(renderer, {x: coords[0][0], y: coords[0][1], width: 20, height: 20, colour: red});
+  //renderRect(renderer, {x: coords[3][0], y: coords[3][1], width: 20, height: 20, colour: red});
+
   renderBezier(renderer, {tessellation: newTess / 2,
                           lineWidthStart: 0.0,
                           lineWidthEnd: lineWidth,
@@ -176,6 +183,7 @@ export function renderBezierBulging(renderer: Renderer,
                           tStart: tMid,
                           tEnd: tEnd,
                           colour: colour});
+
 }
 
 
