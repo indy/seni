@@ -1,10 +1,8 @@
 import * as Shapes from './shapes';
-import { MatrixStack } from './MatrixStack';
-import { Env } from 'lang/env';
-import { Node, NodeType } from 'lang/node';
-import { remapFn, PI, twoPI, PIbyTwo } from './MathUtil';
+import * as MatrixStack from './MatrixStack';
+import * as MathUtil from './MathUtil';
 import * as ColourNS from './Colour';
-import { perlin, perlin2 } from './Perlin';
+import * as Perlin from './Perlin';
 
 export function addBindings(env, renderer) {
 
@@ -18,67 +16,56 @@ export function addBindings(env, renderer) {
 }
 
 function bindMath(env) {
-  env.add('remapFn', (args) => remapFn(args));
-  env.add('PI', PI);
-  env.add('twoPI', twoPI);
-  env.add('PIbyTwo', PIbyTwo);
+  let math = [MathUtil.remapFnBinding,
+              MathUtil.PI,
+              MathUtil.twoPI,
+              MathUtil.PIbyTwo];
+
+  math.forEach((m) => env.add(m.name, m.create()));
 }
 
 function bindMatrixStack(env, matrixStack) {
-  env.add('pushMatrix', () => matrixStack.pushMatrix());
+  let mstack = [MatrixStack.pushMatrix, 
+                MatrixStack.popMatrix, 
+                MatrixStack.scale, 
+                MatrixStack.translate, 
+                MatrixStack.rotate];
 
-  env.add('popMatrix', () => matrixStack.popMatrix());
-
-  env.add('scale', ({x = 1.0, y = 1.0}) =>  matrixStack.scale(x, y));
-
-  env.add('translate', ({x = 0.0, y = 0.0}) => matrixStack.translate(x, y));
-
-  env.add('rotate', ({angle = 0.0}) => matrixStack.rotate(angle));
+  mstack.forEach((m) => env.add(m.name, m.create(matrixStack)));
 }
 
 function bindShapes(env, renderer) {
-  env.add('rect',
-          (args) => Shapes.renderRect(renderer, args));
-  env.add('bezier',
-          (args) => Shapes.renderBezier(renderer, args));
-  env.add('bezierTrailing',
-          (args) => Shapes.renderBezierTrailing(renderer, args));
-  env.add('bezierBulging',
-          (args) => Shapes.renderBezierBulging(renderer, args));
+
+  let shapes = [Shapes.rect, 
+                Shapes.bezier,
+                Shapes.bezierTrailing,
+                Shapes.bezierBulging];
+
+  shapes.forEach((r) => env.add(r.name, r.create(renderer)));
 }
 
 function bindColour(env) {
-  // default colour
-  let dc = ColourNS.rgbColour({r: 1.0, g: 0.0, b: 0.0, a: 1.0});
+
+  let colours = [ColourNS.rgbColour,
+                 ColourNS.hslColour,
+                 ColourNS.labColour,
+                 ColourNS.hsvColour,
+                 ColourNS.RGB,
+                 ColourNS.HSL,
+                 ColourNS.LAB,
+                 ColourNS.HSV,
+                 ColourNS.colourConvert,
+                 ColourNS.complementary,
+                 ColourNS.splitComplementary,
+                 ColourNS.analagous,
+                 ColourNS.triad];
   
-  env.add('rgbColour', (args) => ColourNS.rgbColour(args));
-
-  env.add('hslColour', (args) => ColourNS.hslColour(args));
-
-  env.add('labColour', (args) => ColourNS.labColour(args));
-
-  env.add('hsvColour', (args) => ColourNS.hsvColour(args));
-
-  env.add('RGB', ColourNS.Format.RGB);
-  
-  env.add('HSL', ColourNS.Format.HSL);
-  
-  env.add('LAB', ColourNS.Format.LAB);
-  
-  env.add('HSV', ColourNS.Format.HSV);
-
-  env.add('colourConvert', (args) => ColourNS.colourConvert(args));
-
-  env.add('complementary', ({colour = dc}) => colour.complementary());
-
-  env.add('splitComplementary', ({colour = dc}) => colour.splitComplementary());
-
-  env.add('analagous', ({colour = dc}) => colour.analagous());
-
-  env.add('triad', ({colour = dc}) => colour.triad());
+  colours.forEach((c) => env.add(c.name, c.create()));
 }
 
 function bindPerlin(env) {
-  env.add('perlin', (args) => perlin(args));
-  env.add('perlin2', (args) => perlin2(args));
+  let pln = [Perlin.perlin, 
+             Perlin.perlin2];
+
+  pln.forEach((p) => env.add(p.name, p.create()));
 }

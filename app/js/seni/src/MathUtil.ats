@@ -1,6 +1,32 @@
-export var PI = Math.PI;
-export var twoPI = PI * 2;
-export var PIbyTwo = PI / 2;
+import { PublicBinding } from 'lang/env';
+
+var _PI = Math.PI;
+var _twoPI = _PI * 2;
+var _PIbyTwo = _PI / 2;
+
+export const PI = new PublicBinding(
+  "PI",
+  ``,
+  () => _PI
+)
+export const twoPI = new PublicBinding(
+  "twoPI",
+  ``,
+  () => _twoPI
+)
+
+export const PIbyTwo = new PublicBinding(
+  "PIbyTwo",
+  ``,
+  () => _PIbyTwo
+)
+
+export const remapFnBinding = new PublicBinding(
+  "remapFn",
+  ``,
+  () => remapFn
+)
+
 
 export function stepsInclusive(start, end, num) {
   var unit = (end - start) / (num - 1);
@@ -50,12 +76,12 @@ function mapQuickEase(x) {
 }
 
 function mapSlowEaseIn(x) {
-  let s = Math.sin(x * PIbyTwo);
+  let s = Math.sin(x * _PIbyTwo);
   return s * s * s * s;
 }
 
 function mapSlowEaseInEaseOut(x) {
-  return x - (Math.sin(x * twoPI) / twoPI);
+  return x - (Math.sin(x * _twoPI) / _twoPI);
 }
 
 var mappingLookup = new Map([["linear", mapLinear],

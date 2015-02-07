@@ -1,4 +1,44 @@
+import { PublicBinding } from 'lang/env';
 
+export const pushMatrix = new PublicBinding(
+  "pushMatrix",
+  ``,
+  (matrixStack) => {
+    return () => matrixStack.pushMatrix();
+  }
+)
+
+export const popMatrix = new PublicBinding(
+  "popMatrix",
+  ``,
+  (matrixStack) => {
+    return () => matrixStack.popMatrix();
+  }
+)
+
+export const scale = new PublicBinding(
+  "scale",
+  ``,
+  (matrixStack) => {
+    return ({x = 1.0, y = 1.0}) => matrixStack.scale(x, y);
+  }
+)
+
+export const translate = new PublicBinding(
+  "translate",
+  ``,
+  (matrixStack) => {
+    return ({x = 0.0, y = 0.0}) => matrixStack.translate(x, y);
+  }
+)
+
+export const rotate = new PublicBinding(
+  "rotate",
+  ``,
+  (matrixStack) => {
+    return ({angle = 0.0}) => matrixStack.rotate(angle);
+  }
+)
 
 export class MatrixStack {
 

@@ -1,3 +1,5 @@
+import { PublicBinding } from 'lang/env';
+
 export var Format = {
   RGB: 0,
   HSL: 1,
@@ -6,28 +8,117 @@ export var Format = {
   XYZ: 4
 };
 
-export function colourConvert({format = Format.RGB, colour = undefined}): Colour {
-  if(colour === undefined) {
-    return;
+
+export const rgbColour = new PublicBinding(
+  "rgbColour",
+  ``,
+  () => {
+    return function({r = 1.0, g = 0.5, b = 0.5, a = 1.0}) {
+      return new Colour(Format.RGB, [r, g, b, a]);
+    };
   }
-  return colour.cloneAs(format);
-}
+)
 
-export function rgbColour({r = 1.0, g = 0.5, b = 0.5, a = 1.0}): Colour {
-  return new Colour(Format.RGB, [r, g, b, a]);
-}
+export const hslColour = new PublicBinding(
+  "hslColour",
+  ``,
+  () => {
+    return function({h = 1.0, s = 0.5, l = 0.5, a = 1.0}) {
+      return new Colour(Format.HSL, [h, s, l, a]);
+    };
+  }
+)
 
-export function hslColour({h = 1.0, s = 0.5, l = 0.5, a = 1.0}): Colour {
-  return new Colour(Format.HSL, [h, s, l, a]);
-}
+export const labColour = new PublicBinding(
+  "labColour",
+  ``,
+  () => {
+    return function({l = 1.0, a = 0.5, b = 0.5, alpha = 1.0}) {
+      return new Colour(Format.LAB, [l, a, b, alpha]);
+    };
+  }
+)
 
-export function labColour({l = 1.0, a = 0.5, b = 0.5, alpha = 1.0}): Colour {
-  return new Colour(Format.LAB, [l, a, b, alpha]);
-}
+export const hsvColour = new PublicBinding(
+  "hsvColour",
+  ``,
+  () => {
+    return function({h = 1.0, s = 0.5, v = 0.5, a = 1.0}) {
+      return new Colour(Format.HSV, [h, s, v, a]);
+    };
+  }
+)
 
-export function hsvColour({h = 1.0, s = 0.5, v = 0.5, a = 1.0}): Colour {
-  return new Colour(Format.HSV, [h, s, v, a]);
-}
+export const RGB = new PublicBinding(
+  "RGB",
+  ``,
+  () => Format.RGB
+)
+
+export const HSL = new PublicBinding(
+  "HSL",
+  ``,
+  () => Format.HSL
+)
+
+export const LAB = new PublicBinding(
+  "LAB",
+  ``,
+  () => Format.LAB
+)
+
+export const HSV = new PublicBinding(
+  "HSV",
+  ``,
+  () => Format.HSV
+)
+
+export const colourConvert = new PublicBinding(
+  "colourConvert",
+  ``,
+  () => function({format = Format.RGB, colour = undefined}) {
+    if(colour === undefined) {
+      return;
+    }
+    return colour.cloneAs(format);      
+  }
+)
+
+export const complementary = new PublicBinding(
+  "complementary",
+  ``,
+  () => {
+    let dc = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+    return ({colour = dc}) => colour.complementary();
+  }
+)
+
+export const splitComplementary = new PublicBinding(
+  "splitComplementary",
+  ``,
+  () => {
+    let dc = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+    return ({colour = dc}) => colour.splitComplementary();
+  }
+)
+
+export const analagous = new PublicBinding(
+  "analagous",
+  ``,
+  () => {
+    let dc = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+    return ({colour = dc}) => colour.analagous();
+  }
+)
+
+export const triad = new PublicBinding(
+  "triad",
+  ``,
+  () => {
+    let dc = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+    return ({colour = dc}) => colour.triad();
+  }
+)
 
 export class Colour {
   constructor(format: any, val: Array<number>) {

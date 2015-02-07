@@ -1,19 +1,29 @@
+import { PublicBinding } from 'lang/env';
 
+export const perlin2 = new PublicBinding(
+  "perlin2",
+  ``,
+  () => {
+    return ({x = Math.random(), 
+             y = Math.random(),
+             z = Math.random()}) => {
+               return noise(x, y, z);
+             }
+  }
+)
 
-
-// accepts named parameters and returns a value in the range 0..1
-export function perlin2({x = Math.random(), 
-                        y = Math.random(),
-                        z = Math.random()}) : number {
-                          return noise(x, y, z);
-                        }
-
-export function perlin({x = Math.random(), 
-                        y = Math.random(),
-                        z = Math.random()}) : number {
-                          let v = noise(x, y, z);
-                          return (v + 1) / 2.0;
-                        }
+export const perlin = new PublicBinding(
+  "perlin",
+  ``,
+  () => {
+    return ({x = Math.random(), 
+             y = Math.random(),
+             z = Math.random()}) => {
+               let v = noise(x, y, z);
+               return (v + 1) / 2.0;
+             }
+  }
+)
 
 // A basic translation of Ken Perlin's Java reference implementation of improved noise (C) 2002
 
