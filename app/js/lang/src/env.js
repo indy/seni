@@ -22,7 +22,7 @@ export class PublicBinding {
   }
 }
 
-export function bind(env: Env, objs) {
+export function bind(env, objs) {
   // objs is an array
   // add every key,val pair in obj as a binding to env
   let bindAll = function(obj) {
@@ -42,16 +42,16 @@ export class Env {
     this.bindings = new Map();
   }
 
-  newScope() : Env {
+  newScope() {
     return new Env(this);
   }
 
-  add(key, val) : Env {
+  add(key, val) {
     this.bindings.set(key, val);
     return this;
   }
 
-  hasBinding(key) : boolean {
+  hasBinding(key) {
     let e = this;
     while(e !== null) {
       if(e.hasBindingInThisScope(key)) {
@@ -62,7 +62,7 @@ export class Env {
     return false;
   }
 
-  hasBindingInThisScope(key) : boolean {
+  hasBindingInThisScope(key) {
     return this.bindings.has(key);
   }
 
@@ -77,7 +77,7 @@ export class Env {
     return undefined;           // ???
   }
 
-  mutate(key, val) : Env {
+  mutate(key, val) {
     let e = this;
     while(e !== null) {
       if(e.hasBindingInThisScope(key)) {

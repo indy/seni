@@ -2,7 +2,7 @@ import { GLContainer } from './GLContainer';
 import { MatrixStack } from './MatrixStack';
 
 export class Buffer {
-  constructor(glContainer: GLContainer, matrixStack: MatrixStack) {
+  constructor(glContainer, matrixStack) {
     // each buffer can hold 1000 'items' where an item is a vertex, colour etc
     this.bufferSize = 1000; 
     this.vertexItemSize = 3; // xyz
@@ -28,7 +28,7 @@ export class Buffer {
    * @param numVertices
    * @param p0 the first vertex position
    */
-  prepareToAddTriangleStrip(glContainer: GLContainer, numVertices: number, p0) {
+  prepareToAddTriangleStrip(glContainer, numVertices, p0) {
 
     if(this.bufferLevel >= this.bufferSize - (numVertices + 2)) {
       this.flushTriangles(glContainer);
@@ -91,7 +91,7 @@ export class Buffer {
     this.bufferLevel += 1;
   }
 
-  flushTriangles(glContainer: GLContainer) {
+  flushTriangles(glContainer) {
 
     if(this.bufferLevel === 0) {
       return;

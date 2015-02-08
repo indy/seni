@@ -53,12 +53,12 @@ function funApplication(env, listExpr) {
   return fun(args);
 }
 
-function isSpecialForm(listExpr) : boolean {
+function isSpecialForm(listExpr) {
   const node = listExpr[0];
   return specialForms[node] !== undefined;
 }
 
-function isClassicFunction(listExpr) : boolean {
+function isClassicFunction(listExpr) {
   const node = listExpr[0];
   return classicFunctions[node] !== undefined;
 }

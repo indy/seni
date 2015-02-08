@@ -214,7 +214,7 @@ export const bezierBulging = new PublicBinding(
               }
   })
 
-function bezierPoint(a: number, b: number, c: number, d: number, t: number): number {
+function bezierPoint(a, b, c, d, t) {
   let t1 = 1 - t;
 
   return (a * t1 * t1 * t1) +
@@ -223,7 +223,7 @@ function bezierPoint(a: number, b: number, c: number, d: number, t: number): num
     (d * t * t * t);
 }
 
-function normals(x1: number, y1: number, x2: number, y2: number): Array<number> {
+function normals(x1, y1, x2, y2) {
   let dx = x2 - x1;
   let dy = y2 - y1;
 

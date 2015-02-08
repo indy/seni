@@ -8,7 +8,7 @@ import {
   NodeType
 } from './node';
 
-export function parse(tokens: Array<Token>) : Array<Node> {
+export function parse(tokens) {
 
   let nodes = [];
   let n;
@@ -23,7 +23,7 @@ export function parse(tokens: Array<Token>) : Array<Node> {
   return nodes;
 }
 
-function consumeItem(tokens: Array<Token>, alterable: boolean) : Node {
+function consumeItem(tokens, alterable) {
 
   const token = tokens[0];
   tokens.shift();            // remove the first token
@@ -63,7 +63,7 @@ function consumeItem(tokens: Array<Token>, alterable: boolean) : Node {
 }
 
 
-function consumeBracketForm(tokens: Array<Token>) : Node {
+function consumeBracketForm(tokens) {
   let node = consumeItem(tokens, true),
   nodeType = node.type;
 
@@ -85,7 +85,7 @@ function consumeBracketForm(tokens: Array<Token>) : Node {
 }
 
 
-function consumeQuotedForm(tokens: Array<Token>) : Node {
+function consumeQuotedForm(tokens) {
   // '(2 3 4) -> (quote (2 3 4))
 
   let node = new Node(NodeType.LIST);
@@ -96,7 +96,7 @@ function consumeQuotedForm(tokens: Array<Token>) : Node {
   return node;
 }
 
-function consumeList(tokens: Array<Token>, alterable: boolean) : Node {
+function consumeList(tokens, alterable) {
   let node = new Node(NodeType.LIST);
   let n;
 

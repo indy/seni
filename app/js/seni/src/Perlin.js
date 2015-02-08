@@ -28,7 +28,7 @@ export const perlin = new PublicBinding(
 // A basic translation of Ken Perlin's Java reference implementation of improved noise (C) 2002
 
 // returns a value in the range -1..1
-function noise(x: number, y: number, z: number): number {
+function noise(x, y, z) {
   let X = Math.floor(x) & 255;                  // FIND UNIT CUBE THAT
   let Y = Math.floor(y) & 255;                  // CONTAINS POINT.
   let Z = Math.floor(z) & 255;
@@ -51,15 +51,15 @@ function noise(x: number, y: number, z: number): number {
                         grad(p[BB + 1], x - 1, y - 1, z - 1))));
 }
 
-function fade(t: number) : number {
+function fade(t) {
   return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-function lerp(t: number, a: number, b: number) : number {
+function lerp(t, a, b) {
   return a + t * (b - a);
 }
 
-function grad(hash, x: number, y: number, z: number) : number {
+function grad(hash, x, y, z) {
   let h = hash & 15;                      // CONVERT LO 4 BITS OF HASH CODE
   let u = h < 8 ? x : y,                 // INTO 12 GRADIENT DIRECTIONS.
   v = h < 4 ? y : h == 12 || h == 14 ? x : z;

@@ -121,7 +121,7 @@ export const triad = new PublicBinding(
 )
 
 export class Colour {
-  constructor(format: any, val: Array<number>) {
+  constructor(format, val) {
     this.format = format;
     this.val = val;
     if(val.length === 3) {
@@ -129,7 +129,7 @@ export class Colour {
     }
   }
 
-  compare(other: Colour): boolean {
+  compare(other) {
 
     if(this.format !== other.format) {
       return false;
@@ -145,7 +145,7 @@ export class Colour {
     return true;
   }
 
-  cloneAs(newFormat: any): Colour {
+  cloneAs(newFormat) {
     switch(this.format) {
     case Format.LAB:
       if (newFormat == Format.RGB) {
@@ -210,7 +210,7 @@ export class Colour {
 
   // Returns the colour at the opposite end of the wheel
   //
-  complementary(): Colour {
+  complementary() {
     return addAngleToHSL(this, sComplimentaryAngle);
   }
 
@@ -218,7 +218,7 @@ export class Colour {
   // e.g. if the input colour is at the 12 o'clock position, 
   // this will return the 5 o'clock and 7 o'clock colours
   //
-  splitComplementary(): Array<Colour> {
+  splitComplementary() {
     return pair(complementary(this), sUnitAngle);
   }
 
@@ -226,7 +226,7 @@ export class Colour {
   // e.g. given a colour at 3 o'clock this will return the
   // colours at 2 o'clock and 4 o'clock
   //
-  analagous(): Array<Colour> {
+  analagous() {
     return pair(this, sUnitAngle);
   }
 
@@ -234,13 +234,13 @@ export class Colour {
   // being evenly spaced around the colour wheel. 
   // e.g. given 12 o'clock this will return 4 o'clock and 8 o'clock
   //
-  triad(): Array<Colour> {
+  triad() {
     return pair(this, sTriadAngle);
   }
 }
 
-function addAngleToHSL(c: Colour, delta: number): Colour {
-  let d: Colour = c.cloneAs(Format.HSL);
+function addAngleToHSL(c, delta) {
+  let d = c.cloneAs(Format.HSL);
 
   // rotate the hue by the given delta
   d.val[H] = (d.val[H] + delta) % 360.0;
@@ -249,7 +249,7 @@ function addAngleToHSL(c: Colour, delta: number): Colour {
 }
 
 // Return the 2 colours either side of this that are 'ang' degrees away
-function pair(c: Colour, ang: number): Array<Colour> {
+function pair(c, ang) {
   let ret = [addAngleToHSL(c, -ang), addAngleToHSL(c, ang)];
   return ret;
 }
@@ -261,7 +261,7 @@ function pair(c: Colour, ang: number): Array<Colour> {
 //  b -128 -> +127   cyan -> yellow
 
 
-function colourToAxis(component: number): number {
+function colourToAxis(component) {
   let temp;
   if (component > 0.04045) {
     temp = Math.pow((component + 0.055) / 1.055, 2.4);
@@ -272,7 +272,7 @@ function colourToAxis(component: number): number {
 }
 
 
-function RGBToXYZ(c: Colour): Colour {
+function RGBToXYZ(c) {
   // assumes that this is already in RGB format
   let rr = colourToAxis(c.val[RED]);
   let gg = colourToAxis(c.val[GREEN]);
@@ -284,7 +284,7 @@ function RGBToXYZ(c: Colour): Colour {
                                  c.val[ALPHA]]);
 }
 
-function axisToLABComponent(a: number): number {
+function axisToLABComponent(a) {
   if (a > 0.008856) {
     return Math.pow(a, 1.0 / 3.0);
   } else {
@@ -292,7 +292,7 @@ function axisToLABComponent(a: number): number {
   }
 }
 
-function XYZToLAB(c: Colour): Colour {
+function XYZToLAB(c) {
   // assumes that this is already in XYZ format
   let xx = axisToLABComponent(c.val[X] / 95.047);
   let yy = axisToLABComponent(c.val[Y] / 100.000);
@@ -304,7 +304,7 @@ function XYZToLAB(c: Colour): Colour {
                                  c.val[ALPHA]]);
 }
 
-function AxisToColour(a: number): number {
+function AxisToColour(a) {
   if (a > 0.0031308) {
     return (1.055 * Math.pow(a, 1.0 / 2.4)) - 0.055;
   } else {
@@ -312,7 +312,7 @@ function AxisToColour(a: number): number {
   }
 }
 
-function XYZToRGB(c: Colour): Colour {
+function XYZToRGB(c) {
   let xx = c.val[X] / 100.0;
   let yy = c.val[Y] / 100.0;
   let zz = c.val[Z] / 100.0;
@@ -327,17 +327,17 @@ function XYZToRGB(c: Colour): Colour {
                                  c.val[ALPHA]]);
 }
 
-function maxChannel(c: Colour): number {
+function maxChannel(c) {
   let hi = c.val[RED] > c.val[GREEN] ? RED : GREEN;
   return c.val[BLUE] > c.val[hi] ? BLUE : hi;
 }
 
-function minChannel(c: Colour): number {
+function minChannel(c) {
   let hi = c.val[RED] < c.val[GREEN] ? RED : GREEN;
   return c.val[BLUE] < c.val[hi] ? BLUE : hi;
 }
 
-function hue(c: Colour, maxChan: number, chroma: number): number {
+function hue(c, maxChan, chroma) {
   if (chroma == 0.0) {
     return 0.0;        // invalid hue
   }
@@ -353,7 +353,7 @@ function hue(c: Colour, maxChan: number, chroma: number): number {
   return 0.0;            // should never get here
 }
 
-function RGBToHSL(c: Colour): Colour {
+function RGBToHSL(c) {
   let minCh = minChannel(c);
   let minVal = c.val[minCh];
 
@@ -378,7 +378,7 @@ function RGBToHSL(c: Colour): Colour {
   return col;
 }
 
-function RGBToHSV(c: Colour): Colour {
+function RGBToHSV(c) {
   let minCh = minChannel(c);
   let minVal = c.val[minCh];
 
@@ -404,7 +404,7 @@ function RGBToHSV(c: Colour): Colour {
   return col;
 }
 
-function CHMToRGB(c: Colour, chroma: number, h: number, m: number): Colour {
+function CHMToRGB(c, chroma, h, m) {
   if (!c.validHue) {
     return new Colour(Format.RGB, [m, m, m, c.val[ALPHA]]);
   }
@@ -444,7 +444,7 @@ function CHMToRGB(c: Colour, chroma: number, h: number, m: number): Colour {
   return new Colour(Format.RGB, [r + m, g + m, b + m, c.val[ALPHA]]);
 }
 
-function HSLToRGB(c: Colour): Colour {
+function HSLToRGB(c) {
   let h = c.val[H];
   let s = c.val[S];
   let l = c.val[2]; // L already defined for LAB ...bugger
@@ -457,7 +457,7 @@ function HSLToRGB(c: Colour): Colour {
   return CHMToRGB(col, chroma, h, m);
 }
 
-function LABComponentToAxis(l: number): number {
+function LABComponentToAxis(l) {
   if (Math.pow(l, 3.0) > 0.008856) {
     return Math.pow(l, 3.0);
   } else {
@@ -465,7 +465,7 @@ function LABComponentToAxis(l: number): number {
   }
 }
 
-function LABToXYZ(c: Colour): Colour {
+function LABToXYZ(c) {
   let refX = 95.047;
   let refY = 100.000;
   let refZ = 108.883;
@@ -484,7 +484,7 @@ function LABToXYZ(c: Colour): Colour {
                                  c.val[ALPHA]])
 }
 
-function HSVToRGB(c: Colour) : Colour{
+function HSVToRGB(c) {
   let h = c.val[H];
   let s = c.val[S];
   let v = c.val[V];

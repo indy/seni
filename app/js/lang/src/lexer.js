@@ -3,7 +3,7 @@ import {
   TokenType
 } from './token';
 
-export function tokenise(input: string) : Array<Token> {
+export function tokenise(input) {
   let q = [],   // queue of tokens to return
   p = [];       // [token, remaining] pair
 
@@ -62,7 +62,7 @@ export function tokenise(input: string) : Array<Token> {
 let MINUS = '-';
 let PERIOD = '.';
 
-export function skipWhitespace(s: string) : string {
+export function skipWhitespace(s) {
   for(let i=0;i<s.length;i++) {
     if(!isWhitespace(s[i])) {
       return s.substring(i);
@@ -71,7 +71,7 @@ export function skipWhitespace(s: string) : string {
   return "";
 }
 
-export function consumeInt(s: string) {
+export function consumeInt(s) {
   let i = 0;
   for(i=0;i<s.length;i++) {
     let c = s[i];
@@ -88,7 +88,7 @@ export function consumeInt(s: string) {
   return [token, s.substring(i, s.length)];
 }
 
-export function consumeFloat(s: string) {
+export function consumeFloat(s) {
   let i = 0;
   for(i=0;i<s.length;i++) {
     let c = s[i];
@@ -101,27 +101,27 @@ export function consumeFloat(s: string) {
   return [token, s.substring(i, s.length)];
 }
 
-export function consumeUnknown(s: string) {
+export function consumeUnknown(s) {
   return [new Token(TokenType.UNKNOWN, s[0]), s.substring(1)];
 }
 
-export function consumeListStart(s: string) {
+export function consumeListStart(s) {
   return [new Token(TokenType.LIST_START), s.substring(1)];
 }
 
-export function consumeListEnd(s: string) {
+export function consumeListEnd(s) {
   return [new Token(TokenType.LIST_END), s.substring(1)];
 }
 
-export function consumeBracketStart(s: string) {
+export function consumeBracketStart(s) {
   return [new Token(TokenType.BRACKET_START), s.substring(1)];
 }
 
-export function consumeBracketEnd(s: string) {
+export function consumeBracketEnd(s) {
   return [new Token(TokenType.BRACKET_END), s.substring(1)];
 }
 
-export function consumeString(s: string) {
+export function consumeString(s) {
   let val = s.substring(1); // skip first \"
   const nextQuote = val.indexOf('\"');
   val = val.substring(0, nextQuote);
@@ -130,7 +130,7 @@ export function consumeString(s: string) {
   return [token, s.substring(nextQuote + 2)];
 }
 
-export function consumeName(s: string) {
+export function consumeName(s) {
   let i=0;
   for(i=0;i<s.length;i++) {
     let c = s[i];
@@ -142,7 +142,7 @@ export function consumeName(s: string) {
   return [token, s.substring(i, s.length)];
 }
 
-export function consumeComment(s: string) {
+export function consumeComment(s) {
   let i=0;
   for(i=0;i<s.length;i++) {
     if(isNewline(s[i])) {
@@ -154,7 +154,7 @@ export function consumeComment(s: string) {
   return [token, s.substring(i+1, s.length)];
 }
 
-export function consumeLabel(s: string) {
+export function consumeLabel(s) {
   let i=0;
   for(i=0;i<s.length;i++) {
     let c = s[i];
@@ -168,11 +168,11 @@ export function consumeLabel(s: string) {
   return [token, s.substring(i+1, s.length)];
 }
 
-export function consumeQuoteAbbreviation(s: string) {
+export function consumeQuoteAbbreviation(s) {
   return [new Token(TokenType.QUOTE_ABBREVIATION), s.substring(1)];
 }
 
-export function nextTokenType(s: string) {
+export function nextTokenType(s) {
   let c = s[0];
 
   if(isQuoteAbbreviation(c)) {
@@ -219,7 +219,7 @@ export function nextTokenType(s: string) {
 }
 
 // is there a period in the stream of characters before we get to whitespace
-function hasPeriod(s: string) : boolean {
+function hasPeriod(s) {
   for(let i=0; i<s.length; i++) {
     if(s[i] === PERIOD) {
       return true;
@@ -231,56 +231,56 @@ function hasPeriod(s: string) : boolean {
   return false;
 }
 
-function isWhitespace(character: string) : boolean {
+function isWhitespace(character) {
   return sWhitespaceSet.has(character);
 }
 
-function isDigit(character: string) : boolean {
+function isDigit(character) {
   return sDigitSet.has(character);
 }
 
-function isAlpha(character: string) : boolean {
+function isAlpha(character) {
   return sAlphaSet.has(character);
 }
 
-function isSymbol(character: string) : boolean {
+function isSymbol(character) {
   return sSymbolSet.has(character);
 }
 
-function isListStart(character: string) : boolean {
+function isListStart(character) {
   return character === '(';
 }
 
-function isListEnd(character: string) : boolean {
+function isListEnd(character) {
   return character === ')';
 }
 
-function isBracketStart(character: string) : boolean {
+function isBracketStart(character) {
   return character === '[';
 }
 
-function isBracketEnd(character: string) : boolean {
+function isBracketEnd(character) {
   return character === ']';
 }
 
-function isQuotedString(character: string) : boolean {
+function isQuotedString(character) {
   return character === '"';
 }
 
-function isQuoteAbbreviation(character: string) : boolean {
+function isQuoteAbbreviation(character) {
   return character === '\'';
 }
 
-function isComment(character: string) : boolean {
+function isComment(character) {
   return character === ';';
 }
 
-function isNewline(character: string) : boolean {
+function isNewline(character) {
   return character === '\n';
 }
 
 
-function isLabel(s: string) : boolean {
+function isLabel(s) {
   let i = 0;
   for(i=0;i<s.length;i++) {
     let c = s[i];
@@ -296,7 +296,7 @@ var sDigitSet = characterSet("0123456789");
 var sAlphaSet = characterSet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=");
 var sSymbolSet = characterSet("-!@#$%^&*<>?");
 
-function characterSet(characters: string) : Set {
+function characterSet(characters) {
   let s = new Set();
 
   // todo: is there a better way than iterating over the string?
