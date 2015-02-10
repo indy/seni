@@ -18,31 +18,10 @@
   <link rel="import" href="elements.html"> 
   <link rel="stylesheet" href="css/stylesheet.css">
   
-  <body fullbleed layout vertical>
-
-      <core-header-panel main>
-        <core-toolbar>
-          <div id="seni-main-label">Seni</div>
-          <span flex></span>
-          <paper-button raised role="button" tabindex="0" class="colored" id="eval-button">Eval</paper-button>
-          <paper-icon-button icon="search"></paper-icon-button>
-          <paper-icon-button icon="more-vert" role="button"></paper-icon-button>
-          <!-- <paper-progress class="bottom fit" value="30"></paper-progress> -->
-        </core-toolbar>
-
-        <div class="content">
-
-          <div id="scribbler">
-            <div class="flex-cell-canvas">
-              <canvas id="render-canvas" width="500" height="500"></canvas>
-            </div>
-            <div class="flex-cell">
-              <textarea id="codemirror-textarea"></textarea>
-            </div>
-          </div>
-        </div>
-      </core-header-panel>
-
+  <body>
+    <div id="eval-button">Eval</div>
+    <canvas id="render-canvas" width="500" height="500"></canvas>
+    <textarea id="codemirror-textarea"></textarea>
     $SCRIPTS$
       <script type="text/javascript">System.import('main').then(function(m) { m.main(); }, console.log.bind(console))</script>
   </body>

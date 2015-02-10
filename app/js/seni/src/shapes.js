@@ -29,6 +29,9 @@ export const rect = new PublicBinding(
               colour = undefined}) => {
                 const halfWidth = (width / 2);
                 const halfHeight = (height / 2);
+
+
+                //console.log("rect: x:" + x + ", y:" + y + ", width:" + width + ", height:" + height);
                 
                 if(colour === undefined) {
                   colour = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);

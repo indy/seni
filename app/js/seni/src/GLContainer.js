@@ -12,7 +12,7 @@ export class GLContainer {
 
 function initGL(canvas) {
   try {
-    var gl = canvas.getContext("experimental-webgl");
+    var gl = canvas.getContext("experimental-webgl", { alpha: false });
     // commented out because of jshint
     //    if (!gl) {
     //alert("Could not initialise WebGL, sorry :-(");

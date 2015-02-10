@@ -40,33 +40,24 @@ function renderScript(renderer, form) {
 function initialCode() {
   return `
 
-(define vary (fn (x: 0 y: 0 z: 0 scale: 1)
-               (+ y (* scale (perlin2 x: x y: y z: z)))))
+  (rect x: 500 y: 500 width: 1000 height: 1000 
+   colour: (rgbColour r: 1.0 g: 1.0 b: 1.0 a: 1.0))
 
+  (rect x: 250 y: 500 width: 200 height: 500 
+   colour: (rgbColour r: 1.0 g: 1.0 b: 0.0 a: 1.0))
 
-(define wash (fn (variation: 200
-                      lineWidth: 70
-                      lineSegments: 5
-                      seed: 272)
-               (loop (h from: -20 to: 1020 step: 20)
-        (bezier tesselation: lineSegments
-                lineWidth: lineWidth
-                coords: (pair 0 (vary x: 0.10 y: h z: seed scale: variation)
-                              333 (vary x: 333.33 y: h z: seed scale: variation)
-                              666 (vary x: 666.66 y: h z: seed scale: variation)
-                              1000 (vary x: 1000.10 y: h z: seed scale: variation))
-                colour: (rgbColour r: 0.15 g: 0.15 b: 0.15 a: 0.1))
-        (bezier tesselation: lineSegments
-                lineWidth: lineWidth
-                coords: (pair (vary x: 0.10 y: h z: seed scale: variation) 0
-                              (vary x: 333.33 y: h z: seed scale: variation) 333
-                              (vary x: 666.66 y: h z: seed scale: variation) 666
-                              (vary x: 1000.10 y: h z: seed scale: variation) 1000)
-                colour: (rgbColour r: 0.15 g: 0.15 b: 0.15 a: 0.1)))))
-
-
-  (wash)
+  (rect x: 500 y: 500 width: 200 height: 500 
+   colour: (rgbColour r: 1.0 g: 1.0 b: 0.0 a: 0.5))
   
+  (rect x: 750 y: 500 width: 200 height: 500 
+   colour: (rgbColour r: 1.0 g: 1.0 b: 0.0 a: 0.2))
+  
+ (rect x: 500 y: 250 width: 1000 height: 200 
+   colour: (rgbColour r: 1.0 g: 0.0 b: 0.0 a: 0.5))
+
+  (rect x: 500 y: 750 width: 1000 height: 200 
+   colour: (rgbColour r: 1.0 g: 0.0 b: 0.0 a: 1.0))
+
   `;
 }
 
@@ -193,6 +184,37 @@ function initialCode() {
 
 
 (wash)
+
+
+
+
+
+(define vary (fn (x: 0 y: 0 z: 0 scale: 1)
+               (+ y (* scale (perlin2 x: x y: y z: z)))))
+
+
+(define wash (fn (variation: 200
+                      lineWidth: 70
+                      lineSegments: 5
+                      seed: 272)
+               (loop (h from: -20 to: 1020 step: 20)
+        (bezier tesselation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair 0 (vary x: 0.10 y: h z: seed scale: variation)
+                              333 (vary x: 333.33 y: h z: seed scale: variation)
+                              666 (vary x: 666.66 y: h z: seed scale: variation)
+                              1000 (vary x: 1000.10 y: h z: seed scale: variation))
+                colour: (rgbColour r: 0.15 g: 0.15 b: 0.15 a: 0.1))
+        (bezier tesselation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair (vary x: 0.10 y: h z: seed scale: variation) 0
+                              (vary x: 333.33 y: h z: seed scale: variation) 333
+                              (vary x: 666.66 y: h z: seed scale: variation) 666
+                              (vary x: 1000.10 y: h z: seed scale: variation) 1000)
+                colour: (rgbColour r: 0.15 g: 0.15 b: 0.15 a: 0.1)))))
+
+
+  (wash)
 
 
 

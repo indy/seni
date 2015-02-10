@@ -54,6 +54,8 @@ export class Renderer {
 
 function initGLState(gl) {
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
+
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   //gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
   // http://www.andersriggelsen.dk/glblendfunc.php
@@ -64,6 +66,9 @@ function initGLState(gl) {
   //gl.blendFunc(gl.SRC_COLOR, gl.ONE_MINUS_SRC_COLOR);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+//  gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.blendEquation(gl.FUNC_ADD);
   gl.enable(gl.BLEND);
+  
   gl.disable(gl.DEPTH_TEST);
 }
