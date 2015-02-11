@@ -18,11 +18,19 @@
   <link rel="import" href="elements.html"> 
   <link rel="stylesheet" href="css/stylesheet.css">
   
-  <body>
-    <div id="eval-button">Eval</div>
-    <canvas id="render-canvas" width="500" height="500"></canvas>
-    <textarea id="codemirror-textarea"></textarea>
+  <body class="flex-container-h">
+    <div class="flex-container-v">
+      <div class="flex-item-canvas">
+        <canvas id="render-canvas" width="500" height="500"></canvas>
+      </div>
+      <div class="flex-item-console">
+        <div id="eval-button">Eval</div>
+      </div>
+    </div>
+    <div class="flex-item-code-editor">
+      <textarea id="codemirror-textarea"></textarea> 
+    </div>
     $SCRIPTS$
-      <script type="text/javascript">System.import('main').then(function(m) { m.main(); }, console.log.bind(console))</script>
+    <script type="text/javascript">System.import('main').then(function(m) { m.main(); }, console.log.bind(console))</script>
   </body>
 </html>
