@@ -17,15 +17,21 @@ function setupUI(renderer) {
 
   textArea.value = initialCode();
 
-  var editor = CodeMirror.fromTextArea(textArea, {
+  let editor = CodeMirror.fromTextArea(textArea, {
     lineNumbers: true,
     mode: "scheme",
-    autoMatchParens: true
-  });
+    autoMatchParens: true,
+    extraKeys: {
+      "Ctrl-E": function(cm) {
+        renderScript(renderer, editor.getValue());
+        return false;
+      }
+    }});
 
-  d.getElementById("eval-button").addEventListener("click", (e) => {
-    renderScript(renderer, editor.getValue());
-  });
+
+  //d.getElementById("eval-button").addEventListener("click", (e) => {
+  //  renderScript(renderer, editor.getValue());
+  //});
 }
 
 function renderScript(renderer, form) {

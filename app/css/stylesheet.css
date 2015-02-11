@@ -44,6 +44,10 @@ html,body {
 .flex-item-console {
   order: 3;
   flex-grow: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 
@@ -55,6 +59,7 @@ html,body {
 #eval-button {
   background: green;
   color: yellow;
+  padding: 0.5em;
 }
 
 /*
