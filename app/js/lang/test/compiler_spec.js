@@ -11,15 +11,15 @@ export function main() {
     function simpleCompile(form) {
       // assumes that the form will compile into a single list
       let ts = tokenise(form);
-      let ast = parse(ts);
+      let ast = parse(ts).nodes;
       let compiled = compile(ast);
       return compiled[0];
     }
-
+    
     it('should ', () => {
       let form = "(go arg1: 45 arg2: 11)";
       let ts = tokenise(form);
-      let ast = parse(ts);
+      let ast = parse(ts).nodes;
       let compiled = compile(ast);
       expect(1).toEqual(1);
     });

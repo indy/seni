@@ -18,11 +18,11 @@ export function main() {
 
     function evalForm(env, form) {
       let ts = tokenise(form);
-      let ast = parse(ts);
+      let ast = parse(ts).nodes;
       let compiled = compile(ast);
       return evaluate(env, compiled[0]);
     }
-
+    
     var e;
     var key;
     var val;

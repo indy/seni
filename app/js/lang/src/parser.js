@@ -8,20 +8,39 @@ import {
   NodeType
 } from './node';
 
+/*
+ returns an obj of the form:
+
+ { 
+   nodes: array of nodes,
+   error: possibly undefined
+ }
+
+*/
 export function parse(tokens) {
 
   let nodes = [];
-  let n;
+  let nodeBox;
   
   while(tokens.length != 0) {
-    n = consumeItem(tokens, false);
-    if(n) {
-      nodes.push(n);
+    nodeBox = consumeItem(tokens, false);
+
+    if(nodeBox.error) {
+      return nodeBox;
+    }
+    
+    // n.node will be null on a comment
+    if(nodeBox.node) {
+      nodes.push(nodeBox.node);
     }
   }
 
-  return nodes;
+  return {nodes: nodes};
 }
+
+/*
+  these functions will return {node: node, error: error}
+*/
 
 function consumeItem(tokens, alterable) {
 
@@ -31,57 +50,75 @@ function consumeItem(tokens, alterable) {
   const tokenType = token.type;
   if(tokenType === TokenType.LIST_START) {
     return consumeList(tokens, alterable);
+  } else if(tokenType === TokenType.LIST_END) {
+    return {error: "mismatched closing parens"};
   } else if(tokenType === TokenType.INT) {
-    return new Node(NodeType.INT, token.value, alterable)
+    return boxNode(NodeType.INT, token.value, alterable);
   } else if(tokenType === TokenType.FLOAT) {
-    return new Node(NodeType.FLOAT, token.value, alterable)
+    return boxNode(NodeType.FLOAT, token.value, alterable);
   } else if(tokenType === TokenType.NAME) {
     let val = token.value;
     if(val === "true") {
-      return new Node(NodeType.BOOLEAN, '#t', alterable)
+      return boxNode(NodeType.BOOLEAN, '#t', alterable);
     } else if (val === "false") {
-      return new Node(NodeType.BOOLEAN, '#f', alterable)
+      return boxNode(NodeType.BOOLEAN, '#f', alterable);
     } else {
-      return new Node(NodeType.NAME, token.value, alterable)
+      return boxNode(NodeType.NAME, token.value, alterable);
     }
   } else if(tokenType === TokenType.LABEL) {
-    return new Node(NodeType.LABEL, token.value, alterable)
+    return boxNode(NodeType.LABEL, token.value, alterable);
   } else if(tokenType === TokenType.STRING) {
-    return new Node(NodeType.STRING, token.value, alterable)
+    return boxNode(NodeType.STRING, token.value, alterable);
   } else if(tokenType === TokenType.QUOTE_ABBREVIATION) {
     return consumeQuotedForm(tokens);
   } else if(tokenType === TokenType.BRACKET_START) {
     return consumeBracketForm(tokens);
   } else if(tokenType === TokenType.BRACKET_END) {
-    return null;
+    return {node: null};
   } else if(tokenType === TokenType.COMMENT) {
-    return null;
+    return {node: null};
   }
 
   // e.g. TokenType.UNKNOWN
-  return null;
+  return {error: "unknown token type"};
 }
 
+function boxNode(nodeType, value, alterable) {
+  return {node: new Node(nodeType, value, alterable)};
+}
 
 function consumeBracketForm(tokens) {
-  let node = consumeItem(tokens, true),
-  nodeType = node.type;
+  let nodeBox = consumeItem(tokens, true);
+  if(nodeBox.error) {
+    return nodeBox;
+  }
+
+  let node = nodeBox.node;
+  let nodeType = node.type;
 
   if(nodeType != NodeType.BOOLEAN &&
      nodeType != NodeType.INT &&
      nodeType != NodeType.FLOAT &&
      nodeType != NodeType.NAME &&
      nodeType != NodeType.STRING) {
-    // throw an error - non-mutable node within square brackets
+
+    return {error: "non-mutable node within square brackets"};
   }
 
-  let parameter = consumeItem(tokens, false);
+  let parameterBox = true, parameter = true;
   while(parameter !== null) {
-    node.addParameterNode(parameter);
-    parameter = consumeItem(tokens, false);
+
+    parameterBox = consumeItem(tokens, false);
+    if(parameterBox.error) {
+      return parameterBox;
+    }
+    parameter = parameterBox.node;
+    if(parameter !== null) {
+      node.addParameterNode(parameter);
+    }
   }
 
-  return node;
+  return {node: node};
 }
 
 
@@ -91,22 +128,32 @@ function consumeQuotedForm(tokens) {
   let node = new Node(NodeType.LIST);
 
   node.addChild(new Node(NodeType.NAME, "quote", false));
-  node.addChild(consumeItem(tokens, false));
+  let childBox = consumeItem(tokens, false);
+  if(childBox.error) {
+    return childBox;
+  }
+  node.addChild(childBox.node);
 
-  return node;
+  return {node: node};
 }
 
 function consumeList(tokens, alterable) {
   let node = new Node(NodeType.LIST);
-  let n;
 
   while(true) {
     let token = tokens[0];
+    if(token === undefined) {
+      return {error: "unexpected end of list"};
+    }
     if(token.type === TokenType.LIST_END) {
       tokens.shift();
-      return node;
+      return {node: node};
     } else {
-      n = consumeItem(tokens, false);
+      let nodeBox = consumeItem(tokens, false);
+      if(nodeBox.error) {
+        return nodeBox;
+      }
+      let n = nodeBox.node;
       if(n) {
         node.addChild(n);
       }

@@ -17,7 +17,7 @@ export function main() {
     it('should parse an int', () => {
       let ts = [new Token(TokenType.INT, 4)];
 
-      let res = parse(ts);
+      let res = parse(ts).nodes;
 
       expect(res.length).toEqual(1);
       expect(res[0].type).toEqual(NodeType.INT);
@@ -27,7 +27,7 @@ export function main() {
     it('should parse a float', () => {
       let ts = [new Token(TokenType.FLOAT, 3.14)];
 
-      let res = parse(ts);
+      let res = parse(ts).nodes;
 
       expect(res.length).toEqual(1);
       expect(res[0].type).toEqual(NodeType.FLOAT);
@@ -37,7 +37,7 @@ export function main() {
     it('should parse a name', () => {
       let ts = [new Token(TokenType.NAME, "cdr")];
 
-      let res = parse(ts);
+      let res = parse(ts).nodes;
 
       expect(res.length).toEqual(1);
       expect(res[0].type).toEqual(NodeType.NAME);
@@ -47,7 +47,7 @@ export function main() {
     it('should parse a string', () => {
       let ts = [new Token(TokenType.STRING, "hello world")];
 
-      let res = parse(ts);
+      let res = parse(ts).nodes;
 
       expect(res.length).toEqual(1);
       expect(res[0].type).toEqual(NodeType.STRING);
@@ -56,13 +56,13 @@ export function main() {
 
     it('should parse a boolean', () => {
       let ts = [new Token(TokenType.NAME, "true")];
-      let res = parse(ts);
+      let res = parse(ts).nodes;
       expect(res.length).toEqual(1);
       expect(res[0].type).toEqual(NodeType.BOOLEAN);
       expect(res[0].value).toEqual('#t');
 
       ts = [new Token(TokenType.NAME, "false")];
-      res = parse(ts);
+      res = parse(ts).nodes;
       expect(res.length).toEqual(1);
       expect(res[0].type).toEqual(NodeType.BOOLEAN);
       expect(res[0].value).toEqual('#f');
@@ -73,11 +73,29 @@ export function main() {
                 new Token(TokenType.INT, 4),
                 new Token(TokenType.LIST_END)];
 
-      let res = parse(ts);
+      let res = parse(ts).nodes;
 
       expect(res.length).toEqual(1);
       expect(res[0].type).toEqual(NodeType.LIST);
     });
+
+
+    it('should error on a mismatched list (no closing pair)', () => {
+      let ts = [new Token(TokenType.LIST_START),
+                new Token(TokenType.INT, 4)];
+
+      let r = parse(ts);
+      expect(r.error).toBeDefined();
+    });
+
+    it('should error on a mismatched list (no opening pair)', () => {
+      let ts = [new Token(TokenType.INT, 4),
+                new Token(TokenType.LIST_END)];
+
+      let r = parse(ts);
+      expect(r.error).toBeDefined();
+    });
+    
 
     it('should parse a quoted form', () => {
       // '(2 3 4) => (quote (2 3 4))
@@ -88,7 +106,7 @@ export function main() {
                 new Token(TokenType.INT, 4),
                 new Token(TokenType.LIST_END)];
 
-      let res = parse(ts);
+      let res = parse(ts).nodes;
       expect(res.length).toEqual(1);
 
       let lst = res[0];
@@ -115,7 +133,7 @@ export function main() {
                 new Token(TokenType.INT, 456),
                 new Token(TokenType.LIST_END)];
 
-      let res = parse(ts);
+      let res = parse(ts).nodes;
 
       expect(res.length).toEqual(3);
       expect(res[0].type).toEqual(NodeType.LIST);
@@ -132,8 +150,9 @@ export function main() {
                 new Token(TokenType.LIST_END),
                 new Token(TokenType.BRACKET_END)];
 
-      let res = parse(ts);
-
+      let r = parse(ts);
+      let res = r.nodes;
+      
       expect(res.length).toEqual(1);
       let alterableNode = res[0];
       expect(alterableNode.type).toEqual(NodeType.INT);

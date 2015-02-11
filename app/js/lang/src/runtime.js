@@ -10,8 +10,14 @@ export function createEnv() {
 
 export function evalForm(env, form) {
   let ts = tokenise(form);
-  let ast = parse(ts);
-  let compiled = compile(ast);
+  let astBox = parse(ts);
+  if(astBox.error) {
+    // some sort of error occurred
+    console.log(astBox.error);
+    return false;
+  } 
 
+  let ast = astBox.nodes;
+  let compiled = compile(ast);
   return compiled.reduce((a, b) => evaluate(env, b), null);
 }
