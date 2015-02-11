@@ -8,6 +8,17 @@ export var Format = {
   XYZ: 4
 };
 
+export const setAlpha = new PublicBinding(
+  "setAlpha",
+  
+  `sets the alpha value of the given colour
+  arguments: colour, alpha`,
+  
+  () => {
+    let dc = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+    return ({colour = dc, alpha = 1.0}) => colour.setAlpha(alpha);
+  }
+)
 
 export const rgbColour = new PublicBinding(
   "rgbColour",
@@ -127,6 +138,11 @@ export class Colour {
     if(val.length === 3) {
       this.val.push(1.0);
     }
+  }
+
+  setAlpha(alpha) {
+    this.val[ALPHA] = alpha;
+    return this;
   }
 
   compare(other) {

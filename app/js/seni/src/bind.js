@@ -58,7 +58,8 @@ function bindColour(env) {
                  ColourNS.complementary,
                  ColourNS.splitComplementary,
                  ColourNS.analagous,
-                 ColourNS.triad];
+                 ColourNS.triad,
+                 ColourNS.setAlpha];
   
   colours.forEach((c) => env.add(c.name, c.create()));
 }
