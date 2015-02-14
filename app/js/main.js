@@ -71,6 +71,9 @@ function initialCode() {
 (log (gg))
 (log (gg))
 
+(define shabba  (take num: 3 from: gg))
+
+
   `;
 }
 

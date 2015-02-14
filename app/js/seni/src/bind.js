@@ -3,9 +3,11 @@ import * as MatrixStack from './MatrixStack';
 import * as MathUtil from './MathUtil';
 import * as ColourNS from './Colour';
 import * as Perlin from './Perlin';
+import * as Core from './core';
 
 export function addBindings(env, renderer) {
 
+  bindCore(env);
   bindMath(env);
   bindMatrixStack(env, renderer.getMatrixStack());
   bindShapes(env, renderer);
@@ -13,6 +15,12 @@ export function addBindings(env, renderer) {
   bindPerlin(env);
 
   return env;
+}
+
+function bindCore(env) {
+  let core = [Core.takeBinding];
+
+  core.forEach((m) => env.add(m.name, m.create()));
 }
 
 function bindMath(env) {
