@@ -19,7 +19,8 @@ function bindMath(env) {
   let math = [MathUtil.remapFnBinding,
               MathUtil.PI,
               MathUtil.twoPI,
-              MathUtil.PIbyTwo];
+              MathUtil.PIbyTwo,
+              MathUtil.buildPRNG];
 
   math.forEach((m) => env.add(m.name, m.create()));
 }

@@ -64,6 +64,13 @@ function initialCode() {
   (rect x: 500 y: 750 width: 1000 height: 200 
    colour: (rgbColour r: 1.0 g: 0.0 b: 0.0 a: 1.0))
 
+
+(define gg (buildPRNG seed: "hello."))
+(log (gg))
+(log (gg))
+(log (gg))
+(log (gg))
+
   `;
 }
 

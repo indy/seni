@@ -1,4 +1,5 @@
 import { PublicBinding } from 'lang/env';
+import * as seedRandom from './seedrandom';
 
 var _PI = Math.PI;
 var _twoPI = _PI * 2;
@@ -27,6 +28,14 @@ export const remapFnBinding = new PublicBinding(
   () => remapFn
 )
 
+export const buildPRNG = new PublicBinding(
+  "buildPRNG",
+  `returns a function that generates a prng everytime its invoked`,
+
+  () => function ({seed = "hello."}) {
+    return seedRandom.buildPRNG(seed);
+  }
+)
 
 export function stepsInclusive(start, end, num) {
   var unit = (end - start) / (num - 1);
