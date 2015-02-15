@@ -249,6 +249,7 @@ export function main() {
       e.add('bar', 0);
       res = evalForm(e, "(let ((x 2) (y 4)) (loop (a to: 5 step: x) (+ y y) (set! bar (+ bar a))))");
       expect(e.lookup('bar')).toEqual(6);
+
     });
   });
 }

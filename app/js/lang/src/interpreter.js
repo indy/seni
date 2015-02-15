@@ -130,10 +130,13 @@ export var specialForms = {
 
   // (loop (a from: 1 to: 30 step: 2) (+ a a))
   'loop': (env, [_, [varName, varParameters], ...body]) => {
+
+    let vp = {};
     for(let k in varParameters) {
-      varParameters[k] = evaluate(env, varParameters[k]);
+      vp[k] = evaluate(env, varParameters[k]);
     }
-    return loopingFn(env.newScope(), body, varName, varParameters);
+    
+    return loopingFn(env.newScope(), body, varName, vp);
   },
 
   // (onMatrixStack (f1 1) (f2 3) (f3 5))
@@ -163,7 +166,6 @@ function loopingFn(env, expr, varName, {from = 0,
   }
 
   var res;
-
   if(until !== undefined) {
     for(let i=from;i<=until;i+=step) {
       env.add(varName, i);

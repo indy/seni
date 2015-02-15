@@ -2,29 +2,6 @@ import { Renderer } from 'seni/Renderer';
 import { createEnv, evalForm } from 'lang/runtime';
 import * as seniBind from 'seni/bind';
 
-/*
-(define bug
-  (fn (iterations: 10)
-
-
-        (log iterations)
-        (log "aaa")
-        ;(rect x: x y: y width: width height: height
-        ;      colour: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 0.5))
-        
-        ; horizontal strips
-        (loop (i to: iterations)
-              (log i)
-              (log iterations)              
-              )
-        (log "yoyoyo")
-        ))
-
-(bug iterations: 21)
-(bug iterations: 10)
-
-*/
-
 export function main() {
     var renderer = new Renderer("render-canvas");
     setupUI(renderer);
