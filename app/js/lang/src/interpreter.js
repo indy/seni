@@ -123,10 +123,23 @@ export var specialForms = {
       }
       return evalBodyForms(newEnv, body);
     }},
-  
-  // (log "hello world")
-  'log': (env, [_, msg]) => 
-    console.log(evaluate(env, msg)),
+
+  // (print "hi" foo) => hi 42
+  'print': (env, [_, ...msgs]) => {
+    console.log(msgs.reduce((a, b) => a + " " + evaluate(env, b), ""));
+  },
+
+  // (log "hi" foo) => hi <foo:42>
+  'log': (env, [_, ...msgs]) => {
+    let message = msgs.reduce((a, b) => {
+      if(typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
+        return a + " <" + b + ":" + evaluate(env, b) + ">";
+      }
+      return a + " " + evaluate(env, b);
+    }, "");
+    console.log(message);
+  },
+
 
   // (loop (a from: 1 to: 30 step: 2) (+ a a))
   'loop': (env, [_, [varName, varParameters], ...body]) => {
