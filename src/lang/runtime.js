@@ -1,9 +1,9 @@
-import bind from './bind';
 import Interpreter from './interpreter';
 import Env from './env';
 import Parser from './parser';
 import Lexer from './lexer';
 import Compiler from './compiler';
+import bind from './bind';
 
 export function createEnv() {
   return bind(new Env(), [Interpreter.specialForms,
@@ -17,7 +17,7 @@ export function evalForm(env, form) {
     // some sort of error occurred
     console.log(astBox.error);
     return false;
-  } 
+  }
 
   let ast = astBox.nodes;
   let compiled = Compiler.compile(ast);

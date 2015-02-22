@@ -66,8 +66,8 @@ gulp.task('lint-src', function() {
     .pipe($.jshint())
     .pipe($.jshint.reporter('jshint-stylish'))
     .pipe($.notify(jshintNotify))
-//    .pipe($.jscs())
-//    .pipe($.notify(jscsNotify))
+    .pipe($.jscs())
+    .pipe($.notify(jscsNotify))
     .pipe($.jshint.reporter('fail'));
 });
 

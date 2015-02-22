@@ -1,4 +1,3 @@
-// jscs:disable
 // recursive code so switch off the jslint warnings
 // about functions being used before they're defined
 //
@@ -91,19 +90,19 @@ function addBindings(env, exprs) {
 var _specialForms = {
 
   // (if something truthy falsey) || (if something truthy)
-  'if': (env, [_, cond, t, f]) => 
+  'if': (env, [_, cond, t, f]) =>
     _evaluate(env, _evaluate(env, cond) === TRUE_STRING ? t : f),
 
   // (quote (age 99))
-  'quote': (env, [_, form]) => 
+  'quote': (env, [_, form]) =>
     form,
 
   // (define foo 12)
-  'define': (env, [_, name, val]) => 
+  'define': (env, [_, name, val]) =>
     env.add(name, _evaluate(env, val)),
 
   // (set! foo 42)
-  'set!': (env, [_, name, val]) => 
+  'set!': (env, [_, name, val]) =>
     env.mutate(name, _evaluate(env, val)),
 
   // (begin (f1 1) (f2 3) (f3 5))
@@ -117,12 +116,12 @@ var _specialForms = {
 
   // (fn (x: 0 y: 0) (+ x y))
   'fn': (env, [_, defaultArgForms, ...body]) => {
-    
+
     let defaultArgValues = {};
     for(let k in defaultArgForms) {
       defaultArgValues[k] = _evaluate(env, defaultArgForms[k]);
     }
-    
+
     return function(args) {
       const newEnv = env.newScope();
       for(let k in defaultArgValues) {
@@ -156,7 +155,7 @@ var _specialForms = {
     for(let k in varParameters) {
       vp[k] = _evaluate(env, varParameters[k]);
     }
-    
+
     return loopingFn(env.newScope(), body, varName, vp);
   },
 
@@ -171,14 +170,16 @@ var _specialForms = {
 
 // whoa bodyform, bodyform for you
 function evalBodyForms(env, bodyForms) {
-  return bodyForms.reduce((a, b) => _evaluate(env, b), null);  
+  return bodyForms.reduce((a, b) => _evaluate(env, b), null);
 }
 
-function loopingFn(env, expr, varName, {from = 0,
-                                        to = 10,
-                                        until = undefined,
-                                        step = 1}) {
+function loopingFn(env, expr, varName, params) {
   // todo: 'to' should be <=, and 'until' should be '<'
+
+  let from = params.from || 0;
+  let to = params.to || 10;
+  let until = params.until || undefined;
+  let step = params.step || 1;
 
   if(step === 0) {
     console.log('step size of 0 given');
@@ -212,19 +213,19 @@ function loopingFn(env, expr, varName, {from = 0,
 
 
 var _classicFunctions = {
-  '+': (args) => 
+  '+': (args) =>
     args.reduce((a, b) => a + b, 0),
 
-  '*': (args) => 
+  '*': (args) =>
     args.reduce((a, b) => a * b, 1),
-  
-  '-': (args) => 
+
+  '-': (args) =>
     args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
 
-  '/': (args) => 
+  '/': (args) =>
     args.reduce((a, b) => a / b),
-  
-  '=': ([first, ...rest]) => 
+
+  '=': ([first, ...rest]) =>
     rest.every(a => a === first) ? TRUE_STRING : FALSE_STRING,
 
   '<': (args) => {
@@ -251,7 +252,7 @@ var _classicFunctions = {
     return TRUE_STRING;
   },
 
-  'list' : (args) => 
+  'list' : (args) =>
     args,
 
   'pair' : (args) => {
