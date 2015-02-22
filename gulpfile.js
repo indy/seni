@@ -1,251 +1,187 @@
 var gulp = require('gulp');
-var gulpPlugins = require('gulp-load-plugins')();
-var symlink = require('gulp-symlink');
-var runSequence = require('run-sequence');
-var merge = require('merge');
-var gulpTraceur = require('./tools/transpiler/gulp-traceur');
+var $ = require('gulp-load-plugins')();
+const fs = require('fs');
+const del = require('del');
+const glob = require('glob');
+const path = require('path');
+const mkdirp = require('mkdirp');
+const babelify = require('babelify');
+const isparta = require('isparta');
+const esperanto = require('esperanto');
+const browserify = require('browserify');
+const runSequence = require('run-sequence');
+const source = require('vinyl-source-stream');
+const manifest = require('./package.json');
+const config = manifest.babelBoilerplateOptions;
+const mainFile = manifest.main;
+const destinationFolder = path.dirname(mainFile);
+const exportFileName = path.basename(mainFile, path.extname(mainFile));
 
-var clean = require('./tools/build/clean');
-var deps = require('./tools/build/deps');
-var css = require('./tools/build/css');
-var transpile = require('./tools/build/transpile');
-var html = require('./tools/build/html');
-var jsserve = require('./tools/build/jsserve');
 
-var karma = require('./tools/build/karma');
-var path = require('path');
+var sourcemaps = require("gulp-sourcemaps");
+var babel = require("gulp-babel");
+var concat = require("gulp-concat");
 
+gulp.task("shabba", function () {
+  return gulp.src("src/*.js")
+    .pipe(babel())
+    .pipe(gulp.dest("dist"));
+});
 
-// -----------------------
-// configuration
+gulp.task("shabbaranks", function () {
+  return gulp.src("src/*.js")
+    .pipe(sourcemaps.init())
+    .pipe(concat("all.js"))
+    .pipe(babel())
+    .pipe(sourcemaps.write("."))
+    .pipe(gulp.dest("dist"));
+});
 
-var _COMPILER_CONFIG_JS_DEFAULT = {
-  sourceMaps: true,
-  annotations: true, // parse annotations
-  types: true, // parse types
-  script: false, // parse as a module
-  memberVariables: true, // parse class fields
-  modules: 'instantiate'
+// Remove the built files
+gulp.task('clean', function(cb) {
+  del([destinationFolder], cb);
+});
+
+// Remove our temporary files
+gulp.task('clean-tmp', function(cb) {
+  del(['tmp'], cb);
+});
+
+// Send a notification when JSHint fails,
+// so that you know your changes didn't build
+function jshintNotify(file) {
+  if (!file.jshint) { return; }
+  return file.jshint.success ? false : 'JSHint failed';
+}
+
+function jscsNotify(file) {
+  if (!file.jscs) { return; }
+  return file.jscs.success ? false : 'JSRC failed';
+}
+
+// Lint our source code
+gulp.task('lint-src', function() {
+  return gulp.src(['src/**/*.js'])
+    .pipe($.plumber())
+    .pipe($.jshint())
+    .pipe($.jshint.reporter('jshint-stylish'))
+    .pipe($.notify(jshintNotify))
+    .pipe($.jscs())
+    .pipe($.notify(jscsNotify))
+    .pipe($.jshint.reporter('fail'));
+});
+
+// Lint our test code
+gulp.task('lint-test', function() {
+  return gulp.src(['test/**/*.js'])
+    .pipe($.plumber())
+    .pipe($.jshint())
+    .pipe($.jshint.reporter('jshint-stylish'))
+    .pipe($.notify(jshintNotify))
+    .pipe($.jscs())
+    .pipe($.notify(jscsNotify))
+    .pipe($.jshint.reporter('fail'));
+});
+
+// Build two versions of the library
+gulp.task('build', ['lint-src', 'clean'], function(done) {
+  console.log("inside build");
+  esperanto.bundle({
+    base: 'src',
+    entry: config.entryFileName
+  }).then(function(bundle) {
+    console.log("after esperanto bundle");
+    var res = bundle.toUmd({
+      sourceMap: true,
+      sourceMapSource: config.entryFileName + '.js',
+      sourceMapFile: exportFileName + '.js',
+      name: config.exportVarName
+    });
+    console.log("hello world");
+    // Write the generated sourcemap
+    mkdirp.sync(destinationFolder);
+    fs.writeFileSync(path.join(destinationFolder, exportFileName + '.js'), res.map.toString());
+
+    $.file(exportFileName + '.js', res.code, { src: true })
+      .pipe($.plumber())
+      .pipe($.sourcemaps.init({ loadMaps: true }))
+      .pipe($.babel({ blacklist: ['useStrict'] }))
+      .pipe($.sourcemaps.write('./', {addComment: false}))
+      .pipe(gulp.dest(destinationFolder))
+      .pipe($.filter(['*', '!**/*.js.map']))
+      .pipe($.rename(exportFileName + '.min.js'))
+      .pipe($.uglifyjs({
+        outSourceMap: true,
+        inSourceMap: destinationFolder + '/' + exportFileName + '.js.map',
+      }))
+      .pipe(gulp.dest(destinationFolder))
+      .on('end', done);
+  });
+  console.log("inside build post");
+});
+
+// Bundle our app for our unit tests
+gulp.task('browserify', function() {
+  var testFiles = glob.sync('./test/unit/**/*');
+  var allFiles = ['./test/setup/browserify.js'].concat(testFiles);
+  var bundler = browserify(allFiles);
+  bundler.transform(babelify.configure({
+    sourceMapRelative: __dirname + '/src',
+    blacklist: ['useStrict']
+  }));
+  var bundleStream = bundler.bundle();
+  return bundleStream
+    .on('error', function(err){
+      console.log(err.message);
+      this.emit('end');
+    })
+    .pipe($.plumber())
+    .pipe(source('./tmp/__spec-build.js'))
+    .pipe(gulp.dest(''))
+    .pipe($.livereload());
+});
+
+gulp.task('coverage', function(done) {
+  require('babel/register')({ modules: 'common' });
+  gulp.src(['src/*.js'])
+    .pipe($.plumber())
+    .pipe($.istanbul({ instrumenter: isparta.Instrumenter }))
+    .pipe($.istanbul.hookRequire())
+    .on('finish', function() {
+      return test()
+      .pipe($.istanbul.writeReports())
+      .on('end', done);
+    });
+});
+
+function test() {
+  return gulp.src(['test/setup/node.js', 'test/unit/**/*.js'], {read: false})
+    .pipe($.plumber())
+    .pipe($.mocha({reporter: 'dot', globals: config.mochaGlobals}));
 };
 
-var _HTML_DEFAULT_SCRIPTS_JS = [
-  {src: '/js/deps/traceur-runtime.js'},
-  {src: '/js/rtts_assert/rtts_assert.js'},
-  {src: '/js/deps/es6-module-loader-sans-promises.src.js'},
-  {src: '/js/deps/system.src.js'},
-  {src: '/js/deps/extension-register.js'},
-  {src: '/js/deps/runtime_paths.js'},
-  {src: '/js/deps/gl-matrix.js'}
-];
-
-
-var CONFIG = {
-  dest: {
-    all: 'dist',
-    dev: 'dist/dev',
-    prod: 'dist/prod'
-  },
-  srcFolderMapping: {
-    'default': '.'
-  },
-  deps: {
-    js: [
-      gulpTraceur.RUNTIME_PATH,
-      "node_modules/es6-module-loader/dist/es6-module-loader-sans-promises.src.js",
-      "node_modules/systemjs/dist/system.src.js",
-      "node_modules/systemjs/lib/extension-register.js",
-      "tools/build/runtime_paths.js",
-      "node_modules/gl-matrix/dist/gl-matrix.js"
-    ]
-  },
-  transpile: {
-    src: {
-      js: ['app/js/**/*.js', 'app/js/**/*.es6', 'app/js/**/*.ats']
-    },
-    copy: {
-      js: ['app/js/**/*.es5']
-    },
-    options: {
-      js: {
-        dev: merge(true, _COMPILER_CONFIG_JS_DEFAULT, {
-          typeAssertionModule: 'rtts_assert/rtts_assert',
-          typeAssertions: true
-        }),
-        prod: merge(true, _COMPILER_CONFIG_JS_DEFAULT, {
-          typeAssertions: false
-        })
-      }
-    }
-  },
-  css: {
-    src: 'app/css/*.css'
-  },
-  html: {
-    src: ['app/*.html'],
-    scriptsPerFolder: {
-      js: {
-        default: _HTML_DEFAULT_SCRIPTS_JS
-      }
-    }
-  }
-};
-
-// ------------
-// clean
-
-gulp.task('build/clean.js', clean(gulp, gulpPlugins, {
-  path: CONFIG.dest.all
-}));
-
-
-// ------------
-// css
-
-gulp.task('build/css.js.dev', css(gulp, gulpPlugins, {
-  src: CONFIG.css.src,
-  dest: CONFIG.dest.dev
-}));
-
-gulp.task('build/css.js.prod', css(gulp, gulpPlugins, {
-  src: CONFIG.css.src,
-  dest: CONFIG.dest.prod
-}));
-
-// ------------
-// deps
-
-gulp.task('build/deps.js.dev', deps(gulp, gulpPlugins, {
-  src: CONFIG.deps.js,
-  dest: path.join(CONFIG.dest.dev, 'js')
-}));
-
-gulp.task('build/deps.js.prod', deps(gulp, gulpPlugins, {
-  src: CONFIG.deps.js,
-  dest: path.join(CONFIG.dest.prod, 'js')
-}));
-
-// ------------
-// transpile
-
-gulp.task('build/transpile.js.dev', transpile(gulp, gulpPlugins, {
-  src: CONFIG.transpile.src.js,
-  copy: CONFIG.transpile.copy.js,
-  dest: path.join(CONFIG.dest.dev, 'js'),
-  outputExt: 'js',
-  options: CONFIG.transpile.options.js.dev,
-  srcFolderMapping: CONFIG.srcFolderMapping
-}));
-
-gulp.task('build/transpile.js.prod', transpile(gulp, gulpPlugins, {
-  src: CONFIG.transpile.src.js,
-  copy: CONFIG.transpile.copy.js,
-  dest: path.join(CONFIG.dest.prod, 'js'),
-  outputExt: 'js',
-  options: CONFIG.transpile.options.js.prod,
-  srcFolderMapping: CONFIG.srcFolderMapping
-}));
-
-// ------------
-// html
-
-gulp.task('build/html.js.dev', html(gulp, gulpPlugins, {
-  src: CONFIG.html.src,
-  dest: CONFIG.dest.dev,
-  srcFolderMapping: CONFIG.srcFolderMapping,
-  scriptsPerFolder: CONFIG.html.scriptsPerFolder.js
-}));
-
-gulp.task('build/html.js.prod', html(gulp, gulpPlugins, {
-  src: CONFIG.html.src,
-  dest: CONFIG.dest.prod,
-  srcFolderMapping: CONFIG.srcFolderMapping,
-  scriptsPerFolder: CONFIG.html.scriptsPerFolder.js
-}));
-
-
-// ------------------
-// web servers
-gulp.task('serve.js.dev', jsserve(gulp, gulpPlugins, {
-  path: CONFIG.dest.dev
-}));
-
-gulp.task('serve.js.prod', jsserve(gulp, gulpPlugins, {
-  path: CONFIG.dest.prod
-}));
-
-gulp.task('test', function(done) {
-    var options = {
-        configFile: 'karma.conf.js'
-    };
-    for (var i=0, ii = process.argv.length; i<ii; ++i) {
-        var val = process.argv[i];
-        if (val === '--debug') options.debugRun = true;
-        if (val === '--watch') options.autoWatch = true;
-        else if (val === '--single-run') options.singleRun = true;
-        else if (val === '--browsers') options.browsers = process.argv[++i].split(',');
-    }
-    karma(options, done);
+// Lint and run our tests
+gulp.task('test', ['lint-src', 'lint-test'], function() {
+  require('babel/register')({ modules: 'common' });
+  return test();
 });
 
-// -----------------
-// orchestrated targets
-
-gulp.task('build.js.dev', function() {
-  return runSequence(
-    ['build/deps.js.dev',
-     'build/transpile.js.dev',
-     'build/html.js.dev',
-     'build/css.js.dev']);
+// Ensure that linting occurs before browserify runs. This prevents
+// the build from breaking due to poorly formatted code.
+gulp.task('build-in-sequence', function(callback) {
+  runSequence(['lint-src', 'lint-test'], 'browserify', callback);
 });
 
-gulp.task('build.js.prod', function() {
-  return runSequence(
-    ['build/deps.js.prod',
-     'build/transpile.js.prod',
-     'build/html.js.prod',
-     'build/css.js.prod']);
-});
-
-gulp.task('build.js', ['build.js.dev', 'build.js.prod']);
-
-gulp.task('clean', ['build/clean.js']);
-
-gulp.task('build', ['build.js']);
-
-
-gulp.task('symlink.ext.dev', function() {
-  return gulp.src('bower_components')
-    .pipe(symlink(path.join(CONFIG.dest.dev, '/bower_components')))
-});
-
-gulp.task('symlink.ext.prod', function() {
-  return gulp.src('bower_components')
-    .pipe(symlink(path.join(CONFIG.dest.prod, '/bower_components')))
-});
-
-gulp.task('symlink.ext', ['symlink.ext.dev', 'symlink.ext.prod']);
-
-gulp.task('cleanbuild', function() {
-  return runSequence(
-    ['clean', 'symlink.ext', 'build']);
-});
-
-
-gulp.task('watch.dev', function() {
-  var changeFn = function(event) {
-    console.log('File ' + event.path + ' was ' + event.type);
-  };
-  gulp.watch('app/**/*.ats', ['build/transpile.js.dev']).on('change', changeFn);
-  gulp.watch('app/**/*.js', ['build/transpile.js.dev']).on('change', changeFn);
-  gulp.watch('app/**/*.css', ['build/css.js.dev']).on('change', changeFn);
-  gulp.watch('app/**/*.html', ['build/html.js.dev']).on('change', changeFn);
-});
-
+// Run the headless unit tests as you make changes.
 gulp.task('watch', function() {
-  return runSequence(
-    ['build.js.dev',
-     'watch.dev']);
+  gulp.watch(['src/**/*', 'test/**/*', '.jshintrc', 'test/.jshintrc'], ['test']);
 });
 
+// Set up a livereload environment for our spec runner
+gulp.task('test-browser', ['build-in-sequence'], function() {
+  $.livereload.listen({port: 35729, host: 'localhost', start: true});
+  return gulp.watch(['src/**/*.js', 'test/**/*', '.jshintrc', 'test/.jshintrc'], ['build-in-sequence']);
+});
 
-gulp.task('serve', ['serve.js.dev']);
+// An alias of test
+gulp.task('default', ['test']);
