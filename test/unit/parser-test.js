@@ -147,7 +147,7 @@ describe('parse', () => {
     let alterableNode = res[0];
     expect(alterableNode.type).to.equal(NodeType.INT);
     expect(alterableNode.value).to.equal(42);
-    expect(alterableNode.alterable).to.equal(true);
+    expect(alterableNode.alterable).to.be.true;
 
     let parameterNodes = alterableNode.parameterAST;
     expect(parameterNodes.length).to.equal(1);

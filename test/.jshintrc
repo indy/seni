@@ -16,7 +16,7 @@
   "strict"        : false,
   "maxparams"     : 4,
   "maxdepth"      : 2,
-  "maxstatements" : 15,
+  "maxstatements" : 22,
   "maxcomplexity" : 10,
   "maxlen"        : 200,
 
