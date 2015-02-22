@@ -85,19 +85,16 @@ gulp.task('lint-test', function() {
 
 // Build two versions of the library
 gulp.task('build', ['lint-src', 'clean'], function(done) {
-  console.log("inside build");
   esperanto.bundle({
     base: 'src',
     entry: config.entryFileName
   }).then(function(bundle) {
-    console.log("after esperanto bundle");
     var res = bundle.toUmd({
       sourceMap: true,
       sourceMapSource: config.entryFileName + '.js',
       sourceMapFile: exportFileName + '.js',
       name: config.exportVarName
     });
-    console.log("hello world");
     // Write the generated sourcemap
     mkdirp.sync(destinationFolder);
     fs.writeFileSync(path.join(destinationFolder, exportFileName + '.js'), res.map.toString());
@@ -117,7 +114,6 @@ gulp.task('build', ['lint-src', 'clean'], function(done) {
       .pipe(gulp.dest(destinationFolder))
       .on('end', done);
   });
-  console.log("inside build post");
 });
 
 // Bundle our app for our unit tests
