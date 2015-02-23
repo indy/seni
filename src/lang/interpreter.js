@@ -173,13 +173,23 @@ function evalBodyForms(env, bodyForms) {
   return bodyForms.reduce((a, b) => _evaluate(env, b), null);
 }
 
-function loopingFn(env, expr, varName, params = {from: 0,
-                                                 to: 10,
-                                                 until: undefined,
-                                                 step: 1}) {
+function merge(obj, defaults) {
+  let res = {};
+  for(let p in defaults) {
+    res[p] = obj[p] ? obj[p] : defaults[p];
+  }
+  return res;
+}
+
+function loopingFn(env, expr, varName, params) {
   // todo: 'to' should be <=, and 'until' should be '<'
 
-  let {from, to, until, step} = params;
+  let {from, to, until, step} = merge(params, {from: 0,
+                                               to: 10,
+                                               until: undefined,
+                                               step: 1});
+
+  console.log(to);
 
   if(step === 0) {
     console.log('step size of 0 given');
