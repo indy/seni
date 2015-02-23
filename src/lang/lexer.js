@@ -1,5 +1,5 @@
-import Token from './token';
-import TokenType from './tokentype';
+import Token from './Token';
+import TokenType from './TokenType';
 
 function characterSet(characters) {
   let s = new Set();

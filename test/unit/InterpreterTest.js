@@ -1,9 +1,9 @@
-import Interpreter from '../../src/lang/interpreter';
-import Env from '../../src/lang/env';
+import Interpreter from '../../src/lang/Interpreter';
+import Env from '../../src/lang/Env';
 import bind from '../../src/lang/bind';
-import Parser from '../../src/lang/parser';
-import Lexer from '../../src/lang/lexer';
-import Compiler from '../../src/lang/compiler';
+import Parser from '../../src/lang/Parser';
+import Lexer from '../../src/lang/Lexer';
+import Compiler from '../../src/lang/Compiler';
 
 describe('eval', () => {
 

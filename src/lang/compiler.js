@@ -1,4 +1,4 @@
-import NodeType from './nodetype';
+import NodeType from './NodeType';
 
 // recursive code so switch off the jslint warnings
 // about functions being used before they're defined

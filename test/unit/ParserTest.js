@@ -1,7 +1,7 @@
-import Parser from '../../src/lang/parser';
-import NodeType from '../../src/lang/nodetype';
-import Token from '../../src/lang/token';
-import TokenType from '../../src/lang/tokentype';
+import Parser from '../../src/lang/Parser';
+import NodeType from '../../src/lang/NodeType';
+import Token from '../../src/lang/Token';
+import TokenType from '../../src/lang/TokenType';
 
 describe('parse', () => {
 

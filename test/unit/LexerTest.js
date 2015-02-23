@@ -1,5 +1,5 @@
-import Lexer from '../../src/lang/lexer';
-import TokenType from '../../src/lang/tokentype';
+import Lexer from '../../src/lang/Lexer';
+import TokenType from '../../src/lang/TokenType';
 
 
 describe('Lexer', () => {

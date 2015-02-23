@@ -1,6 +1,6 @@
-import TokenType from './tokentype';
-import Node from './node';
-import NodeType from './nodetype';
+import TokenType from './TokenType';
+import Node from './Node';
+import NodeType from './NodeType';
 
 // recursive code so switch off the jslint warnings
 // about functions being used before they're defined

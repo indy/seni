@@ -1,5 +1,5 @@
-import Token from '../../src/lang/token';
-import TokenType from '../../src/lang/tokentype';
+import Token from '../../src/lang/Token';
+import TokenType from '../../src/lang/TokenType';
 
 describe('token', () => {
 

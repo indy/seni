@@ -1,4 +1,4 @@
-import Env from '../../src/lang/env';
+import Env from '../../src/lang/Env';
 
 describe('env', () => {
 

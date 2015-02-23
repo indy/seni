@@ -1,8 +1,8 @@
-import Interpreter from './interpreter';
-import Env from './env';
-import Parser from './parser';
-import Lexer from './lexer';
-import Compiler from './compiler';
+import Interpreter from './Interpreter';
+import Env from './Env';
+import Parser from './Parser';
+import Lexer from './Lexer';
+import Compiler from './Compiler';
 import bind from './bind';
 
 export function createEnv() {
