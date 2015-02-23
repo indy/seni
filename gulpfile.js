@@ -139,7 +139,7 @@ gulp.task('browserify', function() {
 
 gulp.task('coverage', function(done) {
   require('babel/register')({ modules: 'common' });
-  gulp.src(['src/*.js'])
+  gulp.src(['src/**/*.js'])
     .pipe($.plumber())
     .pipe($.istanbul({ instrumenter: isparta.Instrumenter }))
     .pipe($.istanbul.hookRequire())
