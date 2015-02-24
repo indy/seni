@@ -55,6 +55,8 @@
   "wsh"           : false,
   "yui"           : false,
   "globals": {
-    "console": true
+    "console": true,
+    "mat4": true,
+    "vec3": true
   }
 }

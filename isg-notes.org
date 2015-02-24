@@ -1,3 +1,13 @@
+
+* todo [0/4]
+  1. [ ] use jspm to package gl-matrix
+  2. [ ] remove "gl-matrix": "^2.1.0" from devDependencies
+  4. [ ] look at use of spy in boilerplate test code
+
+
+
+
+
 graphics in webgl
 quick feedback
 ecmascript 6
@@ -38,19 +48,3 @@ seni-lang will have labels as well as names, every argument to a function will h
 
 labels are identified by ending in a colon.
 
-* todo [0/2]
-  1. [ ] when
-  2. [ ] stackMatrix to replace the pushMatrix/popMatrix pairs
-     this will require MathUtil to register specialForms with the interpreter
-
-(let ((c 50) (m 1.2))
-  (loop ((j from: (/ c 2) to: 1000 step: c)
-         (i from: (/ c 2) to: 1000 step: c)) 
-        (stackMatrix 
-         (translate x: i y: j)
-         (rotate angle: (/ 3.14 4))
-         (rect width: (* c m) height: (* c m)
-               colour: (rgbColour r: (perlin) 
-                                  g: (perlin) 
-                                  b: (perlin)
-                                  a: 0.7)))))
