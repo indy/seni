@@ -1,6 +1,6 @@
 import PublicBinding from '../lang/PublicBinding';
 
-const core = {
+const Core = {
   takeBinding: new PublicBinding(
     'take',
 
@@ -21,4 +21,4 @@ const core = {
 
 
 
-export default core;
+export default Core;
