@@ -145,9 +145,29 @@ function initialCode() {
   return code;
 }
 
+function setupUI(renderer) {
+  let d = document;
+
+  let textArea = d.getElementById('codemirror-textarea');
+
+  textArea.value = initialCode();
+
+  let editor = CodeMirror.fromTextArea(textArea, {
+    lineNumbers: true,
+    mode: 'scheme',
+    autoMatchParens: true,
+    extraKeys: {
+      'Ctrl-E': function() {
+        renderScript(renderer, editor.getValue());
+        return false;
+      }
+    }});
+}
+
 const MyLibrary = {
   mainFn() {
     let renderer = new Renderer('render-canvas');
+    setupUI(renderer);
     renderScript(renderer, initialCode());
 
     let r = 'hello';

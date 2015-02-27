@@ -57,6 +57,7 @@
   "globals": {
     "console": true,
     "mat4": true,
-    "vec3": true
+    "vec3": true,
+    "CodeMirror": true
   }
 }
