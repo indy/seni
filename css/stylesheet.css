@@ -1,0 +1,77 @@
+html,body {
+  height: 100%;
+  margin: 0;
+  background-color: #E5E5E5;
+  font-family: 'RobotoDraft', sans-serif;
+}
+
+.flex-container-h {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-container-v {
+  display: flex;
+  flex-direction: column;
+  order: 1;
+
+  width: 50%;
+}
+
+.flex-item-code-editor {
+  order: 2;
+
+  width: 50%;
+
+  flex-grow: 1;
+
+  height: 100%; 
+}
+
+.CodeMirror {
+  height: 100%; 
+}
+
+.flex-item-canvas {
+  order: 2;
+  flex-grow: 6;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-item-console {
+  order: 3;
+  flex-grow: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+#codemirror-textarea {
+  flex-grow: 2;
+  height: 100%;
+}
+
+#eval-button {
+  background: green;
+  color: yellow;
+  padding: 0.5em;
+}
+
+/*
+#render-canvas {
+  border: none;
+  margin: 2em;
+
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+
+  width: 500px;
+  height: 500px;
+}
+
+*/

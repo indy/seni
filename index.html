@@ -1,16 +1,39 @@
 <!doctype html>
 <html>
   <head>
-      <!-- Polyfill (required by Babel) -->
-  <!-- <script src='node_modules/babel/browser-polyfill.js'></script> -->
+    <title>seni</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" 
+          content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Polyfill (required by Babel) -->
+    <!-- <script src='node_modules/babel/browser-polyfill.js'></script> -->
 
-  <script src='node_modules/gl-matrix/dist/gl-matrix.js'></script>
-  <script src='dist/library-dist.js'></script>
-<title></title>
-</head>
-<body>
-<h1>heading</h1>
+    <script src='node_modules/gl-matrix/dist/gl-matrix.js'></script>
+    <script src='dist/library-dist.js'></script>
 
-<script type="text/javascript">MyLibrary.mainFn()</script>
-</body>
+    <link rel="stylesheet" href="css/stylesheet.css">
+  </head>
+
+  <body class="flex-container-h">
+    <div class="flex-container-v">
+      <div class="flex-item-canvas">
+        <canvas id="render-canvas" width="500" height="500"></canvas>
+      </div>
+      <div class="flex-item-console">
+        <!-- <div id="eval-button">Eval</div>  -->
+      </div>
+    </div>
+    <div class="flex-item-code-editor">
+      <textarea id="codemirror-textarea"></textarea> 
+    </div>
+
+    <script type="text/javascript">MyLibrary.mainFn()</script>
+    <!-- 
+    <script type="text/javascript">System.import('main').then(function(m) { m.main(); }, console.log.bind(console))</script>
+    -->
+  </body>
 </html>

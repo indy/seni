@@ -1,7 +1,6 @@
 import Shapes from './Shapes';
-import MatrixStack from './MatrixStack';
+import MatrixStackFns from './MatrixStackFns';
 import MathUtil from './MathUtil';
-import ColourConstants from './ColourConstants';
 import ColourFns from './ColourFns';
 import Perlin from './Perlin';
 import Core from './Core';
@@ -23,11 +22,11 @@ function bindMath(env) {
 }
 
 function bindMatrixStack(env, matrixStack) {
-  let mstack = [MatrixStack.pushMatrix,
-                MatrixStack.popMatrix,
-                MatrixStack.scale,
-                MatrixStack.translate,
-                MatrixStack.rotate];
+  let mstack = [MatrixStackFns.pushMatrix,
+                MatrixStackFns.popMatrix,
+                MatrixStackFns.scale,
+                MatrixStackFns.translate,
+                MatrixStackFns.rotate];
 
   mstack.forEach((m) => env.add(m.name, m.create(matrixStack)));
 }
@@ -48,10 +47,10 @@ function bindColour(env) {
                  ColourFns.hslColour,
                  ColourFns.labColour,
                  ColourFns.hsvColour,
-                 ColourConstants.RGB,
-                 ColourConstants.HSL,
-                 ColourConstants.LAB,
-                 ColourConstants.HSV,
+                 ColourFns.RGB,
+                 ColourFns.HSL,
+                 ColourFns.LAB,
+                 ColourFns.HSV,
                  ColourFns.colourConvert,
                  ColourFns.complementary,
                  ColourFns.splitComplementary,
