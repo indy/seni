@@ -55,7 +55,7 @@ function _remapFn(params) {
   }
 
   return function(params) {
-    let val = params.val || 0.5;
+    let val = params.val || 0;
     let fromInterp = (fromM * val) + fromC,
         toInterp = normalisedMappingFn(fromInterp),
         res = (toM * toInterp) + toC;

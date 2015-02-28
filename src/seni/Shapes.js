@@ -1,4 +1,4 @@
-/*jslint bitwise:true,maxparams:5,maxstatements:31*/
+/*jslint bitwise:true,maxparams:5,maxstatements:35*/
 
 import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
@@ -31,8 +31,10 @@ function _bezier(renderer) {
 
     let tessellation = params.tessellation || 15;
     let lineWidth = params.lineWidth || undefined;
-    let lineWidthStart = params.lineWidthStart || 20;
-    let lineWidthEnd = params.lineWidthEnd || 20;
+    let lineWidthStart =
+          params.lineWidthStart === undefined ? 20 : params.lineWidthStart;
+    let lineWidthEnd =
+          params.lineWidthEnd === undefined ? 20 : params.lineWidthEnd;
     let lineWidthMapping = params.lineWidthMapping || 'slow-in-out';
     let coords = params.coords || [[440, 400],
                                    [533, 700],
@@ -48,7 +50,6 @@ function _bezier(renderer) {
       // user has given a constant lineWidth parameter
       halfWidthEnd  = lineWidth / 2.0;
       remap = () => halfWidthEnd;
-
     } else {
       // use the default start and end line widths
       let halfWidthStart  = lineWidthStart / 2.0;
