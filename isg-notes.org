@@ -1,12 +1,6 @@
 
 * todo [0/4]
-  1. [ ] use jspm to package gl-matrix
-  2. [ ] remove "gl-matrix": "^2.1.0" from devDependencies
   4. [ ] look at use of spy in boilerplate test code
-
-
-
-
 
 graphics in webgl
 quick feedback
@@ -48,3 +42,6 @@ seni-lang will have labels as well as names, every argument to a function will h
 
 labels are identified by ending in a colon.
 
+* development
+  - project structure based on babel-library-boilerplate
+    

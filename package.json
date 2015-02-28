@@ -1,7 +1,7 @@
 {
-  "name": "babel-library-boilerplate",
-  "version": "3.0.0",
-  "description": "Author libraries in ES6 for Node and the browser.",
+  "name": "seni",
+  "version": "0.0.1",
+  "description": "Generate Art",
   "main": "dist/library-dist.js",
   "scripts": {
     "test": "gulp",
@@ -11,33 +11,29 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/babel/babel-library-boilerplate.git"
+    "url": "https://github.com/indy/seni.git"
   },
   "keywords": [
-    "boilerplate",
-    "es6",
-    "node",
-    "starter",
-    "kit",
-    "transpile",
-    "6to5",
-    "babel"
+    "generative art",
+    "genetic algorithms"
   ],
-  "author": "Jmeas",
+  "author": "Inderjit Gill <email@indy.io>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/babel/babel-library-boilerplate/issues"
+    "url": "https://github.com/indy/seni/issues"
   },
-  "homepage": "https://github.com/babel/babel-library-boilerplate",
+  "homepage": "https://github.com/indy/seni",
+  "dependencies": {
+    "codemirror": "^5.0.0",
+    "gl-matrix": "^2.1.0"
+  },
   "devDependencies": {
     "babel": "^4.3.0",
     "babelify": "^5.0.3",
     "browserify": "^8.1.1",
     "chai": "^2.0.0",
-    "codemirror": "^5.0.0",
     "del": "^1.1.1",
     "esperanto": "^0.6.7",
-    "gl-matrix": "^2.1.0",
     "glob": "^4.3.5",
     "gulp": "^3.8.10",
     "gulp-babel": "^4.0.0",
@@ -64,7 +60,7 @@
     "sinon-chai": "^2.7.0",
     "vinyl-source-stream": "^1.0.0"
   },
-  "babelBoilerplateOptions": {
+  "seniOptions": {
     "entryFileName": "index",
     "exportVarName": "MyLibrary",
     "mochaGlobals": [
