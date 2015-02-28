@@ -1,4 +1,4 @@
-var config = require('../../package.json').babelBoilerplateOptions;
+var config = require('../../package.json').seniOptions;
 
 global.mocha.setup('bdd');
 global.onload = function() {
