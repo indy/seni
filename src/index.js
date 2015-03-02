@@ -153,7 +153,7 @@ function setupUI(renderer) {
   textArea.value = initialCode();
 
   let editor = CodeMirror.fromTextArea(textArea, {
-    lineNumbers: true,
+    lineNumbers: false,
     mode: 'scheme',
     autoMatchParens: true,
     extraKeys: {
