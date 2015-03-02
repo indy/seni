@@ -1,8 +1,7 @@
 import PublicBinding from '../lang/PublicBinding';
-import ColourConstants from './ColourConstants';
+import Colour from './Colour';
 
-const Colour = ColourConstants;
-const Format = ColourConstants.Format;
+const Format = Colour.Format;
 
 var ColourBindings = {
   setAlpha: new PublicBinding(

@@ -1,6 +1,5 @@
-import ColourConstants from '../../src/seni/ColourConstants';
+import Colour from '../../src/seni/Colour';
 
-let Colour = ColourConstants;
 let Format = Colour.Format;
 
 describe('Colour', () => {

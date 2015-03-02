@@ -3,11 +3,9 @@
 import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
 //import Colour from './Colour';
-import ColourConstants from './ColourConstants';
+import Colour from './Colour';
 
-let Colour = ColourConstants;
-let Format = ColourConstants.Format;
-
+let Format = Colour.Format;
 
 function bezierPoint(a, b, c, d, t) {
   let t1 = 1 - t;

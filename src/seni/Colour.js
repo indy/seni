@@ -404,7 +404,7 @@ function triad(c) {
   };
 */
 
-var ColourConstants = {
+var Colour = {
   Format: Format,
   RED: RED,
   GREEN: GREEN,
@@ -437,5 +437,5 @@ var ColourConstants = {
   triad: triad
 };
 
-export default ColourConstants;
+export default Colour;
 
