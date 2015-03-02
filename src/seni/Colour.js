@@ -2,7 +2,6 @@
 
 import ColourConstants from './ColourConstants';
 
-
 const sUnitAngle = 360.0 / 12.0;
 const sComplimentaryAngle = sUnitAngle * 6;
 const sTriadAngle = sUnitAngle * 4;

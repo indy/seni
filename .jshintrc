@@ -56,8 +56,9 @@
   "yui"           : false,
   "globals": {
     "console": true,
-    "mat4": true,
-    "vec3": true,
-    "CodeMirror": true
+    "mat4": false,
+    "vec3": false,
+    "CodeMirror": false,
+    "Immutable": false
   }
 }
