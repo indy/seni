@@ -164,7 +164,7 @@ function setupUI(renderer) {
     }});
 }
 
-const MyLibrary = {
+const SeniWebApplication = {
   mainFn() {
     let renderer = new Renderer('render-canvas');
     setupUI(renderer);
@@ -176,4 +176,4 @@ const MyLibrary = {
   }
 };
 
-export default MyLibrary;
+export default SeniWebApplication;

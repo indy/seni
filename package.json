@@ -63,7 +63,7 @@
   },
   "seniOptions": {
     "entryFileName": "index",
-    "exportVarName": "MyLibrary",
+    "exportVarName": "SeniWebApplication",
     "mochaGlobals": [
       "stub",
       "spy",
