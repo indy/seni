@@ -2,10 +2,12 @@
 
 import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
-import Colour from './Colour';
+//import Colour from './Colour';
 import ColourConstants from './ColourConstants';
 
+let Colour = ColourConstants;
 let Format = ColourConstants.Format;
+
 
 function bezierPoint(a, b, c, d, t) {
   let t1 = 1 - t;
@@ -71,10 +73,12 @@ function _bezier(renderer) {
                                           coords[3][1], i));
 
     if(colour === undefined) {
-      colour = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
-    } else if(colour.format !== Format.RGB) {
-      colour = colour.cloneAs(Format.RGB);
+      colour = Colour.construct(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+    } else {
+      colour = Colour.cloneAs(colour, Format.RGB);
     }
+
+    let elementArray = Colour.elementArray(colour);
 
     for(let i=0; i<tVals.length - 1; i++) {
       let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
@@ -89,10 +93,14 @@ function _bezier(renderer) {
                                           0.0]);
       }
 
-      buffer.addVertex([(xn1 * remap({val: t})) + i0, (yn1 * remap({val: t})) + i1, 0.0],
-                       colour.val);
-      buffer.addVertex([(xn2 * remap({val: t})) + i0, (yn2 * remap({val: t})) + i1, 0.0],
-                       colour.val);
+      buffer.addVertex([(xn1 * remap({val: t})) + i0,
+                        (yn1 * remap({val: t})) + i1,
+                        0.0],
+                       elementArray);
+      buffer.addVertex([(xn2 * remap({val: t})) + i0,
+                        (yn2 * remap({val: t})) + i1,
+                        0.0],
+                       elementArray);
     }
 
     // final 2 vertices for the end point
@@ -101,10 +109,14 @@ function _bezier(renderer) {
         i2 = xs[i+1],
         i3 = ys[i+1];
 
-    buffer.addVertex([(xn1 * halfWidthEnd) + i2, (yn1 * halfWidthEnd) + i3, 0.0],
-                     colour.val);
-    buffer.addVertex([(xn2 * halfWidthEnd) + i2, (yn2 * halfWidthEnd) + i3, 0.0],
-                     colour.val);
+    buffer.addVertex([(xn1 * halfWidthEnd) + i2,
+                      (yn1 * halfWidthEnd) + i3,
+                      0.0],
+                     elementArray);
+    buffer.addVertex([(xn2 * halfWidthEnd) + i2,
+                      (yn2 * halfWidthEnd) + i3,
+                      0.0],
+                     elementArray);
 
   };
 }
@@ -130,25 +142,25 @@ const Shapes = {
         let height = params.height || 100;
         let colour = params.colour || undefined;
 
-
         const halfWidth = (width / 2);
         const halfHeight = (height / 2);
-
 
         //console.log('rect: x:' + x + ', y:' + y + ', width:' + width + ', height:' + height);
 
         if(colour === undefined) {
-          colour = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
-        } else if(colour.format !== Format.RGB) {
-          colour = colour.cloneAs(Format.RGB);
+          colour = Colour.construct(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+        } else {
+          colour = Colour.cloneAs(colour, Format.RGB);
         }
+
+        let elementArray = Colour.elementArray(colour);
 
         buffer.prepareToAddTriangleStrip(glContainer, 4,
                                          [x - halfWidth, y - halfHeight, 0.0]);
-        buffer.addVertex([x - halfWidth, y - halfHeight, 0.0], colour.val);
-        buffer.addVertex([x + halfWidth, y - halfHeight, 0.0], colour.val);
-        buffer.addVertex([x - halfWidth, y + halfHeight, 0.0], colour.val);
-        buffer.addVertex([x + halfWidth, y + halfHeight, 0.0], colour.val);
+        buffer.addVertex([x - halfWidth, y - halfHeight, 0.0], elementArray);
+        buffer.addVertex([x + halfWidth, y - halfHeight, 0.0], elementArray);
+        buffer.addVertex([x - halfWidth, y + halfHeight, 0.0], elementArray);
+        buffer.addVertex([x + halfWidth, y + halfHeight, 0.0], elementArray);
       };
     }),
 
@@ -252,4 +264,3 @@ const Shapes = {
 };
 
 export default Shapes;
-

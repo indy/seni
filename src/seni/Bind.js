@@ -1,7 +1,7 @@
 import Shapes from './Shapes';
 import MatrixStackFns from './MatrixStackFns';
 import MathUtil from './MathUtil';
-import ColourFns from './ColourFns';
+import ColourBindings from './ColourBindings';
 import Perlin from './Perlin';
 import Core from './Core';
 
@@ -43,20 +43,20 @@ function bindShapes(env, renderer) {
 
 function bindColour(env) {
 
-  let colours = [ColourFns.rgbColour,
-                 ColourFns.hslColour,
-                 ColourFns.labColour,
-                 ColourFns.hsvColour,
-                 ColourFns.RGB,
-                 ColourFns.HSL,
-                 ColourFns.LAB,
-                 ColourFns.HSV,
-                 ColourFns.colourConvert,
-                 ColourFns.complementary,
-                 ColourFns.splitComplementary,
-                 ColourFns.analagous,
-                 ColourFns.triad,
-                 ColourFns.setAlpha];
+  let colours = [ColourBindings.rgbColour,
+                 ColourBindings.hslColour,
+                 ColourBindings.labColour,
+                 ColourBindings.hsvColour,
+                 ColourBindings.RGB,
+                 ColourBindings.HSL,
+                 ColourBindings.LAB,
+                 ColourBindings.HSV,
+                 ColourBindings.colourConvert,
+                 ColourBindings.complementary,
+                 ColourBindings.splitComplementary,
+                 ColourBindings.analagous,
+                 ColourBindings.triad,
+                 ColourBindings.setAlpha];
 
   colours.forEach((c) => env.add(c.name, c.create()));
 }
