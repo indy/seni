@@ -4,6 +4,8 @@
 /*jslint ignore:start*/
 /*jslint latedef:false, maxparams:6*/
 
+import Util from './Util';
+
 const TRUE_STRING = '#t';
 const FALSE_STRING = '#f';
 
@@ -173,21 +175,13 @@ function evalBodyForms(env, bodyForms) {
   return bodyForms.reduce((a, b) => _evaluate(env, b), null);
 }
 
-function merge(obj, defaults) {
-  let res = {};
-  for(let p in defaults) {
-    res[p] = obj[p] ? obj[p] : defaults[p];
-  }
-  return res;
-}
-
 function loopingFn(env, expr, varName, params) {
   // todo: 'to' should be <=, and 'until' should be '<'
 
-  let {from, to, until, step} = merge(params, {from: 0,
-                                               to: 10,
-                                               until: undefined,
-                                               step: 1});
+  let {from, to, until, step} = Util.merge(params, {from: 0,
+                                                    to: 10,
+                                                    until: undefined,
+                                                    step: 1});
 
   console.log(to);
 
