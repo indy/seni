@@ -145,6 +145,16 @@ function initialCode() {
   return code;
 }
 
+
+// execute the function and log the time that it takes
+function withTiming(fn) {
+  let before = new Date();
+  fn();
+  let after = new Date();
+  let duration = after - before;
+  console.log('Time: ' + duration + 'ms');
+}
+
 function setupUI(renderer) {
   let d = document;
 
@@ -158,7 +168,7 @@ function setupUI(renderer) {
     autoMatchParens: true,
     extraKeys: {
       'Ctrl-E': function() {
-        renderScript(renderer, editor.getValue());
+        withTiming(() => renderScript(renderer, editor.getValue()));
         return false;
       }
     }});
