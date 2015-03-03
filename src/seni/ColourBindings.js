@@ -1,6 +1,5 @@
 import PublicBinding from '../lang/PublicBinding';
 import Colour from './Colour';
-import Util from './Util';
 
 const Format = Colour.Format;
 
@@ -13,7 +12,7 @@ var ColourBindings = {
      alpha: 1.0},
     (self) => {
       return (params) => {
-        let {colour, alpha} = Util.merge(params, self.defaults);
+        let {colour, alpha} = self.mergeWithDefaults(params);
         return Colour.setAlpha(colour, alpha);
       };
     }
@@ -25,7 +24,7 @@ var ColourBindings = {
     {r: 1.0, g: 0.1, b: 0.2, a: 0.5},
     (self) => {
       return function(params) {
-        let {r, g, b, a} = Util.merge(params, self.defaults);
+        let {r, g, b, a} = self.mergeWithDefaults(params);
         return Colour.construct(Format.RGB, [r, g, b, a]);
       };
     }
@@ -37,7 +36,7 @@ var ColourBindings = {
     {h: 1.0, s: 0.1, l: 0.2, a: 0.5},
     (self) => {
       return function(params) {
-        let {h, s, l, a} = Util.merge(params, self.defaults);
+        let {h, s, l, a} = self.mergeWithDefaults(params);
         return Colour.construct(Format.HSL, [h, s, l, a]);
       };
     }
@@ -49,7 +48,7 @@ var ColourBindings = {
     {l: 1.0, a: 0.1, b: 0.2, alpha: 0.5},
     (self) => {
       return function(params) {
-        let {l, a, b, alpha} = Util.merge(params, self.defaults);
+        let {l, a, b, alpha} = self.mergeWithDefaults(params);
         return Colour.construct(Format.LAB, [l, a, b, alpha]);
       };
     }
@@ -61,7 +60,7 @@ var ColourBindings = {
     {h: 1.0, s: 0.1, v: 0.2, a: 0.5},
     (self) => {
       return function(params) {
-        let {h, s, v, a} = Util.merge(params, self.defaults);
+        let {h, s, v, a} = self.mergeWithDefaults(params);
         return Colour.construct(Format.HSV, [h, s, v, a]);
       };
     }
@@ -100,7 +99,7 @@ var ColourBindings = {
     ``,
     {format: Format.RGB, colour: Colour.defaultColour},
     (self) => function(params) {
-      let {format, colour} = Util.merge(params, self);
+      let {format, colour} = self.mergeWithDefaults(params);
       return Colour.cloneAs(colour, format);
     }
   ),
@@ -111,7 +110,7 @@ var ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = Util.merge(params, self);
+        let {colour} = self.mergeWithDefaults(params);
         return Colour.complementary(colour);
       };
     }
@@ -123,7 +122,7 @@ var ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = Util.merge(params, self);
+        let {colour} = self.mergeWithDefaults(params);
         return Colour.splitComplementary(colour);
       };
     }
@@ -135,7 +134,7 @@ var ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = Util.merge(params, self);
+        let {colour} = self.mergeWithDefaults(params);
         return Colour.analagous(colour);
       };
     }
@@ -147,7 +146,7 @@ var ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = Util.merge(params, self);
+        let {colour} = self.mergeWithDefaults(params);
         return Colour.triad(colour);
       };
     }

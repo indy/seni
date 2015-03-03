@@ -1,5 +1,4 @@
 import PublicBinding from '../lang/PublicBinding';
-import Util from './Util';
 
 var MatrixStackBindings = {
 
@@ -27,7 +26,7 @@ var MatrixStackBindings = {
     {x: 1, y: 1},
     (self, matrixStack) => {
       return (params) => {
-        let {x, y} = Util.merge(params, self.defaults);
+        let {x, y} = self.mergeWithDefaults(params);
         return matrixStack.scale(x, y);
       };
     }
@@ -39,7 +38,7 @@ var MatrixStackBindings = {
     {x: 0.0, y: 0.0},
     (self, matrixStack) => {
       return (params) => {
-        let {x, y} = Util.merge(params, self.defaults);
+        let {x, y} = self.mergeWithDefaults(params);
         return matrixStack.translate(x, y);
       };
     }
@@ -51,7 +50,7 @@ var MatrixStackBindings = {
     {angle: 0.0},
     (self, matrixStack) => {
       return (params) => {
-        let {angle} = Util.merge(params, self.defaults);
+        let {angle} = self.mergeWithDefaults(params);
         return matrixStack.rotate(angle);
       };
     }

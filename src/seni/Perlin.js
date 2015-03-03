@@ -1,7 +1,6 @@
 /*jslint ignore:start*/
 
 import PublicBinding from '../lang/PublicBinding';
-import Util from './Util';
 
 // A basic translation of Ken Perlin's Java reference implementation of improved noise (C) 2002
 
@@ -75,7 +74,7 @@ var Perlin = {
     {x: 1.0, y: 1.0, z: 1.0},
     (self) => {
       return (params) => {
-        let {x, y, z} = Util.merge(params, self.defaults);
+        let {x, y, z} = self.mergeWithDefaults(params);
         return noise(x, y, z);
       };
     }
@@ -87,7 +86,7 @@ var Perlin = {
     {x: 1.0, y: 1.0, z: 1.0},
     (self) => {
       return (params) => {
-        let {x, y, z} = Util.merge(params, self.defaults);
+        let {x, y, z} = self.mergeWithDefaults(params);
         let v = noise(x, y, z);
         return (v + 1) / 2.0;
       };

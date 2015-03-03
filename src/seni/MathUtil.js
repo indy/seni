@@ -1,6 +1,5 @@
 import PublicBinding from '../lang/PublicBinding';
 import SeedRandom from './SeedRandom';
-import Util from './Util';
 
 var _PI = Math.PI;
 var _twoPI = _PI * 2;
@@ -106,7 +105,7 @@ var MathUtil = {
     `returns a function that generates a prng everytime its invoked`,
     {seed: 'shabba'},
     (self) => function (params) {
-      let {seed} = Util.merge(params, self.defaults);
+      let {seed} = self.mergeWithDefaults(params);
       return SeedRandom.buildPRNG(seed);
     }
   ),

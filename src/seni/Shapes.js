@@ -3,7 +3,6 @@
 import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
 import Colour from './Colour';
-import Util from './Util';
 
 let Format = Colour.Format;
 
@@ -137,7 +136,7 @@ const Shapes = {
 
       // return a function which accepts args as parameters
       return (params) => {
-        let {x, y, width, height, colour} = Util.merge(params, self.defaults);
+        let {x, y, width, height, colour} = self.mergeWithDefaults(params);
 
         const halfWidth = (width / 2);
         const halfHeight = (height / 2);
@@ -185,7 +184,7 @@ const Shapes = {
     (self, renderer) => {
       let bezierFn = _bezier(renderer);
       return (params) => {
-        bezierFn(Util.merge(params, self.defaults));
+        bezierFn(self.mergeWithDefaults(params));
       };
     }),
 
@@ -219,7 +218,7 @@ const Shapes = {
              coords,
              tStart,
              tEnd,
-             colour} = Util.merge(params, self.defaults);
+             colour} = self.mergeWithDefaults(params);
 
         bezierFn({tessellation: tessellation,
                   lineWidthStart: lineWidth,
@@ -262,7 +261,7 @@ const Shapes = {
              coords,
              tStart,
              tEnd,
-             colour} = Util.merge(params, self.defaults);
+             colour} = self.mergeWithDefaults(params);
 
         let tMid = (tStart + tEnd) / 2.0;
         // tessellation should be an even number
