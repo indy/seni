@@ -1,5 +1,6 @@
 import PublicBinding from '../lang/PublicBinding';
 import Colour from './Colour';
+import Util from './Util';
 
 const Format = Colour.Format;
 
@@ -8,11 +9,11 @@ var ColourBindings = {
     'setAlpha',
     `sets the alpha value of the given colour
     arguments: colour, alpha`,
-    () => {
-      let dc = Colour.construct(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
+    {colour: Colour.defaultColour,
+     alpha: 1.0},
+    (self) => {
       return (params) => {
-        let colour = params.colour || dc;
-        let alpha = params.alpha !== undefined ? params.alpha : 1.0;
+        let {colour, alpha} = Util.merge(params, self.defaults);
         return Colour.setAlpha(colour, alpha);
       };
     }
@@ -21,12 +22,10 @@ var ColourBindings = {
   rgbColour: new PublicBinding(
     'rgbColour',
     ``,
-    () => {
+    {r: 1.0, g: 0.1, b: 0.2, a: 0.5},
+    (self) => {
       return function(params) {
-        let r = params.r !== undefined ? params.r : 1.0;
-        let g = params.g !== undefined ? params.g : 0.1;
-        let b = params.b !== undefined ? params.b : 0.2;
-        let a = params.a !== undefined ? params.a : 0.5;
+        let {r, g, b, a} = Util.merge(params, self.defaults);
         return Colour.construct(Format.RGB, [r, g, b, a]);
       };
     }
@@ -35,13 +34,10 @@ var ColourBindings = {
   hslColour: new PublicBinding(
     'hslColour',
     ``,
-    () => {
+    {h: 1.0, s: 0.1, l: 0.2, a: 0.5},
+    (self) => {
       return function(params) {
-        let h = params.h !== undefined ? params.h : 1.0;
-        let s = params.s !== undefined ? params.s : 0.1;
-        let l = params.l !== undefined ? params.l : 0.2;
-        let a = params.a !== undefined ? params.a : 0.5;
-
+        let {h, s, l, a} = Util.merge(params, self.defaults);
         return Colour.construct(Format.HSL, [h, s, l, a]);
       };
     }
@@ -50,13 +46,10 @@ var ColourBindings = {
   labColour: new PublicBinding(
     'labColour',
     ``,
-    () => {
+    {l: 1.0, a: 0.1, b: 0.2, alpha: 0.5},
+    (self) => {
       return function(params) {
-        let l = params.l !== undefined ? params.l : 1.0;
-        let a = params.a !== undefined ? params.a : 0.1;
-        let b = params.b !== undefined ? params.b : 0.2;
-        let alpha = params.alpha !== undefined ? params.alpha : 0.5;
-
+        let {l, a, b, alpha} = Util.merge(params, self.defaults);
         return Colour.construct(Format.LAB, [l, a, b, alpha]);
       };
     }
@@ -65,13 +58,10 @@ var ColourBindings = {
   hsvColour: new PublicBinding(
     'hsvColour',
     ``,
-    () => {
+    {h: 1.0, s: 0.1, v: 0.2, a: 0.5},
+    (self) => {
       return function(params) {
-        let h = params.h !== undefined ? params.h : 1.0;
-        let s = params.s !== undefined ? params.s : 0.1;
-        let v = params.v !== undefined ? params.v : 0.2;
-        let a = params.a !== undefined ? params.a : 0.5;
-
+        let {h, s, v, a} = Util.merge(params, self.defaults);
         return Colour.construct(Format.HSV, [h, s, v, a]);
       };
     }
@@ -80,36 +70,37 @@ var ColourBindings = {
   RGB: new PublicBinding(
     'RGB',
     ``,
+    {},
     () => Format.RGB
   ),
 
   HSL: new PublicBinding(
     'HSL',
     ``,
+    {},
     () => Format.HSL
   ),
 
   LAB: new PublicBinding(
     'LAB',
     ``,
+    {},
     () => Format.LAB
   ),
 
   HSV: new PublicBinding(
     'HSV',
     ``,
+    {},
     () => Format.HSV
   ),
 
   colourConvert: new PublicBinding(
     'colourConvert',
     ``,
-    () => function(params) {
-      if(params.colour === undefined) {
-        return Colour.defaultColour;
-      }
-      let format = params.format || Format.RGB;
-      let colour = params.colour;
+    {format: Format.RGB, colour: Colour.defaultColour},
+    (self) => function(params) {
+      let {format, colour} = Util.merge(params, self);
       return Colour.cloneAs(colour, format);
     }
   ),
@@ -117,9 +108,10 @@ var ColourBindings = {
   complementary: new PublicBinding(
     'complementary',
     ``,
-    () => {
+    {colour: Colour.defaultColour},
+    (self) => {
       return (params) => {
-        let colour = params.colour || Colour.defaultColour;
+        let {colour} = Util.merge(params, self);
         return Colour.complementary(colour);
       };
     }
@@ -128,9 +120,10 @@ var ColourBindings = {
   splitComplementary: new PublicBinding(
     'splitComplementary',
     ``,
-    () => {
+    {colour: Colour.defaultColour},
+    (self) => {
       return (params) => {
-        let colour = params.colour || Colour.defaultColour;
+        let {colour} = Util.merge(params, self);
         return Colour.splitComplementary(colour);
       };
     }
@@ -139,9 +132,10 @@ var ColourBindings = {
   analagous: new PublicBinding(
     'analagous',
     ``,
-    () => {
+    {colour: Colour.defaultColour},
+    (self) => {
       return (params) => {
-        let colour = params.colour || Colour.defaultColour;
+        let {colour} = Util.merge(params, self);
         return Colour.analagous(colour);
       };
     }
@@ -150,9 +144,10 @@ var ColourBindings = {
   triad: new PublicBinding(
     'triad',
     ``,
-    () => {
+    {colour: Colour.defaultColour},
+    (self) => {
       return (params) => {
-        let colour = params.colour || Colour.defaultColour;
+        let {colour} = Util.merge(params, self);
         return Colour.triad(colour);
       };
     }

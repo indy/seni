@@ -8,7 +8,7 @@ import Core from './Core';
 function bindCore(env) {
   let core = [Core.takeBinding];
 
-  core.forEach((m) => env.add(m.name, m.create()));
+  core.forEach((m) => env.add(m.name, m.create(m)));
 }
 
 function bindMath(env) {
@@ -18,7 +18,7 @@ function bindMath(env) {
               MathUtil.PIbyTwo,
               MathUtil.buildPRNG];
 
-  math.forEach((m) => env.add(m.name, m.create()));
+  math.forEach((m) => env.add(m.name, m.create(m)));
 }
 
 function bindMatrixStack(env, matrixStack) {
@@ -28,7 +28,7 @@ function bindMatrixStack(env, matrixStack) {
                 MatrixStackFns.translate,
                 MatrixStackFns.rotate];
 
-  mstack.forEach((m) => env.add(m.name, m.create(matrixStack)));
+  mstack.forEach((m) => env.add(m.name, m.create(m, matrixStack)));
 }
 
 function bindShapes(env, renderer) {
@@ -38,7 +38,7 @@ function bindShapes(env, renderer) {
                 Shapes.bezierTrailing,
                 Shapes.bezierBulging];
 
-  shapes.forEach((r) => env.add(r.name, r.create(renderer)));
+  shapes.forEach((r) => env.add(r.name, r.create(r, renderer)));
 }
 
 function bindColour(env) {
@@ -58,14 +58,14 @@ function bindColour(env) {
                  ColourBindings.triad,
                  ColourBindings.setAlpha];
 
-  colours.forEach((c) => env.add(c.name, c.create()));
+  colours.forEach((c) => env.add(c.name, c.create(c)));
 }
 
 function bindPerlin(env) {
   let pln = [Perlin.perlin,
              Perlin.perlin2];
 
-  pln.forEach((p) => env.add(p.name, p.create()));
+  pln.forEach((p) => env.add(p.name, p.create(p)));
 }
 
 

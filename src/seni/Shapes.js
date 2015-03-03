@@ -2,8 +2,8 @@
 
 import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
-//import Colour from './Colour';
 import Colour from './Colour';
+import Util from './Util';
 
 let Format = Colour.Format;
 
@@ -29,20 +29,17 @@ function _bezier(renderer) {
 
   return (params) => {
 
-    let tessellation = params.tessellation || 15;
-    let lineWidth = params.lineWidth || undefined;
-    let lineWidthStart =
-          params.lineWidthStart === undefined ? 20 : params.lineWidthStart;
-    let lineWidthEnd =
-          params.lineWidthEnd === undefined ? 20 : params.lineWidthEnd;
-    let lineWidthMapping = params.lineWidthMapping || 'slow-in-out';
-    let coords = params.coords || [[440, 400],
-                                   [533, 700],
-                                   [766, 200],
-                                   [900, 500]];
-    let tStart = params.tStart || 0;
-    let tEnd = params.tEnd || 1;
-    let colour = params.colour || undefined;
+    let {
+      tessellation,
+      lineWidth,
+      lineWidthStart,
+      lineWidthEnd,
+      lineWidthMapping,
+      coords,
+      tStart,
+      tEnd,
+      colour
+    } = params;
 
     let halfWidthEnd, remap;
 
@@ -127,18 +124,20 @@ const Shapes = {
     this is a multi line comment
     woo hoo
     `,
-    (renderer) => {
+
+    {x: 0.0,
+     y: 0.0,
+     width: 100,
+     height: 100,
+     colour: Colour.defaultColour},
+
+    (self, renderer) => {
       const glContainer = renderer.getGLContainer();
       const buffer = renderer.getBuffer();
 
       // return a function which accepts args as parameters
       return (params) => {
-
-        let x = params.x || 0;
-        let y = params.y || 0;
-        let width = params.width || 100;
-        let height = params.height || 100;
-        let colour = params.colour || undefined;
+        let {x, y, width, height, colour} = Util.merge(params, self.defaults);
 
         const halfWidth = (width / 2);
         const halfHeight = (height / 2);
@@ -169,8 +168,25 @@ const Shapes = {
     this is a multi line comment
     woo hoo
     `,
-    (renderer) => {
-      return _bezier(renderer);
+
+    {tessellation: 15,
+     lineWidth: undefined,
+     lineWidthStart: 20,
+     lineWidthEnd: 20,
+     lineWidthMapping: 'slow-in-out',
+     coords: [[440, 400],
+              [533, 700],
+              [766, 200],
+              [900, 500]],
+     tStart: 0,
+     tEnd: 1,
+     colour: Colour.defaultColour},
+
+    (self, renderer) => {
+      let bezierFn = _bezier(renderer);
+      return (params) => {
+        bezierFn(Util.merge(params, self.defaults));
+      };
     }),
 
   bezierTrailing: new PublicBinding(
@@ -180,22 +196,30 @@ const Shapes = {
     this is a multi line comment
     woo hoo
     `,
-    (renderer) => {
+
+    {tessellation: 15,
+     lineWidth: 20,
+     coords: [[440, 400],
+              [533, 700],
+              [766, 200],
+              [900, 500]],
+     tStart: 0,
+     tEnd: 1,
+     colour: Colour.defaultColour},
+
+    (self, renderer) => {
 
       let bezierFn = _bezier(renderer);
 
       // return a function which accepts args as parameters
       return (params) => {
 
-        let tessellation = params.tessellation || 15;
-        let lineWidth = params.lineWidth || 20;
-        let coords = params.coords || [[440, 400],
-                                       [533, 700],
-                                       [766, 200],
-                                       [900, 500]];
-        let tStart = params.tStart || 0;
-        let tEnd = params.tEnd || 1;
-        let colour = params.colour || undefined;
+        let {tessellation,
+             lineWidth,
+             coords,
+             tStart,
+             tEnd,
+             colour} = Util.merge(params, self.defaults);
 
         bezierFn({tessellation: tessellation,
                   lineWidthStart: lineWidth,
@@ -215,37 +239,39 @@ const Shapes = {
     this is a multi line comment
     woo hoo
     `,
-    (renderer) => {
+
+    {tessellation: 16,
+     lineWidth: 20,
+     coords: [[440, 400],
+              [533, 700],
+              [766, 200],
+              [900, 500]],
+     tStart: 0,
+     tEnd: 1,
+     colour: Colour.defaultColour},
+
+    (self, renderer) => {
 
       let bezierFn = _bezier(renderer);
 
       // return a function which accepts args as parameters
       return (params) => {
 
-
-        let tessellation = params.tessellation || 16;
-        let lineWidth = params.lineWidth || 20;
-        let coords = params.coords || [[440, 400],
-                                       [533, 700],
-                                       [766, 200],
-                                       [900, 500]];
-        let tStart = params.tStart || 0;
-        let tEnd = params.tEnd || 1;
-        let colour = params.colour || undefined;
+        let {tessellation,
+             lineWidth,
+             coords,
+             tStart,
+             tEnd,
+             colour} = Util.merge(params, self.defaults);
 
         let tMid = (tStart + tEnd) / 2.0;
         // tessellation should be an even number
         let newTess = tessellation & 1 ? tessellation + 1: tessellation;
 
-        //let red = new Colour(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
-        //renderRect(renderer, {x: coords[0][0], y: coords[0][1],
-        //                      width: 20, height: 20, colour: red});
-        //renderRect(renderer, {x: coords[3][0], y: coords[3][1],
-        //                      width: 20, height: 20, colour: red});
-
         bezierFn({tessellation: newTess / 2,
                   lineWidthStart: 0.0,
                   lineWidthEnd: lineWidth,
+                  lineWidthMapping: 'slow-in-out',
                   coords: coords,
                   tStart: tStart,
                   tEnd: tMid,
@@ -253,6 +279,7 @@ const Shapes = {
         bezierFn({tessellation: newTess / 2,
                   lineWidthStart: lineWidth,
                   lineWidthEnd: 0.0,
+                  lineWidthMapping: 'slow-in-out',
                   coords: coords,
                   tStart: tMid,
                   tEnd: tEnd,

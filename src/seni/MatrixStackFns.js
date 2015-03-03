@@ -1,11 +1,13 @@
 import PublicBinding from '../lang/PublicBinding';
+import Util from './Util';
 
 var MatrixStackFns = {
 
   pushMatrix: new PublicBinding(
     'pushMatrix',
     ``,
-    (matrixStack) => {
+    {},
+    (self, matrixStack) => {
       return () => matrixStack.pushMatrix();
     }
   ),
@@ -13,7 +15,8 @@ var MatrixStackFns = {
   popMatrix: new PublicBinding(
     'popMatrix',
     ``,
-    (matrixStack) => {
+    {},
+    (self, matrixStack) => {
       return () => matrixStack.popMatrix();
     }
   ),
@@ -21,10 +24,10 @@ var MatrixStackFns = {
   scale: new PublicBinding(
     'scale',
     ``,
-    (matrixStack) => {
+    {x: 1, y: 1},
+    (self, matrixStack) => {
       return (params) => {
-        let x = params.x || 1.0;
-        let y = params.y || 1.0;
+        let {x, y} = Util.merge(params, self.defaults);
         return matrixStack.scale(x, y);
       };
     }
@@ -33,10 +36,10 @@ var MatrixStackFns = {
   translate: new PublicBinding(
     'translate',
     ``,
-    (matrixStack) => {
+    {x: 0.0, y: 0.0},
+    (self, matrixStack) => {
       return (params) => {
-        let x = params.x || 0.0;
-        let y = params.y || 0.0;
+        let {x, y} = Util.merge(params, self.defaults);
         return matrixStack.translate(x, y);
       };
     }
@@ -45,9 +48,10 @@ var MatrixStackFns = {
   rotate: new PublicBinding(
     'rotate',
     ``,
-    (matrixStack) => {
+    {angle: 0.0},
+    (self, matrixStack) => {
       return (params) => {
-        let angle = params.angle || 0.0;
+        let {angle} = Util.merge(params, self.defaults);
         return matrixStack.rotate(angle);
       };
     }

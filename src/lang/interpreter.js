@@ -4,7 +4,7 @@
 /*jslint ignore:start*/
 /*jslint latedef:false, maxparams:6*/
 
-import Util from './Util';
+import Util from '../seni/Util';
 
 const TRUE_STRING = '#t';
 const FALSE_STRING = '#f';
@@ -182,12 +182,9 @@ function loopingFn(env, expr, varName, params) {
                                                     to: 10,
                                                     until: undefined,
                                                     step: 1});
-
-  console.log(to);
-
   if(step === 0) {
     console.log('step size of 0 given');
-    return;
+    return undefined;
   }
 
   var res;

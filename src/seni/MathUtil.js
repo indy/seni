@@ -1,5 +1,6 @@
 import PublicBinding from '../lang/PublicBinding';
 import SeedRandom from './SeedRandom';
+import Util from './Util';
 
 var _PI = Math.PI;
 var _twoPI = _PI * 2;
@@ -75,33 +76,37 @@ var MathUtil = {
   PI: new PublicBinding(
     'PI',
     ``,
+    {},
     () => _PI
   ),
 
   twoPI: new PublicBinding(
     'twoPI',
     ``,
+    {},
     () => _twoPI
   ),
 
   PIbyTwo: new PublicBinding(
     'PIbyTwo',
     ``,
+    {},
     () => _PIbyTwo
   ),
 
   remapFnBinding: new PublicBinding(
     'remapFn',
     ``,
+    {},
     () => _remapFn
   ),
 
   buildPRNG: new PublicBinding(
     'buildPRNG',
     `returns a function that generates a prng everytime its invoked`,
-
-    () => function (params) {
-      let seed = params.seed || 'hello.';
+    {seed: 'shabba'},
+    (self) => function (params) {
+      let {seed} = Util.merge(params, self.defaults);
       return SeedRandom.buildPRNG(seed);
     }
   ),
