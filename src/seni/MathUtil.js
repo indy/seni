@@ -32,10 +32,10 @@ function mapSlowEaseInEaseOut(x) {
   return x - (Math.sin(x * _twoPI) / _twoPI);
 }
 
-var mappingLookup = new Map([['linear', mapLinear],
-                             ['quick', mapQuickEase],
-                             ['slow-in', mapSlowEaseIn],
-                             ['slow-in-out', mapSlowEaseInEaseOut]]);
+var mappingLookup = new Immutable.Map({'linear': mapLinear,
+                                       'quick': mapQuickEase,
+                                       'slow-in': mapSlowEaseIn,
+                                       'slow-in-out': mapSlowEaseInEaseOut});
 
 function _remapFn(params) {
 
