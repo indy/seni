@@ -1,5 +1,5 @@
 import Shapes from './Shapes';
-import MatrixStackFns from './MatrixStackFns';
+import MatrixStackBindings from './MatrixStackBindings';
 import MathUtil from './MathUtil';
 import ColourBindings from './ColourBindings';
 import Perlin from './Perlin';
@@ -22,11 +22,11 @@ function bindMath(env) {
 }
 
 function bindMatrixStack(env, matrixStack) {
-  let mstack = [MatrixStackFns.pushMatrix,
-                MatrixStackFns.popMatrix,
-                MatrixStackFns.scale,
-                MatrixStackFns.translate,
-                MatrixStackFns.rotate];
+  let mstack = [MatrixStackBindings.pushMatrix,
+                MatrixStackBindings.popMatrix,
+                MatrixStackBindings.scale,
+                MatrixStackBindings.translate,
+                MatrixStackBindings.rotate];
 
   mstack.forEach((m) => env.add(m.name, m.create(m, matrixStack)));
 }

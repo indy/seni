@@ -1,7 +1,7 @@
 import PublicBinding from '../lang/PublicBinding';
 import Util from './Util';
 
-var MatrixStackFns = {
+var MatrixStackBindings = {
 
   pushMatrix: new PublicBinding(
     'pushMatrix',
@@ -59,4 +59,4 @@ var MatrixStackFns = {
 };
 
 
-export default MatrixStackFns;
+export default MatrixStackBindings;
