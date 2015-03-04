@@ -100,13 +100,23 @@ var MathUtil = {
     () => _remapFn
   ),
 
-  buildPRNG: new PublicBinding(
-    'buildPRNG',
-    `returns a function that generates a prng everytime its invoked`,
+  buildUnsigned: new PublicBinding(
+    'rng/unsigned',
+    `returns a function that generates a random number in the range 0..1 everytime its invoked`,
     {seed: 'shabba'},
     (self) => function (params) {
       let {seed} = self.mergeWithDefaults(params);
-      return SeedRandom.buildPRNG(seed);
+      return SeedRandom.buildUnsigned(seed);
+    }
+  ),
+
+  buildSigned: new PublicBinding(
+    'rng/signed',
+    `returns a function that generates a random number in the range -1..1 everytime its invoked`,
+    {seed: 'shabba'},
+    (self) => function (params) {
+      let {seed} = self.mergeWithDefaults(params);
+      return SeedRandom.buildSigned(seed);
     }
   ),
 

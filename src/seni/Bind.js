@@ -16,7 +16,8 @@ function bindMath(env) {
               MathUtil.PI,
               MathUtil.twoPI,
               MathUtil.PIbyTwo,
-              MathUtil.buildPRNG];
+              MathUtil.buildSigned,
+              MathUtil.buildUnsigned];
 
   math.forEach((m) => env.add(m.name, m.create(m)));
 }
@@ -43,20 +44,21 @@ function bindShapes(env, renderer) {
 
 function bindColour(env) {
 
-  let colours = [ColourBindings.rgbColour,
-                 ColourBindings.hslColour,
-                 ColourBindings.labColour,
-                 ColourBindings.hsvColour,
+  let colours = [ColourBindings.colRGB,
+                 ColourBindings.colHSL,
+                 ColourBindings.colLAB,
+                 ColourBindings.colHSV,
                  ColourBindings.RGB,
                  ColourBindings.HSL,
                  ColourBindings.LAB,
                  ColourBindings.HSV,
-                 ColourBindings.colourConvert,
-                 ColourBindings.complementary,
-                 ColourBindings.splitComplementary,
-                 ColourBindings.analagous,
-                 ColourBindings.triad,
-                 ColourBindings.setAlpha];
+                 ColourBindings.colConvert,
+                 ColourBindings.colComplementary,
+                 ColourBindings.colSplitComplementary,
+                 ColourBindings.colAnalagous,
+                 ColourBindings.colTriad,
+                 ColourBindings.colSetAlpha,
+                 ColourBindings.colGetAlpha];
 
   colours.forEach((c) => env.add(c.name, c.create(c)));
 }

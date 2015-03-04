@@ -55,6 +55,10 @@ function setAlpha(colour, alpha) {
   return colour.setIn(['elements', ALPHA], alpha);
 }
 
+function getAlpha(colour) {
+  return colour.getIn(['elements', ALPHA]);
+}
+
 //  http://www.brucelindbloom.com/index.html?Equations.html
 
 //  l 0 -> 100  lightness
@@ -430,6 +434,7 @@ var Colour = {
   element: element,
   elementArray: elementArray,
   setAlpha: setAlpha,
+  getAlpha: getAlpha,
   cloneAs: cloneAs,
   complementary: complementary,
   splitComplementary: splitComplementary,

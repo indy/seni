@@ -67,7 +67,7 @@ var impl = math['seed' + rngname] = function(seed, options, callback) {
     options.entropy ? [seed, tostring(pool)] :
     (seed === null) ? autoseed() : seed, 3), key);
 
-  // Use the seed to initialize an ARC4 generator.
+  // use the seed to initialize an ARC4 generator.
   var arc4 = new ARC4(key);
 
   // Mix the randomness into accumulated entropy.
@@ -249,10 +249,16 @@ mixkey(math[rngname](), pool);
 );
 
 var SeedRandom = {
-  buildPRNG: function(seedVal) {
+  buildUnsigned: function(seedVal) {
     let seedrandom = Math.seedrandom;
     let saveable = seedrandom(seedVal, {state: true});
     return () => saveable();
+  },
+
+  buildSigned: function(seedVal) {
+    let seedrandom = Math.seedrandom;
+    let saveable = seedrandom(seedVal, {state: true});
+    return () => (saveable() * 2.0) - 1.0;
   }
 };
 

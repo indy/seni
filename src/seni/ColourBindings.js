@@ -4,8 +4,8 @@ import Colour from './Colour';
 const Format = Colour.Format;
 
 var ColourBindings = {
-  setAlpha: new PublicBinding(
-    'setAlpha',
+  colSetAlpha: new PublicBinding(
+    'col/setAlpha',
     `sets the alpha value of the given colour
     arguments: colour, alpha`,
     {colour: Colour.defaultColour,
@@ -18,8 +18,21 @@ var ColourBindings = {
     }
   ),
 
-  rgbColour: new PublicBinding(
-    'rgbColour',
+  colGetAlpha: new PublicBinding(
+    'col/getAlpha',
+    `get the alpha value of the given colour
+    arguments: colour`,
+    {colour: Colour.defaultColour},
+    (self) => {
+      return (params) => {
+        let {colour} = self.mergeWithDefaults(params);
+        return Colour.getAlpha(colour);
+      };
+    }
+  ),
+
+  colRGB: new PublicBinding(
+    'col/rgb',
     ``,
     {r: 1.0, g: 0.1, b: 0.2, a: 0.5},
     (self) => {
@@ -30,8 +43,8 @@ var ColourBindings = {
     }
   ),
 
-  hslColour: new PublicBinding(
-    'hslColour',
+  colHSL: new PublicBinding(
+    'col/hsl',
     ``,
     {h: 1.0, s: 0.1, l: 0.2, a: 0.5},
     (self) => {
@@ -42,8 +55,8 @@ var ColourBindings = {
     }
   ),
 
-  labColour: new PublicBinding(
-    'labColour',
+  colLAB: new PublicBinding(
+    'col/lab',
     ``,
     {l: 1.0, a: 0.1, b: 0.2, alpha: 0.5},
     (self) => {
@@ -54,8 +67,8 @@ var ColourBindings = {
     }
   ),
 
-  hsvColour: new PublicBinding(
-    'hsvColour',
+  colHSV: new PublicBinding(
+    'col/hsv',
     ``,
     {h: 1.0, s: 0.1, v: 0.2, a: 0.5},
     (self) => {
@@ -94,8 +107,8 @@ var ColourBindings = {
     () => Format.HSV
   ),
 
-  colourConvert: new PublicBinding(
-    'colourConvert',
+  colConvert: new PublicBinding(
+    'col/convert',
     ``,
     {format: Format.RGB, colour: Colour.defaultColour},
     (self) => function(params) {
@@ -104,8 +117,8 @@ var ColourBindings = {
     }
   ),
 
-  complementary: new PublicBinding(
-    'complementary',
+  colComplementary: new PublicBinding(
+    'col/complementary',
     ``,
     {colour: Colour.defaultColour},
     (self) => {
@@ -116,8 +129,8 @@ var ColourBindings = {
     }
   ),
 
-  splitComplementary: new PublicBinding(
-    'splitComplementary',
+  colSplitComplementary: new PublicBinding(
+    'col/splitComplementary',
     ``,
     {colour: Colour.defaultColour},
     (self) => {
@@ -128,8 +141,8 @@ var ColourBindings = {
     }
   ),
 
-  analagous: new PublicBinding(
-    'analagous',
+  colAnalagous: new PublicBinding(
+    'col/analagous',
     ``,
     {colour: Colour.defaultColour},
     (self) => {
@@ -140,8 +153,8 @@ var ColourBindings = {
     }
   ),
 
-  triad: new PublicBinding(
-    'triad',
+  colTriad: new PublicBinding(
+    'col/triad',
     ``,
     {colour: Colour.defaultColour},
     (self) => {

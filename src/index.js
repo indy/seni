@@ -17,39 +17,37 @@ function initialCode() {
        y: 0
        width: 10
        height: 10
-       col: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 0.5)
-       volatility: 0)
-      (let ((half-width (/ width 2))
-            (half-height (/ height 2))
-            (passes 10)
-            (prngs (buildPRNG seed: "asdf")))
+       colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 0.5)
+       volatility: 0
+       passes: 1)
+      (let ((halfWidth (/ width 2))
+            (halfHeight (/ height 2))
+            (alpha (col/getAlpha colour: colour))
+            (passColour (col/setAlpha colour: colour alpha: (/ alpha passes)))
+            (prngs (rng/signed seed: "asdf")))
         (onMatrixStack
-         (translate x: (+ x half-width) y: (+ y half-width))
-         (loop (i to: 3)
+         (translate x: x y: y)
+         (loop (i to: passes)
                (let (((rr xr yr) (take num: 3 from: prngs)))
                  (onMatrixStack
                   (rotate angle: (* rr 0.02 volatility))
-                  (translate x: (* xr 5 volatility) y: (* yr 5 volatility))
-                  ; alpha = (/ col.a passes)
-                  (rect x: (- half-width)
-                        y: (- half-height)
+                  (rect x: (* xr 5 volatility)
+                        y: (* yr 5 volatility)
                         width: width
                         height: height
-                        colour: col))))))))
-
-
+                        colour: passColour))))))))
 
 (define bezier-stroked-rect
   (fn (x: 0
-       y: 0
-       width: 10
-       height: 10
-       col: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 0.5)
-       col-volatility: 0 ; todo
-       volatility: 0
-       overlap: 3
-       iterations: 10
-       seed: "shabba")
+          y: 0
+          width: 10
+          height: 10
+          colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 0.5)
+          colour-volatility: 0 ; todo
+          volatility: 0
+          overlap: 3
+          iterations: 10
+          seed: "shabba")
 
       (let ((th-width (/ width 3))
             (th-height (/ height 3))
@@ -68,12 +66,12 @@ function initialCode() {
 
                                         ;[cr cg cb ca] (c/map-to-byte-range col)
             (half-alpha (/ ca 2))
-            (prngs (buildPRNG seed: seed)))
+            (prngs (rng/unsigned seed: seed)))
 
-        ;(rect x: x y: y width: width height: height
-        ;      colour: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 0.5))
+                                        ;(rect x: x y: y width: width height: height
+                                        ;      colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 0.5))
 
-        ; horizontal strips
+                                        ; horizontal strips
         (loop (i to: iterations)
               (let (((rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4) (take num: 8 from: prngs)))
                 (bezier tessellation: 10
@@ -90,11 +88,11 @@ function initialCode() {
 
                                  (+ (+ (* rx4 vol) start-x) (* 3 th-width))
                                  (+ (+ (* i h-delta) (* ry4 vol) start-y) half-h-strip-width))
-                        colour: col)
+                        colour: colour)
                 )
               )
 
-        ; vertical strips
+                                        ; vertical strips
         (loop (i to: iterations)
               (let (((rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4) (take num: 8 from: prngs)))
                 (bezier tessellation: 10
@@ -111,7 +109,7 @@ function initialCode() {
 
                                  (+ (+ (* i v-delta) (* rx4 vol) start-x) half-v-strip-width)
                                  (+ (+ (* ry4 vol) start-y) (* 3 th-height)))
-                        colour: col)
+                        colour: colour)
                 )
               )
 
@@ -119,28 +117,28 @@ function initialCode() {
 
 
 (accumulated-rect x: 750 y: 250
-                    width: 400 height: 400
-                    col: (rgbColour r: 0.8 g: 0.0 b: 0.0 a: 0.2)
-                    volatility: 1.5)
+                  width: 400 height: 400
+                  colour: (col/rgb r: 0.8 g: 0.0 b: 0.0 a: 0.5)
+                  volatility: 1.5
+                  passes: 50)
 
 (bezier-stroked-rect x: 250 y: 250
-                       width: 400 height: 400
-                       col: (rgbColour r: 0.8 g: 0.0 b: 0.0 a: 0.2)
-                       volatility: 10.0
-                       overlap: 3.0)
+                     width: 400 height: 400
+                     colour: (col/rgb r: 0.8 g: 0.0 b: 0.0 a: 0.2)
+                     volatility: 10.0
+                     overlap: 3.0)
 
 (bezier-stroked-rect x: 250 y: 750
-                       width: 400 height: 400
-                       col: (rgbColour r: 0.8 g: 0.0 b: 0.0 a: 0.2)
-                       volatility: 10.0
-                       overlap: 3.0)
+                     width: 400 height: 400
+                     colour: (col/rgb r: 0.8 g: 0.0 b: 0.0 a: 0.2)
+                     volatility: 10.0
+                     overlap: 3.0)
 
 (bezier-stroked-rect x: 750 y: 750
-                       width: 400 height: 400
-                       col: (rgbColour r: 0.8 g: 0.0 b: 0.0 a: 0.2)
-                       volatility: 10.0
-                       overlap: 3.0)
-
+                     width: 400 height: 400
+                     colour: (col/rgb r: 0.8 g: 0.0 b: 0.0 a: 0.2)
+                     volatility: 10.0
+                     overlap: 3.0)
   `;
   return code;
 }

@@ -6,7 +6,7 @@
 	(fn (variation: 200
                   lineWidth: 70
                   lineSegments: 5
-                  colour: (rgbColour r: 0.627 g: 0.627 b: 0.627 a: 0.4)
+                  colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 a: 0.4)
                   seed: 272)
       (loop (h from: -20 to: 1020 step: 20)
             (bezier tessellation: lineSegments
@@ -27,7 +27,7 @@
                     colour: colour))))
 
 (define petal-1
-  (fn (angle: 0 colour: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 1.0))
+  (fn (angle: 0 colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 1.0))
       (onMatrixStack
        (rotate angle: angle)
        (bezierBulging tessellation: 20
@@ -39,7 +39,7 @@
                                     800 0)))))
 
 (define petal-2
-  (fn (angle: 0 colour: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 1.0))
+  (fn (angle: 0 colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 1.0))
       (onMatrixStack
        (rotate angle: angle)
        (bezierBulging tessellation: 20
@@ -52,44 +52,44 @@
 
 
 (define circ-1
-  (fn (petals: 0 colour: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 1.0) sc: 1.0)
+  (fn (petals: 0 colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 1.0) sc: 1.0)
       (onMatrixStack
        (scale x: sc y: sc)
        (let ((strokes petals)
-             (colcol (setAlpha colour: colour alpha: 0.3))
+             (colcol (col/setAlpha colour: colour alpha: 0.3))
              (rem (remapFn from: (list 0 strokes) to: (list 0 6.28318))))
          (loop (i from: 0 to: strokes)
                (petal-1 angle: (rem val: i) colour: colcol))))))
 
 (define circ-2
-  (fn (petals: 0 colour: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 1.0) sc: 1.0)
+  (fn (petals: 0 colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 1.0) sc: 1.0)
       (onMatrixStack
        (scale x: sc y: sc)
        (let ((strokes petals)
-             (colcol (setAlpha colour: colour alpha: 0.4))
+             (colcol (col/setAlpha colour: colour alpha: 0.4))
              (rem (remapFn from: (list 0 strokes) to: (list 0 6.28318))))
          (loop (i from: 0 to: strokes)
                (petal-2 angle: (rem val: i) colour: colcol))))))
 
 (define layered-petals
-  (fn (petals: 0 colour: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 1.0) sc: 1.0)
+  (fn (petals: 0 colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 1.0) sc: 1.0)
 	  	(circ-1 petals: petals colour: colour sc: sc)
       (rotate angle: 0.1)
       (circ-2 petals: petals colour: colour sc: sc)))
 
 (define flower
-  (fn (colour: (rgbColour r: 0.0 g: 1.0 b: 0.0 a: 0.5)
+  (fn (colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 0.5)
                posx: 0
                posy: 0
                sc: 1)
       (onMatrixStack
        (translate x: posx y: posy)
        (scale x: sc y: sc)
-       (let (((c2 c3) (analagous colour: colour)))
+       (let (((c2 c3) (col/analagous colour: colour)))
          (layered-petals petals: 23 colour: colour sc:0.6)
          (layered-petals petals: 19 colour: c3 sc: 0.5)
          (layered-petals petals: 17 colour: c2 sc: 0.3)))))
 
 (wash)
-(flower colour: (rgbColour r: 0.8 g: 0.3 b: 0.2 a: 0.4)
+(flower colour: (col/rgb r: 0.8 g: 0.3 b: 0.2 a: 0.4)
         posx: 500 posy: 500 sc: 1.0)
