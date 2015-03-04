@@ -51,12 +51,22 @@ function construct(format, element) {
 }
 
 
+// todo: these get/set functions are a hack, try to come up with something more generic
+function getAlpha(colour) {
+  return colour.getIn(['elements', ALPHA]);
+}
+
 function setAlpha(colour, alpha) {
   return colour.setIn(['elements', ALPHA], alpha);
 }
 
-function getAlpha(colour) {
-  return colour.getIn(['elements', ALPHA]);
+// currently assuming that 'colour' is already in Lab colour space
+function getLightness(colour) {
+  return colour.getIn(['elements', L]);
+}
+
+function setLightness(colour, lightness) {
+  return colour.setIn(['elements', L], lightness);
 }
 
 //  http://www.brucelindbloom.com/index.html?Equations.html
@@ -433,8 +443,10 @@ var Colour = {
   format: format,
   element: element,
   elementArray: elementArray,
-  setAlpha: setAlpha,
   getAlpha: getAlpha,
+  setAlpha: setAlpha,
+  getLightness: getLightness,
+  setLightness: setLightness,
   cloneAs: cloneAs,
   complementary: complementary,
   splitComplementary: splitComplementary,

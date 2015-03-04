@@ -31,6 +31,33 @@ var ColourBindings = {
     }
   ),
 
+  colSetLightness: new PublicBinding(
+    'col/setLightness',
+    `sets the alpha value of the given colour
+    arguments: colour, alpha`,
+    {colour: Colour.defaultColour,
+     l: 1.0},
+    (self) => {
+      return (params) => {
+        let {colour, l} = self.mergeWithDefaults(params);
+        return Colour.setLightness(colour, l);
+      };
+    }
+  ),
+
+  colGetLightness: new PublicBinding(
+    'col/getLightness',
+    `get the alpha value of the given colour
+    arguments: colour`,
+    {colour: Colour.defaultColour},
+    (self) => {
+      return (params) => {
+        let {colour} = self.mergeWithDefaults(params);
+        return Colour.getLightness(colour);
+      };
+    }
+  ),
+
   colRGB: new PublicBinding(
     'col/rgb',
     ``,

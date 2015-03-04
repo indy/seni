@@ -58,7 +58,9 @@ function bindColour(env) {
                  ColourBindings.colAnalagous,
                  ColourBindings.colTriad,
                  ColourBindings.colSetAlpha,
-                 ColourBindings.colGetAlpha];
+                 ColourBindings.colGetAlpha,
+                 ColourBindings.colSetLightness,
+                 ColourBindings.colGetLightness];
 
   colours.forEach((c) => env.add(c.name, c.create(c)));
 }
