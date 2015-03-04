@@ -154,6 +154,11 @@ gulp.task('watch', function() {
   gulp.watch(['src/**/*', 'test/**/*', '.jshintrc', 'test/.jshintrc'], ['test']);
 });
 
+// Build as you make changes.
+gulp.task('build-watch', function() {
+  gulp.watch(['src/**/*'], ['build']);
+});
+
 // Set up a livereload environment for our spec runner
 gulp.task('test-browser', ['build-in-sequence'], function() {
   $.livereload.listen({port: 35729, host: 'localhost', start: true});
