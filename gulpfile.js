@@ -17,26 +17,6 @@ const mainFile = manifest.main;
 const destinationFolder = path.dirname(mainFile);
 const exportFileName = path.basename(mainFile, path.extname(mainFile));
 
-
-var sourcemaps = require("gulp-sourcemaps");
-var babel = require("gulp-babel");
-var concat = require("gulp-concat");
-
-gulp.task("shabba", function () {
-  return gulp.src("src/*.js")
-    .pipe(babel())
-    .pipe(gulp.dest("dist"));
-});
-
-gulp.task("shabbaranks", function () {
-  return gulp.src("src/*.js")
-    .pipe(sourcemaps.init())
-    .pipe(concat("all.js"))
-    .pipe(babel())
-    .pipe(sourcemaps.write("."))
-    .pipe(gulp.dest("dist"));
-});
-
 // Remove the built files
 gulp.task('clean', function(cb) {
   del([destinationFolder], cb);
@@ -109,7 +89,7 @@ gulp.task('build', ['lint-src', 'clean'], function(done) {
       .pipe($.rename(exportFileName + '.min.js'))
       .pipe($.uglifyjs({
         outSourceMap: true,
-        inSourceMap: destinationFolder + '/' + exportFileName + '.js.map',
+        inSourceMap: destinationFolder + '/' + exportFileName + '.js.map'
       }))
       .pipe(gulp.dest(destinationFolder))
       .on('end', done);
@@ -151,6 +131,7 @@ gulp.task('coverage', function(done) {
 });
 
 function test() {
+  
   return gulp.src(['test/setup/node.js', 'test/unit/**/*.js'], {read: false})
     .pipe($.plumber())
     .pipe($.mocha({reporter: 'dot', globals: config.mochaGlobals}));
