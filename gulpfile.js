@@ -30,12 +30,12 @@ gulp.task('clean-tmp', function(cb) {
 // Send a notification when JSHint fails,
 // so that you know your changes didn't build
 function jshintNotify(file) {
-  if (!file.jshint) { return; }
+  if (!file.jshint) { return false; }
   return file.jshint.success ? false : 'JSHint failed';
 }
 
 function jscsNotify(file) {
-  if (!file.jscs) { return; }
+  if (!file.jscs) { return false; }
   return file.jscs.success ? false : 'JSRC failed';
 }
 
