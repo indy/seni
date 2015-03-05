@@ -12,8 +12,12 @@ let Runtime = {
   },
 
   evalForm: function(env, form) {
-    let ts = Lexer.tokenise(form);
-    let astBox = Parser.parse(ts);
+    let tokensBox = Lexer.tokenise(form);
+    if(tokensBox.error) {
+      console.log(tokensBox.error);
+      return false;
+    }
+    let astBox = Parser.parse(tokensBox.tokens);
     if(astBox.error) {
       // some sort of error occurred
       console.log(astBox.error);

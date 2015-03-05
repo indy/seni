@@ -8,7 +8,7 @@ import Compiler from '../../src/lang/Compiler';
 describe('eval', () => {
 
   function evalForm(env, form) {
-    let ts = Lexer.tokenise(form);
+    let ts = Lexer.tokenise(form).tokens;
     let ast = Parser.parse(ts).nodes;
     let compiled = Compiler.compile(ast);
     return Interpreter.evaluate(env, compiled[0]);

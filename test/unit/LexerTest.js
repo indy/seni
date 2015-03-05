@@ -5,24 +5,29 @@ import TokenType from '../../src/lang/TokenType';
 describe('Lexer', () => {
 
   it('should error handle', () => {
-    // '|' is a character that currently isn't recognised by seni
-
-    let q = Lexer.tokenise('|');
-    expect(q.length).to.equal(1);
-    expect(q[0].type).to.equal(TokenType.UNKNOWN);
-    expect(q[0].value).to.equal('|');
-
     // if an illegal character is found in any part of the input, only that
-    // character will be returned as the result of the lexing operation
+    // character will be returned in the tokens list and the error property
+    // will be set
     //
+    // ('|' is a character that currently isn't recognised by seni)
+    //
+    let q = Lexer.tokenise('|');
+    let tokens = q.tokens;
+    expect(q.error).to.be.a('string');
+    expect(tokens.length).to.equal(1);
+    expect(tokens[0].type).to.equal(TokenType.UNKNOWN);
+    expect(tokens[0].value).to.equal('|');
+
     q = Lexer.tokenise('(foo bar baz) | ');
-    expect(q.length).to.equal(1);
-    expect(q[0].type).to.equal(TokenType.UNKNOWN);
-    expect(q[0].value).to.equal('|');
+    tokens = q.tokens;
+    expect(q.error).to.be.a('string');
+    expect(tokens.length).to.equal(1);
+    expect(tokens[0].type).to.equal(TokenType.UNKNOWN);
+    expect(tokens[0].value).to.equal('|');
   });
 
   it('should tokenise strings', () => {
-    let q = Lexer.tokenise('(go 42 3.14)');
+    let q = Lexer.tokenise('(go 42 3.14)').tokens;
     expect(q.length).to.equal(5);
     expect(q[0].type).to.equal(TokenType.LIST_START);
     expect(q[1].type).to.equal(TokenType.NAME);
@@ -32,7 +37,7 @@ describe('Lexer', () => {
   });
 
   it('should tokenise strings 2', () => {
-    let q = Lexer.tokenise('(go [\"hi\"] \'SOMETHING)');
+    let q = Lexer.tokenise('(go [\"hi\"] \'SOMETHING)').tokens;
     expect(q.length).to.equal(8);
     expect(q[0].type).to.equal(TokenType.LIST_START);
     expect(q[1].type).to.equal(TokenType.NAME);
@@ -45,7 +50,7 @@ describe('Lexer', () => {
   });
 
   it('should tokenise labeled function invocations', () => {
-    let q = Lexer.tokenise('(go arg1: 42)');
+    let q = Lexer.tokenise('(go arg1: 42)').tokens;
     expect(q.length).to.equal(5);
     expect(q[0].type).to.equal(TokenType.LIST_START);
     expect(q[1].type).to.equal(TokenType.NAME);
@@ -55,11 +60,11 @@ describe('Lexer', () => {
   });
 
   it('should recognise comments', () => {
-    let q = Lexer.tokenise(';(go arg1: 42)');
+    let q = Lexer.tokenise(';(go arg1: 42)').tokens;
     expect(q.length).to.equal(1);
     expect(q[0].type).to.equal(TokenType.COMMENT);
 
-    q = Lexer.tokenise(';(go arg1: 42)\n(go arg1: 42)');
+    q = Lexer.tokenise(';(go arg1: 42)\n(go arg1: 42)').tokens;
     expect(q.length).to.equal(6);
     expect(q[0].type).to.equal(TokenType.COMMENT);
     expect(q[1].type).to.equal(TokenType.LIST_START);

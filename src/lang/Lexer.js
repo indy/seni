@@ -292,7 +292,8 @@ const Lexer = {
       default:
         // read the unknown token and return it
         let tok = consumeUnknown(s)[0];
-        return [tok];
+        return {error: 'unknown token: ' + tok.value,
+                tokens: [tok]};
       }
 
       let [token, remaining] = p;
@@ -301,7 +302,7 @@ const Lexer = {
       s = skipWhitespace(remaining);
     }
 
-    return q;
+    return {tokens: q};
   }
 };
 

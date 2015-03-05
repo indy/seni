@@ -6,7 +6,7 @@ describe('compiler', () => {
 
   function simpleCompile(form) {
     // assumes that the form will compile into a single list
-    let ts = Lexer.tokenise(form);
+    let ts = Lexer.tokenise(form).tokens;
     let ast = Parser.parse(ts).nodes;
     let compiled = Compiler.compile(ast);
     return compiled[0];
