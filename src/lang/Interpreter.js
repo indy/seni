@@ -95,6 +95,10 @@ function assert(assertion) {
   }
 }
 
+function isDefineExpression(form) {
+  return form.constructor === Array && form[0] === 'define';
+}
+
 function isDefiningFunction(nameForm) {
 
   let isFunction = false;
@@ -312,9 +316,9 @@ var Interpreter = {
   evaluate: function(env, expr) {
     return _evaluate(env, expr);
   },
+  isDefineExpression: isDefineExpression,
   specialForms: _specialForms,
   classicFunctions: _classicFunctions
 };
 
 export default Interpreter;
-

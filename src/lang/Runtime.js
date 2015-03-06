@@ -26,7 +26,16 @@ let Runtime = {
 
     let ast = astBox.nodes;
     let compiled = Compiler.compile(ast);
-    return compiled.reduce((a, b) => Interpreter.evaluate(env, b), null);
+
+    // add all of the define expressions to the env
+    compiled.
+      filter(Interpreter.isDefineExpression).
+      reduce((a, b) => Interpreter.evaluate(env, b), null);
+
+    // now evaluate all of the non-define expressions
+    return compiled.
+      filter((s) => !Interpreter.isDefineExpression(s)).
+      reduce((a, b) => Interpreter.evaluate(env, b), null);
   }
 };
 

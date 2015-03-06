@@ -69,7 +69,7 @@ for (let i = 0; i < 256; i++) {
 
 var Perlin = {
   perlin2: new PublicBinding(
-    'perlin2',
+    'perlin/unsigned',
     ``,
     {x: 1.0, y: 1.0, z: 1.0},
     (self) => {
@@ -81,7 +81,7 @@ var Perlin = {
   ),
 
   perlin: new PublicBinding(
-    'perlin',
+    'perlin/signed',
     ``,
     {x: 1.0, y: 1.0, z: 1.0},
     (self) => {
