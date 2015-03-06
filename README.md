@@ -3,12 +3,18 @@
 babel-library-boilerplate
 
 
+prerequisite:
+npm install -g http-server
+at root of project:
+$ http-server 
+open http://localhost:8080
+
 
 ## Build
 
 ### Prerequisites:
 
-1. `npm install`
+    p1. `npm install`
 2. `npm install -g gulp karma karma-cli`
 3. `bower install`
 4. `gulp symlink.ext`

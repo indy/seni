@@ -136,6 +136,31 @@ describe('eval', () => {
     expect(e.lookup('monkey')).to.equal(42);
   });
 
+  it('should test define for a function', () => {
+    evalForm(e, '(define addup (fn (x: 2) (+ x x)))');
+    expect(e.hasBinding('addup')).to.be.true;
+
+    evalForm(e, '(set! addupres (addup x: 5))');
+    expect(e.hasBinding('addupres')).to.be.true;
+    expect(e.lookup('addupres')).to.equal(10);
+
+    evalForm(e, '(set! addupres (addup))');
+    expect(e.lookup('addupres')).to.equal(4);
+  });
+
+  it('should test define for a function2', () => {
+    evalForm(e, '(define (addup x: 2) (+ x x))');
+    expect(e.hasBinding('addup')).to.be.true;
+
+    evalForm(e, '(set! addupres (addup x: 5))');
+    expect(e.hasBinding('addupres')).to.be.true;
+    expect(e.lookup('addupres')).to.equal(10);
+
+    evalForm(e, '(set! addupres (addup))');
+    expect(e.lookup('addupres')).to.equal(4);
+  });
+
+
   it('should test set!', () => {
     expect(e.hasBinding('foo')).to.be.true;
     expect(e.lookup('foo')).to.equal(5);

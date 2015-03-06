@@ -13,7 +13,7 @@ function _evaluate(env, expr) {
 
   if(expr === undefined) {
     // in case of non-existent else clause in if statement
-    return;
+    return undefined;
   }
 
   // todo: may need something like:
@@ -36,7 +36,7 @@ function funApplication(env, listExpr) {
   if(fun === undefined) {
     // todo: use something better than console.log
     console.log(listExpr[0] + ' is undefined');
-    return;
+    return undefined;
   }
 
   // special forms that manipulate the listExpr
@@ -89,6 +89,50 @@ function addBindings(env, exprs) {
   return env;
 }
 
+function assert(assertion) {
+  if(!assertion) {
+    console.log('ASSERT FAILED');
+  }
+}
+
+function isDefiningFunction(nameForm) {
+
+  let isFunction = false;
+  if(nameForm.constructor === Array) {
+    // it will either have one element in the array
+    // e.g. (define (shout) (log "WOOHOOO")) => ['shout']
+    // or there will be an argument map
+    // e.g. (defin (doubler x: 3) (+ x x)) => ['doubler', {x: 3}]
+    if(nameForm.length === 1) {
+      isFunction = true;
+    } else if (nameForm.length === 2) {
+      // todo: also check for Map when we have immutable data structures here
+      isFunction = true;
+    } else {
+      // invalid define statement
+      assert(false);
+      isFunction = false;
+    }
+  }
+  return isFunction;
+}
+
+function defineFunction(env, defaultArgForms, body) {
+
+  let defaultArgValues = {};
+  for(let k in defaultArgForms) {
+    defaultArgValues[k] = _evaluate(env, defaultArgForms[k]);
+  }
+
+  return function(args) {
+    const newEnv = env.newScope();
+    for(let k in defaultArgValues) {
+      newEnv.add(k, args[k] === undefined ? defaultArgValues[k] : args[k]);
+    }
+    return evalBodyForms(newEnv, body);
+  };
+}
+
 var _specialForms = {
 
   // (if something truthy falsey) || (if something truthy)
@@ -99,9 +143,19 @@ var _specialForms = {
   'quote': (env, [_, form]) =>
     form,
 
-  // (define foo 12)
-  'define': (env, [_, name, val]) =>
-    env.add(name, _evaluate(env, val)),
+  'define': (env, [_, nameForm, ...valueForms]) => {
+    if(isDefiningFunction(nameForm)) {
+      // e.g. (define (add x: 1 y: 2) (log x) (+ x y))
+      let [name, defaultArgForms] = nameForm;
+      let definedFunction = defineFunction(env, defaultArgForms, valueForms);
+      return env.add(name, definedFunction);
+    } else {
+      // e.g. (define foo 12)
+      assert(valueForms.length === 1);
+      let val = valueForms[0];
+      return env.add(nameForm, _evaluate(env, val));
+    }
+  },
 
   // (set! foo 42)
   'set!': (env, [_, name, val]) =>
@@ -118,19 +172,7 @@ var _specialForms = {
 
   // (fn (x: 0 y: 0) (+ x y))
   'fn': (env, [_, defaultArgForms, ...body]) => {
-
-    let defaultArgValues = {};
-    for(let k in defaultArgForms) {
-      defaultArgValues[k] = _evaluate(env, defaultArgForms[k]);
-    }
-
-    return function(args) {
-      const newEnv = env.newScope();
-      for(let k in defaultArgValues) {
-        newEnv.add(k, args[k] === undefined ? defaultArgValues[k] : args[k]);
-      }
-      return evalBodyForms(newEnv, body);
-    };
+    return defineFunction(env, defaultArgForms, body);
   },
 
   // (print 'hi' foo) => hi 42

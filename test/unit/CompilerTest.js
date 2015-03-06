@@ -48,4 +48,9 @@ describe('compiler', () => {
       to.deep.equal(['go']);
 
   });
+
+  it('should compile function define statements', () => {
+    expect(simpleCompile('(define (add x: 0 y: 0))')).
+      to.deep.equal(['define', ['add', {x:0, y: 0}]]);
+  });
 });
