@@ -120,6 +120,19 @@ var MathUtil = {
     }
   ),
 
+  distance2D: new PublicBinding(
+    'math/distance2D',
+    ``,
+    {aX: 0, aY: 0, bX: 1, bY: 1},
+    (self) => function (params) {
+      let {aX, aY, bX, bY} = self.mergeWithDefaults(params);
+
+      const xd = aX - bX;
+      const yd = aY - bY;
+      return Math.sqrt((xd * xd) + (yd * yd));
+    }
+  ),
+
   stepsInclusive: function(start, end, num) {
     var unit = (end - start) / (num - 1);
     var res = [];
@@ -136,13 +149,13 @@ var MathUtil = {
   distance1d: function(a, b) {
     return Math.abs(a - b);
   },
-
+/*
   distance2d: function([xa, ya], [xb, yb]) {
     let xd = xa - xb;
     let yd = ya - yb;
     return Math.sqrt((xd * xd) + (yd * yd));
   },
-
+*/
   normalize: function(x, y) {
     let len = Math.sqrt((x * x) + (y * y));
     return [(x / len), (y / len)];

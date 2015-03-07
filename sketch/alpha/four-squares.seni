@@ -1,28 +1,39 @@
-(define (v x: 0 y: 0 z: 0 scale: 1)
-  (+ y (* scale (perlin/signed x: x y: y z: z))))
+(wash colour: (col/rgb r: 0.827 g: 0.827 b: 0.827 a: 0.4)
+      seed: 88)
 
-(define (wash variation: 200
-              lineWidth: 70
-              lineSegments: 5
-              colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 a: 0.4)
-              seed: 272)
-  (loop (h from: -20 to: 1020 step: 20)
-        (bezier tessellation: lineSegments
-                lineWidth: lineWidth
-                coords: (pair
-                         0 (v x: 0.10 y: h z: seed scale: variation)
-                         333 (v x: 333.33 y: h z: seed scale: variation)
-                         666 (v x: 666.66 y: h z: seed scale: variation)
-                         1000 (v x: 1000.10 y: h z: seed scale: variation))
-                colour: colour)
-        (bezier tessellation: lineSegments
-                lineWidth: lineWidth
-                coords: (pair
-                         (v x: 0.10 y: h z: seed scale: variation) 0
-                         (v x: 333.33 y: h z: seed scale: variation) 333
-                         (v x: 666.66 y: h z: seed scale: variation) 666
-                         (v x: 1000.10 y: h z: seed scale: variation) 1000)
-                colour: colour)))
+(define baseColour (col/rgb r: 0.9 g: 0.0 b: 0.0 a: 1.0))
+(define border 30)
+
+(define squareSize (/ (- 1000 (* 3 border)) 2))
+(define squareRadius (/ squareSize 2))
+(define squarePosMin (+ border squareRadius))
+(define squarePosMax (- 1000 (+ border squareRadius)))
+
+(rect x: squarePosMin y: squarePosMax
+      width: squareSize height: squareSize
+  	  colour: baseColour)
+
+(accumulated-rect x: squarePosMax y: squarePosMax
+                  width: squareSize height: squareSize
+                  colour: baseColour
+                  volatility: 1.5
+                  passes: 50)
+
+(bezier-stroked-rect x: squarePosMin y: squarePosMin
+                     width: squareSize height: squareSize
+                     colour: baseColour
+                     volatility: 10.0
+                     overlap: 3.0)
+
+(bezier-stroked-rect x: squarePosMax y: squarePosMin
+                     width: squareSize height: squareSize
+                     colour: baseColour
+                     colourVolatility: 10
+                     volatility: 10.0
+                     overlap: 3.0
+                     iterations: 79)
+
+
 
 (define (accumulated-rect x: 0
                           y: 0
@@ -137,37 +148,28 @@
                                 (* 3 thHeight)))
                     colour: current-colour)))))
 
-(define baseColour (col/rgb r: 0.8 g: 0.0 b: 0.0 a: 0.5))
-(define border 200)
+(define (v x: 0 y: 0 z: 0 scale: 1)
+  (+ y (* scale (perlin/unsigned x: x y: y z: z))))
 
-(define squareSize (/ (- 1000 (* 3 border)) 2))
-(define squareRadius (/ squareSize 2))
-(define squarePosMin (+ border squareRadius))
-(define squarePosMax (- 1000 (+ border squareRadius)))
-
-(wash colour: (col/rgb r: 0.827 g: 0.827 b: 0.827 a: 0.4)
-      seed: 88)
-
-(rect x: squarePosMin y: squarePosMax
-      width: squareSize height: squareSize
-  	  colour: baseColour)
-
-(accumulated-rect x: squarePosMax y: squarePosMax
-                  width: squareSize height: squareSize
-                  colour: baseColour
-                  volatility: 1.5
-                  passes: 50)
-
-(bezier-stroked-rect x: squarePosMin y: squarePosMin
-                     width: squareSize height: squareSize
-                     colour: baseColour
-                     volatility: 10.0
-                     overlap: 3.0)
-
-(bezier-stroked-rect x: squarePosMax y: squarePosMin
-                     width: squareSize height: squareSize
-                     colour: baseColour
-                     colourVolatility: 10
-                     volatility: 10.0
-                     overlap: 3.0
-                     iterations: 79)
+(define (wash variation: 200
+              lineWidth: 70
+              lineSegments: 5
+              colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 a: 0.4)
+              seed: 272)
+  (loop (h from: -20 to: 1020 step: 20)
+        (bezier tessellation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair
+                         0 (v x: 0.10 y: h z: seed scale: variation)
+                         333 (v x: 333.33 y: h z: seed scale: variation)
+                         666 (v x: 666.66 y: h z: seed scale: variation)
+                         1000 (v x: 1000.10 y: h z: seed scale: variation))
+                colour: colour)
+        (bezier tessellation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair
+                         (v x: 0.10 y: h z: seed scale: variation) 0
+                         (v x: 333.33 y: h z: seed scale: variation) 333
+                         (v x: 666.66 y: h z: seed scale: variation) 666
+                         (v x: 1000.10 y: h z: seed scale: variation) 1000)
+                colour: colour)))

@@ -17,7 +17,8 @@ function bindMath(env) {
               MathUtil.twoPI,
               MathUtil.PIbyTwo,
               MathUtil.buildSigned,
-              MathUtil.buildUnsigned];
+              MathUtil.buildUnsigned,
+              MathUtil.distance2D];
 
   math.forEach((m) => env.add(m.name, m.create(m)));
 }

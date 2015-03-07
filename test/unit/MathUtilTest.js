@@ -20,10 +20,6 @@ describe('MathUtil', () => {
     expect(MathUtil.clamp(5, 0, 4)).to.equal(4);
   });
 
-  it('distance2d', () => {
-    expect(MathUtil.distance2d([0, 3], [4, 0])).to.equal(5);
-  });
-
   it('normalize', () => {
     expect(MathUtil.normalize(32, 0)).to.eql([1, 0]);
 
