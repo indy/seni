@@ -1,12 +1,15 @@
-(define numSquares 13)
+
+(define numSquaresToRender 13)
 (define gapSize 30)
+
+(define numSquares (+ 2 numSquaresToRender))
 
 (define numGaps (+ numSquares 1))
 (define squareSize (/ (- 1000 (* gapSize numGaps)) numSquares))
 
 
-(loop (y from: 0 to: numSquares)
-	(loop (x from: 0 to: numSquares)
+(loop (y from: 1 to: (- numSquares 1))
+	(loop (x from: 1 to: (- numSquares 1))
           (let ((xPos (mapToPosition at: x))
                 (yPos (mapToPosition at: y)))
             (accumulated-rect x: xPos
