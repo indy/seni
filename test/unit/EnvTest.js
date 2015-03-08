@@ -47,9 +47,4 @@ describe('env', () => {
 
     expect(e2.lookup(key)).to.equal(laterVal);
   });
-
-  it('should mutate bindings', () => {
-    e.mutate(key, 3);
-    expect(e.lookup(key)).to.equal(3);
-  });
 });

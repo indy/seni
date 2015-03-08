@@ -40,20 +40,6 @@ class Env {
     return undefined;           // ???
   }
 
-  mutate(key, val) {
-    let e = this;
-    while(e !== null) {
-      if(e.hasBindingInThisScope(key)) {
-        e.bindings.set(key, val);
-        return this;
-      }
-      e = e.outer;
-    }
-
-    // the key did not exist in this env
-    // so create a new binding
-    return this.add(key, val);
-  }
 }
 
 export default Env;
