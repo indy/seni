@@ -13,41 +13,41 @@ function _evaluate(env, expr) {
 
   if(expr === undefined) {
     // in case of non-existent else clause in if statement
-    return undefined;
+    return [env, undefined];
   }
 
   // todo: may need something like:
   if (typeof expr === 'number') {
-    return expr;
+    return [env, expr];
   }
   if (typeof expr === 'string') {
     if(expr === TRUE_STRING || expr === FALSE_STRING) {
-      return expr;
+      return [env, expr];
     }
-    return env.lookup(expr);
+    return [env, env.lookup(expr)];
   }
   return funApplication(env, expr);
 }
 
 function funApplication(env, listExpr) {
 
-  const fun = _evaluate(env, listExpr[0]);
+  let [env, fun] = _evaluate(env, listExpr[0]);
 
   if(fun === undefined) {
     // todo: use something better than console.log
     console.log(listExpr[0] + ' is undefined');
-    return undefined;
+    return [env, undefined];
   }
 
-  // special forms that manipulate the listExpr
+  // special forms that manipulate the listExpr and can change the env
   if(isSpecialForm(listExpr)) {
     return fun(env, listExpr);
   }
 
   // classic functions that don't require named arguments
   if(isClassicFunction(listExpr)) {
-    let args = listExpr.slice(1).map(n => _evaluate(env, n));
-    return fun(args);
+    let args = listExpr.slice(1).map(n => _evaluate(env, n)[1]);
+    return [env, fun(args)];
   }
 
   // normal functions that require named arguments
@@ -55,10 +55,10 @@ function funApplication(env, listExpr) {
   if(listExpr.length > 1) {
     const argObj = listExpr[1];
     for(let k in argObj) {
-      args[k] = _evaluate(env, argObj[k]);
+      args[k] = _evaluate(env, argObj[k])[1];
     }
   }
-  return fun(args);
+  return [env, fun(args)];
 }
 
 function isSpecialForm(listExpr) {
@@ -74,7 +74,7 @@ function isClassicFunction(listExpr) {
 function addBindings(env, exprs) {
 
   const addBinding = function(name, value) {
-    const v = _evaluate(env, value);
+    const v = _evaluate(env, value)[1];
     if(name.constructor === Array) {
       // destructure
       // todo: error check if size of name array !== size of v
@@ -125,7 +125,7 @@ function defineFunction(env, defaultArgForms, body) {
 
   let defaultArgValues = {};
   for(let k in defaultArgForms) {
-    defaultArgValues[k] = _evaluate(env, defaultArgForms[k]);
+    defaultArgValues[k] = _evaluate(env, defaultArgForms[k])[1];
   }
 
   return function(args) {
@@ -133,7 +133,7 @@ function defineFunction(env, defaultArgForms, body) {
     for(let k in defaultArgValues) {
       newEnv.add(k, args[k] === undefined ? defaultArgValues[k] : args[k]);
     }
-    return evalBodyForms(newEnv, body);
+    return evalBodyForms(newEnv, body)[1];
   };
 }
 
@@ -141,29 +141,25 @@ var _specialForms = {
 
   // (if something truthy falsey) || (if something truthy)
   'if': (env, [_, cond, t, f]) =>
-    _evaluate(env, _evaluate(env, cond) === TRUE_STRING ? t : f),
+    _evaluate(env, _evaluate(env, cond)[1] === TRUE_STRING ? t : f),
 
   // (quote (age 99))
   'quote': (env, [_, form]) =>
-    form,
+    [env, form],
 
   'define': (env, [_, nameForm, ...valueForms]) => {
     if(isDefiningFunction(nameForm)) {
       // e.g. (define (add x: 1 y: 2) (log x) (+ x y))
       let [name, defaultArgForms] = nameForm;
       let definedFunction = defineFunction(env, defaultArgForms, valueForms);
-      return env.add(name, definedFunction);
+      return [env.add(name, definedFunction), true];
     } else {
       // e.g. (define foo 12)
       assert(valueForms.length === 1);
       let val = valueForms[0];
-      return env.add(nameForm, _evaluate(env, val));
+      return [env.add(nameForm, _evaluate(env, val)[1]), true];
     }
   },
-
-  // (set! foo 42)
-  'set!': (env, [_, name, val]) =>
-    env.mutate(name, _evaluate(env, val)),
 
   // (begin (f1 1) (f2 3) (f3 5))
   'begin': (env, [_, ...body]) =>
@@ -176,23 +172,26 @@ var _specialForms = {
 
   // (fn (x: 0 y: 0) (+ x y))
   'fn': (env, [_, defaultArgForms, ...body]) => {
-    return defineFunction(env, defaultArgForms, body);
+    return [env, defineFunction(env, defaultArgForms, body)];
   },
 
   // (print 'hi' foo) => hi 42
   'print': (env, [_, ...msgs]) => {
-    console.log(msgs.reduce((a, b) => a + ' ' + _evaluate(env, b), ''));
+    console.log(msgs.reduce((a, b) => a + ' ' + _evaluate(env, b)[1], ''));
+    return [env, true];
   },
 
   // (log 'hi' foo) => hi <foo:42>
   'log': (env, [_, ...msgs]) => {
     let message = msgs.reduce((a, b) => {
+      let [env, res] = _evaluate(env, b);
       if(typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
-        return a + ' <' + b + ':' + _evaluate(env, b) + '>';
+        return a + ' <' + b + ':' + res + '>';
       }
-      return a + ' ' + _evaluate(env, b);
+      return a + ' ' + res;
     }, '');
     console.log(message);
+    return [env, true];
   },
 
 
@@ -201,7 +200,7 @@ var _specialForms = {
 
     let vp = {};
     for(let k in varParameters) {
-      vp[k] = _evaluate(env, varParameters[k]);
+      vp[k] = _evaluate(env, varParameters[k])[1];
     }
 
     return loopingFn(env.newScope(), body, varName, vp);
@@ -218,7 +217,7 @@ var _specialForms = {
 
 // whoa bodyform, bodyform for you
 function evalBodyForms(env, bodyForms) {
-  return bodyForms.reduce((a, b) => _evaluate(env, b), null);
+  return bodyForms.reduce((a, b) => _evaluate(a[0], b), [env, true]);
 }
 
 function loopingFn(env, expr, varName, params) {
@@ -237,12 +236,12 @@ function loopingFn(env, expr, varName, params) {
   if(until !== undefined) {
     for(let i=from;i<=until;i+=step) {
       env.add(varName, i);
-      res = expr.reduce((a, b) => _evaluate(env, b), null);
+      res = expr.reduce((a, b) => _evaluate(a[0], b), [env, true]);
     }
   } else {
     for(let i=from;i<to;i+=step) {
       env.add(varName, i);
-      res = expr.reduce((a, b) => _evaluate(env, b), null);
+      res = expr.reduce((a, b) => _evaluate(a[0], b), [env, true]);
     }
   }
 
@@ -314,7 +313,7 @@ var _classicFunctions = {
 
 var Interpreter = {
   evaluate: function(env, expr) {
-    return [env, _evaluate(env, expr)];
+    return _evaluate(env, expr);
   },
   isDefineExpression: isDefineExpression,
   specialForms: _specialForms,

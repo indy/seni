@@ -49,7 +49,6 @@ describe('eval', () => {
     expect(newEnv).to.equal(e);
   });
 
-
   it('should test required mathematical functions', () => {
     let [newEnv, res] = evalForm(e, '(* 2 4)');
     expect(res).to.be.closeTo(8, epsilon);
@@ -155,27 +154,25 @@ describe('eval', () => {
     let [newEnv, res] = evalForm(e, '(define addup (fn (x: 2) (+ x x)))');
     expect(newEnv.hasBinding('addup')).to.be.true;
 
-    [newEnv, res] = evalForm(newEnv, '(set! addupres (addup x: 5))');
-    expect(newEnv.hasBinding('addupres')).to.be.true;
-    expect(newEnv.lookup('addupres')).to.equal(10);
+    [newEnv, res] = evalForm(newEnv, '(addup x: 5)');
+    expect(res).to.equal(10);
 
-    [newEnv, res] = evalForm(newEnv, '(set! addupres (addup))');
-    expect(newEnv.lookup('addupres')).to.equal(4);
+    [newEnv, res] = evalForm(newEnv, '(addup)');
+    expect(res).to.equal(4);
   });
 
   it('should test define for a function2', () => {
     let [newEnv, res] = evalForm(e, '(define (addup x: 2) (+ x x))');
     expect(newEnv.hasBinding('addup')).to.be.true;
 
-    [newEnv, res] = evalForm(newEnv, '(set! addupres (addup x: 5))');
-    expect(newEnv.hasBinding('addupres')).to.be.true;
-    expect(newEnv.lookup('addupres')).to.equal(10);
+    [newEnv, res] = evalForm(newEnv, '(addup x: 5)');
+    expect(res).to.equal(10);
 
-    [newEnv, res] = evalForm(newEnv, '(set! addupres (addup))');
-    expect(newEnv.lookup('addupres')).to.equal(4);
+    [newEnv, res] = evalForm(newEnv, '(addup)');
+    expect(res).to.equal(4);
   });
 
-
+    /*
   it('should test set!', () => {
     expect(e.hasBinding('foo')).to.be.true;
     expect(e.lookup('foo')).to.equal(5);
@@ -187,21 +184,15 @@ describe('eval', () => {
 
     // todo: test that the e env still has foo bound to 5
   });
-
+*/
   it('should test begin', () => {
     expect(e.hasBinding('foo')).to.be.true;
     expect(e.lookup('foo')).to.equal(5);
-    let [newEnv, res] = evalForm(e, '(begin (set! foo 1) (+ 1 1) (+ 2 2))');
-    expect(newEnv.hasBinding('foo')).to.be.true;
-    expect(newEnv.lookup('foo')).to.equal(1);
+    let [newEnv, res] = evalForm(e, '(begin (+ 1 1) (+ 2 2))');
+    expect(res).to.equal(4);
 
-    [newEnv, res] = evalForm(e, '(begin (+ 1 1) (set! foo 3) (+ 2 2))');
-    expect(newEnv.hasBinding('foo')).to.be.true;
-    expect(newEnv.lookup('foo')).to.equal(3);
-
-    [newEnv, res] = evalForm(e, '(begin (+ 1 1) (+ 2 2) (set! foo 5))');
-    expect(newEnv.hasBinding('foo')).to.be.true;
-    expect(newEnv.lookup('foo')).to.equal(5);
+    [newEnv, res] = evalForm(e, '(begin (+ 1 1))');
+    expect(res).to.equal(2);
   });
 
   it('should test let', () => {
@@ -217,14 +208,13 @@ describe('eval', () => {
     expect(res).to.equal(11);
 
     // the body of let can contain multiple forms
-    [newEnv, res] = evalForm(e, '(let ((a 2) (b (+ a a))) (set! a 100) (+ a b foo))');
-    expect(res).to.equal(109);
+    [newEnv, res] = evalForm(e, '(let ((a 5) (b (+ a a))) (+ a a) (+ a b foo))');
+    expect(res).to.equal(20);
   });
 
   it('should test destructuring let', () => {
-    let [newEnv, res] = evalForm(e, '(let (((x y) (list 3 4))) (+ x y foo))');
-    expect(res).to.equal(12);
-    expect(newEnv).to.equal(e);
+    let r = evalForm(e, '(let (((x y) (list 3 4))) (+ x y foo))');
+    expect(r[1]).to.equal(12);
   });
 
   it('should test fn', () => {
@@ -255,7 +245,7 @@ describe('eval', () => {
     [newEnv, res] = evalForm(e, '((fn () 3))');
     expect(res).to.equal(3);
   });
-
+  /*
   it('should test loop', () => {
     e.add('bar', 0);
     let [newEnv, res] = evalForm(e, '(loop (a from: 0 to: 4 step: 1) (set! bar (+ bar a)))');
@@ -284,5 +274,5 @@ describe('eval', () => {
     [newEnv, res] = evalForm(newEnv, '(let ((x 2) (y 4)) (loop (a to: 5 step: x) (+ y y) (set! bar (+ bar a))))');
     expect(newEnv.lookup('bar')).to.equal(6);
 
-  });
+  });*/
 });
