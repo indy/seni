@@ -84,7 +84,7 @@
         (vStripWidth (/ width iterations))
         (halfVStripWidth (/ vStripWidth 2))
 
-        (rng (rng/unsigned seed: seed))
+        (rng (rng/signed seed: seed))
 
         (halfAlpha (/ (col/getAlpha colour: colour) 2))
         (labColour (col/setAlpha colour: (col/convert format: LAB colour: colour)
