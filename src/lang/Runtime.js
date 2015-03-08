@@ -28,14 +28,14 @@ let Runtime = {
     let compiled = Compiler.compile(ast);
 
     // add all of the define expressions to the env
-    compiled.
-      filter(Interpreter.isDefineExpression).
-      reduce((a, b) => Interpreter.evaluate(env, b), null);
+    let [_env, _res] = compiled.
+          filter(Interpreter.isDefineExpression).
+          reduce(([e, r], b) => Interpreter.evaluate(e, b), [env, false]);
 
     // now evaluate all of the non-define expressions
     return compiled.
       filter((s) => !Interpreter.isDefineExpression(s)).
-      reduce((a, b) => Interpreter.evaluate(env, b), null);
+      reduce(([e, r], b) => Interpreter.evaluate(e, b), [_env, _res]);
   }
 };
 

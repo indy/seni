@@ -213,7 +213,7 @@ var _specialForms = {
     let res =  evalBodyForms(env, body);
     env.lookup('popMatrix')();
     return res;
-  },
+  }
 };
 
 // whoa bodyform, bodyform for you
@@ -314,7 +314,7 @@ var _classicFunctions = {
 
 var Interpreter = {
   evaluate: function(env, expr) {
-    return _evaluate(env, expr);
+    return [env, _evaluate(env, expr)];
   },
   isDefineExpression: isDefineExpression,
   specialForms: _specialForms,
