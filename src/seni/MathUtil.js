@@ -100,7 +100,7 @@ var MathUtil = {
     () => _remapFn
   ),
 
-  buildUnsigned: new PublicBinding(
+  rngUnsigned: new PublicBinding(
     'rng/unsigned',
     `returns a function that generates a random number in the range 0..1 everytime its invoked`,
     {seed: 'shabba'},
@@ -110,7 +110,7 @@ var MathUtil = {
     }
   ),
 
-  buildSigned: new PublicBinding(
+  rngSigned: new PublicBinding(
     'rng/signed',
     `returns a function that generates a random number in the range -1..1 everytime its invoked`,
     {seed: 'shabba'},
@@ -133,6 +133,16 @@ var MathUtil = {
     }
   ),
 
+  clamp: new PublicBinding(
+    'math/clamp',
+    ``,
+    {val: 0, min: 0, max: 1},
+    (self) => function (params) {
+      let {val, min, max} = self.mergeWithDefaults(params);
+      return val < min ? min : (val > max ? max : val);
+    }
+  ),
+
   stepsInclusive: function(start, end, num) {
     var unit = (end - start) / (num - 1);
     var res = [];
@@ -142,14 +152,14 @@ var MathUtil = {
     return res;
   },
 
-  clamp: function(a, min, max) {
-    return a < min ? min : (a > max ? max : a);
-  },
-
   distance1d: function(a, b) {
     return Math.abs(a - b);
   },
 /*
+  clamp: function(a, min, max) {
+ return a < min ? min : (a > max ? max : a);
+  },
+
   distance2d: function([xa, ya], [xb, yb]) {
     let xd = xa - xb;
     let yd = ya - yb;

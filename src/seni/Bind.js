@@ -15,9 +15,10 @@ function bindMath(env) {
               MathUtil.PI,
               MathUtil.twoPI,
               MathUtil.PIbyTwo,
-              MathUtil.buildSigned,
-              MathUtil.buildUnsigned,
-              MathUtil.distance2D];
+              MathUtil.rngSigned,
+              MathUtil.rngUnsigned,
+              MathUtil.distance2D,
+              MathUtil.clamp];
 
   return math.reduce((a, b) => a.set(b.name, b.create(b)), env);
 }

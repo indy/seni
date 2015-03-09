@@ -14,11 +14,13 @@ describe('MathUtil', () => {
     }
   });
 
+  /*
   it('clamp', () => {
     expect(MathUtil.clamp(5, 0, 10)).to.equal(5);
     expect(MathUtil.clamp(5, 7, 10)).to.equal(7);
     expect(MathUtil.clamp(5, 0, 4)).to.equal(4);
   });
+   */
 
   it('normalize', () => {
     expect(MathUtil.normalize(32, 0)).to.eql([1, 0]);
