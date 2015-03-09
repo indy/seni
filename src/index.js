@@ -36,7 +36,8 @@ function setupUI(renderer) {
   let editor = CodeMirror.fromTextArea(textArea, {
     lineNumbers: false,
     mode: 'scheme',
-    autoMatchParens: true,
+    autoCloseBrackets: true,
+    matchBrackets: true,
     extraKeys: {
       'Ctrl-E': function() {
         withTiming(() => renderScript(renderer, editor.getValue()));
