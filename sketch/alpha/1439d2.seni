@@ -7,22 +7,26 @@
 (define numGaps (+ numSquares 1))
 (define squareSize (/ (- 1000 (* gapSize numGaps)) numSquares))
 
+(define baseColour (col/rgb r: 1.0 g: 0.0 b: 0.3 a: 1.0))
+(define backgroundColour (col/rgb r: 1.0 g: 1.0 b: 0.9))
+
+
 (wash variation: 40
       lineWidth: 25
       lineSegments: 5
-      colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
+      colour: backgroundColour)
 
 (loop (y from: 1 to: (- numSquares 1))
 	(loop (x from: 1 to: (- numSquares 1))
           (let ((xPos (mapToPosition at: x))
                 (yPos (mapToPosition at: y))
                 (distanceFromCentre (math/distance2D aX: 500 
-                                                     aY: 500
+                                                     aY: 800
                                                      bX: xPos
                                                      bY: yPos))
                 (volatility (math/clamp val: (/ (- 500 distanceFromCentre) 12)
                                         min: 0
-                                        max: 100)))
+                                        max: 50)))
             (bezier-stroked-rect x: xPos
                                  y: yPos
                                  colourVolatility: 20
@@ -30,7 +34,7 @@
                                  seed: (+ x (* y numSquares))
                                  width: squareSize 
                                  height: squareSize
-                                 colour: (col/rgb r: 1.0 g: 0.0 b: 0.4 a: 1.0)))))
+                                 colour: baseColour))))
 
 (define (mapToPosition at: 0)
   (+ (* (+ gapSize squareSize) at) (/ squareSize 2) gapSize))
