@@ -1,15 +1,8 @@
 
 function bind(env, objs) {
-  // objs is an array
-  // add every key,val pair in obj as a binding to env
-  let bindAll = function(obj) {
-    for(let key in obj) {
-      env.add(key, obj[key]);
-    }
-  };
-
-  objs.forEach(o => bindAll(o));
-  return env;
+  // env is an immutable Map
+  // objs is an array of maps
+  return objs.reduce((a, b) => a.merge(b), env);
 }
 
 export default bind;

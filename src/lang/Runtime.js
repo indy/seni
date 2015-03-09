@@ -1,5 +1,4 @@
 import Interpreter from './Interpreter';
-import Env from './Env';
 import Parser from './Parser';
 import Lexer from './Lexer';
 import Compiler from './Compiler';
@@ -7,8 +6,8 @@ import bind from './bind';
 
 let Runtime = {
   createEnv: function() {
-    return bind(new Env(), [Interpreter.specialForms,
-                            Interpreter.classicFunctions]);
+    return bind(Immutable.Map(), [Interpreter.specialForms,
+                                  Interpreter.classicFunctions]);
   },
 
   evalForm: function(env, form) {

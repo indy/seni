@@ -66,6 +66,10 @@
     "beforeEach": true,
     "afterEach": true,
     "it": true,
-    "expect": true
+    "expect": true,
+    "mat4": false,
+    "vec3": false,
+    "CodeMirror": false,
+    "Immutable": false
   }
 }

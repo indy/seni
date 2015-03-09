@@ -24,7 +24,7 @@ function _evaluate(env, expr) {
     if(expr === TRUE_STRING || expr === FALSE_STRING) {
       return [env, expr];
     }
-    return [env, env.lookup(expr)];
+    return [env, env.get(expr)];
   }
   return funApplication(env, expr);
 }
@@ -73,20 +73,21 @@ function isClassicFunction(listExpr) {
 
 function addBindings(env, exprs) {
 
-  const addBinding = function(name, value) {
-    const v = _evaluate(env, value)[1];
+  const addBinding = function(e, name, value) {
+    const v = _evaluate(e, value)[1];
     if(name.constructor === Array) {
       // destructure
       // todo: error check if size of name array !== size of v
-      name.forEach((n, i) => env.add(n, v[i]));
+      for(let i=0;i<name.length;i++) {
+        e = e.set(name[i], v[i]);
+      }
     } else {
-      env.add(name, v);
+      e = e.set(name, v);
     }
+    return e;
   };
 
-  exprs.forEach(([name, value]) => addBinding(name, value));
-
-  return env;
+  return exprs.reduce((a, [name, value]) => addBinding(a, name, value), env);
 }
 
 function assert(assertion) {
@@ -129,9 +130,9 @@ function defineFunction(env, defaultArgForms, body) {
   }
 
   return function(args) {
-    const newEnv = env.newScope();
+    let newEnv = env;
     for(let k in defaultArgValues) {
-      newEnv.add(k, args[k] === undefined ? defaultArgValues[k] : args[k]);
+      newEnv = newEnv.set(k, args[k] === undefined ? defaultArgValues[k] : args[k]);
     }
     return evalBodyForms(newEnv, body)[1];
   };
@@ -152,12 +153,12 @@ var _specialForms = {
       // e.g. (define (add x: 1 y: 2) (log x) (+ x y))
       let [name, defaultArgForms] = nameForm;
       let definedFunction = defineFunction(env, defaultArgForms, valueForms);
-      return [env.add(name, definedFunction), true];
+      return [env.set(name, definedFunction), true];
     } else {
       // e.g. (define foo 12)
       assert(valueForms.length === 1);
       let val = valueForms[0];
-      return [env.add(nameForm, _evaluate(env, val)[1]), true];
+      return [env.set(nameForm, _evaluate(env, val)[1]), true];
     }
   },
 
@@ -167,7 +168,7 @@ var _specialForms = {
 
   // (let ((a 12) (b 24)) (+ a b foo))
   'let': (env, [_, args, ...body]) => {
-    return evalBodyForms(addBindings(env.newScope(), args), body);
+    return evalBodyForms(addBindings(env, args), body);
   },
 
   // (fn (x: 0 y: 0) (+ x y))
@@ -203,14 +204,14 @@ var _specialForms = {
       vp[k] = _evaluate(env, varParameters[k])[1];
     }
 
-    return loopingFn(env.newScope(), body, varName, vp);
+    return loopingFn(env, body, varName, vp);
   },
 
   // (onMatrixStack (f1 1) (f2 3) (f3 5))
   'onMatrixStack': (env, [_, ...body]) => {
-    env.lookup('pushMatrix')();
+    env.get('pushMatrix')();
     let res =  evalBodyForms(env, body);
-    env.lookup('popMatrix')();
+    env.get('popMatrix')();
     return res;
   }
 };
@@ -235,12 +236,12 @@ function loopingFn(env, expr, varName, params) {
   var res;
   if(until !== undefined) {
     for(let i=from;i<=until;i+=step) {
-      env.add(varName, i);
+      env = env.set(varName, i);
       res = expr.reduce((a, b) => _evaluate(a[0], b), [env, true]);
     }
   } else {
     for(let i=from;i<to;i+=step) {
-      env.add(varName, i);
+      env = env.set(varName, i);
       res = expr.reduce((a, b) => _evaluate(a[0], b), [env, true]);
     }
   }

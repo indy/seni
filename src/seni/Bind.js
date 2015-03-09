@@ -7,8 +7,7 @@ import Core from './Core';
 
 function bindCore(env) {
   let core = [Core.takeBinding];
-
-  core.forEach((m) => env.add(m.name, m.create(m)));
+  return core.reduce((a, b) => a.set(b.name, b.create(b)), env);
 }
 
 function bindMath(env) {
@@ -20,7 +19,7 @@ function bindMath(env) {
               MathUtil.buildUnsigned,
               MathUtil.distance2D];
 
-  math.forEach((m) => env.add(m.name, m.create(m)));
+  return math.reduce((a, b) => a.set(b.name, b.create(b)), env);
 }
 
 function bindMatrixStack(env, matrixStack) {
@@ -30,7 +29,7 @@ function bindMatrixStack(env, matrixStack) {
                 MatrixStackBindings.translate,
                 MatrixStackBindings.rotate];
 
-  mstack.forEach((m) => env.add(m.name, m.create(m, matrixStack)));
+  return mstack.reduce((a, b) => a.set(b.name, b.create(b, matrixStack)), env);
 }
 
 function bindShapes(env, renderer) {
@@ -40,7 +39,7 @@ function bindShapes(env, renderer) {
                 Shapes.bezierTrailing,
                 Shapes.bezierBulging];
 
-  shapes.forEach((r) => env.add(r.name, r.create(r, renderer)));
+  return shapes.reduce((a, b) => a.set(b.name, b.create(b, renderer)), env);
 }
 
 function bindColour(env) {
@@ -63,26 +62,26 @@ function bindColour(env) {
                  ColourBindings.colSetLightness,
                  ColourBindings.colGetLightness];
 
-  colours.forEach((c) => env.add(c.name, c.create(c)));
+  return colours.reduce((a, b) => a.set(b.name, b.create(b)), env);
 }
 
 function bindPerlin(env) {
   let pln = [Perlin.perlin,
              Perlin.perlin2];
 
-  pln.forEach((p) => env.add(p.name, p.create(p)));
+  return pln.reduce((a, b) => a.set(b.name, b.create(b)), env);
 }
 
 
 var Bind = {
   addBindings: function(env, renderer) {
 
-    bindCore(env);
-    bindMath(env);
-    bindMatrixStack(env, renderer.getMatrixStack());
-    bindShapes(env, renderer);
-    bindColour(env);
-    bindPerlin(env);
+    env = bindCore(env);
+    env = bindMath(env);
+    env = bindMatrixStack(env, renderer.getMatrixStack());
+    env = bindShapes(env, renderer);
+    env = bindColour(env);
+    env = bindPerlin(env);
 
     return env;
   }
