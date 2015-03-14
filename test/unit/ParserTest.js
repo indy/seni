@@ -1,9 +1,29 @@
+import Lexer from '../../src/lang/Lexer';
 import Parser from '../../src/lang/Parser';
 import NodeType from '../../src/lang/NodeType';
 import Token from '../../src/lang/Token';
 import TokenType from '../../src/lang/TokenType';
 
 describe('parse', () => {
+
+  function simpleParse(form) {
+    // assumes that the form will compile into a single list
+    let ts = Lexer.tokenise(form).tokens;
+    return Parser.parse(ts).nodes;
+  }
+
+  it('should parse a bracketed form', () => {
+    let astArray = simpleParse('(+ 1 2 [3 (inRange 0 10)])');
+    expect(astArray.length).to.equal(1);
+
+    let ast = astArray[0];
+    expect(ast.children.length).to.equal(4);
+
+    expect(ast.getChild(0).alterable).to.be.false;
+    expect(ast.getChild(1).alterable).to.be.false;
+    expect(ast.getChild(2).alterable).to.be.false;
+    expect(ast.getChild(3).alterable).to.be.true;
+  });
 
   it('should parse an int', () => {
     let ts = [new Token(TokenType.INT, 4)];

@@ -1,8 +1,17 @@
 
-* todo [0/3]
-  1. [ ] look at use of spy in boilerplate test code
-  2. [ ] MathUtil::_remapFn default args
-  3. [ ] move rng bindings out of mathutil into their own bindings file
+* todo [0/4]
+  1. [ ] interpreter should have a 'create Basic Environment' function
+  2. [ ] look at use of spy in boilerplate test code
+  3. [ ] MathUtil::_remapFn default args
+  4. [ ] move rng bindings out of mathutil into their own bindings file
+
+
+should the GA code be applied after parsing but before compiling?
+could mean that every rendering would require running through the compilation phase.
+
+should the bracketed forms have a gensym value? variations would then just be different bindings in the Env. We would only need one compilation phase but it could mean that the ast isn't as flexible as it could be
+
+
 
 graphics in webgl
 quick feedback
@@ -12,24 +21,12 @@ web components/polymer/material design
 
 --------------------------------------------------------------------------------
 
-karma (was called testacular) is the test runner which can run javascript code on real browsers
-
---------------------------------------------------------------------------------
-
 when npm installing something that's project specific use the --save-dev option e.g.
 
 npm install --save-dev gulp-webserver
 
 --------------------------------------------------------------------------------
 
-
-* atscript
-
-the primitive types are: 
-    any, boolean, number, string, symbol, void
-this is taken from ~/code/es6/traceur-compiler/src/runtime/type-assertions.js
-
-Array, Map, Set
 
 
 * notes
@@ -44,6 +41,23 @@ seni-lang will have labels as well as names, every argument to a function will h
 
 labels are identified by ending in a colon.
 
+
+
+
 * development
   - project structure based on babel-library-boilerplate
     
+
+
+* <2015-03-14 Sat> evaluating square brackets
+
+  the approach of replacing square bracket forms with __GENSYM__ variables will be quite limiting. it works for forms such as (rect x: [500] ...) but gets confusing for (quote ["hello"]) since that gets rewritten as (quote __GENSYM__X__) or if a function is in square brackets: ([rect] x: 500 ...)
+
+  seni needs to change the function that's being called, that was one of the reasons for having named, default function parameters. Without being able to specify forms like:
+
+  ([rect (some-primitive-shape)] x: 500)
+  (rect [x: (some-scalar-parameter)] 500)
+  
+  seni will become a lot less expressive.
+
+  so...the genetic algorithm application has to happen before any 'compilation' phase. it needs to directly modify the AST, not just add some gensym variables. by the time we get to the compilation phase there should be no square brackets

@@ -1,20 +1,13 @@
 /*jslint maxstatements:24*/
 
 import Interpreter from '../../src/lang/Interpreter';
-import bind from '../../src/lang/bind';
 import Parser from '../../src/lang/Parser';
 import Lexer from '../../src/lang/Lexer';
 import Compiler from '../../src/lang/Compiler';
+//import Bind from '../../src/seni/Bind';
+import Genetic from '../../src/lang/Genetic';
 
 describe('eval', () => {
-
-  function evalForm(env, form) {
-    let ts = Lexer.tokenise(form).tokens;
-    let ast = Parser.parse(ts).nodes;
-    let compiled = Compiler.compile(ast);
-    // returns an array of [newEnv, res]
-    return Interpreter.evaluate(env, compiled[0]);
-  }
 
   var e;
   var key;
@@ -22,11 +15,18 @@ describe('eval', () => {
   let epsilon = 0.01;
 
   beforeEach(() => {
-    e = bind(Immutable.Map(), [Interpreter.specialForms,
-                               Interpreter.classicFunctions]);
+    e = Interpreter.getBasicEnv();
     key = 'foo';
     val = 5;
     e = e.set(key, val);
+  });
+
+  it('should evaluate a bracketed form', () => {
+    let res = evalBracketedForm(e, '(* 2 [4])');
+    expect(res[1]).to.be.closeTo(8, epsilon);
+
+    //res = evalBracketedForm(e, '(quote ["shabba"])');
+    //expect(res[1]).to.be.equal('shabba');
   });
 
   it('should evaluate simple nodes', () => {
@@ -274,5 +274,33 @@ describe('eval', () => {
     [newEnv, res] = evalForm(newEnv, '(let ((x 2) (y 4)) (loop (a to: 5 step: x) (+ y y) (set! bar (+ bar a))))');
     expect(newEnv.get('bar')).to.equal(6);
 
-  });*/
+   });*/
+
+    function evalBracketedForm(env, form) {
+    const ts = Lexer.tokenise(form).tokens;
+    const ast = Parser.parse(ts).nodes;
+    const compiled = Compiler.compile(ast);
+
+    // setup a 'compile-time' env for evaluating the ASTs in every gene
+    //let bracketEnv = Bind.addBracketBindings(Interpreter.getBasicEnv());
+    // would then bind a seed value to the bracketEnv here
+    // can then pass bracketEnv when calling createPhenotypeFromGenes
+
+
+    const pheno = Genetic.createPhenotypeFromInitialValues(compiled.genes);
+    env = Genetic.bindPhenotypeToEnv(pheno, env);
+
+    // returns [newEnv, res]
+    return Interpreter.evaluate(env, compiled.forms[0]);
+  }
+
+  function evalForm(env, form) {
+    let ts = Lexer.tokenise(form).tokens;
+    let ast = Parser.parse(ts).nodes;
+    let compiled = Compiler.compile(ast);
+
+    // returns [newEnv, res]
+    return Interpreter.evaluate(env, compiled.forms[0]);
+  }
+
 });

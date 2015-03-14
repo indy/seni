@@ -2,12 +2,10 @@ import Interpreter from './Interpreter';
 import Parser from './Parser';
 import Lexer from './Lexer';
 import Compiler from './Compiler';
-import bind from './bind';
 
 let Runtime = {
   createEnv: function() {
-    return bind(Immutable.Map(), [Interpreter.specialForms,
-                                  Interpreter.classicFunctions]);
+    return Interpreter.getBasicEnv();
   },
 
   evalForm: function(env, form) {
@@ -27,12 +25,12 @@ let Runtime = {
     let compiled = Compiler.compile(ast);
 
     // add all of the define expressions to the env
-    let [_env, _res] = compiled.
+    let [_env, _res] = compiled.forms.
           filter(Interpreter.isDefineExpression).
           reduce(([e, r], b) => Interpreter.evaluate(e, b), [env, false]);
 
     // now evaluate all of the non-define expressions
-    return compiled.
+    return compiled.forms.
       filter((s) => !Interpreter.isDefineExpression(s)).
       reduce(([e, r], b) => Interpreter.evaluate(e, b), [_env, _res]);
   }

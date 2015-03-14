@@ -5,6 +5,7 @@
 /*jslint latedef:false, maxparams:6*/
 
 import Util from '../seni/Util';
+import PublicBinding from './PublicBinding';
 
 const TRUE_STRING = '#t';
 const FALSE_STRING = '#f';
@@ -63,12 +64,12 @@ function funApplication(env, listExpr) {
 
 function isSpecialForm(listExpr) {
   const node = listExpr[0];
-  return _specialForms[node] !== undefined;
+  return specialForms[node] !== undefined;
 }
 
 function isClassicFunction(listExpr) {
   const node = listExpr[0];
-  return _classicFunctions[node] !== undefined;
+  return classicFunctions[node] !== undefined;
 }
 
 function addBindings(env, exprs) {
@@ -138,15 +139,37 @@ function defineFunction(env, defaultArgForms, body) {
   };
 }
 
-var _specialForms = {
+var specialForms = {
 
   // (if something truthy falsey) || (if something truthy)
   'if': (env, [_, cond, t, f]) =>
     _evaluate(env, _evaluate(env, cond)[1] === TRUE_STRING ? t : f),
 
   // (quote (age 99))
-  'quote': (env, [_, form]) =>
-    [env, form],
+  /*
+   todo: the compiler will hack in a quote around strings, this
+   needs to take that into account. e.g. given (quote "hi"), the ast
+   built by the compiler will be: ['quote' ['quote' 'hi']] rather than
+   the expected ['quote' 'hi']. So this is a hack to check inside the
+   form, if it's another list beginning with quote, just return that.
+
+   the proper solution is not to pass in a simplified AST and to retain
+   the nodeType information so that the interpreter can differentiate
+   between names and strings, this would mean that the compiler
+   wouldn't have to wrap strings in quotes and the code for evaling
+   quote becomes 'quote': (env, [_, form]) =>[env, form]
+
+   the cost of this is a more complicated AST, but it seems like a
+   price worth paying
+   */
+  'quote': (env, [_, form]) => {
+    if(form.constructor === Array) {
+      if(form[0] === 'quote') {
+        return [env, form[1]];
+      }
+    }
+    return [env, form];
+  },
 
   'define': (env, [_, nameForm, ...valueForms]) => {
     if(isDefiningFunction(nameForm)) {
@@ -259,7 +282,7 @@ function loopingFn(env, expr, varName, params) {
 // 4 3 7 4) rather than (+ 4 3 7 4)
 
 
-var _classicFunctions = {
+var classicFunctions = {
   '+': (args) =>
     args.reduce((a, b) => a + b, 0),
 
@@ -311,14 +334,17 @@ var _classicFunctions = {
   }
 };
 
+let basicEnv = [specialForms,
+                classicFunctions].reduce((a, b) => a.merge(b), Immutable.Map());
 
 var Interpreter = {
   evaluate: function(env, expr) {
     return _evaluate(env, expr);
   },
-  isDefineExpression: isDefineExpression,
-  specialForms: _specialForms,
-  classicFunctions: _classicFunctions
+  getBasicEnv: function() {
+    return basicEnv;
+  },
+  isDefineExpression: isDefineExpression
 };
 
 export default Interpreter;

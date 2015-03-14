@@ -4,6 +4,7 @@ import MathUtil from './MathUtil';
 import ColourBindings from './ColourBindings';
 import Perlin from './Perlin';
 import Core from './Core';
+import Bracket from './BracketBindings';
 
 function bindCore(env) {
   let core = [Core.takeBinding];
@@ -73,6 +74,12 @@ function bindPerlin(env) {
   return pln.reduce((a, b) => a.set(b.name, b.create(b)), env);
 }
 
+function bindBracket(env) {
+  let br = [Bracket.identity];
+
+  return br.reduce((a, b) => a.set(b.name, b.create(b)), env);
+}
+
 
 var Bind = {
   addBindings: function(env, renderer) {
@@ -85,6 +92,10 @@ var Bind = {
     env = bindPerlin(env);
 
     return env;
+  },
+
+  addBracketBindings: function(env) {
+    return bindBracket(env);
   }
 };
 

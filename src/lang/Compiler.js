@@ -6,11 +6,34 @@ import NodeType from './NodeType';
 //
 /*jslint latedef:false, bitwise:true*/
 
-
-function _compile(node) {
+function _compile(node, genes) {
   if(node.type === NodeType.LIST) {
-    return _compileList(node);
-  } else if(node.type === NodeType.STRING) {
+    return _compileList(node, genes);
+  }
+
+  if(node.alterable === true) {
+    // expect a form in the parameterAST
+    let ast;
+    if(node.parameterAST.length) {
+      // todo: currently assuming that there's only one form
+      // inside square brackets, will probably have to
+      // change this assumption in the future
+      ast = _compile(node.parameterAST[0]);
+    } else {
+      // this is to allow code like (+ 2 [2])
+      // which should behave as if there were no square brackets
+      // todo: implement identity in this context
+      ast = ['identity', {value: node.value}];
+    }
+
+    let gene = {initialValue: node.value,
+                ast: ast,
+                gensym: '__GENSYM__' + genes.length + '__'};
+    genes.push(gene);  // mutate the genes
+    return gene.gensym;
+  }
+
+  if(node.type === NodeType.STRING) {
     // without this the following forms will compile to the same thing:
     //     (foo 'hello')
     //     (foo hello)
@@ -18,20 +41,20 @@ function _compile(node) {
     // we need to wrap the string form in a quote to prevent the interpreter
     // from trying to lookup the contents of the string
     return ['quote', node.value];
-  } else {
-    return node.value;
   }
+
+  return node.value;
 }
 
-function _compileList(node) {
+function _compileList(node, genes) {
   const children = node.children;
 
   if(usingNamedParameters(children)) {
-    return compileFormUsingNamedParameters(children);
+    return compileFormUsingNamedParameters(children, genes);
   } else if(allNamedParameters(children)) {
-    return compileAllNamedParameters(children);
+    return compileAllNamedParameters(children, genes);
   } else {
-    return children.map((child) => _compile(child));
+    return children.map((child) => _compile(child, genes));
   }
 }
 
@@ -51,7 +74,7 @@ function allNamedParameters(children) {
   return false;
 }
 
-function compileFormUsingNamedParameters(children) {
+function compileFormUsingNamedParameters(children, genes) {
   // this is a form that has the pattern (foo arg1: 3 arg2: 5)
   // combine the labels + arguments into an object
 
@@ -65,14 +88,15 @@ function compileFormUsingNamedParameters(children) {
     if(label.type !== NodeType.LABEL) {
       console.log('error: expecting a label, actual: ' + label.value);
     }
-    let arg = _compile(children[i+1]);
+    let arg = _compile(children[i+1], genes);
     args[label.value] = arg;
   }
 
-  return [_compile(children[0]), args];
+  return [_compile(children[0], genes), args];
 }
 
-function compileAllNamedParameters(children) {
+// todo: is this ever used anymore?
+function compileAllNamedParameters(children, genes) {
   // can assume this is of the form (arg1: 3 arg2: 5)
   // combine the labels + arguments into an object
 
@@ -86,7 +110,7 @@ function compileAllNamedParameters(children) {
     if(label.type !== NodeType.LABEL) {
       console.log('error: expecting a label, actual: ' + label.value);
     }
-    let arg = _compile(children[i+1]);
+    let arg = _compile(children[i+1], genes);
     args[label.value] = arg;
   }
 
@@ -95,7 +119,13 @@ function compileAllNamedParameters(children) {
 
 var Compiler = {
   compile: function(ast) {
-    return ast.map((node) => _compile(node));
+
+    // genes will be mutated
+    let genes = [];
+    let forms = ast.map((node) => _compile(node, genes));
+
+    return {forms: forms,
+            genes: genes};
   }
 };
 

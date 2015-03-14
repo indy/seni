@@ -48,7 +48,7 @@ function consumeItem(tokens, alterable) {
   } else if(tokenType === TokenType.BRACKET_START) {
     return consumeBracketForm(tokens);
   } else if(tokenType === TokenType.BRACKET_END) {
-    return {node: null};
+    return {error: 'mismatched closing square brackets'};
   } else if(tokenType === TokenType.COMMENT) {
     return {node: null};
   }
@@ -56,7 +56,6 @@ function consumeItem(tokens, alterable) {
   // e.g. TokenType.UNKNOWN
   return {error: 'unknown token type'};
 }
-
 
 
 function consumeBracketForm(tokens) {
@@ -77,8 +76,16 @@ function consumeBracketForm(tokens) {
     return {error: 'non-mutable node within square brackets'};
   }
 
-  let parameterBox = true, parameter = true;
-  while(parameter !== null) {
+  let token, parameterBox, parameter;
+  while(true) {
+    token = tokens[0];
+    if(token === undefined) {
+      return {error: 'unexpected end of list'};
+    }
+    if(token.type === TokenType.BRACKET_END) {
+      tokens.shift();
+      return {node: node};
+    }
 
     parameterBox = consumeItem(tokens, false);
     if(parameterBox.error) {
@@ -89,10 +96,7 @@ function consumeBracketForm(tokens) {
       node.addParameterNode(parameter);
     }
   }
-
-  return {node: node};
 }
-
 
 function consumeQuotedForm(tokens) {
   // '(2 3 4) -> (quote (2 3 4))
@@ -109,9 +113,7 @@ function consumeQuotedForm(tokens) {
   return {node: node};
 }
 
-function consumeList(tokens, alterable) {
-  let al = alterable;           // prevent jshint from complaining
-  al = !al;
+function consumeList(tokens) {
   let node = new Node(NodeType.LIST);
 
   while(true) {
@@ -133,7 +135,6 @@ function consumeList(tokens, alterable) {
     if(n) {
       node.addChild(n);
     }
-
   }
 }
 
