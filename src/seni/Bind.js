@@ -74,10 +74,11 @@ function bindPerlin(env) {
   return pln.reduce((a, b) => a.set(b.name, b.create(b)), env);
 }
 
-function bindBracket(env) {
-  let br = [Bracket.identity];
+function bindBracket(env, rng) {
+  let br = [Bracket.identity,
+            Bracket.inRange];
 
-  return br.reduce((a, b) => a.set(b.name, b.create(b)), env);
+  return br.reduce((a, b) => a.set(b.name, b.create(b, rng)), env);
 }
 
 
@@ -94,8 +95,15 @@ var Bind = {
     return env;
   },
 
-  addBracketBindings: function(env) {
-    return bindBracket(env);
+  addBracketBindings: function(env, rng) {
+
+    env = bindCore(env);
+    env = bindMath(env);
+    env = bindColour(env);
+    env = bindPerlin(env);
+    env = bindBracket(env, rng);
+
+    return env;
   }
 };
 

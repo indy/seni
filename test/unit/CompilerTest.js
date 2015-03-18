@@ -11,53 +11,6 @@ describe('compiler', () => {
     return Compiler.compile(ast);
   }
 
-  it('should create gensyms for bracket forms', () => {
-    let res = simpleCompile('(+ 3 [4 (inRange min: 0 max: 8)])');
-    expect(res.genes.length).to.equal(1);
-
-    let gene = res.genes[0];
-    expect(gene.initialValue).to.equal(4);
-    expect(gene.ast).to.deep.equal(['inRange', {min: 0, max: 8}]);
-    expect(gene.gensym).to.equal('__GENSYM__0__');
-  });
-
-
-  it('should create identity parameters ast for empty bracket forms', () => {
-    let res = simpleCompile('(+ 4 [9])');
-    expect(res.genes.length).to.equal(1);
-
-    let gene = res.genes[0];
-    expect(gene.initialValue).to.equal(9);
-    expect(gene.ast).to.deep.equal(['identity', {value: 9}]);
-    expect(gene.gensym).to.equal('__GENSYM__0__');
-  });
-
-  it('should create multiple gensyms for multiple bracket forms', () => {
-    let res = simpleCompile(`(/ [5 (oddNumber min: 1 max: 9)]
-                              [4 (inRange min: 0 max: 8)])`);
-    expect(res.genes.length).to.equal(2);
-
-    let gene = res.genes[0];
-    expect(gene.ast).to.deep.equal(['oddNumber', {min: 1, max: 9}]);
-    expect(gene.gensym).to.equal('__GENSYM__0__');
-
-    gene = res.genes[1];
-    expect(gene.initialValue).to.equal(4);
-    expect(gene.ast).to.deep.equal(['inRange', {min: 0, max: 8}]);
-    expect(gene.gensym).to.equal('__GENSYM__1__');
-  });
-
-  it('should increment gensyms across multiple forms', () => {
-    let res = simpleCompile('(/ 1 [2]) (+ [3] [4])');
-    expect(res.genes.length).to.equal(3);
-
-    expect(res.genes[0].gensym).to.equal('__GENSYM__0__');
-    expect(res.genes[1].gensym).to.equal('__GENSYM__1__');
-    expect(res.genes[2].gensym).to.equal('__GENSYM__2__');
-  });
-
-
-
   it('should test required functions', () => {
 
     expect(simpleCompile('4').forms[0]).
@@ -98,5 +51,8 @@ describe('compiler', () => {
   it('should compile function define statements', () => {
     expect(simpleCompile('(define (add x: 0 y: 0))').forms[0]).
       to.deep.equal(['define', ['add', {x:0, y: 0}]]);
+
+    expect(simpleCompile('(define (add x: (+ 1 1) y: 0))').forms[0]).
+      to.deep.equal(['define', ['add', {x: ['+', 1, 1], y: 0}]]);
   });
 });

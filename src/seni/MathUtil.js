@@ -165,7 +165,12 @@ var MathUtil = {
     let yd = ya - yb;
     return Math.sqrt((xd * xd) + (yd * yd));
   },
-*/
+ */
+
+  interpolate: function(a, b, t) {
+    return (a * (1 - t)) + (b * t);
+  },
+
   normalize: function(x, y) {
     let len = Math.sqrt((x * x) + (y * y));
     return [(x / len), (y / len)];
@@ -179,4 +184,3 @@ var MathUtil = {
 };
 
 export default MathUtil;
-

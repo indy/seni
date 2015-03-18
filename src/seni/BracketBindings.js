@@ -1,4 +1,5 @@
 import PublicBinding from '../lang/PublicBinding';
+import MathUtil from './MathUtil';
 
 var BracketBindings = {
   identity: new PublicBinding(
@@ -10,6 +11,20 @@ var BracketBindings = {
       return (params) => {
         let {value} = self.mergeWithDefaults(params);
         return value;
+      };
+    }
+  ),
+
+  inRange: new PublicBinding(
+    'inRange',
+    `returns an integer in the range min..max-1
+    arguments: min max`,
+    {min: 0, max: 100},
+    (self, rng) => {
+      // rng is a SeedRandom returning values in the range 0..1
+      return (params) => {
+        let {min, max} = self.mergeWithDefaults(params);
+        return Number.parseInt(MathUtil.interpolate(min, max, rng()));
       };
     }
   )

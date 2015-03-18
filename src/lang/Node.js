@@ -7,7 +7,6 @@ class Node {
 
     // node mutate specific
     this.parameterAST = [];
-    this.genSym = '';
   }
 
   addChild(child) {

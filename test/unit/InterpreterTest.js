@@ -4,8 +4,6 @@ import Interpreter from '../../src/lang/Interpreter';
 import Parser from '../../src/lang/Parser';
 import Lexer from '../../src/lang/Lexer';
 import Compiler from '../../src/lang/Compiler';
-//import Bind from '../../src/seni/Bind';
-import Genetic from '../../src/lang/Genetic';
 
 describe('eval', () => {
 
@@ -280,15 +278,6 @@ describe('eval', () => {
     const ts = Lexer.tokenise(form).tokens;
     const ast = Parser.parse(ts).nodes;
     const compiled = Compiler.compile(ast);
-
-    // setup a 'compile-time' env for evaluating the ASTs in every gene
-    //let bracketEnv = Bind.addBracketBindings(Interpreter.getBasicEnv());
-    // would then bind a seed value to the bracketEnv here
-    // can then pass bracketEnv when calling createPhenotypeFromGenes
-
-
-    const pheno = Genetic.createPhenotypeFromInitialValues(compiled.genes);
-    env = Genetic.bindPhenotypeToEnv(pheno, env);
 
     // returns [newEnv, res]
     return Interpreter.evaluate(env, compiled.forms[0]);
