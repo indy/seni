@@ -76,7 +76,8 @@ function bindPerlin(env) {
 
 function bindBracket(env, rng) {
   let br = [Bracket.identity,
-            Bracket.inRange];
+            Bracket.inRange,
+            Bracket.testPlus];
 
   return br.reduce((a, b) => a.set(b.name, b.create(b, rng)), env);
 }

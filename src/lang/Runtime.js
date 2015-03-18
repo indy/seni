@@ -2,6 +2,7 @@ import Interpreter from './Interpreter';
 import Parser from './Parser';
 import Lexer from './Lexer';
 import Compiler from './Compiler';
+import Genetic from './Genetic';
 
 let Runtime = {
   createEnv: function() {
@@ -22,7 +23,12 @@ let Runtime = {
     }
 
     let ast = astBox.nodes;
-    let compiled = Compiler.compile(ast);
+
+    const traits = Genetic.buildTraits(ast);
+    const genotype = Genetic.createGenotypeFromInitialValues(traits);
+    let compiled = Compiler.compile(ast, genotype);
+
+    console.log(compiled);
 
     // add all of the define expressions to the env
     let [_env, _res] = compiled.forms.

@@ -13,6 +13,7 @@ function buildTraitFromNode(node, genes) {
     // expect a form in the parameterAST
     let ast;
     if(node.parameterAST.length) {
+      // assuming that there aren't any nested square brackets
       ast = Compiler.compile(node.parameterAST);
     } else {
       // this is to allow code like (+ 2 [2])

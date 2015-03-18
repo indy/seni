@@ -6,9 +6,15 @@ import NodeType from './NodeType';
 //
 /*jslint latedef:false, bitwise:true*/
 
-function _compile(node) {
+function compile(node, genotype) {
+
+  if(node.alterable) {
+    // todo: assert that there's another genotype value available
+    return [genotype.first().get('value'), genotype.shift()];
+  }
+
   if(node.type === NodeType.LIST) {
-    return _compileList(node);
+    return compileList(node, genotype);
   }
 
   if(node.type === NodeType.STRING) {
@@ -18,22 +24,55 @@ function _compile(node) {
     //
     // we need to wrap the string form in a quote to prevent the interpreter
     // from trying to lookup the contents of the string
-    return ['quote', node.value];
+    return [['quote', node.value], genotype];
   }
 
-  return node.value;
+  return [node.value, genotype];
 }
 
-function _compileList(node) {
+function compileNodes(nodes, genotype) {
+
+  let n, res = nodes.map((node) => {
+    [n, genotype] = compile(node, genotype);
+    return n;
+  });
+
+  return [res, genotype];
+}
+
+function compileList(node, genotype) {
   const children = node.children;
 
   if(usingNamedParameters(children)) {
-    return compileFormUsingNamedParameters(children);
-  } else if(allNamedParameters(children)) {
-    return compileAllNamedParameters(children);
+    return compileFormUsingNamedParameters(children, genotype);
   } else {
-    return children.map((child) => _compile(child));
+    return compileNodes(children, genotype);
   }
+}
+
+function compileFormUsingNamedParameters(children, genotype) {
+  // this is a form that has the pattern (foo arg1: 3 arg2: 5)
+  // combine the labels + arguments into an object
+
+  if(!(children.length & 1)) {
+    console.log('error: odd number of nodes expected: function name + pairs of label,arg');
+  }
+
+  let args = {};
+
+  for(let i=1; i < children.length; i+=2) {
+    const label = children[i];
+    if(label.type !== NodeType.LABEL) {
+      console.log('error: expecting a label, actual: ' + label.value);
+    }
+    let [arg, g] = compile(children[i+1], genotype);
+    args[label.value] = arg;
+    genotype = g;
+  }
+
+  let [n, g] = compile(children[0], genotype);
+
+  return [[n, args], g];
 }
 
 function usingNamedParameters(children) {
@@ -44,68 +83,12 @@ function usingNamedParameters(children) {
   return false;
 }
 
-function allNamedParameters(children) {
-  // a basic test, but if it passes this it should be all <label,value> pairs
-  if(children.length > 0) {
-    return children[0].type === NodeType.LABEL;
-  }
-  return false;
-}
-
-function compileFormUsingNamedParameters(children) {
-  // this is a form that has the pattern (foo arg1: 3 arg2: 5)
-  // combine the labels + arguments into an object
-
-  if(!(children.length & 1)) {
-    console.log('error: odd number of nodes expected: function name + pairs of label,arg');
-  }
-
-  let args = {};
-  for(let i=1; i < children.length; i+=2) {
-    const label = children[i];
-    if(label.type !== NodeType.LABEL) {
-      console.log('error: expecting a label, actual: ' + label.value);
-    }
-    let arg = _compile(children[i+1]);
-    args[label.value] = arg;
-  }
-
-  return [_compile(children[0]), args];
-}
-
-// todo: is this ever used anymore?
-function compileAllNamedParameters(children) {
-  // can assume this is of the form (arg1: 3 arg2: 5)
-  // combine the labels + arguments into an object
-
-  if(children.length & 1) {
-    console.log('error: even number of nodes expected: pairs of label,arg');
-  }
-
-  let args = {};
-  for(let i=0; i < children.length; i+=2) {
-    const label = children[i];
-    if(label.type !== NodeType.LABEL) {
-      console.log('error: expecting a label, actual: ' + label.value);
-    }
-    let arg = _compile(children[i+1]);
-    args[label.value] = arg;
-  }
-
-  return args;
-}
-
 var Compiler = {
-  compile: function(ast) {
-    let forms = ast.map((node) => _compile(node));
 
-    return {
-      forms: forms
-    };
-  },
+  compile: function(ast, genotype) {
 
-  compileWithDefaults: function(ast) {
-    let forms = ast.map((node) => _compile(node));
+    let [forms, _] = compileNodes(ast, genotype);
+    _ = _;
 
     return {
       forms: forms

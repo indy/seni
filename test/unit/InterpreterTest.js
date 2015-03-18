@@ -4,6 +4,7 @@ import Interpreter from '../../src/lang/Interpreter';
 import Parser from '../../src/lang/Parser';
 import Lexer from '../../src/lang/Lexer';
 import Compiler from '../../src/lang/Compiler';
+import Genetic from '../../src/lang/Genetic';
 
 describe('eval', () => {
 
@@ -20,10 +21,10 @@ describe('eval', () => {
   });
 
   it('should evaluate a bracketed form', () => {
-    let res = evalBracketedForm(e, '(* 2 [4])');
+    let res = evalForm(e, '(* 2 [4])');
     expect(res[1]).to.be.closeTo(8, epsilon);
 
-    //res = evalBracketedForm(e, '(quote ["shabba"])');
+    //res = evalForm(e, '(quote ["shabba"])');
     //expect(res[1]).to.be.equal('shabba');
   });
 
@@ -148,17 +149,6 @@ describe('eval', () => {
     expect(newEnv.get('monkey')).to.equal(42);
   });
 
-  it('should test define for a function', () => {
-    let [newEnv, res] = evalForm(e, '(define addup (fn (x: 2) (+ x x)))');
-    expect(newEnv.has('addup')).to.be.true;
-
-    [newEnv, res] = evalForm(newEnv, '(addup x: 5)');
-    expect(res).to.equal(10);
-
-    [newEnv, res] = evalForm(newEnv, '(addup)');
-    expect(res).to.equal(4);
-  });
-
   it('should test define for a function2', () => {
     let [newEnv, res] = evalForm(e, '(define (addup x: 2) (+ x x))');
     expect(newEnv.has('addup')).to.be.true;
@@ -170,19 +160,19 @@ describe('eval', () => {
     expect(res).to.equal(4);
   });
 
-    /*
-  it('should test set!', () => {
-    expect(e.has('foo')).to.be.true;
-    expect(e.get('foo')).to.equal(5);
+  /*
+   it('should test set!', () => {
+   expect(e.has('foo')).to.be.true;
+   expect(e.get('foo')).to.equal(5);
 
-    let newEnv = evalForm(e, '(set! foo 42)')[0];
+   let newEnv = evalForm(e, '(set! foo 42)')[0];
 
-    expect(newEnv.has('foo')).to.be.true;
-    expect(newEnv.get('foo')).to.equal(42);
+   expect(newEnv.has('foo')).to.be.true;
+   expect(newEnv.get('foo')).to.equal(42);
 
-    // todo: test that the e env still has foo bound to 5
-  });
-*/
+   // todo: test that the e env still has foo bound to 5
+   });
+   */
   it('should test begin', () => {
     expect(e.has('foo')).to.be.true;
     expect(e.get('foo')).to.equal(5);
@@ -215,81 +205,45 @@ describe('eval', () => {
     expect(r[1]).to.equal(12);
   });
 
-  it('should test fn', () => {
-    // (fn (x y z) (+ x y z))
-    let [newEnv, res] = evalForm(e, '((fn (x: 0 y: 0) (+ x y)) x: 2 y: 3)');
-    expect(res).to.equal(5);
-
-    [newEnv, res] = evalForm(e, '((fn (x: 0 y: 0) (+ x y)) x: (+ 3 2) y: 3)');
-    expect(res).to.equal(8);
-
-    // body can contain multiple forms
-    [newEnv, res] = evalForm(e, '((fn (x: 0 y: 0) (+ 1 1) (+ x y)) x: (+ 3 2) y: 3)');
-    expect(res).to.equal(8);
-
-    [newEnv, res] = evalForm(e, '((fn (x: 0 y: 0) (+ x y)) y: 3)');
-    expect(res).to.equal(3);
-
-    [newEnv, res] = evalForm(e, '((fn (x: 0 y: 0) (+ x y foo)) x: 2 y: 3)');
-    expect(res).to.equal(10);
-
-    [newEnv, res] = evalForm(e, '((fn (x: 3 y: 4) (+ x y)))');
-    expect(res).to.equal(7);
-
-    // the default values may need to be eval'd
-    [newEnv, res] = evalForm(e, '((fn (x: 3 y: (+ 2 2)) (+ x y)))');
-    expect(res).to.equal(7);
-
-    [newEnv, res] = evalForm(e, '((fn () 3))');
-    expect(res).to.equal(3);
-  });
   /*
-  it('should test loop', () => {
-    e.add('bar', 0);
-    let [newEnv, res] = evalForm(e, '(loop (a from: 0 to: 4 step: 1) (set! bar (+ bar a)))');
-    expect(newEnv.get('bar')).to.equal(6);
+   it('should test loop', () => {
+   e.add('bar', 0);
+   let [newEnv, res] = evalForm(e, '(loop (a from: 0 to: 4 step: 1) (set! bar (+ bar a)))');
+   expect(newEnv.get('bar')).to.equal(6);
 
-    // ''until' for <= loop ('to' for < loop)
-    newEnv.add('bar', 0);
-    [newEnv, res] = evalForm(newEnv, '(loop (a from: 0 until: 4 step: 1) (set! bar (+ bar a)))');
-    expect(newEnv.get('bar')).to.equal(10);
+   // ''until' for <= loop ('to' for < loop)
+   newEnv.add('bar', 0);
+   [newEnv, res] = evalForm(newEnv, '(loop (a from: 0 until: 4 step: 1) (set! bar (+ bar a)))');
+   expect(newEnv.get('bar')).to.equal(10);
 
-    newEnv.add('bar', 0);
-    [newEnv, res] = evalForm(newEnv, '(loop (a to: 5) (set! bar (+ bar a)))');
-    expect(newEnv.get('bar')).to.equal(10);
+   newEnv.add('bar', 0);
+   [newEnv, res] = evalForm(newEnv, '(loop (a to: 5) (set! bar (+ bar a)))');
+   expect(newEnv.get('bar')).to.equal(10);
 
-    newEnv.add('bar', 0);
-    [newEnv, res] = evalForm(newEnv, '(loop (a to: 5 step: 2) (set! bar (+ bar a)))');
-    expect(newEnv.get('bar')).to.equal(6);
+   newEnv.add('bar', 0);
+   [newEnv, res] = evalForm(newEnv, '(loop (a to: 5 step: 2) (set! bar (+ bar a)))');
+   expect(newEnv.get('bar')).to.equal(6);
 
-    // loop should eval it's arguments
-    newEnv.add('bar', 0);
-    [newEnv, res] = evalForm(newEnv, '(let ((x 2)) (loop (a to: 5 step: x) (set! bar (+ bar a))))');
-    expect(newEnv.get('bar')).to.equal(6);
+   // loop should eval it's arguments
+   newEnv.add('bar', 0);
+   [newEnv, res] = evalForm(newEnv, '(let ((x 2)) (loop (a to: 5 step: x) (set! bar (+ bar a))))');
+   expect(newEnv.get('bar')).to.equal(6);
 
-    // loop's body should be treated as though it is wrapped in a 'begin'
-    newEnv.add('bar', 0);
-    [newEnv, res] = evalForm(newEnv, '(let ((x 2) (y 4)) (loop (a to: 5 step: x) (+ y y) (set! bar (+ bar a))))');
-    expect(newEnv.get('bar')).to.equal(6);
+   // loop's body should be treated as though it is wrapped in a 'begin'
+   newEnv.add('bar', 0);
+   [newEnv, res] = evalForm(newEnv, '(let ((x 2) (y 4)) (loop (a to: 5 step: x) (+ y y) (set! bar (+ bar a))))');
+   expect(newEnv.get('bar')).to.equal(6);
 
    });*/
 
-    function evalBracketedForm(env, form) {
+  function evalForm(env, form) {
     const ts = Lexer.tokenise(form).tokens;
     const ast = Parser.parse(ts).nodes;
-    const compiled = Compiler.compile(ast);
+    const traits = Genetic.buildTraits(ast);
+    const genotype = Genetic.createGenotypeFromInitialValues(traits);
+    const compiled = Compiler.compile(ast, genotype);
 
     // returns [newEnv, res]
     return Interpreter.evaluate(env, compiled.forms[0]);
   }
-
-  function evalForm(env, form) {
-    let ts = Lexer.tokenise(form).tokens;
-    let ast = Parser.parse(ts).nodes;
-    let compiled = Compiler.compile(ast);
-
-    // returns [newEnv, res]
-    return Interpreter.evaluate(env, compiled.forms[0]);
-  }
-
 });

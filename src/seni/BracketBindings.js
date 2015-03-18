@@ -27,6 +27,19 @@ var BracketBindings = {
         return Number.parseInt(MathUtil.interpolate(min, max, rng()));
       };
     }
+  ),
+
+  testPlus: new PublicBinding(
+    'testPlus',
+    `[FOR TESTING ONLY] returns + character
+    arguments: -`,
+    {},
+    () => {
+      // rng is a SeedRandom returning values in the range 0..1
+      return () => {
+        return '+';
+      };
+    }
   )
 };
 
