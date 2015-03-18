@@ -9,6 +9,13 @@ function renderScript(renderer, form) {
   renderer.preDrawScene();
   Runtime.evalForm(env, form);
   renderer.postDrawScene();
+
+  var imgData = renderer.getImageData();
+
+  var image = document.getElementById('shabba');
+  image.src = imgData;
+
+  console.debug(imgData);
 }
 
 function initialCode() {
@@ -51,10 +58,6 @@ const SeniWebApplication = {
     let renderer = new Renderer('render-canvas');
     setupUI(renderer);
     renderScript(renderer, initialCode());
-
-    let r = 'hello';
-    console.log(r);
-    return r;
   }
 };
 

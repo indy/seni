@@ -28,7 +28,10 @@ function initGLState(gl) {
 
 class Renderer {
   constructor(canvasElement) {
-    this.glContainer = new GLContainer(canvasElement);
+
+    this.glDomElement = document.getElementById(canvasElement);
+
+    this.glContainer = new GLContainer(this.glDomElement);
     this.matrixStack = new MatrixStack();
     this.buffer = new Buffer(this.glContainer, this.matrixStack);
 
@@ -41,6 +44,10 @@ class Renderer {
 
     //    this.matrixStack.translate(-40, -50);
     //    this.matrixStack.rotate(0.2);
+  }
+
+  getImageData() {
+    return this.glDomElement.toDataURL();
   }
 
   getMatrixStack() {

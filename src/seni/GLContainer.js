@@ -1,7 +1,7 @@
 
 function initGL(canvas) {
   try {
-    var gl = canvas.getContext('experimental-webgl', { alpha: false });
+    var gl = canvas.getContext('experimental-webgl', { alpha: false, preserveDrawingBuffer: true });
     // commented out because of jshint
     //    if (!gl) {
     //alert('Could not initialise WebGL, sorry :-(');
@@ -88,11 +88,7 @@ function initShaders(gl) {
 }
 
 class GLContainer {
-
-  constructor(canvasId) {
-
-    var canvas = document.getElementById(canvasId);
-
+  constructor(canvas) {
     var gl = initGL(canvas);
     this.gl = gl;
     this.shaderProgram = initShaders(gl);
