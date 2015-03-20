@@ -1,9 +1,15 @@
 
-* todo [0/4]
-  1. [ ] interpreter should have a 'create Basic Environment' function
-  2. [ ] look at use of spy in boilerplate test code
-  3. [ ] MathUtil::_remapFn default args
-  4. [ ] move rng bindings out of mathutil into their own bindings file
+* plan [0/5]
+  1. [ ] webgl preview + code
+  2. [ ] genetic selections + code
+  3. [ ] genetic selections (full-screen)
+  4. [ ] single artwork (full-screen)
+  5. [ ] select scripts (file manager/gdrive integration)
+
+* todo [0/3]
+  1. [ ] look at use of spy in boilerplate test code
+  2. [ ] MathUtil::_remapFn default args
+  3. [ ] move rng bindings out of mathutil into their own bindings file
 
 
 should the GA code be applied after parsing but before compiling?

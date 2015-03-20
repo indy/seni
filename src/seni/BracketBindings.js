@@ -29,6 +29,20 @@ var BracketBindings = {
     }
   ),
 
+  scalar: new PublicBinding(
+    'scalar',
+    `returns a number in the range 0..1
+    arguments: -`,
+    {},
+    (self, rng) => {
+      self = self;
+      // rng is a SeedRandom returning values in the range 0..1
+      return () => {
+        return rng();
+      };
+    }
+  ),
+
   testPlus: new PublicBinding(
     'testPlus',
     `[FOR TESTING ONLY] returns + character

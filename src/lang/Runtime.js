@@ -2,14 +2,13 @@ import Interpreter from './Interpreter';
 import Parser from './Parser';
 import Lexer from './Lexer';
 import Compiler from './Compiler';
-import Genetic from './Genetic';
 
 const Runtime = {
   createEnv: function() {
     return Interpreter.getBasicEnv();
   },
 
-  evalForm: function(env, form) {
+  buildAst: function(env, form) {
     const tokensBox = Lexer.tokenise(form);
     if(tokensBox.error) {
       console.log(tokensBox.error);
@@ -22,10 +21,10 @@ const Runtime = {
       return false;
     }
 
-    const ast = astBox.nodes;
+    return astBox.nodes;
+  },
 
-    const traits = Genetic.buildTraits(ast);
-    const genotype = Genetic.createGenotypeFromInitialValues(traits);
+  evalAst: function(env, ast, genotype) {
     const compiled = Compiler.compile(ast, genotype);
 
     // add all of the define expressions to the env

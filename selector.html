@@ -12,12 +12,6 @@
     <!-- Polyfill (required by Babel) -->
     <!-- <script src='node_modules/babel/browser-polyfill.js'></script> -->
 
-    <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
-    <script src="node_modules/codemirror/lib/codemirror.js"></script>
-    <script src="node_modules/codemirror/addon/edit/closebrackets.js"></script>
-    <script src="node_modules/codemirror/addon/edit/matchbrackets.js"></script>
-    <script src="node_modules/codemirror/mode/scheme/scheme.js"></script>
-    
     <script src="node_modules/immutable/dist/immutable.js"></script>
     <script src="node_modules/gl-matrix/dist/gl-matrix.js"></script>
     
@@ -27,19 +21,11 @@
   </head>
 
   <body class="flex-container-h">
-    <div class="flex-container-v">
-      <div class="flex-item-canvas">
-        <canvas id="render-canvas" width="500" height="500"></canvas>
-      </div>
-      <div class="flex-item-console">
-        <!-- <div id="eval-button">Eval</div>  -->
-      </div>
-    </div>
-    <div class="flex-item-code-editor">
-      <textarea id="codemirror-textarea"></textarea> 
-    </div>
+    <canvas class="hidden" id="render-canvas" width="500" height="500"></canvas>
 
-    <script type="text/javascript">SeniWebApplication.mainFn()</script>
+    <div id="gallery-container"></div>
+
+    <script type="text/javascript">SeniWebApplication.selectorMainFn()</script>
     <!-- 
     <script type="text/javascript">System.import('main').then(function(m) { m.main(); }, console.log.bind(console))</script>
     -->
