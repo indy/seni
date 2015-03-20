@@ -1,7 +1,10 @@
 
 function initGL(canvas) {
   try {
-    var gl = canvas.getContext('experimental-webgl', { alpha: false, preserveDrawingBuffer: true });
+    const gl = canvas.getContext('experimental-webgl', {
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
     // commented out because of jshint
     //    if (!gl) {
     //alert('Could not initialise WebGL, sorry :-(');
@@ -15,7 +18,7 @@ function initGL(canvas) {
 }
 
 function compileShader(gl, type, src) {
-  var shader = gl.createShader(type);
+  const shader = gl.createShader(type);
   gl.shaderSource(shader, src);
   gl.compileShader(shader);
 
@@ -29,9 +32,9 @@ function compileShader(gl, type, src) {
 
 function initShaders(gl) {
 
-  var shaderProgram = gl.createProgram();
+  const shaderProgram = gl.createProgram();
 
-  var fragmentSrc = `
+  const fragmentSrc = `
   precision mediump float;
   varying vec4 vColor;
 
@@ -40,7 +43,7 @@ function initShaders(gl) {
   }
   `;
 
-  var vertexSrc = `
+  const vertexSrc = `
   attribute vec3 aVertexPosition;
   attribute vec4 aVertexColor;
 
@@ -56,8 +59,8 @@ function initShaders(gl) {
   `;
 
 
-  var vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
-  var fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
+  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
+  const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
 
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
@@ -89,7 +92,7 @@ function initShaders(gl) {
 
 class GLContainer {
   constructor(canvas) {
-    var gl = initGL(canvas);
+    const gl = initGL(canvas);
     this.gl = gl;
     this.shaderProgram = initShaders(gl);
   }

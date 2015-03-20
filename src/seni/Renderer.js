@@ -63,9 +63,9 @@ class Renderer {
   }
 
   preDrawScene() {
-    var glContainer = this.glContainer;
-    var gl = glContainer.gl;
-    var shaderProgram = glContainer.shaderProgram;
+    const glContainer = this.glContainer;
+    const gl = glContainer.gl;
+    const shaderProgram = glContainer.shaderProgram;
 
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

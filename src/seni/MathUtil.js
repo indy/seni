@@ -1,9 +1,9 @@
 import PublicBinding from '../lang/PublicBinding';
 import SeedRandom from './SeedRandom';
 
-var _PI = Math.PI;
-var _twoPI = _PI * 2;
-var _PIbyTwo = _PI / 2;
+const _PI = Math.PI;
+const _twoPI = _PI * 2;
+const _PIbyTwo = _PI / 2;
 
 function mc([xa, ya], [xb, yb]) {
   let m = (ya - yb) / (xa - xb);
@@ -32,7 +32,7 @@ function mapSlowEaseInEaseOut(x) {
   return x - (Math.sin(x * _twoPI) / _twoPI);
 }
 
-var mappingLookup = new Immutable.Map({'linear': mapLinear,
+const mappingLookup = new Immutable.Map({'linear': mapLinear,
                                        'quick': mapQuickEase,
                                        'slow-in': mapSlowEaseIn,
                                        'slow-in-out': mapSlowEaseInEaseOut});
@@ -68,7 +68,7 @@ function _remapFn(params) {
 }
 
 
-var MathUtil = {
+const MathUtil = {
 
   remapFn: _remapFn,
 
@@ -144,9 +144,9 @@ var MathUtil = {
   ),
 
   stepsInclusive: function(start, end, num) {
-    var unit = (end - start) / (num - 1);
-    var res = [];
-    for(var i=0;i<num;i++) {
+    const unit = (end - start) / (num - 1);
+    let res = [];
+    for(let i=0;i<num;i++) {
       res.push(start + (i * unit));
     }
     return res;

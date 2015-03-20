@@ -8,9 +8,9 @@ import Genetic from '../../src/lang/Genetic';
 
 describe('eval', () => {
 
-  var e;
-  var key;
-  var val;
+  let e;
+  let key;
+  let val;
   let epsilon = 0.01;
 
   beforeEach(() => {

@@ -83,7 +83,7 @@ function usingNamedParameters(children) {
   return false;
 }
 
-var Compiler = {
+let Compiler = {
 
   compile: function(ast, genotype) {
 

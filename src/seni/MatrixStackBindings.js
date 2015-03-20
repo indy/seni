@@ -1,6 +1,6 @@
 import PublicBinding from '../lang/PublicBinding';
 
-var MatrixStackBindings = {
+const MatrixStackBindings = {
 
   pushMatrix: new PublicBinding(
     'pushMatrix',

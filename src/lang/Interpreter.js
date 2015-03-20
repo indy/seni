@@ -139,7 +139,7 @@ function defineFunction(env, defaultArgForms, body) {
   };
 }
 
-var specialForms = {
+let specialForms = {
 
   // (if something truthy falsey) || (if something truthy)
   'if': (env, [_, cond, t, f]) =>
@@ -256,7 +256,7 @@ function loopingFn(env, expr, varName, params) {
     return undefined;
   }
 
-  var res;
+  let res;
   if(until !== undefined) {
     for(let i=from;i<=until;i+=step) {
       env = env.set(varName, i);
@@ -282,7 +282,7 @@ function loopingFn(env, expr, varName, params) {
 // 4 3 7 4) rather than (+ 4 3 7 4)
 
 
-var classicFunctions = {
+let classicFunctions = {
   '+': (args) =>
     args.reduce((a, b) => a + b, 0),
 
@@ -337,7 +337,7 @@ var classicFunctions = {
 let basicEnv = [specialForms,
                 classicFunctions].reduce((a, b) => a.merge(b), Immutable.Map());
 
-var Interpreter = {
+let Interpreter = {
   evaluate: function(env, expr) {
     return _evaluate(env, expr);
   },

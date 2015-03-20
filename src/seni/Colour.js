@@ -418,7 +418,7 @@ function triad(c) {
   };
 */
 
-var Colour = {
+const Colour = {
   Format: Format,
   RED: RED,
   GREEN: GREEN,

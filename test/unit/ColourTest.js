@@ -47,7 +47,7 @@ describe('Colour', () => {
     expect(a.format).to.equal(b.format);
     let epsilon = 0.01;
 
-    for(var i=0;i<4;i++) {
+    for(let i=0;i<4;i++) {
       let aElement = Colour.element(a, i);
       let bElement = Colour.element(b, i);
 

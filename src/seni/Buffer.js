@@ -12,7 +12,7 @@ class Buffer {
     // by the relevant itemSize of the buffer
     this.bufferLevel = 0;
 
-    let gl = glContainer.gl;
+    const gl = glContainer.gl;
     this.glVertexBuffer = gl.createBuffer();
     this.glColourBuffer = gl.createBuffer();
 
@@ -33,7 +33,7 @@ class Buffer {
 
     if(this.bufferLevel !== 0) {
       // add two vertex entries which will form degenerate triangles
-      var lastVertexIndex = (this.bufferLevel - 1) * this.vertexItemSize;
+      const lastVertexIndex = (this.bufferLevel - 1) * this.vertexItemSize;
       // just copy the previous entries
       // note: colour doesn't matter since these triangles won't be rendered
       this.addVertexWithoutMatrixMultiply(
@@ -56,9 +56,9 @@ class Buffer {
    * @param c
    */
   addVertex(p, c) {
-    let res = this.matrixStack.transformVector(p);
+    const res = this.matrixStack.transformVector(p);
 
-    var bl = this.bufferLevel * this.vertexItemSize;
+    let bl = this.bufferLevel * this.vertexItemSize;
     this.vertexBuffer[bl + 0] = res[0];
     this.vertexBuffer[bl + 1] = res[1];
     this.vertexBuffer[bl + 2] = res[2];
@@ -74,7 +74,7 @@ class Buffer {
 
 
   addVertexWithoutMatrixMultiply(p, c) {
-    var bl = this.bufferLevel * this.vertexItemSize;
+    let bl = this.bufferLevel * this.vertexItemSize;
     this.vertexBuffer[bl + 0] = p[0];
     this.vertexBuffer[bl + 1] = p[1];
     this.vertexBuffer[bl + 2] = p[2];
@@ -94,11 +94,11 @@ class Buffer {
       return;
     }
 
-    var gl = glContainer.gl;
-    var shaderProgram = glContainer.shaderProgram;
+    let gl = glContainer.gl;
+    let shaderProgram = glContainer.shaderProgram;
 
-    var glVertexBuffer = this.glVertexBuffer;
-    var glColourBuffer = this.glColourBuffer;
+    let glVertexBuffer = this.glVertexBuffer;
+    let glColourBuffer = this.glColourBuffer;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, this.vertexBuffer, gl.STATIC_DRAW);

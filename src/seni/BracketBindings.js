@@ -1,7 +1,7 @@
 import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
 
-var BracketBindings = {
+let BracketBindings = {
   identity: new PublicBinding(
     'identity',
     `returns value

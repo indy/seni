@@ -3,7 +3,7 @@ import Colour from './Colour';
 
 const Format = Colour.Format;
 
-var ColourBindings = {
+const ColourBindings = {
   colSetAlpha: new PublicBinding(
     'col/setAlpha',
     `sets the alpha value of the given colour

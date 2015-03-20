@@ -150,7 +150,7 @@ function consumeList(tokens) {
 
 */
 
-var Parser = {
+let Parser = {
   parse: function(tokens) {
 
     let nodes = [];

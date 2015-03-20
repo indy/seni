@@ -5,11 +5,11 @@ describe('MathUtil', () => {
   let epsilon = 0.01;
 
   it('stepsInclusive', () => {
-    var expected = [0.0, 0.25, 0.50, 0.75, 1.0];
-    var res = MathUtil.stepsInclusive(0, 1, 5);
+    const expected = [0.0, 0.25, 0.50, 0.75, 1.0];
+    const res = MathUtil.stepsInclusive(0, 1, 5);
 
     expect(res.length).to.equal(5);
-    for(var i=0;i<5;i++) {
+    for(let i=0;i<5;i++) {
       expect(res[i]).to.equal(expected[i]);
     }
   });

@@ -11,10 +11,10 @@ function characterSet(characters) {
   return s;
 }
 
-var sWhitespaceSet = characterSet(' \t\n,');
-var sDigitSet = characterSet('0123456789');
-var sAlphaSet = characterSet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=');
-var sSymbolSet = characterSet('-!@#$%^&*<>?');
+let sWhitespaceSet = characterSet(' \t\n,');
+let sDigitSet = characterSet('0123456789');
+let sAlphaSet = characterSet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=');
+let sSymbolSet = characterSet('-!@#$%^&*<>?');
 
 let MINUS = '-';
 let PERIOD = '.';

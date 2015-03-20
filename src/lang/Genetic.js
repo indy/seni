@@ -40,7 +40,7 @@ function buildGenoFromTrait(trait, env) {
   return Immutable.Map({value: finalResult});
 }
 
-var Genetic = {
+let Genetic = {
 
   buildTraits: function(ast) {
     const traits = [];

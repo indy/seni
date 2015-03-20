@@ -84,7 +84,7 @@ function bindBracket(env, rng) {
 }
 
 
-var Bind = {
+let Bind = {
   addBindings: function(env, renderer) {
 
     env = bindCore(env);

@@ -1,5 +1,5 @@
 
-var Util = {
+const Util = {
   merge: function(obj, defaults) {
     let res = {};
     for(let p in defaults) {
