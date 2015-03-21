@@ -1,7 +1,7 @@
 import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
 
-let BracketBindings = {
+const BracketBindings = {
   identity: new PublicBinding(
     'identity',
     `returns value
@@ -9,7 +9,7 @@ let BracketBindings = {
     {value: 42},
     (self) => {
       return (params) => {
-        let {value} = self.mergeWithDefaults(params);
+        const {value} = self.mergeWithDefaults(params);
         return value;
       };
     }
@@ -23,7 +23,7 @@ let BracketBindings = {
     (self, rng) => {
       // rng is a SeedRandom returning values in the range 0..1
       return (params) => {
-        let {min, max} = self.mergeWithDefaults(params);
+        const {min, max} = self.mergeWithDefaults(params);
         return Number.parseInt(MathUtil.interpolate(min, max, rng()));
       };
     }

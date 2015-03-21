@@ -22,8 +22,8 @@ function buildTraitFromNode(node, genes) {
       ast = { forms: [['identity', {value: node.value}]]};
     }
 
-    let gene = {initialValue: node.value,
-                ast: ast};
+    const gene = {initialValue: node.value,
+                  ast: ast};
     genes.push(gene);  // mutate the genes
   }
 }
@@ -40,7 +40,7 @@ function buildGenoFromTrait(trait, env) {
   return Immutable.Map({value: finalResult});
 }
 
-let Genetic = {
+const Genetic = {
 
   buildTraits: function(ast) {
     const traits = [];

@@ -9,7 +9,7 @@ function renderScript(renderer, form) {
   env = Bind.addBindings(env, renderer);
 
   renderer.preDrawScene();
-  let ast = Runtime.buildAst(env, form);
+  const ast = Runtime.buildAst(env, form);
 
   const traits = Genetic.buildTraits(ast);
   const genotype = Genetic.createGenotypeFromInitialValues(traits);
@@ -20,7 +20,7 @@ function renderScript(renderer, form) {
 }
 
 function initialCode() {
-  let code = `(define numSquaresToRender [15 (inRange min: 2 max: 20)])
+  const code = `(define numSquaresToRender [15 (inRange min: 2 max: 20)])
 (define gapSize [30 (inRange min: 5 max: 50)])
 
 (define numSquares (+ 2 numSquaresToRender))
@@ -209,21 +209,21 @@ function initialCode() {
 
 // execute the function and log the time that it takes
 function withTiming(fn) {
-  let before = new Date();
+  const before = new Date();
   fn();
-  let after = new Date();
-  let duration = after - before;
+  const after = new Date();
+  const duration = after - before;
   console.log('Time: ' + duration + 'ms');
 }
 
 function setupUI(renderer) {
-  let d = document;
+  const d = document;
 
-  let textArea = d.getElementById('codemirror-textarea');
+  const textArea = d.getElementById('codemirror-textarea');
 
   textArea.value = initialCode();
 
-  let editor = CodeMirror.fromTextArea(textArea, {
+  const editor = CodeMirror.fromTextArea(textArea, {
     lineNumbers: false,
     mode: 'scheme',
     autoCloseBrackets: true,
@@ -238,7 +238,7 @@ function setupUI(renderer) {
 
 function copyRenderCanvasToImageElement(renderer, parent) {
 
-  var newElement = document.createElement('img');
+  const newElement = document.createElement('img');
   parent.appendChild(newElement);
 
   newElement.width = 250;
@@ -249,7 +249,7 @@ function copyRenderCanvasToImageElement(renderer, parent) {
 }
 
 function setupSelectorUI(renderer, form) {
-  var gallery = document.getElementById('gallery-container');
+  const gallery = document.getElementById('gallery-container');
 
   let env = Runtime.createEnv();
   env = Bind.addBindings(env, renderer);
@@ -281,13 +281,13 @@ function setupSelectorUI(renderer, form) {
 
 const SeniWebApplication = {
   mainFn() {
-    let renderer = new Renderer('render-canvas');
+    const renderer = new Renderer('render-canvas');
     setupUI(renderer);
     renderScript(renderer, initialCode());
   },
 
   selectorMainFn() {
-    let renderer = new Renderer('render-canvas');
+    const renderer = new Renderer('render-canvas');
 
     setupSelectorUI(renderer, initialCode());
 

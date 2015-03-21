@@ -47,12 +47,12 @@ function funApplication(env, listExpr) {
 
   // classic functions that don't require named arguments
   if(isClassicFunction(listExpr)) {
-    let args = listExpr.slice(1).map(n => _evaluate(env, n)[1]);
-    return [env, fun(args)];
+    const argu = listExpr.slice(1).map(n => _evaluate(env, n)[1]);
+    return [env, fun(argu)];
   }
 
   // normal functions that require named arguments
-  let args = {};
+  const args = {};
   if(listExpr.length > 1) {
     const argObj = listExpr[1];
     for(let k in argObj) {
@@ -125,7 +125,7 @@ function isDefiningFunction(nameForm) {
 
 function defineFunction(env, defaultArgForms, body) {
 
-  let defaultArgValues = {};
+  const defaultArgValues = {};
   for(let k in defaultArgForms) {
     defaultArgValues[k] = _evaluate(env, defaultArgForms[k])[1];
   }
@@ -139,7 +139,7 @@ function defineFunction(env, defaultArgForms, body) {
   };
 }
 
-let specialForms = {
+const specialForms = {
 
   // (if something truthy falsey) || (if something truthy)
   'if': (env, [_, cond, t, f]) =>
@@ -174,13 +174,13 @@ let specialForms = {
   'define': (env, [_, nameForm, ...valueForms]) => {
     if(isDefiningFunction(nameForm)) {
       // e.g. (define (add x: 1 y: 2) (log x) (+ x y))
-      let [name, defaultArgForms] = nameForm;
-      let definedFunction = defineFunction(env, defaultArgForms, valueForms);
+      const [name, defaultArgForms] = nameForm;
+      const definedFunction = defineFunction(env, defaultArgForms, valueForms);
       return [env.set(name, definedFunction), true];
     } else {
       // e.g. (define foo 12)
       assert(valueForms.length === 1);
-      let val = valueForms[0];
+      const val = valueForms[0];
       return [env.set(nameForm, _evaluate(env, val)[1]), true];
     }
   },
@@ -207,8 +207,8 @@ let specialForms = {
 
   // (log 'hi' foo) => hi <foo:42>
   'log': (env, [_, ...msgs]) => {
-    let message = msgs.reduce((a, b) => {
-      let [env, res] = _evaluate(env, b);
+    const message = msgs.reduce((a, b) => {
+      const [env, res] = _evaluate(env, b);
       if(typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
         return a + ' <' + b + ':' + res + '>';
       }
@@ -222,7 +222,7 @@ let specialForms = {
   // (loop (a from: 1 to: 30 step: 2) (+ a a))
   'loop': (env, [_, [varName, varParameters], ...body]) => {
 
-    let vp = {};
+    const vp = {};
     for(let k in varParameters) {
       vp[k] = _evaluate(env, varParameters[k])[1];
     }
@@ -233,7 +233,7 @@ let specialForms = {
   // (onMatrixStack (f1 1) (f2 3) (f3 5))
   'onMatrixStack': (env, [_, ...body]) => {
     env.get('pushMatrix')();
-    let res =  evalBodyForms(env, body);
+    const res =  evalBodyForms(env, body);
     env.get('popMatrix')();
     return res;
   }
@@ -247,10 +247,10 @@ function evalBodyForms(env, bodyForms) {
 function loopingFn(env, expr, varName, params) {
   // todo: 'to' should be <=, and 'until' should be '<'
 
-  let {from, to, until, step} = Util.merge(params, {from: 0,
-                                                    to: 10,
-                                                    until: undefined,
-                                                    step: 1});
+  const {from, to, until, step} = Util.merge(params, {from: 0,
+                                                      to: 10,
+                                                      until: undefined,
+                                                      step: 1});
   if(step === 0) {
     console.log('step size of 0 given');
     return undefined;
@@ -282,7 +282,7 @@ function loopingFn(env, expr, varName, params) {
 // 4 3 7 4) rather than (+ 4 3 7 4)
 
 
-let classicFunctions = {
+const classicFunctions = {
   '+': (args) =>
     args.reduce((a, b) => a + b, 0),
 
@@ -326,7 +326,7 @@ let classicFunctions = {
     args,
 
   'pair' : (args) => {
-    let res = [];
+    const res = [];
     for(let i=0;i<args.length;i+=2) {
       res.push([args[i], args[i+1]]);
     }
@@ -334,10 +334,10 @@ let classicFunctions = {
   }
 };
 
-let basicEnv = [specialForms,
-                classicFunctions].reduce((a, b) => a.merge(b), Immutable.Map());
+const basicEnv = [specialForms,
+                  classicFunctions].reduce((a, b) => a.merge(b), Immutable.Map());
 
-let Interpreter = {
+const Interpreter = {
   evaluate: function(env, expr) {
     return _evaluate(env, expr);
   },

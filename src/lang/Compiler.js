@@ -58,7 +58,7 @@ function compileFormUsingNamedParameters(children, genotype) {
     console.log('error: odd number of nodes expected: function name + pairs of label,arg');
   }
 
-  let args = {};
+  const args = {};
 
   for(let i=1; i < children.length; i+=2) {
     const label = children[i];
@@ -83,7 +83,7 @@ function usingNamedParameters(children) {
   return false;
 }
 
-let Compiler = {
+const Compiler = {
 
   compile: function(ast, genotype) {
 

@@ -94,11 +94,11 @@ class Buffer {
       return;
     }
 
-    let gl = glContainer.gl;
-    let shaderProgram = glContainer.shaderProgram;
+    const gl = glContainer.gl;
+    const shaderProgram = glContainer.shaderProgram;
 
-    let glVertexBuffer = this.glVertexBuffer;
-    let glColourBuffer = this.glColourBuffer;
+    const glVertexBuffer = this.glVertexBuffer;
+    const glColourBuffer = this.glColourBuffer;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, this.vertexBuffer, gl.STATIC_DRAW);

@@ -2,7 +2,7 @@ import Token from './Token';
 import TokenType from './TokenType';
 
 function characterSet(characters) {
-  let s = new Set();
+  const s = new Set();
 
   // todo: is there a better way than iterating over the string?
   for(let i=0;i<characters.length;i++) {
@@ -11,13 +11,13 @@ function characterSet(characters) {
   return s;
 }
 
-let sWhitespaceSet = characterSet(' \t\n,');
-let sDigitSet = characterSet('0123456789');
-let sAlphaSet = characterSet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=');
-let sSymbolSet = characterSet('-!@#$%^&*<>?');
+const sWhitespaceSet = characterSet(' \t\n,');
+const sDigitSet = characterSet('0123456789');
+const sAlphaSet = characterSet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=');
+const sSymbolSet = characterSet('-!@#$%^&*<>?');
 
-let MINUS = '-';
-let PERIOD = '.';
+const MINUS = '-';
+const PERIOD = '.';
 
 function isWhitespace(character) {
   return sWhitespaceSet.has(character);
@@ -70,7 +70,7 @@ function isNewline(character) {
 function isLabel(s) {
   let i = 0;
   for(i=0;i<s.length;i++) {
-    let c = s[i];
+    const c = s[i];
     if(!isAlpha(c) && !isDigit(c) && !isSymbol(c)) {
       break;
     }
@@ -104,7 +104,7 @@ function skipWhitespace(s) {
 function consumeInt(s) {
   let i = 0;
   for(i=0;i<s.length;i++) {
-    let c = s[i];
+    const c = s[i];
     if(!isDigit(c) && c !== MINUS) {
       break;
     }
@@ -114,20 +114,20 @@ function consumeInt(s) {
     }
   }
 
-  let token = new Token(TokenType.INT, parseInt(s.substring(0, i)));
+  const token = new Token(TokenType.INT, parseInt(s.substring(0, i)));
   return [token, s.substring(i, s.length)];
 }
 
 function consumeFloat(s) {
   let i = 0;
   for(i=0;i<s.length;i++) {
-    let c = s[i];
+    const c = s[i];
     if(!isDigit(c) && !(i===0 && c === MINUS) && c !== PERIOD) {
       break;
     }
   }
 
-  let token = new Token(TokenType.FLOAT, parseFloat(s.substring(0, i)));
+  const token = new Token(TokenType.FLOAT, parseFloat(s.substring(0, i)));
   return [token, s.substring(i, s.length)];
 }
 
@@ -163,12 +163,12 @@ function consumeString(s) {
 function consumeName(s) {
   let i=0;
   for(i=0;i<s.length;i++) {
-    let c = s[i];
+    const c = s[i];
     if(!isAlpha(c) && !isDigit(c) && !isSymbol(c)) {
       break;
     }
   }
-  let token = new Token(TokenType.NAME, s.substring(0, i));
+  const token = new Token(TokenType.NAME, s.substring(0, i));
   return [token, s.substring(i, s.length)];
 }
 
@@ -179,7 +179,7 @@ function consumeComment(s) {
       break;
     }
   }
-  let token = new Token(TokenType.COMMENT, s.substring(0, i));
+  const token = new Token(TokenType.COMMENT, s.substring(0, i));
   // skip past the newline
   return [token, s.substring(i+1, s.length)];
 }
@@ -187,13 +187,13 @@ function consumeComment(s) {
 function consumeLabel(s) {
   let i=0;
   for(i=0;i<s.length;i++) {
-    let c = s[i];
+    const c = s[i];
     if(!isAlpha(c) && !isDigit(c) && !isSymbol(c)) {
       break;
     }
   }
   // read the label name - the ':' character
-  let token = new Token(TokenType.LABEL, s.substring(0, i));
+  const token = new Token(TokenType.LABEL, s.substring(0, i));
   // the remainder should skip past the ':'
   return [token, s.substring(i+1, s.length)];
 }
@@ -203,7 +203,7 @@ function consumeQuoteAbbreviation(s) {
 }
 
 function nextTokenType(s) {
-  let c = s[0];
+  const c = s[0];
 
   if(isQuoteAbbreviation(c)) {
     return TokenType.QUOTE_ABBREVIATION;
@@ -291,12 +291,12 @@ const Lexer = {
         break;
       default:
         // read the unknown token and return it
-        let tok = consumeUnknown(s)[0];
+        const tok = consumeUnknown(s)[0];
         return {error: 'unknown token: ' + tok.value,
                 tokens: [tok]};
       }
 
-      let [token, remaining] = p;
+      const [token, remaining] = p;
 
       q.push(token);
       s = skipWhitespace(remaining);

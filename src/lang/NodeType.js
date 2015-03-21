@@ -9,7 +9,7 @@ const NodeType = {
   LAMBDA: 7,
   SPECIAL: 8,
   COLOUR: 9,
-  NULL: 10,
+  NULL: 10
 };
 
 export default NodeType;

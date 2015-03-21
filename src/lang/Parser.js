@@ -9,8 +9,8 @@ import NodeType from './NodeType';
 
 
 /*
-  these functions will return {node: node, error: error}
-*/
+ these functions will return {node: node, error: error}
+ */
 
 function boxNode(nodeType, value, alterable) {
   return {node: new Node(nodeType, value, alterable)};
@@ -31,7 +31,7 @@ function consumeItem(tokens, alterable) {
   } else if(tokenType === TokenType.FLOAT) {
     return boxNode(NodeType.FLOAT, token.value, alterable);
   } else if(tokenType === TokenType.NAME) {
-    let val = token.value;
+    const val = token.value;
     if(val === 'true') {
       return boxNode(NodeType.BOOLEAN, '#t', alterable);
     } else if (val === 'false') {
@@ -59,13 +59,13 @@ function consumeItem(tokens, alterable) {
 
 
 function consumeBracketForm(tokens) {
-  let nodeBox = consumeItem(tokens, true);
+  const nodeBox = consumeItem(tokens, true);
   if(nodeBox.error) {
     return nodeBox;
   }
 
-  let node = nodeBox.node;
-  let nodeType = node.type;
+  const node = nodeBox.node;
+  const nodeType = node.type;
 
   if(nodeType !== NodeType.BOOLEAN &&
      nodeType !== NodeType.INT &&
@@ -101,10 +101,10 @@ function consumeBracketForm(tokens) {
 function consumeQuotedForm(tokens) {
   // '(2 3 4) -> (quote (2 3 4))
 
-  let node = new Node(NodeType.LIST);
+  const node = new Node(NodeType.LIST);
 
   node.addChild(new Node(NodeType.NAME, 'quote', false));
-  let childBox = consumeItem(tokens, false);
+  const childBox = consumeItem(tokens, false);
   if(childBox.error) {
     return childBox;
   }
@@ -114,10 +114,10 @@ function consumeQuotedForm(tokens) {
 }
 
 function consumeList(tokens) {
-  let node = new Node(NodeType.LIST);
+  const node = new Node(NodeType.LIST);
 
   while(true) {
-    let token = tokens[0];
+    const token = tokens[0];
     if(token === undefined) {
       return {error: 'unexpected end of list'};
     }
@@ -127,11 +127,11 @@ function consumeList(tokens) {
       return {node: node};
     }
 
-    let nodeBox = consumeItem(tokens, false);
+    const nodeBox = consumeItem(tokens, false);
     if(nodeBox.error) {
       return nodeBox;
     }
-    let n = nodeBox.node;
+    const n = nodeBox.node;
     if(n) {
       node.addChild(n);
     }
@@ -144,16 +144,16 @@ function consumeList(tokens) {
  returns an obj of the form:
 
  {
-   nodes: array of nodes,
-   error: possibly undefined
+ nodes: array of nodes,
+ error: possibly undefined
  }
 
-*/
+ */
 
-let Parser = {
+const Parser = {
   parse: function(tokens) {
 
-    let nodes = [];
+    const nodes = [];
     let nodeBox;
 
     while(tokens.length !== 0) {

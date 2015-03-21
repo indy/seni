@@ -4,10 +4,10 @@ import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
 import Colour from './Colour';
 
-let Format = Colour.Format;
+const Format = Colour.Format;
 
 function bezierPoint(a, b, c, d, t) {
-  let t1 = 1 - t;
+  const t1 = 1 - t;
 
   return (a * t1 * t1 * t1) +
     (3 * b * t * t1 * t1) +
@@ -16,8 +16,8 @@ function bezierPoint(a, b, c, d, t) {
 }
 
 function normals(x1, y1, x2, y2) {
-  let dx = x2 - x1;
-  let dy = y2 - y1;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
 
   return [MathUtil.normalize(-dy, dx), MathUtil.normalize(dy, -dx)];
 }
@@ -28,7 +28,7 @@ function _bezier(renderer) {
 
   return (params) => {
 
-    let {
+    const {
       tessellation,
       lineWidth,
       lineWidthStart,
@@ -36,9 +36,10 @@ function _bezier(renderer) {
       lineWidthMapping,
       coords,
       tStart,
-      tEnd,
-      colour
+      tEnd
     } = params;
+
+    let {colour} = params;
 
     let halfWidthEnd, remap;
 
@@ -48,7 +49,7 @@ function _bezier(renderer) {
       remap = () => halfWidthEnd;
     } else {
       // use the default start and end line widths
-      let halfWidthStart  = lineWidthStart / 2.0;
+      const halfWidthStart  = lineWidthStart / 2.0;
       halfWidthEnd  = lineWidthEnd / 2.0;
       remap = MathUtil.remapFn({from: [tStart, tEnd],
                                 to: [halfWidthStart, halfWidthEnd],
@@ -56,15 +57,15 @@ function _bezier(renderer) {
 
     }
 
-    let tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
-    let xs = tVals.map((i) => bezierPoint(coords[0][0],
-                                          coords[1][0],
-                                          coords[2][0],
-                                          coords[3][0], i));
-    let ys = tVals.map((i) => bezierPoint(coords[0][1],
-                                          coords[1][1],
-                                          coords[2][1],
-                                          coords[3][1], i));
+    const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
+    const xs = tVals.map((i) => bezierPoint(coords[0][0],
+                                            coords[1][0],
+                                            coords[2][0],
+                                            coords[3][0], i));
+    const ys = tVals.map((i) => bezierPoint(coords[0][1],
+                                            coords[1][1],
+                                            coords[2][1],
+                                            coords[3][1], i));
 
     if(colour === undefined) {
       colour = Colour.construct(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
@@ -72,7 +73,7 @@ function _bezier(renderer) {
       colour = Colour.cloneAs(colour, Format.RGB);
     }
 
-    let elementArray = Colour.elementArray(colour);
+    const elementArray = Colour.elementArray(colour);
 
     for(let i=0; i<tVals.length - 1; i++) {
       let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
@@ -149,7 +150,7 @@ const Shapes = {
           colour = Colour.cloneAs(colour, Format.RGB);
         }
 
-        let elementArray = Colour.elementArray(colour);
+        const elementArray = Colour.elementArray(colour);
 
         buffer.prepareToAddTriangleStrip(glContainer, 4,
                                          [x - halfWidth, y - halfHeight, 0.0]);
@@ -182,7 +183,7 @@ const Shapes = {
      colour: Colour.defaultColour},
 
     (self, renderer) => {
-      let bezierFn = _bezier(renderer);
+      const bezierFn = _bezier(renderer);
       return (params) => {
         bezierFn(self.mergeWithDefaults(params));
       };
@@ -208,17 +209,17 @@ const Shapes = {
 
     (self, renderer) => {
 
-      let bezierFn = _bezier(renderer);
+      const bezierFn = _bezier(renderer);
 
       // return a function which accepts args as parameters
       return (params) => {
 
-        let {tessellation,
-             lineWidth,
-             coords,
-             tStart,
-             tEnd,
-             colour} = self.mergeWithDefaults(params);
+        const {tessellation,
+               lineWidth,
+               coords,
+               tStart,
+               tEnd,
+               colour} = self.mergeWithDefaults(params);
 
         bezierFn({tessellation: tessellation,
                   lineWidthStart: lineWidth,
@@ -251,21 +252,21 @@ const Shapes = {
 
     (self, renderer) => {
 
-      let bezierFn = _bezier(renderer);
+      const bezierFn = _bezier(renderer);
 
       // return a function which accepts args as parameters
       return (params) => {
 
-        let {tessellation,
-             lineWidth,
-             coords,
-             tStart,
-             tEnd,
-             colour} = self.mergeWithDefaults(params);
+        const {tessellation,
+               lineWidth,
+               coords,
+               tStart,
+               tEnd,
+               colour} = self.mergeWithDefaults(params);
 
-        let tMid = (tStart + tEnd) / 2.0;
+        const tMid = (tStart + tEnd) / 2.0;
         // tessellation should be an even number
-        let newTess = tessellation & 1 ? tessellation + 1: tessellation;
+        const newTess = tessellation & 1 ? tessellation + 1: tessellation;
 
         bezierFn({tessellation: newTess / 2,
                   lineWidthStart: 0.0,

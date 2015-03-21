@@ -29,8 +29,8 @@ const Runtime = {
 
     // add all of the define expressions to the env
     const [_env, _res] = compiled.forms.
-          filter(Interpreter.isDefineExpression).
-          reduce(([e, r], b) => Interpreter.evaluate(e, b), [env, false]);
+            filter(Interpreter.isDefineExpression).
+            reduce(([e, r], b) => Interpreter.evaluate(e, b), [env, false]);
 
     // now evaluate all of the non-define expressions
     return compiled.forms.

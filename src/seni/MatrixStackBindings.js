@@ -26,7 +26,7 @@ const MatrixStackBindings = {
     {x: 1, y: 1},
     (self, matrixStack) => {
       return (params) => {
-        let {x, y} = self.mergeWithDefaults(params);
+        const {x, y} = self.mergeWithDefaults(params);
         return matrixStack.scale(x, y);
       };
     }
@@ -38,7 +38,7 @@ const MatrixStackBindings = {
     {x: 0.0, y: 0.0},
     (self, matrixStack) => {
       return (params) => {
-        let {x, y} = self.mergeWithDefaults(params);
+        const {x, y} = self.mergeWithDefaults(params);
         return matrixStack.translate(x, y);
       };
     }
@@ -50,7 +50,7 @@ const MatrixStackBindings = {
     {angle: 0.0},
     (self, matrixStack) => {
       return (params) => {
-        let {angle} = self.mergeWithDefaults(params);
+        const {angle} = self.mergeWithDefaults(params);
         return matrixStack.rotate(angle);
       };
     }

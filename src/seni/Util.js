@@ -1,7 +1,7 @@
 
 const Util = {
   merge: function(obj, defaults) {
-    let res = {};
+    const res = {};
     for(let p in defaults) {
       res[p] = obj[p] !== undefined ? obj[p] : defaults[p];
     }

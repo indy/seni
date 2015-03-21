@@ -88,9 +88,9 @@ function colourToAxis(component) {
 
 function rgbxyz(c) {
   // assumes that this is already in RGB format
-  let rr = colourToAxis(element(c, RED));
-  let gg = colourToAxis(element(c, GREEN));
-  let bb = colourToAxis(element(c, BLUE));
+  const rr = colourToAxis(element(c, RED));
+  const gg = colourToAxis(element(c, GREEN));
+  const bb = colourToAxis(element(c, BLUE));
 
   return construct(Format.XYZ, [(rr * 0.4124) + (gg * 0.3576) + (bb * 0.1805),
                                 (rr * 0.2126) + (gg * 0.7152) + (bb * 0.0722),
@@ -108,9 +108,9 @@ function axisToLABComponent(a) {
 
 function xyzlab(c) {
   // assumes that this is already in XYZ format
-  let xx = axisToLABComponent(element(c, X) / 95.047);
-  let yy = axisToLABComponent(element(c, Y) / 100.000);
-  let zz = axisToLABComponent(element(c, Z) / 108.883);
+  const xx = axisToLABComponent(element(c, X) / 95.047);
+  const yy = axisToLABComponent(element(c, Y) / 100.000);
+  const zz = axisToLABComponent(element(c, Z) / 108.883);
 
   return construct(Format.LAB, [(116.0 * yy) - 16.0,
                                 500.0 * (xx - yy),
@@ -127,13 +127,13 @@ function axisToColour(a) {
 }
 
 function xyzrgb(c) {
-  let xx = element(c, X) / 100.0;
-  let yy = element(c, Y) / 100.0;
-  let zz = element(c, Z) / 100.0;
+  const xx = element(c, X) / 100.0;
+  const yy = element(c, Y) / 100.0;
+  const zz = element(c, Z) / 100.0;
 
-  let r = (xx * 3.2406) + (yy * -1.5372) + (zz * -0.4986);
-  let g = (xx * -0.9689) + (yy * 1.8758) + (zz * 0.0415);
-  let b = (xx * 0.0557) + (yy * -0.2040) + (zz * 1.0570);
+  const r = (xx * 3.2406) + (yy * -1.5372) + (zz * -0.4986);
+  const g = (xx * -0.9689) + (yy * 1.8758) + (zz * 0.0415);
+  const b = (xx * 0.0557) + (yy * -0.2040) + (zz * 1.0570);
 
   return construct(Format.RGB, [axisToColour(r),
                                 axisToColour(g),
@@ -142,12 +142,12 @@ function xyzrgb(c) {
 }
 
 function maxChannel(c) {
-  let hi = element(c, RED) > element(c, GREEN) ? RED : GREEN;
+  const hi = element(c, RED) > element(c, GREEN) ? RED : GREEN;
   return element(c, BLUE) > element(c, hi) ? BLUE : hi;
 }
 
 function minChannel(c) {
-  let hi = element(c, RED) < element(c, GREEN) ? RED : GREEN;
+  const hi = element(c, RED) < element(c, GREEN) ? RED : GREEN;
   return element(c, BLUE) < element(c, hi) ? BLUE : hi;
 }
 
@@ -168,17 +168,17 @@ function hue(c, maxChan, chroma) {
 }
 
 function rgbhsl(c) {
-  let minCh = minChannel(c);
-  let minVal = element(c, minCh);
+  const minCh = minChannel(c);
+  const minVal = element(c, minCh);
 
-  let maxCh = maxChannel(c);
-  let maxVal = element(c, maxCh);
+  const maxCh = maxChannel(c);
+  const maxVal = element(c, maxCh);
 
-  let chroma = maxVal - minVal;
-  let h = hue(c, maxCh, chroma);
-  let validHue = (chroma !== 0.0);
+  const chroma = maxVal - minVal;
+  const h = hue(c, maxCh, chroma);
+  const validHue = (chroma !== 0.0);
 
-  let lightness = 0.5 * (minVal + maxVal);
+  const lightness = 0.5 * (minVal + maxVal);
   let saturation;
   if (chroma === 0.0) {
     saturation = 0.0;
@@ -186,22 +186,22 @@ function rgbhsl(c) {
     saturation = chroma / (1.0 - Math.abs((2.0 * lightness) - 1.0));
   }
 
-  let col = construct(Format.HSL, [h, saturation, lightness, element(c, ALPHA)]);
+  const col = construct(Format.HSL, [h, saturation, lightness, element(c, ALPHA)]);
   return col.set('validHue', validHue);
 }
 
 function rgbhsv(c) {
-  let minCh = minChannel(c);
-  let minVal = element(c, minCh);
+  const minCh = minChannel(c);
+  const minVal = element(c, minCh);
 
-  let maxCh = maxChannel(c);
-  let maxVal = element(c, maxCh);
+  const maxCh = maxChannel(c);
+  const maxVal = element(c, maxCh);
 
-  let chroma = maxVal - minVal;
-  let h = hue(c, maxCh, chroma);
-  let validHue = (chroma !== 0.0);
+  const chroma = maxVal - minVal;
+  const h = hue(c, maxCh, chroma);
+  const validHue = (chroma !== 0.0);
 
-  let value = maxVal;
+  const value = maxVal;
 
   let saturation;
   if (chroma === 0.0) {
@@ -210,7 +210,7 @@ function rgbhsv(c) {
     saturation = chroma / value;
   }
 
-  let col = construct(Format.HSV, [h, saturation, value, element(c, ALPHA)]);
+  const col = construct(Format.HSV, [h, saturation, value, element(c, ALPHA)]);
   return col.set('validHue', validHue);
 }
 
@@ -219,8 +219,8 @@ function chmrgb(c, chroma, h, m) {
     return construct(Format.RGB, [m, m, m, element(c, ALPHA)]);
   }
 
-  let hprime = h / 60.0;
-  let x = chroma * (1.0 - Math.abs((hprime % 2) - 1.0));
+  const hprime = h / 60.0;
+  const x = chroma * (1.0 - Math.abs((hprime % 2) - 1.0));
   let r = 0.0;
   let g = 0.0;
   let b = 0.0;
@@ -255,13 +255,13 @@ function chmrgb(c, chroma, h, m) {
 }
 
 function hslrgb(c) {
-  let h = element(c, H);
-  let s = element(c, S);
-  let l = element(c, 2); // L already defined for LAB ...bugger
-  let chroma = (1.0 - Math.abs((2.0 * l) - 1.0)) * s;
-  let m = l - (0.5 * chroma);
+  const h = element(c, H);
+  const s = element(c, S);
+  const l = element(c, 2); // L already defined for LAB ...bugger
+  const chroma = (1.0 - Math.abs((2.0 * l) - 1.0)) * s;
+  const m = l - (0.5 * chroma);
 
-  let col = c.set('validHue', true);
+  const col = c.set('validHue', true);
 
   return chmrgb(col, chroma, h, m);
 }
@@ -275,17 +275,17 @@ function labComponentToAxis(l) {
 }
 
 function labxyz(c) {
-  let refX = 95.047;
-  let refY = 100.000;
-  let refZ = 108.883;
+  const refX = 95.047;
+  const refY = 100.000;
+  const refZ = 108.883;
 
-  let y = (element(c, L) + 16.0) / 116.0;
-  let x = (element(c, A) / 500.0) + y;
-  let z = y - (element(c, B) / 200.0);
+  const y = (element(c, L) + 16.0) / 116.0;
+  const x = (element(c, A) / 500.0) + y;
+  const z = y - (element(c, B) / 200.0);
 
-  let xx = labComponentToAxis(x);
-  let yy = labComponentToAxis(y);
-  let zz = labComponentToAxis(z);
+  const xx = labComponentToAxis(x);
+  const yy = labComponentToAxis(y);
+  const zz = labComponentToAxis(z);
 
   return construct(Format.XYZ, [refX * xx,
                                 refY * yy,
@@ -294,11 +294,11 @@ function labxyz(c) {
 }
 
 function hsvrgb(c) {
-  let h = element(c, H);
-  let s = element(c, S);
-  let v = element(c, V);
-  let chroma = v * s;
-  let m = v - chroma;
+  const h = element(c, H);
+  const s = element(c, S);
+  const v = element(c, V);
+  const chroma = v * s;
+  const m = v - chroma;
   return chmrgb(c, chroma, h, m);
 }
 
@@ -354,7 +354,7 @@ function cloneAs(c, newFormat) {
 }
 
 function addAngleToHSL(c, delta) {
-  let d = cloneAs(c, Format.HSL);
+  const d = cloneAs(c, Format.HSL);
 
   // rotate the hue by the given delta
   return d.updateIn(['elements', H], hue => (hue + delta) % 360.0);
@@ -362,7 +362,7 @@ function addAngleToHSL(c, delta) {
 
 // Return the 2 colours either side of this that are 'ang' degrees away
 function pair(c, ang) {
-  let ret = [addAngleToHSL(c, -ang), addAngleToHSL(c, ang)];
+  const ret = [addAngleToHSL(c, -ang), addAngleToHSL(c, ang)];
   return ret;
 }
 
@@ -399,24 +399,24 @@ function triad(c) {
 
 
 /*
-  public static Colour interpolate(Colour a, Colour b, float t, Format space) {
+ public static Colour interpolate(Colour a, Colour b, float t, Format space) {
 
-  float[] aLab = a.as(space).getVals();
-  float[] bLab = b.as(space).getVals();
+ float[] aLab = a.as(space).getVals();
+ float[] bLab = b.as(space).getVals();
 
-  return Colour.fromSpace(space,
-  MathUtils.interpolate(aLab[0], bLab[0], t),
-  MathUtils.interpolate(aLab[1], bLab[1], t),
-  MathUtils.interpolate(aLab[2], bLab[2], t),
-  MathUtils.interpolate(aLab[3], bLab[3], t));
-  }
+ return Colour.fromSpace(space,
+ MathUtils.interpolate(aLab[0], bLab[0], t),
+ MathUtils.interpolate(aLab[1], bLab[1], t),
+ MathUtils.interpolate(aLab[2], bLab[2], t),
+ MathUtils.interpolate(aLab[3], bLab[3], t));
+ }
 
-  let sampleColour = {
-  format: Format.RGB,
-  val: [0.1, 1.0, 1.0, 1.0],
-  validHue: true                // optional
-  };
-*/
+ let sampleColour = {
+ format: Format.RGB,
+ val: [0.1, 1.0, 1.0, 1.0],
+ validHue: true                // optional
+ };
+ */
 
 const Colour = {
   Format: Format,

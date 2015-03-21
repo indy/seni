@@ -12,7 +12,7 @@ const ColourBindings = {
      alpha: 1.0},
     (self) => {
       return (params) => {
-        let {colour, alpha} = self.mergeWithDefaults(params);
+        const {colour, alpha} = self.mergeWithDefaults(params);
         return Colour.setAlpha(colour, alpha);
       };
     }
@@ -25,7 +25,7 @@ const ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = self.mergeWithDefaults(params);
+        const {colour} = self.mergeWithDefaults(params);
         return Colour.getAlpha(colour);
       };
     }
@@ -39,7 +39,7 @@ const ColourBindings = {
      l: 1.0},
     (self) => {
       return (params) => {
-        let {colour, l} = self.mergeWithDefaults(params);
+        const {colour, l} = self.mergeWithDefaults(params);
         return Colour.setLightness(colour, l);
       };
     }
@@ -52,7 +52,7 @@ const ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = self.mergeWithDefaults(params);
+        const {colour} = self.mergeWithDefaults(params);
         return Colour.getLightness(colour);
       };
     }
@@ -64,7 +64,7 @@ const ColourBindings = {
     {r: 1.0, g: 0.1, b: 0.2, a: 0.5},
     (self) => {
       return function(params) {
-        let {r, g, b, a} = self.mergeWithDefaults(params);
+        const {r, g, b, a} = self.mergeWithDefaults(params);
         return Colour.construct(Format.RGB, [r, g, b, a]);
       };
     }
@@ -76,7 +76,7 @@ const ColourBindings = {
     {h: 1.0, s: 0.1, l: 0.2, a: 0.5},
     (self) => {
       return function(params) {
-        let {h, s, l, a} = self.mergeWithDefaults(params);
+        const {h, s, l, a} = self.mergeWithDefaults(params);
         return Colour.construct(Format.HSL, [h, s, l, a]);
       };
     }
@@ -88,7 +88,7 @@ const ColourBindings = {
     {l: 1.0, a: 0.1, b: 0.2, alpha: 0.5},
     (self) => {
       return function(params) {
-        let {l, a, b, alpha} = self.mergeWithDefaults(params);
+        const {l, a, b, alpha} = self.mergeWithDefaults(params);
         return Colour.construct(Format.LAB, [l, a, b, alpha]);
       };
     }
@@ -100,7 +100,7 @@ const ColourBindings = {
     {h: 1.0, s: 0.1, v: 0.2, a: 0.5},
     (self) => {
       return function(params) {
-        let {h, s, v, a} = self.mergeWithDefaults(params);
+        const {h, s, v, a} = self.mergeWithDefaults(params);
         return Colour.construct(Format.HSV, [h, s, v, a]);
       };
     }
@@ -139,7 +139,7 @@ const ColourBindings = {
     ``,
     {format: Format.RGB, colour: Colour.defaultColour},
     (self) => function(params) {
-      let {format, colour} = self.mergeWithDefaults(params);
+      const {format, colour} = self.mergeWithDefaults(params);
       return Colour.cloneAs(colour, format);
     }
   ),
@@ -150,7 +150,7 @@ const ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = self.mergeWithDefaults(params);
+        const {colour} = self.mergeWithDefaults(params);
         return Colour.complementary(colour);
       };
     }
@@ -162,7 +162,7 @@ const ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = self.mergeWithDefaults(params);
+        const {colour} = self.mergeWithDefaults(params);
         return Colour.splitComplementary(colour);
       };
     }
@@ -174,7 +174,7 @@ const ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = self.mergeWithDefaults(params);
+        const {colour} = self.mergeWithDefaults(params);
         return Colour.analagous(colour);
       };
     }
@@ -186,7 +186,7 @@ const ColourBindings = {
     {colour: Colour.defaultColour},
     (self) => {
       return (params) => {
-        let {colour} = self.mergeWithDefaults(params);
+        const {colour} = self.mergeWithDefaults(params);
         return Colour.triad(colour);
       };
     }
