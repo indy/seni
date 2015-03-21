@@ -26,22 +26,27 @@
     <link rel="stylesheet" href="css/stylesheet.css">
   </head>
 
-  <body class="flex-container-h">
-    <div class="flex-container-v">
-      <div class="flex-item-canvas">
-        <canvas id="render-canvas" width="500" height="500"></canvas>
+  <body>
+
+    <div id="author-container" class="flex-container-h">
+      <div id="render-container">
+        <div class="flex-item-canvas">
+          <canvas id="render-canvas" width="500" height="500"></canvas>
+        </div>
       </div>
-      <div class="flex-item-console">
-        <!-- <div id="eval-button">Eval</div>  -->
+      <div id="editor-container">
+        <textarea id="codemirror-textarea"></textarea> 
       </div>
-    </div>
-    <div class="flex-item-code-editor">
-      <textarea id="codemirror-textarea"></textarea> 
     </div>
 
+    <div id="selector-container" class="hidden">
+      <div id="gallery-container"></div>
+    </div>
+    
     <script type="text/javascript">SeniWebApplication.mainFn()</script>
     <!-- 
     <script type="text/javascript">System.import('main').then(function(m) { m.main(); }, console.log.bind(console))</script>
     -->
   </body>
+  
 </html>

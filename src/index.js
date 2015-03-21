@@ -4,6 +4,16 @@ import Runtime from './lang/Runtime';
 import Bind from './seni/Bind';
 import Trivia from './seni/Trivia';
 
+
+const SeniMode = {
+  authoring: 0,
+  selecting: 1
+};
+
+let gCurrentMode = SeniMode.authoring;
+let gRenderer;
+let gEditor;
+
 function renderScript(renderer, form) {
   let env = Runtime.createEnv();
   env = Bind.addBindings(env, renderer);
@@ -20,48 +30,66 @@ function renderScript(renderer, form) {
 }
 
 function initialCode() {
-  const code = `(define numSquaresToRender [15 (inRange min: 2 max: 20)])
-(define gapSize [30 (inRange min: 5 max: 50)])
+  const code = `(wash colour: (col/rgb r: 0.827 g: 0.827 b: 0.827 a: 0.4)
+      seed: 88)
 
-(define numSquares (+ 2 numSquaresToRender))
+(define baseColour (col/rgb r: 0.9 g: 0.0 b: 0.0 a: 1.0))
+(define border 30)
 
-(define numGaps (+ numSquares 1))
-(define squareSize (/ (- 1000 (* gapSize numGaps)) numSquares))
+(define squareSize (/ (- 1000 (* 3 border)) 2))
+(define squareRadius (/ squareSize 2))
+(define squarePosMin (+ border squareRadius))
+(define squarePosMax (- 1000 (+ border squareRadius)))
 
-(define baseColour (col/rgb r: [1.0 (scalar)] g: [0.0 (scalar)] b: [0.3 (scalar)] a: 1.0))
-  (define backgroundColour (col/rgb r: 1.0 g: 1.0 b: 0.9))
+(rect x: squarePosMin y: squarePosMax
+      width: squareSize height: squareSize
+      colour: baseColour)
 
+(accumulated-rect x: squarePosMax y: squarePosMax
+                  width: squareSize height: squareSize
+                  colour: baseColour
+                  volatility: 1.5
+                  passes: 50)
 
-(wash variation: 40
-      lineWidth: 25
-      lineSegments: 5
-      colour: backgroundColour)
+(bezier-stroked-rect x: squarePosMin y: squarePosMin
+                     width: squareSize height: squareSize
+                     colour: baseColour
+                     volatility: 10.0
+                     overlap: 3.0)
 
-(loop (y from: 1 to: (- numSquares 1))
-	(loop (x from: 1 to: (- numSquares 1))
-          (let ((xPos (mapToPosition at: x))
-                (yPos (mapToPosition at: y))
-                (distanceFromCentre (math/distance2D aX: [500 (inRange min:0 max: 1000)]
-                                                     aY: [800 (inRange min:0 max: 1000)]
-                                                     bX: xPos
-                                                     bY: yPos))
-                (volatility (math/clamp val: (/ (- 500 distanceFromCentre)
-                                                [12 (inRange min:5 max: 50)])
-                                        min: 0
-                                        max: 50)))
-            (bezier-stroked-rect x: xPos
-                                 y: yPos
-                                 colourVolatility: [20 (inRange min: 2 max: 40)]
-                                 volatility: volatility
-                                 seed: (+ x (* y numSquares))
-                                 width: squareSize
-                                 height: squareSize
-                                 colour: baseColour))))
-
-(define (mapToPosition at: 0)
-  (+ (* (+ gapSize squareSize) at) (/ squareSize 2) gapSize))
+(bezier-stroked-rect x: squarePosMax y: squarePosMin
+                     width: squareSize height: squareSize
+                     colour: baseColour
+                     colourVolatility: 10
+                     volatility: 10.0
+                     overlap: 3.0
+                     iterations: 79)
 
 
+
+(define (accumulated-rect x: 0
+                          y: 0
+                          width: 10
+                          height: 10
+                          colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 0.5)
+                          volatility: 0
+                          passes: 1)
+  (let ((halfWidth (/ width 2))
+        (halfHeight (/ height 2))
+        (alpha (col/getAlpha colour: colour))
+        (passColour (col/setAlpha colour: colour alpha: (/ alpha passes)))
+        (rng (rng/signed seed: "asdf")))
+    (onMatrixStack
+     (translate x: x y: y)
+     (loop (i to: passes)
+           (let (((rr xr yr) (take num: 3 from: rng)))
+             (onMatrixStack
+              (rotate angle: (* rr 0.02 volatility))
+              (rect x: (* xr 5 volatility)
+                    y: (* yr 5 volatility)
+                    width: width
+                    height: height
+                    colour: passColour)))))))
 
 (define (bezier-stroked-rect x: 0
                              y: 0
@@ -152,32 +180,6 @@ function initialCode() {
                                 (* 3 thHeight)))
                     colour: current-colour)))))
 
-
-(define (accumulated-rect x: 0
-                          y: 0
-                          width: 10
-                          height: 10
-                          colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 0.5)
-                          volatility: 0
-                          passes: 1
-                          seed: "asdf")
-  (let ((halfWidth (/ width 2))
-        (halfHeight (/ height 2))
-        (alpha (col/getAlpha colour: colour))
-        (passColour (col/setAlpha colour: colour alpha: (/ alpha passes)))
-        (rng (rng/signed seed: seed)))
-    (onMatrixStack
-     (translate x: x y: y)
-     (loop (i to: passes)
-           (let (((rr xr yr) (take num: 3 from: rng)))
-             (onMatrixStack
-              (rotate angle: (* rr 0.02 volatility))
-              (rect x: (* xr 5 volatility)
-                    y: (* yr 5 volatility)
-                    width: width
-                    height: height
-                    colour: passColour)))))))
-
 (define (v x: 0 y: 0 z: 0 scale: 1)
   (+ y (* scale (perlin/unsigned x: x y: y z: z))))
 
@@ -202,7 +204,8 @@ function initialCode() {
                          (v x: 333.33 y: h z: seed scale: variation) 333
                          (v x: 666.66 y: h z: seed scale: variation) 666
                          (v x: 1000.10 y: h z: seed scale: variation) 1000)
-                colour: colour)))`;
+                colour: colour)))
+`;
   return code;
 }
 
@@ -223,14 +226,17 @@ function setupUI(renderer) {
 
   textArea.value = initialCode();
 
-  const editor = CodeMirror.fromTextArea(textArea, {
+  gEditor = CodeMirror.fromTextArea(textArea, {
     lineNumbers: false,
     mode: 'scheme',
     autoCloseBrackets: true,
     matchBrackets: true,
     extraKeys: {
       'Ctrl-E': function() {
-        withTiming(() => renderScript(renderer, editor.getValue()));
+        withTiming(() => renderScript(renderer, gEditor.getValue()));
+        return false;
+      },
+      'Ctrl-D': function() {
         return false;
       }
     }});
@@ -257,6 +263,8 @@ function setupSelectorUI(renderer, form) {
   const traits = Genetic.buildTraits(ast);
   let genotype = Genetic.createGenotypeFromInitialValues(traits);
 
+  gallery.innerHTML = '';
+
   renderer.preDrawScene();
   Runtime.evalAst(env, ast, genotype);
   renderer.postDrawScene();
@@ -264,9 +272,16 @@ function setupSelectorUI(renderer, form) {
 
 
   let i = 0;
+
+  // a quick hack to get a pseudo-random string
+  let random = new Date();
+  random = random.toGMTString();
   setTimeout(function go() {
-    if(i < 100) {
-      genotype = Genetic.createGenotypeFromTraits(traits, i+322);
+    // stop generating new phenotypes if we've reached the desired
+    // population or the user has switched to authoring mode
+    if(i < 25 && gCurrentMode === SeniMode.selecting) {
+
+      genotype = Genetic.createGenotypeFromTraits(traits, i+random);
 
       renderer.preDrawScene();
       Runtime.evalAst(env, ast, genotype);
@@ -279,16 +294,49 @@ function setupSelectorUI(renderer, form) {
   });
 }
 
+function switchMode(newMode) {
+  console.log('switching mode to ' + newMode);
+  gCurrentMode = newMode;
+
+  const authorContainer = document.getElementById('author-container');
+  const selectorContainer = document.getElementById('selector-container');
+
+  const sourceCode = gEditor.getValue();
+
+  if(gCurrentMode === SeniMode.authoring) {
+    authorContainer.className = 'flex-container-h';
+    selectorContainer.className = 'hidden';
+
+    renderScript(gRenderer, sourceCode);
+  } else {    // SeniMode.selecting
+    authorContainer.className = 'hidden';
+    selectorContainer.className = '';
+
+    setupSelectorUI(gRenderer, sourceCode);
+  }
+}
+
 const SeniWebApplication = {
   mainFn() {
-    const renderer = new Renderer('render-canvas');
-    setupUI(renderer);
-    renderScript(renderer, initialCode());
+    gCurrentMode = SeniMode.authoring;
+
+    //
+    document.addEventListener('keydown', function(event) {
+      if(event.ctrlKey && event.keyCode === 68) {
+        switchMode(1 - gCurrentMode);
+        event.preventDefault();
+      }
+    }, false);
+
+    gRenderer = new Renderer('render-canvas');
+    setupUI(gRenderer);
+    renderScript(gRenderer, initialCode());
   },
 
   selectorMainFn() {
-    const renderer = new Renderer('render-canvas');
+    gCurrentMode = SeniMode.selecting;
 
+    const renderer = new Renderer('render-canvas');
     setupSelectorUI(renderer, initialCode());
 
     console.log(Trivia.getTitle());

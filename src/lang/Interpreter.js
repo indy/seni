@@ -77,11 +77,8 @@ function addBindings(env, exprs) {
   const addBinding = function(e, name, value) {
     const v = _evaluate(e, value)[1];
     if(name.constructor === Array) {
-      // destructure
       // todo: error check if size of name array !== size of v
-      for(let i=0;i<name.length;i++) {
-        e = e.set(name[i], v[i]);
-      }
+      name.forEach((n, i) => e = e.set(n, v[i]));
     } else {
       e = e.set(name, v);
     }

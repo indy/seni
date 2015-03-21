@@ -14,13 +14,17 @@ html,body {
 }
 
 .flex-container-h {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+
   display: -webkit-flex;
   display: flex;
   -webkit-flex-direction: row;
   flex-direction: row;
 }
 
-.flex-container-v {
+#render-container {
   display: -webkit-flex;
   display: flex;
   -webkit-flex-direction: column;
@@ -30,7 +34,7 @@ html,body {
   width: 50%;
 }
 
-.flex-item-code-editor {
+#editor-container {
   order: 2;
 
   width: 50%;

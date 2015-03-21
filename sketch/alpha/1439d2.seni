@@ -1,13 +1,12 @@
-
-(define numSquaresToRender 15)
-(define gapSize 30)
+(define numSquaresToRender [15 (inRange min: 2 max: 20)])
+(define gapSize [30 (inRange min: 5 max: 50)])
 
 (define numSquares (+ 2 numSquaresToRender))
 
 (define numGaps (+ numSquares 1))
 (define squareSize (/ (- 1000 (* gapSize numGaps)) numSquares))
 
-(define baseColour (col/rgb r: 1.0 g: 0.0 b: 0.3 a: 1.0))
+(define baseColour (col/rgb r: [1.0 (scalar)] g: [0.0 (scalar)] b: [0.3 (scalar)] a: 1.0))
 (define backgroundColour (col/rgb r: 1.0 g: 1.0 b: 0.9))
 
 
@@ -17,24 +16,25 @@
       colour: backgroundColour)
 
 (loop (y from: 1 to: (- numSquares 1))
-	(loop (x from: 1 to: (- numSquares 1))
-          (let ((xPos (mapToPosition at: x))
-                (yPos (mapToPosition at: y))
-                (distanceFromCentre (math/distance2D aX: 500 
-                                                     aY: 800
-                                                     bX: xPos
-                                                     bY: yPos))
-                (volatility (math/clamp val: (/ (- 500 distanceFromCentre) 12)
-                                        min: 0
-                                        max: 50)))
-            (bezier-stroked-rect x: xPos
-                                 y: yPos
-                                 colourVolatility: 20
-                                 volatility: volatility
-                                 seed: (+ x (* y numSquares))
-                                 width: squareSize 
-                                 height: squareSize
-                                 colour: baseColour))))
+      (loop (x from: 1 to: (- numSquares 1))
+            (let ((xPos (mapToPosition at: x))
+                  (yPos (mapToPosition at: y))
+                  (distanceFromCentre (math/distance2D aX: [500 (inRange min:0 max: 1000)]
+                                                       aY: [800 (inRange min:0 max: 1000)]
+                                                       bX: xPos
+                                                       bY: yPos))
+                  (volatility (math/clamp val: (/ (- 500 distanceFromCentre)
+                                                  [12 (inRange min:5 max: 50)])
+                                          min: 0
+                                          max: 50)))
+              (bezier-stroked-rect x: xPos
+                                   y: yPos
+                                   colourVolatility: [20 (inRange min: 2 max: 40)]
+                                   volatility: volatility
+                                   seed: (+ x (* y numSquares))
+                                   width: squareSize
+                                   height: squareSize
+                                   colour: baseColour))))
 
 (define (mapToPosition at: 0)
   (+ (* (+ gapSize squareSize) at) (/ squareSize 2) gapSize))
