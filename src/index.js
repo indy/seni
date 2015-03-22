@@ -318,9 +318,11 @@ function switchMode(newMode) {
 
 const SeniWebApplication = {
   mainFn() {
+    console.log(Trivia.getTitle());
+
     gCurrentMode = SeniMode.authoring;
 
-    //
+    // Ctrl-D switches between author and selector mode
     document.addEventListener('keydown', function(event) {
       if(event.ctrlKey && event.keyCode === 68) {
         switchMode(1 - gCurrentMode);
@@ -331,15 +333,6 @@ const SeniWebApplication = {
     gRenderer = new Renderer('render-canvas');
     setupUI(gRenderer);
     renderScript(gRenderer, initialCode());
-  },
-
-  selectorMainFn() {
-    gCurrentMode = SeniMode.selecting;
-
-    const renderer = new Renderer('render-canvas');
-    setupSelectorUI(renderer, initialCode());
-
-    console.log(Trivia.getTitle());
   }
 };
 
