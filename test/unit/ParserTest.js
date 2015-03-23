@@ -13,7 +13,7 @@ describe('parse', () => {
   }
 
   it('should parse a bracketed form', () => {
-    let astArray = simpleParse('(+ 1 2 [3 (inRange 0 10)])');
+    let astArray = simpleParse('(+ 1 2 [3 (int min: 0 max: 10)])');
     expect(astArray.length).to.equal(1);
 
     let ast = astArray[0];

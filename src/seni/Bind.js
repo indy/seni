@@ -76,7 +76,7 @@ function bindPerlin(env) {
 
 function bindBracket(env, rng) {
   const br = [Bracket.identity,
-              Bracket.inRange,
+              Bracket.int,
               Bracket.scalar,
               Bracket.testPlus];
 

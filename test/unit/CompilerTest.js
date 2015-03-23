@@ -38,12 +38,12 @@ describe('compiler', () => {
   });
 
   it('should test required functions: genotype', () => {
-    expect(compileWithSeed('(+ 2 [44 (inRange min: 10 max: 56)])', 100).forms[0]).
+    expect(compileWithSeed('(+ 2 [44 (int min: 10 max: 56)])', 100).forms[0]).
       to.deep.equal(['+', 2, 11]);
 
-    expect(compileWithSeed('(+ 2 [44 (inRange min: 10 max: 56)])', 33).forms[0]).
+    expect(compileWithSeed('(+ 2 [44 (int min: 10 max: 56)])', 33).forms[0]).
       to.deep.equal(['+', 2, 49]);
-    expect(compileWithSeed('(+ 2 [44 (inRange min: 10 max: 56)])', 33).forms[0]).
+    expect(compileWithSeed('(+ 2 [44 (int min: 10 max: 56)])', 33).forms[0]).
       to.deep.equal(['+', 2, 49]);
 
   });

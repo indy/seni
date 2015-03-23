@@ -15,8 +15,8 @@ const BracketBindings = {
     }
   ),
 
-  inRange: new PublicBinding(
-    'inRange',
+  int: new PublicBinding(
+    'int',
     `returns an integer in the range min..max-1
     arguments: min max`,
     {min: 0, max: 100},
@@ -33,12 +33,13 @@ const BracketBindings = {
     'scalar',
     `returns a number in the range 0..1
     arguments: -`,
-    {},
+    {min: 0.0, max: 1.0},
     (self, rng) => {
       self = self;
       // rng is a SeedRandom returning values in the range 0..1
-      return () => {
-        return rng();
+      return (params) => {
+        const {min, max} = self.mergeWithDefaults(params);
+        return MathUtil.interpolate(min, max, rng());
       };
     }
   ),
