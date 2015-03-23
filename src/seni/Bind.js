@@ -38,6 +38,7 @@ function bindShapes(env, renderer) {
 
   const shapes = [Shapes.rect,
                   Shapes.bezier,
+                  Shapes.bezierBezier,
                   Shapes.bezierTrailing,
                   Shapes.bezierBulging];
 

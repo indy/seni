@@ -438,6 +438,7 @@ const Colour = {
   V: V,
 
   defaultColour: construct(Format.RGB, [1.0, 0.5, 0.5, 0.5]),
+  debugColour: construct(Format.RGB, [0.0, 0.8, 1.0, 1.0]),
 
   construct: construct,
   format: format,
