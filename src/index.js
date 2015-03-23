@@ -322,13 +322,24 @@ const SeniWebApplication = {
 
     gCurrentMode = SeniMode.authoring;
 
+
+    let onSwitchMode = function(event) {
+        switchMode(1 - gCurrentMode);
+        event.preventDefault();
+    };
+
     // Ctrl-D switches between author and selector mode
     document.addEventListener('keydown', function(event) {
       if(event.ctrlKey && event.keyCode === 68) {
-        switchMode(1 - gCurrentMode);
-        event.preventDefault();
+        onSwitchMode(event);
       }
     }, false);
+
+    let selectorModeIcon = document.getElementById('selector-mode-icon');
+    selectorModeIcon.addEventListener('click', onSwitchMode);
+
+    let authorModeIcon = document.getElementById('author-mode-icon');
+    authorModeIcon.addEventListener('click', onSwitchMode);
 
     gRenderer = new Renderer('render-canvas');
     setupUI(gRenderer);
