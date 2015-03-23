@@ -69,8 +69,8 @@ for (let i = 0; i < 256; i++) {
 
 const Perlin = {
   perlin2: new PublicBinding(
-    'perlin/unsigned',
-    ``,
+    'perlin/signed',
+    `returns perlin numbers in the range -1..1`,
     {x: 1.0, y: 1.0, z: 1.0},
     (self) => {
       return (params) => {
@@ -81,8 +81,8 @@ const Perlin = {
   ),
 
   perlin: new PublicBinding(
-    'perlin/signed',
-    ``,
+    'perlin/unsigned',
+    `returns perlin numbers in the range 0..1`,
     {x: 1.0, y: 1.0, z: 1.0},
     (self) => {
       return (params) => {
@@ -91,7 +91,10 @@ const Perlin = {
         return (v + 1) / 2.0;
       };
     }
-  )
+  ),
+
+  _perlin: (x, y, z) => noise(x, y, z)
+
 };
 
 export default Perlin;

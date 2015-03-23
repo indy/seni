@@ -53,7 +53,7 @@
                     colour: passColour)))))))
 
 (define (v x: 0 y: 0 z: 0 scale: 1)
-  (+ y (* scale (perlin/unsigned x: x y: y z: z))))
+  (+ y (* scale (perlin/signed x: x y: y z: z))))
 
 (define (wash variation: 200
               lineWidth: 70
