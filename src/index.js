@@ -30,7 +30,7 @@ function renderScript(renderer, form) {
 }
 
 function initialCode() {
-  const code = `(bezierbezier)
+  const code = `(bezierScratch)
   `;
   return code;
 }
@@ -105,7 +105,7 @@ function setupSelectorUI(renderer, form) {
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to authoring mode
-    if(i < 25 && gCurrentMode === SeniMode.selecting) {
+    if(i < 50 && gCurrentMode === SeniMode.selecting) {
 
       genotype = Genetic.createGenotypeFromTraits(traits, i+random);
 

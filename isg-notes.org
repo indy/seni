@@ -6,10 +6,11 @@
   4. [ ] single artwork (full-screen)
   5. [ ] select scripts (file manager/gdrive integration)
 
-* todo [0/3]
+* todo [0/4]
   1. [ ] look at use of spy in boilerplate test code
   2. [ ] MathUtil::_remapFn default args
   3. [ ] move rng bindings out of mathutil into their own bindings file
+  4. [ ] come up with a common/good way of creating colour volatility
 
 
 should the GA code be applied after parsing but before compiling?

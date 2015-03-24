@@ -38,9 +38,10 @@ function bindShapes(env, renderer) {
 
   const shapes = [Shapes.rect,
                   Shapes.bezier,
-                  Shapes.bezierBezier,
                   Shapes.bezierTrailing,
-                  Shapes.bezierBulging];
+                  Shapes.bezierBulging,
+                  Shapes.bezierScratch,
+                  Shapes.bezierScratchRect];
 
   return shapes.reduce((a, b) => a.set(b.name, b.create(b, renderer)), env);
 }

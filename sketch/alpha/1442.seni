@@ -1,0 +1,56 @@
+(rect width: 1000 height: 1000 x: 500 y: 500
+      colour: (col/rgb r: 0 g: 0 b: 0 a: 1))
+(wash colour: (col/rgb r: 0.15 g: 0.1 b: 0.2 a: 0.1))
+
+(bezierScratchRect x: 120 y: 100
+                   width: 760 height: 200
+                   colourVolatility: [1 (int min: 0 max: 50)]
+                   colour: (col/rgb r: [0.15 (scalar)]
+                                    g: [0.10 (scalar)]
+                                    b: [0.20 (scalar)]
+                                    a: 0.3)
+                   volatility: [20 (int min: 0 max: 100)]
+                   iterations: [10 (int min: 0 max: 100)]
+                   seed: [42 (int min: 0 max: 100)]
+                   overlap: [2.0 (scalar min: 0 max: 5.0)])
+
+(bezierScratchRect x: 100 y: 300
+                   width: 800 height: 600
+                   colourVolatility: [30 (int min: 0 max: 60)]
+                   colour: (col/rgb r: [0.8 (scalar)]
+                                    g: [0.0 (scalar)]
+                                    b: [0.0 (scalar)]
+                                    a: 0.3)
+                   volatility: [30 (int min: 0 max: 100)]
+                   iterations: [10 (int min: 0 max: 100)]
+                   seed: [40 (int min: 0 max: 100)]
+                   overlap: [0.0 (scalar min: 0 max: 5.0)])
+
+(define (v x: 0 y: 0 z: 0 scale: 1)
+  (+ y (* scale (perlin/signed x: x y: y z: z))))
+
+(define (wash variation: 200
+              lineWidth: 70
+              lineSegments: 5
+              colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 a: 0.4)
+              seed: 272)
+  (loop (h from: -20 to: 1020 step: 20)
+        (bezier tessellation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair
+                         0 (v x: 0.10 y: h z: seed scale: variation)
+                         333 (v x: 333.33 y: h z: seed scale: variation)
+                         666 (v x: 666.66 y: h z: seed scale: variation)
+                         1000 (v x: 1000.10 y: h z: seed scale: variation))
+                colour: colour)
+        (bezier tessellation: lineSegments
+                lineWidth: lineWidth
+                coords: (pair
+                         (v x: 0.10 y: h z: seed scale: variation) 0
+                         (v x: 333.33 y: h z: seed scale: variation) 333
+                         (v x: 666.66 y: h z: seed scale: variation) 666
+                         (v x: 1000.10 y: h z: seed scale: variation) 1000)
+                colour: colour)))
+
+
+
