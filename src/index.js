@@ -3,7 +3,7 @@ import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
 import Bind from './seni/Bind';
 import Trivia from './seni/Trivia';
-
+import InitialCode from './InitialCode';
 
 const SeniMode = {
   authoring: 0,
@@ -30,9 +30,7 @@ function renderScript(renderer, form) {
 }
 
 function initialCode() {
-  const code = `(bezierScratch)
-  `;
-  return code;
+  return InitialCode.getCode();
 }
 
 
