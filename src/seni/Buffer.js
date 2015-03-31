@@ -1,4 +1,5 @@
 class Buffer {
+
   constructor(glContainer, matrixStack) {
     // each buffer can hold 1000 'items' where an item is a vertex, colour etc
     this.bufferSize = 1000;
@@ -17,6 +18,8 @@ class Buffer {
     this.glColourBuffer = gl.createBuffer();
 
     this.matrixStack = matrixStack;
+
+    this.flushCount = 0;
   }
 
   /**
@@ -93,6 +96,8 @@ class Buffer {
     if(this.bufferLevel === 0) {
       return;
     }
+
+    this.flushCount += 1;
 
     const gl = glContainer.gl;
     const shaderProgram = glContainer.shaderProgram;
