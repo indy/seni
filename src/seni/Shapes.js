@@ -8,6 +8,13 @@ import SeedRandom from './SeedRandom';
 
 const Format = Colour.Format;
 
+function normals(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  return [MathUtil.normalize(-dy, dx), MathUtil.normalize(dy, -dx)];
+}
+
 function bezierPoint(a, b, c, d, t) {
   const t1 = 1 - t;
 
@@ -17,41 +24,62 @@ function bezierPoint(a, b, c, d, t) {
     (d * t * t * t);
 }
 
-function normals(x1, y1, x2, y2) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
+function quadraticPoint(a, b, c, t) {
+  const r = ((b - a) - 0.5 * (c - a)) / (0.5 * (0.5 - 1));
+  const s = c - a - r;
 
-  return [MathUtil.normalize(-dy, dx), MathUtil.normalize(dy, -dx)];
+  return (r * t * t) + (s * t) + a;
 }
 
-function debugRect(buffer, glContainer, x, y, radius, colour) {
-  const elementArray = Colour.elementArray(colour);
+function bezierCoordinates(tVals, controlPoints) {
+  const xs = tVals.map((t) => bezierPoint(controlPoints[0][0],
+                                          controlPoints[1][0],
+                                          controlPoints[2][0],
+                                          controlPoints[3][0], t));
+  const ys = tVals.map((t) => bezierPoint(controlPoints[0][1],
+                                          controlPoints[1][1],
+                                          controlPoints[2][1],
+                                          controlPoints[3][1], t));
 
-  for(let i=0;i<3;i++) {
-    buffer.prepareToAddTriangleStrip(glContainer, 4,
-                                     [x - radius, y - radius, 0.0]);
-    buffer.addVertex([x - radius, y - radius, 0.0], elementArray);
-    buffer.addVertex([x + radius, y - radius, 0.0], elementArray);
-    buffer.addVertex([x - radius, y + radius, 0.0], elementArray);
-    buffer.addVertex([x + radius, y + radius, 0.0], elementArray);
-  }
+  return {xs, ys};
 }
 
-function renderSpline(publicBinding, renderer, params) {
-  const glContainer = renderer.getGLContainer();
-  const buffer = renderer.getBuffer();
+function quadraticCoordinates(tVals, controlPoints) {
+  const xs = tVals.map((t) => quadraticPoint(controlPoints[0][0],
+                                             controlPoints[1][0],
+                                             controlPoints[2][0], t));
+  const ys = tVals.map((t) => quadraticPoint(controlPoints[0][1],
+                                             controlPoints[1][1],
+                                             controlPoints[2][1], t));
 
+  return {xs, ys};
+}
+
+
+/*
+ function debugRect(buffer, glContainer, x, y, radius, colour) {
+ const elementArray = Colour.elementArray(colour);
+
+ for(let i=0;i<3;i++) {
+ buffer.prepareToAddTriangleStrip(glContainer, 4,
+ [x - radius, y - radius, 0.0]);
+ buffer.addVertex([x - radius, y - radius, 0.0], elementArray);
+ buffer.addVertex([x + radius, y - radius, 0.0], elementArray);
+ buffer.addVertex([x - radius, y + radius, 0.0], elementArray);
+ buffer.addVertex([x + radius, y + radius, 0.0], elementArray);
+ }
+ }
+ */
+
+function getRemapAndHalfWidthEnd(params) {
   const {
-    colour,
-    coords,
-    tessellation,
-    tStart,
-    tEnd,
     lineWidth,
     lineWidthStart,
     lineWidthEnd,
+    tStart,
+    tEnd,
     lineWidthMapping
-  } = publicBinding.mergeWithDefaults(params);
+  } = params;
 
   let halfWidthEnd, remap;
 
@@ -69,28 +97,26 @@ function renderSpline(publicBinding, renderer, params) {
 
   }
 
+  return {halfWidthEnd, remap};
+}
 
-  const elementArray = Colour.elementArray(colour);
+function addVerticesAsStrip(args) {
 
-  let debugRendering = false;
-  if(debugRendering) {
-    const c = coords;
-    for(let i=0;i<3;i++) {
-      debugRect(buffer, glContainer, c[i][0], c[i][1], 10, colour);
-    }
-  }
+  let {
+    renderer,
+    tVals,
+    xs,
+    ys,
+    tessellation,
+    remap,
+    colour,
+    halfWidthEnd
+  } = args;
 
-  const p = coords;
-  const a0x = p[0][0];
-  const a0y = p[0][1];
-  const a2x = ((p[1][0] - p[0][0]) - 0.5*(p[2][0] - p[0][0])) / (0.5 * (0.5-1));
-  const a2y = ((p[1][1] - p[0][1]) - 0.5*(p[2][1] - p[0][1])) / (0.5 * (0.5-1));
-  const a1x = p[2][0] - p[0][0] - a2x;
-  const a1y = p[2][1] - p[0][1] - a2y;
+  const glContainer = renderer.getGLContainer();
+  const buffer = renderer.getBuffer();
 
-  const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
-  const xs = tVals.map((t) => (a2x*t*t) + (a1x*t) + a0x);
-  const ys = tVals.map((t) => (a2y*t*t) + (a1y*t) + a0y);
+  const elementArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
   for(let i=0; i<tVals.length - 1; i++) {
     let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
@@ -130,7 +156,45 @@ function renderSpline(publicBinding, renderer, params) {
                     0.0],
                    elementArray);
 
+}
 
+function renderCurve(publicBinding, renderer, params, coordFn) {
+
+  const fullParams = publicBinding.mergeWithDefaults(params);
+  const {
+    colour,
+    coords,
+    tessellation,
+    tStart,
+    tEnd
+  } = fullParams;
+
+  const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
+
+  const {
+    xs,
+    ys
+  } = coordFn(tVals, coords);
+
+  const {
+    halfWidthEnd,
+    remap
+  } = getRemapAndHalfWidthEnd(fullParams);
+
+  addVerticesAsStrip({
+    renderer,
+    tVals,
+    xs,
+    ys,
+    tessellation,
+    remap,
+    colour,
+    halfWidthEnd
+  });
+}
+
+function renderSpline(publicBinding, renderer, params) {
+  renderCurve(publicBinding, renderer, params, quadraticCoordinates);
 }
 
 const splineBinding = new PublicBinding(
@@ -155,93 +219,7 @@ const splineBinding = new PublicBinding(
   });
 
 function renderBezier(publicBinding, renderer, params) {
-  const glContainer = renderer.getGLContainer();
-  const buffer = renderer.getBuffer();
-
-  const {
-    tessellation,
-    lineWidth,
-    lineWidthStart,
-    lineWidthEnd,
-    lineWidthMapping,
-    coords,
-    tStart,
-    tEnd
-  } = publicBinding.mergeWithDefaults(params);
-
-  let {colour} = params;
-
-  let halfWidthEnd, remap;
-
-  if(lineWidth !== undefined) {
-    // user has given a constant lineWidth parameter
-    halfWidthEnd  = lineWidth / 2.0;
-    remap = () => halfWidthEnd;
-  } else {
-    // use the default start and end line widths
-    const halfWidthStart  = lineWidthStart / 2.0;
-    halfWidthEnd  = lineWidthEnd / 2.0;
-    remap = MathUtil.remapFn({from: [tStart, tEnd],
-                              to: [halfWidthStart, halfWidthEnd],
-                              mapping: lineWidthMapping});
-
-  }
-
-  const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
-  const xs = tVals.map((i) => bezierPoint(coords[0][0],
-                                          coords[1][0],
-                                          coords[2][0],
-                                          coords[3][0], i));
-  const ys = tVals.map((i) => bezierPoint(coords[0][1],
-                                          coords[1][1],
-                                          coords[2][1],
-                                          coords[3][1], i));
-
-  if(colour === undefined) {
-    colour = Colour.construct(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
-  } else {
-    colour = Colour.cloneAs(colour, Format.RGB);
-  }
-
-  const elementArray = Colour.elementArray(colour);
-
-  for(let i=0; i<tVals.length - 1; i++) {
-    let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
-        i0 = xs[i],
-        i1 = ys[i],
-        t = tVals[i];
-
-    if(i === 0) {
-      buffer.prepareToAddTriangleStrip(glContainer, tessellation * 2,
-                                       [(xn1 * remap({val: t})) + i0,
-                                        (yn1 * remap({val: t})) + i1,
-                                        0.0]);
-    }
-
-    buffer.addVertex([(xn1 * remap({val: t})) + i0,
-                      (yn1 * remap({val: t})) + i1,
-                      0.0],
-                     elementArray);
-    buffer.addVertex([(xn2 * remap({val: t})) + i0,
-                      (yn2 * remap({val: t})) + i1,
-                      0.0],
-                     elementArray);
-  }
-
-  // final 2 vertices for the end point
-  let i = tVals.length - 2,
-      [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
-      i2 = xs[i+1],
-      i3 = ys[i+1];
-
-  buffer.addVertex([(xn1 * halfWidthEnd) + i2,
-                    (yn1 * halfWidthEnd) + i3,
-                    0.0],
-                   elementArray);
-  buffer.addVertex([(xn2 * halfWidthEnd) + i2,
-                    (yn2 * halfWidthEnd) + i3,
-                    0.0],
-                   elementArray);
+  renderCurve(publicBinding, renderer, params, bezierCoordinates);
 }
 
 const bezierBinding = new PublicBinding(
@@ -279,15 +257,7 @@ function renderRect(publicBinding, renderer, params) {
   const halfWidth = (width / 2);
   const halfHeight = (height / 2);
 
-  //console.log('rect: x:' + x + ', y:' + y + ', width:' + width + ', height:' + height);
-
-  if(colour === undefined) {
-    colour = Colour.construct(Format.RGB, [1.0, 0.0, 0.0, 1.0]);
-  } else {
-    colour = Colour.cloneAs(colour, Format.RGB);
-  }
-
-  const elementArray = Colour.elementArray(colour);
+  const elementArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
   buffer.prepareToAddTriangleStrip(glContainer, 4,
                                    [x - halfWidth, y - halfHeight, 0.0]);
@@ -314,7 +284,6 @@ const rectBinding = new PublicBinding(
   (self, renderer) => {
     return (params) => renderRect(self, renderer, params);
   });
-
 
 function renderBezierTrailing(publicBinding, renderer, params) {
   const {tessellation,
@@ -406,81 +375,60 @@ const bezierBulgingBinding = new PublicBinding(
     return (params) => renderBezierBulging(self, renderer, params);
   });
 
-
-function renderBezierScratch(publicBinding, renderer, params) {
+function renderStrokedBezier(publicBinding, renderer, params) {
   const {
     tessellation,
     lineWidth,
     coords,
-    strokeWidth,
     strokeTessellation,
     strokeNoise,
+    strokeLineWidthStart,
+    strokeLineWidthEnd,
     colour,
     colourVolatility,
     seed
   } = publicBinding.mergeWithDefaults(params);
 
   let [[x1, y1], [x2, y2], [x3, y3], [x4, y4]] = coords;
-  let tv = MathUtil.stepsInclusive(0.0, 1.0, tessellation + 3);
+  let tv = MathUtil.stepsInclusive(0.0, 1.0, tessellation + 2);
 
   let lab = Colour.cloneAs(colour, Colour.Format.LAB);
 
   for(let i=0;i<tessellation;i++) {
-    for(let w=3;w < (lineWidth/2); w += 12) { // ????
 
-      let tvals = [tv[i+0], tv[i+1], tv[i+2], tv[i+3]];
-      let [xx1, xx2, xx3, xx4] =
-            tvals.map((t) => bezierPoint(x1, x2, x3, x4, t));
-      let [yy1, yy2, yy3, yy4] =
-            tvals.map((t) => bezierPoint(y1, y2, y3, y4, t));
-      let [[xn1, yn1], [xn2, yn2]] = normals(xx1, yy1, xx4, yy4);
-      let ns = strokeNoise;
+    let tvals = [tv[i+0], tv[i+1], tv[i+2]];
+    // get 3 points on the bezier curve
+    let [xx1, xx2, xx3] =
+          tvals.map((t) => bezierPoint(x1, x2, x3, x4, t));
+    let [yy1, yy2, yy3] =
+          tvals.map((t) => bezierPoint(y1, y2, y3, y4, t));
 
-      renderBezier(bezierBinding, renderer, {
-        tessellation: strokeTessellation,
-        lineWidth: strokeWidth,
-        colour: Colour.setLightness(lab, Colour.getLightness(lab) +
-                                    (Perlin._perlin(xx1, xn1, w) * colourVolatility)),
-        coords: [
-          [(xx1 + (xn1 * w) + (ns * Perlin._perlin(xx1, xn1, w * seed))),
-           (yy1 + (yn1 * w) + (ns * Perlin._perlin(yy1, yn1, w * seed)))],
+    let ns = strokeNoise;
 
-          [(xx2 + (xn1 * w) + (ns * Perlin._perlin(xx2, xn1, w * seed))),
-           (yy2 + (yn1 * w) + (ns * Perlin._perlin(yy2, yn1, w * seed)))],
+    renderSpline(splineBinding, renderer, {
+      tessellation: strokeTessellation,
+      lineWidth: lineWidth,
+      lineWidthStart: strokeLineWidthStart,
+      lineWidthEnd: strokeLineWidthEnd,
 
-          [(xx3 + (xn1 * w) + (ns * Perlin._perlin(xx3, xn1, w * seed))),
-           (yy3 + (yn1 * w) + (ns * Perlin._perlin(yy3, yn1, w * seed)))],
+      colour: Colour.setLightness(lab, Colour.getLightness(lab) +
+                                  (Perlin._perlin(xx1, xx1, xx1) * colourVolatility)),
+      coords: [
+        [(xx1 + (ns * Perlin._perlin(xx1, xx1, seed))),
+         (yy1 + (ns * Perlin._perlin(yy1, yy1, seed)))],
 
-          [(xx4 + (xn1 * w) + (ns * Perlin._perlin(xx4, xn1, w * seed))),
-           (yy4 + (yn1 * w) + (ns * Perlin._perlin(yy4, yn1, w * seed)))],
-        ]
-      });
+        [(xx2 + (ns * Perlin._perlin(xx2, xx1, seed))),
+         (yy2 + (ns * Perlin._perlin(yy2, yy1, seed)))],
 
-      renderBezier(bezierBinding, renderer, {
-        tessellation: strokeTessellation,
-        lineWidth: strokeWidth,
-        colour: Colour.setLightness(lab, Colour.getLightness(lab) +
-                                    (Perlin._perlin(xx1, xn2, w) * colourVolatility)),
-        coords: [
-          [(xx1 + (xn2 * w) + (ns * Perlin._perlin(xx1, xn2, w * seed))),
-           (yy1 + (yn2 * w) + (ns * Perlin._perlin(yy1, yn2, w * seed)))],
-
-          [(xx2 + (xn2 * w) + (ns * Perlin._perlin(xx2, xn2, w * seed))),
-           (yy2 + (yn2 * w) + (ns * Perlin._perlin(yy2, yn2, w * seed)))],
-
-          [(xx3 + (xn2 * w) + (ns * Perlin._perlin(xx3, xn2, w * seed))),
-           (yy3 + (yn2 * w) + (ns * Perlin._perlin(yy3, yn2, w * seed)))],
-
-          [(xx4 + (xn2 * w) + (ns * Perlin._perlin(xx4, xn2, w * seed))),
-           (yy4 + (yn2 * w) + (ns * Perlin._perlin(yy4, yn2, w * seed)))],
-        ]
-      });
-    }
+        [(xx3 + (ns * Perlin._perlin(xx3, xx1, seed))),
+         (yy3 + (ns * Perlin._perlin(yy3, yy1, seed)))],
+      ]
+    });
   }
 }
 
-const bezierScratchBinding = new PublicBinding(
-  'bezierScratch',
+const strokedBezierBinding = new PublicBinding(
+  'strokedBezier',
   `
   tessellation: the number of basic bezier curves to use to render this bezier
 
@@ -496,16 +444,17 @@ const bezierScratchBinding = new PublicBinding(
   `,
   {
     tessellation: 15,
-    lineWidth: 20,
+    lineWidth: undefined,
 
     coords: [[440, 400],
              [533, 700],
              [766, 200],
              [900, 500]],
 
-    strokeWidth: 30,
     strokeTessellation: 10,
     strokeNoise: 25,
+    strokeLineWidthStart: 1.0,
+    strokeLineWidthEnd: 1.0,
 
     colour: Colour.defaultColour,
     colourVolatility: 0,
@@ -513,10 +462,11 @@ const bezierScratchBinding = new PublicBinding(
     seed: 42
   },
   (self, renderer) => {
-    return (params) => renderBezierScratch(self, renderer, params);
+    return (params) => renderStrokedBezier(self, renderer, params);
   });
 
-function renderBezierScratchRect(publicBinding, renderer, params) {
+
+function renderStrokedBezierRect(publicBinding, renderer, params) {
   const {
     x,
     y,
@@ -527,12 +477,26 @@ function renderBezierScratchRect(publicBinding, renderer, params) {
     iterations,
     seed,
     tessellation,
-    strokeWidth,
     strokeTessellation,
     strokeNoise,
     colour,
     colourVolatility
   } = publicBinding.mergeWithDefaults(params);
+
+
+  console.log('x ' + x);
+  console.log('y ' + y);
+  console.log('width ' + width);
+  console.log('height ' + height);
+  console.log('volatility ' + volatility);
+  console.log('overlap ' + overlap);
+  console.log('iterations ' + iterations);
+  console.log('seed ' + seed);
+  console.log('tessellation ' + tessellation);
+  console.log('strokeTessellation ' + strokeTessellation);
+  console.log('strokeNoise ' + strokeNoise);
+  console.log('colour ' + colour);
+  console.log('colourVolatility ' + colourVolatility);
 
   let thWidth = width / 3;
   let thHeight = height / 3;
@@ -540,11 +504,11 @@ function renderBezierScratchRect(publicBinding, renderer, params) {
 
   let hDelta = height / iterations;
   let hStripWidth = height / iterations;
-  let halfHStripWidth = hStripWidth / 2;
+
 
   let vDelta = width / iterations;
   let vStripWidth = width / iterations;
-  let halfVStripWidth = vStripWidth / 2;
+
 
   let halfAlphaCol = Colour.cloneAs(colour, Colour.Format.LAB);
   let lab = Colour.setAlpha(halfAlphaCol, Colour.getAlpha(halfAlphaCol) / 2);
@@ -553,20 +517,19 @@ function renderBezierScratchRect(publicBinding, renderer, params) {
   let i;
 
   for(i=iterations; i>0; i--) {
-    renderBezierScratch(bezierScratchBinding, renderer, {
+    renderStrokedBezier(strokedBezierBinding, renderer, {
       tessellation: tessellation,
       lineWidth: overlap + hStripWidth,
       coords: [
         [(rng() * vol) + x + (0 * thWidth),
-         ((i * hDelta) + (rng() * vol) + y) - halfHStripWidth],
+         ((i * hDelta) + (rng() * vol) + y)],
         [(rng() * vol) + x + (1 * thWidth),
-         ((i * hDelta) + (rng() * vol) + y) - halfHStripWidth],
+         ((i * hDelta) + (rng() * vol) + y)],
         [(rng() * vol) + x + (2 * thWidth),
-         ((i * hDelta) + (rng() * vol) + y) - halfHStripWidth],
+         ((i * hDelta) + (rng() * vol) + y)],
         [(rng() * vol) + x + (3 * thWidth),
-         ((i * hDelta) + (rng() * vol) + y) - halfHStripWidth]
+         ((i * hDelta) + (rng() * vol) + y)]
       ],
-      strokeWidth: strokeWidth,
       strokeTessellation: strokeTessellation,
       strokeNoise: strokeNoise,
       colour: lab,
@@ -575,20 +538,19 @@ function renderBezierScratchRect(publicBinding, renderer, params) {
   }
 
   for(i=iterations; i>0; i--) {
-    renderBezierScratch(bezierScratchBinding, renderer, {
+    renderStrokedBezier(strokedBezierBinding, renderer, {
       tessellation: tessellation,
       lineWidth: overlap + vStripWidth,
       coords: [
-        [((i * vDelta) + (rng() * vol) + x) - halfVStripWidth,
+        [((i * vDelta) + (rng() * vol) + x),
          (rng() * vol) + y + (0 * thHeight)],
-        [((i * vDelta) + (rng() * vol) + x) - halfVStripWidth,
+        [((i * vDelta) + (rng() * vol) + x),
          (rng() * vol) + y + (1 * thHeight)],
-        [((i * vDelta) + (rng() * vol) + x) - halfVStripWidth,
+        [((i * vDelta) + (rng() * vol) + x),
          (rng() * vol) + y + (2 * thHeight)],
-        [((i * vDelta) + (rng() * vol) + x) - halfVStripWidth,
+        [((i * vDelta) + (rng() * vol) + x),
          (rng() * vol) + y + (3 * thHeight)]
       ],
-      strokeWidth: strokeWidth,
       strokeTessellation: strokeTessellation,
       strokeNoise: strokeNoise,
       colour: lab,
@@ -597,8 +559,8 @@ function renderBezierScratchRect(publicBinding, renderer, params) {
   }
 }
 
-const bezierScratchRectBinding = new PublicBinding(
-  'bezierScratchRect',
+const strokedBezierRectBinding = new PublicBinding(
+  'strokedBezierRect',
   `
   `,
   {
@@ -615,7 +577,6 @@ const bezierScratchRectBinding = new PublicBinding(
 
     tessellation: 15,
 
-    strokeWidth: 30,
     strokeTessellation: 10,
     strokeNoise: 25,
 
@@ -623,7 +584,7 @@ const bezierScratchRectBinding = new PublicBinding(
     colourVolatility: 40
   },
   (self, renderer) => {
-    return (params) => renderBezierScratchRect(self, renderer, params);
+    return (params) => renderStrokedBezierRect(self, renderer, params);
   });
 
 const Shapes = {
@@ -632,8 +593,9 @@ const Shapes = {
   bezier: bezierBinding,
   bezierTrailing: bezierTrailingBinding,
   bezierBulging: bezierBulgingBinding,
-  bezierScratch: bezierScratchBinding,
-  bezierScratchRect: bezierScratchRectBinding
+
+  strokedBezier: strokedBezierBinding,
+  strokedBezierRect: strokedBezierRectBinding
 };
 
 export default Shapes;

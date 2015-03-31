@@ -41,8 +41,8 @@ function bindShapes(env, renderer) {
                   Shapes.bezier,
                   Shapes.bezierTrailing,
                   Shapes.bezierBulging,
-                  Shapes.bezierScratch,
-                  Shapes.bezierScratchRect];
+                  Shapes.strokedBezier,
+                  Shapes.strokedBezierRect];
 
   return shapes.reduce((a, b) => a.set(b.name, b.create(b, renderer)), env);
 }
