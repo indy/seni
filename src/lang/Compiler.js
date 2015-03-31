@@ -8,16 +8,16 @@ import NodeType from './NodeType';
 
 function compile(node, genotype) {
 
-  if(node.alterable) {
+  if (node.alterable) {
     // todo: assert that there's another genotype value available
     return [genotype.first().get('value'), genotype.shift()];
   }
 
-  if(node.type === NodeType.LIST) {
+  if (node.type === NodeType.LIST) {
     return compileList(node, genotype);
   }
 
-  if(node.type === NodeType.STRING) {
+  if (node.type === NodeType.STRING) {
     // without this the following forms will compile to the same thing:
     //     (foo 'hello')
     //     (foo hello)
@@ -43,7 +43,7 @@ function compileNodes(nodes, genotype) {
 function compileList(node, genotype) {
   const children = node.children;
 
-  if(usingNamedParameters(children)) {
+  if (usingNamedParameters(children)) {
     return compileFormUsingNamedParameters(children, genotype);
   } else {
     return compileNodes(children, genotype);
@@ -54,18 +54,20 @@ function compileFormUsingNamedParameters(children, genotype) {
   // this is a form that has the pattern (foo arg1: 3 arg2: 5)
   // combine the labels + arguments into an object
 
-  if(!(children.length & 1)) {
-    console.log('error: odd number of nodes expected: function name + pairs of label,arg');
+  if (!(children.length & 1)) {
+    let msg = 'error: odd number of nodes expected: ';
+    msg += ' function name + pairs of label,arg';
+    console.log(msg);
   }
 
   const args = {};
 
-  for(let i=1; i < children.length; i+=2) {
+  for (let i = 1; i < children.length; i += 2) {
     const label = children[i];
-    if(label.type !== NodeType.LABEL) {
+    if (label.type !== NodeType.LABEL) {
       console.log('error: expecting a label, actual: ' + label.value);
     }
-    let [arg, g] = compile(children[i+1], genotype);
+    let [arg, g] = compile(children[i + 1], genotype);
     args[label.value] = arg;
     genotype = g;
   }
@@ -77,7 +79,7 @@ function compileFormUsingNamedParameters(children, genotype) {
 
 function usingNamedParameters(children) {
   // note: this will return false for functions where 0 arguments are given
-  if(children.length > 1) {
+  if (children.length > 1) {
     return children[1].type === NodeType.LABEL;
   }
   return false;

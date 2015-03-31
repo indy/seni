@@ -42,7 +42,7 @@
 /**
  * All code is in an anonymous closure to keep the global namespace clean.
  */
-(function (
+(function(
   global, pool, math, width, chunks, digits, rngname) {
 
   //
@@ -60,7 +60,7 @@
   //
   var impl = math['seed' + rngname] = function(seed, options, callback) {
     var key = [];
-    options = (options === true) ? { entropy: true } : (options || {});
+    options = (options === true) ? {entropy: true} : (options || {});
 
     // Flatten the seed string or build one from local entropy if needed.
     var shortseed = mixkey(flatten(
@@ -85,11 +85,14 @@
 
               // If called as a method of Math (Math.seedrandom()), mutate
               // Math.random because that is how seedrandom.js has worked since v1.0.
-              if (isMathCall) { math[rngname] = prng; return seed; }
-
-              // Otherwise, it is a newer calling convention, so return the
-              // prng directly.
-              else return prng;
+              if (isMathCall) {
+                math[rngname] = prng;
+                return seed;
+              } else {
+                // Otherwise, it is a newer calling convention, so return the
+                // prng directly.
+                return prng;
+              }
             })(
 
       // This function returns a random double in [0, 1) that contains

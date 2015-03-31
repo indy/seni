@@ -3,12 +3,12 @@ import MatrixStack from '../../src/seni/MatrixStack';
 describe('MatrixStack', () => {
 
   function matrixRowColumn(m, r, c) {
-    return m[(c*4) + r];
+    return m[(c * 4) + r];
   }
 
   function expectIdentity(m) {
-    for(let j=0;j<4;j++) {
-      for(let i=0;i<4;i++) {
+    for (let j = 0; j < 4; j++) {
+      for (let i = 0; i < 4; i++) {
         expect(matrixRowColumn(m, i, j)).to.equal(i === j ? 1 : 0);
       }
     }

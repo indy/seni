@@ -10,12 +10,12 @@ const Runtime = {
 
   buildAst: function(env, form) {
     const tokensBox = Lexer.tokenise(form);
-    if(tokensBox.error) {
+    if (tokensBox.error) {
       console.log(tokensBox.error);
       return false;
     }
     const astBox = Parser.parse(tokensBox.tokens);
-    if(astBox.error) {
+    if (astBox.error) {
       // some sort of error occurred
       console.log(astBox.error);
       return false;

@@ -57,5 +57,4 @@ const MatrixStackBindings = {
   )
 };
 
-
 export default MatrixStackBindings;

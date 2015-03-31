@@ -5,7 +5,7 @@ function characterSet(characters) {
   const s = new Set();
 
   // todo: is there a better way than iterating over the string?
-  for(let i=0;i<characters.length;i++) {
+  for (let i = 0; i < characters.length; i++) {
     s.add(characters[i]);
   }
   return s;
@@ -13,7 +13,9 @@ function characterSet(characters) {
 
 const sWhitespaceSet = characterSet(' \t\n,');
 const sDigitSet = characterSet('0123456789');
-const sAlphaSet = characterSet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=');
+const sAlphaSet =
+        characterSet(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=');
 const sSymbolSet = characterSet('-!@#$%^&*<>?');
 
 const MINUS = '-';
@@ -69,9 +71,9 @@ function isNewline(character) {
 
 function isLabel(s) {
   let i = 0;
-  for(i=0;i<s.length;i++) {
+  for (i = 0; i < s.length; i++) {
     const c = s[i];
-    if(!isAlpha(c) && !isDigit(c) && !isSymbol(c)) {
+    if (!isAlpha(c) && !isDigit(c) && !isSymbol(c)) {
       break;
     }
   }
@@ -80,21 +82,20 @@ function isLabel(s) {
 
 // is there a period in the stream of characters before we get to whitespace
 function hasPeriod(s) {
-  for(let i=0; i<s.length; i++) {
-    if(s[i] === PERIOD) {
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === PERIOD) {
       return true;
     }
-    if(isWhitespace(s[i])) {
+    if (isWhitespace(s[i])) {
       return false;
     }
   }
   return false;
 }
 
-
 function skipWhitespace(s) {
-  for(let i=0;i<s.length;i++) {
-    if(!isWhitespace(s[i])) {
+  for (let i = 0; i < s.length; i++) {
+    if (!isWhitespace(s[i])) {
       return s.substring(i);
     }
   }
@@ -103,13 +104,13 @@ function skipWhitespace(s) {
 
 function consumeInt(s) {
   let i = 0;
-  for(i=0;i<s.length;i++) {
+  for (i = 0; i < s.length; i++) {
     const c = s[i];
-    if(!isDigit(c) && c !== MINUS) {
+    if (!isDigit(c) && c !== MINUS) {
       break;
     }
 
-    if(!isDigit(c) && !(i === 0 && c === MINUS)) {
+    if (!isDigit(c) && !(i === 0 && c === MINUS)) {
       break;
     }
   }
@@ -120,9 +121,9 @@ function consumeInt(s) {
 
 function consumeFloat(s) {
   let i = 0;
-  for(i=0;i<s.length;i++) {
+  for (i = 0; i < s.length; i++) {
     const c = s[i];
-    if(!isDigit(c) && !(i===0 && c === MINUS) && c !== PERIOD) {
+    if (!isDigit(c) && !(i === 0 && c === MINUS) && c !== PERIOD) {
       break;
     }
   }
@@ -161,10 +162,10 @@ function consumeString(s) {
 }
 
 function consumeName(s) {
-  let i=0;
-  for(i=0;i<s.length;i++) {
+  let i = 0;
+  for (i = 0; i < s.length; i++) {
     const c = s[i];
-    if(!isAlpha(c) && !isDigit(c) && !isSymbol(c)) {
+    if (!isAlpha(c) && !isDigit(c) && !isSymbol(c)) {
       break;
     }
   }
@@ -173,29 +174,29 @@ function consumeName(s) {
 }
 
 function consumeComment(s) {
-  let i=0;
-  for(i=0;i<s.length;i++) {
-    if(isNewline(s[i])) {
+  let i = 0;
+  for (i = 0; i < s.length; i++) {
+    if (isNewline(s[i])) {
       break;
     }
   }
   const token = new Token(TokenType.COMMENT, s.substring(0, i));
   // skip past the newline
-  return [token, s.substring(i+1, s.length)];
+  return [token, s.substring(i + 1, s.length)];
 }
 
 function consumeLabel(s) {
-  let i=0;
-  for(i=0;i<s.length;i++) {
+  let i = 0;
+  for (i = 0; i < s.length; i++) {
     const c = s[i];
-    if(!isAlpha(c) && !isDigit(c) && !isSymbol(c)) {
+    if (!isAlpha(c) && !isDigit(c) && !isSymbol(c)) {
       break;
     }
   }
   // read the label name - the ':' character
   const token = new Token(TokenType.LABEL, s.substring(0, i));
   // the remainder should skip past the ':'
-  return [token, s.substring(i+1, s.length)];
+  return [token, s.substring(i + 1, s.length)];
 }
 
 function consumeQuoteAbbreviation(s) {
@@ -205,47 +206,46 @@ function consumeQuoteAbbreviation(s) {
 function nextTokenType(s) {
   const c = s[0];
 
-  if(isQuoteAbbreviation(c)) {
+  if (isQuoteAbbreviation(c)) {
     return TokenType.QUOTE_ABBREVIATION;
   }
 
-  if(isListStart(c)) {
+  if (isListStart(c)) {
     return TokenType.LIST_START;
   }
 
-  if(isListEnd(c)) {
+  if (isListEnd(c)) {
     return TokenType.LIST_END;
   }
 
-  if(isBracketStart(c)) {
+  if (isBracketStart(c)) {
     return TokenType.BRACKET_START;
   }
 
-  if(isBracketEnd(c)) {
+  if (isBracketEnd(c)) {
     return TokenType.BRACKET_END;
   }
 
-  if(isQuotedString(c)) {
+  if (isQuotedString(c)) {
     return TokenType.STRING;
   }
 
-  if(isAlpha(c)) {
-    if(!(c === MINUS && s.length > 1 && isDigit(s[1]))) {
+  if (isAlpha(c)) {
+    if (!(c === MINUS && s.length > 1 && isDigit(s[1]))) {
       return isLabel(s) ? TokenType.LABEL : TokenType.NAME;
     }
   }
 
-  if(isDigit(c) || c === MINUS || c === PERIOD) {
+  if (isDigit(c) || c === MINUS || c === PERIOD) {
     return hasPeriod(s) ? TokenType.FLOAT : TokenType.INT;
   }
 
-  if(isComment(c)) {
+  if (isComment(c)) {
     return TokenType.COMMENT;
   }
 
   return TokenType.UNKNOWN;
 }
-
 
 const Lexer = {
   tokenise: function(input) {
@@ -254,8 +254,8 @@ const Lexer = {
 
     let s = skipWhitespace(input);
 
-    while(s.length > 0) {
-      switch(nextTokenType(s)) {
+    while (s.length > 0) {
+      switch (nextTokenType(s)) {
       case TokenType.LIST_START :
         p = consumeListStart(s);
         break;

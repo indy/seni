@@ -9,7 +9,7 @@ describe('MathUtil', () => {
     const res = MathUtil.stepsInclusive(0, 1, 5);
 
     expect(res.length).to.equal(5);
-    for(let i=0;i<5;i++) {
+    for (let i = 0; i < 5; i++) {
       expect(res[i]).to.equal(expected[i]);
     }
   });

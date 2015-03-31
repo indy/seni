@@ -41,7 +41,6 @@ class Renderer {
 
     initGLState(this.glContainer.gl);
 
-
     //    this.matrixStack.translate(-40, -50);
     //    this.matrixStack.rotate(0.2);
   }
@@ -69,7 +68,6 @@ class Renderer {
 
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
 
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, this.pMatrix);
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, this.mvMatrix);

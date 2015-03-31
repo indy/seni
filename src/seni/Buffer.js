@@ -30,11 +30,11 @@ class Buffer {
    */
   prepareToAddTriangleStrip(glContainer, numVertices, p0) {
 
-    if(this.bufferLevel >= this.bufferSize - (numVertices + 2)) {
+    if (this.bufferLevel >= this.bufferSize - (numVertices + 2)) {
       this.flushTriangles(glContainer);
     }
 
-    if(this.bufferLevel !== 0) {
+    if (this.bufferLevel !== 0) {
       // add two vertex entries which will form degenerate triangles
       const lastVertexIndex = (this.bufferLevel - 1) * this.vertexItemSize;
       // just copy the previous entries
@@ -75,7 +75,6 @@ class Buffer {
     this.bufferLevel += 1;
   }
 
-
   addVertexWithoutMatrixMultiply(p, c) {
     let bl = this.bufferLevel * this.vertexItemSize;
     this.vertexBuffer[bl + 0] = p[0];
@@ -93,7 +92,7 @@ class Buffer {
 
   flushTriangles(glContainer) {
 
-    if(this.bufferLevel === 0) {
+    if (this.bufferLevel === 0) {
       return;
     }
 

@@ -33,7 +33,6 @@ function initialCode() {
   return InitialCode.getCode();
 }
 
-
 // execute the function and log the time that it takes
 function withTiming(fn) {
   const before = new Date();
@@ -94,7 +93,6 @@ function setupSelectorUI(renderer, form) {
   renderer.postDrawScene();
   copyRenderCanvasToImageElement(renderer, gallery);
 
-
   let i = 0;
 
   // a quick hack to get a pseudo-random string
@@ -103,9 +101,9 @@ function setupSelectorUI(renderer, form) {
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to authoring mode
-    if(i < 50 && gCurrentMode === SeniMode.selecting) {
+    if (i < 50 && gCurrentMode === SeniMode.selecting) {
 
-      genotype = Genetic.createGenotypeFromTraits(traits, i+random);
+      genotype = Genetic.createGenotypeFromTraits(traits, i + random);
 
       renderer.preDrawScene();
       Runtime.evalAst(env, ast, genotype);
@@ -127,7 +125,7 @@ function switchMode(newMode) {
 
   const sourceCode = gEditor.getValue();
 
-  if(gCurrentMode === SeniMode.authoring) {
+  if (gCurrentMode === SeniMode.authoring) {
     authorContainer.className = 'flex-container-h';
     selectorContainer.className = 'hidden';
 
@@ -146,15 +144,14 @@ const SeniWebApplication = {
 
     gCurrentMode = SeniMode.authoring;
 
-
     let onSwitchMode = function(event) {
-        switchMode(1 - gCurrentMode);
-        event.preventDefault();
+      switchMode(1 - gCurrentMode);
+      event.preventDefault();
     };
 
     // Ctrl-D switches between author and selector mode
     document.addEventListener('keydown', function(event) {
-      if(event.ctrlKey && event.keyCode === 68) {
+      if (event.ctrlKey && event.keyCode === 68) {
         onSwitchMode(event);
       }
     }, false);

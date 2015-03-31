@@ -49,7 +49,6 @@ function _getTitle() {
   return '' + year + dayValue;
 }
 
-
 const Trivia = {
   getTitle: function() {
     return _getTitle();

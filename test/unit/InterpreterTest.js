@@ -47,7 +47,6 @@ describe('eval', () => {
     expect(newEnv).to.equal(e);
   });
 
-
   it('should test required mathematical functions', () => {
     let [newEnv, res] = evalForm(e, '(* 2 4)');
     expect(res).to.be.closeTo(8, epsilon);
@@ -78,7 +77,6 @@ describe('eval', () => {
     expect(res).to.be.closeTo(3, epsilon);
     expect(newEnv).to.equal(e);
   });
-
 
   it('should test required comparison functions', () => {
     let [newEnv, res] = evalForm(e, '(= 90 90)');
@@ -196,7 +194,8 @@ describe('eval', () => {
     expect(res).to.equal(11);
 
     // the body of let can contain multiple forms
-    [newEnv, res] = evalForm(e, '(let ((a 5) (b (+ a a))) (+ a a) (+ a b foo))');
+    [newEnv, res] =
+      evalForm(e, '(let ((a 5) (b (+ a a))) (+ a a) (+ a b foo))');
     expect(res).to.equal(20);
   });
 

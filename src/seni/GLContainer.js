@@ -29,7 +29,6 @@ function compileShader(gl, type, src) {
   return shader;
 }
 
-
 function initShaders(gl) {
 
   const shaderProgram = gl.createProgram();
@@ -57,7 +56,6 @@ function initShaders(gl) {
     vColor = aVertexColor;
   }
   `;
-
 
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
   const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);

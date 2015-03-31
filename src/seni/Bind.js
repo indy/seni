@@ -86,7 +86,6 @@ function bindBracket(env, rng) {
   return br.reduce((a, b) => a.set(b.name, b.create(b, rng)), env);
 }
 
-
 const Bind = {
   addBindings: function(env, renderer) {
 

@@ -7,7 +7,6 @@ import NodeType from './NodeType';
 //
 /*jslint latedef:false*/
 
-
 /*
  these functions will return {node: node, error: error}
  */
@@ -22,34 +21,34 @@ function consumeItem(tokens, alterable) {
   tokens.shift();            // remove the first token
 
   const tokenType = token.type;
-  if(tokenType === TokenType.LIST_START) {
+  if (tokenType === TokenType.LIST_START) {
     return consumeList(tokens, alterable);
-  } else if(tokenType === TokenType.LIST_END) {
+  } else if (tokenType === TokenType.LIST_END) {
     return {error: 'mismatched closing parens'};
-  } else if(tokenType === TokenType.INT) {
+  } else if (tokenType === TokenType.INT) {
     return boxNode(NodeType.INT, token.value, alterable);
-  } else if(tokenType === TokenType.FLOAT) {
+  } else if (tokenType === TokenType.FLOAT) {
     return boxNode(NodeType.FLOAT, token.value, alterable);
-  } else if(tokenType === TokenType.NAME) {
+  } else if (tokenType === TokenType.NAME) {
     const val = token.value;
-    if(val === 'true') {
+    if (val === 'true') {
       return boxNode(NodeType.BOOLEAN, '#t', alterable);
     } else if (val === 'false') {
       return boxNode(NodeType.BOOLEAN, '#f', alterable);
     } else {
       return boxNode(NodeType.NAME, token.value, alterable);
     }
-  } else if(tokenType === TokenType.LABEL) {
+  } else if (tokenType === TokenType.LABEL) {
     return boxNode(NodeType.LABEL, token.value, alterable);
-  } else if(tokenType === TokenType.STRING) {
+  } else if (tokenType === TokenType.STRING) {
     return boxNode(NodeType.STRING, token.value, alterable);
-  } else if(tokenType === TokenType.QUOTE_ABBREVIATION) {
+  } else if (tokenType === TokenType.QUOTE_ABBREVIATION) {
     return consumeQuotedForm(tokens);
-  } else if(tokenType === TokenType.BRACKET_START) {
+  } else if (tokenType === TokenType.BRACKET_START) {
     return consumeBracketForm(tokens);
-  } else if(tokenType === TokenType.BRACKET_END) {
+  } else if (tokenType === TokenType.BRACKET_END) {
     return {error: 'mismatched closing square brackets'};
-  } else if(tokenType === TokenType.COMMENT) {
+  } else if (tokenType === TokenType.COMMENT) {
     return {node: null};
   }
 
@@ -57,17 +56,16 @@ function consumeItem(tokens, alterable) {
   return {error: 'unknown token type'};
 }
 
-
 function consumeBracketForm(tokens) {
   const nodeBox = consumeItem(tokens, true);
-  if(nodeBox.error) {
+  if (nodeBox.error) {
     return nodeBox;
   }
 
   const node = nodeBox.node;
   const nodeType = node.type;
 
-  if(nodeType !== NodeType.BOOLEAN &&
+  if (nodeType !== NodeType.BOOLEAN &&
      nodeType !== NodeType.INT &&
      nodeType !== NodeType.FLOAT &&
      nodeType !== NodeType.NAME &&
@@ -77,22 +75,22 @@ function consumeBracketForm(tokens) {
   }
 
   let token, parameterBox, parameter;
-  while(true) {
+  while (true) {
     token = tokens[0];
-    if(token === undefined) {
+    if (token === undefined) {
       return {error: 'unexpected end of list'};
     }
-    if(token.type === TokenType.BRACKET_END) {
+    if (token.type === TokenType.BRACKET_END) {
       tokens.shift();
       return {node: node};
     }
 
     parameterBox = consumeItem(tokens, false);
-    if(parameterBox.error) {
+    if (parameterBox.error) {
       return parameterBox;
     }
     parameter = parameterBox.node;
-    if(parameter !== null) {
+    if (parameter !== null) {
       node.addParameterNode(parameter);
     }
   }
@@ -105,7 +103,7 @@ function consumeQuotedForm(tokens) {
 
   node.addChild(new Node(NodeType.NAME, 'quote', false));
   const childBox = consumeItem(tokens, false);
-  if(childBox.error) {
+  if (childBox.error) {
     return childBox;
   }
   node.addChild(childBox.node);
@@ -116,29 +114,27 @@ function consumeQuotedForm(tokens) {
 function consumeList(tokens) {
   const node = new Node(NodeType.LIST);
 
-  while(true) {
+  while (true) {
     const token = tokens[0];
-    if(token === undefined) {
+    if (token === undefined) {
       return {error: 'unexpected end of list'};
     }
 
-    if(token.type === TokenType.LIST_END) {
+    if (token.type === TokenType.LIST_END) {
       tokens.shift();
       return {node: node};
     }
 
     const nodeBox = consumeItem(tokens, false);
-    if(nodeBox.error) {
+    if (nodeBox.error) {
       return nodeBox;
     }
     const n = nodeBox.node;
-    if(n) {
+    if (n) {
       node.addChild(n);
     }
   }
 }
-
-
 
 /*
  returns an obj of the form:
@@ -156,15 +152,15 @@ const Parser = {
     const nodes = [];
     let nodeBox;
 
-    while(tokens.length !== 0) {
+    while (tokens.length !== 0) {
       nodeBox = consumeItem(tokens, false);
 
-      if(nodeBox.error) {
+      if (nodeBox.error) {
         return nodeBox;
       }
 
       // n.node will be null on a comment
-      if(nodeBox.node) {
+      if (nodeBox.node) {
         nodes.push(nodeBox.node);
       }
     }
@@ -172,6 +168,5 @@ const Parser = {
     return {nodes: nodes};
   }
 };
-
 
 export default Parser;

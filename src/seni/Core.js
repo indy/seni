@@ -11,14 +11,12 @@ const Core = {
     (self) => function(params) {
       const {num, from} = self.mergeWithDefaults(params);
       const res = [];
-      for(let i=0; i<num; i++) {
+      for (let i = 0; i < num; i++) {
         res.push(from());
       }
       return res;
     }
   )
 };
-
-
 
 export default Core;

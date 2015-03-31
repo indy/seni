@@ -55,7 +55,6 @@ function quadraticCoordinates(tVals, controlPoints) {
   return {xs, ys};
 }
 
-
 /*
  function debugRect(buffer, glContainer, x, y, radius, colour) {
  const elementArray = Colour.elementArray(colour);
@@ -83,7 +82,7 @@ function getRemapAndHalfWidthEnd(params) {
 
   let halfWidthEnd, remap;
 
-  if(lineWidth !== undefined) {
+  if (lineWidth !== undefined) {
     // user has given a constant lineWidth parameter
     halfWidthEnd  = lineWidth / 2.0;
     remap = () => halfWidthEnd;
@@ -118,13 +117,13 @@ function addVerticesAsStrip(args) {
 
   const elementArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
-  for(let i=0; i<tVals.length - 1; i++) {
-    let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
+  for (let i = 0; i < tVals.length - 1; i++) {
+    let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i + 1], ys[i + 1]),
         i0 = xs[i],
         i1 = ys[i],
         t = tVals[i];
 
-    if(i === 0) {
+    if (i === 0) {
       buffer.prepareToAddTriangleStrip(glContainer, tessellation * 2,
                                        [(xn1 * remap({val: t})) + i0,
                                         (yn1 * remap({val: t})) + i1,
@@ -143,9 +142,9 @@ function addVerticesAsStrip(args) {
 
   // final 2 vertices for the end point
   let i = tVals.length - 2,
-      [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i+1], ys[i+1]),
-      i2 = xs[i+1],
-      i3 = ys[i+1];
+      [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i + 1], ys[i + 1]),
+      i2 = xs[i + 1],
+      i3 = ys[i + 1];
 
   buffer.addVertex([(xn1 * halfWidthEnd) + i2,
                     (yn1 * halfWidthEnd) + i3,
@@ -251,7 +250,6 @@ function renderRect(publicBinding, renderer, params) {
   const glContainer = renderer.getGLContainer();
   const buffer = renderer.getBuffer();
 
-
   let {x, y, width, height, colour} = publicBinding.mergeWithDefaults(params);
 
   const halfWidth = (width / 2);
@@ -333,10 +331,9 @@ function renderBezierBulging(publicBinding, renderer, params) {
          tEnd,
          colour} = publicBinding.mergeWithDefaults(params);
 
-
   const tMid = (tStart + tEnd) / 2.0;
   // tessellation should be an even number
-  const newTess = tessellation & 1 ? tessellation + 1: tessellation;
+  const newTess = tessellation & 1 ? tessellation + 1 : tessellation;
 
   renderBezier(bezierBinding, renderer, {tessellation: newTess / 2,
                                          lineWidthStart: 0.0,
@@ -394,9 +391,9 @@ function renderStrokedBezier(publicBinding, renderer, params) {
 
   let lab = Colour.cloneAs(colour, Colour.Format.LAB);
 
-  for(let i=0;i<tessellation;i++) {
+  for (let i = 0; i < tessellation; i++) {
 
-    let tvals = [tv[i+0], tv[i+1], tv[i+2]];
+    let tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
     // get 3 points on the bezier curve
     let [xx1, xx2, xx3] =
           tvals.map((t) => bezierPoint(x1, x2, x3, x4, t));
@@ -412,7 +409,8 @@ function renderStrokedBezier(publicBinding, renderer, params) {
       lineWidthEnd: strokeLineWidthEnd,
 
       colour: Colour.setLightness(lab, Colour.getLightness(lab) +
-                                  (Perlin._perlin(xx1, xx1, xx1) * colourVolatility)),
+                                  (Perlin._perlin(xx1, xx1, xx1) *
+                                   colourVolatility)),
       coords: [
         [(xx1 + (ns * Perlin._perlin(xx1, xx1, seed))),
          (yy1 + (ns * Perlin._perlin(yy1, yy1, seed)))],
@@ -465,7 +463,6 @@ const strokedBezierBinding = new PublicBinding(
     return (params) => renderStrokedBezier(self, renderer, params);
   });
 
-
 function renderStrokedBezierRect(publicBinding, renderer, params) {
   const {
     x,
@@ -482,7 +479,6 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
     colour,
     colourVolatility
   } = publicBinding.mergeWithDefaults(params);
-
 
   console.log('x ' + x);
   console.log('y ' + y);
@@ -505,10 +501,8 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
   let hDelta = height / iterations;
   let hStripWidth = height / iterations;
 
-
   let vDelta = width / iterations;
   let vStripWidth = width / iterations;
-
 
   let halfAlphaCol = Colour.cloneAs(colour, Colour.Format.LAB);
   let lab = Colour.setAlpha(halfAlphaCol, Colour.getAlpha(halfAlphaCol) / 2);
@@ -516,7 +510,7 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
   let rng = SeedRandom.buildSigned(seed);
   let i;
 
-  for(i=iterations; i>0; i--) {
+  for (i = iterations; i > 0; i--) {
     renderStrokedBezier(strokedBezierBinding, renderer, {
       tessellation: tessellation,
       lineWidth: overlap + hStripWidth,
@@ -537,7 +531,7 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
     });
   }
 
-  for(i=iterations; i>0; i--) {
+  for (i = iterations; i > 0; i--) {
     renderStrokedBezier(strokedBezierBinding, renderer, {
       tessellation: tessellation,
       lineWidth: overlap + vStripWidth,

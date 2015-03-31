@@ -1,7 +1,5 @@
 const code = `
 
-
-
 (define coords (pair 440 400
                533 700
                    766 200
@@ -24,7 +22,6 @@ const code = `
                       333 600
                       566 500))
 
-
 (bezier tessellation: 35
     lineWidth: 10
      coords: coords
@@ -40,7 +37,6 @@ const code = `
                colourVolatility: 0
  seed: 43)
 
-
 (strokedBezier tessellation: 15
                coords: coords3
                strokeLineWidthStart: 20
@@ -50,7 +46,6 @@ const code = `
                colour: (col/rgb r: 0.2 g: 0.9 b: 0.1 a: 0.3)
                colourVolatility: 70
                seed: 2200)
-
 
 (strokedBezier tessellation: 65
                coords: coords3

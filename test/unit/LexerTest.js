@@ -1,7 +1,6 @@
 import Lexer from '../../src/lang/Lexer';
 import TokenType from '../../src/lang/TokenType';
 
-
 describe('Lexer', () => {
 
   it('should error handle', () => {

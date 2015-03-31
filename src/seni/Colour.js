@@ -44,12 +44,11 @@ function elementArray(colour) {
 // format is one of the Format constants, val is an array
 function construct(format, element) {
   let elementList = Immutable.List(element);
-  if(elementList.size === 3) {
+  if (elementList.size === 3) {
     elementList = elementList.push(1.0);
   }
   return Immutable.Map({format: format, elements: elementList});
 }
-
 
 // todo: these get/set functions are a hack, try to come up with something more generic
 function getAlpha(colour) {
@@ -74,7 +73,6 @@ function setLightness(colour, lightness) {
 //  l 0 -> 100  lightness
 //  a -128 -> +127   green -> red
 //  b -128 -> +127   cyan -> yellow
-
 
 function colourToAxis(component) {
   let temp;
@@ -186,7 +184,8 @@ function rgbhsl(c) {
     saturation = chroma / (1.0 - Math.abs((2.0 * lightness) - 1.0));
   }
 
-  const col = construct(Format.HSL, [h, saturation, lightness, element(c, ALPHA)]);
+  const col = construct(Format.HSL,
+                        [h, saturation, lightness, element(c, ALPHA)]);
   return col.set('validHue', validHue);
 }
 
@@ -303,7 +302,7 @@ function hsvrgb(c) {
 }
 
 function cloneAs(c, newFormat) {
-  switch(format(c)) {
+  switch (format(c)) {
   case Format.LAB:
     if (newFormat === Format.RGB) {
       return xyzrgb(labxyz(c));
@@ -366,7 +365,6 @@ function pair(c, ang) {
   return ret;
 }
 
-
 // Returns the colour at the opposite end of the wheel
 //
 function complementary(c) {
@@ -396,7 +394,6 @@ function analagous(c) {
 function triad(c) {
   return pair(c, sTriadAngle);
 }
-
 
 /*
  public static Colour interpolate(Colour a, Colour b, float t, Format space) {
@@ -456,4 +453,3 @@ const Colour = {
 };
 
 export default Colour;
-

@@ -5,21 +5,21 @@ import Bind from '../seni/Bind';
 import SeedRandom from '../seni/SeedRandom';
 
 function buildTraitFromNode(node, genes) {
-  if(node.type === NodeType.LIST) {
+  if (node.type === NodeType.LIST) {
     node.children.map((child) => buildTraitFromNode(child, genes));
   }
 
-  if(node.alterable === true) {
+  if (node.alterable === true) {
     // expect a form in the parameterAST
     let ast;
-    if(node.parameterAST.length) {
+    if (node.parameterAST.length) {
       // assuming that there aren't any nested square brackets
       ast = Compiler.compile(node.parameterAST);
     } else {
       // this is to allow code like (+ 2 [2])
       // which should behave as if there were no square brackets
       // todo: implement identity in this context
-      ast = { forms: [['identity', {value: node.value}]]};
+      ast = {forms: [['identity', {value: node.value}]]};
     }
 
     const gene = {initialValue: node.value,
@@ -27,7 +27,6 @@ function buildTraitFromNode(node, genes) {
     genes.push(gene);  // mutate the genes
   }
 }
-
 
 function buildGenoFromTrait(trait, env) {
   const forms = trait.ast.forms;
@@ -65,6 +64,5 @@ const Genetic = {
   }
 
 };
-
 
 export default Genetic;

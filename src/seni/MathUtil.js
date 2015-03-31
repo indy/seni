@@ -51,7 +51,7 @@ function _remapFn(params) {
 
   let normalisedMappingFn = mappingLookup.get(mapping);
 
-  if(normalisedMappingFn === undefined) {
+  if (normalisedMappingFn === undefined) {
     normalisedMappingFn = mappingLookup.get('linear');
   }
 
@@ -60,14 +60,13 @@ function _remapFn(params) {
     const fromInterp = (fromM * val) + fromC,
           toInterp = normalisedMappingFn(fromInterp),
           res = (toM * toInterp) + toC;
-    if(clamping) {
+    if (clamping) {
       return fromInterp < 0 ? toA : (fromInterp > 1) ? toB : res;
     } else {
       return res;
     }
   };
 }
-
 
 const MathUtil = {
 
@@ -103,9 +102,9 @@ const MathUtil = {
 
   rngUnsigned: new PublicBinding(
     'rng/unsigned',
-    `returns a function that generates a random number in the range 0..1 everytime its invoked`,
+    `returns a function that generates a random number in the range 0..1`,
     {seed: 'shabba'},
-    (self) => function (params) {
+    (self) => function(params) {
       const {seed} = self.mergeWithDefaults(params);
       return SeedRandom.buildUnsigned(seed);
     }
@@ -113,9 +112,9 @@ const MathUtil = {
 
   rngSigned: new PublicBinding(
     'rng/signed',
-    `returns a function that generates a random number in the range -1..1 everytime its invoked`,
+    `returns a function that generates a random number in the range -1..1`,
     {seed: 'shabba'},
-    (self) => function (params) {
+    (self) => function(params) {
       const {seed} = self.mergeWithDefaults(params);
       return SeedRandom.buildSigned(seed);
     }
@@ -125,7 +124,7 @@ const MathUtil = {
     'math/distance2D',
     ``,
     {aX: 0, aY: 0, bX: 1, bY: 1},
-    (self) => function (params) {
+    (self) => function(params) {
       const {aX, aY, bX, bY} = self.mergeWithDefaults(params);
 
       const xd = aX - bX;
@@ -138,7 +137,7 @@ const MathUtil = {
     'math/clamp',
     ``,
     {val: 0, min: 0, max: 1},
-    (self) => function (params) {
+    (self) => function(params) {
       const {val, min, max} = self.mergeWithDefaults(params);
       return val < min ? min : (val > max ? max : val);
     }
@@ -147,7 +146,7 @@ const MathUtil = {
   stepsInclusive: function(start, end, num) {
     const unit = (end - start) / (num - 1);
     const res = [];
-    for(let i=0;i<num;i++) {
+    for (let i = 0; i < num; i++) {
       res.push(start + (i * unit));
     }
     return res;

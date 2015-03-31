@@ -16,4 +16,3 @@ describe('token', () => {
     expect(TokenType.UNKNOWN).to.equal(0);
   });
 });
-

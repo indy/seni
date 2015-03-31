@@ -90,7 +90,6 @@ describe('parse', () => {
     expect(res[0].type).to.equal(NodeType.LIST);
   });
 
-
   it('should error on a mismatched list (no closing pair)', () => {
     let ts = [new Token(TokenType.LIST_START),
               new Token(TokenType.INT, 4)];

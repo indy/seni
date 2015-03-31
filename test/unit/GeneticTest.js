@@ -43,7 +43,6 @@ describe('genetic', () => {
     expect(genotype.get(0).get('value')).to.equal(44);
   });
 
-
   it('should createGenotypeFromTraits 2', () => {
     let ts = Lexer.tokenise('(+ 2 [44 (int min: 10 max: 56)])').tokens;
     let ast = Parser.parse(ts).nodes;

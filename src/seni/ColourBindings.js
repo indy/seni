@@ -193,5 +193,4 @@ const ColourBindings = {
   )
 };
 
-
 export default ColourBindings;

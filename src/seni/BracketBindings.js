@@ -58,5 +58,4 @@ const BracketBindings = {
   )
 };
 
-
 export default BracketBindings;

@@ -12,7 +12,7 @@ const FALSE_STRING = '#f';
 
 function _evaluate(env, expr) {
 
-  if(expr === undefined) {
+  if (expr === undefined) {
     // in case of non-existent else clause in if statement
     return [env, undefined];
   }
@@ -22,7 +22,7 @@ function _evaluate(env, expr) {
     return [env, expr];
   }
   if (typeof expr === 'string') {
-    if(expr === TRUE_STRING || expr === FALSE_STRING) {
+    if (expr === TRUE_STRING || expr === FALSE_STRING) {
       return [env, expr];
     }
     return [env, env.get(expr)];
@@ -34,28 +34,28 @@ function funApplication(env, listExpr) {
 
   let [env, fun] = _evaluate(env, listExpr[0]);
 
-  if(fun === undefined) {
+  if (fun === undefined) {
     // todo: use something better than console.log
     console.log(listExpr[0] + ' is undefined');
     return [env, undefined];
   }
 
   // special forms that manipulate the listExpr and can change the env
-  if(isSpecialForm(listExpr)) {
+  if (isSpecialForm(listExpr)) {
     return fun(env, listExpr);
   }
 
   // classic functions that don't require named arguments
-  if(isClassicFunction(listExpr)) {
+  if (isClassicFunction(listExpr)) {
     const argu = listExpr.slice(1).map(n => _evaluate(env, n)[1]);
     return [env, fun(argu)];
   }
 
   // normal functions that require named arguments
   const args = {};
-  if(listExpr.length > 1) {
+  if (listExpr.length > 1) {
     const argObj = listExpr[1];
-    for(let k in argObj) {
+    for (let k in argObj) {
       args[k] = _evaluate(env, argObj[k])[1];
     }
   }
@@ -76,7 +76,7 @@ function addBindings(env, exprs) {
 
   const addBinding = function(e, name, value) {
     const v = _evaluate(e, value)[1];
-    if(name.constructor === Array) {
+    if (name.constructor === Array) {
       // todo: error check if size of name array !== size of v
       name.forEach((n, i) => e = e.set(n, v[i]));
     } else {
@@ -89,7 +89,7 @@ function addBindings(env, exprs) {
 }
 
 function assert(assertion) {
-  if(!assertion) {
+  if (!assertion) {
     console.log('ASSERT FAILED');
   }
 }
@@ -101,12 +101,12 @@ function isDefineExpression(form) {
 function isDefiningFunction(nameForm) {
 
   let isFunction = false;
-  if(nameForm.constructor === Array) {
+  if (nameForm.constructor === Array) {
     // it will either have one element in the array
     // e.g. (define (shout) (log "WOOHOOO")) => ['shout']
     // or there will be an argument map
     // e.g. (defin (doubler x: 3) (+ x x)) => ['doubler', {x: 3}]
-    if(nameForm.length === 1) {
+    if (nameForm.length === 1) {
       isFunction = true;
     } else if (nameForm.length === 2) {
       // todo: also check for Map when we have immutable data structures here
@@ -123,14 +123,15 @@ function isDefiningFunction(nameForm) {
 function defineFunction(env, defaultArgForms, body) {
 
   const defaultArgValues = {};
-  for(let k in defaultArgForms) {
+  for (let k in defaultArgForms) {
     defaultArgValues[k] = _evaluate(env, defaultArgForms[k])[1];
   }
 
   return function(args) {
     let newEnv = env;
-    for(let k in defaultArgValues) {
-      newEnv = newEnv.set(k, args[k] === undefined ? defaultArgValues[k] : args[k]);
+    for (let k in defaultArgValues) {
+      newEnv = newEnv.set(k, args[k] === undefined ?
+                          defaultArgValues[k] : args[k]);
     }
     return evalBodyForms(newEnv, body)[1];
   };
@@ -160,8 +161,8 @@ const specialForms = {
    price worth paying
    */
   'quote': (env, [_, form]) => {
-    if(form.constructor === Array) {
-      if(form[0] === 'quote') {
+    if (form.constructor === Array) {
+      if (form[0] === 'quote') {
         return [env, form[1]];
       }
     }
@@ -169,7 +170,7 @@ const specialForms = {
   },
 
   'define': (env, [_, nameForm, ...valueForms]) => {
-    if(isDefiningFunction(nameForm)) {
+    if (isDefiningFunction(nameForm)) {
       // e.g. (define (add x: 1 y: 2) (log x) (+ x y))
       const [name, defaultArgForms] = nameForm;
       const definedFunction = defineFunction(env, defaultArgForms, valueForms);
@@ -206,7 +207,7 @@ const specialForms = {
   'log': (env, [_, ...msgs]) => {
     const message = msgs.reduce((a, b) => {
       const [env, res] = _evaluate(env, b);
-      if(typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
+      if (typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
         return a + ' <' + b + ':' + res + '>';
       }
       return a + ' ' + res;
@@ -215,12 +216,11 @@ const specialForms = {
     return [env, true];
   },
 
-
   // (loop (a from: 1 to: 30 step: 2) (+ a a))
   'loop': (env, [_, [varName, varParameters], ...body]) => {
 
     const vp = {};
-    for(let k in varParameters) {
+    for (let k in varParameters) {
       vp[k] = _evaluate(env, varParameters[k])[1];
     }
 
@@ -248,19 +248,19 @@ function loopingFn(env, expr, varName, params) {
                                                       to: 10,
                                                       until: undefined,
                                                       step: 1});
-  if(step === 0) {
+  if (step === 0) {
     console.log('step size of 0 given');
     return undefined;
   }
 
   let res;
-  if(until !== undefined) {
-    for(let i=from;i<=until;i+=step) {
+  if (until !== undefined) {
+    for (let i = from; i <= until; i += step) {
       env = env.set(varName, i);
       res = expr.reduce((a, b) => _evaluate(a[0], b), [env, true]);
     }
   } else {
-    for(let i=from;i<to;i+=step) {
+    for (let i = from; i < to; i += step) {
       env = env.set(varName, i);
       res = expr.reduce((a, b) => _evaluate(a[0], b), [env, true]);
     }
@@ -277,7 +277,6 @@ function loopingFn(env, expr, varName, params) {
 // could get rid of the concept of classic functions and allow the
 // user to create @ functions at the expense of having code like: (@+
 // 4 3 7 4) rather than (+ 4 3 7 4)
-
 
 const classicFunctions = {
   '+': (args) =>
@@ -297,9 +296,9 @@ const classicFunctions = {
 
   '<': (args) => {
     let prev = args[0];
-    for(let i = 1; i < args.length; i++) {
+    for (let i = 1; i < args.length; i++) {
       const current = args[i];
-      if(current >= prev) {
+      if (current >= prev) {
         return FALSE_STRING;
       }
       prev = current;
@@ -309,9 +308,9 @@ const classicFunctions = {
 
   '>': (args) => {
     let prev = args[0];
-    for(let i = 1; i < args.length; i++) {
+    for (let i = 1; i < args.length; i++) {
       const current = args[i];
-      if(current <= prev) {
+      if (current <= prev) {
         return FALSE_STRING;
       }
       prev = current;
@@ -324,15 +323,15 @@ const classicFunctions = {
 
   'pair' : (args) => {
     const res = [];
-    for(let i=0;i<args.length;i+=2) {
-      res.push([args[i], args[i+1]]);
+    for (let i = 0; i < args.length; i += 2) {
+      res.push([args[i], args[i + 1]]);
     }
     return res;
   }
 };
 
-const basicEnv = [specialForms,
-                  classicFunctions].reduce((a, b) => a.merge(b), Immutable.Map());
+const basicEnv = [specialForms, classicFunctions].reduce((a, b) => a.merge(b),
+                                                         Immutable.Map());
 
 const Interpreter = {
   evaluate: function(env, expr) {

@@ -42,12 +42,11 @@ describe('Colour', () => {
     expect(Colour.element(d, 3)).to.equal(0.8);
   });
 
-
   function compCol(a, b) {
     expect(a.format).to.equal(b.format);
     let epsilon = 0.01;
 
-    for(let i=0;i<4;i++) {
+    for (let i = 0; i < 4; i++) {
       let aElement = Colour.element(a, i);
       let bElement = Colour.element(b, i);
 

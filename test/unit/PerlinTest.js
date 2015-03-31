@@ -3,7 +3,7 @@ import Perlin from '../../src/seni/Perlin';
 describe('Perlin', () => {
 
   it('should output a number', () => {
-    for(let i=0;i<1000;i++) {
+    for (let i = 0; i < 1000; i++) {
       let binding = Perlin.perlin;
       let v = binding.create(binding)({});
       expect(v).to.be.at.least(0.0);
