@@ -1,27 +1,26 @@
 /*
-    Seni
-    Copyright (C) 2015  Inderjit Gill <email@indy.io>
+ Seni
+ Copyright (C) 2015  Inderjit Gill <email@indy.io>
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 import PublicBinding from '../lang/PublicBinding';
-import SeedRandom from './SeedRandom';
 
-const _PI = Math.PI;
-const _twoPI = _PI * 2;
-const _PIbyTwo = _PI / 2;
+const PI = Math.PI;
+const twoPI = PI * 2;
+const PIbyTwo = PI / 2;
 
 function mc([xa, ya], [xb, yb]) {
   const m = (ya - yb) / (xa - xb);
@@ -42,12 +41,12 @@ function mapQuickEase(x) {
 }
 
 function mapSlowEaseIn(x) {
-  const s = Math.sin(x * _PIbyTwo);
+  const s = Math.sin(x * PIbyTwo);
   return s * s * s * s;
 }
 
 function mapSlowEaseInEaseOut(x) {
-  return x - (Math.sin(x * _twoPI) / _twoPI);
+  return x - (Math.sin(x * twoPI) / twoPI);
 }
 
 const mappingLookup = new Immutable.Map({'linear': mapLinear,
@@ -55,7 +54,7 @@ const mappingLookup = new Immutable.Map({'linear': mapLinear,
                                          'slow-in': mapSlowEaseIn,
                                          'slow-in-out': mapSlowEaseInEaseOut});
 
-function _remapFn(params) {
+function remapFn(params) {
 
   const from = params.from || [0, 1];
   const to = params.to || [0, 100];
@@ -88,54 +87,34 @@ function _remapFn(params) {
 
 const MathUtil = {
 
-  remapFn: _remapFn,
+  remapFn,
 
   PI: new PublicBinding(
-    'PI',
+    'math/PI',
     ``,
     {},
-    () => _PI
+    () => PI
   ),
 
   twoPI: new PublicBinding(
-    'twoPI',
+    'math/2PI',
     ``,
     {},
-    () => _twoPI
+    () => twoPI
   ),
 
   PIbyTwo: new PublicBinding(
-    'PIbyTwo',
+    'math/PI/2',
     ``,
     {},
-    () => _PIbyTwo
+    () => PIbyTwo
   ),
 
   remapFnBinding: new PublicBinding(
     'remapFn',
     ``,
     {},
-    () => _remapFn
-  ),
-
-  rngUnsigned: new PublicBinding(
-    'rng/unsigned',
-    `returns a function that generates a random number in the range 0..1`,
-    {seed: 'shabba'},
-    (self) => function(params) {
-      const {seed} = self.mergeWithDefaults(params);
-      return SeedRandom.buildUnsigned(seed);
-    }
-  ),
-
-  rngSigned: new PublicBinding(
-    'rng/signed',
-    `returns a function that generates a random number in the range -1..1`,
-    {seed: 'shabba'},
-    (self) => function(params) {
-      const {seed} = self.mergeWithDefaults(params);
-      return SeedRandom.buildSigned(seed);
-    }
+    () => remapFn
   ),
 
   distance2D: new PublicBinding(

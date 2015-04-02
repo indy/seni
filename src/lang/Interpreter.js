@@ -28,7 +28,7 @@ import PublicBinding from './PublicBinding';
 const TRUE_STRING = '#t';
 const FALSE_STRING = '#f';
 
-function _evaluate(env, expr) {
+function evaluate(env, expr) {
 
   if (expr === undefined) {
     // in case of non-existent else clause in if statement
@@ -50,7 +50,7 @@ function _evaluate(env, expr) {
 
 function funApplication(env, listExpr) {
 
-  let [env, fun] = _evaluate(env, listExpr[0]);
+  let [env, fun] = evaluate(env, listExpr[0]);
 
   if (fun === undefined) {
     // todo: use something better than console.log
@@ -65,7 +65,7 @@ function funApplication(env, listExpr) {
 
   // classic functions that don't require named arguments
   if (isClassicFunction(listExpr)) {
-    const argu = listExpr.slice(1).map(n => _evaluate(env, n)[1]);
+    const argu = listExpr.slice(1).map(n => evaluate(env, n)[1]);
     return [env, fun(argu)];
   }
 
@@ -74,7 +74,7 @@ function funApplication(env, listExpr) {
   if (listExpr.length > 1) {
     const argObj = listExpr[1];
     for (let k in argObj) {
-      args[k] = _evaluate(env, argObj[k])[1];
+      args[k] = evaluate(env, argObj[k])[1];
     }
   }
   return [env, fun(args)];
@@ -93,7 +93,7 @@ function isClassicFunction(listExpr) {
 function addBindings(env, exprs) {
 
   const addBinding = function(e, name, value) {
-    const v = _evaluate(e, value)[1];
+    const v = evaluate(e, value)[1];
     if (name.constructor === Array) {
       // todo: error check if size of name array !== size of v
       name.forEach((n, i) => e = e.set(n, v[i]));
@@ -142,7 +142,7 @@ function defineFunction(env, defaultArgForms, body) {
 
   const defaultArgValues = {};
   for (let k in defaultArgForms) {
-    defaultArgValues[k] = _evaluate(env, defaultArgForms[k])[1];
+    defaultArgValues[k] = evaluate(env, defaultArgForms[k])[1];
   }
 
   return function(args) {
@@ -159,7 +159,7 @@ const specialForms = {
 
   // (if something truthy falsey) || (if something truthy)
   'if': (env, [_, cond, t, f]) =>
-    _evaluate(env, _evaluate(env, cond)[1] === TRUE_STRING ? t : f),
+    evaluate(env, evaluate(env, cond)[1] === TRUE_STRING ? t : f),
 
   // (quote (age 99))
   /*
@@ -197,7 +197,7 @@ const specialForms = {
       // e.g. (define foo 12)
       assert(valueForms.length === 1);
       const val = valueForms[0];
-      return [env.set(nameForm, _evaluate(env, val)[1]), true];
+      return [env.set(nameForm, evaluate(env, val)[1]), true];
     }
   },
 
@@ -217,14 +217,14 @@ const specialForms = {
 
   // (print 'hi' foo) => hi 42
   'print': (env, [_, ...msgs]) => {
-    console.log(msgs.reduce((a, b) => a + ' ' + _evaluate(env, b)[1], ''));
+    console.log(msgs.reduce((a, b) => a + ' ' + evaluate(env, b)[1], ''));
     return [env, true];
   },
 
   // (log 'hi' foo) => hi <foo:42>
   'log': (env, [_, ...msgs]) => {
     const message = msgs.reduce((a, b) => {
-      const [env, res] = _evaluate(env, b);
+      const [env, res] = evaluate(env, b);
       if (typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
         return a + ' <' + b + ':' + res + '>';
       }
@@ -239,7 +239,7 @@ const specialForms = {
 
     const vp = {};
     for (let k in varParameters) {
-      vp[k] = _evaluate(env, varParameters[k])[1];
+      vp[k] = evaluate(env, varParameters[k])[1];
     }
 
     return loopingFn(env, body, varName, vp);
@@ -256,7 +256,7 @@ const specialForms = {
 
 // whoa bodyform, bodyform for you
 function evalBodyForms(env, bodyForms) {
-  return bodyForms.reduce((a, b) => _evaluate(a[0], b), [env, true]);
+  return bodyForms.reduce((a, b) => evaluate(a[0], b), [env, true]);
 }
 
 function loopingFn(env, expr, varName, params) {
@@ -275,12 +275,12 @@ function loopingFn(env, expr, varName, params) {
   if (until !== undefined) {
     for (let i = from; i <= until; i += step) {
       env = env.set(varName, i);
-      res = expr.reduce((a, b) => _evaluate(a[0], b), [env, true]);
+      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
     }
   } else {
     for (let i = from; i < to; i += step) {
       env = env.set(varName, i);
-      res = expr.reduce((a, b) => _evaluate(a[0], b), [env, true]);
+      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
     }
   }
 
@@ -350,15 +350,14 @@ const classicFunctions = {
 
 const basicEnv = [specialForms, classicFunctions].reduce((a, b) => a.merge(b),
                                                          Immutable.Map());
+function getBasicEnv() {
+  return basicEnv;
+}
 
 const Interpreter = {
-  evaluate: function(env, expr) {
-    return _evaluate(env, expr);
-  },
-  getBasicEnv: function() {
-    return basicEnv;
-  },
-  isDefineExpression: isDefineExpression
+  evaluate,
+  isDefineExpression,
+  getBasicEnv
 };
 
 export default Interpreter;

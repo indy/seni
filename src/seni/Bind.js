@@ -23,6 +23,7 @@ import ColourBindings from './ColourBindings';
 import Perlin from './Perlin';
 import Core from './Core';
 import Bracket from './BracketBindings';
+import SeedRandom from './SeedRandom';
 
 function bindCore(env) {
   const core = [Core.takeBinding];
@@ -34,12 +35,17 @@ function bindMath(env) {
                 MathUtil.PI,
                 MathUtil.twoPI,
                 MathUtil.PIbyTwo,
-                MathUtil.rngSigned,
-                MathUtil.rngUnsigned,
                 MathUtil.distance2D,
                 MathUtil.clamp];
 
   return math.reduce((a, b) => a.set(b.name, b.create(b)), env);
+}
+
+function bindSeedRandom(env) {
+  const random = [SeedRandom.rngSigned,
+                SeedRandom.rngUnsigned];
+
+  return random.reduce((a, b) => a.set(b.name, b.create(b)), env);
 }
 
 function bindMatrixStack(env, matrixStack) {
@@ -109,6 +115,7 @@ const Bind = {
 
     env = bindCore(env);
     env = bindMath(env);
+    env = bindSeedRandom(env);
     env = bindMatrixStack(env, renderer.getMatrixStack());
     env = bindShapes(env, renderer);
     env = bindColour(env);
@@ -121,6 +128,7 @@ const Bind = {
 
     env = bindCore(env);
     env = bindMath(env);
+    env = bindSeedRandom(env);
     env = bindColour(env);
     env = bindPerlin(env);
     env = bindBracket(env, rng);
