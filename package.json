@@ -26,7 +26,8 @@
   "dependencies": {
     "codemirror": "^5.0.0",
     "gl-matrix": "^2.1.0",
-    "immutable": "^3.6.2"
+    "immutable": "^3.6.2",
+    "seedrandom": "^2.3.11"
   },
   "devDependencies": {
     "babel": "^4.6.6",
