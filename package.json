@@ -18,7 +18,7 @@
     "genetic algorithms"
   ],
   "author": "Inderjit Gill <email@indy.io>",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/indy/seni/issues"
   },
