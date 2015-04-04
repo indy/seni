@@ -20,11 +20,6 @@ import TokenType from './TokenType';
 import Node from './Node';
 import NodeType from './NodeType';
 
-// recursive code so switch off the jslint warnings
-// about functions being used before they're defined
-//
-/*jslint latedef:false*/
-
 /*
  these functions will return {node: node, error: error}
  */

@@ -16,8 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*jslint bitwise:true*/
-
 import GLContainer from './GLContainer';
 import Buffer from './Buffer';
 import MatrixStack from './MatrixStack';

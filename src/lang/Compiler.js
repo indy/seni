@@ -16,14 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import NodeType from './NodeType';
-
-// recursive code so switch off the jslint warnings
-// about functions being used before they're defined
-// also allow bitwise operations
-//
-/*jslint latedef:false, bitwise:true*/
 /*eslint-disable no-use-before-define */
+
+import NodeType from './NodeType';
 
 function compile(node, genotype) {
 

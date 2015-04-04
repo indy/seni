@@ -16,8 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*jslint latedef:false, maxstatements:27, maxcomplexity:21*/
-
 const sUnitAngle = 360.0 / 12.0;
 const sComplimentaryAngle = sUnitAngle * 6;
 const sTriadAngle = sUnitAngle * 4;

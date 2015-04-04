@@ -16,8 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*jslint bitwise:true,maxparams:6,maxstatements:50*/
-
 import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
 import Colour from './Colour';

@@ -16,11 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// recursive code so switch off the jslint warnings
-// about functions being used before they're defined
-//
-/*jslint ignore:start*/
-/*jslint latedef:false, maxparams:6*/
 /*eslint-disable no-use-before-define */
 /*eslint-disable no-redeclare */
 

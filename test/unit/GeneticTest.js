@@ -16,8 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*jslint ignore:start*/
-
 import Parser from '../../src/lang/Parser';
 import Lexer from '../../src/lang/Lexer';
 import Genetic from '../../src/lang/Genetic';

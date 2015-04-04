@@ -19,7 +19,6 @@
 /* eslint-disable no-use-before-define */
 // todo: look into no-unused-expressions
 /* eslint-disable no-unused-expressions */
-/*jslint maxstatements:24*/
 
 import Interpreter from '../../src/lang/Interpreter';
 import Parser from '../../src/lang/Parser';

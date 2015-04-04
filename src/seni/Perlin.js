@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*jslint ignore:start*/
 /* eslint-disable no-use-before-define */
 
 import PublicBinding from '../lang/PublicBinding';
