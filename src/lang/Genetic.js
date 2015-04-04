@@ -54,7 +54,7 @@ function buildGenoFromTrait(trait, env) {
   }, [env, false]);
 
   const finalResult = evalRes[1];
-  return Immutable.Map({value: finalResult});
+  return new Immutable.Map({value: finalResult});
 }
 
 const Genetic = {
@@ -66,8 +66,9 @@ const Genetic = {
   },
 
   createGenotypeFromInitialValues: function(traits) {
-    const genotype = traits.map((g) => Immutable.Map({value: g.initialValue}));
-    return Immutable.List(genotype);
+    const genotype = traits.map((g) =>
+                                new Immutable.Map({value: g.initialValue}));
+    return new Immutable.List(genotype);
   },
 
   createGenotypeFromTraits: function(traits, seed) {
@@ -78,7 +79,7 @@ const Genetic = {
     // env is the environment used to evaluate the bracketed forms
     const genotype = traits.map((trait) => buildGenoFromTrait(trait, env));
 
-    return Immutable.List(genotype);
+    return new Immutable.List(genotype);
   }
 
 };

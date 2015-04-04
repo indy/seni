@@ -41,7 +41,7 @@ function base10ToN(num, n) {
 
   while (current !== 0) {
     remainder = current % n;
-    if (36 > remainder && remainder > 9) {
+    if (remainder > 9 && remainder < 36) {
       remainderString = numRep[remainder];
     } else if (remainder >= 36) {
       remainderString = '(' + remainder + ')';

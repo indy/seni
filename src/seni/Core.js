@@ -24,7 +24,7 @@ const Core = {
 
     `invokes the 'from' function 'num' times, returning a list`,
 
-    {num: 1, from: function() {return 0;}},
+    {num: 1, from: function() { return 0; }},
 
     (self) => function(params) {
       const {num, from} = self.mergeWithDefaults(params);

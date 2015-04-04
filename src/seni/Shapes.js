@@ -102,12 +102,12 @@ function getRemapAndHalfWidthEnd(params) {
 
   if (lineWidth !== undefined) {
     // user has given a constant lineWidth parameter
-    halfWidthEnd  = lineWidth / 2.0;
+    halfWidthEnd = lineWidth / 2.0;
     remap = () => halfWidthEnd;
   } else {
     // use the default start and end line widths
     const halfWidthStart  = lineWidthStart / 2.0;
-    halfWidthEnd  = lineWidthEnd / 2.0;
+    halfWidthEnd = lineWidthEnd / 2.0;
     remap = MathUtil.remapFn({from: [tStart, tEnd],
                               to: [halfWidthStart, halfWidthEnd],
                               mapping: lineWidthMapping});
@@ -409,6 +409,7 @@ function renderStrokedBezier(publicBinding, renderer, params) {
 
   let lab = Colour.cloneAs(colour, Colour.Format.LAB);
 
+  /* eslint-disable no-loop-func */
   for (let i = 0; i < tessellation; i++) {
 
     let tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
@@ -437,10 +438,11 @@ function renderStrokedBezier(publicBinding, renderer, params) {
          (yy2 + (ns * Perlin._perlin(yy2, yy1, seed)))],
 
         [(xx3 + (ns * Perlin._perlin(xx3, xx1, seed))),
-         (yy3 + (ns * Perlin._perlin(yy3, yy1, seed)))],
+         (yy3 + (ns * Perlin._perlin(yy3, yy1, seed)))]
       ]
     });
   }
+  /* eslint-enable no-loop-func */
 }
 
 const strokedBezierBinding = new PublicBinding(

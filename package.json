@@ -40,6 +40,7 @@
     "gulp": "^3.8.11",
     "gulp-babel": "^4.0.0",
     "gulp-concat": "^2.5.2",
+    "gulp-eslint": "^0.8.0",
     "gulp-file": "^0.2.0",
     "gulp-filter": "^2.0.2",
     "gulp-istanbul": "^0.6.0",

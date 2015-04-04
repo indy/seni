@@ -23,6 +23,7 @@ import NodeType from './NodeType';
 // also allow bitwise operations
 //
 /*jslint latedef:false, bitwise:true*/
+/*eslint-disable no-use-before-define */
 
 function compile(node, genotype) {
 
