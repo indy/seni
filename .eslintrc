@@ -34,6 +34,7 @@
   },
   "env": {
     "mocha": true,
+    "jasmine": true,
     "node": true,
     "browser": true
   },
