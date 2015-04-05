@@ -41,6 +41,7 @@
   "rules": {
     "no-empty": 0,
     "indent": [2, 2],
+    "no-var": true,
     "quotes": [1, "single"],
     "no-multi-spaces": [1, {
       "exceptions": {
