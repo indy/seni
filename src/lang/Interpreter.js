@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*eslint-disable no-use-before-define */
-/*eslint-disable no-redeclare */
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-redeclare */
 
 import Util from '../seni/Util';
 import PublicBinding from './PublicBinding';
@@ -286,8 +286,7 @@ function loopingFn(env, expr, varName, params) {
     let val;
     for (let i = 0; i < steps; i++) {
       val = from + (i * unit);
-      env = env.set(varName, val);
-      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
+      res = evalBodyForms(env.set(varName, val), expr);
     }
     return res;
   }
@@ -299,38 +298,10 @@ function loopingFn(env, expr, varName, params) {
 
   if (until !== undefined) {
     for (let i = from; i <= until; i += increment) {
-      env = env.set(varName, i);
-      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
-    }
-  } else {
-    for (let i = from; i < to; i += increment) {
-      env = env.set(varName, i);
-      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
-    }
-  }
-
-  return res;
-}
-
-function iterateFn(env, expr, varName, params) {
-  // todo: 'to' should be <=, and 'until' should be '<'
-
-  const {from, to, until, step} = Util.merge(params, {from: 0,
-                                                      to: 10,
-                                                      until: undefined,
-                                                      step: 1});
-  if (step === 0) {
-    console.log('step size of 0 given');
-    return undefined;
-  }
-
-  let res;
-  if (until !== undefined) {
-    for (let i = from; i <= until; i += step) {
       res = evalBodyForms(env.set(varName, i), expr);
     }
   } else {
-    for (let i = from; i < to; i += step) {
+    for (let i = from; i < to; i += increment) {
       res = evalBodyForms(env.set(varName, i), expr);
     }
   }
