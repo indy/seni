@@ -16,11 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*jslint ignore:start*/
+/* eslint-disable no-use-before-define */
 
 import PublicBinding from '../lang/PublicBinding';
 
-// A basic translation of Ken Perlin's Java reference implementation of improved noise (C) 2002
+// A basic translation of Ken Perlin's Java
+// reference implementation of improved noise (C) 2002
 
 // returns a value in the range -1..1
 function noise(x, y, z) {
@@ -33,8 +34,8 @@ function noise(x, y, z) {
   const u = fade(x);                                // COMPUTE FADE CURVES
   const v = fade(y);                                // FOR EACH OF X,Y,Z.
   const w = fade(z);
-  const A = p[X] + Y, AA = p[A] + Z, AB = p[A + 1] + Z;      // HASH COORDINATES OF
-  const B = p[X + 1] + Y, BA = p[B] + Z, BB = p[B + 1] + Z;      // THE 8 CUBE CORNERS,
+  const A = p[X] + Y, AA = p[A] + Z, AB = p[A + 1] + Z; // HASH COORDINATES OF
+  const B = p[X + 1] + Y, BA = p[B] + Z, BB = p[B + 1] + Z; // 8 CUBE CORNERS
 
   return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z),  // AND ADD
                               grad(p[BA], x - 1, y, z)), // BLENDED

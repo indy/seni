@@ -16,11 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// recursive code so switch off the jslint warnings
-// about functions being used before they're defined
-//
-/*jslint ignore:start*/
-/*jslint latedef:false, maxparams:6*/
+/*eslint-disable no-use-before-define */
+/*eslint-disable no-redeclare */
 
 import Util from '../seni/Util';
 import PublicBinding from './PublicBinding';
@@ -155,8 +152,8 @@ function defineFunction(env, defaultArgForms, body) {
   };
 }
 
+/* eslint-disable no-unused-vars */
 const specialForms = {
-
   // (if something truthy falsey) || (if something truthy)
   'if': (env, [_, cond, t, f]) =>
     evaluate(env, evaluate(env, cond)[1] === TRUE_STRING ? t : f),
@@ -254,6 +251,7 @@ const specialForms = {
     return res;
   }
 };
+/* eslint-enable no-unused-vars */
 
 // whoa bodyform, bodyform for you
 function evalBodyForms(env, bodyForms) {
@@ -329,13 +327,11 @@ function iterateFn(env, expr, varName, params) {
   let res;
   if (until !== undefined) {
     for (let i = from; i <= until; i += step) {
-      env = env.set(varName, i);
-      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
+      res = evalBodyForms(env.set(varName, i), expr);
     }
   } else {
     for (let i = from; i < to; i += step) {
-      env = env.set(varName, i);
-      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
+      res = evalBodyForms(env.set(varName, i), expr);
     }
   }
 
@@ -404,7 +400,7 @@ const classicFunctions = {
 };
 
 const basicEnv = [specialForms, classicFunctions].reduce((a, b) => a.merge(b),
-                                                         Immutable.Map());
+                                                         new Immutable.Map());
 function getBasicEnv() {
   return basicEnv;
 }

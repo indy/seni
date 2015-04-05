@@ -16,8 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*jslint latedef:false, maxstatements:27, maxcomplexity:21*/
-
 const sUnitAngle = 360.0 / 12.0;
 const sComplimentaryAngle = sUnitAngle * 6;
 const sTriadAngle = sUnitAngle * 4;
@@ -60,15 +58,16 @@ function elementArray(colour) {
 }
 
 // format is one of the Format constants, val is an array
-function construct(format, element) {
-  let elementList = Immutable.List(element);
+function construct(fmt, elements) {
+  let elementList = new Immutable.List(elements);
   if (elementList.size === 3) {
     elementList = elementList.push(1.0);
   }
-  return Immutable.Map({format: format, elements: elementList});
+  return new Immutable.Map({format: fmt, elements: elementList});
 }
 
-// todo: these get/set functions are a hack, try to come up with something more generic
+// todo: these get/set functions are a hack,
+// try to come up with something more generic
 function getAlpha(colour) {
   return colour.getIn(['elements', ALPHA]);
 }

@@ -53,11 +53,28 @@ const BracketBindings = {
     arguments: -`,
     {min: 0.0, max: 1.0},
     (self, rng) => {
-      self = self;
       // rng is a SeedRandom returning values in the range 0..1
       return (params) => {
         const {min, max} = self.mergeWithDefaults(params);
         return MathUtil.interpolate(min, max, rng());
+      };
+    }
+  ),
+
+  select: new PublicBinding(
+    'select',
+    `returns a number in the range 0..1
+    arguments: -`,
+    {from: []},
+    (self, rng) => {
+      return (params) => {
+        const {from} = self.mergeWithDefaults(params);
+        if (from instanceof Array && from.length > 0) {
+          const index = Number.parseInt(from.length * rng(), 10);
+          return from[index];
+        }
+        console.log('select\'s from parameter should be a list');
+        return undefined;
       };
     }
   ),

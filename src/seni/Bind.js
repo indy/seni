@@ -107,6 +107,7 @@ function bindBracket(env, rng) {
   const br = [Bracket.identity,
               Bracket.int,
               Bracket.scalar,
+              Bracket.select,
               Bracket.testPlus];
 
   return br.reduce((a, b) => a.set(b.name, b.create(b, rng)), env);

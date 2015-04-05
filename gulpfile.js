@@ -30,10 +30,39 @@ const browserify = require('browserify');
 const runSequence = require('run-sequence');
 const source = require('vinyl-source-stream');
 const manifest = require('./package.json');
+const eslint = require('gulp-eslint');
 const config = manifest.seniOptions;
 const mainFile = manifest.main;
 const destinationFolder = path.dirname(mainFile);
 const exportFileName = path.basename(mainFile, path.extname(mainFile));
+
+
+gulp.task('eslint-src', function () {
+    return gulp.src(['src/**/*.js'])
+        // eslint() attaches the lint output to the eslint property
+        // of the file object so it can be used by other modules.
+        .pipe(eslint())
+        // eslint.format() outputs the lint results to the console.
+        // Alternatively use eslint.formatEach() (see Docs).
+        .pipe(eslint.format())
+        // To have the process exit with an error code (1) on
+        // lint error, return the stream and pipe to failOnError last.
+        .pipe(eslint.failOnError());
+});
+
+gulp.task('eslint-test', function () {
+    return gulp.src(['test/**/*.js'])
+        // eslint() attaches the lint output to the eslint property
+        // of the file object so it can be used by other modules.
+        .pipe(eslint())
+        // eslint.format() outputs the lint results to the console.
+        // Alternatively use eslint.formatEach() (see Docs).
+        .pipe(eslint.format())
+        // To have the process exit with an error code (1) on
+        // lint error, return the stream and pipe to failOnError last.
+        .pipe(eslint.failOnError());
+});
+
 
 // Remove the built files
 gulp.task('clean', function(cb) {
@@ -45,44 +74,9 @@ gulp.task('clean-tmp', function(cb) {
   del(['tmp'], cb);
 });
 
-// Send a notification when JSHint fails,
-// so that you know your changes didn't build
-function jshintNotify(file) {
-  if (!file.jshint) { return false; }
-  return file.jshint.success ? false : 'JSHint failed';
-}
-
-function jscsNotify(file) {
-  if (!file.jscs) { return false; }
-  return file.jscs.success ? false : 'JSRC failed';
-}
-
-// Lint our source code
-gulp.task('lint-src', function() {
-  return gulp.src(['src/**/*.js'])
-    .pipe($.plumber())
-    .pipe($.jshint())
-    .pipe($.jshint.reporter('jshint-stylish'))
-    .pipe($.notify(jshintNotify))
-    .pipe($.jscs())
-    .pipe($.notify(jscsNotify))
-    .pipe($.jshint.reporter('fail'));
-});
-
-// Lint our test code
-gulp.task('lint-test', function() {
-  return gulp.src(['test/**/*.js'])
-    .pipe($.plumber())
-    .pipe($.jshint())
-    .pipe($.jshint.reporter('jshint-stylish'))
-    .pipe($.notify(jshintNotify))
-    .pipe($.jscs())
-    .pipe($.notify(jscsNotify))
-    .pipe($.jshint.reporter('fail'));
-});
 
 // Build two versions of the library
-gulp.task('build', ['lint-src', 'clean'], function(done) {
+gulp.task('build', ['eslint-src', 'clean'], function(done) {
   esperanto.bundle({
     base: 'src',
     entry: config.entryFileName
@@ -149,14 +143,13 @@ gulp.task('coverage', function(done) {
 });
 
 function test() {
-  
   return gulp.src(['test/setup/node.js', 'test/unit/**/*.js'], {read: false})
     .pipe($.plumber())
     .pipe($.mocha({reporter: 'dot', globals: config.mochaGlobals}));
 };
 
 // Lint and run our tests
-gulp.task('test', ['lint-src', 'lint-test'], function() {
+gulp.task('test', ['eslint-src', 'eslint-test'], function() {
   require('babel/register')({ modules: 'common' });
   return test();
 });
@@ -164,12 +157,12 @@ gulp.task('test', ['lint-src', 'lint-test'], function() {
 // Ensure that linting occurs before browserify runs. This prevents
 // the build from breaking due to poorly formatted code.
 gulp.task('build-in-sequence', function(callback) {
-  runSequence(['lint-src', 'lint-test'], 'browserify', callback);
+  runSequence(['eslint-src', 'eslint-test'], 'browserify', callback);
 });
 
 // Run the headless unit tests as you make changes.
 gulp.task('watch', function() {
-  gulp.watch(['src/**/*', 'test/**/*', '.jshintrc', 'test/.jshintrc'], ['test']);
+  gulp.watch(['src/**/*', 'test/**/*', '.eslintrc'], ['test']);
 });
 
 // Build as you make changes.
@@ -180,7 +173,7 @@ gulp.task('build-watch', function() {
 // Set up a livereload environment for our spec runner
 gulp.task('test-browser', ['build-in-sequence'], function() {
   $.livereload.listen({port: 35729, host: 'localhost', start: true});
-  return gulp.watch(['src/**/*.js', 'test/**/*', '.jshintrc', 'test/.jshintrc'], ['build-in-sequence']);
+  return gulp.watch(['src/**/*.js', 'test/**/*', '.eslintrc'], ['build-in-sequence']);
 });
 
 // An alias of test

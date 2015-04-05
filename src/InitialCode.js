@@ -75,8 +75,8 @@ const code = `
                colourVolatility: 700
                seed: 220)
 
-(strokedBezierRect x: 50
-                   y: 50
+(strokedBezierRect x: 500
+                   y: 500
                    width: 400
                    height: 400
 

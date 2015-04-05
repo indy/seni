@@ -20,11 +20,6 @@ import TokenType from './TokenType';
 import Node from './Node';
 import NodeType from './NodeType';
 
-// recursive code so switch off the jslint warnings
-// about functions being used before they're defined
-//
-/*jslint latedef:false*/
-
 /*
  these functions will return {node: node, error: error}
  */
@@ -93,6 +88,8 @@ function consumeBracketForm(tokens) {
   }
 
   let token, parameterBox, parameter;
+
+  /* eslint-disable no-constant-condition */
   while (true) {
     token = tokens[0];
     if (token === undefined) {
@@ -112,6 +109,7 @@ function consumeBracketForm(tokens) {
       node.addParameterNode(parameter);
     }
   }
+  /* eslint-enable no-constant-condition */
 }
 
 function consumeQuotedForm(tokens) {
@@ -132,6 +130,7 @@ function consumeQuotedForm(tokens) {
 function consumeList(tokens) {
   const node = new Node(NodeType.LIST);
 
+  /* eslint-disable no-constant-condition */
   while (true) {
     const token = tokens[0];
     if (token === undefined) {
@@ -152,6 +151,7 @@ function consumeList(tokens) {
       node.addChild(n);
     }
   }
+  /* eslint-enable no-constant-condition */
 }
 
 /*

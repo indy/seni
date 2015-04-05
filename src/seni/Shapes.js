@@ -16,8 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*jslint bitwise:true,maxparams:6,maxstatements:50*/
-
 import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
 import Colour from './Colour';
@@ -102,12 +100,12 @@ function getRemapAndHalfWidthEnd(params) {
 
   if (lineWidth !== undefined) {
     // user has given a constant lineWidth parameter
-    halfWidthEnd  = lineWidth / 2.0;
+    halfWidthEnd = lineWidth / 2.0;
     remap = () => halfWidthEnd;
   } else {
     // use the default start and end line widths
     const halfWidthStart  = lineWidthStart / 2.0;
-    halfWidthEnd  = lineWidthEnd / 2.0;
+    halfWidthEnd = lineWidthEnd / 2.0;
     remap = MathUtil.remapFn({from: [tStart, tEnd],
                               to: [halfWidthStart, halfWidthEnd],
                               mapping: lineWidthMapping});
@@ -409,6 +407,7 @@ function renderStrokedBezier(publicBinding, renderer, params) {
 
   let lab = Colour.cloneAs(colour, Colour.Format.LAB);
 
+  /* eslint-disable no-loop-func */
   for (let i = 0; i < tessellation; i++) {
 
     let tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
@@ -437,10 +436,11 @@ function renderStrokedBezier(publicBinding, renderer, params) {
          (yy2 + (ns * Perlin._perlin(yy2, yy1, seed)))],
 
         [(xx3 + (ns * Perlin._perlin(xx3, xx1, seed))),
-         (yy3 + (ns * Perlin._perlin(yy3, yy1, seed)))],
+         (yy3 + (ns * Perlin._perlin(yy3, yy1, seed)))]
       ]
     });
   }
+  /* eslint-enable no-loop-func */
 }
 
 const strokedBezierBinding = new PublicBinding(
@@ -498,34 +498,23 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
     colourVolatility
   } = publicBinding.mergeWithDefaults(params);
 
-  console.log('x ' + x);
-  console.log('y ' + y);
-  console.log('width ' + width);
-  console.log('height ' + height);
-  console.log('volatility ' + volatility);
-  console.log('overlap ' + overlap);
-  console.log('iterations ' + iterations);
-  console.log('seed ' + seed);
-  console.log('tessellation ' + tessellation);
-  console.log('strokeTessellation ' + strokeTessellation);
-  console.log('strokeNoise ' + strokeNoise);
-  console.log('colour ' + colour);
-  console.log('colourVolatility ' + colourVolatility);
+  const xStart = x - (width / 2);
+  const yStart = y - (height / 2);
 
-  let thWidth = width / 3;
-  let thHeight = height / 3;
-  let vol = volatility;
+  const thWidth = width / 3;
+  const thHeight = height / 3;
+  const vol = volatility;
 
-  let hDelta = height / iterations;
-  let hStripWidth = height / iterations;
+  const hDelta = height / iterations;
+  const hStripWidth = height / iterations;
 
-  let vDelta = width / iterations;
-  let vStripWidth = width / iterations;
+  const vDelta = width / iterations;
+  const vStripWidth = width / iterations;
 
-  let halfAlphaCol = Colour.cloneAs(colour, Colour.Format.LAB);
-  let lab = Colour.setAlpha(halfAlphaCol, Colour.getAlpha(halfAlphaCol) / 2);
+  const halfAlphaCol = Colour.cloneAs(colour, Colour.Format.LAB);
+  const lab = Colour.setAlpha(halfAlphaCol, Colour.getAlpha(halfAlphaCol) / 2);
 
-  let rng = SeedRandom.buildSigned(seed);
+  const rng = SeedRandom.buildSigned(seed);
   let i;
 
   for (i = iterations; i > 0; i--) {
@@ -533,14 +522,14 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
       tessellation: tessellation,
       lineWidth: overlap + hStripWidth,
       coords: [
-        [(rng() * vol) + x + (0 * thWidth),
-         ((i * hDelta) + (rng() * vol) + y)],
-        [(rng() * vol) + x + (1 * thWidth),
-         ((i * hDelta) + (rng() * vol) + y)],
-        [(rng() * vol) + x + (2 * thWidth),
-         ((i * hDelta) + (rng() * vol) + y)],
-        [(rng() * vol) + x + (3 * thWidth),
-         ((i * hDelta) + (rng() * vol) + y)]
+        [(rng() * vol) + xStart + (0 * thWidth),
+         ((i * hDelta) + (rng() * vol) + yStart)],
+        [(rng() * vol) + xStart + (1 * thWidth),
+         ((i * hDelta) + (rng() * vol) + yStart)],
+        [(rng() * vol) + xStart + (2 * thWidth),
+         ((i * hDelta) + (rng() * vol) + yStart)],
+        [(rng() * vol) + xStart + (3 * thWidth),
+         ((i * hDelta) + (rng() * vol) + yStart)]
       ],
       strokeTessellation: strokeTessellation,
       strokeNoise: strokeNoise,
@@ -554,14 +543,14 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
       tessellation: tessellation,
       lineWidth: overlap + vStripWidth,
       coords: [
-        [((i * vDelta) + (rng() * vol) + x),
-         (rng() * vol) + y + (0 * thHeight)],
-        [((i * vDelta) + (rng() * vol) + x),
-         (rng() * vol) + y + (1 * thHeight)],
-        [((i * vDelta) + (rng() * vol) + x),
-         (rng() * vol) + y + (2 * thHeight)],
-        [((i * vDelta) + (rng() * vol) + x),
-         (rng() * vol) + y + (3 * thHeight)]
+        [((i * vDelta) + (rng() * vol) + xStart),
+         (rng() * vol) + yStart + (0 * thHeight)],
+        [((i * vDelta) + (rng() * vol) + xStart),
+         (rng() * vol) + yStart + (1 * thHeight)],
+        [((i * vDelta) + (rng() * vol) + xStart),
+         (rng() * vol) + yStart + (2 * thHeight)],
+        [((i * vDelta) + (rng() * vol) + xStart),
+         (rng() * vol) + yStart + (3 * thHeight)]
       ],
       strokeTessellation: strokeTessellation,
       strokeNoise: strokeNoise,

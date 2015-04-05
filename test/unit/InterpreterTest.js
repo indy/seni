@@ -1,4 +1,24 @@
-/*jslint maxstatements:24*/
+/*
+    Seni
+    Copyright (C) 2015  Inderjit Gill <email@indy.io>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/* eslint-disable no-use-before-define */
+// todo: look into no-unused-expressions
+/* eslint-disable no-unused-expressions */
 
 import Interpreter from '../../src/lang/Interpreter';
 import Parser from '../../src/lang/Parser';
@@ -171,6 +191,7 @@ describe('eval', () => {
    // todo: test that the e env still has foo bound to 5
    });
    */
+  /* eslint-disable no-unused-vars */
   it('should test begin', () => {
     expect(e.has('foo')).to.be.true;
     expect(e.get('foo')).to.equal(5);
@@ -180,6 +201,7 @@ describe('eval', () => {
     [newEnv, res] = evalForm(e, '(begin (+ 1 1))');
     expect(res).to.equal(2);
   });
+  /* eslint-enable no-unused-vars */
 
   it('should test let', () => {
     let [newEnv, res] = evalForm(e, '(let ((a 12) (b 24)) (+ a b foo))');
@@ -207,12 +229,16 @@ describe('eval', () => {
   /*
    it('should test loop', () => {
    e.add('bar', 0);
-   let [newEnv, res] = evalForm(e, '(loop (a from: 0 to: 4 increment: 1) (set! bar (+ bar a)))');
+   let [newEnv, res] =
+   evalForm(e, '(loop (a from: 0 to: 4 increment: 1) (set! bar (+ bar a)))');
+
    expect(newEnv.get('bar')).to.equal(6);
 
    // ''until' for <= loop ('to' for < loop)
    newEnv.add('bar', 0);
-   [newEnv, res] = evalForm(newEnv, '(loop (a from: 0 until: 4 increment: 1) (set! bar (+ bar a)))');
+   [newEnv, res] =
+   evalForm(newEnv, '(loop (a from: 0 until: 4 increment: 1) 
+   (set! bar (+ bar a)))');
    expect(newEnv.get('bar')).to.equal(10);
 
    newEnv.add('bar', 0);
@@ -220,17 +246,25 @@ describe('eval', () => {
    expect(newEnv.get('bar')).to.equal(10);
 
    newEnv.add('bar', 0);
-   [newEnv, res] = evalForm(newEnv, '(loop (a to: 5 increment: 2) (set! bar (+ bar a)))');
+   [newEnv, res] =
+       evalForm(newEnv, '(loop (a to: 5 increment: 2) 
+                (set! bar (+ bar a)))');
    expect(newEnv.get('bar')).to.equal(6);
 
    // loop should eval it's arguments
    newEnv.add('bar', 0);
-   [newEnv, res] = evalForm(newEnv, '(let ((x 2)) (loop (a to: 5 increment: x) (set! bar (+ bar a))))');
+   [newEnv, res] =
+       evalForm(newEnv,
+                '(let ((x 2)) (loop (a to: 5 incremenet: x) 
+                (set! bar (+ bar a))))');
    expect(newEnv.get('bar')).to.equal(6);
 
    // loop's body should be treated as though it is wrapped in a 'begin'
    newEnv.add('bar', 0);
-   [newEnv, res] = evalForm(newEnv, '(let ((x 2) (y 4)) (loop (a to: 5 increment: x) (+ y y) (set! bar (+ bar a))))');
+   [newEnv, res] =
+       evalForm(newEnv,
+  '(let ((x 2) (y 4)) (loop (a to: 5 increment: x) 
+                (+ y y) (set! bar (+ bar a))))');
    expect(newEnv.get('bar')).to.equal(6);
 
    });*/
