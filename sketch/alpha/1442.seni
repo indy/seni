@@ -34,7 +34,7 @@
               lineSegments: 5
               colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 a: 0.4)
               seed: 272)
-  (loop (h from: -20 to: 1020 step: 20)
+  (loop (h from: -20 to: 1020 increment: 20)
         (bezier tessellation: lineSegments
                 lineWidth: lineWidth
                 coords: (pair

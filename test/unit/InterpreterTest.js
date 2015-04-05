@@ -207,12 +207,12 @@ describe('eval', () => {
   /*
    it('should test loop', () => {
    e.add('bar', 0);
-   let [newEnv, res] = evalForm(e, '(loop (a from: 0 to: 4 step: 1) (set! bar (+ bar a)))');
+   let [newEnv, res] = evalForm(e, '(loop (a from: 0 to: 4 increment: 1) (set! bar (+ bar a)))');
    expect(newEnv.get('bar')).to.equal(6);
 
    // ''until' for <= loop ('to' for < loop)
    newEnv.add('bar', 0);
-   [newEnv, res] = evalForm(newEnv, '(loop (a from: 0 until: 4 step: 1) (set! bar (+ bar a)))');
+   [newEnv, res] = evalForm(newEnv, '(loop (a from: 0 until: 4 increment: 1) (set! bar (+ bar a)))');
    expect(newEnv.get('bar')).to.equal(10);
 
    newEnv.add('bar', 0);
@@ -220,17 +220,17 @@ describe('eval', () => {
    expect(newEnv.get('bar')).to.equal(10);
 
    newEnv.add('bar', 0);
-   [newEnv, res] = evalForm(newEnv, '(loop (a to: 5 step: 2) (set! bar (+ bar a)))');
+   [newEnv, res] = evalForm(newEnv, '(loop (a to: 5 increment: 2) (set! bar (+ bar a)))');
    expect(newEnv.get('bar')).to.equal(6);
 
    // loop should eval it's arguments
    newEnv.add('bar', 0);
-   [newEnv, res] = evalForm(newEnv, '(let ((x 2)) (loop (a to: 5 step: x) (set! bar (+ bar a))))');
+   [newEnv, res] = evalForm(newEnv, '(let ((x 2)) (loop (a to: 5 increment: x) (set! bar (+ bar a))))');
    expect(newEnv.get('bar')).to.equal(6);
 
    // loop's body should be treated as though it is wrapped in a 'begin'
    newEnv.add('bar', 0);
-   [newEnv, res] = evalForm(newEnv, '(let ((x 2) (y 4)) (loop (a to: 5 step: x) (+ y y) (set! bar (+ bar a))))');
+   [newEnv, res] = evalForm(newEnv, '(let ((x 2) (y 4)) (loop (a to: 5 increment: x) (+ y y) (set! bar (+ bar a))))');
    expect(newEnv.get('bar')).to.equal(6);
 
    });*/

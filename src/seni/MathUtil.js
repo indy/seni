@@ -90,24 +90,44 @@ const MathUtil = {
   remapFn,
 
   PI: new PublicBinding(
-    'math/PI',
+    'PI',
     ``,
     {},
     () => PI
   ),
 
   twoPI: new PublicBinding(
-    'math/2PI',
+    '2PI',
     ``,
     {},
     () => twoPI
   ),
 
   PIbyTwo: new PublicBinding(
-    'math/PI/2',
+    'PI/2',
     ``,
     {},
     () => PIbyTwo
+  ),
+
+  sin: new PublicBinding(
+    'sin',
+    ``,
+    {angle: 0},
+    (self) => function(params) {
+      const {angle} = self.mergeWithDefaults(params);
+      return Math.sin(angle);
+    }
+  ),
+
+  cos: new PublicBinding(
+    'cos',
+    ``,
+    {angle: 0},
+    (self) => function(params) {
+      const {angle} = self.mergeWithDefaults(params);
+      return Math.cos(angle);
+    }
   ),
 
   remapFnBinding: new PublicBinding(

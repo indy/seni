@@ -35,6 +35,8 @@ function bindMath(env) {
                 MathUtil.PI,
                 MathUtil.twoPI,
                 MathUtil.PIbyTwo,
+                MathUtil.sin,
+                MathUtil.cos,
                 MathUtil.distance2D,
                 MathUtil.clamp];
 

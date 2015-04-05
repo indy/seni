@@ -217,7 +217,8 @@ const specialForms = {
 
   // (print 'hi' foo) => hi 42
   'print': (env, [_, ...msgs]) => {
-    console.log(msgs.reduce((a, b) => a + ' ' + evaluate(env, b)[1], ''));
+    let printMsg = msgs.reduce((a, b) => a + ' ' + evaluate(env, b)[1], '');
+    console.log(printMsg.trim());
     return [env, true];
   },
 
@@ -260,6 +261,60 @@ function evalBodyForms(env, bodyForms) {
 }
 
 function loopingFn(env, expr, varName, params) {
+  // todo: 'to' should be <=, and 'until' should be '<'
+
+  // todo: until isn't going to work with steps, perhaps remove it?
+  const {from,
+         to,
+         until,
+         steps,
+         increment} = Util.merge(params, {from: 0,
+                                          to: 10,
+                                          until: undefined,
+                                          steps: undefined,
+                                          increment: 1});
+
+  let res;
+
+  if (steps !== undefined) {
+
+    if (steps < 2) {
+      console.log('steps must be 2 or greater');
+      return undefined;
+    }
+
+    const unit = (to - from) / (steps - 1);
+
+    let val;
+    for (let i = 0; i < steps; i++) {
+      val = from + (i * unit);
+      env = env.set(varName, val);
+      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
+    }
+    return res;
+  }
+
+  if (increment === 0) {
+    console.log('increment of 0 given');
+    return undefined;
+  }
+
+  if (until !== undefined) {
+    for (let i = from; i <= until; i += increment) {
+      env = env.set(varName, i);
+      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
+    }
+  } else {
+    for (let i = from; i < to; i += increment) {
+      env = env.set(varName, i);
+      res = expr.reduce((a, b) => evaluate(a[0], b), [env, true]);
+    }
+  }
+
+  return res;
+}
+
+function iterateFn(env, expr, varName, params) {
   // todo: 'to' should be <=, and 'until' should be '<'
 
   const {from, to, until, step} = Util.merge(params, {from: 0,
