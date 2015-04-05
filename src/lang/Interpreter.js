@@ -47,23 +47,23 @@ function evaluate(env, expr) {
 
 function funApplication(env, listExpr) {
 
-  let [env, fun] = evaluate(env, listExpr[0]);
+  let [e, fun] = evaluate(env, listExpr[0]);
 
   if (fun === undefined) {
     // todo: use something better than console.log
     console.log(listExpr[0] + ' is undefined');
-    return [env, undefined];
+    return [e, undefined];
   }
 
   // special forms that manipulate the listExpr and can change the env
   if (isSpecialForm(listExpr)) {
-    return fun(env, listExpr);
+    return fun(e, listExpr);
   }
 
   // classic functions that don't require named arguments
   if (isClassicFunction(listExpr)) {
-    const argu = listExpr.slice(1).map(n => evaluate(env, n)[1]);
-    return [env, fun(argu)];
+    const argu = listExpr.slice(1).map(n => evaluate(e, n)[1]);
+    return [e, fun(argu)];
   }
 
   // normal functions that require named arguments
@@ -71,10 +71,10 @@ function funApplication(env, listExpr) {
   if (listExpr.length > 1) {
     const argObj = listExpr[1];
     for (let k in argObj) {
-      args[k] = evaluate(env, argObj[k])[1];
+      args[k] = evaluate(e, argObj[k])[1];
     }
   }
-  return [env, fun(args)];
+  return [e, fun(args)];
 }
 
 function isSpecialForm(listExpr) {
