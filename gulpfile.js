@@ -36,6 +36,13 @@ const mainFile = manifest.main;
 const destinationFolder = path.dirname(mainFile);
 const exportFileName = path.basename(mainFile, path.extname(mainFile));
 
+var webpack = require('gulp-webpack');
+
+gulp.task("webpack", function() {
+  return gulp.src('src/index.js')
+    .pipe(webpack( require('./webpack.config.js') ))
+    .pipe(gulp.dest('dist/'));
+});
 
 gulp.task('eslint-src', function () {
     return gulp.src(['src/**/*.js'])
