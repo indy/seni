@@ -419,15 +419,15 @@ function renderStrokedBezier(publicBinding, renderer, params) {
 
     let ns = strokeNoise;
 
+    let colLabL = Colour.getComponent(lab, Colour.L) +
+          (Perlin._perlin(xx1, xx1, xx1) * colourVolatility);
+
     renderSpline(splineBinding, renderer, {
       tessellation: strokeTessellation,
       lineWidth: lineWidth,
       lineWidthStart: strokeLineWidthStart,
       lineWidthEnd: strokeLineWidthEnd,
-
-      colour: Colour.setLightness(lab, Colour.getLightness(lab) +
-                                  (Perlin._perlin(xx1, xx1, xx1) *
-                                   colourVolatility)),
+      colour: Colour.setComponent(lab, Colour.L, colLabL),
       coords: [
         [(xx1 + (ns * Perlin._perlin(xx1, xx1, seed))),
          (yy1 + (ns * Perlin._perlin(yy1, yy1, seed)))],

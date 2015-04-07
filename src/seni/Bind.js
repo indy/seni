@@ -79,19 +79,32 @@ function bindColour(env) {
                    ColourBindings.colHSL,
                    ColourBindings.colLAB,
                    ColourBindings.colHSV,
+
+                   ColourBindings.colSetRGBRed,
+                   ColourBindings.colGetRGBRed,
+                   ColourBindings.colSetRGBGreen,
+                   ColourBindings.colGetRGBGreen,
+                   ColourBindings.colSetRGBBlue,
+                   ColourBindings.colGetRGBBlue,
+                   ColourBindings.colSetAlpha,
+                   ColourBindings.colGetAlpha,
+                   ColourBindings.colSetLABL,
+                   ColourBindings.colGetLABL,
+                   ColourBindings.colSetLABA,
+                   ColourBindings.colGetLABA,
+                   ColourBindings.colSetLABB,
+                   ColourBindings.colGetLABB,
+
                    ColourBindings.RGB,
                    ColourBindings.HSL,
                    ColourBindings.LAB,
                    ColourBindings.HSV,
+
                    ColourBindings.colConvert,
                    ColourBindings.colComplementary,
                    ColourBindings.colSplitComplementary,
                    ColourBindings.colAnalagous,
-                   ColourBindings.colTriad,
-                   ColourBindings.colSetAlpha,
-                   ColourBindings.colGetAlpha,
-                   ColourBindings.colSetLightness,
-                   ColourBindings.colGetLightness];
+                   ColourBindings.colTriad];
 
   return colours.reduce((a, b) => a.set(b.name, b.create(b)), env);
 }

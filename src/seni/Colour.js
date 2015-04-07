@@ -30,14 +30,14 @@ const Format = {
   XYZ: 4
 };
 
-const RED = 0;
-const GREEN = 1;
-const BLUE = 2;
 const ALPHA = 3;
 
 const X = 0;
 const Y = 1;
 const Z = 2;
+
+const R = 0;
+const G = 1;
 
 const L = 0;
 const A = 1;
@@ -68,8 +68,14 @@ function construct(fmt, elements) {
   return new Immutable.Map({format: fmt, elements: elementList});
 }
 
-// todo: these get/set functions are a hack,
-// try to come up with something more generic
+function getComponent(colour, component) {
+  return colour.getIn(['elements', component]);
+}
+
+function setComponent(colour, component, value) {
+  return colour.setIn(['elements', component], value);
+}
+
 function getAlpha(colour) {
   return colour.getIn(['elements', ALPHA]);
 }
@@ -77,18 +83,6 @@ function getAlpha(colour) {
 function setAlpha(colour, alpha) {
   return colour.setIn(['elements', ALPHA], alpha);
 }
-
-/* eslint-disable no-use-before-define */
-function getLightness(colour) {
-  //return cloneAs(colour, Format.LAB).getIn(['elements', L]);
-  return colour.getIn(['elements', L]);
-}
-
-function setLightness(colour, lightness) {
-  // return cloneAs(colour, Format.LAB).setIn(['elements', L], lightness);
-  return colour.setIn(['elements', L], lightness);
-}
-/* eslint-enable no-use-before-define */
 
 //  http://www.brucelindbloom.com/index.html?Equations.html
 
@@ -108,9 +102,9 @@ function colourToAxis(component) {
 
 function rgbxyz(c) {
   // assumes that this is already in RGB format
-  const rr = colourToAxis(element(c, RED));
-  const gg = colourToAxis(element(c, GREEN));
-  const bb = colourToAxis(element(c, BLUE));
+  const rr = colourToAxis(element(c, R));
+  const gg = colourToAxis(element(c, G));
+  const bb = colourToAxis(element(c, B));
 
   return construct(Format.XYZ, [(rr * 0.4124) + (gg * 0.3576) + (bb * 0.1805),
                                 (rr * 0.2126) + (gg * 0.7152) + (bb * 0.0722),
@@ -162,13 +156,13 @@ function xyzrgb(c) {
 }
 
 function maxChannel(c) {
-  const hi = element(c, RED) > element(c, GREEN) ? RED : GREEN;
-  return element(c, BLUE) > element(c, hi) ? BLUE : hi;
+  const hi = element(c, R) > element(c, G) ? R : G;
+  return element(c, B) > element(c, hi) ? B : hi;
 }
 
 function minChannel(c) {
-  const hi = element(c, RED) < element(c, GREEN) ? RED : GREEN;
-  return element(c, BLUE) < element(c, hi) ? BLUE : hi;
+  const hi = element(c, R) < element(c, G) ? R : G;
+  return element(c, B) < element(c, hi) ? B : hi;
 }
 
 function hue(c, maxChan, chroma) {
@@ -176,12 +170,12 @@ function hue(c, maxChan, chroma) {
     return 0.0;        // invalid hue
   }
   switch (maxChan) {
-  case RED:
-    return 60.0 * (((element(c, GREEN) - element(c, BLUE)) / chroma) % 6);
-  case GREEN:
-    return 60.0 * (((element(c, BLUE) - element(c, RED)) / chroma) + 2.0);
-  case BLUE:
-    return 60.0 * (((element(c, RED) - element(c, GREEN)) / chroma) + 4.0);
+  case R:
+    return 60.0 * (((element(c, G) - element(c, B)) / chroma) % 6);
+  case G:
+    return 60.0 * (((element(c, B) - element(c, R)) / chroma) + 2.0);
+  case B:
+    return 60.0 * (((element(c, R) - element(c, G)) / chroma) + 4.0);
   }
 
   return 0.0;            // should never get here
@@ -438,40 +432,41 @@ function triad(c) {
  */
 
 const Colour = {
-  Format: Format,
-  RED: RED,
-  GREEN: GREEN,
-  BLUE: BLUE,
-  ALPHA: ALPHA,
+  Format,
 
-  X: X,
-  Y: Y,
-  Z: Z,
+  ALPHA,
 
-  L: L,
-  A: A,
-  B: B,
+  R,
+  G,
 
-  H: H,
-  S: S,
-  V: V,
+  X,
+  Y,
+  Z,
+
+  L,
+  A,
+  B,
+
+  H,
+  S,
+  V,
 
   defaultColour: construct(Format.RGB, [1.0, 0.5, 0.5, 0.5]),
   debugColour: construct(Format.RGB, [0.0, 0.8, 1.0, 1.0]),
 
-  construct: construct,
-  format: format,
-  element: element,
-  elementArray: elementArray,
-  getAlpha: getAlpha,
-  setAlpha: setAlpha,
-  getLightness: getLightness,
-  setLightness: setLightness,
-  cloneAs: cloneAs,
-  complementary: complementary,
-  splitComplementary: splitComplementary,
-  analagous: analagous,
-  triad: triad
+  construct,
+  format,
+  element,
+  elementArray,
+  getComponent,
+  setComponent,
+  getAlpha,
+  setAlpha,
+  cloneAs,
+  complementary,
+  splitComplementary,
+  analagous,
+  triad
 };
 
 export default Colour;

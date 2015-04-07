@@ -18,81 +18,178 @@
 
 const code = `
 
-(define coords (pair 440 400
-               533 700
-                   766 200
-                   900 500))
+(define backgroundColour (col/rgb r: [0.2 (scalar)]
+                                  g: [0.2 (scalar)]
+                                  b: [0.5 (scalar)]
+                                  alpha: 0.9))
 
-(define coords2 (pair 440 700
-                      533 1000
-                      766 500
-                      900 800))
+(define topColour (col/rgb r: [0.2 (scalar)]
+                           g: [0.0 (scalar)]
+                           b: [0.1 (scalar)]
+                           alpha: 0.9))
 
-(define coords3 (pair 440 800
-                      533 1100
-                      766 600
-                      900 900))
+(define midColour (col/lab l: [37.0 (scalar min: 0 max: 100)]
+                           a: [5.79 (scalar min: -50 max: 50)]
+                           b: [-35.82 (scalar min: -50 max: 50)]
+                           alpha: 0.7))
 
-(spline colour: (col/rgb r: 0.0 g: 0.4 b: 0.1 a: 0.5)
-        lineWidthStart:10
-        lineWidthEnd: 0
-        coords: (pair 140 400
-                      333 600
-                      566 500))
+(define lowColour (col/set-lab-l colour: midColour
+                                 value: (- (col/get-lab-l colour: midColour)
+                                           [20.5 (scalar min: 0.0 max: 20.0)])))
 
-(bezier tessellation: 35
-    lineWidth: 10
-     coords: coords
-     colour: (col/rgb r: 0.0 g: 0.0 b: 0.1 a: 0.5))
+(define topHi (col/set-lab-l colour: topColour
+                             value: (+ (col/get-lab-l colour: topColour)
+                                       [10.5 (scalar min: 0.0 max: 20.0)])))
 
-(strokedBezier tessellation: 5
-               coords: coords2
-               strokeLineWidthStart: 20
-               strokeLineWidthEnd: 20
-               strokeTessellation: 15
-               strokeNoise: 25
-               colour: (col/rgb r: 0.2 g: 0.9 b: 0.1 a: 0.3)
-               colourVolatility: 0
- seed: 43)
+; single colour background
+(rect x: 500
+      y: 500
+      width: 1000
+      height: 1000
+      colour: backgroundColour)
 
-(strokedBezier tessellation: 15
-               coords: coords3
-               strokeLineWidthStart: 20
-               strokeLineWidthEnd: 4
-               strokeTessellation: 15
-               strokeNoise: 45
-               colour: (col/rgb r: 0.2 g: 0.9 b: 0.1 a: 0.3)
-               colourVolatility: 70
-               seed: 2200)
-
-(strokedBezier tessellation: 65
-               coords: coords3
-               strokeLineWidthStart: 2
-               strokeLineWidthEnd: 5
-               strokeTessellation: 15
-               strokeNoise: 55
-               colour: (col/rgb r: 0.2 g: 0.9 b: 0.1 a: 0.3)
-               colourVolatility: 700
-               seed: 220)
-
+; the textured background
 (strokedBezierRect x: 500
                    y: 500
-                   width: 400
-                   height: 400
+                   width: 1000
+                   height: 1000
 
-                   iterations: 50
-                   overlap: 10
+                   iterations: [100 (int min: 1 max: 100)]
+                   overlap: [10 (int min: 1 max: 100)]
 
-                   tessellation: 35
+                   tessellation: [35 (int min: 1 max: 50)]
 
                    strokeTessellation: 15
-                   strokeNoise: 90
+                   strokeNoise: [30 (int min: 1 max: 50)]
 
-                   colour: (col/rgb r: 0.2 g: 0.0 b: 0.1 a: 0.9)
-                   colourVolatility: 20
+                   colour: backgroundColour
+                   colourVolatility: [20 (int min: 0 max: 30)]
 
-                   volatility: 17
-                   seed: 43)
+                   volatility: [3 (int min: 0 max: 20)]
+                   seed: [44 (int)])
+; top section
+(strokedBezierRect x: 500
+                   y: 750
+                   width: 900
+                   height: 400
+
+                   iterations: [40 (int min: 1 max: 100)]
+                   overlap: [10 (int min: 1 max: 100)]
+
+                   tessellation: [35 (int min: 1 max: 50)]
+
+                   strokeTessellation: 15
+                   strokeNoise: [20 (int min: 1 max: 50)]
+
+                   colour: topColour
+                   colourVolatility: [10 (int min: 0 max: 30)]
+
+                   volatility: [10 (int min: 0 max: 30)]
+                   seed: [44 (int)])
+
+; top section highlights
+
+(define hiIterations [5 (int min: 1 max: 30)])
+(define hiOverlap [1 (int min: 1 max: 20)])
+
+(strokedBezierRect x: 250
+                   y: 750
+                   width: 200
+                   height: 300
+
+                   iterations: hiIterations
+                   overlap: hiOverlap
+
+                   tessellation: [35 (int min: 1 max: 50)]
+
+                   strokeTessellation: 15
+                   strokeNoise: [20 (int min: 1 max: 50)]
+
+                   colour: topHi
+                   colourVolatility: [10 (int min: 0 max: 30)]
+
+                   volatility: [10 (int min: 0 max: 30)]
+                   seed: [44 (int)])
+
+(strokedBezierRect x: 550
+                   y: 750
+                   width: 200
+                   height: 300
+
+                   iterations: hiIterations
+                   overlap: hiOverlap
+
+                   tessellation: [35 (int min: 1 max: 50)]
+
+                   strokeTessellation: 15
+                   strokeNoise: [20 (int min: 1 max: 50)]
+
+                   colour: topHi
+                   colourVolatility: [10 (int min: 0 max: 30)]
+
+                   volatility: [10 (int min: 0 max: 30)]
+                   seed: [44 (int)])
+
+
+(strokedBezierRect x: 850
+                   y: 750
+                   width: 200
+                   height: 300
+
+                   iterations: hiIterations
+                   overlap: hiOverlap
+
+                   tessellation: [35 (int min: 1 max: 50)]
+
+                   strokeTessellation: 15
+                   strokeNoise: [20 (int min: 1 max: 50)]
+
+                   colour: topHi
+                   colourVolatility: [10 (int min: 0 max: 30)]
+
+                   volatility: [10 (int min: 0 max: 30)]
+                   seed: [44 (int)])
+
+; middle section
+(strokedBezierRect x: 500
+                   y: 425
+                   width: 900
+                   height: 250
+
+                   iterations: [40 (int min: 1 max: 100)]
+                   overlap: [10 (int min: 1 max: 100)]
+
+                   tessellation: [35 (int min: 1 max: 50)]
+
+                   strokeTessellation: 15
+                   strokeNoise: [20 (int min: 1 max: 50)]
+
+                   colour: midColour
+                   colourVolatility: [10 (int min: 0 max: 30)]
+
+                   volatility: [10 (int min: 0 max: 30)]
+                   seed: [44 (int)])
+
+; lower section
+(strokedBezierRect x: 500
+                   y: 200
+                   width: 900
+                   height: 300
+
+                   iterations: [40 (int min: 1 max: 100)]
+                   overlap: [10 (int min: 1 max: 100)]
+
+                   tessellation: [35 (int min: 1 max: 50)]
+
+                   strokeTessellation: 15
+                   strokeNoise: [20 (int min: 1 max: 50)]
+
+                   colour: lowColour
+                   colourVolatility: [10 (int min: 0 max: 30)]
+
+                   volatility: [10 (int min: 0 max: 30)]
+                   seed: [44 (int)])
+
 `;
 
 const InitialCode = {
