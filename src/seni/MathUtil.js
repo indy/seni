@@ -17,6 +17,7 @@
 */
 
 import PublicBinding from '../lang/PublicBinding';
+import Immutable from 'immutable';
 
 const PI = Math.PI;
 const twoPI = PI * 2;

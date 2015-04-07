@@ -16,6 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import { vec3, mat4 } from 'gl-matrix';
+
 class MatrixStack {
 
   constructor() {

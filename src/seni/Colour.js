@@ -16,6 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import Immutable from 'immutable';
+
 const sUnitAngle = 360.0 / 12.0;
 const sComplimentaryAngle = sUnitAngle * 6;
 const sTriadAngle = sUnitAngle * 4;
@@ -76,14 +78,17 @@ function setAlpha(colour, alpha) {
   return colour.setIn(['elements', ALPHA], alpha);
 }
 
-// currently assuming that 'colour' is already in Lab colour space
+/* eslint-disable no-use-before-define */
 function getLightness(colour) {
+  //return cloneAs(colour, Format.LAB).getIn(['elements', L]);
   return colour.getIn(['elements', L]);
 }
 
 function setLightness(colour, lightness) {
+  // return cloneAs(colour, Format.LAB).setIn(['elements', L], lightness);
   return colour.setIn(['elements', L], lightness);
 }
+/* eslint-enable no-use-before-define */
 
 //  http://www.brucelindbloom.com/index.html?Equations.html
 

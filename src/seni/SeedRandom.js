@@ -17,15 +17,16 @@
 */
 
 import PublicBinding from '../lang/PublicBinding';
+import seedrandom from 'seedrandom';
 
 function buildUnsigned(seedVal) {
-  const seedrandom = Math.seedrandom;
+  //const seedrandom = Math.seedrandom;
   const saveable = seedrandom(seedVal, {state: true});
   return () => saveable();
 }
 
 function buildSigned(seedVal) {
-  const seedrandom = Math.seedrandom;
+  //const seedrandom = Math.seedrandom;
   const saveable = seedrandom(seedVal, {state: true});
   return () => (saveable() * 2.0) - 1.0;
 }

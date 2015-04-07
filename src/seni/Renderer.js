@@ -19,6 +19,7 @@
 import GLContainer from './GLContainer';
 import Buffer from './Buffer';
 import MatrixStack from './MatrixStack';
+import { mat4 } from 'gl-matrix';
 
 function initGLState(gl) {
   gl.clearColor(1.0, 1.0, 1.0, 1.0);

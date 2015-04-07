@@ -21,6 +21,7 @@
 
 import Util from '../seni/Util';
 import PublicBinding from './PublicBinding';
+import Immutable from 'immutable';
 
 const TRUE_STRING = '#t';
 const FALSE_STRING = '#f';

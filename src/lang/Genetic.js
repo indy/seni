@@ -21,6 +21,7 @@ import Compiler from './Compiler';
 import Interpreter from './Interpreter';
 import Bind from '../seni/Bind';
 import SeedRandom from '../seni/SeedRandom';
+import Immutable from 'immutable';
 
 function buildTraitFromNode(node, genes) {
   if (node.type === NodeType.LIST) {
