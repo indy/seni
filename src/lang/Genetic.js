@@ -25,7 +25,7 @@ import Immutable from 'immutable';
 
 function buildTraitFromNode(node, genes) {
   if (node.type === NodeType.LIST) {
-    node.children.map((child) => buildTraitFromNode(child, genes));
+    node.children.map(child => buildTraitFromNode(child, genes));
   }
 
   if (node.alterable === true) {
@@ -62,23 +62,21 @@ const Genetic = {
 
   buildTraits: function(ast) {
     const traits = [];
-    ast.map((node) => buildTraitFromNode(node, traits));
+    ast.map(node => buildTraitFromNode(node, traits));
     return traits;
   },
 
   createGenotypeFromInitialValues: function(traits) {
-    const genotype = traits.map((g) =>
-                                new Immutable.Map({value: g.initialValue}));
-    return new Immutable.List(genotype);
+    const geno = traits.map(g => new Immutable.Map({value: g.initialValue}));
+    return new Immutable.List(geno);
   },
 
   createGenotypeFromTraits: function(traits, seed) {
-
     const rng = SeedRandom.buildUnsigned(seed);
     const env = Bind.addBracketBindings(Interpreter.getBasicEnv(), rng);
 
     // env is the environment used to evaluate the bracketed forms
-    const genotype = traits.map((trait) => buildGenoFromTrait(trait, env));
+    const genotype = traits.map(trait => buildGenoFromTrait(trait, env));
 
     return new Immutable.List(genotype);
   },

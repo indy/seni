@@ -52,7 +52,7 @@ const Runtime = {
 
     // now evaluate all of the non-define expressions
     return compiled.forms.
-      filter((s) => !Interpreter.isDefineExpression(s)).
+      filter(s => !Interpreter.isDefineExpression(s)).
       reduce(([e, r], b) => Interpreter.evaluate(e, b), [_env, _res]);
   }
 };

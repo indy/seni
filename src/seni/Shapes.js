@@ -48,11 +48,11 @@ function quadraticPoint(a, b, c, t) {
 }
 
 function bezierCoordinates(tVals, controlPoints) {
-  const xs = tVals.map((t) => bezierPoint(controlPoints[0][0],
+  const xs = tVals.map(t => bezierPoint(controlPoints[0][0],
                                           controlPoints[1][0],
                                           controlPoints[2][0],
                                           controlPoints[3][0], t));
-  const ys = tVals.map((t) => bezierPoint(controlPoints[0][1],
+  const ys = tVals.map(t => bezierPoint(controlPoints[0][1],
                                           controlPoints[1][1],
                                           controlPoints[2][1],
                                           controlPoints[3][1], t));
@@ -61,10 +61,10 @@ function bezierCoordinates(tVals, controlPoints) {
 }
 
 function quadraticCoordinates(tVals, controlPoints) {
-  const xs = tVals.map((t) => quadraticPoint(controlPoints[0][0],
+  const xs = tVals.map(t => quadraticPoint(controlPoints[0][0],
                                              controlPoints[1][0],
                                              controlPoints[2][0], t));
-  const ys = tVals.map((t) => quadraticPoint(controlPoints[0][1],
+  const ys = tVals.map(t => quadraticPoint(controlPoints[0][1],
                                              controlPoints[1][1],
                                              controlPoints[2][1], t));
 
@@ -411,9 +411,9 @@ function renderStrokedBezier(publicBinding, renderer, params) {
     let tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
     // get 3 points on the bezier curve
     let [xx1, xx2, xx3] =
-          tvals.map((t) => bezierPoint(x1, x2, x3, x4, t));
+          tvals.map(t => bezierPoint(x1, x2, x3, x4, t));
     let [yy1, yy2, yy3] =
-          tvals.map((t) => bezierPoint(y1, y2, y3, y4, t));
+          tvals.map(t => bezierPoint(y1, y2, y3, y4, t));
 
     let ns = strokeNoise;
 

@@ -320,22 +320,18 @@ function loopingFn(env, expr, varName, params) {
 // 4 3 7 4) rather than (+ 4 3 7 4)
 
 const classicFunctions = {
-  '+': (args) =>
-    args.reduce((a, b) => a + b, 0),
+  '+': args => args.reduce((a, b) => a + b, 0),
 
-  '*': (args) =>
-    args.reduce((a, b) => a * b, 1),
+  '*': args => args.reduce((a, b) => a * b, 1),
 
-  '-': (args) =>
-    args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
+  '-': args => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
 
-  '/': (args) =>
-    args.reduce((a, b) => a / b),
+  '/': args => args.reduce((a, b) => a / b),
 
   '=': ([first, ...rest]) =>
     rest.every(a => a === first) ? TRUE_STRING : FALSE_STRING,
 
-  '<': (args) => {
+  '<': args => {
     let prev = args[0];
     for (let i = 1; i < args.length; i++) {
       const current = args[i];
@@ -347,7 +343,7 @@ const classicFunctions = {
     return TRUE_STRING;
   },
 
-  '>': (args) => {
+  '>': args => {
     let prev = args[0];
     for (let i = 1; i < args.length; i++) {
       const current = args[i];
@@ -359,10 +355,9 @@ const classicFunctions = {
     return TRUE_STRING;
   },
 
-  'list' : (args) =>
-    args,
+  'list' : args => args,
 
-  'pair' : (args) => {
+  'pair' : args => {
     const res = [];
     for (let i = 0; i < args.length; i += 2) {
       res.push([args[i], args[i + 1]]);
