@@ -285,14 +285,12 @@ const rectBinding = new PublicBinding(
   'rect',
   `
   this fn adds 1
-  this is a multi line comment
-  woo hoo
   `,
   {
-    x: 0.0,
-    y: 0.0,
-    width: 100,
-    height: 100,
+    x: 500.0,
+    y: 500.0,
+    width: 200,
+    height: 200,
     colour: Colour.defaultColour
   },
   (self, renderer) => {

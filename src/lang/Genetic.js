@@ -81,8 +81,16 @@ const Genetic = {
     const genotype = traits.map((trait) => buildGenoFromTrait(trait, env));
 
     return new Immutable.List(genotype);
-  }
+  },
 
+  nextGeneration: function(genotypes, populationSize) {
+    // a silly mod method for creating the latest generation
+    let newGenotypes = [];
+    for(let i = 0; i < populationSize; i++) {
+      newGenotypes.push(genotypes[i % genotypes.length]);
+    }
+    return newGenotypes;
+  }
 };
 
 export default Genetic;

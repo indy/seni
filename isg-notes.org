@@ -53,8 +53,8 @@ labels are identified by ending in a colon.
 
 * development
   - project structure based on babel-library-boilerplate
-    
-
+  
+    spinner gif downloaded from http://preloaders.net/en/circular
 
 * <2015-03-14 Sat> evaluating square brackets
 

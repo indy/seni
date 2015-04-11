@@ -28,9 +28,20 @@ const SeniMode = {
   selecting: 1
 };
 
-let gCurrentMode = SeniMode.authoring;
-let gRenderer;
-let gEditor;
+let gSeniApp = {
+  currentMode: SeniMode.authoring,
+  renderer: undefined,
+  editor: undefined,
+  containers: [],
+
+  populationSize: 6,
+  genotypes: [],
+
+  form: undefined,
+  ast: undefined,
+  traits: undefined,
+  env: undefined
+};
 
 function renderScript(renderer, form) {
   let env = Runtime.createEnv();
@@ -52,12 +63,12 @@ function initialCode() {
 }
 
 // execute the function and log the time that it takes
-function withTiming(fn) {
+function withTiming(msg, fn) {
   const before = new Date();
   fn();
   const after = new Date();
   const duration = after - before;
-  console.log('Time: ' + duration + 'ms');
+  console.log(msg, duration, 'ms');
 }
 
 function setupUI(renderer) {
@@ -67,14 +78,15 @@ function setupUI(renderer) {
 
   textArea.value = initialCode();
 
-  gEditor = CodeMirror.fromTextArea(textArea, {
+  gSeniApp.editor = CodeMirror.fromTextArea(textArea, {
     lineNumbers: false,
     mode: 'scheme',
     autoCloseBrackets: true,
     matchBrackets: true,
     extraKeys: {
       'Ctrl-E': function() {
-        withTiming(() => renderScript(renderer, gEditor.getValue()));
+        withTiming('renderTime',
+                   () => renderScript(renderer, gSeniApp.editor.getValue()));
         return false;
       },
       'Ctrl-D': function() {
@@ -83,87 +95,174 @@ function setupUI(renderer) {
     }});
 }
 
-function copyRenderCanvasToImageElement(renderer, parent) {
+function createPhenotypeContainer(id) {
+  const container = document.createElement('div');
+  container.className = 'phenotype-container';
+
+  container.id = 'pheno-' + id;
 
   const newElement = document.createElement('img');
-  parent.appendChild(newElement);
 
   newElement.width = 250;
   newElement.height = 250;
-  newElement.src = renderer.getImageData();
-  newElement.className += 'phenotype';
+  newElement.src = 'spinner.gif';
+  newElement.className = 'phenotype';
+  container.appendChild(newElement);
 
+  /*
+  const controls = document.createElement('div');
+  controls.className = 'phenotype-control-container';
+  controls.innerHTML = `
+    <button class="phenotype-control-button">View</button>
+    <input class="phenotype-control-checkbox"
+                  type="checkbox" name="1" value="1">
+  `;
+  container.appendChild(controls);
+
+  parent.appendChild(container);
+   */
+
+  return container;
 }
 
-function setupSelectorUI(renderer, form) {
-  const gallery = document.getElementById('gallery-container');
+function copyRenderCanvasIntoPhenotypeContainer(renderer, parent) {
+  // get the image tag which has a class of phenotype
+  let imageElement = parent.getElementsByClassName('phenotype')[0];
+  imageElement.width = 250;
+  imageElement.height = 250;
+  imageElement.src = renderer.getImageData();
+}
 
-  let env = Runtime.createEnv();
-  env = Bind.addBindings(env, renderer);
-  const ast = Runtime.buildAst(env, form);
-  const traits = Genetic.buildTraits(ast);
-  let genotype = Genetic.createGenotypeFromInitialValues(traits);
-
-  gallery.innerHTML = '';
-
-  renderer.preDrawScene();
-  Runtime.evalAst(env, ast, genotype);
-  renderer.postDrawScene();
-  copyRenderCanvasToImageElement(renderer, gallery);
+function renderPhenotypes(app) {
 
   let i = 0;
-
-  // a quick hack to get a pseudo-random string
-  let random = new Date();
-  random = random.toGMTString();
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to authoring mode
-    if (i < 50 && gCurrentMode === SeniMode.selecting) {
+    if (i < app.containers.length &&
+        app.currentMode === SeniMode.selecting) {
 
-      genotype = Genetic.createGenotypeFromTraits(traits, i + random);
+      let {phenotypeContainer} = app.containers[i];
+      let genotype = app.genotypes[i];
 
-      renderer.preDrawScene();
-      Runtime.evalAst(env, ast, genotype);
-      renderer.postDrawScene();
-      copyRenderCanvasToImageElement(renderer, gallery);
-
+      app.renderer.preDrawScene();
+      Runtime.evalAst(app.env, app.ast, genotype);
+      app.renderer.postDrawScene();
+      copyRenderCanvasIntoPhenotypeContainer(app.renderer, phenotypeContainer);
       i++;
       setTimeout(go);
     }
   });
 }
 
+function setupSelectorUI(renderer, form) {
+  const gallery = document.getElementById('gallery-container');
+
+  gSeniApp.env = Bind.addBindings(Runtime.createEnv(), renderer);
+  gSeniApp.ast = Runtime.buildAst(gSeniApp.env, form);
+  gSeniApp.traits = Genetic.buildTraits(gSeniApp.ast);
+
+  gallery.innerHTML = '';
+
+  // create phenotype/genotype containers
+  let i;
+  let phenotypeContainer;
+  gSeniApp.containers = [];
+  for(i = 0; i < gSeniApp.populationSize; i++) {
+    phenotypeContainer = createPhenotypeContainer(i);
+    gallery.appendChild(phenotypeContainer);
+
+    gSeniApp.containers.push({
+      phenotypeContainer: phenotypeContainer,
+      selected: false
+    });
+  }
+
+  // add genotypes to the containers
+  let genotype;
+  let random = new Date();
+  random = random.toGMTString();
+  for(i = 0; i < gSeniApp.populationSize; i++) {
+    if(i === 0) {
+      genotype = Genetic.createGenotypeFromInitialValues(gSeniApp.traits);
+    } else {
+      genotype = Genetic.createGenotypeFromTraits(gSeniApp.traits, i + random);
+    }
+    gSeniApp.genotypes[i] = genotype;
+  }
+
+  // render the phenotypes
+  renderPhenotypes(gSeniApp);
+}
+
 function switchMode(newMode) {
   console.log('switching mode to ' + newMode);
-  gCurrentMode = newMode;
+  gSeniApp.currentMode = newMode;
 
   const authorContainer = document.getElementById('author-container');
   const selectorContainer = document.getElementById('selector-container');
 
-  const sourceCode = gEditor.getValue();
+  const sourceCode = gSeniApp.editor.getValue();
 
-  if (gCurrentMode === SeniMode.authoring) {
+  if (gSeniApp.currentMode === SeniMode.authoring) {
     authorContainer.className = 'flex-container-h';
     selectorContainer.className = 'hidden';
 
-    renderScript(gRenderer, sourceCode);
+    renderScript(gSeniApp.renderer, sourceCode);
   } else {    // SeniMode.selecting
     authorContainer.className = 'hidden';
     selectorContainer.className = '';
 
-    setupSelectorUI(gRenderer, sourceCode);
+    setupSelectorUI(gSeniApp.renderer, sourceCode);
   }
+}
+
+function toggleSelection(element) {
+  let m = element.id.match(/pheno-(\d+)/);
+  if(m.length === 2) {
+    let index = Number.parseInt(m[1], 10);
+    element.classList.toggle('selected');
+    gSeniApp.containers[index].selected = !gSeniApp.containers[index].selected;
+  } else {
+    console.log('unexpected element id for phenotype container: ', element.id);
+  }
+}
+
+function onNextGen(event) {
+  console.log('onNextGen');
+  event.preventDefault();
+
+  // get the selected genotypes for the next generation
+  let chosen = [];
+  for(let i = 0; i < gSeniApp.populationSize; i++) {
+    if(gSeniApp.containers[i].selected === true) {
+      chosen.push(gSeniApp.genotypes[i]);
+    }
+  }
+
+  gSeniApp.genotypes = Genetic.nextGeneration(chosen, gSeniApp.populationSize);
+
+  // render the genotypes
+  renderPhenotypes(gSeniApp);
+
+  // clean up the dom and clear the selected state
+  for(let i = 0; i < gSeniApp.populationSize; i++) {
+    if(gSeniApp.containers[i].selected === true) {
+      gSeniApp.containers[i].phenotypeContainer.classList.toggle('selected');
+    }
+    gSeniApp.containers[i].selected = false;
+  }
+
 }
 
 const SeniWebApplication = {
   mainFn() {
     console.log(Trivia.getTitle());
 
-    gCurrentMode = SeniMode.authoring;
+    gSeniApp.currentMode = SeniMode.authoring;
 
     let onSwitchMode = function(event) {
-      switchMode(1 - gCurrentMode);
+      switchMode(1 - gSeniApp.currentMode);
       event.preventDefault();
     };
 
@@ -180,9 +279,18 @@ const SeniWebApplication = {
     let authorModeIcon = document.getElementById('author-mode-icon');
     authorModeIcon.addEventListener('click', onSwitchMode);
 
-    gRenderer = new Renderer('render-canvas');
-    setupUI(gRenderer);
-    renderScript(gRenderer, initialCode());
+    gSeniApp.renderer = new Renderer('render-canvas');
+    setupUI(gSeniApp.renderer);
+    renderScript(gSeniApp.renderer, initialCode());
+
+    let galleryContainer = document.getElementById('gallery-container');
+    galleryContainer.addEventListener('click', function(event) {
+      let phenoContainer = event.target.parentNode;
+      toggleSelection(phenoContainer);
+    });
+
+    let nextGenIcon = document.getElementById('next-gen-icon');
+    nextGenIcon.addEventListener('click', onNextGen);
   }
 };
 

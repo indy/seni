@@ -18,10 +18,9 @@
 
 // Trivia is a module that contains auxillery functions
 
-function dayOfTheYear() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const diff = now - start;
+function dayOfTheYear(time) {
+  const start = new Date(time.getFullYear(), 0, 0);
+  const diff = time - start;
 
   const oneDay = 1000 * 60 * 60 * 24;
 
@@ -55,10 +54,9 @@ function base10ToN(num, n) {
   return newNumString;
 }
 
-function _getTitle() {
-  const now = new Date();
-  const year = now.getYear() - 100; // years since 2000
-  const d = base10ToN(dayOfTheYear(), 20);
+function _getTitle(time) {
+  const year = time.getYear() - 100; // years since 2000
+  const d = base10ToN(dayOfTheYear(time), 20);
 
   // in base 20 the days will have at most 2 digits,
   // so pad out the earlier one digit dates with 0
@@ -68,8 +66,11 @@ function _getTitle() {
 }
 
 const Trivia = {
-  getTitle: function() {
-    return _getTitle();
+  getTitle: function(time) {
+    if (time === undefined) {
+      time = new Date();
+    }
+    return _getTitle(time);
   }
 };
 
