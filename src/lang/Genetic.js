@@ -50,12 +50,23 @@ function buildTraitFromNode(node, genes) {
 function buildGenoFromTrait(trait, env) {
   const forms = trait.ast.forms;
   // evaluate all of the forms, returning the final result
-  const evalRes = forms.reduce(([e, r], b) => {
-    return Interpreter.evaluate(e, b);
-  }, [env, false]);
+  const evalRes = forms.reduce(([e, r], b) => Interpreter.evaluate(e, b),
+                               [env, false]);
 
   const finalResult = evalRes[1];
   return new Immutable.Map({value: finalResult});
+}
+
+function randomCrossover(genotypeA, genotypeB) {
+  // todo: assert that both genotypes have the same length
+
+  let crossoverIndex = Number.parseInt(Math.random() * genotypeA.size, 10);
+  console.log('crossoverIndex', crossoverIndex);
+
+  let spliceA = genotypeA.slice(0, crossoverIndex);
+  let spliceB = genotypeB.slice(crossoverIndex, genotypeB.size);
+
+  return spliceA.concat(spliceB);
 }
 
 const Genetic = {
@@ -85,7 +96,14 @@ const Genetic = {
     // a silly mod method for creating the latest generation
     let newGenotypes = [];
     for(let i = 0; i < populationSize; i++) {
-      newGenotypes.push(genotypes[i % genotypes.length]);
+      let idxA = Number.parseInt(Math.random() * genotypes.length, 10);
+      let genotypeA = genotypes[idxA];
+
+      let idxB = Number.parseInt(Math.random() * genotypes.length, 10);
+      let genotypeB = genotypes[idxB];
+
+      console.log('crossover indices: ', idxA, idxB);
+      newGenotypes.push(randomCrossover(genotypeA, genotypeB));
     }
     return newGenotypes;
   }

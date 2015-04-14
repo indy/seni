@@ -34,7 +34,7 @@ let gSeniApp = {
   editor: undefined,
   containers: [],
 
-  populationSize: 6,
+  populationSize: 20,
   genotypes: [],
 
   form: undefined,
