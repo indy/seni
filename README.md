@@ -1,14 +1,8 @@
+# Seni
 
+Seni is a Scheme-like graphical language that runs on modern web browsers.
 
-
-
-
-prerequisite:
-npm install -g http-server
-at root of project:
-$ http-server 
-open http://localhost:8080
-
+It's scripts can be annotated so that genetic algorithms can generate variations and the user can select which of the generated images should be used in future generations.
 
 ## Build
 
