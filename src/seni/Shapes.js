@@ -73,15 +73,15 @@ function quadraticCoordinates(tVals, controlPoints) {
 
 /*
  function debugRect(buffer, glContainer, x, y, radius, colour) {
- const elementArray = Colour.elementArray(colour);
+ const colourArray = Colour.elementArray(colour);
 
  for(let i=0;i<3;i++) {
  buffer.prepareToAddTriangleStrip(glContainer, 4,
  [x - radius, y - radius, 0.0]);
- buffer.addVertex([x - radius, y - radius, 0.0], elementArray);
- buffer.addVertex([x + radius, y - radius, 0.0], elementArray);
- buffer.addVertex([x - radius, y + radius, 0.0], elementArray);
- buffer.addVertex([x + radius, y + radius, 0.0], elementArray);
+ buffer.addVertex([x - radius, y - radius, 0.0], colourArray);
+ buffer.addVertex([x + radius, y - radius, 0.0], colourArray);
+ buffer.addVertex([x - radius, y + radius, 0.0], colourArray);
+ buffer.addVertex([x + radius, y + radius, 0.0], colourArray);
  }
  }
  */
@@ -131,7 +131,7 @@ function addVerticesAsStrip(args) {
   const glContainer = renderer.getGLContainer();
   const buffer = renderer.getBuffer();
 
-  const elementArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+  const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
   for (let i = 0; i < tVals.length - 1; i++) {
     let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i + 1], ys[i + 1]),
@@ -149,11 +149,11 @@ function addVerticesAsStrip(args) {
     buffer.addVertex([(xn1 * remap({val: t})) + i0,
                       (yn1 * remap({val: t})) + i1,
                       0.0],
-                     elementArray);
+                     colourArray);
     buffer.addVertex([(xn2 * remap({val: t})) + i0,
                       (yn2 * remap({val: t})) + i1,
                       0.0],
-                     elementArray);
+                     colourArray);
   }
 
   // final 2 vertices for the end point
@@ -165,11 +165,11 @@ function addVerticesAsStrip(args) {
   buffer.addVertex([(xn1 * halfWidthEnd) + i2,
                     (yn1 * halfWidthEnd) + i3,
                     0.0],
-                   elementArray);
+                   colourArray);
   buffer.addVertex([(xn2 * halfWidthEnd) + i2,
                     (yn2 * halfWidthEnd) + i3,
                     0.0],
-                   elementArray);
+                   colourArray);
 
 }
 
@@ -271,14 +271,14 @@ function renderRect(publicBinding, renderer, params) {
   const halfWidth = (width / 2);
   const halfHeight = (height / 2);
 
-  const elementArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+  const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
   buffer.prepareToAddTriangleStrip(glContainer, 4,
                                    [x - halfWidth, y - halfHeight, 0.0]);
-  buffer.addVertex([x - halfWidth, y - halfHeight, 0.0], elementArray);
-  buffer.addVertex([x + halfWidth, y - halfHeight, 0.0], elementArray);
-  buffer.addVertex([x - halfWidth, y + halfHeight, 0.0], elementArray);
-  buffer.addVertex([x + halfWidth, y + halfHeight, 0.0], elementArray);
+  buffer.addVertex([x - halfWidth, y - halfHeight, 0.0], colourArray);
+  buffer.addVertex([x + halfWidth, y - halfHeight, 0.0], colourArray);
+  buffer.addVertex([x - halfWidth, y + halfHeight, 0.0], colourArray);
+  buffer.addVertex([x + halfWidth, y + halfHeight, 0.0], colourArray);
 }
 
 const rectBinding = new PublicBinding(
@@ -295,6 +295,72 @@ const rectBinding = new PublicBinding(
   },
   (self, renderer) => {
     return (params) => renderRect(self, renderer, params);
+  });
+
+function renderPoly(publicBinding, renderer, params) {
+  const glContainer = renderer.getGLContainer();
+  const buffer = renderer.getBuffer();
+
+  let {
+    x,
+    y,
+    width,
+    height,
+    radius,
+    tessellation,
+    colour
+  } = publicBinding.mergeWithDefaults(params);
+
+  if (radius !== undefined) {
+    // use the radius for both width and height if it's given
+    width = radius;
+    height = radius;
+  }
+
+  const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+
+  buffer.prepareToAddTriangleStrip(glContainer,
+                                   (tessellation * 2) + 2,
+                                   [x, y, 0.0]);
+
+  let twoPI = Math.PI * 2;
+  let unitAngle = twoPI / tessellation;
+  let angle, vx, vy;
+
+  for(let i = 0; i < tessellation; i++) {
+
+    angle = unitAngle * i;
+    vx = (Math.sin(angle) * width) + x;
+    vy = (Math.cos(angle) * height) + y;
+
+    buffer.addVertex([x, y, 0.0], colourArray);
+    buffer.addVertex([vx, vy, 0.0], colourArray);
+  }
+
+  // close up the polygon
+  angle = 0.0;
+  vx = (Math.sin(angle) * width) + x;
+  vy = (Math.cos(angle) * height) + y;
+
+  buffer.addVertex([x, y, 0.0], colourArray);
+  buffer.addVertex([vx, vy, 0.0], colourArray);
+}
+
+const polyBinding = new PublicBinding(
+  'poly',
+  `
+  `,
+  {
+    x: 500.0,
+    y: 500.0,
+    radius: undefined,
+    width: 200,
+    height: 200,
+    tessellation: 10,
+    colour: Colour.defaultColour
+  },
+  (self, renderer) => {
+    return (params) => renderPoly(self, renderer, params);
   });
 
 function renderBezierTrailing(publicBinding, renderer, params) {
@@ -588,6 +654,7 @@ const strokedBezierRectBinding = new PublicBinding(
 
 const Shapes = {
   rect: rectBinding,
+  poly: polyBinding,
   spline: splineBinding,
   bezier: bezierBinding,
   bezierTrailing: bezierTrailingBinding,

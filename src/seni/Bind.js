@@ -63,6 +63,7 @@ function bindMatrixStack(env, matrixStack) {
 function bindShapes(env, renderer) {
 
   const shapes = [Shapes.rect,
+                  Shapes.poly,
                   Shapes.spline,
                   Shapes.bezier,
                   Shapes.bezierTrailing,
