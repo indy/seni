@@ -37,7 +37,7 @@ describe('eval', () => {
     e = Interpreter.getBasicEnv();
     key = 'foo';
     val = 5;
-    e = e.set(key, val);
+    e = e.set(key, { binding: val });
   });
 
   it('should evaluate a bracketed form', () => {
@@ -47,7 +47,6 @@ describe('eval', () => {
     //res = evalForm(e, '(quote ["shabba"])');
     //expect(res[1]).to.be.equal('shabba');
   });
-
   it('should evaluate simple nodes', () => {
     let [newEnv, res] = Interpreter.evaluate(null, 4);
 
@@ -164,7 +163,7 @@ describe('eval', () => {
   it('should test define', () => {
     let [newEnv, res] = evalForm(e, '(define monkey 42)');
     expect(newEnv.has('monkey')).to.be.true;
-    expect(newEnv.get('monkey')).to.equal(42);
+    expect(newEnv.get('monkey').binding).to.equal(42);
     // define should also evaluate to it's set values
     expect(res).to.equal(42);
   });
@@ -207,20 +206,21 @@ describe('eval', () => {
   /* eslint-disable no-unused-vars */
   it('should test begin', () => {
     expect(e.has('foo')).to.be.true;
-    expect(e.get('foo')).to.equal(5);
+    expect(e.get('foo').binding).to.equal(5);
     let [newEnv, res] = evalForm(e, '(begin (+ 1 1) (+ 2 2))');
     expect(res).to.equal(4);
 
     [newEnv, res] = evalForm(e, '(begin (+ 1 1))');
     expect(res).to.equal(2);
   });
+
   /* eslint-enable no-unused-vars */
 
   it('should test let', () => {
     let [newEnv, res] = evalForm(e, '(let ((a 12) (b 24)) (+ a b foo))');
 
     expect(newEnv.has('foo')).to.be.true;
-    expect(newEnv.get('foo')).to.equal(5);
+    expect(newEnv.get('foo').binding).to.equal(5);
 
     expect(res).to.equal(41);
 

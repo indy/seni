@@ -25,9 +25,14 @@ import Core from './Core';
 import Bracket from './BracketBindings';
 import SeedRandom from './SeedRandom';
 
+function bind_(env, pb, value) {
+  return env.set(pb.name, { binding : value,
+                            pb : pb });
+}
+
 function bindCore(env) {
   const core = [Core.takeBinding];
-  return core.reduce((a, b) => a.set(b.name, b.create(b)), env);
+  return core.reduce((a, b) => bind_(a, b, b.create(b)), env);
 }
 
 function bindMath(env) {
@@ -40,14 +45,14 @@ function bindMath(env) {
                 MathUtil.distance2D,
                 MathUtil.clamp];
 
-  return math.reduce((a, b) => a.set(b.name, b.create(b)), env);
+  return math.reduce((a, b) => bind_(a, b, b.create(b)), env);
 }
 
 function bindSeedRandom(env) {
   const random = [SeedRandom.rngSigned,
                 SeedRandom.rngUnsigned];
 
-  return random.reduce((a, b) => a.set(b.name, b.create(b)), env);
+  return random.reduce((a, b) => bind_(a, b, b.create(b)), env);
 }
 
 function bindMatrixStack(env, matrixStack) {
@@ -57,7 +62,7 @@ function bindMatrixStack(env, matrixStack) {
                   MatrixStackBindings.translate,
                   MatrixStackBindings.rotate];
 
-  return mstack.reduce((a, b) => a.set(b.name, b.create(b, matrixStack)), env);
+  return mstack.reduce((a, b) => bind_(a, b, b.create(b, matrixStack)), env);
 }
 
 function bindShapes(env, renderer) {
@@ -71,7 +76,7 @@ function bindShapes(env, renderer) {
                   Shapes.strokedBezier,
                   Shapes.strokedBezierRect];
 
-  return shapes.reduce((a, b) => a.set(b.name, b.create(b, renderer)), env);
+  return shapes.reduce((a, b) => bind_(a, b, b.create(b, renderer)), env);
 }
 
 function bindColour(env) {
@@ -107,14 +112,14 @@ function bindColour(env) {
                    ColourBindings.colAnalagous,
                    ColourBindings.colTriad];
 
-  return colours.reduce((a, b) => a.set(b.name, b.create(b)), env);
+  return colours.reduce((a, b) => bind_(a, b, b.create(b)), env);
 }
 
 function bindPerlin(env) {
   const pln = [Perlin.perlin,
                Perlin.perlin2];
 
-  return pln.reduce((a, b) => a.set(b.name, b.create(b)), env);
+  return pln.reduce((a, b) => bind_(a, b, b.create(b)), env);
 }
 
 function bindBracket(env, rng) {
@@ -124,7 +129,7 @@ function bindBracket(env, rng) {
               Bracket.select,
               Bracket.testPlus];
 
-  return br.reduce((a, b) => a.set(b.name, b.create(b, rng)), env);
+  return br.reduce((a, b) => bind_(a, b, b.create(b, rng)), env);
 }
 
 const Bind = {
