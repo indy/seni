@@ -190,12 +190,13 @@ const specialForms = {
       // e.g. (define (add x: 1 y: 2) (log x) (+ x y))
       const [name, defaultArgForms] = nameForm;
       const definedFunction = defineFunction(env, defaultArgForms, valueForms);
-      return [env.set(name, definedFunction), true];
+      return [env.set(name, definedFunction), definedFunction];
     } else {
       // e.g. (define foo 12)
       assert(valueForms.length === 1);
       const val = valueForms[0];
-      return [env.set(nameForm, evaluate(env, val)[1]), true];
+      const evaluatedVal = evaluate(env, val)[1];
+      return [env.set(nameForm, evaluatedVal), evaluatedVal];
     }
   },
 

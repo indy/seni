@@ -162,9 +162,11 @@ describe('eval', () => {
   });
 
   it('should test define', () => {
-    let newEnv = evalForm(e, '(define monkey 42)')[0];
+    let [newEnv, res] = evalForm(e, '(define monkey 42)');
     expect(newEnv.has('monkey')).to.be.true;
     expect(newEnv.get('monkey')).to.equal(42);
+    // define should also evaluate to it's set values
+    expect(res).to.equal(42);
   });
 
   it('should test define for a function2', () => {
@@ -176,6 +178,17 @@ describe('eval', () => {
 
     [newEnv, res] = evalForm(newEnv, '(addup)');
     expect(res).to.equal(4);
+  });
+
+  it('should be able to invoke a functions while defining it', () => {
+    // invoke while defining
+    let [newEnv, res] = evalForm(e, '((define (addup x: 2) (+ x x)))');
+    expect(newEnv.has('addup')).to.be.true;
+    expect(res).to.equal(4);
+
+    [newEnv, res] = evalForm(e, '((define (addup x: 2) (+ x x)) x: 7)');
+    expect(newEnv.has('addup')).to.be.true;
+    expect(res).to.equal(14);
   });
 
   /*
