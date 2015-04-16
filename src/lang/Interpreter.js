@@ -246,11 +246,11 @@ const specialForms = {
     return loopingFn(env, body, varName, vp);
   },
 
-  // (onMatrixStack (f1 1) (f2 3) (f3 5))
-  'onMatrixStack': (env, [_, ...body]) => {
-    env.get('pushMatrix').binding();
+  // (on-matrix-stack (f1 1) (f2 3) (f3 5))
+  'on-matrix-stack': (env, [_, ...body]) => {
+    env.get('push-matrix').binding();
     const res =  evalBodyForms(env, body);
-    env.get('popMatrix').binding();
+    env.get('pop-matrix').binding();
     return res;
   }
 };

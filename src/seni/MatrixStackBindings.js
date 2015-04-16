@@ -21,7 +21,7 @@ import PublicBinding from '../lang/PublicBinding';
 const MatrixStackBindings = {
 
   pushMatrix: new PublicBinding(
-    'pushMatrix',
+    'push-matrix',
     ``,
     {},
     (self, matrixStack) => {
@@ -30,7 +30,7 @@ const MatrixStackBindings = {
   ),
 
   popMatrix: new PublicBinding(
-    'popMatrix',
+    'pop-matrix',
     ``,
     {},
     (self, matrixStack) => {

@@ -98,7 +98,7 @@ const MathUtil = {
   ),
 
   twoPI: new PublicBinding(
-    '2PI',
+    'PIPI',
     ``,
     {},
     () => twoPI
@@ -132,21 +132,21 @@ const MathUtil = {
   ),
 
   remapFnBinding: new PublicBinding(
-    'remapFn',
+    'remap-fn',
     ``,
     {},
     () => remapFn
   ),
 
   distance2D: new PublicBinding(
-    'math/distance2D',
+    'math/distance-2d',
     ``,
-    {aX: 0, aY: 0, bX: 1, bY: 1},
+    {x1: 0, y1: 0, x2: 1, y2: 1},
     (self) => function(params) {
-      const {aX, aY, bX, bY} = self.mergeWithDefaults(params);
+      const {x1, y1, x2, y2} = self.mergeWithDefaults(params);
 
-      const xd = aX - bX;
-      const yd = aY - bY;
+      const xd = x1 - x2;
+      const yd = y1 - y2;
       return Math.sqrt((xd * xd) + (yd * yd));
     }
   ),
