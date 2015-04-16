@@ -18,6 +18,16 @@
 
 import SeniWebApplication from './app.js';
 
+function compatibilityHacks() {
+  // Safari doesn't have Number.parseInt (yet)
+  if(Number.parseInt === undefined) {
+    Number.parseInt = parseInt;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+
+  compatibilityHacks();
+
   SeniWebApplication.mainFn();
 });
