@@ -17,10 +17,11 @@
 */
 
 const code = `
-(rect x: [500 (int min: 100 max: 900)]
-      y: [500 (int min: 100 max: 900)]
-      width: [200 (int min: 50 max: 500)]
-      height: [200 (int min: 50 max: 500)])
+(poly x: 500
+      y: 500
+      radius: 200
+      tessellation: 20
+      colour: (col/rgb r: 1.0 g: 0.0 b: 0.0 alpha: 1.0))
 `;
 
 const InitialCode = {

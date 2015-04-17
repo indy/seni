@@ -34,7 +34,7 @@ let gSeniApp = {
   editor: undefined,
   containers: [],
 
-  populationSize: 20,
+  populationSize: 50,
   genotypes: [],
 
   form: undefined,
@@ -43,9 +43,27 @@ let gSeniApp = {
   env: undefined
 };
 
+function debugEnv(env) {
+  console.log(env);
+  let keys = env.keySeq().toArray();
+  // console.log(keys);
+  let v;
+  keys.forEach(k => {
+    v = env.get(k);
+    if(v.pb) {
+      console.log(k, v.pb.doc);
+    } else {
+      console.log(k);
+    }
+  });
+  //console.log(env.toJS());
+}
+
 function renderScript(renderer, form) {
   let env = Runtime.createEnv();
   env = Bind.addBindings(env, renderer);
+
+  debugEnv(env);
 
   renderer.preDrawScene();
   const ast = Runtime.buildAst(env, form);
