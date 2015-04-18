@@ -18,6 +18,9 @@
 
 import Colour from '../../src/seni/Colour';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 let Format = Colour.Format;
 
 describe('Colour', () => {

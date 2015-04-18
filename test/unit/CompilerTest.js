@@ -21,6 +21,9 @@ import Lexer from '../../src/lang/Lexer';
 import Compiler from '../../src/lang/Compiler';
 import Genetic from '../../src/lang/Genetic';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 describe('compiler', () => {
 
   function compileWithSeed(form, seed) {

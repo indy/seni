@@ -19,6 +19,9 @@
 import Lexer from '../../src/lang/Lexer';
 import TokenType from '../../src/lang/TokenType';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 describe('Lexer', () => {
 
   it('should error handle', () => {

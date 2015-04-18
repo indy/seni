@@ -20,6 +20,9 @@ import Parser from '../../src/lang/Parser';
 import Lexer from '../../src/lang/Lexer';
 import Genetic from '../../src/lang/Genetic';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 describe('genetic', () => {
 
   function simpleBuildTraits(form) {

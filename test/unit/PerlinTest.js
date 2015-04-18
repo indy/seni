@@ -18,6 +18,9 @@
 
 import Perlin from '../../src/seni/Perlin';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 describe('Perlin', () => {
 
   it('should output a number', () => {

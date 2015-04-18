@@ -5,7 +5,7 @@
   "main": "dist/library-dist.js",
   "scripts": {
     "test": "gulp",
-    "test-browser": "gulp test-browser",
+    "test-browser": "webpack-dev-server \"mocha!./test/test.js\" --output-file testBundle.js --config test.webpack.config.js",
     "build": "gulp build",
     "coverage": "gulp coverage"
   },
@@ -56,10 +56,13 @@
     "isparta": "^3.0.0",
     "mkdirp": "^0.5.0",
     "mocha": "^2.2.1",
+    "mocha-loader": "^0.7.0",
     "run-sequence": "^1.0.2",
     "sinon": "^1.14.1",
     "sinon-chai": "^2.7.0",
-    "vinyl-source-stream": "^1.1.0"
+    "vinyl-source-stream": "^1.1.0",
+    "webpack": "^1.4.15",
+    "webpack-dev-server": "^1.7.0"
   },
   "seniOptions": {
     "entryFileName": "index",

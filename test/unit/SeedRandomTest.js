@@ -18,6 +18,9 @@
 
 import SeedRandom from '../../src/seni/SeedRandom';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 describe('SeedRandom', () => {
 
   it('should have replicable number generation', () => {

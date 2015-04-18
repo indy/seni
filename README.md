@@ -12,15 +12,19 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 ### Build:
 
-1. `gulp build`
+1. `npm build`
 
-### Tests:
+### Test in browser:
 
-1. `gulp test`
+1. `npm run test-browser`
+2. visit http://localhost:8080/webpack-dev-server/testBundle
+
+### Test in node:
+
+1. `npm test`
 
 ### Dev
 
 1. `gulp build-watch`: Watches src folder for changes
 2. `gulp serve`
 3. open http://localhost:8000
-

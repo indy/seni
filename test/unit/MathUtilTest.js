@@ -18,6 +18,9 @@
 
 import MathUtil from '../../src/seni/MathUtil';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 describe('MathUtil', () => {
 
   let epsilon = 0.01;

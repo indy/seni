@@ -19,6 +19,9 @@
 import Token from '../../src/lang/Token';
 import TokenType from '../../src/lang/TokenType';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 describe('token', () => {
 
   it('should be created with a type and an optional value', () => {

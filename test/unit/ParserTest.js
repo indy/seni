@@ -25,6 +25,9 @@ import NodeType from '../../src/lang/NodeType';
 import Token from '../../src/lang/Token';
 import TokenType from '../../src/lang/TokenType';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 describe('parse', () => {
 
   function simpleParse(form) {

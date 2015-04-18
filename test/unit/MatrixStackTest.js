@@ -18,6 +18,9 @@
 
 import MatrixStack from '../../src/seni/MatrixStack';
 
+import chai from 'chai';
+const expect = chai.expect;
+
 describe('MatrixStack', () => {
 
   function matrixRowColumn(m, r, c) {
