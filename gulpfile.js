@@ -20,12 +20,9 @@ var gulp = require('gulp');
 var $ = require('gulp-load-plugins')();
 const fs = require('fs');
 const del = require('del');
-const glob = require('glob');
 const path = require('path');
-const mkdirp = require('mkdirp');
 const isparta = require('isparta');
 const runSequence = require('run-sequence');
-const source = require('vinyl-source-stream');
 const eslint = require('gulp-eslint');
 const webpack = require('gulp-webpack');
 

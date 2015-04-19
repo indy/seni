@@ -372,7 +372,7 @@ function addAngleToHSL(c, delta) {
   const d = cloneAs(c, Format.HSL);
 
   // rotate the hue by the given delta
-  return d.updateIn(['elements', H], hue => (hue + delta) % 360.0);
+  return d.updateIn(['elements', H], h => (h + delta) % 360.0);
 }
 
 // Return the 2 colours either side of this that are 'ang' degrees away

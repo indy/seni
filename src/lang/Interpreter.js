@@ -20,7 +20,6 @@
 /* eslint-disable no-redeclare */
 
 import Util from '../seni/Util';
-import PublicBinding from './PublicBinding';
 import Immutable from 'immutable';
 
 const TRUE_STRING = '#t';
@@ -225,7 +224,7 @@ const specialForms = {
   // (log 'hi' foo) => hi <foo:42>
   'log': (env, [_, ...msgs]) => {
     const message = msgs.reduce((a, b) => {
-      const [env, res] = evaluate(env, b);
+      const [e, res] = evaluate(env, b);
       if (typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
         return a + ' <' + b + ':' + res + '>';
       }
