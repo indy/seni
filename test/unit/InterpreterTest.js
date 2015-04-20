@@ -100,6 +100,44 @@ describe('eval', () => {
     expect(newEnv).to.equal(e);
   });
 
+  it('should test v2 functions', () => {
+    let [newEnv, res] = evalForm(e, '(v2 2.3 4.5)');
+    expect(res, 'creating a v2').to.eql([2.3, 4.5]);
+
+    [newEnv, res] = evalForm(e, '(v2/x (v2 2.3 4.5))');
+    expect(res, 'returning x component').to.equal(2.3);
+
+    [newEnv, res] = evalForm(e, '(v2/y (v2 2.3 4.5))');
+    expect(res, 'returning y component').to.equal(4.5);
+
+    [newEnv, res] = evalForm(e, '(v2/= (v2 2.3 4.5) (v2 2.3 4.5))');
+    expect(res, 'v2 equality true').to.equal('#t');
+
+    [newEnv, res] = evalForm(e, '(v2/= (v2 6.7 8.9) (v2 2.3 4.5))');
+    expect(res, 'v2 equality false').to.equal('#f');
+
+    [newEnv, res] = evalForm(e, '(v2/+ (v2 1 2) (v2 3 4))');
+    expect(res, 'v2 addition').to.eql([4, 6]);
+
+    [newEnv, res] = evalForm(e, '(v2/+ (v2 1 2) (v2 3 4) (v2 5 6))');
+    expect(res, 'v2 additions').to.eql([9, 12]);
+
+    [newEnv, res] = evalForm(e, '(v2/- (v2 9 8) (v2 3 4))');
+    expect(res, 'v2 subtraction').to.eql([6, 4]);
+
+    [newEnv, res] = evalForm(e, '(v2/- (v2 9 8) (v2 3 4) (v2 2 2))');
+    expect(res, 'v2 subtractions').to.eql([4, 2]);
+
+    [newEnv, res] = evalForm(e, '(v2/- (v2 9 8))');
+    expect(res, 'v2 negation').to.eql([-9, -8]);
+
+    [newEnv, res] = evalForm(e, '(v2/* (v2 2 3) (v2 2 3))');
+    expect(res, 'v2 multiplication').to.eql([4, 9]);
+
+    [newEnv, res] = evalForm(e, '(v2// (v2 9 8) (v2 3 2))');
+    expect(res, 'v2 division').to.eql([3, 4]);
+});
+
   it('should test required comparison functions', () => {
     let [newEnv, res] = evalForm(e, '(= 90 90)');
     expect(res).to.equal('#t');

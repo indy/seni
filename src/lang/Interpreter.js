@@ -60,8 +60,8 @@ function funApplication(env, listExpr) {
     return fun(e, listExpr);
   }
 
-  // classic functions that don't require named arguments
-  if (isClassicFunction(listExpr)) {
+  // classic and v2 functions that don't require named arguments
+  if (isClassicFunction(listExpr) || isV2Function(listExpr)) {
     const argu = listExpr.slice(1).map(n => evaluate(e, n)[1]);
     return [e, fun(argu)];
   }
@@ -85,6 +85,11 @@ function isSpecialForm(listExpr) {
 function isClassicFunction(listExpr) {
   const node = listExpr[0];
   return classicFunctions[node] !== undefined;
+}
+
+function isV2Function(listExpr) {
+  const node = listExpr[0];
+  return v2Functions[node] !== undefined;
 }
 
 function addBindings(env, exprs) {
@@ -367,6 +372,34 @@ const classicFunctions = {
   }
 };
 
+// todo: v2 functions are also treated as classic functions
+
+const v2Functions = {
+  'v2': args => [args[0], args[1]],
+
+  'v2/x': args => args[0][0],   // the first component of the first arg
+
+  'v2/y': args => args[0][1],
+
+  'v2/=': ([first, ...rest]) =>
+    rest.every(a => a[0] === first[0] && a[1] === first[1]) ?
+    TRUE_STRING : FALSE_STRING,
+  
+  'v2/+': args => args.reduce((a, b) => [a[0] + b[0], a[1] + b[1]], [0, 0]),
+
+  'v2/*': args => args.reduce((a, b) => [a[0] * b[0], a[1] * b[1]], [1, 1]),
+
+  'v2/-': args => {
+    if ( args.length === 1 ) {
+      return [-args[0][0], -args[0][1]];
+    } else {
+      return args.reduce((a, b) => [a[0] - b[0], a[1] - b[1]]);
+    }
+  },
+
+  'v2//': args => args.reduce((a, b) => [a[0] / b[0], a[1] / b[1]])
+};
+
 function setupBinding(env, rawBindings) {
   for(let prop in rawBindings) {
     env = env.set(prop, { binding: rawBindings[prop] });
@@ -378,7 +411,8 @@ function setupBinding(env, rawBindings) {
 // so transform them to name:{binding: value} pairs
 const basicEnv = [
   specialForms,
-  classicFunctions
+  classicFunctions,
+  v2Functions
 ].reduce((env, bindings) => setupBinding(env, bindings), new Immutable.Map());
 
 
