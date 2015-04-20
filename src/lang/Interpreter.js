@@ -384,7 +384,7 @@ const v2Functions = {
   'v2/=': ([first, ...rest]) =>
     rest.every(a => a[0] === first[0] && a[1] === first[1]) ?
     TRUE_STRING : FALSE_STRING,
-  
+
   'v2/+': args => args.reduce((a, b) => [a[0] + b[0], a[1] + b[1]], [0, 0]),
 
   'v2/*': args => args.reduce((a, b) => [a[0] * b[0], a[1] * b[1]], [1, 1]),

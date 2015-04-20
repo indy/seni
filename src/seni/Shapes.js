@@ -24,53 +24,6 @@ import SeedRandom from './SeedRandom';
 
 const Format = Colour.Format;
 
-function normals(x1, y1, x2, y2) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-
-  return [MathUtil.normalize(-dy, dx), MathUtil.normalize(dy, -dx)];
-}
-
-function bezierPoint(a, b, c, d, t) {
-  const t1 = 1 - t;
-
-  return (a * t1 * t1 * t1) +
-    (3 * b * t * t1 * t1) +
-    (3 * c * t * t * t1) +
-    (d * t * t * t);
-}
-
-function quadraticPoint(a, b, c, t) {
-  const r = ((b - a) - 0.5 * (c - a)) / (0.5 * (0.5 - 1));
-  const s = c - a - r;
-
-  return (r * t * t) + (s * t) + a;
-}
-
-function bezierCoordinates(tVals, controlPoints) {
-  const xs = tVals.map(t => bezierPoint(controlPoints[0][0],
-                                          controlPoints[1][0],
-                                          controlPoints[2][0],
-                                          controlPoints[3][0], t));
-  const ys = tVals.map(t => bezierPoint(controlPoints[0][1],
-                                          controlPoints[1][1],
-                                          controlPoints[2][1],
-                                          controlPoints[3][1], t));
-
-  return {xs, ys};
-}
-
-function quadraticCoordinates(tVals, controlPoints) {
-  const xs = tVals.map(t => quadraticPoint(controlPoints[0][0],
-                                             controlPoints[1][0],
-                                             controlPoints[2][0], t));
-  const ys = tVals.map(t => quadraticPoint(controlPoints[0][1],
-                                             controlPoints[1][1],
-                                             controlPoints[2][1], t));
-
-  return {xs, ys};
-}
-
 /*
  function debugRect(buffer, glContainer, x, y, radius, colour) {
  const colourArray = Colour.elementArray(colour);
@@ -133,7 +86,8 @@ function addVerticesAsStrip(args) {
   const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
   for (let i = 0; i < tVals.length - 1; i++) {
-    let [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i + 1], ys[i + 1]),
+    let [[xn1, yn1], [xn2, yn2]] =
+          MathUtil.normals(xs[i], ys[i], xs[i + 1], ys[i + 1]),
         i0 = xs[i],
         i1 = ys[i],
         t = tVals[i];
@@ -157,7 +111,8 @@ function addVerticesAsStrip(args) {
 
   // final 2 vertices for the end point
   let i = tVals.length - 2,
-      [[xn1, yn1], [xn2, yn2]] = normals(xs[i], ys[i], xs[i + 1], ys[i + 1]),
+      [[xn1, yn1], [xn2, yn2]] =
+        MathUtil.normals(xs[i], ys[i], xs[i + 1], ys[i + 1]),
       i2 = xs[i + 1],
       i3 = ys[i + 1];
 
@@ -209,7 +164,7 @@ function renderCurve(publicBinding, renderer, params, coordFn) {
 }
 
 function renderSpline(publicBinding, renderer, params) {
-  renderCurve(publicBinding, renderer, params, quadraticCoordinates);
+  renderCurve(publicBinding, renderer, params, MathUtil.quadraticCoordinates);
 }
 
 const splineBinding = new PublicBinding(
@@ -234,7 +189,7 @@ const splineBinding = new PublicBinding(
   });
 
 function renderBezier(publicBinding, renderer, params) {
-  renderCurve(publicBinding, renderer, params, bezierCoordinates);
+  renderCurve(publicBinding, renderer, params, MathUtil.bezierCoordinates);
 }
 
 const bezierBinding = new PublicBinding(
@@ -487,9 +442,9 @@ function renderStrokedBezier(publicBinding, renderer, params) {
     let tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
     // get 3 points on the bezier curve
     let [xx1, xx2, xx3] =
-          tvals.map(t => bezierPoint(x1, x2, x3, x4, t));
+          tvals.map(t => MathUtil.bezierPoint(x1, x2, x3, x4, t));
     let [yy1, yy2, yy3] =
-          tvals.map(t => bezierPoint(y1, y2, y3, y4, t));
+          tvals.map(t => MathUtil.bezierPoint(y1, y2, y3, y4, t));
 
     let ns = strokeNoise;
 

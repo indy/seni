@@ -86,6 +86,58 @@ function remapFn(params) {
   };
 }
 
+function normalize(x, y) {
+  const len = Math.sqrt((x * x) + (y * y));
+  return [(x / len), (y / len)];
+}
+
+function normals(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  return [normalize(-dy, dx), normalize(dy, -dx)];
+}
+
+function bezierPoint(a, b, c, d, t) {
+  const t1 = 1 - t;
+
+  return (a * t1 * t1 * t1) +
+    (3 * b * t * t1 * t1) +
+    (3 * c * t * t * t1) +
+    (d * t * t * t);
+}
+
+function quadraticPoint(a, b, c, t) {
+  const r = ((b - a) - 0.5 * (c - a)) / (0.5 * (0.5 - 1));
+  const s = c - a - r;
+
+  return (r * t * t) + (s * t) + a;
+}
+
+function bezierCoordinates(tVals, controlPoints) {
+  const xs = tVals.map(t => bezierPoint(controlPoints[0][0],
+                                        controlPoints[1][0],
+                                        controlPoints[2][0],
+                                        controlPoints[3][0], t));
+  const ys = tVals.map(t => bezierPoint(controlPoints[0][1],
+                                        controlPoints[1][1],
+                                        controlPoints[2][1],
+                                        controlPoints[3][1], t));
+
+  return {xs, ys};
+}
+
+function quadraticCoordinates(tVals, controlPoints) {
+  const xs = tVals.map(t => quadraticPoint(controlPoints[0][0],
+                                           controlPoints[1][0],
+                                           controlPoints[2][0], t));
+  const ys = tVals.map(t => quadraticPoint(controlPoints[0][1],
+                                           controlPoints[1][1],
+                                           controlPoints[2][1], t));
+
+  return {xs, ys};
+}
+
 const MathUtil = {
 
   remapFn,
@@ -189,16 +241,18 @@ const MathUtil = {
     return (a * (1 - t)) + (b * t);
   },
 
-  normalize: function(x, y) {
-    const len = Math.sqrt((x * x) + (y * y));
-    return [(x / len), (y / len)];
-  },
-
   mc: function([xa, ya], [xb, yb]) {
     const m = (ya - yb) / (xa - xb);
     const c = ya - (m * xa);
     return [m, c];
-  }
+  },
+
+  normalize,
+  normals,
+  bezierPoint,
+  quadraticPoint,
+  bezierCoordinates,
+  quadraticCoordinates
 };
 
 export default MathUtil;

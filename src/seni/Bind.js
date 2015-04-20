@@ -17,6 +17,7 @@
 */
 
 import Shapes from './Shapes';
+import Paths from './Paths';
 import MatrixStackBindings from './MatrixStackBindings';
 import MathUtil from './MathUtil';
 import ColourBindings from './ColourBindings';
@@ -77,6 +78,15 @@ function bindShapes(env, renderer) {
                   Shapes.strokedBezierRect];
 
   return shapes.reduce((a, b) => bind_(a, b, b.create(b, renderer)), env);
+}
+
+function bindPaths(env) {
+
+  const paths = [Paths.linear,
+                 Paths.spline,
+                 Paths.bezier];
+
+  return paths.reduce((a, b) => bind_(a, b, b.create(b)), env);
 }
 
 function bindColour(env) {
@@ -140,6 +150,7 @@ const Bind = {
     env = bindSeedRandom(env);
     env = bindMatrixStack(env, renderer.getMatrixStack());
     env = bindShapes(env, renderer);
+    env = bindPaths(env);
     env = bindColour(env);
     env = bindPerlin(env);
 

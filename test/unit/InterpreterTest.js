@@ -136,7 +136,9 @@ describe('eval', () => {
 
     [newEnv, res] = evalForm(e, '(v2// (v2 9 8) (v2 3 2))');
     expect(res, 'v2 division').to.eql([3, 4]);
-});
+
+    newEnv = newEnv;
+  });
 
   it('should test required comparison functions', () => {
     let [newEnv, res] = evalForm(e, '(= 90 90)');
