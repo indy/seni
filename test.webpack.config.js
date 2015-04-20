@@ -3,6 +3,13 @@ var path = require('path');
 
 module.exports = {
   module: {
+    preLoaders: [
+      {
+        test: /\.js$/,
+        loader: "eslint-loader", exclude: /node_modules/
+      }
+    ],
+
     loaders: [
       {
         test: path.join(__dirname, 'src'),
