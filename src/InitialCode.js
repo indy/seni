@@ -17,8 +17,7 @@
 */
 
 const code = `
-(poly x: 500
-      y: 500
+(poly position: (v2 500 500)
       radius: 200
       tessellation: 20
       colour: (col/rgb r: 1.0 g: 0.0 b: 0.0 alpha: 1.0))

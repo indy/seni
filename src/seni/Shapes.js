@@ -221,8 +221,14 @@ function renderRect(publicBinding, renderer, params) {
   const glContainer = renderer.getGLContainer();
   const buffer = renderer.getBuffer();
 
-  let {x, y, width, height, colour} = publicBinding.mergeWithDefaults(params);
+  const {
+    position,
+    width,
+    height,
+    colour
+  } = publicBinding.mergeWithDefaults(params);
 
+  const [x, y] = position;
   const halfWidth = (width / 2);
   const halfHeight = (height / 2);
 
@@ -242,8 +248,7 @@ const rectBinding = new PublicBinding(
   this fn adds 1
   `,
   {
-    x: 500.0,
-    y: 500.0,
+    position: [500, 500],
     width: 200,
     height: 200,
     colour: Colour.defaultColour
@@ -257,14 +262,15 @@ function renderPoly(publicBinding, renderer, params) {
   const buffer = renderer.getBuffer();
 
   let {
-    x,
-    y,
+    position,
     width,
     height,
     radius,
     tessellation,
     colour
   } = publicBinding.mergeWithDefaults(params);
+
+  const [x, y] = position;
 
   if (radius !== undefined) {
     // use the radius for both width and height if it's given
@@ -306,8 +312,7 @@ const polyBinding = new PublicBinding(
   `
   `,
   {
-    x: 500.0,
-    y: 500.0,
+    position: [500, 500],
     radius: undefined,
     width: 200,
     height: 200,
@@ -514,8 +519,7 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
   const fullParams = publicBinding.mergeWithDefaults(params);
 
   const {
-    x,
-    y,
+    position,
     width,
     height,
     volatility,
@@ -528,6 +532,8 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
   const strokeTessellation = fullParams['strok-tessellation'];
   const strokeNoise = fullParams['stroke-noise'];
   const colourVolatility = fullParams['colour-volatility'];
+
+  const [x, y] = position;
 
   const xStart = x - (width / 2);
   const yStart = y - (height / 2);
@@ -596,8 +602,7 @@ const strokedBezierRectBinding = new PublicBinding(
   `
   `,
   {
-    x: 100.0,
-    y: 100.0,
+    position: [100, 100],
     width: 800,
     height: 600,
 
