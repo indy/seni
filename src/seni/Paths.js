@@ -61,6 +61,51 @@ const linearBinding = new PublicBinding(
     return (params) => pathLinear(self, params);
   });
 
+function pathCircle(publicBinding, params) {
+  let fullParams = publicBinding.mergeWithDefaults(params);
+
+  let {position, radius, fn, steps} = fullParams;
+  const tStart = fullParams['t-start'];
+  const tEnd = fullParams['t-end'];
+
+  let [x, y] = position;
+  let twoPI = Math.PI * 2;
+  let unit = (tEnd - tStart) / steps;
+  let unitAngle = unit * twoPI;
+
+  let angle, vx, vy;
+
+  for(let i = 0; i < steps; i++) {
+
+    angle = (unitAngle * i) + (tStart * twoPI);
+    vx = (Math.sin(angle) * radius) + x;
+    vy = (Math.cos(angle) * radius) + y;
+
+    fn({
+      step: i,
+      position: [vx, vy],
+      't-value': tStart + (unit * i)
+    });
+  }
+}
+
+const circleBinding = new PublicBinding(
+  'path/circle',
+  `
+  a circular path
+  `,
+  {
+    position: [500, 500],
+    radius: 100,
+    fn: emptyFn,
+    steps: 10,
+    't-start': 0.0,
+    't-end': 1.0
+  },
+  (self) => {
+    return (params) => pathCircle(self, params);
+  });
+
 function pathCurve(publicBinding, params, coordFn) {
   let fullParams = publicBinding.mergeWithDefaults(params);
 
@@ -100,7 +145,6 @@ const splineBinding = new PublicBinding(
     return (params) => pathCurve(self, params, MathUtil.quadraticCoordinates);
   });
 
-
 const bezierBinding = new PublicBinding(
   'path/bezier',
   `
@@ -119,6 +163,7 @@ const bezierBinding = new PublicBinding(
 
 const Paths = {
   linear: linearBinding,
+  circle: circleBinding,
   spline: splineBinding,
   bezier: bezierBinding
 };

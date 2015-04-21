@@ -83,6 +83,7 @@ function bindShapes(env, renderer) {
 function bindPaths(env) {
 
   const paths = [Paths.linear,
+                 Paths.circle,
                  Paths.spline,
                  Paths.bezier];
 
