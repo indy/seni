@@ -361,15 +361,7 @@ const classicFunctions = {
     return TRUE_STRING;
   },
 
-  'list' : args => args,
-
-  'pair' : args => {
-    const res = [];
-    for (let i = 0; i < args.length; i += 2) {
-      res.push([args[i], args[i + 1]]);
-    }
-    return res;
-  }
+  'list' : args => args
 };
 
 // todo: v2 functions are also treated as classic functions
