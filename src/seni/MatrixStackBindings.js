@@ -24,8 +24,8 @@ const MatrixStackBindings = {
     'push-matrix',
     ``,
     {},
-    (self, matrixStack) => {
-      return () => matrixStack.pushMatrix();
+    (self, renderer) => {
+      return () => renderer.cmdMatrixPush();
     }
   ),
 
@@ -33,8 +33,8 @@ const MatrixStackBindings = {
     'pop-matrix',
     ``,
     {},
-    (self, matrixStack) => {
-      return () => matrixStack.popMatrix();
+    (self, renderer) => {
+      return () => renderer.cmdMatrixPop();
     }
   ),
 
@@ -42,10 +42,10 @@ const MatrixStackBindings = {
     'scale',
     ``,
     {x: 1, y: 1},
-    (self, matrixStack) => {
+    (self, renderer) => {
       return (params) => {
         const {x, y} = self.mergeWithDefaults(params);
-        return matrixStack.scale(x, y);
+        return renderer.cmdMatrixScale(x, y);
       };
     }
   ),
@@ -54,10 +54,10 @@ const MatrixStackBindings = {
     'translate',
     ``,
     {x: 0.0, y: 0.0},
-    (self, matrixStack) => {
+    (self, renderer) => {
       return (params) => {
         const {x, y} = self.mergeWithDefaults(params);
-        return matrixStack.translate(x, y);
+        return renderer.cmdMatrixTranslate(x, y);
       };
     }
   ),
@@ -66,10 +66,10 @@ const MatrixStackBindings = {
     'rotate',
     ``,
     {angle: 0.0},
-    (self, matrixStack) => {
+    (self, renderer) => {
       return (params) => {
         const {angle} = self.mergeWithDefaults(params);
-        return matrixStack.rotate(angle);
+        return renderer.cmdMatrixRotate(angle);
       };
     }
   )

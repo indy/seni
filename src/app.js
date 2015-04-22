@@ -43,6 +43,7 @@ let gSeniApp = {
   env: undefined
 };
 
+/*
 function debugEnv(env) {
   console.log(env);
   let keys = env.keySeq().toArray();
@@ -58,12 +59,13 @@ function debugEnv(env) {
   });
   //console.log(env.toJS());
 }
+*/
 
 function renderScript(renderer, form) {
   let env = Runtime.createEnv();
   env = Bind.addBindings(env, renderer);
 
-  debugEnv(env);
+  //debugEnv(env);
 
   renderer.preDrawScene();
   const ast = Runtime.buildAst(env, form);

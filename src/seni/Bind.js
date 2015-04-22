@@ -56,14 +56,14 @@ function bindSeedRandom(env) {
   return random.reduce((a, b) => bind_(a, b, b.create(b)), env);
 }
 
-function bindMatrixStack(env, matrixStack) {
+function bindMatrixStack(env, renderer) {
   const mstack = [MatrixStackBindings.pushMatrix,
                   MatrixStackBindings.popMatrix,
                   MatrixStackBindings.scale,
                   MatrixStackBindings.translate,
                   MatrixStackBindings.rotate];
 
-  return mstack.reduce((a, b) => bind_(a, b, b.create(b, matrixStack)), env);
+  return mstack.reduce((a, b) => bind_(a, b, b.create(b, renderer)), env);
 }
 
 function bindShapes(env, renderer) {
@@ -149,7 +149,7 @@ const Bind = {
     env = bindCore(env);
     env = bindMath(env);
     env = bindSeedRandom(env);
-    env = bindMatrixStack(env, renderer.getMatrixStack());
+    env = bindMatrixStack(env, renderer);
     env = bindShapes(env, renderer);
     env = bindPaths(env);
     env = bindColour(env);

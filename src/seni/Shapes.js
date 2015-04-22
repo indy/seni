@@ -22,149 +22,9 @@ import Colour from './Colour';
 import Perlin from './Perlin';
 import SeedRandom from './SeedRandom';
 
-const Format = Colour.Format;
-
-/*
- function debugRect(buffer, glContainer, x, y, radius, colour) {
- const colourArray = Colour.elementArray(colour);
-
- for(let i=0;i<3;i++) {
- buffer.prepareToAddTriangleStrip(glContainer, 4,
- [x - radius, y - radius, 0.0]);
- buffer.addVertex([x - radius, y - radius, 0.0], colourArray);
- buffer.addVertex([x + radius, y - radius, 0.0], colourArray);
- buffer.addVertex([x - radius, y + radius, 0.0], colourArray);
- buffer.addVertex([x + radius, y + radius, 0.0], colourArray);
- }
- }
- */
-
-function getRemapAndHalfWidthEnd(params) {
-
-  const lineWidth = params['line-width'];
-  const lineWidthStart = params['line-width-start'];
-  const lineWidthEnd = params['line-width-end'];
-  const tStart = params['t-start'];
-  const tEnd = params['t-end'];
-  const lineWidthMapping = params['line-width-mapping'];
-
-  let halfWidthEnd, remap;
-
-  if (lineWidth !== undefined) {
-    // user has given a constant lineWidth parameter
-    halfWidthEnd = lineWidth / 2.0;
-    remap = () => halfWidthEnd;
-  } else {
-    // use the default start and end line widths
-    const halfWidthStart  = lineWidthStart / 2.0;
-    halfWidthEnd = lineWidthEnd / 2.0;
-    remap = MathUtil.remapFn({from: [tStart, tEnd],
-                              to: [halfWidthStart, halfWidthEnd],
-                              mapping: lineWidthMapping});
-
-  }
-
-  return {halfWidthEnd, remap};
-}
-
-function addVerticesAsStrip(args) {
-
-  let {
-    renderer,
-    tVals,
-    xs,
-    ys,
-    tessellation,
-    remap,
-    colour,
-    halfWidthEnd
-  } = args;
-
-  const glContainer = renderer.getGLContainer();
-  const buffer = renderer.getBuffer();
-
-  const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
-
-  for (let i = 0; i < tVals.length - 1; i++) {
-    let [[xn1, yn1], [xn2, yn2]] =
-          MathUtil.normals(xs[i], ys[i], xs[i + 1], ys[i + 1]),
-        i0 = xs[i],
-        i1 = ys[i],
-        t = tVals[i];
-
-    if (i === 0) {
-      buffer.prepareToAddTriangleStrip(glContainer, tessellation * 2,
-                                       [(xn1 * remap({val: t})) + i0,
-                                        (yn1 * remap({val: t})) + i1,
-                                        0.0]);
-    }
-
-    buffer.addVertex([(xn1 * remap({val: t})) + i0,
-                      (yn1 * remap({val: t})) + i1,
-                      0.0],
-                     colourArray);
-    buffer.addVertex([(xn2 * remap({val: t})) + i0,
-                      (yn2 * remap({val: t})) + i1,
-                      0.0],
-                     colourArray);
-  }
-
-  // final 2 vertices for the end point
-  let i = tVals.length - 2,
-      [[xn1, yn1], [xn2, yn2]] =
-        MathUtil.normals(xs[i], ys[i], xs[i + 1], ys[i + 1]),
-      i2 = xs[i + 1],
-      i3 = ys[i + 1];
-
-  buffer.addVertex([(xn1 * halfWidthEnd) + i2,
-                    (yn1 * halfWidthEnd) + i3,
-                    0.0],
-                   colourArray);
-  buffer.addVertex([(xn2 * halfWidthEnd) + i2,
-                    (yn2 * halfWidthEnd) + i3,
-                    0.0],
-                   colourArray);
-
-}
-
-function renderCurve(publicBinding, renderer, params, coordFn) {
-
+function renderSpline(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
-
-  const {
-    colour,
-    coords,
-    tessellation
-  } = fullParams;
-  const tStart = fullParams['t-start'];
-  const tEnd = fullParams['t-end'];
-
-  const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
-
-  const {
-    xs,
-    ys
-  } = coordFn(tVals, coords);
-
-  const {
-    halfWidthEnd,
-    remap
-  } = getRemapAndHalfWidthEnd(fullParams);
-
-  addVerticesAsStrip({
-    renderer,
-    tVals,
-    xs,
-    ys,
-    tessellation,
-    remap,
-    colour,
-    halfWidthEnd
-  });
-}
-
-function renderSpline(publicBinding, renderer, params) {
-  renderCurve(publicBinding, renderer, params, MathUtil.quadraticCoordinates);
+  renderer.cmdRenderQuadratic(fullParams);
 }
 
 const splineBinding = new PublicBinding(
@@ -185,11 +45,12 @@ const splineBinding = new PublicBinding(
     colour: Colour.defaultColour
   },
   (self, renderer) => {
-    return (params) => renderSpline(self, renderer, params);
+    return (params) => renderSpline(self, params, renderer);
   });
 
-function renderBezier(publicBinding, renderer, params) {
-  renderCurve(publicBinding, renderer, params, MathUtil.bezierCoordinates);
+function renderBezier(publicBinding, params, renderer) {
+  const fullParams = publicBinding.mergeWithDefaults(params);
+  renderer.cmdRenderBezier(fullParams);
 }
 
 const bezierBinding = new PublicBinding(
@@ -214,32 +75,12 @@ const bezierBinding = new PublicBinding(
     colour: Colour.defaultColour
   },
   (self, renderer) => {
-    return (params) => renderBezier(self, renderer, params);
+    return (params) => renderBezier(self, params, renderer);
   });
 
-function renderRect(publicBinding, renderer, params) {
-  const glContainer = renderer.getGLContainer();
-  const buffer = renderer.getBuffer();
-
-  const {
-    position,
-    width,
-    height,
-    colour
-  } = publicBinding.mergeWithDefaults(params);
-
-  const [x, y] = position;
-  const halfWidth = (width / 2);
-  const halfHeight = (height / 2);
-
-  const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
-
-  buffer.prepareToAddTriangleStrip(glContainer, 4,
-                                   [x - halfWidth, y - halfHeight, 0.0]);
-  buffer.addVertex([x - halfWidth, y - halfHeight, 0.0], colourArray);
-  buffer.addVertex([x + halfWidth, y - halfHeight, 0.0], colourArray);
-  buffer.addVertex([x - halfWidth, y + halfHeight, 0.0], colourArray);
-  buffer.addVertex([x + halfWidth, y + halfHeight, 0.0], colourArray);
+function renderRect(publicBinding, params, renderer) {
+  let fullParams = publicBinding.mergeWithDefaults(params);
+  renderer.cmdRenderRect(fullParams);
 }
 
 const rectBinding = new PublicBinding(
@@ -254,57 +95,12 @@ const rectBinding = new PublicBinding(
     colour: Colour.defaultColour
   },
   (self, renderer) => {
-    return (params) => renderRect(self, renderer, params);
+    return (params) => renderRect(self, params, renderer);
   });
 
-function renderPoly(publicBinding, renderer, params) {
-  const glContainer = renderer.getGLContainer();
-  const buffer = renderer.getBuffer();
-
-  let {
-    position,
-    width,
-    height,
-    radius,
-    tessellation,
-    colour
-  } = publicBinding.mergeWithDefaults(params);
-
-  const [x, y] = position;
-
-  if (radius !== undefined) {
-    // use the radius for both width and height if it's given
-    width = radius;
-    height = radius;
-  }
-
-  const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
-
-  buffer.prepareToAddTriangleStrip(glContainer,
-                                   (tessellation * 2) + 2,
-                                   [x, y, 0.0]);
-
-  let twoPI = Math.PI * 2;
-  let unitAngle = twoPI / tessellation;
-  let angle, vx, vy;
-
-  for(let i = 0; i < tessellation; i++) {
-
-    angle = unitAngle * i;
-    vx = (Math.sin(angle) * width) + x;
-    vy = (Math.cos(angle) * height) + y;
-
-    buffer.addVertex([x, y, 0.0], colourArray);
-    buffer.addVertex([vx, vy, 0.0], colourArray);
-  }
-
-  // close up the polygon
-  angle = 0.0;
-  vx = (Math.sin(angle) * width) + x;
-  vy = (Math.cos(angle) * height) + y;
-
-  buffer.addVertex([x, y, 0.0], colourArray);
-  buffer.addVertex([vx, vy, 0.0], colourArray);
+function renderPoly(publicBinding, params, renderer) {
+  const fullParams = publicBinding.mergeWithDefaults(params);
+  renderer.cmdRenderPoly(fullParams);
 }
 
 const polyBinding = new PublicBinding(
@@ -320,10 +116,10 @@ const polyBinding = new PublicBinding(
     colour: Colour.defaultColour
   },
   (self, renderer) => {
-    return (params) => renderPoly(self, renderer, params);
+    return (params) => renderPoly(self, params, renderer);
   });
 
-function renderBezierTrailing(publicBinding, renderer, params) {
+function renderBezierTrailing(publicBinding, params, renderer) {
 
   let fullParams = publicBinding.mergeWithDefaults(params);
 
@@ -334,14 +130,16 @@ function renderBezierTrailing(publicBinding, renderer, params) {
          colour} = fullParams;
   const lineWidth = fullParams['line-width'];
 
-  renderBezier(bezierBinding, renderer, {tessellation: tessellation,
-                                         'line-width-start': lineWidth,
-                                         'line-width-end': 0.0,
-                                         'line-width-mapping': 'linear',
-                                         coords: coords,
-                                         't-start': tStart,
-                                         't-end': tEnd,
-                                         colour: colour});
+  let bezierParams = {tessellation: tessellation,
+                      'line-width-start': lineWidth,
+                      'line-width-end': 0.0,
+                      'line-width-mapping': 'linear',
+                      coords: coords,
+                      't-start': tStart,
+                      't-end': tEnd,
+                      colour: colour};
+
+  renderBezier(bezierBinding, bezierParams, renderer);
 }
 
 const bezierTrailingBinding = new PublicBinding(
@@ -363,10 +161,10 @@ const bezierTrailingBinding = new PublicBinding(
     colour: Colour.defaultColour
   },
   (self, renderer) => {
-    return (params) => renderBezierTrailing(self, renderer, params);
+    return (params) => renderBezierTrailing(self, params, renderer);
   });
 
-function renderBezierBulging(publicBinding, renderer, params) {
+function renderBezierBulging(publicBinding, params, renderer) {
 
   const fullParams = publicBinding.mergeWithDefaults(params);
 
@@ -382,22 +180,25 @@ function renderBezierBulging(publicBinding, renderer, params) {
   // tessellation should be an even number
   const newTess = tessellation & 1 ? tessellation + 1 : tessellation;
 
-  renderBezier(bezierBinding, renderer, {tessellation: newTess / 2,
-                                         'line-width-start': 0.0,
-                                         'line-width-end': lineWidth,
-                                         'line-width-mapping': 'slow-in-out',
-                                         coords: coords,
-                                         't-start': tStart,
-                                         't-end': tMid,
-                                         colour: colour});
-  renderBezier(bezierBinding, renderer, {tessellation: newTess / 2,
-                                         'line-width-start': lineWidth,
-                                         'line-width-end': 0.0,
-                                         'line-width-mapping': 'slow-in-out',
-                                         coords: coords,
-                                         't-start': tMid,
-                                         't-end': tEnd,
-                                         colour: colour});
+  let thinFatParams = {tessellation: newTess / 2,
+                       'line-width-start': 0.0,
+                       'line-width-end': lineWidth,
+                       'line-width-mapping': 'slow-in-out',
+                       coords: coords,
+                       't-start': tStart,
+                       't-end': tMid,
+                       colour: colour};
+  renderBezier(bezierBinding, thinFatParams, renderer);
+
+  let fatThinParams = {tessellation: newTess / 2,
+                       'line-width-start': lineWidth,
+                       'line-width-end': 0.0,
+                       'line-width-mapping': 'slow-in-out',
+                       coords: coords,
+                       't-start': tMid,
+                       't-end': tEnd,
+                       colour: colour};
+  renderBezier(bezierBinding, fatThinParams, renderer);
 }
 
 const bezierBulgingBinding = new PublicBinding(
@@ -416,10 +217,10 @@ const bezierBulgingBinding = new PublicBinding(
     colour: Colour.defaultColour
   },
   (self, renderer) => {
-    return (params) => renderBezierBulging(self, renderer, params);
+    return (params) => renderBezierBulging(self, params, renderer);
   });
 
-function renderStrokedBezier(publicBinding, renderer, params) {
+function renderStrokedBezier(publicBinding, params, renderer) {
 
   const fullParams = publicBinding.mergeWithDefaults(params);
 
@@ -456,7 +257,7 @@ function renderStrokedBezier(publicBinding, renderer, params) {
     let colLabL = Colour.getComponent(lab, Colour.L) +
           (Perlin._perlin(xx1, xx1, xx1) * colourVolatility);
 
-    renderSpline(splineBinding, renderer, {
+    let splineParams = {
       tessellation: strokeTessellation,
       'line-width': lineWidth,
       'line-width-start': strokeLineWidthStart,
@@ -472,7 +273,9 @@ function renderStrokedBezier(publicBinding, renderer, params) {
         [(xx3 + (ns * Perlin._perlin(xx3, xx1, seed))),
          (yy3 + (ns * Perlin._perlin(yy3, yy1, seed)))]
       ]
-    });
+    };
+
+    renderSpline(splineBinding, splineParams, renderer);
   }
   /* eslint-enable no-loop-func */
 }
@@ -512,10 +315,10 @@ const strokedBezierBinding = new PublicBinding(
     seed: 42
   },
   (self, renderer) => {
-    return (params) => renderStrokedBezier(self, renderer, params);
+    return (params) => renderStrokedBezier(self, params, renderer);
   });
 
-function renderStrokedBezierRect(publicBinding, renderer, params) {
+function renderStrokedBezierRect(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
 
   const {
@@ -555,7 +358,7 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
   let i;
 
   for (i = iterations; i > 0; i--) {
-    renderStrokedBezier(strokedBezierBinding, renderer, {
+    let hParams = {
       tessellation: tessellation,
       'line-width': overlap + hStripWidth,
       coords: [
@@ -572,11 +375,12 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
       'stroke-noise': strokeNoise,
       colour: lab,
       'colour-volatility': colourVolatility
-    });
+    };
+    renderStrokedBezier(strokedBezierBinding, hParams, renderer);
   }
 
   for (i = iterations; i > 0; i--) {
-    renderStrokedBezier(strokedBezierBinding, renderer, {
+    let vParams = {
       tessellation: tessellation,
       'line-width': overlap + vStripWidth,
       coords: [
@@ -593,7 +397,8 @@ function renderStrokedBezierRect(publicBinding, renderer, params) {
       'stroke-noise': strokeNoise,
       colour: lab,
       'colour-volatility': colourVolatility
-    });
+    };
+    renderStrokedBezier(strokedBezierBinding, vParams, renderer);
   }
 }
 
@@ -621,7 +426,7 @@ const strokedBezierRectBinding = new PublicBinding(
     'colour-volatility': 40
   },
   (self, renderer) => {
-    return (params) => renderStrokedBezierRect(self, renderer, params);
+    return (params) => renderStrokedBezierRect(self, params, renderer);
   });
 
 const Shapes = {

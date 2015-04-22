@@ -17,10 +17,23 @@
 */
 
 const code = `
-(poly position: (v2 500 500)
-      radius: 200
-      tessellation: 20
-      colour: (col/rgb r: 1.0 g: 0.0 b: 0.0 alpha: 1.0))
+
+(define centre (v2 500 500))
+
+(define (render-circle position: (v2 0 0)
+                       step: 0
+                       t-value: 0)
+  (let ((rad (- 400 (* step 4))))
+    (poly position: (v2/+ centre (v2/* position (v2 rad rad)))
+          radius: (- 30 step)
+          tessellation: 30
+          colour: (col/rgb r: 0.1 g: 0.5 b: 0.2 alpha: 0.7))))
+
+(path/circle position: (v2 0 0)
+             radius: 1
+             steps: 20
+             fn: render-circle)
+
 `;
 
 const InitialCode = {
