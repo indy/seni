@@ -21,7 +21,7 @@ import Paths from '../../src/seni/Paths';
 import chai from 'chai';
 const expect = chai.expect;
 
-describe('paths', () => {
+describe('Paths', () => {
 
   beforeEach(() => {
   });

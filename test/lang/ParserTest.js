@@ -28,7 +28,7 @@ import TokenType from '../../src/lang/TokenType';
 import chai from 'chai';
 const expect = chai.expect;
 
-describe('parse', () => {
+describe('Parser', () => {
 
   function simpleParse(form) {
     // assumes that the form will compile into a single list

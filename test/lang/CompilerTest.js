@@ -24,7 +24,7 @@ import Genetic from '../../src/lang/Genetic';
 import chai from 'chai';
 const expect = chai.expect;
 
-describe('compiler', () => {
+describe('Compiler', () => {
 
   function compileWithSeed(form, seed) {
     // assumes that the form will compile into a single list

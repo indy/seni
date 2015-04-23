@@ -37,7 +37,9 @@ gulp.task('coverage', function(done) {
 });
 
 function test() {
-  return gulp.src(['test/setup/node.js', 'test/unit/**/*.js'], {read: false})
+  return gulp.src(['test/setup/node.js',
+                   'test/lang/*.js',
+                   'test/seni/*.js'], {read: false})
     .pipe($.plumber())
     .pipe($.mocha({reporter: 'dot', globals: config.mochaGlobals}));
 };

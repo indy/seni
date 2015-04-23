@@ -29,7 +29,7 @@ import Genetic from '../../src/lang/Genetic';
 import chai from 'chai';
 const expect = chai.expect;
 
-describe('eval', () => {
+describe('Interpreter', () => {
 
   let e;
   let key;
