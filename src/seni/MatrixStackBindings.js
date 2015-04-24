@@ -16,63 +16,64 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import PublicBinding from '../lang/PublicBinding';
+import PublicBinding from './PublicBinding';
 
 const MatrixStackBindings = {
+  publicBindings: [
+    new PublicBinding(
+      'push-matrix',
+      ``,
+      {},
+      (self, renderer) => {
+        return () => renderer.cmdMatrixPush();
+      }
+    ),
 
-  pushMatrix: new PublicBinding(
-    'push-matrix',
-    ``,
-    {},
-    (self, renderer) => {
-      return () => renderer.cmdMatrixPush();
-    }
-  ),
+    new PublicBinding(
+      'pop-matrix',
+      ``,
+      {},
+      (self, renderer) => {
+        return () => renderer.cmdMatrixPop();
+      }
+    ),
 
-  popMatrix: new PublicBinding(
-    'pop-matrix',
-    ``,
-    {},
-    (self, renderer) => {
-      return () => renderer.cmdMatrixPop();
-    }
-  ),
+    new PublicBinding(
+      'scale',
+      ``,
+      {x: 1, y: 1},
+      (self, renderer) => {
+        return (params) => {
+          const {x, y} = self.mergeWithDefaults(params);
+          return renderer.cmdMatrixScale(x, y);
+        };
+      }
+    ),
 
-  scale: new PublicBinding(
-    'scale',
-    ``,
-    {x: 1, y: 1},
-    (self, renderer) => {
-      return (params) => {
-        const {x, y} = self.mergeWithDefaults(params);
-        return renderer.cmdMatrixScale(x, y);
-      };
-    }
-  ),
+    new PublicBinding(
+      'translate',
+      ``,
+      {x: 0.0, y: 0.0},
+      (self, renderer) => {
+        return (params) => {
+          const {x, y} = self.mergeWithDefaults(params);
+          return renderer.cmdMatrixTranslate(x, y);
+        };
+      }
+    ),
 
-  translate: new PublicBinding(
-    'translate',
-    ``,
-    {x: 0.0, y: 0.0},
-    (self, renderer) => {
-      return (params) => {
-        const {x, y} = self.mergeWithDefaults(params);
-        return renderer.cmdMatrixTranslate(x, y);
-      };
-    }
-  ),
-
-  rotate: new PublicBinding(
-    'rotate',
-    ``,
-    {angle: 0.0},
-    (self, renderer) => {
-      return (params) => {
-        const {angle} = self.mergeWithDefaults(params);
-        return renderer.cmdMatrixRotate(angle);
-      };
-    }
-  )
+    new PublicBinding(
+      'rotate',
+      ``,
+      {angle: 0.0},
+      (self, renderer) => {
+        return (params) => {
+          const {angle} = self.mergeWithDefaults(params);
+          return renderer.cmdMatrixRotate(angle);
+        };
+      }
+    )
+  ]
 };
 
 export default MatrixStackBindings;

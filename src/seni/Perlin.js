@@ -18,7 +18,7 @@
 
 /* eslint-disable no-use-before-define */
 
-import PublicBinding from '../lang/PublicBinding';
+import PublicBinding from './PublicBinding';
 
 // A basic translation of Ken Perlin's Java
 // reference implementation of improved noise (C) 2002
@@ -99,33 +99,33 @@ for (let i = 0; i < 256; i++) {
 }
 
 const Perlin = {
-  perlin2: new PublicBinding(
-    'perlin/signed',
-    `returns perlin numbers in the range -1..1`,
-    {x: 1.0, y: 1.0, z: 1.0},
-    (self) => {
-      return (params) => {
-        const {x, y, z} = self.mergeWithDefaults(params);
-        return noise(x, y, z);
-      };
-    }
-  ),
+  publicBindings: [
+    new PublicBinding(
+      'perlin/signed',
+      `returns perlin numbers in the range -1..1`,
+      {x: 1.0, y: 1.0, z: 1.0},
+      (self) => {
+        return (params) => {
+          const {x, y, z} = self.mergeWithDefaults(params);
+          return noise(x, y, z);
+        };
+      }
+    ),
 
-  perlin: new PublicBinding(
-    'perlin/unsigned',
-    `returns perlin numbers in the range 0..1`,
-    {x: 1.0, y: 1.0, z: 1.0},
-    (self) => {
-      return (params) => {
-        const {x, y, z} = self.mergeWithDefaults(params);
-        const v = noise(x, y, z);
-        return (v + 1) / 2.0;
-      };
-    }
-  ),
-
+    new PublicBinding(
+      'perlin/unsigned',
+      `returns perlin numbers in the range 0..1`,
+      {x: 1.0, y: 1.0, z: 1.0},
+      (self) => {
+        return (params) => {
+          const {x, y, z} = self.mergeWithDefaults(params);
+          const v = noise(x, y, z);
+          return (v + 1) / 2.0;
+        };
+      }
+    )
+  ],
   _perlin: (x, y, z) => noise(x, y, z)
-
 };
 
 export default Perlin;

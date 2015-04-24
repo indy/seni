@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import PublicBinding from '../lang/PublicBinding';
+import PublicBinding from './PublicBinding';
 import MathUtil from './MathUtil';
 import Colour from './Colour';
 import Perlin from './Perlin';
@@ -430,15 +430,16 @@ const strokedBezierRectBinding = new PublicBinding(
   });
 
 const Shapes = {
-  rect: rectBinding,
-  poly: polyBinding,
-  spline: splineBinding,
-  bezier: bezierBinding,
-  bezierTrailing: bezierTrailingBinding,
-  bezierBulging: bezierBulgingBinding,
-
-  strokedBezier: strokedBezierBinding,
-  strokedBezierRect: strokedBezierRectBinding
+  publicBindings: [
+    rectBinding,
+    polyBinding,
+    splineBinding,
+    bezierBinding,
+    bezierTrailingBinding,
+    bezierBulgingBinding,
+    strokedBezierBinding,
+    strokedBezierRectBinding
+  ]
 };
 
 export default Shapes;

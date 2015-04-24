@@ -26,146 +26,52 @@ import Core from './Core';
 import Bracket from './BracketBindings';
 import SeedRandom from './SeedRandom';
 
-function bind_(env, pb, value) {
-  return env.set(pb.name, { binding : value,
-                            pb : pb });
+function createBind(env, pb) {
+
+  let createFn = pb.create;
+
+  let restArgs = Array.prototype.slice.call(arguments, 2);
+  let allArgs = [pb].concat(restArgs);
+
+  // call the PublicBinding's create function with the correct self value
+  // plus any additional arguments
+  let value = createFn.apply(pb, allArgs);
+
+  // bind the value to the pb's name
+  return env.set(pb.name, { binding : value, pb : pb });
 }
 
-function bindCore(env) {
-  const core = [Core.takeBinding];
-  return core.reduce((a, b) => bind_(a, b, b.create(b)), env);
-}
+// applies the publicBindings in namespace to env
+function applyPublicBindings(env, namespace) {
+  // grab any additional arguments that have been given to this function
+  let restArgs = Array.prototype.slice.call(arguments, 2);
 
-function bindMath(env) {
-  const math = [MathUtil.remapFnBinding,
-                MathUtil.PI,
-                MathUtil.twoPI,
-                MathUtil.PIbyTwo,
-                MathUtil.sin,
-                MathUtil.cos,
-                MathUtil.distance2D,
-                MathUtil.clamp];
-
-  return math.reduce((a, b) => bind_(a, b, b.create(b)), env);
-}
-
-function bindSeedRandom(env) {
-  const random = [SeedRandom.rngSigned,
-                SeedRandom.rngUnsigned];
-
-  return random.reduce((a, b) => bind_(a, b, b.create(b)), env);
-}
-
-function bindMatrixStack(env, renderer) {
-  const mstack = [MatrixStackBindings.pushMatrix,
-                  MatrixStackBindings.popMatrix,
-                  MatrixStackBindings.scale,
-                  MatrixStackBindings.translate,
-                  MatrixStackBindings.rotate];
-
-  return mstack.reduce((a, b) => bind_(a, b, b.create(b, renderer)), env);
-}
-
-function bindShapes(env, renderer) {
-
-  const shapes = [Shapes.rect,
-                  Shapes.poly,
-                  Shapes.spline,
-                  Shapes.bezier,
-                  Shapes.bezierTrailing,
-                  Shapes.bezierBulging,
-                  Shapes.strokedBezier,
-                  Shapes.strokedBezierRect];
-
-  return shapes.reduce((a, b) => bind_(a, b, b.create(b, renderer)), env);
-}
-
-function bindPaths(env) {
-
-  const paths = [Paths.linear,
-                 Paths.circle,
-                 Paths.spline,
-                 Paths.bezier];
-
-  return paths.reduce((a, b) => bind_(a, b, b.create(b)), env);
-}
-
-function bindColour(env) {
-
-  const colours = [ColourBindings.colRGB,
-                   ColourBindings.colHSL,
-                   ColourBindings.colLAB,
-                   ColourBindings.colHSV,
-
-                   ColourBindings.colSetRGBRed,
-                   ColourBindings.colGetRGBRed,
-                   ColourBindings.colSetRGBGreen,
-                   ColourBindings.colGetRGBGreen,
-                   ColourBindings.colSetRGBBlue,
-                   ColourBindings.colGetRGBBlue,
-                   ColourBindings.colSetAlpha,
-                   ColourBindings.colGetAlpha,
-                   ColourBindings.colSetLABL,
-                   ColourBindings.colGetLABL,
-                   ColourBindings.colSetLABA,
-                   ColourBindings.colGetLABA,
-                   ColourBindings.colSetLABB,
-                   ColourBindings.colGetLABB,
-
-                   ColourBindings.RGB,
-                   ColourBindings.HSL,
-                   ColourBindings.LAB,
-                   ColourBindings.HSV,
-
-                   ColourBindings.colConvert,
-                   ColourBindings.colComplementary,
-                   ColourBindings.colSplitComplementary,
-                   ColourBindings.colAnalagous,
-                   ColourBindings.colTriad];
-
-  return colours.reduce((a, b) => bind_(a, b, b.create(b)), env);
-}
-
-function bindPerlin(env) {
-  const pln = [Perlin.perlin,
-               Perlin.perlin2];
-
-  return pln.reduce((a, b) => bind_(a, b, b.create(b)), env);
-}
-
-function bindBracket(env, rng) {
-  const br = [Bracket.identity,
-              Bracket.int,
-              Bracket.scalar,
-              Bracket.select,
-              Bracket.testPlus];
-
-  return br.reduce((a, b) => bind_(a, b, b.create(b, rng)), env);
+  return namespace.publicBindings.reduce((a, b) => {
+    return createBind.apply(null, [a, b].concat(restArgs));
+  }, env);
 }
 
 const Bind = {
   addBindings: function(env, renderer) {
-
-    env = bindCore(env);
-    env = bindMath(env);
-    env = bindSeedRandom(env);
-    env = bindMatrixStack(env, renderer);
-    env = bindShapes(env, renderer);
-    env = bindPaths(env);
-    env = bindColour(env);
-    env = bindPerlin(env);
+    env = applyPublicBindings(env, Core);
+    env = applyPublicBindings(env, MathUtil);
+    env = applyPublicBindings(env, SeedRandom);
+    env = applyPublicBindings(env, MatrixStackBindings, renderer);
+    env = applyPublicBindings(env, Shapes, renderer);
+    env = applyPublicBindings(env, Paths);
+    env = applyPublicBindings(env, ColourBindings);
+    env = applyPublicBindings(env, Perlin);
 
     return env;
   },
 
   addBracketBindings: function(env, rng) {
-
-    env = bindCore(env);
-    env = bindMath(env);
-    env = bindSeedRandom(env);
-    env = bindColour(env);
-    env = bindPerlin(env);
-    env = bindBracket(env, rng);
+    env = applyPublicBindings(env, Core);
+    env = applyPublicBindings(env, MathUtil);
+    env = applyPublicBindings(env, SeedRandom);
+    env = applyPublicBindings(env, ColourBindings);
+    env = applyPublicBindings(env, Perlin);
+    env = applyPublicBindings(env, Bracket, rng);
 
     return env;
   }

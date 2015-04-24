@@ -16,25 +16,27 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import PublicBinding from '../lang/PublicBinding';
+import PublicBinding from './PublicBinding';
 
 const Core = {
-  takeBinding: new PublicBinding(
-    'take',
+  publicBindings: [
+    new PublicBinding(
+      'take',
 
-    `invokes the 'from' function 'num' times, returning a list`,
+      `invokes the 'from' function 'num' times, returning a list`,
 
-    {num: 1, from: function() { return 0; }},
+      {num: 1, from: function() { return 0; }},
 
-    (self) => function(params) {
-      const {num, from} = self.mergeWithDefaults(params);
-      const res = [];
-      for (let i = 0; i < num; i++) {
-        res.push(from());
+      (self) => function(params) {
+        const {num, from} = self.mergeWithDefaults(params);
+        const res = [];
+        for (let i = 0; i < num; i++) {
+          res.push(from());
+        }
+        return res;
       }
-      return res;
-    }
-  )
+    )
+  ]
 };
 
 export default Core;

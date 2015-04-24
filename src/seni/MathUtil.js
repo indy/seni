@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import PublicBinding from '../lang/PublicBinding';
+import PublicBinding from './PublicBinding';
 import Immutable from 'immutable';
 
 const PI = Math.PI;
@@ -142,76 +142,78 @@ const MathUtil = {
 
   remapFn,
 
-  PI: new PublicBinding(
-    'PI',
-    ``,
-    {},
-    () => PI
-  ),
+  publicBindings: [
+    new PublicBinding(
+      'PI',
+      ``,
+      {},
+      () => PI
+    ),
 
-  twoPI: new PublicBinding(
-    'PIPI',
-    ``,
-    {},
-    () => twoPI
-  ),
+    new PublicBinding(
+      'PIPI',
+      ``,
+      {},
+      () => twoPI
+    ),
 
-  PIbyTwo: new PublicBinding(
-    'PI/2',
-    ``,
-    {},
-    () => PIbyTwo
-  ),
+    new PublicBinding(
+      'PI/2',
+      ``,
+      {},
+      () => PIbyTwo
+    ),
 
-  sin: new PublicBinding(
-    'sin',
-    ``,
-    {angle: 0},
-    (self) => function(params) {
-      const {angle} = self.mergeWithDefaults(params);
-      return Math.sin(angle);
-    }
-  ),
+    new PublicBinding(
+      'sin',
+      ``,
+      {angle: 0},
+      (self) => function(params) {
+        const {angle} = self.mergeWithDefaults(params);
+        return Math.sin(angle);
+      }
+    ),
 
-  cos: new PublicBinding(
-    'cos',
-    ``,
-    {angle: 0},
-    (self) => function(params) {
-      const {angle} = self.mergeWithDefaults(params);
-      return Math.cos(angle);
-    }
-  ),
+    new PublicBinding(
+      'cos',
+      ``,
+      {angle: 0},
+      (self) => function(params) {
+        const {angle} = self.mergeWithDefaults(params);
+        return Math.cos(angle);
+      }
+    ),
 
-  remapFnBinding: new PublicBinding(
-    'remap-fn',
-    ``,
-    {},
-    () => remapFn
-  ),
+    new PublicBinding(
+      'remap-fn',
+      ``,
+      {},
+      () => remapFn
+    ),
 
-  distance2D: new PublicBinding(
-    'math/distance-2d',
-    ``,
-    {x1: 0, y1: 0, x2: 1, y2: 1},
-    (self) => function(params) {
-      const {x1, y1, x2, y2} = self.mergeWithDefaults(params);
+    new PublicBinding(
+      'math/distance-2d',
+      ``,
+      {x1: 0, y1: 0, x2: 1, y2: 1},
+      (self) => function(params) {
+        const {x1, y1, x2, y2} = self.mergeWithDefaults(params);
 
-      const xd = x1 - x2;
-      const yd = y1 - y2;
-      return Math.sqrt((xd * xd) + (yd * yd));
-    }
-  ),
+        const xd = x1 - x2;
+        const yd = y1 - y2;
+        return Math.sqrt((xd * xd) + (yd * yd));
+      }
+    ),
 
-  clamp: new PublicBinding(
-    'math/clamp',
-    ``,
-    {val: 0, min: 0, max: 1},
-    (self) => function(params) {
-      const {val, min, max} = self.mergeWithDefaults(params);
-      return val < min ? min : (val > max ? max : val);
-    }
-  ),
+    new PublicBinding(
+      'math/clamp',
+      ``,
+      {val: 0, min: 0, max: 1},
+      (self) => function(params) {
+        const {val, min, max} = self.mergeWithDefaults(params);
+        return val < min ? min : (val > max ? max : val);
+      }
+    )
+  ],
 
   stepsInclusive: function(start, end, num) {
     const unit = (end - start) / (num - 1);

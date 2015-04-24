@@ -20,8 +20,18 @@ import Paths from '../../src/seni/Paths';
 
 import chai from 'chai';
 const expect = chai.expect;
-
+/* eslint-disable no-debugger */
 describe('Paths', () => {
+
+  function getPublicBinding(namespace, name) {
+    for (let i = 0; i < namespace.publicBindings.length; i++) {
+      let binding = namespace.publicBindings[i];
+      if (binding.name === name) {
+        return binding;
+      }
+    }
+    return undefined;
+  }
 
   beforeEach(() => {
   });
@@ -36,7 +46,8 @@ describe('Paths', () => {
       positions.push(p.position);
     };
 
-    let linear = Paths.linear.create(Paths.linear);
+    let linearBinding = getPublicBinding(Paths, 'path/linear');
+    let linear = linearBinding.create(linearBinding);
 
     let params = {
       coords: [[0, 0], [100, 100]],

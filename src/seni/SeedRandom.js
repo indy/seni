@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import PublicBinding from '../lang/PublicBinding';
+import PublicBinding from './PublicBinding';
 import seedrandom from 'seedrandom';
 
 function buildUnsigned(seedVal) {
@@ -35,25 +35,27 @@ const SeedRandom = {
   buildUnsigned,
   buildSigned,
 
-  rngUnsigned: new PublicBinding(
-    'rng/unsigned',
-    `returns a function that generates a random number in the range 0..1`,
-    {seed: 'shabba'},
-    (self) => function(params) {
-      const {seed} = self.mergeWithDefaults(params);
-      return buildUnsigned(seed);
-    }
-  ),
+  publicBindings: [
+    new PublicBinding(
+      'rng/unsigned',
+      `returns a function that generates a random number in the range 0..1`,
+      {seed: 'shabba'},
+      (self) => function(params) {
+        const {seed} = self.mergeWithDefaults(params);
+        return buildUnsigned(seed);
+      }
+    ),
 
-  rngSigned: new PublicBinding(
-    'rng/signed',
-    `returns a function that generates a random number in the range -1..1`,
-    {seed: 'shabba'},
-    (self) => function(params) {
-      const {seed} = self.mergeWithDefaults(params);
-      return buildSigned(seed);
-    }
-  )
+    new PublicBinding(
+      'rng/signed',
+      `returns a function that generates a random number in the range -1..1`,
+      {seed: 'shabba'},
+      (self) => function(params) {
+        const {seed} = self.mergeWithDefaults(params);
+        return buildSigned(seed);
+      }
+    )
+  ]
 };
 
 export default SeedRandom;

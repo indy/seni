@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import PublicBinding from '../lang/PublicBinding';
+import PublicBinding from './PublicBinding';
 import MathUtil from './MathUtil';
 
 function emptyFn() {
@@ -162,10 +162,12 @@ const bezierBinding = new PublicBinding(
   });
 
 const Paths = {
-  linear: linearBinding,
-  circle: circleBinding,
-  spline: splineBinding,
-  bezier: bezierBinding
+  publicBindings: [
+    linearBinding,
+    circleBinding,
+    splineBinding,
+    bezierBinding
+  ]
 };
 
 export default Paths;
