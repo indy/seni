@@ -26,16 +26,11 @@ import Core from './Core';
 import Bracket from './BracketBindings';
 import SeedRandom from './SeedRandom';
 
-function createBind(env, pb) {
+function createBind(env, pb, restArgs) {
 
-  let createFn = pb.create;
-
-  let restArgs = Array.prototype.slice.call(arguments, 2);
-  let allArgs = [pb].concat(restArgs);
-
-  // call the PublicBinding's create function with the correct self value
-  // plus any additional arguments
-  let value = createFn.apply(pb, allArgs);
+  // call the PublicBinding's create function passing in an explicit self
+  // along with any additional arguments
+  let value = pb.create.apply(null, [pb].concat(restArgs));
 
   // bind the value to the pb's name
   return env.set(pb.name, { binding : value, pb : pb });
@@ -45,10 +40,9 @@ function createBind(env, pb) {
 function applyPublicBindings(env, namespace) {
   // grab any additional arguments that have been given to this function
   let restArgs = Array.prototype.slice.call(arguments, 2);
+  let bindings = namespace.publicBindings;
 
-  return namespace.publicBindings.reduce((a, b) => {
-    return createBind.apply(null, [a, b].concat(restArgs));
-  }, env);
+  return bindings.reduce((e, pb) => createBind(e, pb, restArgs), env);
 }
 
 const Bind = {
