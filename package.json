@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Generate Art",
   "scripts": {
-    "test": "webpack-dev-server \"mocha!./test/test.js\" --output-file testBundle.js --config test.webpack.config.js",
+    "test": "webpack-dev-server \"mocha!./test/test.js\" --output-file testBundle.js --config webpack.test.config.js",
     "build": "webpack",
     "clean": "rm -rf dist"
   },

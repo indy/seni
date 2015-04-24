@@ -14,11 +14,8 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 1. `npm run build`
 
-### Test in browser:
+### Test:
 
 1. `npm run test`
 2. visit http://localhost:8080/webpack-dev-server/testBundle
 
-### Test in node:
-
-1. `npm run test-node`
