@@ -50,10 +50,10 @@ function mapSlowEaseInEaseOut(x) {
   return x - (Math.sin(x * twoPI) / twoPI);
 }
 
-const mappingLookup = new Immutable.Map({'linear': mapLinear,
-                                         'quick': mapQuickEase,
-                                         'slow-in': mapSlowEaseIn,
-                                         'slow-in-out': mapSlowEaseInEaseOut});
+const remappingFn = new Immutable.Map({'linear': mapLinear,
+                                       'quick': mapQuickEase,
+                                       'slow-in': mapSlowEaseIn,
+                                       'slow-in-out': mapSlowEaseInEaseOut});
 
 function remapFn(params) {
 
@@ -67,14 +67,14 @@ function remapFn(params) {
         [fromM, fromC] = mc([fromA, 0], [fromB, 1]),
         [toM, toC] = mc([0, toA], [1, toB]);
 
-  let normalisedMappingFn = mappingLookup.get(mapping);
+  let normalisedMappingFn = remappingFn.get(mapping);
 
   if (normalisedMappingFn === undefined) {
-    normalisedMappingFn = mappingLookup.get('linear');
+    normalisedMappingFn = remappingFn.get('linear');
   }
 
-  return function(paramaters) {
-    const val = paramaters.val || 0;
+  return function(parameters) {
+    const val = parameters.val || 0;
     const fromInterp = (fromM * val) + fromC,
           toInterp = normalisedMappingFn(fromInterp),
           res = (toM * toInterp) + toC;
@@ -138,9 +138,17 @@ function quadraticCoordinates(tVals, controlPoints) {
   return {xs, ys};
 }
 
-const MathUtil = {
+function distance2d([x1, y1], [x2, y2]) {
+  const xd = x1 - x2;
+  const yd = y1 - y2;
+  return Math.sqrt((xd * xd) + (yd * yd));
+}
 
-  remapFn,
+function clamp(a, min, max) {
+  return a < min ? min : (a > max ? max : a);
+}
+
+const MathUtil = {
 
   publicBindings: [
     new PublicBinding(
@@ -197,10 +205,7 @@ const MathUtil = {
       {x1: 0, y1: 0, x2: 1, y2: 1},
       (self) => function(params) {
         const {x1, y1, x2, y2} = self.mergeWithDefaults(params);
-
-        const xd = x1 - x2;
-        const yd = y1 - y2;
-        return Math.sqrt((xd * xd) + (yd * yd));
+        return distance2d([x1, y1], [x2, y2]);
       }
     ),
 
@@ -210,7 +215,7 @@ const MathUtil = {
       {val: 0, min: 0, max: 1},
       (self) => function(params) {
         const {val, min, max} = self.mergeWithDefaults(params);
-        return val < min ? min : (val > max ? max : val);
+        return clamp(val, min, max);
       }
     )
   ],
@@ -227,17 +232,6 @@ const MathUtil = {
   distance1d: function(a, b) {
     return Math.abs(a - b);
   },
-  /*
-   clamp: function(a, min, max) {
-   return a < min ? min : (a > max ? max : a);
-   },
-
-   distance2d: function([xa, ya], [xb, yb]) {
-   const xd = xa - xb;
-   const yd = ya - yb;
-   return Math.sqrt((xd * xd) + (yd * yd));
-   },
-   */
 
   interpolate: function(a, b, t) {
     return (a * (1 - t)) + (b * t);
@@ -249,12 +243,22 @@ const MathUtil = {
     return [m, c];
   },
 
+  distance2d,
+
+  remapFn,
+  clamp,
+
   normalize,
   normals,
   bezierPoint,
   quadraticPoint,
   bezierCoordinates,
-  quadraticCoordinates
+  quadraticCoordinates,
+
+  mapLinear,
+  mapQuickEase,
+  mapSlowEaseIn,
+  mapSlowEaseInEaseOut
 };
 
 export default MathUtil;

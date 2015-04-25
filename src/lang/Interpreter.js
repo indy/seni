@@ -40,6 +40,10 @@ function evaluate(env, expr) {
     if (expr === TRUE_STRING || expr === FALSE_STRING) {
       return [env, expr];
     }
+    if(env.get(expr) === undefined) {
+      console.log(expr, 'is undefined');
+      return undefined;
+    }
     return [env, env.get(expr).binding];
   }
   return funApplication(env, expr);

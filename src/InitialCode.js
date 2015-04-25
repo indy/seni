@@ -18,14 +18,25 @@
 
 const code = `
 
+
+
 (define centre (v2 500 500))
+
+(define focal (focal/point radius: 200
+                           position: (v2 900 500)))
+
+(rect position: (v2 900 500)
+      width: 400
+      height: 400)
 
 (define (render-circle position: (v2 0 0)
                        step: 0
                        t-value: 0)
-  (let ((rad (- 400 (* step 4))))
-    (poly position: (v2/+ centre (v2/* position (v2 rad rad)))
-          radius: (- 30 step)
+  (let ((rad (- 400 (* step 4)))
+        (final-position (v2/+ centre (v2/* position (v2 rad rad))))
+        (foc (focal position: final-position)))
+    (poly position: final-position
+          radius: (+ 30 (* foc 30))
           tessellation: 30
           colour: (col/rgb r: 0.1 g: 0.5 b: 0.2 alpha: 0.7))))
 

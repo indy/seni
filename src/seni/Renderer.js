@@ -78,6 +78,11 @@ class Renderer {
     this.flushCount = 0;
   }
 
+  vectorToCanvasSpace(v2) {
+    let v3 = [v2[0], v2[1], 0];
+    return this.matrixStack.transformVector(v3);
+  }
+
   // ----------------------------------------------------------------------
   // functions beginning with cmd are commands.
   // perhaps split this out into a separate class?

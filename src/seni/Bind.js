@@ -25,6 +25,7 @@ import Perlin from './Perlin';
 import Core from './Core';
 import Bracket from './BracketBindings';
 import SeedRandom from './SeedRandom';
+import Focal from './Focal';
 
 function createBind(env, pb, restArgs) {
 
@@ -55,6 +56,7 @@ const Bind = {
     env = applyPublicBindings(env, Paths);
     env = applyPublicBindings(env, ColourBindings);
     env = applyPublicBindings(env, Perlin);
+    env = applyPublicBindings(env, Focal, renderer);
 
     return env;
   },

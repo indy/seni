@@ -204,6 +204,24 @@ const ColourBindings = {
     new PublicBinding('LAB', ``, {}, () => Format.LAB),
     new PublicBinding('HSV', ``, {}, () => Format.HSV),
 
+    new PublicBinding('white', ``, {},
+                      () => Colour.construct(Format.RGB, [1, 1, 1, 1])),
+    new PublicBinding('black', ``, {},
+                      () => Colour.construct(Format.RGB, [0, 0, 0, 1])),
+    new PublicBinding('red', ``, {},
+                      () => Colour.construct(Format.RGB, [1, 0, 0, 1])),
+    new PublicBinding('green', ``, {},
+                      () => Colour.construct(Format.RGB, [0, 1, 0, 1])),
+    new PublicBinding('blue', ``, {},
+                      () => Colour.construct(Format.RGB, [0, 0, 1, 1])),
+    new PublicBinding('yellow', ``, {},
+                      () => Colour.construct(Format.RGB, [1, 1, 0, 1])),
+    new PublicBinding('magenta', ``, {},
+                      () => Colour.construct(Format.RGB, [1, 0, 1, 1])),
+    new PublicBinding('cyan', ``, {},
+                      () => Colour.construct(Format.RGB, [0, 1, 1, 1])),
+
+
     new PublicBinding(
       'col/convert',
       ``,
