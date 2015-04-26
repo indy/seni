@@ -90,9 +90,12 @@ const code = `(wash)
    (translate x: posx y: posy)
    (scale x: sc y: sc)
    (let (((c2 c3) (col/analagous colour: colour)))
-     (layered-petals petals: [23 (int min: 1 max: 50)] colour: colour sc: [0.6 (scalar min: 0.1 max: 0.9)])
-     (layered-petals petals: [19 (int min: 1 max: 50)] colour: c3 sc: [0.5 (scalar min: 0.1 max: 0.9)])
-     (layered-petals petals: [17 (int min: 1 max: 50)] colour: c2 sc: [0.3 (scalar min: 0.1 max: 0.9)]))))
+     (layered-petals petals: [23 (int min: 1 max: 50)]
+                     colour: colour sc: [0.6 (scalar min: 0.1 max: 0.9)])
+     (layered-petals petals: [19 (int min: 1 max: 50)]
+                     colour: c3 sc: [0.5 (scalar min: 0.1 max: 0.9)])
+     (layered-petals petals: [17 (int min: 1 max: 50)]
+                     colour: c2 sc: [0.3 (scalar min: 0.1 max: 0.9)]))))
 
 (define (v
          x: 0
