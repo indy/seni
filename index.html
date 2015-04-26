@@ -20,24 +20,27 @@
   </head>
 
   <body>
+    <div id="seni-navbar" class="navbar-fixed">
+      <nav>
+        <div class="nav-wrapper brown">
+          <a href="#!" class="brand-logo">Seni</a>
+          <ul class="right hide-on-med-and-down">
+            <li id="li-author-mode" class="active">
+              <a id="author-mode-icon" href="">
+                <i class="mdi-content-create left"></i>Edit
+              </a>
+            </li>
+            <li id="li-selector-mode">
+              <a id="selector-mode-icon" href="">
+                <i class="mdi-action-view-module left"></i>Selector
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
     <div id="author-container" class="flex-container-h">
-
-   <div class="navbar-fixed">
-    <nav>
-      <div class="nav-wrapper">
-        <a href="#!" class="brand-logo">Seni</a>
-        <ul class="right hide-on-med-and-down">
-          <li><a href="sass.html">Sass</a></li>
-          <li><a href="components.html">Components</a></li>
-        </ul>
-      </div>
-    </nav>
-  </div>
-
-
-      <div id="author-topbar" class="topbar">
-        <a id="selector-mode-icon" class="icon ic-view-module" href=""></a>
-      </div>
       <div id="render-container">
         <div class="flex-item-canvas">
           <canvas id="render-canvas" width="500" height="500"></canvas>
@@ -49,12 +52,6 @@
     </div>
 
     <div id="selector-container" class="hidden">
-      <div class="topbar-full-width">
-        <div id="selector-topbar" class="topbar">
-          <a id="author-mode-icon" class="icon ic-mode-edit" href=""></a>
-          <a id="next-gen-icon" class="icon ic-cloud" href=""></a>
-        </div>
-      </div>
       <div id="gallery-container"></div>
     </div>
 

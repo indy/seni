@@ -1,92 +1,6 @@
 
-.phenotype-container {
-  display: inline-table;
-
-}
-
-.phenotype-container.selected {
+.card-image.selected {
   background: red;
-}
-
-.phenotype-control-container {
-}
-.phenotype-control-button {
-  float: left;
-  margin-left: 4em;
-}
-.phenotype-control-checkbox {
-  float: right;
-  margin-right: 4em;
-}
-
-.icon {
-  background-position: 0 0px;
-	background-repeat: no-repeat;
-  width: 48px;
-  height: 48px;
-  float: right;
-  margin: 0.5em;
-}
-
-.ic-mode-edit {
-	background-image: url(ic_mode_edit_48px.svg);
-}
-
-.ic-cloud {
-	background-image: url(ic_cloud_48px.svg);
-}
-
-.ic-view-module {
-	background-image: url(ic_view_module_48px.svg);
-}
-
-.topbar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 1000;
-
-  transition: opacity .25s ease-in-out;
-  -moz-transition: opacity .25s ease-in-out;
-  -webkit-transition: opacity .25s ease-in-out;
-}
-
-.topbar-full-width {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 1000;
-
-  width: 100%;
-  height: 4em;
-  
-  background: white;
-}
-
-#author-topbar {
-  opacity: 0.02;
-  width: 50%;
-  height: 30%;  
-}
-
-#selector-topbar {
-  opacity: 0.02;
-  width: 50%;
-  height: 4em;
-}
-
-#author-topbar:hover {
-  opacity: 0.8;
-}
-#selector-topbar:hover {
-  opacity: 0.8;
-}
-
-#gallery-container {
-  margin-top: 48px;
-  padding: 1em;
 }
 
 .phenotype {
@@ -130,6 +44,9 @@ html,body {
   flex-grow: 1;
 
   height: 100%;
+
+  font-size: 13px;
+  line-height: 1.3em;
 }
 
 .CodeMirror {
@@ -152,48 +69,12 @@ html,body {
   justify-content: center;
 }
 
-.flex-item-console {
-  order: 3;
-  
-  -webkit-flex-grow: 1;
-  flex-grow: 1;
-
-  display: -webkit-flex;
-  display: flex;
-
-  -webkit-align-items: center;
-  align-items: center;
-
-  -webkit-justify-content: center;
-  justify-content: center;
-}
-
-
 #codemirror-textarea {
   -webkit-flex-grow: 2;
   flex-grow: 2;
   height: 100%;
 }
 
-#eval-button {
-  background: green;
-  color: yellow;
-  padding: 0.5em;
-}
-
-/*
-#render-canvas {
-  border: none;
-  margin: 2em;
-
-  -webkit-flex: 0 0 auto;
-  flex: 0 0 auto;
-
-  width: 500px;
-  height: 500px;
-}
-
-*/
 .hidden {
   display: none;
 }
