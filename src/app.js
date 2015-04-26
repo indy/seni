@@ -117,30 +117,20 @@ function setupUI(renderer) {
 
 function createPhenotypeContainer(id) {
   const container = document.createElement('div');
-  container.className = 'phenotype-container';
 
+  container.className = 'phenotype-container col s3 m7 l3';
   container.id = 'pheno-' + id;
 
-  const newElement = document.createElement('img');
-
-  newElement.width = 250;
-  newElement.height = 250;
-  newElement.src = 'spinner.gif';
-  newElement.className = 'phenotype';
-  container.appendChild(newElement);
-
-  /*
-  const controls = document.createElement('div');
-  controls.className = 'phenotype-control-container';
-  controls.innerHTML = `
-    <button class="phenotype-control-button">View</button>
-    <input class="phenotype-control-checkbox"
-                  type="checkbox" name="1" value="1">
-  `;
-  container.appendChild(controls);
-
-  parent.appendChild(container);
-   */
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-image">
+        <img class="phenotype" src="spinner.gif">
+      </div>
+      <div class="card-action">
+        <a href="#">Preview</a>
+      </div>
+    </div>
+    `;
 
   return container;
 }
@@ -148,8 +138,6 @@ function createPhenotypeContainer(id) {
 function copyRenderCanvasIntoPhenotypeContainer(renderer, parent) {
   // get the image tag which has a class of phenotype
   let imageElement = parent.getElementsByClassName('phenotype')[0];
-  imageElement.width = 250;
-  imageElement.height = 250;
   imageElement.src = renderer.getImageData();
 }
 
@@ -188,15 +176,28 @@ function setupSelectorUI(renderer, form) {
   let i;
   let phenotypeContainer;
   gSeniApp.containers = [];
+
+  let row;
+
   for(i = 0; i < gSeniApp.populationSize; i++) {
+    if((i % 4) === 0) {
+      row = document.createElement('div');
+      row.className = 'row';
+
+      gallery.appendChild(row);
+    }
     phenotypeContainer = createPhenotypeContainer(i);
-    gallery.appendChild(phenotypeContainer);
+    row.appendChild(phenotypeContainer);
 
     gSeniApp.containers.push({
       phenotypeContainer: phenotypeContainer,
       selected: false
     });
   }
+  if(gSeniApp.populationSize % 4 !== 0) {
+    gallery.appendChild(row);
+  }
+
 
   // add genotypes to the containers
   let genotype;
@@ -235,16 +236,30 @@ function switchMode(newMode) {
 
     setupSelectorUI(gSeniApp.renderer, sourceCode);
   }
+
+  // todo: find better way of managing UI state than these horrible toggle calls
+  let liAuthorMode = document.getElementById('li-author-mode');
+  liAuthorMode.classList.toggle('active');
+  let liSelectorMode = document.getElementById('li-selector-mode');
+  liSelectorMode.classList.toggle('active');
 }
 
 function toggleSelection(element) {
-  let m = element.id.match(/pheno-(\d+)/);
-  if(m.length === 2) {
-    let index = Number.parseInt(m[1], 10);
-    element.classList.toggle('selected');
-    gSeniApp.containers[index].selected = !gSeniApp.containers[index].selected;
-  } else {
-    console.log('unexpected element id for phenotype container: ', element.id);
+  while(element) {
+    let m = element.id.match(/pheno-(\d+)/);
+    if(m && m.length === 2) {
+      let index = Number.parseInt(m[1], 10);
+
+      let cardImage = element.getElementsByClassName('card-image')[0];
+      cardImage.classList.toggle('selected');
+
+      let c = gSeniApp.containers[index];
+      c.selected = !c.selected;
+
+      return;
+    } else {
+      element = element.parentNode;
+    }
   }
 }
 
@@ -268,15 +283,31 @@ function onNextGen(event) {
   // clean up the dom and clear the selected state
   for(let i = 0; i < gSeniApp.populationSize; i++) {
     if(gSeniApp.containers[i].selected === true) {
-      gSeniApp.containers[i].phenotypeContainer.classList.toggle('selected');
+      let element = gSeniApp.containers[i].phenotypeContainer;
+      let cardImage = element.getElementsByClassName('card-image')[0];
+      cardImage.classList.toggle('selected');
     }
     gSeniApp.containers[i].selected = false;
   }
 
 }
 
+// take the height of the navbar into consideration
+function resizeContainers() {
+  const navbar = document.getElementById('seni-navbar');
+
+  let ac = document.getElementById('author-container');
+  ac.style.height = (ac.offsetHeight - navbar.offsetHeight) + 'px';
+
+  let sc = document.getElementById('selector-container');
+  sc.style.height = (sc.offsetHeight - navbar.offsetHeight) + 'px';
+}
+
 const SeniWebApplication = {
   mainFn() {
+
+    resizeContainers();
+
     console.log(Trivia.getTitle());
 
     gSeniApp.currentMode = SeniMode.authoring;
@@ -286,12 +317,6 @@ const SeniWebApplication = {
       event.preventDefault();
     };
 
-    // Ctrl-D switches between author and selector mode
-    document.addEventListener('keydown', function(event) {
-      if (event.ctrlKey && event.keyCode === 68) {
-        onSwitchMode(event);
-      }
-    }, false);
 
     let selectorModeIcon = document.getElementById('selector-mode-icon');
     selectorModeIcon.addEventListener('click', onSwitchMode);
@@ -305,12 +330,19 @@ const SeniWebApplication = {
 
     let galleryContainer = document.getElementById('gallery-container');
     galleryContainer.addEventListener('click', function(event) {
-      let phenoContainer = event.target.parentNode;
-      toggleSelection(phenoContainer);
+      //let phenoContainer = event.target.parentNode;
+      toggleSelection(event.target);
     });
 
-    let nextGenIcon = document.getElementById('next-gen-icon');
-    nextGenIcon.addEventListener('click', onNextGen);
+
+    // Ctrl-D renders the next generation
+    document.addEventListener('keydown', function(event) {
+      if (event.ctrlKey &&
+          event.keyCode === 68 &&
+          gSeniApp.currentMode === SeniMode.selecting) {
+        onNextGen(event);
+      }
+    }, false);
   }
 };
 

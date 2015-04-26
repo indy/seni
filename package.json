@@ -25,6 +25,7 @@
     "codemirror": "^5.2.0",
     "gl-matrix": "^2.1.0",
     "immutable": "^3.7.2",
+    "materialize-css": "^0.96.1",
     "seedrandom": "^2.3.11"
   },
   "devDependencies": {

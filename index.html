@@ -8,9 +8,6 @@
           content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    
-    <!-- Polyfill (required by Babel) -->
-    <!-- <script src='node_modules/babel/browser-polyfill.js'></script> -->
 
     <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
     <script src="node_modules/codemirror/lib/codemirror.js"></script>
@@ -18,17 +15,32 @@
     <script src="node_modules/codemirror/addon/edit/matchbrackets.js"></script>
     <script src="node_modules/codemirror/mode/scheme/scheme.js"></script>
 
-    <script src="dist/library-dist.js"></script>
-
+    <link type="text/css" rel="stylesheet" href="node_modules/materialize-css/bin/materialize.css"  media="screen,projection"/>
     <link rel="stylesheet" href="css/stylesheet.css">
   </head>
 
   <body>
+    <div id="seni-navbar" class="navbar-fixed">
+      <nav>
+        <div class="nav-wrapper brown">
+          <a href="#!" class="brand-logo">Seni</a>
+          <ul class="right hide-on-med-and-down">
+            <li id="li-author-mode" class="active">
+              <a id="author-mode-icon" href="">
+                <i class="mdi-content-create left"></i>Edit
+              </a>
+            </li>
+            <li id="li-selector-mode">
+              <a id="selector-mode-icon" href="">
+                <i class="mdi-action-view-module left"></i>Selector
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
 
     <div id="author-container" class="flex-container-h">
-      <div id="author-topbar" class="topbar">
-        <a id="selector-mode-icon" class="icon ic-view-module" href=""></a>
-      </div>
       <div id="render-container">
         <div class="flex-item-canvas">
           <canvas id="render-canvas" width="500" height="500"></canvas>
@@ -40,20 +52,12 @@
     </div>
 
     <div id="selector-container" class="hidden">
-      <div class="topbar-full-width">
-        <div id="selector-topbar" class="topbar">
-          <a id="author-mode-icon" class="icon ic-mode-edit" href=""></a>
-          <a id="next-gen-icon" class="icon ic-cloud" href=""></a>
-        </div>
-      </div>
       <div id="gallery-container"></div>
     </div>
-    <!-- 
-    <script type="text/javascript">SeniWebApplication.mainFn()</script>
- -->
-    <!-- 
-    <script type="text/javascript">System.import('main').then(function(m) { m.main(); }, console.log.bind(console))</script>
-    -->
+
+    <!--Import jQuery before materialize.js-->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="node_modules/materialize-css/bin/materialize.js"></script>
+    <script src="dist/library-dist.js"></script>
   </body>
-  
 </html>
