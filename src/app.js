@@ -118,7 +118,7 @@ function setupUI(renderer) {
 function createPhenotypeContainer(id) {
   const container = document.createElement('div');
 
-  container.className = 'phenotype-container col s3 m7 l3';
+  container.className = 'phenotype-container col s6 m4 l3';
   container.id = 'pheno-' + id;
 
   container.innerHTML = `
@@ -179,13 +179,11 @@ function setupSelectorUI(renderer, form) {
 
   let row;
 
-  for(i = 0; i < gSeniApp.populationSize; i++) {
-    if((i % 4) === 0) {
-      row = document.createElement('div');
-      row.className = 'row';
+  row = document.createElement('div');
+  row.className = 'row';
+  gallery.appendChild(row);
 
-      gallery.appendChild(row);
-    }
+  for(i = 0; i < gSeniApp.populationSize; i++) {
     phenotypeContainer = createPhenotypeContainer(i);
     row.appendChild(phenotypeContainer);
 
@@ -194,10 +192,6 @@ function setupSelectorUI(renderer, form) {
       selected: false
     });
   }
-  if(gSeniApp.populationSize % 4 !== 0) {
-    gallery.appendChild(row);
-  }
-
 
   // add genotypes to the containers
   let genotype;
