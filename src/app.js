@@ -23,6 +23,8 @@ import Bind from './seni/Bind';
 import Trivia from './seni/Trivia';
 import InitialCode from './InitialCode';
 
+/* eslint-disable no-unused-vars */
+
 const SeniMode = {
   authoring: 0,
   selecting: 1
@@ -34,7 +36,7 @@ let gSeniApp = {
   editor: undefined,
   containers: [],
 
-  populationSize: 50,
+  populationSize: 48,
   genotypes: [],
 
   form: undefined,
@@ -105,8 +107,9 @@ function setupUI(renderer) {
     matchBrackets: true,
     extraKeys: {
       'Ctrl-E': function() {
-        withTiming('renderTime',
-                   () => renderScript(renderer, gSeniApp.editor.getValue()));
+        let source = gSeniApp.editor.getValue();
+        withTiming('renderTime', () =>
+                   renderScript(renderer, source));
         return false;
       },
       'Ctrl-D': function() {
@@ -257,10 +260,7 @@ function toggleSelection(element) {
   }
 }
 
-function onNextGen(event) {
-  console.log('onNextGen');
-  event.preventDefault();
-
+function onNextGen() {
   // get the selected genotypes for the next generation
   let chosen = [];
   for(let i = 0; i < gSeniApp.populationSize; i++) {
@@ -283,7 +283,6 @@ function onNextGen(event) {
     }
     gSeniApp.containers[i].selected = false;
   }
-
 }
 
 // take the height of the navbar into consideration
@@ -322,21 +321,36 @@ const SeniWebApplication = {
     setupUI(gSeniApp.renderer);
     renderScript(gSeniApp.renderer, initialCode());
 
+
+    let evalButton = document.getElementById('action-eval');
+    evalButton.addEventListener('click', () => {
+      let source = gSeniApp.editor.getValue();
+      withTiming('renderTime', () =>
+                 renderScript(gSeniApp.renderer, source));
+    });
+
     let galleryContainer = document.getElementById('gallery-container');
-    galleryContainer.addEventListener('click', function(event) {
+    galleryContainer.addEventListener('click', event => {
       //let phenoContainer = event.target.parentNode;
       toggleSelection(event.target);
     });
 
 
     // Ctrl-D renders the next generation
-    document.addEventListener('keydown', function(event) {
+    document.addEventListener('keydown', event => {
       if (event.ctrlKey &&
           event.keyCode === 68 &&
           gSeniApp.currentMode === SeniMode.selecting) {
-        onNextGen(event);
+        event.preventDefault();
+        onNextGen();
       }
     }, false);
+
+    let nextGenButton = document.getElementById('action-next-gen');
+    nextGenButton.addEventListener('click', () => {
+      onNextGen();
+    });
+
   }
 };
 

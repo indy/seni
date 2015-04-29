@@ -1,7 +1,8 @@
 {
   "globals": {
     "console": true,
-    "CodeMirror": false
+    "CodeMirror": false,
+    "$": false
   },
   "settings": {
     "ecmascript": 6
