@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { vec3, mat4 } from 'gl-matrix';
+import { vec2, vec3, mat4 } from 'gl-matrix';
 
 class MatrixStack {
 
@@ -70,6 +70,11 @@ class MatrixStack {
   transformVector(v) {
     const m = this.getHead();
     return vec3.transformMat4(this.out, v, m);
+  }
+
+  transform2DVector(v) {
+    const m = this.getHead();
+    return vec2.transformMat4(this.out, v, m);
   }
 }
 

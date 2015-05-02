@@ -60,7 +60,7 @@ function initShaders(gl) {
   `;
 
   const vertexSrc = `
-  attribute vec3 aVertexPosition;
+  attribute vec2 aVertexPosition;
   attribute vec4 aVertexColor;
 
   uniform mat4 uMVMatrix;
@@ -69,7 +69,7 @@ function initShaders(gl) {
   varying vec4 vColor;
 
   void main(void) {
-    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
     vColor = aVertexColor;
   }
   `;

@@ -63,7 +63,7 @@ class Renderer {
     // buffer code...
     // each buffer can hold 1000 'items' where an item is a vertex, colour etc
     this.bufferSize = 1000;
-    this.vertexItemSize = 3; // xyz
+    this.vertexItemSize = 2; // xy
     this.colourItemSize = 4; // rgba
     this.vertexBuffer = new Float32Array(this.vertexItemSize * this.bufferSize);
     this.colourBuffer = new Float32Array(this.colourItemSize * this.bufferSize);
@@ -138,11 +138,11 @@ class Renderer {
 
     const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
-    this.prepareToAddTriangleStrip(4, [x - halfWidth, y - halfHeight, 0.0]);
-    this.addVertex([x - halfWidth, y - halfHeight, 0.0], colourArray);
-    this.addVertex([x + halfWidth, y - halfHeight, 0.0], colourArray);
-    this.addVertex([x - halfWidth, y + halfHeight, 0.0], colourArray);
-    this.addVertex([x + halfWidth, y + halfHeight, 0.0], colourArray);
+    this.prepareToAddTriangleStrip(4, [x - halfWidth, y - halfHeight]);
+    this.addVertex([x - halfWidth, y - halfHeight], colourArray);
+    this.addVertex([x + halfWidth, y - halfHeight], colourArray);
+    this.addVertex([x - halfWidth, y + halfHeight], colourArray);
+    this.addVertex([x + halfWidth, y + halfHeight], colourArray);
   }
 
   renderPoly(params) {
@@ -165,7 +165,7 @@ class Renderer {
 
     const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
-    this.prepareToAddTriangleStrip((tessellation * 2) + 2, [x, y, 0.0]);
+    this.prepareToAddTriangleStrip((tessellation * 2) + 2, [x, y]);
 
     let twoPI = Math.PI * 2;
     let unitAngle = twoPI / tessellation;
@@ -177,8 +177,8 @@ class Renderer {
       vx = (Math.sin(angle) * width) + x;
       vy = (Math.cos(angle) * height) + y;
 
-      this.addVertex([x, y, 0.0], colourArray);
-      this.addVertex([vx, vy, 0.0], colourArray);
+      this.addVertex([x, y], colourArray);
+      this.addVertex([vx, vy], colourArray);
     }
 
     // close up the polygon
@@ -186,8 +186,8 @@ class Renderer {
     vx = (Math.sin(angle) * width) + x;
     vy = (Math.cos(angle) * height) + y;
 
-    this.addVertex([x, y, 0.0], colourArray);
-    this.addVertex([vx, vy, 0.0], colourArray);
+    this.addVertex([x, y], colourArray);
+    this.addVertex([vx, vy], colourArray);
   }
 
   renderCurve(params, coordFn) {
@@ -273,14 +273,11 @@ class Renderer {
 
       ix = xs[i];
       iy = ys[i];
+
       t = tVals[i];
 
-      v1 = [(xn1 * remap({val: t})) + ix,
-            (yn1 * remap({val: t})) + iy,
-            0.0];
-      v2 = [(xn2 * remap({val: t})) + ix,
-            (yn2 * remap({val: t})) + iy,
-            0.0];
+      v1 = [(xn1 * remap({val: t})) + ix, (yn1 * remap({val: t})) + iy];
+      v2 = [(xn2 * remap({val: t})) + ix, (yn2 * remap({val: t})) + iy];
 
       if (i === 0) {
         this.prepareToAddTriangleStrip(tessellation * 2, v1);
@@ -298,12 +295,8 @@ class Renderer {
     ix = xs[i + 1];
     iy = ys[i + 1];
 
-    v1 = [(xn1 * halfWidthEnd) + ix,
-          (yn1 * halfWidthEnd) + iy,
-          0.0];
-    v2 = [(xn2 * halfWidthEnd) + ix,
-          (yn2 * halfWidthEnd) + iy,
-          0.0];
+    v1 = [(xn1 * halfWidthEnd) + ix, (yn1 * halfWidthEnd) + iy];
+    v2 = [(xn2 * halfWidthEnd) + ix, (yn2 * halfWidthEnd) + iy];
 
     this.addVertex(v1, colourArray);
     this.addVertex(v2, colourArray);
@@ -353,8 +346,7 @@ class Renderer {
       // note: colour doesn't matter since these triangles won't be rendered
       this.addVertexWithoutMatrixMultiply(
         [this.vertexBuffer[lastVertexIndex + 0],
-         this.vertexBuffer[lastVertexIndex + 1],
-         this.vertexBuffer[lastVertexIndex + 2]],
+         this.vertexBuffer[lastVertexIndex + 1]],
         [0, 0, 0, 0]);
 
       this.addVertex(p0, [0, 0, 0, 0]);
@@ -371,12 +363,11 @@ class Renderer {
    * @param c
    */
   addVertex(p, c) {
-    const res = this.matrixStack.transformVector(p);
+    const res = this.matrixStack.transform2DVector(p);
 
     let bl = this.bufferLevel * this.vertexItemSize;
     this.vertexBuffer[bl + 0] = res[0];
     this.vertexBuffer[bl + 1] = res[1];
-    this.vertexBuffer[bl + 2] = res[2];
 
     bl = this.bufferLevel * this.colourItemSize;
     this.colourBuffer[bl + 0] = c[0];
@@ -391,7 +382,7 @@ class Renderer {
     let bl = this.bufferLevel * this.vertexItemSize;
     this.vertexBuffer[bl + 0] = p[0];
     this.vertexBuffer[bl + 1] = p[1];
-    this.vertexBuffer[bl + 2] = p[2];
+//    this.vertexBuffer[bl + 2] = p[2];
 
     bl = this.bufferLevel * this.colourItemSize;
     this.colourBuffer[bl + 0] = c[0];
