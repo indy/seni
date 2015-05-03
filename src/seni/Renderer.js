@@ -34,13 +34,6 @@ function initGL(canvas) {
     //alert('Could not initialise WebGL, sorry :-(');
     //    }
 
-    // anti-pattern:
-    // http://webglfundamentals.org/webgl/lessons/webgl-anti-patterns.html
-    gl.viewportWidth = canvas.width;
-    gl.viewportHeight = canvas.height;
-
-    console.log(gl.drawingBufferWidth, gl.drawingBufferHeight);
-
     return gl;
   } catch (e) {
     return undefined;
@@ -400,11 +393,23 @@ class Renderer {
     return this.glDomElement.toDataURL();
   }
 
-  preDrawScene() {
+  preDrawScene(destWidth, destHeight) {
     const gl = this.gl;
     const shaderProgram = this.shaderProgram;
+    const domElement = this.glDomElement;
 
-    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+    if(domElement.width !== destWidth) {
+      console.log('GL width from', domElement.width, 'to', destWidth);
+      domElement.width = destWidth;
+    }
+    if(this.glDomElement.height !== destHeight) {
+      console.log('GL height from', domElement.height, 'to', destHeight);
+      domElement.height = destHeight;
+    }
+    // gl.drawingBufferWidth, gl.drawingBufferHeight hold the actual
+    // size of the rendering element
+
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, this.pMatrix);

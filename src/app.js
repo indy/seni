@@ -36,7 +36,7 @@ let gSeniApp = {
   editor: undefined,
   containers: [],
 
-  populationSize: 48,
+  populationSize: 3, //48,
   genotypes: [],
 
   form: undefined,
@@ -67,9 +67,9 @@ function renderScript(renderer, form) {
   let env = Runtime.createEnv();
   env = Bind.addBindings(env, renderer);
 
-  //debugEnv(env);
+  const imageElement = document.getElementById('render-img');
 
-  renderer.preDrawScene();
+  renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
   const ast = Runtime.buildAst(env, form);
 
   const traits = Genetic.buildTraits(ast);
@@ -78,6 +78,8 @@ function renderScript(renderer, form) {
   Runtime.evalAst(env, ast, genotype);
 
   renderer.postDrawScene();
+
+  imageElement.src = renderer.getImageData();
 }
 
 function initialCode() {
@@ -138,12 +140,6 @@ function createPhenotypeContainer(id) {
   return container;
 }
 
-function copyRenderCanvasIntoPhenotypeContainer(renderer, parent) {
-  // get the image tag which has a class of phenotype
-  let imageElement = parent.getElementsByClassName('phenotype')[0];
-  imageElement.src = renderer.getImageData();
-}
-
 function renderPhenotypes(app) {
 
   let i = 0;
@@ -156,10 +152,17 @@ function renderPhenotypes(app) {
       let {phenotypeContainer} = app.containers[i];
       let genotype = app.genotypes[i];
 
-      app.renderer.preDrawScene();
+      let imageElement =
+            phenotypeContainer.getElementsByClassName('phenotype')[0];
+
+      app.renderer.preDrawScene(imageElement.clientWidth,
+                                imageElement.clientHeight);
+
       Runtime.evalAst(app.env, app.ast, genotype);
       app.renderer.postDrawScene();
-      copyRenderCanvasIntoPhenotypeContainer(app.renderer, phenotypeContainer);
+
+      imageElement.src = app.renderer.getImageData();
+
       i++;
       setTimeout(go);
     }
@@ -321,6 +324,7 @@ const SeniWebApplication = {
     setupUI(gSeniApp.renderer);
     renderScript(gSeniApp.renderer, initialCode());
 
+    document.isggl = gSeniApp.renderer.gl;
 
     let evalButton = document.getElementById('action-eval');
     evalButton.addEventListener('click', () => {

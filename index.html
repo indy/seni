@@ -20,6 +20,7 @@
   </head>
 
   <body>
+
     <div id="seni-navbar" class="navbar-fixed">
       <nav>
         <div class="nav-wrapper blue">
@@ -40,10 +41,12 @@
       </nav>
     </div>
 
+    <canvas id="render-canvas" width="500" height="500" class="hidden"></canvas>
+
     <div id="author-container" class="flex-container-h">
       <div id="render-container">
         <div class="flex-item-canvas">
-          <canvas id="render-canvas" width="500" height="500"></canvas>
+          <img id="render-img" width="500" height="500"></img>
         </div>
       </div>
       <div id="editor-container">
