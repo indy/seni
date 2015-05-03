@@ -25,12 +25,23 @@ html,body {
   flex-direction: row;
 }
 
+#render-img {
+  width: 550px;
+  height: 550px;
+}
+
 #render-container {
   display: -webkit-flex;
   display: flex;
   -webkit-flex-direction: column;
   flex-direction: column;
   order: 1;
+
+  -webkit-align-items: center;
+  align-items: center;
+  
+  -webkit-justify-content: center;
+  justify-content: center;
 
   width: 50%;
 }
@@ -51,22 +62,6 @@ html,body {
 
 .CodeMirror {
   height: 100%; 
-}
-
-.flex-item-canvas {
-  order: 2;
-  
-  -webkit-flex-grow: 6;
-  flex-grow: 6;
-
-  display: -webkit-flex;
-  display: flex;
-
-  -webkit-align-items: center;
-  align-items: center;
-  
-  -webkit-justify-content: center;
-  justify-content: center;
 }
 
 #codemirror-textarea {
