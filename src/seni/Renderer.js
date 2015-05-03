@@ -16,7 +16,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import GLContainer from './GLContainer';
 import MatrixStack from './MatrixStack';
 import MathUtil from './MathUtil';
 import Colour from './Colour';
@@ -24,7 +23,102 @@ import { mat4 } from 'gl-matrix';
 
 const Format = Colour.Format;
 
-function initGLState(gl) {
+function initGL(canvas) {
+  try {
+    const gl = canvas.getContext('experimental-webgl', {
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+    // commented out because of jshint
+    //    if (!gl) {
+    //alert('Could not initialise WebGL, sorry :-(');
+    //    }
+
+    // anti-pattern:
+    // http://webglfundamentals.org/webgl/lessons/webgl-anti-patterns.html
+    gl.viewportWidth = canvas.width;
+    gl.viewportHeight = canvas.height;
+
+    console.log(gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    return gl;
+  } catch (e) {
+    return undefined;
+  }
+}
+
+function compileShader(gl, type, src) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, src);
+  gl.compileShader(shader);
+
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    //alert(gl.getShaderInfoLog(shader));
+    return null;
+  }
+  return shader;
+}
+
+function setupShaders(gl) {
+
+  const shaderProgram = gl.createProgram();
+
+  const fragmentSrc = `
+  precision mediump float;
+  varying vec4 vColor;
+
+  void main(void) {
+    gl_FragColor = vColor;
+  }
+  `;
+
+  const vertexSrc = `
+  attribute vec2 aVertexPosition;
+  attribute vec4 aVertexColor;
+
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+
+  varying vec4 vColor;
+
+  void main(void) {
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
+    vColor = aVertexColor;
+  }
+  `;
+
+  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
+  const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
+
+  gl.attachShader(shaderProgram, vertexShader);
+  gl.attachShader(shaderProgram, fragmentShader);
+
+  gl.linkProgram(shaderProgram);
+
+  // commented out because of jshint
+  //  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+  //alert('Could not initialise shaders');
+  //  }
+
+  gl.useProgram(shaderProgram);
+
+  shaderProgram.positionAttribute =
+    gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+  gl.enableVertexAttribArray(shaderProgram.positionAttribute);
+
+  shaderProgram.colourAttribute =
+    gl.getAttribLocation(shaderProgram, 'aVertexColor');
+  gl.enableVertexAttribArray(shaderProgram.colourAttribute);
+
+  shaderProgram.pMatrixUniform =
+    gl.getUniformLocation(shaderProgram, 'uPMatrix');
+  shaderProgram.mvMatrixUniform =
+    gl.getUniformLocation(shaderProgram, 'uMVMatrix');
+
+  return shaderProgram;
+}
+
+function setupGLState(gl) {
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -48,17 +142,21 @@ function initGLState(gl) {
 
 class Renderer {
   constructor(canvasElement) {
-
     this.glDomElement = document.getElementById(canvasElement);
 
-    this.glContainer = new GLContainer(this.glDomElement);
-    this.matrixStack = new MatrixStack();
+    // webgl setup
+    const gl = initGL(this.glDomElement);
+    this.gl = gl;
+    this.shaderProgram = setupShaders(gl);
+    setupGLState(gl);
+    this.glVertexBuffer = gl.createBuffer();
+    this.glColourBuffer = gl.createBuffer();
 
+    // matrix setup
+    this.matrixStack = new MatrixStack();
     this.mvMatrix = mat4.create();
     this.pMatrix = mat4.create();
     mat4.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
-
-    initGLState(this.glContainer.gl);
 
     // buffer code...
     // each buffer can hold 1000 'items' where an item is a vertex, colour etc
@@ -67,14 +165,10 @@ class Renderer {
     this.colourItemSize = 4; // rgba
     this.vertexBuffer = new Float32Array(this.vertexItemSize * this.bufferSize);
     this.colourBuffer = new Float32Array(this.colourItemSize * this.bufferSize);
-
     // the level of both the vertex and colour buffer
     // to find the actual index position multiply bufferLevel
     // by the relevant itemSize of the buffer
     this.bufferLevel = 0;
-    const gl = this.glContainer.gl;
-    this.glVertexBuffer = gl.createBuffer();
-    this.glColourBuffer = gl.createBuffer();
     this.flushCount = 0;
   }
 
@@ -307,9 +401,8 @@ class Renderer {
   }
 
   preDrawScene() {
-    const glContainer = this.glContainer;
-    const gl = glContainer.gl;
-    const shaderProgram = glContainer.shaderProgram;
+    const gl = this.gl;
+    const shaderProgram = this.shaderProgram;
 
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -358,7 +451,6 @@ class Renderer {
 
   /**
    * this assumes that the buffer will have enough space to add the vertex
-   * @param glContainer
    * @param p
    * @param c
    */
@@ -401,8 +493,8 @@ class Renderer {
 
     this.flushCount += 1;
 
-    const gl = this.glContainer.gl;
-    const shaderProgram = this.glContainer.shaderProgram;
+    const gl = this.gl;
+    const shaderProgram = this.shaderProgram;
 
     const glVertexBuffer = this.glVertexBuffer;
     const glColourBuffer = this.glColourBuffer;

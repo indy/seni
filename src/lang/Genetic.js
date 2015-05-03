@@ -50,8 +50,9 @@ function buildTraitFromNode(node, genes) {
 function buildGenoFromTrait(trait, env) {
   const forms = trait.ast.forms;
   // evaluate all of the forms, returning the final result
-  const evalRes = forms.reduce(([e, r], b) => Interpreter.evaluate(e, b),
+  const evalRes = forms.reduce((a, b) => Interpreter.evaluate(a[0], b),
                                [env, false]);
+  // a[0] === the new env returned by the interpreter
 
   const finalResult = evalRes[1];
   return new Immutable.Map({value: finalResult});

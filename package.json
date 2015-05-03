@@ -3,8 +3,10 @@
   "version": "0.0.1",
   "description": "Generate Art",
   "scripts": {
-    "test": "webpack-dev-server \"mocha!./test/test.js\" --output-file testBundle.js --config webpack.test.config.js",
+    "test": "webpack-dev-server \"mocha!./test/test.js\" --output-file testBundle.js --config webpack.config.test.js",
     "build": "webpack",
+    "build-watch": "webpack --watch",
+    "build-min": "webpack --config webpack.config.min.js",
     "clean": "rm -rf dist"
   },
   "repository": {

@@ -165,8 +165,10 @@ function defineFunction(env, defaultArgForms, body) {
 /* eslint-disable no-unused-vars */
 const specialForms = {
   // (if something truthy falsey) || (if something truthy)
-  'if': (env, [_, cond, t, f]) =>
-    evaluate(env, evaluate(env, cond)[1] === TRUE_STRING ? t : f),
+  'if': (env, [_, cond, t, f]) => {
+    _ = _;
+    return evaluate(env, evaluate(env, cond)[1] === TRUE_STRING ? t : f);
+  },
 
   // (quote (age 99))
   /*
@@ -186,6 +188,7 @@ const specialForms = {
    price worth paying
    */
   'quote': (env, [_, form]) => {
+    _ = _;
     if (form.constructor === Array) {
       if (form[0] === 'quote') {
         return [env, form[1]];
@@ -195,6 +198,7 @@ const specialForms = {
   },
 
   'define': (env, [_, nameForm, ...valueForms]) => {
+    _ = _;
     if (isDefiningFunction(nameForm)) {
       // e.g. (define (add x: 1 y: 2) (log x) (+ x y))
       const [name, defaultArgForms] = nameForm;
@@ -210,21 +214,26 @@ const specialForms = {
   },
 
   // (begin (f1 1) (f2 3) (f3 5))
-  'begin': (env, [_, ...body]) =>
-    evalBodyForms(env, body),
+  'begin': (env, [_, ...body]) => {
+    _ = _;
+    return evalBodyForms(env, body);
+  },
 
   // (let ((a 12) (b 24)) (+ a b foo))
   'let': (env, [_, args, ...body]) => {
+    _ = _;
     return evalBodyForms(addBindings(env, args), body);
   },
 
   // (fn (x: 0 y: 0) (+ x y))
   'fn': (env, [_, defaultArgForms, ...body]) => {
+    _ = _;
     return [env, defineFunction(env, defaultArgForms, body)];
   },
 
   // (print 'hi' foo) => hi 42
   'print': (env, [_, ...msgs]) => {
+    _ = _;
     let printMsg = msgs.reduce((a, b) => a + ' ' + evaluate(env, b)[1], '');
     console.log(printMsg.trim());
     return [env, true];
@@ -232,8 +241,10 @@ const specialForms = {
 
   // (log 'hi' foo) => hi <foo:42>
   'log': (env, [_, ...msgs]) => {
+    _ = _;
     const message = msgs.reduce((a, b) => {
-      const [e, res] = evaluate(env, b);
+      const r = evaluate(env, b);
+      const res = r[1];
       if (typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
         return a + ' <' + b + ':' + res + '>';
       }
@@ -245,7 +256,7 @@ const specialForms = {
 
   // (loop (a from: 1 to: 30 step: 2) (+ a a))
   'loop': (env, [_, [varName, varParameters], ...body]) => {
-
+    _ = _;
     const vp = {};
     for (let k in varParameters) {
       vp[k] = evaluate(env, varParameters[k])[1];
@@ -256,6 +267,7 @@ const specialForms = {
 
   // (on-matrix-stack (f1 1) (f2 3) (f3 5))
   'on-matrix-stack': (env, [_, ...body]) => {
+    _ = _;
     env.get('push-matrix').binding();
     const res =  evalBodyForms(env, body);
     env.get('pop-matrix').binding();
