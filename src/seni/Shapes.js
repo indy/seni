@@ -429,16 +429,61 @@ const strokedBezierRectBinding = new PublicBinding(
     return (params) => renderStrokedBezierRect(self, params, renderer);
   });
 
+function renderGradientPoly(publicBinding, params, renderer, sides) {
+  let fullParams = publicBinding.mergeWithDefaults(params);
+  renderer.cmdRenderGradientPoly(fullParams, sides);
+}
+
+const gradientTriangleBinding = new PublicBinding(
+  'gradient-triangle',
+  `renders a triangle in which each vertex has a different colour
+  `,
+  {
+    coords: [[100, 100],
+             [600, 100],
+             [500, 600]],
+    colours: [Colour.defaultColour,
+              Colour.defaultColour,
+              Colour.defaultColour]
+  },
+  (self, renderer) => {
+    return (params) => renderGradientPoly(self, params, renderer, 3);
+  });
+
+const gradientQuadBinding = new PublicBinding(
+  'gradient-quad',
+  `renders a quad in which each vertex has a different colour
+  `,
+  {
+    coords: [[100, 100],
+             [600, 100],
+             [600, 600],
+             [100, 600]],
+    colours: [Colour.defaultColour,
+              Colour.defaultColour,
+              Colour.defaultColour,
+              Colour.defaultColour]
+  },
+  (self, renderer) => {
+    return (params) => renderGradientPoly(self, params, renderer, 4);
+  });
+
 const Shapes = {
   publicBindings: [
     rectBinding,
+
     polyBinding,
     splineBinding,
+
     bezierBinding,
     bezierTrailingBinding,
     bezierBulgingBinding,
+
     strokedBezierBinding,
-    strokedBezierRectBinding
+    strokedBezierRectBinding,
+
+    gradientTriangleBinding,
+    gradientQuadBinding
   ]
 };
 

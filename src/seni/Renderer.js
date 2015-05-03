@@ -201,6 +201,10 @@ class Renderer {
     return this.renderPoly(params);
   }
 
+  cmdRenderGradientPoly(params, sides) {
+    return this.renderGradientPoly(params, sides);
+  }
+
   cmdRenderBezier(params) {
     return this.renderCurve(params, MathUtil.bezierCoordinates);
   }
@@ -275,6 +279,21 @@ class Renderer {
 
     this.addVertex([x, y], colourArray);
     this.addVertex([vx, vy], colourArray);
+  }
+
+  renderGradientPoly(params, n) {
+    const {
+      coords,
+      colours
+    } = params;
+
+    let c;
+
+    this.prepareToAddTriangleStrip(n, coords[0]);
+    for(let i = 0; i < n; i++) {
+      c = Colour.elementArray(Colour.cloneAs(colours[i], Format.RGB));
+      this.addVertex(coords[i], c);
+    }
   }
 
   renderCurve(params, coordFn) {
@@ -479,7 +498,6 @@ class Renderer {
     let bl = this.bufferLevel * this.vertexItemSize;
     this.vertexBuffer[bl + 0] = p[0];
     this.vertexBuffer[bl + 1] = p[1];
-//    this.vertexBuffer[bl + 2] = p[2];
 
     bl = this.bufferLevel * this.colourItemSize;
     this.colourBuffer[bl + 0] = c[0];

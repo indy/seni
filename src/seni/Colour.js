@@ -317,6 +317,7 @@ function hsvrgb(c) {
   return chmrgb(c, chroma, h, m);
 }
 
+// todo: this can be cached
 function cloneAs(c, newFormat) {
   switch (format(c)) {
   case Format.LAB:
