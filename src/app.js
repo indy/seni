@@ -61,49 +61,28 @@ function withTiming(msg, fn) {
   console.log(msg, duration, 'ms');
 }
 
-function setupUI(seniApp) {
-  const d = document;
-
-  const textArea = d.getElementById('codemirror-textarea');
-
-  textArea.value = initialCode();
-
-  seniApp.editor = CodeMirror.fromTextArea(textArea, {
-    lineNumbers: false,
-    mode: 'scheme',
-    autoCloseBrackets: true,
-    matchBrackets: true,
-    extraKeys: {
-      'Ctrl-E': function() {
-        const source = seniApp.editor.getValue();
-        withTiming('renderTime', () =>
-                   renderScript(seniApp, source));
-        return false;
-      },
-      'Ctrl-D': function() {
-        return false;
-      }
-    }});
+function addClickEvent(id, fn) {
+  const element = document.getElementById(id);
+  element.addEventListener('click', fn);
 }
 
-function createPhenotypeContainer(id) {
-  const container = document.createElement('div');
+function toggleSelection(seniApp, element) {
+  while(element) {
+    const m = element.id.match(/pheno-(\d+)/);
+    if(m && m.length === 2) {
+      const index = Number.parseInt(m[1], 10);
 
-  container.className = 'phenotype-container col s6 m4 l3';
-  container.id = 'pheno-' + id;
+      const cardImage = element.getElementsByClassName('card-image')[0];
+      cardImage.classList.toggle('selected');
 
-  container.innerHTML = `
-    <div class="card">
-      <div class="card-image">
-        <img class="phenotype" src="spinner.gif">
-      </div>
-      <div class="card-action">
-        <a href="#">Preview</a>
-      </div>
-    </div>
-    `;
+      const c = seniApp.containers[index];
+      c.selected = !c.selected;
 
-  return container;
+      return;
+    } else {
+      element = element.parentNode;
+    }
+  }
 }
 
 function renderPhenotypes(app) {
@@ -133,6 +112,112 @@ function renderPhenotypes(app) {
       setTimeout(go);
     }
   });
+}
+
+function onNextGen(seniApp) {
+  // get the selected genotypes for the next generation
+  let chosen = [];
+  for(let i = 0; i < seniApp.populationSize; i++) {
+    if(seniApp.containers[i].selected === true) {
+      chosen.push(seniApp.genotypes[i]);
+    }
+  }
+
+  seniApp.genotypes = Genetic.nextGeneration(chosen, seniApp.populationSize);
+
+  // render the genotypes
+  renderPhenotypes(seniApp);
+
+  // clean up the dom and clear the selected state
+  for(let i = 0; i < seniApp.populationSize; i++) {
+    if(seniApp.containers[i].selected === true) {
+      const element = seniApp.containers[i].phenotypeContainer;
+      const cardImage = element.getElementsByClassName('card-image')[0];
+      cardImage.classList.toggle('selected');
+    }
+    seniApp.containers[i].selected = false;
+  }
+}
+
+function setupUI(seniApp) {
+  const d = document;
+
+  const textArea = d.getElementById('codemirror-textarea');
+
+  textArea.value = initialCode();
+
+  seniApp.editor = CodeMirror.fromTextArea(textArea, {
+    lineNumbers: false,
+    mode: 'scheme',
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    extraKeys: {
+      'Ctrl-E': function() {
+        const source = seniApp.editor.getValue();
+        withTiming('renderTime', () =>
+                   renderScript(seniApp, source));
+        return false;
+      },
+      'Ctrl-D': function() {
+        return false;
+      }
+    }});
+
+  addClickEvent('selector-mode-icon', event => {
+    if(seniApp.currentMode !== SeniMode.selecting) {
+      switchMode(seniApp, SeniMode.selecting);
+    }
+    event.preventDefault();
+  });
+
+  addClickEvent('author-mode-icon', event => {
+    if(seniApp.currentMode !== SeniMode.authoring) {
+      switchMode(seniApp, SeniMode.authoring);
+    }
+    event.preventDefault();
+  });
+
+  addClickEvent('action-eval', () => {
+    let source = seniApp.editor.getValue();
+    withTiming('renderTime', () => renderScript(seniApp, source));
+  });
+
+  addClickEvent('gallery-container', event => {
+    toggleSelection(seniApp, event.target);
+  });
+
+  addClickEvent('action-next-gen', () => {
+    onNextGen(seniApp);
+  });
+
+  // Ctrl-D renders the next generation
+  document.addEventListener('keydown', event => {
+    if (event.ctrlKey && event.keyCode === 68 &&
+        seniApp.currentMode === SeniMode.selecting) {
+      event.preventDefault();
+      onNextGen(seniApp);
+    }
+  }, false);
+}
+
+function createPhenotypeContainer(id) {
+  const container = document.createElement('div');
+
+  container.className = 'phenotype-container col s6 m4 l3';
+  container.id = 'pheno-' + id;
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-image">
+        <img class="phenotype" src="spinner.gif">
+      </div>
+      <div class="card-action">
+        <a href="#">Preview</a>
+      </div>
+    </div>
+    `;
+
+  return container;
 }
 
 function setupSelectorUI(seniApp, form) {
@@ -210,50 +295,6 @@ function switchMode(seniApp, newMode) {
   liSelectorMode.classList.toggle('active');
 }
 
-function toggleSelection(seniApp, element) {
-  while(element) {
-    const m = element.id.match(/pheno-(\d+)/);
-    if(m && m.length === 2) {
-      const index = Number.parseInt(m[1], 10);
-
-      const cardImage = element.getElementsByClassName('card-image')[0];
-      cardImage.classList.toggle('selected');
-
-      const c = seniApp.containers[index];
-      c.selected = !c.selected;
-
-      return;
-    } else {
-      element = element.parentNode;
-    }
-  }
-}
-
-function onNextGen(seniApp) {
-  // get the selected genotypes for the next generation
-  let chosen = [];
-  for(let i = 0; i < seniApp.populationSize; i++) {
-    if(seniApp.containers[i].selected === true) {
-      chosen.push(seniApp.genotypes[i]);
-    }
-  }
-
-  seniApp.genotypes = Genetic.nextGeneration(chosen, seniApp.populationSize);
-
-  // render the genotypes
-  renderPhenotypes(seniApp);
-
-  // clean up the dom and clear the selected state
-  for(let i = 0; i < seniApp.populationSize; i++) {
-    if(seniApp.containers[i].selected === true) {
-      const element = seniApp.containers[i].phenotypeContainer;
-      const cardImage = element.getElementsByClassName('card-image')[0];
-      cardImage.classList.toggle('selected');
-    }
-    seniApp.containers[i].selected = false;
-  }
-}
-
 // take the height of the navbar into consideration
 function resizeContainers() {
   const navbar = document.getElementById('seni-navbar');
@@ -265,12 +306,7 @@ function resizeContainers() {
   sc.style.height = (sc.offsetHeight - navbar.offsetHeight) + 'px';
 }
 
-function addClickEvent(id, fn) {
-  const element = document.getElementById(id);
-  element.addEventListener('click', fn);
-}
-
-function polluteGlobalNamespace(seniApp) {
+function polluteGlobalDocument(seniApp) {
   document.seni = {};
   document.seni.title = Trivia.getTitle;
   document.seni.help = function(name) {
@@ -286,7 +322,6 @@ function polluteGlobalNamespace(seniApp) {
 
 const SeniWebApplication = {
   mainFn() {
-
     const seniApp = {
       currentMode: SeniMode.authoring,
       renderer: undefined,
@@ -306,43 +341,12 @@ const SeniWebApplication = {
 
     seniApp.renderer = new Renderer('render-canvas');
     seniApp.env = Bind.addBindings(Runtime.createEnv(), seniApp.renderer);
-
-    polluteGlobalNamespace(seniApp);
-
     seniApp.currentMode = SeniMode.authoring;
+
+    polluteGlobalDocument(seniApp);
 
     setupUI(seniApp);
     renderScript(seniApp, initialCode());
-
-    const onSwitchMode = function(event) {
-      switchMode(seniApp, 1 - seniApp.currentMode);
-      event.preventDefault();
-    };
-
-    addClickEvent('selector-mode-icon', onSwitchMode);
-    addClickEvent('author-mode-icon', onSwitchMode);
-
-    addClickEvent('action-eval', () => {
-      let source = seniApp.editor.getValue();
-      withTiming('renderTime', () => renderScript(seniApp, source));
-    });
-
-    addClickEvent('gallery-container', event => {
-      toggleSelection(seniApp, event.target);
-    });
-
-    addClickEvent('action-next-gen', () => {
-      onNextGen(seniApp);
-    });
-
-    // Ctrl-D renders the next generation
-    document.addEventListener('keydown', event => {
-      if (event.ctrlKey && event.keyCode === 68 &&
-          seniApp.currentMode === SeniMode.selecting) {
-        event.preventDefault();
-        onNextGen(seniApp);
-      }
-    }, false);
   }
 };
 
