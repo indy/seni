@@ -1,7 +1,13 @@
 
-.card-image.selected {
-  background: red;
+.card-image {
+  transition: background 0.2s ease;
+  background: white;
 }
+
+.card-image.selected {
+  background: #2979ff;
+}
+
 
 .phenotype {
   padding: 1em;
