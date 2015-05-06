@@ -30,22 +30,29 @@ const SeniMode = {
   selecting: 1
 };
 
-function renderScript(seniApp, form) {
+function renderScriptToImage(seniApp, ast, genotype, imageElement) {
 
   const renderer = seniApp.renderer;
-  const imageElement = document.getElementById('render-img');
 
   renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
-  const ast = Runtime.buildAst(seniApp.env, form);
-
-  const traits = Genetic.buildTraits(ast);
-  const genotype = Genetic.createGenotypeFromInitialValues(traits);
 
   Runtime.evalAst(seniApp.env, ast, genotype);
 
   renderer.postDrawScene();
 
   imageElement.src = renderer.getImageData();
+}
+
+function renderScript(seniApp, form) {
+  seniApp.form = form;
+  const imageElement = document.getElementById('render-img');
+
+  const ast = Runtime.buildAst(seniApp.env, form);
+
+  const traits = Genetic.buildTraits(ast);
+  const genotype = Genetic.createGenotypeFromInitialValues(traits);
+
+  renderScriptToImage(seniApp, ast, genotype, imageElement);
 }
 
 function initialCode() {
@@ -66,22 +73,41 @@ function addClickEvent(id, fn) {
   element.addEventListener('click', fn);
 }
 
-function toggleSelection(seniApp, element) {
+// when user has clicked on a phenotype in the selector UI,
+// traverse up the card until we get to a dom element that
+// contains the phenotype's index number in it's id
+function getPhenoIdFromDom(element) {
   while(element) {
     const m = element.id.match(/pheno-(\d+)/);
     if(m && m.length === 2) {
       const index = Number.parseInt(m[1], 10);
-
-      const cardImage = element.getElementsByClassName('card-image')[0];
-      cardImage.classList.toggle('selected');
-
-      const c = seniApp.containers[index];
-      c.selected = !c.selected;
-
-      return;
+      return [index, element];
     } else {
       element = element.parentNode;
     }
+  }
+  return [-1, null];
+}
+
+function renderHighRes(seniApp, element) {
+  const [index, _] = getPhenoIdFromDom(element);
+  if(index !== -1) {
+    let genotype = seniApp.genotypes[index];
+    const imageElement = document.getElementById('high-res-image');
+    imageElement.classList.toggle('hidden');
+    const ast = Runtime.buildAst(seniApp.env, seniApp.form);
+    renderScriptToImage(seniApp, ast, genotype, imageElement);
+  }
+}
+
+function toggleSelection(seniApp, element) {
+  const [index, e] = getPhenoIdFromDom(element);
+  if(index !== -1) {
+    const cardImage = e.getElementsByClassName('card-image')[0];
+    cardImage.classList.toggle('selected');
+
+    const c = seniApp.containers[index];
+    c.selected = !c.selected;
   }
 }
 
@@ -150,7 +176,7 @@ function createPhenotypeContainer(id) {
         <img class="phenotype" src="spinner.gif">
       </div>
       <div class="card-action">
-        <a href="#">Preview</a>
+        <a href="#" class="render">Render</a>
       </div>
     </div>
     `;
@@ -202,12 +228,23 @@ function setupUI(seniApp) {
   });
 
   addClickEvent('gallery-container', event => {
-    toggleSelection(seniApp, event.target);
+    let target = event.target;
+    if(target.classList.contains('render')) {
+      renderHighRes(seniApp, target);
+    } else {
+      toggleSelection(seniApp, target);
+    }
+    event.preventDefault();
   });
 
   addClickEvent('action-next-gen', () => {
     onNextGen(seniApp);
   });
+
+  addClickEvent('high-res-image', (event) => {
+    event.target.classList.toggle('hidden');
+  });
+
 
   // Ctrl-D renders the next generation
   document.addEventListener('keydown', event => {

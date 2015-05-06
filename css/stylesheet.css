@@ -1,3 +1,10 @@
+#high-res-image {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  width: 2000px;
+  height: 2000px;
+}
 
 .card-image {
   transition: background 0.2s ease;
