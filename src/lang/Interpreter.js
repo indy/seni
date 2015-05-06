@@ -350,6 +350,10 @@ const classicFunctions = {
 
   '/': args => args.reduce((a, b) => a / b),
 
+  'sqrt': args => {
+    return Math.sqrt(args[0]);
+  },
+
   '=': ([first, ...rest]) =>
     rest.every(a => a === first) ? TRUE_STRING : FALSE_STRING,
 
