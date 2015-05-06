@@ -91,14 +91,11 @@ function renderPhenotypes(app) {
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to authoring mode
-    if (i < app.containers.length &&
-        app.currentMode === SeniMode.selecting) {
+    if (i < app.containers.length && app.currentMode === SeniMode.selecting) {
 
-      const {phenotypeContainer} = app.containers[i];
       const genotype = app.genotypes[i];
 
-      const imageElement =
-              phenotypeContainer.getElementsByClassName('phenotype')[0];
+      const imageElement = app.containers[i].imageElement;
 
       app.renderer.preDrawScene(imageElement.clientWidth,
                                 imageElement.clientHeight);
@@ -121,6 +118,8 @@ function onNextGen(seniApp) {
     if(seniApp.containers[i].selected === true) {
       chosen.push(seniApp.genotypes[i]);
     }
+    const imageElement = seniApp.containers[i].imageElement;
+    imageElement.src = 'spinner.gif';
   }
 
   seniApp.genotypes = Genetic.nextGeneration(chosen, seniApp.populationSize);
@@ -137,6 +136,26 @@ function onNextGen(seniApp) {
     }
     seniApp.containers[i].selected = false;
   }
+}
+
+function createPhenotypeContainer(id) {
+  const container = document.createElement('div');
+
+  container.className = 'phenotype-container col s6 m4 l3';
+  container.id = 'pheno-' + id;
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-image">
+        <img class="phenotype" src="spinner.gif">
+      </div>
+      <div class="card-action">
+        <a href="#">Preview</a>
+      </div>
+    </div>
+    `;
+
+  return container;
 }
 
 function setupUI(seniApp) {
@@ -198,38 +217,11 @@ function setupUI(seniApp) {
       onNextGen(seniApp);
     }
   }, false);
-}
 
-function createPhenotypeContainer(id) {
-  const container = document.createElement('div');
 
-  container.className = 'phenotype-container col s6 m4 l3';
-  container.id = 'pheno-' + id;
-
-  container.innerHTML = `
-    <div class="card">
-      <div class="card-image">
-        <img class="phenotype" src="spinner.gif">
-      </div>
-      <div class="card-action">
-        <a href="#">Preview</a>
-      </div>
-    </div>
-    `;
-
-  return container;
-}
-
-function setupSelectorUI(seniApp, form) {
-  const renderer = seniApp.renderer;
   const gallery = document.getElementById('gallery-container');
-
-  seniApp.ast = Runtime.buildAst(seniApp.env, form);
-  seniApp.traits = Genetic.buildTraits(seniApp.ast);
-
   gallery.innerHTML = '';
 
-  // create phenotype/genotype containers
   let i;
   let phenotypeContainer;
   seniApp.containers = [];
@@ -244,11 +236,26 @@ function setupSelectorUI(seniApp, form) {
     phenotypeContainer = createPhenotypeContainer(i);
     row.appendChild(phenotypeContainer);
 
+    const imageElement =
+            phenotypeContainer.getElementsByClassName('phenotype')[0];
+
     seniApp.containers.push({
-      phenotypeContainer: phenotypeContainer,
+      phenotypeContainer,
+      imageElement,
       selected: false
     });
   }
+}
+
+function setupSelectorUI(seniApp, form) {
+  const renderer = seniApp.renderer;
+  const gallery = document.getElementById('gallery-container');
+
+  seniApp.ast = Runtime.buildAst(seniApp.env, form);
+  seniApp.traits = Genetic.buildTraits(seniApp.ast);
+
+  // create phenotype/genotype containers
+  let i;
 
   // add genotypes to the containers
   let genotype;
