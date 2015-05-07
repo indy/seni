@@ -145,7 +145,7 @@ function onNextGen(seniApp) {
       chosen.push(seniApp.genotypes[i]);
     }
     const imageElement = seniApp.containers[i].imageElement;
-    imageElement.src = 'spinner.gif';
+    imageElement.src = seniApp.placeholder;
   }
 
   seniApp.genotypes = Genetic.nextGeneration(chosen, seniApp.populationSize);
@@ -164,7 +164,7 @@ function onNextGen(seniApp) {
   }
 }
 
-function createPhenotypeContainer(id) {
+function createPhenotypeContainer(id, placeholderImage) {
   const container = document.createElement('div');
 
   container.className = 'phenotype-container col s6 m4 l3';
@@ -173,7 +173,7 @@ function createPhenotypeContainer(id) {
   container.innerHTML = `
     <div class="card">
       <div class="card-image">
-        <img class="phenotype" src="spinner.gif">
+        <img class="phenotype" src="${placeholderImage}">
       </div>
       <div class="card-action">
         <a href="#" class="render">Render</a>
@@ -221,6 +221,9 @@ function setupUI(seniApp) {
     }
     event.preventDefault();
   });
+
+
+
 
   addClickEvent('action-eval', () => {
     let source = seniApp.editor.getValue();
@@ -270,7 +273,7 @@ function setupUI(seniApp) {
   gallery.appendChild(row);
 
   for(i = 0; i < seniApp.populationSize; i++) {
-    phenotypeContainer = createPhenotypeContainer(i);
+    phenotypeContainer = createPhenotypeContainer(i, seniApp.placeholder);
     row.appendChild(phenotypeContainer);
 
     const imageElement =
@@ -331,12 +334,6 @@ function switchMode(seniApp, newMode) {
 
     setupSelectorUI(seniApp, sourceCode);
   }
-
-  // todo: find better way of managing UI state than these horrible toggle calls
-  const liAuthorMode = document.getElementById('li-author-mode');
-  liAuthorMode.classList.toggle('active');
-  const liSelectorMode = document.getElementById('li-selector-mode');
-  liSelectorMode.classList.toggle('active');
 }
 
 // take the height of the navbar into consideration
@@ -372,6 +369,7 @@ const SeniWebApplication = {
       editor: undefined,
       containers: [],
 
+      placeholder: 'spinner.gif',
       populationSize: 24,
       genotypes: [],
 
