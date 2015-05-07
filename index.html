@@ -25,18 +25,6 @@
       <nav>
         <div class="nav-wrapper blue">
           <a href="#!" class="brand-logo">Seni</a>
-          <ul class="right">
-            <li id="li-author-mode" class="active">
-              <a id="author-mode-icon" href="">
-                <i class="mdi-content-create left"></i>Edit
-              </a>
-            </li>
-            <li id="li-selector-mode">
-              <a id="selector-mode-icon" href="">
-                <i class="mdi-action-view-module left"></i>Selector
-              </a>
-            </li>
-          </ul>
         </div>
       </nav>
     </div>
@@ -50,48 +38,37 @@
       <div id="editor-container">
         <textarea id="codemirror-textarea"></textarea> 
       </div>
-
       <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
         <a class="btn-floating btn-large red" id="action-eval">
-          <i class="large mdi-action-grade"></i>
+          <i class="large mdi-content-create"></i>
         </a>
+        <ul>
+          <li>
+              <a id="selector-mode-icon" class="btn-floating blue">
+                <i class="mdi-action-view-module"></i>
+              </a>
+          </li>
+        </ul>
       </div>
     </div>
 
     <div id="selector-container" class="hidden">
       <div id="gallery-container"></div>
-
       <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
-        <a class="btn-floating btn-large red" id="action-next-gen">
-          <i class="large mdi-av-fast-forward"></i>
+        <a class="btn-floating btn-large blue" id="action-next-gen">
+          <i class="large mdi-action-view-module"></i>
         </a>
         <ul>
           <li>
-            <a class="btn-floating red">
-              <i class="large mdi-editor-insert-chart"></i>
-            </a>
-          </li>
-          <li>
-            <a class="btn-floating yellow darken-1">
-              <i class="large mdi-editor-format-quote"></i>
-            </a>
-          </li>
-          <li>
-            <a class="btn-floating green">
-              <i class="large mdi-editor-publish"></i>
-            </a>
-          </li>
-          <li>
-            <a class="btn-floating blue">
-              <i class="large mdi-editor-attach-file"></i>
-            </a>
+              <a id="author-mode-icon" class="btn-floating red">
+                <i class="mdi-content-create"></i>
+              </a>
           </li>
         </ul>
       </div>
-      
     </div>
 
-    <img id="high-res-image" src="spinner.gif" class="hidden">
+    <img id="high-res-image" class="hidden">
 
     <!--Import jQuery before materialize.js-->
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
