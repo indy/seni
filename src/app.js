@@ -137,15 +137,21 @@ function renderPhenotypes(app) {
   });
 }
 
+function showPlaceholderImages(seniApp) {
+  for(let i = 0; i < seniApp.populationSize; i++) {
+    const imageElement = seniApp.containers[i].imageElement;
+    imageElement.src = seniApp.placeholder;
+  }
+}
+
 function onNextGen(seniApp) {
+  showPlaceholderImages(seniApp);
   // get the selected genotypes for the next generation
   let chosen = [];
   for(let i = 0; i < seniApp.populationSize; i++) {
     if(seniApp.containers[i].selected === true) {
       chosen.push(seniApp.genotypes[i]);
     }
-    const imageElement = seniApp.containers[i].imageElement;
-    imageElement.src = seniApp.placeholder;
   }
 
   seniApp.genotypes = Genetic.nextGeneration(chosen, seniApp.populationSize);
@@ -250,14 +256,14 @@ function setupUI(seniApp) {
 
 
   // Ctrl-D renders the next generation
+  const dKey = 68;
   document.addEventListener('keydown', event => {
-    if (event.ctrlKey && event.keyCode === 68 &&
+    if (event.ctrlKey && event.keyCode === dKey &&
         seniApp.currentMode === SeniMode.selecting) {
       event.preventDefault();
       onNextGen(seniApp);
     }
   }, false);
-
 
   const gallery = document.getElementById('gallery-container');
   gallery.innerHTML = '';
@@ -288,6 +294,9 @@ function setupUI(seniApp) {
 }
 
 function setupSelectorUI(seniApp, form) {
+
+  showPlaceholderImages(seniApp);
+
   const renderer = seniApp.renderer;
   const gallery = document.getElementById('gallery-container');
 
