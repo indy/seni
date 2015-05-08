@@ -79,12 +79,13 @@ function consumeBracketForm(tokens) {
   const nodeType = node.type;
 
   if (nodeType !== NodeType.BOOLEAN &&
-     nodeType !== NodeType.INT &&
-     nodeType !== NodeType.FLOAT &&
-     nodeType !== NodeType.NAME &&
-     nodeType !== NodeType.STRING) {
+      nodeType !== NodeType.INT &&
+      nodeType !== NodeType.FLOAT &&
+      nodeType !== NodeType.NAME &&
+      nodeType !== NodeType.STRING &&
+      nodeType !== NodeType.LIST) {
 
-    return {error: 'non-mutable node within square brackets'};
+    return {error: 'non-mutable node within square brackets ' + nodeType};
   }
 
   let token, parameterBox, parameter;
@@ -127,8 +128,9 @@ function consumeQuotedForm(tokens) {
   return {node: node};
 }
 
-function consumeList(tokens) {
-  const node = new Node(NodeType.LIST);
+function consumeList(tokens, alterable) {
+
+  const boxedNode = boxNode(NodeType.LIST, undefined, alterable);
 
   /* eslint-disable no-constant-condition */
   while (true) {
@@ -139,16 +141,16 @@ function consumeList(tokens) {
 
     if (token.type === TokenType.LIST_END) {
       tokens.shift();
-      return {node: node};
+      return boxedNode;
     }
 
-    const nodeBox = consumeItem(tokens, false);
-    if (nodeBox.error) {
-      return nodeBox;
+    const boxedItem = consumeItem(tokens, false);
+    if (boxedItem.error) {
+      return boxedItem;
     }
-    const n = nodeBox.node;
+    const n = boxedItem.node;
     if (n) {
-      node.addChild(n);
+      boxedNode.node.addChild(n);
     }
   }
   /* eslint-enable no-constant-condition */

@@ -24,10 +24,6 @@ import SeedRandom from '../seni/SeedRandom';
 import Immutable from 'immutable';
 
 function buildTraitFromNode(node, genes) {
-  if (node.type === NodeType.LIST) {
-    node.children.map(child => buildTraitFromNode(child, genes));
-  }
-
   if (node.alterable === true) {
     // expect a form in the parameterAST
     let ast;
@@ -44,6 +40,10 @@ function buildTraitFromNode(node, genes) {
     const gene = {initialValue: node.value,
                   ast: ast};
     genes.push(gene);  // mutate the genes
+  }
+
+  if (node.type === NodeType.LIST) {
+    node.children.map(child => buildTraitFromNode(child, genes));
   }
 }
 

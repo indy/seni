@@ -81,6 +81,39 @@ const BracketBindings = {
     ),
 
     new PublicBinding(
+      'col',
+      `returns a random rgb colour it takes a single argument of alpha since I think we'll often want to fix the alpha value. If you need to fix the other values in a colour declaration then just use separate scalars for each of the components. e.g.
+
+    (col/rgb r: 0.8
+             g: [0.3 (scalar)]
+             b: [0.2 (scalar)]
+             alpha: 0.4)
+
+random colour:
+    [(col/rgb r: 0.8
+             g: 0.3
+             b: 0.2
+             alpha: 0.4) (col)]
+
+random colour, but keep alpha as 0.4:
+    [(col/rgb r: 0.8
+             g: 0.3
+             b: 0.2
+             alpha: 0.4) (col alpha: 0.4)]
+`,
+      {},
+      (self, rng) => {
+        return (params) => {
+          let r = rng(), g = rng(), b = rng(), alpha = rng();
+          if(params.alpha) {
+            alpha = params.alpha;
+          }
+          return ['col/rgb', {r, g, b, alpha}];
+        };
+      }
+    ),
+
+    new PublicBinding(
       'testPlus',
       `[FOR TESTING ONLY] returns + character
       arguments: -`,

@@ -74,6 +74,35 @@ describe('Compiler', () => {
       to.deep.equal(['+', 2, 7]);
   });
 
+  it('should bracket bind a random colour', () => {
+    let res = (compileWithSeed('[(col/rgb r: 0.1 g: 0.2 b: 0.3) (col)]', 100).
+               forms[0]);
+    // res === ['col/rgb', {r: 0.122, g: 0.08, b: 0.40}]
+
+    expect(res.length).to.equal(2);
+    expect(res[0]).to.equal('col/rgb');
+
+    let epsilon = 0.01;
+    let colourValues = res[1];
+    expect(colourValues.r).to.be.closeTo(0.0253, epsilon);
+    expect(colourValues.g).to.be.closeTo(0.1226, epsilon);
+    expect(colourValues.b).to.be.closeTo(0.0826, epsilon);
+    expect(colourValues.alpha).to.be.closeTo(0.4031, epsilon);
+
+    res = (compileWithSeed('[(col/rgb r: 0.1 g: 0.2 b: 0.3) (col alpha: 1)]',
+                            100).forms[0]);
+    // res === ['col/rgb', {r: 0.122, g: 0.08, b: 0.40 alpha: 1}]
+
+    expect(res.length).to.equal(2);
+    expect(res[0]).to.equal('col/rgb');
+
+    colourValues = res[1];
+    expect(colourValues.r).to.be.closeTo(0.0253, epsilon);
+    expect(colourValues.g).to.be.closeTo(0.1226, epsilon);
+    expect(colourValues.b).to.be.closeTo(0.0826, epsilon);
+    expect(colourValues.alpha).to.be.closeTo(1, epsilon);
+  });
+
   it('should test required functions', () => {
 
     expect(compile('4').forms[0]).
