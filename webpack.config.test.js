@@ -2,6 +2,9 @@ var webpack = require("webpack");
 var path = require('path');
 
 module.exports = {
+  output: {
+    sourceMapFilename: '[file].map'
+  },
   module: {
     preLoaders: [
       {
@@ -20,5 +23,6 @@ module.exports = {
         loader: 'babel-loader'
       }
     ]
-  }
+  },
+  devtool: 'source-map'
 };
