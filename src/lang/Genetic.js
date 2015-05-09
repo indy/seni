@@ -101,12 +101,28 @@ const Genetic = {
 
   nextGeneration: function(genotypes, populationSize) {
     // a silly mod method for creating the latest generation
-    let newGenotypes = [];
-    for(let i = 0; i < populationSize; i++) {
-      let idxA = Number.parseInt(Math.random() * genotypes.length, 10);
-      let genotypeA = genotypes[idxA];
+    let i, newGenotypes = [];
 
+    // the chosen genotypes survive into the next generation
+    for(i = 0; i < genotypes.length; i++) {
+      newGenotypes[i] = genotypes[i];
+    }
+
+    for(i = genotypes.length; i < populationSize; i++) {
+      let idxA = Number.parseInt(Math.random() * genotypes.length, 10);
       let idxB = Number.parseInt(Math.random() * genotypes.length, 10);
+
+      // try not to use the same genotype for both a and b
+      const retryCount = 10;
+      for(let retry = 0; retry < retryCount; retry++) {
+        if(idxB === idxA) {
+          idxB = Number.parseInt(Math.random() * genotypes.length, 10);
+        } else {
+          break;
+        }
+      }
+
+      let genotypeA = genotypes[idxA];
       let genotypeB = genotypes[idxB];
 
       console.log('crossover indices: ', idxA, idxB);
