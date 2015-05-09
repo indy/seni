@@ -102,20 +102,19 @@ function usingNamedParameters(children) {
 const Compiler = {
 
   compileListNode: function(node) {
-    let [form, _] = compileList(node);
+    let [simplifiedAst, _] = compileList(node);
     _ = _;
 
-    return form;
+    // return a simplified ast
+    return simplifiedAst;
   },
 
-  compile: function(ast, genotype) {
-    // ast is an array of nodes
-    let [forms, _] = compileNodes(ast, genotype);
+  compile: function(nodes, genotype) {
+    let [simplifiedAsts, _] = compileNodes(nodes, genotype);
     _ = _;
 
-    return {
-      forms: forms
-    };
+    // return an array of simplified ast objects
+    return simplifiedAsts;
   }
 };
 

@@ -43,16 +43,16 @@ const Runtime = {
   },
 
   evalAst: function(env, ast, genotype) {
-    const compiled = Compiler.compile(ast, genotype);
+    const simplifiedAsts = Compiler.compile(ast, genotype);
 
     // add all of the define expressions to the env
-    const [_env, _res] = compiled.forms.
+    const [_env, _res] = simplifiedAsts.
             filter(Interpreter.isDefineExpression).
             reduce((a, b) => Interpreter.evaluate(a[0], b), [env, false]);
     // a[0] === the new env returned by the interpreter
 
     // now evaluate all of the non-define expressions
-    return compiled.forms.
+    return simplifiedAsts.
       filter(s => !Interpreter.isDefineExpression(s)).
       reduce((a, b) => Interpreter.evaluate(a[0], b), [_env, _res]);
   }

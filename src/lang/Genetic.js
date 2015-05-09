@@ -26,7 +26,7 @@ import Immutable from 'immutable';
 function buildTraitFromNode(node, genes) {
   if (node.alterable === true) {
     // expect a form in the parameterAST
-    let ast, value;
+    let simplifiedAst, value;
 
     if(node.type === NodeType.LIST) {
       value = Compiler.compileListNode(node);
@@ -36,15 +36,15 @@ function buildTraitFromNode(node, genes) {
 
     if (node.parameterAST.length) {
       // assuming that there aren't any nested square brackets
-      ast = Compiler.compile(node.parameterAST);
+      simplifiedAst = Compiler.compile(node.parameterAST);
     } else {
       // this is to allow code like (+ 2 [2])
       // which should behave as if there were no square brackets
       // todo: implement identity in this context
-      ast = {forms: [['identity', {value: value}]]};
+      simplifiedAst = [['identity', {value: value}]];
     }
 
-    const gene = {initialValue: value, ast: ast};
+    const gene = {initialValue: value, ast: simplifiedAst};
     genes.push(gene);  // mutate the genes
   }
 
@@ -54,10 +54,10 @@ function buildTraitFromNode(node, genes) {
 }
 
 function buildGenoFromTrait(trait, env) {
-  const forms = trait.ast.forms;
+  const simplifiedAst = trait.ast;
   // evaluate all of the forms, returning the final result
-  const evalRes = forms.reduce((a, b) => Interpreter.evaluate(a[0], b),
-                               [env, false]);
+  const evalRes = simplifiedAst.reduce((a, b) => Interpreter.evaluate(a[0], b),
+                                       [env, false]);
   // a[0] === the new env returned by the interpreter
 
   const finalResult = evalRes[1];
