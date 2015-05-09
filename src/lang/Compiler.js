@@ -101,8 +101,15 @@ function usingNamedParameters(children) {
 
 const Compiler = {
 
-  compile: function(ast, genotype) {
+  compileListNode: function(node) {
+    let [form, _] = compileList(node);
+    _ = _;
 
+    return form;
+  },
+
+  compile: function(ast, genotype) {
+    // ast is an array of nodes
     let [forms, _] = compileNodes(ast, genotype);
     _ = _;
 

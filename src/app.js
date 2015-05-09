@@ -51,7 +51,6 @@ function renderScript(seniApp, form) {
 
   const traits = Genetic.buildTraits(ast);
   const genotype = Genetic.createGenotypeFromInitialValues(traits);
-
   renderScriptToImage(seniApp, ast, genotype, imageElement);
 }
 

@@ -82,7 +82,10 @@ const BracketBindings = {
 
     new PublicBinding(
       'col',
-      `returns a random rgb colour it takes a single argument of alpha since I think we'll often want to fix the alpha value. If you need to fix the other values in a colour declaration then just use separate scalars for each of the components. e.g.
+      `returns a random rgb colour it takes a single argument of alpha
+since I think we'll often want to fix the alpha value. If you
+need to fix the other values in a colour declaration then just
+      use separate scalars for each of the components. e.g.
 
     (col/rgb r: 0.8
              g: [0.3 (scalar)]
