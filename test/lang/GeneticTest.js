@@ -38,16 +38,16 @@ describe('Genetic', () => {
     expect(res.length).to.equal(1);
     expect(res[0].initialValue).to.equal(4);
     // the ast should be in compiled form
-    expect(res[0].ast.length).to.equal(1);
-    expect(res[0].ast[0][0]).to.equal('int');
+    expect(res[0].simplifiedAst.length).to.equal(1);
+    expect(res[0].simplifiedAst[0][0]).to.equal('int');
   });
 
   it('should default bracketed forms to have an identity function', () => {
     let res = simpleBuildTraits('(+ 2 [1])');
     expect(res.length).to.equal(1);
     expect(res[0].initialValue).to.equal(1);
-    expect(res[0].ast.length).to.equal(1);
-    expect(res[0].ast[0][0]).to.equal('identity');
+    expect(res[0].simplifiedAst.length).to.equal(1);
+    expect(res[0].simplifiedAst[0][0]).to.equal('identity');
   });
 
   it('should createGenotypeFromTraits', () => {
