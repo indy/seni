@@ -22,7 +22,6 @@ import Runtime from './lang/Runtime';
 import Bind from './seni/Bind';
 import Trivia from './seni/Trivia';
 import InitialCode from './InitialCode';
-
 import CodeMirrorConfig from './ui/CodeMirrorConfig';
 
 /* eslint-disable no-unused-vars */
@@ -198,6 +197,14 @@ function setupUI(seniApp) {
 
   textArea.value = initialCode();
 
+  let blockIndent = function(editor, from, to) {
+    editor.operation(function() {
+      for (let i = from; i < to; ++i) {
+        editor.indentLine(i, 'smart');
+      }
+    });
+  };
+
   let codeMirror = CodeMirrorConfig.getCodeMirror();
   let config = CodeMirrorConfig.defaultConfig;
   config.extraKeys = {
@@ -208,6 +215,12 @@ function setupUI(seniApp) {
       return false;
     },
     'Ctrl-D': function() {
+      return false;
+    },
+    'Ctrl-I': function() {
+      let numLines = seniApp.editor.doc.size;
+      blockIndent(seniApp.editor, 0, numLines);
+      console.log('indenting', numLines, 'lines');
       return false;
     }
   };
@@ -367,14 +380,11 @@ function polluteGlobalDocument(seniApp) {
       console.log('default arguments', args);
     }
   };
+  document.seni.seniApp = seniApp;
 }
 
 const SeniWebApplication = {
   mainFn() {
-
-    //CodeMirrorSeni.hello();
-    //CodeMirrorSeni.defineMode();
-
     const seniApp = {
       currentMode: SeniMode.authoring,
       renderer: undefined,
