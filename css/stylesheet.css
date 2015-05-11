@@ -1,3 +1,18 @@
+.cm-s-default .cm-geno-keyword {color: #bbb;}
+.cm-s-default .cm-geno-atom {color: #bbb;}
+.cm-s-default .cm-geno-number {color: #bbb;}
+.cm-s-default .cm-geno-variable {color: #bbb;}
+.cm-s-default .cm-geno-string {color: #bbb;}
+.cm-s-default .cm-geno-bracket {color: #bbb;}
+.cm-s-default .cm-geno-seni-parameter {color: #bbb;}
+
+.cm-s-default .cm-builtin {color: #00d;}
+.cm-s-default .cm-seni-common {color: #00d;}
+
+.cm-s-default .cm-seni-parameter {color: #085;}
+
+
+
 .flex-container-h {
   height: 100%;
   width: 100%;

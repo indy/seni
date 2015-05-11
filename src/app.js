@@ -23,6 +23,8 @@ import Bind from './seni/Bind';
 import Trivia from './seni/Trivia';
 import InitialCode from './InitialCode';
 
+import CodeMirrorConfig from './ui/CodeMirrorConfig';
+
 /* eslint-disable no-unused-vars */
 
 const SeniMode = {
@@ -196,22 +198,20 @@ function setupUI(seniApp) {
 
   textArea.value = initialCode();
 
-  seniApp.editor = CodeMirror.fromTextArea(textArea, {
-    lineNumbers: false,
-    mode: 'scheme',
-    autoCloseBrackets: true,
-    matchBrackets: true,
-    extraKeys: {
-      'Ctrl-E': function() {
-        const source = seniApp.editor.getValue();
-        withTiming('renderTime', () =>
-                   renderScript(seniApp, source));
-        return false;
-      },
-      'Ctrl-D': function() {
-        return false;
-      }
-    }});
+  let codeMirror = CodeMirrorConfig.getCodeMirror();
+  let config = CodeMirrorConfig.defaultConfig;
+  config.extraKeys = {
+    'Ctrl-E': function() {
+      const source = seniApp.editor.getValue();
+      withTiming('renderTime', () =>
+                 renderScript(seniApp, source));
+      return false;
+    },
+    'Ctrl-D': function() {
+      return false;
+    }
+  };
+  seniApp.editor = codeMirror.fromTextArea(textArea, config);
 
   addClickEvent('selector-mode-icon', event => {
     if(seniApp.currentMode !== SeniMode.selecting) {
@@ -371,6 +371,10 @@ function polluteGlobalDocument(seniApp) {
 
 const SeniWebApplication = {
   mainFn() {
+
+    //CodeMirrorSeni.hello();
+    //CodeMirrorSeni.defineMode();
+
     const seniApp = {
       currentMode: SeniMode.authoring,
       renderer: undefined,
