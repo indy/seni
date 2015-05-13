@@ -19,11 +19,11 @@ function seniMode() {
   }
 
   // keywords are core to the seni language
-  let keywords = makeKeywords('define if let lambda loop on-matrix-stack quote');
+  let keywords = makeKeywords('begin define if let lambda loop on-matrix-stack quote');
   let indentKeys = makeKeywords(`define let lambda loop on-matrix-stack`);
 
   // functions from the common seni library
-  let seniCommon = makeKeywords('spline bezier poly rect rotate translate scale col/rgb fn print log + - / * sqrt = < > list v2 v2/x v2/y v2/= v2/+ v2/- v2// v2/*');
+  let seniCommon = makeKeywords('* + - / < = > bezier bezier-bulging bezier-trailing col/analagous col/complementary col/convert col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsv col/lab col/rgb col/set-alpha col/set-lab-a col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r col/split-complementary col/triad cos fn focal/hline focal/point focal/vline gradient-quad gradient-triangle list log math/clamp math/distance-2d on-matrix-stack path/bezier path/circle path/linear path/spline perlin/signed perlin/unsigned poly pop-matrix print push-matrix quote rect red remap-fn rng/signed rng/unsigned rotate scale sin spline sqrt stroked-bezier stroked-bezier-rect take translate v2 v2/* v2/+ v2/- v2// v2/= v2/x v2/y');
 
   function stateStack(indent, type, prev) { // represents a state stack object
     this.indent = indent;

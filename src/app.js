@@ -382,6 +382,19 @@ function polluteGlobalDocument(seniApp) {
   };
   document.seni.seniApp = seniApp;
 }
+/*
+function iterateEnv(seniApp) {
+  let env = seniApp.env;
+  let keys = env.keys();
+
+  let res = [];
+  for(let k = keys.next(); k.done === false; k = keys.next()) {
+    res.push(k.value);
+  }
+  res.sort();
+  res.map(name => console.log(name));
+  console.log(res.toString());
+}*/
 
 const SeniWebApplication = {
   mainFn() {
@@ -411,6 +424,8 @@ const SeniWebApplication = {
 
     setupUI(seniApp);
     renderScript(seniApp, initialCode());
+
+    //iterateEnv(seniApp);
   }
 };
 
