@@ -1,9 +1,9 @@
 
 /* eslint-disable no-unused-vars */
 
-import CodeMirror from '../../node_modules/codemirror/lib/codemirror';
-import * as cb from '../../node_modules/codemirror/addon/edit/closebrackets';
-import * as mb from '../../node_modules/codemirror/addon/edit/matchbrackets';
+import CodeMirror from 'codemirror';
+import * as cb from 'codemirror/addon/edit/closebrackets';
+import * as mb from 'codemirror/addon/edit/matchbrackets';
 import CodeMirrorSeni from './CodeMirrorSeni';
 
 const modeName = 'seni';
