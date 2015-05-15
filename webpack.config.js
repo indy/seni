@@ -2,10 +2,13 @@ var webpack = require("webpack");
 var path = require('path');
 
 module.exports = {
-  entry: './src/index.js',
+  entry: {
+    seni: './src/index.js'
+  },
   output: {
     path: __dirname,
-    filename: "./dist/library-dist.js",
+    filename: "./dist/[name].bundle.js",
+    chunkFilename: "./dist/[id].bundle.js",
     sourceMapFilename: '[file].map'
   },
   module: {
