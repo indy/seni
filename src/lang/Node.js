@@ -16,7 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-class Node {
+/* eslint-disable no-shadow */
+
+export default class Node {
   constructor(type, value, alterable) {
     this.type = type;
     this.value = value;
@@ -43,5 +45,3 @@ class Node {
     this.parameterAST.push(parameter);
   }
 }
-
-export default Node;

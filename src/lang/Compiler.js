@@ -75,18 +75,20 @@ function compileFormUsingNamedParameters(children, genotype) {
   }
 
   const args = {};
+  let g, n;
 
   for (let i = 1; i < children.length; i += 2) {
     const label = children[i];
     if (label.type !== NodeType.LABEL) {
       console.log('error: expecting a label, actual: ' + label.value);
     }
-    let [arg, g] = compile(children[i + 1], genotype);
+    let arg;
+    [arg, g] = compile(children[i + 1], genotype);
     args[label.value] = arg;
     genotype = g;
   }
 
-  let [n, g] = compile(children[0], genotype);
+  [n, g] = compile(children[0], genotype);
 
   return [[n, args], g];
 }

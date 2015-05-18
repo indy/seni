@@ -16,9 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* eslint-disable no-shadow */
+
 import Util from '../seni/Util';
 
-class PublicBinding {
+export default class PublicBinding {
   constructor(name, doc, defaults, create) {
     this.name = name;
     this.doc = doc;
@@ -30,5 +32,3 @@ class PublicBinding {
     return Util.merge(params, this.defaults);
   }
 }
-
-export default PublicBinding;

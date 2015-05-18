@@ -16,9 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* eslint-disable no-shadow */
+
 import { vec2, vec3, mat4 } from 'gl-matrix';
 
-class MatrixStack {
+export default class MatrixStack {
 
   constructor() {
     this.reset();
@@ -77,5 +79,3 @@ class MatrixStack {
     return vec2.transformMat4(this.out, v, m);
   }
 }
-
-export default MatrixStack;
