@@ -28,7 +28,9 @@
     "gl-matrix": "^2.1.0",
     "immutable": "^3.7.2",
     "materialize-css": "^0.96.1",
-    "seedrandom": "^2.4.0"
+    "seedrandom": "^2.4.0",
+    "body-parser": "^1.4.3",
+    "express": "^4.4.5"
   },
   "devDependencies": {
     "babel": "^5.3.1",
