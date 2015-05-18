@@ -29,5 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   compatibilityHacks();
 
+  // Initialize collapse button
+  $('.button-collapse').sideNav();
+
   SeniWebApplication.mainFn();
 });
