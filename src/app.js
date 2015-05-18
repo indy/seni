@@ -431,7 +431,7 @@ const SeniWebApplication = {
 
       phenotypes: [],
 
-      placeholder: 'spinner.gif',
+      placeholder: 'img/spinner.gif',
       populationSize: 24,
       genotypes: [],
 

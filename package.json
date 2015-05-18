@@ -8,7 +8,7 @@
     "build-watch": "webpack --watch",
     "build-min": "webpack --config webpack.config.min.js",
     "clean": "rm -rf dist",
-    "serve": "node server.js"
+    "serve": "node server/server.js"
   },
   "repository": {
     "type": "git",
