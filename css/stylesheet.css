@@ -12,6 +12,10 @@
 .cm-s-default .cm-seni-parameter {color: #085;}
 
 
+#edit-container {
+  height: 100%;
+  width: 100%;
+}
 
 .flex-container-h {
   height: 100%;

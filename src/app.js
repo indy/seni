@@ -27,9 +27,10 @@ import CodeMirrorConfig from './ui/CodeMirrorConfig';
 /* eslint-disable no-unused-vars */
 
 const SeniMode = {
-  edit: 0,
-  evolve: 1,
-  gallery: 2
+  gallery: 0,
+  edit: 1,
+  evolve: 2,
+  numSeniModes: 3
 };
 
 function renderScriptToImage(seniApp, ast, genotype, imageElement) {
@@ -115,7 +116,7 @@ function toggleSelection(seniApp, element) {
     const cardImage = e.getElementsByClassName('card-image')[0];
     cardImage.classList.toggle('selected');
 
-    const c = seniApp.containers[index];
+    const c = seniApp.phenotypes[index];
     c.selected = !c.selected;
   }
 }
@@ -126,11 +127,11 @@ function renderPhenotypes(app) {
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to edit mode
-    if (i < app.containers.length && app.currentMode === SeniMode.evolve) {
+    if (i < app.phenotypes.length && app.currentMode === SeniMode.evolve) {
 
       const genotype = app.genotypes[i];
 
-      const imageElement = app.containers[i].imageElement;
+      const imageElement = app.phenotypes[i].imageElement;
 
       app.renderer.preDrawScene(imageElement.clientWidth,
                                 imageElement.clientHeight);
@@ -148,7 +149,7 @@ function renderPhenotypes(app) {
 
 function showPlaceholderImages(seniApp) {
   for(let i = 0; i < seniApp.populationSize; i++) {
-    const imageElement = seniApp.containers[i].imageElement;
+    const imageElement = seniApp.phenotypes[i].imageElement;
     imageElement.src = seniApp.placeholder;
   }
 }
@@ -158,7 +159,7 @@ function onNextGen(seniApp) {
   // get the selected genotypes for the next generation
   let chosen = [];
   for(let i = 0; i < seniApp.populationSize; i++) {
-    if(seniApp.containers[i].selected === true) {
+    if(seniApp.phenotypes[i].selected === true) {
       chosen.push(seniApp.genotypes[i]);
     }
   }
@@ -170,19 +171,19 @@ function onNextGen(seniApp) {
 
   // clean up the dom and clear the selected state
   for(let i = 0; i < seniApp.populationSize; i++) {
-    if(seniApp.containers[i].selected === true) {
-      const element = seniApp.containers[i].phenotypeContainer;
+    if(seniApp.phenotypes[i].selected === true) {
+      const element = seniApp.phenotypes[i].phenotypeElement;
       const cardImage = element.getElementsByClassName('card-image')[0];
       cardImage.classList.toggle('selected');
     }
-    seniApp.containers[i].selected = false;
+    seniApp.phenotypes[i].selected = false;
   }
 }
 
-function createPhenotypeContainer(id, placeholderImage) {
+function createPhenotypeElement(id, placeholderImage) {
   const container = document.createElement('div');
 
-  container.className = 'phenotype-container col s6 m4 l3';
+  container.className = 'col s6 m4 l3';
   container.id = 'pheno-' + id;
 
   container.innerHTML = `
@@ -204,7 +205,7 @@ function setupEvolveUI(seniApp, form) {
   showPlaceholderImages(seniApp);
 
   const renderer = seniApp.renderer;
-  const gallery = document.getElementById('gallery-container');
+  const gallery = document.getElementById('phenotype-gallery');
 
   seniApp.ast = Runtime.buildAst(seniApp.env, form);
   seniApp.traits = Genetic.buildTraits(seniApp.ast);
@@ -238,21 +239,22 @@ function switchMode(seniApp, newMode) {
   console.log('switching mode to ' + newMode);
   seniApp.currentMode = newMode;
 
-  const editContainer = document.getElementById('edit-container');
-  const evolveContainer = document.getElementById('evolve-container');
-
   const sourceCode = seniApp.editor.getValue();
 
-  if (seniApp.currentMode === SeniMode.edit) {
-    editContainer.className = 'flex-container-h';
-    evolveContainer.className = 'hidden';
+  // show the current container, hide the others
+  for(let i = 0; i < SeniMode.numSeniModes; i++) {
+    seniApp.containers[i].className = i === seniApp.currentMode ? '' : 'hidden';
+  }
 
+  switch(seniApp.currentMode) {
+  case SeniMode.gallery :
+    break;
+  case SeniMode.edit :
     renderScript(seniApp, sourceCode);
-  } else {    // SeniMode.evolve
-    editContainer.className = 'hidden';
-    evolveContainer.className = '';
-
+    break;
+  case SeniMode.evolve :
     setupEvolveUI(seniApp, sourceCode);
+    break;
   }
 }
 
@@ -265,6 +267,7 @@ function resizeContainers() {
 
   const sc = document.getElementById('evolve-container');
   sc.style.height = (sc.offsetHeight - navbar.offsetHeight) + 'px';
+
 }
 
 function polluteGlobalDocument(seniApp) {
@@ -361,7 +364,7 @@ function setupUI(seniApp) {
     withTiming('renderTime', () => renderScript(seniApp, source));
   });
 
-  addClickEvent('gallery-container', event => {
+  addClickEvent('phenotype-gallery', event => {
     let target = event.target;
     if(target.classList.contains('render')) {
       renderHighRes(seniApp, target);
@@ -390,12 +393,12 @@ function setupUI(seniApp) {
     }
   }, false);
 
-  const gallery = document.getElementById('gallery-container');
+  const gallery = document.getElementById('phenotype-gallery');
   gallery.innerHTML = '';
 
   let i;
-  let phenotypeContainer;
-  seniApp.containers = [];
+  let phenotypeElement;
+  seniApp.phenotypes = [];
 
   let row;
 
@@ -404,14 +407,14 @@ function setupUI(seniApp) {
   gallery.appendChild(row);
 
   for(i = 0; i < seniApp.populationSize; i++) {
-    phenotypeContainer = createPhenotypeContainer(i, seniApp.placeholder);
-    row.appendChild(phenotypeContainer);
+    phenotypeElement = createPhenotypeElement(i, seniApp.placeholder);
+    row.appendChild(phenotypeElement);
 
     const imageElement =
-            phenotypeContainer.getElementsByClassName('phenotype')[0];
+            phenotypeElement.getElementsByClassName('phenotype')[0];
 
-    seniApp.containers.push({
-      phenotypeContainer,
+    seniApp.phenotypes.push({
+      phenotypeElement,
       imageElement,
       selected: false
     });
@@ -425,6 +428,8 @@ const SeniWebApplication = {
       renderer: undefined,
       editor: undefined,
       containers: [],
+
+      phenotypes: [],
 
       placeholder: 'spinner.gif',
       populationSize: 24,
@@ -441,6 +446,12 @@ const SeniWebApplication = {
     seniApp.renderer = new Renderer('render-canvas');
     seniApp.env = Bind.addBindings(Runtime.createEnv(), seniApp.renderer);
     seniApp.currentMode = SeniMode.edit;
+    seniApp.containers = [
+      document.getElementById('gallery-container'),
+      document.getElementById('edit-container'),
+      document.getElementById('evolve-container')
+    ];
+
 
     polluteGlobalDocument(seniApp);
 

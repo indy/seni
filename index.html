@@ -40,29 +40,35 @@
 
     <canvas id="render-canvas" width="500" height="500" class="hidden"></canvas>
 
-    <div id="edit-container" class="flex-container-h">
-      <div id="render-container">
-        <img id="render-img"></img>
-      </div>
-      <div id="editor-container">
-        <textarea id="codemirror-textarea"></textarea> 
-      </div>
-      <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
-        <a class="btn-floating btn-large red" id="action-eval">
-          <i class="large mdi-content-create"></i>
-        </a>
-        <ul>
-          <li>
+    <div id="gallery-container" class="hidden">
+      <p>hello world</p>
+    </div>
+    
+    <div id="edit-container">
+      <div class="flex-container-h">
+        <div id="render-container">
+          <img id="render-img"></img>
+        </div>
+        <div id="editor-container">
+          <textarea id="codemirror-textarea"></textarea> 
+        </div>
+        <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
+          <a class="btn-floating btn-large red" id="action-eval">
+            <i class="large mdi-content-create"></i>
+          </a>
+          <ul>
+            <li>
               <a id="evolve-mode-icon" class="btn-floating blue">
                 <i class="mdi-action-view-module"></i>
               </a>
-          </li>
-        </ul>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
 
     <div id="evolve-container" class="hidden">
-      <div id="gallery-container"></div>
+      <div id="phenotype-gallery"></div>
       <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
         <a class="btn-floating btn-large blue" id="action-next-gen">
           <i class="large mdi-action-view-module"></i>
