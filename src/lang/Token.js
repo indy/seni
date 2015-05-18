@@ -16,8 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* eslint-disable no-shadow */
-
 export default class Token {
   constructor(type, value = undefined) {
     this.type = type;
