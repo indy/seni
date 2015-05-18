@@ -27,8 +27,9 @@ import CodeMirrorConfig from './ui/CodeMirrorConfig';
 /* eslint-disable no-unused-vars */
 
 const SeniMode = {
-  authoring: 0,
-  selecting: 1
+  edit: 0,
+  evolve: 1,
+  gallery: 2
 };
 
 function renderScriptToImage(seniApp, ast, genotype, imageElement) {
@@ -73,7 +74,15 @@ function addClickEvent(id, fn) {
   element.addEventListener('click', fn);
 }
 
-// when user has clicked on a phenotype in the selector UI,
+function addClickEventForClass(className, fn) {
+  const elements = document.getElementsByClassName(className);
+  // getElementsByClassName returns an array-like object
+  for(let i = 0; i < elements.length; i++) {
+    elements[i].addEventListener('click', fn);
+  }
+}
+
+// when user has clicked on a phenotype in the evolve UI,
 // traverse up the card until we get to a dom element that
 // contains the phenotype's index number in it's id
 function getPhenoIdFromDom(element) {
@@ -116,8 +125,8 @@ function renderPhenotypes(app) {
   let i = 0;
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
-    // population or the user has switched to authoring mode
-    if (i < app.containers.length && app.currentMode === SeniMode.selecting) {
+    // population or the user has switched to edit mode
+    if (i < app.containers.length && app.currentMode === SeniMode.evolve) {
 
       const genotype = app.genotypes[i];
 
@@ -190,6 +199,102 @@ function createPhenotypeContainer(id, placeholderImage) {
   return container;
 }
 
+function setupEvolveUI(seniApp, form) {
+
+  showPlaceholderImages(seniApp);
+
+  const renderer = seniApp.renderer;
+  const gallery = document.getElementById('gallery-container');
+
+  seniApp.ast = Runtime.buildAst(seniApp.env, form);
+  seniApp.traits = Genetic.buildTraits(seniApp.ast);
+
+  // create phenotype/genotype containers
+  let i;
+
+  // add genotypes to the containers
+  let genotype;
+  let random = new Date();
+  random = random.toGMTString();
+  for(i = 0; i < seniApp.populationSize; i++) {
+    if(i === 0) {
+      genotype = Genetic.createGenotypeFromInitialValues(seniApp.traits);
+    } else {
+      genotype = Genetic.createGenotypeFromTraits(seniApp.traits, i + random);
+    }
+    seniApp.genotypes[i] = genotype;
+  }
+
+  // render the phenotypes
+  renderPhenotypes(seniApp);
+}
+
+function switchMode(seniApp, newMode) {
+
+  if(seniApp.currentMode === newMode) {
+    return;
+  }
+
+  console.log('switching mode to ' + newMode);
+  seniApp.currentMode = newMode;
+
+  const editContainer = document.getElementById('edit-container');
+  const evolveContainer = document.getElementById('evolve-container');
+
+  const sourceCode = seniApp.editor.getValue();
+
+  if (seniApp.currentMode === SeniMode.edit) {
+    editContainer.className = 'flex-container-h';
+    evolveContainer.className = 'hidden';
+
+    renderScript(seniApp, sourceCode);
+  } else {    // SeniMode.evolve
+    editContainer.className = 'hidden';
+    evolveContainer.className = '';
+
+    setupEvolveUI(seniApp, sourceCode);
+  }
+}
+
+// take the height of the navbar into consideration
+function resizeContainers() {
+  const navbar = document.getElementById('seni-navbar');
+
+  const ac = document.getElementById('edit-container');
+  ac.style.height = (ac.offsetHeight - navbar.offsetHeight) + 'px';
+
+  const sc = document.getElementById('evolve-container');
+  sc.style.height = (sc.offsetHeight - navbar.offsetHeight) + 'px';
+}
+
+function polluteGlobalDocument(seniApp) {
+  document.seni = {};
+  document.seni.title = Trivia.getTitle;
+  document.seni.help = function(name) {
+    const v = seniApp.env.get(name);
+    if(v.pb) {
+      const binding = v.pb;       // publicBinding
+      const args = JSON.stringify(binding.defaults, null, ' ');
+      console.log(name + ':', binding.doc);
+      console.log('default arguments', args);
+    }
+  };
+  document.seni.seniApp = seniApp;
+}
+/*
+function iterateEnv(seniApp) {
+  let env = seniApp.env;
+  let keys = env.keys();
+
+  let res = [];
+  for(let k = keys.next(); k.done === false; k = keys.next()) {
+    res.push(k.value);
+  }
+  res.sort();
+  res.map(name => console.log(name));
+  console.log(res.toString());
+}*/
+
 function setupUI(seniApp) {
   const d = document;
 
@@ -226,21 +331,29 @@ function setupUI(seniApp) {
   };
   seniApp.editor = codeMirror.fromTextArea(textArea, config);
 
-  addClickEvent('selector-mode-icon', event => {
-    if(seniApp.currentMode !== SeniMode.selecting) {
-      switchMode(seniApp, SeniMode.selecting);
-    }
+  let galleryModeHandler = event => {
+    switchMode(seniApp, SeniMode.gallery);
     event.preventDefault();
-  });
+  };
 
-  addClickEvent('author-mode-icon', event => {
-    if(seniApp.currentMode !== SeniMode.authoring) {
-      switchMode(seniApp, SeniMode.authoring);
-    }
+  let evolveModeHandler = event => {
+    switchMode(seniApp, SeniMode.evolve);
     event.preventDefault();
-  });
+  };
+
+  let editModeHandler = event => {
+    switchMode(seniApp, SeniMode.edit);
+    event.preventDefault();
+  };
 
 
+  addClickEvent('evolve-mode-icon', evolveModeHandler);
+  addClickEventForClass('to-evolve', evolveModeHandler);
+
+  addClickEvent('edit-mode-icon', editModeHandler);
+  addClickEventForClass('to-edit', editModeHandler);
+
+  addClickEventForClass('to-gallery', galleryModeHandler);
 
 
   addClickEvent('action-eval', () => {
@@ -271,7 +384,7 @@ function setupUI(seniApp) {
   const dKey = 68;
   document.addEventListener('keydown', event => {
     if (event.ctrlKey && event.keyCode === dKey &&
-        seniApp.currentMode === SeniMode.selecting) {
+        seniApp.currentMode === SeniMode.evolve) {
       event.preventDefault();
       onNextGen(seniApp);
     }
@@ -305,101 +418,10 @@ function setupUI(seniApp) {
   }
 }
 
-function setupSelectorUI(seniApp, form) {
-
-  showPlaceholderImages(seniApp);
-
-  const renderer = seniApp.renderer;
-  const gallery = document.getElementById('gallery-container');
-
-  seniApp.ast = Runtime.buildAst(seniApp.env, form);
-  seniApp.traits = Genetic.buildTraits(seniApp.ast);
-
-  // create phenotype/genotype containers
-  let i;
-
-  // add genotypes to the containers
-  let genotype;
-  let random = new Date();
-  random = random.toGMTString();
-  for(i = 0; i < seniApp.populationSize; i++) {
-    if(i === 0) {
-      genotype = Genetic.createGenotypeFromInitialValues(seniApp.traits);
-    } else {
-      genotype = Genetic.createGenotypeFromTraits(seniApp.traits, i + random);
-    }
-    seniApp.genotypes[i] = genotype;
-  }
-
-  // render the phenotypes
-  renderPhenotypes(seniApp);
-}
-
-function switchMode(seniApp, newMode) {
-  console.log('switching mode to ' + newMode);
-  seniApp.currentMode = newMode;
-
-  const authorContainer = document.getElementById('author-container');
-  const selectorContainer = document.getElementById('selector-container');
-
-  const sourceCode = seniApp.editor.getValue();
-
-  if (seniApp.currentMode === SeniMode.authoring) {
-    authorContainer.className = 'flex-container-h';
-    selectorContainer.className = 'hidden';
-
-    renderScript(seniApp, sourceCode);
-  } else {    // SeniMode.selecting
-    authorContainer.className = 'hidden';
-    selectorContainer.className = '';
-
-    setupSelectorUI(seniApp, sourceCode);
-  }
-}
-
-// take the height of the navbar into consideration
-function resizeContainers() {
-  const navbar = document.getElementById('seni-navbar');
-
-  const ac = document.getElementById('author-container');
-  ac.style.height = (ac.offsetHeight - navbar.offsetHeight) + 'px';
-
-  const sc = document.getElementById('selector-container');
-  sc.style.height = (sc.offsetHeight - navbar.offsetHeight) + 'px';
-}
-
-function polluteGlobalDocument(seniApp) {
-  document.seni = {};
-  document.seni.title = Trivia.getTitle;
-  document.seni.help = function(name) {
-    const v = seniApp.env.get(name);
-    if(v.pb) {
-      const binding = v.pb;       // publicBinding
-      const args = JSON.stringify(binding.defaults, null, ' ');
-      console.log(name + ':', binding.doc);
-      console.log('default arguments', args);
-    }
-  };
-  document.seni.seniApp = seniApp;
-}
-/*
-function iterateEnv(seniApp) {
-  let env = seniApp.env;
-  let keys = env.keys();
-
-  let res = [];
-  for(let k = keys.next(); k.done === false; k = keys.next()) {
-    res.push(k.value);
-  }
-  res.sort();
-  res.map(name => console.log(name));
-  console.log(res.toString());
-}*/
-
 const SeniWebApplication = {
   mainFn() {
     const seniApp = {
-      currentMode: SeniMode.authoring,
+      currentMode: SeniMode.edit,
       renderer: undefined,
       editor: undefined,
       containers: [],
@@ -418,7 +440,7 @@ const SeniWebApplication = {
 
     seniApp.renderer = new Renderer('render-canvas');
     seniApp.env = Bind.addBindings(Runtime.createEnv(), seniApp.renderer);
-    seniApp.currentMode = SeniMode.authoring;
+    seniApp.currentMode = SeniMode.edit;
 
     polluteGlobalDocument(seniApp);
 

@@ -21,13 +21,26 @@
       <nav>
         <div class="nav-wrapper blue">
           <a href="#!" class="brand-logo">Seni</a>
+
+          <ul id="slide-out" class="side-nav">
+            <li><a class="to-gallery">Gallery</a></li>
+            <li><a class="to-edit">Edit</a></li>
+            <li><a class="to-evolve">Evolve</a></li>
+          </ul>
+          <ul class="right hide-on-med-and-down">
+            <li><a class="to-gallery">Gallery</a></li>
+            <li><a class="to-edit">Edit</a></li>
+            <li><a class="to-evolve">Evolve</a></li>
+          </ul>
+          <a href="#" data-activates="slide-out" class="button-collapse"><i class="mdi-navigation-menu"></i></a>
+          
         </div>
       </nav>
     </div>
 
     <canvas id="render-canvas" width="500" height="500" class="hidden"></canvas>
 
-    <div id="author-container" class="flex-container-h">
+    <div id="edit-container" class="flex-container-h">
       <div id="render-container">
         <img id="render-img"></img>
       </div>
@@ -40,7 +53,7 @@
         </a>
         <ul>
           <li>
-              <a id="selector-mode-icon" class="btn-floating blue">
+              <a id="evolve-mode-icon" class="btn-floating blue">
                 <i class="mdi-action-view-module"></i>
               </a>
           </li>
@@ -48,7 +61,7 @@
       </div>
     </div>
 
-    <div id="selector-container" class="hidden">
+    <div id="evolve-container" class="hidden">
       <div id="gallery-container"></div>
       <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
         <a class="btn-floating btn-large blue" id="action-next-gen">
@@ -56,7 +69,7 @@
         </a>
         <ul>
           <li>
-              <a id="author-mode-icon" class="btn-floating red">
+              <a id="edit-mode-icon" class="btn-floating red">
                 <i class="mdi-content-create"></i>
               </a>
           </li>
