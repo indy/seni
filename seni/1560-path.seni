@@ -1,0 +1,99 @@
+; apply a full-canvas dark texture
+(stroked-bezier-rect position: (v2 500 500)
+                     overlap: 90
+                     iterations: 80
+                     tessellation: 20
+                     stroke-noise: 20
+      				 width: 1100 
+                     height: 1100
+      				 colour: (col/rgb r: 0 g: 0 b: 0.1 alpha: 0.9))
+
+; further darken the background
+(rect position: (v2 500 500)
+      width: 1000 height: 1000
+      colour: (col/rgb r: 0 g: 0 b: 0.0 alpha: 0.5))
+
+;; the coords that the bezier path will take
+(define coords (list (v2 [  0 (int max: 1000)] [500 (int max: 1000)])
+                     (v2 [333 (int max: 1000)] [100 (int max: 1000)])
+                     (v2 [666 (int max: 1000)] [900 (int max: 1000)])
+                     (v2 [999 (int max: 1000)] [500 (int max: 1000)])))
+
+;; as the bezier path progresses, change the circle's LAB a component
+(define remap-a (remap-fn from: (v2 0 1)
+                            to: (v2 [-80 (scalar min: -100 max: 100)]
+                                    [ 80 (scalar min: -100 max: 100)])))
+
+;; as the bezier path progresses, change the circle's LAB b component
+(define remap-b (remap-fn from: (v2 0 1)
+                            to: (v2 [-100 (scalar min: -100 max: 100)]
+                                    [ 100 (scalar min: -100 max: 100)])))
+
+;; make a function that will be invoked for every point in the bezier path
+(define (make-fun radius: 10
+                  radius-factor: 0
+                  tessellation: [20 (int min: 3 max: 20)]
+                  seed: "hooha"         ; the seed for the position offset rng
+                  l-val: 100            ; the l in LAB
+                  alpha: 1
+                  random-factor: 40)    ; the amount to offset circle position
+  ;; random is used to offset the position along the path
+  (let ((random (rng/signed seed: seed)))
+    (define (fun position: (v2 0 0)
+                 t-value: 0)
+      (poly position: (v2 (+ (v2/x position) (* random-factor (random)))
+                            (+ (v2/y position) (* random-factor (random))))
+                radius: (+ radius (* radius (random) radius-factor))
+                tessellation: tessellation
+                colour: (col/lab l: l-val
+                                 a: (remap-a val: t-value)
+                                 b: (remap-b val: t-value)
+                                 alpha: alpha)))))
+
+(path/bezier fn: (make-fun radius: 500
+                           l-val: 6
+                           alpha: 0.005)
+             steps: 70
+             coords: coords)
+
+(path/bezier fn: (make-fun radius: 300
+                           radius-factor: 0.4
+                           l-val: 12
+                           alpha: 0.01)
+             steps: 70
+             coords: coords)
+
+(define steps [20 (int min: 5 max: 50)])
+
+(path/bezier fn: (make-fun radius: 100
+                           seed: "eenie"
+                           radius-factor: 0.4
+                           l-val: 25
+                           alpha: 0.2)
+             steps: steps
+             coords: coords)
+
+(path/bezier fn: (make-fun radius: 40
+                           seed: "meenie"
+                           radius-factor: 0.4
+                           l-val: 40
+                           alpha: 0.5)
+             steps: steps
+             coords: coords)
+
+(path/bezier fn: (make-fun radius: 10
+                           radius-factor: 0.4
+                           seed: "miney"
+                           l-val: 60
+                           alpha: 0.8)
+             steps: steps
+             coords: coords)
+
+(path/bezier fn: (make-fun radius: 5
+                           radius-factor: 1.4
+                           random-factor: 100
+                           l-val: 90
+                           seed: "mo"
+                           alpha: 0.6)
+             steps: (/ steps 2)
+             coords: coords)

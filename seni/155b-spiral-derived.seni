@@ -1,0 +1,19 @@
+
+(define centre (v2 500 500))
+
+(define (render-circle position: (v2 0 0)
+                       step: 0
+                       t-value: 0)
+  (let ((rad (- [400 (int min: 200 max: 600)] (* step [1 (scalar max: 2.0)]))))
+    (poly position: (v2/+ centre (v2/* position (v2 rad rad)))
+          radius: [20 (int min: 5 max: 50)]
+          tessellation: 30
+          colour: (col/rgb r: 0.1 g: 0.5 b: 0.2 alpha: 0.7))))
+
+(path/circle position: (v2 0 0)
+             t-start: [0.2 (scalar)]
+             t-end: [5.5 (scalar min: 1.0 max: 12.0)]
+             radius: 1
+             steps: [290 (int min: 30 max: 800)]
+             fn: render-circle)
+

@@ -1,0 +1,53 @@
+(render-background)
+(translate x: 500 y: 500)
+(rotate angle: [0.1 (scalar max: 2.0)])
+(define scale-factor [1.2 (scalar min: 0.1 max: 3.0)])
+(scale x: scale-factor y: scale-factor)
+(render-main)
+
+(define num-squares-to-render [15 (int min: 2 max: 20)])
+(define gap-size [30 (int min: 5 max: 50)])
+
+(define num-squares (+ 2 num-squares-to-render))
+
+(define num-gaps (+ num-squares 1))
+(define square-size (/ (- 1000 (* gap-size num-gaps)) num-squares))
+
+(define base-colour (col/rgb r: [1.0 (scalar)]
+                             g: [0.0 (scalar)]
+                             b: [0.3 (scalar)]
+                             alpha: 1.0))
+(define colour-volatility [20 (int min: 2 max: 40)])
+
+(define focal-point (focal/point position: (v2 [500 (int max: 1000)]
+                                               [500 (int max: 1000)])
+                                 distance: [500 (int max: 1000)]))
+(define focal-power [50 (scalar max: 200)])
+
+(define (render-background colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
+  (rect x: 500
+        y: 500
+        width: 1000
+        height: 1000
+        colour: colour))
+
+(define (map-to-position at: 0)
+  (- (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size) 500))
+
+(define (render-main)
+  (loop (y from: 1 to:  (- num-squares 1))
+    (loop (x from: 1 to:  (- num-squares 1))               
+      (let ((p (v2 (map-to-position at: x)
+                   (map-to-position at: y)))
+            (volatility: (* (focal-point position: p) focal-power)))
+        (stroked-bezier-rect position: p
+                             width: square-size
+                             height: square-size
+                             seed: (+ x (* y num-squares))
+                             colour: base-colour
+                             colour-volatility: colour-volatility
+                             volatility: volatility
+                             iterations: [10 (int min: 1 max: 50)]
+                             tessellation: 1
+                             overlap: [0 (int max: 10)]
+                             stroke-noise: 0)))))

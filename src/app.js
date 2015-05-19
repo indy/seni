@@ -33,6 +33,25 @@ const SeniMode = {
   numSeniModes: 3
 };
 
+function getData(url, fn) {
+  var request = new XMLHttpRequest();
+  request.open('GET', url, true);
+
+  request.onload = function() {
+    if (request.status >= 200 && request.status < 400) {
+      fn(request.responseText);
+    } else {
+      // server returned an error
+    }
+  };
+
+  request.onerror = function() {
+    // connection error
+  };
+
+  request.send();
+}
+
 function renderScriptToImage(seniApp, ast, genotype, imageElement) {
 
   const renderer = seniApp.renderer;
@@ -99,6 +118,19 @@ function getPhenoIdFromDom(element) {
   return [-1, null];
 }
 
+function getGalleryItemIdFromDom(element) {
+  while(element) {
+    const m = element.id.match(/gallery-item-(\d+)/);
+    if(m && m.length === 2) {
+      const index = Number.parseInt(m[1], 10);
+      return [index, element];
+    } else {
+      element = element.parentNode;
+    }
+  }
+  return [-1, null];
+}
+
 function renderHighRes(seniApp, element) {
   const [index, _] = getPhenoIdFromDom(element);
   if(index !== -1) {
@@ -107,6 +139,19 @@ function renderHighRes(seniApp, element) {
     imageElement.classList.toggle('hidden');
     const ast = Runtime.buildAst(seniApp.env, seniApp.form);
     renderScriptToImage(seniApp, ast, genotype, imageElement);
+  }
+}
+
+function showEdit(seniApp, element) {
+  const [index, _] = getGalleryItemIdFromDom(element);
+  if(index !== -1) {
+    console.log('showEdit called with', index);
+    const url = '/gallery/' + index;
+    getData(url, data => {
+      seniApp.editor.getDoc().setValue(data);
+      switchMode(seniApp, SeniMode.edit);
+      seniApp.editor.refresh();
+    });
   }
 }
 
@@ -313,7 +358,7 @@ function setupUI(seniApp) {
     });
   };
 
-  let codeMirror = CodeMirrorConfig.getCodeMirror();
+  let codeMirror = CodeMirrorConfig.defineSeniMode();
   let config = CodeMirrorConfig.defaultConfig;
   config.extraKeys = {
     'Ctrl-E': function() {
@@ -362,6 +407,14 @@ function setupUI(seniApp) {
   addClickEvent('action-eval', () => {
     let source = seniApp.editor.getValue();
     withTiming('renderTime', () => renderScript(seniApp, source));
+  });
+
+  addClickEvent('gallery-list', event => {
+    let target = event.target;
+    if(target.classList.contains('show-edit')) {
+      showEdit(seniApp, target);
+    }
+    event.preventDefault();
   });
 
   addClickEvent('phenotype-gallery', event => {
@@ -421,6 +474,48 @@ function setupUI(seniApp) {
   }
 }
 
+function getGallery() {
+  let list = document.getElementById('gallery-list');
+  list.innerHTML = '';
+
+  let row = document.createElement('div');
+  row.className = 'row';
+  list.appendChild(row);
+
+
+  let createGalleryElement = galleryItem => {
+    const container = document.createElement('div');
+
+    container.className = 'col s6 m4 l3';
+    container.id = 'gallery-item-' + galleryItem.id;
+
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-image">
+          <img class="gallery-item-image"
+               src="${galleryItem.image}"
+               style="width:320px;height:320px">
+        </div>
+        <div class="card-action">
+          <a href="#" class="show-edit">Edit</a>
+          <a href="#" class="show-evolve">Evolve</a>
+        </div>
+      </div>
+      `;
+
+    return container;
+  };
+
+  getData('/gallery', data => {
+    let galleryItems = JSON.parse(data);
+    // gets an array of gallery items
+    galleryItems.forEach(item => {
+      let e = createGalleryElement(item);
+      row.appendChild(e);
+    });
+  });
+}
+
 const SeniWebApplication = {
   mainFn() {
     const seniApp = {
@@ -458,6 +553,7 @@ const SeniWebApplication = {
     setupUI(seniApp);
     renderScript(seniApp, initialCode());
 
+    getGallery();
     //iterateEnv(seniApp);
   }
 };

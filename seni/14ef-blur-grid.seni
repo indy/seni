@@ -1,0 +1,76 @@
+(define num-squares-to-render 13)
+(define gap-size 30)
+
+(define num-squares (+ 2 num-squares-to-render))
+
+(define num-gaps (+ num-squares 1))
+(define square-size (/ (- 1000 (* gap-size num-gaps)) num-squares))
+
+(wash)
+
+(loop (y from: 1 to: (- num-squares 1))
+  (loop (x from: 1 to: (- num-squares 1))
+    (let ((x-pos (map-to-position at: x))
+          (y-pos (map-to-position at: y)))
+      (accumulated-rect x: x-pos
+                        y: y-pos
+                        passes: 20
+                        volatility: (/ (math/distance-2d x1: 500 
+                                                         y1: 500
+                                                         x2: x-pos
+                                                         y2: y-pos) 250)
+                        seed: (+ x (* y num-squares))
+                        width: square-size 
+                        height: square-size
+                        colour: (col/rgb r: 1.0 g: 0.0 b: 0.4 alpha: 1.0)))))
+
+(define (map-to-position at: 0)
+  (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
+
+(define (accumulated-rect x: 0
+                          y: 0
+                          width: 10
+                          height: 10
+                          colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)
+                          volatility: 0
+                          passes: 1
+                          seed: "asdf")
+  (let ((alpha (col/get-alpha colour: colour))
+        (pass-colour (col/set-alpha colour: colour value: (/ alpha passes)))
+        (rng (rng/signed seed: seed)))
+    (on-matrix-stack
+      (translate x: x y: y)
+      (loop (i to: passes)
+        (let (((rr xr yr) (take num: 3 from: rng)))
+          (on-matrix-stack
+            (rotate angle: (* rr 0.02 volatility))
+            (rect position: (v2 (* xr 5 volatility) (* yr 5 volatility))
+                  width: width
+                  height: height
+                  colour: pass-colour)))))))
+
+(define (v x: 0 y: 0 z: 0 scale: 1)
+  (+ y (* scale (perlin/signed x: x y: y z: z))))
+
+(define (wash variation: 200
+              line-width: 70
+              line-segments: 5
+              colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+              seed: 272)
+  (loop (h from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: (list
+                     (v2 0 (v x: 0.10 y: h z: seed scale: variation))
+                     (v2 333 (v x: 333.33 y: h z: seed scale: variation))
+                     (v2 666 (v x: 666.66 y: h z: seed scale: variation))
+                     (v2 1000 (v x: 1000.10 y: h z: seed scale: variation)))
+            colour: colour)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: (list
+                     (v2 (v x: 0.10 y: h z: seed scale: variation) 0)
+                     (v2 (v x: 333.33 y: h z: seed scale: variation) 333)
+                     (v2 (v x: 666.66 y: h z: seed scale: variation) 666)
+                     (v2 (v x: 1000.10 y: h z: seed scale: variation) 1000))
+            colour: colour)))

@@ -16,9 +16,12 @@ const defaultConfig = {
 };
 
 const CodeMirrorConfig = {
-  getCodeMirror() {
+  defineSeniMode() {
     // return an instance of CodeMirror with Seni mode defined
     CodeMirror.defineMode(modeName, CodeMirrorSeni.seniMode);
+    return CodeMirror;
+  },
+  getCodeMirror() {
     return CodeMirror;
   },
   defaultConfig,

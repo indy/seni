@@ -179,6 +179,11 @@
 
 .phenotype {
   padding: 1em;
+
+}
+
+.gallery-item-image {
+  padding: 1em;
 }
 
 html,body {

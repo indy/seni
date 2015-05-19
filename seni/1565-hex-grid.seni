@@ -1,0 +1,60 @@
+(define scalefactor [1.5 (scalar min: 0.5 max: 3)])
+(define hex-size [30 (int min: 10 max: 100)])
+
+(define colour-a (col/rgb r: [0 (scalar)] g: [0 (scalar)] b: [0.4 (scalar)]))
+(define colour-b (col/rgb r: [1 (scalar)] g: [0 (scalar)] b: [0.4 (scalar)]))
+
+(define focalpoint (focal/point position: (v2 [500 (int max: 1000)]
+                                              [500 (int max: 1000)])
+                                distance: [400 (int min: 200 max: 1000)]))
+
+(define (hexagon position: (v2 500 500)
+                 colour: black
+                 size: 100)
+  (poly colour: colour
+        radius: (* size 0.95) 
+        position: position
+        tessellation: 6))
+
+(define (hex-grid from: (v2 0 0)
+                  to: (v2 1000 1000)
+                  colour: red
+                  size: 30)
+  (let ((height (* size 2))
+        (vert (* height 0.75))
+        (width (* (/ (sqrt 3) 2) height)))
+    (loop (y from: (v2/y from)
+             to: (+ (v2/y to) vert vert)
+             increment: (+ vert vert))
+      (loop (x from: (v2/x from)
+               to: (+ (v2/x to) width)
+               increment: width)
+        (hexagon size: size
+                 colour: (col/set-alpha colour: colour
+                                        value: (focalpoint position: (v2 x y)))
+                 position: (v2 x y))))
+
+    (loop (y from: (+ (v2/y from) vert)
+             to: (+ (v2/y to) vert vert)
+             increment: (+ vert vert))
+      (loop (x from: (+ (v2/x from) (/ width 2))
+               to: (+ (v2/x to) width)
+               increment: width)
+        (hexagon size: size
+                 colour: (col/set-alpha colour: colour
+                                        value: (focalpoint position: (v2 x y)))
+                 position: (v2 x y))))))
+
+(translate x: 500 y: 500)
+(rotate angle: [0.6 (scalar max: PIPI)])
+(scale x: scalefactor y: scalefactor)
+
+(hex-grid from: (v2 -700 -700)
+          to: (v2 700 700)
+          size: hex-size
+          colour: colour-a)
+
+(hex-grid from: (v2 -500 -500)
+          to: (v2 500 500)
+          size: hex-size
+          colour: colour-b)
