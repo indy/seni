@@ -24,8 +24,6 @@ import Trivia from './seni/Trivia';
 import InitialCode from './InitialCode';
 import CodeMirrorConfig from './ui/CodeMirrorConfig';
 
-/* eslint-disable no-unused-vars */
-
 const SeniMode = {
   gallery: 0,
   edit: 1,
@@ -66,8 +64,7 @@ function renderScriptToImage(seniApp, ast, genotype, imageElement) {
 }
 
 function renderScript(seniApp, form) {
-  seniApp.piece.form = form;
-  const imageElement = document.getElementById('render-img');
+  const imageElement = seniApp.renderImage;
 
   const ast = Runtime.buildAst(seniApp.env, form);
 
@@ -131,6 +128,7 @@ function getGalleryItemIdFromDom(element) {
   return [-1, null];
 }
 
+/* eslint-disable no-unused-vars */
 function renderHighRes(seniApp, element) {
   const [index, _] = getPhenoIdFromDom(element);
   if(index !== -1) {
@@ -142,6 +140,7 @@ function renderHighRes(seniApp, element) {
     renderScriptToImage(seniApp, ast, genotype, imageElement);
   }
 }
+/* eslint-enable no-unused-vars */
 
 function toggleSelection(seniApp, element) {
   const [index, e] = getPhenoIdFromDom(element);
@@ -242,8 +241,6 @@ function setupEvolveUI(seniApp, form) {
   showPlaceholderImages(seniApp);
 
   const piece = seniApp.piece;
-  const renderer = seniApp.renderer;
-  const gallery = document.getElementById('phenotype-gallery');
 
   piece.ast = Runtime.buildAst(seniApp.env, form);
   piece.traits = Genetic.buildTraits(piece.ast);
@@ -274,40 +271,49 @@ function switchMode(seniApp, newMode) {
     return;
   }
 
-  console.log('switching mode to ' + newMode);
+  //const oldMode = seniApp.currentMode;
   seniApp.currentMode = newMode;
-
-  const sourceCode = seniApp.editor.getValue();
 
   // show the current container, hide the others
   for(let i = 0; i < SeniMode.numSeniModes; i++) {
-    seniApp.containers[i].className = i === seniApp.currentMode ? '' : 'hidden';
+    seniApp.containers[i].className = i === newMode ? '' : 'hidden';
   }
 
   switch(seniApp.currentMode) {
   case SeniMode.gallery :
+      seniApp.currentMode = newMode;
     break;
   case SeniMode.edit :
-    renderScript(seniApp, sourceCode);
+    renderScript(seniApp, seniApp.piece.form);
     break;
   case SeniMode.evolve :
-    setupEvolveUI(seniApp, sourceCode);
+    setupEvolveUI(seniApp, seniApp.piece.form);
     break;
   }
 }
+/* eslint-disable no-unused-vars */
+function showFormInEditor(seniApp) {
+  const editor = seniApp.editor;
+  editor.getDoc().setValue(seniApp.piece.form);
+  editor.refresh();
+}
 
-function showEdit(seniApp, element) {
+
+function showEditFromGallery(seniApp, element) {
   const [index, _] = getGalleryItemIdFromDom(element);
   if(index !== -1) {
-    console.log('showEdit called with', index);
+    console.log('showEditFromGallery called with', index);
     const url = '/gallery/' + index;
     getData(url, data => {
-      seniApp.editor.getDoc().setValue(data);
+      // todo: construct a new piece object
+      seniApp.piece.form = data;
+
       switchMode(seniApp, SeniMode.edit);
-      seniApp.editor.refresh();
+      showFormInEditor(seniApp);
     });
   }
 }
+/* eslint-enable no-unused-vars */
 
 // take the height of the navbar into consideration
 function resizeContainers() {
@@ -358,9 +364,10 @@ function setupUI(seniApp) {
     document.getElementById('evolve-container')
   ];
 
-  const textArea = d.getElementById('codemirror-textarea');
+  seniApp.renderImage = document.getElementById('render-img');
 
-  textArea.value = initialCode();
+  const textArea = d.getElementById('codemirror-textarea');
+  //textArea.value = initialCode();
 
   let blockIndent = function(editor, from, to) {
     editor.operation(function() {
@@ -374,9 +381,9 @@ function setupUI(seniApp) {
   let config = CodeMirrorConfig.defaultConfig;
   config.extraKeys = {
     'Ctrl-E': function() {
-      const source = seniApp.editor.getValue();
+      seniApp.piece.form = seniApp.editor.getValue();
       withTiming('renderTime', () =>
-                 renderScript(seniApp, source));
+                 renderScript(seniApp, seniApp.piece.form));
       return false;
     },
     'Ctrl-D': function() {
@@ -417,14 +424,14 @@ function setupUI(seniApp) {
 
 
   addClickEvent('action-eval', () => {
-    let source = seniApp.editor.getValue();
-    withTiming('renderTime', () => renderScript(seniApp, source));
+    seniApp.piece.form = seniApp.editor.getValue();
+    withTiming('renderTime', () => renderScript(seniApp, seniApp.piece.form));
   });
 
   addClickEvent('gallery-list', event => {
     let target = event.target;
     if(target.classList.contains('show-edit')) {
-      showEdit(seniApp, target);
+      showEditFromGallery(seniApp, target);
     }
     event.preventDefault();
   });
@@ -545,6 +552,8 @@ function createSeniApp() {
     currentMode: SeniMode.edit,
     renderer: new Renderer('render-canvas'),
     editor: undefined,
+    // the img destination that shows the rendered script in edit mode
+    renderImage: undefined,
     // the 3 main UI areas
     containers: [],
     placeholder: 'img/spinner.gif',
@@ -569,7 +578,9 @@ const SeniWebApplication = {
     polluteGlobalDocument(seniApp);
 
     setupUI(seniApp);
-    renderScript(seniApp, initialCode());
+    seniApp.piece.form = initialCode();
+    showFormInEditor(seniApp);
+    renderScript(seniApp, seniApp.piece.form);
 
     getGallery();
     //iterateEnv(seniApp);
