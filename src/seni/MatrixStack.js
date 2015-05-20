@@ -26,7 +26,8 @@ export default class MatrixStack {
 
   reset() {
     this.stack = [mat4.create()];
-    this.out = vec3.create();   // only pay the cost of construction once
+    this.out3 = vec3.create();   // only pay the cost of construction once
+    this.out2 = vec2.create();
   }
 
   getHead() {
@@ -69,11 +70,11 @@ export default class MatrixStack {
 
   transformVector(v) {
     const m = this.getHead();
-    return vec3.transformMat4(this.out, v, m);
+    return vec3.transformMat4(this.out3, v, m);
   }
 
   transform2DVector(v) {
     const m = this.getHead();
-    return vec2.transformMat4(this.out, v, m);
+    return vec2.transformMat4(this.out2, v, m);
   }
 }

@@ -166,8 +166,10 @@ class Renderer {
   }
 
   vectorToCanvasSpace(v2) {
-    let v3 = [v2[0], v2[1], 0];
-    return this.matrixStack.transformVector(v3);
+    let res = this.matrixStack.transform2DVector(v2);
+    // destructuring Float32Array as Arrays doesn't work in safari
+    // so we have to build and return a normal JS array
+    return [res[0], res[1]];
   }
 
   // ----------------------------------------------------------------------
