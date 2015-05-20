@@ -21,7 +21,6 @@ import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
 import Bind from './seni/Bind';
 import Trivia from './seni/Trivia';
-import InitialCode from './InitialCode';
 import CodeMirrorConfig from './ui/CodeMirrorConfig';
 
 const SeniMode = {
@@ -50,7 +49,7 @@ function getData(url, fn) {
   request.send();
 }
 
-function renderScriptToImage(seniApp, ast, genotype, imageElement) {
+function renderGenotypeToImage(seniApp, ast, genotype, imageElement) {
 
   const renderer = seniApp.renderer;
 
@@ -70,11 +69,7 @@ function renderScript(seniApp, form) {
 
   const traits = Genetic.buildTraits(ast);
   const genotype = Genetic.createGenotypeFromInitialValues(traits);
-  renderScriptToImage(seniApp, ast, genotype, imageElement);
-}
-
-function initialCode() {
-  return InitialCode.getCode();
+  renderGenotypeToImage(seniApp, ast, genotype, imageElement);
 }
 
 // execute the function and log the time that it takes
@@ -137,7 +132,7 @@ function renderHighRes(seniApp, element) {
     const imageElement = document.getElementById('high-res-image');
     imageElement.classList.toggle('hidden');
     const ast = Runtime.buildAst(seniApp.env, piece.form);
-    renderScriptToImage(seniApp, ast, genotype, imageElement);
+    renderGenotypeToImage(seniApp, ast, genotype, imageElement);
   }
 }
 /* eslint-enable no-unused-vars */
@@ -164,16 +159,9 @@ function renderPhenotypes(seniApp) {
         seniApp.currentMode === SeniMode.evolve) {
 
       const genotype = piece.genotypes[i];
-
       const imageElement = piece.phenotypes[i].imageElement;
 
-      seniApp.renderer.preDrawScene(imageElement.clientWidth,
-                                imageElement.clientHeight);
-
-      Runtime.evalAst(seniApp.env, piece.ast, genotype);
-      seniApp.renderer.postDrawScene();
-
-      imageElement.src = seniApp.renderer.getImageData();
+      renderGenotypeToImage(seniApp, piece.ast, genotype, imageElement);
 
       i++;
       setTimeout(go);
@@ -319,12 +307,11 @@ function showEditFromGallery(seniApp, element) {
 function resizeContainers() {
   const navbar = document.getElementById('seni-navbar');
 
-  const ac = document.getElementById('edit-container');
-  ac.style.height = (ac.offsetHeight - navbar.offsetHeight) + 'px';
+  const edit = document.getElementById('edit-container');
+  edit.style.height = (window.innerHeight - navbar.offsetHeight) + 'px';
 
-  const sc = document.getElementById('evolve-container');
-  sc.style.height = (sc.offsetHeight - navbar.offsetHeight) + 'px';
-
+  const evolve = document.getElementById('evolve-container');
+  evolve.style.height = (window.innerHeight - navbar.offsetHeight) + 'px';
 }
 
 function polluteGlobalDocument(seniApp) {
@@ -366,9 +353,6 @@ function setupUI(seniApp) {
 
   seniApp.renderImage = document.getElementById('render-img');
 
-  const textArea = d.getElementById('codemirror-textarea');
-  //textArea.value = initialCode();
-
   let blockIndent = function(editor, from, to) {
     editor.operation(function() {
       for (let i = from; i < to; ++i) {
@@ -396,6 +380,8 @@ function setupUI(seniApp) {
       return false;
     }
   };
+
+  const textArea = d.getElementById('codemirror-textarea');
   seniApp.editor = codeMirror.fromTextArea(textArea, config);
 
   let galleryModeHandler = event => {
@@ -536,7 +522,6 @@ function getGallery() {
   });
 }
 
-
 class Piece {
   constructor() {
     this.phenotypes = [];
@@ -549,7 +534,7 @@ class Piece {
 
 function createSeniApp() {
   const seniApp = {
-    currentMode: SeniMode.edit,
+    currentMode: SeniMode.gallery,
     renderer: new Renderer('render-canvas'),
     editor: undefined,
     // the img destination that shows the rendered script in edit mode
@@ -578,9 +563,6 @@ const SeniWebApplication = {
     polluteGlobalDocument(seniApp);
 
     setupUI(seniApp);
-    seniApp.piece.form = initialCode();
-    showFormInEditor(seniApp);
-    renderScript(seniApp, seniApp.piece.form);
 
     getGallery();
     //iterateEnv(seniApp);
