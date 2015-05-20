@@ -66,7 +66,7 @@ function renderScriptToImage(seniApp, ast, genotype, imageElement) {
 }
 
 function renderScript(seniApp, form) {
-  seniApp.form = form;
+  seniApp.piece.form = form;
   const imageElement = document.getElementById('render-img');
 
   const ast = Runtime.buildAst(seniApp.env, form);
@@ -134,24 +134,12 @@ function getGalleryItemIdFromDom(element) {
 function renderHighRes(seniApp, element) {
   const [index, _] = getPhenoIdFromDom(element);
   if(index !== -1) {
-    let genotype = seniApp.genotypes[index];
+    let piece = seniApp.piece;
+    let genotype = piece.genotypes[index];
     const imageElement = document.getElementById('high-res-image');
     imageElement.classList.toggle('hidden');
-    const ast = Runtime.buildAst(seniApp.env, seniApp.form);
+    const ast = Runtime.buildAst(seniApp.env, piece.form);
     renderScriptToImage(seniApp, ast, genotype, imageElement);
-  }
-}
-
-function showEdit(seniApp, element) {
-  const [index, _] = getGalleryItemIdFromDom(element);
-  if(index !== -1) {
-    console.log('showEdit called with', index);
-    const url = '/gallery/' + index;
-    getData(url, data => {
-      seniApp.editor.getDoc().setValue(data);
-      switchMode(seniApp, SeniMode.edit);
-      seniApp.editor.refresh();
-    });
   }
 }
 
@@ -161,30 +149,32 @@ function toggleSelection(seniApp, element) {
     const cardImage = e.getElementsByClassName('card-image')[0];
     cardImage.classList.toggle('selected');
 
-    const c = seniApp.phenotypes[index];
+    const c = seniApp.piece.phenotypes[index];
     c.selected = !c.selected;
   }
 }
 
-function renderPhenotypes(app) {
+function renderPhenotypes(seniApp) {
 
   let i = 0;
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to edit mode
-    if (i < app.phenotypes.length && app.currentMode === SeniMode.evolve) {
+    const piece = seniApp.piece;
+    if (i < piece.phenotypes.length &&
+        seniApp.currentMode === SeniMode.evolve) {
 
-      const genotype = app.genotypes[i];
+      const genotype = piece.genotypes[i];
 
-      const imageElement = app.phenotypes[i].imageElement;
+      const imageElement = piece.phenotypes[i].imageElement;
 
-      app.renderer.preDrawScene(imageElement.clientWidth,
+      seniApp.renderer.preDrawScene(imageElement.clientWidth,
                                 imageElement.clientHeight);
 
-      Runtime.evalAst(app.env, app.ast, genotype);
-      app.renderer.postDrawScene();
+      Runtime.evalAst(seniApp.env, piece.ast, genotype);
+      seniApp.renderer.postDrawScene();
 
-      imageElement.src = app.renderer.getImageData();
+      imageElement.src = seniApp.renderer.getImageData();
 
       i++;
       setTimeout(go);
@@ -193,8 +183,9 @@ function renderPhenotypes(app) {
 }
 
 function showPlaceholderImages(seniApp) {
+  const piece = seniApp.piece;
   for(let i = 0; i < seniApp.populationSize; i++) {
-    const imageElement = seniApp.phenotypes[i].imageElement;
+    const imageElement = piece.phenotypes[i].imageElement;
     imageElement.src = seniApp.placeholder;
   }
 }
@@ -203,25 +194,26 @@ function onNextGen(seniApp) {
   showPlaceholderImages(seniApp);
   // get the selected genotypes for the next generation
   let chosen = [];
+  const piece = seniApp.piece;
   for(let i = 0; i < seniApp.populationSize; i++) {
-    if(seniApp.phenotypes[i].selected === true) {
-      chosen.push(seniApp.genotypes[i]);
+    if(piece.phenotypes[i].selected === true) {
+      chosen.push(piece.genotypes[i]);
     }
   }
 
-  seniApp.genotypes = Genetic.nextGeneration(chosen, seniApp.populationSize);
+  piece.genotypes = Genetic.nextGeneration(chosen, seniApp.populationSize);
 
   // render the genotypes
   renderPhenotypes(seniApp);
 
   // clean up the dom and clear the selected state
   for(let i = 0; i < seniApp.populationSize; i++) {
-    if(seniApp.phenotypes[i].selected === true) {
-      const element = seniApp.phenotypes[i].phenotypeElement;
+    if(piece.phenotypes[i].selected === true) {
+      const element = piece.phenotypes[i].phenotypeElement;
       const cardImage = element.getElementsByClassName('card-image')[0];
       cardImage.classList.toggle('selected');
     }
-    seniApp.phenotypes[i].selected = false;
+    piece.phenotypes[i].selected = false;
   }
 }
 
@@ -249,11 +241,12 @@ function setupEvolveUI(seniApp, form) {
 
   showPlaceholderImages(seniApp);
 
+  const piece = seniApp.piece;
   const renderer = seniApp.renderer;
   const gallery = document.getElementById('phenotype-gallery');
 
-  seniApp.ast = Runtime.buildAst(seniApp.env, form);
-  seniApp.traits = Genetic.buildTraits(seniApp.ast);
+  piece.ast = Runtime.buildAst(seniApp.env, form);
+  piece.traits = Genetic.buildTraits(piece.ast);
 
   // create phenotype/genotype containers
   let i;
@@ -264,11 +257,11 @@ function setupEvolveUI(seniApp, form) {
   random = random.toGMTString();
   for(i = 0; i < seniApp.populationSize; i++) {
     if(i === 0) {
-      genotype = Genetic.createGenotypeFromInitialValues(seniApp.traits);
+      genotype = Genetic.createGenotypeFromInitialValues(piece.traits);
     } else {
-      genotype = Genetic.createGenotypeFromTraits(seniApp.traits, i + random);
+      genotype = Genetic.createGenotypeFromTraits(piece.traits, i + random);
     }
-    seniApp.genotypes[i] = genotype;
+    piece.genotypes[i] = genotype;
   }
 
   // render the phenotypes
@@ -300,6 +293,19 @@ function switchMode(seniApp, newMode) {
   case SeniMode.evolve :
     setupEvolveUI(seniApp, sourceCode);
     break;
+  }
+}
+
+function showEdit(seniApp, element) {
+  const [index, _] = getGalleryItemIdFromDom(element);
+  if(index !== -1) {
+    console.log('showEdit called with', index);
+    const url = '/gallery/' + index;
+    getData(url, data => {
+      seniApp.editor.getDoc().setValue(data);
+      switchMode(seniApp, SeniMode.edit);
+      seniApp.editor.refresh();
+    });
   }
 }
 
@@ -345,6 +351,12 @@ function iterateEnv(seniApp) {
 
 function setupUI(seniApp) {
   const d = document;
+
+  seniApp.containers = [
+    document.getElementById('gallery-container'),
+    document.getElementById('edit-container'),
+    document.getElementById('evolve-container')
+  ];
 
   const textArea = d.getElementById('codemirror-textarea');
 
@@ -451,7 +463,8 @@ function setupUI(seniApp) {
 
   let i;
   let phenotypeElement;
-  seniApp.phenotypes = [];
+  const piece = seniApp.piece;
+  piece.phenotypes = [];
 
   let row;
 
@@ -466,7 +479,7 @@ function setupUI(seniApp) {
     const imageElement =
             phenotypeElement.getElementsByClassName('phenotype')[0];
 
-    seniApp.phenotypes.push({
+    piece.phenotypes.push({
       phenotypeElement,
       imageElement,
       selected: false
@@ -516,37 +529,42 @@ function getGallery() {
   });
 }
 
+
+class Piece {
+  constructor() {
+    this.phenotypes = [];
+    this.form = undefined;
+    this.ast = undefined;
+    this.traits = undefined;
+    this.genotypes = [];
+  }
+}
+
+function createSeniApp() {
+  const seniApp = {
+    currentMode: SeniMode.edit,
+    renderer: new Renderer('render-canvas'),
+    editor: undefined,
+    // the 3 main UI areas
+    containers: [],
+    placeholder: 'img/spinner.gif',
+    populationSize: 24,
+    // an immutable var containing the base env for all evaluations
+    env: undefined,
+    // information about the current piece being created/rendered
+    piece: new Piece()
+  };
+
+  seniApp.env = Bind.addBindings(Runtime.createEnv(), seniApp.renderer);
+
+  return seniApp;
+}
+
 const SeniWebApplication = {
   mainFn() {
-    const seniApp = {
-      currentMode: SeniMode.edit,
-      renderer: undefined,
-      editor: undefined,
-      containers: [],
-
-      phenotypes: [],
-
-      placeholder: 'img/spinner.gif',
-      populationSize: 24,
-      genotypes: [],
-
-      form: undefined,
-      ast: undefined,
-      traits: undefined,
-      env: undefined
-    };
-
     resizeContainers();
 
-    seniApp.renderer = new Renderer('render-canvas');
-    seniApp.env = Bind.addBindings(Runtime.createEnv(), seniApp.renderer);
-    seniApp.currentMode = SeniMode.edit;
-    seniApp.containers = [
-      document.getElementById('gallery-container'),
-      document.getElementById('edit-container'),
-      document.getElementById('evolve-container')
-    ];
-
+    let seniApp = createSeniApp();
 
     polluteGlobalDocument(seniApp);
 
