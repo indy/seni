@@ -1,8 +1,9 @@
 (define scalefactor [1.5 (scalar min: 0.5 max: 3)])
 (define hex-size [30 (int min: 10 max: 100)])
 
-(define colour-a (col/rgb r: [0 (scalar)] g: [0 (scalar)] b: [0.4 (scalar)]))
-(define colour-b (col/rgb r: [1 (scalar)] g: [0 (scalar)] b: [0.4 (scalar)]))
+(define background [(col/rgb r: 1 g: 1 b: 1 alpha: 1) (col)])
+(define colour-a [(col/rgb r: 0 g: 0 b: 0.4 alpha: 1) (col)])
+(define colour-b [(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (col)])
 
 (define focalpoint (focal/point position: (v2 [500 (int max: 1000)]
                                               [500 (int max: 1000)])
@@ -44,6 +45,11 @@
                  colour: (col/set-alpha colour: colour
                                         value: (focalpoint position: (v2 x y)))
                  position: (v2 x y))))))
+
+(rect position: (v2 500 500)
+      width: 1000
+      height: 1000
+      colour: background)
 
 (translate x: 500 y: 500)
 (rotate angle: [0.6 (scalar max: PIPI)])
