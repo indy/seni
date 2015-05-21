@@ -178,7 +178,7 @@ function showPlaceholderImages(seniApp) {
 }
 
 function onNextGen(seniApp) {
-  showPlaceholderImages(seniApp);
+
   // get the selected genotypes for the next generation
   let chosen = [];
   const piece = seniApp.piece;
@@ -187,6 +187,13 @@ function onNextGen(seniApp) {
       chosen.push(piece.genotypes[i]);
     }
   }
+
+  if(chosen.length === 0) {
+    // no phenotypes were selected
+    return;
+  }
+
+  showPlaceholderImages(seniApp);
 
   piece.genotypes = Genetic.nextGeneration(chosen, seniApp.populationSize);
 
