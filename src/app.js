@@ -49,6 +49,22 @@ function getData(url, fn) {
   request.send();
 }
 
+// search the children of seniApp.navbar for elements with class 'klass'
+// then add 'addClass' to them
+function addNavbarClass(seniApp, klass, addClass) {
+  let es = seniApp.navbar.getElementsByClassName(klass);
+  for(let i = 0; i < es.length; i++) {
+    es[i].classList.add(addClass);
+  }
+}
+
+function removeNavbarClass(seniApp, klass, removeClass) {
+  let es = seniApp.navbar.getElementsByClassName(klass);
+  for(let i = 0; i < es.length; i++) {
+    es[i].classList.remove(removeClass);
+  }
+}
+
 function renderGenotypeToImage(seniApp, ast, genotype, imageElement) {
 
   const renderer = seniApp.renderer;
@@ -276,12 +292,22 @@ function switchMode(seniApp, newMode) {
 
   switch(seniApp.currentMode) {
   case SeniMode.gallery :
-      seniApp.currentMode = newMode;
+    addNavbarClass(seniApp, 'to-gallery', 'hidden');
+    addNavbarClass(seniApp, 'to-edit', 'hidden');
+    addNavbarClass(seniApp, 'to-evolve', 'hidden');
     break;
   case SeniMode.edit :
+    removeNavbarClass(seniApp, 'to-gallery', 'hidden');
+    removeNavbarClass(seniApp, 'to-edit', 'hidden');
+    removeNavbarClass(seniApp, 'to-evolve', 'hidden');
+
     renderScript(seniApp, seniApp.piece.form);
     break;
   case SeniMode.evolve :
+    removeNavbarClass(seniApp, 'to-gallery', 'hidden');
+    removeNavbarClass(seniApp, 'to-edit', 'hidden');
+    removeNavbarClass(seniApp, 'to-evolve', 'hidden');
+
     setupEvolveUI(seniApp, seniApp.piece.form);
     break;
   }
@@ -352,13 +378,18 @@ function iterateEnv(seniApp) {
 function setupUI(seniApp) {
   const d = document;
 
+  seniApp.navbar = document.getElementById('seni-navbar');
+  seniApp.renderImage = document.getElementById('render-img');
   seniApp.containers = [
     document.getElementById('gallery-container'),
     document.getElementById('edit-container'),
     document.getElementById('evolve-container')
   ];
 
-  seniApp.renderImage = document.getElementById('render-img');
+  // hide the navbar links because we start off in gallery mode
+  addNavbarClass(seniApp, 'to-gallery', 'hidden');
+  addNavbarClass(seniApp, 'to-edit', 'hidden');
+  addNavbarClass(seniApp, 'to-evolve', 'hidden');
 
   let blockIndent = function(editor, from, to) {
     editor.operation(function() {
@@ -495,7 +526,6 @@ function getGallery() {
   row.className = 'row';
   list.appendChild(row);
 
-
   let createGalleryElement = galleryItem => {
     const container = document.createElement('div');
 
@@ -504,11 +534,11 @@ function getGallery() {
 
     container.innerHTML = `
       <div class="card">
-        <div class="card-image">
-          <img class="gallery-item-image"
+        <a href="#" class="card-image">
+          <img class="gallery-item-image show-edit"
                src="${galleryItem.image}"
                style="width:320px;height:320px">
-        </div>
+        </a>
         <div class="card-action">
           <a href="#" class="show-edit">Edit</a>
           <a href="#" class="show-evolve">Evolve</a>
@@ -544,6 +574,8 @@ function createSeniApp() {
     currentMode: SeniMode.gallery,
     renderer: new Renderer('render-canvas'),
     editor: undefined,
+    // the top nav bar across the app
+    navbar: undefined,
     // the img destination that shows the rendered script in edit mode
     renderImage: undefined,
     // the 3 main UI areas
