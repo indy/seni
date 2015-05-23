@@ -24,9 +24,15 @@
 /* eslint-disable no-fallthrough */
 
 function seniMode() {
-  let BUILTIN = 'builtin', COMMENT = 'comment', STRING = 'string',
-      ATOM = 'atom', NUMBER = 'number', BRACKET = 'bracket',
-      SENICOMMON = 'seni-common', PARAMETER = 'seni-parameter';
+  const BUILTIN = 'builtin',
+        COMMENT = 'comment',
+        STRING = 'string',
+        ATOM = 'atom',
+        NUMBER = 'number',
+        PAREN = 'paren',      // ()
+        BRACKET = 'bracket',    // []
+        SENICOMMON = 'seni-common',
+        PARAMETER = 'seni-parameter';
   let INDENT_WORD_SKIP = 2;
 
   function makeKeywords(str) {
@@ -69,24 +75,49 @@ function seniMode() {
     return word.slice(-1) === ':';
   }
 
-  function tokenType(token, state) {
+  function tokenType(token, state, ch) {
     let prefix = 'geno-';
     let usePrefix = false;
 
-    if(state.insideSquareBracket) {
+    if(state.insideBracket) {
       // leave the first element inside square brackets as is.
-      usePrefix = state.squareBracketCounter !== 1;
-      state.squareBracketCounter++;
+
+      if(state.bracketCounter === 1) {
+        usePrefix = false;
+        // this is the first element in the square brackets
+        state.bracketedFirstChildIsParen = (token === PAREN);
+        if(state.bracketedFirstChildIsParen) {
+          // special case of the first child in square brackets being a s-exp.
+          // we'll need to keep count of parenDepth
+          state.firstParenBracketDepth = state.parenDepth;
+        }
+      } else {
+        // normally grey out, except if we're bracketedFirstChildIsParen
+        if(state.bracketedFirstChildIsParen && state.firstParenBracketDepth <= state.parenDepth) {
+          // keep on colouring as normal
+          usePrefix = false;
+
+          // if this is a closing parens then we've processed the first s-exp and can start using prefix
+          // (i.e. start greying out the remainder of the square bracket contents)
+          if(state.firstParenBracketDepth === state.parenDepth && ch === ')') {
+            state.bracketedFirstChildIsParen = false;
+          }
+        } else {
+          usePrefix = true;
+        }
+      }
+
+      state.bracketCounter++;
     }
 
     return usePrefix ? prefix + token : token;
   }
 
-  function setInsideSquareBracket(value, state) {
+  function setInsideBracket(value, state) {
     if(value === true) {
-      state.squareBracketCounter = 0;
+      state.bracketCounter = 0;
     }
-    state.insideSquareBracket = value;
+    state.insideBracket = value;
   }
 
   return {
@@ -97,8 +128,12 @@ function seniMode() {
         mode: false,
         sExprComment: false,
 
-        insideSquareBracket: false,
-        squareBracketCounter: 0
+        parenDepth: 0,
+
+        insideBracket: false,
+        bracketCounter: 0,
+        firstParenBracketDepth: 0,
+        bracketedFirstChildIsParen: false
       };
     },
 
@@ -158,7 +193,9 @@ function seniMode() {
           let keyWord = ''; let indentTemp = stream.column(), letter;
 
           if (ch === '[') {
-            setInsideSquareBracket(true, state);
+            setInsideBracket(true, state);
+          } else {
+            state.parenDepth++;
           }
 
           while ((letter = stream.eat(/[^\s\(\[\;\)\]]/)) != null) {
@@ -183,9 +220,9 @@ function seniMode() {
 
           if(typeof state.sExprComment === 'number') state.sExprComment++;
 
-          returnType = tokenType(BRACKET, state);
+          returnType = tokenType(ch === '[' ? BRACKET : PAREN, state, ch);
         } else if (ch === ')' || ch === ']') {
-          returnType = tokenType(BRACKET, state);
+          returnType = tokenType(ch === ']' ? BRACKET : PAREN, state, ch);
           if (state.indentStack != null && state.indentStack.type === (ch === ')' ? '(' : '[')) {
             popStack(state);
 
@@ -197,7 +234,9 @@ function seniMode() {
             }
           }
           if(ch === ']') {
-            setInsideSquareBracket(false, state);
+            setInsideBracket(false, state);
+          } else {
+            state.parenDepth--;
           }
         } else {
           stream.eatWhile(/[\w\$_\-!$%&*+\.\/:<=>?@\^~]/);

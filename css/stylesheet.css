@@ -1,9 +1,12 @@
+.cm-s-default .cm-paren {color: #997;}
+
 .cm-s-default .cm-geno-keyword {color: #bbb;}
 .cm-s-default .cm-geno-atom {color: #bbb;}
 .cm-s-default .cm-geno-number {color: #bbb;}
 .cm-s-default .cm-geno-variable {color: #bbb;}
 .cm-s-default .cm-geno-string {color: #bbb;}
 .cm-s-default .cm-geno-bracket {color: #bbb;}
+.cm-s-default .cm-geno-paren {color: #bbb;}
 .cm-s-default .cm-geno-seni-parameter {color: #bbb;}
 
 .cm-s-default .cm-builtin {color: #00d;}
