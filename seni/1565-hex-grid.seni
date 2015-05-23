@@ -51,9 +51,9 @@
       height: 1000
       colour: background)
 
-(translate x: 500 y: 500)
+(translate vector: (v2 500 500))
 (rotate angle: [0.6 (scalar max: PIPI)])
-(scale x: scalefactor y: scalefactor)
+(scale scalar: scalefactor)
 
 (hex-grid from: (v2 -700 -700)
           to: (v2 700 700)

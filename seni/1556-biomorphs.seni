@@ -12,7 +12,7 @@
         height: [5 (int min: 2 max: 30)]
         colour: colour)
   ;; translate to start the next segment at the end of this one
-  (translate x: length y: 0))
+  (translate vector: (v2 length 0)))
 
 ;; render-half is a series of segments which will have differing 
 ;; lengths and angles
@@ -51,9 +51,9 @@
 
 ;; render the Biomorph as 2 symmetrical halves
 (define (render)
-  (translate x: 500 y: 500)
+  (translate vector: (v2 500 500))
     (on-matrix-stack
       (render-half))
     (on-matrix-stack
-     (scale x: -1)
+     (scale vector: (v2 -1 1))
      (render-half)))

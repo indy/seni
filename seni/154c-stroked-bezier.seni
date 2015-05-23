@@ -3,7 +3,7 @@
       height: 1000 
       colour: (col/rgb r: 0 g: 0 b: 0 alpha 1))
 
-(translate x: 500 y: 500)
+(translate vector: (v2 500 500))
 (rotate angle: PI/2)
 
 (stroked-bezier-rect position: (v2 0 0)

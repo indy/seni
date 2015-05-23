@@ -40,12 +40,21 @@ const MatrixStackBindings = {
 
     new PublicBinding(
       'scale',
-      ``,
-      {x: 1, y: 1},
+      `Accepts either a 'vector' or 'scalar' argument`,
+      {vector: [1, 1],
+       scalar: 1},
       (self, renderer) => {
         return (params) => {
-          const {x, y} = self.mergeWithDefaults(params);
-          return renderer.cmdMatrixScale(x, y);
+
+          let vector;
+          if(params.scalar) {
+            vector = [params.scalar, params.scalar];
+          } else {
+            const obj = self.mergeWithDefaults(params);
+            vector = obj.vector;
+          }
+
+          return renderer.cmdMatrixScale(vector[0], vector[1]);
         };
       }
     ),
@@ -53,11 +62,11 @@ const MatrixStackBindings = {
     new PublicBinding(
       'translate',
       ``,
-      {x: 0.0, y: 0.0},
+      {vector: [0, 0]},
       (self, renderer) => {
         return (params) => {
-          const {x, y} = self.mergeWithDefaults(params);
-          return renderer.cmdMatrixTranslate(x, y);
+          const {vector} = self.mergeWithDefaults(params);
+          return renderer.cmdMatrixTranslate(vector[0], vector[1]);
         };
       }
     ),

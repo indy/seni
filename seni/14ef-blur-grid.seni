@@ -39,7 +39,7 @@
         (pass-colour (col/set-alpha colour: colour value: (/ alpha passes)))
         (rng (rng/signed seed: seed)))
     (on-matrix-stack
-      (translate x: x y: y)
+      (translate vector: (v2 x y))
       (loop (i to: passes)
         (let (((rr xr yr) (take num: 3 from: rng)))
           (on-matrix-stack
