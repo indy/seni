@@ -16,6 +16,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import RenderPacket from './RenderPacket';
 import MatrixStack from './MatrixStack';
 import MathUtil from './MathUtil';
 import Colour from './Colour';
@@ -151,18 +152,8 @@ class Renderer {
     this.pMatrix = mat4.create();
     mat4.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
 
-    // buffer code...
-    // each buffer can hold 1000 'items' where an item is a vertex, colour etc
-    this.bufferSize = 1000;
-    this.vertexItemSize = 2; // xy
-    this.colourItemSize = 4; // rgba
-    this.vertexBuffer = new Float32Array(this.vertexItemSize * this.bufferSize);
-    this.colourBuffer = new Float32Array(this.colourItemSize * this.bufferSize);
-    // the level of both the vertex and colour buffer
-    // to find the actual index position multiply bufferLevel
-    // by the relevant itemSize of the buffer
-    this.bufferLevel = 0;
-    this.flushCount = 0;
+    this.renderPackets = [];
+    this.renderPacket = new RenderPacket();
   }
 
   vectorToCanvasSpace(v2) {
@@ -201,7 +192,7 @@ class Renderer {
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-cmdMatrixScale(x, y) {
+  cmdMatrixScale(x, y) {
     return this.matrixStack.scale(x, y);
   }
 
@@ -455,10 +446,46 @@ cmdMatrixScale(x, y) {
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, this.mvMatrix);
 
     this.matrixStack.reset();
+
+    this.renderPackets = [];
+    this.renderPacket = new RenderPacket();
+  }
+
+  renderRenderPackets() {
+    const gl = this.gl;
+    const shaderProgram = this.shaderProgram;
+
+    const glVertexBuffer = this.glVertexBuffer;
+    const glColourBuffer = this.glColourBuffer;
+
+    let renderPacket;
+    for(let i = 0; i < this.renderPackets.length; i++) {
+      renderPacket = this.renderPackets[i];
+      console.log('rendering render packet ', i,
+                  'level:', renderPacket.bufferLevel);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER,
+                    renderPacket.vertexBuffer, gl.STATIC_DRAW);
+      gl.vertexAttribPointer(shaderProgram.positionAttribute,
+                             renderPacket.vertexItemSize,
+                             gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER,
+                    renderPacket.colourBuffer, gl.STATIC_DRAW);
+      gl.vertexAttribPointer(shaderProgram.colourAttribute,
+                             renderPacket.colourItemSize,
+                             gl.FLOAT, false, 0, 0);
+
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, renderPacket.bufferLevel);
+    }
   }
 
   postDrawScene() {
     this.flushTriangles();
+
+    this.renderRenderPackets();
   }
 
   // --------------------------------------------------------------------------
@@ -472,24 +499,13 @@ cmdMatrixScale(x, y) {
    */
   prepareToAddTriangleStrip(numVertices, p0) {
 
-    if (this.bufferLevel >= this.bufferSize - (numVertices + 2)) {
+    if (this.renderPacket.canVerticesFit(numVertices) === false) {
       this.flushTriangles();
     }
 
-    if (this.bufferLevel !== 0) {
-      // add two vertex entries which will form degenerate triangles
-      const lastVertexIndex = (this.bufferLevel - 1) * this.vertexItemSize;
-      // just copy the previous entries
-      // note: colour doesn't matter since these triangles won't be rendered
-      this.addVertexWithoutMatrixMultiply(
-        [this.vertexBuffer[lastVertexIndex + 0],
-         this.vertexBuffer[lastVertexIndex + 1]],
-        [0, 0, 0, 0]);
-
-      this.addVertex(p0, [0, 0, 0, 0]);
-
-      // Note: still need to call addVertex on the first
-      // vertex when we 'really' render the strip
+    if (this.renderPacket.isRenderPacketEmpty() === false){
+      const res = this.matrixStack.transform2DVector(p0);
+      this.renderPacket.appendDegenerateVertices(res);
     }
   }
 
@@ -500,61 +516,18 @@ cmdMatrixScale(x, y) {
    */
   addVertex(p, c) {
     const res = this.matrixStack.transform2DVector(p);
-
-    let bl = this.bufferLevel * this.vertexItemSize;
-    this.vertexBuffer[bl + 0] = res[0];
-    this.vertexBuffer[bl + 1] = res[1];
-
-    bl = this.bufferLevel * this.colourItemSize;
-    this.colourBuffer[bl + 0] = c[0];
-    this.colourBuffer[bl + 1] = c[1];
-    this.colourBuffer[bl + 2] = c[2];
-    this.colourBuffer[bl + 3] = c[3];
-
-    this.bufferLevel += 1;
-  }
-
-  addVertexWithoutMatrixMultiply(p, c) {
-    let bl = this.bufferLevel * this.vertexItemSize;
-    this.vertexBuffer[bl + 0] = p[0];
-    this.vertexBuffer[bl + 1] = p[1];
-
-    bl = this.bufferLevel * this.colourItemSize;
-    this.colourBuffer[bl + 0] = c[0];
-    this.colourBuffer[bl + 1] = c[1];
-    this.colourBuffer[bl + 2] = c[2];
-    this.colourBuffer[bl + 3] = c[3];
-
-    this.bufferLevel += 1;
+    this.renderPacket.appendVertex(res, c);
   }
 
   flushTriangles() {
 
-    if (this.bufferLevel === 0) {
+    if (this.renderPacket.isRenderPacketEmpty()) {
       return;
     }
 
-    this.flushCount += 1;
-
-    const gl = this.gl;
-    const shaderProgram = this.shaderProgram;
-
-    const glVertexBuffer = this.glVertexBuffer;
-    const glColourBuffer = this.glColourBuffer;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, this.vertexBuffer, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.positionAttribute,
-                           this.vertexItemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, this.colourBuffer, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.colourAttribute,
-                           this.colourItemSize, gl.FLOAT, false, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.bufferLevel);
-
-    this.bufferLevel = 0;
+    // add the current renderpacket into the renderpackets array
+    this.renderPackets.push(this.renderPacket);
+    this.renderPacket = new RenderPacket();
   }
 
 }
