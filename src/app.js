@@ -570,9 +570,10 @@ class Piece {
 }
 
 function createSeniApp() {
+  let canvasElement = document.getElementById('render-canvas');
   const seniApp = {
     currentMode: SeniMode.gallery,
-    renderer: new Renderer('render-canvas'),
+    renderer: new Renderer(canvasElement),
     editor: undefined,
     // the top nav bar across the app
     navbar: undefined,
