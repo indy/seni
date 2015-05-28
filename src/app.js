@@ -22,6 +22,7 @@ import Runtime from './lang/Runtime';
 import Bind from './seni/Bind';
 import Trivia from './seni/Trivia';
 import CodeMirrorConfig from './ui/CodeMirrorConfig';
+import Util from './seni/Util';
 
 const SeniMode = {
   gallery: 0,
@@ -88,13 +89,8 @@ function renderScript(seniApp, form) {
   renderGenotypeToImage(seniApp, ast, genotype, imageElement);
 }
 
-// execute the function and log the time that it takes
-function withTiming(msg, fn) {
-  const before = new Date();
-  fn();
-  const after = new Date();
-  const duration = after - before;
-  console.log(msg, duration, 'ms');
+function timedRenderScript(seniApp, form, msg) {
+  Util.withTiming(msg, () => renderScript(seniApp, form));
 }
 
 function addClickEvent(id, fn) {
@@ -301,7 +297,7 @@ function switchMode(seniApp, newMode) {
     removeNavbarClass(seniApp, 'to-edit', 'hidden');
     removeNavbarClass(seniApp, 'to-evolve', 'hidden');
 
-    renderScript(seniApp, seniApp.piece.form);
+    timedRenderScript(seniApp, seniApp.piece.form, 'renderScript');
     break;
   case SeniMode.evolve :
     removeNavbarClass(seniApp, 'to-gallery', 'hidden');
@@ -323,7 +319,6 @@ function showFormInEditor(seniApp) {
 function showEditFromGallery(seniApp, element) {
   const [index, _] = getGalleryItemIdFromDom(element);
   if(index !== -1) {
-    console.log('showEditFromGallery called with', index);
     const url = '/gallery/' + index;
     getData(url, data => {
       // todo: construct a new piece object
@@ -404,8 +399,7 @@ function setupUI(seniApp) {
   config.extraKeys = {
     'Ctrl-E': function() {
       seniApp.piece.form = seniApp.editor.getValue();
-      withTiming('renderTime', () =>
-                 renderScript(seniApp, seniApp.piece.form));
+      timedRenderScript(seniApp, seniApp.piece.form, 'renderScript');
       return false;
     },
     'Ctrl-D': function() {
@@ -446,10 +440,9 @@ function setupUI(seniApp) {
 
   addClickEventForClass('to-gallery', galleryModeHandler);
 
-
   addClickEvent('action-eval', () => {
     seniApp.piece.form = seniApp.editor.getValue();
-    withTiming('renderTime', () => renderScript(seniApp, seniApp.piece.form));
+    timedRenderScript(seniApp, seniApp.piece.form, 'renderScript');
   });
 
   addClickEvent('gallery-list', event => {

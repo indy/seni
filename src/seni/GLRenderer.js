@@ -175,10 +175,11 @@ class GLRenderer {
     const glColourBuffer = this.glColourBuffer;
 
     let renderPacket;
-    for(let i = 0; i < renderPackets.length; i++) {
+    let sum = 0;
+    const numPackets = renderPackets.length;
+    for(let i = 0; i < numPackets; i++) {
       renderPacket = renderPackets[i];
-      console.log('rendering render packet ', i,
-                  'level:', renderPacket.bufferLevel);
+      sum += renderPacket.bufferLevel;
 
       gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER,
@@ -196,6 +197,7 @@ class GLRenderer {
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, renderPacket.bufferLevel);
     }
+    console.log(`rendered ${sum} vertices in ${numPackets} renderPackets`);
   }
 }
 

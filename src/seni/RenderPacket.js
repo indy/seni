@@ -18,7 +18,9 @@
 
 
 // each buffer can hold bufferSize 'items' where each item is a vertex+colour
-const bufferSize = 10000;
+const bufferSize = 1000;
+// note: using different values for bufferSize doesn't affect render time
+// (tried with values of 100, 1000, 10000, 100000)
 const vertexItemSize = 2; // xy
 const colourItemSize = 4; // rgba
 

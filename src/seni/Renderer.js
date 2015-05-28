@@ -21,6 +21,7 @@ import GLRenderer from './GLRenderer';
 import MatrixStack from './MatrixStack';
 import MathUtil from './MathUtil';
 import Colour from './Colour';
+import Util from './Util';
 import { mat4 } from 'gl-matrix';
 
 const Format = Colour.Format;
@@ -318,7 +319,10 @@ class Renderer {
 
   postDrawScene() {
     this.flushTriangles();
-    this.glRenderer.drawRenderPackets(this.renderPackets);
+
+    Util.withTiming('drawRenderPackets', () => {
+      this.glRenderer.drawRenderPackets(this.renderPackets);
+    });
   }
 
   // --------------------------------------------------------------------------

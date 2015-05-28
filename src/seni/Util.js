@@ -23,6 +23,15 @@ const Util = {
       res[p] = obj[p] !== undefined ? obj[p] : defaults[p];
     }
     return res;
+  },
+
+  // execute the function and log the time that it takes
+  withTiming: function(msg, fn) {
+    const before = new Date();
+    fn();
+    const after = new Date();
+    const duration = after - before;
+    console.log(msg, duration, 'ms');
   }
 };
 
