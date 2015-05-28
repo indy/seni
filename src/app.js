@@ -66,11 +66,16 @@ function removeNavbarClass(seniApp, klass, removeClass) {
   }
 }
 
-function renderGenotypeToImage(seniApp, ast, genotype, imageElement) {
+function renderGenotypeToImage(seniApp, ast, genotype, imageElement,
+                               width, height) {
 
   const renderer = seniApp.renderer;
 
-  renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
+  if(width !== undefined && height !== undefined) {
+    renderer.preDrawScene(width, height);
+  } else {
+    renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
+  }
 
   Runtime.evalAst(seniApp.env, ast, genotype);
 
@@ -141,10 +146,18 @@ function renderHighRes(seniApp, element) {
   if(index !== -1) {
     let piece = seniApp.piece;
     let genotype = piece.genotypes[index];
-    const imageElement = document.getElementById('high-res-image');
-    imageElement.classList.toggle('hidden');
+    const highResContainer = document.getElementById('high-res-container');
+    highResContainer.classList.toggle('invisible');
     const ast = Runtime.buildAst(seniApp.env, piece.form);
-    renderGenotypeToImage(seniApp, ast, genotype, imageElement);
+
+    const imageElement = document.getElementById('high-res-image');
+    renderGenotypeToImage(seniApp, ast, genotype, imageElement, 2000, 2000);
+
+    const holder = document.getElementById('holder');
+    imageElement.style.height = holder.clientHeight + "px";
+    imageElement.style.width = holder.clientWidth + "px";
+    console.log(imageElement.style.height,holder.clientHeight,
+                imageElement.style.width, holder.clientWidth);
   }
 }
 /* eslint-enable no-unused-vars */
@@ -467,8 +480,14 @@ function setupUI(seniApp) {
     onNextGen(seniApp);
   });
 
-  addClickEvent('high-res-image', (event) => {
-    event.target.classList.toggle('hidden');
+//  addClickEvent('high-res-image', (event) => {
+//    event.target.classList.toggle('hidden');
+//  });
+  addClickEvent('high-res-container', () => {
+    console.log('clicked on high-res-container');
+    const highResContainer = document.getElementById('high-res-container');
+    highResContainer.classList.toggle('invisible');
+    //event.target.classList.toggle('invisible');
   });
 
 

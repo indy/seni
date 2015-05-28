@@ -162,12 +162,25 @@
   }
 }                               /*  (min-width : 993px) */
 
-#high-res-image {
+#high-res-container {
   position: fixed;
-  top: 10px;
-  left: 10px;
+  top: 0px;                     /* ??? */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#holder {
+  width: 30em;
+  height: 30em;
+}
+
+#high-res-image {
   width: 2000px;
   height: 2000px;
+  padding: 1em;
 }
 
 .card-image {
@@ -179,10 +192,8 @@
   background: #2979ff;
 }
 
-
 .phenotype {
   padding: 1em;
-
 }
 
 .gallery-item-image {
@@ -202,4 +213,13 @@ html,body {
 
 .hidden {
   display: none;
+}
+
+
+.visible {
+  visibility: visible;
+}
+
+.invisible {
+  visibility: hidden;
 }
