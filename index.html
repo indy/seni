@@ -16,6 +16,7 @@
   </head>
 
   <body>
+    <div id="dimmer" class="hidden"></div>
 
     <div id="seni-navbar" class="navbar-fixed">
       <nav>
@@ -91,10 +92,12 @@
     <div id="high-res-container" class="invisible">
       <div class="card">
         <div id="holder">
-          <img id="high-res-image" class="card-image">
+          <a id="high-res-link" target="_blank" href="">
+            <img id="high-res-image" class="card-image">
+          </a>
         </div>
         <div class="card-action">
-          <a href="#" class="">Open fullsize in new tab</a>
+          <a href="#" id="high-res-close">Close</a>
         </div>
       </div>
     </div>

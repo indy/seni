@@ -144,6 +144,9 @@ function getGalleryItemIdFromDom(element) {
 function renderHighRes(seniApp, element) {
   const [index, _] = getPhenoIdFromDom(element);
   if(index !== -1) {
+    const dimmer = document.getElementById('dimmer');
+    dimmer.classList.toggle('hidden');
+
     let piece = seniApp.piece;
     let genotype = piece.genotypes[index];
     const highResContainer = document.getElementById('high-res-container');
@@ -151,13 +154,16 @@ function renderHighRes(seniApp, element) {
     const ast = Runtime.buildAst(seniApp.env, piece.form);
 
     const imageElement = document.getElementById('high-res-image');
-    renderGenotypeToImage(seniApp, ast, genotype, imageElement, 2000, 2000);
+    const [width, height] = seniApp.highResolution;
+    renderGenotypeToImage(seniApp, ast, genotype, imageElement,
+                          width, height);
 
     const holder = document.getElementById('holder');
-    imageElement.style.height = holder.clientHeight + "px";
-    imageElement.style.width = holder.clientWidth + "px";
-    console.log(imageElement.style.height,holder.clientHeight,
-                imageElement.style.width, holder.clientWidth);
+    imageElement.style.height = holder.clientHeight + 'px';
+    imageElement.style.width = holder.clientWidth + 'px';
+
+    const linkElement = document.getElementById('high-res-link');
+    linkElement.href = imageElement.src;
   }
 }
 /* eslint-enable no-unused-vars */
@@ -480,14 +486,14 @@ function setupUI(seniApp) {
     onNextGen(seniApp);
   });
 
-//  addClickEvent('high-res-image', (event) => {
-//    event.target.classList.toggle('hidden');
-//  });
-  addClickEvent('high-res-container', () => {
-    console.log('clicked on high-res-container');
+  addClickEvent('high-res-close', (event) => {
+    console.log('high-res-close clicked');
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.toggle('invisible');
-    //event.target.classList.toggle('invisible');
+
+    const dimmer = document.getElementById('dimmer');
+    dimmer.classList.toggle('hidden');
+    event.preventDefault();
   });
 
 
@@ -591,6 +597,8 @@ function createSeniApp() {
     navbar: undefined,
     // the img destination that shows the rendered script in edit mode
     renderImage: undefined,
+    // the resolution of the high res image
+    highResolution: [2048, 2048],
     // the 3 main UI areas
     containers: [],
     placeholder: 'img/spinner.gif',
