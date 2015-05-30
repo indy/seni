@@ -144,13 +144,10 @@ function getGalleryItemIdFromDom(element) {
 function renderHighRes(seniApp, element) {
   const [index, _] = getPhenoIdFromDom(element);
   if(index !== -1) {
-    const dimmer = document.getElementById('dimmer');
-    dimmer.classList.toggle('hidden');
-
     let piece = seniApp.piece;
     let genotype = piece.genotypes[index];
     const highResContainer = document.getElementById('high-res-container');
-    highResContainer.classList.toggle('invisible');
+    highResContainer.classList.remove('invisible');
     const ast = Runtime.buildAst(seniApp.env, piece.form);
 
     const imageElement = document.getElementById('high-res-image');
@@ -236,7 +233,7 @@ function onNextGen(seniApp) {
     if(piece.phenotypes[i].selected === true) {
       const element = piece.phenotypes[i].phenotypeElement;
       const cardImage = element.getElementsByClassName('card-image')[0];
-      cardImage.classList.toggle('selected');
+      cardImage.classList.remove('selected');
     }
     piece.phenotypes[i].selected = false;
   }
@@ -490,8 +487,6 @@ function setupUI(seniApp) {
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.add('invisible');
 
-    const dimmer = document.getElementById('dimmer');
-    dimmer.classList.add('hidden');
     event.preventDefault();
   });
 
