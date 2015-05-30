@@ -487,15 +487,13 @@ function setupUI(seniApp) {
   });
 
   addClickEvent('high-res-close', (event) => {
-    console.log('high-res-close clicked');
     const highResContainer = document.getElementById('high-res-container');
-    highResContainer.classList.toggle('invisible');
+    highResContainer.classList.add('invisible');
 
     const dimmer = document.getElementById('dimmer');
-    dimmer.classList.toggle('hidden');
+    dimmer.classList.add('hidden');
     event.preventDefault();
   });
-
 
   // Ctrl-D renders the next generation
   const dKey = 68;
