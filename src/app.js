@@ -205,29 +205,8 @@ function showPlaceholderImages(seniApp) {
   }
 }
 
-function onNextGen(seniApp) {
-
-  // get the selected genotypes for the next generation
-  let chosen = [];
+function cleanUpSelectionUI(seniApp) {
   const piece = seniApp.piece;
-  for(let i = 0; i < seniApp.populationSize; i++) {
-    if(piece.phenotypes[i].selected === true) {
-      chosen.push(piece.genotypes[i]);
-    }
-  }
-
-  if(chosen.length === 0) {
-    // no phenotypes were selected
-    return;
-  }
-
-  showPlaceholderImages(seniApp);
-
-  piece.genotypes = Genetic.nextGeneration(chosen, seniApp.populationSize);
-
-  // render the genotypes
-  renderPhenotypes(seniApp);
-
   // clean up the dom and clear the selected state
   for(let i = 0; i < seniApp.populationSize; i++) {
     if(piece.phenotypes[i].selected === true) {
@@ -237,6 +216,45 @@ function onNextGen(seniApp) {
     }
     piece.phenotypes[i].selected = false;
   }
+}
+
+function genotypesFromSelectedPhenotypes(seniApp) {
+  const piece = seniApp.piece;
+
+  showPlaceholderImages(seniApp);
+
+  piece.genotypes = Genetic.nextGeneration(piece.selectedPhenotypes,
+                                           seniApp.populationSize);
+
+  // render the genotypes
+  renderPhenotypes(seniApp);
+
+  cleanUpSelectionUI(seniApp);
+}
+
+function shuffleCurrentGen(seniApp) {
+  genotypesFromSelectedPhenotypes(seniApp);
+}
+
+function onNextGen(seniApp) {
+
+  // get the selected genotypes for the next generation
+  const piece = seniApp.piece;
+
+  piece.selectedPhenotypes = [];
+
+  for(let i = 0; i < seniApp.populationSize; i++) {
+    if(piece.phenotypes[i].selected === true) {
+      piece.selectedPhenotypes.push(piece.genotypes[i]);
+    }
+  }
+
+  if(piece.selectedPhenotypes.length === 0) {
+    // no phenotypes were selected
+    return;
+  }
+
+  genotypesFromSelectedPhenotypes(seniApp);
 }
 
 function createPhenotypeElement(id, placeholderImage) {
@@ -456,6 +474,11 @@ function setupUI(seniApp) {
 
   addClickEventForClass('to-gallery', galleryModeHandler);
 
+  addClickEvent('shuffle-icon', (event) => {
+    shuffleCurrentGen(seniApp);
+    event.preventDefault();
+  });
+
   addClickEvent('action-eval', () => {
     seniApp.piece.form = seniApp.editor.getValue();
     timedRenderScript(seniApp, seniApp.piece.form, 'renderScript');
@@ -573,6 +596,9 @@ function getGallery() {
 class Piece {
   constructor() {
     this.phenotypes = [];
+    // selectedPhenotypes is required to remember the previous selection
+    // in case of a shuffle
+    this.selectedPhenotypes = [];
     this.form = undefined;
     this.ast = undefined;
     this.traits = undefined;
