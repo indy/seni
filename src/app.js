@@ -266,7 +266,7 @@ function createPhenotypeElement(id, placeholderImage) {
   container.innerHTML = `
     <div class="card">
       <div class="card-image">
-        <img class="phenotype" src="${placeholderImage}">
+        <img class="phenotype" data-id="${id}" src="${placeholderImage}">
       </div>
       <div class="card-action">
         <a href="#" class="render">Render</a>
@@ -277,33 +277,52 @@ function createPhenotypeElement(id, placeholderImage) {
   return container;
 }
 
+function allImagesLoadedSince(seniApp, timeStamp) {
+  let piece = seniApp.piece;
+  for(let i = 0; i < seniApp.populationSize; i++) {
+    if(piece.phenotypes[i].imageLoadTimeStamp < timeStamp) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function setupEvolveUI(seniApp, form) {
+
+  let timeStamp = Date.now();
 
   showPlaceholderImages(seniApp);
 
-  const piece = seniApp.piece;
+  setTimeout(function go() {
+    // wait until all of the placeholder load events have been received
+    // otherwise there may be image sizing issues, especially with the
+    // first img element
+    if(allImagesLoadedSince(seniApp, timeStamp)) {
+      const piece = seniApp.piece;
 
-  piece.ast = Runtime.buildAst(seniApp.env, form);
-  piece.traits = Genetic.buildTraits(piece.ast);
+      piece.ast = Runtime.buildAst(seniApp.env, form);
+      piece.traits = Genetic.buildTraits(piece.ast);
 
-  // create phenotype/genotype containers
-  let i;
+      // add genotypes to the containers
+      let genotype;
+      let random = new Date();
+      random = random.toGMTString();
+      for(let i = 0; i < seniApp.populationSize; i++) {
+        if(i === 0) {
+          genotype = Genetic.createGenotypeFromInitialValues(piece.traits);
+        } else {
+          genotype = Genetic.createGenotypeFromTraits(piece.traits, i + random);
+        }
+        piece.genotypes[i] = genotype;
+      }
 
-  // add genotypes to the containers
-  let genotype;
-  let random = new Date();
-  random = random.toGMTString();
-  for(i = 0; i < seniApp.populationSize; i++) {
-    if(i === 0) {
-      genotype = Genetic.createGenotypeFromInitialValues(piece.traits);
+      // render the phenotypes
+      renderPhenotypes(seniApp);
+
     } else {
-      genotype = Genetic.createGenotypeFromTraits(piece.traits, i + random);
+      setTimeout(go, 20);
     }
-    piece.genotypes[i] = genotype;
-  }
-
-  // render the phenotypes
-  renderPhenotypes(seniApp);
+  });
 }
 
 function switchMode(seniApp, newMode) {
@@ -523,31 +542,38 @@ function setupUI(seniApp) {
     }
   }, false);
 
+  const piece = seniApp.piece;
+
+  // invoked on every load event for an img tag
+  let imageLoadHandler = (event) => {
+    let imageId = event.target.getAttribute('data-id');
+    piece.phenotypes[imageId].imageLoadTimeStamp = event.timeStamp;
+  };
+
   const gallery = document.getElementById('phenotype-gallery');
   gallery.innerHTML = '';
 
-  let i;
-  let phenotypeElement;
-  const piece = seniApp.piece;
+  let phenotypeElement, imageElement;
   piece.phenotypes = [];
 
-  let row;
-
-  row = document.createElement('div');
+  let row = document.createElement('div');
   row.className = 'row';
   gallery.appendChild(row);
 
-  for(i = 0; i < seniApp.populationSize; i++) {
+  for(let i = 0; i < seniApp.populationSize; i++) {
     phenotypeElement = createPhenotypeElement(i, seniApp.placeholder);
-    row.appendChild(phenotypeElement);
 
-    const imageElement =
-            phenotypeElement.getElementsByClassName('phenotype')[0];
+    // get the image element
+    imageElement = phenotypeElement.getElementsByClassName('phenotype')[0];
+    imageElement.addEventListener('load', imageLoadHandler, false);
+
+    row.appendChild(phenotypeElement);
 
     piece.phenotypes.push({
       phenotypeElement,
       imageElement,
-      selected: false
+      selected: false,
+      imageLoadTimeStamp: 0
     });
   }
 }
