@@ -31,23 +31,38 @@ const SeniMode = {
   numSeniModes: 3
 };
 
-function getData(url, fn) {
-  var request = new XMLHttpRequest();
-  request.open('GET', url, true);
+function get(url) {
+  return new Promise((resolve, reject) => {
 
-  request.onload = function() {
-    if (request.status >= 200 && request.status < 400) {
-      fn(request.responseText);
-    } else {
-      // server returned an error
-    }
-  };
+    var req = new XMLHttpRequest();
+    req.open('GET', url);
 
-  request.onerror = function() {
-    // connection error
-  };
+    req.onload = () => {
+      // This is called even on 404 etc
+      // so check the status
+      if (req.status === 200) {
+        // Resolve the promise with the response text
+        resolve(req.response);
+      }
+      else {
+        // Otherwise reject with the status text
+        // which will hopefully be a meaningful error
+        reject(Error(req.statusText));
+      }
+    };
 
-  request.send();
+    // Handle network errors
+    req.onerror = () => {
+      reject(Error('Network Error'));
+    };
+
+    // Make the request
+    req.send();
+  });
+}
+
+function getJSON(url) {
+  return get(url).then(JSON.parse);
 }
 
 // search the children of seniApp.navbar for elements with class 'klass'
@@ -373,12 +388,15 @@ function showEditFromGallery(seniApp, element) {
   const [index, _] = getGalleryItemIdFromDom(element);
   if(index !== -1) {
     const url = '/gallery/' + index;
-    getData(url, data => {
+
+    get(url).then((data) => {
       // todo: construct a new piece object
       seniApp.piece.form = data;
 
       switchMode(seniApp, SeniMode.edit);
       showFormInEditor(seniApp);
+    }).catch(() => {
+      console.error(`cannot connect to ${url}`);
     });
   }
 }
@@ -609,13 +627,15 @@ function getGallery() {
     return container;
   };
 
-  getData('/gallery', data => {
-    let galleryItems = JSON.parse(data);
+  let url = '/gallery';
+  getJSON(url).then((galleryItems) => {
     // gets an array of gallery items
     galleryItems.forEach(item => {
       let e = createGalleryElement(item);
       row.appendChild(e);
     });
+  }).catch(() => {
+    console.error(`cannot connect to ${url}`);
   });
 }
 
