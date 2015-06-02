@@ -8,7 +8,7 @@
 (define (petal-1 angle: 0
                  colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
   (on-matrix-stack
-    (rotate angle: angle)
+    (rotate angle: (radians->degrees angle: angle))
     (bezier-bulging tessellation: 20
                     line-width: [50 (int min: 10 max: 200)]
                     colour: colour
@@ -20,7 +20,7 @@
 (define (petal-2 angle: 0
                  colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
   (on-matrix-stack
-    (rotate angle: angle)
+    (rotate angle: (radians->degrees angle: angle))
     (bezier-bulging tessellation: 20
                     line-width: [50 (int min: 10 max: 200)]
                     colour: colour
@@ -55,7 +55,7 @@
                         colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
                         sc: 1.0)
   (circ-1 petals: petals colour: colour sc: sc)
-  (rotate angle: [0.1 (scalar min: 0.01 max: 0.4)])
+  (rotate angle: (radians->degrees angle: [0.1 (scalar min: 0.01 max: 0.4)]))
   (circ-2 petals: petals colour: colour sc: sc))
 
 (define (flower colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)

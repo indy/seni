@@ -52,7 +52,7 @@
       colour: background)
 
 (translate vector: (v2 500 500))
-(rotate angle: [0.6 (scalar max: PIPI)])
+(rotate angle: [35 (scalar max: 360)])
 (scale scalar: scalefactor)
 
 (hex-grid from: (v2 -700 -700)

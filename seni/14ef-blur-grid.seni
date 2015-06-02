@@ -43,7 +43,7 @@
       (loop (i to: passes)
         (let (((rr xr yr) (take num: 3 from: rng)))
           (on-matrix-stack
-            (rotate angle: (* rr 0.02 volatility))
+            (rotate angle: (radians->degrees angle: (* rr 0.02 volatility)))
             (rect position: (v2 (* xr 5 volatility) (* yr 5 volatility))
                   width: width
                   height: height

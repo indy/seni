@@ -23,6 +23,17 @@ const PI = Math.PI;
 const twoPI = PI * 2;
 const PIbyTwo = PI / 2;
 
+const degToRad = twoPI / 360;
+const radToDeg = 360 / twoPI;
+
+function degreesToRadians(angle) {
+  return (angle % 360) * degToRad;
+}
+
+function radiansToDegrees(angle) {
+  return (angle % twoPI) * radToDeg;
+}
+
 function mc([xa, ya], [xb, yb]) {
   const m = (ya - yb) / (xa - xb);
   const c = ya - (m * xa);
@@ -217,6 +228,26 @@ const MathUtil = {
         const {val, min, max} = self.mergeWithDefaults(params);
         return clamp(val, min, max);
       }
+    ),
+
+    new PublicBinding(
+      'degrees->radians',
+      `A helper function that converts angles in degrees to radians`,
+      {angle: 0.0},
+      (self) => function(params) {
+        const {angle} = self.mergeWithDefaults(params);
+        return degreesToRadians(angle);
+      }
+    ),
+
+    new PublicBinding(
+      'radians->degrees',
+      `A helper function that converts angles in radians to degrees`,
+      {angle: 0.0},
+      (self) => function(params) {
+        const {angle} = self.mergeWithDefaults(params);
+        return radiansToDegrees(angle);
+      }
     )
   ],
 
@@ -243,6 +274,8 @@ const MathUtil = {
     return [m, c];
   },
 
+  degreesToRadians,
+  radiansToDegrees,
   distance2d,
 
   remapFn,

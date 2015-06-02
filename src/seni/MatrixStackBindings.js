@@ -17,6 +17,7 @@
  */
 
 import PublicBinding from './PublicBinding';
+import MathUtil from './MathUtil';
 
 const MatrixStackBindings = {
   publicBindings: [
@@ -78,7 +79,9 @@ const MatrixStackBindings = {
       (self, renderer) => {
         return (params) => {
           const {angle} = self.mergeWithDefaults(params);
-          return renderer.cmdMatrixRotate(angle);
+          // angle is going to be in degrees
+          let radians = MathUtil.degreesToRadians(angle);
+          return renderer.cmdMatrixRotate(radians);
         };
       }
     )
