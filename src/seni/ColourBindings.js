@@ -111,42 +111,42 @@ const ColourBindings = {
 
     new PublicBinding(
       'col/set-lab-l',
-      `sets red component of the given colour`,
+      `sets l component of the given colour`,
       {colour: Colour.defaultColour, value: 1.0},
       (self) => colourSet(self, Format.LAB, Colour.L)
     ),
 
     new PublicBinding(
       'col/get-lab-l',
-      `gets red component of the given colour`,
+      `gets l component of the given colour`,
       {colour: Colour.defaultColour},
       (self) => colourGet(self, Format.LAB, Colour.L)
     ),
 
     new PublicBinding(
       'col/set-lab-a',
-      `sets red component of the given colour`,
+      `sets a component of the given colour`,
       {colour: Colour.defaultColour, value: 1.0},
       (self) => colourSet(self, Format.LAB, Colour.A)
     ),
 
     new PublicBinding(
       'col/get-lab-a',
-      `gets red component of the given colour`,
+      `gets a component of the given colour`,
       {colour: Colour.defaultColour},
       (self) => colourGet(self, Format.LAB, Colour.A)
     ),
 
     new PublicBinding(
       'col/set-lab-b',
-      `sets red component of the given colour`,
+      `sets b component of the given colour`,
       {colour: Colour.defaultColour, value: 1.0},
       (self) => colourSet(self, Format.LAB, Colour.B)
     ),
 
     new PublicBinding(
       'col/get-lab-b',
-      `gets red component of the given colour`,
+      `gets b component of the given colour`,
       {colour: Colour.defaultColour},
       (self) => colourGet(self, Format.LAB, Colour.B)
     ),
@@ -292,10 +292,21 @@ const ColourBindings = {
       (self) => {
         return (params) => {
           const {a, b, c, d} = self.mergeWithDefaults(params);
-          return Colour.procedural(a, b, c, d);
+          return Colour.proceduralFn(a, b, c, d);
         };
       }
+    ),
+
+    new PublicBinding(
+      'col/darken',
+      `darkens the given colour`,
+      {colour: Colour.defaultColour, value: 1.0},
+      (self) => {
+
+        return colourSet(self, Format.RGB, Colour.G);
+      }
     )
+
   ]
 };
 
