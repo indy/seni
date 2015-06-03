@@ -274,6 +274,10 @@ const MathUtil = {
     return [m, c];
   },
 
+  PI,
+  twoPI,
+  PIbyTwo,
+
   degreesToRadians,
   radiansToDegrees,
   distance2d,

@@ -17,6 +17,7 @@
  */
 
 import Immutable from 'immutable';
+import MathUtil from './MathUtil';
 
 const sUnitAngle = 360.0 / 12.0;
 const sComplimentaryAngle = sUnitAngle * 6;
@@ -432,6 +433,45 @@ function triad(c) {
  };
  */
 
+/* eslint-disable no-unused-vars */
+function proceduralFn(a, b, c, d) {
+
+  a = cloneAs(a, Format.RGB);
+  b = cloneAs(b, Format.RGB);
+  c = cloneAs(c, Format.RGB);
+  d = cloneAs(d, Format.RGB);
+
+  const ar = getComponent(a, R);
+  const ag = getComponent(a, G);
+  const ab = getComponent(a, B);
+
+  const br = getComponent(b, R);
+  const bg = getComponent(b, G);
+  const bb = getComponent(b, B);
+
+  const cr = getComponent(c, R);
+  const cg = getComponent(c, G);
+  const cb = getComponent(c, B);
+
+  const dr = getComponent(d, R);
+  const dg = getComponent(d, G);
+  const db = getComponent(d, B);
+
+  return function(params) {
+    const t = params.t || 1.0;
+
+    const red = ar + ab * Math.cos(MathUtil.twoPI * (cr * t + dr));
+    const green = ag + ab * Math.cos(MathUtil.twoPI * (cg * t + dg));
+    const blue = ab + ab * Math.cos(MathUtil.twoPI * (cb * t + db));
+
+    //console.log('calling proceduralFn with t value of ', t);
+    //console.log('colour is ', red, green, blue);
+
+    return construct(Format.RGB, [red, green, blue, 1.0]);
+  };
+}
+/* eslint-enable no-unused-vars */
+
 const Colour = {
   Format,
 
@@ -467,7 +507,9 @@ const Colour = {
   complementary,
   splitComplementary,
   analagous,
-  triad
+  triad,
+
+  proceduralFn
 };
 
 export default Colour;

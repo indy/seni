@@ -280,6 +280,21 @@ const ColourBindings = {
           return Colour.triad(colour);
         };
       }
+    ),
+
+    new PublicBinding(
+      'col/procedural-fn',
+      ``,
+      {a: Colour.defaultColour,
+       b: Colour.defaultColour,
+       c: Colour.defaultColour,
+       d: Colour.defaultColour},
+      (self) => {
+        return (params) => {
+          const {a, b, c, d} = self.mergeWithDefaults(params);
+          return Colour.procedural(a, b, c, d);
+        };
+      }
     )
   ]
 };
