@@ -142,22 +142,10 @@ function getPhenoIdFromDom(element) {
   return [-1, null];
 }
 
-function getGalleryItemIdFromDom(element) {
-  while(element) {
-    const m = element.id.match(/gallery-item-(\d+)/);
-    if(m && m.length === 2) {
-      const index = Number.parseInt(m[1], 10);
-      return [index, element];
-    } else {
-      element = element.parentNode;
-    }
-  }
-  return [-1, null];
-}
-
-/* eslint-disable no-unused-vars */
 function renderHighRes(seniApp, element) {
-  const [index, _] = getPhenoIdFromDom(element);
+  let [index, _] = getPhenoIdFromDom(element);
+  _ = _;
+
   if(index !== -1) {
     let piece = seniApp.piece;
     let genotype = piece.genotypes[index];
@@ -178,7 +166,6 @@ function renderHighRes(seniApp, element) {
     linkElement.href = imageElement.src;
   }
 }
-/* eslint-enable no-unused-vars */
 
 function toggleSelection(seniApp, element) {
   const [index, e] = getPhenoIdFromDom(element);
@@ -220,19 +207,6 @@ function showPlaceholderImages(seniApp) {
   }
 }
 
-function cleanUpSelectionUI(seniApp) {
-  const piece = seniApp.piece;
-  // clean up the dom and clear the selected state
-  for(let i = 0; i < seniApp.populationSize; i++) {
-    if(piece.phenotypes[i].selected === true) {
-      const element = piece.phenotypes[i].phenotypeElement;
-      const cardImage = element.getElementsByClassName('card-image')[0];
-      cardImage.classList.remove('selected');
-    }
-    piece.phenotypes[i].selected = false;
-  }
-}
-
 function genotypesFromSelectedPhenotypes(seniApp) {
   const piece = seniApp.piece;
 
@@ -244,11 +218,15 @@ function genotypesFromSelectedPhenotypes(seniApp) {
   // render the genotypes
   renderPhenotypes(seniApp);
 
-  cleanUpSelectionUI(seniApp);
-}
-
-function shuffleCurrentGen(seniApp) {
-  genotypesFromSelectedPhenotypes(seniApp);
+  // clean up the dom and clear the selected state
+  for(let i = 0; i < seniApp.populationSize; i++) {
+    if(piece.phenotypes[i].selected === true) {
+      const element = piece.phenotypes[i].phenotypeElement;
+      const cardImage = element.getElementsByClassName('card-image')[0];
+      cardImage.classList.remove('selected');
+    }
+    piece.phenotypes[i].selected = false;
+  }
 }
 
 function onNextGen(seniApp) {
@@ -292,19 +270,19 @@ function createPhenotypeElement(id, placeholderImage) {
   return container;
 }
 
-function allImagesLoadedSince(seniApp, timeStamp) {
-  let piece = seniApp.piece;
-  for(let i = 0; i < seniApp.populationSize; i++) {
-    if(piece.phenotypes[i].imageLoadTimeStamp < timeStamp) {
-      return false;
-    }
-  }
-  return true;
-}
-
 function setupEvolveUI(seniApp, form) {
 
-  let timeStamp = Date.now();
+  let allImagesLoadedSince = function(timeStamp) {
+    let piece = seniApp.piece;
+    for(let i = 0; i < seniApp.populationSize; i++) {
+      if(piece.phenotypes[i].imageLoadTimeStamp < timeStamp) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  let initialTimeStamp = Date.now();
 
   showPlaceholderImages(seniApp);
 
@@ -312,7 +290,7 @@ function setupEvolveUI(seniApp, form) {
     // wait until all of the placeholder load events have been received
     // otherwise there may be image sizing issues, especially with the
     // first img element
-    if(allImagesLoadedSince(seniApp, timeStamp)) {
+    if(allImagesLoadedSince(initialTimeStamp)) {
       const piece = seniApp.piece;
 
       piece.ast = Runtime.buildAst(seniApp.env, form);
@@ -377,26 +355,40 @@ function switchMode(seniApp, newMode) {
   }
 }
 /* eslint-disable no-unused-vars */
-function showFormInEditor(seniApp) {
-  const editor = seniApp.editor;
-  editor.getDoc().setValue(seniApp.piece.form);
-  editor.refresh();
-}
-
 
 function showEditFromGallery(seniApp, element) {
+
+  let getGalleryItemIdFromDom = function(e) {
+    while(e) {
+      const m = e.id.match(/gallery-item-(\d+)/);
+      if(m && m.length === 2) {
+        const index = Number.parseInt(m[1], 10);
+        return [index, e];
+      } else {
+        e = e.parentNode;
+      }
+    }
+    return [-1, null];
+  };
+
+  let showFormInEditor = function() {
+    const editor = seniApp.editor;
+    editor.getDoc().setValue(seniApp.piece.form);
+    editor.refresh();
+  };
+
   const [index, _] = getGalleryItemIdFromDom(element);
   if(index !== -1) {
     const url = '/gallery/' + index;
 
-    get(url).then((data) => {
+    get(url).catch(() => {
+      console.error(`cannot connect to ${url}`);
+    }).then((data) => {
       // todo: construct a new piece object
       seniApp.piece.form = data;
 
       switchMode(seniApp, SeniMode.edit);
-      showFormInEditor(seniApp);
-    }).catch(() => {
-      console.error(`cannot connect to ${url}`);
+      showFormInEditor();
     });
   }
 }
@@ -512,7 +504,7 @@ function setupUI(seniApp) {
   addClickEventForClass('to-gallery', galleryModeHandler);
 
   addClickEvent('shuffle-icon', (event) => {
-    shuffleCurrentGen(seniApp);
+    genotypesFromSelectedPhenotypes(seniApp);
     event.preventDefault();
   });
 
