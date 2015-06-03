@@ -71,6 +71,15 @@ describe('Compiler', () => {
 
   });
 
+  // correctly work with functions that have genotypes
+  // in both name and arg positions
+  it('should correctly apply genotypes to named functions', () => {
+    let form = `([gogo (select from: (list 'shabba 'gogo 'hooha))]
+                 foo: [44 (int min: 10 max: 56)])`;
+
+    expect(compileWithSeed(form, 100)).to.deep.equal(['shabba', {'foo': 15}]);
+  });
+
   it('should test plus', () => {
     expect(compileWithSeed('([- (testPlus)] 2 7)', 100)).
       to.deep.equal(['+', 2, 7]);
