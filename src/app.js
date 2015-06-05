@@ -65,6 +65,11 @@ function getJSON(url) {
   return get(url).then(JSON.parse);
 }
 
+function getScriptFromEditor(seniApp) {
+  seniApp.piece.script = seniApp.editor.getValue();
+}
+
+
 // search the children of seniApp.navbar for elements with class 'klass'
 // then add 'addClass' to them
 function addNavbarClass(seniApp, klass, addClass) {
@@ -99,18 +104,19 @@ function renderGenotypeToImage(seniApp, ast, genotype, imageElement,
   imageElement.src = renderer.getImageData();
 }
 
-function renderScript(seniApp, form) {
+function renderScript(seniApp) {
   const imageElement = seniApp.renderImage;
 
-  const ast = Runtime.buildAst(seniApp.env, form);
+  const script = seniApp.piece.script;
+  const ast = Runtime.buildAst(seniApp.env, script);
 
   const traits = Genetic.buildTraits(ast);
   const genotype = Genetic.createGenotypeFromInitialValues(traits);
   renderGenotypeToImage(seniApp, ast, genotype, imageElement);
 }
 
-function timedRenderScript(seniApp, form, msg) {
-  Util.withTiming(msg, () => renderScript(seniApp, form));
+function timedRenderScript(seniApp, msg) {
+  Util.withTiming(msg, () => renderScript(seniApp));
 }
 
 function addClickEvent(id, fn) {
@@ -151,7 +157,7 @@ function renderHighRes(seniApp, element) {
     let genotype = piece.genotypes[index];
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('invisible');
-    const ast = Runtime.buildAst(seniApp.env, piece.form);
+    const ast = Runtime.buildAst(seniApp.env, piece.script);
 
     const imageElement = document.getElementById('high-res-image');
     const [width, height] = seniApp.highResolution;
@@ -207,13 +213,35 @@ function showPlaceholderImages(seniApp) {
   }
 }
 
+function createInitialGenotypePopulation(piece, populationSize) {
+  // add genotypes to the containers
+  let genotype;
+  let random = new Date();
+  random = random.toGMTString();
+  for(let i = 0; i < populationSize; i++) {
+    if(i === 0) {
+      genotype = Genetic.createGenotypeFromInitialValues(piece.traits);
+    } else {
+      genotype = Genetic.createGenotypeFromTraits(piece.traits, i + random);
+    }
+    piece.genotypes[i] = genotype;
+  }
+  return piece;
+}
+
 function genotypesFromSelectedPhenotypes(seniApp) {
   const piece = seniApp.piece;
 
   showPlaceholderImages(seniApp);
 
-  piece.genotypes = Genetic.nextGeneration(piece.selectedPhenotypes,
-                                           seniApp.populationSize);
+  if(piece.selectedPhenotypes.length === 0) {
+    // if this is the first generation and nothing has been selected
+    // just randomize all of the phenotypes
+    createInitialGenotypePopulation(piece, seniApp.populationSize);
+  } else {
+    piece.genotypes = Genetic.nextGeneration(piece.selectedPhenotypes,
+                                             seniApp.populationSize);
+  }
 
   // render the genotypes
   renderPhenotypes(seniApp);
@@ -270,7 +298,9 @@ function createPhenotypeElement(id, placeholderImage) {
   return container;
 }
 
-function setupEvolveUI(seniApp, form) {
+function setupEvolveUI(seniApp) {
+
+  getScriptFromEditor(seniApp);
 
   let allImagesLoadedSince = function(timeStamp) {
     let piece = seniApp.piece;
@@ -293,21 +323,10 @@ function setupEvolveUI(seniApp, form) {
     if(allImagesLoadedSince(initialTimeStamp)) {
       const piece = seniApp.piece;
 
-      piece.ast = Runtime.buildAst(seniApp.env, form);
+      piece.ast = Runtime.buildAst(seniApp.env, seniApp.piece.script);
       piece.traits = Genetic.buildTraits(piece.ast);
 
-      // add genotypes to the containers
-      let genotype;
-      let random = new Date();
-      random = random.toGMTString();
-      for(let i = 0; i < seniApp.populationSize; i++) {
-        if(i === 0) {
-          genotype = Genetic.createGenotypeFromInitialValues(piece.traits);
-        } else {
-          genotype = Genetic.createGenotypeFromTraits(piece.traits, i + random);
-        }
-        piece.genotypes[i] = genotype;
-      }
+      createInitialGenotypePopulation(piece, seniApp.populationSize);
 
       // render the phenotypes
       renderPhenotypes(seniApp);
@@ -343,14 +362,14 @@ function switchMode(seniApp, newMode) {
     removeNavbarClass(seniApp, 'to-edit', 'hidden');
     removeNavbarClass(seniApp, 'to-evolve', 'hidden');
 
-    timedRenderScript(seniApp, seniApp.piece.form, 'renderScript');
+    timedRenderScript(seniApp, 'renderScript');
     break;
   case SeniMode.evolve :
     removeNavbarClass(seniApp, 'to-gallery', 'hidden');
     removeNavbarClass(seniApp, 'to-edit', 'hidden');
     removeNavbarClass(seniApp, 'to-evolve', 'hidden');
 
-    setupEvolveUI(seniApp, seniApp.piece.form);
+    setupEvolveUI(seniApp);
     break;
   }
 }
@@ -371,9 +390,9 @@ function showEditFromGallery(seniApp, element) {
     return [-1, null];
   };
 
-  let showFormInEditor = function() {
+  let showScriptInEditor = function() {
     const editor = seniApp.editor;
-    editor.getDoc().setValue(seniApp.piece.form);
+    editor.getDoc().setValue(seniApp.piece.script);
     editor.refresh();
   };
 
@@ -385,10 +404,10 @@ function showEditFromGallery(seniApp, element) {
       console.error(`cannot connect to ${url}`);
     }).then((data) => {
       // todo: construct a new piece object
-      seniApp.piece.form = data;
+      seniApp.piece.script = data;
 
       switchMode(seniApp, SeniMode.edit);
-      showFormInEditor();
+      showScriptInEditor();
     });
   }
 }
@@ -461,8 +480,8 @@ function setupUI(seniApp) {
   let config = CodeMirrorConfig.defaultConfig;
   config.extraKeys = {
     'Ctrl-E': function() {
-      seniApp.piece.form = seniApp.editor.getValue();
-      timedRenderScript(seniApp, seniApp.piece.form, 'renderScript');
+      getScriptFromEditor(seniApp);
+      timedRenderScript(seniApp, 'renderScript');
       return false;
     },
     'Ctrl-D': function() {
@@ -509,8 +528,8 @@ function setupUI(seniApp) {
   });
 
   addClickEvent('action-eval', () => {
-    seniApp.piece.form = seniApp.editor.getValue();
-    timedRenderScript(seniApp, seniApp.piece.form, 'renderScript');
+    seniApp.piece.script = seniApp.editor.getValue();
+    timedRenderScript(seniApp, 'renderScript');
   });
 
   addClickEvent('gallery-list', event => {
@@ -637,7 +656,7 @@ class Piece {
     // selectedPhenotypes is required to remember the previous selection
     // in case of a shuffle
     this.selectedPhenotypes = [];
-    this.form = undefined;
+    this.script = undefined;
     this.ast = undefined;
     this.traits = undefined;
     this.genotypes = [];
