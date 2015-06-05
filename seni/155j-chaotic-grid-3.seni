@@ -1,5 +1,5 @@
 (render-background)
-(translate vector: (v2 500 500))
+(translate vector: (v2 (/ canvas/width 2) (/ canvas/height 2)))
 (rotate angle: [5 (scalar max: 115)])
 (scale scalar: [1.2 (scalar min: 0.1 max: 3.0)])
 (render-main)
@@ -10,7 +10,7 @@
 (define num-squares (+ 2 num-squares-to-render))
 
 (define num-gaps (+ num-squares 1))
-(define square-size (/ (- 1000 (* gap-size num-gaps)) num-squares))
+(define square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares))
 
 (define base-colour (col/rgb r: [1.0 (scalar)]
                              g: [0.0 (scalar)]
@@ -18,20 +18,21 @@
                              alpha: 1.0))
 (define colour-volatility [20 (int min: 2 max: 40)])
 
-(define focal-point (focal/point position: (v2 [500 (int max: 1000)]
-                                               [500 (int max: 1000)])
-                                 distance: [500 (int max: 1000)]))
+(define focal-point (focal/point position: (v2 [500 (int max: canvas/width)]
+                                               [500 (int max: canvas/height)])
+                                 distance: [500 (int max: canvas/width)]))
 (define focal-power [50 (scalar max: 200)])
 
 (define (render-background colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
-  (rect x: 500
-        y: 500
-        width: 1000
-        height: 1000
+  (rect x: (/ canvas/width 2)
+        y: (/ canvas/height 2)
+        width: canvas/width
+        height: canvas/height
         colour: colour))
 
 (define (map-to-position at: 0)
-  (- (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size) 500))
+  (- (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size)
+     (/ canvas/width 2)))
 
 (define (render-main)
   (loop (y from: 1 to:  (- num-squares 1))

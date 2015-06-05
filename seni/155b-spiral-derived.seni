@@ -1,5 +1,5 @@
 
-(define centre (v2 500 500))
+(define centre (v2 (/ canvas/width 2) (/ canvas/height 2)))
 
 (define (render-circle position: (v2 0 0)
                        step: 0

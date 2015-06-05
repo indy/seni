@@ -120,12 +120,12 @@
 
 (define (background)
   (rect position: (v2 500 500)
-        width: 1000
-        height: 1000
+        width: canvas/width
+        height: canvas/height
         colour: background-colour)
   (stroked-bezier-rect position: (v2 500 500)
-                       width: 1000
-                       height: 1000
+                       width: canvas/width
+                       height: canvas/height
                        iterations: [100 (int min: 1 max: 100)]
                        overlap: [10 (int min: 1 max: 100)]
                        tessellation: [35 (int min: 1 max: 50)]

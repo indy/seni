@@ -6,7 +6,7 @@
 
 (define num-squares (+ 2 num-squares-to-render))
 (define num-gaps (+ num-squares 1))
-(define square-size (/ (- 1000 (* gap-size num-gaps)) num-squares))
+(define square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares))
 
 (define base-colour (col/rgb r: [1.0 (scalar)]
                              g: [0.0 (scalar)]
@@ -14,16 +14,16 @@
                              alpha: 1.0))
 (define colour-volatility [20 (int min: 2 max: 40)])
 
-(define focal-point (focal/point position: (v2 [500 (int max: 1000)]
-                                               [800 (int max: 1000)])
-                                 distance: [300 (int max: 1000)]))
+(define focal-point (focal/point position: (v2 [500 (int max: canvas/width)]
+                                               [800 (int max: canvas/height)])
+                                 distance: [300 (int max: canvas/width)]))
 (define focal-power [50 (scalar max: 200)])
 
 (define (render-background colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
-  (rect x: 500
-        y: 500
-        width: 1000
-        height: 1000
+  (rect x: (/ canvas/width 2)
+        y: (/ canvas/height 2)
+        width: canvas/width
+        height: canvas/height
         colour: colour))
 
 (define (map-to-position at: 0)

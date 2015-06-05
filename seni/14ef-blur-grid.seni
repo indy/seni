@@ -4,7 +4,7 @@
 (define num-squares (+ 2 num-squares-to-render))
 
 (define num-gaps (+ num-squares 1))
-(define square-size (/ (- 1000 (* gap-size num-gaps)) num-squares))
+(define square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares))
 
 (wash)
 
@@ -15,8 +15,8 @@
       (accumulated-rect x: x-pos
                         y: y-pos
                         passes: 20
-                        volatility: (/ (math/distance-2d x1: 500 
-                                                         y1: 500
+                        volatility: (/ (math/distance-2d x1: (/ canvas/width 2)
+                                                         y1: (/ canvas/heigh 2)
                                                          x2: x-pos
                                                          y2: y-pos) 250)
                         seed: (+ x (* y num-squares))
@@ -57,20 +57,24 @@
               line-segments: 5
               colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
               seed: 272)
-  (loop (h from: -20 to: 1020 increment: 20)
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: (list
-                     (v2 0 (v x: 0.10 y: h z: seed scale: variation))
-                     (v2 333 (v x: 333.33 y: h z: seed scale: variation))
-                     (v2 666 (v x: 666.66 y: h z: seed scale: variation))
-                     (v2 1000 (v x: 1000.10 y: h z: seed scale: variation)))
-            colour: colour)
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: (list
-                     (v2 (v x: 0.10 y: h z: seed scale: variation) 0)
-                     (v2 (v x: 333.33 y: h z: seed scale: variation) 333)
-                     (v2 (v x: 666.66 y: h z: seed scale: variation) 666)
-                     (v2 (v x: 1000.10 y: h z: seed scale: variation) 1000))
-            colour: colour)))
+  (let ((w/3 (/ canvas/width 3))
+        (h/3 (/ canvas/height 3)))
+    (loop (h from: -20 to: 1020 increment: 20)
+      (bezier tessellation: line-segments
+              line-width: line-width
+              coords: (list
+                       (v2 0 (v x: 0 y: h z: seed scale: variation))
+                       (v2 w/3 (v x: w/3 y: h z: seed scale: variation))
+                       (v2 (* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation))
+                       (v2 canvas/width (v x: canvas/width y: h z: seed scale: variation)))
+              colour: colour)
+
+      (bezier tessellation: line-segments
+              line-width: line-width
+              coords: (list
+                       (v2 (v x: 0 y: h z: seed scale: variation) 0)
+                       (v2 (v x: h/3 y: h z: seed scale: variation) h/3)
+                       (v2 (v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2))
+                       (v2 (v x: canvas/height y: h z: seed scale: variation) canvas/height))
+              colour: colour)
+      )))

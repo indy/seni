@@ -3,7 +3,9 @@
                          g: [0.3 (scalar)]
                          b: [0.2 (scalar)]
                          alpha: [0.4 (scalar)])
-        posx: 500 posy: 500 sc: [1.0 (scalar min: 0.6 max: 2.0)])
+        posx: (/ canvas/width 2)
+        posy: (/ canvas/height 2)
+        sc: [1.0 (scalar min: 0.6 max: 2.0)])
 
 (define (petal-1 angle: 0
                  colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
@@ -81,20 +83,24 @@
               line-segments: 5
               colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
               seed: 272)
-  (loop (h from: -20 to: 1020 increment: 20)
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: (list
-                     (v2 0 (v x: 0.10 y: h z: seed scale: variation))
-                     (v2 333 (v x: 333.33 y: h z: seed scale: variation))
-                     (v2 666 (v x: 666.66 y: h z: seed scale: variation))
-                     (v2 1000 (v x: 1000.10 y: h z: seed scale: variation)))
-            colour: colour)
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: (list
-                     (v2 (v x: 0.10 y: h z: seed scale: variation) 0)
-                     (v2 (v x: 333.33 y: h z: seed scale: variation) 333)
-                     (v2 (v x: 666.66 y: h z: seed scale: variation) 666)
-                     (v2 (v x: 1000.10 y: h z: seed scale: variation) 1000))
-            colour: colour)))
+  (let ((w/3 (/ canvas/width 3))
+        (h/3 (/ canvas/height 3)))
+    (loop (h from: -20 to: 1020 increment: 20)
+      (bezier tessellation: line-segments
+              line-width: line-width
+              coords: (list
+                       (v2 0 (v x: 0 y: h z: seed scale: variation))
+                       (v2 w/3 (v x: w/3 y: h z: seed scale: variation))
+                       (v2 (* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation))
+                       (v2 canvas/width (v x: canvas/width y: h z: seed scale: variation)))
+              colour: colour)
+
+      (bezier tessellation: line-segments
+              line-width: line-width
+              coords: (list
+                       (v2 (v x: 0 y: h z: seed scale: variation) 0)
+                       (v2 (v x: h/3 y: h z: seed scale: variation) h/3)
+                       (v2 (v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2))
+                       (v2 (v x: canvas/height y: h z: seed scale: variation) canvas/height))
+              colour: colour)
+      )))

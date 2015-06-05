@@ -1,6 +1,6 @@
-(rect position: (v2 500 500)
-      width: 1000
-      height: 1000
+(rect position: (v2 (/ canvas/width 2) (/ canvas/height 2))
+      width: canvas/width
+      height: canvas/height
       colour: [white (col)])
 
 (loop (y from: 1 to: (- num-squares 1))
@@ -22,16 +22,16 @@
 (define focalpoint ([focal/point (select from: (list 'focal/point
                                                      'focal/hline
                                                      'focal/vline))] 
-                    position: (v2 [500 (int max: 1000)] 
-                                  [500 (int max: 1000)])
-                    distance: [800 (int min: 500 max: 1000)]))
+                    position: (v2 [500 (int max: canvas/width)] 
+                                  [500 (int max: canvas/height)])
+                    distance: [800 (int min: (/ canvas/width 2) max: canvas/width)]))
 
 (define num-squares-to-render [7 (int min: 4 max: 10)])
 
 (define num-squares (+ 2 num-squares-to-render))
 
 (define num-gaps (+ num-squares 1))
-(define square-size (/ 1000 num-squares))
+(define square-size (/ canvas/width num-squares))
 
 (define (draw-tile position: (v2 0 0)
                    colour: red)

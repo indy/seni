@@ -1,5 +1,5 @@
 ; apply a full-canvas dark texture
-(stroked-bezier-rect position: (v2 500 500)
+(stroked-bezier-rect position: (v2 (/ canvas/width 2) (/ canvas/height 2))
                      overlap: 90
                      iterations: 80
                      tessellation: 20
@@ -9,15 +9,15 @@
       				 colour: (col/rgb r: 0 g: 0 b: 0.1 alpha: 0.9))
 
 ; further darken the background
-(rect position: (v2 500 500)
-      width: 1000 height: 1000
+(rect position: (v2 (/ canvas/width 2) (/ canvas/height 2))
+      width: canvas/width height: canvas/height
       colour: (col/rgb r: 0 g: 0 b: 0.0 alpha: 0.5))
 
 ;; the coords that the bezier path will take
-(define coords (list (v2 [  0 (int max: 1000)] [500 (int max: 1000)])
-                     (v2 [333 (int max: 1000)] [100 (int max: 1000)])
-                     (v2 [666 (int max: 1000)] [900 (int max: 1000)])
-                     (v2 [999 (int max: 1000)] [500 (int max: 1000)])))
+(define coords (list (v2 [  0 (int max: canvas/width)] [500 (int max: canvas/height)])
+                     (v2 [333 (int max: canvas/width)] [100 (int max: canvas/height)])
+                     (v2 [666 (int max: canvas/width)] [900 (int max: canvas/height)])
+                     (v2 [999 (int max: canvas/width)] [500 (int max: canvas/height)])))
 
 ;; as the bezier path progresses, change the circle's LAB a component
 (define remap-a (remap-fn from: (v2 0 1)

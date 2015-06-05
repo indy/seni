@@ -5,11 +5,13 @@
 (define colour-a [(col/rgb r: 0 g: 0 b: 0.4 alpha: 1) (col)])
 (define colour-b [(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (col)])
 
-(define focalpoint (focal/point position: (v2 [500 (int max: 1000)]
-                                              [500 (int max: 1000)])
-                                distance: [400 (int min: 200 max: 1000)]))
+(define focalpoint (focal/point position: (v2 [500 (int max: canvas/width)]
+                                              [500 (int max: canvas/height)])
+                                distance: [400 (int min: 200 max: canvas/width)]))
 
-(define (hexagon position: (v2 500 500)
+(define centre (v2 (/ canvas/width 2) (/ canvas/height 2)))
+
+(define (hexagon position: centre
                  colour: black
                  size: 100)
   (poly colour: colour
@@ -18,7 +20,7 @@
         tessellation: 6))
 
 (define (hex-grid from: (v2 0 0)
-                  to: (v2 1000 1000)
+                  to: (v2 canvas/width canvas/height)
                   colour: red
                   size: 30)
   (let ((height (* size 2))
@@ -46,12 +48,12 @@
                                         value: (focalpoint position: (v2 x y)))
                  position: (v2 x y))))))
 
-(rect position: (v2 500 500)
-      width: 1000
-      height: 1000
+(rect position: centre
+      width: canvas/width
+      height: canvas/height
       colour: background)
 
-(translate vector: (v2 500 500))
+(translate vector: centre)
 (rotate angle: [35 (scalar max: 360)])
 (scale scalar: scalefactor)
 
@@ -61,6 +63,6 @@
           colour: colour-a)
 
 (hex-grid from: (v2 -500 -500)
-          to: (v2 500 500)
+          to: centre
           size: hex-size
           colour: colour-b)

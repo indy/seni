@@ -21,6 +21,20 @@ import PublicBinding from './PublicBinding';
 const Core = {
   publicBindings: [
     new PublicBinding(
+      'canvas/width',
+      'the width of the canvas',
+      {},
+      () => 1000
+    ),
+
+    new PublicBinding(
+      'canvas/height',
+      'the height of the canvas',
+      {},
+      () => 1000
+    ),
+
+    new PublicBinding(
       'take',
 
       `invokes the 'from' function 'num' times, returning a list`,
