@@ -35,6 +35,39 @@ const Core = {
     ),
 
     new PublicBinding(
+      'canvas/centre',
+      'the centre of the canvas',
+      {},
+      () => [500, 500]
+    ),
+
+    new PublicBinding(
+      'list/length',
+
+      '',
+
+      {of: []},
+
+      (self) => function(params) {
+        const {of} = self.mergeWithDefaults(params);
+        return of.length;
+      }
+    ),
+
+    new PublicBinding(
+      'list/get',
+
+      '',
+
+      {from: [], nth: 0},
+
+      (self) => function(params) {
+        const {from, nth} = self.mergeWithDefaults(params);
+        return from[nth];
+      }
+    ),
+
+    new PublicBinding(
       'take',
 
       `invokes the 'from' function 'num' times, returning a list`,
