@@ -46,6 +46,7 @@ function buildTraitFromNode(node, genes) {
 
     const gene = {initialValue, simplifiedAst};
     genes.push(gene);  // mutate the genes
+
   }
 
   if (node.type === NodeType.LIST) {
@@ -76,7 +77,38 @@ function randomCrossover(genotypeA, genotypeB) {
   return spliceA.concat(spliceB);
 }
 
+function expandNodeForAlterableChildren(node) {
+
+  if(node.type === NodeType.LIST) {
+    if(node.alterable === true &&
+       node.parameterAST.length > 1 &&
+       node.parameterAST[0].value === 'map') {
+
+      // make this node non-alterable and it's children alterable
+      // e.g. [(list 1 2 3 4 5 6) map (select from: (list 1 2 3 4 5 6 7 8 9))]
+
+      node.alterable = false;
+      let parameterAst = node.parameterAST.slice(1); // remove the 'map''
+
+      for(let i = 1; i < node.children.length; i++) {
+        let n = node.children[i];
+        n.alterable = true;
+        n.parameterAST = parameterAst;
+      }
+
+    } else {
+      node.children = node.children.map(n => expandNodeForAlterableChildren(n));
+    }
+  }
+
+  return node;
+}
+
 const Genetic = {
+
+  expandASTForAlterableChildren: function(ast) {
+    return ast.map(node => expandNodeForAlterableChildren(node));
+  },
 
   buildTraits: function(ast) {
     const traits = [];

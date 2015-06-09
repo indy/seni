@@ -20,6 +20,7 @@ import Interpreter from './Interpreter';
 import Parser from './Parser';
 import Lexer from './Lexer';
 import Compiler from './Compiler';
+import Genetic from './Genetic';
 
 const Runtime = {
   createEnv: function() {
@@ -39,7 +40,9 @@ const Runtime = {
       return false;
     }
 
-    return astBox.nodes;
+    const ast = Genetic.expandASTForAlterableChildren(astBox.nodes);
+
+    return ast;
   },
 
   evalAst: function(env, ast, genotype) {
