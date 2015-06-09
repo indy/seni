@@ -96,6 +96,10 @@ class Renderer {
     return this.renderPoly(params);
   }
 
+  cmdRenderPolySlice(params) {
+    return this.renderPolySlice(params);
+  }
+
   cmdRenderGradientPoly(params, sides) {
     return this.renderGradientPoly(params, sides);
   }
@@ -169,6 +173,61 @@ class Renderer {
 
     // close up the polygon
     angle = 0.0;
+    vx = (Math.sin(angle) * width) + x;
+    vy = (Math.cos(angle) * height) + y;
+
+    this.addVertex([x, y], colourArray);
+    this.addVertex([vx, vy], colourArray);
+  }
+
+  renderPolySlice(params) {
+    let {
+      position,
+      width,
+      height,
+      radius,
+      tessellation,
+      colour
+    } = params;
+
+    let angleStart = params['angle-start'];
+    let angleEnd = params['angle-end'];
+
+    const [x, y] = position;
+
+    if (radius !== undefined) {
+      // use the radius for both width and height if it's given
+      width = radius;
+      height = radius;
+    }
+
+    if(angleStart > angleEnd) {
+      console.warn(`angleStart: ${angleStart} > angleEnd: ${angleEnd}`);
+    }
+
+    const rStart = MathUtil.degreesToRadians(angleStart);
+    const rEnd = MathUtil.degreesToRadians(angleEnd);
+
+    const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+
+    this.prepareToAddTriangleStrip((tessellation * 2) + 2, [x, y]);
+
+    //let twoPI = Math.PI * 2;
+    let unitAngle = (rEnd - rStart) / tessellation;
+    let angle, vx, vy;
+
+    for(let i = 0; i < tessellation; i++) {
+
+      angle = rStart + (unitAngle * i);
+      vx = (Math.sin(angle) * width) + x;
+      vy = (Math.cos(angle) * height) + y;
+
+      this.addVertex([x, y], colourArray);
+      this.addVertex([vx, vy], colourArray);
+    }
+
+    // close up the polygon
+    angle = rEnd;
     vx = (Math.sin(angle) * width) + x;
     vy = (Math.cos(angle) * height) + y;
 
