@@ -119,6 +119,29 @@ const polyBinding = new PublicBinding(
     return (params) => renderPoly(self, params, renderer);
   });
 
+function renderPolySlice(publicBinding, params, renderer) {
+  const fullParams = publicBinding.mergeWithDefaults(params);
+  renderer.cmdRenderPolySlice(fullParams);
+}
+
+const polySliceBinding = new PublicBinding(
+  'poly-slice',
+  `
+  `,
+  {
+    position: [500, 500],
+    radius: undefined,
+    'angle-start': 0,
+    'angle-end': 180,
+    width: 200,
+    height: 200,
+    tessellation: 10,
+    colour: Colour.defaultColour
+  },
+  (self, renderer) => {
+    return (params) => renderPolySlice(self, params, renderer);
+  });
+
 function renderBezierTrailing(publicBinding, params, renderer) {
 
   let fullParams = publicBinding.mergeWithDefaults(params);
@@ -473,6 +496,7 @@ const Shapes = {
     rectBinding,
 
     polyBinding,
+    polySliceBinding,
     splineBinding,
 
     bezierBinding,
