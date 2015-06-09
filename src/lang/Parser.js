@@ -98,7 +98,7 @@ function consumeBracketForm(tokens) {
     }
     if (token.type === TokenType.BRACKET_END) {
       tokens.shift();
-      return {node: node};
+      break;
     }
 
     parameterBox = consumeItem(tokens, false);
@@ -111,6 +111,9 @@ function consumeBracketForm(tokens) {
     }
   }
   /* eslint-enable no-constant-condition */
+
+  return { node };
+
 }
 
 function consumeQuotedForm(tokens) {
@@ -125,7 +128,7 @@ function consumeQuotedForm(tokens) {
   }
   node.addChild(childBox.node);
 
-  return {node: node};
+  return { node };
 }
 
 function consumeList(tokens, alterable) {
@@ -154,6 +157,7 @@ function consumeList(tokens, alterable) {
     }
   }
   /* eslint-enable no-constant-condition */
+
 }
 
 /*

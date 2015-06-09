@@ -302,8 +302,11 @@ const ColourBindings = {
       `darkens the given colour`,
       {colour: Colour.defaultColour, value: 1.0},
       (self) => {
-
-        return colourSet(self, Format.RGB, Colour.G);
+        return (params) => {
+          const {colour, value} = self.mergeWithDefaults(params);
+          return Colour.setComponent(Colour.cloneAs(colour, Format.LAB),
+                                     Colour.L, value);
+        };
       }
     )
 

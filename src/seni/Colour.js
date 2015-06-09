@@ -433,7 +433,9 @@ function triad(c) {
  };
  */
 
+
 /* eslint-disable no-unused-vars */
+// from http://iquilezles.org/www/articles/palettes/palettes.htm
 function proceduralFn(a, b, c, d) {
 
   a = cloneAs(a, Format.RGB);
@@ -463,9 +465,6 @@ function proceduralFn(a, b, c, d) {
     const red = ar + ab * Math.cos(MathUtil.twoPI * (cr * t + dr));
     const green = ag + ab * Math.cos(MathUtil.twoPI * (cg * t + dg));
     const blue = ab + ab * Math.cos(MathUtil.twoPI * (cb * t + db));
-
-    //console.log('calling proceduralFn with t value of ', t);
-    //console.log('colour is ', red, green, blue);
 
     return construct(Format.RGB, [red, green, blue, 1.0]);
   };
