@@ -381,8 +381,8 @@ function showEditFromGallery(seniApp, element) {
     while(e) {
       const m = e.id.match(/gallery-item-(\d+)/);
       if(m && m.length === 2) {
-        const index = Number.parseInt(m[1], 10);
-        return [index, e];
+        const idx = Number.parseInt(m[1], 10);
+        return [idx, e];
       } else {
         e = e.parentNode;
       }
