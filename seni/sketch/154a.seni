@@ -1,0 +1,77 @@
+
+;; test code to render beziers, splines and strokedBeziers
+
+(define coords (list (v2 440 400)
+                     (v2 533 700)
+                     (v2 766 200)
+                     (v2 900 500)))
+
+(define coords2 (list (v2 440 700)
+                      (v2 533 1000)
+                      (v2 766 500)
+                      (v2 900 800)))
+
+(define coords3 (list (v2 440 800)
+                      (v2 533 1100)
+                      (v2 766 600)
+                      (v2 900 900)))
+
+(spline colour: (col/rgb r: 0.0 g: 0.4 b: 0.1 alpha: 0.5)
+        lineWidthStart:10
+        lineWidthEnd: 0
+        coords: (list (v2 140 400)
+                      (v2 333 600)
+                      (v2 566 500)))
+
+(bezier tessellation: 35
+        lineWidth: 10
+        coords: coords
+        colour: (col/rgb r: 0.0 g: 0.0 b: 0.1 alpha: 0.5))
+
+(stroked-bezier tessellation: 5
+                coords: coords2
+                strokeLineWidthStart: 20
+                strokeLineWidthEnd: 20
+                strokeTessellation: 15
+                strokeNoise: 25
+                colour: (col/rgb r: 0.2 g: 0.9 b: 0.1 alpha: 0.3)
+                colourVolatility: 0
+                seed: 43)
+
+(stroked-bezier tessellation: 15
+                coords: coords3
+                strokeLineWidthStart: 20
+                strokeLineWidthEnd: 4
+                strokeTessellation: 15
+                strokeNoise: 45
+                colour: (col/rgb r: 0.2 g: 0.9 b: 0.1 alpha: 0.3)
+                colourVolatility: 70
+                seed: 2200)
+
+(stroked-bezier tessellation: 65
+                coords: coords3
+                strokeLineWidthStart: 2
+                strokeLineWidthEnd: 5
+                strokeTessellation: 15
+                strokeNoise: 55
+                colour: (col/rgb r: 0.2 g: 0.9 b: 0.1 alpha: 0.3)
+                colourVolatility: 700
+                seed: 220)
+
+(stroked-bezier-rect position: (v2 500 500)
+                     width: 400
+                     height: 400
+
+                     iterations: 50
+                     overlap: 10
+
+                     tessellation: 35
+
+                     strokeTessellation: 15
+                     strokeNoise: 90
+
+                     colour: (col/rgb r: 0.2 g: 0.0 b: 0.1 alpha: 0.9)
+                     colourVolatility: 20
+
+                     volatility: 17
+                     seed: 43)

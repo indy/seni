@@ -1,0 +1,39 @@
+(interesting-circle position: (v2 500 500)
+                    seed: [33 (int max: 1000)]
+                    colour: [(col/rgb r: 0.8 g: 0 b: 0 alpha: 0.4) (col alpha: 0.4)])
+
+(define (interesting-circle position: (v2 500 500)
+                            colour: red
+                            seed: "yabba dabba dooo")
+  (let ((rng (rng/unsigned seed: seed)))
+    (loop (i to: 8)
+      (on-matrix-stack
+        (translate vector: position)
+        (rotate angle: (* 360 (take from: rng)))
+        ;; outer ring
+        (poly-slice tessellation: 30
+                    position: (v2 0 0)
+                    colour: colour
+                    angle-start: 0
+                    angle-end: 290
+                    width: (+ (* 40 (take from: rng)) 170)
+                    inner-width: (+ (* 50 (take from: rng)) 100)
+                    height: (+ (* 40 (take from: rng)) 170)
+                    inner-height: (+ (* 50 (take from: rng)) 100))
+        ;; inner ring
+        (poly-slice tessellation: 10
+                    position: (v2 0 0)
+                    colour: colour
+                    angle-start: 0
+                    angle-end: 290
+                    width: (+ (* 50 (take from: rng)) 100)
+                    inner-width: (+ (* 100 (take from: rng)) 0)
+                    height: (+ (* 50 (take from: rng)) 100)
+                    inner-height: (+ (* 100 (take from: rng)) 0))))
+    ;; centre fill
+    (poly-slice tessellation: 10
+                position: position
+                colour: colour
+                angle-start: 0
+                angle-end: 360
+                radius: 30)))

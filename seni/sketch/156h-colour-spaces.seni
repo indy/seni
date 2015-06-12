@@ -1,0 +1,36 @@
+
+
+(define (hsl-grid)
+  (let ((fn-h (remap-fn from: (list 0 1000)
+                          to: (list 0 360)))
+        (fn-l (remap-fn from: (list 0 1000)
+                        to: (list 0.4 0.7)))))
+  (loop (y from: 50 to: 1000 increment: 100)
+    (loop (x from: 50 to: 1000 increment: 100)
+      (rect position: (v2 x y)
+            width: 50
+            height: 50
+            colour: (col/hsl h: (fn-h val: y) 
+                             s: 1 
+                             l: (fn-l val: x))))))
+
+
+;; is there a bug in the hsv colour space?
+(define (hsv-grid)
+  (let ((fn-h (remap-fn from: (list 0 1000)
+                          to: (list 0 360)))
+        (fn-l (remap-fn from: (list 0 1000)
+                        to: (list 0.4 0.8)))))
+  (loop (y from: 50 to: 1000 increment: 100)
+    (loop (x from: 50 to: 1000 increment: 100)
+      (rect position: (v2 x y)
+            width: 50
+            height: 50
+            colour: (col/hsv h: 320 
+                             s: 1 
+                             v: 0.76)))))
+
+
+(hsl-grid)
+
+
