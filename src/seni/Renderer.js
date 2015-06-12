@@ -192,6 +192,8 @@ class Renderer {
 
     let angleStart = params['angle-start'];
     let angleEnd = params['angle-end'];
+    let innerWidth = params['inner-width'];
+    let innerHeight = params['inner-height'];
 
     const degToRad = MathUtil.twoPI / 360;
 
@@ -212,28 +214,39 @@ class Renderer {
 
     const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
-    this.prepareToAddTriangleStrip((tessellation * 2) + 2, [x, y]);
-
     //let twoPI = Math.PI * 2;
     let unitAngle = (rEnd - rStart) / tessellation;
-    let angle, vx, vy;
+    let angle, vx, vy, innervx, innervy;
+
+    angle = rStart;
+    innervx = (Math.sin(angle) * innerWidth) + x;
+    innervy = (Math.cos(angle) * innerHeight) + y;
+    this.prepareToAddTriangleStrip((tessellation * 2) + 2, [innervx, innervy]);
 
     for(let i = 0; i < tessellation; i++) {
 
       angle = rStart + (unitAngle * i);
+
+      innervx = (Math.sin(angle) * innerWidth) + x;
+      innervy = (Math.cos(angle) * innerHeight) + y;
+
       vx = (Math.sin(angle) * width) + x;
       vy = (Math.cos(angle) * height) + y;
 
-      this.addVertex([x, y], colourArray);
+      this.addVertex([innervx, innervy], colourArray);
       this.addVertex([vx, vy], colourArray);
     }
 
     // close up the polygon
     angle = rEnd;
+
+    innervx = (Math.sin(angle) * innerWidth) + x;
+    innervy = (Math.cos(angle) * innerHeight) + y;
+
     vx = (Math.sin(angle) * width) + x;
     vy = (Math.cos(angle) * height) + y;
 
-    this.addVertex([x, y], colourArray);
+    this.addVertex([innervx, innervy], colourArray);
     this.addVertex([vx, vy], colourArray);
   }
 

@@ -164,6 +164,8 @@ const polySliceBinding = new PublicBinding(
     'angle-end': 180,
     width: 200,
     height: 200,
+    'inner-width': 0,
+    'inner-height': 0,
     tessellation: 10,
     colour: Colour.defaultColour
   },
