@@ -597,7 +597,7 @@ function setupUI(seniApp) {
   gallery.appendChild(row);
 
   for(let i = 0; i < seniApp.populationSize; i++) {
-    phenotypeElement = createPhenotypeElement(i, seniApp.placeholder);
+    phenotypeElement = createPhenotypeElement(i, '');
 
     // get the image element
     imageElement = phenotypeElement.getElementsByClassName('phenotype')[0];
