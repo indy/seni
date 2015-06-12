@@ -375,6 +375,13 @@ function switchMode(seniApp, newMode) {
 }
 /* eslint-disable no-unused-vars */
 
+
+function showScriptInEditor(seniApp) {
+  const editor = seniApp.editor;
+  editor.getDoc().setValue(seniApp.piece.script);
+  editor.refresh();
+}
+
 function showEditFromGallery(seniApp, element) {
 
   let getGalleryItemIdFromDom = function(e) {
@@ -390,12 +397,6 @@ function showEditFromGallery(seniApp, element) {
     return [-1, null];
   };
 
-  let showScriptInEditor = function() {
-    const editor = seniApp.editor;
-    editor.getDoc().setValue(seniApp.piece.script);
-    editor.refresh();
-  };
-
   const [index, _] = getGalleryItemIdFromDom(element);
   if(index !== -1) {
     const url = '/gallery/' + index;
@@ -407,7 +408,7 @@ function showEditFromGallery(seniApp, element) {
       seniApp.piece.script = data;
 
       switchMode(seniApp, SeniMode.edit);
-      showScriptInEditor();
+      showScriptInEditor(seniApp);
     });
   }
 }
@@ -530,6 +531,12 @@ function setupUI(seniApp) {
   addClickEvent('action-eval', () => {
     seniApp.piece.script = seniApp.editor.getValue();
     timedRenderScript(seniApp, 'renderScript');
+  });
+
+  addClickEvent('action-add', () => {
+    seniApp.piece.script = '';
+    switchMode(seniApp, SeniMode.edit);
+    showScriptInEditor(seniApp);
   });
 
   addClickEvent('gallery-list', event => {
