@@ -193,6 +193,8 @@ class Renderer {
     let angleStart = params['angle-start'];
     let angleEnd = params['angle-end'];
 
+    const degToRad = MathUtil.twoPI / 360;
+
     const [x, y] = position;
 
     if (radius !== undefined) {
@@ -205,8 +207,8 @@ class Renderer {
       console.warn(`angleStart: ${angleStart} > angleEnd: ${angleEnd}`);
     }
 
-    const rStart = MathUtil.degreesToRadians(angleStart);
-    const rEnd = MathUtil.degreesToRadians(angleEnd);
+    const rStart = angleStart * degToRad;
+    const rEnd = angleEnd * degToRad;
 
     const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
