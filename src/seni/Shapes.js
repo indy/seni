@@ -86,7 +86,7 @@ function renderRect(publicBinding, params, renderer) {
 const rectBinding = new PublicBinding(
   'rect',
   `
-  this fn adds 1
+  renders a rectangle, centered in position with the given width, height
   `,
   {
     position: [500, 500],
@@ -96,6 +96,35 @@ const rectBinding = new PublicBinding(
   },
   (self, renderer) => {
     return (params) => renderRect(self, params, renderer);
+  });
+
+
+const boxBinding = new PublicBinding(
+  'box',
+  `
+  renders a rectangle using the given top, left, bottom, right parameters
+  `,
+  {
+    top: 300,
+    left: 100,
+    bottom: 100,
+    right: 300,
+    colour: Colour.defaultColour
+  },
+  (self, renderer) => {
+    return (params) => {
+      let fullParams = self.mergeWithDefaults(params);
+      let width = fullParams.right - fullParams.left;
+      let height = fullParams.top - fullParams.bottom;
+      let rectParams = {
+        position: [fullParams.left + (width / 2),
+                   fullParams.bottom + (height / 2)],
+        width: width,
+        height: height,
+        colour: fullParams.colour
+      };
+      renderRect(rectBinding, rectParams, renderer);
+    };
   });
 
 function renderPoly(publicBinding, params, renderer) {
@@ -494,6 +523,7 @@ const gradientQuadBinding = new PublicBinding(
 const Shapes = {
   publicBindings: [
     rectBinding,
+    boxBinding,
 
     polyBinding,
     polySliceBinding,
