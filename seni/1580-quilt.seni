@@ -118,7 +118,7 @@
         height: (- h w/2))
   (poly-slice position: (v2 0 (- h/2 w/2))
               angle-start: 270
-              angle-end: 359.9 ;; bug in current poly-slice
+              angle-end: 360
               colour: primary
               radius: w/2)
   (rect position: (v2 w/4 w/4)
