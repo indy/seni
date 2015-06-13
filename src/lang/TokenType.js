@@ -17,18 +17,18 @@
  */
 
 const TokenType = {
-  UNKNOWN: 0,
-  LIST_START: 1,
-  LIST_END: 2,
-  BRACKET_START: 3,
-  BRACKET_END: 4,
-  INT: 5,
-  FLOAT: 6,
-  NAME: 7,
-  STRING: 8,
-  QUOTE_ABBREVIATION: 9,
-  LABEL: 10,
-  COMMENT: 11
+  UNKNOWN: Symbol('UNKNOWN'),
+  LIST_START: Symbol('LIST_START'),
+  LIST_END: Symbol('LIST_END'),
+  BRACKET_START: Symbol('BRACKET_START'),
+  BRACKET_END: Symbol('BRACKET_END'),
+  INT: Symbol('INT'),
+  FLOAT: Symbol('FLOAT'),
+  NAME: Symbol('NAME'),
+  STRING: Symbol('STRING'),
+  QUOTE_ABBREVIATION: Symbol('QUOTE_ABBREVIATION'),
+  LABEL: Symbol('LABEL'),
+  COMMENT: Symbol('COMMENT')
 };
 
 export default TokenType;

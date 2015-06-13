@@ -17,17 +17,17 @@
  */
 
 const NodeType = {
-  LIST: 0,
-  INT: 1,
-  FLOAT: 2,
-  NAME: 3,
-  LABEL: 4,
-  STRING: 5,
-  BOOLEAN: 6,
-  LAMBDA: 7,
-  SPECIAL: 8,
-  COLOUR: 9,
-  NULL: 10
+  LIST: Symbol('LIST'),
+  INT: Symbol('INT'),
+  FLOAT: Symbol('FLOAT'),
+  NAME: Symbol('NAME'),
+  LABEL: Symbol('LABEL'),
+  STRING: Symbol('STRING'),
+  BOOLEAN: Symbol('BOOLEAN'),
+  LAMBDA: Symbol('LAMBDA'),
+  SPECIAL: Symbol('SPECIAL'),
+  COLOUR: Symbol('COLOUR'),
+  NULL: Symbol('NULL')
 };
 
 export default NodeType;
