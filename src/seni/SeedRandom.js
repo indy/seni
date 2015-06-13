@@ -20,15 +20,20 @@ import PublicBinding from './PublicBinding';
 import seedrandom from 'seedrandom';
 
 function buildUnsigned(seedVal) {
-  //const seedrandom = Math.seedrandom;
   const saveable = seedrandom(seedVal, {state: true});
   return () => saveable();
 }
 
 function buildSigned(seedVal) {
-  //const seedrandom = Math.seedrandom;
   const saveable = seedrandom(seedVal, {state: true});
   return () => (saveable() * 2.0) - 1.0;
+}
+
+function buildRange(seedVal, min, max) {
+  const saveable = seedrandom(seedVal, {state: true});
+  const diff = max - min;
+
+  return () => (saveable() * diff) + min;
 }
 
 const SeedRandom = {
@@ -53,6 +58,18 @@ const SeedRandom = {
       (self) => function(params) {
         const {seed} = self.mergeWithDefaults(params);
         return buildSigned(seed);
+      }
+    ),
+
+    new PublicBinding(
+      'rng/range',
+      `returns a function that generates a random number in the range min..max`,
+      {seed: 'shabba',
+       min: 0,
+       max: 1},
+      (self) => function(params) {
+        const {seed, min, max} = self.mergeWithDefaults(params);
+        return buildRange(seed, min, max);
       }
     )
   ]
