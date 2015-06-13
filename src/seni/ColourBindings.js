@@ -17,6 +17,7 @@
  */
 
 import PublicBinding from './PublicBinding';
+import MathUtil from './MathUtil';
 import Colour from './Colour';
 
 const Format = Colour.Format;
@@ -306,6 +307,21 @@ const ColourBindings = {
           const {colour, value} = self.mergeWithDefaults(params);
           return Colour.setComponent(Colour.cloneAs(colour, Format.LAB),
                                      Colour.L, value);
+        };
+      }
+    ),
+
+    new PublicBinding(
+      'col/lighten',
+      `lightens the given colour by delta`,
+      {colour: Colour.defaultColour, delta: 10.0},
+      (self) => {
+        return (params) => {
+          const {colour, delta} = self.mergeWithDefaults(params);
+          let lab = Colour.cloneAs(colour, Format.LAB);
+          let currentL = Colour.getComponent(lab, Colour.L);
+          let newL = MathUtil.clamp(currentL + delta, 0, 100);
+          return Colour.setComponent(lab, Colour.L, newL);
         };
       }
     )
