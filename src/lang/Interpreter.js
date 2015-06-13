@@ -304,11 +304,11 @@ function loopingFn(env, expr, varName, params) {
       return undefined;
     }
 
-    const unit = (to - from) / (steps - 1);
+    const limit = until !== undefined ? until : to;
+    const unit = (limit - from) / (steps - 1);
 
-    let val;
     for (let i = 0; i < steps; i++) {
-      val = from + (i * unit);
+      const val = from + (i * unit);
       res = evalBodyForms(env.set(varName, { binding: val }), expr);
     }
     return res;
