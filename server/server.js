@@ -30,7 +30,8 @@ var galleryData = [
   makeGalleryItem(14, '1565-hex-grid', '1565-hex-grid.png'),
   makeGalleryItem(15, '156h-tri-grid', '156h-tri-grid.png'),
   makeGalleryItem(16, '157e-tile-shadow', '157e-tile-shadow.png'),
-  makeGalleryItem(17, '1580-quilt', '1580-quilt.png')
+  makeGalleryItem(17, '1580-quilt', '1580-quilt.png'),
+  makeGalleryItem(18, '1585-seeds', '1585-seeds.png')
 ].reverse();
 
 app.set('port', (process.env.PORT || 3000));
