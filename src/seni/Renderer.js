@@ -157,8 +157,8 @@ class Renderer {
 
     this.prepareToAddTriangleStrip((tessellation * 2) + 2, [x, y]);
 
-    let twoPI = Math.PI * 2;
-    let unitAngle = twoPI / tessellation;
+    let tau = Math.PI * 2;
+    let unitAngle = tau / tessellation;
     let angle, vx, vy;
 
     for(let i = 0; i < tessellation; i++) {
@@ -195,7 +195,7 @@ class Renderer {
     let innerWidth = params['inner-width'];
     let innerHeight = params['inner-height'];
 
-    const degToRad = MathUtil.twoPI / 360;
+    const degToRad = MathUtil.TAU / 360;
 
     const [x, y] = position;
 
@@ -214,7 +214,7 @@ class Renderer {
 
     const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
-    //let twoPI = Math.PI * 2;
+    //let tau = Math.PI * 2;
     let unitAngle = (rEnd - rStart) / tessellation;
     let angle, vx, vy, innervx, innervy;
 

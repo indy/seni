@@ -462,9 +462,9 @@ function proceduralFn(a, b, c, d) {
   return function(params) {
     const t = params.t || 1.0;
 
-    const red = ar + ab * Math.cos(MathUtil.twoPI * (cr * t + dr));
-    const green = ag + ab * Math.cos(MathUtil.twoPI * (cg * t + dg));
-    const blue = ab + ab * Math.cos(MathUtil.twoPI * (cb * t + db));
+    const red = ar + ab * Math.cos(MathUtil.TAU * (cr * t + dr));
+    const green = ag + ab * Math.cos(MathUtil.TAU * (cg * t + dg));
+    const blue = ab + ab * Math.cos(MathUtil.TAU * (cb * t + db));
 
     return construct(Format.RGB, [red, green, blue, 1.0]);
   };

@@ -20,18 +20,18 @@ import PublicBinding from './PublicBinding';
 import Immutable from 'immutable';
 
 const PI = Math.PI;
-const twoPI = PI * 2;
+const TAU = PI * 2;
 const PIbyTwo = PI / 2;
 
-const degToRad = twoPI / 360;
-const radToDeg = 360 / twoPI;
+const degToRad = TAU / 360;
+const radToDeg = 360 / TAU;
 
 function degreesToRadians(angle) {
   return (angle % 360) * degToRad;
 }
 
 function radiansToDegrees(angle) {
-  return (angle % twoPI) * radToDeg;
+  return (angle % TAU) * radToDeg;
 }
 
 function mc([xa, ya], [xb, yb]) {
@@ -58,7 +58,7 @@ function mapSlowEaseIn(x) {
 }
 
 function mapSlowEaseInEaseOut(x) {
-  return x - (Math.sin(x * twoPI) / twoPI);
+  return x - (Math.sin(x * TAU) / TAU);
 }
 
 const remappingFn = new Immutable.Map({'linear': mapLinear,
@@ -163,28 +163,21 @@ const MathUtil = {
 
   publicBindings: [
     new PublicBinding(
-      'PI',
+      'math/PI',
       ``,
       {},
       () => PI
     ),
 
     new PublicBinding(
-      'PIPI',
+      'math/TAU',
       ``,
       {},
-      () => twoPI
+      () => TAU
     ),
 
     new PublicBinding(
-      'PI/2',
-      ``,
-      {},
-      () => PIbyTwo
-    ),
-
-    new PublicBinding(
-      'sin',
+      'math/sin',
       ``,
       {angle: 0},
       (self) => function(params) {
@@ -194,7 +187,7 @@ const MathUtil = {
     ),
 
     new PublicBinding(
-      'cos',
+      'math/cos',
       ``,
       {angle: 0},
       (self) => function(params) {
@@ -275,8 +268,7 @@ const MathUtil = {
   },
 
   PI,
-  twoPI,
-  PIbyTwo,
+  TAU,
 
   degreesToRadians,
   radiansToDegrees,
