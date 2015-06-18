@@ -428,30 +428,31 @@ function resizeContainers() {
 function polluteGlobalDocument(seniApp) {
   document.seni = {};
   document.seni.title = Trivia.getTitle;
-  document.seni.help = function(name) {
+  document.seni.help = function(name, showDefaultArgs = false) {
     const v = seniApp.env.get(name);
     if(v.pb) {
       const binding = v.pb;       // publicBinding
-      const args = JSON.stringify(binding.defaults, null, ' ');
       console.log(name + ':', binding.doc);
-      console.log('default arguments', args);
+
+      if(showDefaultArgs) {
+        const args = JSON.stringify(binding.defaults, null, ' ');
+        console.log('default arguments', args);
+      }
     }
+  };
+  document.seni.ls = function() {
+    let env = seniApp.env;
+    let keys = env.keys();
+
+    let res = [];
+    for(let k = keys.next(); k.done === false; k = keys.next()) {
+      res.push(k.value);
+    }
+    res.sort();
+    res.map(name => console.log(name));
   };
   document.seni.seniApp = seniApp;
 }
-/*
-function iterateEnv(seniApp) {
-  let env = seniApp.env;
-  let keys = env.keys();
-
-  let res = [];
-  for(let k = keys.next(); k.done === false; k = keys.next()) {
-    res.push(k.value);
-  }
-  res.sort();
-  res.map(name => console.log(name));
-  console.log(res.toString());
-}*/
 
 function setupUI(seniApp) {
   const d = document;
@@ -630,14 +631,13 @@ function getGallery() {
 
     container.innerHTML = `
       <div class="card">
-        <a href="#" class="card-image">
+        <a href="#" class="card-image show-edit">
           <img class="gallery-item-image show-edit"
                src="${galleryItem.image}"
                style="width:320px;height:320px">
         </a>
         <div class="card-action">
-          <a href="#" class="show-edit">Edit</a>
-          <a href="#" class="show-evolve">Evolve</a>
+          <span>${galleryItem.name}</span>
         </div>
       </div>
       `;
