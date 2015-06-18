@@ -16,7 +16,7 @@
                         y: y-pos
                         passes: 20
                         volatility: (/ (math/distance-2d x1: (/ canvas/width 2)
-                                                         y1: (/ canvas/heigh 2)
+                                                         y1: (/ canvas/height 2)
                                                          x2: x-pos
                                                          y2: y-pos) 250)
                         seed: (+ x (* y num-squares))
@@ -37,7 +37,7 @@
                           seed: "asdf")
   (let ((alpha (col/get-alpha colour: colour))
         (pass-colour (col/set-alpha colour: colour value: (/ alpha passes)))
-        (rng (rng/signed seed: seed)))
+        (rng (prng/range min: -1 max: 1 seed: seed)))
     (on-matrix-stack
       (translate vector: (v2 x y))
       (loop (i to: passes)
@@ -50,7 +50,7 @@
                   colour: pass-colour)))))))
 
 (define (v x: 0 y: 0 z: 0 scale: 1)
-  (+ y (* scale (perlin/signed x: x y: y z: z))))
+  (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
 (define (wash variation: 200
               line-width: 70

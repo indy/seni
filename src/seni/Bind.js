@@ -21,10 +21,9 @@ import Paths from './Paths';
 import MatrixStackBindings from './MatrixStackBindings';
 import MathUtil from './MathUtil';
 import ColourBindings from './ColourBindings';
-import Perlin from './Perlin';
 import Core from './Core';
 import Bracket from './BracketBindings';
-import SeedRandom from './SeedRandom';
+import PseudoRandom from './PseudoRandom';
 import Focal from './Focal';
 
 function createBind(env, pb, restArgs) {
@@ -50,12 +49,11 @@ const Bind = {
   addBindings: function(env, renderer) {
     env = applyPublicBindings(env, Core);
     env = applyPublicBindings(env, MathUtil);
-    env = applyPublicBindings(env, SeedRandom);
+    env = applyPublicBindings(env, PseudoRandom);
     env = applyPublicBindings(env, MatrixStackBindings, renderer);
     env = applyPublicBindings(env, Shapes, renderer);
     env = applyPublicBindings(env, Paths);
     env = applyPublicBindings(env, ColourBindings);
-    env = applyPublicBindings(env, Perlin);
     env = applyPublicBindings(env, Focal, renderer);
 
     return env;
@@ -64,9 +62,8 @@ const Bind = {
   addBracketBindings: function(env, rng) {
     env = applyPublicBindings(env, Core);
     env = applyPublicBindings(env, MathUtil);
-    env = applyPublicBindings(env, SeedRandom);
+    env = applyPublicBindings(env, PseudoRandom);
     env = applyPublicBindings(env, ColourBindings);
-    env = applyPublicBindings(env, Perlin);
     env = applyPublicBindings(env, Bracket, rng);
 
     return env;

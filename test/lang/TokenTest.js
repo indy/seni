@@ -32,8 +32,4 @@ describe('Token', () => {
     t = new Token(TokenType.UNKNOWN);
     expect(t.value).to.equal(undefined);
   });
-
-  it('should get values for the constants', () => {
-    expect(TokenType.UNKNOWN).to.equal(0);
-  });
 });

@@ -2,12 +2,12 @@
                             colour: red
                             seed: "yabba dabba dooo"
                             radius: 300)
-  (let ((rng (rng/unsigned seed: seed))
-        (outer-exterior (rng/range seed: (take from: rng) min: 170 max: 210))
-        (outer-interior (rng/range seed: (take from: rng) min: 80 max: 170))
-        (inner-exterior (rng/range seed: (take from: rng) min: 100 max: 150))
-        (inner-interior (rng/range seed: (take from: rng) min: 0 max: 100))
-        (srng (rng/signed seed: seed)))
+  (let ((rng (prng/range seed: seed))
+        (outer-exterior (prng/range seed: (take from: rng) min: 170 max: 210))
+        (outer-interior (prng/range seed: (take from: rng) min: 80 max: 170))
+        (inner-exterior (prng/range seed: (take from: rng) min: 100 max: 150))
+        (inner-interior (prng/range seed: (take from: rng) min: 0 max: 100))
+        (srng (prng/range min: -1 max: 1 seed: seed)))
     (on-matrix-stack
       (translate vector: position)
       (scale scalar: (/ radius 210))
@@ -45,7 +45,7 @@
                   angle-end: 360
                   radius: 30))))
 
-(define initial-seed (rng/unsigned seed: [33 (int max: 1000)]))
+(define initial-seed (prng/range seed: [33 (int max: 1000)]))
 (define radius [50 (int min: 45 max: 100)])
 
 (loop (y from: 0 until: 1000 steps: 14)

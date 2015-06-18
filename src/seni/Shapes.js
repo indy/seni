@@ -19,8 +19,7 @@
 import PublicBinding from './PublicBinding';
 import MathUtil from './MathUtil';
 import Colour from './Colour';
-import Perlin from './Perlin';
-import SeedRandom from './SeedRandom';
+import PseudoRandom from './PseudoRandom';
 
 function renderSpline(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
@@ -309,7 +308,7 @@ function renderStrokedBezier(publicBinding, params, renderer) {
     let ns = strokeNoise;
 
     let colLabL = Colour.getComponent(lab, Colour.L) +
-          (Perlin._perlin(xx1, xx1, xx1) * colourVolatility);
+          (PseudoRandom._perlin(xx1, xx1, xx1) * colourVolatility);
 
     let splineParams = {
       tessellation: strokeTessellation,
@@ -318,14 +317,14 @@ function renderStrokedBezier(publicBinding, params, renderer) {
       'line-width-end': strokeLineWidthEnd,
       colour: Colour.setComponent(lab, Colour.L, colLabL),
       coords: [
-        [(xx1 + (ns * Perlin._perlin(xx1, xx1, seed))),
-         (yy1 + (ns * Perlin._perlin(yy1, yy1, seed)))],
+        [(xx1 + (ns * PseudoRandom._perlin(xx1, xx1, seed))),
+         (yy1 + (ns * PseudoRandom._perlin(yy1, yy1, seed)))],
 
-        [(xx2 + (ns * Perlin._perlin(xx2, xx1, seed))),
-         (yy2 + (ns * Perlin._perlin(yy2, yy1, seed)))],
+        [(xx2 + (ns * PseudoRandom._perlin(xx2, xx1, seed))),
+         (yy2 + (ns * PseudoRandom._perlin(yy2, yy1, seed)))],
 
-        [(xx3 + (ns * Perlin._perlin(xx3, xx1, seed))),
-         (yy3 + (ns * Perlin._perlin(yy3, yy1, seed)))]
+        [(xx3 + (ns * PseudoRandom._perlin(xx3, xx1, seed))),
+         (yy3 + (ns * PseudoRandom._perlin(yy3, yy1, seed)))]
       ]
     };
 
@@ -408,7 +407,7 @@ function renderStrokedBezierRect(publicBinding, params, renderer) {
   const halfAlphaCol = Colour.cloneAs(colour, Colour.Format.LAB);
   const lab = Colour.setAlpha(halfAlphaCol, Colour.getAlpha(halfAlphaCol) / 2);
 
-  const rng = SeedRandom.buildSigned(seed);
+  const rng = PseudoRandom.buildSigned(seed);
   let i;
 
   for (i = iterations; i > 0; i--) {

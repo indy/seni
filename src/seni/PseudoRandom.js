@@ -17,8 +17,8 @@
  */
 
 /* eslint-disable no-use-before-define */
-
 import PublicBinding from './PublicBinding';
+import seedrandom from 'seedrandom';
 
 // A basic translation of Ken Perlin's Java
 // reference implementation of improved noise (C) 2002
@@ -98,10 +98,30 @@ for (let i = 0; i < 256; i++) {
   p.push(permutation[i]);
 }
 
-const Perlin = {
+function buildUnsigned(seedVal) {
+  const saveable = seedrandom(seedVal, {state: true});
+  return () => saveable();
+}
+
+function buildSigned(seedVal) {
+  const saveable = seedrandom(seedVal, {state: true});
+  return () => (saveable() * 2.0) - 1.0;
+}
+
+function buildRange(seedVal, min, max) {
+  const saveable = seedrandom(seedVal, {state: true});
+  const diff = max - min;
+
+  return () => (saveable() * diff) + min;
+}
+
+const PseudoRandom = {
+  buildUnsigned,
+  buildSigned,
+
   publicBindings: [
     new PublicBinding(
-      'perlin/signed',
+      'prng/perlin-signed',
       `returns perlin numbers in the range -1..1`,
       {x: 1.0, y: 1.0, z: 1.0},
       (self) => {
@@ -113,7 +133,7 @@ const Perlin = {
     ),
 
     new PublicBinding(
-      'perlin/unsigned',
+      'prng/perlin-unsigned',
       `returns perlin numbers in the range 0..1`,
       {x: 1.0, y: 1.0, z: 1.0},
       (self) => {
@@ -123,9 +143,21 @@ const Perlin = {
           return (v + 1) / 2.0;
         };
       }
+    ),
+
+    new PublicBinding(
+      'prng/range',
+      `returns a function that generates a random number in the range min..max`,
+      {seed: 'shabba',
+       min: 0,
+       max: 1},
+      (self) => function(params) {
+        const {seed, min, max} = self.mergeWithDefaults(params);
+        return buildRange(seed, min, max);
+      }
     )
   ],
   _perlin: (x, y, z) => noise(x, y, z)
 };
 
-export default Perlin;
+export default PseudoRandom;

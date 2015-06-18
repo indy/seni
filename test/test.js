@@ -8,6 +8,4 @@ import './seni/ColourTest';
 import './seni/MathUtilTest';
 import './seni/MatrixStackTest';
 import './seni/PathsTest';
-import './seni/PerlinTest';
-import './seni/SeedRandomTest';
-
+import './seni/PseudoRandomTest';

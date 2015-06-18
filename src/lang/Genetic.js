@@ -20,7 +20,7 @@ import NodeType from './NodeType';
 import Compiler from './Compiler';
 import Interpreter from './Interpreter';
 import Bind from '../seni/Bind';
-import SeedRandom from '../seni/SeedRandom';
+import PseudoRandom from '../seni/PseudoRandom';
 import Immutable from 'immutable';
 
 function buildTraitFromNode(node, genes) {
@@ -122,7 +122,7 @@ const Genetic = {
   },
 
   createGenotypeFromTraits: function(traits, seed) {
-    const rng = SeedRandom.buildUnsigned(seed);
+    const rng = PseudoRandom.buildUnsigned(seed);
     const env = Bind.addBracketBindings(Interpreter.getBasicEnv(), rng);
 
     // env is the environment used to evaluate the bracketed forms

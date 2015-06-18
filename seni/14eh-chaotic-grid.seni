@@ -68,7 +68,7 @@
         (v-strip-width (/ width iterations))
         (half-v-strip-width (/ v-strip-width 2))
 
-        (rng (rng/signed seed: seed))
+        (rng (prng/range min: -1 max: 1 seed: seed))
 
         (half-alpha (/ (col/get-alpha colour: colour) 2))
         (lab-colour (col/set-alpha colour: (col/convert format: LAB
@@ -136,7 +136,7 @@
                 colour: current-colour)))))
 
 (define (v x: 0 y: 0 z: 0 scale: 1)
-  (+ y (* scale (perlin/signed x: x y: y z: z))))
+  (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
 (define (wash variation: 200
               line-width: 70

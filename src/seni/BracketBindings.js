@@ -40,7 +40,7 @@ const BracketBindings = {
       arguments: min max`,
       {min: 0, max: 100},
       (self, rng) => {
-        // rng is a SeedRandom returning values in the range 0..1
+        // rng is a PseudoRandom returning values in the range 0..1
         return (params) => {
           const {min, max} = self.mergeWithDefaults(params);
           return Number.parseInt(MathUtil.interpolate(min, max, rng()));
@@ -54,7 +54,7 @@ const BracketBindings = {
       arguments: -`,
       {min: 0.0, max: 1.0},
       (self, rng) => {
-        // rng is a SeedRandom returning values in the range 0..1
+        // rng is a PseudoRandom returning values in the range 0..1
         return (params) => {
           const {min, max} = self.mergeWithDefaults(params);
           return MathUtil.interpolate(min, max, rng());
@@ -122,7 +122,7 @@ random colour, but keep alpha as 0.4:
       arguments: -`,
       {},
       () => {
-        // rng is a SeedRandom returning values in the range 0..1
+        // rng is a PseudoRandom returning values in the range 0..1
         return () => {
           return '+';
         };

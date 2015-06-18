@@ -76,7 +76,7 @@
            y: 0
            z: 0
            scale: 1)
-  (+ y (* scale (perlin/signed x: x y: y z: z))))
+  (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
 (define (wash variation: 200
               line-width: 70
