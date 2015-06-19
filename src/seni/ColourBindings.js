@@ -166,12 +166,16 @@ const ColourBindings = {
 
     new PublicBinding(
       'col/hsl',
-      ``,
-      {h: 1.0, s: 0.1, l: 0.2, alpha: 0.5},
+      `h: 0..360
+      s: 0..1
+      l: 0..1
+      `,
+      {h: 180.0, s: 0.1, l: 0.2, alpha: 0.5},
       (self) => {
         return function(params) {
           const {h, s, l, alpha} = self.mergeWithDefaults(params);
-          return Colour.construct(Format.HSL, [h, s, l, alpha]);
+          let normalisedH = h % 360;
+          return Colour.construct(Format.HSL, [normalisedH, s, l, alpha]);
         };
       }
     ),
@@ -190,12 +194,16 @@ const ColourBindings = {
 
     new PublicBinding(
       'col/hsv',
-      ``,
-      {h: 1.0, s: 0.1, v: 0.2, alpha: 0.5},
+      `h: 0..360
+      s: 0..1
+      v: 0..1
+      `,
+      {h: 180.0, s: 0.1, v: 0.2, alpha: 0.5},
       (self) => {
         return function(params) {
           const {h, s, v, alpha} = self.mergeWithDefaults(params);
-          return Colour.construct(Format.HSV, [h, s, v, alpha]);
+          let normalisedH = h % 360;
+          return Colour.construct(Format.HSV, [normalisedH, s, v, alpha]);
         };
       }
     ),
