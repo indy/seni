@@ -151,28 +151,28 @@ describe('Interpreter', () => {
     [newEnv, res] = evalForm(e, '(= 90 3)');
     expect(res).to.equal('#f');
 
-    [newEnv, res] = evalForm(e, '(< 54 30)');
-    expect(res).to.equal('#t');
-
-    [newEnv, res] = evalForm(e, '(< 54 30 20)');
-    expect(res).to.equal('#t');
-
-    [newEnv, res] = evalForm(e, '(< 54 54)');
-    expect(res).to.equal('#f');
-
-    [newEnv, res] = evalForm(e, '(< 54 540)');
-    expect(res).to.equal('#f');
-
     [newEnv, res] = evalForm(e, '(> 54 30)');
-    expect(res).to.equal('#f');
+    expect(res).to.equal('#t');
 
-    [newEnv, res] = evalForm(e, '(> 54 62 72)');
+    [newEnv, res] = evalForm(e, '(> 54 30 20)');
     expect(res).to.equal('#t');
 
     [newEnv, res] = evalForm(e, '(> 54 54)');
     expect(res).to.equal('#f');
 
     [newEnv, res] = evalForm(e, '(> 54 540)');
+    expect(res).to.equal('#f');
+
+    [newEnv, res] = evalForm(e, '(< 54 30)');
+    expect(res).to.equal('#f');
+
+    [newEnv, res] = evalForm(e, '(< 54 62 72)');
+    expect(res).to.equal('#t');
+
+    [newEnv, res] = evalForm(e, '(< 54 54)');
+    expect(res).to.equal('#f');
+
+    [newEnv, res] = evalForm(e, '(< 54 540)');
     expect(res).to.equal('#t');
     expect(newEnv).to.equal(e);
   });

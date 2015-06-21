@@ -361,7 +361,7 @@ const classicFunctions = {
     let prev = args[0];
     for (let i = 1; i < args.length; i++) {
       const current = args[i];
-      if (current >= prev) {
+      if (prev >= current) {
         return FALSE_STRING;
       }
       prev = current;
@@ -373,7 +373,7 @@ const classicFunctions = {
     let prev = args[0];
     for (let i = 1; i < args.length; i++) {
       const current = args[i];
-      if (current <= prev) {
+      if (prev <= current) {
         return FALSE_STRING;
       }
       prev = current;
