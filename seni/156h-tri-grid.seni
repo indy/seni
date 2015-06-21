@@ -1,138 +1,133 @@
-!
 (wash colour:  [(col/rgb r: 0.9 g: 0.9 b: 0.9) (col)])
 (tri-hsl alpha: [0.3 (scalar)])
 (tri-lab alpha: [0.3 (scalar)])
 
+(define (tri-lab alpha: 1)
+  (define-vars w 86.6
+               h 50.0
+               r (prng/range)
+               colour-scale [100 (int max: 900)]
+               colour-offset (prng/range min: -1 max: 1)
+               li (remap-fn from: (v2 0 1)
+                            to: (v2 [60 (int min: 0 max: 120)] 
+                                    [110 (int min: 0 max: 120)]))
+               rma (remap-fn from: (v2 0 canvas/width)
+                             to: (v2 [-80 (int min: -100 max: 100)] 
+                                     [80 (int min: -100 max: 100)]))
+               rmb (remap-fn from: (v2 0 canvas/height)
+                             to: (v2 [-100 (int min: -120 max: 120)]
+                                     [100 (int min: -120 max: 120)])))
 
-(define (tri-lab alpha: 1
-                 )
-  (let ((w 86.6)
-        (h 50.0)
-        (r (prng/range))
-        (colour-scale [100 (int max: 900)])
-        (colour-offset (prng/range min: -1 max: 1))
-        (li (remap-fn from: (v2 0 1)
-                      to: (v2 [60 (int min: 0 max: 120)] 
-                              [110 (int min: 0 max: 120)])))
-        (rma (remap-fn from: (v2 0 canvas/width)
-                       to: (v2 [-80 (int min: -100 max: 100)] 
-                               [80 (int min: -100 max: 100)])))
-        (rmb (remap-fn from: (v2 0 canvas/height)
-                       to: (v2 [-100 (int min: -120 max: 120)]
-                               [100 (int min: -120 max: 120)]))))
-    (loop (y from: 0 until: canvas/height increment: 100)
-      (loop (x from: 0 until: canvas/width increment: (* 2 w))
-        (let ((a (rma val: (+ x (* (colour-offset) colour-scale))))
-              (b (rmb val: (+ y (* (colour-offset) colour-scale)))))
-          (gradient-triangle coords: (list (v2 x (+ y 0))
-                                           (v2 (+ x w) (+ y h))
-                                           (v2 x (+ y h h)))
-                             colours: (list (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                                            (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                                            (col/lab l: (li val: (r)) a: a b: b alpha: alpha)))
-          (gradient-triangle coords: (list (v2 x (+ y 0))
-                                           (v2 (+ x w) (+ y h))
-                                           (v2 (+ x w) (- y h)))
-                             colours: (list (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                                            (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                                            (col/lab l: (li val: (r)) a: a b: b alpha: alpha)))))
+  (loop (y from: 0 until: canvas/height increment: 100)
+    (loop (x from: 0 until: canvas/width increment: (* 2 w))
+      (define-vars a (rma val: (+ x (* (colour-offset) colour-scale)))
+                   b (rmb val: (+ y (* (colour-offset) colour-scale))))
+      (gradient-triangle coords: (list (v2 x (+ y 0))
+                                       (v2 (+ x w) (+ y h))
+                                       (v2 x (+ y h h)))
+                         colours: (list (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
+                                        (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
+                                        (col/lab l: (li val: (r)) a: a b: b alpha: alpha)))
+      (gradient-triangle coords: (list (v2 x (+ y 0))
+                                       (v2 (+ x w) (+ y h))
+                                       (v2 (+ x w) (- y h)))
+                         colours: (list (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
+                                        (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
+                                        (col/lab l: (li val: (r)) a: a b: b alpha: alpha))))
 
-      (loop (x from: w until: canvas/width increment: (* 2 w))
-        (let ((a (rma val: (+ x (* (colour-offset) colour-scale))))
-              (b (rmb val: (+ y (* (colour-offset) colour-scale)))))
-          (gradient-triangle coords: (list (v2 x (+ y h))
-                                           (v2 (+ x w) (+ y h h))
-                                           (v2 (+ x w) (+ y 0)))
-                             colours: (list (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                                            (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                                            (col/lab l: (li val: (r)) a: a b: b alpha: alpha)))
-          (gradient-triangle coords: (list (v2 x (+ y h))
-                                           (v2 (+ x w) (+ y 0))
-                                           (v2 x (- y h)))
-                             colours: (list (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                                            (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                                            (col/lab l: (li val: (r)) a: a b: b alpha: alpha))))))))
+    (loop (x from: w until: canvas/width increment: (* 2 w))
+      (define-vars a (rma val: (+ x (* (colour-offset) colour-scale)))
+                   b (rmb val: (+ y (* (colour-offset) colour-scale))))
 
+      (gradient-triangle coords: (list (v2 x (+ y h))
+                                       (v2 (+ x w) (+ y h h))
+                                       (v2 (+ x w) (+ y 0)))
+                         colours: (list (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
+                                        (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
+                                        (col/lab l: (li val: (r)) a: a b: b alpha: alpha)))
+      (gradient-triangle coords: (list (v2 x (+ y h))
+                                       (v2 (+ x w) (+ y 0))
+                                       (v2 x (- y h)))
+                         colours: (list (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
+                                        (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
+                                        (col/lab l: (li val: (r)) a: a b: b alpha: alpha))))))
 
 (define (tri-hsl alpha: 1)
-  (let ((w 86.6)
-        (h 50.0)
-        (r (prng/range))
-        (colour-scale [100 (int max: 900)])
-        (colour-offset (prng/range min: -1 max: 1))
-        (li (remap-fn from: (v2 0 1)
-                      to: (v2 [60 (int min: 0 max: 120)] 
-                              [110 (int min: 0 max: 120)])))
-        (fn-h (remap-fn from: (list 0 canvas/width)
-                        to: (list [0 (int max: 360)] 
-                                  [360 (int max: 360)])))
-        (fn-l (remap-fn from: (list 0 canvas/height)
-                        to: (list [0.4 (scalar min: 0.2 max: 0.5)] 
-                                  [0.7 (scalar min: 0.4 max: 1.0)]))))
-    (loop (y from: 0 until: canvas/height increment: 100)
-      (loop (x from: 0 until: canvas/width increment: (* 2 w))
-        (let ((a (fn-h val: (+ x (* (colour-offset) colour-scale))))
-              (b (fn-l val: (+ y (* (colour-offset) colour-scale)))))
-          (gradient-triangle coords: (list (v2 x (+ y 0))
-                                           (v2 (+ x w) (+ y h))
-                                           (v2 x (+ y h h)))
-                             colours: (list (col/hsl h: a s: 1 l: b alpha: alpha)
-                                            (col/hsl h: a s: 1 l: b alpha: alpha)
-                                            (col/hsl h: a s: 1 l: b alpha: alpha)))
-          (gradient-triangle coords: (list (v2 x (+ y 0))
-                                           (v2 (+ x w) (+ y h))
-                                           (v2 (+ x w) (- y h)))
-                             colours: (list (col/hsl h: a s: 1 l: b alpha: alpha)
-                                            (col/hsl h: a s: 1 l: b alpha: alpha)
-                                            (col/hsl h: a s: 1 l: b alpha: alpha)))))
+  (define-vars w 86.6
+               h 50.0
+               r (prng/range)
+               colour-scale [100 (int max: 900)]
+               colour-offset (prng/range min: -1 max: 1)
+               li (remap-fn from: (v2 0 1)
+                            to: (v2 [60 (int min: 0 max: 120)] 
+                                    [110 (int min: 0 max: 120)]))
+               fn-h (remap-fn from: (list 0 canvas/width)
+                              to: (list [0 (int max: 360)] 
+                                        [360 (int max: 360)]))
+               fn-l (remap-fn from: (list 0 canvas/height)
+                              to: (list [0.4 (scalar min: 0.2 max: 0.5)] 
+                                        [0.7 (scalar min: 0.4 max: 1.0)])))
+  (loop (y from: 0 until: canvas/height increment: 100)
+    (loop (x from: 0 until: canvas/width increment: (* 2 w))
+      (define-vars a (fn-h val: (+ x (* (colour-offset) colour-scale)))
+                   b (fn-l val: (+ y (* (colour-offset) colour-scale))))
 
-      (loop (x from: w until: canvas/width increment: (* 2 w))
-        (let ((a (fn-h val: (+ x (* (colour-offset) colour-scale))))
-              (b (fn-l val: (+ y (* (colour-offset) colour-scale)))))
-          (gradient-triangle coords: (list (v2 x (+ y h))
-                                           (v2 (+ x w) (+ y h h))
-                                           (v2 (+ x w) (+ y 0)))
-                             colours: (list (col/hsl h: a s: 1 l: b alpha: alpha)
-                                            (col/hsl h: a s: 1 l: b alpha: alpha)
-                                            (col/hsl h: a s: 1 l: b alpha: alpha)))
-          (gradient-triangle coords: (list (v2 x (+ y h))
-                                           (v2 (+ x w) (+ y 0))
-                                           (v2 x (- y h)))
-                             colours: (list (col/hsl h: a s: 1 l: b alpha: alpha)
-                                            (col/hsl h: a s: 1 l: b alpha: alpha)
-                                            (col/hsl h: a s: 1 l: b alpha: alpha))))))))
+      (gradient-triangle coords: (list (v2 x (+ y 0))
+                                       (v2 (+ x w) (+ y h))
+                                       (v2 x (+ y h h)))
+                         colours: (list (col/hsl h: a s: 1 l: b alpha: alpha)
+                                        (col/hsl h: a s: 1 l: b alpha: alpha)
+                                        (col/hsl h: a s: 1 l: b alpha: alpha)))
+      (gradient-triangle coords: (list (v2 x (+ y 0))
+                                       (v2 (+ x w) (+ y h))
+                                       (v2 (+ x w) (- y h)))
+                         colours: (list (col/hsl h: a s: 1 l: b alpha: alpha)
+                                        (col/hsl h: a s: 1 l: b alpha: alpha)
+                                        (col/hsl h: a s: 1 l: b alpha: alpha))))
 
+    (loop (x from: w until: canvas/width increment: (* 2 w))
+      (define-vars a (fn-h val: (+ x (* (colour-offset) colour-scale)))
+                   b (fn-l val: (+ y (* (colour-offset) colour-scale))))
 
-
-(define (v x: 0
-           y: 0
-           z: 0
-           scale: 1)
-  (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
+      (gradient-triangle coords: (list (v2 x (+ y h))
+                                       (v2 (+ x w) (+ y h h))
+                                       (v2 (+ x w) (+ y 0)))
+                         colours: (list (col/hsl h: a s: 1 l: b alpha: alpha)
+                                        (col/hsl h: a s: 1 l: b alpha: alpha)
+                                        (col/hsl h: a s: 1 l: b alpha: alpha)))
+      (gradient-triangle coords: (list (v2 x (+ y h))
+                                       (v2 (+ x w) (+ y 0))
+                                       (v2 x (- y h)))
+                         colours: (list (col/hsl h: a s: 1 l: b alpha: alpha)
+                                        (col/hsl h: a s: 1 l: b alpha: alpha)
+                                        (col/hsl h: a s: 1 l: b alpha: alpha))))))
 
 (define (wash variation: 200
               line-width: 70
               line-segments: 5
               colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
               seed: 272)
-  (let ((w/3 (/ canvas/width 3))
-        (h/3 (/ canvas/height 3)))
-    (loop (h from: -20 to: 1020 increment: 20)
-      (bezier tessellation: line-segments
-              line-width: line-width
-              coords: (list
-                       (v2 0 (v x: 0 y: h z: seed scale: variation))
-                       (v2 w/3 (v x: w/3 y: h z: seed scale: variation))
-                       (v2 (* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation))
-                       (v2 canvas/width (v x: canvas/width y: h z: seed scale: variation)))
-              colour: colour)
 
-      (bezier tessellation: line-segments
-              line-width: line-width
-              coords: (list
-                       (v2 (v x: 0 y: h z: seed scale: variation) 0)
-                       (v2 (v x: h/3 y: h z: seed scale: variation) h/3)
-                       (v2 (v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2))
-                       (v2 (v x: canvas/height y: h z: seed scale: variation) canvas/height))
-              colour: colour)
-      )))
+  (define (v x: 0 y: 0 z: 0 scale: 1)
+    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
+
+  (define-vars w/3 (/ canvas/width 3)
+               h/3 (/ canvas/height 3))
+  (loop (h from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: (list
+                     (v2 0 (v x: 0 y: h z: seed scale: variation))
+                     (v2 w/3 (v x: w/3 y: h z: seed scale: variation))
+                     (v2 (* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation))
+                     (v2 canvas/width (v x: canvas/width y: h z: seed scale: variation)))
+            colour: colour)
+
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: (list
+                     (v2 (v x: 0 y: h z: seed scale: variation) 0)
+                     (v2 (v x: h/3 y: h z: seed scale: variation) h/3)
+                     (v2 (v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2))
+                     (v2 (v x: canvas/height y: h z: seed scale: variation) canvas/height))
+            colour: colour)))

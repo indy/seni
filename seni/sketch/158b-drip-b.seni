@@ -1,0 +1,15 @@
+
+
+
+(rect)
+
+(define (foo c: 20)
+
+  (define-vars a 10
+               b 44)
+
+  (log a b c)
+  )
+
+
+(foo c: 100)

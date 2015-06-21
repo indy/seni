@@ -26,23 +26,32 @@
         height: canvas/height
         colour: colour))
 
-(define (map-to-position at: 0)
-  (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
+(define (wash variation: 200
+              line-width: 70
+              line-segments: 5
+              colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+              seed: 272)
 
-(define (render-main)
-  (loop (y from: 1 to:  (- num-squares 1))
-    (loop (x from: 1 to:  (- num-squares 1))               
-      (let ((p (v2 (map-to-position at: x)
-                   (map-to-position at: y)))
-            (volatility: (* (focal-point position: p) focal-power)))
-        (stroked-bezier-rect position: p
-                             width: square-size
-                             height: square-size
-                             seed: (+ x (* y num-squares))
-                             colour: base-colour
-                             colour-volatility: colour-volatility
-                             volatility: volatility
-                             iterations: 39
-                             tessellation: 1
-                             overlap: 0
-                             stroke-noise: 0)))))
+  (define (v x: 0 y: 0 z: 0 scale: 1)
+    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
+
+  (define-vars w/3 (/ canvas/width 3)
+               h/3 (/ canvas/height 3))
+  (loop (h from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: (list
+                     (v2 0 (v x: 0 y: h z: seed scale: variation))
+                     (v2 w/3 (v x: w/3 y: h z: seed scale: variation))
+                     (v2 (* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation))
+                     (v2 canvas/width (v x: canvas/width y: h z: seed scale: variation)))
+            colour: colour)
+
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: (list
+                     (v2 (v x: 0 y: h z: seed scale: variation) 0)
+                     (v2 (v x: h/3 y: h z: seed scale: variation) h/3)
+                     (v2 (v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2))
+                     (v2 (v x: canvas/height y: h z: seed scale: variation) canvas/height))
+            colour: colour)))

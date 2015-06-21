@@ -4,9 +4,9 @@
                      iterations: 80
                      tessellation: 20
                      stroke-noise: 20
-      				 width: 1100 
+                     width: 1100 
                      height: 1100
-      				 colour: (col/rgb r: 0 g: 0 b: 0.1 alpha: 0.9))
+                     colour: (col/rgb r: 0 g: 0 b: 0.1 alpha: 0.9))
 
 ; further darken the background
 (rect position: (v2 (/ canvas/width 2) (/ canvas/height 2))
@@ -21,13 +21,13 @@
 
 ;; as the bezier path progresses, change the circle's LAB a component
 (define remap-a (remap-fn from: (v2 0 1)
-                            to: (v2 [-80 (scalar min: -100 max: 100)]
-                                    [ 80 (scalar min: -100 max: 100)])))
+                          to: (v2 [-80 (scalar min: -100 max: 100)]
+                                  [ 80 (scalar min: -100 max: 100)])))
 
 ;; as the bezier path progresses, change the circle's LAB b component
 (define remap-b (remap-fn from: (v2 0 1)
-                            to: (v2 [-100 (scalar min: -100 max: 100)]
-                                    [ 100 (scalar min: -100 max: 100)])))
+                          to: (v2 [-100 (scalar min: -100 max: 100)]
+                                  [ 100 (scalar min: -100 max: 100)])))
 
 ;; make a function that will be invoked for every point in the bezier path
 (define (make-fun radius: 10
@@ -38,17 +38,17 @@
                   alpha: 1
                   random-factor: 40)    ; the amount to offset circle position
   ;; random is used to offset the position along the path
-  (let ((random (prng/range min: -1 max: 1 seed: seed)))
-    (define (fun position: (v2 0 0)
-                 t-value: 0)
-      (poly position: (v2 (+ (v2/x position) (* random-factor (random)))
-                            (+ (v2/y position) (* random-factor (random))))
-                radius: (+ radius (* radius (random) radius-factor))
-                tessellation: tessellation
-                colour: (col/lab l: l-val
-                                 a: (remap-a val: t-value)
-                                 b: (remap-b val: t-value)
-                                 alpha: alpha)))))
+  (define-vars random (prng/range min: -1 max: 1 seed: seed))
+  (define (fun position: (v2 0 0)
+               t-value: 0)
+    (poly position: (v2 (+ (v2/x position) (* random-factor (random)))
+                        (+ (v2/y position) (* random-factor (random))))
+          radius: (+ radius (* radius (random) radius-factor))
+          tessellation: tessellation
+          colour: (col/lab l: l-val
+                           a: (remap-a val: t-value)
+                           b: (remap-b val: t-value)
+                           alpha: alpha))))
 
 (path/bezier fn: (make-fun radius: 500
                            l-val: 6

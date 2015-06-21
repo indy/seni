@@ -1,0 +1,8 @@
+
+(define focalpoint ([focal/point (select from: (list 'focal/point
+                                                     'focal/hline
+                                                     'focal/vline))] 
+                    position: (v2 500 500)
+                    distance: [800 (int max: 800)]))
+
+(log (focalpoint position: (v2 250 250)))

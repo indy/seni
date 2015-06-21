@@ -36,18 +36,19 @@
 
 (define (render-main)
   (loop (y from: 1 to:  (- num-squares 1))
-    (loop (x from: 1 to:  (- num-squares 1))               
-      (let ((p (v2 (map-to-position at: x)
-                   (map-to-position at: y)))
-            (volatility: (* (focal-point position: p) focal-power)))
-        (stroked-bezier-rect position: p
-                             width: square-size
-                             height: square-size
-                             seed: (+ x (* y num-squares))
-                             colour: base-colour
-                             colour-volatility: colour-volatility
-                             volatility: volatility
-                             iterations: [10 (int min: 1 max: 50)]
-                             tessellation: 1
-                             overlap: [0 (int max: 10)]
-                             stroke-noise: 0)))))
+    (loop (x from: 1 to:  (- num-squares 1))
+      (define-vars p (v2 (map-to-position at: x)
+                         (map-to-position at: y))
+                   volatility: (* (focal-point position: p) focal-power))
+
+      (stroked-bezier-rect position: p
+                           width: square-size
+                           height: square-size
+                           seed: (+ x (* y num-squares))
+                           colour: base-colour
+                           colour-volatility: colour-volatility
+                           volatility: volatility
+                           iterations: [10 (int min: 1 max: 50)]
+                           tessellation: 1
+                           overlap: [0 (int max: 10)]
+                           stroke-noise: 0))))

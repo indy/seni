@@ -211,6 +211,15 @@ describe('Interpreter', () => {
     expect(res).to.equal(42);
   });
 
+  it('should test define-vars', () => {
+    let [newEnv, res] = evalForm(e, '(define-vars monkey 42 ape 12)');
+    expect(newEnv.has('monkey')).to.be.true;
+    expect(newEnv.get('monkey').binding).to.equal(42);
+    expect(newEnv.has('ape')).to.be.true;
+    expect(newEnv.get('ape').binding).to.equal(12);
+    expect(res).to.equal(true);
+  });
+
   it('should test define for a function2', () => {
     let [newEnv, res] = evalForm(e, '(define (addup x: 2) (+ x x))');
     expect(newEnv.has('addup')).to.be.true;
@@ -258,7 +267,7 @@ describe('Interpreter', () => {
   });
 
   /* eslint-enable no-unused-vars */
-
+  /*
   it('should test let', () => {
     let [newEnv, res] = evalForm(e, '(let ((a 12) (b 24)) (+ a b foo))');
 
@@ -281,7 +290,7 @@ describe('Interpreter', () => {
     let r = evalForm(e, '(let (((x y) (list 3 4))) (+ x y foo))');
     expect(r[1]).to.equal(12);
   });
-
+    */
   /*
    it('should test loop', () => {
    e.add('bar', 0);

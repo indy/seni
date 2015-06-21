@@ -5,13 +5,14 @@
 
 (loop (y from: 1 to: (- num-squares 1))
   (loop (x from: 1 to: (- num-squares 1))
-    (let ((position (v2 (map-to-position at: x)
-                        (map-to-position at: y)))
-          (colour (make-colour t: (focalpoint position: position))))
-      (draw-tile position: (v2/+ position (v2 5 -5))
-                 colour: (col/set-lab-l colour: colour value: 50))
-      (draw-tile position: position
-                 colour: colour))))
+    (define-vars position (v2 (map-to-position at: x)
+                              (map-to-position at: y))
+                 colour (make-colour t: (focalpoint position: position)))
+
+    (draw-tile position: (v2/+ position (v2 5 -5))
+               colour: (col/set-lab-l colour: colour value: 50))
+    (draw-tile position: position
+               colour: colour)))
 
 (define make-colour
   (col/procedural-fn a: [(col/rgb r: 0.80 g: 0.50 b: 0.40) (col)]

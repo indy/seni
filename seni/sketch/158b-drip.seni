@@ -1,0 +1,154 @@
+
+(define (draw-drips height: 300
+                    steps: 20
+                    seed: 2232
+                    drip-range: 100
+                    colour: red
+                    background: white
+                    modge: 0)
+
+  (define-vars r (prng/range seed: seed
+                             min: (* -1 (/ drip-range 2))
+                             max: (/ drip-range 2))
+               radius (/ canvas/width (- steps 1) 2))
+
+  (define (draw-drip position: (v2 500 500)
+                     colour: red)
+    (box left: (- (v2/x position) radius)
+         right: (+ (v2/x position) radius)
+         top: 1000
+         bottom: (v2/y position)
+         colour: colour)
+    (poly position: position
+          tessellation: 20
+          radius: radius
+          colour: colour))
+
+  (define (draw-inbetween-drip position: (v2 500 500)
+                               colour: red
+                               background: white)
+    (box left: (- (v2/x position) radius)
+         right: (+ (v2/x position) radius)
+         top: 1000
+         bottom: (v2/y position)
+         colour: colour)
+    (poly position: position
+          tessellation: 20
+          radius: radius
+          colour: background))
+
+  (define (drip position: (v2 500 500)
+                step: 1
+                t-value: 0.2)
+    (if (= modge (mod step 2))
+        (draw-drip position: (v2/+ position (v2 0 (r)))
+                   colour: colour)
+        (draw-inbetween-drip position: (v2/+ position (v2 0 (+ (r) 120)))
+                             background: background
+                             colour: colour)))
+
+  (path/linear coords: (list (v2 0 height) 
+                             (v2 1000 height))
+               fn: drip
+               steps: steps))
+
+
+(define (draw-splash height: 100
+                     colour: red
+                     steps: 20
+                     seed: 1
+                     splash-range: 80)
+  (define-vars radius (/ canvas/width (- steps 1) 2)
+               r (prng/range seed: seed
+                             max: (+ splash-range radius)
+                             min: radius)
+               g (prng/range seed: (+ seed seed)
+                             min: 0
+                             max: 5))
+
+  (define (draw-splash position: (v2 500 500)
+                       colour: red)
+
+    (define hh (/ (r) 2))
+
+    (box left: (- (v2/x position) radius)
+         right: (+ (v2/x position) radius)
+         top: (v2/y position)
+         bottom: (- (v2/y position) hh)
+         colour: colour)      
+    (poly position: (v2/- position (v2 0 hh))
+          tessellation: 20
+          radius: radius
+          colour: colour)
+    (poly position: position
+          tessellation: 20
+          radius: radius
+          colour: colour))
+
+  (define (splash position: (v2 500 500)
+                  step: 1
+                  t-value: 0.2)
+    (if (> (g) 4)
+        (draw-splash position: (v2/- position (v2 0 (r)))
+                     colour: colour)))
+
+  (path/linear coords: (list (v2 0 height) 
+                             (v2 1000 height))
+               fn: splash
+               steps: steps))
+
+(define steps 20)
+
+(rect position: (v2 500 500)
+      width: canvas/width
+      height: canvas/height
+      colour: yellow)
+
+(draw-drips height: 0
+            steps: steps
+            colour: red
+            background: yellow
+            seed: 1
+            modge: 1)
+
+(draw-drips height: 250
+            steps: steps
+            colour: blue
+            background: red
+            seed: 21)
+
+(draw-drips height: 500
+            steps: steps
+            colour: green
+            background: blue
+            seed: 25
+            modge: 1)
+
+(draw-drips height: 700
+            steps: steps
+            colour: white
+            background: green
+            seed: 28)
+
+(draw-splash height: 0
+             steps: steps
+             colour: red
+             background: yellow
+             seed: 12)
+
+(draw-splash height: 250
+             steps: steps
+             colour: blue
+             background: red
+             seed: 212)
+
+(draw-splash height: 500
+             steps: steps
+             colour: green
+             background: blue
+             seed: 252)
+
+(draw-splash height: 700
+             steps: steps
+             colour: white
+             seed: 282)

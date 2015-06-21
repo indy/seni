@@ -119,7 +119,8 @@ function assert(assertion) {
 }
 
 function isDefineExpression(form) {
-  return form.constructor === Array && form[0] === 'define';
+  return form.constructor === Array &&
+    (form[0] === 'define' || form[0] === 'define-vars');
 }
 
 function isDefiningFunction(nameForm) {
@@ -213,22 +214,26 @@ const specialForms = {
     }
   },
 
+  'define-vars': (env, [_, ...args]) => {
+    _ = _;
+
+    // wrap the args into pairs
+    if(args.length % 2 === 1) {
+      console.error('define-vars should have an even number of args', args);
+    }
+
+    let argPairs = [];
+    for(let i = 0; i < args.length; i += 2) {
+      argPairs.push([args[i + 0], args[i + 1]]);
+    }
+
+    return [addBindings(env, argPairs), true];
+  },
+
   // (begin (f1 1) (f2 3) (f3 5))
   'begin': (env, [_, ...body]) => {
     _ = _;
     return evalBodyForms(env, body);
-  },
-
-  // (let ((a 12) (b 24)) (+ a b foo))
-  'let': (env, [_, args, ...body]) => {
-    _ = _;
-    return evalBodyForms(addBindings(env, args), body);
-  },
-
-  // (fn (x: 0 y: 0) (+ x y))
-  'fn': (env, [_, defaultArgForms, ...body]) => {
-    _ = _;
-    return [env, defineFunction(env, defaultArgForms, body)];
   },
 
   // (print 'hi' foo) => hi 42

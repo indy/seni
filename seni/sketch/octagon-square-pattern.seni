@@ -35,33 +35,33 @@
 
 
 (define (draw)
-  (let ((main-col [yellow (col alpha: 1)])
-        ((triad-b triad-c) ([col/analagous (select from: (list 'col/analagous
-                                                               'col/split-complementary
-                                                               'col/triad))] 
-                            colour: main-col)))
-    (rect position: (v2 500 500)
-          width: 1000
-          height: 1000
-          colour: triad-b)
+  (define-vars main-col [yellow (col alpha: 1)]
+               (triad-b triad-c) ([col/analagous (select from: (list 'col/analagous
+                                                                     'col/split-complementary
+                                                                     'col/triad))] 
+                                  colour: main-col))
+  (rect position: (v2 500 500)
+        width: 1000
+        height: 1000
+        colour: triad-b)
 
-    (on-matrix-stack
-      (translate vector: centre)
-      (rotate angle: master-angle)
-      (loop (y from: -700 until: 700 increment: (* 2 master-radius))
-        (loop (x from: -700 until: 700 increment: (* 2 master-radius))
-          (draw-octagon position: (v2 x y)
-                        radius: master-radius
-                        colour: main-col))))
+  (on-matrix-stack
+    (translate vector: centre)
+    (rotate angle: master-angle)
+    (loop (y from: -700 until: 700 increment: (* 2 master-radius))
+      (loop (x from: -700 until: 700 increment: (* 2 master-radius))
+        (draw-octagon position: (v2 x y)
+                      radius: master-radius
+                      colour: main-col))))
 
-    (on-matrix-stack
-      (translate vector: centre)
-      (rotate angle: master-angle)
-      (loop (y from: -700 until: 700 increment: (* 2 master-radius))
-        (loop (x from: -700 until: 700 increment: (* 2 master-radius))
-          (draw-corner-square position: (v2 x y)
-                              radius: master-radius
-                              colour: triad-c))))))
+  (on-matrix-stack
+    (translate vector: centre)
+    (rotate angle: master-angle)
+    (loop (y from: -700 until: 700 increment: (* 2 master-radius))
+      (loop (x from: -700 until: 700 increment: (* 2 master-radius))
+        (draw-corner-square position: (v2 x y)
+                            radius: master-radius
+                            colour: triad-c)))))
 
 
 (draw)
