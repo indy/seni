@@ -34,7 +34,7 @@ const SeniMode = {
 function get(url) {
   return new Promise((resolve, reject) => {
 
-    var req = new XMLHttpRequest();
+    let req = new XMLHttpRequest();
     req.open('GET', url);
 
     req.onload = () => {
