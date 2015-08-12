@@ -83,6 +83,7 @@ const Core = {
         return res;
       }
     )
+
   ]
 };
 

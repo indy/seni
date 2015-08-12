@@ -48,6 +48,7 @@
       }
     }],
     "max-len": [2, 80, 2],
+    "max-nested-callbacks": [2, 3],
     "no-unused-vars": 1,        
     "key-spacing": [0, {"align": "value"}],
     "no-underscore-dangle": 0
