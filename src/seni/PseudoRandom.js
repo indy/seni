@@ -57,8 +57,8 @@ function lerp(t, a, b) {
 
 function grad(hash, x, y, z) {
   const h = hash & 15;                      // CONVERT LO 4 BITS OF HASH CODE
-  const u = h < 8 ? x : y,                 // INTO 12 GRADIENT DIRECTIONS.
-        v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+  const u = h < 8 ? x : y;                 // INTO 12 GRADIENT DIRECTIONS.
+  const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
   return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
 }
 

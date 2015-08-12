@@ -73,10 +73,10 @@ function remapFn(params) {
   const clamping = params.clamping || false;
   const mapping = params.mapping || 'linear';
 
-  const [fromA, fromB] = from,
-        [toA, toB] = to,
-        [fromM, fromC] = mc([fromA, 0], [fromB, 1]),
-        [toM, toC] = mc([0, toA], [1, toB]);
+  const [fromA, fromB] = from;
+  const [toA, toB] = to;
+  const [fromM, fromC] = mc([fromA, 0], [fromB, 1]);
+  const [toM, toC] = mc([0, toA], [1, toB]);
 
   let normalisedMappingFn = remappingFn.get(mapping);
 
@@ -86,9 +86,10 @@ function remapFn(params) {
 
   return function(parameters) {
     const val = parameters.val || 0;
-    const fromInterp = (fromM * val) + fromC,
-          toInterp = normalisedMappingFn(fromInterp),
-          res = (toM * toInterp) + toC;
+    const fromInterp = (fromM * val) + fromC;
+    const toInterp = normalisedMappingFn(fromInterp);
+    const res = (toM * toInterp) + toC;
+
     if (clamping) {
       return fromInterp < 0 ? toA : (fromInterp > 1) ? toB : res;
     } else {

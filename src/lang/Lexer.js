@@ -267,8 +267,8 @@ function nextTokenType(s) {
 
 const Lexer = {
   tokenise: function(input) {
-    let q = [],   // queue of tokens to return
-        p = [];       // [token, remaining] pair
+    let q = [];   // queue of tokens to return
+    let p = [];   // [token, remaining] pair
 
     let s = skipWhitespace(input);
 

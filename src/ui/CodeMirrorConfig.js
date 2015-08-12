@@ -26,10 +26,10 @@ import CodeMirrorSeni from './CodeMirrorSeni';
 const modeName = 'seni';
 
 const defaultConfig = {
-    lineNumbers: false,
-    mode: modeName,
-    autoCloseBrackets: true,
-    matchBrackets: true
+  lineNumbers: false,
+  mode: modeName,
+  autoCloseBrackets: true,
+  matchBrackets: true
 };
 
 const CodeMirrorConfig = {

@@ -24,15 +24,16 @@
 /* eslint-disable no-fallthrough */
 
 function seniMode() {
-  const BUILTIN = 'builtin',
-        COMMENT = 'comment',
-        STRING = 'string',
-        ATOM = 'atom',
-        NUMBER = 'number',
-        PAREN = 'paren',      // ()
-        BRACKET = 'bracket',    // []
-        SENICOMMON = 'seni-common',
-        PARAMETER = 'seni-parameter';
+  const BUILTIN = 'builtin';
+  const COMMENT = 'comment';
+  const STRING = 'string';
+  const ATOM = 'atom';
+  const NUMBER = 'number';
+  const PAREN = 'paren';      // ()
+  const BRACKET = 'bracket';    // []
+  const SENICOMMON = 'seni-common';
+  const PARAMETER = 'seni-parameter';
+
   let INDENT_WORD_SKIP = 2;
 
   function makeKeywords(str) {

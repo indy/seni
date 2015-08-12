@@ -86,13 +86,12 @@ function removeNavbarClass(seniApp, klass, removeClass) {
   }
 }
 
-function renderGenotypeToImage(seniApp, ast, genotype, imageElement,
-                               width, height) {
+function renderGenotypeToImage(seniApp, ast, genotype, imageElement, w, h) {
 
   const renderer = seniApp.renderer;
 
-  if(width !== undefined && height !== undefined) {
-    renderer.preDrawScene(width, height);
+  if(w !== undefined && h !== undefined) {
+    renderer.preDrawScene(w, h);
   } else {
     renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
   }
