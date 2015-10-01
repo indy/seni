@@ -119,6 +119,12 @@ function bezierPoint(a, b, c, d, t) {
     (d * t * t * t);
 }
 
+function bezierTangent(a, b, c, d, t) {
+  return (3 * t * t * (-a + 3 * b - 3 * c + d) +
+          6 * t * (a - 2 * b + c) +
+          3 * (-a + b));
+}
+
 function quadraticPoint(a, b, c, t) {
   const r = ((b - a) - 0.5 * (c - a)) / (0.5 * (0.5 - 1));
   const s = c - a - r;
@@ -178,6 +184,30 @@ const MathUtil = {
     ),
 
     new PublicBinding(
+      'math/bezier-tangent',
+      ``,
+      {coords: [[440, 400],
+                [533, 700],
+                [766, 200],
+                [900, 500]],
+       t: 1},
+      (self) => function(params) {
+        const {coords, t} = self.mergeWithDefaults(params);
+        let x = bezierTangent(coords[0][0],
+                              coords[1][0],
+                              coords[2][0],
+                              coords[3][0],
+                              t);
+        let y = bezierTangent(coords[0][1],
+                              coords[1][1],
+                              coords[2][1],
+                              coords[3][1],
+                              t);
+        return [x, y];
+      }
+    ),
+
+    new PublicBinding(
       'math/sin',
       ``,
       {angle: 0},
@@ -194,6 +224,19 @@ const MathUtil = {
       (self) => function(params) {
         const {angle} = self.mergeWithDefaults(params);
         return Math.cos(angle);
+      }
+    ),
+
+    new PublicBinding(
+      'math/atan2',
+      `Calculates the arc tangent of the two variables y and x. It is similar
+to calculating the arc tangent of y / x, except that the signs of
+both arguments are used to determine the quadrant of the result`,
+      {x: 0,
+       y: 0},
+      (self) => function(params) {
+        const {x, y} = self.mergeWithDefaults(params);
+        return Math.atan2(y, x); // this is correct, y is given before x
       }
     ),
 
