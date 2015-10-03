@@ -46,7 +46,8 @@ function compile(node, genotype) {
 
 function compileNodes(nodes, genotype) {
 
-  let n, res = nodes.map(node => {
+  let n;
+  let res = nodes.map(node => {
     [n, genotype] = compile(node, genotype);
     return n;
   });
