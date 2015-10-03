@@ -4,42 +4,95 @@
                      (v2 [666 (int max: canvas/width)] [900 (int max: canvas/height)])
                      (v2 [999 (int max: canvas/width)] [500 (int max: canvas/height)])))
 
+(define (interesting-circle position: (v2 500 500)
+                            colour: red
+                            seed: "yabba dabba dooo"
+                            radius: 300)
+  (define-vars rng (prng/range seed: seed)
+               outer-exterior (prng/range seed: (take from: rng) min: 170 max: 210)
+               outer-interior (prng/range seed: (take from: rng) min: 80 max: 170)
+               inner-exterior (prng/range seed: (take from: rng) min: 100 max: 150)
+               inner-interior (prng/range seed: (take from: rng) min: 0 max: 100)
+               srng (prng/range min: -1 max: 1 seed: seed))
+  (on-matrix-stack
+    (translate vector: position)
+    (scale scalar: (/ radius 210))
+    (loop (i to: 3)
+      (on-matrix-stack
+        (rotate angle: (* 360 (take from: rng)))
+        ;; outer ring
+        (poly-slice tessellation: 20
+                    position: (v2 0 0)
+                    colour: (col/lighten colour: colour
+                                         delta: (* [30 (int min: 20 max: 60)] (take from: srng)))
+                    angle-start: 0
+                    angle-end: 320
+                    width: (take from: outer-exterior)
+                    inner-width: (take from: outer-interior)
+                    height: (take from: outer-exterior)
+                    inner-height: (take from: outer-interior))
+        ;; inner ring
+        (poly-slice tessellation: 10
+                    position: (v2 0 0)
+                    colour: (col/lighten colour: colour
+                                         delta: (* [20 (int min: 10 max: 40)] (take from: srng)))
+                    angle-start: 0
+                    angle-end: 320
+                    width: (take from: inner-exterior)
+                    inner-width: (take from: inner-interior)
+                    height: (take from: inner-exterior)
+                    inner-height: (take from: inner-interior))))
+    ;; centre fill
+    (poly-slice tessellation: 10
+                position: (v2 0 0)
+                colour: (col/lighten colour: colour 
+                                     delta: (* [10 (int min: 5 max: 20)] (take from: srng)))
+                angle-start: 0
+                angle-end: 360
+                radius: 30)))
 
-(bezier coords: coords)
+
+
+;(bezier coords: coords)
 
 (define half-pi (/ math/PI 2))
+
+(define (tentacle position: (v2 0 0)
+                  angle: 0)
+  (define-vars x (v2/x position)
+               y (v2/y position)
+               cosa (math/cos angle: angle)
+               sina (math/sin angle: angle)
+               min-pos-rad 28
+               max-pos-rad 300
+               rem (remap-fn from: (v2 min-pos-rad max-pos-rad)
+                             to: (v2 20 1)))
+
+  (loop (r from: min-pos-rad to: max-pos-rad increment: 20)
+        (interesting-circle position: (v2 (+ x (* cosa r))
+                                          (+ y (* sina r)))
+                            radius: (rem val: r)
+                            colour: red)
+        (interesting-circle position: (v2 (- x (* cosa r))
+                                          (- y (* sina r)))
+                            radius: (rem val: r)
+                            colour: red)))
 
 (define (norm position: (v2 0 0)
               t-value: 0)
   (define-vars
-    x (v2/x position)
-    y (v2/y position)
     txy (math/bezier-tangent t: t-value
                              coords: coords)
-    a (- (math/atan2 x: (v2/x txy) y: (v2/y txy)) half-pi)
-    cosa (math/cos angle: a)
-    sina (math/sin angle: a))
+    angle (- (math/atan2 x: (v2/x txy)
+                         y: (v2/y txy))
+             half-pi))
   
-  (rect position: position
-        width: 10
-        height: 10
-        colour: blue)
-  
-  (rect position: (v2 (+ x (* cosa 28))
-                      (+ y (* sina 28)))
-        width: 10
-        height: 10
-        colour: green)
-  
-  (rect position: (v2 (- x (* cosa 28))
-                      (- y (* sina 28)))
-        width: 10
-        height: 10
-        colour: green)
-  
-  
-  )
+;  (interesting-circle position: position
+;                      radius: 20
+;                      colour: blue)
+  (tentacle position: position
+            angle: angle))
 
 (path/bezier fn: norm
-             steps: 10
+             steps: 20
              coords: coords)
