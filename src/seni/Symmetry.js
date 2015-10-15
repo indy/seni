@@ -17,6 +17,7 @@
  */
 
 import PublicBinding from './PublicBinding';
+import MathUtil from './MathUtil';
 
 function emptyFn() {
   // an empty function that acts as the default value for fn arguments
@@ -36,6 +37,19 @@ function mirror(renderer, drawFn, scaling) {
   renderer.cmdMatrixScale(x, y);
   drawFn();
   renderer.cmdMatrixPop();
+}
+
+// draws once then again with x,y swapped
+function rotated90(renderer, drawFn) {
+  renderer.cmdMatrixPush();
+  drawFn();
+  renderer.cmdMatrixPop();
+
+  renderer.cmdMatrixPush();
+  renderer.cmdMatrixRotate(MathUtil.PI / 2);
+  drawFn();
+  renderer.cmdMatrixPop();
+
 }
 
 const symmetryVertical = new PublicBinding(
@@ -82,11 +96,30 @@ const symmetry4 = new PublicBinding(
   }
 );
 
+const symmetry8 = new PublicBinding(
+  'symmetry/8',
+  'renders the draw fn reflected 8 times', // todo: better doc
+  {
+    draw: emptyFn
+  },
+  (self, renderer) => {
+    return (params) => {
+      let { draw } = self.mergeWithDefaults(params);
+      mirror(renderer, () => {
+        mirror(renderer, () => {
+          rotated90(renderer, draw);
+        }, vertical);
+      }, horizontal);
+    };
+  }
+);
+
 const Symmetry = {
   publicBindings: [
     symmetryVertical,
     symmetryHorizontal,
-    symmetry4
+    symmetry4,
+    symmetry8
   ]
 };
 
