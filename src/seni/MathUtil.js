@@ -313,6 +313,7 @@ both arguments are used to determine the quadrant of the result`,
 
   PI,
   TAU,
+  PIbyTwo,
 
   degreesToRadians,
   radiansToDegrees,

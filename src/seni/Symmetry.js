@@ -46,7 +46,7 @@ function rotated90(renderer, drawFn) {
   renderer.cmdMatrixPop();
 
   renderer.cmdMatrixPush();
-  renderer.cmdMatrixRotate(MathUtil.PI / 2);
+  renderer.cmdMatrixRotate(MathUtil.PIbyTwo);
   drawFn();
   renderer.cmdMatrixPop();
 
