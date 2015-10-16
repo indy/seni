@@ -25,7 +25,7 @@ import Core from './Core';
 import Bracket from './BracketBindings';
 import PseudoRandom from './PseudoRandom';
 import Focal from './Focal';
-import Symmetry from './Symmetry';
+import Repeat from './Repeat';
 
 function createBind(env, pb, restArgs) {
 
@@ -56,7 +56,7 @@ const Bind = {
     env = applyPublicBindings(env, Paths);
     env = applyPublicBindings(env, ColourBindings);
     env = applyPublicBindings(env, Focal, renderer);
-    env = applyPublicBindings(env, Symmetry, renderer);
+    env = applyPublicBindings(env, Repeat, renderer);
     return env;
   },
 

@@ -53,7 +53,7 @@ function rotated90(renderer, drawFn) {
 }
 
 const symmetryVertical = new PublicBinding(
-  'symmetry/vertical',
+  'repeat/symmetry-vertical',
   'renders the draw fn twice (mirrored vertically)',
   {
     draw: emptyFn
@@ -67,7 +67,7 @@ const symmetryVertical = new PublicBinding(
 );
 
 const symmetryHorizontal = new PublicBinding(
-  'symmetry/horizontal',
+  'repeat/symmetry-horizontal',
   'renders the draw fn twice (mirrored horizontally)',
   {
     draw: emptyFn
@@ -81,7 +81,7 @@ const symmetryHorizontal = new PublicBinding(
 );
 
 const symmetry4 = new PublicBinding(
-  'symmetry/4',
+  'repeat/symmetry-4',
   'renders the draw fn reflected along both the horizontal and vertical axis',
   {
     draw: emptyFn
@@ -97,7 +97,7 @@ const symmetry4 = new PublicBinding(
 );
 
 const symmetry8 = new PublicBinding(
-  'symmetry/8',
+  'repeat/symmetry-8',
   'renders the draw fn reflected 8 times', // todo: better doc
   {
     draw: emptyFn
@@ -114,13 +114,72 @@ const symmetry8 = new PublicBinding(
   }
 );
 
-const Symmetry = {
+const rotate = new PublicBinding(
+  'repeat/rotate',
+  'renders multiple times by rotation',
+  {
+    draw: emptyFn,
+    copies: 3
+  },
+  (self, renderer) => {
+    return (params) => {
+      let { draw, copies } = self.mergeWithDefaults(params);
+
+      const delta = MathUtil.TAU / copies;
+
+      for(let i = 0; i < copies; i++) {
+        renderer.cmdMatrixPush();
+        renderer.cmdMatrixRotate(delta * i);
+        draw();
+        renderer.cmdMatrixPop();
+      }
+    };
+  }
+);
+
+const rotateMirrored = new PublicBinding(
+  'repeat/rotate-mirrored',
+  'renders multiple times by rotation',
+  {
+    draw: emptyFn,
+    copies: 3
+  },
+  (self, renderer) => {
+    return (params) => {
+      let { draw, copies } = self.mergeWithDefaults(params);
+
+      const delta = MathUtil.TAU / copies;
+
+      for(let i = 0; i < copies; i++) {
+        renderer.cmdMatrixPush();
+        renderer.cmdMatrixRotate(delta * i);
+        draw();
+        renderer.cmdMatrixPop();
+      }
+
+      renderer.cmdMatrixPush();
+      renderer.cmdMatrixScale(-1, 1);
+      for(let i = 0; i < copies; i++) {
+        renderer.cmdMatrixPush();
+        renderer.cmdMatrixRotate(delta * i);
+        draw();
+        renderer.cmdMatrixPop();
+      }
+      renderer.cmdMatrixPop();
+
+    };
+  }
+);
+
+const Repeat = {
   publicBindings: [
     symmetryVertical,
     symmetryHorizontal,
     symmetry4,
-    symmetry8
+    symmetry8,
+    rotate,
+    rotateMirrored
   ]
 };
 
-export default Symmetry;
+export default Repeat;
