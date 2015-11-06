@@ -77,6 +77,27 @@ const bezierBinding = new PublicBinding(
     return (params) => renderBezier(self, params, renderer);
   });
 
+
+function renderLine(publicBinding, params, renderer) {
+  let fullParams = publicBinding.mergeWithDefaults(params);
+  renderer.cmdRenderLine(fullParams);
+}
+
+const lineBinding = new PublicBinding(
+  'line',
+  `
+  renders a line using 'from' and 'to' parameters
+  `,
+  {
+    from: [100, 100],
+    to: [500, 500],
+    width: 20,
+    colour: Colour.defaultColour
+  },
+  (self, renderer) => {
+    return (params) => renderLine(self, params, renderer);
+  });
+
 function renderRect(publicBinding, params, renderer) {
   let fullParams = publicBinding.mergeWithDefaults(params);
   renderer.cmdRenderRect(fullParams);
@@ -523,6 +544,7 @@ const gradientQuadBinding = new PublicBinding(
 
 const Shapes = {
   publicBindings: [
+    lineBinding,
     rectBinding,
     boxBinding,
 

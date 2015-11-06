@@ -88,6 +88,10 @@ class Renderer {
     return this.matrixStack.rotate(angle);
   }
 
+  cmdRenderLine(params) {
+    return this.renderLine(params);
+  }
+
   cmdRenderRect(params) {
     return this.renderRect(params);
   }
@@ -113,6 +117,29 @@ class Renderer {
   }
 
   // ----------------------------------------------------------------------
+
+  renderLine(params) {
+    const {
+      from,
+      to,
+      width,
+      colour
+    } = params;
+
+    const [x1, y1] = from;
+    const [x2, y2] = to;
+    const hw = width / 2;
+
+    const [[n1x, n1y], [n2x, n2y]] = MathUtil.normals(x1, y1, x2, y2);
+
+    const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+
+    this.prepareToAddTriangleStrip(4, [x1 + (hw * n1x), y1 + (hw * n1y)]);
+    this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colourArray);
+    this.addVertex([x1 + (hw * n2x), y1 + (hw * n2y)], colourArray);
+    this.addVertex([x2 + (hw * n1x), y2 + (hw * n1y)], colourArray);
+    this.addVertex([x2 + (hw * n2x), y2 + (hw * n2y)], colourArray);
+  }
 
   renderRect(params) {
     const {
