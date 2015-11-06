@@ -107,7 +107,8 @@ function normals(x1, y1, x2, y2) {
   const dx = x2 - x1;
   const dy = y2 - y1;
 
-  return [normalize(-dy, dx), normalize(dy, -dx)];
+  const [nx, ny] = normalize(-dy, dx);
+  return [[nx, ny], [-nx, -ny]];
 }
 
 function bezierPoint(a, b, c, d, t) {
