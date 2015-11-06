@@ -185,6 +185,30 @@ const MathUtil = {
     ),
 
     new PublicBinding(
+      'math/bezier',
+      ``,
+      {coords: [[440, 400],
+                [533, 700],
+                [766, 200],
+                [900, 500]],
+       t: 1},
+      (self) => function(params) {
+        const {coords, t} = self.mergeWithDefaults(params);
+        let x = bezierPoint(coords[0][0],
+                            coords[1][0],
+                            coords[2][0],
+                            coords[3][0],
+                            t);
+        let y = bezierPoint(coords[0][1],
+                            coords[1][1],
+                            coords[2][1],
+                            coords[3][1],
+                            t);
+        return [x, y];
+      }
+    ),
+
+    new PublicBinding(
       'math/bezier-tangent',
       ``,
       {coords: [[440, 400],
