@@ -1,19 +1,27 @@
-
-
-(define coords1 (list (v2 [  0 (int max: canvas/width)] [500 (int max: canvas/height)])
-                      (v2 [333 (int max: canvas/width)] [100 (int max: canvas/height)])
-                      (v2 [666 (int max: canvas/width)] [900 (int max: canvas/height)])
-                      (v2 [999 (int max: canvas/width)] [500 (int max: canvas/height)])))
-
-(define coords2 (list (v2 [900 (int max: canvas/width)] [900 (int max: canvas/height)])
-                      (v2 [733 (int max: canvas/width)] [800 (int max: canvas/height)])
-                      (v2 [466 (int max: canvas/width)] [700 (int max: canvas/height)])
-                      (v2 [199 (int max: canvas/width)] [600 (int max: canvas/height)])))
-
+(define-vars
+  coords (list)
+  colours (list))
 
 (loop (t from: 0 to: 1 steps: [30 (int min: 5 max: 100)])
-  (line from: (math/bezier t: t coords: coords1)
-        to: (math/bezier t: t coords: coords2)
-        width: [10 (int min: 3 max: 40)]))
+      (append coords (math/bezier t: t
+                                  coords: (list (v2 [  0 (int max: canvas/width)]
+                                                    [500 (int max: canvas/height)])
+                                                (v2 [333 (int max: canvas/width)]
+                                                    [100 (int max: canvas/height)])
+                                                (v2 [666 (int max: canvas/width)]
+                                                    [900 (int max: canvas/height)])
+                                                (v2 [999 (int max: canvas/width)]
+                                                    [500 (int max: canvas/height)]))))
+      (append colours red)
+      (append coords (math/bezier t: t coords: (list (v2 [900 (int max: canvas/width)]
+                                                         [900 (int max: canvas/height)])
+                                                     (v2 [733 (int max: canvas/width)]
+                                                         [800 (int max: canvas/height)])
+                                                     (v2 [466 (int max: canvas/width)]
+                                                         [700 (int max: canvas/height)])
+                                                     (v2 [199 (int max: canvas/width)]
+                                                         [600 (int max: canvas/height)]))))
+      (append colours blue))
 
-
+(poly coords: coords
+      colours: colours)

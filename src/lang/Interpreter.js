@@ -338,7 +338,7 @@ function loopingFn(env, expr, varName, params) {
 }
 
 // todo: classic functions are here because it wouldn't make sense to
-// use named parameters for these functions. perhaps there should by a
+// use named parameters for these functions. perhaps there should be a
 // syntax like prefixing with @ to indicate that the function takes a
 // variable number of non-named paramters?
 
@@ -386,7 +386,12 @@ const classicFunctions = {
     return TRUE_STRING;
   },
 
-  'list' : args => args
+  'list' : args => args,
+
+  'append' : ([list, ...items]) => {
+    items.forEach(i => list.push(i));
+    return list;
+  }
 };
 
 // todo: v2 functions are also treated as classic functions
