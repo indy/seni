@@ -40,11 +40,11 @@
         width: w
         height: h
         colour: primary)
-  (poly position: origin
-        width: (* w 0.4)
-        height: (* w 0.4)
-        tessellation: 32
-        colour: accent))
+  (circle position: origin
+          width: (* w 0.4)
+          height: (* w 0.4)
+          tessellation: 32
+          colour: accent))
 
 ;; two full-size triangles
 (define (p3 primary: red
@@ -73,12 +73,12 @@
         colour: primary
         width: w/2
         height: h/2)
-  (poly-slice position: origin
-              angle-start: 90
-              angle-end: 180
-              colour: primary
-              width: w/2
-              height: h/2))
+  (circle-slice position: origin
+                angle-start: 90
+                angle-end: 180
+                colour: primary
+                width: w/2
+                height: h/2))
 
 (define (p5 primary: red
             accent: green
@@ -87,10 +87,10 @@
   (p4 primary: primary
       accent: accent
       background: background)
-  (poly position: (v2 0 (/ h 5))
-        radius: (/ h 5)
-        colour: accent
-        tessellation: 32))
+  (circle position: (v2 0 (/ h 5))
+          radius: (/ h 5)
+          colour: accent
+          tessellation: 32))
 
 (define (p6 primary: red
             accent: green
@@ -99,14 +99,14 @@
   (p4 primary: primary
       accent: accent
       background: background)
-  (poly position: (v2 0 (/ h 5))
-        radius: (/ w 5)
-        colour: accent
-        tessellation: 32)
-  (poly position: (v2 0 (- (/ h 5)))
-        radius: (/ w 5)
-        colour: accent
-        tessellation: 32))
+  (circle position: (v2 0 (/ h 5))
+          radius: (/ w 5)
+          colour: accent
+          tessellation: 32)
+  (circle position: (v2 0 (- (/ h 5)))
+          radius: (/ w 5)
+          colour: accent
+          tessellation: 32))
 
 (define (p7 primary: red
             accent: green
@@ -116,20 +116,20 @@
         colour: primary
         width: w/2
         height: (- h w/2))
-  (poly-slice position: (v2 0 (- h/2 w/2))
-              angle-start: 270
-              angle-end: 360
-              colour: primary
-              radius: w/2)
+  (circle-slice position: (v2 0 (- h/2 w/2))
+                angle-start: 270
+                angle-end: 360
+                colour: primary
+                radius: w/2)
   (rect position: (v2 w/4 w/4)
         colour: primary
         width: w/2
         height: (- h w/2))
-  (poly-slice position: (v2 0 (- w/2 h/2))
-              angle-start: 90
-              angle-end: 180
-              colour: primary
-              radius: w/2))
+  (circle-slice position: (v2 0 (- w/2 h/2))
+                angle-start: 90
+                angle-end: 180
+                colour: primary
+                radius: w/2))
 
 (define (p8 primary: red
             accent: green
@@ -138,10 +138,10 @@
   (p7 primary: primary
       accent: accent
       background: background)
-  (poly position: (v2 0 (/ h 5))
-        radius: (/ h 5)
-        colour: accent
-        tessellation: 32))
+  (circle position: (v2 0 (/ h 5))
+          radius: (/ h 5)
+          colour: accent
+          tessellation: 32))
 
 (define (p9 primary: red
             accent: green
@@ -150,14 +150,14 @@
   (p7 primary: primary
       accent: accent
       background: background)
-  (poly position: (v2 0 (/ h 5))
-        radius: (/ w 5)
-        colour: accent
-        tessellation: 32)
-  (poly position: (v2 0 (- (/ h 5)))
-        radius: (/ w 5)
-        colour: accent
-        tessellation: 32))
+  (circle position: (v2 0 (/ h 5))
+          radius: (/ w 5)
+          colour: accent
+          tessellation: 32)
+  (circle position: (v2 0 (- (/ h 5)))
+          radius: (/ w 5)
+          colour: accent
+          tessellation: 32))
 
 (define funct [(list p1 p2 p3 p4 p5 p6 p7 p8 p9
                      p1 p2 p3 p4 p5 p6 p7 p8 p9

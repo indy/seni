@@ -41,14 +41,14 @@
   (define-vars random (prng/range min: -1 max: 1 seed: seed))
   (define (fun position: (v2 0 0)
                t-value: 0)
-    (poly position: (v2 (+ (v2/x position) (* random-factor (random)))
-                        (+ (v2/y position) (* random-factor (random))))
-          radius: (+ radius (* radius (random) radius-factor))
-          tessellation: tessellation
-          colour: (col/lab l: l-val
-                           a: (remap-a val: t-value)
-                           b: (remap-b val: t-value)
-                           alpha: alpha))))
+    (circle position: (v2 (+ (v2/x position) (* random-factor (random)))
+                          (+ (v2/y position) (* random-factor (random))))
+            radius: (+ radius (* radius (random) radius-factor))
+            tessellation: tessellation
+            colour: (col/lab l: l-val
+                             a: (remap-a val: t-value)
+                             b: (remap-b val: t-value)
+                             alpha: alpha))))
 
 (path/bezier fn: (make-fun radius: 500
                            l-val: 6

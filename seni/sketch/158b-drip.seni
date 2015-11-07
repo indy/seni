@@ -10,7 +10,7 @@
   (define-vars r (prng/range seed: seed
                              min: (* -1 (/ drip-range 2))
                              max: (/ drip-range 2))
-               radius (/ canvas/width (- steps 1) 2))
+    radius (/ canvas/width (- steps 1) 2))
 
   (define (draw-drip position: (v2 500 500)
                      colour: red)
@@ -19,10 +19,10 @@
          top: 1000
          bottom: (v2/y position)
          colour: colour)
-    (poly position: position
-          tessellation: 20
-          radius: radius
-          colour: colour))
+    (circle position: position
+            tessellation: 20
+            radius: radius
+            colour: colour))
 
   (define (draw-inbetween-drip position: (v2 500 500)
                                colour: red
@@ -32,10 +32,10 @@
          top: 1000
          bottom: (v2/y position)
          colour: colour)
-    (poly position: position
-          tessellation: 20
-          radius: radius
-          colour: background))
+    (circle position: position
+            tessellation: 20
+            radius: radius
+            colour: background))
 
   (define (drip position: (v2 500 500)
                 step: 1
@@ -59,12 +59,12 @@
                      seed: 1
                      splash-range: 80)
   (define-vars radius (/ canvas/width (- steps 1) 2)
-               r (prng/range seed: seed
-                             max: (+ splash-range radius)
-                             min: radius)
-               g (prng/range seed: (+ seed seed)
-                             min: 0
-                             max: 5))
+    r (prng/range seed: seed
+                  max: (+ splash-range radius)
+                  min: radius)
+    g (prng/range seed: (+ seed seed)
+                  min: 0
+                  max: 5))
 
   (define (draw-splash position: (v2 500 500)
                        colour: red)
@@ -76,14 +76,14 @@
          top: (v2/y position)
          bottom: (- (v2/y position) hh)
          colour: colour)      
-    (poly position: (v2/- position (v2 0 hh))
-          tessellation: 20
-          radius: radius
-          colour: colour)
-    (poly position: position
-          tessellation: 20
-          radius: radius
-          colour: colour))
+    (circle position: (v2/- position (v2 0 hh))
+            tessellation: 20
+            radius: radius
+            colour: colour)
+    (circle position: position
+            tessellation: 20
+            radius: radius
+            colour: colour))
 
   (define (splash position: (v2 500 500)
                   step: 1

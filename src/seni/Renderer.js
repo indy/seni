@@ -96,12 +96,12 @@ class Renderer {
     return this.renderRect(params);
   }
 
-  cmdRenderPoly(params) {
-    return this.renderPoly(params);
+  cmdRenderCircle(params) {
+    return this.renderCircle(params);
   }
 
-  cmdRenderPolySlice(params) {
-    return this.renderPolySlice(params);
+  cmdRenderCircleSlice(params) {
+    return this.renderCircleSlice(params);
   }
 
   cmdRenderGradientPoly(params, sides) {
@@ -162,7 +162,7 @@ class Renderer {
     this.addVertex([x + halfWidth, y + halfHeight], colourArray);
   }
 
-  renderPoly(params) {
+  renderCircle(params) {
     let {
       position,
       width,
@@ -207,7 +207,7 @@ class Renderer {
     this.addVertex([vx, vy], colourArray);
   }
 
-  renderPolySlice(params) {
+  renderCircleSlice(params) {
     let {
       position,
       width,

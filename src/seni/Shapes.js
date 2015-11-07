@@ -147,13 +147,13 @@ const boxBinding = new PublicBinding(
     };
   });
 
-function renderPoly(publicBinding, params, renderer) {
+function renderCircle(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
-  renderer.cmdRenderPoly(fullParams);
+  renderer.cmdRenderCircle(fullParams);
 }
 
-const polyBinding = new PublicBinding(
-  'poly',
+const circleBinding = new PublicBinding(
+  'circle',
   `
   `,
   {
@@ -165,16 +165,16 @@ const polyBinding = new PublicBinding(
     colour: Colour.defaultColour
   },
   (self, renderer) => {
-    return (params) => renderPoly(self, params, renderer);
+    return (params) => renderCircle(self, params, renderer);
   });
 
-function renderPolySlice(publicBinding, params, renderer) {
+function renderCircleSlice(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
-  renderer.cmdRenderPolySlice(fullParams);
+  renderer.cmdRenderCircleSlice(fullParams);
 }
 
-const polySliceBinding = new PublicBinding(
-  'poly-slice',
+const circleSliceBinding = new PublicBinding(
+  'circle-slice',
   `
   `,
   {
@@ -190,7 +190,7 @@ const polySliceBinding = new PublicBinding(
     colour: Colour.defaultColour
   },
   (self, renderer) => {
-    return (params) => renderPolySlice(self, params, renderer);
+    return (params) => renderCircleSlice(self, params, renderer);
   });
 
 function renderBezierTrailing(publicBinding, params, renderer) {
@@ -542,14 +542,32 @@ const quadBinding = new PublicBinding(
     return (params) => renderGradientPoly(self, params, renderer, 4);
   });
 
+/*
+const triangleStripBinding = new PublicBinding(
+  'triangle-strip',
+  `renders a triangle strip in which each vertex has a different colour
+  `,
+  {
+    coords: [[100, 100],
+             [600, 100],
+             [500, 600]],
+    colours: [Colour.defaultColour,
+              Colour.defaultColour,
+              Colour.defaultColour]
+  },
+  (self, renderer) => {
+    return (params) => renderGradientPoly(self, params, renderer, 3);
+  });
+*/
+
 const Shapes = {
   publicBindings: [
     lineBinding,
     rectBinding,
     boxBinding,
 
-    polyBinding,
-    polySliceBinding,
+    circleBinding,
+    circleSliceBinding,
     splineBinding,
 
     bezierBinding,

@@ -8,13 +8,13 @@
                       radius: 100
                       colour: black)
   (on-matrix-stack
-    (translate vector: position)
-    (rotate angle: (/ math/TAU 16)) ; align 
-    (poly position: (v2 0 0)
-          tessellation: 8
-          width: radius
-          height: radius
-          colour: colour)))
+   (translate vector: position)
+   (rotate angle: (/ math/TAU 16)) ; align 
+   (circle position: (v2 0 0)
+           tessellation: 8
+           width: radius
+           height: radius
+           colour: colour)))
 
 (define (draw-unit-square colour: black)
   (rect position: (v2 0 0)
