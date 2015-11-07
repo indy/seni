@@ -503,14 +503,10 @@ const strokedBezierRectBinding = new PublicBinding(
     return (params) => renderStrokedBezierRect(self, params, renderer);
   });
 
-function renderGradientPoly(publicBinding, params, renderer, sides) {
-  let fullParams = publicBinding.mergeWithDefaults(params);
-  renderer.cmdRenderGradientPoly(fullParams, sides);
-}
 
-const triangleBinding = new PublicBinding(
-  'triangle',
-  `renders a triangle in which each vertex has a different colour
+const polyBinding = new PublicBinding(
+  'poly',
+  `renders triangle strip in which each vertex has a different colour
   `,
   {
     coords: [[100, 100],
@@ -521,44 +517,9 @@ const triangleBinding = new PublicBinding(
               Colour.defaultColour]
   },
   (self, renderer) => {
-    return (params) => renderGradientPoly(self, params, renderer, 3);
+    return (params) => renderer.cmdRenderPoly(self.mergeWithDefaults(params));
   });
 
-const quadBinding = new PublicBinding(
-  'quad',
-  `renders a quad in which each vertex has a different colour
-  `,
-  {
-    coords: [[100, 100],
-             [600, 100],
-             [600, 600],
-             [100, 600]],
-    colours: [Colour.defaultColour,
-              Colour.defaultColour,
-              Colour.defaultColour,
-              Colour.defaultColour]
-  },
-  (self, renderer) => {
-    return (params) => renderGradientPoly(self, params, renderer, 4);
-  });
-
-/*
-const triangleStripBinding = new PublicBinding(
-  'triangle-strip',
-  `renders a triangle strip in which each vertex has a different colour
-  `,
-  {
-    coords: [[100, 100],
-             [600, 100],
-             [500, 600]],
-    colours: [Colour.defaultColour,
-              Colour.defaultColour,
-              Colour.defaultColour]
-  },
-  (self, renderer) => {
-    return (params) => renderGradientPoly(self, params, renderer, 3);
-  });
-*/
 
 const Shapes = {
   publicBindings: [
@@ -577,8 +538,7 @@ const Shapes = {
     strokedBezierBinding,
     strokedBezierRectBinding,
 
-    triangleBinding,
-    quadBinding
+    polyBinding
   ]
 };
 

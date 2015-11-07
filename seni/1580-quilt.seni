@@ -51,14 +51,14 @@
             accent: green
             background: white)
   (bg background: background)
-  (triangle coords: (list (v2 (- w/2)    h/2)
-                          (v2    w/2  (- h/2))
-                          (v2    w/2     h/2))
-            colours: (list primary primary primary))
-  (triangle coords: (list (v2 (- w/2) (- h/2))
-                          (v2    w/2  (- h/2))
-                          (v2 (- w/2)    h/2))
-            colours: (list accent accent accent)))
+  (poly coords: (list (v2 (- w/2)    h/2)
+                      (v2    w/2  (- h/2))
+                      (v2    w/2     h/2))
+        colours: (list primary primary primary))
+  (poly coords: (list (v2 (- w/2) (- h/2))
+                      (v2    w/2  (- h/2))
+                      (v2 (- w/2)    h/2))
+        colours: (list accent accent accent)))
 
 
 (define (p4 primary: red

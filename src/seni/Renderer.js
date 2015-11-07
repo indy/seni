@@ -104,8 +104,8 @@ class Renderer {
     return this.renderCircleSlice(params);
   }
 
-  cmdRenderGradientPoly(params, sides) {
-    return this.renderGradientPoly(params, sides);
+  cmdRenderPoly(params) {
+    return this.renderPoly(params);
   }
 
   cmdRenderBezier(params) {
@@ -277,12 +277,14 @@ class Renderer {
     this.addVertex([vx, vy], colourArray);
   }
 
-  renderGradientPoly(params, n) {
+  renderPoly(params) {
     const {
       coords,
       colours
     } = params;
 
+    const n = coords.length;
+    // todo: check that the colours array is the same size as the coords array
     let c;
 
     this.prepareToAddTriangleStrip(n, coords[0]);
