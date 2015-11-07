@@ -508,8 +508,8 @@ function renderGradientPoly(publicBinding, params, renderer, sides) {
   renderer.cmdRenderGradientPoly(fullParams, sides);
 }
 
-const gradientTriangleBinding = new PublicBinding(
-  'gradient-triangle',
+const triangleBinding = new PublicBinding(
+  'triangle',
   `renders a triangle in which each vertex has a different colour
   `,
   {
@@ -524,8 +524,8 @@ const gradientTriangleBinding = new PublicBinding(
     return (params) => renderGradientPoly(self, params, renderer, 3);
   });
 
-const gradientQuadBinding = new PublicBinding(
-  'gradient-quad',
+const quadBinding = new PublicBinding(
+  'quad',
   `renders a quad in which each vertex has a different colour
   `,
   {
@@ -559,8 +559,8 @@ const Shapes = {
     strokedBezierBinding,
     strokedBezierRectBinding,
 
-    gradientTriangleBinding,
-    gradientQuadBinding
+    triangleBinding,
+    quadBinding
   ]
 };
 

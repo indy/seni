@@ -1,15 +1,16 @@
-(define-vars origin (v2 0 0)
-             ;; each rectangle is wxh
-             w 1.0
-             h 1
-             w/2 (/ w 2)
-             h/2 (/ h 2)
-             w/4 (/ w 4)
-             h/4 (/ h 4)
+(define-vars
+  origin (v2 0 0)
+  ;; each rectangle is wxh
+  w 1.0
+  h 1
+  w/2 (/ w 2)
+  h/2 (/ h 2)
+  w/4 (/ w 4)
+  h/4 (/ h 4)
 
-             primary [blue (col alpha: 1)]
-             accent [red (col alpha: 1)]
-             background [green (col alpha: 1)])
+  primary [blue (col alpha: 1)]
+  accent [red (col alpha: 1)]
+  background [green (col alpha: 1)])
 
 (define (bg background: white)
   (rect position: origin
@@ -50,14 +51,14 @@
             accent: green
             background: white)
   (bg background: background)
-  (gradient-triangle coords: (list (v2 (- w/2)    h/2)
-                                   (v2    w/2  (- h/2))
-                                   (v2    w/2     h/2))
-                     colours: (list primary primary primary))
-  (gradient-triangle coords: (list (v2 (- w/2) (- h/2))
-                                   (v2    w/2  (- h/2))
-                                   (v2 (- w/2)    h/2))
-                     colours: (list accent accent accent)))
+  (triangle coords: (list (v2 (- w/2)    h/2)
+                          (v2    w/2  (- h/2))
+                          (v2    w/2     h/2))
+            colours: (list primary primary primary))
+  (triangle coords: (list (v2 (- w/2) (- h/2))
+                          (v2    w/2  (- h/2))
+                          (v2 (- w/2)    h/2))
+            colours: (list accent accent accent)))
 
 
 (define (p4 primary: red
@@ -188,17 +189,17 @@
       colour: background)
 
 (loop (y from: 0 to: 10)
-  (loop (x from: 0 to: 10)
-    (define-vars index (+ x (* y 10))
-                 draw-fn (list/get from: funct nth: index)
-                 pos (v2 (+ 50 (* x 100)) (+ 50 (* y 100)))
-                 (scale-x scale-y) (list/get from: rots nth: (mod index rots/length))
-                 brightness (brightness-remapper val: (focal-point position: pos)))
-    (on-matrix-stack
-      (translate vector: pos)
-      (scale vector: (v2 (* scale-x 100) (* scale-y 100)))
-      (draw-fn primary: (col/set-lab-l colour: primary
-                                       value: brightness)
-               accent: (col/set-lab-l colour: accent
-                                      value: brightness)
-               background: (col/set-lab-l colour: background value: brightness)))))
+      (loop (x from: 0 to: 10)
+            (define-vars index (+ x (* y 10))
+              draw-fn (list/get from: funct nth: index)
+              pos (v2 (+ 50 (* x 100)) (+ 50 (* y 100)))
+              (scale-x scale-y) (list/get from: rots nth: (mod index rots/length))
+              brightness (brightness-remapper val: (focal-point position: pos)))
+            (on-matrix-stack
+             (translate vector: pos)
+             (scale vector: (v2 (* scale-x 100) (* scale-y 100)))
+             (draw-fn primary: (col/set-lab-l colour: primary
+                                              value: brightness)
+                      accent: (col/set-lab-l colour: accent
+                                             value: brightness)
+                      background: (col/set-lab-l colour: background value: brightness)))))
