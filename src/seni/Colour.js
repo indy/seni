@@ -446,18 +446,22 @@ function proceduralFn(a, b, c, d) {
   const ar = getComponent(a, R);
   const ag = getComponent(a, G);
   const ab = getComponent(a, B);
+  const az = getComponent(a, ALPHA);
 
   const br = getComponent(b, R);
   const bg = getComponent(b, G);
   const bb = getComponent(b, B);
+  const bz = getComponent(b, ALPHA);
 
   const cr = getComponent(c, R);
   const cg = getComponent(c, G);
   const cb = getComponent(c, B);
+  const cz = getComponent(c, ALPHA);
 
   const dr = getComponent(d, R);
   const dg = getComponent(d, G);
   const db = getComponent(d, B);
+  const dz = getComponent(d, ALPHA);
 
   return function(params) {
     const t = params.t || 1.0;
@@ -465,8 +469,9 @@ function proceduralFn(a, b, c, d) {
     const red = ar + ab * Math.cos(MathUtil.TAU * (cr * t + dr));
     const green = ag + ab * Math.cos(MathUtil.TAU * (cg * t + dg));
     const blue = ab + ab * Math.cos(MathUtil.TAU * (cb * t + db));
+    const alpha = az + az * Math.cos(MathUtil.TAU * (cz * t + dz));
 
-    return construct(Format.RGB, [red, green, blue, 1.0]);
+    return construct(Format.RGB, [red, green, blue, alpha]);
   };
 }
 /* eslint-enable no-unused-vars */
