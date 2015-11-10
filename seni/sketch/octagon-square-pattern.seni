@@ -35,7 +35,7 @@
 
 
 (fn (draw)
-  (define-vars main-col [yellow (col alpha: 1)]
+  (define main-col [yellow (col alpha: 1)]
                (triad-b triad-c) ([col/analagous (select from: (list 'col/analagous
                                                                      'col/split-complementary
                                                                      'col/triad))] 

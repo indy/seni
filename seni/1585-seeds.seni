@@ -1,35 +1,37 @@
 
-(define-vars seed-radius [3.2 (scalar min: 3 max: 5)]
-             scale-factor 4
-             phi (/ (sqrt [5 (scalar min: 4 max: 6)]) [8 (scalar min: 1 max: 10)])
-             seeds 200
-             make-colour (col/procedural-fn a: [(col/rgb r: 0.80 g: 0.50 b: 0.40) (col)]
-                                            b: [(col/rgb r: 0.20 g: 0.40 b: 0.20) (col)]
-                                            c: [(col/rgb r: 2.00 g: 1.00 b: 1.00) (col)]
-                                            d: [(col/rgb r: 0.00 g: 0.25 b: 0.25) (col)])
+(define 
+  seed-radius [3.2 (scalar min: 3 max: 5)]
+  scale-factor 4
+  phi (/ (sqrt [5 (scalar min: 4 max: 6)]) [8 (scalar min: 1 max: 10)])
+  seeds 200
+  make-colour (col/procedural-fn a: [(col/rgb r: 0.80 g: 0.50 b: 0.40) (col)]
+                                 b: [(col/rgb r: 0.20 g: 0.40 b: 0.20) (col)]
+                                 c: [(col/rgb r: 2.00 g: 1.00 b: 1.00) (col)]
+                                 d: [(col/rgb r: 0.00 g: 0.25 b: 0.25) (col)])
 
-             focalpoint ([focal/point (select from: (list 'focal/point
-                                                          'focal/hline
-                                                          'focal/vline))] 
-                         position: (v2 [500 (int max: canvas/width)] 
-                                       [500 (int max: canvas/height)])
-                         distance: [800 (int min: (/ canvas/width 2) max: canvas/width)]))
+  focalpoint ([focal/point (select from: (list 'focal/point
+                                               'focal/hline
+                                               'focal/vline))] 
+              position: (v2 [500 (int max: canvas/width)] 
+                            [500 (int max: canvas/height)])
+              distance: [800 (int min: (/ canvas/width 2) max: canvas/width)]))
 
 (fn (interesting-circle position: (v2 500 500)
-                            colour: red
-                            seed: "yabba dabba dooo"
-                            radius: 300)
-  (define-vars rng (prng/range seed: seed)
-    outer-exterior (prng/range seed: (take from: rng) min: 170 max: 210)
-    outer-interior (prng/range seed: (take from: rng) min: 80 max: 170)
-    inner-exterior (prng/range seed: (take from: rng) min: 100 max: 150)
-    inner-interior (prng/range seed: (take from: rng) min: 0 max: 100)
-    srng (prng/range min: -1 max: 1 seed: seed))
-  (on-matrix-stack
-   (translate vector: position)
-   (scale scalar: (/ radius 210))
-   (loop (i to: 3)
-         (on-matrix-stack
+                        colour: red
+                        seed: "yabba dabba dooo"
+                        radius: 300)
+    (define 
+      rng (prng/range seed: seed)
+      outer-exterior (prng/range seed: (take from: rng) min: 170 max: 210)
+      outer-interior (prng/range seed: (take from: rng) min: 80 max: 170)
+      inner-exterior (prng/range seed: (take from: rng) min: 100 max: 150)
+      inner-interior (prng/range seed: (take from: rng) min: 0 max: 100)
+      srng (prng/range min: -1 max: 1 seed: seed))
+    (on-matrix-stack
+      (translate vector: position)
+      (scale scalar: (/ radius 210))
+      (loop (i to: 3)
+        (on-matrix-stack
           (rotate angle: (* 360 (take from: rng)))
           ;; outer ring
           (circle-slice tessellation: 20
@@ -53,14 +55,14 @@
                         inner-width: (take from: inner-interior)
                         height: (take from: inner-exterior)
                         inner-height: (take from: inner-interior))))
-   ;; centre fill
-   (circle-slice tessellation: 10
-                 position: (v2 0 0)
-                 colour: (col/lighten colour: colour 
-                                      delta: (* [10 (int min: 5 max: 20)] (take from: srng)))
-                 angle-start: 0
-                 angle-end: 360
-                 radius: 30)))
+      ;; centre fill
+      (circle-slice tessellation: 10
+                    position: (v2 0 0)
+                    colour: (col/lighten colour: colour 
+                                         delta: (* [10 (int min: 5 max: 20)] (take from: srng)))
+                    angle-start: 0
+                    angle-end: 360
+                    radius: 30)))
 
 
 (rect position: canvas/centre
@@ -72,11 +74,12 @@
   (translate vector: canvas/centre)
   (scale scalar: 8)
   (loop (i to: seeds)
-    (define-vars theta (/ (* i math/TAU) phi)
-                 r (* scale-factor (sqrt i))
-                 position (v2 (* r (math/cos angle: theta))
-                              (* r (math/sin angle: theta)))
-                 colour (make-colour t: (focalpoint position: position)))
+    (define 
+      theta (/ (* i math/TAU) phi)
+      r (* scale-factor (sqrt i))
+      position (v2 (* r (math/cos angle: theta))
+                   (* r (math/sin angle: theta)))
+      colour (make-colour t: (focalpoint position: position)))
     (interesting-circle position: position
                         radius: seed-radius
                         colour: colour

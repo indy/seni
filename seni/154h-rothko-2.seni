@@ -4,134 +4,137 @@
 (middle-section)
 (lower-section)
 
-(define background-colour (col/rgb r: [0.2 (scalar)]
-                                   g: [0.2 (scalar)]
-                                   b: [0.5 (scalar)]
-                                   alpha: 0.9))
+(define 
+  background-colour (col/rgb r: [0.2 (scalar)]
+                             g: [0.2 (scalar)]
+                             b: [0.5 (scalar)]
+                             alpha: 0.9)
 
-(define top-colour (col/rgb r: [0.2 (scalar)]
-                            g: [0.0 (scalar)]
-                            b: [0.1 (scalar)]
-                            alpha: 0.9))
+  (col/rgb r: [0.2 (scalar)]
+           g: [0.0 (scalar)]
+           b: [0.1 (scalar)]
+           alpha: 0.9)
 
-(define mid-colour (col/lab l: [37.0 (scalar min: 0 max: 100)]
-                            a: [5.79 (scalar min: -50 max: 50)]
-                            b: [-35.82 (scalar min: -50 max: 50)]
-                            alpha: 0.7))
+  (col/lab l: [37.0 (scalar min: 0 max: 100)]
+           a: [5.79 (scalar min: -50 max: 50)]
+           b: [-35.82 (scalar min: -50 max: 50)]
+           alpha: 0.7))
 
 (fn (top-section-highlights)
-  (define-vars iterations [5 (int min: 1 max: 30)]
-               overlap [1 (int min: 1 max: 20)]
-               tessellation [35 (int min: 1 max: 50)]
-               stroke-noise [20 (int min: 1 max: 50)]
-               colour-volatility [10 (int min: 0 max: 30)]
-               volatility [10 (int min: 0 max: 30)]
-               stroke-tessellation 15
-               y 750
-               width 200
-               height 300
-               colour (col/set-lab-l colour: top-colour
-                                     value: (+ (col/get-lab-l colour: top-colour)
-                                               [10.5 (scalar min: 0.0 max: 20.0)])))
+    (define 
+      iterations [5 (int min: 1 max: 30)]
+      overlap [1 (int min: 1 max: 20)]
+      tessellation [35 (int min: 1 max: 50)]
+      stroke-noise [20 (int min: 1 max: 50)]
+      colour-volatility [10 (int min: 0 max: 30)]
+      volatility [10 (int min: 0 max: 30)]
+      stroke-tessellation 15
+      y 750
+      width 200
+      height 300
+      colour (col/set-lab-l colour: top-colour
+                            value: (+ (col/get-lab-l colour: top-colour)
+                                      [10.5 (scalar min: 0.0 max: 20.0)])))
 
-  (stroked-bezier-rect position: (v2 250 y)
-                       width: width
-                       height: height
-                       iterations: iterations
-                       overlap: overlap
-                       tessellation: tessellation
-                       stroke-tessellation: stroke-tessellation
-                       stroke-noise: stroke-noise
-                       colour: colour
-                       colour-volatility: colour-volatility
-                       volatility: volatility
-                       seed: [44 (int)])
-  (stroked-bezier-rect position: (v2 550 y)
-                       width: width
-                       height: height
-                       iterations: iterations
-                       overlap: overlap
-                       tessellation: tessellation
-                       stroke-tessellation: stroke-tessellation
-                       stroke-noise: stroke-noise
-                       colour: colour
-                       colour-volatility: colour-volatility
-                       volatility: volatility
-                       seed: [45 (int)])
-  (stroked-bezier-rect position: (v2 850 y)
-                       width: width
-                       height: height
-                       iterations: iterations
-                       overlap: overlap
-                       tessellation: tessellation
-                       stroke-tessellation: stroke-tessellation
-                       stroke-noise: stroke-noise
-                       colour: colour
-                       colour-volatility: colour-volatility
-                       volatility: volatility
-                       seed: [46 (int)]))
+    (stroked-bezier-rect position: (v2 250 y)
+                         width: width
+                         height: height
+                         iterations: iterations
+                         overlap: overlap
+                         tessellation: tessellation
+                         stroke-tessellation: stroke-tessellation
+                         stroke-noise: stroke-noise
+                         colour: colour
+                         colour-volatility: colour-volatility
+                         volatility: volatility
+                         seed: [44 (int)])
+    (stroked-bezier-rect position: (v2 550 y)
+                         width: width
+                         height: height
+                         iterations: iterations
+                         overlap: overlap
+                         tessellation: tessellation
+                         stroke-tessellation: stroke-tessellation
+                         stroke-noise: stroke-noise
+                         colour: colour
+                         colour-volatility: colour-volatility
+                         volatility: volatility
+                         seed: [45 (int)])
+    (stroked-bezier-rect position: (v2 850 y)
+                         width: width
+                         height: height
+                         iterations: iterations
+                         overlap: overlap
+                         tessellation: tessellation
+                         stroke-tessellation: stroke-tessellation
+                         stroke-noise: stroke-noise
+                         colour: colour
+                         colour-volatility: colour-volatility
+                         volatility: volatility
+                         seed: [46 (int)]))
 
 (fn (top-section)
-  (stroked-bezier-rect position: (v2 500 750)
-                       width: 900
-                       height: 400
-                       iterations: [40 (int min: 1 max: 100)]
-                       overlap: [10 (int min: 1 max: 100)]
-                       tessellation: [35 (int min: 1 max: 50)]
-                       stroke-tessellation: 15
-                       stroke-noise: [20 (int min: 1 max: 50)]
-                       colour: top-colour
-                       colour-volatility: [10 (int min: 0 max: 30)]
-                       volatility: [10 (int min: 0 max: 30)]
-                       seed: [44 (int)])
-  (top-section-highlights))
+    (stroked-bezier-rect position: (v2 500 750)
+                         width: 900
+                         height: 400
+                         iterations: [40 (int min: 1 max: 100)]
+                         overlap: [10 (int min: 1 max: 100)]
+                         tessellation: [35 (int min: 1 max: 50)]
+                         stroke-tessellation: 15
+                         stroke-noise: [20 (int min: 1 max: 50)]
+                         colour: top-colour
+                         colour-volatility: [10 (int min: 0 max: 30)]
+                         volatility: [10 (int min: 0 max: 30)]
+                         seed: [44 (int)])
+    (top-section-highlights))
 
 (fn (middle-section)
-  (stroked-bezier-rect position: (v2 500 425)
-                       width: 900
-                       height: 250
-                       iterations: [40 (int min: 1 max: 100)]
-                       overlap: [10 (int min: 1 max: 100)]
-                       tessellation: [35 (int min: 1 max: 50)]
-                       stroke-tessellation: 15
-                       stroke-noise: [20 (int min: 1 max: 50)]
-                       colour: mid-colour
-                       colour-volatility: [10 (int min: 0 max: 30)]
-                       volatility: [10 (int min: 0 max: 30)]
-                       seed: [44 (int)]))
+    (stroked-bezier-rect position: (v2 500 425)
+                         width: 900
+                         height: 250
+                         iterations: [40 (int min: 1 max: 100)]
+                         overlap: [10 (int min: 1 max: 100)]
+                         tessellation: [35 (int min: 1 max: 50)]
+                         stroke-tessellation: 15
+                         stroke-noise: [20 (int min: 1 max: 50)]
+                         colour: mid-colour
+                         colour-volatility: [10 (int min: 0 max: 30)]
+                         volatility: [10 (int min: 0 max: 30)]
+                         seed: [44 (int)]))
 
 (fn (lower-section)
-  (define-vars colour (col/set-lab-l colour: mid-colour
-                                     value: (- (col/get-lab-l
-                                                colour: mid-colour)
-                                               [20.5 (scalar min: 0.0 max: 20.0)])))
-  (stroked-bezier-rect position: (v2 500 200)
-                       width: 900
-                       height: 300
-                       iterations: [40 (int min: 1 max: 100)]
-                       overlap: [10 (int min: 1 max: 100)]
-                       tessellation: [35 (int min: 1 max: 50)]
-                       stroke-tessellation: 15
-                       stroke-noise: [20 (int min: 1 max: 50)]
-                       colour: colour
-                       colour-volatility: [10 (int min: 0 max: 30)]
-                       volatility: [10 (int min: 0 max: 30)]
-                       seed: [44 (int)]))
+    (define 
+      colour (col/set-lab-l colour: mid-colour
+                            value: (- (col/get-lab-l
+                                       colour: mid-colour)
+                                      [20.5 (scalar min: 0.0 max: 20.0)])))
+    (stroked-bezier-rect position: (v2 500 200)
+                         width: 900
+                         height: 300
+                         iterations: [40 (int min: 1 max: 100)]
+                         overlap: [10 (int min: 1 max: 100)]
+                         tessellation: [35 (int min: 1 max: 50)]
+                         stroke-tessellation: 15
+                         stroke-noise: [20 (int min: 1 max: 50)]
+                         colour: colour
+                         colour-volatility: [10 (int min: 0 max: 30)]
+                         volatility: [10 (int min: 0 max: 30)]
+                         seed: [44 (int)]))
 
 (fn (background)
-  (rect position: (v2 500 500)
-        width: canvas/width
-        height: canvas/height
-        colour: background-colour)
-  (stroked-bezier-rect position: (v2 500 500)
-                       width: canvas/width
-                       height: canvas/height
-                       iterations: [100 (int min: 1 max: 100)]
-                       overlap: [10 (int min: 1 max: 100)]
-                       tessellation: [35 (int min: 1 max: 50)]
-                       stroke-tessellation: 15
-                       stroke-noise: [30 (int min: 1 max: 50)]
-                       colour: background-colour
-                       colour-volatility: [20 (int min: 0 max: 30)]
-                       volatility: [3 (int min: 0 max: 20)]
-                       seed: [44 (int)]))
+    (rect position: (v2 500 500)
+          width: canvas/width
+          height: canvas/height
+          colour: background-colour)
+    (stroked-bezier-rect position: (v2 500 500)
+                         width: canvas/width
+                         height: canvas/height
+                         iterations: [100 (int min: 1 max: 100)]
+                         overlap: [10 (int min: 1 max: 100)]
+                         tessellation: [35 (int min: 1 max: 50)]
+                         stroke-tessellation: 15
+                         stroke-noise: [30 (int min: 1 max: 50)]
+                         colour: background-colour
+                         colour-volatility: [20 (int min: 0 max: 30)]
+                         volatility: [3 (int min: 0 max: 20)]
+                         seed: [44 (int)]))

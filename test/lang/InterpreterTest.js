@@ -211,13 +211,13 @@ describe('Interpreter', () => {
     expect(res).to.equal(42);
   });
 
-  it('should test define-vars', () => {
-    let [newEnv, res] = evalForm(e, '(define-vars monkey 42 ape 12)');
+  it('should test defining  multiple values ', () => {
+    let [newEnv, res] = evalForm(e, '(define monkey 42 ape (+ 6 6))');
     expect(newEnv.has('monkey')).to.be.true;
     expect(newEnv.get('monkey').binding).to.equal(42);
     expect(newEnv.has('ape')).to.be.true;
     expect(newEnv.get('ape').binding).to.equal(12);
-    expect(res).to.equal(true);
+    expect(res).to.equal(12);
   });
 
   it('should test fn', () => {

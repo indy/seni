@@ -8,7 +8,7 @@
                             colour: red
                             seed: "yabba dabba dooo"
                             radius: 300)
-  (define-vars
+  (define
     rng (prng/range seed: seed)
     outer-exterior (prng/range seed: (take from: rng) min: 170 max: 210)
     outer-interior (prng/range seed: (take from: rng) min: 80 max: 170)
@@ -60,7 +60,7 @@
 
 (fn (tentacle position: (v2 0 0)
                   angle: 0)
-  (define-vars x (v2/x position)
+  (define x (v2/x position)
                y (v2/y position)
                cosa (math/cos angle: angle)
                sina (math/sin angle: angle)
@@ -81,7 +81,7 @@
 
 (fn (norm position: (v2 0 0)
               t-value: 0)
-  (define-vars
+  (define
     txy (interp/bezier-tangent t: t-value
                                coords: coords)
     angle (- (math/atan2 x: (v2/x txy)

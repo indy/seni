@@ -22,7 +22,7 @@
                             colour: red
                             seed: "yabba dabba dooo"
                             radius: 300)
-  (define-vars rng (prng/range seed: seed)
+  (define rng (prng/range seed: seed)
                outer-exterior (prng/range seed: (take from: rng) min: 170 max: 210)
                outer-interior (prng/range seed: (take from: rng) min: 80 max: 170)
                inner-exterior (prng/range seed: (take from: rng) min: 100 max: 150)
@@ -75,7 +75,7 @@
   (translate vector: canvas/centre)
   (scale scalar: 8)
   (loop (i to: seeds)
-    (define-vars theta (/ (* i math/TAU) phi)
+    (define theta (/ (* i math/TAU) phi)
                  r (* scale-factor (sqrt i))
                  position (v2 (* r (math/cos angle: theta))
                               (* r (math/sin angle: theta)))

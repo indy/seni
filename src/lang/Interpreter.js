@@ -98,31 +98,36 @@ function isV2Function(listExpr) {
 
 function addBindings(env, exprs) {
 
+  let lastValueBound = undefined;
+
   const addBinding = function(e, name, value) {
     const v = evaluate(e, value)[1];
     if (name.constructor === Array) {
       // todo: error check if size of name array !== size of v
       name.forEach((n, i) => e = e.set(n, { binding: v[i] }));
+      lastValueBound = v[name.length-1];
     } else {
       e = e.set(name, { binding: v });
+      lastValueBound = v;
     }
     return e;
   };
 
-  return exprs.reduce((a, [name, value]) => addBinding(a, name, value), env);
+  return [exprs.reduce((a, [name, value]) => addBinding(a, name, value), env),
+          lastValueBound];
 }
-
+/*
 function assert(assertion) {
   if (!assertion) {
     console.log('ASSERT FAILED');
   }
 }
-
+*/
 function isDefineExpression(form) {
   return form.constructor === Array &&
-    (form[0] === 'fn' || form[0] === 'define' || form[0] === 'define-vars');
+    (form[0] === 'fn' || form[0] === 'define');
 }
-
+/*
 function isDefiningFunction(nameForm) {
 
   let isFunction = false;
@@ -144,7 +149,7 @@ function isDefiningFunction(nameForm) {
   }
   return isFunction;
 }
-
+*/
 function defineFunction(env, defaultArgForms, body) {
 
   const defaultArgValues = {};
@@ -204,7 +209,7 @@ const specialForms = {
     const definedFunction = defineFunction(env, defaultArgForms, valueForms);
     return [env.set(name, { binding: definedFunction }), definedFunction];
   },
-
+/*
   'define': (env, [_, nameForm, ...valueForms]) => {
     _ = _;
     if (isDefiningFunction(nameForm)) {
@@ -220,13 +225,13 @@ const specialForms = {
       return [env.set(nameForm, { binding: evaluatedVal }), evaluatedVal];
     }
   },
-
-  'define-vars': (env, [_, ...args]) => {
+*/
+  'define': (env, [_, ...args]) => {
     _ = _;
 
     // wrap the args into pairs
     if(args.length % 2 === 1) {
-      console.error('define-vars should have an even number of args', args);
+      console.error('define should have an even number of args', args);
     }
 
     let argPairs = [];
@@ -234,7 +239,7 @@ const specialForms = {
       argPairs.push([args[i + 0], args[i + 1]]);
     }
 
-    return [addBindings(env, argPairs), true];
+    return addBindings(env, argPairs);
   },
 
   // (begin (f1 1) (f2 3) (f3 5))

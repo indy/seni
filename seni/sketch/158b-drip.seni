@@ -7,7 +7,7 @@
                     background: white
                     modge: 0)
 
-  (define-vars r (prng/range seed: seed
+  (define r (prng/range seed: seed
                              min: (* -1 (/ drip-range 2))
                              max: (/ drip-range 2))
     radius (/ canvas/width (- steps 1) 2))
@@ -58,7 +58,7 @@
                      steps: 20
                      seed: 1
                      splash-range: 80)
-  (define-vars radius (/ canvas/width (- steps 1) 2)
+  (define radius (/ canvas/width (- steps 1) 2)
     r (prng/range seed: seed
                   max: (+ splash-range radius)
                   min: radius)

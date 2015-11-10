@@ -43,8 +43,8 @@ function seniMode() {
   }
 
   // keywords are core to the seni language
-  let keywords = makeKeywords('begin define define-vars if lambda loop on-matrix-stack quote');
-  let indentKeys = makeKeywords(`define define-vars lambda loop on-matrix-stack`);
+  let keywords = makeKeywords('begin define fn if lambda loop on-matrix-stack quote');
+  let indentKeys = makeKeywords(`define lambda loop on-matrix-stack`);
 
   // functions from the common seni library
   let seniCommon = makeKeywords('+ - / < = > append bezier bezier-bulging bezier-trailing box circle circle-slice col/analagous col/complementary col/convert col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsv col/lab col/lighten col/procedural-fn col/rgb col/set-alpha col/set-lab-a col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r col/split-complementary col/triad degrees->radians focal/hline focal/point focal/vline interp/bezier interp/bezier-tangent interp/fn line list list/get list/length log math/atan2 math/clamp math/cos math/distance-2d math/sin mod path/bezier path/circle path/linear path/spline poly pop-matrix print prng/perlin-signed prng/perlin-unsigned prng/range push-matrix quote radians->degrees rect repeat/rotate repeat/rotate-mirrored repeat/symmetry-4 repeat/symmetry-8 repeat/symmetry-horizontal repeat/symmetry-vertical rotate scale spline sqrt stroked-bezier stroked-bezier-rect take translate v2 v2/* v2/+ v2/- v2// v2/= v2/x v2/y');
