@@ -1,4 +1,3 @@
-
 (define focalpoint ([focal/point (select from: (list 'focal/point
                                                      'focal/hline
                                                      'focal/vline))] 

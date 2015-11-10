@@ -2,7 +2,7 @@
 (tri-hsl alpha: [0.3 (scalar)])
 (tri-lab alpha: [0.3 (scalar)])
 
-(define (tri-lab alpha: 1)
+(fn (tri-lab alpha: 1)
   (define-vars
     w 86.6
     h 50.0
@@ -53,7 +53,7 @@
                                    (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
                                    (col/lab l: (li val: (r)) a: a b: b alpha: alpha))))))
 
-(define (tri-hsl alpha: 1)
+(fn (tri-hsl alpha: 1)
   (define-vars w 86.6
     h 50.0
     r (prng/range)
@@ -103,13 +103,13 @@
                                    (col/hsl h: a s: 1 l: b alpha: alpha)
                                    (col/hsl h: a s: 1 l: b alpha: alpha))))))
 
-(define (wash variation: 200
+(fn (wash variation: 200
               line-width: 70
               line-segments: 5
               colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
               seed: 272)
 
-  (define (v x: 0 y: 0 z: 0 scale: 1)
+  (fn (v x: 0 y: 0 z: 0 scale: 1)
     (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
   (define-vars w/3 (/ canvas/width 3)

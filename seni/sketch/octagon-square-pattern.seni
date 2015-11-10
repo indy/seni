@@ -4,7 +4,7 @@
 (define master-angle [0 (scalar max: math/TAU)])
 
 ;; draw-octagon renders an octagon with it's center in position
-(define (draw-octagon position: (v2 100 100)
+(fn (draw-octagon position: (v2 100 100)
                       radius: 100
                       colour: black)
   (on-matrix-stack
@@ -16,14 +16,14 @@
            height: radius
            colour: colour)))
 
-(define (draw-unit-square colour: black)
+(fn (draw-unit-square colour: black)
   (rect position: (v2 0 0)
         width: 1
         height: 1
         colour: colour))
 
 ;; draws a square to the top-right of an octagon described by position and radius
-(define (draw-corner-square position: (v2 100 100)
+(fn (draw-corner-square position: (v2 100 100)
                             radius: 100
                             colour: black)
   (on-matrix-stack
@@ -34,7 +34,7 @@
     (draw-unit-square colour: colour)))
 
 
-(define (draw)
+(fn (draw)
   (define-vars main-col [yellow (col alpha: 1)]
                (triad-b triad-c) ([col/analagous (select from: (list 'col/analagous
                                                                      'col/split-complementary

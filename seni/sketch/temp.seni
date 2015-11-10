@@ -18,7 +18,7 @@
                                   [500 (int max: canvas/height)])
                     distance: [800 (int min: (/ canvas/width 2) max: canvas/width)]))
 
-(define (interesting-circle position: (v2 500 500)
+(fn (interesting-circle position: (v2 500 500)
                             colour: red
                             seed: "yabba dabba dooo"
                             radius: 300)

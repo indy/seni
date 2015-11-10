@@ -1,6 +1,6 @@
 (render)
 
-(define (render-half)
+(fn (render-half)
   (bezier coords: (list (v2 0 0)
                         (v2 [ 100 (int min: -500 max: 500)] 
                             [ 100 (int min: -500 max: 500)])
@@ -9,7 +9,7 @@
                         (v2 [ 300 (int min: -500 max: 500)] 
                             [-200 (int min: -500 max: 500)]))))
 
-(define (render)
+(fn (render)
   (on-matrix-stack
     (translate vector: (v2 (/ canvas/width 2) (/ canvas/height 2)))
     (repeat/rotate-mirrored draw: render-half
@@ -18,13 +18,13 @@
 
 (render)
 
-(define (render-half)
+(fn (render-half)
   (bezier coords: (list (v2 0 0)
                         (v2 [100 (int max: canvas/width)] [100 (int max: canvas/height)])
                         (v2 [200 (int max: canvas/width)] [-200 (int max: canvas/height)])
                         (v2 [300 (int max: canvas/width)] [200 (int max: canvas/height)]))))
 
-(define (render)
+(fn (render)
   (on-matrix-stack
     (translate vector: (v2 (/ canvas/width 2) (/ canvas/height 2)))
     (repeat/symmetry-8 draw: render-half)))

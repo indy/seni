@@ -28,10 +28,10 @@
                      seed: [42 (int min: 0 max: 100)]
                      overlap: [10.0 (scalar min: 0 max: 5.0)])
 
-(define (v x: 0 y: 0 z: 0 scale: 1)
+(fn (v x: 0 y: 0 z: 0 scale: 1)
   (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
-(define (wash variation: 200
+(fn (wash variation: 200
               line-width: 70
               line-segments: 5
               colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)

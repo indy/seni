@@ -7,7 +7,7 @@
         posy: (/ canvas/height 2)
         sc: [1.0 (scalar min: 0.6 max: 2.0)])
 
-(define (petal-1 angle: 0
+(fn (petal-1 angle: 0
                  colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
   (on-matrix-stack
     (rotate angle: (radians->degrees angle: angle))
@@ -19,7 +19,7 @@
                                   (v2 566.66 -100)
                                   (v2 800 0)))))
 
-(define (petal-2 angle: 0
+(fn (petal-2 angle: 0
                  colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
   (on-matrix-stack
     (rotate angle: (radians->degrees angle: angle))
@@ -31,7 +31,7 @@
                                   (v2 566.66 100)
                                   (v2 800 0)))))
 
-(define (circ-1 petals: 0
+(fn (circ-1 petals: 0
                 colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
                 sc: 1.0)
   (on-matrix-stack
@@ -42,7 +42,7 @@
     (loop (i from: 0 to: strokes)
       (petal-1 angle: (rem val: i) colour: colcol))))
 
-(define (circ-2 petals: 0
+(fn (circ-2 petals: 0
                 colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
                 sc: 1.0)
   (on-matrix-stack
@@ -53,14 +53,14 @@
     (loop (i from: 0 to: strokes)
       (petal-2 angle: (rem val: i) colour: colcol))))
 
-(define (layered-petals petals: 0
+(fn (layered-petals petals: 0
                         colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
                         sc: 1.0)
   (circ-1 petals: petals colour: colour sc: sc)
   (rotate angle: (radians->degrees angle: [0.1 (scalar min: 0.01 max: 0.4)]))
   (circ-2 petals: petals colour: colour sc: sc))
 
-(define (flower colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)
+(fn (flower colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)
                 posx: 0
                 posy: 0
                 sc: 1)
@@ -72,13 +72,13 @@
     (layered-petals petals: [19 (int min: 1 max: 50)] colour: c3 sc: [0.5 (scalar min: 0.1 max: 0.9)])
     (layered-petals petals: [17 (int min: 1 max: 50)] colour: c2 sc: [0.3 (scalar min: 0.1 max: 0.9)])))
 
-(define (wash variation: 200
+(fn (wash variation: 200
               line-width: 70
               line-segments: 5
               colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
               seed: 272)
 
-  (define (v x: 0 y: 0 z: 0 scale: 1)
+  (fn (v x: 0 y: 0 z: 0 scale: 1)
     (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
   (define-vars w/3 (/ canvas/width 3)

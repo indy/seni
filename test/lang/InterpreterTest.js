@@ -220,8 +220,8 @@ describe('Interpreter', () => {
     expect(res).to.equal(true);
   });
 
-  it('should test define for a function2', () => {
-    let [newEnv, res] = evalForm(e, '(define (addup x: 2) (+ x x))');
+  it('should test fn', () => {
+    let [newEnv, res] = evalForm(e, '(fn (addup x: 2) (+ x x))');
     expect(newEnv.has('addup')).to.be.true;
 
     [newEnv, res] = evalForm(newEnv, '(addup x: 5)');
@@ -233,11 +233,11 @@ describe('Interpreter', () => {
 
   it('should be able to invoke a functions while defining it', () => {
     // invoke while defining
-    let [newEnv, res] = evalForm(e, '((define (addup x: 2) (+ x x)))');
+    let [newEnv, res] = evalForm(e, '((fn (addup x: 2) (+ x x)))');
     expect(newEnv.has('addup')).to.be.true;
     expect(res).to.equal(4);
 
-    [newEnv, res] = evalForm(e, '((define (addup x: 2) (+ x x)) x: 7)');
+    [newEnv, res] = evalForm(e, '((fn (addup x: 2) (+ x x)) x: 7)');
     expect(newEnv.has('addup')).to.be.true;
     expect(res).to.equal(14);
   });

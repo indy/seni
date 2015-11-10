@@ -120,7 +120,7 @@ function assert(assertion) {
 
 function isDefineExpression(form) {
   return form.constructor === Array &&
-    (form[0] === 'define' || form[0] === 'define-vars');
+    (form[0] === 'fn' || form[0] === 'define' || form[0] === 'define-vars');
 }
 
 function isDefiningFunction(nameForm) {
@@ -130,7 +130,7 @@ function isDefiningFunction(nameForm) {
     // it will either have one element in the array
     // e.g. (define (shout) (log "WOOHOOO")) => ['shout']
     // or there will be an argument map
-    // e.g. (defin (doubler x: 3) (+ x x)) => ['doubler', {x: 3}]
+    // e.g. (define (doubler x: 3) (+ x x)) => ['doubler', {x: 3}]
     if (nameForm.length === 1) {
       isFunction = true;
     } else if (nameForm.length === 2) {
@@ -196,6 +196,13 @@ const specialForms = {
       }
     }
     return [env, form];
+  },
+
+  'fn': (env, [_, nameForm, ...valueForms]) => {
+    _ = _;
+    const [name, defaultArgForms] = nameForm;
+    const definedFunction = defineFunction(env, defaultArgForms, valueForms);
+    return [env.set(name, { binding: definedFunction }), definedFunction];
   },
 
   'define': (env, [_, nameForm, ...valueForms]) => {

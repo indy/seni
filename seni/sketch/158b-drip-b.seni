@@ -41,10 +41,10 @@
                   (make-colour t: (focalpoint position: p2))))
 
 
-(define (draw)
+(fn (draw)
   (poly coords: coords colours: colours))
 
-(define (render)
+(fn (render)
   (on-matrix-stack
     (translate vector: (v2 (/ canvas/width 2) (/ canvas/height 2)))
     (repeat/rotate-mirrored draw: draw

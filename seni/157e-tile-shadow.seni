@@ -34,7 +34,7 @@
 (define num-gaps (+ num-squares 1))
 (define square-size (/ canvas/width num-squares))
 
-(define (draw-tile position: (v2 0 0)
+(fn (draw-tile position: (v2 0 0)
                    colour: red)
   (on-matrix-stack
     (translate vector: position)
@@ -45,5 +45,5 @@
           height: square-size
           colour: colour)))
 
-(define (map-to-position at: 0)
+(fn (map-to-position at: 0)
   (+ (* square-size at) (/ square-size 2)))

@@ -1,4 +1,3 @@
-
 ;; test code to render beziers, splines and strokedBeziers
 
 (define coords (list (v2 440 400)

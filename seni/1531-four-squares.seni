@@ -34,7 +34,7 @@
                      overlap: 3.0
                      iterations: 79)
 
-(define (accumulated-rect position: (v2 0 0)
+(fn (accumulated-rect position: (v2 0 0)
                           width: 10
                           height: 10
                           colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)
@@ -56,7 +56,7 @@
               height: height
               colour: pass-colour)))))
 
-(define (stroked-bezier-rect position: (v2 0 0)
+(fn (stroked-bezier-rect position: (v2 0 0)
                              width: 10
                              height: 10
                              colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 0.5)
@@ -151,13 +151,13 @@
                             (* 3 third-height))))
             colour: current-colour)))
 
-(define (wash variation: 200
+(fn (wash variation: 200
               line-width: 70
               line-segments: 5
               colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
               seed: 272)
 
-  (define (v x: 0 y: 0 z: 0 scale: 1)
+  (fn (v x: 0 y: 0 z: 0 scale: 1)
     (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
   (define-vars w/3 (/ canvas/width 3)

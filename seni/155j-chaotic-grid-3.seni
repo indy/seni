@@ -23,18 +23,18 @@
                                  distance: [500 (int max: canvas/width)]))
 (define focal-power [50 (scalar max: 200)])
 
-(define (render-background colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
+(fn (render-background colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
   (rect x: (/ canvas/width 2)
         y: (/ canvas/height 2)
         width: canvas/width
         height: canvas/height
         colour: colour))
 
-(define (map-to-position at: 0)
+(fn (map-to-position at: 0)
   (- (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size)
      (/ canvas/width 2)))
 
-(define (render-main)
+(fn (render-main)
   (loop (y from: 1 to:  (- num-squares 1))
     (loop (x from: 1 to:  (- num-squares 1))
       (define-vars p (v2 (map-to-position at: x)

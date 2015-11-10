@@ -3,7 +3,7 @@
 
 ;; render a segment at 0, 0 with a length along the positive x axis
 ;;
-(define (segment angle: 0.1
+(fn (segment angle: 0.1
                  length: 100
                  colour: (col/rgb r: 0.0 g: 0.0 b: 0.3 alpha: 1.0))
   (rotate angle: angle)
@@ -17,7 +17,7 @@
 ;; render-half is a series of segments which will have differing 
 ;; lengths and angles
 ;;
-(define (render-half)
+(fn (render-half)
   (segment length: [30 (int max: 100)] angle: [101 (scalar max: 360)]) 
   (segment length: [43 (int max: 100)] angle: [02 (scalar max: 360)]) 
   (segment length: [73 (int max: 100)] angle: [211 (scalar max: 360)]) 
@@ -50,7 +50,7 @@
   (segment length: [23 (int max: 100)] angle: [300 (scalar max: 360)]))
 
 ;; render the Biomorph as 2 symmetrical halves
-(define (render)
+(fn (render)
   (on-matrix-stack
    (translate vector: (v2 (/ canvas/width 2) (/ canvas/height 2)))
    (repeat/symmetry-vertical draw: render-half)))

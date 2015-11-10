@@ -12,7 +12,7 @@
              centre (v2 (/ canvas/width 2) (/ canvas/height 2)))
 
 
-(define (hexagon position: centre
+(fn (hexagon position: centre
                  colour: black
                  size: 100)
   (circle colour: colour
@@ -20,7 +20,7 @@
           position: position
           tessellation: 6))
 
-(define (hex-grid from: (v2 0 0)
+(fn (hex-grid from: (v2 0 0)
                   to: (v2 canvas/width canvas/height)
                   colour: red
                   size: 30)

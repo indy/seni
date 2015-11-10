@@ -1,14 +1,14 @@
 
 (define centre (v2 (/ canvas/width 2) (/ canvas/height 2)))
 
-(define (render-circle position: (v2 0 0)
-                       step: 0
-                       t-value: 0)
-  (define-vars rad (- [400 (int min: 200 max: 600)] (* step [1 (scalar max: 2.0)])))
-  (circle position: (v2/+ centre (v2/* position (v2 rad rad)))
-          radius: [20 (int min: 5 max: 50)]
-          tessellation: 30
-          colour: (col/rgb r: 0.1 g: 0.5 b: 0.2 alpha: 0.7)))
+(fn (render-circle position: (v2 0 0)
+                   step: 0
+                   t-value: 0)
+    (define rad (- [400 (int min: 200 max: 600)] (* step [1 (scalar max: 2.0)])))
+    (circle position: (v2/+ centre (v2/* position (v2 rad rad)))
+            radius: [20 (int min: 5 max: 50)]
+            tessellation: 30
+            colour: (col/rgb r: 0.1 g: 0.5 b: 0.2 alpha: 0.7)))
 
 (path/circle position: (v2 0 0)
              t-start: [0.2 (scalar)]

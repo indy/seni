@@ -22,10 +22,10 @@
                       height: square-size
                       colour: (col/rgb r: 1.0 g: 0.0 b: 0.4 alpha: 1.0))))
 
-(define (map-to-position at: 0)
+(fn (map-to-position at: 0)
   (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
 
-(define (accumulated-rect x: 0
+(fn (accumulated-rect x: 0
                           y: 0
                           width: 10
                           height: 10
@@ -47,13 +47,13 @@
               height: height
               colour: pass-colour)))))
 
-(define (wash variation: 200
+(fn (wash variation: 200
               line-width: 70
               line-segments: 5
               colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
               seed: 272)
 
-  (define (v x: 0 y: 0 z: 0 scale: 1)
+  (fn (v x: 0 y: 0 z: 0 scale: 1)
     (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
   (define-vars w/3 (/ canvas/width 3)

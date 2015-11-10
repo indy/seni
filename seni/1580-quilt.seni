@@ -12,14 +12,14 @@
   accent [red (col alpha: 1)]
   background [green (col alpha: 1)])
 
-(define (bg background: white)
+(fn (bg background: white)
   (rect position: origin
         width: w
         height: h
         colour: background))
 
 ;; rectangle
-(define (p1 primary: red
+(fn (p1 primary: red
             background: white)
   (bg background: background)
   (rect position: origin
@@ -28,7 +28,7 @@
         colour: primary))
 
 ;; circle in a rectangle
-(define (p2 primary: red
+(fn (p2 primary: red
             accent: green
             background: white)
   (bg background: background)
@@ -47,7 +47,7 @@
           colour: accent))
 
 ;; two full-size triangles
-(define (p3 primary: red
+(fn (p3 primary: red
             accent: green
             background: white)
   (bg background: background)
@@ -61,7 +61,7 @@
         colours: (list accent accent accent)))
 
 
-(define (p4 primary: red
+(fn (p4 primary: red
             accent: green
             background: white)
   (bg background: background)
@@ -80,7 +80,7 @@
                 width: w/2
                 height: h/2))
 
-(define (p5 primary: red
+(fn (p5 primary: red
             accent: green
             background: white)
   (bg background: background)
@@ -92,7 +92,7 @@
           colour: accent
           tessellation: 32))
 
-(define (p6 primary: red
+(fn (p6 primary: red
             accent: green
             background: white)
   (bg background: background)
@@ -108,7 +108,7 @@
           colour: accent
           tessellation: 32))
 
-(define (p7 primary: red
+(fn (p7 primary: red
             accent: green
             background: white)
   (bg background: background)
@@ -131,7 +131,7 @@
                 colour: primary
                 radius: w/2))
 
-(define (p8 primary: red
+(fn (p8 primary: red
             accent: green
             background: white)
   (bg background: background)
@@ -143,7 +143,7 @@
           colour: accent
           tessellation: 32))
 
-(define (p9 primary: red
+(fn (p9 primary: red
             accent: green
             background: white)
   (bg background: background)

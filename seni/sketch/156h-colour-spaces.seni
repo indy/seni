@@ -1,5 +1,5 @@
 
-(define (hsl-grid)
+(fn (hsl-grid)
   (define-vars fn-h (interp/fn from: (list 0 1000)
                                to: (list 0 360))
     fn-l (interp/fn from: (list 0 1000)
@@ -16,7 +16,7 @@
 
 
 ;; is there a bug in the hsv colour space?
-(define (hsv-grid)
+(fn (hsv-grid)
   (define-vars fn-h (interp/fn from: (list 0 1000)
                                to: (list 0 360))
     fn-l (interp/fn from: (list 0 1000)

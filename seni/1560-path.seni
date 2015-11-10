@@ -30,7 +30,7 @@
                                    [ 100 (scalar min: -100 max: 100)])))
 
 ;; make a function that will be invoked for every point in the bezier path
-(define (make-fun radius: 10
+(fn (make-fun radius: 10
                   radius-factor: 0
                   tessellation: [20 (int min: 3 max: 20)]
                   seed: "hooha"         ; the seed for the position offset rng
@@ -39,7 +39,7 @@
                   random-factor: 40)    ; the amount to offset circle position
   ;; random is used to offset the position along the path
   (define-vars random (prng/range min: -1 max: 1 seed: seed))
-  (define (fun position: (v2 0 0)
+  (fn (fun position: (v2 0 0)
                t-value: 0)
     (circle position: (v2 (+ (v2/x position) (* random-factor (random)))
                           (+ (v2/y position) (* random-factor (random))))

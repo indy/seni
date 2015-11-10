@@ -19,7 +19,7 @@
                             b: [-35.82 (scalar min: -50 max: 50)]
                             alpha: 0.7))
 
-(define (top-section-highlights)
+(fn (top-section-highlights)
   (define-vars iterations [5 (int min: 1 max: 30)]
                overlap [1 (int min: 1 max: 20)]
                tessellation [35 (int min: 1 max: 50)]
@@ -71,7 +71,7 @@
                        volatility: volatility
                        seed: [46 (int)]))
 
-(define (top-section)
+(fn (top-section)
   (stroked-bezier-rect position: (v2 500 750)
                        width: 900
                        height: 400
@@ -86,7 +86,7 @@
                        seed: [44 (int)])
   (top-section-highlights))
 
-(define (middle-section)
+(fn (middle-section)
   (stroked-bezier-rect position: (v2 500 425)
                        width: 900
                        height: 250
@@ -100,7 +100,7 @@
                        volatility: [10 (int min: 0 max: 30)]
                        seed: [44 (int)]))
 
-(define (lower-section)
+(fn (lower-section)
   (define-vars colour (col/set-lab-l colour: mid-colour
                                      value: (- (col/get-lab-l
                                                 colour: mid-colour)
@@ -118,7 +118,7 @@
                        volatility: [10 (int min: 0 max: 30)]
                        seed: [44 (int)]))
 
-(define (background)
+(fn (background)
   (rect position: (v2 500 500)
         width: canvas/width
         height: canvas/height
