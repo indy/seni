@@ -179,9 +179,9 @@
 (define focal-point (focal/point position: (v2 [500 (int max: 1000)]
                                                [500 (int max: 1000)])
                                  distance: [800 (int max: 1000)]))
-(define brightness-remapper (remap-fn from: '(0 1) 
-                                      to: '([20 (int min: 0 max: 100)] 
-                                            [80 (int min: 0 max: 100)])))
+(define brightness-remapper (interp/fn from: '(0 1) 
+                                       to: '([20 (int min: 0 max: 100)] 
+                                             [80 (int min: 0 max: 100)])))
 
 (rect position: canvas/centre
       width: canvas/width

@@ -17,7 +17,6 @@
  */
 
 import PublicBinding from './PublicBinding';
-import Immutable from 'immutable';
 
 const PI = Math.PI;
 const TAU = PI * 2;
@@ -40,63 +39,6 @@ function mc([xa, ya], [xb, yb]) {
   return [m, c];
 }
 
-// the following map* functions work in the range 0..1:
-
-function mapLinear(x) {
-  return x;
-}
-
-function mapQuickEase(x) {
-  const x2 = x * x;
-  const x3 = x * x * x;
-  return (3 * x2) - (2 * x3);
-}
-
-function mapSlowEaseIn(x) {
-  const s = Math.sin(x * PIbyTwo);
-  return s * s * s * s;
-}
-
-function mapSlowEaseInEaseOut(x) {
-  return x - (Math.sin(x * TAU) / TAU);
-}
-
-const remappingFn = new Immutable.Map({'linear': mapLinear,
-                                       'quick': mapQuickEase,
-                                       'slow-in': mapSlowEaseIn,
-                                       'slow-in-out': mapSlowEaseInEaseOut});
-
-function remapFn(params) {
-
-  const from = params.from || [0, 1];
-  const to = params.to || [0, 100];
-  const clamping = params.clamping || false;
-  const mapping = params.mapping || 'linear';
-
-  const [fromA, fromB] = from;
-  const [toA, toB] = to;
-  const [fromM, fromC] = mc([fromA, 0], [fromB, 1]);
-  const [toM, toC] = mc([0, toA], [1, toB]);
-
-  let normalisedMappingFn = remappingFn.get(mapping);
-
-  if (normalisedMappingFn === undefined) {
-    normalisedMappingFn = remappingFn.get('linear');
-  }
-
-  return function(parameters) {
-    const val = parameters.val || 0;
-    const fromInterp = (fromM * val) + fromC;
-    const toInterp = normalisedMappingFn(fromInterp);
-    const res = (toM * toInterp) + toC;
-
-    if (clamping) {
-      return fromInterp < 0 ? toA : (fromInterp > 1) ? toB : res;
-    } else {
-      return res;
-    }
-  };
-}
 
 function normalize(x, y) {
   const len = Math.sqrt((x * x) + (y * y));
@@ -109,6 +51,13 @@ function normals(x1, y1, x2, y2) {
 
   const [nx, ny] = normalize(-dy, dx);
   return [[nx, ny], [-nx, -ny]];
+}
+
+function quadraticPoint(a, b, c, t) {
+  const r = ((b - a) - 0.5 * (c - a)) / (0.5 * (0.5 - 1));
+  const s = c - a - r;
+
+  return (r * t * t) + (s * t) + a;
 }
 
 function bezierPoint(a, b, c, d, t) {
@@ -124,13 +73,6 @@ function bezierTangent(a, b, c, d, t) {
   return (3 * t * t * (-a + 3 * b - 3 * c + d) +
           6 * t * (a - 2 * b + c) +
           3 * (-a + b));
-}
-
-function quadraticPoint(a, b, c, t) {
-  const r = ((b - a) - 0.5 * (c - a)) / (0.5 * (0.5 - 1));
-  const s = c - a - r;
-
-  return (r * t * t) + (s * t) + a;
 }
 
 function bezierCoordinates(tVals, controlPoints) {
@@ -185,54 +127,6 @@ const MathUtil = {
     ),
 
     new PublicBinding(
-      'math/bezier',
-      ``,
-      {coords: [[440, 400],
-                [533, 700],
-                [766, 200],
-                [900, 500]],
-       t: 1},
-      (self) => function(params) {
-        const {coords, t} = self.mergeWithDefaults(params);
-        let x = bezierPoint(coords[0][0],
-                            coords[1][0],
-                            coords[2][0],
-                            coords[3][0],
-                            t);
-        let y = bezierPoint(coords[0][1],
-                            coords[1][1],
-                            coords[2][1],
-                            coords[3][1],
-                            t);
-        return [x, y];
-      }
-    ),
-
-    new PublicBinding(
-      'math/bezier-tangent',
-      ``,
-      {coords: [[440, 400],
-                [533, 700],
-                [766, 200],
-                [900, 500]],
-       t: 1},
-      (self) => function(params) {
-        const {coords, t} = self.mergeWithDefaults(params);
-        let x = bezierTangent(coords[0][0],
-                              coords[1][0],
-                              coords[2][0],
-                              coords[3][0],
-                              t);
-        let y = bezierTangent(coords[0][1],
-                              coords[1][1],
-                              coords[2][1],
-                              coords[3][1],
-                              t);
-        return [x, y];
-      }
-    ),
-
-    new PublicBinding(
       'math/sin',
       ``,
       {angle: 0},
@@ -251,7 +145,6 @@ const MathUtil = {
         return Math.cos(angle);
       }
     ),
-
     new PublicBinding(
       'math/atan2',
       `Calculates the arc tangent of the two variables y and x. It is similar
@@ -263,13 +156,6 @@ both arguments are used to determine the quadrant of the result`,
         const {x, y} = self.mergeWithDefaults(params);
         return Math.atan2(y, x); // this is correct, y is given before x
       }
-    ),
-
-    new PublicBinding(
-      'remap-fn',
-      ``,
-      {},
-      () => remapFn
     ),
 
     new PublicBinding(
@@ -325,7 +211,7 @@ both arguments are used to determine the quadrant of the result`,
   distance1d: function(a, b) {
     return Math.abs(a - b);
   },
-
+/*
   interpolate: function(a, b, t) {
     return (a * (1 - t)) + (b * t);
   },
@@ -334,7 +220,10 @@ both arguments are used to determine the quadrant of the result`,
     const m = (ya - yb) / (xa - xb);
     const c = ya - (m * xa);
     return [m, c];
-  },
+  }, ?????
+ */
+
+  mc,
 
   PI,
   TAU,
@@ -344,20 +233,15 @@ both arguments are used to determine the quadrant of the result`,
   radiansToDegrees,
   distance2d,
 
-  remapFn,
   clamp,
 
   normalize,
   normals,
   bezierPoint,
+  bezierTangent,
   quadraticPoint,
   bezierCoordinates,
-  quadraticCoordinates,
-
-  mapLinear,
-  mapQuickEase,
-  mapSlowEaseIn,
-  mapSlowEaseInEaseOut
+  quadraticCoordinates
 };
 
 export default MathUtil;

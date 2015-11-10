@@ -33,8 +33,8 @@
 
 (loop (t from: 0 to: 1 steps: [30 (int min: 5 max: 100)])
   (define-vars
-   p1 (math/bezier t: t coords: coords1)
-   p2 (math/bezier t: t coords: coords2))
+   p1 (interp/bezier t: t coords: coords1)
+   p2 (interp/bezier t: t coords: coords2))
   (append coords p1 
                  p2)
   (append colours (make-colour t: (focalpoint position: p1))

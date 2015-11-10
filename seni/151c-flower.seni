@@ -38,7 +38,7 @@
     (scale scalar: sc)
     (define-vars strokes petals
                  colcol (col/set-alpha colour: colour value: 0.3)
-                 rem (remap-fn from: (list 0 strokes) to: (list 0 6.28318)))
+                 rem (interp/fn from: (list 0 strokes) to: (list 0 6.28318)))
     (loop (i from: 0 to: strokes)
       (petal-1 angle: (rem val: i) colour: colcol))))
 
@@ -49,7 +49,7 @@
     (scale scalar: sc)
     (define-vars strokes petals
                  colcol (col/set-alpha colour: colour value: 0.4)
-                 rem (remap-fn from: (list 0 strokes) to: (list 0 6.28318)))
+                 rem (interp/fn from: (list 0 strokes) to: (list 0 6.28318)))
     (loop (i from: 0 to: strokes)
       (petal-2 angle: (rem val: i) colour: colcol))))
 

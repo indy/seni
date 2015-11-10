@@ -20,6 +20,7 @@ import RenderPacket from './RenderPacket';
 import GLRenderer from './GLRenderer';
 import MatrixStack from './MatrixStack';
 import MathUtil from './MathUtil';
+import Interp from './Interp';
 import Colour from './Colour';
 import Util from './Util';
 import { mat4 } from 'gl-matrix';
@@ -346,9 +347,9 @@ class Renderer {
       // use the default start and end line widths
       const halfWidthStart  = lineWidthStart / 2.0;
       halfWidthEnd = lineWidthEnd / 2.0;
-      remap = MathUtil.remapFn({from: [tStart, tEnd],
-                                to: [halfWidthStart, halfWidthEnd],
-                                mapping: lineWidthMapping});
+      remap = Interp.remapFn({from: [tStart, tEnd],
+                              to: [halfWidthStart, halfWidthEnd],
+                              mapping: lineWidthMapping});
 
     }
 

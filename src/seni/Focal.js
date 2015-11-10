@@ -18,6 +18,7 @@
 
 import PublicBinding from './PublicBinding';
 import MathUtil from './MathUtil';
+import Interp from './Interp';
 
 function setupFocalParameters(publicBinding, params) {
   const fullParams = publicBinding.mergeWithDefaults(params);
@@ -35,7 +36,7 @@ function setupFocalParameters(publicBinding, params) {
     console.log('invalid falloff value');
   }
 
-  let fn = MathUtil.remapFn({
+  let fn = Interp.remapFn({
     from: [0, distance],
     to: [1, 0],
     mapping: falloff,

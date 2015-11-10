@@ -420,10 +420,10 @@ function triad(c) {
  float[] bLab = b.as(space).getVals();
 
  return Colour.fromSpace(space,
- MathUtils.interpolate(aLab[0], bLab[0], t),
- MathUtils.interpolate(aLab[1], bLab[1], t),
- MathUtils.interpolate(aLab[2], bLab[2], t),
- MathUtils.interpolate(aLab[3], bLab[3], t));
+ Interp.interpolate(aLab[0], bLab[0], t),
+ Interp.interpolate(aLab[1], bLab[1], t),
+ Interp.interpolate(aLab[2], bLab[2], t),
+ Interp.interpolate(aLab[3], bLab[3], t));
  }
 
  let sampleColour = {

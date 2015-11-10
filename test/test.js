@@ -6,6 +6,7 @@ import './lang/ParserTest';
 import './lang/TokenTest';
 import './seni/ColourTest';
 import './seni/MathUtilTest';
+import './seni/InterpTest';
 import './seni/MatrixStackTest';
 import './seni/PathsTest';
 import './seni/PseudoRandomTest';

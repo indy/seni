@@ -13,27 +13,38 @@ function makeGalleryItem(id, name, image) {
   };
 }
 
-var galleryData = [
-  makeGalleryItem(1, '14ef-blur-grid', '14ef-blur-grid.png'),
-  makeGalleryItem(2, '14eg-marker-grid', '14eg-marker-grid.png'),
-  makeGalleryItem(3, '14eh-chaotic-grid', '14eh-chaotic-grid.png'),
-  makeGalleryItem(4, '14fh-rothko-1', '14fh-rothko-1.png'),
-  makeGalleryItem(5, '151c-flower', '151c-flower.png'),
-  makeGalleryItem(6, '1531-four-squares', '1531-four-squares.png'),
-  makeGalleryItem(7, '154c-stroked-bezier', '154c-stroked-bezier.png'),
-  makeGalleryItem(8, '154h-rothko-2', '154h-rothko-2.png'),
-  makeGalleryItem(9, '1556-biomorphs', '1556-biomorphs.png'),
-  makeGalleryItem(10, '155b-spiral-derived', '155b-spiral-derived.png'),
-  makeGalleryItem(11, '155j-chaotic-grid-2', '155j-chaotic-grid-2.png'),
-  makeGalleryItem(12, '155j-chaotic-grid-3', '155j-chaotic-grid-3.png'),
-  makeGalleryItem(13, '1560-path', '1560-path.png'),
-  makeGalleryItem(14, '1565-hex-grid', '1565-hex-grid.png'),
-  makeGalleryItem(15, '156h-tri-grid', '156h-tri-grid.png'),
-  makeGalleryItem(16, '157e-tile-shadow', '157e-tile-shadow.png'),
-  makeGalleryItem(17, '1580-quilt', '1580-quilt.png'),
-  makeGalleryItem(18, '1585-seeds', '1585-seeds.png'),
-  makeGalleryItem(19, 'sketch/158b-drip-b', '14ef-blur-grid.png')
-].reverse();
+function buildGalleryData() {
+  var items = [
+    ['14ef-blur-grid', '14ef-blur-grid.png'],
+    ['14eg-marker-grid', '14eg-marker-grid.png'],
+    ['14eh-chaotic-grid', '14eh-chaotic-grid.png'],
+    ['14fh-rothko-1', '14fh-rothko-1.png'],
+    ['151c-flower', '151c-flower.png'],
+    ['1531-four-squares', '1531-four-squares.png'],
+    ['154c-stroked-bezier', '154c-stroked-bezier.png'],
+    ['154h-rothko-2', '154h-rothko-2.png'],
+    ['1556-biomorphs', '1556-biomorphs.png'],
+    ['155b-spiral-derived', '155b-spiral-derived.png'],
+    ['155j-chaotic-grid-2', '155j-chaotic-grid-2.png'],
+    ['155j-chaotic-grid-3', '155j-chaotic-grid-3.png'],
+    ['1560-path', '1560-path.png'],
+    ['1565-hex-grid', '1565-hex-grid.png'],
+    ['156h-tri-grid', '156h-tri-grid.png'],
+    ['157e-tile-shadow', '157e-tile-shadow.png'],
+    ['1580-quilt', '1580-quilt.png'],
+    ['1585-seeds', '1585-seeds.png'],
+    ['15fe-rotate-mirror', '15fe-rotate-mirror.png'],
+    ['sketch/158b-drip-b', '14ef-blur-grid.png']];
+
+  var res = [];
+  for(var i = 0; i < items.length; i++) {
+    res.push(makeGalleryItem(i+1, items[i][0], items[i][1]));
+  }
+
+  return res.reverse();
+}
+
+var galleryData = buildGalleryData();
 
 app.set('port', (process.env.PORT || 3000));
 

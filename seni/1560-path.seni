@@ -20,14 +20,14 @@
                      (v2 [999 (int max: canvas/width)] [500 (int max: canvas/height)])))
 
 ;; as the bezier path progresses, change the circle's LAB a component
-(define remap-a (remap-fn from: (v2 0 1)
-                          to: (v2 [-80 (scalar min: -100 max: 100)]
-                                  [ 80 (scalar min: -100 max: 100)])))
+(define remap-a (interp/fn from: (v2 0 1)
+                           to: (v2 [-80 (scalar min: -100 max: 100)]
+                                   [ 80 (scalar min: -100 max: 100)])))
 
 ;; as the bezier path progresses, change the circle's LAB b component
-(define remap-b (remap-fn from: (v2 0 1)
-                          to: (v2 [-100 (scalar min: -100 max: 100)]
-                                  [ 100 (scalar min: -100 max: 100)])))
+(define remap-b (interp/fn from: (v2 0 1)
+                           to: (v2 [-100 (scalar min: -100 max: 100)]
+                                   [ 100 (scalar min: -100 max: 100)])))
 
 ;; make a function that will be invoked for every point in the bezier path
 (define (make-fun radius: 10

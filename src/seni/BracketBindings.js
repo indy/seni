@@ -17,7 +17,7 @@
  */
 
 import PublicBinding from './PublicBinding';
-import MathUtil from './MathUtil';
+import Interp from './Interp';
 
 const BracketBindings = {
   publicBindings: [
@@ -43,7 +43,7 @@ const BracketBindings = {
         // rng is a PseudoRandom returning values in the range 0..1
         return (params) => {
           const {min, max} = self.mergeWithDefaults(params);
-          return Number.parseInt(MathUtil.interpolate(min, max, rng()));
+          return Number.parseInt(Interp.interpolate(min, max, rng()));
         };
       }
     ),
@@ -57,7 +57,7 @@ const BracketBindings = {
         // rng is a PseudoRandom returning values in the range 0..1
         return (params) => {
           const {min, max} = self.mergeWithDefaults(params);
-          return MathUtil.interpolate(min, max, rng());
+          return Interp.interpolate(min, max, rng());
         };
       }
     ),

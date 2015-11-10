@@ -66,8 +66,8 @@
                sina (math/sin angle: angle)
                min-pos-rad 28
                max-pos-rad 300
-               rem (remap-fn from: (v2 min-pos-rad max-pos-rad)
-                             to: (v2 20 1)))
+               rem (interp/fn from: (v2 min-pos-rad max-pos-rad)
+                              to: (v2 20 1)))
 
   (loop (r from: min-pos-rad to: max-pos-rad increment: 20)
         (interesting-circle position: (v2 (+ x (* cosa r))
@@ -82,8 +82,8 @@
 (define (norm position: (v2 0 0)
               t-value: 0)
   (define-vars
-    txy (math/bezier-tangent t: t-value
-                             coords: coords)
+    txy (interp/bezier-tangent t: t-value
+                               coords: coords)
     angle (- (math/atan2 x: (v2/x txy)
                          y: (v2/y txy))
              half-pi))
