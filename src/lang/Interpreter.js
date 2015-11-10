@@ -116,40 +116,12 @@ function addBindings(env, exprs) {
   return [exprs.reduce((a, [name, value]) => addBinding(a, name, value), env),
           lastValueBound];
 }
-/*
-function assert(assertion) {
-  if (!assertion) {
-    console.log('ASSERT FAILED');
-  }
-}
-*/
+
 function isDefineExpression(form) {
   return form.constructor === Array &&
     (form[0] === 'fn' || form[0] === 'define');
 }
-/*
-function isDefiningFunction(nameForm) {
 
-  let isFunction = false;
-  if (nameForm.constructor === Array) {
-    // it will either have one element in the array
-    // e.g. (define (shout) (log "WOOHOOO")) => ['shout']
-    // or there will be an argument map
-    // e.g. (define (doubler x: 3) (+ x x)) => ['doubler', {x: 3}]
-    if (nameForm.length === 1) {
-      isFunction = true;
-    } else if (nameForm.length === 2) {
-      // todo: also check for Map when we have immutable data structures here
-      isFunction = true;
-    } else {
-      // invalid define statement
-      assert(false);
-      isFunction = false;
-    }
-  }
-  return isFunction;
-}
-*/
 function defineFunction(env, defaultArgForms, body) {
 
   const defaultArgValues = {};
@@ -209,23 +181,7 @@ const specialForms = {
     const definedFunction = defineFunction(env, defaultArgForms, valueForms);
     return [env.set(name, { binding: definedFunction }), definedFunction];
   },
-/*
-  'define': (env, [_, nameForm, ...valueForms]) => {
-    _ = _;
-    if (isDefiningFunction(nameForm)) {
-      // e.g. (define (add x: 1 y: 2) (log x) (+ x y))
-      const [name, defaultArgForms] = nameForm;
-      const definedFunction = defineFunction(env, defaultArgForms, valueForms);
-      return [env.set(name, { binding: definedFunction }), definedFunction];
-    } else {
-      // e.g. (define foo 12)
-      assert(valueForms.length === 1);
-      const val = valueForms[0];
-      const evaluatedVal = evaluate(env, val)[1];
-      return [env.set(nameForm, { binding: evaluatedVal }), evaluatedVal];
-    }
-  },
-*/
+
   'define': (env, [_, ...args]) => {
     _ = _;
 
