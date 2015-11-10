@@ -1,57 +1,49 @@
 (render-background)
-;(render-main)
+(render-main)
 
-(define num-squares-to-render [15 (int min: 2 max: 20)])
-(define gap-size [30 (int min: 5 max: 50)])
+(define 
+  num-squares-to-render [15 (int min: 2 max: 20)]
+  gap-size [30 (int min: 5 max: 50)]
 
-(define num-squares (+ 2 num-squares-to-render))
-(define num-gaps (+ num-squares 1))
-(define square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares))
+  num-squares (+ 2 num-squares-to-render)
+  num-gaps (+ num-squares 1)
+  square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares)
 
-(define base-colour (col/rgb r: [1.0 (scalar)]
-                             g: [0.0 (scalar)]
-                             b: [0.3 (scalar)]
-                             alpha: 1.0))
-(define colour-volatility [20 (int min: 2 max: 40)])
+  base-colour (col/rgb r: [1.0 (scalar)]
+                       g: [0.0 (scalar)]
+                       b: [0.3 (scalar)]
+                       alpha: 1.0)
+  colour-volatility [20 (int min: 2 max: 40)]
 
-(define focal-point (focal/point position: (v2 [500 (int max: canvas/width)]
-                                               [800 (int max: canvas/height)])
-                                 distance: [300 (int max: canvas/width)]))
-(define focal-power [50 (scalar max: 200)])
+  focal-point (focal/point position: (v2 [500 (int max: canvas/width)]
+                                         [800 (int max: canvas/height)])
+                           distance: [300 (int max: canvas/width)])
+  focal-power [50 (scalar max: 200)])
 
 (fn (render-background colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
-  (rect x: (/ canvas/width 2)
-        y: (/ canvas/height 2)
-        width: canvas/width
-        height: canvas/height
-        colour: colour))
+    (rect x: (/ canvas/width 2)
+          y: (/ canvas/height 2)
+          width: canvas/width
+          height: canvas/height
+          colour: colour))
 
-(fn (wash variation: 200
-              line-width: 70
-              line-segments: 5
-              colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
-              seed: 272)
+(fn (map-to-position at: 0)
+    (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
 
-  (fn (v x: 0 y: 0 z: 0 scale: 1)
-    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
-
-  (define w/3 (/ canvas/width 3)
-               h/3 (/ canvas/height 3))
-  (loop (h from: -20 to: 1020 increment: 20)
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: (list
-                     (v2 0 (v x: 0 y: h z: seed scale: variation))
-                     (v2 w/3 (v x: w/3 y: h z: seed scale: variation))
-                     (v2 (* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation))
-                     (v2 canvas/width (v x: canvas/width y: h z: seed scale: variation)))
-            colour: colour)
-
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: (list
-                     (v2 (v x: 0 y: h z: seed scale: variation) 0)
-                     (v2 (v x: h/3 y: h z: seed scale: variation) h/3)
-                     (v2 (v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2))
-                     (v2 (v x: canvas/height y: h z: seed scale: variation) canvas/height))
-            colour: colour)))
+(fn (render-main)
+    (loop (y from: 1 to:  (- num-squares 1))
+      (loop (x from: 1 to:  (- num-squares 1))
+        (define
+          p (v2 (map-to-position at: x) (map-to-position at: y))
+          volatility (* (focal-point position: p) focal-power))
+        (stroked-bezier-rect position: p
+                             width: square-size
+                             height: square-size
+                             seed: (+ x (* y num-squares))
+                             colour: base-colour
+                             colour-volatility: colour-volatility
+                             volatility: volatility
+                             iterations: 39
+                             tessellation: 1
+                             overlap: 0
+                             stroke-noise: 0))))
