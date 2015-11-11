@@ -80,9 +80,9 @@
                             colour: red)))
 
 (fn (norm position: (v2 0 0)
-              t-value: 0)
+              t: 0)
   (define
-    txy (interp/bezier-tangent t: t-value
+    txy (interp/bezier-tangent t: t
                                coords: coords)
     angle (- (math/atan2 x: (v2/x txy)
                          y: (v2/y txy))

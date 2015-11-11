@@ -39,7 +39,7 @@
 
   (fn (drip position: (v2 500 500)
                 step: 1
-                t-value: 0.2)
+                t: 0.2)
     (if (= modge (mod step 2))
         (draw-drip position: (v2/+ position (v2 0 (r)))
                    colour: colour)
@@ -87,7 +87,7 @@
 
   (fn (splash position: (v2 500 500)
                   step: 1
-                  t-value: 0.2)
+                  t: 0.2)
     (if (> (g) 4)
         (draw-splash position: (v2/- position (v2 0 (r)))
                      colour: colour)))

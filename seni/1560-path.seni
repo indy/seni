@@ -41,14 +41,14 @@
     ;; random is used to offset the position along the path
     (define random (prng/range min: -1 max: 1 seed: seed))
     (fn (fun position: (v2 0 0)
-             t-value: 0)
+             t: 0)
         (circle position: (v2 (+ (v2/x position) (* random-factor (random)))
                               (+ (v2/y position) (* random-factor (random))))
                 radius: (+ radius (* radius (random) radius-factor))
                 tessellation: tessellation
                 colour: (col/lab l: l-val
-                                 a: (remap-a val: t-value)
-                                 b: (remap-b val: t-value)
+                                 a: (remap-a val: t)
+                                 b: (remap-b val: t)
                                  alpha: alpha))))
 
 (path/bezier fn: (make-fun radius: 500

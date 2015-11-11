@@ -40,7 +40,7 @@ function pathLinear(publicBinding, params) {
     fn({
       step: i,
       position: [from[0] + (i * xUnit), from[1] + (i * yUnit)],
-      't-value': i / steps
+      t: i / steps
     });
   }
 }
@@ -83,7 +83,7 @@ function pathCircle(publicBinding, params) {
     fn({
       step: i,
       position: [vx, vy],
-      't-value': tStart + (unit * i)
+      t: tStart + (unit * i)
     });
   }
 }
@@ -123,7 +123,7 @@ function pathCurve(publicBinding, params, coordFn) {
     fn({
       step: i,
       position: [xs[i], ys[i]],
-      't-value': tVals[i]
+      t: tVals[i]
     });
   }
 }
