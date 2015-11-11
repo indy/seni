@@ -19,8 +19,8 @@
                      to: (v2 [-100 (int min: -120 max: 120)]
                              [100 (int min: -120 max: 120)])))
 
-    (loop (y from: 0 until: canvas/height increment: 100)
-      (loop (x from: 0 until: canvas/width increment: (* 2 w))
+    (loop (y from: 0 upto: canvas/height increment: 100)
+      (loop (x from: 0 upto: canvas/width increment: (* 2 w))
         (define 
           a (rma val: (+ x (* (colour-offset) colour-scale)))
           b (rmb val: (+ y (* (colour-offset) colour-scale))))
@@ -37,7 +37,7 @@
                              (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
                              (col/lab l: (li val: (r)) a: a b: b alpha: alpha))))
 
-      (loop (x from: w until: canvas/width increment: (* 2 w))
+      (loop (x from: w upto: canvas/width increment: (* 2 w))
         (define
           a (rma val: (+ x (* (colour-offset) colour-scale)))
           b (rmb val: (+ y (* (colour-offset) colour-scale))))
@@ -71,8 +71,8 @@
       fn-l (interp/fn from: (list 0 canvas/height)
                       to: (list [0.4 (scalar min: 0.2 max: 0.5)] 
                                 [0.7 (scalar min: 0.4 max: 1.0)])))
-    (loop (y from: 0 until: canvas/height increment: 100)
-      (loop (x from: 0 until: canvas/width increment: (* 2 w))
+    (loop (y from: 0 upto: canvas/height increment: 100)
+      (loop (x from: 0 upto: canvas/width increment: (* 2 w))
         (define 
           a (fn-h val: (+ x (* (colour-offset) colour-scale)))
           b (fn-l val: (+ y (* (colour-offset) colour-scale))))
@@ -90,7 +90,7 @@
                              (col/hsl h: a s: 1 l: b alpha: alpha)
                              (col/hsl h: a s: 1 l: b alpha: alpha))))
 
-      (loop (x from: w until: canvas/width increment: (* 2 w))
+      (loop (x from: w upto: canvas/width increment: (* 2 w))
         (define 
           a (fn-h val: (+ x (* (colour-offset) colour-scale)))
           b (fn-l val: (+ y (* (colour-offset) colour-scale))))

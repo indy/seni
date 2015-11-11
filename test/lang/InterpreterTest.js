@@ -299,10 +299,10 @@ describe('Interpreter', () => {
 
    expect(newEnv.get('bar')).to.equal(6);
 
-   // ''until' for <= loop ('to' for < loop)
+   // ''upto' for <= loop ('to' for < loop)
    newEnv.add('bar', 0);
    [newEnv, res] =
-   evalForm(newEnv, '(loop (a from: 0 until: 4 increment: 1)
+   evalForm(newEnv, '(loop (a from: 0 upto: 4 increment: 1)
    (set! bar (+ bar a)))');
    expect(newEnv.get('bar')).to.equal(10);
 

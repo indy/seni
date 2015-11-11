@@ -255,33 +255,42 @@ function evalBodyForms(env, bodyForms) {
 }
 
 function loopingFn(env, expr, varName, params) {
-  // todo: 'to' should be <=, and 'until' should be '<'
+  // todo: 'to' should be <=, and 'upto' should be '<'
 
-  // todo: until isn't going to work with steps, perhaps remove it?
+  // todo: upto isn't going to work with steps, perhaps remove it?
+  const merged = Util.merge(params, {from: 0,
+                                     to: 1,
+                                     upto: undefined,
+                                     steps: undefined,
+                                     'steps-upto': undefined,
+                                     increment: 1});
+  let res, limit, unit, val;
+
   const {from,
          to,
-         until,
+         upto,
          steps,
-         increment} = Util.merge(params, {from: 0,
-                                          to: 10,
-                                          until: undefined,
-                                          steps: undefined,
-                                          increment: 1});
+         increment} = merged;
 
-  let res;
+  let stepsUpto = merged['steps-upto'];
 
-  if (steps !== undefined) {
 
-    if (steps < 2) {
-      console.log('steps must be 2 or greater');
+  if (stepsUpto !== undefined || steps !== undefined) {
+    let s = stepsUpto || steps;
+    if (s < 1) {
+      console.log('steps-upto | steps  must be greater than 0');
       return undefined;
     }
 
-    const limit = until !== undefined ? until : to;
-    const unit = (limit - from) / (steps - 1);
+    limit = upto !== undefined ? upto : to;
+    if(stepsUpto !== undefined) {
+      unit = (limit - from) / s;
+    } else {
+      unit = (limit - from) / (s - 1);
+    }
 
-    for (let i = 0; i < steps; i++) {
-      const val = from + (i * unit);
+    for (let i = 0; i < s; i++) {
+      val = from + (i * unit);
       res = evalBodyForms(env.set(varName, { binding: val }), expr);
     }
     return res;
@@ -292,8 +301,8 @@ function loopingFn(env, expr, varName, params) {
     return undefined;
   }
 
-  if (until !== undefined) {
-    for (let i = from; i <= until; i += increment) {
+  if (upto !== undefined) {
+    for (let i = from; i <= upto; i += increment) {
       res = evalBodyForms(env.set(varName, { binding: i }), expr);
     }
   } else {

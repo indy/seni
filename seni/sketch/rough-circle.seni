@@ -49,8 +49,8 @@
 (define initial-seed (prng/range seed: [33 (int max: 1000)]))
 (define radius [50 (int min: 45 max: 100)])
 
-(loop (y from: 0 until: 1000 steps: 14)
-  (loop (x from: 0 until: 1000 steps: 14)
+(loop (y from: 0 upto: 1000 steps: 14)
+  (loop (x from: 0 upto: 1000 steps: 14)
     (interesting-circle position: (v2 x y)
                         seed: (take from: initial-seed)
                         radius: radius
