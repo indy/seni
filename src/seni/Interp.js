@@ -79,6 +79,49 @@ function remapFn(params) {
   };
 }
 
+function interpolate(a, b, t) {
+  return (a * (1 - t)) + (b * t);
+}
+
+
+function makeBezierFn(coords) {
+  return function(parameters) {
+    const t = parameters.t || 0;
+    let x = MathUtil.bezierPoint(coords[0][0],
+                                 coords[1][0],
+                                 coords[2][0],
+                                 coords[3][0],
+                                 t);
+    let y = MathUtil.bezierPoint(coords[0][1],
+                                 coords[1][1],
+                                 coords[2][1],
+                                 coords[3][1],
+                                 t);
+    return [x, y];
+  };
+}
+
+function makeBezierTangentFn(coords) {
+  return function(parameters) {
+    const t = parameters.t || 0;
+    let x = MathUtil.bezierTangent(coords[0][0],
+                                   coords[1][0],
+                                   coords[2][0],
+                                   coords[3][0],
+                                   t);
+    let y = MathUtil.bezierTangent(coords[0][1],
+                                   coords[1][1],
+                                   coords[2][1],
+                                   coords[3][1],
+                                   t);
+    return [x, y];
+  };
+}
+
+const defaultCoords = [[440, 400],
+                       [533, 700],
+                       [766, 200],
+                       [900, 500]];
 
 const Interp = {
   publicBindings: [
@@ -92,57 +135,69 @@ const Interp = {
     new PublicBinding(
       'interp/bezier',
       ``,
-      {coords: [[440, 400],
-                [533, 700],
-                [766, 200],
-                [900, 500]],
-       t: 1},
+      {coords: defaultCoords, t: 1},
       (self) => function(params) {
         const {coords, t} = self.mergeWithDefaults(params);
-        let x = MathUtil.bezierPoint(coords[0][0],
-                                     coords[1][0],
-                                     coords[2][0],
-                                     coords[3][0],
-                                     t);
-        let y = MathUtil.bezierPoint(coords[0][1],
-                                     coords[1][1],
-                                     coords[2][1],
-                                     coords[3][1],
-                                     t);
-        return [x, y];
+        // make a Bezier fn and then invoke it straight away with the t value
+        return makeBezierFn(coords)({t: t});
+      }
+    ),
+
+    new PublicBinding(
+      'interp/bezier-fn',
+      ``,
+      {coords: defaultCoords},
+      (self) => function(params) {
+        const {coords} = self.mergeWithDefaults(params);
+        // return a function that only accepts a t value
+        return makeBezierFn(coords);
       }
     ),
 
     new PublicBinding(
       'interp/bezier-tangent',
       ``,
-      {coords: [[440, 400],
-                [533, 700],
-                [766, 200],
-                [900, 500]],
-       t: 1},
+      {coords: defaultCoords, t: 1},
       (self) => function(params) {
         const {coords, t} = self.mergeWithDefaults(params);
-        let x = MathUtil.bezierTangent(coords[0][0],
-                                       coords[1][0],
-                                       coords[2][0],
-                                       coords[3][0],
-                                       t);
-        let y = MathUtil.bezierTangent(coords[0][1],
-                                       coords[1][1],
-                                       coords[2][1],
-                                       coords[3][1],
-                                       t);
-        return [x, y];
+        return makeBezierTangentFn(coords)({t: t});
       }
     ),
 
+    new PublicBinding(
+      'interp/bezier-tangent-fn',
+      ``,
+      {coords: defaultCoords},
+      (self) => function(params) {
+        const {coords} = self.mergeWithDefaults(params);
+
+        // return a function that only accepts a t value
+        return makeBezierTangentFn(coords);
+      }
+    ),
+
+    new PublicBinding(
+      'interp/circle',
+      ``,
+      {position: [0, 0],
+       radius: 1,
+       t: 0
+      },
+      (self) => function(params) {
+        const {position, radius, t} = self.mergeWithDefaults(params);
+
+        let [x, y] = position;
+
+        let angle = t * MathUtil.TAU;
+
+        let vx = (Math.sin(angle) * radius) + x;
+        let vy = (Math.cos(angle) * radius) + y;
+
+        return [vx, vy];
+      }
+    )
   ],
-
-  interpolate: function(a, b, t) {
-    return (a * (1 - t)) + (b * t);
-  },
-
+  interpolate,
   remapFn
 };
 
