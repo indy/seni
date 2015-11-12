@@ -160,6 +160,25 @@ function consumeList(tokens, alterable) {
 
 }
 
+function unparseASTNode(str, ast) {
+
+  let res;
+
+  if (ast.type === NodeType.LIST) {
+    res = str + ' (' + ast.children.reduce(unparseASTNode, '') + ')';
+  } else if (ast.type === NodeType.STRING) {
+    res = str + ' "' + ast.value + '"';
+  } else if (ast.type === NodeType.BOOLEAN) {
+    res = str + ' ' + (ast.value === '#t' ? 'true' : 'false');
+  } else if (ast.type === NodeType.LABEL) {
+    res = str + ' ' + ast.value + ':';
+  } else {
+    res = str + ' ' + ast.value;
+  }
+
+  return res.trim();
+}
+
 /*
  returns an obj of the form:
 
@@ -190,6 +209,12 @@ const Parser = {
     }
 
     return {nodes: nodes};
+  },
+
+  unparse: function(ast, genotype) {
+    // converts an ast back into a string
+    // todo: lexer should be within the parser
+    return ast.nodes.reduce(unparseASTNode, '');
   }
 };
 

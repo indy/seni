@@ -33,20 +33,41 @@ describe('Parser', () => {
   function simpleParse(form) {
     // assumes that the form will compile into a single list
     let ts = Lexer.tokenise(form).tokens;
-    return Parser.parse(ts).nodes;
+    return Parser.parse(ts);
+  }
+
+
+  function simpleUnparse(form) {
+    let ast = simpleParse(form);
+    return Parser.unparse(ast);
   }
 
   it('should parse a bracketed form', () => {
-    let astArray = simpleParse('(+ 1 2 [3 (int min: 0 max: 10)])');
-    expect(astArray.length).to.equal(1);
+    let astObj = simpleParse('(+ 1 2 [3 (int min: 0 max: 10)])');
+    expect(astObj.nodes.length).to.equal(1);
 
-    let ast = astArray[0];
+    let ast = astObj.nodes[0];
     expect(ast.children.length).to.equal(4);
 
     expect(ast.getChild(0).alterable).to.be.false;
     expect(ast.getChild(1).alterable).to.be.false;
     expect(ast.getChild(2).alterable).to.be.false;
     expect(ast.getChild(3).alterable).to.be.true;
+  });
+
+  it('should unparse', () => {
+    expect(simpleUnparse('4')).to.equal('4');
+    expect(simpleUnparse('4.2')).to.equal('4.2');
+    expect(simpleUnparse('hello')).to.equal('hello');
+    expect(simpleUnparse('"some string"')).to.equal('"some string"');
+    expect(simpleUnparse('label:')).to.equal('label:');
+    expect(simpleUnparse('true')).to.equal('true');
+
+    expect(simpleUnparse('4 2 0')).to.equal('4 2 0');
+    expect(simpleUnparse('(1)')).to.equal('(1)');
+    expect(simpleUnparse('(foo 1)')).to.equal('(foo 1)');
+    expect(simpleUnparse('(fn (bar x: 3) (+ x x))'))
+      .to.equal('(fn (bar x: 3) (+ x x))');
   });
 
   it('should parse an int', () => {
