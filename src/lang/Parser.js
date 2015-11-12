@@ -160,25 +160,6 @@ function consumeList(tokens, alterable) {
 
 }
 
-function unparseASTNode(str, ast) {
-
-  let res;
-
-  if (ast.type === NodeType.LIST) {
-    res = str + ' (' + ast.children.reduce(unparseASTNode, '') + ')';
-  } else if (ast.type === NodeType.STRING) {
-    res = str + ' "' + ast.value + '"';
-  } else if (ast.type === NodeType.BOOLEAN) {
-    res = str + ' ' + (ast.value === '#t' ? 'true' : 'false');
-  } else if (ast.type === NodeType.LABEL) {
-    res = str + ' ' + ast.value + ':';
-  } else {
-    res = str + ' ' + ast.value;
-  }
-
-  return res.trim();
-}
-
 /*
  returns an obj of the form:
 
@@ -211,9 +192,45 @@ const Parser = {
     return {nodes: nodes};
   },
 
+  // converts an ast back into a string
   unparse: function(ast, genotype) {
-    // converts an ast back into a string
+
     // todo: lexer should be within the parser
+
+    let genoIndex = 0;
+
+    function add(term, str, node) {
+      if(node.alterable) {
+        let alterParams = node.parameterAST.reduce(unparseASTNode, '');
+        if (alterParams.length !== 0) {
+          alterParams = ' ' + alterParams;
+        }
+        // don't use the term, replace with value from genotype
+        let v = genotype.get(genoIndex++).get('value');
+        return str + ' [' + v + alterParams + ']';
+      } else {
+        return str + ' ' + term;
+      }
+    }
+
+    function unparseASTNode(str, node) {
+      let res;
+      if (node.type === NodeType.LIST) {
+        let lst = node.children.reduce(unparseASTNode, '');
+        res = add('(' + lst + ')', str, node);
+      } else if (node.type === NodeType.STRING) {
+        res = add('"' + node.value + '"', str, node);
+      } else if (node.type === NodeType.BOOLEAN) {
+        res = add(node.value === '#t' ? 'true' : 'false', str, node);
+      } else if (node.type === NodeType.LABEL) {
+        res = add(node.value + ':', str, node);
+      } else {
+        res = add(node.value, str, node);
+      }
+
+      return res.trim();
+    }
+
     return ast.nodes.reduce(unparseASTNode, '');
   }
 };

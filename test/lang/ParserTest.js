@@ -25,6 +25,9 @@ import NodeType from '../../src/lang/NodeType';
 import Token from '../../src/lang/Token';
 import TokenType from '../../src/lang/TokenType';
 
+
+import Genetic from '../../src/lang/Genetic';
+
 import chai from 'chai';
 const expect = chai.expect;
 
@@ -39,7 +42,20 @@ describe('Parser', () => {
 
   function simpleUnparse(form) {
     let ast = simpleParse(form);
-    return Parser.unparse(ast);
+
+    let traits = Genetic.buildTraits(ast.nodes);
+    let genotype = Genetic.createGenotypeFromInitialValues(traits);
+
+    return Parser.unparse(ast, genotype);
+  }
+
+  function seededUnparse(form, seed) {
+    let ast = simpleParse(form);
+
+    let traits = Genetic.buildTraits(ast.nodes);
+    let genotype = Genetic.createGenotypeFromTraits(traits, seed);
+
+    return Parser.unparse(ast, genotype);
   }
 
   it('should parse a bracketed form', () => {
@@ -68,6 +84,14 @@ describe('Parser', () => {
     expect(simpleUnparse('(foo 1)')).to.equal('(foo 1)');
     expect(simpleUnparse('(fn (bar x: 3) (+ x x))'))
       .to.equal('(fn (bar x: 3) (+ x x))');
+
+    expect(simpleUnparse('(+ 1 2 [3 (int)])')).to.equal('(+ 1 2 [3 (int)])');
+  });
+
+
+  it('should unparse with different genotypes', () => {
+    expect(seededUnparse('(+ [1 (int)] [3 (int)])', 32))
+      .to.equal('(+ [51 (int)] [79 (int)])');
   });
 
   it('should parse an int', () => {
