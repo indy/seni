@@ -27,7 +27,7 @@ const Runtime = {
     return Interpreter.getBasicEnv();
   },
 
-  buildAst: function(env, form) {
+  buildAst: function(form) {
     const tokensBox = Lexer.tokenise(form);
     if (tokensBox.error) {
       console.log(tokensBox.error);
