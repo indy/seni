@@ -28,7 +28,8 @@ const TokenType = {
   STRING: Symbol('STRING'),
   QUOTE_ABBREVIATION: Symbol('QUOTE_ABBREVIATION'),
   LABEL: Symbol('LABEL'),
-  COMMENT: Symbol('COMMENT')
+  COMMENT: Symbol('COMMENT'),
+  WHITESPACE: Symbol('WHITESPACE')
 };
 
 export default TokenType;

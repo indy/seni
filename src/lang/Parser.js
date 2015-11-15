@@ -62,7 +62,11 @@ function consumeItem(tokens, alterable) {
   } else if (tokenType === TokenType.BRACKET_END) {
     return {error: 'mismatched closing square brackets'};
   } else if (tokenType === TokenType.COMMENT) {
-    return {node: null};
+    return boxNode(NodeType.COMMENT, token.value, alterable);
+//    return {node: null};
+  } else if (tokenType === TokenType.WHITESPACE) {
+    return boxNode(NodeType.WHITESPACE, token.value, alterable);
+//    return {node: null};
   }
 
   // e.g. TokenType.UNKNOWN
@@ -192,7 +196,7 @@ const Parser = {
     return {nodes: nodes};
   },
 
-  // converts an ast back into a string
+  // converts a frontAST back into a string
   unparse: function(ast, genotype) {
 
     // todo: lexer should be within the parser
@@ -202,14 +206,11 @@ const Parser = {
     function add(term, str, node) {
       if(node.alterable) {
         let alterParams = node.parameterAST.reduce(unparseASTNode, '');
-        if (alterParams.length !== 0) {
-          alterParams = ' ' + alterParams;
-        }
         // don't use the term, replace with value from genotype
         let v = genotype.get(genoIndex++).get('value');
-        return str + ' [' + v + alterParams + ']';
+        return str + '[' + v + alterParams + ']';
       } else {
-        return str + ' ' + term;
+        return str + term;
       }
     }
 
@@ -228,7 +229,7 @@ const Parser = {
         res = add(node.value, str, node);
       }
 
-      return res.trim();
+      return res;
     }
 
     return ast.nodes.reduce(unparseASTNode, '');

@@ -25,10 +25,12 @@ import Immutable from 'immutable';
 
 function buildTraitFromNode(node, genes) {
   if (node.alterable === true) {
+
     // expect a form in the parameterAST
     let simplifiedAst, initialValue;
 
     if(node.type === NodeType.LIST) {
+      // todo: should this be compiled into a backend ast first?
       initialValue = Compiler.compileListInAlterable(node);
     } else {
       initialValue = node.value;
@@ -36,7 +38,8 @@ function buildTraitFromNode(node, genes) {
 
     if (node.parameterAST.length) {
       // assuming that there aren't any nested square brackets
-      simplifiedAst = Compiler.compileInAlterable(node.parameterAST);
+      let a = Compiler.compileBackEndAst(node.parameterAST);
+      simplifiedAst = Compiler.compileInAlterable(a);
     } else {
       // this is to allow code like (+ 2 [2])
       // which should behave as if there were no square brackets

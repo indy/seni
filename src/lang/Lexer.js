@@ -111,15 +111,6 @@ function hasPeriod(s) {
   return false;
 }
 
-function skipWhitespace(s) {
-  for (let i = 0; i < s.length; i++) {
-    if (!isWhitespace(s[i])) {
-      return s.substring(i);
-    }
-  }
-  return '';
-}
-
 function consumeInt(s) {
   let i = 0;
   for (i = 0; i < s.length; i++) {
@@ -191,6 +182,18 @@ function consumeName(s) {
   return [token, s.substring(i, s.length)];
 }
 
+
+function consumeWhitespace(s) {
+  let i = 0;
+  for (i = 0; i < s.length; i++) {
+    if (!isWhitespace(s[i])) {
+      break;
+    }
+  }
+  const token = new Token(TokenType.WHITESPACE, s.substring(0, i));
+  return [token, s.substring(i, s.length)];
+}
+
 function consumeComment(s) {
   let i = 0;
   for (i = 0; i < s.length; i++) {
@@ -223,6 +226,10 @@ function consumeQuoteAbbreviation(s) {
 
 function nextTokenType(s) {
   const c = s[0];
+
+  if (isWhitespace(c)) {
+    return TokenType.WHITESPACE;
+  }
 
   if (isQuoteAbbreviation(c)) {
     return TokenType.QUOTE_ABBREVIATION;
@@ -270,10 +277,13 @@ const Lexer = {
     let q = [];   // queue of tokens to return
     let p = [];   // [token, remaining] pair
 
-    let s = skipWhitespace(input);
+    let s = input;
 
     while (s.length > 0) {
       switch (nextTokenType(s)) {
+      case TokenType.WHITESPACE :
+        p = consumeWhitespace(s);
+        break;
       case TokenType.LIST_START :
         p = consumeListStart(s);
         break;
@@ -317,7 +327,7 @@ const Lexer = {
       const [token, remaining] = p;
 
       q.push(token);
-      s = skipWhitespace(remaining);
+      s = remaining;
     }
 
     return {tokens: q};

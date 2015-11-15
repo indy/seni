@@ -36,7 +36,9 @@ describe('Compiler', () => {
     const traits = Genetic.buildTraits(ast);
     const genotype = Genetic.createGenotypeFromTraits(traits, seed);
 
-    const simplifiedAsts = Compiler.compileWithGenotype(ast, genotype);
+    const backentAst = Compiler.compileBackEndAst(ast);
+
+    const simplifiedAsts = Compiler.compileWithGenotype(backentAst, genotype);
     return simplifiedAsts[0];
   }
 
@@ -48,7 +50,9 @@ describe('Compiler', () => {
     const traits = Genetic.buildTraits(ast);
     const genotype = Genetic.createGenotypeFromInitialValues(traits);
 
-    const simplifiedAsts =  Compiler.compileWithGenotype(ast, genotype);
+    const backentAst = Compiler.compileBackEndAst(ast);
+
+    const simplifiedAsts =  Compiler.compileWithGenotype(backentAst, genotype);
     return simplifiedAsts[0];
   }
 

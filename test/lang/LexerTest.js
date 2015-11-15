@@ -58,7 +58,9 @@ describe('Lexer', () => {
   it('should tokenise strings', () => {
     t([TokenType.LIST_START,
        TokenType.NAME,
+       TokenType.WHITESPACE,
        TokenType.INT,
+       TokenType.WHITESPACE,
        TokenType.FLOAT,
        TokenType.LIST_END],
       '(go 42 3.14)');
@@ -67,9 +69,11 @@ describe('Lexer', () => {
   it('should tokenise strings 2', () => {
     t([TokenType.LIST_START,
        TokenType.NAME,
+       TokenType.WHITESPACE,
        TokenType.BRACKET_START,
        TokenType.STRING,
        TokenType.BRACKET_END,
+       TokenType.WHITESPACE,
        TokenType.QUOTE_ABBREVIATION,
        TokenType.NAME,
        TokenType.LIST_END],
@@ -79,7 +83,9 @@ describe('Lexer', () => {
   it('should tokenise labeled function invocations', () => {
     t([TokenType.LIST_START,
        TokenType.NAME,
+       TokenType.WHITESPACE,
        TokenType.LABEL,
+       TokenType.WHITESPACE,
        TokenType.INT,
        TokenType.LIST_END],
       '(go arg1: 42)');
@@ -92,7 +98,9 @@ describe('Lexer', () => {
     t([TokenType.COMMENT,
        TokenType.LIST_START,
        TokenType.NAME,
+       TokenType.WHITESPACE,
        TokenType.LABEL,
+       TokenType.WHITESPACE,
        TokenType.INT,
        TokenType.LIST_END],
       ';(go arg1: 42)\n(go arg1: 42)');
