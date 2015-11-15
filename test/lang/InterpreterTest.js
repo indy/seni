@@ -339,7 +339,7 @@ describe('Interpreter', () => {
     const ast = Parser.parse(ts).nodes;
     const traits = Genetic.buildTraits(ast);
     const genotype = Genetic.createGenotypeFromInitialValues(traits);
-    const simplifiedAst = Compiler.compile(ast, genotype);
+    const simplifiedAst = Compiler.compileWithGenotype(ast, genotype);
 
     // returns [newEnv, res]
     return Interpreter.evaluate(env, simplifiedAst[0]);

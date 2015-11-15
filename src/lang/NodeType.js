@@ -24,9 +24,11 @@ const NodeType = {
   LABEL: Symbol('LABEL'),
   STRING: Symbol('STRING'),
   BOOLEAN: Symbol('BOOLEAN'),
-  LAMBDA: Symbol('LAMBDA'),
-  SPECIAL: Symbol('SPECIAL'),
-  COLOUR: Symbol('COLOUR'),
+  LAMBDA: Symbol('LAMBDA'),         // todo: remove this??
+  SPECIAL: Symbol('SPECIAL'),       // todo: remove this??
+  COLOUR: Symbol('COLOUR'),         // todo: remove this??
+  WHITESPACE: Symbol('WHITESPACE'), // only used by front-end ast
+  COMMENT: Symbol('COMMENT'),       // only used by front-end ast
   NULL: Symbol('NULL')
 };
 

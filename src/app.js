@@ -107,11 +107,13 @@ function renderScript(seniApp) {
   const imageElement = seniApp.renderImage;
 
   const script = seniApp.piece.script;
-  const ast = Runtime.buildAst(script);
+  const frontAst = Runtime.buildFrontEndAst(script);
 
-  const traits = Genetic.buildTraits(ast);
+  const backAst = Runtime.compileBackEndAst(frontAst);
+
+  const traits = Genetic.buildTraits(backAst);
   const genotype = Genetic.createGenotypeFromInitialValues(traits);
-  renderGenotypeToImage(seniApp, ast, genotype, imageElement);
+  renderGenotypeToImage(seniApp, backAst, genotype, imageElement);
 }
 
 function timedRenderScript(seniApp, msg) {
@@ -156,11 +158,13 @@ function renderHighRes(seniApp, element) {
     let genotype = piece.genotypes[index];
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('invisible');
-    const ast = Runtime.buildAst(piece.script);
+    const frontAst = Runtime.buildFrontEndAst(piece.script);
+
+    const backAst = Runtime.compileBackEndAst(frontAst);
 
     const imageElement = document.getElementById('high-res-image');
     const [width, height] = seniApp.highResolution;
-    renderGenotypeToImage(seniApp, ast, genotype, imageElement,
+    renderGenotypeToImage(seniApp, backAst, genotype, imageElement,
                           width, height);
 
     const holder = document.getElementById('holder');
@@ -196,7 +200,7 @@ function renderPhenotypes(seniApp) {
       const genotype = piece.genotypes[i];
       const imageElement = piece.phenotypes[i].imageElement;
 
-      renderGenotypeToImage(seniApp, piece.ast, genotype, imageElement);
+      renderGenotypeToImage(seniApp, piece.backAst, genotype, imageElement);
 
       i++;
       setTimeout(go);
@@ -322,8 +326,9 @@ function setupEvolveUI(seniApp) {
     if(allImagesLoadedSince(initialTimeStamp)) {
       const piece = seniApp.piece;
 
-      piece.ast = Runtime.buildAst(seniApp.piece.script);
-      piece.traits = Genetic.buildTraits(piece.ast);
+      piece.frontAst = Runtime.buildFrontEndAst(seniApp.piece.script);
+      piece.backAst = Runtime.compileBackEndAst(piece.frontAst);
+      piece.traits = Genetic.buildTraits(piece.backAst);
 
       createInitialGenotypePopulation(piece, seniApp.populationSize);
 
@@ -663,7 +668,8 @@ class Piece {
     // in case of a shuffle
     this.selectedPhenotypes = [];
     this.script = undefined;
-    this.ast = undefined;
+    this.frontAst = undefined;
+    this.backAst = undefined;
     this.traits = undefined;
     this.genotypes = [];
   }

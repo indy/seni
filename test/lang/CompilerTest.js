@@ -20,6 +20,8 @@ import Parser from '../../src/lang/Parser';
 import Lexer from '../../src/lang/Lexer';
 import Compiler from '../../src/lang/Compiler';
 import Genetic from '../../src/lang/Genetic';
+import Node from '../../src/lang/Node';
+import NodeType from '../../src/lang/NodeType';
 
 import chai from 'chai';
 const expect = chai.expect;
@@ -34,7 +36,7 @@ describe('Compiler', () => {
     const traits = Genetic.buildTraits(ast);
     const genotype = Genetic.createGenotypeFromTraits(traits, seed);
 
-    const simplifiedAsts = Compiler.compile(ast, genotype);
+    const simplifiedAsts = Compiler.compileWithGenotype(ast, genotype);
     return simplifiedAsts[0];
   }
 
@@ -46,9 +48,82 @@ describe('Compiler', () => {
     const traits = Genetic.buildTraits(ast);
     const genotype = Genetic.createGenotypeFromInitialValues(traits);
 
-    const simplifiedAsts =  Compiler.compile(ast, genotype);
+    const simplifiedAsts =  Compiler.compileWithGenotype(ast, genotype);
     return simplifiedAsts[0];
   }
+
+  it('should compile a backend AST', () => {
+    // create a node
+    function n(type, value) {
+      return new Node(type, value, false);
+    }
+
+    let node, frontAst, backAst;
+
+    // 2
+    frontAst = [n(NodeType.INT, 2)];
+    backAst = Compiler.compileBackEndAst(frontAst);
+    expect(backAst.length).to.equal(1);
+    expect(backAst[0].type).to.equal(NodeType.INT);
+    expect(backAst[0].value).to.equal(2);
+
+    // start with some whitespace which should be removed
+    // ^_^_2
+    frontAst = [n(NodeType.WHITESPACE, ' '),
+                n(NodeType.WHITESPACE, ' '),
+                n(NodeType.INT, 2)];
+    backAst = Compiler.compileBackEndAst(frontAst);
+    expect(backAst.length).to.equal(1);
+    expect(backAst[0].type).to.equal(NodeType.INT);
+    expect(backAst[0].value).to.equal(2);
+
+    // (hello 3) ;; some comment
+    node = n(NodeType.LIST, null);
+    node.children = [n(NodeType.STRING, 'hello'),
+                     n(NodeType.WHITESPACE, ' '),
+                     n(NodeType.INT, 3)];
+    frontAst = [node,
+                n(NodeType.WHITESPACE, ' '),
+                n(NodeType.COMMENT, 'some comment'),];
+    backAst = Compiler.compileBackEndAst(frontAst);
+    expect(backAst.length).to.equal(1);
+    expect(backAst[0].type).to.equal(NodeType.LIST);
+    expect(backAst[0].children.length).to.equal(2);
+    expect(backAst[0].children[0].value).to.equal('hello');
+    expect(backAst[0].children[1].value).to.equal(3);
+
+
+    // (hello (mult 5 6) 3) ;; some comment
+    let node2 = n(NodeType.LIST, null);
+    node2.children = [n(NodeType.STRING, 'mult'),
+                      n(NodeType.WHITESPACE, ' '),
+                      n(NodeType.INT, 5),
+                      n(NodeType.WHITESPACE, ' '),
+                      n(NodeType.INT, 6)];
+    node = n(NodeType.LIST, null);
+    node.children = [n(NodeType.STRING, 'hello'),
+                     n(NodeType.WHITESPACE, ' '),
+                     node2,
+                     n(NodeType.WHITESPACE, ' '),
+                     n(NodeType.INT, 3)];
+    frontAst = [node,
+                n(NodeType.WHITESPACE, ' '),
+                n(NodeType.COMMENT, 'some comment'),];
+    backAst = Compiler.compileBackEndAst(frontAst);
+    expect(backAst.length).to.equal(1);
+    expect(backAst[0].type).to.equal(NodeType.LIST);
+    expect(backAst[0].children.length).to.equal(3);
+    expect(backAst[0].children[0].value).to.equal('hello');
+    expect(backAst[0].children[1].type).to.equal(NodeType.LIST);
+    let grandkids = backAst[0].children[1].children;
+    expect(grandkids.length).to.equal(3);
+    expect(grandkids[0].value).to.equal('mult');
+    expect(grandkids[1].value).to.equal(5);
+    expect(grandkids[2].value).to.equal(6);
+    expect(backAst[0].children[2].value).to.equal(3);
+
+    // [5 (int)]
+  });
 
   it('should test required functions: genotype initial', () => {
     expect(compile('(* 2 [4])')).

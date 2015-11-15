@@ -19,6 +19,7 @@
 /* eslint-disable no-use-before-define */
 
 import NodeType from './NodeType';
+import Node from './Node';
 
 function compile(node, genotype) {
 
@@ -101,17 +102,66 @@ function usingNamedParameters(children) {
   return false;
 }
 
+function suitableForBackendAst(node) {
+  return node.type !== NodeType.WHITESPACE && node.type !== NodeType.COMMENT;
+}
+
+// backendAst
+function compileForBackendAst(nodes) {
+  return nodes.reduce((res, n) => {
+    if(suitableForBackendAst(n)) {
+      let newNode = new Node(n.type, n.value, n.alterable);
+
+      if(n.alterable) {
+        newNode.parameterAST = compileForBackendAst(n.parameterAST);
+      }
+
+      if(n.type === NodeType.LIST) {
+        newNode.children = compileForBackendAst(n.children);
+      };
+
+      res.push(newNode);
+    }
+    return res;
+  }, []);
+}
+
 const Compiler = {
 
-  compileListNode: function(node) {
-    let [simplifiedAst, _] = compileList(node);
+  // used by genetic when an alterable node contains a list
+  //
+  compileListInAlterable: function(node) {
+    // don't pass a genotype since we're already going to be inside an
+    // alterable node and nested alterables aren't supported
+    //
+    let nullGenotype = null;
+    let [simplifiedAst, _] = compileList(node, nullGenotype);
     _ = _;
 
-    // return a simplified ast
     return simplifiedAst;
   },
 
-  compile: function(nodes, genotype) {
+  compileInAlterable: function(nodes) {
+    // don't pass a genotype since we're already going to be inside an
+    // alterable node and nested alterables aren't supported
+    //
+    let nullGenotype = null;
+    let [simplifiedAsts, _] = compileNodes(nodes, nullGenotype);
+    _ = _;
+
+    // return an array of simplified ast objects
+    return simplifiedAsts;
+  },
+
+  // transform a front end ast into a backend
+  // NOTE: we currently need to assume that the alterable nodes
+  // stay in the same order
+  compileBackEndAst: function(frontendAst) {
+    return compileForBackendAst(frontendAst);
+  },
+
+  // the nodes should be from the back-end ast
+  compileWithGenotype: function(nodes, genotype) {
     let [simplifiedAsts, _] = compileNodes(nodes, genotype);
     _ = _;
 

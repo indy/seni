@@ -27,7 +27,7 @@ const Runtime = {
     return Interpreter.getBasicEnv();
   },
 
-  buildAst: function(form) {
+  buildFrontEndAst: function(form) {
     const tokensBox = Lexer.tokenise(form);
     if (tokensBox.error) {
       console.log(tokensBox.error);
@@ -45,8 +45,12 @@ const Runtime = {
     return ast;
   },
 
+  compileBackEndAst: function(frontAst) {
+    return Compiler.compileBackEndAst(frontAst);
+  },
+
   evalAst: function(env, ast, genotype) {
-    const simplifiedAsts = Compiler.compile(ast, genotype);
+    const simplifiedAsts = Compiler.compileWithGenotype(ast, genotype);
 
     // add all of the define expressions to the env
     const [_env, _res] = simplifiedAsts.

@@ -24,6 +24,15 @@ const expect = chai.expect;
 
 describe('Lexer', () => {
 
+  function t(expected, text) {
+    let q = Lexer.tokenise(text).tokens;
+    expect(q.length).to.equal(expected.length);
+
+    expected.forEach((e, i) => {
+      expect(q[i].type).to.equal(e);
+    });
+  }
+
   it('should error handle', () => {
     // if an illegal character is found in any part of the input, only that
     // character will be returned in the tokens list and the error property
@@ -47,50 +56,45 @@ describe('Lexer', () => {
   });
 
   it('should tokenise strings', () => {
-    let q = Lexer.tokenise('(go 42 3.14)').tokens;
-    expect(q.length).to.equal(5);
-    expect(q[0].type).to.equal(TokenType.LIST_START);
-    expect(q[1].type).to.equal(TokenType.NAME);
-    expect(q[2].type).to.equal(TokenType.INT);
-    expect(q[3].type).to.equal(TokenType.FLOAT);
-    expect(q[4].type).to.equal(TokenType.LIST_END);
+    t([TokenType.LIST_START,
+       TokenType.NAME,
+       TokenType.INT,
+       TokenType.FLOAT,
+       TokenType.LIST_END],
+      '(go 42 3.14)');
   });
 
   it('should tokenise strings 2', () => {
-    let q = Lexer.tokenise('(go [\"hi\"] \'SOMETHING)').tokens;
-    expect(q.length).to.equal(8);
-    expect(q[0].type).to.equal(TokenType.LIST_START);
-    expect(q[1].type).to.equal(TokenType.NAME);
-    expect(q[2].type).to.equal(TokenType.BRACKET_START);
-    expect(q[3].type).to.equal(TokenType.STRING);
-    expect(q[4].type).to.equal(TokenType.BRACKET_END);
-    expect(q[5].type).to.equal(TokenType.QUOTE_ABBREVIATION);
-    expect(q[6].type).to.equal(TokenType.NAME);
-    expect(q[7].type).to.equal(TokenType.LIST_END);
+    t([TokenType.LIST_START,
+       TokenType.NAME,
+       TokenType.BRACKET_START,
+       TokenType.STRING,
+       TokenType.BRACKET_END,
+       TokenType.QUOTE_ABBREVIATION,
+       TokenType.NAME,
+       TokenType.LIST_END],
+      '(go [\"hi\"] \'SOMETHING)');
   });
 
   it('should tokenise labeled function invocations', () => {
-    let q = Lexer.tokenise('(go arg1: 42)').tokens;
-    expect(q.length).to.equal(5);
-    expect(q[0].type).to.equal(TokenType.LIST_START);
-    expect(q[1].type).to.equal(TokenType.NAME);
-    expect(q[2].type).to.equal(TokenType.LABEL);
-    expect(q[3].type).to.equal(TokenType.INT);
-    expect(q[4].type).to.equal(TokenType.LIST_END);
+    t([TokenType.LIST_START,
+       TokenType.NAME,
+       TokenType.LABEL,
+       TokenType.INT,
+       TokenType.LIST_END],
+      '(go arg1: 42)');
   });
 
   it('should recognise comments', () => {
-    let q = Lexer.tokenise(';(go arg1: 42)').tokens;
-    expect(q.length).to.equal(1);
-    expect(q[0].type).to.equal(TokenType.COMMENT);
+    t([TokenType.COMMENT],
+      ';(go arg1: 42)');
 
-    q = Lexer.tokenise(';(go arg1: 42)\n(go arg1: 42)').tokens;
-    expect(q.length).to.equal(6);
-    expect(q[0].type).to.equal(TokenType.COMMENT);
-    expect(q[1].type).to.equal(TokenType.LIST_START);
-    expect(q[2].type).to.equal(TokenType.NAME);
-    expect(q[3].type).to.equal(TokenType.LABEL);
-    expect(q[4].type).to.equal(TokenType.INT);
-    expect(q[5].type).to.equal(TokenType.LIST_END);
+    t([TokenType.COMMENT,
+       TokenType.LIST_START,
+       TokenType.NAME,
+       TokenType.LABEL,
+       TokenType.INT,
+       TokenType.LIST_END],
+      ';(go arg1: 42)\n(go arg1: 42)');
   });
 });
