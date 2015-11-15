@@ -29,7 +29,7 @@ function boxNode(nodeType, value, alterable) {
 }
 
 function consumeItem(tokens, alterable) {
-
+  let _ = _;
   const token = tokens[0];
   tokens.shift();            // remove the first token
 
@@ -74,13 +74,27 @@ function consumeItem(tokens, alterable) {
 }
 
 function consumeBracketForm(tokens) {
-  const nodeBox = consumeItem(tokens, true);
-  if (nodeBox.error) {
-    return nodeBox;
+  let nodeBox, node, nodeType;
+  let prefixParameters = [];
+
+  while (true) {
+    nodeBox = consumeItem(tokens, true);
+    if (nodeBox.error) {
+      return nodeBox;
+    }
+    node = nodeBox.node;
+    nodeType = node.type;
+
+    if(nodeType === NodeType.COMMENT || nodeType === NodeType.WHITESPACE) {
+      // !alterable to prevent the unparse function from recursing into it
+      node.alterable = false;
+      prefixParameters.push(node);
+    } else {
+      break;
+    }
   }
 
-  const node = nodeBox.node;
-  const nodeType = node.type;
+  prefixParameters.forEach(pp => node.addParameterNodePrefix(pp));
 
   if (nodeType !== NodeType.BOOLEAN &&
       nodeType !== NodeType.INT &&
@@ -88,7 +102,7 @@ function consumeBracketForm(tokens) {
       nodeType !== NodeType.NAME &&
       nodeType !== NodeType.STRING &&
       nodeType !== NodeType.LIST) {
-
+    console.log('whooops', tokens, node);
     return {error: 'non-mutable node within square brackets ' + nodeType};
   }
 
@@ -205,10 +219,12 @@ const Parser = {
 
     function add(term, str, node) {
       if(node.alterable) {
+        // prefixes are any comments/whitespaces after the opening bracket
+        let prefixes = node.parameterPrefix.reduce(unparseASTNode, '');
         let alterParams = node.parameterAST.reduce(unparseASTNode, '');
         // don't use the term, replace with value from genotype
         let v = genotype.get(genoIndex++).get('value');
-        return str + '[' + v + alterParams + ']';
+        return str + '[' + prefixes + v + alterParams + ']';
       } else {
         return str + term;
       }

@@ -25,6 +25,10 @@ export default class Node {
 
     // node mutate specific
     this.parameterAST = [];
+
+    // need a place for nodes that occur within square brackets that should
+    // be ignored, e.g. the whitespace before the 2 in: (+ 1 [ 2] (int))
+    this.parameterPrefix = [];
   }
 
   addChild(child) {
@@ -41,5 +45,9 @@ export default class Node {
 
   addParameterNode(parameter) {
     this.parameterAST.push(parameter);
+  }
+
+  addParameterNodePrefix(prefix) {
+    this.parameterPrefix.push(prefix);
   }
 }

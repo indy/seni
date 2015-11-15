@@ -24,8 +24,6 @@ import Parser from '../../src/lang/Parser';
 import NodeType from '../../src/lang/NodeType';
 import Token from '../../src/lang/Token';
 import TokenType from '../../src/lang/TokenType';
-
-
 import Genetic from '../../src/lang/Genetic';
 
 import chai from 'chai';
@@ -49,11 +47,8 @@ describe('Parser', () => {
 
   function seededUnparse(form, seed) {
     let ast = simpleParse(form);
-//    console.log('isg ast', ast);
     let traits = Genetic.buildTraits(ast.nodes);
-//    console.log('isg traits', traits);
     let genotype = Genetic.createGenotypeFromTraits(traits, seed);
-//    console.log('isg genotype', genotype);
     return Parser.unparse(ast, genotype);
   }
 
@@ -63,7 +58,7 @@ describe('Parser', () => {
 
     let ast = astObj.nodes[0];
     expect(ast.children.length).to.equal(7);
-
+    console.log(ast);
     expect(ast.getChild(0).alterable).to.be.false;
     expect(ast.getChild(1).alterable).to.be.false;
     expect(ast.getChild(2).alterable).to.be.false;
@@ -71,6 +66,31 @@ describe('Parser', () => {
     expect(ast.getChild(4).alterable).to.be.false;
     expect(ast.getChild(5).alterable).to.be.false;
     expect(ast.getChild(6).alterable).to.be.true;
+
+    let alterable = ast.getChild(6);
+    expect(alterable.value).to.equal(3);
+    expect(alterable.parameterPrefix.length).to.equal(0);
+  });
+
+  it('should parse a bracketed form that starts with whitespace', () => {
+    let astObj = simpleParse('(+ 1 2 [ 3 (int min: 0 max: 10)])');
+    expect(astObj.nodes.length).to.equal(1);
+
+    let ast = astObj.nodes[0];
+    expect(ast.children.length).to.equal(7);
+    console.log(ast);
+    expect(ast.getChild(0).alterable).to.be.false;
+    expect(ast.getChild(1).alterable).to.be.false;
+    expect(ast.getChild(2).alterable).to.be.false;
+    expect(ast.getChild(3).alterable).to.be.false;
+    expect(ast.getChild(4).alterable).to.be.false;
+    expect(ast.getChild(5).alterable).to.be.false;
+    expect(ast.getChild(6).alterable).to.be.true;
+
+    let alterable = ast.getChild(6);
+    expect(alterable.value).to.equal(3);
+    // the whitespace after the opening square bracket
+    expect(alterable.parameterPrefix.length).to.equal(1);
   });
 
   it('should unparse', () => {
@@ -89,11 +109,12 @@ describe('Parser', () => {
 
     expect(simpleUnparse('(+ 1 2 [3 (int)])')).to.equal('(+ 1 2 [3 (int)])');
 
+    expect(simpleUnparse('(+ 1 [ 3 (int)])')).to.equal('(+ 1 [ 3 (int)])');
   });
 
   it('should unparse with different genotypes', () => {
-//    expect(seededUnparse('(+ [1 (int)] [3 (int)])', 32))
-//      .to.equal('(+ [51 (int)] [79 (int)])');
+    expect(seededUnparse('(+ [1 (int)] [3 (int)])', 32))
+      .to.equal('(+ [51 (int)] [79 (int)])');
     expect(seededUnparse('(+ [1 (int)])', 32))
       .to.equal('(+ [51 (int)])');
   });
@@ -246,6 +267,5 @@ describe('Parser', () => {
 
     let params = parameterNodes[0];
     expect(params.type).to.equal(NodeType.LIST);
-
   });
 });
