@@ -25,6 +25,7 @@ import NodeType from '../../src/lang/NodeType';
 import Token from '../../src/lang/Token';
 import TokenType from '../../src/lang/TokenType';
 import Genetic from '../../src/lang/Genetic';
+import Compiler from '../../src/lang/Compiler';
 
 import chai from 'chai';
 const expect = chai.expect;
@@ -46,8 +47,12 @@ describe('Parser', () => {
   }
 
   function seededUnparse(form, seed) {
-    let ast = simpleParse(form);
-    let traits = Genetic.buildTraits(ast.nodes);
+    const ts = Lexer.tokenise(form).tokens;
+    const ast = Parser.parse(ts);
+
+    const backAst = Compiler.compileBackEndAst(ast.nodes);
+
+    let traits = Genetic.buildTraits(backAst);
     let genotype = Genetic.createGenotypeFromTraits(traits, seed);
     return Parser.unparse(ast, genotype);
   }

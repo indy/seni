@@ -40,13 +40,12 @@ const Runtime = {
       return false;
     }
 
-    const ast = Genetic.expandASTForAlterableChildren(astBox.nodes);
-
-    return ast;
+    return astBox.nodes;
   },
 
   compileBackEndAst: function(frontAst) {
-    return Compiler.compileBackEndAst(frontAst);
+    let res = Compiler.compileBackEndAst(frontAst);
+    return Genetic.expandASTForAlterableChildren(res);
   },
 
   evalAst: function(env, ast, genotype) {

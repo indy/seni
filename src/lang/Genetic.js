@@ -23,6 +23,7 @@ import Bind from '../seni/Bind';
 import PseudoRandom from '../seni/PseudoRandom';
 import Immutable from 'immutable';
 
+// the node will be in backAst form
 function buildTraitFromNode(node, genes) {
   if (node.alterable === true) {
 
@@ -30,16 +31,13 @@ function buildTraitFromNode(node, genes) {
     let simplifiedAst, initialValue;
 
     if(node.type === NodeType.LIST) {
-      // todo: should this be compiled into a backend ast first?
-      initialValue = Compiler.compileListInAlterable(node);
+      initialValue = Compiler.compileListInAlterable(node.children);
     } else {
       initialValue = node.value;
     }
 
     if (node.parameterAST.length) {
-      // assuming that there aren't any nested square brackets
-      let a = Compiler.compileBackEndAst(node.parameterAST);
-      simplifiedAst = Compiler.compileInAlterable(a);
+      simplifiedAst = Compiler.compileInAlterable(node.parameterAST);
     } else {
       // this is to allow code like (+ 2 [2])
       // which should behave as if there were no square brackets

@@ -29,7 +29,7 @@ function compile(node, genotype) {
   }
 
   if (node.type === NodeType.LIST) {
-    return compileList(node, genotype);
+    return compileList(node.children, genotype);
   }
 
   if (node.type === NodeType.STRING) {
@@ -54,16 +54,6 @@ function compileNodes(nodes, genotype) {
   });
 
   return [res, genotype];
-}
-
-function compileList(node, genotype) {
-  const children = node.children;
-
-  if (usingNamedParameters(children)) {
-    return compileFormUsingNamedParameters(children, genotype);
-  } else {
-    return compileNodes(children, genotype);
-  }
 }
 
 function compileFormUsingNamedParameters(children, genotype) {
@@ -102,13 +92,21 @@ function usingNamedParameters(children) {
   return false;
 }
 
+function compileList(children, genotype) {
+  if (usingNamedParameters(children)) {
+    return compileFormUsingNamedParameters(children, genotype);
+  } else {
+    return compileNodes(children, genotype);
+  }
+}
+
 function suitableForBackendAst(node) {
   return node.type !== NodeType.WHITESPACE && node.type !== NodeType.COMMENT;
 }
 
 // backendAst
 function compileForBackendAst(nodes) {
-  return nodes.reduce((res, n) => {
+  return nodes.reduce((nodeArray, n) => {
     if(suitableForBackendAst(n)) {
       let newNode = new Node(n.type, n.value);
       newNode.alterable = n.alterable;
@@ -121,9 +119,9 @@ function compileForBackendAst(nodes) {
         newNode.children = compileForBackendAst(n.children);
       };
 
-      res.push(newNode);
+      nodeArray.push(newNode);
     }
-    return res;
+    return nodeArray;
   }, []);
 }
 
@@ -131,12 +129,12 @@ const Compiler = {
 
   // used by genetic when an alterable node contains a list
   //
-  compileListInAlterable: function(node) {
+  compileListInAlterable: function(children) {
     // don't pass a genotype since we're already going to be inside an
     // alterable node and nested alterables aren't supported
     //
     let nullGenotype = null;
-    let [simplifiedAst, _] = compileList(node, nullGenotype);
+    let [simplifiedAst, _] = compileList(children, nullGenotype);
     _ = _;
 
     return simplifiedAst;

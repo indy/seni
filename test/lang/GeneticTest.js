@@ -19,6 +19,7 @@
 import Parser from '../../src/lang/Parser';
 import Lexer from '../../src/lang/Lexer';
 import Genetic from '../../src/lang/Genetic';
+import Compiler from '../../src/lang/Compiler';
 
 import chai from 'chai';
 const expect = chai.expect;
@@ -30,7 +31,9 @@ describe('Genetic', () => {
     let ts = Lexer.tokenise(form).tokens;
     let ast = Parser.parse(ts).nodes;
 
-    return Genetic.buildTraits(ast);
+    const backendtAst = Compiler.compileBackEndAst(ast);
+
+    return Genetic.buildTraits(backendtAst);
   }
 
   it('should build a traits array from an ast', () => {
@@ -51,10 +54,8 @@ describe('Genetic', () => {
   });
 
   it('should createGenotypeFromTraits', () => {
-    let ts = Lexer.tokenise('(+ 2 [44])').tokens;
-    let ast = Parser.parse(ts).nodes;
 
-    let traits = Genetic.buildTraits(ast);
+    let traits = simpleBuildTraits('(+ 2 [44])');
 
     let genotype = Genetic.createGenotypeFromTraits(traits, 100);
 
@@ -63,10 +64,7 @@ describe('Genetic', () => {
   });
 
   it('should createGenotypeFromTraits 2', () => {
-    let ts = Lexer.tokenise('(+ 2 [44 (int min: 10 max: 56)])').tokens;
-    let ast = Parser.parse(ts).nodes;
-
-    let traits = Genetic.buildTraits(ast);
+    let traits = simpleBuildTraits('(+ 2 [44 (int min: 10 max: 56)])');
 
     let genotype = Genetic.createGenotypeFromTraits(traits, 100);
 
@@ -76,10 +74,7 @@ describe('Genetic', () => {
   });
 
   it('should create the same genotype', () => {
-    let ts = Lexer.tokenise('(+ 2 [44 (int min: 10 max: 56)])').tokens;
-    let ast = Parser.parse(ts).nodes;
-
-    let traits = Genetic.buildTraits(ast);
+    let traits = simpleBuildTraits('(+ 2 [44 (int min: 10 max: 56)])');
 
     let genotype = Genetic.createGenotypeFromTraits(traits, 33);
     expect(genotype.get(0).get('value')).to.equal(49);
