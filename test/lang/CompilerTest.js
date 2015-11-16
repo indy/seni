@@ -59,7 +59,7 @@ describe('Compiler', () => {
   it('should compile a backend AST', () => {
     // create a node
     function n(type, value) {
-      return new Node(type, value, false);
+      return new Node(type, value);
     }
 
     let node, frontAst, backAst;

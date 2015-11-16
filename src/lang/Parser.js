@@ -1,6 +1,6 @@
 /*
  *  Seni
- *  Copyright (C) 2015  Inderjit Gill <email@indy.io>
+ *  Copyright (C) 2015 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -9,11 +9,11 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import TokenType from './TokenType';
@@ -24,37 +24,37 @@ import NodeType from './NodeType';
  these functions will return {node: node, error: error}
  */
 
-function boxNode(nodeType, value, alterable) {
-  return {node: new Node(nodeType, value, alterable)};
+function boxNode(nodeType, value) {
+  return {node: new Node(nodeType, value)};
 }
 
-function consumeItem(tokens, alterable) {
+function consumeItem(tokens) {
   let _ = _;
   const token = tokens[0];
   tokens.shift();            // remove the first token
 
   const tokenType = token.type;
   if (tokenType === TokenType.LIST_START) {
-    return consumeList(tokens, alterable);
+    return consumeList(tokens);
   } else if (tokenType === TokenType.LIST_END) {
     return {error: 'mismatched closing parens'};
   } else if (tokenType === TokenType.INT) {
-    return boxNode(NodeType.INT, token.value, alterable);
+    return boxNode(NodeType.INT, token.value);
   } else if (tokenType === TokenType.FLOAT) {
-    return boxNode(NodeType.FLOAT, token.value, alterable);
+    return boxNode(NodeType.FLOAT, token.value);
   } else if (tokenType === TokenType.NAME) {
     const val = token.value;
     if (val === 'true') {
-      return boxNode(NodeType.BOOLEAN, '#t', alterable);
+      return boxNode(NodeType.BOOLEAN, '#t');
     } else if (val === 'false') {
-      return boxNode(NodeType.BOOLEAN, '#f', alterable);
+      return boxNode(NodeType.BOOLEAN, '#f');
     } else {
-      return boxNode(NodeType.NAME, token.value, alterable);
+      return boxNode(NodeType.NAME, token.value);
     }
   } else if (tokenType === TokenType.LABEL) {
-    return boxNode(NodeType.LABEL, token.value, alterable);
+    return boxNode(NodeType.LABEL, token.value);
   } else if (tokenType === TokenType.STRING) {
-    return boxNode(NodeType.STRING, token.value, alterable);
+    return boxNode(NodeType.STRING, token.value);
   } else if (tokenType === TokenType.QUOTE_ABBREVIATION) {
     return consumeQuotedForm(tokens);
   } else if (tokenType === TokenType.BRACKET_START) {
@@ -62,11 +62,9 @@ function consumeItem(tokens, alterable) {
   } else if (tokenType === TokenType.BRACKET_END) {
     return {error: 'mismatched closing square brackets'};
   } else if (tokenType === TokenType.COMMENT) {
-    return boxNode(NodeType.COMMENT, token.value, alterable);
-//    return {node: null};
+    return boxNode(NodeType.COMMENT, token.value);
   } else if (tokenType === TokenType.WHITESPACE) {
-    return boxNode(NodeType.WHITESPACE, token.value, alterable);
-//    return {node: null};
+    return boxNode(NodeType.WHITESPACE, token.value);
   }
 
   // e.g. TokenType.UNKNOWN
@@ -78,7 +76,7 @@ function consumeBracketForm(tokens) {
   let prefixParameters = [];
 
   while (true) {
-    nodeBox = consumeItem(tokens, true);
+    nodeBox = consumeItem(tokens);
     if (nodeBox.error) {
       return nodeBox;
     }
@@ -86,10 +84,10 @@ function consumeBracketForm(tokens) {
     nodeType = node.type;
 
     if(nodeType === NodeType.COMMENT || nodeType === NodeType.WHITESPACE) {
-      // !alterable to prevent the unparse function from recursing into it
-      node.alterable = false;
       prefixParameters.push(node);
     } else {
+      // we've got the first node within the square brackets that's mutable
+      node.alterable = true;
       break;
     }
   }
@@ -119,7 +117,7 @@ function consumeBracketForm(tokens) {
       break;
     }
 
-    parameterBox = consumeItem(tokens, false);
+    parameterBox = consumeItem(tokens);
     if (parameterBox.error) {
       return parameterBox;
     }
@@ -139,8 +137,8 @@ function consumeQuotedForm(tokens) {
 
   const node = new Node(NodeType.LIST);
 
-  node.addChild(new Node(NodeType.NAME, 'quote', false));
-  const childBox = consumeItem(tokens, false);
+  node.addChild(new Node(NodeType.NAME, 'quote'));
+  const childBox = consumeItem(tokens);
   if (childBox.error) {
     return childBox;
   }
@@ -149,9 +147,9 @@ function consumeQuotedForm(tokens) {
   return { node };
 }
 
-function consumeList(tokens, alterable) {
+function consumeList(tokens) {
 
-  const boxedNode = boxNode(NodeType.LIST, undefined, alterable);
+  const boxedNode = boxNode(NodeType.LIST, undefined);
 
   /* eslint-disable no-constant-condition */
   while (true) {
@@ -165,14 +163,13 @@ function consumeList(tokens, alterable) {
       return boxedNode;
     }
 
-    const boxedItem = consumeItem(tokens, false);
+    const boxedItem = consumeItem(tokens);
     if (boxedItem.error) {
       return boxedItem;
     }
+
     const n = boxedItem.node;
-    if (n) {
-      boxedNode.node.addChild(n);
-    }
+    boxedNode.node.addChild(n);
   }
   /* eslint-enable no-constant-condition */
 
@@ -195,7 +192,7 @@ const Parser = {
     let nodeBox;
 
     while (tokens.length !== 0) {
-      nodeBox = consumeItem(tokens, false);
+      nodeBox = consumeItem(tokens);
 
       if (nodeBox.error) {
         return nodeBox;
