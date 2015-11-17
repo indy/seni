@@ -62,7 +62,7 @@ function consumeItem(tokens) {
   } else if (tokenType === TokenType.BRACKET_END) {
     return {error: 'mismatched closing square brackets'};
   } else if (tokenType === TokenType.COMMENT) {
-    return boxNode(NodeType.COMMENT, token.value);
+    return boxNode(NodeType.COMMENT, token.value + '\n');
   } else if (tokenType === TokenType.WHITESPACE) {
     return boxNode(NodeType.WHITESPACE, token.value);
   }
@@ -138,6 +138,7 @@ function consumeQuotedForm(tokens) {
   const node = new Node(NodeType.LIST);
 
   node.addChild(new Node(NodeType.NAME, 'quote'));
+  node.addChild(new Node(NodeType.WHITESPACE, ' '));
   const childBox = consumeItem(tokens);
   if (childBox.error) {
     return childBox;
@@ -208,11 +209,27 @@ const Parser = {
   },
 
   // converts a frontAST back into a string
-  unparse: function(ast, genotype) {
-
-    // todo: lexer should be within the parser
-
+  // ast is an array of nodes
+  unparse: function(frontAst, genotype) {
     let genoIndex = 0;
+
+    function formatValue(value) {
+      if(Array.isArray(value) &&
+         value.length === 2 &&
+         typeof(value[1]) === 'object') {
+        // probably a form with named parameters
+        // this looks like [fn name, fn args]
+        // e.g. ['col/rgb', {r: 0 g: 0 b: 0 alpha: 1}]
+        let args = value[1];
+        let argsUnparse = '';
+        for (let k in args) {
+          argsUnparse = argsUnparse + k + ': ' + args[k] + ' ';
+        }
+        return '(' + value[0] + ' ' + argsUnparse.trim() + ')';
+      }
+      return value;
+    }
+
 
     function add(term, str, node) {
       if(node.alterable) {
@@ -220,7 +237,8 @@ const Parser = {
         let prefixes = node.parameterPrefix.reduce(unparseASTNode, '');
         let alterParams = node.parameterAST.reduce(unparseASTNode, '');
         // don't use the term, replace with value from genotype
-        let v = genotype.get(genoIndex++).get('value');
+        let value = genotype.get(genoIndex++).get('value');
+        let v = formatValue(value);
         return str + '[' + prefixes + v + alterParams + ']';
       } else {
         return str + term;
@@ -230,6 +248,9 @@ const Parser = {
     function unparseASTNode(str, node) {
       let res;
       if (node.type === NodeType.LIST) {
+        // todo: mark the list node created by Parser.consumeQuotedForm
+        // so that we can recreate the original 'FORM instead of the
+        // current (quote FORM)
         let lst = node.children.reduce(unparseASTNode, '');
         res = add('(' + lst + ')', str, node);
       } else if (node.type === NodeType.STRING) {
@@ -245,7 +266,7 @@ const Parser = {
       return res;
     }
 
-    return ast.nodes.reduce(unparseASTNode, '');
+    return frontAst.reduce(unparseASTNode, '');
   }
 };
 

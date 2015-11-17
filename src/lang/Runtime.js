@@ -43,6 +43,10 @@ const Runtime = {
     return astBox.nodes;
   },
 
+  logUnparse: function(frontAst, genotype) {
+    console.log(Parser.unparse(frontAst, genotype));
+  },
+
   compileBackEndAst: function(frontAst) {
     let res = Compiler.compileBackEndAst(frontAst);
     return Genetic.expandASTForAlterableChildren(res);

@@ -43,7 +43,7 @@ describe('Parser', () => {
     let traits = Genetic.buildTraits(ast.nodes);
     let genotype = Genetic.createGenotypeFromInitialValues(traits);
 
-    return Parser.unparse(ast, genotype);
+    return Parser.unparse(ast.nodes, genotype);
   }
 
   function seededUnparse(form, seed) {
@@ -54,7 +54,7 @@ describe('Parser', () => {
 
     let traits = Genetic.buildTraits(backAst);
     let genotype = Genetic.createGenotypeFromTraits(traits, seed);
-    return Parser.unparse(ast, genotype);
+    return Parser.unparse(ast.nodes, genotype);
   }
 
   it('should parse a bracketed form', () => {
