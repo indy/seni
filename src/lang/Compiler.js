@@ -125,6 +125,34 @@ function compileForBackendAst(nodes) {
   }, []);
 }
 
+
+function expandNodeForAlterableChildren(node) {
+
+  if(node.type === NodeType.LIST) {
+    if(node.alterable === true &&
+       node.parameterAST.length > 1 &&
+       node.parameterAST[0].value === 'map') {
+
+      // make this node non-alterable and it's children alterable
+      // e.g. [(list 1 2 3 4 5 6) map (select from: (list 1 2 3 4 5 6 7 8 9))]
+
+      node.alterable = false;
+      let parameterAst = node.parameterAST.slice(1); // remove the 'map''
+
+      for(let i = 1; i < node.children.length; i++) {
+        let n = node.children[i];
+        n.alterable = true;
+        n.parameterAST = parameterAst;
+      }
+
+    } else {
+      node.children = node.children.map(n => expandNodeForAlterableChildren(n));
+    }
+  }
+
+  return node;
+}
+
 const Compiler = {
 
   // used by genetic when an alterable node contains a list
@@ -156,7 +184,12 @@ const Compiler = {
   // NOTE: we currently need to assume that the alterable nodes
   // stay in the same order
   compileBackEndAst: function(frontendAst) {
-    return compileForBackendAst(frontendAst);
+    let backAst = compileForBackendAst(frontendAst);
+
+    // slightly ugly way of taking care of the 'map' keyword
+    backAst = backAst.map(node => expandNodeForAlterableChildren(node));
+
+    return backAst;
   },
 
   // the nodes should be from the back-end ast

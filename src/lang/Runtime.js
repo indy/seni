@@ -20,7 +20,6 @@ import Interpreter from './Interpreter';
 import Parser from './Parser';
 import Lexer from './Lexer';
 import Compiler from './Compiler';
-import Genetic from './Genetic';
 
 const Runtime = {
   createEnv: function() {
@@ -48,8 +47,7 @@ const Runtime = {
   },
 
   compileBackEndAst: function(frontAst) {
-    let res = Compiler.compileBackEndAst(frontAst);
-    return Genetic.expandASTForAlterableChildren(res);
+    return Compiler.compileBackEndAst(frontAst);
   },
 
   evalAst: function(env, ast, genotype) {
