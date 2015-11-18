@@ -219,13 +219,16 @@ describe('Parser', () => {
 
     let lst = res[0];
     expect(lst.type).to.equal(NodeType.LIST);
-    expect(lst.size()).to.equal(2);
+    expect(lst.size()).to.equal(3);
 
     let quote = lst.getChild(0);
     expect(quote.type).to.equal(NodeType.NAME);
     expect(quote.value).to.equal('quote');
 
-    let quotedList = lst.getChild(1);
+    quote = lst.getChild(1);
+    expect(quote.type).to.equal(NodeType.WHITESPACE);
+
+    let quotedList = lst.getChild(2);
     expect(quotedList.type).to.equal(NodeType.LIST);
     expect(quotedList.size()).to.equal(3);
   });
