@@ -107,7 +107,7 @@ function renderScript(seniApp) {
   const imageElement = seniApp.renderImage;
 
   const script = seniApp.piece.script;
-  const frontAst = Runtime.buildFrontEndAst(script);
+  const frontAst = Runtime.buildFrontAst(script);
 
   const backAst = Runtime.compileBackAst(frontAst);
 
@@ -162,7 +162,7 @@ function renderHighRes(seniApp, element) {
     let genotype = piece.genotypes[index];
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('invisible');
-    const frontAst = Runtime.buildFrontEndAst(piece.script);
+    const frontAst = Runtime.buildFrontAst(piece.script);
     Runtime.logUnparse(frontAst, genotype);
     const backAst = Runtime.compileBackAst(frontAst);
 
@@ -330,7 +330,7 @@ function setupEvolveUI(seniApp) {
     if(allImagesLoadedSince(initialTimeStamp)) {
       const piece = seniApp.piece;
 
-      piece.frontAst = Runtime.buildFrontEndAst(seniApp.piece.script);
+      piece.frontAst = Runtime.buildFrontAst(seniApp.piece.script);
       piece.backAst = Runtime.compileBackAst(piece.frontAst);
       piece.traits = Genetic.buildTraits(piece.backAst);
 
