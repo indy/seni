@@ -24,8 +24,6 @@ import Parser from '../../src/lang/Parser';
 import NodeType from '../../src/lang/NodeType';
 import Token from '../../src/lang/Token';
 import TokenType from '../../src/lang/TokenType';
-import Genetic from '../../src/lang/Genetic';
-import Compiler from '../../src/lang/Compiler';
 
 import chai from 'chai';
 const expect = chai.expect;
@@ -38,32 +36,13 @@ describe('Parser', () => {
     return Parser.parse(ts);
   }
 
-  function simpleUnparse(form) {
-    let ast = simpleParse(form);
-    let traits = Genetic.buildTraits(ast.nodes);
-    let genotype = Genetic.createGenotypeFromInitialValues(traits);
-
-    return Parser.unparse(ast.nodes, genotype);
-  }
-
-  function seededUnparse(form, seed) {
-    const ts = Lexer.tokenise(form).tokens;
-    const ast = Parser.parse(ts);
-
-    const backAst = Compiler.compileBackEndAst(ast.nodes);
-
-    let traits = Genetic.buildTraits(backAst);
-    let genotype = Genetic.createGenotypeFromTraits(traits, seed);
-    return Parser.unparse(ast.nodes, genotype);
-  }
-
   it('should parse a bracketed form', () => {
     let astObj = simpleParse('(+ 1 2 [3 (int min: 0 max: 10)])');
     expect(astObj.nodes.length).to.equal(1);
 
     let ast = astObj.nodes[0];
     expect(ast.children.length).to.equal(7);
-    console.log(ast);
+
     expect(ast.getChild(0).alterable).to.be.false;
     expect(ast.getChild(1).alterable).to.be.false;
     expect(ast.getChild(2).alterable).to.be.false;
@@ -83,7 +62,7 @@ describe('Parser', () => {
 
     let ast = astObj.nodes[0];
     expect(ast.children.length).to.equal(7);
-    console.log(ast);
+
     expect(ast.getChild(0).alterable).to.be.false;
     expect(ast.getChild(1).alterable).to.be.false;
     expect(ast.getChild(2).alterable).to.be.false;
@@ -96,32 +75,6 @@ describe('Parser', () => {
     expect(alterable.value).to.equal(3);
     // the whitespace after the opening square bracket
     expect(alterable.parameterPrefix.length).to.equal(1);
-  });
-
-  it('should unparse', () => {
-    expect(simpleUnparse('4')).to.equal('4');
-    expect(simpleUnparse('4.2')).to.equal('4.2');
-    expect(simpleUnparse('hello')).to.equal('hello');
-    expect(simpleUnparse('"some string"')).to.equal('"some string"');
-    expect(simpleUnparse('label:')).to.equal('label:');
-    expect(simpleUnparse('true')).to.equal('true');
-
-    expect(simpleUnparse('4 2 0')).to.equal('4 2 0');
-    expect(simpleUnparse('(1)')).to.equal('(1)');
-    expect(simpleUnparse('(foo 1)')).to.equal('(foo 1)');
-    expect(simpleUnparse('(fn (bar x: 3) (+ x x))'))
-      .to.equal('(fn (bar x: 3) (+ x x))');
-
-    expect(simpleUnparse('(+ 1 2 [3 (int)])')).to.equal('(+ 1 2 [3 (int)])');
-
-    expect(simpleUnparse('(+ 1 [ 3 (int)])')).to.equal('(+ 1 [ 3 (int)])');
-  });
-
-  it('should unparse with different genotypes', () => {
-    expect(seededUnparse('(+ [1 (int)] [3 (int)])', 32))
-      .to.equal('(+ [51 (int)] [79 (int)])');
-    expect(seededUnparse('(+ [1 (int)])', 32))
-      .to.equal('(+ [51 (int)])');
   });
 
   it('should parse an int', () => {

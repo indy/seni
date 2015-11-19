@@ -21,6 +21,7 @@ import './lang/GeneticTest';
 import './lang/InterpreterTest';
 import './lang/LexerTest';
 import './lang/ParserTest';
+import './lang/UnparserTest';
 import './lang/TokenTest';
 import './seni/ColourTest';
 import './seni/MathUtilTest';

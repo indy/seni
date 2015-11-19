@@ -18,6 +18,7 @@
 
 import Interpreter from './Interpreter';
 import Parser from './Parser';
+import Unparser from './Unparser';
 import Lexer from './Lexer';
 import Compiler from './Compiler';
 
@@ -43,7 +44,7 @@ const Runtime = {
   },
 
   logUnparse: function(frontAst, genotype) {
-    console.log(Parser.unparse(frontAst, genotype));
+    console.log(Unparser.unparse(frontAst, genotype));
   },
 
   compileBackEndAst: function(frontAst) {
