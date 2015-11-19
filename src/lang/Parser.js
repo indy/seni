@@ -213,7 +213,10 @@ const Parser = {
   unparse: function(frontAst, genotype) {
     let genoIndex = 0;
 
-    function formatValue(value) {
+    // warning: thie function mutates genoIndex
+    function pullValueFromGenotype() {
+      let value = genotype.get(genoIndex++).get('value');
+
       if(Array.isArray(value) &&
          value.length === 2 &&
          typeof(value[1]) === 'object') {
@@ -230,15 +233,50 @@ const Parser = {
       return value;
     }
 
+    // does the node contain a 'map' name node
+    function containsMapNode(ast) {
+      return ast.some(n => n.type === NodeType.NAME && n.value === 'map');
+    }
+
+    // have a form like:
+    // (define foo
+    // [(list 11 12 13 14 15 16) map (select from: (list 1 2 3 4 5 6 7 8 9))])
+    // and we're in the alterable list part
+    function getMultipleValuesFromGenotype(node) {
+      // go through the children: 'list 11 12 13 14 15 16'
+      // ignoring the initial list name (is too specific a check?) and
+      // any whitespace
+      let res = '';
+      node.children.forEach(n => {
+        if(n.type === NodeType.NAME && n.value === 'list') {
+          res += n.value;
+        } else if(n.type === NodeType.COMMENT ||
+                  n.type === NodeType.WHITESPACE) {
+          res += n.value;
+        } else {
+          res += pullValueFromGenotype();
+        }
+      });
+
+      return '(' + res + ')';
+    }
 
     function add(term, str, node) {
       if(node.alterable) {
         // prefixes are any comments/whitespaces after the opening bracket
         let prefixes = node.parameterPrefix.reduce(unparseASTNode, '');
         let alterParams = node.parameterAST.reduce(unparseASTNode, '');
-        // don't use the term, replace with value from genotype
-        let value = genotype.get(genoIndex++).get('value');
-        let v = formatValue(value);
+        let v;
+
+        if (node.type === NodeType.LIST && containsMapNode(node.parameterAST)) {
+          v = getMultipleValuesFromGenotype(node);
+        } else {
+          // don't use the term, replace with value from genotype
+          //let value = genotype.get(genoIndex++).get('value');
+          //v = formatValue(value);
+          v = pullValueFromGenotype();
+        }
+
         return str + '[' + prefixes + v + alterParams + ']';
       } else {
         return str + term;
@@ -251,8 +289,13 @@ const Parser = {
         // todo: mark the list node created by Parser.consumeQuotedForm
         // so that we can recreate the original 'FORM instead of the
         // current (quote FORM)
-        let lst = node.children.reduce(unparseASTNode, '');
-        res = add('(' + lst + ')', str, node);
+
+        if(node.alterable) {
+          res = add('', str, node); // add will construct the correct term
+        } else {
+          let lst = node.children.reduce(unparseASTNode, '');
+          res = add('(' + lst + ')', str, node);
+        }
       } else if (node.type === NodeType.STRING) {
         res = add('"' + node.value + '"', str, node);
       } else if (node.type === NodeType.BOOLEAN) {
