@@ -125,32 +125,30 @@ function compileForBackAst(nodes) {
   }, []);
 }
 
+function expandNodeForAlterableChildren(nodes) {
+  return nodes.map(node => {
+    if(node.type === NodeType.LIST) {
+      if(node.alterable === true &&
+         node.parameterAST.length > 1 &&
+         node.parameterAST[0].value === 'map') {
 
-function expandNodeForAlterableChildren(node) {
+        // make this node non-alterable and it's children alterable
+        // e.g. [(list 1 2 3 4 5 6) map (select from: (list 1 2 3 4 5 6 7 8 9))]
 
-  if(node.type === NodeType.LIST) {
-    if(node.alterable === true &&
-       node.parameterAST.length > 1 &&
-       node.parameterAST[0].value === 'map') {
+        node.alterable = false;
+        let parameterAst = node.parameterAST.slice(1); // remove the 'map''
 
-      // make this node non-alterable and it's children alterable
-      // e.g. [(list 1 2 3 4 5 6) map (select from: (list 1 2 3 4 5 6 7 8 9))]
-
-      node.alterable = false;
-      let parameterAst = node.parameterAST.slice(1); // remove the 'map''
-
-      for(let i = 1; i < node.children.length; i++) {
-        let n = node.children[i];
-        n.alterable = true;
-        n.parameterAST = parameterAst;
+        for(let i = 1; i < node.children.length; i++) {
+          let n = node.children[i];
+          n.alterable = true;
+          n.parameterAST = parameterAst;
+        }
+      } else {
+        node.children = expandNodeForAlterableChildren(node.children);
       }
-
-    } else {
-      node.children = node.children.map(n => expandNodeForAlterableChildren(n));
     }
-  }
-
-  return node;
+    return node;
+  });
 }
 
 const Compiler = {
@@ -183,11 +181,10 @@ const Compiler = {
   // transform a front end ast into a backAst
   // NOTE: we currently need to assume that the alterable nodes
   // stay in the same order
-  compileBackAst: function(frontendAst) {
-    let backAst = compileForBackAst(frontendAst);
+  compileBackAst: function(frontAst) {
+    let backAst = compileForBackAst(frontAst);
 
-    // slightly ugly way of taking care of the 'map' keyword
-    backAst = backAst.map(node => expandNodeForAlterableChildren(node));
+    backAst = expandNodeForAlterableChildren(backAst);
 
     return backAst;
   },
