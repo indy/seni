@@ -87,6 +87,7 @@ const Genetic = {
   },
 
   createGenotypeFromInitialValues: function(traits) {
+    // todo: why have a map with a single 'value' key?
     const geno = traits.map(g => new Immutable.Map({value: g.initialValue}));
     return new Immutable.List(geno);
   },
