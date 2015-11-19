@@ -100,23 +100,23 @@ function compileList(children, genotype) {
   }
 }
 
-function suitableForBackendAst(node) {
+function suitableForBackAst(node) {
   return node.type !== NodeType.WHITESPACE && node.type !== NodeType.COMMENT;
 }
 
-// backendAst
-function compileForBackendAst(nodes) {
+// backAst
+function compileForBackAst(nodes) {
   return nodes.reduce((nodeArray, n) => {
-    if(suitableForBackendAst(n)) {
+    if(suitableForBackAst(n)) {
       let newNode = new Node(n.type, n.value);
       newNode.alterable = n.alterable;
 
       if(n.alterable) {
-        newNode.parameterAST = compileForBackendAst(n.parameterAST);
+        newNode.parameterAST = compileForBackAst(n.parameterAST);
       }
 
       if(n.type === NodeType.LIST) {
-        newNode.children = compileForBackendAst(n.children);
+        newNode.children = compileForBackAst(n.children);
       };
 
       nodeArray.push(newNode);
@@ -180,11 +180,11 @@ const Compiler = {
     return simplifiedAsts;
   },
 
-  // transform a front end ast into a backend
+  // transform a front end ast into a backAst
   // NOTE: we currently need to assume that the alterable nodes
   // stay in the same order
-  compileBackEndAst: function(frontendAst) {
-    let backAst = compileForBackendAst(frontendAst);
+  compileBackAst: function(frontendAst) {
+    let backAst = compileForBackAst(frontendAst);
 
     // slightly ugly way of taking care of the 'map' keyword
     backAst = backAst.map(node => expandNodeForAlterableChildren(node));

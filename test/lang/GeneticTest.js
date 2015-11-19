@@ -31,9 +31,9 @@ describe('Genetic', () => {
     let ts = Lexer.tokenise(form).tokens;
     let ast = Parser.parse(ts).nodes;
 
-    const backendtAst = Compiler.compileBackEndAst(ast);
+    const backAst = Compiler.compileBackAst(ast);
 
-    return Genetic.buildTraits(backendtAst);
+    return Genetic.buildTraits(backAst);
   }
 
   it('should build a traits array from an ast', () => {

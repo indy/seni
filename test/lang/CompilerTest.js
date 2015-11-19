@@ -28,35 +28,35 @@ const expect = chai.expect;
 
 describe('Compiler', () => {
 
-  function compileWithSeed(form, seed) {
-    // assumes that the form will compile into a single list
+  function compileAst(form) {
     const ts = Lexer.tokenise(form).tokens;
-    const ast = Parser.parse(ts).nodes;
+    const frontAst = Parser.parse(ts).nodes;
+    const backAst = Compiler.compileBackAst(frontAst);
 
-    const backentAst = Compiler.compileBackEndAst(ast);
+    const traits = Genetic.buildTraits(backAst);
 
-    const traits = Genetic.buildTraits(backentAst);
-    const genotype = Genetic.createGenotypeFromTraits(traits, seed);
-
-    const simplifiedAsts = Compiler.compileWithGenotype(backentAst, genotype);
-    return simplifiedAsts[0];
+    return [backAst, traits];
   }
 
   function compile(form) {
-    // assumes that the form will compile into a single list
-    const ts = Lexer.tokenise(form).tokens;
-    const ast = Parser.parse(ts).nodes;
+    const [backAst, traits] = compileAst(form);
 
-    const backentAst = Compiler.compileBackEndAst(ast);
-
-    const traits = Genetic.buildTraits(backentAst);
     const genotype = Genetic.createGenotypeFromInitialValues(traits);
 
-    const simplifiedAsts =  Compiler.compileWithGenotype(backentAst, genotype);
+    const simplifiedAsts =  Compiler.compileWithGenotype(backAst, genotype);
     return simplifiedAsts[0];
   }
 
-  it('should compile a backend AST', () => {
+  function compileWithSeed(form, seed) {
+    const [backAst, traits] = compileAst(form);
+
+    const genotype = Genetic.createGenotypeFromTraits(traits, seed);
+
+    const simplifiedAsts = Compiler.compileWithGenotype(backAst, genotype);
+    return simplifiedAsts[0];
+  }
+
+  it('should compile a backAst', () => {
     // create a node
     function n(type, value) {
       return new Node(type, value);
@@ -66,7 +66,7 @@ describe('Compiler', () => {
 
     // 2
     frontAst = [n(NodeType.INT, 2)];
-    backAst = Compiler.compileBackEndAst(frontAst);
+    backAst = Compiler.compileBackAst(frontAst);
     expect(backAst.length).to.equal(1);
     expect(backAst[0].type).to.equal(NodeType.INT);
     expect(backAst[0].value).to.equal(2);
@@ -76,7 +76,7 @@ describe('Compiler', () => {
     frontAst = [n(NodeType.WHITESPACE, ' '),
                 n(NodeType.WHITESPACE, ' '),
                 n(NodeType.INT, 2)];
-    backAst = Compiler.compileBackEndAst(frontAst);
+    backAst = Compiler.compileBackAst(frontAst);
     expect(backAst.length).to.equal(1);
     expect(backAst[0].type).to.equal(NodeType.INT);
     expect(backAst[0].value).to.equal(2);
@@ -89,7 +89,7 @@ describe('Compiler', () => {
     frontAst = [node,
                 n(NodeType.WHITESPACE, ' '),
                 n(NodeType.COMMENT, 'some comment'),];
-    backAst = Compiler.compileBackEndAst(frontAst);
+    backAst = Compiler.compileBackAst(frontAst);
     expect(backAst.length).to.equal(1);
     expect(backAst[0].type).to.equal(NodeType.LIST);
     expect(backAst[0].children.length).to.equal(2);
@@ -113,7 +113,7 @@ describe('Compiler', () => {
     frontAst = [node,
                 n(NodeType.WHITESPACE, ' '),
                 n(NodeType.COMMENT, 'some comment'),];
-    backAst = Compiler.compileBackEndAst(frontAst);
+    backAst = Compiler.compileBackAst(frontAst);
     expect(backAst.length).to.equal(1);
     expect(backAst[0].type).to.equal(NodeType.LIST);
     expect(backAst[0].children.length).to.equal(3);

@@ -47,8 +47,8 @@ const Runtime = {
     console.log(Unparser.unparse(frontAst, genotype));
   },
 
-  compileBackEndAst: function(frontAst) {
-    return Compiler.compileBackEndAst(frontAst);
+  compileBackAst: function(frontAst) {
+    return Compiler.compileBackAst(frontAst);
   },
 
   evalAst: function(env, ast, genotype) {

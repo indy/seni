@@ -33,7 +33,7 @@ describe('Unparser', () => {
   function compileAst(form) {
     const ts = Lexer.tokenise(form).tokens;
     const frontAst = Parser.parse(ts).nodes;
-    const backAst = Compiler.compileBackEndAst(frontAst);
+    const backAst = Compiler.compileBackAst(frontAst);
 
     const traits = Genetic.buildTraits(backAst);
 
