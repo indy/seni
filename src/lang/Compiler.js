@@ -23,7 +23,9 @@ import Node from './Node';
 
 function compile(node, genotype) {
 
-  if (node.alterable) {
+  // genotype !== null because we might call compileNodes with a
+  // null argument for genotypes e.g. Genetic::buildTraitFromNode
+  if (node.alterable && genotype !== null) {
     // todo: assert that there's another genotype value available
     return [genotype.first().get('value'), genotype.shift()];
   }
@@ -152,31 +154,6 @@ function expandNodeForAlterableChildren(nodes) {
 }
 
 const Compiler = {
-
-  // used by genetic when an alterable node contains a list
-  //
-  compileListInAlterable: function(children) {
-    // don't pass a genotype since we're already going to be inside an
-    // alterable node and nested alterables aren't supported
-    //
-    let nullGenotype = null;
-    let [simplifiedAst, _] = compileList(children, nullGenotype);
-    _ = _;
-
-    return simplifiedAst;
-  },
-
-  compileInAlterable: function(nodes) {
-    // don't pass a genotype since we're already going to be inside an
-    // alterable node and nested alterables aren't supported
-    //
-    let nullGenotype = null;
-    let [simplifiedAsts, _] = compileNodes(nodes, nullGenotype);
-    _ = _;
-
-    // return an array of simplified ast objects
-    return simplifiedAsts;
-  },
 
   // transform a front end ast into a backAst
   // NOTE: we currently need to assume that the alterable nodes

@@ -28,16 +28,19 @@ function buildTraitFromNode(node, genes) {
   if (node.alterable === true) {
 
     // expect a form in the parameterAST
-    let simplifiedAst, initialValue;
+    let simplifiedAst, initialValue, compiledNodes;
 
     if(node.type === NodeType.LIST) {
-      initialValue = Compiler.compileListInAlterable(node.children);
+      //initialValue = Compiler.compileListInAlterable(node.children);
+      // wrap the node in an array and pass into Compiler.compileWithGenotype
+      compiledNodes = Compiler.compileWithGenotype([node], null);
+      initialValue = compiledNodes[0];
     } else {
       initialValue = node.value;
     }
 
     if (node.parameterAST.length) {
-      simplifiedAst = Compiler.compileInAlterable(node.parameterAST);
+      simplifiedAst = Compiler.compileWithGenotype(node.parameterAST, null);
     } else {
       // this is to allow code like (+ 2 [2])
       // which should behave as if there were no square brackets
