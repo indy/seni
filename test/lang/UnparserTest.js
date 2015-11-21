@@ -68,7 +68,20 @@ describe('Unparser', () => {
     expectToUnparse('4 2 0');
     expectToUnparse('(1)');
     expectToUnparse('(foo 1)');
+    expectToUnparse('(foo "hello")');
+    expectToUnparse('(list "string")');
+    expectToUnparse('(list (list "a"))');
     expectToUnparse('(fn (bar x: 3) (+ x x))');
+  });
+
+  it('should unparse alterable expressions', () => {
+    expectToUnparse('[(list (list "a") (list "a"))]');
+    expectToUnparse('(foo f [(list (list "a"))])');
+    expectToUnparse('background [(col/rgb r: 1 g: 1 b: 1 alpha: 1) (col)]');
+    expectToUnparse('["hello" (something "foo" "bar")]');
+    expectToUnparse('[true (something)]');
+    expectToUnparse('(foo ["hello"])');
+    expectToUnparse('(foo ["hello" (something "foo" "bar")])');
     expectToUnparse('(+ 1 2 [3 (int)])');
     expectToUnparse('(+ 1 [ 3 (int)])');
   });
@@ -86,5 +99,7 @@ describe('Unparser', () => {
 
     expectToUnparse(f);
     expect(seededUnparse(f, 33)).to.equal(g);
+
+    expectToUnparse('(define f [(list "a") map (l from: (list "a" "b"))])');
   });
 });
