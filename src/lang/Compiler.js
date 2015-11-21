@@ -31,7 +31,11 @@ function compile(node, genotype) {
   }
 
   if (node.type === NodeType.LIST) {
-    return compileList(node.children, genotype);
+    if (usingNamedParameters(node.children)) {
+      return compileFormUsingNamedParameters(node.children, genotype);
+    } else {
+      return compileNodes(node.children, genotype);
+    }
   }
 
   if (node.type === NodeType.STRING) {
@@ -94,14 +98,6 @@ function usingNamedParameters(children) {
   return false;
 }
 
-function compileList(children, genotype) {
-  if (usingNamedParameters(children)) {
-    return compileFormUsingNamedParameters(children, genotype);
-  } else {
-    return compileNodes(children, genotype);
-  }
-}
-
 function suitableForBackAst(node) {
   return node.type !== NodeType.WHITESPACE && node.type !== NodeType.COMMENT;
 }
@@ -153,6 +149,13 @@ function expandNodeForAlterableChildren(nodes) {
   });
 }
 
+// frontAst -> backAst -> simplifiedAst
+
+// frontAst: has whitespace, comment nodes
+// backAst: removes whitespace and comment nodes, expands the map keyword
+// in alterable nodes
+// simplifiedAst: a json-like sexp used by the interpreter
+//
 const Compiler = {
 
   // transform a front end ast into a backAst

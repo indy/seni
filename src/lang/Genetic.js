@@ -31,7 +31,6 @@ function buildTraitFromNode(node, genes) {
     let simplifiedAst, initialValue, compiledNodes;
 
     if(node.type === NodeType.LIST) {
-      //initialValue = Compiler.compileListInAlterable(node.children);
       // wrap the node in an array and pass into Compiler.compileWithGenotype
       compiledNodes = Compiler.compileWithGenotype([node], null);
       initialValue = compiledNodes[0];
