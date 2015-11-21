@@ -46,7 +46,7 @@ function unparseSimplifiedAst(value) {
 
   }
   return value;
-};
+}
 
 // does the node contain a 'map' name node
 function containsMapNode(ast) {
@@ -71,74 +71,98 @@ function formatNodeValue(value, node) {
   return res;
 }
 
+// warning: thie function mutates genoIndex
+function pullValueFromGenotype(genotype) {
+  // let value = genotype.get(genoIndex++).get('value');
+  let value = genotype.first().get('value');
+  return [unparseSimplifiedAst(value), genotype.shift()];
+}
+
+// have a form like:
+// (define foo
+// [(list 11 12 13 14 15 16) map (select from: (list 1 2 3 4 5 6 7 8 9))])
+// and we're in the alterable list part
+function getMultipleValuesFromGenotype(node, genotype) {
+  // go through the children: 'list 11 12 13 14 15 16'
+  // ignoring the initial list name (is too specific a check?) and
+  // any whitespace
+  let v;
+
+  let res = node.children.map(n => {
+    if(n.type === NodeType.NAME && n.value === 'list') {
+      return formatNodeValue(n.value, n);
+    } else if(n.type === NodeType.COMMENT ||
+              n.type === NodeType.WHITESPACE) {
+      return formatNodeValue(n.value, n);
+    } else {
+      [v, genotype] = pullValueFromGenotype(genotype);
+      return formatNodeValue(v, n);
+    }
+  }).join('');
+
+  return ['(' + res + ')', genotype];
+}
+
+function unparseUnalterable(unalterableNode) {
+  let v, _;
+  return unalterableNode.map(n => {
+    [v, _] = unparseASTNode(n, null);
+    return v;
+  }).join('');
+}
+
+function unparseASTNode(node, genotype) {
+  let term = '';
+  let v;
+
+  if(node.alterable) {
+    // prefixes are any comments/whitespaces after the opening bracket
+
+    // Note: neither of these statements should consume any of the
+    // genotype
+    let prefixes = unparseUnalterable(node.parameterPrefix);
+    let alterParams = unparseUnalterable(node.parameterAST);
+
+    // use value from genotype
+    if (node.type === NodeType.LIST && containsMapNode(node.parameterAST)) {
+      [v, genotype] = getMultipleValuesFromGenotype(node, genotype);
+    } else {
+      [v, genotype] = pullValueFromGenotype(genotype);
+      v = formatNodeValue(v, node);
+    }
+
+    term = '[' + prefixes + v + alterParams + ']';
+
+  } else {
+    let nval;
+    if(node.type === NodeType.LIST) {
+      v = '(' + node.children.map(n => {
+        [nval, genotype] = unparseASTNode(n, genotype);
+        return nval;
+      }).join('') + ')';
+    } else {
+      v = node.value;
+    }
+
+    term = formatNodeValue(v, node);
+  }
+
+  return [term, genotype];
+}
+
 const Unparser = {
 
   // converts a frontAST back into a string
   // ast is an array of nodes
   unparse: function(frontAst, genotype) {
-    let genoIndex = 0;
 
-    // warning: thie function mutates genoIndex
-    function pullValueFromGenotype() {
-      let value = genotype.get(genoIndex++).get('value');
-
-      return unparseSimplifiedAst(value);
-    }
-
-    // have a form like:
-    // (define foo
-    // [(list 11 12 13 14 15 16) map (select from: (list 1 2 3 4 5 6 7 8 9))])
-    // and we're in the alterable list part
-    function getMultipleValuesFromGenotype(node) {
-      // go through the children: 'list 11 12 13 14 15 16'
-      // ignoring the initial list name (is too specific a check?) and
-      // any whitespace
-      let res = node.children.map(n => {
-        if(n.type === NodeType.NAME && n.value === 'list') {
-          return formatNodeValue(n.value, n);
-        } else if(n.type === NodeType.COMMENT ||
-                  n.type === NodeType.WHITESPACE) {
-          return formatNodeValue(n.value, n);
-        } else {
-          return formatNodeValue(pullValueFromGenotype(), n);
-        }
-      }).join('');
-
-      return '(' + res + ')';
-    }
-
-    function unparseASTNode(node) {
-      let term = '';
-
-      if(node.alterable) {
-        // use value from genotype
-        let v;
-
-        if (node.type === NodeType.LIST && containsMapNode(node.parameterAST)) {
-          v = getMultipleValuesFromGenotype(node);
-        } else {
-          v = formatNodeValue(pullValueFromGenotype(), node);
-        }
-        // prefixes are any comments/whitespaces after the opening bracket
-        let prefixes = node.parameterPrefix.map(unparseASTNode).join('');
-        let alterParams = node.parameterAST.map(unparseASTNode).join('');
-
-        term = '[' + prefixes + v + alterParams + ']';
-
-      } else {
-        let nval;
-        if(node.type === NodeType.LIST) {
-          nval = '(' + node.children.map(unparseASTNode).join('') + ')';
-        } else {
-          nval = node.value;
-        }
-        term = formatNodeValue(nval, node);
-      }
-
+    let term;
+    let terms = frontAst.map(n => {
+      [term, genotype] = unparseASTNode(n, genotype);
       return term;
-    }
+    });
 
-    return frontAst.map(unparseASTNode).join('');
+    return terms.join('');
   }
 };
 

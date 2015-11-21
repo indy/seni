@@ -75,8 +75,6 @@ describe('Unparser', () => {
   });
 
   it('should unparse alterable expressions', () => {
-    expectToUnparse('[(list (list "a") (list "a"))]');
-    expectToUnparse('(foo f [(list (list "a"))])');
     expectToUnparse('background [(col/rgb r: 1 g: 1 b: 1 alpha: 1) (col)]');
     expectToUnparse('["hello" (something "foo" "bar")]');
     expectToUnparse('[true (something)]');
@@ -84,6 +82,8 @@ describe('Unparser', () => {
     expectToUnparse('(foo ["hello" (something "foo" "bar")])');
     expectToUnparse('(+ 1 2 [3 (int)])');
     expectToUnparse('(+ 1 [ 3 (int)])');
+    expectToUnparse('[(list (list "a") (list "a"))]');
+    expectToUnparse('(foo f [(list (list "a"))])');
   });
 
   it('should unparse with different genotypes', () => {
@@ -102,4 +102,5 @@ describe('Unparser', () => {
 
     expectToUnparse('(define f [(list "a") map (l from: (list "a" "b"))])');
   });
+
 });
