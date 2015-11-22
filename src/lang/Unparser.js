@@ -44,6 +44,10 @@ function unparseSimplifiedAst(value) {
     }
     return args.trim();
 
+  } else if(typeof(value) === 'number') {
+    // see if the number is a float, if so then format to 3dp
+    let asString3dp = value.toFixed(3);
+    return (asString3dp.match(/[.]000$/)) ? value : asString3dp;
   }
   return value;
 }
@@ -107,6 +111,7 @@ function unparseUnalterable(unalterableNode) {
   let v, _;
   return unalterableNode.map(n => {
     [v, _] = unparseASTNode(n, null);
+    _ = _;
     return v;
   }).join('');
 }

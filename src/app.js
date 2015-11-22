@@ -180,6 +180,23 @@ function renderHighRes(seniApp, element) {
   }
 }
 
+function showEditFromEvolve(seniApp, element) {
+  let [index, _] = getPhenoIdFromDom(element);
+  _ = _;
+
+  if(index !== -1) {
+    const piece = seniApp.piece;
+    const genotype = piece.genotypes[index];
+    const frontAst = seniApp.piece.frontAst;
+
+    const script = Runtime.unparse(frontAst, genotype);
+
+    seniApp.piece.script = script;
+    switchMode(seniApp, SeniMode.edit);
+    showScriptInEditor(seniApp);
+  }
+}
+
 function toggleSelection(seniApp, element) {
   const [index, e] = getPhenoIdFromDom(element);
   if(index !== -1) {
@@ -298,6 +315,7 @@ function createPhenotypeElement(id, placeholderImage) {
       </div>
       <div class="card-action">
         <a href="#" class="render">Render</a>
+        <a href="#" class="edit">Edit</a>
       </div>
     </div>
     `;
@@ -560,6 +578,8 @@ function setupUI(seniApp) {
     let target = event.target;
     if(target.classList.contains('render')) {
       renderHighRes(seniApp, target);
+    } else if(target.classList.contains('edit')) {
+      showEditFromEvolve(seniApp, target);
     } else {
       toggleSelection(seniApp, target);
     }

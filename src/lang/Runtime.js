@@ -47,6 +47,10 @@ const Runtime = {
     console.log(Unparser.unparse(frontAst, genotype));
   },
 
+  unparse: function(frontAst, genotype) {
+    return Unparser.unparse(frontAst, genotype);
+  },
+
   compileBackAst: function(frontAst) {
     return Compiler.compileBackAst(frontAst);
   },
