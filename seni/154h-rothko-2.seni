@@ -10,15 +10,15 @@
                              b: [0.5 (scalar)]
                              alpha: 0.9)
 
-  (col/rgb r: [0.2 (scalar)]
-           g: [0.0 (scalar)]
-           b: [0.1 (scalar)]
-           alpha: 0.9)
+  top-colour (col/rgb r: [0.2 (scalar)]
+                      g: [0.0 (scalar)]
+                      b: [0.1 (scalar)]
+                      alpha: 0.9)
 
-  (col/lab l: [37.0 (scalar min: 0 max: 100)]
-           a: [5.79 (scalar min: -50 max: 50)]
-           b: [-35.82 (scalar min: -50 max: 50)]
-           alpha: 0.7))
+  mid-colour (col/lab l: [37.0 (scalar min: 0 max: 100)]
+                      a: [5.79 (scalar min: -50 max: 50)]
+                      b: [-35.82 (scalar min: -50 max: 50)]
+                      alpha: 0.7))
 
 (fn (top-section-highlights)
     (define 
