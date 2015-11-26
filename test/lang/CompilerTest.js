@@ -20,7 +20,7 @@ import Parser from '../../src/lang/Parser';
 import Lexer from '../../src/lang/Lexer';
 import Compiler from '../../src/lang/Compiler';
 import Genetic from '../../src/lang/Genetic';
-import Node from '../../src/lang/Node';
+import {Node, NodeList} from '../../src/lang/Node';
 import NodeType from '../../src/lang/NodeType';
 
 import chai from 'chai';
@@ -59,7 +59,7 @@ describe('Compiler', () => {
   it('should compile a backAst', () => {
     // create a node
     function n(type, value) {
-      return new Node(type, value);
+      return (type === NodeType.LIST) ? new NodeList : new Node(type, value);
     }
 
     let node, frontAst, backAst;

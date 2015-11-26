@@ -72,6 +72,10 @@ describe('Unparser', () => {
     expectToUnparse('(list "string")');
     expectToUnparse('(list (list "a"))');
     expectToUnparse('(fn (bar x: 3) (+ x x))');
+    expectToUnparse('(quote ("hello"))');
+    expectToUnparse('\'bye');
+    expectToUnparse('\'("hello")');
+    expectToUnparse('(hello \'(a b c) \'(1 2 3) \'(a: b: c:))');
   });
 
   it('should unparse alterable expressions', () => {
@@ -84,6 +88,9 @@ describe('Unparser', () => {
     expectToUnparse('(+ 1 [ 3 (int)])');
     expectToUnparse('[(list (list "a") (list "a"))]');
     expectToUnparse('(foo f [(list (list "a"))])');
+    expectToUnparse(`([focal/vline (select from: (list 'focal/point
+                                                       'focal/hline
+                                                       'focal/vline))])`);
   });
 
   it('should unparse with different genotypes', () => {

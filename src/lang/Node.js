@@ -16,12 +16,13 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-export default class Node {
+import NodeType from './NodeType';
+
+class Node {
   constructor(type, value) {
     this.type = type;
     this.value = value;
     this.alterable = false;
-    this.children = [];
 
     // node mutate specific
     this.parameterAST = [];
@@ -29,6 +30,25 @@ export default class Node {
     // need a place for nodes that occur within square brackets that should
     // be ignored, e.g. the whitespace before the 2 in: (+ 1 [ 2] (int))
     this.parameterPrefix = [];
+  }
+
+  addParameterNode(parameter) {
+    this.parameterAST.push(parameter);
+  }
+
+  addParameterNodePrefix(prefix) {
+    this.parameterPrefix.push(prefix);
+  }
+}
+
+class NodeList extends Node {
+  constructor() {
+    super(NodeType.LIST);
+
+    this.children = [];
+    // true if the list was using the '(something) list form
+    // as opposed to (quote (something))
+    this.usingAbbreviation = false;
   }
 
   addChild(child) {
@@ -42,12 +62,6 @@ export default class Node {
   size() {
     return this.children.length;
   }
-
-  addParameterNode(parameter) {
-    this.parameterAST.push(parameter);
-  }
-
-  addParameterNodePrefix(prefix) {
-    this.parameterPrefix.push(prefix);
-  }
 }
+
+export default { Node, NodeList };

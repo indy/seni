@@ -17,7 +17,7 @@
  */
 
 import TokenType from './TokenType';
-import Node from './Node';
+import {Node, NodeList} from './Node';
 import NodeType from './NodeType';
 
 /*
@@ -135,8 +135,9 @@ function consumeBracketForm(tokens) {
 function consumeQuotedForm(tokens) {
   // '(2 3 4) -> (quote (2 3 4))
 
-  const node = new Node(NodeType.LIST);
+  const node = new NodeList();
 
+  node.usingAbbreviation = true;
   node.addChild(new Node(NodeType.NAME, 'quote'));
   node.addChild(new Node(NodeType.WHITESPACE, ' '));
   const childBox = consumeItem(tokens);
@@ -150,7 +151,7 @@ function consumeQuotedForm(tokens) {
 
 function consumeList(tokens) {
 
-  const boxedNode = boxNode(NodeType.LIST, undefined);
+  const node = new NodeList();
 
   /* eslint-disable no-constant-condition */
   while (true) {
@@ -161,7 +162,7 @@ function consumeList(tokens) {
 
     if (token.type === TokenType.LIST_END) {
       tokens.shift();
-      return boxedNode;
+      return {node: node};
     }
 
     const boxedItem = consumeItem(tokens);
@@ -170,7 +171,7 @@ function consumeList(tokens) {
     }
 
     const n = boxedItem.node;
-    boxedNode.node.addChild(n);
+    node.addChild(n);
   }
   /* eslint-enable no-constant-condition */
 

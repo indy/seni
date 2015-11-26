@@ -86,13 +86,25 @@ function pullValueFromGenotype(genotype) {
 // (define foo
 // [(list 11 12 13 14 15 16) map (select from: (list 1 2 3 4 5 6 7 8 9))])
 // and we're in the alterable list part
-function getMultipleValuesFromGenotype(node, genotype) {
+function getMultipleValuesFromGenotype(listNode, genotype) {
   // go through the children: 'list 11 12 13 14 15 16'
   // ignoring the initial list name (is too specific a check?) and
   // any whitespace
   let v;
+  let lst, listPrefix, listPostfix;
 
-  let res = node.children.map(n => {
+  if(listNode.usingAbbreviation) {
+    listPrefix = '\'';
+    listPostfix = '';
+    // remove the 'quote' and whitespace nodes
+    lst = listNode.children.slice(2);
+  } else {
+    listPrefix = '(';
+    listPostfix = ')';
+    lst = listNode.children;
+  }
+
+  let res = lst.map(n => {
     if(n.type === NodeType.NAME && n.value === 'list') {
       return formatNodeValue(n.value, n);
     } else if(n.type === NodeType.COMMENT ||
@@ -104,7 +116,7 @@ function getMultipleValuesFromGenotype(node, genotype) {
     }
   }).join('');
 
-  return ['(' + res + ')', genotype];
+  return [listPrefix + res + listPostfix, genotype];
 }
 
 function unparseUnalterable(unalterableNode) {
@@ -141,10 +153,23 @@ function unparseASTNode(node, genotype) {
   } else {
     let nval;
     if(node.type === NodeType.LIST) {
-      v = '(' + node.children.map(n => {
+
+      let lst, listPrefix, listPostfix;
+      if(node.usingAbbreviation) {
+        listPrefix = '\'';
+        listPostfix = '';
+        // remove the 'quote' and whitespace nodes
+        lst = node.children.slice(2);
+      } else {
+        listPrefix = '(';
+        listPostfix = ')';
+        lst = node.children;
+      }
+
+      v = listPrefix + lst.map(n => {
         [nval, genotype] = unparseASTNode(n, genotype);
         return nval;
-      }).join('') + ')';
+      }).join('') + listPostfix;
     } else {
       v = node.value;
     }

@@ -19,7 +19,7 @@
 /* eslint-disable no-use-before-define */
 
 import NodeType from './NodeType';
-import Node from './Node';
+import {Node, NodeList} from './Node';
 
 function compile(node, genotype) {
 
@@ -106,7 +106,14 @@ function suitableForBackAst(node) {
 function compileForBackAst(nodes) {
   return nodes.reduce((nodeArray, n) => {
     if(suitableForBackAst(n)) {
-      let newNode = new Node(n.type, n.value);
+      let newNode;
+      if (n.type === NodeType.LIST) {
+        newNode = new NodeList();
+        newNode.usingAbbreviation = n.usingAbbreviation;
+      } else {
+        newNode = new Node(n.type, n.value);
+      };
+
       newNode.alterable = n.alterable;
 
       if(n.alterable) {
