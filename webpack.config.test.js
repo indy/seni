@@ -15,12 +15,26 @@ module.exports = {
 
     loaders: [
       {
+        loader: "babel-loader",
+
         test: path.join(__dirname, 'src'),
-        loader: 'babel-loader'
+
+        // Options to configure babel with
+        query: {
+          plugins: ['transform-runtime'],
+          presets: ['es2015']
+        }
       },
       {
+        loader: "babel-loader",
+
         test: path.join(__dirname, 'test'),
-        loader: 'babel-loader'
+
+        // Options to configure babel with
+        query: {
+          plugins: ['transform-runtime'],
+          presets: ['es2015']
+        }
       }
     ]
   },

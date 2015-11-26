@@ -36,7 +36,7 @@ function unparseSimplifiedAst(value) {
     let elements = value.map(unparseSimplifiedAst).join(' ').trim();
     return '(' + elements + ')';
 
-  } else if(typeof(value) === 'object') {
+  } else if(value instanceof Object) {
 
     let args = '';
     for (let k in value) {
@@ -44,7 +44,7 @@ function unparseSimplifiedAst(value) {
     }
     return args.trim();
 
-  } else if(typeof(value) === 'number') {
+  } else if(!Number.isNaN(Number(value))) {
     // see if the number is a float, if so then format to 3dp
     let asString3dp = value.toFixed(3);
     return (asString3dp.match(/[.]000$/)) ? value : asString3dp;
