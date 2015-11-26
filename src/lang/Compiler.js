@@ -19,7 +19,8 @@
 /* eslint-disable no-use-before-define */
 
 import NodeType from './NodeType';
-import {Node, NodeList} from './Node';
+import Node from './Node';
+import NodeList from './NodeList';
 
 function compile(node, genotype) {
 

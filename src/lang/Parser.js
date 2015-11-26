@@ -17,7 +17,8 @@
  */
 
 import TokenType from './TokenType';
-import {Node, NodeList} from './Node';
+import Node from './Node';
+import NodeList from './NodeList';
 import NodeType from './NodeType';
 
 /*

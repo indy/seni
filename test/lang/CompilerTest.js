@@ -20,7 +20,8 @@ import Parser from '../../src/lang/Parser';
 import Lexer from '../../src/lang/Lexer';
 import Compiler from '../../src/lang/Compiler';
 import Genetic from '../../src/lang/Genetic';
-import {Node, NodeList} from '../../src/lang/Node';
+import Node from '../../src/lang/Node';
+import NodeList from '../../src/lang/NodeList';
 import NodeType from '../../src/lang/NodeType';
 
 import chai from 'chai';
