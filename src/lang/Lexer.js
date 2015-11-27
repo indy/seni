@@ -64,11 +64,11 @@ function isListEnd(character) {
 }
 
 function isBracketStart(character) {
-  return character === '[';
+  return character === '{';
 }
 
 function isBracketEnd(character) {
-  return character === ']';
+  return character === '}';
 }
 
 function isQuotedString(character) {

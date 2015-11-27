@@ -44,7 +44,7 @@ describe('Interpreter', () => {
   });
 
   it('should evaluate a bracketed form', () => {
-    let res = evalForm(e, '(* 2 [4])');
+    let res = evalForm(e, '(* 2 {4})');
     expect(res[1]).to.be.closeTo(8, epsilon);
 
     //res = evalForm(e, '(quote ["shabba"])');

@@ -190,16 +190,16 @@ function seniMode() {
         } else if (ch === ';') { // comment
           stream.skipToEnd(); // rest of the line is a comment
           returnType = tokenType(COMMENT, state);
-        } else if (ch === '(' || ch === '[') {
+        } else if (ch === '(' || ch === '{') {
           let keyWord = ''; let indentTemp = stream.column(), letter;
 
-          if (ch === '[') {
+          if (ch === '{') {
             setInsideBracket(true, state);
           } else {
             state.parenDepth++;
           }
 
-          while ((letter = stream.eat(/[^\s\(\[\;\)\]]/)) != null) {
+          while ((letter = stream.eat(/[^\s\(\{\;\)\}]/)) != null) {
             keyWord += letter;
           }
 
@@ -221,10 +221,10 @@ function seniMode() {
 
           if(typeof state.sExprComment === 'number') state.sExprComment++;
 
-          returnType = tokenType(ch === '[' ? BRACKET : PAREN, state, ch);
-        } else if (ch === ')' || ch === ']') {
-          returnType = tokenType(ch === ']' ? BRACKET : PAREN, state, ch);
-          if (state.indentStack != null && state.indentStack.type === (ch === ')' ? '(' : '[')) {
+          returnType = tokenType(ch === '{' ? BRACKET : PAREN, state, ch);
+        } else if (ch === ')' || ch === '}') {
+          returnType = tokenType(ch === '}' ? BRACKET : PAREN, state, ch);
+          if (state.indentStack != null && state.indentStack.type === (ch === ')' ? '(' : '{')) {
             popStack(state);
 
             if(typeof state.sExprComment === 'number'){
@@ -234,7 +234,7 @@ function seniMode() {
               }
             }
           }
-          if(ch === ']') {
+          if(ch === '}') {
             setInsideBracket(false, state);
           } else {
             state.parenDepth--;

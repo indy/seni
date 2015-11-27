@@ -1,7 +1,7 @@
 (rect position: (v2 (/ canvas/width 2) (/ canvas/height 2))
       width: canvas/width
       height: canvas/height
-      colour: [white (col)])
+      colour: {white (col)})
 
 (loop (y from: 1 to: (- num-squares 1))
   (loop (x from: 1 to: (- num-squares 1))
@@ -16,19 +16,19 @@
                colour: colour)))
 
 (define make-colour
-  (col/procedural-fn a: [(col/rgb r: 0.80 g: 0.50 b: 0.40) (col)]
-                     b: [(col/rgb r: 0.20 g: 0.40 b: 0.20) (col)]
-                     c: [(col/rgb r: 2.00 g: 1.00 b: 1.00) (col)]
-                     d: [(col/rgb r: 0.00 g: 0.25 b: 0.25) (col)]))
+  (col/procedural-fn a: {(col/rgb r: 0.80 g: 0.50 b: 0.40) (col)}
+                     b: {(col/rgb r: 0.20 g: 0.40 b: 0.20) (col)}
+                     c: {(col/rgb r: 2.00 g: 1.00 b: 1.00) (col)}
+                     d: {(col/rgb r: 0.00 g: 0.25 b: 0.25) (col)}))
 
 (define 
-  focalpoint ([focal/point (select from: (list 'focal/point
+  focalpoint ({focal/point (select from: (list 'focal/point
                                                'focal/hline
-                                               'focal/vline))] 
-              position: (v2 [500 (int max: canvas/width)] 
-                            [500 (int max: canvas/height)])
-              distance: [800 (int min: (/ canvas/width 2) max: canvas/width)])
-  num-squares-to-render [7 (int min: 4 max: 10)]
+                                               'focal/vline))} 
+              position: (v2 {500 (int max: canvas/width)} 
+                            {500 (int max: canvas/height)})
+              distance: {800 (int min: (/ canvas/width 2) max: canvas/width)})
+  num-squares-to-render {7 (int min: 4 max: 10)}
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ canvas/width num-squares))

@@ -1,18 +1,18 @@
 
-(loop (t steps-upto: [10 (int min: 1 max: 20)])
+(loop (t steps-upto: {10 (int min: 1 max: 20)})
   (bezier colour: (col/rgb r: 0.1 g: 0.4 b: 0.9 alpha: 0.7)
           tessellation: 20
           coords: (list (interp/circle position: (v2 500 500)
-                                       radius: [30 (int max: 1000)]
-                                       t: (+ t [0.2 (scalar)]))
+                                       radius: {30 (int max: 1000)}
+                                       t: (+ t {0.2 (scalar)}))
                         (interp/circle position: (v2 500 500)
-                                       radius: [100 (int max: 1000)]
-                                       t: (+ t [0.2 (scalar)]))
+                                       radius: {100 (int max: 1000)}
+                                       t: (+ t {0.2 (scalar)}))
                         (interp/circle position: (v2 500 500)
-                                       radius: [200 (int max: 1000)]
-                                       t: (+ t [0.3 (scalar)]))
+                                       radius: {200 (int max: 1000)}
+                                       t: (+ t {0.3 (scalar)}))
                         (interp/circle position: (v2 500 500)
-                                       radius: [400 (int max: 1000)]
-                                       t: (+ t [0.4 (scalar)])))))
+                                       radius: {400 (int max: 1000)}
+                                       t: (+ t {0.4 (scalar)})))))
 
 

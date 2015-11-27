@@ -146,7 +146,7 @@ function unparseASTNode(node, genotype) {
       v = formatNodeValue(v, node);
     }
 
-    term = '[' + prefixes + v + alterParams + ']';
+    term = '{' + prefixes + v + alterParams + '}';
 
   } else {
     let nval;

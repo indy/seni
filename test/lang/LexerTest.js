@@ -77,7 +77,7 @@ describe('Lexer', () => {
        TokenType.QUOTE_ABBREVIATION,
        TokenType.NAME,
        TokenType.LIST_END],
-      '(go [\"hi\"] \'SOMETHING)');
+      '(go {\"hi\"} \'SOMETHING)');
   });
 
   it('should tokenise labeled function invocations', () => {

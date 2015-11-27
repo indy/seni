@@ -15,25 +15,25 @@
 
 ;; the coords that the bezier path will take
 (define 
-  coords (list (v2 [  0 (int max: canvas/width)] [500 (int max: canvas/height)])
-               (v2 [333 (int max: canvas/width)] [100 (int max: canvas/height)])
-               (v2 [666 (int max: canvas/width)] [900 (int max: canvas/height)])
-               (v2 [999 (int max: canvas/width)] [500 (int max: canvas/height)]))
+  coords (list (v2 {  0 (int max: canvas/width)} {500 (int max: canvas/height)})
+               (v2 {333 (int max: canvas/width)} {100 (int max: canvas/height)})
+               (v2 {666 (int max: canvas/width)} {900 (int max: canvas/height)})
+               (v2 {999 (int max: canvas/width)} {500 (int max: canvas/height)}))
 
   ;; as the bezier path progresses, change the circle's LAB a component
   remap-a (interp/fn from: (v2 0 1)
-                     to: (v2 [-80 (scalar min: -100 max: 100)]
-                             [ 80 (scalar min: -100 max: 100)]))
+                     to: (v2 {-80 (scalar min: -100 max: 100)}
+                             { 80 (scalar min: -100 max: 100)}))
 
   ;; as the bezier path progresses, change the circle's LAB b component
   remap-b (interp/fn from: (v2 0 1)
-                     to: (v2 [-100 (scalar min: -100 max: 100)]
-                             [ 100 (scalar min: -100 max: 100)])))
+                     to: (v2 {-100 (scalar min: -100 max: 100)}
+                             { 100 (scalar min: -100 max: 100)})))
 
 ;; make a function that will be invoked for every point in the bezier path
 (fn (make-fun radius: 10
               radius-factor: 0
-              tessellation: [20 (int min: 3 max: 20)]
+              tessellation: {20 (int min: 3 max: 20)}
               seed: "hooha"         ; the seed for the position offset rng
               l-val: 100            ; the l in LAB
               alpha: 1
@@ -64,7 +64,7 @@
              steps: 70
              coords: coords)
 
-(define steps [20 (int min: 5 max: 50)])
+(define steps {20 (int min: 5 max: 50)})
 
 (path/bezier fn: (make-fun radius: 100
                            seed: "eenie"

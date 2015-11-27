@@ -37,7 +37,7 @@ describe('Parser', () => {
   }
 
   it('should parse a bracketed form', () => {
-    let astObj = simpleParse('(+ 1 2 [3 (int min: 0 max: 10)])');
+    let astObj = simpleParse('(+ 1 2 {3 (int min: 0 max: 10)})');
     expect(astObj.nodes.length).to.equal(1);
 
     let ast = astObj.nodes[0];
@@ -57,7 +57,7 @@ describe('Parser', () => {
   });
 
   it('should parse a bracketed form that starts with whitespace', () => {
-    let astObj = simpleParse('(+ 1 2 [ 3 (int min: 0 max: 10)])');
+    let astObj = simpleParse('(+ 1 2 { 3 (int min: 0 max: 10)})');
     expect(astObj.nodes.length).to.equal(1);
 
     let ast = astObj.nodes[0];

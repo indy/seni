@@ -7,22 +7,22 @@
 (rotate angle: 90)
 
 (stroked-bezier-rect position: (v2 0 0)
-                     width: [900 (int min: 500 max: canvas/width)]
-                     height: [900 (int min: 500 max: canvas/height)]
+                     width: {900 (int min: 500 max: canvas/width)}
+                     height: {900 (int min: 500 max: canvas/height)}
 
-                     iterations: [42 (int min: 5 max: 100)]
-                     overlap: [15 (int min: 0 max: 50)]
+                     iterations: {42 (int min: 5 max: 100)}
+                     overlap: {15 (int min: 0 max: 50)}
 
-                     tessellation: [45 (int min: 4 max: 90)]
+                     tessellation: {45 (int min: 4 max: 90)}
 
-                     stroke-tessellation: [5 (int min: 3 max: 20)]
-                     stroke-noise: [50 (int min: 0 max: 100)]
+                     stroke-tessellation: {5 (int min: 3 max: 20)}
+                     stroke-noise: {50 (int min: 0 max: 100)}
 
-                     colour: (col/rgb r: [0.2 (scalar max: 0.3)] 
-                                      g: [0.0 (scalar max: 0.3)] 
-                                      b: [0.1 (scalar max: 0.3)] 
+                     colour: (col/rgb r: {0.2 (scalar max: 0.3)} 
+                                      g: {0.0 (scalar max: 0.3)} 
+                                      b: {0.1 (scalar max: 0.3)} 
                                       alpha: 0.9)
-                     colour-volatility: [100 (int min: 0 max: 140)]
+                     colour-volatility: {100 (int min: 0 max: 140)}
 
-                     volatility: [1 (int min: 0 max: 50)]
-                     seed: [43 (int min: 0 max: 3433)])
+                     volatility: {1 (int min: 0 max: 50)}
+                     seed: {43 (int min: 0 max: 3433)})

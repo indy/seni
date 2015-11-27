@@ -8,9 +8,9 @@
   w/4 (/ w 4)
   h/4 (/ h 4)
 
-  primary [blue (col alpha: 1)]
-  accent [red (col alpha: 1)]
-  background [green (col alpha: 1)])
+  primary {blue (col alpha: 1)}
+  accent {red (col alpha: 1)}
+  background {green (col alpha: 1)})
 
 (fn (bg background: white)
     (rect position: origin
@@ -159,7 +159,7 @@
             colour: accent
             tessellation: 32))
 
-(define funct [(list p1 p2 p3 p4 p5 p6 p7 p8 p9
+(define funct {(list p1 p2 p3 p4 p5 p6 p7 p8 p9
                      p1 p2 p3 p4 p5 p6 p7 p8 p9
                      p1 p2 p3 p4 p5 p6 p7 p8 p9
                      p1 p2 p3 p4 p5 p6 p7 p8 p9
@@ -171,18 +171,18 @@
                      p1 p2 p3 p4 p5 p6 p7 p8 p9
                      p1 p2 p3 p4 p5 p6 p7 p8 p9
                      p1)
-               map (select from: (list 'p1 'p2 'p3 'p4 'p5 'p6 'p7 'p8 'p9))])
+               map (select from: (list 'p1 'p2 'p3 'p4 'p5 'p6 'p7 'p8 'p9))})
 
 (define 
   rots (list '(1 1) '(1 -1) '(-1 1) '(-1 -1))
   rots/length (list/length of: rots)
 
-  focal-point (focal/point position: (v2 [500 (int max: 1000)]
-                                         [500 (int max: 1000)])
-                           distance: [800 (int max: 1000)])
+  focal-point (focal/point position: (v2 {500 (int max: 1000)}
+                                         {500 (int max: 1000)})
+                           distance: {800 (int max: 1000)})
   brightness-remapper (interp/fn from: '(0 1) 
-                                 to: '([20 (int min: 0 max: 100)] 
-                                       [80 (int min: 0 max: 100)])))
+                                 to: '({20 (int min: 0 max: 100)} 
+                                       {80 (int min: 0 max: 100)})))
 
 (rect position: canvas/centre
       width: canvas/width
