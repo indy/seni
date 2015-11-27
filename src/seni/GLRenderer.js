@@ -16,6 +16,8 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+const logToConsole = false;
+
 function initGL(canvas) {
   try {
     const gl = canvas.getContext('experimental-webgl', {
@@ -150,11 +152,15 @@ class GLRenderer {
     const domElement = this.glDomElement;
 
     if(domElement.width !== destWidth) {
-      console.log('GL width from', domElement.width, 'to', destWidth);
+      if(logToConsole) {
+        console.log('GL width from', domElement.width, 'to', destWidth);
+      }
       domElement.width = destWidth;
     }
     if(this.glDomElement.height !== destHeight) {
-      console.log('GL height from', domElement.height, 'to', destHeight);
+      if(logToConsole) {
+        console.log('GL height from', domElement.height, 'to', destHeight);
+      }
       domElement.height = destHeight;
     }
     // gl.drawingBufferWidth, gl.drawingBufferHeight hold the actual
@@ -197,7 +203,9 @@ class GLRenderer {
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, renderPacket.bufferLevel);
     }
-    console.log(`rendered ${sum} vertices in ${numPackets} renderPackets`);
+    if(logToConsole) {
+      console.log(`rendered ${sum} vertices in ${numPackets} renderPackets`);
+    }
   }
 }
 

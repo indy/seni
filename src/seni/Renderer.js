@@ -426,7 +426,7 @@ class Renderer {
 
     Util.withTiming('drawRenderPackets', () => {
       this.glRenderer.drawRenderPackets(this.renderPackets);
-    });
+    }, false);
   }
 
   // --------------------------------------------------------------------------

@@ -23,6 +23,8 @@ import Bind from '../seni/Bind';
 import PseudoRandom from '../seni/PseudoRandom';
 import Immutable from 'immutable';
 
+const logToConsole = false;
+
 // the node will be in backAst form
 function buildTraitFromNode(node, genes) {
   if (node.alterable === true) {
@@ -70,7 +72,9 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
   // todo: assert that both genotypes have the same length
 
   let crossoverIndex = Number.parseInt(Math.random() * genotypeA.size, 10);
-  console.log('randomCrossover index:', crossoverIndex, mutationRate);
+  if(logToConsole) {
+    console.log('randomCrossover index:', crossoverIndex, mutationRate);
+  }
 
   let spliceA = genotypeA.slice(0, crossoverIndex);
   let spliceB = genotypeB.slice(crossoverIndex, genotypeB.size);
@@ -81,7 +85,9 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
   for(i = 0; i < genotypeA.size; i++) {
     if(Math.random() < mutationRate) {
       // mutate this trait
-      console.log('mutating gene ', i);
+      if(logToConsole) {
+        console.log('mutating gene ', i);
+      }
       childGenotype[i] = buildGeneFromTrait(traits[i], env);
     }
   }
@@ -140,7 +146,9 @@ const Genetic = {
       let genotypeA = genotypes[idxA];
       let genotypeB = genotypes[idxB];
 
-      console.log('using genotype indices: ', idxA, idxB);
+      if(logToConsole) {
+        console.log('using genotype indices: ', idxA, idxB);
+      }
 
       let child = randomCrossover(genotypeA, genotypeB,
                                   mutationRate, traits, env);

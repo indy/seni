@@ -121,7 +121,7 @@ function renderScript(seniApp) {
 }
 
 function timedRenderScript(seniApp, msg) {
-  Util.withTiming(msg, () => renderScript(seniApp));
+  Util.withTiming(msg, () => renderScript(seniApp), false);
 }
 
 function addClickEvent(id, fn) {

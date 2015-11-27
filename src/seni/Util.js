@@ -26,12 +26,14 @@ const Util = {
   },
 
   // execute the function and log the time that it takes
-  withTiming: function(msg, fn) {
+  withTiming: function(msg, fn, shouldLog) {
     const before = new Date();
     fn();
     const after = new Date();
     const duration = after - before;
-    console.log(msg, duration, 'ms');
+    if(shouldLog) {
+      console.log(msg, duration, 'ms');
+    }
   }
 };
 
