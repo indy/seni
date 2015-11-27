@@ -62,10 +62,8 @@ function buildGeneFromTrait(trait, env) {
   // evaluate all of the forms, returning the final result
   const evalRes = simplifiedAst.reduce((a, b) => Interpreter.evaluate(a[0], b),
                                        [env, false]);
-  // a[0] === the new env returned by the interpreter
-
-  const finalResult = evalRes[1];
-  return new Immutable.Map({value: finalResult});
+  // evalRes[0] === the new env returned by the interpreter
+  return evalRes[1];
 }
 
 function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
@@ -100,9 +98,7 @@ const Genetic = {
   },
 
   createGenotypeFromInitialValues: function(traits) {
-    // todo: why have a map with a single 'value' key?
-    const geno = traits.map(g => new Immutable.Map({value: g.initialValue}));
-    return new Immutable.List(geno);
+    return new Immutable.List(traits.map(g => g.initialValue));
   },
 
   createGenotypeFromTraits: function(traits, seed) {

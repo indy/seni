@@ -28,7 +28,7 @@ function compile(node, genotype) {
   // null argument for genotypes e.g. Genetic::buildTraitFromNode
   if (node.alterable && genotype !== null) {
     // todo: assert that there's another genotype value available
-    return [genotype.first().get('value'), genotype.shift()];
+    return [genotype.first(), genotype.shift()];
   }
 
   if (node.type === NodeType.LIST) {

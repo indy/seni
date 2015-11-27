@@ -77,9 +77,7 @@ function formatNodeValue(value, node) {
 
 // warning: thie function mutates genoIndex
 function pullValueFromGenotype(genotype) {
-  // let value = genotype.get(genoIndex++).get('value');
-  let value = genotype.first().get('value');
-  return [unparseSimplifiedAst(value), genotype.shift()];
+  return [unparseSimplifiedAst(genotype.first()), genotype.shift()];
 }
 
 // have a form like:
