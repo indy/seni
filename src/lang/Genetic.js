@@ -43,8 +43,8 @@ function buildTraitFromNode(node, genes) {
     if (node.parameterAST.length) {
       simplifiedAst = Compiler.compileWithGenotype(node.parameterAST, null);
     } else {
-      // this is to allow code like (+ 2 [2])
-      // which should behave as if there were no square brackets
+      // this is to allow code like (+ 2 {2})
+      // which should behave as if there were no curly brackets
       // todo: implement identity in this context
       simplifiedAst = [['identity', {value: initialValue}]];
     }

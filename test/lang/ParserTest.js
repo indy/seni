@@ -73,7 +73,7 @@ describe('Parser', () => {
 
     let alterable = ast.getChild(6);
     expect(alterable.value).to.equal(3);
-    // the whitespace after the opening square bracket
+    // the whitespace after the opening curly bracket
     expect(alterable.parameterPrefix.length).to.equal(1);
   });
 
@@ -206,13 +206,13 @@ describe('Parser', () => {
   });
 
   it('should parse a bracket form', () => {
-    let ts = [new Token(TokenType.BRACKET_START),
+    let ts = [new Token(TokenType.ALTERABLE_START),
               new Token(TokenType.INT, 42),
               new Token(TokenType.LIST_START),
               new Token(TokenType.INT, 22),
               new Token(TokenType.INT, 88),
               new Token(TokenType.LIST_END),
-              new Token(TokenType.BRACKET_END)];
+              new Token(TokenType.ALTERABLE_END)];
 
     let r = Parser.parse(ts);
     let res = r.nodes;

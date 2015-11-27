@@ -63,11 +63,11 @@ function isListEnd(character) {
   return character === ')';
 }
 
-function isBracketStart(character) {
+function isAlterableStart(character) {
   return character === '{';
 }
 
-function isBracketEnd(character) {
+function isAlterableEnd(character) {
   return character === '}';
 }
 
@@ -153,12 +153,12 @@ function consumeListEnd(s) {
   return [new Token(TokenType.LIST_END), s.substring(1)];
 }
 
-function consumeBracketStart(s) {
-  return [new Token(TokenType.BRACKET_START), s.substring(1)];
+function consumeAlterableStart(s) {
+  return [new Token(TokenType.ALTERABLE_START), s.substring(1)];
 }
 
-function consumeBracketEnd(s) {
-  return [new Token(TokenType.BRACKET_END), s.substring(1)];
+function consumeAlterableEnd(s) {
+  return [new Token(TokenType.ALTERABLE_END), s.substring(1)];
 }
 
 function consumeString(s) {
@@ -243,12 +243,12 @@ function nextTokenType(s) {
     return TokenType.LIST_END;
   }
 
-  if (isBracketStart(c)) {
-    return TokenType.BRACKET_START;
+  if (isAlterableStart(c)) {
+    return TokenType.ALTERABLE_START;
   }
 
-  if (isBracketEnd(c)) {
-    return TokenType.BRACKET_END;
+  if (isAlterableEnd(c)) {
+    return TokenType.ALTERABLE_END;
   }
 
   if (isQuotedString(c)) {
@@ -290,11 +290,11 @@ const Lexer = {
       case TokenType.LIST_END :
         p = consumeListEnd(s);
         break;
-      case TokenType.BRACKET_START :
-        p = consumeBracketStart(s);
+      case TokenType.ALTERABLE_START :
+        p = consumeAlterableStart(s);
         break;
-      case TokenType.BRACKET_END :
-        p = consumeBracketEnd(s);
+      case TokenType.ALTERABLE_END :
+        p = consumeAlterableEnd(s);
         break;
       case TokenType.STRING :
         p = consumeString(s);

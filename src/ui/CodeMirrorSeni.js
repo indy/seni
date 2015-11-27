@@ -30,7 +30,7 @@ function seniMode() {
   const ATOM = 'atom';
   const NUMBER = 'number';
   const PAREN = 'paren';      // ()
-  const BRACKET = 'bracket';    // []
+  const CURLY = 'curly';    // {}
   const SENICOMMON = 'seni-common';
   const PARAMETER = 'seni-parameter';
 
@@ -80,45 +80,45 @@ function seniMode() {
     let prefix = 'geno-';
     let usePrefix = false;
 
-    if(state.insideBracket) {
-      // leave the first element inside square brackets as is.
+    if(state.insideCurly) {
+      // leave the first element inside curlys as is.
 
-      if(state.bracketCounter === 1) {
+      if(state.curlyCounter === 1) {
         usePrefix = false;
-        // this is the first element in the square brackets
-        state.bracketedFirstChildIsParen = (token === PAREN);
-        if(state.bracketedFirstChildIsParen) {
-          // special case of the first child in square brackets being a s-exp.
+        // this is the first element in the curlys
+        state.curlyedFirstChildIsParen = (token === PAREN);
+        if(state.curlyedFirstChildIsParen) {
+          // special case of the first child in curlys being a s-exp.
           // we'll need to keep count of parenDepth
-          state.firstParenBracketDepth = state.parenDepth;
+          state.firstParenCurlyDepth = state.parenDepth;
         }
       } else {
-        // normally grey out, except if we're bracketedFirstChildIsParen
-        if(state.bracketedFirstChildIsParen && state.firstParenBracketDepth <= state.parenDepth) {
+        // normally grey out, except if we're curlyedFirstChildIsParen
+        if(state.curlyedFirstChildIsParen && state.firstParenCurlyDepth <= state.parenDepth) {
           // keep on colouring as normal
           usePrefix = false;
 
           // if this is a closing parens then we've processed the first s-exp and can start using prefix
-          // (i.e. start greying out the remainder of the square bracket contents)
-          if(state.firstParenBracketDepth === state.parenDepth && ch === ')') {
-            state.bracketedFirstChildIsParen = false;
+          // (i.e. start greying out the remainder of the curly contents)
+          if(state.firstParenCurlyDepth === state.parenDepth && ch === ')') {
+            state.curlyedFirstChildIsParen = false;
           }
         } else {
           usePrefix = true;
         }
       }
 
-      state.bracketCounter++;
+      state.curlyCounter++;
     }
 
     return usePrefix ? prefix + token : token;
   }
 
-  function setInsideBracket(value, state) {
+  function setInsideCurly(value, state) {
     if(value === true) {
-      state.bracketCounter = 0;
+      state.curlyCounter = 0;
     }
-    state.insideBracket = value;
+    state.insideCurly = value;
   }
 
   return {
@@ -131,10 +131,10 @@ function seniMode() {
 
         parenDepth: 0,
 
-        insideBracket: false,
-        bracketCounter: 0,
-        firstParenBracketDepth: 0,
-        bracketedFirstChildIsParen: false
+        insideCurly: false,
+        curlyCounter: 0,
+        firstParenCurlyDepth: 0,
+        curlyedFirstChildIsParen: false
       };
     },
 
@@ -194,7 +194,7 @@ function seniMode() {
           let keyWord = ''; let indentTemp = stream.column(), letter;
 
           if (ch === '{') {
-            setInsideBracket(true, state);
+            setInsideCurly(true, state);
           } else {
             state.parenDepth++;
           }
@@ -221,21 +221,21 @@ function seniMode() {
 
           if(typeof state.sExprComment === 'number') state.sExprComment++;
 
-          returnType = tokenType(ch === '{' ? BRACKET : PAREN, state, ch);
+          returnType = tokenType(ch === '{' ? CURLY : PAREN, state, ch);
         } else if (ch === ')' || ch === '}') {
-          returnType = tokenType(ch === '}' ? BRACKET : PAREN, state, ch);
+          returnType = tokenType(ch === '}' ? CURLY : PAREN, state, ch);
           if (state.indentStack != null && state.indentStack.type === (ch === ')' ? '(' : '{')) {
             popStack(state);
 
             if(typeof state.sExprComment === 'number'){
               if(--state.sExprComment === 0){
-                returnType = tokenType(COMMENT, state); // final closing bracket
+                returnType = tokenType(COMMENT, state); // final closing curly
                 state.sExprComment = false; // turn off s-expr commenting mode
               }
             }
           }
           if(ch === '}') {
-            setInsideBracket(false, state);
+            setInsideCurly(false, state);
           } else {
             state.parenDepth--;
           }

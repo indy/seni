@@ -58,10 +58,10 @@ function consumeItem(tokens) {
     return boxNode(NodeType.STRING, token.value);
   } else if (tokenType === TokenType.QUOTE_ABBREVIATION) {
     return consumeQuotedForm(tokens);
-  } else if (tokenType === TokenType.BRACKET_START) {
+  } else if (tokenType === TokenType.ALTERABLE_START) {
     return consumeBracketForm(tokens);
-  } else if (tokenType === TokenType.BRACKET_END) {
-    return {error: 'mismatched closing square brackets'};
+  } else if (tokenType === TokenType.ALTERABLE_END) {
+    return {error: 'mismatched closing alterable brackets'};
   } else if (tokenType === TokenType.COMMENT) {
     return boxNode(NodeType.COMMENT, token.value + '\n');
   } else if (tokenType === TokenType.WHITESPACE) {
@@ -87,7 +87,7 @@ function consumeBracketForm(tokens) {
     if(nodeType === NodeType.COMMENT || nodeType === NodeType.WHITESPACE) {
       prefixParameters.push(node);
     } else {
-      // we've got the first node within the square brackets that's mutable
+      // we've got the first node within the curly brackets that's mutable
       node.alterable = true;
       break;
     }
@@ -102,7 +102,7 @@ function consumeBracketForm(tokens) {
       nodeType !== NodeType.STRING &&
       nodeType !== NodeType.LIST) {
     console.log('whooops', tokens, node);
-    return {error: 'non-mutable node within square brackets ' + nodeType};
+    return {error: 'non-mutable node within curly brackets ' + nodeType};
   }
 
   let token, parameterBox, parameter;
@@ -113,7 +113,7 @@ function consumeBracketForm(tokens) {
     if (token === undefined) {
       return {error: 'unexpected end of list'};
     }
-    if (token.type === TokenType.BRACKET_END) {
+    if (token.type === TokenType.ALTERABLE_END) {
       tokens.shift();
       break;
     }

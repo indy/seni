@@ -25,8 +25,8 @@ export default class Node {
     // node mutate specific
     this.parameterAST = [];
 
-    // need a place for nodes that occur within square brackets that should
-    // be ignored, e.g. the whitespace before the 2 in: (+ 1 [ 2] (int))
+    // need a place for nodes that occur within curly brackets that should
+    // be ignored, e.g. the whitespace before the 2 in: (+ 1 { 2} (int))
     this.parameterPrefix = [];
   }
 
