@@ -60,7 +60,7 @@ describe('Genetic', () => {
     let genotype = Genetic.createGenotypeFromTraits(traits, 100);
 
     expect(genotype.size).to.equal(1);
-    expect(genotype.get(0).get('value')).to.equal(44);
+    expect(genotype.get(0)).to.equal(44);
   });
 
   it('should createGenotypeFromTraits 2', () => {
@@ -70,16 +70,16 @@ describe('Genetic', () => {
 
     expect(genotype.size).to.equal(1);
     // the 11 is returned from an rng with a seed of 100
-    expect(genotype.get(0).get('value')).to.equal(11);
+    expect(genotype.get(0)).to.equal(11);
   });
 
   it('should create the same genotype', () => {
     let traits = simpleBuildTraits('(+ 2 [44 (int min: 10 max: 56)])');
 
     let genotype = Genetic.createGenotypeFromTraits(traits, 33);
-    expect(genotype.get(0).get('value')).to.equal(49);
+    expect(genotype.get(0)).to.equal(49);
     // the same seed should generate the same genotype
     genotype = Genetic.createGenotypeFromTraits(traits, 33);
-    expect(genotype.get(0).get('value')).to.equal(49);
+    expect(genotype.get(0)).to.equal(49);
   });
 });
