@@ -264,7 +264,9 @@ function genotypesFromSelectedPhenotypes(seniApp) {
     createInitialGenotypePopulation(piece, seniApp.populationSize);
   } else {
     piece.genotypes = Genetic.nextGeneration(piece.selectedPhenotypes,
-                                             seniApp.populationSize);
+                                             seniApp.populationSize,
+                                             seniApp.mutationRate,
+                                             piece.traits);
   }
 
   // render the genotypes
@@ -715,6 +717,7 @@ function createSeniApp() {
     containers: [],
     placeholder: 'img/spinner.gif',
     populationSize: 24,
+    mutationRate: 0.1,
     // an immutable var containing the base env for all evaluations
     env: undefined,
     // information about the current piece being created/rendered
