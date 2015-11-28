@@ -86,6 +86,7 @@ describe('Unparser', () => {
     expectToUnparse('(foo {"hello" (something "foo" "bar")})');
     expectToUnparse('(+ 1 2 {3 (int)})');
     expectToUnparse('(+ 1 { 3 (int)})');
+    expectToUnparse('{(list "a")}');
     expectToUnparse('{(list (list "a") (list "a"))}');
     expectToUnparse('(foo f {(list (list "a"))})');
     expectToUnparse(`({focal/vline (select from: (list 'focal/point

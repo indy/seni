@@ -22,9 +22,7 @@
                      d: {(col/rgb r: 0.00 g: 0.25 b: 0.25) (col)}))
 
 (define 
-  focalpoint ({focal/point (select from: (list 'focal/point
-                                               'focal/hline
-                                               'focal/vline))} 
+  focalpoint ({focal/point (select from: [focal/point focal/hline focal/vline])} 
               position: (v2 {500 (int max: canvas/width)} 
                             {500 (int max: canvas/height)})
               distance: {800 (int min: (/ canvas/width 2) max: canvas/width)})

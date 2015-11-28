@@ -22,9 +22,7 @@
                                 c: {(col/rgb r: 2.00 g: 1.00 b: 1.00 a: 0.4) (col)}
                                 d: {(col/rgb r: 0.00 g: 0.25 b: 0.25 a: 0.5) (col)})
 
- focalpoint ({focal/point (select from: (list 'focal/point
-                                              'focal/hline
-                                              'focal/vline))} 
+ focalpoint ({focal/point (select from: [focal/point focal/hline focal/vline])} 
              position: (v2 {0 (int min: -300 max: 300)} 
                            {0 (int min: -300 max: 300)})
              distance: {390 (int min: 300 max: 900)}))

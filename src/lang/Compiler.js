@@ -21,9 +21,9 @@
 import NodeType from './NodeType';
 import Node from './Node';
 import NodeList from './NodeList';
+import NodeVector from './NodeVector';
 
 function compile(node, genotype) {
-
   // genotype !== null because we might call compileNodes with a
   // null argument for genotypes e.g. Genetic::buildTraitFromNode
   if (node.alterable && genotype !== null) {
@@ -39,21 +39,26 @@ function compile(node, genotype) {
     }
   }
 
+  if (node.type === NodeType.VECTOR) {
+    let res;
+    [res, genotype] = compileNodes(node.children, genotype);
+    return [['quote', res], genotype];
+  }
+
   if (node.type === NodeType.STRING) {
     // without this the following forms will compile to the same thing:
     //     (foo 'hello')
     //     (foo hello)
     //
-    // we need to wrap the string form in a quote to prevent the interpreter
-    // from trying to lookup the contents of the string
-    return [['quote', node.value], genotype];
+    // we need to wrap the string form in a quote-like to prevent the
+    // interpreter from trying to lookup the contents of the string
+    return [['__string', node.value], genotype];
   }
 
   return [node.value, genotype];
 }
 
 function compileNodes(nodes, genotype) {
-
   let n;
   let res = nodes.map(node => {
     [n, genotype] = compile(node, genotype);
@@ -111,6 +116,8 @@ function compileForBackAst(nodes) {
       if (n.type === NodeType.LIST) {
         newNode = new NodeList();
         newNode.usingAbbreviation = n.usingAbbreviation;
+      } else if (n.type === NodeType.VECTOR) {
+        newNode = new NodeVector();
       } else {
         newNode = new Node(n.type, n.value);
       };
@@ -121,7 +128,7 @@ function compileForBackAst(nodes) {
         newNode.parameterAST = compileForBackAst(n.parameterAST);
       }
 
-      if(n.type === NodeType.LIST) {
+      if(n.type === NodeType.LIST || n.type === NodeType.VECTOR) {
         newNode.children = compileForBackAst(n.children);
       };
 
@@ -139,7 +146,7 @@ function expandNodeForAlterableChildren(nodes) {
          node.parameterAST[0].value === 'map') {
 
         // make this node non-alterable and it's children alterable
-        // e.g. [(list 1 2 3 4 5 6) map (select from: (list 1 2 3 4 5 6 7 8 9))]
+        // e.g. {(list 1 2 3 4 5 6) map (select from: (list 1 2 3 4 5 6 7 8 9))}
 
         node.alterable = false;
         let parameterAst = node.parameterAST.slice(1); // remove the 'map''
@@ -152,7 +159,23 @@ function expandNodeForAlterableChildren(nodes) {
       } else {
         node.children = expandNodeForAlterableChildren(node.children);
       }
+    } else if(node.type === NodeType.VECTOR) {
+      if(node.alterable === true) {
+        // a big difference between lists and vectors is that the parameterAst
+        // in an alterable statement for a vector applies to each element of
+        // the vector, whereas for a list it applies to the list as a whole
+        //
+        // i.e. {[1 1 2 2 3 3] (select from: [1 2 3])}
+        node.alterable = false;
+        node.children.forEach(n => {
+          n.alterable = true;
+          n.parameterAST = node.parameterAST;
+        });
+      } else {
+        node.children = expandNodeForAlterableChildren(node.children);
+      }
     }
+
     return node;
   });
 }

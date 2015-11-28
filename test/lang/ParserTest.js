@@ -229,4 +229,59 @@ describe('Parser', () => {
     let params = parameterNodes[0];
     expect(params.type).to.equal(NodeType.LIST);
   });
+
+  it('should parse a vector', () => {
+    let ts = [new Token(TokenType.VECTOR_START),
+              new Token(TokenType.INT, 4),
+              new Token(TokenType.VECTOR_END)];
+
+    let res = Parser.parse(ts).nodes;
+
+    expect(res.length).to.equal(1);
+    expect(res[0].type).to.equal(NodeType.VECTOR);
+  });
+
+  it('should parse multiple vectors', () => {
+    let ts = [new Token(TokenType.VECTOR_START),
+              new Token(TokenType.INT, 4),
+              new Token(TokenType.VECTOR_END),
+              new Token(TokenType.VECTOR_START),
+              new Token(TokenType.INT, 45),
+              new Token(TokenType.VECTOR_END),
+              new Token(TokenType.VECTOR_START),
+              new Token(TokenType.INT, 456),
+              new Token(TokenType.VECTOR_END)];
+
+    let res = Parser.parse(ts).nodes;
+
+    expect(res.length).to.equal(3);
+    expect(res[0].type).to.equal(NodeType.VECTOR);
+    expect(res[1].type).to.equal(NodeType.VECTOR);
+    expect(res[2].type).to.equal(NodeType.VECTOR);
+  });
+
+  it('should parse nested vectors', () => {
+    // [4 [45 67] [456]]
+    let ts = [new Token(TokenType.VECTOR_START),
+              new Token(TokenType.INT, 4),
+              new Token(TokenType.VECTOR_START),
+              new Token(TokenType.INT, 45),
+              new Token(TokenType.INT, 67),
+              new Token(TokenType.VECTOR_END),
+              new Token(TokenType.VECTOR_START),
+              new Token(TokenType.INT, 456),
+              new Token(TokenType.VECTOR_END),
+              new Token(TokenType.VECTOR_END)];
+
+
+    let res = Parser.parse(ts).nodes;
+
+    expect(res.length).to.equal(1);
+    expect(res[0].type).to.equal(NodeType.VECTOR);
+    expect(res[0].size()).to.equal(3);
+
+    expect(res[0].getChild(1).type).to.equal(NodeType.VECTOR);
+    expect(res[0].getChild(1).size()).to.equal(2);
+  });
+
 });

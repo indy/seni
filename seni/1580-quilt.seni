@@ -171,7 +171,7 @@
                      p1 p2 p3 p4 p5 p6 p7 p8 p9
                      p1 p2 p3 p4 p5 p6 p7 p8 p9
                      p1)
-               map (select from: (list 'p1 'p2 'p3 'p4 'p5 'p6 'p7 'p8 'p9))})
+               map (select from: [p1 p2 p3 p4 p5 p6 p7 p8 p9])})
 
 (define 
   rots (list '(1 1) '(1 -1) '(-1 1) '(-1 -1))

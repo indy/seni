@@ -19,6 +19,7 @@
 import TokenType from './TokenType';
 import Node from './Node';
 import NodeList from './NodeList';
+import NodeVector from './NodeVector';
 import NodeType from './NodeType';
 
 /*
@@ -39,6 +40,10 @@ function consumeItem(tokens) {
     return consumeList(tokens);
   } else if (tokenType === TokenType.LIST_END) {
     return {error: 'mismatched closing parens'};
+  } else if (tokenType === TokenType.VECTOR_START) {
+    return consumeVector(tokens);
+  } else if (tokenType === TokenType.VECTOR_END) {
+    return {error: 'mismatched closing square brackets'};
   } else if (tokenType === TokenType.INT) {
     return boxNode(NodeType.INT, token.value);
   } else if (tokenType === TokenType.FLOAT) {
@@ -100,7 +105,8 @@ function consumeBracketForm(tokens) {
       nodeType !== NodeType.FLOAT &&
       nodeType !== NodeType.NAME &&
       nodeType !== NodeType.STRING &&
-      nodeType !== NodeType.LIST) {
+      nodeType !== NodeType.LIST &&
+      nodeType !== NodeType.VECTOR) {
     console.log('whooops', tokens, node);
     return {error: 'non-mutable node within curly brackets ' + nodeType};
   }
@@ -176,6 +182,33 @@ function consumeList(tokens) {
   }
   /* eslint-enable no-constant-condition */
 
+}
+
+function consumeVector(tokens) {
+
+  const node = new NodeVector();
+
+  /* eslint-disable no-constant-condition */
+  while (true) {
+    const token = tokens[0];
+    if (token === undefined) {
+      return {error: 'unexpected end of vector'};
+    }
+
+    if (token.type === TokenType.VECTOR_END) {
+      tokens.shift();
+      return {node: node};
+    }
+
+    const boxedItem = consumeItem(tokens);
+    if (boxedItem.error) {
+      return boxedItem;
+    }
+
+    const n = boxedItem.node;
+    node.addChild(n);
+  }
+  /* eslint-enable no-constant-condition */
 }
 
 /*

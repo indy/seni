@@ -16,22 +16,25 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const TokenType = {
-  UNKNOWN: Symbol('UNKNOWN'),
-  LIST_START: Symbol('LIST_START'),
-  LIST_END: Symbol('LIST_END'),
-  VECTOR_START: Symbol('VECTOR_START'),
-  VECTOR_END: Symbol('VECTOR_END'),
-  ALTERABLE_START: Symbol('ALTERABLE_START'),
-  ALTERABLE_END: Symbol('ALTERABLE_END'),
-  INT: Symbol('INT'),
-  FLOAT: Symbol('FLOAT'),
-  NAME: Symbol('NAME'),
-  STRING: Symbol('STRING'),
-  QUOTE_ABBREVIATION: Symbol('QUOTE_ABBREVIATION'),
-  LABEL: Symbol('LABEL'),
-  COMMENT: Symbol('COMMENT'),
-  WHITESPACE: Symbol('WHITESPACE')
-};
+import NodeType from './NodeType';
+import Node from './Node';
 
-export default TokenType;
+export default class NodeVector extends Node {
+  constructor() {
+    super(NodeType.VECTOR);
+
+    this.children = [];
+  }
+
+  addChild(child) {
+    this.children.push(child);
+  }
+
+  getChild(nth) {
+    return this.children[nth];
+  }
+
+  size() {
+    return this.children.length;
+  }
+}

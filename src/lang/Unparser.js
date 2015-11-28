@@ -24,11 +24,8 @@ import NodeType from './NodeType';
 //
 function unparseSimplifiedAst(value) {
   if(Array.isArray(value)) {
-    if(value.length === 2 &&
-       value[0] === 'quote' &&
-       !Array.isArray(value[1])) {
-      // a string disguised as a quoteed expression
-      // e.g. the form "hello" is represented as (quote hello)
+    if(value.length === 2 && value[0] === '__string') {
+      // the form "hello" is represented as (__string hello)
       // this is a hack used by the interpreter
       return '"' + value[1] + '"';
     }
@@ -129,6 +126,7 @@ function unparseUnalterable(unalterableNode) {
 function unparseASTNode(node, genotype) {
   let term = '';
   let v;
+  let lst, listPrefix, listPostfix;
 
   if(node.alterable) {
     // prefixes are any comments/whitespaces after the opening bracket
@@ -141,6 +139,8 @@ function unparseASTNode(node, genotype) {
     // use value from genotype
     if (node.type === NodeType.LIST && containsMapNode(node.parameterAST)) {
       [v, genotype] = getMultipleValuesFromGenotype(node, genotype);
+    } else if (node.type === NodeType.VECTOR) {
+      [v, genotype] = getMultipleValuesFromGenotype(node, genotype);
     } else {
       [v, genotype] = pullValueFromGenotype(genotype);
       v = formatNodeValue(v, node);
@@ -152,7 +152,6 @@ function unparseASTNode(node, genotype) {
     let nval;
     if(node.type === NodeType.LIST) {
 
-      let lst, listPrefix, listPostfix;
       if(node.usingAbbreviation) {
         listPrefix = '\'';
         listPostfix = '';
@@ -163,6 +162,16 @@ function unparseASTNode(node, genotype) {
         listPostfix = ')';
         lst = node.children;
       }
+
+      v = listPrefix + lst.map(n => {
+        [nval, genotype] = unparseASTNode(n, genotype);
+        return nval;
+      }).join('') + listPostfix;
+    } else if(node.type === NodeType.VECTOR) {
+
+      listPrefix = '[';
+      listPostfix = ']';
+      lst = node.children;
 
       v = listPrefix + lst.map(n => {
         [nval, genotype] = unparseASTNode(n, genotype);
@@ -189,7 +198,6 @@ const Unparser = {
       [term, genotype] = unparseASTNode(n, genotype);
       return term;
     });
-
     return terms.join('');
   }
 };

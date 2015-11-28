@@ -150,6 +150,7 @@ const specialForms = {
 
   // (quote (age 99))
   /*
+   todo: remove this code now that __string is used instead
    todo: the compiler will hack in a quote around strings, this
    needs to take that into account. e.g. given (quote "hi"), the ast
    built by the compiler will be: ['quote' ['quote' 'hi']] rather than
@@ -172,6 +173,11 @@ const specialForms = {
         return [env, form[1]];
       }
     }
+    return [env, form];
+  },
+
+  '__string': (env, [_, form]) => {
+    _ = _;
     return [env, form];
   },
 

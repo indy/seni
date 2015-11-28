@@ -63,6 +63,14 @@ function isListEnd(character) {
   return character === ')';
 }
 
+function isVectorStart(character) {
+  return character === '[';
+}
+
+function isVectorEnd(character) {
+  return character === ']';
+}
+
 function isAlterableStart(character) {
   return character === '{';
 }
@@ -151,6 +159,14 @@ function consumeListStart(s) {
 
 function consumeListEnd(s) {
   return [new Token(TokenType.LIST_END), s.substring(1)];
+}
+
+function consumeVectorStart(s) {
+  return [new Token(TokenType.VECTOR_START), s.substring(1)];
+}
+
+function consumeVectorEnd(s) {
+  return [new Token(TokenType.VECTOR_END), s.substring(1)];
 }
 
 function consumeAlterableStart(s) {
@@ -243,6 +259,14 @@ function nextTokenType(s) {
     return TokenType.LIST_END;
   }
 
+  if (isVectorStart(c)) {
+    return TokenType.VECTOR_START;
+  }
+
+  if (isVectorEnd(c)) {
+    return TokenType.VECTOR_END;
+  }
+
   if (isAlterableStart(c)) {
     return TokenType.ALTERABLE_START;
   }
@@ -289,6 +313,12 @@ const Lexer = {
         break;
       case TokenType.LIST_END :
         p = consumeListEnd(s);
+        break;
+      case TokenType.VECTOR_START :
+        p = consumeVectorStart(s);
+        break;
+      case TokenType.VECTOR_END :
+        p = consumeVectorEnd(s);
         break;
       case TokenType.ALTERABLE_START :
         p = consumeAlterableStart(s);

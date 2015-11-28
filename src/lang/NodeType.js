@@ -18,6 +18,7 @@
 
 const NodeType = {
   LIST: Symbol('LIST'),
+  VECTOR: Symbol('VECTOR'),
   INT: Symbol('INT'),
   FLOAT: Symbol('FLOAT'),
   NAME: Symbol('NAME'),

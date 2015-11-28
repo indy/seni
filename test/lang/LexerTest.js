@@ -105,4 +105,16 @@ describe('Lexer', () => {
        TokenType.LIST_END],
       ';(go arg1: 42)\n(go arg1: 42)');
   });
+
+  it('should tokenise vectors', () => {
+    t([TokenType.VECTOR_START,
+       TokenType.FLOAT,
+       TokenType.WHITESPACE,
+       TokenType.FLOAT,
+       TokenType.WHITESPACE,
+       TokenType.FLOAT,
+       TokenType.VECTOR_END],
+      '[2.1 4.2 3.14]');
+  });
+
 });

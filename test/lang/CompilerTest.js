@@ -22,6 +22,7 @@ import Compiler from '../../src/lang/Compiler';
 import Genetic from '../../src/lang/Genetic';
 import Node from '../../src/lang/Node';
 import NodeList from '../../src/lang/NodeList';
+import NodeVector from '../../src/lang/NodeVector';
 import NodeType from '../../src/lang/NodeType';
 
 import chai from 'chai';
@@ -60,7 +61,16 @@ describe('Compiler', () => {
   it('should compile a backAst', () => {
     // create a node
     function n(type, value) {
-      return (type === NodeType.LIST) ? new NodeList : new Node(type, value);
+      switch(type) {
+      case NodeType.LIST:
+        return new NodeList();
+        break;
+      case NodeType.VECTOR:
+        return new NodeVector();
+        break;
+      default:
+        return new Node(type, value);
+      };
     }
 
     let node, frontAst, backAst;
@@ -126,6 +136,21 @@ describe('Compiler', () => {
     expect(grandkids[1].value).to.equal(5);
     expect(grandkids[2].value).to.equal(6);
     expect(backAst[0].children[2].value).to.equal(3);
+
+    // [5 6]
+    node = n(NodeType.VECTOR, null);
+    node.children = [n(NodeType.INT, 5),
+                     n(NodeType.WHITESPACE, ' '),
+                     n(NodeType.INT, 6)];
+    frontAst = [node];
+    backAst = Compiler.compileBackAst(frontAst);
+    expect(backAst.length).to.equal(1);
+    expect(backAst[0].type).to.equal(NodeType.VECTOR);
+    expect(backAst[0].children.length).to.equal(2);
+    expect(backAst[0].children[0].value).to.equal(5);
+    expect(backAst[0].children[0].type).to.equal(NodeType.INT);
+    expect(backAst[0].children[1].value).to.equal(6);
+    expect(backAst[0].children[1].type).to.equal(NodeType.INT);
 
     // [5 (int)]
   });
@@ -210,6 +235,9 @@ describe('Compiler', () => {
     expect(compile('(show 2 4)')).
       to.deep.equal(['show', 2, 4]);
 
+    expect(compile('(show [2 4])')).
+      to.deep.equal(['show', ['quote', [2, 4]]]);
+
     expect(compile('(shot true 4)')).
       to.deep.equal(['shot', '#t', 4]);
 
@@ -220,7 +248,7 @@ describe('Compiler', () => {
       to.deep.equal(['slow', 'something', 4]);
 
     expect(compile('(how \"something\" 4)')).
-      to.deep.equal(['how', ['quote', 'something'], 4]);
+      to.deep.equal(['how', ['__string', 'something'], 4]);
 
     expect(compile('(go arg1: 45 arg2: 11)')).
       to.deep.equal(['go', {arg1: 45, arg2: 11}]);

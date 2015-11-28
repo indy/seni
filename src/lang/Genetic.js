@@ -32,7 +32,7 @@ function buildTraitFromNode(node, genes) {
     // expect a form in the parameterAST
     let simplifiedAst, initialValue, compiledNodes;
 
-    if(node.type === NodeType.LIST) {
+    if(node.type === NodeType.LIST || node.type === NodeType.VECTOR) {
       // wrap the node in an array and pass into Compiler.compileWithGenotype
       compiledNodes = Compiler.compileWithGenotype([node], null);
       initialValue = compiledNodes[0];
@@ -54,7 +54,7 @@ function buildTraitFromNode(node, genes) {
 
   }
 
-  if (node.type === NodeType.LIST) {
+  if (node.type === NodeType.LIST || node.type === NodeType.VECTOR) {
     node.children.map(child => buildTraitFromNode(child, genes));
   }
 }
