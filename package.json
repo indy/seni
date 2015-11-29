@@ -27,10 +27,10 @@
   "dependencies": {
     "babel-polyfill": "^6.2.0",
     "babel-runtime": "^6.2.0",
-    "codemirror": "^5.7.0",
+    "codemirror": "^5.9.0",
     "gl-matrix": "^2.3.1",
     "immutable": "^3.7.5",
-    "materialize-css": "^0.97.1",
+    "materialize-css": "^0.97.3",
     "seedrandom": "^2.4.2"
   },
   "devDependencies": {
@@ -39,14 +39,14 @@
     "babel-plugin-transform-runtime": "^6.1.18",
     "babel-preset-es2015": "^6.1.18",
     "body-parser": "^1.14.1",
-    "chai": "^3.3.0",
-    "eslint": "^1.6.0",
-    "eslint-loader": "^1.1.0",
+    "chai": "^3.4.1",
+    "eslint": "^1.10.1",
+    "eslint-loader": "^1.1.1",
     "express": "^4.13.3",
     "mkdirp": "^0.5.1",
-    "mocha": "^2.3.3",
+    "mocha": "^2.3.4",
     "mocha-loader": "^0.7.1",
-    "webpack": "^1.12.2",
-    "webpack-dev-server": "^1.12.0"
+    "webpack": "^1.12.9",
+    "webpack-dev-server": "^1.14.0"
   }
 }
