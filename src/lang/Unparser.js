@@ -51,11 +51,6 @@ function unparseSimplifiedAst(value) {
   return value;
 }
 
-// does the node contain a 'map' name node
-function containsMapNode(ast) {
-  return ast.some(n => n.type === NodeType.NAME && n.value === 'map');
-}
-
 function formatNodeValue(value, node) {
   let res;
   switch(node.type) {
@@ -79,38 +74,12 @@ function pullValueFromGenotype(genotype) {
   return [unparseSimplifiedAst(genotype.first()), genotype.shift()];
 }
 
-// have a form like:
-// (define foo
-// {(list 11 12 13 14 15 16) map (select from: (list 1 2 3 4 5 6 7 8 9))})
-// and we're in the alterable list part
-function getMultipleValuesFromGenotype(node, genotype) {
-  // go through the children: 'list 11 12 13 14 15 16'
-  // ignoring the initial list name (is too specific a check?) and
-  // any whitespace
+function getMultipleValuesFromGenotype(nodes, genotype) {
   let v;
-  let lst, listPrefix, listPostfix;
+  let listPrefix = '[';
+  let listPostfix = ']';
 
-  if(node.type === NodeType.LIST) {
-    if(node.usingAbbreviation) {
-      listPrefix = '\'';
-      listPostfix = '';
-      // remove the 'quote' and whitespace nodes
-      lst = node.children.slice(2);
-    } else {
-      listPrefix = '(';
-      listPostfix = ')';
-      lst = node.children;
-    }
-  } else if(node.type === NodeType.VECTOR) {
-    listPrefix = '[';
-    listPostfix = ']';
-    lst = node.children;
-  } else {
-    console.log(`ERROR: trying to extract multiple genotype values for
-incompatible node type`);
-  }
-
-  let res = lst.map(n => {
+  let res = nodes.map(n => {
     if(n.type === NodeType.NAME && n.value === 'list') {
       return formatNodeValue(n.value, n);
     } else if(n.type === NodeType.COMMENT ||
@@ -148,10 +117,9 @@ function unparseASTNode(node, genotype) {
     let alterParams = unparseUnalterable(node.parameterAST);
 
     // use value from genotype
-    if (node.type === NodeType.LIST && containsMapNode(node.parameterAST)) {
-      [v, genotype] = getMultipleValuesFromGenotype(node, genotype);
-    } else if (node.type === NodeType.VECTOR) {
-      [v, genotype] = getMultipleValuesFromGenotype(node, genotype);
+    if (node.type === NodeType.VECTOR) {
+      // a vector requires multiple values from the genotype
+      [v, genotype] = getMultipleValuesFromGenotype(node.children, genotype);
     } else {
       [v, genotype] = pullValueFromGenotype(genotype);
       v = formatNodeValue(v, node);

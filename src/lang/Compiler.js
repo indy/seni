@@ -142,24 +142,7 @@ function compileForBackAst(nodes) {
 function expandNodeForAlterableChildren(nodes) {
   return nodes.map(node => {
     if(node.type === NodeType.LIST) {
-      if(node.alterable === true &&
-         node.parameterAST.length > 1 &&
-         node.parameterAST[0].value === 'map') {
-
-        // make this node non-alterable and it's children alterable
-        // e.g. {(list 1 2 3 4 5 6) map (select from: (list 1 2 3 4 5 6 7 8 9))}
-
-        node.alterable = false;
-        let parameterAst = node.parameterAST.slice(1); // remove the 'map''
-
-        for(let i = 1; i < node.children.length; i++) {
-          let n = node.children[i];
-          n.alterable = true;
-          n.parameterAST = parameterAst;
-        }
-      } else {
-        node.children = expandNodeForAlterableChildren(node.children);
-      }
+      node.children = expandNodeForAlterableChildren(node.children);
     } else if(node.type === NodeType.VECTOR) {
       if(node.alterable === true) {
         // a big difference between lists and vectors is that the parameterAst

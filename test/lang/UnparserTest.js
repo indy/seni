@@ -107,14 +107,14 @@ describe('Unparser', () => {
       .to.equal('(+ {51 (int)})');
   });
 
-  it('should unparse map alterables', () => {
-    let f = '(define f {(list 1 2) map (select from: (list 1 2 3 4))})';
-    let g = '(define f {(list 4 1) map (select from: (list 1 2 3 4))})';
+  it('should unparse vectors', () => {
+    let f = '(define f {[1 2] (select from: [1 2 3 4])})';
+    let g = '(define f {[4 1] (select from: [1 2 3 4])})';
 
     expectToUnparse(f);
     expect(seededUnparse(f, 33)).to.equal(g);
 
-    expectToUnparse('(define f {(list "a") map (l from: (list "a" "b"))})');
+    expectToUnparse('(define f {["a"] (l from: ["a" "b"])})');
   });
 
 });
