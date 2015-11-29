@@ -1,3 +1,4 @@
-(define fake {[1 2 3 4 5 6] (int min: 0 max: 10)})
+(define funct {[red green blue]
+               (select from: ['black 'white 'red 'green 'blue 'yellow])})
 
-(log fake)
+(rect colour: (list/get from: funct nth: 1))

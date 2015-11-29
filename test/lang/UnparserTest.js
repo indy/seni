@@ -92,6 +92,12 @@ describe('Unparser', () => {
     expectToUnparse(`({focal/vline (select from: (list 'focal/point
                                                        'focal/hline
                                                        'focal/vline))})`);
+    expectToUnparse(`({red (select from: ['black
+                                          'red
+                                          'white])})`);
+    expectToUnparse(`({[red green blue] (select from: ['black
+                                                       'red
+                                                       'white])})`);
   });
 
   it('should unparse with different genotypes', () => {

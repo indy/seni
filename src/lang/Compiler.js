@@ -42,7 +42,8 @@ function compile(node, genotype) {
   if (node.type === NodeType.VECTOR) {
     let res;
     [res, genotype] = compileNodes(node.children, genotype);
-    return [['quote', res], genotype];
+    res.unshift('list');
+    return [res, genotype];
   }
 
   if (node.type === NodeType.STRING) {
@@ -202,8 +203,15 @@ const Compiler = {
 
   // the nodes should be from the back-end ast
   compileWithGenotype: function(nodes, genotype) {
+
+    // let nullGenotype = genotype === null;
+
     let [simplifiedAsts, _] = compileNodes(nodes, genotype);
     _ = _;
+
+//    if (!nullGenotype) {
+//      console.log('simplifiedAsts', simplifiedAsts);
+//    }
 
     // return an array of simplified ast objects
     return simplifiedAsts;

@@ -92,6 +92,9 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
     }
   }
 
+  if(logToConsole) {
+    console.log('childGenotype ', childGenotype);
+  }
   return new Immutable.List(childGenotype);
 }
 

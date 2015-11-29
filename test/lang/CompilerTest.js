@@ -236,7 +236,7 @@ describe('Compiler', () => {
       to.deep.equal(['show', 2, 4]);
 
     expect(compile('(show [2 4])')).
-      to.deep.equal(['show', ['quote', [2, 4]]]);
+      to.deep.equal(['show', ['list', 2, 4]]);
 
     expect(compile('(shot true 4)')).
       to.deep.equal(['shot', '#t', 4]);

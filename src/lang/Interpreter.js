@@ -55,7 +55,7 @@ function funApplication(env, listExpr) {
 
   if (fun === undefined) {
     // todo: use something better than console.log
-    console.log(listExpr[0] + ' is undefined');
+    console.log(listExpr.toJS(), listExpr[0] + ' is undefined');
     return [e, undefined];
   }
 

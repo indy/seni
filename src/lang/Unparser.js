@@ -18,6 +18,8 @@
 
 import NodeType from './NodeType';
 
+const logToConsole = true;
+
 // the values stored in genotypes will in simplifiedAst form
 // in most cases these will be simple values, but there might
 // occasionally be nested expressions and parameter objects
@@ -79,24 +81,33 @@ function pullValueFromGenotype(genotype) {
 
 // have a form like:
 // (define foo
-// [(list 11 12 13 14 15 16) map (select from: (list 1 2 3 4 5 6 7 8 9))])
+// {(list 11 12 13 14 15 16) map (select from: (list 1 2 3 4 5 6 7 8 9))})
 // and we're in the alterable list part
-function getMultipleValuesFromGenotype(listNode, genotype) {
+function getMultipleValuesFromGenotype(node, genotype) {
   // go through the children: 'list 11 12 13 14 15 16'
   // ignoring the initial list name (is too specific a check?) and
   // any whitespace
   let v;
   let lst, listPrefix, listPostfix;
 
-  if(listNode.usingAbbreviation) {
-    listPrefix = '\'';
-    listPostfix = '';
-    // remove the 'quote' and whitespace nodes
-    lst = listNode.children.slice(2);
+  if(node.type === NodeType.LIST) {
+    if(node.usingAbbreviation) {
+      listPrefix = '\'';
+      listPostfix = '';
+      // remove the 'quote' and whitespace nodes
+      lst = node.children.slice(2);
+    } else {
+      listPrefix = '(';
+      listPostfix = ')';
+      lst = node.children;
+    }
+  } else if(node.type === NodeType.VECTOR) {
+    listPrefix = '[';
+    listPostfix = ']';
+    lst = node.children;
   } else {
-    listPrefix = '(';
-    listPostfix = ')';
-    lst = listNode.children;
+    console.log(`ERROR: trying to extract multiple genotype values for
+incompatible node type`);
   }
 
   let res = lst.map(n => {
@@ -198,7 +209,13 @@ const Unparser = {
       [term, genotype] = unparseASTNode(n, genotype);
       return term;
     });
-    return terms.join('');
+    let res = terms.join('');
+
+    if(logToConsole) {
+      console.log('Unparser::unparse', frontAst, res);
+    }
+
+    return res;
   }
 };
 
