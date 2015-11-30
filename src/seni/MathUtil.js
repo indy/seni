@@ -210,18 +210,6 @@ both arguments are used to determine the quadrant of the result`,
 
   distance1d: (a, b) => Math.abs(a - b),
 
-/*
-  interpolate: function(a, b, t) {
-    return (a * (1 - t)) + (b * t);
-  },
-
-  mc: function([xa, ya], [xb, yb]) {
-    const m = (ya - yb) / (xa - xb);
-    const c = ya - (m * xa);
-    return [m, c];
-  }, ?????
- */
-
   mc,
 
   PI,

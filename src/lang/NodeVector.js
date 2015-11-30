@@ -33,11 +33,11 @@ import Node from './Node';
  this differs from the alterable syntax for a list, since that specifies
  the values for the entire list
  e.g {(list 1 2 3) (select from: (list (list 1 2 3)
-                                       (list 4 5 6)
-                                       (list 7 8 9)))}
+ (list 4 5 6)
+ (list 7 8 9)))}
  -> (list 1 2 3) can be substituted for one of three lists
  (list 1 2 3), (list 4 5 6) or (list 7 8 9)
-*/
+ */
 
 export default class NodeVector extends Node {
   constructor() {
