@@ -1,26 +1,26 @@
 ;; test code to render beziers, splines and strokedBeziers
 
-(define coords (list (v2 440 400)
-                     (v2 533 700)
-                     (v2 766 200)
-                     (v2 900 500)))
+(define coords (list [440 400]
+                     [533 700]
+                     [766 200]
+                     [900 500]))
 
-(define coords2 (list (v2 440 700)
-                      (v2 533 1000)
-                      (v2 766 500)
-                      (v2 900 800)))
+(define coords2 (list [440 700]
+                      [533 1000]
+                      [766 500]
+                      [900 800]))
 
-(define coords3 (list (v2 440 800)
-                      (v2 533 1100)
-                      (v2 766 600)
-                      (v2 900 900)))
+(define coords3 (list [440 800]
+                      [533 1100]
+                      [766 600]
+                      [900 900]))
 
 (spline colour: (col/rgb r: 0.0 g: 0.4 b: 0.1 alpha: 0.5)
         lineWidthStart:10
         lineWidthEnd: 0
-        coords: (list (v2 140 400)
-                      (v2 333 600)
-                      (v2 566 500)))
+        coords: (list [140 400]
+                      [333 600]
+                      [566 500]))
 
 (bezier tessellation: 35
         lineWidth: 10
@@ -57,7 +57,7 @@
                 colourVolatility: 700
                 seed: 220)
 
-(stroked-bezier-rect position: (v2 500 500)
+(stroked-bezier-rect position: [500 500]
                      width: 400
                      height: 400
 

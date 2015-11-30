@@ -1,4 +1,4 @@
-(fn (interesting-circle position: (v2 500 500)
+(fn (interesting-circle position: [500 500]
                             colour: red
                             seed: "yabba dabba dooo"
                             radius: 300)
@@ -17,7 +17,7 @@
         (rotate angle: (* 360 (take from: rng)))
         ;; outer ring
         (circle-slice tessellation: 30
-                    position: (v2 0 0)
+                      position: [0 0]
                     colour: (col/lighten colour: colour
                                          delta: (* {30 (int min: 20 max: 60)} (take from: srng)))
                     angle-start: 0
@@ -28,7 +28,7 @@
                     inner-height: (take from: outer-interior))
         ;; inner ring
         (circle-slice tessellation: 10
-                    position: (v2 0 0)
+                      position: [0 0]
                     colour: (col/lighten colour: colour
                                          delta: (* {20 (int min: 10 max: 40)} (take from: srng)))
                     angle-start: 0
@@ -39,7 +39,7 @@
                     inner-height: (take from: inner-interior))))
     ;; centre fill
     (circle-slice tessellation: 10
-                position: (v2 0 0)
+                  position: [0 0]
                 colour: (col/lighten colour: colour 
                                      delta: (* {10 (int min: 5 max: 20)} (take from: srng)))
                 angle-start: 0
@@ -51,7 +51,7 @@
 
 (loop (y from: 0 upto: 1000 steps: 14)
   (loop (x from: 0 upto: 1000 steps: 14)
-    (interesting-circle position: (v2 x y)
+        (interesting-circle position: [x y]
                         seed: (take from: initial-seed)
                         radius: radius
                         colour: {(col/rgb r: 0.8 g: 0 b: 0 alpha: 0.4) (col alpha: 0.4)})))

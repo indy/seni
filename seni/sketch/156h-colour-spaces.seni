@@ -7,7 +7,7 @@
 
   (loop (y from: 50 to: 1000 increment: 100)
         (loop (x from: 50 to: 1000 increment: 100)
-              (rect position: (v2 x y)
+              (rect position: [x y]
                     width: 50
                     height: 50
                     colour: (col/hsl h: (fn-h val: y) 
@@ -24,7 +24,7 @@
 
   (loop (y from: 50 to: 1000 increment: 100)
     (loop (x from: 50 to: 1000 increment: 100)
-      (rect position: (v2 x y)
+          (rect position: [x y]
             width: 50
             height: 50
             colour: (col/hsv h: 320 

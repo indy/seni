@@ -36,7 +36,7 @@
                             value: (+ (col/get-lab-l colour: top-colour)
                                       {10.5 (scalar min: 0.0 max: 20.0)})))
 
-    (stroked-bezier-rect position: (v2 250 y)
+    (stroked-bezier-rect position: [250 y]
                          width: width
                          height: height
                          iterations: iterations
@@ -48,7 +48,7 @@
                          colour-volatility: colour-volatility
                          volatility: volatility
                          seed: {44 (int)})
-    (stroked-bezier-rect position: (v2 550 y)
+    (stroked-bezier-rect position: [550 y]
                          width: width
                          height: height
                          iterations: iterations
@@ -60,7 +60,7 @@
                          colour-volatility: colour-volatility
                          volatility: volatility
                          seed: {45 (int)})
-    (stroked-bezier-rect position: (v2 850 y)
+    (stroked-bezier-rect position: [850 y]
                          width: width
                          height: height
                          iterations: iterations
@@ -74,7 +74,7 @@
                          seed: {46 (int)}))
 
 (fn (top-section)
-    (stroked-bezier-rect position: (v2 500 750)
+    (stroked-bezier-rect position: [500 750]
                          width: 900
                          height: 400
                          iterations: {40 (int min: 1 max: 100)}
@@ -89,7 +89,7 @@
     (top-section-highlights))
 
 (fn (middle-section)
-    (stroked-bezier-rect position: (v2 500 425)
+    (stroked-bezier-rect position: [500 425]
                          width: 900
                          height: 250
                          iterations: {40 (int min: 1 max: 100)}
@@ -108,7 +108,7 @@
                             value: (- (col/get-lab-l
                                        colour: mid-colour)
                                       {20.5 (scalar min: 0.0 max: 20.0)})))
-    (stroked-bezier-rect position: (v2 500 200)
+    (stroked-bezier-rect position: [500 200]
                          width: 900
                          height: 300
                          iterations: {40 (int min: 1 max: 100)}
@@ -122,11 +122,11 @@
                          seed: {44 (int)}))
 
 (fn (background)
-    (rect position: (v2 500 500)
+    (rect position: [500 500]
           width: canvas/width
           height: canvas/height
           colour: background-colour)
-    (stroked-bezier-rect position: (v2 500 500)
+    (stroked-bezier-rect position: [500 500]
                          width: canvas/width
                          height: canvas/height
                          iterations: {100 (int min: 1 max: 100)}

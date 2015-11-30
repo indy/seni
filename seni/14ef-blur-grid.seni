@@ -39,12 +39,12 @@
       pass-colour (col/set-alpha colour: colour value: (/ alpha passes))
       rng (prng/range min: -1 max: 1 seed: seed))
     (on-matrix-stack
-      (translate vector: (v2 x y))
+     (translate vector: [x y])
       (loop (i to: passes)
         (define (rr xr yr) (take num: 3 from: rng))
         (on-matrix-stack
           (rotate angle: (radians->degrees angle: (* rr 0.02 volatility)))
-          (rect position: (v2 (* xr 5 volatility) (* yr 5 volatility))
+          (rect position: [(* xr 5 volatility) (* yr 5 volatility)]
                 width: width
                 height: height
                 colour: pass-colour)))))
@@ -65,18 +65,16 @@
     (loop (h from: -20 to: 1020 increment: 20)
       (bezier tessellation: line-segments
               line-width: line-width
-              coords: (list
-                       (v2 0 (v x: 0 y: h z: seed scale: variation))
-                       (v2 w/3 (v x: w/3 y: h z: seed scale: variation))
-                       (v2 (* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation))
-                       (v2 canvas/width (v x: canvas/width y: h z: seed scale: variation)))
+              coords: [[0 (v x: 0 y: h z: seed scale: variation)]
+                       [w/3 (v x: w/3 y: h z: seed scale: variation)]
+                       [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
+                       [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
               colour: colour)
 
       (bezier tessellation: line-segments
               line-width: line-width
-              coords: (list
-                       (v2 (v x: 0 y: h z: seed scale: variation) 0)
-                       (v2 (v x: h/3 y: h z: seed scale: variation) h/3)
-                       (v2 (v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2))
-                       (v2 (v x: canvas/height y: h z: seed scale: variation) canvas/height))
+              coords: [[(v x: 0 y: h z: seed scale: variation) 0]
+                       [(v x: h/3 y: h z: seed scale: variation) h/3]
+                       [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
+                       [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
               colour: colour)))

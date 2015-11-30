@@ -12,7 +12,7 @@
                              max: (/ drip-range 2))
     radius (/ canvas/width (- steps 1) 2))
 
-  (fn (draw-drip position: (v2 500 500)
+  (fn (draw-drip position: [500 500]
                      colour: red)
     (box left: (- (v2/x position) radius)
          right: (+ (v2/x position) radius)
@@ -24,7 +24,7 @@
             radius: radius
             colour: colour))
 
-  (fn (draw-inbetween-drip position: (v2 500 500)
+  (fn (draw-inbetween-drip position: [500 500]
                                colour: red
                                background: white)
     (box left: (- (v2/x position) radius)
@@ -37,18 +37,18 @@
             radius: radius
             colour: background))
 
-  (fn (drip position: (v2 500 500)
+  (fn (drip position: [500 500]
                 step: 1
                 t: 0.2)
     (if (= modge (mod step 2))
-        (draw-drip position: (v2/+ position (v2 0 (r)))
+        (draw-drip position: (v2/+ position [0 (r)])
                    colour: colour)
-        (draw-inbetween-drip position: (v2/+ position (v2 0 (+ (r) 120)))
+        (draw-inbetween-drip position: (v2/+ position [0 (+ (r) 120)])
                              background: background
                              colour: colour)))
 
-  (path/linear coords: (list (v2 0 height) 
-                             (v2 1000 height))
+  (path/linear coords: (list [0 height] 
+                             [1000 height])
                fn: drip
                steps: steps))
 
@@ -66,7 +66,7 @@
                   min: 0
                   max: 5))
 
-  (fn (draw-splash position: (v2 500 500)
+  (fn (draw-splash position: [500 500]
                        colour: red)
 
     (define hh (/ (r) 2))
@@ -76,7 +76,7 @@
          top: (v2/y position)
          bottom: (- (v2/y position) hh)
          colour: colour)      
-    (circle position: (v2/- position (v2 0 hh))
+    (circle position: (v2/- position [0 hh])
             tessellation: 20
             radius: radius
             colour: colour)
@@ -85,21 +85,21 @@
             radius: radius
             colour: colour))
 
-  (fn (splash position: (v2 500 500)
+  (fn (splash position: [500 500]
                   step: 1
                   t: 0.2)
     (if (> (g) 4)
-        (draw-splash position: (v2/- position (v2 0 (r)))
+        (draw-splash position: (v2/- position [0 (r)])
                      colour: colour)))
 
-  (path/linear coords: (list (v2 0 height) 
-                             (v2 1000 height))
+  (path/linear coords: (list [0 height] 
+                             [1000 height])
                fn: splash
                steps: steps))
 
 (define steps 20)
 
-(rect position: (v2 500 500)
+(rect position: [500 500]
       width: canvas/width
       height: canvas/height
       colour: yellow)

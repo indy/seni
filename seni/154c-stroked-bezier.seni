@@ -1,12 +1,12 @@
-(rect position: (v2 (/ canvas/width 2) (/ canvas/height 2))
+(rect position: [(/ canvas/width 2) (/ canvas/height 2)]
       width: canvas/width
       height: canvas/height
       colour: (col/rgb r: 0 g: 0 b: 0 alpha 1))
 
-(translate vector: (v2 (/ canvas/width 2) (/ canvas/height 2)))
+(translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
 (rotate angle: 90)
 
-(stroked-bezier-rect position: (v2 0 0)
+(stroked-bezier-rect position: [0 0]
                      width: {900 (int min: 500 max: canvas/width)}
                      height: {900 (int min: 500 max: canvas/height)}
 

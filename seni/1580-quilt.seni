@@ -1,5 +1,5 @@
 (define
-  origin (v2 0 0)
+  origin [0 0]
   ;; each rectangle is wxh
   w 1.0
   h 1
@@ -51,25 +51,25 @@
         accent: green
         background: white)
     (bg background: background)
-    (poly coords: (list (v2 (- w/2)    h/2)
-                        (v2    w/2  (- h/2))
-                        (v2    w/2     h/2))
-          colours: (list primary primary primary))
-    (poly coords: (list (v2 (- w/2) (- h/2))
-                        (v2    w/2  (- h/2))
-                        (v2 (- w/2)    h/2))
-          colours: (list accent accent accent)))
+    (poly coords: [[(- w/2)    h/2]
+                        [w/2  (- h/2)]
+                        [w/2     h/2]]
+          colours: [primary primary primary])
+    (poly coords: [[(- w/2) (- h/2)]
+                        [w/2  (- h/2)]
+                        [(- w/2)    h/2]]
+          colours: [accent accent accent]))
 
 
 (fn (p4 primary: red
         accent: green
         background: white)
     (bg background: background)
-    (rect position: (v2 (- w/4) 0)
+    (rect position: [(- w/4) 0]
           colour: primary
           width: w/2
           height: h)
-    (rect position: (v2 w/4 h/4)
+    (rect position: [w/4 h/4]
           colour: primary
           width: w/2
           height: h/2)
@@ -87,7 +87,7 @@
     (p4 primary: primary
         accent: accent
         background: background)
-    (circle position: (v2 0 (/ h 5))
+    (circle position: [0 (/ h 5)]
             radius: (/ h 5)
             colour: accent
             tessellation: 32))
@@ -99,11 +99,11 @@
     (p4 primary: primary
         accent: accent
         background: background)
-    (circle position: (v2 0 (/ h 5))
+    (circle position: [0 (/ h 5)]
             radius: (/ w 5)
             colour: accent
             tessellation: 32)
-    (circle position: (v2 0 (- (/ h 5)))
+    (circle position: [0 (- (/ h 5))]
             radius: (/ w 5)
             colour: accent
             tessellation: 32))
@@ -112,20 +112,20 @@
         accent: green
         background: white)
     (bg background: background)
-    (rect position: (v2 (- w/4) (- w/4))
+    (rect position: [(- w/4) (- w/4)]
           colour: primary
           width: w/2
           height: (- h w/2))
-    (circle-slice position: (v2 0 (- h/2 w/2))
+    (circle-slice position: [0 (- h/2 w/2)]
                   angle-start: 270
                   angle-end: 360
                   colour: primary
                   radius: w/2)
-    (rect position: (v2 w/4 w/4)
+    (rect position: [w/4 w/4]
           colour: primary
           width: w/2
           height: (- h w/2))
-    (circle-slice position: (v2 0 (- w/2 h/2))
+    (circle-slice position: [0 (- w/2 h/2)]
                   angle-start: 90
                   angle-end: 180
                   colour: primary
@@ -138,7 +138,7 @@
     (p7 primary: primary
         accent: accent
         background: background)
-    (circle position: (v2 0 (/ h 5))
+    (circle position: [0 (/ h 5)]
             radius: (/ h 5)
             colour: accent
             tessellation: 32))
@@ -150,35 +150,35 @@
     (p7 primary: primary
         accent: accent
         background: background)
-    (circle position: (v2 0 (/ h 5))
+    (circle position: [0 (/ h 5)]
             radius: (/ w 5)
             colour: accent
             tessellation: 32)
-    (circle position: (v2 0 (- (/ h 5)))
+    (circle position: [0 (- (/ h 5))]
             radius: (/ w 5)
             colour: accent
             tessellation: 32))
 
-(define funct {(list p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1 p2 p3 p4 p5 p6 p7 p8 p9
-                     p1)
-               map (select from: [p1 p2 p3 p4 p5 p6 p7 p8 p9])})
+(define funct {[p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1 p2 p3 p4 p5 p6 p7 p8 p9
+                p1]
+               (select from: ['p1 'p2 'p3 'p4 'p5 'p6 'p7 'p8 'p9])})
 
 (define 
-  rots (list '(1 1) '(1 -1) '(-1 1) '(-1 -1))
+  rots ['(1 1) '(1 -1) '(-1 1) '(-1 -1)]
   rots/length (list/length of: rots)
 
-  focal-point (focal/point position: (v2 {500 (int max: 1000)}
-                                         {500 (int max: 1000)})
+  focal-point (focal/point position: [{500 (int max: 1000)}
+                                         {500 (int max: 1000)}]
                            distance: {800 (int max: 1000)})
   brightness-remapper (interp/fn from: '(0 1) 
                                  to: '({20 (int min: 0 max: 100)} 
@@ -194,12 +194,12 @@
     (define 
       index (+ x (* y 10))
       draw-fn (list/get from: funct nth: index)
-      pos (v2 (+ 50 (* x 100)) (+ 50 (* y 100)))
+      pos [(+ 50 (* x 100)) (+ 50 (* y 100))]
       (scale-x scale-y) (list/get from: rots nth: (mod index rots/length))
       brightness (brightness-remapper val: (focal-point position: pos)))
     (on-matrix-stack
       (translate vector: pos)
-      (scale vector: (v2 (* scale-x 100) (* scale-y 100)))
+      (scale vector: [(* scale-x 100) (* scale-y 100)])
       (draw-fn primary: (col/set-lab-l colour: primary
                                        value: brightness)
                accent: (col/set-lab-l colour: accent

@@ -1,15 +1,15 @@
-(define centre (v2 (/ canvas/width 2) (/ canvas/height 2)))
+(define centre [(/ canvas/width 2) (/ canvas/height 2)])
 
-(fn (render-circle position: (v2 0 0)
+(fn (render-circle position: [0 0]
                    step: 0
                    t: 0)
     (define rad (- {415 (int min: 200 max: 600)} (* step {0.580119399147693 (scalar max: 2)})))
-    (circle position: (v2/+ centre (v2/* position (v2 rad rad)))
+    (circle position: (v2/+ centre (v2/* position [rad rad]))
             radius: {11 (int min: 5 max: 50)}
             tessellation: 30
             colour: (col/rgb r: 0.1 g: 0.5 b: 0.2 alpha: 0.7)))
 
-(path/circle position: (v2 0 0)
+(path/circle position: [0 0]
              t-start: {0.018244900354147706 (scalar)}
              t-end: (* 4 {4.183264508576904 (scalar min: 1 max: 12)})
              radius: 1

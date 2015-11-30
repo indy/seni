@@ -6,11 +6,11 @@
   colour-a {(col/rgb r: 0 g: 0 b: 0.4 alpha: 1) (col)}
   colour-b {(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (col)}
 
-  focalpoint (focal/point position: (v2 {500 (int max: canvas/width)}
-                                        {500 (int max: canvas/height)})
+  focalpoint (focal/point position: [{500 (int max: canvas/width)}
+                                        {500 (int max: canvas/height)}]
                           distance: {400 (int min: 200 max: canvas/width)})
 
-  centre (v2 (/ canvas/width 2) (/ canvas/height 2)))
+  centre [(/ canvas/width 2) (/ canvas/height 2)])
 
 
 (fn (hexagon position: centre
@@ -21,8 +21,8 @@
             position: position
             tessellation: 6))
 
-(fn (hex-grid from: (v2 0 0)
-              to: (v2 canvas/width canvas/height)
+(fn (hex-grid from: [0 0]
+              to: [canvas/width canvas/height]
               colour: red
               size: 30)
     (define 
@@ -37,8 +37,8 @@
                increment: width)
         (hexagon size: size
                  colour: (col/set-alpha colour: colour
-                                        value: (focalpoint position: (v2 x y)))
-                 position: (v2 x y))))
+                                        value: (focalpoint position: [x y]))
+                 position: [x y])))
 
     (loop (y from: (+ (v2/y from) vert)
              to: (+ (v2/y to) vert vert)
@@ -48,8 +48,8 @@
                increment: width)
         (hexagon size: size
                  colour: (col/set-alpha colour: colour
-                                        value: (focalpoint position: (v2 x y)))
-                 position: (v2 x y)))))
+                                        value: (focalpoint position: [x y]))
+                 position: [x y]))))
 
 (rect position: centre
       width: canvas/width
@@ -60,12 +60,12 @@
 (rotate angle: {35 (scalar max: 360)})
 (scale scalar: scalefactor)
 
-(hex-grid from: (v2 -700 -700)
-          to: (v2 700 700)
+(hex-grid from: [-700 -700]
+          to: [700 700]
           size: hex-size
           colour: colour-a)
 
-(hex-grid from: (v2 -500 -500)
+(hex-grid from: [-500 -500]
           to: centre
           size: hex-size
           colour: colour-b)

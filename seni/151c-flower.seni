@@ -14,10 +14,10 @@
       (bezier-bulging tessellation: 20
                       line-width: {50 (int min: 10 max: 200)}
                       colour: colour
-                      coords: (list (v2 0 0)
-                                    (v2 233.33 100)
-                                    (v2 566.66 -100)
-                                    (v2 800 0)))))
+                      coords: [[0 0]
+                                    [233.33 100]
+                                    [566.66 -100]
+                                    [800 0]])))
 
 (fn (petal-2 angle: 0
              colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
@@ -26,10 +26,10 @@
       (bezier-bulging tessellation: 20
                       line-width: {50 (int min: 10 max: 200)}
                       colour: colour
-                      coords: (list (v2 0 0)
-                                    (v2 233.33 -100)
-                                    (v2 566.66 100)
-                                    (v2 800 0)))))
+                      coords: [[0 0]
+                                    [233.33 -100]
+                                    [566.66 100]
+                                    [800 0]])))
 
 (fn (circ-1 petals: 0
             colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
@@ -39,7 +39,7 @@
       (define 
         strokes petals
         colcol (col/set-alpha colour: colour value: 0.3)
-        rem (interp/fn from: (list 0 strokes) to: (list 0 6.28318)))
+        rem (interp/fn from: [0 strokes] to: [0 math/TAU]))
       (loop (i from: 0 to: strokes)
         (petal-1 angle: (rem val: i) colour: colcol))))
 
@@ -51,7 +51,7 @@
       (define 
         strokes petals
         colcol (col/set-alpha colour: colour value: 0.4)
-        rem (interp/fn from: (list 0 strokes) to: (list 0 6.28318)))
+        rem (interp/fn from: [0 strokes] to: [0 math/TAU]))
       (loop (i from: 0 to: strokes)
         (petal-2 angle: (rem val: i) colour: colcol))))
 
@@ -67,7 +67,7 @@
             posy: 0
             sc: 1)
     (on-matrix-stack
-      (translate vector: (v2 posx posy))
+     (translate vector: [posx posy])
       (scale scalar: sc)
       (define (c2 c3) (col/analagous colour: colour))
       (layered-petals petals: {23 (int min: 1 max: 50)} colour: colour sc: {0.6 (scalar min: 0.1 max: 0.9)})
@@ -89,18 +89,16 @@
     (loop (h from: -20 to: 1020 increment: 20)
       (bezier tessellation: line-segments
               line-width: line-width
-              coords: (list
-                       (v2 0 (v x: 0 y: h z: seed scale: variation))
-                       (v2 w/3 (v x: w/3 y: h z: seed scale: variation))
-                       (v2 (* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation))
-                       (v2 canvas/width (v x: canvas/width y: h z: seed scale: variation)))
+              coords: [[0 (v x: 0 y: h z: seed scale: variation)]
+                       [w/3 (v x: w/3 y: h z: seed scale: variation)]
+                       [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
+                       [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
               colour: colour)
 
       (bezier tessellation: line-segments
               line-width: line-width
-              coords: (list
-                       (v2 (v x: 0 y: h z: seed scale: variation) 0)
-                       (v2 (v x: h/3 y: h z: seed scale: variation) h/3)
-                       (v2 (v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2))
-                       (v2 (v x: canvas/height y: h z: seed scale: variation) canvas/height))
+              coords: [[(v x: 0 y: h z: seed scale: variation) 0]
+                       [(v x: h/3 y: h z: seed scale: variation) h/3]
+                       [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
+                       [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
               colour: colour)))

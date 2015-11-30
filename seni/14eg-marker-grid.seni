@@ -15,7 +15,7 @@
     (define 
       x-pos (map-to-position at: x)
       y-pos (map-to-position at: y))
-    (stroked-bezier-rect position: (v2 x-pos y-pos)
+    (stroked-bezier-rect position: [x-pos y-pos]
                          colour-volatility: 20
                          volatility: (/ (math/distance-2d x1: (/ canvas/width 2) 
                                                           y1: (/ canvas/height 2)
@@ -32,7 +32,7 @@
 (fn (map-to-position at: 0)
     (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
 
-(fn (stroked-bezier-rect position: (v2 0 0)
+(fn (stroked-bezier-rect position: [0 0]
                          width: 10
                          height: 10
                          colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 0.5)
@@ -74,26 +74,25 @@
         current-colour (col/set-lab-l colour: lab-colour value: lightness))
       (bezier tessellation: 10
               line-width: (+ overlap h-strip-width)
-              coords: (list
-                       (v2 (+ (+ (* rx1 vol) start-x)
-                              (* 0 third-width))
-                           (+ (+ (* i h-delta) (* ry1 vol) start-y)
-                              half-h-strip-width))
+              coords: [[(+ (+ (* rx1 vol) start-x)
+                           (* 0 third-width))
+                        (+ (+ (* i h-delta) (* ry1 vol) start-y)
+                           half-h-strip-width)]
 
-                       (v2 (+ (+ (* rx2 vol) start-x)
-                              (* 1 third-width))
-                           (+ (+ (* i h-delta) (* ry2 vol) start-y)
-                              half-h-strip-width))
+                       [(+ (+ (* rx2 vol) start-x)
+                           (* 1 third-width))
+                        (+ (+ (* i h-delta) (* ry2 vol) start-y)
+                           half-h-strip-width)]
 
-                       (v2 (+ (+ (* rx3 vol) start-x)
-                              (* 2 third-width))
-                           (+ (+ (* i h-delta) (* ry3 vol) start-y)
-                              half-h-strip-width))
+                       [(+ (+ (* rx3 vol) start-x)
+                           (* 2 third-width))
+                        (+ (+ (* i h-delta) (* ry3 vol) start-y)
+                           half-h-strip-width)]
 
-                       (v2 (+ (+ (* rx4 vol) start-x)
-                              (* 3 third-width))
-                           (+ (+ (* i h-delta) (* ry4 vol) start-y)
-                              half-h-strip-width)))
+                       [(+ (+ (* rx4 vol) start-x)
+                           (* 3 third-width))
+                        (+ (+ (* i h-delta) (* ry4 vol) start-y)
+                           half-h-strip-width)]]
               colour: current-colour))
     ; vertical strips
     (loop (i to: iterations)
@@ -104,26 +103,25 @@
         current-colour (col/set-lab-l colour: lab-colour value: lightness))
       (bezier tessellation: 10
               line-width: (+ overlap v-strip-width)
-              coords: (list
-                       (v2 (+ (+ (* i v-delta) (* rx1 vol) start-x)
-                              half-v-strip-width)
-                           (+ (+ (* ry1 vol) start-y)
-                              (* 0 third-height)))
+              coords: [[(+ (+ (* i v-delta) (* rx1 vol) start-x)
+                           half-v-strip-width)
+                        (+ (+ (* ry1 vol) start-y)
+                           (* 0 third-height))]
 
-                       (v2 (+ (+ (* i v-delta) (* rx2 vol) start-x)
-                              half-v-strip-width)
-                           (+ (+ (* ry2 vol) start-y)
-                              (* 1 third-height)))
+                       [(+ (+ (* i v-delta) (* rx2 vol) start-x)
+                           half-v-strip-width)
+                        (+ (+ (* ry2 vol) start-y)
+                           (* 1 third-height))]
 
-                       (v2 (+ (+ (* i v-delta) (* rx3 vol) start-x)
-                              half-v-strip-width)
-                           (+ (+ (* ry3 vol) start-y)
-                              (* 2 third-height)))
+                       [(+ (+ (* i v-delta) (* rx3 vol) start-x)
+                           half-v-strip-width)
+                        (+ (+ (* ry3 vol) start-y)
+                           (* 2 third-height))]
 
-                       (v2 (+ (+ (* i v-delta) (* rx4 vol) start-x)
-                              half-v-strip-width)
-                           (+ (+ (* ry4 vol) start-y)
-                              (* 3 third-height))))
+                       [(+ (+ (* i v-delta) (* rx4 vol) start-x)
+                           half-v-strip-width)
+                        (+ (+ (* ry4 vol) start-y)
+                           (* 3 third-height))]]
               colour: current-colour)))
 
 (fn (v x: 0 y: 0 z: 0 scale: 1)
@@ -140,20 +138,18 @@
     (loop (h from: -20 to: 1020 increment: 20)
       (bezier tessellation: line-segments
               line-width: line-width
-              coords: (list
-                       (v2 0 (v x: 0 y: h z: seed scale: variation))
-                       (v2 w/3 (v x: w/3 y: h z: seed scale: variation))
-                       (v2 (* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation))
-                       (v2 canvas/width (v x: canvas/width y: h z: seed scale: variation)))
+              coords: [[0 (v x: 0 y: h z: seed scale: variation)]
+                       [w/3 (v x: w/3 y: h z: seed scale: variation)]
+                       [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
+                       [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
               colour: colour)
 
       (bezier tessellation: line-segments
               line-width: line-width
-              coords: (list
-                       (v2 (v x: 0 y: h z: seed scale: variation) 0)
-                       (v2 (v x: h/3 y: h z: seed scale: variation) h/3)
-                       (v2 (v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2))
-                       (v2 (v x: canvas/height y: h z: seed scale: variation) canvas/height))
+              coords: [[(v x: 0 y: h z: seed scale: variation) 0]
+                       [(v x: h/3 y: h z: seed scale: variation) h/3]
+                       [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
+                       [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
               colour: colour)))
 
 

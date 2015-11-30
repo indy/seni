@@ -1,5 +1,5 @@
 ; apply a full-canvas dark texture
-(stroked-bezier-rect position: (v2 (/ canvas/width 2) (/ canvas/height 2))
+(stroked-bezier-rect position: [(/ canvas/width 2) (/ canvas/height 2)]
                      overlap: 90
                      iterations: 80
                      tessellation: 20
@@ -9,26 +9,24 @@
                      colour: (col/rgb r: 0 g: 0 b: 0.1 alpha: 0.9))
 
 ; further darken the background
-(rect position: (v2 (/ canvas/width 2) (/ canvas/height 2))
+(rect position: [(/ canvas/width 2) (/ canvas/height 2)]
       width: canvas/width height: canvas/height
       colour: (col/rgb r: 0 g: 0 b: 0.0 alpha: 0.5))
 
 ;; the coords that the bezier path will take
 (define 
-  coords (list (v2 {  0 (int max: canvas/width)} {500 (int max: canvas/height)})
-               (v2 {333 (int max: canvas/width)} {100 (int max: canvas/height)})
-               (v2 {666 (int max: canvas/width)} {900 (int max: canvas/height)})
-               (v2 {999 (int max: canvas/width)} {500 (int max: canvas/height)}))
+  coords {[[0 500] [333 100] [666 900] [999 500]]
+          (vector min: 0 max: 1000)}
 
   ;; as the bezier path progresses, change the circle's LAB a component
-  remap-a (interp/fn from: (v2 0 1)
-                     to: (v2 {-80 (scalar min: -100 max: 100)}
-                             { 80 (scalar min: -100 max: 100)}))
+  remap-a (interp/fn from: [0 1]
+                     to: [{-80 (scalar min: -100 max: 100)}
+                             { 80 (scalar min: -100 max: 100)}])
 
   ;; as the bezier path progresses, change the circle's LAB b component
-  remap-b (interp/fn from: (v2 0 1)
-                     to: (v2 {-100 (scalar min: -100 max: 100)}
-                             { 100 (scalar min: -100 max: 100)})))
+  remap-b (interp/fn from: [0 1]
+                     to: [{-100 (scalar min: -100 max: 100)}
+                             { 100 (scalar min: -100 max: 100)}]))
 
 ;; make a function that will be invoked for every point in the bezier path
 (fn (make-fun radius: 10
@@ -40,10 +38,10 @@
               random-factor: 40)    ; the amount to offset circle position
     ;; random is used to offset the position along the path
     (define random (prng/range min: -1 max: 1 seed: seed))
-    (fn (fun position: (v2 0 0)
+    (fn (fun position: [0 0]
              t: 0)
-        (circle position: (v2 (+ (v2/x position) (* random-factor (random)))
-                              (+ (v2/y position) (* random-factor (random))))
+        (circle position: [(+ (v2/x position) (* random-factor (random)))
+                              (+ (v2/y position) (* random-factor (random)))]
                 radius: (+ radius (* radius (random) radius-factor))
                 tessellation: tessellation
                 colour: (col/lab l: l-val

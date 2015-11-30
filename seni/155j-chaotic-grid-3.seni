@@ -1,5 +1,5 @@
 (render-background)
-(translate vector: (v2 (/ canvas/width 2) (/ canvas/height 2)))
+(translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
 (rotate angle: {5 (scalar max: 115)})
 (scale scalar: {1.2 (scalar min: 0.1 max: 3.0)})
 (render-main)
@@ -15,8 +15,8 @@
                        b: {0.3 (scalar)}
                        alpha: 1.0)
   colour-volatility {20 (int min: 2 max: 40)}
-  focal-point (focal/point position: (v2 {500 (int max: canvas/width)}
-                                         {500 (int max: canvas/height)})
+  focal-point (focal/point position: [{500 (int max: canvas/width)}
+                                         {500 (int max: canvas/height)}]
                            distance: {500 (int max: canvas/width)})
   focal-power {50 (scalar max: 200)})
 
@@ -35,8 +35,8 @@
     (loop (y from: 1 to:  (- num-squares 1))
       (loop (x from: 1 to:  (- num-squares 1))
         (define 
-          p (v2 (map-to-position at: x)
-                (map-to-position at: y))
+          p [(map-to-position at: x)
+                (map-to-position at: y)]
           volatility: (* (focal-point position: p) focal-power))
 
         (stroked-bezier-rect position: p
