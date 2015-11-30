@@ -24,14 +24,14 @@ function emptyFn() {
 }
 
 function pathLinear(publicBinding, params) {
-  let fullParams = publicBinding.mergeWithDefaults(params);
+  const fullParams = publicBinding.mergeWithDefaults(params);
 
-  let {coords, fn, steps} = fullParams;
+  const {coords, fn, steps} = fullParams;
   //const tStart = fullParams['t-start'];
   //const tEnd = fullParams['t-end'];
 
-  let from = coords[0];
-  let to = coords[coords.length - 1];
+  const from = coords[0];
+  const to = coords[coords.length - 1];
 
   const xUnit = (to[0] - from[0]) / (steps - 1);
   const yUnit = (to[1] - from[1]) / (steps - 1);
@@ -57,20 +57,18 @@ const linearBinding = new PublicBinding(
     't-start': 0.0,
     't-end': 1.0
   },
-  (self) => {
-    return (params) => pathLinear(self, params);
-  });
+  self => params => pathLinear(self, params));
 
 function pathCircle(publicBinding, params) {
-  let fullParams = publicBinding.mergeWithDefaults(params);
+  const fullParams = publicBinding.mergeWithDefaults(params);
 
-  let {position, radius, fn, steps} = fullParams;
+  const {position, radius, fn, steps} = fullParams;
   const tStart = fullParams['t-start'];
   const tEnd = fullParams['t-end'];
 
-  let [x, y] = position;
-  let unit = (tEnd - tStart) / steps;
-  let unitAngle = unit * MathUtil.TAU;
+  const [x, y] = position;
+  const unit = (tEnd - tStart) / steps;
+  const unitAngle = unit * MathUtil.TAU;
 
   let angle, vx, vy;
 
@@ -101,14 +99,12 @@ const circleBinding = new PublicBinding(
     't-start': 0.0,
     't-end': 1.0
   },
-  (self) => {
-    return (params) => pathCircle(self, params);
-  });
+  self => params => pathCircle(self, params));
 
 function pathCurve(publicBinding, params, coordFn) {
-  let fullParams = publicBinding.mergeWithDefaults(params);
+  const fullParams = publicBinding.mergeWithDefaults(params);
 
-  let {coords, fn, steps} = fullParams;
+  const {coords, fn, steps} = fullParams;
   const tStart = fullParams['t-start'];
   const tEnd = fullParams['t-end'];
 
@@ -140,9 +136,7 @@ const splineBinding = new PublicBinding(
     't-start': 0.0,
     't-end': 1.0
   },
-  (self) => {
-    return (params) => pathCurve(self, params, MathUtil.quadraticCoordinates);
-  });
+  self => params => pathCurve(self, params, MathUtil.quadraticCoordinates));
 
 const bezierBinding = new PublicBinding(
   'path/bezier',
@@ -156,9 +150,7 @@ const bezierBinding = new PublicBinding(
     't-start': 0.0,
     't-end': 1.0
   },
-  (self) => {
-    return (params) => pathCurve(self, params, MathUtil.bezierCoordinates);
-  });
+  self => params => pathCurve(self, params, MathUtil.bezierCoordinates));
 
 const Paths = {
   publicBindings: [

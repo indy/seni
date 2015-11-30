@@ -29,23 +29,23 @@ function unparseSimplifiedAst(value) {
     if(value.length === 2 && value[0] === '__string') {
       // the form "hello" is represented as (__string hello)
       // this is a hack used by the interpreter
-      return '"' + value[1] + '"';
+      return `"${value[1]}"`;
     }
 
-    let elements = value.map(unparseSimplifiedAst).join(' ').trim();
-    return '(' + elements + ')';
+    const elements = value.map(unparseSimplifiedAst).join(' ').trim();
+    return `(${elements})`;
 
   } else if(value instanceof Object) {
 
     let args = '';
-    for (let k in value) {
-      args = args + k + ': ' + unparseSimplifiedAst(value[k]) + ' ';
+    for (const k in value) {
+      args = `${args}${k}: ${unparseSimplifiedAst(value[k])} `;
     }
     return args.trim();
 
   } else if(!Number.isNaN(Number(value))) {
     // see if the number is a float, if so then format to 3dp
-    let asString3dp = value.toFixed(3);
+    const asString3dp = value.toFixed(3);
     return (asString3dp.match(/[.]000$/)) ? value : asString3dp;
   }
   return value;
@@ -55,17 +55,17 @@ function formatNodeValue(value, node) {
   let res;
   switch(node.type) {
   case NodeType.STRING:
-    res = '"' + value + '"';
+    res = `"${value}"`;
     break;
   case NodeType.BOOLEAN:
     res = value === '#t' ? 'true' : 'false';
     break;
   case NodeType.LABEL:
-    res = value + ':';
+    res = `${value}:`;
     break;
   default:
     res = value;
-  };
+  }
   return res;
 }
 
@@ -76,10 +76,10 @@ function pullValueFromGenotype(genotype) {
 
 function getMultipleValuesFromGenotype(nodes, genotype) {
   let v;
-  let listPrefix = '[';
-  let listPostfix = ']';
+  const listPrefix = '[';
+  const listPostfix = ']';
 
-  let res = nodes.map(n => {
+  const res = nodes.map(n => {
     if(n.type === NodeType.NAME && n.value === 'list') {
       return formatNodeValue(n.value, n);
     } else if(n.type === NodeType.COMMENT ||
@@ -113,8 +113,8 @@ function unparseASTNode(node, genotype) {
 
     // Note: neither of these statements should consume any of the
     // genotype
-    let prefixes = unparseUnalterable(node.parameterPrefix);
-    let alterParams = unparseUnalterable(node.parameterAST);
+    const prefixes = unparseUnalterable(node.parameterPrefix);
+    const alterParams = unparseUnalterable(node.parameterAST);
 
     // use value from genotype
     if (node.type === NodeType.VECTOR) {
@@ -125,7 +125,7 @@ function unparseASTNode(node, genotype) {
       v = formatNodeValue(v, node);
     }
 
-    term = '{' + prefixes + v + alterParams + '}';
+    term = `{${prefixes}${v}${alterParams}}`;
 
   } else {
     let nval;
@@ -170,14 +170,14 @@ const Unparser = {
 
   // converts a frontAST back into a string
   // ast is an array of nodes
-  unparse: function(frontAst, genotype) {
+  unparse: (frontAst, genotype) => {
 
     let term;
-    let terms = frontAst.map(n => {
+    const terms = frontAst.map(n => {
       [term, genotype] = unparseASTNode(n, genotype);
       return term;
     });
-    let res = terms.join('');
+    const res = terms.join('');
 
     if(logToConsole) {
       console.log('Unparser::unparse', frontAst, res);

@@ -34,20 +34,21 @@ function seniMode() {
   const SENICOMMON = 'seni-common';
   const PARAMETER = 'seni-parameter';
 
-  let INDENT_WORD_SKIP = 2;
+  const INDENT_WORD_SKIP = 2;
 
   function makeKeywords(str) {
-    let obj = {}, words = str.split(' ');
+    const obj = {}, words = str.split(' ');
     for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
     return obj;
   }
 
   // keywords are core to the seni language
-  let keywords = makeKeywords('begin define fn if loop on-matrix-stack quote');
-  let indentKeys = makeKeywords(`define loop on-matrix-stack`);
+  const keywords =
+          makeKeywords('begin define fn if loop on-matrix-stack quote');
+  const indentKeys = makeKeywords(`define loop on-matrix-stack`);
 
   // functions from the common seni library
-  let seniCommon = makeKeywords('+ - / < = > append bezier bezier-bulging bezier-trailing box circle circle-slice col/analagous col/complementary col/convert col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsv col/lab col/lighten col/procedural-fn col/rgb col/set-alpha col/set-lab-a col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r col/split-complementary col/triad degrees->radians focal/hline focal/point focal/vline interp/bezier interp/bezier-tangent interp/fn line list list/get list/length log math/atan2 math/clamp math/cos math/distance-2d math/sin mod path/bezier path/circle path/linear path/spline poly pop-matrix print prng/perlin-signed prng/perlin-unsigned prng/range push-matrix quote radians->degrees rect repeat/rotate repeat/rotate-mirrored repeat/symmetry-4 repeat/symmetry-8 repeat/symmetry-horizontal repeat/symmetry-vertical rotate scale spline sqrt stroked-bezier stroked-bezier-rect take translate v2 v2/* v2/+ v2/- v2// v2/= v2/x v2/y');
+  const seniCommon = makeKeywords('+ - / < = > append bezier bezier-bulging bezier-trailing box circle circle-slice col/analagous col/complementary col/convert col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsv col/lab col/lighten col/procedural-fn col/rgb col/set-alpha col/set-lab-a col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r col/split-complementary col/triad degrees->radians focal/hline focal/point focal/vline interp/bezier interp/bezier-tangent interp/fn line list list/get list/length log math/atan2 math/clamp math/cos math/distance-2d math/sin mod path/bezier path/circle path/linear path/spline poly pop-matrix print prng/perlin-signed prng/perlin-unsigned prng/range push-matrix quote radians->degrees rect repeat/rotate repeat/rotate-mirrored repeat/symmetry-4 repeat/symmetry-8 repeat/symmetry-horizontal repeat/symmetry-vertical rotate scale spline sqrt stroked-bezier stroked-bezier-rect take translate v2 v2/* v2/+ v2/- v2// v2/= v2/x v2/y');
 
   function stateStack(indent, type, prev) { // represents a state stack object
     this.indent = indent;
@@ -63,7 +64,7 @@ function seniMode() {
     state.indentStack = state.indentStack.prev;
   }
 
-  let decimalMatcher = new RegExp(/^([-+]?\d*\.?\d*)/);
+  const decimalMatcher = new RegExp(/^([-+]?\d*\.?\d*)/);
 
   function isDecimalNumber (stream, backup) {
     if (backup === true) {
@@ -77,7 +78,7 @@ function seniMode() {
   }
 
   function tokenType(token, state, ch) {
-    let prefix = 'geno-';
+    const prefix = 'geno-';
     let usePrefix = false;
 
     if(state.insideCurly) {
@@ -122,8 +123,8 @@ function seniMode() {
   }
 
   return {
-    startState: function () {
-      return {
+    startState: () => {
+      const state = {
         indentStack: null,
         indentation: 0,
         mode: false,
@@ -136,9 +137,10 @@ function seniMode() {
         firstParenCurlyDepth: 0,
         curlyedFirstChildIsParen: false
       };
+      return state;
     },
 
-    token: function (stream, state) {
+    token: (stream, state) => {
       if (state.indentStack === null && stream.sol()) {
         // update indentation, but only if indentStack is empty
         state.indentation = stream.indentation();
@@ -177,7 +179,7 @@ function seniMode() {
         returnType = tokenType(COMMENT, state);
         break;
       default: // default parsing mode
-        let ch = stream.next();
+        const ch = stream.next();
 
         if (ch === '\"') {
           state.mode = 'string';
@@ -191,7 +193,8 @@ function seniMode() {
           stream.skipToEnd(); // rest of the line is a comment
           returnType = tokenType(COMMENT, state);
         } else if (ch === '(' || ch === '{') {
-          let keyWord = ''; let indentTemp = stream.column(), letter;
+          let keyWord = '', letter;
+          const indentTemp = stream.column();
 
           if (ch === '{') {
             setInsideCurly(true, state);
@@ -254,7 +257,7 @@ function seniMode() {
       return (typeof state.sExprComment === 'number') ? COMMENT : returnType;
     },
 
-    indent: function (state) {
+    indent: state => {
       if (state.indentStack === null) return state.indentation;
       return state.indentStack.indent;
     },

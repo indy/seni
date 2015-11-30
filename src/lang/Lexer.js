@@ -297,8 +297,8 @@ function nextTokenType(s) {
 }
 
 const Lexer = {
-  tokenise: function(input) {
-    let q = [];   // queue of tokens to return
+  tokenise: input => {
+    const q = [];   // queue of tokens to return
     let p = [];   // [token, remaining] pair
 
     let s = input;
@@ -350,7 +350,7 @@ const Lexer = {
       default:
         // read the unknown token and return it
         const tok = consumeUnknown(s)[0];
-        return {error: 'unknown token: ' + tok.value,
+        return {error: `unknown token: ${tok.value}`,
                 tokens: [tok]};
       }
 

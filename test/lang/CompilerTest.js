@@ -64,13 +64,11 @@ describe('Compiler', () => {
       switch(type) {
       case NodeType.LIST:
         return new NodeList();
-        break;
       case NodeType.VECTOR:
         return new NodeVector();
-        break;
       default:
         return new Node(type, value);
-      };
+      }
     }
 
     let node, frontAst, backAst;
@@ -99,7 +97,7 @@ describe('Compiler', () => {
                      n(NodeType.INT, 3)];
     frontAst = [node,
                 n(NodeType.WHITESPACE, ' '),
-                n(NodeType.COMMENT, 'some comment'),];
+                n(NodeType.COMMENT, 'some comment')];
     backAst = Compiler.compileBackAst(frontAst);
     expect(backAst.length).to.equal(1);
     expect(backAst[0].type).to.equal(NodeType.LIST);
@@ -109,7 +107,7 @@ describe('Compiler', () => {
 
 
     // (hello (mult 5 6) 3) ;; some comment
-    let node2 = n(NodeType.LIST, null);
+    const node2 = n(NodeType.LIST, null);
     node2.children = [n(NodeType.STRING, 'mult'),
                       n(NodeType.WHITESPACE, ' '),
                       n(NodeType.INT, 5),
@@ -123,14 +121,14 @@ describe('Compiler', () => {
                      n(NodeType.INT, 3)];
     frontAst = [node,
                 n(NodeType.WHITESPACE, ' '),
-                n(NodeType.COMMENT, 'some comment'),];
+                n(NodeType.COMMENT, 'some comment')];
     backAst = Compiler.compileBackAst(frontAst);
     expect(backAst.length).to.equal(1);
     expect(backAst[0].type).to.equal(NodeType.LIST);
     expect(backAst[0].children.length).to.equal(3);
     expect(backAst[0].children[0].value).to.equal('hello');
     expect(backAst[0].children[1].type).to.equal(NodeType.LIST);
-    let grandkids = backAst[0].children[1].children;
+    const grandkids = backAst[0].children[1].children;
     expect(grandkids.length).to.equal(3);
     expect(grandkids[0].value).to.equal('mult');
     expect(grandkids[1].value).to.equal(5);
@@ -179,7 +177,7 @@ describe('Compiler', () => {
   // correctly work with functions that have genotypes
   // in both name and arg positions
   it('should correctly apply genotypes to named functions', () => {
-    let form = `({gogo (select from: (list 'shabba 'gogo 'hooha))}
+    const form = `({gogo (select from: (list 'shabba 'gogo 'hooha))}
                  foo: {44 (int min: 10 max: 56)})`;
 
     expect(compileWithSeed(form, 100)).to.deep.equal(['shabba', {'foo': 15}]);
@@ -197,7 +195,7 @@ describe('Compiler', () => {
     expect(res.length).to.equal(2);
     expect(res[0]).to.equal('col/rgb');
 
-    let epsilon = 0.01;
+    const epsilon = 0.01;
     let colourValues = res[1];
     expect(colourValues.r).to.be.closeTo(0.0253, epsilon);
     expect(colourValues.g).to.be.closeTo(0.1226, epsilon);

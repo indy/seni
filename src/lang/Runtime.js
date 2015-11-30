@@ -23,11 +23,10 @@ import Lexer from './Lexer';
 import Compiler from './Compiler';
 
 const Runtime = {
-  createEnv: function() {
-    return Interpreter.getBasicEnv();
-  },
+  createEnv: () =>
+    Interpreter.getBasicEnv(),
 
-  buildFrontAst: function(form) {
+  buildFrontAst: form => {
     const tokensBox = Lexer.tokenise(form);
     if (tokensBox.error) {
       console.log(tokensBox.error);
@@ -43,19 +42,16 @@ const Runtime = {
     return astBox.nodes;
   },
 
-  logUnparse: function(frontAst, genotype) {
-    console.log(Unparser.unparse(frontAst, genotype));
-  },
+  logUnparse: (frontAst, genotype) =>
+    console.log(Unparser.unparse(frontAst, genotype)),
 
-  unparse: function(frontAst, genotype) {
-    return Unparser.unparse(frontAst, genotype);
-  },
+  unparse: (frontAst, genotype) =>
+    Unparser.unparse(frontAst, genotype),
 
-  compileBackAst: function(frontAst) {
-    return Compiler.compileBackAst(frontAst);
-  },
+  compileBackAst: frontAst =>
+    Compiler.compileBackAst(frontAst),
 
-  evalAst: function(env, ast, genotype) {
+  evalAst: (env, ast, genotype) => {
     const simplifiedAsts = Compiler.compileWithGenotype(ast, genotype);
 
     // add all of the define expressions to the env

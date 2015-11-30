@@ -34,7 +34,7 @@ const SeniMode = {
 function get(url) {
   return new Promise((resolve, reject) => {
 
-    let req = new XMLHttpRequest();
+    const req = new XMLHttpRequest();
     req.open('GET', url);
 
     req.onload = () => {
@@ -73,14 +73,14 @@ function getScriptFromEditor(seniApp) {
 // search the children of seniApp.navbar for elements with class 'klass'
 // then add 'addClass' to them
 function addNavbarClass(seniApp, klass, addClass) {
-  let es = seniApp.navbar.getElementsByClassName(klass);
+  const es = seniApp.navbar.getElementsByClassName(klass);
   for(let i = 0; i < es.length; i++) {
     es[i].classList.add(addClass);
   }
 }
 
 function removeNavbarClass(seniApp, klass, removeClass) {
-  let es = seniApp.navbar.getElementsByClassName(klass);
+  const es = seniApp.navbar.getElementsByClassName(klass);
   for(let i = 0; i < es.length; i++) {
     es[i].classList.remove(removeClass);
   }
@@ -154,12 +154,13 @@ function getPhenoIdFromDom(element) {
 }
 
 function renderHighRes(seniApp, element) {
-  let [index, _] = getPhenoIdFromDom(element);
-  _ = _;
+  /* eslint-disable no-unused-vars */
+  const [index, _] = getPhenoIdFromDom(element);
+  /* eslint-enable no-unused-vars */
 
   if(index !== -1) {
-    let piece = seniApp.piece;
-    let genotype = piece.genotypes[index];
+    const piece = seniApp.piece;
+    const genotype = piece.genotypes[index];
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('invisible');
     const frontAst = Runtime.buildFrontAst(piece.script);
@@ -172,8 +173,8 @@ function renderHighRes(seniApp, element) {
                           width, height);
 
     const holder = document.getElementById('holder');
-    imageElement.style.height = holder.clientHeight + 'px';
-    imageElement.style.width = holder.clientWidth + 'px';
+    imageElement.style.height = `${holder.clientHeight}px`;
+    imageElement.style.width = `${holder.clientWidth}px`;
 
     const linkElement = document.getElementById('high-res-link');
     linkElement.href = imageElement.src;
@@ -181,8 +182,9 @@ function renderHighRes(seniApp, element) {
 }
 
 function showEditFromEvolve(seniApp, element) {
-  let [index, _] = getPhenoIdFromDom(element);
-  _ = _;
+  /* eslint-disable no-unused-vars */
+  const [index, _] = getPhenoIdFromDom(element);
+  /* eslint-enable no-unused-vars */
 
   if(index !== -1) {
     const piece = seniApp.piece;
@@ -308,7 +310,7 @@ function createPhenotypeElement(id, placeholderImage) {
   const container = document.createElement('div');
 
   container.className = 'col s6 m4 l3';
-  container.id = 'pheno-' + id;
+  container.id = `pheno-${id}`;
 
   container.innerHTML = `
     <div class="card">
@@ -329,8 +331,8 @@ function setupEvolveUI(seniApp) {
 
   getScriptFromEditor(seniApp);
 
-  let allImagesLoadedSince = function(timeStamp) {
-    let piece = seniApp.piece;
+  const allImagesLoadedSince = function(timeStamp) {
+    const piece = seniApp.piece;
     for(let i = 0; i < seniApp.populationSize; i++) {
       if(piece.phenotypes[i].imageLoadTimeStamp < timeStamp) {
         return false;
@@ -339,7 +341,7 @@ function setupEvolveUI(seniApp) {
     return true;
   };
 
-  let initialTimeStamp = Date.now();
+  const initialTimeStamp = Date.now();
 
   showPlaceholderImages(seniApp);
 
@@ -412,7 +414,7 @@ function showScriptInEditor(seniApp) {
 
 function showEditFromGallery(seniApp, element) {
 
-  let getGalleryItemIdFromDom = function(e) {
+  const getGalleryItemIdFromDom = function(e) {
     while(e) {
       const m = e.id.match(/gallery-item-(\d+)/);
       if(m && m.length === 2) {
@@ -427,11 +429,11 @@ function showEditFromGallery(seniApp, element) {
 
   const [index, _] = getGalleryItemIdFromDom(element);
   if(index !== -1) {
-    const url = '/gallery/' + index;
+    const url = `/gallery/${index}`;
 
     get(url).catch(() => {
       console.error(`cannot connect to ${url}`);
-    }).then((data) => {
+    }).then(data => {
       // todo: construct a new piece object
       seniApp.piece.script = data;
 
@@ -447,10 +449,10 @@ function resizeContainers() {
   const navbar = document.getElementById('seni-navbar');
 
   const edit = document.getElementById('edit-container');
-  edit.style.height = (window.innerHeight - navbar.offsetHeight) + 'px';
+  edit.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 
   const evolve = document.getElementById('evolve-container');
-  evolve.style.height = (window.innerHeight - navbar.offsetHeight) + 'px';
+  evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
 function polluteGlobalDocument(seniApp) {
@@ -460,7 +462,7 @@ function polluteGlobalDocument(seniApp) {
     const v = seniApp.env.get(name);
     if(v.pb) {
       const binding = v.pb;       // publicBinding
-      console.log(name + ':', binding.doc);
+      console.log(`${name}: ${binding.doc}`);
 
       if(showDefaultArgs) {
         const args = JSON.stringify(binding.defaults, null, ' ');
@@ -468,11 +470,12 @@ function polluteGlobalDocument(seniApp) {
       }
     }
   };
-  document.seni.ls = function() {
-    let env = seniApp.env;
-    let keys = env.keys();
 
-    let res = [];
+  document.seni.ls = function() {
+    const env = seniApp.env;
+    const keys = env.keys();
+
+    const res = [];
     for(let k = keys.next(); k.done === false; k = keys.next()) {
       res.push(k.value);
     }
@@ -498,27 +501,25 @@ function setupUI(seniApp) {
   addNavbarClass(seniApp, 'to-edit', 'hidden');
   addNavbarClass(seniApp, 'to-evolve', 'hidden');
 
-  let blockIndent = function(editor, from, to) {
-    editor.operation(function() {
+  const blockIndent = function(editor, from, to) {
+    editor.operation(() => {
       for (let i = from; i < to; ++i) {
         editor.indentLine(i, 'smart');
       }
     });
   };
 
-  let codeMirror = CodeMirrorConfig.defineSeniMode();
-  let config = CodeMirrorConfig.defaultConfig;
+  const codeMirror = CodeMirrorConfig.defineSeniMode();
+  const config = CodeMirrorConfig.defaultConfig;
   config.extraKeys = {
-    'Ctrl-E': function() {
+    'Ctrl-E': () => {
       getScriptFromEditor(seniApp);
       timedRenderScript(seniApp, 'renderScript');
       return false;
     },
-    'Ctrl-D': function() {
-      return false;
-    },
-    'Ctrl-I': function() {
-      let numLines = seniApp.editor.doc.size;
+    'Ctrl-D': () => false,
+    'Ctrl-I': () => {
+      const numLines = seniApp.editor.doc.size;
       blockIndent(seniApp.editor, 0, numLines);
       console.log('indenting', numLines, 'lines');
       return false;
@@ -528,17 +529,17 @@ function setupUI(seniApp) {
   const textArea = d.getElementById('codemirror-textarea');
   seniApp.editor = codeMirror.fromTextArea(textArea, config);
 
-  let galleryModeHandler = event => {
+  const galleryModeHandler = event => {
     switchMode(seniApp, SeniMode.gallery);
     event.preventDefault();
   };
 
-  let evolveModeHandler = event => {
+  const evolveModeHandler = event => {
     switchMode(seniApp, SeniMode.evolve);
     event.preventDefault();
   };
 
-  let editModeHandler = event => {
+  const editModeHandler = event => {
     switchMode(seniApp, SeniMode.edit);
     event.preventDefault();
   };
@@ -552,7 +553,7 @@ function setupUI(seniApp) {
 
   addClickEventForClass('to-gallery', galleryModeHandler);
 
-  addClickEvent('shuffle-icon', (event) => {
+  addClickEvent('shuffle-icon', event => {
     genotypesFromSelectedPhenotypes(seniApp);
     event.preventDefault();
   });
@@ -569,7 +570,7 @@ function setupUI(seniApp) {
   });
 
   addClickEvent('gallery-list', event => {
-    let target = event.target;
+    const target = event.target;
     if(target.classList.contains('show-edit')) {
       showEditFromGallery(seniApp, target);
     }
@@ -577,7 +578,7 @@ function setupUI(seniApp) {
   });
 
   addClickEvent('phenotype-gallery', event => {
-    let target = event.target;
+    const target = event.target;
     if(target.classList.contains('render')) {
       renderHighRes(seniApp, target);
     } else if(target.classList.contains('edit')) {
@@ -592,7 +593,7 @@ function setupUI(seniApp) {
     onNextGen(seniApp);
   });
 
-  addClickEvent('high-res-close', (event) => {
+  addClickEvent('high-res-close', event => {
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.add('invisible');
 
@@ -612,8 +613,8 @@ function setupUI(seniApp) {
   const piece = seniApp.piece;
 
   // invoked on every load event for an img tag
-  let imageLoadHandler = (event) => {
-    let imageId = event.target.getAttribute('data-id');
+  const imageLoadHandler = event => {
+    const imageId = event.target.getAttribute('data-id');
     piece.phenotypes[imageId].imageLoadTimeStamp = event.timeStamp;
   };
 
@@ -623,7 +624,7 @@ function setupUI(seniApp) {
   let phenotypeElement, imageElement;
   piece.phenotypes = [];
 
-  let row = document.createElement('div');
+  const row = document.createElement('div');
   row.className = 'row';
   gallery.appendChild(row);
 
@@ -646,18 +647,18 @@ function setupUI(seniApp) {
 }
 
 function getGallery() {
-  let list = document.getElementById('gallery-list');
+  const list = document.getElementById('gallery-list');
   list.innerHTML = '';
 
-  let row = document.createElement('div');
+  const row = document.createElement('div');
   row.className = 'row';
   list.appendChild(row);
 
-  let createGalleryElement = galleryItem => {
+  const createGalleryElement = galleryItem => {
     const container = document.createElement('div');
 
     container.className = 'col s6 m4 l3';
-    container.id = 'gallery-item-' + galleryItem.id;
+    container.id = `gallery-item-${galleryItem.id}`;
 
     container.innerHTML = `
       <div class="card">
@@ -675,11 +676,11 @@ function getGallery() {
     return container;
   };
 
-  let url = '/gallery';
-  getJSON(url).then((galleryItems) => {
+  const url = '/gallery';
+  getJSON(url).then(galleryItems => {
     // gets an array of gallery items
     galleryItems.forEach(item => {
-      let e = createGalleryElement(item);
+      const e = createGalleryElement(item);
       row.appendChild(e);
     });
   }).catch(() => {
@@ -702,7 +703,7 @@ class Piece {
 }
 
 function createSeniApp() {
-  let canvasElement = document.getElementById('render-canvas');
+  const canvasElement = document.getElementById('render-canvas');
   const seniApp = {
     currentMode: SeniMode.gallery,
     renderer: new Renderer(canvasElement),
@@ -733,7 +734,7 @@ const SeniWebApplication = {
   mainFn() {
     resizeContainers();
 
-    let seniApp = createSeniApp();
+    const seniApp = createSeniApp();
 
     polluteGlobalDocument(seniApp);
 

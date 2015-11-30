@@ -23,7 +23,7 @@ const expect = chai.expect;
 
 describe('Interp', () => {
 
-  let epsilon = 0.01;
+  const epsilon = 0.01;
 
   it('remapFn', () => {
     let res = Interp.remapFn({from: [0, 1], to: [0, 100], clamping: false});

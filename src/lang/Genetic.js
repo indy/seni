@@ -71,15 +71,15 @@ function buildGeneFromTrait(trait, env) {
 function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
   // todo: assert that both genotypes have the same length
 
-  let crossoverIndex = Number.parseInt(Math.random() * genotypeA.size, 10);
+  const crossoverIndex = Number.parseInt(Math.random() * genotypeA.size, 10);
   if(logToConsole) {
     console.log('randomCrossover index:', crossoverIndex, mutationRate);
   }
 
-  let spliceA = genotypeA.slice(0, crossoverIndex);
-  let spliceB = genotypeB.slice(crossoverIndex, genotypeB.size);
+  const spliceA = genotypeA.slice(0, crossoverIndex);
+  const spliceB = genotypeB.slice(crossoverIndex, genotypeB.size);
 
-  let childGenotype = spliceA.concat(spliceB);
+  const childGenotype = spliceA.concat(spliceB);
 
   let i;
   for(i = 0; i < genotypeA.size; i++) {
@@ -100,17 +100,16 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
 
 const Genetic = {
 
-  buildTraits: function(ast) {
+  buildTraits: ast => {
     const traits = [];
     ast.map(node => buildTraitFromNode(node, traits));
     return traits;
   },
 
-  createGenotypeFromInitialValues: function(traits) {
-    return new Immutable.List(traits.map(g => g.initialValue));
-  },
+  createGenotypeFromInitialValues: traits =>
+    new Immutable.List(traits.map(g => g.initialValue)),
 
-  createGenotypeFromTraits: function(traits, seed) {
+  createGenotypeFromTraits: (traits, seed) => {
     const rng = PseudoRandom.buildUnsigned(seed);
     const env = Bind.addBracketBindings(Interpreter.getBasicEnv(), rng);
 
@@ -120,9 +119,10 @@ const Genetic = {
     return new Immutable.List(genotype);
   },
 
-  nextGeneration: function(genotypes, populationSize, mutationRate, traits) {
+  nextGeneration: (genotypes, populationSize, mutationRate, traits) => {
     // a silly mod method for creating the latest generation
-    let i, newGenotypes = [];
+    let i;
+    const newGenotypes = [];
     const seed = 42;
     const rng = PseudoRandom.buildUnsigned(seed);
     const env = Bind.addBracketBindings(Interpreter.getBasicEnv(), rng);
@@ -133,7 +133,7 @@ const Genetic = {
     }
 
     for(i = genotypes.length; i < populationSize; i++) {
-      let idxA = Number.parseInt(Math.random() * genotypes.length, 10);
+      const idxA = Number.parseInt(Math.random() * genotypes.length, 10);
       let idxB = Number.parseInt(Math.random() * genotypes.length, 10);
 
       // try not to use the same genotype for both a and b
@@ -146,15 +146,15 @@ const Genetic = {
         }
       }
 
-      let genotypeA = genotypes[idxA];
-      let genotypeB = genotypes[idxB];
+      const genotypeA = genotypes[idxA];
+      const genotypeB = genotypes[idxB];
 
       if(logToConsole) {
         console.log('using genotype indices: ', idxA, idxB);
       }
 
-      let child = randomCrossover(genotypeA, genotypeB,
-                                  mutationRate, traits, env);
+      const child = randomCrossover(genotypeA, genotypeB,
+                                    mutationRate, traits, env);
 
       newGenotypes.push(child);
     }

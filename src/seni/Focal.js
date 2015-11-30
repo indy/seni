@@ -36,7 +36,7 @@ function setupFocalParameters(publicBinding, params) {
     console.log('invalid falloff value');
   }
 
-  let fn = Interp.remapFn({
+  const fn = Interp.remapFn({
     from: [0, distance],
     to: [1, 0],
     mapping: falloff,
@@ -58,9 +58,9 @@ function point(publicBinding, params, renderer) {
 
   // returns a function that given a v2 returns how 'interesting' it should be
   return function(parameters) {
-    let v = parameters.position || [0, 0];
-    let p = renderer.vectorToCanvasSpace(v);
-    let d = MathUtil.distance2d(position, p);
+    const v = parameters.position || [0, 0];
+    const p = renderer.vectorToCanvasSpace(v);
+    const d = MathUtil.distance2d(position, p);
 
     return fn({val: d});
   };
@@ -74,9 +74,7 @@ const pointBinding = new PublicBinding(
     distance: 100,
     falloff: 'linear'
   },
-  (self, renderer) => {
-    return (params) => point(self, params, renderer);
-  }
+  (self, renderer) => params => point(self, params, renderer)
 );
 
 
@@ -88,9 +86,9 @@ function vline(publicBinding, params, renderer) {
 
   // returns a function that given a v2 returns how 'interesting' it should be
   return function(parameters) {
-    let v = parameters.position || [0, 0];
-    let p = renderer.vectorToCanvasSpace(v);
-    let d = MathUtil.distance1d(position[0], p[0]);
+    const v = parameters.position || [0, 0];
+    const p = renderer.vectorToCanvasSpace(v);
+    const d = MathUtil.distance1d(position[0], p[0]);
 
     return fn({val: d});
   };
@@ -104,9 +102,7 @@ const vlineBinding = new PublicBinding(
     distance: 100,
     falloff: 'linear'
   },
-  (self, renderer) => {
-    return (params) => vline(self, params, renderer);
-  }
+  (self, renderer) => params => vline(self, params, renderer)
 );
 
 
@@ -117,10 +113,10 @@ function hline(publicBinding, params, renderer) {
   } = setupFocalParameters(publicBinding, params);
 
   // returns a function that given a v2 returns how 'interesting' it should be
-  return function(parameters) {
-    let v = parameters.position || [0, 0];
-    let p = renderer.vectorToCanvasSpace(v);
-    let d = MathUtil.distance1d(position[1], p[1]);
+  return parameters => {
+    const v = parameters.position || [0, 0];
+    const p = renderer.vectorToCanvasSpace(v);
+    const d = MathUtil.distance1d(position[1], p[1]);
 
     return fn({val: d});
   };
@@ -134,9 +130,7 @@ const hlineBinding = new PublicBinding(
     distance: 100,
     falloff: 'linear'
   },
-  (self, renderer) => {
-    return (params) => hline(self, params, renderer);
-  }
+  (self, renderer) => params => hline(self, params, renderer)
 );
 
 const Focal = {

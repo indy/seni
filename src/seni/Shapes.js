@@ -43,9 +43,7 @@ const splineBinding = new PublicBinding(
     't-end': 1,
     colour: Colour.defaultColour
   },
-  (self, renderer) => {
-    return (params) => renderSpline(self, params, renderer);
-  });
+  (self, renderer) => params => renderSpline(self, params, renderer));
 
 function renderBezier(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
@@ -73,13 +71,11 @@ const bezierBinding = new PublicBinding(
     't-end': 1,
     colour: Colour.defaultColour
   },
-  (self, renderer) => {
-    return (params) => renderBezier(self, params, renderer);
-  });
+  (self, renderer) => params => renderBezier(self, params, renderer));
 
 
 function renderLine(publicBinding, params, renderer) {
-  let fullParams = publicBinding.mergeWithDefaults(params);
+  const fullParams = publicBinding.mergeWithDefaults(params);
   renderer.cmdRenderLine(fullParams);
 }
 
@@ -94,12 +90,10 @@ const lineBinding = new PublicBinding(
     width: 20,
     colour: Colour.defaultColour
   },
-  (self, renderer) => {
-    return (params) => renderLine(self, params, renderer);
-  });
+  (self, renderer) => params => renderLine(self, params, renderer));
 
 function renderRect(publicBinding, params, renderer) {
-  let fullParams = publicBinding.mergeWithDefaults(params);
+  const fullParams = publicBinding.mergeWithDefaults(params);
   renderer.cmdRenderRect(fullParams);
 }
 
@@ -114,10 +108,7 @@ const rectBinding = new PublicBinding(
     height: 200,
     colour: Colour.defaultColour
   },
-  (self, renderer) => {
-    return (params) => renderRect(self, params, renderer);
-  });
-
+  (self, renderer) => params => renderRect(self, params, renderer));
 
 const boxBinding = new PublicBinding(
   'box',
@@ -131,20 +122,18 @@ const boxBinding = new PublicBinding(
     right: 300,
     colour: Colour.defaultColour
   },
-  (self, renderer) => {
-    return (params) => {
-      let fullParams = self.mergeWithDefaults(params);
-      let width = fullParams.right - fullParams.left;
-      let height = fullParams.top - fullParams.bottom;
-      let rectParams = {
-        position: [fullParams.left + (width / 2),
-                   fullParams.bottom + (height / 2)],
-        width: width,
-        height: height,
-        colour: fullParams.colour
-      };
-      renderRect(rectBinding, rectParams, renderer);
+  (self, renderer) => params => {
+    const fullParams = self.mergeWithDefaults(params);
+    const width = fullParams.right - fullParams.left;
+    const height = fullParams.top - fullParams.bottom;
+    const rectParams = {
+      position: [fullParams.left + (width / 2),
+                 fullParams.bottom + (height / 2)],
+      width,
+      height,
+      colour: fullParams.colour
     };
+    renderRect(rectBinding, rectParams, renderer);
   });
 
 function renderCircle(publicBinding, params, renderer) {
@@ -164,9 +153,7 @@ const circleBinding = new PublicBinding(
     tessellation: 10,
     colour: Colour.defaultColour
   },
-  (self, renderer) => {
-    return (params) => renderCircle(self, params, renderer);
-  });
+  (self, renderer) => params => renderCircle(self, params, renderer));
 
 function renderCircleSlice(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
@@ -189,13 +176,11 @@ const circleSliceBinding = new PublicBinding(
     tessellation: 10,
     colour: Colour.defaultColour
   },
-  (self, renderer) => {
-    return (params) => renderCircleSlice(self, params, renderer);
-  });
+  (self, renderer) => params => renderCircleSlice(self, params, renderer));
 
 function renderBezierTrailing(publicBinding, params, renderer) {
 
-  let fullParams = publicBinding.mergeWithDefaults(params);
+  const fullParams = publicBinding.mergeWithDefaults(params);
 
   const {tessellation,
          coords,
@@ -204,14 +189,14 @@ function renderBezierTrailing(publicBinding, params, renderer) {
          colour} = fullParams;
   const lineWidth = fullParams['line-width'];
 
-  let bezierParams = {tessellation: tessellation,
-                      'line-width-start': lineWidth,
-                      'line-width-end': 0.0,
-                      'line-width-mapping': 'linear',
-                      coords: coords,
-                      't-start': tStart,
-                      't-end': tEnd,
-                      colour: colour};
+  const bezierParams = {tessellation,
+                        'line-width-start': lineWidth,
+                        'line-width-end': 0.0,
+                        'line-width-mapping': 'linear',
+                        coords,
+                        't-start': tStart,
+                        't-end': tEnd,
+                        colour};
 
   renderBezier(bezierBinding, bezierParams, renderer);
 }
@@ -234,9 +219,7 @@ const bezierTrailingBinding = new PublicBinding(
     't-end': 1,
     colour: Colour.defaultColour
   },
-  (self, renderer) => {
-    return (params) => renderBezierTrailing(self, params, renderer);
-  });
+  (self, renderer) => params => renderBezierTrailing(self, params, renderer));
 
 function renderBezierBulging(publicBinding, params, renderer) {
 
@@ -254,24 +237,24 @@ function renderBezierBulging(publicBinding, params, renderer) {
   // tessellation should be an even number
   const newTess = tessellation & 1 ? tessellation + 1 : tessellation;
 
-  let thinFatParams = {tessellation: newTess / 2,
-                       'line-width-start': 0.0,
-                       'line-width-end': lineWidth,
-                       'line-width-mapping': 'slow-in-out',
-                       coords: coords,
-                       't-start': tStart,
-                       't-end': tMid,
-                       colour: colour};
+  const thinFatParams = {tessellation: newTess / 2,
+                         'line-width-start': 0.0,
+                         'line-width-end': lineWidth,
+                         'line-width-mapping': 'slow-in-out',
+                         coords,
+                         't-start': tStart,
+                         't-end': tMid,
+                         colour};
   renderBezier(bezierBinding, thinFatParams, renderer);
 
-  let fatThinParams = {tessellation: newTess / 2,
-                       'line-width-start': lineWidth,
-                       'line-width-end': 0.0,
-                       'line-width-mapping': 'slow-in-out',
-                       coords: coords,
-                       't-start': tMid,
-                       't-end': tEnd,
-                       colour: colour};
+  const fatThinParams = {tessellation: newTess / 2,
+                         'line-width-start': lineWidth,
+                         'line-width-end': 0.0,
+                         'line-width-mapping': 'slow-in-out',
+                         coords,
+                         't-start': tMid,
+                         't-end': tEnd,
+                         colour};
   renderBezier(bezierBinding, fatThinParams, renderer);
 }
 
@@ -290,9 +273,7 @@ const bezierBulgingBinding = new PublicBinding(
     't-end': 1,
     colour: Colour.defaultColour
   },
-  (self, renderer) => {
-    return (params) => renderBezierBulging(self, params, renderer);
-  });
+  (self, renderer) => params => renderBezierBulging(self, params, renderer));
 
 function renderStrokedBezier(publicBinding, params, renderer) {
 
@@ -311,27 +292,27 @@ function renderStrokedBezier(publicBinding, params, renderer) {
   const strokeLineWidthEnd = fullParams['stroke-line-width-end'];
   const colourVolatility = fullParams['colour-volatility'];
 
-  let [[x1, y1], [x2, y2], [x3, y3], [x4, y4]] = coords;
-  let tv = MathUtil.stepsInclusive(0.0, 1.0, tessellation + 2);
+  const [[x1, y1], [x2, y2], [x3, y3], [x4, y4]] = coords;
+  const tv = MathUtil.stepsInclusive(0.0, 1.0, tessellation + 2);
 
-  let lab = Colour.cloneAs(colour, Colour.Format.LAB);
+  const lab = Colour.cloneAs(colour, Colour.Format.LAB);
 
   /* eslint-disable no-loop-func */
   for (let i = 0; i < tessellation; i++) {
 
-    let tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
+    const tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
     // get 3 points on the bezier curve
-    let [xx1, xx2, xx3] =
-          tvals.map(t => MathUtil.bezierPoint(x1, x2, x3, x4, t));
-    let [yy1, yy2, yy3] =
-          tvals.map(t => MathUtil.bezierPoint(y1, y2, y3, y4, t));
+    const [xx1, xx2, xx3] =
+            tvals.map(t => MathUtil.bezierPoint(x1, x2, x3, x4, t));
+    const [yy1, yy2, yy3] =
+            tvals.map(t => MathUtil.bezierPoint(y1, y2, y3, y4, t));
 
-    let ns = strokeNoise;
+    const ns = strokeNoise;
 
-    let colLabL = Colour.getComponent(lab, Colour.L) +
-          (PseudoRandom._perlin(xx1, xx1, xx1) * colourVolatility);
+    const colLabL = Colour.getComponent(lab, Colour.L) +
+            (PseudoRandom._perlin(xx1, xx1, xx1) * colourVolatility);
 
-    let splineParams = {
+    const splineParams = {
       tessellation: strokeTessellation,
       'line-width': lineWidth,
       'line-width-start': strokeLineWidthStart,
@@ -388,9 +369,7 @@ const strokedBezierBinding = new PublicBinding(
 
     seed: 42
   },
-  (self, renderer) => {
-    return (params) => renderStrokedBezier(self, params, renderer);
-  });
+  (self, renderer) => params => renderStrokedBezier(self, params, renderer));
 
 function renderStrokedBezierRect(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
@@ -432,8 +411,8 @@ function renderStrokedBezierRect(publicBinding, params, renderer) {
   let i;
 
   for (i = iterations; i > 0; i--) {
-    let hParams = {
-      tessellation: tessellation,
+    const hParams = {
+      tessellation,
       'line-width': overlap + hStripWidth,
       coords: [
         [(rng() * vol) + xStart + (0 * thWidth),
@@ -454,8 +433,8 @@ function renderStrokedBezierRect(publicBinding, params, renderer) {
   }
 
   for (i = iterations; i > 0; i--) {
-    let vParams = {
-      tessellation: tessellation,
+    const vParams = {
+      tessellation,
       'line-width': overlap + vStripWidth,
       coords: [
         [((i * vDelta) + (rng() * vol) + xStart),
@@ -499,10 +478,8 @@ const strokedBezierRectBinding = new PublicBinding(
     colour: Colour.defaultColour,
     'colour-volatility': 40
   },
-  (self, renderer) => {
-    return (params) => renderStrokedBezierRect(self, params, renderer);
-  });
-
+  (self, renderer) => params =>
+    renderStrokedBezierRect(self, params, renderer));
 
 const polyBinding = new PublicBinding(
   'poly',
@@ -516,10 +493,8 @@ const polyBinding = new PublicBinding(
               Colour.defaultColour,
               Colour.defaultColour]
   },
-  (self, renderer) => {
-    return (params) => renderer.cmdRenderPoly(self.mergeWithDefaults(params));
-  });
-
+  (self, renderer) => params =>
+    renderer.cmdRenderPoly(self.mergeWithDefaults(params)));
 
 const Shapes = {
   publicBindings: [

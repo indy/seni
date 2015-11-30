@@ -47,14 +47,14 @@ describe('MatrixStack', () => {
 
   it('should scale', () => {
     ms.scale(10, 20);
-    let m = ms.getHead();
+    const m = ms.getHead();
     expect(matrixRowColumn(m, 0, 0)).to.equal(10);
     expect(matrixRowColumn(m, 1, 1)).to.equal(20);
   });
 
   it('should translate', () => {
     ms.translate(30, 40);
-    let m = ms.getHead();
+    const m = ms.getHead();
     expect(matrixRowColumn(m, 0, 3)).to.equal(30);
     expect(matrixRowColumn(m, 1, 3)).to.equal(40);
   });

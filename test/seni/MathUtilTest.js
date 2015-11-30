@@ -23,7 +23,7 @@ const expect = chai.expect;
 
 describe('MathUtil', () => {
 
-  let epsilon = 0.01;
+  const epsilon = 0.01;
 
   it('stepsInclusive', () => {
     const expected = [0.0, 0.25, 0.50, 0.75, 1.0];
@@ -46,7 +46,7 @@ describe('MathUtil', () => {
   it('normalize', () => {
     expect(MathUtil.normalize(32, 0)).to.eql([1, 0]);
 
-    let res = MathUtil.normalize(81, 81);
+    const res = MathUtil.normalize(81, 81);
     expect(res[0]).to.be.closeTo(0.707106, epsilon);
     expect(res[1]).to.be.closeTo(0.707106, epsilon);
   });

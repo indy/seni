@@ -108,8 +108,8 @@ describe('Unparser', () => {
   });
 
   it('should unparse vectors', () => {
-    let f = '(define f {[1 2] (select from: [1 2 3 4])})';
-    let g = '(define f {[4 1] (select from: [1 2 3 4])})';
+    const f = '(define f {[1 2] (select from: [1 2 3 4])})';
+    const g = '(define f {[4 1] (select from: [1 2 3 4])})';
 
     expectToUnparse(f);
     expect(seededUnparse(f, 33)).to.equal(g);

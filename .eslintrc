@@ -1,4 +1,5 @@
 {
+  "extends": "eslint:recommended",
   "globals": {
     "console": true,
     "CodeMirror": false,
@@ -37,7 +38,7 @@
     "browser": true
   },
   "rules": {
-    "no-empty": 0,
+    "no-console": 0,
     "indent": [2, 2],
     "no-var": 2,
     "quotes": [1, "single"],
@@ -51,6 +52,24 @@
     "max-nested-callbacks": [2, 3],
     "no-unused-vars": 1,        
     "key-spacing": [0, {"align": "value"}],
-    "no-underscore-dangle": 0
+    "no-underscore-dangle": 0,
+    "arrow-body-style": 2,
+    "arrow-parens": [2, "as-needed"],
+    "arrow-spacing": 2,
+    "constructor-super": 2,
+    "generator-star-spacing": 2,
+    "no-arrow-condition": 0,
+    "no-class-assign": 2,
+    "no-const-assign": 2,
+    "no-dupe-class-members": 2,
+    "no-this-before-super": 2,
+    "no-var": 2,
+    "object-shorthand": 2,
+    "prefer-arrow-callback": 2,
+    "prefer-const": 2,
+    "prefer-reflect": 0,
+    "prefer-spread": 2,
+    "prefer-template": 2,
+    "require-yield": 2
   }
 }

@@ -124,11 +124,9 @@ const PseudoRandom = {
       'prng/perlin-signed',
       `returns perlin numbers in the range -1..1`,
       {x: 1.0, y: 1.0, z: 1.0},
-      (self) => {
-        return (params) => {
-          const {x, y, z} = self.mergeWithDefaults(params);
-          return noise(x, y, z);
-        };
+      self => params => {
+        const {x, y, z} = self.mergeWithDefaults(params);
+        return noise(x, y, z);
       }
     ),
 
@@ -136,12 +134,10 @@ const PseudoRandom = {
       'prng/perlin-unsigned',
       `returns perlin numbers in the range 0..1`,
       {x: 1.0, y: 1.0, z: 1.0},
-      (self) => {
-        return (params) => {
-          const {x, y, z} = self.mergeWithDefaults(params);
-          const v = noise(x, y, z);
-          return (v + 1) / 2.0;
-        };
+      self => params => {
+        const {x, y, z} = self.mergeWithDefaults(params);
+        const v = noise(x, y, z);
+        return (v + 1) / 2.0;
       }
     ),
 
@@ -151,7 +147,7 @@ const PseudoRandom = {
       {seed: 'shabba',
        min: 0,
        max: 1},
-      (self) => function(params) {
+      self => params => {
         const {seed, min, max} = self.mergeWithDefaults(params);
         return buildRange(seed, min, max);
       }

@@ -26,11 +26,9 @@ const BracketBindings = {
       `returns value
       arguments: value`,
       {value: 42},
-      (self) => {
-        return (params) => {
-          const {value} = self.mergeWithDefaults(params);
-          return value;
-        };
+      self => params => {
+        const {value} = self.mergeWithDefaults(params);
+        return value;
       }
     ),
 
@@ -39,12 +37,10 @@ const BracketBindings = {
       `returns an integer in the range min..max-1
       arguments: min max`,
       {min: 0, max: 100},
-      (self, rng) => {
-        // rng is a PseudoRandom returning values in the range 0..1
-        return (params) => {
-          const {min, max} = self.mergeWithDefaults(params);
-          return Number.parseInt(Interp.interpolate(min, max, rng()));
-        };
+      // rng is a PseudoRandom returning values in the range 0..1
+      (self, rng) => params => {
+        const {min, max} = self.mergeWithDefaults(params);
+        return Number.parseInt(Interp.interpolate(min, max, rng()));
       }
     ),
 
@@ -53,12 +49,10 @@ const BracketBindings = {
       `returns a number in the range 0..1
       arguments: -`,
       {min: 0.0, max: 1.0},
-      (self, rng) => {
-        // rng is a PseudoRandom returning values in the range 0..1
-        return (params) => {
-          const {min, max} = self.mergeWithDefaults(params);
-          return Interp.interpolate(min, max, rng());
-        };
+      // rng is a PseudoRandom returning values in the range 0..1
+      (self, rng) => params => {
+        const {min, max} = self.mergeWithDefaults(params);
+        return Interp.interpolate(min, max, rng());
       }
     ),
 
@@ -67,13 +61,11 @@ const BracketBindings = {
       `returns a vector
       arguments: min max`,
       {min: 0.0, max: 1000.0},
-      (self, rng) => {
-        return (params) => {
-          const {min, max} = self.mergeWithDefaults(params);
-          const x = Interp.interpolate(min, max, rng());
-          const y = Interp.interpolate(min, max, rng());
-          return ['list', x, y];
-        };
+      (self, rng) => params => {
+        const {min, max} = self.mergeWithDefaults(params);
+        const x = Interp.interpolate(min, max, rng());
+        const y = Interp.interpolate(min, max, rng());
+        return ['list', x, y];
       }
     ),
 
@@ -82,16 +74,14 @@ const BracketBindings = {
       `returns a number in the range 0..1
       arguments: -`,
       {from: []},
-      (self, rng) => {
-        return (params) => {
-          const {from} = self.mergeWithDefaults(params);
-          if (from instanceof Array && from.length > 0) {
-            const index = Number.parseInt(from.length * rng(), 10);
-            return from[index];
-          }
-          console.log('select\'s from parameter should be a list');
-          return undefined;
-        };
+      (self, rng) => params => {
+        const {from} = self.mergeWithDefaults(params);
+        if (from instanceof Array && from.length > 0) {
+          const index = Number.parseInt(from.length * rng(), 10);
+          return from[index];
+        }
+        console.log('select\'s from parameter should be a list');
+        return undefined;
       }
     ),
 
@@ -120,14 +110,13 @@ random colour, but keep alpha as 0.4:
              alpha: 0.4) (col alpha: 0.4)]
 `,
       {},
-      (self, rng) => {
-        return (params) => {
-          let r = rng(), g = rng(), b = rng(), alpha = rng();
-          if(params.alpha) {
-            alpha = params.alpha;
-          }
-          return ['col/rgb', {r, g, b, alpha}];
-        };
+      (self, rng) => params => {
+        const r = rng(), g = rng(), b = rng();
+        let alpha = rng();
+        if(params.alpha) {
+          alpha = params.alpha;
+        }
+        return ['col/rgb', {r, g, b, alpha}];
       }
     ),
 
@@ -136,12 +125,8 @@ random colour, but keep alpha as 0.4:
       `[FOR TESTING ONLY] returns + character
       arguments: -`,
       {},
-      () => {
-        // rng is a PseudoRandom returning values in the range 0..1
-        return () => {
-          return '+';
-        };
-      }
+      // rng is a PseudoRandom returning values in the range 0..1
+      () => () => '+'
     )
   ]
 };

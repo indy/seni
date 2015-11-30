@@ -25,12 +25,12 @@ function compatibilityHacks() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
 
   compatibilityHacks();
 
   // Initialize collapse button
-  $('.button-collapse').sideNav();
+  // $('.button-collapse').sideNav();
 
   SeniWebApplication.mainFn();
 });

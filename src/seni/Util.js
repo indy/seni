@@ -17,16 +17,16 @@
  */
 
 const Util = {
-  merge: function(obj, defaults) {
+  merge: (obj, defaults) => {
     const res = {};
-    for (let p in defaults) {
+    for (const p in defaults) {
       res[p] = obj[p] !== undefined ? obj[p] : defaults[p];
     }
     return res;
   },
 
   // execute the function and log the time that it takes
-  withTiming: function(msg, fn, shouldLog) {
+  withTiming: (msg, fn, shouldLog) => {
     const before = new Date();
     fn();
     const after = new Date();

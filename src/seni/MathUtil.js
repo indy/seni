@@ -130,7 +130,7 @@ const MathUtil = {
       'math/sin',
       ``,
       {angle: 0},
-      (self) => function(params) {
+      self => params => {
         const {angle} = self.mergeWithDefaults(params);
         return Math.sin(angle);
       }
@@ -140,7 +140,7 @@ const MathUtil = {
       'math/cos',
       ``,
       {angle: 0},
-      (self) => function(params) {
+      self => params => {
         const {angle} = self.mergeWithDefaults(params);
         return Math.cos(angle);
       }
@@ -152,7 +152,7 @@ to calculating the arc tangent of y / x, except that the signs of
 both arguments are used to determine the quadrant of the result`,
       {x: 0,
        y: 0},
-      (self) => function(params) {
+      self => params => {
         const {x, y} = self.mergeWithDefaults(params);
         return Math.atan2(y, x); // this is correct, y is given before x
       }
@@ -162,7 +162,7 @@ both arguments are used to determine the quadrant of the result`,
       'math/distance-2d',
       ``,
       {x1: 0, y1: 0, x2: 1, y2: 1},
-      (self) => function(params) {
+      self => params => {
         const {x1, y1, x2, y2} = self.mergeWithDefaults(params);
         return distance2d([x1, y1], [x2, y2]);
       }
@@ -172,7 +172,7 @@ both arguments are used to determine the quadrant of the result`,
       'math/clamp',
       ``,
       {val: 0, min: 0, max: 1},
-      (self) => function(params) {
+      self => params => {
         const {val, min, max} = self.mergeWithDefaults(params);
         return clamp(val, min, max);
       }
@@ -182,7 +182,7 @@ both arguments are used to determine the quadrant of the result`,
       'degrees->radians',
       `A helper function that converts angles in degrees to radians`,
       {angle: 0.0},
-      (self) => function(params) {
+      self => params => {
         const {angle} = self.mergeWithDefaults(params);
         return degreesToRadians(angle);
       }
@@ -192,14 +192,14 @@ both arguments are used to determine the quadrant of the result`,
       'radians->degrees',
       `A helper function that converts angles in radians to degrees`,
       {angle: 0.0},
-      (self) => function(params) {
+      self => params => {
         const {angle} = self.mergeWithDefaults(params);
         return radiansToDegrees(angle);
       }
     )
   ],
 
-  stepsInclusive: function(start, end, num) {
+  stepsInclusive: (start, end, num) => {
     const unit = (end - start) / (num - 1);
     const res = [];
     for (let i = 0; i < num; i++) {
@@ -208,9 +208,8 @@ both arguments are used to determine the quadrant of the result`,
     return res;
   },
 
-  distance1d: function(a, b) {
-    return Math.abs(a - b);
-  },
+  distance1d: (a, b) => Math.abs(a - b),
+
 /*
   interpolate: function(a, b, t) {
     return (a * (1 - t)) + (b * t);

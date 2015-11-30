@@ -27,7 +27,7 @@ const vertical = [-1, 1];
 const horizontal = [1, -1];
 
 function mirror(renderer, drawFn, scaling) {
-  let [x, y] = scaling;
+  const [x, y] = scaling;
 
   renderer.cmdMatrixPush();
   drawFn();
@@ -58,11 +58,9 @@ const symmetryVertical = new PublicBinding(
   {
     draw: emptyFn
   },
-  (self, renderer) => {
-    return (params) => {
-      let { draw } = self.mergeWithDefaults(params);
-      mirror(renderer, draw, vertical);
-    };
+  (self, renderer) => params => {
+    const { draw } = self.mergeWithDefaults(params);
+    mirror(renderer, draw, vertical);
   }
 );
 
@@ -72,11 +70,9 @@ const symmetryHorizontal = new PublicBinding(
   {
     draw: emptyFn
   },
-  (self, renderer) => {
-    return (params) => {
-      let { draw } = self.mergeWithDefaults(params);
-      mirror(renderer, draw, horizontal);
-    };
+  (self, renderer) => params => {
+    const { draw } = self.mergeWithDefaults(params);
+    mirror(renderer, draw, horizontal);
   }
 );
 
@@ -86,13 +82,11 @@ const symmetry4 = new PublicBinding(
   {
     draw: emptyFn
   },
-  (self, renderer) => {
-    return (params) => {
-      let { draw } = self.mergeWithDefaults(params);
-      mirror(renderer, () => {
-        mirror(renderer, draw, vertical);
-      }, horizontal);
-    };
+  (self, renderer) => params => {
+    const { draw } = self.mergeWithDefaults(params);
+    mirror(renderer, () => {
+      mirror(renderer, draw, vertical);
+    }, horizontal);
   }
 );
 
@@ -102,15 +96,13 @@ const symmetry8 = new PublicBinding(
   {
     draw: emptyFn
   },
-  (self, renderer) => {
-    return (params) => {
-      let { draw } = self.mergeWithDefaults(params);
+  (self, renderer) => params => {
+    const { draw } = self.mergeWithDefaults(params);
+    mirror(renderer, () => {
       mirror(renderer, () => {
-        mirror(renderer, () => {
-          rotated90(renderer, draw);
-        }, vertical);
-      }, horizontal);
-    };
+        rotated90(renderer, draw);
+      }, vertical);
+    }, horizontal);
   }
 );
 
@@ -121,19 +113,17 @@ const rotate = new PublicBinding(
     draw: emptyFn,
     copies: 3
   },
-  (self, renderer) => {
-    return (params) => {
-      let { draw, copies } = self.mergeWithDefaults(params);
+  (self, renderer) => params => {
+    const { draw, copies } = self.mergeWithDefaults(params);
 
-      const delta = MathUtil.TAU / copies;
+    const delta = MathUtil.TAU / copies;
 
-      for(let i = 0; i < copies; i++) {
-        renderer.cmdMatrixPush();
-        renderer.cmdMatrixRotate(delta * i);
-        draw();
-        renderer.cmdMatrixPop();
-      }
-    };
+    for(let i = 0; i < copies; i++) {
+      renderer.cmdMatrixPush();
+      renderer.cmdMatrixRotate(delta * i);
+      draw();
+      renderer.cmdMatrixPop();
+    }
   }
 );
 
@@ -144,30 +134,27 @@ const rotateMirrored = new PublicBinding(
     draw: emptyFn,
     copies: 3
   },
-  (self, renderer) => {
-    return (params) => {
-      let { draw, copies } = self.mergeWithDefaults(params);
+  (self, renderer) => params => {
+    const { draw, copies } = self.mergeWithDefaults(params);
 
-      const delta = MathUtil.TAU / copies;
+    const delta = MathUtil.TAU / copies;
 
-      for(let i = 0; i < copies; i++) {
-        renderer.cmdMatrixPush();
-        renderer.cmdMatrixRotate(delta * i);
-        draw();
-        renderer.cmdMatrixPop();
-      }
-
+    for(let i = 0; i < copies; i++) {
       renderer.cmdMatrixPush();
-      renderer.cmdMatrixScale(-1, 1);
-      for(let i = 0; i < copies; i++) {
-        renderer.cmdMatrixPush();
-        renderer.cmdMatrixRotate(delta * i);
-        draw();
-        renderer.cmdMatrixPop();
-      }
+      renderer.cmdMatrixRotate(delta * i);
+      draw();
       renderer.cmdMatrixPop();
+    }
 
-    };
+    renderer.cmdMatrixPush();
+    renderer.cmdMatrixScale(-1, 1);
+    for(let i = 0; i < copies; i++) {
+      renderer.cmdMatrixPush();
+      renderer.cmdMatrixRotate(delta * i);
+      draw();
+      renderer.cmdMatrixPop();
+    }
+    renderer.cmdMatrixPop();
   }
 );
 

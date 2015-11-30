@@ -85,35 +85,35 @@ function interpolate(a, b, t) {
 
 
 function makeBezierFn(coords) {
-  return function(parameters) {
+  return parameters => {
     const t = parameters.t || 0;
-    let x = MathUtil.bezierPoint(coords[0][0],
-                                 coords[1][0],
-                                 coords[2][0],
-                                 coords[3][0],
-                                 t);
-    let y = MathUtil.bezierPoint(coords[0][1],
-                                 coords[1][1],
-                                 coords[2][1],
-                                 coords[3][1],
-                                 t);
+    const x = MathUtil.bezierPoint(coords[0][0],
+                                   coords[1][0],
+                                   coords[2][0],
+                                   coords[3][0],
+                                   t);
+    const y = MathUtil.bezierPoint(coords[0][1],
+                                   coords[1][1],
+                                   coords[2][1],
+                                   coords[3][1],
+                                   t);
     return [x, y];
   };
 }
 
 function makeBezierTangentFn(coords) {
-  return function(parameters) {
+  return parameters => {
     const t = parameters.t || 0;
-    let x = MathUtil.bezierTangent(coords[0][0],
-                                   coords[1][0],
-                                   coords[2][0],
-                                   coords[3][0],
-                                   t);
-    let y = MathUtil.bezierTangent(coords[0][1],
-                                   coords[1][1],
-                                   coords[2][1],
-                                   coords[3][1],
-                                   t);
+    const x = MathUtil.bezierTangent(coords[0][0],
+                                     coords[1][0],
+                                     coords[2][0],
+                                     coords[3][0],
+                                     t);
+    const y = MathUtil.bezierTangent(coords[0][1],
+                                     coords[1][1],
+                                     coords[2][1],
+                                     coords[3][1],
+                                     t);
     return [x, y];
   };
 }
@@ -136,10 +136,10 @@ const Interp = {
       'interp/bezier',
       ``,
       {coords: defaultCoords, t: 1},
-      (self) => function(params) {
+      self => params => {
         const {coords, t} = self.mergeWithDefaults(params);
         // make a Bezier fn and then invoke it straight away with the t value
-        return makeBezierFn(coords)({t: t});
+        return makeBezierFn(coords)({t});
       }
     ),
 
@@ -147,7 +147,7 @@ const Interp = {
       'interp/bezier-fn',
       ``,
       {coords: defaultCoords},
-      (self) => function(params) {
+      self => params => {
         const {coords} = self.mergeWithDefaults(params);
         // return a function that only accepts a t value
         return makeBezierFn(coords);
@@ -158,9 +158,9 @@ const Interp = {
       'interp/bezier-tangent',
       ``,
       {coords: defaultCoords, t: 1},
-      (self) => function(params) {
+      self => params => {
         const {coords, t} = self.mergeWithDefaults(params);
-        return makeBezierTangentFn(coords)({t: t});
+        return makeBezierTangentFn(coords)({t});
       }
     ),
 
@@ -168,7 +168,7 @@ const Interp = {
       'interp/bezier-tangent-fn',
       ``,
       {coords: defaultCoords},
-      (self) => function(params) {
+      self => params => {
         const {coords} = self.mergeWithDefaults(params);
 
         // return a function that only accepts a t value
@@ -183,15 +183,15 @@ const Interp = {
        radius: 1,
        t: 0
       },
-      (self) => function(params) {
+      self => params => {
         const {position, radius, t} = self.mergeWithDefaults(params);
 
-        let [x, y] = position;
+        const [x, y] = position;
 
-        let angle = t * MathUtil.TAU;
+        const angle = t * MathUtil.TAU;
 
-        let vx = (Math.sin(angle) * radius) + x;
-        let vy = (Math.cos(angle) * radius) + y;
+        const vx = (Math.sin(angle) * radius) + x;
+        const vy = (Math.cos(angle) * radius) + y;
 
         return [vx, vy];
       }

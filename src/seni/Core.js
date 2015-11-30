@@ -48,7 +48,7 @@ const Core = {
 
       {of: []},
 
-      (self) => function(params) {
+      self => params => {
         const {of} = self.mergeWithDefaults(params);
         return of.length;
       }
@@ -61,7 +61,7 @@ const Core = {
 
       {from: [], nth: 0},
 
-      (self) => function(params) {
+      self => params => {
         const {from, nth} = self.mergeWithDefaults(params);
         return from[nth];
       }
@@ -72,9 +72,9 @@ const Core = {
 
       `invokes the 'from' function 'num' times, returning a list`,
 
-      {num: 1, from: function() { return 0; }},
+      {num: 1, from() { return 0; }},
 
-      (self) => function(params) {
+      self => params => {
         const {num, from} = self.mergeWithDefaults(params);
         const res = [];
         for (let i = 0; i < num; i++) {
@@ -83,7 +83,6 @@ const Core = {
         return res;
       }
     )
-
   ]
 };
 

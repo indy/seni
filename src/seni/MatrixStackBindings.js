@@ -25,18 +25,14 @@ const MatrixStackBindings = {
       'push-matrix',
       ``,
       {},
-      (self, renderer) => {
-        return () => renderer.cmdMatrixPush();
-      }
+      (self, renderer) => () => renderer.cmdMatrixPush()
     ),
 
     new PublicBinding(
       'pop-matrix',
       ``,
       {},
-      (self, renderer) => {
-        return () => renderer.cmdMatrixPop();
-      }
+      (self, renderer) => () => renderer.cmdMatrixPop()
     ),
 
     new PublicBinding(
@@ -44,19 +40,16 @@ const MatrixStackBindings = {
       `Accepts either a 'vector' or 'scalar' argument`,
       {vector: [1, 1],
        scalar: 1},
-      (self, renderer) => {
-        return (params) => {
+      (self, renderer) => params => {
+        let vector;
+        if(params.scalar) {
+          vector = [params.scalar, params.scalar];
+        } else {
+          const obj = self.mergeWithDefaults(params);
+          vector = obj.vector;
+        }
 
-          let vector;
-          if(params.scalar) {
-            vector = [params.scalar, params.scalar];
-          } else {
-            const obj = self.mergeWithDefaults(params);
-            vector = obj.vector;
-          }
-
-          return renderer.cmdMatrixScale(vector[0], vector[1]);
-        };
+        return renderer.cmdMatrixScale(vector[0], vector[1]);
       }
     ),
 
@@ -64,11 +57,9 @@ const MatrixStackBindings = {
       'translate',
       ``,
       {vector: [0, 0]},
-      (self, renderer) => {
-        return (params) => {
-          const {vector} = self.mergeWithDefaults(params);
-          return renderer.cmdMatrixTranslate(vector[0], vector[1]);
-        };
+      (self, renderer) => params => {
+        const {vector} = self.mergeWithDefaults(params);
+        return renderer.cmdMatrixTranslate(vector[0], vector[1]);
       }
     ),
 
@@ -76,13 +67,11 @@ const MatrixStackBindings = {
       'rotate',
       ``,
       {angle: 0.0},
-      (self, renderer) => {
-        return (params) => {
-          const {angle} = self.mergeWithDefaults(params);
-          // angle is going to be in degrees
-          let radians = MathUtil.degreesToRadians(angle);
-          return renderer.cmdMatrixRotate(radians);
-        };
+      (self, renderer) => params => {
+        const {angle} = self.mergeWithDefaults(params);
+        // angle is going to be in degrees
+        const radians = MathUtil.degreesToRadians(angle);
+        return renderer.cmdMatrixRotate(radians);
       }
     )
   ]

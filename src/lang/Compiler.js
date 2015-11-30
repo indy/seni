@@ -61,7 +61,7 @@ function compile(node, genotype) {
 
 function compileNodes(nodes, genotype) {
   let n;
-  let res = nodes.map(node => {
+  const res = nodes.map(node => {
     [n, genotype] = compile(node, genotype);
     return n;
   });
@@ -87,7 +87,7 @@ function compileFormUsingNamedParameters(children, genotype) {
   for (let i = 1; i < children.length; i += 2) {
     const label = children[i];
     if (label.type !== NodeType.LABEL) {
-      console.log('error: expecting a label, actual: ' + label.value);
+      console.log(`error: expecting a label, actual: ${label.value}`);
     }
     let arg;
     [arg, genotype] = compile(children[i + 1], genotype);
@@ -121,7 +121,7 @@ function compileForBackAst(nodes) {
         newNode = new NodeVector();
       } else {
         newNode = new Node(n.type, n.value);
-      };
+      }
 
       newNode.alterable = n.alterable;
 
@@ -131,7 +131,7 @@ function compileForBackAst(nodes) {
 
       if(n.type === NodeType.LIST || n.type === NodeType.VECTOR) {
         newNode.children = compileForBackAst(n.children);
-      };
+      }
 
       nodeArray.push(newNode);
     }
@@ -176,7 +176,7 @@ const Compiler = {
   // transform a front end ast into a backAst
   // NOTE: we currently need to assume that the alterable nodes
   // stay in the same order
-  compileBackAst: function(frontAst) {
+  compileBackAst: frontAst => {
     let backAst = compileForBackAst(frontAst);
 
     backAst = expandNodeForAlterableChildren(backAst);
@@ -185,12 +185,15 @@ const Compiler = {
   },
 
   // the nodes should be from the back-end ast
-  compileWithGenotype: function(nodes, genotype) {
+  compileWithGenotype: (nodes, genotype) => {
 
     // let nullGenotype = genotype === null;
 
-    let [simplifiedAsts, _] = compileNodes(nodes, genotype);
-    _ = _;
+    /* eslint-disable no-unused-vars */
+    const [simplifiedAsts, _] = compileNodes(nodes, genotype);
+    /* eslint-enable no-unused-vars */
+
+//    _ = _;
 
 //    if (!nullGenotype) {
 //      console.log('simplifiedAsts', simplifiedAsts);

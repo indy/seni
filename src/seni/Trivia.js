@@ -41,7 +41,7 @@ function base10ToN(num, n) {
     if (remainder > 9 && remainder < 36) {
       remainderString = numRep[remainder];
     } else if (remainder >= 36) {
-      remainderString = '(' + remainder + ')';
+      remainderString = `(${remainder})`;
     } else {
       remainderString = remainder;
     }
@@ -58,13 +58,13 @@ function _getTitle(time) {
 
   // in base 20 the days will have at most 2 digits,
   // so pad out the earlier one digit dates with 0
-  const dayValue = ('00' + d).substr(-2);
+  const dayValue = (`00${d}`).substr(-2);
 
-  return '' + year + dayValue;
+  return `${year}${dayValue}`;
 }
 
 const Trivia = {
-  getTitle: function(time) {
+  getTitle: time => {
     if (time === undefined) {
       time = new Date();
     }

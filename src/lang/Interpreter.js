@@ -51,11 +51,11 @@ function evaluate(env, expr) {
 
 function funApplication(env, listExpr) {
 
-  let [e, fun] = evaluate(env, listExpr[0]);
+  const [e, fun] = evaluate(env, listExpr[0]);
 
   if (fun === undefined) {
     // todo: use something better than console.log
-    console.log(listExpr.toJS(), listExpr[0] + ' is undefined');
+    console.log(listExpr.toJS(), `${listExpr[0]} is undefined`);
     return [e, undefined];
   }
 
@@ -74,7 +74,7 @@ function funApplication(env, listExpr) {
   const args = {};
   if (listExpr.length > 1) {
     const argObj = listExpr[1];
-    for (let k in argObj) {
+    for (const k in argObj) {
       args[k] = evaluate(e, argObj[k])[1];
     }
   }
@@ -103,8 +103,8 @@ function addBindings(env, exprs) {
       // e.g. (define [x y] [100 200])
       // the names compile to ['list', 'x', 'y']
 
-      let values = v;
-      let names = name.slice(1);
+      const values = v;
+      const names = name.slice(1);
 
       if(names.length !== values.length) {
         console.error('binding mismatch between', names, values);
@@ -131,13 +131,13 @@ function isDefineExpression(form) {
 function defineFunction(env, defaultArgForms, body) {
 
   const defaultArgValues = {};
-  for (let k in defaultArgForms) {
+  for (const k in defaultArgForms) {
     defaultArgValues[k] = evaluate(env, defaultArgForms[k])[1];
   }
 
   return function(args) {
     let newEnv = env;
-    for (let k in defaultArgValues) {
+    for (const k in defaultArgValues) {
       newEnv = newEnv.set(k, {
         binding: args[k] === undefined ? defaultArgValues[k] : args[k]
       });
@@ -202,7 +202,7 @@ const specialForms = {
       console.error('define should have an even number of args', args);
     }
 
-    let argPairs = [];
+    const argPairs = [];
     for(let i = 0; i < args.length; i += 2) {
       argPairs.push([args[i + 0], args[i + 1]]);
     }
@@ -219,7 +219,7 @@ const specialForms = {
   // (print 'hi' foo) => hi 42
   'print': (env, [_, ...msgs]) => {
     _ = _;
-    let printMsg = msgs.reduce((a, b) => a + ' ' + evaluate(env, b)[1], '');
+    const printMsg = msgs.reduce((a, b) => `${a} ${evaluate(env, b)[1]}`, '');
     console.log(printMsg.trim());
     return [env, true];
   },
@@ -231,9 +231,9 @@ const specialForms = {
       const r = evaluate(env, b);
       const res = r[1];
       if (typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
-        return a + ' <' + b + ':' + res + '>';
+        return `${a} < ${b}:${res}>`;
       }
-      return a + ' ' + res;
+      return `${a} ${res}`;
     }, '');
     console.log(message);
     return [env, true];
@@ -243,7 +243,7 @@ const specialForms = {
   'loop': (env, [_, [varName, varParameters], ...body]) => {
     _ = _;
     const vp = {};
-    for (let k in varParameters) {
+    for (const k in varParameters) {
       vp[k] = evaluate(env, varParameters[k])[1];
     }
 
@@ -284,11 +284,11 @@ function loopingFn(env, expr, varName, params) {
          steps,
          increment} = merged;
 
-  let stepsUpto = merged['steps-upto'];
+  const stepsUpto = merged['steps-upto'];
 
 
   if (stepsUpto !== undefined || steps !== undefined) {
-    let s = stepsUpto || steps;
+    const s = stepsUpto || steps;
     if (s < 1) {
       console.log('steps-upto | steps  must be greater than 0');
       return undefined;
@@ -384,7 +384,8 @@ const classicFunctions = {
 };
 
 function setupBinding(env, rawBindings) {
-  for(let prop in rawBindings) {
+
+  for(const prop in rawBindings) {
     env = env.set(prop, { binding: rawBindings[prop] });
   }
   return env;

@@ -31,7 +31,6 @@ function boxNode(nodeType, value) {
 }
 
 function consumeItem(tokens) {
-  let _ = _;
   const token = tokens[0];
   tokens.shift();            // remove the first token
 
@@ -68,7 +67,7 @@ function consumeItem(tokens) {
   } else if (tokenType === TokenType.ALTERABLE_END) {
     return {error: 'mismatched closing alterable brackets'};
   } else if (tokenType === TokenType.COMMENT) {
-    return boxNode(NodeType.COMMENT, token.value + '\n');
+    return boxNode(NodeType.COMMENT, `${token.value}\n`);
   } else if (tokenType === TokenType.WHITESPACE) {
     return boxNode(NodeType.WHITESPACE, token.value);
   }
@@ -77,10 +76,12 @@ function consumeItem(tokens) {
   return {error: 'unknown token type'};
 }
 
+
 function consumeBracketForm(tokens) {
   let nodeBox, node, nodeType;
-  let prefixParameters = [];
+  const prefixParameters = [];
 
+  /*eslint-disable no-constant-condition */
   while (true) {
     nodeBox = consumeItem(tokens);
     if (nodeBox.error) {
@@ -97,6 +98,7 @@ function consumeBracketForm(tokens) {
       break;
     }
   }
+  /*eslint-enable no-constant-condition */
 
   prefixParameters.forEach(pp => node.addParameterNodePrefix(pp));
 
@@ -108,7 +110,7 @@ function consumeBracketForm(tokens) {
       nodeType !== NodeType.LIST &&
       nodeType !== NodeType.VECTOR) {
     console.log('whooops', tokens, node);
-    return {error: 'non-mutable node within curly brackets ' + nodeType};
+    return {error: `non-mutable node within curly brackets ${nodeType}`};
   }
 
   let token, parameterBox, parameter;
@@ -169,7 +171,7 @@ function consumeList(tokens) {
 
     if (token.type === TokenType.LIST_END) {
       tokens.shift();
-      return {node: node};
+      return {node};
     }
 
     const boxedItem = consumeItem(tokens);
@@ -197,7 +199,7 @@ function consumeVector(tokens) {
 
     if (token.type === TokenType.VECTOR_END) {
       tokens.shift();
-      return {node: node};
+      return {node};
     }
 
     const boxedItem = consumeItem(tokens);
@@ -222,7 +224,7 @@ function consumeVector(tokens) {
  */
 
 const Parser = {
-  parse: function(tokens) {
+  parse: tokens => {
 
     const nodes = [];
     let nodeBox;
@@ -240,7 +242,7 @@ const Parser = {
       }
     }
 
-    return {nodes: nodes};
+    return {nodes};
   }
 };
 

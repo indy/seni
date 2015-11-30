@@ -25,7 +25,7 @@ const expect = chai.expect;
 describe('Lexer', () => {
 
   function t(expected, text) {
-    let q = Lexer.tokenise(text).tokens;
+    const q = Lexer.tokenise(text).tokens;
     expect(q.length).to.equal(expected.length);
 
     expected.forEach((e, i) => {

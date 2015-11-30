@@ -25,7 +25,7 @@ describe('Paths', () => {
 
   function getPublicBinding(namespace, name) {
     for (let i = 0; i < namespace.publicBindings.length; i++) {
-      let binding = namespace.publicBindings[i];
+      const binding = namespace.publicBindings[i];
       if (binding.name === name) {
         return binding;
       }
@@ -33,23 +33,20 @@ describe('Paths', () => {
     return undefined;
   }
 
-  beforeEach(() => {
-  });
-
   it('should invoke callback with linear values', () => {
 
     let count = 0;
-    let positions = [];
+    const positions = [];
 
-    let f = function(p) {
+    const f = function(p) {
       count++;
       positions.push(p.position);
     };
 
-    let linearBinding = getPublicBinding(Paths, 'path/linear');
-    let linear = linearBinding.create(linearBinding);
+    const linearBinding = getPublicBinding(Paths, 'path/linear');
+    const linear = linearBinding.create(linearBinding);
 
-    let params = {
+    const params = {
       coords: [[0, 0], [100, 100]],
       fn: f,
       steps: 10

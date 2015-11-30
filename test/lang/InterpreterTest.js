@@ -34,7 +34,7 @@ describe('Interpreter', () => {
   let e;
   let key;
   let val;
-  let epsilon = 0.01;
+  const epsilon = 0.01;
 
   beforeEach(() => {
     e = Interpreter.getBasicEnv();
@@ -44,7 +44,7 @@ describe('Interpreter', () => {
   });
 
   it('should evaluate a bracketed form', () => {
-    let res = evalForm(e, '(* 2 {4})');
+    const res = evalForm(e, '(* 2 {4})');
     expect(res[1]).to.be.closeTo(8, epsilon);
 
     //res = evalForm(e, '(quote ["shabba"])');
@@ -64,7 +64,7 @@ describe('Interpreter', () => {
   });
 
   it('should get names in the env', () => {
-    let [newEnv, res] = Interpreter.evaluate(e, key);
+    const [newEnv, res] = Interpreter.evaluate(e, key);
     expect(res).to.equal(val);
     expect(newEnv).to.equal(e);
   });
@@ -138,7 +138,7 @@ describe('Interpreter', () => {
   });
 
   it('should test list', () => {
-    let [newEnv, res] = evalForm(e, '(list 90 90)');
+    const [newEnv, res] = evalForm(e, '(list 90 90)');
     expect(res).to.deep.equal([90, 90]);
     expect(newEnv).to.equal(e);
   });
@@ -164,7 +164,7 @@ describe('Interpreter', () => {
   });
 
   it('should test define', () => {
-    let [newEnv, res] = evalForm(e, '(define monkey 42)');
+    const [newEnv, res] = evalForm(e, '(define monkey 42)');
     expect(newEnv.has('monkey')).to.be.true;
     expect(newEnv.get('monkey').binding).to.equal(42);
     // define should also evaluate to it's set values
@@ -172,7 +172,7 @@ describe('Interpreter', () => {
   });
 
   it('should test defining multiple values', () => {
-    let [newEnv, res] = evalForm(e, '(define monkey 42 ape (+ 6 6))');
+    const [newEnv, res] = evalForm(e, '(define monkey 42 ape (+ 6 6))');
     expect(newEnv.has('monkey')).to.be.true;
     expect(newEnv.get('monkey').binding).to.equal(42);
     expect(newEnv.has('ape')).to.be.true;
@@ -181,7 +181,7 @@ describe('Interpreter', () => {
   });
 
   it('should test defining destructured values', () => {
-    let [newEnv, res] = evalForm(e, '(define [a b] [2 (+ 3 4)])');
+    const [newEnv, res] = evalForm(e, '(define [a b] [2 (+ 3 4)])');
     expect(newEnv.has('a')).to.be.true;
     expect(newEnv.get('a').binding).to.equal(2);
     expect(newEnv.has('b')).to.be.true;

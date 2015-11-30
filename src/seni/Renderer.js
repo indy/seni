@@ -42,7 +42,7 @@ class Renderer {
   }
 
   vectorToCanvasSpace(v2) {
-    let res = this.matrixStack.transform2DVector(v2);
+    const res = this.matrixStack.transform2DVector(v2);
     // destructuring Float32Array as Arrays doesn't work in safari
     // so we have to build and return a normal JS array
     return [res[0], res[1]];
@@ -164,13 +164,16 @@ class Renderer {
   }
 
   renderCircle(params) {
-    let {
+    const {
       position,
-      width,
-      height,
       radius,
       tessellation,
       colour
+    } = params;
+
+    let {
+      width,
+      height
     } = params;
 
     const [x, y] = position;
@@ -185,8 +188,8 @@ class Renderer {
 
     this.prepareToAddTriangleStrip((tessellation * 2) + 2, [x, y]);
 
-    let tau = Math.PI * 2;
-    let unitAngle = tau / tessellation;
+    const tau = Math.PI * 2;
+    const unitAngle = tau / tessellation;
     let angle, vx, vy;
 
     for(let i = 0; i < tessellation; i++) {
@@ -209,19 +212,22 @@ class Renderer {
   }
 
   renderCircleSlice(params) {
-    let {
+    const {
       position,
-      width,
-      height,
       radius,
       tessellation,
       colour
     } = params;
 
-    let angleStart = params['angle-start'];
-    let angleEnd = params['angle-end'];
-    let innerWidth = params['inner-width'];
-    let innerHeight = params['inner-height'];
+    let {
+      width,
+      height
+    } = params;
+
+    const angleStart = params['angle-start'];
+    const angleEnd = params['angle-end'];
+    const innerWidth = params['inner-width'];
+    const innerHeight = params['inner-height'];
 
     const degToRad = MathUtil.TAU / 360;
 
@@ -243,7 +249,7 @@ class Renderer {
     const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
     //let tau = Math.PI * 2;
-    let unitAngle = (rEnd - rStart) / tessellation;
+    const unitAngle = (rEnd - rStart) / tessellation;
     let angle, vx, vy, innervx, innervy;
 
     angle = rStart;

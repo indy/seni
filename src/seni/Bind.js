@@ -32,23 +32,23 @@ function createBind(env, pb, restArgs) {
 
   // call the PublicBinding's create function passing in an explicit self
   // along with any additional arguments
-  let value = pb.create.apply(null, [pb].concat(restArgs));
+  const binding = pb.create.apply(null, [pb].concat(restArgs));
 
   // bind the value to the pb's name
-  return env.set(pb.name, { binding : value, pb : pb });
+  return env.set(pb.name, { binding, pb });
 }
 
 // applies the publicBindings in namespace to env
 function applyPublicBindings(env, namespace) {
   // grab any additional arguments that have been given to this function
-  let restArgs = Array.prototype.slice.call(arguments, 2);
-  let bindings = namespace.publicBindings;
+  const restArgs = Array.prototype.slice.call(arguments, 2);
+  const bindings = namespace.publicBindings;
 
   return bindings.reduce((e, pb) => createBind(e, pb, restArgs), env);
 }
 
 const Bind = {
-  addBindings: function(env, renderer) {
+  addBindings: (env, renderer) => {
     env = applyPublicBindings(env, Core);
     env = applyPublicBindings(env, MathUtil);
     env = applyPublicBindings(env, PseudoRandom);
@@ -62,7 +62,7 @@ const Bind = {
     return env;
   },
 
-  addBracketBindings: function(env, rng) {
+  addBracketBindings: (env, rng) => {
     env = applyPublicBindings(env, Core);
     env = applyPublicBindings(env, MathUtil);
     env = applyPublicBindings(env, PseudoRandom);
