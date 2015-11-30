@@ -63,6 +63,21 @@ const BracketBindings = {
     ),
 
     new PublicBinding(
+      'vector',
+      `returns a vector
+      arguments: min max`,
+      {min: 0.0, max: 1000.0},
+      (self, rng) => {
+        return (params) => {
+          const {min, max} = self.mergeWithDefaults(params);
+          const x = Interp.interpolate(min, max, rng());
+          const y = Interp.interpolate(min, max, rng());
+          return ['list', x, y];
+        };
+      }
+    ),
+
+    new PublicBinding(
       'select',
       `returns a number in the range 0..1
       arguments: -`,

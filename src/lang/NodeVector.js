@@ -19,6 +19,26 @@
 import NodeType from './NodeType';
 import Node from './Node';
 
+/*
+ A NodeVector is created with the [] syntax e.g. [1 2 3] it's equivalent to
+ (list 1 2 3) with the exception of having different behaviour when defined
+ as alterable.
+
+ the alterable syntax for a vector specifies the values for each component
+ of the vector
+ e.g. {[1 2 3] (select from: [1 2 3 4 5 6])}
+ -> each element in the vector [1 2 3] can have a value from 1..6
+ [4 2 6], [1 2 2], [6 5 4] etc
+
+ this differs from the alterable syntax for a list, since that specifies
+ the values for the entire list
+ e.g {(list 1 2 3) (select from: (list (list 1 2 3)
+                                       (list 4 5 6)
+                                       (list 7 8 9)))}
+ -> (list 1 2 3) can be substituted for one of three lists
+ (list 1 2 3), (list 4 5 6) or (list 7 8 9)
+*/
+
 export default class NodeVector extends Node {
   constructor() {
     super(NodeType.VECTOR);
