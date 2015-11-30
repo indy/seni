@@ -40,8 +40,9 @@
     (define random (prng/range min: -1 max: 1 seed: seed))
     (fn (fun position: [0 0]
              t: 0)
-        (circle position: [(+ (v2/x position) (* random-factor (random)))
-                              (+ (v2/y position) (* random-factor (random)))]
+        (define [x y] position)
+        (circle position: [(+ x (* random-factor (random)))
+                           (+ y (* random-factor (random)))]
                 radius: (+ radius (* radius (random) radius-factor))
                 tessellation: tessellation
                 colour: (col/lab l: l-val

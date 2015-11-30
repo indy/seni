@@ -52,8 +52,7 @@
                          iterations: 10
                          seed: "shabba")
     (define 
-      x (v2/x position)
-      y (v2/y position)
+      [x y] position
       third-width (/ width 3)
       third-height (/ height 3)
       vol volatility
@@ -79,7 +78,7 @@
     ; horizontal strips
     (loop (i to: iterations)
       (define 
-        (rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4) (take num: 8 from: rng)
+        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
         lightness (+ (col/get-lab-l colour: lab-colour)
                      (* colour-volatility (take from: rng)))
         current-colour (col/set-lab-l colour: lab-colour
@@ -109,7 +108,7 @@
     ; vertical strips
     (loop (i to: iterations)
       (define 
-        (rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4) (take num: 8 from: rng)
+        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
         lightness (+ (col/get-lab-l colour: lab-colour)
                      (* colour-volatility (take from: rng)))
         current-colour (col/set-lab-l colour: lab-colour

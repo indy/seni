@@ -26,9 +26,9 @@
 (fn (draw-corner-square position: [100 100]
                             radius: 100
                             colour: black)
+  (define [x y] position)
   (on-matrix-stack
-   (translate vector: [(+ radius (v2/x position))
-                          (+ radius (v2/y position))])
+   (translate vector: [(+ radius x) (+ radius y)])
     (scale scalar: (* radius corner-square-mult))
     (rotate angle: (/ math/PI 4))
     (draw-unit-square colour: colour)))

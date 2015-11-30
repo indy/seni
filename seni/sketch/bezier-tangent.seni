@@ -60,14 +60,13 @@
 
 (fn (tentacle position: [0 0]
                   angle: 0)
-  (define x (v2/x position)
-               y (v2/y position)
-               cosa (math/cos angle: angle)
-               sina (math/sin angle: angle)
-               min-pos-rad 28
-               max-pos-rad 300
-               rem (interp/fn from: [min-pos-rad max-pos-rad]
-                              to: [20 1]))
+  (define [x y] position
+          cosa (math/cos angle: angle)
+          sina (math/sin angle: angle)
+          min-pos-rad 28
+          max-pos-rad 300
+          rem (interp/fn from: [min-pos-rad max-pos-rad]
+                         to: [20 1]))
 
   (loop (r from: min-pos-rad to: max-pos-rad increment: 20)
         (interesting-circle position: [(+ x (* cosa r))
@@ -82,11 +81,8 @@
 (fn (norm position: [0 0]
               t: 0)
   (define
-    txy (interp/bezier-tangent t: t
-                               coords: coords)
-    angle (- (math/atan2 x: (v2/x txy)
-                         y: (v2/y txy))
-             half-pi))
+    [tx ty] (interp/bezier-tangent t: t coords: coords)
+    angle (- (math/atan2 x: tx y: ty) half-pi))
   
 ;  (interesting-circle position: position
 ;                      radius: 20

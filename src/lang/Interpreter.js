@@ -64,8 +64,8 @@ function funApplication(env, listExpr) {
     return fun(e, listExpr);
   }
 
-  // classic and v2 functions that don't require named arguments
-  if (isClassicFunction(listExpr) || isV2Function(listExpr)) {
+  // classic functions that don't require named arguments
+  if (isClassicFunction(listExpr)) {
     const argu = listExpr.slice(1).map(n => evaluate(e, n)[1]);
     return [e, fun(argu)];
   }
@@ -91,21 +91,27 @@ function isClassicFunction(listExpr) {
   return classicFunctions[node] !== undefined;
 }
 
-function isV2Function(listExpr) {
-  const node = listExpr[0];
-  return v2Functions[node] !== undefined;
-}
-
 function addBindings(env, exprs) {
 
   let lastValueBound = undefined;
 
   const addBinding = function(e, name, value) {
     const v = evaluate(e, value)[1];
-    if (name.constructor === Array) {
-      // todo: error check if size of name array !== size of v
-      name.forEach((n, i) => e = e.set(n, { binding: v[i] }));
-      lastValueBound = v[name.length-1];
+    if (name.constructor === Array && name[0] === 'list') {
+
+      // for square bracket notation when declaring variables
+      // e.g. (define [x y] [100 200])
+      // the names compile to ['list', 'x', 'y']
+
+      let values = v;
+      let names = name.slice(1);
+
+      if(names.length !== values.length) {
+        console.error('binding mismatch between', names, values);
+      }
+
+      names.forEach((n, i) => e = e.set(n, { binding: values[i] }));
+      lastValueBound = values[names.length-1];
     } else {
       e = e.set(name, { binding: v });
       lastValueBound = v;
@@ -377,34 +383,6 @@ const classicFunctions = {
   }
 };
 
-// todo: v2 functions are also treated as classic functions
-
-const v2Functions = {
-  'v2': args => [args[0], args[1]],
-
-  'v2/x': args => args[0][0],   // the first component of the first arg
-
-  'v2/y': args => args[0][1],
-
-  'v2/=': ([first, ...rest]) =>
-    rest.every(a => a[0] === first[0] && a[1] === first[1]) ?
-    TRUE_STRING : FALSE_STRING,
-
-  'v2/+': args => args.reduce((a, b) => [a[0] + b[0], a[1] + b[1]], [0, 0]),
-
-  'v2/*': args => args.reduce((a, b) => [a[0] * b[0], a[1] * b[1]], [1, 1]),
-
-  'v2/-': args => {
-    if ( args.length === 1 ) {
-      return [-args[0][0], -args[0][1]];
-    } else {
-      return args.reduce((a, b) => [a[0] - b[0], a[1] - b[1]]);
-    }
-  },
-
-  'v2//': args => args.reduce((a, b) => [a[0] / b[0], a[1] / b[1]])
-};
-
 function setupBinding(env, rawBindings) {
   for(let prop in rawBindings) {
     env = env.set(prop, { binding: rawBindings[prop] });
@@ -416,8 +394,7 @@ function setupBinding(env, rawBindings) {
 // so transform them to name:{binding: value} pairs
 const basicEnv = [
   specialForms,
-  classicFunctions,
-  v2Functions
+  classicFunctions
 ].reduce((env, bindings) => setupBinding(env, bindings), new Immutable.Map());
 
 

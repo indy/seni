@@ -13,11 +13,12 @@
     radius (/ canvas/width (- steps 1) 2))
 
   (fn (draw-drip position: [500 500]
-                     colour: red)
-    (box left: (- (v2/x position) radius)
-         right: (+ (v2/x position) radius)
+                 colour: red)
+    (define [x y] position)
+    (box left: (- x radius)
+         right: (+ x radius)
          top: 1000
-         bottom: (v2/y position)
+         bottom: y
          colour: colour)
     (circle position: position
             tessellation: 20
@@ -27,10 +28,11 @@
   (fn (draw-inbetween-drip position: [500 500]
                                colour: red
                                background: white)
-    (box left: (- (v2/x position) radius)
-         right: (+ (v2/x position) radius)
+    (define [x y] position)
+    (box left: (- x radius)
+         right: (+ x radius)
          top: 1000
-         bottom: (v2/y position)
+         bottom: y
          colour: colour)
     (circle position: position
             tessellation: 20

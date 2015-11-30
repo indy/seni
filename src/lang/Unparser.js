@@ -18,7 +18,7 @@
 
 import NodeType from './NodeType';
 
-const logToConsole = true;
+const logToConsole = false;
 
 // the values stored in genotypes will in simplifiedAst form
 // in most cases these will be simple values, but there might

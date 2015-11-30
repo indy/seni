@@ -100,46 +100,6 @@ describe('Interpreter', () => {
     expect(newEnv).to.equal(e);
   });
 
-  it('should test v2 functions', () => {
-    let [newEnv, res] = evalForm(e, '(v2 2.3 4.5)');
-    expect(res, 'creating a v2').to.eql([2.3, 4.5]);
-
-    [newEnv, res] = evalForm(e, '(v2/x (v2 2.3 4.5))');
-    expect(res, 'returning x component').to.equal(2.3);
-
-    [newEnv, res] = evalForm(e, '(v2/y (v2 2.3 4.5))');
-    expect(res, 'returning y component').to.equal(4.5);
-
-    [newEnv, res] = evalForm(e, '(v2/= (v2 2.3 4.5) (v2 2.3 4.5))');
-    expect(res, 'v2 equality true').to.equal('#t');
-
-    [newEnv, res] = evalForm(e, '(v2/= (v2 6.7 8.9) (v2 2.3 4.5))');
-    expect(res, 'v2 equality false').to.equal('#f');
-
-    [newEnv, res] = evalForm(e, '(v2/+ (v2 1 2) (v2 3 4))');
-    expect(res, 'v2 addition').to.eql([4, 6]);
-
-    [newEnv, res] = evalForm(e, '(v2/+ (v2 1 2) (v2 3 4) (v2 5 6))');
-    expect(res, 'v2 additions').to.eql([9, 12]);
-
-    [newEnv, res] = evalForm(e, '(v2/- (v2 9 8) (v2 3 4))');
-    expect(res, 'v2 subtraction').to.eql([6, 4]);
-
-    [newEnv, res] = evalForm(e, '(v2/- (v2 9 8) (v2 3 4) (v2 2 2))');
-    expect(res, 'v2 subtractions').to.eql([4, 2]);
-
-    [newEnv, res] = evalForm(e, '(v2/- (v2 9 8))');
-    expect(res, 'v2 negation').to.eql([-9, -8]);
-
-    [newEnv, res] = evalForm(e, '(v2/* (v2 2 3) (v2 2 3))');
-    expect(res, 'v2 multiplication').to.eql([4, 9]);
-
-    [newEnv, res] = evalForm(e, '(v2// (v2 9 8) (v2 3 2))');
-    expect(res, 'v2 division').to.eql([3, 4]);
-
-    newEnv = newEnv;
-  });
-
   it('should test required comparison functions', () => {
     let [newEnv, res] = evalForm(e, '(= 90 90)');
     expect(res).to.equal('#t');
@@ -211,13 +171,22 @@ describe('Interpreter', () => {
     expect(res).to.equal(42);
   });
 
-  it('should test defining  multiple values ', () => {
+  it('should test defining multiple values', () => {
     let [newEnv, res] = evalForm(e, '(define monkey 42 ape (+ 6 6))');
     expect(newEnv.has('monkey')).to.be.true;
     expect(newEnv.get('monkey').binding).to.equal(42);
     expect(newEnv.has('ape')).to.be.true;
     expect(newEnv.get('ape').binding).to.equal(12);
     expect(res).to.equal(12);
+  });
+
+  it('should test defining destructured values', () => {
+    let [newEnv, res] = evalForm(e, '(define [a b] [2 (+ 3 4)])');
+    expect(newEnv.has('a')).to.be.true;
+    expect(newEnv.get('a').binding).to.equal(2);
+    expect(newEnv.has('b')).to.be.true;
+    expect(newEnv.get('b').binding).to.equal(7);
+    expect(res).to.equal(7);
   });
 
   it('should test fn', () => {
