@@ -32,7 +32,7 @@ function buildTraitFromNode(node, genes) {
     // expect a form in the parameterAST
     let simplifiedAst, initialValue, compiledNodes;
 
-    if(node.type === NodeType.LIST || node.type === NodeType.VECTOR) {
+    if (node.type === NodeType.LIST || node.type === NodeType.VECTOR) {
       // wrap the node in an array and pass into Compiler.compileWithGenotype
       compiledNodes = Compiler.compileWithGenotype([node], null);
       initialValue = compiledNodes[0];
@@ -72,7 +72,7 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
   // todo: assert that both genotypes have the same length
 
   const crossoverIndex = Number.parseInt(Math.random() * genotypeA.size, 10);
-  if(logToConsole) {
+  if (logToConsole) {
     console.log('randomCrossover index:', crossoverIndex, mutationRate);
   }
 
@@ -82,17 +82,17 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
   const childGenotype = spliceA.concat(spliceB);
 
   let i;
-  for(i = 0; i < genotypeA.size; i++) {
-    if(Math.random() < mutationRate) {
+  for (i = 0; i < genotypeA.size; i++) {
+    if (Math.random() < mutationRate) {
       // mutate this trait
-      if(logToConsole) {
+      if (logToConsole) {
         console.log('mutating gene ', i);
       }
       childGenotype[i] = buildGeneFromTrait(traits[i], env);
     }
   }
 
-  if(logToConsole) {
+  if (logToConsole) {
     console.log('childGenotype ', childGenotype);
   }
   return new Immutable.List(childGenotype);
@@ -128,18 +128,18 @@ const Genetic = {
     const env = Bind.addBracketBindings(Interpreter.getBasicEnv(), rng);
 
     // the chosen genotypes survive into the next generation
-    for(i = 0; i < genotypes.length; i++) {
+    for (i = 0; i < genotypes.length; i++) {
       newGenotypes[i] = genotypes[i];
     }
 
-    for(i = genotypes.length; i < populationSize; i++) {
+    for (i = genotypes.length; i < populationSize; i++) {
       const idxA = Number.parseInt(Math.random() * genotypes.length, 10);
       let idxB = Number.parseInt(Math.random() * genotypes.length, 10);
 
       // try not to use the same genotype for both a and b
       const retryCount = 10;
-      for(let retry = 0; retry < retryCount; retry++) {
-        if(idxB === idxA) {
+      for (let retry = 0; retry < retryCount; retry++) {
+        if (idxB === idxA) {
           idxB = Number.parseInt(Math.random() * genotypes.length, 10);
         } else {
           break;
@@ -149,7 +149,7 @@ const Genetic = {
       const genotypeA = genotypes[idxA];
       const genotypeB = genotypes[idxB];
 
-      if(logToConsole) {
+      if (logToConsole) {
         console.log('using genotype indices: ', idxA, idxB);
       }
 

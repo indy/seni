@@ -132,7 +132,7 @@ function consumeInt(s) {
     }
   }
 
-  const token = new Token(TokenType.INT, parseInt(s.substring(0, i)));
+  const token = new Token(TokenType.INT, parseInt(s.substring(0, i), 10));
   return [token, s.substring(i, s.length)];
 }
 

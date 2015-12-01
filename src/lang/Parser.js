@@ -90,7 +90,7 @@ function consumeBracketForm(tokens) {
     node = nodeBox.node;
     nodeType = node.type;
 
-    if(nodeType === NodeType.COMMENT || nodeType === NodeType.WHITESPACE) {
+    if (nodeType === NodeType.COMMENT || nodeType === NodeType.WHITESPACE) {
       prefixParameters.push(node);
     } else {
       // we've got the first node within the curly brackets that's mutable

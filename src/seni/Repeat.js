@@ -118,7 +118,7 @@ const rotate = new PublicBinding(
 
     const delta = MathUtil.TAU / copies;
 
-    for(let i = 0; i < copies; i++) {
+    for (let i = 0; i < copies; i++) {
       renderer.cmdMatrixPush();
       renderer.cmdMatrixRotate(delta * i);
       draw();
@@ -139,7 +139,7 @@ const rotateMirrored = new PublicBinding(
 
     const delta = MathUtil.TAU / copies;
 
-    for(let i = 0; i < copies; i++) {
+    for (let i = 0; i < copies; i++) {
       renderer.cmdMatrixPush();
       renderer.cmdMatrixRotate(delta * i);
       draw();
@@ -148,7 +148,7 @@ const rotateMirrored = new PublicBinding(
 
     renderer.cmdMatrixPush();
     renderer.cmdMatrixScale(-1, 1);
-    for(let i = 0; i < copies; i++) {
+    for (let i = 0; i < copies; i++) {
       renderer.cmdMatrixPush();
       renderer.cmdMatrixRotate(delta * i);
       draw();

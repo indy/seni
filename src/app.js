@@ -74,14 +74,14 @@ function getScriptFromEditor(seniApp) {
 // then add 'addClass' to them
 function addNavbarClass(seniApp, klass, addClass) {
   const es = seniApp.navbar.getElementsByClassName(klass);
-  for(let i = 0; i < es.length; i++) {
+  for (let i = 0; i < es.length; i++) {
     es[i].classList.add(addClass);
   }
 }
 
 function removeNavbarClass(seniApp, klass, removeClass) {
   const es = seniApp.navbar.getElementsByClassName(klass);
-  for(let i = 0; i < es.length; i++) {
+  for (let i = 0; i < es.length; i++) {
     es[i].classList.remove(removeClass);
   }
 }
@@ -90,7 +90,7 @@ function renderGenotypeToImage(seniApp, ast, genotype, imageElement, w, h) {
 
   const renderer = seniApp.renderer;
 
-  if(w !== undefined && h !== undefined) {
+  if (w !== undefined && h !== undefined) {
     renderer.preDrawScene(w, h);
   } else {
     renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
@@ -132,7 +132,7 @@ function addClickEvent(id, fn) {
 function addClickEventForClass(className, fn) {
   const elements = document.getElementsByClassName(className);
   // getElementsByClassName returns an array-like object
-  for(let i = 0; i < elements.length; i++) {
+  for (let i = 0; i < elements.length; i++) {
     elements[i].addEventListener('click', fn);
   }
 }
@@ -141,9 +141,9 @@ function addClickEventForClass(className, fn) {
 // traverse up the card until we get to a dom element that
 // contains the phenotype's index number in it's id
 function getPhenoIdFromDom(element) {
-  while(element) {
+  while (element) {
     const m = element.id.match(/pheno-(\d+)/);
-    if(m && m.length === 2) {
+    if (m && m.length === 2) {
       const index = Number.parseInt(m[1], 10);
       return [index, element];
     } else {
@@ -158,7 +158,7 @@ function renderHighRes(seniApp, element) {
   const [index, _] = getPhenoIdFromDom(element);
   /* eslint-enable no-unused-vars */
 
-  if(index !== -1) {
+  if (index !== -1) {
     const piece = seniApp.piece;
     const genotype = piece.genotypes[index];
     const highResContainer = document.getElementById('high-res-container');
@@ -186,7 +186,7 @@ function showEditFromEvolve(seniApp, element) {
   const [index, _] = getPhenoIdFromDom(element);
   /* eslint-enable no-unused-vars */
 
-  if(index !== -1) {
+  if (index !== -1) {
     const piece = seniApp.piece;
     const genotype = piece.genotypes[index];
     const frontAst = seniApp.piece.frontAst;
@@ -201,7 +201,7 @@ function showEditFromEvolve(seniApp, element) {
 
 function toggleSelection(seniApp, element) {
   const [index, e] = getPhenoIdFromDom(element);
-  if(index !== -1) {
+  if (index !== -1) {
     const cardImage = e.getElementsByClassName('card-image')[0];
     cardImage.classList.toggle('selected');
 
@@ -233,7 +233,7 @@ function renderPhenotypes(seniApp) {
 
 function showPlaceholderImages(seniApp) {
   const piece = seniApp.piece;
-  for(let i = 0; i < seniApp.populationSize; i++) {
+  for (let i = 0; i < seniApp.populationSize; i++) {
     const imageElement = piece.phenotypes[i].imageElement;
     imageElement.src = seniApp.placeholder;
   }
@@ -244,8 +244,8 @@ function createInitialGenotypePopulation(piece, populationSize) {
   let genotype;
   let random = new Date();
   random = random.toGMTString();
-  for(let i = 0; i < populationSize; i++) {
-    if(i === 0) {
+  for (let i = 0; i < populationSize; i++) {
+    if (i === 0) {
       genotype = Genetic.createGenotypeFromInitialValues(piece.traits);
     } else {
       genotype = Genetic.createGenotypeFromTraits(piece.traits, i + random);
@@ -260,7 +260,7 @@ function genotypesFromSelectedPhenotypes(seniApp) {
 
   showPlaceholderImages(seniApp);
 
-  if(piece.selectedPhenotypes.length === 0) {
+  if (piece.selectedPhenotypes.length === 0) {
     // if this is the first generation and nothing has been selected
     // just randomize all of the phenotypes
     createInitialGenotypePopulation(piece, seniApp.populationSize);
@@ -275,8 +275,8 @@ function genotypesFromSelectedPhenotypes(seniApp) {
   renderPhenotypes(seniApp);
 
   // clean up the dom and clear the selected state
-  for(let i = 0; i < seniApp.populationSize; i++) {
-    if(piece.phenotypes[i].selected === true) {
+  for (let i = 0; i < seniApp.populationSize; i++) {
+    if (piece.phenotypes[i].selected === true) {
       const element = piece.phenotypes[i].phenotypeElement;
       const cardImage = element.getElementsByClassName('card-image')[0];
       cardImage.classList.remove('selected');
@@ -292,13 +292,13 @@ function onNextGen(seniApp) {
 
   piece.selectedPhenotypes = [];
 
-  for(let i = 0; i < seniApp.populationSize; i++) {
-    if(piece.phenotypes[i].selected === true) {
+  for (let i = 0; i < seniApp.populationSize; i++) {
+    if (piece.phenotypes[i].selected === true) {
       piece.selectedPhenotypes.push(piece.genotypes[i]);
     }
   }
 
-  if(piece.selectedPhenotypes.length === 0) {
+  if (piece.selectedPhenotypes.length === 0) {
     // no phenotypes were selected
     return;
   }
@@ -333,8 +333,8 @@ function setupEvolveUI(seniApp) {
 
   const allImagesLoadedSince = function(timeStamp) {
     const piece = seniApp.piece;
-    for(let i = 0; i < seniApp.populationSize; i++) {
-      if(piece.phenotypes[i].imageLoadTimeStamp < timeStamp) {
+    for (let i = 0; i < seniApp.populationSize; i++) {
+      if (piece.phenotypes[i].imageLoadTimeStamp < timeStamp) {
         return false;
       }
     }
@@ -349,7 +349,7 @@ function setupEvolveUI(seniApp) {
     // wait until all of the placeholder load events have been received
     // otherwise there may be image sizing issues, especially with the
     // first img element
-    if(allImagesLoadedSince(initialTimeStamp)) {
+    if (allImagesLoadedSince(initialTimeStamp)) {
       const piece = seniApp.piece;
 
       piece.frontAst = Runtime.buildFrontAst(seniApp.piece.script);
@@ -369,7 +369,7 @@ function setupEvolveUI(seniApp) {
 
 function switchMode(seniApp, newMode) {
 
-  if(seniApp.currentMode === newMode) {
+  if (seniApp.currentMode === newMode) {
     return;
   }
 
@@ -377,11 +377,11 @@ function switchMode(seniApp, newMode) {
   seniApp.currentMode = newMode;
 
   // show the current container, hide the others
-  for(let i = 0; i < SeniMode.numSeniModes; i++) {
+  for (let i = 0; i < SeniMode.numSeniModes; i++) {
     seniApp.containers[i].className = i === newMode ? '' : 'hidden';
   }
 
-  switch(seniApp.currentMode) {
+  switch (seniApp.currentMode) {
   case SeniMode.gallery :
     addNavbarClass(seniApp, 'to-gallery', 'hidden');
     addNavbarClass(seniApp, 'to-edit', 'hidden');
@@ -415,9 +415,9 @@ function showScriptInEditor(seniApp) {
 function showEditFromGallery(seniApp, element) {
 
   const getGalleryItemIdFromDom = function(e) {
-    while(e) {
+    while (e) {
       const m = e.id.match(/gallery-item-(\d+)/);
-      if(m && m.length === 2) {
+      if (m && m.length === 2) {
         const idx = Number.parseInt(m[1], 10);
         return [idx, e];
       } else {
@@ -428,7 +428,7 @@ function showEditFromGallery(seniApp, element) {
   };
 
   const [index, _] = getGalleryItemIdFromDom(element);
-  if(index !== -1) {
+  if (index !== -1) {
     const url = `/gallery/${index}`;
 
     get(url).catch(() => {
@@ -460,11 +460,11 @@ function polluteGlobalDocument(seniApp) {
   document.seni.title = Trivia.getTitle;
   document.seni.help = function(name, showDefaultArgs = false) {
     const v = seniApp.env.get(name);
-    if(v.pb) {
+    if (v.pb) {
       const binding = v.pb;       // publicBinding
       console.log(`${name}: ${binding.doc}`);
 
-      if(showDefaultArgs) {
+      if (showDefaultArgs) {
         const args = JSON.stringify(binding.defaults, null, ' ');
         console.log('default arguments', args);
       }
@@ -476,7 +476,7 @@ function polluteGlobalDocument(seniApp) {
     const keys = env.keys();
 
     const res = [];
-    for(let k = keys.next(); k.done === false; k = keys.next()) {
+    for (let k = keys.next(); k.done === false; k = keys.next()) {
       res.push(k.value);
     }
     res.sort();
@@ -571,7 +571,7 @@ function setupUI(seniApp) {
 
   addClickEvent('gallery-list', event => {
     const target = event.target;
-    if(target.classList.contains('show-edit')) {
+    if (target.classList.contains('show-edit')) {
       showEditFromGallery(seniApp, target);
     }
     event.preventDefault();
@@ -579,9 +579,9 @@ function setupUI(seniApp) {
 
   addClickEvent('phenotype-gallery', event => {
     const target = event.target;
-    if(target.classList.contains('render')) {
+    if (target.classList.contains('render')) {
       renderHighRes(seniApp, target);
-    } else if(target.classList.contains('edit')) {
+    } else if (target.classList.contains('edit')) {
       showEditFromEvolve(seniApp, target);
     } else {
       toggleSelection(seniApp, target);
@@ -628,7 +628,7 @@ function setupUI(seniApp) {
   row.className = 'row';
   gallery.appendChild(row);
 
-  for(let i = 0; i < seniApp.populationSize; i++) {
+  for (let i = 0; i < seniApp.populationSize; i++) {
     phenotypeElement = createPhenotypeElement(i, '');
 
     // get the image element

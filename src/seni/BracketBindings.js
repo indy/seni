@@ -40,7 +40,7 @@ const BracketBindings = {
       // rng is a PseudoRandom returning values in the range 0..1
       (self, rng) => params => {
         const {min, max} = self.mergeWithDefaults(params);
-        return Number.parseInt(Interp.interpolate(min, max, rng()));
+        return Number.parseInt(Interp.interpolate(min, max, rng()), 10);
       }
     ),
 
@@ -113,7 +113,7 @@ random colour, but keep alpha as 0.4:
       (self, rng) => params => {
         const r = rng(), g = rng(), b = rng();
         let alpha = rng();
-        if(params.alpha) {
+        if (params.alpha) {
           alpha = params.alpha;
         }
         return ['col/rgb', {r, g, b, alpha}];

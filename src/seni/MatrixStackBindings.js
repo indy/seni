@@ -42,7 +42,7 @@ const MatrixStackBindings = {
        scalar: 1},
       (self, renderer) => params => {
         let vector;
-        if(params.scalar) {
+        if (params.scalar) {
           vector = [params.scalar, params.scalar];
         } else {
           const obj = self.mergeWithDefaults(params);

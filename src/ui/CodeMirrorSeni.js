@@ -66,7 +66,7 @@ function seniMode() {
 
   const decimalMatcher = new RegExp(/^([-+]?\d*\.?\d*)/);
 
-  function isDecimalNumber (stream, backup) {
+  function isDecimalNumber(stream, backup) {
     if (backup === true) {
       stream.backUp(1);
     }
@@ -81,27 +81,27 @@ function seniMode() {
     const prefix = 'geno-';
     let usePrefix = false;
 
-    if(state.insideCurly) {
+    if (state.insideCurly) {
       // leave the first element inside curlys as is.
 
-      if(state.curlyCounter === 1) {
+      if (state.curlyCounter === 1) {
         usePrefix = false;
         // this is the first element in the curlys
         state.curlyedFirstChildIsParen = (token === PAREN);
-        if(state.curlyedFirstChildIsParen) {
+        if (state.curlyedFirstChildIsParen) {
           // special case of the first child in curlys being a s-exp.
           // we'll need to keep count of parenDepth
           state.firstParenCurlyDepth = state.parenDepth;
         }
       } else {
         // normally grey out, except if we're curlyedFirstChildIsParen
-        if(state.curlyedFirstChildIsParen && state.firstParenCurlyDepth <= state.parenDepth) {
+        if (state.curlyedFirstChildIsParen && state.firstParenCurlyDepth <= state.parenDepth) {
           // keep on colouring as normal
           usePrefix = false;
 
           // if this is a closing parens then we've processed the first s-exp and can start using prefix
           // (i.e. start greying out the remainder of the curly contents)
-          if(state.firstParenCurlyDepth === state.parenDepth && ch === ')') {
+          if (state.firstParenCurlyDepth === state.parenDepth && ch === ')') {
             state.curlyedFirstChildIsParen = false;
           }
         } else {
@@ -116,7 +116,7 @@ function seniMode() {
   }
 
   function setInsideCurly(value, state) {
-    if(value === true) {
+    if (value === true) {
       state.curlyCounter = 0;
     }
     state.insideCurly = value;
@@ -153,7 +153,7 @@ function seniMode() {
       let returnType = null;
       let next;
 
-      switch(state.mode){
+      switch (state.mode) {
       case 'string': // multi-line string parsing mode
         let escaped = false;
         while ((next = stream.next()) != null) {
@@ -164,7 +164,8 @@ function seniMode() {
           }
           escaped = !escaped && next === '\\';
         }
-        returnType = tokenType(STRING, state); // continue on in scheme-string mode
+        // continue on in scheme-string mode
+        returnType = tokenType(STRING, state);
         break;
       case 'comment': // comment parsing mode
         let maybeEnd = false;
@@ -222,7 +223,7 @@ function seniMode() {
           }
           stream.backUp(stream.current().length - 1); // undo all the eating
 
-          if(typeof state.sExprComment === 'number') state.sExprComment++;
+          if (typeof state.sExprComment === 'number') state.sExprComment++;
 
           returnType = tokenType(ch === '{' ? CURLY : PAREN, state, ch);
         } else if (ch === ')' || ch === '}') {
@@ -230,14 +231,14 @@ function seniMode() {
           if (state.indentStack != null && state.indentStack.type === (ch === ')' ? '(' : '{')) {
             popStack(state);
 
-            if(typeof state.sExprComment === 'number'){
-              if(--state.sExprComment === 0){
+            if (typeof state.sExprComment === 'number') {
+              if (--state.sExprComment === 0) {
                 returnType = tokenType(COMMENT, state); // final closing curly
                 state.sExprComment = false; // turn off s-expr commenting mode
               }
             }
           }
-          if(ch === '}') {
+          if (ch === '}') {
             setInsideCurly(false, state);
           } else {
             state.parenDepth--;

@@ -20,7 +20,7 @@ import SeniWebApplication from './app.js';
 
 function compatibilityHacks() {
   // Safari doesn't have Number.parseInt (yet)
-  if(Number.parseInt === undefined) {
+  if (Number.parseInt === undefined) {
     Number.parseInt = parseInt;
   }
 }

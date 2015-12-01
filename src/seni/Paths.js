@@ -36,7 +36,7 @@ function pathLinear(publicBinding, params) {
   const xUnit = (to[0] - from[0]) / (steps - 1);
   const yUnit = (to[1] - from[1]) / (steps - 1);
 
-  for(let i = 0; i < steps; i++) {
+  for (let i = 0; i < steps; i++) {
     fn({
       step: i,
       position: [from[0] + (i * xUnit), from[1] + (i * yUnit)],
@@ -72,7 +72,7 @@ function pathCircle(publicBinding, params) {
 
   let angle, vx, vy;
 
-  for(let i = 0; i < steps; i++) {
+  for (let i = 0; i < steps; i++) {
 
     angle = (unitAngle * i) + (tStart * MathUtil.TAU);
     vx = (Math.sin(angle) * radius) + x;
@@ -115,7 +115,7 @@ function pathCurve(publicBinding, params, coordFn) {
     ys
   } = coordFn(tVals, coords);
 
-  for(let i = 0; i < steps; i++) {
+  for (let i = 0; i < steps; i++) {
     fn({
       step: i,
       position: [xs[i], ys[i]],

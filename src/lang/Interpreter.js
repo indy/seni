@@ -40,7 +40,7 @@ function evaluate(env, expr) {
     if (expr === TRUE_STRING || expr === FALSE_STRING) {
       return [env, expr];
     }
-    if(env.get(expr) === undefined) {
+    if (env.get(expr) === undefined) {
       console.log(expr, 'is undefined');
       return undefined;
     }
@@ -106,7 +106,7 @@ function addBindings(env, exprs) {
       const values = v;
       const names = name.slice(1);
 
-      if(names.length !== values.length) {
+      if (names.length !== values.length) {
         console.error('binding mismatch between', names, values);
       }
 
@@ -149,10 +149,8 @@ function defineFunction(env, defaultArgForms, body) {
 /* eslint-disable no-unused-vars */
 const specialForms = {
   // (if something truthy falsey) || (if something truthy)
-  'if': (env, [_, cond, t, f]) => {
-    _ = _;
-    return evaluate(env, evaluate(env, cond)[1] === TRUE_STRING ? t : f);
-  },
+  'if': (env, [_, cond, t, f]) =>
+    evaluate(env, evaluate(env, cond)[1] === TRUE_STRING ? t : f),
 
   // (quote (age 99))
   /*
@@ -173,7 +171,6 @@ const specialForms = {
    price worth paying
    */
   'quote': (env, [_, form]) => {
-    _ = _;
     if (form.constructor === Array) {
       if (form[0] === 'quote') {
         return [env, form[1]];
@@ -182,28 +179,22 @@ const specialForms = {
     return [env, form];
   },
 
-  '__string': (env, [_, form]) => {
-    _ = _;
-    return [env, form];
-  },
+  '__string': (env, [_, form]) => [env, form],
 
   'fn': (env, [_, nameForm, ...valueForms]) => {
-    _ = _;
     const [name, defaultArgForms] = nameForm;
     const definedFunction = defineFunction(env, defaultArgForms, valueForms);
     return [env.set(name, { binding: definedFunction }), definedFunction];
   },
 
   'define': (env, [_, ...args]) => {
-    _ = _;
-
     // wrap the args into pairs
-    if(args.length % 2 === 1) {
+    if (args.length % 2 === 1) {
       console.error('define should have an even number of args', args);
     }
 
     const argPairs = [];
-    for(let i = 0; i < args.length; i += 2) {
+    for (let i = 0; i < args.length; i += 2) {
       argPairs.push([args[i + 0], args[i + 1]]);
     }
 
@@ -211,14 +202,10 @@ const specialForms = {
   },
 
   // (begin (f1 1) (f2 3) (f3 5))
-  'begin': (env, [_, ...body]) => {
-    _ = _;
-    return evalBodyForms(env, body);
-  },
+  'begin': (env, [_, ...body]) => evalBodyForms(env, body),
 
   // (print 'hi' foo) => hi 42
   'print': (env, [_, ...msgs]) => {
-    _ = _;
     const printMsg = msgs.reduce((a, b) => `${a} ${evaluate(env, b)[1]}`, '');
     console.log(printMsg.trim());
     return [env, true];
@@ -226,7 +213,6 @@ const specialForms = {
 
   // (log 'hi' foo) => hi <foo:42>
   'log': (env, [_, ...msgs]) => {
-    _ = _;
     const message = msgs.reduce((a, b) => {
       const r = evaluate(env, b);
       const res = r[1];
@@ -241,7 +227,6 @@ const specialForms = {
 
   // (loop (a from: 1 to: 30 step: 2) (+ a a))
   'loop': (env, [_, [varName, varParameters], ...body]) => {
-    _ = _;
     const vp = {};
     for (const k in varParameters) {
       vp[k] = evaluate(env, varParameters[k])[1];
@@ -252,7 +237,6 @@ const specialForms = {
 
   // (on-matrix-stack (f1 1) (f2 3) (f3 5))
   'on-matrix-stack': (env, [_, ...body]) => {
-    _ = _;
     env.get('push-matrix').binding();
     const res =  evalBodyForms(env, body);
     env.get('pop-matrix').binding();
@@ -295,7 +279,7 @@ function loopingFn(env, expr, varName, params) {
     }
 
     limit = upto !== undefined ? upto : to;
-    if(stepsUpto !== undefined) {
+    if (stepsUpto !== undefined) {
       unit = (limit - from) / s;
     } else {
       unit = (limit - from) / (s - 1);
@@ -375,9 +359,9 @@ const classicFunctions = {
     return TRUE_STRING;
   },
 
-  'list' : args => args,
+  'list': args => args,
 
-  'append' : ([list, ...items]) => {
+  'append': ([list, ...items]) => {
     items.forEach(i => list.push(i));
     return list;
   }
@@ -385,7 +369,7 @@ const classicFunctions = {
 
 function setupBinding(env, rawBindings) {
 
-  for(const prop in rawBindings) {
+  for (const prop in rawBindings) {
     env = env.set(prop, { binding: rawBindings[prop] });
   }
   return env;

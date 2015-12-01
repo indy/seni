@@ -31,7 +31,7 @@ const Util = {
     fn();
     const after = new Date();
     const duration = after - before;
-    if(shouldLog) {
+    if (shouldLog) {
       console.log(msg, duration, 'ms');
     }
   }

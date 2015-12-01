@@ -112,7 +112,7 @@ function suitableForBackAst(node) {
 // backAst
 function compileForBackAst(nodes) {
   return nodes.reduce((nodeArray, n) => {
-    if(suitableForBackAst(n)) {
+    if (suitableForBackAst(n)) {
       let newNode;
       if (n.type === NodeType.LIST) {
         newNode = new NodeList();
@@ -125,11 +125,11 @@ function compileForBackAst(nodes) {
 
       newNode.alterable = n.alterable;
 
-      if(n.alterable) {
+      if (n.alterable) {
         newNode.parameterAST = compileForBackAst(n.parameterAST);
       }
 
-      if(n.type === NodeType.LIST || n.type === NodeType.VECTOR) {
+      if (n.type === NodeType.LIST || n.type === NodeType.VECTOR) {
         newNode.children = compileForBackAst(n.children);
       }
 
@@ -141,10 +141,10 @@ function compileForBackAst(nodes) {
 
 function expandNodeForAlterableChildren(nodes) {
   return nodes.map(node => {
-    if(node.type === NodeType.LIST) {
+    if (node.type === NodeType.LIST) {
       node.children = expandNodeForAlterableChildren(node.children);
-    } else if(node.type === NodeType.VECTOR) {
-      if(node.alterable === true) {
+    } else if (node.type === NodeType.VECTOR) {
+      if (node.alterable === true) {
         // a big difference between lists and vectors is that the parameterAst
         // in an alterable statement for a vector applies to each element of
         // the vector, whereas for a list it applies to the list as a whole

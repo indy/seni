@@ -25,8 +25,8 @@ const logToConsole = false;
 // occasionally be nested expressions and parameter objects
 //
 function unparseSimplifiedAst(value) {
-  if(Array.isArray(value)) {
-    if(value.length === 2 && value[0] === '__string') {
+  if (Array.isArray(value)) {
+    if (value.length === 2 && value[0] === '__string') {
       // the form "hello" is represented as (__string hello)
       // this is a hack used by the interpreter
       return `"${value[1]}"`;
@@ -35,7 +35,7 @@ function unparseSimplifiedAst(value) {
     const elements = value.map(unparseSimplifiedAst).join(' ').trim();
     return `(${elements})`;
 
-  } else if(value instanceof Object) {
+  } else if (value instanceof Object) {
 
     let args = '';
     for (const k in value) {
@@ -43,7 +43,7 @@ function unparseSimplifiedAst(value) {
     }
     return args.trim();
 
-  } else if(!Number.isNaN(Number(value))) {
+  } else if (!Number.isNaN(Number(value))) {
     // see if the number is a float, if so then format to 3dp
     const asString3dp = value.toFixed(3);
     return (asString3dp.match(/[.]000$/)) ? value : asString3dp;
@@ -53,7 +53,7 @@ function unparseSimplifiedAst(value) {
 
 function formatNodeValue(value, node) {
   let res;
-  switch(node.type) {
+  switch (node.type) {
   case NodeType.STRING:
     res = `"${value}"`;
     break;
@@ -80,9 +80,9 @@ function getMultipleValuesFromGenotype(nodes, genotype) {
   const listPostfix = ']';
 
   const res = nodes.map(n => {
-    if(n.type === NodeType.NAME && n.value === 'list') {
+    if (n.type === NodeType.NAME && n.value === 'list') {
       return formatNodeValue(n.value, n);
-    } else if(n.type === NodeType.COMMENT ||
+    } else if (n.type === NodeType.COMMENT ||
               n.type === NodeType.WHITESPACE) {
       return formatNodeValue(n.value, n);
     } else {
@@ -98,7 +98,6 @@ function unparseUnalterable(unalterableNode) {
   let v, _;
   return unalterableNode.map(n => {
     [v, _] = unparseASTNode(n, null);
-    _ = _;
     return v;
   }).join('');
 }
@@ -108,7 +107,7 @@ function unparseASTNode(node, genotype) {
   let v;
   let lst, listPrefix, listPostfix;
 
-  if(node.alterable) {
+  if (node.alterable) {
     // prefixes are any comments/whitespaces after the opening bracket
 
     // Note: neither of these statements should consume any of the
@@ -129,9 +128,9 @@ function unparseASTNode(node, genotype) {
 
   } else {
     let nval;
-    if(node.type === NodeType.LIST) {
+    if (node.type === NodeType.LIST) {
 
-      if(node.usingAbbreviation) {
+      if (node.usingAbbreviation) {
         listPrefix = '\'';
         listPostfix = '';
         // remove the 'quote' and whitespace nodes
@@ -146,7 +145,7 @@ function unparseASTNode(node, genotype) {
         [nval, genotype] = unparseASTNode(n, genotype);
         return nval;
       }).join('') + listPostfix;
-    } else if(node.type === NodeType.VECTOR) {
+    } else if (node.type === NodeType.VECTOR) {
 
       listPrefix = '[';
       listPostfix = ']';
@@ -179,7 +178,7 @@ const Unparser = {
     });
     const res = terms.join('');
 
-    if(logToConsole) {
+    if (logToConsole) {
       console.log('Unparser::unparse', frontAst, res);
     }
 

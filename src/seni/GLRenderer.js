@@ -151,14 +151,14 @@ class GLRenderer {
     const shaderProgram = this.shaderProgram;
     const domElement = this.glDomElement;
 
-    if(domElement.width !== destWidth) {
-      if(logToConsole) {
+    if (domElement.width !== destWidth) {
+      if (logToConsole) {
         console.log('GL width from', domElement.width, 'to', destWidth);
       }
       domElement.width = destWidth;
     }
-    if(this.glDomElement.height !== destHeight) {
-      if(logToConsole) {
+    if (this.glDomElement.height !== destHeight) {
+      if (logToConsole) {
         console.log('GL height from', domElement.height, 'to', destHeight);
       }
       domElement.height = destHeight;
@@ -183,7 +183,7 @@ class GLRenderer {
     let renderPacket;
     let sum = 0;
     const numPackets = renderPackets.length;
-    for(let i = 0; i < numPackets; i++) {
+    for (let i = 0; i < numPackets; i++) {
       renderPacket = renderPackets[i];
       sum += renderPacket.bufferLevel;
 
@@ -203,7 +203,7 @@ class GLRenderer {
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, renderPacket.bufferLevel);
     }
-    if(logToConsole) {
+    if (logToConsole) {
       console.log(`rendered ${sum} vertices in ${numPackets} renderPackets`);
     }
   }

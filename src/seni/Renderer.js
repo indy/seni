@@ -174,7 +174,7 @@ class Renderer {
     const unitAngle = tau / tessellation;
     let angle, vx, vy;
 
-    for(let i = 0; i < tessellation; i++) {
+    for (let i = 0; i < tessellation; i++) {
 
       angle = unitAngle * i;
       vx = (Math.sin(angle) * width) + x;
@@ -221,7 +221,7 @@ class Renderer {
       height = radius;
     }
 
-    if(angleStart > angleEnd) {
+    if (angleStart > angleEnd) {
       console.warn(`angleStart: ${angleStart} > angleEnd: ${angleEnd}`);
     }
 
@@ -239,7 +239,7 @@ class Renderer {
     innervy = (Math.cos(angle) * innerHeight) + y;
     this.prepareToAddTriangleStrip((tessellation * 2) + 2, [innervx, innervy]);
 
-    for(let i = 0; i < tessellation; i++) {
+    for (let i = 0; i < tessellation; i++) {
 
       angle = rStart + (unitAngle * i);
 
@@ -277,7 +277,7 @@ class Renderer {
     let c;
 
     this.prepareToAddTriangleStrip(n, coords[0]);
-    for(let i = 0; i < n; i++) {
+    for (let i = 0; i < n; i++) {
       c = Colour.elementArray(Colour.cloneAs(colours[i], Format.RGB));
       this.addVertex(coords[i], c);
     }
@@ -432,7 +432,7 @@ class Renderer {
       this.flushTriangles();
     }
 
-    if (this.renderPacket.isRenderPacketEmpty() === false){
+    if (this.renderPacket.isRenderPacketEmpty() === false) {
       const res = this.matrixStack.transform2DVector(p0);
       this.renderPacket.formDegenerateTriangle(res);
     }

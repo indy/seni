@@ -27,10 +27,10 @@ function dayOfTheYear(time) {
 
 function base10ToN(num, n) {
 
-  const numRep = {10:'a', 11:'b', 12:'c', 13:'d', 14:'e', 15:'f', 16:'g',
-                  17:'h', 18:'i', 19:'j', 20:'k', 21:'l', 22:'m', 23:'n',
-                  24:'o', 25:'p', 26:'q', 27:'r', 28:'s', 29:'t', 30:'u',
-                  31:'v', 32:'w', 33:'x', 34:'y', 35:'z'};
+  const numRep = {10: 'a', 11: 'b', 12: 'c', 13: 'd', 14: 'e', 15: 'f', 16: 'g',
+                  17: 'h', 18: 'i', 19: 'j', 20: 'k', 21: 'l', 22: 'm', 23: 'n',
+                  24: 'o', 25: 'p', 26: 'q', 27: 'r', 28: 's', 29: 't', 30: 'u',
+                  31: 'v', 32: 'w', 33: 'x', 34: 'y', 35: 'z'};
 
   let newNumString = '';
   let current = num;
@@ -46,7 +46,7 @@ function base10ToN(num, n) {
       remainderString = remainder;
     }
     newNumString = remainderString + newNumString;
-    current = Number.parseInt(current / n);
+    current = Number.parseInt(current / n, 10);
   }
 
   return newNumString;
