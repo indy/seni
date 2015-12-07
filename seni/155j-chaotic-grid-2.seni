@@ -16,7 +16,7 @@
   colour-volatility {20 (int min: 2 max: 40)}
 
   focal-point (focal/point position: [{500 (int max: canvas/width)}
-                                         {800 (int max: canvas/height)}]
+                                      {800 (int max: canvas/height)}]
                            distance: {300 (int max: canvas/width)})
   focal-power {50 (scalar max: 200)})
 
@@ -32,18 +32,18 @@
 
 (fn (render-main)
     (loop (y from: 1 to:  (- num-squares 1))
-      (loop (x from: 1 to:  (- num-squares 1))
-        (define
-          p [(map-to-position at: x) (map-to-position at: y)]
-          volatility (* (focal-point position: p) focal-power))
-        (stroked-bezier-rect position: p
-                             width: square-size
-                             height: square-size
-                             seed: (+ x (* y num-squares))
-                             colour: base-colour
-                             colour-volatility: colour-volatility
-                             volatility: volatility
-                             iterations: 39
-                             tessellation: 1
-                             overlap: 0
-                             stroke-noise: 0))))
+          (loop (x from: 1 to:  (- num-squares 1))
+                (define
+                  p [(map-to-position at: x) (map-to-position at: y)]
+                  volatility (* (focal-point position: p) focal-power))
+                (stroked-bezier-rect position: p
+                                     width: square-size
+                                     height: square-size
+                                     seed: (+ x (* y num-squares))
+                                     colour: base-colour
+                                     colour-volatility: colour-volatility
+                                     volatility: volatility
+                                     iterations: 39
+                                     tessellation: 1
+                                     overlap: 0
+                                     stroke-noise: 0))))

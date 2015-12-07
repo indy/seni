@@ -16,7 +16,7 @@
                        alpha: 1.0)
   colour-volatility {20 (int min: 2 max: 40)}
   focal-point (focal/point position: [{500 (int max: canvas/width)}
-                                         {500 (int max: canvas/height)}]
+                                      {500 (int max: canvas/height)}]
                            distance: {500 (int max: canvas/width)})
   focal-power {50 (scalar max: 200)})
 
@@ -32,21 +32,21 @@
        (/ canvas/width 2)))
 
 (fn (render-main)
-    (loop (y from: 1 to:  (- num-squares 1))
+  (loop (y from: 1 to:  (- num-squares 1))
       (loop (x from: 1 to:  (- num-squares 1))
-        (define 
-          p [(map-to-position at: x)
-                (map-to-position at: y)]
-          volatility: (* (focal-point position: p) focal-power))
+          (define 
+            p [(map-to-position at: x)
+               (map-to-position at: y)]
+            volatility: (* (focal-point position: p) focal-power))
 
-        (stroked-bezier-rect position: p
-                             width: square-size
-                             height: square-size
-                             seed: (+ x (* y num-squares))
-                             colour: base-colour
-                             colour-volatility: colour-volatility
-                             volatility: volatility
-                             iterations: {10 (int min: 1 max: 50)}
-                             tessellation: 1
-                             overlap: {0 (int max: 10)}
-                             stroke-noise: 0))))
+          (stroked-bezier-rect position: p
+                               width: square-size
+                               height: square-size
+                               seed: (+ x (* y num-squares))
+                               colour: base-colour
+                               colour-volatility: colour-volatility
+                               volatility: volatility
+                               iterations: {10 (int min: 1 max: 50)}
+                               tessellation: 1
+                               overlap: {0 (int max: 10)}
+                               stroke-noise: 0))))

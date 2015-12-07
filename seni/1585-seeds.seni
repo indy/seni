@@ -1,4 +1,3 @@
-
 (define 
   seed-radius {3.2 (scalar min: 3 max: 5)}
   scale-factor 4

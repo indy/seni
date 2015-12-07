@@ -10,50 +10,50 @@
 (fn (petal-1 angle: 0
              colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
     (on-matrix-stack
-      (rotate angle: (radians->degrees angle: angle))
-      (bezier-bulging tessellation: 20
-                      line-width: {50 (int min: 10 max: 200)}
-                      colour: colour
-                      coords: [[0 0]
-                                    [233.33 100]
-                                    [566.66 -100]
-                                    [800 0]])))
+     (rotate angle: (radians->degrees angle: angle))
+     (bezier-bulging tessellation: 20
+                     line-width: {50 (int min: 10 max: 200)}
+                     colour: colour
+                     coords: [[0 0]
+                              [233.33 100]
+                              [566.66 -100]
+                              [800 0]])))
 
 (fn (petal-2 angle: 0
              colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
     (on-matrix-stack
-      (rotate angle: (radians->degrees angle: angle))
-      (bezier-bulging tessellation: 20
-                      line-width: {50 (int min: 10 max: 200)}
-                      colour: colour
-                      coords: [[0 0]
-                                    [233.33 -100]
-                                    [566.66 100]
-                                    [800 0]])))
+     (rotate angle: (radians->degrees angle: angle))
+     (bezier-bulging tessellation: 20
+                     line-width: {50 (int min: 10 max: 200)}
+                     colour: colour
+                     coords: [[0 0]
+                              [233.33 -100]
+                              [566.66 100]
+                              [800 0]])))
 
 (fn (circ-1 petals: 0
             colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
             sc: 1.0)
     (on-matrix-stack
-      (scale scalar: sc)
-      (define 
-        strokes petals
-        colcol (col/set-alpha colour: colour value: 0.3)
-        rem (interp/fn from: [0 strokes] to: [0 math/TAU]))
-      (loop (i from: 0 to: strokes)
-        (petal-1 angle: (rem val: i) colour: colcol))))
+     (scale scalar: sc)
+     (define 
+       strokes petals
+       colcol (col/set-alpha colour: colour value: 0.3)
+       rem (interp/fn from: [0 strokes] to: [0 math/TAU]))
+     (loop (i from: 0 to: strokes)
+           (petal-1 angle: (rem val: i) colour: colcol))))
 
 (fn (circ-2 petals: 0
             colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
             sc: 1.0)
     (on-matrix-stack
-      (scale scalar: sc)
-      (define 
-        strokes petals
-        colcol (col/set-alpha colour: colour value: 0.4)
-        rem (interp/fn from: [0 strokes] to: [0 math/TAU]))
-      (loop (i from: 0 to: strokes)
-        (petal-2 angle: (rem val: i) colour: colcol))))
+     (scale scalar: sc)
+     (define 
+       strokes petals
+       colcol (col/set-alpha colour: colour value: 0.4)
+       rem (interp/fn from: [0 strokes] to: [0 math/TAU]))
+     (loop (i from: 0 to: strokes)
+           (petal-2 angle: (rem val: i) colour: colcol))))
 
 (fn (layered-petals petals: 0
                     colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
@@ -68,11 +68,11 @@
             sc: 1)
     (on-matrix-stack
      (translate vector: [posx posy])
-      (scale scalar: sc)
-      (define [c2 c3] (col/analagous colour: colour))
-      (layered-petals petals: {23 (int min: 1 max: 50)} colour: colour sc: {0.6 (scalar min: 0.1 max: 0.9)})
-      (layered-petals petals: {19 (int min: 1 max: 50)} colour: c3 sc: {0.5 (scalar min: 0.1 max: 0.9)})
-      (layered-petals petals: {17 (int min: 1 max: 50)} colour: c2 sc: {0.3 (scalar min: 0.1 max: 0.9)})))
+     (scale scalar: sc)
+     (define [c2 c3] (col/analagous colour: colour))
+     (layered-petals petals: {23 (int min: 1 max: 50)} colour: colour sc: {0.6 (scalar min: 0.1 max: 0.9)})
+     (layered-petals petals: {19 (int min: 1 max: 50)} colour: c3 sc: {0.5 (scalar min: 0.1 max: 0.9)})
+     (layered-petals petals: {17 (int min: 1 max: 50)} colour: c2 sc: {0.3 (scalar min: 0.1 max: 0.9)})))
 
 (fn (wash variation: 200
           line-width: 70
@@ -87,18 +87,18 @@
       w/3 (/ canvas/width 3)
       h/3 (/ canvas/height 3))
     (loop (h from: -20 to: 1020 increment: 20)
-      (bezier tessellation: line-segments
-              line-width: line-width
-              coords: [[0 (v x: 0 y: h z: seed scale: variation)]
-                       [w/3 (v x: w/3 y: h z: seed scale: variation)]
-                       [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
-                       [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
-              colour: colour)
+          (bezier tessellation: line-segments
+                  line-width: line-width
+                  coords: [[0 (v x: 0 y: h z: seed scale: variation)]
+                           [w/3 (v x: w/3 y: h z: seed scale: variation)]
+                           [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
+                           [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
+                  colour: colour)
 
-      (bezier tessellation: line-segments
-              line-width: line-width
-              coords: [[(v x: 0 y: h z: seed scale: variation) 0]
-                       [(v x: h/3 y: h z: seed scale: variation) h/3]
-                       [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
-                       [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
-              colour: colour)))
+          (bezier tessellation: line-segments
+                  line-width: line-width
+                  coords: [[(v x: 0 y: h z: seed scale: variation) 0]
+                           [(v x: h/3 y: h z: seed scale: variation) h/3]
+                           [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
+                           [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
+                  colour: colour)))
