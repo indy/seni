@@ -31,6 +31,7 @@ function seniMode() {
   const NUMBER = 'number';
   const PAREN = 'paren';      // ()
   const CURLY = 'curly';    // {}
+  const BRACKET = 'bracket';    // []
   const SENICOMMON = 'seni-common';
   const PARAMETER = 'seni-parameter';
 
@@ -193,6 +194,10 @@ function seniMode() {
         } else if (ch === ';') { // comment
           stream.skipToEnd(); // rest of the line is a comment
           returnType = tokenType(COMMENT, state);
+        } else if (ch === '[') { // bracket
+          returnType = tokenType(BRACKET, state);
+        } else if (ch === ']') { // bracket
+          returnType = tokenType(BRACKET, state);
         } else if (ch === '(' || ch === '{') {
           let keyWord = '', letter;
           const indentTemp = stream.column();
