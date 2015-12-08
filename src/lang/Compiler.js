@@ -23,6 +23,11 @@ import Node from './Node';
 import NodeList from './NodeList';
 import NodeVector from './NodeVector';
 
+/**
+ * compile does some stuff
+ * @param node a node
+ * @param genotype a genotype
+ */
 function compile(node, genotype) {
   // genotype !== null because we might call compileNodes with a
   // null argument for genotypes e.g. Genetic::buildTraitFromNode

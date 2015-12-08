@@ -17,6 +17,11 @@
  */
 
 export default class Node {
+  /**
+   * node constructor
+   * @param type
+   * @param value
+   */
   constructor(type, value) {
     this.type = type;
     this.value = value;

@@ -224,6 +224,11 @@ function consumeVector(tokens) {
  */
 
 const Parser = {
+
+  /**
+   * parse some stuff
+   * @param tokens the tokens
+   */
   parse: tokens => {
 
     const nodes = [];

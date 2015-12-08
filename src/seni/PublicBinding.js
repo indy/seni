@@ -19,6 +19,13 @@
 import Util from '../seni/Util';
 
 export default class PublicBinding {
+  /**
+   * PublicBinding constructor
+   * @param name
+   * @param doc
+   * @param defaults
+   * @param create
+   */
   constructor(name, doc, defaults, create) {
     this.name = name;
     this.doc = doc;
