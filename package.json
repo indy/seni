@@ -27,7 +27,7 @@
   "homepage": "https://github.com/indy/seni",
   "dependencies": {
     "babel-polyfill": "^6.3.14",
-    "babel-runtime": "^6.3.13",
+    "babel-plugin-external-helpers-2": "^6.3.13",
     "codemirror": "^5.9.0",
     "gl-matrix": "^2.3.1",
     "immutable": "^3.7.5",
@@ -35,9 +35,8 @@
     "seedrandom": "^2.4.2"
   },
   "devDependencies": {
-    "babel-core": "^6.3.13",
+    "babel-cli": "^6.3.15",
     "babel-loader": "^6.2.0",
-    "babel-plugin-transform-runtime": "^6.3.13",
     "babel-preset-es2015": "^6.3.13",
     "body-parser": "^1.14.1",
     "chai": "^3.4.1",
