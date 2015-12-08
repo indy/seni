@@ -16,13 +16,6 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable no-unused-vars */
-/* eslint-disable curly */
-/* eslint-disable max-len */
-/* eslint-disable new-cap */
-/* eslint-disable no-redeclare */
-/* eslint-disable no-fallthrough */
-
 function seniMode() {
   const BUILTIN = 'builtin';
   const COMMENT = 'comment';
@@ -38,7 +31,7 @@ function seniMode() {
   const INDENT_WORD_SKIP = 2;
 
   function makeKeywords(str) {
-    const obj = {}, words = str.split(' ');
+    const obj = {}, words = str.split(/\s+/);
     for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
     return obj;
   }
@@ -46,10 +39,24 @@ function seniMode() {
   // keywords are core to the seni language
   const keywords =
           makeKeywords('begin define fn if loop on-matrix-stack quote');
-  const indentKeys = makeKeywords(`define loop on-matrix-stack`);
+  const indentKeys = makeKeywords(`define loop on-matrix-stack fn`);
 
   // functions from the common seni library
-  const seniCommon = makeKeywords('+ - / < = > append bezier bezier-bulging bezier-trailing box circle circle-slice col/analagous col/complementary col/convert col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsv col/lab col/lighten col/procedural-fn col/rgb col/set-alpha col/set-lab-a col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r col/split-complementary col/triad degrees->radians focal/hline focal/point focal/vline interp/bezier interp/bezier-tangent interp/fn line list list/get list/length log math/atan2 math/clamp math/cos math/distance-2d math/sin mod path/bezier path/circle path/linear path/spline poly pop-matrix print prng/perlin-signed prng/perlin-unsigned prng/range push-matrix quote radians->degrees rect repeat/rotate repeat/rotate-mirrored repeat/symmetry-4 repeat/symmetry-8 repeat/symmetry-horizontal repeat/symmetry-vertical rotate scale spline sqrt stroked-bezier stroked-bezier-rect take translate v2 v2/* v2/+ v2/- v2// v2/= v2/x v2/y');
+  const seniCommon = makeKeywords(`+ - / < = > append bezier bezier-bulging
+bezier-trailing box circle circle-slice col/analagous col/complementary
+col/convert col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l
+col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsv col/lab col/lighten
+col/procedural-fn col/rgb col/set-alpha col/set-lab-a col/set-lab-b
+col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r col/split-complementary
+col/triad degrees->radians focal/hline focal/point focal/vline interp/bezier
+interp/bezier-tangent interp/fn line list list/get list/length log math/atan2
+math/clamp math/cos math/distance-2d math/sin mod path/bezier path/circle
+path/linear path/spline poly pop-matrix print prng/perlin-signed
+prng/perlin-unsigned prng/range push-matrix quote radians->degrees rect
+repeat/rotate repeat/rotate-mirrored repeat/symmetry-4 repeat/symmetry-8
+repeat/symmetry-horizontal repeat/symmetry-vertical rotate scale spline sqrt
+stroked-bezier stroked-bezier-rect take translate v2 v2/* v2/+ v2/- v2//
+v2/= v2/x v2/y`);
 
   function stateStack(indent, type, prev) { // represents a state stack object
     this.indent = indent;
@@ -96,11 +103,13 @@ function seniMode() {
         }
       } else {
         // normally grey out, except if we're curlyedFirstChildIsParen
-        if (state.curlyedFirstChildIsParen && state.firstParenCurlyDepth <= state.parenDepth) {
+        if (state.curlyedFirstChildIsParen &&
+            state.firstParenCurlyDepth <= state.parenDepth) {
           // keep on colouring as normal
           usePrefix = false;
 
-          // if this is a closing parens then we've processed the first s-exp and can start using prefix
+          // if this is a closing parens then we've processed the first s-exp
+          // and can start using prefix
           // (i.e. start greying out the remainder of the curly contents)
           if (state.firstParenCurlyDepth === state.parenDepth && ch === ')') {
             state.curlyedFirstChildIsParen = false;
@@ -189,14 +198,17 @@ function seniMode() {
 
         } else if (ch === '\'') {
           returnType = tokenType(ATOM, state);
-        } else if (/^[-+0-9.]/.test(ch) && isDecimalNumber(stream, true)) { // match non-prefixed number, must be decimal
+        } else if (/^[-+0-9.]/.test(ch) && isDecimalNumber(stream, true)) {
+          // match non-prefixed number, must be decimal
           returnType = tokenType(NUMBER, state);
         } else if (ch === ';') { // comment
           stream.skipToEnd(); // rest of the line is a comment
           returnType = tokenType(COMMENT, state);
         } else if (ch === '[') { // bracket
+          pushStack(state, stream.column() + 1, ch);
           returnType = tokenType(BRACKET, state);
         } else if (ch === ']') { // bracket
+          popStack(state);
           returnType = tokenType(BRACKET, state);
         } else if (ch === '(' || ch === '{') {
           let keyWord = '', letter;
@@ -212,8 +224,8 @@ function seniMode() {
             keyWord += letter;
           }
 
-          if (keyWord.length > 0 && indentKeys.propertyIsEnumerable(keyWord)) { // indent-word
-
+          if (keyWord.length > 0 && indentKeys.propertyIsEnumerable(keyWord)) {
+            // indent-word
             pushStack(state, indentTemp + INDENT_WORD_SKIP, ch);
           } else { // non-indent word
             // we continue eating the spaces
@@ -223,7 +235,8 @@ function seniMode() {
               // we restart indentation 1 space after
               pushStack(state, indentTemp + 1, ch);
             } else {
-              pushStack(state, indentTemp + stream.current().length, ch); // else we match
+              pushStack(state, indentTemp + stream.current().length, ch);
+              // else we match
             }
           }
           stream.backUp(stream.current().length - 1); // undo all the eating
@@ -233,7 +246,8 @@ function seniMode() {
           returnType = tokenType(ch === '{' ? CURLY : PAREN, state, ch);
         } else if (ch === ')' || ch === '}') {
           returnType = tokenType(ch === '}' ? CURLY : PAREN, state, ch);
-          if (state.indentStack != null && state.indentStack.type === (ch === ')' ? '(' : '{')) {
+          if (state.indentStack != null &&
+              state.indentStack.type === (ch === ')' ? '(' : '{')) {
             popStack(state);
 
             if (typeof state.sExprComment === 'number') {
