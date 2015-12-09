@@ -452,6 +452,58 @@ function proceduralFn(a, b, c, d, alpha) {
   };
 }
 
+/**
+ * bezierFn: interpolates between a and d colours using b and c as control
+ * points
+ * @param a colour
+ * @param b colour
+ * @param c colour
+ * @param d colour
+ */
+function bezierFn(a, b, c, d) {
+
+  const [ar, ag, ab, aalpha] = elementArray(cloneAs(a, Format.RGB));
+  const [br, bg, bb, balpha] = elementArray(cloneAs(b, Format.RGB));
+  const [cr, cg, cb, calpha] = elementArray(cloneAs(c, Format.RGB));
+  const [dr, dg, db, dalpha] = elementArray(cloneAs(d, Format.RGB));
+
+  return function(params) {
+    const t = params.t === undefined ? 1.0 : params.t;
+
+    const red = MathUtil.bezierPoint(ar, br, cr, dr, t);
+    const green = MathUtil.bezierPoint(ag, bg, cg, dg, t);
+    const blue = MathUtil.bezierPoint(ab, bb, cb, db, t);
+    const alpha = MathUtil.bezierPoint(aalpha, balpha, calpha, dalpha, t);
+
+    return construct(Format.RGB, [red, green, blue, alpha]);
+  };
+}
+
+/**
+ * quadraticFn: interpolates between a and c colours using b and c as control
+ * points
+ * @param a colour
+ * @param b colour
+ * @param c colour
+ */
+function quadraticFn(a, b, c) {
+
+  const [ar, ag, ab, aalpha] = elementArray(cloneAs(a, Format.RGB));
+  const [br, bg, bb, balpha] = elementArray(cloneAs(b, Format.RGB));
+  const [cr, cg, cb, calpha] = elementArray(cloneAs(c, Format.RGB));
+
+  return function(params) {
+    const t = params.t === undefined ? 1.0 : params.t;
+
+    const red = MathUtil.quadraticPoint(ar, br, cr, t);
+    const green = MathUtil.quadraticPoint(ag, bg, cg, t);
+    const blue = MathUtil.quadraticPoint(ab, bb, cb, t);
+    const alpha = MathUtil.quadraticPoint(aalpha, balpha, calpha, t);
+
+    return construct(Format.RGB, [red, green, blue, alpha]);
+  };
+}
+
 const Colour = {
   Format,
 
@@ -489,7 +541,9 @@ const Colour = {
   analagous,
   triad,
 
-  proceduralFn
+  proceduralFn,
+  bezierFn,
+  quadraticFn
 };
 
 export default Colour;

@@ -284,6 +284,31 @@ const ColourBindings = {
     ),
 
     new PublicBinding(
+      'col/bezier-fn',
+      ``,
+      {a: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+       b: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+       c: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+       d: Colour.construct(Format.RGB, [1, 1, 1, 1])},
+      self => params => {
+        const {a, b, c, d} = self.mergeWithDefaults(params);
+        return Colour.bezierFn(a, b, c, d);
+      }
+    ),
+
+    new PublicBinding(
+      'col/quadratic-fn',
+      ``,
+      {a: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+       b: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+       c: Colour.construct(Format.RGB, [1, 1, 1, 1])},
+      self => params => {
+        const {a, b, c} = self.mergeWithDefaults(params);
+        return Colour.quadraticFn(a, b, c);
+      }
+    ),
+
+    new PublicBinding(
       'col/darken',
       `darkens the given colour`,
       {colour: Colour.defaultColour, value: 1.0},
