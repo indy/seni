@@ -272,13 +272,14 @@ const ColourBindings = {
     new PublicBinding(
       'col/procedural-fn',
       ``,
-      {a: Colour.defaultColour,
-       b: Colour.defaultColour,
-       c: Colour.defaultColour,
-       d: Colour.defaultColour},
+      {a: [0.5, 0.5, 0.5],
+       b: [0.5, 0.5, 0.5],
+       c: [1.0, 1.0, 1.0],
+       d: [0.0, 0.33, 0.67],
+       alpha: 1.0},
       self => params => {
-        const {a, b, c, d} = self.mergeWithDefaults(params);
-        return Colour.proceduralFn(a, b, c, d);
+        const {a, b, c, d, alpha} = self.mergeWithDefaults(params);
+        return Colour.proceduralFn(a, b, c, d, alpha);
       }
     ),
 

@@ -433,48 +433,24 @@ function triad(c) {
  };
  */
 
-
-/* eslint-disable no-unused-vars */
 // from http://iquilezles.org/www/articles/palettes/palettes.htm
-function proceduralFn(a, b, c, d) {
+function proceduralFn(a, b, c, d, alpha) {
 
-  a = cloneAs(a, Format.RGB);
-  b = cloneAs(b, Format.RGB);
-  c = cloneAs(c, Format.RGB);
-  d = cloneAs(d, Format.RGB);
-
-  const ar = getComponent(a, R);
-  const ag = getComponent(a, G);
-  const ab = getComponent(a, B);
-  const az = getComponent(a, ALPHA);
-
-  const br = getComponent(b, R);
-  const bg = getComponent(b, G);
-  const bb = getComponent(b, B);
-  const bz = getComponent(b, ALPHA);
-
-  const cr = getComponent(c, R);
-  const cg = getComponent(c, G);
-  const cb = getComponent(c, B);
-  const cz = getComponent(c, ALPHA);
-
-  const dr = getComponent(d, R);
-  const dg = getComponent(d, G);
-  const db = getComponent(d, B);
-  const dz = getComponent(d, ALPHA);
+  const [ar, ag, ab] = a;
+  const [br, bg, bb] = b;
+  const [cr, cg, cb] = c;
+  const [dr, dg, db] = d;
 
   return function(params) {
-    const t = params.t || 1.0;
+    const t = params.t === undefined ? 1.0 : params.t;
 
-    const red = ar + ab * Math.cos(MathUtil.TAU * (cr * t + dr));
-    const green = ag + ab * Math.cos(MathUtil.TAU * (cg * t + dg));
-    const blue = ab + ab * Math.cos(MathUtil.TAU * (cb * t + db));
-    const alpha = az + az * Math.cos(MathUtil.TAU * (cz * t + dz));
+    const red = ar + br * Math.cos(MathUtil.TAU * (cr * t + dr));
+    const green = ag + bg * Math.cos(MathUtil.TAU * (cg * t + dg));
+    const blue = ab + bb * Math.cos(MathUtil.TAU * (cb * t + db));
 
     return construct(Format.RGB, [red, green, blue, alpha]);
   };
 }
-/* eslint-enable no-unused-vars */
 
 const Colour = {
   Format,
