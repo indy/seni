@@ -1,10 +1,10 @@
 (define
   coords []
   colours []
-  make-colour (col/procedural-fn a: {(col/rgb r: 0.80 g: 0.50 b: 0.40 a: 0.2) (col)}
-                                 b: {(col/rgb r: 0.20 g: 0.40 b: 0.20 a: 0.3) (col)}
-                                 c: {(col/rgb r: 2.00 g: 1.00 b: 1.00 a: 0.4) (col)}
-                                 d: {(col/rgb r: 0.00 g: 0.25 b: 0.25 a: 0.5) (col)})
+  make-colour (col/procedural-fn a: {[0.80 0.50 0.40] (scalar)}
+                                 b: {[0.20 0.40 0.20] (scalar)}
+                                 c: {[2.00 1.00 1.00] (scalar)}
+                                 d: {[0.00 0.25 0.25] (scalar)})
 
   focalpoint ({focal/point (select from: ['focal/point
                                           'focal/hline
@@ -14,26 +14,26 @@
               distance: {390 (int min: 300 max: 900)}))
 
 (loop (t from: 0 to: 1 steps: {30 (int min: 5 max: 100)})
-      (define
-        p1 (interp/bezier t: t
-                          coords: {[[0 200] [-133 100] [266 -100] [399 -200]]
+  (define
+    p1 (interp/bezier t: t
+                      coords: {[[0 200] [-133 100] [266 -100] [399 -200]]
                                    (vector min: -300 max: 300)})
-        p2 (interp/bezier t: t
-                          coords: {[[-100 200] [133 -300] [66 100] [-99 200]]
-                                   (vector min: -300 max: 300)})
-        c1 (make-colour t: (focalpoint position: p1))
-        c2 (make-colour t: (focalpoint position: p2)))
-      (append coords p1 p2)
-      (append colours c1 c2))
+    p2 (interp/bezier t: t
+                      coords: {[[-100 200] [133 -300] [66 100] [-99 200]]
+                                      (vector min: -300 max: 300)})
+    c1 (make-colour t: (focalpoint position: p1))
+    c2 (make-colour t: (focalpoint position: p2)))
+  (append coords p1 p2)
+  (append colours c1 c2))
 
 
 (fn (draw)
-    (poly coords: coords colours: colours))
+  (poly coords: coords colours: colours))
 
 (fn (render)
-    (on-matrix-stack
-     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
-     (repeat/rotate-mirrored draw: draw
-                             copies: {5 (int min: 1 max: 30)})))
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (repeat/rotate-mirrored draw: draw
+                            copies: {5 (int min: 1 max: 30)})))
 
 (render)

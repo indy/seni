@@ -6,10 +6,10 @@
 (define seeds 200)
 
 (define make-colour
-  (col/procedural-fn a: {(col/rgb r: 0.80 g: 0.50 b: 0.40) (col)}
-                     b: {(col/rgb r: 0.20 g: 0.40 b: 0.20) (col)}
-                     c: {(col/rgb r: 2.00 g: 1.00 b: 1.00) (col)}
-                     d: {(col/rgb r: 0.00 g: 0.25 b: 0.25) (col)}))
+  (col/procedural-fn a: {[0.80 0.50 0.40] (scalar)}
+                     b: {[0.20 0.40 0.20] (scalar)}
+                     c: {[2.00 1.00 1.00] (scalar)}
+                     d: {[0.00 0.25 0.25] (scalar)}))
 
 (define focalpoint ({focal/point (select from: (list 'focal/point
                                                      'focal/hline

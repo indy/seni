@@ -16,17 +16,17 @@
 ;; the coords that the bezier path will take
 (define 
   coords {[[0 500] [333 100] [666 900] [999 500]]
-          (vector min: 0 max: 1000)}
+              (vector min: 0 max: 1000)}
 
   ;; as the bezier path progresses, change the circle's LAB a component
   remap-a (interp/fn from: [0 1]
                      to: [{-80 (scalar min: -100 max: 100)}
-                             { 80 (scalar min: -100 max: 100)}])
+                          { 80 (scalar min: -100 max: 100)}])
 
   ;; as the bezier path progresses, change the circle's LAB b component
   remap-b (interp/fn from: [0 1]
                      to: [{-100 (scalar min: -100 max: 100)}
-                             { 100 (scalar min: -100 max: 100)}]))
+                          { 100 (scalar min: -100 max: 100)}]))
 
 ;; make a function that will be invoked for every point in the bezier path
 (fn (make-fun radius: 10
@@ -36,19 +36,19 @@
               l-val: 100            ; the l in LAB
               alpha: 1
               random-factor: 40)    ; the amount to offset circle position
-    ;; random is used to offset the position along the path
-    (define random (prng/range min: -1 max: 1 seed: seed))
-    (fn (fun position: [0 0]
-             t: 0)
-        (define [x y] position)
-        (circle position: [(+ x (* random-factor (random)))
-                           (+ y (* random-factor (random)))]
-                radius: (+ radius (* radius (random) radius-factor))
-                tessellation: tessellation
-                colour: (col/lab l: l-val
-                                 a: (remap-a val: t)
-                                 b: (remap-b val: t)
-                                 alpha: alpha))))
+  ;; random is used to offset the position along the path
+  (define random (prng/range min: -1 max: 1 seed: seed))
+  (fn (fun position: [0 0]
+           t: 0)
+    (define [x y] position)
+    (circle position: [(+ x (* random-factor (random)))
+                       (+ y (* random-factor (random)))]
+            radius: (+ radius (* radius (random) radius-factor))
+            tessellation: tessellation
+            colour: (col/lab l: l-val
+                             a: (remap-a val: t)
+                             b: (remap-b val: t)
+                             alpha: alpha))))
 
 (path/bezier fn: (make-fun radius: 500
                            l-val: 6

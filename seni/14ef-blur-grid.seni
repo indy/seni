@@ -25,7 +25,7 @@
                       colour: (col/rgb r: 1.0 g: 0.0 b: 0.4 alpha: 1.0))))
 
 (fn (map-to-position at: 0)
-    (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
+  (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
 
 (fn (accumulated-rect x: 0
                       y: 0
@@ -35,19 +35,19 @@
                       volatility: 0
                       passes: 1
                       seed: "asdf")
-    (define alpha (col/get-alpha colour: colour)
-      pass-colour (col/set-alpha colour: colour value: (/ alpha passes))
-      rng (prng/range min: -1 max: 1 seed: seed))
-    (on-matrix-stack
-     (translate vector: [x y])
-      (loop (i to: passes)
-        (define [rr xr yr] (take num: 3 from: rng))
-        (on-matrix-stack
-          (rotate angle: (radians->degrees angle: (* rr 0.02 volatility)))
-          (rect position: [(* xr 5 volatility) (* yr 5 volatility)]
-                width: width
-                height: height
-                colour: pass-colour)))))
+  (define alpha (col/get-alpha colour: colour)
+    pass-colour (col/set-alpha colour: colour value: (/ alpha passes))
+    rng (prng/range min: -1 max: 1 seed: seed))
+  (on-matrix-stack
+    (translate vector: [x y])
+    (loop (i to: passes)
+      (define [rr xr yr] (take num: 3 from: rng))
+      (on-matrix-stack
+        (rotate angle: (radians->degrees angle: (* rr 0.02 volatility)))
+        (rect position: [(* xr 5 volatility) (* yr 5 volatility)]
+              width: width
+              height: height
+              colour: pass-colour)))))
 
 (fn (wash variation: 200
           line-width: 70
@@ -55,26 +55,26 @@
           colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
           seed: 272)
 
-    (fn (v x: 0 y: 0 z: 0 scale: 1)
-        (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
+  (fn (v x: 0 y: 0 z: 0 scale: 1)
+    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
-    (define 
-      w/3 (/ canvas/width 3)
-      h/3 (/ canvas/height 3))
-    
-    (loop (h from: -20 to: 1020 increment: 20)
-      (bezier tessellation: line-segments
-              line-width: line-width
-              coords: [[0 (v x: 0 y: h z: seed scale: variation)]
-                       [w/3 (v x: w/3 y: h z: seed scale: variation)]
-                       [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
-                       [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
-              colour: colour)
+  (define 
+    w/3 (/ canvas/width 3)
+    h/3 (/ canvas/height 3))
 
-      (bezier tessellation: line-segments
-              line-width: line-width
-              coords: [[(v x: 0 y: h z: seed scale: variation) 0]
-                       [(v x: h/3 y: h z: seed scale: variation) h/3]
-                       [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
-                       [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
-              colour: colour)))
+  (loop (h from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[0 (v x: 0 y: h z: seed scale: variation)]
+                     [w/3 (v x: w/3 y: h z: seed scale: variation)]
+                     [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
+                     [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
+            colour: colour)
+
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[(v x: 0 y: h z: seed scale: variation) 0]
+                     [(v x: h/3 y: h z: seed scale: variation) h/3]
+                     [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
+                     [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
+            colour: colour)))

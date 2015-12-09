@@ -6,51 +6,51 @@
 (fn (segment angle: 0.1
              length: 100
              colour: (col/rgb r: 0.0 g: 0.0 b: 0.3 alpha: 1.0))
-    (rotate angle: angle)
-    (rect position: [(/ length 2) 0]
-          width: length
-          height: {5 (int min: 2 max: 30)}
-          colour: colour)
-    ;; translate to start the next segment at the end of this one
-    (translate vector: [length 0]))
+  (rotate angle: angle)
+  (rect position: [(/ length 2) 0]
+        width: length
+        height: {5 (int min: 2 max: 30)}
+        colour: colour)
+  ;; translate to start the next segment at the end of this one
+  (translate vector: [length 0]))
 
 ;; render-half is a series of segments which will have differing 
 ;; lengths and angles
 ;;
 (fn (render-half)
-    (segment length: {30 (int max: 100)} angle: {101 (scalar max: 360)}) 
-    (segment length: {43 (int max: 100)} angle: {02 (scalar max: 360)}) 
-    (segment length: {73 (int max: 100)} angle: {211 (scalar max: 360)}) 
-    (segment length: {33 (int max: 100)} angle: {21 (scalar max: 360)}) 
-    (segment length: {13 (int max: 100)} angle: {106 (scalar max: 360)}) 
-    (segment length: {03 (int max: 100)} angle: {302 (scalar max: 360)}) 
-    (segment length: {43 (int max: 100)} angle: {26 (scalar max: 360)}) 
-    (segment length: {23 (int max: 100)} angle: {108 (scalar max: 360)}) 
-    (segment length: {43 (int max: 100)} angle: {102 (scalar max: 360)}) 
-    (segment length: {83 (int max: 100)} angle: {31 (scalar max: 360)}) 
-    (segment length: {63 (int max: 100)} angle: {204 (scalar max: 360)}) 
-    (segment length: {93 (int max: 100)} angle: {108 (scalar max: 360)}) 
-    (segment length: {23 (int max: 100)} angle: {14 (scalar max: 360)}) 
-    (segment length: {34 (int max: 100)} angle: {308 (scalar max: 360)}) 
-    (segment length: {53 (int max: 100)} angle: {102 (scalar max: 360)}) 
-    (segment length: {33 (int max: 100)} angle: {213 (scalar max: 360)}) 
-    (segment length: {73 (int max: 100)} angle: {34 (scalar max: 360)}) 
-    (segment length: {23 (int max: 100)} angle: {104 (scalar max: 360)}) 
-    (segment length: {53 (int max: 100)} angle: {217 (scalar max: 360)}) 
-    (segment length: {63 (int max: 100)} angle: {09 (scalar max: 360)}) 
-    (segment length: {23 (int max: 100)} angle: {301 (scalar max: 360)}) 
-    (segment length: {93 (int max: 100)} angle: {21 (scalar max: 360)}) 
-    (segment length: {53 (int max: 100)} angle: {123 (scalar max: 360)}) 
-    (segment length: {43 (int max: 100)} angle: {12 (scalar max: 360)}) 
-    (segment length: {33 (int max: 100)} angle: {015 (scalar max: 360)}) 
-    (segment length: {23 (int max: 100)} angle: {037 (scalar max: 360)}) 
-    (segment length: {23 (int max: 100)} angle: {212 (scalar max: 360)}) 
-    (segment length: {63 (int max: 100)} angle: {38 (scalar max: 360)}) 
-    (segment length: {93 (int max: 100)} angle: {114 (scalar max: 360)}) 
-    (segment length: {23 (int max: 100)} angle: {300 (scalar max: 360)}))
+  (segment length: {30 (int max: 100)} angle: {101 (scalar max: 360)}) 
+  (segment length: {43 (int max: 100)} angle: {02 (scalar max: 360)}) 
+  (segment length: {73 (int max: 100)} angle: {211 (scalar max: 360)}) 
+  (segment length: {33 (int max: 100)} angle: {21 (scalar max: 360)}) 
+  (segment length: {13 (int max: 100)} angle: {106 (scalar max: 360)}) 
+  (segment length: {03 (int max: 100)} angle: {302 (scalar max: 360)}) 
+  (segment length: {43 (int max: 100)} angle: {26 (scalar max: 360)}) 
+  (segment length: {23 (int max: 100)} angle: {108 (scalar max: 360)}) 
+  (segment length: {43 (int max: 100)} angle: {102 (scalar max: 360)}) 
+  (segment length: {83 (int max: 100)} angle: {31 (scalar max: 360)}) 
+  (segment length: {63 (int max: 100)} angle: {204 (scalar max: 360)}) 
+  (segment length: {93 (int max: 100)} angle: {108 (scalar max: 360)}) 
+  (segment length: {23 (int max: 100)} angle: {14 (scalar max: 360)}) 
+  (segment length: {34 (int max: 100)} angle: {308 (scalar max: 360)}) 
+  (segment length: {53 (int max: 100)} angle: {102 (scalar max: 360)}) 
+  (segment length: {33 (int max: 100)} angle: {213 (scalar max: 360)}) 
+  (segment length: {73 (int max: 100)} angle: {34 (scalar max: 360)}) 
+  (segment length: {23 (int max: 100)} angle: {104 (scalar max: 360)}) 
+  (segment length: {53 (int max: 100)} angle: {217 (scalar max: 360)}) 
+  (segment length: {63 (int max: 100)} angle: {09 (scalar max: 360)}) 
+  (segment length: {23 (int max: 100)} angle: {301 (scalar max: 360)}) 
+  (segment length: {93 (int max: 100)} angle: {21 (scalar max: 360)}) 
+  (segment length: {53 (int max: 100)} angle: {123 (scalar max: 360)}) 
+  (segment length: {43 (int max: 100)} angle: {12 (scalar max: 360)}) 
+  (segment length: {33 (int max: 100)} angle: {015 (scalar max: 360)}) 
+  (segment length: {23 (int max: 100)} angle: {037 (scalar max: 360)}) 
+  (segment length: {23 (int max: 100)} angle: {212 (scalar max: 360)}) 
+  (segment length: {63 (int max: 100)} angle: {38 (scalar max: 360)}) 
+  (segment length: {93 (int max: 100)} angle: {114 (scalar max: 360)}) 
+  (segment length: {23 (int max: 100)} angle: {300 (scalar max: 360)}))
 
 ;; render the Biomorph as 2 symmetrical halves
 (fn (render)
-    (on-matrix-stack
-     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
-     (repeat/symmetry-vertical draw: render-half)))
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (repeat/symmetry-vertical draw: render-half)))

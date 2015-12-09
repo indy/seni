@@ -1,10 +1,10 @@
-;; imitating Karl Gerstner's Polychrome of Pure Colors (1956-58)
+;; imitating/inspired by Karl Gerstner's Polychrome of Pure Colors (1956-58)
 
-;; http://www.theguardian.com/science/alexs-adventures-in-numberland/2015/dec/02/why-the-history-of-maths-is-also-the-history-of-art
+;; Not using Karl Garstner's palette but I am retaining the horizontal and
+;; vertical colour gradients on alternating squares
 
 (define 
   steps 14
-  ;; assuming a square canvas
   box-dim (/ canvas/width steps)
   half-box-dim (/ box-dim 2)
   remap (interp/fn from: [0 steps] to: [0 1])

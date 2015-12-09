@@ -16,15 +16,15 @@
                colour: colour)))
 
 (define make-colour
-  (col/procedural-fn a: {(col/rgb r: 0.80 g: 0.50 b: 0.40) (col)}
-                     b: {(col/rgb r: 0.20 g: 0.40 b: 0.20) (col)}
-                     c: {(col/rgb r: 2.00 g: 1.00 b: 1.00) (col)}
-                     d: {(col/rgb r: 0.00 g: 0.25 b: 0.25) (col)}))
+  (col/procedural-fn a: {[0.80 0.50 0.40] (scalar)}
+                     b: {[0.20 0.40 0.20] (scalar)}
+                     c: {[2.00 1.00 1.00] (scalar)}
+                     d: {[0.00 0.25 0.25] (scalar)}))
 
 (define 
   focalpoint ({focal/point (select from: ['focal/point 'focal/hline 'focal/vline])} 
               position: [{500 (int max: canvas/width)} 
-                            {500 (int max: canvas/height)}]
+                         {500 (int max: canvas/height)}]
               distance: {800 (int min: (/ canvas/width 2) max: canvas/width)})
   num-squares-to-render {7 (int min: 4 max: 10)}
   num-squares (+ 2 num-squares-to-render)
@@ -33,14 +33,14 @@
 
 (fn (draw-tile position: [0 0]
                colour: red)
-    (on-matrix-stack
-      (translate vector: position)
-      (rotate angle: 45)
-      (scale scalar: 1.3)
-      (rect position: [0 0]
-            width: square-size 
-            height: square-size
-            colour: colour)))
+  (on-matrix-stack
+    (translate vector: position)
+    (rotate angle: 45)
+    (scale scalar: 1.3)
+    (rect position: [0 0]
+          width: square-size 
+          height: square-size
+          colour: colour)))
 
 (fn (map-to-position at: 0)
-    (+ (* square-size at) (/ square-size 2)))
+  (+ (* square-size at) (/ square-size 2)))

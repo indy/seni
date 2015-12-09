@@ -34,6 +34,9 @@ function buildGalleryData() {
     ['1580-quilt', '1580-quilt.png'],
     ['1585-seeds', '1585-seeds.png'],
     ['15fe-rotate-mirror', '15fe-rotate-mirror.png'],
+    ['15h3-polychrome', '15h3-polychrome.png'],
+    ['15h3-rotate-mirror-2', '15h3-rotate-mirror-2.png'],
+    ['15h3-tri-grid', '15h3-tri-grid.png'],
     ['sketch/158b-drip-b', '14ef-blur-grid.png']];
 
   var res = [];

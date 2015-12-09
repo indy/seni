@@ -21,29 +21,29 @@
   focal-power {50 (scalar max: 200)})
 
 (fn (render-background colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
-    (rect x: (/ canvas/width 2)
-          y: (/ canvas/height 2)
-          width: canvas/width
-          height: canvas/height
-          colour: colour))
+  (rect x: (/ canvas/width 2)
+        y: (/ canvas/height 2)
+        width: canvas/width
+        height: canvas/height
+        colour: colour))
 
 (fn (map-to-position at: 0)
-    (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
+  (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
 
 (fn (render-main)
-    (loop (y from: 1 to:  (- num-squares 1))
-          (loop (x from: 1 to:  (- num-squares 1))
-                (define
-                  p [(map-to-position at: x) (map-to-position at: y)]
-                  volatility (* (focal-point position: p) focal-power))
-                (stroked-bezier-rect position: p
-                                     width: square-size
-                                     height: square-size
-                                     seed: (+ x (* y num-squares))
-                                     colour: base-colour
-                                     colour-volatility: colour-volatility
-                                     volatility: volatility
-                                     iterations: 39
-                                     tessellation: 1
-                                     overlap: 0
-                                     stroke-noise: 0))))
+  (loop (y from: 1 to:  (- num-squares 1))
+    (loop (x from: 1 to:  (- num-squares 1))
+      (define
+        p [(map-to-position at: x) (map-to-position at: y)]
+        volatility (* (focal-point position: p) focal-power))
+      (stroked-bezier-rect position: p
+                           width: square-size
+                           height: square-size
+                           seed: (+ x (* y num-squares))
+                           colour: base-colour
+                           colour-volatility: colour-volatility
+                           volatility: volatility
+                           iterations: 39
+                           tessellation: 1
+                           overlap: 0
+                           stroke-noise: 0))))

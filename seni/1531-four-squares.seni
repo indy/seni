@@ -42,21 +42,21 @@
                       volatility: 0
                       passes: 1
                       seed: 33)
-    (define 
-      alpha (col/get-alpha colour: colour)
-      pass-colour (col/set-alpha colour: colour value: (/ alpha passes))
-      rng (prng/range min: -1 max: 1 seed: seed))
+  (define 
+    alpha (col/get-alpha colour: colour)
+    pass-colour (col/set-alpha colour: colour value: (/ alpha passes))
+    rng (prng/range min: -1 max: 1 seed: seed))
 
-    (on-matrix-stack
-     (translate vector: position)
-     (loop (i to: passes)
-           (define [rr xr yr] (take num: 3 from: rng))
-           (on-matrix-stack
-            (rotate angle: (radians->degrees angle: (* rr 0.02 volatility)))
-            (rect position: [(* xr 5 volatility) (* yr 5 volatility)]
-                  width: width
-                  height: height
-                  colour: pass-colour)))))
+  (on-matrix-stack
+    (translate vector: position)
+    (loop (i to: passes)
+      (define [rr xr yr] (take num: 3 from: rng))
+      (on-matrix-stack
+        (rotate angle: (radians->degrees angle: (* rr 0.02 volatility)))
+        (rect position: [(* xr 5 volatility) (* yr 5 volatility)]
+              width: width
+              height: height
+              colour: pass-colour)))))
 
 (fn (stroked-bezier-rect position: [0 0]
                          width: 10
@@ -67,91 +67,91 @@
                          overlap: 3
                          iterations: 10
                          seed: "shabba")
+  (define 
+    [x y] position
+    third-width (/ width 3)
+    third-height (/ height 3)
+    vol volatility
+
+    start-x (- x (/ width 2))
+    start-y (- y (/ height 2))
+
+    h-delta (/ height iterations)
+    h-strip-width (/ height iterations)
+    half-h-strip-width (/ h-strip-width 2)
+
+    v-delta (/ width iterations)
+    v-strip-width (/ width iterations)
+    half-v-strip-width (/ v-strip-width 2)
+
+    rng (prng/range min: -1 max: 1 seed: seed)
+
+    half-alpha (/ (col/get-alpha colour: colour) 2)
+    lab-colour (col/set-alpha colour: (col/convert format: LAB
+                                                   colour: colour)
+                              value: half-alpha))
+
+  ; horizontal strips
+  (loop (i to: iterations)
     (define 
-      [x y] position
-      third-width (/ width 3)
-      third-height (/ height 3)
-      vol volatility
+      [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
+      lightness (+ (col/get-lab-l colour: lab-colour)
+                   (* colour-volatility (take from: rng)))
+      current-colour (col/set-lab-l colour: lab-colour
+                                    value: lightness))
+    (bezier tessellation: 10
+            line-width: (+ overlap h-strip-width)
+            coords: [[(+ (+ (* rx1 vol) start-x)
+                         (* 0 third-width))
+                      (+ (+ (* i h-delta) (* ry1 vol) start-y)
+                         half-h-strip-width)]
 
-      start-x (- x (/ width 2))
-      start-y (- y (/ height 2))
+                     [(+ (+ (* rx2 vol) start-x)
+                         (* 1 third-width))
+                      (+ (+ (* i h-delta) (* ry2 vol) start-y)
+                         half-h-strip-width)]
 
-      h-delta (/ height iterations)
-      h-strip-width (/ height iterations)
-      half-h-strip-width (/ h-strip-width 2)
+                     [(+ (+ (* rx3 vol) start-x)
+                         (* 2 third-width))
+                      (+ (+ (* i h-delta) (* ry3 vol) start-y)
+                         half-h-strip-width)]
 
-      v-delta (/ width iterations)
-      v-strip-width (/ width iterations)
-      half-v-strip-width (/ v-strip-width 2)
+                     [(+ (+ (* rx4 vol) start-x)
+                         (* 3 third-width))
+                      (+ (+ (* i h-delta) (* ry4 vol) start-y)
+                         half-h-strip-width)]]
+            colour: current-colour))
 
-      rng (prng/range min: -1 max: 1 seed: seed)
+  ; vertical strips
+  (loop (i to: iterations)
+    (define 
+      [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
+      lightness (+ (col/get-lab-l colour: lab-colour)
+                   (* colour-volatility (take from: rng)))
+      current-colour (col/set-lab-l colour: lab-colour
+                                    value: lightness))
+    (bezier tessellation: 10
+            line-width: (+ overlap v-strip-width)
+            coords: [[(+ (+ (* i v-delta) (* rx1 vol) start-x)
+                         half-v-strip-width)
+                      (+ (+ (* ry1 vol) start-y)
+                         (* 0 third-height))]
 
-      half-alpha (/ (col/get-alpha colour: colour) 2)
-      lab-colour (col/set-alpha colour: (col/convert format: LAB
-                                                     colour: colour)
-                                value: half-alpha))
+                     [(+ (+ (* i v-delta) (* rx2 vol) start-x)
+                         half-v-strip-width)
+                      (+ (+ (* ry2 vol) start-y)
+                         (* 1 third-height))]
 
-                                        ; horizontal strips
-    (loop (i to: iterations)
-          (define 
-            [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
-            lightness (+ (col/get-lab-l colour: lab-colour)
-                         (* colour-volatility (take from: rng)))
-            current-colour (col/set-lab-l colour: lab-colour
-                                          value: lightness))
-          (bezier tessellation: 10
-                  line-width: (+ overlap h-strip-width)
-                  coords: [[(+ (+ (* rx1 vol) start-x)
-                               (* 0 third-width))
-                            (+ (+ (* i h-delta) (* ry1 vol) start-y)
-                               half-h-strip-width)]
+                     [(+ (+ (* i v-delta) (* rx3 vol) start-x)
+                         half-v-strip-width)
+                      (+ (+ (* ry3 vol) start-y)
+                         (* 2 third-height))]
 
-                           [(+ (+ (* rx2 vol) start-x)
-                               (* 1 third-width))
-                            (+ (+ (* i h-delta) (* ry2 vol) start-y)
-                               half-h-strip-width)]
-
-                           [(+ (+ (* rx3 vol) start-x)
-                               (* 2 third-width))
-                            (+ (+ (* i h-delta) (* ry3 vol) start-y)
-                               half-h-strip-width)]
-
-                           [(+ (+ (* rx4 vol) start-x)
-                               (* 3 third-width))
-                            (+ (+ (* i h-delta) (* ry4 vol) start-y)
-                               half-h-strip-width)]]
-                  colour: current-colour))
-
-                                        ; vertical strips
-    (loop (i to: iterations)
-          (define 
-            [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
-            lightness (+ (col/get-lab-l colour: lab-colour)
-                         (* colour-volatility (take from: rng)))
-            current-colour (col/set-lab-l colour: lab-colour
-                                          value: lightness))
-          (bezier tessellation: 10
-                  line-width: (+ overlap v-strip-width)
-                  coords: [[(+ (+ (* i v-delta) (* rx1 vol) start-x)
-                               half-v-strip-width)
-                            (+ (+ (* ry1 vol) start-y)
-                               (* 0 third-height))]
-
-                           [(+ (+ (* i v-delta) (* rx2 vol) start-x)
-                               half-v-strip-width)
-                            (+ (+ (* ry2 vol) start-y)
-                               (* 1 third-height))]
-
-                           [(+ (+ (* i v-delta) (* rx3 vol) start-x)
-                               half-v-strip-width)
-                            (+ (+ (* ry3 vol) start-y)
-                               (* 2 third-height))]
-
-                           [(+ (+ (* i v-delta) (* rx4 vol) start-x)
-                               half-v-strip-width)
-                            (+ (+ (* ry4 vol) start-y)
-                               (* 3 third-height))]]
-                  colour: current-colour)))
+                     [(+ (+ (* i v-delta) (* rx4 vol) start-x)
+                         half-v-strip-width)
+                      (+ (+ (* ry4 vol) start-y)
+                         (* 3 third-height))]]
+            colour: current-colour)))
 
 (fn (wash variation: 200
           line-width: 70
@@ -159,25 +159,25 @@
           colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
           seed: 272)
 
-    (fn (v x: 0 y: 0 z: 0 scale: 1)
-        (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
+  (fn (v x: 0 y: 0 z: 0 scale: 1)
+    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
-    (define 
-      w/3 (/ canvas/width 3)
-      h/3 (/ canvas/height 3))
-    (loop (h from: -20 to: 1020 increment: 20)
-          (bezier tessellation: line-segments
-                  line-width: line-width
-                  coords: [[0 (v x: 0 y: h z: seed scale: variation)]
-                           [w/3 (v x: w/3 y: h z: seed scale: variation)]
-                           [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
-                           [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
-                  colour: colour)
+  (define 
+    w/3 (/ canvas/width 3)
+    h/3 (/ canvas/height 3))
+  (loop (h from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[0 (v x: 0 y: h z: seed scale: variation)]
+                     [w/3 (v x: w/3 y: h z: seed scale: variation)]
+                     [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
+                     [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
+            colour: colour)
 
-          (bezier tessellation: line-segments
-                  line-width: line-width
-                  coords: [[(v x: 0 y: h z: seed scale: variation) 0]
-                           [(v x: h/3 y: h z: seed scale: variation) h/3]
-                           [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
-                           [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
-                  colour: colour)))
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[(v x: 0 y: h z: seed scale: variation) 0]
+                     [(v x: h/3 y: h z: seed scale: variation) h/3]
+                     [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
+                     [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
+            colour: colour)))
