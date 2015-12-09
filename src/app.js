@@ -164,7 +164,6 @@ function renderHighRes(seniApp, element) {
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('invisible');
     const frontAst = Runtime.buildFrontAst(piece.script);
-    Runtime.logUnparse(frontAst, genotype);
     const backAst = Runtime.compileBackAst(frontAst);
 
     const imageElement = document.getElementById('high-res-image');

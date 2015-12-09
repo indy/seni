@@ -187,6 +187,8 @@ const specialForms = {
     return [env.set(name, { binding: definedFunction }), definedFunction];
   },
 
+  // NOTE: in the documentation state that define creates bindings in
+  // it's parent scope. This may not be the expected behaviour
   'define': (env, [_, ...args]) => {
     // wrap the args into pairs
     if (args.length % 2 === 1) {
