@@ -39,7 +39,6 @@ function mc([xa, ya], [xb, yb]) {
   return [m, c];
 }
 
-
 function normalize(x, y) {
   const len = Math.sqrt((x * x) + (y * y));
   return [(x / len), (y / len)];
