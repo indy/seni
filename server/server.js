@@ -39,7 +39,7 @@ function buildGalleryData() {
                ['15h4-chromatic-layers-1', '15h4-chromatic-layers-1.png'],
                ['15h4-chromatic-layers-2', '15h4-chromatic-layers-2.png'],
                ['15h4-chromatic-layers-3', '15h4-chromatic-layers-3.png'],
-               ['15h4-tri-grid', '15h4-tri-grid.png'],
+               ['15h4-rotate-mirror', '15h4-rotate-mirror.png'],
                ['15h4-mirror-layers', '15h4-mirror-layers.png']];
 
   var res = [];
