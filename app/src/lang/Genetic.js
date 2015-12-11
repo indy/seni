@@ -36,6 +36,8 @@ function buildTraitFromNode(node, genes) {
       // wrap the node in an array and pass into Compiler.compileWithGenotype
       compiledNodes = Compiler.compileWithGenotype([node], null);
       initialValue = compiledNodes[0];
+      // Note: a problem with this is that a form written like '[1 2]' will be
+      // represented in initialValue as the simplified ast: 'list 1 2'
     } else {
       initialValue = node.value;
     }
