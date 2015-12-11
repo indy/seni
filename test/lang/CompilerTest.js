@@ -16,14 +16,14 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import Parser from '../../src/lang/Parser';
-import Lexer from '../../src/lang/Lexer';
-import Compiler from '../../src/lang/Compiler';
-import Genetic from '../../src/lang/Genetic';
-import Node from '../../src/lang/Node';
-import NodeList from '../../src/lang/NodeList';
-import NodeVector from '../../src/lang/NodeVector';
-import NodeType from '../../src/lang/NodeType';
+import Parser from '../../app/src/lang/Parser';
+import Lexer from '../../app/src/lang/Lexer';
+import Compiler from '../../app/src/lang/Compiler';
+import Genetic from '../../app/src/lang/Genetic';
+import Node from '../../app/src/lang/Node';
+import NodeList from '../../app/src/lang/NodeList';
+import NodeVector from '../../app/src/lang/NodeVector';
+import NodeType from '../../app/src/lang/NodeType';
 
 import chai from 'chai';
 const expect = chai.expect;
@@ -61,7 +61,7 @@ describe('Compiler', () => {
   it('should compile a backAst', () => {
     // create a node
     function n(type, value) {
-      switch(type) {
+      switch (type) {
       case NodeType.LIST:
         return new NodeList();
       case NodeType.VECTOR:
@@ -258,7 +258,7 @@ describe('Compiler', () => {
 
   it('should compile function define statements', () => {
     expect(compile('(define (add x: 0 y: 0))')).
-      to.deep.equal(['define', ['add', {x:0, y: 0}]]);
+      to.deep.equal(['define', ['add', {x: 0, y: 0}]]);
 
     expect(compile('(define (add x: (+ 1 1) y: 0))')).
       to.deep.equal(['define', ['add', {x: ['+', 1, 1], y: 0}]]);

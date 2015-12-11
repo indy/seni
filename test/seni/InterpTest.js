@@ -16,7 +16,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import Interp from '../../src/seni/Interp';
+import Interp from '../../app/src/seni/Interp';
 
 import chai from 'chai';
 const expect = chai.expect;

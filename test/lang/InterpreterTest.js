@@ -20,11 +20,11 @@
 // todo: look into no-unused-expressions
 /* eslint-disable no-unused-expressions */
 
-import Interpreter from '../../src/lang/Interpreter';
-import Parser from '../../src/lang/Parser';
-import Lexer from '../../src/lang/Lexer';
-import Compiler from '../../src/lang/Compiler';
-import Genetic from '../../src/lang/Genetic';
+import Interpreter from '../../app/src/lang/Interpreter';
+import Parser from '../../app/src/lang/Parser';
+import Lexer from '../../app/src/lang/Lexer';
+import Compiler from '../../app/src/lang/Compiler';
+import Genetic from '../../app/src/lang/Genetic';
 
 import chai from 'chai';
 const expect = chai.expect;

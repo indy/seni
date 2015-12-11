@@ -9,7 +9,7 @@
     "build-min": "webpack --config webpack.config.min.js",
     "clean": "rm -rf dist",
     "serve": "node server/server.js",
-    "docs": "documentation src/index.js -f html -o docs"
+    "docs": "documentation app/src/index.js -f html -o docs"
   },
   "repository": {
     "type": "git",

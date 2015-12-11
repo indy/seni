@@ -17,11 +17,10 @@ module.exports = {
       {
         loader: "babel-loader",
 
-        test: path.join(__dirname, 'src'),
+        test: path.join(__dirname, 'app', 'src'),
 
         // Options to configure babel with
         query: {
-          plugins: ['transform-runtime'],
           presets: ['es2015']
         }
       },
@@ -32,7 +31,6 @@ module.exports = {
 
         // Options to configure babel with
         query: {
-          plugins: ['transform-runtime'],
           presets: ['es2015']
         }
       }

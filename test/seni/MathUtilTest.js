@@ -16,7 +16,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import MathUtil from '../../src/seni/MathUtil';
+import MathUtil from '../../app/src/seni/MathUtil';
 
 import chai from 'chai';
 const expect = chai.expect;

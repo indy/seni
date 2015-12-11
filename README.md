@@ -18,6 +18,7 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 1. `npm run test`
 2. visit http://localhost:8080/webpack-dev-server/testBundle
+http://localhost:8080/testBundle
 
 The tests will automatically re-run in the browser whenever the source code changes.
 

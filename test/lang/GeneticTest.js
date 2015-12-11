@@ -16,10 +16,10 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import Parser from '../../src/lang/Parser';
-import Lexer from '../../src/lang/Lexer';
-import Genetic from '../../src/lang/Genetic';
-import Compiler from '../../src/lang/Compiler';
+import Parser from '../../app/src/lang/Parser';
+import Lexer from '../../app/src/lang/Lexer';
+import Genetic from '../../app/src/lang/Genetic';
+import Compiler from '../../app/src/lang/Compiler';
 
 import chai from 'chai';
 const expect = chai.expect;

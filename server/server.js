@@ -54,7 +54,8 @@ var galleryData = buildGalleryData();
 
 app.set('port', (process.env.PORT || 3000));
 
-app.use('/', express.static(path.join(__dirname, '..')));
+app.use('/', express.static(path.join(__dirname, '..', 'app')));
+app.use('/node_modules', express.static(path.join(__dirname, '..', 'node_modules')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
