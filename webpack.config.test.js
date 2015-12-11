@@ -15,7 +15,7 @@ module.exports = {
 
     loaders: [
       {
-        loader: "babel-loader",
+        loader: "babel",
 
         test: path.join(__dirname, 'app', 'src'),
 
@@ -25,7 +25,7 @@ module.exports = {
         }
       },
       {
-        loader: "babel-loader",
+        loader: "babel",
 
         test: path.join(__dirname, 'test'),
 

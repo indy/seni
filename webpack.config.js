@@ -3,12 +3,14 @@ var path = require('path');
 
 module.exports = {
   entry: {
-    seni: ['babel-polyfill', './app/src/index.js']
+    seni: ['./app/src/index.js']
+    // why have polyfill?
+    // ,polyfill: ['babel-polyfill']
   },
   output: {
-    path: path.resolve(__dirname, 'app'),
-    filename: './dist/[name].bundle.js',
-    chunkFilename: './dist/[id].bundle.js',
+    path: path.resolve(__dirname, 'app', 'dist'),
+    filename: '[name].bundle.js',
+    chunkFilename: '[id].bundle.js',
     sourceMapFilename: '[file].map'
   },
   module: {
@@ -20,15 +22,15 @@ module.exports = {
     ],
     loaders: [
       {
-        loader: 'babel-loader',
+        loader: 'babel',
 
         // Skip any files outside of your project's `src` directory
         include: [
           path.resolve(__dirname, 'app', 'src'),
         ],
 
-        // Only run `.js` and `.jsx` files through Babel
-        test: /\.jsx?$/,
+        // Only run `.js` files through Babel
+        test: /\.js$/,
 
         // Options to configure babel with
         query: {
