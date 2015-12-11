@@ -1,4 +1,4 @@
-var webpack = require("webpack");
+var common = require('./webpack.config.js');
 var path = require('path');
 
 module.exports = {
@@ -6,24 +6,8 @@ module.exports = {
     sourceMapFilename: '[file].map'
   },
   module: {
-    preLoaders: [
-      {
-        test: /\.js$/,
-        loader: "eslint-loader", exclude: /node_modules/
-      }
-    ],
-
-    loaders: [
-      {
-        loader: "babel",
-
-        test: path.join(__dirname, 'app', 'src'),
-
-        // Options to configure babel with
-        query: {
-          presets: ['es2015']
-        }
-      },
+    preLoaders: common.module.preLoaders,
+    loaders: common.module.loaders.concat([
       {
         loader: "babel",
 
@@ -34,7 +18,6 @@ module.exports = {
           presets: ['es2015']
         }
       }
-    ]
-  },
-  devtool: 'source-map'
+    ])
+  }
 };
