@@ -8,7 +8,7 @@
     "build-watch": "webpack --watch",
     "build-min": "webpack --config webpack.config.min.js",
     "clean": "rm -rf dist",
-    "serve": "node server/server.js",
+    "serve": "nodemon server/server.js --ignore app/ --ignore test/",
     "docs": "documentation app/src/index.js -f html -o docs"
   },
   "repository": {
@@ -45,6 +45,7 @@
     "mkdirp": "^0.5.1",
     "mocha": "^2.3.4",
     "mocha-loader": "^0.7.1",
+    "nodemon": "^1.8.1",
     "webpack": "^1.12.9",
     "webpack-dev-server": "^1.14.0"
   }
