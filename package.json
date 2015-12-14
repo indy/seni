@@ -26,8 +26,6 @@
   },
   "homepage": "https://github.com/indy/seni",
   "dependencies": {
-    "babel-polyfill": "^6.3.14",
-    "babel-plugin-external-helpers-2": "^6.3.13",
     "codemirror": "^5.9.0",
     "gl-matrix": "^2.3.1",
     "immutable": "^3.7.5",
