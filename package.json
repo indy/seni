@@ -7,8 +7,9 @@
     "build": "webpack",
     "build-watch": "webpack --watch",
     "build-min": "webpack --config webpack.config.min.js",
-    "clean": "rm -rf dist",
-    "serve": "nodemon server/server.js --ignore app/ --ignore test/",
+    "clean": "rm -rf app/dist",
+    "serve": "node server/server.js",
+    "monitor": "nodemon server/server.js --ignore app/ --ignore test/",
     "docs": "documentation app/src/index.js -f html -o docs"
   },
   "repository": {
