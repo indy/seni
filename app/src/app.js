@@ -663,8 +663,7 @@ function getGallery() {
       <div class="card">
         <a href="#" class="card-image show-edit">
           <img class="gallery-item-image show-edit"
-               src="${galleryItem.image}"
-               style="width:320px;height:320px">
+               src="${galleryItem.image}">
         </a>
         <div class="card-action">
           <span>${galleryItem.name}</span>
