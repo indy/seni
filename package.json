@@ -30,6 +30,7 @@
     "codemirror": "^5.10.0",
     "gl-matrix": "^2.3.1",
     "immutable": "^3.7.6",
+    "jquery": "^2.1.4",
     "materialize-css": "^0.97.5",
     "seedrandom": "^2.4.2"
   },
