@@ -42,21 +42,23 @@ function seniMode() {
   const indentKeys = makeKeywords(`define loop on-matrix-stack fn`);
 
   // functions from the common seni library
-  const seniCommon = makeKeywords(`+ - / < = > append bezier bezier-bulging
-bezier-trailing box circle circle-slice col/analagous col/complementary
-col/convert col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l
+  const seniCommon = makeKeywords(`* + - / < = > append begin bezier
+bezier-bulging bezier-trailing box canvas/centre canvas/height canvas/width
+circle circle-slice col/analagous col/bezier-fn col/complementary col/convert
+col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l
 col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsv col/lab col/lighten
-col/procedural-fn col/rgb col/set-alpha col/set-lab-a col/set-lab-b
-col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r col/split-complementary
-col/triad degrees->radians focal/hline focal/point focal/vline interp/bezier
-interp/bezier-tangent interp/fn line list list/get list/length log math/atan2
-math/clamp math/cos math/distance-2d math/sin mod path/bezier path/circle
-path/linear path/spline poly pop-matrix print prng/perlin-signed
-prng/perlin-unsigned prng/range push-matrix quote radians->degrees rect
-repeat/rotate repeat/rotate-mirrored repeat/symmetry-4 repeat/symmetry-8
-repeat/symmetry-horizontal repeat/symmetry-vertical rotate scale spline sqrt
-stroked-bezier stroked-bezier-rect take translate v2 v2/* v2/+ v2/- v2//
-v2/= v2/x v2/y`);
+col/procedural-fn col/quadratic-fn col/rgb col/set-alpha col/set-lab-a
+col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r
+col/split-complementary col/triad define degrees->radians fn focal/hline
+focal/point focal/vline if interp/bezier interp/bezier-fn interp/bezier-tangent
+interp/bezier-tangent-fn interp/circle interp/fn line list list/get list/length
+log loop math/PI math/TAU math/atan2 math/clamp math/cos math/distance-2d
+math/sin mod on-matrix-stack path/bezier path/circle path/linear path/spline
+poly pop-matrix print prng/perlin-signed prng/perlin-unsigned prng/range
+push-matrix quote radians->degrees rect repeat/rotate repeat/rotate-mirrored
+repeat/symmetry-4 repeat/symmetry-8 repeat/symmetry-horizontal
+repeat/symmetry-vertical rotate scale spline sqrt stroked-bezier
+stroked-bezier-rect take translate`);
 
   function stateStack(indent, type, prev) { // represents a state stack object
     this.indent = indent;
@@ -220,7 +222,7 @@ v2/= v2/x v2/y`);
             state.parenDepth++;
           }
 
-          while ((letter = stream.eat(/[^\s\(\{\;\)\}]/)) != null) {
+          while ((letter = stream.eat(/[^\s\(\)\[\]\{\}\;]/)) != null) {
             keyWord += letter;
           }
 
