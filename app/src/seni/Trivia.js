@@ -63,7 +63,7 @@ function _getTitle(time) {
   return `${year}${dayValue}`;
 }
 
-const Trivia = {
+export default {
   getTitle: time => {
     if (time === undefined) {
       time = new Date();
@@ -71,5 +71,3 @@ const Trivia = {
     return _getTitle(time);
   }
 };
-
-export default Trivia;

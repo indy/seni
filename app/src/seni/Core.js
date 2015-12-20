@@ -18,72 +18,72 @@
 
 import PublicBinding from './PublicBinding';
 
-const Core = {
-  publicBindings: [
-    new PublicBinding(
-      'canvas/width',
-      'the width of the canvas',
-      {},
-      () => 1000
-    ),
 
-    new PublicBinding(
-      'canvas/height',
-      'the height of the canvas',
-      {},
-      () => 1000
-    ),
+const publicBindings = [
+  new PublicBinding(
+    'canvas/width',
+    'the width of the canvas',
+    {},
+    () => 1000
+  ),
 
-    new PublicBinding(
-      'canvas/centre',
-      'the centre of the canvas',
-      {},
-      () => [500, 500]
-    ),
+  new PublicBinding(
+    'canvas/height',
+    'the height of the canvas',
+    {},
+    () => 1000
+  ),
 
-    new PublicBinding(
-      'list/length',
+  new PublicBinding(
+    'canvas/centre',
+    'the centre of the canvas',
+    {},
+    () => [500, 500]
+  ),
 
-      '',
+  new PublicBinding(
+    'list/length',
 
-      {of: []},
+    '',
 
-      self => params => {
-        const {of} = self.mergeWithDefaults(params);
-        return of.length;
+    {of: []},
+
+    self => params => {
+      const {of} = self.mergeWithDefaults(params);
+      return of.length;
+    }
+  ),
+
+  new PublicBinding(
+    'list/get',
+
+    '',
+
+    {from: [], nth: 0},
+
+    self => params => {
+      const {from, nth} = self.mergeWithDefaults(params);
+      return from[nth];
+    }
+  ),
+
+  new PublicBinding(
+    'take',
+
+    `invokes the 'from' function 'num' times, returning a list`,
+
+    {num: 1, from() { return 0; }},
+
+    self => params => {
+      const {num, from} = self.mergeWithDefaults(params);
+      const res = [];
+      for (let i = 0; i < num; i++) {
+        res.push(from());
       }
-    ),
+      return res;
+    }
+  )];
 
-    new PublicBinding(
-      'list/get',
-
-      '',
-
-      {from: [], nth: 0},
-
-      self => params => {
-        const {from, nth} = self.mergeWithDefaults(params);
-        return from[nth];
-      }
-    ),
-
-    new PublicBinding(
-      'take',
-
-      `invokes the 'from' function 'num' times, returning a list`,
-
-      {num: 1, from() { return 0; }},
-
-      self => params => {
-        const {num, from} = self.mergeWithDefaults(params);
-        const res = [];
-        for (let i = 0; i < num; i++) {
-          res.push(from());
-        }
-        return res;
-      }
-    )
-  ]
+export default {
+  publicBindings
 };
-
-export default Core;

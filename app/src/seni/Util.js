@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Util = {
+export default {
   merge: (obj, defaults) => {
     const res = {};
     for (const p in defaults) {
@@ -36,5 +36,3 @@ const Util = {
     }
   }
 };
-
-export default Util;

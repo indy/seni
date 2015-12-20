@@ -52,121 +52,112 @@ function rotated90(renderer, drawFn) {
 
 }
 
-const symmetryVertical = new PublicBinding(
-  'repeat/symmetry-vertical',
-  'renders the draw fn twice (mirrored vertically)',
-  {
-    draw: emptyFn
-  },
-  (self, renderer) => params => {
-    const { draw } = self.mergeWithDefaults(params);
-    mirror(renderer, draw, vertical);
-  }
-);
-
-const symmetryHorizontal = new PublicBinding(
-  'repeat/symmetry-horizontal',
-  'renders the draw fn twice (mirrored horizontally)',
-  {
-    draw: emptyFn
-  },
-  (self, renderer) => params => {
-    const { draw } = self.mergeWithDefaults(params);
-    mirror(renderer, draw, horizontal);
-  }
-);
-
-const symmetry4 = new PublicBinding(
-  'repeat/symmetry-4',
-  'renders the draw fn reflected along both the horizontal and vertical axis',
-  {
-    draw: emptyFn
-  },
-  (self, renderer) => params => {
-    const { draw } = self.mergeWithDefaults(params);
-    mirror(renderer, () => {
+const publicBindings = [
+  new PublicBinding(
+    'repeat/symmetry-vertical',
+    'renders the draw fn twice (mirrored vertically)',
+    {
+      draw: emptyFn
+    },
+    (self, renderer) => params => {
+      const { draw } = self.mergeWithDefaults(params);
       mirror(renderer, draw, vertical);
-    }, horizontal);
-  }
-);
+    }
+  ),
 
-const symmetry8 = new PublicBinding(
-  'repeat/symmetry-8',
-  'renders the draw fn reflected 8 times', // todo: better doc
-  {
-    draw: emptyFn
-  },
-  (self, renderer) => params => {
-    const { draw } = self.mergeWithDefaults(params);
-    mirror(renderer, () => {
+  new PublicBinding(
+    'repeat/symmetry-horizontal',
+    'renders the draw fn twice (mirrored horizontally)',
+    {
+      draw: emptyFn
+    },
+    (self, renderer) => params => {
+      const { draw } = self.mergeWithDefaults(params);
+      mirror(renderer, draw, horizontal);
+    }
+  ),
+
+  new PublicBinding(
+    'repeat/symmetry-4',
+    'renders the draw fn reflected along both the horizontal and vertical axis',
+    {
+      draw: emptyFn
+    },
+    (self, renderer) => params => {
+      const { draw } = self.mergeWithDefaults(params);
       mirror(renderer, () => {
-        rotated90(renderer, draw);
-      }, vertical);
-    }, horizontal);
-  }
-);
+        mirror(renderer, draw, vertical);
+      }, horizontal);
+    }
+  ),
 
-const rotate = new PublicBinding(
-  'repeat/rotate',
-  'renders multiple times by rotation',
-  {
-    draw: emptyFn,
-    copies: 3
-  },
-  (self, renderer) => params => {
-    const { draw, copies } = self.mergeWithDefaults(params);
+  new PublicBinding(
+    'repeat/symmetry-8',
+    'renders the draw fn reflected 8 times', // todo: better doc
+    {
+      draw: emptyFn
+    },
+    (self, renderer) => params => {
+      const { draw } = self.mergeWithDefaults(params);
+      mirror(renderer, () => {
+        mirror(renderer, () => {
+          rotated90(renderer, draw);
+        }, vertical);
+      }, horizontal);
+    }
+  ),
 
-    const delta = MathUtil.TAU / copies;
+  new PublicBinding(
+    'repeat/rotate',
+    'renders multiple times by rotation',
+    {
+      draw: emptyFn,
+      copies: 3
+    },
+    (self, renderer) => params => {
+      const { draw, copies } = self.mergeWithDefaults(params);
 
-    for (let i = 0; i < copies; i++) {
+      const delta = MathUtil.TAU / copies;
+
+      for (let i = 0; i < copies; i++) {
+        renderer.cmdMatrixPush();
+        renderer.cmdMatrixRotate(delta * i);
+        draw();
+        renderer.cmdMatrixPop();
+      }
+    }
+  ),
+  new PublicBinding(
+    'repeat/rotate-mirrored',
+    'renders multiple times by rotation',
+    {
+      draw: emptyFn,
+      copies: 3
+    },
+    (self, renderer) => params => {
+      const { draw, copies } = self.mergeWithDefaults(params);
+
+      const delta = MathUtil.TAU / copies;
+
+      for (let i = 0; i < copies; i++) {
+        renderer.cmdMatrixPush();
+        renderer.cmdMatrixRotate(delta * i);
+        draw();
+        renderer.cmdMatrixPop();
+      }
+
       renderer.cmdMatrixPush();
-      renderer.cmdMatrixRotate(delta * i);
-      draw();
+      renderer.cmdMatrixScale(-1, 1);
+      for (let i = 0; i < copies; i++) {
+        renderer.cmdMatrixPush();
+        renderer.cmdMatrixRotate(delta * i);
+        draw();
+        renderer.cmdMatrixPop();
+      }
       renderer.cmdMatrixPop();
     }
-  }
-);
+  )];
 
-const rotateMirrored = new PublicBinding(
-  'repeat/rotate-mirrored',
-  'renders multiple times by rotation',
-  {
-    draw: emptyFn,
-    copies: 3
-  },
-  (self, renderer) => params => {
-    const { draw, copies } = self.mergeWithDefaults(params);
-
-    const delta = MathUtil.TAU / copies;
-
-    for (let i = 0; i < copies; i++) {
-      renderer.cmdMatrixPush();
-      renderer.cmdMatrixRotate(delta * i);
-      draw();
-      renderer.cmdMatrixPop();
-    }
-
-    renderer.cmdMatrixPush();
-    renderer.cmdMatrixScale(-1, 1);
-    for (let i = 0; i < copies; i++) {
-      renderer.cmdMatrixPush();
-      renderer.cmdMatrixRotate(delta * i);
-      draw();
-      renderer.cmdMatrixPop();
-    }
-    renderer.cmdMatrixPop();
-  }
-);
-
-const Repeat = {
-  publicBindings: [
-    symmetryVertical,
-    symmetryHorizontal,
-    symmetry4,
-    symmetry8,
-    rotate,
-    rotateMirrored
-  ]
+export default {
+  publicBindings
 };
-
-export default Repeat;

@@ -128,8 +128,7 @@ function setupGLState(gl) {
   gl.disable(gl.DEPTH_TEST);
 }
 
-
-class GLRenderer {
+export default class GLRenderer {
   constructor(canvasElement) {
     this.glDomElement = canvasElement;
 
@@ -208,5 +207,3 @@ class GLRenderer {
     }
   }
 }
-
-export default GLRenderer;

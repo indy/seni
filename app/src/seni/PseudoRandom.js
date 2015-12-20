@@ -115,45 +115,44 @@ function buildRange(seedVal, min, max) {
   return () => (saveable() * diff) + min;
 }
 
-const PseudoRandom = {
+const publicBindings = [
+  new PublicBinding(
+    'prng/perlin-signed',
+    `returns perlin numbers in the range -1..1`,
+    {x: 1.0, y: 1.0, z: 1.0},
+    self => params => {
+      const {x, y, z} = self.mergeWithDefaults(params);
+      return noise(x, y, z);
+    }
+  ),
+
+  new PublicBinding(
+    'prng/perlin-unsigned',
+    `returns perlin numbers in the range 0..1`,
+    {x: 1.0, y: 1.0, z: 1.0},
+    self => params => {
+      const {x, y, z} = self.mergeWithDefaults(params);
+      const v = noise(x, y, z);
+      return (v + 1) / 2.0;
+    }
+  ),
+
+  new PublicBinding(
+    'prng/range',
+    `returns a function that generates a random number in the range min..max`,
+    {seed: 'shabba',
+     min: 0,
+     max: 1},
+    self => params => {
+      const {seed, min, max} = self.mergeWithDefaults(params);
+      return buildRange(seed, min, max);
+    }
+  )
+];
+
+export default {
   buildUnsigned,
   buildSigned,
-
-  publicBindings: [
-    new PublicBinding(
-      'prng/perlin-signed',
-      `returns perlin numbers in the range -1..1`,
-      {x: 1.0, y: 1.0, z: 1.0},
-      self => params => {
-        const {x, y, z} = self.mergeWithDefaults(params);
-        return noise(x, y, z);
-      }
-    ),
-
-    new PublicBinding(
-      'prng/perlin-unsigned',
-      `returns perlin numbers in the range 0..1`,
-      {x: 1.0, y: 1.0, z: 1.0},
-      self => params => {
-        const {x, y, z} = self.mergeWithDefaults(params);
-        const v = noise(x, y, z);
-        return (v + 1) / 2.0;
-      }
-    ),
-
-    new PublicBinding(
-      'prng/range',
-      `returns a function that generates a random number in the range min..max`,
-      {seed: 'shabba',
-       min: 0,
-       max: 1},
-      self => params => {
-        const {seed, min, max} = self.mergeWithDefaults(params);
-        return buildRange(seed, min, max);
-      }
-    )
-  ],
+  publicBindings,
   _perlin: (x, y, z) => noise(x, y, z)
 };
-
-export default PseudoRandom;

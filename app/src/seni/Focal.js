@@ -66,18 +66,6 @@ function point(publicBinding, params, renderer) {
   };
 }
 
-const pointBinding = new PublicBinding(
-  'focal/point',
-  `returns a function that takes a v2 and returns the 'interest' at that point`,
-  {
-    position: [0, 0],
-    distance: 100,
-    falloff: 'linear'
-  },
-  (self, renderer) => params => point(self, params, renderer)
-);
-
-
 function vline(publicBinding, params, renderer) {
   const {
     position,
@@ -93,18 +81,6 @@ function vline(publicBinding, params, renderer) {
     return fn({val: d});
   };
 }
-
-const vlineBinding = new PublicBinding(
-  'focal/vline',
-  `returns a function that takes a v2 and returns the 'interest' at that point`,
-  {
-    position: [500, 500],
-    distance: 100,
-    falloff: 'linear'
-  },
-  (self, renderer) => params => vline(self, params, renderer)
-);
-
 
 function hline(publicBinding, params, renderer) {
   const {
@@ -122,23 +98,44 @@ function hline(publicBinding, params, renderer) {
   };
 }
 
-const hlineBinding = new PublicBinding(
-  'focal/hline',
-  `returns a function that takes a v2 and returns the 'interest' at that point`,
-  {
-    position: [500, 500],
-    distance: 100,
-    falloff: 'linear'
-  },
-  (self, renderer) => params => hline(self, params, renderer)
-);
+const publicBindings = [
+  new PublicBinding(
+    'focal/point',
+    `returns a function that takes a v2 and returns the 'interest'
+at that point`,
+    {
+      position: [0, 0],
+      distance: 100,
+      falloff: 'linear'
+    },
+    (self, renderer) => params => point(self, params, renderer)
+  ),
 
-const Focal = {
-  publicBindings: [
-    pointBinding,
-    vlineBinding,
-    hlineBinding
-  ]
+  new PublicBinding(
+    'focal/vline',
+    `returns a function that takes a v2 and returns the 'interest'
+at that point`,
+    {
+      position: [500, 500],
+      distance: 100,
+      falloff: 'linear'
+    },
+    (self, renderer) => params => vline(self, params, renderer)
+  ),
+
+  new PublicBinding(
+    'focal/hline',
+    `returns a function that takes a v2 and returns the 'interest'
+ at that point`,
+    {
+      position: [500, 500],
+      distance: 100,
+      falloff: 'linear'
+    },
+    (self, renderer) => params => hline(self, params, renderer)
+  )
+];
+
+export default {
+  publicBindings
 };
-
-export default Focal;

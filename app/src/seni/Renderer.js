@@ -27,7 +27,7 @@ import { mat4 } from 'gl-matrix';
 
 const Format = Colour.Format;
 
-class Renderer {
+export default class Renderer {
   constructor(canvasElement) {
     this.glRenderer = new GLRenderer(canvasElement);
 
@@ -459,5 +459,3 @@ class Renderer {
     this.renderPacket = new RenderPacket();
   }
 }
-
-export default Renderer;

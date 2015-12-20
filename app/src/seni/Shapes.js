@@ -26,25 +26,6 @@ function renderSpline(publicBinding, params, renderer) {
   renderer.cmdRenderQuadratic(fullParams);
 }
 
-const splineBinding = new PublicBinding(
-  'spline',
-  `
-  `,
-  {
-    tessellation: 15,
-    'line-width': undefined,
-    'line-width-start': 20,
-    'line-width-end': 20,
-    'line-width-mapping': 'slow-in-out',
-    coords: [[440, 400],
-             [533, 700],
-             [766, 200]],
-    't-start': 0,
-    't-end': 1,
-    colour: Colour.defaultColour
-  },
-  (self, renderer) => params => renderSpline(self, params, renderer));
-
 function renderBezier(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
   renderer.cmdRenderBezier(fullParams);
@@ -52,11 +33,7 @@ function renderBezier(publicBinding, params, renderer) {
 
 const bezierBinding = new PublicBinding(
   'bezier',
-  `
-  this fn adds 1
-  this is a multi line comment
-  woo hoo
-  `,
+  `woo hoo`,
   {
     tessellation: 15,
     'line-width': undefined,
@@ -73,110 +50,20 @@ const bezierBinding = new PublicBinding(
   },
   (self, renderer) => params => renderBezier(self, params, renderer));
 
-
 function renderLine(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
   renderer.cmdRenderLine(fullParams);
 }
-
-const lineBinding = new PublicBinding(
-  'line',
-  `
-  renders a line using 'from' and 'to' parameters
-  `,
-  {
-    from: [100, 100],
-    to: [500, 500],
-    width: 20,
-    colour: Colour.defaultColour
-  },
-  (self, renderer) => params => renderLine(self, params, renderer));
 
 function renderRect(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
   renderer.cmdRenderRect(fullParams);
 }
 
-const rectBinding = new PublicBinding(
-  'rect',
-  `
-  renders a rectangle, centered in position with the given width, height
-  `,
-  {
-    position: [500, 500],
-    width: 200,
-    height: 200,
-    colour: Colour.defaultColour
-  },
-  (self, renderer) => params => renderRect(self, params, renderer));
-
-const boxBinding = new PublicBinding(
-  'box',
-  `
-  renders a rectangle using the given top, left, bottom, right parameters
-  `,
-  {
-    top: 300,
-    left: 100,
-    bottom: 100,
-    right: 300,
-    colour: Colour.defaultColour
-  },
-  (self, renderer) => params => {
-    const fullParams = self.mergeWithDefaults(params);
-    const width = fullParams.right - fullParams.left;
-    const height = fullParams.top - fullParams.bottom;
-    const rectParams = {
-      position: [fullParams.left + (width / 2),
-                 fullParams.bottom + (height / 2)],
-      width,
-      height,
-      colour: fullParams.colour
-    };
-    renderRect(rectBinding, rectParams, renderer);
-  });
-
 function renderCircle(publicBinding, params, renderer) {
   const fullParams = publicBinding.mergeWithDefaults(params);
   renderer.cmdRenderCircle(fullParams);
 }
-
-const circleBinding = new PublicBinding(
-  'circle',
-  `
-  `,
-  {
-    position: [500, 500],
-    radius: undefined,
-    width: 200,
-    height: 200,
-    tessellation: 10,
-    colour: Colour.defaultColour
-  },
-  (self, renderer) => params => renderCircle(self, params, renderer));
-
-function renderCircleSlice(publicBinding, params, renderer) {
-  const fullParams = publicBinding.mergeWithDefaults(params);
-  renderer.cmdRenderCircleSlice(fullParams);
-}
-
-const circleSliceBinding = new PublicBinding(
-  'circle-slice',
-  `
-  `,
-  {
-    position: [500, 500],
-    radius: undefined,
-    'angle-start': 0,
-    'angle-end': 180,
-    width: 200,
-    height: 200,
-    'inner-width': 0,
-    'inner-height': 0,
-    tessellation: 10,
-    colour: Colour.defaultColour
-  },
-  (self, renderer) => params => renderCircleSlice(self, params, renderer));
 
 function renderBezierTrailing(publicBinding, params, renderer) {
 
@@ -200,26 +87,6 @@ function renderBezierTrailing(publicBinding, params, renderer) {
 
   renderBezier(bezierBinding, bezierParams, renderer);
 }
-
-const bezierTrailingBinding = new PublicBinding(
-  'bezier-trailing',
-  `
-  this fn adds 1
-  this is a multi line comment
-  woo hoo
-  `,
-  {
-    tessellation: 15,
-    'line-width': 20,
-    coords: [[440, 400],
-             [533, 700],
-             [766, 200],
-             [900, 500]],
-    't-start': 0,
-    't-end': 1,
-    colour: Colour.defaultColour
-  },
-  (self, renderer) => params => renderBezierTrailing(self, params, renderer));
 
 function renderBezierBulging(publicBinding, params, renderer) {
 
@@ -258,22 +125,23 @@ function renderBezierBulging(publicBinding, params, renderer) {
   renderBezier(bezierBinding, fatThinParams, renderer);
 }
 
-const bezierBulgingBinding = new PublicBinding(
-  'bezier-bulging',
-  `
-  `,
+const splineBinding = new PublicBinding(
+  'spline',
+  ``,
   {
-    tessellation: 16,
-    'line-width': 20,
+    tessellation: 15,
+    'line-width': undefined,
+    'line-width-start': 20,
+    'line-width-end': 20,
+    'line-width-mapping': 'slow-in-out',
     coords: [[440, 400],
              [533, 700],
-             [766, 200],
-             [900, 500]],
+             [766, 200]],
     't-start': 0,
     't-end': 1,
     colour: Colour.defaultColour
   },
-  (self, renderer) => params => renderBezierBulging(self, params, renderer));
+  (self, renderer) => params => renderSpline(self, params, renderer));
 
 function renderStrokedBezier(publicBinding, params, renderer) {
 
@@ -337,8 +205,7 @@ function renderStrokedBezier(publicBinding, params, renderer) {
 
 const strokedBezierBinding = new PublicBinding(
   'stroked-bezier',
-  `
-  tessellation: the number of basic bezier curves to use to render this bezier
+  `tessellation: the number of basic bezier curves to use to render this bezier
 
   lineWidth: the perceived thickness of the final bezier curve,
   made up from multiple basic bezier curves
@@ -348,7 +215,6 @@ const strokedBezierBinding = new PublicBinding(
   strokeWidth: the width of each basic bezier
   strokeTessellation: the tessellation of each basic bezier
   strokeNoise: the amount of noise to add to each basic bezier curve
-
   `,
   {
     tessellation: 15,
@@ -455,66 +321,165 @@ function renderStrokedBezierRect(publicBinding, params, renderer) {
   }
 }
 
-const strokedBezierRectBinding = new PublicBinding(
-  'stroked-bezier-rect',
-  `
-  `,
+function renderCircleSlice(publicBinding, params, renderer) {
+  const fullParams = publicBinding.mergeWithDefaults(params);
+  renderer.cmdRenderCircleSlice(fullParams);
+}
+
+const rectBinding = new PublicBinding(
+  'rect',
+  `renders a rectangle, centered in position with the given width, height`,
   {
-    position: [100, 100],
-    width: 800,
-    height: 600,
-
-    volatility: 30,
-    overlap: 0.0,
-
-    iterations: 10,
-    seed: 40,
-
-    tessellation: 15,
-
-    'stroke-tessellation': 10,
-    'stroke-noise': 25,
-
-    colour: Colour.defaultColour,
-    'colour-volatility': 40
+    position: [500, 500],
+    width: 200,
+    height: 200,
+    colour: Colour.defaultColour
   },
-  (self, renderer) => params =>
-    renderStrokedBezierRect(self, params, renderer));
+  (self, renderer) => params => renderRect(self, params, renderer));
 
-const polyBinding = new PublicBinding(
-  'poly',
-  `renders triangle strip in which each vertex has a different colour
-  `,
-  {
-    coords: [[100, 100],
-             [600, 100],
-             [500, 600]],
-    colours: [Colour.defaultColour,
-              Colour.defaultColour,
-              Colour.defaultColour]
-  },
-  (self, renderer) => params =>
-    renderer.cmdRenderPoly(self.mergeWithDefaults(params)));
+const publicBindings = [
+  rectBinding,
+  splineBinding,
+  bezierBinding,
 
-const Shapes = {
-  publicBindings: [
-    lineBinding,
-    rectBinding,
-    boxBinding,
+  new PublicBinding(
+    'bezier-trailing',
+    `this fn adds 1`,
+    {
+      tessellation: 15,
+      'line-width': 20,
+      coords: [[440, 400],
+               [533, 700],
+               [766, 200],
+               [900, 500]],
+      't-start': 0,
+      't-end': 1,
+      colour: Colour.defaultColour
+    },
+    (self, renderer) => params => renderBezierTrailing(self, params, renderer)),
 
-    circleBinding,
-    circleSliceBinding,
-    splineBinding,
+  new PublicBinding(
+    'bezier-bulging',
+    ``,
+    {
+      tessellation: 16,
+      'line-width': 20,
+      coords: [[440, 400],
+               [533, 700],
+               [766, 200],
+               [900, 500]],
+      't-start': 0,
+      't-end': 1,
+      colour: Colour.defaultColour
+    },
+    (self, renderer) => params => renderBezierBulging(self, params, renderer)),
 
-    bezierBinding,
-    bezierTrailingBinding,
-    bezierBulgingBinding,
+  strokedBezierBinding,
 
-    strokedBezierBinding,
-    strokedBezierRectBinding,
+  new PublicBinding(
+    'line',
+    `renders a line using 'from' and 'to' parameters`,
+    {
+      from: [100, 100],
+      to: [500, 500],
+      width: 20,
+      colour: Colour.defaultColour
+    },
+    (self, renderer) => params => renderLine(self, params, renderer)),
 
-    polyBinding
-  ]
+  new PublicBinding(
+    'box',
+    `renders a rectangle using the given top, left, bottom, right parameters`,
+    {
+      top: 300,
+      left: 100,
+      bottom: 100,
+      right: 300,
+      colour: Colour.defaultColour
+    },
+    (self, renderer) => params => {
+      const fullParams = self.mergeWithDefaults(params);
+      const width = fullParams.right - fullParams.left;
+      const height = fullParams.top - fullParams.bottom;
+      const rectParams = {
+        position: [fullParams.left + (width / 2),
+                   fullParams.bottom + (height / 2)],
+        width,
+        height,
+        colour: fullParams.colour
+      };
+      renderRect(rectBinding, rectParams, renderer);
+    }),
+
+  new PublicBinding(
+    'circle',
+    ``,
+    {
+      position: [500, 500],
+      radius: undefined,
+      width: 200,
+      height: 200,
+      tessellation: 10,
+      colour: Colour.defaultColour
+    },
+    (self, renderer) => params => renderCircle(self, params, renderer)),
+
+  new PublicBinding(
+    'circle-slice',
+    ``,
+    {
+      position: [500, 500],
+      radius: undefined,
+      'angle-start': 0,
+      'angle-end': 180,
+      width: 200,
+      height: 200,
+      'inner-width': 0,
+      'inner-height': 0,
+      tessellation: 10,
+      colour: Colour.defaultColour
+    },
+    (self, renderer) => params => renderCircleSlice(self, params, renderer)),
+
+  new PublicBinding(
+    'stroked-bezier-rect',
+    ``,
+    {
+      position: [100, 100],
+      width: 800,
+      height: 600,
+
+      volatility: 30,
+      overlap: 0.0,
+
+      iterations: 10,
+      seed: 40,
+
+      tessellation: 15,
+
+      'stroke-tessellation': 10,
+      'stroke-noise': 25,
+
+      colour: Colour.defaultColour,
+      'colour-volatility': 40
+    },
+    (self, renderer) => params =>
+      renderStrokedBezierRect(self, params, renderer)),
+
+  new PublicBinding(
+    'poly',
+    `renders triangle strip in which each vertex has a different colour`,
+    {
+      coords: [[100, 100],
+               [600, 100],
+               [500, 600]],
+      colours: [Colour.defaultColour,
+                Colour.defaultColour,
+                Colour.defaultColour]
+    },
+    (self, renderer) => params =>
+      renderer.cmdRenderPoly(self.mergeWithDefaults(params)))];
+
+export default {
+  publicBindings
 };
-
-export default Shapes;

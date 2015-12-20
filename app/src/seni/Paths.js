@@ -45,20 +45,6 @@ function pathLinear(publicBinding, params) {
   }
 }
 
-const linearBinding = new PublicBinding(
-  'path/linear',
-  `
-  a linear path
-  `,
-  {
-    coords: [[0, 0], [100, 100]],
-    fn: emptyFn,
-    steps: 10,
-    't-start': 0.0,
-    't-end': 1.0
-  },
-  self => params => pathLinear(self, params));
-
 function pathCircle(publicBinding, params) {
   const fullParams = publicBinding.mergeWithDefaults(params);
 
@@ -86,21 +72,6 @@ function pathCircle(publicBinding, params) {
   }
 }
 
-const circleBinding = new PublicBinding(
-  'path/circle',
-  `
-  a circular path
-  `,
-  {
-    position: [500, 500],
-    radius: 100,
-    fn: emptyFn,
-    steps: 10,
-    't-start': 0.0,
-    't-end': 1.0
-  },
-  self => params => pathCircle(self, params));
-
 function pathCurve(publicBinding, params, coordFn) {
   const fullParams = publicBinding.mergeWithDefaults(params);
 
@@ -124,41 +95,57 @@ function pathCurve(publicBinding, params, coordFn) {
   }
 }
 
-const splineBinding = new PublicBinding(
-  'path/spline',
-  `
-  a quadratic spline path
-  `,
-  {
-    coords: [[0, 0], [30, 90], [100, 100]],
-    fn: emptyFn,
-    steps: 10,
-    't-start': 0.0,
-    't-end': 1.0
-  },
-  self => params => pathCurve(self, params, MathUtil.quadraticCoordinates));
+const publicBindings = [
+  new PublicBinding(
+    'path/linear',
+    `a linear path`,
+    {
+      coords: [[0, 0], [100, 100]],
+      fn: emptyFn,
+      steps: 10,
+      't-start': 0.0,
+      't-end': 1.0
+    },
+    self => params => pathLinear(self, params)),
 
-const bezierBinding = new PublicBinding(
-  'path/bezier',
-  `
-  a bezier spline path
-  `,
-  {
-    coords: [[0, 0], [30, 90], [60, 90], [100, 100]],
-    fn: emptyFn,
-    steps: 10,
-    't-start': 0.0,
-    't-end': 1.0
-  },
-  self => params => pathCurve(self, params, MathUtil.bezierCoordinates));
+  new PublicBinding(
+    'path/circle',
+    `a circular path`,
+    {
+      position: [500, 500],
+      radius: 100,
+      fn: emptyFn,
+      steps: 10,
+      't-start': 0.0,
+      't-end': 1.0
+    },
+    self => params => pathCircle(self, params)),
 
-const Paths = {
-  publicBindings: [
-    linearBinding,
-    circleBinding,
-    splineBinding,
-    bezierBinding
-  ]
+  new PublicBinding(
+    'path/spline',
+    `a quadratic spline path`,
+    {
+      coords: [[0, 0], [30, 90], [100, 100]],
+      fn: emptyFn,
+      steps: 10,
+      't-start': 0.0,
+      't-end': 1.0
+    },
+    self => params => pathCurve(self, params, MathUtil.quadraticCoordinates)),
+
+  new PublicBinding(
+    'path/bezier',
+    `a bezier spline path`,
+    {
+      coords: [[0, 0], [30, 90], [60, 90], [100, 100]],
+      fn: emptyFn,
+      steps: 10,
+      't-start': 0.0,
+      't-end': 1.0
+    },
+    self => params => pathCurve(self, params, MathUtil.bezierCoordinates))
+];
+
+export default {
+  publicBindings
 };
-
-export default Paths;

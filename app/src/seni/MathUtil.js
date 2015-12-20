@@ -108,95 +108,97 @@ function clamp(a, min, max) {
   return a < min ? min : (a > max ? max : a);
 }
 
-const MathUtil = {
+const publicBindings = [
+  new PublicBinding(
+    'math/PI',
+    ``,
+    {},
+    () => PI
+  ),
 
-  publicBindings: [
-    new PublicBinding(
-      'math/PI',
-      ``,
-      {},
-      () => PI
-    ),
+  new PublicBinding(
+    'math/TAU',
+    ``,
+    {},
+    () => TAU
+  ),
 
-    new PublicBinding(
-      'math/TAU',
-      ``,
-      {},
-      () => TAU
-    ),
+  new PublicBinding(
+    'math/sin',
+    ``,
+    {angle: 0},
+    self => params => {
+      const {angle} = self.mergeWithDefaults(params);
+      return Math.sin(angle);
+    }
+  ),
 
-    new PublicBinding(
-      'math/sin',
-      ``,
-      {angle: 0},
-      self => params => {
-        const {angle} = self.mergeWithDefaults(params);
-        return Math.sin(angle);
-      }
-    ),
-
-    new PublicBinding(
-      'math/cos',
-      ``,
-      {angle: 0},
-      self => params => {
-        const {angle} = self.mergeWithDefaults(params);
-        return Math.cos(angle);
-      }
-    ),
-    new PublicBinding(
-      'math/atan2',
-      `Calculates the arc tangent of the two variables y and x. It is similar
+  new PublicBinding(
+    'math/cos',
+    ``,
+    {angle: 0},
+    self => params => {
+      const {angle} = self.mergeWithDefaults(params);
+      return Math.cos(angle);
+    }
+  ),
+  new PublicBinding(
+    'math/atan2',
+    `Calculates the arc tangent of the two variables y and x. It is similar
 to calculating the arc tangent of y / x, except that the signs of
 both arguments are used to determine the quadrant of the result`,
-      {x: 0,
-       y: 0},
-      self => params => {
-        const {x, y} = self.mergeWithDefaults(params);
-        return Math.atan2(y, x); // this is correct, y is given before x
-      }
-    ),
+    {x: 0,
+     y: 0},
+    self => params => {
+      const {x, y} = self.mergeWithDefaults(params);
+      return Math.atan2(y, x); // this is correct, y is given before x
+    }
+  ),
 
-    new PublicBinding(
-      'math/distance-2d',
-      ``,
-      {x1: 0, y1: 0, x2: 1, y2: 1},
-      self => params => {
-        const {x1, y1, x2, y2} = self.mergeWithDefaults(params);
-        return distance2d([x1, y1], [x2, y2]);
-      }
-    ),
+  new PublicBinding(
+    'math/distance-2d',
+    ``,
+    {x1: 0, y1: 0, x2: 1, y2: 1},
+    self => params => {
+      const {x1, y1, x2, y2} = self.mergeWithDefaults(params);
+      return distance2d([x1, y1], [x2, y2]);
+    }
+  ),
 
-    new PublicBinding(
-      'math/clamp',
-      ``,
-      {val: 0, min: 0, max: 1},
-      self => params => {
-        const {val, min, max} = self.mergeWithDefaults(params);
-        return clamp(val, min, max);
-      }
-    ),
+  new PublicBinding(
+    'math/clamp',
+    ``,
+    {val: 0, min: 0, max: 1},
+    self => params => {
+      const {val, min, max} = self.mergeWithDefaults(params);
+      return clamp(val, min, max);
+    }
+  ),
 
-    new PublicBinding(
-      'degrees->radians',
-      `A helper function that converts angles in degrees to radians`,
-      {angle: 0.0},
-      self => params => {
-        const {angle} = self.mergeWithDefaults(params);
-        return degreesToRadians(angle);
-      }
-    ),
+  new PublicBinding(
+    'degrees->radians',
+    `A helper function that converts angles in degrees to radians`,
+    {angle: 0.0},
+    self => params => {
+      const {angle} = self.mergeWithDefaults(params);
+      return degreesToRadians(angle);
+    }
+  ),
 
-    new PublicBinding(
-      'radians->degrees',
-      `A helper function that converts angles in radians to degrees`,
-      {angle: 0.0},
-      self => params => {
-        const {angle} = self.mergeWithDefaults(params);
-        return radiansToDegrees(angle);
-      }
-    )
-  ],
+  new PublicBinding(
+    'radians->degrees',
+    `A helper function that converts angles in radians to degrees`,
+    {angle: 0.0},
+    self => params => {
+      const {angle} = self.mergeWithDefaults(params);
+      return radiansToDegrees(angle);
+    }
+  )
+];
+
+export default {
+
+  publicBindings,
 
   stepsInclusive: (start, end, num) => {
     const unit = (end - start) / (num - 1);
@@ -229,5 +231,3 @@ both arguments are used to determine the quadrant of the result`,
   bezierCoordinates,
   quadraticCoordinates
 };
-
-export default MathUtil;

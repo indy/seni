@@ -24,7 +24,7 @@ const bufferSize = 1000;
 const vertexItemSize = 2; // xy
 const colourItemSize = 4; // rgba
 
-class RenderPacket {
+export default class RenderPacket {
   constructor() {
     // pass in sizes so that GLExec can access them
     this.vertexItemSize = vertexItemSize;
@@ -78,5 +78,3 @@ class RenderPacket {
     this.bufferLevel += 1;
   }
 }
-
-export default RenderPacket;
