@@ -40,7 +40,13 @@ function buildGalleryData() {
                ['15h4-chromatic-layers-2', '15h4-chromatic-layers-2.png'],
                ['15h4-chromatic-layers-3', '15h4-chromatic-layers-3.png'],
                ['15h4-rotate-mirror', '15h4-rotate-mirror.png'],
-               ['15h4-mirror-layers', '15h4-mirror-layers.png']];
+               ['15h4-mirror-layers', '15h4-mirror-layers.png'],
+               ['15he-rotate-mirror', '15he-rotate-mirror.png'],
+               ['15he-mirror-layers', '15he-mirror-layers.png'],
+               ['15he-cos-1', '15he-cos-1.png'],
+               ['15he-cos-2', '15he-cos-2.png'],
+               ['15he-cos-3', '15he-cos-3.png']
+              ];
 
   var res = [];
   for(var i = 0; i < items.length; i++) {

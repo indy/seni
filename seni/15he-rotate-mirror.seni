@@ -1,0 +1,46 @@
+(define
+  coords []
+  colours []
+  make-colour (col/procedural-fn a: {[0.687 0.399 0.476] (scalar)}
+                                 b: {[0.778 0.405 0.253] (scalar)}
+                                 c: {[0.436 0.590 0.885] (scalar)}
+                                 d: {[0.517 0.439 0.391] (scalar)})
+
+  focalpoint ({focal/vline (select from: ['focal/point
+                                          'focal/hline
+                                          'focal/vline])} 
+              position: [{-148 (int min: -300 max: 300)} 
+                         {239 (int min: -300 max: 300)}]
+              distance: {458 (int min: 300 max: 900)}))
+
+(loop (t from: 0 to: 1 steps: {63 (int min: 5 max: 100)})
+  (define
+    p1 (interp/bezier t: t
+                      coords: {[[-139.592 -150.389] 
+                                [166.582 -132.939] 
+                                [8.370 -108.305] 
+                                [204.349 -212.830]]
+                               (vector min: -300 max: 300)})
+    p2 (interp/bezier t: t
+                      coords: {[[6.482 -255.821] 
+                                [-11.347 100.004]
+                                [201.458 -218.061]
+                                [168.957 84.215]]
+                               (vector min: -300 max: 300)})
+    c1 (make-colour t: (focalpoint position: p1))
+    c2 (make-colour t: (focalpoint position: p2)))
+  (append coords p1 p2)
+  (append colours c1 c2))
+
+
+(fn (draw)
+  (poly coords: coords colours: colours))
+
+(fn (render)
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (scale vector: [1.7 1.7])
+    (repeat/rotate-mirrored draw: draw
+                            copies: {7 (int min: 1 max: 30)})))
+
+(render)
