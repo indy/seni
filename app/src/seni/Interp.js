@@ -123,82 +123,105 @@ const defaultCoords = [[440, 400],
                        [766, 200],
                        [900, 500]];
 
-const Interp = {
-  publicBindings: [
-    new PublicBinding(
-      'interp/fn',
-      ``,
-      {},
-      () => remapFn
-    ),
 
-    new PublicBinding(
-      'interp/bezier',
-      ``,
-      {coords: defaultCoords, t: 1},
-      self => params => {
-        const {coords, t} = self.mergeWithDefaults(params);
-        // make a Bezier fn and then invoke it straight away with the t value
-        return makeBezierFn(coords)({t});
-      }
-    ),
+const publicBindings = [
+  new PublicBinding(
+    'interp/fn',
+    ``,
+    {},
+    () => remapFn
+  ),
 
-    new PublicBinding(
-      'interp/bezier-fn',
-      ``,
-      {coords: defaultCoords},
-      self => params => {
-        const {coords} = self.mergeWithDefaults(params);
-        // return a function that only accepts a t value
-        return makeBezierFn(coords);
-      }
-    ),
+  new PublicBinding(
+    'interp/cos',
+    `note: t goes from 0 to math/TAU`,
+    {amplitude: 1, frequency: 1, t: 1},
+    self => params => {
+      const {amplitude, frequency, t} = self.mergeWithDefaults(params);
+      // make a cosine fn and then invoke it with the t value
+      return amplitude * Math.cos(t * frequency);
+    }
+  ),
 
-    new PublicBinding(
-      'interp/bezier-tangent',
-      ``,
-      {coords: defaultCoords, t: 1},
-      self => params => {
-        const {coords, t} = self.mergeWithDefaults(params);
-        return makeBezierTangentFn(coords)({t});
-      }
-    ),
+  new PublicBinding(
+    'interp/sin',
+    `note: t goes from 0 to math/TAU`,
+    {amplitude: 1, frequency: 1, t: 1},
+    self => params => {
+      const {amplitude, frequency, t} = self.mergeWithDefaults(params);
+      // make a sin fn and then invoke it with the t value
+      return amplitude * Math.sin(t * frequency);
+    }
+  ),
 
-    new PublicBinding(
-      'interp/bezier-tangent-fn',
-      ``,
-      {coords: defaultCoords},
-      self => params => {
-        const {coords} = self.mergeWithDefaults(params);
+  new PublicBinding(
+    'interp/bezier',
+    ``,
+    {coords: defaultCoords, t: 1},
+    self => params => {
+      const {coords, t} = self.mergeWithDefaults(params);
+      // make a Bezier fn and then invoke it straight away with the t value
+      return makeBezierFn(coords)({t});
+    }
+  ),
 
-        // return a function that only accepts a t value
-        return makeBezierTangentFn(coords);
-      }
-    ),
+  new PublicBinding(
+    'interp/bezier-fn',
+    ``,
+    {coords: defaultCoords},
+    self => params => {
+      const {coords} = self.mergeWithDefaults(params);
+      // return a function that only accepts a t value
+      return makeBezierFn(coords);
+    }
+  ),
 
-    new PublicBinding(
-      'interp/circle',
-      ``,
-      {position: [0, 0],
-       radius: 1,
-       t: 0
-      },
-      self => params => {
-        const {position, radius, t} = self.mergeWithDefaults(params);
+  new PublicBinding(
+    'interp/bezier-tangent',
+    ``,
+    {coords: defaultCoords, t: 1},
+    self => params => {
+      const {coords, t} = self.mergeWithDefaults(params);
+      return makeBezierTangentFn(coords)({t});
+    }
+  ),
 
-        const [x, y] = position;
+  new PublicBinding(
+    'interp/bezier-tangent-fn',
+    ``,
+    {coords: defaultCoords},
+    self => params => {
+      const {coords} = self.mergeWithDefaults(params);
 
-        const angle = t * MathUtil.TAU;
+      // return a function that only accepts a t value
+      return makeBezierTangentFn(coords);
+    }
+  ),
 
-        const vx = (Math.sin(angle) * radius) + x;
-        const vy = (Math.cos(angle) * radius) + y;
+  new PublicBinding(
+    'interp/circle',
+    ``,
+    {position: [0, 0],
+     radius: 1,
+     t: 0
+    },
+    self => params => {
+      const {position, radius, t} = self.mergeWithDefaults(params);
 
-        return [vx, vy];
-      }
-    )
-  ],
+      const [x, y] = position;
+
+      const angle = t * MathUtil.TAU;
+
+      const vx = (Math.sin(angle) * radius) + x;
+      const vy = (Math.cos(angle) * radius) + y;
+
+      return [vx, vy];
+    }
+  )
+];
+
+export default {
+  publicBindings,
   interpolate,
   remapFn
 };
-
-export default Interp;
