@@ -31,6 +31,19 @@ const SeniMode = {
   numSeniModes: 3
 };
 
+function seniModeAsString(mode) {
+  switch (mode) {
+  case SeniMode.gallery:
+    return 'SeniMode.gallery';
+  case SeniMode.edit:
+    return 'SeniMode.edit';
+  case SeniMode.evolve:
+    return 'SeniMode.evolve';
+  default:
+    return 'error unknown SeniMode value';
+  }
+}
+
 function get(url) {
   return new Promise((resolve, reject) => {
 
@@ -259,16 +272,17 @@ function genotypesFromSelectedPhenotypes(seniApp) {
 
   showPlaceholderImages(seniApp);
 
-  if (piece.selectedPhenotypes.length === 0) {
+  if (piece.selectedGenotypes.length === 0) {
     // if this is the first generation and nothing has been selected
     // just randomize all of the phenotypes
     createInitialGenotypePopulation(piece, seniApp.populationSize);
   } else {
-    piece.genotypes = Genetic.nextGeneration(piece.selectedPhenotypes,
+    piece.genotypes = Genetic.nextGeneration(piece.selectedGenotypes,
                                              seniApp.populationSize,
                                              seniApp.mutationRate,
                                              piece.traits);
   }
+  historyAdd(seniApp);
 
   // render the genotypes
   renderPhenotypes(seniApp);
@@ -289,19 +303,20 @@ function onNextGen(seniApp) {
   // get the selected genotypes for the next generation
   const piece = seniApp.piece;
 
-  piece.selectedPhenotypes = [];
+  piece.selectedGenotypes = [];
 
   for (let i = 0; i < seniApp.populationSize; i++) {
     if (piece.phenotypes[i].selected === true) {
-      piece.selectedPhenotypes.push(piece.genotypes[i]);
+      piece.selectedGenotypes.push(piece.genotypes[i]);
     }
   }
 
-  if (piece.selectedPhenotypes.length === 0) {
+  if (piece.selectedGenotypes.length === 0) {
     // no phenotypes were selected
     return;
   }
 
+  historyAddSelectedGenotypes(piece.selectedGenotypes);
   genotypesFromSelectedPhenotypes(seniApp);
 }
 
@@ -328,7 +343,7 @@ function createPhenotypeElement(id, placeholderImage) {
 
 function setupEvolveUI(seniApp) {
 
-  getScriptFromEditor(seniApp);
+//  getScriptFromEditor(seniApp);
 
   const allImagesLoadedSince = function(timeStamp) {
     const piece = seniApp.piece;
@@ -366,6 +381,26 @@ function setupEvolveUI(seniApp) {
   });
 }
 
+function hideTopNavBar(seniApp) {
+  addNavbarClass(seniApp, 'to-gallery', 'hidden');
+  addNavbarClass(seniApp, 'to-edit', 'hidden');
+  addNavbarClass(seniApp, 'to-evolve', 'hidden');
+}
+
+function showTopNavBar(seniApp) {
+  removeNavbarClass(seniApp, 'to-gallery', 'hidden');
+  removeNavbarClass(seniApp, 'to-edit', 'hidden');
+  removeNavbarClass(seniApp, 'to-evolve', 'hidden');
+}
+
+
+function showCurrentMode(seniApp) {
+  // show the current container, hide the others
+  for (let i = 0; i < SeniMode.numSeniModes; i++) {
+    seniApp.containers[i].className = i === seniApp.currentMode ? '' : 'hidden';
+  }
+}
+
 function switchMode(seniApp, newMode) {
 
   if (seniApp.currentMode === newMode) {
@@ -375,36 +410,28 @@ function switchMode(seniApp, newMode) {
   //const oldMode = seniApp.currentMode;
   seniApp.currentMode = newMode;
 
-  // show the current container, hide the others
-  for (let i = 0; i < SeniMode.numSeniModes; i++) {
-    seniApp.containers[i].className = i === newMode ? '' : 'hidden';
-  }
+  showCurrentMode(seniApp);
 
   switch (seniApp.currentMode) {
   case SeniMode.gallery :
-    addNavbarClass(seniApp, 'to-gallery', 'hidden');
-    addNavbarClass(seniApp, 'to-edit', 'hidden');
-    addNavbarClass(seniApp, 'to-evolve', 'hidden');
+    hideTopNavBar(seniApp);
+    historyAdd(seniApp);
     break;
   case SeniMode.edit :
-    removeNavbarClass(seniApp, 'to-gallery', 'hidden');
-    removeNavbarClass(seniApp, 'to-edit', 'hidden');
-    removeNavbarClass(seniApp, 'to-evolve', 'hidden');
-
+    showTopNavBar(seniApp);
     timedRenderScript(seniApp, 'renderScript');
+    historyAdd(seniApp);
     break;
   case SeniMode.evolve :
-    removeNavbarClass(seniApp, 'to-gallery', 'hidden');
-    removeNavbarClass(seniApp, 'to-edit', 'hidden');
-    removeNavbarClass(seniApp, 'to-evolve', 'hidden');
-
+    showTopNavBar(seniApp);
+    getScriptFromEditor(seniApp);
     setupEvolveUI(seniApp);
+    historyAdd(seniApp);
     break;
   }
 }
+
 /* eslint-disable no-unused-vars */
-
-
 function showScriptInEditor(seniApp) {
   const editor = seniApp.editor;
   editor.getDoc().setValue(seniApp.piece.script);
@@ -643,6 +670,17 @@ function setupUI(seniApp) {
       imageLoadTimeStamp: 0
     });
   }
+
+  window.addEventListener('popstate', event => {
+    console.log('popstate called', event);
+
+    historyUpdateAppState(seniApp, event.state);
+    //seniApp.history.back();
+    // todo: UI to current position in history object
+
+    const href = document.location.href.split('/');
+    console.log(href);
+  });
 }
 
 function getGallery() {
@@ -686,12 +724,72 @@ function getGallery() {
   });
 }
 
+function historyUpdateAppState(seniApp, state) {
+  // restore the app's current state from state
+
+  console.log('history::updateAppState', state);
+
+  seniApp.currentMode = state.mode;
+  showCurrentMode(seniApp);
+
+  switch (seniApp.currentMode) {
+  case SeniMode.gallery :
+    hideTopNavBar(seniApp);
+    break;
+  case SeniMode.edit :
+    // restore state to the app
+    seniApp.piece.script = state.script;
+    // update the ui
+    showTopNavBar(seniApp);
+    timedRenderScript(seniApp, 'renderScript');
+    break;
+  case SeniMode.evolve :
+    // restore state to the app
+    seniApp.piece.script = state.script;
+    seniApp.piece.genotypes = state.genotypes;
+    // todo: restore the selected genotypes
+    // update the ui
+    showTopNavBar(seniApp);
+
+    showPlaceholderImages(seniApp);
+    renderPhenotypes(seniApp);
+    break;
+  }
+}
+
+function historyAdd(seniApp) {
+
+  const state = {
+    mode: seniApp.currentMode,
+    script: seniApp.piece.script,
+    genotypes: seniApp.piece.genotypes
+  };
+
+  seniApp.lastState = state;
+
+  const uri = `#${seniModeAsString(seniApp.currentMode)}`;
+  history.pushState(state, null, uri);
+}
+
+function historyAddSelectedGenotypes(/*selectedGenotypes*/) {
+
+  // keep a copy of the last state added
+  // modify that state here
+  // call history.replaceState()
+ //    console.log('adding selected genotypes to state index', this.stateIndex);
+  //    const stateItem = this.stateList[this.stateIndex];
+  //    if (stateItem.mode !== SeniMode.evolve) {
+  //      return;
+  //    }
+  //    stateItem.selectedGenotypes = selectedGenotypes;
+}
+
 class Piece {
   constructor() {
     this.phenotypes = [];
-    // selectedPhenotypes is required to remember the previous selection
+    // selectedGenotypes is required to remember the previous selection
     // in case of a shuffle
-    this.selectedPhenotypes = [];
+    this.selectedGenotypes = [];
     this.script = undefined;
     this.frontAst = undefined;
     this.backAst = undefined;
@@ -720,10 +818,13 @@ function createSeniApp() {
     // an immutable var containing the base env for all evaluations
     env: undefined,
     // information about the current piece being created/rendered
-    piece: new Piece()
+    piece: new Piece(),
+    // for browser history modification
+    lastState: undefined
   };
 
   seniApp.env = Bind.addBindings(Runtime.createEnv(), seniApp.renderer);
+  historyAdd(seniApp);
 
   return seniApp;
 }
