@@ -79,7 +79,7 @@ function getJSON(url) {
 }
 
 function getScriptFromEditor(seniApp) {
-  seniApp.piece.script = seniApp.editor.getValue();
+  seniApp.pieceScript = seniApp.editor.getValue();
 }
 
 function ensureMode(seniApp, mode) {
@@ -151,7 +151,7 @@ function renderGenotypeToImage(seniApp, ast, genotype, imageElement, w, h) {
 function renderScript(seniApp) {
   const imageElement = seniApp.renderImage;
 
-  const script = seniApp.piece.script;
+  const script = seniApp.pieceScript;
   const frontAst = Runtime.buildFrontAst(script);
 
   const backAst = Runtime.compileBackAst(frontAst);
@@ -204,11 +204,10 @@ function renderHighRes(seniApp, element) {
   /* eslint-enable no-unused-vars */
 
   if (index !== -1) {
-    const piece = seniApp.piece;
-    const genotype = piece.genotypes[index];
+    const genotype = seniApp.pieceGenotypes[index];
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('invisible');
-    const frontAst = Runtime.buildFrontAst(piece.script);
+    const frontAst = Runtime.buildFrontAst(seniApp.pieceScript);
     const backAst = Runtime.compileBackAst(frontAst);
 
     const imageElement = document.getElementById('high-res-image');
@@ -231,13 +230,12 @@ function showEditFromEvolve(seniApp, element) {
   /* eslint-enable no-unused-vars */
 
   if (index !== -1) {
-    const piece = seniApp.piece;
-    const genotype = piece.genotypes[index];
-    const frontAst = seniApp.piece.frontAst;
+    const genotype = seniApp.pieceGenotypes[index];
+    const frontAst = seniApp.pieceFrontAst;
 
     const script = Runtime.unparse(frontAst, genotype);
 
-    seniApp.piece.script = script;
+    seniApp.pieceScript = script;
 
     ensureMode(seniApp, SeniMode.edit);
   }
@@ -249,7 +247,7 @@ function toggleSelection(seniApp, element) {
     const cardImage = e.getElementsByClassName('card-image')[0];
     cardImage.classList.toggle('selected');
 
-    const c = seniApp.piece.phenotypes[index];
+    const c = seniApp.piecePhenotypes[index];
     c.selected = !c.selected;
   }
 }
@@ -260,15 +258,16 @@ function renderPhenotypes(seniApp) {
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to edit mode
-    const piece = seniApp.piece;
-    if (i < piece.phenotypes.length &&
+    if (i < seniApp.piecePhenotypes.length &&
         seniApp.currentMode === SeniMode.evolve) {
 
-      const genotype = piece.genotypes[i];
-      const imageElement = piece.phenotypes[i].imageElement;
+      const genotype = seniApp.pieceGenotypes[i];
+      const imageElement = seniApp.piecePhenotypes[i].imageElement;
 
-      renderGenotypeToImage(seniApp, piece.backAst, genotype, imageElement);
-
+      renderGenotypeToImage(seniApp,
+                            seniApp.pieceBackAst,
+                            genotype,
+                            imageElement);
       i++;
       setTimeout(go);
     }
@@ -276,43 +275,42 @@ function renderPhenotypes(seniApp) {
 }
 
 function showPlaceholderImages(seniApp) {
-  const piece = seniApp.piece;
   for (let i = 0; i < seniApp.populationSize; i++) {
-    const imageElement = piece.phenotypes[i].imageElement;
+    const imageElement = seniApp.piecePhenotypes[i].imageElement;
     imageElement.src = seniApp.placeholder;
   }
 }
 
-function createInitialGenotypePopulation(piece, populationSize) {
+function createInitialGenotypePopulation(seniApp, populationSize) {
   // add genotypes to the containers
   let genotype;
   let random = new Date();
   random = random.toGMTString();
   for (let i = 0; i < populationSize; i++) {
     if (i === 0) {
-      genotype = Genetic.createGenotypeFromInitialValues(piece.traits);
+      genotype = Genetic.createGenotypeFromInitialValues(seniApp.pieceTraits);
     } else {
-      genotype = Genetic.createGenotypeFromTraits(piece.traits, i + random);
+      genotype = Genetic.createGenotypeFromTraits(seniApp.pieceTraits,
+                                                  i + random);
     }
-    piece.genotypes[i] = genotype;
+    seniApp.pieceGenotypes[i] = genotype;
   }
-  return piece;
 }
 
 function genotypesFromSelectedPhenotypes(seniApp) {
-  const piece = seniApp.piece;
 
   showPlaceholderImages(seniApp);
 
-  if (piece.selectedGenotypes.length === 0) {
+  if (seniApp.pieceSelectedGenotypes.length === 0) {
     // if this is the first generation and nothing has been selected
     // just randomize all of the phenotypes
-    createInitialGenotypePopulation(piece, seniApp.populationSize);
+    createInitialGenotypePopulation(seniApp, seniApp.populationSize);
   } else {
-    piece.genotypes = Genetic.nextGeneration(piece.selectedGenotypes,
-                                             seniApp.populationSize,
-                                             seniApp.mutationRate,
-                                             piece.traits);
+    seniApp.pieceGenotypes = Genetic.nextGeneration(
+      seniApp.pieceSelectedGenotypes,
+      seniApp.populationSize,
+      seniApp.mutationRate,
+      seniApp.pieceTraits);
   }
   historyAdd(seniApp);
 
@@ -321,33 +319,32 @@ function genotypesFromSelectedPhenotypes(seniApp) {
 
   // clean up the dom and clear the selected state
   for (let i = 0; i < seniApp.populationSize; i++) {
-    if (piece.phenotypes[i].selected === true) {
-      const element = piece.phenotypes[i].phenotypeElement;
+    if (seniApp.piecePhenotypes[i].selected === true) {
+      const element = seniApp.piecePhenotypes[i].phenotypeElement;
       const cardImage = element.getElementsByClassName('card-image')[0];
       cardImage.classList.remove('selected');
     }
-    piece.phenotypes[i].selected = false;
+    seniApp.piecePhenotypes[i].selected = false;
   }
 }
 
 function onNextGen(seniApp) {
   // get the selected genotypes for the next generation
-  const piece = seniApp.piece;
 
-  piece.selectedGenotypes = [];
+  seniApp.pieceSelectedGenotypes = [];
 
   for (let i = 0; i < seniApp.populationSize; i++) {
-    if (piece.phenotypes[i].selected === true) {
-      piece.selectedGenotypes.push(piece.genotypes[i]);
+    if (seniApp.piecePhenotypes[i].selected === true) {
+      seniApp.pieceSelectedGenotypes.push(seniApp.pieceGenotypes[i]);
     }
   }
 
-  if (piece.selectedGenotypes.length === 0) {
+  if (seniApp.pieceSelectedGenotypes.length === 0) {
     // no phenotypes were selected
     return;
   }
 
-  historyAddSelectedGenotypes(piece.selectedGenotypes);
+  historyAddSelectedGenotypes(seniApp.pieceSelectedGenotypes);
   genotypesFromSelectedPhenotypes(seniApp);
 }
 
@@ -377,9 +374,8 @@ function setupEvolveUI(seniApp) {
 //  getScriptFromEditor(seniApp);
 
   const allImagesLoadedSince = function(timeStamp) {
-    const piece = seniApp.piece;
     for (let i = 0; i < seniApp.populationSize; i++) {
-      if (piece.phenotypes[i].imageLoadTimeStamp < timeStamp) {
+      if (seniApp.piecePhenotypes[i].imageLoadTimeStamp < timeStamp) {
         return false;
       }
     }
@@ -395,13 +391,11 @@ function setupEvolveUI(seniApp) {
     // otherwise there may be image sizing issues, especially with the
     // first img element
     if (allImagesLoadedSince(initialTimeStamp)) {
-      const piece = seniApp.piece;
+      seniApp.pieceFrontAst = Runtime.buildFrontAst(seniApp.pieceScript);
+      seniApp.pieceBackAst = Runtime.compileBackAst(seniApp.pieceFrontAst);
+      seniApp.pieceTraits = Genetic.buildTraits(seniApp.pieceBackAst);
 
-      piece.frontAst = Runtime.buildFrontAst(seniApp.piece.script);
-      piece.backAst = Runtime.compileBackAst(piece.frontAst);
-      piece.traits = Genetic.buildTraits(piece.backAst);
-
-      createInitialGenotypePopulation(piece, seniApp.populationSize);
+      createInitialGenotypePopulation(seniApp, seniApp.populationSize);
 
       // render the phenotypes
       renderPhenotypes(seniApp);
@@ -435,7 +429,7 @@ function showCurrentMode(seniApp) {
 /* eslint-disable no-unused-vars */
 function showScriptInEditor(seniApp) {
   const editor = seniApp.editor;
-  editor.getDoc().setValue(seniApp.piece.script);
+  editor.getDoc().setValue(seniApp.pieceScript);
   editor.refresh();
 }
 
@@ -462,7 +456,7 @@ function showEditFromGallery(seniApp, element) {
       console.error(`cannot connect to ${url}`);
     }).then(data => {
       // todo: construct a new piece object
-      seniApp.piece.script = data;
+      seniApp.pieceScript = data;
 
       ensureMode(seniApp, SeniMode.edit);
     });
@@ -585,12 +579,12 @@ function setupUI(seniApp) {
   });
 
   addClickEvent('action-eval', () => {
-    seniApp.piece.script = seniApp.editor.getValue();
+    seniApp.pieceScript = seniApp.editor.getValue();
     timedRenderScript(seniApp, 'renderScript');
   });
 
   addClickEvent('action-add', () => {
-    seniApp.piece.script = '';
+    seniApp.pieceScript = '';
     ensureMode(seniApp, SeniMode.edit);
   });
 
@@ -635,19 +629,17 @@ function setupUI(seniApp) {
     }
   }, false);
 
-  const piece = seniApp.piece;
-
   // invoked on every load event for an img tag
   const imageLoadHandler = event => {
     const imageId = event.target.getAttribute('data-id');
-    piece.phenotypes[imageId].imageLoadTimeStamp = event.timeStamp;
+    seniApp.piecePhenotypes[imageId].imageLoadTimeStamp = event.timeStamp;
   };
 
   const gallery = document.getElementById('phenotype-gallery');
   gallery.innerHTML = '';
 
   let phenotypeElement, imageElement;
-  piece.phenotypes = [];
+  seniApp.piecePhenotypes = [];
 
   const row = document.createElement('div');
   row.className = 'row';
@@ -662,7 +654,7 @@ function setupUI(seniApp) {
 
     row.appendChild(phenotypeElement);
 
-    piece.phenotypes.push({
+    seniApp.piecePhenotypes.push({
       phenotypeElement,
       imageElement,
       selected: false,
@@ -737,15 +729,15 @@ function historyUpdateAppState(seniApp, state) {
     break;
   case SeniMode.edit :
     // restore state to the app
-    seniApp.piece.script = state.script;
+    seniApp.pieceScript = state.script;
     // update the ui
     showTopNavBar(seniApp);
     timedRenderScript(seniApp, 'renderScript');
     break;
   case SeniMode.evolve :
     // restore state to the app
-    seniApp.piece.script = state.script;
-    seniApp.piece.genotypes = state.genotypes;
+    seniApp.pieceScript = state.script;
+    seniApp.pieceGenotypes = state.genotypes;
     // todo: restore the selected genotypes
     // update the ui
     showTopNavBar(seniApp);
@@ -760,8 +752,8 @@ function historyAdd(seniApp) {
 
   const state = {
     mode: seniApp.currentMode,
-    script: seniApp.piece.script,
-    genotypes: seniApp.piece.genotypes
+    script: seniApp.pieceScript,
+    genotypes: seniApp.pieceGenotypes
   };
 
   seniApp.lastState = state;
@@ -783,20 +775,6 @@ function historyAddSelectedGenotypes(/*selectedGenotypes*/) {
   //    stateItem.selectedGenotypes = selectedGenotypes;
 }
 
-class Piece {
-  constructor() {
-    this.phenotypes = [];
-    // selectedGenotypes is required to remember the previous selection
-    // in case of a shuffle
-    this.selectedGenotypes = [];
-    this.script = undefined;
-    this.frontAst = undefined;
-    this.backAst = undefined;
-    this.traits = undefined;
-    this.genotypes = [];
-  }
-}
-
 function createSeniApp() {
   const canvasElement = document.getElementById('render-canvas');
   const seniApp = {
@@ -816,8 +794,18 @@ function createSeniApp() {
     mutationRate: 0.1,
     // an immutable var containing the base env for all evaluations
     env: undefined,
+
     // information about the current piece being created/rendered
-    piece: new Piece(),
+    piecePhenotypes: [],
+    // selectedGenotypes is required to remember the previous selection
+    // in case of a shuffle
+    pieceSelectedGenotypes: [],
+    pieceScript: undefined,
+    pieceFrontAst: undefined,
+    pieceBackAst: undefined,
+    pieceTraits: undefined,
+    pieceGenotypes: [],
+
     // for browser history modification
     lastState: undefined
   };
