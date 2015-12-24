@@ -82,6 +82,38 @@ function getScriptFromEditor(seniApp) {
   seniApp.piece.script = seniApp.editor.getValue();
 }
 
+function ensureMode(seniApp, mode) {
+  if (seniApp.currentMode === mode) {
+    return;
+  }
+  seniApp.currentMode = mode;
+  // todo: historyAdd(seniApp) ????
+  updateUI(seniApp);
+}
+
+// function that takes a read-only seniApp and updates the UI
+//
+function updateUI(seniApp) {
+  showCurrentMode(seniApp);
+
+  switch (seniApp.currentMode) {
+  case SeniMode.gallery :
+    hideTopNavBar(seniApp);
+    break;
+  case SeniMode.edit :
+    showTopNavBar(seniApp);
+    showScriptInEditor(seniApp);
+    timedRenderScript(seniApp, 'renderScript');
+    break;
+  case SeniMode.evolve :
+    showTopNavBar(seniApp);
+    getScriptFromEditor(seniApp);
+    // if it's a change of mode into the SeniMode.evolve
+    setupEvolveUI(seniApp);
+    // else if there's been a change in selection ???
+    break;
+  }
+}
 
 // search the children of seniApp.navbar for elements with class 'klass'
 // then add 'addClass' to them
@@ -206,8 +238,8 @@ function showEditFromEvolve(seniApp, element) {
     const script = Runtime.unparse(frontAst, genotype);
 
     seniApp.piece.script = script;
-    switchMode(seniApp, SeniMode.edit);
-    showScriptInEditor(seniApp);
+
+    ensureMode(seniApp, SeniMode.edit);
   }
 }
 
@@ -299,7 +331,6 @@ function genotypesFromSelectedPhenotypes(seniApp) {
 }
 
 function onNextGen(seniApp) {
-
   // get the selected genotypes for the next generation
   const piece = seniApp.piece;
 
@@ -401,36 +432,6 @@ function showCurrentMode(seniApp) {
   }
 }
 
-function switchMode(seniApp, newMode) {
-
-  if (seniApp.currentMode === newMode) {
-    return;
-  }
-
-  //const oldMode = seniApp.currentMode;
-  seniApp.currentMode = newMode;
-
-  showCurrentMode(seniApp);
-
-  switch (seniApp.currentMode) {
-  case SeniMode.gallery :
-    hideTopNavBar(seniApp);
-    historyAdd(seniApp);
-    break;
-  case SeniMode.edit :
-    showTopNavBar(seniApp);
-    timedRenderScript(seniApp, 'renderScript');
-    historyAdd(seniApp);
-    break;
-  case SeniMode.evolve :
-    showTopNavBar(seniApp);
-    getScriptFromEditor(seniApp);
-    setupEvolveUI(seniApp);
-    historyAdd(seniApp);
-    break;
-  }
-}
-
 /* eslint-disable no-unused-vars */
 function showScriptInEditor(seniApp) {
   const editor = seniApp.editor;
@@ -463,8 +464,7 @@ function showEditFromGallery(seniApp, element) {
       // todo: construct a new piece object
       seniApp.piece.script = data;
 
-      switchMode(seniApp, SeniMode.edit);
-      showScriptInEditor(seniApp);
+      ensureMode(seniApp, SeniMode.edit);
     });
   }
 }
@@ -556,17 +556,17 @@ function setupUI(seniApp) {
   seniApp.editor = codeMirror.fromTextArea(textArea, config);
 
   const galleryModeHandler = event => {
-    switchMode(seniApp, SeniMode.gallery);
+    ensureMode(seniApp, SeniMode.gallery);
     event.preventDefault();
   };
 
   const evolveModeHandler = event => {
-    switchMode(seniApp, SeniMode.evolve);
+    ensureMode(seniApp, SeniMode.evolve);
     event.preventDefault();
   };
 
   const editModeHandler = event => {
-    switchMode(seniApp, SeniMode.edit);
+    ensureMode(seniApp, SeniMode.edit);
     event.preventDefault();
   };
 
@@ -591,8 +591,7 @@ function setupUI(seniApp) {
 
   addClickEvent('action-add', () => {
     seniApp.piece.script = '';
-    switchMode(seniApp, SeniMode.edit);
-    showScriptInEditor(seniApp);
+    ensureMode(seniApp, SeniMode.edit);
   });
 
   addClickEvent('gallery-list', event => {
