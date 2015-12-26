@@ -335,7 +335,6 @@ function createInitialGenotypePopulation(app, populationSize) {
     } else {
       genotype = Genetic.createGenotypeFromTraits(pieceTraits, i + random);
     }
-    // todo: is this the right way of updating pieceGenotypes
     pieceGenotypes.push(genotype);
   }
 
@@ -539,7 +538,6 @@ function showEditFromGallery(appAtom, element) {
     get(url).catch(() => {
       console.error(`cannot connect to ${url}`);
     }).then(data => {
-      // todo: construct a new piece object
       let sa = appAtom.app;
       sa = sa.set('pieceScript', data);
       appAtom.app = sa;
