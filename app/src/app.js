@@ -823,18 +823,7 @@ function getGallery() {
 
 function historyUpdateAppState(app, state) {
   // restore the app's current state from state
-  // todo: use merge once we have Immutable structures throughout app
-  // app = appAtom.app.merge(state);
-
-  const pieceGenotypes = state.pieceGenotypes.map(g => new Immutable.List(g));
-  const pieceSelectedGenotypes =
-          state.pieceSelectedGenotypes.map(g => new Immutable.List(g));
-
-  app = app.set('currentMode', state.currentMode)
-    .set('pieceSelectedGenotypes', new Immutable.List(pieceSelectedGenotypes))
-    .set('pieceScript', state.pieceScript)
-    .set('pieceGenotypes', new Immutable.List(pieceGenotypes));
-
+  app = app.merge(state);
   updateUI(app);
   return app;
 }
@@ -844,27 +833,12 @@ function historyBuildState(app) {
   // can't store the entire app since it contains DOM elements and there
   // is a 640k size limit on the serialized data structures.
   //
-
-  // convert the pieceGenotypes array of Immutable Lists into JS arrays
-  const pieceGenotypes = app.get('pieceGenotypes');
-  const pieceGenotypesJS = [];
-  pieceGenotypes.forEach(g => {
-    pieceGenotypesJS.push(g.toJS());
-  });
-  // const pieceGenotypesJS = pieceGenotypes.map(g => g.toJS());
-
-  const selectedGenotypes = app.get('pieceSelectedGenotypes');
-  const selectedGenotypesJS = [];
-  selectedGenotypes.forEach(g => {
-    selectedGenotypesJS.push(g.toJS());
-  });
-
   const state = {
     stateCounter: jjj,
     currentMode: app.get('currentMode'),
-    pieceSelectedGenotypes: selectedGenotypesJS,
+    pieceSelectedGenotypes: app.get('pieceSelectedGenotypes').toJS(),
     pieceScript: app.get('pieceScript'),
-    pieceGenotypes: pieceGenotypesJS
+    pieceGenotypes: app.get('pieceGenotypes').toJS()
   };
 
   const uri = `#${seniModeAsString(app.get('currentMode'))}-${jjj}`;
