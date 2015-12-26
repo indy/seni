@@ -505,7 +505,7 @@ function showCurrentMode(app) {
   const containers = app.get('containers');
   const currentMode = app.get('currentMode');
   for (let i = 0; i < SeniMode.numSeniModes; i++) {
-    containers[i].className = i === currentMode ? '' : 'hidden';
+    containers.get(i).className = i === currentMode ? '' : 'hidden';
   }
 }
 
@@ -594,11 +594,13 @@ function setupUI(appAtom) {
   let sa = appAtom.app;
   const d = document;
 
-  sa = sa.set('navbar', document.getElementById('seni-navbar'));
-  sa = sa.set('renderImage', document.getElementById('render-img'));
-  sa = sa.set('containers', [document.getElementById('gallery-container'),
+  sa = sa
+    .set('navbar', document.getElementById('seni-navbar'))
+    .set('renderImage', document.getElementById('render-img'))
+    .set('containers',
+         new Immutable.List([document.getElementById('gallery-container'),
                              document.getElementById('edit-container'),
-                             document.getElementById('evolve-container')]);
+                             document.getElementById('evolve-container')]));
 
   // hide the navbar links because we start off in gallery mode
   addNavbarClass(sa, 'to-gallery', 'hidden');
