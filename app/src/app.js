@@ -272,10 +272,12 @@ function toggleSelection(app, element) {
     const cardImage = e.getElementsByClassName('card-image')[0];
     cardImage.classList.toggle('selected');
 
-    const piecePhenotypes = app.get('piecePhenotypes');
-    const c = piecePhenotypes[index];
-    c.selected = !c.selected;
+    const path = ['piecePhenotypes', index, 'selected'];
+    const selected = app.getIn(path);
+    app = app.setIn(path, !selected);
   }
+
+  return app;
 }
 
 function renderPhenotypes(app) {
@@ -286,11 +288,11 @@ function renderPhenotypes(app) {
     // population or the user has switched to edit mode
     const piecePhenotypes = app.get('piecePhenotypes');
     const pieceGenotypes = app.get('pieceGenotypes');
-    if (i < piecePhenotypes.length &&
+    if (i < piecePhenotypes.size &&
         app.get('currentMode') === SeniMode.evolve) {
 
       const genotype = pieceGenotypes[i];
-      const imageElement = piecePhenotypes[i].imageElement;
+      const imageElement = piecePhenotypes.getIn([i, 'imageElement']);
 /*
       if (i === 0) {
         // isg debug code
@@ -315,7 +317,7 @@ function showPlaceholderImages(app) {
   const populationSize = app.get('populationSize');
   const piecePhenotypes = app.get('piecePhenotypes');
   for (let i = 0; i < populationSize; i++) {
-    const imageElement = piecePhenotypes[i].imageElement;
+    const imageElement = piecePhenotypes.getIn([i, 'imageElement']);
     imageElement.src = placeholder;
   }
 }
@@ -371,12 +373,12 @@ function genotypesFromSelectedPhenotypes(app) {
   const populationSize = app.get('populationSize');
   const piecePhenotypes = app.get('piecePhenotypes');
   for (let i = 0; i < populationSize; i++) {
-    if (piecePhenotypes[i].selected === true) {
-      const element = piecePhenotypes[i].phenotypeElement;
+    if (piecePhenotypes.getIn([i, 'selected']) === true) {
+      const element = piecePhenotypes.getIn([i, 'phenotypeElement']);
       const cardImage = element.getElementsByClassName('card-image')[0];
       cardImage.classList.remove('selected');
     }
-    piecePhenotypes[i].selected = false;
+    app = app.setIn(['piecePhenotypes', i, 'selected'], false);
   }
 
   return app;
@@ -391,7 +393,7 @@ function onNextGen(app) {
   const pieceGenotypes = app.get('pieceGenotypes');
 
   for (let i = 0; i < populationSize; i++) {
-    if (piecePhenotypes[i].selected === true) {
+    if (piecePhenotypes.getIn([i, 'selected']) === true) {
       pieceSelectedGenotypes.push(pieceGenotypes[i]);
     }
   }
@@ -437,10 +439,11 @@ function setupEvolveUI(appAtom) {
   let app = appAtom.app;
 
   const allImagesLoadedSince = function(timeStamp) {
+    const app = appAtom.app;
     const populationSize = app.get('populationSize');
     const piecePhenotypes = app.get('piecePhenotypes');
     for (let i = 0; i < populationSize; i++) {
-      if (piecePhenotypes[i].imageLoadTimeStamp < timeStamp) {
+      if (piecePhenotypes.getIn([i, 'imageLoadTimeStamp']) < timeStamp) {
         return false;
       }
     }
@@ -697,7 +700,7 @@ function setupUI(appAtom) {
     } else if (target.classList.contains('edit')) {
       appAtom = showEditFromEvolve(appAtom, target);
     } else {
-      toggleSelection(app, target);
+      appAtom.app = toggleSelection(app, target);
     }
     event.preventDefault();
   });
@@ -726,18 +729,17 @@ function setupUI(appAtom) {
 
   // invoked on every load event for an img tag
   const imageLoadHandler = event => {
-    const sac = appAtom;
-    const app = sac.app;
+    const app = appAtom.app;
     const imageId = event.target.getAttribute('data-id');
-    const piecePhenotypes = app.get('piecePhenotypes');
-    piecePhenotypes[imageId].imageLoadTimeStamp = event.timeStamp;
+    appAtom.app = app.setIn(['piecePhenotypes', imageId, 'imageLoadTimeStamp'],
+                            event.timeStamp);
   };
 
   const gallery = document.getElementById('phenotype-gallery');
   gallery.innerHTML = '';
 
   let phenotypeElement, imageElement;
-  sa = sa.set('piecePhenotypes', []);
+  // sa = sa.set('piecePhenotypes', []);
 
   const row = document.createElement('div');
   row.className = 'row';
@@ -754,15 +756,15 @@ function setupUI(appAtom) {
 
     row.appendChild(phenotypeElement);
 
-    piecePhenotypes.push({
+    piecePhenotypes.push(new Immutable.Map({
       phenotypeElement,
       imageElement,
       selected: false,
       imageLoadTimeStamp: 0
-    });
+    }));
   }
 
-  sa = sa.set('piecePhenotypes', piecePhenotypes);
+  sa = sa.set('piecePhenotypes', new Immutable.List(piecePhenotypes));
 
   window.addEventListener('popstate', event => {
     // console.log('popstate called', event);
