@@ -85,30 +85,30 @@ function getScriptFromEditor(seniApp) {
   return seniApp.set('pieceScript', editor.getValue());
 }
 
-function ensureMode(seniAppContainer, mode) {
-  let seniApp = seniAppContainer.seniApp;
+function ensureMode(appAtom, mode) {
+  let seniApp = appAtom.seniApp;
   if (seniApp.get('currentMode') === mode) {
-    return seniAppContainer;
+    return appAtom;
   }
 
   seniApp = seniApp.set('currentMode', mode);
   historyAdd(seniApp);
 
   // todo: ideally this shouldn't change seniApp
-  seniAppContainer.seniApp = seniApp;
+  appAtom.seniApp = seniApp;
 
   if (mode === SeniMode.evolve) {
     showCurrentMode(seniApp);
     showTopNavBar(seniApp);
-    seniAppContainer.seniApp = getScriptFromEditor(seniApp);
+    appAtom.seniApp = getScriptFromEditor(seniApp);
     // if it's a change of mode into the SeniMode.evolve
-    seniAppContainer = setupEvolveUI(seniAppContainer);
+    appAtom = setupEvolveUI(appAtom);
     // else if there's been a change in selection ???
   } else {
-    updateUI(seniAppContainer.seniApp);
+    updateUI(appAtom.seniApp);
   }
 
-  return seniAppContainer;
+  return appAtom;
 }
 
 // function that takes a read-only seniApp and updates the UI
@@ -249,9 +249,9 @@ function renderHighRes(seniApp, element) {
   }
 }
 
-function showEditFromEvolve(seniAppContainer, element) {
+function showEditFromEvolve(appAtom, element) {
 
-  const seniApp = seniAppContainer.seniApp;
+  const seniApp = appAtom.seniApp;
   /* eslint-disable no-unused-vars */
   const [index, _] = getPhenoIdFromDom(element);
   /* eslint-enable no-unused-vars */
@@ -263,12 +263,12 @@ function showEditFromEvolve(seniAppContainer, element) {
 
     const script = Runtime.unparse(frontAst, genotype);
 
-    seniAppContainer.seniApp = seniApp.set('pieceScript', script);
+    appAtom.seniApp = seniApp.set('pieceScript', script);
 
-    seniAppContainer = ensureMode(seniAppContainer, SeniMode.edit);
+    appAtom = ensureMode(appAtom, SeniMode.edit);
   }
 
-  return seniAppContainer;
+  return appAtom;
 }
 
 function toggleSelection(seniApp, element) {
@@ -364,8 +364,8 @@ function genotypesFromSelectedPhenotypes(seniApp) {
       seniApp.get('populationSize'),
       seniApp.get('mutationRate'),
       seniApp.get('pieceTraits')));
-    console.log('genotypesFromSelectedPhenotypes: pieceGenotypes set to',
-                seniApp.get('pieceGenotypes'));
+    // console.log('genotypesFromSelectedPhenotypes: pieceGenotypes set to',
+    // seniApp.get('pieceGenotypes'));
   }
   historyAdd(seniApp);
 
@@ -437,9 +437,9 @@ function createPhenotypeElement(id, placeholderImage) {
   return container;
 }
 
-function setupEvolveUI(seniAppContainer) {
+function setupEvolveUI(appAtom) {
 
-  let seniApp = seniAppContainer.seniApp;
+  let seniApp = appAtom.seniApp;
 
   const allImagesLoadedSince = function(timeStamp) {
     const populationSize = seniApp.get('populationSize');
@@ -483,16 +483,16 @@ function setupEvolveUI(seniAppContainer) {
       // render the phenotypes
       renderPhenotypes(seniApp);
 
-      // the reason for passing seniAppContainer into setupEvolveUI is so
+      // the reason for passing appAtom into setupEvolveUI is so
       // that it references the correct seniApp after the conditions in this
       // timeout have been met
-      seniAppContainer.seniApp = seniApp;
+      appAtom.seniApp = seniApp;
 
     } else {
       setTimeout(go, 20);
     }
   });
-  return seniAppContainer;
+  return appAtom;
 }
 
 function hideTopNavBar(seniApp) {
@@ -523,7 +523,7 @@ function showScriptInEditor(seniApp) {
   editor.refresh();
 }
 
-function showEditFromGallery(seniAppContainer, element) {
+function showEditFromGallery(appAtom, element) {
 
   const getGalleryItemIdFromDom = function(e) {
     while (e) {
@@ -546,10 +546,10 @@ function showEditFromGallery(seniAppContainer, element) {
       console.error(`cannot connect to ${url}`);
     }).then(data => {
       // todo: construct a new piece object
-      let sa = seniAppContainer.seniApp;
+      let sa = appAtom.seniApp;
       sa = sa.set('pieceScript', data);
-      seniAppContainer.seniApp = sa;
-      seniAppContainer = ensureMode(seniAppContainer, SeniMode.edit);
+      appAtom.seniApp = sa;
+      appAtom = ensureMode(appAtom, SeniMode.edit);
     });
   }
 }
@@ -566,8 +566,8 @@ function resizeContainers() {
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
-function polluteGlobalDocument(seniAppContainer) {
-  const seniApp = seniAppContainer.seniApp;
+function polluteGlobalDocument(appAtom) {
+  const seniApp = appAtom.seniApp;
 
   document.seni = {};
   document.seni.title = Trivia.getTitle;
@@ -598,8 +598,8 @@ function polluteGlobalDocument(seniAppContainer) {
   document.seni.seniApp = seniApp;
 }
 
-function setupUI(seniAppContainer) {
-  let sa = seniAppContainer.seniApp;
+function setupUI(appAtom) {
+  let sa = appAtom.seniApp;
   const d = document;
 
   sa = sa.set('navbar', document.getElementById('seni-navbar'));
@@ -625,13 +625,13 @@ function setupUI(seniAppContainer) {
   const config = CodeMirrorConfig.defaultConfig;
   config.extraKeys = {
     'Ctrl-E': () => {
-      seniAppContainer.seniApp = getScriptFromEditor(seniAppContainer.seniApp);
-      timedRenderScript(seniAppContainer.seniApp, 'renderScript');
+      appAtom.seniApp = getScriptFromEditor(appAtom.seniApp);
+      timedRenderScript(appAtom.seniApp, 'renderScript');
       return false;
     },
     'Ctrl-D': () => false,
     'Ctrl-I': () => {
-      const editor = seniAppContainer.seniApp.get('editor');
+      const editor = appAtom.seniApp.get('editor');
       const numLines = editor.doc.size;
       blockIndent(editor, 0, numLines);
       console.log('indenting', numLines, 'lines');
@@ -643,17 +643,17 @@ function setupUI(seniAppContainer) {
   sa = sa.set('editor', codeMirror.fromTextArea(textArea, config));
 
   const galleryModeHandler = event => {
-    seniAppContainer = ensureMode(seniAppContainer, SeniMode.gallery);
+    appAtom = ensureMode(appAtom, SeniMode.gallery);
     event.preventDefault();
   };
 
   const evolveModeHandler = event => {
-    seniAppContainer = ensureMode(seniAppContainer, SeniMode.evolve);
+    appAtom = ensureMode(appAtom, SeniMode.evolve);
     event.preventDefault();
   };
 
   const editModeHandler = event => {
-    seniAppContainer = ensureMode(seniAppContainer, SeniMode.edit);
+    appAtom = ensureMode(appAtom, SeniMode.edit);
     event.preventDefault();
   };
 
@@ -667,41 +667,41 @@ function setupUI(seniAppContainer) {
   addClickEventForClass('to-gallery', galleryModeHandler);
 
   addClickEvent('shuffle-icon', event => {
-    const seniApp = seniAppContainer.seniApp;
-    seniAppContainer.seniApp = genotypesFromSelectedPhenotypes(seniApp);
+    const seniApp = appAtom.seniApp;
+    appAtom.seniApp = genotypesFromSelectedPhenotypes(seniApp);
     event.preventDefault();
   });
 
   addClickEvent('action-eval', () => {
-    let seniApp = seniAppContainer.seniApp;
+    let seniApp = appAtom.seniApp;
     const editor = seniApp.get('editor');
     seniApp = seniApp.set('pieceScript', editor.getValue());
     timedRenderScript(seniApp, 'renderScript');
-    seniAppContainer.seniApp = seniApp;
+    appAtom.seniApp = seniApp;
   });
 
   addClickEvent('action-add', () => {
-    const seniApp = seniAppContainer.seniApp;
-    seniAppContainer.seniApp = seniApp.set('pieceScript', '');
-    seniAppContainer = ensureMode(seniAppContainer, SeniMode.edit);
+    const seniApp = appAtom.seniApp;
+    appAtom.seniApp = seniApp.set('pieceScript', '');
+    appAtom = ensureMode(appAtom, SeniMode.edit);
   });
 
   addClickEvent('gallery-list', event => {
     const target = event.target;
     if (target.classList.contains('show-edit')) {
-      showEditFromGallery(seniAppContainer, target);
+      showEditFromGallery(appAtom, target);
     }
     event.preventDefault();
   });
 
   addClickEvent('phenotype-gallery', event => {
-    const seniApp = seniAppContainer.seniApp;
+    const seniApp = appAtom.seniApp;
 
     const target = event.target;
     if (target.classList.contains('render')) {
       renderHighRes(seniApp, target);
     } else if (target.classList.contains('edit')) {
-      seniAppContainer = showEditFromEvolve(seniAppContainer, target);
+      appAtom = showEditFromEvolve(appAtom, target);
     } else {
       toggleSelection(seniApp, target);
     }
@@ -709,7 +709,7 @@ function setupUI(seniAppContainer) {
   });
 
   addClickEvent('action-next-gen', () => {
-    seniAppContainer.seniApp = onNextGen(seniAppContainer.seniApp);
+    appAtom.seniApp = onNextGen(appAtom.seniApp);
   });
 
   addClickEvent('high-res-close', event => {
@@ -722,17 +722,17 @@ function setupUI(seniAppContainer) {
   // Ctrl-D renders the next generation
   const dKey = 68;
   document.addEventListener('keydown', event => {
-    const seniApp = seniAppContainer.seniApp;
+    const seniApp = appAtom.seniApp;
     if (event.ctrlKey && event.keyCode === dKey &&
         seniApp.get('currentMode') === SeniMode.evolve) {
       event.preventDefault();
-      seniAppContainer.seniApp = onNextGen(seniApp);
+      appAtom.seniApp = onNextGen(seniApp);
     }
   }, false);
 
   // invoked on every load event for an img tag
   const imageLoadHandler = event => {
-    const sac = seniAppContainer;
+    const sac = appAtom;
     const seniApp = sac.seniApp;
     const imageId = event.target.getAttribute('data-id');
     const piecePhenotypes = seniApp.get('piecePhenotypes');
@@ -771,18 +771,18 @@ function setupUI(seniAppContainer) {
   sa = sa.set('piecePhenotypes', piecePhenotypes);
 
   window.addEventListener('popstate', event => {
-    console.log('popstate called', event);
+    // console.log('popstate called', event);
 
-    const seniApp = seniAppContainer.seniApp;
-    seniAppContainer.seniApp = historyUpdateAppState(seniApp, event.state);
+    const seniApp = appAtom.seniApp;
+    appAtom.seniApp = historyUpdateAppState(seniApp, event.state);
 
     //const href = document.location.href.split('/');
     //console.log(href);
   });
 
-  seniAppContainer.seniApp = sa;
+  appAtom.seniApp = sa;
 
-  return seniAppContainer;
+  return appAtom;
 }
 
 function getGallery() {
@@ -849,7 +849,7 @@ function historyUpdateAppState(seniApp, state) {
 */
   // restore the app's current state from state
   // todo: use merge once we have Immutable structures throughout seniApp
-  // seniApp = seniAppContainer.seniApp.merge(state);
+  // seniApp = appAtom.seniApp.merge(state);
 
   const pieceGenotypes = state.pieceGenotypes.map(g => new Immutable.List(g));
   const pieceSelectedGenotypes =
@@ -968,10 +968,10 @@ const SeniWebApplication = {
   mainFn() {
     resizeContainers();
 
-    let seniAppContainer = createSeniApp();
+    let appAtom = createSeniApp();
 
-    polluteGlobalDocument(seniAppContainer);
-    seniAppContainer = setupUI(seniAppContainer);
+    polluteGlobalDocument(appAtom);
+    appAtom = setupUI(appAtom);
     getGallery();
   }
 };
