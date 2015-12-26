@@ -350,7 +350,7 @@ function genotypesFromSelectedPhenotypes(app) {
 
   const pieceSelectedGenotypes = app.get('pieceSelectedGenotypes');
 
-  if (pieceSelectedGenotypes.length === 0) {
+  if (pieceSelectedGenotypes.size === 0) {
     // if this is the first generation and nothing has been selected
     // just randomize all of the phenotypes
     app = createInitialGenotypePopulation(app, app.populationSize);
@@ -360,7 +360,7 @@ function genotypesFromSelectedPhenotypes(app) {
       app.get('populationSize'),
       app.get('mutationRate'),
       app.get('pieceTraits'));
-    app = app.set('pieceGenotypes', new Immutable.List(pieceGenotypes));
+    app = app.set('pieceGenotypes', pieceGenotypes);
   }
   historyAdd(app);
 
@@ -386,19 +386,20 @@ function onNextGen(app) {
   // get the selected genotypes for the next generation
 
   const populationSize = app.get('populationSize');
-  const pieceSelectedGenotypes = [];
+  let pieceSelectedGenotypes = new Immutable.List();
   const piecePhenotypes = app.get('piecePhenotypes');
   const pieceGenotypes = app.get('pieceGenotypes');
 
   for (let i = 0; i < populationSize; i++) {
     if (piecePhenotypes.getIn([i, 'selected']) === true) {
-      pieceSelectedGenotypes.push(pieceGenotypes.get(i));
+      pieceSelectedGenotypes =
+        pieceSelectedGenotypes.push(pieceGenotypes.get(i));
     }
   }
 
   app = app.set('pieceSelectedGenotypes', pieceSelectedGenotypes);
 
-  if (pieceSelectedGenotypes.length === 0) {
+  if (pieceSelectedGenotypes.size === 0) {
     // no phenotypes were selected
     return app;
   }
@@ -830,7 +831,7 @@ function historyUpdateAppState(app, state) {
           state.pieceSelectedGenotypes.map(g => new Immutable.List(g));
 
   app = app.set('currentMode', state.currentMode)
-    .set('pieceSelectedGenotypes', pieceSelectedGenotypes)
+    .set('pieceSelectedGenotypes', new Immutable.List(pieceSelectedGenotypes))
     .set('pieceScript', state.pieceScript)
     .set('pieceGenotypes', new Immutable.List(pieceGenotypes));
 
@@ -853,7 +854,10 @@ function historyBuildState(app) {
   // const pieceGenotypesJS = pieceGenotypes.map(g => g.toJS());
 
   const selectedGenotypes = app.get('pieceSelectedGenotypes');
-  const selectedGenotypesJS = selectedGenotypes.map(g => g.toJS());
+  const selectedGenotypesJS = [];
+  selectedGenotypes.forEach(g => {
+    selectedGenotypesJS.push(g.toJS());
+  });
 
   const state = {
     stateCounter: jjj,
@@ -907,7 +911,7 @@ function createSeniApp() {
     piecePhenotypes: [], // stored in an Immutable.List
     // selectedGenotypes is required to remember the previous selection
     // in case of a shuffle
-    //pieceSelectedGenotypes: [],
+    pieceSelectedGenotypes: [],
     pieceScript: undefined,
     pieceFrontAst: undefined,
     pieceBackAst: undefined,
@@ -924,8 +928,7 @@ function createSeniApp() {
 
   app = app
     .set('renderer', renderer)
-    .set('env', bindings)
-    .set('pieceSelectedGenotypes', []);
+    .set('env', bindings);
 
   historyAdd(app);
 

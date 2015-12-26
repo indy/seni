@@ -124,32 +124,27 @@ const Genetic = {
   nextGeneration: (genotypes, populationSize, mutationRate, traits) => {
     // a silly mod method for creating the latest generation
     let i;
-    const newGenotypes = [];
+    let newGenotypes = genotypes;
     const seed = 42;
     const rng = PseudoRandom.buildUnsigned(seed);
     const env = Bind.addBracketBindings(Interpreter.getBasicEnv(), rng);
 
-    // the chosen genotypes survive into the next generation
-    for (i = 0; i < genotypes.length; i++) {
-      newGenotypes[i] = genotypes[i];
-    }
-
-    for (i = genotypes.length; i < populationSize; i++) {
-      const idxA = Number.parseInt(Math.random() * genotypes.length, 10);
-      let idxB = Number.parseInt(Math.random() * genotypes.length, 10);
+    for (i = genotypes.size; i < populationSize; i++) {
+      const idxA = Number.parseInt(Math.random() * genotypes.size, 10);
+      let idxB = Number.parseInt(Math.random() * genotypes.size, 10);
 
       // try not to use the same genotype for both a and b
       const retryCount = 10;
       for (let retry = 0; retry < retryCount; retry++) {
         if (idxB === idxA) {
-          idxB = Number.parseInt(Math.random() * genotypes.length, 10);
+          idxB = Number.parseInt(Math.random() * genotypes.size, 10);
         } else {
           break;
         }
       }
 
-      const genotypeA = genotypes[idxA];
-      const genotypeB = genotypes[idxB];
+      const genotypeA = genotypes.get(idxA);
+      const genotypeB = genotypes.get(idxB);
 
       if (logToConsole) {
         console.log('using genotype indices: ', idxA, idxB);
@@ -158,7 +153,7 @@ const Genetic = {
       const child = randomCrossover(genotypeA, genotypeB,
                                     mutationRate, traits, env);
 
-      newGenotypes.push(child);
+      newGenotypes = newGenotypes.push(child);
     }
     return newGenotypes;
   }
