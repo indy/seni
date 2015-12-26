@@ -86,23 +86,30 @@ function getScriptFromEditor(seniApp) {
 }
 
 function ensureMode(seniAppContainer, mode) {
-  const seniApp = seniAppContainer.seniApp;
+  let seniApp = seniAppContainer.seniApp;
   if (seniApp.get('currentMode') === mode) {
     return seniAppContainer;
   }
 
-  seniAppContainer.seniApp = seniApp.set('currentMode', mode);
-  // todo: historyAdd(seniApp) ????
+  seniApp = seniApp.set('currentMode', mode);
+  historyAdd(seniApp);
+
+  // is this the first generation of the evolve mode
+  const firstGenEvolve = seniApp.get('currentMode') === SeniMode.evolve;
 
   // todo: ideally this shouldn't change seniApp
-  seniAppContainer = updateUI(seniAppContainer);
+  seniAppContainer.seniApp = seniApp;
+  seniAppContainer = updateUI(seniAppContainer, firstGenEvolve);
 
   return seniAppContainer;
 }
 
 // function that takes a read-only seniApp and updates the UI
+// (note: the firstGenEvolve is a temporary hack since the evolve mode requires
+// different actions depending on whether it's the first generation (i.e.
+// invoked by a user) or not (i.e. invoked by the history API))
 //
-function updateUI(seniAppContainer) {
+function updateUI(seniAppContainer, firstGenEvolve) {
   const seniApp = seniAppContainer.seniApp;
   showCurrentMode(seniApp);
 
@@ -117,10 +124,16 @@ function updateUI(seniAppContainer) {
     break;
   case SeniMode.evolve :
     showTopNavBar(seniApp);
-    seniAppContainer.seniApp = getScriptFromEditor(seniApp);
-    // if it's a change of mode into the SeniMode.evolve
-    seniAppContainer = setupEvolveUI(seniAppContainer);
-    // else if there's been a change in selection ???
+
+    if (firstGenEvolve) {
+      seniAppContainer.seniApp = getScriptFromEditor(seniApp);
+      // if it's a change of mode into the SeniMode.evolve
+      seniAppContainer = setupEvolveUI(seniAppContainer);
+      // else if there's been a change in selection ???
+    } else {
+      showPlaceholderImages(seniApp);
+      renderPhenotypes(seniApp);
+    }
     break;
   }
 
@@ -287,7 +300,15 @@ function renderPhenotypes(seniApp) {
 
       const genotype = pieceGenotypes[i];
       const imageElement = piecePhenotypes[i].imageElement;
-
+/*
+      if (i === 0) {
+        // isg debug code
+        console.log('a', seniApp.get('pieceBackAst'));
+        console.log('b', pieceGenotypes);
+        console.log('c', genotype);
+        console.log('d', genotype.first());
+      }
+*/
       renderGenotypeToImage(seniApp,
                             seniApp.get('pieceBackAst'),
                             genotype,
@@ -326,6 +347,8 @@ function createInitialGenotypePopulation(seniApp, populationSize) {
   }
 
   seniApp = seniApp.set('pieceGenotypes', pieceGenotypes);
+  console.log('createInitialGenotypePopulation: pieceGenotypes set to',
+              pieceGenotypes);
   return seniApp;
 }
 
@@ -345,6 +368,8 @@ function genotypesFromSelectedPhenotypes(seniApp) {
       seniApp.get('populationSize'),
       seniApp.get('mutationRate'),
       seniApp.get('pieceTraits')));
+    console.log('genotypesFromSelectedPhenotypes: pieceGenotypes set to',
+                seniApp.get('pieceGenotypes'));
   }
   historyAdd(seniApp);
 
@@ -388,7 +413,7 @@ function onNextGen(seniApp) {
   }
 
   // todo: implement
-  historyAddSelectedGenotypes(seniApp.get('pieceSelectedGenotypes'));
+  // historyAddSelectedGenotypes(seniApp.get('pieceSelectedGenotypes'));
   seniApp = genotypesFromSelectedPhenotypes(seniApp);
 
   return seniApp;
@@ -454,6 +479,9 @@ function setupEvolveUI(seniAppContainer) {
 
       const populationSize = seniApp.get('populationSize');
       seniApp = createInitialGenotypePopulation(seniApp, populationSize);
+
+      // update the last history state
+      historyReplaceState(seniApp);
 
       // render the phenotypes
       renderPhenotypes(seniApp);
@@ -714,8 +742,6 @@ function setupUI(seniAppContainer) {
     piecePhenotypes[imageId].imageLoadTimeStamp = event.timeStamp;
   };
 
-
-
   const gallery = document.getElementById('phenotype-gallery');
   gallery.innerHTML = '';
 
@@ -750,12 +776,10 @@ function setupUI(seniAppContainer) {
   window.addEventListener('popstate', event => {
     console.log('popstate called', event);
 
-    historyUpdateAppState(sa, event.state);
-    //sa.history.back();
-    // todo: UI to current position in history object
+    seniAppContainer = historyUpdateAppState(seniAppContainer, event.state);
 
-    const href = document.location.href.split('/');
-    console.log(href);
+    //const href = document.location.href.split('/');
+    //console.log(href);
   });
 
   seniAppContainer.seniApp = sa;
@@ -806,11 +830,53 @@ function getGallery() {
 
 
 // TODO: make this work, also don't forget that seniApp is being modified
-function historyUpdateAppState(seniApp, state) {
+function historyUpdateAppState(seniAppContainer, state) {
+
+  let seniApp = seniAppContainer.seniApp;
+/*
+  console.log('Before: currentMode', seniApp.get('currentMode'));
+  console.log('Before: pieceSelectedGenotypes',
+              seniApp.get('pieceSelectedGenotypes'));
+//  console.log('Before: pieceScript', seniApp.get('pieceScript'));
+  console.log('Before: pieceGenotypes', seniApp.get('pieceGenotypes'));
+  console.log('---');
+  console.log('---');
+ */
+  /*
+  console.log('restoring: stateCounter', state.stateCounter);
+  console.log('restoring: currentMode', state.currentMode);
+  console.log('restoring: pieceSelectedGenotypes',
+              state.pieceSelectedGenotypes);
+  console.log('restoring: pieceGenotypes', state.pieceGenotypes);
+  console.log('---');
+*/
   // restore the app's current state from state
+  // todo: use merge once we have Immutable structures throughout seniApp
+  // seniApp = seniAppContainer.seniApp.merge(state);
 
-  console.log('history::updateAppState', state);
+  const pieceGenotypes = state.pieceGenotypes.map(g => new Immutable.List(g));
+  const pieceSelectedGenotypes =
+          state.pieceSelectedGenotypes.map(g => new Immutable.List(g));
 
+  seniApp = seniApp.set('currentMode', state.currentMode);
+  seniApp = seniApp.set('pieceSelectedGenotypes', pieceSelectedGenotypes);
+  seniApp = seniApp.set('pieceScript', state.pieceScript);
+  seniApp = seniApp.set('pieceGenotypes', pieceGenotypes);
+
+/*
+  console.log('After: currentMode', seniApp.get('currentMode'));
+  console.log('After: pieceSelectedGenotypes',
+              seniApp.get('pieceSelectedGenotypes'));
+  console.log('After: pieceScript', seniApp.get('pieceScript'));
+  console.log('After: pieceGenotypes', seniApp.get('pieceGenotypes'));
+  console.log('---');
+  console.log('---');
+*/
+  seniAppContainer.seniApp = seniApp;
+  return updateUI(seniAppContainer, false);
+
+
+  /*
   seniApp.currentMode = state.mode;
   showCurrentMode(seniApp);
 
@@ -836,25 +902,62 @@ function historyUpdateAppState(seniApp, state) {
     showPlaceholderImages(seniApp);
     renderPhenotypes(seniApp);
     break;
-  }
+  }*/
+}
 
+let jjj = 1;
+function historyBuildState(seniApp) {
+  // can't store the entire seniApp since it contains DOM elements and there
+  // is a 640k size limit on the serialized data structures.
+  //
+
+  // convert the pieceGenotypes array of Immutable Lists into JS arrays
+  const pieceGenotypes = seniApp.get('pieceGenotypes');
+  const pieceGenotypesJS = pieceGenotypes.map(g => g.toJS());
+
+  const selectedGenotypes = seniApp.get('pieceSelectedGenotypes');
+  const selectedGenotypesJS = selectedGenotypes.map(g => g.toJS());
+
+  const state = {
+    stateCounter: jjj,
+    currentMode: seniApp.get('currentMode'),
+    pieceSelectedGenotypes: selectedGenotypesJS,
+    pieceScript: seniApp.get('pieceScript'),
+    pieceGenotypes: pieceGenotypesJS
+  };
+
+  const uri = `#${seniModeAsString(seniApp.get('currentMode'))}-${jjj}`;
+  jjj += 1;
+  return [state, uri];
 }
 
 function historyAdd(seniApp) {
-
-  const state = {
-    mode: seniApp.currentMode,
-    script: seniApp.pieceScript,
-    genotypes: seniApp.pieceGenotypes
-  };
-
-  seniApp.lastState = state;
-
-  const uri = `#${seniModeAsString(seniApp.currentMode)}`;
+  const [state, uri] = historyBuildState(seniApp);
+/*
+  console.log('historyAdd: stateCounter', state.stateCounter);
+  console.log('historyAdd: currentMode', state.currentMode);
+  console.log('historyAdd: pieceSelectedGenotypes',
+              state.pieceSelectedGenotypes);
+  console.log('historyAdd: pieceGenotypes', state.pieceGenotypes);
+  console.log('---');
+*/
   history.pushState(state, null, uri);
 }
 
-function historyAddSelectedGenotypes(/*selectedGenotypes*/) {
+function historyReplaceState(seniApp) {
+  const [state, uri] = historyBuildState(seniApp);
+/*
+  console.log('historReplace: stateCounter', state.stateCounter);
+  console.log('historReplace: currentMode', state.currentMode);
+  console.log('historReplace: pieceSelectedGenotypes',
+              state.pieceSelectedGenotypes);
+  console.log('historReplace: pieceGenotypes', state.pieceGenotypes);
+  console.log('---');
+*/
+  history.replaceState(state, null, uri);
+}
+
+//function historyAddSelectedGenotypes(/*selectedGenotypes*/) {
 
   // keep a copy of the last state added
   // modify that state here
@@ -865,7 +968,7 @@ function historyAddSelectedGenotypes(/*selectedGenotypes*/) {
   //      return;
   //    }
   //    stateItem.selectedGenotypes = selectedGenotypes;
-}
+//}
 
 /**
  * Creates the immutable SeniApp
@@ -896,12 +999,12 @@ function createSeniApp() {
     piecePhenotypes: [],
     // selectedGenotypes is required to remember the previous selection
     // in case of a shuffle
-    pieceSelectedGenotypes: [],
+    //pieceSelectedGenotypes: [],
     pieceScript: undefined,
     pieceFrontAst: undefined,
     pieceBackAst: undefined,
     pieceTraits: undefined,
-    pieceGenotypes: [],
+    // pieceGenotypes: [],
 
     // for browser history modification
     lastState: undefined
@@ -914,7 +1017,10 @@ function createSeniApp() {
   const bindings = Bind.addBindings(Runtime.createEnv(), renderer);
   seniApp = seniApp.set('env', bindings);
 
-  // historyAdd(seniApp); // todo: re-instate this once immutable is working
+  seniApp = seniApp.set('pieceGenotypes', []);
+  seniApp = seniApp.set('pieceSelectedGenotypes', []);
+
+  historyAdd(seniApp);
 
   return {seniApp};
 }
