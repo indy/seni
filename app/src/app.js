@@ -901,42 +901,13 @@ function historyBuildState(seniApp) {
 
 function historyAdd(seniApp) {
   const [state, uri] = historyBuildState(seniApp);
-/*
-  console.log('historyAdd: stateCounter', state.stateCounter);
-  console.log('historyAdd: currentMode', state.currentMode);
-  console.log('historyAdd: pieceSelectedGenotypes',
-              state.pieceSelectedGenotypes);
-  console.log('historyAdd: pieceGenotypes', state.pieceGenotypes);
-  console.log('---');
-*/
   history.pushState(state, null, uri);
 }
 
 function historyReplaceState(seniApp) {
   const [state, uri] = historyBuildState(seniApp);
-/*
-  console.log('historReplace: stateCounter', state.stateCounter);
-  console.log('historReplace: currentMode', state.currentMode);
-  console.log('historReplace: pieceSelectedGenotypes',
-              state.pieceSelectedGenotypes);
-  console.log('historReplace: pieceGenotypes', state.pieceGenotypes);
-  console.log('---');
-*/
   history.replaceState(state, null, uri);
 }
-
-//function historyAddSelectedGenotypes(/*selectedGenotypes*/) {
-
-  // keep a copy of the last state added
-  // modify that state here
-  // call history.replaceState()
- //    console.log('adding selected genotypes to state index', this.stateIndex);
-  //    const stateItem = this.stateList[this.stateIndex];
-  //    if (stateItem.mode !== SeniMode.evolve) {
-  //      return;
-  //    }
-  //    stateItem.selectedGenotypes = selectedGenotypes;
-//}
 
 /**
  * Creates the immutable SeniApp
