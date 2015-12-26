@@ -82,7 +82,7 @@ function getJSON(url) {
 
 function getScriptFromEditor(app) {
   const editor = app.get('editor');
-  return app.set('pieceScript', editor.getValue());
+  return app.set('script', editor.getValue());
 }
 
 function ensureMode(appAtom, mode) {
@@ -174,7 +174,7 @@ function renderGenotypeToImage(app, ast, genotype, imageElement, w, h) {
 function renderScript(app) {
   const imageElement = app.get('renderImage');
 
-  const script = app.get('pieceScript');
+  const script = app.get('script');
   const frontAst = Runtime.buildFrontAst(script);
   const backAst = Runtime.compileBackAst(frontAst);
   const traits = Genetic.buildTraits(backAst);
@@ -222,12 +222,12 @@ function renderHighRes(app, element) {
   /* eslint-enable no-unused-vars */
 
   if (index !== -1) {
-    const pieceGenotypes = app.get('pieceGenotypes');
-    const genotype = pieceGenotypes.get(index);
+    const genotypes = app.get('genotypes');
+    const genotype = genotypes.get(index);
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('invisible');
-    const pieceScript = app.get('pieceScript');
-    const frontAst = Runtime.buildFrontAst(pieceScript);
+    const script = app.get('script');
+    const frontAst = Runtime.buildFrontAst(script);
     const backAst = Runtime.compileBackAst(frontAst);
 
     const imageElement = document.getElementById('high-res-image');
@@ -252,13 +252,13 @@ function showEditFromEvolve(appAtom, element) {
   /* eslint-enable no-unused-vars */
 
   if (index !== -1) {
-    const pieceGenotypes = app.get('pieceGenotypes');
-    const genotype = pieceGenotypes.get(index);
-    const frontAst = app.get('pieceFrontAst');
+    const genotypes = app.get('genotypes');
+    const genotype = genotypes.get(index);
+    const frontAst = app.get('frontAst');
 
     const script = Runtime.unparse(frontAst, genotype);
 
-    appAtom.app = app.set('pieceScript', script);
+    appAtom.app = app.set('script', script);
 
     appAtom = ensureMode(appAtom, SeniMode.edit);
   }
@@ -272,7 +272,7 @@ function toggleSelection(app, element) {
     const cardImage = e.getElementsByClassName('card-image')[0];
     cardImage.classList.toggle('selected');
 
-    const path = ['piecePhenotypes', index, 'selected'];
+    const path = ['phenotypes', index, 'selected'];
     const selected = app.getIn(path);
     app = app.setIn(path, !selected);
   }
@@ -286,24 +286,24 @@ function renderPhenotypes(app) {
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to edit mode
-    const piecePhenotypes = app.get('piecePhenotypes');
-    const pieceGenotypes = app.get('pieceGenotypes');
-    if (i < piecePhenotypes.size &&
+    const phenotypes = app.get('phenotypes');
+    const genotypes = app.get('genotypes');
+    if (i < phenotypes.size &&
         app.get('currentMode') === SeniMode.evolve) {
 
-      const genotype = pieceGenotypes.get(i);
-      const imageElement = piecePhenotypes.getIn([i, 'imageElement']);
+      const genotype = genotypes.get(i);
+      const imageElement = phenotypes.getIn([i, 'imageElement']);
 /*
       if (i === 0) {
         // isg debug code
-        console.log('a', app.get('pieceBackAst'));
-        console.log('b', pieceGenotypes);
+        console.log('a', app.get('backAst'));
+        console.log('b', genotypes);
         console.log('c', genotype);
         console.log('d', genotype.first());
       }
 */
       renderGenotypeToImage(app,
-                            app.get('pieceBackAst'),
+                            app.get('backAst'),
                             genotype,
                             imageElement);
       i++;
@@ -315,9 +315,9 @@ function renderPhenotypes(app) {
 function showPlaceholderImages(app) {
   const placeholder = app.get('placeholder');
   const populationSize = app.get('populationSize');
-  const piecePhenotypes = app.get('piecePhenotypes');
+  const phenotypes = app.get('phenotypes');
   for (let i = 0; i < populationSize; i++) {
-    const imageElement = piecePhenotypes.getIn([i, 'imageElement']);
+    const imageElement = phenotypes.getIn([i, 'imageElement']);
     imageElement.src = placeholder;
   }
 }
@@ -326,19 +326,19 @@ function createInitialGenotypePopulation(app, populationSize) {
   // add genotypes to the containers
   let genotype;
   const random = (new Date()).toGMTString();
-  const pieceTraits = app.get('pieceTraits');
-  const pieceGenotypes = [];
+  const traits = app.get('traits');
+  const genotypes = [];
 
   for (let i = 0; i < populationSize; i++) {
     if (i === 0) {
-      genotype = Genetic.createGenotypeFromInitialValues(pieceTraits);
+      genotype = Genetic.createGenotypeFromInitialValues(traits);
     } else {
-      genotype = Genetic.createGenotypeFromTraits(pieceTraits, i + random);
+      genotype = Genetic.createGenotypeFromTraits(traits, i + random);
     }
-    pieceGenotypes.push(genotype);
+    genotypes.push(genotype);
   }
 
-  app = app.set('pieceGenotypes', new Immutable.List(pieceGenotypes));
+  app = app.set('genotypes', new Immutable.List(genotypes));
 
   return app;
 }
@@ -347,19 +347,27 @@ function genotypesFromSelectedPhenotypes(app) {
 
   showPlaceholderImages(app);
 
-  const pieceSelectedGenotypes = app.get('pieceSelectedGenotypes');
+  const selectedIndices = app.get('selectedIndices');
 
-  if (pieceSelectedGenotypes.size === 0) {
+  if (selectedIndices.size === 0) {
     // if this is the first generation and nothing has been selected
     // just randomize all of the phenotypes
     app = createInitialGenotypePopulation(app, app.populationSize);
   } else {
-    const pieceGenotypes = Genetic.nextGeneration(
-      app.get('pieceSelectedGenotypes'),
+
+    const psg = app.get('selectedIndices');
+    const pg = app.get('genotypes');
+    let selectedGenotypes = new Immutable.List();
+    for (let i = 0; i < psg.size; i++) {
+      selectedGenotypes = selectedGenotypes.push(pg.get(psg.get(i)));
+    }
+
+    const genotypes = Genetic.nextGeneration(
+      selectedGenotypes,
       app.get('populationSize'),
       app.get('mutationRate'),
-      app.get('pieceTraits'));
-    app = app.set('pieceGenotypes', pieceGenotypes);
+      app.get('traits'));
+    app = app.set('genotypes', genotypes);
   }
   historyAdd(app);
 
@@ -368,14 +376,14 @@ function genotypesFromSelectedPhenotypes(app) {
 
   // clean up the dom and clear the selected state
   const populationSize = app.get('populationSize');
-  const piecePhenotypes = app.get('piecePhenotypes');
+  const phenotypes = app.get('phenotypes');
   for (let i = 0; i < populationSize; i++) {
-    if (piecePhenotypes.getIn([i, 'selected']) === true) {
-      const element = piecePhenotypes.getIn([i, 'phenotypeElement']);
+    if (phenotypes.getIn([i, 'selected']) === true) {
+      const element = phenotypes.getIn([i, 'phenotypeElement']);
       const cardImage = element.getElementsByClassName('card-image')[0];
       cardImage.classList.remove('selected');
     }
-    app = app.setIn(['piecePhenotypes', i, 'selected'], false);
+    app = app.setIn(['phenotypes', i, 'selected'], false);
   }
 
   return app;
@@ -385,20 +393,18 @@ function onNextGen(app) {
   // get the selected genotypes for the next generation
 
   const populationSize = app.get('populationSize');
-  let pieceSelectedGenotypes = new Immutable.List();
-  const piecePhenotypes = app.get('piecePhenotypes');
-  const pieceGenotypes = app.get('pieceGenotypes');
+  let selectedIndices = new Immutable.List();
+  const phenotypes = app.get('phenotypes');
 
   for (let i = 0; i < populationSize; i++) {
-    if (piecePhenotypes.getIn([i, 'selected']) === true) {
-      pieceSelectedGenotypes =
-        pieceSelectedGenotypes.push(pieceGenotypes.get(i));
+    if (phenotypes.getIn([i, 'selected']) === true) {
+      selectedIndices = selectedIndices.push(i);
     }
   }
 
-  app = app.set('pieceSelectedGenotypes', pieceSelectedGenotypes);
+  app = app.set('selectedIndices', selectedIndices);
 
-  if (pieceSelectedGenotypes.size === 0) {
+  if (selectedIndices.size === 0) {
     // no phenotypes were selected
     return app;
   }
@@ -439,9 +445,9 @@ function setupEvolveUI(appAtom) {
   const allImagesLoadedSince = function(timeStamp) {
     const app = appAtom.app;
     const populationSize = app.get('populationSize');
-    const piecePhenotypes = app.get('piecePhenotypes');
+    const phenotypes = app.get('phenotypes');
     for (let i = 0; i < populationSize; i++) {
-      if (piecePhenotypes.getIn([i, 'imageLoadTimeStamp']) < timeStamp) {
+      if (phenotypes.getIn([i, 'imageLoadTimeStamp']) < timeStamp) {
         return false;
       }
     }
@@ -458,14 +464,14 @@ function setupEvolveUI(appAtom) {
     // first img element
     if (allImagesLoadedSince(initialTimeStamp)) {
 
-      const pieceScript = app.get('pieceScript');
-      app = app.set('pieceFrontAst', Runtime.buildFrontAst(pieceScript));
+      const script = app.get('script');
+      app = app.set('frontAst', Runtime.buildFrontAst(script));
 
-      const pieceFrontAst = app.get('pieceFrontAst');
-      app = app.set('pieceBackAst', Runtime.compileBackAst(pieceFrontAst));
+      const frontAst = app.get('frontAst');
+      app = app.set('backAst', Runtime.compileBackAst(frontAst));
 
-      const pieceBackAst = app.get('pieceBackAst');
-      app = app.set('pieceTraits', Genetic.buildTraits(pieceBackAst));
+      const backAst = app.get('backAst');
+      app = app.set('traits', Genetic.buildTraits(backAst));
 
       const populationSize = app.get('populationSize');
       app = createInitialGenotypePopulation(app, populationSize);
@@ -512,7 +518,7 @@ function showCurrentMode(app) {
 
 function showScriptInEditor(app) {
   const editor = app.get('editor');
-  editor.getDoc().setValue(app.get('pieceScript'));
+  editor.getDoc().setValue(app.get('script'));
   editor.refresh();
 }
 
@@ -539,7 +545,7 @@ function showEditFromGallery(appAtom, element) {
       console.error(`cannot connect to ${url}`);
     }).then(data => {
       let sa = appAtom.app;
-      sa = sa.set('pieceScript', data);
+      sa = sa.set('script', data);
       appAtom.app = sa;
       appAtom = ensureMode(appAtom, SeniMode.edit);
     });
@@ -669,14 +675,14 @@ function setupUI(appAtom) {
   addClickEvent('action-eval', () => {
     let app = appAtom.app;
     const editor = app.get('editor');
-    app = app.set('pieceScript', editor.getValue());
+    app = app.set('script', editor.getValue());
     timedRenderScript(app, 'renderScript');
     appAtom.app = app;
   });
 
   addClickEvent('action-add', () => {
     const app = appAtom.app;
-    appAtom.app = app.set('pieceScript', '');
+    appAtom.app = app.set('script', '');
     appAtom = ensureMode(appAtom, SeniMode.edit);
   });
 
@@ -728,7 +734,7 @@ function setupUI(appAtom) {
   const imageLoadHandler = event => {
     const app = appAtom.app;
     const imageId = event.target.getAttribute('data-id');
-    appAtom.app = app.setIn(['piecePhenotypes', imageId, 'imageLoadTimeStamp'],
+    appAtom.app = app.setIn(['phenotypes', imageId, 'imageLoadTimeStamp'],
                             event.timeStamp);
   };
 
@@ -736,14 +742,14 @@ function setupUI(appAtom) {
   gallery.innerHTML = '';
 
   let phenotypeElement, imageElement;
-  // sa = sa.set('piecePhenotypes', []);
+  // sa = sa.set('phenotypes', []);
 
   const row = document.createElement('div');
   row.className = 'row';
   gallery.appendChild(row);
 
   const populationSize = sa.get('populationSize');
-  const piecePhenotypes = [];
+  const phenotypes = [];
   for (let i = 0; i < populationSize; i++) {
     phenotypeElement = createPhenotypeElement(i, '');
 
@@ -753,7 +759,7 @@ function setupUI(appAtom) {
 
     row.appendChild(phenotypeElement);
 
-    piecePhenotypes.push(new Immutable.Map({
+    phenotypes.push(new Immutable.Map({
       phenotypeElement,
       imageElement,
       selected: false,
@@ -761,7 +767,7 @@ function setupUI(appAtom) {
     }));
   }
 
-  sa = sa.set('piecePhenotypes', new Immutable.List(piecePhenotypes));
+  sa = sa.set('phenotypes', new Immutable.List(phenotypes));
 
   window.addEventListener('popstate', event => {
     // console.log('popstate called', event);
@@ -834,9 +840,9 @@ function historyBuildState(app) {
   const state = {
     stateCounter: jjj,
     currentMode: app.get('currentMode'),
-    pieceSelectedGenotypes: app.get('pieceSelectedGenotypes').toJS(),
-    pieceScript: app.get('pieceScript'),
-    pieceGenotypes: app.get('pieceGenotypes').toJS()
+    selectedIndices: app.get('selectedIndices').toJS(),
+    script: app.get('script'),
+    genotypes: app.get('genotypes').toJS()
   };
 
   const uri = `#${seniModeAsString(app.get('currentMode'))}-${jjj}`;
@@ -880,15 +886,15 @@ function createSeniApp() {
     env: undefined,
 
     // information about the current piece being created/rendered
-    piecePhenotypes: [], // stored in an Immutable.List
+    phenotypes: [], // stored in an Immutable.List
     // selectedGenotypes is required to remember the previous selection
     // in case of a shuffle
-    pieceSelectedGenotypes: [],
-    pieceScript: undefined,
-    pieceFrontAst: undefined,
-    pieceBackAst: undefined,
-    pieceTraits: undefined,
-    pieceGenotypes: [],
+    selectedIndices: [],
+    script: undefined,
+    frontAst: undefined,
+    backAst: undefined,
+    traits: undefined,
+    genotypes: [],
 
     // for browser history modification
     lastState: undefined
