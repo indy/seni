@@ -94,12 +94,19 @@ function ensureMode(seniAppContainer, mode) {
   seniApp = seniApp.set('currentMode', mode);
   historyAdd(seniApp);
 
-  // is this the first generation of the evolve mode
-  const firstGenEvolve = seniApp.get('currentMode') === SeniMode.evolve;
-
   // todo: ideally this shouldn't change seniApp
   seniAppContainer.seniApp = seniApp;
-  seniAppContainer = updateUI(seniAppContainer, firstGenEvolve);
+
+  if (mode === SeniMode.evolve) {
+    showCurrentMode(seniApp);
+    showTopNavBar(seniApp);
+    seniAppContainer.seniApp = getScriptFromEditor(seniApp);
+    // if it's a change of mode into the SeniMode.evolve
+    seniAppContainer = setupEvolveUI(seniAppContainer);
+    // else if there's been a change in selection ???
+  } else {
+    updateUI(seniAppContainer.seniApp);
+  }
 
   return seniAppContainer;
 }
@@ -109,8 +116,7 @@ function ensureMode(seniAppContainer, mode) {
 // different actions depending on whether it's the first generation (i.e.
 // invoked by a user) or not (i.e. invoked by the history API))
 //
-function updateUI(seniAppContainer, firstGenEvolve) {
-  const seniApp = seniAppContainer.seniApp;
+function updateUI(seniApp) {
   showCurrentMode(seniApp);
 
   switch (seniApp.get('currentMode')) {
@@ -124,20 +130,10 @@ function updateUI(seniAppContainer, firstGenEvolve) {
     break;
   case SeniMode.evolve :
     showTopNavBar(seniApp);
-
-    if (firstGenEvolve) {
-      seniAppContainer.seniApp = getScriptFromEditor(seniApp);
-      // if it's a change of mode into the SeniMode.evolve
-      seniAppContainer = setupEvolveUI(seniAppContainer);
-      // else if there's been a change in selection ???
-    } else {
-      showPlaceholderImages(seniApp);
-      renderPhenotypes(seniApp);
-    }
+    showPlaceholderImages(seniApp);
+    renderPhenotypes(seniApp);
     break;
   }
-
-  return seniAppContainer;
 }
 
 // search the children of seniApp.navbar for elements with class 'klass'
@@ -347,8 +343,8 @@ function createInitialGenotypePopulation(seniApp, populationSize) {
   }
 
   seniApp = seniApp.set('pieceGenotypes', pieceGenotypes);
-  console.log('createInitialGenotypePopulation: pieceGenotypes set to',
-              pieceGenotypes);
+//  console.log('createInitialGenotypePopulation: pieceGenotypes set to',
+//              pieceGenotypes);
   return seniApp;
 }
 
@@ -776,7 +772,8 @@ function setupUI(seniAppContainer) {
   window.addEventListener('popstate', event => {
     console.log('popstate called', event);
 
-    seniAppContainer = historyUpdateAppState(seniAppContainer, event.state);
+    const seniApp = seniAppContainer.seniApp;
+    seniAppContainer.seniApp = historyUpdateAppState(seniApp, event.state);
 
     //const href = document.location.href.split('/');
     //console.log(href);
@@ -830,9 +827,8 @@ function getGallery() {
 
 
 // TODO: make this work, also don't forget that seniApp is being modified
-function historyUpdateAppState(seniAppContainer, state) {
+function historyUpdateAppState(seniApp, state) {
 
-  let seniApp = seniAppContainer.seniApp;
 /*
   console.log('Before: currentMode', seniApp.get('currentMode'));
   console.log('Before: pieceSelectedGenotypes',
@@ -872,37 +868,8 @@ function historyUpdateAppState(seniAppContainer, state) {
   console.log('---');
   console.log('---');
 */
-  seniAppContainer.seniApp = seniApp;
-  return updateUI(seniAppContainer, false);
-
-
-  /*
-  seniApp.currentMode = state.mode;
-  showCurrentMode(seniApp);
-
-  switch (seniApp.get('currentMode')) {
-  case SeniMode.gallery :
-    hideTopNavBar(seniApp);
-    break;
-  case SeniMode.edit :
-    // restore state to the app
-    seniApp = seniApp.set('pieceScript', state.script);
-    // update the ui
-    showTopNavBar(seniApp);
-    timedRenderScript(seniApp, 'renderScript');
-    break;
-  case SeniMode.evolve :
-    // restore state to the app
-    seniApp.pieceScript = state.script;
-    seniApp.pieceGenotypes = state.genotypes;
-    // todo: restore the selected genotypes
-    // update the ui
-    showTopNavBar(seniApp);
-
-    showPlaceholderImages(seniApp);
-    renderPhenotypes(seniApp);
-    break;
-  }*/
+  updateUI(seniApp);
+  return seniApp;
 }
 
 let jjj = 1;
