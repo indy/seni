@@ -408,8 +408,9 @@ function onNextGen(seniApp) {
     return seniApp;
   }
 
-  // todo: implement
-  // historyAddSelectedGenotypes(seniApp.get('pieceSelectedGenotypes'));
+  // update the last history state
+  historyReplaceState(seniApp);
+
   seniApp = genotypesFromSelectedPhenotypes(seniApp);
 
   return seniApp;
