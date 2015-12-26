@@ -223,7 +223,7 @@ function renderHighRes(app, element) {
 
   if (index !== -1) {
     const pieceGenotypes = app.get('pieceGenotypes');
-    const genotype = pieceGenotypes[index];
+    const genotype = pieceGenotypes.get(index);
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('invisible');
     const pieceScript = app.get('pieceScript');
@@ -253,7 +253,7 @@ function showEditFromEvolve(appAtom, element) {
 
   if (index !== -1) {
     const pieceGenotypes = app.get('pieceGenotypes');
-    const genotype = pieceGenotypes[index];
+    const genotype = pieceGenotypes.get(index);
     const frontAst = app.get('pieceFrontAst');
 
     const script = Runtime.unparse(frontAst, genotype);
@@ -291,7 +291,7 @@ function renderPhenotypes(app) {
     if (i < piecePhenotypes.size &&
         app.get('currentMode') === SeniMode.evolve) {
 
-      const genotype = pieceGenotypes[i];
+      const genotype = pieceGenotypes.get(i);
       const imageElement = piecePhenotypes.getIn([i, 'imageElement']);
 /*
       if (i === 0) {
@@ -339,9 +339,8 @@ function createInitialGenotypePopulation(app, populationSize) {
     pieceGenotypes.push(genotype);
   }
 
-  app = app.set('pieceGenotypes', pieceGenotypes);
-//  console.log('createInitialGenotypePopulation: pieceGenotypes set to',
-//              pieceGenotypes);
+  app = app.set('pieceGenotypes', new Immutable.List(pieceGenotypes));
+
   return app;
 }
 
@@ -356,13 +355,12 @@ function genotypesFromSelectedPhenotypes(app) {
     // just randomize all of the phenotypes
     app = createInitialGenotypePopulation(app, app.populationSize);
   } else {
-    app = app.set('pieceGenotypes', Genetic.nextGeneration(
+    const pieceGenotypes = Genetic.nextGeneration(
       app.get('pieceSelectedGenotypes'),
       app.get('populationSize'),
       app.get('mutationRate'),
-      app.get('pieceTraits')));
-    // console.log('genotypesFromSelectedPhenotypes: pieceGenotypes set to',
-    // app.get('pieceGenotypes'));
+      app.get('pieceTraits'));
+    app = app.set('pieceGenotypes', new Immutable.List(pieceGenotypes));
   }
   historyAdd(app);
 
@@ -394,7 +392,7 @@ function onNextGen(app) {
 
   for (let i = 0; i < populationSize; i++) {
     if (piecePhenotypes.getIn([i, 'selected']) === true) {
-      pieceSelectedGenotypes.push(pieceGenotypes[i]);
+      pieceSelectedGenotypes.push(pieceGenotypes.get(i));
     }
   }
 
@@ -822,8 +820,6 @@ function getGallery() {
   });
 }
 
-
-// TODO: make this work, also don't forget that app is being modified
 function historyUpdateAppState(app, state) {
   // restore the app's current state from state
   // todo: use merge once we have Immutable structures throughout app
@@ -836,7 +832,7 @@ function historyUpdateAppState(app, state) {
   app = app.set('currentMode', state.currentMode)
     .set('pieceSelectedGenotypes', pieceSelectedGenotypes)
     .set('pieceScript', state.pieceScript)
-    .set('pieceGenotypes', pieceGenotypes);
+    .set('pieceGenotypes', new Immutable.List(pieceGenotypes));
 
   updateUI(app);
   return app;
@@ -850,7 +846,11 @@ function historyBuildState(app) {
 
   // convert the pieceGenotypes array of Immutable Lists into JS arrays
   const pieceGenotypes = app.get('pieceGenotypes');
-  const pieceGenotypesJS = pieceGenotypes.map(g => g.toJS());
+  const pieceGenotypesJS = [];
+  pieceGenotypes.forEach(g => {
+    pieceGenotypesJS.push(g.toJS());
+  });
+  // const pieceGenotypesJS = pieceGenotypes.map(g => g.toJS());
 
   const selectedGenotypes = app.get('pieceSelectedGenotypes');
   const selectedGenotypesJS = selectedGenotypes.map(g => g.toJS());
@@ -895,7 +895,7 @@ function createSeniApp() {
     renderImage: undefined,
     // the resolution of the high res image
     highResolution: [2048, 2048],
-    // the 3 main UI areas
+    // the 3 main UI areas, stored in an Immutable.List
     containers: [],
     placeholder: 'img/spinner.gif',
     populationSize: 24,
@@ -904,7 +904,7 @@ function createSeniApp() {
     env: undefined,
 
     // information about the current piece being created/rendered
-    piecePhenotypes: [],
+    piecePhenotypes: [], // stored in an Immutable.List
     // selectedGenotypes is required to remember the previous selection
     // in case of a shuffle
     //pieceSelectedGenotypes: [],
@@ -912,7 +912,7 @@ function createSeniApp() {
     pieceFrontAst: undefined,
     pieceBackAst: undefined,
     pieceTraits: undefined,
-    // pieceGenotypes: [],
+    pieceGenotypes: [],
 
     // for browser history modification
     lastState: undefined
@@ -925,7 +925,6 @@ function createSeniApp() {
   app = app
     .set('renderer', renderer)
     .set('env', bindings)
-    .set('pieceGenotypes', [])
     .set('pieceSelectedGenotypes', []);
 
   historyAdd(app);
