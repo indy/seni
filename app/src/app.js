@@ -92,7 +92,7 @@ function ensureMode(appAtom, mode) {
   }
 
   app = app.set('currentMode', mode);
-  historyAdd(app);
+  historyPushState(app);
 
   // todo: ideally this shouldn't change app
   appAtom.app = app;
@@ -105,7 +105,7 @@ function ensureMode(appAtom, mode) {
     appAtom = setupEvolveUI(appAtom);
     // else if there's been a change in selection ???
   } else {
-    updateUI(appAtom.app);
+    appAtom.app = updateUI(appAtom.app);
   }
 
   return appAtom;
@@ -132,8 +132,11 @@ function updateUI(app) {
     showTopNavBar(app);
     showPlaceholderImages(app);
     renderPhenotypes(app);
+    app = updateSelectionUI(app);
     break;
   }
+
+  return app;
 }
 
 // search the children of app.navbar for elements with class 'klass'
@@ -368,12 +371,24 @@ function genotypesFromSelectedPhenotypes(app) {
       app.get('mutationRate'),
       app.get('traits'));
     app = app.set('genotypes', genotypes);
+
   }
-  historyAdd(app);
 
   // render the genotypes
   renderPhenotypes(app);
 
+  // clean up the dom and clear the selected state
+  app = app.set('selectedIndices', new Immutable.List());
+  app = updateSelectionUI(app);
+
+  historyPushState(app);
+
+  return app;
+}
+
+// update the selected phenotypes in the evolve screen according to the
+// values in selectedIndices
+function updateSelectionUI(app) {
   // clean up the dom and clear the selected state
   const populationSize = app.get('populationSize');
   const phenotypes = app.get('phenotypes');
@@ -385,6 +400,17 @@ function genotypesFromSelectedPhenotypes(app) {
     }
     app = app.setIn(['phenotypes', i, 'selected'], false);
   }
+
+  const selectedIndices = app.get('selectedIndices');
+  selectedIndices.forEach(i => {
+    app = app.setIn(['phenotypes', i, 'selected'], true);
+
+    const element = app.getIn(['phenotypes', i, 'phenotypeElement']);
+    const cardImage = element.getElementsByClassName('card-image')[0];
+    cardImage.classList.add('selected');
+
+    return true;
+  });
 
   return app;
 }
@@ -770,13 +796,7 @@ function setupUI(appAtom) {
   sa = sa.set('phenotypes', new Immutable.List(phenotypes));
 
   window.addEventListener('popstate', event => {
-    // console.log('popstate called', event);
-
-    const app = appAtom.app;
-    appAtom.app = historyUpdateAppState(app, event.state);
-
-    //const href = document.location.href.split('/');
-    //console.log(href);
+    appAtom.app = historyRestoreState(appAtom.app, event.state);
   });
 
   appAtom.app = sa;
@@ -825,13 +845,6 @@ function getGallery() {
   });
 }
 
-function historyUpdateAppState(app, state) {
-  // restore the app's current state from state
-  app = app.merge(state);
-  updateUI(app);
-  return app;
-}
-
 let jjj = 1;
 function historyBuildState(app) {
   // can't store the entire app since it contains DOM elements and there
@@ -850,14 +863,23 @@ function historyBuildState(app) {
   return [state, uri];
 }
 
-function historyAdd(app) {
+function historyPushState(app) {
   const [state, uri] = historyBuildState(app);
+  console.log('historyPushState', state);
   history.pushState(state, null, uri);
 }
 
 function historyReplaceState(app) {
   const [state, uri] = historyBuildState(app);
+  console.log('historyReplace', state);
   history.replaceState(state, null, uri);
+}
+
+function historyRestoreState(app, state) {
+  console.log('historyRestore', state);
+  app = app.merge(state);
+  app = updateUI(app);
+  return app;
 }
 
 /**
@@ -908,7 +930,7 @@ function createSeniApp() {
     .set('renderer', renderer)
     .set('env', bindings);
 
-  historyAdd(app);
+  historyPushState(app);
 
   return {app};
 }
