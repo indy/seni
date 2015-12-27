@@ -94,7 +94,6 @@ function ensureMode(appAtom, mode) {
   app = app.set('currentMode', mode);
   historyPushState(app);
 
-  // todo: ideally this shouldn't change app
   appAtom.app = app;
 
   if (mode === SeniMode.evolve) {
@@ -112,9 +111,6 @@ function ensureMode(appAtom, mode) {
 }
 
 // function that takes a read-only app and updates the UI
-// (note: the firstGenEvolve is a temporary hack since the evolve mode requires
-// different actions depending on whether it's the first generation (i.e.
-// invoked by a user) or not (i.e. invoked by the history API))
 //
 function updateUI(app) {
   showCurrentMode(app);
@@ -296,15 +292,7 @@ function renderPhenotypes(app) {
 
       const genotype = genotypes.get(i);
       const imageElement = phenotypes.getIn([i, 'imageElement']);
-/*
-      if (i === 0) {
-        // isg debug code
-        console.log('a', app.get('backAst'));
-        console.log('b', genotypes);
-        console.log('c', genotype);
-        console.log('d', genotype.first());
-      }
-*/
+
       renderGenotypeToImage(app,
                             app.get('backAst'),
                             genotype,
@@ -865,18 +853,18 @@ function historyBuildState(app) {
 
 function historyPushState(app) {
   const [state, uri] = historyBuildState(app);
-  console.log('historyPushState', state);
+  // console.log('historyPushState', state);
   history.pushState(state, null, uri);
 }
 
 function historyReplaceState(app) {
   const [state, uri] = historyBuildState(app);
-  console.log('historyReplace', state);
+  // console.log('historyReplace', state);
   history.replaceState(state, null, uri);
 }
 
 function historyRestoreState(app, state) {
-  console.log('historyRestore', state);
+  // console.log('historyRestore', state);
   app = app.merge(state);
   app = updateUI(app);
   return app;
