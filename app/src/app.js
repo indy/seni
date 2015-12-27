@@ -92,6 +92,7 @@ function ensureMode(appAtom, mode) {
   }
 
   app = app.set('currentMode', mode);
+
   historyPushState(app);
 
   appAtom.app = app;
@@ -127,6 +128,7 @@ function updateUI(app) {
   case SeniMode.evolve :
     showTopNavBar(app);
     showPlaceholderImages(app);
+    app = setupAstAndTraits(app);
     renderPhenotypes(app);
     app = updateSelectionUI(app);
     break;
@@ -452,6 +454,19 @@ function createPhenotypeElement(id, placeholderImage) {
   return container;
 }
 
+function setupAstAndTraits(app) {
+  const script = app.get('script');
+  app = app.set('frontAst', Runtime.buildFrontAst(script));
+
+  const frontAst = app.get('frontAst');
+  app = app.set('backAst', Runtime.compileBackAst(frontAst));
+
+  const backAst = app.get('backAst');
+  app = app.set('traits', Genetic.buildTraits(backAst));
+
+  return app;
+}
+
 function setupEvolveUI(appAtom) {
 
   let app = appAtom.app;
@@ -478,14 +493,7 @@ function setupEvolveUI(appAtom) {
     // first img element
     if (allImagesLoadedSince(initialTimeStamp)) {
 
-      const script = app.get('script');
-      app = app.set('frontAst', Runtime.buildFrontAst(script));
-
-      const frontAst = app.get('frontAst');
-      app = app.set('backAst', Runtime.compileBackAst(frontAst));
-
-      const backAst = app.get('backAst');
-      app = app.set('traits', Genetic.buildTraits(backAst));
+      app = setupAstAndTraits(app);
 
       const populationSize = app.get('populationSize');
       app = createInitialGenotypePopulation(app, populationSize);
@@ -865,7 +873,32 @@ function historyReplaceState(app) {
 
 function historyRestoreState(app, state) {
   // console.log('historyRestore', state);
-  app = app.merge(state);
+
+  /**
+   * Note: would like to use:
+   *
+   *    app = app.merge(state);
+   *
+   * but some of the genotypes may contain values that are plain JS arrays
+   * e.g. seni code like:
+   *
+   * (define coords {[[10 10] [20 20] [20 20]] (vector)})
+   *
+   * calling merge will convert them into Immutable objects and that will
+   * screw up the later stages that expect plain JS objects/primitives
+   */
+
+  const genotypes = state.genotypes.reduce((list, genotype) => {
+    const gt = genotype.reduce((lst, g) => lst.push(g), new Immutable.List());
+    return list.push(gt);
+  }, new Immutable.List());
+
+  app = app
+    .set('currentMode', state.currentMode)
+    .set('selectedIndices', new Immutable.List(state.selectedIndices))
+    .set('script', state.script)
+    .set('genotypes', genotypes);
+
   app = updateUI(app);
   return app;
 }
