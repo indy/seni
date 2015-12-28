@@ -108,22 +108,23 @@ function setupShaders(gl) {
 
 function setupGLState(gl) {
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
-
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  //gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
-  // http://www.andersriggelsen.dk/glblendfunc.php
-  //gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-  //  gl.blendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
-  //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_DST_COLOR);
-
-  //gl.blendFunc(gl.SRC_COLOR, gl.ONE_MINUS_SRC_COLOR);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-  //  gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA,
-  //                       gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-  gl.blendEquation(gl.FUNC_ADD);
   gl.enable(gl.BLEND);
+
+  /**
+   * Note: blendEquationSeparate and blendFuncSeparate behave exactly like the
+   * original blendEquation and blendFunc functions. It looks like the extra
+   * arguments in the *Separate functions are ignored on my dev machine
+   */
+  gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
+  gl.blendFuncSeparate(gl.SRC_ALPHA,
+                       gl.ONE_MINUS_SRC_ALPHA,
+                       gl.ONE_MINUS_DST_ALPHA,
+                       gl.ONE);
+  // original
+  // http://www.andersriggelsen.dk/glblendfunc.php
+  // gl.blendEquation(gl.FUNC_ADD);
+  // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
   gl.disable(gl.DEPTH_TEST);
 }
