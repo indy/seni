@@ -9,108 +9,64 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
 
+    <link rel="stylesheet" href="node_modules/skeleton-css/css/normalize.css">
+    <link rel="stylesheet" href="node_modules/skeleton-css/css/skeleton.css">
+    
     <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
 
-    <link type="text/css" rel="stylesheet" href="node_modules/materialize-css/bin/materialize.css"  media="screen,projection"/>
     <link rel="stylesheet" href="css/stylesheet.css">
   </head>
 
   <body>
-    <div id="seni-navbar" class="navbar-fixed">
-      <nav>
-        <div class="nav-wrapper blue">
-          <a href="#!" class="brand-logo">Seni</a>
-
-          <ul id="slide-out" class="side-nav">
-            <li><a class="to-gallery">Gallery</a></li>
-            <li><a class="to-edit">Edit</a></li>
-            <li><a class="to-evolve">Evolve</a></li>
-          </ul>
-          <ul class="right hide-on-med-and-down">
-            <li><a class="to-gallery">Gallery</a></li>
-            <li><a class="to-edit">Edit</a></li>
-            <li><a class="to-evolve">Evolve</a></li>
-          </ul>
-          <a href="#" data-activates="slide-out" class="button-collapse"><i class="mdi-navigation-menu"></i></a>
-          
+    <div class="navbar-spacer"></div>
+    <nav id="seni-navbar" class="navbar">
+      <div class="navbar-container">
+        <a id="home" class="navbar-app-title">Seni</a>
+        <div id="navbar-buttons">
+          <button id="eval-btn" class="navbar-button inactive-button eval-btn">Eval</button>
+          <button id="evolve-btn" class="navbar-button inactive-button">Evolve</button>
+          <button id="next-btn" class="navbar-button inactive-button">NextGen</button>
+          <button id="shuffle-btn" class="navbar-button inactive-button">Shuffle</button>
         </div>
-      </nav>
-    </div>
+      </div>
+      
+    </nav>
 
     <canvas id="render-canvas" width="500" height="500" class="hidden"></canvas>
 
     <div id="gallery-container">
-      <div id="gallery-list"></div>
-      <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
-          <a class="btn-floating btn-large red" id="action-add">
-            <i class="large mdi-content-add"></i>
-          </a>
-        </div>
     </div>
     
     <div id="edit-container" class="hidden">
-      <div class="flex-container-h">
-        <div id="render-container">
-          <img id="render-img"></img>
-        </div>
-        <div id="editor-container">
-          <textarea id="codemirror-textarea"></textarea> 
-        </div>
-        <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
-          <a class="btn-floating btn-large red" id="action-eval">
-            <i class="large mdi-content-create"></i>
-          </a>
-          <ul>
-            <li>
-              <a id="evolve-mode-icon" class="btn-floating blue">
-                <i class="mdi-av-fast-forward"></i>
-              </a>
-            </li>
-          </ul>
-        </div>
+      <div id="render-container">
+        <img id="render-img"></img>
+      </div>
+      <div id="editor-container">
+        <textarea id="codemirror-textarea"></textarea> 
       </div>
     </div>
 
     <div id="evolve-container" class="hidden">
-      <div id="phenotype-gallery"></div>
-      <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
-        <a class="btn-floating btn-large blue" id="action-next-gen">
-          <i class="large mdi-av-fast-forward"></i>
-        </a>
-        <ul>
-          <li>
-            <a id="shuffle-icon" class="btn-floating green">
-              <i class="mdi-av-shuffle"></i>
-            </a>
-          </li>          
-          <li>
-            <a id="edit-mode-icon" class="btn-floating red">
-              <i class="mdi-content-create"></i>
-            </a>
-          </li>
-        </ul>
-      </div>
+      <div id="evolve-gallery"></div>
     </div>
 
-    <div id="high-res-container" class="invisible">
-      <div class="card">
-        <div id="holder">
+    <div id="high-res-container" class="hidden">
+      <div id="holder">
+        <div class="high-res-card-holder">
           <a id="high-res-link" target="_blank" href="">
             <img id="high-res-image" class="card-image">
           </a>
-        </div>
-        <div class="card-action">
-          <a href="#" id="high-res-close">Close</a>
+          <div class="card-action">
+            <a href="#" id="high-res-close">Close</a>
+            <p id="high-res-image-note">(click on image to open in new tab)</p>
+          </div>
         </div>
       </div>
     </div>
 
-    <!--Import jQuery before materialize.js-->
-    <!-- 
-    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script> -->
-    <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>    
-    <script type="text/javascript" src="node_modules/materialize-css/bin/materialize.js"></script>
+
     <script src="dist/seni.bundle.js"></script>
+    <!--
     <script>
       if('serviceWorker' in navigator) {
         navigator.serviceWorker
@@ -118,6 +74,6 @@
           .then(function() { console.log("Service Worker Registered"); });
       }
     </script>
-    
+     -->
   </body>
 </html>

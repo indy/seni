@@ -16,21 +16,17 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import SeniWebApplication from './app.js';
+import main from './app.js';
 
 function compatibilityHacks() {
   // Safari doesn't have Number.parseInt (yet)
+  // Safari is the new IE
   if (Number.parseInt === undefined) {
     Number.parseInt = parseInt;
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-
   compatibilityHacks();
-
-  // Initialize collapse button
-  // $('.button-collapse').sideNav();
-
-  SeniWebApplication.mainFn();
+  main();
 });

@@ -9,7 +9,7 @@ var nodeModuleRequests = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('sw: install', event);
+  // console.log('sw: install', event);
 
   event.waitUntil(
     caches
@@ -22,7 +22,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  console.log('sw: activate', event);
+  // console.log('sw: activate', event);
 
   // delete older cache versions
   event.waitUntil(
@@ -36,7 +36,7 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  console.log('sw: fetch', event.request.url);
+  // console.log('sw: fetch', event.request.url);
 
   event.respondWith(
     caches.match(event.request).then(response => {

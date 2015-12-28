@@ -16,13 +16,81 @@
 
 .cm-s-default .cm-seni-parameter {color: #085;}
 
-
-#edit-container {
-  height: 100%;
-  width: 100%;
+.CodeMirror {
+  height: 100%; 
 }
 
-.flex-container-h {
+body {
+  background: #eee;
+  font-family: 'RobotoDraft', 'HelveticaNeue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.container {
+  max-width: 800px; }
+
+.navbar + .docs-section {
+  border-top-width: 0; }
+.navbar,
+.navbar-spacer {
+  display: block;
+  width: 100%;
+  height: 6.5rem;
+  background: #fff;
+  z-index: 99;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+}
+.navbar {
+  background: #3F51B5;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+.navbar-spacer {
+  display: block; }
+.navbar > .container {
+  width: 100%; }
+.navbar-list {
+  list-style: none;
+  margin-bottom: 0; }
+.navbar-item {
+  position: relative;
+  float: left;
+  margin-bottom: 0; }
+.navbar-link {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .2rem;
+  margin-right: 35px;
+  text-decoration: none;
+  line-height: 6.5rem;
+  color: #fff; }
+.navbar-link.active {
+  color: #33C3F0; }
+
+
+.hidden {
+  display: none !important;
+}
+
+.visible {
+  visibility: visible;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+/* ------------------- Gallery -------------------------------------------- */
+
+#gallery-container {
+  height: 100%;
+  width: 95%;
+}
+
+/* ------------------ Edit ------------------------------------------------- */
+
+#edit-container {
   height: 100%;
   width: 100%;
   margin: 0;
@@ -69,7 +137,7 @@
 }
 
 @media only screen and (min-width : 601px) {
-  .flex-container-h {
+  #edit-container {
     height: 100%;
     width: 100%;
     margin: 0;
@@ -117,7 +185,7 @@
 }                               /* (min-width : 601px) */
 
 @media only screen and (min-width : 993px) {
-  .flex-container-h {
+  #edit-container {
     height: 100%;
     width: 100%;
     margin: 0;
@@ -164,6 +232,117 @@
   }
 }                               /*  (min-width : 993px) */
 
+
+/* ----------------- Evolve ----------------------------------------------- */
+
+
+#evolve-container {
+  height: 100%;
+  width: 95%;
+}
+
+/* ------------------- Cards -------------------------------------------- */
+
+.cards {
+  margin: 0;
+  border: 0;
+  padding: 0;
+
+  margin-left: 2em;
+
+  height: 100%;
+  width: 100%;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.card-holder {
+  margin: 1.5em;
+  padding: 1em;
+  order: 1;
+  width: 16em;
+  background: white;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+}
+
+.card-holder.selected {
+  box-shadow: 0 2px 20px 10px rgba(92, 107, 192, 0.56);
+}
+
+.card-image {
+  width: 100%;
+}
+
+.card-action {
+  border-top: 1px solid rgba(160, 160, 160, 0.2);
+  padding-top: 1em;
+  margin-top: 1em;
+  text-align: center;
+}
+
+/* ------------------- Buttons -------------------------------------------- */
+
+
+.navbar-button, .navbar-button:hover, .navbar-button:focus {
+  transition: background-color 1.5s ease;
+  transition: border-color 1.5s ease;
+  transition: color 1.5s ease;
+  
+  margin-top: 1em;
+  margin-right: 1em;
+
+  color: #FFF;
+  background-color: #5C6BC0;
+  border-color: #5C6BC0;
+}
+
+.eval-btn, .eval-btn:focus {
+  color: #FFF;
+  background-color: #EF5350;
+  border-color: #EF5350;
+}
+.eval-btn:hover {
+  color: #FFF;
+  background-color: #E53935;
+  border-color: #E53935;
+}
+
+.inactive-button, .inactive-button:hover, .inactive-button:focus {
+  transition: background-color 1.5s ease;
+  transition: border-color 1.5s ease;
+  transition: color 1.5s ease;
+  
+  color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(85, 85, 85, 0.1);
+  border-color: rgba(85, 85, 85, 0.1);
+}
+
+.card-action {
+  text-transform: uppercase;
+  font-size: 1.2rem;
+  letter-spacing: .2rem;
+}
+
+.card-action a {
+  text-decoration: none;
+}
+
+.card-action a.render {
+  float: left;
+  margin-left: 3rem;
+}
+
+.card-action a.edit {
+  float: right;
+  margin-right: 3rem;
+}
+
+/* ---------------------- high-res-container ------------------------------- */
+
 #high-res-container {
   z-index: 1000;
   position: fixed;
@@ -178,51 +357,46 @@
 }
 
 #holder {
-  width: 38em;
-  height: 38em;
+  width: 35em;
 }
 
-#high-res-image {
+.high-res-card-holder {
   padding: 1em;
-}
-
-.card-image {
-  transition: background 0.2s ease;
+  order: 1;
   background: white;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
 }
 
-.card-image.selected {
-  background: #2979ff;
-}
-
-.phenotype {
-  padding: 1em;
-}
-
-.gallery-item-image {
-  padding: 1em;
-}
-
-html,body {
-  height: 100%;
-  margin: 0;
-  background-color: #E5E5E5;
-  font-family: 'RobotoDraft', sans-serif;
-}
-
-.CodeMirror {
-  height: 100%; 
-}
-
-.hidden {
-  display: none;
+#high-res-image-note {
+  color: #aaa;
+  font-size: smaller;
+  margin-bottom: 0;
 }
 
 
-.visible {
-  visibility: visible;
+.navbar-container {
+  position: relative;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
-.invisible {
-  visibility: hidden;
+.navbar-app-title {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .2rem;
+  margin-right: 35px;
+  margin-left: 35px;
+  text-decoration: none;
+  line-height: 6.5rem;
+  color: #fff;
+  float: left;
+}
+
+#navbar-buttons {
+  /* todo: replace 50% with calculated pixels 
+     (scrollbars appearing on OSX shift the buttons to the left)
+   */
+  margin-left: 50%;
 }
