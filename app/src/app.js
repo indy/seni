@@ -109,24 +109,26 @@ function showButtonsFor(mode) {
 }
 
 function ensureMode(appAtom, mode) {
+
+
   let app = appAtom.app;
   if (app.get('currentMode') === mode) {
     return appAtom;
   }
 
-  app = app.set('currentMode', mode);
 
-  historyPushState(app);
+  app = app.set('currentMode', mode);
 
   appAtom.app = app;
 
   if (mode === SeniMode.evolve) {
     showCurrentMode(app);
-    appAtom.app = appAtom.app.set('script', getScriptFromEditor(app));
     appAtom = setupEvolveUI(appAtom);
   } else {
     appAtom = updateUI(appAtom);
   }
+
+  historyPushState(appAtom.app);
 
   return appAtom;
 }
@@ -657,6 +659,10 @@ function setupUI(appAtom) {
   };
 
   const evolveModeHandler = event => {
+    // get the latest script from the editor
+    appAtom.app = appAtom.app.set('script', getScriptFromEditor(appAtom.app));
+    historyReplaceState(appAtom.app);
+
     appAtom = ensureMode(appAtom, SeniMode.evolve);
     event.preventDefault();
   };
@@ -831,18 +837,18 @@ function historyBuildState(app) {
 
 function historyPushState(app) {
   const [state, uri] = historyBuildState(app);
-  // console.log('historyPushState', state);
+  console.log('historyPushState', state);
   history.pushState(state, null, uri);
 }
 
 function historyReplaceState(app) {
   const [state, uri] = historyBuildState(app);
-  // console.log('historyReplace', state);
+  console.log('historyReplace', state);
   history.replaceState(state, null, uri);
 }
 
 function historyRestoreState(appAtom, state) {
-  // console.log('historyRestore', state);
+  console.log('historyRestore', state);
 
   /**
    * Note: would like to use:
