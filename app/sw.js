@@ -1,11 +1,7 @@
 var version = 'v2::';
 
 var nodeModuleRequests = [
-  '/node_modules/codemirror/lib/codemirror.css',
-  '/node_modules/materialize-css/bin/materialize.css',
-  '/node_modules/jquery/dist/jquery.min.js',
-  '/node_modules/materialize-css/bin/materialize.js',
-  '/node_modules/materialize-css/font/material-design-icons/Material-Design-Icons.woff2'
+  '/node_modules/codemirror/lib/codemirror.css'
 ];
 
 self.addEventListener('install', event => {
