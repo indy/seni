@@ -9,11 +9,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <link rel="stylesheet" href="node_modules/skeleton-css/css/normalize.css">
-    <link rel="stylesheet" href="node_modules/skeleton-css/css/skeleton.css">
-    
+    <link rel="stylesheet" href="css/bones.css">
     <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
-
     <link rel="stylesheet" href="css/stylesheet.css">
   </head>
 
@@ -23,9 +20,9 @@
       <div class="navbar-container">
         <a id="home" class="navbar-app-title">Seni</a>
         <div id="navbar-buttons">
-          <button id="eval-btn" class="navbar-button inactive-button eval-btn">Eval</button>
+          <button id="eval-btn" class="navbar-button inactive-button primary-btn">Eval</button>
           <button id="evolve-btn" class="navbar-button inactive-button">Evolve</button>
-          <button id="next-btn" class="navbar-button inactive-button">NextGen</button>
+          <button id="next-btn" class="navbar-button inactive-button primary-btn">NextGen</button>
           <button id="shuffle-btn" class="navbar-button inactive-button">Shuffle</button>
         </div>
       </div>
@@ -64,9 +61,7 @@
       </div>
     </div>
 
-
     <script src="dist/seni.bundle.js"></script>
-    <!--
     <script>
       if('serviceWorker' in navigator) {
         navigator.serviceWorker
@@ -74,6 +69,5 @@
           .then(function() { console.log("Service Worker Registered"); });
       }
     </script>
-     -->
   </body>
 </html>
