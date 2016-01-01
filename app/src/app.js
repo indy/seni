@@ -324,39 +324,49 @@ function createInitialGenotypePopulation(app, populationSize) {
   return new Immutable.List(genotypes);
 }
 
-function genotypesFromSelectedPhenotypes(appAtom) {
 
-  let app = appAtom.app;
-
-  showPlaceholderImages(app);
-
+function genotypesFromSelectedIndices(app, indices) {
   let genotypes;
-  const selectedIndices = app.get('selectedIndices');
 
-  if (selectedIndices.size === 0) {
+  if (indices.size === 0) {
     // if this is the first generation and nothing has been selected
     // just randomize all of the phenotypes
-    genotypes = createInitialGenotypePopulation(app,
-                                                app.get('populationSize'));
+    genotypes = createInitialGenotypePopulation(app, app.get('populationSize'));
   } else {
-    const psg = app.get('selectedIndices');
     const pg = app.get('genotypes');
     let selectedGenotypes = new Immutable.List();
-    for (let i = 0; i < psg.size; i++) {
-      selectedGenotypes = selectedGenotypes.push(pg.get(psg.get(i)));
+    for (let i = 0; i < indices.size; i++) {
+      selectedGenotypes = selectedGenotypes.push(pg.get(indices.get(i)));
     }
 
     genotypes = Genetic.nextGeneration(
       selectedGenotypes,
       app.get('populationSize'),
       app.get('mutationRate'),
-      app.get('traits'));
+      app.get('traits'), 42);
   }
+
+  return genotypes;
+}
+/*
+function genotypesFromSelectedPhenotypes(appAtom) {
+
+  let app = appAtom.app;
+
+  showPlaceholderImages(app);
+
+  const selectedIndices = app.get('selectedIndices');
+  const genotypes = genotypesFromSelectedIndices(app, selectedIndices);
 
   app = app.set('genotypes', genotypes);
 
   // render the genotypes
   renderPhenotypes(app);
+
+  app = app.set('previouslySelectedIndices',
+                app.get('selectedIndices'));
+  console.log('previouslySelectedIndices',
+              app.get('previouslySelectedIndices').toJS());
 
   // clean up the dom and clear the selected state
   app = app.set('selectedIndices', new Immutable.List());
@@ -367,7 +377,7 @@ function genotypesFromSelectedPhenotypes(appAtom) {
   appAtom.app = app;
   return appAtom;
 }
-
+*/
 // update the selected phenotypes in the evolve screen according to the
 // values in selectedIndices
 function updateSelectionUI(app) {
@@ -402,6 +412,7 @@ function updateSelectionUI(app) {
 
 function onNextGen(appAtom) {
   let app = appAtom.app;
+
   // get the selected genotypes for the next generation
   const populationSize = app.get('populationSize');
   let selectedIndices = new Immutable.List();
@@ -424,8 +435,27 @@ function onNextGen(appAtom) {
   // update the last history state
   historyReplaceState(app);
 
+  showPlaceholderImages(app);
+
+  const genotypes = genotypesFromSelectedIndices(app, selectedIndices);
+
+  app = app.set('genotypes', genotypes);
+
+  // render the genotypes
+  renderPhenotypes(app);
+
+  // this is the first selectedIndices.size genotypes
+  app = app.set('previouslySelectedGenotypes',
+                genotypes.slice(0, selectedIndices.size));
+
+  // clean up the dom and clear the selected state
+  app = app.set('selectedIndices', new Immutable.List());
+  app = updateSelectionUI(app);
+
+  historyPushState(app);
+
   appAtom.app = app;
-  appAtom = genotypesFromSelectedPhenotypes(appAtom);
+
   return appAtom;
 }
 
@@ -468,9 +498,6 @@ function setupEvolveUI(appAtom) {
     const populationSize = app.get('populationSize');
     const genotypes = createInitialGenotypePopulation(app, populationSize);
     app = app.set('genotypes', genotypes);
-
-    // update the last history state
-    historyReplaceState(app);
 
     // render the phenotypes
     renderPhenotypes(app);
@@ -671,7 +698,28 @@ function setupUI(appAtom) {
   addClickEvent('evolve-btn', evolveModeHandler);
 
   addClickEvent('shuffle-btn', event => {
-    appAtom = genotypesFromSelectedPhenotypes(appAtom);
+
+    let app = appAtom.app;
+
+    showPlaceholderImages(app);
+
+    app = app.set('genotypes', Genetic.nextGeneration(
+      app.get('previouslySelectedGenotypes'),
+      app.get('populationSize'),
+      app.get('mutationRate'),
+      app.get('traits'),
+      11));
+
+    // render the genotypes
+    renderPhenotypes(app);
+
+    // clean up the dom and clear the selected state
+    app = app.set('selectedIndices', new Immutable.List());
+    app = updateSelectionUI(app);
+
+    appAtom.app = app;
+
+//    appAtom = genotypesFromSelectedPhenotypes(appAtom);
     event.preventDefault();
   });
 
@@ -771,7 +819,12 @@ function setupUI(appAtom) {
   sa = sa.set('phenotypes', new Immutable.List(phenotypes));
 
   window.addEventListener('popstate', event => {
-    appAtom = historyRestoreState(appAtom, event.state);
+    if (event.state) {
+      appAtom = historyRestoreState(appAtom, event.state);
+    } else {
+      // no event.state so behave as if the user has visited the '/' of the app
+      appAtom = ensureMode(appAtom, SeniMode.gallery);
+    }
   });
 
   appAtom.app = sa;
@@ -825,6 +878,7 @@ function historyBuildState(app) {
   const state = {
     stateCounter: jjj,
     currentMode: app.get('currentMode'),
+    previouslySelectedGenotypes: app.get('previouslySelectedGenotypes').toJS(),
     selectedIndices: app.get('selectedIndices').toJS(),
     script: app.get('script'),
     genotypes: app.get('genotypes').toJS()
@@ -871,8 +925,15 @@ function historyRestoreState(appAtom, state) {
     return list.push(gt);
   }, new Immutable.List());
 
+  const psg = state.previouslySelectedGenotypes;
+  const prevGenotypes = psg.reduce((list, genotype) => {
+    const gt = genotype.reduce((lst, g) => lst.push(g), new Immutable.List());
+    return list.push(gt);
+  }, new Immutable.List());
+
   app = app
     .set('currentMode', state.currentMode)
+    .set('previouslySelectedGenotypes', prevGenotypes)
     .set('selectedIndices', new Immutable.List(state.selectedIndices))
     .set('script', state.script)
     .set('genotypes', genotypes);
@@ -910,8 +971,8 @@ function createSeniApp() {
 
     // information about the current piece being created/rendered
     phenotypes: [], // stored in an Immutable.List
-    // selectedGenotypes is required to remember the previous selection
-    // in case of a shuffle
+
+    previouslySelectedGenotypes: [],
     selectedIndices: [],
     script: undefined,
     frontAst: undefined,
@@ -930,8 +991,6 @@ function createSeniApp() {
   app = app
     .set('renderer', renderer)
     .set('env', bindings);
-
-  historyPushState(app);
 
   return {app};
 }

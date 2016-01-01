@@ -121,13 +121,19 @@ const Genetic = {
     return new Immutable.List(genotype);
   },
 
-  nextGeneration: (genotypes, populationSize, mutationRate, traits) => {
+  nextGeneration: (genotypes, populationSize, mutationRate, traits, seed) => {
     // a silly mod method for creating the latest generation
     let i;
     let newGenotypes = genotypes;
-    const seed = 42;
     const rng = PseudoRandom.buildUnsigned(seed);
     const env = Bind.addBracketBindings(Interpreter.getBasicEnv(), rng);
+
+    if (logToConsole) {
+      console.log('Genetic::nextGeneration', {populationSize,
+                                              mutationRate,
+                                              seed,
+                                              size: genotypes.size});
+    }
 
     for (i = genotypes.size; i < populationSize; i++) {
       const idxA = Number.parseInt(Math.random() * genotypes.size, 10);
