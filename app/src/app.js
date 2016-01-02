@@ -108,51 +108,46 @@ function showButtonsFor(mode) {
   }
 }
 
-function ensureMode(appAtom, mode) {
+function ensureMode(atom, mode) {
 
-
-  let app = appAtom.app;
-  if (app.get('currentMode') === mode) {
-    return appAtom;
+  if (atom.app.getIn(['appState', 'currentMode']) === mode) {
+    return atom;
   }
 
-
-  app = app.set('currentMode', mode);
-
-  appAtom.app = app;
+  atom.app = atom.app.setIn(['appState', 'currentMode'], mode);
 
   if (mode === SeniMode.evolve) {
-    showCurrentMode(app);
-    appAtom = setupEvolveUI(appAtom);
+    showCurrentMode(atom.app);
+    atom = setupEvolveUI(atom);
   } else {
-    appAtom = updateUI(appAtom);
+    atom = updateUI(atom);
   }
 
-  historyPushState(appAtom.app);
+  historyPushState(atom.app.get('appState'));
 
-  return appAtom;
+  return atom;
 }
 
 // function that takes a read-only app and updates the UI
 //
-function updateUI(appAtom) {
-  showCurrentMode(appAtom.app);
+function updateUI(atom) {
+  showCurrentMode(atom.app);
 
-  switch (appAtom.app.get('currentMode')) {
+  switch (atom.app.getIn(['appState', 'currentMode'])) {
   case SeniMode.gallery :
     break;
   case SeniMode.edit :
-    showScriptInEditor(appAtom.app);
-    timedRenderScript(appAtom.app, 'renderScript');
+    showScriptInEditor(atom.app);
+    timedRenderScript(atom.app, 'renderScript');
     break;
   case SeniMode.evolve :
     // will only get called from historyRestoreState
     //
-    appAtom = restoreEvolveUI(appAtom);
+    atom = restoreEvolveUI(atom);
     break;
   }
 
-  return appAtom;
+  return atom;
 }
 
 function renderGenotypeToImage(app, ast, genotype, imageElement, w, h) {
@@ -175,7 +170,7 @@ function renderGenotypeToImage(app, ast, genotype, imageElement, w, h) {
 function renderScript(app) {
   const imageElement = app.get('renderImage');
 
-  const script = app.get('script');
+  const script = app.getIn(['appState', 'script']);
   const frontAst = Runtime.buildFrontAst(script);
   const backAst = Runtime.compileBackAst(frontAst);
   const traits = Genetic.buildTraits(backAst);
@@ -219,11 +214,11 @@ function renderHighRes(app, element) {
   const [index, _] = getPhenoIdFromDom(element);
 
   if (index !== -1) {
-    const genotypes = app.get('genotypes');
+    const genotypes = app.getIn(['appState', 'genotypes']);
     const genotype = genotypes.get(index);
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('hidden');
-    const script = app.get('script');
+    const script = app.getIn(['appState', 'script']);
     const frontAst = Runtime.buildFrontAst(script);
     const backAst = Runtime.compileBackAst(frontAst);
 
@@ -237,24 +232,24 @@ function renderHighRes(app, element) {
   }
 }
 
-function showEditFromEvolve(appAtom, element) {
+function showEditFromEvolve(atom, element) {
 
-  const app = appAtom.app;
+  const app = atom.app;
   const [index, _] = getPhenoIdFromDom(element);
 
   if (index !== -1) {
-    const genotypes = app.get('genotypes');
+    const genotypes = app.getIn(['appState', 'genotypes']);
     const genotype = genotypes.get(index);
     const frontAst = app.get('frontAst');
 
     const script = Runtime.unparse(frontAst, genotype);
 
-    appAtom.app = app.set('script', script);
+    atom.app = app.setIn(['appState', 'script'], script);
 
-    appAtom = ensureMode(appAtom, SeniMode.edit);
+    atom = ensureMode(atom, SeniMode.edit);
   }
 
-  return appAtom;
+  return atom;
 }
 
 function toggleSelection(app, element) {
@@ -277,9 +272,9 @@ function renderPhenotypes(app) {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to edit mode
     const phenotypes = app.get('phenotypes');
-    const genotypes = app.get('genotypes');
+    const genotypes = app.getIn(['appState', 'genotypes']);
     if (i < phenotypes.size &&
-        app.get('currentMode') === SeniMode.evolve) {
+        app.getIn(['appState', 'currentMode']) === SeniMode.evolve) {
 
       const genotype = genotypes.get(i);
       const imageElement = phenotypes.getIn([i, 'imageElement']);
@@ -324,65 +319,11 @@ function createInitialGenotypePopulation(app, populationSize) {
   return new Immutable.List(genotypes);
 }
 
-
-function genotypesFromSelectedIndices(app, indices) {
-  let genotypes;
-
-  if (indices.size === 0) {
-    // if this is the first generation and nothing has been selected
-    // just randomize all of the phenotypes
-    genotypes = createInitialGenotypePopulation(app, app.get('populationSize'));
-  } else {
-    const pg = app.get('genotypes');
-    let selectedGenotypes = new Immutable.List();
-    for (let i = 0; i < indices.size; i++) {
-      selectedGenotypes = selectedGenotypes.push(pg.get(indices.get(i)));
-    }
-
-    genotypes = Genetic.nextGeneration(
-      selectedGenotypes,
-      app.get('populationSize'),
-      app.get('mutationRate'),
-      app.get('traits'), 42);
-  }
-
-  return genotypes;
-}
-/*
-function genotypesFromSelectedPhenotypes(appAtom) {
-
-  let app = appAtom.app;
-
-  showPlaceholderImages(app);
-
-  const selectedIndices = app.get('selectedIndices');
-  const genotypes = genotypesFromSelectedIndices(app, selectedIndices);
-
-  app = app.set('genotypes', genotypes);
-
-  // render the genotypes
-  renderPhenotypes(app);
-
-  app = app.set('previouslySelectedIndices',
-                app.get('selectedIndices'));
-  console.log('previouslySelectedIndices',
-              app.get('previouslySelectedIndices').toJS());
-
-  // clean up the dom and clear the selected state
-  app = app.set('selectedIndices', new Immutable.List());
-  app = updateSelectionUI(app);
-
-  historyPushState(app);
-
-  appAtom.app = app;
-  return appAtom;
-}
-*/
 // update the selected phenotypes in the evolve screen according to the
 // values in selectedIndices
 function updateSelectionUI(app) {
 
-  const selectedIndices = app.get('selectedIndices');
+  const selectedIndices = app.getIn(['appState', 'selectedIndices']);
   let s = '';
   selectedIndices.forEach(i => {
     s = `${s}, ${i}`;
@@ -410,8 +351,8 @@ function updateSelectionUI(app) {
   return app;
 }
 
-function onNextGen(appAtom) {
-  let app = appAtom.app;
+function onNextGen(atom) {
+  let app = atom.app;
 
   // get the selected genotypes for the next generation
   const populationSize = app.get('populationSize');
@@ -424,39 +365,58 @@ function onNextGen(appAtom) {
     }
   }
 
-  app = app.set('selectedIndices', selectedIndices);
+  app = app.setIn(['appState', 'selectedIndices'], selectedIndices);
 
   if (selectedIndices.size === 0) {
     // no phenotypes were selected
-    appAtom.app = app;
-    return appAtom;
+    atom.app = app;
+    return atom;
   }
 
   // update the last history state
-  historyReplaceState(app);
+  historyReplaceState(app.get('appState'));
 
   showPlaceholderImages(app);
 
-  const genotypes = genotypesFromSelectedIndices(app, selectedIndices);
+  let genotypes;
 
-  app = app.set('genotypes', genotypes);
+  if (selectedIndices.size === 0) {
+    // if this is the first generation and nothing has been selected
+    // just randomize all of the phenotypes
+    genotypes = createInitialGenotypePopulation(app, app.get('populationSize'));
+  } else {
+    const pg = app.getIn(['appState', 'genotypes']);
+    let selectedGenotypes = new Immutable.List();
+    for (let i = 0; i < selectedIndices.size; i++) {
+      selectedGenotypes =
+        selectedGenotypes.push(pg.get(selectedIndices.get(i)));
+    }
+
+    genotypes = Genetic.nextGeneration(
+      selectedGenotypes,
+      app.get('populationSize'),
+      app.get('mutationRate'),
+      app.get('traits'), 42);
+  }
+
+  app = app.setIn(['appState', 'genotypes'], genotypes);
 
   // render the genotypes
   renderPhenotypes(app);
 
   // this is the first selectedIndices.size genotypes
-  app = app.set('previouslySelectedGenotypes',
+  app = app.setIn(['appState', 'previouslySelectedGenotypes'],
                 genotypes.slice(0, selectedIndices.size));
 
   // clean up the dom and clear the selected state
-  app = app.set('selectedIndices', new Immutable.List());
+  app = app.setIn(['appState', 'selectedIndices'], new Immutable.List());
   app = updateSelectionUI(app);
 
-  historyPushState(app);
+  historyPushState(app.get('appState'));
 
-  appAtom.app = app;
+  atom.app = app;
 
-  return appAtom;
+  return atom;
 }
 
 function createPhenotypeElement(id, placeholderImage) {
@@ -478,7 +438,7 @@ function createPhenotypeElement(id, placeholderImage) {
 }
 
 function setupAstAndTraits(app) {
-  const script = app.get('script');
+  const script = app.getIn(['appState', 'script']);
   app = app.set('frontAst', Runtime.buildFrontAst(script));
 
   const frontAst = app.get('frontAst');
@@ -491,13 +451,13 @@ function setupAstAndTraits(app) {
 }
 
 // invoked when the evolve screen is displayed after the edit screen
-function setupEvolveUI(appAtom) {
-  return afterLoadingPlaceholderImages(appAtom, app => {
+function setupEvolveUI(atom) {
+  return afterLoadingPlaceholderImages(atom, app => {
     app = setupAstAndTraits(app);
 
     const populationSize = app.get('populationSize');
     const genotypes = createInitialGenotypePopulation(app, populationSize);
-    app = app.set('genotypes', genotypes);
+    app = app.setIn(['appState', 'genotypes'], genotypes);
 
     // render the phenotypes
     renderPhenotypes(app);
@@ -506,8 +466,8 @@ function setupEvolveUI(appAtom) {
 }
 
 // invoked when restoring the evolve screen from the history api
-function restoreEvolveUI(appAtom) {
-  return afterLoadingPlaceholderImages(appAtom, app => {
+function restoreEvolveUI(atom) {
+  return afterLoadingPlaceholderImages(atom, app => {
     app = setupAstAndTraits(app);
     // render the phenotypes
     renderPhenotypes(app);
@@ -516,10 +476,10 @@ function restoreEvolveUI(appAtom) {
 }
 
 // callback accepts an app argument
-function afterLoadingPlaceholderImages(appAtom, callback) {
+function afterLoadingPlaceholderImages(atom, callback) {
 
   const allImagesLoadedSince = function(timeStamp) {
-    const app = appAtom.app;
+    const app = atom.app;
     const populationSize = app.get('populationSize');
     const phenotypes = app.get('phenotypes');
     for (let i = 0; i < populationSize; i++) {
@@ -532,25 +492,25 @@ function afterLoadingPlaceholderImages(appAtom, callback) {
 
   const initialTimeStamp = Date.now();
 
-  showPlaceholderImages(appAtom.app);
+  showPlaceholderImages(atom.app);
 
   setTimeout(function go() {
     // wait until all of the placeholder load events have been received
     // otherwise there may be image sizing issues, especially with the
     // first img element
     if (allImagesLoadedSince(initialTimeStamp)) {
-      appAtom.app = callback(appAtom.app);
+      atom.app = callback(atom.app);
     } else {
       setTimeout(go, 20);
     }
   });
-  return appAtom;
+  return atom;
 }
 
 function showCurrentMode(app) {
   // show the current container, hide the others
   const containers = app.get('containers');
-  const currentMode = app.get('currentMode');
+  const currentMode = app.getIn(['appState', 'currentMode']);
   for (let i = 0; i < SeniMode.numSeniModes; i++) {
     containers.get(i).className = i === currentMode ? '' : 'hidden';
   }
@@ -559,11 +519,11 @@ function showCurrentMode(app) {
 
 function showScriptInEditor(app) {
   const editor = app.get('editor');
-  editor.getDoc().setValue(app.get('script'));
+  editor.getDoc().setValue(app.getIn(['appState', 'script']));
   editor.refresh();
 }
 
-function showEditFromGallery(appAtom, element) {
+function showEditFromGallery(atom, element) {
 
   const getGalleryItemIdFromDom = function(e) {
     while (e) {
@@ -585,10 +545,10 @@ function showEditFromGallery(appAtom, element) {
     get(url).catch(() => {
       console.error(`cannot connect to ${url}`);
     }).then(data => {
-      let sa = appAtom.app;
-      sa = sa.set('script', data);
-      appAtom.app = sa;
-      appAtom = ensureMode(appAtom, SeniMode.edit);
+      let sa = atom.app;
+      sa = sa.setIn(['appState', 'script'], data);
+      atom.app = sa;
+      atom = ensureMode(atom, SeniMode.edit);
     });
   }
 }
@@ -605,8 +565,8 @@ function resizeContainers() {
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
-function polluteGlobalDocument(appAtom) {
-  const app = appAtom.app;
+function polluteGlobalDocument(atom) {
+  const app = atom.app;
 
   document.seni = {};
   document.seni.title = Trivia.getTitle;
@@ -637,8 +597,8 @@ function polluteGlobalDocument(appAtom) {
   document.seni.app = app;
 }
 
-function setupUI(appAtom) {
-  let sa = appAtom.app;
+function setupUI(atom) {
+  let sa = atom.app;
   const d = document;
 
   sa = sa
@@ -663,13 +623,14 @@ function setupUI(appAtom) {
   const config = CodeMirrorConfig.defaultConfig;
   config.extraKeys = {
     'Ctrl-E': () => {
-      appAtom.app = appAtom.app.set('script', getScriptFromEditor(appAtom.app));
-      timedRenderScript(appAtom.app, 'renderScript');
+      atom.app = atom.app.setIn(['appState', 'script'],
+                                      getScriptFromEditor(atom.app));
+      timedRenderScript(atom.app, 'renderScript');
       return false;
     },
     'Ctrl-D': () => false,
     'Ctrl-I': () => {
-      const editor = appAtom.app.get('editor');
+      const editor = atom.app.get('editor');
       const numLines = editor.doc.size;
       blockIndent(editor, 0, numLines);
       console.log('indenting', numLines, 'lines');
@@ -681,16 +642,17 @@ function setupUI(appAtom) {
   sa = sa.set('editor', codeMirror.fromTextArea(textArea, config));
 
   const galleryModeHandler = event => {
-    appAtom = ensureMode(appAtom, SeniMode.gallery);
+    atom = ensureMode(atom, SeniMode.gallery);
     event.preventDefault();
   };
 
   const evolveModeHandler = event => {
     // get the latest script from the editor
-    appAtom.app = appAtom.app.set('script', getScriptFromEditor(appAtom.app));
-    historyReplaceState(appAtom.app);
+    atom.app = atom.app.setIn(['appState', 'script'],
+                                    getScriptFromEditor(atom.app));
+    historyReplaceState(atom.app.get('appState'));
 
-    appAtom = ensureMode(appAtom, SeniMode.evolve);
+    atom = ensureMode(atom, SeniMode.evolve);
     event.preventDefault();
   };
 
@@ -699,12 +661,12 @@ function setupUI(appAtom) {
 
   addClickEvent('shuffle-btn', event => {
 
-    let app = appAtom.app;
+    let app = atom.app;
 
     showPlaceholderImages(app);
 
-    app = app.set('genotypes', Genetic.nextGeneration(
-      app.get('previouslySelectedGenotypes'),
+    app = app.setIn(['appState', 'genotypes'], Genetic.nextGeneration(
+      app.getIn(['appState', 'previouslySelectedGenotypes']),
       app.get('populationSize'),
       app.get('mutationRate'),
       app.get('traits'),
@@ -714,53 +676,53 @@ function setupUI(appAtom) {
     renderPhenotypes(app);
 
     // clean up the dom and clear the selected state
-    app = app.set('selectedIndices', new Immutable.List());
+    app = app.setIn(['appState', 'selectedIndices'], new Immutable.List());
     app = updateSelectionUI(app);
 
-    appAtom.app = app;
+    atom.app = app;
 
-//    appAtom = genotypesFromSelectedPhenotypes(appAtom);
+//    atom = genotypesFromSelectedPhenotypes(atom);
     event.preventDefault();
   });
 
   addClickEvent('eval-btn', () => {
-    let app = appAtom.app;
+    let app = atom.app;
     const editor = app.get('editor');
-    app = app.set('script', editor.getValue());
+    app = app.setIn(['appState', 'script'], editor.getValue());
     timedRenderScript(app, 'renderScript');
-    appAtom.app = app;
+    atom.app = app;
   });
 /*
   addClickEvent('action-add', () => {
-    const app = appAtom.app;
-    appAtom.app = app.set('script', '');
-    appAtom = ensureMode(appAtom, SeniMode.edit);
+    const app = atom.app;
+    atom.app = app.set('script', '');
+    atom = ensureMode(atom, SeniMode.edit);
   });
 */
   addClickEvent('gallery-container', event => {
     const target = event.target;
     if (target.classList.contains('show-edit')) {
-      showEditFromGallery(appAtom, target);
+      showEditFromGallery(atom, target);
     }
     event.preventDefault();
   });
 
   addClickEvent('evolve-container', event => {
-    const app = appAtom.app;
+    const app = atom.app;
 
     const target = event.target;
     if (target.classList.contains('render')) {
       renderHighRes(app, target);
     } else if (target.classList.contains('edit')) {
-      appAtom = showEditFromEvolve(appAtom, target);
+      atom = showEditFromEvolve(atom, target);
     } else {
-      appAtom.app = toggleSelection(app, target);
+      atom.app = toggleSelection(app, target);
     }
     event.preventDefault();
   });
 
   addClickEvent('next-btn', () => {
-    appAtom = onNextGen(appAtom);
+    atom = onNextGen(atom);
   });
 
   addClickEvent('high-res-close', event => {
@@ -773,17 +735,17 @@ function setupUI(appAtom) {
   const dKey = 68;
   document.addEventListener('keydown', event => {
     if (event.ctrlKey && event.keyCode === dKey &&
-        appAtom.app.get('currentMode') === SeniMode.evolve) {
+        atom.app.getIn(['appState', 'currentMode']) === SeniMode.evolve) {
       event.preventDefault();
-      appAtom = onNextGen(appAtom);
+      atom = onNextGen(atom);
     }
   }, false);
 
   // invoked on every load event for an img tag
   const imageLoadHandler = event => {
-    const app = appAtom.app;
+    const app = atom.app;
     const imageId = event.target.getAttribute('data-id');
-    appAtom.app = app.setIn(['phenotypes', imageId, 'imageLoadTimeStamp'],
+    atom.app = app.setIn(['phenotypes', imageId, 'imageLoadTimeStamp'],
                             event.timeStamp);
   };
 
@@ -820,16 +782,19 @@ function setupUI(appAtom) {
 
   window.addEventListener('popstate', event => {
     if (event.state) {
-      appAtom = historyRestoreState(appAtom, event.state);
+      const appState = historyRestoreState(event.state);
+      atom.app = atom.app.set('appState', appState);
+      atom = updateUI(atom);
+      // atom = historyRestoreState(atom, event.state);
     } else {
       // no event.state so behave as if the user has visited the '/' of the app
-      appAtom = ensureMode(appAtom, SeniMode.gallery);
+      atom = ensureMode(atom, SeniMode.gallery);
     }
   });
 
-  appAtom.app = sa;
+  atom.app = sa;
 
-  return appAtom;
+  return atom;
 }
 
 function getGallery() {
@@ -871,77 +836,78 @@ function getGallery() {
 }
 
 let jjj = 1;
-function historyBuildState(app) {
+function historyBuildState(appState) {
   // can't store the entire app since it contains DOM elements and there
   // is a 640k size limit on the serialized data structures.
   //
   const state = {
     stateCounter: jjj,
-    currentMode: app.get('currentMode'),
-    previouslySelectedGenotypes: app.get('previouslySelectedGenotypes').toJS(),
-    selectedIndices: app.get('selectedIndices').toJS(),
-    script: app.get('script'),
-    genotypes: app.get('genotypes').toJS()
+    currentMode: appState.get('currentMode'),
+    previouslySelectedGenotypes:
+    appState.get('previouslySelectedGenotypes').toJS(),
+    selectedIndices: appState.get('selectedIndices').toJS(),
+    script: appState.get('script'),
+    genotypes: appState.get('genotypes').toJS()
   };
 
-  const uri = `#${seniModeAsString(app.get('currentMode'))}-${jjj}`;
+  const uri = `#${seniModeAsString(appState.get('currentMode'))}-${jjj}`;
   jjj += 1;
   return [state, uri];
 }
 
-function historyPushState(app) {
-  const [state, uri] = historyBuildState(app);
+function historyPushState(appState) {
+  const [state, uri] = historyBuildState(appState);
   console.log('historyPushState', state);
   history.pushState(state, null, uri);
 }
 
-function historyReplaceState(app) {
-  const [state, uri] = historyBuildState(app);
+function historyReplaceState(appState) {
+  const [state, uri] = historyBuildState(appState);
   console.log('historyReplace', state);
   history.replaceState(state, null, uri);
 }
 
-function historyRestoreState(appAtom, state) {
+function historyRestoreState(state) {
   console.log('historyRestore', state);
 
   /**
    * Note: would like to use:
    *
-   *    app = app.merge(state);
+   *    return Immutable.fromJS(state)
    *
    * but some of the genotypes may contain values that are plain JS arrays
    * e.g. seni code like:
    *
    * (define coords {[[10 10] [20 20] [20 20]] (vector)})
    *
-   * calling merge will convert them into Immutable objects and that will
+   * don't want to convert them into Immutable objects as that will
    * screw up the later stages that expect plain JS objects/primitives
    */
+  function deserializeGenotypes(genotypes) {
+    return genotypes.reduce((list, genotype) => {
+      const gt = genotype.reduce((lst, g) => lst.push(g), new Immutable.List());
+      return list.push(gt);
+    }, new Immutable.List());
+  }
 
-  let app = appAtom.app;
+  return Immutable.fromJS({
+    currentMode: state.currentMode,
+    previouslySelectedGenotypes: deserializeGenotypes(
+      state.previouslySelectedGenotypes),
+    selectedIndices: state.selectedIndices,
+    script: state.script,
+    genotypes: deserializeGenotypes(state.genotypes)
+  });
+}
 
-  const genotypes = state.genotypes.reduce((list, genotype) => {
-    const gt = genotype.reduce((lst, g) => lst.push(g), new Immutable.List());
-    return list.push(gt);
-  }, new Immutable.List());
-
-  const psg = state.previouslySelectedGenotypes;
-  const prevGenotypes = psg.reduce((list, genotype) => {
-    const gt = genotype.reduce((lst, g) => lst.push(g), new Immutable.List());
-    return list.push(gt);
-  }, new Immutable.List());
-
-  app = app
-    .set('currentMode', state.currentMode)
-    .set('previouslySelectedGenotypes', prevGenotypes)
-    .set('selectedIndices', new Immutable.List(state.selectedIndices))
-    .set('script', state.script)
-    .set('genotypes', genotypes);
-
-
-  appAtom.app = app;
-  appAtom = updateUI(appAtom);
-  return appAtom;
+function createAppState() {
+  return Immutable.fromJS({
+    currentMode: SeniMode.gallery,
+    previouslySelectedGenotypes: [],
+    selectedIndices: [],
+    script: undefined,
+    genotypes: []
+  });
 }
 
 /**
@@ -952,7 +918,6 @@ function historyRestoreState(appAtom, state) {
  */
 function createSeniApp() {
   let app = Immutable.fromJS({
-    currentMode: SeniMode.gallery,
     renderer: undefined,
     editor: undefined,
     // the top nav bar across the app
@@ -971,17 +936,11 @@ function createSeniApp() {
 
     // information about the current piece being created/rendered
     phenotypes: [], // stored in an Immutable.List
-
-    previouslySelectedGenotypes: [],
-    selectedIndices: [],
-    script: undefined,
     frontAst: undefined,
     backAst: undefined,
     traits: undefined,
-    genotypes: [],
 
-    // for browser history modification
-    lastState: undefined
+    appState: createAppState()
   });
 
   const canvasElement = document.getElementById('render-canvas');
@@ -999,9 +958,9 @@ function createSeniApp() {
 export default function main() {
   resizeContainers();
 
-  let appAtom = createSeniApp();
+  let atom = createSeniApp();
 
-  polluteGlobalDocument(appAtom);
-  appAtom = setupUI(appAtom);
+  polluteGlobalDocument(atom);
+  atom = setupUI(atom);
   getGallery();
 }
