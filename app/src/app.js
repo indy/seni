@@ -22,8 +22,9 @@ import Runtime from './lang/Runtime';
 import Bind from './seni/Bind';
 import Trivia from './seni/Trivia';
 import CodeMirrorConfig from './ui/CodeMirrorConfig';
-import Util from './seni/Util';
+import Konsole from './ui/Konsole';
 
+import Util from './seni/Util';
 import Immutable from 'immutable';
 
 const SeniMode = {
@@ -138,7 +139,7 @@ function updateUI(atom) {
     break;
   case SeniMode.edit :
     showScriptInEditor(atom.app);
-    timedRenderScript(atom.app, 'renderScript');
+    timedRenderScript(atom.app);
     break;
   case SeniMode.evolve :
     // will only get called from historyRestoreState
@@ -179,8 +180,9 @@ function renderScript(app) {
   renderGenotypeToImage(app, backAst, genotype, imageElement);
 }
 
-function timedRenderScript(app, msg) {
-  Util.withTiming(msg, () => renderScript(app), false);
+function timedRenderScript(app) {
+  Util.withTiming('rendered', () => renderScript(app),
+                  app.get('konsole'));
 }
 
 function addClickEvent(id, fn) {
@@ -574,11 +576,11 @@ function polluteGlobalDocument(atom) {
     const v = app.getIn(['env', name]);
     if (v.pb) {
       const binding = v.pb;       // publicBinding
-      console.log(`${name}: ${binding.doc}`);
+      app.get('konsole').log(`${name}: ${binding.doc}`);
 
       if (showDefaultArgs) {
         const args = JSON.stringify(binding.defaults, null, ' ');
-        console.log('default arguments', args);
+        app.get('konsole').log(`default arguments ${args}`);
       }
     }
   };
@@ -592,7 +594,7 @@ function polluteGlobalDocument(atom) {
       res.push(k.value);
     }
     res.sort();
-    res.map(name => console.log(name));
+    res.map(name => app.get('konsole').log(name));
   };
   document.seni.app = app;
 }
@@ -619,27 +621,79 @@ function setupUI(atom) {
     });
   };
 
-  const codeMirror = CodeMirrorConfig.defineSeniMode();
+  const codeMirrorSeniMode = CodeMirrorConfig.defineSeniMode();
   const config = CodeMirrorConfig.defaultConfig;
+
+
+  // isg isg
+  let textArea = d.getElementById('konsole');
+  config.theme = 'konsole';
+
+
+
+  /* eslint-disable no-undef */
+  /* eslint-disable no-unused-vars */
+
+  // const el = document.getElementById('console');
+  const el = document.getElementById('konsole');
+  const konsole = new Konsole(el, {
+    prompt: '> ',
+    historyLabel: 'cs-console-demo',
+    syntax: 'javascript',
+    initialValue: 'This is starting content\nalong with multi-lines!\n',
+    welcomeMessage: 'Welcome to the cs console demo',
+    autoFocus: true,
+    theme: 'konsole',
+    commandValidate(line) {
+      return line.length > 0;
+    },
+    commandHandle(line, report, prompt) {
+
+      console.log('commandHandle', line, report, prompt);
+//     We aren't doing anything with the console input.
+
+//     This is where you might send the input to the server and get a response
+//     for example, an irb response or you could eval javascript here.
+      try {
+        const content = eval.call(this, line);
+        report({content: (content ? content.toString() : '')});
+      } catch (e) {
+        const conten = e.message;
+        report({content: (conten ? conten.toString() : '')});
+      }
+    }
+  });
+
+  el.style.height = `0%`;
+
+  sa = sa.set('konsole', konsole);
+  // konsoleGlobal = bindKonsole(sa);
+
+  /* eslint-enable no-unused-vars */
+  /* eslint-enable no-undef */
+
+  config.theme = 'default';
   config.extraKeys = {
     'Ctrl-E': () => {
       atom.app = atom.app.setIn(['appState', 'script'],
-                                      getScriptFromEditor(atom.app));
-      timedRenderScript(atom.app, 'renderScript');
+                                getScriptFromEditor(atom.app));
+      timedRenderScript(atom.app);
       return false;
     },
-    'Ctrl-D': () => false,
+    // make ctrl-k a noop, otherwise invoking the konsole will result in
+    // deleting a line from the editor
+    'Ctrl-K': () => false,
     'Ctrl-I': () => {
       const editor = atom.app.get('editor');
       const numLines = editor.doc.size;
       blockIndent(editor, 0, numLines);
-      console.log('indenting', numLines, 'lines');
+      konsole.log(`indenting ${numLines} lines`);
       return false;
     }
   };
 
-  const textArea = d.getElementById('codemirror-textarea');
-  sa = sa.set('editor', codeMirror.fromTextArea(textArea, config));
+  textArea = d.getElementById('edit-textarea');
+  sa = sa.set('editor', codeMirrorSeniMode.fromTextArea(textArea, config));
 
   const galleryModeHandler = event => {
     atom = ensureMode(atom, SeniMode.gallery);
@@ -689,7 +743,7 @@ function setupUI(atom) {
     let app = atom.app;
     const editor = app.get('editor');
     app = app.setIn(['appState', 'script'], editor.getValue());
-    timedRenderScript(app, 'renderScript');
+    timedRenderScript(app);
     atom.app = app;
   });
 /*
@@ -794,16 +848,29 @@ function setupUI(atom) {
 
   atom.app = sa;
 
+  let konsoleToggle = 0;
+  document.onkeydown = evt => {
+    evt = evt || window.event;
+
+    // Ctrl-K
+    if (evt.ctrlKey && evt.keyCode == 75) {
+      const konsolePanel2 = document.getElementById('konsole');
+
+      konsoleToggle = 1 - konsoleToggle;
+      if (konsoleToggle === 1) {
+        konsolePanel2.style.height = '50%';
+      } else {
+        konsolePanel2.style.height = '0%';
+      }
+      atom.app.get('konsole').refresh();
+      atom.app.get('editor').refresh();
+    }
+  };
+
   return atom;
 }
 
 function getGallery() {
-  const list = document.getElementById('gallery-container');
-  list.innerHTML = '';
-
-  const row = document.createElement('div');
-  row.className = 'cards';
-  list.appendChild(row);
 
   const createGalleryElement = galleryItem => {
     const container = document.createElement('div');
@@ -823,16 +890,36 @@ function getGallery() {
     return container;
   };
 
-  const url = '/gallery';
-  getJSON(url).then(galleryItems => {
-    // gets an array of gallery items
-    galleryItems.forEach(item => {
-      const e = createGalleryElement(item);
-      row.appendChild(e);
+  return new Promise((resolve, reject) => {
+    const list = document.getElementById('gallery-container');
+    list.innerHTML = '';
+
+    const row = document.createElement('div');
+    row.className = 'cards';
+    list.appendChild(row);
+
+    const url = '/gallery';
+    getJSON(url).then(galleryItems => {
+      // gets an array of gallery items
+      galleryItems.forEach(item => {
+        const e = createGalleryElement(item);
+        row.appendChild(e);
+      });
+      resolve();
+    }).catch(() => {
+      reject(Error(`cannot connect to ${url}`));
     });
-  }).catch(() => {
-    console.error(`cannot connect to ${url}`);
   });
+}
+
+// stops the konsole from briefly flashing at app startup
+// probably better to remove this and replace with some other
+// sort of CSS cleverness. (resorting to this since a CSS rule
+// of 'position: fixed;height:0;' for #konsole screws up Chrome
+// and requires a restart)
+function removeKonsoleInvisibility() {
+  const k = document.getElementById('konsole');
+  k.classList.remove('invisible');
 }
 
 let jjj = 1;
@@ -920,6 +1007,10 @@ function createSeniApp() {
   let app = Immutable.fromJS({
     renderer: undefined,
     editor: undefined,
+
+    // console CodeMirror element in the edit screen
+    konsole: undefined,
+
     // the top nav bar across the app
     navbar: undefined,
     // the img destination that shows the rendered script in edit mode
@@ -954,13 +1045,16 @@ function createSeniApp() {
   return {app};
 }
 
-
 export default function main() {
+
   resizeContainers();
 
   let atom = createSeniApp();
 
-  polluteGlobalDocument(atom);
   atom = setupUI(atom);
-  getGallery();
+  polluteGlobalDocument(atom);
+
+  getGallery()
+    .then(removeKonsoleInvisibility)
+    .catch(error => console.error(error));
 }

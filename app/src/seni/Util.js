@@ -25,14 +25,21 @@ export default {
     return res;
   },
 
-  // execute the function and log the time that it takes
-  withTiming: (msg, fn, shouldLog) => {
+  /**
+   * Execute the function and log the time that it takes
+   *
+   * @param {string}   msg     the message to log
+   * @param {function} fn      the function to time
+   * @param {Object}   console the object that can log the timing information
+   */
+  //
+  withTiming: (msg, fn, console) => {
     const before = new Date();
     fn();
     const after = new Date();
     const duration = after - before;
-    if (shouldLog) {
-      console.log(msg, duration, 'ms');
+    if (console) {
+      console.log(`${msg} ${duration} ms`);
     }
   }
 };

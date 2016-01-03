@@ -26,20 +26,21 @@
           <button id="shuffle-btn" class="navbar-button inactive-button">Shuffle</button>
         </div>
       </div>
-      
     </nav>
-
     <canvas id="render-canvas" width="500" height="500" class="hidden"></canvas>
 
+    <div id="konsole" class="invisible"></div>
+    
     <div id="gallery-container">
     </div>
-    
-    <div id="edit-container" class="hidden">
-      <div id="render-container">
+
+     <div id="edit-container" class="hidden">
+      <div id="render-panel">
         <img id="render-img"></img>
       </div>
+
       <div id="editor-container">
-        <textarea id="codemirror-textarea"></textarea> 
+        <textarea id="edit-textarea"></textarea>
       </div>
     </div>
 
