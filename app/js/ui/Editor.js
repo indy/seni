@@ -1,6 +1,6 @@
 /*
  *  Seni
- *  Copyright (C) 2015 Inderjit Gill <email@indy.io>
+ *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@ import CodeMirror from 'codemirror';
 import * as cb from 'codemirror/addon/edit/closebrackets';
 import * as mb from 'codemirror/addon/edit/matchbrackets';
 import CodeMirrorSeni from './CodeMirrorSeni';
+
+/* eslint-enable no-unused-vars */
 
 const modeName = 'seni';
 
