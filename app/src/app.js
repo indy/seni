@@ -680,9 +680,9 @@ function setupUI(atom) {
       timedRenderScript(atom.app);
       return false;
     },
-    // make ctrl-k a noop, otherwise invoking the konsole will result in
+    // make ctrl-m a noop, otherwise invoking the konsole will result in
     // deleting a line from the editor
-    'Ctrl-K': () => false,
+    'Ctrl-M': () => false,
     'Ctrl-I': () => {
       const editor = atom.app.get('editor');
       const numLines = editor.doc.size;
@@ -852,8 +852,8 @@ function setupUI(atom) {
   document.onkeydown = evt => {
     evt = evt || window.event;
 
-    // Ctrl-K
-    if (evt.ctrlKey && evt.keyCode == 75) {
+    // Ctrl-M
+    if (evt.ctrlKey && evt.keyCode == 77) {
       const konsolePanel2 = document.getElementById('konsole');
 
       konsoleToggle = 1 - konsoleToggle;
