@@ -25,24 +25,25 @@ import CodeMirrorSeni from './CodeMirrorSeni';
 
 const modeName = 'seni';
 
-const defaultConfig = {
-  lineNumbers: false,
-  mode: modeName,
-  autoCloseBrackets: true,
-  matchBrackets: true
-};
+function defineSeniMode() {
+  // return an instance of CodeMirror with Seni mode defined
+  CodeMirror.defineMode(modeName, CodeMirrorSeni.seniMode);
+  return CodeMirror;
+}
 
-const CodeMirrorConfig = {
-  defineSeniMode() {
-    // return an instance of CodeMirror with Seni mode defined
-    CodeMirror.defineMode(modeName, CodeMirrorSeni.seniMode);
-    return CodeMirror;
-  },
-  getCodeMirror() {
-    return CodeMirror;
-  },
-  defaultConfig,
-  modeName
-};
+function createEditor(element, customConfig) {
+  const codeMirrorSeniMode = defineSeniMode();
+  const defaultConfig = {
+    lineNumbers: false,
+    mode: modeName,
+    autoCloseBrackets: true,
+    matchBrackets: true
+  };
+  const res = Object.assign({}, defaultConfig, customConfig);
 
-export default CodeMirrorConfig;
+  return codeMirrorSeniMode.fromTextArea(element, res);
+}
+
+export default {
+  createEditor
+};

@@ -21,8 +21,8 @@ import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
 import Bind from './seni/Bind';
 import Trivia from './seni/Trivia';
-import CodeMirrorConfig from './ui/CodeMirrorConfig';
 import Konsole from './ui/Konsole';
+import Editor from './ui/Editor';
 
 import Util from './seni/Util';
 import Immutable from 'immutable';
@@ -599,44 +599,8 @@ function polluteGlobalDocument(atom) {
   document.seni.app = app;
 }
 
-function setupUI(atom) {
-  let sa = atom.app;
-  const d = document;
-
-  sa = sa
-    .set('navbar', document.getElementById('seni-navbar'))
-    .set('renderImage', document.getElementById('render-img'))
-    .set('containers',
-         new Immutable.List([document.getElementById('gallery-container'),
-                             document.getElementById('edit-container'),
-                             document.getElementById('evolve-container')]));
-
-  showButtonsFor(SeniMode.gallery);
-
-  const blockIndent = function(editor, from, to) {
-    editor.operation(() => {
-      for (let i = from; i < to; ++i) {
-        editor.indentLine(i, 'smart');
-      }
-    });
-  };
-
-  const codeMirrorSeniMode = CodeMirrorConfig.defineSeniMode();
-  const config = CodeMirrorConfig.defaultConfig;
-
-
-  // isg isg
-  let textArea = d.getElementById('konsole');
-  config.theme = 'konsole';
-
-
-
-  /* eslint-disable no-undef */
-  /* eslint-disable no-unused-vars */
-
-  // const el = document.getElementById('console');
-  const el = document.getElementById('konsole');
-  const konsole = new Konsole(el, {
+function createKonsole(element) {
+  return new Konsole(element, {
     prompt: '> ',
     historyLabel: 'cs-console-demo',
     syntax: 'javascript',
@@ -663,37 +627,64 @@ function setupUI(atom) {
       }
     }
   });
+}
 
-  el.style.height = `0%`;
+function createEditor(atom, editorTextArea) {
 
-  sa = sa.set('konsole', konsole);
-  // konsoleGlobal = bindKonsole(sa);
-
-  /* eslint-enable no-unused-vars */
-  /* eslint-enable no-undef */
-
-  config.theme = 'default';
-  config.extraKeys = {
-    'Ctrl-E': () => {
-      atom.app = atom.app.setIn(['appState', 'script'],
-                                getScriptFromEditor(atom.app));
-      timedRenderScript(atom.app);
-      return false;
-    },
-    // make ctrl-m a noop, otherwise invoking the konsole will result in
-    // deleting a line from the editor
-    'Ctrl-M': () => false,
-    'Ctrl-I': () => {
-      const editor = atom.app.get('editor');
-      const numLines = editor.doc.size;
-      blockIndent(editor, 0, numLines);
-      konsole.log(`indenting ${numLines} lines`);
-      return false;
-    }
+  const blockIndent = function(editor, from, to) {
+    editor.operation(() => {
+      for (let i = from; i < to; ++i) {
+        editor.indentLine(i, 'smart');
+      }
+    });
   };
 
-  textArea = d.getElementById('edit-textarea');
-  sa = sa.set('editor', codeMirrorSeniMode.fromTextArea(textArea, config));
+  return Editor.createEditor(editorTextArea, {
+    theme: 'default',
+    extraKeys: {
+      'Ctrl-E': () => {
+        atom.app = atom.app.setIn(['appState', 'script'],
+                                  getScriptFromEditor(atom.app));
+        timedRenderScript(atom.app);
+        return false;
+      },
+      // make ctrl-m a noop, otherwise invoking the konsole will result in
+      // deleting a line from the editor
+      'Ctrl-M': () => false,
+      'Ctrl-I': () => {
+        const editor = atom.app.get('editor');
+        const konsole = atom.app.get('konsole');
+        const numLines = editor.doc.size;
+        blockIndent(editor, 0, numLines);
+        konsole.log(`indenting ${numLines} lines`);
+        return false;
+      }
+    }
+  });
+}
+
+function setupUI(atom) {
+  let sa = atom.app;
+  const d = document;
+
+  sa = sa
+    .set('navbar', document.getElementById('seni-navbar'))
+    .set('renderImage', document.getElementById('render-img'))
+    .set('containers',
+         new Immutable.List([document.getElementById('gallery-container'),
+                             document.getElementById('edit-container'),
+                             document.getElementById('evolve-container')]));
+
+  showButtonsFor(SeniMode.gallery);
+
+  const konsoleElement = document.getElementById('konsole');
+  const konsole = createKonsole(konsoleElement);
+  sa = sa.set('konsole', konsole);
+  konsoleElement.style.height = `0%`;
+
+  const editorTextArea = d.getElementById('edit-textarea');
+  const editor = createEditor(atom, editorTextArea);
+  sa = sa.set('editor', editor);
 
   const galleryModeHandler = event => {
     atom = ensureMode(atom, SeniMode.gallery);
@@ -854,13 +845,13 @@ function setupUI(atom) {
 
     // Ctrl-M
     if (evt.ctrlKey && evt.keyCode == 77) {
-      const konsolePanel2 = document.getElementById('konsole');
+      const konsolePanel = document.getElementById('konsole');
 
       konsoleToggle = 1 - konsoleToggle;
       if (konsoleToggle === 1) {
-        konsolePanel2.style.height = '50%';
+        konsolePanel.style.height = '50%';
       } else {
-        konsolePanel2.style.height = '0%';
+        konsolePanel.style.height = '0%';
       }
       atom.app.get('konsole').refresh();
       atom.app.get('editor').refresh();
