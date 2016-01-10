@@ -87,24 +87,29 @@ function getScriptFromEditor(app) {
 }
 
 function showButtonsFor(mode) {
+  const evalBtn = document.getElementById('eval-btn');
+  const evolveBtn = document.getElementById('evolve-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const shuffleBtn = document.getElementById('shuffle-btn');
+
   switch (mode) {
   case SeniMode.gallery :
-    document.getElementById('eval-btn').classList.add('inactive-button');
-    document.getElementById('evolve-btn').classList.add('inactive-button');
-    document.getElementById('next-btn').classList.add('inactive-button');
-    document.getElementById('shuffle-btn').classList.add('inactive-button');
+    evalBtn.classList.add('inactive-button');
+    evolveBtn.classList.add('inactive-button');
+    nextBtn.classList.add('inactive-button');
+    shuffleBtn.classList.add('inactive-button');
     break;
   case SeniMode.edit :
-    document.getElementById('eval-btn').classList.remove('inactive-button');
-    document.getElementById('evolve-btn').classList.remove('inactive-button');
-    document.getElementById('next-btn').classList.add('inactive-button');
-    document.getElementById('shuffle-btn').classList.add('inactive-button');
+    evalBtn.classList.remove('inactive-button');
+    evolveBtn.classList.remove('inactive-button');
+    nextBtn.classList.add('inactive-button');
+    shuffleBtn.classList.add('inactive-button');
     break;
   case SeniMode.evolve :
-    document.getElementById('eval-btn').classList.add('inactive-button');
-    document.getElementById('evolve-btn').classList.add('inactive-button');
-    document.getElementById('next-btn').classList.remove('inactive-button');
-    document.getElementById('shuffle-btn').classList.remove('inactive-button');
+    evalBtn.classList.add('inactive-button');
+    evolveBtn.classList.add('inactive-button');
+    nextBtn.classList.remove('inactive-button');
+    shuffleBtn.classList.remove('inactive-button');
     break;
   }
 }
@@ -612,14 +617,15 @@ function createKonsole(element) {
       return line.length > 0;
     },
     commandHandle(line, report, prompt) {
-
       console.log('commandHandle', line, report, prompt);
-//     We aren't doing anything with the console input.
-
-//     This is where you might send the input to the server and get a response
-//     for example, an irb response or you could eval javascript here.
       try {
-        const content = eval.call(this, line);
+        let content = '';
+        // const content = eval.call(this, line);
+
+        if (line === 'title') {
+          content = Trivia.getTitle();
+        }
+
         report({content: (content ? content.toString() : '')});
       } catch (e) {
         const conten = e.message;
