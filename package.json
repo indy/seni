@@ -10,7 +10,7 @@
     "clean": "rm -rf app/dist",
     "serve": "node server/server.js",
     "monitor": "nodemon server/server.js --ignore app/ --ignore test/",
-    "docs": "documentation app/src/index.js -f html -o docs"
+    "docs": "documentation app/js/index.js -f html -o docs"
   },
   "repository": {
     "type": "git",

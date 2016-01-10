@@ -16,7 +16,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import Colour from '../../app/src/seni/Colour';
+import Colour from '../../app/js/seni/Colour';
 
 import chai from 'chai';
 const expect = chai.expect;

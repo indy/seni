@@ -16,7 +16,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import PseudoRandom from '../../app/src/seni/PseudoRandom';
+import PseudoRandom from '../../app/js/seni/PseudoRandom';
 
 import chai from 'chai';
 const expect = chai.expect;

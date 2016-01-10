@@ -16,8 +16,8 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import Token from '../../app/src/lang/Token';
-import TokenType from '../../app/src/lang/TokenType';
+import Token from '../../app/js/lang/Token';
+import TokenType from '../../app/js/lang/TokenType';
 
 import chai from 'chai';
 const expect = chai.expect;

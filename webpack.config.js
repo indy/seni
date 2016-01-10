@@ -3,7 +3,7 @@ var path = require('path');
 
 module.exports = {
   entry: {
-    seni: ['./app/src/index.js']
+    seni: ['./app/js/index.js']
     // why have polyfill?
     // ,polyfill: ['babel-polyfill']
   },
@@ -29,9 +29,9 @@ module.exports = {
         // Only run `.js` files through Babel
         test: /\.js$/,
 
-        // Skip any files outside of your project's `src` directory
+        // Skip any files outside of your project's `js` directory
         include: [
-          path.resolve(__dirname, 'app', 'src'),
+          path.resolve(__dirname, 'app', 'js'),
         ],
 
         // Options to configure babel with
@@ -45,7 +45,7 @@ module.exports = {
         loader: 'istanbul-instrumenter',
         test: /\.js$/,
 
-        include: path.resolve(__dirname, 'app', 'src')
+        include: path.resolve(__dirname, 'app', 'js')
 
       }
     ]*/

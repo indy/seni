@@ -16,7 +16,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import Paths from '../../app/src/seni/Paths';
+import Paths from '../../app/js/seni/Paths';
 
 import chai from 'chai';
 const expect = chai.expect;

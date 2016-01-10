@@ -19,11 +19,11 @@
 // todo: look into no-unused-expressions
 /* eslint-disable no-unused-expressions */
 
-import Lexer from '../../app/src/lang/Lexer';
-import Parser from '../../app/src/lang/Parser';
-import Unparser from '../../app/src/lang/Unparser';
-import Genetic from '../../app/src/lang/Genetic';
-import Compiler from '../../app/src/lang/Compiler';
+import Lexer from '../../app/js/lang/Lexer';
+import Parser from '../../app/js/lang/Parser';
+import Unparser from '../../app/js/lang/Unparser';
+import Genetic from '../../app/js/lang/Genetic';
+import Compiler from '../../app/js/lang/Compiler';
 
 import chai from 'chai';
 const expect = chai.expect;

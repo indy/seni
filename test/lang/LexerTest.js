@@ -16,8 +16,8 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import Lexer from '../../app/src/lang/Lexer';
-import TokenType from '../../app/src/lang/TokenType';
+import Lexer from '../../app/js/lang/Lexer';
+import TokenType from '../../app/js/lang/TokenType';
 
 import chai from 'chai';
 const expect = chai.expect;

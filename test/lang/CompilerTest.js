@@ -16,14 +16,14 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import Parser from '../../app/src/lang/Parser';
-import Lexer from '../../app/src/lang/Lexer';
-import Compiler from '../../app/src/lang/Compiler';
-import Genetic from '../../app/src/lang/Genetic';
-import Node from '../../app/src/lang/Node';
-import NodeList from '../../app/src/lang/NodeList';
-import NodeVector from '../../app/src/lang/NodeVector';
-import NodeType from '../../app/src/lang/NodeType';
+import Parser from '../../app/js/lang/Parser';
+import Lexer from '../../app/js/lang/Lexer';
+import Compiler from '../../app/js/lang/Compiler';
+import Genetic from '../../app/js/lang/Genetic';
+import Node from '../../app/js/lang/Node';
+import NodeList from '../../app/js/lang/NodeList';
+import NodeVector from '../../app/js/lang/NodeVector';
+import NodeType from '../../app/js/lang/NodeType';
 
 import chai from 'chai';
 const expect = chai.expect;

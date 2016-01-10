@@ -16,7 +16,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import MatrixStack from '../../app/src/seni/MatrixStack';
+import MatrixStack from '../../app/js/seni/MatrixStack';
 
 import chai from 'chai';
 const expect = chai.expect;
