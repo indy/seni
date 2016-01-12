@@ -5,8 +5,8 @@
   "scripts": {
     "test": "webpack-dev-server \"mocha!./test/test.js\" --output-filename testBundle.js --config webpack.config.test.js",
     "build": "webpack --progress",
-    "build-watch": "webpack --progress --watch",
-    "build-min": "webpack --progress --config webpack.config.min.js",
+    "build:watch": "webpack --progress --watch",
+    "build:min": "webpack --progress --config webpack.config.min.js",
     "clean": "rm -rf app/dist",
     "serve": "node server/server.js",
     "monitor": "nodemon server/server.js --ignore app/ --ignore test/",
