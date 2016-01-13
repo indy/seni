@@ -272,12 +272,15 @@ function loopingFn(env, expr, varName, params) {
 
   const stepsUpto = merged['steps-upto'];
 
+  // initialise res in case we don't assign anything to it again.
+  // (could happen in cases such as the 'to' is less than the 'from')
+  res = [env, undefined];
 
   if (stepsUpto !== undefined || steps !== undefined) {
     const s = stepsUpto || steps;
     if (s < 1) {
       console.log('steps-upto | steps  must be greater than 0');
-      return undefined;
+      return res;
     }
 
     limit = upto !== undefined ? upto : to;
@@ -296,7 +299,7 @@ function loopingFn(env, expr, varName, params) {
 
   if (increment === 0) {
     console.log('increment of 0 given');
-    return undefined;
+    return res;
   }
 
   if (upto !== undefined) {
