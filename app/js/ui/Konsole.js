@@ -254,6 +254,10 @@ class KonsoleHistory {
   }
 }
 
+// todo(isg): remove unused code,
+//            remove commandValidate???,
+//            remove keys
+//
 export default class Konsole {
   constructor(el, options) {
     this.keyMap = {

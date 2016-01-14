@@ -20,9 +20,10 @@ import Renderer from './seni/Renderer';
 import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
 import Bind from './seni/Bind';
-import Trivia from './seni/Trivia';
 import Konsole from './ui/Konsole';
 import Editor from './ui/Editor';
+import KonsoleCommander from './ui/KonsoleCommander';
+import { addDefaultCommands } from './ui/KonsoleCommands';
 
 import Util from './seni/Util';
 import Immutable from 'immutable';
@@ -572,67 +573,31 @@ function resizeContainers() {
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
-function polluteGlobalDocument(atom) {
-  const app = atom.app;
+function createKonsole(atom, element) {
 
-  document.seni = {};
-  document.seni.title = Trivia.getTitle;
-  document.seni.help = function(name, showDefaultArgs = false) {
-    const v = app.getIn(['env', name]);
-    if (v.pb) {
-      const binding = v.pb;       // publicBinding
-      app.get('konsole').log(`${name}: ${binding.doc}`);
-
-      if (showDefaultArgs) {
-        const args = JSON.stringify(binding.defaults, null, ' ');
-        app.get('konsole').log(`default arguments ${args}`);
-      }
-    }
-  };
-
-  document.seni.ls = function() {
-    const env = app.get('env');
-    const keys = env.keys();
-
-    const res = [];
-    for (let k = keys.next(); k.done === false; k = keys.next()) {
-      res.push(k.value);
-    }
-    res.sort();
-    res.map(name => app.get('konsole').log(name));
-  };
-  document.seni.app = app;
-}
-
-function createKonsole(element) {
-  return new Konsole(element, {
+  const konsole = new Konsole(element, {
     prompt: '> ',
     historyLabel: 'cs-console-demo',
     syntax: 'javascript',
     initialValue: 'This is starting content\nalong with multi-lines!\n',
     welcomeMessage: 'Welcome to the cs console demo',
     autoFocus: true,
-    theme: 'konsole',
+    theme: 'konsole'
+  });
+
+  const commander = new KonsoleCommander();
+  addDefaultCommands(atom, commander);
+
+  konsole.initCallbacks({
     commandValidate(line) {
       return line.length > 0;
     },
     commandHandle(line, report, prompt) {
-      console.log('commandHandle', line, report, prompt);
-      try {
-        let content = '';
-        // const content = eval.call(this, line);
-
-        if (line === 'title') {
-          content = Trivia.getTitle();
-        }
-
-        report({content: (content ? content.toString() : '')});
-      } catch (e) {
-        const conten = e.message;
-        report({content: (conten ? conten.toString() : '')});
-      }
+      commander.commandHandle(line, report, prompt);
     }
   });
+
+  return konsole;
 }
 
 function createEditor(atom, editorTextArea) {
@@ -684,7 +649,7 @@ function setupUI(atom) {
   showButtonsFor(SeniMode.gallery);
 
   const konsoleElement = document.getElementById('konsole');
-  const konsole = createKonsole(konsoleElement);
+  const konsole = createKonsole(atom, konsoleElement);
   sa = sa.set('konsole', konsole);
   konsoleElement.style.height = `0%`;
 
@@ -1046,10 +1011,8 @@ export default function main() {
 
   resizeContainers();
 
-  let atom = createSeniApp();
-
-  atom = setupUI(atom);
-  polluteGlobalDocument(atom);
+  // creates the atom
+  setupUI(createSeniApp());
 
   getGallery()
     .then(removeKonsoleInvisibility)
