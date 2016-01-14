@@ -17,36 +17,18 @@
  */
 
 import Renderer from './seni/Renderer';
+import Bind from './seni/Bind';
+import Util from './seni/Util';
 import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
-import Bind from './seni/Bind';
+import { SeniMode } from './ui/SeniMode';
 import Konsole from './ui/Konsole';
 import Editor from './ui/Editor';
 import KonsoleCommander from './ui/KonsoleCommander';
 import { addDefaultCommands } from './ui/KonsoleCommands';
+import History from './ui/History';
 
-import Util from './seni/Util';
 import Immutable from 'immutable';
-
-const SeniMode = {
-  gallery: 0,
-  edit: 1,
-  evolve: 2,
-  numSeniModes: 3
-};
-
-function seniModeAsString(mode) {
-  switch (mode) {
-  case SeniMode.gallery:
-    return 'SeniMode.gallery';
-  case SeniMode.edit:
-    return 'SeniMode.edit';
-  case SeniMode.evolve:
-    return 'SeniMode.evolve';
-  default:
-    return 'error unknown SeniMode value';
-  }
-}
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -130,7 +112,7 @@ function ensureMode(atom, mode) {
     atom = updateUI(atom);
   }
 
-  historyPushState(atom.app.get('appState'));
+  History.pushState(atom.app.get('appState'));
 
   return atom;
 }
@@ -148,7 +130,7 @@ function updateUI(atom) {
     timedRenderScript(atom.app);
     break;
   case SeniMode.evolve :
-    // will only get called from historyRestoreState
+    // will only get called from History.restoreState
     //
     atom = restoreEvolveUI(atom);
     break;
@@ -382,7 +364,7 @@ function onNextGen(atom) {
   }
 
   // update the last history state
-  historyReplaceState(app.get('appState'));
+  History.replaceState(app.get('appState'));
 
   showPlaceholderImages(app);
 
@@ -420,7 +402,7 @@ function onNextGen(atom) {
   app = app.setIn(['appState', 'selectedIndices'], new Immutable.List());
   app = updateSelectionUI(app);
 
-  historyPushState(app.get('appState'));
+  History.pushState(app.get('appState'));
 
   atom.app = app;
 
@@ -462,11 +444,12 @@ function setupAstAndTraits(app) {
 function setupEvolveUI(atom) {
   return afterLoadingPlaceholderImages(atom, app => {
     app = setupAstAndTraits(app);
-
     const populationSize = app.get('populationSize');
     const genotypes = createInitialGenotypePopulation(app, populationSize);
     app = app.setIn(['appState', 'genotypes'], genotypes);
-
+    // make sure that the history for the first evolve generation
+    // has the correct genotypes
+    History.replaceState(app.get('appState'));
     // render the phenotypes
     renderPhenotypes(app);
     return updateSelectionUI(app);
@@ -666,7 +649,7 @@ function setupUI(atom) {
     // get the latest script from the editor
     atom.app = atom.app.setIn(['appState', 'script'],
                                     getScriptFromEditor(atom.app));
-    historyReplaceState(atom.app.get('appState'));
+    History.replaceState(atom.app.get('appState'));
 
     atom = ensureMode(atom, SeniMode.evolve);
     event.preventDefault();
@@ -798,10 +781,10 @@ function setupUI(atom) {
 
   window.addEventListener('popstate', event => {
     if (event.state) {
-      const appState = historyRestoreState(event.state);
+      const appState = History.restoreState(event.state);
       atom.app = atom.app.set('appState', appState);
       atom = updateUI(atom);
-      // atom = historyRestoreState(atom, event.state);
+      // atom = History.restoreState(atom, event.state);
     } else {
       // no event.state so behave as if the user has visited the '/' of the app
       atom = ensureMode(atom, SeniMode.gallery);
@@ -882,71 +865,6 @@ function getGallery() {
 function removeKonsoleInvisibility() {
   const k = document.getElementById('konsole');
   k.classList.remove('invisible');
-}
-
-let jjj = 1;
-function historyBuildState(appState) {
-  // can't store the entire app since it contains DOM elements and there
-  // is a 640k size limit on the serialized data structures.
-  //
-  const state = {
-    stateCounter: jjj,
-    currentMode: appState.get('currentMode'),
-    previouslySelectedGenotypes:
-    appState.get('previouslySelectedGenotypes').toJS(),
-    selectedIndices: appState.get('selectedIndices').toJS(),
-    script: appState.get('script'),
-    genotypes: appState.get('genotypes').toJS()
-  };
-
-  const uri = `#${seniModeAsString(appState.get('currentMode'))}-${jjj}`;
-  jjj += 1;
-  return [state, uri];
-}
-
-function historyPushState(appState) {
-  const [state, uri] = historyBuildState(appState);
-  console.log('historyPushState', state);
-  history.pushState(state, null, uri);
-}
-
-function historyReplaceState(appState) {
-  const [state, uri] = historyBuildState(appState);
-  console.log('historyReplace', state);
-  history.replaceState(state, null, uri);
-}
-
-function historyRestoreState(state) {
-  console.log('historyRestore', state);
-
-  /**
-   * Note: would like to use:
-   *
-   *    return Immutable.fromJS(state)
-   *
-   * but some of the genotypes may contain values that are plain JS arrays
-   * e.g. seni code like:
-   *
-   * (define coords {[[10 10] [20 20] [20 20]] (vector)})
-   *
-   * don't want to convert them into Immutable objects as that will
-   * screw up the later stages that expect plain JS objects/primitives
-   */
-  function deserializeGenotypes(genotypes) {
-    return genotypes.reduce((list, genotype) => {
-      const gt = genotype.reduce((lst, g) => lst.push(g), new Immutable.List());
-      return list.push(gt);
-    }, new Immutable.List());
-  }
-
-  return Immutable.fromJS({
-    currentMode: state.currentMode,
-    previouslySelectedGenotypes: deserializeGenotypes(
-      state.previouslySelectedGenotypes),
-    selectedIndices: state.selectedIndices,
-    script: state.script,
-    genotypes: deserializeGenotypes(state.genotypes)
-  });
 }
 
 function createAppState() {

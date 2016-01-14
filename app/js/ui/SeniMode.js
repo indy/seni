@@ -1,0 +1,37 @@
+/*
+ *  Seni
+ *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+export const SeniMode = {
+  gallery: 0,
+  edit: 1,
+  evolve: 2,
+  numSeniModes: 3
+};
+
+export function seniModeAsString(mode) {
+  switch (mode) {
+  case SeniMode.gallery:
+    return 'SeniMode.gallery';
+  case SeniMode.edit:
+    return 'SeniMode.edit';
+  case SeniMode.evolve:
+    return 'SeniMode.evolve';
+  default:
+    return 'error unknown SeniMode value';
+  }
+}
