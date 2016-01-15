@@ -127,14 +127,27 @@ const defaultCoords = [[440, 400],
 const publicBindings = [
   new PublicBinding(
     'interp/fn',
-    ``,
+    `returns function for remapping values
+args:
+  from     : [0 1]
+  to       : [0 100]
+  clamping : false
+  mapping  : one of 'linear', 'quick', 'slow-in', 'slow-in-out'
+
+returns a function which accepts a 'val' argument`,
     {},
     () => remapFn
   ),
 
   new PublicBinding(
     'interp/cos',
-    `note: t goes from 0 to math/TAU`,
+    `calculate cosine value of t
+args:
+  amplitude : 1
+  frequency : 1
+  t         : 1
+
+note: t goes from 0 to math/TAU`,
     {amplitude: 1, frequency: 1, t: 1},
     self => params => {
       const {amplitude, frequency, t} = self.mergeWithDefaults(params);
@@ -145,7 +158,13 @@ const publicBindings = [
 
   new PublicBinding(
     'interp/sin',
-    `note: t goes from 0 to math/TAU`,
+    `calculate sin value of t
+args:
+  amplitude : 1
+  frequency : 1
+  t         : 1
+
+note: t goes from 0 to math/TAU`,
     {amplitude: 1, frequency: 1, t: 1},
     self => params => {
       const {amplitude, frequency, t} = self.mergeWithDefaults(params);
@@ -156,7 +175,10 @@ const publicBindings = [
 
   new PublicBinding(
     'interp/bezier',
-    ``,
+    `returns a point on a Bezier curve
+args:
+  coords : four vectors representing control points on a Bezier curve
+  t      : the t value along the curve`,
     {coords: defaultCoords, t: 1},
     self => params => {
       const {coords, t} = self.mergeWithDefaults(params);
@@ -167,7 +189,11 @@ const publicBindings = [
 
   new PublicBinding(
     'interp/bezier-fn',
-    ``,
+    `returns a function which calculates points on a Bezier curve
+args:
+  coords : four vectors representing control points on a Bezier curve
+
+returns a function which, when given 't' returns the point on the curve`,
     {coords: defaultCoords},
     self => params => {
       const {coords} = self.mergeWithDefaults(params);
@@ -178,7 +204,10 @@ const publicBindings = [
 
   new PublicBinding(
     'interp/bezier-tangent',
-    ``,
+    `returns a tangent vector for a point on a Bezier curve
+args:
+  coords : four vectors representing control points on a Bezier curve
+  t      : the t value along the curve`,
     {coords: defaultCoords, t: 1},
     self => params => {
       const {coords, t} = self.mergeWithDefaults(params);
@@ -188,7 +217,13 @@ const publicBindings = [
 
   new PublicBinding(
     'interp/bezier-tangent-fn',
-    ``,
+    `returns a function which calculates the tangent vector for a point on
+a Bezier curve
+args:
+  coords: four vectors representing control points on a Bezier curve
+
+returns a function which, when given 't' returns the tangent vector on
+the curve`,
     {coords: defaultCoords},
     self => params => {
       const {coords} = self.mergeWithDefaults(params);
@@ -200,7 +235,11 @@ const publicBindings = [
 
   new PublicBinding(
     'interp/circle',
-    ``,
+    `returns a point on a circle
+args:
+  position : vector for the position of the circle
+  radius   : radius of the circle
+  t        : parametric value along the circle`,
     {position: [0, 0],
      radius: 1,
      t: 0

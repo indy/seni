@@ -98,7 +98,18 @@ function pathCurve(publicBinding, params, coordFn) {
 const publicBindings = [
   new PublicBinding(
     'path/linear',
-    `a linear path`,
+    `invokes a given function with positions along a linear path
+args:
+  coords  : [[0 0] [100 100]]
+  fn      : a function
+  steps   : 10
+  t-start : 0.0
+  t-end   : 1.0
+
+will invoke fn with the following arguments:
+  step     : the current step
+  position : the current position
+  t        : the current t value`,
     {
       coords: [[0, 0], [100, 100]],
       fn: emptyFn,
@@ -110,7 +121,19 @@ const publicBindings = [
 
   new PublicBinding(
     'path/circle',
-    `a circular path`,
+    `invokes a given function with positions along a circular path
+args:
+  position : the centre of the circle [500 500]
+  radius   : the radius of the circle
+  fn      : a function
+  steps   : 10
+  t-start : 0.0
+  t-end   : 1.0
+
+will invoke fn with the following arguments:
+  step     : the current step
+  position : the current position
+  t        : the current t value`,
     {
       position: [500, 500],
       radius: 100,
@@ -123,7 +146,18 @@ const publicBindings = [
 
   new PublicBinding(
     'path/spline',
-    `a quadratic spline path`,
+    `invokes a given function with positions along a quadratic spline path
+args:
+  coords  : [[0 0] [30 90] [100 100]]
+  fn      : a function
+  steps   : 10
+  t-start : 0.0
+  t-end   : 1.0
+
+will invoke fn with the following arguments:
+  step     : the current step
+  position : the current position
+  t        : the current t value`,
     {
       coords: [[0, 0], [30, 90], [100, 100]],
       fn: emptyFn,
@@ -135,7 +169,18 @@ const publicBindings = [
 
   new PublicBinding(
     'path/bezier',
-    `a bezier spline path`,
+    `invokes a given function with positions along a Bezier spline path
+args:
+  coords  : [[0 0] [30 90] [60 90] [100 100]]
+  fn      : a function
+  steps   : 10
+  t-start : 0.0
+  t-end   : 1.0
+
+will invoke fn with the following arguments:
+  step     : the current step
+  position : the current position
+  t        : the current t value`,
     {
       coords: [[0, 0], [30, 90], [60, 90], [100, 100]],
       fn: emptyFn,
