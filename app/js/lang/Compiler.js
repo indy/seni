@@ -18,6 +18,8 @@
 
 /* eslint-disable no-use-before-define */
 
+import Immutable from 'immutable';
+
 import NodeType from './NodeType';
 import Node from './Node';
 import NodeList from './NodeList';
@@ -33,7 +35,19 @@ function compile(node, genotype) {
   // null argument for genotypes e.g. Genetic::buildTraitFromNode
   if (node.alterable && genotype !== null) {
     // todo: assert that there's another genotype value available
-    return [genotype.first(), genotype.shift()];
+
+    let geno = genotype.first();
+    if (Immutable.Iterable.isIterable(geno)) {
+      // some genos will contain Immutable lists:
+      // e.g. (define coords {[[10 10] [20 20]] (vector)})
+      // rather than simple values:
+      // e.g. (define a {42})
+      //
+      // we need to convert these immutable objects back into JS
+      geno = geno.toJS();
+    }
+
+    return [geno, genotype.shift()];
   }
 
   if (node.type === NodeType.LIST) {

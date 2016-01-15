@@ -22,16 +22,3 @@ export const SeniMode = {
   evolve: 2,
   numSeniModes: 3
 };
-
-export function seniModeAsString(mode) {
-  switch (mode) {
-  case SeniMode.gallery:
-    return 'SeniMode.gallery';
-  case SeniMode.edit:
-    return 'SeniMode.edit';
-  case SeniMode.evolve:
-    return 'SeniMode.evolve';
-  default:
-    return 'error unknown SeniMode value';
-  }
-}

@@ -97,7 +97,8 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
   if (logToConsole) {
     console.log('childGenotype ', childGenotype);
   }
-  return new Immutable.List(childGenotype);
+
+  return Immutable.fromJS(childGenotype);
 }
 
 const Genetic = {
@@ -109,7 +110,7 @@ const Genetic = {
   },
 
   createGenotypeFromInitialValues: traits =>
-    new Immutable.List(traits.map(g => g.initialValue)),
+    Immutable.fromJS(traits.map(g => g.initialValue)),
 
   createGenotypeFromTraits: (traits, seed) => {
     const rng = PseudoRandom.buildUnsigned(seed);
@@ -118,7 +119,7 @@ const Genetic = {
     // env is the environment used to evaluate the bracketed forms
     const genotype = traits.map(trait => buildGeneFromTrait(trait, env));
 
-    return new Immutable.List(genotype);
+    return Immutable.fromJS(genotype);
   },
 
   nextGeneration: (genotypes, populationSize, mutationRate, traits, seed) => {

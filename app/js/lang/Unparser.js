@@ -16,6 +16,8 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import Immutable from 'immutable';
+
 import NodeType from './NodeType';
 
 const logToConsole = false;
@@ -73,9 +75,12 @@ function formatNodeValue(value, node) {
   return res;
 }
 
-// warning: thie function mutates genoIndex
 function pullValueFromGenotype(genotype) {
-  return [unparseSimplifiedAst(genotype.first()), genotype.shift()];
+  let geno = genotype.first();
+  if (Immutable.Iterable.isIterable(geno)) {
+    geno = geno.toJS();
+  }
+  return [unparseSimplifiedAst(geno), genotype.shift()];
 }
 
 function getMultipleValuesFromGenotype(nodes, genotype) {

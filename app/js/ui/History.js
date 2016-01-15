@@ -16,18 +16,29 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { seniModeAsString } from './SeniMode';
+import { SeniMode } from './SeniMode';
 import Immutable from 'immutable';
 
 const logToConsole = false;
 
-let jjj = 1;
+function seniModeAsString(mode) {
+  switch (mode) {
+  case SeniMode.gallery:
+    return 'gallery';
+  case SeniMode.edit:
+    return 'edit';
+  case SeniMode.evolve:
+    return 'evolve';
+  default:
+    return 'error unknown SeniMode value';
+  }
+}
+
 function buildState(appState) {
   // can't store the entire app since it contains DOM elements and there
   // is a 640k size limit on the serialized data structures.
   //
   const state = {
-    stateCounter: jjj,
     currentMode: appState.get('currentMode'),
     previouslySelectedGenotypes:
     appState.get('previouslySelectedGenotypes').toJS(),
@@ -36,8 +47,7 @@ function buildState(appState) {
     genotypes: appState.get('genotypes').toJS()
   };
 
-  const uri = `#${seniModeAsString(appState.get('currentMode'))}-${jjj}`;
-  jjj += 1;
+  const uri = `${seniModeAsString(appState.get('currentMode'))}`;
   return [state, uri];
 }
 
@@ -61,35 +71,7 @@ function restoreState(state) {
   if (logToConsole) {
     console.log('historyRestore', state);
   }
-
-  /**
-   * Note: would like to use:
-   *
-   *    return Immutable.fromJS(state)
-   *
-   * but some of the genotypes may contain values that are plain JS arrays
-   * e.g. seni code like:
-   *
-   * (define coords {[[10 10] [20 20] [20 20]] (vector)})
-   *
-   * don't want to convert them into Immutable objects as that will
-   * screw up the later stages that expect plain JS objects/primitives
-   */
-  function deserializeGenotypes(genotypes) {
-    return genotypes.reduce((list, genotype) => {
-      const gt = genotype.reduce((lst, g) => lst.push(g), new Immutable.List());
-      return list.push(gt);
-    }, new Immutable.List());
-  }
-
-  return Immutable.fromJS({
-    currentMode: state.currentMode,
-    previouslySelectedGenotypes: deserializeGenotypes(
-      state.previouslySelectedGenotypes),
-    selectedIndices: state.selectedIndices,
-    script: state.script,
-    genotypes: deserializeGenotypes(state.genotypes)
-  });
+  return Immutable.fromJS(state);
 }
 
 export default {
