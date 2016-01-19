@@ -19,8 +19,7 @@
 import Lexer from '../../app/js/lang/Lexer';
 import TokenType from '../../app/js/lang/TokenType';
 
-import chai from 'chai';
-const expect = chai.expect;
+import {expect} from 'chai';
 
 describe('Lexer', () => {
 

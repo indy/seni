@@ -18,8 +18,7 @@
 
 import MathUtil from '../../app/js/seni/MathUtil';
 
-import chai from 'chai';
-const expect = chai.expect;
+import {expect} from 'chai';
 
 describe('MathUtil', () => {
 

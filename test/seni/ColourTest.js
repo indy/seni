@@ -18,8 +18,7 @@
 
 import Colour from '../../app/js/seni/Colour';
 
-import chai from 'chai';
-const expect = chai.expect;
+import {expect} from 'chai';
 
 const Format = Colour.Format;
 

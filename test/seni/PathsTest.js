@@ -18,8 +18,7 @@
 
 import Paths from '../../app/js/seni/Paths';
 
-import chai from 'chai';
-const expect = chai.expect;
+import {expect} from 'chai';
 /* eslint-disable no-debugger */
 describe('Paths', () => {
 

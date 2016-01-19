@@ -26,8 +26,7 @@ import Lexer from '../../app/js/lang/Lexer';
 import Compiler from '../../app/js/lang/Compiler';
 import Genetic from '../../app/js/lang/Genetic';
 
-import chai from 'chai';
-const expect = chai.expect;
+import {expect} from 'chai';
 
 describe('Interpreter', () => {
 

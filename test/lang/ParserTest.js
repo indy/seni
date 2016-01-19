@@ -25,8 +25,7 @@ import NodeType from '../../app/js/lang/NodeType';
 import Token from '../../app/js/lang/Token';
 import TokenType from '../../app/js/lang/TokenType';
 
-import chai from 'chai';
-const expect = chai.expect;
+import {expect} from 'chai';
 
 describe('Parser', () => {
 

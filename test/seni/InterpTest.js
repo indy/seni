@@ -18,8 +18,7 @@
 
 import Interp from '../../app/js/seni/Interp';
 
-import chai from 'chai';
-const expect = chai.expect;
+import {expect} from 'chai';
 
 describe('Interp', () => {
 

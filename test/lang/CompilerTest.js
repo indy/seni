@@ -25,8 +25,7 @@ import NodeList from '../../app/js/lang/NodeList';
 import NodeVector from '../../app/js/lang/NodeVector';
 import NodeType from '../../app/js/lang/NodeType';
 
-import chai from 'chai';
-const expect = chai.expect;
+import {expect} from 'chai';
 
 describe('Compiler', () => {
 
