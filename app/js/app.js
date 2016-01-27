@@ -77,22 +77,22 @@ function showButtonsFor(mode) {
 
   switch (mode) {
   case SeniMode.gallery :
-    evalBtn.classList.add('inactive-button');
-    evolveBtn.classList.add('inactive-button');
-    nextBtn.classList.add('inactive-button');
-    shuffleBtn.classList.add('inactive-button');
+    evalBtn.classList.add('hidden');
+    evolveBtn.classList.add('hidden');
+    nextBtn.classList.add('hidden');
+    shuffleBtn.classList.add('hidden');
     break;
   case SeniMode.edit :
-    evalBtn.classList.remove('inactive-button');
-    evolveBtn.classList.remove('inactive-button');
-    nextBtn.classList.add('inactive-button');
-    shuffleBtn.classList.add('inactive-button');
+    evalBtn.classList.remove('hidden');
+    evolveBtn.classList.remove('hidden');
+    nextBtn.classList.add('hidden');
+    shuffleBtn.classList.add('hidden');
     break;
   case SeniMode.evolve :
-    evalBtn.classList.add('inactive-button');
-    evolveBtn.classList.add('inactive-button');
-    nextBtn.classList.remove('inactive-button');
-    shuffleBtn.classList.remove('inactive-button');
+    evalBtn.classList.add('hidden');
+    evolveBtn.classList.add('hidden');
+    nextBtn.classList.remove('hidden');
+    shuffleBtn.classList.remove('hidden');
     break;
   }
 }
@@ -794,23 +794,30 @@ function setupUI(atom) {
   atom.app = sa;
 
   let konsoleToggle = 0;
+
+  function toggleKonsole() {
+    const konsolePanel = document.getElementById('konsole');
+
+    konsoleToggle = 1 - konsoleToggle;
+    if (konsoleToggle === 1) {
+      konsolePanel.style.height = '50%';
+    } else {
+      konsolePanel.style.height = '0%';
+    }
+    atom.app.get('konsole').refresh();
+    atom.app.get('editor').refresh();
+  }
+
   document.onkeydown = evt => {
     evt = evt || window.event;
 
     // Ctrl-M
     if (evt.ctrlKey && evt.keyCode == 77) {
-      const konsolePanel = document.getElementById('konsole');
-
-      konsoleToggle = 1 - konsoleToggle;
-      if (konsoleToggle === 1) {
-        konsolePanel.style.height = '50%';
-      } else {
-        konsolePanel.style.height = '0%';
-      }
-      atom.app.get('konsole').refresh();
-      atom.app.get('editor').refresh();
+      toggleKonsole();
     }
   };
+
+  addClickEvent('console-btn', toggleKonsole);
 
   return atom;
 }
@@ -876,6 +883,9 @@ function createAppState() {
     genotypes: []
   });
 }
+
+
+
 
 /**
  * Creates the immutable SeniApp

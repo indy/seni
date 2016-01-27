@@ -382,6 +382,7 @@ export default class Konsole {
     el.className += ' cs-console cs-console-height cs-console-width';
     keyActions = new KeyActions(this.options);
     this.console = CodeMirror(el, {
+      scrollbarStyle: null,
       mode: {
         name: this.options.syntax,
         useCPP: true

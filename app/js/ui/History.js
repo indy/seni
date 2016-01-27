@@ -47,7 +47,7 @@ function buildState(appState) {
     genotypes: appState.get('genotypes').toJS()
   };
 
-  const uri = `${seniModeAsString(appState.get('currentMode'))}`;
+  const uri = `#${seniModeAsString(appState.get('currentMode'))}`;
   return [state, uri];
 }
 
