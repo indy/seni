@@ -36,8 +36,6 @@ export function createInitialState() {
     populationSize: 24,
     mutationRate: 0.1,
 
-    // information about the current piece being created/rendered
-    phenotypes: [], // stored in an Immutable.List
     frontAst: undefined,
     backAst: undefined,
     traits: undefined,
@@ -72,8 +70,6 @@ export function createStore(initialState) {
       return actionInitialGeneration(state, action);
     case 'NEXT_GENERATION':
       return actionNextGeneration(state, action);
-    case 'SET_PHENOTYPES':
-      return actionSetPhenotypes(state, action);
     case 'SET_SAVE_STATE':
       return actionSetSaveState(state, action);
     case 'SET_PREVIOUSLY_SELECTED_GENOTYPES':
@@ -110,10 +106,6 @@ function actionSetScript(state, action) {
 function actionSetSelectedIndices(state, action) {
   const si = action.selectedIndices || new Immutable.List();
   return state.setIn(['saveState', 'selectedIndices'], si);
-}
-
-function actionSetPhenotypes(state, action) {
-  return state.set('phenotypes', action.phenotypes);
 }
 
 function actionSetSaveState(state, action) {

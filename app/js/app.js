@@ -255,7 +255,7 @@ function renderPhenotypes(state) {
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to edit mode
-    const phenotypes = state.get('phenotypes');
+    const phenotypes = gUI.phenotypes;
     const genotypes = state.getIn(['saveState', 'genotypes']);
     if (i < phenotypes.size &&
         state.getIn(['saveState', 'currentMode']) === SeniMode.evolve) {
@@ -276,7 +276,7 @@ function renderPhenotypes(state) {
 function showPlaceholderImages(state) {
   const placeholder = state.get('placeholder');
   const populationSize = state.get('populationSize');
-  const phenotypes = state.get('phenotypes');
+  const phenotypes = gUI.phenotypes;
   for (let i = 0; i < populationSize; i++) {
     const imageElement = phenotypes.getIn([i, 'imageElement']);
     imageElement.src = placeholder;
@@ -291,14 +291,14 @@ function updateSelectionUI(state) {
 
   // clean up the dom and clear the selected state
   const populationSize = state.get('populationSize');
-  const phenotypes = state.get('phenotypes');
+  const phenotypes = gUI.phenotypes;
   for (let i = 0; i < populationSize; i++) {
     const element = phenotypes.getIn([i, 'phenotypeElement']);
     element.classList.remove('selected');
   }
 
   selectedIndices.forEach(i => {
-    const element = state.getIn(['phenotypes', i, 'phenotypeElement']);
+    const element = gUI.phenotypes.getIn([i, 'phenotypeElement']);
     element.classList.add('selected');
     return true;
   });
@@ -308,7 +308,7 @@ function onNextGen(store) {
   // get the selected genotypes for the next generation
   const populationSize = store.getState().get('populationSize');
   let selectedIndices = new Immutable.List();
-  const phenotypes = store.getState().get('phenotypes');
+  const phenotypes = gUI.phenotypes;
 
   for (let i = 0; i < populationSize; i++) {
     const element = phenotypes.getIn([i, 'phenotypeElement']);
@@ -417,7 +417,7 @@ function restoreEvolveUI(store) {
 function afterLoadingPlaceholderImages(state) {
 
   const allImagesLoadedSince = timeStamp => {
-    const phenotypes = state.get('phenotypes');
+    const phenotypes = gUI.phenotypes;
 
     return phenotypes.every(phenotype => {
       const imageElement = phenotype.get('imageElement');
@@ -713,8 +713,7 @@ function setupUI(store) {
     }));
   }
 
-  store.dispatch({type: 'SET_PHENOTYPES',
-                  phenotypes: new Immutable.List(phenotypes)});
+  gUI.phenotypes = new Immutable.List(phenotypes);
 
   window.addEventListener('popstate', event => {
     if (event.state) {
