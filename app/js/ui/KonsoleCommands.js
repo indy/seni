@@ -25,7 +25,7 @@ export function addDefaultCommands(atom, commander) {
     },
 
     execute() {
-      const app = atom.app;
+      const app = atom.getState();
       const env = app.get('env');
       const keys = env.keys();
 
@@ -54,7 +54,7 @@ export function addDefaultCommands(atom, commander) {
 
     execute(_, [name, showDefaultArgs]) {
       // todo: if no args given then show generic help for the konsole
-      const app = atom.app;
+      const app = atom.getState();
       const v = app.getIn(['env', name]);
 
       let res = '';

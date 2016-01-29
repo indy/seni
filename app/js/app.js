@@ -30,6 +30,137 @@ import History from './ui/History';
 
 import Immutable from 'immutable';
 
+
+function actionSetDomElements(state) {
+  const containers =
+          new Immutable.List([document.getElementById('gallery-container'),
+                              document.getElementById('edit-container'),
+                              document.getElementById('evolve-container')]);
+  return state
+    .set('navbar', document.getElementById('seni-navbar'))
+    .set('renderImage', document.getElementById('render-img'))
+    .set('containers', containers);
+}
+
+function actionCreateKonsole(state, action) {
+  const konsoleElement = document.getElementById('konsole');
+  const konsole = createKonsole(action.store, konsoleElement);
+  konsoleElement.style.height = `0%`;
+
+  return state.set('konsole', konsole);
+}
+
+function actionCreateEditor(state, action) {
+  const editorTextArea = document.getElementById('edit-textarea');
+  const editor = createEditor(action.store, editorTextArea);
+  return state.set('editor', editor);
+}
+
+function actionSetMode(state, action) {
+  return state.setIn(['saveState', 'currentMode'], action.mode);
+}
+
+function actionSetScript(state, action) {
+  return state.setIn(['saveState', 'script'], action.script);
+}
+
+function actionSetSelectedIndices(state, action) {
+  const si = action.selectedIndices || new Immutable.List();
+  return state.setIn(['saveState', 'selectedIndices'], si);
+}
+
+function actionSetPhenotypes(state, action) {
+  return state.set('phenotypes', action.phenotypes);
+}
+
+function actionSetSaveState(state, action) {
+  return state.set('saveState', action.saveState);
+}
+
+function actionSetPreviouslySelectedGenotypes(state, action) {
+  return state.setIn(['saveState', 'previouslySelectedGenotypes'],
+                     action.previouslySelectedGenotypes);
+}
+
+function actionSetupAstAndTraits(state) {
+  const script = state.getIn(['saveState', 'script']);
+  state = state.set('frontAst', Runtime.buildFrontAst(script));
+
+  const frontAst = state.get('frontAst');
+  state = state.set('backAst', Runtime.compileBackAst(frontAst));
+
+  const backAst = state.get('backAst');
+  state = state.set('traits', Genetic.buildTraits(backAst));
+
+  return state;
+}
+
+// todo: should populationSize be passed in the action?
+function actionInitialGeneration(state) {
+  const genos = createInitialGenotypePopulation(state,
+                                                state.get('populationSize'));
+  return state.setIn(['saveState', 'genotypes'], genos);
+}
+
+function actionNextGeneration(state, action) {
+  const genotypes = Genetic.nextGeneration(action.genotypes,
+                                           state.get('populationSize'),
+                                           state.get('mutationRate'),
+                                           state.get('traits'),
+                                           action.rng);
+  return state.setIn(['saveState', 'genotypes'], genotypes);
+}
+
+function createStore(initialState) {
+
+  let currentState = initialState;
+
+  function reducer(state, action) {
+    switch (action.type) {
+    case 'SET_DOM_ELEMENTS':
+      return actionSetDomElements(state);
+    case 'CREATE_KONSOLE':
+      return actionCreateKonsole(state, action);
+    case 'CREATE_EDITOR':
+      return actionCreateEditor(state, action);
+    case 'SET_MODE':
+      return actionSetMode(state, action);
+    case 'SET_SCRIPT':
+      return actionSetScript(state, action);
+    case 'SET_SELECTED_INDICES':
+      return actionSetSelectedIndices(state, action);
+    case 'INITIAL_GENERATION':
+      return actionInitialGeneration(state, action);
+    case 'NEXT_GENERATION':
+      return actionNextGeneration(state, action);
+    case 'SET_PHENOTYPES':
+      return actionSetPhenotypes(state, action);
+    case 'SET_SAVE_STATE':
+      return actionSetSaveState(state, action);
+    case 'SET_PREVIOUSLY_SELECTED_GENOTYPES':
+      return actionSetPreviouslySelectedGenotypes(state, action);
+    case 'SETUP_AST_AND_TRAITS':
+      return actionSetupAstAndTraits(state);
+    default:
+      return state;
+    }
+  }
+
+  function getState() {
+    return currentState;
+  }
+
+  function dispatch(action) {
+    currentState = reducer(currentState, action);
+  }
+
+  return {
+    getState,
+    dispatch
+  };
+}
+
+
 function get(url) {
   return new Promise((resolve, reject) => {
 
@@ -64,8 +195,8 @@ function getJSON(url) {
   return get(url).then(JSON.parse);
 }
 
-function getScriptFromEditor(app) {
-  const editor = app.get('editor');
+function getScriptFromEditor(state) {
+  const editor = state.get('editor');
   return editor.getValue();
 }
 
@@ -97,44 +228,42 @@ function showButtonsFor(mode) {
   }
 }
 
-function ensureMode(app, mode) {
+function ensureMode(store, mode) {
   return new Promise((resolve, _) => {
-    if (app.getIn(['appState', 'currentMode']) === mode) {
-      resolve(app);
+    if (store.getState().getIn(['saveState', 'currentMode']) === mode) {
+      resolve();
       return;
     }
 
-    app = app.setIn(['appState', 'currentMode'], mode);
-
-    History.pushState(app.get('appState'));
+    store.dispatch({type: 'SET_MODE', mode});
+    History.pushState(store.getState().get('saveState'));
 
     if (mode === SeniMode.evolve) {
-      showCurrentMode(app);
-      setupEvolveUI(app).then(app => {
+      showCurrentMode(store.getState());
+      setupEvolveUI(store).then(() => {
         // make sure that the history for the first evolve generation
         // has the correct genotypes
-        History.replaceState(app.get('appState'));
-
-        resolve(app);
+        History.replaceState(store.getState().get('saveState'));
+        resolve();
       });
     } else {
-      updateUI(app);
-      resolve(app);
+      updateUI(store.getState());
+      resolve();
     }
   });
 }
 
-// function that takes a read-only app and updates the UI
+// function that takes a read-only state and updates the UI
 //
-function updateUI(app) {
-  showCurrentMode(app);
+function updateUI(state) {
+  showCurrentMode(state);
 
-  switch (app.getIn(['appState', 'currentMode'])) {
+  switch (state.getIn(['saveState', 'currentMode'])) {
   case SeniMode.gallery :
     break;
   case SeniMode.edit :
-    showScriptInEditor(app);
-    timedRenderScript(app);
+    showScriptInEditor(state);
+    timedRenderScript(state);
     break;
   case SeniMode.evolve :
     // will only get here from History.restoreState
@@ -143,9 +272,9 @@ function updateUI(app) {
   }
 }
 
-function renderGenotypeToImage(app, ast, genotype, imageElement, w, h) {
+function renderGenotypeToImage(state, backAst, genotype, imageElement, w, h) {
 
-  const renderer = app.get('renderer');
+  const renderer = state.get('renderer');
 
   if (w !== undefined && h !== undefined) {
     renderer.preDrawScene(w, h);
@@ -153,28 +282,28 @@ function renderGenotypeToImage(app, ast, genotype, imageElement, w, h) {
     renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
   }
 
-  Runtime.evalAst(app.get('env'), ast, genotype);
+  Runtime.evalAst(state.get('env'), backAst, genotype);
 
   renderer.postDrawScene();
 
   imageElement.src = renderer.getImageData();
 }
 
-function renderScript(app) {
-  const imageElement = app.get('renderImage');
+function renderScript(state) {
+  const imageElement = state.get('renderImage');
 
-  const script = app.getIn(['appState', 'script']);
+  const script = state.getIn(['saveState', 'script']);
   const frontAst = Runtime.buildFrontAst(script);
   const backAst = Runtime.compileBackAst(frontAst);
   const traits = Genetic.buildTraits(backAst);
   const genotype = Genetic.createGenotypeFromInitialValues(traits);
 
-  renderGenotypeToImage(app, backAst, genotype, imageElement);
+  renderGenotypeToImage(state, backAst, genotype, imageElement);
 }
 
-function timedRenderScript(app) {
-  Util.withTiming('rendered', () => renderScript(app),
-                  app.get('konsole'));
+function timedRenderScript(state) {
+  Util.withTiming('rendered', () => renderScript(state),
+                  state.get('konsole'));
 }
 
 function addClickEvent(id, fn) {
@@ -202,23 +331,23 @@ function getPhenoIdFromDom(element) {
   return [-1, null];
 }
 
-function renderHighRes(app, element) {
+function renderHighRes(state, element) {
   console.log('renderHighRes');
 
   const [index, _] = getPhenoIdFromDom(element);
 
   if (index !== -1) {
-    const genotypes = app.getIn(['appState', 'genotypes']);
+    const genotypes = state.getIn(['saveState', 'genotypes']);
     const genotype = genotypes.get(index);
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('hidden');
-    const script = app.getIn(['appState', 'script']);
+    const script = state.getIn(['saveState', 'script']);
     const frontAst = Runtime.buildFrontAst(script);
     const backAst = Runtime.compileBackAst(frontAst);
 
     const imageElement = document.getElementById('high-res-image');
-    const [width, height] = app.get('highResolution');
-    renderGenotypeToImage(app, backAst, genotype, imageElement,
+    const [width, height] = state.get('highResolution');
+    renderGenotypeToImage(state, backAst, genotype, imageElement,
                           width, height);
 
     const linkElement = document.getElementById('high-res-link');
@@ -226,43 +355,43 @@ function renderHighRes(app, element) {
   }
 }
 
-function showEditFromEvolve(app, element) {
+function showEditFromEvolve(store, element) {
   return new Promise((resolve, _reject) => {
     const [index, _] = getPhenoIdFromDom(element);
     if (index !== -1) {
-      const genotypes = app.getIn(['appState', 'genotypes']);
+      const genotypes = store.getState().getIn(['saveState', 'genotypes']);
       const genotype = genotypes.get(index);
-      const frontAst = app.get('frontAst');
+      const frontAst = store.getState().get('frontAst');
 
       const script = Runtime.unparse(frontAst, genotype);
 
-      app = app.setIn(['appState', 'script'], script);
+      store.dispatch({type: 'SET_SCRIPT', script});
 
-      ensureMode(app, SeniMode.edit).then(app => {
-        resolve(app);
+      ensureMode(store, SeniMode.edit).then(() => {
+        resolve();
       });
     } else {
-      resolve(app);
+      resolve();
     }
   });
 }
 
-function renderPhenotypes(app) {
+function renderPhenotypes(state) {
 
   let i = 0;
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to edit mode
-    const phenotypes = app.get('phenotypes');
-    const genotypes = app.getIn(['appState', 'genotypes']);
+    const phenotypes = state.get('phenotypes');
+    const genotypes = state.getIn(['saveState', 'genotypes']);
     if (i < phenotypes.size &&
-        app.getIn(['appState', 'currentMode']) === SeniMode.evolve) {
+        state.getIn(['saveState', 'currentMode']) === SeniMode.evolve) {
 
       const genotype = genotypes.get(i);
       const imageElement = phenotypes.getIn([i, 'imageElement']);
 
-      renderGenotypeToImage(app,
-                            app.get('backAst'),
+      renderGenotypeToImage(state,
+                            state.get('backAst'),
                             genotype,
                             imageElement);
       i++;
@@ -271,10 +400,10 @@ function renderPhenotypes(app) {
   });
 }
 
-function showPlaceholderImages(app) {
-  const placeholder = app.get('placeholder');
-  const populationSize = app.get('populationSize');
-  const phenotypes = app.get('phenotypes');
+function showPlaceholderImages(state) {
+  const placeholder = state.get('placeholder');
+  const populationSize = state.get('populationSize');
+  const phenotypes = state.get('phenotypes');
   for (let i = 0; i < populationSize; i++) {
     const imageElement = phenotypes.getIn([i, 'imageElement']);
     imageElement.src = placeholder;
@@ -282,11 +411,11 @@ function showPlaceholderImages(app) {
 }
 
 // returns an immutable list of genotypes
-function createInitialGenotypePopulation(app, populationSize) {
+function createInitialGenotypePopulation(state, populationSize) {
   // add genotypes to the containers
   let genotype;
   const random = (new Date()).toGMTString();
-  const traits = app.get('traits');
+  const traits = state.get('traits');
   const genotypes = [];
 
   for (let i = 0; i < populationSize; i++) {
@@ -303,30 +432,30 @@ function createInitialGenotypePopulation(app, populationSize) {
 
 // update the selected phenotypes in the evolve screen according to the
 // values in selectedIndices
-function updateSelectionUI(app) {
+function updateSelectionUI(state) {
 
-  const selectedIndices = app.getIn(['appState', 'selectedIndices']);
+  const selectedIndices = state.getIn(['saveState', 'selectedIndices']);
 
   // clean up the dom and clear the selected state
-  const populationSize = app.get('populationSize');
-  const phenotypes = app.get('phenotypes');
+  const populationSize = state.get('populationSize');
+  const phenotypes = state.get('phenotypes');
   for (let i = 0; i < populationSize; i++) {
     const element = phenotypes.getIn([i, 'phenotypeElement']);
     element.classList.remove('selected');
   }
 
   selectedIndices.forEach(i => {
-    const element = app.getIn(['phenotypes', i, 'phenotypeElement']);
+    const element = state.getIn(['phenotypes', i, 'phenotypeElement']);
     element.classList.add('selected');
     return true;
   });
 }
 
-function onNextGen(app) {
+function onNextGen(store) {
   // get the selected genotypes for the next generation
-  const populationSize = app.get('populationSize');
+  const populationSize = store.getState().get('populationSize');
   let selectedIndices = new Immutable.List();
-  const phenotypes = app.get('phenotypes');
+  const phenotypes = store.getState().get('phenotypes');
 
   for (let i = 0; i < populationSize; i++) {
     const element = phenotypes.getIn([i, 'phenotypeElement']);
@@ -335,57 +464,49 @@ function onNextGen(app) {
     }
   }
 
-  app = app.setIn(['appState', 'selectedIndices'], selectedIndices);
+  store.dispatch({type: 'SET_SELECTED_INDICES', selectedIndices});
 
   if (selectedIndices.size === 0) {
     // no phenotypes were selected
-    return app;
+    return;
   }
 
   // update the last history state
-  History.replaceState(app.get('appState'));
+  History.replaceState(store.getState().get('saveState'));
 
-  showPlaceholderImages(app);
-
-  let genotypes;
+  showPlaceholderImages(store.getState());
 
   if (selectedIndices.size === 0) {
     // if this is the first generation and nothing has been selected
     // just randomize all of the phenotypes
-    genotypes = createInitialGenotypePopulation(app,
-                                                app.get('populationSize'));
+    store.dispatch({type: 'INITIAL_GENERATION'});
   } else {
-    const pg = app.getIn(['appState', 'genotypes']);
+    const pg = store.getState().getIn(['saveState', 'genotypes']);
     let selectedGenotypes = new Immutable.List();
     for (let i = 0; i < selectedIndices.size; i++) {
       selectedGenotypes =
         selectedGenotypes.push(pg.get(selectedIndices.get(i)));
     }
-
-    genotypes = Genetic.nextGeneration(
-      selectedGenotypes,
-      app.get('populationSize'),
-      app.get('mutationRate'),
-      app.get('traits'), 42);
+    store.dispatch({type: 'NEXT_GENERATION',
+                    genotypes: selectedGenotypes,
+                    rng: 42});
   }
 
-  app = app.setIn(['appState', 'genotypes'], genotypes);
+  const genotypes = store.getState().getIn(['saveState', 'genotypes']);
 
   // render the genotypes
-  renderPhenotypes(app);
+  renderPhenotypes(store.getState());
 
   // this is the first selectedIndices.size genotypes
-  app = app.setIn(['appState', 'previouslySelectedGenotypes'],
-                            genotypes.slice(0, selectedIndices.size));
+  const previouslySelectedGenotypes = genotypes.slice(0, selectedIndices.size);
+  store.dispatch({type: 'SET_PREVIOUSLY_SELECTED_GENOTYPES',
+                  previouslySelectedGenotypes});
 
   // clean up the dom and clear the selected state
-  app = app.setIn(['appState', 'selectedIndices'],
-                            new Immutable.List());
-  updateSelectionUI(app);
+  store.dispatch({type: 'SET_SELECTED_INDICES'});
+  updateSelectionUI(store.getState());
 
-  History.pushState(app.get('appState'));
-
-  return app;
+  History.pushState(store.getState().get('saveState'));
 }
 
 function createPhenotypeElement(id, placeholderImage) {
@@ -406,56 +527,44 @@ function createPhenotypeElement(id, placeholderImage) {
   return container;
 }
 
-function setupAstAndTraits(app) {
-  const script = app.getIn(['appState', 'script']);
-  app = app.set('frontAst', Runtime.buildFrontAst(script));
-
-  const frontAst = app.get('frontAst');
-  app = app.set('backAst', Runtime.compileBackAst(frontAst));
-
-  const backAst = app.get('backAst');
-  app = app.set('traits', Genetic.buildTraits(backAst));
-
-  return app;
-}
-
 // invoked when the evolve screen is displayed after the edit screen
-function setupEvolveUI(app) {
+function setupEvolveUI(store) {
   return new Promise((resolve, _) => {
-    afterLoadingPlaceholderImages(app).then(app => {
-      app = setupAstAndTraits(app);
-      const populationSize = app.get('populationSize');
-      const genotypes = createInitialGenotypePopulation(app, populationSize);
-      app = app.setIn(['appState', 'genotypes'], genotypes);
-      // render the phenotypes
-      renderPhenotypes(app);
-      updateSelectionUI(app);
+    afterLoadingPlaceholderImages(store.getState()).then(() => {
 
-      resolve(app);
+      store.dispatch({type: 'SETUP_AST_AND_TRAITS'});
+      store.dispatch({type: 'INITIAL_GENERATION'});
+
+      // render the phenotypes
+      renderPhenotypes(store.getState());
+      updateSelectionUI(store.getState());
+
+      resolve();
     });
   });
 }
 
 // invoked when restoring the evolve screen from the history api
-function restoreEvolveUI(app) {
+function restoreEvolveUI(store) {
   return new Promise((resolve, _) => { // todo: implement reject
-    afterLoadingPlaceholderImages(app).then(app => {
-      app = setupAstAndTraits(app);
+    afterLoadingPlaceholderImages(store.getState()).then(() => {
+      store.dispatch({type: 'SETUP_AST_AND_TRAITS'});
       // render the phenotypes
-      renderPhenotypes(app);
-      updateSelectionUI(app);
+      renderPhenotypes(store.getState());
+      updateSelectionUI(store.getState());
 
-      resolve(app);
+      resolve();
     });
   });
 }
 
-// needs the atom since imageLoadHandler rebinds atom.app on every image load
+// needs the store since imageLoadHandler rebinds store.getState()
+// on every image load
 //
-function afterLoadingPlaceholderImages(app) {
+function afterLoadingPlaceholderImages(state) {
 
   const allImagesLoadedSince = timeStamp => {
-    const phenotypes = app.get('phenotypes');
+    const phenotypes = state.get('phenotypes');
 
     return phenotypes.every(phenotype => {
       const imageElement = phenotype.get('imageElement');
@@ -466,7 +575,7 @@ function afterLoadingPlaceholderImages(app) {
 
   const initialTimeStamp = Date.now();
 
-  showPlaceholderImages(app);
+  showPlaceholderImages(state);
 
   return new Promise((resolve, _) => { // todo: implement reject
     setTimeout(function go() {
@@ -474,7 +583,7 @@ function afterLoadingPlaceholderImages(app) {
       // otherwise there may be image sizing issues, especially with the
       // first img element
       if (allImagesLoadedSince(initialTimeStamp)) {
-        resolve(app);
+        resolve(state);
       } else {
         setTimeout(go, 20);
       }
@@ -482,23 +591,23 @@ function afterLoadingPlaceholderImages(app) {
   });
 }
 
-function showCurrentMode(app) {
+function showCurrentMode(state) {
   // show the current container, hide the others
-  const containers = app.get('containers');
-  const currentMode = app.getIn(['appState', 'currentMode']);
+  const containers = state.get('containers');
+  const currentMode = state.getIn(['saveState', 'currentMode']);
   for (let i = 0; i < SeniMode.numSeniModes; i++) {
     containers.get(i).className = i === currentMode ? '' : 'hidden';
   }
   showButtonsFor(currentMode);
 }
 
-function showScriptInEditor(app) {
-  const editor = app.get('editor');
-  editor.getDoc().setValue(app.getIn(['appState', 'script']));
+function showScriptInEditor(state) {
+  const editor = state.get('editor');
+  editor.getDoc().setValue(state.getIn(['saveState', 'script']));
   editor.refresh();
 }
 
-function showEditFromGallery(app, element) {
+function showEditFromGallery(store, element) {
 
   const getGalleryItemIdFromDom = function(e) {
     while (e) {
@@ -521,13 +630,13 @@ function showEditFromGallery(app, element) {
       get(url).catch(() => {
         console.error(`cannot connect to ${url}`);
       }).then(data => {
-        app = app.setIn(['appState', 'script'], data);
-        return ensureMode(app, SeniMode.edit);
-      }).then(app => {
-        resolve(app);
+        store.dispatch({type: 'SET_SCRIPT', script: data});
+        return ensureMode(store, SeniMode.edit);
+      }).then(() => {
+        resolve();
       });
     } else {
-      resolve(app);
+      resolve();
     }
   });
 }
@@ -544,7 +653,7 @@ function resizeContainers() {
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
-function createKonsole(atom, element) {
+function createKonsole(store, element) {
 
   const konsole = new Konsole(element, {
     prompt: '> ',
@@ -557,7 +666,7 @@ function createKonsole(atom, element) {
   });
 
   const commander = new KonsoleCommander();
-  addDefaultCommands(atom, commander);
+  addDefaultCommands(store, commander);
 
   konsole.initCallbacks({
     commandValidate(line) {
@@ -571,7 +680,7 @@ function createKonsole(atom, element) {
   return konsole;
 }
 
-function createEditor(atom, editorTextArea) {
+function createEditor(store, editorTextArea) {
 
   const blockIndent = function(editor, from, to) {
     editor.operation(() => {
@@ -585,17 +694,17 @@ function createEditor(atom, editorTextArea) {
     theme: 'default',
     extraKeys: {
       'Ctrl-E': () => {
-        atom.app = atom.app.setIn(['appState', 'script'],
-                                  getScriptFromEditor(atom.app));
-        timedRenderScript(atom.app);
+        const script = getScriptFromEditor(store.getState());
+        store.dispatch({type: 'SET_SCRIPT', script});
+        timedRenderScript(store.getState());
         return false;
       },
       // make ctrl-m a noop, otherwise invoking the konsole will result in
       // deleting a line from the editor
       'Ctrl-M': () => false,
       'Ctrl-I': () => {
-        const editor = atom.app.get('editor');
-        const konsole = atom.app.get('konsole');
+        const editor = store.getState().get('editor');
+        const konsole = store.getState().get('konsole');
         const numLines = editor.doc.size;
         blockIndent(editor, 0, numLines);
         konsole.log(`indenting ${numLines} lines`);
@@ -605,44 +714,27 @@ function createEditor(atom, editorTextArea) {
   });
 }
 
-function setupUI(atom) {
-  const d = document;
+function setupUI(store) {
 
-  atom.app = atom.app
-    .set('navbar', document.getElementById('seni-navbar'))
-    .set('renderImage', document.getElementById('render-img'))
-    .set('containers',
-         new Immutable.List([document.getElementById('gallery-container'),
-                             document.getElementById('edit-container'),
-                             document.getElementById('evolve-container')]));
+  store.dispatch({type: 'SET_DOM_ELEMENTS'});
 
   showButtonsFor(SeniMode.gallery);
 
-  const konsoleElement = document.getElementById('konsole');
-  const konsole = createKonsole(atom, konsoleElement);
-  atom.app = atom.app.set('konsole', konsole);
-  konsoleElement.style.height = `0%`;
-
-  const editorTextArea = d.getElementById('edit-textarea');
-  const editor = createEditor(atom, editorTextArea);
-  atom.app = atom.app.set('editor', editor);
+  store.dispatch({type: 'CREATE_KONSOLE', store});
+  store.dispatch({type: 'CREATE_EDITOR', store});
 
   const galleryModeHandler = event => {
-    ensureMode(atom.app, SeniMode.gallery).then(app => {
-      atom.app = app;
-    });
+    ensureMode(store, SeniMode.gallery);
     event.preventDefault();
   };
 
   const evolveModeHandler = event => {
     // get the latest script from the editor
-    atom.app = atom.app.setIn(['appState', 'script'],
-                              getScriptFromEditor(atom.app));
-    History.replaceState(atom.app.get('appState'));
+    store.dispatch({type: 'SET_SCRIPT',
+                    script: getScriptFromEditor(store.getState())});
+    History.replaceState(store.getState().get('saveState'));
 
-    ensureMode(atom.app, SeniMode.evolve).then(app => {
-      atom.app = app;
-    });
+    ensureMode(store, SeniMode.evolve);
     event.preventDefault();
   };
 
@@ -651,48 +743,41 @@ function setupUI(atom) {
 
   addClickEvent('shuffle-btn', event => {
 
-    showPlaceholderImages(atom.app);
+    showPlaceholderImages(store.getState());
 
-    atom.app = atom.app.setIn(
-      ['appState', 'genotypes'],
-      Genetic.nextGeneration(
-        atom.app.getIn(['appState', 'previouslySelectedGenotypes']),
-        atom.app.get('populationSize'),
-        atom.app.get('mutationRate'),
-        atom.app.get('traits'),
-        11));
+    const previouslySelectedGenotypes = store.getState().
+            getIn(['saveState', 'previouslySelectedGenotypes']);
+    store.dispatch({type: 'NEXT_GENERATION',
+                    genotypes: previouslySelectedGenotypes,
+                    rng: 11});
 
-    // render the genotypes
-    renderPhenotypes(atom.app);
+    renderPhenotypes(store.getState());
 
     // clean up the dom and clear the selected state
-    atom.app = atom.app.setIn(['appState', 'selectedIndices'],
-                              new Immutable.List());
-    updateSelectionUI(atom.app);
+    store.dispatch({type: 'SET_SELECTED_INDICES'});
+    updateSelectionUI(store.getState());
 
 
-//    atom = genotypesFromSelectedPhenotypes(atom);
+//    store = genotypesFromSelectedPhenotypes(store);
     event.preventDefault();
   });
 
   addClickEvent('eval-btn', () => {
-    const editor = atom.app.get('editor');
-    atom.app = atom.app.setIn(['appState', 'script'], editor.getValue());
-    timedRenderScript(atom.app);
+    const editor = store.getState().get('editor');
+    store.dispatch({type: 'SET_SCRIPT', script: editor.getValue()});
+    timedRenderScript(store.getState());
   });
 /*
   addClickEvent('action-add', () => {
-    const app = atom.app;
-    atom.app = app.set('script', '');
-    atom = ensureMode(atom, SeniMode.edit);
+    const state = store.getState();
+    store.getState() = state.set('script', '');
+    store = ensureMode(store, SeniMode.edit);
   });
 */
   addClickEvent('gallery-container', event => {
     const target = event.target;
     if (target.classList.contains('show-edit')) {
-      showEditFromGallery(atom.app, target).then(app => {
-        atom.app = app;
-      });
+      showEditFromGallery(store, target);
     }
     event.preventDefault();
   });
@@ -700,11 +785,9 @@ function setupUI(atom) {
   addClickEvent('evolve-container', event => {
     const target = event.target;
     if (target.classList.contains('render')) {
-      renderHighRes(atom.app, target);
+      renderHighRes(store.getState(), target);
     } else if (target.classList.contains('edit')) {
-      showEditFromEvolve(atom.app, target).then(app => {
-        atom.app = app;
-      });
+      showEditFromEvolve(store, target);
     } else {
       const [index, e] = getPhenoIdFromDom(target);
       if (index !== -1) {
@@ -715,7 +798,7 @@ function setupUI(atom) {
   });
 
   addClickEvent('next-btn', () => {
-    atom.app = onNextGen(atom.app);
+    onNextGen(store);
   });
 
   addClickEvent('high-res-close', event => {
@@ -728,9 +811,10 @@ function setupUI(atom) {
   const dKey = 68;
   document.addEventListener('keydown', event => {
     if (event.ctrlKey && event.keyCode === dKey &&
-        atom.app.getIn(['appState', 'currentMode']) === SeniMode.evolve) {
+        store.getState().getIn(['saveState', 'currentMode']) ===
+        SeniMode.evolve) {
       event.preventDefault();
-      atom.app = onNextGen(atom.app);
+      onNextGen(store);
     }
   }, false);
 
@@ -749,7 +833,7 @@ function setupUI(atom) {
 
   let phenotypeElement, imageElement;
 
-  const populationSize = atom.app.get('populationSize');
+  const populationSize = store.getState().get('populationSize');
   const phenotypes = [];
   for (let i = 0; i < populationSize; i++) {
     phenotypeElement = createPhenotypeElement(i, '');
@@ -767,24 +851,23 @@ function setupUI(atom) {
     }));
   }
 
-  atom.app = atom.app.set('phenotypes', new Immutable.List(phenotypes));
+  store.dispatch({type: 'SET_PHENOTYPES',
+                  phenotypes: new Immutable.List(phenotypes)});
 
   window.addEventListener('popstate', event => {
     if (event.state) {
-      const appState = History.restoreState(event.state);
-      atom.app = atom.app.set('appState', appState);
-      updateUI(atom.app);
-      if (atom.app.getIn(['appState', 'currentMode']) === SeniMode.evolve) {
-        restoreEvolveUI(atom.app).then(app => {
-          atom.app = app;
-        });
+      const saveState = History.restoreState(event.state);
+      store.dispatch({type: 'SET_SAVE_STATE', saveState});
+      updateUI(store.getState());
+      if (store.getState().getIn(['saveState', 'currentMode']) ===
+          SeniMode.evolve) {
+        restoreEvolveUI(store);
       }
 
     } else {
-      // no event.state so behave as if the user has visited the '/' of the app
-      ensureMode(atom.app, SeniMode.gallery).then(app => {
-        atom.app = app;
-      });
+      // no event.state so behave as if the user has visited
+      // the '/' of the state
+      ensureMode(store, SeniMode.gallery);
     }
   });
 
@@ -799,8 +882,8 @@ function setupUI(atom) {
     } else {
       konsolePanel.style.height = '0%';
     }
-    atom.app.get('konsole').refresh();
-    atom.app.get('editor').refresh();
+    store.getState().get('konsole').refresh();
+    store.getState().get('editor').refresh();
   }
 
   document.onkeydown = evt => {
@@ -814,7 +897,7 @@ function setupUI(atom) {
 
   addClickEvent('console-btn', toggleKonsole);
 
-  return atom;
+  return store;
 }
 
 function getGallery() {
@@ -859,7 +942,7 @@ function getGallery() {
   });
 }
 
-// stops the konsole from briefly flashing at app startup
+// stops the konsole from briefly flashing at state startup
 // probably better to remove this and replace with some other
 // sort of CSS cleverness. (resorting to this since a CSS rule
 // of 'position: fixed;height:0;' for #konsole screws up Chrome
@@ -869,7 +952,7 @@ function removeKonsoleInvisibility() {
   k.classList.remove('invisible');
 }
 
-function createAppState() {
+function createSaveState() {
   return Immutable.fromJS({
     currentMode: SeniMode.gallery,
     previouslySelectedGenotypes: [],
@@ -883,20 +966,20 @@ function createAppState() {
 
 
 /**
- * Creates the immutable SeniApp
+ * Creates the immutable SeniState
  *
  * @private
- * @returns {Immutable Map} a basic SeniApp with a valid renderer and env
+ * @returns {Immutable Map} a basic SeniState with a valid renderer and env
  */
-function createSeniApp() {
-  let app = Immutable.fromJS({
+function createSeniState() {
+  let state = Immutable.fromJS({
     renderer: undefined,
     editor: undefined,
 
     // console CodeMirror element in the edit screen
     konsole: undefined,
 
-    // the top nav bar across the app
+    // the top nav bar across the state
     navbar: undefined,
     // the img destination that shows the rendered script in edit mode
     renderImage: undefined,
@@ -916,26 +999,27 @@ function createSeniApp() {
     backAst: undefined,
     traits: undefined,
 
-    appState: createAppState()
+    saveState: createSaveState()
   });
 
   const canvasElement = document.getElementById('render-canvas');
   const renderer = new Renderer(canvasElement);
   const bindings = Bind.addBindings(Runtime.createEnv(), renderer);
 
-  app = app
+  state = state
     .set('renderer', renderer)
     .set('env', bindings);
 
-  return {app};
+  return state;
 }
 
 export default function main() {
 
   resizeContainers();
 
-  // creates the atom
-  setupUI(createSeniApp());
+  // creates the store
+  const state = createSeniState();
+  setupUI(createStore(state));
 
   getGallery()
     .then(removeKonsoleInvisibility)
