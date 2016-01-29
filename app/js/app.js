@@ -115,20 +115,20 @@ function showButtonsFor(mode) {
 
 function ensureMode(store, mode) {
   return new Promise((resolve, _) => {
-    if (store.getState().getIn(['saveState', 'currentMode']) === mode) {
+    if (store.getState().get('currentMode') === mode) {
       resolve();
       return;
     }
 
     store.dispatch({type: 'SET_MODE', mode});
-    History.pushState(store.getState().get('saveState'));
+    History.pushState(store.getState());
 
     if (mode === SeniMode.evolve) {
       showCurrentMode(store.getState());
       setupEvolveUI(store).then(() => {
         // make sure that the history for the first evolve generation
         // has the correct genotypes
-        History.replaceState(store.getState().get('saveState'));
+        History.replaceState(store.getState());
         resolve();
       });
     } else {
@@ -143,7 +143,7 @@ function ensureMode(store, mode) {
 function updateUI(state) {
   showCurrentMode(state);
 
-  switch (state.getIn(['saveState', 'currentMode'])) {
+  switch (state.get('currentMode')) {
   case SeniMode.gallery :
     break;
   case SeniMode.edit :
@@ -177,7 +177,7 @@ function renderGenotypeToImage(state, backAst, genotype, imageElement, w, h) {
 function renderScript(state) {
   const imageElement = gUI.renderImage;
 
-  const script = state.getIn(['saveState', 'script']);
+  const script = state.get('script');
   const frontAst = Runtime.buildFrontAst(script);
   const backAst = Runtime.compileBackAst(frontAst);
   const traits = Genetic.buildTraits(backAst);
@@ -221,11 +221,11 @@ function renderHighRes(state, element) {
   const [index, _] = getPhenoIdFromDom(element);
 
   if (index !== -1) {
-    const genotypes = state.getIn(['saveState', 'genotypes']);
+    const genotypes = state.get('genotypes');
     const genotype = genotypes.get(index);
     const highResContainer = document.getElementById('high-res-container');
     highResContainer.classList.remove('hidden');
-    const script = state.getIn(['saveState', 'script']);
+    const script = state.get('script');
     const frontAst = Runtime.buildFrontAst(script);
     const backAst = Runtime.compileBackAst(frontAst);
 
@@ -243,7 +243,7 @@ function showEditFromEvolve(store, element) {
   return new Promise((resolve, _reject) => {
     const [index, _] = getPhenoIdFromDom(element);
     if (index !== -1) {
-      const genotypes = store.getState().getIn(['saveState', 'genotypes']);
+      const genotypes = store.getState().get('genotypes');
       const genotype = genotypes.get(index);
       const frontAst = gFrontAst;
 
@@ -267,9 +267,8 @@ function renderPhenotypes(state) {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to edit mode
     const phenotypes = gUI.phenotypes;
-    const genotypes = state.getIn(['saveState', 'genotypes']);
-    if (i < phenotypes.size &&
-        state.getIn(['saveState', 'currentMode']) === SeniMode.evolve) {
+    const genotypes = state.get('genotypes');
+    if (i < phenotypes.size && state.get('currentMode') === SeniMode.evolve) {
 
       const genotype = genotypes.get(i);
       const imageElement = phenotypes.getIn([i, 'imageElement']);
@@ -298,7 +297,7 @@ function showPlaceholderImages(state) {
 // values in selectedIndices
 function updateSelectionUI(state) {
 
-  const selectedIndices = state.getIn(['saveState', 'selectedIndices']);
+  const selectedIndices = state.get('selectedIndices');
 
   // clean up the dom and clear the selected state
   const populationSize = state.get('populationSize');
@@ -336,7 +335,7 @@ function onNextGen(store) {
   }
 
   // update the last history state
-  History.replaceState(store.getState().get('saveState'));
+  History.replaceState(store.getState());
 
   showPlaceholderImages(store.getState());
 
@@ -345,7 +344,7 @@ function onNextGen(store) {
     // just randomize all of the phenotypes
     store.dispatch({type: 'INITIAL_GENERATION', traits: gTraits});
   } else {
-    const pg = store.getState().getIn(['saveState', 'genotypes']);
+    const pg = store.getState().get('genotypes');
     let selectedGenotypes = new Immutable.List();
     for (let i = 0; i < selectedIndices.size; i++) {
       selectedGenotypes =
@@ -357,7 +356,7 @@ function onNextGen(store) {
                     rng: 42});
   }
 
-  const genotypes = store.getState().getIn(['saveState', 'genotypes']);
+  const genotypes = store.getState().get('genotypes');
 
   // render the genotypes
   renderPhenotypes(store.getState());
@@ -371,7 +370,7 @@ function onNextGen(store) {
   store.dispatch({type: 'SET_SELECTED_INDICES'});
   updateSelectionUI(store.getState());
 
-  History.pushState(store.getState().get('saveState'));
+  History.pushState(store.getState());
 }
 
 function createPhenotypeElement(id, placeholderImage) {
@@ -397,7 +396,7 @@ function setupEvolveUI(store) {
   return new Promise((resolve, _) => {
     afterLoadingPlaceholderImages(store.getState()).then(() => {
 
-      setupAstAndTraits(store.getState().getIn(['saveState', 'script']));
+      setupAstAndTraits(store.getState().get('script'));
       store.dispatch({type: 'INITIAL_GENERATION', traits: gTraits});
 
       // render the phenotypes
@@ -413,7 +412,7 @@ function setupEvolveUI(store) {
 function restoreEvolveUI(store) {
   return new Promise((resolve, _) => { // todo: implement reject
     afterLoadingPlaceholderImages(store.getState()).then(() => {
-      setupAstAndTraits(store.getState().getIn(['saveState', 'script']));
+      setupAstAndTraits(store.getState().get('script'));
       // render the phenotypes
       renderPhenotypes(store.getState());
       updateSelectionUI(store.getState());
@@ -459,7 +458,7 @@ function afterLoadingPlaceholderImages(state) {
 function showCurrentMode(state) {
   // show the current container, hide the others
   const containers = gUI.containers;
-  const currentMode = state.getIn(['saveState', 'currentMode']);
+  const currentMode = state.get('currentMode');
   for (let i = 0; i < SeniMode.numSeniModes; i++) {
     containers.get(i).className = i === currentMode ? '' : 'hidden';
   }
@@ -468,7 +467,7 @@ function showCurrentMode(state) {
 
 function showScriptInEditor(state) {
   const editor = gUI.editor;
-  editor.getDoc().setValue(state.getIn(['saveState', 'script']));
+  editor.getDoc().setValue(state.get('script'));
   editor.refresh();
 }
 
@@ -613,7 +612,7 @@ function setupUI(store) {
   const evolveModeHandler = event => {
     // get the latest script from the editor
     store.dispatch({type: 'SET_SCRIPT', script: getScriptFromEditor()});
-    History.replaceState(store.getState().get('saveState'));
+    History.replaceState(store.getState());
 
     ensureMode(store, SeniMode.evolve);
     event.preventDefault();
@@ -626,8 +625,8 @@ function setupUI(store) {
 
     showPlaceholderImages(store.getState());
 
-    const previouslySelectedGenotypes = store.getState().
-            getIn(['saveState', 'previouslySelectedGenotypes']);
+    const previouslySelectedGenotypes =
+            store.getState().get('previouslySelectedGenotypes');
     store.dispatch({type: 'NEXT_GENERATION',
                     genotypes: previouslySelectedGenotypes,
                     traits: gTraits,
@@ -686,8 +685,7 @@ function setupUI(store) {
   const dKey = 68;
   document.addEventListener('keydown', event => {
     if (event.ctrlKey && event.keyCode === dKey &&
-        store.getState().getIn(['saveState', 'currentMode']) ===
-        SeniMode.evolve) {
+        store.getState().get('currentMode') === SeniMode.evolve) {
       event.preventDefault();
       onNextGen(store);
     }
@@ -730,11 +728,10 @@ function setupUI(store) {
 
   window.addEventListener('popstate', event => {
     if (event.state) {
-      const saveState = History.restoreState(event.state);
-      store.dispatch({type: 'SET_SAVE_STATE', saveState});
+      const savedState = History.restoreState(event.state);
+      store.dispatch({type: 'SET_STATE', state: savedState});
       updateUI(store.getState());
-      if (store.getState().getIn(['saveState', 'currentMode']) ===
-          SeniMode.evolve) {
+      if (store.getState().get('currentMode') === SeniMode.evolve) {
         restoreEvolveUI(store);
       }
 

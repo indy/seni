@@ -35,12 +35,6 @@ export function createInitialState() {
     populationSize: 24,
     mutationRate: 0.1,
 
-    saveState: createSaveState()
-  });
-}
-
-function createSaveState() {
-  return Immutable.fromJS({
     currentMode: SeniMode.gallery,
     previouslySelectedGenotypes: [],
     selectedIndices: [],
@@ -65,10 +59,10 @@ export function createStore(initialState) {
       return actionInitialGeneration(state, action);
     case 'NEXT_GENERATION':
       return actionNextGeneration(state, action);
-    case 'SET_SAVE_STATE':
-      return actionSetSaveState(state, action);
     case 'SET_PREVIOUSLY_SELECTED_GENOTYPES':
       return actionSetPreviouslySelectedGenotypes(state, action);
+    case 'SET_STATE':
+      return action.state;
     default:
       return state;
     }
@@ -89,25 +83,21 @@ export function createStore(initialState) {
 }
 
 function actionSetMode(state, action) {
-  return state.setIn(['saveState', 'currentMode'], action.mode);
+  return state.set('currentMode', action.mode);
 }
 
 function actionSetScript(state, action) {
-  return state.setIn(['saveState', 'script'], action.script);
+  return state.set('script', action.script);
 }
 
 function actionSetSelectedIndices(state, action) {
   const si = action.selectedIndices || new Immutable.List();
-  return state.setIn(['saveState', 'selectedIndices'], si);
-}
-
-function actionSetSaveState(state, action) {
-  return state.set('saveState', action.saveState);
+  return state.set('selectedIndices', si);
 }
 
 function actionSetPreviouslySelectedGenotypes(state, action) {
-  return state.setIn(['saveState', 'previouslySelectedGenotypes'],
-                     action.previouslySelectedGenotypes);
+  return state.set('previouslySelectedGenotypes',
+                   action.previouslySelectedGenotypes);
 }
 
 // todo: should populationSize be passed in the action?
@@ -128,9 +118,7 @@ function actionInitialGeneration(state, action) {
     genotypes.push(genotype);
   }
 
-  const genos = new Immutable.List(genotypes);
-
-  return state.setIn(['saveState', 'genotypes'], genos);
+  return state.set('genotypes', new Immutable.List(genotypes));
 }
 
 function actionNextGeneration(state, action) {
@@ -139,5 +127,5 @@ function actionNextGeneration(state, action) {
                                            state.get('mutationRate'),
                                            action.traits,
                                            action.rng);
-  return state.setIn(['saveState', 'genotypes'], genotypes);
+  return state.set('genotypes', genotypes);
 }

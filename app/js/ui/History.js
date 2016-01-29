@@ -35,18 +35,7 @@ function seniModeAsString(mode) {
 }
 
 function buildState(appState) {
-  // can't store the entire app since it contains DOM elements and there
-  // is a 640k size limit on the serialized data structures.
-  //
-  const state = {
-    currentMode: appState.get('currentMode'),
-    previouslySelectedGenotypes:
-    appState.get('previouslySelectedGenotypes').toJS(),
-    selectedIndices: appState.get('selectedIndices').toJS(),
-    script: appState.get('script'),
-    genotypes: appState.get('genotypes').toJS()
-  };
-
+  const state = appState.toJS();
   const uri = `#${seniModeAsString(appState.get('currentMode'))}`;
   return [state, uri];
 }
