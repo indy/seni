@@ -18,7 +18,6 @@
 
 import Immutable from 'immutable';
 
-import Bind from './seni/Bind';
 import { SeniMode } from './ui/SeniMode';
 import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
@@ -29,15 +28,13 @@ import Runtime from './lang/Runtime';
  * @private
  * @returns {Immutable Map} a basic SeniState with a valid renderer and env
  */
-export function createInitialState(renderer) {
-  let state = Immutable.fromJS({
+export function createInitialState() {
+  return Immutable.fromJS({
     // the resolution of the high res image
     highResolution: [2048, 2048],
     placeholder: 'img/spinner.gif',
     populationSize: 24,
     mutationRate: 0.1,
-    // an immutable var containing the base env for all evaluations
-    env: undefined,
 
     // information about the current piece being created/rendered
     phenotypes: [], // stored in an Immutable.List
@@ -47,13 +44,6 @@ export function createInitialState(renderer) {
 
     saveState: createSaveState()
   });
-
-  const bindings = Bind.addBindings(Runtime.createEnv(), renderer);
-
-  state = state
-    .set('env', bindings);
-
-  return state;
 }
 
 function createSaveState() {

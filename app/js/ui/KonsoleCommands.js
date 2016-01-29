@@ -17,7 +17,7 @@
  */
 import Trivia from '../seni/Trivia';
 
-export function addDefaultCommands(atom, commander) {
+export function addDefaultCommands(env, commander) {
 
   const ls = {
     canHandle(command) {
@@ -25,8 +25,6 @@ export function addDefaultCommands(atom, commander) {
     },
 
     execute() {
-      const app = atom.getState();
-      const env = app.get('env');
       const keys = env.keys();
 
       const res = [];
@@ -54,8 +52,7 @@ export function addDefaultCommands(atom, commander) {
 
     execute(_, [name, showDefaultArgs]) {
       // todo: if no args given then show generic help for the konsole
-      const app = atom.getState();
-      const v = app.getIn(['env', name]);
+      const v = env.get(name);
 
       let res = '';
 

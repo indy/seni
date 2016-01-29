@@ -18,6 +18,7 @@
 
 import Immutable from 'immutable';
 
+import Bind from './seni/Bind';
 import Renderer from './seni/Renderer';
 import Util from './seni/Util';
 import Genetic from './lang/Genetic';
@@ -32,6 +33,8 @@ import { createStore, createInitialState } from './StateContainer';
 
 let gUI = {};
 let gRenderer = undefined;
+// an immutable var containing the base env for all evaluations
+let gEnv = undefined;
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -153,7 +156,7 @@ function renderGenotypeToImage(state, backAst, genotype, imageElement, w, h) {
     renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
   }
 
-  Runtime.evalAst(state.get('env'), backAst, genotype);
+  Runtime.evalAst(gEnv, backAst, genotype);
 
   renderer.postDrawScene();
 
@@ -504,7 +507,7 @@ function resizeContainers() {
 }
 
 
-function createKonsole(store, element) {
+function createKonsole(env, element) {
 
   const konsole = new Konsole(element, {
     prompt: '> ',
@@ -517,7 +520,7 @@ function createKonsole(store, element) {
   });
 
   const commander = new KonsoleCommander();
-  addDefaultCommands(store, commander);
+  addDefaultCommands(env, commander);
 
   konsole.initCallbacks({
     commandValidate(line) {
@@ -582,7 +585,7 @@ function setupUI(store) {
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById('render-img'),
     // console CodeMirror element in the edit screen
-    konsole: createKonsole(store, konsoleElement),
+    konsole: createKonsole(gEnv, konsoleElement),
     editor: createEditor(store, editorTextArea)
   };
 
@@ -815,7 +818,9 @@ export default function main() {
   resizeContainers();
 
   gRenderer = new Renderer(document.getElementById('render-canvas'));
-  const state = createInitialState(gRenderer);
+  gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
+
+  const state = createInitialState();
   const store = createStore(state);
   setupUI(store);
 
