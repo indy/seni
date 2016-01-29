@@ -36,6 +36,17 @@ let gRenderer = undefined;
 // an immutable var containing the base env for all evaluations
 let gEnv = undefined;
 
+let gFrontAst = undefined;
+let gBackAst = undefined;
+let gTraits = undefined;
+
+
+function setupAstAndTraits(script) {
+  gFrontAst = Runtime.buildFrontAst(script);
+  gBackAst = Runtime.compileBackAst(gFrontAst);
+  gTraits = Genetic.buildTraits(gBackAst);
+}
+
 function get(url) {
   return new Promise((resolve, reject) => {
 
@@ -234,7 +245,7 @@ function showEditFromEvolve(store, element) {
     if (index !== -1) {
       const genotypes = store.getState().getIn(['saveState', 'genotypes']);
       const genotype = genotypes.get(index);
-      const frontAst = store.getState().get('frontAst');
+      const frontAst = gFrontAst;
 
       const script = Runtime.unparse(frontAst, genotype);
 
@@ -264,7 +275,7 @@ function renderPhenotypes(state) {
       const imageElement = phenotypes.getIn([i, 'imageElement']);
 
       renderGenotypeToImage(state,
-                            state.get('backAst'),
+                            gBackAst,
                             genotype,
                             imageElement);
       i++;
@@ -332,7 +343,7 @@ function onNextGen(store) {
   if (selectedIndices.size === 0) {
     // if this is the first generation and nothing has been selected
     // just randomize all of the phenotypes
-    store.dispatch({type: 'INITIAL_GENERATION'});
+    store.dispatch({type: 'INITIAL_GENERATION', traits: gTraits});
   } else {
     const pg = store.getState().getIn(['saveState', 'genotypes']);
     let selectedGenotypes = new Immutable.List();
@@ -342,6 +353,7 @@ function onNextGen(store) {
     }
     store.dispatch({type: 'NEXT_GENERATION',
                     genotypes: selectedGenotypes,
+                    traits: gTraits,
                     rng: 42});
   }
 
@@ -385,8 +397,8 @@ function setupEvolveUI(store) {
   return new Promise((resolve, _) => {
     afterLoadingPlaceholderImages(store.getState()).then(() => {
 
-      store.dispatch({type: 'SETUP_AST_AND_TRAITS'});
-      store.dispatch({type: 'INITIAL_GENERATION'});
+      setupAstAndTraits(store.getState().getIn(['saveState', 'script']));
+      store.dispatch({type: 'INITIAL_GENERATION', traits: gTraits});
 
       // render the phenotypes
       renderPhenotypes(store.getState());
@@ -401,7 +413,7 @@ function setupEvolveUI(store) {
 function restoreEvolveUI(store) {
   return new Promise((resolve, _) => { // todo: implement reject
     afterLoadingPlaceholderImages(store.getState()).then(() => {
-      store.dispatch({type: 'SETUP_AST_AND_TRAITS'});
+      setupAstAndTraits(store.getState().getIn(['saveState', 'script']));
       // render the phenotypes
       renderPhenotypes(store.getState());
       updateSelectionUI(store.getState());
@@ -618,6 +630,7 @@ function setupUI(store) {
             getIn(['saveState', 'previouslySelectedGenotypes']);
     store.dispatch({type: 'NEXT_GENERATION',
                     genotypes: previouslySelectedGenotypes,
+                    traits: gTraits,
                     rng: 11});
 
     renderPhenotypes(store.getState());

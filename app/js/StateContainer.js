@@ -20,7 +20,6 @@ import Immutable from 'immutable';
 
 import { SeniMode } from './ui/SeniMode';
 import Genetic from './lang/Genetic';
-import Runtime from './lang/Runtime';
 
 /**
  * Creates the immutable SeniState
@@ -35,10 +34,6 @@ export function createInitialState() {
     placeholder: 'img/spinner.gif',
     populationSize: 24,
     mutationRate: 0.1,
-
-    frontAst: undefined,
-    backAst: undefined,
-    traits: undefined,
 
     saveState: createSaveState()
   });
@@ -74,8 +69,6 @@ export function createStore(initialState) {
       return actionSetSaveState(state, action);
     case 'SET_PREVIOUSLY_SELECTED_GENOTYPES':
       return actionSetPreviouslySelectedGenotypes(state, action);
-    case 'SETUP_AST_AND_TRAITS':
-      return actionSetupAstAndTraits(state);
     default:
       return state;
     }
@@ -117,25 +110,12 @@ function actionSetPreviouslySelectedGenotypes(state, action) {
                      action.previouslySelectedGenotypes);
 }
 
-function actionSetupAstAndTraits(state) {
-  const script = state.getIn(['saveState', 'script']);
-  state = state.set('frontAst', Runtime.buildFrontAst(script));
-
-  const frontAst = state.get('frontAst');
-  state = state.set('backAst', Runtime.compileBackAst(frontAst));
-
-  const backAst = state.get('backAst');
-  state = state.set('traits', Genetic.buildTraits(backAst));
-
-  return state;
-}
-
 // todo: should populationSize be passed in the action?
-function actionInitialGeneration(state) {
+function actionInitialGeneration(state, action) {
 
   let genotype;
   const random = (new Date()).toGMTString();
-  const traits = state.get('traits');
+  const traits = action.traits;
   const genotypes = [];
   const populationSize = state.get('populationSize');
 
@@ -157,7 +137,7 @@ function actionNextGeneration(state, action) {
   const genotypes = Genetic.nextGeneration(action.genotypes,
                                            state.get('populationSize'),
                                            state.get('mutationRate'),
-                                           state.get('traits'),
+                                           action.traits,
                                            action.rng);
   return state.setIn(['saveState', 'genotypes'], genotypes);
 }
