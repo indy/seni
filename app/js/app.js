@@ -16,150 +16,22 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import Immutable from 'immutable';
+
 import Renderer from './seni/Renderer';
-import Bind from './seni/Bind';
 import Util from './seni/Util';
 import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
 import { SeniMode } from './ui/SeniMode';
+import History from './ui/History';
 import Konsole from './ui/Konsole';
-import Editor from './ui/Editor';
 import KonsoleCommander from './ui/KonsoleCommander';
 import { addDefaultCommands } from './ui/KonsoleCommands';
-import History from './ui/History';
+import Editor from './ui/Editor';
+import { createStore, createInitialState } from './StateContainer';
 
-import Immutable from 'immutable';
-
-
-function actionSetDomElements(state) {
-  const containers =
-          new Immutable.List([document.getElementById('gallery-container'),
-                              document.getElementById('edit-container'),
-                              document.getElementById('evolve-container')]);
-  return state
-    .set('navbar', document.getElementById('seni-navbar'))
-    .set('renderImage', document.getElementById('render-img'))
-    .set('containers', containers);
-}
-
-function actionCreateKonsole(state, action) {
-  const konsoleElement = document.getElementById('konsole');
-  const konsole = createKonsole(action.store, konsoleElement);
-  konsoleElement.style.height = `0%`;
-
-  return state.set('konsole', konsole);
-}
-
-function actionCreateEditor(state, action) {
-  const editorTextArea = document.getElementById('edit-textarea');
-  const editor = createEditor(action.store, editorTextArea);
-  return state.set('editor', editor);
-}
-
-function actionSetMode(state, action) {
-  return state.setIn(['saveState', 'currentMode'], action.mode);
-}
-
-function actionSetScript(state, action) {
-  return state.setIn(['saveState', 'script'], action.script);
-}
-
-function actionSetSelectedIndices(state, action) {
-  const si = action.selectedIndices || new Immutable.List();
-  return state.setIn(['saveState', 'selectedIndices'], si);
-}
-
-function actionSetPhenotypes(state, action) {
-  return state.set('phenotypes', action.phenotypes);
-}
-
-function actionSetSaveState(state, action) {
-  return state.set('saveState', action.saveState);
-}
-
-function actionSetPreviouslySelectedGenotypes(state, action) {
-  return state.setIn(['saveState', 'previouslySelectedGenotypes'],
-                     action.previouslySelectedGenotypes);
-}
-
-function actionSetupAstAndTraits(state) {
-  const script = state.getIn(['saveState', 'script']);
-  state = state.set('frontAst', Runtime.buildFrontAst(script));
-
-  const frontAst = state.get('frontAst');
-  state = state.set('backAst', Runtime.compileBackAst(frontAst));
-
-  const backAst = state.get('backAst');
-  state = state.set('traits', Genetic.buildTraits(backAst));
-
-  return state;
-}
-
-// todo: should populationSize be passed in the action?
-function actionInitialGeneration(state) {
-  const genos = createInitialGenotypePopulation(state,
-                                                state.get('populationSize'));
-  return state.setIn(['saveState', 'genotypes'], genos);
-}
-
-function actionNextGeneration(state, action) {
-  const genotypes = Genetic.nextGeneration(action.genotypes,
-                                           state.get('populationSize'),
-                                           state.get('mutationRate'),
-                                           state.get('traits'),
-                                           action.rng);
-  return state.setIn(['saveState', 'genotypes'], genotypes);
-}
-
-function createStore(initialState) {
-
-  let currentState = initialState;
-
-  function reducer(state, action) {
-    switch (action.type) {
-    case 'SET_DOM_ELEMENTS':
-      return actionSetDomElements(state);
-    case 'CREATE_KONSOLE':
-      return actionCreateKonsole(state, action);
-    case 'CREATE_EDITOR':
-      return actionCreateEditor(state, action);
-    case 'SET_MODE':
-      return actionSetMode(state, action);
-    case 'SET_SCRIPT':
-      return actionSetScript(state, action);
-    case 'SET_SELECTED_INDICES':
-      return actionSetSelectedIndices(state, action);
-    case 'INITIAL_GENERATION':
-      return actionInitialGeneration(state, action);
-    case 'NEXT_GENERATION':
-      return actionNextGeneration(state, action);
-    case 'SET_PHENOTYPES':
-      return actionSetPhenotypes(state, action);
-    case 'SET_SAVE_STATE':
-      return actionSetSaveState(state, action);
-    case 'SET_PREVIOUSLY_SELECTED_GENOTYPES':
-      return actionSetPreviouslySelectedGenotypes(state, action);
-    case 'SETUP_AST_AND_TRAITS':
-      return actionSetupAstAndTraits(state);
-    default:
-      return state;
-    }
-  }
-
-  function getState() {
-    return currentState;
-  }
-
-  function dispatch(action) {
-    currentState = reducer(currentState, action);
-  }
-
-  return {
-    getState,
-    dispatch
-  };
-}
-
+let gUI = {};
+let gRenderer = undefined;
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -195,9 +67,8 @@ function getJSON(url) {
   return get(url).then(JSON.parse);
 }
 
-function getScriptFromEditor(state) {
-  const editor = state.get('editor');
-  return editor.getValue();
+function getScriptFromEditor() {
+  return gUI.editor.getValue();
 }
 
 function showButtonsFor(mode) {
@@ -274,7 +145,7 @@ function updateUI(state) {
 
 function renderGenotypeToImage(state, backAst, genotype, imageElement, w, h) {
 
-  const renderer = state.get('renderer');
+  const renderer = gRenderer;
 
   if (w !== undefined && h !== undefined) {
     renderer.preDrawScene(w, h);
@@ -290,7 +161,7 @@ function renderGenotypeToImage(state, backAst, genotype, imageElement, w, h) {
 }
 
 function renderScript(state) {
-  const imageElement = state.get('renderImage');
+  const imageElement = gUI.renderImage;
 
   const script = state.getIn(['saveState', 'script']);
   const frontAst = Runtime.buildFrontAst(script);
@@ -302,8 +173,7 @@ function renderScript(state) {
 }
 
 function timedRenderScript(state) {
-  Util.withTiming('rendered', () => renderScript(state),
-                  state.get('konsole'));
+  Util.withTiming('rendered', () => renderScript(state), gUI.konsole);
 }
 
 function addClickEvent(id, fn) {
@@ -408,26 +278,6 @@ function showPlaceholderImages(state) {
     const imageElement = phenotypes.getIn([i, 'imageElement']);
     imageElement.src = placeholder;
   }
-}
-
-// returns an immutable list of genotypes
-function createInitialGenotypePopulation(state, populationSize) {
-  // add genotypes to the containers
-  let genotype;
-  const random = (new Date()).toGMTString();
-  const traits = state.get('traits');
-  const genotypes = [];
-
-  for (let i = 0; i < populationSize; i++) {
-    if (i === 0) {
-      genotype = Genetic.createGenotypeFromInitialValues(traits);
-    } else {
-      genotype = Genetic.createGenotypeFromTraits(traits, i + random);
-    }
-    genotypes.push(genotype);
-  }
-
-  return new Immutable.List(genotypes);
 }
 
 // update the selected phenotypes in the evolve screen according to the
@@ -593,7 +443,7 @@ function afterLoadingPlaceholderImages(state) {
 
 function showCurrentMode(state) {
   // show the current container, hide the others
-  const containers = state.get('containers');
+  const containers = gUI.containers;
   const currentMode = state.getIn(['saveState', 'currentMode']);
   for (let i = 0; i < SeniMode.numSeniModes; i++) {
     containers.get(i).className = i === currentMode ? '' : 'hidden';
@@ -602,7 +452,7 @@ function showCurrentMode(state) {
 }
 
 function showScriptInEditor(state) {
-  const editor = state.get('editor');
+  const editor = gUI.editor;
   editor.getDoc().setValue(state.getIn(['saveState', 'script']));
   editor.refresh();
 }
@@ -653,6 +503,7 @@ function resizeContainers() {
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
+
 function createKonsole(store, element) {
 
   const konsole = new Konsole(element, {
@@ -690,38 +541,54 @@ function createEditor(store, editorTextArea) {
     });
   };
 
+  const extraKeys = {
+    'Ctrl-E': () => {
+      store.dispatch({type: 'SET_SCRIPT', script: getScriptFromEditor()});
+      timedRenderScript(store.getState());
+      return false;
+    },
+    // make ctrl-m a noop, otherwise invoking the konsole will result in
+    // deleting a line from the editor
+    'Ctrl-M': () => false,
+    'Ctrl-I': () => {
+      const editor = gUI.editor;
+      const konsole = gUI.konsole;
+      const numLines = editor.doc.size;
+      blockIndent(editor, 0, numLines);
+      konsole.log(`indenting ${numLines} lines`);
+      return false;
+    }
+  };
+
   return Editor.createEditor(editorTextArea, {
     theme: 'default',
-    extraKeys: {
-      'Ctrl-E': () => {
-        const script = getScriptFromEditor(store.getState());
-        store.dispatch({type: 'SET_SCRIPT', script});
-        timedRenderScript(store.getState());
-        return false;
-      },
-      // make ctrl-m a noop, otherwise invoking the konsole will result in
-      // deleting a line from the editor
-      'Ctrl-M': () => false,
-      'Ctrl-I': () => {
-        const editor = store.getState().get('editor');
-        const konsole = store.getState().get('konsole');
-        const numLines = editor.doc.size;
-        blockIndent(editor, 0, numLines);
-        konsole.log(`indenting ${numLines} lines`);
-        return false;
-      }
-    }
+    extraKeys
   });
 }
 
 function setupUI(store) {
 
-  store.dispatch({type: 'SET_DOM_ELEMENTS'});
+  const d = document;
+  const konsoleElement = d.getElementById('konsole');
+  const editorTextArea = d.getElementById('edit-textarea');
+
+  gUI = {
+    // the 3 main UI areas, stored in an Immutable.List
+    containers: new Immutable.List([d.getElementById('gallery-container'),
+                                    d.getElementById('edit-container'),
+                                    d.getElementById('evolve-container')]),
+    // the top nav bar across the state
+    navbar: d.getElementById('seni-navbar'),
+    // the img destination that shows the rendered script in edit mode
+    renderImage: d.getElementById('render-img'),
+    // console CodeMirror element in the edit screen
+    konsole: createKonsole(store, konsoleElement),
+    editor: createEditor(store, editorTextArea)
+  };
+
+  konsoleElement.style.height = `0%`;
 
   showButtonsFor(SeniMode.gallery);
-
-  store.dispatch({type: 'CREATE_KONSOLE', store});
-  store.dispatch({type: 'CREATE_EDITOR', store});
 
   const galleryModeHandler = event => {
     ensureMode(store, SeniMode.gallery);
@@ -730,8 +597,7 @@ function setupUI(store) {
 
   const evolveModeHandler = event => {
     // get the latest script from the editor
-    store.dispatch({type: 'SET_SCRIPT',
-                    script: getScriptFromEditor(store.getState())});
+    store.dispatch({type: 'SET_SCRIPT', script: getScriptFromEditor()});
     History.replaceState(store.getState().get('saveState'));
 
     ensureMode(store, SeniMode.evolve);
@@ -763,17 +629,10 @@ function setupUI(store) {
   });
 
   addClickEvent('eval-btn', () => {
-    const editor = store.getState().get('editor');
-    store.dispatch({type: 'SET_SCRIPT', script: editor.getValue()});
+    store.dispatch({type: 'SET_SCRIPT', script: getScriptFromEditor()});
     timedRenderScript(store.getState());
   });
-/*
-  addClickEvent('action-add', () => {
-    const state = store.getState();
-    store.getState() = state.set('script', '');
-    store = ensureMode(store, SeniMode.edit);
-  });
-*/
+
   addClickEvent('gallery-container', event => {
     const target = event.target;
     if (target.classList.contains('show-edit')) {
@@ -882,8 +741,8 @@ function setupUI(store) {
     } else {
       konsolePanel.style.height = '0%';
     }
-    store.getState().get('konsole').refresh();
-    store.getState().get('editor').refresh();
+    gUI.konsole.refresh();
+    gUI.editor.refresh();
   }
 
   document.onkeydown = evt => {
@@ -952,74 +811,13 @@ function removeKonsoleInvisibility() {
   k.classList.remove('invisible');
 }
 
-function createSaveState() {
-  return Immutable.fromJS({
-    currentMode: SeniMode.gallery,
-    previouslySelectedGenotypes: [],
-    selectedIndices: [],
-    script: undefined,
-    genotypes: []
-  });
-}
-
-
-
-
-/**
- * Creates the immutable SeniState
- *
- * @private
- * @returns {Immutable Map} a basic SeniState with a valid renderer and env
- */
-function createSeniState() {
-  let state = Immutable.fromJS({
-    renderer: undefined,
-    editor: undefined,
-
-    // console CodeMirror element in the edit screen
-    konsole: undefined,
-
-    // the top nav bar across the state
-    navbar: undefined,
-    // the img destination that shows the rendered script in edit mode
-    renderImage: undefined,
-    // the resolution of the high res image
-    highResolution: [2048, 2048],
-    // the 3 main UI areas, stored in an Immutable.List
-    containers: [],
-    placeholder: 'img/spinner.gif',
-    populationSize: 24,
-    mutationRate: 0.1,
-    // an immutable var containing the base env for all evaluations
-    env: undefined,
-
-    // information about the current piece being created/rendered
-    phenotypes: [], // stored in an Immutable.List
-    frontAst: undefined,
-    backAst: undefined,
-    traits: undefined,
-
-    saveState: createSaveState()
-  });
-
-  const canvasElement = document.getElementById('render-canvas');
-  const renderer = new Renderer(canvasElement);
-  const bindings = Bind.addBindings(Runtime.createEnv(), renderer);
-
-  state = state
-    .set('renderer', renderer)
-    .set('env', bindings);
-
-  return state;
-}
-
 export default function main() {
-
   resizeContainers();
 
-  // creates the store
-  const state = createSeniState();
-  setupUI(createStore(state));
+  gRenderer = new Renderer(document.getElementById('render-canvas'));
+  const state = createInitialState(gRenderer);
+  const store = createStore(state);
+  setupUI(store);
 
   getGallery()
     .then(removeKonsoleInvisibility)
