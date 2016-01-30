@@ -701,12 +701,15 @@ function setupUI(store) {
 
   function toggleKonsole() {
     const konsolePanel = document.getElementById('konsole');
+    const konsoleButton = document.getElementById('console-btn');
 
     konsoleToggle = 1 - konsoleToggle;
     if (konsoleToggle === 1) {
       konsolePanel.style.height = '50%';
+      konsoleButton.textContent = 'Hide Console';
     } else {
       konsolePanel.style.height = '0%';
+      konsoleButton.textContent = 'Show Console';
     }
     gUI.konsole.refresh();
     gUI.editor.refresh();
