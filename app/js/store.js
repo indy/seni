@@ -83,16 +83,16 @@ export function createStore(initialState) {
   };
 }
 
-function actionSetMode(state, action) {
-  return state.set('currentMode', action.mode);
+function actionSetMode(state, { mode }) {
+  return state.set('currentMode', mode);
 }
 
-function actionSetScript(state, action) {
-  return state.set('script', action.script);
+function actionSetScript(state, { script }) {
+  return state.set('script', script);
 }
 
-function actionSetSelectedIndices(state, action) {
-  const si = action.selectedIndices || new Immutable.List();
+function actionSetSelectedIndices(state, { selectedIndices }) {
+  const si = selectedIndices || new Immutable.List();
   return state.set('selectedIndices', si);
 }
 
@@ -122,24 +122,27 @@ function actionInitialGeneration(state) {
     .set('selectedIndices', new Immutable.List());
 }
 
-function actionShuffleGeneration(state, action) {
-
-  const script = state.get('script');
-  const traits = buildTraits(script);
+function actionShuffleGeneration(state, { rng }) {
 
   const prev = state.get('previouslySelectedGenotypes');
 
+  if (prev.size === 0) {
+    return actionInitialGeneration(state);
+  }
+
+  const script = state.get('script');
+  const traits = buildTraits(script);
   const genotypes = Genetic.nextGeneration(prev,
                                            state.get('populationSize'),
                                            state.get('mutationRate'),
                                            traits,
-                                           action.rng);
+                                           rng);
   return state
     .set('genotypes', genotypes)
     .set('selectedIndices', new Immutable.List());
 }
 
-function actionNextGeneration(state, action) {
+function actionNextGeneration(state, { rng }) {
 
 
   const pg = state.get('genotypes');
@@ -156,7 +159,7 @@ function actionNextGeneration(state, action) {
                                            state.get('populationSize'),
                                            state.get('mutationRate'),
                                            traits,
-                                           action.rng);
+                                           rng);
 
   const previouslySelectedGenotypes = genotypes.slice(0, selectedIndices.size);
 
