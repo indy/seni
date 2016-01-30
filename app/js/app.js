@@ -357,8 +357,8 @@ function createPhenotypeElement(id, placeholderImage) {
              data-id="${id}" src="${placeholderImage}">
       </a>
       <div class="card-action">
-        <a href="#" class="render">Render</a>
-        <a href="#" class="edit">Edit</a>
+        <a href="#" class="render left-side">Render</a>
+        <a href="#" class="edit right-side">Edit</a>
       </div>`;
 
   return container;
@@ -629,6 +629,22 @@ function setupUI(store) {
 
   addClickEvent('next-btn', () => {
     onNextGen(store);
+  });
+
+  addClickEvent('high-res-download', event => {
+    const highResLink = document.getElementById('high-res-link');
+
+    // remove target='_blank' and add a download attribute
+    highResLink.removeAttribute('target');
+    highResLink.setAttribute('download', 'seni-image.png');
+
+    highResLink.click();
+
+    // restore attributes
+    highResLink.removeAttribute('download');
+    highResLink.setAttribute('target', '_blank');
+
+    event.preventDefault();
   });
 
   addClickEvent('high-res-close', event => {

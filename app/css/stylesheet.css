@@ -253,14 +253,24 @@ button {
   text-decoration: none;
 }
 
-.card-action a.render {
+.card-action a.left-side {
   float: left;
   margin-left: 3rem;
 }
 
-.card-action a.edit {
+.left-more {
+  float: left;  
+  margin-left: 9rem;
+}
+
+.card-action a.right-side {
   float: right;
   margin-right: 3rem;
+}
+
+.right-more {
+  float: right;
+  margin-right: 9rem;
 }
 
 /* ---------------------- high-res-container ------------------------------- */
@@ -290,6 +300,7 @@ button {
 }
 
 #high-res-image-note {
+  clear: both;
   color: #aaa;
   font-size: smaller;
   margin-bottom: 0;
