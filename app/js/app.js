@@ -29,23 +29,12 @@ import Konsole from './ui/Konsole';
 import KonsoleCommander from './ui/KonsoleCommander';
 import { addDefaultCommands } from './ui/KonsoleCommands';
 import Editor from './ui/Editor';
-import { createStore, createInitialState } from './StateContainer';
+import { createStore, createInitialState } from './store';
 
 let gUI = {};
 let gRenderer = undefined;
 // an immutable var containing the base env for all evaluations
 let gEnv = undefined;
-
-let gFrontAst = undefined;
-let gBackAst = undefined;
-let gTraits = undefined;
-
-
-function setupAstAndTraits(script) {
-  gFrontAst = Runtime.buildFrontAst(script);
-  gBackAst = Runtime.compileBackAst(gFrontAst);
-  gTraits = Genetic.buildTraits(gBackAst);
-}
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -86,6 +75,7 @@ function getScriptFromEditor() {
 }
 
 function showButtonsFor(mode) {
+
   const evalBtn = document.getElementById('eval-btn');
   const evolveBtn = document.getElementById('evolve-btn');
   const nextBtn = document.getElementById('next-btn');
@@ -141,6 +131,7 @@ function ensureMode(store, mode) {
 // function that takes a read-only state and updates the UI
 //
 function updateUI(state) {
+
   showCurrentMode(state);
 
   switch (state.get('currentMode')) {
@@ -168,14 +159,11 @@ function renderGenotypeToImage(state, backAst, genotype, imageElement, w, h) {
   }
 
   Runtime.evalAst(gEnv, backAst, genotype);
-
   renderer.postDrawScene();
-
   imageElement.src = renderer.getImageData();
 }
 
-function renderScript(state) {
-  const imageElement = gUI.renderImage;
+function renderScript(state, imageElement) {
 
   const script = state.get('script');
   const frontAst = Runtime.buildFrontAst(script);
@@ -187,11 +175,15 @@ function renderScript(state) {
 }
 
 function timedRenderScript(state) {
-  Util.withTiming('rendered', () => renderScript(state), gUI.konsole);
+  Util.withTiming('rendered',
+                  () => renderScript(state, gUI.renderImage),
+                  gUI.konsole);
 }
 
 function addClickEvent(id, fn) {
+
   const element = document.getElementById(id);
+
   if (element) {
     element.addEventListener('click', fn);
   } else {
@@ -216,7 +208,6 @@ function getPhenoIdFromDom(element) {
 }
 
 function renderHighRes(state, element) {
-  console.log('renderHighRes');
 
   const [index, _] = getPhenoIdFromDom(element);
 
@@ -245,7 +236,8 @@ function showEditFromEvolve(store, element) {
     if (index !== -1) {
       const genotypes = store.getState().get('genotypes');
       const genotype = genotypes.get(index);
-      const frontAst = gFrontAst;
+
+      const frontAst = Runtime.buildFrontAst(store.getState().get('script'));
 
       const script = Runtime.unparse(frontAst, genotype);
 
@@ -262,7 +254,10 @@ function showEditFromEvolve(store, element) {
 
 function renderPhenotypes(state) {
 
+  const frontAst = Runtime.buildFrontAst(state.get('script'));
+  const backAst = Runtime.compileBackAst(frontAst);
   let i = 0;
+
   setTimeout(function go() {
     // stop generating new phenotypes if we've reached the desired
     // population or the user has switched to edit mode
@@ -274,7 +269,7 @@ function renderPhenotypes(state) {
       const imageElement = phenotypes.getIn([i, 'imageElement']);
 
       renderGenotypeToImage(state,
-                            gBackAst,
+                            backAst,
                             genotype,
                             imageElement);
       i++;
@@ -284,9 +279,11 @@ function renderPhenotypes(state) {
 }
 
 function showPlaceholderImages(state) {
+
   const placeholder = state.get('placeholder');
   const populationSize = state.get('populationSize');
   const phenotypes = gUI.phenotypes;
+
   for (let i = 0; i < populationSize; i++) {
     const imageElement = phenotypes.getIn([i, 'imageElement']);
     imageElement.src = placeholder;
@@ -298,10 +295,9 @@ function showPlaceholderImages(state) {
 function updateSelectionUI(state) {
 
   const selectedIndices = state.get('selectedIndices');
-
-  // clean up the dom and clear the selected state
   const populationSize = state.get('populationSize');
   const phenotypes = gUI.phenotypes;
+
   for (let i = 0; i < populationSize; i++) {
     const element = phenotypes.getIn([i, 'phenotypeElement']);
     element.classList.remove('selected');
@@ -315,10 +311,11 @@ function updateSelectionUI(state) {
 }
 
 function onNextGen(store) {
+
   // get the selected genotypes for the next generation
   const populationSize = store.getState().get('populationSize');
-  let selectedIndices = new Immutable.List();
   const phenotypes = gUI.phenotypes;
+  let selectedIndices = new Immutable.List();
 
   for (let i = 0; i < populationSize; i++) {
     const element = phenotypes.getIn([i, 'phenotypeElement']);
@@ -339,46 +336,21 @@ function onNextGen(store) {
 
   showPlaceholderImages(store.getState());
 
-  if (selectedIndices.size === 0) {
-    // if this is the first generation and nothing has been selected
-    // just randomize all of the phenotypes
-    store.dispatch({type: 'INITIAL_GENERATION', traits: gTraits});
-  } else {
-    const pg = store.getState().get('genotypes');
-    let selectedGenotypes = new Immutable.List();
-    for (let i = 0; i < selectedIndices.size; i++) {
-      selectedGenotypes =
-        selectedGenotypes.push(pg.get(selectedIndices.get(i)));
-    }
-    store.dispatch({type: 'NEXT_GENERATION',
-                    genotypes: selectedGenotypes,
-                    traits: gTraits,
-                    rng: 42});
-  }
-
-  const genotypes = store.getState().get('genotypes');
+  store.dispatch({type: 'NEXT_GENERATION', rng: 42});
 
   // render the genotypes
   renderPhenotypes(store.getState());
-
-  // this is the first selectedIndices.size genotypes
-  const previouslySelectedGenotypes = genotypes.slice(0, selectedIndices.size);
-  store.dispatch({type: 'SET_PREVIOUSLY_SELECTED_GENOTYPES',
-                  previouslySelectedGenotypes});
-
-  // clean up the dom and clear the selected state
-  store.dispatch({type: 'SET_SELECTED_INDICES'});
   updateSelectionUI(store.getState());
 
   History.pushState(store.getState());
 }
 
 function createPhenotypeElement(id, placeholderImage) {
+
   const container = document.createElement('div');
 
   container.className = 'card-holder';
   container.id = `pheno-${id}`;
-
   container.innerHTML = `
       <a href="#">
         <img class="card-image phenotype"
@@ -388,6 +360,7 @@ function createPhenotypeElement(id, placeholderImage) {
         <a href="#" class="render">Render</a>
         <a href="#" class="edit">Edit</a>
       </div>`;
+
   return container;
 }
 
@@ -396,8 +369,7 @@ function setupEvolveUI(store) {
   return new Promise((resolve, _) => {
     afterLoadingPlaceholderImages(store.getState()).then(() => {
 
-      setupAstAndTraits(store.getState().get('script'));
-      store.dispatch({type: 'INITIAL_GENERATION', traits: gTraits});
+      store.dispatch({type: 'INITIAL_GENERATION'});
 
       // render the phenotypes
       renderPhenotypes(store.getState());
@@ -412,7 +384,6 @@ function setupEvolveUI(store) {
 function restoreEvolveUI(store) {
   return new Promise((resolve, _) => { // todo: implement reject
     afterLoadingPlaceholderImages(store.getState()).then(() => {
-      setupAstAndTraits(store.getState().get('script'));
       // render the phenotypes
       renderPhenotypes(store.getState());
       updateSelectionUI(store.getState());
@@ -426,7 +397,6 @@ function restoreEvolveUI(store) {
 // on every image load
 //
 function afterLoadingPlaceholderImages(state) {
-
   const allImagesLoadedSince = timeStamp => {
     const phenotypes = gUI.phenotypes;
 
@@ -456,9 +426,11 @@ function afterLoadingPlaceholderImages(state) {
 }
 
 function showCurrentMode(state) {
+
   // show the current container, hide the others
   const containers = gUI.containers;
   const currentMode = state.get('currentMode');
+
   for (let i = 0; i < SeniMode.numSeniModes; i++) {
     containers.get(i).className = i === currentMode ? '' : 'hidden';
   }
@@ -466,13 +438,14 @@ function showCurrentMode(state) {
 }
 
 function showScriptInEditor(state) {
+
   const editor = gUI.editor;
+
   editor.getDoc().setValue(state.get('script'));
   editor.refresh();
 }
 
 function showEditFromGallery(store, element) {
-
   const getGalleryItemIdFromDom = function(e) {
     while (e) {
       const m = e.id.match(/gallery-item-(\d+)/);
@@ -508,6 +481,7 @@ function showEditFromGallery(store, element) {
 
 // take the height of the navbar into consideration
 function resizeContainers() {
+
   const navbar = document.getElementById('seni-navbar');
 
   const edit = document.getElementById('edit-container');
@@ -604,42 +578,24 @@ function setupUI(store) {
 
   showButtonsFor(SeniMode.gallery);
 
-  const galleryModeHandler = event => {
+  addClickEvent('home', event => {
     ensureMode(store, SeniMode.gallery);
     event.preventDefault();
-  };
+  });
 
-  const evolveModeHandler = event => {
+  addClickEvent('evolve-btn', event => {
     // get the latest script from the editor
     store.dispatch({type: 'SET_SCRIPT', script: getScriptFromEditor()});
     History.replaceState(store.getState());
-
     ensureMode(store, SeniMode.evolve);
     event.preventDefault();
-  };
-
-  addClickEvent('home', galleryModeHandler);
-  addClickEvent('evolve-btn', evolveModeHandler);
+  });
 
   addClickEvent('shuffle-btn', event => {
-
     showPlaceholderImages(store.getState());
-
-    const previouslySelectedGenotypes =
-            store.getState().get('previouslySelectedGenotypes');
-    store.dispatch({type: 'NEXT_GENERATION',
-                    genotypes: previouslySelectedGenotypes,
-                    traits: gTraits,
-                    rng: 11});
-
+    store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11});
     renderPhenotypes(store.getState());
-
-    // clean up the dom and clear the selected state
-    store.dispatch({type: 'SET_SELECTED_INDICES'});
     updateSelectionUI(store.getState());
-
-
-//    store = genotypesFromSelectedPhenotypes(store);
     event.preventDefault();
   });
 
@@ -734,7 +690,6 @@ function setupUI(store) {
       if (store.getState().get('currentMode') === SeniMode.evolve) {
         restoreEvolveUI(store);
       }
-
     } else {
       // no event.state so behave as if the user has visited
       // the '/' of the state
