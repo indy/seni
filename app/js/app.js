@@ -739,6 +739,8 @@ function setupUI(store) {
     if (konsoleToggle === 1) {
       konsolePanel.style.height = '50%';
       konsoleButton.textContent = 'Hide Console';
+      gUI.konsole.focus();
+
     } else {
       konsolePanel.style.height = '0%';
       konsoleButton.textContent = 'Show Console';

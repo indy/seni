@@ -287,6 +287,7 @@ export default class Konsole {
     this.initCallbacks(options);
     this.initializeKeyMap();
     this.initConsole(el);
+
     this.submitHistory = new KonsoleHistory(this.options);
   }
 
@@ -398,7 +399,7 @@ export default class Konsole {
       autoFocus: this.options.autoFocus,
       extraKeys: {
         'Enter': () => this.submit(),
-        'Ctrl-M': () => this.submit(),
+        'Ctrl-M': () => this.noop(),
         'Tab': () => this.noop(),
         'Left': () => keyActions.goCharLeft(),
         'Ctrl-B': () => keyActions.goCharLeft(),
@@ -465,6 +466,7 @@ export default class Konsole {
     if (this.options.autoFocus) {
       setTimeout(() => _this.console.getInputField().focus(), 10);
     }
+
     return this.moveInputForward();
   }
 
