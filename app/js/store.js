@@ -18,6 +18,7 @@
 
 import Immutable from 'immutable';
 
+import Util from './seni/Util';
 import { SeniMode } from './ui/SeniMode';
 import Runtime from './lang/Runtime';
 import Genetic from './lang/Genetic';
@@ -40,6 +41,7 @@ export function createInitialState() {
     previouslySelectedGenotypes: [],
     selectedIndices: [],
     script: undefined,
+    scriptHash: undefined,
     genotypes: []
   });
 }
@@ -88,7 +90,9 @@ function actionSetMode(state, { mode }) {
 }
 
 function actionSetScript(state, { script }) {
-  return state.set('script', script);
+  return state
+    .set('script', script)
+    .set('scriptHash', Util.hashCode(script));
 }
 
 function actionSetSelectedIndices(state, { selectedIndices }) {

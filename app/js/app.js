@@ -20,7 +20,6 @@ import Immutable from 'immutable';
 
 import Bind from './seni/Bind';
 import Renderer from './seni/Renderer';
-import Util from './seni/Util';
 import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
 import { SeniMode } from './ui/SeniMode';
@@ -30,6 +29,7 @@ import KonsoleCommander from './ui/KonsoleCommander';
 import { addDefaultCommands } from './ui/KonsoleCommands';
 import Editor from './ui/Editor';
 import { createStore, createInitialState } from './store';
+import { startTiming } from './timer';
 
 let gUI = {};
 let gRenderer = undefined;
@@ -175,9 +175,9 @@ function renderScript(state, imageElement) {
 }
 
 function timedRenderScript(state) {
-  Util.withTiming('rendered',
-                  () => renderScript(state, gUI.renderImage),
-                  gUI.konsole);
+  const stopFn = startTiming(`renderScript-${state.get('scriptHash')}`);
+  renderScript(state, gUI.renderImage);
+  stopFn();
 }
 
 function addClickEvent(id, fn) {
@@ -252,29 +252,39 @@ function showEditFromEvolve(store, element) {
   });
 }
 
-function renderPhenotypes(state) {
+function renderGeneration(state) {
+  return new Promise((resolve, _) => {
 
-  const frontAst = Runtime.buildFrontAst(state.get('script'));
-  const backAst = Runtime.compileBackAst(frontAst);
-  let i = 0;
+    const script = state.get('script');
+    const scriptHash = state.get('scriptHash');
 
-  setTimeout(function go() {
-    // stop generating new phenotypes if we've reached the desired
-    // population or the user has switched to edit mode
-    const phenotypes = gUI.phenotypes;
-    const genotypes = state.get('genotypes');
-    if (i < phenotypes.size && state.get('currentMode') === SeniMode.evolve) {
+    const stopTiming = startTiming(`renderGeneration-${scriptHash}`);
 
-      const genotype = genotypes.get(i);
-      const imageElement = phenotypes.getIn([i, 'imageElement']);
+    const frontAst = Runtime.buildFrontAst(script);
+    const backAst = Runtime.compileBackAst(frontAst);
+    let i = 0;
 
-      renderGenotypeToImage(state,
-                            backAst,
-                            genotype,
-                            imageElement);
-      i++;
-      setTimeout(go);
-    }
+    setTimeout(function go() {
+      // stop generating new phenotypes if we've reached the desired
+      // population or the user has switched to edit mode
+      const phenotypes = gUI.phenotypes;
+      const genotypes = state.get('genotypes');
+      if (i < phenotypes.size && state.get('currentMode') === SeniMode.evolve) {
+
+        const genotype = genotypes.get(i);
+        const imageElement = phenotypes.getIn([i, 'imageElement']);
+
+        renderGenotypeToImage(state,
+                              backAst,
+                              genotype,
+                              imageElement);
+        i++;
+        setTimeout(go);
+      } else {
+        stopTiming();
+        resolve();
+      }
+    });
   });
 }
 
@@ -338,11 +348,11 @@ function onNextGen(store) {
 
   store.dispatch({type: 'NEXT_GENERATION', rng: 42});
 
-  // render the genotypes
-  renderPhenotypes(store.getState());
-  updateSelectionUI(store.getState());
-
   History.pushState(store.getState());
+
+  // render the genotypes
+  updateSelectionUI(store.getState());
+  renderGeneration(store.getState());
 }
 
 function createPhenotypeElement(id, placeholderImage) {
@@ -368,15 +378,11 @@ function createPhenotypeElement(id, placeholderImage) {
 function setupEvolveUI(store) {
   return new Promise((resolve, _) => {
     afterLoadingPlaceholderImages(store.getState()).then(() => {
-
       store.dispatch({type: 'INITIAL_GENERATION'});
-
       // render the phenotypes
-      renderPhenotypes(store.getState());
       updateSelectionUI(store.getState());
-
-      resolve();
-    });
+      return renderGeneration(store.getState());
+    }).then(resolve);
   });
 }
 
@@ -385,11 +391,9 @@ function restoreEvolveUI(store) {
   return new Promise((resolve, _) => { // todo: implement reject
     afterLoadingPlaceholderImages(store.getState()).then(() => {
       // render the phenotypes
-      renderPhenotypes(store.getState());
       updateSelectionUI(store.getState());
-
-      resolve();
-    });
+      return renderGeneration(store.getState());
+    }).then(resolve);
   });
 }
 
@@ -459,19 +463,17 @@ function showEditFromGallery(store, element) {
     return [-1, null];
   };
 
-  return new Promise((resolve, _reject) => {
+  return new Promise((resolve, reject) => {
     const [index, _] = getGalleryItemIdFromDom(element);
     if (index !== -1) {
       const url = `/gallery/${index}`;
 
       get(url).catch(() => {
-        console.error(`cannot connect to ${url}`);
+        reject(Error(`cannot connect to ${url}`));
       }).then(data => {
         store.dispatch({type: 'SET_SCRIPT', script: data});
         return ensureMode(store, SeniMode.edit);
-      }).then(() => {
-        resolve();
-      });
+      }).then(resolve);
     } else {
       resolve();
     }
@@ -594,8 +596,8 @@ function setupUI(store) {
   addClickEvent('shuffle-btn', event => {
     showPlaceholderImages(store.getState());
     store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11});
-    renderPhenotypes(store.getState());
     updateSelectionUI(store.getState());
+    renderGeneration(store.getState());
     event.preventDefault();
   });
 
@@ -607,7 +609,9 @@ function setupUI(store) {
   addClickEvent('gallery-container', event => {
     const target = event.target;
     if (target.classList.contains('show-edit')) {
-      showEditFromGallery(store, target);
+      showEditFromGallery(store, target).catch(error => {
+        console.error(error);
+      });
     }
     event.preventDefault();
   });
