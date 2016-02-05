@@ -22,21 +22,25 @@ import MathUtil from './MathUtil';
 const publicBindings = [
   new PublicBinding(
     'push-matrix',
-    ``,
+    `Pushes the current matrix onto the stack`,
     {},
     (self, renderer) => () => renderer.cmdMatrixPush()
   ),
 
   new PublicBinding(
     'pop-matrix',
-    ``,
+    `Pops a matrix from the stack`,
     {},
     (self, renderer) => () => renderer.cmdMatrixPop()
   ),
 
   new PublicBinding(
     'scale',
-    `Accepts either a 'vector' or 'scalar' argument`,
+    `Apply scaling to the matrix
+args:
+  either vector : [0 1]
+  or     scalar : 1
+`,
     {vector: [1, 1],
      scalar: 1},
     (self, renderer) => params => {
@@ -54,7 +58,10 @@ const publicBindings = [
 
   new PublicBinding(
     'translate',
-    ``,
+    `Apply a translation to the matrix
+args:
+  vector : [0 1]
+`,
     {vector: [0, 0]},
     (self, renderer) => params => {
       const {vector} = self.mergeWithDefaults(params);
@@ -64,7 +71,10 @@ const publicBindings = [
 
   new PublicBinding(
     'rotate',
-    ``,
+    `Apply a rotation to the matrix
+args:
+  angle : 0
+`,
     {angle: 0.0},
     (self, renderer) => params => {
       const {angle} = self.mergeWithDefaults(params);
