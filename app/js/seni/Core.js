@@ -22,32 +22,38 @@ import PublicBinding from './PublicBinding';
 const publicBindings = [
   new PublicBinding(
     'canvas/width',
-    'the width of the canvas',
+    {
+      returns: 'the width of the canvas'
+    },
     {},
     () => 1000
   ),
 
   new PublicBinding(
     'canvas/height',
-    'the height of the canvas',
+    {
+      returns: 'the height of the canvas'
+    },
     {},
     () => 1000
   ),
 
   new PublicBinding(
     'canvas/centre',
-    'the centre of the canvas',
+    {
+      returns: 'the centre of the canvas'
+    },
     {},
     () => [500, 500]
   ),
 
   new PublicBinding(
     'list/length',
-
-    '',
-
+    {
+      args: [['of', 'the vector whose length is required']],
+      returns: 'the length of the vector'
+    },
     {of: []},
-
     self => params => {
       const {of} = self.mergeWithDefaults(params);
       return of.length;
@@ -56,9 +62,12 @@ const publicBindings = [
 
   new PublicBinding(
     'list/get',
-
-    '',
-
+    {
+      description: 'get an element from a vector',
+      args: [['from', 'a vector'],
+             ['nth', 'the index of an element']],
+      returns: 'the nth element in the vector'
+    },
     {from: [], nth: 0},
 
     self => params => {
@@ -69,11 +78,13 @@ const publicBindings = [
 
   new PublicBinding(
     'take',
-
-    `invokes the 'from' function 'num' times, returning a list`,
-
+    {
+      description: `invokes the 'from' function 'num' times`,
+      args: [['num', '1'],
+             ['from', 'a function']],
+      returns: 'a vector of results'
+    },
     {num: 1, from() { return 0; }},
-
     self => params => {
       const {num, from} = self.mergeWithDefaults(params);
       const res = [];

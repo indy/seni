@@ -25,23 +25,23 @@ import seedrandom from 'seedrandom';
 
 // returns a value in the range -1..1
 function noise(x, y, z) {
-  const X = Math.floor(x) & 255;                  // FIND UNIT CUBE THAT
-  const Y = Math.floor(y) & 255;                  // CONTAINS POINT.
+  const X = Math.floor(x) & 255;                        // FIND UNIT CUBE THAT
+  const Y = Math.floor(y) & 255;                        // CONTAINS POINT.
   const Z = Math.floor(z) & 255;
-  x -= Math.floor(x);                                // FIND RELATIVE X,Y,Z
-  y -= Math.floor(y);                                // OF POINT IN CUBE.
+  x -= Math.floor(x);                                   // FIND RELATIVE X,Y,Z
+  y -= Math.floor(y);                                   // OF POINT IN CUBE.
   z -= Math.floor(z);
-  const u = fade(x);                                // COMPUTE FADE CURVES
-  const v = fade(y);                                // FOR EACH OF X,Y,Z.
+  const u = fade(x);                                    // COMPUTE FADE CURVES
+  const v = fade(y);                                    // FOR EACH OF X,Y,Z.
   const w = fade(z);
   const A = p[X] + Y, AA = p[A] + Z, AB = p[A + 1] + Z; // HASH COORDINATES OF
   const B = p[X + 1] + Y, BA = p[B] + Z, BB = p[B + 1] + Z; // 8 CUBE CORNERS
 
-  return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z),  // AND ADD
-                              grad(p[BA], x - 1, y, z)), // BLENDED
-                      lerp(u, grad(p[AB], x, y - 1, z),  // RESULTS
-                           grad(p[BB], x - 1, y - 1, z))),// FROM  8
-              lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1),  // CORNERS
+  return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z),        // AND ADD
+                              grad(p[BA], x - 1, y, z)),      // BLENDED
+                      lerp(u, grad(p[AB], x, y - 1, z),       // RESULTS
+                           grad(p[BB], x - 1, y - 1, z))),    // FROM  8
+              lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1),   // CORNERS
                            grad(p[BA + 1], x - 1, y, z - 1)), // OF CUBE
                    lerp(u, grad(p[AB + 1], x, y - 1, z - 1),
                         grad(p[BB + 1], x - 1, y - 1, z - 1))));
@@ -118,8 +118,18 @@ function buildRange(seedVal, min, max) {
 const publicBindings = [
   new PublicBinding(
     'prng/perlin-signed',
-    `returns perlin numbers in the range -1..1`,
-    {x: 1.0, y: 1.0, z: 1.0},
+    {
+      description: '',
+      args: [['x', '1.0'],
+             ['y', '1.0'],
+             ['z', '1.0']],
+      returns: `returns perlin numbers in the range -1..1`
+    },
+    {
+      x: 1.0,
+      y: 1.0,
+      z: 1.0
+    },
     self => params => {
       const {x, y, z} = self.mergeWithDefaults(params);
       return noise(x, y, z);
@@ -128,8 +138,18 @@ const publicBindings = [
 
   new PublicBinding(
     'prng/perlin-unsigned',
-    `returns perlin numbers in the range 0..1`,
-    {x: 1.0, y: 1.0, z: 1.0},
+    {
+      description: '',
+      args: [['x', '1.0'],
+             ['y', '1.0'],
+             ['z', '1.0']],
+      returns: `perlin numbers in the range 0..1`
+    },
+    {
+      x: 1.0,
+      y: 1.0,
+      z: 1.0
+    },
     self => params => {
       const {x, y, z} = self.mergeWithDefaults(params);
       const v = noise(x, y, z);
@@ -139,10 +159,18 @@ const publicBindings = [
 
   new PublicBinding(
     'prng/range',
-    `returns a function that generates a random number in the range min..max`,
-    {seed: 'shabba',
-     min: 0,
-     max: 1},
+    {
+      description: '',
+      args: [['seed', 'shabba'],
+             ['min', '0'],
+             ['max', '1']],
+      returns: `a function that generates a random number in the range min..max`
+    },
+    {
+      seed: 'shabba',
+      min: 0,
+      max: 1
+    },
     self => params => {
       const {seed, min, max} = self.mergeWithDefaults(params);
       return buildRange(seed, min, max);

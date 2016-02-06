@@ -101,14 +101,15 @@ function hline(publicBinding, params, renderer) {
 const publicBindings = [
   new PublicBinding(
     'focal/point',
-    `returns a function that describes how 'interesting' a point should be
-args:
-  position : [0 0]
-  distance : 100
-  falloff  : one of 'linear', 'quick', 'slow-in', 'slow-in-out'
-
-returns a function which, when given 'position' vector returns the 'interest'
-at that point`,
+    {
+      description: `creates a function that describes how 'interesting' a
+point should be`,
+      args: [['position', '[0 0]'],
+             ['distance', '100'],
+             ['falloff',
+              `one of 'linear', 'quick', 'slow-in', 'slow-in-out'`]],
+      returns: `a function that takes a position vector`
+    },
     {
       position: [0, 0],
       distance: 100,
@@ -119,14 +120,15 @@ at that point`,
 
   new PublicBinding(
     'focal/vline',
-    `returns a function that describes how 'interesting' a point should be
-args:
-  position : [0 0]
-  distance : 100
-  falloff  : one of 'linear', 'quick', 'slow-in', 'slow-in-out'
-
-returns a function which, when given 'position' vector returns the 'interest'
-at that point (only the position's x value will be taken into account)`,
+    {
+      description: `creates a function that describes how 'interesting' a
+point should be (only the position's x value will be taken into account)`,
+      args: [['position', '[0 0]'],
+             ['distance', '100'],
+             ['falloff',
+              `one of 'linear', 'quick', 'slow-in', 'slow-in-out'`]],
+      returns: `a function that takes a position vector`
+    },
     {
       position: [500, 500],
       distance: 100,
@@ -137,14 +139,15 @@ at that point (only the position's x value will be taken into account)`,
 
   new PublicBinding(
     'focal/hline',
-    `returns a function that describes how 'interesting' a point should be
-args:
-  position : [0 0]
-  distance : 100
-  falloff  : one of 'linear', 'quick', 'slow-in', 'slow-in-out'
-
-returns a function which, when given 'position' vector returns the 'interest'
-at that point (only the position's y value will be taken into account)`,
+    {
+      description: `creates a function that describes how 'interesting' a
+point should be (only the position's y value will be taken into account)`,
+      args: [['position', '[0 0]'],
+             ['distance', '100'],
+             ['falloff',
+              `one of 'linear', 'quick', 'slow-in', 'slow-in-out'`]],
+      returns: `a function that takes a position vector`
+    },
     {
       position: [500, 500],
       distance: 100,

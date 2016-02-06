@@ -33,7 +33,19 @@ function renderBezier(publicBinding, params, renderer) {
 
 const bezierBinding = new PublicBinding(
   'bezier',
-  `woo hoo`,
+  {
+    description: 'renders a bezier curve',
+    args: [['tessellation', 'the number of polygons to use'],
+           ['line-width', ''],
+           ['line-width-start', ''],
+           ['line-width-end', ''],
+           ['line-width-mapping',
+            'one of linear, quick, slow-in or slow-in-out'],
+           ['coords', 'four control points'],
+           ['t-start', '0'],
+           ['t-end', '1'],
+           ['colour', 'Colour.defaultColour']]
+  },
   {
     tessellation: 15,
     'line-width': undefined,
@@ -127,7 +139,19 @@ function renderBezierBulging(publicBinding, params, renderer) {
 
 const splineBinding = new PublicBinding(
   'spline',
-  ``,
+  {
+    description: `renders a spline curve`,
+    args: [['tessellation', 'the number of polygons to use'],
+           ['line-width', ''],
+           ['line-width-start', ''],
+           ['line-width-end', ''],
+           ['line-width-mapping',
+            'one of linear, quick, slow-in or slow-in-out'],
+           ['coords', 'three control points'],
+           ['t-start', '0'],
+           ['t-end', '1'],
+           ['colour', 'Colour.defaultColour']]
+  },
   {
     tessellation: 15,
     'line-width': undefined,
@@ -171,14 +195,14 @@ function renderStrokedBezier(publicBinding, params, renderer) {
     const tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
     // get 3 points on the bezier curve
     const [xx1, xx2, xx3] =
-            tvals.map(t => MathUtil.bezierPoint(x1, x2, x3, x4, t));
+          tvals.map(t => MathUtil.bezierPoint(x1, x2, x3, x4, t));
     const [yy1, yy2, yy3] =
-            tvals.map(t => MathUtil.bezierPoint(y1, y2, y3, y4, t));
+      tvals.map(t => MathUtil.bezierPoint(y1, y2, y3, y4, t));
 
     const ns = strokeNoise;
 
     const colLabL = Colour.getComponent(lab, Colour.L) +
-            (PseudoRandom._perlin(xx1, xx1, xx1) * colourVolatility);
+          (PseudoRandom._perlin(xx1, xx1, xx1) * colourVolatility);
 
     const splineParams = {
       tessellation: strokeTessellation,
@@ -205,17 +229,20 @@ function renderStrokedBezier(publicBinding, params, renderer) {
 
 const strokedBezierBinding = new PublicBinding(
   'stroked-bezier',
-  `tessellation: the number of basic bezier curves to use to render this bezier
-
-  lineWidth: the perceived thickness of the final bezier curve,
-  made up from multiple basic bezier curves
-
-  coords: --
-
-  strokeWidth: the width of each basic bezier
-  strokeTessellation: the tessellation of each basic bezier
-  strokeNoise: the amount of noise to add to each basic bezier curve
-  `,
+  {
+    description: 'renders a stroked bezier curve',
+    args: [['tessellation', 'the number of polygons to use'],
+           ['line-width', ''],
+           ['coords', 'four control points'],
+           ['stroke-tessellation', 'the tessellation of each basic bezier'],
+           ['stroke-noise',
+            'the amount of noise to add to each basic bezier curve'],
+           ['stroke-line-width-start', 'the width of each basic bezier'],
+           ['stroke-line-width-end', 'the width of each basic bezier'],
+           ['colour', 'Colour.defaultColour'],
+           ['colour-volatility', '1'],
+           ['seed', 'the random seed']]
+  },
   {
     tessellation: 15,
     'line-width': undefined,
@@ -328,7 +355,14 @@ function renderCircleSlice(publicBinding, params, renderer) {
 
 const rectBinding = new PublicBinding(
   'rect',
-  `renders a rectangle, centered in position with the given width, height`,
+  {
+    description:
+    `renders a rectangle, centered in position with the given width, height`,
+    args: [['position', 'a position vector'],
+           ['width', 'width'],
+           ['height', 'height'],
+           ['colour', 'Colour.defaultColour']]
+  },
   {
     position: [500, 500],
     width: 200,
@@ -344,7 +378,15 @@ const publicBindings = [
 
   new PublicBinding(
     'bezier-trailing',
-    `this fn adds 1`,
+    {
+      description: `renders a trailing bezier curve`,
+      args: [['tessellation', 'the number of polygons to use'],
+             ['line-width', ''],
+             ['coords', 'three control points'],
+             ['t-start', '0'],
+             ['t-end', '1'],
+             ['colour', 'Colour.defaultColour']]
+    },
     {
       tessellation: 15,
       'line-width': 20,
@@ -360,7 +402,15 @@ const publicBindings = [
 
   new PublicBinding(
     'bezier-bulging',
-    ``,
+    {
+      description: `renders a bulging bezier curve`,
+      args: [['tessellation', 'the number of polygons to use'],
+             ['line-width', ''],
+             ['coords', 'three control points'],
+             ['t-start', '0'],
+             ['t-end', '1'],
+             ['colour', 'Colour.defaultColour']]
+    },
     {
       tessellation: 16,
       'line-width': 20,
@@ -378,7 +428,13 @@ const publicBindings = [
 
   new PublicBinding(
     'line',
-    `renders a line using 'from' and 'to' parameters`,
+    {
+      description: `renders a line using 'from' and 'to' parameters`,
+      args: [['from', 'vector'],
+             ['to', 'vector'],
+             ['width', '20'],
+             ['colour', 'Colour.defaultColour']]
+    },
     {
       from: [100, 100],
       to: [500, 500],
@@ -389,7 +445,15 @@ const publicBindings = [
 
   new PublicBinding(
     'box',
-    `renders a rectangle using the given top, left, bottom, right parameters`,
+    {
+      description:
+      `renders a rectangle using the given top, left, bottom, right parameters`,
+      args: [['top', ''],
+             ['left', ''],
+             ['bottom', ''],
+             ['right', ''],
+             ['colour', 'Colour.defaultColour']]
+    },
     {
       top: 300,
       left: 100,
@@ -413,7 +477,15 @@ const publicBindings = [
 
   new PublicBinding(
     'circle',
-    ``,
+    {
+      description: `renders a circle`,
+      args: [['positioin', ''],
+             ['radius', ''],
+             ['width', ''],
+             ['height', ''],
+             ['tessellation', ''],
+             ['colour', 'Colour.defaultColour']]
+    },
     {
       position: [500, 500],
       radius: undefined,
@@ -426,7 +498,19 @@ const publicBindings = [
 
   new PublicBinding(
     'circle-slice',
-    ``,
+    {
+      description: `renders a circle-slice`,
+      args: [['positioin', ''],
+             ['radius', ''],
+             ['angle-start', ''],
+             ['angle-end', ''],
+             ['width', ''],
+             ['height', ''],
+             ['inner-width', ''],
+             ['inner-height', ''],
+             ['tessellation', ''],
+             ['colour', 'Colour.defaultColour']]
+    },
     {
       position: [500, 500],
       radius: undefined,
@@ -443,7 +527,11 @@ const publicBindings = [
 
   new PublicBinding(
     'stroked-bezier-rect',
-    ``,
+    {
+      description: `renders a stroked Bezier rect`,
+      args: [['position', ''],
+             ['colour', 'Colour.defaultColour']]
+    },
     {
       position: [100, 100],
       width: 800,
@@ -468,7 +556,12 @@ const publicBindings = [
 
   new PublicBinding(
     'poly',
-    `renders triangle strip in which each vertex has a different colour`,
+    {
+      description:
+      `renders triangle strip in which each vertex has a different colour`,
+      args: [['coords', '3 points'],
+             ['colours', '3 colours']]
+    },
     {
       coords: [[100, 100],
                [600, 100],
