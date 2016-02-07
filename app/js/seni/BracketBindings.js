@@ -22,8 +22,11 @@ import Interp from './Interp';
 const publicBindings = [
   new PublicBinding(
     'identity',
-    `returns value
-      arguments: value`,
+    {
+      description: 'basic identity function',
+      args: [['value', 'the value to return']],
+      returns: 'the given value'
+    },
     {value: 42},
     self => params => {
       const {value} = self.mergeWithDefaults(params);
@@ -33,8 +36,12 @@ const publicBindings = [
 
   new PublicBinding(
     'int',
-    `returns an integer in the range min..max-1
-      arguments: min max`,
+    {
+      description: 'generate an integer',
+      args: [['min', ''],
+             ['max', '']],
+      returns: 'an integer in the range min..max-1'
+    },
     {min: 0, max: 100},
     // rng is a PseudoRandom returning values in the range 0..1
     (self, rng) => params => {
@@ -45,8 +52,12 @@ const publicBindings = [
 
   new PublicBinding(
     'scalar',
-    `returns a number in the range 0..1
-      arguments: -`,
+    {
+      description: 'generate an scalar',
+      args: [['min', ''],
+             ['max', '']],
+      returns: 'an scalar in the range min..max'
+    },
     {min: 0.0, max: 1.0},
     // rng is a PseudoRandom returning values in the range 0..1
     (self, rng) => params => {
@@ -57,8 +68,12 @@ const publicBindings = [
 
   new PublicBinding(
     'vector',
-    `returns a vector
-      arguments: min max`,
+    {
+      description: 'generate a 2d vector',
+      args: [['min', ''],
+             ['max', '']],
+      returns: 'a 2d vector with each element in the range min..max'
+    },
     {min: 0.0, max: 1000.0},
     (self, rng) => params => {
       const {min, max} = self.mergeWithDefaults(params);
@@ -70,8 +85,11 @@ const publicBindings = [
 
   new PublicBinding(
     'select',
-    `returns a number in the range 0..1
-      arguments: -`,
+    {
+      description: 'selects a value from a vector',
+      args: [['from', 'a vector of values']],
+      returns: 'one of the values in the from vector'
+    },
     {from: []},
     (self, rng) => params => {
       const {from} = self.mergeWithDefaults(params);
@@ -86,28 +104,12 @@ const publicBindings = [
 
   new PublicBinding(
     'col',
-    `returns a random rgb colour it takes a single argument of alpha
-since I think we'll often want to fix the alpha value. If you
-need to fix the other values in a colour declaration then just
-      use separate scalars for each of the components. e.g.
-
-    (col/rgb r: 0.8
-             g: [0.3 (scalar)]
-             b: [0.2 (scalar)]
-             alpha: 0.4)
-
-random colour:
-    [(col/rgb r: 0.8
-             g: 0.3
-             b: 0.2
-             alpha: 0.4) (col)]
-
-random colour, but keep alpha as 0.4:
-    [(col/rgb r: 0.8
-             g: 0.3
-             b: 0.2
-             alpha: 0.4) (col alpha: 0.4)]
-`,
+    {
+      description: 'generates a colour',
+      args: [['alpha', 'the alpha value to use']],
+      returns: `a colour`
+    }
+    ,
     {},
     (self, rng) => params => {
       const r = rng(), g = rng(), b = rng();
@@ -121,8 +123,9 @@ random colour, but keep alpha as 0.4:
 
   new PublicBinding(
     'testPlus',
-    `[FOR TESTING ONLY] returns + character
-      arguments: -`,
+    {
+      description: '[FOR TESTING ONLY] returns + character'
+    },
     {},
     // rng is a PseudoRandom returning values in the range 0..1
     () => () => '+'

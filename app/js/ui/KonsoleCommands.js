@@ -54,15 +54,32 @@ export function addDefaultCommands(env, commander) {
       // todo: if no args given then show generic help for the konsole
       const v = env.get(name);
 
-      let res = '';
+      const binding = v.pb;       // publicBinding
+      if (!binding) {
+        return '';
+      }
 
-      if (v.pb) {
-        const binding = v.pb;       // publicBinding
-        res = `${name}: ${binding.doc}`;
-        if (showDefaultArgs) {
-          const args = JSON.stringify(binding.defaults, null, ' ');
-          res = `${res}\ndefault arguments ${args}`;
+      function makeDoc(name, {description, args, returns}) {
+        let res = name;
+        if (description && description.length > 0) {
+          res += `: ${description}`;
         }
+        if (args && args.length > 0) {
+          res = args.reduce((a, [name, desc]) => `${a}  ${name}: ${desc}\n`,
+                            `${res}\n\nArguments:\n`);
+        }
+        if (returns && returns.length > 0) {
+          res += `\nReturns: ${returns}`;
+        }
+
+        return res;
+      }
+
+      let res = makeDoc(name, binding.doc);
+
+      if (showDefaultArgs) {
+        const args = JSON.stringify(binding.defaults, null, ' ');
+        res = `${res}\ndefault arguments ${args}`;
       }
       return res;
     }

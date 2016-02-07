@@ -127,28 +127,32 @@ const defaultCoords = [[440, 400],
 const publicBindings = [
   new PublicBinding(
     'interp/fn',
-    `returns function for remapping values
-args:
-  from     : [0 1]
-  to       : [0 100]
-  clamping : false
-  mapping  : one of 'linear', 'quick', 'slow-in', 'slow-in-out'
-
-returns a function which accepts a 'val' argument`,
+    {
+      description: 'a function for remapping values',
+      args: [['from', '[0 1]'],
+             ['to', '[0 100]'],
+             ['clamping', 'false'],
+             ['mapping', `one of 'linear', 'quick', 'slow-in', 'slow-in-out'`]],
+      returns: `a function which accepts a 'val' argument`
+    },
     {},
     () => remapFn
   ),
 
   new PublicBinding(
     'interp/cos',
-    `calculate cosine value of t
-args:
-  amplitude : 1
-  frequency : 1
-  t         : 1
-
-note: t goes from 0 to math/TAU`,
-    {amplitude: 1, frequency: 1, t: 1},
+    {
+      description: 'calculate cosine value of t',
+      args: [['amplitude', '1'],
+             ['frequency', '1'],
+             ['t', '1 (note: t goes from 0 to math/TAU)']],
+      returns: 'the cosine'
+    },
+    {
+      amplitude: 1,
+      frequency: 1,
+      t: 1
+    },
     self => params => {
       const {amplitude, frequency, t} = self.mergeWithDefaults(params);
       // make a cosine fn and then invoke it with the t value
@@ -158,14 +162,18 @@ note: t goes from 0 to math/TAU`,
 
   new PublicBinding(
     'interp/sin',
-    `calculate sin value of t
-args:
-  amplitude : 1
-  frequency : 1
-  t         : 1
-
-note: t goes from 0 to math/TAU`,
-    {amplitude: 1, frequency: 1, t: 1},
+    {
+      description: 'calculate sine value of t',
+      args: [['amplitude', '1'],
+             ['frequency', '1'],
+             ['t', '1 (note: t goes from 0 to math/TAU)']],
+      returns: 'the sin'
+    },
+    {
+      amplitude: 1,
+      frequency: 1,
+      t: 1
+    },
     self => params => {
       const {amplitude, frequency, t} = self.mergeWithDefaults(params);
       // make a sin fn and then invoke it with the t value
@@ -175,11 +183,18 @@ note: t goes from 0 to math/TAU`,
 
   new PublicBinding(
     'interp/bezier',
-    `returns a point on a Bezier curve
-args:
-  coords : four vectors representing control points on a Bezier curve
-  t      : the t value along the curve`,
-    {coords: defaultCoords, t: 1},
+    /* eslint-disable max-len */
+    {
+      description: 'interpolates across a Bezier curve',
+      args: [['coords', 'four vectors representing control points on a Bezier curve'],
+             ['t', 'the t value along the curve']],
+      returns: 'a point on a Bezier curve'
+    },
+    /* eslint-enable max-len */
+    {
+      coords: defaultCoords,
+      t: 1
+    },
     self => params => {
       const {coords, t} = self.mergeWithDefaults(params);
       // make a Bezier fn and then invoke it straight away with the t value
@@ -189,26 +204,36 @@ args:
 
   new PublicBinding(
     'interp/bezier-fn',
-    `returns a function which calculates points on a Bezier curve
-args:
-  coords : four vectors representing control points on a Bezier curve
-
-returns a function which, when given 't' returns the point on the curve`,
-    {coords: defaultCoords},
+    /* eslint-disable max-len */
+    {
+      description: 'creates a function which calculates points on a Bezier curve',
+      args: [['coords', 'four vectors representing control points on a Bezier curve']],
+      returns: `returns a function which, when given 't' returns the point on the curve`
+    },
+    /* eslint-enable max-len */
+    {
+      coords: defaultCoords
+    },
     self => params => {
       const {coords} = self.mergeWithDefaults(params);
-      // return a function that only accepts a t value
       return makeBezierFn(coords);
     }
   ),
 
   new PublicBinding(
     'interp/bezier-tangent',
-    `returns a tangent vector for a point on a Bezier curve
-args:
-  coords : four vectors representing control points on a Bezier curve
-  t      : the t value along the curve`,
-    {coords: defaultCoords, t: 1},
+    /* eslint-disable max-len */
+    {
+      description: 'calculate the tangent vector for a point on the Bezier curve',
+      args: [['coords', 'four vectors representing control points on a Bezier curve'],
+             ['t', 'the t value along the curve']],
+      returns: 'a tangent vector on the Bezier curve'
+    },
+    /* eslint-enable max-len */
+    {
+      coords: defaultCoords,
+      t: 1
+    },
     self => params => {
       const {coords, t} = self.mergeWithDefaults(params);
       return makeBezierTangentFn(coords)({t});
@@ -217,32 +242,35 @@ args:
 
   new PublicBinding(
     'interp/bezier-tangent-fn',
-    `returns a function which calculates the tangent vector for a point on
-a Bezier curve
-args:
-  coords: four vectors representing control points on a Bezier curve
-
-returns a function which, when given 't' returns the tangent vector on
-the curve`,
-    {coords: defaultCoords},
+    /* eslint-disable max-len */
+    {
+      description: 'create a function calculates tangents for a point on the Bezier curve',
+      args: [['coords', 'four vectors representing control points on a Bezier curve']],
+      returns: `returns a function which, given 't' returns the tangent for the curve`
+    },
+    /* eslint-enable max-len */
+    {
+      coords: defaultCoords
+    },
     self => params => {
       const {coords} = self.mergeWithDefaults(params);
-
-      // return a function that only accepts a t value
       return makeBezierTangentFn(coords);
     }
   ),
 
   new PublicBinding(
     'interp/circle',
-    `returns a point on a circle
-args:
-  position : vector for the position of the circle
-  radius   : radius of the circle
-  t        : parametric value along the circle`,
-    {position: [0, 0],
-     radius: 1,
-     t: 0
+    {
+      description: 'calculate a point on a circle',
+      args: [['position', 'vector for the position of the circle'],
+             ['radius', 'radius of the circle'],
+             ['t', 'parametric value along the circle']],
+      returns: 'a point on a circle'
+    },
+    {
+      position: [0, 0],
+      radius: 1,
+      t: 0
     },
     self => params => {
       const {position, radius, t} = self.mergeWithDefaults(params);

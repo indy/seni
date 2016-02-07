@@ -55,7 +55,10 @@ function rotated90(renderer, drawFn) {
 const publicBindings = [
   new PublicBinding(
     'repeat/symmetry-vertical',
-    'renders the draw fn twice (mirrored vertically)',
+    {
+      description: 'renders the draw fn twice (mirrored vertically)',
+      args: [['draw', 'a draw function']]
+    },
     {
       draw: emptyFn
     },
@@ -67,7 +70,10 @@ const publicBindings = [
 
   new PublicBinding(
     'repeat/symmetry-horizontal',
-    'renders the draw fn twice (mirrored horizontally)',
+    {
+      description: 'renders the draw fn twice (mirrored horizontally)',
+      args: [['draw', 'a draw function']]
+    },
     {
       draw: emptyFn
     },
@@ -79,7 +85,11 @@ const publicBindings = [
 
   new PublicBinding(
     'repeat/symmetry-4',
-    'renders the draw fn reflected along both the horizontal and vertical axis',
+    {
+      description:
+      `renders the draw fn reflected along the horizontal and vertical axis`,
+      args: [['draw', 'a draw function']]
+    },
     {
       draw: emptyFn
     },
@@ -93,7 +103,10 @@ const publicBindings = [
 
   new PublicBinding(
     'repeat/symmetry-8',
-    'renders the draw fn reflected 8 times', // todo: better doc
+    {
+      description: 'renders the draw fn reflected 8 times',
+      args: [['draw', 'a draw function']]
+    },
     {
       draw: emptyFn
     },
@@ -109,7 +122,11 @@ const publicBindings = [
 
   new PublicBinding(
     'repeat/rotate',
-    'renders multiple times by rotation',
+    {
+      description: 'renders multiple times by rotation',
+      args: [['draw', 'a draw function'],
+             ['copies', 'the number of copies to render']]
+    },
     {
       draw: emptyFn,
       copies: 3
@@ -127,16 +144,20 @@ const publicBindings = [
       }
     }
   ),
+
   new PublicBinding(
     'repeat/rotate-mirrored',
-    'renders multiple times by rotation',
+    {
+      description: 'renders multiple times by rotation',
+      args: [['draw', 'a draw function'],
+             ['copies', 'the number of copies to render']]
+    },
     {
       draw: emptyFn,
       copies: 3
     },
     (self, renderer) => params => {
       const { draw, copies } = self.mergeWithDefaults(params);
-
       const delta = MathUtil.TAU / copies;
 
       for (let i = 0; i < copies; i++) {
