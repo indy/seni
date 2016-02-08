@@ -78,6 +78,7 @@ function showButtonsFor(mode) {
 
   const evalBtn = document.getElementById('eval-btn');
   const evolveBtn = document.getElementById('evolve-btn');
+  const renderBtn = document.getElementById('render-btn');
   const nextBtn = document.getElementById('next-btn');
   const shuffleBtn = document.getElementById('shuffle-btn');
 
@@ -85,18 +86,21 @@ function showButtonsFor(mode) {
   case SeniMode.gallery :
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
+    renderBtn.classList.add('hidden');
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
   case SeniMode.edit :
     evalBtn.classList.remove('hidden');
     evolveBtn.classList.remove('hidden');
+    renderBtn.classList.remove('hidden');
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
   case SeniMode.evolve :
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
+    renderBtn.classList.add('hidden');
     nextBtn.classList.remove('hidden');
     shuffleBtn.classList.remove('hidden');
     break;
@@ -207,27 +211,25 @@ function getPhenoIdFromDom(element) {
   return [-1, null];
 }
 
-function renderHighRes(state, element) {
+function renderHighRes(state, genotype) {
+  const highResContainer = document.getElementById('high-res-container');
+  highResContainer.classList.remove('hidden');
+  const script = state.get('script');
+  const frontAst = Runtime.buildFrontAst(script);
+  const backAst = Runtime.compileBackAst(frontAst);
 
-  const [index, _] = getPhenoIdFromDom(element);
-
-  if (index !== -1) {
-    const genotypes = state.get('genotypes');
-    const genotype = genotypes.get(index);
-    const highResContainer = document.getElementById('high-res-container');
-    highResContainer.classList.remove('hidden');
-    const script = state.get('script');
-    const frontAst = Runtime.buildFrontAst(script);
-    const backAst = Runtime.compileBackAst(frontAst);
-
-    const imageElement = document.getElementById('high-res-image');
-    const [width, height] = state.get('highResolution');
-    renderGenotypeToImage(state, backAst, genotype, imageElement,
-                          width, height);
-
-    const linkElement = document.getElementById('high-res-link');
-    linkElement.href = imageElement.src;
+  if (genotype === undefined) {
+    const traits = Genetic.buildTraits(backAst);
+    genotype = Genetic.createGenotypeFromInitialValues(traits);
   }
+
+  const imageElement = document.getElementById('high-res-image');
+  const [width, height] = state.get('highResolution');
+  renderGenotypeToImage(state, backAst, genotype, imageElement,
+                        width, height);
+
+  const linkElement = document.getElementById('high-res-link');
+  linkElement.href = imageElement.src;
 }
 
 function showEditFromEvolve(store, element) {
@@ -593,6 +595,11 @@ function setupUI(store) {
     event.preventDefault();
   });
 
+  addClickEvent('render-btn', event => {
+    renderHighRes(store.getState());
+    event.preventDefault();
+  });
+
   addClickEvent('shuffle-btn', event => {
     showPlaceholderImages(store.getState());
     store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11});
@@ -618,14 +625,19 @@ function setupUI(store) {
 
   addClickEvent('evolve-container', event => {
     const target = event.target;
+    const [index, phenoElement] = getPhenoIdFromDom(target);
+
     if (target.classList.contains('render')) {
-      renderHighRes(store.getState(), target);
+      if (index !== -1) {
+        const genotypes = store.getState().get('genotypes');
+        const genotype = genotypes.get(index);
+        renderHighRes(store.getState(), genotype);
+      }
     } else if (target.classList.contains('edit')) {
       showEditFromEvolve(store, target);
     } else {
-      const [index, e] = getPhenoIdFromDom(target);
       if (index !== -1) {
-        e.classList.toggle('selected');
+        phenoElement.classList.toggle('selected');
       }
     }
     event.preventDefault();
