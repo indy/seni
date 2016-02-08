@@ -27,7 +27,7 @@
       (translate vector: position)
       (rotate angle: (* combined-interest rotate-factor))
       (circle position: [0 0]
-              colour: (col/set-alpha colour: (col-fn t: interest-1) value: alpha)
+              colour: (col/set-alpha colour: (col-fn t: interest-a) value: alpha)
               width: width
               height: height))))
 

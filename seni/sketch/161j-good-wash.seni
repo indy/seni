@@ -1,0 +1,56 @@
+(define
+  ;; fade out any lines which are far away from the focal points
+  interest (interp/fn from: [0.2 1.5] to: [0 1] clamping: true))
+
+;; call 'fun' for every point on a nXn grid on the canvas
+(fn (grid n: 10 fun: (fn (a) 1))
+  (define
+    remap-x (interp/fn from: [0 (- n 1)] to: [0 canvas/width])
+    remap-y (interp/fn from: [0 (- n 1)] to: [0 canvas/height]))
+  (loop (y from: 0 to: n)
+    (loop (x from: 0 to: n)
+      (fun position: [(remap-x val: x) (remap-y val: y)]))))
+
+(fn (make-draw-element focal-fn-a: 1
+                       focal-fn-b: 1
+                       rotate-factor: 1
+                       width: 21
+                       height: 239
+                       col-fn: 1)
+  (fn (draw-element position: [0 0])
+    (define
+      interest-a (focal-fn-a position: position)
+      interest-b (focal-fn-b position: position)
+      combined-interest (+ interest-a interest-b)
+      alpha (interest val: combined-interest))
+    (on-matrix-stack
+      (translate vector: position)
+      (rotate angle: (* combined-interest rotate-factor))
+      (circle position: [0 0]
+              colour: (col/set-alpha colour: (col-fn t: interest-a) value: alpha)
+              width: width
+              height: height))))
+
+;; render the background grid
+(define
+  focal-bg-a (focal/point position: [{463 (int min: 400 max: 600)} 
+                                     {230 (int min: 100 max: 400)}]
+                          distance: {898 (int min: 700 max: 1000)}
+                          falloff: "linear")
+  focal-bg-b (focal/point position: [{554 (int min: 400 max: 600)} 
+                                     {709 (int min: 600 max: 900)}]
+                          distance: {733 (int min: 700 max: 1000)}
+                          falloff: "linear")
+  col-fn-bg (col/bezier-fn a: {(col/rgb r: 0.643 g: 0.912 b: 0.870 alpha: 0.639) (col)}
+                           b: {(col/rgb r: 0.033 g: 0.347 b: 0.415 alpha: 0.007) (col)}
+                           c: {(col/rgb r: 0.637 g: 0.021 b: 0.253 alpha: 0.321) (col)}
+                           d: {(col/rgb r: 0.641 g: 0.877 b: 0.166 alpha: 0.455) (col)}))
+
+(grid n: {37 (int min: 30 max: 40)}
+      fun: (make-draw-element focal-fn-a: focal-bg-a
+                              focal-fn-b: focal-bg-b
+                              rotate-factor: {384 (int min: 300 max: 400)}
+                              width: {33 (int min: 30 max: 60)}
+                              height: {482 (int min: 400 max: 500)}
+                              col-fn: col-fn-bg))
+
