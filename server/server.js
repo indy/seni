@@ -46,7 +46,8 @@ function buildGalleryData() {
                ['15he-cos-1', '15he-cos-1.png'],
                ['15he-cos-2', '15he-cos-2.png'],
                ['15he-cos-3', '15he-cos-3.png'],
-               ['160c-schotter', '160c-schotter.png']
+               ['160c-schotter', '160c-schotter.png'],
+               ['161g-grid-flow', '161g-grid-flow.png']
               ];
 
   var res = [];
