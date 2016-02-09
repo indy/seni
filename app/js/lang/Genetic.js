@@ -63,11 +63,10 @@ function buildTraitFromNode(node, genes) {
 
 function buildGeneFromTrait(trait, env) {
   const simplifiedAst = trait.simplifiedAst;
-  // evaluate all of the forms, returning the final result
-  const evalRes = simplifiedAst.reduce((a, b) => Interpreter.evaluate(a[0], b),
-                                       [env, false]);
-  // evalRes[0] === the new env returned by the interpreter
-  return evalRes[1];
+  // evaluate all of the forms, returning the final [env, result]
+  const [_, res] = simplifiedAst.reduce((a, b) => Interpreter.evaluate(a[0], b),
+                                        [env, false]);
+  return res;
 }
 
 function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
