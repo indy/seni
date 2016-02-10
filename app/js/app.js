@@ -171,7 +171,11 @@ function renderScript(state, imageElement) {
 
   const script = state.get('script');
   const frontAst = Runtime.buildFrontAst(script);
-  const backAst = Runtime.compileBackAst(frontAst);
+  if (frontAst.error) {
+    gUI.konsole.log(frontAst.error);
+    return;
+  }
+  const backAst = Runtime.compileBackAst(frontAst.nodes);
   const traits = Genetic.buildTraits(backAst);
   const genotype = Genetic.createGenotypeFromInitialValues(traits);
 
@@ -222,8 +226,14 @@ function renderHighRes(state, genotype) {
 
   setTimeout(() => {
     const script = state.get('script');
-    const frontAst = Runtime.buildFrontAst(script);
-    const backAst = Runtime.compileBackAst(frontAst);
+    const frontAst  = Runtime.buildFrontAst(script);
+    if (frontAst.error) {
+      gUI.konsole.log(frontAst.error);
+      image.classList.remove('hidden');
+      loader.classList.add('hidden');
+      return;
+    }
+    const backAst = Runtime.compileBackAst(frontAst.nodes);
 
     if (genotype === undefined) {
       const traits = Genetic.buildTraits(backAst);
@@ -244,21 +254,27 @@ function renderHighRes(state, genotype) {
 }
 
 function showEditFromEvolve(store, element) {
-  return new Promise((resolve, _reject) => {
+  return new Promise((resolve, reject) => {
     const [index, _] = getPhenoIdFromDom(element);
     if (index !== -1) {
       const genotypes = store.getState().get('genotypes');
       const genotype = genotypes.get(index);
 
-      const frontAst = Runtime.buildFrontAst(store.getState().get('script'));
+      const state = store.getState();
+      const frontAst  = Runtime.buildFrontAst(state.get('script'));
+      if (frontAst.error) {
+        gUI.konsole.log(frontAst.error);
+        reject();
+        return;
+      } else {
+        const script = Runtime.unparse(frontAst.nodes, genotype);
 
-      const script = Runtime.unparse(frontAst, genotype);
+        store.dispatch({type: 'SET_SCRIPT', script});
 
-      store.dispatch({type: 'SET_SCRIPT', script});
-
-      ensureMode(store, SeniMode.edit).then(() => {
-        resolve();
-      });
+        ensureMode(store, SeniMode.edit).then(() => {
+          resolve();
+        });
+      }
     } else {
       resolve();
     }
@@ -266,7 +282,7 @@ function showEditFromEvolve(store, element) {
 }
 
 function renderGeneration(state) {
-  return new Promise((resolve, _) => {
+  return new Promise((resolve, reject) => {
 
     const script = state.get('script');
     const scriptHash = state.get('scriptHash');
@@ -274,7 +290,13 @@ function renderGeneration(state) {
     const stopTiming = startTiming(`renderGeneration-${scriptHash}`);
 
     const frontAst = Runtime.buildFrontAst(script);
-    const backAst = Runtime.compileBackAst(frontAst);
+    if (frontAst.error) {
+      gUI.konsole.log(frontAst.error);
+      reject();
+      return;
+    }
+
+    const backAst = Runtime.compileBackAst(frontAst.nodes);
     let i = 0;
 
     setTimeout(function go() {

@@ -104,7 +104,7 @@ function actionSetSelectedIndices(state, { selectedIndices }) {
 function actionInitialGeneration(state) {
 
   const script = state.get('script');
-  const traits = buildTraits(script);
+  const { traits } = buildTraits(script);
 
   let genotype;
   const random = (new Date()).toGMTString();
@@ -135,7 +135,7 @@ function actionShuffleGeneration(state, { rng }) {
   }
 
   const script = state.get('script');
-  const traits = buildTraits(script);
+  const { traits } = buildTraits(script);
   const genotypes = Genetic.nextGeneration(prev,
                                            state.get('populationSize'),
                                            state.get('mutationRate'),
@@ -157,7 +157,7 @@ function actionNextGeneration(state, { rng }) {
   }
 
   const script = state.get('script');
-  const traits = buildTraits(script);
+  const { traits } = buildTraits(script);
 
   const genotypes = Genetic.nextGeneration(selectedGenos,
                                            state.get('populationSize'),
@@ -175,8 +175,11 @@ function actionNextGeneration(state, { rng }) {
 
 function buildTraits(script) {
   const frontAst = Runtime.buildFrontAst(script);
-  const backAst = Runtime.compileBackAst(frontAst);
+  if (frontAst.error) {
+    return { error: frontAst.error };
+  }
+  const backAst = Runtime.compileBackAst(frontAst.nodes);
   const traits = Genetic.buildTraits(backAst);
 
-  return traits;
+  return { traits };
 }

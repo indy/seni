@@ -29,21 +29,14 @@ const Runtime = {
   buildFrontAst: form => {
     const tokensBox = Lexer.tokenise(form);
     if (tokensBox.error) {
-      console.log(tokensBox.error);
-      return false;
+      return { error: tokensBox.error };
     }
     const astBox = Parser.parse(tokensBox.tokens);
     if (astBox.error) {
-      // some sort of error occurred
-      console.log(astBox.error);
-      return false;
+      return { error: astBox.error };
     }
-
-    return astBox.nodes;
+    return { nodes: astBox.nodes };
   },
-
-  logUnparse: (frontAst, genotype) =>
-    console.log(Unparser.unparse(frontAst, genotype)),
 
   unparse: (frontAst, genotype) =>
     Unparser.unparse(frontAst, genotype),

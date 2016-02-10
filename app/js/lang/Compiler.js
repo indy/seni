@@ -205,9 +205,7 @@ const Compiler = {
 
   // the nodes should be from the back-end ast
   compileWithGenotype: (nodes, genotype) => {
-    /* eslint-disable no-unused-vars */
     const [simplifiedAsts, _] = compileNodes(nodes, genotype);
-    /* eslint-enable no-unused-vars */
 
     // return an array of simplified ast objects
     return simplifiedAsts;
