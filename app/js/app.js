@@ -212,24 +212,35 @@ function getPhenoIdFromDom(element) {
 }
 
 function renderHighRes(state, genotype) {
-  const highResContainer = document.getElementById('high-res-container');
-  highResContainer.classList.remove('hidden');
-  const script = state.get('script');
-  const frontAst = Runtime.buildFrontAst(script);
-  const backAst = Runtime.compileBackAst(frontAst);
+  const container = document.getElementById('high-res-container');
+  const loader = document.getElementById('high-res-loader');
+  const image = document.getElementById('high-res-image');
 
-  if (genotype === undefined) {
-    const traits = Genetic.buildTraits(backAst);
-    genotype = Genetic.createGenotypeFromInitialValues(traits);
-  }
+  container.classList.remove('hidden');
+  loader.classList.remove('hidden');
+  image.classList.add('hidden');
 
-  const imageElement = document.getElementById('high-res-image');
-  const [width, height] = state.get('highResolution');
-  renderGenotypeToImage(state, backAst, genotype, imageElement,
-                        width, height);
+  setTimeout(() => {
+    const script = state.get('script');
+    const frontAst = Runtime.buildFrontAst(script);
+    const backAst = Runtime.compileBackAst(frontAst);
 
-  const linkElement = document.getElementById('high-res-link');
-  linkElement.href = imageElement.src;
+    if (genotype === undefined) {
+      const traits = Genetic.buildTraits(backAst);
+      genotype = Genetic.createGenotypeFromInitialValues(traits);
+    }
+
+    const [width, height] = state.get('highResolution');
+    renderGenotypeToImage(state, backAst, genotype, image,
+                          width, height);
+
+    image.classList.remove('hidden');
+
+    const link = document.getElementById('high-res-link');
+    link.href = image.src;
+
+    loader.classList.add('hidden');
+  }, 100);
 }
 
 function showEditFromEvolve(store, element) {
@@ -740,8 +751,8 @@ function setupUI(store) {
       konsolePanel.style.height = '50%';
       konsoleButton.textContent = 'Hide Console';
       gUI.konsole.focus();
-
     } else {
+      gUI.editor.focus();
       konsolePanel.style.height = '0%';
       konsoleButton.textContent = 'Show Console';
     }

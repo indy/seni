@@ -297,7 +297,32 @@ button {
   order: 1;
   background: white;
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+
+  text-align: center;
 }
+
+#high-res-loader {
+  display: inline-block;
+  
+  border: 1px solid #eef;
+  border-top-color: #223;
+  border-radius: 100%;
+  border-width: 0.5rem;
+  
+  height: 6rem;
+  width: 6rem;
+
+  -webkit-animation: loaderSpin 1s infinite linear;
+  animation: loaderSpin 1s infinite linear;
+}
+
+@-webkit-keyframes loaderSpin {
+  0%   { -webbkit- transform: rotate(0deg); }
+  100% { -webbkit- transform: rotate(360deg); } }
+@keyframes loaderSpin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); } }
+
 
 #high-res-image-note {
   clear: both;
