@@ -25,38 +25,38 @@ import Immutable from 'immutable';
 const TRUE_STRING = '#t';
 const FALSE_STRING = '#f';
 
+// evaluate will return the new env, the resultant evaluated form
+// and any potential error
+//
 function evaluate(env, expr) {
 
   if (expr === undefined) {
     // in case of non-existent else clause in if statement
-    return [env, undefined];
+    return [env, undefined, undefined];
   }
 
   // todo: may need something like:
   if (typeof expr === 'number') {
-    return [env, expr];
+    return [env, expr, undefined];
   }
   if (typeof expr === 'string') {
     if (expr === TRUE_STRING || expr === FALSE_STRING) {
-      return [env, expr];
+      return [env, expr, undefined];
     }
     if (env.get(expr) === undefined) {
-      console.log(expr, 'is undefined');
-      return undefined;
+      return [env, undefined, `${expr} is undefined`];
     }
-    return [env, env.get(expr).binding];
+    return [env, env.get(expr).binding, undefined];
   }
   return funApplication(env, expr);
 }
 
 function funApplication(env, listExpr) {
 
-  const [e, fun] = evaluate(env, listExpr[0]);
+  const [e, fun, err] = evaluate(env, listExpr[0]);
 
-  if (fun === undefined) {
-    // todo: use something better than console.log
-    console.log(listExpr.toJS(), `${listExpr[0]} is undefined`);
-    return [e, undefined];
+  if (err) {
+    return [e, fun, err];
   }
 
   // special forms that manipulate the listExpr and can change the env
@@ -66,8 +66,7 @@ function funApplication(env, listExpr) {
 
   // classic functions that don't require named arguments
   if (isClassicFunction(listExpr)) {
-    const argu = listExpr.slice(1).map(n => evaluate(e, n)[1]);
-    return [e, fun(argu)];
+    return funApplicationClassic(e, fun, listExpr);
   }
 
   // normal functions that require named arguments
@@ -75,7 +74,11 @@ function funApplication(env, listExpr) {
   if (listExpr.length > 1) {
     const argObj = listExpr[1];
     for (const k in argObj) {
-      args[k] = evaluate(e, argObj[k])[1];
+      const [env2, form2, err2] = evaluate(e, argObj[k]);
+      if (err2) {
+        return [env2, form2, err2];
+      }
+      args[k] = form2;
     }
   }
   return [e, fun(args)];
@@ -89,6 +92,35 @@ function isSpecialForm(listExpr) {
 function isClassicFunction(listExpr) {
   const node = listExpr[0];
   return classicFunctions[node] !== undefined;
+}
+
+function funApplicationClassic(env, fun, [fnName, ...fnArguments]) {
+
+  let argumentError = undefined;
+  const args = fnArguments.map(n => {
+    const [_env1, form1, err1] = evaluate(env, n);
+    if (err1) {
+      argumentError = err1;
+    }
+    return form1;
+  });
+
+  if (argumentError) {
+    return [env, fun, argumentError];
+  }
+
+
+  // the classic functions that require all of their arguments to be numbers
+  const requiringNumbers = ['+', '*', '-', '/', 'sqrt', 'mod', '<', '>'];
+
+  const requiresNumbers = name => requiringNumbers.some(f => name === f);
+  const allNumbers = values => values.every(Number.isFinite);
+
+  if (requiresNumbers(fnName) && !allNumbers(args)) {
+    return [env, fun, `all arguments to ${fnName} should be numbers`];
+  }
+
+  return [env, fun(args)];
 }
 
 function addBindings(env, exprs) {
@@ -173,10 +205,10 @@ const specialForms = {
   'quote': (env, [_, form]) => {
     if (form.constructor === Array) {
       if (form[0] === 'quote') {
-        return [env, form[1]];
+        return [env, form[1], undefined];
       }
     }
-    return [env, form];
+    return [env, form, undefined];
   },
 
   '__string': (env, [_, form]) => [env, form],
@@ -184,7 +216,9 @@ const specialForms = {
   'fn': (env, [_, nameForm, ...valueForms]) => {
     const [name, defaultArgForms] = nameForm;
     const definedFunction = defineFunction(env, defaultArgForms, valueForms);
-    return [env.set(name, { binding: definedFunction }), definedFunction];
+    return [env.set(name, { binding: definedFunction }),
+            definedFunction,
+            undefined];
   },
 
   // NOTE: in the documentation state that define creates bindings in
@@ -192,7 +226,7 @@ const specialForms = {
   'define': (env, [_, ...args]) => {
     // wrap the args into pairs
     if (args.length % 2 === 1) {
-      console.error('define should have an even number of args', args);
+      return [env, undefined, 'define should have an even number of args'];
     }
 
     const argPairs = [];
@@ -210,7 +244,7 @@ const specialForms = {
   'print': (env, [_, ...msgs]) => {
     const printMsg = msgs.reduce((a, b) => `${a} ${evaluate(env, b)[1]}`, '');
     console.log(printMsg.trim());
-    return [env, true];
+    return [env, true, undefined];
   },
 
   // (log 'hi' foo) => hi <foo:42>
@@ -224,7 +258,7 @@ const specialForms = {
       return `${a} ${res}`;
     }, '');
     console.log(message);
-    return [env, true];
+    return [env, true, undefined];
   },
 
   // (loop (a from: 1 to: 30 step: 2) (+ a a))
@@ -249,7 +283,18 @@ const specialForms = {
 
 // whoa bodyform, bodyform for you
 function evalBodyForms(env, bodyForms) {
-  return bodyForms.reduce((a, b) => evaluate(a[0], b), [env, true]);
+
+  let error = undefined;
+  const res = bodyForms.reduce(([e, _], b) => {
+    const [env1, form1, error1] = evaluate(e, b);
+    if (error1 && !error) {
+      // store the first error and always return it
+      error = error1;
+    }
+    return [env1, form1, error];
+  }, [env, true]);
+
+  return res;
 }
 
 function loopingFn(env, expr, varName, params) {
@@ -325,7 +370,11 @@ function loopingFn(env, expr, varName, params) {
 // 4 3 7 4) rather than (+ 4 3 7 4)
 
 const classicFunctions = {
-  '+': args => args.reduce((a, b) => a + b, 0),
+  // '+': args => args.reduce((a, b) => a + b, 0),
+
+  '+': args => args.reduce((a, b) => {
+    return a + b;
+  }, 0),
 
   '*': args => args.reduce((a, b) => a * b, 1),
 

@@ -64,9 +64,19 @@ function buildTraitFromNode(node, genes) {
 function buildGeneFromTrait(trait, env) {
   const simplifiedAst = trait.simplifiedAst;
   // evaluate all of the forms, returning the final [env, result]
-  const [_, res] = simplifiedAst.reduce((a, b) => Interpreter.evaluate(a[0], b),
-                                        [env, false]);
-  return res;
+  /* eslint-disable arrow-body-style */
+  const [_, result, _error] = simplifiedAst.reduce(([e, f, err], form) => {
+    if (err) {
+      // if there's an error keep on passing it along
+      return [e, f, err];
+    } else {
+      return Interpreter.evaluate(e, form);
+    }
+  }, [env, false, undefined]);
+  /* eslint-enable arrow-body-style */
+
+  // return { error, result };
+  return result;
 }
 
 function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
