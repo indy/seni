@@ -1,20 +1,20 @@
 /*
-    Seni
-    Copyright (C) 2015 Inderjit Gill <email@indy.io>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+ *  Seni
+ *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 // todo: look into no-unused-expressions
 /* eslint-disable no-unused-expressions */
@@ -42,13 +42,13 @@ describe('Parser', () => {
     const ast = astObj.nodes[0];
     expect(ast.children.length).to.equal(7);
 
-    expect(ast.getChild(0).alterable).to.be.false;
-    expect(ast.getChild(1).alterable).to.be.false;
-    expect(ast.getChild(2).alterable).to.be.false;
-    expect(ast.getChild(3).alterable).to.be.false;
-    expect(ast.getChild(4).alterable).to.be.false;
-    expect(ast.getChild(5).alterable).to.be.false;
-    expect(ast.getChild(6).alterable).to.be.true;
+    expect(ast.getChild(0).alterable).to.equal(false);
+    expect(ast.getChild(1).alterable).to.equal(false);
+    expect(ast.getChild(2).alterable).to.equal(false);
+    expect(ast.getChild(3).alterable).to.equal(false);
+    expect(ast.getChild(4).alterable).to.equal(false);
+    expect(ast.getChild(5).alterable).to.equal(false);
+    expect(ast.getChild(6).alterable).to.equal(true);
 
     const alterable = ast.getChild(6);
     expect(alterable.value).to.equal(3);
@@ -62,13 +62,13 @@ describe('Parser', () => {
     const ast = astObj.nodes[0];
     expect(ast.children.length).to.equal(7);
 
-    expect(ast.getChild(0).alterable).to.be.false;
-    expect(ast.getChild(1).alterable).to.be.false;
-    expect(ast.getChild(2).alterable).to.be.false;
-    expect(ast.getChild(3).alterable).to.be.false;
-    expect(ast.getChild(4).alterable).to.be.false;
-    expect(ast.getChild(5).alterable).to.be.false;
-    expect(ast.getChild(6).alterable).to.be.true;
+    expect(ast.getChild(0).alterable).to.equal(false);
+    expect(ast.getChild(1).alterable).to.equal(false);
+    expect(ast.getChild(2).alterable).to.equal(false);
+    expect(ast.getChild(3).alterable).to.equal(false);
+    expect(ast.getChild(4).alterable).to.equal(false);
+    expect(ast.getChild(5).alterable).to.equal(false);
+    expect(ast.getChild(6).alterable).to.equal(true);
 
     const alterable = ast.getChild(6);
     expect(alterable.value).to.equal(3);
@@ -220,7 +220,7 @@ describe('Parser', () => {
     const alterableNode = res[0];
     expect(alterableNode.type).to.equal(NodeType.INT);
     expect(alterableNode.value).to.equal(42);
-    expect(alterableNode.alterable).to.be.true;
+    expect(alterableNode.alterable).to.equal(true);
 
     const parameterNodes = alterableNode.parameterAST;
     expect(parameterNodes.length).to.equal(1);
