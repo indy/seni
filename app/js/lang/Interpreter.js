@@ -19,11 +19,13 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-redeclare */
 
-import Util from '../seni/Util';
+// import Util from '../seni/Util';
 import Immutable from 'immutable';
 
 const TRUE_STRING = '#t';
 const FALSE_STRING = '#f';
+
+const NO_ERROR = undefined;
 
 // evaluate will return the new env, the resultant evaluated form
 // and any potential error
@@ -32,46 +34,51 @@ function evaluate(env, expr) {
 
   if (expr === undefined) {
     // in case of non-existent else clause in if statement
-    return [env, undefined, undefined];
+    return [env, undefined, NO_ERROR];
   }
 
   // todo: may need something like:
   if (typeof expr === 'number') {
-    return [env, expr, undefined];
+    return [env, expr, NO_ERROR];
   }
   if (typeof expr === 'string') {
     if (expr === TRUE_STRING || expr === FALSE_STRING) {
-      return [env, expr, undefined];
+      return [env, expr, NO_ERROR];
     }
-    if (env.get(expr) === undefined) {
+    const bind = env.get(expr);
+    if (bind === undefined) {
       return [env, undefined, `${expr} is undefined`];
     }
-    return [env, env.get(expr).binding, undefined];
+    // use priority of special, classic and then normal binding
+    return [env, bind.special || bind.classic || bind.binding, NO_ERROR];
   }
   return funApplication(env, expr);
 }
 
 function funApplication(env, listExpr) {
+  const fnName = listExpr[0];
 
-  const [e, fun, err] = evaluate(env, listExpr[0]);
+  const [e, fun, err] = evaluate(env, fnName);
 
   if (err) {
     return [e, fun, err];
   }
 
-  // special forms that manipulate the listExpr and can change the env
-  if (isSpecialForm(listExpr)) {
+  const bind = env.get(fnName);
+  if (bind && bind.special) {
+    // special forms that manipulate the listExpr and can change the env
     return fun(e, listExpr);
   }
 
-  // classic functions that don't require named arguments
-  if (isClassicFunction(listExpr)) {
+  if (isClassicFunction(fnName)) {
+    // classic functions that don't require named arguments
     return funApplicationClassic(e, fun, listExpr);
   }
 
   // normal functions that require named arguments
   const args = {};
   if (listExpr.length > 1) {
+    // the 2nd listExpr node will be an object containing the arguments
     const argObj = listExpr[1];
     for (const k in argObj) {
       const [env2, form2, err2] = evaluate(e, argObj[k]);
@@ -81,17 +88,13 @@ function funApplication(env, listExpr) {
       args[k] = form2;
     }
   }
-  return [e, fun(args)];
+
+  return [e, fun(args), NO_ERROR];
 }
 
-function isSpecialForm(listExpr) {
-  const node = listExpr[0];
-  return specialForms[node] !== undefined;
-}
-
-function isClassicFunction(listExpr) {
-  const node = listExpr[0];
-  return classicFunctions[node] !== undefined;
+// check if the first element in the list expression is a classic function
+function isClassicFunction(fnName) {
+  return classicFunctions[fnName] !== undefined;
 }
 
 function funApplicationClassic(env, fun, [fnName, ...fnArguments]) {
@@ -120,244 +123,12 @@ function funApplicationClassic(env, fun, [fnName, ...fnArguments]) {
     return [env, fun, `all arguments to ${fnName} should be numbers`];
   }
 
-  return [env, fun(args)];
-}
-
-function addBindings(env, exprs) {
-
-  let lastValueBound = undefined;
-
-  const addBinding = function(e, name, value) {
-    const v = evaluate(e, value)[1];
-    if (name.constructor === Array && name[0] === 'list') {
-
-      // for square bracket notation when declaring variables
-      // e.g. (define [x y] [100 200])
-      // the names compile to ['list', 'x', 'y']
-
-      const values = v;
-      const names = name.slice(1);
-
-      if (names.length !== values.length) {
-        console.error('binding mismatch between', names, values);
-      }
-
-      names.forEach((n, i) => e = e.set(n, { binding: values[i] }));
-      lastValueBound = values[names.length-1];
-    } else {
-      e = e.set(name, { binding: v });
-      lastValueBound = v;
-    }
-    return e;
-  };
-
-  return [exprs.reduce((a, [name, value]) => addBinding(a, name, value), env),
-          lastValueBound];
+  return [env, fun(args), NO_ERROR];
 }
 
 function isDefineExpression(form) {
   return form.constructor === Array &&
     (form[0] === 'fn' || form[0] === 'define');
-}
-
-function defineFunction(env, defaultArgForms, body) {
-
-  const defaultArgValues = {};
-  for (const k in defaultArgForms) {
-    defaultArgValues[k] = evaluate(env, defaultArgForms[k])[1];
-  }
-
-  return function(args) {
-    let newEnv = env;
-    for (const k in defaultArgValues) {
-      newEnv = newEnv.set(k, {
-        binding: args[k] === undefined ? defaultArgValues[k] : args[k]
-      });
-    }
-    return evalBodyForms(newEnv, body)[1];
-  };
-}
-
-/* eslint-disable no-unused-vars */
-const specialForms = {
-  // (if something truthy falsey) || (if something truthy)
-  'if': (env, [_, cond, t, f]) =>
-    evaluate(env, evaluate(env, cond)[1] === TRUE_STRING ? t : f),
-
-  // (quote (age 99))
-  /*
-   todo: remove this code now that __string is used instead
-   todo: the compiler will hack in a quote around strings, this
-   needs to take that into account. e.g. given (quote "hi"), the ast
-   built by the compiler will be: ['quote' ['quote' 'hi']] rather than
-   the expected ['quote' 'hi']. So this is a hack to check inside the
-   form, if it's another list beginning with quote, just return that.
-
-   the proper solution is not to pass in a simplified AST and to retain
-   the nodeType information so that the interpreter can differentiate
-   between names and strings, this would mean that the compiler
-   wouldn't have to wrap strings in quotes and the code for evaling
-   quote becomes 'quote': (env, [_, form]) =>[env, form]
-
-   the cost of this is a more complicated AST, but it seems like a
-   price worth paying
-   */
-  'quote': (env, [_, form]) => {
-    if (form.constructor === Array) {
-      if (form[0] === 'quote') {
-        return [env, form[1], undefined];
-      }
-    }
-    return [env, form, undefined];
-  },
-
-  '__string': (env, [_, form]) => [env, form],
-
-  'fn': (env, [_, nameForm, ...valueForms]) => {
-    const [name, defaultArgForms] = nameForm;
-    const definedFunction = defineFunction(env, defaultArgForms, valueForms);
-    return [env.set(name, { binding: definedFunction }),
-            definedFunction,
-            undefined];
-  },
-
-  // NOTE: in the documentation state that define creates bindings in
-  // it's parent scope. This may not be the expected behaviour
-  'define': (env, [_, ...args]) => {
-    // wrap the args into pairs
-    if (args.length % 2 === 1) {
-      return [env, undefined, 'define should have an even number of args'];
-    }
-
-    const argPairs = [];
-    for (let i = 0; i < args.length; i += 2) {
-      argPairs.push([args[i + 0], args[i + 1]]);
-    }
-
-    return addBindings(env, argPairs);
-  },
-
-  // (begin (f1 1) (f2 3) (f3 5))
-  'begin': (env, [_, ...body]) => evalBodyForms(env, body),
-
-  // (print 'hi' foo) => hi 42
-  'print': (env, [_, ...msgs]) => {
-    const printMsg = msgs.reduce((a, b) => `${a} ${evaluate(env, b)[1]}`, '');
-    console.log(printMsg.trim());
-    return [env, true, undefined];
-  },
-
-  // (log 'hi' foo) => hi <foo:42>
-  'log': (env, [_, ...msgs]) => {
-    const message = msgs.reduce((a, b) => {
-      const r = evaluate(env, b);
-      const res = r[1];
-      if (typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
-        return `${a} < ${b}:${res}>`;
-      }
-      return `${a} ${res}`;
-    }, '');
-    console.log(message);
-    return [env, true, undefined];
-  },
-
-  // (loop (a from: 1 to: 30 step: 2) (+ a a))
-  'loop': (env, [_, [varName, varParameters], ...body]) => {
-    const vp = {};
-    for (const k in varParameters) {
-      vp[k] = evaluate(env, varParameters[k])[1];
-    }
-
-    return loopingFn(env, body, varName, vp);
-  },
-
-  // (on-matrix-stack (f1 1) (f2 3) (f3 5))
-  'on-matrix-stack': (env, [_, ...body]) => {
-    env.get('push-matrix').binding();
-    const res =  evalBodyForms(env, body);
-    env.get('pop-matrix').binding();
-    return res;
-  }
-};
-/* eslint-enable no-unused-vars */
-
-// whoa bodyform, bodyform for you
-function evalBodyForms(env, bodyForms) {
-
-  let error = undefined;
-  const res = bodyForms.reduce(([e, _], b) => {
-    const [env1, form1, error1] = evaluate(e, b);
-    if (error1 && !error) {
-      // store the first error and always return it
-      error = error1;
-    }
-    return [env1, form1, error];
-  }, [env, true]);
-
-  return res;
-}
-
-function loopingFn(env, expr, varName, params) {
-  // todo: 'to' should be <=, and 'upto' should be '<'
-
-  // todo: upto isn't going to work with steps, perhaps remove it?
-  const merged = Util.merge(params, {from: 0,
-                                     to: 1,
-                                     upto: undefined,
-                                     steps: undefined,
-                                     'steps-upto': undefined,
-                                     increment: 1});
-  let res, limit, unit, val;
-
-  const {from,
-         to,
-         upto,
-         steps,
-         increment} = merged;
-
-  const stepsUpto = merged['steps-upto'];
-
-  // initialise res in case we don't assign anything to it again.
-  // (could happen in cases such as the 'to' is less than the 'from')
-  res = [env, undefined];
-
-  if (stepsUpto !== undefined || steps !== undefined) {
-    const s = stepsUpto || steps;
-    if (s < 1) {
-      console.log('steps-upto | steps  must be greater than 0');
-      return res;
-    }
-
-    limit = upto !== undefined ? upto : to;
-    if (stepsUpto !== undefined) {
-      unit = (limit - from) / s;
-    } else {
-      unit = (limit - from) / (s - 1);
-    }
-
-    for (let i = 0; i < s; i++) {
-      val = from + (i * unit);
-      res = evalBodyForms(env.set(varName, { binding: val }), expr);
-    }
-    return res;
-  }
-
-  if (increment === 0) {
-    console.log('increment of 0 given');
-    return res;
-  }
-
-  if (upto !== undefined) {
-    for (let i = from; i <= upto; i += increment) {
-      res = evalBodyForms(env.set(varName, { binding: i }), expr);
-    }
-  } else {
-    for (let i = from; i < to; i += increment) {
-      res = evalBodyForms(env.set(varName, { binding: i }), expr);
-    }
-  }
-
-  return res;
 }
 
 // todo: classic functions are here because it wouldn't make sense to
@@ -370,11 +141,8 @@ function loopingFn(env, expr, varName, params) {
 // 4 3 7 4) rather than (+ 4 3 7 4)
 
 const classicFunctions = {
-  // '+': args => args.reduce((a, b) => a + b, 0),
 
-  '+': args => args.reduce((a, b) => {
-    return a + b;
-  }, 0),
+  '+': args => args.reduce((a, b) => a + b, 0),
 
   '*': args => args.reduce((a, b) => a * b, 1),
 
@@ -431,20 +199,22 @@ function setupBinding(env, rawBindings) {
 
 // specialForms and classicFunctions are defined in name:value pairs
 // so transform them to name:{binding: value} pairs
-const basicEnv = [
-  specialForms,
+const essentialEnv = [
   classicFunctions
 ].reduce((env, bindings) => setupBinding(env, bindings), new Immutable.Map());
 
 
 function getBasicEnv() {
-  return basicEnv;
+  return essentialEnv;
 }
 
 const Interpreter = {
   evaluate,
   isDefineExpression,
-  getBasicEnv
+  getBasicEnv,
+  NO_ERROR,
+  TRUE_STRING,
+  FALSE_STRING
 };
 
 export default Interpreter;

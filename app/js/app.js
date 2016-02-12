@@ -853,6 +853,7 @@ export default function main() {
 
   gRenderer = new Renderer(document.getElementById('render-canvas'));
   gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
+  gEnv = Bind.addSpecialBindings(gEnv);
 
   const state = createInitialState();
   const store = createStore(state);

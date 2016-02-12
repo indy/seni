@@ -25,6 +25,7 @@ import Parser from '../../app/js/lang/Parser';
 import Lexer from '../../app/js/lang/Lexer';
 import Compiler from '../../app/js/lang/Compiler';
 import Genetic from '../../app/js/lang/Genetic';
+import Bind from '../../app/js/seni/Bind';
 
 import {expect} from 'chai';
 
@@ -36,7 +37,7 @@ describe('Interpreter', () => {
   const epsilon = 0.01;
 
   beforeEach(() => {
-    e = Interpreter.getBasicEnv();
+    e = Bind.addSpecialBindings(Interpreter.getBasicEnv());
     key = 'foo';
     val = 5;
     e = e.set(key, { binding: val });
@@ -49,39 +50,55 @@ describe('Interpreter', () => {
 
   it('should error when evaluating an unbound variable', () => {
     const [_env, _form, error] = evalForm(e, '(* bar 2)');
-    expect(error).to.be.a('string');
     expect(error).to.equal('bar is undefined');
   });
 
   it('should error when evaluating an unbound function', () => {
     const [_env, _form, error] = evalForm(e, '(baq 1 2)');
-    expect(error).to.be.a('string');
     expect(error).to.equal('baq is undefined');
   });
 
   it('should error', () => {
     const [_env, _form, error] = evalForm(e, '(+ 1 "a")');
-    expect(error).to.be.a('string');
     expect(error).to.equal('all arguments to + should be numbers');
   });
 
+  it('should error when binding an undefined variable', () => {
+    const [_env, _form, error] = evalForm(e, '(define a 1 b 2 c d)');
+    expect(error).to.equal('d is undefined');
+  });
+
+  it('should error when binding an odd number of args', () => {
+    const [_env, _form, error] = evalForm(e, '(define a 1 b 2 c)');
+    expect(error).to.equal('define should have an even number of args');
+  });
+
+  it('should error when if condition is invalid', () => {
+    const [_env, _form, error] = evalForm(e, '(if z 1 2)');
+    expect(error).to.equal('z is undefined');
+  });
+
   it('should evaluate simple nodes', () => {
-    let [newEnv, res] = Interpreter.evaluate(null, 4);
+    let [newEnv, res, error] = Interpreter.evaluate(null, 4);
 
     expect(newEnv).to.equal(null);
     expect(res).to.equal(4);
+    expect(error).to.equal(Interpreter.NO_ERROR);
 
-    [newEnv, res] = Interpreter.evaluate(null, 12.34);
+    [newEnv, res, error] = Interpreter.evaluate(null, 12.34);
     expect(res).to.be.closeTo(12.34, epsilon);
+    expect(error).to.equal(Interpreter.NO_ERROR);
 
-    [newEnv, res] = Interpreter.evaluate(e, ['quote', 'some string']);
+    [newEnv, res, error] = Interpreter.evaluate(e, ['quote', 'some string']);
     expect(res).to.equal('some string');
+    expect(error).to.equal(Interpreter.NO_ERROR);
   });
 
   it('should get names in the env', () => {
-    const [newEnv, res] = Interpreter.evaluate(e, key);
+    const [newEnv, res, error] = Interpreter.evaluate(e, key);
     expect(res).to.equal(val);
     expect(newEnv).to.equal(e);
+    expect(error).to.equal(Interpreter.NO_ERROR);
   });
 
   it('should test required mathematical functions', () => {
@@ -215,7 +232,7 @@ describe('Interpreter', () => {
     expect(res).to.equal(4);
   });
 
-  it('should be able to invoke a functions while defining it', () => {
+  it('should be able to invoke a function while defining it', () => {
     // invoke while defining
     let [newEnv, res] = evalForm(e, '((fn (addup x: 2) (+ x x)))');
     expect(newEnv.has('addup')).to.equal(true);
@@ -236,72 +253,72 @@ describe('Interpreter', () => {
     expect(res).to.equal(2);
   });
 
-  /*
-   it('should test let', () => {
-   let [newEnv, res] = evalForm(e, '(let ((a 12) (b 24)) (+ a b foo))');
+  // /*
+  //   it('should test let', () => {
+  //   let [newEnv, res] = evalForm(e, '(let ((a 12) (b 24)) (+ a b foo))');
 
-   expect(newEnv.has('foo')).to.equal(true);
-   expect(newEnv.get('foo').binding).to.equal(5);
+  //   expect(newEnv.has('foo')).to.equal(true);
+  //   expect(newEnv.get('foo').binding).to.equal(5);
 
-   expect(res).to.equal(41);
+  //   expect(res).to.equal(41);
 
-   // let bindings can refer to earlier bindings
-   [newEnv, res] = evalForm(e, '(let ((a 2) (b (+ a a))) (+ a b foo))');
-   expect(res).to.equal(11);
+  //   // let bindings can refer to earlier bindings
+  //   [newEnv, res] = evalForm(e, '(let ((a 2) (b (+ a a))) (+ a b foo))');
+  //   expect(res).to.equal(11);
 
-   // the body of let can contain multiple forms
-   [newEnv, res] =
-   evalForm(e, '(let ((a 5) (b (+ a a))) (+ a a) (+ a b foo))');
-   expect(res).to.equal(20);
-   });
+  //   // the body of let can contain multiple forms
+  //   [newEnv, res] =
+  //   evalForm(e, '(let ((a 5) (b (+ a a))) (+ a a) (+ a b foo))');
+  //   expect(res).to.equal(20);
+  //   });
 
-   it('should test destructuring let', () => {
-   let r = evalForm(e, '(let (((x y) (list 3 4))) (+ x y foo))');
-   expect(r[1]).to.equal(12);
-   });
-   */
-  /*
-   it('should test loop', () => {
-   e.add('bar', 0);
-   let [newEnv, res] =
-   evalForm(e, '(loop (a from: 0 to: 4 increment: 1) (set! bar (+ bar a)))');
+  //   it('should test destructuring let', () => {
+  //   let r = evalForm(e, '(let (((x y) (list 3 4))) (+ x y foo))');
+  //   expect(r[1]).to.equal(12);
+  //   });
+  // */
+  // /*
+  //   it('should test loop', () => {
+  //   e.add('bar', 0);
+  //   let [newEnv, res] =
+  //   evalForm(e, '(loop (a from: 0 to: 4 increment: 1) (set! bar (+ bar a)))');
 
-   expect(newEnv.get('bar')).to.equal(6);
+  //   expect(newEnv.get('bar')).to.equal(6);
 
-   // ''upto' for <= loop ('to' for < loop)
-   newEnv.add('bar', 0);
-   [newEnv, res] =
-   evalForm(newEnv, '(loop (a from: 0 upto: 4 increment: 1)
-   (set! bar (+ bar a)))');
-   expect(newEnv.get('bar')).to.equal(10);
+  //   // ''upto' for <= loop ('to' for < loop)
+  //   newEnv.add('bar', 0);
+  //   [newEnv, res] =
+  //   evalForm(newEnv, '(loop (a from: 0 upto: 4 increment: 1)
+  //   (set! bar (+ bar a)))');
+  //   expect(newEnv.get('bar')).to.equal(10);
 
-   newEnv.add('bar', 0);
-   [newEnv, res] = evalForm(newEnv, '(loop (a to: 5) (set! bar (+ bar a)))');
-   expect(newEnv.get('bar')).to.equal(10);
+  //   newEnv.add('bar', 0);
+  //   [newEnv, res] = evalForm(newEnv, '(loop (a to: 5) (set! bar (+ bar a)))');
+  //   expect(newEnv.get('bar')).to.equal(10);
 
-   newEnv.add('bar', 0);
-   [newEnv, res] =
-   evalForm(newEnv, '(loop (a to: 5 increment: 2)
-   (set! bar (+ bar a)))');
-   expect(newEnv.get('bar')).to.equal(6);
+  //   newEnv.add('bar', 0);
+  //   [newEnv, res] =
+  //   evalForm(newEnv, '(loop (a to: 5 increment: 2)
+  //   (set! bar (+ bar a)))');
+  //   expect(newEnv.get('bar')).to.equal(6);
 
-   // loop should eval it's arguments
-   newEnv.add('bar', 0);
-   [newEnv, res] =
-   evalForm(newEnv,
-   '(let ((x 2)) (loop (a to: 5 incremenet: x)
-   (set! bar (+ bar a))))');
-   expect(newEnv.get('bar')).to.equal(6);
+  //   // loop should eval it's arguments
+  //   newEnv.add('bar', 0);
+  //   [newEnv, res] =
+  //   evalForm(newEnv,
+  //   '(let ((x 2)) (loop (a to: 5 incremenet: x)
+  //   (set! bar (+ bar a))))');
+  //   expect(newEnv.get('bar')).to.equal(6);
 
-   // loop's body should be treated as though it is wrapped in a 'begin'
-   newEnv.add('bar', 0);
-   [newEnv, res] =
-   evalForm(newEnv,
-   '(let ((x 2) (y 4)) (loop (a to: 5 increment: x)
-   (+ y y) (set! bar (+ bar a))))');
-   expect(newEnv.get('bar')).to.equal(6);
+  //   // loop's body should be treated as though it is wrapped in a 'begin'
+  //   newEnv.add('bar', 0);
+  //   [newEnv, res] =
+  //   evalForm(newEnv,
+  //   '(let ((x 2) (y 4)) (loop (a to: 5 increment: x)
+  //   (+ y y) (set! bar (+ bar a))))');
+  //   expect(newEnv.get('bar')).to.equal(6);
 
-   });*/
+  //   });*/
 
   function evalForm(env, form) {
 

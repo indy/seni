@@ -66,13 +66,13 @@ function buildGeneFromTrait(trait, env) {
   // evaluate all of the forms, returning the final [env, result]
   /* eslint-disable arrow-body-style */
   const [_, result, _error] = simplifiedAst.reduce(([e, f, err], form) => {
-    if (err) {
+    if (err != Interpreter.NO_ERROR) {
       // if there's an error keep on passing it along
       return [e, f, err];
     } else {
       return Interpreter.evaluate(e, form);
     }
-  }, [env, false, undefined]);
+  }, [env, false, Interpreter.NO_ERROR]);
   /* eslint-enable arrow-body-style */
 
   // return { error, result };
@@ -110,6 +110,11 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
   return Immutable.fromJS(childGenotype);
 }
 
+function buildEnv(rng) {
+  return Bind.addBracketBindings(
+    Bind.addSpecialBindings(Interpreter.getBasicEnv()), rng);
+}
+
 const Genetic = {
 
   buildTraits: ast => {
@@ -123,7 +128,7 @@ const Genetic = {
 
   createGenotypeFromTraits: (traits, seed) => {
     const rng = PseudoRandom.buildUnsigned(seed);
-    const env = Bind.addBracketBindings(Interpreter.getBasicEnv(), rng);
+    const env = buildEnv(rng);
 
     // env is the environment used to evaluate the bracketed forms
     const genotype = traits.map(trait => buildGeneFromTrait(trait, env));
@@ -136,7 +141,7 @@ const Genetic = {
     let i;
     let newGenotypes = genotypes;
     const rng = PseudoRandom.buildUnsigned(seed);
-    const env = Bind.addBracketBindings(Interpreter.getBasicEnv(), rng);
+    const env = buildEnv(rng);
 
     if (logToConsole) {
       console.log('Genetic::nextGeneration', {populationSize,

@@ -27,24 +27,47 @@ import PseudoRandom from './PseudoRandom';
 import Focal from './Focal';
 import Repeat from './Repeat';
 import Interp from './Interp';
+import Special from './Special';
 
-function createBind(env, pb, restArgs) {
-
-  // call the PublicBinding's create function passing in an explicit self
-  // along with any additional arguments
-  const binding = pb.create.apply(null, [pb].concat(restArgs));
-
-  // bind the value to the pb's name
-  return env.set(pb.name, { binding, pb });
-}
+/*
+  Env is an immutable map
+  Each entry in the map is another map that can contain:
+  - binding: a normal function/variable binding
+  - pb: the Public Binding structure, can be used for in-app documentation
+  - special: a special binding for macro like functionality
+*/
 
 // applies the publicBindings in namespace to env
 function applyPublicBindings(env, namespace) {
+
+  function createBind(env, pb, restArgs) {
+    // call the PublicBinding's create function passing in an explicit self
+    // along with any additional arguments
+    const binding = pb.create.apply(null, [pb].concat(restArgs));
+    // bind the value to the pb's name
+    return env.set(pb.name, { binding, pb });
+  }
+
   // grab any additional arguments that have been given to this function
   const restArgs = Array.prototype.slice.call(arguments, 2);
   const bindings = namespace.publicBindings;
 
   return bindings.reduce((e, pb) => createBind(e, pb, restArgs), env);
+}
+
+function applySpecialBindings(env, namespace) {
+
+  function createBind(env, pb) {
+    // call the PublicBinding's create function passing in an explicit self
+    const special = pb.create.apply(null, [pb]);
+    // bind the value to the pb's name
+    return env.set(pb.name, { special, pb });
+  }
+
+  // grab any additional arguments that have been given to this function
+  const bindings = namespace.specialBindings;
+
+  return bindings.reduce((e, pb) => createBind(e, pb), env);
 }
 
 const Bind = {
@@ -59,6 +82,7 @@ const Bind = {
     env = applyPublicBindings(env, Focal, renderer);
     env = applyPublicBindings(env, Repeat, renderer);
     env = applyPublicBindings(env, Interp);
+
     return env;
   },
 
@@ -68,6 +92,12 @@ const Bind = {
     env = applyPublicBindings(env, PseudoRandom);
     env = applyPublicBindings(env, ColourBindings);
     env = applyPublicBindings(env, Bracket, rng);
+
+    return env;
+  },
+
+  addSpecialBindings: env => {
+    env = applySpecialBindings(env, Special);
 
     return env;
   }

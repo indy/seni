@@ -21,10 +21,11 @@ import Parser from './Parser';
 import Unparser from './Unparser';
 import Lexer from './Lexer';
 import Compiler from './Compiler';
+import Bind from './Bind';
 
 const Runtime = {
   createEnv: () =>
-    Interpreter.getBasicEnv(),
+    Bind.addSpecialBindings(Interpreter.getBasicEnv()),
 
   buildFrontAst: form => {
     const tokensBox = Lexer.tokenise(form);
@@ -48,15 +49,29 @@ const Runtime = {
     const simplifiedAsts = Compiler.compileWithGenotype(ast, genotype);
 
     // add all of the define expressions to the env
-    const [_env, _res] = simplifiedAsts.
-            filter(Interpreter.isDefineExpression).
-            reduce((a, b) => Interpreter.evaluate(a[0], b), [env, false]);
+    const [env1, res1, error1] = simplifiedAsts.
+          filter(Interpreter.isDefineExpression).
+          reduce(([e, _, error], form) => {
+            if (error !== Interpreter.NO_ERROR) {
+              return [e, _, error];
+            }
+            return Interpreter.evaluate(e, form);
+          }, [env, false, Interpreter.NO_ERROR]);
+
+    if (error1 !== Interpreter.NO_ERROR) {
+      return [env1, res1, error1];
+    }
     // a[0] === the new env returned by the interpreter
 
     // now evaluate all of the non-define expressions
     return simplifiedAsts.
       filter(s => !Interpreter.isDefineExpression(s)).
-      reduce((a, b) => Interpreter.evaluate(a[0], b), [_env, _res]);
+      reduce(([env2, res2, error2], form) => {
+        if (error2 !== Interpreter.NO_ERROR) {
+          return [env2, res2, error2];
+        }
+        return Interpreter.evaluate(env2, form);
+      }, [env1, res1, Interpreter.NO_ERROR]);
   }
 };
 
