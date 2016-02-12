@@ -56,45 +56,50 @@ function evaluate(env, expr) {
 }
 
 function funApplication(env, listExpr) {
+
+  let fun, error;
   const fnName = listExpr[0];
+  [env, fun, error] = evaluate(env, fnName);
 
-  const [e, fun, err] = evaluate(env, fnName);
-
-  if (err) {
-    return [e, fun, err];
+  if (error) {
+    return [env, fun, error];
   }
 
   const bind = env.get(fnName);
+
   if (bind && bind.special) {
     // special forms that manipulate the listExpr and can change the env
-    return fun(e, listExpr);
+    return fun(env, listExpr);
   }
 
-  if (isClassicFunction(fnName)) {
+  if (bind && bind.classic) {
     // classic functions that don't require named arguments
-    return funApplicationClassic(e, fun, listExpr);
+    return funApplicationClassic(env, fun, listExpr);
   }
 
   // normal functions that require named arguments
+  const [args, argsError] = buildArgs(env, listExpr);
+  if (argsError) {
+    return [env, undefined, argsError];
+  }
+
+  return [env, fun(args), NO_ERROR];
+}
+
+function buildArgs(env, listExpr) {
   const args = {};
   if (listExpr.length > 1) {
     // the 2nd listExpr node will be an object containing the arguments
     const argObj = listExpr[1];
     for (const k in argObj) {
-      const [env2, form2, err2] = evaluate(e, argObj[k]);
-      if (err2) {
-        return [env2, form2, err2];
+      const [_, res, error] = evaluate(env, argObj[k]);
+      if (error) {
+        return [undefined, error];
       }
-      args[k] = form2;
+      args[k] = res;
     }
   }
-
-  return [e, fun(args), NO_ERROR];
-}
-
-// check if the first element in the list expression is a classic function
-function isClassicFunction(fnName) {
-  return classicFunctions[fnName] !== undefined;
+  return [args, NO_ERROR];
 }
 
 function funApplicationClassic(env, fun, [fnName, ...fnArguments]) {
@@ -131,81 +136,8 @@ function isDefineExpression(form) {
     (form[0] === 'fn' || form[0] === 'define');
 }
 
-// todo: classic functions are here because it wouldn't make sense to
-// use named parameters for these functions. perhaps there should be a
-// syntax like prefixing with @ to indicate that the function takes a
-// variable number of non-named paramters?
-
-// could get rid of the concept of classic functions and allow the
-// user to create @ functions at the expense of having code like: (@+
-// 4 3 7 4) rather than (+ 4 3 7 4)
-
-const classicFunctions = {
-
-  '+': args => args.reduce((a, b) => a + b, 0),
-
-  '*': args => args.reduce((a, b) => a * b, 1),
-
-  '-': args => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
-
-  '/': args => args.reduce((a, b) => a / b),
-
-  'sqrt': args => Math.sqrt(args[0]),
-
-  'mod': args => args[0] % args[1],
-
-  '=': ([first, ...rest]) =>
-    rest.every(a => a === first) ? TRUE_STRING : FALSE_STRING,
-
-  '<': args => {
-    let prev = args[0];
-    for (let i = 1; i < args.length; i++) {
-      const current = args[i];
-      if (prev >= current) {
-        return FALSE_STRING;
-      }
-      prev = current;
-    }
-    return TRUE_STRING;
-  },
-
-  '>': args => {
-    let prev = args[0];
-    for (let i = 1; i < args.length; i++) {
-      const current = args[i];
-      if (prev <= current) {
-        return FALSE_STRING;
-      }
-      prev = current;
-    }
-    return TRUE_STRING;
-  },
-
-  'list': args => args,
-
-  'append': ([list, ...items]) => {
-    items.forEach(i => list.push(i));
-    return list;
-  }
-};
-
-function setupBinding(env, rawBindings) {
-
-  for (const prop in rawBindings) {
-    env = env.set(prop, { binding: rawBindings[prop] });
-  }
-  return env;
-}
-
-// specialForms and classicFunctions are defined in name:value pairs
-// so transform them to name:{binding: value} pairs
-const essentialEnv = [
-  classicFunctions
-].reduce((env, bindings) => setupBinding(env, bindings), new Immutable.Map());
-
-
 function getBasicEnv() {
-  return essentialEnv;
+  return new Immutable.Map();
 }
 
 const Interpreter = {

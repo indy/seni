@@ -165,7 +165,7 @@ function loopingFn(env, expr, varName, params) {
   return res;
 }
 
-const specialBindings = [
+const publicBindings = [
   new PublicBinding(
     'if',
     {
@@ -322,7 +322,6 @@ This may not be the expected behaviour`,
     }
   ),
 
-
   new PublicBinding(
     'loop',
     {
@@ -340,7 +339,6 @@ This may not be the expected behaviour`,
       return loopingFn(env, body, varName, vp);
     }
   ),
-
 
   new PublicBinding(
     'on-matrix-stack',
@@ -361,5 +359,5 @@ This may not be the expected behaviour`,
 ];
 
 export default {
-  specialBindings
+  publicBindings
 };

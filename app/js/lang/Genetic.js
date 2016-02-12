@@ -112,7 +112,10 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
 
 function buildEnv(rng) {
   return Bind.addBracketBindings(
-    Bind.addSpecialBindings(Interpreter.getBasicEnv()), rng);
+    Bind.addClassicBindings(
+      Bind.addSpecialBindings(
+        Interpreter.getBasicEnv())),
+    rng);
 }
 
 const Genetic = {

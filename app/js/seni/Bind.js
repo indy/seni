@@ -28,76 +28,84 @@ import Focal from './Focal';
 import Repeat from './Repeat';
 import Interp from './Interp';
 import Special from './Special';
+import Classic from './Classic';
 
 /*
   Env is an immutable map
-  Each entry in the map is another map that can contain:
-  - binding: a normal function/variable binding
+
+  Each entry in the map is another map that contains:
   - pb: the Public Binding structure, can be used for in-app documentation
+
+  and one of the following:
+  - binding: a normal function/variable binding
   - special: a special binding for macro like functionality
+  - classic: a binding for functions with classic lisp calling conventions
+
+  see Interpreter::funApplication for how they're evaluated differently
 */
 
-// applies the publicBindings in namespace to env
-function applyPublicBindings(env, namespace) {
+function createBind(env, key, pb, restArgs) {
+  // call the PublicBinding's create function passing in an explicit self
+  // along with any additional arguments
+  const binding = pb.create.apply(null, [pb].concat(restArgs));
 
-  function createBind(env, pb, restArgs) {
-    // call the PublicBinding's create function passing in an explicit self
-    // along with any additional arguments
-    const binding = pb.create.apply(null, [pb].concat(restArgs));
-    // bind the value to the pb's name
-    return env.set(pb.name, { binding, pb });
-  }
+  // bind the value to the pb's name
+  const obj = {};
+  obj[key] = binding;
+  obj.pb = pb;
 
-  // grab any additional arguments that have been given to this function
-  const restArgs = Array.prototype.slice.call(arguments, 2);
-  const bindings = namespace.publicBindings;
-
-  return bindings.reduce((e, pb) => createBind(e, pb, restArgs), env);
+  return env.set(pb.name, obj);
 }
 
-function applySpecialBindings(env, namespace) {
-
-  function createBind(env, pb) {
-    // call the PublicBinding's create function passing in an explicit self
-    const special = pb.create.apply(null, [pb]);
-    // bind the value to the pb's name
-    return env.set(pb.name, { special, pb });
-  }
+// take the publicBindings in the namespace and add them into env
+// store them under the given key
+//
+// e.g. applyBindings(env, 'binding', {publicBindings: ['rect':...]})
+// results in: env['rect'] = {binding: ...}
+function applyBindings(env, key, namespace) {
 
   // grab any additional arguments that have been given to this function
-  const bindings = namespace.specialBindings;
+  const restArgs = Array.prototype.slice.call(arguments, 3);
+  const bindings = namespace.publicBindings;
 
-  return bindings.reduce((e, pb) => createBind(e, pb), env);
+  return bindings.reduce((e, pb) => createBind(e, key, pb, restArgs), env);
 }
 
 const Bind = {
   addBindings: (env, renderer) => {
-    env = applyPublicBindings(env, Core);
-    env = applyPublicBindings(env, MathUtil);
-    env = applyPublicBindings(env, PseudoRandom);
-    env = applyPublicBindings(env, MatrixStackBindings, renderer);
-    env = applyPublicBindings(env, Shapes, renderer);
-    env = applyPublicBindings(env, Paths);
-    env = applyPublicBindings(env, ColourBindings);
-    env = applyPublicBindings(env, Focal, renderer);
-    env = applyPublicBindings(env, Repeat, renderer);
-    env = applyPublicBindings(env, Interp);
+    env = applyBindings(env, 'binding', Core);
+    env = applyBindings(env, 'binding', MathUtil);
+    env = applyBindings(env, 'binding', PseudoRandom);
+    env = applyBindings(env, 'binding', Paths);
+    env = applyBindings(env, 'binding', ColourBindings);
+    env = applyBindings(env, 'binding', Interp);
+
+    env = applyBindings(env, 'binding', MatrixStackBindings, renderer);
+    env = applyBindings(env, 'binding', Shapes, renderer);
+    env = applyBindings(env, 'binding', Focal, renderer);
+    env = applyBindings(env, 'binding', Repeat, renderer);
 
     return env;
   },
 
   addBracketBindings: (env, rng) => {
-    env = applyPublicBindings(env, Core);
-    env = applyPublicBindings(env, MathUtil);
-    env = applyPublicBindings(env, PseudoRandom);
-    env = applyPublicBindings(env, ColourBindings);
-    env = applyPublicBindings(env, Bracket, rng);
+    env = applyBindings(env, 'binding', Core);
+    env = applyBindings(env, 'binding', MathUtil);
+    env = applyBindings(env, 'binding', PseudoRandom);
+    env = applyBindings(env, 'binding', ColourBindings);
+    env = applyBindings(env, 'binding', Bracket, rng);
 
     return env;
   },
 
   addSpecialBindings: env => {
-    env = applySpecialBindings(env, Special);
+    env = applyBindings(env, 'special', Special);
+
+    return env;
+  },
+
+  addClassicBindings: env => {
+    env = applyBindings(env, 'classic', Classic);
 
     return env;
   }

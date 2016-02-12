@@ -852,8 +852,11 @@ export default function main() {
   resizeContainers();
 
   gRenderer = new Renderer(document.getElementById('render-canvas'));
-  gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
-  gEnv = Bind.addSpecialBindings(gEnv);
+  gEnv = Bind.addBindings(
+    Bind.addClassicBindings(
+      Bind.addSpecialBindings(
+        Runtime.createEnv())),
+    gRenderer);
 
   const state = createInitialState();
   const store = createStore(state);

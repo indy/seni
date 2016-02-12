@@ -37,7 +37,9 @@ describe('Interpreter', () => {
   const epsilon = 0.01;
 
   beforeEach(() => {
-    e = Bind.addSpecialBindings(Interpreter.getBasicEnv());
+    e = Bind.addClassicBindings(
+      Bind.addSpecialBindings(
+        Interpreter.getBasicEnv()));
     key = 'foo';
     val = 5;
     e = e.set(key, { binding: val });
