@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import PublicBinding from './PublicBinding';
+import PublicBinding from '../lang/PublicBinding';
 
 const PI = Math.PI;
 const TAU = PI * 2;

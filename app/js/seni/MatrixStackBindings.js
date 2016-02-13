@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import PublicBinding from './PublicBinding';
+import PublicBinding from '../lang/PublicBinding';
 import MathUtil from './MathUtil';
 
 const publicBindings = [

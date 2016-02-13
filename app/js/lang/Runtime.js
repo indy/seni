@@ -21,13 +21,14 @@ import Parser from './Parser';
 import Unparser from './Unparser';
 import Lexer from './Lexer';
 import Compiler from './Compiler';
-import Bind from '../seni/Bind';
+import Bind from './Bind';
 
 const Runtime = {
   createEnv: () =>
     Bind.addClassicBindings(
-      Bind.addSpecialBindings(
-        Interpreter.getBasicEnv())),
+      Bind.addSpecialDebugBindings(
+        Bind.addSpecialBindings(
+          Interpreter.getBasicEnv()))),
 
   buildFrontAst: form => {
     const tokensBox = Lexer.tokenise(form);

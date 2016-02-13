@@ -18,7 +18,7 @@
 
 import Immutable from 'immutable';
 
-import Bind from './seni/Bind';
+import Bind from './lang/Bind';
 import Renderer from './seni/Renderer';
 import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
@@ -854,8 +854,9 @@ export default function main() {
   gRenderer = new Renderer(document.getElementById('render-canvas'));
   gEnv = Bind.addBindings(
     Bind.addClassicBindings(
-      Bind.addSpecialBindings(
-        Runtime.createEnv())),
+      Bind.addSpecialDebugBindings(
+        Bind.addSpecialBindings(
+          Runtime.createEnv()))),
     gRenderer);
 
   const state = createInitialState();

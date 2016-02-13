@@ -16,8 +16,8 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import PublicBinding from './PublicBinding';
-import Interpreter from '../lang/Interpreter';
+import PublicBinding from '../lang/PublicBinding';
+import Interpreter from './Interpreter';
 
 const { TRUE_STRING, FALSE_STRING } = Interpreter;
 

@@ -16,10 +16,10 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import PublicBinding from './PublicBinding';
 import Immutable from 'immutable';
-import MathUtil from './MathUtil';
 
+import MathUtil from './MathUtil';
+import PublicBinding from '../lang/PublicBinding';
 
 // the following map* functions work in the range 0..1:
 

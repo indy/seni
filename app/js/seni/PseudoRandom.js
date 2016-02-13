@@ -17,8 +17,9 @@
  */
 
 /* eslint-disable no-use-before-define */
-import PublicBinding from './PublicBinding';
 import seedrandom from 'seedrandom';
+
+import PublicBinding from '../lang/PublicBinding';
 
 // A basic translation of Ken Perlin's Java
 // reference implementation of improved noise (C) 2002

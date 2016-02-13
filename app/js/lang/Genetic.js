@@ -19,7 +19,7 @@
 import NodeType from './NodeType';
 import Compiler from './Compiler';
 import Interpreter from './Interpreter';
-import Bind from '../seni/Bind';
+import Bind from './Bind';
 import PseudoRandom from '../seni/PseudoRandom';
 import Immutable from 'immutable';
 
@@ -113,8 +113,9 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
 function buildEnv(rng) {
   return Bind.addBracketBindings(
     Bind.addClassicBindings(
-      Bind.addSpecialBindings(
-        Interpreter.getBasicEnv())),
+      Bind.addSpecialDebugBindings(
+        Bind.addSpecialBindings(
+          Interpreter.getBasicEnv()))),
     rng);
 }
 

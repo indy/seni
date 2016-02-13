@@ -19,7 +19,6 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-redeclare */
 
-// import Util from '../seni/Util';
 import Immutable from 'immutable';
 
 const TRUE_STRING = '#t';

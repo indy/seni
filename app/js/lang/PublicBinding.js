@@ -16,8 +16,6 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Util from '../seni/Util';
-
 export default class PublicBinding {
   /**
    * PublicBinding constructor
@@ -34,6 +32,6 @@ export default class PublicBinding {
   }
 
   mergeWithDefaults(params) {
-    return Util.merge(params, this.defaults);
+    return Object.assign({}, this.defaults, params);
   }
 }

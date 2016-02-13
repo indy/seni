@@ -16,19 +16,24 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Shapes from './Shapes';
-import Paths from './Paths';
-import MatrixStackBindings from './MatrixStackBindings';
-import MathUtil from './MathUtil';
-import ColourBindings from './ColourBindings';
-import Core from './Core';
-import BracketBindings from './BracketBindings';
-import PseudoRandom from './PseudoRandom';
-import Focal from './Focal';
-import Repeat from './Repeat';
-import Interp from './Interp';
 import Special from './Special';
 import Classic from './Classic';
+
+import SpecialDebug from '../ui/SpecialDebug';
+
+import Shapes from '../seni/Shapes';
+import Paths from '../seni/Paths';
+import MatrixStackBindings from '../seni/MatrixStackBindings';
+import MathUtil from '../seni/MathUtil';
+import ColourBindings from '../seni/ColourBindings';
+import Core from '../seni/Core';
+import BracketBindings from '../seni/BracketBindings';
+import PseudoRandom from '../seni/PseudoRandom';
+import Focal from '../seni/Focal';
+import Repeat from '../seni/Repeat';
+import Interp from '../seni/Interp';
+
+
 
 /*
   Env is an immutable map
@@ -44,14 +49,14 @@ import Classic from './Classic';
   see Interpreter::funApplication for how they're evaluated differently
 */
 
-function createBind(env, key, pb, restArgs) {
+function createBind(env, bindType, pb, restArgs) {
   // call the PublicBinding's create function passing in an explicit self
   // along with any additional arguments
   const binding = pb.create.apply(null, [pb].concat(restArgs));
 
   // bind the value to the pb's name
   const obj = {};
-  obj[key] = binding;
+  obj[bindType] = binding;
   obj.pb = pb;
 
   return env.set(pb.name, obj);
@@ -102,6 +107,12 @@ const Bind = {
 
   addSpecialBindings: env => {
     env = applyBindings(env, Special);
+
+    return env;
+  },
+
+  addSpecialDebugBindings: (env, _konsole) => {
+    env = applyBindings(env, SpecialDebug);
 
     return env;
   },

@@ -25,7 +25,7 @@ import Parser from '../../app/js/lang/Parser';
 import Lexer from '../../app/js/lang/Lexer';
 import Compiler from '../../app/js/lang/Compiler';
 import Genetic from '../../app/js/lang/Genetic';
-import Bind from '../../app/js/seni/Bind';
+import Bind from '../../app/js/lang/Bind';
 
 import {expect} from 'chai';
 
@@ -38,8 +38,9 @@ describe('Interpreter', () => {
 
   beforeEach(() => {
     e = Bind.addClassicBindings(
-      Bind.addSpecialBindings(
-        Interpreter.getBasicEnv()));
+      Bind.addSpecialDebugBindings(
+        Bind.addSpecialBindings(
+          Interpreter.getBasicEnv())));
     key = 'foo';
     val = 5;
     e = e.set(key, { binding: val });

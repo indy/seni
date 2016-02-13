@@ -17,14 +17,6 @@
  */
 
 export default {
-  merge: (obj, defaults) => {
-    const res = {};
-    for (const p in defaults) {
-      res[p] = obj[p] !== undefined ? obj[p] : defaults[p];
-    }
-    return res;
-  },
-
   // from http://werxltd.com/wp/2010/05/13/ (cont'd next line)
   // javascript-implementation-of-javas-string-hashcode-method/
   hashCode: string => {
