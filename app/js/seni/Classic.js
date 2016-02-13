@@ -169,5 +169,6 @@ const publicBindings = [
 ];
 
 export default {
+  publicBindingType: 'classic',
   publicBindings
 };

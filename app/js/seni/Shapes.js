@@ -574,5 +574,6 @@ const publicBindings = [
       renderer.cmdRenderPoly(self.mergeWithDefaults(params)))];
 
 export default {
+  publicBindingType: 'binding',
   publicBindings
 };

@@ -359,5 +359,6 @@ This may not be the expected behaviour`,
 ];
 
 export default {
+  publicBindingType: 'special',
   publicBindings
 };

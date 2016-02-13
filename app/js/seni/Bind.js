@@ -22,7 +22,7 @@ import MatrixStackBindings from './MatrixStackBindings';
 import MathUtil from './MathUtil';
 import ColourBindings from './ColourBindings';
 import Core from './Core';
-import Bracket from './BracketBindings';
+import BracketBindings from './BracketBindings';
 import PseudoRandom from './PseudoRandom';
 import Focal from './Focal';
 import Repeat from './Repeat';
@@ -58,54 +58,56 @@ function createBind(env, key, pb, restArgs) {
 }
 
 // take the publicBindings in the namespace and add them into env
-// store them under the given key
+// store them under the given publicBindingType
 //
-// e.g. applyBindings(env, 'binding', {publicBindings: ['rect':...]})
+// e.g. applyBindings(env, {publicBindings: ['rect':...],
+//                          publicBindingType: 'binding'})
 // results in: env['rect'] = {binding: ...}
-function applyBindings(env, key, namespace) {
+function applyBindings(env, namespace) {
 
   // grab any additional arguments that have been given to this function
-  const restArgs = Array.prototype.slice.call(arguments, 3);
+  const restArgs = Array.prototype.slice.call(arguments, 2);
   const bindings = namespace.publicBindings;
+  const bindType = namespace.publicBindingType;
 
-  return bindings.reduce((e, pb) => createBind(e, key, pb, restArgs), env);
+  return bindings.reduce((e, pb) => createBind(e, bindType, pb, restArgs), env);
 }
 
 const Bind = {
   addBindings: (env, renderer) => {
-    env = applyBindings(env, 'binding', Core);
-    env = applyBindings(env, 'binding', MathUtil);
-    env = applyBindings(env, 'binding', PseudoRandom);
-    env = applyBindings(env, 'binding', Paths);
-    env = applyBindings(env, 'binding', ColourBindings);
-    env = applyBindings(env, 'binding', Interp);
+    env = applyBindings(env, Core);
+    env = applyBindings(env, MathUtil);
+    env = applyBindings(env, PseudoRandom);
+    env = applyBindings(env, Paths);
+    env = applyBindings(env, ColourBindings);
+    env = applyBindings(env, Interp);
 
-    env = applyBindings(env, 'binding', MatrixStackBindings, renderer);
-    env = applyBindings(env, 'binding', Shapes, renderer);
-    env = applyBindings(env, 'binding', Focal, renderer);
-    env = applyBindings(env, 'binding', Repeat, renderer);
+    env = applyBindings(env, MatrixStackBindings, renderer);
+    env = applyBindings(env, Shapes, renderer);
+    env = applyBindings(env, Focal, renderer);
+    env = applyBindings(env, Repeat, renderer);
 
     return env;
   },
 
   addBracketBindings: (env, rng) => {
-    env = applyBindings(env, 'binding', Core);
-    env = applyBindings(env, 'binding', MathUtil);
-    env = applyBindings(env, 'binding', PseudoRandom);
-    env = applyBindings(env, 'binding', ColourBindings);
-    env = applyBindings(env, 'binding', Bracket, rng);
+    env = applyBindings(env, Core);
+    env = applyBindings(env, MathUtil);
+    env = applyBindings(env, PseudoRandom);
+    env = applyBindings(env, ColourBindings);
+    env = applyBindings(env, BracketBindings, rng);
 
     return env;
   },
 
   addSpecialBindings: env => {
-    env = applyBindings(env, 'special', Special);
+    env = applyBindings(env, Special);
 
     return env;
   },
 
   addClassicBindings: env => {
-    env = applyBindings(env, 'classic', Classic);
+    env = applyBindings(env, Classic);
 
     return env;
   }

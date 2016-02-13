@@ -133,5 +133,6 @@ const publicBindings = [
 ];
 
 export default {
+  publicBindingType: 'binding',
   publicBindings
 };

@@ -158,5 +158,6 @@ point should be (only the position's y value will be taken into account)`,
 ];
 
 export default {
+  publicBindingType: 'binding',
   publicBindings
 };

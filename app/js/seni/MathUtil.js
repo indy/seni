@@ -213,7 +213,7 @@ both arguments are used to determine the quadrant of the result`,
 ];
 
 export default {
-
+  publicBindingType: 'binding',
   publicBindings,
 
   stepsInclusive: (start, end, num) => {

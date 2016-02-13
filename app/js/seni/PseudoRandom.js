@@ -179,8 +179,9 @@ const publicBindings = [
 ];
 
 export default {
+  publicBindingType: 'binding',
+  publicBindings,
   buildUnsigned,
   buildSigned,
-  publicBindings,
   _perlin: (x, y, z) => noise(x, y, z)
 };
