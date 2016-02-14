@@ -24,6 +24,7 @@ import './lang/ParserTest';
 import './lang/UnparserTest';
 import './lang/TokenTest';
 import './lang/SpecialTest';
+import './lang/ClassicTest';
 import './seni/ColourTest';
 import './seni/MathUtilTest';
 import './seni/InterpTest';

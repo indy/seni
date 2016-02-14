@@ -32,7 +32,7 @@ describe('Paths', () => {
     return undefined;
   }
 
-  it('should invoke callback with linear values', () => {
+  it('invoke callback with linear values', () => {
 
     let count = 0;
     const positions = [];

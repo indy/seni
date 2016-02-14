@@ -57,7 +57,7 @@ describe('Compiler', () => {
     return simplifiedAsts[0];
   }
 
-  it('should compile a backAst', () => {
+  it('compile a backAst', () => {
     // create a node
     function n(type, value) {
       switch (type) {
@@ -152,17 +152,17 @@ describe('Compiler', () => {
     // [5 (int)]
   });
 
-  it('should test required functions: genotype initial', () => {
+  it('required functions: genotype initial', () => {
     expect(compile('(* 2 {4})')).
       to.deep.equal(['*', 2, 4]);
   });
 
-  it('should build a hash for the arguments', () => {
+  it('build a hash for the arguments', () => {
     expect(compile('(something monkey: 42)')).
       to.deep.equal(['something', {monkey: 42}]);
   });
 
-  it('should test required functions: genotype', () => {
+  it('required functions: genotype', () => {
     expect(compileWithSeed('(+ 2 {44 (int min: 10 max: 56)})', 100)).
       to.deep.equal(['+', 2, 11]);
 
@@ -175,19 +175,19 @@ describe('Compiler', () => {
 
   // correctly work with functions that have genotypes
   // in both name and arg positions
-  it('should correctly apply genotypes to named functions', () => {
+  it('correctly apply genotypes to named functions', () => {
     const form = `({gogo (select from: (list 'shabba 'gogo 'hooha))}
                  foo: {44 (int min: 10 max: 56)})`;
 
     expect(compileWithSeed(form, 100)).to.deep.equal(['shabba', {'foo': 15}]);
   });
 
-  it('should test plus', () => {
+  it('plus', () => {
     expect(compileWithSeed('({- (testPlus)} 2 7)', 100)).
       to.deep.equal(['+', 2, 7]);
   });
 
-  it('should bracket bind a random colour', () => {
+  it('bracket bind a random colour', () => {
     let res = (compileWithSeed('{(col/rgb r: 0.1 g: 0.2 b: 0.3) (col)}', 100));
     // res === ['col/rgb', {r: 0.122, g: 0.08, b: 0.40}]
 
@@ -215,7 +215,7 @@ describe('Compiler', () => {
     expect(colourValues.alpha).to.be.closeTo(1, epsilon);
   });
 
-  it('should test required functions', () => {
+  it('required functions', () => {
 
     expect(compile('4')).
       to.equal(4);
@@ -255,7 +255,7 @@ describe('Compiler', () => {
 
   });
 
-  it('should compile function define statements', () => {
+  it('compile function define statements', () => {
     expect(compile('(define (add x: 0 y: 0))')).
       to.deep.equal(['define', ['add', {x: 0, y: 0}]]);
 

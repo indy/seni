@@ -32,7 +32,7 @@ describe('Parser', () => {
     return Parser.parse(ts);
   }
 
-  it('should parse a bracketed form', () => {
+  it('bracketed form', () => {
     const astObj = simpleParse('(+ 1 2 {3 (int min: 0 max: 10)})');
     expect(astObj.nodes.length).to.equal(1);
 
@@ -52,7 +52,7 @@ describe('Parser', () => {
     expect(alterable.parameterPrefix.length).to.equal(0);
   });
 
-  it('should parse a bracketed form that starts with whitespace', () => {
+  it('bracketed form that starts with whitespace', () => {
     const astObj = simpleParse('(+ 1 2 { 3 (int min: 0 max: 10)})');
     expect(astObj.nodes.length).to.equal(1);
 
@@ -73,7 +73,7 @@ describe('Parser', () => {
     expect(alterable.parameterPrefix.length).to.equal(1);
   });
 
-  it('should parse an int', () => {
+  it('an int', () => {
     const ts = [new Token(TokenType.INT, 4)];
 
     const res = Parser.parse(ts).nodes;
@@ -83,7 +83,7 @@ describe('Parser', () => {
     expect(res[0].value).to.equal(4);
   });
 
-  it('should parse a float', () => {
+  it('float', () => {
     const ts = [new Token(TokenType.FLOAT, 3.14)];
 
     const res = Parser.parse(ts).nodes;
@@ -93,7 +93,7 @@ describe('Parser', () => {
     expect(res[0].value).to.be.closeTo(3.14, 0.01);
   });
 
-  it('should parse a name', () => {
+  it('name', () => {
     const ts = [new Token(TokenType.NAME, 'cdr')];
 
     const res = Parser.parse(ts).nodes;
@@ -103,7 +103,7 @@ describe('Parser', () => {
     expect(res[0].value).to.equal('cdr');
   });
 
-  it('should parse a string', () => {
+  it('string', () => {
     const ts = [new Token(TokenType.STRING, 'hello world')];
 
     const res = Parser.parse(ts).nodes;
@@ -113,7 +113,7 @@ describe('Parser', () => {
     expect(res[0].value).to.equal('hello world');
   });
 
-  it('should parse a boolean', () => {
+  it('boolean', () => {
     let ts = [new Token(TokenType.NAME, 'true')];
     let res = Parser.parse(ts).nodes;
     expect(res.length).to.equal(1);
@@ -127,7 +127,7 @@ describe('Parser', () => {
     expect(res[0].value).to.equal('#f');
   });
 
-  it('should parse a list', () => {
+  it('list', () => {
     const ts = [new Token(TokenType.LIST_START),
               new Token(TokenType.INT, 4),
               new Token(TokenType.LIST_END)];
@@ -138,7 +138,7 @@ describe('Parser', () => {
     expect(res[0].type).to.equal(NodeType.LIST);
   });
 
-  it('should error on a mismatched list (no closing pair)', () => {
+  it('error on a mismatched list (no closing pair)', () => {
     const ts = [new Token(TokenType.LIST_START),
               new Token(TokenType.INT, 4)];
 
@@ -146,7 +146,7 @@ describe('Parser', () => {
     expect(r.error).to.exist;
   });
 
-  it('should error on a mismatched list (no opening pair)', () => {
+  it('error on a mismatched list (no opening pair)', () => {
     const ts = [new Token(TokenType.INT, 4),
               new Token(TokenType.LIST_END)];
 
@@ -154,14 +154,14 @@ describe('Parser', () => {
     expect(r.error).to.exist;
   });
 
-  it('should parse a quoted form', () => {
+  it('quoted form', () => {
     // '(2 3 4) => (quote (2 3 4))
     const ts = [new Token(TokenType.QUOTE_ABBREVIATION),
-              new Token(TokenType.LIST_START),
-              new Token(TokenType.INT, 2),
-              new Token(TokenType.INT, 3),
-              new Token(TokenType.INT, 4),
-              new Token(TokenType.LIST_END)];
+                new Token(TokenType.LIST_START),
+                new Token(TokenType.INT, 2),
+                new Token(TokenType.INT, 3),
+                new Token(TokenType.INT, 4),
+                new Token(TokenType.LIST_END)];
 
     const res = Parser.parse(ts).nodes;
     expect(res.length).to.equal(1);
@@ -182,16 +182,16 @@ describe('Parser', () => {
     expect(quotedList.size()).to.equal(3);
   });
 
-  it('should parse multiple lists', () => {
+  it('multiple lists', () => {
     const ts = [new Token(TokenType.LIST_START),
-              new Token(TokenType.INT, 4),
-              new Token(TokenType.LIST_END),
-              new Token(TokenType.LIST_START),
-              new Token(TokenType.INT, 45),
-              new Token(TokenType.LIST_END),
-              new Token(TokenType.LIST_START),
-              new Token(TokenType.INT, 456),
-              new Token(TokenType.LIST_END)];
+                new Token(TokenType.INT, 4),
+                new Token(TokenType.LIST_END),
+                new Token(TokenType.LIST_START),
+                new Token(TokenType.INT, 45),
+                new Token(TokenType.LIST_END),
+                new Token(TokenType.LIST_START),
+                new Token(TokenType.INT, 456),
+                new Token(TokenType.LIST_END)];
 
     const res = Parser.parse(ts).nodes;
 
@@ -201,14 +201,14 @@ describe('Parser', () => {
     expect(res[2].type).to.equal(NodeType.LIST);
   });
 
-  it('should parse a bracket form', () => {
+  it('bracket form', () => {
     const ts = [new Token(TokenType.ALTERABLE_START),
-              new Token(TokenType.INT, 42),
-              new Token(TokenType.LIST_START),
-              new Token(TokenType.INT, 22),
-              new Token(TokenType.INT, 88),
-              new Token(TokenType.LIST_END),
-              new Token(TokenType.ALTERABLE_END)];
+                new Token(TokenType.INT, 42),
+                new Token(TokenType.LIST_START),
+                new Token(TokenType.INT, 22),
+                new Token(TokenType.INT, 88),
+                new Token(TokenType.LIST_END),
+                new Token(TokenType.ALTERABLE_END)];
 
     const r = Parser.parse(ts);
     const res = r.nodes;
@@ -226,10 +226,10 @@ describe('Parser', () => {
     expect(params.type).to.equal(NodeType.LIST);
   });
 
-  it('should parse a vector', () => {
+  it('vector', () => {
     const ts = [new Token(TokenType.VECTOR_START),
-              new Token(TokenType.INT, 4),
-              new Token(TokenType.VECTOR_END)];
+                new Token(TokenType.INT, 4),
+                new Token(TokenType.VECTOR_END)];
 
     const res = Parser.parse(ts).nodes;
 
@@ -237,16 +237,16 @@ describe('Parser', () => {
     expect(res[0].type).to.equal(NodeType.VECTOR);
   });
 
-  it('should parse multiple vectors', () => {
+  it('multiple vectors', () => {
     const ts = [new Token(TokenType.VECTOR_START),
-              new Token(TokenType.INT, 4),
-              new Token(TokenType.VECTOR_END),
-              new Token(TokenType.VECTOR_START),
-              new Token(TokenType.INT, 45),
-              new Token(TokenType.VECTOR_END),
-              new Token(TokenType.VECTOR_START),
-              new Token(TokenType.INT, 456),
-              new Token(TokenType.VECTOR_END)];
+                new Token(TokenType.INT, 4),
+                new Token(TokenType.VECTOR_END),
+                new Token(TokenType.VECTOR_START),
+                new Token(TokenType.INT, 45),
+                new Token(TokenType.VECTOR_END),
+                new Token(TokenType.VECTOR_START),
+                new Token(TokenType.INT, 456),
+                new Token(TokenType.VECTOR_END)];
 
     const res = Parser.parse(ts).nodes;
 
@@ -256,18 +256,18 @@ describe('Parser', () => {
     expect(res[2].type).to.equal(NodeType.VECTOR);
   });
 
-  it('should parse nested vectors', () => {
+  it('nested vectors', () => {
     // [4 [45 67] [456]]
     const ts = [new Token(TokenType.VECTOR_START),
-              new Token(TokenType.INT, 4),
-              new Token(TokenType.VECTOR_START),
-              new Token(TokenType.INT, 45),
-              new Token(TokenType.INT, 67),
-              new Token(TokenType.VECTOR_END),
-              new Token(TokenType.VECTOR_START),
-              new Token(TokenType.INT, 456),
-              new Token(TokenType.VECTOR_END),
-              new Token(TokenType.VECTOR_END)];
+                new Token(TokenType.INT, 4),
+                new Token(TokenType.VECTOR_START),
+                new Token(TokenType.INT, 45),
+                new Token(TokenType.INT, 67),
+                new Token(TokenType.VECTOR_END),
+                new Token(TokenType.VECTOR_START),
+                new Token(TokenType.INT, 456),
+                new Token(TokenType.VECTOR_END),
+                new Token(TokenType.VECTOR_END)];
 
 
     const res = Parser.parse(ts).nodes;

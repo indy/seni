@@ -40,7 +40,7 @@ describe('PseudoRandom', () => {
     expect(v).to.be.closeTo(w, 3);
   });
 
-  it('should have replicable number generation', () => {
+  it('have replicable number generation', () => {
     const epsilon = 0.0001;
 
     const aa = PseudoRandom.buildUnsigned('hello.');

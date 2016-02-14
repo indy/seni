@@ -32,7 +32,7 @@ describe('Lexer', () => {
     });
   }
 
-  it('should error handle', () => {
+  it('error handle', () => {
     // if an illegal character is found in any part of the input, only that
     // character will be returned in the tokens list and the error property
     // will be set
@@ -54,7 +54,7 @@ describe('Lexer', () => {
     expect(tokens[0].value).to.equal('|');
   });
 
-  it('should tokenise strings', () => {
+  it('tokenise strings', () => {
     t([TokenType.LIST_START,
        TokenType.NAME,
        TokenType.WHITESPACE,
@@ -65,7 +65,7 @@ describe('Lexer', () => {
       '(go 42 3.14)');
   });
 
-  it('should tokenise strings 2', () => {
+  it('tokenise strings 2', () => {
     t([TokenType.LIST_START,
        TokenType.NAME,
        TokenType.WHITESPACE,
@@ -79,7 +79,7 @@ describe('Lexer', () => {
       '(go {\"hi\"} \'SOMETHING)');
   });
 
-  it('should tokenise labeled function invocations', () => {
+  it('tokenise labeled function invocations', () => {
     t([TokenType.LIST_START,
        TokenType.NAME,
        TokenType.WHITESPACE,
@@ -90,7 +90,7 @@ describe('Lexer', () => {
       '(go arg1: 42)');
   });
 
-  it('should recognise comments', () => {
+  it('recognise comments', () => {
     t([TokenType.COMMENT],
       ';(go arg1: 42)');
 
@@ -105,7 +105,7 @@ describe('Lexer', () => {
       ';(go arg1: 42)\n(go arg1: 42)');
   });
 
-  it('should tokenise vectors', () => {
+  it('tokenise vectors', () => {
     t([TokenType.VECTOR_START,
        TokenType.FLOAT,
        TokenType.WHITESPACE,

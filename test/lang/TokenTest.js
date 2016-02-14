@@ -23,7 +23,7 @@ import {expect} from 'chai';
 
 describe('Token', () => {
 
-  it('should be created with a type and an optional value', () => {
+  it('create with a type and an optional value', () => {
     let t = new Token(TokenType.INT, 4);
     expect(t.value).to.equal(4);
     expect(t.type).to.equal(TokenType.INT);

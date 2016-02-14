@@ -16,14 +16,9 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Interpreter from '../../app/js/lang/Interpreter';
-import Parser from '../../app/js/lang/Parser';
-import Lexer from '../../app/js/lang/Lexer';
-import Compiler from '../../app/js/lang/Compiler';
-import Genetic from '../../app/js/lang/Genetic';
-import Bind from '../../app/js/lang/Bind';
+import { expect } from 'chai';
 
-import {expect} from 'chai';
+import { buildEnv, evalForm } from './eval_helper';
 
 describe('Special', () => {
 
@@ -33,12 +28,10 @@ describe('Special', () => {
   const epsilon = 0.01;
 
   beforeEach(() => {
-    e = Bind.addClassicBindings(
-      Bind.addSpecialBindings(
-        Interpreter.getBasicEnv()));
+    e = buildEnv();
   });
 
-  it('should test if', () => {
+  it('if', () => {
     let [newEnv, res] = evalForm(e, '(if true 2 4)');
     expect(res).to.equal(2);
     expect(newEnv).to.equal(e);
@@ -48,7 +41,7 @@ describe('Special', () => {
     expect(newEnv).to.equal(e);
   });
 
-  it('should test quote', () => {
+  it('quote', () => {
     let [newEnv, res] = evalForm(e, '(quote something)');
     expect(res).to.equal('something');
     expect(newEnv).to.equal(e);
@@ -58,7 +51,7 @@ describe('Special', () => {
     expect(newEnv).to.equal(e);
   });
 
-  it('should test fn', () => {
+  it('fn', () => {
     let [newEnv, res] = evalForm(e, '(fn (addup x: 2) (+ x x))');
     expect(newEnv.has('addup')).to.equal(true);
 
@@ -80,7 +73,7 @@ describe('Special', () => {
     expect(res).to.equal(14);
   });
 
-  it('should test define', () => {
+  it('define', () => {
     const [newEnv, res] = evalForm(e, '(define monkey 42)');
     expect(newEnv.has('monkey')).to.equal(true);
     expect(newEnv.get('monkey').binding).to.equal(42);
@@ -88,7 +81,7 @@ describe('Special', () => {
     expect(res).to.equal(42);
   });
 
-  it('should test defining multiple values', () => {
+  it('defining multiple values', () => {
     const [newEnv, res] = evalForm(e, '(define monkey 42 ape (+ 6 6))');
     expect(newEnv.has('monkey')).to.equal(true);
     expect(newEnv.get('monkey').binding).to.equal(42);
@@ -97,7 +90,7 @@ describe('Special', () => {
     expect(res).to.equal(12);
   });
 
-  it('should test defining destructured values', () => {
+  it('defining destructured values', () => {
     const [newEnv, res] = evalForm(e, '(define [a b] [2 (+ 3 4)])');
     expect(newEnv.has('a')).to.equal(true);
     expect(newEnv.get('a').binding).to.equal(2);
@@ -106,7 +99,7 @@ describe('Special', () => {
     expect(res).to.equal(7);
   });
 
-  it('should test begin', () => {
+  it('begin', () => {
     let [_, res] = evalForm(e, '(begin (+ 1 1) (+ 2 2))');
     expect(res).to.equal(4);
 
@@ -114,7 +107,7 @@ describe('Special', () => {
     expect(res).to.equal(2);
   });
 
-  it('should test loop: from/to', () => {
+  it('loop: from/to', () => {
     let [env, res] = evalForm(e,`
 (define bar (list))
 (loop (a from: 0 to: 4 increment: 1) (append bar a))`);
@@ -123,7 +116,7 @@ describe('Special', () => {
     expect(bar.binding).to.deep.equal([0, 1, 2, 3]);
   });
 
-  it('should test loop: from/upto', () => {
+  it('loop: from/upto', () => {
     let [env, res] = evalForm(e,`
 (define bar (list))
 (loop (a from: 0 upto: 4 increment: 1) (append bar a))`);
@@ -132,7 +125,7 @@ describe('Special', () => {
     expect(bar.binding).to.deep.equal([0, 1, 2, 3, 4]);
   });
 
-  it('should test loop: increment', () => {
+  it('loop: increment', () => {
     let [env, res] = evalForm(e,`
 (define bar (list))
 (loop (a from: 0 to: 12 increment: 2) (append bar a))`);
@@ -143,7 +136,7 @@ describe('Special', () => {
 
   // todo: steps should only apply when upto is used
   // otherwise the 'to' parameter becomes inclusive
-  it('should test loop: from/to steps', () => {
+  it('loop: from/to steps', () => {
     let [env, res] = evalForm(e,`
 (define bar (list))
 (loop (a from: 0 to: 40 steps: 4) (append bar a))`);
@@ -154,7 +147,7 @@ describe('Special', () => {
     expect(bar.binding[2]).to.be.closeTo(26.66, epsilon);
     expect(bar.binding[3]).to.be.closeTo(40.00, epsilon);
   });
-  //   it('should test loop: negative increment', () => {
+  //   it('loop: negative increment', () => {
   //     let [env, res] = evalForm(e,`
   // (define bar (list))
   // (loop (a from: 12 to: 0 increment: -2) (append bar a))`);
@@ -163,16 +156,4 @@ describe('Special', () => {
   //     expect(bar.binding).to.deep.equal([12, 10, 8, 6, 4, 2]);
   //   });
 
-  function evalForm(env, form) {
-
-    const ts = Lexer.tokenise(form).tokens;
-    const ast = Parser.parse(ts).nodes;
-    const traits = Genetic.buildTraits(ast);
-    const genotype = Genetic.createGenotypeFromInitialValues(traits);
-    const backAst = Compiler.compileBackAst(ast);
-    const astList = Compiler.compileWithGenotype(backAst, genotype);
-
-    return astList.reduce(([e, res, err], ast) => Interpreter.evaluate(e, ast),
-                          [env, undefined, Interpreter.NO_ERROR]);
-  }
 });

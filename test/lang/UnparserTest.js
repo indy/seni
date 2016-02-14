@@ -54,7 +54,7 @@ describe('Unparser', () => {
     expect(simpleUnparse(form)).to.equal(form);
   }
 
-  it('should unparse', () => {
+  it('unparse', () => {
     expectToUnparse('4');
     expectToUnparse('4.2');
     expectToUnparse('hello');
@@ -74,7 +74,7 @@ describe('Unparser', () => {
     expectToUnparse('(hello \'(a b c) \'(1 2 3) \'(a: b: c:))');
   });
 
-  it('should unparse alterable expressions', () => {
+  it('unparse alterable expressions', () => {
     expectToUnparse('background {(col/rgb r: 1 g: 1 b: 1 alpha: 1) (col)}');
     expectToUnparse('{"hello" (something "foo" "bar")}');
     expectToUnparse('{true (something)}');
@@ -95,14 +95,14 @@ describe('Unparser', () => {
                                                        'white])})`);
   });
 
-  it('should unparse with different genotypes', () => {
+  it('unparse with different genotypes', () => {
     expect(seededUnparse('(+ {1 (int)} {3 (int)})', 32))
       .to.equal('(+ {51 (int)} {79 (int)})');
     expect(seededUnparse('(+ {1 (int)})', 32))
       .to.equal('(+ {51 (int)})');
   });
 
-  it('should unparse vectors', () => {
+  it('unparse vectors', () => {
     const f = '(define f {[1 2] (select from: [1 2 3 4])})';
     const g = '(define f {[4 1] (select from: [1 2 3 4])})';
 

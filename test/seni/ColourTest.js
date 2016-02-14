@@ -46,7 +46,7 @@ describe('Colour', () => {
     expect(Colour.element(c, 3)).to.equal(1.0);
   });
 
-  it('should return a new colour when setting alpha', () => {
+  it('return a new colour when setting alpha', () => {
 
     const c = Colour.construct(Format.RGB, [0.1, 0.2, 0.3, 0.4]);
     const d = Colour.setAlpha(c, 0.8);
@@ -71,7 +71,7 @@ describe('Colour', () => {
     }
   }
 
-  it('should convert colours', () => {
+  it('convert colours', () => {
     const rgb = Colour.construct(Format.RGB, [0.2, 0.1, 0.5, 1.0]);
     const hsl = Colour.construct(Format.HSL, [255.0, 0.6666, 0.3, 1.0]);
     const lab = Colour.construct(Format.LAB, [19.9072, 39.6375, -52.7720, 1.0]);

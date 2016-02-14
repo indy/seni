@@ -35,7 +35,7 @@ describe('Genetic', () => {
     return Genetic.buildTraits(backAst);
   }
 
-  it('should build a traits array from an ast', () => {
+  it('build a traits array from an ast', () => {
     const res = simpleBuildTraits('(+ 3 {4 (int min: 0 max: 8)})');
     expect(res.length).to.equal(1);
     expect(res[0].initialValue).to.equal(4);
@@ -44,7 +44,7 @@ describe('Genetic', () => {
     expect(res[0].simplifiedAst[0][0]).to.equal('int');
   });
 
-  it('should default bracketed forms to have an identity function', () => {
+  it('default bracketed forms to have an identity function', () => {
     const res = simpleBuildTraits('(+ 2 {1})');
     expect(res.length).to.equal(1);
     expect(res[0].initialValue).to.equal(1);
@@ -52,7 +52,7 @@ describe('Genetic', () => {
     expect(res[0].simplifiedAst[0][0]).to.equal('identity');
   });
 
-  it('should createGenotypeFromTraits', () => {
+  it('createGenotypeFromTraits', () => {
 
     const traits = simpleBuildTraits('(+ 2 {44})');
 
@@ -62,7 +62,7 @@ describe('Genetic', () => {
     expect(genotype.get(0)).to.equal(44);
   });
 
-  it('should createGenotypeFromTraits 2', () => {
+  it('createGenotypeFromTraits 2', () => {
     const traits = simpleBuildTraits('(+ 2 {44 (int min: 10 max: 56)})');
 
     const genotype = Genetic.createGenotypeFromTraits(traits, 100);
@@ -72,7 +72,7 @@ describe('Genetic', () => {
     expect(genotype.get(0)).to.equal(11);
   });
 
-  it('should create the same genotype', () => {
+  it('create the same genotype', () => {
     const traits = simpleBuildTraits('(+ 2 {44 (int min: 10 max: 56)})');
 
     let genotype = Genetic.createGenotypeFromTraits(traits, 33);
