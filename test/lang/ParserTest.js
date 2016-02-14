@@ -16,9 +16,6 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// todo: look into no-unused-expressions
-/* eslint-disable no-unused-expressions */
-
 import Lexer from '../../app/js/lang/Lexer';
 import Parser from '../../app/js/lang/Parser';
 import NodeType from '../../app/js/lang/NodeType';
