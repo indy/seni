@@ -34,7 +34,7 @@ export function evalForm(env, form) {
 
   const ts = Lexer.tokenise(form).tokens;
   const ast = Parser.parse(ts).nodes;
-  const traits = Genetic.buildTraits(ast);l
+  const traits = Genetic.buildTraits(ast);
   const genotype = Genetic.createGenotypeFromInitialValues(traits);
   const backAst = Compiler.compileBackAst(ast);
   const astList = Compiler.compileWithGenotype(backAst, genotype);

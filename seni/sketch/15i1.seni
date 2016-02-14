@@ -64,7 +64,7 @@
 
 
 (fn (draw)
-  (loop (t from: 0 to: 1 steps: 200)
+  (loop (t from: 0 upto: 1 steps: 200)
     (poly coords: [(interp/bezier t: t coords: coords1)
                    (interp/bezier t: t coords: coords2)
                    (interp/bezier t: t coords: coords3)]

@@ -116,6 +116,24 @@ describe('Special', () => {
     expect(bar.binding).to.deep.equal([0, 1, 2, 3]);
   });
 
+  it('loop: from/to high to low', () => {
+    let [env, res] = evalForm(e,`
+(define bar (list))
+(loop (a from: 4 to: 0 increment: -1) (append bar a))`);
+
+    const bar = env.get('bar');
+    expect(bar.binding).to.deep.equal([4, 3, 2, 1]);
+  });
+
+  it('loop: from/to high to low, positive increment', () => {
+    let [env, res] = evalForm(e,`
+(define bar (list))
+(loop (a from: 4 to: 0 increment: 1) (append bar a))`);
+
+    const bar = env.get('bar');
+    expect(bar.binding).to.deep.equal([4, 3, 2, 1]);
+  });
+
   it('loop: from/upto', () => {
     let [env, res] = evalForm(e,`
 (define bar (list))
@@ -125,7 +143,25 @@ describe('Special', () => {
     expect(bar.binding).to.deep.equal([0, 1, 2, 3, 4]);
   });
 
-  it('loop: increment', () => {
+  it('loop: from/upto high to low', () => {
+    let [env, res] = evalForm(e,`
+(define bar (list))
+(loop (a from: 4 upto: 0 increment: -1) (append bar a))`);
+
+    const bar = env.get('bar');
+    expect(bar.binding).to.deep.equal([4, 3, 2, 1, 0]);
+  });
+
+  it('loop: from/upto high to low, positive increment', () => {
+    let [env, res] = evalForm(e,`
+(define bar (list))
+(loop (a from: 4 upto: 0 increment: 1) (append bar a))`);
+
+    const bar = env.get('bar');
+    expect(bar.binding).to.deep.equal([4, 3, 2, 1, 0]);
+  });
+
+  it('loop: to increment', () => {
     let [env, res] = evalForm(e,`
 (define bar (list))
 (loop (a from: 0 to: 12 increment: 2) (append bar a))`);
@@ -134,19 +170,67 @@ describe('Special', () => {
     expect(bar.binding).to.deep.equal([0, 2, 4, 6, 8, 10]);
   });
 
-  // todo: steps should only apply when upto is used
-  // otherwise the 'to' parameter becomes inclusive
+  it('loop: upto increment', () => {
+    let [env, res] = evalForm(e,`
+(define bar (list))
+(loop (a from: 0 upto: 12 increment: 2) (append bar a))`);
+
+    const bar = env.get('bar');
+    expect(bar.binding).to.deep.equal([0, 2, 4, 6, 8, 10, 12]);
+  });
+
   it('loop: from/to steps', () => {
     let [env, res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 0 to: 40 steps: 4) (append bar a))`);
+(loop (a from: 0 to: 10 steps: 3) (append bar a))`);
 
     const bar = env.get('bar');
     expect(bar.binding[0]).to.be.closeTo(0.00, epsilon);
-    expect(bar.binding[1]).to.be.closeTo(13.33, epsilon);
-    expect(bar.binding[2]).to.be.closeTo(26.66, epsilon);
-    expect(bar.binding[3]).to.be.closeTo(40.00, epsilon);
+    expect(bar.binding[1]).to.be.closeTo(3.333, epsilon);
+    expect(bar.binding[2]).to.be.closeTo(6.666, epsilon);
   });
+
+  it('loop: from/to steps high to low', () => {
+    let [env, res] = evalForm(e,`
+(define bar (list))
+(loop (a from: 10 to: 0 steps: 3) (append bar a))`);
+
+    const bar = env.get('bar');
+    expect(bar.binding[0]).to.be.closeTo(10.000, epsilon);
+    expect(bar.binding[1]).to.be.closeTo(6.666, epsilon);
+    expect(bar.binding[2]).to.be.closeTo(3.333, epsilon);
+  });
+
+  it('loop: from/upto steps', () => {
+    let [env, res] = evalForm(e,`
+
+      (define bar (list))
+      (loop (a from: 0 upto: 10 steps: 3) (append bar a))
+
+    `);
+
+    const bar = env.get('bar');
+    expect(bar.binding[0]).to.be.closeTo(0.00, epsilon);
+    expect(bar.binding[1]).to.be.closeTo(5.0, epsilon);
+    expect(bar.binding[2]).to.be.closeTo(10.0, epsilon);
+  });
+
+  it('loop: from/upto steps high to low', () => {
+    let [env, res] = evalForm(e,`
+
+      (define bar (list))
+      (loop (a from: 10 upto: 0 steps: 3) (append bar a))
+
+    `);
+
+    const bar = env.get('bar');
+    expect(bar.binding[0]).to.be.closeTo(10.0, epsilon);
+    expect(bar.binding[1]).to.be.closeTo(5.0, epsilon);
+    expect(bar.binding[2]).to.be.closeTo(0.00, epsilon);
+  });
+
+
+
   //   it('loop: negative increment', () => {
   //     let [env, res] = evalForm(e,`
   // (define bar (list))

@@ -102,45 +102,31 @@ function addBindings(env, exprs) {
 }
 
 function loopingFn(env, expr, varName, params) {
-  // todo: 'to' should be <=, and 'upto' should be '<'
-  // todo: upto isn't going to work with steps, perhaps remove it?
-  const merged = Object.assign({
+
+  const { from, to, upto, steps, increment } = Object.assign({
     from: 0,
     to: 1,
     upto: undefined,
     steps: undefined,
-    'steps-upto': undefined,
     increment: 1}, params);
 
-  let res, limit, unit, val;
+  let unit, val, i;
+  let res = [env, undefined, NO_ERROR];
 
-  const {from,
-         to,
-         upto,
-         steps,
-         increment} = merged;
-
-  const stepsUpto = merged['steps-upto'];
-
-  // initialise res in case we don't assign anything to it again.
-  // (could happen in cases such as the 'to' is less than the 'from')
-  res = [env, undefined];
-
-  if (stepsUpto !== undefined || steps !== undefined) {
-    const s = stepsUpto || steps;
-    if (s < 1) {
-      console.log('steps-upto | steps  must be greater than 0');
-      return res;
+  if (steps !== undefined) {
+    if (steps < 1) {
+      return [env, undefined, 'steps must be greater than 0'];
     }
 
-    limit = upto !== undefined ? upto : to;
-    if (stepsUpto !== undefined) {
-      unit = (limit - from) / s;
+    if (upto === undefined) {
+      // from, to, steps
+      unit = (to - from) / steps;
     } else {
-      unit = (limit - from) / (s - 1);
+      // from, upto, steps
+      unit = (upto - from) / (steps - 1);
     }
 
-    for (let i = 0; i < s; i++) {
+    for (i = 0; i < steps; i++) {
       val = from + (i * unit);
       res = evalBodyForms(env.set(varName, { binding: val }), expr);
     }
@@ -148,17 +134,32 @@ function loopingFn(env, expr, varName, params) {
   }
 
   if (increment === 0) {
-    console.log('increment of 0 given');
-    return res;
+    return [env, undefined, 'increment of 0 given'];
   }
 
+  let delta = increment;
   if (upto !== undefined) {
-    for (let i = from; i <= upto; i += increment) {
-      res = evalBodyForms(env.set(varName, { binding: i }), expr);
+    if (from <= upto) {
+      for (i = from; i <= upto; i += delta) {
+        res = evalBodyForms(env.set(varName, { binding: i }), expr);
+      }
+    } else {
+      delta = increment > 0 ? -increment : increment;
+      for (i = from; i >= upto; i += delta) {
+        res = evalBodyForms(env.set(varName, { binding: i }), expr);
+      }
     }
   } else {
-    for (let i = from; i < to; i += increment) {
-      res = evalBodyForms(env.set(varName, { binding: i }), expr);
+
+    if (from <=  to) {
+      for (i = from; i < to; i += delta) {
+        res = evalBodyForms(env.set(varName, { binding: i }), expr);
+      }
+    } else {
+      delta = increment > 0 ? -increment : increment;
+      for (i = from; i > to; i += delta) {
+        res = evalBodyForms(env.set(varName, { binding: i }), expr);
+      }
     }
   }
 
@@ -184,22 +185,22 @@ const publicBindings = [
   ),
 
   /*
-    todo: remove this code now that __string is used instead
-    todo: the compiler will hack in a quote around strings, this
-    needs to take that into account. e.g. given (quote "hi"), the ast
-    built by the compiler will be: ['quote' ['quote' 'hi']] rather than
-    the expected ['quote' 'hi']. So this is a hack to check inside the
-    form, if it's another list beginning with quote, just return that.
+   todo: remove this code now that __string is used instead
+   todo: the compiler will hack in a quote around strings, this
+   needs to take that into account. e.g. given (quote "hi"), the ast
+   built by the compiler will be: ['quote' ['quote' 'hi']] rather than
+   the expected ['quote' 'hi']. So this is a hack to check inside the
+   form, if it's another list beginning with quote, just return that.
 
-    the proper solution is not to pass in a simplified AST and to retain
-    the nodeType information so that the interpreter can differentiate
-    between names and strings, this would mean that the compiler
-    wouldn't have to wrap strings in quotes and the code for evaling
-    quote becomes 'quote': (env, [_, form]) =>[env, form]
+   the proper solution is not to pass in a simplified AST and to retain
+   the nodeType information so that the interpreter can differentiate
+   between names and strings, this would mean that the compiler
+   wouldn't have to wrap strings in quotes and the code for evaling
+   quote becomes 'quote': (env, [_, form]) =>[env, form]
 
-    the cost of this is a more complicated AST, but it seems like a
-    price worth paying
-  */
+   the cost of this is a more complicated AST, but it seems like a
+   price worth paying
+   */
   new PublicBinding(
     'quote',
     {
@@ -240,7 +241,7 @@ const publicBindings = [
     _self => (env, [_, nameForm, ...valueForms]) => {
       const [name, defaultArgForms] = nameForm;
       const [definedFunction, error] =
-            defineFunction(env, defaultArgForms, valueForms);
+              defineFunction(env, defaultArgForms, valueForms);
       return [env.set(name, { binding: definedFunction }),
               definedFunction,
               error];

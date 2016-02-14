@@ -15,7 +15,7 @@
                          {212 (int min: -300 max: 300)}]
               distance: {819 (int min: 300 max: 900)}))
 
-(loop (t from: 0 to: 1 steps: {39 (int min: 5 max: 100)})
+(loop (t from: 0 upto: 1 steps: {39 (int min: 5 max: 100)})
   (define
     p1 (interp/bezier t: t
                       coords: {[(list -249.550 -79.597) (list 194.782 -180.117) (list 21.536 106.905) (list -82.513 153.607)]
