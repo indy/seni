@@ -1,0 +1,45 @@
+(define 
+  coords1 {[[-334.832 360.613]
+            [-153.525 -124.310]
+            [-470.096 -104.095]
+            [91.910 -160.094]]
+           (vector min: -500 max: 500)}
+  coords2 {[[-223.950 468.340]
+            [308.459 -456.816]
+            [-401.633 284.743]
+            [-8.407 257.295]]
+           (vector min: -500 max: 500)}
+  coords3 {[[-412.063 -149.809]
+            [-78.466 -66.429]
+            [58.852 146.280]
+            [96.709 -286.538]]
+           (vector min: -500 max: 500)}
+
+  col-fn-1 (col/procedural-fn preset: {"chrome" (select from: col/procedural-fn-presets)}
+                              alpha: 0.08)
+  col-fn-2 (col/procedural-fn preset: {"knight-rider" (select from: col/procedural-fn-presets)}
+                              alpha: 0.08)
+  col-fn-3 (col/procedural-fn preset: {"knight-rider" (select from: col/procedural-fn-presets)}
+                              alpha: 0.08))
+
+(fn (draw)
+  (loop (t from: 0 upto: 1 steps: 200)
+    (poly coords: [(interp/bezier t: t coords: coords1)
+                   (interp/bezier t: t coords: coords2)
+                   (interp/bezier t: t coords: coords3)]
+          colours: [(col-fn-1 t: t)
+                    (col-fn-2 t: t)
+                    (col-fn-3 t: t)])))
+
+(fn (render)
+  (rect position: [500 500]
+        width: 1000
+        height: 1000
+        colour: (col-fn-1 t: 0.5))
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (repeat/rotate-mirrored draw: draw
+                            copies: {3 (int min: 1 max: 8)})))
+
+(render)
+

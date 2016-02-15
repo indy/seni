@@ -1,0 +1,76 @@
+(define
+  ;; fade out any lines which are far away from the focal points
+  interest (interp/fn from: [0.2 1.5] to: [0 1] clamping: true))
+
+;; call 'fun' for every point on a nXn grid on the canvas
+(fn (grid n: 10 fun: (fn (a) 1))
+  (define
+    remap-x (interp/fn from: [0 (- n 1)] to: [0 canvas/width])
+    remap-y (interp/fn from: [0 (- n 1)] to: [0 canvas/height]))
+  (loop (y from: 0 to: n)
+    (loop (x from: 0 to: n)
+      (fun position: [(remap-x val: x) (remap-y val: y)]))))
+
+(fn (make-draw-element focal-fn-a: 1
+                       focal-fn-b: 1
+                       rotate-factor: 1
+                       width: 21
+                       height: 239
+                       col-fn: 1)
+  (fn (draw-element position: [0 0])
+    (define
+      interest-a (focal-fn-a position: position)
+      interest-b (focal-fn-b position: position)
+      combined-interest (+ interest-a interest-b)
+      alpha (interest val: combined-interest))
+    (on-matrix-stack
+      (translate vector: position)
+      (rotate angle: (* combined-interest rotate-factor))
+      (circle position: [0 0]
+              colour: (col/set-alpha colour: (col-fn t: interest-a) value: alpha)
+              width: width
+              height: height))))
+
+;; render the background grid
+(define
+  focal-bg-a (focal/point position: [{542 (int min: 400 max: 600)} 
+                                     {181 (int min: 100 max: 400)}]
+                          distance: {942 (int min: 700 max: 1000)}
+                          falloff: "linear")
+  focal-bg-b (focal/point position: [{474 (int min: 400 max: 600)} 
+                                     {752 (int min: 600 max: 900)}]
+                          distance: {707 (int min: 700 max: 1000)}
+                          falloff: "linear")
+  col-fn-bg (col/bezier-fn a: {(col/rgb r: 0.119 g: 0.426 b: 0.713 alpha: 0.164) (col)}
+                           b: {(col/rgb r: 0.821 g: 0.575 b: 0.624 alpha: 0.297) (col)}
+                           c: {(col/rgb r: 0.894 g: 0.449 b: 0.859 alpha: 0.588) (col)}
+                           d: {(col/rgb r: 0.995 g: 0.563 b: 0.163 alpha: 0.473) (col)}))
+
+(grid n: {31 (int min: 30 max: 40)}
+      fun: (make-draw-element focal-fn-a: focal-bg-a
+                              focal-fn-b: focal-bg-b
+                              rotate-factor: {334 (int min: 300 max: 400)}
+                              width: {46 (int min: 30 max: 60)}
+                              height: {419 (int min: 400 max: 500)}
+                              col-fn: col-fn-bg))
+
+;; render the foreground
+(define
+  focal-fg-a (focal/point position: {[336 755] (int min: 0 max: 1000)}
+                          distance: {227 (int min: 0 max: 500)}
+                          falloff: "linear")
+  focal-fg-b (focal/point position: {[306 731] (int min: 0 max: 1000)}
+                          distance: {363 (int min: 0 max: 600)}
+                          falloff: "linear")
+  col-fn-fg (col/bezier-fn a: {(col/rgb r: 0.983 g: 0.458 b: 0.537 alpha: 0.705) (col)}
+                           b: {(col/rgb r: 0.245 g: 0.153 b: 0.194 alpha: 0.175) (col)}
+                           c: {(col/rgb r: 0.013 g: 0.113 b: 0.547 alpha: 0.427) (col)}
+                           d: {(col/rgb r: 0.568 g: 0.800 b: 0.521 alpha: 0.931) (col)}))
+
+(grid n: {42 (int min: 30 max: 40)}
+      fun: (make-draw-element focal-fn-a: focal-fg-a
+                              focal-fn-b: focal-fg-b
+                              rotate-factor: {104 (int min: 1 max: 200)}
+                              width: {14 (int min: 10 max: 30)}
+                              height: {141 (int min: 100 max: 300)}
+                              col-fn: col-fn-fg))
