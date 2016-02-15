@@ -21,6 +21,12 @@ import Interpreter from '../lang/Interpreter';
 
 const { evaluate, TRUE_STRING, FALSE_STRING, NO_ERROR } = Interpreter;
 
+let gKonsole = undefined;
+
+function useKonsole(konsole) {
+  gKonsole = konsole;
+}
+
 const publicBindings = [
   new PublicBinding(
     'print',
@@ -32,7 +38,9 @@ const publicBindings = [
     {},
     _self => (env, [_, ...msgs]) => {
       const printMsg = msgs.reduce((a, b) => `${a} ${evaluate(env, b)[1]}`, '');
-      console.log(printMsg.trim());
+      if (gKonsole) {
+        gKonsole.log(printMsg.trim());
+      }
       return [env, true, NO_ERROR];
     }
   ),
@@ -57,7 +65,9 @@ const publicBindings = [
         }
         return `${a} ${res}`;
       }, '');
-      console.log(message);
+      if (gKonsole) {
+        gKonsole.log(message);
+      }
       return [env, true, firstError];
     }
   )
@@ -65,5 +75,6 @@ const publicBindings = [
 
 export default {
   publicBindingType: 'special',
-  publicBindings
+  publicBindings,
+  useKonsole
 };

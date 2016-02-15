@@ -22,14 +22,15 @@ import Bind from './lang/Bind';
 import Renderer from './seni/Renderer';
 import Genetic from './lang/Genetic';
 import Runtime from './lang/Runtime';
-import { SeniMode } from './ui/SeniMode';
 import History from './ui/History';
+import Editor from './ui/Editor';
+import SpecialDebug from './ui/SpecialDebug';
 import Konsole from './ui/Konsole';
 import KonsoleCommander from './ui/KonsoleCommander';
 import { addDefaultCommands } from './ui/KonsoleCommands';
-import Editor from './ui/Editor';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
+import { SeniMode } from './ui/SeniMode';
 
 let gUI = {};
 let gRenderer = undefined;
@@ -183,7 +184,8 @@ function renderScript(state, imageElement) {
 }
 
 function timedRenderScript(state) {
-  const stopFn = startTiming(`renderScript-${state.get('scriptHash')}`);
+  const stopFn = startTiming(`renderScript-${state.get('scriptHash')}`,
+                             gUI.konsole);
   renderScript(state, gUI.renderImage);
   stopFn();
 }
@@ -195,7 +197,7 @@ function addClickEvent(id, fn) {
   if (element) {
     element.addEventListener('click', fn);
   } else {
-    console.log('cannot addClickEvent for', id);
+    console.error('cannot addClickEvent for', id);
   }
 }
 
@@ -287,7 +289,8 @@ function renderGeneration(state) {
     const script = state.get('script');
     const scriptHash = state.get('scriptHash');
 
-    const stopTiming = startTiming(`renderGeneration-${scriptHash}`);
+    const stopTiming = startTiming(`renderGeneration-${scriptHash}`,
+                                   gUI.konsole);
 
     const frontAst = Runtime.buildFrontAst(script);
     if (frontAst.error) {
@@ -552,6 +555,8 @@ function createKonsole(env, element) {
       commander.commandHandle(line, report, prompt);
     }
   });
+
+  SpecialDebug.useKonsole(konsole);
 
   return konsole;
 }

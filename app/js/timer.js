@@ -30,15 +30,18 @@ function useDBEntry(id) {
   return db[id];
 }
 
-export function startTiming(id) {
+export function startTiming(id, konsole) {
 
   const entry = useDBEntry(id);
 
   const stopFn = () => {
     const after = new Date();
     const duration = after - before;
-    console.log(`called stop for ${entry.id} with duration: ${duration}`);
+
     entry.values.push(duration);
+    if (konsole) {
+      konsole.log(`rendered ${entry.id} ${duration}ms`);
+    }
   };
 
   const before = new Date();
