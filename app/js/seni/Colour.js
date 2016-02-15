@@ -433,13 +433,57 @@ function triad(c) {
  };
  */
 
-// from http://iquilezles.org/www/articles/palettes/palettes.htm
-function proceduralFn(a, b, c, d, alpha) {
+const proceduralFnPresetValues = {
+  'rainbow': {a: [0.5, 0.5, 0.5],
+              b: [0.5, 0.5, 0.5],
+              c: [1.0, 1.0, 1.0],
+              d: [0.0, 3.33, 6.67]},
+  'chrome': {a: [0.5, 0.5, 0.5],
+             b: [0.5, 0.5, 0.5],
+             c: [1.0, 1.0, 1.0],
+             d: [0.0, 0.1, 0.2]},
+  'robocop': {a: [0.5, 0.5, 0.5],
+              b: [0.5, 0.5, 0.5],
+              c: [1.0, 1.0, 1.0],
+              d: [0.3, 0.2, 0.2]},
+  'transformers': {a: [0.5, 0.5, 0.5],
+                   b: [0.5, 0.5, 0.5],
+                   c: [1.0, 1.0, 0.5],
+                   d: [0.8, 0.9, 0.3]},
+  'knight-rider': {a: [0.5, 0.5, 0.5],
+                   b: [0.5, 0.5, 0.5],
+                   c: [1.0, 0.7, 0.4],
+                   d: [0.0, 0.15, 0.2]},
+  'hotline-miami': {a: [0.5, 0.5, 0.5],
+                    b: [0.5, 0.5, 0.5],
+                    c: [2.0, 1.0, 0.0],
+                    d: [0.5, 0.2, 0.25]},
+  'mars': {a: [0.8, 0.5, 0.4],
+           b: [0.2, 0.4, 0.2],
+           c: [2.0, 1.0, 1.0],
+           d: [0.0, 0.25, 0.25]}
+};
 
-  const [ar, ag, ab] = a;
-  const [br, bg, bb] = b;
-  const [cr, cg, cb] = c;
-  const [dr, dg, db] = d;
+const proceduralFnPresets = ['rainbow', 'chrome', 'robocop', 'transformers',
+                             'knight-rider', 'hotline-miami', 'mars'];
+
+// from http://iquilezles.org/www/articles/palettes/palettes.htm
+function proceduralFn(preset, a, b, c, d, alpha) {
+
+  let ar, ag, ab, br, bg, bb, cr, cg, cb, dr, dg, db;
+
+  const colPreset = proceduralFnPresetValues[preset];
+  if (colPreset) {
+    [ar, ag, ab] = colPreset.a;
+    [br, bg, bb] = colPreset.b;
+    [cr, cg, cb] = colPreset.c;
+    [dr, dg, db] = colPreset.d;
+  } else {
+    [ar, ag, ab] = a;
+    [br, bg, bb] = b;
+    [cr, cg, cb] = c;
+    [dr, dg, db] = d;
+  }
 
   return function(params) {
     const t = params.t === undefined ? 1.0 : params.t;
@@ -541,6 +585,7 @@ const Colour = {
   analagous,
   triad,
 
+  proceduralFnPresets,
   proceduralFn,
   bezierFn,
   quadraticFn

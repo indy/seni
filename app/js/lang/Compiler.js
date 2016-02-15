@@ -25,6 +25,17 @@ import Node from './Node';
 import NodeList from './NodeList';
 import NodeVector from './NodeVector';
 
+
+function wrapString(value) {
+  // without this the following forms will compile to the same thing:
+  //     (foo "hello")
+  //     (foo hello)
+  //
+  // we need to wrap the form in a quote-like to prevent the
+  // interpreter from trying to lookup the contents of the string
+  return ['__string', value];
+}
+
 /**
  * compile does some stuff
  * @param node a node
@@ -47,6 +58,10 @@ function compile(node, genotype) {
       geno = geno.toJS();
     }
 
+    if (node.type === NodeType.STRING) {
+      return [wrapString(geno), genotype.shift()];
+    }
+
     return [geno, genotype.shift()];
   }
 
@@ -66,13 +81,7 @@ function compile(node, genotype) {
   }
 
   if (node.type === NodeType.STRING) {
-    // without this the following forms will compile to the same thing:
-    //     (foo 'hello')
-    //     (foo hello)
-    //
-    // we need to wrap the string form in a quote-like to prevent the
-    // interpreter from trying to lookup the contents of the string
-    return [['__string', node.value], genotype];
+    return [wrapString(node.value), genotype];
   }
 
   return [node.value, genotype];

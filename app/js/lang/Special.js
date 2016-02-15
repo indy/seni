@@ -150,8 +150,7 @@ function loopingFn(env, expr, varName, params) {
       }
     }
   } else {
-
-    if (from <=  to) {
+    if (from <= to) {
       for (i = from; i < to; i += delta) {
         res = evalBodyForms(env.set(varName, { binding: i }), expr);
       }

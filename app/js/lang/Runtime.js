@@ -53,13 +53,13 @@ const Runtime = {
 
     // add all of the define expressions to the env
     const [env1, res1, error1] = simplifiedAsts.
-          filter(Interpreter.isDefineExpression).
-          reduce(([e, _, error], form) => {
-            if (error !== Interpreter.NO_ERROR) {
-              return [e, _, error];
-            }
-            return Interpreter.evaluate(e, form);
-          }, [env, false, Interpreter.NO_ERROR]);
+            filter(Interpreter.isDefineExpression).
+            reduce(([e, _, error], form) => {
+              if (error !== Interpreter.NO_ERROR) {
+                return [e, _, error];
+              }
+              return Interpreter.evaluate(e, form);
+            }, [env, false, Interpreter.NO_ERROR]);
 
     if (error1 !== Interpreter.NO_ERROR) {
       return [env1, res1, error1];

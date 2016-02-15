@@ -90,6 +90,7 @@ describe('Unparser', () => {
     expectToUnparse(`({red (select from: ['black
                                           'red
                                           'white])})`);
+    expectToUnparse(`({"red" (select from: ["black" "red" "white"])})`);
     expectToUnparse(`({[red green blue] (select from: ['black
                                                        'red
                                                        'white])})`);

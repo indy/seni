@@ -390,24 +390,35 @@ const publicBindings = [
   ),
 
   new PublicBinding(
+    'col/procedural-fn-presets',
+    {description: ``, args: [], returns: ''},
+    {},
+    () => Colour.proceduralFnPresets
+  ),
+
+  new PublicBinding(
     'col/procedural-fn',
     {
       description: `calculate procedural colours`,
-      args: [['a', '[0.5, 0.5, 0.5]'],
+      args: [['preset', '"none"'],
+             ['a', '[0.5, 0.5, 0.5]'],
              ['b', '[0.5, 0.5, 0.5]'],
-             ['c', '[0.5, 0.5, 0.5]'],
-             ['d', '[0.5, 0.5, 0.5]'],
+             ['c', '[1.0, 1.0, 1.0]'],
+             ['d', '[0.0, 0.33, 0.67]'],
              ['alpha', '1.0']],
       returns: 'a function that accepts a t parameter'
     },
-    {a: [0.5, 0.5, 0.5],
-     b: [0.5, 0.5, 0.5],
-     c: [1.0, 1.0, 1.0],
-     d: [0.0, 0.33, 0.67],
-     alpha: 1.0},
+    {
+      preset: 'none',
+      a: [0.5, 0.5, 0.5],
+      b: [0.5, 0.5, 0.5],
+      c: [1.0, 1.0, 1.0],
+      d: [0.0, 0.33, 0.67],
+      alpha: 1.0
+    },
     self => params => {
-      const {a, b, c, d, alpha} = self.mergeWithDefaults(params);
-      return Colour.proceduralFn(a, b, c, d, alpha);
+      const { preset, a, b, c, d, alpha } = self.mergeWithDefaults(params);
+      return Colour.proceduralFn(preset, a, b, c, d, alpha);
     }
   ),
 
@@ -421,10 +432,12 @@ const publicBindings = [
              ['d', 'colour']],
       returns: 'a function that accepts a t parameter'
     },
-    {a: Colour.construct(Format.RGB, [1, 1, 1, 1]),
-     b: Colour.construct(Format.RGB, [1, 1, 1, 1]),
-     c: Colour.construct(Format.RGB, [1, 1, 1, 1]),
-     d: Colour.construct(Format.RGB, [1, 1, 1, 1])},
+    {
+      a: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+      b: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+      c: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+      d: Colour.construct(Format.RGB, [1, 1, 1, 1])
+    },
     self => params => {
       const {a, b, c, d} = self.mergeWithDefaults(params);
       return Colour.bezierFn(a, b, c, d);
