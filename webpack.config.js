@@ -36,19 +36,25 @@ module.exports = {
 
         // Options to configure babel with
         query: {
-          presets: ['es2015']
+          plugins: ["transform-es2015-arrow-functions",
+                    "transform-es2015-classes",
+                    "transform-es2015-object-super",
+                    "transform-es2015-parameters",
+                    "transform-es2015-destructuring",
+                    "transform-es2015-block-scoping",
+                    "transform-es2015-modules-commonjs"]
         }
       }
     ]/*,
-    postLoaders: [
+      postLoaders: [
       {
-        loader: 'istanbul-instrumenter',
-        test: /\.js$/,
+      loader: 'istanbul-instrumenter',
+      test: /\.js$/,
 
-        include: path.resolve(__dirname, 'app', 'js')
+      include: path.resolve(__dirname, 'app', 'js')
 
       }
-    ]*/
+      ]*/
   },
   devtool: 'source-map'
 };

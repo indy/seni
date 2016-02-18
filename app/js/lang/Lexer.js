@@ -84,7 +84,7 @@ function isQuotedString(character) {
 }
 
 function isQuoteAbbreviation(character) {
-  return character === `\``;
+  return character === `\'`;
 }
 
 function isComment(character) {

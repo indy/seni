@@ -14,9 +14,7 @@ module.exports = {
         test: path.join(__dirname, 'test'),
 
         // Options to configure babel with
-        query: {
-          presets: ['es2015']
-        }
+        query: common.module.loaders[0].query
       }
     ])
   }
