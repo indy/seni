@@ -54,13 +54,11 @@ function rotated90(renderer, drawFn) {
 
 const publicBindings = [
   new PublicBinding(
-    'repeat/symmetry-vertical',
-    {
-      description: 'renders the draw fn twice (mirrored vertically)',
-      args: [['draw', 'a draw function']]
+    `repeat/symmetry-vertical`,
+    { description: `renders the draw fn twice (mirrored vertically)`,
+      args: [[`draw`, `a draw function`]]
     },
-    {
-      draw: emptyFn
+    { draw: emptyFn
     },
     (self, renderer) => params => {
       const { draw } = self.mergeWithDefaults(params);
@@ -69,14 +67,10 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'repeat/symmetry-horizontal',
-    {
-      description: 'renders the draw fn twice (mirrored horizontally)',
-      args: [['draw', 'a draw function']]
-    },
-    {
-      draw: emptyFn
-    },
+    `repeat/symmetry-horizontal`,
+    { description: `renders the draw fn twice (mirrored horizontally)`,
+      args: [[`draw`, `a draw function`]] },
+    { draw: emptyFn },
     (self, renderer) => params => {
       const { draw } = self.mergeWithDefaults(params);
       mirror(renderer, draw, horizontal);
@@ -84,15 +78,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'repeat/symmetry-4',
-    {
-      description:
+    `repeat/symmetry-4`,
+    { description:
       `renders the draw fn reflected along the horizontal and vertical axis`,
-      args: [['draw', 'a draw function']]
-    },
-    {
-      draw: emptyFn
-    },
+      args: [[`draw`, `a draw function`]] },
+    { draw: emptyFn },
     (self, renderer) => params => {
       const { draw } = self.mergeWithDefaults(params);
       mirror(renderer, () => {
@@ -102,14 +92,10 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'repeat/symmetry-8',
-    {
-      description: 'renders the draw fn reflected 8 times',
-      args: [['draw', 'a draw function']]
-    },
-    {
-      draw: emptyFn
-    },
+    `repeat/symmetry-8`,
+    { description: `renders the draw fn reflected 8 times`,
+      args: [[`draw`, `a draw function`]] },
+    { draw: emptyFn },
     (self, renderer) => params => {
       const { draw } = self.mergeWithDefaults(params);
       mirror(renderer, () => {
@@ -121,16 +107,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'repeat/rotate',
-    {
-      description: 'renders multiple times by rotation',
-      args: [['draw', 'a draw function'],
-             ['copies', 'the number of copies to render']]
-    },
-    {
-      draw: emptyFn,
-      copies: 3
-    },
+    `repeat/rotate`,
+    { description: `renders multiple times by rotation`,
+      args: [[`draw`, `a draw function`],
+             [`copies`, `the number of copies to render`]] },
+    { draw: emptyFn,
+      copies: 3 },
     (self, renderer) => params => {
       const { draw, copies } = self.mergeWithDefaults(params);
 
@@ -146,16 +128,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'repeat/rotate-mirrored',
-    {
-      description: 'renders multiple times by rotation',
-      args: [['draw', 'a draw function'],
-             ['copies', 'the number of copies to render']]
-    },
-    {
-      draw: emptyFn,
-      copies: 3
-    },
+    `repeat/rotate-mirrored`,
+    { description: `renders multiple times by rotation`,
+      args: [[`draw`, `a draw function`],
+             [`copies`, `the number of copies to render`]] },
+    { draw: emptyFn,
+      copies: 3 },
     (self, renderer) => params => {
       const { draw, copies } = self.mergeWithDefaults(params);
       const delta = MathUtil.TAU / copies;
@@ -180,6 +158,6 @@ const publicBindings = [
   )];
 
 export default {
-  publicBindingType: 'binding',
+  publicBindingType: `binding`,
   publicBindings
 };

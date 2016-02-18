@@ -20,39 +20,31 @@ import PublicBinding from '../lang/PublicBinding';
 
 const publicBindings = [
   new PublicBinding(
-    'canvas/width',
-    {
-      returns: 'the width of the canvas'
-    },
+    `canvas/width`,
+    { returns: `the width of the canvas` },
     {},
     () => 1000
   ),
 
   new PublicBinding(
-    'canvas/height',
-    {
-      returns: 'the height of the canvas'
-    },
+    `canvas/height`,
+    { returns: `the height of the canvas` },
     {},
     () => 1000
   ),
 
   new PublicBinding(
-    'canvas/centre',
-    {
-      returns: 'the centre of the canvas'
-    },
+    `canvas/centre`,
+    { returns: `the centre of the canvas` },
     {},
     () => [500, 500]
   ),
 
   new PublicBinding(
-    'list/length',
-    {
-      args: [['of', 'the vector whose length is required']],
-      returns: 'the length of the vector'
-    },
-    {of: []},
+    `list/length`,
+    { args: [[`of`, `the vector whose length is required`]],
+      returns: `the length of the vector` },
+    { of: [] },
     self => params => {
       const {of} = self.mergeWithDefaults(params);
       return of.length;
@@ -60,14 +52,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'list/get',
-    {
-      description: 'get an element from a vector',
-      args: [['from', 'a vector'],
-             ['nth', 'the index of an element']],
-      returns: 'the nth element in the vector'
-    },
-    {from: [], nth: 0},
+    `list/get`,
+    { description: `get an element from a vector`,
+      args: [[`from`, `a vector`],
+             [`nth`, `the index of an element`]],
+      returns: `the nth element in the vector` },
+    { from: [], nth: 0 },
 
     self => params => {
       const {from, nth} = self.mergeWithDefaults(params);
@@ -76,14 +66,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'take',
-    {
-      description: `invokes the 'from' function 'num' times`,
-      args: [['num', '1'],
-             ['from', 'a function']],
-      returns: 'a vector of results'
-    },
-    {num: 1, from() { return 0; }},
+    `take`,
+    { description: `invokes the 'from' function 'num' times`,
+      args: [[`num`, `1`],
+             [`from`, `a function`]],
+      returns: `a vector of results` },
+    { num: 1, from() { return 0; } },
     self => params => {
       const {num, from} = self.mergeWithDefaults(params);
       const res = [];
@@ -95,6 +83,6 @@ const publicBindings = [
   )];
 
 export default {
-  publicBindingType: 'binding',
+  publicBindingType: `binding`,
   publicBindings
 };

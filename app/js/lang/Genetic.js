@@ -30,11 +30,11 @@ function buildTraitFromNode(node, genes) {
   if (node.alterable === true) {
 
     // expect a form in the parameterAST
-    let simplifiedAst, initialValue, compiledNodes;
+    let simplifiedAst, initialValue;
 
     if (node.type === NodeType.LIST || node.type === NodeType.VECTOR) {
       // wrap the node in an array and pass into Compiler.compileWithGenotype
-      compiledNodes = Compiler.compileWithGenotype([node], null);
+      const compiledNodes = Compiler.compileWithGenotype([node], null);
       initialValue = compiledNodes[0];
       // Note: a problem with this is that a form written like '[1 2]' will be
       // represented in initialValue as the simplified ast: 'list 1 2'
@@ -48,7 +48,7 @@ function buildTraitFromNode(node, genes) {
       // this is to allow code like (+ 2 {2})
       // which should behave as if there were no curly brackets
       // todo: implement identity in this context
-      simplifiedAst = [['identity', {value: initialValue}]];
+      simplifiedAst = [[`identity`, {value: initialValue}]];
     }
 
     const gene = {initialValue, simplifiedAst};
@@ -67,7 +67,7 @@ function buildGeneFromTrait(trait, env) {
   /* eslint-disable arrow-body-style */
   const [_, result, _error] = simplifiedAst.reduce(([e, f, err], form) => {
     if (err != Interpreter.NO_ERROR) {
-      // if there's an error keep on passing it along
+      // if there`s an error keep on passing it along
       return [e, f, err];
     } else {
       return Interpreter.evaluate(e, form);
@@ -84,7 +84,7 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
 
   const crossoverIndex = Number.parseInt(Math.random() * genotypeA.size, 10);
   if (logToConsole) {
-    console.log('randomCrossover index:', crossoverIndex, mutationRate);
+    console.log(`randomCrossover index:`, crossoverIndex, mutationRate);
   }
 
   const spliceA = genotypeA.slice(0, crossoverIndex);
@@ -97,14 +97,14 @@ function randomCrossover(genotypeA, genotypeB, mutationRate, traits, env) {
     if (Math.random() < mutationRate) {
       // mutate this trait
       if (logToConsole) {
-        console.log('mutating gene ', i);
+        console.log(`mutating gene `, i);
       }
       childGenotype[i] = buildGeneFromTrait(traits[i], env);
     }
   }
 
   if (logToConsole) {
-    console.log('childGenotype ', childGenotype);
+    console.log(`childGenotype `, childGenotype);
   }
 
   return Immutable.fromJS(childGenotype);
@@ -148,7 +148,7 @@ const Genetic = {
     const env = buildEnv(rng);
 
     if (logToConsole) {
-      console.log('Genetic::nextGeneration', {populationSize,
+      console.log(`Genetic::nextGeneration`, {populationSize,
                                               mutationRate,
                                               seed,
                                               size: genotypes.size});
@@ -172,7 +172,7 @@ const Genetic = {
       const genotypeB = genotypes.get(idxB);
 
       if (logToConsole) {
-        console.log('using genotype indices: ', idxA, idxB);
+        console.log(`using genotype indices: `, idxA, idxB);
       }
 
       const child = randomCrossover(genotypeA, genotypeB,

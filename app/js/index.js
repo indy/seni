@@ -26,7 +26,7 @@ function compatibilityHacks() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener(`DOMContentLoaded`, () => {
   compatibilityHacks();
   main();
 });

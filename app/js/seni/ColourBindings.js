@@ -44,83 +44,69 @@ function colourGet(publicBinding, format, component) {
 
 const publicBindings = [
   new PublicBinding(
-    'col/set-rgb-r',
-    {
-      description: `sets red component of the given colour`,
-      args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
-      returns: 'the new colour'
-    },
-    {colour: Colour.defaultColour, value: 1.0},
+    `col/set-rgb-r`,
+    { description: `sets red component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`],
+             [`value`, `0..1`]],
+      returns: `the new colour` },
+    { colour: Colour.defaultColour, value: 1.0 },
     self => colourSet(self, Format.RGB, Colour.R)
   ),
 
   new PublicBinding(
-    'col/get-rgb-r',
-    {
-      description: `gets red component of the given colour`,
-      args: [['colour', 'Colour.defaultColour']],
-      returns: 'the red component of the colour'
-    },
-    {colour: Colour.defaultColour},
+    `col/get-rgb-r`,
+    { description: `gets red component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`]],
+      returns: `the red component of the colour` },
+    { colour: Colour.defaultColour },
     self => colourGet(self, Format.RGB, Colour.R)
   ),
 
   new PublicBinding(
-    'col/set-rgb-g',
-    {
-      description: `sets green component of the given colour`,
-      args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
-      returns: 'the new colour'
-    },
-    {colour: Colour.defaultColour, value: 1.0},
+    `col/set-rgb-g`,
+    { description: `sets green component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`],
+             [`value`, `0..1`]],
+      returns: `the new colour` },
+    { colour: Colour.defaultColour, value: 1.0 },
     self => colourSet(self, Format.RGB, Colour.G)
   ),
 
   new PublicBinding(
-    'col/get-rgb-g',
-    {
-      description: `gets green component of the given colour`,
-      args: [['colour', 'Colour.defaultColour']],
-      returns: 'the green component of the colour'
-    },
-    {colour: Colour.defaultColour},
+    `col/get-rgb-g`,
+    { description: `gets green component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`]],
+      returns: `the green component of the colour` },
+    { colour: Colour.defaultColour },
     self => colourGet(self, Format.RGB, Colour.G)
   ),
 
   new PublicBinding(
-    'col/set-rgb-b',
-    {
-      description: `sets blue component of the given colour`,
-      args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
-      returns: 'the new colour'
-    },
-    {colour: Colour.defaultColour, value: 1.0},
+    `col/set-rgb-b`,
+    { description: `sets blue component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`],
+             [`value`, `0..1`]],
+      returns: `the new colour` },
+    { colour: Colour.defaultColour, value: 1.0 },
     self => colourSet(self, Format.RGB, Colour.B)
   ),
 
   new PublicBinding(
-    'col/get-rgb-b',
-    {
-      description: `gets blue component of the given colour`,
-      args: [['colour', 'Colour.defaultColour']],
-      returns: 'the blue component of the colour'
-    },
-    {colour: Colour.defaultColour},
+    `col/get-rgb-b`,
+    { description: `gets blue component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`]],
+      returns: `the blue component of the colour` },
+    { colour: Colour.defaultColour },
     self => colourGet(self, Format.RGB, Colour.B)
   ),
 
   new PublicBinding(
-    'col/set-alpha',
-    {
-      description: `sets alpha component of the given colour`,
-      args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
-      returns: 'the new colour'
-    },
-    {colour: Colour.defaultColour, value: 1.0},
+    `col/set-alpha`,
+    { description: `sets alpha component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`],
+             [`value`, `0..1`]],
+      returns: `the new colour` },
+    { colour: Colour.defaultColour, value: 1.0 },
     self => params => {
       const {colour, value} = self.mergeWithDefaults(params);
       return Colour.setComponent(colour, Colour.ALPHA, value);
@@ -128,13 +114,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/get-alpha',
-    {
-      description: `gets alpha component of the given colour`,
-      args: [['colour', 'Colour.defaultColour']],
-      returns: 'the alpha component of the colour'
-    },
-    {colour: Colour.defaultColour},
+    `col/get-alpha`,
+    { description: `gets alpha component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`]],
+      returns: `the alpha component of the colour` },
+    { colour: Colour.defaultColour },
     self => params => {
       const {colour} = self.mergeWithDefaults(params);
       return Colour.getComponent(colour, Colour.ALPHA);
@@ -142,85 +126,71 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/set-lab-l',
-    {
-      description: `sets lab l component of the given colour`,
-      args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
-      returns: 'the new colour'
-    },
-    {colour: Colour.defaultColour, value: 1.0},
+    `col/set-lab-l`,
+    { description: `sets lab l component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`],
+             [`value`, `0..1`]],
+      returns: `the new colour` },
+    { colour: Colour.defaultColour, value: 1.0 },
     self => colourSet(self, Format.LAB, Colour.L)
   ),
 
   new PublicBinding(
-    'col/get-lab-l',
-    {
-      description: `gets lab l component of the given colour`,
-      args: [['colour', 'Colour.defaultColour']],
-      returns: 'the lab l component of the colour'
-    },
-    {colour: Colour.defaultColour},
+    `col/get-lab-l`,
+    { description: `gets lab l component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`]],
+      returns: `the lab l component of the colour` },
+    { colour: Colour.defaultColour },
     self => colourGet(self, Format.LAB, Colour.L)
   ),
 
   new PublicBinding(
-    'col/set-lab-a',
-    {
-      description: `sets lab a component of the given colour`,
-      args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
-      returns: 'the new colour'
-    },
-    {colour: Colour.defaultColour, value: 1.0},
+    `col/set-lab-a`,
+    { description: `sets lab a component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`],
+             [`value`, `0..1`]],
+      returns: `the new colour` },
+    { colour: Colour.defaultColour, value: 1.0 },
     self => colourSet(self, Format.LAB, Colour.A)
   ),
 
   new PublicBinding(
-    'col/get-lab-a',
-    {
-      description: `gets lab a component of the given colour`,
-      args: [['colour', 'Colour.defaultColour']],
-      returns: 'the lab a component of the colour'
-    },
-    {colour: Colour.defaultColour},
+    `col/get-lab-a`,
+    { description: `gets lab a component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`]],
+      returns: `the lab a component of the colour` },
+    { colour: Colour.defaultColour },
     self => colourGet(self, Format.LAB, Colour.A)
   ),
 
   new PublicBinding(
-    'col/set-lab-b',
-    {
-      description: `sets lab b component of the given colour`,
-      args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
-      returns: 'the new colour'
-    },
-    {colour: Colour.defaultColour, value: 1.0},
+    `col/set-lab-b`,
+    { description: `sets lab b component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`],
+             [`value`, `0..1`]],
+      returns: `the new colour` },
+    { colour: Colour.defaultColour, value: 1.0 },
     self => colourSet(self, Format.LAB, Colour.B)
   ),
 
   new PublicBinding(
-    'col/get-lab-b',
-    {
-      description: `gets lab b component of the given colour`,
-      args: [['colour', 'Colour.defaultColour']],
-      returns: 'the lab b component of the colour'
-    },
-    {colour: Colour.defaultColour},
+    `col/get-lab-b`,
+    { description: `gets lab b component of the given colour`,
+      args: [[`colour`, `Colour.defaultColour`]],
+      returns: `the lab b component of the colour` },
+    { colour: Colour.defaultColour },
     self => colourGet(self, Format.LAB, Colour.B)
   ),
 
   new PublicBinding(
-    'col/rgb',
-    {
-      description: `creates a colour given r, g, b and alpha values`,
-      args: [['r', '0..1'],
-             ['g', '0..1'],
-             ['b', '0..1'],
-             ['alpha', '0..1']],
-      returns: 'the colour'
-    },
-    {r: 1.0, g: 0.1, b: 0.2, alpha: 0.5},
+    `col/rgb`,
+    { description: `creates a colour given r, g, b and alpha values`,
+      args: [[`r`, `0..1`],
+             [`g`, `0..1`],
+             [`b`, `0..1`],
+             [`alpha`, `0..1`]],
+      returns: `the colour` },
+    { r: 1.0, g: 0.1, b: 0.2, alpha: 0.5 },
     self => params => {
       const {r, g, b, alpha} = self.mergeWithDefaults(params);
       return Colour.construct(Format.RGB, [r, g, b, alpha]);
@@ -228,16 +198,14 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/hsl',
-    {
-      description: `creates a colour given h, s, l and alpha values`,
-      args: [['h', '0..360'],
-             ['s', '0..1'],
-             ['l', '0..1'],
-             ['alpha', '0..1']],
-      returns: 'the colour'
-    },
-    {h: 180.0, s: 0.1, l: 0.2, alpha: 0.5},
+    `col/hsl`,
+    { description: `creates a colour given h, s, l and alpha values`,
+      args: [[`h`, `0..360`],
+             [`s`, `0..1`],
+             [`l`, `0..1`],
+             [`alpha`, `0..1`]],
+      returns: `the colour` },
+    { h: 180.0, s: 0.1, l: 0.2, alpha: 0.5 },
     self => params => {
       const {h, s, l, alpha} = self.mergeWithDefaults(params);
       const normalisedH = h % 360;
@@ -246,16 +214,14 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/lab',
-    {
-      description: `creates a colour given l, a, b and alpha values`,
-      args: [['l', '0..'],
-             ['a', '-1..1'],
-             ['b', '-1..1'],
-             ['alpha', '0..1']],
-      returns: 'the colour'
-    },
-    {l: 1.0, a: 0.1, b: 0.2, alpha: 0.5},
+    `col/lab`,
+    { description: `creates a colour given l, a, b and alpha values`,
+      args: [[`l`, `0..`],
+             [`a`, `-1..1`],
+             [`b`, `-1..1`],
+             [`alpha`, `0..1`]],
+      returns: `the colour` },
+    { l: 1.0, a: 0.1, b: 0.2, alpha: 0.5 },
     self => params => {
       const {l, a, b, alpha} = self.mergeWithDefaults(params);
       return Colour.construct(Format.LAB, [l, a, b, alpha]);
@@ -263,16 +229,14 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/hsv',
-    {
-      description: `creates a colour given h, s, v and alpha values`,
-      args: [['h', '0..360'],
-             ['s', '0..1'],
-             ['v', '0..1'],
-             ['alpha', '0..1']],
-      returns: 'the colour'
-    },
-    {h: 180.0, s: 0.1, v: 0.2, alpha: 0.5},
+    `col/hsv`,
+    { description: `creates a colour given h, s, v and alpha values`,
+      args: [[`h`, `0..360`],
+             [`s`, `0..1`],
+             [`v`, `0..1`],
+             [`alpha`, `0..1`]],
+      returns: `the colour` },
+    { h: 180.0, s: 0.1, v: 0.2, alpha: 0.5 },
     self => params => {
       const {h, s, v, alpha} = self.mergeWithDefaults(params);
       const normalisedH = h % 360;
@@ -280,53 +244,51 @@ const publicBindings = [
     }
   ),
 
-  new PublicBinding('RGB',
-                    {description: ``, args: [], returns: ''},
+  new PublicBinding(`RGB`,
+                    {description: ``, args: [], returns: ``},
                     {}, () => Format.RGB),
-  new PublicBinding('HSL',
-                    {description: ``, args: [], returns: ''},
+  new PublicBinding(`HSL`,
+                    {description: ``, args: [], returns: ``},
                     {}, () => Format.HSL),
-  new PublicBinding('LAB',
-                    {description: ``, args: [], returns: ''},
+  new PublicBinding(`LAB`,
+                    {description: ``, args: [], returns: ``},
                     {}, () => Format.LAB),
-  new PublicBinding('HSV',
-                    {description: ``, args: [], returns: ''},
+  new PublicBinding(`HSV`,
+                    {description: ``, args: [], returns: ``},
                     {}, () => Format.HSV),
 
-  new PublicBinding('white',
-                    {description: ``, args: [], returns: ''}, {},
+  new PublicBinding(`white`,
+                    {description: ``, args: [], returns: ``}, {},
                     () => Colour.construct(Format.RGB, [1, 1, 1, 1])),
-  new PublicBinding('black',
-                    {description: ``, args: [], returns: ''}, {},
+  new PublicBinding(`black`,
+                    {description: ``, args: [], returns: ``}, {},
                     () => Colour.construct(Format.RGB, [0, 0, 0, 1])),
-  new PublicBinding('red',
-                    {description: ``, args: [], returns: ''}, {},
+  new PublicBinding(`red`,
+                    {description: ``, args: [], returns: ``}, {},
                     () => Colour.construct(Format.RGB, [1, 0, 0, 1])),
-  new PublicBinding('green',
-                    {description: ``, args: [], returns: ''}, {},
+  new PublicBinding(`green`,
+                    {description: ``, args: [], returns: ``}, {},
                     () => Colour.construct(Format.RGB, [0, 1, 0, 1])),
-  new PublicBinding('blue',
-                    {description: ``, args: [], returns: ''}, {},
+  new PublicBinding(`blue`,
+                    {description: ``, args: [], returns: ``}, {},
                     () => Colour.construct(Format.RGB, [0, 0, 1, 1])),
-  new PublicBinding('yellow',
-                    {description: ``, args: [], returns: ''}, {},
+  new PublicBinding(`yellow`,
+                    {description: ``, args: [], returns: ``}, {},
                     () => Colour.construct(Format.RGB, [1, 1, 0, 1])),
-  new PublicBinding('magenta',
-                    {description: ``, args: [], returns: ''}, {},
+  new PublicBinding(`magenta`,
+                    {description: ``, args: [], returns: ``}, {},
                     () => Colour.construct(Format.RGB, [1, 0, 1, 1])),
-  new PublicBinding('cyan',
-                    {description: ``, args: [], returns: ''}, {},
+  new PublicBinding(`cyan`,
+                    {description: ``, args: [], returns: ``}, {},
                     () => Colour.construct(Format.RGB, [0, 1, 1, 1])),
 
   new PublicBinding(
-    'col/convert',
-    {
-      description: `converts a colour to a different internal format`,
-      args: [['format', 'the format to change to (RGB)'],
-             ['colour', 'the input colour']],
-      returns: 'the new colour'
-    },
-    {format: Format.RGB, colour: Colour.defaultColour},
+    `col/convert`,
+    { description: `converts a colour to a different internal format`,
+      args: [[`format`, `the format to change to (RGB)`],
+             [`colour`, `the input colour`]],
+      returns: `the new colour` },
+    { format: Format.RGB, colour: Colour.defaultColour },
     self => params => {
       const {format, colour} = self.mergeWithDefaults(params);
       return Colour.cloneAs(colour, format);
@@ -334,13 +296,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/complementary',
-    {
-      description: `calculate a complementary colour`,
-      args: [['colour', 'the input colour']],
-      returns: 'the complementary colour'
-    },
-    {colour: Colour.defaultColour},
+    `col/complementary`,
+    { description: `calculate a complementary colour`,
+      args: [[`colour`, `the input colour`]],
+      returns: `the complementary colour` },
+    { colour: Colour.defaultColour },
     self => params => {
       const {colour} = self.mergeWithDefaults(params);
       return Colour.complementary(colour);
@@ -348,13 +308,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/split-complementary',
-    {
-      description: `calculate split-complementary colours`,
-      args: [['colour', 'the input colour']],
-      returns: 'the 2 split complementary colours'
-    },
-    {colour: Colour.defaultColour},
+    `col/split-complementary`,
+    { description: `calculate split-complementary colours`,
+      args: [[`colour`, `the input colour`]],
+      returns: `the 2 split complementary colours` },
+    { colour: Colour.defaultColour },
     self => params => {
       const {colour} = self.mergeWithDefaults(params);
       return Colour.splitComplementary(colour);
@@ -362,13 +320,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/analagous',
-    {
-      description: `calculate analagous colours`,
-      args: [['colour', 'the input colour']],
-      returns: 'the 2 analagous colours'
-    },
-    {colour: Colour.defaultColour},
+    `col/analagous`,
+    { description: `calculate analagous colours`,
+      args: [[`colour`, `the input colour`]],
+      returns: `the 2 analagous colours` },
+    { colour: Colour.defaultColour },
     self => params => {
       const {colour} = self.mergeWithDefaults(params);
       return Colour.analagous(colour);
@@ -376,13 +332,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/triad',
-    {
-      description: `calculate triad colours`,
-      args: [['colour', 'the input colour']],
-      returns: 'the 2 triad colours'
-    },
-    {colour: Colour.defaultColour},
+    `col/triad`,
+    { description: `calculate triad colours`,
+      args: [[`colour`, `the input colour`]],
+      returns: `the 2 triad colours` },
+    { colour: Colour.defaultColour },
     self => params => {
       const {colour} = self.mergeWithDefaults(params);
       return Colour.triad(colour);
@@ -390,32 +344,28 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/procedural-fn-presets',
-    {description: ``, args: [], returns: ''},
+    `col/procedural-fn-presets`,
+    { description: ``, args: [], returns: `` },
     {},
     () => Colour.proceduralFnPresets
   ),
 
   new PublicBinding(
-    'col/procedural-fn',
-    {
-      description: `calculate procedural colours`,
-      args: [['preset', '"none"'],
-             ['a', '[0.5, 0.5, 0.5]'],
-             ['b', '[0.5, 0.5, 0.5]'],
-             ['c', '[1.0, 1.0, 1.0]'],
-             ['d', '[0.0, 0.33, 0.67]'],
-             ['alpha', '1.0']],
-      returns: 'a function that accepts a t parameter'
-    },
-    {
-      preset: 'none',
+    `col/procedural-fn`,
+    { description: `calculate procedural colours`,
+      args: [[`preset`, `"none"`],
+             [`a`, `[0.5, 0.5, 0.5]`],
+             [`b`, `[0.5, 0.5, 0.5]`],
+             [`c`, `[1.0, 1.0, 1.0]`],
+             [`d`, `[0.0, 0.33, 0.67]`],
+             [`alpha`, `1.0`]],
+      returns: `a function that accepts a t parameter` },
+    { preset: `none`,
       a: [0.5, 0.5, 0.5],
       b: [0.5, 0.5, 0.5],
       c: [1.0, 1.0, 1.0],
       d: [0.0, 0.33, 0.67],
-      alpha: 1.0
-    },
+      alpha: 1.0 },
     self => params => {
       const { preset, a, b, c, d, alpha } = self.mergeWithDefaults(params);
       return Colour.proceduralFn(preset, a, b, c, d, alpha);
@@ -423,21 +373,17 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/bezier-fn',
-    {
-      description: `calculate colours using a Bezier function`,
-      args: [['a', 'colour'],
-             ['b', 'colour'],
-             ['c', 'colour'],
-             ['d', 'colour']],
-      returns: 'a function that accepts a t parameter'
-    },
-    {
-      a: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+    `col/bezier-fn`,
+    { description: `calculate colours using a Bezier function`,
+      args: [[`a`, `colour`],
+             [`b`, `colour`],
+             [`c`, `colour`],
+             [`d`, `colour`]],
+      returns: `a function that accepts a t parameter` },
+    { a: Colour.construct(Format.RGB, [1, 1, 1, 1]),
       b: Colour.construct(Format.RGB, [1, 1, 1, 1]),
       c: Colour.construct(Format.RGB, [1, 1, 1, 1]),
-      d: Colour.construct(Format.RGB, [1, 1, 1, 1])
-    },
+      d: Colour.construct(Format.RGB, [1, 1, 1, 1]) },
     self => params => {
       const {a, b, c, d} = self.mergeWithDefaults(params);
       return Colour.bezierFn(a, b, c, d);
@@ -445,17 +391,15 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/quadratic-fn',
-    {
-      description: `calculate colours using a quadratic function`,
-      args: [['a', 'colour'],
-             ['b', 'colour'],
-             ['c', 'colour']],
-      returns: 'a function that accepts a t parameter'
-    },
-    {a: Colour.construct(Format.RGB, [1, 1, 1, 1]),
-     b: Colour.construct(Format.RGB, [1, 1, 1, 1]),
-     c: Colour.construct(Format.RGB, [1, 1, 1, 1])},
+    `col/quadratic-fn`,
+    { description: `calculate colours using a quadratic function`,
+      args: [[`a`, `colour`],
+             [`b`, `colour`],
+             [`c`, `colour`]],
+      returns: `a function that accepts a t parameter` },
+    { a: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+      b: Colour.construct(Format.RGB, [1, 1, 1, 1]),
+      c: Colour.construct(Format.RGB, [1, 1, 1, 1]) },
     self => params => {
       const {a, b, c} = self.mergeWithDefaults(params);
       return Colour.quadraticFn(a, b, c);
@@ -463,14 +407,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/darken',
-    {
-      description: `darkens the given colour`,
-      args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
-      returns: 'the new colour'
-    },
-    {colour: Colour.defaultColour, value: 1.0},
+    `col/darken`,
+    { description: `darkens the given colour`,
+      args: [[`colour`, `Colour.defaultColour`],
+             [`value`, `0..1`]],
+      returns: `the new colour` },
+    { colour: Colour.defaultColour, value: 1.0 },
     self => params => {
       const {colour, value} = self.mergeWithDefaults(params);
       return Colour.setComponent(Colour.cloneAs(colour, Format.LAB),
@@ -479,14 +421,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'col/lighten',
-    {
-      description: `lightens the given colour by 'value'`,
-      args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
-      returns: 'the new colour'
-    },
-    {colour: Colour.defaultColour, value: 10.0},
+    `col/lighten`,
+    { description: `lightens the given colour by 'value'`,
+      args: [[`colour`, `Colour.defaultColour`],
+             [`value`, `0..1`]],
+      returns: `the new colour` },
+    { colour: Colour.defaultColour, value: 10.0 },
     self => params => {
       const {colour, value} = self.mergeWithDefaults(params);
       const lab = Colour.cloneAs(colour, Format.LAB);
@@ -498,6 +438,6 @@ const publicBindings = [
 ];
 
 export default {
-  publicBindingType: 'binding',
+  publicBindingType: `binding`,
   publicBindings
 };

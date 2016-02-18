@@ -25,7 +25,7 @@ import CodeMirrorSeni from './CodeMirrorSeni';
 
 /* eslint-enable no-unused-vars */
 
-const modeName = 'seni';
+const modeName = `seni`;
 
 function defineSeniMode() {
   // return an instance of CodeMirror with Seni mode defined

@@ -28,22 +28,22 @@ const logToConsole = false;
 //
 function unparseSimplifiedAst(value) {
   if (Array.isArray(value)) {
-    if (value.length === 2 && value[0] === '__string') {
+    if (value.length === 2 && value[0] === `__string`) {
       // the form "hello" is represented as (__string hello)
       // this is a hack used by the interpreter
       return `"${value[1]}"`;
-    } else if (value.length > 0 && value[0] === 'list') {
+    } else if (value.length > 0 && value[0] === `list`) {
       // hack used to correctly unparse forms like '[1 2]', without this
       // the output would be '(list 1 2)' (see Genetic::buildTraitFromNode)
-      const e = value.slice(1).map(unparseSimplifiedAst).join(' ').trim();
+      const e = value.slice(1).map(unparseSimplifiedAst).join(` `).trim();
       return `[${e}]`;
     }
-    const elements = value.map(unparseSimplifiedAst).join(' ').trim();
+    const elements = value.map(unparseSimplifiedAst).join(` `).trim();
     return `(${elements})`;
 
   } else if (value instanceof Object) {
 
-    let args = '';
+    let args = ``;
     for (const k in value) {
       args = `${args}${k}: ${unparseSimplifiedAst(value[k])} `;
     }
@@ -64,7 +64,7 @@ function formatNodeValue(value, node) {
     res = `"${value}"`;
     break;
   case NodeType.BOOLEAN:
-    res = value === '#t' ? 'true' : 'false';
+    res = value === `#t` ? `true` : `false`;
     break;
   case NodeType.LABEL:
     res = `${value}:`;
@@ -84,12 +84,12 @@ function pullValueFromGenotype(genotype) {
 }
 
 function getMultipleValuesFromGenotype(nodes, genotype) {
-  let v;
-  const listPrefix = '[';
-  const listPostfix = ']';
+  let v = undefined;
+  const listPrefix = `[`;
+  const listPostfix = `]`;
 
   const res = nodes.map(n => {
-    if (n.type === NodeType.NAME && n.value === 'list') {
+    if (n.type === NodeType.NAME && n.value === `list`) {
       return formatNodeValue(n.value, n);
     } else if (n.type === NodeType.COMMENT ||
                n.type === NodeType.WHITESPACE) {
@@ -98,21 +98,20 @@ function getMultipleValuesFromGenotype(nodes, genotype) {
       [v, genotype] = pullValueFromGenotype(genotype);
       return formatNodeValue(v, n);
     }
-  }).join('');
+  }).join(``);
 
   return [listPrefix + res + listPostfix, genotype];
 }
 
 function unparseUnalterable(unalterableNode) {
-  let v, _;
   return unalterableNode.map(n => {
-    [v, _] = unparseASTNode(n, null);
+    const [v, _] = unparseASTNode(n, null);
     return v;
-  }).join('');
+  }).join(``);
 }
 
 function unparseASTNode(node, genotype) {
-  let term = '';
+  let term = ``;
   let v;
   let lst, listPrefix, listPostfix;
 
@@ -140,30 +139,30 @@ function unparseASTNode(node, genotype) {
     if (node.type === NodeType.LIST) {
 
       if (node.usingAbbreviation) {
-        listPrefix = '\'';
-        listPostfix = '';
+        listPrefix = `\'`;
+        listPostfix = ``;
         // remove the 'quote' and whitespace nodes
         lst = node.children.slice(2);
       } else {
-        listPrefix = '(';
-        listPostfix = ')';
+        listPrefix = `(`;
+        listPostfix = `)`;
         lst = node.children;
       }
 
       v = listPrefix + lst.map(n => {
         [nval, genotype] = unparseASTNode(n, genotype);
         return nval;
-      }).join('') + listPostfix;
+      }).join(``) + listPostfix;
     } else if (node.type === NodeType.VECTOR) {
 
-      listPrefix = '[';
-      listPostfix = ']';
+      listPrefix = `[`;
+      listPostfix = `]`;
       lst = node.children;
 
       v = listPrefix + lst.map(n => {
         [nval, genotype] = unparseASTNode(n, genotype);
         return nval;
-      }).join('') + listPostfix;
+      }).join(``) + listPostfix;
     } else {
       v = node.value;
     }
@@ -180,15 +179,15 @@ const Unparser = {
   // ast is an array of nodes
   unparse: (frontAst, genotype) => {
 
-    let term;
+    let term = undefined;
     const terms = frontAst.map(n => {
       [term, genotype] = unparseASTNode(n, genotype);
       return term;
     });
-    const res = terms.join('');
+    const res = terms.join(``);
 
     if (logToConsole) {
-      console.log('Unparser::unparse', frontAst, res);
+      console.log(`Unparser::unparse`, frontAst, res);
     }
 
     return res;

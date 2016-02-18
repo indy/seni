@@ -206,10 +206,10 @@ export default class Renderer {
       height
     } = params;
 
-    const angleStart = params['angle-start'];
-    const angleEnd = params['angle-end'];
-    const innerWidth = params['inner-width'];
-    const innerHeight = params['inner-height'];
+    const angleStart = params[`angle-start`];
+    const angleEnd = params[`angle-end`];
+    const innerWidth = params[`inner-width`];
+    const innerHeight = params[`inner-height`];
 
     const degToRad = MathUtil.TAU / 360;
 
@@ -274,11 +274,10 @@ export default class Renderer {
 
     const n = coords.length;
     // todo: check that the colours array is the same size as the coords array
-    let c;
 
     this.prepareToAddTriangleStrip(n, coords[0]);
     for (let i = 0; i < n; i++) {
-      c = Colour.elementArray(Colour.cloneAs(colours[i], Format.RGB));
+      const c = Colour.elementArray(Colour.cloneAs(colours[i], Format.RGB));
       this.addVertex(coords[i], c);
     }
   }
@@ -290,8 +289,8 @@ export default class Renderer {
       coords,
       tessellation
     } = params;
-    const tStart = params['t-start'];
-    const tEnd = params['t-end'];
+    const tStart = params[`t-start`];
+    const tEnd = params[`t-end`];
 
     const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
 
@@ -318,12 +317,12 @@ export default class Renderer {
 
   getRemapAndHalfWidthEnd(params) {
 
-    const lineWidth = params['line-width'];
-    const lineWidthStart = params['line-width-start'];
-    const lineWidthEnd = params['line-width-end'];
-    const tStart = params['t-start'];
-    const tEnd = params['t-end'];
-    const lineWidthMapping = params['line-width-mapping'];
+    const lineWidth = params[`line-width`];
+    const lineWidthStart = params[`line-width-start`];
+    const lineWidthEnd = params[`line-width-end`];
+    const tStart = params[`t-start`];
+    const tEnd = params[`t-end`];
+    const lineWidthMapping = params[`line-width-mapping`];
 
     let halfWidthEnd, remap;
 
@@ -358,7 +357,8 @@ export default class Renderer {
 
     const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
-    let i, ix, iy, v1, v2, t, xn1, yn1, xn2, yn2;
+    let i, ix, iy, v1, v2, xn1, yn1, xn2, yn2;
+    let t = undefined;
 
     for (i = 0; i < tVals.length - 1; i++) {
       [[xn1, yn1], [xn2, yn2]] =
@@ -412,7 +412,7 @@ export default class Renderer {
   postDrawScene() {
     this.flushTriangles();
 
-    Util.withTiming('drawRenderPackets', () => {
+    Util.withTiming(`drawRenderPackets`, () => {
       this.glRenderer.drawRenderPackets(this.renderPackets);
     }, false);
   }

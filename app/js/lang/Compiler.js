@@ -33,7 +33,7 @@ function wrapString(value) {
   //
   // we need to wrap the form in a quote-like to prevent the
   // interpreter from trying to lookup the contents of the string
-  return ['__string', value];
+  return [`__string`, value];
 }
 
 /**
@@ -74,9 +74,9 @@ function compile(node, genotype) {
   }
 
   if (node.type === NodeType.VECTOR) {
-    let res;
+    let res = undefined;
     [res, genotype] = compileNodes(node.children, genotype);
-    res.unshift('list');
+    res.unshift(`list`);
     return [res, genotype];
   }
 
@@ -88,7 +88,7 @@ function compile(node, genotype) {
 }
 
 function compileNodes(nodes, genotype) {
-  let n;
+  let n = undefined;
   const res = nodes.map(node => {
     [n, genotype] = compile(node, genotype);
     return n;
@@ -102,14 +102,14 @@ function compileFormUsingNamedParameters(children, genotype) {
   // combine the labels + arguments into an object
 
   if (!(children.length & 1)) {
-    let msg = 'error: odd number of nodes expected: ';
-    msg += ' function name + pairs of label,arg';
+    let msg = `error: odd number of nodes expected: `;
+    msg += ` function name + pairs of label,arg`;
     console.log(msg);
   }
 
   const args = {};
 
-  let fnName;
+  let fnName = undefined;
   [fnName, genotype] = compile(children[0], genotype);
 
   for (let i = 1; i < children.length; i += 2) {
@@ -117,7 +117,7 @@ function compileFormUsingNamedParameters(children, genotype) {
     if (label.type !== NodeType.LABEL) {
       console.log(`error: expecting a label, actual: ${label.value}`);
     }
-    let arg;
+    let arg = undefined;
     [arg, genotype] = compile(children[i + 1], genotype);
     args[label.value] = arg;
   }

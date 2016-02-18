@@ -60,9 +60,7 @@ class CodeMirrorHelpers {
   }
 
   setLine(lineNumber, content) {
-    let lineContent;
-
-    lineContent = this.cmInstance.doc.getLine(lineNumber);
+    const lineContent = this.cmInstance.doc.getLine(lineNumber);
     return this.cmInstance.doc.replaceRange(content, {
       line: lineNumber,
       ch: 0
@@ -117,9 +115,7 @@ class KeyActions {
   }
 
   goLineStart() {
-    let cursorPos;
-
-    cursorPos = this.console.getCursor();
+    const cursorPos = this.console.getCursor();
     return this.console.setCursor({
       line: cursorPos.line,
       ch: this.promptLength()
@@ -127,11 +123,9 @@ class KeyActions {
   }
 
   delGroupBefore() {
-    let cursorStartPos, futurePos;
-
-    cursorStartPos = this.console.getCursor();
-    this.console.moveH(-1, 'group');
-    futurePos = this.console.getCursor().ch;
+    const cursorStartPos = this.console.getCursor();
+    this.console.moveH(-1, `group`);
+    const futurePos = this.console.getCursor().ch;
     this.console.setCursor(cursorStartPos);
     if (futurePos >= this.promptLength()) {
       return this._defaultCommands.delGroupBefore(this.console);
@@ -160,11 +154,9 @@ class KonsoleHistory {
   constructor(options) {
     this.storage = {};
     this.currentIndex = 0;
-    this.historyLabel = 'cs-console-history';
+    this.historyLabel = `cs-console-history`;
     this.cachedHistory = [];
     this.maxEntries = 25;
-
-    let localHistory;
 
     this.options = options;
     if (this.options.historyLabel) {
@@ -175,7 +167,7 @@ class KonsoleHistory {
     }
     if (this.localStorageExists()) {
       this.storage = window.localStorage;
-      localHistory = this.getHistory();
+      const localHistory = this.getHistory();
       if (localHistory) {
         this.cachedHistory = localHistory;
       }
@@ -186,7 +178,7 @@ class KonsoleHistory {
   localStorageExists() {
 
     try {
-      return !!(window['localStorage'] !== null && window.localStorage);
+      return !!(window[`localStorage`] !== null && window.localStorage);
     } catch (_error) {
       const e = _error;
       return false;
@@ -227,7 +219,7 @@ class KonsoleHistory {
     if (this.cachedHistory.length > 0) {
       history = this.cachedHistory[this.currentIndex];
     } else {
-      history = '';
+      history = ``;
     }
     if (this.currentIndex > 0) {
       this.currentIndex--;
@@ -240,12 +232,12 @@ class KonsoleHistory {
       this.currentIndex++;
       return this.cachedHistory[this.currentIndex];
     } else {
-      return '';
+      return ``;
     }
   }
 
   clearHistory() {
-    this.storage[this.historyLabel] = '[]';
+    this.storage[this.historyLabel] = `[]`;
     return this.cachedHistory = [];
   }
 
@@ -261,19 +253,19 @@ class KonsoleHistory {
 export default class Konsole {
   constructor(el, options) {
     this.keyMap = {
-      'Alt-Delete': 'delGroupAfter',
-      'Alt-Left': 'goGroupLeft',
-      'Alt-Right': 'goGroupRight',
-      'Cmd-Right': 'goLineEnd',
-      'Ctrl-E': 'goLineEnd',
-      'Ctrl-Alt-Backspace': 'delGroupAfter',
-      'Delete': 'delCharAfter',
-      'End': 'goLineEnd',
-      'Home': 'goLineStartSmart',
-      'PageDown': 'goPageDown',
-      'PageUp': 'goPageUp',
-      'Right': 'goCharRight',
-      'Ctrl-F': 'goCharRight'
+      'Alt-Delete': `delGroupAfter`,
+      'Alt-Left': `goGroupLeft`,
+      'Alt-Right': `goGroupRight`,
+      'Cmd-Right': `goLineEnd`,
+      'Ctrl-E': `goLineEnd`,
+      'Ctrl-Alt-Backspace': `delGroupAfter`,
+      'Delete': `delCharAfter`,
+      'End': `goLineEnd`,
+      'Home': `goLineStartSmart`,
+      'PageDown': `goPageDown`,
+      'PageUp': `goPageUp`,
+      'Right': `goCharRight`,
+      'Ctrl-F': `goCharRight`
     };
 
     this.outputWidgets = [];
@@ -282,7 +274,7 @@ export default class Konsole {
 
     this.options = options;
     if (!this.options.prompt) {
-      this.options.prompt = '> ';
+      this.options.prompt = `> `;
     }
     this.initCallbacks(options);
     this.initializeKeyMap();
@@ -325,36 +317,36 @@ export default class Konsole {
   }
 
   getAllInput() {
-    let input, lineInput, startingInput;
+    let startingInput;
 
     startingInput = this.currentLine;
-    input = [];
+    const input = [];
     while (startingInput <= this.lineNumber()) {
       if (startingInput === this.currentLine) {
-        lineInput = this.console.doc.getLine(startingInput)
-          .substr(this.promptLength(),
-                  this.console.doc.getLine(this.currentLine).length);
+        const lineInput = this.console.doc.getLine(startingInput)
+                .substr(this.promptLength(),
+                        this.console.doc.getLine(this.currentLine).length);
         input.push(lineInput);
       } else {
         input.push(this.console.doc.getLine(startingInput));
       }
       startingInput++;
     }
-    return input.join('\n');
+    return input.join(`\n`);
   }
 
   reset(welcomeMessage) {
-    let widget, _i, _len, _ref;
+    let _i, _len;
 
     if (welcomeMessage == null) {
       welcomeMessage = true;
     }
     this.submitInProgress = false;
-    this.console.setValue('');
+    this.console.setValue(``);
     this.currentLine = 0;
-    _ref = this.outputWidgets;
+    const _ref = this.outputWidgets;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      widget = _ref[_i];
+      const widget = _ref[_i];
       this.console.removeLineWidget(widget);
     }
     this.outputWidgets = [];
@@ -376,12 +368,12 @@ export default class Konsole {
   }
 
   initConsole(el) {
-    let keyActions, _this = this;
+    let _this = this;
 
     _this = this;
 
-    el.className += ' cs-console cs-console-height cs-console-width';
-    keyActions = new KeyActions(this.options);
+    el.className += ` cs-console cs-console-height cs-console-width`;
+    const keyActions = new KeyActions(this.options);
     this.console = CodeMirror(el, {
       scrollbarStyle: null,
       mode: {
@@ -390,10 +382,10 @@ export default class Konsole {
       },
       gutter: this.options.lineNumbers,
       lineNumbers: this.options.lineNumbers,
-      theme: this.options.theme || 'konsole',
+      theme: this.options.theme || `konsole`,
       indentUnit: 2,
       tabSize: 2,
-      keyMap: 'console',
+      keyMap: `console`,
       lineWrapping: true,
       undoDepth: 0,
       autoFocus: this.options.autoFocus,
@@ -432,12 +424,10 @@ export default class Konsole {
     this.helpers = new CodeMirrorHelpers(this.console);
     keyActions.setConsole(this.console);
 
-    // this.console.on('keydown', this.focusInput);
+    // this.console.on(`keydown`, this.focusInput);
 
-    this.console.on('keydown', (cm, evt) => {
-      let cursorPos;
-
-      cursorPos = this.console.getCursor();
+    this.console.on(`keydown`, (cm, evt) => {
+      const cursorPos = this.console.getCursor();
       if (cursorPos.line === this.lineNumber()) {
         this.storedCursorPosition = this.console.getCursor();
         if (cursorPos.ch < this.promptLength()) {
@@ -453,9 +443,9 @@ export default class Konsole {
     });
 
     setTimeout(() => _this.console.refresh(), 1);
-    this.console.getScrollerElement().className += ' cs-console-height';
+    this.console.getScrollerElement().className += ` cs-console-height`;
     this.console.getWrapperElement().className +=
-      ' cs-console-height cs-console-width';
+      ` cs-console-height cs-console-width`;
     if (this.options.welcomeMessage) {
       this.showWelcomeMessage();
     }
@@ -471,9 +461,7 @@ export default class Konsole {
   }
 
   focusInput(cm, evt) {
-    let cursorPos;
-
-    cursorPos = this.console.getCursor();
+    const cursorPos = this.console.getCursor();
     if (cursorPos.line === this.lineNumber()) {
       this.storedCursorPosition = this.console.getCursor();
       if (cursorPos.ch < this.promptLength()) {
@@ -497,10 +485,8 @@ export default class Konsole {
   }
 
   showWelcomeMessage() {
-    let line;
-
-    this.console.setValue('');
-    line = {
+    this.console.setValue(``);
+    const line = {
       content: this.options.welcomeMessage
     };
     return this.buildWidget(1, line, {
@@ -514,9 +500,7 @@ export default class Konsole {
   }
 
   submit() {
-    let input;
-
-    input = this.getAllInput();
+    const input = this.getAllInput();
     // todo: isg: the undefined was void 0
     if ((this.options.commandValidate === undefined ||
          this.options.commandValidate(input)) && !this.submitInProgress) {
@@ -558,25 +542,25 @@ export default class Konsole {
   }
 
   renderResponse(responseLines) {
-    let line, lineNumber, _i, _len;
+    let _i, _len;
 
     if (!responseLines) {
       this.moveInputForward();
       this.submitInProgress = false;
       return undefined;
     }
-    lineNumber = this.lineNumber();
+    const lineNumber = this.lineNumber();
     if (responseLines.constructor === Array) {
       for (_i = 0, _len = responseLines.length; _i < _len; _i++) {
-        line = responseLines[_i];
+        const line = responseLines[_i];
         this.buildWidget(lineNumber, line);
       }
     } else {
       this.buildWidget(lineNumber, responseLines);
     }
     this.buildWidget(lineNumber, {
-      content: document.createElement('p'),
-      className: 'cs-console-output-spacer bottom'
+      content: document.createElement(`p`),
+      className: `cs-console-output-spacer bottom`
     });
     this.moveInputForward();
     return this.submitInProgress = false;
@@ -584,39 +568,39 @@ export default class Konsole {
 
   htmlEscape(string) {
     return (`${string}`)
-      .replace(/&(?!\w+;|#\d+;|#x[\da-f]+;)/gi, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;')
-      .replace(/\//g, '&#x2F;');
+      .replace(/&(?!\w+;|#\d+;|#x[\da-f]+;)/gi, `&amp;`)
+      .replace(/</g, `&lt;`)
+      .replace(/>/g, `&gt;`)
+      .replace(/"/g, `&quot;`)
+      .replace(/`/g, `&#x27;`)
+      .replace(/\//g, `&#x2F;`);
   }
 
   buildWidget(lineNumber, responseLine, widgetOptions) {
-    let widgetContent, widgetElement;
+    let widgetElement;
     const _this = this;
 
     if (widgetOptions == null) {
       widgetOptions = {};
     }
-    widgetContent = responseLine ? responseLine.content : '';
+    const widgetContent = responseLine ? responseLine.content : ``;
     if (this.isHtmlElement(widgetContent)) {
       widgetElement = widgetContent;
     } else {
-      widgetElement = document.createElement('div');
+      widgetElement = document.createElement(`div`);
       widgetElement.innerHTML =
         this.formatWidgetElementText(this.htmlEscape(widgetContent));
-      widgetElement.className = 'cs-console-output-element';
-      widgetElement.style.whiteSpace = 'pre-wrap';
+      widgetElement.className = `cs-console-output-element`;
+      widgetElement.style.whiteSpace = `pre-wrap`;
     }
     // todo: isg: undefined was void 0
     if (responseLine != null ? responseLine.className : undefined) {
       widgetElement.className += ` ${responseLine.className}`;
     }
-    if (Object.keys(widgetOptions).indexOf('coverGutter') < 0) {
+    if (Object.keys(widgetOptions).indexOf(`coverGutter`) < 0) {
       widgetOptions.coverGutter = false;
     }
-    if (Object.keys(widgetOptions).indexOf('noHScroll') < 0) {
+    if (Object.keys(widgetOptions).indexOf(`noHScroll`) < 0) {
       widgetOptions.noHScroll = true;
     }
     this.outputWidgets.push(this.console.addLineWidget(lineNumber,
@@ -633,7 +617,7 @@ export default class Konsole {
   }
 
   formatWidgetElementText(message) {
-    return message.replace(/^\s/, '');
+    return message.replace(/^\s/, ``);
   }
 
   moveInputForward() {

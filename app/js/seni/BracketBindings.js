@@ -21,13 +21,11 @@ import Interp from './Interp';
 
 const publicBindings = [
   new PublicBinding(
-    'identity',
-    {
-      description: 'basic identity function',
-      args: [['value', 'the value to return']],
-      returns: 'the given value'
-    },
-    {value: 42},
+    `identity`,
+    { description: `basic identity function`,
+      args: [[`value`, `the value to return`]],
+      returns: `the given value` },
+    { value: 42 },
     self => params => {
       const {value} = self.mergeWithDefaults(params);
       return value;
@@ -35,14 +33,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'int',
-    {
-      description: 'generate an integer',
-      args: [['min', ''],
-             ['max', '']],
-      returns: 'an integer in the range min..max-1'
-    },
-    {min: 0, max: 100},
+    `int`,
+    { description: `generate an integer`,
+      args: [[`min`, ``],
+             [`max`, ``]],
+      returns: `an integer in the range min..max-1` },
+    { min: 0, max: 100 },
     // rng is a PseudoRandom returning values in the range 0..1
     (self, rng) => params => {
       const {min, max} = self.mergeWithDefaults(params);
@@ -51,14 +47,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'scalar',
-    {
-      description: 'generate an scalar',
-      args: [['min', ''],
-             ['max', '']],
-      returns: 'an scalar in the range min..max'
-    },
-    {min: 0.0, max: 1.0},
+    `scalar`,
+    { description: `generate an scalar`,
+      args: [[`min`, ``],
+             [`max`, ``]],
+      returns: `an scalar in the range min..max` },
+    { min: 0.0, max: 1.0 },
     // rng is a PseudoRandom returning values in the range 0..1
     (self, rng) => params => {
       const {min, max} = self.mergeWithDefaults(params);
@@ -67,49 +61,42 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'vector',
-    {
-      description: 'generate a 2d vector',
-      args: [['min', ''],
-             ['max', '']],
-      returns: 'a 2d vector with each element in the range min..max'
-    },
-    {min: 0.0, max: 1000.0},
+    `vector`,
+    { description: `generate a 2d vector`,
+      args: [[`min`, ``],
+             [`max`, ``]],
+      returns: `a 2d vector with each element in the range min..max` },
+    { min: 0.0, max: 1000.0 },
     (self, rng) => params => {
       const {min, max} = self.mergeWithDefaults(params);
       const x = Interp.interpolate(min, max, rng());
       const y = Interp.interpolate(min, max, rng());
-      return ['list', x, y];
+      return [`list`, x, y];
     }
   ),
 
   new PublicBinding(
-    'select',
-    {
-      description: 'selects a value from a vector',
-      args: [['from', 'a vector of values']],
-      returns: 'one of the values in the from vector'
-    },
-    {from: []},
+    `select`,
+    { description: `selects a value from a vector`,
+      args: [[`from`, `a vector of values`]],
+      returns: `one of the values in the from vector` },
+    { from: [] },
     (self, rng) => params => {
       const {from} = self.mergeWithDefaults(params);
       if (from instanceof Array && from.length > 0) {
         const index = Number.parseInt(from.length * rng(), 10);
         return from[index];
       }
-      console.log('select\'s from parameter should be a list');
+      console.log(`select\'s from parameter should be a list`);
       return undefined;
     }
   ),
 
   new PublicBinding(
-    'col',
-    {
-      description: 'generates a colour',
-      args: [['alpha', 'the alpha value to use']],
-      returns: `a colour`
-    }
-    ,
+    `col`,
+    { description: `generates a colour`,
+      args: [[`alpha`, `the alpha value to use`]],
+      returns: `a colour` },
     {},
     (self, rng) => params => {
       const r = rng(), g = rng(), b = rng();
@@ -117,22 +104,20 @@ const publicBindings = [
       if (params.alpha) {
         alpha = params.alpha;
       }
-      return ['col/rgb', {r, g, b, alpha}];
+      return [`col/rgb`, {r, g, b, alpha}];
     }
   ),
 
   new PublicBinding(
-    'testPlus',
-    {
-      description: '[FOR TESTING ONLY] returns + character'
-    },
+    `testPlus`,
+    { description: `[FOR TESTING ONLY] returns + character` },
     {},
     // rng is a PseudoRandom returning values in the range 0..1
-    () => () => '+'
+    () => () => `+`
   )
 ];
 
 export default {
-  publicBindingType: 'binding',
+  publicBindingType: `binding`,
   publicBindings
 };

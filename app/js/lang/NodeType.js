@@ -17,20 +17,20 @@
  */
 
 const NodeType = {
-  LIST: Symbol('LIST'),
-  VECTOR: Symbol('VECTOR'),
-  INT: Symbol('INT'),
-  FLOAT: Symbol('FLOAT'),
-  NAME: Symbol('NAME'),
-  LABEL: Symbol('LABEL'),
-  STRING: Symbol('STRING'),
-  BOOLEAN: Symbol('BOOLEAN'),
-  LAMBDA: Symbol('LAMBDA'),         // todo: remove this??
-  SPECIAL: Symbol('SPECIAL'),       // todo: remove this??
-  COLOUR: Symbol('COLOUR'),         // todo: remove this??
-  WHITESPACE: Symbol('WHITESPACE'), // only used by front-end ast
-  COMMENT: Symbol('COMMENT'),       // only used by front-end ast
-  NULL: Symbol('NULL')
+  LIST: Symbol(`LIST`),
+  VECTOR: Symbol(`VECTOR`),
+  INT: Symbol(`INT`),
+  FLOAT: Symbol(`FLOAT`),
+  NAME: Symbol(`NAME`),
+  LABEL: Symbol(`LABEL`),
+  STRING: Symbol(`STRING`),
+  BOOLEAN: Symbol(`BOOLEAN`),
+  LAMBDA: Symbol(`LAMBDA`),         // todo: remove this??
+  SPECIAL: Symbol(`SPECIAL`),       // todo: remove this??
+  COLOUR: Symbol(`COLOUR`),         // todo: remove this??
+  WHITESPACE: Symbol(`WHITESPACE`), // only used by front-end ast
+  COMMENT: Symbol(`COMMENT`),       // only used by front-end ast
+  NULL: Symbol(`NULL`)
 };
 
 export default NodeType;

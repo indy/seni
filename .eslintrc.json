@@ -1,4 +1,8 @@
 {
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
   "globals": {
     "console": true,
     "CodeMirror": false,
@@ -7,30 +11,8 @@
   "settings": {
     "ecmascript": 6
   },
-  "ecmaFeatures": {
-    "modules": true,
-    "classes": true,
-    "arrowFunctions": true,
-    "binaryLiterals": true,
-    "blockBindings": true,
-    "defaultParams": true,
-    "destructuring": true,
-    "forOf": true,
-    "generators": true,
-    "objectLiteralComputedProperties": true,
-    "objectLiteralDuplicateProperties": true,
-    "objectLiteralShorthandMethods": true,
-    "objectLiteralShorthandProperties": true,
-    "octalLiterals": true,
-    "regexUFlag": true,
-    "regexYFlag": true,
-    "spread": true,
-    "superInFunctions": true,
-    "templateStrings": true,
-    "unicodeCodePointEscapes": true,
-    "globalReturn": true
-  },
   "env": {
+    "es6": true,
     "mocha": true,
     "jasmine": true,
     "node": true,
@@ -187,7 +169,7 @@
     "guard-for-in": 0,
     "handle-callback-err": 0,
     "id-length": 0,
-    "indent": [2, 2],
+    "indent": [2, 2, {"VariableDeclarator": 2}],
     "init-declarations": 0,
     "jsx-quotes": [0, "prefer-double"],
     "key-spacing": [2, {
@@ -215,7 +197,7 @@
     "prefer-reflect": 0,
     "prefer-template": 2,
     "quote-props": 0,
-    "quotes": [1, "single"],
+    "quotes": [1, "backtick", "avoid-escape"],
     "radix": [2, "always"],
     "id-match": 0,
     "require-jsdoc": 0,
@@ -223,8 +205,7 @@
     "semi": 0,
     "semi-spacing": [0, {"before": false, "after": true}],
     "sort-vars": 0,
-    "space-after-keywords": [1, "always"],
-    "space-before-keywords": [1, "always"],
+    "keyword-spacing": [1, {"before": true, "after": true}],
     "space-before-blocks": [1, "always"],
     "space-before-function-paren": [2, "never"],
     "space-in-parens": [1, "never"],

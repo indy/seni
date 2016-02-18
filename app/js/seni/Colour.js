@@ -49,15 +49,15 @@ const S = 1;
 const V = 2;
 
 function format(colour) {
-  return colour.get('format');
+  return colour.get(`format`);
 }
 
 function element(colour, index) {
-  return colour.get('elements').get(index);
+  return colour.get(`elements`).get(index);
 }
 
 function elementArray(colour) {
-  return colour.get('elements').toArray();
+  return colour.get(`elements`).toArray();
 }
 
 // format is one of the Format constants, val is an array
@@ -70,19 +70,19 @@ function construct(fmt, elements) {
 }
 
 function getComponent(colour, component) {
-  return colour.getIn(['elements', component]);
+  return colour.getIn([`elements`, component]);
 }
 
 function setComponent(colour, component, value) {
-  return colour.setIn(['elements', component], value);
+  return colour.setIn([`elements`, component], value);
 }
 
 function getAlpha(colour) {
-  return colour.getIn(['elements', ALPHA]);
+  return colour.getIn([`elements`, ALPHA]);
 }
 
 function setAlpha(colour, alpha) {
-  return colour.setIn(['elements', ALPHA], alpha);
+  return colour.setIn([`elements`, ALPHA], alpha);
 }
 
 //  http://www.brucelindbloom.com/index.html?Equations.html
@@ -203,7 +203,7 @@ function rgbhsl(c) {
 
   const col = construct(Format.HSL,
                         [h, saturation, lightness, element(c, ALPHA)]);
-  return col.set('validHue', validHue);
+  return col.set(`validHue`, validHue);
 }
 
 function rgbhsv(c) {
@@ -227,11 +227,11 @@ function rgbhsv(c) {
   }
 
   const col = construct(Format.HSV, [h, saturation, value, element(c, ALPHA)]);
-  return col.set('validHue', validHue);
+  return col.set(`validHue`, validHue);
 }
 
 function chmrgb(c, chroma, h, m) {
-  if (c.get('validHue') === undefined) {
+  if (c.get(`validHue`) === undefined) {
     return construct(Format.RGB, [m, m, m, element(c, ALPHA)]);
   }
 
@@ -277,7 +277,7 @@ function hslrgb(c) {
   const chroma = (1.0 - Math.abs((2.0 * l) - 1.0)) * s;
   const m = l - (0.5 * chroma);
 
-  const col = c.set('validHue', true);
+  const col = c.set(`validHue`, true);
 
   return chmrgb(col, chroma, h, m);
 }
@@ -374,10 +374,10 @@ function addAngleToHSL(c, delta) {
   const d = cloneAs(c, Format.HSL);
 
   // rotate the hue by the given delta
-  return d.updateIn(['elements', H], h => (h + delta) % 360.0);
+  return d.updateIn([`elements`, H], h => (h + delta) % 360.0);
 }
 
-// Return the 2 colours either side of this that are 'ang' degrees away
+// Return the 2 colours either side of this that are `ang` degrees away
 function pair(c, ang) {
   const ret = [addAngleToHSL(c, -ang), addAngleToHSL(c, ang)];
   return ret;
@@ -390,16 +390,16 @@ function complementary(c) {
 }
 
 // Returns the 2 colours next to a complementary colour.
-// e.g. if the input colour is at the 12 o'clock position,
-// this will return the 5 o'clock and 7 o'clock colours
+// e.g. if the input colour is at the 12 o`clock position,
+// this will return the 5 o`clock and 7 o`clock colours
 //
 function splitComplementary(c) {
   return pair(addAngleToHSL(c, sComplimentaryAngle), sUnitAngle);
 }
 
 // Returns the adjacent colours.
-// e.g. given a colour at 3 o'clock this will return the
-// colours at 2 o'clock and 4 o'clock
+// e.g. given a colour at 3 o`clock this will return the
+// colours at 2 o`clock and 4 o`clock
 //
 function analagous(c) {
   return pair(c, sUnitAngle);
@@ -407,7 +407,7 @@ function analagous(c) {
 
 // Returns the 2 colours that will result in all 3 colours
 // being evenly spaced around the colour wheel.
-// e.g. given 12 o'clock this will return 4 o'clock and 8 o'clock
+// e.g. given 12 o`clock this will return 4 o`clock and 8 o`clock
 //
 function triad(c) {
   return pair(c, sTriadAngle);
@@ -464,8 +464,8 @@ const proceduralFnPresetValues = {
            d: [0.0, 0.25, 0.25]}
 };
 
-const proceduralFnPresets = ['rainbow', 'chrome', 'robocop', 'transformers',
-                             'knight-rider', 'hotline-miami', 'mars'];
+const proceduralFnPresets = [`rainbow`, `chrome`, `robocop`, `transformers`,
+                             `knight-rider`, `hotline-miami`, `mars`];
 
 // from http://iquilezles.org/www/articles/palettes/palettes.htm
 function proceduralFn(preset, a, b, c, d, alpha) {

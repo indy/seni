@@ -33,7 +33,7 @@ export function createInitialState() {
   return Immutable.fromJS({
     // the resolution of the high res image
     highResolution: [2048, 2048],
-    placeholder: 'img/spinner.gif',
+    placeholder: `img/spinner.gif`,
     populationSize: 24,
     mutationRate: 0.1,
 
@@ -52,19 +52,19 @@ export function createStore(initialState) {
 
   function reducer(state, action) {
     switch (action.type) {
-    case 'SET_MODE':
+    case `SET_MODE`:
       return actionSetMode(state, action);
-    case 'SET_SCRIPT':
+    case `SET_SCRIPT`:
       return actionSetScript(state, action);
-    case 'SET_SELECTED_INDICES':
+    case `SET_SELECTED_INDICES`:
       return actionSetSelectedIndices(state, action);
-    case 'INITIAL_GENERATION':
+    case `INITIAL_GENERATION`:
       return actionInitialGeneration(state);
-    case 'NEXT_GENERATION':
+    case `NEXT_GENERATION`:
       return actionNextGeneration(state, action);
-    case 'SHUFFLE_GENERATION':
+    case `SHUFFLE_GENERATION`:
       return actionShuffleGeneration(state, action);
-    case 'SET_STATE':
+    case `SET_STATE`:
       return action.state;
     default:
       return state;
@@ -86,30 +86,30 @@ export function createStore(initialState) {
 }
 
 function actionSetMode(state, { mode }) {
-  return state.set('currentMode', mode);
+  return state.set(`currentMode`, mode);
 }
 
 function actionSetScript(state, { script }) {
   return state
-    .set('script', script)
-    .set('scriptHash', Util.hashCode(script));
+    .set(`script`, script)
+    .set(`scriptHash`, Util.hashCode(script));
 }
 
 function actionSetSelectedIndices(state, { selectedIndices }) {
   const si = selectedIndices || new Immutable.List();
-  return state.set('selectedIndices', si);
+  return state.set(`selectedIndices`, si);
 }
 
 // todo: should populationSize be passed in the action?
 function actionInitialGeneration(state) {
 
-  const script = state.get('script');
+  const script = state.get(`script`);
   const { traits } = buildTraits(script);
 
   let genotype;
   const random = (new Date()).toGMTString();
   const genotypes = [];
-  const populationSize = state.get('populationSize');
+  const populationSize = state.get(`populationSize`);
 
   for (let i = 0; i < populationSize; i++) {
     if (i === 0) {
@@ -121,55 +121,55 @@ function actionInitialGeneration(state) {
   }
 
   return state
-    .set('genotypes', new Immutable.List(genotypes))
-    .set('previouslySelectedGenotypes', new Immutable.List())
-    .set('selectedIndices', new Immutable.List());
+    .set(`genotypes`, new Immutable.List(genotypes))
+    .set(`previouslySelectedGenotypes`, new Immutable.List())
+    .set(`selectedIndices`, new Immutable.List());
 }
 
 function actionShuffleGeneration(state, { rng }) {
 
-  const prev = state.get('previouslySelectedGenotypes');
+  const prev = state.get(`previouslySelectedGenotypes`);
 
   if (prev.size === 0) {
     return actionInitialGeneration(state);
   }
 
-  const script = state.get('script');
+  const script = state.get(`script`);
   const { traits } = buildTraits(script);
   const genotypes = Genetic.nextGeneration(prev,
-                                           state.get('populationSize'),
-                                           state.get('mutationRate'),
+                                           state.get(`populationSize`),
+                                           state.get(`mutationRate`),
                                            traits,
                                            rng);
   return state
-    .set('genotypes', genotypes)
-    .set('selectedIndices', new Immutable.List());
+    .set(`genotypes`, genotypes)
+    .set(`selectedIndices`, new Immutable.List());
 }
 
 function actionNextGeneration(state, { rng }) {
 
 
-  const pg = state.get('genotypes');
-  const selectedIndices = state.get('selectedIndices');
+  const pg = state.get(`genotypes`);
+  const selectedIndices = state.get(`selectedIndices`);
   let selectedGenos = new Immutable.List();
   for (let i = 0; i < selectedIndices.size; i++) {
     selectedGenos = selectedGenos.push(pg.get(selectedIndices.get(i)));
   }
 
-  const script = state.get('script');
+  const script = state.get(`script`);
   const { traits } = buildTraits(script);
 
   const genotypes = Genetic.nextGeneration(selectedGenos,
-                                           state.get('populationSize'),
-                                           state.get('mutationRate'),
+                                           state.get(`populationSize`),
+                                           state.get(`mutationRate`),
                                            traits,
                                            rng);
 
   const previouslySelectedGenotypes = genotypes.slice(0, selectedIndices.size);
 
-  return state.set('genotypes', genotypes)
-    .set('previouslySelectedGenotypes', previouslySelectedGenotypes)
-    .set('selectedIndices', new Immutable.List());
+  return state.set(`genotypes`, genotypes)
+    .set(`previouslySelectedGenotypes`, previouslySelectedGenotypes)
+    .set(`selectedIndices`, new Immutable.List());
 }
 
 

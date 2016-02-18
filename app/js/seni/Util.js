@@ -20,10 +20,10 @@ export default {
   // from http://werxltd.com/wp/2010/05/13/ (cont'd next line)
   // javascript-implementation-of-javas-string-hashcode-method/
   hashCode: string => {
-    let hash = 0, i, chr, len;
+    let hash = 0, i, len;
     if (string.length === 0) return hash;
     for (i = 0, len = string.length; i < len; i++) {
-      chr = string.charCodeAt(i);
+      const chr = string.charCodeAt(i);
       hash = ((hash << 5) - hash) + chr;
       hash |= 0; // Convert to 32bit integer
     }

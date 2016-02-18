@@ -118,19 +118,15 @@ function buildRange(seedVal, min, max) {
 
 const publicBindings = [
   new PublicBinding(
-    'prng/perlin-signed',
-    {
-      description: '',
-      args: [['x', '1.0'],
-             ['y', '1.0'],
-             ['z', '1.0']],
-      returns: `returns perlin numbers in the range -1..1`
-    },
-    {
-      x: 1.0,
+    `prng/perlin-signed`,
+    { description: ``,
+      args: [[`x`, `1.0`],
+             [`y`, `1.0`],
+             [`z`, `1.0`]],
+      returns: `returns perlin numbers in the range -1..1` },
+    { x: 1.0,
       y: 1.0,
-      z: 1.0
-    },
+      z: 1.0 },
     self => params => {
       const {x, y, z} = self.mergeWithDefaults(params);
       return noise(x, y, z);
@@ -138,19 +134,15 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'prng/perlin-unsigned',
-    {
-      description: '',
-      args: [['x', '1.0'],
-             ['y', '1.0'],
-             ['z', '1.0']],
-      returns: `perlin numbers in the range 0..1`
-    },
-    {
-      x: 1.0,
+    `prng/perlin-unsigned`,
+    { description: ``,
+      args: [[`x`, `1.0`],
+             [`y`, `1.0`],
+             [`z`, `1.0`]],
+      returns: `perlin numbers in the range 0..1` },
+    { x: 1.0,
       y: 1.0,
-      z: 1.0
-    },
+      z: 1.0 },
     self => params => {
       const {x, y, z} = self.mergeWithDefaults(params);
       const v = noise(x, y, z);
@@ -159,19 +151,16 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'prng/range',
-    {
-      description: '',
-      args: [['seed', 'shabba'],
-             ['min', '0'],
-             ['max', '1']],
-      returns: `a function that generates a random number in the range min..max`
-    },
-    {
-      seed: 'shabba',
+    `prng/range`,
+    { description: ``,
+      args: [[`seed`, `shabba`],
+             [`min`, `0`],
+             [`max`, `1`]],
+      returns:
+      `a function that generates a random number in the range min..max` },
+    { seed: `shabba`,
       min: 0,
-      max: 1
-    },
+      max: 1 },
     self => params => {
       const {seed, min, max} = self.mergeWithDefaults(params);
       return buildRange(seed, min, max);
@@ -180,7 +169,7 @@ const publicBindings = [
 ];
 
 export default {
-  publicBindingType: 'binding',
+  publicBindingType: `binding`,
   publicBindings,
   buildUnsigned,
   buildSigned,

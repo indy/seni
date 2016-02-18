@@ -21,7 +21,7 @@ export function addDefaultCommands(env, commander) {
 
   const ls = {
     canHandle(command) {
-      return command === 'ls';
+      return command === `ls`;
     },
 
     execute() {
@@ -31,13 +31,13 @@ export function addDefaultCommands(env, commander) {
       for (let k = keys.next(); k.done === false; k = keys.next()) {
         res.push(k.value);
       }
-      return res.sort().join('\n');
+      return res.sort().join(`\n`);
     }
   };
 
   const title = {
     canHandle(command) {
-      return command === 'title';
+      return command === `title`;
     },
 
     execute() {
@@ -47,7 +47,7 @@ export function addDefaultCommands(env, commander) {
 
   const help = {
     canHandle(command) {
-      return command === 'help';
+      return command === `help`;
     },
 
     execute(_, [name, showDefaultArgs]) {
@@ -56,7 +56,7 @@ export function addDefaultCommands(env, commander) {
 
       const binding = v.pb;       // publicBinding
       if (!binding) {
-        return '';
+        return ``;
       }
 
       function makeDoc(name, {description, args, returns}) {
@@ -78,7 +78,7 @@ export function addDefaultCommands(env, commander) {
       let res = makeDoc(name, binding.doc);
 
       if (showDefaultArgs) {
-        const args = JSON.stringify(binding.defaults, null, ' ');
+        const args = JSON.stringify(binding.defaults, null, ` `);
         res = `${res}\ndefault arguments ${args}`;
       }
       return res;

@@ -29,15 +29,13 @@ function useKonsole(konsole) {
 
 const publicBindings = [
   new PublicBinding(
-    'print',
-    {
-      description: `(print 'hi' foo) => hi 42`,
+    `print`,
+    { description: `(print 'hi' foo) => hi 42`,
       args: [],
-      returns: `-`
-    },
+      returns: `-` },
     {},
     _self => (env, [_, ...msgs]) => {
-      const printMsg = msgs.reduce((a, b) => `${a} ${evaluate(env, b)[1]}`, '');
+      const printMsg = msgs.reduce((a, b) => `${a} ${evaluate(env, b)[1]}`, ``);
       if (gKonsole) {
         gKonsole.log(printMsg.trim());
       }
@@ -46,12 +44,10 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'log',
-    {
-      description: `(log 'hi' foo) => hi <foo:42>`,
+    `log`,
+    { description: `(log 'hi' foo) => hi <foo:42>`,
       args: [],
-      returns: `-`
-    },
+      returns: `-` },
     {},
     _self => (env, [_, ...msgs]) => {
       let firstError = NO_ERROR;
@@ -60,11 +56,11 @@ const publicBindings = [
         if (err && firstError === NO_ERROR) {
           firstError = err;
         }
-        if (typeof b === 'string' && b !== TRUE_STRING && b !== FALSE_STRING) {
+        if (typeof b === `string` && b !== TRUE_STRING && b !== FALSE_STRING) {
           return `${a} < ${b}:${res}>`;
         }
         return `${a} ${res}`;
-      }, '');
+      }, ``);
       if (gKonsole) {
         gKonsole.log(message);
       }
@@ -74,7 +70,7 @@ const publicBindings = [
 ];
 
 export default {
-  publicBindingType: 'special',
+  publicBindingType: `special`,
   publicBindings,
   useKonsole
 };

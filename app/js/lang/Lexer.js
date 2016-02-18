@@ -29,15 +29,15 @@ function characterSet(characters) {
   return s;
 }
 
-const sWhitespaceSet = characterSet(' \t\n,');
-const sDigitSet = characterSet('0123456789');
+const sWhitespaceSet = characterSet(` \t\n,`);
+const sDigitSet = characterSet(`0123456789`);
 const sAlphaSet =
         characterSet(
-          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=');
-const sSymbolSet = characterSet('-!@#$%^&*<>?');
+          `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=`);
+const sSymbolSet = characterSet(`-!@#$%^&*<>?`);
 
-const MINUS = '-';
-const PERIOD = '.';
+const MINUS = `-`;
+const PERIOD = `.`;
 
 function isWhitespace(character) {
   return sWhitespaceSet.has(character);
@@ -56,43 +56,43 @@ function isSymbol(character) {
 }
 
 function isListStart(character) {
-  return character === '(';
+  return character === `(`;
 }
 
 function isListEnd(character) {
-  return character === ')';
+  return character === `)`;
 }
 
 function isVectorStart(character) {
-  return character === '[';
+  return character === `[`;
 }
 
 function isVectorEnd(character) {
-  return character === ']';
+  return character === `]`;
 }
 
 function isAlterableStart(character) {
-  return character === '{';
+  return character === `{`;
 }
 
 function isAlterableEnd(character) {
-  return character === '}';
+  return character === `}`;
 }
 
 function isQuotedString(character) {
-  return character === '"';
+  return character === `"`;
 }
 
 function isQuoteAbbreviation(character) {
-  return character === '\'';
+  return character === `\``;
 }
 
 function isComment(character) {
-  return character === ';';
+  return character === `;`;
 }
 
 function isNewline(character) {
-  return character === '\n';
+  return character === `\n`;
 }
 
 function isLabel(s) {
@@ -103,7 +103,7 @@ function isLabel(s) {
       break;
     }
   }
-  return i < s.length && s[i] === ':';
+  return i < s.length && s[i] === `:`;
 }
 
 // is there a period in the stream of characters before we get to whitespace
@@ -179,7 +179,7 @@ function consumeAlterableEnd(s) {
 
 function consumeString(s) {
   let val = s.substring(1); // skip first \"
-  const nextQuote = val.indexOf('\"');
+  const nextQuote = val.indexOf(`\"`);
   val = val.substring(0, nextQuote);
 
   const token = new Token(TokenType.STRING, val);

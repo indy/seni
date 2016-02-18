@@ -24,26 +24,27 @@ const logToConsole = false;
 function seniModeAsString(mode) {
   switch (mode) {
   case SeniMode.gallery:
-    return 'gallery';
+    return `gallery`;
   case SeniMode.edit:
-    return 'edit';
+    return `edit`;
   case SeniMode.evolve:
-    return 'evolve';
+    return `evolve`;
   default:
-    return 'error unknown SeniMode value';
+    return `error unknown SeniMode value`;
   }
 }
 
 function buildState(appState) {
   const state = appState.toJS();
-  const uri = `#${seniModeAsString(appState.get('currentMode'))}`;
+  const currentMode = appState.get(`currentMode`);
+  const uri = `#${seniModeAsString(currentMode)}`;
   return [state, uri];
 }
 
 function pushState(appState) {
   const [state, uri] = buildState(appState);
   if (logToConsole) {
-    console.log('historyPushState', state);
+    console.log(`historyPushState`, state);
   }
   history.pushState(state, null, uri);
 }
@@ -51,14 +52,14 @@ function pushState(appState) {
 function replaceState(appState) {
   const [state, uri] = buildState(appState);
   if (logToConsole) {
-    console.log('historyReplace', state);
+    console.log(`historyReplace`, state);
   }
   history.replaceState(state, null, uri);
 }
 
 function restoreState(state) {
   if (logToConsole) {
-    console.log('historyRestore', state);
+    console.log(`historyRestore`, state);
   }
   return Immutable.fromJS(state);
 }

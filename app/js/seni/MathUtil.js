@@ -110,21 +110,21 @@ function clamp(a, min, max) {
 
 const publicBindings = [
   new PublicBinding(
-    'math/PI',
+    `math/PI`,
     {},
     {},
     () => PI
   ),
 
   new PublicBinding(
-    'math/TAU',
+    `math/TAU`,
     {},
     {},
     () => TAU
   ),
 
   new PublicBinding(
-    'math/sin',
+    `math/sin`,
     {},
     {angle: 0},
     self => params => {
@@ -134,7 +134,7 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    'math/cos',
+    `math/cos`,
     {},
     {angle: 0},
     self => params => {
@@ -143,15 +143,13 @@ const publicBindings = [
     }
   ),
   new PublicBinding(
-    'math/atan2',
-    {
-      description: `Calculates the arc tangent of the two variables y and x.
+    `math/atan2`,
+    { description: `Calculates the arc tangent of the two variables y and x.
 It is similar to calculating the arc tangent of y / x, except that the signs of
 both arguments are used to determine the quadrant of the result`,
-      args: [['x', ''],
-             ['y', '']]
-    },
-    {x: 0, y: 0},
+      args: [[`x`, ``],
+             [`y`, ``]] },
+    { x: 0, y: 0 },
     self => params => {
       const {x, y} = self.mergeWithDefaults(params);
       return Math.atan2(y, x); // this is correct, y is given before x
@@ -159,9 +157,9 @@ both arguments are used to determine the quadrant of the result`,
   ),
 
   new PublicBinding(
-    'math/distance-2d',
+    `math/distance-2d`,
     {},
-    {x1: 0, y1: 0, x2: 1, y2: 1},
+    { x1: 0, y1: 0, x2: 1, y2: 1 },
     self => params => {
       const {x1, y1, x2, y2} = self.mergeWithDefaults(params);
       return distance2d([x1, y1], [x2, y2]);
@@ -169,14 +167,12 @@ both arguments are used to determine the quadrant of the result`,
   ),
 
   new PublicBinding(
-    'math/clamp',
-    {
-      description: 'clamps a value between min and max',
-      args: [['val', '0'],
-             ['min', ''],
-             ['max', '']]
-    },
-    {val: 0, min: 0, max: 1},
+    `math/clamp`,
+    { description: `clamps a value between min and max`,
+      args: [[`val`, `0`],
+             [`min`, ``],
+             [`max`, ``]] },
+    { val: 0, min: 0, max: 1 },
     self => params => {
       const {val, min, max} = self.mergeWithDefaults(params);
       return clamp(val, min, max);
@@ -184,13 +180,11 @@ both arguments are used to determine the quadrant of the result`,
   ),
 
   new PublicBinding(
-    'degrees->radians',
-    {
-      description:
+    `degrees->radians`,
+    { description:
       `A helper function that converts angles in degrees to radians`,
-      args: [['angle', '0.0']]
-    },
-    {angle: 0.0},
+      args: [[`angle`, `0.0`]] },
+    { angle: 0.0 },
     self => params => {
       const {angle} = self.mergeWithDefaults(params);
       return degreesToRadians(angle);
@@ -198,13 +192,11 @@ both arguments are used to determine the quadrant of the result`,
   ),
 
   new PublicBinding(
-    'radians->degrees',
-    {
-      description:
+    `radians->degrees`,
+    { description:
       `A helper function that converts angles in radians to degrees`,
-      args: [['angle', '0.0']]
-    },
-    {angle: 0.0},
+      args: [[`angle`, `0.0`]] },
+    { angle: 0.0 },
     self => params => {
       const {angle} = self.mergeWithDefaults(params);
       return radiansToDegrees(angle);
@@ -213,7 +205,7 @@ both arguments are used to determine the quadrant of the result`,
 ];
 
 export default {
-  publicBindingType: 'binding',
+  publicBindingType: `binding`,
   publicBindings,
 
   stepsInclusive: (start, end, num) => {
