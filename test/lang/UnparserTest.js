@@ -24,7 +24,7 @@ import Compiler from '../../app/js/lang/Compiler';
 
 import {expect} from 'chai';
 
-describe('Unparser', () => {
+describe(`Unparser`, () => {
 
   function compileAst(form) {
     const ts = Lexer.tokenise(form).tokens;
@@ -54,36 +54,36 @@ describe('Unparser', () => {
     expect(simpleUnparse(form)).to.equal(form);
   }
 
-  it('unparse', () => {
-    expectToUnparse('4');
-    expectToUnparse('4.2');
-    expectToUnparse('hello');
-    expectToUnparse('"some string"');
-    expectToUnparse('label:');
-    expectToUnparse('true');
-    expectToUnparse('4 2 0');
-    expectToUnparse('(1)');
-    expectToUnparse('(foo 1)');
-    expectToUnparse('(foo "hello")');
-    expectToUnparse('(list "string")');
-    expectToUnparse('(list (list "a"))');
-    expectToUnparse('(fn (bar x: 3) (+ x x))');
-    expectToUnparse('(quote ("hello"))');
-    expectToUnparse('\'bye');
-    expectToUnparse('\'("hello")');
-    expectToUnparse('(hello \'(a b c) \'(1 2 3) \'(a: b: c:))');
+  it(`unparse`, () => {
+    expectToUnparse(`4`);
+    expectToUnparse(`4.2`);
+    expectToUnparse(`hello`);
+    expectToUnparse(`"some string"`);
+    expectToUnparse(`label:`);
+    expectToUnparse(`true`);
+    expectToUnparse(`4 2 0`);
+    expectToUnparse(`(1)`);
+    expectToUnparse(`(foo 1)`);
+    expectToUnparse(`(foo "hello")`);
+    expectToUnparse(`(list "string")`);
+    expectToUnparse(`(list (list "a"))`);
+    expectToUnparse(`(fn (bar x: 3) (+ x x))`);
+    expectToUnparse(`(quote ("hello"))`);
+    expectToUnparse(`\'bye`);
+    expectToUnparse(`\'("hello")`);
+    expectToUnparse(`(hello \'(a b c) \'(1 2 3) \'(a: b: c:))`);
   });
 
-  it('unparse alterable expressions', () => {
-    expectToUnparse('background {(col/rgb r: 1 g: 1 b: 1 alpha: 1) (col)}');
-    expectToUnparse('{"hello" (something "foo" "bar")}');
-    expectToUnparse('{true (something)}');
-    expectToUnparse('(foo {"hello"})');
-    expectToUnparse('(foo {"hello" (something "foo" "bar")})');
-    expectToUnparse('(+ 1 2 {3 (int)})');
-    expectToUnparse('(+ 1 { 3 (int)})');
-    expectToUnparse('{["a"]}');
-    expectToUnparse('{[["a"] ["a"]]}');
+  it(`unparse alterable expressions`, () => {
+    expectToUnparse(`background {(col/rgb r: 1 g: 1 b: 1 alpha: 1) (col)}`);
+    expectToUnparse(`{"hello" (something "foo" "bar")}`);
+    expectToUnparse(`{true (something)}`);
+    expectToUnparse(`(foo {"hello"})`);
+    expectToUnparse(`(foo {"hello" (something "foo" "bar")})`);
+    expectToUnparse(`(+ 1 2 {3 (int)})`);
+    expectToUnparse(`(+ 1 { 3 (int)})`);
+    expectToUnparse(`{["a"]}`);
+    expectToUnparse(`{[["a"] ["a"]]}`);
     expectToUnparse(`({focal/vline (select from: (list 'focal/point
                                                        'focal/hline
                                                        'focal/vline))})`);
@@ -96,21 +96,21 @@ describe('Unparser', () => {
                                                        'white])})`);
   });
 
-  it('unparse with different genotypes', () => {
-    expect(seededUnparse('(+ {1 (int)} {3 (int)})', 32))
-      .to.equal('(+ {51 (int)} {79 (int)})');
-    expect(seededUnparse('(+ {1 (int)})', 32))
-      .to.equal('(+ {51 (int)})');
+  it(`unparse with different genotypes`, () => {
+    expect(seededUnparse(`(+ {1 (int)} {3 (int)})`, 32))
+      .to.equal(`(+ {51 (int)} {79 (int)})`);
+    expect(seededUnparse(`(+ {1 (int)})`, 32))
+      .to.equal(`(+ {51 (int)})`);
   });
 
-  it('unparse vectors', () => {
-    const f = '(define f {[1 2] (select from: [1 2 3 4])})';
-    const g = '(define f {[4 1] (select from: [1 2 3 4])})';
+  it(`unparse vectors`, () => {
+    const f = `(define f {[1 2] (select from: [1 2 3 4])})`;
+    const g = `(define f {[4 1] (select from: [1 2 3 4])})`;
 
     expectToUnparse(f);
     expect(seededUnparse(f, 33)).to.equal(g);
 
-    expectToUnparse('(define f {["a"] (l from: ["a" "b"])})');
+    expectToUnparse(`(define f {["a"] (l from: ["a" "b"])})`);
   });
 
 });

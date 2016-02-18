@@ -21,9 +21,9 @@ import TokenType from '../../app/js/lang/TokenType';
 
 import {expect} from 'chai';
 
-describe('Token', () => {
+describe(`Token`, () => {
 
-  it('create with a type and an optional value', () => {
+  it(`create with a type and an optional value`, () => {
     let t = new Token(TokenType.INT, 4);
     expect(t.value).to.equal(4);
     expect(t.type).to.equal(TokenType.INT);

@@ -22,14 +22,14 @@ import {expect} from 'chai';
 
 const Format = Colour.Format;
 
-describe('Colour', () => {
+describe(`Colour`, () => {
 
-  it('construct an immutable colour map', () => {
+  it(`construct an immutable colour map`, () => {
 
     let c = Colour.construct(Format.RGB, [0.1, 0.2, 0.3, 0.4]);
 
     expect(Colour.format(c)).to.equal(Format.RGB);
-    expect(c.get('elements').size).to.equal(4);
+    expect(c.get(`elements`).size).to.equal(4);
     expect(Colour.element(c, 0)).to.equal(0.1);
     expect(Colour.element(c, 1)).to.equal(0.2);
     expect(Colour.element(c, 2)).to.equal(0.3);
@@ -39,20 +39,20 @@ describe('Colour', () => {
     c = Colour.construct(Format.RGB, [0.9, 0.8, 0.7]);
 
     expect(Colour.format(c)).to.equal(Format.RGB);
-    expect(c.get('elements').size).to.equal(4);
+    expect(c.get(`elements`).size).to.equal(4);
     expect(Colour.element(c, 0)).to.equal(0.9);
     expect(Colour.element(c, 1)).to.equal(0.8);
     expect(Colour.element(c, 2)).to.equal(0.7);
     expect(Colour.element(c, 3)).to.equal(1.0);
   });
 
-  it('return a new colour when setting alpha', () => {
+  it(`return a new colour when setting alpha`, () => {
 
     const c = Colour.construct(Format.RGB, [0.1, 0.2, 0.3, 0.4]);
     const d = Colour.setAlpha(c, 0.8);
 
     expect(Colour.format(d)).to.equal(Format.RGB);
-    expect(d.get('elements').size).to.equal(4);
+    expect(d.get(`elements`).size).to.equal(4);
     expect(Colour.element(d, 0)).to.equal(0.1);
     expect(Colour.element(d, 1)).to.equal(0.2);
     expect(Colour.element(d, 2)).to.equal(0.3);
@@ -71,7 +71,7 @@ describe('Colour', () => {
     }
   }
 
-  it('convert colours', () => {
+  it(`convert colours`, () => {
     const rgb = Colour.construct(Format.RGB, [0.2, 0.1, 0.5, 1.0]);
     const hsl = Colour.construct(Format.HSL, [255.0, 0.6666, 0.3, 1.0]);
     const lab = Colour.construct(Format.LAB, [19.9072, 39.6375, -52.7720, 1.0]);

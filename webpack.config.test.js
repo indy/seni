@@ -10,11 +10,7 @@ module.exports = {
     loaders: common.module.loaders.concat([
       {
         loader: "babel",
-
-        test: path.join(__dirname, 'test'),
-
-        // Options to configure babel with
-        query: common.module.loaders[0].query
+        test: path.join(__dirname, 'test')
       }
     ])
   }

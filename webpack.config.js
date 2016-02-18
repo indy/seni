@@ -32,18 +32,7 @@ module.exports = {
         // Skip any files outside of your project's `js` directory
         include: [
           path.resolve(__dirname, 'app', 'js'),
-        ],
-
-        // Options to configure babel with
-        query: {
-          plugins: ["transform-es2015-arrow-functions",
-                    "transform-es2015-classes",
-                    "transform-es2015-object-super",
-                    "transform-es2015-parameters",
-                    "transform-es2015-destructuring",
-                    "transform-es2015-block-scoping",
-                    "transform-es2015-modules-commonjs"]
-        }
+        ]
       }
     ]/*,
       postLoaders: [

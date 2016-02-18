@@ -20,7 +20,7 @@ import Paths from '../../app/js/seni/Paths';
 
 import {expect} from 'chai';
 /* eslint-disable no-debugger */
-describe('Paths', () => {
+describe(`Paths`, () => {
 
   function getPublicBinding(namespace, name) {
     for (let i = 0; i < namespace.publicBindings.length; i++) {
@@ -32,7 +32,7 @@ describe('Paths', () => {
     return undefined;
   }
 
-  it('invoke callback with linear values', () => {
+  it(`invoke callback with linear values`, () => {
 
     let count = 0;
     const positions = [];
@@ -42,7 +42,7 @@ describe('Paths', () => {
       positions.push(p.position);
     };
 
-    const linearBinding = getPublicBinding(Paths, 'path/linear');
+    const linearBinding = getPublicBinding(Paths, `path/linear`);
     const linear = linearBinding.create(linearBinding);
 
     const params = {
@@ -54,7 +54,7 @@ describe('Paths', () => {
     // invoke the path/linear
     linear(params);
 
-    expect(count, 'callback invoked params.steps times').to.equal(params.steps);
+    expect(count, `callback invoked params.steps times`).to.equal(params.steps);
 
     expect(positions.length).to.equal(params.steps);
 
