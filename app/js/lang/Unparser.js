@@ -84,9 +84,11 @@ function pullValueFromGenotype(genotype) {
 }
 
 function getMultipleValuesFromGenotype(nodes, genotype) {
-  let v = undefined;
   const listPrefix = `[`;
   const listPostfix = `]`;
+
+  let v = undefined;
+  let geno = genotype;
 
   const res = nodes.map(n => {
     if (n.type === NodeType.NAME && n.value === `list`) {
@@ -95,12 +97,12 @@ function getMultipleValuesFromGenotype(nodes, genotype) {
                n.type === NodeType.WHITESPACE) {
       return formatNodeValue(n.value, n);
     } else {
-      [v, genotype] = pullValueFromGenotype(genotype);
+      [v, geno] = pullValueFromGenotype(geno);
       return formatNodeValue(v, n);
     }
   }).join(``);
 
-  return [listPrefix + res + listPostfix, genotype];
+  return [listPrefix + res + listPostfix, geno];
 }
 
 function unparseUnalterable(unalterableNode) {
@@ -113,6 +115,7 @@ function unparseUnalterable(unalterableNode) {
 function unparseASTNode(node, genotype) {
   let term = ``;
   let v;
+  let geno = genotype;
   let lst, listPrefix, listPostfix;
 
   if (node.alterable) {
@@ -126,9 +129,9 @@ function unparseASTNode(node, genotype) {
     // use value from genotype
     if (node.type === NodeType.VECTOR) {
       // a vector requires multiple values from the genotype
-      [v, genotype] = getMultipleValuesFromGenotype(node.children, genotype);
+      [v, geno] = getMultipleValuesFromGenotype(node.children, geno);
     } else {
-      [v, genotype] = pullValueFromGenotype(genotype);
+      [v, geno] = pullValueFromGenotype(geno);
       v = formatNodeValue(v, node);
     }
 
@@ -150,7 +153,7 @@ function unparseASTNode(node, genotype) {
       }
 
       v = listPrefix + lst.map(n => {
-        [nval, genotype] = unparseASTNode(n, genotype);
+        [nval, geno] = unparseASTNode(n, geno);
         return nval;
       }).join(``) + listPostfix;
     } else if (node.type === NodeType.VECTOR) {
@@ -160,7 +163,7 @@ function unparseASTNode(node, genotype) {
       lst = node.children;
 
       v = listPrefix + lst.map(n => {
-        [nval, genotype] = unparseASTNode(n, genotype);
+        [nval, geno] = unparseASTNode(n, geno);
         return nval;
       }).join(``) + listPostfix;
     } else {
@@ -170,7 +173,7 @@ function unparseASTNode(node, genotype) {
     term = formatNodeValue(v, node);
   }
 
-  return [term, genotype];
+  return [term, geno];
 }
 
 const Unparser = {
@@ -180,8 +183,9 @@ const Unparser = {
   unparse: (frontAst, genotype) => {
 
     let term = undefined;
+    let geno = genotype;
     const terms = frontAst.map(n => {
-      [term, genotype] = unparseASTNode(n, genotype);
+      [term, geno] = unparseASTNode(n, geno);
       return term;
     });
     const res = terms.join(``);

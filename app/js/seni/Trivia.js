@@ -64,10 +64,5 @@ function _getTitle(time) {
 }
 
 export default {
-  getTitle: time => {
-    if (time === undefined) {
-      time = new Date();
-    }
-    return _getTitle(time);
-  }
+  getTitle: time => _getTitle(time || new Date())
 };

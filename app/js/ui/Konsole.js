@@ -337,9 +337,10 @@ export default class Konsole {
 
   reset(welcomeMessage) {
     let _i, _len;
+    let _welcomeMessage = welcomeMessage;
 
-    if (welcomeMessage == null) {
-      welcomeMessage = true;
+    if (_welcomeMessage == null) {
+      _welcomeMessage = true;
     }
     this.submitInProgress = false;
     this.console.setValue(``);
@@ -350,7 +351,7 @@ export default class Konsole {
       this.console.removeLineWidget(widget);
     }
     this.outputWidgets = [];
-    if (this.options.welcomeMessage && welcomeMessage) {
+    if (this.options.welcomeMessage && _welcomeMessage) {
       this.showWelcomeMessage();
       this.moveInputForward();
     }
@@ -576,7 +577,8 @@ export default class Konsole {
       .replace(/\//g, `&#x2F;`);
   }
 
-  buildWidget(lineNumber, responseLine, widgetOptions) {
+  buildWidget(lineNumber, responseLine, widgetOptions_) {
+    let widgetOptions = widgetOptions_;
     let widgetElement;
     const _this = this;
 

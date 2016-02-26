@@ -25,11 +25,12 @@ const { evaluate, TRUE_STRING, NO_ERROR } = Interpreter;
 function evalBodyForms(env, bodyForms) {
   return bodyForms.reduce(([e, _, error], b) => {
     const [env1, form1, error1] = evaluate(e, b);
-    if (error1 && error === NO_ERROR) {
+    let retError = error;
+    if (error1 && retError === NO_ERROR) {
       // store the first error and always return it
-      error = error1;
+      retError = error1;
     }
-    return [env1, form1, error];
+    return [env1, form1, retError];
   }, [env, true, NO_ERROR]);
 }
 
@@ -60,7 +61,8 @@ function addBindings(env, exprs) {
   let lastValueBound = undefined;
 
   // adds a binding to the env, returning the ['new environment', error] pair
-  const addBinding = function(e, name, value) {
+  const addBinding = function(e_, name, value) {
+    let e = e_;
     const [env, v, error] = evaluate(e, value);
     if (error) {
       return [env, error];

@@ -74,10 +74,9 @@ function compile(node, genotype) {
   }
 
   if (node.type === NodeType.VECTOR) {
-    let res = undefined;
-    [res, genotype] = compileNodes(node.children, genotype);
+    const [res, genotype2] = compileNodes(node.children, genotype);
     res.unshift(`list`);
-    return [res, genotype];
+    return [res, genotype2];
   }
 
   if (node.type === NodeType.STRING) {
@@ -89,12 +88,13 @@ function compile(node, genotype) {
 
 function compileNodes(nodes, genotype) {
   let n = undefined;
+  let geno = genotype;
   const res = nodes.map(node => {
-    [n, genotype] = compile(node, genotype);
+    [n, geno] = compile(node, geno);
     return n;
   });
 
-  return [res, genotype];
+  return [res, geno];
 }
 
 function compileFormUsingNamedParameters(children, genotype) {
@@ -110,7 +110,8 @@ function compileFormUsingNamedParameters(children, genotype) {
   const args = {};
 
   let fnName = undefined;
-  [fnName, genotype] = compile(children[0], genotype);
+  let geno = genotype;
+  [fnName, geno] = compile(children[0], geno);
 
   for (let i = 1; i < children.length; i += 2) {
     const label = children[i];
@@ -118,11 +119,11 @@ function compileFormUsingNamedParameters(children, genotype) {
       console.log(`error: expecting a label, actual: ${label.value}`);
     }
     let arg = undefined;
-    [arg, genotype] = compile(children[i + 1], genotype);
+    [arg, geno] = compile(children[i + 1], geno);
     args[label.value] = arg;
   }
 
-  return [[fnName, args], genotype];
+  return [[fnName, args], geno];
 }
 
 function usingNamedParameters(children) {
