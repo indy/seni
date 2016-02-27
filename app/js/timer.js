@@ -35,7 +35,7 @@ export function startTiming(id, konsole) {
   const entry = useDBEntry(id);
 
   const stopFn = () => {
-    const after = new Date();
+    const after = performance.now();
     const duration = after - before;
 
     entry.values.push(duration);
@@ -44,7 +44,7 @@ export function startTiming(id, konsole) {
     }
   };
 
-  const before = new Date();
+  const before = performance.now();
   return stopFn;
 }
 

@@ -39,9 +39,9 @@ export default {
    */
   //
   withTiming: (msg, fn, console) => {
-    const before = new Date();
+    const before = performance.now();
     fn();
-    const after = new Date();
+    const after = performance.now();
     const duration = after - before;
     if (console) {
       console.log(`${msg} ${duration} ms`);
