@@ -1,8 +1,8 @@
 
-(define coords (list [{  0 (gen/int max: canvas/width)} {500 (gen/int max: canvas/height)}]
-                     [{333 (gen/int max: canvas/width)} {100 (gen/int max: canvas/height)}]
-                     [{666 (gen/int max: canvas/width)} {900 (gen/int max: canvas/height)}]
-                     [{999 (gen/int max: canvas/width)} {500 (gen/int max: canvas/height)}]))
+(define coords [[{  0 (gen/int max: canvas/width)} {500 (gen/int max: canvas/height)}]
+                [{333 (gen/int max: canvas/width)} {100 (gen/int max: canvas/height)}]
+                [{666 (gen/int max: canvas/width)} {900 (gen/int max: canvas/height)}]
+                [{999 (gen/int max: canvas/width)} {500 (gen/int max: canvas/height)}]])
 
 (fn (interesting-circle position: [500 500]
                             colour: red

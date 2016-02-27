@@ -131,10 +131,10 @@ describe(`Classic`, () => {
   });
 
   it(`append`, () => {
-    let [_, res] = evalForm(e, `(append (list 10 20) 30)`);
+    let [_, res] = evalForm(e, `(vector/append (list 10 20) 30)`);
     expect(res).to.deep.equal([10, 20, 30]);
 
-    [_, res] = evalForm(e, `(append (list 10 20) 30 40 50 60)`);
+    [_, res] = evalForm(e, `(vector/append (list 10 20) 30 40 50 60)`);
     expect(res).to.deep.equal([10, 20, 30, 40, 50, 60]);
   });
 });

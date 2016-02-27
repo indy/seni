@@ -23,8 +23,8 @@
                                       (vector min: -300 max: 300)})
     c1 (make-colour t: (focalpoint position: p1))
     c2 (make-colour t: (focalpoint position: p2)))
-  (append coords p1 p2)
-  (append colours c1 c2))
+  (vector/append coords p1 p2)
+  (vector/append colours c1 c2))
 
 
 (fn (draw)

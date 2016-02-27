@@ -49,8 +49,8 @@
                              background: background
                              colour: colour)))
 
-  (path/linear coords: (list [0 height] 
-                             [1000 height])
+  (path/linear coords: [[0 height] 
+                        [1000 height]]
                fn: drip
                steps: steps))
 
@@ -94,8 +94,8 @@
         (draw-splash position: (v2/- position [0 (r)])
                      colour: colour)))
 
-  (path/linear coords: (list [0 height] 
-                             [1000 height])
+  (path/linear coords: [[0 height] 
+                        [1000 height]]
                fn: splash
                steps: steps))
 

@@ -134,7 +134,7 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `append`,
+    `vector/append`,
     { description: `-`,
       args: [],
       returns: `-` },

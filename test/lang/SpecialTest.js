@@ -108,7 +108,7 @@ describe(`Special`, () => {
   it(`loop: from/to`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 0 to: 4 increment: 1) (append bar a))`);
+(loop (a from: 0 to: 4 increment: 1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding).to.deep.equal([0, 1, 2, 3]);
@@ -117,7 +117,7 @@ describe(`Special`, () => {
   it(`loop: from/to high to low`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 4 to: 0 increment: -1) (append bar a))`);
+(loop (a from: 4 to: 0 increment: -1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding).to.deep.equal([4, 3, 2, 1]);
@@ -126,7 +126,7 @@ describe(`Special`, () => {
   it(`loop: from/to high to low, positive increment`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 4 to: 0 increment: 1) (append bar a))`);
+(loop (a from: 4 to: 0 increment: 1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding).to.deep.equal([4, 3, 2, 1]);
@@ -135,7 +135,7 @@ describe(`Special`, () => {
   it(`loop: from/upto`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 0 upto: 4 increment: 1) (append bar a))`);
+(loop (a from: 0 upto: 4 increment: 1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding).to.deep.equal([0, 1, 2, 3, 4]);
@@ -144,7 +144,7 @@ describe(`Special`, () => {
   it(`loop: from/upto high to low`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 4 upto: 0 increment: -1) (append bar a))`);
+(loop (a from: 4 upto: 0 increment: -1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding).to.deep.equal([4, 3, 2, 1, 0]);
@@ -153,7 +153,7 @@ describe(`Special`, () => {
   it(`loop: from/upto high to low, positive increment`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 4 upto: 0 increment: 1) (append bar a))`);
+(loop (a from: 4 upto: 0 increment: 1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding).to.deep.equal([4, 3, 2, 1, 0]);
@@ -162,7 +162,7 @@ describe(`Special`, () => {
   it(`loop: to increment`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 0 to: 12 increment: 2) (append bar a))`);
+(loop (a from: 0 to: 12 increment: 2) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding).to.deep.equal([0, 2, 4, 6, 8, 10]);
@@ -171,7 +171,7 @@ describe(`Special`, () => {
   it(`loop: upto increment`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 0 upto: 12 increment: 2) (append bar a))`);
+(loop (a from: 0 upto: 12 increment: 2) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding).to.deep.equal([0, 2, 4, 6, 8, 10, 12]);
@@ -180,7 +180,7 @@ describe(`Special`, () => {
   it(`loop: from/to steps`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 0 to: 10 steps: 3) (append bar a))`);
+(loop (a from: 0 to: 10 steps: 3) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding[0]).to.be.closeTo(0.00, epsilon);
@@ -191,7 +191,7 @@ describe(`Special`, () => {
   it(`loop: from/to steps high to low`, () => {
     const [env, _res] = evalForm(e,`
 (define bar (list))
-(loop (a from: 10 to: 0 steps: 3) (append bar a))`);
+(loop (a from: 10 to: 0 steps: 3) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
     expect(bar.binding[0]).to.be.closeTo(10.000, epsilon);
@@ -203,7 +203,7 @@ describe(`Special`, () => {
     const [env, _res] = evalForm(e,`
 
       (define bar (list))
-      (loop (a from: 0 upto: 10 steps: 3) (append bar a))
+      (loop (a from: 0 upto: 10 steps: 3) (vector/append bar a))
 
     `);
 
@@ -217,7 +217,7 @@ describe(`Special`, () => {
     const [env, _res] = evalForm(e,`
 
       (define bar (list))
-      (loop (a from: 10 upto: 0 steps: 3) (append bar a))
+      (loop (a from: 10 upto: 0 steps: 3) (vector/append bar a))
 
     `);
 
@@ -232,7 +232,7 @@ describe(`Special`, () => {
   //   it(`loop: negative increment`, () => {
   //     let [env, res] = evalForm(e,`
   // (define bar (list))
-  // (loop (a from: 12 to: 0 increment: -2) (append bar a))`);
+  // (loop (a from: 12 to: 0 increment: -2) (vector/append bar a))`);
   //
   //     const bar = env.get(`bar`);
   //     expect(bar.binding).to.deep.equal([12, 10, 8, 6, 4, 2]);

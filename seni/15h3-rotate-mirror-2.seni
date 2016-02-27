@@ -18,15 +18,15 @@
 (loop (t from: 0 upto: 1 steps: {39 (gen/int min: 5 max: 100)})
   (define
     p1 (interp/bezier t: t
-                      coords: {[(list -249.550 -79.597) (list 194.782 -180.117) (list 21.536 106.905) (list -82.513 153.607)]
+                      coords: {[[-249.550 -79.597] [194.782 -180.117] [21.536 106.905] [-82.513 153.607]]
                                 (gen/vector min: -300 max: 300)})
     p2 (interp/bezier t: t
-                      coords: {[(list 90.069 -189.886) (list -84.464 59.473) (list 144.670 -74.757) (list 182.469 159.561)]
+                      coords: {[[90.069 -189.886] [-84.464 59.473] [144.670 -74.757] [182.469 159.561]]
                                 (gen/vector min: -300 max: 300)})
     c1 (make-colour t: (focalpoint position: p1))
     c2 (make-colour t: (focalpoint position: p2)))
-  (append coords p1 p2)
-  (append colours c1 c2))
+  (vector/append coords p1 p2)
+  (vector/append colours c1 c2))
 
 (fn (wash variation: 200
           line-width: 70

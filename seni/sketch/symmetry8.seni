@@ -1,13 +1,13 @@
 (render)
 
 (fn (render-half)
-    (bezier coords: (list [0 0]
-                          [{ 100 (gen/int min: -500 max: 500)} 
-                              { 100 (gen/int min: -500 max: 500)}]
-                          [{ 200 (gen/int min: -500 max: 500)} 
-                              {-200 (gen/int min: -500 max: 500)}]
-                          [{ 300 (gen/int min: -500 max: 500)} 
-                              {-200 (gen/int min: -500 max: 500)}])))
+    (bezier coords: [[0 0]
+                     [{ 100 (gen/int min: -500 max: 500)} 
+                      { 100 (gen/int min: -500 max: 500)}]
+                     [{ 200 (gen/int min: -500 max: 500)} 
+                      {-200 (gen/int min: -500 max: 500)}]
+                     [{ 300 (gen/int min: -500 max: 500)} 
+                      {-200 (gen/int min: -500 max: 500)}]]))
 
 (fn (render)
   (on-matrix-stack
@@ -19,10 +19,10 @@
 (render)
 
 (fn (render-half)
-    (bezier coords: (list [0 0]
-                          [{100 (gen/int max: canvas/width)} {100 (gen/int max: canvas/height)}]
-                          [{200 (gen/int max: canvas/width)} {-200 (gen/int max: canvas/height)}]
-                          [{300 (gen/int max: canvas/width)} {200 (gen/int max: canvas/height)}])))
+    (bezier coords: [[0 0]
+                     [{100 (gen/int max: canvas/width)} {100 (gen/int max: canvas/height)}]
+                     [{200 (gen/int max: canvas/width)} {-200 (gen/int max: canvas/height)}]
+                     [{300 (gen/int max: canvas/width)} {200 (gen/int max: canvas/height)}]]))
 
 (fn (render)
   (on-matrix-stack

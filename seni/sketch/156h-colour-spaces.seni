@@ -1,9 +1,9 @@
 
 (fn (hsl-grid)
-  (define fn-h (interp/fn from: (list 0 1000)
-                               to: (list 0 360))
-    fn-l (interp/fn from: (list 0 1000)
-                    to: (list 0.4 0.7)))
+    (define fn-h (interp/fn from: [0 1000]
+                            to: [0 360])
+      fn-l (interp/fn from: [0 1000]
+                      to: [0.4 0.7]))
 
   (loop (y from: 50 to: 1000 increment: 100)
         (loop (x from: 50 to: 1000 increment: 100)
@@ -17,10 +17,10 @@
 
 ;; is there a bug in the hsv colour space?
 (fn (hsv-grid)
-  (define fn-h (interp/fn from: (list 0 1000)
-                               to: (list 0 360))
-    fn-l (interp/fn from: (list 0 1000)
-                    to: (list 0.4 0.8)))
+    (define fn-h (interp/fn from: [0 1000]
+                            to: [0 360])
+      fn-l (interp/fn from: [0 1000]
+                      to: [0.4 0.8]))
 
   (loop (y from: 50 to: 1000 increment: 100)
     (loop (x from: 50 to: 1000 increment: 100)
