@@ -66,7 +66,7 @@ function addBindings(env, exprs) {
       return [env, error];
     }
 
-    if (name.constructor === Array && name[0] === `list`) {
+    if (name.constructor === Array && name[0] === `vector`) {
 
       // for square bracket notation when declaring variables
       // e.g. (define [x y] [100 200])

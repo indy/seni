@@ -176,7 +176,7 @@ describe(`Compiler`, () => {
   // correctly work with functions that have genotypes
   // in both name and arg positions
   it(`correctly apply genotypes to named functions`, () => {
-    const form = `({gogo (gen/select from: (list 'shabba 'gogo 'hooha))}
+    const form = `({gogo (gen/select from: (vector 'shabba 'gogo 'hooha))}
                  foo: {44 (gen/int min: 10 max: 56)})`;
 
     expect(compileWithSeed(form, 100)).to.deep.equal([`shabba`, {foo: 15}]);
@@ -228,7 +228,7 @@ describe(`Compiler`, () => {
       to.deep.equal([`show`, 2, 4]);
 
     expect(compile(`(show [2 4])`)).
-      to.deep.equal([`show`, [`list`, 2, 4]]);
+      to.deep.equal([`show`, [`vector`, 2, 4]]);
 
     expect(compile(`(shot true 4)`)).
       to.deep.equal([`shot`, `#t`, 4]);

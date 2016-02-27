@@ -71,7 +71,7 @@ const publicBindings = [
       const {min, max} = self.mergeWithDefaults(params);
       const x = Interp.interpolate(min, max, rng());
       const y = Interp.interpolate(min, max, rng());
-      return [`list`, x, y];
+      return [`vector`, x, y];
     }
   ),
 

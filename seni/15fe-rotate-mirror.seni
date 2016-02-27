@@ -20,7 +20,7 @@
                                    (gen/vector min: -300 max: 300)})
     p2 (interp/bezier t: t
                       coords: {[[-100 200] [133 -300] [66 100] [-99 200]]
-                                      (vector min: -300 max: 300)})
+                                      (gen/vector min: -300 max: 300)})
     c1 (make-colour t: (focalpoint position: p1))
     c2 (make-colour t: (focalpoint position: p2)))
   (vector/append coords p1 p2)

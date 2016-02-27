@@ -76,7 +76,7 @@ function compile(node, genotype) {
   if (node.type === NodeType.VECTOR) {
     let res = undefined;
     [res, genotype] = compileNodes(node.children, genotype);
-    res.unshift(`list`);
+    res.unshift(`vector`);
     return [res, genotype];
   }
 

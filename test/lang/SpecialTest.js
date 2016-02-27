@@ -107,7 +107,7 @@ describe(`Special`, () => {
 
   it(`loop: from/to`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 0 to: 4 increment: 1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -116,7 +116,7 @@ describe(`Special`, () => {
 
   it(`loop: from/to high to low`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 4 to: 0 increment: -1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -125,7 +125,7 @@ describe(`Special`, () => {
 
   it(`loop: from/to high to low, positive increment`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 4 to: 0 increment: 1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -134,7 +134,7 @@ describe(`Special`, () => {
 
   it(`loop: from/upto`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 0 upto: 4 increment: 1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -143,7 +143,7 @@ describe(`Special`, () => {
 
   it(`loop: from/upto high to low`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 4 upto: 0 increment: -1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -152,7 +152,7 @@ describe(`Special`, () => {
 
   it(`loop: from/upto high to low, positive increment`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 4 upto: 0 increment: 1) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -161,7 +161,7 @@ describe(`Special`, () => {
 
   it(`loop: to increment`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 0 to: 12 increment: 2) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -170,7 +170,7 @@ describe(`Special`, () => {
 
   it(`loop: upto increment`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 0 upto: 12 increment: 2) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -179,7 +179,7 @@ describe(`Special`, () => {
 
   it(`loop: from/to steps`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 0 to: 10 steps: 3) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -190,7 +190,7 @@ describe(`Special`, () => {
 
   it(`loop: from/to steps high to low`, () => {
     const [env, _res] = evalForm(e,`
-(define bar (list))
+(define bar (vector))
 (loop (a from: 10 to: 0 steps: 3) (vector/append bar a))`);
 
     const bar = env.get(`bar`);
@@ -202,7 +202,7 @@ describe(`Special`, () => {
   it(`loop: from/upto steps`, () => {
     const [env, _res] = evalForm(e,`
 
-      (define bar (list))
+      (define bar (vector))
       (loop (a from: 0 upto: 10 steps: 3) (vector/append bar a))
 
     `);
@@ -216,7 +216,7 @@ describe(`Special`, () => {
   it(`loop: from/upto steps high to low`, () => {
     const [env, _res] = evalForm(e,`
 
-      (define bar (list))
+      (define bar (vector))
       (loop (a from: 10 upto: 0 steps: 3) (vector/append bar a))
 
     `);
@@ -231,7 +231,7 @@ describe(`Special`, () => {
 
   //   it(`loop: negative increment`, () => {
   //     let [env, res] = evalForm(e,`
-  // (define bar (list))
+  // (define bar (vector))
   // (loop (a from: 12 to: 0 increment: -2) (vector/append bar a))`);
   //
   //     const bar = env.get(`bar`);

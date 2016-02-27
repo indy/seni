@@ -125,7 +125,7 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `list`,
+    `vector`,
     { description: `-`,
       args: [],
       returns: `-` },
