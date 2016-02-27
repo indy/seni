@@ -8,9 +8,9 @@
   w/4 (/ w 4)
   h/4 (/ h 4)
 
-  primary {blue (col alpha: 1)}
-  accent {red (col alpha: 1)}
-  background {green (col alpha: 1)})
+  primary {blue (gen/col alpha: 1)}
+  accent {red (gen/col alpha: 1)}
+  background {green (gen/col alpha: 1)})
 
 (fn (bg background: white)
   (rect position: origin
@@ -171,18 +171,18 @@
                 p1 p2 p3 p4 p5 p6 p7 p8 p9
                 p1 p2 p3 p4 p5 p6 p7 p8 p9
                 p1]
-                   (select from: ['p1 'p2 'p3 'p4 'p5 'p6 'p7 'p8 'p9])})
+                   (gen/select from: ['p1 'p2 'p3 'p4 'p5 'p6 'p7 'p8 'p9])})
 
 (define 
   rots ['(1 1) '(1 -1) '(-1 1) '(-1 -1)]
   rots/length (list/length of: rots)
 
-  focal-point (focal/point position: [{500 (int max: 1000)}
-                                      {500 (int max: 1000)}]
-                           distance: {800 (int max: 1000)})
+  focal-point (focal/point position: [{500 (gen/int max: 1000)}
+                                      {500 (gen/int max: 1000)}]
+                           distance: {800 (gen/int max: 1000)})
   brightness-remapper (interp/fn from: '(0 1) 
-                                 to: '({20 (int min: 0 max: 100)} 
-                                       {80 (int min: 0 max: 100)})))
+                                 to: '({20 (gen/int min: 0 max: 100)} 
+                                       {80 (gen/int min: 0 max: 100)})))
 
 (rect position: canvas/centre
       width: canvas/width

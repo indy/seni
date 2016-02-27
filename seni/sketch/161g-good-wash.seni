@@ -1,14 +1,14 @@
 (define
-  focal-fn-1 (focal/point position: {[587 323] (int min: 0 max: 1000)}
-                          distance: {820 (int min: 0 max: 1000)}
+  focal-fn-1 (focal/point position: {[587 323] (gen/int min: 0 max: 1000)}
+                          distance: {820 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
-  focal-fn-2 (focal/point position: {[545 830] (int min: 0 max: 1000)}
-                          distance: {730 (int min: 0 max: 1000)}
+  focal-fn-2 (focal/point position: {[545 830] (gen/int min: 0 max: 1000)}
+                          distance: {730 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
-  col-fn-2 (col/bezier-fn a: {(col/rgb r: 0.666 g: 0.618 b: 0.220 alpha: 0.510) (col)}
-                          b: {(col/rgb r: 0.919 g: 0.641 b: 0.994 alpha: 0.307) (col)}
-                          c: {(col/rgb r: 0.286 g: 0.472 b: 0.934 alpha: 0.476) (col)}
-                          d: {(col/rgb r: 0.202 g: 0.294 b: 0.926 alpha: 0.428) (col)})
+  col-fn-2 (col/bezier-fn a: {(col/rgb r: 0.666 g: 0.618 b: 0.220 alpha: 0.510) (gen/col)}
+                          b: {(col/rgb r: 0.919 g: 0.641 b: 0.994 alpha: 0.307) (gen/col)}
+                          c: {(col/rgb r: 0.286 g: 0.472 b: 0.934 alpha: 0.476) (gen/col)}
+                          d: {(col/rgb r: 0.202 g: 0.294 b: 0.926 alpha: 0.428) (gen/col)})
 
   ;; fade out any lines which are far away from the focal points
   interest (interp/fn from: [0.2 1.5] to: [0 1] clamping: true)
@@ -32,11 +32,11 @@
     alpha (interest val: combined-interest))
   (on-matrix-stack
     (translate vector: position)
-    (rotate angle: (* combined-interest {348 (int min: 1 max: 400)}))
+    (rotate angle: (* combined-interest {348 (gen/int min: 1 max: 400)}))
     (circle position: [0 0]
             colour: (col/set-alpha colour: (col-fn-2 t: interest-1) value: alpha)
-            width: {54 (int min: 10 max: 200)}
-            height: {467 (int min: 20 max: 500)})))
+            width: {54 (gen/int min: 10 max: 200)}
+            height: {467 (gen/int min: 20 max: 500)})))
 
-(good-grid n: {33 (int min: 30 max: 40)}
+(good-grid n: {33 (gen/int min: 30 max: 40)}
            fun: draw-element)

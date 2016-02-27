@@ -3,15 +3,15 @@
   r (interp/fn from: [0 1000] to: [0 math/TAU]))
 
 (loop (x from: 0 upto: 1000 steps: 1600)
-  (rect position: [x (+ (interp/cos amplitude: {160 (int min: 1 max: 1000)} 
-                                    frequency: {5.629 (scalar min: 0.1 max: 10)} 
+  (rect position: [x (+ (interp/cos amplitude: {160 (gen/int min: 1 max: 1000)} 
+                                    frequency: {5.629 (gen/scalar min: 0.1 max: 10)} 
                                     t: (r val: x)) 
                         500)]
-        width: {254 (int min: 10 max: 300)}
-        height: {153 (int min: 10 max: 300)}
-        colour: (col/lab l: (+ {92.673 (scalar min: -50 max: 100)}
-                               (interp/cos amplitude: {99 (int min: 1 max: 100)}
-                                           frequency: {5.346 (scalar min: 0.1 max: 10)}
+        width: {254 (gen/int min: 10 max: 300)}
+        height: {153 (gen/int min: 10 max: 300)}
+        colour: (col/lab l: (+ {92.673 (gen/scalar min: -50 max: 100)}
+                               (interp/cos amplitude: {99 (gen/int min: 1 max: 100)}
+                                           frequency: {5.346 (gen/scalar min: 0.1 max: 10)}
                                            t: (r val: x))) 
-                         a: {-25.618 (scalar min: -50 max: 100)}
-                         b: {12.205 (scalar min: -50 max: 100)})))
+                         a: {-25.618 (gen/scalar min: -50 max: 100)}
+                         b: {12.205 (gen/scalar min: -50 max: 100)})))

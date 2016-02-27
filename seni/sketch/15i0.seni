@@ -1,32 +1,32 @@
 (define
   coords []
   colours []
-  make-colour (col/procedural-fn a: {[0.383 0.337 0.509] (scalar)}
-                                 b: {[0.715 0.995 0.049] (scalar)}
-                                 c: {[0.783 0.005 0.826] (scalar)}
-                                 d: {[0.165 0.397 0.991] (scalar)})
+  make-colour (col/procedural-fn a: {[0.383 0.337 0.509] (gen/scalar)}
+                                 b: {[0.715 0.995 0.049] (gen/scalar)}
+                                 c: {[0.783 0.005 0.826] (gen/scalar)}
+                                 d: {[0.165 0.397 0.991] (gen/scalar)})
 
-  focalpoint ({focal/hline (select from: ['focal/point
+  focalpoint ({focal/hline (gen/select from: ['focal/point
                                           'focal/hline
                                           'focal/vline])} 
-              position: [{-188 (int min: -300 max: 300)} 
-                         {-74 (int min: -300 max: 300)}]
-              distance: {880 (int min: 300 max: 900)}))
+              position: [{-188 (gen/int min: -300 max: 300)} 
+                         {-74 (gen/int min: -300 max: 300)}]
+              distance: {880 (gen/int min: 300 max: 900)}))
 
-(loop (t from: 0 upto: 1 steps: {8 (int min: 5 max: 100)})
+(loop (t from: 0 upto: 1 steps: {8 (gen/int min: 5 max: 100)})
   (define
     p1 (interp/bezier t: t
                       coords: {[[203.248 264.592] 
                                 [-68.168 263.556] 
                                 [179.636 -247.367] 
                                 [195.158 214.771]]
-                               (vector min: -300 max: 300)})
+                               (gen/vector min: -300 max: 300)})
     p2 (interp/bezier t: t
                       coords: {[[68.917 -241.196] 
                                 [67.282 264.504]
                                 [184.179 31.127]
                                 [151.505 34.604]]
-                               (vector min: -300 max: 300)})
+                               (gen/vector min: -300 max: 300)})
     c1 (make-colour t: (focalpoint position: p1))
     c2 (make-colour t: (focalpoint position: p2)))
   (append coords p1 p2)
@@ -41,6 +41,6 @@
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (scale vector: [1.7 1.7])
     (repeat/rotate-mirrored draw: draw
-                            copies: {5 (int min: 1 max: 30)})))
+                            copies: {5 (gen/int min: 1 max: 30)})))
 
 (render)

@@ -1,25 +1,25 @@
 (define
-  focal-fg-1 (focal/point position: {[508 674] (int min: 0 max: 1000)}
-                          distance: {957 (int min: 0 max: 1000)}
+  focal-fg-1 (focal/point position: {[508 674] (gen/int min: 0 max: 1000)}
+                          distance: {957 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
-  focal-fg-2 (focal/point position: {[598 653] (int min: 0 max: 1000)}
-                          distance: {355 (int min: 0 max: 1000)}
+  focal-fg-2 (focal/point position: {[598 653] (gen/int min: 0 max: 1000)}
+                          distance: {355 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
-  col-fn-fg (col/bezier-fn a: {(col/rgb r: 0.525 g: 0.007 b: 0.541 alpha: 0.932) (col)}
-                           b: {(col/rgb r: 0.591 g: 0.962 b: 0.770 alpha: 0.727) (col)}
-                           c: {(col/rgb r: 0.473 g: 0.995 b: 0.516 alpha: 0.216) (col)}
-                           d: {(col/rgb r: 0.427 g: 0.140 b: 0.390 alpha: 0.725) (col)})
+  col-fn-fg (col/bezier-fn a: {(col/rgb r: 0.525 g: 0.007 b: 0.541 alpha: 0.932) (gen/col)}
+                           b: {(col/rgb r: 0.591 g: 0.962 b: 0.770 alpha: 0.727) (gen/col)}
+                           c: {(col/rgb r: 0.473 g: 0.995 b: 0.516 alpha: 0.216) (gen/col)}
+                           d: {(col/rgb r: 0.427 g: 0.140 b: 0.390 alpha: 0.725) (gen/col)})
 
-  focal-bg-1 (focal/point position: {[184 128] (int min: 0 max: 1000)}
-                          distance: {223 (int min: 0 max: 1000)}
+  focal-bg-1 (focal/point position: {[184 128] (gen/int min: 0 max: 1000)}
+                          distance: {223 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
-  focal-bg-2 (focal/point position: {[932 237] (int min: 0 max: 1000)}
-                          distance: {265 (int min: 0 max: 1000)}
+  focal-bg-2 (focal/point position: {[932 237] (gen/int min: 0 max: 1000)}
+                          distance: {265 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
-  col-fn-bg (col/bezier-fn a: {(col/rgb r: 0.693 g: 0.073 b: 0.065 alpha: 0.044) (col)}
-                           b: {(col/rgb r: 0.592 g: 0.724 b: 0.950 alpha: 0.559) (col)}
-                           c: {(col/rgb r: 0.133 g: 0.684 b: 0.689 alpha: 0.477) (col)}
-                           d: {(col/rgb r: 0.261 g: 0.837 b: 0.671 alpha: 0.526) (col)})
+  col-fn-bg (col/bezier-fn a: {(col/rgb r: 0.693 g: 0.073 b: 0.065 alpha: 0.044) (gen/col)}
+                           b: {(col/rgb r: 0.592 g: 0.724 b: 0.950 alpha: 0.559) (gen/col)}
+                           c: {(col/rgb r: 0.133 g: 0.684 b: 0.689 alpha: 0.477) (gen/col)}
+                           d: {(col/rgb r: 0.261 g: 0.837 b: 0.671 alpha: 0.526) (gen/col)})
 
   ;; fade out any lines which are far away from the focal points
   interest (interp/fn from: [0.2 1.5] to: [0 1] clamping: true))
@@ -54,18 +54,18 @@
                  width: width
                  height: height))))
 
-(good-grid n: {39 (int min: 30 max: 40)}
+(good-grid n: {39 (gen/int min: 30 max: 40)}
            fun: (make-draw-element focal-fn-1: focal-bg-1
                                    focal-fn-2: focal-bg-2
-                                   rotate-factor: {50 (int min: 1 max: 400)}
-                                   width: {14 (int min: 10 max: 200)}
-                                   height: {69 (int min: 20 max: 500)}
+                                   rotate-factor: {50 (gen/int min: 1 max: 400)}
+                                   width: {14 (gen/int min: 10 max: 200)}
+                                   height: {69 (gen/int min: 20 max: 500)}
                                    col-fn: col-fn-bg))
 
-(good-grid n: {39 (int min: 30 max: 40)}
+(good-grid n: {39 (gen/int min: 30 max: 40)}
            fun: (make-draw-element focal-fn-1: focal-fg-1
                                    focal-fn-2: focal-fg-2
-                                   rotate-factor: {391 (int min: 1 max: 400)}
-                                   width: {25 (int min: 10 max: 200)}
-                                   height: {390 (int min: 20 max: 500)}
+                                   rotate-factor: {391 (gen/int min: 1 max: 400)}
+                                   width: {25 (gen/int min: 10 max: 200)}
+                                   height: {390 (gen/int min: 20 max: 500)}
                                    col-fn: col-fn-fg))

@@ -1,23 +1,23 @@
 (define
   coords []
   colours []
-  make-colour (col/procedural-fn a: {[0.80 0.50 0.40] (scalar)}
-                                 b: {[0.20 0.40 0.20] (scalar)}
-                                 c: {[2.00 1.00 1.00] (scalar)}
-                                 d: {[0.00 0.25 0.25] (scalar)})
+  make-colour (col/procedural-fn a: {[0.80 0.50 0.40] (gen/scalar)}
+                                 b: {[0.20 0.40 0.20] (gen/scalar)}
+                                 c: {[2.00 1.00 1.00] (gen/scalar)}
+                                 d: {[0.00 0.25 0.25] (gen/scalar)})
 
-  focalpoint ({focal/point (select from: ['focal/point
+  focalpoint ({focal/point (gen/select from: ['focal/point
                                           'focal/hline
                                           'focal/vline])} 
-              position: [{0 (int min: -300 max: 300)} 
-                         {0 (int min: -300 max: 300)}]
-              distance: {390 (int min: 300 max: 900)}))
+              position: [{0 (gen/int min: -300 max: 300)} 
+                         {0 (gen/int min: -300 max: 300)}]
+              distance: {390 (gen/int min: 300 max: 900)}))
 
-(loop (t from: 0 upto: 1 steps: {30 (int min: 5 max: 100)})
+(loop (t from: 0 upto: 1 steps: {30 (gen/int min: 5 max: 100)})
   (define
     p1 (interp/bezier t: t
                       coords: {[[0 200] [-133 100] [266 -100] [399 -200]]
-                                   (vector min: -300 max: 300)})
+                                   (gen/vector min: -300 max: 300)})
     p2 (interp/bezier t: t
                       coords: {[[-100 200] [133 -300] [66 100] [-99 200]]
                                       (vector min: -300 max: 300)})
@@ -34,6 +34,6 @@
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (repeat/rotate-mirrored draw: draw
-                            copies: {5 (int min: 1 max: 30)})))
+                            copies: {5 (gen/int min: 1 max: 30)})))
 
 (render)

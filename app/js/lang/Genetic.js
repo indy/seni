@@ -48,7 +48,7 @@ function buildTraitFromNode(node, genes) {
       // this is to allow code like (+ 2 {2})
       // which should behave as if there were no curly brackets
       // todo: implement identity in this context
-      simplifiedAst = [[`identity`, {value: initialValue}]];
+      simplifiedAst = [[`gen/identity`, {value: initialValue}]];
     }
 
     const gene = {initialValue, simplifiedAst};

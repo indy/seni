@@ -49,7 +49,7 @@ describe(`Genetic`, () => {
     expect(res.length).to.equal(1);
     expect(res[0].initialValue).to.equal(1);
     expect(res[0].simplifiedAst.length).to.equal(1);
-    expect(res[0].simplifiedAst[0][0]).to.equal(`identity`);
+    expect(res[0].simplifiedAst[0][0]).to.equal(`gen/identity`);
   });
 
   it(`createGenotypeFromTraits`, () => {
@@ -63,7 +63,7 @@ describe(`Genetic`, () => {
   });
 
   it(`createGenotypeFromTraits 2`, () => {
-    const traits = simpleBuildTraits(`(+ 2 {44 (int min: 10 max: 56)})`);
+    const traits = simpleBuildTraits(`(+ 2 {44 (gen/int min: 10 max: 56)})`);
 
     const genotype = Genetic.createGenotypeFromTraits(traits, 100);
 
@@ -73,7 +73,7 @@ describe(`Genetic`, () => {
   });
 
   it(`create the same genotype`, () => {
-    const traits = simpleBuildTraits(`(+ 2 {44 (int min: 10 max: 56)})`);
+    const traits = simpleBuildTraits(`(+ 2 {44 (gen/int min: 10 max: 56)})`);
 
     let genotype = Genetic.createGenotypeFromTraits(traits, 33);
     expect(genotype.get(0)).to.equal(49);

@@ -187,14 +187,14 @@ function renderStrokedBezier(publicBinding, params, renderer) {
     const tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
     // get 3 points on the bezier curve
     const [xx1, xx2, xx3] =
-            tvals.map(t => MathUtil.bezierPoint(x1, x2, x3, x4, t));
+          tvals.map(t => MathUtil.bezierPoint(x1, x2, x3, x4, t));
     const [yy1, yy2, yy3] =
-            tvals.map(t => MathUtil.bezierPoint(y1, y2, y3, y4, t));
+          tvals.map(t => MathUtil.bezierPoint(y1, y2, y3, y4, t));
 
     const ns = strokeNoise;
 
     const colLabL = Colour.getComponent(lab, Colour.L) +
-            (PseudoRandom._perlin(xx1, xx1, xx1) * colourVolatility);
+          (PseudoRandom._perlin(xx1, xx1, xx1) * colourVolatility);
 
     const splineParams = {
       tessellation: strokeTessellation,
@@ -446,7 +446,7 @@ const publicBindings = [
   new PublicBinding(
     `circle`,
     { description: `renders a circle`,
-      args: [[`positioin`, ``],
+      args: [[`position`, ``],
              [`radius`, ``],
              [`width`, ``],
              [`height`, ``],
@@ -463,7 +463,7 @@ const publicBindings = [
   new PublicBinding(
     `circle-slice`,
     { description: `renders a circle-slice`,
-      args: [[`positioin`, ``],
+      args: [[`position`, ``],
              [`radius`, ``],
              [`angle-start`, ``],
              [`angle-end`, ``],

@@ -1,7 +1,7 @@
 (define centre [500 500])
-(define master-radius {50 (scalar min: 30 max: 80)})
-(define corner-square-mult {0.5 (scalar min: 0.3 max: 1.0)})
-(define master-angle {0 (scalar max: math/TAU)})
+(define master-radius {50 (gen/scalar min: 30 max: 80)})
+(define corner-square-mult {0.5 (gen/scalar min: 0.3 max: 1.0)})
+(define master-angle {0 (gen/scalar max: math/TAU)})
 
 ;; draw-octagon renders an octagon with it's center in position
 (fn (draw-octagon position: [100 100]
@@ -35,8 +35,8 @@
 
 
 (fn (draw)
-  (define main-col {yellow (col alpha: 1)}
-    (triad-b triad-c) ({col/analagous (select from: ['col/analagous
+  (define main-col {yellow (gen/col alpha: 1)}
+    (triad-b triad-c) ({col/analagous (gen/select from: ['col/analagous
                                                      'col/split-complementary
                                                      'col/triad])} 
                                   colour: main-col))
