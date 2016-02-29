@@ -202,20 +202,25 @@ function addClickEvent(id, fn) {
   }
 }
 
+function getIdNumberFromDom(element, regexp) {
+  let e = element;
+  while (e) {
+    const m = e.id.match(regexp);
+    if (m && m.length === 2) {
+      const index = Number.parseInt(m[1], 10);
+      return [index, e];
+    } else {
+      e = e.parentNode;
+    }
+  }
+  return [-1, null];
+}
+
 // when user has clicked on a phenotype in the evolve UI,
 // traverse up the card until we get to a dom element that
 // contains the phenotype's index number in it's id
 function getPhenoIdFromDom(element) {
-  while (element) {
-    const m = element.id.match(/pheno-(\d+)/);
-    if (m && m.length === 2) {
-      const index = Number.parseInt(m[1], 10);
-      return [index, element];
-    } else {
-      element = element.parentNode;
-    }
-  }
-  return [-1, null];
+  return getIdNumberFromDom(element, /pheno-(\d+)/);
 }
 
 function renderHighRes(state, genotype) {
@@ -238,13 +243,14 @@ function renderHighRes(state, genotype) {
     }
     const backAst = Runtime.compileBackAst(frontAst.nodes);
 
-    if (genotype === undefined) {
+    let geno = genotype;
+    if (geno === undefined) {
       const traits = Genetic.buildTraits(backAst);
-      genotype = Genetic.createGenotypeFromInitialValues(traits);
+      geno = Genetic.createGenotypeFromInitialValues(traits);
     }
 
     const [width, height] = state.get(`highResolution`);
-    renderGenotypeToImage(state, backAst, genotype, image,
+    renderGenotypeToImage(state, backAst, geno, image,
                           width, height);
 
     image.classList.remove(`hidden`);
@@ -489,21 +495,8 @@ function showScriptInEditor(state) {
 }
 
 function showEditFromGallery(store, element) {
-  const getGalleryItemIdFromDom = function(e) {
-    while (e) {
-      const m = e.id.match(/gallery-item-(\d+)/);
-      if (m && m.length === 2) {
-        const idx = Number.parseInt(m[1], 10);
-        return [idx, e];
-      } else {
-        e = e.parentNode;
-      }
-    }
-    return [-1, null];
-  };
-
   return new Promise((resolve, reject) => {
-    const [index, _] = getGalleryItemIdFromDom(element);
+    const [index, _] = getIdNumberFromDom(element, /gallery-item-(\d+)/);
     if (index !== -1) {
       const url = `/gallery/${index}`;
 
@@ -787,8 +780,8 @@ function setupUI(store) {
     gUI.editor.refresh();
   }
 
-  document.onkeydown = evt => {
-    evt = evt || window.event;
+  document.onkeydown = evt_ => {
+    const evt = evt_ || window.event;
 
     // Ctrl-M
     if (evt.ctrlKey && evt.keyCode == 77) {

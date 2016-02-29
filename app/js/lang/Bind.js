@@ -80,7 +80,8 @@ function applyBindings(env, namespace) {
 }
 
 const Bind = {
-  addBindings: (env, renderer) => {
+  addBindings: (env_, renderer) => {
+    let env = env_;
     env = applyBindings(env, Core);
     env = applyBindings(env, MathUtil);
     env = applyBindings(env, PseudoRandom);
@@ -96,7 +97,8 @@ const Bind = {
     return env;
   },
 
-  addBracketBindings: (env, rng) => {
+  addBracketBindings: (env_, rng) => {
+    let env = env_;
     env = applyBindings(env, Core);
     env = applyBindings(env, MathUtil);
     env = applyBindings(env, PseudoRandom);
@@ -106,19 +108,22 @@ const Bind = {
     return env;
   },
 
-  addSpecialBindings: env => {
+  addSpecialBindings: env_ => {
+    let env = env_;
     env = applyBindings(env, Special);
 
     return env;
   },
 
-  addSpecialDebugBindings: (env, _konsole) => {
+  addSpecialDebugBindings: (env_, _konsole) => {
+    let env = env_;
     env = applyBindings(env, SpecialDebug);
 
     return env;
   },
 
-  addClassicBindings: env => {
+  addClassicBindings: env_ => {
+    let env = env_;
     env = applyBindings(env, Classic);
     env = applyBindings(env, HigherOrder);
 

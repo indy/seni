@@ -25,13 +25,13 @@ import PublicBinding from '../lang/PublicBinding';
 // reference implementation of improved noise (C) 2002
 
 // returns a value in the range -1..1
-function noise(x, y, z) {
-  const X = Math.floor(x) & 255;                        // FIND UNIT CUBE THAT
-  const Y = Math.floor(y) & 255;                        // CONTAINS POINT.
-  const Z = Math.floor(z) & 255;
-  x -= Math.floor(x);                                   // FIND RELATIVE X,Y,Z
-  y -= Math.floor(y);                                   // OF POINT IN CUBE.
-  z -= Math.floor(z);
+function noise(x_, y_, z_) {
+  const X = Math.floor(x_) & 255;                       // FIND UNIT CUBE THAT
+  const Y = Math.floor(y_) & 255;                       // CONTAINS POINT.
+  const Z = Math.floor(z_) & 255;
+  const x = x_ - Math.floor(x_);                        // FIND RELATIVE X,Y,Z
+  const y = y_ - Math.floor(y_);                        // OF POINT IN CUBE.
+  const z = z_ - Math.floor(z_);
   const u = fade(x);                                    // COMPUTE FADE CURVES
   const v = fade(y);                                    // FOR EACH OF X,Y,Z.
   const w = fade(z);

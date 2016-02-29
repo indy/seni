@@ -54,8 +54,9 @@ function evaluate(env, expr) {
   return funApplication(env, expr);
 }
 
-function funApplication(env, listExpr) {
+function funApplication(env_, listExpr) {
 
+  let env = env_;
   let fun = undefined;
   let error = undefined;
   const fnName = listExpr[0];
