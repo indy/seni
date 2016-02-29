@@ -1,0 +1,36 @@
+;; possible syntax
+
+;; Pablo Picasso's Dog
+;;
+(define
+  line-width  1
+  colour      black
+  ;; co-ordinates from "Dog" by Jeremy Kun 2013
+  front-leg   [[180 280] [183 268] [186 256] [189 244]]
+  tummy       [[191 244] [290 244] [300 230] [339 245]]
+  back-leg    [[340 246] [350 290] [360 300] [355 210]]
+  tail        [[353 210] [370 207] [380 196] [375 193]]
+  back        [[375 193] [310 220] [190 220] [164 205]]
+  ear-start   [[164 205] [135 194] [135 265] [153 275]]
+  head        [[153 275] [168 275] [170 180] [150 190]]
+  nose-bridge [[149 190] [122 214] [142 204] [ 85 240]]
+  mouth       [[ 86 240] [100 247] [125 233] [140 238]])
+
+(on-matrix-stack
+  ;; scale coords from 500 limit to 1000 limit 
+  (scale vector: [2 2])
+ 
+  ;; reverse y-coordinates
+  (translate vector: [0 500])
+  (scale vector: [1 -1])
+
+  (with-args (line-width: line-width colour: colour)
+    (bezier coords: front-leg) 
+    (bezier coords: tummy ) 
+    (bezier coords: back-leg) 
+    (bezier coords: tail) 
+    (bezier coords: back) 
+    (bezier coords: ear-start) 
+    (bezier coords: head) 
+    (bezier coords: nose-bridge) 
+    (bezier coords: mouth)))

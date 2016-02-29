@@ -1,0 +1,11 @@
+(define 
+  col-fn-2 (col/procedural-fn preset: "mars"
+                              alpha: 1.0))
+
+(loop (t from: 0 upto: 1 steps: 500)
+  (rect position: [(+ 25 (* t 950)) 800]
+        width: 2
+        height: 200
+        colour: (col-fn-2 t: t)))
+
+(log (list/get from: col/procedural-fn-presets nth: 0))
