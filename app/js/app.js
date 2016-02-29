@@ -18,24 +18,21 @@
 
 import Immutable from 'immutable';
 
-import Bind from './lang/Bind';
 import Renderer from './seni/Renderer';
-import Genetic from './lang/Genetic';
-import Runtime from './lang/Runtime';
 import History from './ui/History';
 import Editor from './ui/Editor';
 import SpecialDebug from './ui/SpecialDebug';
 import Konsole from './ui/Konsole';
 import KonsoleCommander from './ui/KonsoleCommander';
-import { addDefaultCommands } from './ui/KonsoleCommands';
+// import { addDefaultCommands } from './ui/KonsoleCommands';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
 import { SeniMode } from './ui/SeniMode';
 
+import Workers from './workers';
+
 let gUI = {};
 let gRenderer = undefined;
-// an immutable var containing the base env for all evaluations
-let gEnv = undefined;
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -115,21 +112,22 @@ function ensureMode(store, mode) {
       return;
     }
 
-    store.dispatch({type: `SET_MODE`, mode});
-    History.pushState(store.getState());
+    store.dispatch({type: `SET_MODE`, mode}).then(state => {
+      History.pushState(state);
 
-    if (mode === SeniMode.evolve) {
-      showCurrentMode(store.getState());
-      setupEvolveUI(store).then(() => {
-        // make sure that the history for the first evolve generation
-        // has the correct genotypes
-        History.replaceState(store.getState());
+      if (mode === SeniMode.evolve) {
+        showCurrentMode(state);
+        setupEvolveUI(store).then(state => {
+          // make sure that the history for the first evolve generation
+          // has the correct genotypes
+          History.replaceState(state);
+          resolve();
+        });
+      } else {
+        updateUI(state);
         resolve();
-      });
-    } else {
-      updateUI(store.getState());
-      resolve();
-    }
+      }
+    });
   });
 }
 
@@ -144,7 +142,7 @@ function updateUI(state) {
     break;
   case SeniMode.edit :
     showScriptInEditor(state);
-    timedRenderScript(state);
+    renderScript(state, gUI.renderImage);
     break;
   case SeniMode.evolve :
     // will only get here from History.restoreState
@@ -153,7 +151,7 @@ function updateUI(state) {
   }
 }
 
-function renderGenotypeToImage(state, backAst, genotype, imageElement, w, h) {
+function renderCommandBuffer(commandBuffer, imageElement, w, h) {
 
   const renderer = gRenderer;
 
@@ -163,50 +161,28 @@ function renderGenotypeToImage(state, backAst, genotype, imageElement, w, h) {
     renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
   }
 
-  const res = Runtime.evalAst(gEnv, backAst, genotype);
-  const env = res[0];
+  renderer.executeCommandBuffer(commandBuffer);
 
   renderer.postDrawScene();
   imageElement.src = renderer.getImageData();
-
-  return env;
 }
 
-function titleForScript(env, scriptHash) {
-  // default the scriptTitle to scriptHash
-  // (but replace with 'title' binding if it's defined in the script)
-  let scriptTitle = scriptHash;
-  if (env) {
-    const titleBinding = env.get(`title`);
-    if (titleBinding) {
-      scriptTitle = titleBinding.binding;
-    }
-  }
-  return scriptTitle;
-}
 
 function renderScript(state, imageElement) {
-
-  const script = state.get(`script`);
-  const frontAst = Runtime.buildFrontAst(script);
-  if (frontAst.error) {
-    gUI.konsole.log(frontAst.error);
-    return undefined;
-  }
-  const backAst = Runtime.compileBackAst(frontAst.nodes);
-  const traits = Genetic.buildTraits(backAst);
-  const genotype = Genetic.createGenotypeFromInitialValues(traits);
-
-  const env = renderGenotypeToImage(state, backAst, genotype, imageElement);
-
-  return env;
-}
-
-function timedRenderScript(state) {
   const stopFn = startTiming();
-  const env = renderScript(state, gUI.renderImage);
-  const scriptTitle = titleForScript(env, state.get(`scriptHash`));
-  stopFn(`renderScript-${scriptTitle}`, gUI.konsole);
+
+  Workers.perform(`RENDER`, {
+    script: state.get(`script`),
+    scriptHash: state.get(`scriptHash`)
+  }).then(({ title, commandBuffer }) => {
+
+    renderCommandBuffer(commandBuffer, imageElement);
+    stopFn(`renderScript-${title}`, gUI.konsole);
+
+  }).catch(error => {
+    // handle error
+    console.log(`worker: error of ${error}`);
+  });
 }
 
 function addClickEvent(id, fn) {
@@ -242,6 +218,7 @@ function getPhenoIdFromDom(element) {
 }
 
 function renderHighRes(state, genotype) {
+
   const container = document.getElementById(`high-res-container`);
   const loader = document.getElementById(`high-res-loader`);
   const image = document.getElementById(`high-res-image`);
@@ -250,58 +227,63 @@ function renderHighRes(state, genotype) {
   loader.classList.remove(`hidden`);
   image.classList.add(`hidden`);
 
-  setTimeout(() => {
-    const script = state.get(`script`);
-    const frontAst  = Runtime.buildFrontAst(script);
-    if (frontAst.error) {
-      gUI.konsole.log(frontAst.error);
-      image.classList.remove(`hidden`);
-      loader.classList.add(`hidden`);
-      return;
-    }
-    const backAst = Runtime.compileBackAst(frontAst.nodes);
+  const stopFn = startTiming();
 
-    let geno = genotype;
-    if (geno === undefined) {
-      const traits = Genetic.buildTraits(backAst);
-      geno = Genetic.createGenotypeFromInitialValues(traits);
-    }
+  Workers.perform(`RENDER`, {
+    script: state.get(`script`),
+    scriptHash: state.get(`scriptHash`),
+    genotype: genotype ? genotype.toJS() : undefined
+  }).then(({ title, commandBuffer }) => {
 
     const [width, height] = state.get(`highResolution`);
-    renderGenotypeToImage(state, backAst, geno, image,
-                          width, height);
+    renderCommandBuffer(commandBuffer, image, width, height);
+
+    stopFn(`renderHighRes-${title}`, gUI.konsole);
 
     image.classList.remove(`hidden`);
-
     const link = document.getElementById(`high-res-link`);
     link.href = image.src;
-
     loader.classList.add(`hidden`);
-  }, 100);
+
+  }).catch(error => {
+    // handle error
+    console.log(`worker: error of ${error}`);
+    gUI.konsole.log(error);
+    image.classList.remove(`hidden`);
+    loader.classList.add(`hidden`);
+  });
+}
+
+// updates the store's script variable and then generates the traits
+// in a ww and updates the store again
+//
+function setScript(store, script) {
+  return store.dispatch({type: `SET_SCRIPT`, script});
 }
 
 function showEditFromEvolve(store, element) {
   return new Promise((resolve, reject) => {
     const [index, _] = getPhenoIdFromDom(element);
     if (index !== -1) {
-      const genotypes = store.getState().get(`genotypes`);
-      const genotype = genotypes.get(index);
-
       const state = store.getState();
-      const frontAst  = Runtime.buildFrontAst(state.get(`script`));
-      if (frontAst.error) {
-        gUI.konsole.log(frontAst.error);
-        reject();
-        return;
-      } else {
-        const script = Runtime.unparse(frontAst.nodes, genotype);
+      const genotypes = state.get(`genotypes`);
 
-        store.dispatch({type: `SET_SCRIPT`, script});
+      Workers.perform(`UNPARSE`, {
+        script: state.get(`script`),
+        scriptHash: state.get(`scriptHash`),
+        genotype: genotypes.get(index).toJS()
+      }).then(({ script }) => {
 
-        ensureMode(store, SeniMode.edit).then(() => {
-          resolve();
-        });
-      }
+        setScript(store, script)
+          .then(() => ensureMode(store, SeniMode.edit))
+          .then(resolve);
+
+      }).catch(error => {
+        // handle error
+        console.log(`worker: error of ${error}`);
+        reject(error);
+      });
+
     } else {
       resolve();
     }
@@ -309,45 +291,48 @@ function showEditFromEvolve(store, element) {
 }
 
 function renderGeneration(state) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
 
     const script = state.get(`script`);
+    const scriptHash = state.get(`scriptHash`);
 
-    const stopTiming = startTiming();
+    const genotypes = state.get(`genotypes`);
 
-    const frontAst = Runtime.buildFrontAst(script);
-    if (frontAst.error) {
-      gUI.konsole.log(frontAst.error);
-      reject();
-      return;
+    // TODO: stop generating  if the user has switched to edit mode
+    const phenotypes = gUI.phenotypes;
+
+    let hackTitle = scriptHash;
+
+    const promises = [];
+
+    const stopFn = startTiming();
+
+    for (let i = 0;i < phenotypes.size; i++) {
+
+      const workerJob = Workers.perform(`RENDER`, {
+        script,
+        scriptHash,
+        genotype: genotypes.get(i).toJS()
+      }).then(({ title, commandBuffer }) => {
+
+        const imageElement = phenotypes.getIn([i, `imageElement`]);
+        renderCommandBuffer(commandBuffer, imageElement);
+
+        hackTitle = title;
+
+      }).catch(error => {
+        // handle error
+        console.log(`worker: error of ${error}`);
+      });
+
+      promises.push(workerJob);
     }
 
-    const backAst = Runtime.compileBackAst(frontAst.nodes);
-    let env = undefined;
-    let i = 0;
-
-    setTimeout(function go() {
-      // stop generating new phenotypes if we've reached the desired
-      // population or the user has switched to edit mode
-      const phenotypes = gUI.phenotypes;
-      const genotypes = state.get(`genotypes`);
-      if (i < phenotypes.size && state.get(`currentMode`) === SeniMode.evolve) {
-
-        const genotype = genotypes.get(i);
-        const imageElement = phenotypes.getIn([i, `imageElement`]);
-
-        env = renderGenotypeToImage(state,
-                                    backAst,
-                                    genotype,
-                                    imageElement);
-        i++;
-        setTimeout(go);
-      } else {
-        const scriptTitle = titleForScript(env, state.get(`scriptHash`));
-        stopTiming(`renderGeneration-${scriptTitle}`, gUI.konsole);
-        resolve();
-      }
+    Promise.all(promises).then(() => {
+      stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
     });
+
+    resolve();
   });
 }
 
@@ -397,25 +382,30 @@ function onNextGen(store) {
     }
   }
 
-  store.dispatch({type: `SET_SELECTED_INDICES`, selectedIndices});
+  store.dispatch({type: `SET_SELECTED_INDICES`, selectedIndices})
+    .then(state => {
+      if (selectedIndices.size === 0) {
+        // no phenotypes were selected
+        return undefined;
+      }
 
-  if (selectedIndices.size === 0) {
-    // no phenotypes were selected
-    return;
-  }
+      // update the last history state
+      History.replaceState(state);
 
-  // update the last history state
-  History.replaceState(store.getState());
+      showPlaceholderImages(state);
 
-  showPlaceholderImages(store.getState());
+      return store.dispatch({type: `NEXT_GENERATION`, rng: 42});
+    }).then(state => {
 
-  store.dispatch({type: `NEXT_GENERATION`, rng: 42});
+      if (state === undefined) {
+        return;
+      }
 
-  History.pushState(store.getState());
-
-  // render the genotypes
-  updateSelectionUI(store.getState());
-  renderGeneration(store.getState());
+      History.pushState(state);
+      // render the genotypes
+      updateSelectionUI(state);
+      renderGeneration(state);
+    });
 }
 
 function createPhenotypeElement(id, placeholderImage) {
@@ -440,12 +430,15 @@ function createPhenotypeElement(id, placeholderImage) {
 // invoked when the evolve screen is displayed after the edit screen
 function setupEvolveUI(store) {
   return new Promise((resolve, _) => {
-    afterLoadingPlaceholderImages(store.getState()).then(() => {
-      store.dispatch({type: `INITIAL_GENERATION`});
-      // render the phenotypes
-      updateSelectionUI(store.getState());
-      return renderGeneration(store.getState());
-    }).then(resolve);
+    afterLoadingPlaceholderImages(store.getState())
+      .then(() => store.dispatch({type: `INITIAL_GENERATION`}))
+      .then(state => {
+        // render the phenotypes
+        updateSelectionUI(state);
+        renderGeneration(state);
+        return state;
+      })
+      .then(state => resolve(state));
   });
 }
 
@@ -518,12 +511,14 @@ function showEditFromGallery(store, element) {
     if (index !== -1) {
       const url = `/gallery/${index}`;
 
-      get(url).catch(() => {
-        reject(Error(`cannot connect to ${url}`));
-      }).then(data => {
-        store.dispatch({type: `SET_SCRIPT`, script: data});
-        return ensureMode(store, SeniMode.edit);
-      }).then(resolve);
+      get(url)
+        .catch(() => {
+          reject(Error(`cannot connect to ${url}`));
+        })
+        .then(data => setScript(store, data))
+        .then(() => ensureMode(store, SeniMode.edit))
+        .then(resolve);
+
     } else {
       resolve();
     }
@@ -544,7 +539,7 @@ function resizeContainers() {
 }
 
 
-function createKonsole(env, element) {
+function createKonsole(_env, element) {
 
   const konsole = new Konsole(element, {
     prompt: `> `,
@@ -557,7 +552,8 @@ function createKonsole(env, element) {
   });
 
   const commander = new KonsoleCommander();
-  addDefaultCommands(env, commander);
+  // todo: re-instate addDefaultCommands but make it work with ww
+  // addDefaultCommands(env, commander);
 
   konsole.initCallbacks({
     commandValidate(line) {
@@ -585,8 +581,8 @@ function createEditor(store, editorTextArea) {
 
   const extraKeys = {
     'Ctrl-E': () => {
-      store.dispatch({type: `SET_SCRIPT`, script: getScriptFromEditor()});
-      timedRenderScript(store.getState());
+      setScript(store, getScriptFromEditor())
+        .then(state => renderScript(state, gUI.renderImage));
       return false;
     },
     // make ctrl-m a noop, otherwise invoking the konsole will result in
@@ -624,7 +620,7 @@ function setupUI(store) {
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById(`render-img`),
     // console CodeMirror element in the edit screen
-    konsole: createKonsole(gEnv, konsoleElement),
+    konsole: createKonsole(undefined, konsoleElement), // todo: was env
     editor: createEditor(store, editorTextArea)
   };
 
@@ -639,9 +635,10 @@ function setupUI(store) {
 
   addClickEvent(`evolve-btn`, event => {
     // get the latest script from the editor
-    store.dispatch({type: `SET_SCRIPT`, script: getScriptFromEditor()});
-    History.replaceState(store.getState());
-    ensureMode(store, SeniMode.evolve);
+    setScript(store, getScriptFromEditor()).then(state => {
+      History.replaceState(state);
+      ensureMode(store, SeniMode.evolve);
+    });
     event.preventDefault();
   });
 
@@ -652,15 +649,18 @@ function setupUI(store) {
 
   addClickEvent(`shuffle-btn`, event => {
     showPlaceholderImages(store.getState());
-    store.dispatch({type: `SHUFFLE_GENERATION`, rng: 11});
-    updateSelectionUI(store.getState());
-    renderGeneration(store.getState());
+    store.dispatch({type: `SHUFFLE_GENERATION`, rng: 11}).then(state => {
+      updateSelectionUI(state);
+      renderGeneration(state);
+    });
     event.preventDefault();
   });
 
-  addClickEvent(`eval-btn`, () => {
-    store.dispatch({type: `SET_SCRIPT`, script: getScriptFromEditor()});
-    timedRenderScript(store.getState());
+  addClickEvent(`eval-btn`, event => {
+    setScript(store, getScriptFromEditor()).then(state => {
+      renderScript(state, gUI.renderImage);
+    });
+    event.preventDefault();
   });
 
   addClickEvent(`gallery-container`, event => {
@@ -766,11 +766,13 @@ function setupUI(store) {
   window.addEventListener(`popstate`, event => {
     if (event.state) {
       const savedState = History.restoreState(event.state);
-      store.dispatch({type: `SET_STATE`, state: savedState});
-      updateUI(store.getState());
-      if (store.getState().get(`currentMode`) === SeniMode.evolve) {
-        restoreEvolveUI(store);
-      }
+      store.dispatch({type: `SET_STATE`, state: savedState})
+        .then(state => {
+          updateUI(state);
+          if (state.get(`currentMode`) === SeniMode.evolve) {
+            restoreEvolveUI(store);
+          }
+        });
     } else {
       // no event.state so behave as if the user has visited
       // the `/` of the state
@@ -867,13 +869,10 @@ function removeKonsoleInvisibility() {
 export default function main() {
   resizeContainers();
 
+  Workers.setup();
+
   gRenderer = new Renderer(document.getElementById(`render-canvas`));
-  gEnv = Bind.addBindings(
-    Bind.addClassicBindings(
-      Bind.addSpecialDebugBindings(
-        Bind.addSpecialBindings(
-          Runtime.createEnv()))),
-    gRenderer);
+  // gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
 
   const state = createInitialState();
   const store = createStore(state);

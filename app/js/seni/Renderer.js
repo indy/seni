@@ -27,6 +27,20 @@ import { mat4 } from 'gl-matrix';
 
 const Format = Colour.Format;
 
+// command constants for the commandBuffer
+const opMatrixPush = 0;
+const opMatrixPop = 1;
+const opMatrixScale = 2;
+const opMatrixTranslate = 3;
+const opMatrixRotate = 4;
+const opRenderLine = 5;
+const opRenderRect = 6;
+const opRenderCircle = 7;
+const opRenderCircleSlice = 8;
+const opRenderPoly = 9;
+const opRenderBezier = 10;
+const opRenderQuadratic = 11;
+
 export default class Renderer {
   constructor(canvasElement) {
     this.glRenderer = new GLRenderer(canvasElement);
@@ -41,6 +55,73 @@ export default class Renderer {
     this.renderPacket = new RenderPacket();
   }
 
+  executeCommandBuffer(commandBuffer) {
+
+    const hackColour = c => Colour.construct(c.format, c.elements);
+
+    const hackParams = p => {
+      if (p.colour) {
+        p.colour = hackColour(p.colour);
+      }
+
+      if (p.colours) {
+        p.colours = p.colours.map(hackColour);
+      }
+
+      return p;
+    };
+
+    commandBuffer.forEach(cmd => {
+      const op = cmd[0];
+
+      let params = undefined;
+      if (op >= opRenderLine) {
+        // make sure that colours are Immutable objects
+        params = hackParams(cmd[1]);
+      }
+
+      switch (op) {
+      case opMatrixPush:
+        this.cmdMatrixPush();
+        break;
+      case opMatrixPop:
+        this.cmdMatrixPop();
+        break;
+      case opMatrixScale:
+        this.cmdMatrixScale(cmd[1], cmd[2]);
+        break;
+      case opMatrixTranslate:
+        this.cmdMatrixTranslate(cmd[1], cmd[2]);
+        break;
+      case opMatrixRotate:
+        this.cmdMatrixRotate(cmd[1]);
+        break;
+      case opRenderLine:
+        this.cmdRenderLine(params);
+        break;
+      case opRenderRect:
+        this.cmdRenderRect(params);
+        break;
+      case opRenderCircle:
+        this.cmdRenderCircle(params);
+        break;
+      case opRenderCircleSlice:
+        this.cmdRenderCircleSlice(params);
+        break;
+      case opRenderPoly:
+        this.cmdRenderPoly(params);
+        break;
+      case opRenderBezier:
+        this.cmdRenderBezier(params);
+        break;
+      case opRenderQuadratic:
+        this.cmdRenderQuadratic(params);
+        break;
+      }
+    });
+  }
+
+  // todo: remove this once all rendering goes through ProxyRenderer
   vectorToCanvasSpace(v2) {
     const res = this.matrixStack.transform2DVector(v2);
     // destructuring Float32Array as Arrays doesn't work in safari

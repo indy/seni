@@ -3,7 +3,8 @@ var path = require('path');
 
 module.exports = {
   entry: {
-    seni: ['./app/js/index.js']
+    seni: ['./app/js/index.js'],
+    worker: ['./app/js/worker.js']
     // why have polyfill?
     // ,polyfill: ['babel-polyfill']
   },

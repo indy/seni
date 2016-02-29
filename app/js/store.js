@@ -20,8 +20,9 @@ import Immutable from 'immutable';
 
 import Util from './seni/Util';
 import { SeniMode } from './ui/SeniMode';
-import Runtime from './lang/Runtime';
-import Genetic from './lang/Genetic';
+import Workers from './workers';
+
+let currentState = undefined;
 
 /**
  * Creates the immutable SeniState
@@ -42,13 +43,21 @@ export function createInitialState() {
     selectedIndices: [],
     script: undefined,
     scriptHash: undefined,
-    genotypes: []
+    genotypes: [],
+    traits: []
+  });
+}
+
+function wrapInPromise(state) {
+  return new Promise((resolve, _reject) => {
+    currentState = state;
+    resolve(currentState);
   });
 }
 
 export function createStore(initialState) {
 
-  let currentState = initialState;
+  currentState = initialState;
 
   function reducer(state, action) {
     switch (action.type) {
@@ -65,9 +74,9 @@ export function createStore(initialState) {
     case `SHUFFLE_GENERATION`:
       return actionShuffleGeneration(state, action);
     case `SET_STATE`:
-      return action.state;
+      return wrapInPromise(action.state);
     default:
-      return state;
+      return wrapInPromise(state);
     }
   }
 
@@ -76,7 +85,7 @@ export function createStore(initialState) {
   }
 
   function dispatch(action) {
-    currentState = reducer(currentState, action);
+    return reducer(currentState, action);
   }
 
   return {
@@ -86,100 +95,137 @@ export function createStore(initialState) {
 }
 
 function actionSetMode(state, { mode }) {
-  return state.set(`currentMode`, mode);
+  return new Promise((resolve, _reject) => {
+    currentState = state.set(`currentMode`, mode);
+    resolve(currentState);
+  });
 }
 
 function actionSetScript(state, { script }) {
-  return state
-    .set(`script`, script)
-    .set(`scriptHash`, Util.hashCode(script));
+  return new Promise((resolve, reject) => {
+    currentState = state
+      .set(`script`, script)
+      .set(`scriptHash`, Util.hashCode(script));
+
+    Workers.perform(`BUILD_TRAITS`, {
+      script: currentState.get(`script`),
+      scriptHash: currentState.get(`scriptHash`)
+    }).then(({ traits }) => {
+
+      currentState = currentState.set(`traits`, traits);
+      resolve(currentState);
+
+    }).catch(error => {
+      // handle error
+      console.log(`worker: error of ${error}`);
+      reject(error);
+    });
+
+  });
 }
 
 function actionSetSelectedIndices(state, { selectedIndices }) {
-  const si = selectedIndices || new Immutable.List();
-  return state.set(`selectedIndices`, si);
+  return new Promise((resolve, _reject) => {
+    const si = selectedIndices || new Immutable.List();
+    currentState = state.set(`selectedIndices`, si);
+    resolve(currentState);
+  });
 }
 
 // todo: should populationSize be passed in the action?
 function actionInitialGeneration(state) {
+  return new Promise((resolve, reject) => {
 
-  const script = state.get(`script`);
-  const { traits } = buildTraits(script);
+    Workers.perform(`INITIAL_GENERATION`, {
+      traits: state.get(`traits`),
+      populationSize: state.get(`populationSize`)
+    }).then(({ genotypes }) => {
 
-  let genotype;
-  const random = (new Date()).toGMTString();
-  const genotypes = [];
-  const populationSize = state.get(`populationSize`);
+      const im = Immutable.fromJS(genotypes);
 
-  for (let i = 0; i < populationSize; i++) {
-    if (i === 0) {
-      genotype = Genetic.createGenotypeFromInitialValues(traits);
-    } else {
-      genotype = Genetic.createGenotypeFromTraits(traits, i + random);
-    }
-    genotypes.push(genotype);
-  }
+      currentState = state
+        .set(`genotypes`, new Immutable.List(im))
+        .set(`previouslySelectedGenotypes`, new Immutable.List())
+        .set(`selectedIndices`, new Immutable.List());
 
-  return state
-    .set(`genotypes`, new Immutable.List(genotypes))
-    .set(`previouslySelectedGenotypes`, new Immutable.List())
-    .set(`selectedIndices`, new Immutable.List());
+      resolve(currentState);
+
+    }).catch(error => {
+      // handle error
+      console.log(`worker: error of ${error}`);
+      reject(error);
+    });
+  });
 }
 
 function actionShuffleGeneration(state, { rng }) {
+  return new Promise((resolve, reject) => {
 
-  const prev = state.get(`previouslySelectedGenotypes`);
+    const prev = state.get(`previouslySelectedGenotypes`);
 
-  if (prev.size === 0) {
-    return actionInitialGeneration(state);
-  }
+    if (prev.size === 0) {
+      actionInitialGeneration(state).then(s => {
+        resolve(s);
+      });
+    } else {
 
-  const script = state.get(`script`);
-  const { traits } = buildTraits(script);
-  const genotypes = Genetic.nextGeneration(prev,
-                                           state.get(`populationSize`),
-                                           state.get(`mutationRate`),
-                                           traits,
-                                           rng);
-  return state
-    .set(`genotypes`, genotypes)
-    .set(`selectedIndices`, new Immutable.List());
+      Workers.perform(`NEW_GENERATION`, {
+        genotypes: prev.toJS(),
+        populationSize: state.get(`populationSize`),
+        traits: state.get(`traits`),
+        mutationRate: state.get(`mutationRate`),
+        rng
+      }).then(({ genotypes }) => {
+
+        const im = Immutable.fromJS(genotypes);
+
+        currentState = state
+          .set(`genotypes`, new Immutable.List(im))
+          .set(`selectedIndices`, new Immutable.List());
+
+        resolve(currentState);
+
+      }).catch(error => {
+        // handle error
+        console.log(`worker: error of ${error}`);
+        reject(error);
+      });
+    }
+  });
 }
 
 function actionNextGeneration(state, { rng }) {
+  return new Promise((resolve, reject) => {
 
+    const pg = state.get(`genotypes`);
+    const selectedIndices = state.get(`selectedIndices`);
+    let selectedGenos = new Immutable.List();
+    for (let i = 0; i < selectedIndices.size; i++) {
+      selectedGenos = selectedGenos.push(pg.get(selectedIndices.get(i)));
+    }
 
-  const pg = state.get(`genotypes`);
-  const selectedIndices = state.get(`selectedIndices`);
-  let selectedGenos = new Immutable.List();
-  for (let i = 0; i < selectedIndices.size; i++) {
-    selectedGenos = selectedGenos.push(pg.get(selectedIndices.get(i)));
-  }
+    Workers.perform(`NEW_GENERATION`, {
+      genotypes: selectedGenos.toJS(),
+      populationSize: state.get(`populationSize`),
+      traits: state.get(`traits`),
+      mutationRate: state.get(`mutationRate`),
+      rng
+    }).then(({ genotypes }) => {
 
-  const script = state.get(`script`);
-  const { traits } = buildTraits(script);
+      const im = Immutable.fromJS(genotypes);
+      const previouslySelectedGenotypes = im.slice(0, selectedIndices.size);
 
-  const genotypes = Genetic.nextGeneration(selectedGenos,
-                                           state.get(`populationSize`),
-                                           state.get(`mutationRate`),
-                                           traits,
-                                           rng);
+      currentState = state
+        .set(`genotypes`, im)
+        .set(`previouslySelectedGenotypes`, previouslySelectedGenotypes)
+        .set(`selectedIndices`, new Immutable.List());
 
-  const previouslySelectedGenotypes = genotypes.slice(0, selectedIndices.size);
+      resolve(currentState);
 
-  return state.set(`genotypes`, genotypes)
-    .set(`previouslySelectedGenotypes`, previouslySelectedGenotypes)
-    .set(`selectedIndices`, new Immutable.List());
-}
-
-
-function buildTraits(script) {
-  const frontAst = Runtime.buildFrontAst(script);
-  if (frontAst.error) {
-    return { error: frontAst.error };
-  }
-  const backAst = Runtime.compileBackAst(frontAst.nodes);
-  const traits = Genetic.buildTraits(backAst);
-
-  return { traits };
+    }).catch(error => {
+      // handle error
+      console.log(`worker: error of ${error}`);
+      reject(error);
+    });
+  });
 }

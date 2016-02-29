@@ -61,7 +61,13 @@ function restoreState(state) {
   if (logToConsole) {
     console.log(`historyRestore`, state);
   }
-  return Immutable.fromJS(state);
+  const allImmutable = Immutable.fromJS(state);
+
+  // hack: state.traits is expected to consist of JS data structures
+  // so convert that part of allImmutable back into JS
+  //
+  const immutableTraits = allImmutable.get(`traits`);
+  return allImmutable.set(`traits`, immutableTraits.toJS());
 }
 
 export default {
