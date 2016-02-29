@@ -32,7 +32,7 @@ function unparseSimplifiedAst(value) {
       // the form "hello" is represented as (__string hello)
       // this is a hack used by the interpreter
       return `"${value[1]}"`;
-    } else if (value.length > 0 && value[0] === `list`) {
+    } else if (value.length > 0 && value[0] === `vector`) {
       // hack used to correctly unparse forms like '[1 2]', without this
       // the output would be '(list 1 2)' (see Genetic::buildTraitFromNode)
       const e = value.slice(1).map(unparseSimplifiedAst).join(` `).trim();
@@ -89,7 +89,7 @@ function getMultipleValuesFromGenotype(nodes, genotype) {
   const listPostfix = `]`;
 
   const res = nodes.map(n => {
-    if (n.type === NodeType.NAME && n.value === `list`) {
+    if (n.type === NodeType.NAME && n.value === `vector`) {
       return formatNodeValue(n.value, n);
     } else if (n.type === NodeType.COMMENT ||
                n.type === NodeType.WHITESPACE) {

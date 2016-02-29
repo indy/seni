@@ -124,17 +124,17 @@ describe(`Classic`, () => {
     expect(res).to.equal(`#t`);
   });
 
-  it(`list`, () => {
-    const [newEnv, res] = evalForm(e, `(list 90 90)`);
+  it(`vector`, () => {
+    const [newEnv, res] = evalForm(e, `(vector 90 90)`);
     expect(res).to.deep.equal([90, 90]);
     expect(newEnv).to.equal(e);
   });
 
-  it(`append`, () => {
-    let [_, res] = evalForm(e, `(append (list 10 20) 30)`);
+  it(`vector/append`, () => {
+    let [_, res] = evalForm(e, `(vector/append (vector 10 20) 30)`);
     expect(res).to.deep.equal([10, 20, 30]);
 
-    [_, res] = evalForm(e, `(append (list 10 20) 30 40 50 60)`);
+    [_, res] = evalForm(e, `(vector/append (vector 10 20) 30 40 50 60)`);
     expect(res).to.deep.equal([10, 20, 30, 40, 50, 60]);
   });
 });

@@ -1,18 +1,18 @@
 (wash)
-(flower colour: (col/rgb r: {0.8 (scalar)}
-                         g: {0.3 (scalar)}
-                         b: {0.2 (scalar)}
-                         alpha: {0.4 (scalar)})
+(flower colour: (col/rgb r: {0.8 (gen/scalar)}
+                         g: {0.3 (gen/scalar)}
+                         b: {0.2 (gen/scalar)}
+                         alpha: {0.4 (gen/scalar)})
         posx: (/ canvas/width 2)
         posy: (/ canvas/height 2)
-        sc: {1.0 (scalar min: 0.6 max: 2.0)})
+        sc: {1.0 (gen/scalar min: 0.6 max: 2.0)})
 
 (fn (petal-1 angle: 0
              colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
   (on-matrix-stack
     (rotate angle: (radians->degrees angle: angle))
     (bezier-bulging tessellation: 20
-                    line-width: {50 (int min: 10 max: 200)}
+                    line-width: {50 (gen/int min: 10 max: 200)}
                     colour: colour
                     coords: [[0 0]
                              [233.33 100]
@@ -24,7 +24,7 @@
   (on-matrix-stack
     (rotate angle: (radians->degrees angle: angle))
     (bezier-bulging tessellation: 20
-                    line-width: {50 (int min: 10 max: 200)}
+                    line-width: {50 (gen/int min: 10 max: 200)}
                     colour: colour
                     coords: [[0 0]
                              [233.33 -100]
@@ -59,7 +59,7 @@
                     colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
                     sc: 1.0)
   (circ-1 petals: petals colour: colour sc: sc)
-  (rotate angle: (radians->degrees angle: {0.1 (scalar min: 0.01 max: 0.4)}))
+  (rotate angle: (radians->degrees angle: {0.1 (gen/scalar min: 0.01 max: 0.4)}))
   (circ-2 petals: petals colour: colour sc: sc))
 
 (fn (flower colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)
@@ -70,9 +70,9 @@
     (translate vector: [posx posy])
     (scale scalar: sc)
     (define [c2 c3] (col/analagous colour: colour))
-    (layered-petals petals: {23 (int min: 1 max: 50)} colour: colour sc: {0.6 (scalar min: 0.1 max: 0.9)})
-    (layered-petals petals: {19 (int min: 1 max: 50)} colour: c3 sc: {0.5 (scalar min: 0.1 max: 0.9)})
-    (layered-petals petals: {17 (int min: 1 max: 50)} colour: c2 sc: {0.3 (scalar min: 0.1 max: 0.9)})))
+    (layered-petals petals: {23 (gen/int min: 1 max: 50)} colour: colour sc: {0.6 (gen/scalar min: 0.1 max: 0.9)})
+    (layered-petals petals: {19 (gen/int min: 1 max: 50)} colour: c3 sc: {0.5 (gen/scalar min: 0.1 max: 0.9)})
+    (layered-petals petals: {17 (gen/int min: 1 max: 50)} colour: c2 sc: {0.3 (gen/scalar min: 0.1 max: 0.9)})))
 
 (fn (wash variation: 200
           line-width: 70

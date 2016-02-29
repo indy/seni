@@ -33,24 +33,24 @@
 
 ;; render the background grid
 (define
-  focal-bg-a (focal/point position: [{463 (int min: 400 max: 600)} 
-                                     {230 (int min: 100 max: 400)}]
-                          distance: {898 (int min: 700 max: 1000)}
+  focal-bg-a (focal/point position: [{463 (gen/int min: 400 max: 600)} 
+                                     {230 (gen/int min: 100 max: 400)}]
+                          distance: {898 (gen/int min: 700 max: 1000)}
                           falloff: "linear")
-  focal-bg-b (focal/point position: [{554 (int min: 400 max: 600)} 
-                                     {709 (int min: 600 max: 900)}]
-                          distance: {733 (int min: 700 max: 1000)}
+  focal-bg-b (focal/point position: [{554 (gen/int min: 400 max: 600)} 
+                                     {709 (gen/int min: 600 max: 900)}]
+                          distance: {733 (gen/int min: 700 max: 1000)}
                           falloff: "linear")
-  col-fn-bg (col/bezier-fn a: {(col/rgb r: 0.643 g: 0.912 b: 0.870 alpha: 0.639) (col)}
-                           b: {(col/rgb r: 0.033 g: 0.347 b: 0.415 alpha: 0.007) (col)}
-                           c: {(col/rgb r: 0.637 g: 0.021 b: 0.253 alpha: 0.321) (col)}
-                           d: {(col/rgb r: 0.641 g: 0.877 b: 0.166 alpha: 0.455) (col)}))
+  col-fn-bg (col/bezier-fn a: {(col/rgb r: 0.643 g: 0.912 b: 0.870 alpha: 0.639) (gen/col)}
+                           b: {(col/rgb r: 0.033 g: 0.347 b: 0.415 alpha: 0.007) (gen/col)}
+                           c: {(col/rgb r: 0.637 g: 0.021 b: 0.253 alpha: 0.321) (gen/col)}
+                           d: {(col/rgb r: 0.641 g: 0.877 b: 0.166 alpha: 0.455) (gen/col)}))
 
-(grid n: {37 (int min: 30 max: 40)}
+(grid n: {37 (gen/int min: 30 max: 40)}
       fun: (make-draw-element focal-fn-a: focal-bg-a
                               focal-fn-b: focal-bg-b
-                              rotate-factor: {384 (int min: 300 max: 400)}
-                              width: {33 (int min: 30 max: 60)}
-                              height: {482 (int min: 400 max: 500)}
+                              rotate-factor: {384 (gen/int min: 300 max: 400)}
+                              width: {33 (gen/int min: 30 max: 60)}
+                              height: {482 (gen/int min: 400 max: 500)}
                               col-fn: col-fn-bg))
 

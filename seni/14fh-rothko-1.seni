@@ -6,27 +6,27 @@
 
 (stroked-bezier-rect position: [(/ canvas/width 2) 600]
                      width: 800 height: 600
-                     colour-volatility: {90 (int min: 0 max: 60)}
-                     colour: (col/rgb r: {0.8 (scalar)}
-                                      g: {0.0 (scalar)}
-                                      b: {0.0 (scalar)}
+                     colour-volatility: {90 (gen/int min: 0 max: 60)}
+                     colour: (col/rgb r: {0.8 (gen/scalar)}
+                                      g: {0.0 (gen/scalar)}
+                                      b: {0.0 (gen/scalar)}
                                       alpha: 0.3)
-                     volatility: {2 (int min: 0 max: 100)}
-                     iterations: {90 (int min: 0 max: 100)}
-                     seed: {40 (int min: 0 max: 100)}
-                     overlap: {90.0 (scalar min: 0 max: 5.0)})
+                     volatility: {2 (gen/int min: 0 max: 100)}
+                     iterations: {90 (gen/int min: 0 max: 100)}
+                     seed: {40 (gen/int min: 0 max: 100)}
+                     overlap: {90.0 (gen/scalar min: 0 max: 5.0)})
 
 (stroked-bezier-rect position: [(/ canvas/width 2) 200]
                      width: 760 height: 200
-                     colour-volatility: {9 (int min: 0 max: 50)}
-                     colour: (col/rgb r: {0.15 (scalar)}
-                                      g: {0.10 (scalar)}
-                                      b: {0.20 (scalar)}
+                     colour-volatility: {9 (gen/int min: 0 max: 50)}
+                     colour: (col/rgb r: {0.15 (gen/scalar)}
+                                      g: {0.10 (gen/scalar)}
+                                      b: {0.20 (gen/scalar)}
                                       alpha: 0.3)
-                     volatility: {20 (int min: 0 max: 100)}
-                     iterations: {90 (int min: 0 max: 100)}
-                     seed: {42 (int min: 0 max: 100)}
-                     overlap: {10.0 (scalar min: 0 max: 5.0)})
+                     volatility: {20 (gen/int min: 0 max: 100)}
+                     iterations: {90 (gen/int min: 0 max: 100)}
+                     seed: {42 (gen/int min: 0 max: 100)}
+                     overlap: {10.0 (gen/scalar min: 0 max: 5.0)})
 
 (fn (v x: 0 y: 0 z: 0 scale: 1)
     (+ y (* scale (prng/perlin-signed x: x y: y z: z))))

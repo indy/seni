@@ -4,17 +4,17 @@
                    step: 0
                    t: 0)
   (define
-    rad (- {415 (int min: 200 max: 600)}
-           (* step {0.58 (scalar max: 2)}))
+    rad (- {415 (gen/int min: 200 max: 600)}
+           (* step {0.58 (gen/scalar max: 2)}))
     [px py] position)
   (circle position: [(+ cx (* px rad)) (+ cy (* py rad))]
-          radius: {11 (int min: 5 max: 50)}
+          radius: {11 (gen/int min: 5 max: 50)}
           tessellation: 30
           colour: (col/rgb r: 0.1 g: 0.5 b: 0.2 alpha: 0.7)))
 
 (path/circle position: [0 0]
-             t-start: {0.018 (scalar)}
-             t-end: (* 4 {4.183 (scalar min: 1 max: 12)})
+             t-start: {0.018 (gen/scalar)}
+             t-end: (* 4 {4.183 (gen/scalar min: 1 max: 12)})
              radius: 1
-             steps: (* 4 {123 (int min: 30 max: 800)})
+             steps: (* 4 {123 (gen/int min: 30 max: 800)})
              fn: render-circle)

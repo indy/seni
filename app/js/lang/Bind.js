@@ -18,6 +18,7 @@
 
 import Special from './Special';
 import Classic from './Classic';
+import HigherOrder from './HigherOrder';
 
 import SpecialDebug from '../ui/SpecialDebug';
 
@@ -119,6 +120,7 @@ const Bind = {
 
   addClassicBindings: env => {
     env = applyBindings(env, Classic);
+    env = applyBindings(env, HigherOrder);
 
     return env;
   }

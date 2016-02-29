@@ -41,7 +41,7 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `list/length`,
+    `vector/length`,
     { args: [[`of`, `the vector whose length is required`]],
       returns: `the length of the vector` },
     { of: [] },
@@ -52,7 +52,7 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `list/get`,
+    `vector/get`,
     { description: `get an element from a vector`,
       args: [[`from`, `a vector`],
              [`nth`, `the index of an element`]],

@@ -21,7 +21,7 @@ import Interp from './Interp';
 
 const publicBindings = [
   new PublicBinding(
-    `identity`,
+    `gen/identity`,
     { description: `basic identity function`,
       args: [[`value`, `the value to return`]],
       returns: `the given value` },
@@ -33,7 +33,7 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `int`,
+    `gen/int`,
     { description: `generate an integer`,
       args: [[`min`, ``],
              [`max`, ``]],
@@ -47,7 +47,7 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `scalar`,
+    `gen/scalar`,
     { description: `generate an scalar`,
       args: [[`min`, ``],
              [`max`, ``]],
@@ -61,7 +61,7 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `vector`,
+    `gen/vector`,
     { description: `generate a 2d vector`,
       args: [[`min`, ``],
              [`max`, ``]],
@@ -71,12 +71,12 @@ const publicBindings = [
       const {min, max} = self.mergeWithDefaults(params);
       const x = Interp.interpolate(min, max, rng());
       const y = Interp.interpolate(min, max, rng());
-      return [`list`, x, y];
+      return [`vector`, x, y];
     }
   ),
 
   new PublicBinding(
-    `select`,
+    `gen/select`,
     { description: `selects a value from a vector`,
       args: [[`from`, `a vector of values`]],
       returns: `one of the values in the from vector` },
@@ -93,7 +93,7 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `col`,
+    `gen/col`,
     { description: `generates a colour`,
       args: [[`alpha`, `the alpha value to use`]],
       returns: `a colour` },
@@ -106,14 +106,6 @@ const publicBindings = [
       }
       return [`col/rgb`, {r, g, b, alpha}];
     }
-  ),
-
-  new PublicBinding(
-    `testPlus`,
-    { description: `[FOR TESTING ONLY] returns + character` },
-    {},
-    // rng is a PseudoRandom returning values in the range 0..1
-    () => () => `+`
   )
 ];
 

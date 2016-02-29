@@ -10,13 +10,13 @@
   remap (interp/fn from: [0 steps] to: [0 1])
   col-fn-1 (col/procedural-fn a: [0.5 0.5 0.5]
                               b: [0.5 0.5 0.5]
-                              c: {[0.990 0.406 0.048] (scalar)}
-                              d: {[0.015 0.723 0.116] (scalar)}
+                              c: {[0.990 0.406 0.048] (gen/scalar)}
+                              d: {[0.015 0.723 0.116] (gen/scalar)}
                               alpha: 1)
   col-fn-2 (col/procedural-fn a: [0.5 0.5 0.5]
                               b: [0.5 0.5 0.5]
-                              c: {[0.664 0.776 0.153] (scalar)}
-                              d: {[0.372 0.515 0.756] (scalar)}
+                              c: {[0.664 0.776 0.153] (gen/scalar)}
+                              d: {[0.372 0.515 0.756] (gen/scalar)}
                               alpha: 1))
 
 (loop (y from: 0 to: steps)

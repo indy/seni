@@ -18,12 +18,43 @@
 
 
 const db = {};
+const printPrecision = 2;
+
+function getStats(entry) {
+  if (entry.num === 0) {
+    return null;
+  }
+  return {
+    current: entry.last,
+    average: (entry.sum / entry.num),
+    min: entry.min,
+    max: entry.max
+  };
+}
+
+
+function addTiming(entry, duration) {
+  entry.num += 1;
+  entry.sum += duration;
+  entry.last = duration;
+  if (duration < entry.min) {
+    entry.min = duration;
+  }
+  if (duration > entry.max) {
+    entry.max = duration;
+  }
+  return entry;
+}
 
 function useDBEntry(id) {
   if (!db[id]) {
     db[id] = {
       id,
-      values: []
+      num: 0,
+      sum: 0,
+      last: 0,
+      min: 100000,
+      max: 0
     };
   }
 
@@ -35,16 +66,24 @@ export function startTiming(id, konsole) {
   const entry = useDBEntry(id);
 
   const stopFn = () => {
-    const after = new Date();
+    const after = performance.now();
     const duration = after - before;
 
-    entry.values.push(duration);
-    if (konsole) {
-      konsole.log(`rendered ${entry.id} ${duration}ms`);
+    addTiming(entry, duration);
+
+    const stats = getStats(entry);
+
+    if (konsole && stats) {
+      const id = entry.id;
+      const cur = stats.current.toFixed(printPrecision);
+      const avg = stats.average.toFixed(printPrecision);
+      const min = stats.min.toFixed(printPrecision);
+      const max = stats.max.toFixed(printPrecision);
+      konsole.log(`${id}: ${cur}ms (Mean: ${avg}, Min: ${min}, Max: ${max})`);
     }
   };
 
-  const before = new Date();
+  const before = performance.now();
   return stopFn;
 }
 

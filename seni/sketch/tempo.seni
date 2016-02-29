@@ -1,5 +1,5 @@
 (rect)
 
-(define coords {[[10 10] [20 20] [30 30]] (vector)})
+(define coords {[[10 10] [20 20] [30 30]] (gen/vector)})
 
 (log coords)

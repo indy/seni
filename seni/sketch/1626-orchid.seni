@@ -3,23 +3,23 @@
             [-153.525 -124.310]
             [-470.096 -104.095]
             [91.910 -160.094]]
-           (vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
   coords2 {[[-223.950 468.340]
             [308.459 -456.816]
             [-401.633 284.743]
             [-8.407 257.295]]
-           (vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
   coords3 {[[-412.063 -149.809]
             [-78.466 -66.429]
             [58.852 146.280]
             [96.709 -286.538]]
-           (vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
 
-  col-fn-1 (col/procedural-fn preset: {"chrome" (select from: col/procedural-fn-presets)}
+  col-fn-1 (col/procedural-fn preset: {"chrome" (gen/select from: col/procedural-fn-presets)}
                               alpha: 0.08)
-  col-fn-2 (col/procedural-fn preset: {"knight-rider" (select from: col/procedural-fn-presets)}
+  col-fn-2 (col/procedural-fn preset: {"knight-rider" (gen/select from: col/procedural-fn-presets)}
                               alpha: 0.08)
-  col-fn-3 (col/procedural-fn preset: {"knight-rider" (select from: col/procedural-fn-presets)}
+  col-fn-3 (col/procedural-fn preset: {"knight-rider" (gen/select from: col/procedural-fn-presets)}
                               alpha: 0.08))
 
 (fn (draw)
@@ -39,7 +39,7 @@
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (repeat/rotate-mirrored draw: draw
-                            copies: {3 (int min: 1 max: 8)})))
+                            copies: {3 (gen/int min: 1 max: 8)})))
 
 (render)
 

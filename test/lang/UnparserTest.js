@@ -97,15 +97,15 @@ describe(`Unparser`, () => {
   });
 
   it(`unparse with different genotypes`, () => {
-    expect(seededUnparse(`(+ {1 (int)} {3 (int)})`, 32))
-      .to.equal(`(+ {51 (int)} {79 (int)})`);
-    expect(seededUnparse(`(+ {1 (int)})`, 32))
-      .to.equal(`(+ {51 (int)})`);
+    expect(seededUnparse(`(+ {1 (gen/int)} {3 (gen/int)})`, 32))
+      .to.equal(`(+ {51 (gen/int)} {79 (gen/int)})`);
+    expect(seededUnparse(`(+ {1 (gen/int)})`, 32))
+      .to.equal(`(+ {51 (gen/int)})`);
   });
 
   it(`unparse vectors`, () => {
-    const f = `(define f {[1 2] (select from: [1 2 3 4])})`;
-    const g = `(define f {[4 1] (select from: [1 2 3 4])})`;
+    const f = `(define f {[1 2] (gen/select from: [1 2 3 4])})`;
+    const g = `(define f {[4 1] (gen/select from: [1 2 3 4])})`;
 
     expectToUnparse(f);
     expect(seededUnparse(f, 33)).to.equal(g);

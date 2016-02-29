@@ -163,12 +163,12 @@ describe(`Compiler`, () => {
   });
 
   it(`required functions: genotype`, () => {
-    expect(compileWithSeed(`(+ 2 {44 (int min: 10 max: 56)})`, 100)).
+    expect(compileWithSeed(`(+ 2 {44 (gen/int min: 10 max: 56)})`, 100)).
       to.deep.equal([`+`, 2, 11]);
 
-    expect(compileWithSeed(`(+ 2 {44 (int min: 10 max: 56)})`, 33)).
+    expect(compileWithSeed(`(+ 2 {44 (gen/int min: 10 max: 56)})`, 33)).
       to.deep.equal([`+`, 2, 49]);
-    expect(compileWithSeed(`(+ 2 {44 (int min: 10 max: 56)})`, 33)).
+    expect(compileWithSeed(`(+ 2 {44 (gen/int min: 10 max: 56)})`, 33)).
       to.deep.equal([`+`, 2, 49]);
 
   });
@@ -176,19 +176,14 @@ describe(`Compiler`, () => {
   // correctly work with functions that have genotypes
   // in both name and arg positions
   it(`correctly apply genotypes to named functions`, () => {
-    const form = `({gogo (select from: (list 'shabba 'gogo 'hooha))}
-                 foo: {44 (int min: 10 max: 56)})`;
+    const form = `({gogo (gen/select from: (vector 'shabba 'gogo 'hooha))}
+                 foo: {44 (gen/int min: 10 max: 56)})`;
 
     expect(compileWithSeed(form, 100)).to.deep.equal([`shabba`, {foo: 15}]);
   });
 
-  it(`plus`, () => {
-    expect(compileWithSeed(`({- (testPlus)} 2 7)`, 100)).
-      to.deep.equal([`+`, 2, 7]);
-  });
-
   it(`bracket bind a random colour`, () => {
-    let res = (compileWithSeed(`{(col/rgb r: 0.1 g: 0.2 b: 0.3) (col)}`, 100));
+    let res = (compileWithSeed(`{(col/rgb r: 0.1 g: 0.2 b: 0.3) (gen/col)}`, 100));
     // res === [`col/rgb`, {r: 0.122, g: 0.08, b: 0.40}]
 
     expect(res.length).to.equal(2);
@@ -201,7 +196,7 @@ describe(`Compiler`, () => {
     expect(colourValues.b).to.be.closeTo(0.0826, epsilon);
     expect(colourValues.alpha).to.be.closeTo(0.4031, epsilon);
 
-    res = (compileWithSeed(`{(col/rgb r: 0.1 g: 0.2 b: 0.3) (col alpha: 1)}`,
+    res = (compileWithSeed(`{(col/rgb r: 0.1 g: 0.2 b: 0.3) (gen/col alpha: 1)}`,
                            100));
     // res === [`col/rgb`, {r: 0.122, g: 0.08, b: 0.40 alpha: 1}]
 
@@ -233,7 +228,7 @@ describe(`Compiler`, () => {
       to.deep.equal([`show`, 2, 4]);
 
     expect(compile(`(show [2 4])`)).
-      to.deep.equal([`show`, [`list`, 2, 4]]);
+      to.deep.equal([`show`, [`vector`, 2, 4]]);
 
     expect(compile(`(shot true 4)`)).
       to.deep.equal([`shot`, `#t`, 4]);

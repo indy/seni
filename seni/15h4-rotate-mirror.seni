@@ -3,30 +3,30 @@
 (define
   coords []
   colours []
-  make-colour (col/procedural-fn a: {[0.062 0.117 0.209] (scalar)}
-                                 b: {[0.764 0.639 0.638] (scalar)}
-                                 c: {[0.613 0.181 0.155] (scalar)}
-                                 d: {[0.695 0.726 0.761] (scalar)})
+  make-colour (col/procedural-fn a: {[0.062 0.117 0.209] (gen/scalar)}
+                                 b: {[0.764 0.639 0.638] (gen/scalar)}
+                                 c: {[0.613 0.181 0.155] (gen/scalar)}
+                                 d: {[0.695 0.726 0.761] (gen/scalar)})
 
-  focalpoint ({focal/point (select from: ['focal/point
+  focalpoint ({focal/point (gen/select from: ['focal/point
                                           'focal/hline
                                           'focal/vline])} 
-              position: [{82 (int min: -300 max: 300)} 
-                         {268 (int min: -300 max: 300)}]
-              distance: {488 (int min: 300 max: 900)}))
+              position: [{82 (gen/int min: -300 max: 300)} 
+                         {268 (gen/int min: -300 max: 300)}]
+              distance: {488 (gen/int min: 300 max: 900)}))
 
-(loop (t from: 0 upto: 1 steps: {63 (int min: 5 max: 100)})
+(loop (t from: 0 upto: 1 steps: {63 (gen/int min: 5 max: 100)})
   (define
     p1 (interp/bezier t: t
                       coords: {[[26.352 71.412] [23.830 24.871] [-133.484 -181.749] [267.624 -253.808]]
-                                (vector min: -300 max: 300)})
+                                (gen/vector min: -300 max: 300)})
     p2 (interp/bezier t: t
                       coords: {[[-8.177 249.445] [102.280 -277.847] [-45.873 -253.028] [180.791 -209.762]]
-                                (vector min: -300 max: 300)})
+                                (gen/vector min: -300 max: 300)})
     c1 (make-colour t: (focalpoint position: p1))
     c2 (make-colour t: (focalpoint position: p2)))
-  (append coords p1 p2)
-  (append colours c1 c2))
+  (vector/append coords p1 p2)
+  (vector/append colours c1 c2))
 
 (fn (wash variation: 200
           line-width: 70
@@ -60,13 +60,13 @@
 (fn (draw)
   (poly coords: coords colours: colours))
 
-(wash colour: {(col/rgb r: 0.184 g: 0.605 b: 0.804 alpha: 0.163) (col)})
+(wash colour: {(col/rgb r: 0.184 g: 0.605 b: 0.804 alpha: 0.163) (gen/col)})
 
 (on-matrix-stack
   (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
-  (scale scalar: {0.996 (scalar min: 0.8 max: 2)})
-  (rotate angle: {88.202 (scalar min: 0 max: 360)})
+  (scale scalar: {0.996 (gen/scalar min: 0.8 max: 2)})
+  (rotate angle: {88.202 (gen/scalar min: 0 max: 360)})
   (repeat/rotate-mirrored draw: draw
-                          copies: {28 (int min: 1 max: 30)}))
+                          copies: {28 (gen/int min: 1 max: 30)}))
 
 
