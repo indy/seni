@@ -163,9 +163,26 @@ function renderGenotypeToImage(state, backAst, genotype, imageElement, w, h) {
     renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
   }
 
-  Runtime.evalAst(gEnv, backAst, genotype);
+  const res = Runtime.evalAst(gEnv, backAst, genotype);
+  const env = res[0];
+
   renderer.postDrawScene();
   imageElement.src = renderer.getImageData();
+
+  return env;
+}
+
+function titleForScript(env, scriptHash) {
+  // default the scriptTitle to scriptHash
+  // (but replace with 'title' binding if it's defined in the script)
+  let scriptTitle = scriptHash;
+  if (env) {
+    const titleBinding = env.get(`title`);
+    if (titleBinding) {
+      scriptTitle = titleBinding.binding;
+    }
+  }
+  return scriptTitle;
 }
 
 function renderScript(state, imageElement) {
@@ -174,21 +191,22 @@ function renderScript(state, imageElement) {
   const frontAst = Runtime.buildFrontAst(script);
   if (frontAst.error) {
     gUI.konsole.log(frontAst.error);
-    return;
+    return undefined;
   }
   const backAst = Runtime.compileBackAst(frontAst.nodes);
   const traits = Genetic.buildTraits(backAst);
   const genotype = Genetic.createGenotypeFromInitialValues(traits);
 
-  renderGenotypeToImage(state, backAst, genotype, imageElement);
+  const env = renderGenotypeToImage(state, backAst, genotype, imageElement);
+
+  return env;
 }
 
 function timedRenderScript(state) {
-  const scriptHash = state.get(`scriptHash`);
-  const stopFn = startTiming(`renderScript-${scriptHash}`,
-                             gUI.konsole);
-  renderScript(state, gUI.renderImage);
-  stopFn();
+  const stopFn = startTiming();
+  const env = renderScript(state, gUI.renderImage);
+  const scriptTitle = titleForScript(env, state.get(`scriptHash`));
+  stopFn(`renderScript-${scriptTitle}`, gUI.konsole);
 }
 
 function addClickEvent(id, fn) {
@@ -294,10 +312,8 @@ function renderGeneration(state) {
   return new Promise((resolve, reject) => {
 
     const script = state.get(`script`);
-    const scriptHash = state.get(`scriptHash`);
 
-    const stopTiming = startTiming(`renderGeneration-${scriptHash}`,
-                                   gUI.konsole);
+    const stopTiming = startTiming();
 
     const frontAst = Runtime.buildFrontAst(script);
     if (frontAst.error) {
@@ -307,6 +323,7 @@ function renderGeneration(state) {
     }
 
     const backAst = Runtime.compileBackAst(frontAst.nodes);
+    let env = undefined;
     let i = 0;
 
     setTimeout(function go() {
@@ -319,14 +336,15 @@ function renderGeneration(state) {
         const genotype = genotypes.get(i);
         const imageElement = phenotypes.getIn([i, `imageElement`]);
 
-        renderGenotypeToImage(state,
-                              backAst,
-                              genotype,
-                              imageElement);
+        env = renderGenotypeToImage(state,
+                                    backAst,
+                                    genotype,
+                                    imageElement);
         i++;
         setTimeout(go);
       } else {
-        stopTiming();
+        const scriptTitle = titleForScript(env, state.get(`scriptHash`));
+        stopTiming(`renderGeneration-${scriptTitle}`, gUI.konsole);
         resolve();
       }
     });

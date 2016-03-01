@@ -61,11 +61,10 @@ function useDBEntry(id) {
   return db[id];
 }
 
-export function startTiming(id, konsole) {
+export function startTiming() {
+  const stopFn = (id, konsole) => {
+    const entry = useDBEntry(id);
 
-  const entry = useDBEntry(id);
-
-  const stopFn = () => {
     const after = performance.now();
     const duration = after - before;
 
@@ -74,12 +73,12 @@ export function startTiming(id, konsole) {
     const stats = getStats(entry);
 
     if (konsole && stats) {
-      const id = entry.id;
+      const eid = entry.id;
       const cur = stats.current.toFixed(printPrecision);
       const avg = stats.average.toFixed(printPrecision);
       const min = stats.min.toFixed(printPrecision);
       const max = stats.max.toFixed(printPrecision);
-      konsole.log(`${id}: ${cur}ms (Mean: ${avg}, Min: ${min}, Max: ${max})`);
+      konsole.log(`${eid}: ${cur}ms (Mean: ${avg}, Min: ${min}, Max: ${max})`);
     }
   };
 
