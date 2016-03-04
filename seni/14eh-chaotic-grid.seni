@@ -80,7 +80,7 @@
       (define 
         [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
         lightness (+ (col/get-lab-l colour: lab-colour)
-                     (* colour-volatility (take from: rng)))
+                     (* colour-volatility (rng)))
         current-colour (col/set-lab-l colour: lab-colour
                                       value: lightness))
       (bezier tessellation: 10
@@ -110,7 +110,7 @@
       (define 
         [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
         lightness (+ (col/get-lab-l colour: lab-colour)
-                     (* colour-volatility (take from: rng)))
+                     (* colour-volatility (rng)))
         current-colour (col/set-lab-l colour: lab-colour
                                       value: lightness))
       (bezier tessellation: 10

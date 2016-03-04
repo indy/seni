@@ -17,7 +17,7 @@
  */
 
 import Immutable from 'immutable';
-
+import Trivia from './seni/Trivia';
 import Renderer from './seni/Renderer';
 import History from './ui/History';
 import Editor from './ui/Editor';
@@ -868,7 +868,7 @@ function removeKonsoleInvisibility() {
 
 export default function main() {
   resizeContainers();
-
+  console.log(Trivia.getTitle());
   Workers.setup();
 
   gRenderer = new Renderer(document.getElementById(`render-canvas`));
