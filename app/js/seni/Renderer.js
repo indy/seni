@@ -82,40 +82,40 @@ export default class Renderer {
 
       switch (op) {
       case opMatrixPush:
-        this.cmdMatrixPush();
+        this.matrixStack.pushMatrix();
         break;
       case opMatrixPop:
-        this.cmdMatrixPop();
+        this.matrixStack.popMatrix();
         break;
       case opMatrixScale:
-        this.cmdMatrixScale(cmd[1], cmd[2]);
+        this.matrixStack.scale(cmd[1], cmd[2]);
         break;
       case opMatrixTranslate:
-        this.cmdMatrixTranslate(cmd[1], cmd[2]);
+        this.matrixStack.translate(cmd[1], cmd[2]);
         break;
       case opMatrixRotate:
-        this.cmdMatrixRotate(cmd[1]);
+        this.matrixStack.rotate(cmd[1]);
         break;
       case opRenderLine:
-        this.cmdRenderLine(params);
+        this.renderLine(params);
         break;
       case opRenderRect:
-        this.cmdRenderRect(params);
+        this.renderRect(params);
         break;
       case opRenderCircle:
-        this.cmdRenderCircle(params);
+        this.renderCircle(params);
         break;
       case opRenderCircleSlice:
-        this.cmdRenderCircleSlice(params);
+        this.renderCircleSlice(params);
         break;
       case opRenderPoly:
-        this.cmdRenderPoly(params);
+        this.renderPoly(params);
         break;
       case opRenderBezier:
-        this.cmdRenderBezier(params);
+        this.renderCurve(params, MathUtil.bezierCoordinates);
         break;
       case opRenderQuadratic:
-        this.cmdRenderQuadratic(params);
+        this.renderCurve(params, MathUtil.quadraticCoordinates);
         break;
       }
     });
@@ -128,59 +128,6 @@ export default class Renderer {
     // so we have to build and return a normal JS array
     return [res[0], res[1]];
   }
-
-  // ----------------------------------------------------------------------
-  // functions beginning with cmd are commands.
-  // perhaps split this out into a separate class?
-  cmdMatrixPush() {
-    return this.matrixStack.pushMatrix();
-  }
-
-  cmdMatrixPop() {
-    return this.matrixStack.popMatrix();
-  }
-
-  cmdMatrixScale(x, y) {
-    return this.matrixStack.scale(x, y);
-  }
-
-  cmdMatrixTranslate(x, y) {
-    return this.matrixStack.translate(x, y);
-  }
-
-  cmdMatrixRotate(angle) {
-    return this.matrixStack.rotate(angle);
-  }
-
-  cmdRenderLine(params) {
-    return this.renderLine(params);
-  }
-
-  cmdRenderRect(params) {
-    return this.renderRect(params);
-  }
-
-  cmdRenderCircle(params) {
-    return this.renderCircle(params);
-  }
-
-  cmdRenderCircleSlice(params) {
-    return this.renderCircleSlice(params);
-  }
-
-  cmdRenderPoly(params) {
-    return this.renderPoly(params);
-  }
-
-  cmdRenderBezier(params) {
-    return this.renderCurve(params, MathUtil.bezierCoordinates);
-  }
-
-  cmdRenderQuadratic(params) {
-    return this.renderCurve(params, MathUtil.quadraticCoordinates);
-  }
-
-  // ----------------------------------------------------------------------
 
   renderLine(params) {
     const {
