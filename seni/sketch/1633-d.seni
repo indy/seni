@@ -1,0 +1,84 @@
+(define 
+  coords1 {[[335.200 112.444]
+            [-431.964 -91.473]
+            [-310.904 465.143]
+            [-494.828 418.991]]
+                    (gen/vector min: -500 max: 500)}
+  coords2 {[[-196.502 251.355]
+            [272.635 297.197]
+            [264.253 -422.074]
+            [-219.562 -151.337]]
+                      (gen/vector min: -500 max: 500)}
+  coords3 {[[-236.278 -447.736]
+            [151.727 -322.909]
+            [-421.354 235.607]
+            [4.363 -40.959]]
+                      (gen/vector min: -500 max: 500)}
+
+  col-fn-1 (col/procedural-fn a: {[0.486 0.027 0.535] (gen/scalar)}
+                              b: {[0.353 0.901 0.712] (gen/scalar)}
+                              c: {[0.057 0.027 0.131] (gen/scalar)}
+                              d: {[0.027 0.080 0.730] (gen/scalar)}
+                              alpha: 0.08)
+  col-fn-2 (col/procedural-fn a: {[0.564 0.598 0.396] (gen/scalar)}
+                              b: {[0.960 0.160 0.760] (gen/scalar)}
+                              c: {[0.169 0.125 0.258] (gen/scalar)}
+                              d: {[0.852 0.121 0.579] (gen/scalar)}
+                              alpha: 0.08)
+  col-fn-3 (col/procedural-fn a: {[0.855 0.451 0.754] (gen/scalar)}
+                              b: {[0.475 0.520 0.623] (gen/scalar)}
+                              c: {[0.839 0.740 0.371] (gen/scalar)}
+                              d: {[0.717 0.631 0.202] (gen/scalar)}
+                              alpha: 0.08))
+
+
+(fn (wash variation: 200
+          line-width: 70
+          line-segments: 5
+          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+          seed: 272)
+
+  (fn (v x: 0 y: 0 z: 0 scale: 1)
+    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
+
+  (define 
+    w/3 (/ canvas/width 3)
+    h/3 (/ canvas/height 3))
+
+  (loop (h from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[0 (v x: 0 y: h z: seed scale: variation)]
+                     [w/3 (v x: w/3 y: h z: seed scale: variation)]
+                     [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
+                     [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
+            colour: colour)
+
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[(v x: 0 y: h z: seed scale: variation) 0]
+                     [(v x: h/3 y: h z: seed scale: variation) h/3]
+                     [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
+                     [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
+            colour: colour)))
+
+
+(fn (draw)
+  (loop (t from: 0 upto: 1 steps: 200)
+    (poly coords: [(interp/bezier t: t coords: coords1)
+                   (interp/bezier t: t coords: coords2)
+                   (interp/bezier t: t coords: coords3)]
+          colours: [(col-fn-1 t: t)
+                    (col-fn-2 t: t)
+                    (col-fn-3 t: t)])))
+
+(fn (render)
+  (wash colour: {(col/rgb r: 0.914 g: 0.278 b: 0.557 alpha: 0.901) (gen/col)})
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 1) (/ canvas/height 2)])
+    (scale scalar: 2)
+    (repeat/rotate-mirrored draw: draw
+                            copies: {8 (gen/int min: 1 max: 10)})))
+
+(render)
+
