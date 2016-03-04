@@ -79,10 +79,10 @@ function renderBezierTrailing(publicBinding, params, renderer) {
 
   const {tessellation,
          coords,
-         tStart,
-         tEnd,
          colour} = fullParams;
   const lineWidth = fullParams[`line-width`];
+  const tStart = fullParams[`t-start`];
+  const tEnd = fullParams[`t-end`];
 
   const bezierParams = {tessellation,
                         'line-width-start': lineWidth,
@@ -266,7 +266,7 @@ function renderStrokedBezierRect(publicBinding, params, renderer) {
     tessellation,
     colour
   } = fullParams;
-  const strokeTessellation = fullParams[`strok-tessellation`];
+  const strokeTessellation = fullParams[`stroke-tessellation`];
   const strokeNoise = fullParams[`stroke-noise`];
   const colourVolatility = fullParams[`colour-volatility`];
 
