@@ -22,7 +22,9 @@
 
 import PromiseWorker from 'promise-worker';
 
-const numWorkers = 8;
+const logToConsole = true;
+
+let numWorkers = 8;
 const promiseWorkers = [];
 const working = [];
 
@@ -59,7 +61,14 @@ function releaseWorker(workerId) {
   working[workerId] = false;
 }
 
-function setup() {
+function setup(numWorkersParam) {
+
+  if (logToConsole) {
+    console.log(`workers::numWorkers = ${numWorkersParam}`);
+  }
+
+  numWorkers = numWorkersParam;
+
   for (let i = 0; i < numWorkers; i++) {
     const w = new Worker(`/dist/worker.bundle.js`);
     promiseWorkers[i] = new PromiseWorker(w);

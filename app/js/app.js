@@ -866,16 +866,28 @@ function removeKonsoleInvisibility() {
   k.classList.remove(`invisible`);
 }
 
+function allocateWorkers(state) {
+  const defaultNumWorkers = 4;
+  let numWorkers = navigator.hardwareConcurrency || defaultNumWorkers;
+  if (numWorkers > state.get(`populationSize`)) {
+    // don't allocate more workers than necessary
+    numWorkers = state.get(`populationSize`);
+  }
+  Workers.setup(numWorkers);
+}
+
 export default function main() {
   resizeContainers();
   console.log(Trivia.getTitle());
-  Workers.setup();
+
+  const state = createInitialState();
+  const store = createStore(state);
+
+  allocateWorkers(state);
 
   gRenderer = new Renderer(document.getElementById(`render-canvas`));
   // gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
 
-  const state = createInitialState();
-  const store = createStore(state);
   setupUI(store);
 
   getGallery()
