@@ -99,6 +99,9 @@ function showButtonsFor(mode) {
     nextBtn.classList.remove(`hidden`);
     shuffleBtn.classList.remove(`hidden`);
     break;
+  default:
+    console.log(`unknown seni mode`);
+    break;
   }
 }
 
@@ -143,6 +146,9 @@ function updateUI(state) {
   case SeniMode.evolve :
     // will only get here from History.restoreState
     // NOTE: the popstate event listener is handling this case
+    break;
+  default:
+    console.log(`unknown SeniMode`);
     break;
   }
 }

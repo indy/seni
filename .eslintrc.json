@@ -157,7 +157,7 @@
     "consistent-this": [0, "that"],
     "constructor-super": 2,
     "curly": [0, "all"],
-    "default-case": 0,
+    "default-case": 2,
     "dot-location": 0,
     "dot-notation": [0, { "allowKeywords": true }],
     "eol-last": 0,

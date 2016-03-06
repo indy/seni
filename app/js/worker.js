@@ -195,7 +195,7 @@ register(args => {
     return newGeneration(args);
   case `GENERATE_HELP`:
     return generateHelp(args);
+  default:
+    return ``;
   }
-
-  return ``;
 });

@@ -116,6 +116,9 @@ export default class Renderer {
       case opRenderQuadratic:
         this.renderCurve(params, MathUtil.quadraticCoordinates);
         break;
+      default:
+        console.log(`unknown op code: ${op}`);
+        break;
       }
     });
   }

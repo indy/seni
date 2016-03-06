@@ -177,6 +177,8 @@ function hue(c, maxChan, chroma) {
     return 60.0 * (((element(c, B) - element(c, R)) / chroma) + 2.0);
   case B:
     return 60.0 * (((element(c, R) - element(c, G)) / chroma) + 4.0);
+  default:
+    break;
   }
 
   return 0.0;            // should never get here
@@ -364,6 +366,9 @@ function cloneAs(c, newFormat) {
     } else if (newFormat === Format.LAB) {
       return xyzlab(rgbxyz(c));
     }
+    break;
+  default:
+    console.log(`unknown colour mode`);
     break;
   }
   // something has gone wrong if we get here
