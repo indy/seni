@@ -536,7 +536,7 @@ export default class Konsole {
   responseObject() {
     const _this = this;
 
-    return function(responseLines) {
+    return function (responseLines) {
       return _this.renderResponse(responseLines);
     };
   }

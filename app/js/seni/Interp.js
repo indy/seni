@@ -64,7 +64,7 @@ function remapFn(params) {
     normalisedMappingFn = remappingFn.get(`linear`);
   }
 
-  return function(parameters) {
+  return function (parameters) {
     const val = parameters.val || 0;
     const fromInterp = (fromM * val) + fromC;
     const toInterp = normalisedMappingFn(fromInterp);

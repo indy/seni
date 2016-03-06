@@ -489,7 +489,7 @@ function proceduralFn(preset, a, b, c, d, alpha) {
     [dr, dg, db] = d;
   }
 
-  return function(params) {
+  return function (params) {
     const t = params.t === undefined ? 1.0 : params.t;
 
     const red = ar + br * Math.cos(MathUtil.TAU * (cr * t + dr));
@@ -514,7 +514,7 @@ function bezierFn(a, b, c, d) {
   const [cr, cg, cb, calpha] = elementArray(cloneAs(c, Format.RGB));
   const [dr, dg, db, dalpha] = elementArray(cloneAs(d, Format.RGB));
 
-  return function(params) {
+  return function (params) {
     const t = params.t === undefined ? 1.0 : params.t;
 
     const red = MathUtil.bezierPoint(ar, br, cr, dr, t);
@@ -538,7 +538,7 @@ function quadraticFn(a, b, c) {
   const [br, bg, bb, balpha] = elementArray(cloneAs(b, Format.RGB));
   const [cr, cg, cb, calpha] = elementArray(cloneAs(c, Format.RGB));
 
-  return function(params) {
+  return function (params) {
     const t = params.t === undefined ? 1.0 : params.t;
 
     const red = MathUtil.quadraticPoint(ar, br, cr, t);

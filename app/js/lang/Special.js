@@ -44,7 +44,7 @@ function defineFunction(env, defaultArgForms, body) {
     defaultArgValues[k] = v;
   }
 
-  return [function(args) {
+  return [function (args) {
     let newEnv = env;
     for (const k in defaultArgValues) {
       newEnv = newEnv.set(k, {
@@ -59,7 +59,7 @@ function addBindings(env, exprs) {
   let lastValueBound = undefined;
 
   // adds a binding to the env, returning the ['new environment', error] pair
-  const addBinding = function(e_, name, value) {
+  const addBinding = function (e_, name, value) {
     let e = e_;
     const [env, v, error] = evaluate(e, value);
     if (error) {

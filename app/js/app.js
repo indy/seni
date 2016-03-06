@@ -548,7 +548,7 @@ function createKonsole(_env, element) {
 }
 
 function createEditor(store, editorTextArea) {
-  const blockIndent = function(editor, from, to) {
+  const blockIndent = function (editor, from, to) {
     editor.operation(() => {
       for (let i = from; i < to; ++i) {
         editor.indentLine(i, `smart`);

@@ -56,7 +56,7 @@ function point(publicBinding, params, renderer) {
   } = setupFocalParameters(publicBinding, params);
 
   // returns a function that given a v2 returns how 'interesting' it should be
-  return function(parameters) {
+  return function (parameters) {
     const v = parameters.position || [0, 0];
     const p = renderer.vectorToCanvasSpace(v);
     const d = MathUtil.distance2d(position, p);
@@ -72,7 +72,7 @@ function vline(publicBinding, params, renderer) {
   } = setupFocalParameters(publicBinding, params);
 
   // returns a function that given a v2 returns how 'interesting' it should be
-  return function(parameters) {
+  return function (parameters) {
     const v = parameters.position || [0, 0];
     const p = renderer.vectorToCanvasSpace(v);
     const d = MathUtil.distance1d(position[0], p[0]);
