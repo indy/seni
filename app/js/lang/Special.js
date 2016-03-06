@@ -61,9 +61,9 @@ function addBindings(env, exprs) {
   // adds a binding to the env, returning the ['new environment', error] pair
   const addBinding = function (e_, name, value) {
     let e = e_;
-    const [env, v, error] = evaluate(e, value);
+    const [ee, v, error] = evaluate(e, value);
     if (error) {
-      return [env, error];
+      return [ee, error];
     }
 
     if (name.constructor === Array && name[0] === `vector`) {

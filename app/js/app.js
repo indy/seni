@@ -117,10 +117,10 @@ function ensureMode(store, mode) {
 
       if (mode === SeniMode.evolve) {
         showCurrentMode(state);
-        setupEvolveUI(store).then(state => {
+        setupEvolveUI(store).then(latestState => {
           // make sure that the history for the first evolve generation
           // has the correct genotypes
-          History.replaceState(state);
+          History.replaceState(latestState);
           resolve();
         });
       } else {
