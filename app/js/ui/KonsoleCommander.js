@@ -32,7 +32,7 @@ export default class KonsoleCommander {
 
   // todo: prompt is also passed in
   commandHandle(line, report) {
-    const words = line.split(` `);
+    const words = line.split(' ');
     const commandName = words[0].trim();
 
     try {

@@ -17,16 +17,16 @@
  */
 
 function seniMode() {
-  const BUILTIN = `builtin`;
-  const COMMENT = `comment`;
-  const STRING = `string`;
-  const ATOM = `atom`;
-  const NUMBER = `number`;
-  const PAREN = `paren`;      // ()
-  const CURLY = `curly`;    // {}
-  const BRACKET = `bracket`;    // []
-  const SENICOMMON = `seni-common`;
-  const PARAMETER = `seni-parameter`;
+  const BUILTIN = 'builtin';
+  const COMMENT = 'comment';
+  const STRING = 'string';
+  const ATOM = 'atom';
+  const NUMBER = 'number';
+  const PAREN = 'paren';      // ()
+  const CURLY = 'curly';    // {}
+  const BRACKET = 'bracket';    // []
+  const SENICOMMON = 'seni-common';
+  const PARAMETER = 'seni-parameter';
 
   const INDENT_WORD_SKIP = 2;
 
@@ -38,8 +38,8 @@ function seniMode() {
 
   // keywords are core to the seni language
   const keywords =
-          makeKeywords(`begin define fn if loop on-matrix-stack quote`);
-  const indentKeys = makeKeywords(`define loop on-matrix-stack fn`);
+          makeKeywords('begin define fn if loop on-matrix-stack quote');
+  const indentKeys = makeKeywords('define loop on-matrix-stack fn');
 
   // functions from the common seni library
   const seniCommon = makeKeywords(`* + - / < = > append begin bezier
@@ -84,11 +84,11 @@ stroked-bezier-rect take translate`);
   }
 
   function isParameter(word) {
-    return word.slice(-1) === `:`;
+    return word.slice(-1) === ':';
   }
 
   function tokenType(token, state, ch) {
-    const prefix = `geno-`;
+    const prefix = 'geno-';
     let usePrefix = false;
 
     if (state.insideCurly) {
@@ -113,7 +113,7 @@ stroked-bezier-rect take translate`);
           // if this is a closing parens then we've processed the first s-exp
           // and can start using prefix
           // (i.e. start greying out the remainder of the curly contents)
-          if (state.firstParenCurlyDepth === state.parenDepth && ch === `)`) {
+          if (state.firstParenCurlyDepth === state.parenDepth && ch === ')') {
             state.curlyedFirstChildIsParen = false;
           }
         } else {
@@ -166,54 +166,54 @@ stroked-bezier-rect take translate`);
       let next;
 
       switch (state.mode) {
-      case `string`: // multi-line string parsing mode
+      case 'string': // multi-line string parsing mode
         let escaped = false;
         while ((next = stream.next()) != null) {
-          if (next === `\"` && !escaped) {
+          if (next === '\"' && !escaped) {
             state.mode = false;
             break;
           }
-          escaped = !escaped && next === `\\`;
+          escaped = !escaped && next === '\\';
         }
         // continue on in scheme-string mode
         returnType = tokenType(STRING, state);
         break;
-      case `comment`: // comment parsing mode
+      case 'comment': // comment parsing mode
         let maybeEnd = false;
         while ((next = stream.next()) != null) {
-          if (next === `#` && maybeEnd) {
+          if (next === '#' && maybeEnd) {
             state.mode = false;
             break;
           }
-          maybeEnd = (next === `|`);
+          maybeEnd = (next === '|');
         }
         returnType = tokenType(COMMENT, state);
         break;
       default: // default parsing mode
         const ch = stream.next();
 
-        if (ch === `\"`) {
-          state.mode = `string`;
+        if (ch === '\"') {
+          state.mode = 'string';
           returnType = tokenType(STRING, state);
-        } else if (ch === `\'`) {
+        } else if (ch === '\'') {
           returnType = tokenType(ATOM, state);
         } else if (/^[-+0-9.]/.test(ch) && isDecimalNumber(stream, true)) {
           // match non-prefixed number, must be decimal
           returnType = tokenType(NUMBER, state);
-        } else if (ch === `;`) { // comment
+        } else if (ch === ';') { // comment
           stream.skipToEnd(); // rest of the line is a comment
           returnType = tokenType(COMMENT, state);
-        } else if (ch === `[`) { // bracket
+        } else if (ch === '[') { // bracket
           pushStack(state, stream.column() + 1, ch);
           returnType = tokenType(BRACKET, state);
-        } else if (ch === `]`) { // bracket
+        } else if (ch === ']') { // bracket
           popStack(state);
           returnType = tokenType(BRACKET, state);
-        } else if (ch === `(` || ch === `{`) {
-          let keyWord = ``, letter;
+        } else if (ch === '(' || ch === '{') {
+          let keyWord = '', letter;
           const indentTemp = stream.column();
 
-          if (ch === `{`) {
+          if (ch === '{') {
             setInsideCurly(true, state);
           } else {
             state.parenDepth++;
@@ -229,7 +229,7 @@ stroked-bezier-rect take translate`);
           } else { // non-indent word
             // we continue eating the spaces
             stream.eatSpace();
-            if (stream.eol() || stream.peek() === `;`) {
+            if (stream.eol() || stream.peek() === ';') {
               // nothing significant after
               // we restart indentation 1 space after
               pushStack(state, indentTemp + 1, ch);
@@ -240,23 +240,23 @@ stroked-bezier-rect take translate`);
           }
           stream.backUp(stream.current().length - 1); // undo all the eating
 
-          if (typeof state.sExprComment === `number`) state.sExprComment++;
+          if (typeof state.sExprComment === 'number') state.sExprComment++;
 
-          returnType = tokenType(ch === `{` ? CURLY : PAREN, state, ch);
-        } else if (ch === `)` || ch === `}`) {
-          returnType = tokenType(ch === `}` ? CURLY : PAREN, state, ch);
+          returnType = tokenType(ch === '{' ? CURLY : PAREN, state, ch);
+        } else if (ch === ')' || ch === '}') {
+          returnType = tokenType(ch === '}' ? CURLY : PAREN, state, ch);
           if (state.indentStack != null &&
-              state.indentStack.type === (ch === `)` ? `(` : `{`)) {
+              state.indentStack.type === (ch === ')' ? '(' : '{')) {
             popStack(state);
 
-            if (typeof state.sExprComment === `number`) {
+            if (typeof state.sExprComment === 'number') {
               if (--state.sExprComment === 0) {
                 returnType = tokenType(COMMENT, state); // final closing curly
                 state.sExprComment = false; // turn off s-expr commenting mode
               }
             }
           }
-          if (ch === `}`) {
+          if (ch === '}') {
             setInsideCurly(false, state);
           } else {
             state.parenDepth--;
@@ -270,10 +270,10 @@ stroked-bezier-rect take translate`);
             returnType = tokenType(SENICOMMON, state);
           } else if (isParameter(stream.current())) {
             returnType = tokenType(PARAMETER, state);
-          } else returnType = tokenType(`variable`, state);
+          } else returnType = tokenType('variable', state);
         }
       }
-      return (typeof state.sExprComment === `number`) ? COMMENT : returnType;
+      return (typeof state.sExprComment === 'number') ? COMMENT : returnType;
     },
 
     indent: state => {
@@ -281,8 +281,8 @@ stroked-bezier-rect take translate`);
       return state.indentStack.indent;
     },
 
-    closeBrackets: {pairs: `()[]{}\"\"`},
-    lineComment: `;;`
+    closeBrackets: {pairs: '()[]{}\"\"'},
+    lineComment: ';;'
   };
 }
 

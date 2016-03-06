@@ -69,7 +69,7 @@ function setup(numWorkersParam) {
   numWorkers = numWorkersParam;
 
   for (let i = 0; i < numWorkers; i++) {
-    const w = new Worker(`/dist/worker.bundle.js`);
+    const w = new Worker('/dist/worker.bundle.js');
     promiseWorkers[i] = new PromiseWorker(w);
     working[i] = false;
   }
@@ -90,7 +90,7 @@ function perform(jobType, jobData) {
     }).then(result => {
       releaseWorker(result.workerId);
 
-      if (result.status === `OK`) {
+      if (result.status === 'OK') {
         resolve(result.data);
       } else {
         reject(result.status);

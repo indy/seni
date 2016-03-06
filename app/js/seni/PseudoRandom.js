@@ -118,12 +118,12 @@ function buildRange(seedVal, min, max) {
 
 const publicBindings = [
   new PublicBinding(
-    `prng/perlin-signed`,
-    { description: ``,
-      args: [[`x`, `1.0`],
-             [`y`, `1.0`],
-             [`z`, `1.0`]],
-      returns: `returns perlin numbers in the range -1..1` },
+    'prng/perlin-signed',
+    { description: '',
+      args: [['x', '1.0'],
+             ['y', '1.0'],
+             ['z', '1.0']],
+      returns: 'returns perlin numbers in the range -1..1' },
     { x: 1.0,
       y: 1.0,
       z: 1.0 },
@@ -134,12 +134,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `prng/perlin-unsigned`,
-    { description: ``,
-      args: [[`x`, `1.0`],
-             [`y`, `1.0`],
-             [`z`, `1.0`]],
-      returns: `perlin numbers in the range 0..1` },
+    'prng/perlin-unsigned',
+    { description: '',
+      args: [['x', '1.0'],
+             ['y', '1.0'],
+             ['z', '1.0']],
+      returns: 'perlin numbers in the range 0..1' },
     { x: 1.0,
       y: 1.0,
       z: 1.0 },
@@ -151,14 +151,14 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `prng/range`,
-    { description: ``,
-      args: [[`seed`, `shabba`],
-             [`min`, `0`],
-             [`max`, `1`]],
+    'prng/range',
+    { description: '',
+      args: [['seed', 'shabba'],
+             ['min', '0'],
+             ['max', '1']],
       returns:
-      `a function that generates a random number in the range min..max` },
-    { seed: `shabba`,
+      'a function that generates a random number in the range min..max' },
+    { seed: 'shabba',
       min: 0,
       max: 1 },
     self => params => {
@@ -169,7 +169,7 @@ const publicBindings = [
 ];
 
 export default {
-  publicBindingType: `binding`,
+  publicBindingType: 'binding',
   publicBindings,
   buildUnsigned,
   buildSigned,

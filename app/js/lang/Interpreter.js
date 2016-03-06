@@ -21,8 +21,8 @@
 
 import Immutable from 'immutable';
 
-const TRUE_STRING = `#t`;
-const FALSE_STRING = `#f`;
+const TRUE_STRING = '#t';
+const FALSE_STRING = '#f';
 
 const NO_ERROR = undefined;
 
@@ -36,10 +36,10 @@ function evaluate(env, expr) {
   }
 
   // todo: may need something like:
-  if (typeof expr === `number`) {
+  if (typeof expr === 'number') {
     return [env, expr, NO_ERROR];
   }
-  if (typeof expr === `string`) {
+  if (typeof expr === 'string') {
     if (expr === TRUE_STRING || expr === FALSE_STRING) {
       return [env, expr, NO_ERROR];
     }
@@ -117,7 +117,7 @@ function funApplicationClassic(env, fun, [fnName, ...fnArguments]) {
 
 
   // the classic functions that require all of their arguments to be numbers
-  const requiringNumbers = [`+`, `*`, `-`, `/`, `sqrt`, `mod`, `<`, `>`];
+  const requiringNumbers = ['+', '*', '-', '/', 'sqrt', 'mod', '<', '>'];
 
   const requiresNumbers = name => requiringNumbers.some(f => name === f);
   const allNumbers = values => values.every(Number.isFinite);
@@ -131,7 +131,7 @@ function funApplicationClassic(env, fun, [fnName, ...fnArguments]) {
 
 function isDefineExpression(form) {
   return form.constructor === Array &&
-    (form[0] === `fn` || form[0] === `define`);
+    (form[0] === 'fn' || form[0] === 'define');
 }
 
 function getBasicEnv() {

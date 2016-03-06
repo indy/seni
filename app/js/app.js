@@ -37,7 +37,7 @@ let gRenderer = undefined;
 function get(url) {
   return new Promise((resolve, reject) => {
     const req = new XMLHttpRequest();
-    req.open(`GET`, url);
+    req.open('GET', url);
 
     req.onload = () => {
       // This is called even on 404 etc
@@ -54,7 +54,7 @@ function get(url) {
 
     // Handle network errors
     req.onerror = () => {
-      reject(Error(`Network Error`));
+      reject(Error('Network Error'));
     };
 
     // Make the request
@@ -71,48 +71,48 @@ function getScriptFromEditor() {
 }
 
 function showButtonsFor(mode) {
-  const evalBtn = document.getElementById(`eval-btn`);
-  const evolveBtn = document.getElementById(`evolve-btn`);
-  const renderBtn = document.getElementById(`render-btn`);
-  const nextBtn = document.getElementById(`next-btn`);
-  const shuffleBtn = document.getElementById(`shuffle-btn`);
+  const evalBtn = document.getElementById('eval-btn');
+  const evolveBtn = document.getElementById('evolve-btn');
+  const renderBtn = document.getElementById('render-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const shuffleBtn = document.getElementById('shuffle-btn');
 
   switch (mode) {
   case SeniMode.gallery :
-    evalBtn.classList.add(`hidden`);
-    evolveBtn.classList.add(`hidden`);
-    renderBtn.classList.add(`hidden`);
-    nextBtn.classList.add(`hidden`);
-    shuffleBtn.classList.add(`hidden`);
+    evalBtn.classList.add('hidden');
+    evolveBtn.classList.add('hidden');
+    renderBtn.classList.add('hidden');
+    nextBtn.classList.add('hidden');
+    shuffleBtn.classList.add('hidden');
     break;
   case SeniMode.edit :
-    evalBtn.classList.remove(`hidden`);
-    evolveBtn.classList.remove(`hidden`);
-    renderBtn.classList.remove(`hidden`);
-    nextBtn.classList.add(`hidden`);
-    shuffleBtn.classList.add(`hidden`);
+    evalBtn.classList.remove('hidden');
+    evolveBtn.classList.remove('hidden');
+    renderBtn.classList.remove('hidden');
+    nextBtn.classList.add('hidden');
+    shuffleBtn.classList.add('hidden');
     break;
   case SeniMode.evolve :
-    evalBtn.classList.add(`hidden`);
-    evolveBtn.classList.add(`hidden`);
-    renderBtn.classList.add(`hidden`);
-    nextBtn.classList.remove(`hidden`);
-    shuffleBtn.classList.remove(`hidden`);
+    evalBtn.classList.add('hidden');
+    evolveBtn.classList.add('hidden');
+    renderBtn.classList.add('hidden');
+    nextBtn.classList.remove('hidden');
+    shuffleBtn.classList.remove('hidden');
     break;
   default:
-    console.log(`unknown seni mode`);
+    console.log('unknown seni mode');
     break;
   }
 }
 
 function ensureMode(store, mode) {
   return new Promise((resolve, _) => {
-    if (store.getState().get(`currentMode`) === mode) {
+    if (store.getState().get('currentMode') === mode) {
       resolve();
       return;
     }
 
-    store.dispatch({type: `SET_MODE`, mode}).then(state => {
+    store.dispatch({type: 'SET_MODE', mode}).then(state => {
       History.pushState(state);
 
       if (mode === SeniMode.evolve) {
@@ -136,7 +136,7 @@ function ensureMode(store, mode) {
 function updateUI(state) {
   showCurrentMode(state);
 
-  switch (state.get(`currentMode`)) {
+  switch (state.get('currentMode')) {
   case SeniMode.gallery :
     break;
   case SeniMode.edit :
@@ -148,7 +148,7 @@ function updateUI(state) {
     // NOTE: the popstate event listener is handling this case
     break;
   default:
-    console.log(`unknown SeniMode`);
+    console.log('unknown SeniMode');
     break;
   }
 }
@@ -172,9 +172,9 @@ function renderCommandBuffer(commandBuffer, imageElement, w, h) {
 function renderScript(state, imageElement) {
   const stopFn = startTiming();
 
-  Workers.perform(`RENDER`, {
-    script: state.get(`script`),
-    scriptHash: state.get(`scriptHash`)
+  Workers.perform('RENDER', {
+    script: state.get('script'),
+    scriptHash: state.get('scriptHash')
   }).then(({ title, commandBuffer }) => {
     renderCommandBuffer(commandBuffer, imageElement);
     stopFn(`renderScript-${title}`, gUI.konsole);
@@ -188,9 +188,9 @@ function addClickEvent(id, fn) {
   const element = document.getElementById(id);
 
   if (element) {
-    element.addEventListener(`click`, fn);
+    element.addEventListener('click', fn);
   } else {
-    console.error(`cannot addClickEvent for`, id);
+    console.error('cannot addClickEvent for', id);
   }
 }
 
@@ -216,36 +216,36 @@ function getPhenoIdFromDom(element) {
 }
 
 function renderHighRes(state, genotype) {
-  const container = document.getElementById(`high-res-container`);
-  const loader = document.getElementById(`high-res-loader`);
-  const image = document.getElementById(`high-res-image`);
+  const container = document.getElementById('high-res-container');
+  const loader = document.getElementById('high-res-loader');
+  const image = document.getElementById('high-res-image');
 
-  container.classList.remove(`hidden`);
-  loader.classList.remove(`hidden`);
-  image.classList.add(`hidden`);
+  container.classList.remove('hidden');
+  loader.classList.remove('hidden');
+  image.classList.add('hidden');
 
   const stopFn = startTiming();
 
-  Workers.perform(`RENDER`, {
-    script: state.get(`script`),
-    scriptHash: state.get(`scriptHash`),
+  Workers.perform('RENDER', {
+    script: state.get('script'),
+    scriptHash: state.get('scriptHash'),
     genotype: genotype ? genotype.toJS() : undefined
   }).then(({ title, commandBuffer }) => {
-    const [width, height] = state.get(`highResolution`);
+    const [width, height] = state.get('highResolution');
     renderCommandBuffer(commandBuffer, image, width, height);
 
     stopFn(`renderHighRes-${title}`, gUI.konsole);
 
-    image.classList.remove(`hidden`);
-    const link = document.getElementById(`high-res-link`);
+    image.classList.remove('hidden');
+    const link = document.getElementById('high-res-link');
     link.href = image.src;
-    loader.classList.add(`hidden`);
+    loader.classList.add('hidden');
   }).catch(error => {
     // handle error
     console.log(`worker: error of ${error}`);
     gUI.konsole.log(error);
-    image.classList.remove(`hidden`);
-    loader.classList.add(`hidden`);
+    image.classList.remove('hidden');
+    loader.classList.add('hidden');
   });
 }
 
@@ -253,7 +253,7 @@ function renderHighRes(state, genotype) {
 // in a ww and updates the store again
 //
 function setScript(store, script) {
-  return store.dispatch({type: `SET_SCRIPT`, script});
+  return store.dispatch({type: 'SET_SCRIPT', script});
 }
 
 function showEditFromEvolve(store, element) {
@@ -261,11 +261,11 @@ function showEditFromEvolve(store, element) {
     const [index, _] = getPhenoIdFromDom(element);
     if (index !== -1) {
       const state = store.getState();
-      const genotypes = state.get(`genotypes`);
+      const genotypes = state.get('genotypes');
 
-      Workers.perform(`UNPARSE`, {
-        script: state.get(`script`),
-        scriptHash: state.get(`scriptHash`),
+      Workers.perform('UNPARSE', {
+        script: state.get('script'),
+        scriptHash: state.get('scriptHash'),
         genotype: genotypes.get(index).toJS()
       }).then(({ script }) => {
         setScript(store, script)
@@ -284,10 +284,10 @@ function showEditFromEvolve(store, element) {
 
 function renderGeneration(state) {
   return new Promise((resolve, _reject) => {
-    const script = state.get(`script`);
-    const scriptHash = state.get(`scriptHash`);
+    const script = state.get('script');
+    const scriptHash = state.get('scriptHash');
 
-    const genotypes = state.get(`genotypes`);
+    const genotypes = state.get('genotypes');
 
     // TODO: stop generating  if the user has switched to edit mode
     const phenotypes = gUI.phenotypes;
@@ -299,12 +299,12 @@ function renderGeneration(state) {
     const stopFn = startTiming();
 
     for (let i = 0;i < phenotypes.size; i++) {
-      const workerJob = Workers.perform(`RENDER`, {
+      const workerJob = Workers.perform('RENDER', {
         script,
         scriptHash,
         genotype: genotypes.get(i).toJS()
       }).then(({ title, commandBuffer }) => {
-        const imageElement = phenotypes.getIn([i, `imageElement`]);
+        const imageElement = phenotypes.getIn([i, 'imageElement']);
         renderCommandBuffer(commandBuffer, imageElement);
 
         hackTitle = title;
@@ -325,12 +325,12 @@ function renderGeneration(state) {
 }
 
 function showPlaceholderImages(state) {
-  const placeholder = state.get(`placeholder`);
-  const populationSize = state.get(`populationSize`);
+  const placeholder = state.get('placeholder');
+  const populationSize = state.get('populationSize');
   const phenotypes = gUI.phenotypes;
 
   for (let i = 0; i < populationSize; i++) {
-    const imageElement = phenotypes.getIn([i, `imageElement`]);
+    const imageElement = phenotypes.getIn([i, 'imageElement']);
     imageElement.src = placeholder;
   }
 }
@@ -338,36 +338,36 @@ function showPlaceholderImages(state) {
 // update the selected phenotypes in the evolve screen according to the
 // values in selectedIndices
 function updateSelectionUI(state) {
-  const selectedIndices = state.get(`selectedIndices`);
-  const populationSize = state.get(`populationSize`);
+  const selectedIndices = state.get('selectedIndices');
+  const populationSize = state.get('populationSize');
   const phenotypes = gUI.phenotypes;
 
   for (let i = 0; i < populationSize; i++) {
-    const element = phenotypes.getIn([i, `phenotypeElement`]);
-    element.classList.remove(`selected`);
+    const element = phenotypes.getIn([i, 'phenotypeElement']);
+    element.classList.remove('selected');
   }
 
   selectedIndices.forEach(i => {
-    const element = gUI.phenotypes.getIn([i, `phenotypeElement`]);
-    element.classList.add(`selected`);
+    const element = gUI.phenotypes.getIn([i, 'phenotypeElement']);
+    element.classList.add('selected');
     return true;
   });
 }
 
 function onNextGen(store) {
   // get the selected genotypes for the next generation
-  const populationSize = store.getState().get(`populationSize`);
+  const populationSize = store.getState().get('populationSize');
   const phenotypes = gUI.phenotypes;
   let selectedIndices = new Immutable.List();
 
   for (let i = 0; i < populationSize; i++) {
-    const element = phenotypes.getIn([i, `phenotypeElement`]);
-    if (element.classList.contains(`selected`)) {
+    const element = phenotypes.getIn([i, 'phenotypeElement']);
+    if (element.classList.contains('selected')) {
       selectedIndices = selectedIndices.push(i);
     }
   }
 
-  store.dispatch({type: `SET_SELECTED_INDICES`, selectedIndices})
+  store.dispatch({type: 'SET_SELECTED_INDICES', selectedIndices})
     .then(state => {
       if (selectedIndices.size === 0) {
         // no phenotypes were selected
@@ -379,7 +379,7 @@ function onNextGen(store) {
 
       showPlaceholderImages(state);
 
-      return store.dispatch({type: `NEXT_GENERATION`, rng: 42});
+      return store.dispatch({type: 'NEXT_GENERATION', rng: 42});
     }).then(state => {
       if (state === undefined) {
         return;
@@ -393,9 +393,9 @@ function onNextGen(store) {
 }
 
 function createPhenotypeElement(id, placeholderImage) {
-  const container = document.createElement(`div`);
+  const container = document.createElement('div');
 
-  container.className = `card-holder`;
+  container.className = 'card-holder';
   container.id = `pheno-${id}`;
   container.innerHTML = `
       <a href="#">
@@ -414,7 +414,7 @@ function createPhenotypeElement(id, placeholderImage) {
 function setupEvolveUI(store) {
   return new Promise((resolve, _) => {
     afterLoadingPlaceholderImages(store.getState())
-      .then(() => store.dispatch({type: `INITIAL_GENERATION`}))
+      .then(() => store.dispatch({type: 'INITIAL_GENERATION'}))
       .then(state => {
         // render the phenotypes
         updateSelectionUI(state);
@@ -444,8 +444,8 @@ function afterLoadingPlaceholderImages(state) {
     const phenotypes = gUI.phenotypes;
 
     return phenotypes.every(phenotype => {
-      const imageElement = phenotype.get(`imageElement`);
-      const loaded = imageElement.getAttribute(`data-image-load-timestamp`);
+      const imageElement = phenotype.get('imageElement');
+      const loaded = imageElement.getAttribute('data-image-load-timestamp');
       return loaded > timeStamp;
     });
   };
@@ -471,10 +471,10 @@ function afterLoadingPlaceholderImages(state) {
 function showCurrentMode(state) {
   // show the current container, hide the others
   const containers = gUI.containers;
-  const currentMode = state.get(`currentMode`);
+  const currentMode = state.get('currentMode');
 
   for (let i = 0; i < SeniMode.numSeniModes; i++) {
-    containers.get(i).className = i === currentMode ? `` : `hidden`;
+    containers.get(i).className = i === currentMode ? '' : 'hidden';
   }
   showButtonsFor(currentMode);
 }
@@ -482,7 +482,7 @@ function showCurrentMode(state) {
 function showScriptInEditor(state) {
   const editor = gUI.editor;
 
-  editor.getDoc().setValue(state.get(`script`));
+  editor.getDoc().setValue(state.get('script'));
   editor.refresh();
 }
 
@@ -508,25 +508,25 @@ function showEditFromGallery(store, element) {
 
 // take the height of the navbar into consideration
 function resizeContainers() {
-  const navbar = document.getElementById(`seni-navbar`);
+  const navbar = document.getElementById('seni-navbar');
 
-  const edit = document.getElementById(`edit-container`);
+  const edit = document.getElementById('edit-container');
   edit.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 
-  const evolve = document.getElementById(`evolve-container`);
+  const evolve = document.getElementById('evolve-container');
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
 
 function createKonsole(_env, element) {
   const konsole = new Konsole(element, {
-    prompt: `> `,
-    historyLabel: `cs-console-demo`,
-    syntax: `javascript`,
-    initialValue: `This is starting content\nalong with multi-lines!\n`,
-    welcomeMessage: `Welcome to the cs console demo`,
+    prompt: '> ',
+    historyLabel: 'cs-console-demo',
+    syntax: 'javascript',
+    initialValue: 'This is starting content\nalong with multi-lines!\n',
+    welcomeMessage: 'Welcome to the cs console demo',
     autoFocus: true,
-    theme: `konsole`
+    theme: 'konsole'
   });
 
   const commander = new KonsoleCommander();
@@ -551,7 +551,7 @@ function createEditor(store, editorTextArea) {
   const blockIndent = function (editor, from, to) {
     editor.operation(() => {
       for (let i = from; i < to; ++i) {
-        editor.indentLine(i, `smart`);
+        editor.indentLine(i, 'smart');
       }
     });
   };
@@ -576,40 +576,40 @@ function createEditor(store, editorTextArea) {
   };
 
   return Editor.createEditor(editorTextArea, {
-    theme: `default`,
+    theme: 'default',
     extraKeys
   });
 }
 
 function setupUI(store) {
   const d = document;
-  const konsoleElement = d.getElementById(`konsole`);
-  const editorTextArea = d.getElementById(`edit-textarea`);
+  const konsoleElement = d.getElementById('konsole');
+  const editorTextArea = d.getElementById('edit-textarea');
 
   gUI = {
     // the 3 main UI areas, stored in an Immutable.List
-    containers: new Immutable.List([d.getElementById(`gallery-container`),
-                                    d.getElementById(`edit-container`),
-                                    d.getElementById(`evolve-container`)]),
+    containers: new Immutable.List([d.getElementById('gallery-container'),
+                                    d.getElementById('edit-container'),
+                                    d.getElementById('evolve-container')]),
     // the top nav bar across the state
-    navbar: d.getElementById(`seni-navbar`),
+    navbar: d.getElementById('seni-navbar'),
     // the img destination that shows the rendered script in edit mode
-    renderImage: d.getElementById(`render-img`),
+    renderImage: d.getElementById('render-img'),
     // console CodeMirror element in the edit screen
     konsole: createKonsole(undefined, konsoleElement), // todo: was env
     editor: createEditor(store, editorTextArea)
   };
 
-  konsoleElement.style.height = `0%`;
+  konsoleElement.style.height = '0%';
 
   showButtonsFor(SeniMode.gallery);
 
-  addClickEvent(`home`, event => {
+  addClickEvent('home', event => {
     ensureMode(store, SeniMode.gallery);
     event.preventDefault();
   });
 
-  addClickEvent(`evolve-btn`, event => {
+  addClickEvent('evolve-btn', event => {
     // get the latest script from the editor
     setScript(store, getScriptFromEditor()).then(state => {
       History.replaceState(state);
@@ -618,30 +618,30 @@ function setupUI(store) {
     event.preventDefault();
   });
 
-  addClickEvent(`render-btn`, event => {
+  addClickEvent('render-btn', event => {
     renderHighRes(store.getState());
     event.preventDefault();
   });
 
-  addClickEvent(`shuffle-btn`, event => {
+  addClickEvent('shuffle-btn', event => {
     showPlaceholderImages(store.getState());
-    store.dispatch({type: `SHUFFLE_GENERATION`, rng: 11}).then(state => {
+    store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11}).then(state => {
       updateSelectionUI(state);
       renderGeneration(state);
     });
     event.preventDefault();
   });
 
-  addClickEvent(`eval-btn`, event => {
+  addClickEvent('eval-btn', event => {
     setScript(store, getScriptFromEditor()).then(state => {
       renderScript(state, gUI.renderImage);
     });
     event.preventDefault();
   });
 
-  addClickEvent(`gallery-container`, event => {
+  addClickEvent('gallery-container', event => {
     const target = event.target;
-    if (target.classList.contains(`show-edit`)) {
+    if (target.classList.contains('show-edit')) {
       showEditFromGallery(store, target).catch(error => {
         console.error(error);
       });
@@ -649,57 +649,57 @@ function setupUI(store) {
     event.preventDefault();
   });
 
-  addClickEvent(`evolve-container`, event => {
+  addClickEvent('evolve-container', event => {
     const target = event.target;
     const [index, phenoElement] = getPhenoIdFromDom(target);
 
-    if (target.classList.contains(`render`)) {
+    if (target.classList.contains('render')) {
       if (index !== -1) {
-        const genotypes = store.getState().get(`genotypes`);
+        const genotypes = store.getState().get('genotypes');
         const genotype = genotypes.get(index);
         renderHighRes(store.getState(), genotype);
       }
-    } else if (target.classList.contains(`edit`)) {
+    } else if (target.classList.contains('edit')) {
       showEditFromEvolve(store, target);
     } else {
       if (index !== -1) {
-        phenoElement.classList.toggle(`selected`);
+        phenoElement.classList.toggle('selected');
       }
     }
     event.preventDefault();
   });
 
-  addClickEvent(`next-btn`, () => {
+  addClickEvent('next-btn', () => {
     onNextGen(store);
   });
 
-  addClickEvent(`high-res-download`, event => {
-    const highResLink = document.getElementById(`high-res-link`);
+  addClickEvent('high-res-download', event => {
+    const highResLink = document.getElementById('high-res-link');
 
-    // remove target=`_blank` and add a download attribute
-    highResLink.removeAttribute(`target`);
-    highResLink.setAttribute(`download`, `seni-image.png`);
+    // remove target='_blank' and add a download attribute
+    highResLink.removeAttribute('target');
+    highResLink.setAttribute('download', 'seni-image.png');
 
     highResLink.click();
 
     // restore attributes
-    highResLink.removeAttribute(`download`);
-    highResLink.setAttribute(`target`, `_blank`);
+    highResLink.removeAttribute('download');
+    highResLink.setAttribute('target', '_blank');
 
     event.preventDefault();
   });
 
-  addClickEvent(`high-res-close`, event => {
-    const highResContainer = document.getElementById(`high-res-container`);
-    highResContainer.classList.add(`hidden`);
+  addClickEvent('high-res-close', event => {
+    const highResContainer = document.getElementById('high-res-container');
+    highResContainer.classList.add('hidden');
     event.preventDefault();
   });
 
   // Ctrl-D renders the next generation
   const dKey = 68;
-  document.addEventListener(`keydown`, event => {
+  document.addEventListener('keydown', event => {
     if (event.ctrlKey && event.keyCode === dKey &&
-        store.getState().get(`currentMode`) === SeniMode.evolve) {
+        store.getState().get('currentMode') === SeniMode.evolve) {
       event.preventDefault();
       onNextGen(store);
     }
@@ -707,27 +707,27 @@ function setupUI(store) {
 
   // invoked on every load event for an img tag
   const imageLoadHandler = event => {
-    event.target.setAttribute(`data-image-load-timestamp`, event.timeStamp);
+    event.target.setAttribute('data-image-load-timestamp', event.timeStamp);
   };
 
   // setup the evolve-container
-  const evolveGallery = document.getElementById(`evolve-gallery`);
-  evolveGallery.innerHTML = ``;
+  const evolveGallery = document.getElementById('evolve-gallery');
+  evolveGallery.innerHTML = '';
 
-  const row = document.createElement(`div`);
-  row.className = `cards`;
+  const row = document.createElement('div');
+  row.className = 'cards';
   evolveGallery.appendChild(row);
 
-  const populationSize = store.getState().get(`populationSize`);
+  const populationSize = store.getState().get('populationSize');
   const phenotypes = [];
   for (let i = 0; i < populationSize; i++) {
-    const phenotypeElement = createPhenotypeElement(i, ``);
+    const phenotypeElement = createPhenotypeElement(i, '');
 
     // get the image element
     const imageElement =
-          phenotypeElement.getElementsByClassName(`phenotype`)[0];
-    imageElement.addEventListener(`load`, imageLoadHandler, false);
-    imageElement.setAttribute(`data-image-load-timestamp`, 0);
+          phenotypeElement.getElementsByClassName('phenotype')[0];
+    imageElement.addEventListener('load', imageLoadHandler, false);
+    imageElement.setAttribute('data-image-load-timestamp', 0);
 
     row.appendChild(phenotypeElement);
 
@@ -739,19 +739,19 @@ function setupUI(store) {
 
   gUI.phenotypes = new Immutable.List(phenotypes);
 
-  window.addEventListener(`popstate`, event => {
+  window.addEventListener('popstate', event => {
     if (event.state) {
       const savedState = History.restoreState(event.state);
-      store.dispatch({type: `SET_STATE`, state: savedState})
+      store.dispatch({type: 'SET_STATE', state: savedState})
         .then(state => {
           updateUI(state);
-          if (state.get(`currentMode`) === SeniMode.evolve) {
+          if (state.get('currentMode') === SeniMode.evolve) {
             restoreEvolveUI(store);
           }
         });
     } else {
       // no event.state so behave as if the user has visited
-      // the `/` of the state
+      // the '/' of the state
       ensureMode(store, SeniMode.gallery);
     }
   });
@@ -759,18 +759,18 @@ function setupUI(store) {
   let konsoleToggle = 0;
 
   function toggleKonsole() {
-    const konsolePanel = document.getElementById(`konsole`);
-    const konsoleButton = document.getElementById(`console-btn`);
+    const konsolePanel = document.getElementById('konsole');
+    const konsoleButton = document.getElementById('console-btn');
 
     konsoleToggle = 1 - konsoleToggle;
     if (konsoleToggle === 1) {
-      konsolePanel.style.height = `50%`;
-      konsoleButton.textContent = `Hide Console`;
+      konsolePanel.style.height = '50%';
+      konsoleButton.textContent = 'Hide Console';
       gUI.konsole.focus();
     } else {
       gUI.editor.focus();
-      konsolePanel.style.height = `0%`;
-      konsoleButton.textContent = `Show Console`;
+      konsolePanel.style.height = '0%';
+      konsoleButton.textContent = 'Show Console';
     }
     gUI.konsole.refresh();
     gUI.editor.refresh();
@@ -785,16 +785,16 @@ function setupUI(store) {
     }
   };
 
-  addClickEvent(`console-btn`, toggleKonsole);
+  addClickEvent('console-btn', toggleKonsole);
 
   return store;
 }
 
 function getGallery() {
   const createGalleryElement = galleryItem => {
-    const container = document.createElement(`div`);
+    const container = document.createElement('div');
 
-    container.className = `card-holder`;
+    container.className = 'card-holder';
     container.id = `gallery-item-${galleryItem.id}`;
 
     container.innerHTML = `
@@ -810,14 +810,14 @@ function getGallery() {
   };
 
   return new Promise((resolve, reject) => {
-    const list = document.getElementById(`gallery-container`);
-    list.innerHTML = ``;
+    const list = document.getElementById('gallery-container');
+    list.innerHTML = '';
 
-    const row = document.createElement(`div`);
-    row.className = `cards`;
+    const row = document.createElement('div');
+    row.className = 'cards';
     list.appendChild(row);
 
-    const url = `/gallery`;
+    const url = '/gallery';
     getJSON(url).then(galleryItems => {
       // gets an array of gallery items
       galleryItems.forEach(item => {
@@ -837,16 +837,16 @@ function getGallery() {
 // of 'position: fixed;height:0;' for #konsole screws up Chrome
 // and requires a restart)
 function removeKonsoleInvisibility() {
-  const k = document.getElementById(`konsole`);
-  k.classList.remove(`invisible`);
+  const k = document.getElementById('konsole');
+  k.classList.remove('invisible');
 }
 
 function allocateWorkers(state) {
   const defaultNumWorkers = 4;
   let numWorkers = navigator.hardwareConcurrency || defaultNumWorkers;
-  if (numWorkers > state.get(`populationSize`)) {
+  if (numWorkers > state.get('populationSize')) {
     // don't allocate more workers than necessary
-    numWorkers = state.get(`populationSize`);
+    numWorkers = state.get('populationSize');
   }
   Workers.setup(numWorkers);
 }
@@ -860,7 +860,7 @@ export default function main() {
 
   allocateWorkers(state);
 
-  gRenderer = new Renderer(document.getElementById(`render-canvas`));
+  gRenderer = new Renderer(document.getElementById('render-canvas'));
   // gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
 
   setupUI(store);

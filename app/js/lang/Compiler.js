@@ -33,7 +33,7 @@ function wrapString(value) {
   //
   // we need to wrap the form in a quote-like to prevent the
   // interpreter from trying to lookup the contents of the string
-  return [`__string`, value];
+  return ['__string', value];
 }
 
 /**
@@ -75,7 +75,7 @@ function compile(node, genotype) {
 
   if (node.type === NodeType.VECTOR) {
     const [res, genotype2] = compileNodes(node.children, genotype);
-    res.unshift(`vector`);
+    res.unshift('vector');
     return [res, genotype2];
   }
 
@@ -102,8 +102,8 @@ function compileFormUsingNamedParameters(children, genotype) {
   // combine the labels + arguments into an object
 
   if (!(children.length & 1)) {
-    let msg = `error: odd number of nodes expected: `;
-    msg += ` function name + pairs of label,arg`;
+    let msg = 'error: odd number of nodes expected: ';
+    msg += ' function name + pairs of label,arg';
     console.log(msg);
   }
 

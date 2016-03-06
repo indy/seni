@@ -34,7 +34,7 @@ export function createInitialState() {
   return Immutable.fromJS({
     // the resolution of the high res image
     highResolution: [2048, 2048],
-    placeholder: `img/spinner.gif`,
+    placeholder: 'img/spinner.gif',
     populationSize: 24,
     mutationRate: 0.1,
 
@@ -60,19 +60,19 @@ export function createStore(initialState) {
 
   function reducer(state, action) {
     switch (action.type) {
-    case `SET_MODE`:
+    case 'SET_MODE':
       return actionSetMode(state, action);
-    case `SET_SCRIPT`:
+    case 'SET_SCRIPT':
       return actionSetScript(state, action);
-    case `SET_SELECTED_INDICES`:
+    case 'SET_SELECTED_INDICES':
       return actionSetSelectedIndices(state, action);
-    case `INITIAL_GENERATION`:
+    case 'INITIAL_GENERATION':
       return actionInitialGeneration(state);
-    case `NEXT_GENERATION`:
+    case 'NEXT_GENERATION':
       return actionNextGeneration(state, action);
-    case `SHUFFLE_GENERATION`:
+    case 'SHUFFLE_GENERATION':
       return actionShuffleGeneration(state, action);
-    case `SET_STATE`:
+    case 'SET_STATE':
       return wrapInPromise(action.state);
     default:
       return wrapInPromise(state);
@@ -95,7 +95,7 @@ export function createStore(initialState) {
 
 function actionSetMode(state, { mode }) {
   return new Promise((resolve, _reject) => {
-    currentState = state.set(`currentMode`, mode);
+    currentState = state.set('currentMode', mode);
     resolve(currentState);
   });
 }
@@ -103,14 +103,14 @@ function actionSetMode(state, { mode }) {
 function actionSetScript(state, { script }) {
   return new Promise((resolve, reject) => {
     currentState = state
-      .set(`script`, script)
-      .set(`scriptHash`, Util.hashCode(script));
+      .set('script', script)
+      .set('scriptHash', Util.hashCode(script));
 
-    Workers.perform(`BUILD_TRAITS`, {
-      script: currentState.get(`script`),
-      scriptHash: currentState.get(`scriptHash`)
+    Workers.perform('BUILD_TRAITS', {
+      script: currentState.get('script'),
+      scriptHash: currentState.get('scriptHash')
     }).then(({ traits }) => {
-      currentState = currentState.set(`traits`, traits);
+      currentState = currentState.set('traits', traits);
       resolve(currentState);
     }).catch(error => {
       // handle error
@@ -123,7 +123,7 @@ function actionSetScript(state, { script }) {
 function actionSetSelectedIndices(state, { selectedIndices }) {
   return new Promise((resolve, _reject) => {
     const si = selectedIndices || new Immutable.List();
-    currentState = state.set(`selectedIndices`, si);
+    currentState = state.set('selectedIndices', si);
     resolve(currentState);
   });
 }
@@ -131,16 +131,16 @@ function actionSetSelectedIndices(state, { selectedIndices }) {
 // todo: should populationSize be passed in the action?
 function actionInitialGeneration(state) {
   return new Promise((resolve, reject) => {
-    Workers.perform(`INITIAL_GENERATION`, {
-      traits: state.get(`traits`),
-      populationSize: state.get(`populationSize`)
+    Workers.perform('INITIAL_GENERATION', {
+      traits: state.get('traits'),
+      populationSize: state.get('populationSize')
     }).then(({ genotypes }) => {
       const im = Immutable.fromJS(genotypes);
 
       currentState = state
-        .set(`genotypes`, new Immutable.List(im))
-        .set(`previouslySelectedGenotypes`, new Immutable.List())
-        .set(`selectedIndices`, new Immutable.List());
+        .set('genotypes', new Immutable.List(im))
+        .set('previouslySelectedGenotypes', new Immutable.List())
+        .set('selectedIndices', new Immutable.List());
 
       resolve(currentState);
     }).catch(error => {
@@ -153,25 +153,25 @@ function actionInitialGeneration(state) {
 
 function actionShuffleGeneration(state, { rng }) {
   return new Promise((resolve, reject) => {
-    const prev = state.get(`previouslySelectedGenotypes`);
+    const prev = state.get('previouslySelectedGenotypes');
 
     if (prev.size === 0) {
       actionInitialGeneration(state).then(s => {
         resolve(s);
       });
     } else {
-      Workers.perform(`NEW_GENERATION`, {
+      Workers.perform('NEW_GENERATION', {
         genotypes: prev.toJS(),
-        populationSize: state.get(`populationSize`),
-        traits: state.get(`traits`),
-        mutationRate: state.get(`mutationRate`),
+        populationSize: state.get('populationSize'),
+        traits: state.get('traits'),
+        mutationRate: state.get('mutationRate'),
         rng
       }).then(({ genotypes }) => {
         const im = Immutable.fromJS(genotypes);
 
         currentState = state
-          .set(`genotypes`, new Immutable.List(im))
-          .set(`selectedIndices`, new Immutable.List());
+          .set('genotypes', new Immutable.List(im))
+          .set('selectedIndices', new Immutable.List());
 
         resolve(currentState);
       }).catch(error => {
@@ -185,27 +185,27 @@ function actionShuffleGeneration(state, { rng }) {
 
 function actionNextGeneration(state, { rng }) {
   return new Promise((resolve, reject) => {
-    const pg = state.get(`genotypes`);
-    const selectedIndices = state.get(`selectedIndices`);
+    const pg = state.get('genotypes');
+    const selectedIndices = state.get('selectedIndices');
     let selectedGenos = new Immutable.List();
     for (let i = 0; i < selectedIndices.size; i++) {
       selectedGenos = selectedGenos.push(pg.get(selectedIndices.get(i)));
     }
 
-    Workers.perform(`NEW_GENERATION`, {
+    Workers.perform('NEW_GENERATION', {
       genotypes: selectedGenos.toJS(),
-      populationSize: state.get(`populationSize`),
-      traits: state.get(`traits`),
-      mutationRate: state.get(`mutationRate`),
+      populationSize: state.get('populationSize'),
+      traits: state.get('traits'),
+      mutationRate: state.get('mutationRate'),
       rng
     }).then(({ genotypes }) => {
       const im = Immutable.fromJS(genotypes);
       const previouslySelectedGenotypes = im.slice(0, selectedIndices.size);
 
       currentState = state
-        .set(`genotypes`, im)
-        .set(`previouslySelectedGenotypes`, previouslySelectedGenotypes)
-        .set(`selectedIndices`, new Immutable.List());
+        .set('genotypes', im)
+        .set('previouslySelectedGenotypes', previouslySelectedGenotypes)
+        .set('selectedIndices', new Immutable.List());
 
       resolve(currentState);
     }).catch(error => {

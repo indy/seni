@@ -20,7 +20,7 @@ const logToConsole = false;
 
 function initGL(canvas) {
   try {
-    const gl = canvas.getContext(`experimental-webgl`, {
+    const gl = canvas.getContext('experimental-webgl', {
       alpha: false,
       preserveDrawingBuffer: true
     });
@@ -90,17 +90,17 @@ function setupShaders(gl) {
   gl.useProgram(shaderProgram);
 
   shaderProgram.positionAttribute =
-    gl.getAttribLocation(shaderProgram, `aVertexPosition`);
+    gl.getAttribLocation(shaderProgram, 'aVertexPosition');
   gl.enableVertexAttribArray(shaderProgram.positionAttribute);
 
   shaderProgram.colourAttribute =
-    gl.getAttribLocation(shaderProgram, `aVertexColor`);
+    gl.getAttribLocation(shaderProgram, 'aVertexColor');
   gl.enableVertexAttribArray(shaderProgram.colourAttribute);
 
   shaderProgram.pMatrixUniform =
-    gl.getUniformLocation(shaderProgram, `uPMatrix`);
+    gl.getUniformLocation(shaderProgram, 'uPMatrix');
   shaderProgram.mvMatrixUniform =
-    gl.getUniformLocation(shaderProgram, `uMVMatrix`);
+    gl.getUniformLocation(shaderProgram, 'uMVMatrix');
 
   return shaderProgram;
 }
@@ -152,13 +152,13 @@ export default class GLRenderer {
 
     if (domElement.width !== destWidth) {
       if (logToConsole) {
-        console.log(`GL width from`, domElement.width, `to`, destWidth);
+        console.log('GL width from', domElement.width, 'to', destWidth);
       }
       domElement.width = destWidth;
     }
     if (this.glDomElement.height !== destHeight) {
       if (logToConsole) {
-        console.log(`GL height from`, domElement.height, `to`, destHeight);
+        console.log('GL height from', domElement.height, 'to', destHeight);
       }
       domElement.height = destHeight;
     }

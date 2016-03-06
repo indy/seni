@@ -23,74 +23,74 @@ const { TRUE_STRING, FALSE_STRING } = Interpreter;
 
 const publicBindings = [
   new PublicBinding(
-    `+`,
-    { description: `-`,
+    '+',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => args => args.reduce((a, b) => a + b, 0)
   ),
 
   new PublicBinding(
-    `*`,
-    { description: `-`,
+    '*',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => args => args.reduce((a, b) => a * b, 1)
   ),
 
   new PublicBinding(
-    `-`,
-    { description: `-`,
+    '-',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => args => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b)
   ),
 
   new PublicBinding(
-    `/`,
-    { description: `-`,
+    '/',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => args => args.reduce((a, b) => a / b)
   ),
 
   new PublicBinding(
-    `sqrt`,
-    { description: `-`,
+    'sqrt',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => args => Math.sqrt(args[0])
   ),
 
   new PublicBinding(
-    `mod`,
-    { description: `-`,
+    'mod',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => args => args[0] % args[1]
   ),
 
   new PublicBinding(
-    `=`,
-    { description: `-`,
+    '=',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => ([first, ...rest]) =>
       rest.every(a => a === first) ? TRUE_STRING : FALSE_STRING
   ),
 
   new PublicBinding(
-    `<`,
-    { description: `-`,
+    '<',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => args => {
       let prev = args[0];
@@ -106,10 +106,10 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `>`,
-    { description: `-`,
+    '>',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => args => {
       let prev = args[0];
@@ -125,19 +125,19 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `vector`,
-    { description: `-`,
+    'vector',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => args => args
   ),
 
   new PublicBinding(
-    `vector/append`,
-    { description: `-`,
+    'vector/append',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => ([list, ...items]) => {
       items.forEach(i => list.push(i));
@@ -146,6 +146,6 @@ const publicBindings = [
   )];
 
 export default {
-  publicBindingType: `classic`,
+  publicBindingType: 'classic',
   publicBindings
 };

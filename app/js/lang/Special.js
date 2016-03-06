@@ -66,7 +66,7 @@ function addBindings(env, exprs) {
       return [ee, error];
     }
 
-    if (name.constructor === Array && name[0] === `vector`) {
+    if (name.constructor === Array && name[0] === 'vector') {
       // for square bracket notation when declaring variables
       // e.g. (define [x y] [100 200])
       // the names compile to ['list', 'x', 'y']
@@ -113,7 +113,7 @@ function loopingFn(env, expr, varName, params) {
 
   if (steps !== undefined) {
     if (steps < 1) {
-      return [env, undefined, `steps must be greater than 0`];
+      return [env, undefined, 'steps must be greater than 0'];
     }
 
     if (upto === undefined) {
@@ -132,7 +132,7 @@ function loopingFn(env, expr, varName, params) {
   }
 
   if (increment === 0) {
-    return [env, undefined, `increment of 0 given`];
+    return [env, undefined, 'increment of 0 given'];
   }
 
   let delta = increment;
@@ -165,10 +165,10 @@ function loopingFn(env, expr, varName, params) {
 
 const publicBindings = [
   new PublicBinding(
-    `if`,
-    { description: `-`,
+    'if',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => (env, [_, cond, t, f]) => {
       const [e, conditionVal, err] = evaluate(env, cond);
@@ -183,28 +183,28 @@ const publicBindings = [
    todo: remove this code now that __string is used instead
    todo: the compiler will hack in a quote around strings, this
    needs to take that into account. e.g. given (quote "hi"), the ast
-   built by the compiler will be: [`quote` [`quote` `hi`]] rather than
-   the expected [`quote` `hi`]. So this is a hack to check inside the
-   form, if it`s another list beginning with quote, just return that.
+   built by the compiler will be: ['quote' ['quote' 'hi']] rather than
+   the expected ['quote' 'hi']. So this is a hack to check inside the
+   form, if it's another list beginning with quote, just return that.
 
    the proper solution is not to pass in a simplified AST and to retain
    the nodeType information so that the interpreter can differentiate
    between names and strings, this would mean that the compiler
-   wouldn`t have to wrap strings in quotes and the code for evaling
-   quote becomes `quote`: (env, [_, form]) =>[env, form]
+   wouldn't have to wrap strings in quotes and the code for evaling
+   quote becomes 'quote': (env, [_, form]) =>[env, form]
 
    the cost of this is a more complicated AST, but it seems like a
    price worth paying
    */
   new PublicBinding(
-    `quote`,
-    { description: `-`,
+    'quote',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => (env, [_, form]) => {
       if (form.constructor === Array) {
-        if (form[0] === `quote`) {
+        if (form[0] === 'quote') {
           return [env, form[1], NO_ERROR];
         }
       }
@@ -213,19 +213,19 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `__string`,
-    { description: `-`,
+    '__string',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => (env, [_, form]) => [env, form]
   ),
 
   new PublicBinding(
-    `fn`,
-    { description: `-`,
+    'fn',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => (env, [_, nameForm, ...valueForms]) => {
       const [name, defaultArgForms] = nameForm;
@@ -238,16 +238,16 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `define`,
+    'define',
     { description: `define creates bindings in it's parent scope.
       This may not be the expected behaviour`,
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => (env, [_, ...args]) => {
       // wrap the args into pairs
       if (args.length % 2 === 1) {
-        return [env, undefined, `define should have an even number of args`];
+        return [env, undefined, 'define should have an even number of args'];
       }
 
       const argPairs = [];
@@ -260,19 +260,19 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `begin`,
-    { description: `(begin (f1 1) (f2 3) (f3 5))`,
+    'begin',
+    { description: '(begin (f1 1) (f2 3) (f3 5))',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => (env, [_, ...body]) => evalBodyForms(env, body)
   ),
 
   new PublicBinding(
-    `loop`,
-    { description: `(loop (a from: 1 to: 30 step: 2) (+ a a))`,
+    'loop',
+    { description: '(loop (a from: 1 to: 30 step: 2) (+ a a))',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => (env, [_, [varName, varParameters], ...body]) => {
       const vp = {};
@@ -285,15 +285,15 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `on-matrix-stack`,
-    { description: `(on-matrix-stack (f1 1) (f2 3) (f3 5))`,
+    'on-matrix-stack',
+    { description: '(on-matrix-stack (f1 1) (f2 3) (f3 5))',
       args: [],
-      returns: `-` },
+      returns: '-' },
     {},
     _self => (env, [_, ...body]) => {
-      env.get(`push-matrix`).binding();
+      env.get('push-matrix').binding();
       const res = evalBodyForms(env, body);
-      env.get(`pop-matrix`).binding();
+      env.get('pop-matrix').binding();
       return res;
     }
   )
@@ -301,6 +301,6 @@ const publicBindings = [
 ];
 
 export default {
-  publicBindingType: `special`,
+  publicBindingType: 'special',
   publicBindings
 };

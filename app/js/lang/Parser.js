@@ -38,21 +38,21 @@ function consumeItem(tokens) {
   if (tokenType === TokenType.LIST_START) {
     return consumeList(tokens);
   } else if (tokenType === TokenType.LIST_END) {
-    return {error: `mismatched closing parens`};
+    return {error: 'mismatched closing parens'};
   } else if (tokenType === TokenType.VECTOR_START) {
     return consumeVector(tokens);
   } else if (tokenType === TokenType.VECTOR_END) {
-    return {error: `mismatched closing square brackets`};
+    return {error: 'mismatched closing square brackets'};
   } else if (tokenType === TokenType.INT) {
     return boxNode(NodeType.INT, token.value);
   } else if (tokenType === TokenType.FLOAT) {
     return boxNode(NodeType.FLOAT, token.value);
   } else if (tokenType === TokenType.NAME) {
     const val = token.value;
-    if (val === `true`) {
-      return boxNode(NodeType.BOOLEAN, `#t`);
-    } else if (val === `false`) {
-      return boxNode(NodeType.BOOLEAN, `#f`);
+    if (val === 'true') {
+      return boxNode(NodeType.BOOLEAN, '#t');
+    } else if (val === 'false') {
+      return boxNode(NodeType.BOOLEAN, '#f');
     } else {
       return boxNode(NodeType.NAME, token.value);
     }
@@ -65,7 +65,7 @@ function consumeItem(tokens) {
   } else if (tokenType === TokenType.ALTERABLE_START) {
     return consumeBracketForm(tokens);
   } else if (tokenType === TokenType.ALTERABLE_END) {
-    return {error: `mismatched closing alterable brackets`};
+    return {error: 'mismatched closing alterable brackets'};
   } else if (tokenType === TokenType.COMMENT) {
     return boxNode(NodeType.COMMENT, `${token.value}\n`);
   } else if (tokenType === TokenType.WHITESPACE) {
@@ -73,7 +73,7 @@ function consumeItem(tokens) {
   }
 
   // e.g. TokenType.UNKNOWN
-  return {error: `unknown token type`};
+  return {error: 'unknown token type'};
 }
 
 
@@ -109,7 +109,7 @@ function consumeBracketForm(tokens) {
       nodeType !== NodeType.STRING &&
       nodeType !== NodeType.LIST &&
       nodeType !== NodeType.VECTOR) {
-    console.log(`whooops`, tokens, node);
+    console.log('whooops', tokens, node);
     return {error: `non-mutable node within curly brackets ${nodeType}`};
   }
 
@@ -117,7 +117,7 @@ function consumeBracketForm(tokens) {
   while (true) {
     const token = tokens[0];
     if (token === undefined) {
-      return {error: `unexpected end of list`};
+      return {error: 'unexpected end of list'};
     }
     if (token.type === TokenType.ALTERABLE_END) {
       tokens.shift();
@@ -144,8 +144,8 @@ function consumeQuotedForm(tokens) {
   const node = new NodeList();
 
   node.usingAbbreviation = true;
-  node.addChild(new Node(NodeType.NAME, `quote`));
-  node.addChild(new Node(NodeType.WHITESPACE, ` `));
+  node.addChild(new Node(NodeType.NAME, 'quote'));
+  node.addChild(new Node(NodeType.WHITESPACE, ' '));
   const childBox = consumeItem(tokens);
   if (childBox.error) {
     return childBox;
@@ -162,7 +162,7 @@ function consumeList(tokens) {
   while (true) {
     const token = tokens[0];
     if (token === undefined) {
-      return {error: `unexpected end of list`};
+      return {error: 'unexpected end of list'};
     }
 
     if (token.type === TokenType.LIST_END) {
@@ -188,7 +188,7 @@ function consumeVector(tokens) {
   while (true) {
     const token = tokens[0];
     if (token === undefined) {
-      return {error: `unexpected end of vector`};
+      return {error: 'unexpected end of vector'};
     }
 
     if (token.type === TokenType.VECTOR_END) {

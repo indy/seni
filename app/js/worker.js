@@ -26,7 +26,7 @@ import Genetic from './lang/Genetic';
 
 const gProxyRenderer = new ProxyRenderer();
 const gEnv = createEnv(gProxyRenderer);
-let gScriptHash = ``;
+let gScriptHash = '';
 let gFrontAst = undefined;
 let gBackAst = undefined;
 let gGenotype = undefined;
@@ -63,7 +63,7 @@ function titleForScript(env, scriptHash) {
   // (but replace with 'title' binding if it's defined in the script)
   let scriptTitle = scriptHash;
   if (env) {
-    const titleBinding = env.get(`title`);
+    const titleBinding = env.get('title');
     if (titleBinding) {
       scriptTitle = titleBinding.binding;
     }
@@ -80,7 +80,7 @@ function render({ workerId, data }) {
 
   const res = Runtime.evalAst(gEnv, gBackAst, gGenotype);
   if (res === undefined) {
-    return { status: `ERROR`, workerId };
+    return { status: 'ERROR', workerId };
   }
 
   const finalEnv = res[0];
@@ -88,7 +88,7 @@ function render({ workerId, data }) {
   const commandBuffer = gProxyRenderer.getCommandBuffer();
 
   return {
-    status: `OK`,
+    status: 'OK',
     workerId,
     data: { title, commandBuffer }
   };
@@ -102,7 +102,7 @@ function unparse({ workerId, data }) {
   const newScript = Runtime.unparse(gFrontAst.nodes, gGenotype);
 
   return {
-    status: `OK`,
+    status: 'OK',
     workerId,
     data: { script: newScript }
   };
@@ -117,7 +117,7 @@ function buildTraits({ workerId, data }) {
 
     gFrontAst = Runtime.buildFrontAst(script);
     if (gFrontAst.error) {
-      return { status: `ERROR` };
+      return { status: 'ERROR' };
     }
 
     gBackAst = Runtime.compileBackAst(gFrontAst.nodes);
@@ -126,7 +126,7 @@ function buildTraits({ workerId, data }) {
   const traits = Genetic.buildTraits(gBackAst);
 
   return {
-    status: `OK`,
+    status: 'OK',
     workerId,
     data: { traits }
   };
@@ -148,7 +148,7 @@ function createInitialGeneration({ workerId, data }) {
   }
 
   return {
-    status: `OK`,
+    status: 'OK',
     workerId,
     data: { genotypes }
   };
@@ -170,7 +170,7 @@ function newGeneration({ workerId, data }) {
                                       rng);
 
   return {
-    status: `OK`,
+    status: 'OK',
     workerId,
     data: { genotypes: geno }
   };
@@ -183,19 +183,19 @@ register(args => {
   const { type } = args;
 
   switch (type) {
-  case `RENDER`:
+  case 'RENDER':
     return render(args);
-  case `UNPARSE`:
+  case 'UNPARSE':
     return unparse(args);
-  case `BUILD_TRAITS`:
+  case 'BUILD_TRAITS':
     return buildTraits(args);
-  case `INITIAL_GENERATION`:
+  case 'INITIAL_GENERATION':
     return createInitialGeneration(args);
-  case `NEW_GENERATION`:
+  case 'NEW_GENERATION':
     return newGeneration(args);
-  case `GENERATE_HELP`:
+  case 'GENERATE_HELP':
     return generateHelp(args);
   default:
-    return ``;
+    return '';
   }
 });

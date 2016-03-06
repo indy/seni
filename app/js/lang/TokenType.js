@@ -17,21 +17,21 @@
  */
 
 const TokenType = {
-  UNKNOWN: Symbol(`UNKNOWN`),
-  LIST_START: Symbol(`LIST_START`),
-  LIST_END: Symbol(`LIST_END`),
-  VECTOR_START: Symbol(`VECTOR_START`),
-  VECTOR_END: Symbol(`VECTOR_END`),
-  ALTERABLE_START: Symbol(`ALTERABLE_START`),
-  ALTERABLE_END: Symbol(`ALTERABLE_END`),
-  INT: Symbol(`INT`),
-  FLOAT: Symbol(`FLOAT`),
-  NAME: Symbol(`NAME`),
-  STRING: Symbol(`STRING`),
-  QUOTE_ABBREVIATION: Symbol(`QUOTE_ABBREVIATION`),
-  LABEL: Symbol(`LABEL`),
-  COMMENT: Symbol(`COMMENT`),
-  WHITESPACE: Symbol(`WHITESPACE`)
+  UNKNOWN: Symbol('UNKNOWN'),
+  LIST_START: Symbol('LIST_START'),
+  LIST_END: Symbol('LIST_END'),
+  VECTOR_START: Symbol('VECTOR_START'),
+  VECTOR_END: Symbol('VECTOR_END'),
+  ALTERABLE_START: Symbol('ALTERABLE_START'),
+  ALTERABLE_END: Symbol('ALTERABLE_END'),
+  INT: Symbol('INT'),
+  FLOAT: Symbol('FLOAT'),
+  NAME: Symbol('NAME'),
+  STRING: Symbol('STRING'),
+  QUOTE_ABBREVIATION: Symbol('QUOTE_ABBREVIATION'),
+  LABEL: Symbol('LABEL'),
+  COMMENT: Symbol('COMMENT'),
+  WHITESPACE: Symbol('WHITESPACE')
 };
 
 export default TokenType;

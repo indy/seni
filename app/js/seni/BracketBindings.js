@@ -21,10 +21,10 @@ import Interp from './Interp';
 
 const publicBindings = [
   new PublicBinding(
-    `gen/identity`,
-    { description: `basic identity function`,
-      args: [[`value`, `the value to return`]],
-      returns: `the given value` },
+    'gen/identity',
+    { description: 'basic identity function',
+      args: [['value', 'the value to return']],
+      returns: 'the given value' },
     { value: 42 },
     self => params => {
       const {value} = self.mergeWithDefaults(params);
@@ -33,11 +33,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `gen/int`,
-    { description: `generate an integer`,
-      args: [[`min`, ``],
-             [`max`, ``]],
-      returns: `an integer in the range min..max-1` },
+    'gen/int',
+    { description: 'generate an integer',
+      args: [['min', ''],
+             ['max', '']],
+      returns: 'an integer in the range min..max-1' },
     { min: 0, max: 100 },
     // rng is a PseudoRandom returning values in the range 0..1
     (self, rng) => params => {
@@ -47,11 +47,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `gen/scalar`,
-    { description: `generate an scalar`,
-      args: [[`min`, ``],
-             [`max`, ``]],
-      returns: `an scalar in the range min..max` },
+    'gen/scalar',
+    { description: 'generate an scalar',
+      args: [['min', ''],
+             ['max', '']],
+      returns: 'an scalar in the range min..max' },
     { min: 0.0, max: 1.0 },
     // rng is a PseudoRandom returning values in the range 0..1
     (self, rng) => params => {
@@ -61,25 +61,25 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `gen/vector`,
-    { description: `generate a 2d vector`,
-      args: [[`min`, ``],
-             [`max`, ``]],
-      returns: `a 2d vector with each element in the range min..max` },
+    'gen/vector',
+    { description: 'generate a 2d vector',
+      args: [['min', ''],
+             ['max', '']],
+      returns: 'a 2d vector with each element in the range min..max' },
     { min: 0.0, max: 1000.0 },
     (self, rng) => params => {
       const {min, max} = self.mergeWithDefaults(params);
       const x = Interp.interpolate(min, max, rng());
       const y = Interp.interpolate(min, max, rng());
-      return [`vector`, x, y];
+      return ['vector', x, y];
     }
   ),
 
   new PublicBinding(
-    `gen/select`,
-    { description: `selects a value from a vector`,
-      args: [[`from`, `a vector of values`]],
-      returns: `one of the values in the from vector` },
+    'gen/select',
+    { description: 'selects a value from a vector',
+      args: [['from', 'a vector of values']],
+      returns: 'one of the values in the from vector' },
     { from: [] },
     (self, rng) => params => {
       const {from} = self.mergeWithDefaults(params);
@@ -87,16 +87,16 @@ const publicBindings = [
         const index = Number.parseInt(from.length * rng(), 10);
         return from[index];
       }
-      console.log(`select\'s from parameter should be a list`);
+      console.log("select's from parameter should be a list");
       return undefined;
     }
   ),
 
   new PublicBinding(
-    `gen/col`,
-    { description: `generates a colour`,
-      args: [[`alpha`, `the alpha value to use`]],
-      returns: `a colour` },
+    'gen/col',
+    { description: 'generates a colour',
+      args: [['alpha', 'the alpha value to use']],
+      returns: 'a colour' },
     {},
     (self, rng) => params => {
       const r = rng(), g = rng(), b = rng();
@@ -104,12 +104,12 @@ const publicBindings = [
       if (params.alpha) {
         alpha = params.alpha;
       }
-      return [`col/rgb`, {r, g, b, alpha}];
+      return ['col/rgb', {r, g, b, alpha}];
     }
   )
 ];
 
 export default {
-  publicBindingType: `binding`,
+  publicBindingType: 'binding',
   publicBindings
 };

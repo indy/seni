@@ -197,7 +197,7 @@
     "prefer-reflect": 0,
     "prefer-template": 2,
     "quote-props": 0,
-    "quotes": [1, "backtick", "avoid-escape"],
+    "quotes": [1, "single", "avoid-escape"],
     "radix": [2, "always"],
     "id-match": 0,
     "require-jsdoc": 0,

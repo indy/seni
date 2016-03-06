@@ -27,8 +27,8 @@ function pathLinear(publicBinding, params) {
   const fullParams = publicBinding.mergeWithDefaults(params);
 
   const {coords, fn, steps} = fullParams;
-  //const tStart = fullParams[`t-start`];
-  //const tEnd = fullParams[`t-end`];
+  //const tStart = fullParams['t-start'];
+  //const tEnd = fullParams['t-end'];
 
   const from = coords[0];
   const to = coords[coords.length - 1];
@@ -49,8 +49,8 @@ function pathCircle(publicBinding, params) {
   const fullParams = publicBinding.mergeWithDefaults(params);
 
   const {position, radius, fn, steps} = fullParams;
-  const tStart = fullParams[`t-start`];
-  const tEnd = fullParams[`t-end`];
+  const tStart = fullParams['t-start'];
+  const tEnd = fullParams['t-end'];
 
   const [x, y] = position;
   const unit = (tEnd - tStart) / steps;
@@ -73,8 +73,8 @@ function pathCurve(publicBinding, params, coordFn) {
   const fullParams = publicBinding.mergeWithDefaults(params);
 
   const {coords, fn, steps} = fullParams;
-  const tStart = fullParams[`t-start`];
-  const tEnd = fullParams[`t-end`];
+  const tStart = fullParams['t-start'];
+  const tEnd = fullParams['t-end'];
 
   const tVals = MathUtil.stepsInclusive(tStart, tEnd, steps);
 
@@ -94,14 +94,14 @@ function pathCurve(publicBinding, params, coordFn) {
 
 const publicBindings = [
   new PublicBinding(
-    `path/linear`,
+    'path/linear',
     { description:
-      `invokes a given function with positions along a linear path`,
-      args: [[`coords`, `a vector of 2 2D vectors`],
-             [`fn`, `a function that accepts step, position and t params`],
-             [`steps`, `10`],
-             [`t-start`, `0`],
-             [`t-end`, `1`]] },
+      'invokes a given function with positions along a linear path',
+      args: [['coords', 'a vector of 2 2D vectors'],
+             ['fn', 'a function that accepts step, position and t params'],
+             ['steps', '10'],
+             ['t-start', '0'],
+             ['t-end', '1']] },
     { coords: [[0, 0], [100, 100]],
       fn: emptyFn,
       steps: 10,
@@ -110,15 +110,15 @@ const publicBindings = [
     self => params => pathLinear(self, params)),
 
   new PublicBinding(
-    `path/circle`,
+    'path/circle',
     { description:
-      `invokes a given function with positions along a circular path`,
-      args: [[`position`, `the centre of the circle`],
-             [`radius`, `the radius of the circle`],
-             [`fn`, `a function that accepts step, position and t params`],
-             [`steps`, `10`],
-             [`t-start`, `0`],
-             [`t-end`, `1`]] },
+      'invokes a given function with positions along a circular path',
+      args: [['position', 'the centre of the circle'],
+             ['radius', 'the radius of the circle'],
+             ['fn', 'a function that accepts step, position and t params'],
+             ['steps', '10'],
+             ['t-start', '0'],
+             ['t-end', '1']] },
     { position: [500, 500],
       radius: 100,
       fn: emptyFn,
@@ -128,14 +128,14 @@ const publicBindings = [
     self => params => pathCircle(self, params)),
 
   new PublicBinding(
-    `path/spline`,
+    'path/spline',
     { description:
-      `invokes a given function with positions along a quadratic spline path`,
-      args: [[`coords`, `a vector of 3 2D vectors`],
-             [`fn`, `a function that accepts step, position and t params`],
-             [`steps`, `10`],
-             [`t-start`, `0`],
-             [`t-end`, `1`]] },
+      'invokes a given function with positions along a quadratic spline path',
+      args: [['coords', 'a vector of 3 2D vectors'],
+             ['fn', 'a function that accepts step, position and t params'],
+             ['steps', '10'],
+             ['t-start', '0'],
+             ['t-end', '1']] },
     { coords: [[0, 0], [30, 90], [100, 100]],
       fn: emptyFn,
       steps: 10,
@@ -144,14 +144,14 @@ const publicBindings = [
     self => params => pathCurve(self, params, MathUtil.quadraticCoordinates)),
 
   new PublicBinding(
-    `path/bezier`,
+    'path/bezier',
     { description:
-      `invokes a given function with positions along a Bezier spline path`,
-      args: [[`coords`, `a vector of 4 2D vectors`],
-             [`fn`, `a function that accepts step, position and t params`],
-             [`steps`, `10`],
-             [`t-start`, `0`],
-             [`t-end`, `1`]] },
+      'invokes a given function with positions along a Bezier spline path',
+      args: [['coords', 'a vector of 4 2D vectors'],
+             ['fn', 'a function that accepts step, position and t params'],
+             ['steps', '10'],
+             ['t-start', '0'],
+             ['t-end', '1']] },
     { coords: [[0, 0], [30, 90], [60, 90], [100, 100]],
       fn: emptyFn,
       steps: 10,
@@ -161,6 +161,6 @@ const publicBindings = [
 ];
 
 export default {
-  publicBindingType: `binding`,
+  publicBindingType: 'binding',
   publicBindings
 };

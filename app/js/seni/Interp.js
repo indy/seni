@@ -51,7 +51,7 @@ function remapFn(params) {
   const from = params.from || [0, 1];
   const to = params.to || [0, 100];
   const clamping = params.clamping || false;
-  const mapping = params.mapping || `linear`;
+  const mapping = params.mapping || 'linear';
 
   const [fromA, fromB] = from;
   const [toA, toB] = to;
@@ -61,7 +61,7 @@ function remapFn(params) {
   let normalisedMappingFn = remappingFn.get(mapping);
 
   if (normalisedMappingFn === undefined) {
-    normalisedMappingFn = remappingFn.get(`linear`);
+    normalisedMappingFn = remappingFn.get('linear');
   }
 
   return function (parameters) {
@@ -125,24 +125,24 @@ const defaultCoords = [[440, 400],
 
 const publicBindings = [
   new PublicBinding(
-    `interp/fn`,
-    { description: `a function for remapping values`,
-      args: [[`from`, `[0 1]`],
-             [`to`, `[0 100]`],
-             [`clamping`, `false`],
-             [`mapping`, `one of 'linear', 'quick', 'slow-in', 'slow-in-out'`]],
-      returns: `a function which accepts a 'val' argument`},
+    'interp/fn',
+    { description: 'a function for remapping values',
+      args: [['from', '[0 1]'],
+             ['to', '[0 100]'],
+             ['clamping', 'false'],
+             ['mapping', "one of 'linear', 'quick', 'slow-in', 'slow-in-out'"]],
+      returns: "a function which accepts a 'val' argument"},
     {},
     () => remapFn
   ),
 
   new PublicBinding(
-    `interp/cos`,
-    { description: `calculate cosine value of t`,
-      args: [[`amplitude`, `1`],
-             [`frequency`, `1`],
-             [`t`, `1 (note: t goes from 0 to math/TAU)`]],
-      returns: `the cosine`},
+    'interp/cos',
+    { description: 'calculate cosine value of t',
+      args: [['amplitude', '1'],
+             ['frequency', '1'],
+             ['t', '1 (note: t goes from 0 to math/TAU)']],
+      returns: 'the cosine'},
     { amplitude: 1,
       frequency: 1,
       t: 1},
@@ -154,12 +154,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `interp/sin`,
-    { description: `calculate sine value of t`,
-      args: [[`amplitude`, `1`],
-             [`frequency`, `1`],
-             [`t`, `1 (note: t goes from 0 to math/TAU)`]],
-      returns: `the sin`},
+    'interp/sin',
+    { description: 'calculate sine value of t',
+      args: [['amplitude', '1'],
+             ['frequency', '1'],
+             ['t', '1 (note: t goes from 0 to math/TAU)']],
+      returns: 'the sin'},
     { amplitude: 1,
       frequency: 1,
       t: 1},
@@ -171,12 +171,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `interp/bezier`,
+    'interp/bezier',
     /* eslint-disable max-len */
-    { description: `interpolates across a Bezier curve`,
-      args: [[`coords`, `four vectors representing control points on a Bezier curve`],
-             [`t`, `the t value along the curve`]],
-      returns: `a point on a Bezier curve`},
+    { description: 'interpolates across a Bezier curve',
+      args: [['coords', 'four vectors representing control points on a Bezier curve'],
+             ['t', 'the t value along the curve']],
+      returns: 'a point on a Bezier curve'},
     /* eslint-enable max-len */
     {coords: defaultCoords,
      t: 1},
@@ -188,11 +188,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `interp/bezier-fn`,
+    'interp/bezier-fn',
     /* eslint-disable max-len */
-    { description: `creates a function which calculates points on a Bezier curve`,
-      args: [[`coords`, `four vectors representing control points on a Bezier curve`]],
-      returns: `returns a function which, when given 't' returns the point on the curve`},
+    { description: 'creates a function which calculates points on a Bezier curve',
+      args: [['coords', 'four vectors representing control points on a Bezier curve']],
+      returns: "returns a function which, when given 't' returns the point on the curve"},
     /* eslint-enable max-len */
     { coords: defaultCoords },
     self => params => {
@@ -202,12 +202,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `interp/bezier-tangent`,
+    'interp/bezier-tangent',
     /* eslint-disable max-len */
-    { description: `calculate the tangent vector for a point on the Bezier curve`,
-      args: [[`coords`, `four vectors representing control points on a Bezier curve`],
-             [`t`, `the t value along the curve`]],
-      returns: `a tangent vector on the Bezier curve`},
+    { description: 'calculate the tangent vector for a point on the Bezier curve',
+      args: [['coords', 'four vectors representing control points on a Bezier curve'],
+             ['t', 'the t value along the curve']],
+      returns: 'a tangent vector on the Bezier curve'},
     /* eslint-enable max-len */
     { coords: defaultCoords,
       t: 1 },
@@ -218,11 +218,11 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `interp/bezier-tangent-fn`,
+    'interp/bezier-tangent-fn',
     /* eslint-disable max-len */
-    { description: `create a function calculates tangents for a point on the Bezier curve`,
-      args: [[`coords`, `four vectors representing control points on a Bezier curve`]],
-      returns: `returns a function which, given 't' returns the tangent for the curve` },
+    { description: 'create a function calculates tangents for a point on the Bezier curve',
+      args: [['coords', 'four vectors representing control points on a Bezier curve']],
+      returns: "returns a function which, given 't' returns the tangent for the curve" },
     /* eslint-enable max-len */
     { coords: defaultCoords },
     self => params => {
@@ -232,12 +232,12 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `interp/circle`,
-    { description: `calculate a point on a circle`,
-      args: [[`position`, `vector for the position of the circle`],
-             [`radius`, `radius of the circle`],
-             [`t`, `parametric value along the circle`]],
-      returns: `a point on a circle` },
+    'interp/circle',
+    { description: 'calculate a point on a circle',
+      args: [['position', 'vector for the position of the circle'],
+             ['radius', 'radius of the circle'],
+             ['t', 'parametric value along the circle']],
+      returns: 'a point on a circle' },
     { position: [0, 0],
       radius: 1,
       t: 0 },
@@ -257,7 +257,7 @@ const publicBindings = [
 ];
 
 export default {
-  publicBindingType: `binding`,
+  publicBindingType: 'binding',
   publicBindings,
   interpolate,
   remapFn

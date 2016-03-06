@@ -21,24 +21,24 @@ import MathUtil from './MathUtil';
 
 const publicBindings = [
   new PublicBinding(
-    `push-matrix`,
-    { description: `pushes the current matrix onto the stack` },
+    'push-matrix',
+    { description: 'pushes the current matrix onto the stack' },
     {},
     (self, renderer) => () => renderer.cmdMatrixPush()
   ),
 
   new PublicBinding(
-    `pop-matrix`,
-    { description: `pops a matrix from the stack` },
+    'pop-matrix',
+    { description: 'pops a matrix from the stack' },
     {},
     (self, renderer) => () => renderer.cmdMatrixPop()
   ),
 
   new PublicBinding(
-    `scale`,
-    { description: `apply scaling to the matrix`,
-      args: [[`vector`, `[0 1]`],
-             [`scalar`, `1`]]
+    'scale',
+    { description: 'apply scaling to the matrix',
+      args: [['vector', '[0 1]'],
+             ['scalar', '1']]
     },
     { vector: [1, 1],
       scalar: 1 },
@@ -56,9 +56,9 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `translate`,
-    { description: `apply translation to the matrix`,
-      args: [[`vector`, `[0 1]`]] },
+    'translate',
+    { description: 'apply translation to the matrix',
+      args: [['vector', '[0 1]']] },
     { vector: [0, 0] },
     (self, renderer) => params => {
       const {vector} = self.mergeWithDefaults(params);
@@ -67,9 +67,9 @@ const publicBindings = [
   ),
 
   new PublicBinding(
-    `rotate`,
-    { description: `apply a rotation to the matrix`,
-      args: [[`angle`, `0`]] },
+    'rotate',
+    { description: 'apply a rotation to the matrix',
+      args: [['angle', '0']] },
     { angle: 0.0 },
     (self, renderer) => params => {
       const {angle} = self.mergeWithDefaults(params);
@@ -81,6 +81,6 @@ const publicBindings = [
 ];
 
 export default {
-  publicBindingType: `binding`,
+  publicBindingType: 'binding',
   publicBindings
 };

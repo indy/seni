@@ -27,12 +27,12 @@ function identity({item}) {
 
 const publicBindings = [
   new PublicBinding(
-    `map`,
-    { description: `-`,
+    'map',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     { fn: identity,
-      bind: `item`,
+      bind: 'item',
       vector: []},
     self => params => {
       const {fn, bind, vector} = self.mergeWithDefaults(params);
@@ -44,12 +44,12 @@ const publicBindings = [
     }
   ),
   new PublicBinding(
-    `filter`,
-    { description: `-`,
+    'filter',
+    { description: '-',
       args: [],
-      returns: `-` },
+      returns: '-' },
     { fn: identity,
-      bind: `item`,
+      bind: 'item',
       vector: []},
     self => params => {
       const {fn, bind, vector} = self.mergeWithDefaults(params);
@@ -62,6 +62,6 @@ const publicBindings = [
   )];
 
 export default {
-  publicBindingType: `binding`,
+  publicBindingType: 'binding',
   publicBindings
 };

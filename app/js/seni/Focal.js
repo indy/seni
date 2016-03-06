@@ -29,11 +29,11 @@ function setupFocalParameters(publicBinding, params) {
     falloff
   } = fullParams;
 
-  if (falloff !== `linear` &&
-      falloff !== `quick` &&
-      falloff !== `slow-in` &&
-      falloff !== `slow-in-out`) {
-    console.log(`invalid falloff value`);
+  if (falloff !== 'linear' &&
+      falloff !== 'quick' &&
+      falloff !== 'slow-in' &&
+      falloff !== 'slow-in-out') {
+    console.log('invalid falloff value');
   }
 
   const fn = Interp.remapFn({
@@ -87,7 +87,7 @@ function hline(publicBinding, params, renderer) {
     fn
   } = setupFocalParameters(publicBinding, params);
 
-  // returns a function that given a v2 returns how `interesting` it should be
+  // returns a function that given a v2 returns how 'interesting' it should be
   return parameters => {
     const v = parameters.position || [0, 0];
     const p = renderer.vectorToCanvasSpace(v);
@@ -99,52 +99,52 @@ function hline(publicBinding, params, renderer) {
 
 const publicBindings = [
   new PublicBinding(
-    `focal/point`,
+    'focal/point',
     { description: `creates a function that describes how 'interesting' a
 point should be`,
-      args: [[`position`, `[0 0]`],
-             [`distance`, `100`],
-             [`falloff`,
-              `one of 'linear', 'quick', 'slow-in', 'slow-in-out'`]],
-      returns: `a function that takes a position vector` },
+      args: [['position', '[0 0]'],
+             ['distance', '100'],
+             ['falloff',
+              "one of 'linear', 'quick', 'slow-in', 'slow-in-out'"]],
+      returns: 'a function that takes a position vector' },
     { position: [0, 0],
       distance: 100,
-      falloff: `linear` },
+      falloff: 'linear' },
     (self, renderer) => params => point(self, params, renderer)
   ),
 
   new PublicBinding(
-    `focal/vline`,
+    'focal/vline',
     { description: `creates a function that describes how 'interesting' a
 point should be (only the position's x value will be taken into account)`,
-      args: [[`position`, `[0 0]`],
-             [`distance`, `100`],
-             [`falloff`,
-              `one of 'linear', 'quick', 'slow-in', 'slow-in-out'`]],
-      returns: `a function that takes a position vector` },
+      args: [['position', '[0 0]'],
+             ['distance', '100'],
+             ['falloff',
+              "one of 'linear', 'quick', 'slow-in', 'slow-in-out'"]],
+      returns: 'a function that takes a position vector' },
     { position: [500, 500],
       distance: 100,
-      falloff: `linear` },
+      falloff: 'linear' },
     (self, renderer) => params => vline(self, params, renderer)
   ),
 
   new PublicBinding(
-    `focal/hline`,
+    'focal/hline',
     { description: `creates a function that describes how 'interesting' a
 point should be (only the position's y value will be taken into account)`,
-      args: [[`position`, `[0 0]`],
-             [`distance`, `100`],
-             [`falloff`,
-              `one of 'linear', 'quick', 'slow-in', 'slow-in-out'`]],
-      returns: `a function that takes a position vector` },
+      args: [['position', '[0 0]'],
+             ['distance', '100'],
+             ['falloff',
+              "one of 'linear', 'quick', 'slow-in', 'slow-in-out'"]],
+      returns: 'a function that takes a position vector' },
     { position: [500, 500],
       distance: 100,
-      falloff: `linear` },
+      falloff: 'linear' },
     (self, renderer) => params => hline(self, params, renderer)
   )
 ];
 
 export default {
-  publicBindingType: `binding`,
+  publicBindingType: 'binding',
   publicBindings
 };
