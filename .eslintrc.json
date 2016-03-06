@@ -145,7 +145,7 @@
     "accessor-pairs": 0,
     "block-scoped-var": 0,
     "block-spacing": 0,
-    "brace-style": [0, "1tbs"],
+    "brace-style": [2, "1tbs", { "allowSingleLine": true }],
     "callback-return": 0,
     "camelcase": 0,
     "comma-dangle": [2, "never"],
