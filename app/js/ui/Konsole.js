@@ -338,7 +338,7 @@ export default class Konsole {
     let _i, _len;
     let _welcomeMessage = welcomeMessage;
 
-    if (_welcomeMessage == null) {
+    if (_welcomeMessage === null) {
       _welcomeMessage = true;
     }
     this.submitInProgress = false;
@@ -581,7 +581,7 @@ export default class Konsole {
     let widgetElement;
     const _this = this;
 
-    if (widgetOptions == null) {
+    if (widgetOptions === null) {
       widgetOptions = {};
     }
     const widgetContent = responseLine ? responseLine.content : '';
@@ -595,7 +595,7 @@ export default class Konsole {
       widgetElement.style.whiteSpace = 'pre-wrap';
     }
     // todo: isg: undefined was void 0
-    if (responseLine != null ? responseLine.className : undefined) {
+    if (responseLine !== null ? responseLine.className : undefined) {
       widgetElement.className += ` ${responseLine.className}`;
     }
     if (Object.keys(widgetOptions).indexOf('coverGutter') < 0) {

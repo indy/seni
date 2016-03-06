@@ -780,7 +780,7 @@ function setupUI(store) {
     const evt = evt_ || window.event;
 
     // Ctrl-M
-    if (evt.ctrlKey && evt.keyCode == 77) {
+    if (evt.ctrlKey && evt.keyCode === 77) {
       toggleKonsole();
     }
   };

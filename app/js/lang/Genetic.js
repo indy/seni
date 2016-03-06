@@ -64,7 +64,7 @@ function buildGeneFromTrait(trait, env) {
   // evaluate all of the forms, returning the final [env, result]
   /* eslint-disable arrow-body-style */
   const [_, result, _error] = simplifiedAst.reduce(([e, f, err], form) => {
-    if (err != Interpreter.NO_ERROR) {
+    if (err !== Interpreter.NO_ERROR) {
       // if there's an error keep on passing it along
       return [e, f, err];
     } else {

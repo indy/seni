@@ -16,6 +16,8 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* eslint-disable eqeqeq */
+
 function seniMode() {
   const BUILTIN = 'builtin';
   const COMMENT = 'comment';
@@ -38,7 +40,7 @@ function seniMode() {
 
   // keywords are core to the seni language
   const keywords =
-          makeKeywords('begin define fn if loop on-matrix-stack quote');
+        makeKeywords('begin define fn if loop on-matrix-stack quote');
   const indentKeys = makeKeywords('define loop on-matrix-stack fn');
 
   // functions from the common seni library
