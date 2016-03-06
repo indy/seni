@@ -79,7 +79,7 @@
       }
     }],
     "no-multi-str": 0,
-    "no-multiple-empty-lines": [0, {"max": 2}],
+    "no-multiple-empty-lines": [2, {"max": 2, "maxEOF": 1 }],
     "no-native-reassign": 0,
     "no-negated-condition": 0,
     "no-negated-in-lhs": 2,

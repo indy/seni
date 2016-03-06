@@ -34,8 +34,6 @@ import Focal from '../seni/Focal';
 import Repeat from '../seni/Repeat';
 import Interp from '../seni/Interp';
 
-
-
 /*
   Env is an immutable map
 
