@@ -28,7 +28,6 @@ const logToConsole = false;
 // the node will be in backAst form
 function buildTraitFromNode(node, genes) {
   if (node.alterable === true) {
-
     // expect a form in the parameterAST
     let simplifiedAst, initialValue;
 
@@ -53,7 +52,6 @@ function buildTraitFromNode(node, genes) {
 
     const gene = {initialValue, simplifiedAst};
     genes.push(gene);  // mutate the genes
-
   }
 
   if (node.type === NodeType.LIST || node.type === NodeType.VECTOR) {

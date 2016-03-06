@@ -469,7 +469,6 @@ const proceduralFnPresets = [`rainbow`, `chrome`, `robocop`, `transformers`,
 
 // from http://iquilezles.org/www/articles/palettes/palettes.htm
 function proceduralFn(preset, a, b, c, d, alpha) {
-
   let ar, ag, ab, br, bg, bb, cr, cg, cb, dr, dg, db;
 
   const colPreset = proceduralFnPresetValues[preset];
@@ -505,7 +504,6 @@ function proceduralFn(preset, a, b, c, d, alpha) {
  * @param d colour
  */
 function bezierFn(a, b, c, d) {
-
   const [ar, ag, ab, aalpha] = elementArray(cloneAs(a, Format.RGB));
   const [br, bg, bb, balpha] = elementArray(cloneAs(b, Format.RGB));
   const [cr, cg, cb, calpha] = elementArray(cloneAs(c, Format.RGB));
@@ -531,7 +529,6 @@ function bezierFn(a, b, c, d) {
  * @param c colour
  */
 function quadraticFn(a, b, c) {
-
   const [ar, ag, ab, aalpha] = elementArray(cloneAs(a, Format.RGB));
   const [br, bg, bb, balpha] = elementArray(cloneAs(b, Format.RGB));
   const [cr, cg, cb, calpha] = elementArray(cloneAs(c, Format.RGB));

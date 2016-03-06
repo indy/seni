@@ -170,7 +170,6 @@ stroked-bezier-rect take translate`);
         let escaped = false;
         while ((next = stream.next()) != null) {
           if (next === `\"` && !escaped) {
-
             state.mode = false;
             break;
           }
@@ -183,7 +182,6 @@ stroked-bezier-rect take translate`);
         let maybeEnd = false;
         while ((next = stream.next()) != null) {
           if (next === `#` && maybeEnd) {
-
             state.mode = false;
             break;
           }
@@ -197,7 +195,6 @@ stroked-bezier-rect take translate`);
         if (ch === `\"`) {
           state.mode = `string`;
           returnType = tokenType(STRING, state);
-
         } else if (ch === `\'`) {
           returnType = tokenType(ATOM, state);
         } else if (/^[-+0-9.]/.test(ch) && isDecimalNumber(stream, true)) {

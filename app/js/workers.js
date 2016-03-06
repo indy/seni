@@ -62,7 +62,6 @@ function releaseWorker(workerId) {
 }
 
 function setup(numWorkersParam) {
-
   if (logToConsole) {
     console.log(`workers::numWorkers = ${numWorkersParam}`);
   }
@@ -77,9 +76,7 @@ function setup(numWorkersParam) {
 }
 
 function perform(jobType, jobData) {
-
   return new Promise((resolve, reject) => {
-
     findAvailableWorkerId().then(id => {
       const worker = getWorker(id);
 
@@ -91,7 +88,6 @@ function perform(jobType, jobData) {
 
       return worker.postMessage(data);
     }).then(result => {
-
       releaseWorker(result.workerId);
 
       if (result.status === `OK`) {
@@ -105,7 +101,6 @@ function perform(jobType, jobData) {
       reject(error);
     });
   });
-
 }
 
 export default {

@@ -30,7 +30,6 @@ const NO_ERROR = undefined;
 // and any potential error
 //
 function evaluate(env, expr) {
-
   if (expr === undefined) {
     // in case of non-existent else clause in if statement
     return [env, undefined, NO_ERROR];
@@ -55,7 +54,6 @@ function evaluate(env, expr) {
 }
 
 function funApplication(env_, listExpr) {
-
   let env = env_;
   let fun = undefined;
   let error = undefined;
@@ -104,7 +102,6 @@ function buildArgs(env, listExpr) {
 }
 
 function funApplicationClassic(env, fun, [fnName, ...fnArguments]) {
-
   let argumentError = undefined;
   const args = fnArguments.map(n => {
     const [_env1, form1, err1] = evaluate(env, n);

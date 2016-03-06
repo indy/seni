@@ -35,7 +35,6 @@ function evalBodyForms(env, bodyForms) {
 }
 
 function defineFunction(env, defaultArgForms, body) {
-
   const defaultArgValues = {};
   for (const k in defaultArgForms) {
     const [_e, v, err] = evaluate(env, defaultArgForms[k]);
@@ -57,7 +56,6 @@ function defineFunction(env, defaultArgForms, body) {
 }
 
 function addBindings(env, exprs) {
-
   let lastValueBound = undefined;
 
   // adds a binding to the env, returning the ['new environment', error] pair
@@ -69,7 +67,6 @@ function addBindings(env, exprs) {
     }
 
     if (name.constructor === Array && name[0] === `vector`) {
-
       // for square bracket notation when declaring variables
       // e.g. (define [x y] [100 200])
       // the names compile to ['list', 'x', 'y']
@@ -104,7 +101,6 @@ function addBindings(env, exprs) {
 }
 
 function loopingFn(env, expr, varName, params) {
-
   const { from, to, upto, steps, increment } = Object.assign({
     from: 0,
     to: 1,

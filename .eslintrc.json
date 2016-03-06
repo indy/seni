@@ -190,7 +190,7 @@
     "one-var": [0, "always"],
     "operator-assignment": [0, "always"],
     "operator-linebreak": 0,
-    "padded-blocks": 0,
+    "padded-blocks": [2, "never"],
     "prefer-arrow-callback": 2,
     "prefer-const": 2,
     "prefer-spread": 2,

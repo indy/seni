@@ -136,7 +136,6 @@ function consumeBracketForm(tokens) {
   /* eslint-enable no-constant-condition */
 
   return { node };
-
 }
 
 function consumeQuotedForm(tokens) {
@@ -157,7 +156,6 @@ function consumeQuotedForm(tokens) {
 }
 
 function consumeList(tokens) {
-
   const node = new NodeList();
 
   /* eslint-disable no-constant-condition */
@@ -181,11 +179,9 @@ function consumeList(tokens) {
     node.addChild(n);
   }
   /* eslint-enable no-constant-condition */
-
 }
 
 function consumeVector(tokens) {
-
   const node = new NodeVector();
 
   /* eslint-disable no-constant-condition */
@@ -228,7 +224,6 @@ const Parser = {
    * @param tokens the tokens
    */
   parse: tokens => {
-
     const nodes = [];
     while (tokens.length !== 0) {
       const nodeBox = consumeItem(tokens);

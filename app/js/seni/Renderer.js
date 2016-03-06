@@ -56,7 +56,6 @@ export default class Renderer {
   }
 
   executeCommandBuffer(commandBuffer) {
-
     const hackColour = c => Colour.construct(c.format, c.elements);
 
     const hackParams = p => {
@@ -203,7 +202,6 @@ export default class Renderer {
     let angle, vx, vy;
 
     for (let i = 0; i < tessellation; i++) {
-
       angle = unitAngle * i;
       vx = (Math.sin(angle) * width) + x;
       vy = (Math.cos(angle) * height) + y;
@@ -268,7 +266,6 @@ export default class Renderer {
     this.prepareToAddTriangleStrip((tessellation * 2) + 2, [innervx, innervy]);
 
     for (let i = 0; i < tessellation; i++) {
-
       angle = rStart + (unitAngle * i);
 
       innervx = (Math.sin(angle) * innerWidth) + x;
@@ -311,7 +308,6 @@ export default class Renderer {
   }
 
   renderCurve(params, coordFn) {
-
     const {
       colour,
       coords,
@@ -344,7 +340,6 @@ export default class Renderer {
   }
 
   getRemapAndHalfWidthEnd(params) {
-
     const lineWidth = params[`line-width`];
     const lineWidthStart = params[`line-width-start`];
     const lineWidthEnd = params[`line-width-end`];
@@ -365,14 +360,12 @@ export default class Renderer {
       remap = Interp.remapFn({from: [tStart, tEnd],
                               to: [halfWidthStart, halfWidthEnd],
                               mapping: lineWidthMapping});
-
     }
 
     return {halfWidthEnd, remap};
   }
 
   addVerticesAsStrip(args) {
-
     const {
       tVals,
       xs,
@@ -455,7 +448,6 @@ export default class Renderer {
    * @param p0 the first vertex position
    */
   prepareToAddTriangleStrip(numVertices, p0) {
-
     if (this.renderPacket.canVerticesFit(numVertices) === false) {
       this.flushTriangles();
     }
@@ -477,7 +469,6 @@ export default class Renderer {
   }
 
   flushTriangles() {
-
     if (this.renderPacket.isRenderPacketEmpty()) {
       return;
     }

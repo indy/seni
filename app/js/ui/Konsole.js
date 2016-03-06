@@ -176,7 +176,6 @@ class KonsoleHistory {
   }
 
   localStorageExists() {
-
     try {
       return !!(window[`localStorage`] !== null && window.localStorage);
     } catch (_error) {

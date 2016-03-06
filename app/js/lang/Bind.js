@@ -70,7 +70,6 @@ function createBind(env, bindType, pb, restArgs) {
 //                          publicBindingType: 'binding'})
 // results in: env['rect'] = {binding: ...}
 function applyBindings(env, namespace) {
-
   // grab any additional arguments that have been given to this function
   const restArgs = Array.prototype.slice.call(arguments, 2);
   const bindings = namespace.publicBindings;

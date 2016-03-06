@@ -36,7 +36,6 @@ let gRenderer = undefined;
 
 function get(url) {
   return new Promise((resolve, reject) => {
-
     const req = new XMLHttpRequest();
     req.open(`GET`, url);
 
@@ -73,7 +72,6 @@ function getScriptFromEditor() {
 }
 
 function showButtonsFor(mode) {
-
   const evalBtn = document.getElementById(`eval-btn`);
   const evolveBtn = document.getElementById(`evolve-btn`);
   const renderBtn = document.getElementById(`render-btn`);
@@ -134,7 +132,6 @@ function ensureMode(store, mode) {
 // function that takes a read-only state and updates the UI
 //
 function updateUI(state) {
-
   showCurrentMode(state);
 
   switch (state.get(`currentMode`)) {
@@ -152,7 +149,6 @@ function updateUI(state) {
 }
 
 function renderCommandBuffer(commandBuffer, imageElement, w, h) {
-
   const renderer = gRenderer;
 
   if (w !== undefined && h !== undefined) {
@@ -175,10 +171,8 @@ function renderScript(state, imageElement) {
     script: state.get(`script`),
     scriptHash: state.get(`scriptHash`)
   }).then(({ title, commandBuffer }) => {
-
     renderCommandBuffer(commandBuffer, imageElement);
     stopFn(`renderScript-${title}`, gUI.konsole);
-
   }).catch(error => {
     // handle error
     console.log(`worker: error of ${error}`);
@@ -186,7 +180,6 @@ function renderScript(state, imageElement) {
 }
 
 function addClickEvent(id, fn) {
-
   const element = document.getElementById(id);
 
   if (element) {
@@ -218,7 +211,6 @@ function getPhenoIdFromDom(element) {
 }
 
 function renderHighRes(state, genotype) {
-
   const container = document.getElementById(`high-res-container`);
   const loader = document.getElementById(`high-res-loader`);
   const image = document.getElementById(`high-res-image`);
@@ -234,7 +226,6 @@ function renderHighRes(state, genotype) {
     scriptHash: state.get(`scriptHash`),
     genotype: genotype ? genotype.toJS() : undefined
   }).then(({ title, commandBuffer }) => {
-
     const [width, height] = state.get(`highResolution`);
     renderCommandBuffer(commandBuffer, image, width, height);
 
@@ -244,7 +235,6 @@ function renderHighRes(state, genotype) {
     const link = document.getElementById(`high-res-link`);
     link.href = image.src;
     loader.classList.add(`hidden`);
-
   }).catch(error => {
     // handle error
     console.log(`worker: error of ${error}`);
@@ -273,17 +263,14 @@ function showEditFromEvolve(store, element) {
         scriptHash: state.get(`scriptHash`),
         genotype: genotypes.get(index).toJS()
       }).then(({ script }) => {
-
         setScript(store, script)
           .then(() => ensureMode(store, SeniMode.edit))
           .then(resolve);
-
       }).catch(error => {
         // handle error
         console.log(`worker: error of ${error}`);
         reject(error);
       });
-
     } else {
       resolve();
     }
@@ -292,7 +279,6 @@ function showEditFromEvolve(store, element) {
 
 function renderGeneration(state) {
   return new Promise((resolve, _reject) => {
-
     const script = state.get(`script`);
     const scriptHash = state.get(`scriptHash`);
 
@@ -308,18 +294,15 @@ function renderGeneration(state) {
     const stopFn = startTiming();
 
     for (let i = 0;i < phenotypes.size; i++) {
-
       const workerJob = Workers.perform(`RENDER`, {
         script,
         scriptHash,
         genotype: genotypes.get(i).toJS()
       }).then(({ title, commandBuffer }) => {
-
         const imageElement = phenotypes.getIn([i, `imageElement`]);
         renderCommandBuffer(commandBuffer, imageElement);
 
         hackTitle = title;
-
       }).catch(error => {
         // handle error
         console.log(`worker: error of ${error}`);
@@ -337,7 +320,6 @@ function renderGeneration(state) {
 }
 
 function showPlaceholderImages(state) {
-
   const placeholder = state.get(`placeholder`);
   const populationSize = state.get(`populationSize`);
   const phenotypes = gUI.phenotypes;
@@ -351,7 +333,6 @@ function showPlaceholderImages(state) {
 // update the selected phenotypes in the evolve screen according to the
 // values in selectedIndices
 function updateSelectionUI(state) {
-
   const selectedIndices = state.get(`selectedIndices`);
   const populationSize = state.get(`populationSize`);
   const phenotypes = gUI.phenotypes;
@@ -369,7 +350,6 @@ function updateSelectionUI(state) {
 }
 
 function onNextGen(store) {
-
   // get the selected genotypes for the next generation
   const populationSize = store.getState().get(`populationSize`);
   const phenotypes = gUI.phenotypes;
@@ -396,7 +376,6 @@ function onNextGen(store) {
 
       return store.dispatch({type: `NEXT_GENERATION`, rng: 42});
     }).then(state => {
-
       if (state === undefined) {
         return;
       }
@@ -409,7 +388,6 @@ function onNextGen(store) {
 }
 
 function createPhenotypeElement(id, placeholderImage) {
-
   const container = document.createElement(`div`);
 
   container.className = `card-holder`;
@@ -486,7 +464,6 @@ function afterLoadingPlaceholderImages(state) {
 }
 
 function showCurrentMode(state) {
-
   // show the current container, hide the others
   const containers = gUI.containers;
   const currentMode = state.get(`currentMode`);
@@ -498,7 +475,6 @@ function showCurrentMode(state) {
 }
 
 function showScriptInEditor(state) {
-
   const editor = gUI.editor;
 
   editor.getDoc().setValue(state.get(`script`));
@@ -518,7 +494,6 @@ function showEditFromGallery(store, element) {
         .then(data => setScript(store, data))
         .then(() => ensureMode(store, SeniMode.edit))
         .then(resolve);
-
     } else {
       resolve();
     }
@@ -528,7 +503,6 @@ function showEditFromGallery(store, element) {
 
 // take the height of the navbar into consideration
 function resizeContainers() {
-
   const navbar = document.getElementById(`seni-navbar`);
 
   const edit = document.getElementById(`edit-container`);
@@ -540,7 +514,6 @@ function resizeContainers() {
 
 
 function createKonsole(_env, element) {
-
   const konsole = new Konsole(element, {
     prompt: `> `,
     historyLabel: `cs-console-demo`,
@@ -570,7 +543,6 @@ function createKonsole(_env, element) {
 }
 
 function createEditor(store, editorTextArea) {
-
   const blockIndent = function(editor, from, to) {
     editor.operation(() => {
       for (let i = from; i < to; ++i) {
@@ -605,7 +577,6 @@ function createEditor(store, editorTextArea) {
 }
 
 function setupUI(store) {
-
   const d = document;
   const konsoleElement = d.getElementById(`konsole`);
   const editorTextArea = d.getElementById(`edit-textarea`);
@@ -749,7 +720,7 @@ function setupUI(store) {
 
     // get the image element
     const imageElement =
-            phenotypeElement.getElementsByClassName(`phenotype`)[0];
+          phenotypeElement.getElementsByClassName(`phenotype`)[0];
     imageElement.addEventListener(`load`, imageLoadHandler, false);
     imageElement.setAttribute(`data-image-load-timestamp`, 0);
 
@@ -815,7 +786,6 @@ function setupUI(store) {
 }
 
 function getGallery() {
-
   const createGalleryElement = galleryItem => {
     const container = document.createElement(`div`);
 

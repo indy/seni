@@ -48,7 +48,6 @@ function compileShader(gl, type, src) {
 }
 
 function setupShaders(gl) {
-
   const shaderProgram = gl.createProgram();
 
   const fragmentSrc = `

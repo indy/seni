@@ -48,7 +48,6 @@ const remappingFn = new Immutable.Map({linear: mapLinear,
                                        'slow-in-out': mapSlowEaseInEaseOut});
 
 function remapFn(params) {
-
   const from = params.from || [0, 1];
   const to = params.to || [0, 100];
   const clamping = params.clamping || false;

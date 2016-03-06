@@ -40,15 +40,12 @@ function unparseSimplifiedAst(value) {
     }
     const elements = value.map(unparseSimplifiedAst).join(` `).trim();
     return `(${elements})`;
-
   } else if (value instanceof Object) {
-
     let args = ``;
     for (const k in value) {
       args = `${args}${k}: ${unparseSimplifiedAst(value[k])} `;
     }
     return args.trim();
-
   } else if (!Number.isNaN(Number(value))) {
     // see if the number is a float, if so then format to 3dp
     const asString3dp = value.toFixed(3);
@@ -136,11 +133,9 @@ function unparseASTNode(node, genotype) {
     }
 
     term = `{${prefixes}${v}${alterParams}}`;
-
   } else {
     let nval;
     if (node.type === NodeType.LIST) {
-
       if (node.usingAbbreviation) {
         listPrefix = `\'`;
         listPostfix = ``;
@@ -157,7 +152,6 @@ function unparseASTNode(node, genotype) {
         return nval;
       }).join(``) + listPostfix;
     } else if (node.type === NodeType.VECTOR) {
-
       listPrefix = `[`;
       listPostfix = `]`;
       lst = node.children;
@@ -181,7 +175,6 @@ const Unparser = {
   // converts a frontAST back into a string
   // ast is an array of nodes
   unparse: (frontAst, genotype) => {
-
     let term = undefined;
     let geno = genotype;
     const terms = frontAst.map(n => {

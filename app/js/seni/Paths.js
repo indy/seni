@@ -57,7 +57,6 @@ function pathCircle(publicBinding, params) {
   const unitAngle = unit * MathUtil.TAU;
 
   for (let i = 0; i < steps; i++) {
-
     const angle = (unitAngle * i) + (tStart * MathUtil.TAU);
     const vx = (Math.sin(angle) * radius) + x;
     const vy = (Math.cos(angle) * radius) + y;

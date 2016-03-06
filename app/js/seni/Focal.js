@@ -50,7 +50,6 @@ function setupFocalParameters(publicBinding, params) {
 }
 
 function point(publicBinding, params, renderer) {
-
   const {
     position,
     fn

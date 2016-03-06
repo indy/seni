@@ -56,7 +56,6 @@ function wrapInPromise(state) {
 }
 
 export function createStore(initialState) {
-
   currentState = initialState;
 
   function reducer(state, action) {
@@ -111,16 +110,13 @@ function actionSetScript(state, { script }) {
       script: currentState.get(`script`),
       scriptHash: currentState.get(`scriptHash`)
     }).then(({ traits }) => {
-
       currentState = currentState.set(`traits`, traits);
       resolve(currentState);
-
     }).catch(error => {
       // handle error
       console.log(`worker: error of ${error}`);
       reject(error);
     });
-
   });
 }
 
@@ -135,12 +131,10 @@ function actionSetSelectedIndices(state, { selectedIndices }) {
 // todo: should populationSize be passed in the action?
 function actionInitialGeneration(state) {
   return new Promise((resolve, reject) => {
-
     Workers.perform(`INITIAL_GENERATION`, {
       traits: state.get(`traits`),
       populationSize: state.get(`populationSize`)
     }).then(({ genotypes }) => {
-
       const im = Immutable.fromJS(genotypes);
 
       currentState = state
@@ -149,7 +143,6 @@ function actionInitialGeneration(state) {
         .set(`selectedIndices`, new Immutable.List());
 
       resolve(currentState);
-
     }).catch(error => {
       // handle error
       console.log(`worker: error of ${error}`);
@@ -160,7 +153,6 @@ function actionInitialGeneration(state) {
 
 function actionShuffleGeneration(state, { rng }) {
   return new Promise((resolve, reject) => {
-
     const prev = state.get(`previouslySelectedGenotypes`);
 
     if (prev.size === 0) {
@@ -168,7 +160,6 @@ function actionShuffleGeneration(state, { rng }) {
         resolve(s);
       });
     } else {
-
       Workers.perform(`NEW_GENERATION`, {
         genotypes: prev.toJS(),
         populationSize: state.get(`populationSize`),
@@ -176,7 +167,6 @@ function actionShuffleGeneration(state, { rng }) {
         mutationRate: state.get(`mutationRate`),
         rng
       }).then(({ genotypes }) => {
-
         const im = Immutable.fromJS(genotypes);
 
         currentState = state
@@ -184,7 +174,6 @@ function actionShuffleGeneration(state, { rng }) {
           .set(`selectedIndices`, new Immutable.List());
 
         resolve(currentState);
-
       }).catch(error => {
         // handle error
         console.log(`worker: error of ${error}`);
@@ -196,7 +185,6 @@ function actionShuffleGeneration(state, { rng }) {
 
 function actionNextGeneration(state, { rng }) {
   return new Promise((resolve, reject) => {
-
     const pg = state.get(`genotypes`);
     const selectedIndices = state.get(`selectedIndices`);
     let selectedGenos = new Immutable.List();
@@ -211,7 +199,6 @@ function actionNextGeneration(state, { rng }) {
       mutationRate: state.get(`mutationRate`),
       rng
     }).then(({ genotypes }) => {
-
       const im = Immutable.fromJS(genotypes);
       const previouslySelectedGenotypes = im.slice(0, selectedIndices.size);
 
@@ -221,7 +208,6 @@ function actionNextGeneration(state, { rng }) {
         .set(`selectedIndices`, new Immutable.List());
 
       resolve(currentState);
-
     }).catch(error => {
       // handle error
       console.log(`worker: error of ${error}`);

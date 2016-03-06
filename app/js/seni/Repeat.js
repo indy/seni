@@ -49,7 +49,6 @@ function rotated90(renderer, drawFn) {
   renderer.cmdMatrixRotate(MathUtil.PIbyTwo);
   drawFn();
   renderer.cmdMatrixPop();
-
 }
 
 const publicBindings = [

@@ -72,7 +72,6 @@ function titleForScript(env, scriptHash) {
 }
 
 function render({ workerId, data }) {
-
   const { script, scriptHash, genotype } = data;
 
   gProxyRenderer.reset();
@@ -96,7 +95,6 @@ function render({ workerId, data }) {
 }
 
 function unparse({ workerId, data }) {
-
   const { script, scriptHash, genotype } = data;
 
   updateState(script, scriptHash, Immutable.fromJS(genotype));
@@ -112,7 +110,6 @@ function unparse({ workerId, data }) {
 
 // this isn't saving the intermediate ASTs, perhaps do so later?
 function buildTraits({ workerId, data }) {
-
   const { script, scriptHash } = data;
 
   if (scriptHash !== gScriptHash) {
@@ -137,7 +134,6 @@ function buildTraits({ workerId, data }) {
 
 
 function createInitialGeneration({ workerId, data }) {
-
   const { populationSize, traits } = data;
 
   const random = (new Date()).toGMTString();
@@ -159,7 +155,6 @@ function createInitialGeneration({ workerId, data }) {
 }
 
 function newGeneration({ workerId, data }) {
-
   const {
     genotypes,
     populationSize,
@@ -185,7 +180,6 @@ function generateHelp(_args) {
 }
 
 register(args => {
-
   const { type } = args;
 
   switch (type) {

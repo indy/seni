@@ -74,7 +74,6 @@ function renderCircle(publicBinding, params, renderer) {
 }
 
 function renderBezierTrailing(publicBinding, params, renderer) {
-
   const fullParams = publicBinding.mergeWithDefaults(params);
 
   const {tessellation,
@@ -97,7 +96,6 @@ function renderBezierTrailing(publicBinding, params, renderer) {
 }
 
 function renderBezierBulging(publicBinding, params, renderer) {
-
   const fullParams = publicBinding.mergeWithDefaults(params);
 
   const {tessellation,
@@ -160,7 +158,6 @@ const splineBinding = new PublicBinding(
   (self, renderer) => params => renderSpline(self, params, renderer));
 
 function renderStrokedBezier(publicBinding, params, renderer) {
-
   const fullParams = publicBinding.mergeWithDefaults(params);
 
   const {
@@ -183,7 +180,6 @@ function renderStrokedBezier(publicBinding, params, renderer) {
 
   /* eslint-disable no-loop-func */
   for (let i = 0; i < tessellation; i++) {
-
     const tvals = [tv[i + 0], tv[i + 1], tv[i + 2]];
     // get 3 points on the bezier curve
     const [xx1, xx2, xx3] =
