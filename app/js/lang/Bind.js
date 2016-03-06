@@ -67,13 +67,12 @@ function createBind(env, bindType, pb, restArgs) {
 // e.g. applyBindings(env, {publicBindings: ['rect':...],
 //                          publicBindingType: 'binding'})
 // results in: env['rect'] = {binding: ...}
-function applyBindings(env, namespace) {
+function applyBindings(env, namespace, ...args) {
   // grab any additional arguments that have been given to this function
-  const restArgs = Array.prototype.slice.call(arguments, 2);
   const bindings = namespace.publicBindings;
   const bindType = namespace.publicBindingType;
 
-  return bindings.reduce((e, pb) => createBind(e, bindType, pb, restArgs), env);
+  return bindings.reduce((e, pb) => createBind(e, bindType, pb, args), env);
 }
 
 const Bind = {

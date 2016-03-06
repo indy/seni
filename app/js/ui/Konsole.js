@@ -53,6 +53,7 @@ import CodeMirror from 'codemirror';
 
 /* ------------------------------------------------------------ */
 /* eslint-disable no-unused-vars */
+/* eslint-disable no-return-assign */
 
 class CodeMirrorHelpers {
   constructor(cmInstance) {
@@ -177,7 +178,7 @@ class KonsoleHistory {
 
   localStorageExists() {
     try {
-      return !!(window['localStorage'] !== null && window.localStorage);
+      return !!(window.localStorage !== null && window.localStorage);
     } catch (_error) {
       const e = _error;
       return false;

@@ -78,7 +78,9 @@ function addBindings(env, exprs) {
         return [e, `binding mismatch between ${names} and ${values}`];
       }
 
+      /* eslint-disable no-return-assign */
       names.forEach((n, i) => e = e.set(n, { binding: values[i] }));
+      /* eslint-enable no-return-assign */
       lastValueBound = values[names.length-1];
     } else {
       e = e.set(name, { binding: v });
