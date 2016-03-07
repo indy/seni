@@ -22,9 +22,11 @@ import NodeList from './NodeList';
 import NodeVector from './NodeVector';
 import NodeType from './NodeType';
 
+/* eslint-disable no-use-before-define */
+
 /*
- these functions will return {node: node, error: error}
- */
+  these functions will return {node: node, error: error}
+*/
 
 function boxNode(nodeType, value) {
   return {node: new Node(nodeType, value)};

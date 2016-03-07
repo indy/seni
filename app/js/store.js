@@ -24,75 +24,6 @@ import Workers from './workers';
 
 let currentState = undefined;
 
-/**
- * Creates the immutable SeniState
- *
- * @private
- * @returns {Immutable Map} a basic SeniState with a valid renderer and env
- */
-export function createInitialState() {
-  return Immutable.fromJS({
-    // the resolution of the high res image
-    highResolution: [2048, 2048],
-    placeholder: 'img/spinner.gif',
-    populationSize: 24,
-    mutationRate: 0.1,
-
-    currentMode: SeniMode.gallery,
-    previouslySelectedGenotypes: [],
-    selectedIndices: [],
-    script: undefined,
-    scriptHash: undefined,
-    genotypes: [],
-    traits: []
-  });
-}
-
-function wrapInPromise(state) {
-  return new Promise((resolve, _reject) => {
-    currentState = state;
-    resolve(currentState);
-  });
-}
-
-export function createStore(initialState) {
-  currentState = initialState;
-
-  function reducer(state, action) {
-    switch (action.type) {
-    case 'SET_MODE':
-      return actionSetMode(state, action);
-    case 'SET_SCRIPT':
-      return actionSetScript(state, action);
-    case 'SET_SELECTED_INDICES':
-      return actionSetSelectedIndices(state, action);
-    case 'INITIAL_GENERATION':
-      return actionInitialGeneration(state);
-    case 'NEXT_GENERATION':
-      return actionNextGeneration(state, action);
-    case 'SHUFFLE_GENERATION':
-      return actionShuffleGeneration(state, action);
-    case 'SET_STATE':
-      return wrapInPromise(action.state);
-    default:
-      return wrapInPromise(state);
-    }
-  }
-
-  function getState() {
-    return currentState;
-  }
-
-  function dispatch(action) {
-    return reducer(currentState, action);
-  }
-
-  return {
-    getState,
-    dispatch
-  };
-}
-
 function actionSetMode(state, { mode }) {
   return new Promise((resolve, _reject) => {
     currentState = state.set('currentMode', mode);
@@ -214,4 +145,73 @@ function actionNextGeneration(state, { rng }) {
       reject(error);
     });
   });
+}
+
+function wrapInPromise(state) {
+  return new Promise((resolve, _reject) => {
+    currentState = state;
+    resolve(currentState);
+  });
+}
+
+/**
+ * Creates the immutable SeniState
+ *
+ * @private
+ * @returns {Immutable Map} a basic SeniState with a valid renderer and env
+ */
+export function createInitialState() {
+  return Immutable.fromJS({
+    // the resolution of the high res image
+    highResolution: [2048, 2048],
+    placeholder: 'img/spinner.gif',
+    populationSize: 24,
+    mutationRate: 0.1,
+
+    currentMode: SeniMode.gallery,
+    previouslySelectedGenotypes: [],
+    selectedIndices: [],
+    script: undefined,
+    scriptHash: undefined,
+    genotypes: [],
+    traits: []
+  });
+}
+
+export function createStore(initialState) {
+  currentState = initialState;
+
+  function reducer(state, action) {
+    switch (action.type) {
+    case 'SET_MODE':
+      return actionSetMode(state, action);
+    case 'SET_SCRIPT':
+      return actionSetScript(state, action);
+    case 'SET_SELECTED_INDICES':
+      return actionSetSelectedIndices(state, action);
+    case 'INITIAL_GENERATION':
+      return actionInitialGeneration(state);
+    case 'NEXT_GENERATION':
+      return actionNextGeneration(state, action);
+    case 'SHUFFLE_GENERATION':
+      return actionShuffleGeneration(state, action);
+    case 'SET_STATE':
+      return wrapInPromise(action.state);
+    default:
+      return wrapInPromise(state);
+    }
+  }
+
+  function getState() {
+    return currentState;
+  }
+
+  function dispatch(action) {
+    return reducer(currentState, action);
+  }
+
+  return {
+    getState,
+    dispatch
+  };
 }

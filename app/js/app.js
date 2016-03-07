@@ -105,29 +105,170 @@ function showButtonsFor(mode) {
   }
 }
 
-function ensureMode(store, mode) {
-  return new Promise((resolve, _) => {
-    if (store.getState().get('currentMode') === mode) {
-      resolve();
-      return;
-    }
+function showCurrentMode(state) {
+  // show the current container, hide the others
+  const containers = gUI.containers;
+  const currentMode = state.get('currentMode');
 
-    store.dispatch({type: 'SET_MODE', mode}).then(state => {
-      History.pushState(state);
+  for (let i = 0; i < SeniMode.numSeniModes; i++) {
+    containers.get(i).className = i === currentMode ? '' : 'hidden';
+  }
+  showButtonsFor(currentMode);
+}
 
-      if (mode === SeniMode.evolve) {
-        showCurrentMode(state);
-        setupEvolveUI(store).then(latestState => {
-          // make sure that the history for the first evolve generation
-          // has the correct genotypes
-          History.replaceState(latestState);
-          resolve();
-        });
+function showPlaceholderImages(state) {
+  const placeholder = state.get('placeholder');
+  const populationSize = state.get('populationSize');
+  const phenotypes = gUI.phenotypes;
+
+  for (let i = 0; i < populationSize; i++) {
+    const imageElement = phenotypes.getIn([i, 'imageElement']);
+    imageElement.src = placeholder;
+  }
+}
+
+// needs the store since imageLoadHandler rebinds store.getState()
+// on every image load
+//
+function afterLoadingPlaceholderImages(state) {
+  const allImagesLoadedSince = timeStamp => {
+    const phenotypes = gUI.phenotypes;
+
+    return phenotypes.every(phenotype => {
+      const imageElement = phenotype.get('imageElement');
+      const loaded = imageElement.getAttribute('data-image-load-timestamp');
+      return loaded > timeStamp;
+    });
+  };
+
+  const initialTimeStamp = Date.now();
+
+  showPlaceholderImages(state);
+
+  return new Promise((resolve, _) => { // todo: implement reject
+    setTimeout(function go() {
+      // wait until all of the placeholder load events have been received
+      // otherwise there may be image sizing issues, especially with the
+      // first img element
+      if (allImagesLoadedSince(initialTimeStamp)) {
+        resolve(state);
       } else {
-        updateUI(state);
-        resolve();
+        setTimeout(go, 20);
       }
     });
+  });
+}
+
+// update the selected phenotypes in the evolve screen according to the
+// values in selectedIndices
+function updateSelectionUI(state) {
+  const selectedIndices = state.get('selectedIndices');
+  const populationSize = state.get('populationSize');
+  const phenotypes = gUI.phenotypes;
+
+  for (let i = 0; i < populationSize; i++) {
+    const element = phenotypes.getIn([i, 'phenotypeElement']);
+    element.classList.remove('selected');
+  }
+
+  selectedIndices.forEach(i => {
+    const element = gUI.phenotypes.getIn([i, 'phenotypeElement']);
+    element.classList.add('selected');
+    return true;
+  });
+}
+
+function renderCommandBuffer(commandBuffer, imageElement, w, h) {
+  const renderer = gRenderer;
+
+  if (w !== undefined && h !== undefined) {
+    renderer.preDrawScene(w, h);
+  } else {
+    renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
+  }
+
+  renderer.executeCommandBuffer(commandBuffer);
+
+  renderer.postDrawScene();
+  imageElement.src = renderer.getImageData();
+}
+
+function renderGeneration(state) {
+  return new Promise((resolve, _reject) => {
+    const script = state.get('script');
+    const scriptHash = state.get('scriptHash');
+
+    const genotypes = state.get('genotypes');
+
+    // TODO: stop generating  if the user has switched to edit mode
+    const phenotypes = gUI.phenotypes;
+
+    let hackTitle = scriptHash;
+
+    const promises = [];
+
+    const stopFn = startTiming();
+
+    for (let i = 0;i < phenotypes.size; i++) {
+      const workerJob = Workers.perform('RENDER', {
+        script,
+        scriptHash,
+        genotype: genotypes.get(i).toJS()
+      }).then(({ title, commandBuffer }) => {
+        const imageElement = phenotypes.getIn([i, 'imageElement']);
+        renderCommandBuffer(commandBuffer, imageElement);
+
+        hackTitle = title;
+      }).catch(error => {
+        // handle error
+        console.log(`worker: error of ${error}`);
+      });
+
+      promises.push(workerJob);
+    }
+
+    Promise.all(promises).then(() => {
+      stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
+    });
+
+    resolve();
+  });
+}
+
+// invoked when the evolve screen is displayed after the edit screen
+function setupEvolveUI(store) {
+  return new Promise((resolve, _) => {
+    afterLoadingPlaceholderImages(store.getState())
+      .then(() => store.dispatch({type: 'INITIAL_GENERATION'}))
+      .then(state => {
+        // render the phenotypes
+        updateSelectionUI(state);
+        renderGeneration(state);
+        return state;
+      })
+      .then(state => resolve(state));
+  });
+}
+
+function showScriptInEditor(state) {
+  const editor = gUI.editor;
+
+  editor.getDoc().setValue(state.get('script'));
+  editor.refresh();
+}
+
+function renderScript(state, imageElement) {
+  const stopFn = startTiming();
+
+  Workers.perform('RENDER', {
+    script: state.get('script'),
+    scriptHash: state.get('scriptHash')
+  }).then(({ title, commandBuffer }) => {
+    renderCommandBuffer(commandBuffer, imageElement);
+    stopFn(`renderScript-${title}`, gUI.konsole);
+  }).catch(error => {
+    // handle error
+    console.log(`worker: error of ${error}`);
   });
 }
 
@@ -153,34 +294,29 @@ function updateUI(state) {
   }
 }
 
-function renderCommandBuffer(commandBuffer, imageElement, w, h) {
-  const renderer = gRenderer;
+function ensureMode(store, mode) {
+  return new Promise((resolve, _) => {
+    if (store.getState().get('currentMode') === mode) {
+      resolve();
+      return;
+    }
 
-  if (w !== undefined && h !== undefined) {
-    renderer.preDrawScene(w, h);
-  } else {
-    renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
-  }
+    store.dispatch({type: 'SET_MODE', mode}).then(state => {
+      History.pushState(state);
 
-  renderer.executeCommandBuffer(commandBuffer);
-
-  renderer.postDrawScene();
-  imageElement.src = renderer.getImageData();
-}
-
-
-function renderScript(state, imageElement) {
-  const stopFn = startTiming();
-
-  Workers.perform('RENDER', {
-    script: state.get('script'),
-    scriptHash: state.get('scriptHash')
-  }).then(({ title, commandBuffer }) => {
-    renderCommandBuffer(commandBuffer, imageElement);
-    stopFn(`renderScript-${title}`, gUI.konsole);
-  }).catch(error => {
-    // handle error
-    console.log(`worker: error of ${error}`);
+      if (mode === SeniMode.evolve) {
+        showCurrentMode(state);
+        setupEvolveUI(store).then(latestState => {
+          // make sure that the history for the first evolve generation
+          // has the correct genotypes
+          History.replaceState(latestState);
+          resolve();
+        });
+      } else {
+        updateUI(state);
+        resolve();
+      }
+    });
   });
 }
 
@@ -282,78 +418,6 @@ function showEditFromEvolve(store, element) {
   });
 }
 
-function renderGeneration(state) {
-  return new Promise((resolve, _reject) => {
-    const script = state.get('script');
-    const scriptHash = state.get('scriptHash');
-
-    const genotypes = state.get('genotypes');
-
-    // TODO: stop generating  if the user has switched to edit mode
-    const phenotypes = gUI.phenotypes;
-
-    let hackTitle = scriptHash;
-
-    const promises = [];
-
-    const stopFn = startTiming();
-
-    for (let i = 0;i < phenotypes.size; i++) {
-      const workerJob = Workers.perform('RENDER', {
-        script,
-        scriptHash,
-        genotype: genotypes.get(i).toJS()
-      }).then(({ title, commandBuffer }) => {
-        const imageElement = phenotypes.getIn([i, 'imageElement']);
-        renderCommandBuffer(commandBuffer, imageElement);
-
-        hackTitle = title;
-      }).catch(error => {
-        // handle error
-        console.log(`worker: error of ${error}`);
-      });
-
-      promises.push(workerJob);
-    }
-
-    Promise.all(promises).then(() => {
-      stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
-    });
-
-    resolve();
-  });
-}
-
-function showPlaceholderImages(state) {
-  const placeholder = state.get('placeholder');
-  const populationSize = state.get('populationSize');
-  const phenotypes = gUI.phenotypes;
-
-  for (let i = 0; i < populationSize; i++) {
-    const imageElement = phenotypes.getIn([i, 'imageElement']);
-    imageElement.src = placeholder;
-  }
-}
-
-// update the selected phenotypes in the evolve screen according to the
-// values in selectedIndices
-function updateSelectionUI(state) {
-  const selectedIndices = state.get('selectedIndices');
-  const populationSize = state.get('populationSize');
-  const phenotypes = gUI.phenotypes;
-
-  for (let i = 0; i < populationSize; i++) {
-    const element = phenotypes.getIn([i, 'phenotypeElement']);
-    element.classList.remove('selected');
-  }
-
-  selectedIndices.forEach(i => {
-    const element = gUI.phenotypes.getIn([i, 'phenotypeElement']);
-    element.classList.add('selected');
-    return true;
-  });
-}
-
 function onNextGen(store) {
   // get the selected genotypes for the next generation
   const populationSize = store.getState().get('populationSize');
@@ -410,21 +474,6 @@ function createPhenotypeElement(id, placeholderImage) {
   return container;
 }
 
-// invoked when the evolve screen is displayed after the edit screen
-function setupEvolveUI(store) {
-  return new Promise((resolve, _) => {
-    afterLoadingPlaceholderImages(store.getState())
-      .then(() => store.dispatch({type: 'INITIAL_GENERATION'}))
-      .then(state => {
-        // render the phenotypes
-        updateSelectionUI(state);
-        renderGeneration(state);
-        return state;
-      })
-      .then(state => resolve(state));
-  });
-}
-
 // invoked when restoring the evolve screen from the history api
 function restoreEvolveUI(store) {
   return new Promise((resolve, _) => { // todo: implement reject
@@ -434,56 +483,6 @@ function restoreEvolveUI(store) {
       return renderGeneration(store.getState());
     }).then(resolve);
   });
-}
-
-// needs the store since imageLoadHandler rebinds store.getState()
-// on every image load
-//
-function afterLoadingPlaceholderImages(state) {
-  const allImagesLoadedSince = timeStamp => {
-    const phenotypes = gUI.phenotypes;
-
-    return phenotypes.every(phenotype => {
-      const imageElement = phenotype.get('imageElement');
-      const loaded = imageElement.getAttribute('data-image-load-timestamp');
-      return loaded > timeStamp;
-    });
-  };
-
-  const initialTimeStamp = Date.now();
-
-  showPlaceholderImages(state);
-
-  return new Promise((resolve, _) => { // todo: implement reject
-    setTimeout(function go() {
-      // wait until all of the placeholder load events have been received
-      // otherwise there may be image sizing issues, especially with the
-      // first img element
-      if (allImagesLoadedSince(initialTimeStamp)) {
-        resolve(state);
-      } else {
-        setTimeout(go, 20);
-      }
-    });
-  });
-}
-
-function showCurrentMode(state) {
-  // show the current container, hide the others
-  const containers = gUI.containers;
-  const currentMode = state.get('currentMode');
-
-  for (let i = 0; i < SeniMode.numSeniModes; i++) {
-    containers.get(i).className = i === currentMode ? '' : 'hidden';
-  }
-  showButtonsFor(currentMode);
-}
-
-function showScriptInEditor(state) {
-  const editor = gUI.editor;
-
-  editor.getDoc().setValue(state.get('script'));
-  editor.refresh();
 }
 
 function showEditFromGallery(store, element) {

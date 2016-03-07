@@ -25,16 +25,11 @@ import ProxyRenderer from './seni/ProxyRenderer';
 import Genetic from './lang/Genetic';
 
 const gProxyRenderer = new ProxyRenderer();
-const gEnv = createEnv(gProxyRenderer);
+const gEnv = Bind.addBindings(Runtime.createEnv(), gProxyRenderer);
 let gScriptHash = '';
 let gFrontAst = undefined;
 let gBackAst = undefined;
 let gGenotype = undefined;
-
-function createEnv(proxyRenderer) {
-  // an immutable var containing the base env for all evaluations
-  return Bind.addBindings(Runtime.createEnv(), proxyRenderer);
-}
 
 // todo: return more informative errors
 function updateState(script, scriptHash, genotype) {

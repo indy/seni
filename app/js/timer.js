@@ -62,7 +62,9 @@ function useDBEntry(id) {
 }
 
 export function startTiming() {
-  const stopFn = (id, konsole) => {
+  const before = performance.now();
+  // return the 'stop' function
+  return (id, konsole) => {
     const entry = useDBEntry(id);
 
     const after = performance.now();
@@ -81,9 +83,6 @@ export function startTiming() {
       konsole.log(`${eid}: ${cur}ms (Mean: ${avg}, Min: ${min}, Max: ${max})`);
     }
   };
-
-  const before = performance.now();
-  return stopFn;
 }
 
 export function getTimingEntry(id) {

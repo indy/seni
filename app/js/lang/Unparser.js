@@ -17,8 +17,9 @@
  */
 
 import Immutable from 'immutable';
-
 import NodeType from './NodeType';
+
+/* eslint-disable no-use-before-define */
 
 const logToConsole = false;
 
