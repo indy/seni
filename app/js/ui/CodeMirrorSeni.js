@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable eqeqeq */
+/* eslint-disable no-cond-assign */
 
 function seniMode() {
   const BUILTIN = 'builtin';
@@ -62,14 +63,14 @@ repeat/symmetry-4 repeat/symmetry-8 repeat/symmetry-horizontal
 repeat/symmetry-vertical rotate scale spline sqrt stroked-bezier
 stroked-bezier-rect take translate`);
 
-  function stateStack(indent, type, prev) { // represents a state stack object
+  function StateStack(indent, type, prev) { // represents a state stack object
     this.indent = indent;
     this.type = type;
     this.prev = prev;
   }
 
   function pushStack(state, indent, type) {
-    state.indentStack = new stateStack(indent, type, state.indentStack);
+    state.indentStack = new StateStack(indent, type, state.indentStack);
   }
 
   function popStack(state) {

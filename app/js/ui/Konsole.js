@@ -375,6 +375,7 @@ export default class Konsole {
 
     el.className += ' cs-console cs-console-height cs-console-width';
     const keyActions = new KeyActions(this.options);
+    /* eslint-disable new-cap */
     this.console = CodeMirror(el, {
       scrollbarStyle: null,
       mode: {
@@ -422,6 +423,7 @@ export default class Konsole {
         'Cmd-Z': () => this.noop()
       }
     });
+    /* eslint-enable new-cap */
     this.helpers = new CodeMirrorHelpers(this.console);
     keyActions.setConsole(this.console);
 
