@@ -24,7 +24,7 @@ import Editor from './ui/Editor';
 import SpecialDebug from './ui/SpecialDebug';
 import Konsole from './ui/Konsole';
 import KonsoleCommander from './ui/KonsoleCommander';
-// import { addDefaultCommands } from './ui/KonsoleCommands';
+import { addDefaultCommands } from './ui/KonsoleCommands';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
 import { SeniMode } from './ui/SeniMode';
@@ -517,7 +517,7 @@ function resizeContainers() {
 }
 
 
-function createKonsole(_env, element) {
+function createKonsole(element) {
   const konsole = new Konsole(element, {
     prompt: '> ',
     historyLabel: 'cs-console-demo',
@@ -528,20 +528,25 @@ function createKonsole(_env, element) {
     theme: 'konsole'
   });
 
-  const commander = new KonsoleCommander();
-  // todo: re-instate addDefaultCommands but make it work with ww
-  // addDefaultCommands(env, commander);
+  Workers.perform('GENERATE_HELP', {
+  }).then(documentation => {
+    const commander = new KonsoleCommander();
+    addDefaultCommands(documentation, commander);
 
-  konsole.initCallbacks({
-    commandValidate(line) {
-      return line.length > 0;
-    },
-    commandHandle(line, report, prompt) {
-      commander.commandHandle(line, report, prompt);
-    }
+    konsole.initCallbacks({
+      commandValidate(line) {
+        return line.length > 0;
+      },
+      commandHandle(line, report, prompt) {
+        console.log('commandHandle', line, report, prompt);
+        commander.commandHandle(line, report, prompt);
+      }
+    });
+    SpecialDebug.useKonsole(konsole);
+  }).catch(error => {
+    // handle error
+    console.log(`worker: error of ${error}`);
   });
-
-  SpecialDebug.useKonsole(konsole);
 
   return konsole;
 }
@@ -595,7 +600,7 @@ function setupUI(store) {
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById('render-img'),
     // console CodeMirror element in the edit screen
-    konsole: createKonsole(undefined, konsoleElement), // todo: was env
+    konsole: createKonsole(konsoleElement),
     editor: createEditor(store, editorTextArea)
   };
 

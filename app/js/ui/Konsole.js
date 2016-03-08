@@ -584,9 +584,10 @@ export default class Konsole {
     let widgetElement;
     const _this = this;
 
-    if (widgetOptions === null) {
+    if (widgetOptions === null || widgetOptions === undefined) {
       widgetOptions = {};
     }
+
     const widgetContent = responseLine ? responseLine.content : '';
     if (this.isHtmlElement(widgetContent)) {
       widgetElement = widgetContent;

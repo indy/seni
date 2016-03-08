@@ -17,27 +17,24 @@
  */
 import Trivia from '../seni/Trivia';
 
-export function addDefaultCommands(env, commander) {
-
+export function addDefaultCommands(documentation, commander) {
   const ls = {
     canHandle(command) {
-      return command === `ls`;
+      return command === 'ls';
     },
 
     execute() {
-      const keys = env.keys();
-
       const res = [];
-      for (let k = keys.next(); k.done === false; k = keys.next()) {
-        res.push(k.value);
+      for (const k in documentation) {
+        res.push(k);
       }
-      return res.sort().join(`\n`);
+      return res.sort().join('\n');
     }
   };
 
   const title = {
     canHandle(command) {
-      return command === `title`;
+      return command === 'title';
     },
 
     execute() {
@@ -47,25 +44,24 @@ export function addDefaultCommands(env, commander) {
 
   const help = {
     canHandle(command) {
-      return command === `help`;
+      return command === 'help';
     },
 
-    execute(_, [name, showDefaultArgs]) {
+    execute(_, [name, _showDefaultArgs]) {
       // todo: if no args given then show generic help for the konsole
-      const v = env.get(name);
+      const v = documentation[name];
 
-      const binding = v.pb;       // publicBinding
-      if (!binding) {
-        return ``;
+      if (!v) {
+        return undefined;
       }
 
-      function makeDoc(name, {description, args, returns}) {
+      function makeDoc({description, args, returns}) {
         let res = name;
         if (description && description.length > 0) {
           res += `: ${description}`;
         }
         if (args && args.length > 0) {
-          res = args.reduce((a, [name, desc]) => `${a}  ${name}: ${desc}\n`,
+          res = args.reduce((a, [nm, desc]) => `${a}  ${nm}: ${desc}\n`,
                             `${res}\n\nArguments:\n`);
         }
         if (returns && returns.length > 0) {
@@ -75,12 +71,13 @@ export function addDefaultCommands(env, commander) {
         return res;
       }
 
-      let res = makeDoc(name, binding.doc);
-
+      const res = makeDoc(v);
+      /*
       if (showDefaultArgs) {
-        const args = JSON.stringify(binding.defaults, null, ` `);
+        const args = JSON.stringify(binding.defaults, null, ' ');
         res = `${res}\ndefault arguments ${args}`;
       }
+      */
       return res;
     }
   };

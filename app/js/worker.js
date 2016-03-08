@@ -171,7 +171,18 @@ function newGeneration({ workerId, data }) {
   };
 }
 
-function generateHelp(_args) {
+function generateHelp({ workerId }) {
+  // create a hash of document objects
+  const res = gEnv.reduce((a, v, k) => {
+    a[k] = v.pb.doc;
+    return a;
+  }, {});
+
+  return {
+    status: 'OK',
+    workerId,
+    data: res
+  };
 }
 
 register(args => {
