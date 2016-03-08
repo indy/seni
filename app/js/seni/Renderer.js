@@ -16,6 +16,8 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { mat4 } from 'gl-matrix';
+
 import RenderPacket from './RenderPacket';
 import GLRenderer from './GLRenderer';
 import MatrixStack from './MatrixStack';
@@ -23,23 +25,20 @@ import MathUtil from './MathUtil';
 import Interp from './Interp';
 import Colour from './Colour';
 import Util from './Util';
-import { mat4 } from 'gl-matrix';
+import { opMatrixPush,
+         opMatrixPop,
+         opMatrixScale,
+         opMatrixTranslate,
+         opMatrixRotate,
+         opRenderLine,
+         opRenderRect,
+         opRenderCircle,
+         opRenderCircleSlice,
+         opRenderPoly,
+         opRenderBezier,
+         opRenderQuadratic } from './RenderOps';
 
 const Format = Colour.Format;
-
-// command constants for the commandBuffer
-const opMatrixPush = 0;
-const opMatrixPop = 1;
-const opMatrixScale = 2;
-const opMatrixTranslate = 3;
-const opMatrixRotate = 4;
-const opRenderLine = 5;
-const opRenderRect = 6;
-const opRenderCircle = 7;
-const opRenderCircleSlice = 8;
-const opRenderPoly = 9;
-const opRenderBezier = 10;
-const opRenderQuadratic = 11;
 
 export default class Renderer {
   constructor(canvasElement) {

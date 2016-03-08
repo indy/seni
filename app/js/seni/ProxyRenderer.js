@@ -17,21 +17,18 @@
  */
 
 import MatrixStack from './MatrixStack';
-
-
-// command constants for the commandBuffer
-const opMatrixPush = 0;
-const opMatrixPop = 1;
-const opMatrixScale = 2;
-const opMatrixTranslate = 3;
-const opMatrixRotate = 4;
-const opRenderLine = 5;
-const opRenderRect = 6;
-const opRenderCircle = 7;
-const opRenderCircleSlice = 8;
-const opRenderPoly = 9;
-const opRenderBezier = 10;
-const opRenderQuadratic = 11;
+import { opMatrixPush,
+         opMatrixPop,
+         opMatrixScale,
+         opMatrixTranslate,
+         opMatrixRotate,
+         opRenderLine,
+         opRenderRect,
+         opRenderCircle,
+         opRenderCircleSlice,
+         opRenderPoly,
+         opRenderBezier,
+         opRenderQuadratic } from './RenderOps';
 
 // todo: preDraw resets the matrix stack, will this behaviour
 // be required in the ProxyRenderer?
