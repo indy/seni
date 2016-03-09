@@ -65,7 +65,7 @@
     "no-irregular-whitespace": 2,
     "no-iterator": 2,
     "no-label-var": 0,
-    "no-labels": [2, { "allowLoop": false, "allowSwitch": false }],
+    "no-labels": 2,
     "no-lone-blocks": 2,
     "no-lonely-if": 0,
     "no-loop-func": 0,
