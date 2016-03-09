@@ -20,11 +20,10 @@ import MathUtil from '../../app/js/seni/MathUtil';
 
 import {expect} from 'chai';
 
-describe(`MathUtil`, () => {
-
+describe('MathUtil', () => {
   const epsilon = 0.01;
 
-  it(`stepsInclusive`, () => {
+  it('stepsInclusive', () => {
     const expected = [0.0, 0.25, 0.50, 0.75, 1.0];
     const res = MathUtil.stepsInclusive(0, 1, 5);
 
@@ -35,14 +34,14 @@ describe(`MathUtil`, () => {
   });
 
   /*
-   it(`clamp`, () => {
+   it('clamp', () => {
    expect(MathUtil.clamp(5, 0, 10)).to.equal(5);
    expect(MathUtil.clamp(5, 7, 10)).to.equal(7);
    expect(MathUtil.clamp(5, 0, 4)).to.equal(4);
    });
    */
 
-  it(`normalize`, () => {
+  it('normalize', () => {
     expect(MathUtil.normalize(32, 0)).to.eql([1, 0]);
 
     const res = MathUtil.normalize(81, 81);

@@ -20,7 +20,7 @@ import {expect} from 'chai';
 
 import { buildEnv, evalForm } from './eval_helper';
 
-describe(`HigherOrder`, () => {
+describe('HigherOrder', () => {
 
   let e;
   const epsilon = 0.01;
@@ -28,13 +28,13 @@ describe(`HigherOrder`, () => {
   beforeEach(() => {
     e = buildEnv();
 
-    const key = `foo`;
+    const key = 'foo';
     const val = 5;
     e = e.set(key, { binding: val });
   });
 
 
-  it(`map`, () => {
+  it('map', () => {
     let [_, res] = evalForm(e, `(map
 fn: (fn (triple x: 1)
         (+ x x x))
@@ -43,7 +43,7 @@ bind: 'x)`);
     expect(res).to.deep.equal([3, 6, 9, 12]);
   });
 
-  it(`filter`, () => {
+  it('filter', () => {
     let [_, res] = evalForm(e, `(filter
 fn: (fn (more-than-4 count: 1)
         (> count 4))

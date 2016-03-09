@@ -20,121 +20,120 @@ import {expect} from 'chai';
 
 import { buildEnv, evalForm } from './eval_helper';
 
-describe(`Classic`, () => {
-
+describe('Classic', () => {
   let e;
   const epsilon = 0.01;
 
   beforeEach(() => {
     e = buildEnv();
 
-    const key = `foo`;
+    const key = 'foo';
     const val = 5;
     e = e.set(key, { binding: val });
   });
 
-  it(`error`, () => {
-    const [_env, _form, error] = evalForm(e, `(+ 1 "a")`);
-    expect(error).to.equal(`all arguments to + should be numbers`);
+  it('error', () => {
+    const [_env, _form, error] = evalForm(e, '(+ 1 "a")');
+    expect(error).to.equal('all arguments to + should be numbers');
   });
 
-  it(`+`, () => {
-    let [_, res] = evalForm(e, `(+ 2 4)`);
+  it('+', () => {
+    let [_, res] = evalForm(e, '(+ 2 4)');
     expect(res).to.be.closeTo(6, epsilon);
 
-    [_, res] = evalForm(e, `(+ 2 foo)`);
+    [_, res] = evalForm(e, '(+ 2 foo)');
     expect(res).to.be.closeTo(7, epsilon);
   });
 
-  it(`-`, () => {
-    let [_, res] = evalForm(e, `(- 10 3)`);
+  it('-', () => {
+    let [_, res] = evalForm(e, '(- 10 3)');
     expect(res).to.be.closeTo(7, epsilon);
 
-    [_, res] = evalForm(e, `(- 10 3 5)`);
+    [_, res] = evalForm(e, '(- 10 3 5)');
     expect(res).to.be.closeTo(2, epsilon);
 
-    [_, res] = evalForm(e, `(- 42)`);
+    [_, res] = evalForm(e, '(- 42)');
     expect(res).to.be.closeTo(-42, epsilon);
   });
 
-  it(`*`, () => {
-    const [_, res] = evalForm(e, `(* 2 4)`);
+  it('*', () => {
+    const [_, res] = evalForm(e, '(* 2 4)');
     expect(res).to.be.closeTo(8, epsilon);
   });
 
-  it(`/`, () => {
-    let [_, res] = evalForm(e, `(/ 90 10)`);
+  it('/', () => {
+    let [_, res] = evalForm(e, '(/ 90 10)');
     expect(res).to.be.closeTo(9, epsilon);
 
-    [_, res] = evalForm(e, `(/ 90 10 3)`);
+    [_, res] = evalForm(e, '(/ 90 10 3)');
     expect(res).to.be.closeTo(3, epsilon);
   });
 
-  it(`combined mathematical functions`, () => {
-    const [_, res] = evalForm(e, `(+ (* 2 2) (* 3 3))`);
+  it('combined mathematical functions', () => {
+    const [_, res] = evalForm(e, '(+ (* 2 2) (* 3 3))');
     expect(res).to.be.closeTo(13, epsilon);
   });
 
-  it(`mod`, () => {
-    const [_, res] = evalForm(e, `(mod 10 3)`);
+  it('mod', () => {
+    const [_, res] = evalForm(e, '(mod 10 3)');
     expect(res).to.equal(1);
   });
 
-  it(`sqrt`, () => {
-    const [_, res] = evalForm(e, `(sqrt 81)`);
+  it('sqrt', () => {
+    const [_, res] = evalForm(e, '(sqrt 81)');
     expect(res).to.equal(9);
   });
 
-  it(`=`, () => {
-    let [_, res] = evalForm(e, `(= 90 90)`);
-    expect(res).to.equal(`#t`);
+  it('=', () => {
+    let [_, res] = evalForm(e, '(= 90 90)');
+    expect(res).to.equal('#t');
 
-    [_, res] = evalForm(e, `(= 90 3)`);
-    expect(res).to.equal(`#f`);
+    [_, res] = evalForm(e, '(= 90 3)');
+    expect(res).to.equal('#f');
 
-    [_, res] = evalForm(e, `(= 90 90 90)`);
-    expect(res).to.equal(`#t`);
+    [_, res] = evalForm(e, '(= 90 90 90)');
+    expect(res).to.equal('#t');
   });
 
-  it(`>`, () => {
-    let [_, res] = evalForm(e, `(> 54 30)`);
-    expect(res).to.equal(`#t`);
+  it('>', () => {
+    let [_, res] = evalForm(e, '(> 54 30)');
+    expect(res).to.equal('#t');
 
-    [_, res] = evalForm(e, `(> 54 540)`);
-    expect(res).to.equal(`#f`);
+    [_, res] = evalForm(e, '(> 54 540)');
+    expect(res).to.equal('#f');
 
-    [_, res] = evalForm(e, `(> 54 54)`);
-    expect(res).to.equal(`#f`);
+    [_, res] = evalForm(e, '(> 54 54)');
+    expect(res).to.equal('#f');
 
-    [_, res] = evalForm(e, `(> 54 30 20)`);
-    expect(res).to.equal(`#t`);
+    [_, res] = evalForm(e, '(> 54 30 20)');
+    expect(res).to.equal('#t');
   });
 
-  it(`<`, () => {
-    let [_, res] = evalForm(e, `(< 54 30)`);
-    expect(res).to.equal(`#f`);
+  it('<', () => {
+    let [_, res] = evalForm(e, '(< 54 30)');
+    expect(res).to.equal('#f');
 
-    [_, res] = evalForm(e, `(< 54 540)`);
-    expect(res).to.equal(`#t`);
+    [_, res] = evalForm(e, '(< 54 540)');
+    expect(res).to.equal('#t');
 
-    [_, res] = evalForm(e, `(< 54 54)`);
-    expect(res).to.equal(`#f`);
+    [_, res] = evalForm(e, '(< 54 54)');
+    expect(res).to.equal('#f');
 
-    [_, res] = evalForm(e, `(< 54 62 72)`);
-    expect(res).to.equal(`#t`);
+    [_, res] = evalForm(e, '(< 54 62 72)');
+    expect(res).to.equal('#t');
   });
 
-  it(`vector`, () => {
-    const [newEnv, res] = evalForm(e, `(vector 90 90)`);
+  it('vector', () => {
+    const [newEnv, res] = evalForm(e, '(vector 90 90)');
     expect(res).to.deep.equal([90, 90]);
     expect(newEnv).to.equal(e);
   });
 
-  it(`vector/append`, () => {
-    let [_, res] = evalForm(e, `(vector/append (vector 10 20) 30)`);
+  it('vector/append', () => {
+    let [_, res] = evalForm(e, '(vector/append (vector 10 20) 30)');
     expect(res).to.deep.equal([10, 20, 30]);
 
-    [_, res] = evalForm(e, `(vector/append (vector 10 20) 30 40 50 60)`);
+    [_, res] = evalForm(e, '(vector/append (vector 10 20) 30 40 50 60)');
     expect(res).to.deep.equal([10, 20, 30, 40, 50, 60]);
   });
 });

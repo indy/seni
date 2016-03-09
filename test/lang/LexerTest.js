@@ -21,8 +21,7 @@ import TokenType from '../../app/js/lang/TokenType';
 
 import {expect} from 'chai';
 
-describe(`Lexer`, () => {
-
+describe('Lexer', () => {
   function t(expected, text) {
     const q = Lexer.tokenise(text).tokens;
     expect(q.length).to.equal(expected.length);
@@ -32,29 +31,29 @@ describe(`Lexer`, () => {
     });
   }
 
-  it(`error handle`, () => {
+  it('error handle', () => {
     // if an illegal character is found in any part of the input, only that
     // character will be returned in the tokens list and the error property
     // will be set
     //
-    // (`|` is a character that currently isn't recognised by seni)
+    // ('|' is a character that currently isn't recognised by seni)
     //
-    let q = Lexer.tokenise(`|`);
+    let q = Lexer.tokenise('|');
     let tokens = q.tokens;
-    expect(q.error).to.be.a(`string`);
+    expect(q.error).to.be.a('string');
     expect(tokens.length).to.equal(1);
     expect(tokens[0].type).to.equal(TokenType.UNKNOWN);
-    expect(tokens[0].value).to.equal(`|`);
+    expect(tokens[0].value).to.equal('|');
 
-    q = Lexer.tokenise(`(foo bar baz) | `);
+    q = Lexer.tokenise('(foo bar baz) | ');
     tokens = q.tokens;
-    expect(q.error).to.be.a(`string`);
+    expect(q.error).to.be.a('string');
     expect(tokens.length).to.equal(1);
     expect(tokens[0].type).to.equal(TokenType.UNKNOWN);
-    expect(tokens[0].value).to.equal(`|`);
+    expect(tokens[0].value).to.equal('|');
   });
 
-  it(`tokenise strings`, () => {
+  it('tokenise strings', () => {
     t([TokenType.LIST_START,
        TokenType.NAME,
        TokenType.WHITESPACE,
@@ -62,10 +61,10 @@ describe(`Lexer`, () => {
        TokenType.WHITESPACE,
        TokenType.FLOAT,
        TokenType.LIST_END],
-      `(go 42 3.14)`);
+      '(go 42 3.14)');
   });
 
-  it(`tokenise strings 2`, () => {
+  it('tokenise strings 2', () => {
     t([TokenType.LIST_START,
        TokenType.NAME,
        TokenType.WHITESPACE,
@@ -76,10 +75,10 @@ describe(`Lexer`, () => {
        TokenType.QUOTE_ABBREVIATION,
        TokenType.NAME,
        TokenType.LIST_END],
-      `(go {\"hi\"} \'SOMETHING)`);
+      '(go {\"hi\"} \'SOMETHING)');
   });
 
-  it(`tokenise labeled function invocations`, () => {
+  it('tokenise labeled function invocations', () => {
     t([TokenType.LIST_START,
        TokenType.NAME,
        TokenType.WHITESPACE,
@@ -87,12 +86,12 @@ describe(`Lexer`, () => {
        TokenType.WHITESPACE,
        TokenType.INT,
        TokenType.LIST_END],
-      `(go arg1: 42)`);
+      '(go arg1: 42)');
   });
 
-  it(`recognise comments`, () => {
+  it('recognise comments', () => {
     t([TokenType.COMMENT],
-      `;(go arg1: 42)`);
+      ';(go arg1: 42)');
 
     t([TokenType.COMMENT,
        TokenType.LIST_START,
@@ -102,10 +101,10 @@ describe(`Lexer`, () => {
        TokenType.WHITESPACE,
        TokenType.INT,
        TokenType.LIST_END],
-      `;(go arg1: 42)\n(go arg1: 42)`);
+      ';(go arg1: 42)\n(go arg1: 42)');
   });
 
-  it(`tokenise vectors`, () => {
+  it('tokenise vectors', () => {
     t([TokenType.VECTOR_START,
        TokenType.FLOAT,
        TokenType.WHITESPACE,
@@ -113,7 +112,6 @@ describe(`Lexer`, () => {
        TokenType.WHITESPACE,
        TokenType.FLOAT,
        TokenType.VECTOR_END],
-      `[2.1 4.2 3.14]`);
+      '[2.1 4.2 3.14]');
   });
-
 });

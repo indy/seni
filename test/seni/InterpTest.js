@@ -20,11 +20,10 @@ import Interp from '../../app/js/seni/Interp';
 
 import {expect} from 'chai';
 
-describe(`Interp`, () => {
-
+describe('Interp', () => {
   const epsilon = 0.01;
 
-  it(`remapFn`, () => {
+  it('remapFn', () => {
     let res = Interp.remapFn({from: [0, 1], to: [0, 100], clamping: false});
     expect(res({val: 0})).to.be.closeTo(0, epsilon);
     expect(res({val: 1})).to.be.closeTo(100, epsilon);

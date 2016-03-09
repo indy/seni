@@ -31,7 +31,6 @@ export function buildEnv() {
 }
 
 export function evalForm(env, form) {
-
   const ts = Lexer.tokenise(form).tokens;
   const ast = Parser.parse(ts).nodes;
   const traits = Genetic.buildTraits(ast);
@@ -39,6 +38,6 @@ export function evalForm(env, form) {
   const backAst = Compiler.compileBackAst(ast);
   const astList = Compiler.compileWithGenotype(backAst, genotype);
 
-  return astList.reduce(([e, res, err], ast) => Interpreter.evaluate(e, ast),
+  return astList.reduce(([e, res, err], ast2) => Interpreter.evaluate(e, ast2),
                         [env, undefined, Interpreter.NO_ERROR]);
 }

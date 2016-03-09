@@ -24,16 +24,15 @@ import TokenType from '../../app/js/lang/TokenType';
 
 import {expect} from 'chai';
 
-describe(`Parser`, () => {
-
+describe('Parser', () => {
   function simpleParse(form) {
     // assumes that the form will compile into a single list
     const ts = Lexer.tokenise(form).tokens;
     return Parser.parse(ts);
   }
 
-  it(`bracketed form`, () => {
-    const astObj = simpleParse(`(+ 1 2 {3 (int min: 0 max: 10)})`);
+  it('bracketed form', () => {
+    const astObj = simpleParse('(+ 1 2 {3 (int min: 0 max: 10)})');
     expect(astObj.nodes.length).to.equal(1);
 
     const ast = astObj.nodes[0];
@@ -52,8 +51,8 @@ describe(`Parser`, () => {
     expect(alterable.parameterPrefix.length).to.equal(0);
   });
 
-  it(`bracketed form that starts with whitespace`, () => {
-    const astObj = simpleParse(`(+ 1 2 { 3 (int min: 0 max: 10)})`);
+  it('bracketed form that starts with whitespace', () => {
+    const astObj = simpleParse('(+ 1 2 { 3 (int min: 0 max: 10)})');
     expect(astObj.nodes.length).to.equal(1);
 
     const ast = astObj.nodes[0];
@@ -73,7 +72,7 @@ describe(`Parser`, () => {
     expect(alterable.parameterPrefix.length).to.equal(1);
   });
 
-  it(`an int`, () => {
+  it('an int', () => {
     const ts = [new Token(TokenType.INT, 4)];
 
     const res = Parser.parse(ts).nodes;
@@ -83,7 +82,7 @@ describe(`Parser`, () => {
     expect(res[0].value).to.equal(4);
   });
 
-  it(`float`, () => {
+  it('float', () => {
     const ts = [new Token(TokenType.FLOAT, 3.14)];
 
     const res = Parser.parse(ts).nodes;
@@ -93,41 +92,41 @@ describe(`Parser`, () => {
     expect(res[0].value).to.be.closeTo(3.14, 0.01);
   });
 
-  it(`name`, () => {
-    const ts = [new Token(TokenType.NAME, `cdr`)];
+  it('name', () => {
+    const ts = [new Token(TokenType.NAME, 'cdr')];
 
     const res = Parser.parse(ts).nodes;
 
     expect(res.length).to.equal(1);
     expect(res[0].type).to.equal(NodeType.NAME);
-    expect(res[0].value).to.equal(`cdr`);
+    expect(res[0].value).to.equal('cdr');
   });
 
-  it(`string`, () => {
-    const ts = [new Token(TokenType.STRING, `hello world`)];
+  it('string', () => {
+    const ts = [new Token(TokenType.STRING, 'hello world')];
 
     const res = Parser.parse(ts).nodes;
 
     expect(res.length).to.equal(1);
     expect(res[0].type).to.equal(NodeType.STRING);
-    expect(res[0].value).to.equal(`hello world`);
+    expect(res[0].value).to.equal('hello world');
   });
 
-  it(`boolean`, () => {
-    let ts = [new Token(TokenType.NAME, `true`)];
+  it('boolean', () => {
+    let ts = [new Token(TokenType.NAME, 'true')];
     let res = Parser.parse(ts).nodes;
     expect(res.length).to.equal(1);
     expect(res[0].type).to.equal(NodeType.BOOLEAN);
-    expect(res[0].value).to.equal(`#t`);
+    expect(res[0].value).to.equal('#t');
 
-    ts = [new Token(TokenType.NAME, `false`)];
+    ts = [new Token(TokenType.NAME, 'false')];
     res = Parser.parse(ts).nodes;
     expect(res.length).to.equal(1);
     expect(res[0].type).to.equal(NodeType.BOOLEAN);
-    expect(res[0].value).to.equal(`#f`);
+    expect(res[0].value).to.equal('#f');
   });
 
-  it(`list`, () => {
+  it('list', () => {
     const ts = [new Token(TokenType.LIST_START),
                 new Token(TokenType.INT, 4),
                 new Token(TokenType.LIST_END)];
@@ -138,23 +137,27 @@ describe(`Parser`, () => {
     expect(res[0].type).to.equal(NodeType.LIST);
   });
 
-  it(`error on a mismatched list (no closing pair)`, () => {
+  it('error on a mismatched list (no closing pair)', () => {
     const ts = [new Token(TokenType.LIST_START),
                 new Token(TokenType.INT, 4)];
 
     const r = Parser.parse(ts);
+    /* eslint-disable no-unused-expressions */
     expect(r.error).to.exist;
+    /* eslint-enable no-unused-expressions */
   });
 
-  it(`error on a mismatched list (no opening pair)`, () => {
+  it('error on a mismatched list (no opening pair)', () => {
     const ts = [new Token(TokenType.INT, 4),
                 new Token(TokenType.LIST_END)];
 
     const r = Parser.parse(ts);
+    /* eslint-disable no-unused-expressions */
     expect(r.error).to.exist;
+    /* eslint-enable no-unused-expressions */
   });
 
-  it(`quoted form`, () => {
+  it('quoted form', () => {
     // '(2 3 4) => (quote (2 3 4))
     const ts = [new Token(TokenType.QUOTE_ABBREVIATION),
                 new Token(TokenType.LIST_START),
@@ -172,7 +175,7 @@ describe(`Parser`, () => {
 
     let quote = lst.getChild(0);
     expect(quote.type).to.equal(NodeType.NAME);
-    expect(quote.value).to.equal(`quote`);
+    expect(quote.value).to.equal('quote');
 
     quote = lst.getChild(1);
     expect(quote.type).to.equal(NodeType.WHITESPACE);
@@ -182,7 +185,7 @@ describe(`Parser`, () => {
     expect(quotedList.size()).to.equal(3);
   });
 
-  it(`multiple lists`, () => {
+  it('multiple lists', () => {
     const ts = [new Token(TokenType.LIST_START),
                 new Token(TokenType.INT, 4),
                 new Token(TokenType.LIST_END),
@@ -201,7 +204,7 @@ describe(`Parser`, () => {
     expect(res[2].type).to.equal(NodeType.LIST);
   });
 
-  it(`bracket form`, () => {
+  it('bracket form', () => {
     const ts = [new Token(TokenType.ALTERABLE_START),
                 new Token(TokenType.INT, 42),
                 new Token(TokenType.LIST_START),
@@ -226,7 +229,7 @@ describe(`Parser`, () => {
     expect(params.type).to.equal(NodeType.LIST);
   });
 
-  it(`vector`, () => {
+  it('vector', () => {
     const ts = [new Token(TokenType.VECTOR_START),
                 new Token(TokenType.INT, 4),
                 new Token(TokenType.VECTOR_END)];
@@ -237,7 +240,7 @@ describe(`Parser`, () => {
     expect(res[0].type).to.equal(NodeType.VECTOR);
   });
 
-  it(`multiple vectors`, () => {
+  it('multiple vectors', () => {
     const ts = [new Token(TokenType.VECTOR_START),
                 new Token(TokenType.INT, 4),
                 new Token(TokenType.VECTOR_END),
@@ -256,7 +259,7 @@ describe(`Parser`, () => {
     expect(res[2].type).to.equal(NodeType.VECTOR);
   });
 
-  it(`nested vectors`, () => {
+  it('nested vectors', () => {
     // [4 [45 67] [456]]
     const ts = [new Token(TokenType.VECTOR_START),
                 new Token(TokenType.INT, 4),
@@ -279,5 +282,4 @@ describe(`Parser`, () => {
     expect(res[0].getChild(1).type).to.equal(NodeType.VECTOR);
     expect(res[0].getChild(1).size()).to.equal(2);
   });
-
 });
