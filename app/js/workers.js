@@ -61,6 +61,10 @@ function releaseWorker(workerId) {
   working[workerId] = false;
 }
 
+function isValidWorkerId(workerId) {
+  return workerId >= 0 && workerId < numWorkers;
+}
+
 function setup(numWorkersParam) {
   if (logToConsole) {
     console.log(`workers::numWorkers = ${numWorkersParam}`);
@@ -75,27 +79,31 @@ function setup(numWorkersParam) {
   }
 }
 
-function perform(jobType, jobData) {
+function perform(type, data) {
   return new Promise((resolve, reject) => {
+    let workerId = undefined;
+
     findAvailableWorkerId().then(id => {
       const worker = getWorker(id);
+      workerId = id;
 
-      const data = {
-        type: jobType,
-        workerId: id,
-        data: jobData
-      };
-
-      return worker.postMessage(data);
-    }).then(result => {
-      releaseWorker(result.workerId);
-
-      if (result.status === 'OK') {
-        resolve(result.data);
-      } else {
-        reject(result.status);
+      if (logToConsole) {
+        console.log(`assigning ${type} to worker ${id}`);
       }
+
+      return worker.postMessage({type, data});
+    }).then(result => {
+      if (logToConsole) {
+        console.log(`result ${type} id:${workerId}`);
+      }
+
+      releaseWorker(workerId);
+      resolve(result);
     }).catch(error => {
+      if (isValidWorkerId(workerId)) {
+        releaseWorker(workerId);
+      }
+
       // handle error
       console.log(`worker: error of ${error}`);
       reject(error);

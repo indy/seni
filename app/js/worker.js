@@ -66,71 +66,51 @@ function titleForScript(env, scriptHash) {
   return scriptTitle;
 }
 
-function render({ workerId, data }) {
-  const { script, scriptHash, genotype } = data;
-
+function render({ script, scriptHash, genotype }) {
   gProxyRenderer.reset();
-
   updateState(script, scriptHash, Immutable.fromJS(genotype));
 
   const res = Runtime.evalAst(gEnv, gBackAst, gGenotype);
   if (res === undefined) {
-    return { status: 'ERROR', workerId };
+    throw new Error('worker.js::render evalAst returned undefined');
   }
 
   const finalEnv = res[0];
   const title = titleForScript(finalEnv, scriptHash);
   const commandBuffer = gProxyRenderer.getCommandBuffer();
 
-  return {
-    status: 'OK',
-    workerId,
-    data: { title, commandBuffer }
-  };
+  return { title, commandBuffer };
 }
 
-function unparse({ workerId, data }) {
-  const { script, scriptHash, genotype } = data;
-
+function unparse({ script, scriptHash, genotype }) {
   updateState(script, scriptHash, Immutable.fromJS(genotype));
 
   const newScript = Runtime.unparse(gFrontAst.nodes, gGenotype);
 
-  return {
-    status: 'OK',
-    workerId,
-    data: { script: newScript }
-  };
+  return { script: newScript };
 }
 
 // this isn't saving the intermediate ASTs, perhaps do so later?
-function buildTraits({ workerId, data }) {
-  const { script, scriptHash } = data;
-
+function buildTraits({ script, scriptHash }) {
   if (scriptHash !== gScriptHash) {
     gScriptHash = scriptHash;
-
     gFrontAst = Runtime.buildFrontAst(script);
-    if (gFrontAst.error) {
-      return { status: 'ERROR' };
-    }
 
+    if (gFrontAst.error) {
+      // don't cache the current compilation state variables
+      gScriptHash = undefined;
+      throw new Error(`worker.js::buildTraits: ${gFrontAst.error}`);
+    }
     gBackAst = Runtime.compileBackAst(gFrontAst.nodes);
   }
 
   const traits = Genetic.buildTraits(gBackAst);
 
-  return {
-    status: 'OK',
-    workerId,
-    data: { traits }
-  };
+  return { traits };
 }
 
 
-function createInitialGeneration({ workerId, data }) {
-  const { populationSize, traits } = data;
-
+function createInitialGeneration({ populationSize, traits }) {
   const random = (new Date()).toGMTString();
   const genotypes = [];
 
@@ -142,14 +122,10 @@ function createInitialGeneration({ workerId, data }) {
     genotypes.push(genotype.toJS());
   }
 
-  return {
-    status: 'OK',
-    workerId,
-    data: { genotypes }
-  };
+  return { genotypes };
 }
 
-function newGeneration({ workerId, data }) {
+function newGeneration(data) {
   const {
     genotypes,
     populationSize,
@@ -158,50 +134,43 @@ function newGeneration({ workerId, data }) {
     rng
   } = data;
 
-  const geno = Genetic.nextGeneration(Immutable.fromJS(genotypes),
-                                      populationSize,
-                                      mutationRate,
-                                      traits,
-                                      rng);
+  const newGenotypes = Genetic.nextGeneration(Immutable.fromJS(genotypes),
+                                              populationSize,
+                                              mutationRate,
+                                              traits,
+                                              rng);
 
-  return {
-    status: 'OK',
-    workerId,
-    data: { genotypes: geno }
-  };
+  return { genotypes: newGenotypes };
 }
 
-function generateHelp({ workerId }) {
+function generateHelp() {
   // create a hash of document objects
   const res = gEnv.reduce((a, v, k) => {
     a[k] = v.pb.doc;
     return a;
   }, {});
 
-  return {
-    status: 'OK',
-    workerId,
-    data: res
-  };
+  return res;
 }
 
 register(args => {
-  const { type } = args;
+  const { type, data } = args;
 
   switch (type) {
   case 'RENDER':
-    return render(args);
+    return render(data);
   case 'UNPARSE':
-    return unparse(args);
+    return unparse(data);
   case 'BUILD_TRAITS':
-    return buildTraits(args);
+    return buildTraits(data);
   case 'INITIAL_GENERATION':
-    return createInitialGeneration(args);
+    return createInitialGeneration(data);
   case 'NEW_GENERATION':
-    return newGeneration(args);
+    return newGeneration(data);
   case 'GENERATE_HELP':
-    return generateHelp(args);
+    return generateHelp(data);
   default:
-    return '';
+    // throw unknown type
+    throw new Error(`worker.js: Unknown type: ${type}`);
   }
 });

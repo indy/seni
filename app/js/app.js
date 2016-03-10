@@ -227,9 +227,11 @@ function renderGeneration(state) {
       promises.push(workerJob);
     }
 
-    Promise.all(promises).then(() => {
-      stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
-    });
+    Promise.all(promises)
+      .then(() => {
+        stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
+      })
+      .catch(error => console.log(`renderGeneration error: ${error}`));
 
     resolve();
   });
@@ -237,7 +239,7 @@ function renderGeneration(state) {
 
 // invoked when the evolve screen is displayed after the edit screen
 function setupEvolveUI(store) {
-  return new Promise((resolve, _) => {
+  return new Promise((resolve, reject) => {
     afterLoadingPlaceholderImages(store.getState())
       .then(() => store.dispatch({type: 'INITIAL_GENERATION'}))
       .then(state => {
@@ -246,7 +248,11 @@ function setupEvolveUI(store) {
         renderGeneration(state);
         return state;
       })
-      .then(state => resolve(state));
+      .then(state => resolve(state))
+      .catch(error => {
+        console.log(`setupEvolveUI error: ${error}`);
+        reject(error);
+      });
   });
 }
 
@@ -295,28 +301,35 @@ function updateUI(state) {
 }
 
 function ensureMode(store, mode) {
-  return new Promise((resolve, _) => {
+  return new Promise((resolve, reject) => {
     if (store.getState().get('currentMode') === mode) {
       resolve();
       return;
     }
 
-    store.dispatch({type: 'SET_MODE', mode}).then(state => {
-      History.pushState(state);
+    store.dispatch({type: 'SET_MODE', mode})
+      .then(state => {
+        History.pushState(state);
 
-      if (mode === SeniMode.evolve) {
-        showCurrentMode(state);
-        setupEvolveUI(store).then(latestState => {
-          // make sure that the history for the first evolve generation
-          // has the correct genotypes
-          History.replaceState(latestState);
+        if (mode === SeniMode.evolve) {
+          showCurrentMode(state);
+          setupEvolveUI(store)
+            .then(latestState => {
+              // make sure that the history for the first evolve generation
+              // has the correct genotypes
+              History.replaceState(latestState);
+              resolve();
+            })
+            .catch(error => console.log(`ensureMode error: ${error}`));
+        } else {
+          updateUI(state);
           resolve();
-        });
-      } else {
-        updateUI(state);
-        resolve();
-      }
-    });
+        }
+      })
+      .catch(error => {
+        console.log(`ensureMode error: ${error}`);
+        reject(error);
+      });
   });
 }
 
@@ -497,7 +510,11 @@ function showEditFromGallery(store, element) {
         })
         .then(data => setScript(store, data))
         .then(() => ensureMode(store, SeniMode.edit))
-        .then(resolve);
+        .then(resolve)
+        .catch(error => {
+          console.log(`showEditFromGallery error ${error}`);
+          reject(error);
+        });
     } else {
       resolve();
     }
@@ -563,7 +580,8 @@ function createEditor(store, editorTextArea) {
   const extraKeys = {
     'Ctrl-E': () => {
       setScript(store, getScriptFromEditor())
-        .then(state => renderScript(state, gUI.renderImage));
+        .then(state => renderScript(state, gUI.renderImage))
+        .catch(error => console.log(`worker setScript error: ${error}`));
       return false;
     },
     // make ctrl-m a noop, otherwise invoking the konsole will result in
