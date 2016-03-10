@@ -1,0 +1,23 @@
+
+(loop (t from: 0 to: 1 steps: {16 (gen/int min: 1 max: 20)})
+  (stroked-bezier colour: {(col/rgb r: 0.1 g: 0.4 b: 0.9 alpha: 0.7) (gen/col)}
+                  tessellation: 20
+                  line-width: 10
+                  stroke-line-width-start: 21
+                  stroke-line-width-end: 4
+                  stroke-tessellation: {9 (gen/int min: 4 max: 10)}
+                  stroke-noise: {45 (gen/int min: 25 max: 60)}
+                  colour-volatility: {117 (gen/int min: 25 max: 160)}
+                  seed: 2200
+                  coords: [(interp/circle position: [500 500]
+                                          radius: {465 (gen/int max: 1000)}
+                                          t: (+ t {0.275 (gen/scalar)}))
+                           (interp/circle position: [500 500]
+                                          radius: {100 (gen/int max: 1000)}
+                                          t: (+ t {0.618 (gen/scalar)}))
+                           (interp/circle position: [500 500]
+                                          radius: {368 (gen/int max: 1000)}
+                                          t: (+ t {0.777 (gen/scalar)}))
+                           (interp/circle position: [500 500]
+                                          radius: {631 (gen/int max: 1000)}
+                                          t: (+ t {0.089 (gen/scalar)}))]))

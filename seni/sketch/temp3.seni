@@ -1,8 +1,0 @@
-(define focalpoint ({focal/point (gen/select from: ['focal/point
-                                                    'focal/hline
-                                                    'focal/vline])} 
-                    position: [500 500]
-                    distance: {800 (gen/int)}))
-
-(log (focalpoint position: [250 250]))
-

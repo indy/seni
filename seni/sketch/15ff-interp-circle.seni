@@ -1,3 +1,20 @@
+(define coords3 [[440 800]
+                 [533 1100]
+                 [766 600]
+                 [900 900]])
+
+
+(stroked-bezier tessellation: 15
+                coords: coords3
+                strokeLineWidthStart: 20
+                strokeLineWidthEnd: 4
+                strokeTessellation: 15
+                strokeNoise: 45
+                colour: (col/rgb r: 0.2 g: 0.9 b: 0.1 alpha: 0.3)
+                colourVolatility: 70
+                seed: 2200)
+
+
 
 (loop (t from: 0 to: 1 steps: {10 (gen/int min: 1 max: 20)})
   (bezier colour: (col/rgb r: 0.1 g: 0.4 b: 0.9 alpha: 0.7)
