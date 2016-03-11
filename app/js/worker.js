@@ -16,7 +16,6 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import register from 'promise-worker/register';
 import Immutable from 'immutable';
 
 import Bind from './lang/Bind';
@@ -153,9 +152,19 @@ function generateHelp() {
   return res;
 }
 
-register(args => {
-  const { type, data } = args;
+function register(callback) {
+  self.addEventListener('message', e => {
+    try {
+      const { type, data } = JSON.parse(e.data);
+      const result = callback(type, data);
+      self.postMessage(JSON.stringify([null, result]));
+    } catch (error) {
+      self.postMessage(JSON.stringify([{message: error.message}]));
+    }
+  });
+}
 
+register((type, data) => {
   switch (type) {
   case 'RENDER':
     return render(data);

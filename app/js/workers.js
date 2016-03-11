@@ -20,13 +20,59 @@
  used on the main thread to manage the web workers
  */
 
-import PromiseWorker from 'promise-worker';
-
 const logToConsole = true;
 
 let numWorkers = 8;
 const promiseWorkers = [];
-const working = [];
+
+class PromiseWorker {
+  constructor(workerUrl) {
+    const self = this;
+
+    this.worker = new Worker(workerUrl);
+    this.working = false;
+    this.reject = undefined;
+    this.resolve = undefined;
+
+    this.worker.addEventListener('message', event => {
+      const [error, result] = JSON.parse(event.data);
+
+      if (error) {
+        return self.reject(new Error(error.message));
+      }
+      return self.resolve(result);
+    });
+  }
+
+  postMessage(type, data) {
+    const self = this;
+
+    return new Promise((resolve, reject) => {
+      self.resolve = resolve;
+      self.reject = reject;
+      self.worker.postMessage(JSON.stringify({ type, data }));
+    });
+  }
+
+  setWorking(value) {
+    this.working = value;
+  }
+
+  getWorking() {
+    return this.working;
+  }
+}
+
+function setup(numWorkersParam) {
+  if (logToConsole) {
+    console.log(`workers::numWorkers = ${numWorkersParam}`);
+  }
+
+  numWorkers = numWorkersParam;
+  for (let i = 0; i < numWorkers; i++) {
+    promiseWorkers[i] = new PromiseWorker('/dist/worker.bundle.js');
+  }
+}
 
 function findAvailableWorkerId() {
   return new Promise((resolve, _reject) => {
@@ -34,7 +80,7 @@ function findAvailableWorkerId() {
       let foundAvailableWorker = false;
       let id = 0;
       for (let i=0;i<numWorkers;i++) {
-        if (working[i] === false) {
+        if (promiseWorkers[i].getWorking() === false) {
           foundAvailableWorker = true;
           id = i;
           break;
@@ -53,30 +99,16 @@ function findAvailableWorkerId() {
 }
 
 function getWorker(workerId) {
-  working[workerId] = true;
+  promiseWorkers[workerId].setWorking(true);
   return promiseWorkers[workerId];
 }
 
 function releaseWorker(workerId) {
-  working[workerId] = false;
+  promiseWorkers[workerId].setWorking(false);
 }
 
 function isValidWorkerId(workerId) {
   return workerId >= 0 && workerId < numWorkers;
-}
-
-function setup(numWorkersParam) {
-  if (logToConsole) {
-    console.log(`workers::numWorkers = ${numWorkersParam}`);
-  }
-
-  numWorkers = numWorkersParam;
-
-  for (let i = 0; i < numWorkers; i++) {
-    const w = new Worker('/dist/worker.bundle.js');
-    promiseWorkers[i] = new PromiseWorker(w);
-    working[i] = false;
-  }
 }
 
 function perform(type, data) {
@@ -91,7 +123,7 @@ function perform(type, data) {
         console.log(`assigning ${type} to worker ${id}`);
       }
 
-      return worker.postMessage({type, data});
+      return worker.postMessage(type, data);
     }).then(result => {
       if (logToConsole) {
         console.log(`result ${type} id:${workerId}`);
