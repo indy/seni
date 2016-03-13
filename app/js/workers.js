@@ -24,8 +24,14 @@ const logToConsole = false;
 let numWorkers = 8;
 const promiseWorkers = [];
 
-function ab2str(buf) {
-  return String.fromCharCode.apply(null, new Uint16Array(buf));
+function ab2str(arrayBuffer) {
+  let res = '';
+  const data = new Uint16Array(arrayBuffer);
+  const len = data.byteLength / 2;
+  for (let i = 0; i < len; i++) {
+    res += String.fromCharCode(data[i]);
+  }
+  return res;
 }
 
 class PromiseWorker {
@@ -39,15 +45,11 @@ class PromiseWorker {
     this.resolve = undefined;
 
     this.worker.addEventListener('message', event => {
-      // (`workers.js: event.data message received: <${event.data}>`);
-      // (`workers.js: typeof === ${typeof(event.data)}`);
-
       // string data is always going to be in JSON formation
       // otherwise it will be a string encoded in an ArrayBuffer
       let error = undefined;
       let result = undefined;
 
-      console.log('received postMessage from worker', performance.now());
       if (typeof(event.data) === 'string') {
         [error, result] = JSON.parse(event.data);
       } else {                  // ArrayBuffer

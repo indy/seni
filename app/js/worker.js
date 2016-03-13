@@ -176,18 +176,13 @@ function register(callback) {
       }
 
       const result = callback(type, data);
-      let n = undefined;
 
-      if (type === jobTest /*|| type === jobRender*/) {
+      if (type === jobTest || type === jobRender) {
         const res = JSON.stringify([null, result]);
         const arrayBuffer = str2ab(res);
-        n = performance.now();
-        console.log(`${type} about to postMessage from worker ${n}`);
         self.postMessage(arrayBuffer, [arrayBuffer]);
       } else {
         const sendData = JSON.stringify([null, result]);
-        n = performance.now();
-        console.log(`${type} about to postMessage from worker ${n}`);
         self.postMessage(sendData);
       }
     } catch (error) {

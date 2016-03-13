@@ -884,17 +884,18 @@ export default function main() {
   const store = createStore(state);
 
   allocateWorkers(state);
-  /*
-    Workers.perform(jobTest, {
+
+  // todo: remove the following test code
+  Workers.perform(jobTest, {
     a: 'hello',
     b: 'world'
-    }).then(({ z }) => {
+  }).then(({ z }) => {
     console.log(`app.js: result from worker: ${z}`);
-    }).catch(error => {
+  }).catch(error => {
     // handle error
     console.log(`worker: error of ${error}`);
-    });
-  */
+  });
+
   gRenderer = new Renderer(document.getElementById('render-canvas'));
 
   setupUI(store);
