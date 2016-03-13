@@ -22,6 +22,13 @@ import Bind from './lang/Bind';
 import Runtime from './lang/Runtime';
 import ProxyRenderer from './seni/ProxyRenderer';
 import Genetic from './lang/Genetic';
+import { jobRender,
+         jobUnparse,
+         jobBuildTraits,
+         jobInitialGeneration,
+         jobNewGeneration,
+         jobGenerateHelp,
+         jobTest } from './jobTypes';
 
 const gProxyRenderer = new ProxyRenderer();
 const gEnv = Bind.addBindings(Runtime.createEnv(), gProxyRenderer);
@@ -124,21 +131,12 @@ function createInitialGeneration({ populationSize, traits }) {
   return { genotypes };
 }
 
-function newGeneration(data) {
-  const {
-    genotypes,
-    populationSize,
-    traits,
-    mutationRate,
-    rng
-  } = data;
-
+function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   const newGenotypes = Genetic.nextGeneration(Immutable.fromJS(genotypes),
                                               populationSize,
                                               mutationRate,
                                               traits,
                                               rng);
-
   return { genotypes: newGenotypes };
 }
 
@@ -152,12 +150,46 @@ function generateHelp() {
   return res;
 }
 
+function test({ a, b }) {
+  console.log(`worker.js: received a:${a} and b:${b}`);
+  return {
+    z: 42
+  };
+}
+
+function str2ab(str) {
+  const buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+  const bufView = new Uint16Array(buf);
+  for (let i=0, strLen=str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
+
 function register(callback) {
   self.addEventListener('message', e => {
     try {
       const { type, data } = JSON.parse(e.data);
+
+      if (type === jobTest) {
+        console.log(`e.data: ${e.data}`);
+      }
+
       const result = callback(type, data);
-      self.postMessage(JSON.stringify([null, result]));
+      let n = undefined;
+
+      if (type === jobTest /*|| type === jobRender*/) {
+        const res = JSON.stringify([null, result]);
+        const arrayBuffer = str2ab(res);
+        n = performance.now();
+        console.log(`${type} about to postMessage from worker ${n}`);
+        self.postMessage(arrayBuffer, [arrayBuffer]);
+      } else {
+        const sendData = JSON.stringify([null, result]);
+        n = performance.now();
+        console.log(`${type} about to postMessage from worker ${n}`);
+        self.postMessage(sendData);
+      }
     } catch (error) {
       self.postMessage(JSON.stringify([{message: error.message}]));
     }
@@ -166,18 +198,20 @@ function register(callback) {
 
 register((type, data) => {
   switch (type) {
-  case 'RENDER':
+  case jobRender:
     return render(data);
-  case 'UNPARSE':
+  case jobUnparse:
     return unparse(data);
-  case 'BUILD_TRAITS':
+  case jobBuildTraits:
     return buildTraits(data);
-  case 'INITIAL_GENERATION':
+  case jobInitialGeneration:
     return createInitialGeneration(data);
-  case 'NEW_GENERATION':
+  case jobNewGeneration:
     return newGeneration(data);
-  case 'GENERATE_HELP':
+  case jobGenerateHelp:
     return generateHelp(data);
+  case jobTest:
+    return test(data);
   default:
     // throw unknown type
     throw new Error(`worker.js: Unknown type: ${type}`);

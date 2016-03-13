@@ -28,8 +28,11 @@ import { addDefaultCommands } from './ui/KonsoleCommands';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
 import { SeniMode } from './ui/SeniMode';
-
 import Workers from './workers';
+import { jobRender,
+         jobUnparse,
+         jobTest,
+         jobGenerateHelp } from './jobTypes';
 
 let gUI = {};
 let gRenderer = undefined;
@@ -210,7 +213,7 @@ function renderGeneration(state) {
     const stopFn = startTiming();
 
     for (let i = 0;i < phenotypes.size; i++) {
-      const workerJob = Workers.perform('RENDER', {
+      const workerJob = Workers.perform(jobRender, {
         script,
         scriptHash,
         genotype: genotypes.get(i).toJS()
@@ -266,7 +269,7 @@ function showScriptInEditor(state) {
 function renderScript(state, imageElement) {
   const stopFn = startTiming();
 
-  Workers.perform('RENDER', {
+  Workers.perform(jobRender, {
     script: state.get('script'),
     scriptHash: state.get('scriptHash')
   }).then(({ title, commandBuffer }) => {
@@ -375,7 +378,7 @@ function renderHighRes(state, genotype) {
 
   const stopFn = startTiming();
 
-  Workers.perform('RENDER', {
+  Workers.perform(jobRender, {
     script: state.get('script'),
     scriptHash: state.get('scriptHash'),
     genotype: genotype ? genotype.toJS() : undefined
@@ -412,7 +415,7 @@ function showEditFromEvolve(store, element) {
       const state = store.getState();
       const genotypes = state.get('genotypes');
 
-      Workers.perform('UNPARSE', {
+      Workers.perform(jobUnparse, {
         script: state.get('script'),
         scriptHash: state.get('scriptHash'),
         genotype: genotypes.get(index).toJS()
@@ -545,7 +548,7 @@ function createKonsole(element) {
     theme: 'konsole'
   });
 
-  Workers.perform('GENERATE_HELP', {
+  Workers.perform(jobGenerateHelp, {
   }).then(documentation => {
     const commander = new KonsoleCommander();
     addDefaultCommands(documentation, commander);
@@ -881,9 +884,18 @@ export default function main() {
   const store = createStore(state);
 
   allocateWorkers(state);
-
+  /*
+    Workers.perform(jobTest, {
+    a: 'hello',
+    b: 'world'
+    }).then(({ z }) => {
+    console.log(`app.js: result from worker: ${z}`);
+    }).catch(error => {
+    // handle error
+    console.log(`worker: error of ${error}`);
+    });
+  */
   gRenderer = new Renderer(document.getElementById('render-canvas'));
-  // gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
 
   setupUI(store);
 

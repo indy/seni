@@ -19,23 +19,40 @@
 /*
  used on the main thread to manage the web workers
  */
-
-const logToConsole = true;
+const logToConsole = false;
 
 let numWorkers = 8;
 const promiseWorkers = [];
 
+function ab2str(buf) {
+  return String.fromCharCode.apply(null, new Uint16Array(buf));
+}
+
 class PromiseWorker {
-  constructor(workerUrl) {
+  constructor(id, workerUrl) {
     const self = this;
 
     this.worker = new Worker(workerUrl);
+    this.id = id;
     this.working = false;
     this.reject = undefined;
     this.resolve = undefined;
 
     this.worker.addEventListener('message', event => {
-      const [error, result] = JSON.parse(event.data);
+      // (`workers.js: event.data message received: <${event.data}>`);
+      // (`workers.js: typeof === ${typeof(event.data)}`);
+
+      // string data is always going to be in JSON formation
+      // otherwise it will be a string encoded in an ArrayBuffer
+      let error = undefined;
+      let result = undefined;
+
+      console.log('received postMessage from worker', performance.now());
+      if (typeof(event.data) === 'string') {
+        [error, result] = JSON.parse(event.data);
+      } else {                  // ArrayBuffer
+        [error, result] = JSON.parse(ab2str(event.data));
+      }
 
       if (error) {
         return self.reject(new Error(error.message));
@@ -54,12 +71,22 @@ class PromiseWorker {
     });
   }
 
-  setWorking(value) {
-    this.working = value;
+  employ() {
+    this.working = true;
+    return this;
   }
 
-  getWorking() {
+  release() {
+    this.working = false;
+    return this;
+  }
+
+  isWorking() {
     return this.working;
+  }
+
+  getId() {
+    return this.id;
   }
 }
 
@@ -70,72 +97,47 @@ function setup(numWorkersParam) {
 
   numWorkers = numWorkersParam;
   for (let i = 0; i < numWorkers; i++) {
-    promiseWorkers[i] = new PromiseWorker('/dist/worker.bundle.js');
+    promiseWorkers[i] = new PromiseWorker(i, '/dist/worker.bundle.js');
   }
 }
 
-function findAvailableWorkerId() {
+function findAvailableWorker() {
   return new Promise((resolve, _reject) => {
     setTimeout(function go() {
-      let foundAvailableWorker = false;
-      let id = 0;
       for (let i=0;i<numWorkers;i++) {
-        if (promiseWorkers[i].getWorking() === false) {
-          foundAvailableWorker = true;
-          id = i;
-          break;
+        if (promiseWorkers[i].isWorking() === false) {
+          resolve(promiseWorkers[i].employ());
+          return;
         }
       }
-
       // todo?: reject if waiting too long?
-
-      if (foundAvailableWorker) {
-        resolve(id);
-      } else {
-        setTimeout(go, 500);
-      }
+      setTimeout(go, 100);
     });
   });
 }
 
-function getWorker(workerId) {
-  promiseWorkers[workerId].setWorking(true);
-  return promiseWorkers[workerId];
-}
-
-function releaseWorker(workerId) {
-  promiseWorkers[workerId].setWorking(false);
-}
-
-function isValidWorkerId(workerId) {
-  return workerId >= 0 && workerId < numWorkers;
-}
-
 function perform(type, data) {
   return new Promise((resolve, reject) => {
-    let workerId = undefined;
+    let worker = undefined;
 
-    findAvailableWorkerId().then(id => {
-      const worker = getWorker(id);
-      workerId = id;
+    findAvailableWorker().then(worker_ => {
+      worker = worker_;
 
       if (logToConsole) {
-        console.log(`assigning ${type} to worker ${id}`);
+        console.log(`assigning ${type} to worker ${worker.getId()}`);
       }
 
       return worker.postMessage(type, data);
     }).then(result => {
       if (logToConsole) {
-        console.log(`result ${type} id:${workerId}`);
+        console.log(`result ${type} id:${worker.getId()}`);
       }
-
-      releaseWorker(workerId);
+      worker.release();
       resolve(result);
     }).catch(error => {
-      if (isValidWorkerId(workerId)) {
-        releaseWorker(workerId);
+      if (worker !== undefined) {
+        worker.release();
       }
-
       // handle error
       console.log(`worker: error of ${error}`);
       reject(error);
