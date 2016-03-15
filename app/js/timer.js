@@ -28,7 +28,8 @@ function getStats(entry) {
     current: entry.last,
     average: (entry.sum / entry.num),
     min: entry.min,
-    max: entry.max
+    max: entry.max,
+    num: entry.num
   };
 }
 
@@ -80,7 +81,12 @@ export function startTiming() {
       const avg = stats.average.toFixed(printPrecision);
       const min = stats.min.toFixed(printPrecision);
       const max = stats.max.toFixed(printPrecision);
-      konsole.log(`${eid}: ${cur}ms (Mean: ${avg}, Min: ${min}, Max: ${max})`);
+      const num = stats.num;
+
+      const msg1 = `${eid}: ${cur}ms `;
+      const msg2 = `(Mean: ${avg}, Min: ${min}, Max: ${max} N:${num})`;
+
+      konsole.log(msg1 + msg2);
     }
   };
 }
