@@ -183,7 +183,8 @@ export default class GLRenderer {
     const numPackets = renderPackets.length;
     for (let i = 0; i < numPackets; i++) {
       const renderPacket = renderPackets[i];
-      sum += renderPacket.bufferLevel;
+      const bufferLevel = renderPacket.getBufferLevel();
+      sum += bufferLevel;
 
       gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER,
@@ -199,7 +200,7 @@ export default class GLRenderer {
                              renderPacket.colourItemSize,
                              gl.FLOAT, false, 0, 0);
 
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, renderPacket.bufferLevel);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, bufferLevel);
     }
     if (logToConsole) {
       console.log(`rendered ${sum} vertices in ${numPackets} renderPackets`);

@@ -35,11 +35,17 @@ export default class RenderPacket {
     // to find the actual index position multiply bufferLevel
     // by the relevant itemSize of the buffer
     this.bufferLevel = 0;
+    this.vertexBufferLevel = 0;
+    this.colourBufferLevel = 0;
   }
 
   // can the number of vertices fit into this RenderPacket?
   canVerticesFit(numVertices) {
     return this.bufferLevel < bufferSize - (numVertices + 2);
+  }
+
+  getBufferLevel() {
+    return this.bufferLevel;
   }
 
   isRenderPacketEmpty() {
@@ -50,7 +56,7 @@ export default class RenderPacket {
     // add two vertex entries which will form degenerate triangles
 
     // get the index of the last vertex that was added
-    const index = (this.bufferLevel - 1) * vertexItemSize;
+    const index = this.vertexBufferLevel - vertexItemSize;
     // just copy the previous entries
     // note: colour doesn't matter since these triangles won't be rendered
     this.addVertex([this.vertexBuffer[index + 0], this.vertexBuffer[index + 1]],
@@ -65,16 +71,16 @@ export default class RenderPacket {
 
   // appends the vertex with position p and colour c
   addVertex(p, c) {
-    let bl = this.bufferLevel * vertexItemSize;
-    this.vertexBuffer[bl + 0] = p[0];
-    this.vertexBuffer[bl + 1] = p[1];
+    this.vertexBuffer[this.vertexBufferLevel + 0] = p[0];
+    this.vertexBuffer[this.vertexBufferLevel + 1] = p[1];
 
-    bl = this.bufferLevel * colourItemSize;
-    this.colourBuffer[bl + 0] = c[0];
-    this.colourBuffer[bl + 1] = c[1];
-    this.colourBuffer[bl + 2] = c[2];
-    this.colourBuffer[bl + 3] = c[3];
+    this.colourBuffer[this.colourBufferLevel + 0] = c[0];
+    this.colourBuffer[this.colourBufferLevel + 1] = c[1];
+    this.colourBuffer[this.colourBufferLevel + 2] = c[2];
+    this.colourBuffer[this.colourBufferLevel + 3] = c[3];
 
     this.bufferLevel += 1;
+    this.vertexBufferLevel += vertexItemSize;
+    this.colourBufferLevel += colourItemSize;
   }
 }
