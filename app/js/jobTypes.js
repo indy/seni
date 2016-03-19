@@ -22,5 +22,3 @@ export const jobBuildTraits = 'BUILD_TRAITS';
 export const jobInitialGeneration = 'INITIAL_GENERATION';
 export const jobNewGeneration = 'NEW_GENERATION';
 export const jobGenerateHelp = 'GENERATE_HELP';
-// TODO: remove TEST asap
-export const jobTest = 'TEST';

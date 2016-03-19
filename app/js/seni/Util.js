@@ -28,7 +28,7 @@ export default {
       hash |= 0; // Convert to 32bit integer
     }
     return hash;
-  },
+  }
 
   /**
    * Execute the function and log the time that it takes
@@ -38,6 +38,7 @@ export default {
    * @param {Object}   console the object that can log the timing information
    */
   //
+  /*
   withTiming: (msg, fn, console) => {
     const before = performance.now();
     fn();
@@ -46,5 +47,5 @@ export default {
     if (console) {
       console.log(`${msg} ${duration} ms`);
     }
-  }
+  }*/
 };

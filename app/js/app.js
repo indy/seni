@@ -18,7 +18,7 @@
 
 import Immutable from 'immutable';
 import Trivia from './seni/Trivia';
-import Renderer from './seni/Renderer';
+import GLRenderer from './seni/GLRenderer';
 import History from './ui/History';
 import Editor from './ui/Editor';
 import SpecialDebug from './ui/SpecialDebug';
@@ -31,11 +31,10 @@ import { SeniMode } from './ui/SeniMode';
 import Workers from './workers';
 import { jobRender,
          jobUnparse,
-         jobTest,
          jobGenerateHelp } from './jobTypes';
 
 let gUI = {};
-let gRenderer = undefined;
+let gGLRenderer = undefined;
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -181,19 +180,25 @@ function updateSelectionUI(state) {
   });
 }
 
-function renderCommandBuffer(commandBuffer, imageElement, w, h) {
-  const renderer = gRenderer;
-
+function renderGeometryBuffers(buffers, imageElement, w, h) {
+  let destWidth = undefined;
+  let destHeight = undefined;
   if (w !== undefined && h !== undefined) {
-    renderer.preDrawScene(w, h);
+    destWidth = w;
+    destHeight = h;
   } else {
-    renderer.preDrawScene(imageElement.clientWidth, imageElement.clientHeight);
+    destWidth = imageElement.clientWidth;
+    destHeight = imageElement.clientHeight;
   }
 
-  renderer.executeCommandBuffer(commandBuffer);
+  gGLRenderer.preDrawScene(destWidth, destHeight);
 
-  renderer.postDrawScene();
-  imageElement.src = renderer.getImageData();
+  console.log('wahey in rendergeometrybuffers');
+  buffers.forEach(buffer => {
+    gGLRenderer.drawBuffers(buffer.vbuf, buffer.cbuf, buffer.numVertices);
+  });
+
+  imageElement.src = gGLRenderer.getImageData();
 }
 
 function renderGeneration(state) {
@@ -212,15 +217,34 @@ function renderGeneration(state) {
 
     const stopFn = startTiming();
 
+
+    let sendTotal = 0;
+    let processTotal = 0;
+    let receiveTotal = 0;
+    let renderTotal = 0;
+
     for (let i = 0;i < phenotypes.size; i++) {
       const workerJob = Workers.perform(jobRender, {
         script,
         scriptHash,
         genotype: genotypes.get(i).toJS()
-      }).then(({ title, commandBuffer }) => {
+      }).then(result => {
+        const { title,
+                buffers,
+                sendTime,
+                processTime,
+                receiveTime } = result;
         const imageElement = phenotypes.getIn([i, 'imageElement']);
-        renderCommandBuffer(commandBuffer, imageElement);
+        const beforeRender = performance.now();
 
+        renderGeometryBuffers(buffers, imageElement);
+
+        const afterRender = performance.now();
+
+        sendTotal += sendTime;
+        processTotal += processTime;
+        receiveTotal += receiveTime;
+        renderTotal += afterRender - beforeRender;
         hackTitle = title;
       }).catch(error => {
         // handle error
@@ -233,6 +257,11 @@ function renderGeneration(state) {
     Promise.all(promises)
       .then(() => {
         stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
+
+        console.log(`sendTotal ${sendTotal}`);
+        console.log(`processTotal ${processTotal} (${processTotal / 4})`);
+        console.log(`receiveTotal ${receiveTotal}`);
+        console.log(`renderTotal ${renderTotal}`);
       })
       .catch(error => console.log(`renderGeneration error: ${error}`));
 
@@ -272,8 +301,11 @@ function renderScript(state, imageElement) {
   Workers.perform(jobRender, {
     script: state.get('script'),
     scriptHash: state.get('scriptHash')
-  }).then(({ title, commandBuffer }) => {
-    renderCommandBuffer(commandBuffer, imageElement);
+  }).then(({ title, buffers }) => {
+    // console.log(`renderScript ${title} received ${numVertices} vertices`);
+
+    renderGeometryBuffers(buffers, imageElement);
+
     stopFn(`renderScript-${title}`, gUI.konsole);
   }).catch(error => {
     // handle error
@@ -382,9 +414,10 @@ function renderHighRes(state, genotype) {
     script: state.get('script'),
     scriptHash: state.get('scriptHash'),
     genotype: genotype ? genotype.toJS() : undefined
-  }).then(({ title, commandBuffer }) => {
+  }).then(({ title, buffers }) => {
     const [width, height] = state.get('highResolution');
-    renderCommandBuffer(commandBuffer, image, width, height);
+
+    renderGeometryBuffers(buffers, image, width, height);
 
     stopFn(`renderHighRes-${title}`, gUI.konsole);
 
@@ -885,18 +918,8 @@ export default function main() {
 
   allocateWorkers(state);
 
-  // todo: remove the following test code
-  Workers.perform(jobTest, {
-    a: 'hello',
-    b: 'world'
-  }).then(({ z }) => {
-    console.log(`app.js: result from worker: ${z}`);
-  }).catch(error => {
-    // handle error
-    console.log(`worker: error of ${error}`);
-  });
-
-  gRenderer = new Renderer(document.getElementById('render-canvas'));
+  const canvasElement = document.getElementById('render-canvas');
+  gGLRenderer = new GLRenderer(canvasElement);
 
   setupUI(store);
 

@@ -24,13 +24,19 @@ const bufferSize = 1000;
 const vertexItemSize = 2; // xy
 const colourItemSize = 4; // rgba
 
+const fsize = 4; // 4 bytes in a float32
+
 export default class RenderPacket {
   constructor() {
     // pass in sizes so that GLExec can access them
     this.vertexItemSize = vertexItemSize;
     this.colourItemSize = colourItemSize;
-    this.vertexBuffer = new Float32Array(vertexItemSize * bufferSize);
-    this.colourBuffer = new Float32Array(colourItemSize * bufferSize);
+
+    this.abVertex = new ArrayBuffer(vertexItemSize * fsize * bufferSize);
+    this.abColour = new ArrayBuffer(colourItemSize * fsize * bufferSize);
+
+    this.vertexBuffer = new Float32Array(this.abVertex);
+    this.colourBuffer = new Float32Array(this.abColour);
     // the level of both the vertex and colour buffer
     // to find the actual index position multiply bufferLevel
     // by the relevant itemSize of the buffer

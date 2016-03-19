@@ -19,11 +19,14 @@
 /*
  used on the main thread to manage the web workers
  */
+import { jobRender } from './jobTypes';
+
 const logToConsole = false;
 
-let numWorkers = 8;
+let numWorkers = 0;
 const promiseWorkers = [];
 
+/*
 function ab2str(arrayBuffer) {
   let res = '';
   const data = new Uint16Array(arrayBuffer);
@@ -33,6 +36,7 @@ function ab2str(arrayBuffer) {
   }
   return res;
 }
+*/
 
 class PromiseWorker {
   constructor(id, workerUrl) {
@@ -53,7 +57,9 @@ class PromiseWorker {
       if (typeof(event.data) === 'string') {
         [error, result] = JSON.parse(event.data);
       } else {                  // ArrayBuffer
-        [error, result] = JSON.parse(ab2str(event.data));
+        // [error, result] = JSON.parse(ab2str(event.data));
+        [error, result] = event.data;
+        return self.resolve(result);
       }
 
       if (error) {
@@ -122,7 +128,14 @@ function perform(type, data) {
   return new Promise((resolve, reject) => {
     let worker = undefined;
 
+    let preBefore = 0;
+    let postAfter = 0;
+
     findAvailableWorker().then(worker_ => {
+      if (type === jobRender) {
+        preBefore = performance.now();
+      }
+
       worker = worker_;
 
       if (logToConsole) {
@@ -131,6 +144,23 @@ function perform(type, data) {
 
       return worker.postMessage(type, data);
     }).then(result => {
+      if (type === jobRender) {
+        postAfter = performance.now();
+
+        const before = result.before;
+        const after = result.after;
+
+        const sendTime = before - preBefore;
+        const processTime = after - before;
+        const receiveTime = postAfter - after;
+
+        const res = Object.assign({sendTime, processTime, receiveTime}, result);
+
+        worker.release();
+        resolve(res);
+        return;
+      }
+
       if (logToConsole) {
         console.log(`result ${type} id:${worker.getId()}`);
       }

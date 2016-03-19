@@ -16,6 +16,8 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { mat4 } from 'gl-matrix';
+
 const logToConsole = false;
 
 function initGL(canvas) {
@@ -145,7 +147,11 @@ export default class GLRenderer {
     return this.glDomElement.toDataURL();
   }
 
-  preDrawScene(destWidth, destHeight, pMatrix, mvMatrix) {
+  preDrawScene(destWidth, destHeight) {
+    const mvMatrix = mat4.create();
+    const pMatrix = mat4.create();
+    mat4.ortho(pMatrix, 0, 1000, 0, 1000, 10, -10);
+
     const gl = this.gl;
     const shaderProgram = this.shaderProgram;
     const domElement = this.glDomElement;
@@ -205,5 +211,30 @@ export default class GLRenderer {
     if (logToConsole) {
       console.log(`rendered ${sum} vertices in ${numPackets} renderPackets`);
     }
+  }
+
+  drawBuffers(vbuf, cbuf, numVertices) {
+    const gl = this.gl;
+    const shaderProgram = this.shaderProgram;
+
+    const glVertexBuffer = this.glVertexBuffer;
+    const glColourBuffer = this.glColourBuffer;
+
+    const vertexItemSize = 2;
+    const colourItemSize = 4;
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vbuf, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shaderProgram.positionAttribute,
+                           vertexItemSize,
+                           gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, cbuf, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shaderProgram.colourAttribute,
+                           colourItemSize,
+                           gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, numVertices);
   }
 }

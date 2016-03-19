@@ -19,31 +19,15 @@
 import { mat4 } from 'gl-matrix';
 
 import RenderPacket from './RenderPacket';
-import GLRenderer from './GLRenderer';
 import MatrixStack from './MatrixStack';
 import MathUtil from './MathUtil';
 import Interp from './Interp';
 import Colour from './Colour';
-import Util from './Util';
-import { opMatrixPush,
-         opMatrixPop,
-         opMatrixScale,
-         opMatrixTranslate,
-         opMatrixRotate,
-         opRenderLine,
-         opRenderRect,
-         opRenderCircle,
-         opRenderCircleSlice,
-         opRenderPoly,
-         opRenderBezier,
-         opRenderQuadratic } from './RenderOps';
 
 const Format = Colour.Format;
 
 export default class Renderer {
-  constructor(canvasElement) {
-    this.glRenderer = new GLRenderer(canvasElement);
-
+  constructor() {
     // matrix setup
     this.matrixStack = new MatrixStack();
     this.mvMatrix = mat4.create();
@@ -54,72 +38,56 @@ export default class Renderer {
     this.renderPacket = new RenderPacket();
   }
 
-  executeCommandBuffer(commandBuffer) {
-    const hackColour = c => Colour.construct(c.format, c.elements);
+  getRenderPackets() {
+    return this.renderPackets;
+  }
 
-    const hackParams = p => {
-      if (p.colour) {
-        p.colour = hackColour(p.colour);
-      }
+  cmdMatrixPush() {
+    return this.matrixStack.pushMatrix();
+  }
 
-      if (p.colours) {
-        p.colours = p.colours.map(hackColour);
-      }
+  cmdMatrixPop() {
+    return this.matrixStack.popMatrix();
+  }
 
-      return p;
-    };
+  cmdMatrixScale(x, y) {
+    return this.matrixStack.scale(x, y);
+  }
 
-    commandBuffer.forEach(cmd => {
-      const op = cmd[0];
+  cmdMatrixTranslate(x, y) {
+    return this.matrixStack.translate(x, y);
+  }
 
-      let params = undefined;
-      if (op >= opRenderLine) {
-        // make sure that colours are Immutable objects
-        params = hackParams(cmd[1]);
-      }
+  cmdMatrixRotate(angle) {
+    return this.matrixStack.rotate(angle);
+  }
 
-      switch (op) {
-      case opMatrixPush:
-        this.matrixStack.pushMatrix();
-        break;
-      case opMatrixPop:
-        this.matrixStack.popMatrix();
-        break;
-      case opMatrixScale:
-        this.matrixStack.scale(cmd[1], cmd[2]);
-        break;
-      case opMatrixTranslate:
-        this.matrixStack.translate(cmd[1], cmd[2]);
-        break;
-      case opMatrixRotate:
-        this.matrixStack.rotate(cmd[1]);
-        break;
-      case opRenderLine:
-        this.renderLine(params);
-        break;
-      case opRenderRect:
-        this.renderRect(params);
-        break;
-      case opRenderCircle:
-        this.renderCircle(params);
-        break;
-      case opRenderCircleSlice:
-        this.renderCircleSlice(params);
-        break;
-      case opRenderPoly:
-        this.renderPoly(params);
-        break;
-      case opRenderBezier:
-        this.renderCurve(params, MathUtil.bezierCoordinates);
-        break;
-      case opRenderQuadratic:
-        this.renderCurve(params, MathUtil.quadraticCoordinates);
-        break;
-      default:
-        console.log(`unknown op code: ${op}`);
-        break;
-      }
-    });
+  cmdRenderLine(params) {
+    this.renderLine(params);
+  }
+
+  cmdRenderRect(params) {
+    this.renderRect(params);
+  }
+
+  cmdRenderCircle(params) {
+    this.renderCircle(params);
+  }
+
+  cmdRenderCircleSlice(params) {
+    this.renderCircleSlice(params);
+  }
+
+  cmdRenderPoly(params) {
+    this.renderPoly(params);
+  }
+
+  cmdRenderBezier(params) {
+    this.renderCurve(params, MathUtil.bezierCoordinates);
+  }
+
+  cmdRenderQuadratic(params) {
+    this.renderCurve(params, MathUtil.quadraticCoordinates);
   }
 
   // todo: remove this once all rendering goes through ProxyRenderer
@@ -418,14 +386,7 @@ export default class Renderer {
     this.addVertex(v2, colourArray);
   }
 
-  getImageData() {
-    return this.glRenderer.getImageData();
-  }
-
-  preDrawScene(destWidth, destHeight) {
-    this.glRenderer.preDrawScene(destWidth, destHeight,
-                                 this.pMatrix, this.mvMatrix);
-
+  preDrawScene() {
     this.matrixStack.reset();
 
     this.renderPackets = [];
@@ -434,10 +395,6 @@ export default class Renderer {
 
   postDrawScene() {
     this.flushTriangles();
-
-    Util.withTiming('drawRenderPackets', () => {
-      this.glRenderer.drawRenderPackets(this.renderPackets);
-    }, false);
   }
 
   // --------------------------------------------------------------------------

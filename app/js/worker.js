@@ -20,18 +20,20 @@ import Immutable from 'immutable';
 
 import Bind from './lang/Bind';
 import Runtime from './lang/Runtime';
-import ProxyRenderer from './seni/ProxyRenderer';
+// import ProxyRenderer from './seni/ProxyRenderer';
+import Renderer from './seni/Renderer';
 import Genetic from './lang/Genetic';
 import { jobRender,
          jobUnparse,
          jobBuildTraits,
          jobInitialGeneration,
          jobNewGeneration,
-         jobGenerateHelp,
-         jobTest } from './jobTypes';
+         jobGenerateHelp } from './jobTypes';
 
-const gProxyRenderer = new ProxyRenderer();
-const gEnv = Bind.addBindings(Runtime.createEnv(), gProxyRenderer);
+// const gProxyRenderer = new ProxyRenderer();
+const gRenderer = new Renderer();
+
+const gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
 let gScriptHash = '';
 let gFrontAst = undefined;
 let gBackAst = undefined;
@@ -73,7 +75,10 @@ function titleForScript(env, scriptHash) {
 }
 
 function render({ script, scriptHash, genotype }) {
-  gProxyRenderer.reset();
+  const before = performance.now();
+
+  gRenderer.preDrawScene();
+
   updateState(script, scriptHash, Immutable.fromJS(genotype));
 
   const res = Runtime.evalAst(gEnv, gBackAst, gGenotype);
@@ -83,9 +88,23 @@ function render({ script, scriptHash, genotype }) {
 
   const finalEnv = res[0];
   const title = titleForScript(finalEnv, scriptHash);
-  const commandBuffer = gProxyRenderer.getCommandBuffer();
 
-  return { title, commandBuffer };
+  gRenderer.postDrawScene();
+
+  const after = performance.now();
+
+  const renderPackets = gRenderer.getRenderPackets();
+
+  const buffers = renderPackets.map(packet => {
+    const bufferData = {
+      vbuf: packet.abVertex,
+      cbuf: packet.abColour,
+      numVertices: packet.bufferLevel
+    };
+    return bufferData;
+  });
+
+  return { title, buffers, before, after };
 }
 
 function unparse({ script, scriptHash, genotype }) {
@@ -150,37 +169,20 @@ function generateHelp() {
   return res;
 }
 
-function test({ a, b }) {
-  console.log(`worker.js: received a:${a} and b:${b}`);
-  return {
-    z: 42
-  };
-}
-
-function str2ab(str) {
-  const buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
-  const bufView = new Uint16Array(buf);
-  for (let i=0, strLen=str.length; i < strLen; i++) {
-    bufView[i] = str.charCodeAt(i);
-  }
-  return buf;
-}
-
 function register(callback) {
   self.addEventListener('message', e => {
     try {
       const { type, data } = JSON.parse(e.data);
 
-      if (type === jobTest) {
-        console.log(`e.data: ${e.data}`);
-      }
-
       const result = callback(type, data);
 
-      if (type === jobTest || type === jobRender) {
-        const res = JSON.stringify([null, result]);
-        const arrayBuffer = str2ab(res);
-        self.postMessage(arrayBuffer, [arrayBuffer]);
+      if (type === jobRender) {
+        const transferrable = [];
+        result.buffers.forEach(buffer => {
+          transferrable.push(buffer.vbuf);
+          transferrable.push(buffer.cbuf);
+        });
+        self.postMessage([null, result], transferrable);
       } else {
         const sendData = JSON.stringify([null, result]);
         self.postMessage(sendData);
@@ -205,8 +207,6 @@ register((type, data) => {
     return newGeneration(data);
   case jobGenerateHelp:
     return generateHelp(data);
-  case jobTest:
-    return test(data);
   default:
     // throw unknown type
     throw new Error(`worker.js: Unknown type: ${type}`);
