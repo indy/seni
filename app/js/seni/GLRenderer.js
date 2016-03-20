@@ -16,7 +16,7 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { mat4 } from 'gl-matrix';
+import Matrix from './Matrix';
 
 const logToConsole = false;
 
@@ -141,6 +141,10 @@ export default class GLRenderer {
     setupGLState(gl);
     this.glVertexBuffer = gl.createBuffer();
     this.glColourBuffer = gl.createBuffer();
+
+    this.mvMatrix = Matrix.create();
+    this.pMatrix = Matrix.create();
+    Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
   }
 
   getImageData() {
@@ -148,12 +152,7 @@ export default class GLRenderer {
   }
 
   preDrawScene(destWidth, destHeight) {
-    const mvMatrix = mat4.create();
-    const pMatrix = mat4.create();
-    mat4.ortho(pMatrix, 0, 1000, 0, 1000, 10, -10);
-
     const gl = this.gl;
-    const shaderProgram = this.shaderProgram;
     const domElement = this.glDomElement;
 
     if (domElement.width !== destWidth) {
@@ -174,8 +173,12 @@ export default class GLRenderer {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
-    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+    gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform,
+                        false,
+                        this.pMatrix);
+    gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform,
+                        false,
+                        this.mvMatrix);
   }
 
   drawRenderPackets(renderPackets) {

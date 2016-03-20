@@ -16,18 +16,20 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { vec2, vec3, mat4 } from 'gl-matrix';
+import Matrix from './Matrix';
 
 export default class MatrixStack {
 
   constructor() {
     this.reset();
+    this.transform = Matrix.create();
   }
 
   reset() {
-    this.stack = [mat4.create()];
-    this.out3 = vec3.create();   // only pay the cost of construction once
-    this.out2 = vec2.create();
+    this.stack = [Matrix.create()];
+    // only pay the cost of construction once
+    this.out3 = new Float32Array(3);
+    this.out2 = new Float32Array(2);
   }
 
   getHead() {
@@ -37,7 +39,7 @@ export default class MatrixStack {
 
   pushMatrix() {
     const m = this.getHead();
-    this.stack.push(mat4.clone(m));
+    this.stack.push(Matrix.clone(m));
   }
 
   popMatrix() {
@@ -45,36 +47,37 @@ export default class MatrixStack {
   }
 
   scale(sx, sy) {
-    const r = mat4.create();
-    mat4.scale(r, r, [sx, sy, 1.0]);
+    Matrix.identity(this.transform);
+    Matrix.scale(this.transform, this.transform, [sx, sy, 1.0]);
 
     const m = this.getHead();
-    mat4.mul(m, m, r);
+    Matrix.multiply(m, m, this.transform);
   }
 
   translate(tx, ty) {
-    const r = mat4.create();
-    mat4.translate(r, r, [tx, ty, 0.0]);
+    Matrix.identity(this.transform);
+    Matrix.translate(this.transform, this.transform, [tx, ty, 0.0]);
+
 
     const m = this.getHead();
-    mat4.mul(m, m, r);
+    Matrix.multiply(m, m, this.transform);
   }
 
   rotate(a) {
-    const r = mat4.create();
-    mat4.rotateZ(r, r, a);
+    Matrix.identity(this.transform);
+    Matrix.rotateZ(this.transform, this.transform, a);
 
     const m = this.getHead();
-    mat4.mul(m, m, r);
+    Matrix.multiply(m, m, this.transform);
   }
 
   transformVector(v) {
     const m = this.getHead();
-    return vec3.transformMat4(this.out3, v, m);
+    return Matrix.transformVec3(this.out3, v, m);
   }
 
   transform2DVector(v) {
     const m = this.getHead();
-    return vec2.transformMat4(this.out2, v, m);
+    return Matrix.transformVec2(this.out2, v, m);
   }
 }

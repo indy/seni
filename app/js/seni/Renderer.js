@@ -16,8 +16,6 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { mat4 } from 'gl-matrix';
-
 import RenderPacket from './RenderPacket';
 import MatrixStack from './MatrixStack';
 import MathUtil from './MathUtil';
@@ -30,9 +28,6 @@ export default class Renderer {
   constructor() {
     // matrix setup
     this.matrixStack = new MatrixStack();
-    this.mvMatrix = mat4.create();
-    this.pMatrix = mat4.create();
-    mat4.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
 
     this.renderPackets = [];
     this.renderPacket = new RenderPacket();
