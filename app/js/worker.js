@@ -20,7 +20,6 @@ import Immutable from 'immutable';
 
 import Bind from './lang/Bind';
 import Runtime from './lang/Runtime';
-// import ProxyRenderer from './seni/ProxyRenderer';
 import Renderer from './seni/Renderer';
 import Genetic from './lang/Genetic';
 import { jobRender,
@@ -30,10 +29,10 @@ import { jobRender,
          jobNewGeneration,
          jobGenerateHelp } from './jobTypes';
 
-// const gProxyRenderer = new ProxyRenderer();
+const logToConsole = false;
 const gRenderer = new Renderer();
-
 const gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
+
 let gScriptHash = '';
 let gFrontAst = undefined;
 let gBackAst = undefined;
@@ -75,8 +74,6 @@ function titleForScript(env, scriptHash) {
 }
 
 function render({ script, scriptHash, genotype }) {
-  const before = performance.now();
-
   gRenderer.preDrawScene();
 
   updateState(script, scriptHash, Immutable.fromJS(genotype));
@@ -91,8 +88,6 @@ function render({ script, scriptHash, genotype }) {
 
   gRenderer.postDrawScene();
 
-  const after = performance.now();
-
   const renderPackets = gRenderer.getRenderPackets();
 
   const buffers = renderPackets.map(packet => {
@@ -104,7 +99,7 @@ function render({ script, scriptHash, genotype }) {
     return bufferData;
   });
 
-  return { title, buffers, before, after };
+  return { title, buffers };
 }
 
 function unparse({ script, scriptHash, genotype }) {
@@ -182,6 +177,10 @@ function register(callback) {
           transferrable.push(buffer.vbuf);
           transferrable.push(buffer.cbuf);
         });
+        if (logToConsole) {
+          const n = transferrable.length / 2;
+          console.log(`sending over ${n} transferrable sets`);
+        }
         self.postMessage([null, result], transferrable);
       } else {
         const sendData = JSON.stringify([null, result]);

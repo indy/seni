@@ -193,7 +193,6 @@ function renderGeometryBuffers(buffers, imageElement, w, h) {
 
   gGLRenderer.preDrawScene(destWidth, destHeight);
 
-  console.log('wahey in rendergeometrybuffers');
   buffers.forEach(buffer => {
     gGLRenderer.drawBuffers(buffer.vbuf, buffer.cbuf, buffer.numVertices);
   });
@@ -217,34 +216,14 @@ function renderGeneration(state) {
 
     const stopFn = startTiming();
 
-
-    let sendTotal = 0;
-    let processTotal = 0;
-    let receiveTotal = 0;
-    let renderTotal = 0;
-
     for (let i = 0;i < phenotypes.size; i++) {
       const workerJob = Workers.perform(jobRender, {
         script,
         scriptHash,
         genotype: genotypes.get(i).toJS()
-      }).then(result => {
-        const { title,
-                buffers,
-                sendTime,
-                processTime,
-                receiveTime } = result;
+      }).then(({ title, buffers }) => {
         const imageElement = phenotypes.getIn([i, 'imageElement']);
-        const beforeRender = performance.now();
-
         renderGeometryBuffers(buffers, imageElement);
-
-        const afterRender = performance.now();
-
-        sendTotal += sendTime;
-        processTotal += processTime;
-        receiveTotal += receiveTime;
-        renderTotal += afterRender - beforeRender;
         hackTitle = title;
       }).catch(error => {
         // handle error
@@ -257,11 +236,6 @@ function renderGeneration(state) {
     Promise.all(promises)
       .then(() => {
         stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
-
-        console.log(`sendTotal ${sendTotal}`);
-        console.log(`processTotal ${processTotal} (${processTotal / 4})`);
-        console.log(`receiveTotal ${receiveTotal}`);
-        console.log(`renderTotal ${renderTotal}`);
       })
       .catch(error => console.log(`renderGeneration error: ${error}`));
 

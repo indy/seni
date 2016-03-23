@@ -1,30 +1,33 @@
 /*
- Seni
- Copyright (C) 2016 Inderjit Gill <email@indy.io>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *  Seni
+ *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// the size of transferrable data held by each RenderPacket
+const renderPacketSize = 1 * 1024 * 1024; // 1MB
 
-// each buffer can hold bufferSize 'items' where each item is a vertex+colour
-const bufferSize = 1000;
-// note: using different values for bufferSize doesn't affect render time
-// (tried with values of 100, 1000, 10000, 100000)
+// number of float32 elements in each data type
 const vertexItemSize = 2; // xy
 const colourItemSize = 4; // rgba
 
-const fsize = 4; // 4 bytes in a float32
+const f32Size = 4; // 4 bytes in a float32
+
+// each buffer can hold bufferSize 'items' where each item is a vertex+colour
+const itemSize = f32Size * (vertexItemSize + colourItemSize);
+const bufferSize = parseInt(renderPacketSize / itemSize, 10);
 
 export default class RenderPacket {
   constructor() {
@@ -32,8 +35,8 @@ export default class RenderPacket {
     this.vertexItemSize = vertexItemSize;
     this.colourItemSize = colourItemSize;
 
-    this.abVertex = new ArrayBuffer(vertexItemSize * fsize * bufferSize);
-    this.abColour = new ArrayBuffer(colourItemSize * fsize * bufferSize);
+    this.abVertex = new ArrayBuffer(vertexItemSize * f32Size * bufferSize);
+    this.abColour = new ArrayBuffer(colourItemSize * f32Size * bufferSize);
 
     this.vertexBuffer = new Float32Array(this.abVertex);
     this.colourBuffer = new Float32Array(this.abColour);
