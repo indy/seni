@@ -17,7 +17,7 @@
  */
 
 /* eslint-disable no-use-before-define */
-import seedrandom from 'seedrandom';
+import { seedrandom } from './seedrandom';
 
 import PublicBinding from '../lang/PublicBinding';
 
