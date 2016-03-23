@@ -3,17 +3,17 @@
             [329.109 479.700]
             [-379.652 -248.992]
             [-408.700 443.968]]
-                    (gen/vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
   coords2 {[[160.088 -124.315]
             [-291.133 -357.968]
             [290.588 432.570]
             [442.875 475.219]]
-                      (gen/vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
   coords3 {[[115.066 -95.138]
             [-485.132 -200.796]
             [-367.920 285.440]
             [422.032 -212.102]]
-                      (gen/vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
 
   col-fn-1 (col/procedural-fn a: {[0.525 0.911 0.163] (gen/scalar)}
                               b: {[0.091 0.084 0.211] (gen/scalar)}
@@ -81,4 +81,3 @@
                             copies: {2 (gen/int min: 1 max: 30)})))
 
 (render)
-

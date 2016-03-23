@@ -1,3 +1,6 @@
+(define
+  title "scale-green")
+
 (fn (interesting-circle position: [500 500]
                         colour: red
                         seed: "yabba dabba dooo"

@@ -1,19 +1,19 @@
 (define 
-  coords1 {[[335.200 112.444]
-            [-431.964 -91.473]
-            [-310.904 465.143]
-            [-494.828 418.991]]
-                    (gen/vector min: -500 max: 500)}
-  coords2 {[[-196.502 251.355]
-            [272.635 297.197]
-            [264.253 -422.074]
-            [-219.562 -151.337]]
-                      (gen/vector min: -500 max: 500)}
-  coords3 {[[-236.278 -447.736]
+  coords1 {[[348.427 279.760]
+            [277.085 -128.082]
+            [46.746 -76.157]
+            [450.194 286.473]]
+           (gen/vector min: -500 max: 500)}
+  coords2 {[[-392.432 -302.484]
+            [-470.910 366.850]
+            [-50.447 -483.185]
+            [482.907 92.257]]
+           (gen/vector min: -500 max: 500)}
+  coords3 {[[-93.748 49.329]
             [151.727 -322.909]
             [-421.354 235.607]
             [4.363 -40.959]]
-                      (gen/vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
 
   col-fn-1 (col/procedural-fn a: {[0.486 0.027 0.535] (gen/scalar)}
                               b: {[0.353 0.901 0.712] (gen/scalar)}
@@ -30,7 +30,6 @@
                               c: {[0.839 0.740 0.371] (gen/scalar)}
                               d: {[0.717 0.631 0.202] (gen/scalar)}
                               alpha: 0.08))
-
 
 (fn (wash variation: 200
           line-width: 70
@@ -62,7 +61,6 @@
                      [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
             colour: colour)))
 
-
 (fn (draw)
   (loop (t from: 0 upto: 1 steps: 200)
     (poly coords: [(interp/bezier t: t coords: coords1)
@@ -78,7 +76,6 @@
     (translate vector: [(/ canvas/width 1) (/ canvas/height 2)])
     (scale scalar: 2)
     (repeat/rotate-mirrored draw: draw
-                            copies: {8 (gen/int min: 1 max: 10)})))
+                            copies: {14 (gen/int min: 1 max: 30)})))
 
 (render)
-

@@ -1,4 +1,5 @@
 (define
+  title "night"
   ;; fade out any lines which are far away from the focal points
   interest (interp/fn from: [0.2 1.5] to: [0 1] clamping: true))
 
