@@ -48,8 +48,24 @@ function buildGalleryData() {
                ['15he-cos-3', '15he-cos-3.png'],
                ['160c-schotter', '160c-schotter.png'],
                ['161g-grid-flow', '161g-grid-flow.png'],
-               ['sketch/test', 'blank.png']
-              ];
+               ['161j-trump', '161j-trump.png'],
+               ['1626-embers', '1626-embers.png'],
+               ['1626-orchid', '1626-orchid.png'],
+               ['162e-alien', '162e-alien.png'],
+               ['162e-mask', '162e-mask.png'],
+               ['162e-slice', '162e-slice.png'],
+               ['162e-star', '162e-star.png'],
+               ['162e-x', '162e-x.png'],
+               ['1632-star', '1632-star.png'],
+               ['1633-dune', '1633-dune.png'],
+               ['1633-orchid', '1633-orchid.png'],
+               ['1633-petal', '1633-petal.png'],
+               ['1634-cryst', '1634-cryst.png'],
+               ['1638-night', '1638-night.png'],
+               ['163a-scale-green', '163a-scale-green.png'],
+               ['1642-book-stack', '1642-book-stack.png'],
+               ['1642-stacks', '1642-stacks.png'],
+               ['sketch/test', 'blank.png']];
 
   var res = [];
   for(var i = 0; i < items.length; i++) {
