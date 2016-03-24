@@ -410,13 +410,15 @@ const publicBindings = [
     'col/darken',
     { description: 'darkens the given colour',
       args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
+             ['value', '0..100']],
       returns: 'the new colour' },
     { colour: Colour.defaultColour, value: 1.0 },
     self => params => {
       const {colour, value} = self.mergeWithDefaults(params);
-      return Colour.setComponent(Colour.cloneAs(colour, Format.LAB),
-                                 Colour.L, value);
+      const lab = Colour.cloneAs(colour, Format.LAB);
+      const currentL = Colour.getComponent(lab, Colour.L);
+      const newL = MathUtil.clamp(currentL - value, 0, 100);
+      return Colour.setComponent(lab, Colour.L, newL);
     }
   ),
 
@@ -424,7 +426,7 @@ const publicBindings = [
     'col/lighten',
     { description: "lightens the given colour by 'value'",
       args: [['colour', 'Colour.defaultColour'],
-             ['value', '0..1']],
+             ['value', '0..100']],
       returns: 'the new colour' },
     { colour: Colour.defaultColour, value: 10.0 },
     self => params => {
