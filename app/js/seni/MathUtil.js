@@ -156,13 +156,16 @@ both arguments are used to determine the quadrant of the result`,
     }
   ),
 
+  // todo: make this work with vectors of any dimension
   new PublicBinding(
-    'math/distance-2d',
-    {},
-    { x1: 0, y1: 0, x2: 1, y2: 1 },
+    'math/distance',
+    { description: 'returns the distance between 2 vectors',
+      args: [['vec1', '[0 0]'],
+             ['vec2', '[100 100]']] },
+    { vec1: [0, 0], vec2: [100, 100] },
     self => params => {
-      const {x1, y1, x2, y2} = self.mergeWithDefaults(params);
-      return distance2d([x1, y1], [x2, y2]);
+      const {vec1, vec2} = self.mergeWithDefaults(params);
+      return distance2d(vec1, vec2);
     }
   ),
 

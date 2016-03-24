@@ -15,10 +15,10 @@
     (accumulated-rect x: x-pos
                       y: y-pos
                       passes: 20
-                      volatility: (/ (math/distance-2d x1: (/ canvas/width 2)
-                                                       y1: (/ canvas/height 2)
-                                                       x2: x-pos
-                                                       y2: y-pos) 250)
+                      volatility: (/ (math/distance vec1: [(/ canvas/width 2)
+                                                           (/ canvas/height 2)]
+                                                    vec2: [x-pos y-pos]) 
+                                     250)
                       seed: (+ x (* y num-squares))
                       width: square-size 
                       height: square-size
