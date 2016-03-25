@@ -38,8 +38,7 @@ describe('HigherOrder', () => {
     let [_, res] = evalForm(e, `(map
 fn: (fn (triple x: 1)
         (+ x x x))
-vector: [1 2 3 4]
-bind: 'x)`);
+x: [1 2 3 4])`);
     expect(res).to.deep.equal([3, 6, 9, 12]);
   });
 

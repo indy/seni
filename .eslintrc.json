@@ -143,7 +143,7 @@
     "no-with": 2,
     "no-magic-numbers": 0,
     "array-bracket-spacing": [2, "never"],
-    "arrow-body-style": [2, "as-needed"],
+    "arrow-body-style": [0, "as-needed"],
     "arrow-parens": [2, "as-needed"],
     "arrow-spacing": 2,
     "accessor-pairs": 0,

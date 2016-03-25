@@ -233,11 +233,9 @@ function renderGeneration(state) {
       promises.push(workerJob);
     }
 
-    Promise.all(promises)
-      .then(() => {
-        stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
-      })
-      .catch(error => console.log(`renderGeneration error: ${error}`));
+    Promise.all(promises).then(() => {
+      stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
+    }).catch(error => console.log(`renderGeneration error: ${error}`));
 
     resolve();
   });
@@ -246,19 +244,19 @@ function renderGeneration(state) {
 // invoked when the evolve screen is displayed after the edit screen
 function setupEvolveUI(store) {
   return new Promise((resolve, reject) => {
-    afterLoadingPlaceholderImages(store.getState())
-      .then(() => store.dispatch({type: 'INITIAL_GENERATION'}))
-      .then(state => {
-        // render the phenotypes
-        updateSelectionUI(state);
-        renderGeneration(state);
-        return state;
-      })
-      .then(state => resolve(state))
-      .catch(error => {
-        console.log(`setupEvolveUI error: ${error}`);
-        reject(error);
-      });
+    afterLoadingPlaceholderImages(store.getState()).then(() => {
+      return store.dispatch({type: 'INITIAL_GENERATION'});
+    }).then(state => {
+      // render the phenotypes
+      updateSelectionUI(state);
+      renderGeneration(state);
+      return state;
+    }).then(state => {
+      return resolve(state);
+    }).catch(error => {
+      console.log(`setupEvolveUI error: ${error}`);
+      reject(error);
+    });
   });
 }
 
@@ -316,29 +314,25 @@ function ensureMode(store, mode) {
       return;
     }
 
-    store.dispatch({type: 'SET_MODE', mode})
-      .then(state => {
-        History.pushState(state);
+    store.dispatch({type: 'SET_MODE', mode}).then(state => {
+      History.pushState(state);
 
-        if (mode === SeniMode.evolve) {
-          showCurrentMode(state);
-          setupEvolveUI(store)
-            .then(latestState => {
-              // make sure that the history for the first evolve generation
-              // has the correct genotypes
-              History.replaceState(latestState);
-              resolve();
-            })
-            .catch(error => console.log(`ensureMode error: ${error}`));
-        } else {
-          updateUI(state);
+      if (mode === SeniMode.evolve) {
+        showCurrentMode(state);
+        setupEvolveUI(store).then(latestState => {
+          // make sure that the history for the first evolve generation
+          // has the correct genotypes
+          History.replaceState(latestState);
           resolve();
-        }
-      })
-      .catch(error => {
-        console.log(`ensureMode error: ${error}`);
-        reject(error);
-      });
+        }).catch(error => console.log(`ensureMode error: ${error}`));
+      } else {
+        updateUI(state);
+        resolve();
+      }
+    }).catch(error => {
+      console.log(`ensureMode error: ${error}`);
+      reject(error);
+    });
   });
 }
 
@@ -427,9 +421,13 @@ function showEditFromEvolve(store, element) {
         scriptHash: state.get('scriptHash'),
         genotype: genotypes.get(index).toJS()
       }).then(({ script }) => {
-        setScript(store, script)
-          .then(() => ensureMode(store, SeniMode.edit))
-          .then(resolve);
+        setScript(store, script).then(() => {
+          return ensureMode(store, SeniMode.edit);
+        }).then(resolve).catch(e => {
+          // handle error
+          console.log(`worker: error of ${e}`);
+          reject(e);
+        });
       }).catch(error => {
         // handle error
         console.log(`worker: error of ${error}`);
@@ -454,29 +452,32 @@ function onNextGen(store) {
     }
   }
 
-  store.dispatch({type: 'SET_SELECTED_INDICES', selectedIndices})
-    .then(state => {
-      if (selectedIndices.size === 0) {
-        // no phenotypes were selected
-        return undefined;
-      }
+  const command = {type: 'SET_SELECTED_INDICES', selectedIndices};
+  store.dispatch(command).then(state => {
+    if (selectedIndices.size === 0) {
+      // no phenotypes were selected
+      return undefined;
+    }
 
-      // update the last history state
-      History.replaceState(state);
+    // update the last history state
+    History.replaceState(state);
 
-      showPlaceholderImages(state);
+    showPlaceholderImages(state);
 
-      return store.dispatch({type: 'NEXT_GENERATION', rng: 42});
-    }).then(state => {
-      if (state === undefined) {
-        return;
-      }
+    return store.dispatch({type: 'NEXT_GENERATION', rng: 42});
+  }).then(state => {
+    if (state === undefined) {
+      return;
+    }
 
-      History.pushState(state);
-      // render the genotypes
-      updateSelectionUI(state);
-      renderGeneration(state);
-    });
+    History.pushState(state);
+    // render the genotypes
+    updateSelectionUI(state);
+    renderGeneration(state);
+  }).catch(error => {
+    // handle error
+    console.log(`error of ${error}`);
+  });
 }
 
 function createPhenotypeElement(id, placeholderImage) {
@@ -499,12 +500,16 @@ function createPhenotypeElement(id, placeholderImage) {
 
 // invoked when restoring the evolve screen from the history api
 function restoreEvolveUI(store) {
-  return new Promise((resolve, _) => { // todo: implement reject
+  return new Promise((resolve, reject) => { // todo: implement reject
     afterLoadingPlaceholderImages(store.getState()).then(() => {
       // render the phenotypes
       updateSelectionUI(store.getState());
       return renderGeneration(store.getState());
-    }).then(resolve);
+    }).then(resolve).catch(error => {
+      // handle error
+      console.log(`restoreEvolveUI: error of ${error}`);
+      reject(error);
+    });
   });
 }
 
@@ -514,17 +519,16 @@ function showEditFromGallery(store, element) {
     if (index !== -1) {
       const url = `/gallery/${index}`;
 
-      get(url)
-        .catch(() => {
-          reject(Error(`cannot connect to ${url}`));
-        })
-        .then(data => setScript(store, data))
-        .then(() => ensureMode(store, SeniMode.edit))
-        .then(resolve)
-        .catch(error => {
-          console.log(`showEditFromGallery error ${error}`);
-          reject(error);
-        });
+      get(url).catch(() => {
+        reject(Error(`cannot connect to ${url}`));
+      }).then(data => {
+        return setScript(store, data);
+      }).then(() => {
+        return ensureMode(store, SeniMode.edit);
+      }).then(resolve).catch(error => {
+        console.log(`showEditFromGallery error ${error}`);
+        reject(error);
+      });
     } else {
       resolve();
     }
@@ -589,9 +593,11 @@ function createEditor(store, editorTextArea) {
 
   const extraKeys = {
     'Ctrl-E': () => {
-      setScript(store, getScriptFromEditor())
-        .then(state => renderScript(state, gUI.renderImage))
-        .catch(error => console.log(`worker setScript error: ${error}`));
+      setScript(store, getScriptFromEditor()).then(state => {
+        return renderScript(state, gUI.renderImage);
+      }).catch(error => {
+        console.log(`worker setScript error: ${error}`);
+      });
       return false;
     },
     // make ctrl-m a noop, otherwise invoking the konsole will result in
@@ -646,6 +652,9 @@ function setupUI(store) {
     setScript(store, getScriptFromEditor()).then(state => {
       History.replaceState(state);
       ensureMode(store, SeniMode.evolve);
+    }).catch(error => {
+      // handle error
+      console.log(`evolve-btn:click : error of ${error}`);
     });
     event.preventDefault();
   });
@@ -660,6 +669,9 @@ function setupUI(store) {
     store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11}).then(state => {
       updateSelectionUI(state);
       renderGeneration(state);
+    }).catch(error => {
+      // handle error
+      console.log(`shuffle-btn:click : error of ${error}`);
     });
     event.preventDefault();
   });
@@ -667,6 +679,9 @@ function setupUI(store) {
   addClickEvent('eval-btn', event => {
     setScript(store, getScriptFromEditor()).then(state => {
       renderScript(state, gUI.renderImage);
+    }).catch(error => {
+      // handle error
+      console.log(`eval-btn:click : error of ${error}`);
     });
     event.preventDefault();
   });
@@ -774,13 +789,15 @@ function setupUI(store) {
   window.addEventListener('popstate', event => {
     if (event.state) {
       const savedState = History.restoreState(event.state);
-      store.dispatch({type: 'SET_STATE', state: savedState})
-        .then(state => {
-          updateUI(state);
-          if (state.get('currentMode') === SeniMode.evolve) {
-            restoreEvolveUI(store);
-          }
-        });
+      store.dispatch({type: 'SET_STATE', state: savedState}).then(state => {
+        updateUI(state);
+        if (state.get('currentMode') === SeniMode.evolve) {
+          restoreEvolveUI(store);
+        }
+      }).catch(error => {
+        // handle error
+        console.log(`SET_STATE: error of ${error}`);
+      });
     } else {
       // no event.state so behave as if the user has visited
       // the '/' of the state
@@ -897,7 +914,7 @@ export default function main() {
 
   setupUI(store);
 
-  getGallery()
-    .then(removeKonsoleInvisibility)
-    .catch(error => console.error(error));
+  getGallery().then(() => {
+    return removeKonsoleInvisibility();
+  }).catch(error => console.error(error));
 }

@@ -25,24 +25,62 @@ function identity({item}) {
   return item;
 }
 
+function buildDynamicParams(mergedParams) {
+  const fn = mergedParams.fn;
+  const argValues = {};
+  const argNames = [];
+  let first = true;
+  let size = 0;
+
+  for (const pName in mergedParams) {
+    if (pName === 'fn' || !Array.isArray(mergedParams[pName])) {
+      continue;
+    }
+
+    argNames.push(pName);
+    argValues[pName] = mergedParams[pName];
+    if (first || mergedParams[pName].length < size) {
+      first = false;
+      size = mergedParams[pName].length;
+    }
+  }
+
+  return {
+    fn,
+    size,
+    argNames,
+    argValues
+  };
+}
+
 const publicBindings = [
   new PublicBinding(
     'map',
     { description: '-',
       args: [],
       returns: '-' },
-    { fn: identity,
-      bind: 'item',
-      vector: []},
+    { fn: identity },
     self => params => {
-      const {fn, bind, vector} = self.mergeWithDefaults(params);
-      const args = {};
-      return vector.map(v => {
-        args[bind] = v;
-        return fn(args);
-      });
+      const {
+        fn,
+        size,
+        argNames,
+        argValues
+      } = buildDynamicParams(self.mergeWithDefaults(params));
+
+      const res = [];
+      for (let i=0;i<size;i++) {
+        const args = argNames.reduce((a, name) => {
+          a[name] = argValues[name][i];
+          return a;
+        }, {});
+        res.push(fn(args));
+      }
+
+      return res;
     }
   ),
+
   new PublicBinding(
     'filter',
     { description: '-',

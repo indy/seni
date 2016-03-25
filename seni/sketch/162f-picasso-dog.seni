@@ -32,4 +32,5 @@
   ;; reverse y-coordinates
   (translate vector: [0 500])
   (scale vector: [1 -1])
-  (map fn: curve vector: dog bind: 'coords))
+  (map fn: curve
+       coords: dog))

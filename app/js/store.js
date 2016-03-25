@@ -92,6 +92,10 @@ function actionShuffleGeneration(state, { rng }) {
     if (prev.size === 0) {
       actionInitialGeneration(state).then(s => {
         resolve(s);
+      }).catch(error1 => {
+        // handle error
+        console.log(`worker: error of ${error1}`);
+        reject(error1);
       });
     } else {
       Workers.perform(jobNewGeneration, {
