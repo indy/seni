@@ -1,0 +1,78 @@
+(define 
+  positions []
+  colours []
+  radii [])
+
+(define
+  random-axis-position (prng/range seed: {494 (gen/int min: 0 max: 999)} 
+                                   min: -500 
+                                   max: 500)
+  col-fn (col/procedural-fn preset: "chrome")
+  random-radius (prng/range seed: {435 (gen/int min: 0 max: 999)} 
+                            min: 2 
+                            max: {26 (gen/int min: 3 max: 40)}))
+
+(loop (x to: 800)
+  (vector/append positions [(random-axis-position) 
+                            (random-axis-position)])
+  (define 
+    ;dist (math/distance vec1: (vector/get from: positions nth: x) vec2: [0 0])
+    ;colour (col-fn t: (/ dist 500))
+    colour (col-fn t: (/ 1000 (+ 500 (random-axis-position)))))
+
+  (vector/append colours colour)
+  (vector/append radii (random-radius)))
+
+
+(fn (draw-shape position: [0 0]
+                colour: red
+                radius: 10)
+  (circle position: position
+          colour: colour
+          radius: radius
+          tessellation: 20))
+
+(fn (draw-body position: [0 0]
+               colour: red
+               radius: 10
+               obj: [])
+  (draw-shape position: position
+              colour: colour
+              radius: radius))
+
+(fn (draw-shadow position: [0 0]
+                 colour: red
+                 radius: 10
+                 obj: [])
+  (define 
+    shadow-mult {1.030 (gen/scalar min: 1 max: 1.05)}
+    pos [(* (vector/get from: position nth: 0) shadow-mult)
+         (* (vector/get from: position nth: 1) shadow-mult)]
+    col: (col/set-alpha colour: (col/darken colour: colour 
+                                            value: {46 (gen/int min: 0 max: 100)})
+                        value: {0.849 (gen/scalar min: 0.2 max: 1)}))
+  (draw-shape position: pos
+              colour: col
+              radius: radius))
+
+(fn (draw-pre-shadow position: [0 0]
+                     colour: red
+                     radius: 10)
+  (draw-shape position: position
+              colour: (col/set-alpha colour: colour value: 0.03)
+              radius: (* radius 5)))
+
+(on-matrix-stack
+  (translate vector: [500 500])  
+  (map fn: draw-pre-shadow
+       position: positions
+       colour: colours
+       radius: radii)
+  (map fn: draw-shadow
+       position: positions
+       colour: colours
+       radius: radii)
+  (map fn: draw-body
+       position: positions
+       colour: colours
+       radius: radii))
