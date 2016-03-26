@@ -52,6 +52,18 @@ const publicBindings = [
   ),
 
   new PublicBinding(
+    'vector/multiply',
+    { args: [['vector', 'the input vector'],
+             ['scalar', 'the input scalar']],
+      returns: 'the result of multiplying vector by scalar' },
+    { of: [] },
+    self => params => {
+      const { vector, scalar } = self.mergeWithDefaults(params);
+      return vector.map(n => n * scalar);
+    }
+  ),
+
+  new PublicBinding(
     'vector/get',
     { description: 'get an element from a vector',
       args: [['from', 'a vector'],

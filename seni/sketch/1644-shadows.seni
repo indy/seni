@@ -46,8 +46,7 @@
                  obj: [])
   (define 
     shadow-mult {1.030 (gen/scalar min: 1 max: 1.05)}
-    pos [(* (vector/get from: position nth: 0) shadow-mult)
-         (* (vector/get from: position nth: 1) shadow-mult)]
+    pos (vector/multiply vector: position scalar: shadow-mult)
     col: (col/set-alpha colour: (col/darken colour: colour 
                                             value: {46 (gen/int min: 0 max: 100)})
                         value: {0.849 (gen/scalar min: 0.2 max: 1)}))
