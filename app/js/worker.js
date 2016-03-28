@@ -131,7 +131,7 @@ function buildTraits({ script, scriptHash }) {
 
 
 function createInitialGeneration({ populationSize, traits }) {
-  const random = (new Date()).toGMTString();
+  const random = performance.now();
   const genotypes = [];
 
   const initialGeno = Genetic.createGenotypeFromInitialValues(traits);
