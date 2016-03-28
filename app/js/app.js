@@ -143,7 +143,7 @@ function afterLoadingPlaceholderImages(state) {
     });
   };
 
-  const initialTimeStamp = Date.now();
+  const initialTimeStamp = performance.now();
 
   showPlaceholderImages(state);
 
