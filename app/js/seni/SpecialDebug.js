@@ -61,6 +61,7 @@ const publicBindings = [
         }
         return `${a} ${res}`;
       }, '');
+
       if (gKonsole) {
         gKonsole.log(message);
       }

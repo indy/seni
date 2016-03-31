@@ -19,9 +19,9 @@
 import Immutable from 'immutable';
 import Trivia from './seni/Trivia';
 import GLRenderer from './seni/GLRenderer';
+
 import History from './ui/History';
 import Editor from './ui/Editor';
-import SpecialDebug from './ui/SpecialDebug';
 import Konsole from './ui/Konsole';
 import KonsoleCommander from './ui/KonsoleCommander';
 import { addDefaultCommands } from './ui/KonsoleCommands';
@@ -273,11 +273,11 @@ function renderScript(state, imageElement) {
   Workers.perform(jobRender, {
     script: state.get('script'),
     scriptHash: state.get('scriptHash')
-  }).then(({ title, buffers }) => {
-    // console.log(`renderScript ${title} received ${numVertices} vertices`);
-
+  }).then(({ title, buffers, logMessages }) => {
+    // display any log/print messages that were generated
+    // during the execution of the script
+    gUI.konsole.log(logMessages);
     renderGeometryBuffers(buffers, imageElement);
-
     stopFn(`renderScript-${title}`, gUI.konsole);
   }).catch(error => {
     // handle error
@@ -573,7 +573,6 @@ function createKonsole(element) {
         commander.commandHandle(line, report, prompt);
       }
     });
-    SpecialDebug.useKonsole(konsole);
   }).catch(error => {
     // handle error
     console.log(`worker: error of ${error}`);

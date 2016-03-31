@@ -20,8 +20,7 @@ import Special from './Special';
 import Classic from './Classic';
 import HigherOrder from './HigherOrder';
 
-import SpecialDebug from '../ui/SpecialDebug';
-
+import SpecialDebug from '../seni/SpecialDebug';
 import Shapes from '../seni/Shapes';
 import Paths from '../seni/Paths';
 import MatrixStackBindings from '../seni/MatrixStackBindings';

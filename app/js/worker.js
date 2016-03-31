@@ -18,6 +18,8 @@
 
 import Immutable from 'immutable';
 
+import SpecialDebug from './seni/SpecialDebug';
+
 import Bind from './lang/Bind';
 import Runtime from './lang/Runtime';
 import Renderer from './seni/Renderer';
@@ -32,6 +34,29 @@ import { jobRender,
 const logToConsole = false;
 const gRenderer = new Renderer();
 const gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
+
+
+class KonsoleProxy {
+  constructor() {
+    this.messages = [];
+  }
+
+  clear() {
+    this.messages = [];
+  }
+
+  log(msg) {
+    this.messages.push(msg);
+  }
+
+  collectMessages() {
+    return this.messages.join('\n');
+  }
+}
+
+const konsoleProxy = new KonsoleProxy();
+SpecialDebug.useKonsole(konsoleProxy);
+
 
 let gScriptHash = '';
 let gFrontAst = undefined;
@@ -74,6 +99,7 @@ function titleForScript(env, scriptHash) {
 }
 
 function render({ script, scriptHash, genotype }) {
+  konsoleProxy.clear();
   gRenderer.preDrawScene();
 
   updateState(script, scriptHash, Immutable.fromJS(genotype));
@@ -99,7 +125,9 @@ function render({ script, scriptHash, genotype }) {
     return bufferData;
   });
 
-  return { title, buffers };
+  const logMessages = konsoleProxy.collectMessages();
+
+  return { title, buffers, logMessages };
 }
 
 function unparse({ script, scriptHash, genotype }) {
