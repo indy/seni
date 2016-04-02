@@ -20,7 +20,7 @@ import Immutable from 'immutable';
 
 import Util from './seni/Util';
 import { SeniMode } from './ui/SeniMode';
-import Workers from './workers';
+import Job from './job';
 import { jobBuildTraits,
          jobInitialGeneration,
          jobNewGeneration } from './jobTypes';
@@ -40,7 +40,7 @@ function actionSetScript(state, { script }) {
       .set('script', script)
       .set('scriptHash', Util.hashCode(script));
 
-    Workers.perform(jobBuildTraits, {
+    Job.request(jobBuildTraits, {
       script: currentState.get('script'),
       scriptHash: currentState.get('scriptHash')
     }).then(({ traits }) => {
@@ -65,7 +65,7 @@ function actionSetSelectedIndices(state, { selectedIndices }) {
 // todo: should populationSize be passed in the action?
 function actionInitialGeneration(state) {
   return new Promise((resolve, reject) => {
-    Workers.perform(jobInitialGeneration, {
+    Job.request(jobInitialGeneration, {
       traits: state.get('traits'),
       populationSize: state.get('populationSize')
     }).then(({ genotypes }) => {
@@ -98,7 +98,7 @@ function actionShuffleGeneration(state, { rng }) {
         reject(error1);
       });
     } else {
-      Workers.perform(jobNewGeneration, {
+      Job.request(jobNewGeneration, {
         genotypes: prev.toJS(),
         populationSize: state.get('populationSize'),
         traits: state.get('traits'),
@@ -130,7 +130,7 @@ function actionNextGeneration(state, { rng }) {
       selectedGenos = selectedGenos.push(pg.get(selectedIndices.get(i)));
     }
 
-    Workers.perform(jobNewGeneration, {
+    Job.request(jobNewGeneration, {
       genotypes: selectedGenos.toJS(),
       populationSize: state.get('populationSize'),
       traits: state.get('traits'),

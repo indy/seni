@@ -107,7 +107,7 @@ function findAvailableWorker() {
   });
 }
 
-function perform(type, data) {
+function request(type, data) {
   return new Promise((resolve, reject) => {
     let worker = undefined;
 
@@ -136,5 +136,5 @@ function perform(type, data) {
 
 export default {
   setup,
-  perform
+  request
 };

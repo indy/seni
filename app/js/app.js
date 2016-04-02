@@ -28,7 +28,7 @@ import { addDefaultCommands } from './ui/KonsoleCommands';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
 import { SeniMode } from './ui/SeniMode';
-import Workers from './workers';
+import Job from './job';
 import { jobRender,
          jobUnparse,
          jobGenerateHelp } from './jobTypes';
@@ -217,7 +217,7 @@ function renderGeneration(state) {
     const stopFn = startTiming();
 
     for (let i = 0;i < phenotypes.size; i++) {
-      const workerJob = Workers.perform(jobRender, {
+      const workerJob = Job.request(jobRender, {
         script,
         scriptHash,
         genotype: genotypes.get(i).toJS()
@@ -270,7 +270,7 @@ function showScriptInEditor(state) {
 function renderScript(state, imageElement) {
   const stopFn = startTiming();
 
-  Workers.perform(jobRender, {
+  Job.request(jobRender, {
     script: state.get('script'),
     scriptHash: state.get('scriptHash')
   }).then(({ title, buffers, logMessages }) => {
@@ -378,7 +378,7 @@ function renderHighRes(state, genotype) {
 
   const stopFn = startTiming();
 
-  Workers.perform(jobRender, {
+  Job.request(jobRender, {
     script: state.get('script'),
     scriptHash: state.get('scriptHash'),
     genotype: genotype ? genotype.toJS() : undefined
@@ -416,7 +416,7 @@ function showEditFromEvolve(store, element) {
       const state = store.getState();
       const genotypes = state.get('genotypes');
 
-      Workers.perform(jobUnparse, {
+      Job.request(jobUnparse, {
         script: state.get('script'),
         scriptHash: state.get('scriptHash'),
         genotype: genotypes.get(index).toJS()
@@ -559,7 +559,7 @@ function createKonsole(element) {
     theme: 'konsole'
   });
 
-  Workers.perform(jobGenerateHelp, {
+  Job.request(jobGenerateHelp, {
   }).then(documentation => {
     const commander = new KonsoleCommander();
     addDefaultCommands(documentation, commander);
@@ -896,7 +896,7 @@ function allocateWorkers(state) {
     // don't allocate more workers than necessary
     numWorkers = state.get('populationSize');
   }
-  Workers.setup(numWorkers);
+  Job.setup(numWorkers);
 }
 
 export default function main() {
