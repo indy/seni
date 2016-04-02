@@ -102,13 +102,28 @@ function addBindings(env, exprs) {
   return [newEnv, lastValueBound, firstError];
 }
 
+function loopingFnIn(env, expr, varName, inParam) {
+  let res = [env, undefined, NO_ERROR];
+
+  inParam.forEach(val => {
+    res = evalBodyForms(env.set(varName, { binding: val }), expr);
+  });
+
+  return res;
+}
+
 function loopingFn(env, expr, varName, params) {
+  if (params.in !== undefined) {
+    return loopingFnIn(env, expr, varName, params.in);
+  }
+
   const { from, to, upto, steps, increment } = Object.assign({
     from: 0,
     to: 1,
     upto: undefined,
     steps: undefined,
-    increment: 1}, params);
+    increment: 1
+  }, params);
 
   let unit, i;
   let res = [env, undefined, NO_ERROR];

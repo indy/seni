@@ -104,134 +104,89 @@ describe('Special', () => {
     expect(res).to.equal(2);
   });
 
-  it('loop: from/to', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 0 to: 4 increment: 1) (vector/append bar a))`);
 
-    const bar = env.get('bar');
-    expect(bar.binding).to.deep.equal([0, 1, 2, 3]);
+  // given a loop's defining form this will return a vector of the loop's values
+  function evalLoop(form) {
+    const varName = 'a';
+    const vectorName = 'v';
+    const [env, _res] = evalForm(e,`
+      (define ${vectorName} (vector))
+      (loop (${varName} ${form})
+        (vector/append ${vectorName} ${varName}))
+    `);
+    return env.get(vectorName);
+  }
+
+  function loopEqual(form, expected) {
+    const res = evalLoop(form);
+    expect(res.binding).to.deep.equal(expected);
+  }
+
+  function loopCloseTo(form, expected) {
+    const res = evalLoop(form);
+    const binding = res.binding;
+    binding.forEach((value, index) => {
+      expect(value).to.be.closeTo(expected[index], epsilon);
+    });
+  }
+
+  it('loop: from/to', () => {
+    loopEqual('from: 0 to: 4 increment: 1', [0, 1, 2, 3]);
   });
 
   it('loop: from/to high to low', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 4 to: 0 increment: -1) (vector/append bar a))`);
-
-    const bar = env.get('bar');
-    expect(bar.binding).to.deep.equal([4, 3, 2, 1]);
+    loopEqual('from: 4 to: 0 increment: -1', [4, 3, 2, 1]);
   });
 
   it('loop: from/to high to low, positive increment', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 4 to: 0 increment: 1) (vector/append bar a))`);
-
-    const bar = env.get('bar');
-    expect(bar.binding).to.deep.equal([4, 3, 2, 1]);
+    loopEqual('from: 4 to: 0 increment: 1', [4, 3, 2, 1]);
   });
 
   it('loop: from/upto', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 0 upto: 4 increment: 1) (vector/append bar a))`);
-
-    const bar = env.get('bar');
-    expect(bar.binding).to.deep.equal([0, 1, 2, 3, 4]);
+    loopEqual('from: 0 upto: 4 increment: 1', [0, 1, 2, 3, 4]);
   });
 
   it('loop: from/upto high to low', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 4 upto: 0 increment: -1) (vector/append bar a))`);
-
-    const bar = env.get('bar');
-    expect(bar.binding).to.deep.equal([4, 3, 2, 1, 0]);
+    loopEqual('from: 4 upto: 0 increment: -1', [4, 3, 2, 1, 0]);
   });
 
   it('loop: from/upto high to low, positive increment', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 4 upto: 0 increment: 1) (vector/append bar a))`);
-
-    const bar = env.get('bar');
-    expect(bar.binding).to.deep.equal([4, 3, 2, 1, 0]);
+    loopEqual('from: 4 upto: 0 increment: 1', [4, 3, 2, 1, 0]);
   });
 
   it('loop: to increment', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 0 to: 12 increment: 2) (vector/append bar a))`);
-
-    const bar = env.get('bar');
-    expect(bar.binding).to.deep.equal([0, 2, 4, 6, 8, 10]);
+    loopEqual('from: 0 to: 12 increment: 2', [0, 2, 4, 6, 8, 10]);
   });
 
   it('loop: upto increment', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 0 upto: 12 increment: 2) (vector/append bar a))`);
-
-    const bar = env.get('bar');
-    expect(bar.binding).to.deep.equal([0, 2, 4, 6, 8, 10, 12]);
+    loopEqual('from: 0 upto: 12 increment: 2', [0, 2, 4, 6, 8, 10, 12]);
   });
 
   it('loop: from/to steps', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 0 to: 10 steps: 3) (vector/append bar a))`);
-
-    const bar = env.get('bar');
-    expect(bar.binding[0]).to.be.closeTo(0.00, epsilon);
-    expect(bar.binding[1]).to.be.closeTo(3.333, epsilon);
-    expect(bar.binding[2]).to.be.closeTo(6.666, epsilon);
+    loopCloseTo('from: 0 to: 10 steps: 3', [0.00, 3.333, 6.666]);
   });
 
   it('loop: from/to steps high to low', () => {
-    const [env, _res] = evalForm(e,`
-(define bar (vector))
-(loop (a from: 10 to: 0 steps: 3) (vector/append bar a))`);
-
-    const bar = env.get('bar');
-    expect(bar.binding[0]).to.be.closeTo(10.000, epsilon);
-    expect(bar.binding[1]).to.be.closeTo(6.666, epsilon);
-    expect(bar.binding[2]).to.be.closeTo(3.333, epsilon);
+    loopCloseTo('from: 10 to: 0 steps: 3', [10.00, 6.666, 3.333]);
   });
 
   it('loop: from/upto steps', () => {
-    const [env, _res] = evalForm(e,`
-
-      (define bar (vector))
-      (loop (a from: 0 upto: 10 steps: 3) (vector/append bar a))
-
-    `);
-
-    const bar = env.get('bar');
-    expect(bar.binding[0]).to.be.closeTo(0.00, epsilon);
-    expect(bar.binding[1]).to.be.closeTo(5.0, epsilon);
-    expect(bar.binding[2]).to.be.closeTo(10.0, epsilon);
+    loopCloseTo('from: 0 upto: 10 steps: 3', [0.0, 5.0, 10.0]);
   });
 
   it('loop: from/upto steps high to low', () => {
-    const [env, _res] = evalForm(e,`
-
-      (define bar (vector))
-      (loop (a from: 10 upto: 0 steps: 3) (vector/append bar a))
-
-    `);
-
-    const bar = env.get('bar');
-    expect(bar.binding[0]).to.be.closeTo(10.0, epsilon);
-    expect(bar.binding[1]).to.be.closeTo(5.0, epsilon);
-    expect(bar.binding[2]).to.be.closeTo(0.00, epsilon);
+    loopCloseTo('from: 10 upto: 0 steps: 3', [10.0, 5.0, 0.0]);
   });
 
-  //   it('loop: negative increment', () => {
-  //     let [env, res] = evalForm(e,`
-  // (define bar (vector))
-  // (loop (a from: 12 to: 0 increment: -2) (vector/append bar a))`);
-  //
-  //     const bar = env.get('bar');
-  //     expect(bar.binding).to.deep.equal([12, 10, 8, 6, 4, 2]);
-  //   });
+  it('loop: in', () => {
+    loopEqual('in: [3 7 1 9]', [3, 7, 1, 9]);
+  });
+
+  it('loop: in 1', () => {
+    loopEqual('in: [3]', [3]);
+  });
+
+  it('loop: in empty', () => {
+    loopEqual('in: []', []);
+  });
 });
