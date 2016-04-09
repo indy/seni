@@ -1,0 +1,164 @@
+(define 
+  title "164f-vhs"
+  initial-seed (prng/range seed: {384 (gen/int max: 1000)})
+  coords1 {[[304.553 -275.573]
+            [-71.354 -384.054]
+            [196.137 -37.219]
+            [-158.737 279.845]]
+           (gen/vector min: -500 max: 500)}
+  coords2 {[[-188.668 -221.156]
+            [133.438 7.501]
+            [-389.312 47.671]
+            [-251.040 -450.217]]
+           (gen/vector min: -500 max: 500)}
+  coords3 {[[104.872 -115.458]
+            [-201.240 401.424]
+            [57.271 293.906]
+            [-140.606 -252.564]]
+           (gen/vector min: -500 max: 500)}
+
+  col-fn-1 (col/procedural-fn a: {[0.977 0.416 0.171] (gen/scalar)}
+                              b: {[0.846 0.460 0.596] (gen/scalar)}
+                              c: {[0.667 0.176 0.706] (gen/scalar)}
+                              d: {[0.148 0.675 0.572] (gen/scalar)}
+                              alpha: 0.08)
+  col-fn-2 (col/procedural-fn a: {[0.945 0.574 0.681] (gen/scalar)}
+                              b: {[0.565 0.806 0.712] (gen/scalar)}
+                              c: {[0.260 0.205 0.216] (gen/scalar)}
+                              d: {[0.940 0.123 0.942] (gen/scalar)}
+                              alpha: 0.08)) 
+
+(fn (wash variation: 200
+          line-width: 70
+          line-segments: 5
+          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+          seed: 272)
+
+  (fn (v x: 0 y: 0 z: 0 scale: 1)
+    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
+
+  (define 
+    w/3 (/ canvas/width 3)
+    h/3 (/ canvas/height 3))
+
+  (loop (h from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[0 (v x: 0 y: h z: seed scale: variation)]
+                     [w/3 (v x: w/3 y: h z: seed scale: variation)]
+                     [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
+                     [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
+            colour: colour)
+
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[(v x: 0 y: h z: seed scale: variation) 0]
+                     [(v x: h/3 y: h z: seed scale: variation) h/3]
+                     [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
+                     [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
+            colour: colour)))
+
+(fn (interesting-circle position: [500 500]
+                        colour: red
+                        seed: "yabba dabba dooo"
+                        radius: 300)
+  (define 
+    rng (prng/range seed: seed)
+    outer-exterior (prng/range seed: (rng) min: 170 max: 210)
+    outer-interior (prng/range seed: (rng) min: 80 max: 170)
+    inner-exterior (prng/range seed: (rng) min: 100 max: 150)
+    inner-interior (prng/range seed: (rng) min: 0 max: 100)
+    srng (prng/range min: -1 max: 1 seed: seed))
+
+  (on-matrix-stack
+    (translate vector: position)
+    (scale scalar: (/ radius 210))
+    (loop (i to: 8)
+      (on-matrix-stack
+        (rotate angle: (* 360 (rng)))
+        ;; outer ring
+        (circle-slice tessellation: 30
+                      position: [0 0]
+                      colour: (col/lighten colour: colour
+                                           value: (* {85 (gen/int min: 20 max: 600)} (srng)))
+                      angle-start: 0
+                      angle-end: 320
+                      width: (outer-exterior)
+                      inner-width: (outer-interior)
+                      height: (outer-exterior)
+                      inner-height: (outer-interior))
+        ;; inner ring
+        (circle-slice tessellation: 10
+                      position: [0 0]
+                      colour: (col/lighten colour: colour
+                                           value: (* {54 (gen/int min: 10 max: 400)} (srng)))
+                      angle-start: 0
+                      angle-end: 320
+                      width: (inner-exterior)
+                      inner-width: (inner-interior)
+                      height: (inner-exterior)
+                      inner-height: (inner-interior))))
+    ;; centre fill
+    (circle-slice tessellation: 10
+                  position: [0 0]
+                  colour: (col/lighten colour: colour 
+                                       value: (* {66 (gen/int min: 5 max: 200)} (srng)))
+                  angle-start: 0
+                  angle-end: 360
+                  radius: 30)))
+
+(fn (flowery)
+  (loop (t from: 0 upto: 1 steps: 200)
+    (poly coords: [(interp/bezier t: t coords: coords1)
+                   (interp/bezier t: t coords: coords2)
+                   (interp/bezier t: t coords: coords3)]
+          colours: [(col-fn-1 t: t)
+                    (col-fn-2 t: (- 1 t))
+                    (col-fn-1 t: t)])))
+
+(fn (fg1)
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 2) 0])
+    (scale scalar: {1.587 (gen/scalar min: 1.2 max: 1.7)})
+    (rotate angle: {190 (gen/int max: 360)})
+    (repeat/rotate-mirrored draw: flowery
+                            copies: {8 (gen/int min: 1 max: 10)})))
+
+
+
+(fn (bg2)
+  (define 
+    seed-radius {7.055 (gen/scalar min: 6 max: 8)}
+    scale-factor 4
+    phi (/ (sqrt {5.428 (gen/scalar min: 4 max: 6)}) {8.036 (gen/scalar min: 8 max: 10)})
+    seeds 200
+    focalpoint ({focal/point (gen/select from: ['focal/point 'focal/hline 'focal/vline])} 
+                position: [{430 (gen/int max: canvas/width)} 
+                           {533 (gen/int max: canvas/height)}]
+                distance: {651 (gen/int min: (/ canvas/width 2) max: canvas/width)}))
+
+  (on-matrix-stack
+    (translate vector: [500 0])
+    (scale scalar: 20)
+    (loop (i from: seeds to: 0)
+      (define 
+        theta (/ (* i math/TAU) phi)
+        r (* scale-factor (sqrt i))
+        position [(* r (math/cos angle: theta))
+                  (* r (math/sin angle: theta))]
+        colour (col/set-alpha colour: (col-fn-1 t: (focalpoint position: position))
+                              value: 0.4))
+      ;; don't render some of the offscreen circles
+      (if (> (vector/get from: position nth: 1) -10)
+          (interesting-circle position: position
+                              radius: seed-radius
+                              colour: colour
+                              seed: i)))))
+
+
+
+(wash colour: (col-fn-1 t: 0.1))
+(bg2)
+(fg1)
+
+
