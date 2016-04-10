@@ -5,7 +5,7 @@
 (define 
   random-axis-position (prng/range seed: 42 min: -500 max: 500)
   col-fn (col/procedural-fn preset: {"robocop" 
-                                     (select from: col/procedural-fn-presets)})
+                                     (gen/select from: col/procedural-fn-presets)})
   random-radius (prng/range seed: 42 min: 2 max: 30))
 
 (loop (x to: 800)

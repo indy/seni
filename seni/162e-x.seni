@@ -3,17 +3,17 @@
             [12.860 -115.420]
             [9.174 415.564]
             [307.752 115.163]]
-           (vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
   coords2 {[[263.535 163.360]
             [463.316 -483.654]
             [-126.369 163.186]
             [-110.559 144.470]]
-           (vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
   coords3 {[[246.179 333.430]
             [175.995 205.296]
             [415.600 -409.797]
             [-284.530 207.528]]
-           (vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
 
   col-fn-1 (col/procedural-fn a: {[0.500 0.688 0.908] (scalar)}
                               b: {[0.256 0.838 0.984] (scalar)}
@@ -76,7 +76,7 @@
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (repeat/rotate-mirrored draw: draw
-                            copies: {2 (int min: 1 max: 30)})))
+                            copies: {2 (gen/int min: 1 max: 30)})))
 
 (render)
 

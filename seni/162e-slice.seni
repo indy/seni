@@ -3,26 +3,26 @@
             [74.096 -347.654]
             [-183.828 -380.454]
             [139.696 -188.675]]
-           (vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
   coords2 {[[-44.663 -282.768]
             [-329.692 -130.704]
             [313.436 448.917]
             [164.377 197.854]]
-           (vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
   coords3 {[[-114.835 -305.887]
             [236.405 -310.621]
             [-105.256 -58.435]
             [-274.251 -349.727]]
-           (vector min: -500 max: 500)}
+           (gen/vector min: -500 max: 500)}
 
   col-fn-1 (col/procedural-fn preset: {"robocop" 
-                                       (select from: col/procedural-fn-presets)}
+                                       (gen/select from: col/procedural-fn-presets)}
                               alpha: 0.08)
   col-fn-2 (col/procedural-fn preset: {"chrome" 
-                                       (select from: col/procedural-fn-presets)}
+                                       (gen/select from: col/procedural-fn-presets)}
                               alpha: 0.08)
   col-fn-3 (col/procedural-fn preset: {"chrome" 
-                                       (select from: col/procedural-fn-presets)}
+                                       (gen/select from: col/procedural-fn-presets)}
                               alpha: 0.08))
 
 
@@ -39,7 +39,7 @@
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (repeat/rotate-mirrored draw: draw
-                            copies: {6 (int min: 1 max: 8)})))
+                            copies: {6 (gen/int min: 1 max: 8)})))
 
 (render)
 
