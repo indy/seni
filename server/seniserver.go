@@ -1,0 +1,98 @@
+package main
+
+// based on https://golang.org/doc/articles/wiki/
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+)
+
+type GalleryItem struct {
+	Id    int
+	Name  string
+	Image string
+}
+
+var galleryItems []GalleryItem
+
+func galleryListHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	body, err := ioutil.ReadFile("gallery.json")
+	if err != nil {
+		return
+	}
+	fmt.Fprintf(w, string(body))
+}
+
+func galleryHandler(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	last := parts[len(parts)-1]
+	id, err := strconv.Atoi(last)
+	if err != nil {
+		http.Redirect(w, r, "/gallery", http.StatusFound)
+		return
+	}
+
+	galleryItem, err := getGalleryItem(id)
+	if err != nil {
+		http.Redirect(w, r, "/gallery", http.StatusFound)
+		return
+	}
+
+	filename := "seni/" + galleryItem.Name + ".seni"
+	body, err := ioutil.ReadFile(filename)
+	if err != nil {
+		http.Redirect(w, r, "/gallery", http.StatusFound)
+		return
+	}
+
+	fmt.Fprintf(w, string(body))
+}
+
+func getGalleryItem(id int) (*GalleryItem, error) {
+	for i := 0; i < len(galleryItems); i++ {
+		if galleryItems[i].Id == id {
+			return &galleryItems[i], nil
+		}
+	}
+	return nil, errors.New("unable to find id")
+}
+
+func parseGallery() ([]GalleryItem, error) {
+	body, err := ioutil.ReadFile("gallery.json")
+	if err != nil {
+		return nil, err
+	}
+	var m []GalleryItem
+	dec := json.NewDecoder(strings.NewReader(string(body)))
+	if err := dec.Decode(&m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func main() {
+	galleryItems2, err := parseGallery()
+	if err != nil {
+		fmt.Println("fooked")
+		log.Fatal(err)
+	}
+	galleryItems = galleryItems2
+
+	http.HandleFunc("/gallery", galleryListHandler)
+	http.HandleFunc("/gallery/", galleryHandler)
+
+	fs := http.FileServer(http.Dir("app"))
+	http.Handle("/", fs)
+
+	fs = http.FileServer(http.Dir("node_modules"))
+	http.Handle("/node_modules/", http.StripPrefix("/node_modules/", fs))
+
+	http.ListenAndServe(":3000", nil)
+}
