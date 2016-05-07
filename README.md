@@ -8,7 +8,8 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 ### Prerequisites:
 
-1. `npm install`
+1. go should be installed
+2. `npm install`
 
 ### Build:
 
@@ -24,5 +25,5 @@ The tests will automatically re-run in the browser whenever the source code chan
 
 ### Running
 
-1. `npm run serve`
+1. `go run server/seniserver.go`
 2. visit http://localhost:3000
