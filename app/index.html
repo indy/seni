@@ -26,6 +26,10 @@
           <button id="render-btn" class="hidden navbar-button">Render</button>
           <button id="next-btn" class="hidden navbar-button nextgen-btn">NextGen</button>
           <button id="shuffle-btn" class="hidden navbar-button">Shuffle</button>
+
+        <span id="quickstart-sign-in-status">Unknown</span>
+        <button disabled class="navbar-button" id="quickstart-sign-in">Sign In</button>
+          
         </div>
       </div>
     </nav>
@@ -66,6 +70,7 @@
       </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
     <script src="dist/seni.bundle.js"></script>
     <script>
       if('serviceWorker' in navigator) {

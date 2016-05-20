@@ -32,6 +32,8 @@ import Job from './job';
 import { jobRender,
          jobUnparse,
          jobGenerateHelp } from './jobTypes';
+import { initFirebase,
+         initFirebaseSignIn} from './fb';
 
 let gUI = {};
 let gGLRenderer = undefined;
@@ -900,6 +902,9 @@ function allocateWorkers(state) {
 }
 
 export default function main() {
+  initFirebase();
+  initFirebaseSignIn();
+
   resizeContainers();
   console.log(Trivia.getTitle());
 

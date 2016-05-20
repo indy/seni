@@ -6,6 +6,7 @@
   "globals": {
     "console": true,
     "CodeMirror": false,
+    "firebase": false,
     "performance": true
   },
   "settings": {
