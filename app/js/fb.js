@@ -42,7 +42,7 @@ function toggleSignIn() {
   } else {
     firebase.auth().signOut();
   }
-  document.getElementById('quickstart-sign-in').disabled = true;
+  document.getElementById('firebase-sign-in').disabled = true;
 }
 
 /**
@@ -67,13 +67,9 @@ export function initFirebaseSignIn() {
       // This gives you a Google Access Token.
       // You can use it to access the Google API.
       let token = result.credential.accessToken;
-      console.log(`firebase received Google Access Token ${token}`);
-      // document.getElementById('quickstart-oauthtoken').textContent = token;
-    } else {
-      // document.getElementById('quickstart-oauthtoken').textContent = 'null';
     }
     // The signed-in user info.
-    let user = result.user;
+    // let user = result.user;
   }).catch(error => {
     // Handle Errors here.
     let errorCode = error.code;
@@ -91,6 +87,8 @@ export function initFirebaseSignIn() {
     }
   });
 
+  const fbSignIn = document.getElementById('firebase-sign-in');
+
   // Listening for auth state changes.
   firebase.auth().onAuthStateChanged(user => {
     if (user) {
@@ -103,9 +101,7 @@ export function initFirebaseSignIn() {
       let uid = user.uid;
       let refreshToken = user.refreshToken;
       let providerData = user.providerData;
-      document.getElementById('quickstart-sign-in-status').textContent =
-        displayName;
-      document.getElementById('quickstart-sign-in').textContent = 'Sign out';
+      fbSignIn.textContent = displayName;
 
       const info =
         JSON.stringify({
@@ -118,18 +114,11 @@ export function initFirebaseSignIn() {
           refreshToken,
           providerData
         }, null, '  ');
-      console.log(info);
     } else {
       // User is signed out.
-      document.getElementById('quickstart-sign-in-status').textContent =
-        'Signed out';
-      document.getElementById('quickstart-sign-in').textContent =
-        'Sign In';
+      fbSignIn.textContent = 'Sign In';
     }
-    document.getElementById('quickstart-sign-in').disabled = false;
+    fbSignIn.disabled = false;
   });
-
-  document.getElementById('quickstart-sign-in').addEventListener('click',
-                                                                 toggleSignIn,
-                                                                 false);
+  fbSignIn.addEventListener('click', toggleSignIn, false);
 }
