@@ -77,6 +77,13 @@ func parseGallery() ([]GalleryItem, error) {
 	return m, nil
 }
 
+func maxAgeHandler(seconds int, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d, public, must-revalidate, proxy-revalidate", seconds))
+		h.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	galleryItems2, err := parseGallery()
 	if err != nil {
@@ -89,7 +96,7 @@ func main() {
 	http.HandleFunc("/gallery/", galleryHandler)
 
 	fs := http.FileServer(http.Dir("app"))
-	http.Handle("/", fs)
+	http.Handle("/", maxAgeHandler(0, fs))
 
 	fs = http.FileServer(http.Dir("node_modules"))
 	http.Handle("/node_modules/", http.StripPrefix("/node_modules/", fs))
