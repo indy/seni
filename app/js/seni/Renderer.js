@@ -419,7 +419,10 @@ export default class Renderer {
    */
   addVertex(p, c) {
     const res = this.matrixStack.transform2DVector(p);
-    this.renderPacket.addVertex(res, c);
+    // pre-multiply the alpha
+    // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
+    const col = [c[0] * c[3], c[1] * c[3], c[2] * c[3], c[3]];
+    this.renderPacket.addVertex(res, col);
   }
 
   flushTriangles() {
