@@ -55,24 +55,36 @@ function setupShaders(gl) {
   const fragmentSrc = `
   precision mediump float;
   varying vec4 vColor;
+  varying highp vec2 vTextureCoord;
+
+  uniform sampler2D uSampler;
 
   void main(void) {
-    gl_FragColor = vColor;
+    vec4 tex = texture2D(uSampler, vTextureCoord);
+
+    gl_FragColor.r = vColor.r;
+    gl_FragColor.g = vColor.g;
+    gl_FragColor.b = vColor.b;
+    gl_FragColor.a = tex.r * vColor.a;
+
   }
   `;
 
   const vertexSrc = `
   attribute vec2 aVertexPosition;
   attribute vec4 aVertexColor;
+  attribute vec2 aVertexTexture;
 
   uniform mat4 uMVMatrix;
   uniform mat4 uPMatrix;
 
   varying vec4 vColor;
+  varying highp vec2 vTextureCoord;
 
   void main(void) {
     gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
     vColor = aVertexColor;
+    vTextureCoord = aVertexTexture;
   }
   `;
 
@@ -99,6 +111,10 @@ function setupShaders(gl) {
     gl.getAttribLocation(shaderProgram, 'aVertexColor');
   gl.enableVertexAttribArray(shaderProgram.colourAttribute);
 
+  shaderProgram.textureAttribute =
+    gl.getAttribLocation(shaderProgram, 'aVertexTexture');
+  gl.enableVertexAttribArray(shaderProgram.textureAttribute);
+
   shaderProgram.pMatrixUniform =
     gl.getUniformLocation(shaderProgram, 'uPMatrix');
   shaderProgram.mvMatrixUniform =
@@ -117,17 +133,48 @@ function setupGLState(gl) {
    * original blendEquation and blendFunc functions. It looks like the extra
    * arguments in the *Separate functions are ignored on my dev machine
    */
+
   gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
   gl.blendFuncSeparate(gl.SRC_ALPHA,
                        gl.ONE_MINUS_SRC_ALPHA,
                        gl.ONE_MINUS_DST_ALPHA,
                        gl.ONE);
+
   // original
   // http://www.andersriggelsen.dk/glblendfunc.php
-  // gl.blendEquation(gl.FUNC_ADD);
-  // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+//  gl.blendEquation(gl.FUNC_ADD);
+//  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-  gl.disable(gl.DEPTH_TEST);
+//  gl.disable(gl.DEPTH_TEST);
+}
+
+
+function handleTextureLoaded(gl, image, texture, shaderProgram) {
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+                   gl.LINEAR_MIPMAP_NEAREST);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.uniform1i(gl.getUniformLocation(shaderProgram, 'uSampler'), 0);
+}
+
+function initTexture(gl, shaderProgram) {
+  const texture = gl.createTexture();
+  const image = new Image();
+  image.onload = () => {
+    console.log('GLRenderer.js: loading a texture');
+    handleTextureLoaded(gl, image, texture, shaderProgram);
+  };
+
+  image.src = '/img/texture.png';
+
+  return texture;
 }
 
 export default class GLRenderer {
@@ -137,10 +184,15 @@ export default class GLRenderer {
     // webgl setup
     const gl = initGL(this.glDomElement);
     this.gl = gl;
+
     this.shaderProgram = setupShaders(gl);
     setupGLState(gl);
+
+    this.texture = initTexture(gl, this.shaderProgram);
+
     this.glVertexBuffer = gl.createBuffer();
     this.glColourBuffer = gl.createBuffer();
+    this.glTextureBuffer = gl.createBuffer();
 
     this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
@@ -181,63 +233,36 @@ export default class GLRenderer {
                         this.mvMatrix);
   }
 
-  drawRenderPackets(renderPackets) {
+  drawBuffer(buffer) {
     const gl = this.gl;
     const shaderProgram = this.shaderProgram;
 
     const glVertexBuffer = this.glVertexBuffer;
     const glColourBuffer = this.glColourBuffer;
-
-    let sum = 0;
-    const numPackets = renderPackets.length;
-    for (let i = 0; i < numPackets; i++) {
-      const renderPacket = renderPackets[i];
-      const bufferLevel = renderPacket.getBufferLevel();
-      sum += bufferLevel;
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER,
-                    renderPacket.vertexBuffer, gl.STATIC_DRAW);
-      gl.vertexAttribPointer(shaderProgram.positionAttribute,
-                             renderPacket.vertexItemSize,
-                             gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER,
-                    renderPacket.colourBuffer, gl.STATIC_DRAW);
-      gl.vertexAttribPointer(shaderProgram.colourAttribute,
-                             renderPacket.colourItemSize,
-                             gl.FLOAT, false, 0, 0);
-
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, bufferLevel);
-    }
-    if (logToConsole) {
-      console.log(`rendered ${sum} vertices in ${numPackets} renderPackets`);
-    }
-  }
-
-  drawBuffers(vbuf, cbuf, numVertices) {
-    const gl = this.gl;
-    const shaderProgram = this.shaderProgram;
-
-    const glVertexBuffer = this.glVertexBuffer;
-    const glColourBuffer = this.glColourBuffer;
+    const glTextureBuffer = this.glTextureBuffer;
 
     const vertexItemSize = 2;
     const colourItemSize = 4;
+    const textureItemSize = 2;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vbuf, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, buffer.vbuf, gl.STATIC_DRAW);
     gl.vertexAttribPointer(shaderProgram.positionAttribute,
                            vertexItemSize,
                            gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, cbuf, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, buffer.cbuf, gl.STATIC_DRAW);
     gl.vertexAttribPointer(shaderProgram.colourAttribute,
                            colourItemSize,
                            gl.FLOAT, false, 0, 0);
 
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, numVertices);
+    gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, buffer.tbuf, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shaderProgram.textureAttribute,
+                           textureItemSize,
+                           gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.numVertices);
   }
 }
