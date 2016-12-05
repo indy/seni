@@ -196,7 +196,7 @@ function renderGeometryBuffers(buffers, imageElement, w, h) {
   gGLRenderer.preDrawScene(destWidth, destHeight);
 
   buffers.forEach(buffer => {
-    gGLRenderer.drawBuffers(buffer.vbuf, buffer.cbuf, buffer.numVertices);
+    gGLRenderer.drawBuffer(buffer);
   });
 
   imageElement.src = gGLRenderer.getImageData();

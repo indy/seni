@@ -120,6 +120,7 @@ function render({ script, scriptHash, genotype }) {
     const bufferData = {
       vbuf: packet.abVertex,
       cbuf: packet.abColour,
+      tbuf: packet.abTexture,
       numVertices: packet.bufferLevel
     };
     return bufferData;
@@ -204,9 +205,10 @@ function register(callback) {
         result.buffers.forEach(buffer => {
           transferrable.push(buffer.vbuf);
           transferrable.push(buffer.cbuf);
+          transferrable.push(buffer.tbuf);
         });
         if (logToConsole) {
-          const n = transferrable.length / 2;
+          const n = transferrable.length / 3;
           console.log(`sending over ${n} transferrable sets`);
         }
         self.postMessage([null, result], transferrable);
