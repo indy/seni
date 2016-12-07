@@ -31,6 +31,16 @@ function renderBezier(publicBinding, params, renderer) {
   renderer.cmdRenderBezier(fullParams);
 }
 
+function renderBrushLine(publicBinding, params, renderer) {
+  const fullParams = publicBinding.mergeWithDefaults(params);
+  renderer.cmdRenderBrushLine(fullParams);
+}
+
+function renderBrushStroke(publicBinding, params, renderer) {
+  const fullParams = publicBinding.mergeWithDefaults(params);
+  renderer.cmdRenderBrushStroke(fullParams);
+}
+
 const bezierBinding = new PublicBinding(
   'bezier',
   { description: 'renders a bezier curve',
@@ -395,6 +405,46 @@ const publicBindings = [
       't-end': 1,
       colour: Colour.defaultColour },
     (self, renderer) => params => renderBezierBulging(self, params, renderer)),
+
+  new PublicBinding(
+    'brush-line',
+    { description: 'renders a brush line',
+      args: [['from', 'vector'],
+             ['to', 'vector'],
+             ['width', '20'],
+             ['colour', 'Colour.defaultColour']] },
+    { from: [100, 100],
+      to: [500, 500],
+      width: 20,
+      colour: Colour.defaultColour },
+    (self, renderer) => params => renderBrushLine(self, params, renderer)),
+
+  new PublicBinding(
+    'brush-stroke',
+    { description: 'renders a brush stroke alone a bezier curve',
+      args: [['tessellation', 'the number of polygons to use'],
+             ['line-width', ''],
+             ['line-width-start', ''],
+             ['line-width-end', ''],
+             ['line-width-mapping',
+              'one of linear, quick, slow-in or slow-in-out'],
+             ['coords', 'four control points'],
+             ['t-start', '0'],
+             ['t-end', '1'],
+             ['colour', 'Colour.defaultColour']] },
+    { tessellation: 15,
+      'line-width': undefined,
+      'line-width-start': 20,
+      'line-width-end': 20,
+      'line-width-mapping': 'slow-in-out',
+      coords: [[440, 400],
+               [533, 700],
+               [766, 200],
+               [900, 500]],
+      't-start': 0,
+      't-end': 1,
+      colour: Colour.defaultColour },
+    (self, renderer) => params => renderBrushStroke(self, params, renderer)),
 
   strokedBezierBinding,
 

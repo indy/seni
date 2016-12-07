@@ -87,6 +87,14 @@ export default class Renderer {
     this.renderCurve(params, MathUtil.bezierCoordinates);
   }
 
+  cmdRenderBrushLine(params) {
+    this.renderBrushLine(params);
+  }
+
+  cmdRenderBrushStroke(params) {
+    this.renderBrushStroke(params);
+  }
+
   cmdRenderQuadratic(params) {
     this.renderCurve(params, MathUtil.quadraticCoordinates);
   }
@@ -113,13 +121,83 @@ export default class Renderer {
 
     const [[n1x, n1y], [n2x, n2y]] = MathUtil.normals(x1, y1, x2, y2);
 
-    const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+    const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
     this.prepareToAddTriangleStrip(4, [x1 + (hw * n1x), y1 + (hw * n1y)]);
-    this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colourArray, uv(1, 1));
-    this.addVertex([x1 + (hw * n2x), y1 + (hw * n2y)], colourArray, uv(2, 1));
-    this.addVertex([x2 + (hw * n1x), y2 + (hw * n1y)], colourArray, uv(1, 2));
-    this.addVertex([x2 + (hw * n2x), y2 + (hw * n2y)], colourArray, uv(2, 2));
+    this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colArray, uv(1, 1));
+    this.addVertex([x1 + (hw * n2x), y1 + (hw * n2y)], colArray, uv(2, 1));
+    this.addVertex([x2 + (hw * n1x), y2 + (hw * n1y)], colArray, uv(1, 2));
+    this.addVertex([x2 + (hw * n2x), y2 + (hw * n2y)], colArray, uv(2, 2));
+  }
+
+  renderBrushLine(params) {
+    const {
+      from,
+      to,
+      width,
+      colour
+    } = params;
+
+    const [x1, y1] = from;
+    const [x2, y2] = to;
+    const hw = width / 2;
+
+    const [[n1x, n1y], [n2x, n2y]] = MathUtil.normals(x1, y1, x2, y2);
+
+    const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+
+    const uvCoords = [
+      uv(248, 196),
+      uv(248, 255),
+      uv(0, 196),
+      uv(0, 255)
+    ];
+
+    this.prepareToAddTriangleStrip(4, [x1 + (hw * n1x), y1 + (hw * n1y)]);
+    this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colArray, uvCoords[0]);
+    this.addVertex([x1 + (hw * n2x), y1 + (hw * n2y)], colArray, uvCoords[1]);
+    this.addVertex([x2 + (hw * n1x), y2 + (hw * n1y)], colArray, uvCoords[2]);
+    this.addVertex([x2 + (hw * n2x), y2 + (hw * n2y)], colArray, uvCoords[3]);
+  }
+
+  renderBrushStroke(params) {
+    const {
+      colour,
+      coords,
+      tessellation
+    } = params;
+    const tStart = params['t-start'];
+    const tEnd = params['t-end'];
+
+    const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
+
+    const {
+      xs,
+      ys
+    } = MathUtil.bezierCoordinates(tVals, coords);
+
+    const {
+      halfWidthEnd,
+      remap
+    } = this.getRemapAndHalfWidthEnd(params);
+
+    const uvCoords = [
+      uv(248, 196),
+      uv(248, 255),
+      uv(0, 196),
+      uv(0, 255)
+    ];
+
+    this.addVerticesAsStrip({
+      tVals,
+      xs,
+      ys,
+      tessellation,
+      remap,
+      colour,
+      halfWidthEnd,
+      uvCoords
+    });
   }
 
   renderRect(params) {
@@ -134,14 +212,14 @@ export default class Renderer {
     const halfWidth = width / 2;
     const halfHeight = height / 2;
 
-    const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+    const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
     this.prepareToAddTriangleStrip(4, [x - halfWidth, y - halfHeight]);
 
-    this.addVertex([x - halfWidth, y - halfHeight], colourArray, uv(1, 1));
-    this.addVertex([x + halfWidth, y - halfHeight], colourArray, uv(2, 1));
-    this.addVertex([x - halfWidth, y + halfHeight], colourArray, uv(1, 2));
-    this.addVertex([x + halfWidth, y + halfHeight], colourArray, uv(2, 2));
+    this.addVertex([x - halfWidth, y - halfHeight], colArray, uv(1, 1));
+    this.addVertex([x + halfWidth, y - halfHeight], colArray, uv(2, 1));
+    this.addVertex([x - halfWidth, y + halfHeight], colArray, uv(1, 2));
+    this.addVertex([x + halfWidth, y + halfHeight], colArray, uv(2, 2));
   }
 
   renderCircle(params) {
@@ -165,7 +243,7 @@ export default class Renderer {
       height = radius;
     }
 
-    const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+    const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
     this.prepareToAddTriangleStrip((tessellation * 2) + 2, [x, y]);
 
@@ -179,8 +257,8 @@ export default class Renderer {
       vx = (Math.sin(angle) * width) + x;
       vy = (Math.cos(angle) * height) + y;
 
-      this.addVertex([x, y], colourArray, textureUV);
-      this.addVertex([vx, vy], colourArray, textureUV);
+      this.addVertex([x, y], colArray, textureUV);
+      this.addVertex([vx, vy], colArray, textureUV);
     }
 
     // close up the polygon
@@ -188,8 +266,8 @@ export default class Renderer {
     vx = (Math.sin(angle) * width) + x;
     vy = (Math.cos(angle) * height) + y;
 
-    this.addVertex([x, y], colourArray, textureUV);
-    this.addVertex([vx, vy], colourArray, textureUV);
+    this.addVertex([x, y], colArray, textureUV);
+    this.addVertex([vx, vy], colArray, textureUV);
   }
 
   renderCircleSlice(params) {
@@ -228,7 +306,7 @@ export default class Renderer {
     const rStart = angleStart * degToRad;
     const rEnd = angleEnd * degToRad;
 
-    const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+    const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
     //let tau = Math.PI * 2;
     const unitAngle = (rEnd - rStart) / tessellation;
@@ -248,8 +326,8 @@ export default class Renderer {
       vx = (Math.sin(angle) * width) + x;
       vy = (Math.cos(angle) * height) + y;
 
-      this.addVertex([innervx, innervy], colourArray, textureUV);
-      this.addVertex([vx, vy], colourArray, textureUV);
+      this.addVertex([innervx, innervy], colArray, textureUV);
+      this.addVertex([vx, vy], colArray, textureUV);
     }
 
     // close up the polygon
@@ -261,8 +339,8 @@ export default class Renderer {
     vx = (Math.sin(angle) * width) + x;
     vy = (Math.cos(angle) * height) + y;
 
-    this.addVertex([innervx, innervy], colourArray, textureUV);
-    this.addVertex([vx, vy], colourArray, textureUV);
+    this.addVertex([innervx, innervy], colArray, textureUV);
+    this.addVertex([vx, vy], colArray, textureUV);
   }
 
   renderPoly(params) {
@@ -303,6 +381,13 @@ export default class Renderer {
       remap
     } = this.getRemapAndHalfWidthEnd(params);
 
+    const uvCoords = [
+      uv(2, 1),
+      uv(2, 2),
+      uv(1, 1),
+      uv(1, 2)
+    ];
+
     this.addVerticesAsStrip({
       tVals,
       xs,
@@ -310,7 +395,8 @@ export default class Renderer {
       tessellation,
       remap,
       colour,
-      halfWidthEnd
+      halfWidthEnd,
+      uvCoords
     });
   }
 
@@ -348,15 +434,25 @@ export default class Renderer {
       tessellation,
       remap,
       colour,
-      halfWidthEnd
+      halfWidthEnd,
+      uvCoords
     } = args;
 
-    const colourArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
+    const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
     let i, ix, iy, v1, v2, xn1, yn1, xn2, yn2;
     let t = undefined;
 
-    const textureUV = uv(1, 1);
+    const texT = 1.0 / tVals.length;
+    const uvA = uvCoords[0];
+    const uvB = uvCoords[1];
+    const uvC = uvCoords[2];
+    const uvD = uvCoords[3];
+
+    const interpUV = function (a, b, _t) {
+      return [Interp.interpolate(a[0], b[0], _t),
+              Interp.interpolate(a[1], b[1], _t)];
+    };
 
     for (i = 0; i < tVals.length - 1; i++) {
       [[xn1, yn1], [xn2, yn2]] =
@@ -374,8 +470,10 @@ export default class Renderer {
         this.prepareToAddTriangleStrip(tessellation * 2, v1);
       }
 
-      this.addVertex(v1, colourArray, textureUV);
-      this.addVertex(v2, colourArray, textureUV);
+      const uvt = texT * i;
+
+      this.addVertex(v1, colArray, interpUV(uvB, uvD, uvt));
+      this.addVertex(v2, colArray, interpUV(uvA, uvC, uvt));
     }
 
     // final 2 vertices for the end point
@@ -389,8 +487,8 @@ export default class Renderer {
     v1 = [(xn1 * halfWidthEnd) + ix, (yn1 * halfWidthEnd) + iy];
     v2 = [(xn2 * halfWidthEnd) + ix, (yn2 * halfWidthEnd) + iy];
 
-    this.addVertex(v1, colourArray, textureUV);
-    this.addVertex(v2, colourArray, textureUV);
+    this.addVertex(v1, colArray, uvD);
+    this.addVertex(v2, colArray, uvC);
   }
 
   preDrawScene() {

@@ -1,7 +1,13 @@
 (define title "hello world")
 
-(rect position: [700 300])
+(brush-line colour: green
+            width: 150
+            from: [890 300]
+            to: [100 300])
 
-(rect
- position: [300 300]
- colour: (col/rgb r: 1.0 g: 0.0 b: 0.0 alpha: 1.0))
+(brush-stroke colour: (col/rgb r: 0.5 g: 0.2 b: 0.1 alpha: 0.4)
+              line-width: 150
+              coords: [[100 500]
+                       [333.33 800]
+                       [666.66 200]
+                       [900 500]])
