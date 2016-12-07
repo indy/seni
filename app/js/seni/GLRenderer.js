@@ -62,9 +62,9 @@ function setupShaders(gl) {
   void main(void) {
     vec4 tex = texture2D(uSampler, vTextureCoord);
 
-    gl_FragColor.r = vColor.r;
-    gl_FragColor.g = vColor.g;
-    gl_FragColor.b = vColor.b;
+    gl_FragColor.r = tex.r * vColor.r;
+    gl_FragColor.g = tex.r * vColor.g;
+    gl_FragColor.b = tex.r * vColor.b;
     gl_FragColor.a = tex.r * vColor.a;
 
   }
