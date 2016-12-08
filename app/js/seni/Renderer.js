@@ -134,6 +134,8 @@ export default class Renderer {
       width,
       colour
     } = params;
+    const brushType = params['brush-type'];
+    const brushSubtype = params['brush-subtype'];
 
     const [x1, y1] = from;
     const [x2, y2] = to;
@@ -143,7 +145,7 @@ export default class Renderer {
 
     const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
-    const uvCoords = UVMapper.get('brushA', 0);
+    const uvCoords = UVMapper.get(brushType, brushSubtype);
 
     this.prepareToAddTriangleStrip(4, [x1 + (hw * n1x), y1 + (hw * n1y)]);
     this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colArray, uvCoords[0]);
@@ -160,6 +162,8 @@ export default class Renderer {
     } = params;
     const tStart = params['t-start'];
     const tEnd = params['t-end'];
+    const brushType = params['brush-type'];
+    const brushSubtype = params['brush-subtype'];
 
     const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
 
@@ -173,7 +177,7 @@ export default class Renderer {
       remap
     } = this.getRemapAndHalfWidthEnd(params);
 
-    const uvCoords = UVMapper.get('brushA', 0);
+    const uvCoords = UVMapper.get(brushType, brushSubtype);
 
     this.addVerticesAsStrip({
       tVals,

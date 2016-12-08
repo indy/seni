@@ -3,7 +3,9 @@
 (brush-line colour: green
             width: 150
             from: [890 300]
-            to: [100 300])
+            to: [100 300]
+            brush-type: "brushC"
+            brush-subtype: 0)
 
 (brush-stroke colour: (col/rgb r: 0.5 g: 0.2 b: 0.1 alpha: 0.4)
               line-width: 150
