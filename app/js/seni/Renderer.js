@@ -21,14 +21,9 @@ import MatrixStack from './MatrixStack';
 import MathUtil from './MathUtil';
 import Interp from './Interp';
 import Colour from './Colour';
+import UVMapper from './UVMapper';
 
 const Format = Colour.Format;
-
-const textureDim = 256.0;
-function uv(x, y) {
-  return [x / textureDim, y / textureDim];
-}
-
 
 export default class Renderer {
   constructor() {
@@ -123,11 +118,13 @@ export default class Renderer {
 
     const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
+    const uvCoords = UVMapper.get('flat', 0);
+
     this.prepareToAddTriangleStrip(4, [x1 + (hw * n1x), y1 + (hw * n1y)]);
-    this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colArray, uv(1, 1));
-    this.addVertex([x1 + (hw * n2x), y1 + (hw * n2y)], colArray, uv(2, 1));
-    this.addVertex([x2 + (hw * n1x), y2 + (hw * n1y)], colArray, uv(1, 2));
-    this.addVertex([x2 + (hw * n2x), y2 + (hw * n2y)], colArray, uv(2, 2));
+    this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colArray, uvCoords[0]);
+    this.addVertex([x1 + (hw * n2x), y1 + (hw * n2y)], colArray, uvCoords[1]);
+    this.addVertex([x2 + (hw * n1x), y2 + (hw * n1y)], colArray, uvCoords[2]);
+    this.addVertex([x2 + (hw * n2x), y2 + (hw * n2y)], colArray, uvCoords[3]);
   }
 
   renderBrushLine(params) {
@@ -146,12 +143,7 @@ export default class Renderer {
 
     const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
 
-    const uvCoords = [
-      uv(248, 196),
-      uv(248, 255),
-      uv(0, 196),
-      uv(0, 255)
-    ];
+    const uvCoords = UVMapper.get('brushA', 0);
 
     this.prepareToAddTriangleStrip(4, [x1 + (hw * n1x), y1 + (hw * n1y)]);
     this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colArray, uvCoords[0]);
@@ -181,12 +173,7 @@ export default class Renderer {
       remap
     } = this.getRemapAndHalfWidthEnd(params);
 
-    const uvCoords = [
-      uv(248, 196),
-      uv(248, 255),
-      uv(0, 196),
-      uv(0, 255)
-    ];
+    const uvCoords = UVMapper.get('brushA', 0);
 
     this.addVerticesAsStrip({
       tVals,
@@ -216,10 +203,12 @@ export default class Renderer {
 
     this.prepareToAddTriangleStrip(4, [x - halfWidth, y - halfHeight]);
 
-    this.addVertex([x - halfWidth, y - halfHeight], colArray, uv(1, 1));
-    this.addVertex([x + halfWidth, y - halfHeight], colArray, uv(2, 1));
-    this.addVertex([x - halfWidth, y + halfHeight], colArray, uv(1, 2));
-    this.addVertex([x + halfWidth, y + halfHeight], colArray, uv(2, 2));
+    const uvCoords = UVMapper.get('flat', 0);
+
+    this.addVertex([x - halfWidth, y - halfHeight], colArray, uvCoords[0]);
+    this.addVertex([x + halfWidth, y - halfHeight], colArray, uvCoords[1]);
+    this.addVertex([x - halfWidth, y + halfHeight], colArray, uvCoords[2]);
+    this.addVertex([x + halfWidth, y + halfHeight], colArray, uvCoords[3]);
   }
 
   renderCircle(params) {
@@ -250,7 +239,7 @@ export default class Renderer {
     const tau = Math.PI * 2;
     const unitAngle = tau / tessellation;
     let angle, vx, vy;
-    const textureUV = uv(1, 1);
+    const textureUV = UVMapper.uv(1, 1);
 
     for (let i = 0; i < tessellation; i++) {
       angle = unitAngle * i;
@@ -290,7 +279,7 @@ export default class Renderer {
 
     const degToRad = MathUtil.TAU / 360;
 
-    const textureUV = uv(1, 1);
+    const textureUV = UVMapper.uv(1, 1);
     const [x, y] = position;
 
     if (radius !== undefined) {
@@ -349,7 +338,7 @@ export default class Renderer {
       colours
     } = params;
 
-    const textureUV = uv(1, 1);
+    const textureUV = UVMapper.uv(1, 1);
     const n = coords.length;
     // todo: check that the colours array is the same size as the coords array
 
@@ -381,12 +370,7 @@ export default class Renderer {
       remap
     } = this.getRemapAndHalfWidthEnd(params);
 
-    const uvCoords = [
-      uv(2, 1),
-      uv(2, 2),
-      uv(1, 1),
-      uv(1, 2)
-    ];
+    const uvCoords = UVMapper.get('flat', 0);
 
     this.addVerticesAsStrip({
       tVals,
