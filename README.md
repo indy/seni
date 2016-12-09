@@ -25,19 +25,15 @@ The tests will automatically re-run in the browser whenever the source code chan
 
 ### Running
 
-1. `go run server/seniserver.go`
+1. `go run server.go`
 2. visit http://localhost:3000
-
-
 
 ## Windows 10 Shenanigans
 
-You will need to build a seniserver.exe and add it to the Firewall whitelist in order to prevent a Windows Firewall dialog appearing every time.
+You will need to build a server.exe and add it to the Firewall whitelist in order to prevent a Windows Firewall dialog appearing every time.
 
-1. `cd seni\server`
-2. `go build -o seniserver.exe`
-3. In the windows control panel go to:
+1. `go build -o server.exe`
+2. In the windows control panel go to:
    `Control Panel\All Control Panel Items\Windows Firewall\Allowed applications`
-   and add the seniserver.exe that was just created
-4. `cd ..`
-5. `server\seniserver.exe`
+   and add the server.exe that was just created
+3. `server.exe`
