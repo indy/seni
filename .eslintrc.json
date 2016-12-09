@@ -174,7 +174,11 @@
     "guard-for-in": 0,
     "handle-callback-err": 0,
     "id-length": 0,
-    "indent": [2, 2, {"VariableDeclarator": 2}],
+    "indent": [0, 2, {"VariableDeclarator": 2,
+                      "MemberExpression": 1,
+                      "CallExpression": {"arguments": "first"},
+                      "FunctionExpression": {"parameters": "first"},
+                      "FunctionDeclaration": {"parameters": "first"}}],
     "init-declarations": 0,
     "jsx-quotes": [0, "prefer-double"],
     "key-spacing": [2, {
