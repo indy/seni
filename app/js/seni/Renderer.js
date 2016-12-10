@@ -110,15 +110,16 @@ export default class Renderer {
       colour
     } = params;
 
+    const textureInfo = UVMapper.get('flat', 0);
+    const uvCoords = textureInfo.mapping;
+
     const [x1, y1] = from;
     const [x2, y2] = to;
-    const hw = width / 2;
+    const hw = (width * textureInfo.widthScale) / 2;
 
     const [[n1x, n1y], [n2x, n2y]] = MathUtil.normals(x1, y1, x2, y2);
 
     const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
-
-    const uvCoords = UVMapper.get('flat', 0);
 
     this.prepareToAddTriangleStrip(4, [x1 + (hw * n1x), y1 + (hw * n1y)]);
     this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colArray, uvCoords[0]);
@@ -137,15 +138,16 @@ export default class Renderer {
     const brushType = params['brush-type'];
     const brushSubtype = params['brush-subtype'];
 
+    const textureInfo = UVMapper.get(brushType, brushSubtype);
+    const uvCoords = textureInfo.mapping;
+
     const [x1, y1] = from;
     const [x2, y2] = to;
-    const hw = width / 2;
+    const hw = (width * textureInfo.widthScale) / 2;
 
     const [[n1x, n1y], [n2x, n2y]] = MathUtil.normals(x1, y1, x2, y2);
 
     const colArray = Colour.elementArray(Colour.cloneAs(colour, Format.RGB));
-
-    const uvCoords = UVMapper.get(brushType, brushSubtype);
 
     this.prepareToAddTriangleStrip(4, [x1 + (hw * n1x), y1 + (hw * n1y)]);
     this.addVertex([x1 + (hw * n1x), y1 + (hw * n1y)], colArray, uvCoords[0]);
@@ -165,6 +167,9 @@ export default class Renderer {
     const brushType = params['brush-type'];
     const brushSubtype = params['brush-subtype'];
 
+    const textureInfo = UVMapper.get(brushType, brushSubtype);
+    const uvCoords = textureInfo.mapping;
+
     const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
 
     const {
@@ -175,9 +180,7 @@ export default class Renderer {
     const {
       halfWidthEnd,
       remap
-    } = this.getRemapAndHalfWidthEnd(params);
-
-    const uvCoords = UVMapper.get(brushType, brushSubtype);
+    } = this.getRemapAndHalfWidthEnd(params, textureInfo.widthScale);
 
     this.addVerticesAsStrip({
       tVals,
@@ -207,7 +210,8 @@ export default class Renderer {
 
     this.prepareToAddTriangleStrip(4, [x - halfWidth, y - halfHeight]);
 
-    const uvCoords = UVMapper.get('flat', 0);
+    const textureInfo = UVMapper.get('flat', 0);
+    const uvCoords = textureInfo.mapping;
 
     this.addVertex([x - halfWidth, y - halfHeight], colArray, uvCoords[0]);
     this.addVertex([x + halfWidth, y - halfHeight], colArray, uvCoords[1]);
@@ -362,6 +366,9 @@ export default class Renderer {
     const tStart = params['t-start'];
     const tEnd = params['t-end'];
 
+    const textureInfo = UVMapper.get('flat', 0);
+    const uvCoords = textureInfo.mapping;
+
     const tVals = MathUtil.stepsInclusive(tStart, tEnd, tessellation);
 
     const {
@@ -372,9 +379,7 @@ export default class Renderer {
     const {
       halfWidthEnd,
       remap
-    } = this.getRemapAndHalfWidthEnd(params);
-
-    const uvCoords = UVMapper.get('flat', 0);
+    } = this.getRemapAndHalfWidthEnd(params, textureInfo.widthScale);
 
     this.addVerticesAsStrip({
       tVals,
@@ -388,10 +393,10 @@ export default class Renderer {
     });
   }
 
-  getRemapAndHalfWidthEnd(params) {
-    const lineWidth = params['line-width'];
-    const lineWidthStart = params['line-width-start'];
-    const lineWidthEnd = params['line-width-end'];
+  getRemapAndHalfWidthEnd(params, widthScale) {
+    const lineWidth = params['line-width'] * widthScale;
+    const lineWidthStart = params['line-width-start'] * widthScale;
+    const lineWidthEnd = params['line-width-end'] * widthScale;
     const tStart = params['t-start'];
     const tEnd = params['t-end'];
     const lineWidthMapping = params['line-width-mapping'];
