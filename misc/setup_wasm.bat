@@ -11,3 +11,6 @@ rem setup emsdk environment variables
 call "D:\code\wasm\emsdk\emsdk_env.bat"
 rem modify path so that emcc can be invoked
 set path=d:\code\wasm\emsdk\emscripten\incoming;%path%
+
+
+rem NOTE: visual studion 2015 is only required to build emsdk, we can use the latest visual studio for seni

@@ -1,36 +1,28 @@
-Value Simplicity.
 
-build.bat/build.sh replaces build tools
-
-
-
-// debug info
-cl /Zi foo.c
-
-
-
-
-cd code
-build.bat
-
-devenv ..\build\main.exe
-
-F11
-
-
-
-compiling for Windows:
+* compiling for Windows:
 
 run this once in the console:
 misc\setup_winconsole.bat
 
 then for each compile run:
-build.bat
+build_win.bat
 
-compiling for WebAssembly on Windows:
+test the output by executing:
+build_win\main_win.exe
+
+* compiling for WebAssembly on Windows:
 
 run this once in the console:
 misc\setup_wasm.bat
 
 then for each compile run:
 build_wasm.bat
+
+test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
+
+* visual studio integration with the native windows build
+  build the windows version (main_win.exe)
+  load visual studio with: devenv ..\build_win\main_win.exe
+  Insert any breakpoints
+  Press F11 to begin execution
+  When exiting for the first time, save the MSDev solution to the build_win folder
