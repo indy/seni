@@ -1,3 +1,20 @@
+* compiling for OSX:
+
+then for each compile run:
+./build_osx.sh
+
+test the output by executing:
+build_osx\seni-c
+
+* compiling for WebAssembly on OSX:
+
+run this once in the console:
+source misc\setup_wasm.sh
+
+then for each compile run:
+./build_wasm.sh
+
+test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
 
 * compiling for Windows:
 
