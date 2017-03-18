@@ -1,6 +1,6 @@
 * compiling for OSX:
 
-then for each compile run:
+for each compile run:
 ./build_osx.sh
 
 test the output by executing:

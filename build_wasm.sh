@@ -1,4 +1,3 @@
-mkdir build_wasm
 pushd build_wasm
-emcc -o seni-wasm.html ../code/wasm.c ../code/seni.c -O3 -s WASM=1 --shell-file ../misc/html_template/shell_minimal.html -DPLATFORM_WASM
+emcc -o seni-wasm.js ../code/wasm.c ../code/seni.c ../code/seni_*.c -O3 -s WASM=1
 popd

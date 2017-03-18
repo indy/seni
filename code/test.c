@@ -1,27 +1,19 @@
 /*
   Runs tests using the native compiler
 */
-
-#include <stdio.h>
 #include "unity/unity.h"
 #include "seni.h"
 
-void test_monkey(void)
+void test_mathutil(void)
 {
-  TEST_ASSERT_EQUAL(4, 4);
-  TEST_ASSERT_EQUAL(6, 6);
-}
-
-void test_monkey2(void)
-{
-  TEST_ASSERT_EQUAL(4, 4);
-  TEST_ASSERT_EQUAL(6, 6);
+  TEST_ASSERT_EQUAL_FLOAT(1.5f, deg2rad(rad2deg(1.5f)));
+  TEST_ASSERT_EQUAL_FLOAT(0.44444f, mc_m(1.0f, 1.0f, 10.0f, 5.0f));
+  TEST_ASSERT_EQUAL_FLOAT(0.55556f, mc_c(1.0f, 1.0f, 0.444444f));
 }
 
 int main(void)
 {
   UNITY_BEGIN();
-  RUN_TEST(test_monkey);
-  RUN_TEST(test_monkey2);
+  RUN_TEST(test_mathutil);
   return UNITY_END();
 }

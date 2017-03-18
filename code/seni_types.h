@@ -16,4 +16,9 @@ typedef uint64_t u64;
 typedef float    f32;
 typedef double   f64;
 
+typedef struct
+{
+  f32 x, y;
+} v2;
+
 #endif  /* SENI_TYPES_H */
