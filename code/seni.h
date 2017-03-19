@@ -3,6 +3,7 @@
 
 #include "seni_types.h"
 #include "seni_mathutil.h"
+#include "seni_interp.h"
 
 i32 add(i32 a, i32 b);
 
