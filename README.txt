@@ -1,7 +1,13 @@
+Keep things simple by using C.
+Avoid C++, even trying to use it as a 'nicer C' results in increased compilation times, obtuse error messages, complicates the build/link commands and reduces platform independance.
+Switch to Rust if you need a better C
+
+
+
 * compiling for OSX:
 
 for each compile run:
-./build_osx.sh
+./make/osx.sh
 
 test the output by executing:
 build_osx\seni-c
@@ -12,7 +18,7 @@ run this once in the console:
 source misc\setup_wasm.sh
 
 then for each compile run:
-./build_wasm.sh
+./make/wasm.sh
 
 test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
 
@@ -22,7 +28,7 @@ run this once in the console:
 misc\setup_winconsole.bat
 
 then for each compile run:
-build_win.bat
+make\win.bat
 
 test the output by executing:
 build_win\main_win.exe
@@ -33,7 +39,7 @@ run this once in the console:
 misc\setup_wasm.bat
 
 then for each compile run:
-build_wasm.bat
+make\wasm.bat
 
 test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
 
@@ -43,3 +49,5 @@ test the output by opening build_wasm\seni-wasm.html in a browser that supports 
   Insert any breakpoints
   Press F11 to begin execution
   When exiting for the first time, save the MSDev solution to the build_win folder
+
+
