@@ -16,9 +16,14 @@ typedef uint64_t u64;
 typedef float    f32;
 typedef double   f64;
 
+#define SENI_SCALAR
+typedef f32 scalar;
+
+#include "gl-matrix/gl-matrix.h"
+
 typedef struct
 {
-  f32 x, y;
+  scalar x, y;
 } v2;
 
 #endif  /* SENI_TYPES_H */
