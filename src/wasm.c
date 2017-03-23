@@ -1,4 +1,3 @@
-#define STB_DEFINE
 #include <emscripten/emscripten.h>
 #include "seni.h"
 

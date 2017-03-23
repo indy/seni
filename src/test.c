@@ -22,7 +22,6 @@ void test_interp(void)
 
 my_struct *users = NULL;    /* important! initialize to NULL */
 
-// https://troydhanson.github.io/uthash/userguide.html
 void test_uthash(void)
 {
   int user_id = 42;
