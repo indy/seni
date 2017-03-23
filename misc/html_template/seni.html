@@ -26,9 +26,7 @@ xhr.onload = function() {
 xhr.send(null);
 
 document.querySelector('.mybutton').addEventListener('click', function(){
-  var add = Module.cwrap('add_wasm', 'number', ['number', 'number']);
   var mc_m = Module.cwrap('mc_m_wasm', 'number', ['number', 'number', 'number', 'number']);
-  console.log('here is add function: ' + add(23, 11));
   console.log('here is mc_m function: ' + mc_m(10, 10, 5, 7));
 });                                      
 </script>
