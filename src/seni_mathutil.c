@@ -4,7 +4,7 @@
 // TODO: quadraticCoordinates
 
 // stb.h translations
-f32 smoothstep(f32 t)
+f32 smooth_step(f32 t)
 {
    return (3 - 2*t)*(t*t);
 }
@@ -84,7 +84,7 @@ v2 opposite_normal(v2 n)
   return n;
 }
 
-f32 quadraticPoint(f32 a, f32 b, f32 c, f32 t)
+f32 quadratic_point(f32 a, f32 b, f32 c, f32 t)
 {
   f32 r = ((b - a) - 0.5f * (c - a)) / (0.5f * (0.5f - 1));
   f32 s = c - a - r;
@@ -92,7 +92,7 @@ f32 quadraticPoint(f32 a, f32 b, f32 c, f32 t)
   return (r * t * t) + (s * t) + a;
 }
 
-f32 bezierPoint(f32 a, f32 b, f32 c, f32 d, f32 t)
+f32 bezier_point(f32 a, f32 b, f32 c, f32 d, f32 t)
 {
   f32 t1 = 1 - t;
 
@@ -102,7 +102,7 @@ f32 bezierPoint(f32 a, f32 b, f32 c, f32 d, f32 t)
     (d * t * t * t);
 }
 
-f32 bezierTangent(f32 a, f32 b, f32 c, f32 d, f32 t)
+f32 bezier_tangent(f32 a, f32 b, f32 c, f32 d, f32 t)
 {
   return (3 * t * t * (-a + 3 * b - 3 * c + d) +
           6 * t * (a - 2 * b + c) +
