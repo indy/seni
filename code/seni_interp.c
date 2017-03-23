@@ -15,12 +15,12 @@ f32 map_quick_ease(f32 x)
 
 f32 map_slow_ease_in(f32 x)
 {
-  f32 s = sin(x * PI_BY_2);
+  f32 s = (f32)sin(x * PI_BY_2);
   return s * s * s * s;
 }
 
 f32 map_slow_ease_in_ease_out(f32 x)
 {
-  return x - (sin(x * TAU) / TAU);
+  return x - ((f32)sin(x * TAU) / TAU);
 }
 

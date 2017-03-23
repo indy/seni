@@ -33,12 +33,16 @@ f32 mc_c(f32 xa, f32 ya, f32 m)
 
 f32 length_v2(v2 v)
 {
-  return sqrt((v.x * v.x) + (v.y * v.y));
+  return (f32)sqrt((v.x * v.x) + (v.y * v.y));
 }
 
 v2 sub_v2(v2 a, v2 b)
 {
-  v2 ret = { a.x - b.x, a.y - b.y };
+  v2 ret;
+
+  ret.x = a.x - b.x;
+  ret.y = a.y - b.y;
+
   return ret;
 }
 
@@ -53,8 +57,11 @@ f32 distance_v2(v2 a, v2 b)
 v2 normalize(v2 v)
 {
   f32 len = length_v2(v);
-
-  v2 ret = { v.x / len, v.y / len };
+  v2 ret;
+  
+  ret.x = v.x / len;
+  ret.y = v.y / len;
+  
   return ret;
 }
 
@@ -62,8 +69,11 @@ v2 normal(f32 x1, f32 y1, f32 x2, f32 y2)
 {
   f32 dx = x2 - x1;
   f32 dy = -(y2 - y1);
+  v2 v;
 
-  v2 v = { dx, dy };
+  v.x = dx;
+  v.y = dy;
+  
   return normalize(v);
 }
 

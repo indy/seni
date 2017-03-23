@@ -1,8 +1,12 @@
 /*
   Runs tests using the native compiler
 */
+
 #include "unity/unity.h"
 #include "seni.h"
+
+void setUp(void) { }
+void tearDown(void) { }
 
 void test_mathutil(void)
 {
