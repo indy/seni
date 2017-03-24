@@ -4,21 +4,17 @@ Switch to Rust if you need a better C
 
 
 
-* compiling for OSX:
+* compiling and testing on Linux/MacOS:
 
-for each compile run:
-./make/osx.sh
+./make/unix.sh
 
-test the output by executing:
-build_osx\seni-c
-
-* compiling for WebAssembly on OSX:
+* compiling WebAssembly on Linux/MacOS:
 
 run this once in the console:
 source misc\setup_wasm.sh
 
 then for each compile run:
-./make/wasm.sh
+./make/unix.sh wasm
 
 test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
 

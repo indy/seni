@@ -1,3 +1,4 @@
 /build_wasm/
+/build_unix/
 /build_win/
 /build_osx/
