@@ -3,6 +3,8 @@
 
 #include "seni_types.h"
 #include "seni_mathutil.h"
+#include "seni_containers.h"
+
 #include "seni_interp.h"
 
 #endif /* SENI_H */

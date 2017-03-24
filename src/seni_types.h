@@ -3,8 +3,9 @@
 
 #include <stdint.h>
 
-// https://troydhanson.github.io/uthash/userguide.html
-#include "uthash/uthash.h"
+typedef int      bool;
+#define false 0;
+#define true 1;
 
 typedef int8_t   i8;
 typedef int16_t  i16;
@@ -28,13 +29,5 @@ typedef struct
 {
   scalar x, y;
 } v2;
-
-typedef struct
-{
-  int id;                    /* key */
-  f32 ff;
-  char name[10];
-  UT_hash_handle hh;         /* makes this structure hashable */
-} my_struct;
 
 #endif  /* SENI_TYPES_H */

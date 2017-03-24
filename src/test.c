@@ -4,6 +4,14 @@
 #include "unity/unity.h"
 #include "seni.h"
 
+#include "seni_lang_lexer.h"
+
+#include "stdio.h"
+
+/* way of working with boolean and TEST macros */
+bool test_true = true;
+bool test_false = false;
+
 /* required by unity */
 void setUp(void) { }
 void tearDown(void) { }
@@ -38,9 +46,45 @@ void test_uthash(void)
   HASH_ADD_INT( users, id, s );  /* id: name of key field */
 
   my_struct *t;
+
   HASH_FIND_INT( users, &user_id, t );  /* t: output pointer */
   
   TEST_ASSERT_EQUAL(fvalue, t->ff);
+}
+
+char *pp_token(seni_token_type type)
+{
+  switch(type) {
+  case TOK_UNKNOWN: return "TOK_UNKNOWN";
+  case TOK_LIST_START: return "TOK_LIST_START";
+  case TOK_LIST_END: return "TOK_LIST_END";
+  case TOK_VECTOR_START: return "TOK_VECTOR_START";
+  case TOK_VECTOR_END: return "TOK_VECTOR_END";
+  case TOK_ALTERABLE_START: return "TOK_ALTERABLE_START";
+  case TOK_ALTERABLE_END: return "TOK_ALTERABLE_END";
+  case TOK_INT: return "TOK_INT";
+  case TOK_FLOAT: return "TOK_FLOAT";
+  case TOK_NAME: return "TOK_NAME";
+  case TOK_STRING: return "TOK_STRING";
+  case TOK_QUOTE_ABBREVIATION: return "TOK_QUOTE_ABBREVIATION";
+  case TOK_LABEL: return "TOK_LABEL";
+  case TOK_COMMENT: return "TOK_COMMENT";
+  case TOK_WHITESPACE: return "TOK_WHITESPACE";
+  };
+  return "FOOK";
+}
+
+void test_lang_lexer(void)
+{
+  seni_token *tokens = tokenise("( (hello bar: 42) foo 12.34)");
+  i32 i = 0;
+  while (tokens != NULL) {
+    printf("%d: %s %d %.2f %s %c\n", i++, pp_token(tokens->type), tokens->i32_value, tokens->f32_value, tokens->str_value, tokens->chr_value);
+    tokens = tokens->next;
+  }
+
+  TEST_ASSERT_EQUAL(test_true, is_label("foo:"));
+  TEST_ASSERT_EQUAL(test_false, is_label("foo"));
 }
 
 int main(void)
@@ -49,5 +93,7 @@ int main(void)
   RUN_TEST(test_mathutil);
   RUN_TEST(test_interp);
   RUN_TEST(test_uthash);
+  RUN_TEST(test_lang_lexer);
   return UNITY_END();
 }
+
