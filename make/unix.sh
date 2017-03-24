@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "$1" != "wasm" ]; then
+if [ "$1" == "wasm" ]; then
 
     mkdir build_wasm    
     pushd build_wasm

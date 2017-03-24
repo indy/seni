@@ -18,24 +18,22 @@ then for each compile run:
 
 test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
 
+
 * compiling for Windows:
 
-run this once in the console:
-misc\setup_winconsole.bat
+setup the paths by running this once in the console:
+misc\setup_win.bat
 
-then for each compile run:
+* compiling and testing on Windows
+
 make\win.bat
-
-test the output by executing:
-build_win\main_win.exe
 
 * compiling for WebAssembly on Windows:
 
-run this once in the console:
-misc\setup_wasm.bat
-
 then for each compile run:
-make\wasm.bat
+make\win.bat wasm
+
+
 
 test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
 
