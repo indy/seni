@@ -52,41 +52,68 @@ void test_uthash(void)
   TEST_ASSERT_EQUAL(fvalue, t->ff);
 }
 
-char *pp_token(seni_token_type type)
+seni_token *assert_lexer_token_raw(seni_token *token, seni_token_type type)
 {
-  switch(type) {
-  case TOK_UNKNOWN: return "TOK_UNKNOWN";
-  case TOK_LIST_START: return "TOK_LIST_START";
-  case TOK_LIST_END: return "TOK_LIST_END";
-  case TOK_VECTOR_START: return "TOK_VECTOR_START";
-  case TOK_VECTOR_END: return "TOK_VECTOR_END";
-  case TOK_ALTERABLE_START: return "TOK_ALTERABLE_START";
-  case TOK_ALTERABLE_END: return "TOK_ALTERABLE_END";
-  case TOK_INT: return "TOK_INT";
-  case TOK_FLOAT: return "TOK_FLOAT";
-  case TOK_NAME: return "TOK_NAME";
-  case TOK_STRING: return "TOK_STRING";
-  case TOK_QUOTE_ABBREVIATION: return "TOK_QUOTE_ABBREVIATION";
-  case TOK_LABEL: return "TOK_LABEL";
-  case TOK_COMMENT: return "TOK_COMMENT";
-  case TOK_WHITESPACE: return "TOK_WHITESPACE";
-  };
-  return "FOOK";
+    TEST_ASSERT_EQUAL(type, token->type);
+    return token->next;
+}
+seni_token *assert_lexer_token_i32(seni_token *token, seni_token_type type, i32 val)
+{
+    TEST_ASSERT_EQUAL(type, token->type);
+    TEST_ASSERT_EQUAL(val, token->i32_value);
+    return token->next;
+}
+seni_token *assert_lexer_token_f32(seni_token *token, seni_token_type type, f32 val)
+{
+    TEST_ASSERT_EQUAL(type, token->type);
+    TEST_ASSERT_EQUAL_FLOAT(val, token->f32_value);
+    return token->next;
+}
+seni_token *assert_lexer_token_str(seni_token *token, seni_token_type type, char *val)
+{
+    TEST_ASSERT_EQUAL(type, token->type);
+    TEST_ASSERT_EQUAL_STRING(val, token->str_value);
+    return token->next;
+}
+seni_token *assert_lexer_token_chr(seni_token *token, seni_token_type type, char val)
+{
+    TEST_ASSERT_EQUAL(type, token->type);
+    TEST_ASSERT_EQUAL(val, token->chr_value);
+    return token->next;
 }
 
 void test_lang_lexer(void)
 {
   seni_token *tokens = tokenise("'(runall \"shabba\") ; woohoo");
   seni_token *iter = tokens;
-  i32 i = 0;
-  while (iter != NULL) {
-    printf("%d: %s %d %.2f %s %c\n", i++, pp_token(iter->type), iter->i32_value, iter->f32_value, iter->str_value, iter->chr_value);
-    iter = iter->next;
-  }
+
+  iter = assert_lexer_token_raw(iter, TOK_QUOTE_ABBREVIATION);
+  iter = assert_lexer_token_raw(iter, TOK_LIST_START);
+  iter = assert_lexer_token_str(iter, TOK_NAME, "runall");
+  iter = assert_lexer_token_str(iter, TOK_WHITESPACE, " ");
+  iter = assert_lexer_token_str(iter, TOK_STRING, "shabba");
+  iter = assert_lexer_token_raw(iter, TOK_LIST_END);
+  iter = assert_lexer_token_str(iter, TOK_WHITESPACE, " ");
+  iter = assert_lexer_token_str(iter, TOK_COMMENT, "; woohoo");
+
   free_tokens(tokens);
 
-  TEST_ASSERT_EQUAL(test_true, is_label("foo:"));
-  TEST_ASSERT_EQUAL(test_false, is_label("foo"));
+  tokens = tokenise("(fun i: 42 f: 12.34)");
+  iter = tokens;
+
+  iter = assert_lexer_token_raw(iter, TOK_LIST_START);
+  iter = assert_lexer_token_str(iter, TOK_NAME, "fun");
+  iter = assert_lexer_token_str(iter, TOK_WHITESPACE, " ");
+  iter = assert_lexer_token_str(iter, TOK_LABEL, "i");
+  iter = assert_lexer_token_str(iter, TOK_WHITESPACE, " ");
+  iter = assert_lexer_token_i32(iter, TOK_INT, 42);
+  iter = assert_lexer_token_str(iter, TOK_WHITESPACE, " ");
+  iter = assert_lexer_token_str(iter, TOK_LABEL, "f");
+  iter = assert_lexer_token_str(iter, TOK_WHITESPACE, " ");
+  iter = assert_lexer_token_f32(iter, TOK_FLOAT, 12.34f);
+  iter = assert_lexer_token_raw(iter, TOK_LIST_END);
+
+  free_tokens(tokens);
 }
 
 int main(void)
