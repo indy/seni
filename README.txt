@@ -38,8 +38,8 @@ make\win.bat wasm
 test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
 
 * visual studio integration with the native windows build
-  build the windows version (main_win.exe)
-  load visual studio with: devenv ..\build_win\main_win.exe
+  build the windows version (test.exe)
+  load visual studio with: devenv build_win\test.exe
   Insert any breakpoints
   Press F11 to begin execution
   When exiting for the first time, save the MSDev solution to the build_win folder

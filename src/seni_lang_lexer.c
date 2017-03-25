@@ -235,6 +235,7 @@ char *find_next(char *s, char target)
     if (*s == target) {
       return s;
     }
+    s++;
   }
   return NULL;
 }
@@ -294,14 +295,16 @@ seni_token *consume_comment(char *s)
 
   for (i = 0; i < len; i++) {
     char c = s[i];
-    if (!is_newline(c)) {
+    if (is_newline(c)) {
       break;
     }
   }
 
   seni_token *token = build_string_token(TOK_COMMENT, s, i);
-  token->remaining += 1;        /* skip past the newline */
-
+  if (is_newline(*(token->remaining))) {
+    token->remaining += 1;        /* skip past the newline */
+  }
+    
   return token;
 }
 
@@ -447,10 +450,31 @@ seni_token *tokenise(char *s)
         //tokens: [tok]};
         return NULL;
     };
+
+    if(p == NULL) {
+      /* TODO: ERROR */
+      return NULL;
+    }
+      
     DL_APPEND(tokens, p);
     s = p->remaining;
     len = strlen(s);
   }
     
   return tokens;
+}
+
+void free_tokens(seni_token *tokens)
+{
+  seni_token *token = tokens;
+  seni_token *next;
+
+  while(token != NULL) {
+    next = token->next;
+    if (token->str_value != NULL) {
+      free(token->str_value);
+    }
+    free(token);
+    token = next;
+  }
 }

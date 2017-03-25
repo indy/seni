@@ -31,13 +31,12 @@ typedef struct seni_token {
 
   char* remaining;
 
-
   struct seni_token *prev;
   struct seni_token *next;
   
 } seni_token;
 
-bool is_label(char* s);
-seni_token *tokenise(char *s);         /* TEMP */
+seni_token *tokenise(char *s);
+void free_tokens(seni_token *tokens);
 
 #endif

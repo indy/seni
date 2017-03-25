@@ -76,12 +76,14 @@ char *pp_token(seni_token_type type)
 
 void test_lang_lexer(void)
 {
-  seni_token *tokens = tokenise("( (hello bar: 42) foo 12.34)");
+  seni_token *tokens = tokenise("'(runall \"shabba\") ; woohoo");
+  seni_token *iter = tokens;
   i32 i = 0;
-  while (tokens != NULL) {
-    printf("%d: %s %d %.2f %s %c\n", i++, pp_token(tokens->type), tokens->i32_value, tokens->f32_value, tokens->str_value, tokens->chr_value);
-    tokens = tokens->next;
+  while (iter != NULL) {
+    printf("%d: %s %d %.2f %s %c\n", i++, pp_token(iter->type), iter->i32_value, iter->f32_value, iter->str_value, iter->chr_value);
+    iter = iter->next;
   }
+  free_tokens(tokens);
 
   TEST_ASSERT_EQUAL(test_true, is_label("foo:"));
   TEST_ASSERT_EQUAL(test_false, is_label("foo"));
