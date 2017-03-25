@@ -453,6 +453,7 @@ seni_token *tokenise(char *s)
 
     if(p == NULL) {
       /* TODO: ERROR */
+      free_tokens(tokens);
       return NULL;
     }
       

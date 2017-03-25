@@ -114,6 +114,24 @@ void test_lang_lexer(void)
   iter = assert_lexer_token_raw(iter, TOK_LIST_END);
 
   free_tokens(tokens);
+
+
+  tokens = tokenise("(a {[1 2]})");
+  iter = tokens;
+
+  iter = assert_lexer_token_raw(iter, TOK_LIST_START);
+  iter = assert_lexer_token_str(iter, TOK_NAME, "a");
+  iter = assert_lexer_token_str(iter, TOK_WHITESPACE, " ");
+  iter = assert_lexer_token_raw(iter, TOK_ALTERABLE_START);
+  iter = assert_lexer_token_raw(iter, TOK_VECTOR_START);
+  iter = assert_lexer_token_i32(iter, TOK_INT, 1);
+  iter = assert_lexer_token_str(iter, TOK_WHITESPACE, " ");
+  iter = assert_lexer_token_i32(iter, TOK_INT, 2);
+  iter = assert_lexer_token_raw(iter, TOK_VECTOR_END);
+  iter = assert_lexer_token_raw(iter, TOK_ALTERABLE_END);
+  iter = assert_lexer_token_raw(iter, TOK_LIST_END);
+  
+  free_tokens(tokens);
 }
 
 int main(void)
