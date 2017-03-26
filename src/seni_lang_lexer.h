@@ -36,7 +36,7 @@ typedef struct seni_token {
   
 } seni_token;
 
-seni_token *tokenise(char *s);
-void free_tokens(seni_token *tokens);
+seni_token *lexer_tokenise(char *s);
+void lexer_free_tokens(seni_token *tokens);
 
 #endif

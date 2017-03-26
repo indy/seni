@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 typedef int      bool;
-#define false 0;
-#define true 1;
+#define false 0
+#define true 1
 
 typedef int8_t   i8;
 typedef int16_t  i16;

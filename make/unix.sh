@@ -12,7 +12,8 @@ else
     # build for the native platform and run tests
     mkdir build_osx
     pushd build_osx    
-    cc -o test ../src/test.c ../src/unity/unity.c ../src/gl-matrix/*.c ../src/seni.c ../src/seni_*.c
+    # cc -o test -std=c99 -Wall -Wextra ../src/test.c ../src/unity/unity.c ../src/gl-matrix/*.c ../src/seni.c ../src/seni_*.c
+    cc -o test -std=c99 ../src/test.c ../src/unity/unity.c ../src/gl-matrix/*.c ../src/seni.c ../src/seni_*.c
     popd
 
     ./build_osx/test

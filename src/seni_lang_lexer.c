@@ -384,7 +384,7 @@ seni_token_type next_token_type(char *s)
   return TOK_UNKNOWN;  
 }
 
-seni_token *tokenise(char *s)
+seni_token *lexer_tokenise(char *s)
 {
   if (s == NULL) {
     return NULL;
@@ -453,7 +453,7 @@ seni_token *tokenise(char *s)
 
     if(p == NULL) {
       /* TODO: ERROR */
-      free_tokens(tokens);
+      lexer_free_tokens(tokens);
       return NULL;
     }
       
@@ -465,7 +465,7 @@ seni_token *tokenise(char *s)
   return tokens;
 }
 
-void free_tokens(seni_token *tokens)
+void lexer_free_tokens(seni_token *tokens)
 {
   seni_token *token = tokens;
   seni_token *next;
