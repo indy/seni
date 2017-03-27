@@ -10,7 +10,7 @@ seni_node *parser_consume_item(seni_token **pptokens);
 bool parser_string_compare(char* a, char *b)
 {
 #if defined(_WIN32)
-  return stricmp(a, b) == 0;
+  return _stricmp(a, b) == 0;
 #else
   return strcasecmp(a, b) == 0;
 #endif
@@ -43,7 +43,7 @@ seni_node *build_text_node_from_token(seni_node_type type, seni_token *token)
 
 void debug_token(seni_token *token)
 {
-  printf("token %d %u\n", token->type, (u32)token);
+  printf("token %d %p\n", token->type, (void *)token);
 }
 
 /* 

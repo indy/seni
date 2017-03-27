@@ -327,63 +327,6 @@ seni_token *consume_label(char *s)
   return token;
 }
 
-seni_token_type next_token_type(char *s)
-{
-  char c = *s;
-
-  if (is_whitespace(c)) {
-    return TOK_WHITESPACE;
-  }
-
-  if (is_quote_abbreviation(c)) {
-    return TOK_QUOTE_ABBREVIATION;
-  }
-
-  if (is_list_start(c)) {
-    return TOK_LIST_START;
-  }
-
-  if (is_list_end(c)) {
-    return TOK_LIST_END;
-  }
-
-  if (is_vector_start(c)) {
-    return TOK_VECTOR_START;
-  }
-
-  if (is_vector_end(c)) {
-    return TOK_VECTOR_END;
-  }
-
-  if (is_alterable_start(c)) {
-    return TOK_ALTERABLE_START;
-  }
-
-  if (is_alterable_end(c)) {
-    return TOK_ALTERABLE_END;
-  }
-
-  if (is_quoted_string(c)) {
-    return TOK_STRING;
-  }
-
-  if (is_alpha(c)) {
-    if (!(c == MINUS && strlen(s) > 1 && is_digit(s[1]))) {
-      return is_label(s) ? TOK_LABEL : TOK_NAME;
-    }
-  }
-
-  if (is_digit(c) || c == MINUS || c == PERIOD) {
-    return has_period(s) ? TOK_FLOAT : TOK_INT;
-  }
-
-  if (is_comment(c)) {
-    return TOK_COMMENT;
-  }
-
-  return TOK_UNKNOWN;  
-}
-
 seni_token *lexer_tokenise(char *s)
 {
   if (s == NULL) {
@@ -396,60 +339,47 @@ seni_token *lexer_tokenise(char *s)
   chars_symbol_len = strlen(chars_symbol);
   
   seni_token *tokens = NULL;
-  seni_token *p;
-  size_t len = strlen(s);
+  seni_token *p = NULL;
 
-  while (len > 0) {
-    switch(next_token_type(s)) {
-      case TOK_WHITESPACE :
-        p = consume_whitespace(s);
-        break;
-      case TOK_LIST_START :
-        p = consume_list_start(s);
-        break;
-      case TOK_LIST_END :
-        p = consume_list_end(s);
-        break;
-      case TOK_VECTOR_START :
-        p = consume_vector_start(s);
-        break;
-      case TOK_VECTOR_END :
-        p = consume_vector_end(s);
-        break;
-      case TOK_ALTERABLE_START :
-        p = consume_alterable_start(s);
-        break;
-      case TOK_ALTERABLE_END :
-        p = consume_alterable_end(s);
-        break;
-      case TOK_STRING :
-        p = consume_string(s);
-        break;
-      case TOK_NAME :
-        p = consume_name(s);
-        break;
-      case TOK_LABEL :
-        p = consume_label(s);
-        break;
-      case TOK_INT :
-        p = consume_int(s);
-        break;
-      case TOK_FLOAT :
+  while (strlen(s) > 0) {
+
+    char c = *s;
+
+    if (is_whitespace(c)) {
+      p = consume_whitespace(s);
+    } else if (is_quote_abbreviation(c)) {
+      p = consume_quote_abbreviation(s);
+    } else if (is_list_start(c)) {
+      p = consume_list_start(s);
+    } else if (is_list_end(c)) {
+      p = consume_list_end(s);
+    } else if (is_vector_start(c)) {
+      p = consume_vector_start(s);
+    } else if (is_vector_end(c)) {
+      p = consume_vector_end(s);
+    } else if (is_alterable_start(c)) {
+      p = consume_alterable_start(s);
+    } else if (is_alterable_end(c)) {
+      p = consume_alterable_end(s);
+    } else if (is_quoted_string(c)) {
+      p = consume_string(s);
+    } else if (is_alpha(c)) {
+      if (!(c == MINUS && strlen(s) > 1 && is_digit(s[1]))) {
+        if (is_label(s)) {
+          p = consume_label(s);
+        } else {
+          p = consume_name(s);
+        }
+      }
+    } else if (is_digit(c) || c == MINUS || c == PERIOD) {
+      if (has_period(s)) {
         p = consume_float(s);
-        break;
-      case TOK_QUOTE_ABBREVIATION :
-        p = consume_quote_abbreviation(s);
-        break;
-      case TOK_COMMENT :
-        p = consume_comment(s);
-        break;
-      default:
-        // read the unknown token and return it
-        //const tok = consumeUnknown(s)[0];
-        //return {error: `unknown token: ${tok.value}`,
-        //tokens: [tok]};
-        return NULL;
-    };
+      } else {
+        p = consume_int(s);
+      }
+    } else if (is_comment(c)) {
+      p = consume_comment(s);
+    }
 
     if(p == NULL) {
       /* TODO: ERROR */
@@ -459,7 +389,6 @@ seni_token *lexer_tokenise(char *s)
       
     DL_APPEND(tokens, p);
     s = p->remaining;
-    len = strlen(s);
   }
     
   return tokens;
