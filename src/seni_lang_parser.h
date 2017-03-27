@@ -24,10 +24,11 @@ typedef enum {
 typedef struct seni_node {
   seni_node_type type;
 
-  i32 i32_value;
-  f32 f32_value;
-  char* str_value;
-  char chr_value;
+  union {
+    i32 i;
+    f32 f;
+    char* s;                    /* needed for whitespace nodes */
+  } value;
 
   bool alterable;
 
@@ -47,7 +48,18 @@ typedef struct seni_node {
   struct seni_node *next;
 } seni_node;
 
-seni_node *parser_parse(char *s);
+
+typedef struct parser_info {
+  // INPUT/OUTPUT: pre-allocated array of char* used to store names
+  char **name_lookup;
+  i32 name_lookup_max;
+  i32 name_lookup_count;
+  
+  // OUTPUT: the AST nodes that the parser will return;
+  seni_node *nodes;
+} parser_info;
+
+parser_info *parser_parse(parser_info *parser_info, char *s);
 void parser_free_nodes(seni_node *nodes);
 char *parser_node_type_name(seni_node_type type);
   

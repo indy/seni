@@ -8,46 +8,36 @@
 
 seni_node *consume_item();
 
-char* remaining;                /* global */
-
-char* chars_whitespace = " \t\n,";
-char* chars_digit = "0123456789";
-char* chars_alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=";
-char* chars_symbol = "-!@#$%^&*<>?";
-
-char MINUS = '-';
-char PERIOD = '.';
-
-bool contains(char c, char *p)
+bool is_minus(char c)
 {
-  while(*p != 0) {
-    if (*p == c) {
-      return true;
-    }
-    p++;
-  }
-  
-  return false;
+  return c == '-';
+}
+
+bool is_period(char c)
+{
+  return c == '.';
 }
 
 bool is_whitespace(char c)
 {
-  return contains(c, chars_whitespace);
+  return (c == ' ' || c == '\t' || c == '\n' || c == ',') ? true : false;
 }
 
 bool is_digit(char c)
 {
-  return contains(c, chars_digit);
+  return (c >= '0' && c <= '9') ? true : false;
 }
 
 bool is_alpha(char c)
 {
-  return contains(c, chars_alpha);
+  return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) ? true : false;
 }
 
 bool is_symbol(char c)
 {
-  return contains(c, chars_symbol);
+  return (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' ||
+          c == '!' || c == '@' || c == '#' || c == '$' || c == '%' ||
+          c == '^' || c == '&' || c == '<' || c == '>' || c == '?') ? true : false;
 }
 
 bool is_list_start(char c)
@@ -100,20 +90,19 @@ bool is_newline(char c)
   return c == '\n';
 }
 
-bool is_label(char *s)
+bool is_label(char *s, size_t word_len)
 {
-  size_t i = 0;
-  char c = s[i];
+  return s[word_len] == ':';
+}
 
-  while(c != 0) {
-    if (!is_alpha(c) && !is_digit(c) && !is_symbol(c)) {
-      break;
-    }
-    i++;
-    c = s[i];
-  }
+bool is_boolean_true(char *s, size_t word_len)
+{
+  return word_len == 4 && s[0] == 't' && s[1] == 'r' && s[2] == 'u' && s[3] == 'e';
+}
 
-  return c != 0 && s[i] == ':';
+bool is_boolean_false(char *s, size_t word_len)
+{
+  return word_len == 5 && s[0] == 'f' && s[1] == 'a' && s[2] == 'l' && s[3] == 's' && s[4] == 'e';
 }
 
 bool has_period(char *s)
@@ -122,7 +111,7 @@ bool has_period(char *s)
   char c = s[i];
 
   while (c != 0) {
-    if (c == PERIOD) {
+    if (is_period(c)) {
       return true;
     }
     if (is_whitespace(c)) {
@@ -155,49 +144,107 @@ bool string_compare(char* a, char *b)
 #endif
 }
 
-seni_node *build_text_node_from_string(seni_node_type type, char *string)
+i32 text_lookup(parser_info *parser_info, const char *string, size_t len)
+{
+  i32 i = 0;
+  for (i = 0; i < parser_info->name_lookup_count; i++) {
+    char *name = parser_info->name_lookup[i];
+    bool found = true;
+    /* can't use string_compare since 'string' could be a substring */
+    size_t j = 0;
+    for (j = 0; j < len; j++) {
+      if (name[j] == '\0' || (name[j] != string[j])) {
+        found = false;
+        break;
+      }
+    }
+    /* searched all of 'string' and the early exit wasn't triggered */
+    if (name[j] == '\0' && found == true) {
+      return i;
+    }
+  }
+
+  /* string is not in the table and there's no room for another entry */
+  if (i >= parser_info->name_lookup_max) {
+    return -1;
+  }
+
+  // the string is not in the lookup table, so add it
+  char *c = (char *)malloc(sizeof(char) * (len + 1));
+  strncpy(c, string, len);
+  c[len] = '\0';
+
+  parser_info->name_lookup[i] = c;
+  parser_info->name_lookup_count++;
+
+  return i;
+}
+
+seni_node *build_text_lookup_node_from_string(parser_info *parser_info, seni_node_type type, char *string)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   size_t len = strlen(string);
 
+  i32 k = text_lookup(parser_info, string, len);
+  if (k == -1) {
+    return NULL;
+  }
+
   node->type = type;
-  node->str_value = (char *)malloc(sizeof(char) * (len + 1));
-  strncpy(node->str_value, string, len);
-  node->str_value[len] = '\0';
+  node->value.i = k;
   
   return node;
 }
 
-seni_node *build_text_node_of_length(seni_node_type type, size_t len)
+seni_node *build_text_lookup_node_of_length(parser_info *parser_info, char **src, seni_node_type type, size_t len)
+{
+  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
+
+  i32 k = text_lookup(parser_info, *src, len);
+  if (k == -1) {
+    return NULL;
+  }
+
+  node->type = type;
+  node->value.i = k;
+  
+  *src += len;
+  
+  return node;
+}
+
+// allocate memory for comments and whitespace rather than using the lookup table
+//
+seni_node *build_text_node_of_length(char **src, seni_node_type type, size_t len)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = type;
 
   char *str = (char *)malloc(sizeof(char) * (len + 1));
-  strncpy(str, remaining, len);
+  strncpy(str, *src, len);
   str[len] = '\0';
 
-  remaining += len;
+  *src += len;
   
-  node->str_value = str;
+  node->value.s = str;
   
   return node;
 }
 
-seni_node *consume_list()
+seni_node *consume_list(parser_info *parser_info, char **src)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_LIST;
 
-  remaining++; // (
+  (*src)++; // (
 
   while (1) {
-    if (is_list_end(*remaining)) {
-      remaining++; // )
+    if (is_list_end(**src)) {
+      (*src)++; // )
       return node;
     }
 
-    seni_node *child = consume_item();
+    seni_node *child = consume_item(parser_info, src);
     if (child == NULL) {
       /* error? */
       return NULL;
@@ -207,20 +254,20 @@ seni_node *consume_list()
   }
 }
 
-seni_node *consume_vector()
+seni_node *consume_vector(parser_info *parser_info, char **src)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_VECTOR;
 
-  remaining++; // [
+  (*src)++; // [
   
   while (1) {
-    if (is_vector_end(*remaining)) {
-      remaining++; // ]
+    if (is_vector_end(**src)) {
+      (*src)++; // ]
       return node;
     }
 
-    seni_node *child = consume_item();
+    seni_node *child = consume_item(parser_info, src);
     if (child == NULL) {
       /* error? */
       return NULL;
@@ -230,16 +277,16 @@ seni_node *consume_vector()
   }
 }
 
-seni_node *consume_bracket()
+seni_node *consume_bracket(parser_info *parser_info, char **src)
 {
   seni_node *node;
   seni_node *parameter_prefix = NULL;
   seni_node *c;
   
-  remaining++; // {
+  (*src)++; // {
   
   while (1) {
-    c = consume_item();
+    c = consume_item(parser_info, src);
     if (c == NULL) {
       /* error? */
       return NULL;
@@ -272,12 +319,12 @@ seni_node *consume_bracket()
   */
   
   while (1) {
-    if (is_alterable_end(*remaining)) {
-      remaining++; // }
+    if (is_alterable_end(**src)) {
+      (*src)++; // }
       return node;
     }
 
-    seni_node *child = consume_item();
+    seni_node *child = consume_item(parser_info, src);
     if (child == NULL) {
       /* error? */
       return NULL;
@@ -287,112 +334,111 @@ seni_node *consume_bracket()
   }
 }
 
-seni_node *consume_quoted_form()
+seni_node *consume_quoted_form(parser_info *parser_info, char **src)
 {
-  remaining++;
+  (*src)++; // '
   
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_LIST;
 
-  seni_node *quote_name = build_text_node_from_string(NODE_NAME, "quote");
+  seni_node *quote_name = build_text_lookup_node_from_string(parser_info, NODE_NAME, "quote");
   DL_APPEND(node->children, quote_name);
 
-  seni_node *ws = build_text_node_from_string(NODE_WHITESPACE, " ");
+  char *wst = " ";
+  seni_node *ws = build_text_node_of_length(&wst, NODE_WHITESPACE, 1);
   DL_APPEND(node->children, ws);
 
-  seni_node *child = consume_item();
+  seni_node *child = consume_item(parser_info, src);
   DL_APPEND(node->children, child);
 
   return node;
 }
 
-seni_node *consume_int()
+seni_node *consume_int(char **src)
 {
   char *end_ptr;
   
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_INT;
-  node->i32_value = (i32)strtoimax(remaining, &end_ptr, 10);
+  node->value.i = (i32)strtoimax(*src, &end_ptr, 10);
 
-  remaining = end_ptr;
+  *src = end_ptr;
   
   return node;
 }
 
-seni_node *consume_float()
+seni_node *consume_float(char **src)
 {
   char *end_ptr;
   
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_FLOAT;
-  node->f32_value = (f32)strtof(remaining, &end_ptr);
+  node->value.f = (f32)strtof(*src, &end_ptr);
 
-  remaining = end_ptr;
+  *src = end_ptr;
+  
+  return node;
+}
+
+seni_node *consume_boolean(char **src, bool val)
+{
+  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
+  node->type = NODE_BOOLEAN;
+  node->value.i = val;
+
+  if (val == true) {
+    (*src) += 4;                /* 'true' */
+  } else {
+    (*src) += 5;                /* 'false' */
+  }
   
   return node;
 }
 
 
-seni_node *consume_name_or_boolean()
+seni_node *consume_name(parser_info *parser_info, char **src)
 {
   size_t i = 0;
+  char *rem = *src;
 
-  while(remaining[i]) {
-    char c = remaining[i];
+  while(rem[i]) {
+    char c = rem[i];
     if (!is_alpha(c) && !is_digit(c) && !is_symbol(c)) {
       break;
     }
     i++;
   }
 
-  seni_node *node = build_text_node_of_length(NODE_NAME, i);
-
-  if (string_compare(node->str_value, "true") == true) {
-    node->type = NODE_BOOLEAN;
-    free(node->str_value);
-    node->i32_value = true;
-  } else if (string_compare(node->str_value, "false") == true) {
-    node->type = NODE_BOOLEAN;
-    free(node->str_value);
-    node->i32_value = false;
-  }
+  seni_node *node = build_text_lookup_node_of_length(parser_info, src, NODE_NAME, i);
 
   return node;
 }
 
-seni_node *consume_boolean(bool val)
+seni_node *consume_string(parser_info *parser_info, char **src)
 {
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
-  node->type = NODE_BOOLEAN;
-  node->i32_value = val;
+  (*src)++; // skip the first \"
 
-  return node;
-}
-
-seni_node *consume_string()
-{
-  remaining++; // skip the first \"
-
-  char *next_quote = find_next(remaining, '\"');
+  char *next_quote = find_next(*src, '\"');
   if (next_quote == NULL) {
     return NULL;
   }
 
-  size_t string_len = next_quote - remaining;
+  size_t string_len = next_quote - *src;
 
-  seni_node *node = build_text_node_of_length(NODE_STRING, string_len);
+  seni_node *node = build_text_lookup_node_of_length(parser_info, src, NODE_STRING, string_len);
 
-  remaining++; // skip the second \"
+  (*src)++; // skip the second \"
   
   return node;
 }
 
-seni_node *consume_label()
+seni_node *consume_label(parser_info *parser_info, char **src)
 {
   size_t i = 0;
+  char *rem = *src;
 
-  while(remaining[i]) {
-    char c = remaining[i];
+  while(rem[i]) {
+    char c = rem[i];
     if (!is_alpha(c) && !is_digit(c) && !is_symbol(c)) {
       break;
     }
@@ -400,70 +446,72 @@ seni_node *consume_label()
   }
 
   // read the label name - the ':' character
-  seni_node *node = build_text_node_of_length(NODE_LABEL, i);
+  seni_node *node = build_text_lookup_node_of_length(parser_info, src, NODE_LABEL, i);
 
-  if (*remaining != ':') {
+  if (**src != ':') {
     return NULL;
   }
 
-  remaining += 1;        /* the remaining should skip past the ':' */
+  (*src)++;        /* the remaining should skip past the ':' */
 
   return node;
 }
 
-seni_node *consume_comment()
+seni_node *consume_comment(char **src)
 {
   size_t i = 0;
-
-  while (remaining[i]) {
-    char c = remaining[i];
+  char *rem = *src;
+  
+  while (rem[i]) {
+    char c = rem[i];
     if (is_newline(c)) {
       break;
     }
     i++;
   }
 
-  seni_node *node = build_text_node_of_length(NODE_COMMENT, i);
+  seni_node *node = build_text_node_of_length(src, NODE_COMMENT, i);
 
-  if (is_newline(*remaining)) {
-    remaining += 1;        /* skip past the newline */
+  if (is_newline(*rem)) {
+    (*src)++;        /* skip past the newline */
   }
     
   return node;
 }
 
-seni_node *consume_whitespace()
+seni_node *consume_whitespace(char **src)
 {
   size_t i = 0;
-  char c = remaining[i];
+  char *rem = *src;
+  char c = rem[i];
   
   while(c) {
     if (!is_whitespace(c)) {
       break;
     }
     i++;
-    c = remaining[i];
+    c = rem[i];
   }
 
-  seni_node *node = build_text_node_of_length(NODE_WHITESPACE, i);
+  seni_node *node = build_text_node_of_length(src, NODE_WHITESPACE, i);
 
   return node;
 }
 
-seni_node *consume_item()
+seni_node *consume_item(parser_info *parser_info, char **src)
 {
-  char c = *remaining;
+  char c = **src;
 
   if (is_whitespace(c)) {
-    return consume_whitespace();
+    return consume_whitespace(src);
   }
 
   if (is_quote_abbreviation(c)) {
-    return consume_quoted_form();
+    return consume_quoted_form(parser_info, src);
   }
 
   if (is_list_start(c)) {
-    return consume_list();
+    return consume_list(parser_info, src);
   }
 
   if (is_list_end(c)) {
@@ -471,7 +519,7 @@ seni_node *consume_item()
   }
 
   if (is_vector_start(c)) {
-    return consume_vector();
+    return consume_vector(parser_info, src);
   }
 
   if (is_vector_end(c)) {
@@ -479,7 +527,7 @@ seni_node *consume_item()
   }
 
   if (is_alterable_start(c)) {
-    return consume_bracket();
+    return consume_bracket(parser_info, src);
   }
 
   if (is_alterable_end(c)) {
@@ -487,29 +535,50 @@ seni_node *consume_item()
   }
 
   if (is_quoted_string(c)) {
-    return consume_string();
+    return consume_string(parser_info, src);
   }
 
-  if (is_alpha(c)) {
-    if (!(c == MINUS && *(remaining + 1) != 0 && is_digit(remaining[1]))) {
-      if (is_label(remaining)) {
-        return consume_label();
-      } else {
-        return consume_name_or_boolean();
+  if (is_alpha(c) || is_minus(c) || is_symbol(c)) {
+    // doesn't begin with -[0..9]
+    if (!(is_minus(c) && *(*src + 1) != 0 && is_digit(*(*src + 1)))) {
+
+      char *s = *src;
+      size_t word_len = 0;
+
+      while(*s != 0) {
+        if (!is_alpha(*s) && !is_digit(*s) && !is_symbol(*s)) {
+          break;
+        }
+        word_len++;
+        s++;
       }
+      
+      if (is_label(*src, word_len)) {
+        return consume_label(parser_info, src);
+      }
+
+      if (is_boolean_true(*src, word_len)) {
+        return consume_boolean(src, true);
+      }
+
+      if (is_boolean_false(*src, word_len)) {
+        return consume_boolean(src, false);
+      } 
+
+      return consume_name(parser_info, src);
     }
   }
   
-  if (is_digit(c) || c == MINUS || c == PERIOD) {
-    if (has_period(remaining)) {
-      return consume_float();
+  if (is_digit(c) || is_minus(c) || is_period(c)) {
+    if (has_period(*src)) {
+      return consume_float(src);
     } else {
-      return consume_int();
+      return consume_int(src);
     }
   }
 
   if (is_comment(c)) {
-    return consume_comment();
+    return consume_comment(src);
   }
   return NULL;
 }
@@ -552,9 +621,14 @@ void parser_free_nodes(seni_node *nodes)
     }
     
     next = node->next;
-    
-    if (node->str_value != NULL) {
-      free(node->str_value);
+
+    if (node->type == NODE_COMMENT || node->type == NODE_WHITESPACE) {
+      // freeing a pointer in a union, so make sure that the value in
+      // the union only comes from the 's' component and not 'i' or 'f'
+      //
+      if (node->value.s != NULL) {
+        free(node->value.s);
+      }
     }
 
     // printf("freeing node: %s %u\n", parser_node_type_name(node->type), (u32)node);
@@ -564,19 +638,19 @@ void parser_free_nodes(seni_node *nodes)
   }
 }
 
-seni_node *parser_parse(char *s)
+parser_info *parser_parse(parser_info *parser_info, char *s)
 {
   if (s == NULL) {
     return NULL;
   }
 
-  remaining = s;
+  char **src = &s;
 
   seni_node *nodes = NULL;
   seni_node *node;
-
-  while(*remaining) {
-    node = consume_item();
+  
+  while(**src) {
+    node = consume_item(parser_info, src);
 
     if (node == NULL) {
       // clean up and fuck off
@@ -587,5 +661,6 @@ seni_node *parser_parse(char *s)
     DL_APPEND(nodes, node);
   }
 
-  return nodes;
+  parser_info->nodes = nodes;
+  return parser_info;
 }

@@ -9,6 +9,16 @@ f32 mc_m_wasm(f32 xa, f32 ya, f32 xb, f32 yb)
   return mc_m(xa, ya, xb, yb);
 }
 
+
+EMSCRIPTEN_KEEPALIVE
+void parse_sample()
+{
+  seni_node *nodes = parser_parse("[(+ 1 1)]");
+  printf("hello from parse_sample %d\n", (int)nodes->type);
+}
+
+
+
 EMSCRIPTEN_KEEPALIVE
 int myFunction_wasm(int argc, char ** argv)
 {

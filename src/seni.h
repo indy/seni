@@ -6,5 +6,6 @@
 #include "seni_containers.h"
 
 #include "seni_interp.h"
+#include "seni_lang_parser.h"
 
 #endif /* SENI_H */
