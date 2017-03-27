@@ -49,5 +49,6 @@ typedef struct seni_node {
 
 seni_node *parser_parse(char *s);
 void parser_free_nodes(seni_node *nodes);
-
+char *parser_node_type_name(seni_node_type type);
+  
 #endif

@@ -289,6 +289,8 @@ seni_node *consume_bracket()
 
 seni_node *consume_quoted_form()
 {
+  remaining++;
+  
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_LIST;
 
@@ -512,7 +514,7 @@ seni_node *consume_item()
   return NULL;
 }
 
-char *node_type_as_string(seni_node_type type)
+char *parser_node_type_name(seni_node_type type)
 {
   switch(type) {
   case NODE_LIST: return "NODE_LIST";
@@ -555,7 +557,7 @@ void parser_free_nodes(seni_node *nodes)
       free(node->str_value);
     }
 
-    // printf("freeing node: %s %u\n", node_type_as_string(node->type), (u32)node);
+    // printf("freeing node: %s %u\n", parser_node_type_name(node->type), (u32)node);
     free(node);
     
     node = next;
