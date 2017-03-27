@@ -4,7 +4,7 @@ if "%1" == "wasm" (
 
    pushd build_wasm
    rem ISG: have to list each c file as Windows command prompt doesn't do wildcard expansion
-   call emcc -o seni-wasm.js ..\src\wasm.c ..\src\seni.c ..\src\seni_containers.c ..\src\seni_interp.c ..\src\seni_lang_lexer.c ..\src\seni_lang_parser.c ..\src\seni_mathutil.c -O3 -s WASM=1
+   call emcc -o seni-wasm.js ..\src\wasm.c ..\src\seni.c ..\src\seni_containers.c ..\src\seni_interp.c ..\src\seni_lang_parser.c ..\src\seni_mathutil.c -O3 -s WASM=1
    popd
 
 ) else (

@@ -1,13 +1,152 @@
 #include <string.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <stdio.h>              /* for debug only */
 
-#include "stdio.h"              /* for debug only */
 #include "seni_lang_parser.h"
-
 #include "seni_containers.h"
 
-seni_node *parser_consume_item(seni_token **pptokens);
+seni_node *consume_item();
 
-bool parser_string_compare(char* a, char *b)
+char* remaining;                /* global */
+
+char* chars_whitespace = " \t\n,";
+char* chars_digit = "0123456789";
+char* chars_alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/<>=";
+char* chars_symbol = "-!@#$%^&*<>?";
+
+char MINUS = '-';
+char PERIOD = '.';
+
+bool contains(char c, char *p)
+{
+  while(*p != 0) {
+    if (*p == c) {
+      return true;
+    }
+    p++;
+  }
+  
+  return false;
+}
+
+bool is_whitespace(char c)
+{
+  return contains(c, chars_whitespace);
+}
+
+bool is_digit(char c)
+{
+  return contains(c, chars_digit);
+}
+
+bool is_alpha(char c)
+{
+  return contains(c, chars_alpha);
+}
+
+bool is_symbol(char c)
+{
+  return contains(c, chars_symbol);
+}
+
+bool is_list_start(char c)
+{
+  return c == '(';
+}
+
+bool is_list_end(char c)
+{
+  return c == ')';
+}
+
+bool is_vector_start(char c)
+{
+  return c == '[';
+}
+
+bool is_vector_end(char c)
+{
+  return c == ']';
+}
+
+bool is_alterable_start(char c)
+{
+  return c == '{';
+}
+
+bool is_alterable_end(char c)
+{
+  return c == '}';
+}
+
+bool is_quoted_string(char c)
+{
+  return c == '"';
+}
+
+bool is_quote_abbreviation(char c)
+{
+  return c == '\'';
+}
+
+bool is_comment(char c)
+{
+  return c == ';';
+}
+
+bool is_newline(char c)
+{
+  return c == '\n';
+}
+
+bool is_label(char *s)
+{
+  size_t i = 0;
+  char c = s[i];
+
+  while(c != 0) {
+    if (!is_alpha(c) && !is_digit(c) && !is_symbol(c)) {
+      break;
+    }
+    i++;
+    c = s[i];
+  }
+
+  return c != 0 && s[i] == ':';
+}
+
+bool has_period(char *s)
+{
+  size_t i = 0;
+  char c = s[i];
+
+  while (c != 0) {
+    if (c == PERIOD) {
+      return true;
+    }
+    if (is_whitespace(c)) {
+      return false;
+    }
+    i++;
+    c = s[i];
+  }
+
+  return false;
+}
+
+char *find_next(char *s, char target)
+{
+  while (*s != 0){
+    if (*s == target) {
+      return s;
+    }
+    s++;
+  }
+  return NULL;
+}
+
+bool string_compare(char* a, char *b)
 {
 #if defined(_WIN32)
   return _stricmp(a, b) == 0;
@@ -29,45 +168,36 @@ seni_node *build_text_node_from_string(seni_node_type type, char *string)
   return node;
 }
 
-seni_node *build_text_node_from_token(seni_node_type type, seni_token *token)
+seni_node *build_text_node_of_length(seni_node_type type, size_t len)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = type;
-  node->str_value = token->str_value;
 
-  // clear token->str_value since the seni_token is now re-using that memory
-  token->str_value = NULL;
+  char *str = (char *)malloc(sizeof(char) * (len + 1));
+  strncpy(str, remaining, len);
+  str[len] = '\0';
+
+  remaining += len;
+  
+  node->str_value = str;
   
   return node;
 }
 
-void debug_token(seni_token *token)
-{
-  printf("token %d %p\n", token->type, (void *)token);
-}
-
-/* 
-   the list-like nodes can allocate an array of tokens to store it's children?
- */
-
-seni_node *parser_consume_list(seni_token **pptokens)
+seni_node *consume_list()
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_LIST;
 
-  while (1) {
-    seni_token *token = *pptokens;
-    if (token == NULL) {
-      /* unexpected end of list */
-      return NULL;
-    }
+  remaining++; // (
 
-    if (token->type == TOK_LIST_END) {
-      *pptokens = token->next;
+  while (1) {
+    if (is_list_end(*remaining)) {
+      remaining++; // )
       return node;
     }
 
-    seni_node *child = parser_consume_item(pptokens);
+    seni_node *child = consume_item();
     if (child == NULL) {
       /* error? */
       return NULL;
@@ -77,24 +207,20 @@ seni_node *parser_consume_list(seni_token **pptokens)
   }
 }
 
-seni_node *parser_consume_vector(seni_token **pptokens)
+seni_node *consume_vector()
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_VECTOR;
 
+  remaining++; // [
+  
   while (1) {
-    seni_token *token = *pptokens;
-    if (token == NULL) {
-      /* unexpected end of vector */
-      return NULL;
-    }
-
-    if (token->type == TOK_VECTOR_END) {
-      *pptokens = token->next;
+    if (is_vector_end(*remaining)) {
+      remaining++; // ]
       return node;
     }
 
-    seni_node *child = parser_consume_item(pptokens);
+    seni_node *child = consume_item();
     if (child == NULL) {
       /* error? */
       return NULL;
@@ -104,13 +230,16 @@ seni_node *parser_consume_vector(seni_token **pptokens)
   }
 }
 
-seni_node *parser_consume_bracket(seni_token **pptokens)
+seni_node *consume_bracket()
 {
   seni_node *node;
   seni_node *parameter_prefix = NULL;
-
+  seni_node *c;
+  
+  remaining++; // {
+  
   while (1) {
-    seni_node *c = parser_consume_item(pptokens);
+    c = consume_item();
     if (c == NULL) {
       /* error? */
       return NULL;
@@ -143,18 +272,12 @@ seni_node *parser_consume_bracket(seni_token **pptokens)
   */
   
   while (1) {
-    seni_token *token = *pptokens;
-    if (token == NULL) {
-      /* unexpected end of vector */
-      return NULL;
-    }
-
-    if (token->type == TOK_ALTERABLE_END) {
-      *pptokens = token->next;
+    if (is_alterable_end(*remaining)) {
+      remaining++; // }
       return node;
     }
 
-    seni_node *child = parser_consume_item(pptokens);
+    seni_node *child = consume_item();
     if (child == NULL) {
       /* error? */
       return NULL;
@@ -164,7 +287,7 @@ seni_node *parser_consume_bracket(seni_token **pptokens)
   }
 }
 
-seni_node *parser_consume_quoted_form(seni_token **pptokens)
+seni_node *consume_quoted_form()
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_LIST;
@@ -175,31 +298,67 @@ seni_node *parser_consume_quoted_form(seni_token **pptokens)
   seni_node *ws = build_text_node_from_string(NODE_WHITESPACE, " ");
   DL_APPEND(node->children, ws);
 
-  seni_node *child = parser_consume_item(pptokens);
+  seni_node *child = consume_item();
   DL_APPEND(node->children, child);
 
   return node;
 }
 
-seni_node *parser_consume_int(seni_token *token)
+seni_node *consume_int()
 {
+  char *end_ptr;
+  
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_INT;
-  node->i32_value = token->i32_value;
+  node->i32_value = (i32)strtoimax(remaining, &end_ptr, 10);
+
+  remaining = end_ptr;
   
   return node;
 }
 
-seni_node *parser_consume_float(seni_token *token)
+seni_node *consume_float()
 {
+  char *end_ptr;
+  
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_FLOAT;
-  node->f32_value = token->f32_value;
+  node->f32_value = (f32)strtof(remaining, &end_ptr);
+
+  remaining = end_ptr;
+  
+  return node;
+}
+
+
+seni_node *consume_name_or_boolean()
+{
+  size_t i = 0;
+
+  while(remaining[i]) {
+    char c = remaining[i];
+    if (!is_alpha(c) && !is_digit(c) && !is_symbol(c)) {
+      break;
+    }
+    i++;
+  }
+
+  seni_node *node = build_text_node_of_length(NODE_NAME, i);
+
+  if (string_compare(node->str_value, "true") == true) {
+    node->type = NODE_BOOLEAN;
+    free(node->str_value);
+    node->i32_value = true;
+  } else if (string_compare(node->str_value, "false") == true) {
+    node->type = NODE_BOOLEAN;
+    free(node->str_value);
+    node->i32_value = false;
+  }
 
   return node;
 }
 
-seni_node *parser_consume_boolean(bool val)
+seni_node *consume_boolean(bool val)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_BOOLEAN;
@@ -208,91 +367,149 @@ seni_node *parser_consume_boolean(bool val)
   return node;
 }
 
-seni_node *parser_consume_name(seni_token *token)
+seni_node *consume_string()
 {
-  return build_text_node_from_token(NODE_NAME, token);
-}
+  remaining++; // skip the first \"
 
-seni_node *parser_consume_string(seni_token *token)
-{
-  return build_text_node_from_token(NODE_STRING, token);
-}
-
-seni_node *parser_consume_label(seni_token *token)
-{
-  return build_text_node_from_token(NODE_LABEL, token);
-}
-
-seni_node *parser_consume_comment(seni_token *token)
-{
-  return build_text_node_from_token(NODE_COMMENT, token);
-}
-
-seni_node *parser_consume_whitespace(seni_token *token)
-{
-  return build_text_node_from_token(NODE_WHITESPACE, token);
-}
-
-seni_node *parser_consume_item(seni_token **pptokens)
-{
-  seni_token *token = *pptokens;
-  *pptokens = token->next;
-
-  // debug_token(token);
-  
-  seni_token_type token_type = token->type;
-  switch (token_type) {
-  case TOK_LIST_START:
-    return parser_consume_list(pptokens);
-    break;
-  case TOK_LIST_END:
-    return NULL;                /* 'mismatched closing parens' */
-    break;
-  case TOK_VECTOR_START:
-    return parser_consume_vector(pptokens);
-    break;
-  case TOK_VECTOR_END:
-    return NULL;                /* 'mismatched closing square brackets' */
-    break;
-  case TOK_ALTERABLE_START:
-    return parser_consume_bracket(pptokens);
-    break;
-  case TOK_ALTERABLE_END:
-    return NULL;                /* 'mismatched closing alterable brackets' */
-    break;
-  case TOK_INT:
-    return parser_consume_int(token);
-    break;
-  case TOK_FLOAT:
-    return parser_consume_float(token);
-    break;
-  case TOK_NAME:
-    if(parser_string_compare(token->str_value, "true") == true) {
-      return parser_consume_boolean(true);
-    } else if(parser_string_compare(token->str_value, "false") == true) {
-      return parser_consume_boolean(false);
-    } else {
-      return parser_consume_name(token);
-    }
-    break;
-  case TOK_STRING:
-    return parser_consume_string(token);
-    break;
-  case TOK_QUOTE_ABBREVIATION:
-    return parser_consume_quoted_form(pptokens);
-    break;
-  case TOK_LABEL:
-    return parser_consume_label(token);
-    break;
-  case TOK_COMMENT:
-    return parser_consume_comment(token);
-    break;
-  case TOK_WHITESPACE:
-    return parser_consume_whitespace(token);
-    break;
-  default:
+  char *next_quote = find_next(remaining, '\"');
+  if (next_quote == NULL) {
     return NULL;
-  };
+  }
+
+  size_t string_len = next_quote - remaining;
+
+  seni_node *node = build_text_node_of_length(NODE_STRING, string_len);
+
+  remaining++; // skip the second \"
+  
+  return node;
+}
+
+seni_node *consume_label()
+{
+  size_t i = 0;
+
+  while(remaining[i]) {
+    char c = remaining[i];
+    if (!is_alpha(c) && !is_digit(c) && !is_symbol(c)) {
+      break;
+    }
+    i++;
+  }
+
+  // read the label name - the ':' character
+  seni_node *node = build_text_node_of_length(NODE_LABEL, i);
+
+  if (*remaining != ':') {
+    return NULL;
+  }
+
+  remaining += 1;        /* the remaining should skip past the ':' */
+
+  return node;
+}
+
+seni_node *consume_comment()
+{
+  size_t i = 0;
+
+  while (remaining[i]) {
+    char c = remaining[i];
+    if (is_newline(c)) {
+      break;
+    }
+    i++;
+  }
+
+  seni_node *node = build_text_node_of_length(NODE_COMMENT, i);
+
+  if (is_newline(*remaining)) {
+    remaining += 1;        /* skip past the newline */
+  }
+    
+  return node;
+}
+
+seni_node *consume_whitespace()
+{
+  size_t i = 0;
+  char c = remaining[i];
+  
+  while(c) {
+    if (!is_whitespace(c)) {
+      break;
+    }
+    i++;
+    c = remaining[i];
+  }
+
+  seni_node *node = build_text_node_of_length(NODE_WHITESPACE, i);
+
+  return node;
+}
+
+seni_node *consume_item()
+{
+  char c = *remaining;
+
+  if (is_whitespace(c)) {
+    return consume_whitespace();
+  }
+
+  if (is_quote_abbreviation(c)) {
+    return consume_quoted_form();
+  }
+
+  if (is_list_start(c)) {
+    return consume_list();
+  }
+
+  if (is_list_end(c)) {
+    return NULL;                /* 'mismatched closing parens' */
+  }
+
+  if (is_vector_start(c)) {
+    return consume_vector();
+  }
+
+  if (is_vector_end(c)) {
+    return NULL;                /* 'mismatched closing square brackets' */
+  }
+
+  if (is_alterable_start(c)) {
+    return consume_bracket();
+  }
+
+  if (is_alterable_end(c)) {
+    return NULL;                /* 'mismatched closing alterable brackets' */
+  }
+
+  if (is_quoted_string(c)) {
+    return consume_string();
+  }
+
+  if (is_alpha(c)) {
+    if (!(c == MINUS && *(remaining + 1) != 0 && is_digit(remaining[1]))) {
+      if (is_label(remaining)) {
+        return consume_label();
+      } else {
+        return consume_name_or_boolean();
+      }
+    }
+  }
+  
+  if (is_digit(c) || c == MINUS || c == PERIOD) {
+    if (has_period(remaining)) {
+      return consume_float();
+    } else {
+      return consume_int();
+    }
+  }
+
+  if (is_comment(c)) {
+    return consume_comment();
+  }
+  return NULL;
 }
 
 char *node_type_as_string(seni_node_type type)
@@ -345,15 +562,19 @@ void parser_free_nodes(seni_node *nodes)
   }
 }
 
-seni_node *parser_parse(seni_token *tokens)
+seni_node *parser_parse(char *s)
 {
+  if (s == NULL) {
+    return NULL;
+  }
+
+  remaining = s;
+
   seni_node *nodes = NULL;
   seni_node *node;
 
-  seni_token **pptokens = &tokens;
-
-  while (*pptokens != NULL) {
-    node = parser_consume_item(pptokens);
+  while(*remaining) {
+    node = consume_item();
 
     if (node == NULL) {
       // clean up and fuck off

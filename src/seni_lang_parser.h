@@ -2,7 +2,6 @@
 #define SENI_LANG_PARSER_H
 
 #include "seni_types.h"
-#include "seni_lang_lexer.h"
 
 typedef enum {
   NODE_LIST = 0,
@@ -48,7 +47,7 @@ typedef struct seni_node {
   struct seni_node *next;
 } seni_node;
 
-seni_node *parser_parse(seni_token *tokens);
+seni_node *parser_parse(char *s);
 void parser_free_nodes(seni_node *nodes);
 
 #endif
