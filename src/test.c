@@ -5,6 +5,7 @@
 #include "seni.h"
 
 #include "seni_lang_parser.h"
+#include "seni_lang_env.h"
 
 #include "stdio.h"
 
@@ -247,6 +248,41 @@ void test_lang_parser(void)
   free(parser_info);
 }
 
+void test_lang_env(void)
+{
+  seni_env *env, *env2;
+  seni_var *var, *var2;
+
+  env_allocate_pools();
+  env = get_initial_env();
+
+  var = add_var(env, 1);
+  var->type = NODE_INT;
+  var->value.i = 42;
+
+  /* basic lookup */
+  var2 = lookup_var(env, 1);
+  TEST_ASSERT_EQUAL(42, var2->value.i);
+
+  /* lookup an outer scope */
+  env2 = push_scope(env);
+  var2 = lookup_var(env2, 1);
+  TEST_ASSERT_EQUAL(42, var2->value.i);  
+
+  /* redefine current scope */
+  var2 = add_var(env2, 1);
+  var2->value.i = 100;
+  var2 = lookup_var(env2, 1);
+  TEST_ASSERT_EQUAL(100, var2->value.i);
+
+  /* pop scope and get back previous value */
+  env2 = pop_scope(env2);
+  var2 = lookup_var(env2, 1);
+  TEST_ASSERT_EQUAL(42, var2->value.i);
+
+  env_free_pools();
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -254,5 +290,6 @@ int main(void)
   RUN_TEST(test_interp);
   RUN_TEST(test_uthash);
   RUN_TEST(test_lang_parser);
+  RUN_TEST(test_lang_env);
   return UNITY_END();
 }
