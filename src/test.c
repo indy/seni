@@ -107,61 +107,60 @@ void teardown_parser(parser_info *parser_info, seni_node *nodes)
 
 void test_lang_parser(void)
 {
-  parser_info *parser_info = malloc(sizeof(parser_info));
   seni_node *nodes, *iter, *iter2;
+  parser_info *pi = (parser_info *)calloc(1, sizeof(parser_info));
 
-  parser_info->name_lookup = name_lookup;
-  parser_info->name_lookup_count = 0;
-  parser_info->name_lookup_max = MAX_NAMES;
+  pi->name_lookup = name_lookup;
+  pi->name_lookup_count = 0;
+  pi->name_lookup_max = MAX_NAMES;
   for( int i = 0; i < MAX_NAMES; i++) {
-    parser_info->name_lookup[i] = 0;      
+    pi->name_lookup[i] = 0;      
   }
 
-  //  hello
-  parser_info = parser_parse(parser_info, "hello");
-  nodes = parser_info->nodes;
-  assert_parser_node_txt(nodes, NODE_NAME, "hello", parser_info);
-  teardown_parser(parser_info, nodes);
+  pi = parser_parse(pi, "hello");
+  nodes = pi->nodes;
+  assert_parser_node_txt(nodes, NODE_NAME, "hello", pi);
+  teardown_parser(pi, nodes);
 
-  parser_info = parser_parse(parser_info, "5");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "5");
+  nodes = pi->nodes;
   assert_parser_node_i32(nodes, NODE_INT, 5);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
 
-  parser_info = parser_parse(parser_info, "(4)");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "(4)");
+  nodes = pi->nodes;
   assert_parser_node_raw(nodes, NODE_LIST);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
   
-  parser_info = parser_parse(parser_info, "true");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "true");
+  nodes = pi->nodes;
   assert_parser_node_i32(nodes, NODE_BOOLEAN, true);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
 
-  parser_info = parser_parse(parser_info, "false");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "false");
+  nodes = pi->nodes;
   assert_parser_node_i32(nodes, NODE_BOOLEAN, false);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
 
-  parser_info = parser_parse(parser_info, "(add 1 2)");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "(add 1 2)");
+  nodes = pi->nodes;
   iter = nodes->children;
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "add", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "add", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 1);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 2);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
 
-  parser_info = parser_parse(parser_info, "[add 9 8 (foo)]");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "[add 9 8 (foo)]");
+  nodes = pi->nodes;
   assert_parser_node_raw(nodes, NODE_VECTOR);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "add", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "add", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 9);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
@@ -170,55 +169,55 @@ void test_lang_parser(void)
   iter = assert_parser_node_raw(iter, NODE_LIST);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
  
-  parser_info = parser_parse(parser_info, ";[add 9 8 (foo)]");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, ";[add 9 8 (foo)]");
+  nodes = pi->nodes;
   assert_parser_node_str(nodes, NODE_COMMENT, ";[add 9 8 (foo)]");
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
 
-  parser_info = parser_parse(parser_info, "'(runall \"shabba\") ; woohoo");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "'(runall \"shabba\") ; woohoo");
+  nodes = pi->nodes;
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "quote", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "quote", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter;
   iter = assert_parser_node_raw(iter, NODE_LIST);
   TEST_ASSERT_NULL(iter);
   iter = iter2->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "runall", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "runall", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_txt(iter, NODE_STRING, "shabba", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_STRING, "shabba", pi);
   iter = nodes->next;
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_str(iter, NODE_COMMENT, "; woohoo");
   TEST_ASSERT_NULL(iter);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
 
-  parser_info = parser_parse(parser_info, "(fun i: 42 f: 12.34)");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "(fun i: 42 f: 12.34)");
+  nodes = pi->nodes;
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "fun", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "fun", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_txt(iter, NODE_LABEL, "i", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_LABEL, "i", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 42);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_txt(iter, NODE_LABEL, "f", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_LABEL, "f", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_f32(iter, NODE_FLOAT, 12.34f);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
 
-  parser_info = parser_parse(parser_info, "(a 1) (b 2)");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "(a 1) (b 2)");
+  nodes = pi->nodes;
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "a", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "a", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 1);
   TEST_ASSERT_NULL(iter);
@@ -226,26 +225,26 @@ void test_lang_parser(void)
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   assert_parser_node_raw(iter, NODE_LIST);
   iter = iter->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "b", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "b", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 2);
   TEST_ASSERT_NULL(iter);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
 
-  parser_info = parser_parse(parser_info, "(a {[1 2]})");
-  nodes = parser_info->nodes;
+  pi = parser_parse(pi, "(a {[1 2]})");
+  nodes = pi->nodes;
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "a", parser_info);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "a", pi);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter; // the vector
   iter = assert_parser_node_raw(iter, NODE_VECTOR);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_EQUAL(test_true, iter2->alterable);
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(parser_info, nodes);
+  teardown_parser(pi, nodes);
 
-  free(parser_info);
+  free(pi);
 }
 
 void test_lang_env(void)

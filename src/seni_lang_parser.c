@@ -207,9 +207,8 @@ seni_node *build_text_lookup_node_of_length(parser_info *parser_info, char **src
 
   node->type = type;
   node->value.i = k;
-  
   *src += len;
-  
+
   return node;
 }
 
@@ -648,19 +647,19 @@ parser_info *parser_parse(parser_info *parser_info, char *s)
 
   seni_node *nodes = NULL;
   seni_node *node;
-  
+
   while(**src) {
     node = consume_item(parser_info, src);
-
     if (node == NULL) {
       // clean up and fuck off
       parser_free_nodes(nodes);
       return NULL;
     }
-    
+
     DL_APPEND(nodes, node);
   }
 
   parser_info->nodes = nodes;
+
   return parser_info;
 }
