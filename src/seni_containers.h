@@ -9,14 +9,4 @@
 // https://troydhanson.github.io/uthash/utlist.html
 #include "uthash/utlist.h"
 
-typedef struct
-{
-  int id;                    /* key */
-  f32 ff;
-  char name[10];
-  UT_hash_handle hh;         /* makes this structure hashable */
-} my_struct;
-
-
-
 #endif

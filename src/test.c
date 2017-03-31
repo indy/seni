@@ -4,8 +4,10 @@
 #include "unity/unity.h"
 #include "seni.h"
 
+#include "seni_lang_word_lookup.h"
 #include "seni_lang_parser.h"
 #include "seni_lang_env.h"
+#include "seni_lang_interpreter.h"
 
 #include "stdio.h"
 
@@ -22,35 +24,6 @@ void test_mathutil(void)
   TEST_ASSERT_EQUAL_FLOAT(1.5f, deg_to_rad(rad_to_deg(1.5f)));
   TEST_ASSERT_EQUAL_FLOAT(0.44444f, mc_m(1.0f, 1.0f, 10.0f, 5.0f));
   TEST_ASSERT_EQUAL_FLOAT(0.55556f, mc_c(1.0f, 1.0f, 0.444444f));
-}
-
-void test_interp(void)
-{
-  TEST_ASSERT_EQUAL_FLOAT(1.5f, map_linear(1.5f));
-}
-
-my_struct *users = NULL;    /* important! initialize to NULL */
-
-void test_uthash(void)
-{
-  int user_id = 42;
-  f32 fvalue = 99.88f;
-  char* name = "hello";
-
-  
-  my_struct *s;
-
-  s = malloc(sizeof(my_struct));
-  s->id = user_id;
-  s->ff = fvalue;
-  strcpy(s->name, name);
-  HASH_ADD_INT( users, id, s );  /* id: name of key field */
-
-  my_struct *t;
-
-  HASH_FIND_INT( users, &user_id, t );  /* t: output pointer */
-  
-  TEST_ASSERT_EQUAL(fvalue, t->ff);
 }
 
 seni_node *assert_parser_node_raw(seni_node *node, seni_node_type type)
@@ -80,87 +53,65 @@ seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *va
   return node->next;
 }
 
-seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, parser_info *parser_info)
+seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, word_lookup *word_lookup)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, parser_node_type_name(node->type));
 
-  char *c = parser_info->name_lookup[node->value.i];
+  char *c = word_lookup->words[node->value.i];
   TEST_ASSERT_EQUAL_STRING(val, c);
   
   return node->next;
 }
 
-#define MAX_NAMES 64
-char *name_lookup[MAX_NAMES];
-
-void teardown_parser(parser_info *parser_info, seni_node *nodes)
-{
-  for( int i = 0; i < MAX_NAMES; i++) {
-    if (parser_info->name_lookup[i]) {
-      free(parser_info->name_lookup[i]);
-    }
-    parser_info->name_lookup[i] = 0;      
-  }
-  parser_info->name_lookup_count = 0;
-  parser_free_nodes(nodes);
-}
-
 void test_lang_parser(void)
 {
   seni_node *nodes, *iter, *iter2;
-  parser_info *pi = (parser_info *)calloc(1, sizeof(parser_info));
+  word_lookup *wl = (word_lookup *)calloc(1, sizeof(word_lookup));
 
-  pi->name_lookup = name_lookup;
-  pi->name_lookup_count = 0;
-  pi->name_lookup_max = MAX_NAMES;
-  for( int i = 0; i < MAX_NAMES; i++) {
-    pi->name_lookup[i] = 0;      
-  }
+  nodes = parser_parse(wl, "hello");
+  assert_parser_node_txt(nodes, NODE_NAME, "hello", wl);
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
 
-  pi = parser_parse(pi, "hello");
-  nodes = pi->nodes;
-  assert_parser_node_txt(nodes, NODE_NAME, "hello", pi);
-  teardown_parser(pi, nodes);
 
-  pi = parser_parse(pi, "5");
-  nodes = pi->nodes;
+  nodes = parser_parse(wl, "5");
   assert_parser_node_i32(nodes, NODE_INT, 5);
-  teardown_parser(pi, nodes);
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
 
-  pi = parser_parse(pi, "(4)");
-  nodes = pi->nodes;
+  nodes = parser_parse(wl, "(4)");
   assert_parser_node_raw(nodes, NODE_LIST);
-  teardown_parser(pi, nodes);
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
   
-  pi = parser_parse(pi, "true");
-  nodes = pi->nodes;
+  nodes = parser_parse(wl, "true");
   assert_parser_node_i32(nodes, NODE_BOOLEAN, true);
-  teardown_parser(pi, nodes);
-
-  pi = parser_parse(pi, "false");
-  nodes = pi->nodes;
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
+  
+  nodes = parser_parse(wl, "false");
   assert_parser_node_i32(nodes, NODE_BOOLEAN, false);
-  teardown_parser(pi, nodes);
-
-  pi = parser_parse(pi, "(add 1 2)");
-  nodes = pi->nodes;
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
+  
+  nodes = parser_parse(wl, "(add 1 2)");
   iter = nodes->children;
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "add", pi);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 1);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 2);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(pi, nodes);
-
-  pi = parser_parse(pi, "[add 9 8 (foo)]");
-  nodes = pi->nodes;
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
+  
+  nodes = parser_parse(wl, "[add 9 8 (foo)]");
   assert_parser_node_raw(nodes, NODE_VECTOR);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "add", pi);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 9);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
@@ -169,55 +120,55 @@ void test_lang_parser(void)
   iter = assert_parser_node_raw(iter, NODE_LIST);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(pi, nodes);
- 
-  pi = parser_parse(pi, ";[add 9 8 (foo)]");
-  nodes = pi->nodes;
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
+  
+  nodes = parser_parse(wl, ";[add 9 8 (foo)]");
   assert_parser_node_str(nodes, NODE_COMMENT, ";[add 9 8 (foo)]");
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(pi, nodes);
-
-  pi = parser_parse(pi, "'(runall \"shabba\") ; woohoo");
-  nodes = pi->nodes;
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
+  
+  nodes = parser_parse(wl, "'(runall \"shabba\") ; woohoo");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "quote", pi);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "quote", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter;
   iter = assert_parser_node_raw(iter, NODE_LIST);
   TEST_ASSERT_NULL(iter);
   iter = iter2->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "runall", pi);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "runall", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_txt(iter, NODE_STRING, "shabba", pi);
+  iter = assert_parser_node_txt(iter, NODE_STRING, "shabba", wl);
   iter = nodes->next;
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_str(iter, NODE_COMMENT, "; woohoo");
   TEST_ASSERT_NULL(iter);
-  teardown_parser(pi, nodes);
-
-  pi = parser_parse(pi, "(fun i: 42 f: 12.34)");
-  nodes = pi->nodes;
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
+  
+  nodes = parser_parse(wl, "(fun i: 42 f: 12.34)");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "fun", pi);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "fun", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_txt(iter, NODE_LABEL, "i", pi);
+  iter = assert_parser_node_txt(iter, NODE_LABEL, "i", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 42);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_txt(iter, NODE_LABEL, "f", pi);
+  iter = assert_parser_node_txt(iter, NODE_LABEL, "f", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_f32(iter, NODE_FLOAT, 12.34f);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(pi, nodes);
-
-  pi = parser_parse(pi, "(a 1) (b 2)");
-  nodes = pi->nodes;
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
+  
+  nodes = parser_parse(wl, "(a 1) (b 2)");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "a", pi);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "a", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 1);
   TEST_ASSERT_NULL(iter);
@@ -225,26 +176,27 @@ void test_lang_parser(void)
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   assert_parser_node_raw(iter, NODE_LIST);
   iter = iter->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "b", pi);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "b", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 2);
   TEST_ASSERT_NULL(iter);
-  teardown_parser(pi, nodes);
-
-  pi = parser_parse(pi, "(a {[1 2]})");
-  nodes = pi->nodes;
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
+  
+  nodes = parser_parse(wl, "(a {[1 2]})");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->children;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "a", pi);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "a", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter; // the vector
   iter = assert_parser_node_raw(iter, NODE_VECTOR);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_EQUAL(test_true, iter2->alterable);
   TEST_ASSERT_NULL(nodes->next);
-  teardown_parser(pi, nodes);
-
-  free(pi);
+  word_lookup_free_words(wl);
+  parser_free_nodes(nodes);
+  
+  free(wl);
 }
 
 void test_lang_env(void)
@@ -282,13 +234,204 @@ void test_lang_env(void)
   env_free_pools();
 }
 
+void assert_seni_var(seni_var *var, seni_node_type type)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, parser_node_type_name(var->type));
+}
+
+void assert_seni_var_i32(seni_var *var, seni_node_type type, i32 i)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, parser_node_type_name(var->type));
+  TEST_ASSERT_EQUAL(i, var->value.i);
+}
+
+void assert_seni_var_f32(seni_var *var, seni_node_type type, f32 f)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, parser_node_type_name(var->type));
+  TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
+}
+
+word_lookup *setup_interpreter_wl()
+{
+  word_lookup *wl = (word_lookup *)calloc(1, sizeof(word_lookup));
+  /*
+  wl->words_count = 0;
+  for( int i = 0; i < MAX_WORD_LOOKUPS; i++) {
+    wl->words[i] = 0;      
+  }
+  */
+  
+  // TODO: could the 0 index of every env be reserved for scratch?
+  // in which case this code would go away
+  
+  // NOTE: allocate __SCRATCH before parsing.
+  //
+  // add an initial dummy lookup for storing temporary expressions
+  i32 scratch = word_lookup_or_add(wl, "__SCRATCH", strlen("__SCRATCH"));
+  // should be 0
+  TEST_ASSERT_EQUAL(0, scratch);
+  // the interpreter can now use id:0 as a temporary placeholder
+
+  word_lookup_add_reserved_words(wl);
+
+  return wl;
+}
+
+seni_env *setup_interpreter_env()
+{
+  env_allocate_pools();
+  seni_env *env = get_initial_env();
+  add_var(env, 0);
+
+  return env;
+}
+
+void shutdown_interpreter_test(word_lookup *wl, seni_node *ast)
+{
+  env_free_pools();
+  word_lookup_free_words(wl);
+  word_lookup_free_reserved_words(wl);
+  parser_free_nodes(ast);
+  free(wl);
+}
+
+void add_binding_i32(word_lookup *wl, seni_env *env, char *name, i32 i)
+{
+  // add a foo binding to env
+  i32 name_index = word_lookup_or_add(wl, name, strlen(name));
+  seni_var *v = add_var(env, name_index);
+  v->type = NODE_INT;
+  v->value.i = i;
+}
+
+void test_lang_interpreter(void)
+{
+  word_lookup *wl = NULL;
+  seni_env *env = NULL;
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "42");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_INT, 42);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "12.34");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 12.34);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "true");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_BOOLEAN, 1);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "false");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_BOOLEAN, 0);
+
+    shutdown_interpreter_test(wl, ast);
+  }  
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    // add a foo binding to env
+    add_binding_i32(wl, env, "foo", 31);
+
+    seni_node *ast = parser_parse(wl, "foo");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_INT, 31);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "+");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_NAME, 0 + RESERVED_WORD_START);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(+ 10 1)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_INT, 11);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(+ 3 4 5 6)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_INT, 18);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(+ (+ 1 2) (+ 3 4))");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_INT, 10);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+}
+
 int main(void)
 {
   UNITY_BEGIN();
+#if 1
   RUN_TEST(test_mathutil);
-  RUN_TEST(test_interp);
-  RUN_TEST(test_uthash);
   RUN_TEST(test_lang_parser);
   RUN_TEST(test_lang_env);
+#endif  
+  RUN_TEST(test_lang_interpreter);
   return UNITY_END();
 }

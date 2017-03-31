@@ -2,6 +2,7 @@
 #define SENI_LANG_PARSER_H
 
 #include "seni_types.h"
+#include "seni_lang_word_lookup.h"
 
 typedef enum {
   NODE_LIST = 0,
@@ -27,7 +28,7 @@ typedef struct seni_node {
   union {
     i32 i;
     f32 f;
-    char* s;                    /* needed for whitespace nodes */
+    char* s;                    /* needed for whitespace/comment nodes */
   } value;
 
   bool alterable;
@@ -48,18 +49,7 @@ typedef struct seni_node {
   struct seni_node *next;
 } seni_node;
 
-
-typedef struct parser_info {
-  // INPUT/OUTPUT: pre-allocated array of char* used to store names
-  char **name_lookup;
-  i32 name_lookup_max;
-  i32 name_lookup_count;
-  
-  // OUTPUT: the AST nodes that the parser will return;
-  seni_node *nodes;
-} parser_info;
-
-parser_info *parser_parse(parser_info *parser_info, char *s);
+seni_node *parser_parse(word_lookup *word_lookup, char *s);
 void parser_free_nodes(seni_node *nodes);
 char *parser_node_type_name(seni_node_type type);
   
