@@ -523,6 +523,9 @@ void test_lang_interpreter(void)
     shutdown_interpreter_test(wl, ast);
   }
 
+
+  // (define num 10) (+ num num)
+
 }
 
 int main(void)

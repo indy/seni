@@ -336,5 +336,10 @@ seni_var *evaluate(seni_env *env, word_lookup *wl, seni_node *ast)
   g_wl = wl;
   g_error = 0;
 
-  return eval(env, ast);
+  seni_var *res;
+  for (seni_node *n = ast; n != NULL; n = n->next) {
+    res = eval(env, n);
+  }
+
+  return res;
 }
