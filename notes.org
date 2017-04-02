@@ -1,0 +1,72 @@
+* simple bytecode vm
+  https://www.youtube.com/watch?v=8k5h-A7JaaE&t=6s&index=36&list=WL
+  1:03:39
+
+  a lot of the enums start at 128
+
+  opcode_t
+  push add sub mul div mod neg ret
+
+  char bytecode_buffer[1024];
+  char *bytecode = bytecode_buffer;
+
+  emit(uint8 byte) {
+    *bytecode++ = byte;
+  }
+  emit4(uint32 data) {
+    *(uint32 *)bytecode = data;
+    bytecode += 4;
+  }
+
+  ---------------------------------------------------------------------------
+
+  bytecode interpreter
+
+  char *ip;
+  int execute_stack[1024];
+  int *sp = execute_stack
+
+  void execute() {
+    for(;;) {
+      int op = *ip++;
+      switch (op) {
+      PUSH:
+        *sp++ = *(uint32 *)ip;
+        ip += 4;
+      ADD:
+        sp[-2] += sp[-1];
+        sp--;
+        break;
+        ....
+      RET:
+        // return whats on top of the stack
+        return sp[-1];
+      }
+ 
+    }
+  }
+
+
+  test code:
+
+  emit(PUSH)
+  emit(1)
+  emit(PUSH)
+  emit(2)
+  emit(ADD)
+  emit(RET)
+
+
+  char emit_buffer[1024];
+  emit_pointer = emit_buffer;
+
+  int frame[1024];
+  int stack[1024];
+
+  ip = emit_buffer;
+  fp = frame;
+  sp = stack
+
+  int val = execute();
+
+
