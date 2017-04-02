@@ -310,7 +310,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "12.34");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 12.34);
+    assert_seni_var_f32(var, NODE_FLOAT, 12.34f);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -523,8 +523,41 @@ void test_lang_interpreter(void)
     shutdown_interpreter_test(wl, ast);
   }
 
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
 
-  // (define num 10) (+ num num)
+    seni_node *ast = parser_parse(wl, "(define num 10) (+ num num)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_INT, 20);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(define num 10.0) (+ num num)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 20.0f);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(define num (* 2 3.0)) (+ num num num)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 18.0f);
+
+    shutdown_interpreter_test(wl, ast);
+  }
 
 }
 

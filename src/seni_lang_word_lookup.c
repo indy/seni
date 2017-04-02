@@ -105,6 +105,7 @@ void word_lookup_add_reserved_words(word_lookup *nl)
   cpy("list", &(nl->reserved_words[nl->reserved_words_count++]));
   cpy("loop", &(nl->reserved_words[nl->reserved_words_count++]));
   cpy("fn", &(nl->reserved_words[nl->reserved_words_count++]));
+  cpy("define", &(nl->reserved_words[nl->reserved_words_count++]));
 }
 
 void word_lookup_free_reserved_words(word_lookup *nl)
@@ -127,4 +128,12 @@ void word_lookup_free_words(word_lookup *nl)
     nl->words[i] = 0;      
   }
   nl->words_count = 0;
+}
+
+char *word_lookup_i32(word_lookup *wl, i32 index)
+{
+  if (index >= RESERVED_WORD_START) {
+    return wl->reserved_words[index - RESERVED_WORD_START];
+  }
+  return wl->words[index];
 }

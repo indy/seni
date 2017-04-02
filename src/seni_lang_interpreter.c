@@ -24,6 +24,16 @@ seni_node *safe_next(seni_node *expr)
   return sibling;
 }
 
+void safe_seni_var_copy(seni_var *dest, seni_var *src)
+{
+  dest->type = src->type;
+  if (src->type == NODE_FLOAT) {
+    dest->value.f = src->value.f;
+  } else {
+    dest->value.i = src->value.i;
+  }
+}
+
 seni_var *eval_reserved_plus(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
@@ -253,6 +263,34 @@ seni_var *eval_reserved_divide(seni_env *env, seni_node *expr)
   return &g_reg;
 }
 
+seni_var *eval_reserved_define(seni_env *env, seni_node *expr)
+{
+  // (define num 10)
+
+  // char *a1 = word_lookup_i32(g_wl, expr->value.i);
+  
+  seni_node *sibling = safe_next(expr);
+  if (sibling == NULL) {
+    // error: no args given to 'define'
+    return NULL;
+  }
+
+  // get the binding name
+  seni_node *name = sibling;
+  // this should be NODE_NAME
+  //char *a2 = word_lookup_i32(g_wl, name->value.i);
+
+  // get the value
+  sibling = safe_next(sibling);
+  seni_var *v = eval(env, sibling);
+
+  // add the name/value binding to the current env
+  seni_var *env_var = add_var(env, name->value.i);
+  safe_seni_var_copy(env_var, v);
+
+  return env_var;
+}
+
 
 seni_var *eval_list(seni_env *env, seni_node *expr)
 {
@@ -272,6 +310,8 @@ seni_var *eval_list(seni_env *env, seni_node *expr)
       return eval_reserved_multiply(env, expr->children);
     case RESERVED_WORD_DIVIDE:
       return eval_reserved_divide(env, expr->children);
+    case RESERVED_WORD_DEFINE:
+      return eval_reserved_define(env, expr->children);
     };
   }
   
@@ -336,8 +376,8 @@ seni_var *evaluate(seni_env *env, word_lookup *wl, seni_node *ast)
   g_wl = wl;
   g_error = 0;
 
-  seni_var *res;
-  for (seni_node *n = ast; n != NULL; n = n->next) {
+  seni_var *res = NULL;
+  for (seni_node *n = ast; n != NULL; n = safe_next(n)) {
     res = eval(env, n);
   }
 
