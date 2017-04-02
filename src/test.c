@@ -53,11 +53,11 @@ seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *va
   return node->next;
 }
 
-seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, word_lookup *word_lookup)
+seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, word_lut *wlut)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, parser_node_type_name(node->type));
 
-  char *c = word_lookup->words[node->value.i];
+  char *c = wlut->words[node->value.i];
   TEST_ASSERT_EQUAL_STRING(val, c);
   
   return node->next;
@@ -66,7 +66,7 @@ seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *va
 void test_lang_parser(void)
 {
   seni_node *nodes, *iter, *iter2;
-  word_lookup *wl = (word_lookup *)calloc(1, sizeof(word_lookup));
+  word_lut *wl = (word_lut *)calloc(1, sizeof(word_lut));
 
   nodes = parser_parse(wl, "hello");
   assert_parser_node_txt(nodes, NODE_NAME, "hello", wl);
@@ -251,9 +251,9 @@ void assert_seni_var_f32(seni_var *var, seni_node_type type, f32 f)
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
-word_lookup *setup_interpreter_wl()
+word_lut *setup_interpreter_wl()
 {
-  word_lookup *wl = (word_lookup *)calloc(1, sizeof(word_lookup));
+  word_lut *wl = (word_lut *)calloc(1, sizeof(word_lut));
   word_lookup_add_reserved_words(wl);
 
   return wl;
@@ -268,7 +268,7 @@ seni_env *setup_interpreter_env()
   return env;
 }
 
-void shutdown_interpreter_test(word_lookup *wl, seni_node *ast)
+void shutdown_interpreter_test(word_lut *wl, seni_node *ast)
 {
   env_free_pools();
   word_lookup_free_words(wl);
@@ -277,7 +277,7 @@ void shutdown_interpreter_test(word_lookup *wl, seni_node *ast)
   free(wl);
 }
 
-void add_binding_i32(word_lookup *wl, seni_env *env, char *name, i32 i)
+void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
 {
   // add a foo binding to env
   i32 name_index = word_lookup_or_add(wl, name, strlen(name));
@@ -288,7 +288,7 @@ void add_binding_i32(word_lookup *wl, seni_env *env, char *name, i32 i)
 
 void test_lang_interpreter(void)
 {
-  word_lookup *wl = NULL;
+  word_lut *wl = NULL;
   seni_env *env = NULL;
 
   {

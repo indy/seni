@@ -4,7 +4,7 @@
 seni_var *eval(seni_env *env, seni_node *expr);
   
 int g_error = 0;
-word_lookup *g_wl = NULL;
+word_lut *g_wl = NULL;
 // a register like seni_var for holding intermediate values
 seni_var g_reg;
 
@@ -267,7 +267,7 @@ seni_var *eval_reserved_define(seni_env *env, seni_node *expr)
 {
   // (define num 10)
 
-  // char *a1 = word_lookup_i32(g_wl, expr->value.i);
+  // char *a1 = word_lut_i32(g_wl, expr->value.i);
   
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
@@ -278,7 +278,7 @@ seni_var *eval_reserved_define(seni_env *env, seni_node *expr)
   // get the binding name
   seni_node *name = sibling;
   // this should be NODE_NAME
-  //char *a2 = word_lookup_i32(g_wl, name->value.i);
+  //char *a2 = word_lut_i32(g_wl, name->value.i);
 
   // get the value
   sibling = safe_next(sibling);
@@ -371,7 +371,7 @@ seni_var *eval(seni_env *env, seni_node *expr)
 
 
   
-seni_var *evaluate(seni_env *env, word_lookup *wl, seni_node *ast)
+seni_var *evaluate(seni_env *env, word_lut *wl, seni_node *ast)
 {
   g_wl = wl;
   g_error = 0;

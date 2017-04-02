@@ -16,21 +16,22 @@
 #define RESERVED_WORD_FN (RESERVED_WORD_START + 6)
 #define RESERVED_WORD_DEFINE (RESERVED_WORD_START + 7)
 
-typedef struct word_lookup {
+/* word lookup table */
+typedef struct word_lut {
   char *reserved_words[MAX_WORD_LOOKUPS];  
   i32 reserved_words_count;
   
   char *words[MAX_WORD_LOOKUPS];
   i32 words_count;
-} word_lookup;
+} word_lut;
 
 
-i32 word_lookup_or_add(word_lookup *wl, char *string, size_t len);
-void word_lookup_free_words(word_lookup *wl);
+i32 word_lookup_or_add(word_lut *wlut, char *string, size_t len);
+void word_lookup_free_words(word_lut *wlut);
 
-void word_lookup_add_reserved_words(word_lookup *wl);
-void word_lookup_free_reserved_words(word_lookup *wl);
+void word_lookup_add_reserved_words(word_lut *wlut);
+void word_lookup_free_reserved_words(word_lut *wlut);
 
-char *word_lookup_i32(word_lookup *wl, i32 index);
+char *word_lookup_i32(word_lut *wlut, i32 index);
 
 #endif
