@@ -254,24 +254,6 @@ void assert_seni_var_f32(seni_var *var, seni_node_type type, f32 f)
 word_lookup *setup_interpreter_wl()
 {
   word_lookup *wl = (word_lookup *)calloc(1, sizeof(word_lookup));
-  /*
-  wl->words_count = 0;
-  for( int i = 0; i < MAX_WORD_LOOKUPS; i++) {
-    wl->words[i] = 0;      
-  }
-  */
-  
-  // TODO: could the 0 index of every env be reserved for scratch?
-  // in which case this code would go away
-  
-  // NOTE: allocate __SCRATCH before parsing.
-  //
-  // add an initial dummy lookup for storing temporary expressions
-  i32 scratch = word_lookup_or_add(wl, "__SCRATCH", strlen("__SCRATCH"));
-  // should be 0
-  TEST_ASSERT_EQUAL(0, scratch);
-  // the interpreter can now use id:0 as a temporary placeholder
-
   word_lookup_add_reserved_words(wl);
 
   return wl;
@@ -397,7 +379,30 @@ void test_lang_interpreter(void)
     shutdown_interpreter_test(wl, ast);
   }
 
+  { // convert result to float if any arg is a float
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
 
+    seni_node *ast = parser_parse(wl, "(+ 10.0 1)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 11.0);
+
+    shutdown_interpreter_test(wl, ast);
+  }  
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(+ 10 1.0)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 11.0);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+    
   {
     wl = setup_interpreter_wl();
     env = setup_interpreter_env();
@@ -418,6 +423,102 @@ void test_lang_interpreter(void)
     seni_var *var = evaluate(env, wl, ast);
   
     assert_seni_var_i32(var, NODE_INT, 10);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(+ (+ 1 2) (+ 3.0 4))");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 10.0);
+
+    shutdown_interpreter_test(wl, ast);
+  }  
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(- 100 20)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_INT, 80);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  { // - with one arg = negation
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(- 59)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_INT, -59);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(- 100.0 20)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 80.0);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(- 100 20.0)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 80.0);
+
+    shutdown_interpreter_test(wl, ast);
+  }  
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(- 100.0 20.0)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 80.0);
+
+    shutdown_interpreter_test(wl, ast);
+  }  
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(* 6 5)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, NODE_INT, 30);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(/ 16.0 2.0)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, NODE_FLOAT, 8.0f);
 
     shutdown_interpreter_test(wl, ast);
   }

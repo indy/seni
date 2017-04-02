@@ -99,6 +99,9 @@ void word_lookup_add_reserved_words(word_lookup *nl)
 {
   nl->reserved_words_count = 0;
   cpy("+", &(nl->reserved_words[nl->reserved_words_count++]));
+  cpy("-", &(nl->reserved_words[nl->reserved_words_count++]));
+  cpy("*", &(nl->reserved_words[nl->reserved_words_count++]));
+  cpy("/", &(nl->reserved_words[nl->reserved_words_count++]));
   cpy("list", &(nl->reserved_words[nl->reserved_words_count++]));
   cpy("loop", &(nl->reserved_words[nl->reserved_words_count++]));
   cpy("fn", &(nl->reserved_words[nl->reserved_words_count++]));
