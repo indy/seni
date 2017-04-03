@@ -5,8 +5,25 @@
 #include "seni_containers.h"
 #include "seni_lang_parser.h"
 
+// start at 128 just to make it easier to spot mistakes when transforming seni_node_type -> seni_var_type
+typedef enum {
+  VAR_INT = 128, // value.i
+  VAR_FLOAT,     // value.f
+  VAR_BOOLEAN,   // value.i
+  VAR_NAME,      // word_lut[value.i]
+  VAR_EXPR       // TODO: pointer to seni_node
+} seni_var_type;
+
+/*
+  NODE_FN,
+  NODE_SPECIAL,
+  NODE_COLOUR,
+
+  NODE_NULL
+*/
+
 typedef struct seni_var {
-  seni_node_type type;
+  seni_var_type type;
 
   /* no char* in this union since I don't think we're ever going to have a pointer to a string */
   union {

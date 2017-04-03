@@ -10,7 +10,7 @@ seni_var g_reg;
 
 bool is_reserved_word(seni_var *var)
 {
-  return (var->type == NODE_NAME && var->value.i >= RESERVED_WORD_START);
+  return (var->type == VAR_NAME && var->value.i >= RESERVED_WORD_START);
 }
 
 seni_node *safe_next(seni_node *expr)
@@ -27,7 +27,7 @@ seni_node *safe_next(seni_node *expr)
 void safe_seni_var_copy(seni_var *dest, seni_var *src)
 {
   dest->type = src->type;
-  if (src->type == NODE_FLOAT) {
+  if (src->type == VAR_FLOAT) {
     dest->value.f = src->value.f;
   } else {
     dest->value.i = src->value.i;
@@ -52,18 +52,18 @@ seni_var *eval_reserved_plus(seni_env *env, seni_node *expr)
     
     v = eval(env, sibling);
 
-    if (all_ints && v->type == NODE_FLOAT) {
+    if (all_ints && v->type == VAR_FLOAT) {
       // first time a non-int has occurred
       all_ints = false;
       fresult = (f32)iresult;
     }
 
-    if (all_ints && v->type == NODE_INT) {
+    if (all_ints && v->type == VAR_INT) {
       iresult += v->value.i;
     } else {
-      if (v->type == NODE_INT) {
+      if (v->type == VAR_INT) {
         fresult += (f32)v->value.i;
-      } else if (v->type == NODE_FLOAT){
+      } else if (v->type == VAR_FLOAT){
         fresult += v->value.f;
       } else {
         // error: incompatible node type
@@ -75,10 +75,10 @@ seni_var *eval_reserved_plus(seni_env *env, seni_node *expr)
   }
 
   if (all_ints) {
-    g_reg.type = NODE_INT;
+    g_reg.type = VAR_INT;
     g_reg.value.i = iresult;
   } else {
-    g_reg.type = NODE_FLOAT;
+    g_reg.type = VAR_FLOAT;
     g_reg.value.f = fresult;
   }
   
@@ -104,10 +104,10 @@ seni_var *eval_reserved_minus(seni_env *env, seni_node *expr)
     // only 1 arg e.g. (- 42)
     // so negate it
     if (all_ints) {
-      g_reg.type = NODE_INT;
+      g_reg.type = VAR_INT;
       g_reg.value.i = -iresult;
     } else {
-      g_reg.type = NODE_FLOAT;
+      g_reg.type = VAR_FLOAT;
       g_reg.value.f = -fresult;
     }
     return &g_reg;
@@ -119,18 +119,18 @@ seni_var *eval_reserved_minus(seni_env *env, seni_node *expr)
     
     v = eval(env, sibling);
 
-    if (all_ints && v->type == NODE_FLOAT) {
+    if (all_ints && v->type == VAR_FLOAT) {
       // first time a non-int has occurred
       all_ints = false;
       fresult = (f32)iresult;
     }
 
-    if (all_ints && v->type == NODE_INT) {
+    if (all_ints && v->type == VAR_INT) {
       iresult -= v->value.i;
     } else {
-      if (v->type == NODE_INT) {
+      if (v->type == VAR_INT) {
         fresult -= (f32)v->value.i;
-      } else if (v->type == NODE_FLOAT){
+      } else if (v->type == VAR_FLOAT){
         fresult -= v->value.f;
       } else {
         // error: incompatible node type
@@ -142,10 +142,10 @@ seni_var *eval_reserved_minus(seni_env *env, seni_node *expr)
   }
 
   if (all_ints) {
-    g_reg.type = NODE_INT;
+    g_reg.type = VAR_INT;
     g_reg.value.i = iresult;
   } else {
-    g_reg.type = NODE_FLOAT;
+    g_reg.type = VAR_FLOAT;
     g_reg.value.f = fresult;
   }
 
@@ -173,18 +173,18 @@ seni_var *eval_reserved_multiply(seni_env *env, seni_node *expr)
     
     v = eval(env, sibling);
 
-    if (all_ints && v->type == NODE_FLOAT) {
+    if (all_ints && v->type == VAR_FLOAT) {
       // first time a non-int has occurred
       all_ints = false;
       fresult = (f32)iresult;
     }
 
-    if (all_ints && v->type == NODE_INT) {
+    if (all_ints && v->type == VAR_INT) {
       iresult *= v->value.i;
     } else {
-      if (v->type == NODE_INT) {
+      if (v->type == VAR_INT) {
         fresult *= (f32)v->value.i;
-      } else if (v->type == NODE_FLOAT){
+      } else if (v->type == VAR_FLOAT){
         fresult *= v->value.f;
       } else {
         // error: incompatible node type
@@ -196,10 +196,10 @@ seni_var *eval_reserved_multiply(seni_env *env, seni_node *expr)
   }
 
   if (all_ints) {
-    g_reg.type = NODE_INT;
+    g_reg.type = VAR_INT;
     g_reg.value.i = iresult;
   } else {
-    g_reg.type = NODE_FLOAT;
+    g_reg.type = VAR_FLOAT;
     g_reg.value.f = fresult;
   }
 
@@ -227,21 +227,21 @@ seni_var *eval_reserved_divide(seni_env *env, seni_node *expr)
     
     v = eval(env, sibling);
 
-    if (all_ints && v->type == NODE_FLOAT) {
+    if (all_ints && v->type == VAR_FLOAT) {
       // first time a non-int has occurred
       all_ints = false;
     }
 
-    if (all_ints && v->type == NODE_INT) {
+    if (all_ints && v->type == VAR_INT) {
       iresult /= v->value.i;
       // keep a track of the floating point equivalent in case
       // a later seni_node evals to NODE_FLOAT. We don't want
       // to lose precision by casting the i32 result to f32.
       fresult /= (f32)v->value.i; 
     } else {
-      if (v->type == NODE_INT) {
+      if (v->type == VAR_INT) {
         fresult /= (f32)v->value.i;
-      } else if (v->type == NODE_FLOAT){
+      } else if (v->type == VAR_FLOAT){
         fresult /= v->value.f;
       } else {
         // error: incompatible node type
@@ -253,10 +253,10 @@ seni_var *eval_reserved_divide(seni_env *env, seni_node *expr)
   }
 
   if (all_ints) {
-    g_reg.type = NODE_INT;
+    g_reg.type = VAR_INT;
     g_reg.value.i = iresult;
   } else {
-    g_reg.type = NODE_FLOAT;
+    g_reg.type = VAR_FLOAT;
     g_reg.value.f = fresult;
   }
 
@@ -318,6 +318,22 @@ seni_var *eval_list(seni_env *env, seni_node *expr)
   return var;
 }
 
+seni_var_type node_type_to_var_type(seni_node_type type)
+{
+  switch(type) {
+  case NODE_INT:
+    return VAR_INT;
+  case NODE_FLOAT:
+    return VAR_FLOAT;
+  case NODE_BOOLEAN:
+    return VAR_BOOLEAN;
+  case NODE_NAME:
+    return VAR_NAME;
+  default:
+    return VAR_INT;
+  }
+}
+
 seni_var *eval(seni_env *env, seni_node *expr)
 {
   seni_var *v = NULL;
@@ -329,26 +345,26 @@ seni_var *eval(seni_env *env, seni_node *expr)
   }
 
   if (expr->type == NODE_INT) {
-    g_reg.type = expr->type;
+    g_reg.type = node_type_to_var_type(expr->type);
     g_reg.value.i = expr->value.i;
     return &g_reg;
   }
   
   if (expr->type == NODE_FLOAT) {
-    g_reg.type = expr->type;
+    g_reg.type = node_type_to_var_type(expr->type);
     g_reg.value.f = expr->value.f;
     return &g_reg;
   }
   
   if (expr->type == NODE_BOOLEAN) {
-    g_reg.type = expr->type;
+    g_reg.type = node_type_to_var_type(expr->type);
     g_reg.value.i = expr->value.i;
     return &g_reg;
   }
 
   if (expr->type == NODE_NAME) {
     if (expr->value.i >= RESERVED_WORD_START) {
-      g_reg.type = expr->type;
+      g_reg.type = node_type_to_var_type(expr->type);
       g_reg.value.i = expr->value.i;
       return &g_reg;
     }
@@ -357,7 +373,7 @@ seni_var *eval(seni_env *env, seni_node *expr)
   }
 
   if (expr->type == NODE_LABEL || expr->type == NODE_STRING) {
-      g_reg.type = expr->type;
+      g_reg.type = node_type_to_var_type(expr->type);
       g_reg.value.i = expr->value.i;
       return &g_reg;
   }

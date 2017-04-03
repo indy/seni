@@ -13,14 +13,9 @@ typedef enum {
   NODE_LABEL,
   NODE_STRING,
   NODE_BOOLEAN,
-  NODE_LAMBDA,
-  NODE_SPECIAL,
-  NODE_COLOUR,
   NODE_WHITESPACE,
-  NODE_COMMENT,
-  NODE_NULL
+  NODE_COMMENT
 } seni_node_type;
-
 
 typedef struct seni_node {
   seni_node_type type;

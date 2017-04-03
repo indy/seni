@@ -234,18 +234,18 @@ void test_lang_env(void)
   env_free_pools();
 }
 
-void assert_seni_var(seni_var *var, seni_node_type type)
+void assert_seni_var(seni_var *var, seni_var_type type)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, parser_node_type_name(var->type));
 }
 
-void assert_seni_var_i32(seni_var *var, seni_node_type type, i32 i)
+void assert_seni_var_i32(seni_var *var, seni_var_type type, i32 i)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, parser_node_type_name(var->type));
   TEST_ASSERT_EQUAL(i, var->value.i);
 }
 
-void assert_seni_var_f32(seni_var *var, seni_node_type type, f32 f)
+void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, parser_node_type_name(var->type));
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
@@ -282,7 +282,7 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
   // add a foo binding to env
   i32 name_index = word_lookup_or_add(wl, name, strlen(name));
   seni_var *v = add_var(env, name_index);
-  v->type = NODE_INT;
+  v->type = VAR_INT;
   v->value.i = i;
 }
 
@@ -298,7 +298,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "42");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_INT, 42);
+    assert_seni_var_i32(var, VAR_INT, 42);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -310,7 +310,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "12.34");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 12.34f);
+    assert_seni_var_f32(var, VAR_FLOAT, 12.34f);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -322,7 +322,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "true");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_BOOLEAN, 1);
+    assert_seni_var_i32(var, VAR_BOOLEAN, 1);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -334,7 +334,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "false");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_BOOLEAN, 0);
+    assert_seni_var_i32(var, VAR_BOOLEAN, 0);
 
     shutdown_interpreter_test(wl, ast);
   }  
@@ -349,10 +349,11 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "foo");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_INT, 31);
+    assert_seni_var_i32(var, VAR_INT, 31);
 
     shutdown_interpreter_test(wl, ast);
   }
+
 
 
   {
@@ -361,11 +362,12 @@ void test_lang_interpreter(void)
 
     seni_node *ast = parser_parse(wl, "+");
     seni_var *var = evaluate(env, wl, ast);
-  
-    assert_seni_var_i32(var, NODE_NAME, 0 + RESERVED_WORD_START);
+
+    assert_seni_var_i32(var, VAR_NAME, 0 + RESERVED_WORD_START);
 
     shutdown_interpreter_test(wl, ast);
   }
+
 
   {
     wl = setup_interpreter_wl();
@@ -374,7 +376,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(+ 10 1)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_INT, 11);
+    assert_seni_var_i32(var, VAR_INT, 11);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -386,7 +388,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(+ 10.0 1)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 11.0);
+    assert_seni_var_f32(var, VAR_FLOAT, 11.0);
 
     shutdown_interpreter_test(wl, ast);
   }  
@@ -398,7 +400,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(+ 10 1.0)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 11.0);
+    assert_seni_var_f32(var, VAR_FLOAT, 11.0);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -410,7 +412,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(+ 3 4 5 6)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_INT, 18);
+    assert_seni_var_i32(var, VAR_INT, 18);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -422,7 +424,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(+ (+ 1 2) (+ 3 4))");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_INT, 10);
+    assert_seni_var_i32(var, VAR_INT, 10);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -434,7 +436,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(+ (+ 1 2) (+ 3.0 4))");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 10.0);
+    assert_seni_var_f32(var, VAR_FLOAT, 10.0);
 
     shutdown_interpreter_test(wl, ast);
   }  
@@ -446,7 +448,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(- 100 20)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_INT, 80);
+    assert_seni_var_i32(var, VAR_INT, 80);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -458,7 +460,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(- 59)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_INT, -59);
+    assert_seni_var_i32(var, VAR_INT, -59);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -470,7 +472,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(- 100.0 20)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 80.0);
+    assert_seni_var_f32(var, VAR_FLOAT, 80.0);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -482,7 +484,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(- 100 20.0)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 80.0);
+    assert_seni_var_f32(var, VAR_FLOAT, 80.0);
 
     shutdown_interpreter_test(wl, ast);
   }  
@@ -494,7 +496,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(- 100.0 20.0)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 80.0);
+    assert_seni_var_f32(var, VAR_FLOAT, 80.0);
 
     shutdown_interpreter_test(wl, ast);
   }  
@@ -506,7 +508,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(* 6 5)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_INT, 30);
+    assert_seni_var_i32(var, VAR_INT, 30);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -518,7 +520,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(/ 16.0 2.0)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 8.0f);
+    assert_seni_var_f32(var, VAR_FLOAT, 8.0f);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -530,7 +532,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(define num 10) (+ num num)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_i32(var, NODE_INT, 20);
+    assert_seni_var_i32(var, VAR_INT, 20);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -542,7 +544,7 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(define num 10.0) (+ num num)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 20.0f);
+    assert_seni_var_f32(var, VAR_FLOAT, 20.0f);
 
     shutdown_interpreter_test(wl, ast);
   }
@@ -554,17 +556,29 @@ void test_lang_interpreter(void)
     seni_node *ast = parser_parse(wl, "(define num (* 2 3.0)) (+ num num num)");
     seni_var *var = evaluate(env, wl, ast);
   
-    assert_seni_var_f32(var, NODE_FLOAT, 18.0f);
+    assert_seni_var_f32(var, VAR_FLOAT, 18.0f);
 
     shutdown_interpreter_test(wl, ast);
   }
+#if 0
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
 
+    seni_node *ast = parser_parse(wl, "(fn (a) 42) (+ (a) (a))");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, VAR_INT, 84);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+#endif
 }
 
 int main(void)
 {
   UNITY_BEGIN();
-#if 1
+#if 0
   RUN_TEST(test_mathutil);
   RUN_TEST(test_lang_parser);
   RUN_TEST(test_lang_env);

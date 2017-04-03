@@ -548,14 +548,10 @@ char *parser_node_type_name(seni_node_type type)
   case NODE_LABEL: return "NODE_LABEL";
   case NODE_STRING: return "NODE_STRING";
   case NODE_BOOLEAN: return "NODE_BOOLEAN";
-  case NODE_LAMBDA: return "NODE_LAMBDA";
-  case NODE_SPECIAL: return "NODE_SPECIAL";
-  case NODE_COLOUR: return "NODE_COLOUR";
   case NODE_WHITESPACE: return "NODE_WHITESPACE";
   case NODE_COMMENT: return "NODE_COMMENT";
-  case NODE_NULL: return "NODE_NULL";
+  default: return "unknown node type";
   };
-  return "";
 }
 
 void parser_free_nodes(seni_node *nodes)
