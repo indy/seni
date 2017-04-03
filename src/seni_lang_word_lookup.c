@@ -37,8 +37,8 @@ void cpy(char *src, char **dst)
 i32 lookup_reserved_name(word_lut *wlut, char *string, size_t len)
 {
   i32 i = 0;
-  for (i = 0; i < wlut->reserved_words_count; i++) {
-    char *name = wlut->reserved_words[i];
+  for (i = 0; i < wlut->keywords_count; i++) {
+    char *name = wlut->keywords[i];
     bool found = true;
     /* can't use string_compare since 'string' could be a substring */
     size_t j = 0;
@@ -50,7 +50,7 @@ i32 lookup_reserved_name(word_lut *wlut, char *string, size_t len)
     }
     /* searched all of 'string' and the early exit wasn't triggered */
     if (name[j] == '\0' && found == true) {
-      return i + RESERVED_WORD_START; // add offset
+      return i + KEYWORD_START; // add offset
     }
   }
 
@@ -95,28 +95,27 @@ i32 word_lookup_or_add(word_lut *wlut, char *string, size_t len)
 }
 
 
-void word_lookup_add_reserved_words(word_lut *wlut)
+void word_lookup_add_keywords(word_lut *wlut)
 {
-  wlut->reserved_words_count = 0;
-  cpy("+", &(wlut->reserved_words[wlut->reserved_words_count++]));
-  cpy("-", &(wlut->reserved_words[wlut->reserved_words_count++]));
-  cpy("*", &(wlut->reserved_words[wlut->reserved_words_count++]));
-  cpy("/", &(wlut->reserved_words[wlut->reserved_words_count++]));
-  cpy("list", &(wlut->reserved_words[wlut->reserved_words_count++]));
-  cpy("loop", &(wlut->reserved_words[wlut->reserved_words_count++]));
-  cpy("fn", &(wlut->reserved_words[wlut->reserved_words_count++]));
-  cpy("define", &(wlut->reserved_words[wlut->reserved_words_count++]));
+  wlut->keywords_count = 0;
+  cpy("+",      &(wlut->keywords[wlut->keywords_count++]));
+  cpy("-",      &(wlut->keywords[wlut->keywords_count++]));
+  cpy("*",      &(wlut->keywords[wlut->keywords_count++]));
+  cpy("/",      &(wlut->keywords[wlut->keywords_count++]));
+  cpy("define", &(wlut->keywords[wlut->keywords_count++]));
+  cpy("fn",     &(wlut->keywords[wlut->keywords_count++]));
+
 }
 
-void word_lookup_free_reserved_words(word_lut *wlut)
+void word_lookup_free_keywords(word_lut *wlut)
 {
   for( int i = 0; i < MAX_WORD_LOOKUPS; i++) {
-    if (wlut->reserved_words[i]) {
-      free(wlut->reserved_words[i]);
+    if (wlut->keywords[i]) {
+      free(wlut->keywords[i]);
     }
-    wlut->reserved_words[i] = 0;      
+    wlut->keywords[i] = 0;      
   }
-  wlut->reserved_words_count = 0;
+  wlut->keywords_count = 0;
 }
 
 void word_lookup_free_words(word_lut *wlut)
@@ -132,8 +131,8 @@ void word_lookup_free_words(word_lut *wlut)
 
 char *word_lookup_i32(word_lut *wlut, i32 index)
 {
-  if (index >= RESERVED_WORD_START) {
-    return wlut->reserved_words[index - RESERVED_WORD_START];
+  if (index >= KEYWORD_START) {
+    return wlut->keywords[index - KEYWORD_START];
   }
   return wlut->words[index];
 }

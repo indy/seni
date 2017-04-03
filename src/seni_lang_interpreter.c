@@ -8,9 +8,20 @@ word_lut *g_wl = NULL;
 // a register like seni_var for holding intermediate values
 seni_var g_reg;
 
-bool is_reserved_word(seni_var *var)
+seni_var_type node_type_to_var_type(seni_node_type type)
 {
-  return (var->type == VAR_NAME && var->value.i >= RESERVED_WORD_START);
+  switch(type) {
+  case NODE_INT:
+    return VAR_INT;
+  case NODE_FLOAT:
+    return VAR_FLOAT;
+  case NODE_BOOLEAN:
+    return VAR_BOOLEAN;
+  case NODE_NAME:
+    return VAR_NAME;
+  default:
+    return VAR_INT;
+  }
 }
 
 seni_node *safe_next(seni_node *expr)
@@ -29,12 +40,14 @@ void safe_seni_var_copy(seni_var *dest, seni_var *src)
   dest->type = src->type;
   if (src->type == VAR_FLOAT) {
     dest->value.f = src->value.f;
+  } else if (src->type == VAR_FN) {
+    dest->value.p = src->value.p;
   } else {
     dest->value.i = src->value.i;
   }
 }
 
-seni_var *eval_reserved_plus(seni_env *env, seni_node *expr)
+seni_var *eval_keyword_plus(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
@@ -85,7 +98,7 @@ seni_var *eval_reserved_plus(seni_env *env, seni_node *expr)
   return &g_reg;
 }
 
-seni_var *eval_reserved_minus(seni_env *env, seni_node *expr)
+seni_var *eval_keyword_minus(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
@@ -152,7 +165,7 @@ seni_var *eval_reserved_minus(seni_env *env, seni_node *expr)
   return &g_reg;
 }
 
-seni_var *eval_reserved_multiply(seni_env *env, seni_node *expr)
+seni_var *eval_keyword_multiply(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
@@ -206,7 +219,7 @@ seni_var *eval_reserved_multiply(seni_env *env, seni_node *expr)
   return &g_reg;
 }
 
-seni_var *eval_reserved_divide(seni_env *env, seni_node *expr)
+seni_var *eval_keyword_divide(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
@@ -263,11 +276,11 @@ seni_var *eval_reserved_divide(seni_env *env, seni_node *expr)
   return &g_reg;
 }
 
-seni_var *eval_reserved_define(seni_env *env, seni_node *expr)
+seni_var *eval_keyword_define(seni_env *env, seni_node *expr)
 {
   // (define num 10)
 
-  // char *a1 = word_lut_i32(g_wl, expr->value.i);
+  // char *a1 = word_lookup_i32(g_wl, expr->value.i);
   
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
@@ -278,7 +291,7 @@ seni_var *eval_reserved_define(seni_env *env, seni_node *expr)
   // get the binding name
   seni_node *name = sibling;
   // this should be NODE_NAME
-  //char *a2 = word_lut_i32(g_wl, name->value.i);
+  //char *a2 = word_lookup_i32(g_wl, name->value.i);
 
   // get the value
   sibling = safe_next(sibling);
@@ -291,48 +304,135 @@ seni_var *eval_reserved_define(seni_env *env, seni_node *expr)
   return env_var;
 }
 
+seni_var *eval_keyword_fn(seni_env *env, seni_node *expr)
+{
+  // (fn (a) 42)
+  // (fn (add a: 0 b: 0) (+ a b))
+  
+  seni_node *fn_keyword = expr;
+  //char *fn_keyword_c = word_lookup_i32(g_wl, fn_keyword->value.i); // should be 'fn'
+  
+  seni_node *def_list = safe_next(fn_keyword);
+  if (!def_list || def_list->type != NODE_LIST) {
+    // error: no name+parameter list given
+    // printf("error: no name+parameter list given\n");
+  }
+
+  seni_node *fn_name = def_list->children;
+  //char *fn_name_c = word_lookup_i32(g_wl, fn_name->value.i); // the name of the function
+
+  
+  // todo: parse the args ???
+
+  seni_var *env_var = add_var(env, fn_name->value.i);
+  env_var->type = VAR_FN;
+  env_var->value.p = expr;
+  
+  return env_var;
+}
+
+seni_var *eval_fn(seni_env *env, seni_node *expr)
+{
+  seni_node *name = expr->children;
+
+  // look up the name in the env
+  seni_var *var = lookup_var(env, name->value.i);  // var == fn (foo b: 1 c: 2) (+ b c)
+
+  // should be of type VAR_FN
+  if (var->type != VAR_FN) {
+    // error: eval_fn - function invocation leads to non-fn binding
+  }
+
+  seni_env *fn_env = push_scope(env);
+  
+  seni_node *fn_expr = var->value.p;
+
+  // fn_expr points to the 'fn' keyword
+
+  seni_node *fn_name_and_args_list = safe_next(fn_expr); // (foo b: 1 c: 2)
+  
+  seni_node *fn_args = safe_next(fn_name_and_args_list->children); // b: 1 c: 2
+
+  // Add the default parameter bindings to the function's locally scoped env
+  //
+  while (fn_args != NULL) {
+    // fn_args points to the binding symbol e.g. b
+    seni_node *arg_binding = fn_args;
+
+    // fn_args points to the expr that evaluates to the default value to assign to the binding symbol
+    fn_args = safe_next(fn_args);
+    seni_var *default_value = eval(fn_env, fn_args);
+
+    // set this parameter's default value
+    seni_var *fn_parameter = add_var(fn_env, arg_binding->value.i);
+    safe_seni_var_copy(fn_parameter, default_value);
+
+    fn_args = safe_next(fn_args);
+  }
+
+  // Add the invoked parameter bindings to the function's locally scoped env
+  //
+  seni_node *invoke_node = safe_next(name);
+  while (invoke_node != NULL) {
+    seni_node *arg_binding = invoke_node;
+
+    invoke_node = safe_next(invoke_node);
+    seni_var *invoke_parameter_value = eval(env, invoke_node); // note: eval using the original outer scope
+
+    seni_var *invoke_parameter = add_var(fn_env, arg_binding->value.i);
+    safe_seni_var_copy(invoke_parameter, invoke_parameter_value);
+
+    invoke_node = safe_next(invoke_node);
+  }
+
+  seni_node *fn_body = safe_next(fn_name_and_args_list);
+  seni_var *res = NULL;
+  
+  while (fn_body) {
+    res = eval(fn_env, fn_body);
+    fn_body = safe_next(fn_body);
+  }
+
+  pop_scope(fn_env);
+  
+  return res;
+}
 
 seni_var *eval_list(seni_env *env, seni_node *expr)
 {
   seni_var *var = eval(env, expr->children);
-  if (!is_reserved_word(var)) {
-    printf("fuuck - only reserved words are functions at the moment\n");
+
+  if (var->type == VAR_NAME && (var->value.i & KEYWORD_START)) {
+    switch(var->value.i) {
+    case KEYWORD_PLUS:
+      return eval_keyword_plus(env, expr->children);
+    case KEYWORD_MINUS:
+      return eval_keyword_minus(env, expr->children);
+    case KEYWORD_MULTIPLY:
+      return eval_keyword_multiply(env, expr->children);
+    case KEYWORD_DIVIDE:
+      return eval_keyword_divide(env, expr->children);
+    case KEYWORD_DEFINE:
+      return eval_keyword_define(env, expr->children);
+    case KEYWORD_FN:
+      return eval_keyword_fn(env, expr->children);
+    }
+  }
+
+  // user defined function
+  if (var->type == VAR_FN) {
+    return eval_fn(env, expr);
+  }
+
+  if (!(var->type == VAR_NAME || var->type == VAR_FN)) {
+    printf("fuuck - only named functions can be invoked at the moment %d\n", var->type);
     return NULL;
   }
 
-  if (var->value.i >= RESERVED_WORD_START) {
-    switch(var->value.i) {
-    case RESERVED_WORD_PLUS:
-      return eval_reserved_plus(env, expr->children);
-    case RESERVED_WORD_MINUS:
-      return eval_reserved_minus(env, expr->children);
-    case RESERVED_WORD_MULTIPLY:
-      return eval_reserved_multiply(env, expr->children);
-    case RESERVED_WORD_DIVIDE:
-      return eval_reserved_divide(env, expr->children);
-    case RESERVED_WORD_DEFINE:
-      return eval_reserved_define(env, expr->children);
-    };
-  }
-  
-  return var;
+  return NULL;
 }
 
-seni_var_type node_type_to_var_type(seni_node_type type)
-{
-  switch(type) {
-  case NODE_INT:
-    return VAR_INT;
-  case NODE_FLOAT:
-    return VAR_FLOAT;
-  case NODE_BOOLEAN:
-    return VAR_BOOLEAN;
-  case NODE_NAME:
-    return VAR_NAME;
-  default:
-    return VAR_INT;
-  }
-}
+
 
 seni_var *eval(seni_env *env, seni_node *expr)
 {
@@ -363,7 +463,7 @@ seni_var *eval(seni_env *env, seni_node *expr)
   }
 
   if (expr->type == NODE_NAME) {
-    if (expr->value.i >= RESERVED_WORD_START) {
+    if (expr->value.i & KEYWORD_START) {
       g_reg.type = node_type_to_var_type(expr->type);
       g_reg.value.i = expr->value.i;
       return &g_reg;

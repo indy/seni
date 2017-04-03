@@ -11,7 +11,7 @@ typedef enum {
   VAR_FLOAT,     // value.f
   VAR_BOOLEAN,   // value.i
   VAR_NAME,      // word_lut[value.i]
-  VAR_EXPR       // TODO: pointer to seni_node
+  VAR_FN         // pointer to seni_node
 } seni_var_type;
 
 /*
@@ -29,6 +29,7 @@ typedef struct seni_var {
   union {
     i32 i;
     f32 f;
+    seni_node *p;
   } value;
 
   /* for hashing */

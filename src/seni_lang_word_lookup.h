@@ -4,22 +4,24 @@
 #include <stdio.h>
 #include "seni_types.h"
 
-#define MAX_WORD_LOOKUPS 64
-#define RESERVED_WORD_START MAX_WORD_LOOKUPS
+// 2 << 6 == 64
+#define MAX_WORD_LOOKUPS (2 << 6)
+#define KEYWORD_START MAX_WORD_LOOKUPS
 
-#define RESERVED_WORD_PLUS (RESERVED_WORD_START + 0)
-#define RESERVED_WORD_MINUS (RESERVED_WORD_START + 1)
-#define RESERVED_WORD_MULTIPLY (RESERVED_WORD_START + 2)
-#define RESERVED_WORD_DIVIDE (RESERVED_WORD_START + 3)
-#define RESERVED_WORD_LIST (RESERVED_WORD_START + 4)
-#define RESERVED_WORD_LOOP (RESERVED_WORD_START + 5)
-#define RESERVED_WORD_FN (RESERVED_WORD_START + 6)
-#define RESERVED_WORD_DEFINE (RESERVED_WORD_START + 7)
+// IMPORTANT: make sure these defines match up with word_lookup_add_keywords
+//
+#define KEYWORD_PLUS     (KEYWORD_START + 0)
+#define KEYWORD_MINUS    (KEYWORD_START + 1)
+#define KEYWORD_MULTIPLY (KEYWORD_START + 2)
+#define KEYWORD_DIVIDE   (KEYWORD_START + 3)
+#define KEYWORD_DEFINE   (KEYWORD_START + 4)
+#define KEYWORD_FN       (KEYWORD_START + 5)
+
 
 /* word lookup table */
 typedef struct word_lut {
-  char *reserved_words[MAX_WORD_LOOKUPS];  
-  i32 reserved_words_count;
+  char *keywords[MAX_WORD_LOOKUPS];  
+  i32 keywords_count;
   
   char *words[MAX_WORD_LOOKUPS];
   i32 words_count;
@@ -29,8 +31,8 @@ typedef struct word_lut {
 i32 word_lookup_or_add(word_lut *wlut, char *string, size_t len);
 void word_lookup_free_words(word_lut *wlut);
 
-void word_lookup_add_reserved_words(word_lut *wlut);
-void word_lookup_free_reserved_words(word_lut *wlut);
+void word_lookup_add_keywords(word_lut *wlut);
+void word_lookup_free_keywords(word_lut *wlut);
 
 char *word_lookup_i32(word_lut *wlut, i32 index);
 
