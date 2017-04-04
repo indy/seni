@@ -337,6 +337,25 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
 
 #define EVAL_CLEANUP shutdown_interpreter_test(wl, ast)
 
+#define EVAL_INT(EXPR,EXPECTED) EVAL_EXPR(EXPR); \
+  assert_seni_var_i32(var, VAR_INT, EXPECTED); \
+  EVAL_CLEANUP
+
+#define EVAL_FLOAT(EXPR,EXPECTED) EVAL_EXPR(EXPR); \
+  assert_seni_var_f32(var, VAR_FLOAT, EXPECTED); \
+  EVAL_CLEANUP
+
+#define EVAL_TRUE(EXPR) EVAL_EXPR(EXPR); \
+  assert_seni_var_true(var); \
+  EVAL_CLEANUP
+
+#define EVAL_FALSE(EXPR) EVAL_EXPR(EXPR); \
+  assert_seni_var_false(var); \
+  EVAL_CLEANUP
+
+#define EVAL_NAME(EXPR,EXPECTED) EVAL_EXPR(EXPR); \
+  assert_seni_var_i32(var, VAR_NAME, EXPECTED); \
+  EVAL_CLEANUP
 
 void test_lang_interpreter(void)
 {
@@ -344,190 +363,52 @@ void test_lang_interpreter(void)
   seni_env *env = NULL;
   seni_node *ast = NULL;
   seni_var *var = NULL;
-  
-  EVAL_EXPR("42");
-  assert_seni_var_i32(var, VAR_INT, 42);
-  EVAL_CLEANUP;
 
-  EVAL_EXPR("42");
-  assert_seni_var_i32(var, VAR_INT, 42);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("12.34");
-  assert_seni_var_f32(var, VAR_FLOAT, 12.34f);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("true");
-  assert_seni_var_true(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("false");
-  assert_seni_var_false(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("+");
-  assert_seni_var_i32(var, VAR_NAME, 0 + KEYWORD_START);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(+ 10 1)");
-  assert_seni_var_i32(var, VAR_INT, 11);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(+ 10.0 1)");
-  assert_seni_var_f32(var, VAR_FLOAT, 11.0);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(+ 10 1.0)");
-  assert_seni_var_f32(var, VAR_FLOAT, 11.0);
-  EVAL_CLEANUP;
-    
-  EVAL_EXPR("(+ 3 4 5 6)");
-  assert_seni_var_i32(var, VAR_INT, 18);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(+ (+ 1 2) (+ 3 4))");
-  assert_seni_var_i32(var, VAR_INT, 10);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(+ (+ 1 2) (+ 3.0 4))");
-  assert_seni_var_f32(var, VAR_FLOAT, 10.0);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(- 100 20)");
-  assert_seni_var_i32(var, VAR_INT, 80);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(- (+ 50 50) 20)");
-  assert_seni_var_i32(var, VAR_INT, 80);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(- 59)");
-  assert_seni_var_i32(var, VAR_INT, -59);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(- (+ 50 9))");
-  assert_seni_var_i32(var, VAR_INT, -59);
-  EVAL_CLEANUP;
-  
-  EVAL_EXPR("(- 100.0 20)");
-  assert_seni_var_f32(var, VAR_FLOAT, 80.0);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(- 100 20.0)");
-  assert_seni_var_f32(var, VAR_FLOAT, 80.0);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(- 100.0 20.0)");
-  assert_seni_var_f32(var, VAR_FLOAT, 80.0);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(* 6 5)");
-  assert_seni_var_i32(var, VAR_INT, 30);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(* (* 2 3) 5)");
-  assert_seni_var_i32(var, VAR_INT, 30);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(/ 16.0 2.0)");
-  assert_seni_var_f32(var, VAR_FLOAT, 8.0f);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(= 16.0 16.0)");
-  assert_seni_var_true(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(= 16.0 99.0)");
-  assert_seni_var_false(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(= 16.0 16)");
-  assert_seni_var_false(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(= 6 6)");
-  assert_seni_var_true(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(= 6 26)");
-  assert_seni_var_false(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(> 6 2)");
-  assert_seni_var_true(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(> 6 6)");
-  assert_seni_var_false(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(> 6 26)");
-  assert_seni_var_false(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(> 1000 100 10 1)");
-  assert_seni_var_true(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(> 6 2.0)");
-  assert_seni_var_true(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(< 7 10)");
-  assert_seni_var_true(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(< 7 5)");
-  assert_seni_var_false(var);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(sqrt 144)");
-  assert_seni_var_f32(var, VAR_FLOAT, 12.0f);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(sqrt 144.0)");
-  assert_seni_var_f32(var, VAR_FLOAT, 12.0f);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(sqrt (+ 100 44))");
-  assert_seni_var_f32(var, VAR_FLOAT, 12.0f);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(define num 10) (+ num num)");
-  assert_seni_var_i32(var, VAR_INT, 20);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(define num 10.0) (+ num num)");
-  assert_seni_var_f32(var, VAR_FLOAT, 20.0f);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(define num (* 2 3.0)) (+ num num num)");
-  assert_seni_var_f32(var, VAR_FLOAT, 18.0f);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(fn (a) 42) (+ (a) (a))");
-  assert_seni_var_i32(var, VAR_INT, 84);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(fn (a) 12 34 55 42) (+ (a) (a))");
-  assert_seni_var_i32(var, VAR_INT, 84);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(fn (foo b: 1 c: 2) (+ b c)) (foo)");
-  assert_seni_var_i32(var, VAR_INT, 3);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(fn (foo b: 1 c: 2) (+ b c)) (foo b: 10 c: 100)");
-  assert_seni_var_i32(var, VAR_INT, 110);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(fn (foo b: 1 c: 2) (+ b c)) (foo c: 30 b: 5.6)");
-  assert_seni_var_f32(var, VAR_FLOAT, 35.6f);
-  EVAL_CLEANUP;
-
-  EVAL_EXPR("(define b 10)(fn (foo b: 1) (+ b b)) (foo b: (+ b b))");
-  assert_seni_var_i32(var, VAR_INT, 40);
-  EVAL_CLEANUP;
+  EVAL_INT("42", 42);
+  EVAL_FLOAT("12.34", 12.34f);
+  EVAL_TRUE("true");
+  EVAL_FALSE("false");
+  EVAL_NAME("+", 0 + KEYWORD_START);
+  EVAL_INT("(+ 10 1)", 11);
+  EVAL_FLOAT("(+ 10.0 1)", 11.0f);
+  EVAL_FLOAT("(+ 10 1.0)", 11.0f);
+  EVAL_INT("(+ 3 4 5 6)", 18);
+  EVAL_INT("(+ (+ 1 2) (+ 3 4))", 10);
+  EVAL_FLOAT("(+ (+ 1 2) (+ 3.0 4))", 10.0f);
+  EVAL_INT("(- 100 20)", 80);
+  EVAL_INT("(- (+ 50 50) 20)", 80);
+  EVAL_INT("(- 59)", -59);
+  EVAL_INT("(- (+ 50 9))", -59);
+  EVAL_FLOAT("(- 100.0 20)", 80.0f);
+  EVAL_FLOAT("(- 100 20.0)", 80.0f);
+  EVAL_FLOAT("(- 100.0 20.0)", 80.0f);
+  EVAL_INT("(* 6 5)", 30);
+  EVAL_INT("(* (* 2 3) 5)", 30);
+  EVAL_FLOAT("(/ 16.0 2.0)", 8.0f);
+  EVAL_TRUE("(= 16.0 16.0)");
+  EVAL_FALSE("(= 16.0 99.0)");
+  EVAL_FALSE("(= 16.0 16)");
+  EVAL_TRUE("(= 6 6)");
+  EVAL_FALSE("(= 6 26)");
+  EVAL_TRUE("(> 6 2)");
+  EVAL_FALSE("(> 6 6)");
+  EVAL_FALSE("(> 6 26)");
+  EVAL_TRUE("(> 1000 100 10 1)");
+  EVAL_TRUE("(> 6 2.0)");
+  EVAL_TRUE("(< 7 10)");
+  EVAL_FALSE("(< 7 5)");
+  EVAL_FLOAT("(sqrt 144)", 12.0f);
+  EVAL_FLOAT("(sqrt 144.0)", 12.0f);
+  EVAL_FLOAT("(sqrt (+ 100 44))", 12.0f);
+  EVAL_INT("(define num 10) (+ num num)", 20);
+  EVAL_FLOAT("(define num 10.0) (+ num num)", 20.0f);
+  EVAL_FLOAT("(define num (* 2 3.0)) (+ num num num)", 18.0f);
+  EVAL_INT("(fn (a) 42) (+ (a) (a))", 84);
+  EVAL_INT("(fn (a) 12 34 55 42) (+ (a) (a))", 84);
+  EVAL_INT("(fn (foo b: 1 c: 2) (+ b c)) (foo)", 3);
+  EVAL_INT("(fn (foo b: 1 c: 2) (+ b c)) (foo b: 10 c: 100)", 110);
+  EVAL_FLOAT("(fn (foo b: 1 c: 2) (+ b c)) (foo c: 30 b: 5.6)", 35.6f);
+  EVAL_INT("(define b 10)(fn (foo b: 1) (+ b b)) (foo b: (+ b b))", 40);
 }  
 
 int main(void)

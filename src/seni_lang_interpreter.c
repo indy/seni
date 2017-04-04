@@ -16,15 +16,12 @@ word_lut *g_wl = NULL;
 // a register like seni_var for holding intermediate values
 seni_var g_reg;
 
-
-
 // which value to use
 typedef enum seni_value_in_use {
   USE_I,
   USE_F,
   USE_P
 } seni_value_in_use;
-
 
 seni_value_in_use get_value_in_use(seni_var_type type) {
   if (type == VAR_FLOAT) {
