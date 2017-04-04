@@ -373,6 +373,150 @@ seni_var *eval_classic_fn_equality(seni_env *env, seni_node *expr)
   return true_in_g_reg();
 }
 
+seni_var *eval_classic_fn_greater(seni_env *env, seni_node *expr)
+{
+  seni_node *sibling = safe_next(expr);
+  if (sibling == NULL) {
+    // error: no args given to '>'
+    return NULL;
+  }
+
+  seni_var *v = eval(env, sibling);
+
+  bool prev_using_i;
+  i32 prev_i = 0;
+  f32 prev_f = 0.0f;
+
+  seni_value_in_use using = get_value_in_use(v->type);
+  if (using == USE_I) {
+    prev_using_i = true;
+    prev_i = v->value.i;
+  } else if (using == USE_F) {
+    prev_using_i = false;
+    prev_f = v->value.f;
+  } else {
+    // error ()
+    return NULL;
+  }
+
+  sibling = safe_next(sibling);
+
+  while (sibling != NULL) {
+    
+    v = eval(env, sibling);
+
+    seni_value_in_use using2 = get_value_in_use(v->type);
+    if (using2 == USE_I) {
+      if (prev_using_i) {
+        if (prev_i <= v->value.i) {
+          return false_in_g_reg();
+        }
+      } else {
+        if (prev_f <= (f32)v->value.i) {
+          return false_in_g_reg();
+        }
+      }
+
+      prev_using_i = true;
+      prev_i = v->value.i;
+
+    } else if (using2 == USE_F) {
+      if (prev_using_i) {
+        if ((f32)prev_i <= v->value.f) {
+          return false_in_g_reg();
+        }
+      } else {
+        if (prev_f <= v->value.f) {
+          return false_in_g_reg();
+        }
+      }
+
+      prev_using_i = false;
+      prev_f = v->value.f;
+      
+    } else {
+      // error()
+      return NULL;
+    }
+
+    sibling = safe_next(sibling);
+  }
+
+  return true_in_g_reg();
+}
+
+seni_var *eval_classic_fn_lesser(seni_env *env, seni_node *expr)
+{
+  seni_node *sibling = safe_next(expr);
+  if (sibling == NULL) {
+    // error: no args given to '<'
+    return NULL;
+  }
+
+  seni_var *v = eval(env, sibling);
+
+  bool prev_using_i;
+  i32 prev_i = 0;
+  f32 prev_f = 0.0f;
+
+  seni_value_in_use using = get_value_in_use(v->type);
+  if (using == USE_I) {
+    prev_using_i = true;
+    prev_i = v->value.i;
+  } else if (using == USE_F) {
+    prev_using_i = false;
+    prev_f = v->value.f;
+  } else {
+    // error ()
+    return NULL;
+  }
+
+  sibling = safe_next(sibling);
+
+  while (sibling != NULL) {
+    
+    v = eval(env, sibling);
+
+    seni_value_in_use using2 = get_value_in_use(v->type);
+    if (using2 == USE_I) {
+      if (prev_using_i) {
+        if (prev_i >= v->value.i) {
+          return false_in_g_reg();
+        }
+      } else {
+        if (prev_f >= (f32)v->value.i) {
+          return false_in_g_reg();
+        }
+      }
+
+      prev_using_i = true;
+      prev_i = v->value.i;
+
+    } else if (using2 == USE_F) {
+      if (prev_using_i) {
+        if ((f32)prev_i >= v->value.f) {
+          return false_in_g_reg();
+        }
+      } else {
+        if (prev_f >= v->value.f) {
+          return false_in_g_reg();
+        }
+      }
+
+      prev_using_i = false;
+      prev_f = v->value.f;
+      
+    } else {
+      // error()
+      return NULL;
+    }
+
+    sibling = safe_next(sibling);
+  }
+
+  return true_in_g_reg();
+}
+
 seni_var *eval_classic_fn_sqrt(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
@@ -630,8 +774,8 @@ void interpreter_declare_keywords(word_lut *wlut)
   declare_keyword(wlut, "*", &eval_classic_fn_multiply);
   declare_keyword(wlut, "/", &eval_classic_fn_divide);
   declare_keyword(wlut, "=", &eval_classic_fn_equality);
-  declare_keyword(wlut, ">", &eval_classic_fn_sqrt);
-  declare_keyword(wlut, "<", &eval_classic_fn_sqrt);
+  declare_keyword(wlut, ">", &eval_classic_fn_greater);
+  declare_keyword(wlut, "<", &eval_classic_fn_lesser);
   declare_keyword(wlut, "vector", &eval_classic_fn_sqrt);
   declare_keyword(wlut, "vector/append", &eval_classic_fn_sqrt);
   declare_keyword(wlut, "sqrt", &eval_classic_fn_sqrt);
