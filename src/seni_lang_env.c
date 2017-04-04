@@ -93,9 +93,9 @@ seni_env *get_env_from_pool()
   return head;
 }
 
-void return_env_to_pool(seni_env *seni_env)
+void return_env_to_pool(seni_env *env)
 {
-  DL_APPEND(g_envs, seni_env);
+  DL_APPEND(g_envs, env);
 }
 
 seni_var *get_var_from_pool()
@@ -109,9 +109,9 @@ seni_var *get_var_from_pool()
   return head;
 }
 
-void return_var_to_pool(seni_var *seni_var)
+void return_var_to_pool(seni_var *var)
 {
-  DL_APPEND(g_vars, seni_var);
+  DL_APPEND(g_vars, var);
 }
 
 seni_env *get_initial_env()

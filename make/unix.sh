@@ -13,7 +13,7 @@ else
     mkdir build_osx
     pushd build_osx    
     # cc -o test -std=c99 -Wall -Wextra ../src/test.c ../src/unity/unity.c ../src/gl-matrix/*.c ../src/seni.c ../src/seni_*.c
-    cc -o test -std=c99 ../src/test.c ../src/unity/unity.c ../src/gl-matrix/*.c ../src/seni.c ../src/seni_*.c
+    cc -o test -std=c99 ../src/test.c ../src/unity/unity.c ../src/gl-matrix/*.c ../src/seni.c ../src/seni_*.c -lm
     popd
 
     ./build_osx/test
