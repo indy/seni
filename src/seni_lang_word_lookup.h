@@ -3,8 +3,8 @@
 
 #include "seni_types.h"
 
-// 2 << 6 == 64
-#define MAX_WORD_LOOKUPS (2 << 6)
+// 2 << 7 == 128
+#define MAX_WORD_LOOKUPS (2 << 7)
 #define MAX_KEYWORD_LOOKUPS MAX_WORD_LOOKUPS
 #define KEYWORD_START MAX_WORD_LOOKUPS
 

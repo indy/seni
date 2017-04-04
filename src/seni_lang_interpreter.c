@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "seni_lang_interpreter.h"
 
 seni_var *eval(seni_env *env, seni_node *expr);
@@ -15,6 +16,25 @@ word_lut *g_wl = NULL;
 // a register like seni_var for holding intermediate values
 seni_var g_reg;
 
+
+
+// which value to use
+typedef enum seni_value_in_use {
+  USE_I,
+  USE_F,
+  USE_P
+} seni_value_in_use;
+
+
+seni_value_in_use get_value_in_use(seni_var_type type) {
+  if (type == VAR_FLOAT) {
+    return USE_F;
+  } else if (type == VAR_FN) {
+    return USE_P;
+  } else {
+    return USE_I;
+  }
+}
 
 seni_var_type node_type_to_var_type(seni_node_type type)
 {
@@ -46,16 +66,33 @@ seni_node *safe_next(seni_node *expr)
 void safe_seni_var_copy(seni_var *dest, seni_var *src)
 {
   dest->type = src->type;
-  if (src->type == VAR_FLOAT) {
-    dest->value.f = src->value.f;
-  } else if (src->type == VAR_FN) {
-    dest->value.p = src->value.p;
-  } else {
+
+  seni_value_in_use using = get_value_in_use(src->type);
+  
+  if (using == USE_I) {
     dest->value.i = src->value.i;
+  } else if (using == USE_F) {
+    dest->value.f = src->value.f;
+  } else if (using == USE_P) {
+    dest->value.p = src->value.p;
   }
 }
 
-seni_var *eval_keyword_plus(seni_env *env, seni_node *expr)
+seni_var *true_in_g_reg()
+{
+  g_reg.type = VAR_BOOLEAN;
+  g_reg.value.i = 1;
+  return &g_reg;
+}
+
+seni_var *false_in_g_reg()
+{
+  g_reg.type = VAR_BOOLEAN;
+  g_reg.value.i = 0;
+  return &g_reg;
+}
+
+seni_var *eval_classic_fn_plus(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
@@ -106,18 +143,20 @@ seni_var *eval_keyword_plus(seni_env *env, seni_node *expr)
   return &g_reg;
 }
 
-seni_var *eval_keyword_minus(seni_env *env, seni_node *expr)
+seni_var *eval_classic_fn_minus(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
     // error: no args given to '-'
     return NULL;
   }
-  
-  i32 iresult = sibling->value.i;
-  f32 fresult = sibling->value.f;
 
-  bool all_ints = sibling->type == NODE_INT;
+  seni_var *v = eval(env, sibling);
+  
+  i32 iresult = v->value.i;
+  f32 fresult = v->value.f;
+
+  bool all_ints = v->type == VAR_INT;
   
   sibling = safe_next(sibling);
 
@@ -134,8 +173,6 @@ seni_var *eval_keyword_minus(seni_env *env, seni_node *expr)
     return &g_reg;
   }
   
-  seni_var *v;
-
   while (sibling != NULL) {
     
     v = eval(env, sibling);
@@ -173,7 +210,7 @@ seni_var *eval_keyword_minus(seni_env *env, seni_node *expr)
   return &g_reg;
 }
 
-seni_var *eval_keyword_multiply(seni_env *env, seni_node *expr)
+seni_var *eval_classic_fn_multiply(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
@@ -181,15 +218,15 @@ seni_var *eval_keyword_multiply(seni_env *env, seni_node *expr)
     return NULL;
   }
 
-  i32 iresult = sibling->value.i;
-  f32 fresult = sibling->value.f;
+  seni_var *v = eval(env, sibling);
 
-  bool all_ints = sibling->type == NODE_INT;
+  i32 iresult = v->value.i;
+  f32 fresult = v->value.f;
+
+  bool all_ints = v->type == VAR_INT;
   
   sibling = safe_next(sibling);
   
-  seni_var *v;
-
   while (sibling != NULL) {
     
     v = eval(env, sibling);
@@ -227,22 +264,21 @@ seni_var *eval_keyword_multiply(seni_env *env, seni_node *expr)
   return &g_reg;
 }
 
-seni_var *eval_keyword_divide(seni_env *env, seni_node *expr)
+seni_var *eval_classic_fn_divide(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
     // error: no args given to '/'
     return NULL;
   }
+  seni_var *v = eval(env, sibling);
+  
+  bool all_ints = v->type == VAR_INT;
 
-  bool all_ints = sibling->type == NODE_INT;
-
-  i32 iresult = sibling->value.i;
-  f32 fresult = all_ints ? (float)(sibling->value.i) : sibling->value.f;
+  i32 iresult = v->value.i;
+  f32 fresult = all_ints ? (float)(v->value.i) : v->value.f;
   
   sibling = safe_next(sibling);
-  
-  seni_var *v;
 
   while (sibling != NULL) {
     
@@ -280,6 +316,84 @@ seni_var *eval_keyword_divide(seni_env *env, seni_node *expr)
     g_reg.type = VAR_FLOAT;
     g_reg.value.f = fresult;
   }
+
+  return &g_reg;
+}
+
+seni_var *eval_classic_fn_equality(seni_env *env, seni_node *expr)
+{
+  seni_node *sibling = safe_next(expr);
+  if (sibling == NULL) {
+    // error: no args given to '='
+    return NULL;
+  }
+
+  seni_var *v = eval(env, sibling);
+
+  bool using_i;
+  i32 i = 0;
+  f32 f = 0.0f;
+
+  seni_value_in_use using = get_value_in_use(v->type);
+  if (using == USE_I) {
+    using_i = true;
+    i = v->value.i;
+  } else if (using == USE_F) {
+    using_i = false;
+    f = v->value.f;
+  } else {
+    // error ()
+    return NULL;
+  } 
+  
+  sibling = safe_next(sibling);
+
+  while (sibling != NULL) {
+    
+    v = eval(env, sibling);
+
+    seni_value_in_use using2 = get_value_in_use(v->type);
+    if (using2 != using) {
+      return false_in_g_reg();
+    }
+
+    if (using_i) {
+      if (i != v->value.i) {
+        return false_in_g_reg();
+      }
+    } else {
+      if (f != v->value.f) {
+        return false_in_g_reg();
+      }
+    }
+
+    sibling = safe_next(sibling);
+  }
+
+  return true_in_g_reg();
+}
+
+seni_var *eval_classic_fn_sqrt(seni_env *env, seni_node *expr)
+{
+  seni_node *sibling = safe_next(expr);
+  if (sibling == NULL) {
+    // error: no args given to 'sqrt'
+    return NULL;
+  }
+
+  seni_var *v = eval(env, sibling);
+  f32 inp;
+  if (v->type == VAR_FLOAT) {
+    inp = v->value.f;
+  } else if (v->type == VAR_INT) {
+    inp = (f32)(v->value.i);
+  } else {
+    // error("non numeric argument given to sqrt");
+    return NULL;
+  }
+
+  g_reg.type = VAR_FLOAT;
+  g_reg.value.f = (f32)sqrt(inp);
 
   return &g_reg;
 }
@@ -510,10 +624,20 @@ void interpreter_declare_keywords(word_lut *wlut)
 {
   wlut->keywords_count = 0;
 
-  declare_keyword(wlut, "+", &eval_keyword_plus);
-  declare_keyword(wlut, "-", &eval_keyword_minus);
-  declare_keyword(wlut, "*", &eval_keyword_multiply);
-  declare_keyword(wlut, "/", &eval_keyword_divide);
+  // classic functions that don't use named arguments when invoked
+  declare_keyword(wlut, "+", &eval_classic_fn_plus);
+  declare_keyword(wlut, "-", &eval_classic_fn_minus);
+  declare_keyword(wlut, "*", &eval_classic_fn_multiply);
+  declare_keyword(wlut, "/", &eval_classic_fn_divide);
+  declare_keyword(wlut, "=", &eval_classic_fn_equality);
+  declare_keyword(wlut, ">", &eval_classic_fn_sqrt);
+  declare_keyword(wlut, "<", &eval_classic_fn_sqrt);
+  declare_keyword(wlut, "vector", &eval_classic_fn_sqrt);
+  declare_keyword(wlut, "vector/append", &eval_classic_fn_sqrt);
+  declare_keyword(wlut, "sqrt", &eval_classic_fn_sqrt);
+  declare_keyword(wlut, "mod", &eval_classic_fn_sqrt);
+
+  // special functions with non-standard syntax
   declare_keyword(wlut, "define", &eval_keyword_define);
   declare_keyword(wlut, "fn", &eval_keyword_fn);
 }

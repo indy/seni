@@ -485,6 +485,18 @@ void test_lang_interpreter(void)
     shutdown_interpreter_test(wl, ast);
   }
 
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(- (+ 50 50) 20)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, VAR_INT, 80);
+
+    shutdown_interpreter_test(wl, ast);
+  }  
+
   { // - with one arg = negation
     wl = setup_interpreter_wl();
     env = setup_interpreter_env();
@@ -497,6 +509,18 @@ void test_lang_interpreter(void)
     shutdown_interpreter_test(wl, ast);
   }
 
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(- (+ 50 9))");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, VAR_INT, -59);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+  
   {
     wl = setup_interpreter_wl();
     env = setup_interpreter_env();
@@ -549,10 +573,118 @@ void test_lang_interpreter(void)
     wl = setup_interpreter_wl();
     env = setup_interpreter_env();
 
+    seni_node *ast = parser_parse(wl, "(* (* 2 3) 5)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, VAR_INT, 30);
+
+    shutdown_interpreter_test(wl, ast);
+  }  
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
     seni_node *ast = parser_parse(wl, "(/ 16.0 2.0)");
     seni_var *var = evaluate(env, wl, ast);
   
     assert_seni_var_f32(var, VAR_FLOAT, 8.0f);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(= 16.0 16.0)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, VAR_BOOLEAN, 1);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(= 16.0 99.0)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, VAR_BOOLEAN, 0);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  { // comparing ints to floats always returns false
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(= 16.0 16)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, VAR_BOOLEAN, 0);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(= 6 6)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, VAR_BOOLEAN, 1);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(= 6 26)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_i32(var, VAR_BOOLEAN, 0);
+
+    shutdown_interpreter_test(wl, ast);
+  }  
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(sqrt 144)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, VAR_FLOAT, 12.0f);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(sqrt 144.0)");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, VAR_FLOAT, 12.0f);
+
+    shutdown_interpreter_test(wl, ast);
+  }
+
+  {
+    wl = setup_interpreter_wl();
+    env = setup_interpreter_env();
+
+    seni_node *ast = parser_parse(wl, "(sqrt (+ 100 44))");
+    seni_var *var = evaluate(env, wl, ast);
+  
+    assert_seni_var_f32(var, VAR_FLOAT, 12.0f);
 
     shutdown_interpreter_test(wl, ast);
   }

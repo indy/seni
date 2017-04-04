@@ -1,9 +1,18 @@
-* TODO [0/2]
-  1. [ ] loop
-  2. [ ] on-matrix-stack
+* TODO [0/5]
+  1. [ ] classic fns: sqrt mod = < > vector vector/append
+  2. [ ] special fn: if
+  3. [ ] special fn: loop
+  4. [ ] special fn: on-matrix-stack
+  5. [ ] special fn: begin
 
 
 
+* loop usage
+from to
+to
+from to increment
+from upto
+from upto steps
 
 * bytecode vm design for guile
   https://www.gnu.org/software/guile/manual/html_node/Why-a-VM_003f.html#Why-a-VM_003f
