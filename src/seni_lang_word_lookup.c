@@ -3,6 +3,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+#if defined(_WIN32)
+#else
+#include "strings.h"
+#endif
 
 bool string_compare(char* a, char *b)
 {
@@ -12,8 +17,9 @@ bool string_compare(char* a, char *b)
   return strcasecmp(a, b) == 0;
 #endif
 }
+*/
 
-void cpy_len(char *src, char **dst, size_t len)
+void string_copy_len(char **dst, char *src, size_t len)
 {
   char *c = (char *)malloc(sizeof(char) * (len + 1));
   strncpy(c, src, len);
@@ -22,16 +28,6 @@ void cpy_len(char *src, char **dst, size_t len)
   *dst = c;
 }
 
-void cpy(char *src, char **dst)
-{
-  size_t len = strlen(src);
-  
-  char *c = (char *)malloc(sizeof(char) * (len + 1));
-  strncpy(c, src, len);
-  c[len] = '\0';
-
-  *dst = c;
-}
 
 /* returns 0 if not found */
 i32 lookup_reserved_name(word_lut *wlut, char *string, size_t len)
@@ -88,28 +84,23 @@ i32 word_lookup_or_add(word_lut *wlut, char *string, size_t len)
   }
 
   // the string is not in the lookup table, so add it
-  cpy_len(string, &(wlut->words[i]), len);
+  string_copy_len(&(wlut->words[i]), string, len);
   wlut->words_count++;
 
   return i;
 }
 
-
-void word_lookup_add_keywords(word_lut *wlut)
+char *word_lookup_i32(word_lut *wlut, i32 index)
 {
-  wlut->keywords_count = 0;
-  cpy("+",      &(wlut->keywords[wlut->keywords_count++]));
-  cpy("-",      &(wlut->keywords[wlut->keywords_count++]));
-  cpy("*",      &(wlut->keywords[wlut->keywords_count++]));
-  cpy("/",      &(wlut->keywords[wlut->keywords_count++]));
-  cpy("define", &(wlut->keywords[wlut->keywords_count++]));
-  cpy("fn",     &(wlut->keywords[wlut->keywords_count++]));
-
+  if (index >= KEYWORD_START) {
+    return wlut->keywords[index - KEYWORD_START];
+  }
+  return wlut->words[index];
 }
 
 void word_lookup_free_keywords(word_lut *wlut)
 {
-  for( int i = 0; i < MAX_WORD_LOOKUPS; i++) {
+  for( int i = 0; i < MAX_KEYWORD_LOOKUPS; i++) {
     if (wlut->keywords[i]) {
       free(wlut->keywords[i]);
     }
@@ -129,10 +120,15 @@ void word_lookup_free_words(word_lut *wlut)
   wlut->words_count = 0;
 }
 
-char *word_lookup_i32(word_lut *wlut, i32 index)
+word_lut *word_lookup_allocate()
 {
-  if (index >= KEYWORD_START) {
-    return wlut->keywords[index - KEYWORD_START];
-  }
-  return wlut->words[index];
+  word_lut *wl = (word_lut *)calloc(1, sizeof(word_lut));
+  return wl;
+}
+
+void word_lookup_free(word_lut *wlut)
+{
+  word_lookup_free_words(wlut);
+  word_lookup_free_keywords(wlut);
+  free(wlut);
 }

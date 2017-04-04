@@ -2,11 +2,19 @@
 #include "seni_lang_interpreter.h"
 
 seni_var *eval(seni_env *env, seni_node *expr);
-  
+
+typedef struct keyword {
+  seni_var *(*function_ptr)(seni_env *, seni_node *);
+  char *name;
+} keyword;
+
+keyword g_keyword[MAX_KEYWORD_LOOKUPS];
+
 int g_error = 0;
 word_lut *g_wl = NULL;
 // a register like seni_var for holding intermediate values
 seni_var g_reg;
+
 
 seni_var_type node_type_to_var_type(seni_node_type type)
 {
@@ -403,20 +411,8 @@ seni_var *eval_list(seni_env *env, seni_node *expr)
   seni_var *var = eval(env, expr->children);
 
   if (var->type == VAR_NAME && (var->value.i & KEYWORD_START)) {
-    switch(var->value.i) {
-    case KEYWORD_PLUS:
-      return eval_keyword_plus(env, expr->children);
-    case KEYWORD_MINUS:
-      return eval_keyword_minus(env, expr->children);
-    case KEYWORD_MULTIPLY:
-      return eval_keyword_multiply(env, expr->children);
-    case KEYWORD_DIVIDE:
-      return eval_keyword_divide(env, expr->children);
-    case KEYWORD_DEFINE:
-      return eval_keyword_define(env, expr->children);
-    case KEYWORD_FN:
-      return eval_keyword_fn(env, expr->children);
-    }
+    i32 i = var->value.i - KEYWORD_START;
+    return (*g_keyword[i].function_ptr)(env, expr->children);
   }
 
   // user defined function
@@ -485,7 +481,42 @@ seni_var *eval(seni_env *env, seni_node *expr)
   return NULL;
 }
 
+void string_copy(char **dst, char *src)
+{
+  size_t len = strlen(src);
+  
+  char *c = (char *)malloc(sizeof(char) * (len + 1));
+  strncpy(c, src, len);
+  c[len] = '\0';
 
+  *dst = c;
+}
+
+// NOTE: the keyword.name is pointing to memory that's managed by the word_lut
+//
+void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *))
+{
+  string_copy(&(wlut->keywords[wlut->keywords_count]), name);
+  g_keyword[wlut->keywords_count].name = wlut->keywords[wlut->keywords_count];
+  g_keyword[wlut->keywords_count].function_ptr = function_ptr;
+  wlut->keywords_count++;
+
+  if (wlut->keywords_count > MAX_KEYWORD_LOOKUPS) {
+    // error
+  }
+}
+
+void interpreter_declare_keywords(word_lut *wlut)
+{
+  wlut->keywords_count = 0;
+
+  declare_keyword(wlut, "+", &eval_keyword_plus);
+  declare_keyword(wlut, "-", &eval_keyword_minus);
+  declare_keyword(wlut, "*", &eval_keyword_multiply);
+  declare_keyword(wlut, "/", &eval_keyword_divide);
+  declare_keyword(wlut, "define", &eval_keyword_define);
+  declare_keyword(wlut, "fn", &eval_keyword_fn);
+}
   
 seni_var *evaluate(seni_env *env, word_lut *wl, seni_node *ast)
 {

@@ -48,4 +48,4 @@ seni_node *parser_parse(word_lut *wlut, char *s);
 void parser_free_nodes(seni_node *nodes);
 char *parser_node_type_name(seni_node_type type);
   
-#endif
+#endif // SENI_LANG_PARSER_H
