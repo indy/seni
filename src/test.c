@@ -241,7 +241,7 @@ void test_lang_env(void)
   env = get_initial_env();
 
   var = add_var(env, 1);
-  var->type = NODE_INT;
+  var->type = VAR_INT;
   var->value.i = 42;
 
   /* basic lookup */
@@ -267,32 +267,50 @@ void test_lang_env(void)
   env_free_pools();
 }
 
+char *var_type_name(seni_var_type type)
+{
+  switch(type) {
+  case VAR_INT:
+    return "VAR_INT";
+  case VAR_FLOAT:
+    return "VAR_FLOAT";
+  case VAR_BOOLEAN:
+    return "VAR_BOOLEAN";
+  case VAR_NAME:
+    return "VAR_NAME";
+  case VAR_FN:
+    return "VAR_FN";
+  }
+
+  return "unknown var type";
+}
+
 void assert_seni_var(seni_var *var, seni_var_type type)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, parser_node_type_name(var->type));
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var->type));
 }
 
 void assert_seni_var_i32(seni_var *var, seni_var_type type, i32 i)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, parser_node_type_name(var->type));
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var->type));
   TEST_ASSERT_EQUAL(i, var->value.i);
 }
 
 void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, parser_node_type_name(var->type));
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var->type));
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
 void assert_seni_var_true(seni_var *var)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, parser_node_type_name(var->type));
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var->type));
   TEST_ASSERT_EQUAL(1, var->value.i);
 }
 
 void assert_seni_var_false(seni_var *var)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, parser_node_type_name(var->type));
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var->type));
   TEST_ASSERT_EQUAL(0, var->value.i);
 }
 
@@ -395,9 +413,13 @@ void test_lang_interpret_math(void)
   EVAL_INT("(* 6 5)", 30);
   EVAL_INT("(* (* 2 3) 5)", 30);
   EVAL_FLOAT("(/ 16.0 2.0)", 8.0f);
+
   EVAL_FLOAT("(sqrt 144)", 12.0f);
   EVAL_FLOAT("(sqrt 144.0)", 12.0f);
   EVAL_FLOAT("(sqrt (+ 100 44))", 12.0f);
+
+  EVAL_INT("(mod 10 3)", 1);
+  EVAL_INT("(mod 11 3)", 2);
 }
 
 void test_lang_interpret_comparison(void)
@@ -442,11 +464,9 @@ void test_lang_interpret_function(void)
 int main(void)
 {
   UNITY_BEGIN();
-#if 1
   RUN_TEST(test_mathutil);
   RUN_TEST(test_lang_parser);
   RUN_TEST(test_lang_env);
-#endif  
   RUN_TEST(test_lang_interpret_basic);
   RUN_TEST(test_lang_interpret_math);
   RUN_TEST(test_lang_interpret_comparison);

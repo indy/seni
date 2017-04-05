@@ -89,6 +89,32 @@ seni_var *false_in_g_reg()
   return &g_reg;
 }
 
+i32 var_as_int(seni_var *v1)
+{
+  seni_value_in_use using = get_value_in_use(v1->type);
+
+  if (using == USE_I) {
+    return v1->value.i;
+  } else if (using == USE_F) {
+    return (i32)(v1->value.f);
+  }
+
+  return -1;
+}
+
+f32 var_as_float(seni_var *v1)
+{
+  seni_value_in_use using = get_value_in_use(v1->type);
+
+  if (using == USE_I) {
+    return (f32)(v1->value.i);
+  } else if (using == USE_F) {
+    return v1->value.f;
+  }
+
+  return -1.0f;
+}
+
 seni_var *eval_classic_fn_plus(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
@@ -104,28 +130,18 @@ seni_var *eval_classic_fn_plus(seni_env *env, seni_node *expr)
   seni_var *v;
 
   while (sibling != NULL) {
-    
     v = eval(env, sibling);
-
+    
     if (all_ints && v->type == VAR_FLOAT) {
       // first time a non-int has occurred
       all_ints = false;
-      fresult = (f32)iresult;
-    }
-
-    if (all_ints && v->type == VAR_INT) {
+      fresult = (f32)iresult + v->value.f;
+    } else if (all_ints && v->type == VAR_INT) {
       iresult += v->value.i;
     } else {
-      if (v->type == VAR_INT) {
-        fresult += (f32)v->value.i;
-      } else if (v->type == VAR_FLOAT){
-        fresult += v->value.f;
-      } else {
-        // error: incompatible node type
-        return NULL;
-      }
+      float ff = var_as_float(v);
+      fresult += ff;
     }
-
     sibling = safe_next(sibling);
   }
 
@@ -183,14 +199,8 @@ seni_var *eval_classic_fn_minus(seni_env *env, seni_node *expr)
     if (all_ints && v->type == VAR_INT) {
       iresult -= v->value.i;
     } else {
-      if (v->type == VAR_INT) {
-        fresult -= (f32)v->value.i;
-      } else if (v->type == VAR_FLOAT){
-        fresult -= v->value.f;
-      } else {
-        // error: incompatible node type
-        return NULL;
-      }
+      float ff = var_as_float(v);
+      fresult -= ff;
     }
 
     sibling = safe_next(sibling);
@@ -237,14 +247,8 @@ seni_var *eval_classic_fn_multiply(seni_env *env, seni_node *expr)
     if (all_ints && v->type == VAR_INT) {
       iresult *= v->value.i;
     } else {
-      if (v->type == VAR_INT) {
-        fresult *= (f32)v->value.i;
-      } else if (v->type == VAR_FLOAT){
-        fresult *= v->value.f;
-      } else {
-        // error: incompatible node type
-        return NULL;
-      }
+      f32 ff = var_as_float(v);
+      fresult *= ff;
     }
 
     sibling = safe_next(sibling);
@@ -523,18 +527,34 @@ seni_var *eval_classic_fn_sqrt(seni_env *env, seni_node *expr)
   }
 
   seni_var *v = eval(env, sibling);
-  f32 inp;
-  if (v->type == VAR_FLOAT) {
-    inp = v->value.f;
-  } else if (v->type == VAR_INT) {
-    inp = (f32)(v->value.i);
-  } else {
-    // error("non numeric argument given to sqrt");
-    return NULL;
-  }
+  f32 inp = var_as_float(v);
 
   g_reg.type = VAR_FLOAT;
   g_reg.value.f = (f32)sqrt(inp);
+
+  return &g_reg;
+}
+
+seni_var *eval_classic_fn_mod(seni_env *env, seni_node *expr)
+{
+  seni_node *sibling = safe_next(expr);
+  if (sibling == NULL) {
+    // error: no args given to 'sqrt'
+    return NULL;
+  }
+
+  seni_var *v;
+
+  v = eval(env, sibling);
+  i32 i1 = var_as_int(v);
+
+  sibling = safe_next(sibling);
+  
+  v = eval(env, sibling);
+  i32 i2 = var_as_int(v);
+
+  g_reg.type = VAR_INT;
+  g_reg.value.i = i1 % i2;
 
   return &g_reg;
 }
@@ -776,7 +796,7 @@ void interpreter_declare_keywords(word_lut *wlut)
   declare_keyword(wlut, "vector", &eval_classic_fn_sqrt);
   declare_keyword(wlut, "vector/append", &eval_classic_fn_sqrt);
   declare_keyword(wlut, "sqrt", &eval_classic_fn_sqrt);
-  declare_keyword(wlut, "mod", &eval_classic_fn_sqrt);
+  declare_keyword(wlut, "mod", &eval_classic_fn_mod);
 
   // special functions with non-standard syntax
   declare_keyword(wlut, "define", &eval_keyword_define);
