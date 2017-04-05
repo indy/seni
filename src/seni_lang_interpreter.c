@@ -518,6 +518,30 @@ seni_var *eval_classic_fn_lesser(seni_env *env, seni_node *expr)
   return true_in_g_reg();
 }
 
+// TODO: IMPLEMENT
+seni_var *eval_classic_fn_vector(seni_env *env, seni_node *expr)
+{
+  seni_node *sibling = safe_next(expr);
+  if (sibling == NULL) {
+    // error: no args given to '<'
+    return NULL;
+  }
+
+  return true_in_g_reg();
+}
+
+// TODO: IMPLEMENT
+seni_var *eval_classic_fn_vector_append(seni_env *env, seni_node *expr)
+{
+  seni_node *sibling = safe_next(expr);
+  if (sibling == NULL) {
+    // error: no args given to '<'
+    return NULL;
+  }
+
+  return true_in_g_reg();
+}
+
 seni_var *eval_classic_fn_sqrt(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
@@ -612,6 +636,35 @@ seni_var *eval_keyword_fn(seni_env *env, seni_node *expr)
   env_var->value.p = expr;
   
   return env_var;
+}
+
+seni_var *eval_keyword_if(seni_env *env, seni_node *expr)
+{
+  // if (test) then else
+
+  seni_node *test = safe_next(expr);
+  if (test == NULL) {
+    return NULL;
+  }
+
+  seni_var *test_var = eval(env, test);
+  if (test_var->type != VAR_BOOLEAN) {
+    // error: if's test condition should evaluate to a boolean
+    return NULL;
+  }
+
+  bool truthy = test_var->value.i == 1;
+
+  seni_node *truthy_node = safe_next(test);
+  seni_node *falsey_node = safe_next(truthy_node);
+
+  if (truthy) {
+    return eval(env, truthy_node);
+  } else if (falsey_node) {
+    return eval(env, falsey_node);
+  }
+
+  return NULL;
 }
 
 seni_var *eval_fn(seni_env *env, seni_node *expr)
@@ -793,14 +846,15 @@ void interpreter_declare_keywords(word_lut *wlut)
   declare_keyword(wlut, "=", &eval_classic_fn_equality);
   declare_keyword(wlut, ">", &eval_classic_fn_greater);
   declare_keyword(wlut, "<", &eval_classic_fn_lesser);
-  declare_keyword(wlut, "vector", &eval_classic_fn_sqrt);
-  declare_keyword(wlut, "vector/append", &eval_classic_fn_sqrt);
+  declare_keyword(wlut, "vector", &eval_classic_fn_vector);
+  declare_keyword(wlut, "vector/append", &eval_classic_fn_vector_append);
   declare_keyword(wlut, "sqrt", &eval_classic_fn_sqrt);
   declare_keyword(wlut, "mod", &eval_classic_fn_mod);
 
   // special functions with non-standard syntax
   declare_keyword(wlut, "define", &eval_keyword_define);
   declare_keyword(wlut, "fn", &eval_keyword_fn);
+  declare_keyword(wlut, "if", &eval_keyword_if);
 }
   
 seni_var *evaluate(seni_env *env, word_lut *wl, seni_node *ast)

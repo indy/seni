@@ -461,6 +461,18 @@ void test_lang_interpret_function(void)
   EVAL_INT("(define b 10)(fn (foo b: 1) (+ b b)) (foo b: (+ b b))", 40);
 }  
 
+void test_lang_interpret_if(void)
+{
+  EVAL_DECL;
+
+  EVAL_INT("(if true 3 4)", 3);
+  EVAL_INT("(if true 3)", 3);
+  EVAL_INT("(if false 3 4)", 4);
+
+  EVAL_INT("(if (> 100 1) 5 6)", 5);
+  EVAL_INT("(if (> 1 100) 5 6)", 6);
+}  
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -472,5 +484,6 @@ int main(void)
   RUN_TEST(test_lang_interpret_comparison);
   RUN_TEST(test_lang_interpret_define);
   RUN_TEST(test_lang_interpret_function);
+  RUN_TEST(test_lang_interpret_if);
   return UNITY_END();
 }
