@@ -357,18 +357,28 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
   assert_seni_var_i32(var, VAR_NAME, EXPECTED); \
   EVAL_CLEANUP
 
-void test_lang_interpreter(void)
-{
-  word_lut *wl = NULL;
-  seni_env *env = NULL;
-  seni_node *ast = NULL;
-  seni_var *var = NULL;
+#define EVAL_DECL   word_lut *wl = NULL; \
+  seni_env *env = NULL; \
+  seni_node *ast = NULL; \
+  seni_var *var = NULL
 
+
+void test_lang_interpret_basic(void)
+{
+  EVAL_DECL;
+
+  // basic eval
   EVAL_INT("42", 42);
   EVAL_FLOAT("12.34", 12.34f);
   EVAL_TRUE("true");
   EVAL_FALSE("false");
   EVAL_NAME("+", 0 + KEYWORD_START);
+}
+
+void test_lang_interpret_math(void)
+{
+  EVAL_DECL;
+
   EVAL_INT("(+ 10 1)", 11);
   EVAL_FLOAT("(+ 10.0 1)", 11.0f);
   EVAL_FLOAT("(+ 10 1.0)", 11.0f);
@@ -385,6 +395,15 @@ void test_lang_interpreter(void)
   EVAL_INT("(* 6 5)", 30);
   EVAL_INT("(* (* 2 3) 5)", 30);
   EVAL_FLOAT("(/ 16.0 2.0)", 8.0f);
+  EVAL_FLOAT("(sqrt 144)", 12.0f);
+  EVAL_FLOAT("(sqrt 144.0)", 12.0f);
+  EVAL_FLOAT("(sqrt (+ 100 44))", 12.0f);
+}
+
+void test_lang_interpret_comparison(void)
+{
+  EVAL_DECL;
+
   EVAL_TRUE("(= 16.0 16.0)");
   EVAL_FALSE("(= 16.0 99.0)");
   EVAL_FALSE("(= 16.0 16)");
@@ -397,12 +416,21 @@ void test_lang_interpreter(void)
   EVAL_TRUE("(> 6 2.0)");
   EVAL_TRUE("(< 7 10)");
   EVAL_FALSE("(< 7 5)");
-  EVAL_FLOAT("(sqrt 144)", 12.0f);
-  EVAL_FLOAT("(sqrt 144.0)", 12.0f);
-  EVAL_FLOAT("(sqrt (+ 100 44))", 12.0f);
+}
+
+void test_lang_interpret_define(void)
+{
+  EVAL_DECL;
+
   EVAL_INT("(define num 10) (+ num num)", 20);
   EVAL_FLOAT("(define num 10.0) (+ num num)", 20.0f);
   EVAL_FLOAT("(define num (* 2 3.0)) (+ num num num)", 18.0f);
+}
+
+void test_lang_interpret_function(void)
+{
+  EVAL_DECL;
+
   EVAL_INT("(fn (a) 42) (+ (a) (a))", 84);
   EVAL_INT("(fn (a) 12 34 55 42) (+ (a) (a))", 84);
   EVAL_INT("(fn (foo b: 1 c: 2) (+ b c)) (foo)", 3);
@@ -419,6 +447,10 @@ int main(void)
   RUN_TEST(test_lang_parser);
   RUN_TEST(test_lang_env);
 #endif  
-  RUN_TEST(test_lang_interpreter);
+  RUN_TEST(test_lang_interpret_basic);
+  RUN_TEST(test_lang_interpret_math);
+  RUN_TEST(test_lang_interpret_comparison);
+  RUN_TEST(test_lang_interpret_define);
+  RUN_TEST(test_lang_interpret_function);
   return UNITY_END();
 }
