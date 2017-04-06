@@ -450,7 +450,7 @@ void test_lang_interpret_loop(void)
 {
   EVAL_DECL;
 
-  EVAL_INT("(loop (x from: 0 to: 2) x)", 3);
+  EVAL_INT("(loop (x from: 0 to: 5) (setq --test x)) --test", 4);
 }  
 
 int main(void)

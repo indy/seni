@@ -16,6 +16,15 @@ word_lut *g_wl = NULL;
 // a register like seni_var for holding intermediate values
 seni_var g_reg;
 
+i32 g_arg_from = 0;
+i32 g_arg_to = 0;
+i32 g_arg_increment = 0;
+i32 g_arg_upto = 0;
+i32 g_arg_steps = 0;
+
+
+
+
 // which value to use
 typedef enum seni_value_in_use {
   USE_I,
@@ -724,19 +733,18 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
     // need a 'is_this_var_explicitly_defined' function
     // get the 'from' binding
     // get the 'to' binding
-
+    seni_var *from_var = lookup_var(loop_env, g_arg_from);
+    seni_var *to_var = lookup_var(loop_env, g_arg_to);
 
     i32 i;
-    i32 from = 0;
-    i32 to = 4;
+    i32 from = from_var->value.i;
+    i32 to = to_var->value.i;
     for (i = from; i < to; i++) {
-      // bind i
+      // bind the current loop count to the user specified var
       seni_var *sv = add_var(loop_env, var_index);
       sv->type = VAR_INT;
       sv->value.i = i;
 
-      printf("hi\n");
-      
       res = eval(loop_env, body);
     }
   }
@@ -918,9 +926,11 @@ void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_
   }
 }
 
-void declare_common_arg(word_lut *wlut, char *name)
+void declare_common_arg(word_lut *wlut, char *name, i32 *global_value)
 {
   declare_keyword(wlut, name, NULL);
+  i32 i = word_lookup_or_add(wlut, name, strlen(name));
+  *global_value = i;
 }
 
 void interpreter_declare_keywords(word_lut *wlut)
@@ -948,11 +958,11 @@ void interpreter_declare_keywords(word_lut *wlut)
 
   declare_keyword(wlut, "setq", &eval_keyword_setq);
 
-  declare_common_arg(wlut, "from");
-  declare_common_arg(wlut, "to");
-  declare_common_arg(wlut, "increment");
-  declare_common_arg(wlut, "upto");
-  declare_common_arg(wlut, "steps");
+  declare_common_arg(wlut, "from", &g_arg_from);
+  declare_common_arg(wlut, "to", &g_arg_to);
+  declare_common_arg(wlut, "increment", &g_arg_increment);
+  declare_common_arg(wlut, "upto", &g_arg_upto);
+  declare_common_arg(wlut, "steps", &g_arg_steps);
 }
   
 seni_var *evaluate(seni_env *env, word_lut *wl, seni_node *ast)
