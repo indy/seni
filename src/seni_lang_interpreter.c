@@ -1058,31 +1058,30 @@ void interpreter_declare_keywords(word_lut *wlut)
   wlut->keywords_count = 0;
 
   // classic functions that don't use named arguments when invoked
-  declare_keyword(wlut, "+", &eval_classic_fn_plus);
-  declare_keyword(wlut, "-", &eval_classic_fn_minus);
-  declare_keyword(wlut, "*", &eval_classic_fn_multiply);
-  declare_keyword(wlut, "/", &eval_classic_fn_divide);
-  declare_keyword(wlut, "=", &eval_classic_fn_equality);
-  declare_keyword(wlut, ">", &eval_classic_fn_greater);
-  declare_keyword(wlut, "<", &eval_classic_fn_lesser);
-  declare_keyword(wlut, "vector", &eval_classic_fn_vector);
-  declare_keyword(wlut, "vector/append", &eval_classic_fn_vector_append);
-  declare_keyword(wlut, "sqrt", &eval_classic_fn_sqrt);
-  declare_keyword(wlut, "mod", &eval_classic_fn_mod);
-
+  declare_keyword(wlut,    "+",             &eval_classic_fn_plus);
+  declare_keyword(wlut,    "-",             &eval_classic_fn_minus);
+  declare_keyword(wlut,    "*",             &eval_classic_fn_multiply);
+  declare_keyword(wlut,    "/",             &eval_classic_fn_divide);
+  declare_keyword(wlut,    "=",             &eval_classic_fn_equality);
+  declare_keyword(wlut,    ">",             &eval_classic_fn_greater);
+  declare_keyword(wlut,    "<",             &eval_classic_fn_lesser);
+  declare_keyword(wlut,    "vector",        &eval_classic_fn_vector);
+  declare_keyword(wlut,    "vector/append", &eval_classic_fn_vector_append);
+  declare_keyword(wlut,    "sqrt",          &eval_classic_fn_sqrt);
+  declare_keyword(wlut,    "mod",           &eval_classic_fn_mod);
   // special functions with non-standard syntax
-  declare_keyword(wlut, "define", &eval_keyword_define);
-  declare_keyword(wlut, "fn", &eval_keyword_fn);
-  declare_keyword(wlut, "if", &eval_keyword_if);
-  declare_keyword(wlut, "loop", &eval_keyword_loop);
-
-  declare_keyword(wlut, "setq", &eval_keyword_setq);
-
-  declare_common_arg(wlut, "from", &g_arg_from);
-  declare_common_arg(wlut, "to", &g_arg_to);
-  declare_common_arg(wlut, "increment", &g_arg_increment);
-  declare_common_arg(wlut, "upto", &g_arg_upto);
-  declare_common_arg(wlut, "steps", &g_arg_steps);
+  declare_keyword(wlut,    "define",        &eval_keyword_define);
+  declare_keyword(wlut,    "fn",            &eval_keyword_fn);
+  declare_keyword(wlut,    "if",            &eval_keyword_if);
+  declare_keyword(wlut,    "loop",          &eval_keyword_loop);
+  // for debugging
+  declare_keyword(wlut,    "setq",          &eval_keyword_setq);
+  // common parameters used by keywords and the standard api
+  declare_common_arg(wlut, "from",          &g_arg_from);
+  declare_common_arg(wlut, "to",            &g_arg_to);
+  declare_common_arg(wlut, "increment",     &g_arg_increment);
+  declare_common_arg(wlut, "upto",          &g_arg_upto);
+  declare_common_arg(wlut, "steps",         &g_arg_steps);
 }
   
 seni_var *evaluate(seni_env *env, word_lut *wl, seni_node *ast)
