@@ -2,6 +2,9 @@
 #include <math.h>
 #include "seni_lang_interpreter.h"
 
+
+#define SENI_ERROR(MSG) printf("%s\n", MSG)
+
 seni_var *eval(seni_env *env, seni_node *expr);
 
 typedef struct keyword {
@@ -21,9 +24,6 @@ i32 g_arg_to = 0;
 i32 g_arg_increment = 0;
 i32 g_arg_upto = 0;
 i32 g_arg_steps = 0;
-
-
-
 
 // which value to use
 typedef enum seni_value_in_use {
@@ -124,11 +124,26 @@ f32 var_as_float(seni_var *v1)
   return -1.0f;
 }
 
+void bind_var_to_int(seni_env *env, i32 name, i32 value)
+{
+  seni_var *sv = add_var(env, name);
+  sv->type = VAR_INT;
+  sv->value.i = value;
+}
+
+void bind_var_to_float(seni_env *env, i32 name, f32 value)
+{
+  seni_var *sv = add_var(env, name);
+  sv->type = VAR_FLOAT;
+  sv->value.f = value;
+}
+
+
 seni_var *eval_classic_fn_plus(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to '+'
+    SENI_ERROR("no args given to '+'");
     return NULL;
   }
 
@@ -163,6 +178,18 @@ seni_var *eval_classic_fn_plus(seni_env *env, seni_node *expr)
   }
   
   return &g_reg;
+}
+
+seni_var *eval_all_nodes(seni_env *env, seni_node *body)
+{
+  seni_var *res = NULL;
+
+  while (body) {
+    res = eval(env, body);
+    body = safe_next(body);
+  }
+
+  return res;
 }
 
 seni_var *eval_classic_fn_minus(seni_env *env, seni_node *expr)
@@ -527,28 +554,16 @@ seni_var *eval_classic_fn_lesser(seni_env *env, seni_node *expr)
   return true_in_g_reg();
 }
 
-// TODO: IMPLEMENT
 seni_var *eval_classic_fn_vector(seni_env *env, seni_node *expr)
 {
-  seni_node *sibling = safe_next(expr);
-  if (sibling == NULL) {
-    // error: no args given to '<'
-    return NULL;
-  }
-
-  return true_in_g_reg();
+  printf("IMPLEMENT eval_classic_fn_vector\n");
+  return eval_classic_fn_lesser(env, expr);
 }
 
-// TODO: IMPLEMENT
 seni_var *eval_classic_fn_vector_append(seni_env *env, seni_node *expr)
 {
-  seni_node *sibling = safe_next(expr);
-  if (sibling == NULL) {
-    // error: no args given to '<'
-    return NULL;
-  }
-
-  return true_in_g_reg();
+  printf("IMPLEMENT eval_classic_fn_vector_append\n");
+  return eval_classic_fn_lesser(env, expr);
 }
 
 seni_var *eval_classic_fn_sqrt(seni_env *env, seni_node *expr)
@@ -677,9 +692,8 @@ seni_var *eval_keyword_if(seni_env *env, seni_node *expr)
 }
 
 // a: 3 b: 10 c: (+ 5 6)
-void add_vars_to_env(seni_env *env, seni_node *named_args)
+void add_labelled_parameters_to_env(seni_env *env, seni_node *named_args)
 {
-
   while (named_args) {
     seni_node *name = named_args;
     if (name->type != NODE_LABEL) {
@@ -704,6 +718,34 @@ void add_vars_to_env(seni_env *env, seni_node *named_args)
   }
 }
 
+// does the sequence of named args contain the given name
+bool has_labelled_parameter(seni_node *named_args, i32 name)
+{
+  // assuming we're at the first named parameter
+  seni_node *node = named_args;
+  
+  while(node) {
+    if (node->type != NODE_LABEL) {
+      // error should never get here, all name/value parameters should start with a NODE_NAME
+      return false;
+    }
+
+    if (node->value.i == name) {
+      return true;
+    }
+
+    node = safe_next(node);     // node is at the value
+    if (node == NULL) {
+      // error should never get here, there should always be pairs of name/value
+      return false;
+    }
+
+    node = safe_next(node);     // node is at the next named parameter
+  }
+
+  return false;
+}
+
 seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
 {
   // (loop (x from: 1 to: 4) x)
@@ -725,33 +767,115 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
   {
     seni_node *args = safe_next(var_node);
 
-    // starting at args, add the variables to the loop_env
-    add_vars_to_env(loop_env, args);
-    // now do the looping
-    // bind the integer to var
+    add_labelled_parameters_to_env(loop_env, args);
 
-    // need a 'is_this_var_explicitly_defined' function
-    // get the 'from' binding
-    // get the 'to' binding
-    seni_var *from_var = lookup_var(loop_env, g_arg_from);
-    seni_var *to_var = lookup_var(loop_env, g_arg_to);
+    i32 increment = 1;
+    i32 steps = 1;
+    seni_var *from_var = NULL;
+    seni_var *to_var = NULL;
+    seni_var *upto_var = NULL;
+    
+    bool has_from = has_labelled_parameter(args, g_arg_from);
+    if (has_from) {
+      from_var = lookup_var(loop_env, g_arg_from);
+    }
 
-    i32 i;
-    i32 from = from_var->value.i;
-    i32 to = to_var->value.i;
-    for (i = from; i < to; i++) {
-      // bind the current loop count to the user specified var
-      seni_var *sv = add_var(loop_env, var_index);
-      sv->type = VAR_INT;
-      sv->value.i = i;
+    bool has_to = has_labelled_parameter(args, g_arg_to);
+    if (has_to) {
+      to_var = lookup_var(loop_env, g_arg_to);
+    }
 
-      res = eval(loop_env, body);
+    bool has_upto = has_labelled_parameter(args, g_arg_upto);
+    if (has_upto) {
+      upto_var = lookup_var(loop_env, g_arg_upto);
+    }
+
+    bool has_increment = has_labelled_parameter(args, g_arg_increment);
+    if (has_increment) {
+      seni_var *increment_var = lookup_var(loop_env, g_arg_increment);
+      increment = var_as_int(increment_var);
+      if (increment == 0) {
+        // error: cannot have an increment of 0
+        pop_scope(loop_env);
+        return NULL;
+      }
+    }
+
+    bool has_steps = has_labelled_parameter(args, g_arg_steps);
+    if (has_steps) {
+      seni_var *steps_var = lookup_var(loop_env, g_arg_steps);
+      steps = var_as_int(steps_var);
+      if (steps == 0) {
+        // error: cannot have steps value of 0
+        pop_scope(loop_env);
+        return NULL;
+      }
+    }
+
+    if(has_increment || !has_steps) {
+      i32 from = has_from ? var_as_int(from_var) : 0;
+      i32 to = has_to ? var_as_int(to_var) : 10;
+      i32 upto = has_upto ? var_as_int(upto_var) : 10;
+
+      // the default path - perform an integer based iteration
+      i32 i;
+      if (has_to || !has_upto) {
+
+        if (from > to) {
+          // error: from has to be less than to
+          pop_scope(loop_env);
+          return NULL;
+        }
+    
+        
+        for (i = from; i < to; i += increment) {
+          bind_var_to_int(loop_env, var_index, i);
+          res = eval_all_nodes(loop_env, body);
+        }
+      
+      } else if (has_upto) {
+        for (i = from; i <= upto; i += increment) {
+          bind_var_to_int(loop_env, var_index, i);
+          res = eval_all_nodes(loop_env, body);
+        }
+      }
+      
+    } else {
+      // use steps and a float based iteration
+      f32 from = has_from ? var_as_float(from_var) : 0.0f;
+      f32 to = has_to ? var_as_float(to_var) : 10.0f;
+      f32 upto = has_upto ? var_as_float(upto_var) : 10.0f;
+
+      f32 f;
+      if (has_to || !has_upto) {
+
+        f32 step_size = (to - from) / (f32)steps;
+        i32 i;
+        
+        for (i = 0; i < steps; i++) {
+          f = from + ((f32)i * step_size);
+          bind_var_to_float(loop_env, var_index, f);
+          res = eval_all_nodes(loop_env, body);
+        }
+      
+      } else if (has_upto) {
+
+        f32 step_size = (upto - from) / (f32)(steps - 1);
+        i32 i;
+        
+        for (i = 0; i < steps; i++) {
+          f = from + ((f32)i * step_size);
+          bind_var_to_float(loop_env, var_index, f);
+          res = eval_all_nodes(loop_env, body);
+        }
+      }
     }
   }
   pop_scope(loop_env);
     
   return res;
 }
+
 
 /* used for debugging only */
 seni_var *eval_keyword_setq(seni_env *env, seni_node *expr)
@@ -795,7 +919,7 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
   
   seni_node *fn_args = safe_next(fn_name_and_args_list->value.children); // b: 1 c: 2
 
-  add_vars_to_env(fn_env, fn_args);
+  add_labelled_parameters_to_env(fn_env, fn_args);
 
   // Add the invoked parameter bindings to the function's locally scoped env
   //
@@ -814,12 +938,8 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
   }
 
   seni_node *fn_body = safe_next(fn_name_and_args_list);
-  seni_var *res = NULL;
 
-  while (fn_body) {
-    res = eval(fn_env, fn_body);
-    fn_body = safe_next(fn_body);
-  }
+  seni_var *res = eval_all_nodes(fn_env, fn_body);
 
   pop_scope(fn_env);
 

@@ -261,6 +261,12 @@ void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
+void assert_seni_var_f32_within(seni_var *var, seni_var_type type, f32 f, f32 tolerance)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var->type));
+  TEST_ASSERT_FLOAT_WITHIN(tolerance, f, var->value.f);
+}
+
 void assert_seni_var_true(seni_var *var)
 {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var->type));
@@ -325,6 +331,10 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
 
 #define EVAL_FLOAT(EXPR,EXPECTED) EVAL_EXPR(EXPR); \
   assert_seni_var_f32(var, VAR_FLOAT, EXPECTED); \
+  EVAL_CLEANUP
+
+#define EVAL_FLOAT_WITHIN(EXPR,EXPECTED,TOLERANCE) EVAL_EXPR(EXPR);  \
+  assert_seni_var_f32_within(var, VAR_FLOAT, EXPECTED, TOLERANCE); \
   EVAL_CLEANUP
 
 #define EVAL_TRUE(EXPR) EVAL_EXPR(EXPR); \
@@ -450,7 +460,24 @@ void test_lang_interpret_loop(void)
 {
   EVAL_DECL;
 
+  // basic from, to and upto
   EVAL_INT("(loop (x from: 0 to: 5) (setq --test x)) --test", 4);
+  EVAL_INT("(loop (x from: 0 upto: 5) (setq --test x)) --test", 5);
+  EVAL_INT("(loop (x to: 8) (setq --test x)) --test", 7);
+  EVAL_INT("(loop (x upto: 8) (setq --test x)) --test", 8);
+  EVAL_INT("(setq --test 1)(loop (x from: 0 to: 5) (setq --test (+ --test --test))) --test", 32);
+  EVAL_INT("(loop (x from: 1 to: 4) (setq --test (+ --test x))) --test", 6);
+  EVAL_INT("(loop (x from: 1 upto: 4) (setq --test (+ --test x))) --test", 10);
+
+  // change increment
+  EVAL_INT("(loop (x from: 0 to: 10 increment: 2) (setq --test (+ --test x))) --test", 20);
+
+  // steps
+  EVAL_FLOAT_WITHIN("(loop (x from: 0   to: 10 steps: 3) (setq --test (+ --test x))) --test",
+                    0.00f + 3.333f + 6.666f, 0.1f);
+  EVAL_FLOAT_WITHIN("(loop (x from: 0 upto: 10 steps: 3) (setq --test (+ --test x))) --test",
+                    0.00f + 5.0f + 10.0f, 0.1f);
+  //  EVAL_FLOAT("(loop (x from: 0 upto: 10 steps: 3) (setq --test (+ --test x))) --test", 0.00f + 5.0f + 10.0f);
 }  
 
 int main(void)
