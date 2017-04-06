@@ -204,7 +204,7 @@ seni_node *consume_list(word_lut *wlut, char **src)
       return NULL;
     }
 
-    DL_APPEND(node->children, child);
+    DL_APPEND(node->value.children, child);
   }
 }
 
@@ -227,7 +227,7 @@ seni_node *consume_vector(word_lut *wlut, char **src)
       return NULL;
     }
 
-    DL_APPEND(node->children, child);
+    DL_APPEND(node->value.children, child);
   }
 }
 
@@ -296,14 +296,14 @@ seni_node *consume_quoted_form(word_lut *wlut, char **src)
   node->type = NODE_LIST;
 
   seni_node *quote_name = build_text_lookup_node_from_string(wlut, NODE_NAME, "quote");
-  DL_APPEND(node->children, quote_name);
+  DL_APPEND(node->value.children, quote_name);
 
   char *wst = " ";
   seni_node *ws = build_text_node_of_length(&wst, NODE_WHITESPACE, 1);
-  DL_APPEND(node->children, ws);
+  DL_APPEND(node->value.children, ws);
 
   seni_node *child = consume_item(wlut, src);
-  DL_APPEND(node->children, child);
+  DL_APPEND(node->value.children, child);
 
   return node;
 }
@@ -560,8 +560,8 @@ void parser_free_nodes(seni_node *nodes)
   seni_node *next;
 
   while(node != NULL) {
-    if (node->children) {
-      parser_free_nodes(node->children);
+    if (node->type == NODE_LIST && node->value.children) {
+      parser_free_nodes(node->value.children);
     }
     if (node->parameter_ast) {
       parser_free_nodes(node->parameter_ast);

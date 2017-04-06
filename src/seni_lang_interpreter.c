@@ -634,7 +634,7 @@ seni_var *eval_keyword_fn(seni_env *env, seni_node *expr)
     // printf("error: no name+parameter list given\n");
   }
 
-  seni_node *fn_name = def_list->children;
+  seni_node *fn_name = def_list->value.children;
   //char *fn_name_c = word_lookup_i32(g_wl, fn_name->value.i); // the name of the function
 
   
@@ -717,7 +717,7 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
   }
 
   seni_node *body = safe_next(setup);
-  seni_node *var_node = setup->children;
+  seni_node *var_node = setup->value.children;
 
   i32 var_index = var_node->value.i;
 
@@ -775,7 +775,7 @@ seni_var *eval_keyword_setq(seni_env *env, seni_node *expr)
 
 seni_var *eval_fn(seni_env *env, seni_node *expr)
 {
-  seni_node *name = expr->children;
+  seni_node *name = expr->value.children;
 
   // look up the name in the env
   seni_var *var = lookup_var(env, name->value.i);  // var == fn (foo b: 1 c: 2) (+ b c)
@@ -793,7 +793,7 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
 
   seni_node *fn_name_and_args_list = safe_next(fn_expr); // (foo b: 1 c: 2)
   
-  seni_node *fn_args = safe_next(fn_name_and_args_list->children); // b: 1 c: 2
+  seni_node *fn_args = safe_next(fn_name_and_args_list->value.children); // b: 1 c: 2
 
   add_vars_to_env(fn_env, fn_args);
 
@@ -828,11 +828,11 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
 
 seni_var *eval_list(seni_env *env, seni_node *expr)
 {
-  seni_var *var = eval(env, expr->children);
+  seni_var *var = eval(env, expr->value.children);
 
   if (var->type == VAR_NAME && (var->value.i & KEYWORD_START)) {
     i32 i = var->value.i - KEYWORD_START;
-    return (*g_keyword[i].function_ptr)(env, expr->children);
+    return (*g_keyword[i].function_ptr)(env, expr->value.children);
   }
 
   // user defined function

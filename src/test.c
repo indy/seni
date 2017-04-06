@@ -96,9 +96,9 @@ void test_lang_parser(void)
   PARSE_CLEANUP;
 
   PARSE("(add 1 2)");
-  iter = nodes->children;
+  iter = nodes->value.children;
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->children;
+  iter = nodes->value.children;
   iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 1);
@@ -110,7 +110,7 @@ void test_lang_parser(void)
 
   PARSE("[add 9 8 (foo)]");
   assert_parser_node_raw(nodes, NODE_VECTOR);
-  iter = nodes->children;
+  iter = nodes->value.children;
   iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 9);
@@ -129,13 +129,13 @@ void test_lang_parser(void)
 
   PARSE("'(runall \"shabba\") ; woohoo");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->children;
+  iter = nodes->value.children;
   iter = assert_parser_node_txt(iter, NODE_NAME, "quote", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter;
   iter = assert_parser_node_raw(iter, NODE_LIST);
   TEST_ASSERT_NULL(iter);
-  iter = iter2->children;
+  iter = iter2->value.children;
   iter = assert_parser_node_txt(iter, NODE_NAME, "runall", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_txt(iter, NODE_STRING, "shabba", wl);
@@ -147,7 +147,7 @@ void test_lang_parser(void)
 
   PARSE("(fun i: 42 f: 12.34)");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->children;
+  iter = nodes->value.children;
   iter = assert_parser_node_txt(iter, NODE_NAME, "fun", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_txt(iter, NODE_LABEL, "i", wl);
@@ -163,7 +163,7 @@ void test_lang_parser(void)
 
   PARSE("(a 1) (b 2)");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->children;
+  iter = nodes->value.children;
   iter = assert_parser_node_txt(iter, NODE_NAME, "a", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 1);
@@ -171,7 +171,7 @@ void test_lang_parser(void)
   iter = nodes->next;
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   assert_parser_node_raw(iter, NODE_LIST);
-  iter = iter->children;
+  iter = iter->value.children;
   iter = assert_parser_node_txt(iter, NODE_NAME, "b", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 2);
@@ -180,7 +180,7 @@ void test_lang_parser(void)
 
   PARSE("(a {[1 2]})");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->children;
+  iter = nodes->value.children;
   iter = assert_parser_node_txt(iter, NODE_NAME, "a", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter; // the vector

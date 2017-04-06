@@ -23,13 +23,11 @@ typedef struct seni_node {
   union {
     i32 i;
     f32 f;
-    char* s;                    /* needed for whitespace/comment nodes */
+    char* s;                     /* needed for whitespace/comment nodes */
+    struct seni_node *children;  /* list node */
   } value;
 
   bool alterable;
-
-  /* node list functionality */
-  struct seni_node *children;
 
   // node mutate specific
   struct seni_node *parameter_ast;
@@ -38,8 +36,7 @@ typedef struct seni_node {
   // be ignored, e.g. the whitespace before the 2 in: (+ 1 { 2} (int))
   struct seni_node *parameter_prefix;
 
-  /* NOTE: parameter_ast, parameter_prefix, children */
-  /* for children */
+  /* for parameter_ast, parameter_prefix, children */
   struct seni_node *prev;
   struct seni_node *next;
 } seni_node;
