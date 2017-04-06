@@ -1,11 +1,13 @@
 * TODO [0/5]
-  1. [ ] classic fns: sqrt mod = < > vector vector/append
-  2. [ ] special fn: if
-  3. [ ] special fn: loop
-  4. [ ] special fn: on-matrix-stack
+  1. [ ] why does setq seg fault when it returns NULL?
+  2. [ ] special fn: loop
+  3. [ ] special fn: on-matrix-stack
+  4. [ ] classic fns: vector vector/append
   5. [ ] special fn: begin
 
 
+after parsing it's safe to treat seni_nodes as immutable
+seni_vars that have been eval'd should get their values asap since they could just by aliases of g_reg
 
 * loop usage
 from to

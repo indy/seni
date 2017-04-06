@@ -667,6 +667,104 @@ seni_var *eval_keyword_if(seni_env *env, seni_node *expr)
   return NULL;
 }
 
+// a: 3 b: 10 c: (+ 5 6)
+void add_vars_to_env(seni_env *env, seni_node *named_args)
+{
+
+  while (named_args) {
+    seni_node *name = named_args;
+    if (name->type != NODE_LABEL) {
+      // error: expected a label as the start of the name/value pair
+      return;
+    }
+    i32 name_i = name->value.i;
+
+    named_args = safe_next(named_args);
+    if (named_args == NULL) {
+      // error expected name value pairs
+      return;
+    }
+    
+    seni_node *value = named_args;
+    seni_var *var = eval(env, value);
+    seni_var *env_var = add_var(env, name_i);
+
+    safe_seni_var_copy(env_var, var);
+
+    named_args = safe_next(named_args);
+  }
+}
+
+seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
+{
+  // (loop (x from: 1 to: 4) x)
+
+  seni_var *res = NULL;
+
+  seni_node *setup = safe_next(expr);
+  if (setup->type != NODE_LIST) {
+    // error loop requires a list describing it's behaviour
+    return NULL;
+  }
+
+  seni_node *body = safe_next(setup);
+  seni_node *var_node = setup->children;
+
+  i32 var_index = var_node->value.i;
+
+  seni_env *loop_env = push_scope(env);
+  {
+    seni_node *args = safe_next(var_node);
+
+    // starting at args, add the variables to the loop_env
+    add_vars_to_env(loop_env, args);
+    // now do the looping
+    // bind the integer to var
+
+    // need a 'is_this_var_explicitly_defined' function
+    // get the 'from' binding
+    // get the 'to' binding
+
+
+    i32 i;
+    i32 from = 0;
+    i32 to = 4;
+    for (i = from; i < to; i++) {
+      // bind i
+      seni_var *sv = add_var(loop_env, var_index);
+      sv->type = VAR_INT;
+      sv->value.i = i;
+
+      printf("hi\n");
+      
+      res = eval(loop_env, body);
+    }
+  }
+  pop_scope(loop_env);
+    
+  return res;
+}
+
+/* used for debugging only */
+seni_var *eval_keyword_setq(seni_env *env, seni_node *expr)
+{
+  // (setq foo 4)
+  seni_node *name_node = safe_next(expr);
+
+  seni_node *value_node = safe_next(name_node);
+  seni_var *value_var = eval(env, value_node);
+
+  if (name_node->type != NODE_NAME) {
+    printf("error: setq expects a name as the first arg\n");
+    return NULL;
+  }
+
+  // call lookup_var since we're overwriting the existing value
+  seni_var *variable = lookup_var(env, name_node->value.i);
+  safe_seni_var_copy(variable, value_var);
+  return variable;
+}
+
 seni_var *eval_fn(seni_env *env, seni_node *expr)
 {
   seni_node *name = expr->children;
@@ -689,26 +787,12 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
   
   seni_node *fn_args = safe_next(fn_name_and_args_list->children); // b: 1 c: 2
 
-  // Add the default parameter bindings to the function's locally scoped env
-  //
-  while (fn_args != NULL) {
-    // fn_args points to the binding symbol e.g. b
-    seni_node *arg_binding = fn_args;
-
-    // fn_args points to the expr that evaluates to the default value to assign to the binding symbol
-    fn_args = safe_next(fn_args);
-    seni_var *default_value = eval(fn_env, fn_args);
-
-    // set this parameter's default value
-    seni_var *fn_parameter = add_var(fn_env, arg_binding->value.i);
-    safe_seni_var_copy(fn_parameter, default_value);
-
-    fn_args = safe_next(fn_args);
-  }
+  add_vars_to_env(fn_env, fn_args);
 
   // Add the invoked parameter bindings to the function's locally scoped env
   //
   seni_node *invoke_node = safe_next(name);
+
   while (invoke_node != NULL) {
     seni_node *arg_binding = invoke_node;
 
@@ -723,14 +807,14 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
 
   seni_node *fn_body = safe_next(fn_name_and_args_list);
   seni_var *res = NULL;
-  
+
   while (fn_body) {
     res = eval(fn_env, fn_body);
     fn_body = safe_next(fn_body);
   }
 
   pop_scope(fn_env);
-  
+
   return res;
 }
 
@@ -834,6 +918,11 @@ void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_
   }
 }
 
+void declare_common_arg(word_lut *wlut, char *name)
+{
+  declare_keyword(wlut, name, NULL);
+}
+
 void interpreter_declare_keywords(word_lut *wlut)
 {
   wlut->keywords_count = 0;
@@ -855,6 +944,15 @@ void interpreter_declare_keywords(word_lut *wlut)
   declare_keyword(wlut, "define", &eval_keyword_define);
   declare_keyword(wlut, "fn", &eval_keyword_fn);
   declare_keyword(wlut, "if", &eval_keyword_if);
+  declare_keyword(wlut, "loop", &eval_keyword_loop);
+
+  declare_keyword(wlut, "setq", &eval_keyword_setq);
+
+  declare_common_arg(wlut, "from");
+  declare_common_arg(wlut, "to");
+  declare_common_arg(wlut, "increment");
+  declare_common_arg(wlut, "upto");
+  declare_common_arg(wlut, "steps");
 }
   
 seni_var *evaluate(seni_env *env, word_lut *wl, seni_node *ast)
