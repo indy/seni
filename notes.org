@@ -1,0 +1,115 @@
+* TODO [0/6]
+  1. [ ] why does setq seg fault when it returns NULL?
+  3. [ ] 'in' paramaeter for loop ?
+  4. [ ] special fn: on-matrix-stack
+  5. [ ] classic fns: vector vector/append
+
+
+after parsing it's safe to treat seni_nodes as immutable
+seni_vars that have been eval'd should get their values asap since they could just by aliases of g_reg
+
+* loop usage
+from to
+to
+from to increment
+from upto
+from upto steps
+
+* bytecode vm design for guile
+  https://www.gnu.org/software/guile/manual/html_node/Why-a-VM_003f.html#Why-a-VM_003f
+
+  bytecode interpreter written in C
+
+
+
+Compiled code is run by a virtual machine (VM). Each thread has its own VM. The virtual machine executes the sequence of instructions in a procedure.
+
+Each VM instruction starts by indicating which operation it is, and then follows by encoding its source and destination operands. Each procedure declares that it has some number of local variables, including the function arguments. These local variables form the available operands of the procedure, and are accessed by index.
+
+The local variables for a procedure are stored on a stack. Calling a procedure typically enlarges the stack, and returning from a procedure shrinks it. Stack memory is exclusive to the virtual machine that owns it.
+
+In addition to their stacks, virtual machines also have access to the global memory (modules, global bindings, etc) that is shared among other parts of Guile, including other VMs.
+
+The registers that a VM has are as follows:
+
+ip - Instruction pointer
+sp - Stack pointer
+fp - Frame pointer
+In other architectures, the instruction pointer is sometimes called the "program counter" (pc). This set of registers is pretty typical for virtual machines; their exact meanings in the context of Guile's VM are described in the next section.
+
+
+
+  
+
+* simple bytecode vm
+  https://www.youtube.com/watch?v=8k5h-A7JaaE&t=6s&index=36&list=WL
+  1:03:39
+
+  a lot of the enums start at 128
+
+  opcode_t
+  push add sub mul div mod neg ret
+
+  char bytecode_buffer[1024];
+  char *bytecode = bytecode_buffer;
+
+  emit(uint8 byte) {
+    *bytecode++ = byte;
+  }
+  emit4(uint32 data) {
+    *(uint32 *)bytecode = data;
+    bytecode += 4;
+  }
+
+  ---------------------------------------------------------------------------
+
+  bytecode interpreter
+
+  char *ip;
+  int execute_stack[1024];
+  int *sp = execute_stack
+
+  void execute() {
+    for(;;) {
+      int op = *ip++;
+      switch (op) {
+      PUSH:
+        *sp++ = *(uint32 *)ip;
+        ip += 4;
+      ADD:
+        sp[-2] += sp[-1];
+        sp--;
+        break;
+        ....
+      RET:
+        // return whats on top of the stack
+        return sp[-1];
+      }
+ 
+    }
+  }
+
+
+  test code:
+
+  emit(PUSH)
+  emit(1)
+  emit(PUSH)
+  emit(2)
+  emit(ADD)
+  emit(RET)
+
+
+  char emit_buffer[1024];
+  emit_pointer = emit_buffer;
+
+  int frame[1024];
+  int stack[1024];
+
+  ip = emit_buffer;
+  fp = frame;
+  sp = stack
+
+  int val = execute();
+
+
