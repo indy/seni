@@ -116,6 +116,13 @@ function buildRange(seedVal, min, max) {
   return () => (saveable() * diff) + min;
 }
 
+function buildRangeInteger(seedVal, min, max) {
+  const saveable = seedrandom(seedVal, {state: true});
+  const diff = max - min;
+
+  return () => Math.floor((saveable() * diff) + min);
+}
+
 const publicBindings = [
   new PublicBinding(
     'prng/perlin-signed',
@@ -164,6 +171,24 @@ const publicBindings = [
     self => params => {
       const {seed, min, max} = self.mergeWithDefaults(params);
       return buildRange(seed, min, max);
+    }
+  ),
+
+  new PublicBinding(
+    'prng/irange',
+    { description: '',
+      args: [['seed', 'shabba'],
+             ['min', '0'],
+             ['max', '10']],
+      returns:
+      `a function that generates a random integer in the range min..max
+(min inclusive, max exclusive)` },
+    { seed: 'shabba',
+      min: 0,
+      max: 10 },
+    self => params => {
+      const {seed, min, max} = self.mergeWithDefaults(params);
+      return buildRangeInteger(seed, min, max);
     }
   )
 ];

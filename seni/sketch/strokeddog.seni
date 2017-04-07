@@ -1,0 +1,34 @@
+(define rng (prng/irange min: 0 max: 9 seed: 54))
+
+;; Pablo Picasso's Dog
+;;
+(define
+  ;; co-ordinates from "Dog" by Jeremy Kun 2013
+  front-leg   [[180 280] [183 268] [186 256] [189 244]]
+  tummy       [[191 244] [290 244] [300 230] [339 245]]
+  back-leg    [[340 246] [350 290] [360 300] [355 210]]
+  tail        [[353 210] [370 207] [380 196] [375 193]]
+  back        [[375 193] [310 220] [190 220] [164 205]]
+  ear-start   [[164 205] [135 194] [135 265] [153 275]]
+  head        [[153 275] [168 275] [170 180] [150 190]]
+  nose-bridge [[149 190] [122 214] [142 204] [ 85 240]]
+  mouth       [[ 86 240] [100 247] [125 233] [140 238]]
+  dog [front-leg tummy back-leg tail back ear-start head nose-bridge mouth])
+
+;; renders a bezier curve with rounded end-points
+(fn (curve line-width: 3 colour: black coords: [])
+  (brush-stroke coords: coords
+                colour: colour
+                line-width: line-width
+                tessellation: 50
+                brush-type: "brushC"
+                brush-subtype: (rng)))
+
+(on-matrix-stack
+  ;; scale coords from 500 limit to 1000 limit 
+  (scale vector: [3 3])
+  ;; reverse y-coordinates
+  (translate vector: [-70 400])
+  (scale vector: [1 -1])
+  (map fn: curve
+       coords: dog))
