@@ -5,6 +5,7 @@
 #include "seni.h"
 
 #include "seni_lang.h"
+#include "seni_lang_bind.h"
 
 #include "stdio.h"
 
@@ -60,10 +61,10 @@ seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *va
   return node->next;
 }
 
-#define PARSE(EXPR) wl = word_lookup_allocate(); \
+#define PARSE(EXPR) wl = wlut_allocate(); \
   nodes = parser_parse(wl, EXPR)
 
-#define PARSE_CLEANUP word_lookup_free(wl); \
+#define PARSE_CLEANUP wlut_free(wl); \
   parser_free_nodes(nodes)
 
 
@@ -278,7 +279,7 @@ void assert_seni_var_false(seni_var *var)
 
 word_lut *setup_interpreter_wl()
 {
-  word_lut *wl = word_lookup_allocate();
+  word_lut *wl = wlut_allocate();
   // add keywords to the word_lut and setup function pointers within the interpreter
   interpreter_declare_keywords(wl);
 
@@ -291,7 +292,7 @@ seni_env *setup_interpreter_env(word_lut *wl)
   seni_env *env = get_initial_env();
 
   /* add a temporary debug variable for testing loops etc */
-  i32 index = word_lookup_or_add(wl, "--test", sizeof("--test"));
+  i32 index = wlut_lookup_or_add(wl, "--test", sizeof("--test"));
   seni_var *var = add_var(env, index);
   var->type = VAR_INT;
   var->value.i = 0;
@@ -302,14 +303,14 @@ seni_env *setup_interpreter_env(word_lut *wl)
 void shutdown_interpreter_test(word_lut *wl, seni_node *ast)
 {
   env_free_pools();
-  word_lookup_free(wl);
+  wlut_free(wl);
   parser_free_nodes(ast);
 }
 
 void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
 {
   // add a foo binding to env
-  i32 name_index = word_lookup_or_add(wl, name, strlen(name));
+  i32 name_index = wlut_lookup_or_add(wl, name, strlen(name));
   seni_var *v = add_var(env, name_index);
   v->type = VAR_INT;
   v->value.i = i;

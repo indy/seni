@@ -106,15 +106,14 @@ typedef struct seni_env {
 
 
 // word lookup
-word_lut *word_lookup_allocate();
-void word_lookup_free(word_lut *wlut);
-i32 word_lookup_or_add(word_lut *wlut, char *string, size_t len);
-// char *word_lookup_i32(word_lut *wlut, i32 index);
+word_lut *wlut_allocate();
+void      wlut_free(word_lut *wlut);
+i32       wlut_lookup_or_add(word_lut *wlut, char *string, size_t len);
 
 // parser
 seni_node *parser_parse(word_lut *wlut, char *s);
-void parser_free_nodes(seni_node *nodes);
-char *parser_node_type_name(seni_node_type type);
+void       parser_free_nodes(seni_node *nodes);
+char      *parser_node_type_name(seni_node_type type);
 
 // env
 //int env_debug_available_env();
@@ -130,7 +129,31 @@ seni_var *add_var(seni_env *env, i32 var_id);
 seni_var *lookup_var(seni_env *env, i32 var_id);
 
 // interpreter
-void interpreter_declare_keywords(word_lut *wl);
+
+// which value to use
+typedef enum seni_value_in_use {
+  USE_I,
+  USE_F,
+  USE_P
+} seni_value_in_use;
+
+// helpers used by bounded functions
+seni_var *false_in_reg(seni_var *reg);
+seni_var *true_in_reg(seni_var *reg);
+i32 var_as_int(seni_var *v1);
+f32 var_as_float(seni_var *v1);
+void bind_var_to_int(seni_env *env, i32 name, i32 value);
+void bind_var_to_float(seni_env *env, i32 name, f32 value);
+seni_var *eval(seni_env *env, seni_node *expr);
+seni_var *eval_all_nodes(seni_env *env, seni_node *body);
+seni_node *safe_next(seni_node *expr);
+seni_value_in_use get_value_in_use(seni_var_type type);
+void safe_seni_var_copy(seni_var *dest, seni_var *src);
+void add_labelled_parameters_to_env(seni_env *env, seni_node *named_args);
+bool has_labelled_parameter(seni_node *named_args, i32 name);
+
+void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *));
+void declare_common_arg(word_lut *wlut, char *name, i32 *global_value);
 seni_var *evaluate(seni_env *env, word_lut *wl, seni_node *ast);
 
 #endif
