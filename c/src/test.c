@@ -4,10 +4,7 @@
 #include "unity/unity.h"
 #include "seni.h"
 
-#include "seni_lang_word_lookup.h"
-#include "seni_lang_parser.h"
-#include "seni_lang_env.h"
-#include "seni_lang_interpreter.h"
+#include "seni_lang.h"
 
 #include "stdio.h"
 

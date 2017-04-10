@@ -5,7 +5,6 @@
 #include "seni_mathutil.h"
 #include "seni_containers.h"
 
-#include "seni_interp.h"
-#include "seni_lang_parser.h"
+#include "seni_lang.h"
 
 #endif /* SENI_H */
