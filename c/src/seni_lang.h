@@ -73,6 +73,13 @@ typedef enum {
   NODE_NULL
 */
 
+// which value to use
+typedef enum seni_value_in_use {
+  USE_I,
+  USE_F,
+  USE_P
+} seni_value_in_use;
+
 typedef struct seni_var {
   seni_var_type type;
 
@@ -129,13 +136,6 @@ seni_var *add_var(seni_env *env, i32 var_id);
 seni_var *lookup_var(seni_env *env, i32 var_id);
 
 // interpreter
-
-// which value to use
-typedef enum seni_value_in_use {
-  USE_I,
-  USE_F,
-  USE_P
-} seni_value_in_use;
 
 // helpers used by bounded functions
 seni_var *false_in_reg(seni_var *reg);
