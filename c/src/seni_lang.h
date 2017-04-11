@@ -62,7 +62,8 @@ typedef enum {
   VAR_FLOAT,     // value.f
   VAR_BOOLEAN,   // value.i
   VAR_NAME,      // word_lut[value.i]
-  VAR_FN         // pointer to seni_node
+  VAR_FN,        // pointer to seni_node: value.n
+  VAR_VECTOR     // pointer to value in value.v and next/prev point to siblings
 } seni_var_type;
 
 /*
@@ -75,9 +76,10 @@ typedef enum {
 
 // which value to use
 typedef enum seni_value_in_use {
-  USE_I,
-  USE_F,
-  USE_P
+  USE_I,                        // integer
+  USE_F,                        // float
+  USE_N,                        // pointer to seni_node
+  USE_V                         // pointer to seni_var
 } seni_value_in_use;
 
 typedef struct seni_var {
@@ -87,7 +89,8 @@ typedef struct seni_var {
   union {
     i32 i;
     f32 f;
-    seni_node *p;
+    seni_node *n;
+    struct seni_var *v;
   } value;
 
   /* for hashing */

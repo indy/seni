@@ -8,6 +8,10 @@
 after parsing it's safe to treat seni_nodes as immutable
 seni_vars that have been eval'd should get their values asap since they could just by aliases of g_reg
 
+vector:
+bind a linked list of seni_var* to a variable in the current env scope
+have checks when popping a scope to look for linked lists and manually de-allocate them (or return them to a pool of seni_var*. IMPORTANT: remember to iterate through each seni_var since there could be nested vectors)
+
 * loop usage
 from to
 to

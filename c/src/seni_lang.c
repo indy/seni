@@ -7,23 +7,19 @@
 #include "seni_containers.h"
 #include "seni_lang.h"
 
-// a register like seni_var for holding intermediate values
-seni_var g_reg;
-
-
 // for parsing
 seni_node *consume_item();
 
 // for interpreting
 seni_var *eval(seni_env *env, seni_node *expr);
 
-#define G_ENVS_MAX 32
+#define NUM_SENI_ENV_ALLOCATED 32
 seni_env *g_envs;               /* doubly linked list used as a pool of seni_env structs */
 i32 g_envs_used;
 
-#define G_VARS_MAX 64
+#define NUM_SENI_VAR_ALLOCATED 1024
 seni_var *g_vars;               /* doubly linked list used as a pool of seni_var structs */
-i32 g_vars_used;
+//i32 g_vars_used;
 
 void string_copy_len(char **dst, char *src, size_t len)
 {
@@ -781,24 +777,18 @@ void env_allocate_pools(void)
   
   g_envs = NULL;
   g_envs_used = 0;
-  seni_env *env;
 
-  for (i = 0; i < G_ENVS_MAX; i++) {
-    env = (seni_env *)malloc(sizeof(seni_env));
-    env->outer = NULL;
-    env->vars = NULL;
-    env->prev = NULL;
-    env->next = NULL;
-    DL_APPEND(g_envs, env);
+  seni_env *env = (seni_env *)calloc(NUM_SENI_ENV_ALLOCATED, sizeof(seni_env));
+  for (i = 0; i < NUM_SENI_ENV_ALLOCATED; i++) {
+    DL_APPEND(g_envs, &(env[i]));
   }
 
   g_vars = NULL;
-  g_vars_used = 0;
-  seni_var *var;
+  //g_vars_used = 0;
 
-  for (i = 0; i < G_VARS_MAX; i++) {
-    var = (seni_var *)malloc(sizeof(seni_var));
-    DL_APPEND(g_vars, var);
+  seni_var *var = (seni_var *)calloc(NUM_SENI_VAR_ALLOCATED, sizeof(seni_var));
+  for (i = 0; i < NUM_SENI_VAR_ALLOCATED; i++) {
+    DL_APPEND(g_vars, &(var[i]));
   }
 }
 
@@ -808,14 +798,14 @@ void env_free_pools(void)
   seni_env *env, *tmp;
   DL_FOREACH_SAFE(g_envs, env, tmp) {
     DL_DELETE(g_envs, env);
-    free(env);
-  }  
+  }
+  free(g_envs);
 
   seni_var *var, *tmp2;
   DL_FOREACH_SAFE(g_vars, var, tmp2) {
     DL_DELETE(g_vars, var);
-    free(var);
-  }  
+  }
+  free(g_vars);
 }
 
 seni_env *get_env_from_pool()
@@ -937,7 +927,7 @@ seni_value_in_use get_value_in_use(seni_var_type type)
   if (type == VAR_FLOAT) {
     return USE_F;
   } else if (type == VAR_FN) {
-    return USE_P;
+    return USE_N;
   } else {
     return USE_I;
   }
@@ -954,6 +944,8 @@ seni_var_type node_type_to_var_type(seni_node_type type)
     return VAR_BOOLEAN;
   case NODE_NAME:
     return VAR_NAME;
+  case NODE_VECTOR:
+    return VAR_VECTOR;
   default:
     return VAR_INT;
   }
@@ -980,8 +972,8 @@ void safe_seni_var_copy(seni_var *dest, seni_var *src)
     dest->value.i = src->value.i;
   } else if (using == USE_F) {
     dest->value.f = src->value.f;
-  } else if (using == USE_P) {
-    dest->value.p = src->value.p;
+  } else if (using == USE_N) {
+    dest->value.n = src->value.n;
   }
 }
 
@@ -1068,7 +1060,7 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
 
   seni_env *fn_env = push_scope(env);
   
-  seni_node *fn_expr = var->value.p;
+  seni_node *fn_expr = var->value.n;
 
   // fn_expr points to the 'fn' keyword
 
@@ -1127,51 +1119,71 @@ seni_var *eval_list(seni_env *env, seni_node *expr)
 
 
 
+
+
 seni_var *eval(seni_env *env, seni_node *expr)
 {
+  // a register like seni_var for holding intermediate values
+  static seni_var reg;
+
   seni_var *v = NULL;
-  
+
   if (expr == NULL) {
     // in case of non-existent else clause in if statement
     printf("TODO: can we get here?\n");
     return NULL;
   }
 
+  if (expr->type == NODE_VECTOR) {
+    printf("shabba\n");
+    reg.type = VAR_INT;
+    reg.value.i = 42;
+
+    return &reg;
+  }
+
   if (expr->type == NODE_INT) {
-    g_reg.type = node_type_to_var_type(expr->type);
-    g_reg.value.i = expr->value.i;
-    return &g_reg;
+    reg.type = node_type_to_var_type(expr->type);
+    reg.value.i = expr->value.i;
+
+    return &reg;
   }
   
   if (expr->type == NODE_FLOAT) {
-    g_reg.type = node_type_to_var_type(expr->type);
-    g_reg.value.f = expr->value.f;
-    return &g_reg;
+    reg.type = node_type_to_var_type(expr->type);
+    reg.value.f = expr->value.f;
+
+    return &reg;
   }
   
   if (expr->type == NODE_BOOLEAN) {
-    g_reg.type = node_type_to_var_type(expr->type);
-    g_reg.value.i = expr->value.i;
-    return &g_reg;
+    reg.type = node_type_to_var_type(expr->type);
+    reg.value.i = expr->value.i;
+
+    return &reg;
   }
 
   if (expr->type == NODE_NAME) {
     if (expr->value.i & KEYWORD_START) {
-      g_reg.type = node_type_to_var_type(expr->type);
-      g_reg.value.i = expr->value.i;
-      return &g_reg;
+      reg.type = node_type_to_var_type(expr->type);
+      reg.value.i = expr->value.i;
+
+      return &reg;
     }
     v = lookup_var(env, expr->value.i);
+
     return v;
   }
 
   if (expr->type == NODE_LABEL || expr->type == NODE_STRING) {
-      g_reg.type = node_type_to_var_type(expr->type);
-      g_reg.value.i = expr->value.i;
-      return &g_reg;
+      reg.type = node_type_to_var_type(expr->type);
+      reg.value.i = expr->value.i;
+
+      return &reg;
   }
 
   if (expr->type == NODE_LIST) {
+
     return eval_list(env, expr);
   }
 
@@ -1182,6 +1194,7 @@ seni_var *true_in_reg(seni_var *reg)
 {
   reg->type = VAR_BOOLEAN;
   reg->value.i = 1;
+
   return reg;
 }
 
@@ -1189,6 +1202,7 @@ seni_var *false_in_reg(seni_var *reg)
 {
   reg->type = VAR_BOOLEAN;
   reg->value.i = 0;
+
   return reg;
 }
 

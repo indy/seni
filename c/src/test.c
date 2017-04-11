@@ -476,21 +476,28 @@ void test_lang_interpret_loop(void)
   EVAL_FLOAT_WITHIN("(loop (x from: 0 upto: 10 steps: 3) (setq --test (+ --test x))) --test",
                     0.00f + 5.0f + 10.0f, 0.1f);
   //  EVAL_FLOAT("(loop (x from: 0 upto: 10 steps: 3) (setq --test (+ --test x))) --test", 0.00f + 5.0f + 10.0f);
-}  
+}
+
+void test_lang_interpret_vector(void)
+{
+  EVAL_DECL;
+  EVAL_INT("(define x [3]) (setq x 4)", 4);
+}
 
 int main(void)
 {
   UNITY_BEGIN();
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_lang_parser);
-  RUN_TEST(test_lang_env);
-  RUN_TEST(test_lang_interpret_basic);
-  RUN_TEST(test_lang_interpret_math);
-  RUN_TEST(test_lang_interpret_comparison);
-  RUN_TEST(test_lang_interpret_define);
-  RUN_TEST(test_lang_interpret_function);
-  RUN_TEST(test_lang_interpret_if);
-  RUN_TEST(test_lang_interpret_setq);
-  RUN_TEST(test_lang_interpret_loop);
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_lang_parser);
+  // RUN_TEST(test_lang_env);
+  // RUN_TEST(test_lang_interpret_basic);
+  // RUN_TEST(test_lang_interpret_math);
+  // RUN_TEST(test_lang_interpret_comparison);
+  // RUN_TEST(test_lang_interpret_define);
+  // RUN_TEST(test_lang_interpret_function);
+  // RUN_TEST(test_lang_interpret_if);
+  // RUN_TEST(test_lang_interpret_setq);
+  // RUN_TEST(test_lang_interpret_loop);
+  RUN_TEST(test_lang_interpret_vector);
   return UNITY_END();
 }

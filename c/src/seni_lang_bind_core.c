@@ -13,6 +13,19 @@ i32 g_arg_steps = 0;
 
 #define SENI_ERROR(MSG) printf("%s\n", MSG)
 
+seni_var *var_as_int_or_float(bool is_int, i32 i, f32 f)
+{
+  if (is_int) {
+    g_reg.type = VAR_INT;
+    g_reg.value.i = i;
+  } else {
+    g_reg.type = VAR_FLOAT;
+    g_reg.value.f = f;
+  }
+
+  return &g_reg;
+}
+
 seni_var *eval_classic_fn_plus(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
@@ -43,15 +56,7 @@ seni_var *eval_classic_fn_plus(seni_env *env, seni_node *expr)
     sibling = safe_next(sibling);
   }
 
-  if (all_ints) {
-    g_reg.type = VAR_INT;
-    g_reg.value.i = iresult;
-  } else {
-    g_reg.type = VAR_FLOAT;
-    g_reg.value.f = fresult;
-  }
-  
-  return &g_reg;
+  return var_as_int_or_float(all_ints, iresult, fresult);
 }
 
 seni_var *eval_classic_fn_minus(seni_env *env, seni_node *expr)
@@ -74,14 +79,7 @@ seni_var *eval_classic_fn_minus(seni_env *env, seni_node *expr)
   if (sibling == NULL) {
     // only 1 arg e.g. (- 42)
     // so negate it
-    if (all_ints) {
-      g_reg.type = VAR_INT;
-      g_reg.value.i = -iresult;
-    } else {
-      g_reg.type = VAR_FLOAT;
-      g_reg.value.f = -fresult;
-    }
-    return &g_reg;
+    return var_as_int_or_float(all_ints, -iresult, -fresult);
   }
   
   while (sibling != NULL) {
@@ -104,15 +102,7 @@ seni_var *eval_classic_fn_minus(seni_env *env, seni_node *expr)
     sibling = safe_next(sibling);
   }
 
-  if (all_ints) {
-    g_reg.type = VAR_INT;
-    g_reg.value.i = iresult;
-  } else {
-    g_reg.type = VAR_FLOAT;
-    g_reg.value.f = fresult;
-  }
-
-  return &g_reg;
+  return var_as_int_or_float(all_ints, iresult, fresult);
 }
 
 seni_var *eval_classic_fn_multiply(seni_env *env, seni_node *expr)
@@ -152,15 +142,7 @@ seni_var *eval_classic_fn_multiply(seni_env *env, seni_node *expr)
     sibling = safe_next(sibling);
   }
 
-  if (all_ints) {
-    g_reg.type = VAR_INT;
-    g_reg.value.i = iresult;
-  } else {
-    g_reg.type = VAR_FLOAT;
-    g_reg.value.f = fresult;
-  }
-
-  return &g_reg;
+  return var_as_int_or_float(all_ints, iresult, fresult);
 }
 
 seni_var *eval_classic_fn_divide(seni_env *env, seni_node *expr)
@@ -208,15 +190,7 @@ seni_var *eval_classic_fn_divide(seni_env *env, seni_node *expr)
     sibling = safe_next(sibling);
   }
 
-  if (all_ints) {
-    g_reg.type = VAR_INT;
-    g_reg.value.i = iresult;
-  } else {
-    g_reg.type = VAR_FLOAT;
-    g_reg.value.f = fresult;
-  }
-
-  return &g_reg;
+  return var_as_int_or_float(all_ints, iresult, fresult);
 }
 
 seni_var *eval_classic_fn_equality(seni_env *env, seni_node *expr)
@@ -513,7 +487,7 @@ seni_var *eval_keyword_fn(seni_env *env, seni_node *expr)
 
   seni_var *env_var = add_var(env, fn_name->value.i);
   env_var->type = VAR_FN;
-  env_var->value.p = expr;
+  env_var->value.n = expr;
   
   return env_var;
 }
