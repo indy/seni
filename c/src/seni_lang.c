@@ -757,53 +757,40 @@ seni_value_in_use get_value_in_use(seni_var_type type)
     return USE_F;
   case VAR_FN:
     return USE_N;
-  case VAR_VECTOR:
+  case VAR_VEC_HEAD:
+    return USE_V;
+  case VAR_VEC_CONS:
     return USE_V;
   default:
     return USE_I;
   };
 }
 
-seni_var_type node_type_to_var_type(seni_node_type type)
-{
-  switch(type) {
-  case NODE_INT:
-    return VAR_INT;
-  case NODE_FLOAT:
-    return VAR_FLOAT;
-  case NODE_BOOLEAN:
-    return VAR_BOOLEAN;
-  case NODE_NAME:
-    return VAR_NAME;
-  case NODE_VECTOR:
-    return VAR_VECTOR;
-  default:
-    return VAR_INT;
-  }
-}
-
 char *seni_var_type_name(seni_var *var)
 {
   switch(var->type) {
-  case VAR_INT:     return "VAR_INT";
-  case VAR_FLOAT:   return "VAR_FLOAT";
-  case VAR_BOOLEAN: return "VAR_BOOLEAN";
-  case VAR_NAME:    return "VAR_NAME";
-  case VAR_FN:      return "VAR_FN";
-  case VAR_VECTOR:  return "VAR_VECTOR";
+  case VAR_INT:      return "VAR_INT";
+  case VAR_FLOAT:    return "VAR_FLOAT";
+  case VAR_BOOLEAN:  return "VAR_BOOLEAN";
+  case VAR_NAME:     return "VAR_NAME";
+  case VAR_FN:       return "VAR_FN";
+  case VAR_VEC_HEAD: return "VAR_VEC_HEAD";
+  case VAR_VEC_CONS: return "VAR_VEC_CONS";
   default: return "unknown seni_var type";
   }
 }
 
 i32 seni_var_vector_length(seni_var *var)
 {
-  if (var->type != VAR_VECTOR) {
+  if (var->type != VAR_VEC_HEAD) {
     return 0;
   }
 
-  i32 len = 1;
-  while (var->next) {
-    var = var->next;
+  i32 len = 0;
+  seni_var *v = var->value.v;
+  
+  while (v->next) {
+    v = v->next;
     len++;
   }
 
@@ -927,7 +914,12 @@ seni_var *var_get_from_pool()
 void var_return_to_pool(seni_var *var)
 {
   // pretty_print_seni_var(var);
-  if (var->type == VAR_VECTOR) {
+  if (var->type == VAR_VEC_HEAD) {
+    if (var->value.v != NULL) {
+      var_return_to_pool(var->value.v);
+    }
+  }
+  if (var->type == VAR_VEC_CONS) {
     var_return_to_pool(var->value.v);
     if (var->next != NULL) {
       var_return_to_pool(var->next);
@@ -1037,16 +1029,10 @@ void safe_seni_var_copy(seni_var *dest, seni_var *src)
   } else if (using == USE_N) {
     dest->value.n = src->value.n;
   } else if (using == USE_V) {
-    dest->value.v = src->value.v;
-    // weirdness to do with the uthash linked list implementation
-    if (src->prev == src) {
-      dest->prev = dest;
+    if (src->type == VAR_VEC_HEAD) {
+      dest->value.v = src->value.v;
     } else {
-      dest->prev = src->prev;
-    }
-    dest->next = src->next;
-    if (src->next) {
-      src->next->prev = dest;
+      printf("what the fuck?\n");
     }
   }
 }
@@ -1192,14 +1178,18 @@ seni_var *eval_list(seni_env *env, seni_node *expr)
 }
 
 //
-//  the bound value
+// [ ] <<- this is the VAR_VEC_HEAD
 //  |
-// [ ] -> [ ] -> [ ] -> [ ] -> NULL
+// [ ] -> [ ] -> [ ] -> [ ] -> NULL  <<- these are VAR_VEC_CONS
 //  |      |      |      |
 //  4      7      2      3
 //
-seni_var *append_to_vector(seni_var *vec, seni_var *val)
+seni_var *append_to_vector(seni_var *head, seni_var *val)
 {
+
+  // assuming that head is VAR_VEC_HEAD
+
+  
   seni_var *child_value = var_get_from_pool();
   if (child_value == NULL) {
     // error
@@ -1208,24 +1198,18 @@ seni_var *append_to_vector(seni_var *vec, seni_var *val)
   safe_seni_var_copy(child_value, val);
 
 
-  if (vec && vec->value.v == NULL) {
-    // special case of the empty vector []
-    vec->value.v = child_value;
-    return vec;
-  }
-
   seni_var *child_cell = var_get_from_pool();
   if (child_cell == NULL) {
     // error
     return NULL;
   }
 
-  child_cell->type = VAR_VECTOR;
+  child_cell->type = VAR_VEC_CONS;
   child_cell->value.v = child_value;
 
-  DL_APPEND(vec, child_cell);
+  DL_APPEND(head->value.v, child_cell);
 
-  return vec;
+  return head;
 }
 
 seni_var *eval(seni_env *env, seni_node *expr)
@@ -1242,54 +1226,43 @@ seni_var *eval(seni_env *env, seni_node *expr)
   }
 
   if (expr->type == NODE_VECTOR) {
-    seni_var *vec = NULL;
+
+    seni_var head, *val, *vec;
+
+    // don't use reg since the elements of the vector will call eval and overwrite it
+    head.type = VAR_VEC_HEAD;
+    head.value.v = NULL;
 
     for (seni_node *node = expr->value.children; node != NULL; node = safe_next(node)) {
-      seni_var *val = eval(env, node);
-      //printf("\n\nin vector node\n");
-      //pretty_print_seni_var(val);
-
-      vec = append_to_vector(vec, val);
+      val = eval(env, node);
+      
+      vec = append_to_vector(&head, val);
       if (vec == NULL) {
         return NULL;
       }
     }
 
-    if (vec == NULL) {
-      // empty vector : []
-      // treat as a special case of VAR_VECTOR where value.v = NULL
-      //
-      seni_var *child_cell = var_get_from_pool();
-      if (child_cell == NULL) {
-        // error
-        return NULL;
-      }
-
-      child_cell->type = VAR_VECTOR;
-      child_cell->value.v = NULL;
-
-      DL_APPEND(vec, child_cell);
-    }
-
-    return vec;
+    reg.type = head.type;
+    reg.value.v = head.value.v; // this is a list of VAR_VEC_CONS
+    return &reg;
   }
 
   if (expr->type == NODE_INT) {
-    reg.type = node_type_to_var_type(expr->type);
+    reg.type = VAR_INT;
     reg.value.i = expr->value.i;
 
     return &reg;
   }
   
   if (expr->type == NODE_FLOAT) {
-    reg.type = node_type_to_var_type(expr->type);
+    reg.type = VAR_FLOAT;
     reg.value.f = expr->value.f;
 
     return &reg;
   }
   
   if (expr->type == NODE_BOOLEAN) {
-    reg.type = node_type_to_var_type(expr->type);
+    reg.type = VAR_BOOLEAN;
     reg.value.i = expr->value.i;
 
     return &reg;
@@ -1297,7 +1270,7 @@ seni_var *eval(seni_env *env, seni_node *expr)
 
   if (expr->type == NODE_NAME) {
     if (expr->value.i & KEYWORD_START) {
-      reg.type = node_type_to_var_type(expr->type);
+      reg.type = VAR_NAME;
       reg.value.i = expr->value.i;
 
       return &reg;
@@ -1308,14 +1281,13 @@ seni_var *eval(seni_env *env, seni_node *expr)
   }
 
   if (expr->type == NODE_LABEL || expr->type == NODE_STRING) {
-      reg.type = node_type_to_var_type(expr->type);
-      reg.value.i = expr->value.i;
-
-      return &reg;
+    reg.type = VAR_INT;
+    reg.value.i = expr->value.i;
+    
+    return &reg;
   }
 
   if (expr->type == NODE_LIST) {
-
     return eval_list(env, expr);
   }
 

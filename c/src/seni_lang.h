@@ -63,7 +63,8 @@ typedef enum {
   VAR_BOOLEAN,   // value.i
   VAR_NAME,      // word_lut[value.i]
   VAR_FN,        // pointer to seni_node: value.n
-  VAR_VECTOR     // pointer to value in value.v and next/prev point to siblings
+  VAR_VEC_HEAD,  // pointer to first cons in value.v
+  VAR_VEC_CONS,  // pointer to value in value.v and next/prev point to siblings
 } seni_var_type;
 
 /*

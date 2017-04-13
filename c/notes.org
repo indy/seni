@@ -1,8 +1,10 @@
-* TODO [0/6]
-  1. [ ] why does setq seg fault when it returns NULL?
+* TODO [0/5]
+  1. [ ] i32 seni_var_vector_length(seni_var *var)
+  2. [ ] why does setq seg fault when it returns NULL?
   3. [ ] 'in' paramaeter for loop ?
   4. [ ] special fn: on-matrix-stack
   5. [ ] classic fns: vector vector/append
+
 
 
 after parsing it's safe to treat seni_nodes as immutable

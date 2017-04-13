@@ -402,8 +402,8 @@ seni_var *eval_classic_fn_vector_append(seni_env *env, seni_node *expr)
     return NULL;
   }
 
-  seni_var *vec = eval(env, sibling);
-  if (vec->type != VAR_VECTOR) {
+  seni_var *vec_head = eval(env, sibling);
+  if (vec_head->type != VAR_VEC_HEAD) {
     //error: first argument of vector/append should be a vector
     return NULL;
   }
@@ -412,12 +412,12 @@ seni_var *eval_classic_fn_vector_append(seni_env *env, seni_node *expr)
   seni_var *val = eval(env, sibling);
 
   // add val to the end of vec
-  vec = append_to_vector(vec, val);
-  if (vec == NULL) {
+  vec_head = append_to_vector(vec_head, val);
+  if (vec_head == NULL) {
     return NULL;
   }
 
-  return vec;
+  return vec_head;
 }
 
 seni_var *eval_classic_fn_sqrt(seni_env *env, seni_node *expr)
