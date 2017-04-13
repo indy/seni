@@ -673,20 +673,20 @@ seni_node *consume_item(word_lut *wlut, char **src)
   return NULL;
 }
 
-char *parser_node_type_name(seni_node_type type)
+char *seni_node_type_name(seni_node *node)
 {
-  switch(type) {
-  case NODE_LIST: return "NODE_LIST";
-  case NODE_VECTOR: return "NODE_VECTOR";
-  case NODE_INT: return "NODE_INT";
-  case NODE_FLOAT: return "NODE_FLOAT";
-  case NODE_NAME: return "NODE_NAME";
-  case NODE_LABEL: return "NODE_LABEL";
-  case NODE_STRING: return "NODE_STRING";
-  case NODE_BOOLEAN: return "NODE_BOOLEAN";
+  switch(node->type) {
+  case NODE_LIST:       return "NODE_LIST";
+  case NODE_VECTOR:     return "NODE_VECTOR";
+  case NODE_INT:        return "NODE_INT";
+  case NODE_FLOAT:      return "NODE_FLOAT";
+  case NODE_NAME:       return "NODE_NAME";
+  case NODE_LABEL:      return "NODE_LABEL";
+  case NODE_STRING:     return "NODE_STRING";
+  case NODE_BOOLEAN:    return "NODE_BOOLEAN";
   case NODE_WHITESPACE: return "NODE_WHITESPACE";
-  case NODE_COMMENT: return "NODE_COMMENT";
-  default: return "unknown node type";
+  case NODE_COMMENT:    return "NODE_COMMENT";
+  default: return "unknown seni_node type";
   };
 }
 
@@ -717,7 +717,7 @@ void parser_free_nodes(seni_node *nodes)
       }
     }
 
-    // printf("freeing node: %s %u\n", parser_node_type_name(node->type), (u32)node);
+    // printf("freeing node: %s %u\n", seni_node_type_name(node), (u32)node);
     free(node);
     
     node = next;
@@ -748,6 +748,87 @@ seni_node *parser_parse(word_lut *wlut, char *s)
 
   // NOTE: not strictly a tree as the ast root could have siblings
   return nodes;
+}
+
+seni_value_in_use get_value_in_use(seni_var_type type)
+{
+  switch(type) {
+  case VAR_FLOAT:
+    return USE_F;
+  case VAR_FN:
+    return USE_N;
+  case VAR_VECTOR:
+    return USE_V;
+  default:
+    return USE_I;
+  };
+}
+
+seni_var_type node_type_to_var_type(seni_node_type type)
+{
+  switch(type) {
+  case NODE_INT:
+    return VAR_INT;
+  case NODE_FLOAT:
+    return VAR_FLOAT;
+  case NODE_BOOLEAN:
+    return VAR_BOOLEAN;
+  case NODE_NAME:
+    return VAR_NAME;
+  case NODE_VECTOR:
+    return VAR_VECTOR;
+  default:
+    return VAR_INT;
+  }
+}
+
+char *seni_var_type_name(seni_var *var)
+{
+  switch(var->type) {
+  case VAR_INT:     return "VAR_INT";
+  case VAR_FLOAT:   return "VAR_FLOAT";
+  case VAR_BOOLEAN: return "VAR_BOOLEAN";
+  case VAR_NAME:    return "VAR_NAME";
+  case VAR_FN:      return "VAR_FN";
+  case VAR_VECTOR:  return "VAR_VECTOR";
+  default: return "unknown seni_var type";
+  }
+}
+
+i32 seni_var_vector_length(seni_var *var)
+{
+  if (var->type != VAR_VECTOR) {
+    return 0;
+  }
+
+  i32 len = 1;
+  while (var->next) {
+    var = var->next;
+    len++;
+  }
+
+  return len;
+}
+
+void pretty_print_seni_var(seni_var *var)
+{
+  char *type = seni_var_type_name(var);
+  seni_value_in_use using = get_value_in_use(var->type);
+  
+  switch(using) {
+  case USE_I:
+    printf("%s : %d\n", type, var->value.i);
+    break;
+  case USE_F:
+    printf("%s : %.2f\n", type, var->value.f);
+    break;
+  case USE_N:
+    printf("%s %s\n", type, seni_node_type_name(var->value.n));
+    break;
+  case USE_V:
+    printf("%s : length %d\n", type, seni_var_vector_length(var));
+    break;
+  }
 }
 
 int env_debug_available_env()
@@ -808,7 +889,7 @@ void env_free_pools(void)
   free(g_vars);
 }
 
-seni_env *get_env_from_pool()
+seni_env *env_get_from_pool()
 {
   seni_env *head = g_envs;
 
@@ -824,35 +905,45 @@ seni_env *get_env_from_pool()
   return head;
 }
 
-void return_env_to_pool(seni_env *env)
+void env_return_to_pool(seni_env *env)
 {
   DL_APPEND(g_envs, env);
 }
 
-seni_var *get_var_from_pool()
+seni_var *var_get_from_pool()
 {
   seni_var *head = g_vars;
 
   if (head != NULL) {
     DL_DELETE(g_vars, head);
   }
+
+  head->next = NULL;
+  head->prev = NULL;
   
   return head;
 }
 
-void return_var_to_pool(seni_var *var)
+void var_return_to_pool(seni_var *var)
 {
+  // pretty_print_seni_var(var);
+  if (var->type == VAR_VECTOR) {
+    var_return_to_pool(var->value.v);
+    if (var->next != NULL) {
+      var_return_to_pool(var->next);
+    }
+  }
   DL_APPEND(g_vars, var);
 }
 
 seni_env *get_initial_env()
 {
-  return get_env_from_pool();
+  return env_get_from_pool();
 }
 
 seni_env *push_scope(seni_env *outer)
 {
-  seni_env *env = get_env_from_pool();
+  seni_env *env = env_get_from_pool();
   if (env == NULL) {
     // error
     return NULL;
@@ -873,10 +964,10 @@ seni_env *pop_scope(seni_env *env)
 
   HASH_ITER(hh, env->vars, var, tmp) {
     HASH_DEL(env->vars, var);
-    return_var_to_pool(var);
+    var_return_to_pool(var);
   }  
 
-  return_env_to_pool(env);
+  env_return_to_pool(env);
   
   return outer_env;
 }
@@ -893,7 +984,7 @@ seni_var *add_var(seni_env *env, i32 var_id)
     return var;
   }
 
-  var = get_var_from_pool();
+  var = var_get_from_pool();
   if (var == NULL) {
     // error
     return NULL;
@@ -922,35 +1013,6 @@ seni_var *lookup_var(seni_env *env, i32 var_id)
   return lookup_var(env->outer, var_id);
 }
 
-seni_value_in_use get_value_in_use(seni_var_type type)
-{
-  if (type == VAR_FLOAT) {
-    return USE_F;
-  } else if (type == VAR_FN) {
-    return USE_N;
-  } else {
-    return USE_I;
-  }
-}
-
-seni_var_type node_type_to_var_type(seni_node_type type)
-{
-  switch(type) {
-  case NODE_INT:
-    return VAR_INT;
-  case NODE_FLOAT:
-    return VAR_FLOAT;
-  case NODE_BOOLEAN:
-    return VAR_BOOLEAN;
-  case NODE_NAME:
-    return VAR_NAME;
-  case NODE_VECTOR:
-    return VAR_VECTOR;
-  default:
-    return VAR_INT;
-  }
-}
-
 seni_node *safe_next(seni_node *expr)
 {
   seni_node *sibling = expr->next;
@@ -974,6 +1036,18 @@ void safe_seni_var_copy(seni_var *dest, seni_var *src)
     dest->value.f = src->value.f;
   } else if (using == USE_N) {
     dest->value.n = src->value.n;
+  } else if (using == USE_V) {
+    dest->value.v = src->value.v;
+    // weirdness to do with the uthash linked list implementation
+    if (src->prev == src) {
+      dest->prev = dest;
+    } else {
+      dest->prev = src->prev;
+    }
+    dest->next = src->next;
+    if (src->next) {
+      src->next->prev = dest;
+    }
   }
 }
 
@@ -1117,9 +1191,42 @@ seni_var *eval_list(seni_env *env, seni_node *expr)
   return NULL;
 }
 
+//
+//  the bound value
+//  |
+// [ ] -> [ ] -> [ ] -> [ ] -> NULL
+//  |      |      |      |
+//  4      7      2      3
+//
+seni_var *append_to_vector(seni_var *vec, seni_var *val)
+{
+  seni_var *child_value = var_get_from_pool();
+  if (child_value == NULL) {
+    // error
+    return NULL;
+  }
+  safe_seni_var_copy(child_value, val);
 
 
+  if (vec && vec->value.v == NULL) {
+    // special case of the empty vector []
+    vec->value.v = child_value;
+    return vec;
+  }
 
+  seni_var *child_cell = var_get_from_pool();
+  if (child_cell == NULL) {
+    // error
+    return NULL;
+  }
+
+  child_cell->type = VAR_VECTOR;
+  child_cell->value.v = child_value;
+
+  DL_APPEND(vec, child_cell);
+
+  return vec;
+}
 
 seni_var *eval(seni_env *env, seni_node *expr)
 {
@@ -1135,11 +1242,36 @@ seni_var *eval(seni_env *env, seni_node *expr)
   }
 
   if (expr->type == NODE_VECTOR) {
-    printf("shabba\n");
-    reg.type = VAR_INT;
-    reg.value.i = 42;
+    seni_var *vec = NULL;
 
-    return &reg;
+    for (seni_node *node = expr->value.children; node != NULL; node = safe_next(node)) {
+      seni_var *val = eval(env, node);
+      //printf("\n\nin vector node\n");
+      //pretty_print_seni_var(val);
+
+      vec = append_to_vector(vec, val);
+      if (vec == NULL) {
+        return NULL;
+      }
+    }
+
+    if (vec == NULL) {
+      // empty vector : []
+      // treat as a special case of VAR_VECTOR where value.v = NULL
+      //
+      seni_var *child_cell = var_get_from_pool();
+      if (child_cell == NULL) {
+        // error
+        return NULL;
+      }
+
+      child_cell->type = VAR_VECTOR;
+      child_cell->value.v = NULL;
+
+      DL_APPEND(vec, child_cell);
+    }
+
+    return vec;
   }
 
   if (expr->type == NODE_INT) {
@@ -1278,7 +1410,7 @@ void declare_common_arg(word_lut *wlut, char *name, i32 *global_value)
   *global_value = i;
 }
 
-seni_var *evaluate(seni_env *env, word_lut *wl, seni_node *ast)
+seni_var *evaluate(seni_env *env, seni_node *ast)
 {
   seni_var *res = NULL;
   for (seni_node *n = ast; n != NULL; n = safe_next(n)) {

@@ -390,16 +390,34 @@ seni_var *eval_classic_fn_lesser(seni_env *env, seni_node *expr)
   return true_in_reg(&g_reg);
 }
 
-seni_var *eval_classic_fn_vector(seni_env *env, seni_node *expr)
-{
-  printf("IMPLEMENT eval_classic_fn_vector\n");
-  return eval_classic_fn_lesser(env, expr);
-}
+
 
 seni_var *eval_classic_fn_vector_append(seni_env *env, seni_node *expr)
 {
-  printf("IMPLEMENT eval_classic_fn_vector_append\n");
-  return eval_classic_fn_lesser(env, expr);
+  // (define v [1])(vector/append v 3)
+
+  seni_node *sibling = safe_next(expr);
+  if (sibling == NULL) {
+    // error: no args given to 'vector/append'
+    return NULL;
+  }
+
+  seni_var *vec = eval(env, sibling);
+  if (vec->type != VAR_VECTOR) {
+    //error: first argument of vector/append should be a vector
+    return NULL;
+  }
+
+  sibling = safe_next(sibling);
+  seni_var *val = eval(env, sibling);
+
+  // add val to the end of vec
+  vec = append_to_vector(vec, val);
+  if (vec == NULL) {
+    return NULL;
+  }
+
+  return vec;
 }
 
 seni_var *eval_classic_fn_sqrt(seni_env *env, seni_node *expr)
@@ -683,7 +701,6 @@ void bind_core_declarations(word_lut *wlut)
   declare_keyword(wlut,    "=",             &eval_classic_fn_equality);
   declare_keyword(wlut,    ">",             &eval_classic_fn_greater);
   declare_keyword(wlut,    "<",             &eval_classic_fn_lesser);
-  declare_keyword(wlut,    "vector",        &eval_classic_fn_vector);
   declare_keyword(wlut,    "vector/append", &eval_classic_fn_vector_append);
   declare_keyword(wlut,    "sqrt",          &eval_classic_fn_sqrt);
   declare_keyword(wlut,    "mod",           &eval_classic_fn_mod);

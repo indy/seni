@@ -8,9 +8,37 @@
 after parsing it's safe to treat seni_nodes as immutable
 seni_vars that have been eval'd should get their values asap since they could just by aliases of g_reg
 
-vector:
+* vector
 bind a linked list of seni_var* to a variable in the current env scope
+
 have checks when popping a scope to look for linked lists and manually de-allocate them (or return them to a pool of seni_var*. IMPORTANT: remember to iterate through each seni_var since there could be nested vectors)
+
+how to know when to release the seni_vars?
+
+
+easy to release vectors that are bound with define
+(define a [1 2 3])
+
+just clean up when the env is popped
+
+
+might need a special case in the function application code when literal vectors are given
+(do-something a: [1 2 3])
+
+
+but the hardest is when a function returns a vector that's passed into another function
+(do-something a: (make-vec len: 3))
+
+perhaps assign the results of all functions to temporary variables which are in the current scope?
+
+(do-something a: (define ##make-vec-len (make-vec len: 3)))
+
+or special case if an argument is a function call and the return type is vector?
+
+
+
+special case if an argument is a literal vector or a function call with a vector return type
+
 
 * loop usage
 from to

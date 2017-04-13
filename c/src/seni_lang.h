@@ -123,7 +123,9 @@ i32       wlut_lookup_or_add(word_lut *wlut, char *string, size_t len);
 // parser
 seni_node *parser_parse(word_lut *wlut, char *s);
 void       parser_free_nodes(seni_node *nodes);
-char      *parser_node_type_name(seni_node_type type);
+
+char      *seni_node_type_name(seni_node *node);
+char      *seni_var_type_name(seni_var *var);
 
 // env
 //int env_debug_available_env();
@@ -138,6 +140,7 @@ seni_env *pop_scope(seni_env *outer);
 seni_var *add_var(seni_env *env, i32 var_id);
 seni_var *lookup_var(seni_env *env, i32 var_id);
 
+seni_var *append_to_vector(seni_var *vec, seni_var *val);
 // interpreter
 
 // helpers used by bounded functions
@@ -157,6 +160,6 @@ bool has_labelled_parameter(seni_node *named_args, i32 name);
 
 void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *));
 void declare_common_arg(word_lut *wlut, char *name, i32 *global_value);
-seni_var *evaluate(seni_env *env, word_lut *wl, seni_node *ast);
+seni_var *evaluate(seni_env *env, seni_node *ast);
 
 #endif

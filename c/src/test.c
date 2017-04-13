@@ -26,34 +26,34 @@ void test_mathutil(void)
 
 seni_node *assert_parser_node_raw(seni_node *node, seni_node_type type)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, parser_node_type_name(node->type));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
   return node->next;
 }
 
 seni_node *assert_parser_node_i32(seni_node *node, seni_node_type type, i32 val)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, parser_node_type_name(node->type));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
   TEST_ASSERT_EQUAL(val, node->value.i);
   return node->next;
 }
 
 seni_node *assert_parser_node_f32(seni_node *node, seni_node_type type, f32 val)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, parser_node_type_name(node->type));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
   TEST_ASSERT_EQUAL_FLOAT(val, node->value.f);
   return node->next;
 }
 
 seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *val)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, parser_node_type_name(node->type));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
   TEST_ASSERT_EQUAL_STRING(val, node->value.s);
   return node->next;
 }
 
 seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, word_lut *wlut)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, parser_node_type_name(node->type));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
 
   char *c = wlut->words[node->value.i];
   TEST_ASSERT_EQUAL_STRING(val, c);
@@ -237,6 +237,8 @@ char *var_type_name(seni_var_type type)
     return "VAR_NAME";
   case VAR_FN:
     return "VAR_FN";
+  case VAR_VECTOR:
+    return "VAR_VECTOR";
   }
 
   return "unknown var type";
@@ -251,6 +253,12 @@ void assert_seni_var_i32(seni_var *var, seni_var_type type, i32 i)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var->type));
   TEST_ASSERT_EQUAL(i, var->value.i);
+}
+
+void assert_seni_var_i32_vec(seni_var *var, i32 i)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, var_type_name(var->type));
+  assert_seni_var_i32(var->value.v, VAR_INT, i);
 }
 
 void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
@@ -319,11 +327,11 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
 #define EVAL_EXPR(EXPR) wl = setup_interpreter_wl(); \
   env = setup_interpreter_env(wl); \
   ast = parser_parse(wl, EXPR); \
-  var = evaluate(env, wl, ast)
+  var = evaluate(env, ast)
 
 #define EVAL_CLEANUP shutdown_interpreter_test(wl, ast)
 
-#define EVAL_INT(EXPR,EXPECTED) EVAL_EXPR(EXPR); \
+#define EVAL_INT(EXPR,EXPECTED) EVAL_EXPR(EXPR);  \
   assert_seni_var_i32(var, VAR_INT, EXPECTED); \
   EVAL_CLEANUP
 
@@ -346,6 +354,9 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
 #define EVAL_NAME(EXPR,EXPECTED) EVAL_EXPR(EXPR); \
   assert_seni_var_i32(var, VAR_NAME, EXPECTED); \
   EVAL_CLEANUP
+
+#define SENI_ASSERT_VEC_INT(EXPECTED) assert_seni_var_i32_vec(var, EXPECTED); \
+  var = var->next
 
 #define EVAL_DECL   word_lut *wl = NULL; \
   seni_env *env = NULL; \
@@ -481,7 +492,81 @@ void test_lang_interpret_loop(void)
 void test_lang_interpret_vector(void)
 {
   EVAL_DECL;
-  EVAL_INT("(define x [3]) (setq x 4)", 4);
+
+  {
+
+    EVAL_EXPR("(define x [])");
+    seni_var *v = var;
+    TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, var_type_name(var->type));
+    TEST_ASSERT_NULL(var->value.v);
+    var = var->next;
+    TEST_ASSERT_NULL(var);
+    
+    EVAL_CLEANUP;
+  }
+  
+  {
+    EVAL_EXPR("(define x [3])");
+    seni_var *v = var;
+    SENI_ASSERT_VEC_INT(3);
+    TEST_ASSERT_NULL(var);
+
+    EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_EXPR("(define y [8 7 6])");
+    seni_var *v = var;
+    SENI_ASSERT_VEC_INT(8);
+    SENI_ASSERT_VEC_INT(7);
+    SENI_ASSERT_VEC_INT(6);
+    TEST_ASSERT_NULL(var);
+
+    EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_EXPR("(define y []) (vector/append y 5)");
+    seni_var *v = var;
+    SENI_ASSERT_VEC_INT(5);
+    TEST_ASSERT_NULL(var);
+
+    EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_EXPR("(define y [3]) (vector/append y 4)");
+    seni_var *v = var;
+    SENI_ASSERT_VEC_INT(3);
+    SENI_ASSERT_VEC_INT(4);
+    TEST_ASSERT_NULL(var);
+
+    EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_EXPR("(define y [4 5]) (vector/append y 6)");
+    seni_var *v = var;
+    SENI_ASSERT_VEC_INT(4);
+    SENI_ASSERT_VEC_INT(5);
+    SENI_ASSERT_VEC_INT(6);
+    TEST_ASSERT_NULL(var);
+
+    EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_EXPR("(define y [8 7 6]) (vector/append y 5)");
+    seni_var *v = var;
+    SENI_ASSERT_VEC_INT(8);
+    SENI_ASSERT_VEC_INT(7);
+    SENI_ASSERT_VEC_INT(6);
+    SENI_ASSERT_VEC_INT(5);
+    TEST_ASSERT_NULL(var);
+
+    EVAL_CLEANUP;
+  }
+
 }
 
 int main(void)
