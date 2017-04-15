@@ -11,8 +11,6 @@ i32 g_arg_increment = 0;
 i32 g_arg_upto = 0;
 i32 g_arg_steps = 0;
 
-#define SENI_ERROR(MSG) printf("%s\n", MSG)
-
 seni_var *var_as_int_or_float(bool is_int, i32 i, f32 f)
 {
   if (is_int) {
@@ -63,7 +61,7 @@ seni_var *eval_classic_fn_minus(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to '-'
+    SENI_ERROR("no args given to '-'");
     return NULL;
   }
 
@@ -109,7 +107,7 @@ seni_var *eval_classic_fn_multiply(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to '*'
+    SENI_ERROR("no args given to '*'");
     return NULL;
   }
 
@@ -149,7 +147,7 @@ seni_var *eval_classic_fn_divide(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to '/'
+    SENI_ERROR("no args given to '/'");
     return NULL;
   }
   seni_var *v = eval(env, sibling);
@@ -182,7 +180,7 @@ seni_var *eval_classic_fn_divide(seni_env *env, seni_node *expr)
       } else if (v->type == VAR_FLOAT){
         fresult /= v->value.f;
       } else {
-        // error: incompatible node type
+        SENI_ERROR("incompatible node type");
         return NULL;
       }
     }
@@ -197,7 +195,7 @@ seni_var *eval_classic_fn_equality(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to '='
+    SENI_ERROR("no args given to '='");
     return NULL;
   }
 
@@ -215,7 +213,7 @@ seni_var *eval_classic_fn_equality(seni_env *env, seni_node *expr)
     using_i = false;
     f = v->value.f;
   } else {
-    // error ()
+    SENI_ERROR("()");
     return NULL;
   } 
   
@@ -250,7 +248,7 @@ seni_var *eval_classic_fn_greater(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to '>'
+    SENI_ERROR("no args given to '>'");
     return NULL;
   }
 
@@ -268,7 +266,7 @@ seni_var *eval_classic_fn_greater(seni_env *env, seni_node *expr)
     prev_using_i = false;
     prev_f = v->value.f;
   } else {
-    // error ()
+    SENI_ERROR("()");
     return NULL;
   }
 
@@ -308,7 +306,7 @@ seni_var *eval_classic_fn_greater(seni_env *env, seni_node *expr)
       prev_f = v->value.f;
       
     } else {
-      // error()
+      SENI_ERROR("()");
       return NULL;
     }
 
@@ -322,7 +320,7 @@ seni_var *eval_classic_fn_lesser(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to '<'
+    SENI_ERROR("no args given to '<'");
     return NULL;
   }
 
@@ -340,7 +338,7 @@ seni_var *eval_classic_fn_lesser(seni_env *env, seni_node *expr)
     prev_using_i = false;
     prev_f = v->value.f;
   } else {
-    // error ()
+    SENI_ERROR("()");
     return NULL;
   }
 
@@ -380,7 +378,7 @@ seni_var *eval_classic_fn_lesser(seni_env *env, seni_node *expr)
       prev_f = v->value.f;
       
     } else {
-      // error()
+      SENI_ERROR("()");
       return NULL;
     }
 
@@ -398,13 +396,13 @@ seni_var *eval_classic_fn_vector_append(seni_env *env, seni_node *expr)
 
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to 'vector/append'
+    SENI_ERROR("no args given to 'vector/append'");
     return NULL;
   }
 
   seni_var *vec_head = eval(env, sibling);
   if (vec_head->type != VAR_VEC_HEAD) {
-    //error: first argument of vector/append should be a vector
+    SENI_ERROR("first argument of vector/append should be a vector");
     return NULL;
   }
 
@@ -424,7 +422,7 @@ seni_var *eval_classic_fn_sqrt(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to 'sqrt'
+    SENI_ERROR("no args given to 'sqrt'");
     return NULL;
   }
 
@@ -441,7 +439,7 @@ seni_var *eval_classic_fn_mod(seni_env *env, seni_node *expr)
 {
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to 'sqrt'
+    SENI_ERROR("no args given to 'sqrt'");
     return NULL;
   }
 
@@ -467,7 +465,7 @@ seni_var *eval_keyword_define(seni_env *env, seni_node *expr)
 
   seni_node *sibling = safe_next(expr);
   if (sibling == NULL) {
-    // error: no args given to 'define'
+    SENI_ERROR("no args given to 'define'");
     return NULL;
   }
 
@@ -480,8 +478,7 @@ seni_var *eval_keyword_define(seni_env *env, seni_node *expr)
   seni_var *v = eval(env, sibling);
 
   // add the name/value binding to the current env
-  seni_var *env_var = add_var(env, name->value.i);
-  safe_seni_var_copy(env_var, v);
+  seni_var *env_var = bind_var(env, name->value.i, v);
 
   return env_var;
 }
@@ -495,7 +492,7 @@ seni_var *eval_keyword_fn(seni_env *env, seni_node *expr)
   
   seni_node *def_list = safe_next(fn_keyword);
   if (!def_list || def_list->type != NODE_LIST) {
-    // error: no name+parameter list given
+    SENI_ERROR("no name+parameter list given");
     // printf("error: no name+parameter list given\n");
   }
 
@@ -503,9 +500,14 @@ seni_var *eval_keyword_fn(seni_env *env, seni_node *expr)
   
   // todo: parse the args ???
 
-  seni_var *env_var = add_var(env, fn_name->value.i);
-  env_var->type = VAR_FN;
-  env_var->value.n = expr;
+  seni_var fn_var;
+  fn_var.type = VAR_FN;
+  fn_var.value.n = expr;
+#ifdef SENI_DEBUG_MODE
+  fn_var.debug_allocatable = false;
+#endif
+
+  seni_var *env_var = bind_var(env, fn_name->value.i, &fn_var);
   
   return env_var;
 }
@@ -521,7 +523,7 @@ seni_var *eval_keyword_if(seni_env *env, seni_node *expr)
 
   seni_var *test_var = eval(env, test);
   if (test_var->type != VAR_BOOLEAN) {
-    // error: if's test condition should evaluate to a boolean
+    SENI_ERROR("if test condition should evaluate to a boolean");
     return NULL;
   }
 
@@ -547,7 +549,7 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
 
   seni_node *setup = safe_next(expr);
   if (setup->type != NODE_LIST) {
-    // error loop requires a list describing it's behaviour
+    SENI_ERROR("loop requires a list describing its behaviour");
     return NULL;
   }
 
@@ -588,7 +590,7 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
       seni_var *increment_var = lookup_var(loop_env, g_arg_increment);
       increment = var_as_int(increment_var);
       if (increment == 0) {
-        // error: cannot have an increment of 0
+        SENI_ERROR("cannot have an increment of 0");
         pop_scope(loop_env);
         return NULL;
       }
@@ -599,7 +601,7 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
       seni_var *steps_var = lookup_var(loop_env, g_arg_steps);
       steps = var_as_int(steps_var);
       if (steps == 0) {
-        // error: cannot have steps value of 0
+        SENI_ERROR("cannot have steps value of 0");
         pop_scope(loop_env);
         return NULL;
       }
@@ -615,13 +617,14 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
       if (has_to || !has_upto) {
 
         if (from > to) {
-          // error: from has to be less than to
+          SENI_ERROR("from has to be less than to");
           pop_scope(loop_env);
           return NULL;
         }
     
         
         for (i = from; i < to; i += increment) {
+          // todo: should each iteration of the loop have it's own env scope?
           bind_var_to_int(loop_env, var_index, i);
           res = eval_all_nodes(loop_env, body);
         }
@@ -680,7 +683,7 @@ seni_var *eval_keyword_setq(seni_env *env, seni_node *expr)
   seni_var *value_var = eval(env, value_node);
 
   if (name_node->type != NODE_NAME) {
-    printf("error: setq expects a name as the first arg\n");
+    SENI_ERROR("setq expects a name as the first arg");
     return NULL;
   }
 
@@ -690,9 +693,24 @@ seni_var *eval_keyword_setq(seni_env *env, seni_node *expr)
   return variable;
 }
 
+/* used for debugging only */
+seni_var *eval_keyword_vars(seni_env *env, seni_node *expr)
+{
+  // (#vars)
+  safe_next(expr);
+
+  debug_var_info(env);
+
+  return NULL;;
+}
+
 
 void bind_core_declarations(word_lut *wlut)
 {
+#ifdef SENI_DEBUG_MODE
+  g_reg.debug_allocatable = false;
+#endif
+  
   // classic functions that don't use named arguments when invoked
   declare_keyword(wlut,    "+",             &eval_classic_fn_plus);
   declare_keyword(wlut,    "-",             &eval_classic_fn_minus);
@@ -711,6 +729,7 @@ void bind_core_declarations(word_lut *wlut)
   declare_keyword(wlut,    "loop",          &eval_keyword_loop);
   // for debugging
   declare_keyword(wlut,    "setq",          &eval_keyword_setq);
+  declare_keyword(wlut,    "#vars",         &eval_keyword_vars);
   // common parameters used by keywords and the standard api
   declare_common_arg(wlut, "from",          &g_arg_from);
   declare_common_arg(wlut, "to",            &g_arg_to);

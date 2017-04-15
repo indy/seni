@@ -1,6 +1,7 @@
 #ifndef SENI_LANG_H
 #define SENI_LANG_H
 
+#include "seni_config.h"
 #include "seni_types.h"
 #include "seni_containers.h"
 
@@ -94,6 +95,11 @@ typedef struct seni_var {
     struct seni_var *v;
   } value;
 
+#ifdef SENI_DEBUG_MODE  
+  i32 debug_id;
+  bool debug_allocatable; 
+#endif
+
   /* for hashing */
   i32 id;                    /* key */
   UT_hash_handle hh;         /* makes this structure hashable */
@@ -149,8 +155,9 @@ seni_var *false_in_reg(seni_var *reg);
 seni_var *true_in_reg(seni_var *reg);
 i32 var_as_int(seni_var *v1);
 f32 var_as_float(seni_var *v1);
-void bind_var_to_int(seni_env *env, i32 name, i32 value);
-void bind_var_to_float(seni_env *env, i32 name, f32 value);
+seni_var *bind_var(seni_env *env, i32 name, seni_var *var);
+seni_var *bind_var_to_int(seni_env *env, i32 name, i32 value);
+seni_var *bind_var_to_float(seni_env *env, i32 name, f32 value);
 seni_var *eval(seni_env *env, seni_node *expr);
 seni_var *eval_all_nodes(seni_env *env, seni_node *body);
 seni_node *safe_next(seni_node *expr);
@@ -162,5 +169,9 @@ bool has_labelled_parameter(seni_node *named_args, i32 name);
 void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *));
 void declare_common_arg(word_lut *wlut, char *name, i32 *global_value);
 seni_var *evaluate(seni_env *env, seni_node *ast);
+
+// debugging
+void debug_var_info(seni_env *env);
+void debug_reset();
 
 #endif

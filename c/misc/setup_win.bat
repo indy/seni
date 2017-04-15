@@ -18,8 +18,6 @@ copy misc\html_template\seni.html build_wasm\.
 
 rem NOTE: visual studion 2015 is only required to build emsdk, we can use the latest visual studio for seni
 
-
-
-call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
- rem devenv : loads Visual Studio
+rem call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+rem devenv : loads Visual Studio
 

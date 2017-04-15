@@ -279,10 +279,17 @@ word_lut *setup_interpreter_wl()
   return wl;
 }
 
-seni_env *setup_interpreter_env(word_lut *wl)
+seni_env *setup_basic_interpreter_env()
 {
   env_allocate_pools();
   seni_env *env = get_initial_env();
+
+  return env;
+}
+
+seni_env *setup_interpreter_env(word_lut *wl)
+{
+  seni_env *env = setup_basic_interpreter_env();
 
   /* add a temporary debug variable for testing loops etc */
   i32 index = wlut_lookup_or_add(wl, "--test", sizeof("--test"));
@@ -309,8 +316,15 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
   v->value.i = i;
 }
 
-#define EVAL_EXPR(EXPR) wl = setup_interpreter_wl(); \
+#define EVAL_EXPR(EXPR) debug_reset(); \
+  wl = setup_interpreter_wl(); \
   env = setup_interpreter_env(wl); \
+  ast = parser_parse(wl, EXPR); \
+  var = evaluate(env, ast)
+
+#define EVAL_EXPR2(EXPR) debug_reset();          \
+  wl = setup_interpreter_wl(); \
+  env = setup_basic_interpreter_env(); \
   ast = parser_parse(wl, EXPR); \
   var = evaluate(env, ast)
 
@@ -350,7 +364,6 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
   seni_env *env = NULL; \
   seni_node *ast = NULL; \
   seni_var *var = NULL
-
 
 void test_lang_interpret_basic(void)
 {
@@ -489,7 +502,7 @@ void test_lang_interpret_vector(void)
     
     EVAL_CLEANUP;
   }
-  
+
   {
     EVAL_EXPR("(define x [3])");
     // seni_var *v = var;
@@ -559,20 +572,72 @@ void test_lang_interpret_vector(void)
   }
 }
 
+void test_lang_interpret_mem(void)
+{
+  EVAL_DECL;
+
+  // {
+  //   EVAL_EXPR2("(loop (x from: 0 to: 30) (define v [7 8 9])) (#vars)");
+
+  //   //EVAL_EXPR("(#vars) (loop (x from: 0 upto: 10 steps: 3) (setq --test (+ --test x))) (#vars)");
+    
+    
+  //   EVAL_CLEANUP;
+  // }
+
+  {
+    EVAL_EXPR2("(fn (some-fn) (define a 34)(setq a 11)) (#vars)");
+    EVAL_CLEANUP;
+  }  
+}
+
+
+/*
+return to pool if
+
+safe_seni_var_copy ->
+
+
+
+the dest binding is in the current lowest level of the env
+the dest is allocatable
+
+
+
+--------------------------------------------------------------------------------
+
+
+(fn (some-fn)
+    (define a 34)  
+    (setq a 11))   <<- the dest here that's a VAR_INT:34 would be released
+
+
+
+(define b 99)
+(fn (some-fn)
+    (define a b)  
+    (setq a 11)) <<- no release here
+
+
+
+unless every seni_var has a pointer to the env in which it was defined
+*/
+
 int main(void)
 {
   UNITY_BEGIN();
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_lang_parser);
-  RUN_TEST(test_lang_env);
-  RUN_TEST(test_lang_interpret_basic);
-  RUN_TEST(test_lang_interpret_math);
-  RUN_TEST(test_lang_interpret_comparison);
-  RUN_TEST(test_lang_interpret_define);
-  RUN_TEST(test_lang_interpret_function);
-  RUN_TEST(test_lang_interpret_if);
-  RUN_TEST(test_lang_interpret_setq);
-  RUN_TEST(test_lang_interpret_loop);
-  RUN_TEST(test_lang_interpret_vector);
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_lang_parser);
+  // RUN_TEST(test_lang_env);
+  // RUN_TEST(test_lang_interpret_basic);
+  // RUN_TEST(test_lang_interpret_math);
+  // RUN_TEST(test_lang_interpret_comparison);
+  // RUN_TEST(test_lang_interpret_define);
+  // RUN_TEST(test_lang_interpret_function);
+  // RUN_TEST(test_lang_interpret_if);
+  // RUN_TEST(test_lang_interpret_setq);
+  // RUN_TEST(test_lang_interpret_loop);
+  // RUN_TEST(test_lang_interpret_vector);
+  RUN_TEST(test_lang_interpret_mem);
   return UNITY_END();
 }

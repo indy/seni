@@ -19,7 +19,9 @@ i32 g_envs_used;
 
 #define NUM_SENI_VAR_ALLOCATED 1024
 seni_var *g_vars;               /* doubly linked list used as a pool of seni_var structs */
-//i32 g_vars_used;
+
+i32 g_debug_var_get_count = 0;
+i32 g_debug_var_return_count = 0;
 
 void string_copy_len(char **dst, char *src, size_t len)
 {
@@ -336,7 +338,7 @@ seni_node *consume_list(word_lut *wlut, char **src)
 
     seni_node *child = consume_item(wlut, src);
     if (child == NULL) {
-      /* error? */
+      SENI_ERROR("unable to consume element of list");
       return NULL;
     }
 
@@ -359,7 +361,7 @@ seni_node *consume_vector(word_lut *wlut, char **src)
 
     seni_node *child = consume_item(wlut, src);
     if (child == NULL) {
-      /* error? */
+      SENI_ERROR("unable to consume element of vector");
       return NULL;
     }
 
@@ -378,7 +380,7 @@ seni_node *consume_bracket(word_lut *wlut, char **src)
   while (1) {
     c = consume_item(wlut, src);
     if (c == NULL) {
-      /* error? */
+      SENI_ERROR("unable to consume element of bracket");
       return NULL;
     }
 
@@ -416,7 +418,7 @@ seni_node *consume_bracket(word_lut *wlut, char **src)
 
     seni_node *child = consume_item(wlut, src);
     if (child == NULL) {
-      /* error? */
+      SENI_ERROR("unable to consume element of bracket");
       return NULL;
     }
 
@@ -788,6 +790,10 @@ i32 seni_var_vector_length(seni_var *var)
 
   i32 len = 0;
   seni_var *v = var->value.v;
+
+  if (v == NULL) {
+    return len;
+  }
   
   while (v->next) {
     v = v->next;
@@ -797,25 +803,42 @@ i32 seni_var_vector_length(seni_var *var)
   return len;
 }
 
-void pretty_print_seni_var(seni_var *var)
+void pretty_print_seni_var(seni_var *var, char* msg)
 {
   char *type = seni_var_type_name(var);
   seni_value_in_use using = get_value_in_use(var->type);
-  
+
+#ifdef SENI_DEBUG_MODE
   switch(using) {
   case USE_I:
-    printf("%s : %d\n", type, var->value.i);
+    printf("id:%d %s : %d %s\n", var->debug_id, type, var->value.i, msg);
     break;
   case USE_F:
-    printf("%s : %.2f\n", type, var->value.f);
+    printf("id:%d %s : %.2f %s\n", var->debug_id, type, var->value.f, msg);
     break;
   case USE_N:
-    printf("%s %s\n", type, seni_node_type_name(var->value.n));
+    printf("id:%d %s %s %s\n", var->debug_id, type, seni_node_type_name(var->value.n), msg);
     break;
   case USE_V:
-    printf("%s : length %d\n", type, seni_var_vector_length(var));
+    printf("id:%d %s : length %d %s\n", var->debug_id, type, seni_var_vector_length(var), msg);
     break;
   }
+#else
+  switch(using) {
+  case USE_I:
+    printf("%s : %d %s\n", type, var->value.i, msg);
+    break;
+  case USE_F:
+    printf("%s : %.2f %s\n", type, var->value.f, msg);
+    break;
+  case USE_N:
+    printf("%s %s %s\n", type, seni_node_type_name(var->value.n), msg);
+    break;
+  case USE_V:
+    printf("%s : length %d %s\n", type, seni_var_vector_length(var), msg);
+    break;
+  }
+#endif
 }
 
 int env_debug_available_env()
@@ -856,6 +879,10 @@ void env_allocate_pools(void)
 
   seni_var *var = (seni_var *)calloc(NUM_SENI_VAR_ALLOCATED, sizeof(seni_var));
   for (i = 0; i < NUM_SENI_VAR_ALLOCATED; i++) {
+#ifdef SENI_DEBUG_MODE
+    var[i].debug_id = i;
+    var[i].debug_allocatable = true;
+#endif
     DL_APPEND(g_vars, &(var[i]));
   }
 }
@@ -899,21 +926,35 @@ void env_return_to_pool(seni_env *env)
 
 seni_var *var_get_from_pool()
 {
+  //printf("getting %d ", env_debug_available_var());
+  
+  g_debug_var_get_count++;
+  
   seni_var *head = g_vars;
 
   if (head != NULL) {
     DL_DELETE(g_vars, head);
+  } else {
+    SENI_ERROR("no more vars in pool");
   }
 
   head->next = NULL;
   head->prev = NULL;
-  
+
   return head;
 }
 
 void var_return_to_pool(seni_var *var)
 {
-  // pretty_print_seni_var(var);
+  g_debug_var_return_count++;
+
+#ifdef SENI_DEBUG_MODE
+  if (var->debug_allocatable == false) {
+    SENI_ERROR("trying to return a seni_var to the pool that wasnt originally from the pool");
+  }
+#endif
+
+  
   if (var->type == VAR_VEC_HEAD) {
     if (var->value.v != NULL) {
       var_return_to_pool(var->value.v);
@@ -925,6 +966,8 @@ void var_return_to_pool(seni_var *var)
       var_return_to_pool(var->next);
     }
   }
+  //printf("returning %d ", env_debug_available_var());
+  //pretty_print_seni_var(var, "r");
   DL_APPEND(g_vars, var);
 }
 
@@ -973,17 +1016,27 @@ seni_var *add_var(seni_env *env, i32 var_id)
   HASH_FIND_INT(env->vars, &var_id, var);
   if (var != NULL) {
     // return the existing var so that it can be overwritten
+    // printf("-- already in hashmap -- %d ", env_debug_available_var());
     return var;
   }
 
   var = var_get_from_pool();
   if (var == NULL) {
-    // error
+    SENI_ERROR("unable to get a var from the pool");
     return NULL;
   }
   
   var->id = var_id;
   HASH_ADD_INT(env->vars, id, var);
+
+  return var;
+}
+
+seni_var *lookup_var_in_current_scope(seni_env *env, i32 var_id)
+{
+  seni_var *var = NULL;
+
+  HASH_FIND_INT(env->vars, &var_id, var);
 
   return var;
 }
@@ -994,11 +1047,9 @@ seni_var *lookup_var(seni_env *env, i32 var_id)
     return NULL;
   }
 
-  seni_var *var = NULL;
+  seni_var *var = lookup_var_in_current_scope(env, var_id);
 
-  HASH_FIND_INT(env->vars, &var_id, var);
   if (var != NULL) {
-    // return the existing var
     return var;
   }
 
@@ -1018,6 +1069,11 @@ seni_node *safe_next(seni_node *expr)
 
 void safe_seni_var_copy(seni_var *dest, seni_var *src)
 {
+  if (dest->type == VAR_VEC_HEAD) {
+    if (dest->value.v != NULL) {
+      var_return_to_pool(dest->value.v);
+    }
+  }
   dest->type = src->type;
 
   seni_value_in_use using = get_value_in_use(src->type);
@@ -1049,29 +1105,34 @@ seni_var *eval_all_nodes(seni_env *env, seni_node *body)
   return res;
 }
 
-
-// a: 3 b: 10 c: (+ 5 6)
+// adds the labelled parameters to the env only if the current top-level scope
+// of the env doesn't already contain bindings to those values. (this saves
+// eval'ing values that are only going to be re-written by explicit parameters)
+//
+// e.g (fn (foo a: 1 b: 2) (+ a b)) (foo a: 3)
+//
+// the 'a: 1' won't be eval'd since the eval_fn will have already bound a to 3
+//
 void add_labelled_parameters_to_env(seni_env *env, seni_node *named_args)
 {
   while (named_args) {
     seni_node *name = named_args;
     if (name->type != NODE_LABEL) {
-      // error: expected a label as the start of the name/value pair
+      SENI_ERROR("expected a label as the start of the name/value pair");
       return;
     }
     i32 name_i = name->value.i;
 
     named_args = safe_next(named_args);
     if (named_args == NULL) {
-      // error expected name value pairs
+      SENI_ERROR("expected name value pairs");
       return;
     }
-    
-    seni_node *value = named_args;
-    seni_var *var = eval(env, value);
-    seni_var *env_var = add_var(env, name_i);
 
-    safe_seni_var_copy(env_var, var);
+    if (lookup_var_in_current_scope(env, name_i) == NULL) {
+      seni_var *var = eval(env, named_args);
+      bind_var(env, name_i, var);
+    }
 
     named_args = safe_next(named_args);
   }
@@ -1085,7 +1146,7 @@ bool has_labelled_parameter(seni_node *named_args, i32 name)
   
   while(node) {
     if (node->type != NODE_LABEL) {
-      // error should never get here, all name/value parameters should start with a NODE_NAME
+      SENI_ERROR("should never get here, all name/value parameters should start with a NODE_NAME");
       return false;
     }
 
@@ -1095,7 +1156,7 @@ bool has_labelled_parameter(seni_node *named_args, i32 name)
 
     node = safe_next(node);     // node is at the value
     if (node == NULL) {
-      // error should never get here, there should always be pairs of name/value
+      SENI_ERROR("should never get here, there should always be pairs of name/value");
       return false;
     }
 
@@ -1115,7 +1176,7 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
 
   // should be of type VAR_FN
   if (var->type != VAR_FN) {
-    // error: eval_fn - function invocation leads to non-fn binding
+    SENI_ERROR("eval_fn - function invocation leads to non-fn binding");
   }
 
   seni_env *fn_env = push_scope(env);
@@ -1128,23 +1189,25 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
   
   seni_node *fn_args = safe_next(fn_name_and_args_list->value.children); // b: 1 c: 2
 
-  add_labelled_parameters_to_env(fn_env, fn_args);
-
   // Add the invoked parameter bindings to the function's locally scoped env
   //
   seni_node *invoke_node = safe_next(name);
 
   while (invoke_node != NULL) {
     seni_node *arg_binding = invoke_node;
+    i32 arg_binding_name = arg_binding->value.i;
 
     invoke_node = safe_next(invoke_node);
+
     seni_var *invoke_parameter_value = eval(env, invoke_node); // note: eval using the original outer scope
 
-    seni_var *invoke_parameter = add_var(fn_env, arg_binding->value.i);
-    safe_seni_var_copy(invoke_parameter, invoke_parameter_value);
+    bind_var(fn_env, arg_binding_name, invoke_parameter_value);
 
     invoke_node = safe_next(invoke_node);
   }
+
+  // add the labelled default parameters if none were explicitly given
+  add_labelled_parameters_to_env(fn_env, fn_args);
 
   seni_node *fn_body = safe_next(fn_name_and_args_list);
 
@@ -1192,20 +1255,22 @@ seni_var *append_to_vector(seni_var *head, seni_var *val)
   
   seni_var *child_value = var_get_from_pool();
   if (child_value == NULL) {
-    // error
+    SENI_ERROR("cannot allocate child_value from pool");
     return NULL;
   }
   safe_seni_var_copy(child_value, val);
+  //pretty_print_seni_var(child_value, "child val");
 
 
   seni_var *child_cell = var_get_from_pool();
   if (child_cell == NULL) {
-    // error
+    SENI_ERROR("cannot allocate child_cell from pool");
     return NULL;
   }
 
   child_cell->type = VAR_VEC_CONS;
   child_cell->value.v = child_value;
+  //pretty_print_seni_var(child_cell, "child cell");
 
   DL_APPEND(head->value.v, child_cell);
 
@@ -1216,6 +1281,9 @@ seni_var *eval(seni_env *env, seni_node *expr)
 {
   // a register like seni_var for holding intermediate values
   static seni_var reg;
+#ifdef SENI_DEBUG_MODE
+  reg.debug_allocatable = false;
+#endif
 
   seni_var *v = NULL;
 
@@ -1336,18 +1404,39 @@ f32 var_as_float(seni_var *v1)
   return -1.0f;
 }
 
-void bind_var_to_int(seni_env *env, i32 name, i32 value)
+seni_var *bind_var(seni_env *env, i32 name, seni_var *var)
 {
   seni_var *sv = add_var(env, name);
-  sv->type = VAR_INT;
-  sv->value.i = value;
+
+  safe_seni_var_copy(sv, var);
+
+  pretty_print_seni_var(sv, "var");
+
+  return sv;
 }
 
-void bind_var_to_float(seni_env *env, i32 name, f32 value)
+seni_var *bind_var_to_int(seni_env *env, i32 name, i32 value)
 {
   seni_var *sv = add_var(env, name);
+
+  sv->type = VAR_INT;
+  sv->value.i = value;
+
+  pretty_print_seni_var(sv, "int");
+
+  return sv;
+}
+
+seni_var *bind_var_to_float(seni_env *env, i32 name, f32 value)
+{
+  seni_var *sv = add_var(env, name);
+
   sv->type = VAR_FLOAT;
   sv->value.f = value;
+
+  pretty_print_seni_var(sv, "float");
+
+  return sv;
 }
 
 void string_copy(char **dst, char *src)
@@ -1371,7 +1460,7 @@ void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_
   wlut->keywords_count++;
 
   if (wlut->keywords_count > MAX_KEYWORD_LOOKUPS) {
-    // error
+    SENI_ERROR("cannot declare keyword - wlut is full");
   }
 }
 
@@ -1390,4 +1479,19 @@ seni_var *evaluate(seni_env *env, seni_node *ast)
   }
 
   return res;
+}
+
+void debug_var_info(seni_env *env)
+{
+  env = NULL;
+  printf("vars available: %d, get count: %d, return count: %d\n",
+         env_debug_available_var(),
+         g_debug_var_get_count,
+         g_debug_var_return_count);
+}
+
+void debug_reset()
+{
+  g_debug_var_get_count = 0;
+  g_debug_var_return_count = 0;
 }
