@@ -197,7 +197,7 @@ void test_lang_env(void)
   env_allocate_pools();
   env = get_initial_env();
 
-  var = add_var(env, 1);
+  var = get_binded_var(env, 1);
   var->type = VAR_INT;
   var->value.i = 42;
 
@@ -211,7 +211,7 @@ void test_lang_env(void)
   TEST_ASSERT_EQUAL(42, var2->value.i);  
 
   /* redefine current scope */
-  var2 = add_var(env2, 1);
+  var2 = get_binded_var(env2, 1);
   var2->value.i = 100;
   var2 = lookup_var(env2, 1);
   TEST_ASSERT_EQUAL(100, var2->value.i);
@@ -293,7 +293,7 @@ seni_env *setup_interpreter_env(word_lut *wl)
 
   /* add a temporary debug variable for testing loops etc */
   i32 index = wlut_lookup_or_add(wl, "--test", sizeof("--test"));
-  seni_var *var = add_var(env, index);
+  seni_var *var = get_binded_var(env, index);
   var->type = VAR_INT;
   var->value.i = 0;
 
@@ -311,7 +311,7 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
 {
   // add a foo binding to env
   i32 name_index = wlut_lookup_or_add(wl, name, strlen(name));
-  seni_var *v = add_var(env, name_index);
+  seni_var *v = get_binded_var(env, name_index);
   v->type = VAR_INT;
   v->value.i = i;
 }
@@ -578,17 +578,28 @@ void test_lang_interpret_mem(void)
 
   // {
   //   EVAL_EXPR2("(loop (x from: 0 to: 30) (define v [7 8 9])) (#vars)");
-
-  //   //EVAL_EXPR("(#vars) (loop (x from: 0 upto: 10 steps: 3) (setq --test (+ --test x))) (#vars)");
-    
-    
   //   EVAL_CLEANUP;
   // }
 
   {
-    EVAL_EXPR2("(fn (some-fn) (define a 34)(setq a 11)) (#vars)");
+    //    EVAL_EXPR2("(fn (some-fn) (define a [3 4])(setq a 11)) (#vars)"); // <<- release the [3 4]
+    //    EVAL_CLEANUP;
+  }
+
+  {
+    //EVAL_EXPR2("(define b [2 3])(fn (some-fn) (define a [1 2 3])(setq a b)) (#vars)"); // <<- no release for [2 3]
+    //EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_EXPR2("(fn (some-fn)(define a [7 8]) (define b [2 3]) (setq a b))(some-fn)(#vars)");
     EVAL_CLEANUP;
-  }  
+  }
+
+  // {
+  //   EVAL_EXPR2("(define g 0) (loop (x from: 0 upto: 10 steps: 3) (setq g (+ g x))) (#vars)");
+  //   EVAL_CLEANUP;
+  // }
 }
 
 
@@ -608,14 +619,14 @@ the dest is allocatable
 
 
 (fn (some-fn)
-    (define a 34)  
-    (setq a 11))   <<- the dest here that's a VAR_INT:34 would be released
+    (define a [3 4])  
+    (setq a 11))   <<- the dest here that's [3 4] would be released
 
 
 
-(define b 99)
+(define b [2 3])
 (fn (some-fn)
-    (define a b)  
+    (define a b)
     (setq a 11)) <<- no release here
 
 

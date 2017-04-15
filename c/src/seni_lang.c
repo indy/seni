@@ -883,6 +883,7 @@ void env_allocate_pools(void)
     var[i].debug_id = i;
     var[i].debug_allocatable = true;
 #endif
+    var[i].allocated = false;
     DL_APPEND(g_vars, &(var[i]));
   }
 }
@@ -927,6 +928,7 @@ void env_return_to_pool(seni_env *env)
 seni_var *var_get_from_pool()
 {
   //printf("getting %d ", env_debug_available_var());
+
   
   g_debug_var_get_count++;
   
@@ -938,14 +940,31 @@ seni_var *var_get_from_pool()
     SENI_ERROR("no more vars in pool");
   }
 
+  if (head->allocated == true) {
+    SENI_ERROR("how did an already allocated seni_var get in the pool?");
+    pretty_print_seni_var(head, "var_get_from_pool");
+  }
+
+  head->env = NULL;
+  head->allocated = true;
+
   head->next = NULL;
   head->prev = NULL;
+
+  //pretty_print_seni_var(head, "getting");
 
   return head;
 }
 
 void var_return_to_pool(seni_var *var)
 {
+  if(var->allocated == false) {
+    // in case of 2 bindings to the same variable
+    // e.g. (define a [1 2]) (define b [3 4]) (setq a b)
+    // a and b both point to [3 4]
+    return;
+  }
+  
   g_debug_var_return_count++;
 
 #ifdef SENI_DEBUG_MODE
@@ -954,6 +973,7 @@ void var_return_to_pool(seni_var *var)
   }
 #endif
 
+  //pretty_print_seni_var(var, "returning");
   
   if (var->type == VAR_VEC_HEAD) {
     if (var->value.v != NULL) {
@@ -966,8 +986,8 @@ void var_return_to_pool(seni_var *var)
       var_return_to_pool(var->next);
     }
   }
-  //printf("returning %d ", env_debug_available_var());
-  //pretty_print_seni_var(var, "r");
+
+  var->allocated = false;
   DL_APPEND(g_vars, var);
 }
 
@@ -997,6 +1017,10 @@ seni_env *pop_scope(seni_env *env)
   // return all the vars back to the pool
   seni_var *var, *tmp;
 
+  // HASH_ITER(hh, env->vars, var, tmp) {
+  //   pretty_print_seni_var(var, "popping");
+  // }  
+
   HASH_ITER(hh, env->vars, var, tmp) {
     HASH_DEL(env->vars, var);
     var_return_to_pool(var);
@@ -1005,31 +1029,6 @@ seni_env *pop_scope(seni_env *env)
   env_return_to_pool(env);
   
   return outer_env;
-}
-
-/* adds a var to the env */
-seni_var *add_var(seni_env *env, i32 var_id)
-{
-  seni_var *var = NULL;
-
-  // is the key already assigned to this env?
-  HASH_FIND_INT(env->vars, &var_id, var);
-  if (var != NULL) {
-    // return the existing var so that it can be overwritten
-    // printf("-- already in hashmap -- %d ", env_debug_available_var());
-    return var;
-  }
-
-  var = var_get_from_pool();
-  if (var == NULL) {
-    SENI_ERROR("unable to get a var from the pool");
-    return NULL;
-  }
-  
-  var->id = var_id;
-  HASH_ADD_INT(env->vars, id, var);
-
-  return var;
 }
 
 seni_var *lookup_var_in_current_scope(seni_env *env, i32 var_id)
@@ -1067,13 +1066,43 @@ seni_node *safe_next(seni_node *expr)
   return sibling;
 }
 
-void safe_seni_var_copy(seni_var *dest, seni_var *src)
+/* adds a var to the env */
+seni_var *get_binded_var(seni_env *env, i32 var_id)
 {
-  if (dest->type == VAR_VEC_HEAD) {
-    if (dest->value.v != NULL) {
-      var_return_to_pool(dest->value.v);
+  seni_var *var = NULL;
+
+  // is the key already assigned to this env?
+  HASH_FIND_INT(env->vars, &var_id, var);
+  if (var != NULL) {
+    // return the existing var so that it can be overwritten
+    // printf("-- already in hashmap -- %d ", env_debug_available_var());
+    return var;
+  }
+
+  var = var_get_from_pool();
+  if (var == NULL) {
+    SENI_ERROR("unable to get a var from the pool");
+    return NULL;
+  }
+
+  var->env = env;
+  
+  var->id = var_id;
+  HASH_ADD_INT(env->vars, id, var);
+
+  return var;
+}
+
+void safe_seni_var_copy(seni_env *env, seni_var *dest, seni_var *src)
+{
+  if (dest->env == env) {
+    if (dest->type == VAR_VEC_HEAD) {
+      if (dest->value.v != NULL) {
+        var_return_to_pool(dest->value.v);
+      }
     }
   }
+  
   dest->type = src->type;
 
   seni_value_in_use using = get_value_in_use(src->type);
@@ -1247,7 +1276,7 @@ seni_var *eval_list(seni_env *env, seni_node *expr)
 //  |      |      |      |
 //  4      7      2      3
 //
-seni_var *append_to_vector(seni_var *head, seni_var *val)
+seni_var *append_to_vector(seni_env *env, seni_var *head, seni_var *val)
 {
 
   // assuming that head is VAR_VEC_HEAD
@@ -1258,7 +1287,7 @@ seni_var *append_to_vector(seni_var *head, seni_var *val)
     SENI_ERROR("cannot allocate child_value from pool");
     return NULL;
   }
-  safe_seni_var_copy(child_value, val);
+  safe_seni_var_copy(env, child_value, val);
   //pretty_print_seni_var(child_value, "child val");
 
 
@@ -1271,6 +1300,10 @@ seni_var *append_to_vector(seni_var *head, seni_var *val)
   child_cell->type = VAR_VEC_CONS;
   child_cell->value.v = child_value;
   //pretty_print_seni_var(child_cell, "child cell");
+
+
+  child_cell->env = env;
+  child_value->env = env;
 
   DL_APPEND(head->value.v, child_cell);
 
@@ -1304,7 +1337,7 @@ seni_var *eval(seni_env *env, seni_node *expr)
     for (seni_node *node = expr->value.children; node != NULL; node = safe_next(node)) {
       val = eval(env, node);
       
-      vec = append_to_vector(&head, val);
+      vec = append_to_vector(env, &head, val);
       if (vec == NULL) {
         return NULL;
       }
@@ -1406,35 +1439,35 @@ f32 var_as_float(seni_var *v1)
 
 seni_var *bind_var(seni_env *env, i32 name, seni_var *var)
 {
-  seni_var *sv = add_var(env, name);
+  seni_var *sv = get_binded_var(env, name);
 
-  safe_seni_var_copy(sv, var);
+  safe_seni_var_copy(env, sv, var);
 
-  pretty_print_seni_var(sv, "var");
+  // pretty_print_seni_var(sv, "var");
 
   return sv;
 }
 
 seni_var *bind_var_to_int(seni_env *env, i32 name, i32 value)
 {
-  seni_var *sv = add_var(env, name);
+  seni_var *sv = get_binded_var(env, name);
 
   sv->type = VAR_INT;
   sv->value.i = value;
 
-  pretty_print_seni_var(sv, "int");
+  // pretty_print_seni_var(sv, "int");
 
   return sv;
 }
 
 seni_var *bind_var_to_float(seni_env *env, i32 name, f32 value)
 {
-  seni_var *sv = add_var(env, name);
+  seni_var *sv = get_binded_var(env, name);
 
   sv->type = VAR_FLOAT;
   sv->value.f = value;
 
-  pretty_print_seni_var(sv, "float");
+  // pretty_print_seni_var(sv, "float");
 
   return sv;
 }
