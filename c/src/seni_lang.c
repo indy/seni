@@ -11,7 +11,9 @@
 seni_node *consume_item();
 
 // for interpreting
+void var_return_to_pool(seni_var *var);
 seni_var *eval(seni_env *env, seni_node *expr);
+
 
 #define NUM_SENI_ENV_ALLOCATED 32
 seni_env *g_envs;               /* doubly linked list used as a pool of seni_env structs */
@@ -761,7 +763,7 @@ seni_value_in_use get_value_in_use(seni_var_type type)
     return USE_N;
   case VAR_VEC_HEAD:
     return USE_V;
-  case VAR_VEC_CONS:
+  case VAR_VEC_RC:
     return USE_V;
   default:
     return USE_I;
@@ -777,7 +779,7 @@ char *seni_var_type_name(seni_var *var)
   case VAR_NAME:     return "VAR_NAME";
   case VAR_FN:       return "VAR_FN";
   case VAR_VEC_HEAD: return "VAR_VEC_HEAD";
-  case VAR_VEC_CONS: return "VAR_VEC_CONS";
+  case VAR_VEC_RC:   return "VAR_VEC_RC";
   default: return "unknown seni_var type";
   }
 }
@@ -790,6 +792,10 @@ i32 seni_var_vector_length(seni_var *var)
 
   i32 len = 0;
   seni_var *v = var->value.v;
+  if (var->type != VAR_VEC_RC) {
+    return 0;
+  }
+  v = var->value.v;
 
   if (v == NULL) {
     return len;
@@ -945,15 +951,40 @@ seni_var *var_get_from_pool()
     pretty_print_seni_var(head, "var_get_from_pool");
   }
 
-  head->env = NULL;
   head->allocated = true;
 
   head->next = NULL;
   head->prev = NULL;
 
+  head->ref_count = 0;
+
   //pretty_print_seni_var(head, "getting");
 
   return head;
+}
+
+void vector_ref_count_decrement(seni_var *vec_head)
+{
+  seni_var *var_rc = vec_head->value.v;
+  if (var_rc->type != VAR_VEC_RC) {
+    SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC???");
+  }
+
+  //printf ("ref count is %d\n", var_rc->ref_count);
+  var_rc->ref_count--;
+      
+  if (var_rc->ref_count == 0) {
+    var_return_to_pool(var_rc);
+  }
+}
+
+void vector_ref_count_increment(seni_var *vec_head)
+{
+  seni_var *var_rc = vec_head->value.v;
+  if (var_rc->type != VAR_VEC_RC) {
+    SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC???");
+  }
+  var_rc->ref_count++;
 }
 
 void var_return_to_pool(seni_var *var)
@@ -966,6 +997,7 @@ void var_return_to_pool(seni_var *var)
   }
   
   g_debug_var_return_count++;
+  // pretty_print_seni_var(var, "returning");
 
 #ifdef SENI_DEBUG_MODE
   if (var->debug_allocatable == false) {
@@ -973,18 +1005,21 @@ void var_return_to_pool(seni_var *var)
   }
 #endif
 
-  //pretty_print_seni_var(var, "returning");
-  
+
+
   if (var->type == VAR_VEC_HEAD) {
+    vector_ref_count_decrement(var);
+  }
+  
+  if (var->type == VAR_VEC_RC) {
     if (var->value.v != NULL) {
       var_return_to_pool(var->value.v);
     }
   }
-  if (var->type == VAR_VEC_CONS) {
-    var_return_to_pool(var->value.v);
-    if (var->next != NULL) {
-      var_return_to_pool(var->next);
-    }
+
+  // the var is part of an allocated list
+  if (var->next != NULL) {
+    var_return_to_pool(var->next);
   }
 
   var->allocated = false;
@@ -1085,22 +1120,22 @@ seni_var *get_binded_var(seni_env *env, i32 var_id)
     return NULL;
   }
 
-  var->env = env;
-  
   var->id = var_id;
   HASH_ADD_INT(env->vars, id, var);
 
   return var;
 }
 
-void safe_seni_var_copy(seni_env *env, seni_var *dest, seni_var *src)
+
+
+void safe_seni_var_copy(seni_var *dest, seni_var *src)
 {
-  if (dest->env == env) {
-    if (dest->type == VAR_VEC_HEAD) {
-      if (dest->value.v != NULL) {
-        var_return_to_pool(dest->value.v);
-      }
-    }
+  if (dest == src) {
+    return;
+  }
+
+  if (dest->type == VAR_VEC_HEAD) {
+    vector_ref_count_decrement(dest);
   }
   
   dest->type = src->type;
@@ -1116,6 +1151,7 @@ void safe_seni_var_copy(seni_env *env, seni_var *dest, seni_var *src)
   } else if (using == USE_V) {
     if (src->type == VAR_VEC_HEAD) {
       dest->value.v = src->value.v;
+      vector_ref_count_increment(dest);
     } else {
       printf("what the fuck?\n");
     }
@@ -1269,43 +1305,25 @@ seni_var *eval_list(seni_env *env, seni_node *expr)
   return NULL;
 }
 
-//
 // [ ] <<- this is the VAR_VEC_HEAD
 //  |
-// [ ] -> [ ] -> [ ] -> [ ] -> NULL  <<- these are VAR_VEC_CONS
-//  |      |      |      |
-//  4      7      2      3
+// [4] -> [7] -> [3] -> [5] -> NULL  <<- these are seni_vars
 //
-seni_var *append_to_vector(seni_env *env, seni_var *head, seni_var *val)
+seni_var *append_to_vector(seni_var *head, seni_var *val)
 {
-
   // assuming that head is VAR_VEC_HEAD
-
   
   seni_var *child_value = var_get_from_pool();
   if (child_value == NULL) {
     SENI_ERROR("cannot allocate child_value from pool");
     return NULL;
   }
-  safe_seni_var_copy(env, child_value, val);
+  safe_seni_var_copy(child_value, val);
   //pretty_print_seni_var(child_value, "child val");
 
-
-  seni_var *child_cell = var_get_from_pool();
-  if (child_cell == NULL) {
-    SENI_ERROR("cannot allocate child_cell from pool");
-    return NULL;
-  }
-
-  child_cell->type = VAR_VEC_CONS;
-  child_cell->value.v = child_value;
-  //pretty_print_seni_var(child_cell, "child cell");
-
-
-  child_cell->env = env;
-  child_value->env = env;
-
-  DL_APPEND(head->value.v, child_cell);
+  seni_var *vec_rc = head->value.v;
+  
+  DL_APPEND(vec_rc->value.v, child_value);
 
   return head;
 }
@@ -1314,18 +1332,20 @@ void debug_vector(seni_var *head)
 {
   printf("\nhead->type %d\n", head->type);
   if (head->type != VAR_VEC_HEAD) {
-    printf("fooked\n");
+    SENI_ERROR("fooked");
   }
 
   printf("head address %p\n", (void *)head);
   printf("head->value.v %p\n", (void *)head->value.v);
   pretty_print_seni_var(head, "head value");
 
-  if(head->value.v == NULL) {
-    printf("fooked\n");
+  seni_var *vec_rc = head->value.v;
+  if (!vec_rc || vec_rc->type != VAR_VEC_RC) {
+    SENI_ERROR("no rc var attached to vector head");
   }
+  printf("vector reference count %d\n", vec_rc->ref_count);
 
-  seni_var *cons = head->value.v;
+  seni_var *cons = vec_rc->value.v;
   while (cons != NULL) {
     pretty_print_seni_var(cons, "cons value");
     cons = cons->next;
@@ -1355,19 +1375,31 @@ seni_var *eval(seni_env *env, seni_node *expr)
 
     // don't use reg since the elements of the vector will call eval and overwrite it
     head.type = VAR_VEC_HEAD;
-    head.value.v = NULL;
+
+    // create and attach a VAR_VEC_RC to head
+    seni_var *var_rc = var_get_from_pool();
+    if (var_rc == NULL) {
+      SENI_ERROR("unable to get a var from the pool");
+      return NULL;
+    }
+    var_rc->type = VAR_VEC_RC;
+    var_rc->ref_count = 0;
+    var_rc->value.v = NULL;
+
+    head.value.v = var_rc;
+
 
     for (seni_node *node = expr->value.children; node != NULL; node = safe_next(node)) {
       val = eval(env, node);
       
-      vec = append_to_vector(env, &head, val);
+      vec = append_to_vector(&head, val);
       if (vec == NULL) {
         return NULL;
       }
     }
 
     reg.type = head.type;
-    reg.value.v = head.value.v; // this is a list of VAR_VEC_CONS
+    reg.value.v = head.value.v; // this is a list of seni_vars whose  next/prev pointers are being used
     return &reg;
   }
 
@@ -1464,7 +1496,7 @@ seni_var *bind_var(seni_env *env, i32 name, seni_var *var)
 {
   seni_var *sv = get_binded_var(env, name);
 
-  safe_seni_var_copy(env, sv, var);
+  safe_seni_var_copy(sv, var);
 
   // pretty_print_seni_var(sv, "var");
 

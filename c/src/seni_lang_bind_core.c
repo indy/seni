@@ -410,7 +410,7 @@ seni_var *eval_classic_fn_vector_append(seni_env *env, seni_node *expr)
   seni_var *val = eval(env, sibling);
 
   // add val to the end of vec
-  vec_head = append_to_vector(env, vec_head, val);
+  vec_head = append_to_vector(vec_head, val);
   if (vec_head == NULL) {
     return NULL;
   }
@@ -690,7 +690,7 @@ seni_var *eval_keyword_setq(seni_env *env, seni_node *expr)
 
   // call lookup_var since we're overwriting the existing value
   seni_var *variable = lookup_var(env, name_node->value.i);
-  safe_seni_var_copy(env, variable, value_var);
+  safe_seni_var_copy(variable, value_var);
   return variable;
 }
 

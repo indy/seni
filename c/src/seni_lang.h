@@ -64,8 +64,8 @@ typedef enum {
   VAR_BOOLEAN,   // value.i
   VAR_NAME,      // word_lut[value.i]
   VAR_FN,        // pointer to seni_node: value.n
-  VAR_VEC_HEAD,  // pointer to first cons in value.v
-  VAR_VEC_CONS,  // pointer to value in value.v and next/prev point to siblings
+  VAR_VEC_HEAD,  // pointer to vec_rc is in value.v
+  VAR_VEC_RC,    // pointer to first vector element is in value.v
 } seni_var_type;
 
 /*
@@ -100,8 +100,8 @@ typedef struct seni_var {
   bool debug_allocatable; 
 #endif
 
-  // the env in which this var is contained
-  struct seni_env *env;
+  // reference count for VAR_VEC_RC
+  i32 ref_count;
 
   bool allocated;
 
@@ -109,7 +109,7 @@ typedef struct seni_var {
   i32 id;                    /* key */
   UT_hash_handle hh;         /* makes this structure hashable */
 
-  /* for linked list used by the pool */
+  /* for linked list used by the pool and for elements in a vector */
   struct seni_var *prev;
   struct seni_var *next;
 
@@ -152,7 +152,7 @@ seni_env *pop_scope(seni_env *outer);
 seni_var *get_binded_var(seni_env *env, i32 var_id);
 seni_var *lookup_var(seni_env *env, i32 var_id);
 
-seni_var *append_to_vector(seni_env *env, seni_var *vec, seni_var *val);
+seni_var *append_to_vector(seni_var *vec, seni_var *val);
 // interpreter
 
 // helpers used by bounded functions
@@ -167,7 +167,7 @@ seni_var *eval(seni_env *env, seni_node *expr);
 seni_var *eval_all_nodes(seni_env *env, seni_node *body);
 seni_node *safe_next(seni_node *expr);
 seni_value_in_use get_value_in_use(seni_var_type type);
-void safe_seni_var_copy(seni_env *env, seni_var *dest, seni_var *src);
+void safe_seni_var_copy(seni_var *dest, seni_var *src);
 void add_labelled_parameters_to_env(seni_env *env, seni_node *named_args);
 bool has_labelled_parameter(seni_node *named_args, i32 name);
 

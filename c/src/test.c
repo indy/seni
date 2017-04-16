@@ -242,8 +242,8 @@ void assert_seni_var_vec(seni_var *var)
 
 void assert_seni_var_vec_i32(seni_var *var, i32 i)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_CONS, var->type, seni_var_type_name(var));
-  assert_seni_var_i32(var->value.v, VAR_INT, i);
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_INT, var->type, seni_var_type_name(var));
+  assert_seni_var_i32(var, VAR_INT, i);
 }
 
 void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
@@ -356,6 +356,7 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
   EVAL_CLEANUP
 
 #define SENI_ASSERT_VEC() assert_seni_var_vec(var); \
+  var = var->value.v; \
   var = var->value.v
 
 #define SENI_ASSERT_VEC_INT(EXPECTED) assert_seni_var_vec_i32(var, EXPECTED); \
@@ -609,7 +610,7 @@ void debug_lang_interpret_mem(void)
   {
     DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define a 1) (vector/append b a))");
     EVAL_CLEANUP;
-  }  
+  }
 }
 
 int main(void)
@@ -626,7 +627,7 @@ int main(void)
   RUN_TEST(test_lang_interpret_if);
   RUN_TEST(test_lang_interpret_setq);
   RUN_TEST(test_lang_interpret_loop);
-  RUN_TEST(test_lang_interpret_vector); 
+  RUN_TEST(test_lang_interpret_vector);
 
   // for debugging/development
   RUN_TEST(debug_lang_interpret_mem);
