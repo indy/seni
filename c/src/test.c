@@ -292,7 +292,7 @@ seni_env *setup_interpreter_env(word_lut *wl)
   seni_env *env = setup_basic_interpreter_env();
 
   /* add a temporary debug variable for testing loops etc */
-  i32 index = wlut_lookup_or_add(wl, "--test", sizeof("--test"));
+  i32 index = wlut_lookup_or_add(wl, "#test", sizeof("#test"));
   seni_var *var = get_binded_var(env, index);
   var->type = VAR_INT;
   var->value.i = 0;
@@ -320,13 +320,14 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
   wl = setup_interpreter_wl(); \
   env = setup_interpreter_env(wl); \
   ast = parser_parse(wl, EXPR); \
-  var = evaluate(env, ast)
+  var = evaluate(env, ast, false)
 
-#define EVAL_EXPR2(EXPR) debug_reset();          \
+#define DEBUG_EXPR(EXPR) debug_reset(); \
   wl = setup_interpreter_wl(); \
   env = setup_basic_interpreter_env(); \
   ast = parser_parse(wl, EXPR); \
-  var = evaluate(env, ast)
+  var = evaluate(env, ast, true);    \
+  debug_var_info(env)
 
 #define EVAL_CLEANUP shutdown_interpreter_test(wl, ast)
 
@@ -463,59 +464,63 @@ void test_lang_interpret_setq(void)
   EVAL_DECL;
 
   EVAL_INT("(define x 7) (setq x 4)", 4);
-  EVAL_INT("(setq --test 5) --test", 5);
+  EVAL_INT("(setq #test 5) #test", 5);
 }  
 
 void test_lang_interpret_loop(void)
 {
   EVAL_DECL;
 
+  // #test is a special global for unit testing that we've defined
+  // in setup_interpreter_env
+
   // basic from, to and upto
-  EVAL_INT("(loop (x from: 0 to: 5) (setq --test x)) --test", 4);
-  EVAL_INT("(loop (x from: 0 upto: 5) (setq --test x)) --test", 5);
-  EVAL_INT("(loop (x to: 8) (setq --test x)) --test", 7);
-  EVAL_INT("(loop (x upto: 8) (setq --test x)) --test", 8);
-  EVAL_INT("(setq --test 1)(loop (x from: 0 to: 5) (setq --test (+ --test --test))) --test", 32);
-  EVAL_INT("(loop (x from: 1 to: 4) (setq --test (+ --test x))) --test", 6);
-  EVAL_INT("(loop (x from: 1 upto: 4) (setq --test (+ --test x))) --test", 10);
+  EVAL_INT("(loop (x from: 0 to: 5) (setq #test x)) #test", 4);
+  EVAL_INT("(loop (x from: 0 upto: 5) (setq #test x)) #test", 5);
+  EVAL_INT("(loop (x to: 8) (setq #test x)) #test", 7);
+  EVAL_INT("(loop (x upto: 8) (setq #test x)) #test", 8);
+  EVAL_INT("(setq #test 1)(loop (x from: 0 to: 5) (setq #test (+ #test #test))) #test", 32);
+  EVAL_INT("(loop (x from: 1 to: 4) (setq #test (+ #test x))) #test", 6);
+  EVAL_INT("(loop (x from: 1 upto: 4) (setq #test (+ #test x))) #test", 10);
 
   // change increment
-  EVAL_INT("(loop (x from: 0 to: 10 increment: 2) (setq --test (+ --test x))) --test", 20);
+  EVAL_INT("(loop (x from: 0 to: 10 increment: 2) (setq #test (+ #test x))) #test", 20);
 
   // steps
-  EVAL_FLOAT_WITHIN("(loop (x from: 0   to: 10 steps: 3) (setq --test (+ --test x))) --test",
+  EVAL_FLOAT_WITHIN("(loop (x from: 0   to: 10 steps: 3) (setq #test (+ #test x))) #test",
                     0.00f + 3.333f + 6.666f, 0.1f);
-  EVAL_FLOAT_WITHIN("(loop (x from: 0 upto: 10 steps: 3) (setq --test (+ --test x))) --test",
+  EVAL_FLOAT_WITHIN("(loop (x from: 0 upto: 10 steps: 3) (setq #test (+ #test x))) #test",
                     0.00f + 5.0f + 10.0f, 0.1f);
-  //  EVAL_FLOAT("(loop (x from: 0 upto: 10 steps: 3) (setq --test (+ --test x))) --test", 0.00f + 5.0f + 10.0f);
+  //  EVAL_FLOAT("(loop (x from: 0 upto: 10 steps: 3) (setq #test (+ #test x))) #test", 0.00f + 5.0f + 10.0f);
 }
 
 void test_lang_interpret_vector(void)
 {
   EVAL_DECL;
-
+#if 1
   {
     EVAL_EXPR("(define x [])");
-    // seni_var *v = var;
+
     SENI_ASSERT_VEC();
     TEST_ASSERT_NULL(var);
     
     EVAL_CLEANUP;
   }
-
+#endif
+  
   {
     EVAL_EXPR("(define x [3])");
-    // seni_var *v = var;
+
     SENI_ASSERT_VEC();
     SENI_ASSERT_VEC_INT(3);
     TEST_ASSERT_NULL(var);
 
     EVAL_CLEANUP;
   }
-  
+
   {
     EVAL_EXPR("(define y [8 7 6])");
-    // seni_var *v = var;
+
     SENI_ASSERT_VEC();
     SENI_ASSERT_VEC_INT(8);
     SENI_ASSERT_VEC_INT(7);
@@ -527,7 +532,7 @@ void test_lang_interpret_vector(void)
   
   {
     EVAL_EXPR("(define y []) (vector/append y 5)");
-    // seni_var *v = var;
+
     SENI_ASSERT_VEC();
     SENI_ASSERT_VEC_INT(5);
     TEST_ASSERT_NULL(var);
@@ -537,7 +542,7 @@ void test_lang_interpret_vector(void)
 
   {
     EVAL_EXPR("(define y [3]) (vector/append y 4)");
-    // seni_var *v = var;
+
     SENI_ASSERT_VEC();
     SENI_ASSERT_VEC_INT(3);
     SENI_ASSERT_VEC_INT(4);
@@ -548,7 +553,7 @@ void test_lang_interpret_vector(void)
 
   {
     EVAL_EXPR("(define y [4 5]) (vector/append y 6)");
-    // seni_var *v = var;
+
     SENI_ASSERT_VEC();
     SENI_ASSERT_VEC_INT(4);
     SENI_ASSERT_VEC_INT(5);
@@ -560,7 +565,7 @@ void test_lang_interpret_vector(void)
 
   {
     EVAL_EXPR("(define y [8 7 6]) (vector/append y 5)");
-    // seni_var *v = var;
+
     SENI_ASSERT_VEC();
     SENI_ASSERT_VEC_INT(8);
     SENI_ASSERT_VEC_INT(7);
@@ -572,83 +577,59 @@ void test_lang_interpret_vector(void)
   }
 }
 
-void test_lang_interpret_mem(void)
+void debug_lang_interpret_mem(void)
 {
   EVAL_DECL;
 
-  // {
-  //   EVAL_EXPR2("(loop (x from: 0 to: 30) (define v [7 8 9])) (#vars)");
-  //   EVAL_CLEANUP;
-  // }
-
   {
-    //    EVAL_EXPR2("(fn (some-fn) (define a [3 4])(setq a 11)) (#vars)"); // <<- release the [3 4]
-    //    EVAL_CLEANUP;
-  }
-
-  {
-    //EVAL_EXPR2("(define b [2 3])(fn (some-fn) (define a [1 2 3])(setq a b)) (#vars)"); // <<- no release for [2 3]
-    //EVAL_CLEANUP;
-  }
-
-  {
-    EVAL_EXPR2("(fn (some-fn)(define a [7 8]) (define b [2 3]) (setq a b))(some-fn)(#vars)");
+    DEBUG_EXPR("(fn (some-fn) (define a [3 4])(setq a 11))");
     EVAL_CLEANUP;
   }
 
-  // {
-  //   EVAL_EXPR2("(define g 0) (loop (x from: 0 upto: 10 steps: 3) (setq g (+ g x))) (#vars)");
-  //   EVAL_CLEANUP;
-  // }
+  {
+    DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define a [1 2 3])(setq a b))");
+    EVAL_CLEANUP;
+  }
+
+  {
+    DEBUG_EXPR("(fn (some-fn)(define a [7 8]) (define b [2 3]) (setq a b))(some-fn)");
+    EVAL_CLEANUP;
+  }
+
+  {
+   DEBUG_EXPR("(define g 0) (loop (x from: 0 upto: 10 steps: 3) (setq g (+ g x)))");
+   EVAL_CLEANUP;
+  }
+
+  {
+    DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define a [1 2 3]) (vector/append b a))");
+    EVAL_CLEANUP;
+  }
+
+  {
+    DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define a 1) (vector/append b a))");
+    EVAL_CLEANUP;
+  }  
 }
-
-
-/*
-return to pool if
-
-safe_seni_var_copy ->
-
-
-
-the dest binding is in the current lowest level of the env
-the dest is allocatable
-
-
-
---------------------------------------------------------------------------------
-
-
-(fn (some-fn)
-    (define a [3 4])  
-    (setq a 11))   <<- the dest here that's [3 4] would be released
-
-
-
-(define b [2 3])
-(fn (some-fn)
-    (define a b)
-    (setq a 11)) <<- no release here
-
-
-
-unless every seni_var has a pointer to the env in which it was defined
-*/
 
 int main(void)
 {
   UNITY_BEGIN();
-  // RUN_TEST(test_mathutil);
-  // RUN_TEST(test_lang_parser);
-  // RUN_TEST(test_lang_env);
-  // RUN_TEST(test_lang_interpret_basic);
-  // RUN_TEST(test_lang_interpret_math);
-  // RUN_TEST(test_lang_interpret_comparison);
-  // RUN_TEST(test_lang_interpret_define);
-  // RUN_TEST(test_lang_interpret_function);
-  // RUN_TEST(test_lang_interpret_if);
-  // RUN_TEST(test_lang_interpret_setq);
-  // RUN_TEST(test_lang_interpret_loop);
-  // RUN_TEST(test_lang_interpret_vector);
-  RUN_TEST(test_lang_interpret_mem);
+  RUN_TEST(test_mathutil);
+  RUN_TEST(test_lang_parser);
+  RUN_TEST(test_lang_env);
+  RUN_TEST(test_lang_interpret_basic);
+  RUN_TEST(test_lang_interpret_math);
+  RUN_TEST(test_lang_interpret_comparison);
+  RUN_TEST(test_lang_interpret_define);
+  RUN_TEST(test_lang_interpret_function);
+  RUN_TEST(test_lang_interpret_if);
+  RUN_TEST(test_lang_interpret_setq);
+  RUN_TEST(test_lang_interpret_loop);
+  RUN_TEST(test_lang_interpret_vector); 
+
+  // for debugging/development
+  RUN_TEST(debug_lang_interpret_mem);
+  
   return UNITY_END();
 }

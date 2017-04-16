@@ -1310,6 +1310,29 @@ seni_var *append_to_vector(seni_env *env, seni_var *head, seni_var *val)
   return head;
 }
 
+void debug_vector(seni_var *head)
+{
+  printf("\nhead->type %d\n", head->type);
+  if (head->type != VAR_VEC_HEAD) {
+    printf("fooked\n");
+  }
+
+  printf("head address %d\n", (int)head);
+  printf("head->value.v %d\n", (int)head->value.v);
+  pretty_print_seni_var(head, "head value");
+
+  if(head->value.v == NULL) {
+    printf("fooked\n");
+  }
+
+  seni_var *cons = head->value.v;
+  while (cons != NULL) {
+    pretty_print_seni_var(cons, "cons value");
+    cons = cons->next;
+  }
+  printf("cons is null\n\n");
+}
+
 seni_var *eval(seni_env *env, seni_node *expr)
 {
   // a register like seni_var for holding intermediate values
@@ -1504,14 +1527,48 @@ void declare_common_arg(word_lut *wlut, char *name, i32 *global_value)
   *global_value = i;
 }
 
-seni_var *evaluate(seni_env *env, seni_node *ast)
+seni_var *evaluate(seni_env *env, seni_node *ast, bool hygenic_scope)
 {
-  seni_var *res = NULL;
-  for (seni_node *n = ast; n != NULL; n = safe_next(n)) {
-    res = eval(env, n);
-  }
+  if (hygenic_scope) {
 
-  return res;
+    // evaluate the ast in a clean scope that's popped afterwards.
+    // This is useful when debugging for seni_var leaks and we want
+    // to compare g_debug_var_get_count with g_debug_var_return_count.
+    // (see debug_lang_interpret_mem in test.c). It's also neater in
+    // concept since it doesn't leave a polluted env after being
+    // called so it should be used by default
+
+    seni_env *e = push_scope(env);
+    {
+      for (seni_node *n = ast; n != NULL; n = safe_next(n)) {
+        eval(e, n);
+      }
+    }
+    pop_scope(e);
+
+    // can't return the result of eval since that will reference
+    // a seni_var that has been returned to the pool with the call
+    // to pop_scope
+    //
+    return NULL;
+
+  } else {
+
+    // eval with the given seni_env, any modifications made will
+    // persist. Useful for unit testing when we want to get the
+    // result of an evaluation. (Normal behaviour is to add vertex
+    // data to a buffer a.k.a side-effects)
+
+    seni_var *res = NULL;
+    {
+      for (seni_node *n = ast; n != NULL; n = safe_next(n)) {
+        res = eval(env, n);
+      }
+    }
+
+    return res;
+
+  }
 }
 
 void debug_var_info(seni_env *env)

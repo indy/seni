@@ -16,6 +16,8 @@ else
     cc -o test -std=c99 ../src/test.c ../src/unity/unity.c ../src/gl-matrix/*.c ../src/seni.c ../src/seni_*.c -lm
     popd
 
-    ./build_osx/test
+    if [ "$1" == "test" ]; then
+        ./build_osx/test
+    fi
 
 fi

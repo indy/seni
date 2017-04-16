@@ -173,10 +173,11 @@ bool has_labelled_parameter(seni_node *named_args, i32 name);
 
 void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *));
 void declare_common_arg(word_lut *wlut, char *name, i32 *global_value);
-seni_var *evaluate(seni_env *env, seni_node *ast);
+seni_var *evaluate(seni_env *env, seni_node *ast, bool hygenic_scope);
 
 // debugging
 void debug_var_info(seni_env *env);
 void debug_reset();
-
+void pretty_print_seni_var(seni_var *var, char* msg);
+  
 #endif

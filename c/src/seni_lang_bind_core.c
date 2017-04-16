@@ -478,6 +478,7 @@ seni_var *eval_keyword_define(seni_env *env, seni_node *expr)
   seni_var *v = eval(env, sibling);
 
   // add the name/value binding to the current env
+
   seni_var *env_var = bind_var(env, name->value.i, v);
 
   return env_var;
