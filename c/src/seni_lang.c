@@ -1317,8 +1317,8 @@ void debug_vector(seni_var *head)
     printf("fooked\n");
   }
 
-  printf("head address %d\n", (int)head);
-  printf("head->value.v %d\n", (int)head->value.v);
+  printf("head address %p\n", (void *)head);
+  printf("head->value.v %p\n", (void *)head->value.v);
   pretty_print_seni_var(head, "head value");
 
   if(head->value.v == NULL) {
