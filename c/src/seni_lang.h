@@ -127,6 +127,18 @@ typedef struct seni_env {
 } seni_env;
 
 
+typedef struct seni_debug_info {
+  i32 num_var_allocated;
+  i32 num_env_allocated;
+
+  i32 num_var_available;
+
+  i32 var_get_count;
+  i32 var_return_count;
+} seni_debug_info;
+
+void fill_debug_info(seni_debug_info *debug_info);
+
 // word lookup
 word_lut *wlut_allocate();
 void      wlut_free(word_lut *wlut);
@@ -136,8 +148,8 @@ i32       wlut_lookup_or_add(word_lut *wlut, char *string, size_t len);
 seni_node *parser_parse(word_lut *wlut, char *s);
 void       parser_free_nodes(seni_node *nodes);
 
-char      *seni_node_type_name(seni_node *node);
-char      *seni_var_type_name(seni_var *var);
+char      *node_type_name(seni_node *node);
+char      *var_type_name(seni_var *var);
 
 // env
 //int env_debug_available_env();
@@ -167,7 +179,7 @@ seni_var *eval(seni_env *env, seni_node *expr);
 seni_var *eval_all_nodes(seni_env *env, seni_node *body);
 seni_node *safe_next(seni_node *expr);
 seni_value_in_use get_value_in_use(seni_var_type type);
-void safe_seni_var_copy(seni_var *dest, seni_var *src);
+void safe_var_copy(seni_var *dest, seni_var *src);
 void add_labelled_parameters_to_env(seni_env *env, seni_node *named_args);
 bool has_labelled_parameter(seni_node *named_args, i32 name);
 

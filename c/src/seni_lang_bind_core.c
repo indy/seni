@@ -690,7 +690,7 @@ seni_var *eval_keyword_setq(seni_env *env, seni_node *expr)
 
   // call lookup_var since we're overwriting the existing value
   seni_var *variable = lookup_var(env, name_node->value.i);
-  safe_seni_var_copy(variable, value_var);
+  safe_var_copy(variable, value_var);
   return variable;
 }
 

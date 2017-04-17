@@ -26,34 +26,34 @@ void test_mathutil(void)
 
 seni_node *assert_parser_node_raw(seni_node *node, seni_node_type type)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
   return node->next;
 }
 
 seni_node *assert_parser_node_i32(seni_node *node, seni_node_type type, i32 val)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
   TEST_ASSERT_EQUAL(val, node->value.i);
   return node->next;
 }
 
 seni_node *assert_parser_node_f32(seni_node *node, seni_node_type type, f32 val)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
   TEST_ASSERT_EQUAL_FLOAT(val, node->value.f);
   return node->next;
 }
 
 seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *val)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
   TEST_ASSERT_EQUAL_STRING(val, node->value.s);
   return node->next;
 }
 
 seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, word_lut *wlut)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, seni_node_type_name(node));
+  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
   char *c = wlut->words[node->value.i];
   TEST_ASSERT_EQUAL_STRING(val, c);
@@ -226,47 +226,47 @@ void test_lang_env(void)
 
 void assert_seni_var(seni_var *var, seni_var_type type)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, seni_var_type_name(var));
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
 }
 
 void assert_seni_var_i32(seni_var *var, seni_var_type type, i32 i)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, seni_var_type_name(var));
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
   TEST_ASSERT_EQUAL(i, var->value.i);
 }
 
 void assert_seni_var_vec(seni_var *var)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_HEAD, var->type, seni_var_type_name(var));
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_HEAD, var->type, var_type_name(var));
 }
 
 void assert_seni_var_vec_i32(seni_var *var, i32 i)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_INT, var->type, seni_var_type_name(var));
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_INT, var->type, var_type_name(var));
   assert_seni_var_i32(var, VAR_INT, i);
 }
 
 void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, seni_var_type_name(var));
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
 void assert_seni_var_f32_within(seni_var *var, seni_var_type type, f32 f, f32 tolerance)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, seni_var_type_name(var));
+  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
   TEST_ASSERT_FLOAT_WITHIN(tolerance, f, var->value.f);
 }
 
 void assert_seni_var_true(seni_var *var)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, seni_var_type_name(var));
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var));
   TEST_ASSERT_EQUAL(1, var->value.i);
 }
 
 void assert_seni_var_false(seni_var *var)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, seni_var_type_name(var));
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var));
   TEST_ASSERT_EQUAL(0, var->value.i);
 }
 
@@ -316,13 +316,29 @@ void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
   v->value.i = i;
 }
 
+void debug_memory(char *expression)
+{
+  seni_debug_info debug_info;
+  fill_debug_info(&debug_info);
+  
+  TEST_ASSERT_EQUAL_MESSAGE(debug_info.num_var_allocated, debug_info.num_var_available, expression);
+  TEST_ASSERT_EQUAL_MESSAGE(debug_info.var_get_count, debug_info.var_return_count, expression);
+}
+
 #define EVAL_EXPR(EXPR) debug_reset(); \
   wl = setup_interpreter_wl(); \
   env = setup_interpreter_env(wl); \
   ast = parser_parse(wl, EXPR); \
   var = evaluate(env, ast, false)
 
-#define DEBUG_EXPR(EXPR) debug_reset(); \
+#define EVAL_MEM(EXPR) debug_reset(); \
+  wl = setup_interpreter_wl(); \
+  env = setup_basic_interpreter_env(); \
+  ast = parser_parse(wl, EXPR); \
+  var = evaluate(env, ast, true);    \
+  debug_memory(EXPR)
+
+#define DEBUG_EXPR(EXPR) debug_reset();         \
   wl = setup_interpreter_wl(); \
   env = setup_basic_interpreter_env(); \
   ast = parser_parse(wl, EXPR); \
@@ -578,6 +594,43 @@ void test_lang_interpret_vector(void)
   }
 }
 
+void test_lang_interpret_mem(void)
+{
+  EVAL_DECL;
+
+  // tests the memory allocations for any leaks or double-free
+
+  {
+    EVAL_MEM("(fn (some-fn) (define a [3 4])(setq a 11))");
+    EVAL_CLEANUP;
+  }
+  
+  {
+    EVAL_MEM("(define b [2 3]) (fn (some-fn) (define a [1 2 3])(setq a b))");
+    EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_MEM("(fn (some-fn)(define a [7 8]) (define b [2 3]) (setq a b))(some-fn)");
+    EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_MEM("(define g 0) (loop (x from: 0 upto: 10 steps: 3) (setq g (+ g x)))");
+    EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_MEM("(define b [2 3]) (fn (some-fn) (define a [1 2 3]) (vector/append b a))");
+    EVAL_CLEANUP;
+  }
+
+  {
+    EVAL_MEM("(define b [2 3]) (fn (some-fn) (define a 1) (vector/append b a))");
+    EVAL_CLEANUP;
+  }  
+}
+
 void debug_lang_interpret_mem(void)
 {
   EVAL_DECL;
@@ -598,8 +651,8 @@ void debug_lang_interpret_mem(void)
   }
 
   {
-   DEBUG_EXPR("(define g 0) (loop (x from: 0 upto: 10 steps: 3) (setq g (+ g x)))");
-   EVAL_CLEANUP;
+    DEBUG_EXPR("(define g 0) (loop (x from: 0 upto: 10 steps: 3) (setq g (+ g x)))");
+    EVAL_CLEANUP;
   }
 
   {
@@ -628,6 +681,7 @@ int main(void)
   RUN_TEST(test_lang_interpret_setq);
   RUN_TEST(test_lang_interpret_loop);
   RUN_TEST(test_lang_interpret_vector);
+  RUN_TEST(test_lang_interpret_mem);
 
   // for debugging/development
   RUN_TEST(debug_lang_interpret_mem);

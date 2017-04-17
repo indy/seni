@@ -15,15 +15,14 @@ void var_return_to_pool(seni_var *var);
 seni_var *eval(seni_env *env, seni_node *expr);
 
 
-#define NUM_SENI_ENV_ALLOCATED 32
+#define NUM_ENV_ALLOCATED 32
 seni_env *g_envs;               /* doubly linked list used as a pool of seni_env structs */
 i32 g_envs_used;
 
-#define NUM_SENI_VAR_ALLOCATED 1024
+#define NUM_VAR_ALLOCATED 1024
 seni_var *g_vars;               /* doubly linked list used as a pool of seni_var structs */
 
-i32 g_debug_var_get_count = 0;
-i32 g_debug_var_return_count = 0;
+seni_debug_info g_debug_info;
 
 void string_copy_len(char **dst, char *src, size_t len)
 {
@@ -677,7 +676,7 @@ seni_node *consume_item(word_lut *wlut, char **src)
   return NULL;
 }
 
-char *seni_node_type_name(seni_node *node)
+char *node_type_name(seni_node *node)
 {
   switch(node->type) {
   case NODE_LIST:       return "NODE_LIST";
@@ -721,7 +720,7 @@ void parser_free_nodes(seni_node *nodes)
       }
     }
 
-    // printf("freeing node: %s %u\n", seni_node_type_name(node), (u32)node);
+    // printf("freeing node: %s %u\n", node_type_name(node), (u32)node);
     free(node);
     
     node = next;
@@ -770,7 +769,7 @@ seni_value_in_use get_value_in_use(seni_var_type type)
   };
 }
 
-char *seni_var_type_name(seni_var *var)
+char *var_type_name(seni_var *var)
 {
   switch(var->type) {
   case VAR_INT:      return "VAR_INT";
@@ -811,7 +810,7 @@ i32 seni_var_vector_length(seni_var *var)
 
 void pretty_print_seni_var(seni_var *var, char* msg)
 {
-  char *type = seni_var_type_name(var);
+  char *type = var_type_name(var);
   seni_value_in_use using = get_value_in_use(var->type);
 
 #ifdef SENI_DEBUG_MODE
@@ -823,7 +822,7 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     printf("id:%d %s : %.2f %s\n", var->debug_id, type, var->value.f, msg);
     break;
   case USE_N:
-    printf("id:%d %s %s %s\n", var->debug_id, type, seni_node_type_name(var->value.n), msg);
+    printf("id:%d %s %s %s\n", var->debug_id, type, node_type_name(var->value.n), msg);
     break;
   case USE_V:
     printf("id:%d %s : length %d %s\n", var->debug_id, type, seni_var_vector_length(var), msg);
@@ -838,7 +837,7 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     printf("%s : %.2f %s\n", type, var->value.f, msg);
     break;
   case USE_N:
-    printf("%s %s %s\n", type, seni_node_type_name(var->value.n), msg);
+    printf("%s %s %s\n", type, node_type_name(var->value.n), msg);
     break;
   case USE_V:
     printf("%s : length %d %s\n", type, seni_var_vector_length(var), msg);
@@ -875,16 +874,16 @@ void env_allocate_pools(void)
   g_envs = NULL;
   g_envs_used = 0;
 
-  seni_env *env = (seni_env *)calloc(NUM_SENI_ENV_ALLOCATED, sizeof(seni_env));
-  for (i = 0; i < NUM_SENI_ENV_ALLOCATED; i++) {
+  seni_env *env = (seni_env *)calloc(NUM_ENV_ALLOCATED, sizeof(seni_env));
+  for (i = 0; i < NUM_ENV_ALLOCATED; i++) {
     DL_APPEND(g_envs, &(env[i]));
   }
 
   g_vars = NULL;
   //g_vars_used = 0;
 
-  seni_var *var = (seni_var *)calloc(NUM_SENI_VAR_ALLOCATED, sizeof(seni_var));
-  for (i = 0; i < NUM_SENI_VAR_ALLOCATED; i++) {
+  seni_var *var = (seni_var *)calloc(NUM_VAR_ALLOCATED, sizeof(seni_var));
+  for (i = 0; i < NUM_VAR_ALLOCATED; i++) {
 #ifdef SENI_DEBUG_MODE
     var[i].debug_id = i;
     var[i].debug_allocatable = true;
@@ -935,8 +934,7 @@ seni_var *var_get_from_pool()
 {
   //printf("getting %d ", env_debug_available_var());
 
-  
-  g_debug_var_get_count++;
+  g_debug_info.var_get_count++;
   
   seni_var *head = g_vars;
 
@@ -995,8 +993,8 @@ void var_return_to_pool(seni_var *var)
     // a and b both point to [3 4]
     return;
   }
-  
-  g_debug_var_return_count++;
+
+  g_debug_info.var_return_count++;
   // pretty_print_seni_var(var, "returning");
 
 #ifdef SENI_DEBUG_MODE
@@ -1128,7 +1126,7 @@ seni_var *get_binded_var(seni_env *env, i32 var_id)
 
 
 
-void safe_seni_var_copy(seni_var *dest, seni_var *src)
+void safe_var_copy(seni_var *dest, seni_var *src)
 {
   if (dest == src) {
     return;
@@ -1318,7 +1316,7 @@ seni_var *append_to_vector(seni_var *head, seni_var *val)
     SENI_ERROR("cannot allocate child_value from pool");
     return NULL;
   }
-  safe_seni_var_copy(child_value, val);
+  safe_var_copy(child_value, val);
   //pretty_print_seni_var(child_value, "child val");
 
   seni_var *vec_rc = head->value.v;
@@ -1496,7 +1494,7 @@ seni_var *bind_var(seni_env *env, i32 name, seni_var *var)
 {
   seni_var *sv = get_binded_var(env, name);
 
-  safe_seni_var_copy(sv, var);
+  safe_var_copy(sv, var);
 
   // pretty_print_seni_var(sv, "var");
 
@@ -1565,7 +1563,7 @@ seni_var *evaluate(seni_env *env, seni_node *ast, bool hygenic_scope)
 
     // evaluate the ast in a clean scope that's popped afterwards.
     // This is useful when debugging for seni_var leaks and we want
-    // to compare g_debug_var_get_count with g_debug_var_return_count.
+    // to compare g_debug_info.
     // (see debug_lang_interpret_mem in test.c). It's also neater in
     // concept since it doesn't leave a polluted env after being
     // called so it should be used by default
@@ -1608,12 +1606,28 @@ void debug_var_info(seni_env *env)
   env = NULL;
   printf("vars available: %d, get count: %d, return count: %d\n",
          env_debug_available_var(),
-         g_debug_var_get_count,
-         g_debug_var_return_count);
+         g_debug_info.var_get_count,
+         g_debug_info.var_return_count);
 }
 
 void debug_reset()
 {
-  g_debug_var_get_count = 0;
-  g_debug_var_return_count = 0;
+  g_debug_info.num_var_allocated = NUM_VAR_ALLOCATED;
+  g_debug_info.num_env_allocated = NUM_ENV_ALLOCATED;
+
+  g_debug_info.num_var_available = env_debug_available_var();
+
+  g_debug_info.var_get_count = 0;
+  g_debug_info.var_return_count = 0;
+}
+
+void fill_debug_info(seni_debug_info *debug_info)
+{
+  debug_info->num_var_allocated = g_debug_info.num_var_allocated;
+  debug_info->num_env_allocated = g_debug_info.num_env_allocated;
+
+  debug_info->num_var_available = env_debug_available_var();
+
+  debug_info->var_get_count = g_debug_info.var_get_count;
+  debug_info->var_return_count = g_debug_info.var_return_count;
 }
