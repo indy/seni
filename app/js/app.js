@@ -38,6 +38,35 @@ import { initFirebase,
 let gUI = {};
 let gGLRenderer = undefined;
 
+const Shabba = {};
+// TODO: delete this when the wasm work is completed
+const gWasmHack = true;
+
+function configureWasmModule() {
+  if (!Module.cwrap || !Module.asm._malloc) {
+    // make sure the module code has been loaded
+    setTimeout(configureWasmModule, 100);
+    return;
+  }
+
+  Shabba.buffer_fill = Module.cwrap('buffer_fill',
+                                    'number', ['number', 'number', 'string']);
+
+  Shabba.floatSize = 4; // size in bytes of an f32
+  Shabba.arrayLength = 4;
+  Shabba.ptr = Module._malloc(Shabba.arrayLength * Shabba.floatSize);
+}
+
+function freeModule() {
+  Module._free(Shabba.ptr);
+}
+
+function pointerToFloat32Array(ptr, length) {
+  const nByte = 4;
+  const pos = ptr / nByte;
+  return Module.HEAPF32.subarray(pos, pos + length);
+}
+
 function get(url) {
   return new Promise((resolve, reject) => {
     const req = new XMLHttpRequest();
@@ -78,6 +107,7 @@ function showButtonsFor(mode) {
   const evalBtn = document.getElementById('eval-btn');
   const evolveBtn = document.getElementById('evolve-btn');
   const renderBtn = document.getElementById('render-btn');
+  const wasmBtn = document.getElementById('wasm-btn');
   const nextBtn = document.getElementById('next-btn');
   const shuffleBtn = document.getElementById('shuffle-btn');
 
@@ -86,6 +116,7 @@ function showButtonsFor(mode) {
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
+    wasmBtn.classList.add('hidden');
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
@@ -93,6 +124,7 @@ function showButtonsFor(mode) {
     evalBtn.classList.remove('hidden');
     evolveBtn.classList.remove('hidden');
     renderBtn.classList.remove('hidden');
+    wasmBtn.classList.remove('hidden');
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
@@ -100,6 +132,7 @@ function showButtonsFor(mode) {
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
+    wasmBtn.classList.add('hidden');
     nextBtn.classList.remove('hidden');
     shuffleBtn.classList.remove('hidden');
     break;
@@ -287,6 +320,24 @@ function renderScript(state, imageElement) {
   });
 }
 
+function renderScriptWithWASM(state) {
+  const script = state.get('script');
+  console.log('will try to render');
+  console.log(script);
+  console.log(Module);
+  console.log(Shabba);
+
+  const newLength = Shabba.buffer_fill(Shabba.ptr, Shabba.arrayLength,
+                                       'howo doodo');
+  const moddedArray = pointerToFloat32Array(Shabba.ptr, newLength);
+
+  console.log(Shabba.ptr);
+  console.log(newLength);
+  console.log(moddedArray);
+
+  freeModule();
+}
+
 // function that takes a read-only state and updates the UI
 //
 function updateUI(state) {
@@ -297,7 +348,11 @@ function updateUI(state) {
     break;
   case SeniMode.edit :
     showScriptInEditor(state);
-    renderScript(state, gUI.renderImage);
+    if (gWasmHack) {
+      // WASM
+    } else {
+      renderScript(state, gUI.renderImage);
+    }
     break;
   case SeniMode.evolve :
     // will only get here from History.restoreState
@@ -665,6 +720,16 @@ function setupUI(store) {
     event.preventDefault();
   });
 
+  addClickEvent('wasm-btn', event => {
+    setScript(store, getScriptFromEditor()).then(state => {
+      renderScriptWithWASM(state, gUI.renderImage);
+    }).catch(error => {
+      // handle error
+      console.log(`eval-btn:click : error of ${error}`);
+    });
+    event.preventDefault();
+  });
+
   addClickEvent('shuffle-btn', event => {
     showPlaceholderImages(store.getState());
     store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11}).then(state => {
@@ -921,4 +986,6 @@ export default function main() {
   getGallery().then(() => {
     return removeKonsoleInvisibility();
   }).catch(error => console.error(error));
+
+  setTimeout(configureWasmModule);
 }
