@@ -51,15 +51,39 @@ function configureWasmModule() {
 
   Shabba.buffer_fill = Module.cwrap('buffer_fill',
                                     'number', ['number', 'number', 'string']);
+  Shabba.render = Module.cwrap('render', 'number',
+                               ['number', 'number',
+                                'number', 'number', 'string']);
 
   Shabba.floatSize = 4; // size in bytes of an f32
-  Shabba.arrayLength = 4;
+  Shabba.arrayLength = 100;
+
+  // TODO: remember to free these calls to malloc
+
   Shabba.ptr = Module._malloc(Shabba.arrayLength * Shabba.floatSize);
+
+
+  Shabba.vbufElementSize = 2;
+  const vSize = Shabba.arrayLength * Shabba.floatSize * Shabba.vbufElementSize;
+  Shabba.vbuf = Module._malloc(vSize);
+
+  Shabba.cbufElementSize = 4;
+  const cSize = Shabba.arrayLength * Shabba.floatSize * Shabba.cbufElementSize;
+  Shabba.cbuf = Module._malloc(cSize);
+
+  Shabba.tbufElementSize = 2;
+  const tSize = Shabba.arrayLength * Shabba.floatSize * Shabba.tbufElementSize;
+  Shabba.tbuf = Module._malloc(tSize);
 }
 
+/*
 function freeModule() {
   Module._free(Shabba.ptr);
+  Module._free(Shabba.vbuf);
+  Module._free(Shabba.cbuf);
+  Module._free(Shabba.tbuf);
 }
+*/
 
 function pointerToFloat32Array(ptr, length) {
   const nByte = 4;
@@ -320,22 +344,22 @@ function renderScript(state, imageElement) {
   });
 }
 
-function renderScriptWithWASM(state) {
+function renderScriptWithWASM(state, imageElement) {
   const script = state.get('script');
-  console.log('will try to render');
-  console.log(script);
-  console.log(Module);
-  console.log(Shabba);
 
-  const newLength = Shabba.buffer_fill(Shabba.ptr, Shabba.arrayLength,
-                                       'howo doodo');
-  const moddedArray = pointerToFloat32Array(Shabba.ptr, newLength);
+  const numVertices = Shabba.render(Shabba.vbuf, Shabba.cbuf, Shabba.tbuf, 4,
+                                    script);
 
-  console.log(Shabba.ptr);
-  console.log(newLength);
-  console.log(moddedArray);
+  // HACK in a buffers like object to pass into the renderer
+  const buffers = [];
+  const buffer = {};
+  buffer.vbuf = pointerToFloat32Array(Shabba.vbuf, numVertices * 2);
+  buffer.cbuf = pointerToFloat32Array(Shabba.cbuf, numVertices * 4);
+  buffer.tbuf = pointerToFloat32Array(Shabba.tbuf, numVertices * 2);
+  buffer.numVertices = numVertices;
+  buffers.push(buffer);
 
-  freeModule();
+  renderGeometryBuffers(buffers, imageElement);
 }
 
 // function that takes a read-only state and updates the UI
