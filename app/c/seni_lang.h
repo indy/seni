@@ -4,6 +4,7 @@
 #include "seni_config.h"
 #include "seni_types.h"
 #include "seni_containers.h"
+#include "wasm.h"
 
 // 2 << 7 == 128
 #define MAX_WORD_LOOKUPS (2 << 7)
@@ -40,7 +41,7 @@ typedef struct seni_node {
     i32 i;
     f32 f;
     char* s;                     /* needed for whitespace/comment nodes */
-    struct seni_node *children;  /* list node */
+    struct seni_node *first_child;  /* list node */
   } value;
 
   bool alterable;
@@ -52,7 +53,7 @@ typedef struct seni_node {
   // be ignored, e.g. the whitespace before the 2 in: (+ 1 { 2} (int))
   struct seni_node *parameter_prefix;
 
-  /* for parameter_ast, parameter_prefix, children */
+  /* for parameter_ast, parameter_prefix, first_child */
   struct seni_node *prev;
   struct seni_node *next;
 } seni_node;
@@ -119,6 +120,8 @@ typedef struct seni_var {
 typedef struct seni_env {
   struct seni_env *outer;
   seni_var *vars;
+
+  wasm_buffer *buffer;
 
   /* for linked list used by the pool */
   struct seni_env *prev;

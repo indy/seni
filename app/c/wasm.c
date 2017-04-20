@@ -1,5 +1,7 @@
 #include <emscripten/emscripten.h>
+#include "wasm.h"
 #include "seni.h"
+#include "seni_lang_bind.h"
 
 f32 mult = 3.2f;
 int lensub = 0;
@@ -23,14 +25,45 @@ int buffer_fill(f32* array, int length, char *script)
   return retlength;
 }
 
+/*
+  fill up the wasm_buffer with data during the eval phase
+
+  if more buffer is required, allocate 'overflow' buffers on the c side.
+  The js will then repeatedly call a 'draining' function that copies data
+  into the given vbuf,cbuf,tbuf
+
+  don't forget to free the overflow buffers
+*/
 // returns the number of vertices to render
 EMSCRIPTEN_KEEPALIVE
-int render(f32* vbuf, f32* cbuf, f32* tbuf, int length, char *script)
+int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
 {
-  printf("the script is %s\n", script);
-  //printf("array length is %d\n", length);
+  word_lut *wl = NULL;
+  seni_env *env = NULL;
+  seni_node *ast = NULL;
+  seni_var *var = NULL;
+    
+  wasm_buffer buffer;
 
+  buffer.max_vertices = max_vertices;
+  buffer.vbuf = vbuf;
+  buffer.cbuf = cbuf;
+  buffer.tbuf = tbuf;
+  
 
+  debug_reset();
+
+  wl = wlut_allocate();
+  interpreter_declare_keywords(wl);
+
+  env_allocate_pools();
+  env = get_initial_env(&buffer);
+  
+  ast = parser_parse(wl, script);
+  var = evaluate(env, ast, true);
+  debug_var_info(env);
+
+  
   // return 3 vectors
   
   int i;
@@ -85,6 +118,11 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int length, char *script)
   // v2
   tbuf[4] = a;
   tbuf[5] = b;
-  
+
+
+  env_free_pools();
+  wlut_free(wl);
+  parser_free_nodes(ast);
+
   return num_vertices;
 }

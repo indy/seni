@@ -343,7 +343,7 @@ seni_node *consume_list(word_lut *wlut, char **src)
       return NULL;
     }
 
-    DL_APPEND(node->value.children, child);
+    DL_APPEND(node->value.first_child, child);
   }
 }
 
@@ -366,7 +366,7 @@ seni_node *consume_vector(word_lut *wlut, char **src)
       return NULL;
     }
 
-    DL_APPEND(node->value.children, child);
+    DL_APPEND(node->value.first_child, child);
   }
 }
 
@@ -435,14 +435,14 @@ seni_node *consume_quoted_form(word_lut *wlut, char **src)
   node->type = NODE_LIST;
 
   seni_node *quote_name = build_text_lookup_node_from_string(wlut, NODE_NAME, "quote");
-  DL_APPEND(node->value.children, quote_name);
+  DL_APPEND(node->value.first_child, quote_name);
 
   char *wst = " ";
   seni_node *ws = build_text_node_of_length(&wst, NODE_WHITESPACE, 1);
-  DL_APPEND(node->value.children, ws);
+  DL_APPEND(node->value.first_child, ws);
 
   seni_node *child = consume_item(wlut, src);
-  DL_APPEND(node->value.children, child);
+  DL_APPEND(node->value.first_child, child);
 
   return node;
 }
@@ -699,8 +699,8 @@ void parser_free_nodes(seni_node *nodes)
   seni_node *next;
 
   while(node != NULL) {
-    if (node->type == NODE_LIST && node->value.children) {
-      parser_free_nodes(node->value.children);
+    if (node->type == NODE_LIST && node->value.first_child) {
+      parser_free_nodes(node->value.first_child);
     }
     if (node->parameter_ast) {
       parser_free_nodes(node->parameter_ast);
@@ -1024,9 +1024,12 @@ void var_return_to_pool(seni_var *var)
   DL_APPEND(g_vars, var);
 }
 
-seni_env *get_initial_env()
+seni_env *get_initial_env(wasm_buffer *buffer)
 {
-  return env_get_from_pool();
+  seni_env *env = env_get_from_pool();
+  env->buffer = buffer;
+
+  return env;
 }
 
 seni_env *push_scope(seni_env *outer)
@@ -1037,6 +1040,7 @@ seni_env *push_scope(seni_env *outer)
     return NULL;
   }
 
+  env->buffer = outer->buffer;
   env->outer = outer;
   env->vars = NULL;
   
@@ -1232,7 +1236,7 @@ bool has_labelled_parameter(seni_node *named_args, i32 name)
 
 seni_var *eval_fn(seni_env *env, seni_node *expr)
 {
-  seni_node *name = expr->value.children;
+  seni_node *name = expr->value.first_child;
 
   // look up the name in the env
   seni_var *var = lookup_var(env, name->value.i);  // var == fn (foo b: 1 c: 2) (+ b c)
@@ -1250,7 +1254,7 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
 
   seni_node *fn_name_and_args_list = safe_next(fn_expr); // (foo b: 1 c: 2)
   
-  seni_node *fn_args = safe_next(fn_name_and_args_list->value.children); // b: 1 c: 2
+  seni_node *fn_args = safe_next(fn_name_and_args_list->value.first_child); // b: 1 c: 2
 
   // Add the invoked parameter bindings to the function's locally scoped env
   //
@@ -1283,11 +1287,11 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
 
 seni_var *eval_list(seni_env *env, seni_node *expr)
 {
-  seni_var *var = eval(env, expr->value.children);
+  seni_var *var = eval(env, expr->value.first_child);
 
   if (var->type == VAR_NAME && (var->value.i & KEYWORD_START)) {
     i32 i = var->value.i - KEYWORD_START;
-    return (*g_keyword[i].function_ptr)(env, expr->value.children);
+    return (*g_keyword[i].function_ptr)(env, expr->value.first_child);
   }
 
   // user defined function
@@ -1387,7 +1391,7 @@ seni_var *eval(seni_env *env, seni_node *expr)
     head.value.v = var_rc;
 
 
-    for (seni_node *node = expr->value.children; node != NULL; node = safe_next(node)) {
+    for (seni_node *node = expr->value.first_child; node != NULL; node = safe_next(node)) {
       val = eval(env, node);
       
       vec = append_to_vector(&head, val);

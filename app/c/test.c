@@ -94,9 +94,9 @@ void test_lang_parser(void)
   PARSE_CLEANUP;
 
   PARSE("(add 1 2)");
-  iter = nodes->value.children;
+  iter = nodes->value.first_child;
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->value.children;
+  iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 1);
@@ -108,7 +108,7 @@ void test_lang_parser(void)
 
   PARSE("[add 9 8 (foo)]");
   assert_parser_node_raw(nodes, NODE_VECTOR);
-  iter = nodes->value.children;
+  iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 9);
@@ -127,13 +127,13 @@ void test_lang_parser(void)
 
   PARSE("'(runall \"shabba\") ; woohoo");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->value.children;
+  iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "quote", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter;
   iter = assert_parser_node_raw(iter, NODE_LIST);
   TEST_ASSERT_NULL(iter);
-  iter = iter2->value.children;
+  iter = iter2->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "runall", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_txt(iter, NODE_STRING, "shabba", wl);
@@ -145,7 +145,7 @@ void test_lang_parser(void)
 
   PARSE("(fun i: 42 f: 12.34)");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->value.children;
+  iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "fun", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_txt(iter, NODE_LABEL, "i", wl);
@@ -161,7 +161,7 @@ void test_lang_parser(void)
 
   PARSE("(a 1) (b 2)");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->value.children;
+  iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "a", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 1);
@@ -169,7 +169,7 @@ void test_lang_parser(void)
   iter = nodes->next;
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   assert_parser_node_raw(iter, NODE_LIST);
-  iter = iter->value.children;
+  iter = iter->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "b", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_i32(iter, NODE_INT, 2);
@@ -178,7 +178,7 @@ void test_lang_parser(void)
 
   PARSE("(a {[1 2]})");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->value.children;
+  iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "a", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter; // the vector
@@ -195,7 +195,7 @@ void test_lang_env(void)
   seni_var *var, *var2;
 
   env_allocate_pools();
-  env = get_initial_env();
+  env = get_initial_env(NULL);
 
   var = get_binded_var(env, 1);
   var->type = VAR_INT;
@@ -282,7 +282,7 @@ word_lut *setup_interpreter_wl()
 seni_env *setup_basic_interpreter_env()
 {
   env_allocate_pools();
-  seni_env *env = get_initial_env();
+  seni_env *env = get_initial_env(NULL);
 
   return env;
 }

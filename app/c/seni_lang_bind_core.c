@@ -497,7 +497,7 @@ seni_var *eval_keyword_fn(seni_env *env, seni_node *expr)
     // printf("error: no name+parameter list given\n");
   }
 
-  seni_node *fn_name = def_list->value.children;
+  seni_node *fn_name = def_list->value.first_child;
   
   // todo: parse the args ???
 
@@ -555,7 +555,7 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
   }
 
   seni_node *body = safe_next(setup);
-  seni_node *var_node = setup->value.children;
+  seni_node *var_node = setup->value.first_child;
 
   i32 var_index = var_node->value.i;
 

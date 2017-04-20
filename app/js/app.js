@@ -56,23 +56,23 @@ function configureWasmModule() {
                                 'number', 'number', 'string']);
 
   Shabba.floatSize = 4; // size in bytes of an f32
-  Shabba.arrayLength = 100;
+  Shabba.maxVertices = 100;
 
   // TODO: remember to free these calls to malloc
 
-  Shabba.ptr = Module._malloc(Shabba.arrayLength * Shabba.floatSize);
+  Shabba.ptr = Module._malloc(Shabba.maxVertices * Shabba.floatSize);
 
 
   Shabba.vbufElementSize = 2;
-  const vSize = Shabba.arrayLength * Shabba.floatSize * Shabba.vbufElementSize;
+  const vSize = Shabba.maxVertices * Shabba.floatSize * Shabba.vbufElementSize;
   Shabba.vbuf = Module._malloc(vSize);
 
   Shabba.cbufElementSize = 4;
-  const cSize = Shabba.arrayLength * Shabba.floatSize * Shabba.cbufElementSize;
+  const cSize = Shabba.maxVertices * Shabba.floatSize * Shabba.cbufElementSize;
   Shabba.cbuf = Module._malloc(cSize);
 
   Shabba.tbufElementSize = 2;
-  const tSize = Shabba.arrayLength * Shabba.floatSize * Shabba.tbufElementSize;
+  const tSize = Shabba.maxVertices * Shabba.floatSize * Shabba.tbufElementSize;
   Shabba.tbuf = Module._malloc(tSize);
 }
 
@@ -347,7 +347,9 @@ function renderScript(state, imageElement) {
 function renderScriptWithWASM(state, imageElement) {
   const script = state.get('script');
 
-  const numVertices = Shabba.render(Shabba.vbuf, Shabba.cbuf, Shabba.tbuf, 4,
+
+  const numVertices = Shabba.render(Shabba.vbuf, Shabba.cbuf, Shabba.tbuf,
+                                    Shabba.maxVertices,
                                     script);
 
   // HACK in a buffers like object to pass into the renderer
