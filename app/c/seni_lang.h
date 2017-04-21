@@ -190,15 +190,16 @@ seni_var *eval_all_nodes(seni_env *env, seni_node *body);
 seni_node *safe_next(seni_node *expr);
 seni_value_in_use get_value_in_use(seni_var_type type);
 void safe_var_copy(seni_var *dest, seni_var *src);
-void add_labelled_parameters_to_env(seni_env *env, seni_node *named_args);
+void add_named_parameters_to_env(seni_env *env, seni_node *named_params);
 
-seni_node *get_labelled_value(seni_node *named_args, i32 name);
-bool has_labelled_value(seni_node *named_args, i32 name);
-seni_var *get_labelled_value_var(seni_env *env, seni_node *params, i32 name);
-f32 get_labelled_value_f32(seni_env *env, seni_node *params, i32 name, f32 default_value);
-i32 get_labelled_value_i32(seni_env *env, seni_node *params, i32 name, i32 default_value);
-void get_labelled_value_vec2(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1);
-void get_labelled_value_vec4(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1, f32 *out2, f32 *out3);
+// getting value from named parameter lists
+bool has_named_node(seni_node *params, i32 name);
+seni_node *get_named_node(seni_node *params, i32 name);
+seni_var *get_named_var(seni_env *env, seni_node *params, i32 name);
+f32 get_named_f32(seni_env *env, seni_node *params, i32 name, f32 default_value);
+i32 get_named_i32(seni_env *env, seni_node *params, i32 name, i32 default_value);
+void get_named_vec2(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1);
+void get_named_vec4(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1, f32 *out2, f32 *out3);
 
 void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *));
 void declare_common_arg(word_lut *wlut, char *name, i32 *global_value);

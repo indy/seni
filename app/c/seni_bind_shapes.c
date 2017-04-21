@@ -99,11 +99,11 @@ seni_var *eval_fn_rect(seni_env *env, seni_node *expr)
   //
   seni_node *parameters = safe_next(expr);
 
-  f32 width = get_labelled_value_f32(env, parameters, g_arg_width, 500.0f);
-  f32 height = get_labelled_value_f32(env, parameters, g_arg_height, 500.0f);
+  f32 width = get_named_f32(env, parameters, g_arg_width, 500.0f);
+  f32 height = get_named_f32(env, parameters, g_arg_height, 500.0f);
 
   f32 x = 500.0f; f32 y = 500.0f;
-  get_labelled_value_vec2(env, parameters, g_arg_position, &x, &y);
+  get_named_vec2(env, parameters, g_arg_position, &x, &y);
 
   f32 half_width = width / 2.0f;
   f32 half_height = height / 2.0f;
@@ -115,7 +115,7 @@ seni_var *eval_fn_rect(seni_env *env, seni_node *expr)
   printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
   f32 r = 0.0f; f32 g = 0.0f; f32 b = 0.0f; f32 a = 1.0f;
-  get_labelled_value_vec4(env, parameters, g_arg_colour, &r, &g, &b, &a);
+  get_named_vec4(env, parameters, g_arg_colour, &r, &g, &b, &a);
 
   prepare_to_add_triangle_strip(buffer, 4, x - half_width, y - half_height);
   add_vertex(buffer, x - half_width, y - half_height, r, g, b, a, max_uv, min_uv);
@@ -134,22 +134,22 @@ seni_var *eval_fn_circle(seni_env *env, seni_node *expr)
   //
   seni_node *parameters = safe_next(expr);
 
-  f32 width = get_labelled_value_f32(env, parameters, g_arg_width, 500.0f);
-  f32 height = get_labelled_value_f32(env, parameters, g_arg_height, 500.0f);
-  f32 radius = get_labelled_value_f32(env, parameters, g_arg_radius, 100.0f);
-  i32 tessellation = get_labelled_value_i32(env, parameters, g_arg_tessellation, 5);
+  f32 width = get_named_f32(env, parameters, g_arg_width, 500.0f);
+  f32 height = get_named_f32(env, parameters, g_arg_height, 500.0f);
+  f32 radius = get_named_f32(env, parameters, g_arg_radius, 100.0f);
+  i32 tessellation = get_named_i32(env, parameters, g_arg_tessellation, 5);
 
   f32 x = 500.0f; f32 y = 500.0f;
-  get_labelled_value_vec2(env, parameters, g_arg_position, &x, &y);
+  get_named_vec2(env, parameters, g_arg_position, &x, &y);
 
-  if (has_labelled_value(parameters, g_arg_radius)) {
+  if (has_named_node(parameters, g_arg_radius)) {
     // use the radius for both width and height if it's given
     width = radius;
     height = radius;
   }
 
   f32 r = 0.0f; f32 g = 0.0f; f32 b = 0.0f; f32 a = 1.0f;
-  get_labelled_value_vec4(env, parameters, g_arg_colour, &r, &g, &b, &a);
+  get_named_vec4(env, parameters, g_arg_colour, &r, &g, &b, &a);
 
   seni_buffer *buffer = env->buffer;
   printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);

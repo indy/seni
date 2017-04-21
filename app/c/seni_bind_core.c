@@ -556,7 +556,7 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
   {
     seni_node *args = safe_next(var_node);
 
-    add_labelled_parameters_to_env(loop_env, args);
+    add_named_parameters_to_env(loop_env, args);
 
     i32 increment = 1;
     i32 steps = 1;
@@ -564,22 +564,22 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
     seni_var *to_var = NULL;
     seni_var *upto_var = NULL;
     
-    bool has_from = has_labelled_value(args, g_arg_from);
+    bool has_from = has_named_node(args, g_arg_from);
     if (has_from) {
       from_var = lookup_var(loop_env, g_arg_from);
     }
 
-    bool has_to = has_labelled_value(args, g_arg_to);
+    bool has_to = has_named_node(args, g_arg_to);
     if (has_to) {
       to_var = lookup_var(loop_env, g_arg_to);
     }
 
-    bool has_upto = has_labelled_value(args, g_arg_upto);
+    bool has_upto = has_named_node(args, g_arg_upto);
     if (has_upto) {
       upto_var = lookup_var(loop_env, g_arg_upto);
     }
 
-    bool has_increment = has_labelled_value(args, g_arg_increment);
+    bool has_increment = has_named_node(args, g_arg_increment);
     if (has_increment) {
       seni_var *increment_var = lookup_var(loop_env, g_arg_increment);
       increment = var_as_int(increment_var);
@@ -590,7 +590,7 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
       }
     }
 
-    bool has_steps = has_labelled_value(args, g_arg_steps);
+    bool has_steps = has_named_node(args, g_arg_steps);
     if (has_steps) {
       seni_var *steps_var = lookup_var(loop_env, g_arg_steps);
       steps = var_as_int(steps_var);

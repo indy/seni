@@ -1175,7 +1175,7 @@ seni_var *eval_all_nodes(seni_env *env, seni_node *body)
   return res;
 }
 
-// adds the labelled parameters to the env only if the current top-level scope
+// adds the named parameters to the env only if the current top-level scope
 // of the env doesn't already contain bindings to those values. (this saves
 // eval'ing values that are only going to be re-written by explicit parameters)
 //
@@ -1183,35 +1183,35 @@ seni_var *eval_all_nodes(seni_env *env, seni_node *body)
 //
 // the 'a: 1' won't be eval'd since the eval_fn will have already bound a to 3
 //
-void add_labelled_parameters_to_env(seni_env *env, seni_node *named_args)
+void add_named_parameters_to_env(seni_env *env, seni_node *named_params)
 {
-  while (named_args) {
-    seni_node *name = named_args;
+  while (named_params) {
+    seni_node *name = named_params;
     if (name->type != NODE_LABEL) {
       SENI_ERROR("expected a label as the start of the name/value pair");
       return;
     }
     i32 name_i = name->value.i;
 
-    named_args = safe_next(named_args);
-    if (named_args == NULL) {
+    named_params = safe_next(named_params);
+    if (named_params == NULL) {
       SENI_ERROR("expected name value pairs");
       return;
     }
 
     if (lookup_var_in_current_scope(env, name_i) == NULL) {
-      seni_var *var = eval(env, named_args);
+      seni_var *var = eval(env, named_params);
       bind_var(env, name_i, var);
     }
 
-    named_args = safe_next(named_args);
+    named_params = safe_next(named_params);
   }
 }
 
-seni_node *get_labelled_value(seni_node *parameters, i32 name)
+seni_node *get_named_node(seni_node *params, i32 name)
 {
   // assuming we're at the first named parameter
-  seni_node *node = parameters;
+  seni_node *node = params;
   bool found = false;
   
   while(node) {
@@ -1239,15 +1239,15 @@ seni_node *get_labelled_value(seni_node *parameters, i32 name)
 }
 
 // does the sequence of named args contain the given name
-bool has_labelled_value(seni_node *named_args, i32 name)
+bool has_named_node(seni_node *params, i32 name)
 {
-  seni_node *val = get_labelled_value(named_args, name);
+  seni_node *val = get_named_node(params, name);
   return val != NULL;
 }
 
-seni_var *get_labelled_value_var(seni_env *env, seni_node *params, i32 name)
+seni_var *get_named_var(seni_env *env, seni_node *params, i32 name)
 {
-  seni_node *node = get_labelled_value(params, name);
+  seni_node *node = get_named_node(params, name);
   if (node == NULL) {
     // couldn't find the parameter
     return NULL;
@@ -1258,11 +1258,11 @@ seni_var *get_labelled_value_var(seni_env *env, seni_node *params, i32 name)
   return var;
 }
 
-f32 get_labelled_value_f32(seni_env *env, seni_node *params, i32 name, f32 default_value)
+f32 get_named_f32(seni_env *env, seni_node *params, i32 name, f32 default_value)
 {
   f32 ret = default_value;
   
-  seni_var *var = get_labelled_value_var(env, params, name);
+  seni_var *var = get_named_var(env, params, name);
   if (var == NULL) {
     return ret;
   }
@@ -1271,11 +1271,11 @@ f32 get_labelled_value_f32(seni_env *env, seni_node *params, i32 name, f32 defau
   return ret;
 }
 
-i32 get_labelled_value_i32(seni_env *env, seni_node *params, i32 name, i32 default_value)
+i32 get_named_i32(seni_env *env, seni_node *params, i32 name, i32 default_value)
 {
   i32 ret = default_value;
   
-  seni_var *var = get_labelled_value_var(env, params, name);
+  seni_var *var = get_named_var(env, params, name);
   if (var == NULL) {
     return ret;
   }
@@ -1284,9 +1284,9 @@ i32 get_labelled_value_i32(seni_env *env, seni_node *params, i32 name, i32 defau
   return ret;
 }
 
-void get_labelled_value_vec2(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1)
+void get_named_vec2(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1)
 {
-  seni_var *var = get_labelled_value_var(env, params, name);
+  seni_var *var = get_named_var(env, params, name);
   if (var) {
     if (var->type != VAR_VEC_HEAD) {
       return;
@@ -1306,9 +1306,9 @@ void get_labelled_value_vec2(seni_env *env, seni_node *params, i32 name, f32 *ou
   }
 }
 
-void get_labelled_value_vec4(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1, f32 *out2, f32 *out3)
+void get_named_vec4(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1, f32 *out2, f32 *out3)
 {
-  seni_var *var = get_labelled_value_var(env, params, name);
+  seni_var *var = get_named_var(env, params, name);
   if (var) {
     if (var->type != VAR_VEC_HEAD) {
       return;
@@ -1368,7 +1368,7 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
   }
 
   // add the labelled default parameters if none were explicitly given
-  add_labelled_parameters_to_env(fn_env, fn_args);
+  add_named_parameters_to_env(fn_env, fn_args);
 
   seni_node *fn_body = safe_next(fn_name_and_args_list);
 
