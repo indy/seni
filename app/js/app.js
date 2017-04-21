@@ -56,7 +56,7 @@ function configureWasmModule() {
                                 'number', 'number', 'string']);
 
   Shabba.floatSize = 4; // size in bytes of an f32
-  Shabba.maxVertices = 100;
+  Shabba.maxVertices = 10000;
 
   // TODO: remember to free these calls to malloc
 
@@ -346,7 +346,6 @@ function renderScript(state, imageElement) {
 
 function renderScriptWithWASM(state, imageElement) {
   const script = state.get('script');
-
 
   const numVertices = Shabba.render(Shabba.vbuf, Shabba.cbuf, Shabba.tbuf,
                                     Shabba.maxVertices,

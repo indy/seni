@@ -4,7 +4,7 @@
 #include "seni_config.h"
 #include "seni_types.h"
 #include "seni_containers.h"
-#include "wasm.h"
+#include "seni_buffer.h"
 
 // 2 << 7 == 128
 #define MAX_WORD_LOOKUPS (2 << 7)
@@ -121,7 +121,8 @@ typedef struct seni_env {
   struct seni_env *outer;
   seni_var *vars;
 
-  wasm_buffer *buffer;
+  // every seni_env will have a pointer to the buffer used for rendering vertices
+  seni_buffer *buffer;
 
   /* for linked list used by the pool */
   struct seni_env *prev;
@@ -173,8 +174,13 @@ seni_var *append_to_vector(seni_var *vec, seni_var *val);
 // helpers used by bounded functions
 seni_var *false_in_reg(seni_var *reg);
 seni_var *true_in_reg(seni_var *reg);
-i32 var_as_int(seni_var *v1);
-f32 var_as_float(seni_var *v1);
+
+i32 var_vector_length(seni_var *var);
+  
+i32 var_as_int(seni_var *var);
+f32 var_as_float(seni_var *var);
+void var_as_vec2(f32* out0, f32* out1, seni_var *var);
+
 seni_var *bind_var(seni_env *env, i32 name, seni_var *var);
 seni_var *bind_var_to_int(seni_env *env, i32 name, i32 value);
 seni_var *bind_var_to_float(seni_env *env, i32 name, f32 value);
@@ -184,7 +190,13 @@ seni_node *safe_next(seni_node *expr);
 seni_value_in_use get_value_in_use(seni_var_type type);
 void safe_var_copy(seni_var *dest, seni_var *src);
 void add_labelled_parameters_to_env(seni_env *env, seni_node *named_args);
-bool has_labelled_parameter(seni_node *named_args, i32 name);
+
+seni_node *get_labelled_value(seni_node *named_args, i32 name);
+bool has_labelled_value(seni_node *named_args, i32 name);
+seni_var *get_labelled_value_var(seni_env *env, seni_node *params, i32 name);
+f32 get_labelled_value_f32(seni_env *env, seni_node *params, i32 name, f32 default_value);
+i32 get_labelled_value_i32(seni_env *env, seni_node *params, i32 name, i32 default_value);
+void get_labelled_value_vec2(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1);
 
 void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *));
 void declare_common_arg(word_lut *wlut, char *name, i32 *global_value);
@@ -194,5 +206,6 @@ seni_var *evaluate(seni_env *env, seni_node *ast, bool hygenic_scope);
 void debug_var_info(seni_env *env);
 void debug_reset();
 void pretty_print_seni_var(seni_var *var, char* msg);
+void pretty_print_seni_node(seni_node *node, char* msg);
   
 #endif

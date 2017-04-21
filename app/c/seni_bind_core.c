@@ -1,15 +1,8 @@
-#include "seni_lang_bind_core.h"
+#include "seni_bind_core.h"
+#include "seni_bind.h"
+
 #include <stdio.h>
 #include <math.h>
-
-// a register like seni_var for holding intermediate values
-seni_var g_reg;
-
-i32 g_arg_from = 0;
-i32 g_arg_to = 0;
-i32 g_arg_increment = 0;
-i32 g_arg_upto = 0;
-i32 g_arg_steps = 0;
 
 seni_var *var_as_int_or_float(bool is_int, i32 i, f32 f)
 {
@@ -571,22 +564,22 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
     seni_var *to_var = NULL;
     seni_var *upto_var = NULL;
     
-    bool has_from = has_labelled_parameter(args, g_arg_from);
+    bool has_from = has_labelled_value(args, g_arg_from);
     if (has_from) {
       from_var = lookup_var(loop_env, g_arg_from);
     }
 
-    bool has_to = has_labelled_parameter(args, g_arg_to);
+    bool has_to = has_labelled_value(args, g_arg_to);
     if (has_to) {
       to_var = lookup_var(loop_env, g_arg_to);
     }
 
-    bool has_upto = has_labelled_parameter(args, g_arg_upto);
+    bool has_upto = has_labelled_value(args, g_arg_upto);
     if (has_upto) {
       upto_var = lookup_var(loop_env, g_arg_upto);
     }
 
-    bool has_increment = has_labelled_parameter(args, g_arg_increment);
+    bool has_increment = has_labelled_value(args, g_arg_increment);
     if (has_increment) {
       seni_var *increment_var = lookup_var(loop_env, g_arg_increment);
       increment = var_as_int(increment_var);
@@ -597,7 +590,7 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
       }
     }
 
-    bool has_steps = has_labelled_parameter(args, g_arg_steps);
+    bool has_steps = has_labelled_value(args, g_arg_steps);
     if (has_steps) {
       seni_var *steps_var = lookup_var(loop_env, g_arg_steps);
       steps = var_as_int(steps_var);
@@ -708,10 +701,6 @@ seni_var *eval_keyword_vars(seni_env *env, seni_node *expr)
 
 void bind_core_declarations(word_lut *wlut)
 {
-#ifdef SENI_DEBUG_MODE
-  g_reg.debug_allocatable = false;
-#endif
-  
   // classic functions that don't use named arguments when invoked
   declare_keyword(wlut,    "+",             &eval_classic_fn_plus);
   declare_keyword(wlut,    "-",             &eval_classic_fn_minus);
@@ -731,10 +720,4 @@ void bind_core_declarations(word_lut *wlut)
   // for debugging
   declare_keyword(wlut,    "setq",          &eval_keyword_setq);
   declare_keyword(wlut,    "#vars",         &eval_keyword_vars);
-  // common parameters used by keywords and the standard api
-  declare_common_arg(wlut, "from",          &g_arg_from);
-  declare_common_arg(wlut, "to",            &g_arg_to);
-  declare_common_arg(wlut, "increment",     &g_arg_increment);
-  declare_common_arg(wlut, "upto",          &g_arg_upto);
-  declare_common_arg(wlut, "steps",         &g_arg_steps);
 }

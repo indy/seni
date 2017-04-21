@@ -783,7 +783,7 @@ char *var_type_name(seni_var *var)
   }
 }
 
-i32 seni_var_vector_length(seni_var *var)
+i32 var_vector_length(seni_var *var)
 {
   if (var->type != VAR_VEC_HEAD) {
     return 0;
@@ -791,21 +791,26 @@ i32 seni_var_vector_length(seni_var *var)
 
   i32 len = 0;
   seni_var *v = var->value.v;
-  if (var->type != VAR_VEC_RC) {
+  if (v->type != VAR_VEC_RC) {
     return 0;
   }
-  v = var->value.v;
-
-  if (v == NULL) {
-    return len;
-  }
+  v = v->value.v;
   
-  while (v->next) {
-    v = v->next;
+  while (v != NULL) {
     len++;
+    v = v->next;
   }
 
   return len;
+}
+
+void pretty_print_seni_node(seni_node *node, char* msg)
+{
+  if (node == NULL) {
+    printf("NULL NODE %s\n", msg);
+    return;
+  }
+  printf("%s %s\n", node_type_name(node), msg);
 }
 
 void pretty_print_seni_var(seni_var *var, char* msg)
@@ -825,7 +830,7 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     printf("id:%d %s %s %s\n", var->debug_id, type, node_type_name(var->value.n), msg);
     break;
   case USE_V:
-    printf("id:%d %s : length %d %s\n", var->debug_id, type, seni_var_vector_length(var), msg);
+    printf("id:%d %s : length %d %s\n", var->debug_id, type, var_vector_length(var), msg);
     break;
   }
 #else
@@ -840,7 +845,7 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     printf("%s %s %s\n", type, node_type_name(var->value.n), msg);
     break;
   case USE_V:
-    printf("%s : length %d %s\n", type, seni_var_vector_length(var), msg);
+    printf("%s : length %d %s\n", type, var_vector_length(var), msg);
     break;
   }
 #endif
@@ -1003,8 +1008,6 @@ void var_return_to_pool(seni_var *var)
   }
 #endif
 
-
-
   if (var->type == VAR_VEC_HEAD) {
     vector_ref_count_decrement(var);
   }
@@ -1024,7 +1027,7 @@ void var_return_to_pool(seni_var *var)
   DL_APPEND(g_vars, var);
 }
 
-seni_env *get_initial_env(wasm_buffer *buffer)
+seni_env *get_initial_env(seni_buffer *buffer)
 {
   seni_env *env = env_get_from_pool();
   env->buffer = buffer;
@@ -1205,34 +1208,103 @@ void add_labelled_parameters_to_env(seni_env *env, seni_node *named_args)
   }
 }
 
-// does the sequence of named args contain the given name
-bool has_labelled_parameter(seni_node *named_args, i32 name)
+seni_node *get_labelled_value(seni_node *parameters, i32 name)
 {
   // assuming we're at the first named parameter
-  seni_node *node = named_args;
+  seni_node *node = parameters;
+  bool found = false;
   
   while(node) {
     if (node->type != NODE_LABEL) {
       SENI_ERROR("should never get here, all name/value parameters should start with a NODE_NAME");
-      return false;
+      return NULL;
     }
 
-    if (node->value.i == name) {
-      return true;
-    }
+    found = node->value.i == name;
 
     node = safe_next(node);     // node is at the value
     if (node == NULL) {
       SENI_ERROR("should never get here, there should always be pairs of name/value");
-      return false;
+      return NULL;
+    }
+
+    if (found) {
+      return node;
     }
 
     node = safe_next(node);     // node is at the next named parameter
   }
 
-  return false;
+  return NULL;
 }
 
+// does the sequence of named args contain the given name
+bool has_labelled_value(seni_node *named_args, i32 name)
+{
+  seni_node *val = get_labelled_value(named_args, name);
+  return val != NULL;
+}
+
+seni_var *get_labelled_value_var(seni_env *env, seni_node *params, i32 name)
+{
+  seni_node *node = get_labelled_value(params, name);
+  if (node == NULL) {
+    // couldn't find the parameter
+    return NULL;
+  }
+
+  seni_var *var = eval(env, node);
+
+  return var;
+}
+
+f32 get_labelled_value_f32(seni_env *env, seni_node *params, i32 name, f32 default_value)
+{
+  f32 ret = default_value;
+  
+  seni_var *var = get_labelled_value_var(env, params, name);
+  if (var == NULL) {
+    return ret;
+  }
+  ret = var_as_float(var);
+  
+  return ret;
+}
+
+i32 get_labelled_value_i32(seni_env *env, seni_node *params, i32 name, i32 default_value)
+{
+  i32 ret = default_value;
+  
+  seni_var *var = get_labelled_value_var(env, params, name);
+  if (var == NULL) {
+    return ret;
+  }
+  ret = var_as_int(var);
+  
+  return ret;
+}
+
+void get_labelled_value_vec2(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1)
+{
+  seni_var *var = get_labelled_value_var(env, params, name);
+  if (var) {
+    if (var->type != VAR_VEC_HEAD) {
+      return;
+    }
+
+    var_as_vec2(out0, out1, var);
+
+    if (var->allocated) {
+      var_return_to_pool(var);
+    } else {
+      // return the VEC_RC and the vector's contents to the pool
+      // don't free var though since it's going to be the static
+      // seni_var in the eval function
+      var_return_to_pool(var->value.v);
+    }
+    
+  }
+}
 
 seni_var *eval_fn(seni_env *env, seni_node *expr)
 {
@@ -1468,30 +1540,48 @@ seni_var *false_in_reg(seni_var *reg)
   return reg;
 }
 
-i32 var_as_int(seni_var *v1)
+i32 var_as_int(seni_var *var)
 {
-  seni_value_in_use using = get_value_in_use(v1->type);
+  seni_value_in_use using = get_value_in_use(var->type);
 
   if (using == USE_I) {
-    return v1->value.i;
+    return var->value.i;
   } else if (using == USE_F) {
-    return (i32)(v1->value.f);
+    return (i32)(var->value.f);
   }
 
   return -1;
 }
 
-f32 var_as_float(seni_var *v1)
+f32 var_as_float(seni_var *var)
 {
-  seni_value_in_use using = get_value_in_use(v1->type);
+  seni_value_in_use using = get_value_in_use(var->type);
 
   if (using == USE_I) {
-    return (f32)(v1->value.i);
+    return (f32)(var->value.i);
   } else if (using == USE_F) {
-    return v1->value.f;
+    return var->value.f;
   }
 
   return -1.0f;
+}
+
+void var_as_vec2(f32 *out0, f32 *out1, seni_var *var)
+{
+  int len = var_vector_length(var);
+  if (len != 2) {
+    return;
+  }
+
+  seni_var *rc = var->value.v;
+  seni_var *v = rc->value.v;
+
+  f32 f0 = var_as_float(v);
+  v = v->next;
+  f32 f1 = var_as_float(v);
+  
+  *out0 = f0;
+  *out1 = f1;
 }
 
 seni_var *bind_var(seni_env *env, i32 name, seni_var *var)

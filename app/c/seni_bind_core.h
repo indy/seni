@@ -1,5 +1,5 @@
-#ifndef SENI_LANG_BIND_CORE_H
-#define SENI_LANG_BIND_CORE_H
+#ifndef SENI_BIND_CORE_H
+#define SENI_BIND_CORE_H
 
 #include "seni_lang.h"
 

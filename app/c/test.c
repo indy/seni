@@ -5,7 +5,7 @@
 #include "seni.h"
 
 #include "seni_lang.h"
-#include "seni_lang_bind.h"
+#include "seni_bind.h"
 
 #include "stdio.h"
 
@@ -392,7 +392,6 @@ void test_lang_interpret_basic(void)
   EVAL_FLOAT("12.34", 12.34f);
   EVAL_TRUE("true");
   EVAL_FALSE("false");
-  EVAL_NAME("+", 0 + KEYWORD_START);
 }
 
 void test_lang_interpret_math(void)
