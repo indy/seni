@@ -29,7 +29,7 @@ void matrix_stack_transform_2d_vector(f32 *out, f32 x, f32 y)
   out[1] = y;
 }
 
-void add_vertex(seni_buffer *buffer, f32 x, f32 y, f32 *c, f32 *t)
+void add_vertex(seni_buffer *buffer, f32 x, f32 y, f32 r, f32 g, f32 b, f32 a, f32 *t)
 {
   i32 vertex_item_size = 2;
   i32 v_index = buffer->num_vertices * vertex_item_size;
@@ -41,10 +41,10 @@ void add_vertex(seni_buffer *buffer, f32 x, f32 y, f32 *c, f32 *t)
   buffer->vbuf[v_index + 0] = x;
   buffer->vbuf[v_index + 1] = y;
 
-  buffer->cbuf[c_index + 0] = c[0];
-  buffer->cbuf[c_index + 1] = c[1];
-  buffer->cbuf[c_index + 2] = c[2];
-  buffer->cbuf[c_index + 3] = c[3];
+  buffer->cbuf[c_index + 0] = r;
+  buffer->cbuf[c_index + 1] = g;
+  buffer->cbuf[c_index + 2] = b;
+  buffer->cbuf[c_index + 3] = a;
 
   buffer->tbuf[t_index + 0] = t[0];
   buffer->tbuf[t_index + 1] = t[1];
@@ -58,19 +58,16 @@ void form_degenerate_triangle(seni_buffer *buffer, f32 x, f32 y)
   // get the index of the last vertex that was added
   i32 index = (buffer->num_vertices * vertex_item_size) - vertex_item_size;
 
-  f32 zero4[4];
-  zero4[0] = 0.0f; zero4[1] = 0.0f; zero4[2] = 0.0f; zero4[3] = 0.0f;
   f32 zero2[2];
   zero2[0] = 0.0f; zero2[1] = 0.0f;
-
 
   // just copy the previous entries
   // note: colour doesn't matter since these triangles won't be rendered
   f32 *last_v = &(buffer->vbuf[index]);
-  add_vertex(buffer, last_v[0], last_v[1], zero4, zero2);
+  add_vertex(buffer, last_v[0], last_v[1], 0.0f, 0.0f, 0.0f, 0.0f, zero2);
 
   // add the new vertex to complete the degenerate triangle
-  add_vertex(buffer, x, y, zero4, zero2);
+  add_vertex(buffer, x, y, 0.0f, 0.0f, 0.0f, 0.0f, zero2);
   
   // Note: still need to call addVertex on the first
   // vertex when we 'really' render the strip
@@ -120,21 +117,21 @@ seni_var *eval_fn_rect(seni_env *env, seni_node *expr)
   seni_buffer *buffer = env->buffer;
   printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
-  f32 col_array[4];
-  col_array[0] = 0.0f; col_array[1] = 0.0f; col_array[2] = 0.0f; col_array[3] = 1.0f;
+  f32 r = 0.0f; f32 g = 0.0f; f32 b = 0.0f; f32 a = 1.0f;
+  get_labelled_value_vec4(env, parameters, g_arg_colour, &r, &g, &b, &a);
 
   f32 tex_array[2];
   tex_array[0] = 0.0f; tex_array[1] = 0.0f;
   
   prepare_to_add_triangle_strip(buffer, 4, x - half_width, y - half_height);
   tex_array[0] = max_uv; tex_array[1] = min_uv;
-  add_vertex(buffer, x - half_width, y - half_height, col_array, tex_array);
+  add_vertex(buffer, x - half_width, y - half_height, r, g, b, a, tex_array);
   tex_array[0] = max_uv; tex_array[1] = max_uv;
-  add_vertex(buffer, x + half_width, y - half_height, col_array, tex_array);
+  add_vertex(buffer, x + half_width, y - half_height, r, g, b, a, tex_array);
   tex_array[0] = min_uv; tex_array[1] = min_uv;
-  add_vertex(buffer, x - half_width, y + half_height, col_array, tex_array);
+  add_vertex(buffer, x - half_width, y + half_height, r, g, b, a, tex_array);
   tex_array[0] = min_uv; tex_array[1] = max_uv;
-  add_vertex(buffer, x + half_width, y + half_height, col_array, tex_array);
+  add_vertex(buffer, x + half_width, y + half_height, r, g, b, a, tex_array);
   
   printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
@@ -161,11 +158,11 @@ seni_var *eval_fn_circle(seni_env *env, seni_node *expr)
     height = radius;
   }
 
+  f32 r = 0.0f; f32 g = 0.0f; f32 b = 0.0f; f32 a = 1.0f;
+  get_labelled_value_vec4(env, parameters, g_arg_colour, &r, &g, &b, &a);
+
   seni_buffer *buffer = env->buffer;
   printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
-
-  f32 col_array[4];
-  col_array[0] = 0.0f; col_array[1] = 0.0f; col_array[2] = 0.0f; col_array[3] = 1.0f;
 
   f32 tex_array[2];
   f32 uv = 1.0f / 1024.0f;
@@ -182,16 +179,16 @@ seni_var *eval_fn_circle(seni_env *env, seni_node *expr)
     vx = ((f32)(sin(angle)) * width) + x;
     vy = ((f32)(cos(angle)) * height) + y;
 
-    add_vertex(buffer, x, y, col_array, tex_array);
-    add_vertex(buffer, vx, vy, col_array, tex_array);
+    add_vertex(buffer, x, y, r, g, b, a, tex_array);
+    add_vertex(buffer, vx, vy, r, g, b, a, tex_array);
   }
 
   angle = 0.0f;
   vx = ((f32)(sin(angle)) * width) + x;
   vy = ((f32)(cos(angle)) * height) + y;
 
-  add_vertex(buffer, x, y, col_array, tex_array);
-  add_vertex(buffer, vx, vy, col_array, tex_array);
+  add_vertex(buffer, x, y, r, g, b, a, tex_array);
+  add_vertex(buffer, vx, vy, r, g, b, a, tex_array);
 
   printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 

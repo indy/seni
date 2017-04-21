@@ -1306,6 +1306,28 @@ void get_labelled_value_vec2(seni_env *env, seni_node *params, i32 name, f32 *ou
   }
 }
 
+void get_labelled_value_vec4(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1, f32 *out2, f32 *out3)
+{
+  seni_var *var = get_labelled_value_var(env, params, name);
+  if (var) {
+    if (var->type != VAR_VEC_HEAD) {
+      return;
+    }
+
+    var_as_vec4(out0, out1, out2, out3, var);
+
+    if (var->allocated) {
+      var_return_to_pool(var);
+    } else {
+      // return the VEC_RC and the vector's contents to the pool
+      // don't free var though since it's going to be the static
+      // seni_var in the eval function
+      var_return_to_pool(var->value.v);
+    }
+    
+  }
+}
+
 seni_var *eval_fn(seni_env *env, seni_node *expr)
 {
   seni_node *name = expr->value.first_child;
@@ -1582,6 +1604,30 @@ void var_as_vec2(f32 *out0, f32 *out1, seni_var *var)
   
   *out0 = f0;
   *out1 = f1;
+}
+
+void var_as_vec4(f32 *out0, f32 *out1, f32 *out2, f32 *out3, seni_var *var)
+{
+  int len = var_vector_length(var);
+  if (len != 4) {
+    return;
+  }
+
+  seni_var *rc = var->value.v;
+  seni_var *v = rc->value.v;
+
+  f32 f0 = var_as_float(v);
+  v = v->next;
+  f32 f1 = var_as_float(v);
+  v = v->next;
+  f32 f2 = var_as_float(v);
+  v = v->next;
+  f32 f3 = var_as_float(v);
+  
+  *out0 = f0;
+  *out1 = f1;
+  *out2 = f2;
+  *out3 = f3;
 }
 
 seni_var *bind_var(seni_env *env, i32 name, seni_var *var)

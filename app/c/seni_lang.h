@@ -180,6 +180,7 @@ i32 var_vector_length(seni_var *var);
 i32 var_as_int(seni_var *var);
 f32 var_as_float(seni_var *var);
 void var_as_vec2(f32* out0, f32* out1, seni_var *var);
+void var_as_vec4(f32* out0, f32* out1, f32* out2, f32* out3, seni_var *var);
 
 seni_var *bind_var(seni_env *env, i32 name, seni_var *var);
 seni_var *bind_var_to_int(seni_env *env, i32 name, i32 value);
@@ -197,6 +198,7 @@ seni_var *get_labelled_value_var(seni_env *env, seni_node *params, i32 name);
 f32 get_labelled_value_f32(seni_env *env, seni_node *params, i32 name, f32 default_value);
 i32 get_labelled_value_i32(seni_env *env, seni_node *params, i32 name, i32 default_value);
 void get_labelled_value_vec2(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1);
+void get_labelled_value_vec4(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1, f32 *out2, f32 *out3);
 
 void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *));
 void declare_common_arg(word_lut *wlut, char *name, i32 *global_value);
