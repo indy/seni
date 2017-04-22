@@ -6,6 +6,7 @@
 
 #include "seni_lang.h"
 #include "seni_bind.h"
+#include "seni_uv_mapper.h"
 
 #include "stdio.h"
 
@@ -665,6 +666,25 @@ void debug_lang_interpret_mem(void)
   }
 }
 
+void test_uv_mapper(void)
+{
+  init_uv_mapper();
+
+  seni_uv_mapping *flat = get_uv_mapping(BRUSH_FLAT, 0);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f, flat->width_scale);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 2.0f / 1024.0f, flat->mapping0[0]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f / 1024.0f, flat->mapping0[1]);
+  
+  TEST_ASSERT_NULL(get_uv_mapping(BRUSH_FLAT, 1)); // out of range
+
+  seni_uv_mapping *c = get_uv_mapping(BRUSH_C, 8);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.1f, c->width_scale);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 326.0f / 1024.0f, c->mapping0[0]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 556.0f / 1024.0f, c->mapping0[1]);
+
+  free_uv_mapper();
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -681,9 +701,10 @@ int main(void)
   RUN_TEST(test_lang_interpret_loop);
   RUN_TEST(test_lang_interpret_vector);
   RUN_TEST(test_lang_interpret_mem);
+  RUN_TEST(test_uv_mapper);
 
   // for debugging/development
-  RUN_TEST(debug_lang_interpret_mem);
+  // RUN_TEST(debug_lang_interpret_mem);
   
   return UNITY_END();
 }

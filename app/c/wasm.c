@@ -2,6 +2,7 @@
 #include "seni.h"
 #include "seni_buffer.h"
 #include "seni_bind.h"
+#include "seni_uv_mapper.h"
 
 f32 mult = 3.2f;
 int lensub = 0;
@@ -56,6 +57,8 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
   wl = wlut_allocate();
   interpreter_declare_keywords(wl);
 
+  init_uv_mapper();
+
   env_allocate_pools();
   env = get_initial_env(&buffer);
   
@@ -64,6 +67,7 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
   debug_var_info(env);
 
   env_free_pools();
+  free_uv_mapper();
   wlut_free(wl);
   parser_free_nodes(ast);
 
