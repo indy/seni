@@ -159,3 +159,13 @@ void render_circle(seni_buffer *buffer,
   add_vertex(buffer, x, y, col, uv);
   add_vertex(buffer, vx, vy, col, uv);
 }
+
+void render_bezier(seni_buffer *buffer,
+                   v2 *coords,
+                   f32 line_width, f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
+                   f32 t_start, f32 t_end,
+                   rgba col,
+                   i32 tessellation)
+{
+}
+

@@ -345,6 +345,8 @@ function renderScript(state, imageElement) {
 }
 
 function renderScriptWithWASM(state, imageElement) {
+  const stopFn = startTiming();
+
   const script = state.get('script');
 
   const numVertices = Shabba.render(Shabba.vbuf, Shabba.cbuf, Shabba.tbuf,
@@ -361,6 +363,8 @@ function renderScriptWithWASM(state, imageElement) {
   buffers.push(buffer);
 
   renderGeometryBuffers(buffers, imageElement);
+
+  stopFn('renderScriptWASM', gUI.konsole);
 }
 
 // function that takes a read-only state and updates the UI

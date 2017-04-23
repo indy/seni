@@ -19,6 +19,11 @@ void render_circle(seni_buffer *buffer,
                    f32 width, f32 height,
                    rgba col,
                    i32 tessellation);
-
+void render_bezier(seni_buffer *buffer,
+                   v2 *coords,
+                   f32 line_width, f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
+                   f32 t_start, f32 t_end,
+                   rgba col,
+                   i32 tessellation);
 
 #endif
