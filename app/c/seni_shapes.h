@@ -4,15 +4,20 @@
 #include "seni_types.h"
 #include "seni_buffer.h"
 
+void render_line(seni_buffer *buffer,
+                 f32 from_x, f32 from_y, f32 to_x, f32 to_y,
+                 f32 width,
+                 rgba col);
+
 void render_rect(seni_buffer *buffer,
                  f32 x, f32 y,
                  f32 width, f32 height,
-                 f32 r, f32 g, f32 b, f32 a);
+                 rgba col);
 
 void render_circle(seni_buffer *buffer,
                    f32 x, f32 y,
                    f32 width, f32 height,
-                   f32 r, f32 g, f32 b, f32 a,
+                   rgba col,
                    i32 tessellation);
 
 

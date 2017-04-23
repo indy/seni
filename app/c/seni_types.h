@@ -25,7 +25,19 @@ typedef f32 scalar;
 
 typedef struct
 {
-  scalar x, y;
+  union {
+    scalar x;
+    scalar u;
+  };
+  union {
+    scalar y;
+    scalar v;
+  };
 } v2;
+
+typedef struct
+{
+  scalar r, g, b, a;
+} rgba;
 
 #endif  /* SENI_TYPES_H */

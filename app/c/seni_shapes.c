@@ -1,5 +1,6 @@
 #include "seni_shapes.h"
 #include "seni_uv_mapper.h"
+#include "seni_mathutil.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -28,7 +29,7 @@ void matrix_stack_transform_2d_vector(f32 *out, f32 x, f32 y)
   out[1] = y;
 }
 
-void add_vertex(seni_buffer *buffer, f32 x, f32 y, f32 r, f32 g, f32 b, f32 a, f32 u, f32 v)
+void add_vertex(seni_buffer *buffer, f32 x, f32 y, rgba col, v2 t)
 {
   i32 vertex_item_size = 2;
   i32 v_index = buffer->num_vertices * vertex_item_size;
@@ -40,13 +41,13 @@ void add_vertex(seni_buffer *buffer, f32 x, f32 y, f32 r, f32 g, f32 b, f32 a, f
   buffer->vbuf[v_index + 0] = x;
   buffer->vbuf[v_index + 1] = y;
 
-  buffer->cbuf[c_index + 0] = r;
-  buffer->cbuf[c_index + 1] = g;
-  buffer->cbuf[c_index + 2] = b;
-  buffer->cbuf[c_index + 3] = a;
+  buffer->cbuf[c_index + 0] = col.r;
+  buffer->cbuf[c_index + 1] = col.g;
+  buffer->cbuf[c_index + 2] = col.b;
+  buffer->cbuf[c_index + 3] = col.a;
 
-  buffer->tbuf[t_index + 0] = u;
-  buffer->tbuf[t_index + 1] = v;
+  buffer->tbuf[t_index + 0] = t.u;
+  buffer->tbuf[t_index + 1] = t.v;
 
   buffer->num_vertices++;
 }
@@ -60,10 +61,15 @@ void form_degenerate_triangle(seni_buffer *buffer, f32 x, f32 y)
   // just copy the previous entries
   // note: colour doesn't matter since these triangles won't be rendered
   f32 *last_v = &(buffer->vbuf[index]);
-  add_vertex(buffer, last_v[0], last_v[1], 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+
+  rgba col;
+  col.r = 0.0f; col.g = 0.0f; col.b = 0.0f; col.a = 0.0f;
+  v2 t;
+  t.u = 0.0f; t.v = 0.0f;
+  add_vertex(buffer, last_v[0], last_v[1], col, t);
 
   // add the new vertex to complete the degenerate triangle
-  add_vertex(buffer, x, y, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+  add_vertex(buffer, x, y, col, t);
   
   // Note: still need to call addVertex on the first
   // vertex when we 'really' render the strip
@@ -82,10 +88,33 @@ void prepare_to_add_triangle_strip(seni_buffer *buffer, i32 num_vertices, f32 x,
   }
 }
 
+void render_line(seni_buffer *buffer,
+                 f32 from_x, f32 from_y, f32 to_x, f32 to_y,
+                 f32 width,
+                 rgba col)
+{
+  seni_uv_mapping *m = get_uv_mapping(BRUSH_FLAT, 0);
+
+  f32 hw = (width * m->width_scale) / 2.0f;
+
+  v2 n = normal(from_x, from_y, to_x, to_y);
+  v2 n2 = opposite_normal(n);
+
+  printf("%.2f, %.2f, %.2f, %.2f\n", n.x, n.y, n2.x, n2.y);
+
+  prepare_to_add_triangle_strip(buffer, 4, from_x + (hw * n.x), from_y + (hw * n.y));
+  
+  add_vertex(buffer, from_x + (hw * n.x),  from_y + (hw * n.y),  col, m->map[0]);
+  add_vertex(buffer, from_x + (hw * n2.x), from_y + (hw * n2.y), col, m->map[1]);
+  add_vertex(buffer, to_x + (hw * n.x),    to_y + (hw * n.y),    col, m->map[2]);
+  add_vertex(buffer, to_x + (hw * n2.x),   to_y + (hw * n2.y),   col, m->map[3]);
+}
+
+
 void render_rect(seni_buffer *buffer,
                  f32 x, f32 y,
                  f32 width, f32 height,
-                 f32 r, f32 g, f32 b, f32 a)
+                 rgba col)
 {
   seni_uv_mapping *m = get_uv_mapping(BRUSH_FLAT, 0);
 
@@ -93,20 +122,20 @@ void render_rect(seni_buffer *buffer,
   f32 half_height = height / 2.0f;
 
   prepare_to_add_triangle_strip(buffer, 4, x - half_width, y - half_height);
-  add_vertex(buffer, x - half_width, y - half_height, r, g, b, a, m->mapping0[0], m->mapping0[1]);
-  add_vertex(buffer, x + half_width, y - half_height, r, g, b, a, m->mapping1[0], m->mapping1[1]);
-  add_vertex(buffer, x - half_width, y + half_height, r, g, b, a, m->mapping2[0], m->mapping2[1]);
-  add_vertex(buffer, x + half_width, y + half_height, r, g, b, a, m->mapping3[0], m->mapping3[1]);
+  add_vertex(buffer, x - half_width, y - half_height, col, m->map[0]);
+  add_vertex(buffer, x + half_width, y - half_height, col, m->map[1]);
+  add_vertex(buffer, x - half_width, y + half_height, col, m->map[2]);
+  add_vertex(buffer, x + half_width, y + half_height, col, m->map[3]);
 }
 
 void render_circle(seni_buffer *buffer,
                    f32 x, f32 y,
                    f32 width, f32 height,
-                   f32 r, f32 g, f32 b, f32 a,
+                   rgba col,
                    i32 tessellation)
 {
-  f32 u, v;
-  make_uv(&u, &v, 1.0f, 1.0f);
+  v2 uv;
+  make_uv(&uv, 1.0f, 1.0f);
 
   prepare_to_add_triangle_strip(buffer, (tessellation * 2) + 2, x, y);
 
@@ -119,14 +148,14 @@ void render_circle(seni_buffer *buffer,
     vx = ((f32)(sin(angle)) * width) + x;
     vy = ((f32)(cos(angle)) * height) + y;
 
-    add_vertex(buffer, x, y, r, g, b, a, u, v);
-    add_vertex(buffer, vx, vy, r, g, b, a, u, v);
+    add_vertex(buffer, x, y, col, uv);
+    add_vertex(buffer, vx, vy, col, uv);
   }
 
   angle = 0.0f;
   vx = ((f32)(sin(angle)) * width) + x;
   vy = ((f32)(cos(angle)) * height) + y;
 
-  add_vertex(buffer, x, y, r, g, b, a, u, v);
-  add_vertex(buffer, vx, vy, r, g, b, a, u, v);
+  add_vertex(buffer, x, y, col, uv);
+  add_vertex(buffer, vx, vy, col, uv);
 }

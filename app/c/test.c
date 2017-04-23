@@ -672,15 +672,15 @@ void test_uv_mapper(void)
 
   seni_uv_mapping *flat = get_uv_mapping(BRUSH_FLAT, 0);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f, flat->width_scale);
-  TEST_ASSERT_FLOAT_WITHIN(0.1f, 2.0f / 1024.0f, flat->mapping0[0]);
-  TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f / 1024.0f, flat->mapping0[1]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 2.0f / 1024.0f, flat->map[0].u);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f / 1024.0f, flat->map[0].v);
   
   TEST_ASSERT_NULL(get_uv_mapping(BRUSH_FLAT, 1)); // out of range
 
   seni_uv_mapping *c = get_uv_mapping(BRUSH_C, 8);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.1f, c->width_scale);
-  TEST_ASSERT_FLOAT_WITHIN(0.1f, 326.0f / 1024.0f, c->mapping0[0]);
-  TEST_ASSERT_FLOAT_WITHIN(0.1f, 556.0f / 1024.0f, c->mapping0[1]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 326.0f / 1024.0f, c->map[0].u);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, 556.0f / 1024.0f, c->map[0].v);
 
   free_uv_mapper();
 }

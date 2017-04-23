@@ -17,17 +17,14 @@ typedef enum {
 
 typedef struct seni_uv_mapping {
   f32 width_scale;
-  float *mapping0;
-  float *mapping1;
-  float *mapping2;
-  float *mapping3;
+  v2 *map;                  // array of length 4
 } seni_uv_mapping;
 
 void init_uv_mapper();
 void free_uv_mapper();
 
 
-void make_uv(f32 *out_u, f32 *out_v, f32 in_u, f32 in_v);
+void make_uv(v2 *out, f32 in_u, f32 in_v);
 seni_uv_mapping *get_uv_mapping(seni_brush_type type, i32 sub_type);
 
 #endif

@@ -68,11 +68,11 @@ v2 normalize(v2 v)
 v2 normal(f32 x1, f32 y1, f32 x2, f32 y2)
 {
   f32 dx = x2 - x1;
-  f32 dy = -(y2 - y1);
-  v2 v;
+  f32 dy = y2 - y1;
 
-  v.x = dx;
-  v.y = dy;
+  v2 v;
+  v.x = -dy;
+  v.y = dx;
   
   return normalize(v);
 }
