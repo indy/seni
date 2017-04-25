@@ -9,6 +9,7 @@
 #include "seni_uv_mapper.h"
 
 #include "stdio.h"
+#include <string.h>
 
 /* way of working with boolean and TEST macros */
 bool test_true = true;
@@ -662,6 +663,11 @@ void debug_lang_interpret_mem(void)
 
   {
     DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define a 1) (vector/append b a))");
+    EVAL_CLEANUP;
+  }
+
+  {
+    DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define b 1) (+ b b)) (some-fn)");
     EVAL_CLEANUP;
   }
 }

@@ -3,7 +3,6 @@
 
 #include "seni_config.h"
 #include "seni_types.h"
-#include "seni_containers.h"
 #include "seni_buffer.h"
 
 // 2 << 7 == 128
@@ -86,6 +85,7 @@ typedef enum seni_value_in_use {
 } seni_value_in_use;
 
 typedef struct seni_var {
+  i32 id;
   seni_var_type type;
 
   /* no char* in this union since I don't think we're ever going to have a pointer to a string */
@@ -103,17 +103,11 @@ typedef struct seni_var {
 
   // reference count for VAR_VEC_RC
   i32 ref_count;
-
   bool allocated;
-
-  /* for hashing */
-  i32 id;                    /* key */
-  UT_hash_handle hh;         /* makes this structure hashable */
 
   /* for linked list used by the pool and for elements in a vector */
   struct seni_var *prev;
   struct seni_var *next;
-
 } seni_var;
 
 

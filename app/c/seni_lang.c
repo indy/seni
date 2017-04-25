@@ -4,7 +4,7 @@
 #include <stdio.h>              /* for debug only */
 #include <math.h>
 
-#include "seni_containers.h"
+#include "utlist.h"
 #include "seni_lang.h"
 
 // for parsing
@@ -812,22 +812,31 @@ void pretty_print_seni_node(seni_node *node, char* msg)
 
 void pretty_print_seni_var(seni_var *var, char* msg)
 {
+  if (var == NULL) {
+    SENI_ERROR("pretty_print_seni_var: given NULL");
+    return;
+  }
+  
   char *type = var_type_name(var);
   seni_value_in_use using = get_value_in_use(var->type);
 
 #ifdef SENI_DEBUG_MODE
   switch(using) {
   case USE_I:
-    printf("id:%d %s : %d %s\n", var->debug_id, type, var->value.i, msg);
+    printf("debug_id:%d id:%d %s : %d %s\n", var->debug_id, var->id, type, var->value.i, msg);
     break;
   case USE_F:
-    printf("id:%d %s : %.2f %s\n", var->debug_id, type, var->value.f, msg);
+    printf("debug_id:%d id:%d %s : %.2f %s\n", var->debug_id, var->id,  type, var->value.f, msg);
     break;
   case USE_N:
-    printf("id:%d %s %s %s\n", var->debug_id, type, node_type_name(var->value.n), msg);
+    printf("debug_id:%d id:%d %s %s %s\n", var->debug_id, var->id,  type, node_type_name(var->value.n), msg);
     break;
   case USE_V:
-    printf("id:%d %s : length %d %s\n", var->debug_id, type, var_vector_length(var), msg);
+    if (var->type == VAR_VEC_HEAD) {
+      printf("debug_id:%d id:%d %s : length %d %s\n", var->debug_id, var->id,  type, var_vector_length(var), msg);
+    } else {
+      printf("debug_id:%d id:%d %s : %s\n", var->debug_id, var->id,  type, msg);
+    }
     break;
   }
 #else
@@ -1054,14 +1063,13 @@ seni_env *pop_scope(seni_env *env)
   // return all the vars back to the pool
   seni_var *var, *tmp;
 
-  // HASH_ITER(hh, env->vars, var, tmp) {
-  //   pretty_print_seni_var(var, "popping");
-  // }  
-
-  HASH_ITER(hh, env->vars, var, tmp) {
-    HASH_DEL(env->vars, var);
+  DL_FOREACH_SAFE(env->vars, var, tmp) {
+    DL_DELETE(env->vars, var);
+    // null the next pointer otherwise var_return_to_pool will treat the var
+    // as a linked list and try to return var->next to the pool as well
+    var->next = NULL; 
     var_return_to_pool(var);
-  }  
+  }
 
   env_return_to_pool(env);
   
@@ -1072,9 +1080,13 @@ seni_var *lookup_var_in_current_scope(seni_env *env, i32 var_id)
 {
   seni_var *var = NULL;
 
-  HASH_FIND_INT(env->vars, &var_id, var);
 
-  return var;
+  DL_FOREACH(env->vars, var) {
+    if (var->id == var_id) {
+      return var;
+    }
+  }
+  return NULL;
 }
 
 seni_var *lookup_var(seni_env *env, i32 var_id)
@@ -1109,11 +1121,11 @@ seni_var *get_binded_var(seni_env *env, i32 var_id)
   seni_var *var = NULL;
 
   // is the key already assigned to this env?
-  HASH_FIND_INT(env->vars, &var_id, var);
-  if (var != NULL) {
-    // return the existing var so that it can be overwritten
-    // printf("-- already in hashmap -- %d ", env_debug_available_var());
-    return var;
+  DL_FOREACH(env->vars, var) {
+    if (var->id == var_id) {
+      // return the existing var so that it can be overwritten
+      return var;
+    }
   }
 
   var = var_get_from_pool();
@@ -1123,7 +1135,8 @@ seni_var *get_binded_var(seni_env *env, i32 var_id)
   }
 
   var->id = var_id;
-  HASH_ADD_INT(env->vars, id, var);
+
+  DL_APPEND(env->vars, var);
 
   return var;
 }
