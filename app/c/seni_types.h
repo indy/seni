@@ -25,6 +25,13 @@ typedef f32 scalar;
 
 typedef struct
 {
+  scalar x;
+  scalar y;
+
+  /*
+  // 25/04/2017
+  // can't use this as the Microsoft compiler doesn't support anonymous unions which are part of C11
+  //
   union {
     scalar x;
     scalar u;
@@ -33,6 +40,7 @@ typedef struct
     scalar y;
     scalar v;
   };
+  */
 } v2;
 
 typedef struct

@@ -9,8 +9,8 @@ f32 texture_dim = 1024.0f;
 
 void make_uv(v2 *out, f32 in_u, f32 in_v)
 {
-  out->u = in_u / texture_dim;
-  out->v = in_v / texture_dim;
+  out->x = in_u / texture_dim;
+  out->y = in_v / texture_dim;
 }
 
 void allocate_uv_mapping(seni_brush_type type, i32 sub_type,

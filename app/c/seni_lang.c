@@ -14,7 +14,6 @@ seni_node *consume_item();
 void var_return_to_pool(seni_var *var);
 seni_var *eval(seni_env *env, seni_node *expr);
 
-
 #define NUM_ENV_ALLOCATED 32
 seni_env *g_envs;               /* doubly linked list used as a pool of seni_env structs */
 i32 g_envs_used;
@@ -40,8 +39,6 @@ typedef struct keyword {
 } keyword;
 
 keyword g_keyword[MAX_KEYWORD_LOOKUPS];
-
-
 
 /* returns 0 if not found */
 i32 lookup_reserved_name(word_lut *wlut, char *string, size_t len)

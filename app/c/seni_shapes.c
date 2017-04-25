@@ -14,6 +14,7 @@ bool can_vertices_fit(seni_buffer *buffer, i32 num)
 
 void flush_triangles(seni_buffer *buffer)
 {
+  buffer = NULL;
   printf("TODO: implement");
 }
 
@@ -46,8 +47,8 @@ void add_vertex(seni_buffer *buffer, f32 x, f32 y, rgba col, v2 t)
   buffer->cbuf[c_index + 2] = col.b;
   buffer->cbuf[c_index + 3] = col.a;
 
-  buffer->tbuf[t_index + 0] = t.u;
-  buffer->tbuf[t_index + 1] = t.v;
+  buffer->tbuf[t_index + 0] = t.x; // u
+  buffer->tbuf[t_index + 1] = t.y; // v
 
   buffer->num_vertices++;
 }
@@ -65,7 +66,7 @@ void form_degenerate_triangle(seni_buffer *buffer, f32 x, f32 y)
   rgba col;
   col.r = 0.0f; col.g = 0.0f; col.b = 0.0f; col.a = 0.0f;
   v2 t;
-  t.u = 0.0f; t.v = 0.0f;
+  t.x = 0.0f; t.y = 0.0f; // u v
   add_vertex(buffer, last_v[0], last_v[1], col, t);
 
   // add the new vertex to complete the degenerate triangle
@@ -139,8 +140,7 @@ void render_circle(seni_buffer *buffer,
 
   prepare_to_add_triangle_strip(buffer, (tessellation * 2) + 2, x, y);
 
-  f32 tau = M_PI * 2.0f;
-  f32 unit_angle = tau / tessellation;
+  f32 unit_angle = TAU / tessellation;
   f32 angle, vx, vy;
 
   for (int i = 0; i < tessellation; i++) {
@@ -167,5 +167,15 @@ void render_bezier(seni_buffer *buffer,
                    rgba col,
                    i32 tessellation)
 {
+  buffer = NULL;
+  coords = NULL;
+  line_width = 0.0f;
+  line_width_start = 0.0f;
+  line_width_end = 0.0f;
+  line_width_mapping = 0;
+  t_start = 0.0f;
+  t_end = 0.0f;
+  col.r = 0.0f;
+  tessellation = 0;
 }
 

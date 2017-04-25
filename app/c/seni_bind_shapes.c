@@ -107,7 +107,7 @@ seni_var *eval_fn_bezier(seni_env *env, seni_node *expr)
   f32 line_width = get_named_f32(env, parameters, g_arg_line_width, 5.0f);
   f32 line_width_start = get_named_f32(env, parameters, g_arg_line_width_start, 5.0f);
   f32 line_width_end = get_named_f32(env, parameters, g_arg_line_width_end, 5.0f);
-  f32 line_width_mapping = get_named_i32(env, parameters, g_arg_line_width_mapping, 0);
+  i32 line_width_mapping = get_named_i32(env, parameters, g_arg_line_width_mapping, 0);
   seni_var *coords_var = get_named_var(env, parameters, g_arg_coords);
   v2 coords[4];
   if (coords_var && var_vector_length(coords_var) == 4) {
