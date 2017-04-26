@@ -450,6 +450,8 @@ void test_lang_interpret_define(void)
   EVAL_INT("(define num 10) (+ num num)", 20);
   EVAL_FLOAT("(define num 10.0) (+ num num)", 20.0f);
   EVAL_FLOAT("(define num (* 2 3.0)) (+ num num num)", 18.0f);
+  // multiple defines
+  EVAL_INT("(define a 10 b 5 c 2) (+ a b c)", 17);
 }
 
 void test_lang_interpret_function(void)
@@ -709,6 +711,7 @@ int main(void)
   RUN_TEST(test_lang_interpret_mem);
   RUN_TEST(test_uv_mapper);
 
+  
   // for debugging/development
   RUN_TEST(debug_lang_interpret_mem);
   

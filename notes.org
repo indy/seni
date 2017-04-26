@@ -1,9 +1,9 @@
 * TODO [0/5]
-  1. [ ] i32 seni_var_vector_length(seni_var *var)
-  2. [ ] why does setq seg fault when it returns NULL?
-  3. [ ] 'in' paramaeter for loop ?
-  4. [ ] special fn: on-matrix-stack
-  5. [ ] classic fns: vector vector/append
+  1. [ ] evaluate any top-level defines and fns
+  2. [ ] special fn: on-matrix-stack
+  3. [ ] why does setq seg fault when it returns NULL?
+  4. [ ] 'in' paramaeter for loop ?
+  5. [ ] constants like canvas/width
 
 
 

@@ -1,1 +1,20 @@
-(rect)
+(define 
+  num-squares-to-render 13
+  gap-size 30
+  num-squares (+ 2 num-squares-to-render)
+  num-gaps (+ num-squares 1)
+  square-size (/ (- 1000 (* gap-size num-gaps)) num-squares))
+
+(fn (map-to-position at: 0)
+    (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
+
+(loop (y from: 1 to: (- num-squares 1))
+  (loop (x from: 1 to: (- num-squares 1))
+        (define
+          x-pos (map-to-position at: x)
+          y-pos (map-to-position at: y))
+        (rect position: [x-pos y-pos]
+              width: square-size 
+              height: square-size
+              colour: [1.0 0.0 0.4 1.0])))
+

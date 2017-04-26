@@ -462,17 +462,20 @@ seni_var *eval_keyword_define(seni_env *env, seni_node *expr)
     return NULL;
   }
 
-  // get the binding name
-  seni_node *name = sibling;
-  // this should be NODE_NAME
+  seni_var *env_var = NULL;
+  
+  while (sibling) {
+    // get the binding name
+    seni_node *name = sibling;
+    sibling = safe_next(sibling);
 
-  // get the value
-  sibling = safe_next(sibling);
-  seni_var *v = eval(env, sibling);
+    // get the value
+    seni_var *v = eval(env, sibling);
+    sibling = safe_next(sibling);
 
-  // add the name/value binding to the current env
-
-  seni_var *env_var = bind_var(env, name->value.i, v);
+    // add the name/value binding to the current env
+    env_var = bind_var(env, name->value.i, v);
+  }
 
   return env_var;
 }
