@@ -1341,6 +1341,7 @@ void get_named_vec4(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *
 seni_var *eval_fn(seni_env *env, seni_node *expr)
 {
   seni_node *name = expr->value.first_child;
+  seni_var *res = NULL;
 
   // look up the name in the env
   seni_var *var = lookup_var(env, name->value.i);  // var == fn (foo b: 1 c: 2) (+ b c)
@@ -1351,39 +1352,39 @@ seni_var *eval_fn(seni_env *env, seni_node *expr)
   }
 
   seni_env *fn_env = push_scope(env);
+  {
+    seni_node *fn_expr = var->value.n;
+
+    // fn_expr points to the 'fn' keyword
+
+    seni_node *fn_name_and_args_list = safe_next(fn_expr); // (foo b: 1 c: 2)
   
-  seni_node *fn_expr = var->value.n;
+    seni_node *fn_args = safe_next(fn_name_and_args_list->value.first_child); // b: 1 c: 2
 
-  // fn_expr points to the 'fn' keyword
+    // Add the invoked parameter bindings to the function's locally scoped env
+    //
+    seni_node *invoke_node = safe_next(name);
 
-  seni_node *fn_name_and_args_list = safe_next(fn_expr); // (foo b: 1 c: 2)
-  
-  seni_node *fn_args = safe_next(fn_name_and_args_list->value.first_child); // b: 1 c: 2
+    while (invoke_node != NULL) {
+      seni_node *arg_binding = invoke_node;
+      i32 arg_binding_name = arg_binding->value.i;
 
-  // Add the invoked parameter bindings to the function's locally scoped env
-  //
-  seni_node *invoke_node = safe_next(name);
+      invoke_node = safe_next(invoke_node);
 
-  while (invoke_node != NULL) {
-    seni_node *arg_binding = invoke_node;
-    i32 arg_binding_name = arg_binding->value.i;
+      seni_var *invoke_parameter_value = eval(env, invoke_node); // note: eval using the original outer scope
 
-    invoke_node = safe_next(invoke_node);
+      bind_var(fn_env, arg_binding_name, invoke_parameter_value);
 
-    seni_var *invoke_parameter_value = eval(env, invoke_node); // note: eval using the original outer scope
+      invoke_node = safe_next(invoke_node);
+    }
 
-    bind_var(fn_env, arg_binding_name, invoke_parameter_value);
+    // add the labelled default parameters if none were explicitly given
+    add_named_parameters_to_env(fn_env, fn_args);
 
-    invoke_node = safe_next(invoke_node);
+    seni_node *fn_body = safe_next(fn_name_and_args_list);
+
+    res = eval_all_nodes(fn_env, fn_body);
   }
-
-  // add the labelled default parameters if none were explicitly given
-  add_named_parameters_to_env(fn_env, fn_args);
-
-  seni_node *fn_body = safe_next(fn_name_and_args_list);
-
-  seni_var *res = eval_all_nodes(fn_env, fn_body);
-
   pop_scope(fn_env);
 
   return res;

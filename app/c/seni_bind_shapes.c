@@ -26,11 +26,11 @@ seni_var *eval_fn_line(seni_env *env, seni_node *expr)
 
 
   seni_buffer *buffer = env->buffer;
-  printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
+  //printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
   render_line(buffer, from_x, from_y, to_x, to_y, width, col);
   
-  printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
+  //printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
   return NULL;
 }
@@ -53,11 +53,11 @@ seni_var *eval_fn_rect(seni_env *env, seni_node *expr)
   col.r = r; col.g = g; col.b = b; col.a = a;
 
   seni_buffer *buffer = env->buffer;
-  printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
+  //printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
   render_rect(buffer, x, y, width, height, col);
   
-  printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
+  //printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
   return NULL;
 }
@@ -88,11 +88,11 @@ seni_var *eval_fn_circle(seni_env *env, seni_node *expr)
   col.r = r; col.g = g; col.b = b; col.a = a;
 
   seni_buffer *buffer = env->buffer;
-  printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
+  //printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
   render_circle(buffer, x, y, width, height, col, tessellation);
 
-  printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
+  //printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
   return NULL;
 }
@@ -131,7 +131,7 @@ seni_var *eval_fn_bezier(seni_env *env, seni_node *expr)
   rgba col; col.r = r; col.g = g; col.b = b; col.a = a;
 
   seni_buffer *buffer = env->buffer;
-  printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
+  //printf("before: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
 
   render_bezier(buffer,
                 coords,
@@ -139,7 +139,7 @@ seni_var *eval_fn_bezier(seni_env *env, seni_node *expr)
                 t_start, t_end,
                 col, tessellation);
   
-  printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
+  //printf("after: buffer size %d %d\n", buffer->max_vertices, buffer->num_vertices);
   return NULL;
 }
 
