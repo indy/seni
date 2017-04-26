@@ -1,21 +1,33 @@
 @echo off
 
-if "%1" == "wasm" (
+setlocal EnableDelayedExpansion
 
+if "%1" == "wasm" (
+   if not exist "app\dist" mkdir app\dist
    pushd app\dist
-   rem ISG: have to list each c file as Windows command prompt doesn't do wildcard expansion
-   call emcc -o seni-wasm.js ..\c\wasm.c ..\c\seni.c ..\c\seni_containers.c ..\c\seni_interp.c ..\c\seni_lang.c ..\c\seni_mathutil.c -O3 -s WASM=1 -s EXPORTED_FUNCTIONS="['_mc_m_wasm', '_parse_sample', '_copy_array']"
+      rem emcc doesn't expand wildcards
+      set seni_sources=..\c\wasm.c ..\c\seni.c
+      for /f %%F in ('dir /b ..\c\seni_*.c') do call set seni_sources=%%seni_sources%% ..\c\%%F
+
+      set exported_fns="['_mc_m_wasm', '_parse_sample', '_copy_array']"
+
+      call emcc -o seni-wasm.js !seni_sources! -O3 -s WASM=1 -s EXPORTED_FUNCTIONS=!exported_fns!
    popd
 
 ) else (
+  if not exist "build_win" mkdir build_win
 
-  mkdir build_win
   pushd build_win
-  rem compiler switches: https://docs.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-alphabetically
-  cl /W4 /wd4127 /wd4001 -Zi -Za /D_CRT_SECURE_NO_DEPRECATE /TC ..\app\c\test.c ..\app\c\unity\unity.c ..\app\c\seni.c ..\app\c\seni_*.c /link /OUT:test.exe
+      rem cl can expand wildcards
+      set test_sources=..\app\c\test.c ..\app\c\unity\unity.c ..\app\c\seni.c ..\app\c\seni_*.c
+      
+      rem https://docs.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-alphabetically
+      cl /W4 /wd4127 /wd4001 -Zi -Za /D_CRT_SECURE_NO_DEPRECATE /TC !test_sources! /link /OUT:test.exe
   popd
 
   if "%1" == "test" (
     .\build_win\test.exe
   )
 )
+
+
