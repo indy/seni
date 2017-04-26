@@ -6,25 +6,9 @@
 // a register like seni_var for holding intermediate values
 extern seni_var g_reg;
 
-extern i32 g_arg_colour;
-extern i32 g_arg_coords;
-extern i32 g_arg_from;
-extern i32 g_arg_height;
-extern i32 g_arg_increment;
-extern i32 g_arg_line_width;
-extern i32 g_arg_line_width_end;
-extern i32 g_arg_line_width_mapping;
-extern i32 g_arg_line_width_start;
-extern i32 g_arg_position;
-extern i32 g_arg_radius;
-extern i32 g_arg_steps;
-extern i32 g_arg_t_end;
-extern i32 g_arg_t_start;
-extern i32 g_arg_tessellation;
-extern i32 g_arg_to;
-extern i32 g_arg_upto;
-extern i32 g_arg_width;
-
+#define COMMON_ARG(VAR,_) extern i32 VAR;
+#include "seni_common_args.h"
+#undef COMMON_ARG
 
 void interpreter_declare_keywords(word_lut *wl);
 
