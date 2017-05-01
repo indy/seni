@@ -147,3 +147,120 @@ In other architectures, the instruction pointer is sometimes called the "program
   int val = execute();
 
 
+
+
+* vm links
+  https://github.com/munificent/wren
+  http://wren.io/getting-started.html
+  http://gameprogrammingpatterns.com/bytecode.html
+  https://github.com/skx/simple.vm/tree/master/examples
+  http://www.jucs.org/jucs_11_7/the_implementation_of_lua/jucs_11_7_1159_1176_defigueiredo.html
+  http://smalltalk.gnu.org/files/vmspec.pdf
+  http://stackoverflow.com/questions/20313122/generating-register-based-bytecode-from-an-abstract-syntax-tree
+  http://hhvm.com/blog/6323/the-journey-of-a-thousand-bytecodes
+  https://www.reddit.com/r/learnprogramming/comments/w6i0p/bytecode_execution_vs_ast_walking_speed/
+
+* wren vm notes
+  Unlike expressions, statements do not leave a value on the stack.
+
+
+  wren_vm.c:
+  initvm
+    wrenconfiguration structure
+    vm = wrenNewVM(configuration)
+      symbol table init
+      wrenInitializeCore                <<<-- wren_core.c
+        define root Object class
+        PRIMITIVE macro ?
+        all the core primitives (keywords in seni?) have now been defined
+
+  WrenInterpretResult result = wrenInterpret(vm, source); <<<-- vm.c
+    WrenVM is passed around
+    creates a 'main' module (in a tempRoot), creates a 'fiber' and runs interpreter with that fiber
+      Value ???
+      wrenStringFormat returns a large number
+  is interpreter called twice? first for core module then for the user specified main module?
+  loadModule calls wrenCompile
+  
+  wrenCompile <<<<-- wren_compiler.c
+    lexer parser etc
+    
+
+  static WrenInterpretResult runInterpreter(WrenVM* vm, register ObjFiber* fiber) <<<<<-- wren_vm.c
+
+  definition(compiler)
+  statement(compiler)
+  expression(compiler)
+  literal(compiler, canAssign)
+  emitConstant
+
+  WREN_NAN_TAGGING - if not defined this makes debugging easier as Value has a type and num structure
+
+
+* wren analysis scratch notes
+>	wren_d.exe!emitOp(sCompiler * compiler, Code instruction) Line 1171	C
+ 	wren_d.exe!emitShortArg(sCompiler * compiler, Code instruction, int arg) Line 1200	C
+ 	wren_d.exe!emitConstant(sCompiler * compiler, unsigned __int64 value) Line 1221	C
+ 	wren_d.exe!literal(sCompiler * compiler, bool canAssign) Line 2267	C
+ 	wren_d.exe!parsePrecedence(sCompiler * compiler, Precedence precedence) Line 2680	C
+ 	wren_d.exe!infixOp(sCompiler * compiler, bool canAssign) Line 2434	C
+ 	wren_d.exe!parsePrecedence(sCompiler * compiler, Precedence precedence) Line 2686	C
+ 	wren_d.exe!expression(sCompiler * compiler) Line 2694	C
+ 	wren_d.exe!forStatement(sCompiler * compiler) Line 2905	C
+ 	wren_d.exe!statement(sCompiler * compiler) Line 2992	C
+ 	wren_d.exe!definition(sCompiler * compiler) Line 3421	C
+ 	wren_d.exe!wrenCompile(WrenVM * vm, ObjModule * module, const char * source, bool isExpression, bool printErrors) Line 3468	C
+ 	wren_d.exe!loadModule(WrenVM * vm, unsigned __int64 name, const char * source) Line 490	C
+ 	wren_d.exe!wrenInterpretInModule(WrenVM * vm, const char * module, const char * source) Line 1328	C
+ 	wren_d.exe!wrenInterpret(WrenVM * vm, const char * source) Line 1315	C
+ 	wren_d.exe!runFile(const char * path) Line 232	C
+
+
+
+
+
+
+  when compiling user code set a breakpoint on emitOp wren_compiler.c 1170
+
+  System.print("hello from isg")
+  for (i in 1..10) System.print("Counting up %(i)")
+
+  instruction	CODE_LOAD_MODULE_VAR (17)	Code
+  instruction	CODE_CONSTANT (0)	Code
+	instruction	CODE_CALL_1 (25)	Code
+	instruction	CODE_POP (23)	Code
+	instruction	CODE_CONSTANT (0)	Code
+	instruction	CODE_CONSTANT (0)	Code
+	instruction	CODE_CALL_1 (25)	Code
+	instruction	CODE_NULL (1)	Code
+	instruction	CODE_LOAD_LOCAL_0 (4)	Code
+	instruction	CODE_LOAD_LOCAL_1 (5)	Code
+	instruction	CODE_CALL_1 (25)	Code
+	instruction	CODE_STORE_LOCAL (14)	Code
+	instruction	CODE_JUMP_IF (60)	Code
+	instruction	CODE_LOAD_LOCAL_0 (4)	Code
+	instruction	CODE_LOAD_LOCAL_1 (5)	Code
+	instruction	CODE_CALL_1 (25)	Code
+	instruction	CODE_LOAD_MODULE_VAR (17)	Code
+	instruction	CODE_LOAD_MODULE_VAR (17)	Code
+	instruction	CODE_CALL_0 (24)	Code
+	instruction	CODE_CONSTANT (0)	Code
+	instruction	CODE_CALL_1 (25)	Code
+	instruction	CODE_LOAD_LOCAL_2 (6)	Code
+	instruction	CODE_CALL_1 (25)	Code
+	instruction	CODE_CONSTANT (0)	Code
+	instruction	CODE_CALL_1 (25)	Code
+	instruction	CODE_CALL_0 (24)	Code
+	instruction	CODE_CALL_1 (25)	Code
+	instruction	CODE_POP (23)	Code
+	instruction	CODE_LOOP (59)	Code
+
+
+
+
+* wren build shenanigans
+
+Build Events -> Command Line had the following pasted in:
+
+python ../../libuv.py download
+python ../../libuv.py build -32

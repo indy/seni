@@ -9,9 +9,7 @@ if "%1" == "wasm" (
       set seni_sources=..\c\wasm.c ..\c\seni.c
       for /f %%F in ('dir /b ..\c\seni_*.c') do call set seni_sources=%%seni_sources%% ..\c\%%F
 
-      set exported_fns="['_mc_m_wasm', '_parse_sample', '_copy_array']"
-
-      call emcc -o seni-wasm.js !seni_sources! -O3 -s WASM=1 -s EXPORTED_FUNCTIONS=!exported_fns!
+      call emcc -o seni-wasm.js !seni_sources! -O3 -s WASM=1
    popd
 
 ) else (
