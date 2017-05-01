@@ -77,7 +77,7 @@ typedef enum {
 */
 
 // which value to use
-typedef enum seni_value_in_use {
+typedef enum {
   USE_I,                        // integer
   USE_F,                        // float
   USE_N,                        // pointer to seni_node
@@ -141,6 +141,7 @@ void fill_debug_info(seni_debug_info *debug_info);
 word_lut *wlut_allocate();
 void      wlut_free(word_lut *wlut);
 i32       wlut_lookup_or_add(word_lut *wlut, char *string, size_t len);
+char     *wlut_lookup(word_lut *wlut, i32 index);
 
 // parser
 seni_node *parser_parse(word_lut *wlut, char *s);

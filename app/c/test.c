@@ -7,6 +7,7 @@
 #include "seni_lang.h"
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
+#include "seni_vm.h"
 
 #include "stdio.h"
 #include <string.h>
@@ -693,23 +694,137 @@ void test_uv_mapper(void)
   free_uv_mapper();
 }
 
+
+void construct_seni_var_int(seni_var *var, i32 i)
+{
+  var->type = VAR_INT;
+  var->value.i = i;
+}
+void test_vm_stack(void)
+{
+  seni_var va, vb, vc, vd, *top;
+
+  // push/pop
+  {
+    seni_stack *stack = stack_construct(10);
+    construct_seni_var_int(&va, 42);
+    construct_seni_var_int(&vb, 11);
+
+    stack_push(stack, &va);
+    stack_push(stack, &vb);
+
+    top = stack_pop(stack);
+    TEST_ASSERT_EQUAL(vb.value.i, top->value.i);
+    top = stack_pop(stack);
+    TEST_ASSERT_EQUAL(va.value.i, top->value.i);
+    top = stack_pop(stack);
+    TEST_ASSERT_NULL(top);
+    stack_free(stack);
+  }
+
+  // peek/peek2
+  {
+    seni_stack *stack = stack_construct(10);
+    construct_seni_var_int(&va, 2);
+    construct_seni_var_int(&vb, 3);
+    construct_seni_var_int(&vc, 4);
+    construct_seni_var_int(&vd, 5);
+
+    stack_push(stack, &va);
+    stack_push(stack, &vb);
+    stack_push(stack, &vc);
+    stack_push(stack, &vd);
+
+    top = stack_peek(stack);
+    TEST_ASSERT_EQUAL(vd.value.i, top->value.i);
+    top = stack_peek(stack);    // calling peek again returns the same value
+    TEST_ASSERT_EQUAL(vd.value.i, top->value.i);
+    top = stack_peek2(stack);
+    TEST_ASSERT_EQUAL(vc.value.i, top->value.i);
+    
+    top = stack_pop(stack);
+    TEST_ASSERT_EQUAL(vd.value.i, top->value.i);
+
+    top = stack_peek(stack);
+    TEST_ASSERT_EQUAL(vc.value.i, top->value.i);
+    top = stack_peek2(stack);
+    TEST_ASSERT_EQUAL(vb.value.i, top->value.i);
+
+    stack_free(stack);
+  }  
+}
+
+#define COMPILE_DECL   word_lut *wl = NULL;         \
+  seni_env *env = NULL;                             \
+  seni_node *ast = NULL;                            \
+  seni_program *prog = NULL
+
+#define COMPILE(EXPR) debug_reset();                \
+  wl = setup_interpreter_wl();                      \
+  env = setup_interpreter_env(wl);                  \
+  ast = parser_parse(wl, EXPR);                     \
+  prog = program_allocate(256);                     \
+  compiler_compile(ast, prog, wl)
+
+#define COMPILE_CLEANUP shutdown_interpreter_test(wl, ast); \
+  program_free(prog);
+
+void test_vm_bytecode(void)
+{
+  COMPILE_DECL;
+
+  {
+    COMPILE("(+ 3 4)");
+
+    program_pretty_print(prog);
+    
+    COMPILE_CLEANUP;
+  }
+
+  {
+    COMPILE("(- (+ 1 2) 3)");
+
+    program_pretty_print(prog);
+    
+    COMPILE_CLEANUP;
+  }
+
+  
+
+    
+  /*
+  seni_program *prog = program_construct(128);
+  program_emit_opcode(prog, PUSH, 4, 0);
+  program_emit_opcode(prog, PUSH, 6, 0);
+  program_emit_opcode(prog, ADD, 0, 0);
+
+  program_pretty_print(prog);
+  
+  program_free(prog);
+  */
+  TEST_ASSERT_EQUAL(1, 1);
+}
+
 int main(void)
 {
   UNITY_BEGIN();
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_lang_parser);
-  RUN_TEST(test_lang_env);
-  RUN_TEST(test_lang_interpret_basic);
-  RUN_TEST(test_lang_interpret_math);
-  RUN_TEST(test_lang_interpret_comparison);
-  RUN_TEST(test_lang_interpret_define);
-  RUN_TEST(test_lang_interpret_function);
-  RUN_TEST(test_lang_interpret_if);
-  RUN_TEST(test_lang_interpret_setq);
-  RUN_TEST(test_lang_interpret_loop);
-  RUN_TEST(test_lang_interpret_vector);
-  RUN_TEST(test_lang_interpret_mem);
-  RUN_TEST(test_uv_mapper);
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_lang_parser);
+  // RUN_TEST(test_lang_env);
+  // RUN_TEST(test_lang_interpret_basic);
+  // RUN_TEST(test_lang_interpret_math);
+  // RUN_TEST(test_lang_interpret_comparison);
+  // RUN_TEST(test_lang_interpret_define);
+  // RUN_TEST(test_lang_interpret_function);
+  // RUN_TEST(test_lang_interpret_if);
+  // RUN_TEST(test_lang_interpret_setq);
+  // RUN_TEST(test_lang_interpret_loop);
+  // RUN_TEST(test_lang_interpret_vector);
+  // RUN_TEST(test_lang_interpret_mem);
+  // RUN_TEST(test_uv_mapper);
+
+  RUN_TEST(test_vm_stack);
+  RUN_TEST(test_vm_bytecode);
 
   
   // for debugging/development

@@ -9,6 +9,39 @@
 
 after parsing it's safe to treat seni_nodes as immutable
 seni_vars that have been eval'd should get their values asap since they could just by aliases of g_reg
+* seni_vm
+  four types of command in the VM:
+  1. Arithmetic: perform arithmetic and logical operations on the stack
+  2. Memory access: transfer data between the stack and virtual memory
+  3. Program flow: conditional and unconditional branching operations
+  4. Function calling: call functions and return from them
+
+(+ 7 8)
+
+push constant 7
+push constant 8
+add
+
+
+(- 10 2)
+
+push constant 10
+push constant 2
+sub
+
+B + C - D  ==> 
+
+B C + D -  (post fix)
+(- (+ B C) D) (pre fix)
+traverse ast: lhs, rhs, op
+
+
+push val B,
+push val C, 
+add,
+push val D,
+sub. 
+
 
 * vector
 bind a linked list of seni_var* to a variable in the current env scope
