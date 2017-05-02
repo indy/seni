@@ -751,95 +751,89 @@ void test_vm_stack(void)
   }  
 }
 
-#define COMPILE_DECL   word_lut *wl = NULL;         \
-  seni_env *env = NULL;                             \
-  seni_node *ast = NULL;                            \
-  seni_program *prog = NULL
+// --------------------------------------------------
 
-#define COMPILE(EXPR) debug_reset();                \
-  wl = setup_interpreter_wl();                      \
-  env = setup_interpreter_env(wl);                  \
-  ast = parser_parse(wl, EXPR);                     \
-  prog = program_allocate(256);                     \
-  compiler_compile(ast, prog, wl)
+// debug version of VM_COMPILE - prints the bytecode
+//
+#define DVM_COMPILE(EXPR,_) word_lut *wl = NULL;     \
+  seni_node *ast = NULL;                             \
+  seni_program *prog = NULL;                         \
+  seni_virtual_machine *vm = NULL;                   \
+  debug_reset();                                     \
+  wl = setup_interpreter_wl();                       \
+  ast = parser_parse(wl, EXPR);                      \
+  prog = program_allocate(256);                      \
+  compiler_compile(ast, prog, wl);                   \
+  vm = virtual_machine_construct(64);                \
+  program_pretty_print(prog);
 
-#define COMPILE_CLEANUP shutdown_interpreter_test(wl, ast); \
-  program_free(prog);
+// --------------------------------------------------
+
+#define VM_COMPILE(EXPR,RES) word_lut *wl = NULL;           \
+  seni_node *ast = NULL;                                    \
+  seni_program *prog = NULL;                                \
+  seni_virtual_machine *vm = NULL;                          \
+  debug_reset();                                            \
+  wl = setup_interpreter_wl();                              \
+  ast = parser_parse(wl, EXPR);                             \
+  prog = program_allocate(256);                             \
+  compiler_compile(ast, prog, wl);                          \
+  vm = virtual_machine_construct(64);                       \
+  vm_interpret(vm, prog);                                   \
+  assert_seni_var_i32(stack_pop(vm->stack), VAR_INT, RES);
+
+#define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
+  program_free(prog);                                   \
+  virtual_machine_free(vm)
+
+// --------------------------------------------------
 
 void test_vm_bytecode(void)
 {
-  COMPILE_DECL;
-
   {
-    COMPILE("(+ 3 4)");
-
-    program_pretty_print(prog);
-    
-    COMPILE_CLEANUP;
-  }
-
-  {
-    COMPILE("(- (+ 1 2) 3)");
-
-    program_pretty_print(prog);
-    
-    COMPILE_CLEANUP;
-  }
-
-  /*
-  seni_program *prog = program_construct(128);
-  program_emit_opcode(prog, PUSH, 4, 0);
-  program_emit_opcode(prog, PUSH, 6, 0);
-  program_emit_opcode(prog, ADD, 0, 0);
-
-  program_pretty_print(prog);
-  
-  program_free(prog);
-  */
-  TEST_ASSERT_EQUAL(1, 1);
-}
-
-#define VM_DECL   word_lut *wl = NULL;              \
-  seni_node *ast = NULL;                            \
-  seni_program *prog = NULL;                        \
-  seni_virtual_machine *vm = NULL;
-
-#define VM_INTERPRET(EXPR) debug_reset();           \
-  wl = setup_interpreter_wl();                      \
-  ast = parser_parse(wl, EXPR);                     \
-  prog = program_allocate(256);                     \
-  compiler_compile(ast, prog, wl);                  \
-  vm = virtual_machine_construct(64);               \
-  vm_interpret(vm, prog)
-
-#define VM_CLEANUP shutdown_interpreter_test(wl, ast); \
-  program_free(prog); \
-  free(vm)
-
-void test_vm_interpreter(void)
-{
-  VM_DECL;
-
-  {
-    VM_INTERPRET("(+ 3 4)");
-
-    seni_var *v = stack_pop(vm->stack);
-    assert_seni_var_i32(v, VAR_INT, 7);
-        
+    DVM_COMPILE("(define a 42) (define b 52) 10", 10);
+    // PUSH CONST 42
+    // POP  LOCAL  0
+    // PUSH CONST 52
+    // POP  LOCAL  1
+    // STOP
     VM_CLEANUP;
   }
 
   {
-    VM_INTERPRET("(- (+ 1 2) 3)");
+    DVM_COMPILE("(define a 6) (define b 7) (+ a b)", 13);
+    // PUSH CONST  6
+    // POP  LOCAL  0
+    // PUSH CONST  7
+    // POP  LOCAL  1
+    // PUSH LOCAL  0
+    // PUSH LOCAL  1
+    // ADD
+    // STOP
+    VM_CLEANUP;
+  }  
 
-    seni_var *v = stack_pop(vm->stack);
-    assert_seni_var_i32(v, VAR_INT, 0);
-    
+  {
+    DVM_COMPILE("(+ 3 4)", 7);
+    // PUSH CONST 3
+    // PUSH CONST 4
+    // ADD
+    // STOP
+    VM_CLEANUP;
+  }  
+
+  {
+    DVM_COMPILE("(- (+ 1 2) 3)", 0);
+    // PUSH    CONST   1
+    // PUSH    CONST   2
+    // ADD
+    // PUSH    CONST   3
+    // SUB
+    // STOP
     VM_CLEANUP;
   }
 
 }
-
 
 int main(void)
 {
@@ -867,9 +861,7 @@ int main(void)
 
   // vm
   // RUN_TEST(test_vm_stack);
-  // RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_interpreter);
-  
+  RUN_TEST(test_vm_bytecode);
   
   return UNITY_END();
 }

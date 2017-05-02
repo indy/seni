@@ -2,6 +2,7 @@
 #include "seni_config.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 // **************************************************
@@ -99,6 +100,29 @@ bool program_emit_opcode(seni_program *program, seni_opcode op, i32 arg0, i32 ar
   return true;
 }
 
+char *memory_segment_name(seni_memory_segment_type segment)
+{
+  switch(segment) {
+  case MEM_SEG_ARGUMENT:
+    return "ARG";
+  case MEM_SEG_LOCAL:
+    return "LOCAL";
+  case MEM_SEG_STATIC:
+    return "STATIC";
+  case MEM_SEG_CONSTANT:
+    return "CONST";
+  case MEM_SEG_THIS:
+    return "THIS";
+  case MEM_SEG_THAT:
+    return "THAT";
+  case MEM_SEG_POINTER:
+    return "PTR";
+  case MEM_SEG_TEMP:
+    return "TEMP";
+  }
+  return "UNKNOWN";
+}
+
 #define STR(x) #x
 #define XSTR(x) STR(x)
 
@@ -112,14 +136,26 @@ void program_pretty_print(seni_program *program)
 
   for (i32 i = 0; i < program->code_size; i++) {
     seni_bytecode *b = &(program->code[i]);
-    if (b->op == PUSH) {
-      printf("%d\t%s\t%d\n", i, names[b->op], b->arg0);
+    if (b->op == PUSH || b->op == POP) {
+      printf("%d\t%s\t%s\t%d\n",
+             i,
+             names[b->op],
+             memory_segment_name((seni_memory_segment_type)b->arg0),
+             b->arg1);
     } else {
       printf("%d\t%s\n", i, names[b->op]);
     }
   }
   printf("\n");
 }
+
+// **************************************************
+
+#define MAX_LOCAL_MAPPINGS 10
+// store which wlut values are stored in which local memory addresses
+//
+i32 local_mappings[MAX_LOCAL_MAPPINGS];
+
 
 // **************************************************
 // Virtual Machine
@@ -130,62 +166,156 @@ seni_virtual_machine *virtual_machine_construct(i32 stack_size)
   seni_virtual_machine *vm = (seni_virtual_machine *)calloc(sizeof(seni_virtual_machine), 1);
 
   vm->stack = stack_construct(stack_size);
-  vm->ram = (int *)calloc(sizeof(int), RAM_SIZE);
+  vm->ram = (int *)calloc(sizeof(int), RAM_SIZE); // ????
+
+  vm->memory_local = (seni_var *)calloc(sizeof(seni_var), MAX_LOCAL_MAPPINGS);
   
   return vm;
+}
+
+void virtual_machine_free(seni_virtual_machine *vm)
+{
+  stack_free(vm->stack);
+  free(vm->memory_local);
+  free(vm);
 }
 
 // **************************************************
 // Compiler
 // **************************************************
 
-void compile(seni_node *ast, seni_program *program);
-word_lut *g_wl = NULL;
 
-void compile_list(seni_node *ast, seni_program *program)
+void clear_local_mappings()
 {
-  // first element is the op, the rest are arguments
-  //
-
-  seni_node *op = ast->value.first_child;
-
-  seni_node *arg = safe_next(op);
-  while (arg) {
-    compile(arg, program);
-    arg = safe_next(arg);
+  for (i32 i=0; i < MAX_LOCAL_MAPPINGS; i++) {
+    local_mappings[i] = -1;
   }
-
-  compile(op, program);
 }
 
-void compile(seni_node *ast, seni_program *program)
+i32 get_local_mapping(i32 wlut_value)
 {
+  for (i32 i=0; i < MAX_LOCAL_MAPPINGS; i++) {
+    if(local_mappings[i] == wlut_value) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+i32 add_local_mapping(i32 wlut_value)
+{
+  for (i32 i=0; i < MAX_LOCAL_MAPPINGS; i++) {
+    if(local_mappings[i] == -1) {
+      local_mappings[i] = wlut_value;
+      return i;
+    }
+  }
+  return -1;
+}
+
+seni_node *compile(seni_node *ast, seni_program *program);
+word_lut *g_wl = NULL;
+
+bool string_matches(char *a, char *b)
+{
+  return strcmp(a, b) == 0;
+}
+
+// single pair of name/value for the moment
+seni_node *compile_define(seni_node *ast, seni_program *program)
+{
+  // define a 42
+  // ^
+
+  seni_node *name_node = safe_next(ast);
+  // TODO: assert that name_node is NODE_NAME
+  
+  seni_node *value_node = safe_next(name_node);
+  
+  compile(value_node, program);
+
+  i32 local_address = get_local_mapping(name_node->value.i);
+  if (local_address == -1) {
+    local_address = add_local_mapping(name_node->value.i);
+  }
+
+  program_emit_opcode(program, POP, MEM_SEG_LOCAL, local_address);
+
+  return safe_next(value_node);
+}
+
+// compiles everything after the current ast point
+void compile_rest(seni_node *ast, seni_program *program)
+{
+  ast = safe_next(ast);
+  while (ast) {
+    ast = compile(ast, program);
+  }
+}
+
+seni_node *compile(seni_node *ast, seni_program *program)
+{
+  seni_node *n;
+  
   if (ast->type == NODE_LIST) {
-    compile_list(ast, program);
+    n = ast->value.first_child;
+    compile(n, program);
+    return safe_next(ast);
   }
   if (ast->type == NODE_INT) {
-    program_emit_opcode(program, PUSH, ast->value.i, 0);
+    program_emit_opcode(program, PUSH, MEM_SEG_CONSTANT, ast->value.i);
+    return safe_next(ast);
   }
   if (ast->type == NODE_NAME) {
+    // TODO: compare the wlut values against known ones for keywords
     char *name = wlut_lookup(g_wl, ast->value.i);
-    if (name[0] == '+') {
-      program_emit_opcode(program, ADD, 0, 0);
-    }
-    if (name[0] == '-') {
-      // TODO: differentiate between neg and sub?
-      program_emit_opcode(program, SUB, 0, 0);
-    }
-    if (name[0] == '=') {
-      program_emit_opcode(program, EQ, 0, 0);
-    }
-    if (name[0] == '<') {
-      program_emit_opcode(program, LT, 0, 0);
-    }
-    if (name[0] == '>') {
-      program_emit_opcode(program, GT, 0, 0);
-    }
+
+    i32 local_mapping = get_local_mapping(ast->value.i);
     
+    if (local_mapping != -1) {
+      program_emit_opcode(program, PUSH, MEM_SEG_LOCAL, local_mapping);
+      return safe_next(ast);
+    }
+    else if (string_matches(name, "define")) {
+      return compile_define(ast, program);
+    }
+    else if (string_matches(name, "+")) {
+
+      // push the arguments onto the stack
+      compile_rest(ast, program);
+      
+      program_emit_opcode(program, ADD, 0, 0);
+      return safe_next(ast);
+    }
+    else if (string_matches(name, "-")) {
+      // TODO: differentiate between neg and sub?
+      // push the arguments onto the stack
+      compile_rest(ast, program);
+
+      program_emit_opcode(program, SUB, 0, 0);
+      return safe_next(ast);
+    }
+    else if (string_matches(name, "=")) {
+      program_emit_opcode(program, EQ, 0, 0);
+      return safe_next(ast);
+    }
+    else if (string_matches(name, "<")) {
+      program_emit_opcode(program, LT, 0, 0);
+      return safe_next(ast);
+    }
+    else if (string_matches(name, ">")) {
+      program_emit_opcode(program, GT, 0, 0);
+      return safe_next(ast);
+    }
+    else {
+      // look up the name as a local variable?
+      
+      return safe_next(ast);
+    }
   }
+
+  return safe_next(ast);
 }
 
 // compiles the ast into bytecode for a stack based VM
@@ -193,9 +323,15 @@ void compile(seni_node *ast, seni_program *program)
 void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl)
 {
   g_wl = wl;
-  for (seni_node *n = ast; n != NULL; n = safe_next(n)) {
-    compile(n, program);
+
+  // temporary invocation here
+  clear_local_mappings();
+  
+  seni_node *n = ast;
+  while (n != NULL) {
+    n = compile(n, program);
   }
+
   program_emit_opcode(program, STOP, 0, 0);
 }
 
@@ -216,9 +352,30 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
     
     switch(bc->op) {
     case PUSH:
-      v  = stack_push(vm->stack);
-      v->type = VAR_INT;
-      v->value.i = bc->arg0;
+      v = stack_push(vm->stack);
+      if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_CONSTANT) {
+        v->type = VAR_INT;
+        v->value.i = bc->arg1;
+      } else if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_LOCAL) {
+        // get value from local memory - push onto stack
+
+        seni_var *local_var = &(vm->memory_local[bc->arg1]);
+        // TODO: safe_var_copy also does ref-counting on vectors which is wrong for this use case
+        safe_var_copy(v, local_var); 
+        
+      } else {
+        SENI_ERROR("PUSH: unknown memory segment type %d", bc->arg0);
+      }
+      break;
+
+    case POP:
+      v = stack_pop(vm->stack);
+      if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_LOCAL) {
+        seni_var *dest = &(vm->memory_local[bc->arg1]);
+        safe_var_copy(dest, v);
+      } else {
+        SENI_ERROR("POP: unknown memory segment type %d", bc->arg0);
+      } 
       break;
 
     case ADD:
