@@ -10,6 +10,7 @@
 #include "seni_vm.h"
 
 #include "stdio.h"
+#include <stdlib.h>
 #include <string.h>
 
 /* way of working with boolean and TEST macros */
@@ -695,28 +696,28 @@ void test_uv_mapper(void)
 }
 
 
-void construct_seni_var_int(seni_var *var, i32 i)
+void stack_push_int(seni_stack *stack, i32 i)
 {
+  seni_var *var = stack_push(stack);
   var->type = VAR_INT;
   var->value.i = i;
 }
+
 void test_vm_stack(void)
 {
-  seni_var va, vb, vc, vd, *top;
+  seni_var *top;
 
   // push/pop
   {
     seni_stack *stack = stack_construct(10);
-    construct_seni_var_int(&va, 42);
-    construct_seni_var_int(&vb, 11);
 
-    stack_push(stack, &va);
-    stack_push(stack, &vb);
+    stack_push_int(stack, 42);
+    stack_push_int(stack, 11);
 
     top = stack_pop(stack);
-    TEST_ASSERT_EQUAL(vb.value.i, top->value.i);
+    TEST_ASSERT_EQUAL(11, top->value.i);
     top = stack_pop(stack);
-    TEST_ASSERT_EQUAL(va.value.i, top->value.i);
+    TEST_ASSERT_EQUAL(42, top->value.i);
     top = stack_pop(stack);
     TEST_ASSERT_NULL(top);
     stack_free(stack);
@@ -725,30 +726,26 @@ void test_vm_stack(void)
   // peek/peek2
   {
     seni_stack *stack = stack_construct(10);
-    construct_seni_var_int(&va, 2);
-    construct_seni_var_int(&vb, 3);
-    construct_seni_var_int(&vc, 4);
-    construct_seni_var_int(&vd, 5);
 
-    stack_push(stack, &va);
-    stack_push(stack, &vb);
-    stack_push(stack, &vc);
-    stack_push(stack, &vd);
-
+    stack_push_int(stack, 2);
+    stack_push_int(stack, 3);
+    stack_push_int(stack, 4);
+    stack_push_int(stack, 5);
+    
     top = stack_peek(stack);
-    TEST_ASSERT_EQUAL(vd.value.i, top->value.i);
+    TEST_ASSERT_EQUAL(5, top->value.i);
     top = stack_peek(stack);    // calling peek again returns the same value
-    TEST_ASSERT_EQUAL(vd.value.i, top->value.i);
+    TEST_ASSERT_EQUAL(5, top->value.i);
     top = stack_peek2(stack);
-    TEST_ASSERT_EQUAL(vc.value.i, top->value.i);
+    TEST_ASSERT_EQUAL(4, top->value.i);
     
     top = stack_pop(stack);
-    TEST_ASSERT_EQUAL(vd.value.i, top->value.i);
+    TEST_ASSERT_EQUAL(5, top->value.i);
 
     top = stack_peek(stack);
-    TEST_ASSERT_EQUAL(vc.value.i, top->value.i);
+    TEST_ASSERT_EQUAL(4, top->value.i);
     top = stack_peek2(stack);
-    TEST_ASSERT_EQUAL(vb.value.i, top->value.i);
+    TEST_ASSERT_EQUAL(3, top->value.i);
 
     stack_free(stack);
   }  
@@ -789,9 +786,6 @@ void test_vm_bytecode(void)
     COMPILE_CLEANUP;
   }
 
-  
-
-    
   /*
   seni_program *prog = program_construct(128);
   program_emit_opcode(prog, PUSH, 4, 0);
@@ -805,12 +799,58 @@ void test_vm_bytecode(void)
   TEST_ASSERT_EQUAL(1, 1);
 }
 
+#define VM_DECL   word_lut *wl = NULL;              \
+  seni_node *ast = NULL;                            \
+  seni_program *prog = NULL;                        \
+  seni_virtual_machine *vm = NULL;
+
+#define VM_INTERPRET(EXPR) debug_reset();           \
+  wl = setup_interpreter_wl();                      \
+  ast = parser_parse(wl, EXPR);                     \
+  prog = program_allocate(256);                     \
+  compiler_compile(ast, prog, wl);                  \
+  vm = virtual_machine_construct(64);               \
+  vm_interpret(vm, prog)
+
+#define VM_CLEANUP shutdown_interpreter_test(wl, ast); \
+  program_free(prog); \
+  free(vm)
+
+void test_vm_interpreter(void)
+{
+  VM_DECL;
+
+  {
+    VM_INTERPRET("(+ 3 4)");
+
+    seni_var *v = stack_pop(vm->stack);
+    assert_seni_var_i32(v, VAR_INT, 7);
+        
+    VM_CLEANUP;
+  }
+
+  {
+    VM_INTERPRET("(- (+ 1 2) 3)");
+
+    seni_var *v = stack_pop(vm->stack);
+    assert_seni_var_i32(v, VAR_INT, 0);
+    
+    VM_CLEANUP;
+  }
+
+}
+
+
 int main(void)
 {
   UNITY_BEGIN();
+
   // RUN_TEST(test_mathutil);
   // RUN_TEST(test_lang_parser);
   // RUN_TEST(test_lang_env);
+  // RUN_TEST(test_uv_mapper);
+  
+
   // RUN_TEST(test_lang_interpret_basic);
   // RUN_TEST(test_lang_interpret_math);
   // RUN_TEST(test_lang_interpret_comparison);
@@ -821,14 +861,15 @@ int main(void)
   // RUN_TEST(test_lang_interpret_loop);
   // RUN_TEST(test_lang_interpret_vector);
   // RUN_TEST(test_lang_interpret_mem);
-  // RUN_TEST(test_uv_mapper);
-
-  RUN_TEST(test_vm_stack);
-  RUN_TEST(test_vm_bytecode);
 
   
-  // for debugging/development
-  RUN_TEST(debug_lang_interpret_mem);
+  // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
+
+  // vm
+  // RUN_TEST(test_vm_stack);
+  // RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_interpreter);
+  
   
   return UNITY_END();
 }

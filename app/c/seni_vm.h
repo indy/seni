@@ -6,7 +6,7 @@
 // Stack
 // 
 typedef struct {
-  seni_var **data;
+  seni_var *data;
   i32 stack_size;
   i32 sp;
 } seni_stack;
@@ -14,7 +14,7 @@ typedef struct {
 seni_stack *stack_construct(i32 size);
 void stack_free(seni_stack *stack);
   
-void stack_push(seni_stack *stack, seni_var *var);
+seni_var * stack_push(seni_stack *stack);
 seni_var *stack_pop(seni_stack *stack);
 seni_var *stack_peek(seni_stack *stack);
 seni_var *stack_peek2(seni_stack *stack);
@@ -90,5 +90,7 @@ typedef struct {
 seni_virtual_machine *virtual_machine_construct(i32 stack_size);
 
 void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl);
+
+void vm_interpret(seni_virtual_machine *vm, seni_program *program);
 
 #endif

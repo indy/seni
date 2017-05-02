@@ -1,6 +1,9 @@
 #include "seni_vm.h"
 #include "seni_config.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 // **************************************************
 // Stack
 // **************************************************
@@ -8,7 +11,7 @@
 seni_stack *stack_construct(i32 size)
 {
   seni_stack *stack = (seni_stack *)calloc(sizeof(seni_stack), 1);
-  stack->data = (seni_var **)(calloc(sizeof(seni_var *), size));
+  stack->data = (seni_var *)(calloc(sizeof(seni_var), size));
 
   stack->stack_size = size;
   stack->sp = 0;
@@ -21,10 +24,12 @@ void stack_free(seni_stack *stack)
   free(stack->data);
 }
 
-void stack_push(seni_stack *stack, seni_var *var)
+// returns the next available seni_var that the calling code can write to
+seni_var *stack_push(seni_stack *stack)
 {
-  stack->data[stack->sp] = var;
+  seni_var *var = &(stack->data[stack->sp]);
   stack->sp++;
+  return var;
 }
 
 seni_var *stack_pop(seni_stack *stack)
@@ -34,7 +39,7 @@ seni_var *stack_pop(seni_stack *stack)
   }
   
   stack->sp--;
-  return stack->data[stack->sp];
+  return &(stack->data[stack->sp]);
 }
 
 seni_var *stack_peek(seni_stack *stack)
@@ -42,7 +47,7 @@ seni_var *stack_peek(seni_stack *stack)
   if (stack->sp == 0) {
     return NULL;
   }
-  return stack->data[stack->sp - 1];
+  return &(stack->data[stack->sp - 1]);
 }
 
 seni_var *stack_peek2(seni_stack *stack)
@@ -50,7 +55,12 @@ seni_var *stack_peek2(seni_stack *stack)
   if (stack->sp < 2) {
     return NULL;
   }
-  return stack->data[stack->sp - 2];
+  return &(stack->data[stack->sp - 2]);
+}
+
+void pretty_print_stack(seni_stack *stack, char *msg)
+{
+  printf("%s stack sp: %d\n", msg, stack->sp);
 }
 
 // **************************************************
@@ -194,3 +204,47 @@ void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl)
 // **************************************************
 
 // executes a program on a vm 
+void vm_interpret(seni_virtual_machine *vm, seni_program *program)
+{
+  seni_bytecode *bc = NULL;
+  seni_var *v = NULL;
+  i32 a, b;
+  i32 pc = 0;
+
+  for (;;) {
+    bc = &(program->code[pc++]);
+    
+    switch(bc->op) {
+    case PUSH:
+      v  = stack_push(vm->stack);
+      v->type = VAR_INT;
+      v->value.i = bc->arg0;
+      break;
+
+    case ADD:
+      v = stack_pop(vm->stack);
+      b = v->value.i;
+      v = stack_pop(vm->stack);
+      a = v->value.i;
+
+      v = stack_push(vm->stack);
+      v->type = VAR_INT;
+      v->value.i = a + b;
+      break;
+
+    case SUB:
+      v = stack_pop(vm->stack);
+      b = v->value.i;
+      v = stack_pop(vm->stack);
+      a = v->value.i;
+
+      v = stack_push(vm->stack);
+      v->type = VAR_INT;
+      v->value.i = a - b;
+      break;
+      
+    case STOP:
+      return;
+    }
+  }
+}
