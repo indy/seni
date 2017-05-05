@@ -7,13 +7,11 @@
 // 
 typedef struct {
   seni_var *data;
-  i32 stack_size;
   i32 sp;
+  i32 base; // the index within 'data' that this stack starts
 } seni_stack;
 
-seni_stack *stack_construct(i32 size);
-void stack_free(seni_stack *stack);
-  
+void stack_construct(seni_stack *stack, seni_var *data, i32 base);
 seni_var *stack_push(seni_stack *stack);
 seni_var *stack_pop(seni_stack *stack);
 seni_var *stack_peek(seni_stack *stack);
@@ -52,8 +50,8 @@ typedef enum {
 #define R14   14
 #define R15   15
 
-#define RAM_SIZE 1024
-
+#define MEMORY_SIZE 1024
+#define MEMORY_LOCAL_SIZE 10
 
 // codes
 //
@@ -83,15 +81,20 @@ void program_pretty_print(seni_program *program);
 // Virtual Machine
 //
 typedef struct {
-  seni_stack *stack;
-  int *ram;
+  seni_var *heap;
+  i32 heap_size;
+  
+  seni_var *stack_memory;
+  i32 stack_memory_size;
 
-  // hacks
-  seni_var *memory_local;
+  // these reference the memory allocated in stack_memory
+  seni_stack stack;
+  seni_stack local;
+  seni_stack args;
   
 } seni_virtual_machine;
 
-seni_virtual_machine *virtual_machine_construct(i32 stack_size);
+seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size);
 void virtual_machine_free(seni_virtual_machine *vm);
 
 void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl);

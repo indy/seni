@@ -9,20 +9,12 @@
 // Stack
 // **************************************************
 
-seni_stack *stack_construct(i32 size)
+void stack_construct(seni_stack *stack, seni_var *data, i32 base)
 {
-  seni_stack *stack = (seni_stack *)calloc(sizeof(seni_stack), 1);
-  stack->data = (seni_var *)(calloc(sizeof(seni_var), size));
+  stack->data = data;
 
-  stack->stack_size = size;
-  stack->sp = 0;
-
-  return stack;
-}
-
-void stack_free(seni_stack *stack)
-{
-  free(stack->data);
+  stack->sp = base;
+  stack->base = base;
 }
 
 // returns the next available seni_var that the calling code can write to
@@ -35,7 +27,7 @@ seni_var *stack_push(seni_stack *stack)
 
 seni_var *stack_pop(seni_stack *stack)
 {
-  if (stack->sp == 0) {
+  if (stack->sp == stack->base) {
     return NULL;
   }
   
@@ -45,7 +37,7 @@ seni_var *stack_pop(seni_stack *stack)
 
 seni_var *stack_peek(seni_stack *stack)
 {
-  if (stack->sp == 0) {
+  if (stack->sp == stack->base) {
     return NULL;
   }
   return &(stack->data[stack->sp - 1]);
@@ -53,7 +45,7 @@ seni_var *stack_peek(seni_stack *stack)
 
 seni_var *stack_peek2(seni_stack *stack)
 {
-  if (stack->sp < 2) {
+  if (stack->sp < stack->base + 2) {
     return NULL;
   }
   return &(stack->data[stack->sp - 2]);
@@ -63,6 +55,7 @@ void pretty_print_stack(seni_stack *stack, char *msg)
 {
   printf("%s stack sp: %d\n", msg, stack->sp);
 }
+
 
 // **************************************************
 // Program
@@ -126,24 +119,29 @@ char *memory_segment_name(seni_memory_segment_type segment)
 #define STR(x) #x
 #define XSTR(x) STR(x)
 
-void program_pretty_print(seni_program *program)
-{
+char *opcode_name(seni_opcode opcode) {
   char *names[] = {
 #define OPCODE(name,_) STR(name),
 #include "seni_opcodes.h"
 #undef OPCODE
   };
 
+  return names[opcode];
+}
+
+void program_pretty_print(seni_program *program)
+{
+
   for (i32 i = 0; i < program->code_size; i++) {
     seni_bytecode *b = &(program->code[i]);
     if (b->op == PUSH || b->op == POP) {
       printf("%d\t%s\t%s\t%d\n",
              i,
-             names[b->op],
+             opcode_name(b->op),
              memory_segment_name((seni_memory_segment_type)b->arg0),
              b->arg1);
     } else {
-      printf("%d\t%s\n", i, names[b->op]);
+      printf("%d\t%s\n", i, opcode_name(b->op));
     }
   }
   printf("\n");
@@ -151,32 +149,38 @@ void program_pretty_print(seni_program *program)
 
 // **************************************************
 
-#define MAX_LOCAL_MAPPINGS 10
 // store which wlut values are stored in which local memory addresses
 //
-i32 local_mappings[MAX_LOCAL_MAPPINGS];
+i32 local_mappings[MEMORY_LOCAL_SIZE];
 
 
 // **************************************************
 // Virtual Machine
 // **************************************************
 
-seni_virtual_machine *virtual_machine_construct(i32 stack_size)
+seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size)
 {
   seni_virtual_machine *vm = (seni_virtual_machine *)calloc(sizeof(seni_virtual_machine), 1);
 
-  vm->stack = stack_construct(stack_size);
-  vm->ram = (int *)calloc(sizeof(int), RAM_SIZE); // ????
+  vm->stack_memory = (seni_var *)calloc(sizeof(seni_var), stack_size);
+  vm->stack_memory_size = stack_size;
 
-  vm->memory_local = (seni_var *)calloc(sizeof(seni_var), MAX_LOCAL_MAPPINGS);
-  
+  i32 base_offset = 0;
+  stack_construct(&vm->local, vm->stack_memory, base_offset);
+  base_offset += MEMORY_LOCAL_SIZE;
+  stack_construct(&vm->args, vm->stack_memory, base_offset);
+  stack_construct(&vm->stack, vm->stack_memory, base_offset);
+
+  vm->heap = (seni_var *)calloc(sizeof(seni_var), heap_size);
+  vm->heap_size = heap_size;
+
   return vm;
 }
 
 void virtual_machine_free(seni_virtual_machine *vm)
 {
-  stack_free(vm->stack);
-  free(vm->memory_local);
+  free(vm->stack_memory);
+  free(vm->heap);
   free(vm);
 }
 
@@ -187,14 +191,14 @@ void virtual_machine_free(seni_virtual_machine *vm)
 
 void clear_local_mappings()
 {
-  for (i32 i=0; i < MAX_LOCAL_MAPPINGS; i++) {
+  for (i32 i=0; i < MEMORY_LOCAL_SIZE; i++) {
     local_mappings[i] = -1;
   }
 }
 
 i32 get_local_mapping(i32 wlut_value)
 {
-  for (i32 i=0; i < MAX_LOCAL_MAPPINGS; i++) {
+  for (i32 i=0; i < MEMORY_LOCAL_SIZE; i++) {
     if(local_mappings[i] == wlut_value) {
       return i;
     }
@@ -205,7 +209,7 @@ i32 get_local_mapping(i32 wlut_value)
 
 i32 add_local_mapping(i32 wlut_value)
 {
-  for (i32 i=0; i < MAX_LOCAL_MAPPINGS; i++) {
+  for (i32 i=0; i < MEMORY_LOCAL_SIZE; i++) {
     if(local_mappings[i] == -1) {
       local_mappings[i] = wlut_value;
       return i;
@@ -352,14 +356,14 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
     
     switch(bc->op) {
     case PUSH:
-      v = stack_push(vm->stack);
+      v = stack_push(&(vm->stack));
       if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_CONSTANT) {
         v->type = VAR_INT;
         v->value.i = bc->arg1;
       } else if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_LOCAL) {
         // get value from local memory - push onto stack
 
-        seni_var *local_var = &(vm->memory_local[bc->arg1]);
+        seni_var *local_var = &(vm->local.data[vm->local.base + bc->arg1]);
         // TODO: safe_var_copy also does ref-counting on vectors which is wrong for this use case
         safe_var_copy(v, local_var); 
         
@@ -369,9 +373,9 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       break;
 
     case POP:
-      v = stack_pop(vm->stack);
+      v = stack_pop(&(vm->stack));
       if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_LOCAL) {
-        seni_var *dest = &(vm->memory_local[bc->arg1]);
+        seni_var *dest = &(vm->local.data[vm->local.base + bc->arg1]);
         safe_var_copy(dest, v);
       } else {
         SENI_ERROR("POP: unknown memory segment type %d", bc->arg0);
@@ -379,29 +383,31 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       break;
 
     case ADD:
-      v = stack_pop(vm->stack);
+      v = stack_pop(&(vm->stack));
       b = v->value.i;
-      v = stack_pop(vm->stack);
+      v = stack_pop(&(vm->stack));
       a = v->value.i;
 
-      v = stack_push(vm->stack);
+      v = stack_push(&(vm->stack));
       v->type = VAR_INT;
       v->value.i = a + b;
       break;
 
     case SUB:
-      v = stack_pop(vm->stack);
+      v = stack_pop(&(vm->stack));
       b = v->value.i;
-      v = stack_pop(vm->stack);
+      v = stack_pop(&(vm->stack));
       a = v->value.i;
 
-      v = stack_push(vm->stack);
+      v = stack_push(&(vm->stack));
       v->type = VAR_INT;
       v->value.i = a - b;
       break;
       
     case STOP:
       return;
+    default:
+      SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));
     }
   }
 }

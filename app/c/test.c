@@ -706,49 +706,54 @@ void stack_push_int(seni_stack *stack, i32 i)
 void test_vm_stack(void)
 {
   seni_var *top;
-
+  
   // push/pop
   {
-    seni_stack *stack = stack_construct(10);
+    seni_var *mem = (seni_var *)calloc(sizeof(seni_var), 10);
+    seni_stack stack;
+    stack_construct(&stack, mem, 0);
 
-    stack_push_int(stack, 42);
-    stack_push_int(stack, 11);
+    stack_push_int(&stack, 42);
+    stack_push_int(&stack, 11);
 
-    top = stack_pop(stack);
+    top = stack_pop(&stack);
     TEST_ASSERT_EQUAL(11, top->value.i);
-    top = stack_pop(stack);
+    top = stack_pop(&stack);
     TEST_ASSERT_EQUAL(42, top->value.i);
-    top = stack_pop(stack);
+    top = stack_pop(&stack);
     TEST_ASSERT_NULL(top);
-    stack_free(stack);
+
+    free(mem);
   }
 
   // peek/peek2
   {
-    seni_stack *stack = stack_construct(10);
+    seni_var *mem = (seni_var *)calloc(sizeof(seni_var), 10);
+    seni_stack stack;
+    stack_construct(&stack, mem, 0);
 
-    stack_push_int(stack, 2);
-    stack_push_int(stack, 3);
-    stack_push_int(stack, 4);
-    stack_push_int(stack, 5);
+    stack_push_int(&stack, 2);
+    stack_push_int(&stack, 3);
+    stack_push_int(&stack, 4);
+    stack_push_int(&stack, 5);
     
-    top = stack_peek(stack);
+    top = stack_peek(&stack);
     TEST_ASSERT_EQUAL(5, top->value.i);
-    top = stack_peek(stack);    // calling peek again returns the same value
+    top = stack_peek(&stack);    // calling peek again returns the same value
     TEST_ASSERT_EQUAL(5, top->value.i);
-    top = stack_peek2(stack);
+    top = stack_peek2(&stack);
     TEST_ASSERT_EQUAL(4, top->value.i);
     
-    top = stack_pop(stack);
+    top = stack_pop(&stack);
     TEST_ASSERT_EQUAL(5, top->value.i);
 
-    top = stack_peek(stack);
+    top = stack_peek(&stack);
     TEST_ASSERT_EQUAL(4, top->value.i);
-    top = stack_peek2(stack);
+    top = stack_peek2(&stack);
     TEST_ASSERT_EQUAL(3, top->value.i);
 
-    stack_free(stack);
-  }  
+    free(mem);
+  }
 }
 
 // --------------------------------------------------
@@ -764,7 +769,7 @@ void test_vm_stack(void)
   ast = parser_parse(wl, EXPR);                      \
   prog = program_allocate(256);                      \
   compiler_compile(ast, prog, wl);                   \
-  vm = virtual_machine_construct(64);                \
+  vm = virtual_machine_construct(64,MEMORY_SIZE);    \
   program_pretty_print(prog);
 
 // --------------------------------------------------
@@ -778,9 +783,9 @@ void test_vm_stack(void)
   ast = parser_parse(wl, EXPR);                             \
   prog = program_allocate(256);                             \
   compiler_compile(ast, prog, wl);                          \
-  vm = virtual_machine_construct(64);                       \
+  vm = virtual_machine_construct(64,MEMORY_SIZE);           \
   vm_interpret(vm, prog);                                   \
-  assert_seni_var_i32(stack_pop(vm->stack), VAR_INT, RES);
+  assert_seni_var_i32(stack_pop(&(vm->stack)), VAR_INT, RES);
 
 #define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
   program_free(prog);                                   \
@@ -791,7 +796,7 @@ void test_vm_stack(void)
 void test_vm_bytecode(void)
 {
   {
-    DVM_COMPILE("(define a 42) (define b 52) 10", 10);
+    VM_COMPILE("(define a 42) (define b 52) 10", 10);
     // PUSH CONST 42
     // POP  LOCAL  0
     // PUSH CONST 52
@@ -801,7 +806,7 @@ void test_vm_bytecode(void)
   }
 
   {
-    DVM_COMPILE("(define a 6) (define b 7) (+ a b)", 13);
+    VM_COMPILE("(define a 6) (define b 7) (+ a b)", 13);
     // PUSH CONST  6
     // POP  LOCAL  0
     // PUSH CONST  7
@@ -814,7 +819,7 @@ void test_vm_bytecode(void)
   }  
 
   {
-    DVM_COMPILE("(+ 3 4)", 7);
+    VM_COMPILE("(+ 3 4)", 7);
     // PUSH CONST 3
     // PUSH CONST 4
     // ADD
@@ -823,7 +828,7 @@ void test_vm_bytecode(void)
   }  
 
   {
-    DVM_COMPILE("(- (+ 1 2) 3)", 0);
+    VM_COMPILE("(- (+ 1 2) 3)", 0);
     // PUSH    CONST   1
     // PUSH    CONST   2
     // ADD
@@ -860,7 +865,7 @@ int main(void)
   // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
 
   // vm
-  // RUN_TEST(test_vm_stack);
+  RUN_TEST(test_vm_stack);
   RUN_TEST(test_vm_bytecode);
   
   return UNITY_END();
