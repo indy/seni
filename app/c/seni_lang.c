@@ -1641,6 +1641,19 @@ void var_as_vec4(f32 *out0, f32 *out1, f32 *out2, f32 *out3, seni_var *var)
   *out3 = f3;
 }
 
+void bool_as_var(seni_var *out, bool b)
+{
+  out->type = VAR_BOOLEAN;
+  out->value.i = b ? 1 : 0;
+}
+
+void i32_as_var(seni_var *out, i32 i)
+{
+  out->type = VAR_INT;
+  out->value.i = i;
+}
+
+
 seni_var *bind_var(seni_env *env, i32 name, seni_var *var)
 {
   seni_var *sv = get_binded_var(env, name);

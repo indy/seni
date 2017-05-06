@@ -262,6 +262,12 @@ void assert_seni_var_f32_within(seni_var *var, seni_var_type type, f32 f, f32 to
   TEST_ASSERT_FLOAT_WITHIN(tolerance, f, var->value.f);
 }
 
+void assert_seni_var_bool(seni_var *var, bool b)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var));
+  TEST_ASSERT_EQUAL(b ? 1 : 0, var->value.i);
+}
+
 void assert_seni_var_true(seni_var *var)
 {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var));
@@ -760,7 +766,7 @@ void test_vm_stack(void)
 
 // debug version of VM_COMPILE - prints the bytecode
 //
-#define DVM_COMPILE(EXPR,_) word_lut *wl = NULL;     \
+#define DVM_COMPILE(EXPR) word_lut *wl = NULL;       \
   seni_node *ast = NULL;                             \
   seni_program *prog = NULL;                         \
   seni_virtual_machine *vm = NULL;                   \
@@ -770,11 +776,14 @@ void test_vm_stack(void)
   prog = program_allocate(256);                      \
   compiler_compile(ast, prog, wl);                   \
   vm = virtual_machine_construct(64,MEMORY_SIZE);    \
+  printf("%s\n", EXPR);                              \
   program_pretty_print(prog);
 
 // --------------------------------------------------
 
-#define VM_COMPILE(EXPR,RES) word_lut *wl = NULL;           \
+// eval version of VM_COMPILE - evals and compares result to an int
+//
+#define EVM_COMPILE(EXPR) word_lut *wl = NULL;              \
   seni_node *ast = NULL;                                    \
   seni_program *prog = NULL;                                \
   seni_virtual_machine *vm = NULL;                          \
@@ -784,60 +793,51 @@ void test_vm_stack(void)
   prog = program_allocate(256);                             \
   compiler_compile(ast, prog, wl);                          \
   vm = virtual_machine_construct(64,MEMORY_SIZE);           \
-  vm_interpret(vm, prog);                                   \
-  assert_seni_var_i32(stack_pop(&(vm->stack)), VAR_INT, RES);
+  vm_interpret(vm, prog)
+
+
+#define VM_TEST_INT(RES) assert_seni_var_i32(stack_pop(&(vm->stack)), VAR_INT, RES)
+#define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_pop(&(vm->stack)), RES)
 
 #define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
   program_free(prog);                                   \
   virtual_machine_free(vm)
 
+
+// COMPILE macros that eval and compare results
+//
+#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
+#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
+
+// COMPILE macros that print out bytecode
+//
+//#define VM_COMPILE_INT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+//#define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+
 // --------------------------------------------------
 
 void test_vm_bytecode(void)
 {
-  {
-    VM_COMPILE("(define a 42) (define b 52) 10", 10);
-    // PUSH CONST 42
-    // POP  LOCAL  0
-    // PUSH CONST 52
-    // POP  LOCAL  1
-    // STOP
-    VM_CLEANUP;
-  }
+  // VM_COMPILE_INT("(define a 42) (define b 52) 10", 10);
+  // VM_COMPILE_INT("(define a 6) (define b 7) (+ a b)", 13);
+  // VM_COMPILE_INT("(+ 3 4)", 7);
+  // VM_COMPILE_INT("(- (+ 1 2) 3)", 0);
+  // VM_COMPILE_BOOL("(> 5 10)", false);
+  // VM_COMPILE_BOOL("(< 5 10)", true);
+  // VM_COMPILE_BOOL("(= 2 2)", true);
+  // VM_COMPILE_BOOL("(= 1 2)", false);
+  // VM_COMPILE_BOOL("(and (< 1 2) (< 3 4))", true);
+  // VM_COMPILE_BOOL("(and (< 1 2) (> 3 4))", false);
+  // VM_COMPILE_BOOL("(or (< 1 2) (> 3 4))", true);
+  // VM_COMPILE_BOOL("(not (> 1 10))", true);
+  // VM_COMPILE_BOOL("(and (or (< 1 2) (> 3 4)) (not (> 1 10)))", true);
 
-  {
-    VM_COMPILE("(define a 6) (define b 7) (+ a b)", 13);
-    // PUSH CONST  6
-    // POP  LOCAL  0
-    // PUSH CONST  7
-    // POP  LOCAL  1
-    // PUSH LOCAL  0
-    // PUSH LOCAL  1
-    // ADD
-    // STOP
-    VM_CLEANUP;
-  }  
-
-  {
-    VM_COMPILE("(+ 3 4)", 7);
-    // PUSH CONST 3
-    // PUSH CONST 4
-    // ADD
-    // STOP
-    VM_CLEANUP;
-  }  
-
-  {
-    VM_COMPILE("(- (+ 1 2) 3)", 0);
-    // PUSH    CONST   1
-    // PUSH    CONST   2
-    // ADD
-    // PUSH    CONST   3
-    // SUB
-    // STOP
-    VM_CLEANUP;
-  }
-
+  VM_COMPILE_INT("(if (> 400 200) 66)", 66);
+  VM_COMPILE_INT("(if (> 200 100) 12 24)", 12);
+  VM_COMPILE_INT("(if (< 200 100) 12 24)", 24);
+  VM_COMPILE_BOOL("(if (> 400 200) (= 50 50))", true);
+  VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
+  VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
 }
 
 int main(void)
@@ -865,7 +865,7 @@ int main(void)
   // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
 
   // vm
-  RUN_TEST(test_vm_stack);
+  //RUN_TEST(test_vm_stack);
   RUN_TEST(test_vm_bytecode);
   
   return UNITY_END();

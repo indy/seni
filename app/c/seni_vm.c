@@ -78,11 +78,11 @@ void program_free(seni_program *program)
   free(program);
 }
 
-bool program_emit_opcode(seni_program *program, seni_opcode op, i32 arg0, i32 arg1)
+seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, i32 arg0, i32 arg1)
 {
   if (program->code_size >= program->code_max_size) {
     SENI_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
-    return false;
+    return NULL;
   }
   
   seni_bytecode *b = &(program->code[program->code_size++]);
@@ -90,7 +90,7 @@ bool program_emit_opcode(seni_program *program, seni_opcode op, i32 arg0, i32 ar
   b->arg0 = arg0;
   b->arg1 = arg1;
 
-  return true;
+  return b;
 }
 
 char *memory_segment_name(seni_memory_segment_type segment)
@@ -140,6 +140,17 @@ void program_pretty_print(seni_program *program)
              opcode_name(b->op),
              memory_segment_name((seni_memory_segment_type)b->arg0),
              b->arg1);
+    } else if (b->op == JUMP_IF || b->op == JUMP || b->op == LOOP) {
+      printf("%d\t%s\t",
+             i,
+             opcode_name(b->op));
+      if (b->arg0 > 0) {
+        printf("+%d\n", b->arg0);
+      } else if (b->arg0 < 0) {
+        printf("%d\n", b->arg0);
+      } else {
+        printf("WTF!\n");
+      }
     } else {
       printf("%d\t%s\n", i, opcode_name(b->op));
     }
@@ -249,6 +260,39 @@ seni_node *compile_define(seni_node *ast, seni_program *program)
   return safe_next(value_node);
 }
 
+
+seni_node *compile_if(seni_node *ast, seni_program *program)
+{
+  // if (> 200 100) 12 24
+  // ^
+  seni_node *if_node = safe_next(ast);
+  seni_node *then_node = safe_next(if_node);
+  seni_node *else_node = safe_next(then_node); // could be NULL
+
+  compile(if_node, program);
+  // insert jump to after the 'then' node if not true
+  i32 addr_jump_then = program->code_size;
+  seni_bytecode *bc_jump_then = program_emit_opcode(program, JUMP_IF, 0, 0);
+
+  compile(then_node, program);
+
+  if (else_node) {
+    // insert a bc_jump_else opcode
+    i32 addr_jump_else = program->code_size;
+    seni_bytecode *bc_jump_else = program_emit_opcode(program, JUMP, 0, 0);
+
+    bc_jump_then->arg0 = program->code_size - addr_jump_then;
+
+    compile(else_node, program);
+
+    bc_jump_else->arg0 = program->code_size - addr_jump_else;
+  } else {
+    bc_jump_then->arg0 = program->code_size - addr_jump_then;
+  }
+
+  return NULL;
+}
+
 // compiles everything after the current ast point
 void compile_rest(seni_node *ast, seni_program *program)
 {
@@ -280,41 +324,45 @@ seni_node *compile(seni_node *ast, seni_program *program)
     if (local_mapping != -1) {
       program_emit_opcode(program, PUSH, MEM_SEG_LOCAL, local_mapping);
       return safe_next(ast);
-    }
-    else if (string_matches(name, "define")) {
+    } else if (string_matches(name, "define")) {
       return compile_define(ast, program);
-    }
-    else if (string_matches(name, "+")) {
-
-      // push the arguments onto the stack
+    } else if (string_matches(name, "if")) {
+      return compile_if(ast, program);
+    }else if (string_matches(name, "+")) {
       compile_rest(ast, program);
-      
       program_emit_opcode(program, ADD, 0, 0);
       return safe_next(ast);
-    }
-    else if (string_matches(name, "-")) {
+    } else if (string_matches(name, "-")) {
       // TODO: differentiate between neg and sub?
-      // push the arguments onto the stack
       compile_rest(ast, program);
-
       program_emit_opcode(program, SUB, 0, 0);
       return safe_next(ast);
-    }
-    else if (string_matches(name, "=")) {
+    } else if (string_matches(name, "=")) {
+      compile_rest(ast, program);
       program_emit_opcode(program, EQ, 0, 0);
       return safe_next(ast);
-    }
-    else if (string_matches(name, "<")) {
+    } else if (string_matches(name, "<")) {
+      compile_rest(ast, program);
       program_emit_opcode(program, LT, 0, 0);
       return safe_next(ast);
-    }
-    else if (string_matches(name, ">")) {
+    } else if (string_matches(name, ">")) {
+      compile_rest(ast, program);
       program_emit_opcode(program, GT, 0, 0);
       return safe_next(ast);
-    }
-    else {
+    } else if (string_matches(name, "and")) {
+      compile_rest(ast, program);
+      program_emit_opcode(program, AND, 0, 0);
+      return safe_next(ast);
+    } else if (string_matches(name, "or")) {
+      compile_rest(ast, program);
+      program_emit_opcode(program, OR, 0, 0);
+      return safe_next(ast);
+    } else if (string_matches(name, "not")) {
+      compile_rest(ast, program);
+      program_emit_opcode(program, NOT, 0, 0);
+      return safe_next(ast);
+    } else {
       // look up the name as a local variable?
-      
       return safe_next(ast);
     }
   }
@@ -343,20 +391,51 @@ void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl)
 // VM bytecode interpreter
 // **************************************************
 
+i32 pop_i32(seni_stack *stack)
+{
+  seni_var *v = stack_pop(stack);
+  i32 i = v->value.i;
+
+  return i;
+}
+
+bool pop_bool(seni_stack *stack)
+{
+  seni_var *v = stack_pop(stack);
+  i32 i = v->value.i;
+
+  return i != 0;
+}
+
+void push_i32(seni_stack *stack, i32 i)
+{
+  seni_var *v = stack_push(stack);
+  i32_as_var(v, i);
+}
+
+void push_bool(seni_stack *stack, bool b)
+{
+  seni_var *v = stack_push(stack);
+  bool_as_var(v, b);
+}
+
 // executes a program on a vm 
 void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 {
   seni_bytecode *bc = NULL;
   seni_var *v = NULL;
   i32 a, b;
+  bool b1, b2;
   i32 pc = 0;
+
+  seni_stack *stack = &(vm->stack);
 
   for (;;) {
     bc = &(program->code[pc++]);
     
     switch(bc->op) {
     case PUSH:
-      v = stack_push(&(vm->stack));
+      v = stack_push(stack);
       if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_CONSTANT) {
         v->type = VAR_INT;
         v->value.i = bc->arg1;
@@ -373,7 +452,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       break;
 
     case POP:
-      v = stack_pop(&(vm->stack));
+      v = stack_pop(stack);
       if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_LOCAL) {
         seni_var *dest = &(vm->local.data[vm->local.base + bc->arg1]);
         safe_var_copy(dest, v);
@@ -382,26 +461,64 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       } 
       break;
 
-    case ADD:
-      v = stack_pop(&(vm->stack));
-      b = v->value.i;
-      v = stack_pop(&(vm->stack));
-      a = v->value.i;
+    case JUMP:
+      pc--;
+      pc += bc->arg0;
+      break;
 
-      v = stack_push(&(vm->stack));
-      v->type = VAR_INT;
-      v->value.i = a + b;
+    case JUMP_IF:
+      // jump if the top of the stack is false
+      if (pop_bool(stack) == false) {
+        pc--;
+        pc += bc->arg0;
+      }
+      break;
+
+    case ADD:
+      b = pop_i32(stack);
+      a = pop_i32(stack);
+      push_i32(stack, a + b);
       break;
 
     case SUB:
-      v = stack_pop(&(vm->stack));
-      b = v->value.i;
-      v = stack_pop(&(vm->stack));
-      a = v->value.i;
+      b = pop_i32(stack);
+      a = pop_i32(stack);
+      push_i32(stack, a - b);
+      break;
 
-      v = stack_push(&(vm->stack));
-      v->type = VAR_INT;
-      v->value.i = a - b;
+    case EQ:
+      b = pop_i32(stack);
+      a = pop_i32(stack);
+      push_bool(stack, a == b);
+      break;
+
+    case GT:
+      b = pop_i32(stack);
+      a = pop_i32(stack);
+      push_bool(stack, a > b);
+      break;
+
+    case LT:
+      b = pop_i32(stack);
+      a = pop_i32(stack);
+      push_bool(stack, a < b);
+      break;
+
+    case AND:
+      b2 = pop_bool(stack);
+      b1 = pop_bool(stack);
+      push_bool(stack, b1 && b2);
+      break;
+      
+    case OR:
+      b2 = pop_bool(stack);
+      b1 = pop_bool(stack);
+      push_bool(stack, b1 || b2);
+      break;
+      
+    case NOT:
+      b1 = pop_bool(stack);
+      push_bool(stack, !b1);
       break;
       
     case STOP:

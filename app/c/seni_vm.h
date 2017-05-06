@@ -75,7 +75,7 @@ typedef struct {
 
 seni_program *program_allocate(i32 code_max_size);
 void program_free(seni_program *program);
-bool program_emit_opcode(seni_program *program, seni_opcode op, i32 arg0, i32 arg1);
+seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, i32 arg0, i32 arg1);
 void program_pretty_print(seni_program *program);
 
 // Virtual Machine

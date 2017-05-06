@@ -177,6 +177,10 @@ f32 var_as_float(seni_var *var);
 void var_as_vec2(f32* out0, f32* out1, seni_var *var);
 void var_as_vec4(f32* out0, f32* out1, f32* out2, f32* out3, seni_var *var);
 
+void bool_as_var(seni_var *out, bool b);
+void i32_as_var(seni_var *out, i32 i);
+
+
 seni_var *bind_var(seni_env *env, i32 name, seni_var *var);
 seni_var *bind_var_to_int(seni_env *env, i32 name, i32 value);
 seni_var *bind_var_to_float(seni_env *env, i32 name, f32 value);
