@@ -466,51 +466,27 @@ void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl)
 // VM bytecode interpreter
 // **************************************************
 
-i32 pop_i32(seni_stack *stack)
-{
-  seni_var *v = stack_pop(stack);
-  i32 i = v->value.i;
-
-  return i;
-}
-
-bool pop_bool(seni_stack *stack)
-{
-  seni_var *v = stack_pop(stack);
-  i32 i = v->value.i;
-
-  return i != 0;
-}
-
-void push_i32(seni_stack *stack, i32 i)
-{
-  seni_var *v = stack_push(stack);
-  i32_as_var(v, i);
-}
-
-void push_bool(seni_stack *stack, bool b)
-{
-  seni_var *v = stack_push(stack);
-  bool_as_var(v, b);
-}
-
 // executes a program on a vm 
 void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 {
-  seni_bytecode *bc = NULL;
-  seni_var *v = NULL;
   i32 a, b;
   bool b1, b2;
-  i32 pc = 0;
 
-  seni_stack *stack = &(vm->stack);
+  register seni_bytecode *bc = NULL;
+  register seni_var *v = NULL;
+  register i32 ip = 0;
+  register i32 sp = vm->stack.sp;
+  register seni_var *stack_d = &(vm->stack.data[sp]);
+
+#define STACK_POP stack_d--; sp--; v = stack_d
+#define STACK_PUSH v = stack_d; stack_d++; sp++
 
   for (;;) {
-    bc = &(program->code[pc++]);
+    bc = &(program->code[ip++]);
     
     switch(bc->op) {
     case PUSH:
-      v = stack_push(stack);
+      STACK_PUSH;
       if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_CONSTANT) {
         v->type = VAR_INT;
         v->value.i = bc->arg1;
@@ -518,15 +494,14 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
         // get value from local memory - push onto stack
 
         seni_var *local_var = &(vm->local.data[vm->local.base + bc->arg1]);
-        safe_var_move(v, local_var); 
-        
+        safe_var_move(v, local_var);
       } else {
         SENI_ERROR("PUSH: unknown memory segment type %d", bc->arg0);
       }
       break;
 
     case POP:
-      v = stack_pop(stack);
+      STACK_POP;
       if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_LOCAL) {
         seni_var *dest = &(vm->local.data[vm->local.base + bc->arg1]);
         safe_var_move(dest, v);
@@ -536,66 +511,110 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       break;
 
     case JUMP:
-      pc--;
-      pc += bc->arg0;
+      ip--;
+      ip += bc->arg0;
       break;
 
     case JUMP_IF:
+      STACK_POP;
+
       // jump if the top of the stack is false
-      if (pop_bool(stack) == false) {
-        pc--;
-        pc += bc->arg0;
+      if (v->value.i == 0) {
+        ip--;
+        ip += bc->arg0;
       }
       break;
 
     case ADD:
-      b = pop_i32(stack);
-      a = pop_i32(stack);
-      push_i32(stack, a + b);
+      STACK_POP;
+      b = v->value.i;
+      STACK_POP;
+      a = v->value.i;
+
+      STACK_PUSH;
+      v->value.i = a + b;
       break;
 
     case SUB:
-      b = pop_i32(stack);
-      a = pop_i32(stack);
-      push_i32(stack, a - b);
+      STACK_POP;
+      b = v->value.i;
+      STACK_POP;
+      a = v->value.i;
+
+      STACK_PUSH;
+      v->value.i = a - b;
+
+      // TEMP
+      stack_d--;
+      sp--;
       break;
 
     case EQ:
-      b = pop_i32(stack);
-      a = pop_i32(stack);
-      push_bool(stack, a == b);
+      STACK_POP;
+      b = v->value.i;
+      STACK_POP;
+      a = v->value.i;
+
+      STACK_PUSH;
+      v->type = VAR_BOOLEAN;
+      v->value.i = a == b;
       break;
 
     case GT:
-      b = pop_i32(stack);
-      a = pop_i32(stack);
-      push_bool(stack, a > b);
+      STACK_POP;
+      b = v->value.i;
+      STACK_POP;
+      a = v->value.i;
+
+      STACK_PUSH;
+      v->type = VAR_BOOLEAN;
+      v->value.i = a > b;
       break;
 
     case LT:
-      b = pop_i32(stack);
-      a = pop_i32(stack);
-      push_bool(stack, a < b);
+      STACK_POP;
+      b = v->value.i;
+      STACK_POP;
+      a = v->value.i;
+
+      STACK_PUSH;
+      v->value.i = a < b;
+      v->type = VAR_BOOLEAN;
       break;
 
     case AND:
-      b2 = pop_bool(stack);
-      b1 = pop_bool(stack);
-      push_bool(stack, b1 && b2);
+      STACK_POP;
+      b2 = (bool)v->value.i;
+      STACK_POP;
+      b1 = (bool)v->value.i;
+
+      STACK_PUSH;
+      v->value.i = b1 && b2;
+      v->type = VAR_BOOLEAN;
       break;
       
     case OR:
-      b2 = pop_bool(stack);
-      b1 = pop_bool(stack);
-      push_bool(stack, b1 || b2);
+      STACK_POP;
+      b2 = (bool)v->value.i;
+      STACK_POP;
+      b1 = (bool)v->value.i;
+
+      STACK_PUSH;
+      v->value.i = b1 || b2;
+      v->type = VAR_BOOLEAN;
       break;
       
     case NOT:
-      b1 = pop_bool(stack);
-      push_bool(stack, !b1);
+      STACK_POP;
+      b1 = (bool)v->value.i;
+
+      STACK_PUSH;
+      v->value.i = !b1;
+      v->type = VAR_BOOLEAN;
       break;
       
     case STOP:
+      vm->stack.sp = sp;
       return;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));

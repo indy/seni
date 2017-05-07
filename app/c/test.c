@@ -9,6 +9,7 @@
 #include "seni_uv_mapper.h"
 #include "seni_vm.h"
 
+#include "time.h"
 #include "stdio.h"
 #include <stdlib.h>
 #include <string.h>
@@ -806,45 +807,67 @@ void test_vm_stack(void)
 
 // COMPILE macros that eval and compare results
 //
-//#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
-//#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
+#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
+#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 
 // COMPILE macros that print out bytecode
 //
-#define VM_COMPILE_INT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-#define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+//#define VM_COMPILE_INT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+//#define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 
 // --------------------------------------------------
 
 void test_vm_bytecode(void)
 {
-  // VM_COMPILE_INT("(define a 42) (define b 52) 10", 10);
-  // VM_COMPILE_INT("(define a 6) (define b 7) (+ a b)", 13);
-  // VM_COMPILE_INT("(+ 3 4)", 7);
-  // VM_COMPILE_INT("(- (+ 1 2) 3)", 0);
-  // VM_COMPILE_BOOL("(> 5 10)", false);
-  // VM_COMPILE_BOOL("(< 5 10)", true);
-  // VM_COMPILE_BOOL("(= 2 2)", true);
-  // VM_COMPILE_BOOL("(= 1 2)", false);
-  // VM_COMPILE_BOOL("(and (< 1 2) (< 3 4))", true);
-  // VM_COMPILE_BOOL("(and (< 1 2) (> 3 4))", false);
-  // VM_COMPILE_BOOL("(or (< 1 2) (> 3 4))", true);
-  // VM_COMPILE_BOOL("(not (> 1 10))", true);
-  // VM_COMPILE_BOOL("(and (or (< 1 2) (> 3 4)) (not (> 1 10)))", true);
+  VM_COMPILE_INT("(define a 42) (define b 52) 10", 10);
+  VM_COMPILE_INT("(define a 6) (define b 7) (+ a b)", 13);
+  VM_COMPILE_INT("(+ 3 4)", 7);
+  VM_COMPILE_INT("(- (+ 1 2) 3)", 0);
+  VM_COMPILE_BOOL("(> 5 10)", false);
+  VM_COMPILE_BOOL("(< 5 10)", true);
+  VM_COMPILE_BOOL("(= 2 2)", true);
+  VM_COMPILE_BOOL("(= 1 2)", false);
+  VM_COMPILE_BOOL("(and (< 1 2) (< 3 4))", true);
+  VM_COMPILE_BOOL("(and (< 1 2) (> 3 4))", false);
+  VM_COMPILE_BOOL("(or (< 1 2) (> 3 4))", true);
+  VM_COMPILE_BOOL("(not (> 1 10))", true);
+  VM_COMPILE_BOOL("(and (or (< 1 2) (> 3 4)) (not (> 1 10)))", true);
 
-  // VM_COMPILE_INT("(if (> 400 200) 66)", 66);
-  // VM_COMPILE_INT("(if (> 200 100) 12 24)", 12);
-  // VM_COMPILE_INT("(if (< 200 100) 12 24)", 24);
-  // VM_COMPILE_BOOL("(if (> 400 200) (= 50 50))", true);
-  // VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
-  // VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
+  VM_COMPILE_INT("(if (> 400 200) 66)", 66);
+  VM_COMPILE_INT("(if (> 200 100) 12 24)", 12);
+  VM_COMPILE_INT("(if (< 200 100) 12 24)", 24);
+  VM_COMPILE_BOOL("(if (> 400 200) (= 50 50))", true);
+  VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
+  VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
 
-  VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
+  // VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
+  // VM_COMPILE_INT("(loop (x from: 0 to: 53) (+ 1 1)) 4", 4);
+}
+
+void timing(void)
+{
+  clock_t start, diff;
+  int msec;
+ 
+  EVAL_DECL;
+  start = clock();
+  EVAL_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+  diff = clock() - start;
+  msec = diff * 1000 / CLOCKS_PER_SEC;
+  printf("Eval Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
+
+  start = clock();
+  VM_COMPILE_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+  diff = clock() - start;
+  msec = diff * 1000 / CLOCKS_PER_SEC;
+  printf("VM Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
 }
 
 int main(void)
 {
-  UNITY_BEGIN();
+  timing();
+    
+  // UNITY_BEGIN();
 
   // RUN_TEST(test_mathutil);
   // RUN_TEST(test_lang_parser);
@@ -866,7 +889,7 @@ int main(void)
 
   // vm
   // RUN_TEST(test_vm_stack);
-  RUN_TEST(test_vm_bytecode);
+  // RUN_TEST(test_vm_bytecode);
   
-  return UNITY_END();
+  // return UNITY_END();
 }

@@ -297,3 +297,51 @@ Build Events -> Command Line had the following pasted in:
 
 python ../../libuv.py download
 python ../../libuv.py build -32
+
+* timings
+
+<2017-05-07 Sun>
+
+A. full run but with SUB popping the stack
+
+Eval Time taken 2 seconds 568 milliseconds
+VM Time taken 2 seconds 986 milliseconds
+
+
+--------------------------------------------------------------------------------
+
+B. early return from vm_interpret
+
+Eval Time taken 2 seconds 568 milliseconds
+VM Time taken 0 seconds 0 milliseconds
+
+--------------------------------------------------------------------------------
+
+C. replacing safe_var_move with simpler dest.value.i = src.value.i
+
+Eval Time taken 2 seconds 570 milliseconds
+VM Time taken 2 seconds 945 milliseconds
+
+--------------------------------------------------------------------------------
+
+D. keeping a local variable indicating stack position and doing simple pointer increment/decrements
+
+Eval Time taken 2 seconds 568 milliseconds
+VM Time taken 1 seconds 552 milliseconds
+
+--------------------------------------------------------------------------------
+
+E. C + D
+
+Eval Time taken 2 seconds 568 milliseconds
+VM Time taken 1 seconds 502 milliseconds
+
+--------------------------------------------------------------------------------
+
+F. D + using 'register' keyword on commonly accessed variables in interpreter loop
+
+Eval Time taken 2 seconds 665 milliseconds
+VM Time taken 0 seconds 759 milliseconds
+
+(/ 2665.0 759)
+3.5111989459815547
