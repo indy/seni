@@ -140,7 +140,7 @@ void program_pretty_print(seni_program *program)
              opcode_name(b->op),
              memory_segment_name((seni_memory_segment_type)b->arg0),
              b->arg1);
-    } else if (b->op == JUMP_IF || b->op == JUMP || b->op == LOOP) {
+    } else if (b->op == JUMP_IF || b->op == JUMP) {
       printf("%d\t%s\t",
              i,
              opcode_name(b->op));
@@ -293,40 +293,34 @@ seni_node *compile_if(seni_node *ast, seni_program *program)
   return NULL;
 }
 
-/*
-;; set x to 0
-0	PUSH	CONST	0
-1	POP	LOCAL	0
-;; compare against exit condition
-2 PUSH LOCAL 0
-3 PUSH CONST 5
-4 LT
-;; jump out of loop if (< x 5) == false
-5 JUMP_IF 10
-
-7, 8, 9...op codes for body...
-
-;; increment x
-10 PUSH LOCAL 0
-11 PUSH CONST 1
-12 ADD
-13 POP LOCAL 0
-;; loop back to comparison
-14 LOOP 12
-15 STOP
-*/
 seni_node *compile_loop(seni_node *ast, seni_program *program)
 {
-  // loop (x from: 0 to: 5) body
+  // loop (x from: 0 to: 5) (+ 42 38)
   // ^
 
+  // 0  PUSH    CONST 0
+  // 1  POP     LOCAL 0   ;; set x to 0
+  // 2  PUSH    LOCAL 0
+  // 3  PUSH    CONST 5
+  // 4  LT
+  // 5  JUMP_IF +9        ;; jump out of loop if x >= 5
+  // 6  PUSH    CONST 42
+  // 7  PUSH    CONST 38
+  // 8  ADD               ;; code in body form
+  // 9  PUSH    LOCAL 0
+  // 10	PUSH    CONST 1
+  // 11	ADD               ;; increment x
+  // 12	POP	    LOCAL 0
+  // 13	JUMP    -11       ;; jump to loop exit check
+  // 14	STOP
+  
   seni_node *parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
     SENI_ERROR("expected a list that defines loop parameters");
     return NULL;
   }
 
-  // x
+  // the looping variable x
   seni_node *name_node = parameters_node->value.first_child;
   // from: 0
   seni_node *from_node = safe_next(name_node); // the label 'from'
@@ -335,15 +329,39 @@ seni_node *compile_loop(seni_node *ast, seni_program *program)
   seni_node *to_node = safe_next(from_node); // the label 'to'
   to_node = safe_next(to_node);              // the value of 'to'
 
-  
+  // set looping variable x to 'from' value
   compile(from_node, program);
-  i32 local_address = get_local_mapping(name_node->value.i);
-  if (local_address == -1) {
-    local_address = add_local_mapping(name_node->value.i);
+  i32 looper_address = get_local_mapping(name_node->value.i);
+  if (looper_address == -1) {
+    looper_address = add_local_mapping(name_node->value.i);
   }
-  program_emit_opcode(program, POP, MEM_SEG_LOCAL, local_address);
+  program_emit_opcode(program, POP, MEM_SEG_LOCAL, looper_address);
 
+  // compare looping variable against exit condition
+  // and jump if looping variable >= exit value
+  i32 addr_loop_start = program->code_size;
+  program_emit_opcode(program, PUSH, MEM_SEG_LOCAL, looper_address);
   compile(to_node, program);
+  program_emit_opcode(program, LT, 0, 0);
+  i32 addr_exit_check = program->code_size;
+  seni_bytecode *bc_exit_check = program_emit_opcode(program, JUMP_IF, 0, 0);
+
+  // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
+  seni_node *body = safe_next(parameters_node);
+  while (body != NULL) {
+    compile(body, program);
+    body = safe_next(body);
+  }
+
+  // increment the looping variable
+  program_emit_opcode(program, PUSH, MEM_SEG_LOCAL, looper_address);
+  program_emit_opcode(program, PUSH, MEM_SEG_CONSTANT, 1);
+  program_emit_opcode(program, ADD, 0, 0);
+  program_emit_opcode(program, POP, MEM_SEG_LOCAL, looper_address);
+
+  // loop back to the comparison
+  program_emit_opcode(program, JUMP, -(program->code_size - addr_loop_start), 0);
+  bc_exit_check->arg0 = program->code_size - addr_exit_check;
 
   return NULL;
 }
@@ -384,7 +402,6 @@ seni_node *compile(seni_node *ast, seni_program *program)
     } else if (string_matches(name, "if")) {
       return compile_if(ast, program);
     } else if (string_matches(name, "loop")) {
-      printf("inside loop\n");
       return compile_loop(ast, program);
     } else if (string_matches(name, "+")) {
       compile_rest(ast, program);

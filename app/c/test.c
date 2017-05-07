@@ -839,7 +839,7 @@ void test_vm_bytecode(void)
   // VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
   // VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
 
-  VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 1 1))", 9);
+  VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
 }
 
 int main(void)
