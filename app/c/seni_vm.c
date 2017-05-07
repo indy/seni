@@ -303,16 +303,18 @@ seni_node *compile_loop(seni_node *ast, seni_program *program)
   // 2  PUSH    LOCAL 0
   // 3  PUSH    CONST 5
   // 4  LT
-  // 5  JUMP_IF +9        ;; jump out of loop if x >= 5
-  // 6  PUSH    CONST 42
-  // 7  PUSH    CONST 38
-  // 8  ADD               ;; code in body form
-  // 9  PUSH    LOCAL 0
-  // 10	PUSH    CONST 1
-  // 11	ADD               ;; increment x
-  // 12	POP	    LOCAL 0
-  // 13	JUMP    -11       ;; jump to loop exit check
-  // 14	STOP
+  // 5  JUMP_IF +11        ;; jump out of loop if x >= 5
+  // 6  MARK
+  // 7  PUSH    CONST 42
+  // 8  PUSH    CONST 38
+  // 9  ADD               ;; code in body form
+  // 10 UNMARK
+  // 11 PUSH    LOCAL 0
+  // 12	PUSH    CONST 1
+  // 13	ADD               ;; increment x
+  // 14	POP	    LOCAL 0
+  // 15	JUMP    -13       ;; jump to loop exit check
+  // 16	STOP
   
   seni_node *parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
@@ -346,12 +348,22 @@ seni_node *compile_loop(seni_node *ast, seni_program *program)
   i32 addr_exit_check = program->code_size;
   seni_bytecode *bc_exit_check = program_emit_opcode(program, JUMP_IF, 0, 0);
 
+  // mark and unmark required for loops that may have bodies which leave values on the stack
+  // e.g. 3 + 4 would leave the value 7 on the stack.
+  // so (loop 100 times: 3 + 4) would grow the stack by 100
+  // this is obviously shit - so by marking the start of a loop's body, the vm can 
+  // repeatedly pop any left over values from the stack
+  program_emit_opcode(program, MARK, 0, 0);
+  
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
   seni_node *body = safe_next(parameters_node);
   while (body != NULL) {
     compile(body, program);
     body = safe_next(body);
   }
+
+  // the vm will start popping values from the stack until a seni_var of type VAR_MARK is encountered
+  program_emit_opcode(program, UNMARK, 0, 0);
 
   // increment the looping variable
   program_emit_opcode(program, PUSH, MEM_SEG_LOCAL, looper_address);
@@ -525,6 +537,20 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       }
       break;
 
+    case MARK:
+      STACK_PUSH;
+      v->type = VAR_MARK;
+      break;
+      
+    case UNMARK:
+      while(true) {
+        STACK_POP;
+        if (v->type == VAR_MARK) {
+          break;
+        }
+      }
+      break;
+
     case ADD:
       STACK_POP;
       b = v->value.i;
@@ -544,9 +570,6 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       STACK_PUSH;
       v->value.i = a - b;
 
-      // TEMP
-      stack_d--;
-      sp--;
       break;
 
     case EQ:

@@ -66,6 +66,7 @@ typedef enum {
   VAR_FN,        // pointer to seni_node: value.n
   VAR_VEC_HEAD,  // pointer to vec_rc is in value.v
   VAR_VEC_RC,    // pointer to first vector element is in value.v
+  VAR_MARK,
 } seni_var_type;
 
 /*

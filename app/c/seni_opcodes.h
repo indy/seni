@@ -23,5 +23,13 @@ OPCODE(JUMP, 0)
 OPCODE(JUMP_IF, -1)
 
 
+// TODO: make the compiler spot cases where the stack would grow linearly and fix/warn
+// would then be able to get rid of MARK/UNMARK
+//
+// place a mark
+OPCODE(MARK, 1)
+// keep popping until mark is reached and popped
+OPCODE(UNMARK, -1)
+
 OPCODE (NOP, 0)
 OPCODE (STOP, 0)
