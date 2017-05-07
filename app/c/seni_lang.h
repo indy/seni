@@ -189,6 +189,7 @@ seni_var *eval_all_nodes(seni_env *env, seni_node *body);
 seni_node *safe_next(seni_node *expr);
 seni_value_in_use get_value_in_use(seni_var_type type);
 void safe_var_copy(seni_var *dest, seni_var *src);
+void safe_var_move(seni_var *dest, seni_var *src);
 void add_named_parameters_to_env(seni_env *env, seni_node *named_params);
 
 // getting value from named parameter lists

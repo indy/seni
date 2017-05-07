@@ -806,13 +806,13 @@ void test_vm_stack(void)
 
 // COMPILE macros that eval and compare results
 //
-#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
-#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
+//#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
+//#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 
 // COMPILE macros that print out bytecode
 //
-//#define VM_COMPILE_INT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-//#define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_INT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 
 // --------------------------------------------------
 
@@ -832,12 +832,14 @@ void test_vm_bytecode(void)
   // VM_COMPILE_BOOL("(not (> 1 10))", true);
   // VM_COMPILE_BOOL("(and (or (< 1 2) (> 3 4)) (not (> 1 10)))", true);
 
-  VM_COMPILE_INT("(if (> 400 200) 66)", 66);
-  VM_COMPILE_INT("(if (> 200 100) 12 24)", 12);
-  VM_COMPILE_INT("(if (< 200 100) 12 24)", 24);
-  VM_COMPILE_BOOL("(if (> 400 200) (= 50 50))", true);
-  VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
-  VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
+  // VM_COMPILE_INT("(if (> 400 200) 66)", 66);
+  // VM_COMPILE_INT("(if (> 200 100) 12 24)", 12);
+  // VM_COMPILE_INT("(if (< 200 100) 12 24)", 24);
+  // VM_COMPILE_BOOL("(if (> 400 200) (= 50 50))", true);
+  // VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
+  // VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
+
+  VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 1 1))", 9);
 }
 
 int main(void)
@@ -848,7 +850,6 @@ int main(void)
   // RUN_TEST(test_lang_parser);
   // RUN_TEST(test_lang_env);
   // RUN_TEST(test_uv_mapper);
-  
 
   // RUN_TEST(test_lang_interpret_basic);
   // RUN_TEST(test_lang_interpret_math);
@@ -860,12 +861,11 @@ int main(void)
   // RUN_TEST(test_lang_interpret_loop);
   // RUN_TEST(test_lang_interpret_vector);
   // RUN_TEST(test_lang_interpret_mem);
-
   
   // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
 
   // vm
-  //RUN_TEST(test_vm_stack);
+  // RUN_TEST(test_vm_stack);
   RUN_TEST(test_vm_bytecode);
   
   return UNITY_END();

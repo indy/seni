@@ -293,6 +293,61 @@ seni_node *compile_if(seni_node *ast, seni_program *program)
   return NULL;
 }
 
+/*
+;; set x to 0
+0	PUSH	CONST	0
+1	POP	LOCAL	0
+;; compare against exit condition
+2 PUSH LOCAL 0
+3 PUSH CONST 5
+4 LT
+;; jump out of loop if (< x 5) == false
+5 JUMP_IF 10
+
+7, 8, 9...op codes for body...
+
+;; increment x
+10 PUSH LOCAL 0
+11 PUSH CONST 1
+12 ADD
+13 POP LOCAL 0
+;; loop back to comparison
+14 LOOP 12
+15 STOP
+*/
+seni_node *compile_loop(seni_node *ast, seni_program *program)
+{
+  // loop (x from: 0 to: 5) body
+  // ^
+
+  seni_node *parameters_node = safe_next(ast);
+  if (parameters_node->type != NODE_LIST) {
+    SENI_ERROR("expected a list that defines loop parameters");
+    return NULL;
+  }
+
+  // x
+  seni_node *name_node = parameters_node->value.first_child;
+  // from: 0
+  seni_node *from_node = safe_next(name_node); // the label 'from'
+  from_node = safe_next(from_node);            // the value of 'from'
+  // to: 5
+  seni_node *to_node = safe_next(from_node); // the label 'to'
+  to_node = safe_next(to_node);              // the value of 'to'
+
+  
+  compile(from_node, program);
+  i32 local_address = get_local_mapping(name_node->value.i);
+  if (local_address == -1) {
+    local_address = add_local_mapping(name_node->value.i);
+  }
+  program_emit_opcode(program, POP, MEM_SEG_LOCAL, local_address);
+
+  compile(to_node, program);
+
+  return NULL;
+}
+
 // compiles everything after the current ast point
 void compile_rest(seni_node *ast, seni_program *program)
 {
@@ -305,7 +360,7 @@ void compile_rest(seni_node *ast, seni_program *program)
 seni_node *compile(seni_node *ast, seni_program *program)
 {
   seni_node *n;
-  
+
   if (ast->type == NODE_LIST) {
     n = ast->value.first_child;
     compile(n, program);
@@ -328,7 +383,10 @@ seni_node *compile(seni_node *ast, seni_program *program)
       return compile_define(ast, program);
     } else if (string_matches(name, "if")) {
       return compile_if(ast, program);
-    }else if (string_matches(name, "+")) {
+    } else if (string_matches(name, "loop")) {
+      printf("inside loop\n");
+      return compile_loop(ast, program);
+    } else if (string_matches(name, "+")) {
       compile_rest(ast, program);
       program_emit_opcode(program, ADD, 0, 0);
       return safe_next(ast);
@@ -443,8 +501,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
         // get value from local memory - push onto stack
 
         seni_var *local_var = &(vm->local.data[vm->local.base + bc->arg1]);
-        // TODO: safe_var_copy also does ref-counting on vectors which is wrong for this use case
-        safe_var_copy(v, local_var); 
+        safe_var_move(v, local_var); 
         
       } else {
         SENI_ERROR("PUSH: unknown memory segment type %d", bc->arg0);
@@ -455,7 +512,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       v = stack_pop(stack);
       if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_LOCAL) {
         seni_var *dest = &(vm->local.data[vm->local.base + bc->arg1]);
-        safe_var_copy(dest, v);
+        safe_var_move(dest, v);
       } else {
         SENI_ERROR("POP: unknown memory segment type %d", bc->arg0);
       } 

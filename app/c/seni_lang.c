@@ -1173,6 +1173,32 @@ void safe_var_copy(seni_var *dest, seni_var *src)
   }
 }
 
+// like a seni_var_copy without any modifications to the ref count
+void safe_var_move(seni_var *dest, seni_var *src)
+{
+  if (dest == src) {
+    return;
+  }
+
+  dest->type = src->type;
+
+  seni_value_in_use using = get_value_in_use(src->type);
+  
+  if (using == USE_I) {
+    dest->value.i = src->value.i;
+  } else if (using == USE_F) {
+    dest->value.f = src->value.f;
+  } else if (using == USE_N) {
+    dest->value.n = src->value.n;
+  } else if (using == USE_V) {
+    if (src->type == VAR_VEC_HEAD) {
+      dest->value.v = src->value.v;
+    } else {
+      printf("what the fuck?\n");
+    }
+  }
+}
+
 seni_var *eval_all_nodes(seni_env *env, seni_node *body)
 {
   seni_var *res = NULL;
