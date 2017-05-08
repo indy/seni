@@ -28,7 +28,8 @@ typedef enum {
   MEM_SEG_THIS,                 // general purpose - point to different areas of the heap
   MEM_SEG_THAT,                 // general purpose - point to different areas of the heap
   MEM_SEG_POINTER,              // two entry segment that holds base address of this and that
-  MEM_SEG_TEMP                  // fixed 8 entry segment that holds temporary variables
+  MEM_SEG_TEMP,                 // fixed 8 entry segment that holds temporary variables
+  MEM_SEG_VOID,                 // nothing
 } seni_memory_segment_type;
 
 // known memory addresses
@@ -71,6 +72,8 @@ typedef struct {
   seni_bytecode *code;
   i32 code_max_size;
   i32 code_size;
+
+  i32 opcode_offset;
 } seni_program;
 
 seni_program *program_allocate(i32 code_max_size);

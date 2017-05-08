@@ -807,14 +807,16 @@ void test_vm_stack(void)
 
 // COMPILE macros that eval and compare results
 //
+
+#if 0
 #define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
-
+#else
 // COMPILE macros that print out bytecode
 //
-//#define VM_COMPILE_INT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-//#define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-
+#define VM_COMPILE_INT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#endif
 // --------------------------------------------------
 
 void test_vm_bytecode(void)
@@ -840,7 +842,7 @@ void test_vm_bytecode(void)
   // VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
   // VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
 
-  // VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
+  VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
   VM_COMPILE_INT("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
 }
 
@@ -848,27 +850,31 @@ void timing(void)
 {
   clock_t start, diff;
   int msec;
- 
-  EVAL_DECL;
-  start = clock();
-  // EVAL_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
-  EVAL_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
-  diff = clock() - start;
-  msec = diff * 1000 / CLOCKS_PER_SEC;
-  printf("Eval Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
 
-  start = clock();
-  //VM_COMPILE_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+  {
+    EVAL_DECL;
+    start = clock();
+    // EVAL_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+    EVAL_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
+    diff = clock() - start;
+    msec = diff * 1000 / CLOCKS_PER_SEC;
+    printf("Eval Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
+  }
 
-  VM_COMPILE_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
-  diff = clock() - start;
-  msec = diff * 1000 / CLOCKS_PER_SEC;
-  printf("VM Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
+  {
+    start = clock();
+    //VM_COMPILE_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+
+    VM_COMPILE_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
+    diff = clock() - start;
+    msec = diff * 1000 / CLOCKS_PER_SEC;
+    printf("VM Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
+  }
 }
 
 int main(void)
 {
-  timing();
+  // timing();
     
   UNITY_BEGIN();
 
@@ -892,7 +898,7 @@ int main(void)
 
   // vm
   // RUN_TEST(test_vm_stack);
-  // RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_bytecode);
   
   return UNITY_END();
 }

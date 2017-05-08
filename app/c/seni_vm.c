@@ -61,6 +61,26 @@ void pretty_print_stack(seni_stack *stack, char *msg)
 // Program
 // **************************************************
 
+#define STR(x) #x
+#define XSTR(x) STR(x)
+
+char *opcode_name(seni_opcode opcode)
+{
+  char *names[] = {
+#define OPCODE(name,_) STR(name),
+#include "seni_opcodes.h"
+#undef OPCODE
+  };
+
+  return names[opcode];
+}
+
+i32 opcode_offset[] = {
+#define OPCODE(_,offset) offset,
+#include "seni_opcodes.h"
+#undef OPCODE
+};
+
 seni_program *program_allocate(i32 code_max_size)
 {
   seni_program *program = (seni_program *)calloc(sizeof(seni_program), 1);
@@ -68,6 +88,7 @@ seni_program *program_allocate(i32 code_max_size)
   program->code = (seni_bytecode *)calloc(sizeof(seni_bytecode), code_max_size);
   program->code_max_size = code_max_size;
   program->code_size = 0;
+  program->opcode_offset = 0;
 
   return program;
 }
@@ -89,6 +110,8 @@ seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, i32 ar
   b->op = op;
   b->arg0 = arg0;
   b->arg1 = arg1;
+
+  program->opcode_offset += opcode_offset[op];
 
   return b;
 }
@@ -112,21 +135,10 @@ char *memory_segment_name(seni_memory_segment_type segment)
     return "PTR";
   case MEM_SEG_TEMP:
     return "TEMP";
+  case MEM_SEG_VOID:
+    return "VOID";
   }
   return "UNKNOWN";
-}
-
-#define STR(x) #x
-#define XSTR(x) STR(x)
-
-char *opcode_name(seni_opcode opcode) {
-  char *names[] = {
-#define OPCODE(name,_) STR(name),
-#include "seni_opcodes.h"
-#undef OPCODE
-  };
-
-  return names[opcode];
 }
 
 void program_pretty_print(seni_program *program)
@@ -295,26 +307,24 @@ seni_node *compile_if(seni_node *ast, seni_program *program)
 
 seni_node *compile_loop(seni_node *ast, seni_program *program)
 {
-  // loop (x from: 0 to: 5) (+ 42 38)
-  // ^
-
-  // 0  PUSH    CONST 0
-  // 1  POP     LOCAL 0   ;; set x to 0
-  // 2  PUSH    LOCAL 0
-  // 3  PUSH    CONST 5
-  // 4  LT
-  // 5  JUMP_IF +11        ;; jump out of loop if x >= 5
-  // 6  MARK
-  // 7  PUSH    CONST 42
-  // 8  PUSH    CONST 38
-  // 9  ADD               ;; code in body form
-  // 10 UNMARK
-  // 11 PUSH    LOCAL 0
-  // 12	PUSH    CONST 1
-  // 13	ADD               ;; increment x
-  // 14	POP	    LOCAL 0
-  // 15	JUMP    -13       ;; jump to loop exit check
-  // 16	STOP
+  // (loop (x from: 0 to: 5) (+ 42 38))
+  //
+  // 0       PUSH    CONST   0
+  // 1       POP     LOCAL   0
+  // 2       PUSH    LOCAL   0
+  // 3       PUSH    CONST   5
+  // 4       LT
+  // 5       JUMP_IF +10
+  // 6       PUSH    CONST   42
+  // 7       PUSH    CONST   38
+  // 8       ADD
+  // 9       POP     VOID    0
+  // 10      PUSH    LOCAL   0
+  // 11      PUSH    CONST   1
+  // 12      ADD
+  // 13      POP     LOCAL   0
+  // 14      JUMP    -12
+  // 15      STOP
   
   seni_node *parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
@@ -348,13 +358,9 @@ seni_node *compile_loop(seni_node *ast, seni_program *program)
   i32 addr_exit_check = program->code_size;
   seni_bytecode *bc_exit_check = program_emit_opcode(program, JUMP_IF, 0, 0);
 
-  // mark and unmark required for loops that may have bodies which leave values on the stack
-  // e.g. 3 + 4 would leave the value 7 on the stack.
-  // so (loop 100 times: 3 + 4) would grow the stack by 100
-  // this is obviously shit - so by marking the start of a loop's body, the vm can 
-  // repeatedly pop any left over values from the stack
-  program_emit_opcode(program, MARK, 0, 0);
-  
+
+  i32 pre_body_opcode_offset = program->opcode_offset;
+
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
   seni_node *body = safe_next(parameters_node);
   while (body != NULL) {
@@ -362,8 +368,13 @@ seni_node *compile_loop(seni_node *ast, seni_program *program)
     body = safe_next(body);
   }
 
-  // the vm will start popping values from the stack until a seni_var of type VAR_MARK is encountered
-  program_emit_opcode(program, UNMARK, 0, 0);
+  i32 post_body_opcode_offset = program->opcode_offset;
+  i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
+
+  // pop off any values that the body might leave on the stack
+  for(i32 i = 0;i < opcode_delta; i++) {
+    program_emit_opcode(program, POP, MEM_SEG_VOID, 0);
+  }
 
   // increment the looping variable
   program_emit_opcode(program, PUSH, MEM_SEG_LOCAL, looper_address);
@@ -483,6 +494,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 {
   i32 a, b;
   bool b1, b2;
+  seni_memory_segment_type memory_segment_type;
 
   register seni_bytecode *bc = NULL;
   register seni_var *v = NULL;
@@ -499,10 +511,12 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
     switch(bc->op) {
     case PUSH:
       STACK_PUSH;
-      if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_CONSTANT) {
+
+      memory_segment_type = (seni_memory_segment_type)bc->arg0;
+      if (memory_segment_type == MEM_SEG_CONSTANT) {
         v->type = VAR_INT;
         v->value.i = bc->arg1;
-      } else if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_LOCAL) {
+      } else if (memory_segment_type == MEM_SEG_LOCAL) {
         // get value from local memory - push onto stack
 
         seni_var *local_var = &(vm->local.data[vm->local.base + bc->arg1]);
@@ -514,9 +528,13 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
     case POP:
       STACK_POP;
-      if ((seni_memory_segment_type)bc->arg0 == MEM_SEG_LOCAL) {
+
+      memory_segment_type = (seni_memory_segment_type)bc->arg0;
+      if (memory_segment_type == MEM_SEG_LOCAL) {
         seni_var *dest = &(vm->local.data[vm->local.base + bc->arg1]);
         safe_var_move(dest, v);
+      } else if (memory_segment_type == MEM_SEG_VOID) {
+        // do nothing - just pop from the stack and lose the value
       } else {
         SENI_ERROR("POP: unknown memory segment type %d", bc->arg0);
       } 
@@ -534,20 +552,6 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       if (v->value.i == 0) {
         ip--;
         ip += bc->arg0;
-      }
-      break;
-
-    case MARK:
-      STACK_PUSH;
-      v->type = VAR_MARK;
-      break;
-      
-    case UNMARK:
-      while(true) {
-        STACK_POP;
-        if (v->type == VAR_MARK) {
-          break;
-        }
       }
       break;
 
