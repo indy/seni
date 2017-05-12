@@ -1,9 +1,12 @@
-* TODO [0/5]
-  1. [ ] evaluate any top-level defines and fns
-  2. [ ] special fn: on-matrix-stack
-  3. [ ] why does setq seg fault when it returns NULL?
-  4. [ ] 'in' paramaeter for loop ?
-  5. [ ] constants like canvas/width
+* TODO [0/8]
+  1. [ ] replace string_matches with index_of_keyword
+  2. [ ] reference to wl in program, rather than g_wl
+  3. [ ] evaluate any top-level defines and fns
+  4. [ ] special fn: on-matrix-stack
+  5. [ ] why does setq seg fault when it returns NULL?
+  6. [ ] 'in' paramaeter for loop ?
+  7. [ ] constants like canvas/width
+  8. [ ] how would a stack machine compile first class functions?
 
 
 
@@ -183,6 +186,8 @@ In other architectures, the instruction pointer is sometimes called the "program
 
 
 * vm links
+  http://bartoszsypytkowski.com/simple-virtual-machine/
+
   https://github.com/munificent/wren
   http://wren.io/getting-started.html
   http://gameprogrammingpatterns.com/bytecode.html
@@ -345,3 +350,47 @@ VM Time taken 0 seconds 759 milliseconds
 
 (/ 2665.0 759)
 3.5111989459815547
+
+* looking up arguments during bytecode execution
+
+given:
+
+(fn (something alpha: 10 beta: 20)
+    (+ alpha beta))
+
+assuming that the wlut values are:
+
+| something | 42 |
+| alpha     | 53 |
+| beta      | 67 |
+
+the MEM_SEG_ARGUMENT memory will be:
+
+| 0 | 53 |
+| 1 | 10 |
+| 2 | 67 |
+| 3 | 20 |
+
+the fn_info->argument_offsets array would be:
+
+| 0 | 53 |
+| 1 | 67 |
+
+then:
+// finding argument location of 'beta':
+
+index = get_argument_mapping(fn_info, 67); // returns 1
+index_into_arguments_memory = (index * 2) + 1
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+invoking a function would involve:
+1. setting up the ARG memory with the default arguments given in the function signature (CALL_PREP ???)
+2. overwriting particular values with those from the invocation (RET followed by PUSH/POP to change arg mem)
+3. actually calling the function (CALL straight into function body, followed by RET)
+
+fn_info would then have 2 addresses - 1 for setting up args, the other for the body

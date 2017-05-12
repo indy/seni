@@ -23,7 +23,7 @@ seni_var *stack_peek2(seni_stack *stack);
 typedef enum {
   MEM_SEG_ARGUMENT,             // store the function's arguments
   MEM_SEG_LOCAL,                // store the function's local arguments
-  MEM_SEG_STATIC,               // static variables shared by all functions
+  MEM_SEG_GLOBAL,               // global variables shared by all functions
   MEM_SEG_CONSTANT,             // pseudo-segment holds constants in range 0..32767
   MEM_SEG_THIS,                 // general purpose - point to different areas of the heap
   MEM_SEG_THAT,                 // general purpose - point to different areas of the heap
@@ -52,7 +52,14 @@ typedef enum {
 #define R15   15
 
 #define MEMORY_SIZE 1024
+#define STACK_SIZE 1024
+// TODO: put global on the heap rather than at the bottom of the stack
+#define MEMORY_GLOBAL_SIZE 10
 #define MEMORY_LOCAL_SIZE 10
+// ARGUMENT stores pairs of label/value, so twice as large
+#define MEMORY_ARGUMENT_SIZE 32
+
+#define MAX_TOP_LEVEL_FUNCTIONS 32
 
 // codes
 //
@@ -64,21 +71,40 @@ typedef enum {
 
 typedef struct {
   seni_opcode op;
-  i32 arg0;
-  i32 arg1;
+  seni_var arg0;
+  seni_var arg1;
 } seni_bytecode;
+
+typedef struct {
+  bool active;                  // is this struct being used
+
+  i32 index;                    // the index into program->fn_info
+  i32 fn_name;
+  i32 arg_address;
+  i32 body_address;
+  i32 num_args;
+  i32 argument_offsets[MEMORY_ARGUMENT_SIZE >> 1];
+} seni_fn_info;
+
+
 
 typedef struct {
   seni_bytecode *code;
   i32 code_max_size;
   i32 code_size;
 
+  // variables used during compilation phase
+  //
   i32 opcode_offset;
+  i32 global_mappings[MEMORY_GLOBAL_SIZE]; // top-level defines
+  i32 local_mappings[MEMORY_LOCAL_SIZE]; // store which wlut values are stored in which local memory addresses
+
+  seni_fn_info fn_info[MAX_TOP_LEVEL_FUNCTIONS];
+
 } seni_program;
 
 seni_program *program_allocate(i32 code_max_size);
 void program_free(seni_program *program);
-seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, i32 arg0, i32 arg1);
 void program_pretty_print(seni_program *program);
 
 // Virtual Machine
@@ -92,6 +118,7 @@ typedef struct {
 
   // these reference the memory allocated in stack_memory
   seni_stack stack;
+  seni_stack global;
   seni_stack local;
   seni_stack args;
   

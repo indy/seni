@@ -1,6 +1,3 @@
-// function
-// call
-// return
 
 OPCODE(PUSH, 1)
 OPCODE(POP, -1)
@@ -21,6 +18,9 @@ OPCODE(NOT, 0)
 OPCODE(JUMP, 0)
 // Pop and if not truthy then jump the instruction pointer [arg] forward.
 OPCODE(JUMP_IF, -1)
+
+OPCODE(CALL, 0)
+OPCODE(RET, 0)
 
 OPCODE (NOP, 0)
 OPCODE (STOP, 0)
