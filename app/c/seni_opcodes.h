@@ -19,7 +19,7 @@ OPCODE(JUMP, 0)
 // Pop and if not truthy then jump the instruction pointer [arg] forward.
 OPCODE(JUMP_IF, -1)
 
-OPCODE(CALL, 0)
+OPCODE(CALL, 0) // 1??????
 OPCODE(RET, 0)
 
 OPCODE (NOP, 0)

@@ -702,67 +702,6 @@ void test_uv_mapper(void)
   free_uv_mapper();
 }
 
-
-void stack_push_int(seni_stack *stack, i32 i)
-{
-  seni_var *var = stack_push(stack);
-  var->type = VAR_INT;
-  var->value.i = i;
-}
-
-void test_vm_stack(void)
-{
-  seni_var *top;
-  
-  // push/pop
-  {
-    seni_var *mem = (seni_var *)calloc(sizeof(seni_var), 10);
-    seni_stack stack;
-    stack_construct(&stack, mem, 0);
-
-    stack_push_int(&stack, 42);
-    stack_push_int(&stack, 11);
-
-    top = stack_pop(&stack);
-    TEST_ASSERT_EQUAL(11, top->value.i);
-    top = stack_pop(&stack);
-    TEST_ASSERT_EQUAL(42, top->value.i);
-    top = stack_pop(&stack);
-    TEST_ASSERT_NULL(top);
-
-    free(mem);
-  }
-
-  // peek/peek2
-  {
-    seni_var *mem = (seni_var *)calloc(sizeof(seni_var), 10);
-    seni_stack stack;
-    stack_construct(&stack, mem, 0);
-
-    stack_push_int(&stack, 2);
-    stack_push_int(&stack, 3);
-    stack_push_int(&stack, 4);
-    stack_push_int(&stack, 5);
-    
-    top = stack_peek(&stack);
-    TEST_ASSERT_EQUAL(5, top->value.i);
-    top = stack_peek(&stack);    // calling peek again returns the same value
-    TEST_ASSERT_EQUAL(5, top->value.i);
-    top = stack_peek2(&stack);
-    TEST_ASSERT_EQUAL(4, top->value.i);
-    
-    top = stack_pop(&stack);
-    TEST_ASSERT_EQUAL(5, top->value.i);
-
-    top = stack_peek(&stack);
-    TEST_ASSERT_EQUAL(4, top->value.i);
-    top = stack_peek2(&stack);
-    TEST_ASSERT_EQUAL(3, top->value.i);
-
-    free(mem);
-  }
-}
-
 // --------------------------------------------------
 
 // debug version of VM_COMPILE - prints the bytecode
@@ -797,8 +736,8 @@ void test_vm_stack(void)
   vm_interpret(vm, prog)
 
 
-#define VM_TEST_INT(RES) assert_seni_var_i32(stack_pop(&(vm->stack)), VAR_INT, RES)
-#define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_pop(&(vm->stack)), RES)
+#define VM_TEST_INT(RES) assert_seni_var_i32(stack_pop(vm), VAR_INT, RES)
+#define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_pop(vm), RES)
 
 #define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
   program_free(prog);                                   \
@@ -808,7 +747,7 @@ void test_vm_stack(void)
 // COMPILE macros that eval and compare results
 //
 
-#if 0
+#if 1
 #define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 #else
@@ -874,7 +813,7 @@ void timing(void)
 
 void test_vm_callret(void)
 {
-   VM_COMPILE_INT("(define a 42) (define b 52) 10", 10);
+  // VM_COMPILE_INT("(define a 42) (define b 52) 10", 10);
   // VM_COMPILE_INT("(define a 6) (define b 7) (+ a b)", 13);
   // VM_COMPILE_INT("(+ 3 4)", 7);
   // VM_COMPILE_INT("(- (+ 1 2) 3)", 0);
@@ -898,7 +837,8 @@ void test_vm_callret(void)
   // (fn (adder a: 0 b: 0) (+ a b)) (adder a: 3 b: 5)
 
   // VM_COMPILE_INT("(+ a b)", 0);
-  VM_COMPILE_INT("(fn (adder a: 0 b: 0) (+ a b)) (adder a: 3 b: 5)", 0);
+   VM_COMPILE_INT("(fn (adder a: 0 b: 0) (+ a b)) (adder a: 3 b: 5)", 0);
+  // VM_COMPILE_INT("(fn (adder a: 0 b: 0) (+ a b)) (fn (bbb c: 0 d: 0) (+ c d))", 0);
   // VM_COMPILE_INT("(fn (adder a: 0 b: 0) (define c 5) (+ a b c)) (adder a: 3 b: 5)", 0);
 
   // VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
@@ -910,29 +850,28 @@ int main(void)
     
   UNITY_BEGIN();
 
-  // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
+  //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   
-  // RUN_TEST(test_mathutil);
-  // RUN_TEST(test_lang_parser);
-  // RUN_TEST(test_lang_env);
-  // RUN_TEST(test_uv_mapper);
+  RUN_TEST(test_mathutil);
+  RUN_TEST(test_lang_parser);
+  RUN_TEST(test_lang_env);
+  RUN_TEST(test_uv_mapper);
 
-  // RUN_TEST(test_lang_interpret_basic);
-  // RUN_TEST(test_lang_interpret_math);
-  // RUN_TEST(test_lang_interpret_comparison);
-  // RUN_TEST(test_lang_interpret_define);
-  // RUN_TEST(test_lang_interpret_function);
-  // RUN_TEST(test_lang_interpret_if);
-  // RUN_TEST(test_lang_interpret_setq);
-  // RUN_TEST(test_lang_interpret_loop);
-  // RUN_TEST(test_lang_interpret_vector);
-  // RUN_TEST(test_lang_interpret_mem);
+  RUN_TEST(test_lang_interpret_basic);
+  RUN_TEST(test_lang_interpret_math);
+  RUN_TEST(test_lang_interpret_comparison);
+  RUN_TEST(test_lang_interpret_define);
+  RUN_TEST(test_lang_interpret_function);
+  RUN_TEST(test_lang_interpret_if);
+  RUN_TEST(test_lang_interpret_setq);
+  RUN_TEST(test_lang_interpret_loop);
+  RUN_TEST(test_lang_interpret_vector);
+  RUN_TEST(test_lang_interpret_mem);
   
   // // vm
-  // RUN_TEST(test_vm_stack);
-  // RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_bytecode);
 
-  RUN_TEST(test_vm_callret);
+  // RUN_TEST(test_vm_callret);
   
   return UNITY_END();
 }

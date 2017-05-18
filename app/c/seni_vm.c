@@ -5,55 +5,43 @@
 #include <string.h>
 #include <stdlib.h>
 
-// **************************************************
-// Stack
-// **************************************************
-
-void stack_construct(seni_stack *stack, seni_var *data, i32 base)
-{
-  stack->data = data;
-
-  stack->sp = base;
-  stack->base = base;
-}
-
 // returns the next available seni_var that the calling code can write to
-seni_var *stack_push(seni_stack *stack)
+seni_var *stack_push(seni_virtual_machine *vm)
 {
-  seni_var *var = &(stack->data[stack->sp]);
-  stack->sp++;
+  seni_var *var = &(vm->stack[vm->sp]);
+  vm->sp++;
   return var;
 }
 
-seni_var *stack_pop(seni_stack *stack)
+seni_var *stack_pop(seni_virtual_machine *vm)
 {
-  if (stack->sp == stack->base) {
+  if (vm->sp == 0) {
     return NULL;
   }
   
-  stack->sp--;
-  return &(stack->data[stack->sp]);
+  vm->sp--;
+  return &(vm->stack[vm->sp]);
 }
 
-seni_var *stack_peek(seni_stack *stack)
+seni_var *stack_peek(seni_virtual_machine *vm)
 {
-  if (stack->sp == stack->base) {
+  if (vm->sp == 0) {
     return NULL;
   }
-  return &(stack->data[stack->sp - 1]);
+  return &(vm->stack[vm->sp - 1]);
 }
 
-seni_var *stack_peek2(seni_stack *stack)
+seni_var *stack_peek2(seni_virtual_machine *vm)
 {
-  if (stack->sp < stack->base + 2) {
+  if (vm->sp < 2) {
     return NULL;
   }
-  return &(stack->data[stack->sp - 2]);
+  return &(vm->stack[vm->sp - 2]);
 }
 
-void pretty_print_stack(seni_stack *stack, char *msg)
+void pretty_print_vm_stack(seni_virtual_machine *vm, char *msg)
 {
-  printf("%s stack sp: %d\n", msg, stack->sp);
+  printf("%s stack sp: %d\n", msg, vm->sp);
 }
 
 
@@ -144,14 +132,6 @@ char *memory_segment_name(seni_memory_segment_type segment)
     return "GLOBAL";
   case MEM_SEG_CONSTANT:
     return "CONST";
-  case MEM_SEG_THIS:
-    return "THIS";
-  case MEM_SEG_THAT:
-    return "THAT";
-  case MEM_SEG_POINTER:
-    return "PTR";
-  case MEM_SEG_TEMP:
-    return "TEMP";
   case MEM_SEG_VOID:
     return "VOID";
   }
@@ -198,19 +178,26 @@ void program_pretty_print(seni_program *program)
 
 seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size)
 {
+  i32 base_offset = 0;
   seni_virtual_machine *vm = (seni_virtual_machine *)calloc(sizeof(seni_virtual_machine), 1);
 
-  vm->stack_memory = (seni_var *)calloc(sizeof(seni_var), stack_size);
-  vm->stack_memory_size = stack_size;
+  vm->stack = (seni_var *)calloc(sizeof(seni_var), stack_size);
+  vm->stack_size = stack_size;
 
-  i32 base_offset = 0;
-  stack_construct(&vm->global, vm->stack_memory, base_offset);
+  vm->global = base_offset;
   base_offset += MEMORY_GLOBAL_SIZE;
-  stack_construct(&vm->args, vm->stack_memory, base_offset);
+
+  vm->instruction_pointer = 0;
+  vm->frame_pointer = base_offset;
+
+  vm->args = base_offset;
+  //  printf("construct args: %d\n", base_offset);
   base_offset += MEMORY_ARGUMENT_SIZE;
-  stack_construct(&vm->local, vm->stack_memory, base_offset);
+  vm->local = base_offset;
+  //  printf("construct local: %d\n", base_offset);
   base_offset += MEMORY_LOCAL_SIZE;
-  stack_construct(&vm->stack, vm->stack_memory, base_offset);
+  vm->sp = base_offset;
+  //  printf("construct stack: %d\n", base_offset);
 
   vm->heap = (seni_var *)calloc(sizeof(seni_var), heap_size);
   vm->heap_size = heap_size;
@@ -220,9 +207,79 @@ seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size)
 
 void virtual_machine_free(seni_virtual_machine *vm)
 {
-  free(vm->stack_memory);
+  free(vm->stack);
   free(vm->heap);
   free(vm);
+}
+
+/*
+frame structure:
+(growing downwards)
+
+       ...
+----------------------
+IP
+FP
+ARGS
+LOCAL
+
+*/
+i32 frame_push(seni_virtual_machine *vm)
+{
+  seni_var *v;
+
+  // vm->stack.sp is the current stack pointer
+
+  // push ip
+  v = stack_push(vm);
+  v->type = VAR_INT;
+  v->value.i = vm->instruction_pointer;
+  printf("frame_push instruction pointer: %d\n", vm->sp - 1);
+
+  // push fp
+  v = stack_push(vm);
+  v->type = VAR_INT;
+  v->value.i = vm->frame_pointer;
+  printf("frame_push frame pointer: %d\n", vm->sp - 1);
+
+  vm->frame_pointer = vm->sp;
+  i32 base_offset = vm->sp;
+
+  vm->args = base_offset;
+
+  base_offset += MEMORY_ARGUMENT_SIZE;
+  vm->local = base_offset;
+  base_offset += MEMORY_LOCAL_SIZE;
+
+  //vm->stack.base = base_offset;
+  vm->sp = base_offset;
+
+  return -1;
+}
+
+i32 frame_pop(seni_virtual_machine *vm)
+{
+  // what is the state of stack.sp going to be?
+  // should it be the same as stack.base (empty stack) or will there be a value on the stack?
+  seni_var *v;
+  printf("WARNING FIX THIS CODE");
+  i32 base_offset = 42;// vm->stack.base;
+
+  base_offset -= MEMORY_LOCAL_SIZE;
+  vm->local = base_offset;
+  
+  base_offset -= MEMORY_ARGUMENT_SIZE;
+  vm->args = base_offset;
+
+  base_offset--;
+  v = &(vm->stack[base_offset]); // fp
+  vm->frame_pointer = v->value.i;
+
+  base_offset--;
+  v = &(vm->stack[base_offset]); // ip
+  vm->instruction_pointer = v->value.i;
+
+  return -1;
 }
 
 // **************************************************
@@ -288,14 +345,33 @@ i32 get_global_mapping(seni_program *program, i32 wlut_value)
   return -1;
 }
 
-i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value)
+i32 get_argument_mapping(seni_program *program, i32 wlut_value)
 {
+  seni_fn_info *fn_info = program->current_fn_info;
+
+  if (fn_info == NULL) {
+    return -1;
+  }
+
   for (i32 i = 0; i < MEMORY_ARGUMENT_SIZE >> 1; i++) {
     if (fn_info->argument_offsets[i] == -1) {
       return -1;
     }
     if (fn_info->argument_offsets[i] == wlut_value) {
       return i;
+    }
+  }
+  return -1;
+}
+
+i32 get_argument_data_index(seni_fn_info *fn_info, i32 wlut_value)
+{
+  for (i32 i = 0; i < MEMORY_ARGUMENT_SIZE >> 1; i++) {
+    if (fn_info->argument_offsets[i] == -1) {
+      return -1;
+    }
+    if (fn_info->argument_offsets[i] == wlut_value) {
+      return (i * 2) + 1;
     }
   }
   return -1;
@@ -585,6 +661,12 @@ seni_node *compile_fn(seni_node *ast, seni_program *program)
     return NULL;
   }
 
+  program->current_fn_info = fn_info;
+
+  // -------------
+  // the arguments
+  // -------------
+  
   fn_info->arg_address = program->code_size;
   seni_node *args = safe_next(fn_name); // pairs of label/value declarations
   i32 num_args = 0;
@@ -612,18 +694,22 @@ seni_node *compile_fn(seni_node *ast, seni_program *program)
 
   program_emit_opcode_i32(program, RET, 0, 0);
 
+  // --------
+  // the body
+  // --------
+
   fn_info->body_address = program->code_size;
-  
 
   // (+ a b)
   seni_node *body = safe_next(signature);
 
-
   i32 pre_body_opcode_offset = program->opcode_offset;
+  
   while (body != NULL) {
     compile(body, program, false);
     body = safe_next(body);
   }
+  
   i32 post_body_opcode_offset = program->opcode_offset;
   i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
@@ -633,6 +719,8 @@ seni_node *compile_fn(seni_node *ast, seni_program *program)
   }
 
   program_emit_opcode_i32(program, RET, 0, 0);
+
+  program->current_fn_info = NULL;
 
   return NULL;
 }
@@ -646,9 +734,41 @@ void compile_rest(seni_node *ast, seni_program *program)
   }
 }
 
-void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *fn_info)
+void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *fn_info, bool global_scope)
 {
-  program_emit_opcode_i32(program, CALL, fn_info->index, 0);
+  // ast == adder a: 10 b: 20
+  
+  // push the return address onto the stack
+  program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, program->code_size + 2);
+  // prepare the MEM_SEG_ARGUMENT with default values
+  program_emit_opcode_i32(program, CALL, fn_info->arg_address, 0);
+
+  // overwrite the default arguments with the actual arguments given by the fn invocation
+  seni_node *args = safe_next(ast); // pairs of label/value declarations
+  while (args != NULL) {
+    seni_node *label = args;
+    seni_node *value = safe_next(label);
+
+    // find the index within MEM_SEG_ARGUMENT that holds the default value for label
+    i32 data_index = get_argument_data_index(fn_info, label->value.i);
+    if (data_index != -1) {
+      // push value
+      compile(value, program, global_scope);
+      program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, data_index);
+    }
+
+    args = safe_next(value);
+  }
+  
+  // push the return address onto the stack
+  program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, program->code_size + 2);
+  // call the body of the function
+  program_emit_opcode_i32(program, CALL, fn_info->body_address, 0);
+
+  // TODO: return value?
+
+  // possibly have a special 'return value' memory address
+  // if that's filled in then push that value onto the stack
 }
 
 seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
@@ -660,7 +780,7 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
 
     seni_fn_info *fn_info = get_local_fn_info(n, program);
     if (fn_info) {
-      compile_fn_invocation(n, program, fn_info);
+      compile_fn_invocation(n, program, fn_info, global_scope);
     } else {
       compile(n, program, global_scope);
     }
@@ -671,12 +791,15 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
     return safe_next(ast);
   }
   if (ast->type == NODE_NAME) {
-    // TODO: compare the wlut values against known ones for keywords
-    char *name = wlut_lookup(g_wl, ast->value.i);
-
     i32 local_mapping = get_local_mapping(program, ast->value.i);
     if (local_mapping != -1) {
       program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, local_mapping);
+      return safe_next(ast);
+    }
+
+    i32 argument_mapping = get_argument_mapping(program, ast->value.i);
+    if (argument_mapping != -1) {
+      program_emit_opcode_i32(program, PUSH, MEM_SEG_ARGUMENT, argument_mapping);
       return safe_next(ast);
     }
 
@@ -685,6 +808,9 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
       program_emit_opcode_i32(program, PUSH, MEM_SEG_GLOBAL, global_mapping);
       return safe_next(ast);
     }
+
+    // TODO: compare the wlut values against known ones for keywords
+    char *name = wlut_lookup(g_wl, ast->value.i);
 
     if (string_matches(name, "define")) {
       if (global_scope) {
@@ -748,6 +874,7 @@ void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl)
 
   clear_global_mappings(program);
   clear_local_mappings(program);
+  program->current_fn_info = NULL;
   
   register_top_level_fns(ast, program, wl);
   
@@ -773,10 +900,10 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
   register seni_bytecode *bc = NULL;
   register seni_var *v = NULL;
-  register i32 ip = 0;
-  register i32 fp = 0;
-  register i32 sp = vm->stack.sp;
-  register seni_var *stack_d = &(vm->stack.data[sp]);
+  register i32 ip = vm->instruction_pointer;
+  // register i32 fp = 0;
+  register i32 sp = vm->sp;
+  register seni_var *stack_d = &(vm->stack[sp]);
 
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
@@ -792,13 +919,14 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       if (memory_segment_type == MEM_SEG_CONSTANT) {
         v->type = VAR_INT;
         v->value.i = bc->arg1.value.i;
-      } else if (memory_segment_type == MEM_SEG_LOCAL) {
-        // get value from local memory - push onto stack
-
-        src = &(vm->local.data[vm->local.base + bc->arg1.value.i]);
+      } else if (memory_segment_type == MEM_SEG_ARGUMENT) {
+        src = &(vm->stack[vm->args + bc->arg1.value.i]);
         safe_var_move(v, src);
-      } else if (memory_segment_type == MEM_SEG_GLOBAL) {
-        src = &(vm->global.data[vm->global.base + bc->arg1.value.i]);
+      } else if (memory_segment_type == MEM_SEG_LOCAL) {
+        src = &(vm->stack[vm->local + bc->arg1.value.i]);
+        safe_var_move(v, src);
+      }else if (memory_segment_type == MEM_SEG_GLOBAL) {
+        src = &(vm->stack[vm->global + bc->arg1.value.i]);
         safe_var_move(v, src);
       } else {
         SENI_ERROR("PUSH: unknown memory segment type %d", bc->arg0.value.i);
@@ -809,11 +937,14 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       STACK_POP;
 
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
-      if (memory_segment_type == MEM_SEG_LOCAL) {
-        dest = &(vm->local.data[vm->local.base + bc->arg1.value.i]);
+      if (memory_segment_type == MEM_SEG_ARGUMENT) {
+        dest = &(vm->stack[vm->args + bc->arg1.value.i]);
+        safe_var_move(dest, v);
+      } else if (memory_segment_type == MEM_SEG_LOCAL) {
+        dest = &(vm->stack[vm->local + bc->arg1.value.i]);
         safe_var_move(dest, v);
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
-        dest = &(vm->global.data[vm->global.base + bc->arg1.value.i]);
+        dest = &(vm->stack[vm->global + bc->arg1.value.i]);
         safe_var_move(dest, v);
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // do nothing - just pop from the stack and lose the value
@@ -835,6 +966,23 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
         ip--;
         ip += bc->arg0.value.i;
       }
+      break;
+
+    case CALL:
+      // update the seni_stack variables that are currently only being updated in registers
+      vm->sp = sp;
+      vm->instruction_pointer = ip;
+
+      frame_push(vm);
+      break;
+
+    case RET:
+      vm->sp = sp;
+      frame_pop(vm);
+
+      ip = vm->instruction_pointer; // +1 ?
+      sp = vm->sp;
+      stack_d = &(vm->stack[sp]);
       break;
 
     case ADD:
@@ -923,7 +1071,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       break;
       
     case STOP:
-      vm->stack.sp = sp;
+      vm->sp = sp;
       return;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));
