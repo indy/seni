@@ -185,6 +185,13 @@ void program_pretty_print(seni_program *program)
 // Virtual Machine
 // **************************************************
 
+void vm_stack_set_value_i32(seni_virtual_machine *vm, i32 index, i32 value)
+{
+  seni_var *v = &(vm->stack[index]);
+  v->type = VAR_INT;
+  v->value.i = value;
+}
+
 seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size)
 {
   i32 base_offset = 0;
@@ -197,7 +204,9 @@ seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size)
   base_offset += MEMORY_GLOBAL_SIZE;
 
   vm->instruction_pointer = 0;
+  
   vm->frame_pointer = base_offset;
+  vm_stack_set_value_i32(vm, vm->frame_pointer, vm->frame_pointer);
 
   // add some offsets so that the memory after frame_pointer matches a standard format
   base_offset++;                // the caller's frame pointer
@@ -226,6 +235,23 @@ void virtual_machine_free(seni_virtual_machine *vm)
   free(vm);
 }
 
+void pretty_print_virtual_machine(seni_virtual_machine *vm, char* msg)
+{
+  printf("%s\tsp:%d global:%d local:%d args:%d ip:%d fp:%d\n",
+         msg,
+         vm->sp,
+         vm->global,
+         vm->local,
+         vm->args,
+         vm->instruction_pointer,
+         vm->frame_pointer);
+  /*
+  for (i32 i=0;i < vm->sp; i++) {
+    printf("%d:: ", i);
+    pretty_print_seni_var(&(vm->stack[i]), "");
+  }
+  */
+}
 /*
 frame structure:
 
@@ -246,23 +272,22 @@ i32 frame_push(seni_virtual_machine *vm)
   i32 fp = vm->sp;
 
   // push the caller's fp
+  // printf("frame_push onto stack[%d] frame_pointer value: %d\n", vm->sp, vm->frame_pointer);
   v = stack_push(vm);
   v->type = VAR_INT;
   v->value.i = vm->frame_pointer;
-  // printf("frame_push frame pointer: %d\n", vm->frame_pointer);
 
   // sp
+  // printf("frame_push onto stack[%d] sp value: %d\n", vm->sp, sp);
   v = stack_push(vm);
   v->type = VAR_INT;
   v->value.i = sp;
-  // printf("frame_push sp: %d\n", sp);
 
   // push ip
+  // printf("frame_push onto stack[%d] ip value: %d\n", vm->sp, vm->instruction_pointer);
   v = stack_push(vm);
   v->type = VAR_INT;
   v->value.i = vm->instruction_pointer;
-  // printf("frame_push instruction pointer: %d\n", vm->instruction_pointer);
-
 
   vm->frame_pointer = fp;
 
@@ -275,14 +300,24 @@ i32 frame_push(seni_virtual_machine *vm)
   base_offset += MEMORY_LOCAL_SIZE;
 
   vm->sp = base_offset;
-
+  /*
+  printf("frame_push frame_pointer %d\n", vm->frame_pointer);
+  printf("frame_push args %d\n", vm->args);
+  printf("frame_push local %d\n", vm->local);
+  printf("frame_push sp %d\n", vm->sp);
+  */
   return -1;
 }
 
+/*
+  this is going to be called at the end of a function (if keep_args is 0)
+  the top value on the stack needs to be retained and then copied onto the top of the parent stack
+*/
 i32 frame_pop(seni_virtual_machine *vm, i32 keep_args)
 {
   // check value of sp with the expected value if the stack was empty
-
+  // printf("frame_pop pre-frame_pointer %d\n", vm->frame_pointer);
+ 
   i32 callers_fp = vm->stack[vm->frame_pointer].value.i;
   i32 callers_sp = vm->stack[vm->frame_pointer + 1].value.i;
   i32 callers_ip = vm->stack[vm->frame_pointer + 2].value.i;
@@ -290,10 +325,6 @@ i32 frame_pop(seni_virtual_machine *vm, i32 keep_args)
   vm->frame_pointer = callers_fp;
   vm->sp = callers_sp;
   vm->instruction_pointer = callers_ip;
-
-  // printf("frame_pop frame pointer: %d\n", vm->frame_pointer);
-  // printf("frame_pop sp: %d\n", vm->sp);
-  // printf("frame_pop instruction pointer: %d\n", vm->instruction_pointer);
 
   i32 base_offset = vm->frame_pointer + 3;
 
@@ -308,6 +339,14 @@ i32 frame_pop(seni_virtual_machine *vm, i32 keep_args)
   
   vm->local = base_offset;
   base_offset += MEMORY_LOCAL_SIZE;
+
+  /*
+  printf("frame_pop frame_pointer %d\n", vm->frame_pointer);
+  printf("frame_pop args %d\n", vm->args);
+  printf("frame_pop local %d\n", vm->local);
+  printf("frame_pop sp %d\n", vm->sp);
+  printf("frame_pop ip %d\n", vm->instruction_pointer);
+  */
 
   return -1;
 }
@@ -739,9 +778,17 @@ seni_node *compile_fn(seni_node *ast, seni_program *program)
   i32 post_body_opcode_offset = program->opcode_offset;
   i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
-  // pop off any values that the body might leave on the stack
-  for(i32 i = 0;i < opcode_delta; i++) {
-    program_emit_opcode_i32(program, POP, MEM_SEG_VOID, 0);
+  // if there's just one extra value on the stack after the 
+  // function has been called then leave it be.
+  if (opcode_delta > 1) {
+    // TODO: pop off the top of the stack and store it somewhere
+    //       pop off the remaining values from the stack and into the void
+    //       push the previous top value back onto the stack
+
+    // pop off any values that the body might leave on the stack
+    for(i32 i = 0;i < opcode_delta; i++) {
+      program_emit_opcode_i32(program, POP, MEM_SEG_VOID, 0);
+    }
   }
 
   program_emit_opcode_i32(program, RET, 0, 0);
@@ -763,14 +810,9 @@ void compile_rest(seni_node *ast, seni_program *program)
 void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *fn_info, bool global_scope)
 {
   // ast == adder a: 10 b: 20
-  
-  // push the return address onto the stack
-  //program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, program->code_size + 2);
+
   // prepare the MEM_SEG_ARGUMENT with default values
   program_emit_opcode_i32(program, CALL, fn_info->arg_address, 0);
-
-  // remove the return address
-  //program_emit_opcode_i32(program, POP, MEM_SEG_VOID, 0);
 
   // overwrite the default arguments with the actual arguments given by the fn invocation
   seni_node *args = safe_next(ast); // pairs of label/value declarations
@@ -789,15 +831,9 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
     args = safe_next(value);
   }
   
-  // push the return address onto the stack
-  //program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, program->code_size + 2);
   // call the body of the function
   program_emit_opcode_i32(program, CALL, fn_info->body_address, 0);
 
-  // TODO: return value?
-
-  // possibly have a special 'return value' memory address
-  // if that's filled in then push that value onto the stack
 }
 
 seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
@@ -950,6 +986,8 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
 
+  pretty_print_virtual_machine(vm, "start of interpret");
+  
   for (;;) {
     bc = &(program->code[ip++]);
 
@@ -1015,35 +1053,45 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       break;
 
     case CALL:
+      // pretty_print_virtual_machine(vm, "Before CALL");
       // update the seni_stack variables that are currently only being updated in registers
       vm->sp = sp;
       vm->instruction_pointer = ip;
 
       frame_push(vm);
 
+      sp = vm->sp;
+      stack_d = &(vm->stack[sp]);
+
       ip = bc->arg0.value.i;
+
+      // pretty_print_virtual_machine(vm, "After CALL");
       break;
 
     case RET:
+      // pretty_print_virtual_machine(vm, "Before RET");
+      
       vm->sp = sp;
       frame_pop(vm, bc->arg0.value.i);
 
-      ip = vm->instruction_pointer; // +1 ?
+      ip = vm->instruction_pointer;
       sp = vm->sp;
       stack_d = &(vm->stack[sp]);
+
+      // pretty_print_virtual_machine(vm, "After RET");
       break;
 
     case ADD:
       STACK_POP;
       b = v->value.i;
+      
       STACK_POP;
       a = v->value.i;
 
       STACK_PUSH;
       v->value.i = a + b;
 
-      printf("add returned %d + %d = %d\n", a, b, v->value.i);
-      
+      // printf("add returned %d + %d = %d\n", a, b, v->value.i);
       break;
 
     case SUB:
@@ -1123,6 +1171,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       
     case STOP:
       vm->sp = sp;
+      pretty_print_virtual_machine(vm, "stop");
       return;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));

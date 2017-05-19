@@ -1,12 +1,10 @@
-* TODO [0/8]
-  1. [ ] replace string_matches with index_of_keyword
-  2. [ ] reference to wl in program, rather than g_wl
-  3. [ ] evaluate any top-level defines and fns
-  4. [ ] special fn: on-matrix-stack
-  5. [ ] why does setq seg fault when it returns NULL?
-  6. [ ] 'in' paramaeter for loop ?
-  7. [ ] constants like canvas/width
-  8. [ ] how would a stack machine compile first class functions?
+* TODO [0/6]
+  1. [ ] compile_fn: should result in the stack always growing by one
+  2. [ ] special fn: on-matrix-stack
+  3. [ ] why does setq seg fault when it returns NULL?
+  4. [ ] 'in' paramaeter for loop ?
+  5. [ ] constants like canvas/width
+  6. [ ] how would a stack machine compile first class functions?
 
 
 
@@ -394,3 +392,80 @@ invoking a function would involve:
 3. actually calling the function (CALL straight into function body, followed by RET)
 
 fn_info would then have 2 addresses - 1 for setting up args, the other for the body
+
+
+* stack layout
+
+(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)
+0	JUMP	+14
+1	PUSH	CONST	1
+2	POP	ARG	0
+3	PUSH	CONST	9
+4	POP	ARG	1
+5	PUSH	CONST	2
+6	POP	ARG	2
+7	PUSH	CONST	8
+8	POP	ARG	3
+9	RET	KEEP_ARGS
+10	PUSH	ARG	1
+11	PUSH	ARG	3
+12	ADD
+13	RET	
+14	CALL	1
+15	PUSH	CONST	5
+16	POP	ARG	1
+17	PUSH	CONST	3
+18	POP	ARG	3
+19	CALL	10
+20	STOP
+
+
+
+
+
+
+start of interpret	sp:55 global:0 local:45 args:13 ip:0 fp:10
+
+Before CALL	sp:55 global:0 local:45 args:13 ip:0 fp:10
+After CALL	sp:100 global:0 local:90 args:58 ip:15 fp:55
+
+Before RET	sp:100 global:0 local:90 args:58 ip:15 fp:55
+After RET	sp:55 global:0 local:43 args:58 ip:15 fp:8
+
+Before CALL	sp:55 global:0 local:43 args:58 ip:15 fp:8
+After CALL	sp:100 global:0 local:90 args:58 ip:20 fp:55
+
+add returned 5 + 3 = 8
+
+Before RET	sp:100 global:0 local:90 args:58 ip:20 fp:55
+After RET	sp:3 global:0 local:43 args:11 ip:20 fp:8
+
+stop	sp:3 global:0 local:43 args:11 ip:20 fp:8
+
+hi	sp:3 global:0 local:43 args:11 ip:20 fp:8
+
+debug_id:0 id:0 unknown seni_var type : 0 vv
+
+
+  stack size: 1024
+
+  | label  |    index | desc.                     | value |
+  |--------+----------+---------------------------+-------|
+  |        |          | initial                   |       |
+  |--------+----------+---------------------------+-------|
+  | global |   0 -> 9 | MEMORY_GLOBAL_SIZE (10)   |       |
+  | fp     |       10 |                           |       |
+  | sp     |       11 |                           |       |
+  | ip     |       12 |                           |       |
+  | args   | 13 -> 44 | MEMORY_ARGUMENT_SIZE (32) |       |
+  | local  | 45 -> 54 | MEMORY_LOCAL_SIZE (10)    |       |
+  | sp     |       55 |                           |       |
+  |--------+----------+---------------------------+-------|
+  |        |          | frame_push                |       |
+  |--------+----------+---------------------------+-------|
+  | fp     |       55 |                           |    10 |
+  | sp     |       56 |                           |    55 |
+  | ip     |       57 |                           |       |
+  | args   | 58 -> 89 | (32)                      |       |
+  | local  | 90 -> 99 | (10)                      |       |
+  | sp     |      100 |                           |       |

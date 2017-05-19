@@ -105,4 +105,6 @@ void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl);
 
 void vm_interpret(seni_virtual_machine *vm, seni_program *program);
 
+void pretty_print_virtual_machine(seni_virtual_machine *vm, char* msg);
+
 #endif

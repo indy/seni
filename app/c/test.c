@@ -749,11 +749,11 @@ void test_uv_mapper(void)
 //#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
 //#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 
-#if 0
+#if 1
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
-#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 #else
 // COMPILE macros that print out bytecode
@@ -842,7 +842,19 @@ void test_vm_callret(void)
   // (fn (adder a: 0 b: 0) (+ a b)) (adder a: 3 b: 5)
 
   // VM_COMPILE_INT("(+ a b)", 0);
-   VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 0);
+  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+
+  /*
+   {
+     EVM_COMPILE("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 6)");
+
+     pretty_print_virtual_machine(vm, "hi");
+     seni_var *vv = stack_pop(vm);
+     pretty_print_seni_var(vv, "vv");
+     VM_CLEANUP;
+   }
+*/
+   
   // VM_COMPILE_INT("(fn (adder a: 0 b: 0) (+ a b)) (fn (bbb c: 0 d: 0) (+ c d))", 0);
   // VM_COMPILE_INT("(fn (adder a: 0 b: 0) (define c 5) (+ a b c)) (adder a: 3 b: 5)", 0);
 
