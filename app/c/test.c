@@ -746,9 +746,14 @@ void test_uv_mapper(void)
 
 // COMPILE macros that eval and compare results
 //
+//#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
+//#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 
-#if 1
-#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
+#if 0
+// ************************************************
+// TODO: use the above definition of VM_COMPILE_INT
+// ************************************************
+#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 #else
 // COMPILE macros that print out bytecode
@@ -837,7 +842,7 @@ void test_vm_callret(void)
   // (fn (adder a: 0 b: 0) (+ a b)) (adder a: 3 b: 5)
 
   // VM_COMPILE_INT("(+ a b)", 0);
-   VM_COMPILE_INT("(fn (adder a: 0 b: 0) (+ a b)) (adder a: 3 b: 5)", 0);
+   VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 0);
   // VM_COMPILE_INT("(fn (adder a: 0 b: 0) (+ a b)) (fn (bbb c: 0 d: 0) (+ c d))", 0);
   // VM_COMPILE_INT("(fn (adder a: 0 b: 0) (define c 5) (+ a b c)) (adder a: 3 b: 5)", 0);
 
@@ -852,26 +857,26 @@ int main(void)
 
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_lang_parser);
-  RUN_TEST(test_lang_env);
-  RUN_TEST(test_uv_mapper);
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_lang_parser);
+  // RUN_TEST(test_lang_env);
+  // RUN_TEST(test_uv_mapper);
 
-  RUN_TEST(test_lang_interpret_basic);
-  RUN_TEST(test_lang_interpret_math);
-  RUN_TEST(test_lang_interpret_comparison);
-  RUN_TEST(test_lang_interpret_define);
-  RUN_TEST(test_lang_interpret_function);
-  RUN_TEST(test_lang_interpret_if);
-  RUN_TEST(test_lang_interpret_setq);
-  RUN_TEST(test_lang_interpret_loop);
-  RUN_TEST(test_lang_interpret_vector);
-  RUN_TEST(test_lang_interpret_mem);
+  // RUN_TEST(test_lang_interpret_basic);
+  // RUN_TEST(test_lang_interpret_math);
+  // RUN_TEST(test_lang_interpret_comparison);
+  // RUN_TEST(test_lang_interpret_define);
+  // RUN_TEST(test_lang_interpret_function);
+  // RUN_TEST(test_lang_interpret_if);
+  // RUN_TEST(test_lang_interpret_setq);
+  // RUN_TEST(test_lang_interpret_loop);
+  // RUN_TEST(test_lang_interpret_vector);
+  // RUN_TEST(test_lang_interpret_mem);
   
-  // // vm
-  RUN_TEST(test_vm_bytecode);
+  // // // vm
+  // RUN_TEST(test_vm_bytecode);
 
-  // RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_callret);
   
   return UNITY_END();
 }

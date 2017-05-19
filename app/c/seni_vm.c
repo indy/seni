@@ -138,36 +138,45 @@ char *memory_segment_name(seni_memory_segment_type segment)
   return "UNKNOWN";
 }
 
+void bytecode_pretty_print(i32 ip, seni_bytecode *b)
+{
+  if (b->op == PUSH || b->op == POP) {
+    printf("%d\t%s\t%s\t%d\n",
+           ip,
+           opcode_name(b->op),
+           memory_segment_name((seni_memory_segment_type)b->arg0.value.i),
+           b->arg1.value.i);
+  } else if (b->op == JUMP_IF || b->op == JUMP) {
+    printf("%d\t%s\t",
+           ip,
+           opcode_name(b->op));
+    if (b->arg0.value.i > 0) {
+      printf("+%d\n", b->arg0.value.i);
+    } else if (b->arg0.value.i < 0) {
+      printf("%d\n", b->arg0.value.i);
+    } else {
+      printf("WTF!\n");
+    }
+  } else if (b->op == CALL) {
+    printf("%d\t%s\t%d\n",
+           ip,
+           opcode_name(b->op),
+           b->arg0.value.i);
+  } else if (b->op == RET) {
+    printf("%d\t%s\t%s\n",
+           ip,
+           opcode_name(b->op),
+           b->arg0.value.i == 1 ? "KEEP_ARGS" : "");
+  } else {
+    printf("%d\t%s\n", ip, opcode_name(b->op));
+  }  
+}
+
 void program_pretty_print(seni_program *program)
 {
-
   for (i32 i = 0; i < program->code_size; i++) {
     seni_bytecode *b = &(program->code[i]);
-    if (b->op == PUSH || b->op == POP) {
-      printf("%d\t%s\t%s\t%d\n",
-             i,
-             opcode_name(b->op),
-             memory_segment_name((seni_memory_segment_type)b->arg0.value.i),
-             b->arg1.value.i);
-    } else if (b->op == JUMP_IF || b->op == JUMP) {
-      printf("%d\t%s\t",
-             i,
-             opcode_name(b->op));
-      if (b->arg0.value.i > 0) {
-        printf("+%d\n", b->arg0.value.i);
-      } else if (b->arg0.value.i < 0) {
-        printf("%d\n", b->arg0.value.i);
-      } else {
-        printf("WTF!\n");
-      }
-    } else if (b->op == CALL) {
-      printf("%d\t%s\t%d\n",
-             i,
-             opcode_name(b->op),
-             b->arg0.value.i);
-    } else {
-      printf("%d\t%s\n", i, opcode_name(b->op));
-    }
+    bytecode_pretty_print(i, b);
   }
   printf("\n");
 }
@@ -189,6 +198,11 @@ seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size)
 
   vm->instruction_pointer = 0;
   vm->frame_pointer = base_offset;
+
+  // add some offsets so that the memory after frame_pointer matches a standard format
+  base_offset++;                // the caller's frame pointer
+  base_offset++;                // the caller's sp
+  base_offset++;                // the caller's ip
 
   vm->args = base_offset;
   //  printf("construct args: %d\n", base_offset);
@@ -214,70 +228,86 @@ void virtual_machine_free(seni_virtual_machine *vm)
 
 /*
 frame structure:
-(growing downwards)
 
-       ...
-----------------------
-IP
-FP
+------frame------
+fp <<- the caller's frame pointer
+sp <<- the caller's sp before this frame was created
+ip <<- the ip of the next instruction for the caller
 ARGS
-LOCAL
-
+LOCALS
+STACK
 */
+
 i32 frame_push(seni_virtual_machine *vm)
 {
   seni_var *v;
 
-  // vm->stack.sp is the current stack pointer
+  i32 sp = vm->sp;
+  i32 fp = vm->sp;
+
+  // push the caller's fp
+  v = stack_push(vm);
+  v->type = VAR_INT;
+  v->value.i = vm->frame_pointer;
+  // printf("frame_push frame pointer: %d\n", vm->frame_pointer);
+
+  // sp
+  v = stack_push(vm);
+  v->type = VAR_INT;
+  v->value.i = sp;
+  // printf("frame_push sp: %d\n", sp);
 
   // push ip
   v = stack_push(vm);
   v->type = VAR_INT;
   v->value.i = vm->instruction_pointer;
-  printf("frame_push instruction pointer: %d\n", vm->sp - 1);
+  // printf("frame_push instruction pointer: %d\n", vm->instruction_pointer);
 
-  // push fp
-  v = stack_push(vm);
-  v->type = VAR_INT;
-  v->value.i = vm->frame_pointer;
-  printf("frame_push frame pointer: %d\n", vm->sp - 1);
 
-  vm->frame_pointer = vm->sp;
+  vm->frame_pointer = fp;
+
   i32 base_offset = vm->sp;
 
   vm->args = base_offset;
-
   base_offset += MEMORY_ARGUMENT_SIZE;
+  
   vm->local = base_offset;
   base_offset += MEMORY_LOCAL_SIZE;
 
-  //vm->stack.base = base_offset;
   vm->sp = base_offset;
 
   return -1;
 }
 
-i32 frame_pop(seni_virtual_machine *vm)
+i32 frame_pop(seni_virtual_machine *vm, i32 keep_args)
 {
-  // what is the state of stack.sp going to be?
-  // should it be the same as stack.base (empty stack) or will there be a value on the stack?
-  seni_var *v;
-  printf("WARNING FIX THIS CODE");
-  i32 base_offset = 42;// vm->stack.base;
+  // check value of sp with the expected value if the stack was empty
 
-  base_offset -= MEMORY_LOCAL_SIZE;
-  vm->local = base_offset;
+  i32 callers_fp = vm->stack[vm->frame_pointer].value.i;
+  i32 callers_sp = vm->stack[vm->frame_pointer + 1].value.i;
+  i32 callers_ip = vm->stack[vm->frame_pointer + 2].value.i;
   
-  base_offset -= MEMORY_ARGUMENT_SIZE;
-  vm->args = base_offset;
+  vm->frame_pointer = callers_fp;
+  vm->sp = callers_sp;
+  vm->instruction_pointer = callers_ip;
 
-  base_offset--;
-  v = &(vm->stack[base_offset]); // fp
-  vm->frame_pointer = v->value.i;
+  // printf("frame_pop frame pointer: %d\n", vm->frame_pointer);
+  // printf("frame_pop sp: %d\n", vm->sp);
+  // printf("frame_pop instruction pointer: %d\n", vm->instruction_pointer);
 
-  base_offset--;
-  v = &(vm->stack[base_offset]); // ip
-  vm->instruction_pointer = v->value.i;
+  i32 base_offset = vm->frame_pointer + 3;
+
+  if (keep_args != 1) {
+    vm->args = base_offset;
+    // printf("keep_args: overwriting args\n");
+  } else {
+    // printf("keep_args: retaining args\n");
+  }
+  
+  base_offset += MEMORY_ARGUMENT_SIZE;
+  
+  vm->local = base_offset;
+  base_offset += MEMORY_LOCAL_SIZE;
 
   return -1;
 }
@@ -345,26 +375,7 @@ i32 get_global_mapping(seni_program *program, i32 wlut_value)
   return -1;
 }
 
-i32 get_argument_mapping(seni_program *program, i32 wlut_value)
-{
-  seni_fn_info *fn_info = program->current_fn_info;
-
-  if (fn_info == NULL) {
-    return -1;
-  }
-
-  for (i32 i = 0; i < MEMORY_ARGUMENT_SIZE >> 1; i++) {
-    if (fn_info->argument_offsets[i] == -1) {
-      return -1;
-    }
-    if (fn_info->argument_offsets[i] == wlut_value) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-i32 get_argument_data_index(seni_fn_info *fn_info, i32 wlut_value)
+i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value)
 {
   for (i32 i = 0; i < MEMORY_ARGUMENT_SIZE >> 1; i++) {
     if (fn_info->argument_offsets[i] == -1) {
@@ -580,6 +591,20 @@ i32 index_of_keyword(const char *keyword, word_lut *wl)
   return -1;
 }
 
+bool is_seni_node_a_function(seni_node *ast, i32 fn_index)
+{
+  if (ast->type != NODE_LIST) {
+    return false;
+  }      
+
+  seni_node *fn_keyword = ast->value.first_child;
+  if (fn_keyword->type == NODE_NAME && fn_keyword->value.i == fn_index) {
+    return true;
+  }
+
+  return false;
+}
+
 void register_top_level_fns(seni_node *ast, seni_program *program, word_lut *wl)
 {
   i32 i;
@@ -595,6 +620,7 @@ void register_top_level_fns(seni_node *ast, seni_program *program, word_lut *wl)
 
   // register top level fns
   while (ast != NULL) {
+
     if (ast->type != NODE_LIST) {
       ast = safe_next(ast);
       continue;
@@ -692,7 +718,7 @@ seni_node *compile_fn(seni_node *ast, seni_program *program)
 
   fn_info->num_args = num_args;
 
-  program_emit_opcode_i32(program, RET, 0, 0);
+  program_emit_opcode_i32(program, RET, 1, 0); // the 1 in arg0 signifies that vm->args shouldn't be reset
 
   // --------
   // the body
@@ -739,9 +765,12 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
   // ast == adder a: 10 b: 20
   
   // push the return address onto the stack
-  program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, program->code_size + 2);
+  //program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, program->code_size + 2);
   // prepare the MEM_SEG_ARGUMENT with default values
   program_emit_opcode_i32(program, CALL, fn_info->arg_address, 0);
+
+  // remove the return address
+  //program_emit_opcode_i32(program, POP, MEM_SEG_VOID, 0);
 
   // overwrite the default arguments with the actual arguments given by the fn invocation
   seni_node *args = safe_next(ast); // pairs of label/value declarations
@@ -750,7 +779,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
     seni_node *value = safe_next(label);
 
     // find the index within MEM_SEG_ARGUMENT that holds the default value for label
-    i32 data_index = get_argument_data_index(fn_info, label->value.i);
+    i32 data_index = get_argument_mapping(fn_info, label->value.i);
     if (data_index != -1) {
       // push value
       compile(value, program, global_scope);
@@ -761,7 +790,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
   }
   
   // push the return address onto the stack
-  program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, program->code_size + 2);
+  //program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, program->code_size + 2);
   // call the body of the function
   program_emit_opcode_i32(program, CALL, fn_info->body_address, 0);
 
@@ -797,10 +826,13 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
       return safe_next(ast);
     }
 
-    i32 argument_mapping = get_argument_mapping(program, ast->value.i);
-    if (argument_mapping != -1) {
-      program_emit_opcode_i32(program, PUSH, MEM_SEG_ARGUMENT, argument_mapping);
-      return safe_next(ast);
+    // check arguments if we're in a function
+    if (program->current_fn_info) {
+      i32 argument_mapping = get_argument_mapping(program->current_fn_info, ast->value.i);
+      if (argument_mapping != -1) {
+        program_emit_opcode_i32(program, PUSH, MEM_SEG_ARGUMENT, argument_mapping);
+        return safe_next(ast);
+      }
     }
 
     i32 global_mapping = get_global_mapping(program, ast->value.i);
@@ -877,9 +909,19 @@ void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl)
   program->current_fn_info = NULL;
   
   register_top_level_fns(ast, program, wl);
+
+  i32 fn_index = index_of_keyword("fn", wl);
+  seni_bytecode *start = program_emit_opcode_i32(program, JUMP, 0, 0);
+  bool found_start = false;
   
   seni_node *n = ast;
   while (n != NULL) {
+    // ghetto jump to start
+    if (found_start == false && is_seni_node_a_function(n, fn_index) == false) {
+      start->arg0.type = VAR_INT;
+      start->arg0.value.i = program->code_size;
+      found_start = true;
+    }
     n = compile(n, program, true);
   }
 
@@ -910,6 +952,8 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
   for (;;) {
     bc = &(program->code[ip++]);
+
+    // bytecode_pretty_print(ip - 1, bc);
     
     switch(bc->op) {
     case PUSH:
@@ -921,6 +965,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
         v->value.i = bc->arg1.value.i;
       } else if (memory_segment_type == MEM_SEG_ARGUMENT) {
         src = &(vm->stack[vm->args + bc->arg1.value.i]);
+        //printf("%d pushing arg[%d] : value is %d\n", vm->args, bc->arg1.value.i, src->value.i);
         safe_var_move(v, src);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         src = &(vm->stack[vm->local + bc->arg1.value.i]);
@@ -939,6 +984,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->args + bc->arg1.value.i]);
+        //printf("%d popping to arg[%d] %d\n", vm->args, bc->arg1.value.i, v->value.i);
         safe_var_move(dest, v);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         dest = &(vm->stack[vm->local + bc->arg1.value.i]);
@@ -974,11 +1020,13 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       vm->instruction_pointer = ip;
 
       frame_push(vm);
+
+      ip = bc->arg0.value.i;
       break;
 
     case RET:
       vm->sp = sp;
-      frame_pop(vm);
+      frame_pop(vm, bc->arg0.value.i);
 
       ip = vm->instruction_pointer; // +1 ?
       sp = vm->sp;
@@ -993,6 +1041,9 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       STACK_PUSH;
       v->value.i = a + b;
+
+      printf("add returned %d + %d = %d\n", a, b, v->value.i);
+      
       break;
 
     case SUB:
