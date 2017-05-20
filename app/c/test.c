@@ -820,14 +820,26 @@ void test_vm_callret(void)
 {
   // basic invocation
   VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
-  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder)", 17);
-  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)", 18);
-  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29);
+  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))", 12); // calc required for value
+  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)", 13); // non-existent argument
+  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder)", 17); // only default arguments
+  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)", 18); // missing argument
+  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29); // missing argument
+
+  VM_COMPILE_INT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))", 20);
+  VM_COMPILE_INT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
 
   // functions calling functions
   VM_COMPILE_INT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)",       6);
   VM_COMPILE_INT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",      10);
   VM_COMPILE_INT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
+}
+
+void test_vm_temp(void)
+{
+  //VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+  // broken
+  VM_COMPILE_INT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
 }
 
 int main(void)
@@ -857,6 +869,7 @@ int main(void)
   // vm
   RUN_TEST(test_vm_bytecode);
   RUN_TEST(test_vm_callret);
+  // RUN_TEST(test_vm_temp);
   
   return UNITY_END();
 }

@@ -157,16 +157,12 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b)
     } else {
       printf("WTF!\n");
     }
-  } else if (b->op == CALL) {
-    printf("%d\t%s\t%d\n",
+  } else if (b->op == CALL_KF || b->op == CALL) {
+    printf("%d\t%s\t%d\t%d\n",
            ip,
            opcode_name(b->op),
-           b->arg0.value.i);
-  } else if (b->op == RET) {
-    printf("%d\t%s\t%s\n",
-           ip,
-           opcode_name(b->op),
-           b->arg0.value.i == 1 ? "KEEP_ARGS" : "");
+           b->arg0.value.i,
+           b->arg1.value.i);
   } else {
     printf("%d\t%s\n", ip, opcode_name(b->op));
   }  
@@ -203,19 +199,17 @@ seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size)
   vm->global = base_offset;
   base_offset += MEMORY_GLOBAL_SIZE;
 
-  vm->instruction_pointer = 0;
+  vm->ip = 0;
   
-  vm->frame_pointer = base_offset;
-  vm_stack_set_value_i32(vm, vm->frame_pointer, vm->frame_pointer);
+  vm->fp = base_offset;
+  vm_stack_set_value_i32(vm, vm->fp, vm->fp);
 
-  // add some offsets so that the memory after frame_pointer matches a standard format
+  // add some offsets so that the memory after fp matches a standard format
   base_offset++;                // the caller's frame pointer
   base_offset++;                // the caller's sp
   base_offset++;                // the caller's ip
+  base_offset++;                // the num_args of the called function
 
-  vm->args = base_offset;
-  //  printf("construct args: %d\n", base_offset);
-  base_offset += MEMORY_ARGUMENT_SIZE;
   vm->local = base_offset;
   //  printf("construct local: %d\n", base_offset);
   base_offset += MEMORY_LOCAL_SIZE;
@@ -237,121 +231,19 @@ void virtual_machine_free(seni_virtual_machine *vm)
 
 void pretty_print_virtual_machine(seni_virtual_machine *vm, char* msg)
 {
-  printf("%s\tsp:%d global:%d local:%d args:%d ip:%d fp:%d\n",
+  printf("%s\tvm: fp:%d sp:%d ip:%d local:%d\n",
          msg,
+         vm->fp,
          vm->sp,
-         vm->global,
-         vm->local,
-         vm->args,
-         vm->instruction_pointer,
-         vm->frame_pointer);
-  /*
-  for (i32 i=0;i < vm->sp; i++) {
-    printf("%d:: ", i);
-    pretty_print_seni_var(&(vm->stack[i]), "");
-  }
-  */
-}
-/*
-frame structure:
+         vm->ip,
+         vm->local);
 
-------frame------
-fp <<- the caller's frame pointer
-sp <<- the caller's sp before this frame was created
-ip <<- the ip of the next instruction for the caller
-ARGS
-LOCALS
-STACK
-*/
-
-i32 frame_push(seni_virtual_machine *vm)
-{
-  seni_var *v;
-
-  i32 sp = vm->sp;
-  i32 fp = vm->sp;
-
-  // push the caller's fp
-  // printf("frame_push onto stack[%d] frame_pointer value: %d\n", vm->sp, vm->frame_pointer);
-  v = stack_push(vm);
-  v->type = VAR_INT;
-  v->value.i = vm->frame_pointer;
-
-  // sp
-  // printf("frame_push onto stack[%d] sp value: %d\n", vm->sp, sp);
-  v = stack_push(vm);
-  v->type = VAR_INT;
-  v->value.i = sp;
-
-  // push ip
-  // printf("frame_push onto stack[%d] ip value: %d\n", vm->sp, vm->instruction_pointer);
-  v = stack_push(vm);
-  v->type = VAR_INT;
-  v->value.i = vm->instruction_pointer;
-
-  vm->frame_pointer = fp;
-
-  i32 base_offset = vm->sp;
-
-  vm->args = base_offset;
-  base_offset += MEMORY_ARGUMENT_SIZE;
-  
-  vm->local = base_offset;
-  base_offset += MEMORY_LOCAL_SIZE;
-
-  vm->sp = base_offset;
-  /*
-  printf("frame_push frame_pointer %d\n", vm->frame_pointer);
-  printf("frame_push args %d\n", vm->args);
-  printf("frame_push local %d\n", vm->local);
-  printf("frame_push sp %d\n", vm->sp);
-  */
-  return -1;
-}
-
-/*
-  this is going to be called at the end of a function (if keep_args is 0)
-  the top value on the stack needs to be retained and then copied onto the top of the parent stack
-*/
-i32 frame_pop(seni_virtual_machine *vm, i32 setting_up_args)
-{
-  seni_var *v = NULL;
-  
-  if(setting_up_args != 1) {
-    // grab whatever was the last value on the soon to be popped frame
-    v = &(vm->stack[vm->sp - 1]);
-  }
- 
-  i32 callers_fp = vm->stack[vm->frame_pointer].value.i;
-  i32 callers_sp = vm->stack[vm->frame_pointer + 1].value.i;
-  i32 callers_ip = vm->stack[vm->frame_pointer + 2].value.i;
-  
-  vm->frame_pointer = callers_fp;
-  vm->sp = callers_sp;
-  vm->instruction_pointer = callers_ip;
-
-  i32 base_offset = vm->frame_pointer + 3;
-
-  if (setting_up_args != 1) {
-    vm->args = base_offset;
-    // printf("keep_args: overwriting args\n");
-    seni_var *ret_value = stack_push(vm);
-    safe_var_move(ret_value, v);
-  }
-  
-  base_offset += MEMORY_ARGUMENT_SIZE;
-  
-  vm->local = base_offset;
-
-  /*
-  printf("frame_pop frame_pointer %d\n", vm->frame_pointer);
-  printf("frame_pop args %d\n", vm->args);
-  printf("frame_pop local %d\n", vm->local);
-  printf("frame_pop sp %d\n", vm->sp);
-  printf("frame_pop ip %d\n", vm->instruction_pointer);
-  */
-
-  return -1;
+  seni_var *fp = &(vm->stack[vm->fp]);
+  i32 onStackFP = (fp + 0)->value.i;
+  i32 onStackSP = (fp + 1)->value.i;
+  i32 onStackIP = (fp + 2)->value.i;
+  i32 onStackNumArgs = (fp + 3)->value.i;
+  printf("\ton stack: fp:%d sp:%d ip:%d numArgs:%d\n", onStackFP, onStackSP, onStackIP, onStackNumArgs);
 }
 
 // **************************************************
@@ -419,7 +311,7 @@ i32 get_global_mapping(seni_program *program, i32 wlut_value)
 
 i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value)
 {
-  for (i32 i = 0; i < MEMORY_ARGUMENT_SIZE >> 1; i++) {
+  for (i32 i = 0; i < MAX_NUM_ARGUMENTS; i++) {
     if (fn_info->argument_offsets[i] == -1) {
       return -1;
     }
@@ -699,7 +591,7 @@ void register_top_level_fns(seni_node *ast, seni_program *program, word_lut *wl)
 
     // these will be filled in by compile_fn:
     fn_info->num_args = 0;
-    for (i = 0; i < MEMORY_ARGUMENT_SIZE >> 1; i++) {
+    for (i = 0; i < MAX_NUM_ARGUMENTS; i++) {
       fn_info->argument_offsets[i] = -1;
     }
 
@@ -760,7 +652,7 @@ seni_node *compile_fn(seni_node *ast, seni_program *program)
 
   fn_info->num_args = num_args;
 
-  program_emit_opcode_i32(program, RET, 1, 0); // the 1 in arg0 signifies that vm->args shouldn't be reset
+  program_emit_opcode_i32(program, RET_KF, 0, 0);
 
   // --------
   // the body
@@ -800,7 +692,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
   // ast == adder a: 10 b: 20
 
   // prepare the MEM_SEG_ARGUMENT with default values
-  program_emit_opcode_i32(program, CALL, fn_info->arg_address, 0);
+  program_emit_opcode_i32(program, CALL, fn_info->arg_address, fn_info->num_args);
 
   // overwrite the default arguments with the actual arguments given by the fn invocation
   seni_node *args = safe_next(ast); // pairs of label/value declarations
@@ -820,7 +712,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
   }
   
   // call the body of the function
-  program_emit_opcode_i32(program, CALL, fn_info->body_address, 0);
+  program_emit_opcode_i32(program, CALL_KF, fn_info->body_address, fn_info->num_args);
 
 }
 
@@ -966,10 +858,12 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
   register seni_bytecode *bc = NULL;
   register seni_var *v = NULL;
-  register i32 ip = vm->instruction_pointer;
-  // register i32 fp = 0;
+  register i32 ip = vm->ip;
   register i32 sp = vm->sp;
   register seni_var *stack_d = &(vm->stack[sp]);
+
+  i32 old_sp, new_fp, base_offset;
+  i32 num_args;
 
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
@@ -986,9 +880,10 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
         v->type = VAR_INT;
         v->value.i = bc->arg1.value.i;
       } else if (memory_segment_type == MEM_SEG_ARGUMENT) {
-        src = &(vm->stack[vm->args + bc->arg1.value.i]);
-        //printf("%d pushing arg[%d] : value is %d\n", vm->args, bc->arg1.value.i, src->value.i);
+        a = vm->fp - bc->arg1.value.i - 1;
+        src = &(vm->stack[a]);
         safe_var_move(v, src);
+        // printf("pushing ARG value %d onto the stack from %d\n", v->value.i, a);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         src = &(vm->stack[vm->local + bc->arg1.value.i]);
         safe_var_move(v, src);
@@ -1005,9 +900,10 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
-        dest = &(vm->stack[vm->args + bc->arg1.value.i]);
-        //printf("%d popping to arg[%d] %d\n", vm->args, bc->arg1.value.i, v->value.i);
+        a = vm->fp - bc->arg1.value.i - 1;
+        dest = &(vm->stack[a]);
         safe_var_move(dest, v);
+        // printf("popping ARG value %d from the stack onto %d\n", v->value.i, a);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         dest = &(vm->stack[vm->local + bc->arg1.value.i]);
         safe_var_move(dest, v);
@@ -1037,24 +933,97 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       break;
 
     case CALL:
+      num_args = bc->arg1.value.i;
+      
       // update the seni_stack variables that are currently only being updated in registers
-      vm->sp = sp;
-      vm->instruction_pointer = ip;
+      vm->ip = ip;
 
-      frame_push(vm);
+      // make room for the labelled arguments
+      for (i32 i = 0; i < num_args * 2; i++) {
+        STACK_PUSH;
+      }
+      
+      old_sp = sp;      
+      new_fp = sp;
+
+      // push the caller's fp
+      STACK_PUSH;
+      v->type = VAR_INT;
+      v->value.i = vm->fp;
+
+      // sp
+      STACK_PUSH;
+      v->type = VAR_INT;
+      v->value.i = old_sp;
+
+      // push ip
+      STACK_PUSH;
+      v->type = VAR_INT;
+      v->value.i = ip;
+
+      // push num_args
+      STACK_PUSH;
+      v->type = VAR_INT;
+      v->value.i = num_args;
+
+      vm->fp = new_fp;
+
+      base_offset = sp;
+  
+      vm->local = base_offset;
+      base_offset += MEMORY_LOCAL_SIZE;
+
+      vm->sp = base_offset;
 
       sp = vm->sp;
       stack_d = &(vm->stack[sp]);
 
       ip = bc->arg0.value.i;
-
+      vm->ip = ip;
       break;
 
-    case RET:
-      vm->sp = sp;
-      frame_pop(vm, bc->arg0.value.i);
+    case CALL_KF:
+      // like CALL but keep the existing frame and just update the ip and return ip
+      
+      // set the correct return ip
+      vm->stack[vm->fp + 2].value.i = ip;
 
-      ip = vm->instruction_pointer;
+      // leap to a location
+      ip = bc->arg0.value.i;
+      vm->ip = ip;
+      break;
+
+    case RET_KF:
+      // leap to the return ip
+      vm->ip = vm->stack[vm->fp + 2].value.i;
+      ip = vm->ip;
+      break;
+      
+    case RET:
+      // pop the frame
+      //
+     
+      vm->sp = sp;
+
+      // grab whatever was the last value on the soon to be popped frame
+      v = &(vm->stack[vm->sp - 1]);
+
+      num_args = vm->stack[vm->fp + 3].value.i;
+      vm->ip = vm->stack[vm->fp + 2].value.i;
+      vm->sp = vm->stack[vm->fp + 1].value.i;
+      vm->fp = vm->stack[vm->fp].value.i;
+
+      base_offset = vm->fp + 4;
+
+      // remove the named parameters from the stack
+      vm->sp -= num_args * 2;
+      // copy the previous frame's top stack value onto the current frame's stack
+      seni_var *ret_value = stack_push(vm);
+      safe_var_move(ret_value, v);
+  
+      vm->local = base_offset;
+
+      ip = vm->ip;
       sp = vm->sp;
       stack_d = &(vm->stack[sp]);
       break;

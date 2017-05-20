@@ -24,10 +24,10 @@ typedef enum {
 // TODO: put global on the heap rather than at the bottom of the stack
 #define MEMORY_GLOBAL_SIZE 10
 #define MEMORY_LOCAL_SIZE 10
-// ARGUMENT stores pairs of label/value, so twice as large
-#define MEMORY_ARGUMENT_SIZE 32
 
 #define MAX_TOP_LEVEL_FUNCTIONS 32
+
+#define MAX_NUM_ARGUMENTS 16
 
 // codes
 //
@@ -51,7 +51,7 @@ typedef struct {
   i32 arg_address;
   i32 body_address;
   i32 num_args;
-  i32 argument_offsets[MEMORY_ARGUMENT_SIZE >> 1];
+  i32 argument_offsets[MAX_NUM_ARGUMENTS];
 } seni_fn_info;
 
 typedef struct {
@@ -83,13 +83,12 @@ typedef struct {
   seni_var *stack;
   i32 stack_size;
 
-  i32 sp;
-  i32 global;
-  i32 local;
-  i32 args;
+  i32 fp;                       // frame pointer
+  i32 sp;                       // stack pointer
+  i32 ip;                       // instruction pointer
 
-  i32 instruction_pointer;
-  i32 frame_pointer;            // an index into stack
+  i32 global;                   // single segment of memory at top of stack
+  i32 local;                    // per-frame segment of memory for local variables
 } seni_virtual_machine;
 
 seni_var *stack_push(seni_virtual_machine *vm);

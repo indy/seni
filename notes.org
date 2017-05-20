@@ -1,12 +1,19 @@
-* TODO [0/6]
-  1. [ ] compile_fn: should result in the stack always growing by one
-  2. [ ] special fn: on-matrix-stack
-  3. [ ] why does setq seg fault when it returns NULL?
-  4. [ ] 'in' paramaeter for loop ?
-  5. [ ] constants like canvas/width
-  6. [ ] how would a stack machine compile first class functions?
+* TODO [4/11]
+  1. [X] add num_args to frame
+  2. [X] CALL_A should emit number of args
+  3. [X] push default args onto stack in reverse order - changes meaning of POP ARG n
+  4. [X] place the invocation parameters in the correct stack position
+  5. [ ] check that frame's SP can be calculated from fp and num_args
+  6. [ ] compile_fn: should result in the stack always growing by one
+  7. [ ] special fn: on-matrix-stack
+  8. [ ] why does setq seg fault when it returns NULL?
+  9. [ ] 'in' paramaeter for loop ?
+  10. [ ] constants like canvas/width
+  11. [ ] how would a stack machine compile first class functions?
 
 
+
+ 
 
 after parsing it's safe to treat seni_nodes as immutable
 seni_vars that have been eval'd should get their values asap since they could just by aliases of g_reg
@@ -380,10 +387,6 @@ then:
 index = get_argument_mapping(fn_info, 67); // returns 1
 index_into_arguments_memory = (index * 2) + 1
 
-
-
-
---------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 invoking a function would involve:
@@ -393,79 +396,49 @@ invoking a function would involve:
 
 fn_info would then have 2 addresses - 1 for setting up args, the other for the body
 
-
-* stack layout
-
-(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)
-0	JUMP	+14
-1	PUSH	CONST	1
-2	POP	ARG	0
-3	PUSH	CONST	9
-4	POP	ARG	1
-5	PUSH	CONST	2
-6	POP	ARG	2
-7	PUSH	CONST	8
-8	POP	ARG	3
-9	RET	KEEP_ARGS
-10	PUSH	ARG	1
-11	PUSH	ARG	3
-12	ADD
-13	RET	
-14	CALL	1
-15	PUSH	CONST	5
-16	POP	ARG	1
-17	PUSH	CONST	3
-18	POP	ARG	3
-19	CALL	10
-20	STOP
+* bytecode sequence when calling functions
 
 
+  (fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)
+
+  0       JUMP    +14
+  1       PUSH    CONST   1
+  2       POP     ARG     0
+  3       PUSH    CONST   9
+  4       POP     ARG     1
+  5       PUSH    CONST   2
+  6       POP     ARG     2
+  7       PUSH    CONST   8
+  8       POP     ARG     3
+  9       RET_KF
+  10      PUSH    ARG     1
+  11      PUSH    ARG     3
+  12      ADD
+  13      RET
+  14      CALL    1       2
+  15      PUSH    CONST   5
+  16      POP     ARG     1
+  17      PUSH    CONST   3
+  18      POP     ARG     3
+  19      CALL_KF 10      2
+  20      STOP
 
 
+  calling a function involves the following sequence being executed:
+  (KF == Keep Frame)
+
+  CALL      Pushes a frame onto the stack and jumps to the given ip
+  RET_KF    Returns to the ip stored in the frame pointer on the stack without popping the frame
+  CALL_KF   Jumps to the given ip without pushing a new frame (it does modify the ip on the frame 
+            so that execution will return to the correct location at the next RET)
+  RET       Returns to the ip stored in the frame pointer on the stack and pops the current frame
 
 
-start of interpret	sp:55 global:0 local:45 args:13 ip:0 fp:10
-
-Before CALL	sp:55 global:0 local:45 args:13 ip:0 fp:10
-After CALL	sp:100 global:0 local:90 args:58 ip:15 fp:55
-
-Before RET	sp:100 global:0 local:90 args:58 ip:15 fp:55
-After RET	sp:55 global:0 local:43 args:58 ip:15 fp:8
-
-Before CALL	sp:55 global:0 local:43 args:58 ip:15 fp:8
-After CALL	sp:100 global:0 local:90 args:58 ip:20 fp:55
-
-add returned 5 + 3 = 8
-
-Before RET	sp:100 global:0 local:90 args:58 ip:20 fp:55
-After RET	sp:3 global:0 local:43 args:11 ip:20 fp:8
-
-stop	sp:3 global:0 local:43 args:11 ip:20 fp:8
-
-hi	sp:3 global:0 local:43 args:11 ip:20 fp:8
-
-debug_id:0 id:0 unknown seni_var type : 0 vv
-
-
-  stack size: 1024
-
-  | label  |    index | desc.                     | value |
-  |--------+----------+---------------------------+-------|
-  |        |          | initial                   |       |
-  |--------+----------+---------------------------+-------|
-  | global |   0 -> 9 | MEMORY_GLOBAL_SIZE (10)   |       |
-  | fp     |       10 |                           |       |
-  | sp     |       11 |                           |       |
-  | ip     |       12 |                           |       |
-  | args   | 13 -> 44 | MEMORY_ARGUMENT_SIZE (32) |       |
-  | local  | 45 -> 54 | MEMORY_LOCAL_SIZE (10)    |       |
-  | sp     |       55 |                           |       |
-  |--------+----------+---------------------------+-------|
-  |        |          | frame_push                |       |
-  |--------+----------+---------------------------+-------|
-  | fp     |       55 |                           |    10 |
-  | sp     |       56 |                           |    55 |
-  | ip     |       57 |                           |       |
-  | args   | 58 -> 89 | (32)                      |       |
-  | local  | 90 -> 99 | (10)                      |       |
-  | sp     |      100 |                           |       |
+  This way, invoking a function results in the following:
+  1. There are some empty pushes onto the stack in order to make room for all the named arguments
+  2. A frame is pushed onto the stack
+  3. The empty pushes from (1) are filled in with default values
+  4. RET_KF moves the ip back to the calling code which can then override the default values
+  5. CALL_KF moves the ip into the body of the called function, retaining the current frame
+  6. The body is executed
+  7. RET pops the frame and copies the last value from the function onto the current stack

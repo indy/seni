@@ -19,11 +19,14 @@ OPCODE(JUMP, 0)
 // Pop and if not truthy then jump the instruction pointer [arg] forward.
 OPCODE(JUMP_IF, -1)
 
-// CALL is 1 because it results in a RET call and that will push
-// the top value on the last frame onto the current frame
+OPCODE(CALL, 0)
+// KF == KEEP FRAME
+// CALL_KF is 1 because it results in a RET call and that will
+// push the top value of the last frame onto the current frame
 //
-OPCODE(CALL, 1)
+OPCODE(CALL_KF, 1)
 OPCODE(RET, 0)
+OPCODE(RET_KF, 0)
 
 OPCODE (NOP, 0)
 OPCODE (STOP, 0)
