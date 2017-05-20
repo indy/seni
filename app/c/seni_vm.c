@@ -313,10 +313,14 @@ i32 frame_push(seni_virtual_machine *vm)
   this is going to be called at the end of a function (if keep_args is 0)
   the top value on the stack needs to be retained and then copied onto the top of the parent stack
 */
-i32 frame_pop(seni_virtual_machine *vm, i32 keep_args)
+i32 frame_pop(seni_virtual_machine *vm, i32 setting_up_args)
 {
-  // check value of sp with the expected value if the stack was empty
-  // printf("frame_pop pre-frame_pointer %d\n", vm->frame_pointer);
+  seni_var *v = NULL;
+  
+  if(setting_up_args != 1) {
+    // grab whatever was the last value on the soon to be popped frame
+    v = &(vm->stack[vm->sp - 1]);
+  }
  
   i32 callers_fp = vm->stack[vm->frame_pointer].value.i;
   i32 callers_sp = vm->stack[vm->frame_pointer + 1].value.i;
@@ -328,17 +332,16 @@ i32 frame_pop(seni_virtual_machine *vm, i32 keep_args)
 
   i32 base_offset = vm->frame_pointer + 3;
 
-  if (keep_args != 1) {
+  if (setting_up_args != 1) {
     vm->args = base_offset;
     // printf("keep_args: overwriting args\n");
-  } else {
-    // printf("keep_args: retaining args\n");
+    seni_var *ret_value = stack_push(vm);
+    safe_var_move(ret_value, v);
   }
   
   base_offset += MEMORY_ARGUMENT_SIZE;
   
   vm->local = base_offset;
-  base_offset += MEMORY_LOCAL_SIZE;
 
   /*
   printf("frame_pop frame_pointer %d\n", vm->frame_pointer);
@@ -768,28 +771,13 @@ seni_node *compile_fn(seni_node *ast, seni_program *program)
   // (+ a b)
   seni_node *body = safe_next(signature);
 
-  i32 pre_body_opcode_offset = program->opcode_offset;
-  
   while (body != NULL) {
     compile(body, program, false);
     body = safe_next(body);
   }
-  
-  i32 post_body_opcode_offset = program->opcode_offset;
-  i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
-  // if there's just one extra value on the stack after the 
-  // function has been called then leave it be.
-  if (opcode_delta > 1) {
-    // TODO: pop off the top of the stack and store it somewhere
-    //       pop off the remaining values from the stack and into the void
-    //       push the previous top value back onto the stack
-
-    // pop off any values that the body might leave on the stack
-    for(i32 i = 0;i < opcode_delta; i++) {
-      program_emit_opcode_i32(program, POP, MEM_SEG_VOID, 0);
-    }
-  }
+  // Don't need any POP, MEM_SEG_VOID instructions as the RET will
+  // pop the frame and blow the stack
 
   program_emit_opcode_i32(program, RET, 0, 0);
 
@@ -986,12 +974,8 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
 
-  pretty_print_virtual_machine(vm, "start of interpret");
-  
   for (;;) {
     bc = &(program->code[ip++]);
-
-    // bytecode_pretty_print(ip - 1, bc);
     
     switch(bc->op) {
     case PUSH:
@@ -1053,7 +1037,6 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       break;
 
     case CALL:
-      // pretty_print_virtual_machine(vm, "Before CALL");
       // update the seni_stack variables that are currently only being updated in registers
       vm->sp = sp;
       vm->instruction_pointer = ip;
@@ -1065,20 +1048,15 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       ip = bc->arg0.value.i;
 
-      // pretty_print_virtual_machine(vm, "After CALL");
       break;
 
     case RET:
-      // pretty_print_virtual_machine(vm, "Before RET");
-      
       vm->sp = sp;
       frame_pop(vm, bc->arg0.value.i);
 
       ip = vm->instruction_pointer;
       sp = vm->sp;
       stack_d = &(vm->stack[sp]);
-
-      // pretty_print_virtual_machine(vm, "After RET");
       break;
 
     case ADD:
@@ -1090,8 +1068,6 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       STACK_PUSH;
       v->value.i = a + b;
-
-      // printf("add returned %d + %d = %d\n", a, b, v->value.i);
       break;
 
     case SUB:
@@ -1171,7 +1147,6 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       
     case STOP:
       vm->sp = sp;
-      pretty_print_virtual_machine(vm, "stop");
       return;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));

@@ -763,6 +763,32 @@ void test_uv_mapper(void)
 #endif
 // --------------------------------------------------
 
+void timing(void)
+{
+  clock_t start, diff;
+  int msec;
+
+  {
+    EVAL_DECL;
+    start = clock();
+    // EVAL_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+    EVAL_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
+    diff = clock() - start;
+    msec = diff * 1000 / CLOCKS_PER_SEC;
+    printf("Eval Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
+  }
+
+  {
+    start = clock();
+    //VM_COMPILE_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+
+    VM_COMPILE_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
+    diff = clock() - start;
+    msec = diff * 1000 / CLOCKS_PER_SEC;
+    printf("VM Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
+  }
+}
+
 void test_vm_bytecode(void)
 {
   VM_COMPILE_INT("(define a 42) (define b 52) 10", 10);
@@ -790,75 +816,18 @@ void test_vm_bytecode(void)
   VM_COMPILE_INT("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
 }
 
-void timing(void)
-{
-  clock_t start, diff;
-  int msec;
-
-  {
-    EVAL_DECL;
-    start = clock();
-    // EVAL_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
-    EVAL_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
-    diff = clock() - start;
-    msec = diff * 1000 / CLOCKS_PER_SEC;
-    printf("Eval Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
-  }
-
-  {
-    start = clock();
-    //VM_COMPILE_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
-
-    VM_COMPILE_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
-    diff = clock() - start;
-    msec = diff * 1000 / CLOCKS_PER_SEC;
-    printf("VM Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
-  }
-}
-
 void test_vm_callret(void)
 {
-  // VM_COMPILE_INT("(define a 42) (define b 52) 10", 10);
-  // VM_COMPILE_INT("(define a 6) (define b 7) (+ a b)", 13);
-  // VM_COMPILE_INT("(+ 3 4)", 7);
-  // VM_COMPILE_INT("(- (+ 1 2) 3)", 0);
-  // VM_COMPILE_BOOL("(> 5 10)", false);
-  // VM_COMPILE_BOOL("(< 5 10)", true);
-  // VM_COMPILE_BOOL("(= 2 2)", true);
-  // VM_COMPILE_BOOL("(= 1 2)", false);
-  // VM_COMPILE_BOOL("(and (< 1 2) (< 3 4))", true);
-  // VM_COMPILE_BOOL("(and (< 1 2) (> 3 4))", false);
-  // VM_COMPILE_BOOL("(or (< 1 2) (> 3 4))", true);
-  // VM_COMPILE_BOOL("(not (> 1 10))", true);
-  // VM_COMPILE_BOOL("(and (or (< 1 2) (> 3 4)) (not (> 1 10)))", true);
-
-  // VM_COMPILE_INT("(if (> 400 200) 66)", 66);
-  // VM_COMPILE_INT("(if (> 200 100) 12 24)", 12);
-  // VM_COMPILE_INT("(if (< 200 100) 12 24)", 24);
-  // VM_COMPILE_BOOL("(if (> 400 200) (= 50 50))", true);
-  // VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
-  // VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
-
-  // (fn (adder a: 0 b: 0) (+ a b)) (adder a: 3 b: 5)
-
-  // VM_COMPILE_INT("(+ a b)", 0);
+  // basic invocation
   VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder)", 17);
+  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)", 18);
+  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29);
 
-  /*
-   {
-     EVM_COMPILE("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 6)");
-
-     pretty_print_virtual_machine(vm, "hi");
-     seni_var *vv = stack_pop(vm);
-     pretty_print_seni_var(vv, "vv");
-     VM_CLEANUP;
-   }
-*/
-   
-  // VM_COMPILE_INT("(fn (adder a: 0 b: 0) (+ a b)) (fn (bbb c: 0 d: 0) (+ c d))", 0);
-  // VM_COMPILE_INT("(fn (adder a: 0 b: 0) (define c 5) (+ a b c)) (adder a: 3 b: 5)", 0);
-
-  // VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
+  // functions calling functions
+  VM_COMPILE_INT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)",       6);
+  VM_COMPILE_INT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",      10);
+  VM_COMPILE_INT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
 }
 
 int main(void)
@@ -869,25 +838,24 @@ int main(void)
 
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   
-  // RUN_TEST(test_mathutil);
-  // RUN_TEST(test_lang_parser);
-  // RUN_TEST(test_lang_env);
-  // RUN_TEST(test_uv_mapper);
+  RUN_TEST(test_mathutil);
+  RUN_TEST(test_lang_parser);
+  RUN_TEST(test_lang_env);
+  RUN_TEST(test_uv_mapper);
 
-  // RUN_TEST(test_lang_interpret_basic);
-  // RUN_TEST(test_lang_interpret_math);
-  // RUN_TEST(test_lang_interpret_comparison);
-  // RUN_TEST(test_lang_interpret_define);
-  // RUN_TEST(test_lang_interpret_function);
-  // RUN_TEST(test_lang_interpret_if);
-  // RUN_TEST(test_lang_interpret_setq);
-  // RUN_TEST(test_lang_interpret_loop);
-  // RUN_TEST(test_lang_interpret_vector);
-  // RUN_TEST(test_lang_interpret_mem);
+  RUN_TEST(test_lang_interpret_basic);
+  RUN_TEST(test_lang_interpret_math);
+  RUN_TEST(test_lang_interpret_comparison);
+  RUN_TEST(test_lang_interpret_define);
+  RUN_TEST(test_lang_interpret_function);
+  RUN_TEST(test_lang_interpret_if);
+  RUN_TEST(test_lang_interpret_setq);
+  RUN_TEST(test_lang_interpret_loop);
+  RUN_TEST(test_lang_interpret_vector);
+  RUN_TEST(test_lang_interpret_mem);
   
-  // // // vm
-  // RUN_TEST(test_vm_bytecode);
-
+  // vm
+  RUN_TEST(test_vm_bytecode);
   RUN_TEST(test_vm_callret);
   
   return UNITY_END();
