@@ -157,7 +157,7 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b)
     } else {
       printf("WTF!\n");
     }
-  } else if (b->op == CALL_KF || b->op == CALL) {
+  } else if (b->op == CALL_0 || b->op == CALL) {
     printf("%d\t%s\t%d\t%d\n",
            ip,
            opcode_name(b->op),
@@ -652,7 +652,7 @@ seni_node *compile_fn(seni_node *ast, seni_program *program)
 
   fn_info->num_args = num_args;
 
-  program_emit_opcode_i32(program, RET_KF, 0, 0);
+  program_emit_opcode_i32(program, RET_0, 0, 0);
 
   // --------
   // the body
@@ -712,7 +712,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
   }
   
   // call the body of the function
-  program_emit_opcode_i32(program, CALL_KF, fn_info->body_address, fn_info->num_args);
+  program_emit_opcode_i32(program, CALL_0, fn_info->body_address, fn_info->num_args);
 
 }
 
@@ -982,7 +982,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       vm->ip = ip;
       break;
 
-    case CALL_KF:
+    case CALL_0:
       // like CALL but keep the existing frame and just update the ip and return ip
       
       // set the correct return ip
@@ -993,7 +993,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       vm->ip = ip;
       break;
 
-    case RET_KF:
+    case RET_0:
       // leap to the return ip
       vm->ip = vm->stack[vm->fp + 2].value.i;
       ip = vm->ip;

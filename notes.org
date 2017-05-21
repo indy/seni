@@ -1,19 +1,11 @@
-* TODO [4/11]
-  1. [X] add num_args to frame
-  2. [X] CALL_A should emit number of args
-  3. [X] push default args onto stack in reverse order - changes meaning of POP ARG n
-  4. [X] place the invocation parameters in the correct stack position
-  5. [ ] check that frame's SP can be calculated from fp and num_args
-  6. [ ] compile_fn: should result in the stack always growing by one
-  7. [ ] special fn: on-matrix-stack
-  8. [ ] why does setq seg fault when it returns NULL?
-  9. [ ] 'in' paramaeter for loop ?
-  10. [ ] constants like canvas/width
-  11. [ ] how would a stack machine compile first class functions?
-
-
-
- 
+* TODO [0/7]
+  1. [ ] check that frame's SP can be calculated from fp and num_args
+  2. [ ] compile_fn: should result in the stack always growing by one
+  3. [ ] special fn: on-matrix-stack
+  4. [ ] why does setq seg fault when it returns NULL?
+  5. [ ] 'in' paramaeter for loop ?
+  6. [ ] constants like canvas/width
+  7. [ ] how would a stack machine compile first class functions?
 
 after parsing it's safe to treat seni_nodes as immutable
 seni_vars that have been eval'd should get their values asap since they could just by aliases of g_reg
@@ -410,7 +402,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   6       POP     ARG     2
   7       PUSH    CONST   8
   8       POP     ARG     3
-  9       RET_KF
+  9       RET_0
   10      PUSH    ARG     1
   11      PUSH    ARG     3
   12      ADD
@@ -420,7 +412,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   16      POP     ARG     1
   17      PUSH    CONST   3
   18      POP     ARG     3
-  19      CALL_KF 10      2
+  19      CALL_0 10      2
   20      STOP
 
 
@@ -428,8 +420,8 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   (KF == Keep Frame)
 
   CALL      Pushes a frame onto the stack and jumps to the given ip
-  RET_KF    Returns to the ip stored in the frame pointer on the stack without popping the frame
-  CALL_KF   Jumps to the given ip without pushing a new frame (it does modify the ip on the frame 
+  RET_0    Returns to the ip stored in the frame pointer on the stack without popping the frame
+  CALL_0   Jumps to the given ip without pushing a new frame (it does modify the ip on the frame 
             so that execution will return to the correct location at the next RET)
   RET       Returns to the ip stored in the frame pointer on the stack and pops the current frame
 
@@ -438,7 +430,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   1. There are some empty pushes onto the stack in order to make room for all the named arguments
   2. A frame is pushed onto the stack
   3. The empty pushes from (1) are filled in with default values
-  4. RET_KF moves the ip back to the calling code which can then override the default values
-  5. CALL_KF moves the ip into the body of the called function, retaining the current frame
+  4. RET_0 moves the ip back to the calling code which can then override the default values
+  5. CALL_0 moves the ip into the body of the called function, retaining the current frame
   6. The body is executed
   7. RET pops the frame and copies the last value from the function onto the current stack
