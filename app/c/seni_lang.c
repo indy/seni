@@ -1675,6 +1675,12 @@ void i32_as_var(seni_var *out, i32 i)
   out->value.i = i;
 }
 
+void f32_as_var(seni_var *out, f32 f)
+{
+  out->type = VAR_FLOAT;
+  out->value.f = f;
+}
+
 
 seni_var *bind_var(seni_env *env, i32 name, seni_var *var)
 {

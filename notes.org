@@ -1,19 +1,13 @@
-* TODO [4/11]
-  1. [X] add num_args to frame
-  2. [X] CALL_A should emit number of args
-  3. [X] push default args onto stack in reverse order - changes meaning of POP ARG n
-  4. [X] place the invocation parameters in the correct stack position
-  5. [ ] check that frame's SP can be calculated from fp and num_args
-  6. [ ] compile_fn: should result in the stack always growing by one
-  7. [ ] special fn: on-matrix-stack
-  8. [ ] why does setq seg fault when it returns NULL?
-  9. [ ] 'in' paramaeter for loop ?
-  10. [ ] constants like canvas/width
-  11. [ ] how would a stack machine compile first class functions?
+* TODO [0/8]
+  1. [ ] default all numbers to float
+  2. [ ] calling native built-in functions
+  3. [ ] manipulate vectors
+  4. [ ] special fn: on-matrix-stack
+  5. [ ] why does setq seg fault when it returns NULL?
+  6. [ ] 'in' paramaeter for loop ?
+  7. [ ] constants like canvas/width
+  8. [ ] how would a stack machine compile first class functions?
 
-
-
- 
 
 after parsing it's safe to treat seni_nodes as immutable
 seni_vars that have been eval'd should get their values asap since they could just by aliases of g_reg
@@ -239,74 +233,72 @@ In other architectures, the instruction pointer is sometimes called the "program
 
   WREN_NAN_TAGGING - if not defined this makes debugging easier as Value has a type and num structure
 
-
-* wren analysis scratch notes
->	wren_d.exe!emitOp(sCompiler * compiler, Code instruction) Line 1171	C
- 	wren_d.exe!emitShortArg(sCompiler * compiler, Code instruction, int arg) Line 1200	C
- 	wren_d.exe!emitConstant(sCompiler * compiler, unsigned __int64 value) Line 1221	C
- 	wren_d.exe!literal(sCompiler * compiler, bool canAssign) Line 2267	C
- 	wren_d.exe!parsePrecedence(sCompiler * compiler, Precedence precedence) Line 2680	C
- 	wren_d.exe!infixOp(sCompiler * compiler, bool canAssign) Line 2434	C
- 	wren_d.exe!parsePrecedence(sCompiler * compiler, Precedence precedence) Line 2686	C
- 	wren_d.exe!expression(sCompiler * compiler) Line 2694	C
- 	wren_d.exe!forStatement(sCompiler * compiler) Line 2905	C
- 	wren_d.exe!statement(sCompiler * compiler) Line 2992	C
- 	wren_d.exe!definition(sCompiler * compiler) Line 3421	C
- 	wren_d.exe!wrenCompile(WrenVM * vm, ObjModule * module, const char * source, bool isExpression, bool printErrors) Line 3468	C
- 	wren_d.exe!loadModule(WrenVM * vm, unsigned __int64 name, const char * source) Line 490	C
- 	wren_d.exe!wrenInterpretInModule(WrenVM * vm, const char * module, const char * source) Line 1328	C
- 	wren_d.exe!wrenInterpret(WrenVM * vm, const char * source) Line 1315	C
- 	wren_d.exe!runFile(const char * path) Line 232	C
-
+** wren analysis scratch notes
+ >	wren_d.exe!emitOp(sCompiler * compiler, Code instruction) Line 1171	C
+ 	 wren_d.exe!emitShortArg(sCompiler * compiler, Code instruction, int arg) Line 1200	C
+ 	 wren_d.exe!emitConstant(sCompiler * compiler, unsigned __int64 value) Line 1221	C
+ 	 wren_d.exe!literal(sCompiler * compiler, bool canAssign) Line 2267	C
+ 	 wren_d.exe!parsePrecedence(sCompiler * compiler, Precedence precedence) Line 2680	C
+ 	 wren_d.exe!infixOp(sCompiler * compiler, bool canAssign) Line 2434	C
+ 	 wren_d.exe!parsePrecedence(sCompiler * compiler, Precedence precedence) Line 2686	C
+ 	 wren_d.exe!expression(sCompiler * compiler) Line 2694	C
+ 	 wren_d.exe!forStatement(sCompiler * compiler) Line 2905	C
+ 	 wren_d.exe!statement(sCompiler * compiler) Line 2992	C
+ 	 wren_d.exe!definition(sCompiler * compiler) Line 3421	C
+ 	 wren_d.exe!wrenCompile(WrenVM * vm, ObjModule * module, const char * source, bool isExpression, bool printErrors) Line 3468	C
+ 	 wren_d.exe!loadModule(WrenVM * vm, unsigned __int64 name, const char * source) Line 490	C
+ 	 wren_d.exe!wrenInterpretInModule(WrenVM * vm, const char * module, const char * source) Line 1328	C
+ 	 wren_d.exe!wrenInterpret(WrenVM * vm, const char * source) Line 1315	C
+ 	 wren_d.exe!runFile(const char * path) Line 232	C
 
 
 
 
 
-  when compiling user code set a breakpoint on emitOp wren_compiler.c 1170
 
-  System.print("hello from isg")
-  for (i in 1..10) System.print("Counting up %(i)")
+   when compiling user code set a breakpoint on emitOp wren_compiler.c 1170
 
-  instruction	CODE_LOAD_MODULE_VAR (17)	Code
-  instruction	CODE_CONSTANT (0)	Code
-	instruction	CODE_CALL_1 (25)	Code
-	instruction	CODE_POP (23)	Code
-	instruction	CODE_CONSTANT (0)	Code
-	instruction	CODE_CONSTANT (0)	Code
-	instruction	CODE_CALL_1 (25)	Code
-	instruction	CODE_NULL (1)	Code
-	instruction	CODE_LOAD_LOCAL_0 (4)	Code
-	instruction	CODE_LOAD_LOCAL_1 (5)	Code
-	instruction	CODE_CALL_1 (25)	Code
-	instruction	CODE_STORE_LOCAL (14)	Code
-	instruction	CODE_JUMP_IF (60)	Code
-	instruction	CODE_LOAD_LOCAL_0 (4)	Code
-	instruction	CODE_LOAD_LOCAL_1 (5)	Code
-	instruction	CODE_CALL_1 (25)	Code
-	instruction	CODE_LOAD_MODULE_VAR (17)	Code
-	instruction	CODE_LOAD_MODULE_VAR (17)	Code
-	instruction	CODE_CALL_0 (24)	Code
-	instruction	CODE_CONSTANT (0)	Code
-	instruction	CODE_CALL_1 (25)	Code
-	instruction	CODE_LOAD_LOCAL_2 (6)	Code
-	instruction	CODE_CALL_1 (25)	Code
-	instruction	CODE_CONSTANT (0)	Code
-	instruction	CODE_CALL_1 (25)	Code
-	instruction	CODE_CALL_0 (24)	Code
-	instruction	CODE_CALL_1 (25)	Code
-	instruction	CODE_POP (23)	Code
-	instruction	CODE_LOOP (59)	Code
+   System.print("hello from isg")
+   for (i in 1..10) System.print("Counting up %(i)")
+
+   instruction	CODE_LOAD_MODULE_VAR (17)	Code
+   instruction	CODE_CONSTANT (0)	Code
+	 instruction	CODE_CALL_1 (25)	Code
+	 instruction	CODE_POP (23)	Code
+	 instruction	CODE_CONSTANT (0)	Code
+	 instruction	CODE_CONSTANT (0)	Code
+	 instruction	CODE_CALL_1 (25)	Code
+	 instruction	CODE_NULL (1)	Code
+	 instruction	CODE_LOAD_LOCAL_0 (4)	Code
+	 instruction	CODE_LOAD_LOCAL_1 (5)	Code
+	 instruction	CODE_CALL_1 (25)	Code
+	 instruction	CODE_STORE_LOCAL (14)	Code
+	 instruction	CODE_JUMP_IF (60)	Code
+	 instruction	CODE_LOAD_LOCAL_0 (4)	Code
+	 instruction	CODE_LOAD_LOCAL_1 (5)	Code
+	 instruction	CODE_CALL_1 (25)	Code
+	 instruction	CODE_LOAD_MODULE_VAR (17)	Code
+	 instruction	CODE_LOAD_MODULE_VAR (17)	Code
+	 instruction	CODE_CALL_0 (24)	Code
+	 instruction	CODE_CONSTANT (0)	Code
+	 instruction	CODE_CALL_1 (25)	Code
+	 instruction	CODE_LOAD_LOCAL_2 (6)	Code
+	 instruction	CODE_CALL_1 (25)	Code
+	 instruction	CODE_CONSTANT (0)	Code
+	 instruction	CODE_CALL_1 (25)	Code
+	 instruction	CODE_CALL_0 (24)	Code
+	 instruction	CODE_CALL_1 (25)	Code
+	 instruction	CODE_POP (23)	Code
+	 instruction	CODE_LOOP (59)	Code
 
 
 
+** wren build shenanigans
 
-* wren build shenanigans
+ Build Events -> Command Line had the following pasted in:
 
-Build Events -> Command Line had the following pasted in:
-
-python ../../libuv.py download
-python ../../libuv.py build -32
+ python ../../libuv.py download
+ python ../../libuv.py build -32
 
 * timings
 
@@ -442,3 +434,19 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   5. CALL_KF moves the ip into the body of the called function, retaining the current frame
   6. The body is executed
   7. RET pops the frame and copies the last value from the function onto the current stack
+
+* frame structure
+
+
+  ^^^ stack grows upwards
+  ------------- <- sp of new frame
+  locals (10)
+  num_args
+  IP
+  FP
+  args (n * 2)
+  ------------- <- sp of previous frame
+  ...
+  ...
+
+  after a function returns, the frame is popped and the sp has increased by one as it holds the return value from the function

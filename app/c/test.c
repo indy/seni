@@ -733,7 +733,7 @@ void test_uv_mapper(void)
   vm_interpret(vm, prog)
 
 
-#define VM_TEST_INT(RES) assert_seni_var_i32(stack_pop(vm), VAR_INT, RES)
+#define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_pop(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_pop(vm), RES)
 
 #define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
@@ -743,19 +743,16 @@ void test_uv_mapper(void)
 
 // COMPILE macros that eval and compare results
 //
-//#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
-//#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
-
 #if 1
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
-#define VM_COMPILE_INT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_INT(RES);VM_CLEANUP;}
+#define VM_COMPILE_FLOAT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 #else
 // COMPILE macros that print out bytecode
 //
-#define VM_COMPILE_INT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_FLOAT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #endif
 // --------------------------------------------------
@@ -777,9 +774,9 @@ void timing(void)
 
   {
     start = clock();
-    //VM_COMPILE_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+    //VM_COMPILE_FLOAT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
 
-    VM_COMPILE_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
+    VM_COMPILE_FLOAT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
     diff = clock() - start;
     msec = diff * 1000 / CLOCKS_PER_SEC;
     printf("VM Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
@@ -788,10 +785,10 @@ void timing(void)
 
 void test_vm_bytecode(void)
 {
-  VM_COMPILE_INT("(define a 42) (define b 52) 10", 10);
-  VM_COMPILE_INT("(define a 6) (define b 7) (+ a b)", 13);
-  VM_COMPILE_INT("(+ 3 4)", 7);
-  VM_COMPILE_INT("(- (+ 1 2) 3)", 0);
+  VM_COMPILE_FLOAT("(define a 42) (define b 52) 10", 10);
+  VM_COMPILE_FLOAT("(define a 6) (define b 7) (+ a b)", 13);
+  VM_COMPILE_FLOAT("(+ 3 4)", 7);
+  VM_COMPILE_FLOAT("(- (+ 1 2) 3)", 0);
   VM_COMPILE_BOOL("(> 5 10)", false);
   VM_COMPILE_BOOL("(< 5 10)", true);
   VM_COMPILE_BOOL("(= 2 2)", true);
@@ -802,41 +799,41 @@ void test_vm_bytecode(void)
   VM_COMPILE_BOOL("(not (> 1 10))", true);
   VM_COMPILE_BOOL("(and (or (< 1 2) (> 3 4)) (not (> 1 10)))", true);
 
-  VM_COMPILE_INT("(if (> 400 200) 66)", 66);
-  VM_COMPILE_INT("(if (> 200 100) 12 24)", 12);
-  VM_COMPILE_INT("(if (< 200 100) 12 24)", 24);
+  VM_COMPILE_FLOAT("(if (> 400 200) 66)", 66);
+  VM_COMPILE_FLOAT("(if (> 200 100) 12 24)", 12);
+  VM_COMPILE_FLOAT("(if (< 200 100) 12 24)", 24);
   VM_COMPILE_BOOL("(if (> 400 200) (= 50 50))", true);
   VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
   VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
 
-  VM_COMPILE_INT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
-  VM_COMPILE_INT("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
+  VM_COMPILE_FLOAT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
+  VM_COMPILE_FLOAT("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
 }
 
 void test_vm_callret(void)
 {
   // basic invocation
-  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
-  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))", 12); // calc required for value
-  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)", 13); // non-existent argument
-  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder)", 17); // only default arguments
-  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)", 18); // missing argument
-  VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29); // missing argument
+  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))", 12); // calc required for value
+  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)", 13); // non-existent argument
+  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder)", 17); // only default arguments
+  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)", 18); // missing argument
+  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29); // missing argument
 
-  VM_COMPILE_INT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))", 20);
-  VM_COMPILE_INT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
+  VM_COMPILE_FLOAT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))", 20);
+  VM_COMPILE_FLOAT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
 
   // functions calling functions
-  VM_COMPILE_INT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)",       6);
-  VM_COMPILE_INT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",      10);
-  VM_COMPILE_INT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
+  VM_COMPILE_FLOAT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)",       6);
+  VM_COMPILE_FLOAT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",      10);
+  VM_COMPILE_FLOAT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
 }
 
 void test_vm_temp(void)
 {
-  //VM_COMPILE_INT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+  //VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
   // broken
-  VM_COMPILE_INT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
+  VM_COMPILE_FLOAT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
 }
 
 int main(void)
@@ -863,9 +860,9 @@ int main(void)
   RUN_TEST(test_lang_interpret_vector);
   RUN_TEST(test_lang_interpret_mem);
   
-  // // vm
-  // RUN_TEST(test_vm_bytecode);
-  // RUN_TEST(test_vm_callret);
+  // // // vm
+  RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_callret);
   // RUN_TEST(test_vm_temp);
   
   return UNITY_END();
