@@ -206,7 +206,6 @@ seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size)
 
   // add some offsets so that the memory after fp matches a standard format
   base_offset++;                // the caller's frame pointer
-  base_offset++;                // the caller's sp
   base_offset++;                // the caller's ip
   base_offset++;                // the num_args of the called function
 
@@ -240,10 +239,9 @@ void pretty_print_virtual_machine(seni_virtual_machine *vm, char* msg)
 
   seni_var *fp = &(vm->stack[vm->fp]);
   i32 onStackFP = (fp + 0)->value.i;
-  i32 onStackSP = (fp + 1)->value.i;
-  i32 onStackIP = (fp + 2)->value.i;
-  i32 onStackNumArgs = (fp + 3)->value.i;
-  printf("\ton stack: fp:%d sp:%d ip:%d numArgs:%d\n", onStackFP, onStackSP, onStackIP, onStackNumArgs);
+  i32 onStackIP = (fp + 1)->value.i;
+  i32 onStackNumArgs = (fp + 2)->value.i;
+  printf("\ton stack: fp:%d ip:%d numArgs:%d\n", onStackFP, onStackIP, onStackNumArgs);
 }
 
 // **************************************************
@@ -862,7 +860,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
   register i32 sp = vm->sp;
   register seni_var *stack_d = &(vm->stack[sp]);
 
-  i32 old_sp, new_fp, base_offset;
+  i32 new_fp;
   i32 num_args;
 
 #define STACK_POP stack_d--; sp--; v = stack_d
@@ -934,27 +932,18 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
     case CALL:
       num_args = bc->arg1.value.i;
-      
-      // update the seni_stack variables that are currently only being updated in registers
-      vm->ip = ip;
 
       // make room for the labelled arguments
       for (i32 i = 0; i < num_args * 2; i++) {
         STACK_PUSH;
       }
       
-      old_sp = sp;      
       new_fp = sp;
 
       // push the caller's fp
       STACK_PUSH;
       v->type = VAR_INT;
       v->value.i = vm->fp;
-
-      // sp
-      STACK_PUSH;
-      v->type = VAR_INT;
-      v->value.i = old_sp;
 
       // push ip
       STACK_PUSH;
@@ -966,27 +955,23 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       v->type = VAR_INT;
       v->value.i = num_args;
 
+      vm->ip = bc->arg0.value.i;
       vm->fp = new_fp;
+      vm->local = sp;
+      sp += MEMORY_LOCAL_SIZE;
 
-      base_offset = sp;
-  
-      vm->local = base_offset;
-      base_offset += MEMORY_LOCAL_SIZE;
-
-      vm->sp = base_offset;
-
-      sp = vm->sp;
       stack_d = &(vm->stack[sp]);
+      ip = vm->ip;
+      
+      vm->sp = sp;
 
-      ip = bc->arg0.value.i;
-      vm->ip = ip;
       break;
 
     case CALL_KF:
       // like CALL but keep the existing frame and just update the ip and return ip
       
       // set the correct return ip
-      vm->stack[vm->fp + 2].value.i = ip;
+      vm->stack[vm->fp + 1].value.i = ip;
 
       // leap to a location
       ip = bc->arg0.value.i;
@@ -995,37 +980,33 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
     case RET_KF:
       // leap to the return ip
-      vm->ip = vm->stack[vm->fp + 2].value.i;
+      vm->ip = vm->stack[vm->fp + 1].value.i;
       ip = vm->ip;
       break;
       
     case RET:
       // pop the frame
       //
-     
-      vm->sp = sp;
 
       // grab whatever was the last value on the soon to be popped frame
-      v = &(vm->stack[vm->sp - 1]);
+      src = &(vm->stack[sp - 1]);
 
-      num_args = vm->stack[vm->fp + 3].value.i;
-      vm->ip = vm->stack[vm->fp + 2].value.i;
-      vm->sp = vm->stack[vm->fp + 1].value.i;
+      num_args = vm->stack[vm->fp + 2].value.i;
+
+      vm->sp = vm->fp - (num_args * 2);
+      vm->ip = vm->stack[vm->fp + 1].value.i;
       vm->fp = vm->stack[vm->fp].value.i;
+      vm->local = vm->fp + 3;
 
-      base_offset = vm->fp + 4;
-
-      // remove the named parameters from the stack
-      vm->sp -= num_args * 2;
-      // copy the previous frame's top stack value onto the current frame's stack
-      seni_var *ret_value = stack_push(vm);
-      safe_var_move(ret_value, v);
-  
-      vm->local = base_offset;
-
+      // sync up the fast registers
       ip = vm->ip;
       sp = vm->sp;
       stack_d = &(vm->stack[sp]);
+
+      // copy the previous frame's top stack value onto the current frame's stack
+      STACK_PUSH;
+      safe_var_move(v, src);
+
       break;
 
     case ADD:
