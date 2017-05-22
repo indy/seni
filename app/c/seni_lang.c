@@ -443,7 +443,7 @@ seni_node *consume_quoted_form(word_lut *wlut, char **src)
 
   return node;
 }
-
+/*
 seni_node *consume_int(char **src)
 {
   char *end_ptr;
@@ -456,7 +456,7 @@ seni_node *consume_int(char **src)
   
   return node;
 }
-
+*/
 seni_node *consume_float(char **src)
 {
   char *end_ptr;
@@ -660,11 +660,7 @@ seni_node *consume_item(word_lut *wlut, char **src)
   }
   
   if (is_digit(c) || is_minus(c) || is_period(c)) {
-    if (has_period(*src)) {
-      return consume_float(src);
-    } else {
-      return consume_int(src);
-    }
+    return consume_float(src);
   }
 
   if (is_comment(c)) {

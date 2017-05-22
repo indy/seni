@@ -42,9 +42,9 @@ seni_node *assert_parser_node_i32(seni_node *node, seni_node_type type, i32 val)
   return node->next;
 }
 
-seni_node *assert_parser_node_f32(seni_node *node, seni_node_type type, f32 val)
+seni_node *assert_parser_node_f32(seni_node *node, f32 val)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
+  TEST_ASSERT_EQUAL_MESSAGE(NODE_FLOAT, node->type, node_type_name(node));
   TEST_ASSERT_EQUAL_FLOAT(val, node->value.f);
   return node->next;
 }
@@ -83,7 +83,7 @@ void test_lang_parser(void)
   PARSE_CLEANUP;
 
   PARSE("5");
-  assert_parser_node_i32(nodes, NODE_INT, 5);
+  assert_parser_node_f32(nodes, 5);
   PARSE_CLEANUP;
 
   PARSE("(4)");
@@ -104,9 +104,9 @@ void test_lang_parser(void)
   iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_i32(iter, NODE_INT, 1);
+  iter = assert_parser_node_f32(iter, 1);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_i32(iter, NODE_INT, 2);
+  iter = assert_parser_node_f32(iter, 2);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_NULL(nodes->next);
   PARSE_CLEANUP;
@@ -116,9 +116,9 @@ void test_lang_parser(void)
   iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_i32(iter, NODE_INT, 9);
+  iter = assert_parser_node_f32(iter, 9);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_i32(iter, NODE_INT, 8);
+  iter = assert_parser_node_f32(iter, 8);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_raw(iter, NODE_LIST);
   TEST_ASSERT_NULL(iter);
@@ -155,11 +155,11 @@ void test_lang_parser(void)
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_txt(iter, NODE_LABEL, "i", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_i32(iter, NODE_INT, 42);
+  iter = assert_parser_node_f32(iter, 42);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_txt(iter, NODE_LABEL, "f", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_f32(iter, NODE_FLOAT, 12.34f);
+  iter = assert_parser_node_f32(iter, 12.34f);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_NULL(nodes->next);
   PARSE_CLEANUP;
@@ -169,7 +169,7 @@ void test_lang_parser(void)
   iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "a", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_i32(iter, NODE_INT, 1);
+  iter = assert_parser_node_f32(iter, 1);
   TEST_ASSERT_NULL(iter);
   iter = nodes->next;
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
@@ -177,7 +177,7 @@ void test_lang_parser(void)
   iter = iter->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "b", wl);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_i32(iter, NODE_INT, 2);
+  iter = assert_parser_node_f32(iter, 2);
   TEST_ASSERT_NULL(iter);
   PARSE_CLEANUP;
 
@@ -358,10 +358,6 @@ void debug_memory(char *expression)
 
 #define EVAL_CLEANUP shutdown_interpreter_test(wl, ast)
 
-#define EVAL_INT(EXPR,EXPECTED) EVAL_EXPR(EXPR);  \
-  assert_seni_var_i32(var, VAR_INT, EXPECTED); \
-  EVAL_CLEANUP
-
 #define EVAL_FLOAT(EXPR,EXPECTED) EVAL_EXPR(EXPR); \
   assert_seni_var_f32(var, VAR_FLOAT, EXPECTED); \
   EVAL_CLEANUP
@@ -386,7 +382,7 @@ void debug_memory(char *expression)
   var = var->value.v; \
   var = var->value.v
 
-#define SENI_ASSERT_VEC_INT(EXPECTED) assert_seni_var_vec_i32(var, EXPECTED); \
+#define SENI_ASSERT_VEC_FLOAT(EXPECTED) assert_seni_var_f32(var, VAR_FLOAT, EXPECTED); \
   var = var->next
 
 #define EVAL_DECL   word_lut *wl = NULL; \
@@ -399,7 +395,7 @@ void test_lang_interpret_basic(void)
   EVAL_DECL;
 
   // basic eval
-  EVAL_INT("42", 42);
+  EVAL_FLOAT("42", 42.0f);
   EVAL_FLOAT("12.34", 12.34f);
   EVAL_TRUE("true");
   EVAL_FALSE("false");
@@ -409,29 +405,29 @@ void test_lang_interpret_math(void)
 {
   EVAL_DECL;
 
-  EVAL_INT("(+ 10 1)", 11);
+  EVAL_FLOAT("(+ 10 1)", 11);
   EVAL_FLOAT("(+ 10.0 1)", 11.0f);
   EVAL_FLOAT("(+ 10 1.0)", 11.0f);
-  EVAL_INT("(+ 3 4 5 6)", 18);
-  EVAL_INT("(+ (+ 1 2) (+ 3 4))", 10);
+  EVAL_FLOAT("(+ 3 4 5 6)", 18);
+  EVAL_FLOAT("(+ (+ 1 2) (+ 3 4))", 10);
   EVAL_FLOAT("(+ (+ 1 2) (+ 3.0 4))", 10.0f);
-  EVAL_INT("(- 100 20)", 80);
-  EVAL_INT("(- (+ 50 50) 20)", 80);
-  EVAL_INT("(- 59)", -59);
-  EVAL_INT("(- (+ 50 9))", -59);
+  EVAL_FLOAT("(- 100 20)", 80);
+  EVAL_FLOAT("(- (+ 50 50) 20)", 80);
+  EVAL_FLOAT("(- 59)", -59);
+  EVAL_FLOAT("(- (+ 50 9))", -59);
   EVAL_FLOAT("(- 100.0 20)", 80.0f);
   EVAL_FLOAT("(- 100 20.0)", 80.0f);
   EVAL_FLOAT("(- 100.0 20.0)", 80.0f);
-  EVAL_INT("(* 6 5)", 30);
-  EVAL_INT("(* (* 2 3) 5)", 30);
+  EVAL_FLOAT("(* 6 5)", 30);
+  EVAL_FLOAT("(* (* 2 3) 5)", 30);
   EVAL_FLOAT("(/ 16.0 2.0)", 8.0f);
 
   EVAL_FLOAT("(sqrt 144)", 12.0f);
   EVAL_FLOAT("(sqrt 144.0)", 12.0f);
   EVAL_FLOAT("(sqrt (+ 100 44))", 12.0f);
 
-  EVAL_INT("(mod 10 3)", 1);
-  EVAL_INT("(mod 11 3)", 2);
+  EVAL_FLOAT("(mod 10 3)", 1);
+  EVAL_FLOAT("(mod 11 3)", 2);
 }
 
 void test_lang_interpret_comparison(void)
@@ -440,7 +436,7 @@ void test_lang_interpret_comparison(void)
 
   EVAL_TRUE("(= 16.0 16.0)");
   EVAL_FALSE("(= 16.0 99.0)");
-  EVAL_FALSE("(= 16.0 16)");
+  EVAL_TRUE("(= 16.0 16)");
   EVAL_TRUE("(= 6 6)");
   EVAL_FALSE("(= 6 26)");
   EVAL_TRUE("(> 6 2)");
@@ -456,35 +452,35 @@ void test_lang_interpret_define(void)
 {
   EVAL_DECL;
 
-  EVAL_INT("(define num 10) (+ num num)", 20);
+  EVAL_FLOAT("(define num 10) (+ num num)", 20);
   EVAL_FLOAT("(define num 10.0) (+ num num)", 20.0f);
   EVAL_FLOAT("(define num (* 2 3.0)) (+ num num num)", 18.0f);
   // multiple defines
-  EVAL_INT("(define a 10 b 5 c 2) (+ a b c)", 17);
+  EVAL_FLOAT("(define a 10 b 5 c 2) (+ a b c)", 17);
 }
 
 void test_lang_interpret_function(void)
 {
   EVAL_DECL;
 
-  EVAL_INT("(fn (a) 42) (+ (a) (a))", 84);
-  EVAL_INT("(fn (a) 12 34 55 42) (+ (a) (a))", 84);
-  EVAL_INT("(fn (foo b: 1 c: 2) (+ b c)) (foo)", 3);
-  EVAL_INT("(fn (foo b: 1 c: 2) (+ b c)) (foo b: 10 c: 100)", 110);
+  EVAL_FLOAT("(fn (a) 42) (+ (a) (a))", 84);
+  EVAL_FLOAT("(fn (a) 12 34 55 42) (+ (a) (a))", 84);
+  EVAL_FLOAT("(fn (foo b: 1 c: 2) (+ b c)) (foo)", 3);
+  EVAL_FLOAT("(fn (foo b: 1 c: 2) (+ b c)) (foo b: 10 c: 100)", 110);
   EVAL_FLOAT("(fn (foo b: 1 c: 2) (+ b c)) (foo c: 30 b: 5.6)", 35.6f);
-  EVAL_INT("(define b 10)(fn (foo b: 1) (+ b b)) (foo b: (+ b b))", 40);
+  EVAL_FLOAT("(define b 10)(fn (foo b: 1) (+ b b)) (foo b: (+ b b))", 40);
 }  
 
 void test_lang_interpret_if(void)
 {
   EVAL_DECL;
 
-  EVAL_INT("(if true 3 4)", 3);
-  EVAL_INT("(if true 3)", 3);
-  EVAL_INT("(if false 3 4)", 4);
+  EVAL_FLOAT("(if true 3 4)", 3);
+  EVAL_FLOAT("(if true 3)", 3);
+  EVAL_FLOAT("(if false 3 4)", 4);
 
-  EVAL_INT("(if (> 100 1) 5 6)", 5);
-  EVAL_INT("(if (> 1 100) 5 6)", 6);
+  EVAL_FLOAT("(if (> 100 1) 5 6)", 5);
+  EVAL_FLOAT("(if (> 1 100) 5 6)", 6);
 }  
 
 /* temporary, only used for testing */
@@ -492,8 +488,8 @@ void test_lang_interpret_setq(void)
 {
   EVAL_DECL;
 
-  EVAL_INT("(define x 7) (setq x 4)", 4);
-  EVAL_INT("(setq #test 5) #test", 5);
+  EVAL_FLOAT("(define x 7) (setq x 4)", 4);
+  EVAL_FLOAT("(setq #test 5) #test", 5);
 }  
 
 void test_lang_interpret_loop(void)
@@ -504,16 +500,16 @@ void test_lang_interpret_loop(void)
   // in setup_interpreter_env
 
   // basic from, to and upto
-  EVAL_INT("(loop (x from: 0 to: 5) (setq #test x)) #test", 4);
-  EVAL_INT("(loop (x from: 0 upto: 5) (setq #test x)) #test", 5);
-  EVAL_INT("(loop (x to: 8) (setq #test x)) #test", 7);
-  EVAL_INT("(loop (x upto: 8) (setq #test x)) #test", 8);
-  EVAL_INT("(setq #test 1)(loop (x from: 0 to: 5) (setq #test (+ #test #test))) #test", 32);
-  EVAL_INT("(loop (x from: 1 to: 4) (setq #test (+ #test x))) #test", 6);
-  EVAL_INT("(loop (x from: 1 upto: 4) (setq #test (+ #test x))) #test", 10);
+  EVAL_FLOAT("(loop (x from: 0 to: 5) (setq #test x)) #test", 4);
+  EVAL_FLOAT("(loop (x from: 0 upto: 5) (setq #test x)) #test", 5);
+  EVAL_FLOAT("(loop (x to: 8) (setq #test x)) #test", 7);
+  EVAL_FLOAT("(loop (x upto: 8) (setq #test x)) #test", 8);
+  EVAL_FLOAT("(setq #test 1)(loop (x from: 0 to: 5) (setq #test (+ #test #test))) #test", 32);
+  EVAL_FLOAT("(loop (x from: 1 to: 4) (setq #test (+ #test x))) #test", 6);
+  EVAL_FLOAT("(loop (x from: 1 upto: 4) (setq #test (+ #test x))) #test", 10);
 
   // change increment
-  EVAL_INT("(loop (x from: 0 to: 10 increment: 2) (setq #test (+ #test x))) #test", 20);
+  EVAL_FLOAT("(loop (x from: 0 to: 10 increment: 2) (setq #test (+ #test x))) #test", 20);
 
   // steps
   EVAL_FLOAT_WITHIN("(loop (x from: 0   to: 10 steps: 3) (setq #test (+ #test x))) #test",
@@ -541,7 +537,7 @@ void test_lang_interpret_vector(void)
     EVAL_EXPR("(define x [3])");
 
     SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_INT(3);
+    SENI_ASSERT_VEC_FLOAT(3);
     TEST_ASSERT_NULL(var);
 
     EVAL_CLEANUP;
@@ -551,9 +547,9 @@ void test_lang_interpret_vector(void)
     EVAL_EXPR("(define y [8 7 6])");
 
     SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_INT(8);
-    SENI_ASSERT_VEC_INT(7);
-    SENI_ASSERT_VEC_INT(6);
+    SENI_ASSERT_VEC_FLOAT(8);
+    SENI_ASSERT_VEC_FLOAT(7);
+    SENI_ASSERT_VEC_FLOAT(6);
     TEST_ASSERT_NULL(var);
 
     EVAL_CLEANUP;
@@ -563,7 +559,7 @@ void test_lang_interpret_vector(void)
     EVAL_EXPR("(define y []) (vector/append y 5)");
 
     SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_INT(5);
+    SENI_ASSERT_VEC_FLOAT(5);
     TEST_ASSERT_NULL(var);
 
     EVAL_CLEANUP;
@@ -573,8 +569,8 @@ void test_lang_interpret_vector(void)
     EVAL_EXPR("(define y [3]) (vector/append y 4)");
 
     SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_INT(3);
-    SENI_ASSERT_VEC_INT(4);
+    SENI_ASSERT_VEC_FLOAT(3);
+    SENI_ASSERT_VEC_FLOAT(4);
     TEST_ASSERT_NULL(var);
 
     EVAL_CLEANUP;
@@ -584,9 +580,9 @@ void test_lang_interpret_vector(void)
     EVAL_EXPR("(define y [4 5]) (vector/append y 6)");
 
     SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_INT(4);
-    SENI_ASSERT_VEC_INT(5);
-    SENI_ASSERT_VEC_INT(6);
+    SENI_ASSERT_VEC_FLOAT(4);
+    SENI_ASSERT_VEC_FLOAT(5);
+    SENI_ASSERT_VEC_FLOAT(6);
     TEST_ASSERT_NULL(var);
 
     EVAL_CLEANUP;
@@ -596,14 +592,15 @@ void test_lang_interpret_vector(void)
     EVAL_EXPR("(define y [8 7 6]) (vector/append y 5)");
 
     SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_INT(8);
-    SENI_ASSERT_VEC_INT(7);
-    SENI_ASSERT_VEC_INT(6);
-    SENI_ASSERT_VEC_INT(5);
+    SENI_ASSERT_VEC_FLOAT(8);
+    SENI_ASSERT_VEC_FLOAT(7);
+    SENI_ASSERT_VEC_FLOAT(6);
+    SENI_ASSERT_VEC_FLOAT(5);
     TEST_ASSERT_NULL(var);
 
     EVAL_CLEANUP;
   }
+
 }
 
 void test_lang_interpret_mem(void)
@@ -771,8 +768,8 @@ void timing(void)
   {
     EVAL_DECL;
     start = clock();
-    // EVAL_INT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
-    EVAL_INT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
+    // EVAL_FLOAT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+    EVAL_FLOAT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
     diff = clock() - start;
     msec = diff * 1000 / CLOCKS_PER_SEC;
     printf("Eval Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
@@ -866,9 +863,9 @@ int main(void)
   RUN_TEST(test_lang_interpret_vector);
   RUN_TEST(test_lang_interpret_mem);
   
-  // vm
-  RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_callret);
+  // // vm
+  // RUN_TEST(test_vm_bytecode);
+  // RUN_TEST(test_vm_callret);
   // RUN_TEST(test_vm_temp);
   
   return UNITY_END();
