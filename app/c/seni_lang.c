@@ -34,7 +34,7 @@ void string_copy_len(char **dst, char *src, size_t len)
 
 // interpreting typedefs and globals
 typedef struct keyword {
-  seni_var *(*function_ptr)(seni_env *, seni_node *);
+  eval_function_ptr function_ptr;
   char *name;
 } keyword;
 
@@ -443,7 +443,7 @@ seni_node *consume_quoted_form(word_lut *wlut, char **src)
 
   return node;
 }
-
+/*
 seni_node *consume_int(char **src)
 {
   char *end_ptr;
@@ -456,7 +456,7 @@ seni_node *consume_int(char **src)
   
   return node;
 }
-
+*/
 seni_node *consume_float(char **src)
 {
   char *end_ptr;
@@ -660,11 +660,7 @@ seni_node *consume_item(word_lut *wlut, char **src)
   }
   
   if (is_digit(c) || is_minus(c) || is_period(c)) {
-    if (has_period(*src)) {
-      return consume_float(src);
-    } else {
-      return consume_int(src);
-    }
+    return consume_float(src);
   }
 
   if (is_comment(c)) {
@@ -1679,6 +1675,12 @@ void i32_as_var(seni_var *out, i32 i)
   out->value.i = i;
 }
 
+void f32_as_var(seni_var *out, f32 f)
+{
+  out->type = VAR_FLOAT;
+  out->value.f = f;
+}
+
 
 seni_var *bind_var(seni_env *env, i32 name, seni_var *var)
 {
@@ -1728,7 +1730,8 @@ void string_copy(char **dst, char *src)
 
 // NOTE: the keyword.name is pointing to memory that's managed by the word_lut
 //
-void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *))
+//void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *))
+void declare_keyword(word_lut *wlut, char *name, eval_function_ptr function_ptr)
 {
   string_copy(&(wlut->keywords[wlut->keywords_count]), name);
   g_keyword[wlut->keywords_count].name = wlut->keywords[wlut->keywords_count];

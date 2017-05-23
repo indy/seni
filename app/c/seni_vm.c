@@ -104,6 +104,7 @@ seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, seni_v
   return b;
 }
 
+// emits an <opcode, i32, i32> triplet
 seni_bytecode *program_emit_opcode_i32(seni_program *program, seni_opcode op, i32 arg0, i32 arg1)
 {
   if (program->code_size >= program->code_max_size) {
@@ -115,6 +116,24 @@ seni_bytecode *program_emit_opcode_i32(seni_program *program, seni_opcode op, i3
   b->op = op;
   i32_as_var(&(b->arg0), arg0);
   i32_as_var(&(b->arg1), arg1);
+
+  program->opcode_offset += opcode_offset[op];
+
+  return b;
+}
+
+// emits an <opcode, i32, f32> triplet
+seni_bytecode *program_emit_opcode_i32_f32(seni_program *program, seni_opcode op, i32 arg0, f32 arg1)
+{
+  if (program->code_size >= program->code_max_size) {
+    SENI_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
+    return NULL;
+  }
+  
+  seni_bytecode *b = &(program->code[program->code_size++]);
+  b->op = op;
+  i32_as_var(&(b->arg0), arg0);
+  f32_as_var(&(b->arg1), arg1);
 
   program->opcode_offset += opcode_offset[op];
 
@@ -141,11 +160,30 @@ char *memory_segment_name(seni_memory_segment_type segment)
 void bytecode_pretty_print(i32 ip, seni_bytecode *b)
 {
   if (b->op == PUSH || b->op == POP) {
-    printf("%d\t%s\t%s\t%d\n",
+    printf("%d\t%s\t%s\t",
            ip,
            opcode_name(b->op),
-           memory_segment_name((seni_memory_segment_type)b->arg0.value.i),
-           b->arg1.value.i);
+           memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
+
+    seni_value_in_use using = get_value_in_use(b->arg1.type);
+    switch(using) {
+    case USE_I:
+      printf("%d\n", b->arg1.value.i);
+      break;
+    case USE_F:
+      printf("%.2f\n", b->arg1.value.f);
+      break;
+    case USE_V:
+      if (b->arg1.type == VAR_VEC_HEAD) {
+        printf("[..]len %d\n", var_vector_length(&(b->arg1)));
+      } else {
+        printf("[..]\n");
+      }
+      break;
+    default:
+      printf("unknown type\n");
+    }
+    
   } else if (b->op == JUMP_IF || b->op == JUMP) {
     printf("%d\t%s\t",
            ip,
@@ -206,7 +244,6 @@ seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size)
 
   // add some offsets so that the memory after fp matches a standard format
   base_offset++;                // the caller's frame pointer
-  base_offset++;                // the caller's sp
   base_offset++;                // the caller's ip
   base_offset++;                // the num_args of the called function
 
@@ -240,10 +277,9 @@ void pretty_print_virtual_machine(seni_virtual_machine *vm, char* msg)
 
   seni_var *fp = &(vm->stack[vm->fp]);
   i32 onStackFP = (fp + 0)->value.i;
-  i32 onStackSP = (fp + 1)->value.i;
-  i32 onStackIP = (fp + 2)->value.i;
-  i32 onStackNumArgs = (fp + 3)->value.i;
-  printf("\ton stack: fp:%d sp:%d ip:%d numArgs:%d\n", onStackFP, onStackSP, onStackIP, onStackNumArgs);
+  i32 onStackIP = (fp + 1)->value.i;
+  i32 onStackNumArgs = (fp + 2)->value.i;
+  printf("\ton stack: fp:%d ip:%d numArgs:%d\n", onStackFP, onStackIP, onStackNumArgs);
 }
 
 // **************************************************
@@ -483,7 +519,7 @@ seni_node *compile_loop(seni_node *ast, seni_program *program)
 
   // increment the looping variable
   program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, looper_address);
-  program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, 1);
+  program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, 1.0f);
   program_emit_opcode_i32(program, ADD, 0, 0);
   program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, looper_address);
 
@@ -643,8 +679,11 @@ seni_node *compile_fn(seni_node *ast, seni_program *program)
     program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, label->value.i);
     program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, counter++);
 
-    program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, value->value.i); // temp: stick to i32 for now
-    program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, counter++); // temp: stick to i32 for now
+    // HACK:
+    // think of a more robust way of pushing a seni_node value into a bytecode instruction
+    //
+    program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, value->value.f);
+    program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, counter++);
 
     num_args++;
     args = safe_next(value);
@@ -729,6 +768,10 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
     } else {
       compile(n, program, global_scope);
     }
+    return safe_next(ast);
+  }
+  if (ast->type == NODE_FLOAT) {
+    program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, ast->value.f);
     return safe_next(ast);
   }
   if (ast->type == NODE_INT) {
@@ -851,8 +894,8 @@ void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl)
 // executes a program on a vm 
 void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 {
-  i32 a, b;
   bool b1, b2;
+  f32 f1, f2;
   seni_memory_segment_type memory_segment_type;
   seni_var *src, *dest;
 
@@ -862,13 +905,14 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
   register i32 sp = vm->sp;
   register seni_var *stack_d = &(vm->stack[sp]);
 
-  i32 old_sp, new_fp, base_offset;
+  i32 new_fp;
   i32 num_args;
 
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
 
   for (;;) {
+    // printf("%d\n", ip);
     bc = &(program->code[ip++]);
     
     switch(bc->op) {
@@ -877,11 +921,9 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_CONSTANT) {
-        v->type = VAR_INT;
-        v->value.i = bc->arg1.value.i;
+        safe_var_move(v, &(bc->arg1));
       } else if (memory_segment_type == MEM_SEG_ARGUMENT) {
-        a = vm->fp - bc->arg1.value.i - 1;
-        src = &(vm->stack[a]);
+        src = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
         safe_var_move(v, src);
         // printf("pushing ARG value %d onto the stack from %d\n", v->value.i, a);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
@@ -900,8 +942,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
-        a = vm->fp - bc->arg1.value.i - 1;
-        dest = &(vm->stack[a]);
+        dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
         safe_var_move(dest, v);
         // printf("popping ARG value %d from the stack onto %d\n", v->value.i, a);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
@@ -934,27 +975,18 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
     case CALL:
       num_args = bc->arg1.value.i;
-      
-      // update the seni_stack variables that are currently only being updated in registers
-      vm->ip = ip;
 
       // make room for the labelled arguments
       for (i32 i = 0; i < num_args * 2; i++) {
         STACK_PUSH;
       }
       
-      old_sp = sp;      
       new_fp = sp;
 
       // push the caller's fp
       STACK_PUSH;
       v->type = VAR_INT;
       v->value.i = vm->fp;
-
-      // sp
-      STACK_PUSH;
-      v->type = VAR_INT;
-      v->value.i = old_sp;
 
       // push ip
       STACK_PUSH;
@@ -966,27 +998,23 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       v->type = VAR_INT;
       v->value.i = num_args;
 
+      vm->ip = bc->arg0.value.i;
       vm->fp = new_fp;
+      vm->local = sp;
+      sp += MEMORY_LOCAL_SIZE;
 
-      base_offset = sp;
-  
-      vm->local = base_offset;
-      base_offset += MEMORY_LOCAL_SIZE;
-
-      vm->sp = base_offset;
-
-      sp = vm->sp;
       stack_d = &(vm->stack[sp]);
+      ip = vm->ip;
+      
+      vm->sp = sp;
 
-      ip = bc->arg0.value.i;
-      vm->ip = ip;
       break;
 
     case CALL_0:
       // like CALL but keep the existing frame and just update the ip and return ip
       
       // set the correct return ip
-      vm->stack[vm->fp + 2].value.i = ip;
+      vm->stack[vm->fp + 1].value.i = ip;
 
       // leap to a location
       ip = bc->arg0.value.i;
@@ -995,91 +1023,87 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
     case RET_0:
       // leap to the return ip
-      vm->ip = vm->stack[vm->fp + 2].value.i;
+      vm->ip = vm->stack[vm->fp + 1].value.i;
       ip = vm->ip;
       break;
       
     case RET:
       // pop the frame
       //
-     
-      vm->sp = sp;
 
       // grab whatever was the last value on the soon to be popped frame
-      v = &(vm->stack[vm->sp - 1]);
+      src = &(vm->stack[sp - 1]);
 
-      num_args = vm->stack[vm->fp + 3].value.i;
-      vm->ip = vm->stack[vm->fp + 2].value.i;
-      vm->sp = vm->stack[vm->fp + 1].value.i;
+      num_args = vm->stack[vm->fp + 2].value.i;
+
+      vm->sp = vm->fp - (num_args * 2);
+      vm->ip = vm->stack[vm->fp + 1].value.i;
       vm->fp = vm->stack[vm->fp].value.i;
+      vm->local = vm->fp + 3;
 
-      base_offset = vm->fp + 4;
-
-      // remove the named parameters from the stack
-      vm->sp -= num_args * 2;
-      // copy the previous frame's top stack value onto the current frame's stack
-      seni_var *ret_value = stack_push(vm);
-      safe_var_move(ret_value, v);
-  
-      vm->local = base_offset;
-
+      // sync up the fast registers
       ip = vm->ip;
       sp = vm->sp;
       stack_d = &(vm->stack[sp]);
+
+      // copy the previous frame's top stack value onto the current frame's stack
+      STACK_PUSH;
+      safe_var_move(v, src);
+
       break;
 
     case ADD:
       STACK_POP;
-      b = v->value.i;
+      f2 = v->value.f;
       
       STACK_POP;
-      a = v->value.i;
+      f1 = v->value.f;
 
       STACK_PUSH;
-      v->value.i = a + b;
+      v->value.f = f1 + f2;
       break;
 
     case SUB:
       STACK_POP;
-      b = v->value.i;
+      f2 = v->value.f;
       STACK_POP;
-      a = v->value.i;
+      f1 = v->value.f;
 
       STACK_PUSH;
-      v->value.i = a - b;
+      v->value.f = f1 - f2;
 
       break;
 
     case EQ:
       STACK_POP;
-      b = v->value.i;
+      f2 = v->value.f;
       STACK_POP;
-      a = v->value.i;
+      f1 = v->value.f;
 
       STACK_PUSH;
       v->type = VAR_BOOLEAN;
-      v->value.i = a == b;
+      v->value.i = f1 == f2;
       break;
 
     case GT:
       STACK_POP;
-      b = v->value.i;
+      f2 = v->value.f;
       STACK_POP;
-      a = v->value.i;
+      f1 = v->value.f;
 
       STACK_PUSH;
       v->type = VAR_BOOLEAN;
-      v->value.i = a > b;
+      v->value.i = f1 > f2;
       break;
 
     case LT:
       STACK_POP;
-      b = v->value.i;
+      f2 = v->value.f;
       STACK_POP;
-      a = v->value.i;
+      f1 = v->value.f;
 
       STACK_PUSH;
-      v->value.i = a < b;
+      v->value.i = f1 < f2;
       v->type = VAR_BOOLEAN;
       break;
 

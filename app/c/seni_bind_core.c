@@ -446,8 +446,8 @@ seni_var *eval_classic_fn_mod(seni_env *env, seni_node *expr)
   v = eval(env, sibling);
   i32 i2 = var_as_int(v);
 
-  g_reg.type = VAR_INT;
-  g_reg.value.i = i1 % i2;
+  g_reg.type = VAR_FLOAT;
+  g_reg.value.f = (float)(i1 % i2);
 
   return &g_reg;
 }
@@ -561,8 +561,8 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
 
     add_named_parameters_to_env(loop_env, args);
 
-    i32 increment = 1;
-    i32 steps = 1;
+    f32 increment = 1.0f;
+    f32 steps = 1.0f;
     seni_var *from_var = NULL;
     seni_var *to_var = NULL;
     seni_var *upto_var = NULL;
@@ -585,8 +585,8 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
     bool has_increment = has_named_node(args, g_arg_increment);
     if (has_increment) {
       seni_var *increment_var = lookup_var(loop_env, g_arg_increment);
-      increment = var_as_int(increment_var);
-      if (increment == 0) {
+      increment = var_as_float(increment_var);
+      if (increment == 0.0f) {
         SENI_ERROR("cannot have an increment of 0");
         pop_scope(loop_env);
         return NULL;
@@ -596,8 +596,8 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
     bool has_steps = has_named_node(args, g_arg_steps);
     if (has_steps) {
       seni_var *steps_var = lookup_var(loop_env, g_arg_steps);
-      steps = var_as_int(steps_var);
-      if (steps == 0) {
+      steps = var_as_float(steps_var);
+      if (steps == 0.0f) {
         SENI_ERROR("cannot have steps value of 0");
         pop_scope(loop_env);
         return NULL;
@@ -605,12 +605,12 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
     }
 
     if(has_increment || !has_steps) {
-      i32 from = has_from ? var_as_int(from_var) : 0;
-      i32 to = has_to ? var_as_int(to_var) : 10;
-      i32 upto = has_upto ? var_as_int(upto_var) : 10;
+      f32 from = has_from ? var_as_float(from_var) : 0.0f;
+      f32 to = has_to ? var_as_int(to_var) : 10.0f;
+      f32 upto = has_upto ? var_as_int(upto_var) : 10.0f;
 
       // the default path - perform an integer based iteration
-      i32 i;
+      f32 i;
       if (has_to || !has_upto) {
 
         if (from > to) {
@@ -622,13 +622,13 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
         
         for (i = from; i < to; i += increment) {
           // todo: should each iteration of the loop have it's own env scope?
-          bind_var_to_int(loop_env, var_index, i);
+          bind_var_to_float(loop_env, var_index, i);
           res = eval_all_nodes(loop_env, body);
         }
       
       } else if (has_upto) {
         for (i = from; i <= upto; i += increment) {
-          bind_var_to_int(loop_env, var_index, i);
+          bind_var_to_float(loop_env, var_index, i);
           res = eval_all_nodes(loop_env, body);
         }
       }
