@@ -150,3 +150,12 @@ void bind_shape_declarations(word_lut *wlut)
   declare_keyword(wlut, "circle", &eval_fn_circle);
   declare_keyword(wlut, "bezier", &eval_fn_bezier);
 }
+
+
+void bind_vm_shape_declarations(word_lut *wlut)
+{
+  declare_vm_native(wlut, "line");
+  declare_vm_native(wlut, "rect");
+  declare_vm_native(wlut, "circle");
+  declare_vm_native(wlut, "bezier");
+}

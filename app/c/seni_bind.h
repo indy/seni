@@ -11,5 +11,6 @@ extern seni_var g_reg;
 #undef COMMON_ARG
 
 void interpreter_declare_keywords(word_lut *wl);
+void vm_declare_keywords(word_lut *wl);
 
 #endif

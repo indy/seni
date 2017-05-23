@@ -724,3 +724,32 @@ void bind_core_declarations(word_lut *wlut)
   declare_keyword(wlut,    "setq",          &eval_keyword_setq);
   declare_keyword(wlut,    "#vars",         &eval_keyword_vars);
 }
+
+
+void bind_vm_core_declarations(word_lut *wlut)
+{
+  // classic functions that don't use named arguments when invoked
+  declare_vm_keyword(wlut, "+", &(wlut->iname_plus));
+  declare_vm_keyword(wlut, "-", &(wlut->iname_minus));
+  declare_vm_keyword(wlut, "*", &(wlut->iname_mult));
+  declare_vm_keyword(wlut, "/", &(wlut->iname_divide));
+  declare_vm_keyword(wlut, "=", &(wlut->iname_equal));
+  declare_vm_keyword(wlut, ">", &(wlut->iname_gt));
+  declare_vm_keyword(wlut, "<", &(wlut->iname_lt));
+  declare_vm_keyword(wlut, "vector/append", &(wlut->iname_vector_append));
+  declare_vm_keyword(wlut, "sqrt", &(wlut->iname_sqrt));
+  declare_vm_keyword(wlut, "mod", &(wlut->iname_mod));
+
+  declare_vm_keyword(wlut, "and", &(wlut->iname_and));
+  declare_vm_keyword(wlut, "or", &(wlut->iname_or));
+  declare_vm_keyword(wlut, "not", &(wlut->iname_not));
+  // TODO: on-matrix-stack
+  // special functions with non-standard syntax
+  declare_vm_keyword(wlut, "define", &(wlut->iname_define));
+  declare_vm_keyword(wlut, "fn", &(wlut->iname_fn));
+  declare_vm_keyword(wlut, "if", &(wlut->iname_if));
+  declare_vm_keyword(wlut, "loop", &(wlut->iname_loop));
+  // for debugging
+  declare_vm_keyword(wlut, "setq", &(wlut->iname_setq));
+  declare_vm_keyword(wlut, "#vars", &(wlut->iname_hash_vars));
+}

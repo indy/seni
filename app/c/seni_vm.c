@@ -360,12 +360,6 @@ i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value)
 
 
 seni_node *compile(seni_node *ast, seni_program *program, bool global_scope);
-word_lut *g_wl = NULL;
-
-bool string_matches(char *a, char *b)
-{
-  return strcmp(a, b) == 0;
-}
 
 // a define statement in the global scope
 seni_node *compile_global_define(seni_node *ast, seni_program *program)
@@ -552,8 +546,8 @@ seni_fn_info *get_local_fn_info(seni_node *node, seni_program *program)
 
 i32 index_of_keyword(const char *keyword, word_lut *wl)
 {
-  for (i32 i = 0; i < wl->keywords_count; i++) {
-    if (strcmp(keyword, wl->keywords[i]) == 0) {
+  for (i32 i = 0; i < wl->keyword_count; i++) {
+    if (strcmp(keyword, wl->keyword[i]) == 0) {
       return KEYWORD_START + i; // the keywords have KEYWORD_START added onto their index
     }
   }
@@ -575,7 +569,7 @@ bool is_seni_node_a_function(seni_node *ast, i32 fn_index)
   return false;
 }
 
-void register_top_level_fns(seni_node *ast, seni_program *program, word_lut *wl)
+void register_top_level_fns(seni_node *ast, seni_program *program)
 {
   i32 i;
   i32 num_fns = 0;
@@ -586,7 +580,7 @@ void register_top_level_fns(seni_node *ast, seni_program *program, word_lut *wl)
   }
   
   // search the wlut for the index of the 'fn' keyword
-  i32 fn_index = index_of_keyword("fn", wl);
+  i32 fn_index = index_of_keyword("fn", program->wl);
 
   // register top level fns
   while (ast != NULL) {
@@ -779,78 +773,85 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
     return safe_next(ast);
   }
   if (ast->type == NODE_NAME) {
-    i32 local_mapping = get_local_mapping(program, ast->value.i);
-    if (local_mapping != -1) {
-      program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, local_mapping);
-      return safe_next(ast);
-    }
 
-    // check arguments if we're in a function
-    if (program->current_fn_info) {
-      i32 argument_mapping = get_argument_mapping(program->current_fn_info, ast->value.i);
-      if (argument_mapping != -1) {
-        program_emit_opcode_i32(program, PUSH, MEM_SEG_ARGUMENT, argument_mapping);
+    i32 iname = ast->value.i;
+    
+    if (iname >= WORD_START && iname < WORD_START + MAX_WORD_LOOKUPS) { // a user defined name
+      
+      i32 local_mapping = get_local_mapping(program, iname);
+      if (local_mapping != -1) {
+        program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, local_mapping);
         return safe_next(ast);
       }
-    }
 
-    i32 global_mapping = get_global_mapping(program, ast->value.i);
-    if (global_mapping != -1) {
-      program_emit_opcode_i32(program, PUSH, MEM_SEG_GLOBAL, global_mapping);
-      return safe_next(ast);
-    }
-
-    // TODO: compare the wlut values against known ones for keywords
-    char *name = wlut_lookup(g_wl, ast->value.i);
-
-    if (string_matches(name, "define")) {
-      if (global_scope) {
-        return compile_global_define(ast, program);
-      } else {
-        return compile_define(ast, program);
+      // check arguments if we're in a function
+      if (program->current_fn_info) {
+        i32 argument_mapping = get_argument_mapping(program->current_fn_info, iname);
+        if (argument_mapping != -1) {
+          program_emit_opcode_i32(program, PUSH, MEM_SEG_ARGUMENT, argument_mapping);
+          return safe_next(ast);
+        }
       }
-    } else if (string_matches(name, "if")) {
-      return compile_if(ast, program);
-    } else if (string_matches(name, "loop")) {
-      return compile_loop(ast, program);
-    } else if (string_matches(name, "fn")) {
-      return compile_fn(ast, program);
-    } else if (string_matches(name, "+")) {
-      compile_rest(ast, program);
-      program_emit_opcode_i32(program, ADD, 0, 0);
-      return safe_next(ast);
-    } else if (string_matches(name, "-")) {
-      // TODO: differentiate between neg and sub?
-      compile_rest(ast, program);
-      program_emit_opcode_i32(program, SUB, 0, 0);
-      return safe_next(ast);
-    } else if (string_matches(name, "=")) {
-      compile_rest(ast, program);
-      program_emit_opcode_i32(program, EQ, 0, 0);
-      return safe_next(ast);
-    } else if (string_matches(name, "<")) {
-      compile_rest(ast, program);
-      program_emit_opcode_i32(program, LT, 0, 0);
-      return safe_next(ast);
-    } else if (string_matches(name, ">")) {
-      compile_rest(ast, program);
-      program_emit_opcode_i32(program, GT, 0, 0);
-      return safe_next(ast);
-    } else if (string_matches(name, "and")) {
-      compile_rest(ast, program);
-      program_emit_opcode_i32(program, AND, 0, 0);
-      return safe_next(ast);
-    } else if (string_matches(name, "or")) {
-      compile_rest(ast, program);
-      program_emit_opcode_i32(program, OR, 0, 0);
-      return safe_next(ast);
-    } else if (string_matches(name, "not")) {
-      compile_rest(ast, program);
-      program_emit_opcode_i32(program, NOT, 0, 0);
-      return safe_next(ast);
-    } else {
-      // look up the name as a local variable?
-      return safe_next(ast);
+
+      i32 global_mapping = get_global_mapping(program, iname);
+      if (global_mapping != -1) {
+        program_emit_opcode_i32(program, PUSH, MEM_SEG_GLOBAL, global_mapping);
+        return safe_next(ast);
+      }
+    } else if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
+
+      if (iname == program->wl->iname_define) {
+        if (global_scope) {
+          return compile_global_define(ast, program);
+        } else {
+          return compile_define(ast, program);
+        }        
+      } else if (iname == program->wl->iname_if) {
+        return compile_if(ast, program);          
+      } else if (iname == program->wl->iname_loop) {
+        return compile_loop(ast, program);
+      } else if (iname == program->wl->iname_fn) {
+        return compile_fn(ast, program);          
+      } else if (iname == program->wl->iname_plus) {
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, ADD, 0, 0);
+        return safe_next(ast);
+      } else if (iname == program->wl->iname_minus) {
+        // TODO: differentiate between neg and sub?
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, SUB, 0, 0);
+        return safe_next(ast);
+      } else if (iname == program->wl->iname_equal) {
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, EQ, 0, 0);
+        return safe_next(ast);
+      } else if (iname == program->wl->iname_lt) {
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, LT, 0, 0);
+        return safe_next(ast);
+      } else if (iname == program->wl->iname_gt) {
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, GT, 0, 0);
+        return safe_next(ast);
+      } else if (iname == program->wl->iname_and) {
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, AND, 0, 0);
+        return safe_next(ast);
+      } else if (iname == program->wl->iname_or) {
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, OR, 0, 0);
+        return safe_next(ast);
+      } else if (iname == program->wl->iname_not) {
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, NOT, 0, 0);
+        return safe_next(ast);
+      } else {
+        // look up the name as a local variable?
+        return safe_next(ast);        
+      }
+
+    } else if ( iname >= NATIVE_START && iname < NATIVE_START + MAX_NATIVE_LOOKUPS){
+      // NATIVE
     }
   }
 
@@ -859,17 +860,15 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
 
 // compiles the ast into bytecode for a stack based VM
 //
-void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl)
+void compiler_compile(seni_node *ast, seni_program *program)
 {
-  g_wl = wl;
-
   clear_global_mappings(program);
   clear_local_mappings(program);
   program->current_fn_info = NULL;
   
-  register_top_level_fns(ast, program, wl);
+  register_top_level_fns(ast, program);
 
-  i32 fn_index = index_of_keyword("fn", wl);
+  i32 fn_index = index_of_keyword("fn", program->wl);
   seni_bytecode *start = program_emit_opcode_i32(program, JUMP, 0, 0);
   bool found_start = false;
   

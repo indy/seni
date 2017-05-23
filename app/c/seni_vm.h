@@ -68,6 +68,8 @@ typedef struct {
 
   seni_fn_info fn_info[MAX_TOP_LEVEL_FUNCTIONS];
 
+  word_lut *wl;
+
 } seni_program;
 
 seni_program *program_allocate(i32 code_max_size);
@@ -100,7 +102,7 @@ seni_var *stack_peek2(seni_virtual_machine *vm);
 seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size);
 void virtual_machine_free(seni_virtual_machine *vm);
 
-void compiler_compile(seni_node *ast, seni_program *program, word_lut *wl);
+void compiler_compile(seni_node *ast, seni_program *program);
 
 void vm_interpret(seni_virtual_machine *vm, seni_program *program);
 

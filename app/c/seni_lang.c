@@ -40,12 +40,13 @@ typedef struct keyword {
 
 keyword g_keyword[MAX_KEYWORD_LOOKUPS];
 
+
 /* returns 0 if not found */
-i32 lookup_reserved_name(word_lut *wlut, char *string, size_t len)
+i32 lookup_name(char **words, i32 word_count, i32 offset, char *string, size_t len)
 {
   i32 i = 0;
-  for (i = 0; i < wlut->keywords_count; i++) {
-    char *name = wlut->keywords[i];
+  for (i = 0; i < word_count; i++) {
+    char *name = words[i];
     bool found = true;
     /* can't use string_compare since 'string' could be a substring */
     size_t j = 0;
@@ -57,78 +58,101 @@ i32 lookup_reserved_name(word_lut *wlut, char *string, size_t len)
     }
     /* searched all of 'string' and the early exit wasn't triggered */
     if (name[j] == '\0' && found == true) {
-      return i + KEYWORD_START; // add offset
+      return i + offset;
     }
   }
 
-  return 0;
+  return -1;  
+}
+
+i32 wlut_lookup_(word_lut *wlut, char *string, size_t len)
+{
+  i32 native = lookup_name(wlut->native, wlut->native_count, NATIVE_START, string, len);
+  if (native != -1) {
+    return native;
+  }
+
+  i32 keyword = lookup_name(wlut->keyword, wlut->keyword_count, KEYWORD_START, string, len);
+  if (keyword != -1) {
+    return keyword;
+  }
+
+  i32 word = lookup_name(wlut->word, wlut->word_count, WORD_START, string, len);
+  if (word != -1) {
+    return word;
+  }
+
+  return -1;
+}
+
+i32 wlut_lookup(word_lut *wlut, char *string)
+{
+  size_t len = strlen(string);
+  return wlut_lookup_(wlut, string, len);
 }
 
 i32 wlut_lookup_or_add(word_lut *wlut, char *string, size_t len)
 {
-  i32 reserved = lookup_reserved_name(wlut, string, len);
-  if (reserved != 0) {
-    return reserved;
+  i32 iname = wlut_lookup_(wlut, string, len);
+  if (iname != -1) {
+    return iname;
   }
-  
-  i32 i = 0;
-  for (i = 0; i < wlut->words_count; i++) {
-    char *name = wlut->words[i];
-    bool found = true;
-    /* can't use string_compare since 'string' could be a substring */
-    size_t j = 0;
-    for (j = 0; j < len; j++) {
-      if (name[j] == '\0' || (name[j] != string[j])) {
-        found = false;
-        break;
-      }
-    }
-    /* searched all of 'string' and the early exit wasn't triggered */
-    if (name[j] == '\0' && found == true) {
-      return i;
-    }
-  }
-  
+
   /* string is not in the table and there's no room for another entry */
-  if (i >= MAX_WORD_LOOKUPS) {
+  if (wlut->word_count >= MAX_WORD_LOOKUPS) {
     return -1;
   }
 
   // the string is not in the lookup table, so add it
-  string_copy_len(&(wlut->words[i]), string, len);
-  wlut->words_count++;
+  string_copy_len(&(wlut->word[wlut->word_count]), string, len);
+  wlut->word_count++;
 
-  return i;
+  return wlut->word_count - 1;
 }
 
-char *wlut_lookup(word_lut *wlut, i32 index)
+
+char *wlut_reverse_lookup(word_lut *wlut, i32 index)
 {
-  if (index >= KEYWORD_START) {
-    return wlut->keywords[index - KEYWORD_START];
+  if (index >= NATIVE_START && index < (NATIVE_START + MAX_NATIVE_LOOKUPS)) {
+    return wlut->native[index - NATIVE_START];
   }
-  return wlut->words[index];
+  if (index >= KEYWORD_START && index < (KEYWORD_START + MAX_KEYWORD_LOOKUPS)) {
+    return wlut->keyword[index - KEYWORD_START];
+  }
+  return wlut->word[index];
 }
 
 void wlut_free_keywords(word_lut *wlut)
 {
   for( int i = 0; i < MAX_KEYWORD_LOOKUPS; i++) {
-    if (wlut->keywords[i]) {
-      free(wlut->keywords[i]);
+    if (wlut->keyword[i]) {
+      free(wlut->keyword[i]);
     }
-    wlut->keywords[i] = 0;      
+    wlut->keyword[i] = 0;      
   }
-  wlut->keywords_count = 0;
+  wlut->keyword_count = 0;
+}
+
+void wlut_free_natives(word_lut *wlut)
+{
+  for( int i = 0; i < MAX_NATIVE_LOOKUPS; i++) {
+    if (wlut->native[i]) {
+      free(wlut->native[i]);
+    }
+    wlut->native[i] = 0;      
+  }
+  wlut->native_count = 0;
 }
 
 void wlut_free_words(word_lut *wlut)
 {
   for( int i = 0; i < MAX_WORD_LOOKUPS; i++) {
-    if (wlut->words[i]) {
-      free(wlut->words[i]);
+    if (wlut->word[i]) {
+      free(wlut->word[i]);
     }
-    wlut->words[i] = 0;      
+    wlut->word[i] = 0;      
   }
-  wlut->words_count = 0;
+  wlut->word_count = 0;
 }
 
 word_lut *wlut_allocate()
@@ -141,6 +165,7 @@ void wlut_free(word_lut *wlut)
 {
   wlut_free_words(wlut);
   wlut_free_keywords(wlut);
+  wlut_free_natives(wlut);
   free(wlut);
 }
 
@@ -1733,13 +1758,36 @@ void string_copy(char **dst, char *src)
 //void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *))
 void declare_keyword(word_lut *wlut, char *name, eval_function_ptr function_ptr)
 {
-  string_copy(&(wlut->keywords[wlut->keywords_count]), name);
-  g_keyword[wlut->keywords_count].name = wlut->keywords[wlut->keywords_count];
-  g_keyword[wlut->keywords_count].function_ptr = function_ptr;
-  wlut->keywords_count++;
+  string_copy(&(wlut->keyword[wlut->keyword_count]), name);
+  g_keyword[wlut->keyword_count].name = wlut->keyword[wlut->keyword_count];
+  g_keyword[wlut->keyword_count].function_ptr = function_ptr;
+  wlut->keyword_count++;
 
-  if (wlut->keywords_count > MAX_KEYWORD_LOOKUPS) {
+  if (wlut->keyword_count > MAX_KEYWORD_LOOKUPS) {
     SENI_ERROR("cannot declare keyword - wlut is full");
+  }
+}
+
+void declare_vm_keyword(word_lut *wlut, char *name, i32 *iname)
+{
+  string_copy(&(wlut->keyword[wlut->keyword_count]), name);
+  if (iname) {
+    *iname = wlut->keyword_count + KEYWORD_START;
+  }
+  wlut->keyword_count++;
+
+  if (wlut->keyword_count > MAX_KEYWORD_LOOKUPS) {
+    SENI_ERROR("cannot declare keyword - wlut is full");
+  }
+}
+
+void declare_vm_native(word_lut *wlut, char *name)
+{
+  string_copy(&(wlut->native[wlut->native_count]), name);
+  wlut->native_count++;
+
+  if (wlut->native_count > MAX_NATIVE_LOOKUPS) {
+    SENI_ERROR("cannot declare native - wlut is full");
   }
 }
 

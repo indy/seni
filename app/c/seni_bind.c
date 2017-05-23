@@ -15,7 +15,7 @@ void interpreter_declare_keywords(word_lut *wlut)
   g_reg.debug_allocatable = false;
 #endif
 
-  wlut->keywords_count = 0;
+  wlut->keyword_count = 0;
 
   // common arguments used by keywords and the standard api
   #define COMMON_ARG(VAR,WORD) declare_common_arg(wlut, WORD, &VAR);
@@ -24,4 +24,21 @@ void interpreter_declare_keywords(word_lut *wlut)
 
   bind_core_declarations(wlut);
   bind_shape_declarations(wlut);
+}
+
+void vm_declare_keywords(word_lut *wlut)
+{
+#ifdef SENI_DEBUG_MODE
+  g_reg.debug_allocatable = false;
+#endif
+
+  wlut->keyword_count = 0;
+  
+  // common arguments used by keywords and the standard api
+  #define COMMON_ARG(VAR,WORD) declare_common_arg(wlut, WORD, &VAR);
+  #include "seni_common_args.h"
+  #undef COMMON_ARG
+
+  bind_vm_core_declarations(wlut);
+  bind_vm_shape_declarations(wlut);
 }

@@ -60,7 +60,7 @@ seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *va
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
-  char *c = wlut->words[node->value.i];
+  char *c = wlut->word[node->value.i];
   TEST_ASSERT_EQUAL_STRING(val, c);
   
   return node->next;
@@ -701,6 +701,16 @@ void test_uv_mapper(void)
 
 // --------------------------------------------------
 
+word_lut *setup_vm_wl()
+{
+  word_lut *wl = wlut_allocate();
+  // add keywords to the word_lut and setup function pointers within the interpreter
+  vm_declare_keywords(wl);
+
+  return wl;
+}
+
+
 // debug version of VM_COMPILE - prints the bytecode
 //
 #define DVM_COMPILE(EXPR) word_lut *wl = NULL;            \
@@ -708,10 +718,11 @@ void test_uv_mapper(void)
   seni_program *prog = NULL;                              \
   seni_virtual_machine *vm = NULL;                        \
   debug_reset();                                          \
-  wl = setup_interpreter_wl();                            \
+  wl = setup_vm_wl();                                     \
   ast = parser_parse(wl, EXPR);                           \
   prog = program_allocate(256);                           \
-  compiler_compile(ast, prog, wl);                        \
+  prog->wl = wl;                                          \
+  compiler_compile(ast, prog);                            \
   vm = virtual_machine_construct(STACK_SIZE,MEMORY_SIZE); \
   printf("%s\n", EXPR);                                   \
   program_pretty_print(prog);
@@ -725,10 +736,11 @@ void test_uv_mapper(void)
   seni_program *prog = NULL;                                \
   seni_virtual_machine *vm = NULL;                          \
   debug_reset();                                            \
-  wl = setup_interpreter_wl();                              \
+  wl = setup_vm_wl();                                       \
   ast = parser_parse(wl, EXPR);                             \
   prog = program_allocate(256);                             \
-  compiler_compile(ast, prog, wl);                          \
+  prog->wl = wl;                                            \
+  compiler_compile(ast, prog);                              \
   vm = virtual_machine_construct(STACK_SIZE,MEMORY_SIZE);   \
   vm_interpret(vm, prog)
 
