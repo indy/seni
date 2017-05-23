@@ -124,6 +124,7 @@ typedef struct seni_env {
   
 } seni_env;
 
+typedef seni_var *(*eval_function_ptr)(seni_env *, seni_node *);
 
 typedef struct seni_debug_info {
   i32 num_var_allocated;
@@ -211,5 +212,7 @@ void debug_var_info(seni_env *env);
 void debug_reset();
 void pretty_print_seni_var(seni_var *var, char* msg);
 void pretty_print_seni_node(seni_node *node, char* msg);
-  
+
+
+
 #endif

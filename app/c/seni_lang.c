@@ -34,7 +34,7 @@ void string_copy_len(char **dst, char *src, size_t len)
 
 // interpreting typedefs and globals
 typedef struct keyword {
-  seni_var *(*function_ptr)(seni_env *, seni_node *);
+  eval_function_ptr function_ptr;
   char *name;
 } keyword;
 
@@ -1730,7 +1730,8 @@ void string_copy(char **dst, char *src)
 
 // NOTE: the keyword.name is pointing to memory that's managed by the word_lut
 //
-void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *))
+//void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *))
+void declare_keyword(word_lut *wlut, char *name, eval_function_ptr function_ptr)
 {
   string_copy(&(wlut->keywords[wlut->keywords_count]), name);
   g_keyword[wlut->keywords_count].name = wlut->keywords[wlut->keywords_count];
