@@ -19,14 +19,18 @@ OPCODE(JUMP, 0)
 // Pop and if not truthy then jump the instruction pointer [arg] forward.
 OPCODE(JUMP_IF, -1)
 
-OPCODE(CALL, 0)
 // _0 == keep the existing frame, don't push/pop one
 // CALL_0 is 1 because it results in a RET call and that will
 // push the top value of the last frame onto the current frame
 //
+OPCODE(CALL, 0)
 OPCODE(CALL_0, 1)
 OPCODE(RET, 0)
 OPCODE(RET_0, 0)
+
+// calls a native function, leaving the result on the stack
+// offset is 0 as the vm->opcode_offset is modified by the native helper function
+OPCODE(NATIVE, 0)
 
 OPCODE (NOP, 0)
 OPCODE (STOP, 0)

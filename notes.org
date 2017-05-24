@@ -1,5 +1,5 @@
-* TODO [0/8]
-  1. [ ] default all numbers to float
+* TODO [1/8]
+  1. [X] default all numbers to float
   2. [ ] calling native built-in functions
   3. [ ] manipulate vectors
   4. [ ] special fn: on-matrix-stack

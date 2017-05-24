@@ -9,7 +9,7 @@ seni_var g_reg;
 #include "seni_common_args.h"
 #undef COMMON_ARG
 
-void interpreter_declare_keywords(word_lut *wlut)
+void interpreter_declare_keywords(seni_word_lut *wlut)
 {
 #ifdef SENI_DEBUG_MODE
   g_reg.debug_allocatable = false;
@@ -26,7 +26,7 @@ void interpreter_declare_keywords(word_lut *wlut)
   bind_shape_declarations(wlut);
 }
 
-void vm_declare_keywords(word_lut *wlut)
+void vm_declare_keywords(seni_word_lut *wlut, seni_vm_environment *e)
 {
 #ifdef SENI_DEBUG_MODE
   g_reg.debug_allocatable = false;
@@ -40,5 +40,5 @@ void vm_declare_keywords(word_lut *wlut)
   #undef COMMON_ARG
 
   bind_vm_core_declarations(wlut);
-  bind_vm_shape_declarations(wlut);
+  bind_vm_shape_declarations(wlut, e);
 }

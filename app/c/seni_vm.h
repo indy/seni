@@ -29,6 +29,35 @@ typedef enum {
 
 #define MAX_NUM_ARGUMENTS 16
 
+
+
+// Virtual Machine
+//
+typedef struct seni_virtual_machine {
+  seni_var *heap;
+  i32 heap_size;
+  
+  seni_var *stack;
+  i32 stack_size;
+
+  i32 fp;                       // frame pointer
+  i32 sp;                       // stack pointer
+  i32 ip;                       // instruction pointer
+
+  i32 global;                   // single segment of memory at top of stack
+  i32 local;                    // per-frame segment of memory for local variables
+
+} seni_virtual_machine;
+
+seni_var *stack_push(seni_virtual_machine *vm);
+seni_var *stack_pop(seni_virtual_machine *vm);
+seni_var *stack_peek(seni_virtual_machine *vm);
+seni_var *stack_peek2(seni_virtual_machine *vm);
+
+seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size);
+void virtual_machine_free(seni_virtual_machine *vm);
+void pretty_print_virtual_machine(seni_virtual_machine *vm, char* msg);
+
 // codes
 //
 typedef enum {
@@ -54,6 +83,13 @@ typedef struct {
   i32 argument_offsets[MAX_NUM_ARGUMENTS];
 } seni_fn_info;
 
+
+typedef void (*native_function_ptr)(seni_virtual_machine *vm, i32 num_args);
+typedef struct {
+  native_function_ptr function_ptr[MAX_NATIVE_LOOKUPS];
+} seni_vm_environment;
+
+
 typedef struct {
   seni_bytecode *code;
   i32 code_max_size;
@@ -68,7 +104,12 @@ typedef struct {
 
   seni_fn_info fn_info[MAX_TOP_LEVEL_FUNCTIONS];
 
-  word_lut *wl;
+  // todo: splut up seni_word_lut, keep the word array in seni_program but move the
+  // native and keyword stuff into their own structure that can be shared amongst
+  // multiple seni_programs
+  seni_word_lut *wl;
+
+  seni_vm_environment *vm_environment;
 
 } seni_program;
 
@@ -76,36 +117,13 @@ seni_program *program_allocate(i32 code_max_size);
 void program_free(seni_program *program);
 void program_pretty_print(seni_program *program);
 
-// Virtual Machine
-//
-typedef struct {
-  seni_var *heap;
-  i32 heap_size;
-  
-  seni_var *stack;
-  i32 stack_size;
+seni_vm_environment *vm_environment_construct();
+void vm_environment_free(seni_vm_environment *e);
 
-  i32 fp;                       // frame pointer
-  i32 sp;                       // stack pointer
-  i32 ip;                       // instruction pointer
-
-  i32 global;                   // single segment of memory at top of stack
-  i32 local;                    // per-frame segment of memory for local variables
-} seni_virtual_machine;
-
-seni_var *stack_push(seni_virtual_machine *vm);
-seni_var *stack_pop(seni_virtual_machine *vm);
-seni_var *stack_peek(seni_virtual_machine *vm);
-seni_var *stack_peek2(seni_virtual_machine *vm);
-
-
-seni_virtual_machine *virtual_machine_construct(i32 stack_size, i32 heap_size);
-void virtual_machine_free(seni_virtual_machine *vm);
+void declare_vm_keyword(seni_word_lut *wlut, char *name, i32 *iname);
+void declare_vm_native(seni_word_lut *wlut, char *name, seni_vm_environment *e, native_function_ptr function_ptr);
 
 void compiler_compile(seni_node *ast, seni_program *program);
-
 void vm_interpret(seni_virtual_machine *vm, seni_program *program);
-
-void pretty_print_virtual_machine(seni_virtual_machine *vm, char* msg);
 
 #endif

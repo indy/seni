@@ -195,6 +195,12 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b)
     } else {
       printf("WTF!\n");
     }
+  } else if (b->op == NATIVE) {
+    printf("%d\t%s\t%d\t%d\n",
+           ip,
+           opcode_name(b->op),
+           b->arg0.value.i,
+           b->arg1.value.i);    
   } else if (b->op == CALL_0 || b->op == CALL) {
     printf("%d\t%s\t%d\t%d\n",
            ip,
@@ -213,6 +219,17 @@ void program_pretty_print(seni_program *program)
     bytecode_pretty_print(i, b);
   }
   printf("\n");
+}
+
+seni_vm_environment *vm_environment_construct()
+{
+  seni_vm_environment *e = (seni_vm_environment *)calloc(sizeof(seni_vm_environment), 1);
+  return e;
+}
+
+void vm_environment_free(seni_vm_environment *e)
+{
+  free(e);
 }
 
 // **************************************************
@@ -281,6 +298,33 @@ void pretty_print_virtual_machine(seni_virtual_machine *vm, char* msg)
   i32 onStackNumArgs = (fp + 2)->value.i;
   printf("\ton stack: fp:%d ip:%d numArgs:%d\n", onStackFP, onStackIP, onStackNumArgs);
 }
+
+void declare_vm_keyword(seni_word_lut *wlut, char *name, i32 *iname)
+{
+  string_copy(&(wlut->keyword[wlut->keyword_count]), name);
+  if (iname) {
+    *iname = wlut->keyword_count + KEYWORD_START;
+  }
+  wlut->keyword_count++;
+
+  if (wlut->keyword_count > MAX_KEYWORD_LOOKUPS) {
+    SENI_ERROR("cannot declare keyword - wlut is full");
+  }
+}
+
+void declare_vm_native(seni_word_lut *wlut, char *name, seni_vm_environment *e, native_function_ptr function_ptr)
+{
+  string_copy(&(wlut->native[wlut->native_count]), name);
+
+  e->function_ptr[wlut->native_count] = function_ptr;
+
+  wlut->native_count++;
+
+  if (wlut->native_count > MAX_NATIVE_LOOKUPS) {
+    SENI_ERROR("cannot declare native - wlut is full");
+  }
+}
+
 
 // **************************************************
 // Compiler
@@ -544,7 +588,7 @@ seni_fn_info *get_local_fn_info(seni_node *node, seni_program *program)
 }
 
 
-i32 index_of_keyword(const char *keyword, word_lut *wl)
+i32 index_of_keyword(const char *keyword, seni_word_lut *wl)
 {
   for (i32 i = 0; i < wl->keyword_count; i++) {
     if (strcmp(keyword, wl->keyword[i]) == 0) {
@@ -852,6 +896,27 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
 
     } else if ( iname >= NATIVE_START && iname < NATIVE_START + MAX_NATIVE_LOOKUPS){
       // NATIVE
+
+      // note: how to count the stack delta? how many pop voids are required?
+      // todo: modify opcode_offset according to how many args were given
+      i32 num_args = 0;
+      seni_node *args = safe_next(ast); // pairs of label/value declarations
+      while (args != NULL) {
+        seni_node *label = args;
+        seni_node *value = safe_next(label);
+
+        program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, label->value.i);
+        compile(value, program, global_scope);
+
+        num_args++;
+        args = safe_next(value);
+      }
+      
+      program_emit_opcode_i32(program, NATIVE, iname, num_args);
+
+      
+      
+      return safe_next(ast);
     }
   }
 
@@ -1049,6 +1114,16 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       STACK_PUSH;
       safe_var_move(v, src);
 
+      break;
+
+    case NATIVE:
+
+      i32 iname = bc->arg0.value.i - NATIVE_START;
+      num_args = bc->arg1.value.i;
+
+      native_function_ptr native_func = program->vm_environment->function_ptr[iname];
+      native_func(vm, num_args);
+      
       break;
 
     case ADD:

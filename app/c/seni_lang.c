@@ -65,7 +65,7 @@ i32 lookup_name(char **words, i32 word_count, i32 offset, char *string, size_t l
   return -1;  
 }
 
-i32 wlut_lookup_(word_lut *wlut, char *string, size_t len)
+i32 wlut_lookup_(seni_word_lut *wlut, char *string, size_t len)
 {
   i32 native = lookup_name(wlut->native, wlut->native_count, NATIVE_START, string, len);
   if (native != -1) {
@@ -85,13 +85,13 @@ i32 wlut_lookup_(word_lut *wlut, char *string, size_t len)
   return -1;
 }
 
-i32 wlut_lookup(word_lut *wlut, char *string)
+i32 wlut_lookup(seni_word_lut *wlut, char *string)
 {
   size_t len = strlen(string);
   return wlut_lookup_(wlut, string, len);
 }
 
-i32 wlut_lookup_or_add(word_lut *wlut, char *string, size_t len)
+i32 wlut_lookup_or_add(seni_word_lut *wlut, char *string, size_t len)
 {
   i32 iname = wlut_lookup_(wlut, string, len);
   if (iname != -1) {
@@ -111,7 +111,7 @@ i32 wlut_lookup_or_add(word_lut *wlut, char *string, size_t len)
 }
 
 
-char *wlut_reverse_lookup(word_lut *wlut, i32 index)
+char *wlut_reverse_lookup(seni_word_lut *wlut, i32 index)
 {
   if (index >= NATIVE_START && index < (NATIVE_START + MAX_NATIVE_LOOKUPS)) {
     return wlut->native[index - NATIVE_START];
@@ -122,7 +122,7 @@ char *wlut_reverse_lookup(word_lut *wlut, i32 index)
   return wlut->word[index];
 }
 
-void wlut_free_keywords(word_lut *wlut)
+void wlut_free_keywords(seni_word_lut *wlut)
 {
   for( int i = 0; i < MAX_KEYWORD_LOOKUPS; i++) {
     if (wlut->keyword[i]) {
@@ -133,7 +133,7 @@ void wlut_free_keywords(word_lut *wlut)
   wlut->keyword_count = 0;
 }
 
-void wlut_free_natives(word_lut *wlut)
+void wlut_free_natives(seni_word_lut *wlut)
 {
   for( int i = 0; i < MAX_NATIVE_LOOKUPS; i++) {
     if (wlut->native[i]) {
@@ -144,7 +144,7 @@ void wlut_free_natives(word_lut *wlut)
   wlut->native_count = 0;
 }
 
-void wlut_free_words(word_lut *wlut)
+void wlut_free_words(seni_word_lut *wlut)
 {
   for( int i = 0; i < MAX_WORD_LOOKUPS; i++) {
     if (wlut->word[i]) {
@@ -155,13 +155,13 @@ void wlut_free_words(word_lut *wlut)
   wlut->word_count = 0;
 }
 
-word_lut *wlut_allocate()
+seni_word_lut *wlut_allocate()
 {
-  word_lut *wl = (word_lut *)calloc(1, sizeof(word_lut));
+  seni_word_lut *wl = (seni_word_lut *)calloc(1, sizeof(seni_word_lut));
   return wl;
 }
 
-void wlut_free(word_lut *wlut)
+void wlut_free(seni_word_lut *wlut)
 {
   wlut_free_words(wlut);
   wlut_free_keywords(wlut);
@@ -296,7 +296,7 @@ char *find_next(char *s, char target)
   return NULL;
 }
 
-seni_node *build_text_lookup_node_from_string(word_lut *wlut, seni_node_type type, char *string)
+seni_node *build_text_lookup_node_from_string(seni_word_lut *wlut, seni_node_type type, char *string)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   size_t len = strlen(string);
@@ -312,7 +312,7 @@ seni_node *build_text_lookup_node_from_string(word_lut *wlut, seni_node_type typ
   return node;
 }
 
-seni_node *build_text_lookup_node_of_length(word_lut *wlut, char **src, seni_node_type type, size_t len)
+seni_node *build_text_lookup_node_of_length(seni_word_lut *wlut, char **src, seni_node_type type, size_t len)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
 
@@ -346,7 +346,7 @@ seni_node *build_text_node_of_length(char **src, seni_node_type type, size_t len
   return node;
 }
 
-seni_node *consume_list(word_lut *wlut, char **src)
+seni_node *consume_list(seni_word_lut *wlut, char **src)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_LIST;
@@ -369,7 +369,7 @@ seni_node *consume_list(word_lut *wlut, char **src)
   }
 }
 
-seni_node *consume_vector(word_lut *wlut, char **src)
+seni_node *consume_vector(seni_word_lut *wlut, char **src)
 {
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_VECTOR;
@@ -392,7 +392,7 @@ seni_node *consume_vector(word_lut *wlut, char **src)
   }
 }
 
-seni_node *consume_bracket(word_lut *wlut, char **src)
+seni_node *consume_bracket(seni_word_lut *wlut, char **src)
 {
   seni_node *node;
   seni_node *parameter_prefix = NULL;
@@ -449,7 +449,7 @@ seni_node *consume_bracket(word_lut *wlut, char **src)
   }
 }
 
-seni_node *consume_quoted_form(word_lut *wlut, char **src)
+seni_node *consume_quoted_form(seni_word_lut *wlut, char **src)
 {
   (*src)++; // '
   
@@ -511,7 +511,7 @@ seni_node *consume_boolean(char **src, bool val)
 }
 
 
-seni_node *consume_name(word_lut *wlut, char **src)
+seni_node *consume_name(seni_word_lut *wlut, char **src)
 {
   size_t i = 0;
   char *rem = *src;
@@ -529,7 +529,7 @@ seni_node *consume_name(word_lut *wlut, char **src)
   return node;
 }
 
-seni_node *consume_string(word_lut *wlut, char **src)
+seni_node *consume_string(seni_word_lut *wlut, char **src)
 {
   (*src)++; // skip the first \"
 
@@ -547,7 +547,7 @@ seni_node *consume_string(word_lut *wlut, char **src)
   return node;
 }
 
-seni_node *consume_label(word_lut *wlut, char **src)
+seni_node *consume_label(seni_word_lut *wlut, char **src)
 {
   size_t i = 0;
   char *rem = *src;
@@ -613,7 +613,7 @@ seni_node *consume_whitespace(char **src)
   return node;
 }
 
-seni_node *consume_item(word_lut *wlut, char **src)
+seni_node *consume_item(seni_word_lut *wlut, char **src)
 {
   char c = **src;
 
@@ -745,7 +745,7 @@ void parser_free_nodes(seni_node *nodes)
   }
 }
 
-seni_node *parser_parse(word_lut *wlut, char *s)
+seni_node *parser_parse(seni_word_lut *wlut, char *s)
 {
   if (s == NULL) {
     return NULL;
@@ -1753,10 +1753,10 @@ void string_copy(char **dst, char *src)
   *dst = c;
 }
 
-// NOTE: the keyword.name is pointing to memory that's managed by the word_lut
+// NOTE: the keyword.name is pointing to memory that's managed by the seni_word_lut
 //
-//void declare_keyword(word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *))
-void declare_keyword(word_lut *wlut, char *name, eval_function_ptr function_ptr)
+//void declare_keyword(seni_word_lut *wlut, char *name, seni_var *(*function_ptr)(seni_env *, seni_node *))
+void declare_keyword(seni_word_lut *wlut, char *name, eval_function_ptr function_ptr)
 {
   string_copy(&(wlut->keyword[wlut->keyword_count]), name);
   g_keyword[wlut->keyword_count].name = wlut->keyword[wlut->keyword_count];
@@ -1768,30 +1768,8 @@ void declare_keyword(word_lut *wlut, char *name, eval_function_ptr function_ptr)
   }
 }
 
-void declare_vm_keyword(word_lut *wlut, char *name, i32 *iname)
-{
-  string_copy(&(wlut->keyword[wlut->keyword_count]), name);
-  if (iname) {
-    *iname = wlut->keyword_count + KEYWORD_START;
-  }
-  wlut->keyword_count++;
 
-  if (wlut->keyword_count > MAX_KEYWORD_LOOKUPS) {
-    SENI_ERROR("cannot declare keyword - wlut is full");
-  }
-}
-
-void declare_vm_native(word_lut *wlut, char *name)
-{
-  string_copy(&(wlut->native[wlut->native_count]), name);
-  wlut->native_count++;
-
-  if (wlut->native_count > MAX_NATIVE_LOOKUPS) {
-    SENI_ERROR("cannot declare native - wlut is full");
-  }
-}
-
-void declare_common_arg(word_lut *wlut, char *name, i32 *global_value)
+void declare_common_arg(seni_word_lut *wlut, char *name, i32 *global_value)
 {
   declare_keyword(wlut, name, NULL);
   i32 i = wlut_lookup_or_add(wlut, name, strlen(name));

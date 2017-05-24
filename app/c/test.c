@@ -56,7 +56,7 @@ seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *va
   return node->next;
 }
 
-seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, word_lut *wlut)
+seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, seni_word_lut *wlut)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
@@ -76,7 +76,7 @@ seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *va
 void test_lang_parser(void)
 {
   seni_node *nodes, *iter, *iter2;
-  word_lut *wl;
+  seni_word_lut *wl;
 
   PARSE("hello");
   assert_parser_node_txt(nodes, NODE_NAME, "hello", wl);
@@ -281,10 +281,10 @@ void assert_seni_var_false(seni_var *var)
   TEST_ASSERT_EQUAL(0, var->value.i);
 }
 
-word_lut *setup_interpreter_wl()
+seni_word_lut *setup_interpreter_wl()
 {
-  word_lut *wl = wlut_allocate();
-  // add keywords to the word_lut and setup function pointers within the interpreter
+  seni_word_lut *wl = wlut_allocate();
+  // add keywords to the seni_word_lut and setup function pointers within the interpreter
   interpreter_declare_keywords(wl);
 
   return wl;
@@ -298,7 +298,7 @@ seni_env *setup_basic_interpreter_env()
   return env;
 }
 
-seni_env *setup_interpreter_env(word_lut *wl)
+seni_env *setup_interpreter_env(seni_word_lut *wl)
 {
   seni_env *env = setup_basic_interpreter_env();
 
@@ -311,14 +311,14 @@ seni_env *setup_interpreter_env(word_lut *wl)
   return env;
 }
 
-void shutdown_interpreter_test(word_lut *wl, seni_node *ast)
+void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 {
   env_free_pools();
   wlut_free(wl);
   parser_free_nodes(ast);
 }
 
-void add_binding_i32(word_lut *wl, seni_env *env, char *name, i32 i)
+void add_binding_i32(seni_word_lut *wl, seni_env *env, char *name, i32 i)
 {
   // add a foo binding to env
   i32 name_index = wlut_lookup_or_add(wl, name, strlen(name));
@@ -385,7 +385,7 @@ void debug_memory(char *expression)
 #define SENI_ASSERT_VEC_FLOAT(EXPECTED) assert_seni_var_f32(var, VAR_FLOAT, EXPECTED); \
   var = var->next
 
-#define EVAL_DECL   word_lut *wl = NULL; \
+#define EVAL_DECL   seni_word_lut *wl = NULL; \
   seni_env *env = NULL; \
   seni_node *ast = NULL; \
   seni_var *var = NULL
@@ -701,11 +701,11 @@ void test_uv_mapper(void)
 
 // --------------------------------------------------
 
-word_lut *setup_vm_wl()
+seni_word_lut *setup_vm_wl(seni_vm_environment *e)
 {
-  word_lut *wl = wlut_allocate();
-  // add keywords to the word_lut and setup function pointers within the interpreter
-  vm_declare_keywords(wl);
+  seni_word_lut *wl = wlut_allocate();
+  // add keywords to the seni_word_lut and setup function pointers within the interpreter
+  vm_declare_keywords(wl, e);
 
   return wl;
 }
@@ -713,15 +713,18 @@ word_lut *setup_vm_wl()
 
 // debug version of VM_COMPILE - prints the bytecode
 //
-#define DVM_COMPILE(EXPR) word_lut *wl = NULL;            \
+#define DVM_COMPILE(EXPR) seni_word_lut *wl = NULL;       \
+  seni_vm_environment *e = NULL;                          \
   seni_node *ast = NULL;                                  \
   seni_program *prog = NULL;                              \
   seni_virtual_machine *vm = NULL;                        \
   debug_reset();                                          \
-  wl = setup_vm_wl();                                     \
+  e = vm_environment_construct();                         \
+  wl = setup_vm_wl(e);                                    \
   ast = parser_parse(wl, EXPR);                           \
   prog = program_allocate(256);                           \
   prog->wl = wl;                                          \
+  prog->vm_environment = e;                               \
   compiler_compile(ast, prog);                            \
   vm = virtual_machine_construct(STACK_SIZE,MEMORY_SIZE); \
   printf("%s\n", EXPR);                                   \
@@ -731,15 +734,18 @@ word_lut *setup_vm_wl()
 
 // eval version of VM_COMPILE - evals and compares result to an int
 //
-#define EVM_COMPILE(EXPR) word_lut *wl = NULL;              \
+#define EVM_COMPILE(EXPR) seni_word_lut *wl = NULL;         \
+  seni_vm_environment *e = NULL;                            \
   seni_node *ast = NULL;                                    \
   seni_program *prog = NULL;                                \
   seni_virtual_machine *vm = NULL;                          \
   debug_reset();                                            \
-  wl = setup_vm_wl();                                       \
+  e = vm_environment_construct();                           \
+  wl = setup_vm_wl(e);                                      \
   ast = parser_parse(wl, EXPR);                             \
   prog = program_allocate(256);                             \
   prog->wl = wl;                                            \
+  prog->vm_environment = e;                                 \
   compiler_compile(ast, prog);                              \
   vm = virtual_machine_construct(STACK_SIZE,MEMORY_SIZE);   \
   vm_interpret(vm, prog)
@@ -750,12 +756,13 @@ word_lut *setup_vm_wl()
 
 #define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
   program_free(prog);                                   \
+  vm_environment_free(e);                               \
   virtual_machine_free(vm)
 
 
 // COMPILE macros that eval and compare results
 //
-#if 1
+#if 0
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
@@ -843,9 +850,8 @@ void test_vm_callret(void)
 
 void test_vm_temp(void)
 {
-  //VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
-  // broken
-  VM_COMPILE_FLOAT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
+  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (line width: (+ 3 4) depth: (adder))", 15);
+  // VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
 }
 
 int main(void)
@@ -856,26 +862,26 @@ int main(void)
 
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_lang_parser);
-  RUN_TEST(test_lang_env);
-  RUN_TEST(test_uv_mapper);
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_lang_parser);
+  // RUN_TEST(test_lang_env);
+  // RUN_TEST(test_uv_mapper);
 
-  RUN_TEST(test_lang_interpret_basic);
-  RUN_TEST(test_lang_interpret_math);
-  RUN_TEST(test_lang_interpret_comparison);
-  RUN_TEST(test_lang_interpret_define);
-  RUN_TEST(test_lang_interpret_function);
-  RUN_TEST(test_lang_interpret_if);
-  RUN_TEST(test_lang_interpret_setq);
-  RUN_TEST(test_lang_interpret_loop);
-  RUN_TEST(test_lang_interpret_vector);
-  RUN_TEST(test_lang_interpret_mem);
+  // RUN_TEST(test_lang_interpret_basic);
+  // RUN_TEST(test_lang_interpret_math);
+  // RUN_TEST(test_lang_interpret_comparison);
+  // RUN_TEST(test_lang_interpret_define);
+  // RUN_TEST(test_lang_interpret_function);
+  // RUN_TEST(test_lang_interpret_if);
+  // RUN_TEST(test_lang_interpret_setq);
+  // RUN_TEST(test_lang_interpret_loop);
+  // RUN_TEST(test_lang_interpret_vector);
+  // RUN_TEST(test_lang_interpret_mem);
   
-  // // // vm
-  RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_callret);
-  // RUN_TEST(test_vm_temp);
+  // // // // vm
+  // RUN_TEST(test_vm_bytecode);
+  // RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_temp);
   
   return UNITY_END();
 }

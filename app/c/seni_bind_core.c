@@ -1,6 +1,8 @@
 #include "seni_bind_core.h"
 #include "seni_bind.h"
 
+#include "seni_vm.h"
+
 #include <stdio.h>
 #include <math.h>
 
@@ -702,7 +704,7 @@ seni_var *eval_keyword_vars(seni_env *env, seni_node *expr)
 }
 
 
-void bind_core_declarations(word_lut *wlut)
+void bind_core_declarations(seni_word_lut *wlut)
 {
   // classic functions that don't use named arguments when invoked
   declare_keyword(wlut,    "+",             &eval_classic_fn_plus);
@@ -726,7 +728,7 @@ void bind_core_declarations(word_lut *wlut)
 }
 
 
-void bind_vm_core_declarations(word_lut *wlut)
+void bind_vm_core_declarations(seni_word_lut *wlut)
 {
   // classic functions that don't use named arguments when invoked
   declare_vm_keyword(wlut, "+", &(wlut->iname_plus));

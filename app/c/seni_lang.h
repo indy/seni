@@ -14,7 +14,7 @@
 #define NATIVE_START (KEYWORD_START + MAX_KEYWORD_LOOKUPS)
 
 /* word lookup table */
-typedef struct word_lut {
+typedef struct seni_word_lut {
   char *native[MAX_NATIVE_LOOKUPS];  
   i32 native_count;
 
@@ -44,7 +44,7 @@ typedef struct word_lut {
   i32 iname_loop;
   i32 iname_setq;
   i32 iname_hash_vars;
-} word_lut;
+} seni_word_lut;
 
 typedef enum {
   NODE_LIST = 0,
@@ -88,7 +88,7 @@ typedef enum {
   VAR_INT = 128, // value.i
   VAR_FLOAT,     // value.f
   VAR_BOOLEAN,   // value.i
-  VAR_NAME,      // word_lut[value.i]
+  VAR_NAME,      // seni_word_lut[value.i]
   VAR_FN,        // pointer to seni_node: value.n
   VAR_VEC_HEAD,  // pointer to vec_rc is in value.v
   VAR_VEC_RC,    // pointer to first vector element is in value.v
@@ -165,14 +165,14 @@ typedef struct seni_debug_info {
 void fill_debug_info(seni_debug_info *debug_info);
 
 // word lookup
-word_lut *wlut_allocate();
-void      wlut_free(word_lut *wlut);
-i32       wlut_lookup_or_add(word_lut *wlut, char *string, size_t len);
-i32       wlut_lookup(word_lut *wlut, char *string);
-char     *wlut_reverse_lookup(word_lut *wlut, i32 index);
+seni_word_lut *wlut_allocate();
+void      wlut_free(seni_word_lut *wlut);
+i32       wlut_lookup_or_add(seni_word_lut *wlut, char *string, size_t len);
+i32       wlut_lookup(seni_word_lut *wlut, char *string);
+char     *wlut_reverse_lookup(seni_word_lut *wlut, i32 index);
 
 // parser
-seni_node *parser_parse(word_lut *wlut, char *s);
+seni_node *parser_parse(seni_word_lut *wlut, char *s);
 void       parser_free_nodes(seni_node *nodes);
 
 char      *node_type_name(seni_node *node);
@@ -230,10 +230,10 @@ i32 get_named_i32(seni_env *env, seni_node *params, i32 name, i32 default_value)
 void get_named_vec2(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1);
 void get_named_vec4(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1, f32 *out2, f32 *out3);
 
-void declare_keyword(word_lut *wlut, char *name, eval_function_ptr function_ptr);
-void declare_vm_keyword(word_lut *wlut, char *name, i32 *iname);
-void declare_vm_native(word_lut *wlut, char *name);
-void declare_common_arg(word_lut *wlut, char *name, i32 *global_value);
+void string_copy(char **dst, char *src);
+  
+void declare_keyword(seni_word_lut *wlut, char *name, eval_function_ptr function_ptr);
+void declare_common_arg(seni_word_lut *wlut, char *name, i32 *global_value);
 seni_var *evaluate(seni_env *env, seni_node *ast, bool hygenic_scope);
 
 // debugging

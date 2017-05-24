@@ -3,6 +3,8 @@
 #include "seni_bind.h"
 #include "seni_buffer.h"
 
+#include "seni_vm.h"
+
 #include <stdio.h>
 
 seni_var *eval_fn_line(seni_env *env, seni_node *expr)
@@ -143,7 +145,7 @@ seni_var *eval_fn_bezier(seni_env *env, seni_node *expr)
   return NULL;
 }
 
-void bind_shape_declarations(word_lut *wlut)
+void bind_shape_declarations(seni_word_lut *wlut)
 {
   declare_keyword(wlut, "line", &eval_fn_line);
   declare_keyword(wlut, "rect", &eval_fn_rect);
@@ -152,10 +154,17 @@ void bind_shape_declarations(word_lut *wlut)
 }
 
 
-void bind_vm_shape_declarations(word_lut *wlut)
+void native_fn_line(seni_virtual_machine *vm, i32 num_args)
 {
-  declare_vm_native(wlut, "line");
-  declare_vm_native(wlut, "rect");
-  declare_vm_native(wlut, "circle");
-  declare_vm_native(wlut, "bezier");
+  printf("hello this is a native fn called with %d args!!! %d\n", num_args, vm->stack_size);
+}
+
+
+
+void bind_vm_shape_declarations(seni_word_lut *wlut, seni_vm_environment *e)
+{
+  declare_vm_native(wlut, "line", e, &native_fn_line);
+  declare_vm_native(wlut, "rect", e, &native_fn_line);
+  declare_vm_native(wlut, "circle", e, &native_fn_line);
+  declare_vm_native(wlut, "bezier", e, &native_fn_line);
 }

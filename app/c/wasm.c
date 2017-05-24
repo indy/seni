@@ -39,7 +39,7 @@ int buffer_fill(f32* array, int length, char *script)
 EMSCRIPTEN_KEEPALIVE
 int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
 {
-  word_lut *wl = NULL;
+  seni_word_lut *wl = NULL;
   seni_env *env = NULL;
   seni_node *ast = NULL;
   seni_var *var = NULL;
