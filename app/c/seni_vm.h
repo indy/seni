@@ -120,7 +120,7 @@ void program_pretty_print(seni_program *program);
 seni_vm_environment *vm_environment_construct();
 void vm_environment_free(seni_vm_environment *e);
 
-void declare_vm_keyword(seni_word_lut *wlut, char *name, i32 *iname);
+void declare_vm_keyword(seni_word_lut *wlut, char *name);
 void declare_vm_native(seni_word_lut *wlut, char *name, seni_vm_environment *e, native_function_ptr function_ptr);
 
 void compiler_compile(seni_node *ast, seni_program *program);

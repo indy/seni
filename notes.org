@@ -1,12 +1,13 @@
-* TODO [1/8]
-  1. [X] default all numbers to float
-  2. [ ] calling native built-in functions
-  3. [ ] manipulate vectors
-  4. [ ] special fn: on-matrix-stack
-  5. [ ] why does setq seg fault when it returns NULL?
-  6. [ ] 'in' paramaeter for loop ?
-  7. [ ] constants like canvas/width
-  8. [ ] how would a stack machine compile first class functions?
+* TODO [1/9]
+  1. [ ] calling native built-in functions
+  2. [ ] remove seni_common_args.h when interpreter is deleted
+  3. [X] default all numbers to float
+  4. [ ] manipulate vectors
+  5. [ ] special fn: on-matrix-stack
+  6. [ ] why does setq seg fault when it returns NULL?
+  7. [ ] 'in' paramaeter for loop ?
+  8. [ ] constants like canvas/width
+  9. [ ] how would a stack machine compile first class functions?
 
 after parsing it's safe to treat seni_nodes as immutable
 seni_vars that have been eval'd should get their values asap since they could just by aliases of g_reg

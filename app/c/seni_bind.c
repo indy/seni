@@ -17,12 +17,13 @@ void interpreter_declare_keywords(seni_word_lut *wlut)
 
   wlut->keyword_count = 0;
 
+  bind_core_declarations(wlut);
+
   // common arguments used by keywords and the standard api
   #define COMMON_ARG(VAR,WORD) declare_common_arg(wlut, WORD, &VAR);
   #include "seni_common_args.h"
   #undef COMMON_ARG
 
-  bind_core_declarations(wlut);
   bind_shape_declarations(wlut);
 }
 
@@ -33,11 +34,6 @@ void vm_declare_keywords(seni_word_lut *wlut, seni_vm_environment *e)
 #endif
 
   wlut->keyword_count = 0;
-  
-  // common arguments used by keywords and the standard api
-  #define COMMON_ARG(VAR,WORD) declare_common_arg(wlut, WORD, &VAR);
-  #include "seni_common_args.h"
-  #undef COMMON_ARG
 
   bind_vm_core_declarations(wlut);
   bind_vm_shape_declarations(wlut, e);

@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <math.h>
 
+// extern global keyword variables
+#define KEYWORD(val,_,name) extern i32 g_keyword_iname_##name;
+#include "seni_keywords.h"
+#undef KEYWORD
+
+
 seni_var *var_as_int_or_float(bool is_int, i32 i, f32 f)
 {
   if (is_int) {
@@ -569,24 +575,24 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
     seni_var *to_var = NULL;
     seni_var *upto_var = NULL;
     
-    bool has_from = has_named_node(args, g_arg_from);
+    bool has_from = has_named_node(args, g_keyword_iname_from);
     if (has_from) {
-      from_var = lookup_var(loop_env, g_arg_from);
+      from_var = lookup_var(loop_env, g_keyword_iname_from);
     }
 
-    bool has_to = has_named_node(args, g_arg_to);
+    bool has_to = has_named_node(args, g_keyword_iname_to);
     if (has_to) {
-      to_var = lookup_var(loop_env, g_arg_to);
+      to_var = lookup_var(loop_env, g_keyword_iname_to);
     }
 
-    bool has_upto = has_named_node(args, g_arg_upto);
+    bool has_upto = has_named_node(args, g_keyword_iname_upto);
     if (has_upto) {
-      upto_var = lookup_var(loop_env, g_arg_upto);
+      upto_var = lookup_var(loop_env, g_keyword_iname_upto);
     }
 
-    bool has_increment = has_named_node(args, g_arg_increment);
+    bool has_increment = has_named_node(args, g_keyword_iname_increment);
     if (has_increment) {
-      seni_var *increment_var = lookup_var(loop_env, g_arg_increment);
+      seni_var *increment_var = lookup_var(loop_env, g_keyword_iname_increment);
       increment = var_as_float(increment_var);
       if (increment == 0.0f) {
         SENI_ERROR("cannot have an increment of 0");
@@ -595,9 +601,9 @@ seni_var *eval_keyword_loop(seni_env *env, seni_node *expr)
       }
     }
 
-    bool has_steps = has_named_node(args, g_arg_steps);
+    bool has_steps = has_named_node(args, g_keyword_iname_steps);
     if (has_steps) {
-      seni_var *steps_var = lookup_var(loop_env, g_arg_steps);
+      seni_var *steps_var = lookup_var(loop_env, g_keyword_iname_steps);
       steps = var_as_float(steps_var);
       if (steps == 0.0f) {
         SENI_ERROR("cannot have steps value of 0");
@@ -717,6 +723,11 @@ void bind_core_declarations(seni_word_lut *wlut)
   declare_keyword(wlut,    "vector/append", &eval_classic_fn_vector_append);
   declare_keyword(wlut,    "sqrt",          &eval_classic_fn_sqrt);
   declare_keyword(wlut,    "mod",           &eval_classic_fn_mod);
+
+  declare_keyword(wlut,    "or",            &eval_classic_fn_mod); // TEMP
+  declare_keyword(wlut,    "and",           &eval_classic_fn_mod); // TEMP
+  declare_keyword(wlut,    "not",           &eval_classic_fn_mod); // TEMP
+
   // special functions with non-standard syntax
   declare_keyword(wlut,    "define",        &eval_keyword_define);
   declare_keyword(wlut,    "fn",            &eval_keyword_fn);
@@ -728,30 +739,13 @@ void bind_core_declarations(seni_word_lut *wlut)
 }
 
 
+
 void bind_vm_core_declarations(seni_word_lut *wlut)
 {
-  // classic functions that don't use named arguments when invoked
-  declare_vm_keyword(wlut, "+", &(wlut->iname_plus));
-  declare_vm_keyword(wlut, "-", &(wlut->iname_minus));
-  declare_vm_keyword(wlut, "*", &(wlut->iname_mult));
-  declare_vm_keyword(wlut, "/", &(wlut->iname_divide));
-  declare_vm_keyword(wlut, "=", &(wlut->iname_equal));
-  declare_vm_keyword(wlut, ">", &(wlut->iname_gt));
-  declare_vm_keyword(wlut, "<", &(wlut->iname_lt));
-  declare_vm_keyword(wlut, "vector/append", &(wlut->iname_vector_append));
-  declare_vm_keyword(wlut, "sqrt", &(wlut->iname_sqrt));
-  declare_vm_keyword(wlut, "mod", &(wlut->iname_mod));
-
-  declare_vm_keyword(wlut, "and", &(wlut->iname_and));
-  declare_vm_keyword(wlut, "or", &(wlut->iname_or));
-  declare_vm_keyword(wlut, "not", &(wlut->iname_not));
-  // TODO: on-matrix-stack
-  // special functions with non-standard syntax
-  declare_vm_keyword(wlut, "define", &(wlut->iname_define));
-  declare_vm_keyword(wlut, "fn", &(wlut->iname_fn));
-  declare_vm_keyword(wlut, "if", &(wlut->iname_if));
-  declare_vm_keyword(wlut, "loop", &(wlut->iname_loop));
-  // for debugging
-  declare_vm_keyword(wlut, "setq", &(wlut->iname_setq));
-  declare_vm_keyword(wlut, "#vars", &(wlut->iname_hash_vars));
+  // this fills out wlut->keyword and that's used in the wlut_lookup_ functions
+  //
+#define KEYWORD(_,string,__) declare_vm_keyword(wlut, string);
+#include "seni_keywords.h"
+#undef KEYWORD
 }
+

@@ -5,6 +5,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+// global keyword variables
+#define KEYWORD(val,_,name) i32 g_keyword_iname_##name = KEYWORD_START + val;
+#include "seni_keywords.h"
+#undef KEYWORD
+
+
+
 // returns the next available seni_var that the calling code can write to
 seni_var *stack_push(seni_virtual_machine *vm)
 {
@@ -299,12 +306,9 @@ void pretty_print_virtual_machine(seni_virtual_machine *vm, char* msg)
   printf("\ton stack: fp:%d ip:%d numArgs:%d\n", onStackFP, onStackIP, onStackNumArgs);
 }
 
-void declare_vm_keyword(seni_word_lut *wlut, char *name, i32 *iname)
+void declare_vm_keyword(seni_word_lut *wlut, char *name)
 {
   string_copy(&(wlut->keyword[wlut->keyword_count]), name);
-  if (iname) {
-    *iname = wlut->keyword_count + KEYWORD_START;
-  }
   wlut->keyword_count++;
 
   if (wlut->keyword_count > MAX_KEYWORD_LOOKUPS) {
@@ -844,53 +848,54 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
       }
     } else if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
 
-      if (iname == program->wl->iname_define) {
+      if (iname == g_keyword_iname_define) {
         if (global_scope) {
           return compile_global_define(ast, program);
         } else {
           return compile_define(ast, program);
         }        
-      } else if (iname == program->wl->iname_if) {
+      } else if (iname == g_keyword_iname_if) {
         return compile_if(ast, program);          
-      } else if (iname == program->wl->iname_loop) {
+      } else if (iname == g_keyword_iname_loop) {
         return compile_loop(ast, program);
-      } else if (iname == program->wl->iname_fn) {
+      } else if (iname == g_keyword_iname_fn) {
         return compile_fn(ast, program);          
-      } else if (iname == program->wl->iname_plus) {
+      } else if (iname == g_keyword_iname_plus) {
         compile_rest(ast, program);
         program_emit_opcode_i32(program, ADD, 0, 0);
         return safe_next(ast);
-      } else if (iname == program->wl->iname_minus) {
+      } else if (iname == g_keyword_iname_minus) {
         // TODO: differentiate between neg and sub?
         compile_rest(ast, program);
         program_emit_opcode_i32(program, SUB, 0, 0);
         return safe_next(ast);
-      } else if (iname == program->wl->iname_equal) {
+      } else if (iname == g_keyword_iname_equal) {
         compile_rest(ast, program);
         program_emit_opcode_i32(program, EQ, 0, 0);
         return safe_next(ast);
-      } else if (iname == program->wl->iname_lt) {
+      } else if (iname == g_keyword_iname_lt) {
         compile_rest(ast, program);
         program_emit_opcode_i32(program, LT, 0, 0);
         return safe_next(ast);
-      } else if (iname == program->wl->iname_gt) {
+      } else if (iname == g_keyword_iname_gt) {
         compile_rest(ast, program);
         program_emit_opcode_i32(program, GT, 0, 0);
         return safe_next(ast);
-      } else if (iname == program->wl->iname_and) {
+      } else if (iname == g_keyword_iname_and) {
         compile_rest(ast, program);
         program_emit_opcode_i32(program, AND, 0, 0);
         return safe_next(ast);
-      } else if (iname == program->wl->iname_or) {
+      } else if (iname == g_keyword_iname_or) {
         compile_rest(ast, program);
         program_emit_opcode_i32(program, OR, 0, 0);
         return safe_next(ast);
-      } else if (iname == program->wl->iname_not) {
+      } else if (iname == g_keyword_iname_not) {
         compile_rest(ast, program);
         program_emit_opcode_i32(program, NOT, 0, 0);
         return safe_next(ast);
       } else {
         // look up the name as a local variable?
+        printf("cannot find %d\n", iname);
         return safe_next(ast);        
       }
 

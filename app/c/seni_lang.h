@@ -23,27 +23,6 @@ typedef struct seni_word_lut {
   
   char *word[MAX_WORD_LOOKUPS];
   i32 word_count;
-
-  // store some keywords in their own variables to make compiling slightly easier
-  i32 iname_plus;
-  i32 iname_minus;
-  i32 iname_mult;
-  i32 iname_divide;
-  i32 iname_equal;
-  i32 iname_gt;
-  i32 iname_lt;
-  i32 iname_vector_append;
-  i32 iname_sqrt;
-  i32 iname_mod;
-  i32 iname_and;
-  i32 iname_or;
-  i32 iname_not;
-  i32 iname_define;
-  i32 iname_fn;
-  i32 iname_if;
-  i32 iname_loop;
-  i32 iname_setq;
-  i32 iname_hash_vars;
 } seni_word_lut;
 
 typedef enum {
