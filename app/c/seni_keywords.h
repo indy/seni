@@ -41,3 +41,6 @@ KEYWORD(33, "tessellation", tessellation)
 KEYWORD(34, "to", to)
 KEYWORD(35, "upto", upto)
 KEYWORD(36, "width", width)
+// temporary: replace with vec2
+KEYWORD(37, "x", x)
+KEYWORD(38, "y", y)

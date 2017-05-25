@@ -3,6 +3,7 @@
 #include "seni_bind.h"
 #include "seni_buffer.h"
 
+#include "seni_lang.h"
 #include "seni_vm.h"
 
 #include <stdio.h>
@@ -12,7 +13,6 @@
 #define KEYWORD(val,_,name) extern i32 g_keyword_iname_##name;
 #include "seni_keywords.h"
 #undef KEYWORD
-
 
 seni_var *eval_fn_line(seni_env *env, seni_node *expr)
 {
@@ -160,18 +160,65 @@ void bind_shape_declarations(seni_word_lut *wlut)
   declare_keyword(wlut, "bezier", &eval_fn_bezier);
 }
 
-
 void native_fn_line(seni_virtual_machine *vm, i32 num_args)
 {
-  printf("hello this is a native fn called with %d args!!! %d\n", num_args, vm->stack_size);
+  // default values for line
+  f32 width = 4.0f;
+  f32 height = 10.0f;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(width);
+  READ_STACK_ARG_F32(height);
+  READ_STACK_ARGS_END;
+
+  seni_var res;
+  res.type = VAR_FLOAT;
+  res.value.f = 17.0f;
+
+  printf("native_fn_line width: %.2f height: %.2f\n", width, height);
+
+
+  
+  // push the return value onto the stack
+  WRITE_STACK(res);
 }
 
+void native_fn_rect(seni_virtual_machine *vm, i32 num_args)
+{
+  // default values for line
+  f32 width = 4.0f;
+  f32 height = 10.0f;
+  f32 x = 500.0f;
+  f32 y = 500.0f;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(width);
+  READ_STACK_ARG_F32(height);
+  READ_STACK_ARG_F32(x);
+  READ_STACK_ARG_F32(y);
+  READ_STACK_ARGS_END;
+
+  seni_var res;
+  res.type = VAR_BOOLEAN;
+  res.value.i = 1;
+
+  f32 r = 1.0f; f32 g = 0.0f; f32 b = 0.0f; f32 a = 1.0f;
+  rgba col;
+  col.r = r; col.g = g; col.b = b; col.a = a;
+
+  render_rect(vm->buffer, x, y, width, height, col);
+
+  // push the return value onto the stack
+  WRITE_STACK(res);
+}
 
 
 void bind_vm_shape_declarations(seni_word_lut *wlut, seni_vm_environment *e)
 {
   declare_vm_native(wlut, "line", e, &native_fn_line);
-  declare_vm_native(wlut, "rect", e, &native_fn_line);
+  declare_vm_native(wlut, "rect", e, &native_fn_rect);
   declare_vm_native(wlut, "circle", e, &native_fn_line);
   declare_vm_native(wlut, "bezier", e, &native_fn_line);
 }

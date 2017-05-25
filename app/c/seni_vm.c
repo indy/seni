@@ -10,8 +10,6 @@
 #include "seni_keywords.h"
 #undef KEYWORD
 
-
-
 // returns the next available seni_var that the calling code can write to
 seni_var *stack_push(seni_virtual_machine *vm)
 {
@@ -869,6 +867,14 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
         compile_rest(ast, program);
         program_emit_opcode_i32(program, SUB, 0, 0);
         return safe_next(ast);
+      } else if (iname == g_keyword_iname_mult) {
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, MUL, 0, 0);
+        return safe_next(ast);
+      } else if (iname == g_keyword_iname_divide) {
+        compile_rest(ast, program);
+        program_emit_opcode_i32(program, DIV, 0, 0);
+        return safe_next(ast);
       } else if (iname == g_keyword_iname_equal) {
         compile_rest(ast, program);
         program_emit_opcode_i32(program, EQ, 0, 0);
@@ -903,7 +909,6 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
       // NATIVE
 
       // note: how to count the stack delta? how many pop voids are required?
-      // todo: modify opcode_offset according to how many args were given
       i32 num_args = 0;
       seni_node *args = safe_next(ast); // pairs of label/value declarations
       while (args != NULL) {
@@ -919,6 +924,8 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
       
       program_emit_opcode_i32(program, NATIVE, iname, num_args);
 
+      // modify opcode_offset according to how many args were given
+      program->opcode_offset -= (num_args * 2) - 1;
       
       
       return safe_next(ast);
@@ -976,6 +983,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
   i32 new_fp;
   i32 num_args;
+  i32 iname;
 
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
@@ -998,7 +1006,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         src = &(vm->stack[vm->local + bc->arg1.value.i]);
         safe_var_move(v, src);
-      }else if (memory_segment_type == MEM_SEG_GLOBAL) {
+      } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         src = &(vm->stack[vm->global + bc->arg1.value.i]);
         safe_var_move(v, src);
       } else {
@@ -1105,12 +1113,13 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       num_args = vm->stack[vm->fp + 2].value.i;
 
+      // update vm
       vm->sp = vm->fp - (num_args * 2);
       vm->ip = vm->stack[vm->fp + 1].value.i;
       vm->fp = vm->stack[vm->fp].value.i;
       vm->local = vm->fp + 3;
 
-      // sync up the fast registers
+      // sync registers with vm
       ip = vm->ip;
       sp = vm->sp;
       stack_d = &(vm->stack[sp]);
@@ -1122,12 +1131,18 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       break;
 
     case NATIVE:
-
-      i32 iname = bc->arg0.value.i - NATIVE_START;
+      iname = bc->arg0.value.i - NATIVE_START;
       num_args = bc->arg1.value.i;
+
+      // sync vm with registers
+      vm->sp = sp;
 
       native_function_ptr native_func = program->vm_environment->function_ptr[iname];
       native_func(vm, num_args);
+
+      // sync registers with vm
+      sp = vm->sp;
+      stack_d = &(vm->stack[sp]);
       
       break;
 
@@ -1151,6 +1166,28 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       STACK_PUSH;
       v->value.f = f1 - f2;
 
+      break;
+
+    case MUL:
+      STACK_POP;
+      f2 = v->value.f;
+      
+      STACK_POP;
+      f1 = v->value.f;
+
+      STACK_PUSH;
+      v->value.f = f1 * f2;
+      break;
+
+    case DIV:
+      STACK_POP;
+      f2 = v->value.f;
+      
+      STACK_POP;
+      f1 = v->value.f;
+
+      STACK_PUSH;
+      v->value.f = f1 / f2;
       break;
 
     case EQ:

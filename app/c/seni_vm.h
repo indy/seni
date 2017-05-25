@@ -34,6 +34,8 @@ typedef enum {
 // Virtual Machine
 //
 typedef struct seni_virtual_machine {
+  seni_buffer *buffer;          // used for rendering vertices
+  
   seni_var *heap;
   i32 heap_size;
   
