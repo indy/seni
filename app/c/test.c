@@ -762,7 +762,7 @@ seni_word_lut *setup_vm_wl(seni_vm_environment *e)
 
 // COMPILE macros that eval and compare results
 //
-#if 1
+#if 0
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
@@ -808,6 +808,8 @@ void test_vm_bytecode(void)
   VM_COMPILE_FLOAT("(define a 6) (define b 7) (+ a b)", 13);
   VM_COMPILE_FLOAT("(+ 3 4)", 7);
   VM_COMPILE_FLOAT("(- (+ 1 2) 3)", 0);
+  VM_COMPILE_FLOAT("(* 3 4)", 12);
+  VM_COMPILE_FLOAT("(/ 90 10)", 9);
   VM_COMPILE_BOOL("(> 5 10)", false);
   VM_COMPILE_BOOL("(< 5 10)", true);
   VM_COMPILE_BOOL("(= 2 2)", true);
@@ -850,7 +852,9 @@ void test_vm_callret(void)
 
 void test_vm_temp(void)
 {
-  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (line width: (+ 3 4) depth: (adder))", 17);
+  VM_COMPILE_FLOAT("(fn (foo a: [2 3]) 33) (foo a: [1 5])", 8);
+  // VM_COMPILE_FLOAT("(line width: 35 height: 22)", 17);
+  // VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (line width: (+ 3 4) height: (adder))", 17);
   // VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
 }
 
@@ -862,26 +866,26 @@ int main(void)
 
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_lang_parser);
-  RUN_TEST(test_lang_env);
-  RUN_TEST(test_uv_mapper);
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_lang_parser);
+  // RUN_TEST(test_lang_env);
+  // RUN_TEST(test_uv_mapper);
 
-  RUN_TEST(test_lang_interpret_basic);
-  RUN_TEST(test_lang_interpret_math);
-  RUN_TEST(test_lang_interpret_comparison);
-  RUN_TEST(test_lang_interpret_define);
-  RUN_TEST(test_lang_interpret_function);
-  RUN_TEST(test_lang_interpret_if);
-  RUN_TEST(test_lang_interpret_setq);
-  RUN_TEST(test_lang_interpret_loop);
-  RUN_TEST(test_lang_interpret_vector);
-  RUN_TEST(test_lang_interpret_mem);
+  // RUN_TEST(test_lang_interpret_basic);
+  // RUN_TEST(test_lang_interpret_math);
+  // RUN_TEST(test_lang_interpret_comparison);
+  // RUN_TEST(test_lang_interpret_define);
+  // RUN_TEST(test_lang_interpret_function);
+  // RUN_TEST(test_lang_interpret_if);
+  // RUN_TEST(test_lang_interpret_setq);
+  // RUN_TEST(test_lang_interpret_loop);
+  // RUN_TEST(test_lang_interpret_vector);
+  // RUN_TEST(test_lang_interpret_mem);
   
-  // vm
-  RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_callret);
-  //RUN_TEST(test_vm_temp);
+  // // vm
+  // RUN_TEST(test_vm_bytecode);
+  // RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_temp);
   
   return UNITY_END();
 }
