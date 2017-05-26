@@ -68,7 +68,7 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
   prog->wl = wl;
   prog->vm_environment = e;
 
-  vm = virtual_machine_construct(STACK_SIZE,MEMORY_SIZE);
+  vm = virtual_machine_construct(STACK_SIZE, MEMORY_SIZE);
   vm->buffer = &buffer;
 
 
@@ -77,7 +77,6 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
   vm_interpret(vm, prog);
 
   // cleanup
-  env_free_pools();
   free_uv_mapper();
   wlut_free(wl);
   parser_free_nodes(ast);

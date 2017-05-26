@@ -34,5 +34,8 @@ OPCODE(RET_0, 0)
 // offset is 0 as the vm->opcode_offset is modified by the native helper function
 OPCODE(NATIVE, 0)
 
+// appends item at top to vector at top-1, leaves vector on stack
+OPCODE(APPEND, -1)
+
 OPCODE (NOP, 0)
 OPCODE (STOP, 0)

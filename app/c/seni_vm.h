@@ -35,9 +35,10 @@ typedef enum {
 //
 typedef struct seni_virtual_machine {
   seni_buffer *buffer;          // used for rendering vertices
-  
-  seni_var *heap;
+
+  seni_var *heap;               // the contiguous block of allocated memory
   i32 heap_size;
+  seni_var *heap_list;          // doubly linked list of unallocated seni_vars from the heap
   
   seni_var *stack;
   i32 stack_size;
