@@ -430,7 +430,7 @@ void vm_vector_ref_count_increment(seni_virtual_machine *vm, seni_var *vec_head)
 {
   seni_var *var_rc = vec_head->value.v;
   if (var_rc->type != VAR_VEC_RC) {
-    SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC???");
+    SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC %d???", vm->sp);
   }
   var_rc->ref_count++;
 }
@@ -1340,7 +1340,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       num_args = bc->arg1.value.i;
 
       // make room for the labelled arguments
-      for (i32 i = 0; i < num_args * 2; i++) {
+      for (i = 0; i < num_args * 2; i++) {
         STACK_PUSH;
       }
       
