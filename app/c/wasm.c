@@ -57,7 +57,6 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
 
   init_uv_mapper();
   
-  debug_reset();
   e = env_construct();
   
   wl = wlut_allocate();
