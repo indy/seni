@@ -164,22 +164,27 @@ void native_fn_line(seni_virtual_machine *vm, i32 num_args)
 {
   // default values for line
   f32 width = 4.0f;
-  f32 height = 10.0f;
+  f32 from[] = {10.0f, 10.0f};
+  f32 to[] = {900.0f, 500.0f};
+  f32 colour[] = { 0.0f, 1.0f, 0.0f, 1.0f };
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(width);
-  READ_STACK_ARG_F32(height);
+  READ_STACK_ARG_VEC2(from);
+  READ_STACK_ARG_VEC2(to);
+  READ_STACK_ARG_VEC4(colour);
   READ_STACK_ARGS_END;
 
   seni_var res;
-  res.type = VAR_FLOAT;
-  res.value.f = 17.0f;
+  res.type = VAR_BOOLEAN;
+  res.value.i = 1;
 
-  printf("native_fn_line width: %.2f height: %.2f\n", width, height);
+  rgba col;
+  col.r = colour[0]; col.g = colour[1]; col.b = colour[2]; col.a = colour[3];
 
+  render_line(vm->buffer, from[0], from[1], to[0], to[1], width, col);
 
-  
   // push the return value onto the stack
   WRITE_STACK(res);
 }
@@ -213,11 +218,42 @@ void native_fn_rect(seni_virtual_machine *vm, i32 num_args)
   WRITE_STACK(res);
 }
 
+void native_fn_circle(seni_virtual_machine *vm, i32 num_args)
+{
+  // default values for line
+  f32 width = 4.0f;
+  f32 height = 10.0f;
+  f32 position[] = {10.0f, 23.0f};
+  f32 colour[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+  f32 tessellation = 10.0f;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(width);
+  READ_STACK_ARG_F32(height);
+  READ_STACK_ARG_VEC2(position);
+  READ_STACK_ARG_VEC4(colour);
+  READ_STACK_ARG_F32(tessellation);
+  READ_STACK_ARGS_END;
+
+  seni_var res;
+  res.type = VAR_BOOLEAN;
+  res.value.i = 1;
+
+  rgba col;
+  col.r = colour[0]; col.g = colour[1]; col.b = colour[2]; col.a = colour[3];
+
+  render_circle(vm->buffer, position[0], position[1], width, height, col, (i32)tessellation);
+
+  // push the return value onto the stack
+  WRITE_STACK(res);
+}
+
 
 void bind_vm_shape_declarations(seni_word_lut *wlut, seni_vm_environment *e)
 {
   declare_vm_native(wlut, "line", e, &native_fn_line);
   declare_vm_native(wlut, "rect", e, &native_fn_rect);
-  declare_vm_native(wlut, "circle", e, &native_fn_line);
+  declare_vm_native(wlut, "circle", e, &native_fn_circle);
   declare_vm_native(wlut, "bezier", e, &native_fn_line);
 }
