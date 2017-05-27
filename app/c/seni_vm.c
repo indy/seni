@@ -460,7 +460,7 @@ void vm_safe_var_copy(seni_virtual_machine *vm, seni_var *dest, seni_var *src)
       dest->value.v = src->value.v;
       vm_vector_ref_count_increment(vm, dest);
     } else {
-      printf("what the fuck?\n");
+      SENI_ERROR("what the fuck?\n");
     }
   }
 }
@@ -486,7 +486,7 @@ void vm_safe_var_move(seni_var *dest, seni_var *src)
     if (src->type == VAR_VEC_HEAD) {
       dest->value.v = src->value.v;
     } else {
-      printf("what the fuck?\n");
+      SENI_ERROR("what the fuck?\n");
     }
   }
 }
@@ -1129,7 +1129,7 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
         return safe_next(ast);
       } else {
         // look up the name as a local variable?
-        printf("cannot find %d\n", iname);
+        SENI_ERROR("cannot find %d\n", iname);
         return safe_next(ast);        
       }
 
@@ -1272,7 +1272,6 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
-        //printf("POP ARG stack value %d is %d\n", bc->arg1.value.i, vm->fp - bc->arg1.value.i - 1);
         // check the current value of dest, 
         vm_safe_var_move(dest, v);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
@@ -1419,10 +1418,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       for (i = 0; i < num_args; i++) {
         tmp = &(vm->stack[vm->fp - ((i+1) * 2)]);
-        // printf("fp %d RET arg decrement %d on stack: %d\n", vm->fp, num_args, vm->fp - ((i+1) * 2));
-        // pretty_print_seni_var(tmp, "tmp");
         if (tmp->type == VAR_VEC_HEAD) {
-          // printf("RET arg decrement\n");
           vm_vector_ref_count_decrement(vm, tmp);
         }
       }
@@ -1469,7 +1465,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       STACK_POP;
       // v is the vector
       if (v->type != VAR_VEC_HEAD) {
-        printf("APPEND expects the 2nd item on the stack to be a vector\n");
+        SENI_ERROR("APPEND expects the 2nd item on the stack to be a vector\n");
         return;
       }
 
