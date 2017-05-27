@@ -33,6 +33,12 @@ typedef enum {
 
 // Virtual Machine
 //
+
+typedef struct seni_vm_debug_info {
+  i32 get_from_heap_count;
+  i32 return_to_heap_count;
+} seni_vm_debug_info;
+
 typedef struct seni_virtual_machine {
   seni_buffer *buffer;          // used for rendering vertices
 
@@ -49,6 +55,10 @@ typedef struct seni_virtual_machine {
 
   i32 global;                   // single segment of memory at top of stack
   i32 local;                    // per-frame segment of memory for local variables
+
+#ifdef SENI_DEBUG_MODE
+  seni_vm_debug_info debug;     // debug info regarding vm
+#endif
 
 } seni_virtual_machine;
 
