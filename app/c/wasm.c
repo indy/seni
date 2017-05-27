@@ -4,7 +4,7 @@
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
 
-#include "seni_vm.h"
+#include "seni_lang.h"
 
 f32 mult = 3.2f;
 int lensub = 0;
@@ -43,10 +43,10 @@ EMSCRIPTEN_KEEPALIVE
 int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
 {
   seni_word_lut *wl = NULL;
-  seni_vm_environment *e = NULL;
+  seni_env *e = NULL;
   seni_node *ast = NULL;
   seni_program *prog = NULL;
-  seni_virtual_machine *vm = NULL;
+  seni_vm *vm = NULL;
   seni_buffer buffer;
 
   buffer.num_vertices = 0;
@@ -58,17 +58,17 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
   init_uv_mapper();
   
   debug_reset();
-  e = vm_environment_construct();
+  e = env_construct();
   
   wl = wlut_allocate();
-  vm_declare_keywords(wl, e);
+  declare_bindings(wl, e);
   
   ast = parser_parse(wl, script);
   prog = program_allocate(256);
   prog->wl = wl;
-  prog->vm_environment = e;
+  prog->env = e;
 
-  vm = virtual_machine_construct(STACK_SIZE, MEMORY_SIZE);
+  vm = vm_construct(STACK_SIZE, MEMORY_SIZE);
   vm->buffer = &buffer;
 
 
@@ -81,51 +81,10 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
   wlut_free(wl);
   parser_free_nodes(ast);
   program_free(prog);
-  vm_environment_free(e);
-  virtual_machine_free(vm);
+  env_free(e);
+  vm_free(vm);
 
   return buffer.num_vertices;
 }
 
 
-
-
-/*
-EMSCRIPTEN_KEEPALIVE
-int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
-{
-  seni_word_lut *wl = NULL;
-  seni_env *env = NULL;
-  seni_node *ast = NULL;
-  seni_var *var = NULL;
-    
-  seni_buffer buffer;
-
-  buffer.num_vertices = 0;
-  buffer.max_vertices = max_vertices;
-  buffer.vbuf = vbuf;
-  buffer.cbuf = cbuf;
-  buffer.tbuf = tbuf;
-  
-  debug_reset();
-
-  wl = wlut_allocate();
-  interpreter_declare_keywords(wl);
-
-  init_uv_mapper();
-
-  env_allocate_pools();
-  env = get_initial_env(&buffer);
-  
-  ast = parser_parse(wl, script);
-  var = evaluate(env, ast, true);
-  debug_var_info(env);
-
-  env_free_pools();
-  free_uv_mapper();
-  wlut_free(wl);
-  parser_free_nodes(ast);
-
-  return buffer.num_vertices;
-}
-*/

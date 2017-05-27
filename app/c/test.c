@@ -7,7 +7,6 @@
 #include "seni_lang.h"
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
-#include "seni_vm.h"
 
 #include "time.h"
 #include "stdio.h"
@@ -73,7 +72,7 @@ seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *va
   parser_free_nodes(nodes)
 
 
-void test_lang_parser(void)
+void test_parser(void)
 {
   seni_node *nodes, *iter, *iter2;
   seni_word_lut *wl;
@@ -194,63 +193,6 @@ void test_lang_parser(void)
   PARSE_CLEANUP;
 }
 
-void test_lang_env(void)
-{
-  seni_env *env, *env2;
-  seni_var *var, *var2;
-
-  env_allocate_pools();
-  env = get_initial_env(NULL);
-
-  var = get_binded_var(env, 1);
-  var->type = VAR_INT;
-  var->value.i = 42;
-
-  /* basic lookup */
-  var2 = lookup_var(env, 1);
-  TEST_ASSERT_EQUAL(42, var2->value.i);
-
-  /* lookup an outer scope */
-  env2 = push_scope(env);
-  var2 = lookup_var(env2, 1);
-  TEST_ASSERT_EQUAL(42, var2->value.i);  
-
-  /* redefine current scope */
-  var2 = get_binded_var(env2, 1);
-  var2->value.i = 100;
-  var2 = lookup_var(env2, 1);
-  TEST_ASSERT_EQUAL(100, var2->value.i);
-
-  /* pop scope and get back previous value */
-  env2 = pop_scope(env2);
-  var2 = lookup_var(env2, 1);
-  TEST_ASSERT_EQUAL(42, var2->value.i);
-
-  env_free_pools();
-}
-
-void assert_seni_var(seni_var *var, seni_var_type type)
-{
-  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
-}
-
-void assert_seni_var_i32(seni_var *var, seni_var_type type, i32 i)
-{
-  TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
-  TEST_ASSERT_EQUAL(i, var->value.i);
-}
-
-void assert_seni_var_vec(seni_var *var)
-{
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_HEAD, var->type, var_type_name(var));
-}
-
-void assert_seni_var_vec_i32(seni_var *var, i32 i)
-{
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_INT, var->type, var_type_name(var));
-  assert_seni_var_i32(var, VAR_INT, i);
-}
-
 void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
@@ -290,417 +232,6 @@ void assert_seni_var_bool(seni_var *var, bool b)
   TEST_ASSERT_EQUAL(b ? 1 : 0, var->value.i);
 }
 
-void assert_seni_var_true(seni_var *var)
-{
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var));
-  TEST_ASSERT_EQUAL(1, var->value.i);
-}
-
-void assert_seni_var_false(seni_var *var)
-{
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var));
-  TEST_ASSERT_EQUAL(0, var->value.i);
-}
-
-seni_word_lut *setup_interpreter_wl()
-{
-  seni_word_lut *wl = wlut_allocate();
-  // add keywords to the seni_word_lut and setup function pointers within the interpreter
-  interpreter_declare_keywords(wl);
-
-  return wl;
-}
-
-seni_env *setup_basic_interpreter_env()
-{
-  env_allocate_pools();
-  seni_env *env = get_initial_env(NULL);
-
-  return env;
-}
-
-seni_env *setup_interpreter_env(seni_word_lut *wl)
-{
-  seni_env *env = setup_basic_interpreter_env();
-
-  /* add a temporary debug variable for testing loops etc */
-  i32 index = wlut_lookup_or_add(wl, "#test", sizeof("#test"));
-  seni_var *var = get_binded_var(env, index);
-  var->type = VAR_INT;
-  var->value.i = 0;
-
-  return env;
-}
-
-void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
-{
-  env_free_pools();
-  wlut_free(wl);
-  parser_free_nodes(ast);
-}
-
-void add_binding_i32(seni_word_lut *wl, seni_env *env, char *name, i32 i)
-{
-  // add a foo binding to env
-  i32 name_index = wlut_lookup_or_add(wl, name, strlen(name));
-  seni_var *v = get_binded_var(env, name_index);
-  v->type = VAR_INT;
-  v->value.i = i;
-}
-
-void debug_memory(char *expression)
-{
-  seni_debug_info debug_info;
-  fill_debug_info(&debug_info);
-  
-  TEST_ASSERT_EQUAL_MESSAGE(debug_info.num_var_allocated, debug_info.num_var_available, expression);
-  TEST_ASSERT_EQUAL_MESSAGE(debug_info.var_get_count, debug_info.var_return_count, expression);
-}
-
-#define EVAL_EXPR(EXPR) debug_reset(); \
-  wl = setup_interpreter_wl(); \
-  env = setup_interpreter_env(wl); \
-  ast = parser_parse(wl, EXPR); \
-  var = evaluate(env, ast, false)
-
-#define EVAL_MEM(EXPR) debug_reset(); \
-  wl = setup_interpreter_wl(); \
-  env = setup_basic_interpreter_env(); \
-  ast = parser_parse(wl, EXPR); \
-  var = evaluate(env, ast, true);    \
-  debug_memory(EXPR)
-
-#define DEBUG_EXPR(EXPR) debug_reset();         \
-  wl = setup_interpreter_wl(); \
-  env = setup_basic_interpreter_env(); \
-  ast = parser_parse(wl, EXPR); \
-  var = evaluate(env, ast, true);    \
-  debug_var_info(env)
-
-#define EVAL_CLEANUP shutdown_interpreter_test(wl, ast)
-
-#define EVAL_FLOAT(EXPR,EXPECTED) EVAL_EXPR(EXPR); \
-  assert_seni_var_f32(var, VAR_FLOAT, EXPECTED); \
-  EVAL_CLEANUP
-
-#define EVAL_FLOAT_WITHIN(EXPR,EXPECTED,TOLERANCE) EVAL_EXPR(EXPR);  \
-  assert_seni_var_f32_within(var, VAR_FLOAT, EXPECTED, TOLERANCE); \
-  EVAL_CLEANUP
-
-#define EVAL_TRUE(EXPR) EVAL_EXPR(EXPR); \
-  assert_seni_var_true(var); \
-  EVAL_CLEANUP
-
-#define EVAL_FALSE(EXPR) EVAL_EXPR(EXPR); \
-  assert_seni_var_false(var); \
-  EVAL_CLEANUP
-
-#define EVAL_NAME(EXPR,EXPECTED) EVAL_EXPR(EXPR); \
-  assert_seni_var_i32(var, VAR_NAME, EXPECTED); \
-  EVAL_CLEANUP
-
-#define SENI_ASSERT_VEC() assert_seni_var_vec(var); \
-  var = var->value.v; \
-  var = var->value.v
-
-#define SENI_ASSERT_VEC_FLOAT(EXPECTED) assert_seni_var_f32(var, VAR_FLOAT, EXPECTED); \
-  var = var->next
-
-#define EVAL_DECL   seni_word_lut *wl = NULL; \
-  seni_env *env = NULL; \
-  seni_node *ast = NULL; \
-  seni_var *var = NULL
-
-void test_lang_interpret_basic(void)
-{
-  EVAL_DECL;
-
-  // basic eval
-  EVAL_FLOAT("42", 42.0f);
-  EVAL_FLOAT("12.34", 12.34f);
-  EVAL_TRUE("true");
-  EVAL_FALSE("false");
-}
-
-void test_lang_interpret_math(void)
-{
-  EVAL_DECL;
-
-  EVAL_FLOAT("(+ 10 1)", 11);
-  EVAL_FLOAT("(+ 10.0 1)", 11.0f);
-  EVAL_FLOAT("(+ 10 1.0)", 11.0f);
-  EVAL_FLOAT("(+ 3 4 5 6)", 18);
-  EVAL_FLOAT("(+ (+ 1 2) (+ 3 4))", 10);
-  EVAL_FLOAT("(+ (+ 1 2) (+ 3.0 4))", 10.0f);
-  EVAL_FLOAT("(- 100 20)", 80);
-  EVAL_FLOAT("(- (+ 50 50) 20)", 80);
-  EVAL_FLOAT("(- 59)", -59);
-  EVAL_FLOAT("(- (+ 50 9))", -59);
-  EVAL_FLOAT("(- 100.0 20)", 80.0f);
-  EVAL_FLOAT("(- 100 20.0)", 80.0f);
-  EVAL_FLOAT("(- 100.0 20.0)", 80.0f);
-  EVAL_FLOAT("(* 6 5)", 30);
-  EVAL_FLOAT("(* (* 2 3) 5)", 30);
-  EVAL_FLOAT("(/ 16.0 2.0)", 8.0f);
-
-  EVAL_FLOAT("(sqrt 144)", 12.0f);
-  EVAL_FLOAT("(sqrt 144.0)", 12.0f);
-  EVAL_FLOAT("(sqrt (+ 100 44))", 12.0f);
-
-  EVAL_FLOAT("(mod 10 3)", 1);
-  EVAL_FLOAT("(mod 11 3)", 2);
-}
-
-void test_lang_interpret_comparison(void)
-{
-  EVAL_DECL;
-
-  EVAL_TRUE("(= 16.0 16.0)");
-  EVAL_FALSE("(= 16.0 99.0)");
-  EVAL_TRUE("(= 16.0 16)");
-  EVAL_TRUE("(= 6 6)");
-  EVAL_FALSE("(= 6 26)");
-  EVAL_TRUE("(> 6 2)");
-  EVAL_FALSE("(> 6 6)");
-  EVAL_FALSE("(> 6 26)");
-  EVAL_TRUE("(> 1000 100 10 1)");
-  EVAL_TRUE("(> 6 2.0)");
-  EVAL_TRUE("(< 7 10)");
-  EVAL_FALSE("(< 7 5)");
-}
-
-void test_lang_interpret_define(void)
-{
-  EVAL_DECL;
-
-  EVAL_FLOAT("(define num 10) (+ num num)", 20);
-  EVAL_FLOAT("(define num 10.0) (+ num num)", 20.0f);
-  EVAL_FLOAT("(define num (* 2 3.0)) (+ num num num)", 18.0f);
-  // multiple defines
-  EVAL_FLOAT("(define a 10 b 5 c 2) (+ a b c)", 17);
-}
-
-void test_lang_interpret_function(void)
-{
-  EVAL_DECL;
-
-  EVAL_FLOAT("(fn (a) 42) (+ (a) (a))", 84);
-  EVAL_FLOAT("(fn (a) 12 34 55 42) (+ (a) (a))", 84);
-  EVAL_FLOAT("(fn (foo b: 1 c: 2) (+ b c)) (foo)", 3);
-  EVAL_FLOAT("(fn (foo b: 1 c: 2) (+ b c)) (foo b: 10 c: 100)", 110);
-  EVAL_FLOAT("(fn (foo b: 1 c: 2) (+ b c)) (foo c: 30 b: 5.6)", 35.6f);
-  EVAL_FLOAT("(define b 10)(fn (foo b: 1) (+ b b)) (foo b: (+ b b))", 40);
-}  
-
-void test_lang_interpret_if(void)
-{
-  EVAL_DECL;
-
-  EVAL_FLOAT("(if true 3 4)", 3);
-  EVAL_FLOAT("(if true 3)", 3);
-  EVAL_FLOAT("(if false 3 4)", 4);
-
-  EVAL_FLOAT("(if (> 100 1) 5 6)", 5);
-  EVAL_FLOAT("(if (> 1 100) 5 6)", 6);
-}  
-
-/* temporary, only used for testing */
-void test_lang_interpret_setq(void)
-{
-  EVAL_DECL;
-
-  EVAL_FLOAT("(define x 7) (setq x 4)", 4);
-  EVAL_FLOAT("(setq #test 5) #test", 5);
-}  
-
-void test_lang_interpret_loop(void)
-{
-  EVAL_DECL;
-
-  // #test is a special global for unit testing that we've defined
-  // in setup_interpreter_env
-
-  // basic from, to and upto
-  EVAL_FLOAT("(loop (x from: 0 to: 5) (setq #test x)) #test", 4);
-  EVAL_FLOAT("(loop (x from: 0 upto: 5) (setq #test x)) #test", 5);
-  EVAL_FLOAT("(loop (x to: 8) (setq #test x)) #test", 7);
-  EVAL_FLOAT("(loop (x upto: 8) (setq #test x)) #test", 8);
-  EVAL_FLOAT("(setq #test 1)(loop (x from: 0 to: 5) (setq #test (+ #test #test))) #test", 32);
-  EVAL_FLOAT("(loop (x from: 1 to: 4) (setq #test (+ #test x))) #test", 6);
-  EVAL_FLOAT("(loop (x from: 1 upto: 4) (setq #test (+ #test x))) #test", 10);
-
-  // change increment
-  EVAL_FLOAT("(loop (x from: 0 to: 10 increment: 2) (setq #test (+ #test x))) #test", 20);
-
-  // steps
-  EVAL_FLOAT_WITHIN("(loop (x from: 0   to: 10 steps: 3) (setq #test (+ #test x))) #test",
-                    0.00f + 3.333f + 6.666f, 0.1f);
-  EVAL_FLOAT_WITHIN("(loop (x from: 0 upto: 10 steps: 3) (setq #test (+ #test x))) #test",
-                    0.00f + 5.0f + 10.0f, 0.1f);
-  //  EVAL_FLOAT("(loop (x from: 0 upto: 10 steps: 3) (setq #test (+ #test x))) #test", 0.00f + 5.0f + 10.0f);
-}
-
-void test_lang_interpret_vector(void)
-{
-  EVAL_DECL;
-#if 1
-  {
-    EVAL_EXPR("(define x [])");
-
-    SENI_ASSERT_VEC();
-    TEST_ASSERT_NULL(var);
-    
-    EVAL_CLEANUP;
-  }
-#endif
-  
-  {
-    EVAL_EXPR("(define x [3])");
-
-    SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_FLOAT(3);
-    TEST_ASSERT_NULL(var);
-
-    EVAL_CLEANUP;
-  }
-
-  {
-    EVAL_EXPR("(define y [8 7 6])");
-
-    SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_FLOAT(8);
-    SENI_ASSERT_VEC_FLOAT(7);
-    SENI_ASSERT_VEC_FLOAT(6);
-    TEST_ASSERT_NULL(var);
-
-    EVAL_CLEANUP;
-  }
-  
-  {
-    EVAL_EXPR("(define y []) (vector/append y 5)");
-
-    SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_FLOAT(5);
-    TEST_ASSERT_NULL(var);
-
-    EVAL_CLEANUP;
-  }
-
-  {
-    EVAL_EXPR("(define y [3]) (vector/append y 4)");
-
-    SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_FLOAT(3);
-    SENI_ASSERT_VEC_FLOAT(4);
-    TEST_ASSERT_NULL(var);
-
-    EVAL_CLEANUP;
-  }
-
-  {
-    EVAL_EXPR("(define y [4 5]) (vector/append y 6)");
-
-    SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_FLOAT(4);
-    SENI_ASSERT_VEC_FLOAT(5);
-    SENI_ASSERT_VEC_FLOAT(6);
-    TEST_ASSERT_NULL(var);
-
-    EVAL_CLEANUP;
-  }
-
-  {
-    EVAL_EXPR("(define y [8 7 6]) (vector/append y 5)");
-
-    SENI_ASSERT_VEC();
-    SENI_ASSERT_VEC_FLOAT(8);
-    SENI_ASSERT_VEC_FLOAT(7);
-    SENI_ASSERT_VEC_FLOAT(6);
-    SENI_ASSERT_VEC_FLOAT(5);
-    TEST_ASSERT_NULL(var);
-
-    EVAL_CLEANUP;
-  }
-
-}
-
-void test_lang_interpret_mem(void)
-{
-  EVAL_DECL;
-
-  // tests the memory allocations for any leaks or double-free
-
-  {
-    EVAL_MEM("(fn (some-fn) (define a [3 4])(setq a 11))");
-    EVAL_CLEANUP;
-  }
-  
-  {
-    EVAL_MEM("(define b [2 3]) (fn (some-fn) (define a [1 2 3])(setq a b))");
-    EVAL_CLEANUP;
-  }
-
-  {
-    EVAL_MEM("(fn (some-fn)(define a [7 8]) (define b [2 3]) (setq a b))(some-fn)");
-    EVAL_CLEANUP;
-  }
-
-  {
-    EVAL_MEM("(define g 0) (loop (x from: 0 upto: 10 steps: 3) (setq g (+ g x)))");
-    EVAL_CLEANUP;
-  }
-
-  {
-    EVAL_MEM("(define b [2 3]) (fn (some-fn) (define a [1 2 3]) (vector/append b a))");
-    EVAL_CLEANUP;
-  }
-
-  {
-    EVAL_MEM("(define b [2 3]) (fn (some-fn) (define a 1) (vector/append b a))");
-    EVAL_CLEANUP;
-  }  
-}
-
-void debug_lang_interpret_mem(void)
-{
-  EVAL_DECL;
-
-  {
-    DEBUG_EXPR("(fn (some-fn) (define a [3 4])(setq a 11))");
-    EVAL_CLEANUP;
-  }
-
-  {
-    DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define a [1 2 3])(setq a b))");
-    EVAL_CLEANUP;
-  }
-
-  {
-    DEBUG_EXPR("(fn (some-fn)(define a [7 8]) (define b [2 3]) (setq a b))(some-fn)");
-    EVAL_CLEANUP;
-  }
-
-  {
-    DEBUG_EXPR("(define g 0) (loop (x from: 0 upto: 10 steps: 3) (setq g (+ g x)))");
-    EVAL_CLEANUP;
-  }
-
-  {
-    DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define a [1 2 3]) (vector/append b a))");
-    EVAL_CLEANUP;
-  }
-
-  {
-    DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define a 1) (vector/append b a))");
-    EVAL_CLEANUP;
-  }
-
-  {
-    DEBUG_EXPR("(define b [2 3]) (fn (some-fn) (define b 1) (+ b b)) (some-fn)");
-    EVAL_CLEANUP;
-  }
-}
-
 void test_uv_mapper(void)
 {
   init_uv_mapper();
@@ -722,32 +253,36 @@ void test_uv_mapper(void)
 
 // --------------------------------------------------
 
-seni_word_lut *setup_vm_wl(seni_vm_environment *e)
+seni_word_lut *setup_vm_wl(seni_env *e)
 {
   seni_word_lut *wl = wlut_allocate();
   // add keywords to the seni_word_lut and setup function pointers within the interpreter
-  vm_declare_keywords(wl, e);
+  declare_bindings(wl, e);
 
   return wl;
 }
 
+void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
+{
+  wlut_free(wl);
+  parser_free_nodes(ast);
+}
 
 // debug version of VM_COMPILE - prints the bytecode
 //
 #define DVM_COMPILE(EXPR) seni_word_lut *wl = NULL;       \
-  seni_vm_environment *e = NULL;                          \
+  seni_env *e = NULL;                                     \
   seni_node *ast = NULL;                                  \
   seni_program *prog = NULL;                              \
-  seni_virtual_machine *vm = NULL;                        \
-  debug_reset();                                          \
-  e = vm_environment_construct();                         \
+  seni_vm *vm = NULL;                                     \
+  e = env_construct();                                    \
   wl = setup_vm_wl(e);                                    \
   ast = parser_parse(wl, EXPR);                           \
   prog = program_allocate(256);                           \
   prog->wl = wl;                                          \
-  prog->vm_environment = e;                               \
+  prog->env = e;                                          \
   compiler_compile(ast, prog);                            \
-  vm = virtual_machine_construct(STACK_SIZE,MEMORY_SIZE); \
+  vm = vm_construct(STACK_SIZE,MEMORY_SIZE);              \
   printf("%s\n", EXPR);                                   \
   program_pretty_print(prog);
 
@@ -756,19 +291,18 @@ seni_word_lut *setup_vm_wl(seni_vm_environment *e)
 // eval version of VM_COMPILE - evals and compares result to an int
 //
 #define EVM_COMPILE(EXPR) seni_word_lut *wl = NULL;         \
-  seni_vm_environment *e = NULL;                            \
+  seni_env *e = NULL;                                       \
   seni_node *ast = NULL;                                    \
   seni_program *prog = NULL;                                \
-  seni_virtual_machine *vm = NULL;                          \
-  debug_reset();                                            \
-  e = vm_environment_construct();                           \
+  seni_vm *vm = NULL;                                       \
+  e = env_construct();                                      \
   wl = setup_vm_wl(e);                                      \
   ast = parser_parse(wl, EXPR);                             \
   prog = program_allocate(256);                             \
   prog->wl = wl;                                            \
-  prog->vm_environment = e;                                 \
+  prog->env = e;                                            \
   compiler_compile(ast, prog);                              \
-  vm = virtual_machine_construct(STACK_SIZE,MEMORY_SIZE);   \
+  vm = vm_construct(STACK_SIZE,MEMORY_SIZE);                \
   vm_interpret(vm, prog)
 
 
@@ -780,13 +314,13 @@ seni_word_lut *setup_vm_wl(seni_vm_environment *e)
 
 #define VM_TEST_VEC2_0(RES) assert_seni_var_v2_0(stack_peek(vm), RES)
 #define VM_TEST_VEC2_1(RES) assert_seni_var_v2_1(stack_peek(vm), RES)
-#define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_pop(vm), VAR_FLOAT, RES)
-#define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_pop(vm), RES)
+#define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
+#define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
 
 #define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
   program_free(prog);                                   \
-  vm_environment_free(e);                               \
-  virtual_machine_free(vm)
+  env_free(e);                                          \
+  vm_free(vm)
 
 
 // COMPILE macros that eval and compare results
@@ -811,17 +345,6 @@ void timing(void)
 {
   clock_t start, diff;
   int msec;
-
-  {
-    EVAL_DECL;
-    start = clock();
-    // EVAL_FLOAT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
-    EVAL_FLOAT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
-    diff = clock() - start;
-    msec = diff * 1000 / CLOCKS_PER_SEC;
-    printf("Eval Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
-  }
-
   {
     start = clock();
     //VM_COMPILE_FLOAT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
@@ -936,20 +459,8 @@ int main(void)
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   
   RUN_TEST(test_mathutil);
-  RUN_TEST(test_lang_parser);
-  RUN_TEST(test_lang_env);
+  RUN_TEST(test_parser);
   RUN_TEST(test_uv_mapper);
-
-  RUN_TEST(test_lang_interpret_basic);
-  RUN_TEST(test_lang_interpret_math);
-  RUN_TEST(test_lang_interpret_comparison);
-  RUN_TEST(test_lang_interpret_define);
-  RUN_TEST(test_lang_interpret_function);
-  RUN_TEST(test_lang_interpret_if);
-  RUN_TEST(test_lang_interpret_setq);
-  RUN_TEST(test_lang_interpret_loop);
-  RUN_TEST(test_lang_interpret_vector);
-  RUN_TEST(test_lang_interpret_mem);
   
   // vm
   RUN_TEST(test_vm_bytecode);

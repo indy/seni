@@ -115,112 +115,143 @@ typedef struct seni_var {
   struct seni_var *next;
 } seni_var;
 
+// Memory Segments
+//
+typedef enum {
+  MEM_SEG_ARGUMENT,             // store the function's arguments
+  MEM_SEG_LOCAL,                // store the function's local arguments
+  MEM_SEG_GLOBAL,               // global variables shared by all functions
+  MEM_SEG_CONSTANT,             // pseudo-segment holds constants in range 0..32767
+  MEM_SEG_VOID,                 // nothing
+} seni_memory_segment_type;
 
-typedef struct seni_env {
-  struct seni_env *outer;
-  seni_var *vars;
+// known memory addresses
 
-  // every seni_env will have a pointer to the buffer used for rendering vertices
-  seni_buffer *buffer;
+#define SP     0
+#define LCL    1
+#define ARG    2
 
-  /* for linked list used by the pool */
-  struct seni_env *prev;
-  struct seni_env *next;
+#define MEMORY_SIZE 1024
+#define STACK_SIZE 1024
+// TODO: put global on the heap rather than at the bottom of the stack
+#define MEMORY_GLOBAL_SIZE 10
+#define MEMORY_LOCAL_SIZE 10
+
+#define MAX_TOP_LEVEL_FUNCTIONS 32
+
+#define MAX_NUM_ARGUMENTS 16
+
+
+// Virtual Machine
+//
+
+typedef struct seni_vm_debug_info {
+  i32 get_from_heap_count;
+  i32 return_to_heap_count;
+} seni_vm_debug_info;
+
+typedef struct seni_vm {
+  seni_buffer *buffer;          // used for rendering vertices
+
+  seni_var *heap;               // the contiguous block of allocated memory
+  i32 heap_size;
+  seni_var *heap_list;          // doubly linked list of unallocated seni_vars from the heap
   
+  seni_var *stack;
+  i32 stack_size;
+
+  i32 fp;                       // frame pointer
+  i32 sp;                       // stack pointer
+  i32 ip;                       // instruction pointer
+
+  i32 global;                   // single segment of memory at top of stack
+  i32 local;                    // per-frame segment of memory for local variables
+
+#ifdef SENI_DEBUG_MODE
+  seni_vm_debug_info debug;     // debug info regarding vm
+#endif
+
+} seni_vm;
+
+// codes
+//
+typedef enum {
+#define OPCODE(name,_) name,
+#include "seni_opcodes.h"
+#undef OPCODE  
+} seni_opcode;
+
+typedef struct {
+  seni_opcode op;
+  seni_var arg0;
+  seni_var arg1;
+} seni_bytecode;
+
+typedef struct {
+  bool active;                  // is this struct being used
+
+  i32 index;                    // the index into program->fn_info
+  i32 fn_name;
+  i32 arg_address;
+  i32 body_address;
+  i32 num_args;
+  i32 argument_offsets[MAX_NUM_ARGUMENTS];
+} seni_fn_info;
+
+
+typedef void (*native_function_ptr)(seni_vm *vm, i32 num_args);
+typedef struct {
+  native_function_ptr function_ptr[MAX_NATIVE_LOOKUPS];
 } seni_env;
 
-typedef seni_var *(*eval_function_ptr)(seni_env *, seni_node *);
 
-typedef struct seni_debug_info {
-  i32 num_var_allocated;
-  i32 num_env_allocated;
+typedef struct {
+  seni_bytecode *code;
+  i32 code_max_size;
+  i32 code_size;
 
-  i32 num_var_available;
+  // variables used during compilation phase
+  //
+  i32 opcode_offset;
+  i32 global_mappings[MEMORY_GLOBAL_SIZE]; // top-level defines
+  i32 local_mappings[MEMORY_LOCAL_SIZE]; // store which wlut values are stored in which local memory addresses
+  seni_fn_info *current_fn_info;
 
-  i32 var_get_count;
-  i32 var_return_count;
-} seni_debug_info;
+  seni_fn_info fn_info[MAX_TOP_LEVEL_FUNCTIONS];
 
-void fill_debug_info(seni_debug_info *debug_info);
+  // todo: splut up seni_word_lut, keep the word array in seni_program but move the
+  // native and keyword stuff into their own structure that can be shared amongst
+  // multiple seni_programs
+  seni_word_lut *wl;
+
+  seni_env *env;
+
+} seni_program;
 
 // word lookup
 seni_word_lut *wlut_allocate();
-void      wlut_free(seni_word_lut *wlut);
-i32       wlut_lookup_or_add(seni_word_lut *wlut, char *string, size_t len);
-i32       wlut_lookup(seni_word_lut *wlut, char *string);
-char     *wlut_reverse_lookup(seni_word_lut *wlut, i32 index);
-
+void           wlut_free(seni_word_lut *wlut);
 // parser
-seni_node *parser_parse(seni_word_lut *wlut, char *s);
-void       parser_free_nodes(seni_node *nodes);
+seni_node     *parser_parse(seni_word_lut *wlut, char *s);
+void           parser_free_nodes(seni_node *nodes);
 
-char      *node_type_name(seni_node *node);
-char      *var_type_name(seni_var *var);
+char          *node_type_name(seni_node *node);
+char          *var_type_name(seni_var *var);
 
-// env
-//int env_debug_available_env();
-//int env_debug_available_var();
+seni_var      *stack_peek(seni_vm *vm);
 
-void env_allocate_pools(void);
-void env_free_pools(void);
-seni_env *get_initial_env();
+seni_vm       *vm_construct(i32 stack_size, i32 heap_size);
+void           vm_free(seni_vm *vm);
 
-seni_env *push_scope(seni_env *env);
-seni_env *pop_scope(seni_env *outer);
-seni_var *get_binded_var(seni_env *env, i32 var_id);
-seni_var *lookup_var(seni_env *env, i32 var_id);
+seni_program  *program_allocate(i32 code_max_size);
+void           program_free(seni_program *program);
+void           program_pretty_print(seni_program *program);
 
-seni_var *append_to_vector(seni_var *vec, seni_var *val);
-// interpreter
+seni_env      *env_construct();
+void           env_free(seni_env *e);
 
-// helpers used by bounded functions
-seni_var *false_in_reg(seni_var *reg);
-seni_var *true_in_reg(seni_var *reg);
-
-i32 var_vector_length(seni_var *var);
-  
-i32 var_as_int(seni_var *var);
-f32 var_as_float(seni_var *var);
-void var_as_vec2(f32* out0, f32* out1, seni_var *var);
-void var_as_vec4(f32* out0, f32* out1, f32* out2, f32* out3, seni_var *var);
-
-void bool_as_var(seni_var *out, bool b);
-void i32_as_var(seni_var *out, i32 i);
-void f32_as_var(seni_var *out, f32 f);
-
-
-seni_var *bind_var(seni_env *env, i32 name, seni_var *var);
-seni_var *bind_var_to_int(seni_env *env, i32 name, i32 value);
-seni_var *bind_var_to_float(seni_env *env, i32 name, f32 value);
-seni_var *eval(seni_env *env, seni_node *expr);
-seni_var *eval_all_nodes(seni_env *env, seni_node *body);
-seni_node *safe_next(seni_node *expr);
-seni_value_in_use get_value_in_use(seni_var_type type);
-void safe_var_copy(seni_var *dest, seni_var *src);
-void safe_var_move(seni_var *dest, seni_var *src);
-void add_named_parameters_to_env(seni_env *env, seni_node *named_params);
-
-// getting value from named parameter lists
-bool has_named_node(seni_node *params, i32 name);
-seni_node *get_named_node(seni_node *params, i32 name);
-seni_var *get_named_var(seni_env *env, seni_node *params, i32 name);
-f32 get_named_f32(seni_env *env, seni_node *params, i32 name, f32 default_value);
-i32 get_named_i32(seni_env *env, seni_node *params, i32 name, i32 default_value);
-void get_named_vec2(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1);
-void get_named_vec4(seni_env *env, seni_node *params, i32 name, f32 *out0, f32 *out1, f32 *out2, f32 *out3);
-
-void string_copy(char **dst, char *src);
-  
-void declare_keyword(seni_word_lut *wlut, char *name, eval_function_ptr function_ptr);
-void declare_common_arg(seni_word_lut *wlut, char *name, i32 *global_value);
-seni_var *evaluate(seni_env *env, seni_node *ast, bool hygenic_scope);
-
-// debugging
-void debug_var_info(seni_env *env);
-void debug_reset();
-void pretty_print_seni_var(seni_var *var, char* msg);
-void pretty_print_seni_node(seni_node *node, char* msg);
-
-
+void           compiler_compile(seni_node *ast, seni_program *program);
+void           vm_interpret(seni_vm *vm, seni_program *program);
+void           safe_var_move(seni_var *dest, seni_var *src);
 
 #endif
