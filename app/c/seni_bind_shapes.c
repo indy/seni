@@ -190,21 +190,22 @@ void native_fn_rect(seni_virtual_machine *vm, i32 num_args)
   f32 width = 4.0f;
   f32 height = 10.0f;
   f32 position[] = {10.0f, 23.0f};
+  f32 colour[] = { 0.0f, 1.0f, 0.0f, 1.0f };
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(width);
   READ_STACK_ARG_F32(height);
   READ_STACK_ARG_VEC2(position);
+  READ_STACK_ARG_VEC4(colour);
   READ_STACK_ARGS_END;
 
   seni_var res;
   res.type = VAR_BOOLEAN;
   res.value.i = 1;
 
-  f32 r = 1.0f; f32 g = 0.0f; f32 b = 0.0f; f32 a = 1.0f;
   rgba col;
-  col.r = r; col.g = g; col.b = b; col.a = a;
+  col.r = colour[0]; col.g = colour[1]; col.b = colour[2]; col.a = colour[3];
 
   render_rect(vm->buffer, position[0], position[1], width, height, col);
 

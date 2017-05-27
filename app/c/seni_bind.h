@@ -27,6 +27,17 @@
     n[1] = tmp_1->next->value.f;                                       \
   }
 
+#define READ_STACK_ARG_VEC4(n) if (name_1 == g_keyword_iname_##n) {    \
+    tmp_1 = (value_1->value.v)->value.v;                               \
+    n[0] = tmp_1->value.f;                                             \
+    tmp_1 = tmp_1->next;                                               \
+    n[1] = tmp_1->value.f;                                             \
+    tmp_1 = tmp_1->next;                                               \
+    n[2] = tmp_1->value.f;                                             \
+    tmp_1 = tmp_1->next;                                               \
+    n[3] = tmp_1->value.f;                                             \
+  }
+
 #define WRITE_STACK(v) safe_var_move(&(vm->stack[vm->sp++]), &v)
 
 
