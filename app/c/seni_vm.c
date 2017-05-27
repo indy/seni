@@ -12,6 +12,35 @@
 #include "seni_keywords.h"
 #undef KEYWORD
 
+
+#ifdef SENI_DEBUG_MODE
+
+void vm_debug_info_reset(seni_virtual_machine *vm)
+{
+  vm->debug.get_from_heap_count = 0;
+  vm->debug.return_to_heap_count = 0;
+}
+
+void vm_debug_info_print(seni_virtual_machine *vm)
+{
+  printf("*** vm_debug_info_print ***\n");
+  printf("var_get_from_heap: %d\n", vm->debug.get_from_heap_count);
+  printf("var_return_to_heap: %d\n", vm->debug.return_to_heap_count);
+}
+
+// record information during execution of bytecode
+#define DEBUG_INFO_RESET(vm) vm_debug_info_reset(vm)
+#define DEBUG_INFO_PRINT(vm) vm_debug_info_print(vm)
+#define DEBUG_INFO_GET_FROM_HEAP(vm) vm->debug.get_from_heap_count++
+#define DEBUG_INFO_RETURN_TO_HEAP(vm) vm->debug.return_to_heap_count++
+#else
+// do nothing
+#define DEBUG_INFO_RESET(vm)
+#define DEBUG_INFO_PRINT(vm)
+#define DEBUG_INFO_GET_FROM_HEAP(vm)
+#define DEBUG_INFO_RETURN_TO_HEAP(vm)
+#endif
+
 // returns the next available seni_var that the calling code can write to
 seni_var *stack_push(seni_virtual_machine *vm)
 {
@@ -94,6 +123,8 @@ void program_free(seni_program *program)
   free(program);
 }
 
+void vm_safe_var_move(seni_var *dest, seni_var *src);
+
 seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, seni_var *arg0, seni_var *arg1)
 {
   if (program->code_size >= program->code_max_size) {
@@ -103,8 +134,8 @@ seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, seni_v
   
   seni_bytecode *b = &(program->code[program->code_size++]);
   b->op = op;
-  safe_var_move(&(b->arg0), arg0);
-  safe_var_move(&(b->arg1), arg1);
+  vm_safe_var_move(&(b->arg0), arg0);
+  vm_safe_var_move(&(b->arg1), arg1);
 
   program->opcode_offset += opcode_offset[op];
 
@@ -166,7 +197,7 @@ char *memory_segment_name(seni_memory_segment_type segment)
 
 void bytecode_pretty_print(i32 ip, seni_bytecode *b)
 {
-  if (b->op == PUSH || b->op == POP) {
+  if (b->op == PUSH || b->op == POP || b->op == DEC_RC || b->op == INC_RC) {
     printf("%d\t%s\t%s\t",
            ip,
            opcode_name(b->op),
@@ -318,9 +349,8 @@ void vm_vector_ref_count_decrement(seni_virtual_machine *vm, seni_var *vec_head)
 
 seni_var *var_get_from_heap(seni_virtual_machine *vm)
 {
-  //printf("getting %d ", env_debug_available_var());
-  // g_debug_info.var_get_count++;
-  
+  DEBUG_INFO_GET_FROM_HEAP(vm);
+
   seni_var *head = vm->heap_list;
 
   if (head != NULL) {
@@ -331,7 +361,7 @@ seni_var *var_get_from_heap(seni_virtual_machine *vm)
 
   if (head->allocated == true) {
     SENI_ERROR("how did an already allocated seni_var get on the heap?");
-    pretty_print_seni_var(head, "var_get_from_heap");
+    pretty_print_seni_var(head, "ERROR: var_get_from_heap");
   }
 
   head->allocated = true;
@@ -355,8 +385,7 @@ void var_return_to_heap(seni_virtual_machine *vm,  seni_var *var)
     return;
   }
 
-  // g_debug_info.var_return_count++;
-  // pretty_print_seni_var(var, "returning");
+  DEBUG_INFO_RETURN_TO_HEAP(vm);
 
 #ifdef SENI_DEBUG_MODE
   if (var->debug_allocatable == false) {
@@ -390,7 +419,6 @@ void vm_vector_ref_count_decrement(seni_virtual_machine *vm, seni_var *vec_head)
     SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC???");
   }
 
-  //printf ("ref count is %d\n", var_rc->ref_count);
   var_rc->ref_count--;
       
   if (var_rc->ref_count == 0) {
@@ -407,6 +435,62 @@ void vm_vector_ref_count_increment(seni_virtual_machine *vm, seni_var *vec_head)
   var_rc->ref_count++;
 }
 
+void vm_safe_var_copy(seni_virtual_machine *vm, seni_var *dest, seni_var *src)
+{
+  if (dest == src) {
+    return;
+  }
+
+  if (dest->type == VAR_VEC_HEAD) {
+    vm_vector_ref_count_decrement(vm, dest);
+  }
+  
+  dest->type = src->type;
+
+  seni_value_in_use using = get_value_in_use(src->type);
+  
+  if (using == USE_I) {
+    dest->value.i = src->value.i;
+  } else if (using == USE_F) {
+    dest->value.f = src->value.f;
+  } else if (using == USE_N) {
+    dest->value.n = src->value.n;
+  } else if (using == USE_V) {
+    if (src->type == VAR_VEC_HEAD) {
+      dest->value.v = src->value.v;
+      vm_vector_ref_count_increment(vm, dest);
+    } else {
+      printf("what the fuck?\n");
+    }
+  }
+}
+
+// like a seni_var_copy without any modifications to the ref count
+void vm_safe_var_move(seni_var *dest, seni_var *src)
+{
+  if (dest == src) {
+    return;
+  }
+
+  dest->type = src->type;
+
+  seni_value_in_use using = get_value_in_use(src->type);
+  
+  if (using == USE_I) {
+    dest->value.i = src->value.i;
+  } else if (using == USE_F) {
+    dest->value.f = src->value.f;
+  } else if (using == USE_N) {
+    dest->value.n = src->value.n;
+  } else if (using == USE_V) {
+    if (src->type == VAR_VEC_HEAD) {
+      dest->value.v = src->value.v;
+    } else {
+      printf("what the fuck?\n");
+    }
+  }
+}
+
 // [ ] <<- this is the VAR_VEC_HEAD
 //  |
 // [4] -> [7] -> [3] -> [5] -> NULL  <<- these are seni_vars
@@ -420,7 +504,7 @@ seni_var *vm_append_to_vector(seni_virtual_machine *vm, seni_var *head, seni_var
     SENI_ERROR("cannot allocate child_value from pool");
     return NULL;
   }
-  safe_var_copy(child_value, val);
+  vm_safe_var_copy(vm, child_value, val);
   //pretty_print_seni_var(child_value, "child val");
 
   seni_var *vec_rc = head->value.v;
@@ -841,10 +925,7 @@ void compile_fn(seni_node *ast, seni_program *program)
     program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, label->value.i);
     program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, counter++);
 
-    // HACK:
-    // think of a more robust way of pushing a seni_node value into a bytecode instruction
-    //
-    program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, value->value.f);
+    compile(value, program, false);
     program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, counter++);
 
     num_args++;
@@ -904,7 +985,16 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
     if (data_index != -1) {
       // push value
       compile(value, program, global_scope);
+      program_emit_opcode_i32(program, DEC_RC, MEM_SEG_ARGUMENT, data_index);
       program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, data_index);
+
+      if (value->type != NODE_VECTOR) {
+        // not an explicitly declared vector so increment it's rc
+        program_emit_opcode_i32(program, INC_RC, MEM_SEG_ARGUMENT, data_index);
+
+        // explicitly declared vectors will have an rc of 1, when the function
+        // returns this will be decremented and they will be returned to the heap
+      }
     }
 
     args = safe_next(value);
@@ -1111,7 +1201,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
   bool b1, b2;
   f32 f1, f2;
   seni_memory_segment_type memory_segment_type;
-  seni_var *src, *dest, *rc;
+  seni_var *src, *dest, *tmp;
 
   register seni_bytecode *bc = NULL;
   register seni_var *v = NULL;
@@ -1122,9 +1212,12 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
   i32 new_fp;
   i32 num_args;
   i32 iname;
+  i32 i;
 
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
+
+  DEBUG_INFO_RESET(vm);
 
   for (;;) {
     bc = &(program->code[ip++]);
@@ -1135,16 +1228,16 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_CONSTANT) {
-        safe_var_move(v, &(bc->arg1));
+        vm_safe_var_move(v, &(bc->arg1));
       } else if (memory_segment_type == MEM_SEG_ARGUMENT) {
         src = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
-        safe_var_move(v, src);
+        vm_safe_var_move(v, src);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         src = &(vm->stack[vm->local + bc->arg1.value.i]);
-        safe_var_move(v, src);
+        vm_safe_var_move(v, src);
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         src = &(vm->stack[vm->global + bc->arg1.value.i]);
-        safe_var_move(v, src);
+        vm_safe_var_move(v, src);
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // pushing from the void. i.e. create this object
 
@@ -1156,18 +1249,18 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
         src = v;
         src->type = VAR_VEC_HEAD;
         
-        rc = var_get_from_heap(vm);
-        if (rc == NULL) {
+        tmp = var_get_from_heap(vm);
+        if (tmp == NULL) {
           SENI_ERROR("unable to get a var from the pool");
           return;
         }
-        rc->type = VAR_VEC_RC;
-        rc->ref_count = 0;
-        rc->value.v = NULL;
+        tmp->type = VAR_VEC_RC;
+        tmp->ref_count = 1;
+        tmp->value.v = NULL;
 
-        src->value.v = rc;
+        src->value.v = tmp;
         
-        safe_var_move(v, src);
+        vm_safe_var_copy(vm, v, src);
       } else {
         SENI_ERROR("PUSH: unknown memory segment type %d", bc->arg0.value.i);
       }
@@ -1179,13 +1272,15 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
-        safe_var_move(dest, v);
+        //printf("POP ARG stack value %d is %d\n", bc->arg1.value.i, vm->fp - bc->arg1.value.i - 1);
+        // check the current value of dest, 
+        vm_safe_var_move(dest, v);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         dest = &(vm->stack[vm->local + bc->arg1.value.i]);
-        safe_var_move(dest, v);
+        vm_safe_var_move(dest, v);
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         dest = &(vm->stack[vm->global + bc->arg1.value.i]);
-        safe_var_move(dest, v);
+        vm_safe_var_move(dest, v);
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // normally pop from the stack and lose the value
         // but if it's a vector then decrement its ref count
@@ -1194,7 +1289,37 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
         }
       } else {
         SENI_ERROR("POP: unknown memory segment type %d", bc->arg0.value.i);
-      } 
+      }
+      break;
+
+    case DEC_RC:
+      // the var referenced by the bytecode is a default value for a function argument
+      // it's going to be overwritten by a parameter that was specified by the calling
+      // code.
+      // We'll need to decrement it's ref count
+      //
+      memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
+      if (memory_segment_type == MEM_SEG_ARGUMENT) {
+        dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
+        if (dest->type == VAR_VEC_HEAD) {
+          vm_vector_ref_count_decrement(vm, dest);
+        }
+      } else {
+        SENI_ERROR("DEC_RC: unknown memory segment type %d", bc->arg0.value.i);
+      }
+      break;
+
+    case INC_RC:
+      //
+      memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
+      if (memory_segment_type == MEM_SEG_ARGUMENT) {
+        dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
+        if (dest->type == VAR_VEC_HEAD) {
+          vm_vector_ref_count_increment(vm, dest);
+        }
+      } else {
+        SENI_ERROR("DEC_RC: unknown memory segment type %d", bc->arg0.value.i);
+      }
       break;
 
     case JUMP:
@@ -1240,13 +1365,19 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       vm->ip = bc->arg0.value.i;
       vm->fp = new_fp;
       vm->local = sp;
-      sp += MEMORY_LOCAL_SIZE;
+
+      // clear ref count on the new local memory
+      // so that during pop we can correctly return memory to the heap
+      for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
+        vm->stack[sp].ref_count = 0;
+        vm->stack[sp].type = VAR_INT; // anything but VAR_VEC_HEAD
+        sp++;
+      }
 
       stack_d = &(vm->stack[sp]);
       ip = vm->ip;
       
       vm->sp = sp;
-
       break;
 
     case CALL_0:
@@ -1272,8 +1403,29 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       // grab whatever was the last value on the soon to be popped frame
       src = &(vm->stack[sp - 1]);
+      if (src->type == VAR_VEC_HEAD) {
+        vm_vector_ref_count_increment(vm, src);
+      }
 
       num_args = vm->stack[vm->fp + 2].value.i;
+
+      // decrement ref count on any locally defined vectors
+      for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
+        tmp = &(vm->stack[vm->local + i]);
+        if (tmp->type == VAR_VEC_HEAD) {
+          vm_vector_ref_count_decrement(vm, tmp);
+        }
+      }
+
+      for (i = 0; i < num_args; i++) {
+        tmp = &(vm->stack[vm->fp - ((i+1) * 2)]);
+        // printf("fp %d RET arg decrement %d on stack: %d\n", vm->fp, num_args, vm->fp - ((i+1) * 2));
+        // pretty_print_seni_var(tmp, "tmp");
+        if (tmp->type == VAR_VEC_HEAD) {
+          // printf("RET arg decrement\n");
+          vm_vector_ref_count_decrement(vm, tmp);
+        }
+      }
 
       // update vm
       vm->sp = vm->fp - (num_args * 2);
@@ -1288,7 +1440,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
 
       // copy the previous frame's top stack value onto the current frame's stack
       STACK_PUSH;
-      safe_var_move(v, src);
+      vm_safe_var_move(v, src);
 
       break;
 
@@ -1436,6 +1588,7 @@ void vm_interpret(seni_virtual_machine *vm, seni_program *program)
       
     case STOP:
       vm->sp = sp;
+      //DEBUG_INFO_PRINT(vm);
       return;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));

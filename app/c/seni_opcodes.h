@@ -37,5 +37,9 @@ OPCODE(NATIVE, 0)
 // appends item at top to vector at top-1, leaves vector on stack
 OPCODE(APPEND, -1)
 
+// decrements ref count of seni_var at given memory location
+OPCODE(DEC_RC, 0)
+OPCODE(INC_RC, 0)
+
 OPCODE (NOP, 0)
 OPCODE (STOP, 0)

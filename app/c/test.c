@@ -257,6 +257,27 @@ void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
+void assert_seni_var_v2_0(seni_var *var, f32 f)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_HEAD, var->type, "VAR_VEC_HEAD");
+  seni_var *rc = var->value.v;
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_RC, rc->type, "VAR_VEC_RC");
+
+  seni_var *val = rc->value.v;
+  TEST_ASSERT_EQUAL_FLOAT(f, val->value.f);
+}
+
+void assert_seni_var_v2_1(seni_var *var, f32 f)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_HEAD, var->type, "VAR_VEC_HEAD");
+  seni_var *rc = var->value.v;
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_RC, rc->type, "VAR_VEC_RC");
+
+  seni_var *val = rc->value.v;
+  val = val->next;
+  TEST_ASSERT_EQUAL_FLOAT(f, val->value.f);
+}
+
 void assert_seni_var_f32_within(seni_var *var, seni_var_type type, f32 f, f32 tolerance)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
@@ -751,6 +772,14 @@ seni_word_lut *setup_vm_wl(seni_vm_environment *e)
   vm_interpret(vm, prog)
 
 
+#ifdef SENI_DEBUG_MODE
+#define VM_HEAP_CHECK TEST_ASSERT_EQUAL_MESSAGE(vm->debug.get_from_heap_count, vm->debug.return_to_heap_count, "vm heap leak")
+#else
+#define VM_HEAP_CHECK
+#endif
+
+#define VM_TEST_VEC2_0(RES) assert_seni_var_v2_0(stack_peek(vm), RES)
+#define VM_TEST_VEC2_1(RES) assert_seni_var_v2_1(stack_peek(vm), RES)
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_pop(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_pop(vm), RES)
 
@@ -762,15 +791,17 @@ seni_word_lut *setup_vm_wl(seni_vm_environment *e)
 
 // COMPILE macros that eval and compare results
 //
-#if 0
+#if 1
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
-#define VM_COMPILE_FLOAT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
-#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
+#define VM_COMPILE_VEC2(EXPR,RES0,RES1) {EVM_COMPILE(EXPR);VM_TEST_VEC2_0(RES0);VM_TEST_VEC2_1(RES1);VM_CLEANUP;}
+#define VM_COMPILE_FLOAT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_HEAP_CHECK;VM_CLEANUP;}
+#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_HEAP_CHECK;VM_CLEANUP;}
 #else
 // COMPILE macros that print out bytecode
 //
+#define VM_COMPILE_VEC2(EXPR,_,__) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_FLOAT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #endif
@@ -850,9 +881,47 @@ void test_vm_callret(void)
   VM_COMPILE_FLOAT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
 }
 
+void test_vm_vector(void)
+{
+  VM_COMPILE_VEC2("[4 5]", 4, 5);
+
+  VM_COMPILE_FLOAT("(loop (x from: 0 to: 5) [1 2]) 9", 9);
+
+  // explicitly defined vector is returned
+  VM_COMPILE_VEC2("(fn (f a: 3) [1 2]) (fn (x) (f)) (x)", 1, 2);
+
+  // local var in function is returned
+  VM_COMPILE_VEC2("(fn (f a: 3) (define b [1 2]) b) (fn (x) (f)) (x)", 1, 2);
+
+  // local var in function is not returned
+  VM_COMPILE_FLOAT("(fn (f a: 3) (define b [1 2]) 55) (fn (x) (f)) (x)", 55);
+
+  // default argument for function is returned
+  VM_COMPILE_VEC2("(fn (f a: [1 2]) a) (fn (x) (f)) (x)", 1, 2);
+
+  // default argument for function is not returned
+  VM_COMPILE_FLOAT("(fn (f a: [1 2]) 3) (fn (x) (f)) (x)", 3);
+
+  // default argument for function is not returned and
+  // it's called with an explicitly declared vector
+  VM_COMPILE_FLOAT("(fn (f a: [1 2]) 3) (fn (x) (f a: [3 4])) (x)", 3);
+
+  // default argument for function is not returned and
+  // it's called with an unused argument
+  VM_COMPILE_FLOAT("(fn (f a: [1 2]) 3) (fn (x) (f z: [3 4])) (x)", 3);
+
+  // default argument for function is not returned
+  VM_COMPILE_FLOAT("(fn (f a: [1 2]) a) (fn (x) (f a: 5)) (x)", 5);
+  
+  // argument into function is returned
+  VM_COMPILE_VEC2("(fn (f a: [3 4]) a) (fn (x) (f a: [1 2])) (x)", 1, 2);
+}
+
 void test_vm_temp(void)
 {
-  VM_COMPILE_FLOAT("(fn (foo a: [2 3]) 33) (foo a: [1 5])", 8);
+  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+  //VM_COMPILE_FLOAT("(fn (adder a: [1 2]) (+ 4 2)) (adder a: [4 5])", 8);
+
   // VM_COMPILE_FLOAT("(line width: 35 height: 22)", 17);
   // VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (line width: (+ 3 4) height: (adder))", 17);
   // VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
@@ -866,26 +935,27 @@ int main(void)
 
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   
-  // RUN_TEST(test_mathutil);
-  // RUN_TEST(test_lang_parser);
-  // RUN_TEST(test_lang_env);
-  // RUN_TEST(test_uv_mapper);
+  RUN_TEST(test_mathutil);
+  RUN_TEST(test_lang_parser);
+  RUN_TEST(test_lang_env);
+  RUN_TEST(test_uv_mapper);
 
-  // RUN_TEST(test_lang_interpret_basic);
-  // RUN_TEST(test_lang_interpret_math);
-  // RUN_TEST(test_lang_interpret_comparison);
-  // RUN_TEST(test_lang_interpret_define);
-  // RUN_TEST(test_lang_interpret_function);
-  // RUN_TEST(test_lang_interpret_if);
-  // RUN_TEST(test_lang_interpret_setq);
-  // RUN_TEST(test_lang_interpret_loop);
-  // RUN_TEST(test_lang_interpret_vector);
-  // RUN_TEST(test_lang_interpret_mem);
+  RUN_TEST(test_lang_interpret_basic);
+  RUN_TEST(test_lang_interpret_math);
+  RUN_TEST(test_lang_interpret_comparison);
+  RUN_TEST(test_lang_interpret_define);
+  RUN_TEST(test_lang_interpret_function);
+  RUN_TEST(test_lang_interpret_if);
+  RUN_TEST(test_lang_interpret_setq);
+  RUN_TEST(test_lang_interpret_loop);
+  RUN_TEST(test_lang_interpret_vector);
+  RUN_TEST(test_lang_interpret_mem);
   
-  // // vm
-  // RUN_TEST(test_vm_bytecode);
-  // RUN_TEST(test_vm_callret);
-  RUN_TEST(test_vm_temp);
+  // vm
+  RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_vector);
+  // RUN_TEST(test_vm_temp);
   
   return UNITY_END();
 }
