@@ -205,7 +205,7 @@ void assert_seni_var_v2(seni_var *var, f32 a, f32 b)
   seni_var *rc = var->value.v;
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_RC, rc->type, "VAR_VEC_RC");
 
-  seni_var *val = rc->value.v;
+  seni_var *val = rc->next;
   TEST_ASSERT_EQUAL_FLOAT(a, val->value.f);
 
   val = val->next;
@@ -219,7 +219,7 @@ void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d)
   seni_var *rc = var->value.v;
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_RC, rc->type, "VAR_VEC_RC");
 
-  seni_var *val = rc->value.v;
+  seni_var *val = rc->next;
   TEST_ASSERT_EQUAL_FLOAT(a, val->value.f);
 
   val = val->next;
@@ -455,6 +455,7 @@ void test_vector(void)
   
   // argument into function is returned
   VM_COMPILE_VEC2("(fn (f a: [3 4]) a) (fn (x) (f a: [1 2])) (x)", 1, 2);
+
 }
 
 void test_col_rgb(void)

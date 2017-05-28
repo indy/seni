@@ -87,6 +87,7 @@ typedef struct seni_var {
   union {
     i32 i;
     f32 f;
+    i32 ref_count;              // reference count for VAR_VEC_RC
     struct seni_var *v;
   } value;
 
@@ -95,8 +96,6 @@ typedef struct seni_var {
   bool debug_allocatable; 
 #endif
 
-  // reference count for VAR_VEC_RC
-  i32 ref_count;
   bool allocated;
 
   /* for linked list used by the pool and for elements in a vector */
@@ -246,4 +245,9 @@ void           safe_var_move(seni_var *dest, seni_var *src);
 // debugging
 void           pretty_print_seni_var(seni_var *var, char* msg);
 i32 var_vector_length(seni_var *var);
+
+void construct_vector(seni_vm *vm, seni_var *head);
+void append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
+void append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
+
 #endif

@@ -775,7 +775,7 @@ seni_value_in_use get_value_in_use(seni_var_type type)
   case VAR_VEC_HEAD:
     return USE_V;
   case VAR_VEC_RC:
-    return USE_V;
+    return USE_I;
   default:
     return USE_I;
   };
@@ -805,7 +805,7 @@ i32 var_vector_length(seni_var *var)
   if (v->type != VAR_VEC_RC) {
     return 0;
   }
-  v = v->value.v;
+  v = v->next;
   
   while (v != NULL) {
     len++;
@@ -1268,7 +1268,7 @@ seni_var *var_get_from_heap(seni_vm *vm)
   head->next = NULL;
   head->prev = NULL;
 
-  head->ref_count = 0;
+  head->value.i = 0;
 
   //pretty_print_seni_var(head, "getting");
 
@@ -1295,12 +1295,6 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
   if (var->type == VAR_VEC_HEAD) {
     ref_count_decrement(vm, var);
   }
-  
-  if (var->type == VAR_VEC_RC) {
-    if (var->value.v != NULL) {
-      var_return_to_heap(vm, var->value.v);
-    }
-  }
 
   // the var is part of an allocated list
   if (var->next != NULL) {
@@ -1318,9 +1312,9 @@ void ref_count_decrement(seni_vm *vm, seni_var *vec_head)
     SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC???");
   }
 
-  var_rc->ref_count--;
+  var_rc->value.ref_count--;
       
-  if (var_rc->ref_count == 0) {
+  if (var_rc->value.ref_count == 0) {
     var_return_to_heap(vm, var_rc);
   }
 }
@@ -1331,7 +1325,7 @@ void ref_count_increment(seni_vm *vm, seni_var *vec_head)
   if (var_rc->type != VAR_VEC_RC) {
     SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC %d???", vm->sp);
   }
-  var_rc->ref_count++;
+  var_rc->value.ref_count++;
 }
 
 void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
@@ -1386,29 +1380,46 @@ void safe_var_move(seni_var *dest, seni_var *src)
   }
 }
 
-// [ ] <<- this is the VAR_VEC_HEAD
+// [ ] <<- this is the VAR_VEC_HEAD (value.v points to VAR_VEC_RC)
 //  |
-// [ ] <<- this is the VAR_VEC_RC
+// [ ] <<- this is the VAR_VEC_RC (value.ref_count is used)
 //  |
+//  v  <<= the VAR_VEC_RC's next pointer points to the contents of the vector
 // [4] -> [7] -> [3] -> [5] -> NULL  <<- these are seni_vars
 //
-seni_var *append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
+void construct_vector(seni_vm *vm, seni_var *head)
+{
+  seni_var *rc = var_get_from_heap(vm);    // get a vec_rc
+  rc->type = VAR_VEC_RC;
+  rc->value.ref_count = 1;
+
+  // assuming that it's ok to wipe out head->value.v
+  head->type = VAR_VEC_HEAD;
+  head->value.v = NULL;           // attach vec_rc to vec_head
+  DL_APPEND(head->value.v, rc);
+}
+
+void append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
+{
+  seni_var *v = var_get_from_heap(vm);
+  v->type = VAR_FLOAT;
+  v->value.f = val;
+
+  DL_APPEND(head->value.v, v);
+}
+
+void append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
 {
   // assuming that head is VAR_VEC_HEAD
   
   seni_var *child_value = var_get_from_heap(vm);
   if (child_value == NULL) {
     SENI_ERROR("cannot allocate child_value from pool");
-    return NULL;
+    return;
   }
   safe_var_copy(vm, child_value, val);
-  //pretty_print_seni_var(child_value, "child val");
-
-  seni_var *vec_rc = head->value.v;
   
-  DL_APPEND(vec_rc->value.v, child_value);
-
-  return head;
+  DL_APPEND(head->value.v, child_value);
 }
 
 // **************************************************
@@ -2130,19 +2141,8 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 
         // also note that the VAR_VEC_HEAD is a seni_var from the stack
         // so it should never be sent to the vm->heap_list
-        src = v;
-        src->type = VAR_VEC_HEAD;
+        construct_vector(vm, v);
         
-        tmp = var_get_from_heap(vm);
-        if (tmp == NULL) {
-          SENI_ERROR("unable to get a var from the pool");
-          return;
-        }
-        tmp->type = VAR_VEC_RC;
-        tmp->ref_count = 1;
-        tmp->value.v = NULL;
-
-        src->value.v = tmp;
       } else {
         SENI_ERROR("PUSH: unknown memory segment type %d", bc->arg0.value.i);
       }
@@ -2250,7 +2250,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       // clear ref count on the new local memory
       // so that during pop we can correctly return memory to the heap
       for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
-        vm->stack[sp].ref_count = 0;
+        vm->stack[sp].value.ref_count = 0;
         vm->stack[sp].type = VAR_INT; // anything but VAR_VEC_HEAD
         sp++;
       }

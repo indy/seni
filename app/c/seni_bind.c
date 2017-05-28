@@ -179,18 +179,6 @@ void bind_circle(seni_vm *vm, i32 num_args)
   WRITE_STACK(g_var_true);
 }
 
-
-seni_var *add_float_to_vector(seni_vm *vm, seni_var *prev, f32 val)
-{
-  seni_var *v = var_get_from_heap(vm);
-  v->type = VAR_FLOAT;
-  v->value.f = val;
-  if (prev) {
-    prev->next = v;
-  }
-  return v;
-}
-
 void bind_col_rgb(seni_vm *vm, i32 num_args)
 {
   // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
@@ -209,23 +197,15 @@ void bind_col_rgb(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(alpha);
   READ_STACK_ARGS_END;
 
-  seni_var ret, *v, *rc;
+  seni_var ret;
 
-  ret.type = VAR_VEC_HEAD;      // returning a vec_head
-
-  rc = var_get_from_heap(vm);    // get a vec_rc
-  rc->type = VAR_VEC_RC;
-  rc->ref_count = 1;
-  rc->value.v = NULL;
-
-  ret.value.v = rc;              // attach vec_rc to vec_head
-
+  construct_vector(vm, &ret);
+  
   // append the rgba values to each other
-  v = add_float_to_vector(vm, NULL, r);
-  rc->value.v = v;  
-  v = add_float_to_vector(vm, v, g);
-  v = add_float_to_vector(vm, v, b);
-  v = add_float_to_vector(vm, v, alpha);
+  append_to_vector_f32(vm, &ret, r);
+  append_to_vector_f32(vm, &ret, g);
+  append_to_vector_f32(vm, &ret, b);
+  append_to_vector_f32(vm, &ret, alpha);
 
   // push the return value onto the stack
   WRITE_STACK(ret);
