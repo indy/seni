@@ -772,8 +772,6 @@ seni_value_in_use get_value_in_use(seni_var_type type)
   switch(type) {
   case VAR_FLOAT:
     return USE_F;
-  case VAR_FN:
-    return USE_N;
   case VAR_VEC_HEAD:
     return USE_V;
   case VAR_VEC_RC:
@@ -790,7 +788,6 @@ char *var_type_name(seni_var *var)
   case VAR_FLOAT:    return "VAR_FLOAT";
   case VAR_BOOLEAN:  return "VAR_BOOLEAN";
   case VAR_NAME:     return "VAR_NAME";
-  case VAR_FN:       return "VAR_FN";
   case VAR_VEC_HEAD: return "VAR_VEC_HEAD";
   case VAR_VEC_RC:   return "VAR_VEC_RC";
   default: return "unknown seni_var type";
@@ -845,9 +842,6 @@ void pretty_print_seni_var(seni_var *var, char* msg)
   case USE_F:
     printf("debug_id:%d id:%d %s : %.2f %s\n", var->debug_id, var->id,  type, var->value.f, msg);
     break;
-  case USE_N:
-    printf("debug_id:%d id:%d %s %s %s\n", var->debug_id, var->id,  type, node_type_name(var->value.n), msg);
-    break;
   case USE_V:
     if (var->type == VAR_VEC_HEAD) {
       printf("debug_id:%d id:%d %s : length %d %s\n", var->debug_id, var->id,  type, var_vector_length(var), msg);
@@ -863,9 +857,6 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     break;
   case USE_F:
     printf("%s : %.2f %s\n", type, var->value.f, msg);
-    break;
-  case USE_N:
-    printf("%s %s %s\n", type, node_type_name(var->value.n), msg);
     break;
   case USE_V:
     printf("%s : length %d %s\n", type, var_vector_length(var), msg);
@@ -1361,8 +1352,6 @@ void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
     dest->value.i = src->value.i;
   } else if (using == USE_F) {
     dest->value.f = src->value.f;
-  } else if (using == USE_N) {
-    dest->value.n = src->value.n;
   } else if (using == USE_V) {
     if (src->type == VAR_VEC_HEAD) {
       dest->value.v = src->value.v;
@@ -1388,8 +1377,6 @@ void safe_var_move(seni_var *dest, seni_var *src)
     dest->value.i = src->value.i;
   } else if (using == USE_F) {
     dest->value.f = src->value.f;
-  } else if (using == USE_N) {
-    dest->value.n = src->value.n;
   } else if (using == USE_V) {
     if (src->type == VAR_VEC_HEAD) {
       dest->value.v = src->value.v;
