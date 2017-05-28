@@ -93,7 +93,6 @@ typedef struct seni_var {
   i32 id;
   seni_var_type type;
 
-  /* no char* in this union since I don't think we're ever going to have a pointer to a string */
   union {
     i32 i;
     f32 f;
@@ -239,6 +238,7 @@ char          *node_type_name(seni_node *node);
 char          *var_type_name(seni_var *var);
 
 seni_var      *stack_peek(seni_vm *vm);
+seni_var      *var_get_from_heap(seni_vm *vm);
 
 seni_vm       *vm_construct(i32 stack_size, i32 heap_size);
 void           vm_free(seni_vm *vm);
@@ -253,5 +253,7 @@ void           env_free(seni_env *e);
 void           compiler_compile(seni_node *ast, seni_program *program);
 void           vm_interpret(seni_vm *vm, seni_program *program);
 void           safe_var_move(seni_var *dest, seni_var *src);
-
+// debugging
+void           pretty_print_seni_var(seni_var *var, char* msg);
+i32 var_vector_length(seni_var *var);
 #endif

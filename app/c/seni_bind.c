@@ -13,6 +13,7 @@
 #define READ_STACK_ARGS_BEGIN i32 args_pointer_1 = vm->sp - (num_args * 2); \
   i32 i_1;                                                              \
   seni_var *label_1, *value_1, *tmp_1;                                  \
+  tmp_1 = NULL;                                                         \
   for(i_1 = 0; i_1 < num_args; i_1++) {                                 \
   label_1 = &(vm->stack[args_pointer_1 + 0]);                           \
   value_1 = &(vm->stack[args_pointer_1 + 1]);                           \
@@ -49,6 +50,10 @@
 #include "seni_keywords.h"
 #undef KEYWORD
 
+// a global var that represents true, used as the default
+// return type for bindings that only have side-effects
+//
+seni_var g_var_true;
 
 void string_copy(char **dst, char *src)
 {
@@ -71,7 +76,7 @@ void declare_vm_keyword(seni_word_lut *wlut, char *name)
   }
 }
 
-void declare_vm_native(seni_word_lut *wlut, char *name, seni_env *e, native_function_ptr function_ptr)
+void declare_binding(seni_word_lut *wlut, seni_env *e, char *name, native_function_ptr function_ptr)
 {
   string_copy(&(wlut->native[wlut->native_count]), name);
 
@@ -84,7 +89,15 @@ void declare_vm_native(seni_word_lut *wlut, char *name, seni_env *e, native_func
   }
 }
 
-void native_fn_line(seni_vm *vm, i32 num_args)
+// TEMPORARY
+rgba array_to_colour(f32 *colour)
+{
+  rgba col;
+  col.r = colour[0]; col.g = colour[1]; col.b = colour[2]; col.a = colour[3];
+  return col;
+}
+
+void bind_line(seni_vm *vm, i32 num_args)
 {
   // default values for line
   f32 width = 4.0f;
@@ -100,20 +113,15 @@ void native_fn_line(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_VEC4(colour);
   READ_STACK_ARGS_END;
 
-  seni_var res;
-  res.type = VAR_BOOLEAN;
-  res.value.i = 1;
-
-  rgba col;
-  col.r = colour[0]; col.g = colour[1]; col.b = colour[2]; col.a = colour[3];
+  rgba col = array_to_colour(colour);
 
   render_line(vm->buffer, from[0], from[1], to[0], to[1], width, col);
 
   // push the return value onto the stack
-  WRITE_STACK(res);
+  WRITE_STACK(g_var_true);
 }
 
-void native_fn_rect(seni_vm *vm, i32 num_args)
+void bind_rect(seni_vm *vm, i32 num_args)
 {
   // default values for line
   f32 width = 4.0f;
@@ -129,20 +137,15 @@ void native_fn_rect(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_VEC4(colour);
   READ_STACK_ARGS_END;
 
-  seni_var res;
-  res.type = VAR_BOOLEAN;
-  res.value.i = 1;
-
-  rgba col;
-  col.r = colour[0]; col.g = colour[1]; col.b = colour[2]; col.a = colour[3];
+  rgba col = array_to_colour(colour);
 
   render_rect(vm->buffer, position[0], position[1], width, height, col);
 
   // push the return value onto the stack
-  WRITE_STACK(res);
+  WRITE_STACK(g_var_true);
 }
 
-void native_fn_circle(seni_vm *vm, i32 num_args)
+void bind_circle(seni_vm *vm, i32 num_args)
 {
   // default values for line
   f32 width = 4.0f;
@@ -150,31 +153,89 @@ void native_fn_circle(seni_vm *vm, i32 num_args)
   f32 position[] = {10.0f, 23.0f};
   f32 colour[] = { 0.0f, 1.0f, 0.0f, 1.0f };
   f32 tessellation = 10.0f;
+  f32 radius = -1.0f;
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(width);
   READ_STACK_ARG_F32(height);
+  READ_STACK_ARG_F32(radius);
   READ_STACK_ARG_VEC2(position);
   READ_STACK_ARG_VEC4(colour);
   READ_STACK_ARG_F32(tessellation);
   READ_STACK_ARGS_END;
 
-  seni_var res;
-  res.type = VAR_BOOLEAN;
-  res.value.i = 1;
-
-  rgba col;
-  col.r = colour[0]; col.g = colour[1]; col.b = colour[2]; col.a = colour[3];
+  // if the radius has been defined then it overrides the width and height parameters
+  if (radius > 0.0f) {
+    width = radius;
+    height = radius;
+  }
+  
+  rgba col = array_to_colour(colour);
 
   render_circle(vm->buffer, position[0], position[1], width, height, col, (i32)tessellation);
 
   // push the return value onto the stack
-  WRITE_STACK(res);
+  WRITE_STACK(g_var_true);
+}
+
+
+seni_var *add_float_to_vector(seni_vm *vm, seni_var *prev, f32 val)
+{
+  seni_var *v = var_get_from_heap(vm);
+  v->type = VAR_FLOAT;
+  v->value.f = val;
+  if (prev) {
+    prev->next = v;
+  }
+  return v;
+}
+
+void bind_col_rgb(seni_vm *vm, i32 num_args)
+{
+  // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+  
+  // default values for line
+  f32 r = 0.0f;
+  f32 g = 0.0f;
+  f32 b = 0.0f;
+  f32 alpha = 0.0f;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(r);
+  READ_STACK_ARG_F32(g);
+  READ_STACK_ARG_F32(b);
+  READ_STACK_ARG_F32(alpha);
+  READ_STACK_ARGS_END;
+
+  seni_var ret, *v, *rc;
+
+  ret.type = VAR_VEC_HEAD;      // returning a vec_head
+
+  rc = var_get_from_heap(vm);    // get a vec_rc
+  rc->type = VAR_VEC_RC;
+  rc->ref_count = 1;
+  rc->value.v = NULL;
+
+  ret.value.v = rc;              // attach vec_rc to vec_head
+
+  // append the rgba values to each other
+  v = add_float_to_vector(vm, NULL, r);
+  rc->value.v = v;  
+  v = add_float_to_vector(vm, v, g);
+  v = add_float_to_vector(vm, v, b);
+  v = add_float_to_vector(vm, v, alpha);
+
+  // push the return value onto the stack
+  WRITE_STACK(ret);
 }
 
 void declare_bindings(seni_word_lut *wlut, seni_env *e)
 {
+  g_var_true.type = VAR_BOOLEAN;
+  g_var_true.value.i = 1;
+  
   wlut->keyword_count = 0;
 
   // this fills out wlut->keyword and that's used in the wlut_lookup_ functions
@@ -183,8 +244,10 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 #include "seni_keywords.h"
 #undef KEYWORD
 
-  declare_vm_native(wlut, "line", e, &native_fn_line);
-  declare_vm_native(wlut, "rect", e, &native_fn_rect);
-  declare_vm_native(wlut, "circle", e, &native_fn_circle);
-  declare_vm_native(wlut, "bezier", e, &native_fn_line);
+  declare_binding(wlut, e, "line", &bind_line);
+  declare_binding(wlut, e, "rect", &bind_rect);
+  declare_binding(wlut, e, "circle", &bind_circle);
+  declare_binding(wlut, e, "bezier", &bind_line);
+
+  declare_binding(wlut, e, "col/rgb", &bind_col_rgb);
 }

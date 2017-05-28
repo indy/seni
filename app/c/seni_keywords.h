@@ -20,9 +20,7 @@ KEYWORD(16, "loop", loop)
 // for debugging
 KEYWORD(17, "setq", setq)
 KEYWORD(18, "#vars", hash_vars)
-
-
-// Common Args
+// common args
 KEYWORD(19, "colour", colour)
 KEYWORD(20, "coords", coords)
 KEYWORD(21, "from", from)
@@ -41,6 +39,11 @@ KEYWORD(33, "tessellation", tessellation)
 KEYWORD(34, "to", to)
 KEYWORD(35, "upto", upto)
 KEYWORD(36, "width", width)
-// temporary: replace with vec2
+// TEMPORARY: replace with vec2
 KEYWORD(37, "x", x)
 KEYWORD(38, "y", y)
+// colour components
+KEYWORD(39, "r", r)
+KEYWORD(40, "g", g)
+KEYWORD(41, "b", b)
+KEYWORD(42, "alpha", alpha)

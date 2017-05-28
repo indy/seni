@@ -1263,11 +1263,13 @@ seni_var *var_get_from_heap(seni_vm *vm)
     DL_DELETE(vm->heap_list, head);
   } else {
     SENI_ERROR("no more vars in pool");
+    return NULL;
   }
 
   if (head->allocated == true) {
     SENI_ERROR("how did an already allocated seni_var get on the heap?");
     pretty_print_seni_var(head, "ERROR: var_get_from_heap");
+    return NULL;
   }
 
   head->allocated = true;
@@ -1900,6 +1902,33 @@ void compile_vector(seni_node *ast, seni_program *program)
   }
 }
 
+seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 iname)
+{
+  i32 local_mapping = get_local_mapping(program, iname);
+  if (local_mapping != -1) {
+    program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, local_mapping);
+    return safe_next(ast);
+  }
+
+  // check arguments if we're in a function
+  if (program->current_fn_info) {
+    i32 argument_mapping = get_argument_mapping(program->current_fn_info, iname);
+    if (argument_mapping != -1) {
+      program_emit_opcode_i32(program, PUSH, MEM_SEG_ARGUMENT, argument_mapping);
+      return safe_next(ast);
+    }
+  }
+
+  i32 global_mapping = get_global_mapping(program, iname);
+  if (global_mapping != -1) {
+    program_emit_opcode_i32(program, PUSH, MEM_SEG_GLOBAL, global_mapping);
+    return safe_next(ast);
+  }
+
+  SENI_ERROR("compile_user_defined_name: unknown mapping for %d", iname);
+  return safe_next(ast);
+}
+
 seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
 {
   seni_node *n;
@@ -1932,27 +1961,7 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
     i32 iname = ast->value.i;
     
     if (iname >= WORD_START && iname < WORD_START + MAX_WORD_LOOKUPS) { // a user defined name
-      
-      i32 local_mapping = get_local_mapping(program, iname);
-      if (local_mapping != -1) {
-        program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, local_mapping);
-        return safe_next(ast);
-      }
-
-      // check arguments if we're in a function
-      if (program->current_fn_info) {
-        i32 argument_mapping = get_argument_mapping(program->current_fn_info, iname);
-        if (argument_mapping != -1) {
-          program_emit_opcode_i32(program, PUSH, MEM_SEG_ARGUMENT, argument_mapping);
-          return safe_next(ast);
-        }
-      }
-
-      i32 global_mapping = get_global_mapping(program, iname);
-      if (global_mapping != -1) {
-        program_emit_opcode_i32(program, PUSH, MEM_SEG_GLOBAL, global_mapping);
-        return safe_next(ast);
-      }
+      return compile_user_defined_name(ast, program, iname);
     } else if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
 
       if (iname == g_keyword_iname_define) {
@@ -2012,9 +2021,11 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
         program_emit_opcode_i32(program, NOT, 0, 0);
         return safe_next(ast);
       } else {
-        // look up the name as a local variable?
-        SENI_ERROR("cannot find %d\n", iname);
-        return safe_next(ast);        
+        // look up the name as a user defined variable
+        // normally get here when a script contains variables
+        // that have the same name as common parameters.
+        // e.g. r, g, b, alpha
+        return compile_user_defined_name(ast, program, iname);
       }
 
     } else if ( iname >= NATIVE_START && iname < NATIVE_START + MAX_NATIVE_LOOKUPS){
@@ -2104,6 +2115,8 @@ void vm_interpret(seni_vm *vm, seni_program *program)
   DEBUG_INFO_RESET(vm);
 
   for (;;) {
+    // printf("ip: %d\n", ip);
+    
     bc = &(program->code[ip++]);
     
     switch(bc->op) {
@@ -2143,8 +2156,6 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         tmp->value.v = NULL;
 
         src->value.v = tmp;
-        
-        safe_var_copy(vm, v, src);
       } else {
         SENI_ERROR("PUSH: unknown memory segment type %d", bc->arg0.value.i);
       }
@@ -2333,7 +2344,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 
       native_function_ptr native_func = program->env->function_ptr[iname];
       native_func(vm, num_args);
-
+      
       // sync registers with vm
       sp = vm->sp;
       stack_d = &(vm->stack[sp]);
@@ -2474,7 +2485,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       
     case STOP:
       vm->sp = sp;
-      //DEBUG_INFO_PRINT(vm);
+      // DEBUG_INFO_PRINT(vm);
       return;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));

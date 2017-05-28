@@ -199,25 +199,37 @@ void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
-void assert_seni_var_v2_0(seni_var *var, f32 f)
+void assert_seni_var_v2(seni_var *var, f32 a, f32 b)
 {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_HEAD, var->type, "VAR_VEC_HEAD");
   seni_var *rc = var->value.v;
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_RC, rc->type, "VAR_VEC_RC");
 
   seni_var *val = rc->value.v;
-  TEST_ASSERT_EQUAL_FLOAT(f, val->value.f);
+  TEST_ASSERT_EQUAL_FLOAT(a, val->value.f);
+
+  val = val->next;
+  TEST_ASSERT_EQUAL_FLOAT(b, val->value.f);
 }
 
-void assert_seni_var_v2_1(seni_var *var, f32 f)
+void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d)
 {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_HEAD, var->type, "VAR_VEC_HEAD");
+
   seni_var *rc = var->value.v;
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_RC, rc->type, "VAR_VEC_RC");
 
   seni_var *val = rc->value.v;
+  TEST_ASSERT_EQUAL_FLOAT(a, val->value.f);
+
   val = val->next;
-  TEST_ASSERT_EQUAL_FLOAT(f, val->value.f);
+  TEST_ASSERT_EQUAL_FLOAT(b, val->value.f);
+
+  val = val->next;
+  TEST_ASSERT_EQUAL_FLOAT(c, val->value.f);
+
+  val = val->next;
+  TEST_ASSERT_EQUAL_FLOAT(d, val->value.f);
 }
 
 void assert_seni_var_f32_within(seni_var *var, seni_var_type type, f32 f, f32 tolerance)
@@ -312,10 +324,11 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 #define VM_HEAP_CHECK
 #endif
 
-#define VM_TEST_VEC2_0(RES) assert_seni_var_v2_0(stack_peek(vm), RES)
-#define VM_TEST_VEC2_1(RES) assert_seni_var_v2_1(stack_peek(vm), RES)
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
+#define VM_TEST_VEC2(A,B) assert_seni_var_v2(stack_peek(vm), A, B)
+#define VM_TEST_VEC4(A,B,C,D) assert_seni_var_v4(stack_peek(vm), A, B, C, D)
+
 
 #define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
   program_free(prog);                                   \
@@ -325,19 +338,23 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 
 // COMPILE macros that eval and compare results
 //
+// 0 == print out bytecode, 1 == execute bytecode
 #if 1
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
-#define VM_COMPILE_VEC2(EXPR,RES0,RES1) {EVM_COMPILE(EXPR);VM_TEST_VEC2_0(RES0);VM_TEST_VEC2_1(RES1);VM_CLEANUP;}
 #define VM_COMPILE_FLOAT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_HEAP_CHECK;VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_HEAP_CHECK;VM_CLEANUP;}
+#define VM_COMPILE_VEC2(EXPR,A,B) {EVM_COMPILE(EXPR);VM_TEST_VEC2(A,B);VM_CLEANUP;}
+#define VM_COMPILE_VEC4(EXPR,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_VEC4(A,B,C,D);VM_CLEANUP;}
+
 #else
 // COMPILE macros that print out bytecode
 //
-#define VM_COMPILE_VEC2(EXPR,_,__) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_FLOAT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_VEC2(EXPR,_,_1) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_VEC4(EXPR,_,_1,_2,_3) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #endif
 // --------------------------------------------------
 
@@ -356,7 +373,7 @@ void timing(void)
   }
 }
 
-void test_vm_bytecode(void)
+void test_bytecode(void)
 {
   VM_COMPILE_FLOAT("(define a 42) (define b 52) 10", 10);
   VM_COMPILE_FLOAT("(define a 6) (define b 7) (+ a b)", 13);
@@ -385,7 +402,7 @@ void test_vm_bytecode(void)
   VM_COMPILE_FLOAT("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
 }
 
-void test_vm_callret(void)
+void test_callret(void)
 {
   // basic invocation
   VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
@@ -404,7 +421,7 @@ void test_vm_callret(void)
   VM_COMPILE_FLOAT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
 }
 
-void test_vm_vector(void)
+void test_vector(void)
 {
   VM_COMPILE_VEC2("[4 5]", 4, 5);
 
@@ -440,7 +457,15 @@ void test_vm_vector(void)
   VM_COMPILE_VEC2("(fn (f a: [3 4]) a) (fn (x) (f a: [1 2])) (x)", 1, 2);
 }
 
-void test_vm_temp(void)
+void test_col_rgb(void)
+{
+  // VM_COMPILE_VEC2("[4 5]", 4, 5);
+  // VM_COMPILE_VEC4("[4 5 6 7]", 4, 5, 6, 7);
+
+  VM_COMPILE_VEC4("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4)", 0.1f, 0.2f, 0.3f, 0.4f);
+}
+
+void test_temp(void)
 {
   VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
   //VM_COMPILE_FLOAT("(fn (adder a: [1 2]) (+ 4 2)) (adder a: [4 5])", 8);
@@ -463,10 +488,11 @@ int main(void)
   RUN_TEST(test_uv_mapper);
   
   // vm
-  RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_callret);
-  RUN_TEST(test_vm_vector);
-  // RUN_TEST(test_vm_temp);
+  RUN_TEST(test_bytecode);
+  RUN_TEST(test_callret);
+  RUN_TEST(test_vector);
+  RUN_TEST(test_col_rgb);
+  //RUN_TEST(test_temp);
   
   return UNITY_END();
 }
