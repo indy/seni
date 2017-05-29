@@ -4,6 +4,7 @@
 #include "seni_config.h"
 #include "seni_types.h"
 #include "seni_buffer.h"
+#include "seni_matrix.h"
 
 #define MAX_WORD_LOOKUPS 128
 #define MAX_KEYWORD_LOOKUPS 128
@@ -139,24 +140,25 @@ typedef struct seni_vm_debug_info {
 } seni_vm_debug_info;
 
 typedef struct seni_vm {
-  seni_buffer *buffer;          // used for rendering vertices
+  seni_buffer *buffer;             // used for rendering vertices
+  seni_matrix_stack *matrix_stack; 
 
-  seni_var *heap;               // the contiguous block of allocated memory
+  seni_var *heap;                  // the contiguous block of allocated memory
   i32 heap_size;
-  seni_var *heap_list;          // doubly linked list of unallocated seni_vars from the heap
+  seni_var *heap_list;             // doubly linked list of unallocated seni_vars from the heap
   
   seni_var *stack;
   i32 stack_size;
 
-  i32 fp;                       // frame pointer
-  i32 sp;                       // stack pointer
-  i32 ip;                       // instruction pointer
+  i32 fp;                          // frame pointer
+  i32 sp;                          // stack pointer
+  i32 ip;                          // instruction pointer
 
-  i32 global;                   // single segment of memory at top of stack
-  i32 local;                    // per-frame segment of memory for local variables
+  i32 global;                      // single segment of memory at top of stack
+  i32 local;                       // per-frame segment of memory for local variables
 
 #ifdef SENI_DEBUG_MODE
-  seni_vm_debug_info debug;     // debug info regarding vm
+  seni_vm_debug_info debug;        // debug info regarding vm
 #endif
 
 } seni_vm;
@@ -242,12 +244,11 @@ void           env_free(seni_env *e);
 void           compiler_compile(seni_node *ast, seni_program *program);
 void           vm_interpret(seni_vm *vm, seni_program *program);
 void           safe_var_move(seni_var *dest, seni_var *src);
-// debugging
-void           pretty_print_seni_var(seni_var *var, char* msg);
-i32 var_vector_length(seni_var *var);
 
-void construct_vector(seni_vm *vm, seni_var *head);
-void append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
-void append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
+void           pretty_print_seni_var(seni_var *var, char* msg);
+
+void           vector_construct(seni_vm *vm, seni_var *head);
+void           append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
+void           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 
 #endif

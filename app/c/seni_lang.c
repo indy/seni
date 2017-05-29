@@ -1216,11 +1216,17 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
     DL_APPEND(vm->heap_list, &(var[i]));
   }
 
+  vm->matrix_stack = matrix_stack_construct();
+  // add an identity matrix onto the stack so that further scale/rotate/translate ops can work
+  seni_matrix matrix = matrix_stack_push(vm->matrix_stack);
+  matrix_identity(matrix);
+
   return vm;
 }
 
 void vm_free(seni_vm *vm)
 {
+  matrix_stack_free(vm->matrix_stack);
   free(vm->stack);
   free(vm->heap);
   free(vm);
@@ -1387,7 +1393,7 @@ void safe_var_move(seni_var *dest, seni_var *src)
 //  v  <<= the VAR_VEC_RC's next pointer points to the contents of the vector
 // [4] -> [7] -> [3] -> [5] -> NULL  <<- these are seni_vars
 //
-void construct_vector(seni_vm *vm, seni_var *head)
+void vector_construct(seni_vm *vm, seni_var *head)
 {
   seni_var *rc = var_get_from_heap(vm);    // get a vec_rc
   rc->type = VAR_VEC_RC;
@@ -2141,7 +2147,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 
         // also note that the VAR_VEC_HEAD is a seni_var from the stack
         // so it should never be sent to the vm->heap_list
-        construct_vector(vm, v);
+        vector_construct(vm, v);
         
       } else {
         SENI_ERROR("PUSH: unknown memory segment type %d", bc->arg0.value.i);

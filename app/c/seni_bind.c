@@ -199,7 +199,7 @@ void bind_col_rgb(seni_vm *vm, i32 num_args)
 
   seni_var ret;
 
-  construct_vector(vm, &ret);
+  vector_construct(vm, &ret);
   
   // append the rgba values to each other
   append_to_vector_f32(vm, &ret, r);

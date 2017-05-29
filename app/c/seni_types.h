@@ -21,8 +21,6 @@ typedef double   f64;
 #define SENI_SCALAR
 typedef f32 scalar;
 
-// #include "gl-matrix/gl-matrix.h"
-
 typedef struct
 {
   scalar x;
