@@ -3,6 +3,7 @@
 #include "seni_shapes.h"
 #include "seni_buffer.h"
 #include "seni_lang.h"
+#include "seni_matrix.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -115,7 +116,10 @@ void bind_line(seni_vm *vm, i32 num_args)
 
   rgba col = array_to_colour(colour);
 
-  render_line(vm->buffer, from[0], from[1], to[0], to[1], width, col);
+  seni_buffer *buffer = vm->buffer;
+  seni_matrix matrix = matrix_stack_peek(vm->matrix_stack);
+
+  render_line(buffer, matrix, from[0], from[1], to[0], to[1], width, col);
 
   // push the return value onto the stack
   WRITE_STACK(g_var_true);
@@ -139,7 +143,10 @@ void bind_rect(seni_vm *vm, i32 num_args)
 
   rgba col = array_to_colour(colour);
 
-  render_rect(vm->buffer, position[0], position[1], width, height, col);
+  seni_buffer *buffer = vm->buffer;
+  seni_matrix matrix = matrix_stack_peek(vm->matrix_stack);
+
+  render_rect(buffer, matrix, position[0], position[1], width, height, col);
 
   // push the return value onto the stack
   WRITE_STACK(g_var_true);
@@ -173,7 +180,10 @@ void bind_circle(seni_vm *vm, i32 num_args)
   
   rgba col = array_to_colour(colour);
 
-  render_circle(vm->buffer, position[0], position[1], width, height, col, (i32)tessellation);
+  seni_buffer *buffer = vm->buffer;
+  seni_matrix matrix = matrix_stack_peek(vm->matrix_stack);
+
+  render_circle(buffer, matrix, position[0], position[1], width, height, col, (i32)tessellation);
 
   // push the return value onto the stack
   WRITE_STACK(g_var_true);
@@ -211,6 +221,52 @@ void bind_col_rgb(seni_vm *vm, i32 num_args)
   WRITE_STACK(ret);
 }
 
+void bind_translate(seni_vm *vm, i32 num_args)
+{
+  f32 vector[] = {0.0f, 0.0f};
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(vector);
+  READ_STACK_ARGS_END;
+
+  matrix_stack_translate(vm->matrix_stack, vector[0], vector[1]);
+
+  WRITE_STACK(g_var_true);
+}
+
+void bind_rotate(seni_vm *vm, i32 num_args)
+{
+  f32 angle = 0.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(angle);
+  READ_STACK_ARGS_END;
+
+  matrix_stack_rotate(vm->matrix_stack, angle);
+
+  WRITE_STACK(g_var_true);
+}
+
+void bind_scale(seni_vm *vm, i32 num_args)
+{
+  f32 vector[] = {1.0f, 1.0f};
+  f32 scalar = 1.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(vector);
+  READ_STACK_ARG_F32(scalar);
+  READ_STACK_ARGS_END;
+
+  if (scalar != 1.0f) {
+    matrix_stack_scale(vm->matrix_stack, scalar, scalar);
+  } else {
+    matrix_stack_scale(vm->matrix_stack, vector[0], vector[1]);
+  }
+
+  WRITE_STACK(g_var_true);
+}
+
+
 void declare_bindings(seni_word_lut *wlut, seni_env *e)
 {
   g_var_true.type = VAR_BOOLEAN;
@@ -227,7 +283,11 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_binding(wlut, e, "line", &bind_line);
   declare_binding(wlut, e, "rect", &bind_rect);
   declare_binding(wlut, e, "circle", &bind_circle);
-  declare_binding(wlut, e, "bezier", &bind_line);
+  // declare_binding(wlut, e, "bezier", &bind_bezier);
+
+  declare_binding(wlut, e, "translate", &bind_translate);
+  declare_binding(wlut, e, "rotate", &bind_rotate);
+  declare_binding(wlut, e, "scale", &bind_scale);
 
   declare_binding(wlut, e, "col/rgb", &bind_col_rgb);
 }

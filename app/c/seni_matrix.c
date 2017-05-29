@@ -254,7 +254,7 @@ seni_matrix matrix_stack_pop(seni_matrix_stack *matrix_stack)
   return m;
 }
 
-seni_matrix matrix_stack_top(seni_matrix_stack *matrix_stack)
+seni_matrix matrix_stack_peek(seni_matrix_stack *matrix_stack)
 {
   seni_matrix head = matrix_stack->stack[matrix_stack->sp - 1];
 
@@ -267,7 +267,7 @@ void matrix_stack_scale(seni_matrix_stack *matrix_stack, f32 sx, f32 sy)
   matrix_identity(m);
   matrix_scale(m, m, sx, sy, 1.0f);
 
-  seni_matrix head = matrix_stack_top(matrix_stack);
+  seni_matrix head = matrix_stack_peek(matrix_stack);
   matrix_multiply(head, head, m);
 }
 
@@ -277,7 +277,7 @@ void matrix_stack_translate(seni_matrix_stack *matrix_stack, f32 tx, f32 ty)
   matrix_identity(m);
   matrix_translate(m, m, tx, ty, 0.0f);
 
-  seni_matrix head = matrix_stack_top(matrix_stack);
+  seni_matrix head = matrix_stack_peek(matrix_stack);
   matrix_multiply(head, head, m);
 }
 
@@ -287,18 +287,18 @@ void matrix_stack_rotate(seni_matrix_stack *matrix_stack, f32 a)
   matrix_identity(m);
   matrix_rotate_z(m, m, a);
 
-  seni_matrix head = matrix_stack_top(matrix_stack);
+  seni_matrix head = matrix_stack_peek(matrix_stack);
   matrix_multiply(head, head, m);
 }
 
 void matrix_stack_transform_vec2(f32 *out, seni_matrix_stack *matrix_stack, f32 x, f32 y)
 {
-  seni_matrix head = matrix_stack_top(matrix_stack);
+  seni_matrix head = matrix_stack_peek(matrix_stack);
   matrix_transform_vec2(out, head, x, y);
 }
 
 void matrix_stack_transform_vec3(f32 *out, seni_matrix_stack *matrix_stack, f32 x, f32 y, f32 z)
 {
-  seni_matrix head = matrix_stack_top(matrix_stack);
+  seni_matrix head = matrix_stack_peek(matrix_stack);
   matrix_transform_vec3(out, head, x, y, z);
 }

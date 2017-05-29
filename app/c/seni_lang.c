@@ -1,10 +1,11 @@
 #include "seni_lang.h"
-
+#include "seni_matrix.h"
 #include "seni_config.h"
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
 #include <stdio.h>              /* for debug only */
+
 
 #include "utlist.h"
 
@@ -1584,6 +1585,15 @@ void compile_if(seni_node *ast, seni_program *program)
   }
 }
 
+// compiles everything after the current ast point
+void compile_rest(seni_node *ast, seni_program *program)
+{
+  ast = safe_next(ast);
+  while (ast) {
+    ast = compile(ast, program, false);
+  }
+}
+
 void compile_loop(seni_node *ast, seni_program *program)
 {
   // (loop (x from: 0 to: 5) (+ 42 38))
@@ -1641,11 +1651,7 @@ void compile_loop(seni_node *ast, seni_program *program)
   i32 pre_body_opcode_offset = program->opcode_offset;
 
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-  seni_node *body = safe_next(parameters_node);
-  while (body != NULL) {
-    compile(body, program, false);
-    body = safe_next(body);
-  }
+  compile_rest(parameters_node, program);
 
   i32 post_body_opcode_offset = program->opcode_offset;
   i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
@@ -1664,6 +1670,13 @@ void compile_loop(seni_node *ast, seni_program *program)
   // loop back to the comparison
   program_emit_opcode_i32(program, JUMP, -(program->code_size - addr_loop_start), 0);
   bc_exit_check->arg0.value.i = program->code_size - addr_exit_check;
+}
+
+void compile_on_matrix_stack(seni_node *ast, seni_program *program)
+{
+  program_emit_opcode_i32(program, MTX_PUSH, 0, 0);
+  compile_rest(ast, program);
+  program_emit_opcode_i32(program, MTX_POP, 0, 0);
 }
 
 seni_fn_info *get_local_fn_info(seni_node *node, seni_program *program)
@@ -1848,15 +1861,6 @@ void compile_fn(seni_node *ast, seni_program *program)
   program->current_fn_info = NULL;
 }
 
-// compiles everything after the current ast point
-void compile_rest(seni_node *ast, seni_program *program)
-{
-  ast = safe_next(ast);
-  while (ast) {
-    ast = compile(ast, program, false);
-  }
-}
-
 void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *fn_info, bool global_scope)
 {
   // ast == adder a: 10 b: 20
@@ -1980,6 +1984,9 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
       } else if (iname == g_keyword_iname_loop) {
         compile_loop(ast, program);
         return safe_next(ast);
+      } else if (iname == g_keyword_iname_on_matrix_stack) {
+        compile_on_matrix_stack(ast, program);
+        return safe_next(ast);
       } else if (iname == g_keyword_iname_fn) {
         compile_fn(ast, program);
         return safe_next(ast);
@@ -2101,6 +2108,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
   f32 f1, f2;
   seni_memory_segment_type memory_segment_type;
   seni_var *src, *dest, *tmp;
+  seni_matrix top, matrix;
 
   register seni_bytecode *bc = NULL;
   register seni_var *v = NULL;
@@ -2360,6 +2368,17 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       append_to_vector(vm, v, src); // note: this uses a copy, should it be a move instead?
 
       STACK_PUSH;
+      break;
+
+    case MTX_PUSH:
+      // note: should these just be normal functions and not opcodes?
+      top = matrix_stack_peek(vm->matrix_stack);
+      matrix = matrix_stack_push(vm->matrix_stack);
+      matrix_copy(matrix, top);
+      break;
+
+    case MTX_POP:
+      matrix_stack_pop(vm->matrix_stack);
       break;
 
     case ADD:

@@ -36,7 +36,7 @@ void matrix_stack_free(seni_matrix_stack *matrix_stack);
 
 seni_matrix matrix_stack_push(seni_matrix_stack *matrix_stack);
 seni_matrix matrix_stack_pop(seni_matrix_stack *matrix_stack);
-seni_matrix matrix_stack_top(seni_matrix_stack *matrix_stack);
+seni_matrix matrix_stack_peek(seni_matrix_stack *matrix_stack);
 
 // modify the top of the matrix stack
 // (note: the matrix_stack cannot be empty)
