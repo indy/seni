@@ -1846,12 +1846,7 @@ void compile_fn(seni_node *ast, seni_program *program)
   fn_info->body_address = program->code_size;
 
   // (+ a b)
-  seni_node *body = safe_next(signature);
-
-  while (body != NULL) {
-    compile(body, program, false);
-    body = safe_next(body);
-  }
+  compile_rest(signature, program);
 
   // Don't need any POP, MEM_SEG_VOID instructions as the RET will
   // pop the frame and blow the stack
