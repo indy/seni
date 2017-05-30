@@ -1219,7 +1219,7 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
 
   vm->matrix_stack = matrix_stack_construct();
   // add an identity matrix onto the stack so that further scale/rotate/translate ops can work
-  seni_matrix matrix = matrix_stack_push(vm->matrix_stack);
+  seni_matrix *matrix = matrix_stack_push(vm->matrix_stack);
   matrix_identity(matrix);
 
   return vm;
@@ -2103,7 +2103,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
   f32 f1, f2;
   seni_memory_segment_type memory_segment_type;
   seni_var *src, *dest, *tmp;
-  seni_matrix top, matrix;
+  seni_matrix *top, *matrix;
 
   register seni_bytecode *bc = NULL;
   register seni_var *v = NULL;

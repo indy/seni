@@ -23,7 +23,7 @@ bool is_buffer_empty(seni_buffer *buffer)
   return buffer->num_vertices == 0;
 }
 
-void add_vertex(seni_buffer *buffer, seni_matrix matrix, f32 x, f32 y, rgba colour, v2 t)
+void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, rgba colour, v2 t)
 {
   i32 vertex_item_size = 2;
   i32 v_index = buffer->num_vertices * vertex_item_size;
@@ -48,7 +48,7 @@ void add_vertex(seni_buffer *buffer, seni_matrix matrix, f32 x, f32 y, rgba colo
   buffer->num_vertices++;
 }
 
-void form_degenerate_triangle(seni_buffer *buffer, seni_matrix matrix, f32 x, f32 y)
+void form_degenerate_triangle(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y)
 {
   i32 vertex_item_size = 2;
   // get the index of the last vertex that was added
@@ -58,11 +58,15 @@ void form_degenerate_triangle(seni_buffer *buffer, seni_matrix matrix, f32 x, f3
   // note: colour doesn't matter since these triangles won't be rendered
   f32 *last_v = &(buffer->vbuf[index]);
 
+  // todo: don't create an identity matrix for each call
+  seni_matrix identity;
+  matrix_identity(&identity);
+  
   rgba colour;
   colour.r = 0.0f; colour.g = 0.0f; colour.b = 0.0f; colour.a = 0.0f;
   v2 t;
   t.x = 0.0f; t.y = 0.0f; // u v
-  add_vertex(buffer, matrix, last_v[0], last_v[1], colour, t);
+  add_vertex(buffer, &identity, last_v[0], last_v[1], colour, t);
 
   // add the new vertex to complete the degenerate triangle
   add_vertex(buffer, matrix, x, y, colour, t);
@@ -71,21 +75,19 @@ void form_degenerate_triangle(seni_buffer *buffer, seni_matrix matrix, f32 x, f3
   // vertex when we 'really' render the strip
 }
 
-void prepare_to_add_triangle_strip(seni_buffer *buffer, seni_matrix matrix, i32 num_vertices, f32 x, f32 y)
+void prepare_to_add_triangle_strip(seni_buffer *buffer, seni_matrix *matrix, i32 num_vertices, f32 x, f32 y)
 {
   if (can_vertices_fit(buffer, num_vertices) == false) {
     flush_triangles(buffer);
   }
 
   if (is_buffer_empty(buffer) == false) {
-    f32 out[2];
-    matrix_transform_vec2(out, matrix, x, y);
-    form_degenerate_triangle(buffer, matrix, out[0], out[1]);
+    form_degenerate_triangle(buffer, matrix, x, y);
   }
 }
 
 void render_line(seni_buffer *buffer,
-                 seni_matrix matrix,
+                 seni_matrix *matrix,
                  f32 from_x, f32 from_y, f32 to_x, f32 to_y,
                  f32 width,
                  rgba colour)
@@ -109,7 +111,7 @@ void render_line(seni_buffer *buffer,
 
 
 void render_rect(seni_buffer *buffer,
-                 seni_matrix matrix,
+                 seni_matrix *matrix,
                  f32 x, f32 y,
                  f32 width, f32 height,
                  rgba colour)
@@ -129,7 +131,7 @@ void render_rect(seni_buffer *buffer,
 }
 
 void render_circle(seni_buffer *buffer,
-                   seni_matrix matrix,
+                   seni_matrix *matrix,
                    f32 x, f32 y,
                    f32 width, f32 height,
                    rgba colour,
@@ -161,7 +163,7 @@ void render_circle(seni_buffer *buffer,
 }
 
 void render_bezier(seni_buffer *buffer,
-                   seni_matrix matrix,
+                   seni_matrix *matrix,
                    v2 *coords,
                    f32 line_width, f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
                    f32 t_start, f32 t_end,
@@ -169,6 +171,7 @@ void render_bezier(seni_buffer *buffer,
                    i32 tessellation)
 {
   buffer = NULL;
+  matrix = NULL;
   coords = NULL;
   line_width = 0.0f;
   line_width_start = 0.0f;

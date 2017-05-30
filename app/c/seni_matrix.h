@@ -3,21 +3,23 @@
 
 #include "seni_types.h"
 
-typedef f32 *seni_matrix;
+typedef struct {
+  f32 m[16];
+} seni_matrix;
 
-seni_matrix matrix_construct();
-void matrix_free(seni_matrix matrix);
+seni_matrix *matrix_construct();
+void matrix_free(seni_matrix* matrix);
 
-void matrix_copy(seni_matrix out, seni_matrix a);
-void matrix_identity(seni_matrix out);
-void matrix_ortho(seni_matrix out, f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far);
-void matrix_multiply(seni_matrix out, seni_matrix a, seni_matrix b);
-void matrix_scale(seni_matrix out, seni_matrix a, f32 x, f32 y, f32 z);
-void matrix_translate(seni_matrix out, seni_matrix a, f32 x, f32 y, f32 z);
-void matrix_rotate_z(seni_matrix out, seni_matrix a, f32 rad);
+void matrix_copy(seni_matrix *out, seni_matrix *a);
+void matrix_identity(seni_matrix *out);
+void matrix_ortho(seni_matrix *out, f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far);
+void matrix_multiply(seni_matrix *out, seni_matrix *a, seni_matrix *b);
+void matrix_scale(seni_matrix *out, seni_matrix *a, f32 x, f32 y, f32 z);
+void matrix_translate(seni_matrix *out, seni_matrix *a, f32 x, f32 y, f32 z);
+void matrix_rotate_z(seni_matrix *out, seni_matrix *a, f32 rad);
 
-void matrix_transform_vec2(f32 *out, seni_matrix m, f32 x, f32 y);
-void matrix_transform_vec3(f32 *out, seni_matrix m, f32 x, f32 y, f32 z);
+void matrix_transform_vec2(f32 *out, seni_matrix *m, f32 x, f32 y);
+void matrix_transform_vec3(f32 *out, seni_matrix *m, f32 x, f32 y, f32 z);
 
 #define MATRIX_STACK_SIZE 16
 
@@ -28,15 +30,15 @@ typedef struct {
 
   i32 sp;
 
-  seni_matrix wip_transform;        // a matrix for performing calculations
+  seni_matrix *wip_transform;        // a matrix for performing calculations
 } seni_matrix_stack;
 
 seni_matrix_stack *matrix_stack_construct();
 void matrix_stack_free(seni_matrix_stack *matrix_stack);
 
-seni_matrix matrix_stack_push(seni_matrix_stack *matrix_stack);
-seni_matrix matrix_stack_pop(seni_matrix_stack *matrix_stack);
-seni_matrix matrix_stack_peek(seni_matrix_stack *matrix_stack);
+seni_matrix *matrix_stack_push(seni_matrix_stack *matrix_stack);
+seni_matrix *matrix_stack_pop(seni_matrix_stack *matrix_stack);
+seni_matrix *matrix_stack_peek(seni_matrix_stack *matrix_stack);
 
 // modify the top of the matrix stack
 // (note: the matrix_stack cannot be empty)

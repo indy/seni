@@ -28,13 +28,13 @@
 // traverse through the VAR_VEC_HEAD, VAR_VEC_RC nodes down into the values
 // todo: make a seni_var type that can hold VEC2
 #define READ_STACK_ARG_VEC2(n) if (name_1 == g_keyword_iname_##n) {    \
-    tmp_1 = (value_1->value.v)->value.v;                               \
+    tmp_1 = (value_1->value.v)->next;                                  \
     n[0] = tmp_1->value.f;                                             \
     n[1] = tmp_1->next->value.f;                                       \
   }
 
 #define READ_STACK_ARG_VEC4(n) if (name_1 == g_keyword_iname_##n) {    \
-    tmp_1 = (value_1->value.v)->value.v;                               \
+    tmp_1 = (value_1->value.v)->next;                                  \
     n[0] = tmp_1->value.f;                                             \
     tmp_1 = tmp_1->next;                                               \
     n[1] = tmp_1->value.f;                                             \
@@ -117,7 +117,7 @@ void bind_line(seni_vm *vm, i32 num_args)
   rgba col = array_to_colour(colour);
 
   seni_buffer *buffer = vm->buffer;
-  seni_matrix matrix = matrix_stack_peek(vm->matrix_stack);
+  seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
   render_line(buffer, matrix, from[0], from[1], to[0], to[1], width, col);
 
@@ -144,7 +144,7 @@ void bind_rect(seni_vm *vm, i32 num_args)
   rgba col = array_to_colour(colour);
 
   seni_buffer *buffer = vm->buffer;
-  seni_matrix matrix = matrix_stack_peek(vm->matrix_stack);
+  seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
   render_rect(buffer, matrix, position[0], position[1], width, height, col);
 
@@ -181,7 +181,7 @@ void bind_circle(seni_vm *vm, i32 num_args)
   rgba col = array_to_colour(colour);
 
   seni_buffer *buffer = vm->buffer;
-  seni_matrix matrix = matrix_stack_peek(vm->matrix_stack);
+  seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
   render_circle(buffer, matrix, position[0], position[1], width, height, col, (i32)tessellation);
 
