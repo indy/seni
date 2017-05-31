@@ -23,7 +23,7 @@ bool is_buffer_empty(seni_buffer *buffer)
   return buffer->num_vertices == 0;
 }
 
-void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, rgba colour, v2 t)
+void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, rgba colour, v2 uv)
 {
   i32 vertex_item_size = 2;
   i32 v_index = buffer->num_vertices * vertex_item_size;
@@ -42,8 +42,8 @@ void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, rgba col
   buffer->cbuf[c_index + 2] = colour.b;
   buffer->cbuf[c_index + 3] = colour.a;
 
-  buffer->tbuf[t_index + 0] = t.x; // u
-  buffer->tbuf[t_index + 1] = t.y; // v
+  buffer->tbuf[t_index + 0] = uv.x; // u
+  buffer->tbuf[t_index + 1] = uv.y; // v
 
   buffer->num_vertices++;
 }
@@ -64,12 +64,12 @@ void form_degenerate_triangle(seni_buffer *buffer, seni_matrix *matrix, f32 x, f
   
   rgba colour;
   colour.r = 0.0f; colour.g = 0.0f; colour.b = 0.0f; colour.a = 0.0f;
-  v2 t;
-  t.x = 0.0f; t.y = 0.0f; // u v
-  add_vertex(buffer, &identity, last_v[0], last_v[1], colour, t);
+  v2 uv;
+  uv.x = 0.0f; uv.y = 0.0f; // u v
+  add_vertex(buffer, &identity, last_v[0], last_v[1], colour, uv);
 
   // add the new vertex to complete the degenerate triangle
-  add_vertex(buffer, matrix, x, y, colour, t);
+  add_vertex(buffer, matrix, x, y, colour, uv);
   
   // Note: still need to call addVertex on the first
   // vertex when we 'really' render the strip
@@ -92,21 +92,19 @@ void render_line(seni_buffer *buffer,
                  f32 width,
                  rgba colour)
 {
-  seni_uv_mapping *m = get_uv_mapping(BRUSH_FLAT, 0);
+  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0);
 
-  f32 hw = (width * m->width_scale) / 2.0f;
+  f32 hw = (width * uv->width_scale) / 2.0f;
 
   v2 n = normal(from_x, from_y, to_x, to_y);
   v2 n2 = opposite_normal(n);
 
-  printf("%.2f, %.2f, %.2f, %.2f\n", n.x, n.y, n2.x, n2.y);
-
   prepare_to_add_triangle_strip(buffer, matrix, 4, from_x + (hw * n.x), from_y + (hw * n.y));
   
-  add_vertex(buffer, matrix, from_x + (hw * n.x),  from_y + (hw * n.y),  colour, m->map[0]);
-  add_vertex(buffer, matrix, from_x + (hw * n2.x), from_y + (hw * n2.y), colour, m->map[1]);
-  add_vertex(buffer, matrix, to_x + (hw * n.x),    to_y + (hw * n.y),    colour, m->map[2]);
-  add_vertex(buffer, matrix, to_x + (hw * n2.x),   to_y + (hw * n2.y),   colour, m->map[3]);
+  add_vertex(buffer, matrix, from_x + (hw * n.x),  from_y + (hw * n.y),  colour, uv->map[0]);
+  add_vertex(buffer, matrix, from_x + (hw * n2.x), from_y + (hw * n2.y), colour, uv->map[1]);
+  add_vertex(buffer, matrix, to_x + (hw * n.x),    to_y + (hw * n.y),    colour, uv->map[2]);
+  add_vertex(buffer, matrix, to_x + (hw * n2.x),   to_y + (hw * n2.y),   colour, uv->map[3]);
 }
 
 
@@ -116,18 +114,16 @@ void render_rect(seni_buffer *buffer,
                  f32 width, f32 height,
                  rgba colour)
 {
-  printf("render_rect: x: %.2f y: %.2f width: %.2f height: %.2f\n", x, y , width, height);
-  
-  seni_uv_mapping *m = get_uv_mapping(BRUSH_FLAT, 0);
+  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0);
 
   f32 half_width = width / 2.0f;
   f32 half_height = height / 2.0f;
 
   prepare_to_add_triangle_strip(buffer, matrix, 4, x - half_width, y - half_height);
-  add_vertex(buffer, matrix, x - half_width, y - half_height, colour, m->map[0]);
-  add_vertex(buffer, matrix, x + half_width, y - half_height, colour, m->map[1]);
-  add_vertex(buffer, matrix, x - half_width, y + half_height, colour, m->map[2]);
-  add_vertex(buffer, matrix, x + half_width, y + half_height, colour, m->map[3]);
+  add_vertex(buffer, matrix, x - half_width, y - half_height, colour, uv->map[0]);
+  add_vertex(buffer, matrix, x + half_width, y - half_height, colour, uv->map[1]);
+  add_vertex(buffer, matrix, x - half_width, y + half_height, colour, uv->map[2]);
+  add_vertex(buffer, matrix, x + half_width, y + half_height, colour, uv->map[3]);
 }
 
 void render_circle(seni_buffer *buffer,
@@ -164,22 +160,82 @@ void render_circle(seni_buffer *buffer,
 
 void render_bezier(seni_buffer *buffer,
                    seni_matrix *matrix,
-                   v2 *coords,
-                   f32 line_width, f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
+                   f32 *coords,
+                   f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
                    f32 t_start, f32 t_end,
                    rgba colour,
                    i32 tessellation)
 {
-  buffer = NULL;
-  matrix = NULL;
-  coords = NULL;
-  line_width = 0.0f;
-  line_width_start = 0.0f;
-  line_width_end = 0.0f;
-  line_width_mapping = 0;
-  t_start = 0.0f;
-  t_end = 0.0f;
-  colour.r = 0.0f;
-  tessellation = 0;
+  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0);
+
+  line_width_start *= uv->width_scale;
+  line_width_end *= uv->width_scale;
+  f32 half_width_start = line_width_start / 2.0f;
+  f32 half_width_end = line_width_end / 2.0f;
+  // create a remapping function here
+
+  f32 x0 = coords[0], x1 = coords[2], x2 = coords[4], x3 = coords[6];
+  f32 y0 = coords[1], y1 = coords[3], y2 = coords[5], y3 = coords[7];
+  f32 xs, ys, xs_next, ys_next;
+  v2 n1, n2, v1, v2;
+ 
+  i32 i;
+  f32 unit = (t_end - t_start) / (tessellation - 1.0f);
+  f32 t_val, t_val_next;
+
+  f32 tex_t = 1.0f / tessellation;
+  f32 uv_t;
+  // uvA == uv->map[0] ...
+
+  for (i = 0; i < tessellation - 1; i++) {
+    t_val = t_start + ((f32)i * unit);
+    t_val_next = t_start + ((f32)(i + 1) * unit);
+
+    xs = bezier_point(x0, x1, x2, x3, t_val);
+    ys = bezier_point(y0, y1, y2, y3, t_val);
+    xs_next = bezier_point(x0, x1, x2, x3, t_val_next);
+    ys_next = bezier_point(y0, y1, y2, y3, t_val_next);
+
+    // addVerticesAsStrip
+    n1 = normal(xs, ys, xs_next, ys_next);
+    n2 = opposite_normal(n1);
+
+    v1.x = (n1.x * half_width_end) + xs;
+    v1.y = (n1.y * half_width_end) + ys;
+    v2.x = (n2.x * half_width_end) + xs;
+    v2.y = (n2.y * half_width_end) + ys;
+
+    if (i == 0) {
+      prepare_to_add_triangle_strip(buffer, matrix, tessellation * 2, v1.x, v1.y);
+    }
+
+    uv_t = tex_t * (f32)i;
+    
+    // todo: interpolate the uv coordinates
+    add_vertex(buffer, matrix, v1.x, v1.y, colour, uv->map[0]);
+    add_vertex(buffer, matrix, v2.x, v2.y, colour, uv->map[1]);
+  }
+
+  // final 2 vertices for the end point
+  i = tessellation - 2;
+
+  t_val = t_start + ((f32)i * unit);
+  t_val_next = t_start + ((f32)(i + 1) * unit);
+
+  xs = bezier_point(x0, x1, x2, x3, t_val);
+  ys = bezier_point(y0, y1, y2, y3, t_val);
+  xs_next = bezier_point(x0, x1, x2, x3, t_val_next);
+  ys_next = bezier_point(y0, y1, y2, y3, t_val_next);
+
+  n1 = normal(xs, ys, xs_next, ys_next);
+  n2 = opposite_normal(n1);
+
+  v1.x = (n1.x * half_width_end) + xs_next;
+  v1.y = (n1.y * half_width_end) + ys_next;
+  v2.x = (n2.x * half_width_end) + xs_next;
+  v2.y = (n2.y * half_width_end) + ys_next;
+
+  add_vertex(buffer, matrix, v1.x, v1.y, colour, uv->map[3]);
+  add_vertex(buffer, matrix, v2.x, v2.y, colour, uv->map[2]);
 }
 

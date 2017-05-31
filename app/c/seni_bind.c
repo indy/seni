@@ -13,8 +13,9 @@
 //
 #define READ_STACK_ARGS_BEGIN i32 args_pointer_1 = vm->sp - (num_args * 2); \
   i32 i_1;                                                              \
-  seni_var *label_1, *value_1, *tmp_1;                                  \
+  seni_var *label_1, *value_1, *tmp_1, *tmp_2;                          \
   tmp_1 = NULL;                                                         \
+  tmp_2 = NULL;                                                         \
   for(i_1 = 0; i_1 < num_args; i_1++) {                                 \
   label_1 = &(vm->stack[args_pointer_1 + 0]);                           \
   value_1 = &(vm->stack[args_pointer_1 + 1]);                           \
@@ -24,6 +25,7 @@
 #define READ_STACK_ARGS_END } vm->sp -= (num_args * 2);
 
 #define READ_STACK_ARG_F32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.f; }
+#define READ_STACK_ARG_I32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.i; }
 
 // traverse through the VAR_VEC_HEAD, VAR_VEC_RC nodes down into the values
 // todo: make a seni_var type that can hold VEC2
@@ -42,6 +44,29 @@
     n[2] = tmp_1->value.f;                                             \
     tmp_1 = tmp_1->next;                                               \
     n[3] = tmp_1->value.f;                                             \
+  }
+
+#define READ_STACK_ARG_COORD4(n) if (name_1 == g_keyword_iname_##n) { \
+    tmp_1 = (value_1->value.v)->next;                                 \
+    tmp_2 = (tmp_1->value.v)->next;                                   \
+    n[0] = tmp_2->value.f;                                            \
+    tmp_2 = tmp_2->next;                                              \
+    n[1] = tmp_2->value.f;                                            \
+    tmp_1 = tmp_1->next;                                              \
+    tmp_2 = (tmp_1->value.v)->next;                                   \
+    n[2] = tmp_2->value.f;                                            \
+    tmp_2 = tmp_2->next;                                              \
+    n[3] = tmp_2->value.f;                                            \
+    tmp_1 = tmp_1->next;                                              \
+    tmp_2 = (tmp_1->value.v)->next;                                   \
+    n[4] = tmp_2->value.f;                                            \
+    tmp_2 = tmp_2->next;                                              \
+    n[5] = tmp_2->value.f;                                            \
+    tmp_1 = tmp_1->next;                                              \
+    tmp_2 = (tmp_1->value.v)->next;                                   \
+    n[6] = tmp_2->value.f;                                            \
+    tmp_2 = tmp_2->next;                                              \
+    n[7] = tmp_2->value.f;                                            \
   }
 
 #define WRITE_STACK(v) safe_var_move(&(vm->stack[vm->sp++]), &v)
@@ -127,7 +152,7 @@ void bind_line(seni_vm *vm, i32 num_args)
 
 void bind_rect(seni_vm *vm, i32 num_args)
 {
-  // default values for line
+  // default values for rect
   f32 width = 4.0f;
   f32 height = 10.0f;
   f32 position[] = {10.0f, 23.0f};
@@ -154,7 +179,7 @@ void bind_rect(seni_vm *vm, i32 num_args)
 
 void bind_circle(seni_vm *vm, i32 num_args)
 {
-  // default values for line
+  // default values for circle
   f32 width = 4.0f;
   f32 height = 10.0f;
   f32 position[] = {10.0f, 23.0f};
@@ -184,6 +209,61 @@ void bind_circle(seni_vm *vm, i32 num_args)
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
   render_circle(buffer, matrix, position[0], position[1], width, height, col, (i32)tessellation);
+
+  // push the return value onto the stack
+  WRITE_STACK(g_var_true);
+}
+
+void bind_bezier(seni_vm *vm, i32 num_args)
+{
+  // default values for bezier
+  f32 line_width = -1.0f;
+  f32 line_width_start = 4.0f;
+  f32 line_width_end = 4.0f;
+  i32 line_width_mapping = 1;
+  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
+  f32 t_start = -1.0f;
+  f32 t_end = 2.0f;
+  f32 tessellation = 10.0f;
+  f32 colour[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+
+  // line_width_mapping will be one of several constants
+  
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(line_width);
+  READ_STACK_ARG_F32(line_width_start);
+  READ_STACK_ARG_F32(line_width_end);
+  READ_STACK_ARG_I32(line_width_mapping);
+  READ_STACK_ARG_COORD4(coords);
+  READ_STACK_ARG_F32(t_start);
+  READ_STACK_ARG_F32(t_end);
+  READ_STACK_ARG_VEC4(colour);
+  READ_STACK_ARG_F32(tessellation);
+  READ_STACK_ARGS_END;
+
+  // if the line_width has been defined then it overrides the separate start/end variables
+  if (line_width > 0.0f) {
+    line_width_start = line_width;
+    line_width_end = line_width;
+  }
+
+  if (t_start < 0.0f) {
+    t_start = 0.0f;
+  }
+  
+  if (t_end > 1.0f) {
+    t_end = 1.0f;
+  }
+  
+  rgba col = array_to_colour(colour);
+
+  seni_buffer *buffer = vm->buffer;
+  seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
+
+  render_bezier(buffer, matrix,
+                coords, line_width_start, line_width_end, line_width_mapping,
+                t_start, t_end, col, (i32)tessellation);
 
   // push the return value onto the stack
   WRITE_STACK(g_var_true);
@@ -283,7 +363,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_binding(wlut, e, "line", &bind_line);
   declare_binding(wlut, e, "rect", &bind_rect);
   declare_binding(wlut, e, "circle", &bind_circle);
-  // declare_binding(wlut, e, "bezier", &bind_bezier);
+  declare_binding(wlut, e, "bezier", &bind_bezier);
 
   declare_binding(wlut, e, "translate", &bind_translate);
   declare_binding(wlut, e, "rotate", &bind_rotate);
