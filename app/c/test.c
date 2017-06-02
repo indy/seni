@@ -7,6 +7,7 @@
 #include "seni_lang.h"
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
+#include "seni_colour.h"
 
 #include "time.h"
 #include "stdio.h"
@@ -263,6 +264,52 @@ void test_uv_mapper(void)
   free_uv_mapper();
 }
 
+void assert_colour(seni_colour *expected, seni_colour *colour)
+{
+  TEST_ASSERT_EQUAL(expected->format, colour->format);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[0], colour->element[0]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[1], colour->element[1]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[2], colour->element[2]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[3], colour->element[3]);
+}
+
+void test_colour(void)
+{
+  {
+    seni_colour *c = colour_construct(RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+    TEST_ASSERT_EQUAL(RGB, c->format);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, c->element[0]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, c->element[1]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, c->element[2]);
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, c->element[3]);
+    colour_free(c);
+  }
+
+  {
+    seni_colour *rgb = colour_construct(RGB, 0.2f, 0.1f, 0.5f, 1.0f);
+    seni_colour *hsl = colour_construct(HSL, 255.0f, 0.6666f, 0.3f, 1.0f);
+    seni_colour *lab = colour_construct(LAB, 19.9072f, 39.6375f, -52.7720f, 1.0f);
+
+    seni_colour res;
+
+    assert_colour(rgb, clone_as(&res, rgb, RGB));
+    assert_colour(hsl, clone_as(&res, rgb, HSL));
+    assert_colour(lab, clone_as(&res, rgb, LAB));
+
+    assert_colour(rgb, clone_as(&res, hsl, RGB));
+    assert_colour(hsl, clone_as(&res, hsl, HSL));
+    assert_colour(lab, clone_as(&res, hsl, LAB));
+
+    assert_colour(rgb, clone_as(&res, lab, RGB));
+    assert_colour(hsl, clone_as(&res, lab, HSL));
+    assert_colour(lab, clone_as(&res, lab, LAB));
+
+    colour_free(rgb);
+    colour_free(hsl);
+    colour_free(lab);
+  }
+}
+
 // --------------------------------------------------
 
 seni_word_lut *setup_vm_wl(seni_env *e)
@@ -373,7 +420,7 @@ void timing(void)
   }
 }
 
-void test_bytecode(void)
+void test_vm_bytecode(void)
 {
   VM_COMPILE_FLOAT("(define a 42) (define b 52) 10", 10);
   VM_COMPILE_FLOAT("(define a 6) (define b 7) (+ a b)", 13);
@@ -402,7 +449,7 @@ void test_bytecode(void)
   VM_COMPILE_FLOAT("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
 }
 
-void test_callret(void)
+void test_vm_callret(void)
 {
   // basic invocation
   VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
@@ -421,7 +468,7 @@ void test_callret(void)
   VM_COMPILE_FLOAT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
 }
 
-void test_vector(void)
+void test_vm_vector(void)
 {
   VM_COMPILE_VEC2("[4 5]", 4, 5);
 
@@ -458,7 +505,7 @@ void test_vector(void)
 
 }
 
-void test_col_rgb(void)
+void test_vm_col_rgb(void)
 {
   // VM_COMPILE_VEC2("[4 5]", 4, 5);
   // VM_COMPILE_VEC4("[4 5 6 7]", 4, 5, 6, 7);
@@ -487,12 +534,13 @@ int main(void)
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
   RUN_TEST(test_uv_mapper);
+  RUN_TEST(test_colour);
   
   // vm
-  RUN_TEST(test_bytecode);
-  RUN_TEST(test_callret);
-  RUN_TEST(test_vector);
-  RUN_TEST(test_col_rgb);
+  RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_vector);
+  RUN_TEST(test_vm_col_rgb);
   //RUN_TEST(test_temp);
   
   return UNITY_END();
