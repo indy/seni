@@ -369,5 +369,20 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_binding(wlut, e, "rotate", &bind_rotate);
   declare_binding(wlut, e, "scale", &bind_scale);
 
+  //  declare_binding(wlut, e, "col/convert", &bind_col_convert);
   declare_binding(wlut, e, "col/rgb", &bind_col_rgb);
+  //  declare_binding(wlut, e, "col/hsl", &bind_col_hsl);
+  //  declare_binding(wlut, e, "col/hsv", &bind_col_hsv);
+  //  declare_binding(wlut, e, "col/lab", &bind_col_lab);
+  //  declare_binding(wlut, e, "col/complementary", &bind_col_complementary);
+  //  declare_binding(wlut, e, "col/split-complementary", &bind_col_split_complementary);
+  //  declare_binding(wlut, e, "col/analagous", &bind_col_analagous);
+  //  declare_binding(wlut, e, "col/triad", &bind_col_triad);
+  //  declare_binding(wlut, e, "col/darken", &bind_col_darken);
+  //  declare_binding(wlut, e, "col/lighten", &bind_col_lighten);
+
+  // col/procedural-fn-presets
+  // col/procedural-fn
+  // col/bezier-fn
+  // col/quadratic-fn
 }
