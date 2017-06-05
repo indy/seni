@@ -138,26 +138,32 @@ typedef enum {
 
 // Virtual Machine
 //
+typedef struct {
+  i32 size;
+  i32 get_count;
+  i32 return_count;
 
-typedef struct seni_vm_debug_info {
-  i32 get_from_heap_avail_count;
-  i32 return_to_heap_avail_count;
+  i32 delta;                    // get == +1, return == -1
+  i32 high_water_mark;          // max(delta) == the highest number of elements that were in use at one time
+} seni_slab_info;
 
-  i32 get_from_colour_avail_count;
-  i32 return_to_colour_avail_count;
-} seni_vm_debug_info;
+void slab_reset(seni_slab_info *slab_info);
+void slab_full_reset(seni_slab_info *slab_info);
+void slab_get(seni_slab_info *slab_info);
+void slab_return(seni_slab_info *slab_info);
+void slab_print(seni_slab_info *slab_info, char *message);
 
 typedef struct seni_vm {
   seni_buffer *buffer;             // used for rendering vertices
   seni_matrix_stack *matrix_stack;
 
   seni_colour *colour_slab;        // a slab of pre-allocated colours
-  i32 colour_slab_size;
   seni_colour *colour_avail;       // doubly linked list of unallocated seni_colours from the colour_slab
+  seni_slab_info colour_slab_info;
 
   seni_var *heap_slab;             // the contiguous block of allocated memory
-  i32 heap_slab_size;
   seni_var *heap_avail;            // doubly linked list of unallocated seni_vars from the heap_slab
+  seni_slab_info heap_slab_info;
   
   seni_var *stack;
   i32 stack_size;
@@ -168,10 +174,6 @@ typedef struct seni_vm {
 
   i32 global;                      // single segment of memory at top of stack
   i32 local;                       // per-frame segment of memory for local variables
-
-#ifdef SENI_DEBUG_MODE
-  seni_vm_debug_info debug;        // debug info regarding vm
-#endif
 
 } seni_vm;
 

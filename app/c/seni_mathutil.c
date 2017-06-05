@@ -1,5 +1,16 @@
 #include "seni_mathutil.h"
 
+
+i32 max_i32(i32 a, i32 b)
+{
+  return a > b ? a : b;
+}
+
+i32 min_i32(i32 a, i32 b)
+{
+  return a < b ? a : b;
+}
+
 // TODO: bezierCoordinates
 // TODO: quadraticCoordinates
 

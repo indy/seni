@@ -15,6 +15,9 @@
 #define unlerp(t,a,b)      ( ((t) - (a)) / (f32) ((b) - (a)) )
 #define clamp(x,xmin,xmax) ((x) < (xmin) ? (xmin) : (x) > (xmax) ? (xmax) : (x))
 
+i32 max_i32(i32 a, i32 b);
+i32 min_i32(i32 a, i32 b);
+
 f32 smooth_step(f32 t);
 f32 cubic_bezier_1d(f32 t, f32 p0, f32 p1, f32 p2, f32 p3);
 f64 linear_remap(f64 x, f64 x_min, f64 x_max, f64 out_min, f64 out_max);

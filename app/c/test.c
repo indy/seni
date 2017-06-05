@@ -380,13 +380,13 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 
 
 #ifdef SENI_DEBUG_MODE
-#define VM_HEAP_SLAB_CHECK TEST_ASSERT_EQUAL_MESSAGE(vm->debug.get_from_heap_avail_count, vm->debug.return_to_heap_avail_count, "vm heap slab leak")
+#define VM_HEAP_SLAB_CHECK TEST_ASSERT_EQUAL_MESSAGE(0, vm->heap_slab_info.delta, "vm heap slab leak")
 #else
 #define VM_HEAP_SLAB_CHECK
 #endif
 
 #ifdef SENI_DEBUG_MODE
-#define VM_COLOUR_SLAB_CHECK TEST_ASSERT_EQUAL_MESSAGE(vm->debug.get_from_colour_avail_count, vm->debug.return_to_colour_avail_count, "vm colour slab leak")
+#define VM_COLOUR_SLAB_CHECK TEST_ASSERT_EQUAL_MESSAGE(0, vm->colour_slab_info.delta, "vm colour slab leak")
 #else
 #define VM_COLOUR_SLAB_CHECK
 #endif

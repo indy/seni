@@ -1,6 +1,7 @@
 #include "seni_lang.h"
 #include "seni_matrix.h"
 #include "seni_config.h"
+#include "seni_mathutil.h"
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -18,30 +19,26 @@
 
 void vm_debug_info_reset(seni_vm *vm)
 {
-  vm->debug.get_from_heap_avail_count = 0;
-  vm->debug.return_to_heap_avail_count = 0;
-  vm->debug.get_from_colour_avail_count = 0;
-  vm->debug.return_to_colour_avail_count = 0;
+  slab_reset(&(vm->heap_slab_info));
+  slab_reset(&(vm->colour_slab_info));
 }
 
 void vm_debug_info_print(seni_vm *vm)
 {
   printf("*** vm_debug_info_print ***\n");
-  printf("get_from_heap_avail_count: %d\n", vm->debug.get_from_heap_avail_count);
-  printf("return_to_heap_avail_count: %d\n", vm->debug.return_to_heap_avail_count);
-  printf("get_from_colour_avail_count: %d\n", vm->debug.get_from_colour_avail_count);
-  printf("return_to_colour_avail_count: %d\n", vm->debug.return_to_colour_avail_count);
+  slab_print(&(vm->heap_slab_info), "heap slab");
+  slab_print(&(vm->colour_slab_info), "colour slab");
 }
 
 // record information during execution of bytecode
 #define DEBUG_INFO_RESET(vm) vm_debug_info_reset(vm)
 #define DEBUG_INFO_PRINT(vm) vm_debug_info_print(vm)
-#define DEBUG_INFO_GET_FROM_HEAP(vm) vm->debug.get_from_heap_avail_count++
-#define DEBUG_INFO_RETURN_TO_HEAP(vm) vm->debug.return_to_heap_avail_count++
-#define DEBUG_INFO_GET_FROM_COLOUR(vm) vm->debug.get_from_colour_avail_count++
-#define DEBUG_INFO_RETURN_TO_COLOUR(vm) vm->debug.return_to_colour_avail_count++
+#define DEBUG_INFO_GET_FROM_HEAP(vm) slab_get(&(vm->heap_slab_info))
+#define DEBUG_INFO_RETURN_TO_HEAP(vm) slab_return(&(vm->heap_slab_info))
+#define DEBUG_INFO_GET_FROM_COLOUR(vm) slab_get(&(vm->colour_slab_info))
+#define DEBUG_INFO_RETURN_TO_COLOUR(vm) slab_return(&(vm->colour_slab_info))
 #else
-// do nothing
+// do nothingpa
 #define DEBUG_INFO_RESET(vm)
 #define DEBUG_INFO_PRINT(vm)
 #define DEBUG_INFO_GET_FROM_HEAP(vm)
@@ -1200,6 +1197,50 @@ void env_free(seni_env *e)
 }
 
 // **************************************************
+// Slab Info
+// **************************************************
+
+void slab_reset(seni_slab_info *slab_info)
+{
+  slab_info->get_count = 0;
+  slab_info->return_count = 0;
+
+  slab_info->delta = 0;
+}
+
+void slab_full_reset(seni_slab_info *slab_info)
+{
+  slab_reset(slab_info);
+
+  slab_info->size = 0;
+  slab_info->high_water_mark = 0;
+}
+
+void slab_get(seni_slab_info *slab_info)
+{
+  slab_info->get_count++;
+  slab_info->delta++;
+  slab_info->high_water_mark = max_i32(slab_info->high_water_mark, slab_info->delta);
+}
+
+void slab_return(seni_slab_info *slab_info)
+{
+  slab_info->return_count++;
+  slab_info->delta--;
+
+  if (slab_info->delta < 0) {
+    SENI_ERROR("slab_return called more often than slab_get");
+  }
+}
+
+void slab_print(seni_slab_info *slab_info, char *message)
+{
+  printf("%s\tsize: %d\n", message, slab_info->size);
+  printf("\t\tget_count %d\treturn_count %d\n", slab_info->get_count, slab_info->return_count);
+  printf("\t\tdelta: %d\thigh_water_mark %d\n", slab_info->delta, slab_info->high_water_mark);
+}
+
+// **************************************************
 // Virtual Machine
 // **************************************************
 
@@ -1234,16 +1275,19 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
 
   // allocate a slab of colours that can be pointed to by seni_vars on the stack/heap
   //
-  vm->colour_slab_size = COLOUR_SLAB_SIZE;
-  vm->colour_slab = (seni_colour *)calloc(vm->colour_slab_size, sizeof(seni_colour));
+  vm->colour_slab = (seni_colour *)calloc(COLOUR_SLAB_SIZE, sizeof(seni_colour));
   vm->colour_avail = NULL;
-  for (i = 0; i < vm->colour_slab_size; i++) {
+  for (i = 0; i < COLOUR_SLAB_SIZE; i++) {
     DL_APPEND(vm->colour_avail, &(vm->colour_slab[i]));
   }
+  slab_full_reset(&(vm->colour_slab_info));
+  vm->colour_slab_info.size = COLOUR_SLAB_SIZE;
 
   vm->heap_slab = (seni_var *)calloc(heap_size, sizeof(seni_var));
   vm->heap_avail = NULL;
-  vm->heap_slab_size = heap_size;
+  slab_full_reset(&(vm->heap_slab_info));
+  vm->heap_slab_info.size = heap_size;
+
 
   var = vm->heap_slab;
   for (i = 0; i < heap_size; i++) {
