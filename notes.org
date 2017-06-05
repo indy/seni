@@ -1,8 +1,35 @@
-* TODO [0/4]
-  1. [ ] manipulate vectors
-  2. [ ] 'in' paramaeter for loop ?
-  3. [ ] constants like canvas/width
-  4. [ ] how would a stack machine compile first class functions?
+* TODO [1/18]
+  1. [ ] replace rgba struct with seni_colour
+  2. [ ] seni_var should be able to hold seni_colour
+  3. [ ] colour functions
+  4. [X] math/distance math/clamp
+  5. [ ] col/get-alpha col/set-alpha
+  6. [ ] canvas/width canvas/height bind to global mappings
+  7. [ ] seni_env
+  8. [ ] manipulate vectors
+  9. [ ] parsing defines/top-level functions and function calls
+  10. [ ] prng/range
+  11. [ ] prng/perlin-signed
+  12. [ ] take
+  13. [ ] destructuring
+  14. [ ] radians->degrees angle:
+  15. [ ] interp/fn interp/bezier
+  16. [ ] 'in' paramaeter for loop ?
+  17. [ ] bind colour functions
+  18. [ ] how would a stack machine compile first class functions?
+
+
+* seni_env
+
+  standard universal bindings (done once, immutable, applied to all compiled/executed programs)
+  e.g. the standard api functions in seni_env
+
+  standard per-program bindings (done at program start, equivalent to a set of known global variables)
+  e.g. global bindings like canvas/width which require a call to add_global_mapping.
+
+  per-program bindings (parse through the program)
+
+
 
 * seni_vm
   four types of command in the VM:
