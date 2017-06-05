@@ -4,6 +4,7 @@
 #include "seni_buffer.h"
 #include "seni_lang.h"
 #include "seni_matrix.h"
+#include "seni_mathutil.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -347,6 +348,58 @@ void bind_scale(seni_vm *vm, i32 num_args)
 }
 
 
+void bind_math_distance(seni_vm *vm, i32 num_args)
+{
+  f32 vec1[] = {0.0f, 0.0f};
+  f32 vec2[] = {0.0f, 0.0f};
+  
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(vec1);
+  READ_STACK_ARG_VEC2(vec2);
+  READ_STACK_ARGS_END;
+
+  v2 a,b;
+  a.x = vec1[0]; a.y = vec1[1];
+  b.x = vec2[0]; b.y = vec2[1];
+
+  f32 distance = distance_v2(a, b);
+  
+  seni_var ret;
+  f32_as_var(&ret, distance);
+
+  // push the return value onto the stack
+  WRITE_STACK(ret);
+}
+
+void bind_math_clamp(seni_vm *vm, i32 num_args)
+{
+  // todo: try and move functions like this into ones that initially
+  // create and return a function that takes a single argument.
+  // e.g.
+  // (define my-clamp (math/clamp-fn min: 0.0 max: 42.0))
+  // (my-clamp val: 22)
+  //
+  // then optimize for single argument functions as these will be much faster to parse
+  //
+  f32 val = 0.0f;
+  f32 min = 0.0f;
+  f32 max = 1.0f;
+  
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(val);
+  READ_STACK_ARG_F32(min);
+  READ_STACK_ARG_F32(max);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+  f32_as_var(&ret, clamp(val, min, max));
+  
+  // push the return value onto the stack
+  WRITE_STACK(ret);
+}
+
 void declare_bindings(seni_word_lut *wlut, seni_env *e)
 {
   g_var_true.type = VAR_BOOLEAN;
@@ -385,4 +438,9 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   // col/procedural-fn
   // col/bezier-fn
   // col/quadratic-fn
+
+
+
+  declare_binding(wlut, e, "math/distance", &bind_math_distance);
+  declare_binding(wlut, e, "math/clamp", &bind_math_clamp);
 }

@@ -390,18 +390,21 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
-#define VM_COMPILE_FLOAT(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_HEAP_CHECK;VM_CLEANUP;}
+#define VM_COMPILE_F32(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_HEAP_CHECK;VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_HEAP_CHECK;VM_CLEANUP;}
 #define VM_COMPILE_VEC2(EXPR,A,B) {EVM_COMPILE(EXPR);VM_TEST_VEC2(A,B);VM_CLEANUP;}
 #define VM_COMPILE_VEC4(EXPR,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_VEC4(A,B,C,D);VM_CLEANUP;}
+// leaky version that doesn't perform a heap check
+#define VM_COMPILE_F32_L(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
 
 #else
 // COMPILE macros that print out bytecode
 //
-#define VM_COMPILE_FLOAT(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_F32(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_VEC2(EXPR,_,_1) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_VEC4(EXPR,_,_1,_2,_3) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_F32_L(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #endif
 // --------------------------------------------------
 
@@ -411,9 +414,9 @@ void timing(void)
   int msec;
   {
     start = clock();
-    //VM_COMPILE_FLOAT("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+    //VM_COMPILE_F32("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
 
-    VM_COMPILE_FLOAT("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
+    VM_COMPILE_F32("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
     diff = clock() - start;
     msec = diff * 1000 / CLOCKS_PER_SEC;
     printf("VM Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
@@ -422,12 +425,12 @@ void timing(void)
 
 void test_vm_bytecode(void)
 {
-  VM_COMPILE_FLOAT("(define a 42) (define b 52) 10", 10);
-  VM_COMPILE_FLOAT("(define a 6) (define b 7) (+ a b)", 13);
-  VM_COMPILE_FLOAT("(+ 3 4)", 7);
-  VM_COMPILE_FLOAT("(- (+ 1 2) 3)", 0);
-  VM_COMPILE_FLOAT("(* 3 4)", 12);
-  VM_COMPILE_FLOAT("(/ 90 10)", 9);
+  VM_COMPILE_F32("(define a 42) (define b 52) 10", 10);
+  VM_COMPILE_F32("(define a 6) (define b 7) (+ a b)", 13);
+  VM_COMPILE_F32("(+ 3 4)", 7);
+  VM_COMPILE_F32("(- (+ 1 2) 3)", 0);
+  VM_COMPILE_F32("(* 3 4)", 12);
+  VM_COMPILE_F32("(/ 90 10)", 9);
   VM_COMPILE_BOOL("(> 5 10)", false);
   VM_COMPILE_BOOL("(< 5 10)", true);
   VM_COMPILE_BOOL("(= 2 2)", true);
@@ -438,41 +441,41 @@ void test_vm_bytecode(void)
   VM_COMPILE_BOOL("(not (> 1 10))", true);
   VM_COMPILE_BOOL("(and (or (< 1 2) (> 3 4)) (not (> 1 10)))", true);
 
-  VM_COMPILE_FLOAT("(if (> 400 200) 66)", 66);
-  VM_COMPILE_FLOAT("(if (> 200 100) 12 24)", 12);
-  VM_COMPILE_FLOAT("(if (< 200 100) 12 24)", 24);
+  VM_COMPILE_F32("(if (> 400 200) 66)", 66);
+  VM_COMPILE_F32("(if (> 200 100) 12 24)", 12);
+  VM_COMPILE_F32("(if (< 200 100) 12 24)", 24);
   VM_COMPILE_BOOL("(if (> 400 200) (= 50 50))", true);
   VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
   VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
 
-  VM_COMPILE_FLOAT("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
-  VM_COMPILE_FLOAT("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
+  VM_COMPILE_F32("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
+  VM_COMPILE_F32("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
 }
 
 void test_vm_callret(void)
 {
   // basic invocation
-  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
-  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))", 12); // calc required for value
-  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)", 13); // non-existent argument
-  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder)", 17); // only default arguments
-  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)", 18); // missing argument
-  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29); // missing argument
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))", 12); // calc required for value
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)", 13); // non-existent argument
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder)", 17); // only default arguments
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)", 18); // missing argument
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29); // missing argument
 
-  VM_COMPILE_FLOAT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))", 20);
-  VM_COMPILE_FLOAT("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
+  VM_COMPILE_F32("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))", 20);
+  VM_COMPILE_F32("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
 
   // functions calling functions
-  VM_COMPILE_FLOAT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)",       6);
-  VM_COMPILE_FLOAT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",      10);
-  VM_COMPILE_FLOAT("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)",       6);
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",      10);
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
 }
 
 void test_vm_vector(void)
 {
   VM_COMPILE_VEC2("[4 5]", 4, 5);
 
-  VM_COMPILE_FLOAT("(loop (x from: 0 to: 5) [1 2]) 9", 9);
+  VM_COMPILE_F32("(loop (x from: 0 to: 5) [1 2]) 9", 9);
 
   // explicitly defined vector is returned
   VM_COMPILE_VEC2("(fn (f a: 3) [1 2]) (fn (x) (f)) (x)", 1, 2);
@@ -481,24 +484,24 @@ void test_vm_vector(void)
   VM_COMPILE_VEC2("(fn (f a: 3) (define b [1 2]) b) (fn (x) (f)) (x)", 1, 2);
 
   // local var in function is not returned
-  VM_COMPILE_FLOAT("(fn (f a: 3) (define b [1 2]) 55) (fn (x) (f)) (x)", 55);
+  VM_COMPILE_F32("(fn (f a: 3) (define b [1 2]) 55) (fn (x) (f)) (x)", 55);
 
   // default argument for function is returned
   VM_COMPILE_VEC2("(fn (f a: [1 2]) a) (fn (x) (f)) (x)", 1, 2);
 
   // default argument for function is not returned
-  VM_COMPILE_FLOAT("(fn (f a: [1 2]) 3) (fn (x) (f)) (x)", 3);
+  VM_COMPILE_F32("(fn (f a: [1 2]) 3) (fn (x) (f)) (x)", 3);
 
   // default argument for function is not returned and
   // it's called with an explicitly declared vector
-  VM_COMPILE_FLOAT("(fn (f a: [1 2]) 3) (fn (x) (f a: [3 4])) (x)", 3);
+  VM_COMPILE_F32("(fn (f a: [1 2]) 3) (fn (x) (f a: [3 4])) (x)", 3);
 
   // default argument for function is not returned and
   // it's called with an unused argument
-  VM_COMPILE_FLOAT("(fn (f a: [1 2]) 3) (fn (x) (f z: [3 4])) (x)", 3);
+  VM_COMPILE_F32("(fn (f a: [1 2]) 3) (fn (x) (f z: [3 4])) (x)", 3);
 
   // default argument for function is not returned
-  VM_COMPILE_FLOAT("(fn (f a: [1 2]) a) (fn (x) (f a: 5)) (x)", 5);
+  VM_COMPILE_F32("(fn (f a: [1 2]) a) (fn (x) (f a: 5)) (x)", 5);
   
   // argument into function is returned
   VM_COMPILE_VEC2("(fn (f a: [3 4]) a) (fn (x) (f a: [1 2])) (x)", 1, 2);
@@ -513,14 +516,24 @@ void test_vm_col_rgb(void)
   VM_COMPILE_VEC4("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4)", 0.1f, 0.2f, 0.3f, 0.4f);
 }
 
+void test_vm_math(void)
+{
+  // using the leaky macro since the vectors in the parameters won't be collected
+  VM_COMPILE_F32_L("(math/distance vec1: [0 0] vec2: [0 20])", 20.0f);
+  
+  VM_COMPILE_F32("(math/clamp val: 0.1 min: 0.0 max: 5)", 0.1f);
+  VM_COMPILE_F32("(math/clamp val: -0.1 min: 0.0 max: 5)", 0.0f);
+  VM_COMPILE_F32("(math/clamp val: 10 min: 0.0 max: 5)", 5.0f);
+}
+
 void test_temp(void)
 {
-  VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
-  //VM_COMPILE_FLOAT("(fn (adder a: [1 2]) (+ 4 2)) (adder a: [4 5])", 8);
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+  //VM_COMPILE_F32("(fn (adder a: [1 2]) (+ 4 2)) (adder a: [4 5])", 8);
 
-  // VM_COMPILE_FLOAT("(line width: 35 height: 22)", 17);
-  // VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (line width: (+ 3 4) height: (adder))", 17);
-  // VM_COMPILE_FLOAT("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+  // VM_COMPILE_F32("(line width: 35 height: 22)", 17);
+  // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (line width: (+ 3 4) height: (adder))", 17);
+  // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
 }
 
 int main(void)
@@ -541,6 +554,7 @@ int main(void)
   RUN_TEST(test_vm_callret);
   RUN_TEST(test_vm_vector);
   RUN_TEST(test_vm_col_rgb);
+  RUN_TEST(test_vm_math);
   //RUN_TEST(test_temp);
   
   return UNITY_END();

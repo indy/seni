@@ -251,4 +251,7 @@ void           vector_construct(seni_vm *vm, seni_var *head);
 void           append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
 void           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 
+void           f32_as_var(seni_var *out, f32 f);
+void           i32_as_var(seni_var *out, i32 i);
+  
 #endif
