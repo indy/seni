@@ -6,7 +6,6 @@
 #include <inttypes.h>
 #include <stdio.h>              /* for debug only */
 
-
 #include "utlist.h"
 
 // global keyword variables
@@ -19,28 +18,36 @@
 
 void vm_debug_info_reset(seni_vm *vm)
 {
-  vm->debug.get_from_heap_count = 0;
-  vm->debug.return_to_heap_count = 0;
+  vm->debug.get_from_heap_avail_count = 0;
+  vm->debug.return_to_heap_avail_count = 0;
+  vm->debug.get_from_colour_avail_count = 0;
+  vm->debug.return_to_colour_avail_count = 0;
 }
 
 void vm_debug_info_print(seni_vm *vm)
 {
   printf("*** vm_debug_info_print ***\n");
-  printf("var_get_from_heap: %d\n", vm->debug.get_from_heap_count);
-  printf("var_return_to_heap: %d\n", vm->debug.return_to_heap_count);
+  printf("get_from_heap_avail_count: %d\n", vm->debug.get_from_heap_avail_count);
+  printf("return_to_heap_avail_count: %d\n", vm->debug.return_to_heap_avail_count);
+  printf("get_from_colour_avail_count: %d\n", vm->debug.get_from_colour_avail_count);
+  printf("return_to_colour_avail_count: %d\n", vm->debug.return_to_colour_avail_count);
 }
 
 // record information during execution of bytecode
 #define DEBUG_INFO_RESET(vm) vm_debug_info_reset(vm)
 #define DEBUG_INFO_PRINT(vm) vm_debug_info_print(vm)
-#define DEBUG_INFO_GET_FROM_HEAP(vm) vm->debug.get_from_heap_count++
-#define DEBUG_INFO_RETURN_TO_HEAP(vm) vm->debug.return_to_heap_count++
+#define DEBUG_INFO_GET_FROM_HEAP(vm) vm->debug.get_from_heap_avail_count++
+#define DEBUG_INFO_RETURN_TO_HEAP(vm) vm->debug.return_to_heap_avail_count++
+#define DEBUG_INFO_GET_FROM_COLOUR(vm) vm->debug.get_from_colour_avail_count++
+#define DEBUG_INFO_RETURN_TO_COLOUR(vm) vm->debug.return_to_colour_avail_count++
 #else
 // do nothing
 #define DEBUG_INFO_RESET(vm)
 #define DEBUG_INFO_PRINT(vm)
 #define DEBUG_INFO_GET_FROM_HEAP(vm)
 #define DEBUG_INFO_RETURN_TO_HEAP(vm)
+#define DEBUG_INFO_GET_FROM_COLOUR(vm)
+#define DEBUG_INFO_RETURN_TO_COLOUR(vm)
 #endif
 
 
@@ -775,6 +782,8 @@ seni_value_in_use get_value_in_use(seni_var_type type)
     return USE_F;
   case VAR_VEC_HEAD:
     return USE_V;
+  case VAR_COLOUR:
+    return USE_C;
   case VAR_VEC_RC:
     return USE_I;
   default:
@@ -791,6 +800,7 @@ char *var_type_name(seni_var *var)
   case VAR_NAME:     return "VAR_NAME";
   case VAR_VEC_HEAD: return "VAR_VEC_HEAD";
   case VAR_VEC_RC:   return "VAR_VEC_RC";
+  case VAR_COLOUR:   return "VAR_COLOUR";
   default: return "unknown seni_var type";
   }
 }
@@ -850,6 +860,10 @@ void pretty_print_seni_var(seni_var *var, char* msg)
       printf("debug_id:%d id:%d %s : %s\n", var->debug_id, var->id,  type, msg);
     }
     break;
+  case USE_C:
+    printf("debug_id:%d id:%d %s : %p %s\n", var->debug_id, var->id,  type, var->value.c, msg);
+    break;
+    
   }
 #else
   switch(using) {
@@ -861,6 +875,9 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     break;
   case USE_V:
     printf("%s : length %d %s\n", type, var_vector_length(var), msg);
+    break;
+  case USE_C:
+    printf("%s : %p %s\n", type, var->value.c, msg);
     break;
   }
 #endif
@@ -955,6 +972,12 @@ void f32_as_var(seni_var *out, f32 f)
 {
   out->type = VAR_FLOAT;
   out->value.f = f;
+}
+
+void colour_as_var(seni_var *out, seni_colour *c)
+{
+  out->type = VAR_COLOUR;
+  out->value.c = c;
 }
 
 // returns the next available seni_var that the calling code can write to
@@ -1120,6 +1143,10 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b)
         printf("[..]\n");
       }
       break;
+    case USE_C:
+      printf("%p\n", b->arg1.value.c);
+      break;
+      
     default:
       printf("unknown type\n");
     }
@@ -1180,6 +1207,7 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
 {
   seni_var *var;
   i32 base_offset = 0;
+  i32 i;
   seni_vm *vm = (seni_vm *)calloc(1, sizeof(seni_vm));
 
   vm->stack = (seni_var *)calloc(stack_size, sizeof(seni_var));
@@ -1203,18 +1231,28 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
   vm->local = base_offset;
   base_offset += MEMORY_LOCAL_SIZE;
   vm->sp = base_offset;
-  
-  var = (seni_var *)calloc(heap_size, sizeof(seni_var));
-  vm->heap = var;
-  vm->heap_list = NULL;
-  vm->heap_size = heap_size;
-  for (i32 i = 0; i < heap_size; i++) {
+
+  // allocate a slab of colours that can be pointed to by seni_vars on the stack/heap
+  //
+  vm->colour_slab_size = COLOUR_SLAB_SIZE;
+  vm->colour_slab = (seni_colour *)calloc(vm->colour_slab_size, sizeof(seni_colour));
+  vm->colour_avail = NULL;
+  for (i = 0; i < vm->colour_slab_size; i++) {
+    DL_APPEND(vm->colour_avail, &(vm->colour_slab[i]));
+  }
+
+  vm->heap_slab = (seni_var *)calloc(heap_size, sizeof(seni_var));
+  vm->heap_avail = NULL;
+  vm->heap_slab_size = heap_size;
+
+  var = vm->heap_slab;
+  for (i = 0; i < heap_size; i++) {
 #ifdef SENI_DEBUG_MODE
     var[i].debug_id = i;
     var[i].debug_allocatable = true;
 #endif
     var[i].allocated = false;
-    DL_APPEND(vm->heap_list, &(var[i]));
+    DL_APPEND(vm->heap_avail, &(var[i]));
   }
 
   vm->matrix_stack = matrix_stack_construct();
@@ -1229,7 +1267,8 @@ void vm_free(seni_vm *vm)
 {
   matrix_stack_free(vm->matrix_stack);
   free(vm->stack);
-  free(vm->heap);
+  free(vm->heap_slab);
+  free(vm->colour_slab);
   free(vm);
 }
 
@@ -1249,16 +1288,38 @@ void pretty_print_vm(seni_vm *vm, char* msg)
   printf("\ton stack: fp:%d ip:%d numArgs:%d\n", onStackFP, onStackIP, onStackNumArgs);
 }
 
-void ref_count_decrement(seni_vm *vm, seni_var *vec_head);
+void vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head);
+
+seni_colour *colour_get_from_vm(seni_vm *vm)
+{
+  seni_colour *head = vm->colour_avail;
+  if (head != NULL) {
+    DEBUG_INFO_GET_FROM_COLOUR(vm);
+    DL_DELETE(vm->colour_avail, head);
+  } else {
+    SENI_ERROR("no more available colours");
+    return NULL;
+  }
+
+  head->next = NULL;
+  head->prev = NULL;
+  
+  return head;
+}
+
+void colour_return_to_vm(seni_vm *vm, seni_colour *colour)
+{
+  DEBUG_INFO_RETURN_TO_COLOUR(vm);
+  DL_APPEND(vm->colour_avail, colour);
+}
 
 seni_var *var_get_from_heap(seni_vm *vm)
 {
-  DEBUG_INFO_GET_FROM_HEAP(vm);
-
-  seni_var *head = vm->heap_list;
+  seni_var *head = vm->heap_avail;
 
   if (head != NULL) {
-    DL_DELETE(vm->heap_list, head);
+    DEBUG_INFO_GET_FROM_HEAP(vm);
+    DL_DELETE(vm->heap_avail, head);
   } else {
     SENI_ERROR("no more vars in pool");
     return NULL;
@@ -1300,7 +1361,7 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
 #endif
 
   if (var->type == VAR_VEC_HEAD) {
-    ref_count_decrement(vm, var);
+    vector_ref_count_decrement(vm, var);
   }
 
   // the var is part of an allocated list
@@ -1309,10 +1370,10 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
   }
 
   var->allocated = false;
-  DL_APPEND(vm->heap_list, var);
+  DL_APPEND(vm->heap_avail, var);
 }
   
-void ref_count_decrement(seni_vm *vm, seni_var *vec_head)
+void vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
 {
   seni_var *var_rc = vec_head->value.v;
   if (var_rc->type != VAR_VEC_RC) {
@@ -1326,7 +1387,7 @@ void ref_count_decrement(seni_vm *vm, seni_var *vec_head)
   }
 }
 
-void ref_count_increment(seni_vm *vm, seni_var *vec_head)
+void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
 {
   seni_var *var_rc = vec_head->value.v;
   if (var_rc->type != VAR_VEC_RC) {
@@ -1342,7 +1403,7 @@ void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
   }
 
   if (dest->type == VAR_VEC_HEAD) {
-    ref_count_decrement(vm, dest);
+    vector_ref_count_decrement(vm, dest);
   }
   
   dest->type = src->type;
@@ -1356,11 +1417,13 @@ void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
   } else if (using == USE_V) {
     if (src->type == VAR_VEC_HEAD) {
       dest->value.v = src->value.v;
-      ref_count_increment(vm, dest);
+      vector_ref_count_increment(vm, dest);
     } else {
       SENI_ERROR("what the fuck?\n");
     }
-  }
+  } else if (using == USE_C) {
+    dest->value.c = src->value.c;
+  } 
 }
 
 // like a seni_var_copy without any modifications to the ref count
@@ -1384,6 +1447,8 @@ void safe_var_move(seni_var *dest, seni_var *src)
     } else {
       SENI_ERROR("what the fuck?\n");
     }
+  } else if (using == USE_C) {
+    dest->value.c = src->value.c;
   }
 }
 
@@ -2149,7 +2214,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         // means creating a new vector object.
 
         // also note that the VAR_VEC_HEAD is a seni_var from the stack
-        // so it should never be sent to the vm->heap_list
+        // so it should never be sent to the vm->heap_avail
         vector_construct(vm, v);
         
       } else {
@@ -2175,7 +2240,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         // normally pop from the stack and lose the value
         // but if it's a vector then decrement its ref count
         if (v->type == VAR_VEC_HEAD) {
-          ref_count_decrement(vm, v);
+          vector_ref_count_decrement(vm, v);
         }
       } else {
         SENI_ERROR("POP: unknown memory segment type %d", bc->arg0.value.i);
@@ -2192,7 +2257,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
         if (dest->type == VAR_VEC_HEAD) {
-          ref_count_decrement(vm, dest);
+          vector_ref_count_decrement(vm, dest);
         }
       } else {
         SENI_ERROR("DEC_RC: unknown memory segment type %d", bc->arg0.value.i);
@@ -2205,7 +2270,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
         if (dest->type == VAR_VEC_HEAD) {
-          ref_count_increment(vm, dest);
+          vector_ref_count_increment(vm, dest);
         }
       } else {
         SENI_ERROR("DEC_RC: unknown memory segment type %d", bc->arg0.value.i);
@@ -2294,7 +2359,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       // grab whatever was the last value on the soon to be popped frame
       src = &(vm->stack[sp - 1]);
       if (src->type == VAR_VEC_HEAD) {
-        ref_count_increment(vm, src);
+        vector_ref_count_increment(vm, src);
       }
 
       num_args = vm->stack[vm->fp + 2].value.i;
@@ -2303,14 +2368,18 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
         tmp = &(vm->stack[vm->local + i]);
         if (tmp->type == VAR_VEC_HEAD) {
-          ref_count_decrement(vm, tmp);
+          vector_ref_count_decrement(vm, tmp);
+        } else if (tmp->type == VAR_COLOUR && tmp != src) {
+          colour_return_to_vm(vm, tmp->value.c);
         }
       }
 
       for (i = 0; i < num_args; i++) {
         tmp = &(vm->stack[vm->fp - ((i+1) * 2)]);
         if (tmp->type == VAR_VEC_HEAD) {
-          ref_count_decrement(vm, tmp);
+          vector_ref_count_decrement(vm, tmp);
+        } else if (tmp->type == VAR_COLOUR && tmp != src) {
+          colour_return_to_vm(vm, tmp->value.c);
         }
       }
 

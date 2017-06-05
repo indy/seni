@@ -1,22 +1,23 @@
-* TODO [1/18]
-  1. [ ] replace rgba struct with seni_colour
-  2. [ ] seni_var should be able to hold seni_colour
-  3. [ ] colour functions
-  4. [X] math/distance math/clamp
-  5. [ ] col/get-alpha col/set-alpha
-  6. [ ] canvas/width canvas/height bind to global mappings
-  7. [ ] seni_env
-  8. [ ] manipulate vectors
-  9. [ ] parsing defines/top-level functions and function calls
-  10. [ ] prng/range
-  11. [ ] prng/perlin-signed
-  12. [ ] take
-  13. [ ] destructuring
-  14. [ ] radians->degrees angle:
-  15. [ ] interp/fn interp/bezier
-  16. [ ] 'in' paramaeter for loop ?
-  17. [ ] bind colour functions
-  18. [ ] how would a stack machine compile first class functions?
+* TODO [3/19]
+  1. [ ] test passing around colours to rendering functions
+  2. [ ] colour functions
+  3. [X] seni_var should be able to hold seni_colour
+  4. [X] replace rgba struct with seni_colour
+  5. [X] math/distance math/clamp
+  6. [ ] col/get-alpha col/set-alpha
+  7. [ ] canvas/width canvas/height bind to global mappings
+  8. [ ] seni_env
+  9. [ ] manipulate vectors
+  10. [ ] parsing defines/top-level functions and function calls
+  11. [ ] prng/range
+  12. [ ] prng/perlin-signed
+  13. [ ] take
+  14. [ ] destructuring
+  15. [ ] radians->degrees angle:
+  16. [ ] interp/fn interp/bezier
+  17. [ ] 'in' paramaeter for loop ?
+  18. [ ] bind colour functions
+  19. [ ] how would a stack machine compile first class functions?
 
 
 * seni_env

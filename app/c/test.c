@@ -233,6 +233,20 @@ void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d)
   TEST_ASSERT_EQUAL_FLOAT(d, val->value.f);
 }
 
+void assert_seni_var_col(seni_var *var, i32 format, f32 a, f32 b, f32 c, f32 d)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_COLOUR, var->type, "VAR_COLOUR");
+
+  seni_colour *colour = var->value.c;
+
+  TEST_ASSERT_EQUAL(format, (i32)colour->format);
+
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, a, colour->element[0]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, b, colour->element[1]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, c, colour->element[2]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, d, colour->element[3]);
+}
+
 void assert_seni_var_f32_within(seni_var *var, seni_var_type type, f32 f, f32 tolerance)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
@@ -292,17 +306,17 @@ void test_colour(void)
 
     seni_colour res;
 
-    assert_colour(rgb, clone_as(&res, rgb, RGB));
-    assert_colour(hsl, clone_as(&res, rgb, HSL));
-    assert_colour(lab, clone_as(&res, rgb, LAB));
+    assert_colour(rgb, colour_clone_as(&res, rgb, RGB));
+    assert_colour(hsl, colour_clone_as(&res, rgb, HSL));
+    assert_colour(lab, colour_clone_as(&res, rgb, LAB));
 
-    assert_colour(rgb, clone_as(&res, hsl, RGB));
-    assert_colour(hsl, clone_as(&res, hsl, HSL));
-    assert_colour(lab, clone_as(&res, hsl, LAB));
+    assert_colour(rgb, colour_clone_as(&res, hsl, RGB));
+    assert_colour(hsl, colour_clone_as(&res, hsl, HSL));
+    assert_colour(lab, colour_clone_as(&res, hsl, LAB));
 
-    assert_colour(rgb, clone_as(&res, lab, RGB));
-    assert_colour(hsl, clone_as(&res, lab, HSL));
-    assert_colour(lab, clone_as(&res, lab, LAB));
+    assert_colour(rgb, colour_clone_as(&res, lab, RGB));
+    assert_colour(hsl, colour_clone_as(&res, lab, HSL));
+    assert_colour(lab, colour_clone_as(&res, lab, LAB));
 
     colour_free(rgb);
     colour_free(hsl);
@@ -366,15 +380,22 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 
 
 #ifdef SENI_DEBUG_MODE
-#define VM_HEAP_CHECK TEST_ASSERT_EQUAL_MESSAGE(vm->debug.get_from_heap_count, vm->debug.return_to_heap_count, "vm heap leak")
+#define VM_HEAP_SLAB_CHECK TEST_ASSERT_EQUAL_MESSAGE(vm->debug.get_from_heap_avail_count, vm->debug.return_to_heap_avail_count, "vm heap slab leak")
 #else
-#define VM_HEAP_CHECK
+#define VM_HEAP_SLAB_CHECK
+#endif
+
+#ifdef SENI_DEBUG_MODE
+#define VM_COLOUR_SLAB_CHECK TEST_ASSERT_EQUAL_MESSAGE(vm->debug.get_from_colour_avail_count, vm->debug.return_to_colour_avail_count, "vm colour slab leak")
+#else
+#define VM_COLOUR_SLAB_CHECK
 #endif
 
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
 #define VM_TEST_VEC2(A,B) assert_seni_var_v2(stack_peek(vm), A, B)
 #define VM_TEST_VEC4(A,B,C,D) assert_seni_var_v4(stack_peek(vm), A, B, C, D)
+#define VM_TEST_COL(F,A,B,C,D) assert_seni_var_col(stack_peek(vm), F, A, B, C, D)
 
 
 #define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
@@ -390,12 +411,14 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
-#define VM_COMPILE_F32(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_HEAP_CHECK;VM_CLEANUP;}
-#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_HEAP_CHECK;VM_CLEANUP;}
+#define VM_COMPILE_F32(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_HEAP_SLAB_CHECK;VM_CLEANUP;}
+#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_HEAP_SLAB_CHECK;VM_CLEANUP;}
 #define VM_COMPILE_VEC2(EXPR,A,B) {EVM_COMPILE(EXPR);VM_TEST_VEC2(A,B);VM_CLEANUP;}
 #define VM_COMPILE_VEC4(EXPR,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_VEC4(A,B,C,D);VM_CLEANUP;}
-// leaky version that doesn't perform a heap check
+#define VM_COMPILE_COL(EXPR,F,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_COLOUR_SLAB_CHECK;VM_CLEANUP;}
+// don't perform a heap check as we're assuming that the expr will be leaky
 #define VM_COMPILE_F32_L(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
+#define VM_COMPILE_COL_L(EXPR,F,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_CLEANUP;}
 
 #else
 // COMPILE macros that print out bytecode
@@ -404,6 +427,7 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 #define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_VEC2(EXPR,_,_1) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_VEC4(EXPR,_,_1,_2,_3) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_COL(EXPR,_,_1,_2,_3,_4) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_F32_L(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #endif
 // --------------------------------------------------
@@ -510,10 +534,9 @@ void test_vm_vector(void)
 
 void test_vm_col_rgb(void)
 {
-  // VM_COMPILE_VEC2("[4 5]", 4, 5);
-  // VM_COMPILE_VEC4("[4 5 6 7]", 4, 5, 6, 7);
-
-  VM_COMPILE_VEC4("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4)", 0.1f, 0.2f, 0.3f, 0.4f);
+  VM_COMPILE_COL_L("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4)", RGB, 0.1f, 0.2f, 0.3f, 0.4f);
+  // checking colour_avail
+  VM_COMPILE_F32("(fn (f) (col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4) 5) (f)", 5.0f);
 }
 
 void test_vm_math(void)
@@ -555,6 +578,7 @@ int main(void)
   RUN_TEST(test_vm_vector);
   RUN_TEST(test_vm_col_rgb);
   RUN_TEST(test_vm_math);
+
   //RUN_TEST(test_temp);
   
   return UNITY_END();

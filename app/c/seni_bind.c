@@ -27,6 +27,7 @@
 
 #define READ_STACK_ARG_F32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.f; }
 #define READ_STACK_ARG_I32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.i; }
+#define READ_STACK_ARG_COL(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.c; }
 
 // traverse through the VAR_VEC_HEAD, VAR_VEC_RC nodes down into the values
 // todo: make a seni_var type that can hold VEC2
@@ -36,6 +37,9 @@
     n[1] = tmp_1->next->value.f;                                       \
   }
 
+// this is probably obsolete now. It was used to parse colours
+// when they were just represented as a vector of 4 floats
+//
 #define READ_STACK_ARG_VEC4(n) if (name_1 == g_keyword_iname_##n) {    \
     tmp_1 = (value_1->value.v)->next;                                  \
     n[0] = tmp_1->value.f;                                             \
@@ -116,36 +120,27 @@ void declare_binding(seni_word_lut *wlut, seni_env *e, char *name, native_functi
   }
 }
 
-// TEMPORARY
-rgba array_to_colour(f32 *colour)
-{
-  rgba col;
-  col.r = colour[0]; col.g = colour[1]; col.b = colour[2]; col.a = colour[3];
-  return col;
-}
-
 void bind_line(seni_vm *vm, i32 num_args)
 {
   // default values for line
   f32 width = 4.0f;
   f32 from[] = {10.0f, 10.0f};
   f32 to[] = {900.0f, 500.0f};
-  f32 colour[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(width);
   READ_STACK_ARG_VEC2(from);
   READ_STACK_ARG_VEC2(to);
-  READ_STACK_ARG_VEC4(colour);
+  READ_STACK_ARG_COL(colour);
   READ_STACK_ARGS_END;
-
-  rgba col = array_to_colour(colour);
 
   seni_buffer *buffer = vm->buffer;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_line(buffer, matrix, from[0], from[1], to[0], to[1], width, col);
+  render_line(buffer, matrix, from[0], from[1], to[0], to[1], width, colour);
 
   // push the return value onto the stack
   WRITE_STACK(g_var_true);
@@ -157,22 +152,21 @@ void bind_rect(seni_vm *vm, i32 num_args)
   f32 width = 4.0f;
   f32 height = 10.0f;
   f32 position[] = {10.0f, 23.0f};
-  f32 colour[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(width);
   READ_STACK_ARG_F32(height);
   READ_STACK_ARG_VEC2(position);
-  READ_STACK_ARG_VEC4(colour);
+  READ_STACK_ARG_COL(colour);
   READ_STACK_ARGS_END;
-
-  rgba col = array_to_colour(colour);
 
   seni_buffer *buffer = vm->buffer;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_rect(buffer, matrix, position[0], position[1], width, height, col);
+  render_rect(buffer, matrix, position[0], position[1], width, height, colour);
 
   // push the return value onto the stack
   WRITE_STACK(g_var_true);
@@ -184,7 +178,8 @@ void bind_circle(seni_vm *vm, i32 num_args)
   f32 width = 4.0f;
   f32 height = 10.0f;
   f32 position[] = {10.0f, 23.0f};
-  f32 colour[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
   f32 tessellation = 10.0f;
   f32 radius = -1.0f;
 
@@ -194,7 +189,7 @@ void bind_circle(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(height);
   READ_STACK_ARG_F32(radius);
   READ_STACK_ARG_VEC2(position);
-  READ_STACK_ARG_VEC4(colour);
+  READ_STACK_ARG_COL(colour);
   READ_STACK_ARG_F32(tessellation);
   READ_STACK_ARGS_END;
 
@@ -203,13 +198,11 @@ void bind_circle(seni_vm *vm, i32 num_args)
     width = radius;
     height = radius;
   }
-  
-  rgba col = array_to_colour(colour);
 
   seni_buffer *buffer = vm->buffer;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_circle(buffer, matrix, position[0], position[1], width, height, col, (i32)tessellation);
+  render_circle(buffer, matrix, position[0], position[1], width, height, colour, (i32)tessellation);
 
   // push the return value onto the stack
   WRITE_STACK(g_var_true);
@@ -226,7 +219,8 @@ void bind_bezier(seni_vm *vm, i32 num_args)
   f32 t_start = -1.0f;
   f32 t_end = 2.0f;
   f32 tessellation = 10.0f;
-  f32 colour[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
 
   // line_width_mapping will be one of several constants
   
@@ -239,7 +233,7 @@ void bind_bezier(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_COORD4(coords);
   READ_STACK_ARG_F32(t_start);
   READ_STACK_ARG_F32(t_end);
-  READ_STACK_ARG_VEC4(colour);
+  READ_STACK_ARG_COL(colour);
   READ_STACK_ARG_F32(tessellation);
   READ_STACK_ARGS_END;
 
@@ -256,18 +250,43 @@ void bind_bezier(seni_vm *vm, i32 num_args)
   if (t_end > 1.0f) {
     t_end = 1.0f;
   }
-  
-  rgba col = array_to_colour(colour);
 
   seni_buffer *buffer = vm->buffer;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
   render_bezier(buffer, matrix,
                 coords, line_width_start, line_width_end, line_width_mapping,
-                t_start, t_end, col, (i32)tessellation);
+                t_start, t_end, colour, (i32)tessellation);
 
   // push the return value onto the stack
   WRITE_STACK(g_var_true);
+}
+
+void bind_col_convert(seni_vm *vm, i32 num_args)
+{
+  // (col/convert colour: col format: LAB)
+  
+  i32 format = RGB;
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(format);
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARGS_END;
+
+  // the seni_var referencing the converted colour is going to be added to the VM's stack
+  // so we need to get the referenced colour from the vm
+  //
+  seni_colour *out = colour_get_from_vm(vm);
+  colour_clone_as(out, colour, format);
+
+  seni_var ret;
+  colour_as_var(&ret, out);
+
+  // push the return value onto the stack
+  WRITE_STACK(ret);
 }
 
 void bind_col_rgb(seni_vm *vm, i32 num_args)
@@ -290,13 +309,14 @@ void bind_col_rgb(seni_vm *vm, i32 num_args)
 
   seni_var ret;
 
-  vector_construct(vm, &ret);
-  
-  // append the rgba values to each other
-  append_to_vector_f32(vm, &ret, r);
-  append_to_vector_f32(vm, &ret, g);
-  append_to_vector_f32(vm, &ret, b);
-  append_to_vector_f32(vm, &ret, alpha);
+  seni_colour *colour = colour_get_from_vm(vm);
+  colour->format = RGB;
+  colour->element[0] = r;
+  colour->element[1] = g;
+  colour->element[2] = b;
+  colour->element[3] = alpha;
+
+  colour_as_var(&ret, colour);
 
   // push the return value onto the stack
   WRITE_STACK(ret);
@@ -422,7 +442,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_binding(wlut, e, "rotate", &bind_rotate);
   declare_binding(wlut, e, "scale", &bind_scale);
 
-  //  declare_binding(wlut, e, "col/convert", &bind_col_convert);
+  declare_binding(wlut, e, "col/convert", &bind_col_convert);
   declare_binding(wlut, e, "col/rgb", &bind_col_rgb);
   //  declare_binding(wlut, e, "col/hsl", &bind_col_hsl);
   //  declare_binding(wlut, e, "col/hsv", &bind_col_hsv);

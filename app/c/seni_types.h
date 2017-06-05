@@ -41,9 +41,5 @@ typedef struct
   */
 } v2;
 
-typedef struct
-{
-  scalar r, g, b, a;
-} rgba;
 
 #endif  /* SENI_TYPES_H */

@@ -23,7 +23,7 @@ bool is_buffer_empty(seni_buffer *buffer)
   return buffer->num_vertices == 0;
 }
 
-void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, rgba colour, v2 uv)
+void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, seni_colour *colour, v2 uv)
 {
   i32 vertex_item_size = 2;
   i32 v_index = buffer->num_vertices * vertex_item_size;
@@ -37,10 +37,12 @@ void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, rgba col
   buffer->vbuf[v_index + 0] = out[0];
   buffer->vbuf[v_index + 1] = out[1];
 
-  buffer->cbuf[c_index + 0] = colour.r;
-  buffer->cbuf[c_index + 1] = colour.g;
-  buffer->cbuf[c_index + 2] = colour.b;
-  buffer->cbuf[c_index + 3] = colour.a;
+  // currently assuming that the colour is in RGB format
+  // todo: check this assumption
+  buffer->cbuf[c_index + 0] = colour->element[0];
+  buffer->cbuf[c_index + 1] = colour->element[1];
+  buffer->cbuf[c_index + 2] = colour->element[2];
+  buffer->cbuf[c_index + 3] = colour->element[3];
 
   buffer->tbuf[t_index + 0] = uv.x; // u
   buffer->tbuf[t_index + 1] = uv.y; // v
@@ -61,15 +63,15 @@ void form_degenerate_triangle(seni_buffer *buffer, seni_matrix *matrix, f32 x, f
   // todo: don't create an identity matrix for each call
   seni_matrix identity;
   matrix_identity(&identity);
-  
-  rgba colour;
-  colour.r = 0.0f; colour.g = 0.0f; colour.b = 0.0f; colour.a = 0.0f;
+
+  seni_colour colour;
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 0.0f);
   v2 uv;
   uv.x = 0.0f; uv.y = 0.0f; // u v
-  add_vertex(buffer, &identity, last_v[0], last_v[1], colour, uv);
+  add_vertex(buffer, &identity, last_v[0], last_v[1], &colour, uv);
 
   // add the new vertex to complete the degenerate triangle
-  add_vertex(buffer, matrix, x, y, colour, uv);
+  add_vertex(buffer, matrix, x, y, &colour, uv);
   
   // Note: still need to call addVertex on the first
   // vertex when we 'really' render the strip
@@ -90,7 +92,7 @@ void render_line(seni_buffer *buffer,
                  seni_matrix *matrix,
                  f32 from_x, f32 from_y, f32 to_x, f32 to_y,
                  f32 width,
-                 rgba colour)
+                 seni_colour *colour)
 {
   seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0);
 
@@ -112,7 +114,7 @@ void render_rect(seni_buffer *buffer,
                  seni_matrix *matrix,
                  f32 x, f32 y,
                  f32 width, f32 height,
-                 rgba colour)
+                 seni_colour *colour)
 {
   seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0);
 
@@ -130,7 +132,7 @@ void render_circle(seni_buffer *buffer,
                    seni_matrix *matrix,
                    f32 x, f32 y,
                    f32 width, f32 height,
-                   rgba colour,
+                   seni_colour *colour,
                    i32 tessellation)
 {
   v2 uv;
@@ -163,7 +165,7 @@ void render_bezier(seni_buffer *buffer,
                    f32 *coords,
                    f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
                    f32 t_start, f32 t_end,
-                   rgba colour,
+                   seni_colour *colour,
                    i32 tessellation)
 {
   seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0);

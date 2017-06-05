@@ -5,6 +5,7 @@
 #include "seni_types.h"
 #include "seni_buffer.h"
 #include "seni_matrix.h"
+#include "seni_colour.h"
 
 #define MAX_WORD_LOOKUPS 128
 #define MAX_KEYWORD_LOOKUPS 128
@@ -71,6 +72,7 @@ typedef enum {
   VAR_NAME,      // seni_word_lut[value.i]
   VAR_VEC_HEAD,  // pointer to vec_rc is in value.v
   VAR_VEC_RC,    // pointer to first vector element is in value.v
+  VAR_COLOUR,    // pointer to a colour
 } seni_var_type;
 
 
@@ -78,7 +80,8 @@ typedef enum {
 typedef enum {
   USE_I,                        // integer
   USE_F,                        // float
-  USE_V                         // pointer to seni_var
+  USE_V,                        // pointer to seni_var
+  USE_C                         // pointer to a colour
 } seni_value_in_use;
 
 typedef struct seni_var {
@@ -90,6 +93,7 @@ typedef struct seni_var {
     f32 f;
     i32 ref_count;              // reference count for VAR_VEC_RC
     struct seni_var *v;
+    seni_colour *c;             // reference to a colour allocated from vm->colour_slab
   } value;
 
 #ifdef SENI_DEBUG_MODE  
@@ -130,22 +134,30 @@ typedef enum {
 
 #define MAX_NUM_ARGUMENTS 16
 
+#define COLOUR_SLAB_SIZE 256
 
 // Virtual Machine
 //
 
 typedef struct seni_vm_debug_info {
-  i32 get_from_heap_count;
-  i32 return_to_heap_count;
+  i32 get_from_heap_avail_count;
+  i32 return_to_heap_avail_count;
+
+  i32 get_from_colour_avail_count;
+  i32 return_to_colour_avail_count;
 } seni_vm_debug_info;
 
 typedef struct seni_vm {
   seni_buffer *buffer;             // used for rendering vertices
-  seni_matrix_stack *matrix_stack; 
+  seni_matrix_stack *matrix_stack;
 
-  seni_var *heap;                  // the contiguous block of allocated memory
-  i32 heap_size;
-  seni_var *heap_list;             // doubly linked list of unallocated seni_vars from the heap
+  seni_colour *colour_slab;        // a slab of pre-allocated colours
+  i32 colour_slab_size;
+  seni_colour *colour_avail;       // doubly linked list of unallocated seni_colours from the colour_slab
+
+  seni_var *heap_slab;             // the contiguous block of allocated memory
+  i32 heap_slab_size;
+  seni_var *heap_avail;            // doubly linked list of unallocated seni_vars from the heap_slab
   
   seni_var *stack;
   i32 stack_size;
@@ -230,6 +242,8 @@ char          *var_type_name(seni_var *var);
 
 seni_var      *stack_peek(seni_vm *vm);
 seni_var      *var_get_from_heap(seni_vm *vm);
+seni_colour   *colour_get_from_vm(seni_vm *vm);
+void colour_return_to_vm(seni_vm *vm, seni_colour *colour); // temp
 
 seni_vm       *vm_construct(i32 stack_size, i32 heap_size);
 void           vm_free(seni_vm *vm);
@@ -253,5 +267,6 @@ void           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 
 void           f32_as_var(seni_var *out, f32 f);
 void           i32_as_var(seni_var *out, i32 i);
+void           colour_as_var(seni_var *out, seni_colour *c);
   
 #endif

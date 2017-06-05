@@ -18,12 +18,24 @@ seni_colour *colour_construct(seni_colour_format format, f32 e0, f32 e1, f32 e2,
   colour->element[2] = e2;
   colour->element[3] = alpha;
 
+  colour->next = NULL;
+  colour->prev = NULL;
+
   return colour;
 }
 
 void colour_free(seni_colour *colour)
 {
   free(colour);
+}
+
+void colour_set(seni_colour *out, seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha)
+{
+  out->format = format;
+  out->element[0] = e0;
+  out->element[1] = e1;
+  out->element[2] = e2;
+  out->element[3] = alpha;
 }
 
 seni_colour *colour_clone(seni_colour *out, seni_colour *in)
@@ -336,7 +348,7 @@ seni_colour *hsv_rgb(seni_colour *out, seni_colour *in)
   return out;
 }
 
-seni_colour *clone_as(seni_colour *out, seni_colour *in, seni_colour_format new_format)
+seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_format new_format)
 {
   switch(in->format) {
   case LAB:
@@ -428,7 +440,7 @@ seni_colour *add_angle_to_hsl(seni_colour *out, seni_colour *in, f32 delta)
   i32 H = 0;
 
   // rotate the hue by the given delta
-  clone_as(out, in, HSL);
+  colour_clone_as(out, in, HSL);
   out->element[H] = fmod(out->element[H] + delta, 360.0f);
 
   return out;
