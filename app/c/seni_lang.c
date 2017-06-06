@@ -1408,6 +1408,10 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
     vector_ref_count_decrement(vm, var);
   }
 
+  if (var->type == VAR_COLOUR) {
+    colour_return_to_vm(vm, var->value.c);
+  }
+
   // the var is part of an allocated list
   if (var->next != NULL) {
     var_return_to_heap(vm, var->next);
@@ -1520,6 +1524,15 @@ void append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
   seni_var *v = var_get_from_heap(vm);
   v->type = VAR_FLOAT;
   v->value.f = val;
+
+  DL_APPEND(head->value.v, v);
+}
+
+void append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col)
+{
+  seni_var *v = var_get_from_heap(vm);
+  v->type = VAR_COLOUR;
+  v->value.c = col;
 
   DL_APPEND(head->value.v, v);
 }

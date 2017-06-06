@@ -294,10 +294,10 @@ void bind_col_rgb(seni_vm *vm, i32 num_args)
   // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
   
   // default values for line
-  f32 r = 0.0f;
-  f32 g = 0.0f;
-  f32 b = 0.0f;
-  f32 alpha = 0.0f;
+  f32 r = 0.0f;                 // 0..1
+  f32 g = 0.0f;                 // 0..1
+  f32 b = 0.0f;                 // 0..1
+  f32 alpha = 0.0f;             // 0..1
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -319,6 +319,236 @@ void bind_col_rgb(seni_vm *vm, i32 num_args)
   colour_as_var(&ret, colour);
 
   // push the return value onto the stack
+  WRITE_STACK(ret);
+}
+
+void bind_col_hsl(seni_vm *vm, i32 num_args)
+{
+  // (col/hsl h: 180.0 s: 0.1 l: 0.2 alpha: 0.4)
+  
+  // default values for line
+  f32 h = 0.0f;                 // 0..360
+  f32 s = 0.0f;                 // 0..1
+  f32 l = 0.0f;                 // 0..1
+  f32 alpha = 0.0f;             // 0..1
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(h);
+  READ_STACK_ARG_F32(s);
+  READ_STACK_ARG_F32(l);
+  READ_STACK_ARG_F32(alpha);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+
+  seni_colour *colour = colour_get_from_vm(vm);
+  colour->format = HSL;
+  colour->element[0] = h;
+  colour->element[1] = s;
+  colour->element[2] = l;
+  colour->element[3] = alpha;
+
+  colour_as_var(&ret, colour);
+
+  // push the return value onto the stack
+  WRITE_STACK(ret);
+}
+
+void bind_col_hsv(seni_vm *vm, i32 num_args)
+{
+  // (col/hsv h: 180.0 s: 0.1 v: 0.2 alpha: 0.4)
+  
+  // default values for line
+  f32 h = 0.0f;                 // 0..360
+  f32 s = 0.0f;                 // 0..1
+  f32 v = 0.0f;                 // 0..1
+  f32 alpha = 0.0f;             // 0..1
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(h);
+  READ_STACK_ARG_F32(s);
+  READ_STACK_ARG_F32(v);
+  READ_STACK_ARG_F32(alpha);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+
+  seni_colour *colour = colour_get_from_vm(vm);
+  colour->format = HSV;
+  colour->element[0] = h;
+  colour->element[1] = s;
+  colour->element[2] = v;
+  colour->element[3] = alpha;
+
+  colour_as_var(&ret, colour);
+
+  // push the return value onto the stack
+  WRITE_STACK(ret);
+}
+
+void bind_col_lab(seni_vm *vm, i32 num_args)
+{
+  // (col/lab l: 0.2 a: -0.1 b: -0.3 alpha: 0.4)
+  
+  // default values for line
+  f32 l = 0.0f;                 // 0..
+  f32 a = 0.0f;                 // -1..1
+  f32 b = 0.0f;                 // -1..1
+  f32 alpha = 0.0f;             // 0..1
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(l);
+  READ_STACK_ARG_F32(a);
+  READ_STACK_ARG_F32(b);
+  READ_STACK_ARG_F32(alpha);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+
+  seni_colour *colour = colour_get_from_vm(vm);
+  colour->format = LAB;
+  colour->element[0] = l;
+  colour->element[1] = a;
+  colour->element[2] = b;
+  colour->element[3] = alpha;
+
+  colour_as_var(&ret, colour);
+
+  // push the return value onto the stack
+  WRITE_STACK(ret);
+}
+
+void bind_col_complementary(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARGS_END;
+
+  seni_colour *ret_colour = colour_get_from_vm(vm);
+  complementary(ret_colour, colour);
+
+  // push the return value onto the stack
+  seni_var ret;
+  colour_as_var(&ret, ret_colour);
+  WRITE_STACK(ret);
+}
+
+void bind_col_split_complementary(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARGS_END;
+
+  seni_colour *ret_colour0 = colour_get_from_vm(vm);
+  seni_colour *ret_colour1 = colour_get_from_vm(vm);
+  split_complementary(ret_colour0, ret_colour1, colour);
+
+  // push the return values onto the stack as a vector
+  seni_var ret;
+  vector_construct(vm, &ret);
+  append_to_vector_col(vm, &ret, ret_colour0);
+  append_to_vector_col(vm, &ret, ret_colour1);
+  WRITE_STACK(ret);
+}
+
+void bind_col_analagous(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARGS_END;
+
+  seni_colour *ret_colour0 = colour_get_from_vm(vm);
+  seni_colour *ret_colour1 = colour_get_from_vm(vm);
+  analagous(ret_colour0, ret_colour1, colour);
+
+  // push the return values onto the stack as a vector
+  seni_var ret;
+  vector_construct(vm, &ret);
+  append_to_vector_col(vm, &ret, ret_colour0);
+  append_to_vector_col(vm, &ret, ret_colour1);
+  WRITE_STACK(ret);
+}
+
+void bind_col_triad(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARGS_END;
+
+  seni_colour *ret_colour0 = colour_get_from_vm(vm);
+  seni_colour *ret_colour1 = colour_get_from_vm(vm);
+  triad(ret_colour0, ret_colour1, colour);
+
+  // push the return values onto the stack as a vector
+  seni_var ret;
+  vector_construct(vm, &ret);
+  append_to_vector_col(vm, &ret, ret_colour0);
+  append_to_vector_col(vm, &ret, ret_colour1);
+  WRITE_STACK(ret);
+}
+
+void bind_col_darken(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+  f32 value = 0;                // 0..100
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_F32(value);
+  READ_STACK_ARGS_END;
+
+  seni_colour *ret_colour = colour_get_from_vm(vm);
+
+  colour_clone_as(ret_colour, colour, LAB);
+  ret_colour->element[0] = clamp(ret_colour->element[0] - value, 0.0f, 100.0f);
+
+  // push the return value onto the stack
+  seni_var ret;
+  colour_as_var(&ret, ret_colour);
+  WRITE_STACK(ret);
+}
+
+void bind_col_lighten(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+  f32 value = 0;                // 0..100
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_F32(value);
+  READ_STACK_ARGS_END;
+
+  seni_colour *ret_colour = colour_get_from_vm(vm);
+
+  colour_clone_as(ret_colour, colour, LAB);
+  ret_colour->element[0] = clamp(ret_colour->element[0] + value, 0.0f, 100.0f);
+
+  // push the return value onto the stack
+  seni_var ret;
+  colour_as_var(&ret, ret_colour);
   WRITE_STACK(ret);
 }
 
@@ -444,22 +674,20 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   declare_binding(wlut, e, "col/convert", &bind_col_convert);
   declare_binding(wlut, e, "col/rgb", &bind_col_rgb);
-  //  declare_binding(wlut, e, "col/hsl", &bind_col_hsl);
-  //  declare_binding(wlut, e, "col/hsv", &bind_col_hsv);
-  //  declare_binding(wlut, e, "col/lab", &bind_col_lab);
-  //  declare_binding(wlut, e, "col/complementary", &bind_col_complementary);
-  //  declare_binding(wlut, e, "col/split-complementary", &bind_col_split_complementary);
-  //  declare_binding(wlut, e, "col/analagous", &bind_col_analagous);
-  //  declare_binding(wlut, e, "col/triad", &bind_col_triad);
-  //  declare_binding(wlut, e, "col/darken", &bind_col_darken);
-  //  declare_binding(wlut, e, "col/lighten", &bind_col_lighten);
+  declare_binding(wlut, e, "col/hsl", &bind_col_hsl);
+  declare_binding(wlut, e, "col/hsv", &bind_col_hsv);
+  declare_binding(wlut, e, "col/lab", &bind_col_lab);
+  declare_binding(wlut, e, "col/complementary", &bind_col_complementary);
+  declare_binding(wlut, e, "col/split-complementary", &bind_col_split_complementary);
+  declare_binding(wlut, e, "col/analagous", &bind_col_analagous);
+  declare_binding(wlut, e, "col/triad", &bind_col_triad);
+  declare_binding(wlut, e, "col/darken", &bind_col_darken);
+  declare_binding(wlut, e, "col/lighten", &bind_col_lighten);
 
   // col/procedural-fn-presets
   // col/procedural-fn
   // col/bezier-fn
   // col/quadratic-fn
-
-
 
   declare_binding(wlut, e, "math/distance", &bind_math_distance);
   declare_binding(wlut, e, "math/clamp", &bind_math_clamp);

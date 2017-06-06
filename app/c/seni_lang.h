@@ -265,6 +265,7 @@ void           pretty_print_seni_var(seni_var *var, char* msg);
 
 void           vector_construct(seni_vm *vm, seni_var *head);
 void           append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
+void           append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col);
 void           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 
 void           f32_as_var(seni_var *out, f32 f);
