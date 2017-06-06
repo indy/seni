@@ -74,9 +74,9 @@ seni_colour *rgb_xyz(seni_colour *out, seni_colour *in)
   f32 bb = colour_to_axis(in->element[2]);
 
   out->format = XYZ;
-  out->element[0] = (rr * 0.4124) + (gg * 0.3576) + (bb * 0.1805);
-  out->element[1] = (rr * 0.2126) + (gg * 0.7152) + (bb * 0.0722);
-  out->element[2] = (rr * 0.0193) + (gg * 0.1192) + (bb * 0.9505);
+  out->element[0] = (rr * 0.4124f) + (gg * 0.3576f) + (bb * 0.1805f);
+  out->element[1] = (rr * 0.2126f) + (gg * 0.7152f) + (bb * 0.0722f);
+  out->element[2] = (rr * 0.0193f) + (gg * 0.1192f) + (bb * 0.9505f);
   out->element[3] = in->element[3];
 
   return out;
@@ -156,7 +156,7 @@ f32 hue(seni_colour *colour, i32 max_chan, f32 chroma)
 
   switch (max_chan) {
   case 0:                       // R
-    return 60.0f * (fmod(colour->element[1] - colour->element[2], chroma) / 6.0f);
+    return 60.0f * ((f32)fmod(colour->element[1] - colour->element[2], chroma) / 6.0f);
   case 1:                       // G
     return 60.0f * (((colour->element[2] - colour->element[0]) / chroma) + 2.0f);
   case 2:                       // B
@@ -170,7 +170,7 @@ f32 hue(seni_colour *colour, i32 max_chan, f32 chroma)
 
 f32 abso(f32 in)
 {
-  return in < 0.0 ? -in : in;
+  return in < 0.0f ? -in : in;
 }
 
 seni_colour *rgb_hsl(seni_colour *out, seni_colour *in)
@@ -183,7 +183,7 @@ seni_colour *rgb_hsl(seni_colour *out, seni_colour *in)
 
   f32 chroma = max_val - min_val;
   f32 h = hue(in, max_ch, chroma);
-  bool valid_hue = (chroma != 0.0);
+  // bool valid_hue = (chroma != 0.0);
 
   f32 lightness = 0.5f * (min_val + max_val);
   f32 saturation;
@@ -215,7 +215,7 @@ seni_colour *rgb_hsv(seni_colour *out, seni_colour *in)
 
   f32 chroma = max_val - min_val;
   f32 h = hue(in, max_ch, chroma);
-  bool valid_hue = (chroma != 0.0);
+  // bool valid_hue = (chroma != 0.0);
 
   f32 value = max_val;
 
@@ -247,7 +247,7 @@ seni_colour *chm_rgb(seni_colour *out, seni_colour *in, f32 chroma, f32 h, f32 m
   //}
 
   f32 hprime = h / 60.0f;
-  f32 x = chroma * (1.0 - abso(fmod(hprime, 2.0f) - 1.0));
+  f32 x = chroma * (1.0f - abso((f32)fmod(hprime, 2.0f) - 1.0f));
   f32 r = 0.0f;
   f32 g = 0.0f;
   f32 b = 0.0f;
@@ -441,7 +441,7 @@ seni_colour *add_angle_to_hsl(seni_colour *out, seni_colour *in, f32 delta)
 
   // rotate the hue by the given delta
   colour_clone_as(out, in, HSL);
-  out->element[H] = fmod(out->element[H] + delta, 360.0f);
+  out->element[H] = (f32)fmod(out->element[H] + delta, 360.0f);
 
   return out;
 }
