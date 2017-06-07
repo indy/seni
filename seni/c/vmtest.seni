@@ -3,4 +3,9 @@
 (circle radius: 20 position: [500 500] tessellation: 20 colour: (col/rgb r: 0.4 g: 0.0 b: 0.8 alpha: 1.0))
 
 
-(bezier coords: [[100 500] [300 300] [600 700] [900 500]] tessellation: 20 colour: (col/rgb r: 0.8 g: 0.4 b: 0.4 alpha: 1.0) line-width: 50)
+(bezier coords: [[100 500] [300 500] [600 500] [900 500]] 
+        tessellation: 70 
+        colour: (col/rgb r: 0.8 g: 0.4 b: 0.4 alpha: 1.0)
+        line-width-mapping: linear
+        line-width-start: 50
+        line-width-end: 500)

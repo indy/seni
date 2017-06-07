@@ -2050,6 +2050,13 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
     return safe_next(ast);
   }
 
+  // could be a keyword such as linear, ease-in etc
+  if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
+    program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, iname);
+    return safe_next(ast);
+  }
+
+
   SENI_ERROR("compile_user_defined_name: unknown mapping for %d", iname);
   return safe_next(ast);
 }
@@ -2153,6 +2160,8 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
         // normally get here when a script contains variables
         // that have the same name as common parameters.
         // e.g. r, g, b, alpha
+        // or if we're passing a pre-defined argument value
+        // e.g. linear in (bezier line-width-mapping: linear)
         return compile_user_defined_name(ast, program, iname);
       }
 

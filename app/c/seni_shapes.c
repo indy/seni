@@ -1,9 +1,15 @@
 #include "seni_shapes.h"
 #include "seni_uv_mapper.h"
 #include "seni_mathutil.h"
+#include "seni_interp.h"
 
 #include <stdio.h>
 #include <math.h>
+
+// extern global keyword variables - used to reference bezier line_width_mapping
+#define KEYWORD(val,_,name) extern i32 g_keyword_iname_##name;
+#include "seni_keywords.h"
+#undef KEYWORD
 
 // Renderer :: renderRect
 
@@ -23,7 +29,7 @@ bool is_buffer_empty(seni_buffer *buffer)
   return buffer->num_vertices == 0;
 }
 
-void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, seni_colour *colour, v2 uv)
+void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, seni_colour *rgb, v2 uv)
 {
   i32 vertex_item_size = 2;
   i32 v_index = buffer->num_vertices * vertex_item_size;
@@ -37,12 +43,10 @@ void add_vertex(seni_buffer *buffer, seni_matrix *matrix, f32 x, f32 y, seni_col
   buffer->vbuf[v_index + 0] = out[0];
   buffer->vbuf[v_index + 1] = out[1];
 
-  // currently assuming that the colour is in RGB format
-  // todo: check this assumption
-  buffer->cbuf[c_index + 0] = colour->element[0];
-  buffer->cbuf[c_index + 1] = colour->element[1];
-  buffer->cbuf[c_index + 2] = colour->element[2];
-  buffer->cbuf[c_index + 3] = colour->element[3];
+  buffer->cbuf[c_index + 0] = rgb->element[0];
+  buffer->cbuf[c_index + 1] = rgb->element[1];
+  buffer->cbuf[c_index + 2] = rgb->element[2];
+  buffer->cbuf[c_index + 3] = rgb->element[3];
 
   buffer->tbuf[t_index + 0] = uv.x; // u
   buffer->tbuf[t_index + 1] = uv.y; // v
@@ -101,12 +105,19 @@ void render_line(seni_buffer *buffer,
   v2 n = normal(from_x, from_y, to_x, to_y);
   v2 n2 = opposite_normal(n);
 
+  seni_colour *rgb, rgb_colour;
+  if (colour->format == RGB) {
+    rgb = colour;
+  } else {
+    colour_clone_as(&rgb_colour, colour, RGB);
+    rgb = &rgb_colour;
+  }
+
   prepare_to_add_triangle_strip(buffer, matrix, 4, from_x + (hw * n.x), from_y + (hw * n.y));
-  
-  add_vertex(buffer, matrix, from_x + (hw * n.x),  from_y + (hw * n.y),  colour, uv->map[0]);
-  add_vertex(buffer, matrix, from_x + (hw * n2.x), from_y + (hw * n2.y), colour, uv->map[1]);
-  add_vertex(buffer, matrix, to_x + (hw * n.x),    to_y + (hw * n.y),    colour, uv->map[2]);
-  add_vertex(buffer, matrix, to_x + (hw * n2.x),   to_y + (hw * n2.y),   colour, uv->map[3]);
+  add_vertex(buffer, matrix, from_x + (hw * n.x),  from_y + (hw * n.y),  rgb, uv->map[0]);
+  add_vertex(buffer, matrix, from_x + (hw * n2.x), from_y + (hw * n2.y), rgb, uv->map[1]);
+  add_vertex(buffer, matrix, to_x + (hw * n.x),    to_y + (hw * n.y),    rgb, uv->map[2]);
+  add_vertex(buffer, matrix, to_x + (hw * n2.x),   to_y + (hw * n2.y),   rgb, uv->map[3]);
 }
 
 
@@ -121,11 +132,19 @@ void render_rect(seni_buffer *buffer,
   f32 half_width = width / 2.0f;
   f32 half_height = height / 2.0f;
 
+  seni_colour *rgb, rgb_colour;
+  if (colour->format == RGB) {
+    rgb = colour;
+  } else {
+    colour_clone_as(&rgb_colour, colour, RGB);
+    rgb = &rgb_colour;
+  }
+
   prepare_to_add_triangle_strip(buffer, matrix, 4, x - half_width, y - half_height);
-  add_vertex(buffer, matrix, x - half_width, y - half_height, colour, uv->map[0]);
-  add_vertex(buffer, matrix, x + half_width, y - half_height, colour, uv->map[1]);
-  add_vertex(buffer, matrix, x - half_width, y + half_height, colour, uv->map[2]);
-  add_vertex(buffer, matrix, x + half_width, y + half_height, colour, uv->map[3]);
+  add_vertex(buffer, matrix, x - half_width, y - half_height, rgb, uv->map[0]);
+  add_vertex(buffer, matrix, x + half_width, y - half_height, rgb, uv->map[1]);
+  add_vertex(buffer, matrix, x - half_width, y + half_height, rgb, uv->map[2]);
+  add_vertex(buffer, matrix, x + half_width, y + half_height, rgb, uv->map[3]);
 }
 
 void render_circle(seni_buffer *buffer,
@@ -143,21 +162,29 @@ void render_circle(seni_buffer *buffer,
   f32 unit_angle = TAU / tessellation;
   f32 angle, vx, vy;
 
+  seni_colour *rgb, rgb_colour;
+  if (colour->format == RGB) {
+    rgb = colour;
+  } else {
+    colour_clone_as(&rgb_colour, colour, RGB);
+    rgb = &rgb_colour;
+  }
+
   for (int i = 0; i < tessellation; i++) {
     angle = unit_angle * i;
     vx = ((f32)(sin(angle)) * width) + x;
     vy = ((f32)(cos(angle)) * height) + y;
 
-    add_vertex(buffer, matrix, x, y, colour, uv);
-    add_vertex(buffer, matrix, vx, vy, colour, uv);
+    add_vertex(buffer, matrix, x, y, rgb, uv);
+    add_vertex(buffer, matrix, vx, vy, rgb, uv);
   }
 
   angle = 0.0f;
   vx = ((f32)(sin(angle)) * width) + x;
   vy = ((f32)(cos(angle)) * height) + y;
 
-  add_vertex(buffer, matrix, x, y, colour, uv);
-  add_vertex(buffer, matrix, vx, vy, colour, uv);
+  add_vertex(buffer, matrix, x, y, rgb, uv);
+  add_vertex(buffer, matrix, vx, vy, rgb, uv);
 }
 
 void render_bezier(seni_buffer *buffer,
@@ -172,9 +199,16 @@ void render_bezier(seni_buffer *buffer,
 
   line_width_start *= uv->width_scale;
   line_width_end *= uv->width_scale;
+
+  // variables for interpolating the curve's width
+  //
   f32 half_width_start = line_width_start / 2.0f;
   f32 half_width_end = line_width_end / 2.0f;
-  // create a remapping function here
+  f32 from_m = mc_m(t_start, 0.0f, t_end, 1.0f);
+  f32 from_c = mc_c(t_start, 0.0f, from_m);
+  f32 to_m = mc_m(0.0f, half_width_start, 1.0f, half_width_end);
+  f32 to_c = mc_c(0.0f, half_width_start, to_m);
+  f32 from_interp, to_interp, half_width;
 
   f32 x0 = coords[0], x1 = coords[2], x2 = coords[4], x3 = coords[6];
   f32 y0 = coords[1], y1 = coords[3], y2 = coords[5], y3 = coords[7];
@@ -188,7 +222,15 @@ void render_bezier(seni_buffer *buffer,
   f32 tex_t = 1.0f / tessellation;
   f32 uv_t;
   // uvA == uv->map[0] ...
-
+  
+  seni_colour *rgb, rgb_colour;
+  if (colour->format == RGB) {
+    rgb = colour;
+  } else {
+    colour_clone_as(&rgb_colour, colour, RGB);
+    rgb = &rgb_colour;
+  }
+  
   for (i = 0; i < tessellation - 1; i++) {
     t_val = t_start + ((f32)i * unit);
     t_val_next = t_start + ((f32)(i + 1) * unit);
@@ -201,11 +243,23 @@ void render_bezier(seni_buffer *buffer,
     // addVerticesAsStrip
     n1 = normal(xs, ys, xs_next, ys_next);
     n2 = opposite_normal(n1);
+    
+    from_interp = (from_m * t_val) + from_c;
+    if (line_width_mapping == g_keyword_iname_linear) {
+      to_interp = from_interp;
+    } else if (line_width_mapping == g_keyword_iname_quick) {
+      to_interp = map_quick_ease(from_interp);
+    } else if (line_width_mapping == g_keyword_iname_slow_in) {
+      to_interp = map_slow_ease_in(from_interp);
+    } else if (line_width_mapping == g_keyword_iname_slow_in_out) {
+      to_interp = map_slow_ease_in_ease_out(from_interp);
+    }
+    half_width = (to_m * to_interp) + to_c;
 
-    v1.x = (n1.x * half_width_end) + xs;
-    v1.y = (n1.y * half_width_end) + ys;
-    v2.x = (n2.x * half_width_end) + xs;
-    v2.y = (n2.y * half_width_end) + ys;
+    v1.x = (n1.x * half_width) + xs;
+    v1.y = (n1.y * half_width) + ys;
+    v2.x = (n2.x * half_width) + xs;
+    v2.y = (n2.y * half_width) + ys;
 
     if (i == 0) {
       prepare_to_add_triangle_strip(buffer, matrix, tessellation * 2, v1.x, v1.y);
@@ -214,8 +268,8 @@ void render_bezier(seni_buffer *buffer,
     uv_t = tex_t * (f32)i;
     
     // todo: interpolate the uv coordinates
-    add_vertex(buffer, matrix, v1.x, v1.y, colour, uv->map[0]);
-    add_vertex(buffer, matrix, v2.x, v2.y, colour, uv->map[1]);
+    add_vertex(buffer, matrix, v1.x, v1.y, rgb, uv->map[0]);
+    add_vertex(buffer, matrix, v2.x, v2.y, rgb, uv->map[1]);
   }
 
   // final 2 vertices for the end point
@@ -237,7 +291,7 @@ void render_bezier(seni_buffer *buffer,
   v2.x = (n2.x * half_width_end) + xs_next;
   v2.y = (n2.y * half_width_end) + ys_next;
 
-  add_vertex(buffer, matrix, v1.x, v1.y, colour, uv->map[3]);
-  add_vertex(buffer, matrix, v2.x, v2.y, colour, uv->map[2]);
+  add_vertex(buffer, matrix, v1.x, v1.y, rgb, uv->map[3]);
+  add_vertex(buffer, matrix, v2.x, v2.y, rgb, uv->map[2]);
 }
 

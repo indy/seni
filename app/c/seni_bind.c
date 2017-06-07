@@ -214,7 +214,7 @@ void bind_bezier(seni_vm *vm, i32 num_args)
   f32 line_width = -1.0f;
   f32 line_width_start = 4.0f;
   f32 line_width_end = 4.0f;
-  i32 line_width_mapping = 1;
+  i32 line_width_mapping = g_keyword_iname_linear;
   f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
   f32 t_start = -1.0f;
   f32 t_end = 2.0f;
