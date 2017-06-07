@@ -30,6 +30,7 @@ void render_bezier(seni_buffer *buffer,
                    f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
                    f32 t_start, f32 t_end,
                    seni_colour *colour,
-                   i32 tessellation);
+                   i32 tessellation,
+                   i32 brush, i32 brush_subtype);
 
 #endif

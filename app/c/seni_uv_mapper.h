@@ -25,6 +25,6 @@ void free_uv_mapper();
 
 
 void make_uv(v2 *out, f32 in_u, f32 in_v);
-seni_uv_mapping *get_uv_mapping(seni_brush_type type, i32 sub_type);
+seni_uv_mapping *get_uv_mapping(seni_brush_type type, i32 sub_type, bool wrap_sub_type);
 
 #endif

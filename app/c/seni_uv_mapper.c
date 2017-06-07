@@ -108,10 +108,13 @@ void free_uv_mapper()
   free(num_uv_mappings);
 }
 
-seni_uv_mapping *get_uv_mapping(seni_brush_type type, i32 sub_type)
+seni_uv_mapping *get_uv_mapping(seni_brush_type type, i32 sub_type, bool wrap_sub_type)
 {
-  if(num_uv_mappings[type] <= sub_type) {
+  if(wrap_sub_type == false && sub_type >= num_uv_mappings[type]) {
     return NULL;
   }
-  return &(g_brush_info[type][sub_type]);
+
+  i32 sub = sub_type % num_uv_mappings[type];
+  
+  return &(g_brush_info[type][sub]);
 }

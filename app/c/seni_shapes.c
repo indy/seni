@@ -1,4 +1,5 @@
 #include "seni_shapes.h"
+#include "seni_types.h"
 #include "seni_uv_mapper.h"
 #include "seni_mathutil.h"
 #include "seni_interp.h"
@@ -98,7 +99,7 @@ void render_line(seni_buffer *buffer,
                  f32 width,
                  seni_colour *colour)
 {
-  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0);
+  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0, true);
 
   f32 hw = (width * uv->width_scale) / 2.0f;
 
@@ -127,7 +128,7 @@ void render_rect(seni_buffer *buffer,
                  f32 width, f32 height,
                  seni_colour *colour)
 {
-  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0);
+  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0, true);
 
   f32 half_width = width / 2.0f;
   f32 half_height = height / 2.0f;
@@ -193,10 +194,21 @@ void render_bezier(seni_buffer *buffer,
                    f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
                    f32 t_start, f32 t_end,
                    seni_colour *colour,
-                   i32 tessellation)
+                   i32 tessellation,
+                   i32 brush, i32 brush_subtype)
 {
-  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0);
+  // get the uv co-ordinates for the specified brush
+  //
+  seni_brush_type brush_type = (seni_brush_type)(brush - g_keyword_iname_brush_flat);
+  printf("brush type %d\n", brush_type);
+  seni_uv_mapping *uv = get_uv_mapping(brush_type, brush_subtype, true);
+  v2 uv_a = uv->map[0];
+  v2 uv_b = uv->map[1];
+  v2 uv_c = uv->map[2];
+  v2 uv_d = uv->map[3];
 
+  // modify the width so that the brush textures provide good coverage
+  //
   line_width_start *= uv->width_scale;
   line_width_end *= uv->width_scale;
 
@@ -213,7 +225,7 @@ void render_bezier(seni_buffer *buffer,
   f32 x0 = coords[0], x1 = coords[2], x2 = coords[4], x3 = coords[6];
   f32 y0 = coords[1], y1 = coords[3], y2 = coords[5], y3 = coords[7];
   f32 xs, ys, xs_next, ys_next;
-  v2 n1, n2, v1, v2;
+  v2 n1, n2, v_1, v_2;
  
   i32 i;
   f32 unit = (t_end - t_start) / (tessellation - 1.0f);
@@ -221,8 +233,9 @@ void render_bezier(seni_buffer *buffer,
 
   f32 tex_t = 1.0f / tessellation;
   f32 uv_t;
-  // uvA == uv->map[0] ...
-  
+  v2 t_uv;
+
+  // vertex colours have to be in rgb space
   seni_colour *rgb, rgb_colour;
   if (colour->format == RGB) {
     rgb = colour;
@@ -245,9 +258,8 @@ void render_bezier(seni_buffer *buffer,
     n2 = opposite_normal(n1);
     
     from_interp = (from_m * t_val) + from_c;
-    if (line_width_mapping == g_keyword_iname_linear) {
-      to_interp = from_interp;
-    } else if (line_width_mapping == g_keyword_iname_quick) {
+    to_interp = from_interp;    // default behaviour as though 'linear' was chosen
+    if (line_width_mapping == g_keyword_iname_quick) {
       to_interp = map_quick_ease(from_interp);
     } else if (line_width_mapping == g_keyword_iname_slow_in) {
       to_interp = map_slow_ease_in(from_interp);
@@ -256,20 +268,24 @@ void render_bezier(seni_buffer *buffer,
     }
     half_width = (to_m * to_interp) + to_c;
 
-    v1.x = (n1.x * half_width) + xs;
-    v1.y = (n1.y * half_width) + ys;
-    v2.x = (n2.x * half_width) + xs;
-    v2.y = (n2.y * half_width) + ys;
+    v_1.x = (n1.x * half_width) + xs;
+    v_1.y = (n1.y * half_width) + ys;
+    v_2.x = (n2.x * half_width) + xs;
+    v_2.y = (n2.y * half_width) + ys;
 
     if (i == 0) {
-      prepare_to_add_triangle_strip(buffer, matrix, tessellation * 2, v1.x, v1.y);
+      prepare_to_add_triangle_strip(buffer, matrix, tessellation * 2, v_1.x, v_1.y);
     }
 
     uv_t = tex_t * (f32)i;
-    
-    // todo: interpolate the uv coordinates
-    add_vertex(buffer, matrix, v1.x, v1.y, rgb, uv->map[0]);
-    add_vertex(buffer, matrix, v2.x, v2.y, rgb, uv->map[1]);
+
+    t_uv.x = lerp(uv_t, uv_b.x, uv_d.x);
+    t_uv.y = lerp(uv_t, uv_b.y, uv_d.y);
+    add_vertex(buffer, matrix, v_1.x, v_1.y, rgb, t_uv);
+
+    t_uv.x = lerp(uv_t, uv_a.x, uv_c.x);
+    t_uv.y = lerp(uv_t, uv_a.y, uv_c.y);
+    add_vertex(buffer, matrix, v_2.x, v_2.y, rgb, t_uv);
   }
 
   // final 2 vertices for the end point
@@ -286,12 +302,12 @@ void render_bezier(seni_buffer *buffer,
   n1 = normal(xs, ys, xs_next, ys_next);
   n2 = opposite_normal(n1);
 
-  v1.x = (n1.x * half_width_end) + xs_next;
-  v1.y = (n1.y * half_width_end) + ys_next;
-  v2.x = (n2.x * half_width_end) + xs_next;
-  v2.y = (n2.y * half_width_end) + ys_next;
+  v_1.x = (n1.x * half_width_end) + xs_next;
+  v_1.y = (n1.y * half_width_end) + ys_next;
+  v_2.x = (n2.x * half_width_end) + xs_next;
+  v_2.y = (n2.y * half_width_end) + ys_next;
 
-  add_vertex(buffer, matrix, v1.x, v1.y, rgb, uv->map[3]);
-  add_vertex(buffer, matrix, v2.x, v2.y, rgb, uv->map[2]);
+  add_vertex(buffer, matrix, v_1.x, v_1.y, rgb, uv_d);
+  add_vertex(buffer, matrix, v_2.x, v_2.y, rgb, uv_c);
 }
 

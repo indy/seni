@@ -221,6 +221,9 @@ void bind_bezier(seni_vm *vm, i32 num_args)
   f32 tessellation = 10.0f;
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
+  i32 brush = g_keyword_iname_brush_flat;
+  f32 brush_subtype = 0.0f;
+    
 
   // line_width_mapping will be one of several constants
   
@@ -235,6 +238,8 @@ void bind_bezier(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(t_end);
   READ_STACK_ARG_COL(colour);
   READ_STACK_ARG_F32(tessellation);
+  READ_STACK_ARG_I32(brush);
+  READ_STACK_ARG_F32(brush_subtype);
   READ_STACK_ARGS_END;
 
   // if the line_width has been defined then it overrides the separate start/end variables
@@ -256,7 +261,7 @@ void bind_bezier(seni_vm *vm, i32 num_args)
 
   render_bezier(buffer, matrix,
                 coords, line_width_start, line_width_end, line_width_mapping,
-                t_start, t_end, colour, (i32)tessellation);
+                t_start, t_end, colour, (i32)tessellation, brush, (i32)brush_subtype);
 
   // push the return value onto the stack
   WRITE_STACK(g_var_true);
