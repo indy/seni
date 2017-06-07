@@ -2,7 +2,6 @@
 #include "seni_types.h"
 #include "seni_uv_mapper.h"
 #include "seni_mathutil.h"
-#include "seni_interp.h"
 
 #include <stdio.h>
 #include <math.h>

@@ -18,6 +18,11 @@
 i32 max_i32(i32 a, i32 b);
 i32 min_i32(i32 a, i32 b);
 
+f32 map_linear(f32 x);
+f32 map_quick_ease(f32 x);
+f32 map_slow_ease_in(f32 x);
+f32 map_slow_ease_in_ease_out(f32 x);
+
 f32 smooth_step(f32 t);
 f32 cubic_bezier_1d(f32 t, f32 p0, f32 p1, f32 p2, f32 p3);
 f64 linear_remap(f64 x, f64 x_min, f64 x_max, f64 out_min, f64 out_max);
