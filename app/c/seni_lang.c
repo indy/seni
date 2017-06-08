@@ -1832,21 +1832,21 @@ i32 index_of_keyword(const char *keyword, seni_word_lut *wl)
   return -1;
 }
 
-bool is_seni_node_a_function(seni_node *ast, i32 fn_index)
+bool is_top_level_fn(seni_node *ast, i32 fn_index)
 {
   if (ast->type != NODE_LIST) {
     return false;
   }      
 
-  seni_node *fn_keyword = ast->value.first_child;
-  if (fn_keyword->type == NODE_NAME && fn_keyword->value.i == fn_index) {
+  seni_node *keyword = ast->value.first_child;
+  if (keyword->type == NODE_NAME && keyword->value.i == fn_index) {
     return true;
   }
 
-  return false;
+  return false;  
 }
 
-void register_top_level_fns(seni_node *ast, seni_program *program)
+void register_top_level_fns(seni_node *ast, seni_program *program, i32 fn_index)
 {
   i32 i;
   i32 num_fns = 0;
@@ -1855,9 +1855,6 @@ void register_top_level_fns(seni_node *ast, seni_program *program)
   for (i = 0; i < MAX_TOP_LEVEL_FUNCTIONS; i++) {
     program->fn_info[i].active = false;
   }
-  
-  // search the wlut for the index of the 'fn' keyword
-  i32 fn_index = index_of_keyword("fn", program->wl);
 
   // register top level fns
   while (ast != NULL) {
@@ -2203,23 +2200,39 @@ void compiler_compile(seni_node *ast, seni_program *program)
   clear_local_mappings(program);
   program->current_fn_info = NULL;
   
-  register_top_level_fns(ast, program);
-
   i32 fn_index = index_of_keyword("fn", program->wl);
+
+  register_top_level_fns(ast, program, fn_index);
+
   seni_bytecode *start = program_emit_opcode_i32(program, JUMP, 0, 0);
   bool found_start = false;
-  
+
+  // compile the top-level functions
   seni_node *n = ast;
   while (n != NULL) {
-    // ghetto jump to start
-    if (found_start == false && is_seni_node_a_function(n, fn_index) == false) {
-      start->arg0.type = VAR_INT;
-      start->arg0.value.i = program->code_size;
-      found_start = true;
+    if (is_top_level_fn(n, fn_index) == true) {
+      n = compile(n, program, true);
+    } else {
+      n = safe_next(n);
     }
-    n = compile(n, program, true);
   }
 
+  // compile all other top-level forms
+  n = ast;
+  while (n != NULL) {
+    if (is_top_level_fn(n, fn_index) == false) {
+      // start at the first top-level form that's not a function declaration
+      if (found_start == false) {
+        start->arg0.type = VAR_INT;
+        start->arg0.value.i = program->code_size;
+        found_start = true;
+      }
+      n = compile(n, program, true);
+    } else {
+      n = safe_next(n);
+    }
+  }
+  
   program_emit_opcode_i32(program, STOP, 0, 0);
 }
 
