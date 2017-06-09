@@ -2,8 +2,9 @@
   Runs tests using the native compiler
 */
 #include "unity/unity.h"
-#include "seni.h"
 
+#include "seni_types.h"
+#include "seni_mathutil.h"
 #include "seni_lang.h"
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"

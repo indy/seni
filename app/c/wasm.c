@@ -1,5 +1,4 @@
 #include <emscripten/emscripten.h>
-#include "seni.h"
 #include "seni_buffer.h"
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
