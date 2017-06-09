@@ -1,0 +1,16 @@
+(define num-squares-to-render 13)
+(define gap-size 30)
+(define num-squares 15) 
+
+(fn (map-to-position at: 0)
+    (define gs 30)
+    (define ss (/ (- 1000 (* 30 16)) 15))
+    (+ (+ (* (+ gs ss) at) (/ ss 2)) gs))
+
+(loop (y from: 1 to: (- num-squares 1))
+      (loop (x from: 1 to: (- num-squares 1))
+            (rect position: [(map-to-position at: x) (map-to-position at: y)]
+                  width: 20
+                  height: 20
+                  colour: (col/rgb r: 1.0 g: 0.0 b: 0.4 alpha: 1.0))))
+

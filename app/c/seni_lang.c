@@ -777,6 +777,8 @@ seni_value_in_use get_value_in_use(seni_var_type type)
   switch(type) {
   case VAR_FLOAT:
     return USE_F;
+  case VAR_LONG:
+    return USE_L;
   case VAR_VEC_HEAD:
     return USE_V;
   case VAR_COLOUR:
@@ -794,6 +796,7 @@ char *var_type_name(seni_var *var)
   case VAR_INT:      return "VAR_INT";
   case VAR_FLOAT:    return "VAR_FLOAT";
   case VAR_BOOLEAN:  return "VAR_BOOLEAN";
+  case VAR_LONG:     return "VAR_LONG";
   case VAR_NAME:     return "VAR_NAME";
   case VAR_VEC_HEAD: return "VAR_VEC_HEAD";
   case VAR_VEC_RC:   return "VAR_VEC_RC";
@@ -850,6 +853,9 @@ void pretty_print_seni_var(seni_var *var, char* msg)
   case USE_F:
     printf("debug_id:%d id:%d %s : %.2f %s\n", var->debug_id, var->id,  type, var->value.f, msg);
     break;
+  case USE_L:
+    printf("debug_id:%d id:%d %s : %llu %s\n", var->debug_id, var->id, type, var->value.l, msg);
+    break;
   case USE_V:
     if (var->type == VAR_VEC_HEAD) {
       printf("debug_id:%d id:%d %s : length %d %s\n", var->debug_id, var->id,  type, var_vector_length(var), msg);
@@ -869,6 +875,9 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     break;
   case USE_F:
     printf("%s : %.2f %s\n", type, var->value.f, msg);
+    break;
+  case USE_L:
+    printf("%s : %llu %s\n", type, var->value.l, msg);
     break;
   case USE_V:
     printf("%s : length %d %s\n", type, var_vector_length(var), msg);
@@ -899,6 +908,8 @@ i32 var_as_int(seni_var *var)
     return var->value.i;
   } else if (using == USE_F) {
     return (i32)(var->value.f);
+  } else {
+    SENI_ERROR("var_as_int given unconvertable seni_var");
   }
 
   return -1;
@@ -912,9 +923,27 @@ f32 var_as_float(seni_var *var)
     return (f32)(var->value.i);
   } else if (using == USE_F) {
     return var->value.f;
+  } else {
+    SENI_ERROR("var_as_float given unconvertable seni_var");
   }
 
   return -1.0f;
+}
+
+u64 var_as_long(seni_var *var)
+{
+  seni_value_in_use using = get_value_in_use(var->type);
+
+  if (using == USE_L) {
+    return var->value.l;
+  } else if (using == USE_I) {
+    SENI_ERROR("Converting seni_var.value.i to u64");             // todo: should be a SENI_WARN
+    return (u64)(var->value.i);
+  } else {
+    SENI_ERROR("var_as_long given unconvertable seni_var");
+  }
+
+  return 0L;
 }
 
 void var_as_vec2(f32 *out0, f32 *out1, seni_var *var)
@@ -1132,6 +1161,9 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b)
       break;
     case USE_F:
       printf("%.2f\n", b->arg1.value.f);
+      break;
+    case USE_L:
+      printf("%llu\n", b->arg1.value.l);
       break;
     case USE_V:
       if (b->arg1.type == VAR_VEC_HEAD) {
@@ -1462,6 +1494,8 @@ void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
     dest->value.i = src->value.i;
   } else if (using == USE_F) {
     dest->value.f = src->value.f;
+  } else if (using == USE_L) {
+    dest->value.l = src->value.l;
   } else if (using == USE_V) {
     if (src->type == VAR_VEC_HEAD) {
       dest->value.v = src->value.v;
@@ -1471,7 +1505,9 @@ void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
     }
   } else if (using == USE_C) {
     dest->value.c = src->value.c;
-  } 
+  } else {
+    SENI_ERROR("unknown seni_value_in_use for safe_var_copy");
+  }
 }
 
 // like a seni_var_copy without any modifications to the ref count
@@ -1489,6 +1525,8 @@ void safe_var_move(seni_var *dest, seni_var *src)
     dest->value.i = src->value.i;
   } else if (using == USE_F) {
     dest->value.f = src->value.f;
+  } else if (using == USE_L) {
+    dest->value.l = src->value.l;
   } else if (using == USE_V) {
     if (src->type == VAR_VEC_HEAD) {
       dest->value.v = src->value.v;
@@ -1497,6 +1535,8 @@ void safe_var_move(seni_var *dest, seni_var *src)
     }
   } else if (using == USE_C) {
     dest->value.c = src->value.c;
+  } else {
+    SENI_ERROR("unknown seni_value_in_use for safe_var_move");
   }
 }
 
@@ -1524,6 +1564,15 @@ void append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
   seni_var *v = var_get_from_heap(vm);
   v->type = VAR_FLOAT;
   v->value.f = val;
+
+  DL_APPEND(head->value.v, v);
+}
+
+void append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val)
+{
+  seni_var *v = var_get_from_heap(vm);
+  v->type = VAR_LONG;
+  v->value.l = val;
 
   DL_APPEND(head->value.v, v);
 }
@@ -1846,6 +1895,20 @@ bool is_top_level_fn(seni_node *ast, i32 fn_index)
   return false;  
 }
 
+bool is_top_level_define(seni_node *ast, i32 define_index)
+{
+  if (ast->type != NODE_LIST) {
+    return false;
+  }      
+
+  seni_node *keyword = ast->value.first_child;
+  if (keyword->type == NODE_NAME && keyword->value.i == define_index) {
+    return true;
+  }
+
+  return false;  
+}
+
 void register_top_level_fns(seni_node *ast, seni_program *program, i32 fn_index)
 {
   i32 i;
@@ -1897,6 +1960,36 @@ void register_top_level_fns(seni_node *ast, seni_program *program, i32 fn_index)
     fn_info->num_args = 0;
     for (i = 0; i < MAX_NUM_ARGUMENTS; i++) {
       fn_info->argument_offsets[i] = -1;
+    }
+
+    ast = safe_next(ast);
+  }
+}
+
+void register_top_level_defines(seni_node *ast, seni_program *program, i32 define_index)
+{
+  // register top level fns
+  while (ast != NULL) {
+
+    if (ast->type != NODE_LIST) {
+      ast = safe_next(ast);
+      continue;
+    }
+
+    // todo: deal with multiple defines in a single s-expr
+
+    seni_node *define_keyword = ast->value.first_child;
+    if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == define_index)) {
+      ast = safe_next(ast);
+      continue;
+    }
+
+    // (define foo 1)
+    seni_node *name = safe_next(define_keyword);
+    
+    i32 global_address = get_global_mapping(program, name->value.i);
+    if (global_address == -1) {
+      global_address = add_global_mapping(program, name->value.i);
     }
 
     ast = safe_next(ast);
@@ -2095,7 +2188,8 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
 
       if (iname == g_keyword_iname_define) {
         if (global_scope) {
-          return compile_global_define(ast, program);
+          printf("should never get here\n");
+          // return compile_global_define(ast, program);
         } else {
           return compile_define(ast, program);
         }        
@@ -2199,10 +2293,14 @@ void compiler_compile(seni_node *ast, seni_program *program)
   clear_global_mappings(program);
   clear_local_mappings(program);
   program->current_fn_info = NULL;
-  
-  i32 fn_index = index_of_keyword("fn", program->wl);
 
+  // register top-level functions
+  i32 fn_index = index_of_keyword("fn", program->wl);
   register_top_level_fns(ast, program, fn_index);
+
+  // register top-level defines
+  i32 define_index = index_of_keyword("define", program->wl);
+  register_top_level_defines(ast, program, define_index);
 
   seni_bytecode *start = program_emit_opcode_i32(program, JUMP, 0, 0);
   bool found_start = false;
@@ -2217,11 +2315,28 @@ void compiler_compile(seni_node *ast, seni_program *program)
     }
   }
 
+  // compile the top-level defines
+  n = ast;
+  while (n != NULL) {
+    if (is_top_level_define(n, define_index) == true) {
+      // start at the first top-level define if there is one
+      if (found_start == false) {
+        start->arg0.type = VAR_INT;
+        start->arg0.value.i = program->code_size;
+        found_start = true;
+      }
+      compile_global_define(n->value.first_child, program);
+      n = safe_next(n);
+    } else {
+      n = safe_next(n);
+    }
+  }
+
   // compile all other top-level forms
   n = ast;
   while (n != NULL) {
-    if (is_top_level_fn(n, fn_index) == false) {
-      // start at the first top-level form that's not a function declaration
+    if (is_top_level_fn(n, fn_index) == false && is_top_level_define(n, define_index) == false) {
+      // if there have been no global defines, start at the first top-level form that's not a function declaration
       if (found_start == false) {
         start->arg0.type = VAR_INT;
         start->arg0.value.i = program->code_size;
@@ -2255,10 +2370,16 @@ void vm_interpret(seni_vm *vm, seni_program *program)
   register i32 sp = vm->sp;
   register seni_var *stack_d = &(vm->stack[sp]);
 
-  i32 new_fp;
   i32 num_args;
   i32 iname;
   i32 i;
+
+  // the function calling convention means that references to LOCAL variables after a
+  // CALL need to hop-back down the frame pointers to the real local frame that they
+  // should be referencing. (see notes.org: bytecode sequence when calling functions)
+  //
+  i32 hop_back = 0;
+  i32 local, fp;
 
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
@@ -2281,7 +2402,15 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         src = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
         safe_var_move(v, src);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
-        src = &(vm->stack[vm->local + bc->arg1.value.i]);
+
+        // if we're referencing a LOCAL in-between CALL and CALL_0 make sure we use the right frame
+        fp = vm->fp;
+        for (i = 0; i < hop_back; i++) {
+          fp = vm->stack[fp].value.i;    // go back a frame
+        }
+        local = fp + 3;         // get the correct frame's local
+        
+        src = &(vm->stack[local + bc->arg1.value.i]);
         safe_var_move(v, src);
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         src = &(vm->stack[vm->global + bc->arg1.value.i]);
@@ -2379,7 +2508,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         STACK_PUSH;
       }
       
-      new_fp = sp;
+      fp = sp;
 
       // push the caller's fp
       STACK_PUSH;
@@ -2397,7 +2526,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       v->value.i = num_args;
 
       vm->ip = bc->arg0.value.i;
-      vm->fp = new_fp;
+      vm->fp = fp;
       vm->local = sp;
 
       // clear ref count on the new local memory
@@ -2412,6 +2541,8 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       ip = vm->ip;
       
       vm->sp = sp;
+
+      hop_back++;
       break;
 
     case CALL_0:
@@ -2423,6 +2554,8 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       // leap to a location
       ip = bc->arg0.value.i;
       vm->ip = ip;
+
+      hop_back--;
       break;
 
     case RET_0:

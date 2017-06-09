@@ -5,10 +5,24 @@
 #include "seni_lang.h"
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
+#include "seni_prng.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+// struct used by binding functions for prng/take and prng/take-1
+typedef struct {
+  u64 state;
+  u64 inc;
+  f32 min;
+  f32 max;
+
+  // references to the heap allocated seni_vars on the vector need to be updated after seni_prng_f32 is called
+  //
+  seni_var *seni_var_state;
+  seni_var *seni_var_inc;
+} seni_prng_full_state;
 
 // helper macros used by the bind code to parse arguments on the VM's stack
 //
@@ -28,6 +42,7 @@
 #define READ_STACK_ARG_F32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.f; }
 #define READ_STACK_ARG_I32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.i; }
 #define READ_STACK_ARG_COL(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.c; }
+#define READ_STACK_ARG_VAR(n) if (name_1 == g_keyword_iname_##n) { n = value_1; }
 
 // traverse through the VAR_VEC_HEAD, VAR_VEC_RC nodes down into the values
 // todo: make a seni_var type that can hold VEC2
@@ -49,6 +64,19 @@
     n[2] = tmp_1->value.f;                                             \
     tmp_1 = tmp_1->next;                                               \
     n[3] = tmp_1->value.f;                                             \
+  }
+
+#define READ_STACK_ARG_PRNG(n) if (name_1 == g_keyword_iname_##n) {     \
+    tmp_1 = (value_1->value.v)->next;                                   \
+    n.state = tmp_1->value.l;                                           \
+    n.seni_var_state = tmp_1;                                           \
+    tmp_1 = tmp_1->next;                                                \
+    n.inc = tmp_1->value.l;                                             \
+    n.seni_var_inc = tmp_1;                                             \
+    tmp_1 = tmp_1->next;                                                \
+    n.min = tmp_1->value.f;                                             \
+    tmp_1 = tmp_1->next;                                                \
+    n.max = tmp_1->value.f;                                             \
   }
 
 #define READ_STACK_ARG_COORD4(n) if (name_1 == g_keyword_iname_##n) { \
@@ -557,6 +585,46 @@ void bind_col_lighten(seni_vm *vm, i32 num_args)
   WRITE_STACK(ret);
 }
 
+void bind_col_set_alpha(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+  f32 value = 0;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_F32(value);
+  READ_STACK_ARGS_END;
+
+  seni_colour *ret_colour = colour_get_from_vm(vm);
+
+  colour_clone_as(ret_colour, colour, colour->format);
+  ret_colour->element[3] = value;
+
+  // push the return value onto the stack
+  seni_var ret;
+  colour_as_var(&ret, ret_colour);
+  WRITE_STACK(ret);
+}
+
+void bind_col_get_alpha(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+  f32_as_var(&ret, colour->element[3]);
+
+  // push the return value onto the stack
+  WRITE_STACK(ret);
+}
+
 void bind_translate(seni_vm *vm, i32 num_args)
 {
   f32 vector[] = {0.0f, 0.0f};
@@ -655,6 +723,173 @@ void bind_math_clamp(seni_vm *vm, i32 num_args)
   WRITE_STACK(ret);
 }
 
+void bind_math_radians_to_degrees(seni_vm *vm, i32 num_args)
+{
+  f32 angle = 0.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(angle);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+  f32_as_var(&ret, rad_to_deg(angle));
+
+  WRITE_STACK(ret);
+}
+
+// (prng/build seed: 4324 min: 40 max: 100)
+void bind_prng_build(seni_vm *vm, i32 num_args)
+{
+  f32 seed = 12322.0f;            // todo: in docs mention that seed should be in range 1..some-large-number
+  f32 min = 0.0f;
+  f32 max = 1.0f;
+  
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(seed);
+  READ_STACK_ARG_F32(min);
+  READ_STACK_ARG_F32(max);
+  READ_STACK_ARGS_END;
+
+  u64 seed_u64 = (u64)seed;
+
+  // build a seni_prng_state and call it once - this always returns 0 but further calls will be valid
+  seni_prng_state prng_state;
+  prng_state.state = seed_u64;
+  prng_state.inc = 1L;
+  seni_prng_f32(&prng_state);
+  
+  // push the return values onto the stack as a vector
+  // the vector needs to represent a seni_prng_state struct as well as the min + max values
+  // i.e. [u64 state, u64 inc, f32 min, f32 max]
+  //
+  seni_var ret;
+  vector_construct(vm, &ret);
+  append_to_vector_u64(vm, &ret, prng_state.state);
+  append_to_vector_u64(vm, &ret, prng_state.inc);
+  append_to_vector_f32(vm, &ret, min);
+  append_to_vector_f32(vm, &ret, max);
+  WRITE_STACK(ret);
+}
+
+// (prng/take num: 5 from: rng)
+void bind_prng_take(seni_vm *vm, i32 num_args)
+{
+  i32 num = 1;
+  seni_prng_full_state from;
+  // just have anything as the default values, this function should always be given a 'from' parameter
+  from.state = 2222;
+  from.inc = 1;
+  from.min = 0.0f;
+  from.max = 1.0f;
+  from.seni_var_state = NULL;
+  from.seni_var_inc = NULL;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(num);
+  READ_STACK_ARG_PRNG(from);
+  READ_STACK_ARGS_END;
+
+  // build a seni_prng_state from the seni_prng_full_state
+  seni_prng_state prng_state;
+  prng_state.state = from.state;
+  prng_state.inc = from.inc;
+
+  // create the return vector
+  seni_var ret;
+  f32 value;
+
+  vector_construct(vm, &ret);
+  for (i32 i = 0; i < num; i++) {
+    value = seni_prng_f32_range(&prng_state, from.min, from.max);
+    append_to_vector_f32(vm, &ret, value);
+  }
+  WRITE_STACK(ret);
+
+  // update the state and inc values stored in the vector on the vm's stack
+  if (from.seni_var_state != NULL && from.seni_var_inc != NULL) {
+    from.seni_var_state->value.l = prng_state.state;
+    from.seni_var_inc->value.l = prng_state.inc;
+  } else {
+    SENI_ERROR("seni_prng_full_state has null pointers ???");
+  }
+}
+
+// (prng/take-1 from: rng)
+void bind_prng_take_1(seni_vm *vm, i32 num_args)
+{
+  seni_prng_full_state from;
+  // just have anything as the default values, this function should always be given a 'from' parameter
+  from.state = 2222;
+  from.inc = 1;
+  from.min = 0.0f;
+  from.max = 1.0f;
+  from.seni_var_state = NULL;
+  from.seni_var_inc = NULL;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_PRNG(from);
+  READ_STACK_ARGS_END;
+
+  // build a seni_prng_state from the seni_prng_full_state
+  seni_prng_state prng_state;
+  prng_state.state = from.state;
+  prng_state.inc = from.inc;
+
+  // push the return value onto the stack
+  seni_var ret;
+  f32 value = seni_prng_f32_range(&prng_state, from.min, from.max);
+  f32_as_var(&ret, value);
+  WRITE_STACK(ret);
+
+  // update the state and inc values stored in the vector on the vm's stack
+  if (from.seni_var_state != NULL && from.seni_var_inc != NULL) {
+    from.seni_var_state->value.l = prng_state.state;
+    from.seni_var_inc->value.l = prng_state.inc;
+  } else {
+    SENI_ERROR("seni_prng_full_state has null pointers ???");
+  }
+}
+
+void bind_prng_perlin(seni_vm *vm, i32 num_args)
+{
+  f32 x = 1.0f;
+  f32 y = 1.0f;
+  f32 z = 1.0f;
+  
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(x);
+  READ_STACK_ARG_F32(y);
+  READ_STACK_ARG_F32(z);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+  f32 value = seni_perlin(x, y, z);
+  f32_as_var(&ret, value);
+  
+  // push the return value onto the stack
+  WRITE_STACK(ret);
+}
+
+void bind_debug_print(seni_vm *vm, i32 num_args)
+{
+  seni_var *val = NULL;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VAR(val);
+  READ_STACK_ARGS_END;
+
+  
+  pretty_print_seni_var(val, "debug");
+
+  // push the return value onto the stack
+  WRITE_STACK(g_var_true);
+}
+
+
+
 void declare_bindings(seni_word_lut *wlut, seni_env *e)
 {
   g_var_true.type = VAR_BOOLEAN;
@@ -688,6 +923,8 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_binding(wlut, e, "col/triad", &bind_col_triad);
   declare_binding(wlut, e, "col/darken", &bind_col_darken);
   declare_binding(wlut, e, "col/lighten", &bind_col_lighten);
+  declare_binding(wlut, e, "col/set-alpha", &bind_col_set_alpha);
+  declare_binding(wlut, e, "col/get-alpha", &bind_col_get_alpha);
 
   // col/procedural-fn-presets
   // col/procedural-fn
@@ -696,4 +933,13 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   declare_binding(wlut, e, "math/distance", &bind_math_distance);
   declare_binding(wlut, e, "math/clamp", &bind_math_clamp);
+  declare_binding(wlut, e, "math/radians->degrees", &bind_math_radians_to_degrees);
+
+  declare_binding(wlut, e, "prng/build", &bind_prng_build);
+  declare_binding(wlut, e, "prng/take", &bind_prng_take);
+  declare_binding(wlut, e, "prng/take-1", &bind_prng_take_1);
+  declare_binding(wlut, e, "prng/perlin", &bind_prng_perlin); // was prng/perlin-signed
+
+  declare_binding(wlut, e, "debug/print", &bind_debug_print);
 }
+

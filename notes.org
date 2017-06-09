@@ -1,19 +1,52 @@
-* TODO [1/15]
-  1. [X] parsing defines/top-level functions and function calls
-  2. [ ] NTH opcode (push vec, push index, pop, push vec[index])
-  3. [ ] canvas/width canvas/height bind to global mappings
-  4. [ ] col/get-alpha col/set-alpha
-  5. [ ] prng/perlin-signed
-  6. [ ] prng/range
-  7. [ ] seni_env
-  8. [ ] manipulate vectors
-  9. [ ] take
-  10. [ ] destructuring
-  11. [ ] radians->degrees angle:
-  12. [ ] interp/fn interp/bezier
-  13. [ ] 'in' paramaeter for loop ?
-  14. [ ] bind colour functions
-  15. [ ] how would a stack machine compile first class functions?
+* TODO [6/20]
+  1. [ ] multiple define statements
+  2. [ ] print debug statement
+  3. [ ] + should take multiple arguments
+  4. [ ] functions will not be nestable
+  5. [ ] NTH opcode (prep: push vec, push index, action: pop, peek, push vec[index], delta: 0)
+  6. [ ] manipulate vectors
+  7. [ ] destructuring
+  8. [ ] take
+  9. [ ] canvas/width canvas/height bind to global mappings
+  10. [ ] seni_env
+  11. [ ] interp/fn interp/bezier
+  12. [ ] 'in' paramaeter for loop ?
+  13. [ ] how would a stack machine compile first class functions? could there be alternatives?
+  14. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  15. [X] radians->degrees angle:
+  16. [X] prng/perlin-signed
+  17. [X] prng/range
+  18. [X] col/get-alpha col/set-alpha
+  19. [X] parsing defines/top-level functions and function calls
+  20. [X] bind colour functions
+
+
+* first class functions / ghetto-equivalents
+  don't know how to implement closures in a stack vm
+  SECD machines? lua implementation?
+
+  could hack in a prng/range equivalent:
+  store a vector containing seed+inc+min+max
+
+  replacing old (prng/range seed: 1 min: 0 max: 100) with (prng/build seed: 1 min: 0 max: 100)
+  replace code like (take num: 3 from: rng) with (prng/take num: 3 from: rng)
+  replace code like (rng) with (prng/take-1 from: rng)
+
+  without first class functions how will code like take work?
+
+  'map' could work if it's limited to functions that are defined at the top-level of the script
+
+  'interp/fn' could return a structure similar to the prng/range workaround
+  so rather than (define foo (interp/fn from: [0 1] to: [123 345])) (foo val: 42)
+  we'd have      (define foo (interp/build from: [0 1] to: [123 345])) (interp use: foo val: 42)
+
+  have some sort of 'invoke' function/special form
+  e.g. (invoke (address-of draw-fn) a: 4 b: 5)
+  with the restriction that it can only invoke top-level functions
+  and address-of returns the value.i of the given name
+
+  'path/bezier' : ??? (e.g. 1560-path.seni)
+  1638-night.seni : impossible?
 
 
 * seni_env
@@ -405,8 +438,8 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   (KF == Keep Frame)
 
   CALL      Pushes a frame onto the stack and jumps to the given ip
-  RET_0    Returns to the ip stored in the frame pointer on the stack without popping the frame
-  CALL_0   Jumps to the given ip without pushing a new frame (it does modify the ip on the frame 
+  RET_0     Returns to the ip stored in the frame pointer on the stack without popping the frame
+  CALL_0    Jumps to the given ip without pushing a new frame (it does modify the ip on the frame 
             so that execution will return to the correct location at the next RET)
   RET       Returns to the ip stored in the frame pointer on the stack and pops the current frame
 
@@ -419,6 +452,30 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   5. CALL_0 moves the ip into the body of the called function, retaining the current frame
   6. The body is executed
   7. RET pops the frame and copies the last value from the function onto the current stack
+
+  a flaw in this scheme is that LOCAL will now reference the new frame created 
+  after CALL and nothing will be found e.g.
+
+  17      CALL    1       1    <<<< - creates a new frame
+  18      PUSH    LOCAL   0    <<<< - so now 'LOCAL' doesn't reference what you think it should
+  19      DEC_RC  ARG     1
+  20      POP     ARG     1
+  21      INC_RC  ARG     1
+  22      CALL_0  6       1
+
+
+
+  another thing to note are the DEC_RC and INC_RC opcodes. These ensure that default arguments 
+  which are vectors and will be overidden by the calling code will have their reference counts 
+  correctly altered
+
+  17      CALL    1       1    
+  18      PUSH    LOCAL   0    
+  19      DEC_RC  ARG     1    <<<< - decrement the reference count for the default argument
+  20      POP     ARG     1
+  21      INC_RC  ARG     1    <<<< - increment the caller supplied argument
+  22      CALL_0  6       1
+  
 
 * frame structure
 

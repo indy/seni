@@ -69,17 +69,18 @@ typedef enum {
   VAR_INT = 128, // value.i
   VAR_FLOAT,     // value.f
   VAR_BOOLEAN,   // value.i
+  VAR_LONG,      // value.l
   VAR_NAME,      // seni_word_lut[value.i]
   VAR_VEC_HEAD,  // pointer to vec_rc is in value.v
   VAR_VEC_RC,    // pointer to first vector element is in value.v
   VAR_COLOUR,    // pointer to a colour
 } seni_var_type;
 
-
 // which value to use
 typedef enum {
   USE_I,                        // integer
   USE_F,                        // float
+  USE_L,                        // long
   USE_V,                        // pointer to seni_var
   USE_C                         // pointer to a colour
 } seni_value_in_use;
@@ -91,6 +92,7 @@ typedef struct seni_var {
   union {
     i32 i;
     f32 f;
+    u64 l;                      // long - used by seni_prng_state
     i32 ref_count;              // reference count for VAR_VEC_RC
     struct seni_var *v;
     seni_colour *c;             // reference to a colour allocated from vm->colour_slab
@@ -265,6 +267,7 @@ void           pretty_print_seni_var(seni_var *var, char* msg);
 
 void           vector_construct(seni_vm *vm, seni_var *head);
 void           append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
+void           append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val);
 void           append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col);
 void           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 

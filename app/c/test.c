@@ -9,6 +9,7 @@
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
 #include "seni_colour.h"
+#include "seni_prng.h"
 
 #include "time.h"
 #include "stdio.h"
@@ -325,6 +326,70 @@ void test_colour(void)
   }
 }
 
+// void minmax(f32 lacunarity, f32 gain, f32 offset, i32 octaves)
+// {
+//   f32 w, min, max;
+
+//   i32 i, j;
+//   min = 10000.0f;
+//   max = -10000.0f;
+//   for (j = 0; j < 500; j++) {
+//     for (i = 0; i < 500; i++) {
+//       w = seni_perlin((f32)j / 4701.0f, (f32)i / 41.0f, ((f32)j / 471.0f) + ((f32)i / 471.0f));
+//       max = w > max ? w : max;
+//       min = w < min ? w : min;
+//     }
+//   }
+//   printf("min %f, max %f\n", min, max);
+// }
+
+void test_prng(void)
+{
+  // seni_prng_state prng_state;
+  // seni_prng_set_state(&prng_state, 65493);
+
+  // f32 a = seni_prng_f32(&prng_state);
+  // f32 b = seni_prng_f32(&prng_state);
+  // printf("a = %.3f b = %.3f\n", a, b);
+
+
+  
+
+  // u32 u, umin, umax;
+  // umin = 10000;
+  // umax = 0;
+  // for (i32 i = 0; i < 100; i++) {
+  //   u = seni_prng_u32(&prng_state1, 10);
+  //   umax = u > umax ? u : umax;
+  //   umin = u < umin ? u : umin;
+  // }
+  // printf("u32 min %d, max %d\n", umin, umax);
+
+  // f32 w, min, max;
+  // min = 10000.0f;
+  // max = -10000.0f;
+  // for (i32 i = 0; i < 10000; i++) {
+  //   w = seni_prng_f32(&prng_state1);
+  //   max = w > max ? w : max;
+  //   min = w < min ? w : min;
+  // }
+
+  // printf("min %f, max %f\n", min, max);
+
+  // TEST_ASSERT_EQUAL(230, u);
+
+  // minmax(1.0f, 1.0f, 0.0f, 1);
+  // minmax(1.0f, 1.0f, 1.0f, 1);
+  // minmax(1.0f, 1.0f, 2.0f, 1);
+  // minmax(1.0f, 1.0f, 3.0f, 1);
+
+  // printf("%f\n", seni_perlin(0.0001f, 0.1f, 0.5f));
+  // printf("%f\n", seni_perlin(90.4f, 13.1f, 4394.0f));
+  // printf("%f\n", seni_perlin(0.122f, 0.1f, 0.3f));
+  // printf("%f\n", seni_perlin(0.1f, 0.1f, 0.1f));
+  
+}
+
 // --------------------------------------------------
 
 seni_word_lut *setup_vm_wl(seni_env *e)
@@ -430,6 +495,7 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 #define VM_COMPILE_VEC4(EXPR,_,_1,_2,_3) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_COL(EXPR,_,_1,_2,_3,_4) {DVM_COMPILE(EXPR);VM_CLEANUP;}
 #define VM_COMPILE_F32_L(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
+#define VM_COMPILE_COL_L(EXPR,F,A,B,C,D) {EVM_COMPILE(EXPR);VM_CLEANUP;}
 #endif
 // --------------------------------------------------
 
@@ -494,6 +560,14 @@ void test_vm_callret(void)
   VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)",       6);
   VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",      10);
   VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
+  
+  // function calling another function, passing on one of it's local variables
+  // (make use of the hop_back method of referring to the correct LOCAL frame)
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 5)) (fn (y) (define x 10) (z a: x)) (y)", 15);
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 5)) (fn (zz a: 1) (+ a 9))(fn (y) (define x 10) (z a: (zz a: x))) (y)", 24);
+
+  // function referencing a global
+  VM_COMPILE_F32("(define gs 30)(fn (foo at: 0) (+ at gs))(foo at: 10)", 40);
 }
 
 void test_vm_vector(void)
@@ -550,14 +624,42 @@ void test_vm_math(void)
   VM_COMPILE_F32("(math/clamp val: 10 min: 0.0 max: 5)", 5.0f);
 }
 
+void test_vm_prng(void)
+{
+  // using the leaky macro since the vectors in the parameters won't be collected
+  //
+  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng)", 16.32348f);
+  // calling with the same seed returns the same value
+  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng)", 16.32348f);
+  // state of rng is changing, returning a different number than previous tests
+  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng) (prng/take-1 from: rng)", 13.451335f);
+}
+
 void test_temp(void)
 {
-  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+  // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
   //VM_COMPILE_F32("(fn (adder a: [1 2]) (+ 4 2)) (adder a: [4 5])", 8);
 
   // VM_COMPILE_F32("(line width: 35 height: 22)", 17);
   // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (line width: (+ 3 4) height: (adder))", 17);
   // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
+
+  VM_COMPILE_F32("(fn (map-to-position at: 0) \
+   (debug/print val: at))                  \
+(loop (xx from: 1 to: 10) \
+  (map-to-position at: xx))", 42);
+
+//   VM_COMPILE_F32("(fn (map-to-position at: 0) \
+//    (+ at at)) \
+// (loop (xx from: 1 to: 10) \
+//   (debug/print val: (map-to-position at: xx)))", 42);
+
+  
+  // VM_COMPILE_F32("(fn (map-to-position at: 0) \
+  //  (+ at at)) \
+  // (define xx 42) \
+  // (debug/print val: (map-to-position at: xx))", 42);
+
 }
 
 int main(void)
@@ -579,7 +681,9 @@ int main(void)
   RUN_TEST(test_vm_vector);
   RUN_TEST(test_vm_col_rgb);
   RUN_TEST(test_vm_math);
+  RUN_TEST(test_vm_prng);
 
+  // RUN_TEST(test_prng);
   //RUN_TEST(test_temp);
   
   return UNITY_END();
