@@ -1677,52 +1677,62 @@ i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value)
 }
 
 
-seni_node *compile(seni_node *ast, seni_program *program, bool global_scope);
+seni_node *compile(seni_node *ast, seni_program *program);
 
 // a define statement in the global scope
-seni_node *compile_global_define(seni_node *ast, seni_program *program)
+void compile_global_define(seni_node *ast, seni_program *program)
 {
   // define a 42
   // ^
+  // define a 42 b 100 c 0
+  // ^
 
   seni_node *name_node = safe_next(ast);
-  // TODO: assert that name_node is NODE_NAME
-  
-  seni_node *value_node = safe_next(name_node);
-  
-  compile(value_node, program, false);
+  seni_node *value_node;
 
-  i32 global_address = get_global_mapping(program, name_node->value.i);
-  if (global_address == -1) {
-    global_address = add_global_mapping(program, name_node->value.i);
+  while (name_node != NULL) {
+    // TODO: assert that name_node is NODE_NAME
+
+    value_node = safe_next(name_node);
+
+    compile(value_node, program);
+
+    i32 global_address = get_global_mapping(program, name_node->value.i);
+    if (global_address == -1) {
+      // should never get here ???
+      global_address = add_global_mapping(program, name_node->value.i);
+    }
+
+    program_emit_opcode_i32(program, POP, MEM_SEG_GLOBAL, global_address);
+
+    name_node = safe_next(value_node);
   }
-
-  program_emit_opcode_i32(program, POP, MEM_SEG_GLOBAL, global_address);
-
-  return safe_next(value_node);
 }
 
 // single pair of name/value for the moment
 seni_node *compile_define(seni_node *ast, seni_program *program)
 {
-  // define a 42
-  // ^
-
   seni_node *name_node = safe_next(ast);
-  // TODO: assert that name_node is NODE_NAME
-  
-  seni_node *value_node = safe_next(name_node);
-  
-  compile(value_node, program, false);
+  seni_node *value_node;
 
-  i32 local_address = get_local_mapping(program, name_node->value.i);
-  if (local_address == -1) {
-    local_address = add_local_mapping(program, name_node->value.i);
+  while (name_node != NULL) {
+    // TODO: assert that name_node is NODE_NAME
+
+    value_node = safe_next(name_node);
+
+    compile(value_node, program);
+
+    i32 local_address = get_local_mapping(program, name_node->value.i);
+    if (local_address == -1) {
+      local_address = add_local_mapping(program, name_node->value.i);
+    }
+
+    program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, local_address);
+
+    name_node = safe_next(value_node);
   }
 
-  program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, local_address);
-
-  return safe_next(value_node);
+  return NULL;
 }
 
 
@@ -1734,12 +1744,12 @@ void compile_if(seni_node *ast, seni_program *program)
   seni_node *then_node = safe_next(if_node);
   seni_node *else_node = safe_next(then_node); // could be NULL
 
-  compile(if_node, program, false);
+  compile(if_node, program);
   // insert jump to after the 'then' node if not true
   i32 addr_jump_then = program->code_size;
   seni_bytecode *bc_jump_then = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
 
-  compile(then_node, program, false);
+  compile(then_node, program);
 
   if (else_node) {
     // insert a bc_jump_else opcode
@@ -1748,7 +1758,7 @@ void compile_if(seni_node *ast, seni_program *program)
 
     bc_jump_then->arg0.value.i = program->code_size - addr_jump_then;
 
-    compile(else_node, program, false);
+    compile(else_node, program);
 
     bc_jump_else->arg0.value.i = program->code_size - addr_jump_else;
   } else {
@@ -1761,7 +1771,7 @@ void compile_rest(seni_node *ast, seni_program *program)
 {
   ast = safe_next(ast);
   while (ast) {
-    ast = compile(ast, program, false);
+    ast = compile(ast, program);
   }
 }
 
@@ -1802,7 +1812,7 @@ void compile_loop(seni_node *ast, seni_program *program)
   to_node = safe_next(to_node);              // the value of 'to'
 
   // set looping variable x to 'from' value
-  compile(from_node, program, false);
+  compile(from_node, program);
   i32 looper_address = get_local_mapping(program, name_node->value.i);
   if (looper_address == -1) {
     looper_address = add_local_mapping(program, name_node->value.i);
@@ -1813,7 +1823,7 @@ void compile_loop(seni_node *ast, seni_program *program)
   // and jump if looping variable >= exit value
   i32 addr_loop_start = program->code_size;
   program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, looper_address);
-  compile(to_node, program, false);
+  compile(to_node, program);
   program_emit_opcode_i32(program, LT, 0, 0);
   i32 addr_exit_check = program->code_size;
   seni_bytecode *bc_exit_check = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
@@ -1879,34 +1889,6 @@ i32 index_of_keyword(const char *keyword, seni_word_lut *wl)
   }
 
   return -1;
-}
-
-bool is_top_level_fn(seni_node *ast, i32 fn_index)
-{
-  if (ast->type != NODE_LIST) {
-    return false;
-  }      
-
-  seni_node *keyword = ast->value.first_child;
-  if (keyword->type == NODE_NAME && keyword->value.i == fn_index) {
-    return true;
-  }
-
-  return false;  
-}
-
-bool is_top_level_define(seni_node *ast, i32 define_index)
-{
-  if (ast->type != NODE_LIST) {
-    return false;
-  }      
-
-  seni_node *keyword = ast->value.first_child;
-  if (keyword->type == NODE_NAME && keyword->value.i == define_index) {
-    return true;
-  }
-
-  return false;  
 }
 
 void register_top_level_fns(seni_node *ast, seni_program *program, i32 fn_index)
@@ -1976,22 +1958,25 @@ void register_top_level_defines(seni_node *ast, seni_program *program, i32 defin
       continue;
     }
 
-    // todo: deal with multiple defines in a single s-expr
-
     seni_node *define_keyword = ast->value.first_child;
     if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == define_index)) {
       ast = safe_next(ast);
       continue;
     }
 
-    // (define foo 1)
     seni_node *name = safe_next(define_keyword);
-    
-    i32 global_address = get_global_mapping(program, name->value.i);
-    if (global_address == -1) {
-      global_address = add_global_mapping(program, name->value.i);
+    while (name != NULL) {
+
+      i32 global_address = get_global_mapping(program, name->value.i);
+      if (global_address == -1) {
+        global_address = add_global_mapping(program, name->value.i);
+      }
+
+      name = safe_next(name); // points to the value
+      name = safe_next(name); // points to the next define statement if there multiple
     }
 
+    
     ast = safe_next(ast);
   }
 }
@@ -2040,7 +2025,7 @@ void compile_fn(seni_node *ast, seni_program *program)
     program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, label->value.i);
     program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, counter++);
 
-    compile(value, program, false);
+    compile(value, program);
     program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, counter++);
 
     num_args++;
@@ -2068,7 +2053,7 @@ void compile_fn(seni_node *ast, seni_program *program)
   program->current_fn_info = NULL;
 }
 
-void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *fn_info, bool global_scope)
+void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *fn_info)
 {
   // ast == adder a: 10 b: 20
 
@@ -2085,7 +2070,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
     i32 data_index = get_argument_mapping(fn_info, label->value.i);
     if (data_index != -1) {
       // push value
-      compile(value, program, global_scope);
+      compile(value, program);
       program_emit_opcode_i32(program, DEC_RC, MEM_SEG_ARGUMENT, data_index);
       program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, data_index);
 
@@ -2112,7 +2097,7 @@ void compile_vector(seni_node *ast, seni_program *program)
   program_emit_opcode_i32(program, PUSH, MEM_SEG_VOID, 0);
 
   for (seni_node *node = ast->value.first_child; node != NULL; node = safe_next(node)) {
-    compile(node, program, false);
+    compile(node, program);
     program_emit_opcode_i32(program, APPEND, 0, 0);
   }
 }
@@ -2151,7 +2136,7 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
   return safe_next(ast);
 }
 
-seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
+seni_node *compile(seni_node *ast, seni_program *program)
 {
   seni_node *n;
 
@@ -2160,9 +2145,9 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
 
     seni_fn_info *fn_info = get_local_fn_info(n, program);
     if (fn_info) {
-      compile_fn_invocation(n, program, fn_info, global_scope);
+      compile_fn_invocation(n, program, fn_info);
     } else {
-      compile(n, program, global_scope);
+      compile(n, program);
     }
     return safe_next(ast);
   }
@@ -2187,12 +2172,7 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
     } else if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
 
       if (iname == g_keyword_iname_define) {
-        if (global_scope) {
-          printf("should never get here\n");
-          // return compile_global_define(ast, program);
-        } else {
-          return compile_define(ast, program);
-        }        
+        return compile_define(ast, program);
       } else if (iname == g_keyword_iname_if) {
         compile_if(ast, program);
         return safe_next(ast);
@@ -2267,7 +2247,7 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
         seni_node *value = safe_next(label);
 
         program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, label->value.i);
-        compile(value, program, global_scope);
+        compile(value, program);
 
         num_args++;
         args = safe_next(value);
@@ -2284,6 +2264,20 @@ seni_node *compile(seni_node *ast, seni_program *program, bool global_scope)
   }
 
   return safe_next(ast);
+}
+
+bool is_list_beginning_with(seni_node *ast, i32 index)
+{
+  if (ast->type != NODE_LIST) {
+    return false;
+  }      
+
+  seni_node *keyword = ast->value.first_child;
+  if (keyword->type == NODE_NAME && keyword->value.i == index) {
+    return true;
+  }
+
+  return false;  
 }
 
 // compiles the ast into bytecode for a stack based VM
@@ -2308,8 +2302,8 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // compile the top-level functions
   seni_node *n = ast;
   while (n != NULL) {
-    if (is_top_level_fn(n, fn_index) == true) {
-      n = compile(n, program, true);
+    if (is_list_beginning_with(n, fn_index) == true) {
+      n = compile(n, program);
     } else {
       n = safe_next(n);
     }
@@ -2318,7 +2312,7 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // compile the top-level defines
   n = ast;
   while (n != NULL) {
-    if (is_top_level_define(n, define_index) == true) {
+    if (is_list_beginning_with(n, define_index) == true) {
       // start at the first top-level define if there is one
       if (found_start == false) {
         start->arg0.type = VAR_INT;
@@ -2335,14 +2329,15 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // compile all other top-level forms
   n = ast;
   while (n != NULL) {
-    if (is_top_level_fn(n, fn_index) == false && is_top_level_define(n, define_index) == false) {
+    if (is_list_beginning_with(n, fn_index) == false &&
+        is_list_beginning_with(n, define_index) == false) {
       // if there have been no global defines, start at the first top-level form that's not a function declaration
       if (found_start == false) {
         start->arg0.type = VAR_INT;
         start->arg0.value.i = program->code_size;
         found_start = true;
       }
-      n = compile(n, program, true);
+      n = compile(n, program);
     } else {
       n = safe_next(n);
     }

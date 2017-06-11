@@ -518,6 +518,7 @@ void test_vm_bytecode(void)
 {
   VM_COMPILE_F32("(define a 42) (define b 52) 10", 10);
   VM_COMPILE_F32("(define a 6) (define b 7) (+ a b)", 13);
+  VM_COMPILE_F32("(define a 8 b 9) (+ a b)", 17);
   VM_COMPILE_F32("(+ 3 4)", 7);
   VM_COMPILE_F32("(- (+ 1 2) 3)", 0);
   VM_COMPILE_F32("(* 3 4)", 12);
