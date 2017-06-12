@@ -1775,6 +1775,27 @@ void compile_rest(seni_node *ast, seni_program *program)
   }
 }
 
+void compile_math(seni_node *ast, seni_program *program, seni_opcode opcode)
+{
+  // + 3 4 5 6
+  //
+  // 1	PUSH	CONST	3.00
+  // 2	PUSH	CONST	4.00
+  // 3	ADD
+  // 4	PUSH	CONST	5.00
+  // 5	ADD
+  // 6	PUSH	CONST	6.00
+  // 7	ADD
+  
+  ast = safe_next(ast); // skip the opcode
+
+  ast = compile(ast, program); // compile the first argument
+  while (ast) {
+    ast = compile(ast, program); // compile the next argument
+    program_emit_opcode_i32(program, opcode, 0, 0);
+  }
+}
+
 void compile_loop(seni_node *ast, seni_program *program)
 {
   // (loop (x from: 0 to: 5) (+ 42 38))
@@ -2186,41 +2207,32 @@ seni_node *compile(seni_node *ast, seni_program *program)
         compile_fn(ast, program);
         return safe_next(ast);
       } else if (iname == g_keyword_iname_plus) {
-        compile_rest(ast, program);
-        program_emit_opcode_i32(program, ADD, 0, 0);
+        compile_math(ast, program, ADD);
         return safe_next(ast);
       } else if (iname == g_keyword_iname_minus) {
         // TODO: differentiate between neg and sub?
-        compile_rest(ast, program);
-        program_emit_opcode_i32(program, SUB, 0, 0);
+        compile_math(ast, program, SUB);
         return safe_next(ast);
       } else if (iname == g_keyword_iname_mult) {
-        compile_rest(ast, program);
-        program_emit_opcode_i32(program, MUL, 0, 0);
+        compile_math(ast, program, MUL);
         return safe_next(ast);
       } else if (iname == g_keyword_iname_divide) {
-        compile_rest(ast, program);
-        program_emit_opcode_i32(program, DIV, 0, 0);
+        compile_math(ast, program, DIV);        
         return safe_next(ast);
       } else if (iname == g_keyword_iname_equal) {
-        compile_rest(ast, program);
-        program_emit_opcode_i32(program, EQ, 0, 0);
+        compile_math(ast, program, EQ);
         return safe_next(ast);
       } else if (iname == g_keyword_iname_lt) {
-        compile_rest(ast, program);
-        program_emit_opcode_i32(program, LT, 0, 0);
+        compile_math(ast, program, LT);        
         return safe_next(ast);
       } else if (iname == g_keyword_iname_gt) {
-        compile_rest(ast, program);
-        program_emit_opcode_i32(program, GT, 0, 0);
+        compile_math(ast, program, GT);
         return safe_next(ast);
       } else if (iname == g_keyword_iname_and) {
-        compile_rest(ast, program);
-        program_emit_opcode_i32(program, AND, 0, 0);
+        compile_math(ast, program, AND);
         return safe_next(ast);
       } else if (iname == g_keyword_iname_or) {
-        compile_rest(ast, program);
-        program_emit_opcode_i32(program, OR, 0, 0);
+        compile_math(ast, program, OR);
         return safe_next(ast);
       } else if (iname == g_keyword_iname_not) {
         compile_rest(ast, program);

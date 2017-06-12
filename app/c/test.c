@@ -474,6 +474,7 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 //
 // 0 == print out bytecode, 1 == execute bytecode
 #if 1
+
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
@@ -520,14 +521,21 @@ void test_vm_bytecode(void)
   VM_COMPILE_F32("(define a 6) (define b 7) (+ a b)", 13);
   VM_COMPILE_F32("(define a 8 b 9) (+ a b)", 17);
   VM_COMPILE_F32("(+ 3 4)", 7);
+  VM_COMPILE_F32("(+ 3 4 5)", 12);
+  VM_COMPILE_F32("(+ 3 4 5 6)", 18);
   VM_COMPILE_F32("(- (+ 1 2) 3)", 0);
   VM_COMPILE_F32("(* 3 4)", 12);
+  VM_COMPILE_F32("(* 3 4 5)", 60);
   VM_COMPILE_F32("(/ 90 10)", 9);
+  VM_COMPILE_F32("(/ 90 10 3)", 3);
   VM_COMPILE_BOOL("(> 5 10)", false);
   VM_COMPILE_BOOL("(< 5 10)", true);
+  VM_COMPILE_BOOL("(< 1 2 3 4 5 10)", true);
   VM_COMPILE_BOOL("(= 2 2)", true);
   VM_COMPILE_BOOL("(= 1 2)", false);
+  VM_COMPILE_BOOL("(= 1 1 1 1 1 2)", false);
   VM_COMPILE_BOOL("(and (< 1 2) (< 3 4))", true);
+  VM_COMPILE_BOOL("(and (< 1 2) (< 3 4) (< 5 6) (< 7 8))", true);
   VM_COMPILE_BOOL("(and (< 1 2) (> 3 4))", false);
   VM_COMPILE_BOOL("(or (< 1 2) (> 3 4))", true);
   VM_COMPILE_BOOL("(not (> 1 10))", true);
