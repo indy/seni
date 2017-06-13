@@ -16,6 +16,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+// define EXECUTE_BYTECODE to run the code, otherwise it will be printed
+//
+ #define EXECUTE_BYTECODE
+
 /* way of working with boolean and TEST macros */
 bool test_true = true;
 bool test_false = false;
@@ -423,7 +427,7 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
   compiler_compile(ast, prog);                            \
   vm = vm_construct(STACK_SIZE,MEMORY_SIZE);              \
   printf("%s\n", EXPR);                                   \
-  program_pretty_print(prog);
+  pretty_print_program(prog);
 
 // --------------------------------------------------
 
@@ -473,7 +477,7 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 // COMPILE macros that eval and compare results
 //
 // 0 == print out bytecode, 1 == execute bytecode
-#if 1
+#ifdef EXECUTE_BYTECODE
 
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
@@ -577,6 +581,15 @@ void test_vm_callret(void)
 
   // function referencing a global
   VM_COMPILE_F32("(define gs 30)(fn (foo at: 0) (+ at gs))(foo at: 10)", 40);
+
+  // global references a function, function references a global
+  VM_COMPILE_F32("(define a 5 b (acc n: 2)) (fn (acc n: 0) (+ n a)) (+ a b)", 12);
+}
+
+void test_vm_destructure(void)
+{
+  VM_COMPILE_F32("(define [a b] [22 33]) (- b a)", 11);
+  VM_COMPILE_F32("(define [a b c] [22 33 44]) (+ a b c)", 99);
 }
 
 void test_vm_vector(void)
@@ -653,10 +666,10 @@ void test_temp(void)
   // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (line width: (+ 3 4) height: (adder))", 17);
   // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
 
-  VM_COMPILE_F32("(fn (map-to-position at: 0) \
-   (debug/print val: at))                  \
-(loop (xx from: 1 to: 10) \
-  (map-to-position at: xx))", 42);
+//   VM_COMPILE_F32("(fn (map-to-position at: 0) \
+//    (debug/print val: at))                  \
+// (loop (xx from: 1 to: 10) \
+//   (map-to-position at: xx))", 42);
 
 //   VM_COMPILE_F32("(fn (map-to-position at: 0) \
 //    (+ at at)) \
@@ -669,6 +682,12 @@ void test_temp(void)
   // (define xx 42) \
   // (debug/print val: (map-to-position at: xx))", 42);
 
+  //VM_COMPILE_F32("(loop (i from: 0 to: 100) (+ 1 2))", 100);
+
+  // VM_COMPILE_F32("(define a 100)", 100);
+  VM_COMPILE_F32("(define [a b] [22 33]) (- b a)", 11);
+
+  //VM_COMPILE_F32("(nth n: 0 from: [22 33])", 100);
 }
 
 int main(void)
@@ -687,12 +706,13 @@ int main(void)
   // vm
   RUN_TEST(test_vm_bytecode);
   RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_destructure);
   RUN_TEST(test_vm_vector);
   RUN_TEST(test_vm_col_rgb);
   RUN_TEST(test_vm_math);
   RUN_TEST(test_vm_prng);
 
-  // RUN_TEST(test_prng);
+  //RUN_TEST(test_prng);
   //RUN_TEST(test_temp);
   
   return UNITY_END();

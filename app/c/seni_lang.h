@@ -254,7 +254,7 @@ void           vm_free(seni_vm *vm);
 
 seni_program  *program_allocate(i32 code_max_size);
 void           program_free(seni_program *program);
-void           program_pretty_print(seni_program *program);
+void           pretty_print_program(seni_program *program);
 
 seni_env      *env_construct();
 void           env_free(seni_env *e);

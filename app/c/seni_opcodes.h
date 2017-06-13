@@ -36,6 +36,13 @@ OPCODE(NATIVE, 0)
 
 // appends item at top to vector at top-1, leaves vector on stack
 OPCODE(APPEND, -1)
+// top item is nth, top-1 is vec, pops top and pushes vec[nth]
+OPCODE(NTH, 0)
+// given a vector on the stack this unpacks it's contents onto the stack
+// offset is 0 as the vm->opcode_offset depends on the size of the stack
+// can only be used if each element on the lhs is a NODE_NAME
+// the first arg of the bytecode is the expected length of the vector
+OPCODE(PILE, 0)
 
 // decrements ref count of seni_var at given memory location
 OPCODE(DEC_RC, 0)

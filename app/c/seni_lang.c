@@ -900,6 +900,17 @@ seni_node *safe_next(seni_node *expr)
   return sibling;
 }
 
+seni_node *safe_prev(seni_node *expr)
+{
+  seni_node *sibling = expr->prev;
+  while(sibling && (sibling->type == NODE_WHITESPACE ||
+                    sibling->type == NODE_COMMENT)) {
+    sibling = sibling->prev;
+  }
+
+  return sibling;
+}
+
 i32 var_as_int(seni_var *var)
 {
   seni_value_in_use using = get_value_in_use(var->type);
@@ -1146,7 +1157,7 @@ char *memory_segment_name(seni_memory_segment_type segment)
   return "UNKNOWN";
 }
 
-void bytecode_pretty_print(i32 ip, seni_bytecode *b)
+void pretty_print_bytecode(i32 ip, seni_bytecode *b)
 {
   if (b->op == PUSH || b->op == POP || b->op == DEC_RC || b->op == INC_RC) {
     printf("%d\t%s\t%s\t",
@@ -1203,16 +1214,21 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b)
            opcode_name(b->op),
            b->arg0.value.i,
            b->arg1.value.i);
+  } else if (b->op == PILE) {
+    printf("%d\t%s\t%d\n",
+           ip,
+           opcode_name(b->op),
+           b->arg0.value.i);
   } else {
     printf("%d\t%s\n", ip, opcode_name(b->op));
   }  
 }
 
-void program_pretty_print(seni_program *program)
+void pretty_print_program(seni_program *program)
 {
   for (i32 i = 0; i < program->code_size; i++) {
     seni_bytecode *b = &(program->code[i]);
-    bytecode_pretty_print(i, b);
+    pretty_print_bytecode(i, b);
   }
   printf("\n");
 }
@@ -1676,60 +1692,120 @@ i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value)
   return -1;
 }
 
-
 seni_node *compile(seni_node *ast, seni_program *program);
 
-// a define statement in the global scope
-void compile_global_define(seni_node *ast, seni_program *program)
+bool all_children_have_type(seni_node *parent, seni_node_type type)
 {
-  // define a 42
-  // ^
-  // define a 42 b 100 c 0
-  // ^
-
-  seni_node *name_node = safe_next(ast);
-  seni_node *value_node;
-
-  while (name_node != NULL) {
-    // TODO: assert that name_node is NODE_NAME
-
-    value_node = safe_next(name_node);
-
-    compile(value_node, program);
-
-    i32 global_address = get_global_mapping(program, name_node->value.i);
-    if (global_address == -1) {
-      // should never get here ???
-      global_address = add_global_mapping(program, name_node->value.i);
-    }
-
-    program_emit_opcode_i32(program, POP, MEM_SEG_GLOBAL, global_address);
-
-    name_node = safe_next(value_node);
+  if (parent->type != NODE_VECTOR && parent->type != NODE_LIST) {
+    SENI_ERROR("all_children_have_type need a vector or list");
+    return false;
   }
+
+  seni_node *child = parent->value.first_child;
+  while (child != NULL) {
+    if (child->type != type) {
+      return false;
+    }
+    child = safe_next(child);
+  }
+
+  return true;
 }
 
-// single pair of name/value for the moment
-seni_node *compile_define(seni_node *ast, seni_program *program)
+i32 count_children(seni_node *parent)
 {
-  seni_node *name_node = safe_next(ast);
+  if (parent->type != NODE_VECTOR && parent->type != NODE_LIST) {
+    SENI_ERROR("count_children need a vector or list");
+    return 0;
+  }
+
+  i32 count = 0;
+  seni_node *child = parent->value.first_child;
+  while (child != NULL) {
+    count++;
+    child = safe_next(child);
+  }
+
+  return count;
+}
+
+i32 pop_from_stack_to_memory(seni_program *program, seni_node *node, seni_memory_segment_type memory_segment_type)
+{
+  i32 address = -1;
+  
+  if (memory_segment_type == MEM_SEG_LOCAL) {
+    address = get_local_mapping(program, node->value.i);
+    if (address == -1) {
+      address = add_local_mapping(program, node->value.i);
+    }
+    program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, address);
+  } else if (memory_segment_type == MEM_SEG_GLOBAL) {
+    address = get_global_mapping(program, node->value.i);
+    if (address == -1) {
+      address = add_global_mapping(program, node->value.i);
+    }
+    program_emit_opcode_i32(program, POP, MEM_SEG_GLOBAL, address);
+  } else {
+    SENI_ERROR("pop_from_stack_to_memory: unknown memory_segment_type: %d", memory_segment_type);
+  }
+
+  return address;
+}
+
+seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_segment_type memory_segment_type)
+{
+  seni_node *lhs_node = safe_next(ast);
   seni_node *value_node;
+  i32 i;
 
-  while (name_node != NULL) {
-    // TODO: assert that name_node is NODE_NAME
+  while (lhs_node != NULL) {
 
-    value_node = safe_next(name_node);
-
+    value_node = safe_next(lhs_node);
     compile(value_node, program);
 
-    i32 local_address = get_local_mapping(program, name_node->value.i);
-    if (local_address == -1) {
-      local_address = add_local_mapping(program, name_node->value.i);
+    if (lhs_node->type == NODE_NAME) {
+      // define foo 10
+      pop_from_stack_to_memory(program, lhs_node, memory_segment_type);
+
+    } else if (lhs_node->type == NODE_VECTOR) {
+      // define [a b] (something-that-returns-a-vector ...)
+
+      // check if we can use the PILE opcode
+      if (all_children_have_type(lhs_node, NODE_NAME)) {
+        i32 num_children = count_children(lhs_node);
+
+        // PILE will stack the elemtents in the rhs vector in order,
+        // so the lhs values have to be popped in reverse order
+        program_emit_opcode_i32(program, PILE, num_children, 0);
+
+        seni_node *child = lhs_node->value.first_child;
+
+
+        for (i = 1; i < num_children; i++) {
+          child = safe_next(child);
+        }
+        for (i = 0; i < num_children; i++) {
+          pop_from_stack_to_memory(program, child, memory_segment_type);
+          child = safe_prev(child);
+        }
+        /*        
+        while (child != NULL) {
+          pop_from_stack_to_memory(program, child, memory_segment_type);
+          child = safe_next(child);
+        }
+        */
+        
+        
+      } else {
+        // this may be recursive
+        printf("todo: push each item onto stack using nth");
+      }
+
+    } else {
+      SENI_ERROR("compile_define lhs should be a name or a list");
     }
 
-    program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, local_address);
-
-    name_node = safe_next(value_node);
+    lhs_node = safe_next(value_node);
   }
 
   return NULL;
@@ -1834,11 +1910,7 @@ void compile_loop(seni_node *ast, seni_program *program)
 
   // set looping variable x to 'from' value
   compile(from_node, program);
-  i32 looper_address = get_local_mapping(program, name_node->value.i);
-  if (looper_address == -1) {
-    looper_address = add_local_mapping(program, name_node->value.i);
-  }
-  program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, looper_address);
+  i32 looper_address = pop_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
 
   // compare looping variable against exit condition
   // and jump if looping variable >= exit value
@@ -1969,6 +2041,27 @@ void register_top_level_fns(seni_node *ast, seni_program *program, i32 fn_index)
   }
 }
 
+
+void register_names_in_define(seni_node *lhs, seni_program *program)
+{
+  if (lhs->type == NODE_NAME) {
+    // (define foo 42)
+    i32 global_address = get_global_mapping(program, lhs->value.i);
+    if (global_address == -1) {
+      global_address = add_global_mapping(program, lhs->value.i);
+    }
+  } else if (lhs->type == NODE_LIST || lhs->type == NODE_VECTOR) {
+    // (define [a b] (something))
+    // (define [a [x y]] (something))
+    seni_node *child = lhs->value.first_child;
+
+    while (child != NULL) {
+      register_names_in_define(child, program);
+      child = safe_next(child);
+    }
+  }  
+}
+
 void register_top_level_defines(seni_node *ast, seni_program *program, i32 define_index)
 {
   // register top level fns
@@ -1985,19 +2078,13 @@ void register_top_level_defines(seni_node *ast, seni_program *program, i32 defin
       continue;
     }
 
-    seni_node *name = safe_next(define_keyword);
-    while (name != NULL) {
-
-      i32 global_address = get_global_mapping(program, name->value.i);
-      if (global_address == -1) {
-        global_address = add_global_mapping(program, name->value.i);
-      }
-
-      name = safe_next(name); // points to the value
-      name = safe_next(name); // points to the next define statement if there multiple
+    seni_node *lhs = safe_next(define_keyword);
+    while (lhs != NULL) {
+      register_names_in_define(lhs, program);
+      lhs = safe_next(lhs); // points to the value
+      lhs = safe_next(lhs); // points to the next define statement if there multiple
     }
 
-    
     ast = safe_next(ast);
   }
 }
@@ -2193,7 +2280,7 @@ seni_node *compile(seni_node *ast, seni_program *program)
     } else if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
 
       if (iname == g_keyword_iname_define) {
-        return compile_define(ast, program);
+        return compile_define(ast, program, MEM_SEG_LOCAL);
       } else if (iname == g_keyword_iname_if) {
         compile_if(ast, program);
         return safe_next(ast);
@@ -2331,7 +2418,7 @@ void compiler_compile(seni_node *ast, seni_program *program)
         start->arg0.value.i = program->code_size;
         found_start = true;
       }
-      compile_global_define(n->value.first_child, program);
+      compile_define(n->value.first_child, program, MEM_SEG_GLOBAL);
       n = safe_next(n);
     } else {
       n = safe_next(n);
@@ -2388,6 +2475,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
   i32 hop_back = 0;
   i32 local, fp;
 
+#define STACK_PEEK v = stack_d - 1
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
 
@@ -2651,6 +2739,33 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       append_to_vector(vm, v, src); // note: this uses a copy, should it be a move instead?
 
       STACK_PUSH;
+      break;
+
+    case NTH:
+      // top of stack is nth index
+      // top-1 is a vector
+      // pop stack and push vector[nth]
+      SENI_ERROR("NTH implement");
+      break;
+
+    case PILE:
+      num_args = bc->arg0.value.i;
+      // top of the stack contains a vector
+      // take num_args elements from the vector and push them onto the stack
+      STACK_POP;
+
+      seni_var _vec;
+      safe_var_copy(vm, &_vec, v);
+
+      src = _vec.value.v->next;
+      for (i = 0; i < num_args; i++) {
+        STACK_PUSH;
+        safe_var_copy(vm, v, src);
+
+        src = src->next;
+      }
+
+      vector_ref_count_decrement(vm, &_vec);
       break;
 
     case MTX_PUSH:
