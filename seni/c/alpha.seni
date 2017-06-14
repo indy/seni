@@ -15,9 +15,9 @@
       y-pos (map-to-position at: y))
     (accumulated-rect x: x-pos
                       y: y-pos
-                      passes: 20
-                      volatility: (/ (math/distance vec1: [(/ canvas/width 2)
-                                                           (/ canvas/height 2)]
+                      passes: 2
+                      volatility: (/ (math/distance vec1: [(/ 1000 2)
+                                                           (/ 1000 2)]
                                                     vec2: [x-pos y-pos]) 
                                      250)
                       seed: (+ x (* y num-squares))
@@ -38,10 +38,35 @@
     rng (prng/build min: -1 max: 1 seed: seed))
   (on-matrix-stack
     (translate vector: [x y])
-    (loop (i to: passes)
+    (loop (i from: 0 to: passes)
       (on-matrix-stack
-        (rotate angle: (math/radians->degrees angle: (* (prng/take-1 from: rng) 0.02 volatility)))
-        (rect position: [(* (prng/take-1 from: rng) 5 volatility) (* (prng/take-1 from: rng) 5 volatility)]
+        (rect position: [0 0]
               width: width
               height: height
               colour: pass-colour)))))
+
+
+
+
+
+;(fn (accumulated-rect x: 0
+;                      y: 0
+;                      width: 10
+;                      height: 10
+;                      colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)
+;                      volatility: 0
+;                      passes: 1
+;                      seed: 341)
+;  (define alpha (col/get-alpha colour: colour)
+;    pass-colour (col/set-alpha colour: colour value: (/ alpha passes))
+;    rng (prng/build min: -1 max: 1 seed: seed))
+;  (on-matrix-stack
+;    (translate vector: [x y])
+;    (loop (i from: 0 to: passes)
+;      (define [rr rx ry] (prng/take num: 3 from: rng))
+;      (on-matrix-stack
+;        (rotate angle: (math/radians->degrees angle: (* rr 0.02 volatility)))
+;        (rect position: [(* rx 5 volatility) (* ry 5 volatility)]
+;              width: width
+;              height: height
+;              colour: pass-colour)))))

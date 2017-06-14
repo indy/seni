@@ -1,24 +1,15 @@
-* TODO [6/20]
-  1. [ ] multiple define statements
-  2. [ ] print debug statement
-  3. [ ] + should take multiple arguments
+* TODO [0/11]
+  1. [ ] add checks to parsing code in bind
+  2. [ ] add checks about number of local variables declared
+  3. [ ] add checks about number of global variables declared
   4. [ ] functions will not be nestable
-  5. [ ] NTH opcode (prep: push vec, push index, action: pop, peek, push vec[index], delta: 0)
-  6. [ ] manipulate vectors
-  7. [ ] destructuring
-  8. [ ] take
-  9. [ ] canvas/width canvas/height bind to global mappings
-  10. [ ] seni_env
-  11. [ ] interp/fn interp/bezier
-  12. [ ] 'in' paramaeter for loop ?
-  13. [ ] how would a stack machine compile first class functions? could there be alternatives?
-  14. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  15. [X] radians->degrees angle:
-  16. [X] prng/perlin-signed
-  17. [X] prng/range
-  18. [X] col/get-alpha col/set-alpha
-  19. [X] parsing defines/top-level functions and function calls
-  20. [X] bind colour functions
+  5. [ ] manipulate vectors
+  6. [ ] canvas/width canvas/height bind to global mappings
+  7. [ ] seni_env
+  8. [ ] interp/fn interp/bezier
+  9. [ ] 'in' paramaeter for loop ?
+  10. [ ] how would a stack machine compile first class functions? could there be alternatives?
+  11. [ ] remove hsv colour space? - would this get rid of the illegal state?
 
 
 * first class functions / ghetto-equivalents

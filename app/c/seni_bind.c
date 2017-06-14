@@ -37,7 +37,8 @@ typedef struct {
   args_pointer_1 += 2;                                                  \
   i32 name_1 = label_1->value.i
 
-#define READ_STACK_ARGS_END } vm->sp -= (num_args * 2);
+#define READ_STACK_ARGS_END };
+// #define READ_STACK_ARGS_END } vm->sp -= (num_args * 2);
 
 #define READ_STACK_ARG_F32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.f; }
 #define READ_STACK_ARG_I32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.i; }
@@ -102,8 +103,6 @@ typedef struct {
     n[7] = tmp_2->value.f;                                            \
   }
 
-#define WRITE_STACK(v) safe_var_move(&(vm->stack[vm->sp++]), &v)
-
 // extern global keyword variables
 #define KEYWORD(val,_,name) extern i32 g_keyword_iname_##name;
 #include "seni_keywords.h"
@@ -148,7 +147,7 @@ void declare_binding(seni_word_lut *wlut, seni_env *e, char *name, native_functi
   }
 }
 
-void bind_line(seni_vm *vm, i32 num_args)
+seni_var bind_line(seni_vm *vm, i32 num_args)
 {
   // default values for line
   f32 width = 4.0f;
@@ -170,11 +169,11 @@ void bind_line(seni_vm *vm, i32 num_args)
 
   render_line(buffer, matrix, from[0], from[1], to[0], to[1], width, colour);
 
-  // push the return value onto the stack
-  WRITE_STACK(g_var_true);
+
+  return g_var_true;
 }
 
-void bind_rect(seni_vm *vm, i32 num_args)
+seni_var bind_rect(seni_vm *vm, i32 num_args)
 {
   // default values for rect
   f32 width = 4.0f;
@@ -196,11 +195,11 @@ void bind_rect(seni_vm *vm, i32 num_args)
 
   render_rect(buffer, matrix, position[0], position[1], width, height, colour);
 
-  // push the return value onto the stack
-  WRITE_STACK(g_var_true);
+
+  return g_var_true;
 }
 
-void bind_circle(seni_vm *vm, i32 num_args)
+seni_var bind_circle(seni_vm *vm, i32 num_args)
 {
   // default values for circle
   f32 width = 4.0f;
@@ -232,11 +231,11 @@ void bind_circle(seni_vm *vm, i32 num_args)
 
   render_circle(buffer, matrix, position[0], position[1], width, height, colour, (i32)tessellation);
 
-  // push the return value onto the stack
-  WRITE_STACK(g_var_true);
+
+  return g_var_true;
 }
 
-void bind_bezier(seni_vm *vm, i32 num_args)
+seni_var bind_bezier(seni_vm *vm, i32 num_args)
 {
   // default values for bezier
   f32 line_width = -1.0f;
@@ -291,11 +290,11 @@ void bind_bezier(seni_vm *vm, i32 num_args)
                 coords, line_width_start, line_width_end, line_width_mapping,
                 t_start, t_end, colour, (i32)tessellation, brush, (i32)brush_subtype);
 
-  // push the return value onto the stack
-  WRITE_STACK(g_var_true);
+
+  return g_var_true;
 }
 
-void bind_col_convert(seni_vm *vm, i32 num_args)
+seni_var bind_col_convert(seni_vm *vm, i32 num_args)
 {
   // (col/convert colour: col format: LAB)
   
@@ -318,11 +317,11 @@ void bind_col_convert(seni_vm *vm, i32 num_args)
   seni_var ret;
   colour_as_var(&ret, out);
 
-  // push the return value onto the stack
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
-void bind_col_rgb(seni_vm *vm, i32 num_args)
+seni_var bind_col_rgb(seni_vm *vm, i32 num_args)
 {
   // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
   
@@ -351,11 +350,11 @@ void bind_col_rgb(seni_vm *vm, i32 num_args)
 
   colour_as_var(&ret, colour);
 
-  // push the return value onto the stack
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
-void bind_col_hsl(seni_vm *vm, i32 num_args)
+seni_var bind_col_hsl(seni_vm *vm, i32 num_args)
 {
   // (col/hsl h: 180.0 s: 0.1 l: 0.2 alpha: 0.4)
   
@@ -384,11 +383,11 @@ void bind_col_hsl(seni_vm *vm, i32 num_args)
 
   colour_as_var(&ret, colour);
 
-  // push the return value onto the stack
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
-void bind_col_hsv(seni_vm *vm, i32 num_args)
+seni_var bind_col_hsv(seni_vm *vm, i32 num_args)
 {
   // (col/hsv h: 180.0 s: 0.1 v: 0.2 alpha: 0.4)
   
@@ -417,11 +416,11 @@ void bind_col_hsv(seni_vm *vm, i32 num_args)
 
   colour_as_var(&ret, colour);
 
-  // push the return value onto the stack
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
-void bind_col_lab(seni_vm *vm, i32 num_args)
+seni_var bind_col_lab(seni_vm *vm, i32 num_args)
 {
   // (col/lab l: 0.2 a: -0.1 b: -0.3 alpha: 0.4)
   
@@ -450,11 +449,11 @@ void bind_col_lab(seni_vm *vm, i32 num_args)
 
   colour_as_var(&ret, colour);
 
-  // push the return value onto the stack
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
-void bind_col_complementary(seni_vm *vm, i32 num_args)
+seni_var bind_col_complementary(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -467,13 +466,13 @@ void bind_col_complementary(seni_vm *vm, i32 num_args)
   seni_colour *ret_colour = colour_get_from_vm(vm);
   complementary(ret_colour, colour);
 
-  // push the return value onto the stack
+
   seni_var ret;
   colour_as_var(&ret, ret_colour);
-  WRITE_STACK(ret);
+  return ret;
 }
 
-void bind_col_split_complementary(seni_vm *vm, i32 num_args)
+seni_var bind_col_split_complementary(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -492,10 +491,10 @@ void bind_col_split_complementary(seni_vm *vm, i32 num_args)
   vector_construct(vm, &ret);
   append_to_vector_col(vm, &ret, ret_colour0);
   append_to_vector_col(vm, &ret, ret_colour1);
-  WRITE_STACK(ret);
+  return ret;
 }
 
-void bind_col_analagous(seni_vm *vm, i32 num_args)
+seni_var bind_col_analagous(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -514,10 +513,10 @@ void bind_col_analagous(seni_vm *vm, i32 num_args)
   vector_construct(vm, &ret);
   append_to_vector_col(vm, &ret, ret_colour0);
   append_to_vector_col(vm, &ret, ret_colour1);
-  WRITE_STACK(ret);
+  return ret;
 }
 
-void bind_col_triad(seni_vm *vm, i32 num_args)
+seni_var bind_col_triad(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -536,10 +535,10 @@ void bind_col_triad(seni_vm *vm, i32 num_args)
   vector_construct(vm, &ret);
   append_to_vector_col(vm, &ret, ret_colour0);
   append_to_vector_col(vm, &ret, ret_colour1);
-  WRITE_STACK(ret);
+  return ret;
 }
 
-void bind_col_darken(seni_vm *vm, i32 num_args)
+seni_var bind_col_darken(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -556,13 +555,13 @@ void bind_col_darken(seni_vm *vm, i32 num_args)
   colour_clone_as(ret_colour, colour, LAB);
   ret_colour->element[0] = clamp(ret_colour->element[0] - value, 0.0f, 100.0f);
 
-  // push the return value onto the stack
+
   seni_var ret;
   colour_as_var(&ret, ret_colour);
-  WRITE_STACK(ret);
+  return ret;
 }
 
-void bind_col_lighten(seni_vm *vm, i32 num_args)
+seni_var bind_col_lighten(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -579,13 +578,13 @@ void bind_col_lighten(seni_vm *vm, i32 num_args)
   colour_clone_as(ret_colour, colour, LAB);
   ret_colour->element[0] = clamp(ret_colour->element[0] + value, 0.0f, 100.0f);
 
-  // push the return value onto the stack
+
   seni_var ret;
   colour_as_var(&ret, ret_colour);
-  WRITE_STACK(ret);
+  return ret;
 }
 
-void bind_col_set_alpha(seni_vm *vm, i32 num_args)
+seni_var bind_col_set_alpha(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -602,13 +601,13 @@ void bind_col_set_alpha(seni_vm *vm, i32 num_args)
   colour_clone_as(ret_colour, colour, colour->format);
   ret_colour->element[3] = value;
 
-  // push the return value onto the stack
+
   seni_var ret;
   colour_as_var(&ret, ret_colour);
-  WRITE_STACK(ret);
+  return ret;
 }
 
-void bind_col_get_alpha(seni_vm *vm, i32 num_args)
+seni_var bind_col_get_alpha(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -621,11 +620,11 @@ void bind_col_get_alpha(seni_vm *vm, i32 num_args)
   seni_var ret;
   f32_as_var(&ret, colour->element[3]);
 
-  // push the return value onto the stack
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
-void bind_translate(seni_vm *vm, i32 num_args)
+seni_var bind_translate(seni_vm *vm, i32 num_args)
 {
   f32 vector[] = {0.0f, 0.0f};
 
@@ -635,10 +634,10 @@ void bind_translate(seni_vm *vm, i32 num_args)
 
   matrix_stack_translate(vm->matrix_stack, vector[0], vector[1]);
 
-  WRITE_STACK(g_var_true);
+  return g_var_true;
 }
 
-void bind_rotate(seni_vm *vm, i32 num_args)
+seni_var bind_rotate(seni_vm *vm, i32 num_args)
 {
   f32 angle = 0.0f;
 
@@ -648,10 +647,10 @@ void bind_rotate(seni_vm *vm, i32 num_args)
 
   matrix_stack_rotate(vm->matrix_stack, angle);
 
-  WRITE_STACK(g_var_true);
+  return g_var_true;
 }
 
-void bind_scale(seni_vm *vm, i32 num_args)
+seni_var bind_scale(seni_vm *vm, i32 num_args)
 {
   f32 vector[] = {1.0f, 1.0f};
   f32 scalar = 1.0f;
@@ -667,11 +666,11 @@ void bind_scale(seni_vm *vm, i32 num_args)
     matrix_stack_scale(vm->matrix_stack, vector[0], vector[1]);
   }
 
-  WRITE_STACK(g_var_true);
+  return g_var_true;
 }
 
 
-void bind_math_distance(seni_vm *vm, i32 num_args)
+seni_var bind_math_distance(seni_vm *vm, i32 num_args)
 {
   f32 vec1[] = {0.0f, 0.0f};
   f32 vec2[] = {0.0f, 0.0f};
@@ -691,11 +690,11 @@ void bind_math_distance(seni_vm *vm, i32 num_args)
   seni_var ret;
   f32_as_var(&ret, distance);
 
-  // push the return value onto the stack
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
-void bind_math_clamp(seni_vm *vm, i32 num_args)
+seni_var bind_math_clamp(seni_vm *vm, i32 num_args)
 {
   // todo: try and move functions like this into ones that initially
   // create and return a function that takes a single argument.
@@ -719,11 +718,11 @@ void bind_math_clamp(seni_vm *vm, i32 num_args)
   seni_var ret;
   f32_as_var(&ret, clamp(val, min, max));
   
-  // push the return value onto the stack
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
-void bind_math_radians_to_degrees(seni_vm *vm, i32 num_args)
+seni_var bind_math_radians_to_degrees(seni_vm *vm, i32 num_args)
 {
   f32 angle = 0.0f;
 
@@ -734,11 +733,11 @@ void bind_math_radians_to_degrees(seni_vm *vm, i32 num_args)
   seni_var ret;
   f32_as_var(&ret, rad_to_deg(angle));
 
-  WRITE_STACK(ret);
+  return ret;
 }
 
 // (prng/build seed: 4324 min: 40 max: 100)
-void bind_prng_build(seni_vm *vm, i32 num_args)
+seni_var bind_prng_build(seni_vm *vm, i32 num_args)
 {
   f32 seed = 12322.0f;            // todo: in docs mention that seed should be in range 1..some-large-number
   f32 min = 0.0f;
@@ -769,13 +768,14 @@ void bind_prng_build(seni_vm *vm, i32 num_args)
   append_to_vector_u64(vm, &ret, prng_state.inc);
   append_to_vector_f32(vm, &ret, min);
   append_to_vector_f32(vm, &ret, max);
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
 // (prng/take num: 5 from: rng)
-void bind_prng_take(seni_vm *vm, i32 num_args)
+seni_var bind_prng_take(seni_vm *vm, i32 num_args)
 {
-  i32 num = 1;
+  f32 num = 1.0f;
   seni_prng_full_state from;
   // just have anything as the default values, this function should always be given a 'from' parameter
   from.state = 2222;
@@ -786,7 +786,7 @@ void bind_prng_take(seni_vm *vm, i32 num_args)
   from.seni_var_inc = NULL;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(num);
+  READ_STACK_ARG_F32(num);
   READ_STACK_ARG_PRNG(from);
   READ_STACK_ARGS_END;
 
@@ -799,12 +799,13 @@ void bind_prng_take(seni_vm *vm, i32 num_args)
   seni_var ret;
   f32 value;
 
+  i32 inum = (i32)num;
+
   vector_construct(vm, &ret);
-  for (i32 i = 0; i < num; i++) {
+  for (i32 i = 0; i < inum; i++) {
     value = seni_prng_f32_range(&prng_state, from.min, from.max);
     append_to_vector_f32(vm, &ret, value);
   }
-  WRITE_STACK(ret);
 
   // update the state and inc values stored in the vector on the vm's stack
   if (from.seni_var_state != NULL && from.seni_var_inc != NULL) {
@@ -813,10 +814,12 @@ void bind_prng_take(seni_vm *vm, i32 num_args)
   } else {
     SENI_ERROR("seni_prng_full_state has null pointers ???");
   }
+
+  return ret;
 }
 
 // (prng/take-1 from: rng)
-void bind_prng_take_1(seni_vm *vm, i32 num_args)
+seni_var bind_prng_take_1(seni_vm *vm, i32 num_args)
 {
   seni_prng_full_state from;
   // just have anything as the default values, this function should always be given a 'from' parameter
@@ -836,11 +839,10 @@ void bind_prng_take_1(seni_vm *vm, i32 num_args)
   prng_state.state = from.state;
   prng_state.inc = from.inc;
 
-  // push the return value onto the stack
+
   seni_var ret;
   f32 value = seni_prng_f32_range(&prng_state, from.min, from.max);
   f32_as_var(&ret, value);
-  WRITE_STACK(ret);
 
   // update the state and inc values stored in the vector on the vm's stack
   if (from.seni_var_state != NULL && from.seni_var_inc != NULL) {
@@ -849,9 +851,11 @@ void bind_prng_take_1(seni_vm *vm, i32 num_args)
   } else {
     SENI_ERROR("seni_prng_full_state has null pointers ???");
   }
+
+  return ret;
 }
 
-void bind_prng_perlin(seni_vm *vm, i32 num_args)
+seni_var bind_prng_perlin(seni_vm *vm, i32 num_args)
 {
   f32 x = 1.0f;
   f32 y = 1.0f;
@@ -867,12 +871,11 @@ void bind_prng_perlin(seni_vm *vm, i32 num_args)
   seni_var ret;
   f32 value = seni_perlin(x, y, z);
   f32_as_var(&ret, value);
-  
-  // push the return value onto the stack
-  WRITE_STACK(ret);
+
+  return ret;
 }
 
-void bind_debug_print(seni_vm *vm, i32 num_args)
+seni_var  bind_debug_print(seni_vm *vm, i32 num_args)
 {
   seni_var *val = NULL;
 
@@ -884,10 +887,37 @@ void bind_debug_print(seni_vm *vm, i32 num_args)
   
   pretty_print_seni_var(val, "debug");
 
-  // push the return value onto the stack
-  WRITE_STACK(g_var_true);
+  return g_var_true;
 }
 
+seni_var bind_nth(seni_vm *vm, i32 num_args)
+{
+  seni_var *from = NULL;
+  f32 n = 0;
+  
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VAR(from);
+  READ_STACK_ARG_F32(n);
+  READ_STACK_ARGS_END;
+
+  if (from->type != VAR_VEC_HEAD) {
+    printf("wtf\n");
+    return g_var_true;
+  }
+
+  i32 nth = (i32)n;
+  seni_var *e = from->value.v;
+
+  // e is pointing to the rc, so even a nth of 0 requires one call to e->next
+  for (i32 i = 0; i <= nth; i++) {
+    e = e->next;
+  }
+
+  seni_var ret;
+  safe_var_copy(vm, &ret, e);
+
+  return ret;
+}
 
 
 void declare_bindings(seni_word_lut *wlut, seni_env *e)
@@ -941,5 +971,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_binding(wlut, e, "prng/perlin", &bind_prng_perlin); // was prng/perlin-signed
 
   declare_binding(wlut, e, "debug/print", &bind_debug_print);
+
+  declare_binding(wlut, e, "nth", &bind_nth);
 }
 

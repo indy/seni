@@ -128,9 +128,8 @@ typedef enum {
 
 #define MEMORY_SIZE 1024
 #define STACK_SIZE 1024
-// TODO: put global on the heap rather than at the bottom of the stack
 #define MEMORY_GLOBAL_SIZE 10
-#define MEMORY_LOCAL_SIZE 10
+#define MEMORY_LOCAL_SIZE 20
 
 #define MAX_TOP_LEVEL_FUNCTIONS 32
 
@@ -152,7 +151,7 @@ typedef struct {
 void slab_reset(seni_slab_info *slab_info);
 void slab_full_reset(seni_slab_info *slab_info);
 void slab_get(seni_slab_info *slab_info);
-void slab_return(seni_slab_info *slab_info);
+void slab_return(seni_slab_info *slab_info, char *msg);
 void slab_print(seni_slab_info *slab_info, char *message);
 
 typedef struct seni_vm {
@@ -204,8 +203,8 @@ typedef struct {
   i32 argument_offsets[MAX_NUM_ARGUMENTS];
 } seni_fn_info;
 
-
-typedef void (*native_function_ptr)(seni_vm *vm, i32 num_args);
+// todo: replace returned seni_var with a seni_var *
+typedef seni_var (*native_function_ptr)(seni_vm *vm, i32 num_args);
 typedef struct {
   native_function_ptr function_ptr[MAX_NATIVE_LOOKUPS];
 } seni_env;
@@ -261,7 +260,7 @@ void           env_free(seni_env *e);
 
 void           compiler_compile(seni_node *ast, seni_program *program);
 void           vm_interpret(seni_vm *vm, seni_program *program);
-void           safe_var_move(seni_var *dest, seni_var *src);
+void           safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
 
 void           pretty_print_seni_var(seni_var *var, char* msg);
 

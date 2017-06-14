@@ -18,7 +18,7 @@
 
 // define EXECUTE_BYTECODE to run the code, otherwise it will be printed
 //
- #define EXECUTE_BYTECODE
+#define EXECUTE_BYTECODE
 
 /* way of working with boolean and TEST macros */
 bool test_true = true;
@@ -586,6 +586,15 @@ void test_vm_callret(void)
   VM_COMPILE_F32("(define a 5 b (acc n: 2)) (fn (acc n: 0) (+ n a)) (+ a b)", 12);
 }
 
+void test_vm_native(void)
+{
+  // call native functions that have vector arguments (tests ref counting)
+  VM_COMPILE_F32("(nth n: 0 from: [22 33])", 22);
+  VM_COMPILE_F32_L("(define aa [22 33]) (nth n: 0 from: aa)", 22);  
+  VM_COMPILE_F32("(fn (x) (nth n: 0 from: [22 33])) (x)", 22);
+  VM_COMPILE_F32("(math/distance vec1: [0 0] vec2: [0 20])", 20.0f);
+}
+
 void test_vm_destructure(void)
 {
   VM_COMPILE_F32("(define [a b] [22 33]) (- b a)", 11);
@@ -626,7 +635,6 @@ void test_vm_vector(void)
   
   // argument into function is returned
   VM_COMPILE_VEC2("(fn (f a: [3 4]) a) (fn (x) (f a: [1 2])) (x)", 1, 2);
-
 }
 
 void test_vm_col_rgb(void)
@@ -638,9 +646,8 @@ void test_vm_col_rgb(void)
 
 void test_vm_math(void)
 {
-  // using the leaky macro since the vectors in the parameters won't be collected
-  VM_COMPILE_F32_L("(math/distance vec1: [0 0] vec2: [0 20])", 20.0f);
-  
+  VM_COMPILE_F32("(math/distance vec1: [0 0] vec2: [0 20])", 20.0f);
+  VM_COMPILE_F32("(math/distance vec1: [0 5] vec2: [0 20])", 15.0f);
   VM_COMPILE_F32("(math/clamp val: 0.1 min: 0.0 max: 5)", 0.1f);
   VM_COMPILE_F32("(math/clamp val: -0.1 min: 0.0 max: 5)", 0.0f);
   VM_COMPILE_F32("(math/clamp val: 10 min: 0.0 max: 5)", 5.0f);
@@ -648,46 +655,54 @@ void test_vm_math(void)
 
 void test_vm_prng(void)
 {
-  // using the leaky macro since the vectors in the parameters won't be collected
+  // leaky because the global rng is a vector
   //
-  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng)", 16.32348f);
-  // calling with the same seed returns the same value
   VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng)", 16.32348f);
   // state of rng is changing, returning a different number than previous tests
   VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng) (prng/take-1 from: rng)", 13.451335f);
+
+  // wrapped in a function so that it's not leaky
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng)) (x)", 16.32348f);
+  // state of rng is changing, returning a different number than previous tests
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng) (prng/take-1 from: rng)) (x)", 13.451335f);
+
+  // prng/take returning a vector
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 0 from: foo)", 0.27065f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 1 from: foo)", 0.75259f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 2 from: foo)", -0.141389f);
+
+  // non-leaky version of above
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 0 from: foo)) (x)", 0.27065f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 1 from: foo)) (x)", 0.75259f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 2 from: foo)) (x)", -0.141389f);
+
+  // prng, destructuring, multiple args to '+'
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a b c] (prng/take num: 3 from: rng)) (+ a b c)) (x)", 0.881854f);
+  
+}
+
+// code that exposed bugs - but was later fixed
+void test_vm_bugs(void)
+{
+  // messed up decrementing ref counts for colours
+  VM_COMPILE_F32("(fn (x colour: (col/rgb)) (+ 1 1)) (x colour: (col/rgb))", 2.0f);
+
+  // tmp in interpreter was decrementing ref count of previously held value
+     VM_COMPILE_F32("(fn (huh at: 0) 4)\
+ (fn (x colour: (col/rgb)              \
+        volatility: 0                  \
+        passes: 1                      \
+        seed: 341)                     \
+   42)                                 \
+ (x colour: (col/rgb))                 \
+ (huh at: 5)", 4.0f);
+
+  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/take num: 3 from: rng)))) (f) 1", 1.0f);
 }
 
 void test_temp(void)
 {
-  // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
-  //VM_COMPILE_F32("(fn (adder a: [1 2]) (+ 4 2)) (adder a: [4 5])", 8);
 
-  // VM_COMPILE_F32("(line width: 35 height: 22)", 17);
-  // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (line width: (+ 3 4) height: (adder))", 17);
-  // VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
-
-//   VM_COMPILE_F32("(fn (map-to-position at: 0) \
-//    (debug/print val: at))                  \
-// (loop (xx from: 1 to: 10) \
-//   (map-to-position at: xx))", 42);
-
-//   VM_COMPILE_F32("(fn (map-to-position at: 0) \
-//    (+ at at)) \
-// (loop (xx from: 1 to: 10) \
-//   (debug/print val: (map-to-position at: xx)))", 42);
-
-  
-  // VM_COMPILE_F32("(fn (map-to-position at: 0) \
-  //  (+ at at)) \
-  // (define xx 42) \
-  // (debug/print val: (map-to-position at: xx))", 42);
-
-  //VM_COMPILE_F32("(loop (i from: 0 to: 100) (+ 1 2))", 100);
-
-  // VM_COMPILE_F32("(define a 100)", 100);
-  VM_COMPILE_F32("(define [a b] [22 33]) (- b a)", 11);
-
-  //VM_COMPILE_F32("(nth n: 0 from: [22 33])", 100);
 }
 
 int main(void)
@@ -706,13 +721,14 @@ int main(void)
   // vm
   RUN_TEST(test_vm_bytecode);
   RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_native);  
   RUN_TEST(test_vm_destructure);
   RUN_TEST(test_vm_vector);
   RUN_TEST(test_vm_col_rgb);
   RUN_TEST(test_vm_math);
   RUN_TEST(test_vm_prng);
+  RUN_TEST(test_vm_bugs);
 
-  //RUN_TEST(test_prng);
   //RUN_TEST(test_temp);
   
   return UNITY_END();

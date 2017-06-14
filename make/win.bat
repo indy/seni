@@ -9,7 +9,7 @@ if "%1" == "wasm" (
       set seni_sources=..\c\wasm.c
       for /f %%F in ('dir /b ..\c\seni_*.c') do call set seni_sources=%%seni_sources%% ..\c\%%F
 
-      call emcc -o seni-wasm.js !seni_sources! -O3 -s WASM=1
+      call emcc -o seni-wasm.js !seni_sources! -O3 -s WASM=1 -s ASSERTIONS=1
    popd
 
 ) else (

@@ -62,7 +62,7 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
   declare_bindings(wl, e);
   
   ast = parser_parse(wl, script);
-  prog = program_allocate(256);
+  prog = program_allocate(1024);
   prog->wl = wl;
   prog->env = e;
 

@@ -34,9 +34,9 @@ void vm_debug_info_print(seni_vm *vm)
 #define DEBUG_INFO_RESET(vm) vm_debug_info_reset(vm)
 #define DEBUG_INFO_PRINT(vm) vm_debug_info_print(vm)
 #define DEBUG_INFO_GET_FROM_HEAP(vm) slab_get(&(vm->heap_slab_info))
-#define DEBUG_INFO_RETURN_TO_HEAP(vm) slab_return(&(vm->heap_slab_info))
+#define DEBUG_INFO_RETURN_TO_HEAP(vm) slab_return(&(vm->heap_slab_info), "RETURN_TO_HEAP")
 #define DEBUG_INFO_GET_FROM_COLOUR(vm) slab_get(&(vm->colour_slab_info))
-#define DEBUG_INFO_RETURN_TO_COLOUR(vm) slab_return(&(vm->colour_slab_info))
+#define DEBUG_INFO_RETURN_TO_COLOUR(vm) slab_return(&(vm->colour_slab_info), "RETURN_TO_COLOUR")
 #else
 // do nothingpa
 #define DEBUG_INFO_RESET(vm)
@@ -1271,13 +1271,13 @@ void slab_get(seni_slab_info *slab_info)
   slab_info->high_water_mark = max_i32(slab_info->high_water_mark, slab_info->delta);
 }
 
-void slab_return(seni_slab_info *slab_info)
+void slab_return(seni_slab_info *slab_info, char *msg)
 {
   slab_info->return_count++;
   slab_info->delta--;
 
   if (slab_info->delta < 0) {
-    SENI_ERROR("slab_return called more often than slab_get");
+    SENI_ERROR("slab_return called more often than slab_get %s", msg);
   }
 }
 
@@ -1382,6 +1382,8 @@ void pretty_print_vm(seni_vm *vm, char* msg)
 
 void vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head);
 
+// i32 isg_col = 0;
+
 seni_colour *colour_get_from_vm(seni_vm *vm)
 {
   seni_colour *head = vm->colour_avail;
@@ -1395,12 +1397,18 @@ seni_colour *colour_get_from_vm(seni_vm *vm)
 
   head->next = NULL;
   head->prev = NULL;
+
+  // isg_col++;
+  // printf("colour_get_from_vm %d\n", isg_col);
   
   return head;
 }
 
 void colour_return_to_vm(seni_vm *vm, seni_colour *colour)
 {
+  // isg_col--;
+  // printf("colour_return_to_vm %d\n", isg_col);
+
   DEBUG_INFO_RETURN_TO_COLOUR(vm);
   DL_APPEND(vm->colour_avail, colour);
 }
@@ -1477,9 +1485,13 @@ void vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
   }
 
   var_rc->value.ref_count--;
+
+  // printf("vector_ref_count_decrement %d\n", var_rc->value.ref_count);
       
   if (var_rc->value.ref_count == 0) {
     var_return_to_heap(vm, var_rc);
+  } else if (var_rc->value.ref_count < 0) {
+    SENI_ERROR("vector_ref_count_decrement: ref_count is %d", var_rc->value.ref_count);
   }
 }
 
@@ -1489,7 +1501,10 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
   if (var_rc->type != VAR_VEC_RC) {
     SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC %d???", vm->sp);
   }
+  
   var_rc->value.ref_count++;
+
+  // printf("vector_ref_count_increment %d\n", var_rc->value.ref_count);
 }
 
 void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
@@ -1502,6 +1517,38 @@ void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
     vector_ref_count_decrement(vm, dest);
   }
   
+  dest->type = src->type;
+
+  seni_value_in_use using = get_value_in_use(src->type);
+  
+  if (using == USE_I) {
+    dest->value.i = src->value.i;
+  } else if (using == USE_F) {
+    dest->value.f = src->value.f;
+  } else if (using == USE_L) {
+    dest->value.l = src->value.l;
+  } else if (using == USE_V) {
+    if (src->type == VAR_VEC_HEAD) {
+      dest->value.v = src->value.v;
+      vector_ref_count_increment(vm, dest);
+    } else {
+      SENI_ERROR("what the fuck?\n");
+    }
+  } else if (using == USE_C) {
+    dest->value.c = src->value.c;
+  } else {
+    SENI_ERROR("unknown seni_value_in_use for safe_var_copy");
+  }
+}
+
+// copying the src onto a var that we're not using (e.g. the top of a stack)
+// only the reference counts of the src should be updated
+void safe_var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src)
+{
+  if (dest == src) {
+    return;
+  }
+
   dest->type = src->type;
 
   seni_value_in_use using = get_value_in_use(src->type);
@@ -1566,6 +1613,11 @@ void safe_var_move(seni_var *dest, seni_var *src)
 void vector_construct(seni_vm *vm, seni_var *head)
 {
   seni_var *rc = var_get_from_heap(vm);    // get a vec_rc
+  if (rc == NULL) {
+    SENI_ERROR("vector_construct");
+    return;
+  }
+  
   rc->type = VAR_VEC_RC;
   rc->value.ref_count = 1;
 
@@ -1578,6 +1630,11 @@ void vector_construct(seni_vm *vm, seni_var *head)
 void append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
 {
   seni_var *v = var_get_from_heap(vm);
+  if (v == NULL) {
+    SENI_ERROR("append_to_vector_f32");
+    return;
+  }
+  
   v->type = VAR_FLOAT;
   v->value.f = val;
 
@@ -1587,6 +1644,10 @@ void append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
 void append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val)
 {
   seni_var *v = var_get_from_heap(vm);
+  if (v == NULL) {
+    SENI_ERROR("append_to_vector_u64");
+    return;
+  }
   v->type = VAR_LONG;
   v->value.l = val;
 
@@ -1596,6 +1657,10 @@ void append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val)
 void append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col)
 {
   seni_var *v = var_get_from_heap(vm);
+  if (v == NULL) {
+    SENI_ERROR("append_to_vector_col");
+    return;
+  }
   v->type = VAR_COLOUR;
   v->value.c = col;
 
@@ -1777,6 +1842,7 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
         // PILE will stack the elemtents in the rhs vector in order,
         // so the lhs values have to be popped in reverse order
         program_emit_opcode_i32(program, PILE, num_children, 0);
+        program->opcode_offset += num_children - 1;
 
         seni_node *child = lhs_node->value.first_child;
 
@@ -2443,6 +2509,8 @@ void compiler_compile(seni_node *ast, seni_program *program)
   }
   
   program_emit_opcode_i32(program, STOP, 0, 0);
+
+  // printf("program compiled: %d lines\n", program->code_size);
 }
 
 // **************************************************
@@ -2468,6 +2536,8 @@ void vm_interpret(seni_vm *vm, seni_program *program)
   i32 iname;
   i32 i;
 
+  // isg_col = 0;
+
   // the function calling convention means that references to LOCAL variables after a
   // CALL need to hop-back down the frame pointers to the real local frame that they
   // should be referencing. (see notes.org: bytecode sequence when calling functions)
@@ -2479,12 +2549,18 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
 
+
   DEBUG_INFO_RESET(vm);
 
   for (;;) {
     // printf("ip: %d\n", ip);
     
     bc = &(program->code[ip++]);
+
+    // #define TRACE_PRINT_OPCODES
+#ifdef TRACE_PRINT_OPCODES
+    pretty_print_bytecode(ip-1, bc); // 0-index the ip so that it matches the pretty print program output
+#endif
     
     switch(bc->op) {
     case PUSH:
@@ -2506,10 +2582,10 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         local = fp + 3;         // get the correct frame's local
         
         src = &(vm->stack[local + bc->arg1.value.i]);
-        safe_var_move(v, src);
+        safe_var_copy_onto_junk(vm, v, src);
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         src = &(vm->stack[vm->global + bc->arg1.value.i]);
-        safe_var_move(v, src);
+        safe_var_copy_onto_junk(vm, v, src);
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // pushing from the void. i.e. create this object
 
@@ -2561,7 +2637,9 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
         if (dest->type == VAR_VEC_HEAD) {
           vector_ref_count_decrement(vm, dest);
-        }
+        } else if (dest->type == VAR_COLOUR) {
+          colour_return_to_vm(vm, dest->value.c);
+        }       
       } else {
         SENI_ERROR("DEC_RC: unknown memory segment type %d", bc->arg0.value.i);
       }
@@ -2624,11 +2702,11 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       vm->fp = fp;
       vm->local = sp;
 
-      // clear ref count on the new local memory
-      // so that during pop we can correctly return memory to the heap
+      // clear the memory that's going to be used for locals
       for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
-        vm->stack[sp].value.ref_count = 0;
-        vm->stack[sp].type = VAR_INT; // anything but VAR_VEC_HEAD
+        // setting all memory as VAR_INT will prevent any weird ref count
+        // stuff when we deal with the RET opcodes later on
+        vm->stack[sp].type = VAR_INT; 
         sp++;
       }
 
@@ -2715,12 +2793,32 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       vm->sp = sp;
 
       native_function_ptr native_func = program->env->function_ptr[iname];
-      native_func(vm, num_args);
+      seni_var var = native_func(vm, num_args);
+      
+      // move vm->sp below the arguments, and decrement the rc of any vectors
+      for (i = 0; i < num_args; i++) {
+        vm->sp -= 2;
+        tmp = &(vm->stack[vm->sp + 1]);
+        if (tmp->type == VAR_VEC_HEAD) {
+          vector_ref_count_decrement(vm, tmp);
+
+          // this is now off the stack, so blow away the vector head
+          tmp->type = VAR_INT;
+          tmp->value.i = 0;
+
+          // IMPORTANT TODO: look at usage of safe_var_move/copy when the destination is
+          // the top of the stack don't increment the reference count on what was there.
+          // might need a third safe_var_??? function
+        }
+      }
+      
+      // put the return value at the top of the stack
+      safe_var_move(&(vm->stack[vm->sp++]), &var);
       
       // sync registers with vm
       sp = vm->sp;
       stack_d = &(vm->stack[sp]);
-      
+
       break;
 
     case APPEND:
@@ -2741,22 +2839,13 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       STACK_PUSH;
       break;
 
-    case NTH:
-      // top of stack is nth index
-      // top-1 is a vector
-      // pop stack and push vector[nth]
-      SENI_ERROR("NTH implement");
-      break;
-
     case PILE:
       num_args = bc->arg0.value.i;
       // top of the stack contains a vector
       // take num_args elements from the vector and push them onto the stack
       STACK_POP;
-
       seni_var _vec;
-      safe_var_copy(vm, &_vec, v);
-
+      safe_var_copy_onto_junk(vm, &_vec, v);
       src = _vec.value.v->next;
       for (i = 0; i < num_args; i++) {
         STACK_PUSH;
@@ -2764,7 +2853,6 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 
         src = src->next;
       }
-
       vector_ref_count_decrement(vm, &_vec);
       break;
 
