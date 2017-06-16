@@ -38,46 +38,59 @@ typedef struct {
   i32 name_1 = label_1->value.i
 
 #define READ_STACK_ARGS_END };
-// #define READ_STACK_ARGS_END } vm->sp -= (num_args * 2);
 
-#define READ_STACK_ARG_F32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.f; }
-#define READ_STACK_ARG_I32(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.i; }
-#define READ_STACK_ARG_COL(n) if (name_1 == g_keyword_iname_##n) { n = value_1->value.c; }
+
+// CHECK_STACK_ARGS performs run-time checks to make sure that the seni_var has the correct type
+//
+#define CHECK_STACK_ARGS
+
+#ifdef CHECK_STACK_ARGS
+#define IS_F32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected f32 for: %s", #n); }
+#define IS_I32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected i32 for: %s", #n); }
+#define IS_COL(n) if (value_1->type != VAR_COLOUR) { SENI_ERROR("expected colour for: %s", #n); }
+#define IS_LONG(n) if (value_1->type != VAR_LONG) { SENI_ERROR("expected long for: %s", #n); }
+#else
+#define IS_F32
+#define IS_I32
+#define IS_COL
+#define IS_LONG
+#endif
+
+#define READ_STACK_ARG_F32(n) if (name_1 == g_keyword_iname_##n) { IS_F32(n); n = value_1->value.f; }
+#define READ_STACK_ARG_I32(n) if (name_1 == g_keyword_iname_##n) { IS_I32(n); n = value_1->value.i; }
+#define READ_STACK_ARG_COL(n) if (name_1 == g_keyword_iname_##n) { IS_COL(n); n = value_1->value.c; }
 #define READ_STACK_ARG_VAR(n) if (name_1 == g_keyword_iname_##n) { n = value_1; }
 
 // traverse through the VAR_VEC_HEAD, VAR_VEC_RC nodes down into the values
 // todo: make a seni_var type that can hold VEC2
-#define READ_STACK_ARG_VEC2(n) if (name_1 == g_keyword_iname_##n) {    \
-    tmp_1 = (value_1->value.v)->next;                                  \
-    n[0] = tmp_1->value.f;                                             \
-    n[1] = tmp_1->next->value.f;                                       \
-  }
-
-// this is probably obsolete now. It was used to parse colours
-// when they were just represented as a vector of 4 floats
-//
-#define READ_STACK_ARG_VEC4(n) if (name_1 == g_keyword_iname_##n) {    \
-    tmp_1 = (value_1->value.v)->next;                                  \
-    n[0] = tmp_1->value.f;                                             \
-    tmp_1 = tmp_1->next;                                               \
-    n[1] = tmp_1->value.f;                                             \
-    tmp_1 = tmp_1->next;                                               \
-    n[2] = tmp_1->value.f;                                             \
-    tmp_1 = tmp_1->next;                                               \
-    n[3] = tmp_1->value.f;                                             \
+#define READ_STACK_ARG_VEC2(n) if (name_1 == g_keyword_iname_##n) {     \
+    tmp_1 = value_1;                                                    \
+    value_1 = (value_1->value.v)->next;                                 \
+    IS_F32(#n);                                                         \
+    n[0] = value_1->value.f;                                            \
+    value_1 = value_1->next;                                            \
+    IS_F32(#n);                                                         \
+    n[1] = value_1->value.f;                                            \
+    value_1 = tmp_1;                                                    \
   }
 
 #define READ_STACK_ARG_PRNG(n) if (name_1 == g_keyword_iname_##n) {     \
-    tmp_1 = (value_1->value.v)->next;                                   \
-    n.state = tmp_1->value.l;                                           \
-    n.seni_var_state = tmp_1;                                           \
-    tmp_1 = tmp_1->next;                                                \
-    n.inc = tmp_1->value.l;                                             \
-    n.seni_var_inc = tmp_1;                                             \
-    tmp_1 = tmp_1->next;                                                \
-    n.min = tmp_1->value.f;                                             \
-    tmp_1 = tmp_1->next;                                                \
-    n.max = tmp_1->value.f;                                             \
+    tmp_1 = value_1;                                                    \
+    value_1 = (value_1->value.v)->next;                                 \
+    IS_LONG(#n);                                                        \
+    n.state = value_1->value.l;                                         \
+    n.seni_var_state = value_1;                                         \
+    value_1 = value_1->next;                                            \
+    IS_LONG(#n);                                                        \
+    n.inc = value_1->value.l;                                           \
+    n.seni_var_inc = value_1;                                           \
+    value_1 = value_1->next;                                            \
+    IS_F32(#n);                                                         \
+    n.min = value_1->value.f;                                           \
+    value_1 = value_1->next;                                            \
+    IS_F32(#n);                                                         \
+    n.max = value_1->value.f;                                           \
+    value_1 = tmp_1;                                                    \
   }
 
 #define READ_STACK_ARG_COORD4(n) if (name_1 == g_keyword_iname_##n) { \
