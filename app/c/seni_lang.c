@@ -1,6 +1,6 @@
 #include "seni_lang.h"
-#include "seni_matrix.h"
 #include "seni_config.h"
+#include "seni_matrix.h"
 #include "seni_mathutil.h"
 #include <string.h>
 #include <stdlib.h>
@@ -38,7 +38,7 @@ void vm_debug_info_print(seni_vm *vm)
 #define DEBUG_INFO_GET_FROM_COLOUR(vm) slab_get(&(vm->colour_slab_info))
 #define DEBUG_INFO_RETURN_TO_COLOUR(vm) slab_return(&(vm->colour_slab_info), "RETURN_TO_COLOUR")
 #else
-// do nothingpa
+// do nothing
 #define DEBUG_INFO_RESET(vm)
 #define DEBUG_INFO_PRINT(vm)
 #define DEBUG_INFO_GET_FROM_HEAP(vm)
@@ -1701,6 +1701,8 @@ i32 add_local_mapping(seni_program *program, i32 wlut_value)
       return i;
     }
   }
+
+  SENI_ERROR("add_local_mapping failed: increase MEMORY_LOCAL_SIZE from %d", MEMORY_LOCAL_SIZE);  
   return -1;
 }
 
@@ -1730,6 +1732,8 @@ i32 add_global_mapping(seni_program *program, i32 wlut_value)
       return i;
     }
   }
+
+  SENI_ERROR("add_global_mapping failed: increase MEMORY_GLOBAL_SIZE from %d", MEMORY_GLOBAL_SIZE);
   return -1;
 }
 
@@ -1802,6 +1806,10 @@ i32 pop_from_stack_to_memory(seni_program *program, seni_node *node, seni_memory
     address = get_local_mapping(program, node->value.i);
     if (address == -1) {
       address = add_local_mapping(program, node->value.i);
+      if (address == -1) {
+        // failed to allocate
+        SENI_ERROR("pop_from_stack_to_memory: allocation failure");
+      }
     }
     program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, address);
   } else if (memory_segment_type == MEM_SEG_GLOBAL) {
@@ -1821,7 +1829,7 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
 {
   seni_node *lhs_node = safe_next(ast);
   seni_node *value_node;
-  i32 i;
+  i32 i, m;
 
   while (lhs_node != NULL) {
 
@@ -1830,8 +1838,11 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
 
     if (lhs_node->type == NODE_NAME) {
       // define foo 10
-      pop_from_stack_to_memory(program, lhs_node, memory_segment_type);
-
+      m = pop_from_stack_to_memory(program, lhs_node, memory_segment_type);
+      if (m == -1) {
+        SENI_ERROR("compile_define: allocation failure in define");
+        return NULL;
+      }
     } else if (lhs_node->type == NODE_VECTOR) {
       // define [a b] (something-that-returns-a-vector ...)
 
@@ -1851,7 +1862,11 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
           child = safe_next(child);
         }
         for (i = 0; i < num_children; i++) {
-          pop_from_stack_to_memory(program, child, memory_segment_type);
+          m = pop_from_stack_to_memory(program, child, memory_segment_type);
+          if (m == -1) {
+            SENI_ERROR("compile_define: allocation failure during destructure");
+            return NULL;
+          }
           child = safe_prev(child);
         }
         /*        
@@ -1977,6 +1992,10 @@ void compile_loop(seni_node *ast, seni_program *program)
   // set looping variable x to 'from' value
   compile(from_node, program);
   i32 looper_address = pop_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
+  if (looper_address == -1) {
+    SENI_ERROR("compile_loop: allocation failure");
+    return;
+  }
 
   // compare looping variable against exit condition
   // and jump if looping variable >= exit value
@@ -2549,7 +2568,6 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
 
-
   DEBUG_INFO_RESET(vm);
 
   for (;;) {
@@ -2557,7 +2575,6 @@ void vm_interpret(seni_vm *vm, seni_program *program)
     
     bc = &(program->code[ip++]);
 
-    // #define TRACE_PRINT_OPCODES
 #ifdef TRACE_PRINT_OPCODES
     pretty_print_bytecode(ip-1, bc); // 0-index the ip so that it matches the pretty print program output
 #endif

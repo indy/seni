@@ -3,6 +3,7 @@
 */
 #include "unity/unity.h"
 
+#include "seni_config.h"
 #include "seni_types.h"
 #include "seni_mathutil.h"
 #include "seni_lang.h"
@@ -15,10 +16,6 @@
 #include "stdio.h"
 #include <stdlib.h>
 #include <string.h>
-
-// define EXECUTE_BYTECODE to run the code, otherwise it will be printed
-//
-#define EXECUTE_BYTECODE
 
 /* way of working with boolean and TEST macros */
 bool test_true = true;

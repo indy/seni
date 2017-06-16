@@ -1,7 +1,7 @@
-* TODO [0/11]
-  1. [ ] add checks to parsing code in bind
-  2. [ ] add checks about number of local variables declared
-  3. [ ] add checks about number of global variables declared
+* TODO [3/11]
+  1. [X] add checks to parsing code in bind
+  2. [X] add checks about number of local variables declared
+  3. [X] add checks about number of global variables declared
   4. [ ] functions will not be nestable
   5. [ ] manipulate vectors
   6. [ ] canvas/width canvas/height bind to global mappings

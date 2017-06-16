@@ -1,5 +1,5 @@
 #include "seni_bind.h"
-
+#include "seni_config.h"
 #include "seni_shapes.h"
 #include "seni_buffer.h"
 #include "seni_lang.h"
@@ -38,11 +38,6 @@ typedef struct {
   i32 name_1 = label_1->value.i
 
 #define READ_STACK_ARGS_END };
-
-
-// CHECK_STACK_ARGS performs run-time checks to make sure that the seni_var has the correct type
-//
-#define CHECK_STACK_ARGS
 
 #ifdef CHECK_STACK_ARGS
 #define IS_F32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected f32 for: %s", #n); }
