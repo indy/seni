@@ -854,7 +854,7 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     printf("debug_id:%d id:%d %s : %.2f %s\n", var->debug_id, var->id,  type, var->value.f, msg);
     break;
   case USE_L:
-    printf("debug_id:%d id:%d %s : %llu %s\n", var->debug_id, var->id, type, var->value.l, msg);
+    printf("debug_id:%d id:%d %s : %llu %s\n", var->debug_id, var->id, type, (long long unsigned int)(var->value.l), msg);
     break;
   case USE_V:
     if (var->type == VAR_VEC_HEAD) {
@@ -877,7 +877,7 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     printf("%s : %.2f %s\n", type, var->value.f, msg);
     break;
   case USE_L:
-    printf("%s : %llu %s\n", type, var->value.l, msg);
+    printf("%s : %llu %s\n", type, (long long unsigned int)(var->value.l), msg);
     break;
   case USE_V:
     printf("%s : length %d %s\n", type, var_vector_length(var), msg);
@@ -1174,7 +1174,7 @@ void pretty_print_bytecode(i32 ip, seni_bytecode *b)
       printf("%.2f\n", b->arg1.value.f);
       break;
     case USE_L:
-      printf("%llu\n", b->arg1.value.l);
+      printf("%llu\n", (long long unsigned int)(b->arg1.value.l));
       break;
     case USE_V:
       if (b->arg1.type == VAR_VEC_HEAD) {
