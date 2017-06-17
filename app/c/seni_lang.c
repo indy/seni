@@ -76,7 +76,7 @@ i32 lookup_name(char **words, i32 word_count, i32 offset, char *string, size_t l
       }
     }
     /* searched all of 'string' and the early exit wasn't triggered */
-    if (name[j] == '\0' && found == true) {
+    if (name[j] == '\0' && found) {
       return i + offset;
     }
   }
@@ -182,24 +182,24 @@ bool is_period(char c)
 
 bool is_whitespace(char c)
 {
-  return (c == ' ' || c == '\t' || c == '\n' || c == ',') ? true : false;
+  return c == ' ' || c == '\t' || c == '\n' || c == ',';
 }
 
 bool is_digit(char c)
 {
-  return (c >= '0' && c <= '9') ? true : false;
+  return c >= '0' && c <= '9';
 }
 
 bool is_alpha(char c)
 {
-  return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) ? true : false;
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
 bool is_symbol(char c)
 {
-  return (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' ||
-          c == '!' || c == '@' || c == '#' || c == '$' || c == '%' ||
-          c == '^' || c == '&' || c == '<' || c == '>' || c == '?') ? true : false;
+  return c == '+' || c == '-' || c == '*' || c == '/' || c == '=' ||
+    c == '!' || c == '@' || c == '#' || c == '$' || c == '%' ||
+    c == '^' || c == '&' || c == '<' || c == '>' || c == '?';
 }
 
 bool is_list_start(char c)
@@ -502,7 +502,7 @@ seni_node *consume_boolean(char **src, bool val)
   node->type = NODE_BOOLEAN;
   node->value.i = val;
 
-  if (val == true) {
+  if (val) {
     (*src) += 4;                /* 'true' */
   } else {
     (*src) += 5;                /* 'false' */
@@ -1425,7 +1425,7 @@ seni_var *var_get_from_heap(seni_vm *vm)
     return NULL;
   }
 
-  if (head->allocated == true) {
+  if (head->allocated) {
     SENI_ERROR("how did an already allocated seni_var get on the heap?");
     pretty_print_seni_var(head, "ERROR: var_get_from_heap");
     return NULL;
@@ -2501,7 +2501,7 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // compile the top-level functions
   seni_node *n = ast;
   while (n != NULL) {
-    if (is_list_beginning_with(n, g_keyword_iname_fn) == true) {
+    if (is_list_beginning_with(n, g_keyword_iname_fn)) {
       n = compile(n, program);
     } else {
       n = safe_next(n);
@@ -2518,7 +2518,7 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // compile the top-level defines
   n = ast;
   while (n != NULL) {
-    if (is_list_beginning_with(n, g_keyword_iname_define) == true) {
+    if (is_list_beginning_with(n, g_keyword_iname_define)) {
       compile_define(n->value.first_child, program, MEM_SEG_GLOBAL);
       n = safe_next(n);
     } else {

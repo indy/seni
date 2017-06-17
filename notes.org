@@ -1,13 +1,9 @@
 * TODO [0/6]
-  1. [ ] structs for compile info and runtime info
-  2. [ ] seni_env
-  3. [ ] interp/fn interp/bezier
+  1. [ ] interp/fn interp/bezier
+  2. [ ] structs for compile info and runtime info
+  3. [ ] seni_env
   4. [ ] 'in' paramaeter for loop ?
-  5. [ ] how would a stack machine compile first class functions? could there be alternatives?
-  6. [ ] remove hsv colour space? - would this get rid of the illegal state?
-
-
-during compilation, have a preamble phase in which the globals are defined
+  5. [ ] remove hsv colour space? - would this get rid of the illegal state?
 
 * first class functions / ghetto-equivalents
   don't know how to implement closures in a stack vm
