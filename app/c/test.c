@@ -516,6 +516,25 @@ void timing(void)
   }
 }
 
+// code that exposed bugs - but was later fixed
+void test_vm_bugs(void)
+{
+  // messed up decrementing ref counts for colours
+  VM_COMPILE_F32("(fn (x colour: (col/rgb)) (+ 1 1)) (x colour: (col/rgb))", 2.0f);
+
+  // tmp in interpreter was decrementing ref count of previously held value
+     VM_COMPILE_F32("(fn (huh at: 0) 4)\
+ (fn (x colour: (col/rgb)              \
+        volatility: 0                  \
+        passes: 1                      \
+        seed: 341)                     \
+   42)                                 \
+ (x colour: (col/rgb))                 \
+ (huh at: 5)", 4.0f);
+
+  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/take num: 3 from: rng)))) (f) 1", 1.0f);
+}
+
 void test_vm_bytecode(void)
 {
   VM_COMPILE_F32("(define a 42) (define b 52) 10", 10);
@@ -678,28 +697,10 @@ void test_vm_prng(void)
   
 }
 
-// code that exposed bugs - but was later fixed
-void test_vm_bugs(void)
+void test_vm_environmental(void)
 {
-  // messed up decrementing ref counts for colours
-  VM_COMPILE_F32("(fn (x colour: (col/rgb)) (+ 1 1)) (x colour: (col/rgb))", 2.0f);
-
-  // tmp in interpreter was decrementing ref count of previously held value
-     VM_COMPILE_F32("(fn (huh at: 0) 4)\
- (fn (x colour: (col/rgb)              \
-        volatility: 0                  \
-        passes: 1                      \
-        seed: 341)                     \
-   42)                                 \
- (x colour: (col/rgb))                 \
- (huh at: 5)", 4.0f);
-
-  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/take num: 3 from: rng)))) (f) 1", 1.0f);
-}
-
-void test_temp(void)
-{
-
+  VM_COMPILE_F32("canvas/width", 1000.0f);
+  VM_COMPILE_F32("canvas/height", 1000.0f);
 }
 
 int main(void)
@@ -716,6 +717,7 @@ int main(void)
   RUN_TEST(test_colour);
   
   // vm
+  RUN_TEST(test_vm_bugs);
   RUN_TEST(test_vm_bytecode);
   RUN_TEST(test_vm_callret);
   RUN_TEST(test_vm_native);  
@@ -724,9 +726,7 @@ int main(void)
   RUN_TEST(test_vm_col_rgb);
   RUN_TEST(test_vm_math);
   RUN_TEST(test_vm_prng);
-  RUN_TEST(test_vm_bugs);
-
-  //RUN_TEST(test_temp);
+  RUN_TEST(test_vm_environmental);
   
   return UNITY_END();
 }

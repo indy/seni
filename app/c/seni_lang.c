@@ -2069,7 +2069,7 @@ i32 index_of_keyword(const char *keyword, seni_word_lut *wl)
   return -1;
 }
 
-void register_top_level_fns(seni_node *ast, seni_program *program, i32 fn_index)
+void register_top_level_fns(seni_node *ast, seni_program *program)
 {
   i32 i;
   i32 num_fns = 0;
@@ -2088,7 +2088,7 @@ void register_top_level_fns(seni_node *ast, seni_program *program, i32 fn_index)
     }      
 
     seni_node *fn_keyword = ast->value.first_child;
-    if (!(fn_keyword->type == NODE_NAME && fn_keyword->value.i == fn_index)) {
+    if (!(fn_keyword->type == NODE_NAME && fn_keyword->value.i == g_keyword_iname_fn)) {
       ast = safe_next(ast);
       continue;
     }
@@ -2147,7 +2147,7 @@ void register_names_in_define(seni_node *lhs, seni_program *program)
   }  
 }
 
-void register_top_level_defines(seni_node *ast, seni_program *program, i32 define_index)
+void register_top_level_defines(seni_node *ast, seni_program *program)
 {
   // register top level fns
   while (ast != NULL) {
@@ -2158,7 +2158,7 @@ void register_top_level_defines(seni_node *ast, seni_program *program, i32 defin
     }
 
     seni_node *define_keyword = ast->value.first_child;
-    if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == define_index)) {
+    if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == g_keyword_iname_define)) {
       ast = safe_next(ast);
       continue;
     }
@@ -2464,6 +2464,24 @@ bool is_list_beginning_with(seni_node *ast, i32 index)
   return false;  
 }
 
+
+void compile_preamble_f32(seni_program *program, i32 iname, f32 value)
+{
+  program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, value);
+  i32 address = get_global_mapping(program, iname);
+  if (address == -1) {
+    address = add_global_mapping(program, iname);
+  }
+  program_emit_opcode_i32(program, POP, MEM_SEG_GLOBAL, address);
+}
+
+void compile_preamble(seni_program *program)
+{
+  compile_preamble_f32(program, g_keyword_iname_canvas_width, 1000.0f);
+  compile_preamble_f32(program, g_keyword_iname_canvas_height, 1000.0f);
+}
+
+
 // compiles the ast into bytecode for a stack based VM
 //
 void compiler_compile(seni_node *ast, seni_program *program)
@@ -2473,36 +2491,34 @@ void compiler_compile(seni_node *ast, seni_program *program)
   program->current_fn_info = NULL;
 
   // register top-level functions
-  i32 fn_index = index_of_keyword("fn", program->wl);
-  register_top_level_fns(ast, program, fn_index);
+  register_top_level_fns(ast, program);
 
   // register top-level defines
-  i32 define_index = index_of_keyword("define", program->wl);
-  register_top_level_defines(ast, program, define_index);
+  register_top_level_defines(ast, program);
 
   seni_bytecode *start = program_emit_opcode_i32(program, JUMP, 0, 0);
-  bool found_start = false;
 
   // compile the top-level functions
   seni_node *n = ast;
   while (n != NULL) {
-    if (is_list_beginning_with(n, fn_index) == true) {
+    if (is_list_beginning_with(n, g_keyword_iname_fn) == true) {
       n = compile(n, program);
     } else {
       n = safe_next(n);
     }
   }
 
+  // compile the global defines common to all seni programs
+  // (e.g. canvas/width)
+  // this is where the program will start from
+  start->arg0.type = VAR_INT;
+  start->arg0.value.i = program->code_size;
+  compile_preamble(program);
+
   // compile the top-level defines
   n = ast;
   while (n != NULL) {
-    if (is_list_beginning_with(n, define_index) == true) {
-      // start at the first top-level define if there is one
-      if (found_start == false) {
-        start->arg0.type = VAR_INT;
-        start->arg0.value.i = program->code_size;
-        found_start = true;
-      }
+    if (is_list_beginning_with(n, g_keyword_iname_define) == true) {
       compile_define(n->value.first_child, program, MEM_SEG_GLOBAL);
       n = safe_next(n);
     } else {
@@ -2513,14 +2529,8 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // compile all other top-level forms
   n = ast;
   while (n != NULL) {
-    if (is_list_beginning_with(n, fn_index) == false &&
-        is_list_beginning_with(n, define_index) == false) {
-      // if there have been no global defines, start at the first top-level form that's not a function declaration
-      if (found_start == false) {
-        start->arg0.type = VAR_INT;
-        start->arg0.value.i = program->code_size;
-        found_start = true;
-      }
+    if (is_list_beginning_with(n, g_keyword_iname_fn) == false &&
+        is_list_beginning_with(n, g_keyword_iname_define) == false) {
       n = compile(n, program);
     } else {
       n = safe_next(n);
