@@ -6,6 +6,7 @@
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
 #include "seni_prng.h"
+#include "seni_interp.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -883,6 +884,118 @@ seni_var bind_prng_perlin(seni_vm *vm, i32 num_args)
   return ret;
 }
 
+seni_var bind_interp_fn(seni_vm *vm, i32 num_args)
+{
+  SENI_ERROR("TODO: implement");
+  return g_var_true;
+}
+
+seni_var bind_interp_call(seni_vm *vm, i32 num_args)
+{
+  SENI_ERROR("TODO: implement");
+  return g_var_true;
+}
+
+seni_var bind_interp_cos(seni_vm *vm, i32 num_args)
+{
+  f32 amplitude = 1.0f;
+  f32 frequency = 1.0f;
+  f32 t = 1.0f;                 // t goes from 0 to TAU
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(amplitude);
+  READ_STACK_ARG_F32(frequency);
+  READ_STACK_ARG_F32(t);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+  f32 value = seni_interp_cos(amplitude, frequency, t);
+  f32_as_var(&ret, value);
+
+  return ret;
+}
+
+seni_var bind_interp_sin(seni_vm *vm, i32 num_args)
+{
+  f32 amplitude = 1.0f;
+  f32 frequency = 1.0f;
+  f32 t = 1.0f;                 // t goes from 0 to TAU
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(amplitude);
+  READ_STACK_ARG_F32(frequency);
+  READ_STACK_ARG_F32(t);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+  f32 value = seni_interp_sin(amplitude, frequency, t);
+  f32_as_var(&ret, value);
+
+  return ret;
+}
+
+seni_var bind_interp_bezier(seni_vm *vm, i32 num_args)
+{
+  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
+  f32 t = 1.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COORD4(coords);
+  READ_STACK_ARG_F32(t);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+  v2 point = seni_interp_bezier(coords, t);
+
+  // push the return values onto the stack as a vector
+  vector_construct(vm, &ret);
+  append_to_vector_f32(vm, &ret, point.x);
+  append_to_vector_f32(vm, &ret, point.y);
+  return ret;
+}
+
+seni_var bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
+{
+  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
+  f32 t = 1.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COORD4(coords);
+  READ_STACK_ARG_F32(t);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+  v2 point = seni_interp_bezier_tangent(coords, t);
+
+  // push the return values onto the stack as a vector
+  vector_construct(vm, &ret);
+  append_to_vector_f32(vm, &ret, point.x);
+  append_to_vector_f32(vm, &ret, point.y);
+  return ret;
+}
+
+seni_var bind_interp_circle(seni_vm *vm, i32 num_args)
+{
+  f32 position[] = {0.0f, 0.0f};
+  f32 radius = 1.0f;
+  f32 t = 0.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(position);
+  READ_STACK_ARG_F32(radius);
+  READ_STACK_ARG_F32(t);
+  READ_STACK_ARGS_END;
+
+  seni_var ret;
+  v2 point = seni_interp_circle(position, radius, t);
+
+  // push the return values onto the stack as a vector
+  vector_construct(vm, &ret);
+  append_to_vector_f32(vm, &ret, point.x);
+  append_to_vector_f32(vm, &ret, point.y);
+  return ret;
+}
+
 seni_var  bind_debug_print(seni_vm *vm, i32 num_args)
 {
   seni_var *val = NULL;
@@ -909,7 +1022,7 @@ seni_var bind_nth(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_END;
 
   if (from->type != VAR_VEC_HEAD) {
-    printf("wtf\n");
+    SENI_ERROR("wtf\n");
     return g_var_true;
   }
 
@@ -977,6 +1090,18 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_binding(wlut, e, "prng/take", &bind_prng_take);
   declare_binding(wlut, e, "prng/take-1", &bind_prng_take_1);
   declare_binding(wlut, e, "prng/perlin", &bind_prng_perlin); // was prng/perlin-signed
+
+  declare_binding(wlut, e, "interp/fn", &bind_interp_fn);
+  declare_binding(wlut, e, "interp/call", &bind_interp_call);
+  declare_binding(wlut, e, "interp/cos", &bind_interp_cos);
+  declare_binding(wlut, e, "interp/sin", &bind_interp_sin);
+  declare_binding(wlut, e, "interp/bezier", &bind_interp_bezier);
+  declare_binding(wlut, e, "interp/bezier-tangent", &bind_interp_bezier_tangent);
+  declare_binding(wlut, e, "interp/circle", &bind_interp_circle);
+
+  // map
+
+  // path/???
 
   declare_binding(wlut, e, "debug/print", &bind_debug_print);
 

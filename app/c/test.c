@@ -703,6 +703,11 @@ void test_vm_environmental(void)
   VM_COMPILE_F32("canvas/height", 1000.0f);
 }
 
+void test_vm_temp(void)
+{
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 0 from: foo)) (x)", 0.27065f);
+}
+
 int main(void)
 {
   // timing();
@@ -727,6 +732,8 @@ int main(void)
   RUN_TEST(test_vm_math);
   RUN_TEST(test_vm_prng);
   RUN_TEST(test_vm_environmental);
+
+  // RUN_TEST(test_vm_temp);
   
   return UNITY_END();
 }
