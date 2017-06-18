@@ -1486,7 +1486,7 @@ void vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
 
   var_rc->value.ref_count--;
 
-  // printf("vector_ref_count_decrement %d\n", var_rc->value.ref_count);
+  // printf("vector_ref_count_decrement %p: %d\n", var_rc, var_rc->value.ref_count);
       
   if (var_rc->value.ref_count == 0) {
     var_return_to_heap(vm, var_rc);
@@ -1504,7 +1504,15 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
   
   var_rc->value.ref_count++;
 
-  // printf("vector_ref_count_increment %d\n", var_rc->value.ref_count);
+#ifdef WHAT_THE_FUCK_MAC_HACK
+  /* 
+     this printf should have absolutely no effect, but it does prevent some of the 
+     unit tests failing on OSX
+   */
+  printf("");
+#endif
+
+  // printf("vector_ref_count_increment %p: %d\n", var_rc, var_rc->value.ref_count);
 }
 
 void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
@@ -2581,8 +2589,6 @@ void vm_interpret(seni_vm *vm, seni_program *program)
   DEBUG_INFO_RESET(vm);
 
   for (;;) {
-    // printf("ip: %d\n", ip);
-    
     bc = &(program->code[ip++]);
 
 #ifdef TRACE_PRINT_OPCODES
@@ -2776,6 +2782,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 
       num_args = vm->stack[vm->fp + 2].value.i;
 
+      //printf("RET-a\n");
       // decrement ref count on any locally defined vectors
       for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
         tmp = &(vm->stack[vm->local + i]);
@@ -2785,7 +2792,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
           colour_return_to_vm(vm, tmp->value.c);
         }
       }
-
+      //printf("RET-b\n");
       for (i = 0; i < num_args; i++) {
         tmp = &(vm->stack[vm->fp - ((i+1) * 2)]);
         if (tmp->type == VAR_VEC_HEAD) {
@@ -2794,7 +2801,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
           colour_return_to_vm(vm, tmp->value.c);
         }
       }
-
+      //printf("RET-c\n");
       // update vm
       vm->sp = vm->fp - (num_args * 2);
       vm->ip = vm->stack[vm->fp + 1].value.i;

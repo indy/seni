@@ -17,6 +17,13 @@
 // #define TRACE_PRINT_OPCODES
 
 
+// tests that pass on both windows and unix fail on macs
+// they complain of ref_count becoming negative
+// the fix is to add a useless printf("") to vector_ref_count_increment
+// fuck knows why this is happening
+#define WHAT_THE_FUCK_MAC_HACK
+
+
 #ifdef SENI_DEBUG_MODE
 #include <stdio.h>
 #define SENI_ERROR(f_, ...) printf("ERROR: [%s %d] ", __FILE__, __LINE__); printf((f_), ##__VA_ARGS__); printf("\n")
