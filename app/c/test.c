@@ -701,6 +701,7 @@ void test_vm_environmental(void)
 {
   VM_COMPILE_F32("canvas/width", 1000.0f);
   VM_COMPILE_F32("canvas/height", 1000.0f);
+
 }
 
 void test_vm_temp(void)

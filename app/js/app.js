@@ -49,31 +49,15 @@ function configureWasmModule() {
     return;
   }
 
-  Shabba.buffer_fill = Module.cwrap('buffer_fill',
-                                    'number', ['number', 'number', 'string']);
-  Shabba.render = Module.cwrap('render', 'number',
-                               ['number', 'number',
-                                'number', 'number', 'string']);
+  Shabba.compile_to_render_packets = Module.cwrap('compile_to_render_packets',
+                                                  'number', ['string']);
 
-  Shabba.floatSize = 4; // size in bytes of an f32
-  Shabba.maxVertices = 10000;
-
-  // TODO: remember to free these calls to malloc
-
-  Shabba.ptr = Module._malloc(Shabba.maxVertices * Shabba.floatSize);
-
-
-  Shabba.vbufElementSize = 2;
-  const vSize = Shabba.maxVertices * Shabba.floatSize * Shabba.vbufElementSize;
-  Shabba.vbuf = Module._malloc(vSize);
-
-  Shabba.cbufElementSize = 4;
-  const cSize = Shabba.maxVertices * Shabba.floatSize * Shabba.cbufElementSize;
-  Shabba.cbuf = Module._malloc(cSize);
-
-  Shabba.tbufElementSize = 2;
-  const tSize = Shabba.maxVertices * Shabba.floatSize * Shabba.tbufElementSize;
-  Shabba.tbuf = Module._malloc(tSize);
+  Shabba.get_render_packet_vbuf = Module.cwrap('get_render_packet_vbuf',
+                                               'number', ['number']);
+  Shabba.get_render_packet_cbuf = Module.cwrap('get_render_packet_cbuf',
+                                               'number', ['number']);
+  Shabba.get_render_packet_tbuf = Module.cwrap('get_render_packet_tbuf',
+                                               'number', ['number']);
 }
 
 /*
@@ -349,16 +333,17 @@ function renderScriptWithWASM(state, imageElement) {
 
   const script = state.get('script');
 
-  const numVertices = Shabba.render(Shabba.vbuf, Shabba.cbuf, Shabba.tbuf,
-                                    Shabba.maxVertices,
-                                    script);
+  const numVertices = Shabba.compile_to_render_packets(script);
+  const vbuf = Shabba.get_render_packet_vbuf(0);
+  const cbuf = Shabba.get_render_packet_cbuf(0);
+  const tbuf = Shabba.get_render_packet_tbuf(0);
 
   // HACK in a buffers like object to pass into the renderer
   const buffers = [];
   const buffer = {};
-  buffer.vbuf = pointerToFloat32Array(Shabba.vbuf, numVertices * 2);
-  buffer.cbuf = pointerToFloat32Array(Shabba.cbuf, numVertices * 4);
-  buffer.tbuf = pointerToFloat32Array(Shabba.tbuf, numVertices * 2);
+  buffer.vbuf = pointerToFloat32Array(vbuf, numVertices * 2);
+  buffer.cbuf = pointerToFloat32Array(cbuf, numVertices * 4);
+  buffer.tbuf = pointerToFloat32Array(tbuf, numVertices * 2);
   buffer.numVertices = numVertices;
   buffers.push(buffer);
 

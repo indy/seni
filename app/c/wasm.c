@@ -1,31 +1,77 @@
 #include <emscripten/emscripten.h>
+#include <stdlib.h>
 #include "seni_buffer.h"
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
 
 #include "seni_lang.h"
 
-f32 mult = 3.2f;
-int lensub = 0;
+// --------------------------------------------------------------------------------
+
+int max_vertices = 10000;
+
+f32 *g_vbuf = NULL;
+f32 *g_cbuf = NULL;
+f32 *g_tbuf = NULL;
 
 EMSCRIPTEN_KEEPALIVE
-int buffer_fill(f32* array, int length, char *script)
+f32 *malloc_vbuf(int size)
 {
-  printf("the script is %s\n", script);
-  
-  printf("array length is %d\n", length);
+  f32 *mem = (f32 *)malloc(size);
 
-  for (int i=0; i<length; i++) {
-    printf("array[%d] = %.2f\n", i, array[i]);
-    array[i] = (f32)i * mult;
-  }
-
-  int retlength = length - lensub;
-  lensub++;
-  mult += 1.2f;
-  
-  return retlength;
+  return mem;
 }
+
+EMSCRIPTEN_KEEPALIVE
+int get_max_vertices()
+{
+  // TODO: IMPLEMENT
+  return 42;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int get_num_render_packets()
+{
+  // TODO: IMPLEMENT
+  return 42;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int get_render_packet_num_vertices()
+{
+  // TODO: IMPLEMENT
+  return 42;
+}
+
+EMSCRIPTEN_KEEPALIVE
+f32 *get_render_packet_vbuf(int packet_number)
+{
+  return g_vbuf;
+}
+
+EMSCRIPTEN_KEEPALIVE
+f32 *get_render_packet_cbuf(int packet_number)
+{
+  return g_cbuf;
+}
+
+EMSCRIPTEN_KEEPALIVE
+f32 *get_render_packet_tbuf(int packet_number)
+{
+  return g_tbuf;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void free_all_render_packets()
+{
+  // TODO: IMPLEMENT
+}
+
+// --------------------------------------------------------------------------------
+
+
+
+
 
 /*
   fill up the seni_buffer with data during the eval phase
@@ -39,7 +85,7 @@ int buffer_fill(f32* array, int length, char *script)
 // returns the number of vertices to render
 
 EMSCRIPTEN_KEEPALIVE
-int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
+int compile_to_render_packets(char *script)
 {
   seni_word_lut *wl = NULL;
   seni_env *e = NULL;
@@ -48,11 +94,19 @@ int render(f32* vbuf, f32* cbuf, f32* tbuf, int max_vertices, char *script)
   seni_vm *vm = NULL;
   seni_buffer buffer;
 
+
+  i32 vbuf_element_size = 2;
+  g_vbuf = (f32 *)malloc(max_vertices * sizeof(f32) * vbuf_element_size);
+  i32 cbuf_element_size = 4;
+  g_cbuf = (f32 *)malloc(max_vertices * sizeof(f32) * cbuf_element_size);
+  i32 tbuf_element_size = 2;
+  g_tbuf = (f32 *)malloc(max_vertices * sizeof(f32) * tbuf_element_size);
+
   buffer.num_vertices = 0;
   buffer.max_vertices = max_vertices;
-  buffer.vbuf = vbuf;
-  buffer.cbuf = cbuf;
-  buffer.tbuf = tbuf;
+  buffer.vbuf = g_vbuf;
+  buffer.cbuf = g_cbuf;
+  buffer.tbuf = g_tbuf;
 
   init_uv_mapper();
   

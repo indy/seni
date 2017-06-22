@@ -1,9 +1,32 @@
 * TODO [0/6]
   1. [ ] interp/fn interp/bezier
-  2. [ ] structs for compile info and runtime info
-  3. [ ] seni_env
-  4. [ ] 'in' paramaeter for loop ?
-  5. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  2. [ ] can c-side malloc memory for vertex data and pass it into javascript?
+  3. [ ] structs for compile info and runtime info
+  4. [ ] seni_env
+  5. [ ] 'in' paramaeter for loop ?
+  6. [ ] remove hsv colour space? - would this get rid of the illegal state?
+
+
+* wasm - opengl
+
+  main issue is that the c-side should be allocating memory for the rendering. this will enable the renderpacket method 
+
+  options are:
+  a. call js from c, passing in the pointers to the vertex data. js side renders with OpenGL
+  b. call OpenGL from c
+
+  with a:
+  render the vertices (compile+run code)
+  then later on the js-side will call a 'render-to-opengl' method on the c-side
+  the c-side will call a 'render-render-packets' function on the js-side multiple times
+  
+  with b:
+  pass in a canvas to c-side, let something initialise an opengGL context
+  render the vertices (compile+run code)
+  js-side will call a 'render-to-opengl' method and we're done
+
+  how will b work in a web-worker situation? - can the gl context be shared? could the vertex data from one c-side web-worker be transferred for use in the c-side of a worker that has the gl context?
+  
 
 * first class functions / ghetto-equivalents
   don't know how to implement closures in a stack vm

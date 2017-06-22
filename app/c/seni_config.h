@@ -21,7 +21,7 @@
 // they complain of ref_count becoming negative
 // the fix is to add a useless printf("") to vector_ref_count_increment
 // fuck knows why this is happening
-#define WHAT_THE_FUCK_MAC_HACK
+// #define WHAT_THE_FUCK_MAC_HACK
 
 
 #ifdef SENI_DEBUG_MODE
