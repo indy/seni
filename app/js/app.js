@@ -58,6 +58,10 @@ function configureWasmModule() {
                                                'number', ['number']);
   Shabba.get_render_packet_tbuf = Module.cwrap('get_render_packet_tbuf',
                                                'number', ['number']);
+
+  Shabba.get_render_packet_num_vertices =
+    Module.cwrap('get_render_packet_num_vertices',
+                 'number', ['number']);
 }
 
 /*
@@ -333,19 +337,26 @@ function renderScriptWithWASM(state, imageElement) {
 
   const script = state.get('script');
 
-  const numVertices = Shabba.compile_to_render_packets(script);
-  const vbuf = Shabba.get_render_packet_vbuf(0);
-  const cbuf = Shabba.get_render_packet_cbuf(0);
-  const tbuf = Shabba.get_render_packet_tbuf(0);
-
-  // HACK in a buffers like object to pass into the renderer
   const buffers = [];
-  const buffer = {};
-  buffer.vbuf = pointerToFloat32Array(vbuf, numVertices * 2);
-  buffer.cbuf = pointerToFloat32Array(cbuf, numVertices * 4);
-  buffer.tbuf = pointerToFloat32Array(tbuf, numVertices * 2);
-  buffer.numVertices = numVertices;
-  buffers.push(buffer);
+
+  const numRenderPackets = Shabba.compile_to_render_packets(script);
+  console.log(`numRenderPackets = ${numRenderPackets}`);
+
+  for (let i = 0; i < numRenderPackets; i++) {
+    const numVertices = Shabba.get_render_packet_num_vertices(i);
+    console.log(`render_packet ${i}: numVertices = ${numVertices}`);
+
+    const vbuf = Shabba.get_render_packet_vbuf(i);
+    const cbuf = Shabba.get_render_packet_cbuf(i);
+    const tbuf = Shabba.get_render_packet_tbuf(i);
+
+    const buffer = {};
+    buffer.vbuf = pointerToFloat32Array(vbuf, numVertices * 2);
+    buffer.cbuf = pointerToFloat32Array(cbuf, numVertices * 4);
+    buffer.tbuf = pointerToFloat32Array(tbuf, numVertices * 2);
+    buffer.numVertices = numVertices;
+    buffers.push(buffer);
+  }
 
   renderGeometryBuffers(buffers, imageElement);
 

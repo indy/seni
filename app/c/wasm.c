@@ -1,6 +1,6 @@
 #include <emscripten/emscripten.h>
 #include <stdlib.h>
-#include "seni_buffer.h"
+#include "seni_render_packet.h"
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
 
@@ -8,57 +8,50 @@
 
 // --------------------------------------------------------------------------------
 
-int max_vertices = 10000;
-
-f32 *g_vbuf = NULL;
-f32 *g_cbuf = NULL;
-f32 *g_tbuf = NULL;
+seni_vm *g_vm = NULL;
 
 EMSCRIPTEN_KEEPALIVE
-f32 *malloc_vbuf(int size)
+int get_render_packet_num_vertices(int packet_number)
 {
-  f32 *mem = (f32 *)malloc(size);
+  seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
+  if (render_packet == NULL) {
+    return 0;
+  }
 
-  return mem;
-}
-
-EMSCRIPTEN_KEEPALIVE
-int get_max_vertices()
-{
-  // TODO: IMPLEMENT
-  return 42;
-}
-
-EMSCRIPTEN_KEEPALIVE
-int get_num_render_packets()
-{
-  // TODO: IMPLEMENT
-  return 42;
-}
-
-EMSCRIPTEN_KEEPALIVE
-int get_render_packet_num_vertices()
-{
-  // TODO: IMPLEMENT
-  return 42;
+  return render_packet->num_vertices;
 }
 
 EMSCRIPTEN_KEEPALIVE
 f32 *get_render_packet_vbuf(int packet_number)
 {
-  return g_vbuf;
+  seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
+  if (render_packet == NULL) {
+    return NULL;
+  }
+
+  return render_packet->vbuf;
 }
 
 EMSCRIPTEN_KEEPALIVE
 f32 *get_render_packet_cbuf(int packet_number)
 {
-  return g_cbuf;
+  seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
+  if (render_packet == NULL) {
+    return NULL;
+  }
+
+  return render_packet->cbuf;
 }
 
 EMSCRIPTEN_KEEPALIVE
 f32 *get_render_packet_tbuf(int packet_number)
 {
-  return g_tbuf;
+  seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
+  if (render_packet == NULL) {
+    return NULL;
+  }
+
+  return render_packet->tbuf;
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -74,7 +67,7 @@ void free_all_render_packets()
 
 
 /*
-  fill up the seni_buffer with data during the eval phase
+  fill up the seni_render_packet with data during the eval phase
 
   if more buffer is required, allocate 'overflow' buffers on the c side.
   The js will then repeatedly call a 'draining' function that copies data
@@ -91,22 +84,11 @@ int compile_to_render_packets(char *script)
   seni_env *e = NULL;
   seni_node *ast = NULL;
   seni_program *prog = NULL;
-  seni_vm *vm = NULL;
-  seni_buffer buffer;
 
-
-  i32 vbuf_element_size = 2;
-  g_vbuf = (f32 *)malloc(max_vertices * sizeof(f32) * vbuf_element_size);
-  i32 cbuf_element_size = 4;
-  g_cbuf = (f32 *)malloc(max_vertices * sizeof(f32) * cbuf_element_size);
-  i32 tbuf_element_size = 2;
-  g_tbuf = (f32 *)malloc(max_vertices * sizeof(f32) * tbuf_element_size);
-
-  buffer.num_vertices = 0;
-  buffer.max_vertices = max_vertices;
-  buffer.vbuf = g_vbuf;
-  buffer.cbuf = g_cbuf;
-  buffer.tbuf = g_tbuf;
+  int max_vertices = 10000;
+ 
+  seni_render_data *render_data = render_data_construct(max_vertices);
+  seni_render_packet *render_packet = add_render_packet(render_data);
 
   init_uv_mapper();
   
@@ -120,13 +102,16 @@ int compile_to_render_packets(char *script)
   prog->wl = wl;
   prog->env = e;
 
-  vm = vm_construct(STACK_SIZE, MEMORY_SIZE);
-  vm->buffer = &buffer;
+  if (g_vm != NULL) {
+    vm_free(g_vm);
+  }
+  g_vm = vm_construct(STACK_SIZE, MEMORY_SIZE);
+  g_vm->render_data = render_data;
 
 
   // compile and evaluate
   compiler_compile(ast, prog);
-  vm_interpret(vm, prog);
+  vm_interpret(g_vm, prog);
 
   // cleanup
   free_uv_mapper();
@@ -134,9 +119,9 @@ int compile_to_render_packets(char *script)
   parser_free_nodes(ast);
   program_free(prog);
   env_free(e);
-  vm_free(vm);
+  //  vm_free(vm);
 
-  return buffer.num_vertices;
+  return render_data->num_render_packets;
 }
 
 

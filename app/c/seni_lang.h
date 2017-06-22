@@ -3,7 +3,7 @@
 
 #include "seni_config.h"
 #include "seni_types.h"
-#include "seni_buffer.h"
+#include "seni_render_packet.h"
 #include "seni_matrix.h"
 #include "seni_colour.h"
 
@@ -155,7 +155,8 @@ void slab_return(seni_slab_info *slab_info, char *msg);
 void slab_print(seni_slab_info *slab_info, char *message);
 
 typedef struct seni_vm {
-  seni_buffer *buffer;             // used for rendering vertices
+  seni_render_data *render_data;   // stores the generated vertex data
+  
   seni_matrix_stack *matrix_stack;
 
   seni_colour *colour_slab;        // a slab of pre-allocated colours

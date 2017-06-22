@@ -1,7 +1,7 @@
 #include "seni_bind.h"
 #include "seni_config.h"
 #include "seni_shapes.h"
-#include "seni_buffer.h"
+#include "seni_render_packet.h"
 #include "seni_lang.h"
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
@@ -173,10 +173,10 @@ seni_var bind_line(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_COL(colour);
   READ_STACK_ARGS_END;
 
-  seni_buffer *buffer = vm->buffer;
+  seni_render_data *render_data = vm->render_data;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_line(buffer, matrix, from[0], from[1], to[0], to[1], width, colour);
+  render_line(render_data, matrix, from[0], from[1], to[0], to[1], width, colour);
 
 
   return g_var_true;
@@ -199,10 +199,10 @@ seni_var bind_rect(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_COL(colour);
   READ_STACK_ARGS_END;
 
-  seni_buffer *buffer = vm->buffer;
+  seni_render_data *render_data = vm->render_data;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_rect(buffer, matrix, position[0], position[1], width, height, colour);
+  render_rect(render_data, matrix, position[0], position[1], width, height, colour);
 
 
   return g_var_true;
@@ -235,10 +235,10 @@ seni_var bind_circle(seni_vm *vm, i32 num_args)
     height = radius;
   }
 
-  seni_buffer *buffer = vm->buffer;
+  seni_render_data *render_data = vm->render_data;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_circle(buffer, matrix, position[0], position[1], width, height, colour, (i32)tessellation);
+  render_circle(render_data, matrix, position[0], position[1], width, height, colour, (i32)tessellation);
 
 
   return g_var_true;
@@ -292,10 +292,10 @@ seni_var bind_bezier(seni_vm *vm, i32 num_args)
     t_end = 1.0f;
   }
 
-  seni_buffer *buffer = vm->buffer;
+  seni_render_data *render_data = vm->render_data;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_bezier(buffer, matrix,
+  render_bezier(render_data, matrix,
                 coords, line_width_start, line_width_end, line_width_mapping,
                 t_start, t_end, colour, (i32)tessellation, brush, (i32)brush_subtype);
 

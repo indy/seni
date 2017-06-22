@@ -1299,6 +1299,8 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
   i32 i;
   seni_vm *vm = (seni_vm *)calloc(1, sizeof(seni_vm));
 
+  vm->render_data = NULL;
+
   vm->stack = (seni_var *)calloc(stack_size, sizeof(seni_var));
   vm->stack_size = stack_size;
 
@@ -1357,6 +1359,7 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
 
 void vm_free(seni_vm *vm)
 {
+  render_data_free(vm->render_data);
   matrix_stack_free(vm->matrix_stack);
   free(vm->stack);
   free(vm->heap_slab);
