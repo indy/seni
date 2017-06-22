@@ -26,19 +26,22 @@ function compatibilityHacks() {
   }
 }
 
-fetch('dist/seni-wasm.wasm')
-  .then(response => response.arrayBuffer())
-  .then(bytes => {
-    Module.wasmBinary = bytes;
-
-    const script = document.createElement('script');
-    document.body.appendChild(script);
-
-    script.src = 'dist/seni-wasm.js';
-  });
-
 document.addEventListener('DOMContentLoaded', () => {
   compatibilityHacks();
 
-  main();
+  fetch('dist/seni-wasm.wasm')
+    .then(response => response.arrayBuffer())
+    .then(bytes => {
+      Module.wasmBinary = bytes;
+
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+
+      script.onload = function () {
+        main();
+      };
+
+      script.src = 'dist/seni-wasm.js';
+      document.body.appendChild(script);
+    });
 });

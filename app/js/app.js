@@ -43,12 +43,6 @@ const Shabba = {};
 const gWasmHack = true;
 
 function configureWasmModule() {
-  if (!Module.cwrap || !Module.asm._malloc) {
-    // make sure the module code has been loaded
-    setTimeout(configureWasmModule, 100);
-    return;
-  }
-
   Shabba.compile_to_render_packets = Module.cwrap('compile_to_render_packets',
                                                   'number', ['string']);
 
@@ -1012,5 +1006,5 @@ export default function main() {
     return removeKonsoleInvisibility();
   }).catch(error => console.error(error));
 
-  setTimeout(configureWasmModule);
+  configureWasmModule();
 }
