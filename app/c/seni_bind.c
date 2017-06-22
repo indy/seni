@@ -42,7 +42,7 @@ typedef struct {
 
 #ifdef CHECK_STACK_ARGS
 #define IS_F32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected f32 for: %s", #n); }
-#define IS_I32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected i32 for: %s", #n); }
+#define IS_I32(n) if (value_1->type != VAR_INT) { SENI_ERROR("expected i32 for: %s", #n); }
 #define IS_COL(n) if (value_1->type != VAR_COLOUR) { SENI_ERROR("expected colour for: %s", #n); }
 #define IS_LONG(n) if (value_1->type != VAR_LONG) { SENI_ERROR("expected long for: %s", #n); }
 #else

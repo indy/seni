@@ -6,6 +6,8 @@
 #include "seni_matrix.h"
 #include "seni_colour.h"
 
+void seni_shapes_init_globals();
+
 void render_line(seni_render_data *render_data,
                  seni_matrix *matrix,
                  f32 from_x, f32 from_y, f32 to_x, f32 to_y,

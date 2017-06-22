@@ -3,10 +3,8 @@
 #include "seni_render_packet.h"
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
-
+#include "seni_shapes.h"
 #include "seni_lang.h"
-
-// --------------------------------------------------------------------------------
 
 seni_vm *g_vm = NULL;
 
@@ -55,29 +53,6 @@ f32 *get_render_packet_tbuf(int packet_number)
 }
 
 EMSCRIPTEN_KEEPALIVE
-void free_all_render_packets()
-{
-  // TODO: IMPLEMENT
-}
-
-// --------------------------------------------------------------------------------
-
-
-
-
-
-/*
-  fill up the seni_render_packet with data during the eval phase
-
-  if more buffer is required, allocate 'overflow' buffers on the c side.
-  The js will then repeatedly call a 'draining' function that copies data
-  into the given vbuf,cbuf,tbuf
-
-  don't forget to free the overflow buffers
-*/
-// returns the number of vertices to render
-
-EMSCRIPTEN_KEEPALIVE
 int compile_to_render_packets(char *script)
 {
   seni_word_lut *wl = NULL;
@@ -86,9 +61,12 @@ int compile_to_render_packets(char *script)
   seni_program *prog = NULL;
 
   int max_vertices = 10000;
+
+  // build the global identity matrix used by the shape rendering
+  seni_shapes_init_globals();
  
   seni_render_data *render_data = render_data_construct(max_vertices);
-  seni_render_packet *render_packet = add_render_packet(render_data);
+  add_render_packet(render_data);
 
   init_uv_mapper();
   

@@ -4,15 +4,8 @@
 #include "seni_types.h"
 
 typedef struct seni_render_packet {
-  // max number of vertices that can fit in the render_packet
-  int max_vertices;
-
   // number of vertices actually in the render_packet
   int num_vertices;
-
-  i32 vbuf_element_size;        // 2
-  i32 cbuf_element_size;        // 4
-  i32 tbuf_element_size;        // 2
 
   f32* vbuf; // max_vertices * vbuf_element_size * sizeof(f32)
   f32* cbuf; // max_vertices * cbuf_element_size * sizeof(f32)
@@ -24,7 +17,7 @@ typedef struct seni_render_packet {
 
 
 typedef struct {
-  // max number of vertices that can fit in the render_packet
+  // max number of vertices that can fit in a single render_packet
   i32 max_vertices;
 
   i32 vbuf_element_size;        // 2

@@ -12,16 +12,15 @@
 #include "seni_keywords.h"
 #undef KEYWORD
 
-// Renderer :: renderRect
+seni_matrix g_identity;
+seni_colour g_unseen_colour;
+v2 g_unseen_uv;
 
-bool can_vertices_fit(seni_render_packet *render_packet, i32 num, i32 max_vertices)
+void seni_shapes_init_globals()
 {
-  return render_packet->num_vertices < (max_vertices - (num + 2));
-}
-
-bool is_render_packet_empty(seni_render_packet *render_packet)
-{
-  return render_packet->num_vertices == 0;
+  matrix_identity(&g_identity);
+  colour_set(&g_unseen_colour, RGB, 0.0f, 0.0f, 0.0f, 0.0f);
+  g_unseen_uv.x = 0.0f; g_unseen_uv.y = 0.0f; // u v
 }
 
 void add_vertex(seni_render_packet *render_packet, seni_matrix *matrix, f32 x, f32 y, seni_colour *rgb, v2 uv)
@@ -59,21 +58,23 @@ void form_degenerate_triangle(seni_render_packet *render_packet, seni_matrix *ma
   // note: colour doesn't matter since these triangles won't be rendered
   f32 *last_v = &(render_packet->vbuf[index]);
 
-  // todo: don't create an identity matrix for each call
-  seni_matrix identity;
-  matrix_identity(&identity);
-
-  seni_colour colour;
-  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 0.0f);
-  v2 uv;
-  uv.x = 0.0f; uv.y = 0.0f; // u v
-  add_vertex(render_packet, &identity, last_v[0], last_v[1], &colour, uv);
+  add_vertex(render_packet, &g_identity, last_v[0], last_v[1], &g_unseen_colour, g_unseen_uv);
 
   // add the new vertex to complete the degenerate triangle
-  add_vertex(render_packet, matrix, x, y, &colour, uv);
+  add_vertex(render_packet, matrix, x, y, &g_unseen_colour, g_unseen_uv);
   
   // Note: still need to call addVertex on the first
   // vertex when we 'really' render the strip
+}
+
+bool can_vertices_fit(seni_render_packet *render_packet, i32 num, i32 max_vertices)
+{
+  return render_packet->num_vertices < (max_vertices - (num + 2));
+}
+
+bool is_render_packet_empty(seni_render_packet *render_packet)
+{
+  return render_packet->num_vertices == 0;
 }
 
 void prepare_to_add_triangle_strip(seni_render_data *render_data, seni_matrix *matrix, i32 num_vertices, f32 x, f32 y)
@@ -113,8 +114,8 @@ void render_line(seni_render_data *render_data,
   prepare_to_add_triangle_strip(render_data, matrix, 4, from_x + (hw * n.x), from_y + (hw * n.y));
   add_vertex(render_data->current_render_packet, matrix, from_x + (hw * n.x),  from_y + (hw * n.y),  rgb, uv->map[0]);
   add_vertex(render_data->current_render_packet, matrix, from_x + (hw * n2.x), from_y + (hw * n2.y), rgb, uv->map[1]);
-  add_vertex(render_data->current_render_packet, matrix, to_x + (hw * n.x),    to_y + (hw * n.y),    rgb, uv->map[2]);
-  add_vertex(render_data->current_render_packet, matrix, to_x + (hw * n2.x),   to_y + (hw * n2.y),   rgb, uv->map[3]);
+  add_vertex(render_data->current_render_packet, matrix, to_x   + (hw * n.x),    to_y + (hw * n.y),  rgb, uv->map[2]);
+  add_vertex(render_data->current_render_packet, matrix, to_x   + (hw * n2.x),   to_y + (hw * n2.y), rgb, uv->map[3]);
 }
 
 
