@@ -1638,6 +1638,20 @@ void vector_construct(seni_vm *vm, seni_var *head)
   DL_APPEND(head->value.v, rc);
 }
 
+void append_to_vector_i32(seni_vm *vm, seni_var *head, i32 val)
+{
+  seni_var *v = var_get_from_heap(vm);
+  if (v == NULL) {
+    SENI_ERROR("append_to_vector_i32");
+    return;
+  }
+  
+  v->type = VAR_INT;
+  v->value.i = val;
+
+  DL_APPEND(head->value.v, v);
+}
+
 void append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
 {
   seni_var *v = var_get_from_heap(vm);

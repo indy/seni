@@ -25,6 +25,23 @@ typedef struct {
   seni_var *seni_var_inc;
 } seni_prng_full_state;
 
+typedef struct {
+  i32 interp_fn_id;
+  f32 from_m;
+  f32 to_m;
+  f32 from_c;
+  f32 to_c;
+  f32 to0;
+  f32 to1;
+  i32 clamping;
+  i32 mapping;
+} seni_interp_state;
+
+// extern global keyword variables
+#define KEYWORD(val,_,name) extern i32 g_keyword_iname_##name;
+#include "seni_keywords.h"
+#undef KEYWORD
+
 // helper macros used by the bind code to parse arguments on the VM's stack
 //
 #define READ_STACK_ARGS_BEGIN i32 args_pointer_1 = vm->sp - (num_args * 2); \
@@ -89,6 +106,38 @@ typedef struct {
     value_1 = tmp_1;                                                    \
   }
 
+#define READ_STACK_ARG_INTERP(n) if (name_1 == g_keyword_iname_##n) {   \
+    tmp_1 = value_1;                                                    \
+    value_1 = (value_1->value.v)->next;                                 \
+    IS_I32(#n);                                                         \
+    n.interp_fn_id = value_1->value.i;                                  \
+    value_1 = value_1->next;                                            \
+    IS_F32(#n);                                                         \
+    n.from_m = value_1->value.f;                                        \
+    value_1 = value_1->next;                                            \
+    IS_F32(#n);                                                         \
+    n.to_m = value_1->value.f;                                          \
+    value_1 = value_1->next;                                            \
+    IS_F32(#n);                                                         \
+    n.from_c = value_1->value.f;                                        \
+    value_1 = value_1->next;                                            \
+    IS_F32(#n);                                                         \
+    n.to_c = value_1->value.f;                                          \
+    value_1 = value_1->next;                                            \
+    IS_F32(#n);                                                         \
+    n.to0 = value_1->value.f;                                           \
+    value_1 = value_1->next;                                            \
+    IS_F32(#n);                                                         \
+    n.to1 = value_1->value.f;                                           \
+    value_1 = value_1->next;                                            \
+    IS_I32(#n);                                                         \
+    n.clamping = value_1->value.i;                                      \
+    value_1 = value_1->next;                                            \
+    IS_I32(#n);                                                         \
+    n.mapping = value_1->value.i;                                       \
+    value_1 = tmp_1;                                                    \
+  }
+
 #define READ_STACK_ARG_COORD4(n) if (name_1 == g_keyword_iname_##n) { \
     tmp_1 = (value_1->value.v)->next;                                 \
     tmp_2 = (tmp_1->value.v)->next;                                   \
@@ -111,11 +160,6 @@ typedef struct {
     tmp_2 = tmp_2->next;                                              \
     n[7] = tmp_2->value.f;                                            \
   }
-
-// extern global keyword variables
-#define KEYWORD(val,_,name) extern i32 g_keyword_iname_##name;
-#include "seni_keywords.h"
-#undef KEYWORD
 
 // a global var that represents true, used as the default
 // return type for bindings that only have side-effects
@@ -886,14 +930,86 @@ seni_var bind_prng_perlin(seni_vm *vm, i32 num_args)
 
 seni_var bind_interp_fn(seni_vm *vm, i32 num_args)
 {
-  SENI_ERROR("TODO: implement");
-  return g_var_true;
+  f32 from[] = {0.0f, 1.0f};
+  f32 to[] = {0.0f, 100.0f};
+  i32 clamping = g_keyword_iname_false;
+  i32 mapping = g_keyword_iname_linear;
+  
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(from);
+  READ_STACK_ARG_VEC2(to);
+  READ_STACK_ARG_I32(clamping); // true | false
+  READ_STACK_ARG_I32(mapping);  // linear, quick, slow-in, slow-in-out
+  READ_STACK_ARGS_END;
+
+  f32 from_m = mc_m(from[0], 0.0f, from[1], 1.0f);
+  f32 from_c = mc_c(from[0], 0.0f, from_m);
+
+  f32 to_m = mc_m(0.0f, to[0], 1.0f, to[1]);
+  f32 to_c = mc_c(0.0f, to[0], to_m);
+
+  // id to signify that this structure stores data for interpolation
+  i32 interp_fn_id = 42;
+
+  seni_var ret;
+  vector_construct(vm, &ret);
+  append_to_vector_i32(vm, &ret, interp_fn_id);
+  append_to_vector_f32(vm, &ret, from_m);
+  append_to_vector_f32(vm, &ret, to_m);
+  append_to_vector_f32(vm, &ret, from_c);
+  append_to_vector_f32(vm, &ret, to_c);
+  append_to_vector_f32(vm, &ret, to[0]);
+  append_to_vector_f32(vm, &ret, to[1]);
+  append_to_vector_i32(vm, &ret, clamping);
+  append_to_vector_i32(vm, &ret, mapping);
+  
+  return ret;
 }
 
 seni_var bind_interp_call(seni_vm *vm, i32 num_args)
 {
-  SENI_ERROR("TODO: implement");
-  return g_var_true;
+  seni_interp_state using;
+  f32 val = 0.0f;
+
+  using.interp_fn_id = 0;
+  using.from_m = 0.0f;
+  using.to_m = 0.0f;
+  using.from_c = 0.0f;
+  using.to_c = 0.0f;
+  using.to0 = 0.0f;
+  using.to1 = 1.0f;
+  using.clamping = 0;
+  using.mapping = 0;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_INTERP(using);
+  READ_STACK_ARG_F32(val);
+  READ_STACK_ARGS_END;
+
+  f32 from_interp = (using.from_m * val) + using.from_c;
+  f32 to_interp = from_interp;
+
+  if (using.mapping == g_keyword_iname_linear) {
+    to_interp = from_interp;
+  } else if (using.mapping == g_keyword_iname_quick) {
+    to_interp = map_quick_ease(from_interp);
+  } else if (using.mapping == g_keyword_iname_slow_in) {
+    to_interp = map_slow_ease_in(from_interp);
+  } else { // g_keyword_iname_slow_in_out
+    to_interp = map_slow_ease_in_ease_out(from_interp);
+  }
+
+  f32 res = (using.to_m * to_interp) + using.to_c;
+
+  if (using.clamping == g_keyword_iname_true) {
+    res = from_interp < 0.0f ? using.to0 : (from_interp > 1.0f) ? using.to1 : res;
+  }
+  
+  seni_var ret;
+  f32_as_var(&ret, res);
+
+  return ret;
 }
 
 seni_var bind_interp_cos(seni_vm *vm, i32 num_args)

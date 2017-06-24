@@ -704,6 +704,22 @@ void test_vm_environmental(void)
 
 }
 
+void test_vm_interp(void)
+{
+  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100])) (interp/call using: i val: 0.5)) (x)", 50.0f);
+
+  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [10 20] to: [50 200])) (interp/call using: i val: 10.0)) (x)", 50.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [10 20] to: [50 200])) (interp/call using: i val: 20.0)) (x)", 200.0f);
+
+  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [50 10] to: [100 1000])) (interp/call using: i val: 50.0)) (x)", 100.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [50 10] to: [100 1000])) (interp/call using: i val: 10.0)) (x)", 1000.0f);
+
+  // clamping
+  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100] clamping: false)) (interp/call using: i val: 2.0)) (x)", 200.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100] clamping: true)) (interp/call using: i val: 2.0)) (x)", 100.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100] clamping: true)) (interp/call using: i val: -2.0)) (x)", 0.0f);
+}
+
 void test_vm_temp(void)
 {
   VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 0 from: foo)) (x)", 0.27065f);
@@ -733,6 +749,7 @@ int main(void)
   RUN_TEST(test_vm_math);
   RUN_TEST(test_vm_prng);
   RUN_TEST(test_vm_environmental);
+  RUN_TEST(test_vm_interp);
 
   // RUN_TEST(test_vm_temp);
   
