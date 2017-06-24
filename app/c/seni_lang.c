@@ -257,16 +257,6 @@ bool is_label(char *s, size_t word_len)
   return s[word_len] == ':';
 }
 
-bool is_boolean_true(char *s, size_t word_len)
-{
-  return word_len == 4 && s[0] == 't' && s[1] == 'r' && s[2] == 'u' && s[3] == 'e';
-}
-
-bool is_boolean_false(char *s, size_t word_len)
-{
-  return word_len == 5 && s[0] == 'f' && s[1] == 'a' && s[2] == 'l' && s[3] == 's' && s[4] == 'e';
-}
-
 bool has_period(char *s)
 {
   size_t i = 0;
@@ -496,22 +486,6 @@ seni_node *consume_float(char **src)
   return node;
 }
 
-seni_node *consume_boolean(char **src, bool val)
-{
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
-  node->type = NODE_BOOLEAN;
-  node->value.i = val;
-
-  if (val) {
-    (*src) += 4;                /* 'true' */
-  } else {
-    (*src) += 5;                /* 'false' */
-  }
-  
-  return node;
-}
-
-
 seni_node *consume_name(seni_word_lut *wlut, char **src)
 {
   size_t i = 0;
@@ -673,14 +647,6 @@ seni_node *consume_item(seni_word_lut *wlut, char **src)
         return consume_label(wlut, src);
       }
 
-      if (is_boolean_true(*src, word_len)) {
-        return consume_boolean(src, true);
-      }
-
-      if (is_boolean_false(*src, word_len)) {
-        return consume_boolean(src, false);
-      } 
-
       return consume_name(wlut, src);
     }
   }
@@ -705,7 +671,6 @@ char *node_type_name(seni_node *node)
   case NODE_NAME:       return "NODE_NAME";
   case NODE_LABEL:      return "NODE_LABEL";
   case NODE_STRING:     return "NODE_STRING";
-  case NODE_BOOLEAN:    return "NODE_BOOLEAN";
   case NODE_WHITESPACE: return "NODE_WHITESPACE";
   case NODE_COMMENT:    return "NODE_COMMENT";
   default: return "unknown seni_node type";

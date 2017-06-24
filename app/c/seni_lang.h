@@ -35,7 +35,6 @@ typedef enum {
   NODE_NAME,
   NODE_LABEL,
   NODE_STRING,
-  NODE_BOOLEAN,
   NODE_WHITESPACE,
   NODE_COMMENT
 } seni_node_type;

@@ -93,14 +93,6 @@ void test_parser(void)
   assert_parser_node_raw(nodes, NODE_LIST);
   PARSE_CLEANUP;
 
-  PARSE("true");
-  assert_parser_node_i32(nodes, NODE_BOOLEAN, true);
-  PARSE_CLEANUP;
-
-  PARSE("false");
-  assert_parser_node_i32(nodes, NODE_BOOLEAN, false);
-  PARSE_CLEANUP;
-
   PARSE("(add 1 2)");
   iter = nodes->value.first_child;
   assert_parser_node_raw(nodes, NODE_LIST);
