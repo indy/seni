@@ -125,6 +125,7 @@ void test_parser(void)
   TEST_ASSERT_NULL(nodes->next);
   PARSE_CLEANUP;
 
+  // note: can parse string but it isn't being used - should it be removed?
   PARSE("'(runall \"shabba\") ; woohoo");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->value.first_child;
@@ -525,6 +526,12 @@ void test_vm_bugs(void)
  (huh at: 5)", 4.0f);
 
   VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/take num: 3 from: rng)))) (f) 1", 1.0f);
+
+  // pre-assigned global wasn't being added to the global-mapping so references to them in functions wasn't working
+  VM_COMPILE_F32("(wash) (fn (wash) (define foo (/ canvas/width 3)) foo)", 333.3333f);
+
+  // vm should use the caller function's ARG values not the callees.
+  VM_COMPILE_F32("(fn (v foo: 10) foo) (fn (wash seed: 272) (v foo: seed)) (wash seed: 66)", 66.0f);
 }
 
 void test_vm_bytecode(void)
@@ -714,7 +721,8 @@ void test_vm_interp(void)
 
 void test_vm_temp(void)
 {
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 0 from: foo)) (x)", 0.27065f);
+  // just passing along values into a function
+  VM_COMPILE_F32("(fn (v foo: 10) foo) (fn (wash seed: 272) (v foo: seed)) (wash seed: 66)", 66.0f);
 }
 
 int main(void)

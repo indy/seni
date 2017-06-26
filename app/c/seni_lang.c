@@ -383,7 +383,7 @@ seni_node *consume_vector(seni_word_lut *wlut, char **src)
   }
 }
 
-seni_node *consume_bracket(seni_word_lut *wlut, char **src)
+seni_node *consume_alterable(seni_word_lut *wlut, char **src)
 {
   seni_node *node;
   seni_node *parameter_prefix = NULL;
@@ -394,7 +394,7 @@ seni_node *consume_bracket(seni_word_lut *wlut, char **src)
   while (1) {
     c = consume_item(wlut, src);
     if (c == NULL) {
-      SENI_ERROR("unable to consume element of bracket");
+      SENI_ERROR("unable to consume element of alterable");
       return NULL;
     }
 
@@ -408,21 +408,15 @@ seni_node *consume_bracket(seni_word_lut *wlut, char **src)
     }
   }
 
-  /* TODO: sanity check the parameter prefixes */
-  /* 
-  prefixParameters.forEach(pp => node.addParameterNodePrefix(pp));
-
-  if (nodeType !== NodeType.BOOLEAN &&
-      nodeType !== NodeType.INT &&
-      nodeType !== NodeType.FLOAT &&
-      nodeType !== NodeType.NAME &&
-      nodeType !== NodeType.STRING &&
-      nodeType !== NodeType.LIST &&
-      nodeType !== NodeType.VECTOR) {
-    console.log('whooops', tokens, node);
-    return {error: `non-mutable node within curly brackets ${nodeType}`};
-  }
-  */
+  if (node->type != NODE_INT
+      && node->type != NODE_FLOAT
+      && node->type != NODE_NAME
+      && node->type != NODE_LIST
+      && node->type != NODE_VECTOR)
+    {
+      SENI_ERROR("non-mutable node within curly brackets: %s", node_type_name(node));
+      return NULL;
+    }
   
   while (1) {
     if (is_alterable_end(**src)) {
@@ -617,7 +611,7 @@ seni_node *consume_item(seni_word_lut *wlut, char **src)
   }
 
   if (is_alterable_start(c)) {
-    return consume_bracket(wlut, src);
+    return consume_alterable(wlut, src);
   }
 
   if (is_alterable_end(c)) {
@@ -1348,7 +1342,7 @@ void pretty_print_vm(seni_vm *vm, char* msg)
   printf("\ton stack: fp:%d ip:%d numArgs:%d\n", onStackFP, onStackIP, onStackNumArgs);
 }
 
-void vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head);
+bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head);
 
 // i32 isg_col = 0;
 
@@ -1429,7 +1423,10 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
 #endif
 
   if (var->type == VAR_VEC_HEAD) {
-    vector_ref_count_decrement(vm, var);
+    bool res = vector_ref_count_decrement(vm, var);
+    if(res == false) {
+      SENI_ERROR("var_return_to_heap");
+    }
   }
 
   if (var->type == VAR_COLOUR) {
@@ -1445,11 +1442,13 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
   DL_APPEND(vm->heap_avail, var);
 }
   
-void vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
+bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
 {
   seni_var *var_rc = vec_head->value.v;
   if (var_rc->type != VAR_VEC_RC) {
     SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC???");
+    pretty_print_seni_var(vec_head, "vector_ref_count_decrement called on this???");
+    return false;
   }
 
   var_rc->value.ref_count--;
@@ -1460,7 +1459,10 @@ void vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
     var_return_to_heap(vm, var_rc);
   } else if (var_rc->value.ref_count < 0) {
     SENI_ERROR("vector_ref_count_decrement: ref_count is %d", var_rc->value.ref_count);
+    return false;
   }
+
+  return true;
 }
 
 void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
@@ -1490,7 +1492,11 @@ void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
   }
 
   if (dest->type == VAR_VEC_HEAD) {
-    vector_ref_count_decrement(vm, dest);
+    bool res = vector_ref_count_decrement(vm, dest);
+    if (res == false) {
+      SENI_ERROR("safe_var_copy - vector_ref_count_decrement failed");
+      return;
+    }
   }
   
   dest->type = src->type;
@@ -2465,6 +2471,14 @@ void compile_preamble_f32(seni_program *program, i32 iname, f32 value)
   program_emit_opcode_i32(program, POP, MEM_SEG_GLOBAL, address);
 }
 
+// NOTE: each entry in compile_preamble should have a corresponding entry here
+void register_top_level_preamble(seni_program *program)
+{
+  add_global_mapping(program, g_keyword_iname_canvas_width);
+  add_global_mapping(program, g_keyword_iname_canvas_height);
+}
+
+// NOTE: each entry should have a corresponding entry in register_top_level_preamble
 void compile_preamble(seni_program *program)
 {
   compile_preamble_f32(program, g_keyword_iname_canvas_width, 1000.0f);
@@ -2484,6 +2498,7 @@ void compiler_compile(seni_node *ast, seni_program *program)
   register_top_level_fns(ast, program);
 
   // register top-level defines
+  register_top_level_preamble(program);
   register_top_level_defines(ast, program);
 
   seni_bytecode *start = program_emit_opcode_i32(program, JUMP, 0, 0);
@@ -2585,7 +2600,15 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       if (memory_segment_type == MEM_SEG_CONSTANT) {
         safe_var_move(v, &(bc->arg1));
       } else if (memory_segment_type == MEM_SEG_ARGUMENT) {
-        src = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
+
+        // if we're referencing an ARG in-between CALL and CALL_0 make sure we use the right frame
+        // i.e. we're using the caller function's ARG, not the callee
+        fp = vm->fp;
+        for (i = 0; i < hop_back; i++) {
+          fp = vm->stack[fp].value.i;    // go back a frame
+        }
+        
+        src = &(vm->stack[fp - bc->arg1.value.i - 1]);
         safe_var_move(v, src);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
 
@@ -2669,7 +2692,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
           vector_ref_count_increment(vm, dest);
         }
       } else {
-        SENI_ERROR("DEC_RC: unknown memory segment type %d", bc->arg0.value.i);
+        SENI_ERROR("INC_RC: unknown memory segment type %d", bc->arg0.value.i);
       }
       break;
 
@@ -2869,7 +2892,10 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 
         src = src->next;
       }
-      vector_ref_count_decrement(vm, &_vec);
+      b1 = vector_ref_count_decrement(vm, &_vec);
+      if (b1 == false) {
+        SENI_ERROR("PILE: vector_ref_count_decrement");
+      }
       break;
 
     case MTX_PUSH:
