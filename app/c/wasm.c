@@ -83,7 +83,7 @@ int compile_to_render_packets(char *script)
   if (g_vm != NULL) {
     vm_free(g_vm);
   }
-  g_vm = vm_construct(STACK_SIZE, MEMORY_SIZE);
+  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE);
   g_vm->render_data = render_data;
 
 

@@ -1428,6 +1428,7 @@ seni_var *var_get_from_heap(seni_vm *vm)
   head->prev = NULL;
 
   head->value.i = 0;
+  head->type = VAR_INT;         // just make sure that it isn't VAR_VEC_HEAD from a previous allocation
 
   //pretty_print_seni_var(head, "getting");
 
@@ -1483,6 +1484,15 @@ bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
   var_rc->value.ref_count--;
 
   // printf("vector_ref_count_decrement %p: %d\n", var_rc, var_rc->value.ref_count);
+
+  // decrement the ref counts of any nested vectors
+  seni_var *element = var_rc->next;
+  while (element != NULL) {
+    if (element->type == VAR_VEC_HEAD) {
+      vector_ref_count_decrement(vm, element);
+    }    
+    element = element->next;
+  }
       
   if (var_rc->value.ref_count == 0) {
     var_return_to_heap(vm, var_rc);
@@ -1514,17 +1524,17 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
   // printf("vector_ref_count_increment %p: %d\n", var_rc, var_rc->value.ref_count);
 }
 
-void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
+bool safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
 {
   if (dest == src) {
-    return;
+    return true;
   }
 
   if (dest->type == VAR_VEC_HEAD) {
     bool res = vector_ref_count_decrement(vm, dest);
     if (res == false) {
       SENI_ERROR("safe_var_copy - vector_ref_count_decrement failed");
-      return;
+      return false;
     }
   }
   
@@ -1550,6 +1560,8 @@ void safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
   } else {
     SENI_ERROR("unknown seni_value_in_use for safe_var_copy");
   }
+
+  return true;
 }
 
 // copying the src onto a var that we're not using (e.g. the top of a stack)
@@ -1692,18 +1704,24 @@ void append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col)
   DL_APPEND(head->value.v, v);
 }
 
-void append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
+bool append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
 {
   // assuming that head is VAR_VEC_HEAD
   
   seni_var *child_value = var_get_from_heap(vm);
   if (child_value == NULL) {
     SENI_ERROR("cannot allocate child_value from pool");
-    return;
+    return false;
   }
-  safe_var_copy(vm, child_value, val);
+
+  bool res = safe_var_copy(vm, child_value, val);
+  if (res == false) {
+    SENI_ERROR("safe_var_copy failed in append_to_vector");
+    return false;
+  }
   
   DL_APPEND(head->value.v, child_value);
+  return true;
 }
 
 // **************************************************
@@ -2962,7 +2980,14 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         return;
       }
 
-      append_to_vector(vm, v, src); // note: this uses a copy, should it be a move instead?
+      b1 = append_to_vector(vm, v, src); // note: this uses a copy, should it be a move instead?
+      if (b1 == false) {
+        SENI_ERROR("append_to_vector failed in APPEND");
+        DEBUG_INFO_PRINT(vm);
+        pretty_print_seni_var(v, "the vector");
+        pretty_print_seni_var(src, "the item to append");
+        return;
+      }
 
       STACK_PUSH;
       break;
@@ -2977,13 +3002,18 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       src = _vec.value.v->next;
       for (i = 0; i < num_args; i++) {
         STACK_PUSH;
-        safe_var_copy(vm, v, src);
+        b1 = safe_var_copy(vm, v, src);
+        if (b1 == false) {
+          SENI_ERROR("safe_var_copy failed in PILE");
+          return;
+        }
 
         src = src->next;
       }
       b1 = vector_ref_count_decrement(vm, &_vec);
       if (b1 == false) {
         SENI_ERROR("PILE: vector_ref_count_decrement");
+        return;
       }
       break;
 
@@ -3114,7 +3144,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       
     case STOP:
       vm->sp = sp;
-      // DEBUG_INFO_PRINT(vm);
+      DEBUG_INFO_PRINT(vm);
       return;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));

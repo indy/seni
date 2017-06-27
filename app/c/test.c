@@ -415,7 +415,7 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
   prog->wl = wl;                                          \
   prog->env = e;                                          \
   compiler_compile(ast, prog);                            \
-  vm = vm_construct(STACK_SIZE,MEMORY_SIZE);              \
+  vm = vm_construct(STACK_SIZE,HEAP_SIZE);                \
   printf("%s\n", EXPR);                                   \
   pretty_print_program(prog);
 
@@ -435,7 +435,7 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
   prog->wl = wl;                                            \
   prog->env = e;                                            \
   compiler_compile(ast, prog);                              \
-  vm = vm_construct(STACK_SIZE,MEMORY_SIZE);                \
+  vm = vm_construct(STACK_SIZE,HEAP_SIZE);                  \
   vm_interpret(vm, prog)
 
 

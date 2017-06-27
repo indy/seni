@@ -125,7 +125,7 @@ typedef enum {
 #define LCL    1
 #define ARG    2
 
-#define MEMORY_SIZE 1024
+#define HEAP_SIZE 1024
 #define STACK_SIZE 1024
 #define MEMORY_GLOBAL_SIZE 10
 #define MEMORY_LOCAL_SIZE 20
@@ -245,6 +245,7 @@ char          *var_type_name(seni_var *var);
 
 seni_var      *stack_peek(seni_vm *vm);
 seni_var      *var_get_from_heap(seni_vm *vm);
+void           var_return_to_heap(seni_vm *vm,  seni_var *var);
 seni_colour   *colour_get_from_vm(seni_vm *vm);
 void colour_return_to_vm(seni_vm *vm, seni_colour *colour); // temp
 
@@ -260,7 +261,7 @@ void           env_free(seni_env *e);
 
 void           compiler_compile(seni_node *ast, seni_program *program);
 void           vm_interpret(seni_vm *vm, seni_program *program);
-void           safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
+bool           safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
 
 void           pretty_print_seni_var(seni_var *var, char* msg);
 
@@ -269,7 +270,7 @@ void           append_to_vector_i32(seni_vm *vm, seni_var *head, i32 val);
 void           append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
 void           append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val);
 void           append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col);
-void           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
+bool           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 
 void           f32_as_var(seni_var *out, f32 f);
 void           i32_as_var(seni_var *out, i32 i);
