@@ -1208,7 +1208,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_binding(wlut, e, "prng/build", &bind_prng_build);
   declare_binding(wlut, e, "prng/take", &bind_prng_take);
   declare_binding(wlut, e, "prng/take-1", &bind_prng_take_1);
-  declare_binding(wlut, e, "prng/perlin", &bind_prng_perlin); // was prng/perlin-signed
+  declare_binding(wlut, e, "prng/perlin", &bind_prng_perlin);
 
   declare_binding(wlut, e, "interp/fn", &bind_interp_fn);
   declare_binding(wlut, e, "interp/call", &bind_interp_call);
