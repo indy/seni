@@ -182,7 +182,7 @@ bool is_period(char c)
 
 bool is_whitespace(char c)
 {
-  return c == ' ' || c == '\t' || c == '\n' || c == ',';
+  return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == ',';
 }
 
 bool is_digit(char c)

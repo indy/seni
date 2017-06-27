@@ -29,7 +29,7 @@ function characterSet(characters) {
   return s;
 }
 
-const sWhitespaceSet = characterSet(' \t\n,');
+const sWhitespaceSet = characterSet(' \t\n\r,');
 const sDigitSet = characterSet('0123456789');
 const sAlphaSet =
       characterSet(
