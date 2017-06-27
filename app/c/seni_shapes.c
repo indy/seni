@@ -37,9 +37,13 @@ void add_vertex(seni_render_packet *render_packet, seni_matrix *matrix, f32 x, f
   render_packet->vbuf[v_index + 0] = out[0];
   render_packet->vbuf[v_index + 1] = out[1];
 
-  render_packet->cbuf[c_index + 0] = rgb->element[0];
-  render_packet->cbuf[c_index + 1] = rgb->element[1];
-  render_packet->cbuf[c_index + 2] = rgb->element[2];
+  // pre-multiply the alpha
+  // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
+  f32 alpha = rgb->element[3];
+
+  render_packet->cbuf[c_index + 0] = rgb->element[0] * alpha;
+  render_packet->cbuf[c_index + 1] = rgb->element[1] * alpha;
+  render_packet->cbuf[c_index + 2] = rgb->element[2] * alpha;
   render_packet->cbuf[c_index + 3] = rgb->element[3];
 
   render_packet->tbuf[t_index + 0] = uv.x; // u
