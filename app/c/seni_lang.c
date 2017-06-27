@@ -848,6 +848,35 @@ void pretty_print_seni_var(seni_var *var, char* msg)
 #endif
 }
 
+void pretty_print_seni_var2(char* msg, seni_var *var)
+{
+  if (var == NULL) {
+    SENI_ERROR("pretty_print_seni_var: given NULL");
+    return;
+  }
+  
+  char *type = var_type_name(var);
+  seni_value_in_use using = get_value_in_use(var->type);
+
+  switch(using) {
+  case USE_I:
+    printf("%s %s : %d\n", msg, type, var->value.i);
+    break;
+  case USE_F:
+    printf("%s %s : %.2f\n", msg, type, var->value.f);
+    break;
+  case USE_L:
+    printf("%s %s : %llu\n", msg, type, (long long unsigned int)(var->value.l));
+    break;
+  case USE_V:
+    printf("%s %s : length %d\n", msg, type, var_vector_length(var));
+    break;
+  case USE_C:
+    printf("%s %s : %p\n", msg, type, var->value.c);
+    break;
+  }
+}
+
 seni_node *safe_next(seni_node *expr)
 {
   seni_node *sibling = expr->next;
@@ -1978,15 +2007,52 @@ void compile_loop(seni_node *ast, seni_program *program)
 
   // the looping variable x
   seni_node *name_node = parameters_node->value.first_child;
-  // from: 0
-  seni_node *from_node = safe_next(name_node); // the label 'from'
-  from_node = safe_next(from_node);            // the value of 'from'
-  // to: 5
-  seni_node *to_node = safe_next(from_node); // the label 'to'
-  to_node = safe_next(to_node);              // the value of 'to'
+
+
+
+  seni_node *from_node = NULL;
+  seni_node *to_node = NULL;
+  seni_node *increment_node = NULL;
+  bool have_from = false;
+  bool have_to = false;
+  bool have_increment = false;
+  
+
+  seni_node *node = name_node;
+
+  while (node) {
+    node = safe_next(node);  // the label part
+    if (node == NULL) {
+      break;
+    }
+    if (node->value.i == g_keyword_iname_from) {
+      have_from = true;
+      from_node = safe_next(node);
+    }
+    if (node->value.i == g_keyword_iname_to) {
+      have_to = true;
+      to_node = safe_next(node);
+    }
+    if (node->value.i == g_keyword_iname_increment) {
+      have_increment = true;
+      increment_node = safe_next(node);
+    }
+    node = safe_next(node); // the value part
+  }
+
+  if (have_to == false) {
+    SENI_ERROR("loop form requires a 'to' parameter");
+    return;
+  }
 
   // set looping variable x to 'from' value
-  compile(from_node, program);
+  if (have_from == true) {
+    compile(from_node, program);
+  } else {
+    // else default to 0
+    program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, 0.0f);
+  }
+
   i32 looper_address = pop_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
   if (looper_address == -1) {
     SENI_ERROR("compile_loop: allocation failure");
@@ -2018,7 +2084,12 @@ void compile_loop(seni_node *ast, seni_program *program)
 
   // increment the looping variable
   program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, looper_address);
-  program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, 1.0f);
+
+  if (have_increment == true) {
+    compile(increment_node, program);
+  } else {
+    program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, 1.0f);
+  }
   program_emit_opcode_i32(program, ADD, 0, 0);
   program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, looper_address);
 
@@ -2609,6 +2680,10 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         }
         
         src = &(vm->stack[fp - bc->arg1.value.i - 1]);
+#ifdef TRACE_PRINT_OPCODES
+        pretty_print_seni_var2("---", src);
+        printf("--- hop_back is %d fp is %d\n", hop_back, fp);
+#endif
         safe_var_move(v, src);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
 
@@ -2645,8 +2720,12 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
-        // check the current value of dest, 
+        // check the current value of dest,
         safe_var_move(dest, v);
+#ifdef TRACE_PRINT_OPCODES
+        pretty_print_seni_var2("---", dest);
+        printf("--- fp is %d\n", vm->fp);
+#endif        
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         dest = &(vm->stack[vm->local + bc->arg1.value.i]);
         safe_var_move(dest, v);
@@ -2753,7 +2832,9 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       
       vm->sp = sp;
 
-      hop_back++;
+#ifdef TRACE_PRINT_OPCODES
+        printf("--- fp is %d\n", vm->fp);
+#endif        
       break;
 
     case CALL_0:
@@ -2766,13 +2847,18 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       ip = bc->arg0.value.i;
       vm->ip = ip;
 
-      hop_back--;
+      // we're now executing the body of the function so don't
+      // hop back when we push any arguments or locals onto the stack
+      hop_back = 0;
       break;
 
     case RET_0:
       // leap to the return ip
       vm->ip = vm->stack[vm->fp + 1].value.i;
       ip = vm->ip;
+
+      hop_back++;
+
       break;
       
     case RET:
@@ -2822,6 +2908,9 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       STACK_PUSH;
       safe_var_move(v, src);
 
+#ifdef TRACE_PRINT_OPCODES
+        printf("--- fp is %d\n", vm->fp);
+#endif        
       break;
 
     case NATIVE:

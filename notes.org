@@ -1,6 +1,6 @@
-* TODO [0/6]
-  1. [ ] interp/fn interp/bezier
-  2. [ ] can c-side malloc memory for vertex data and pass it into javascript?
+* TODO [0/8]
+  1. [ ] interp/bezier
+  2. [ ] cleanup memory of parser
   3. [ ] structs for compile info and runtime info
   4. [ ] seni_env
   5. [ ] 'in' paramaeter for loop ?
