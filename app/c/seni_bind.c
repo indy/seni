@@ -692,13 +692,14 @@ seni_var bind_translate(seni_vm *vm, i32 num_args)
 
 seni_var bind_rotate(seni_vm *vm, i32 num_args)
 {
+  // angle in degrees
   f32 angle = 0.0f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(angle);
   READ_STACK_ARGS_END;
 
-  matrix_stack_rotate(vm->matrix_stack, angle);
+  matrix_stack_rotate(vm->matrix_stack, deg_to_rad(angle));
 
   return g_var_true;
 }
