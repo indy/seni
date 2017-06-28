@@ -5,8 +5,7 @@
   num-gaps (+ num-squares 1)
   square-size (/ (- 1000 (* gap-size num-gaps)) num-squares))
 
-(fn (map-to-position at: 0)
-  (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
+(wash)
 
 (loop (y from: 1 to: (- num-squares 1))
   (loop (x from: 1 to: (- num-squares 1))
@@ -25,6 +24,9 @@
                       height: square-size
                       colour: (col/rgb r: 1.0 g: 0.0 b: 0.4 alpha: 1.0))))
 
+(fn (map-to-position at: 0)
+    (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
+
 (fn (accumulated-rect x: 0
                       y: 0
                       width: 10
@@ -33,15 +35,46 @@
                       volatility: 0
                       passes: 1
                       seed: 341)
-  (define alpha (col/get-alpha colour: colour)
-    pass-colour (col/set-alpha colour: colour value: (/ alpha passes))
-    rng (prng/build min: -1 max: 1 seed: seed))
-  (on-matrix-stack
-    (translate vector: [x y])
-    (loop (i to: passes)
-      (on-matrix-stack
-        (rotate angle: (math/radians->degrees angle: (* (prng/take-1 from: rng) 0.02 volatility)))
-        (rect position: [(* (prng/take-1 from: rng) 5 volatility) (* (prng/take-1 from: rng) 5 volatility)]
-              width: width
-              height: height
-              colour: pass-colour)))))
+    (define alpha (col/get-alpha colour: colour)
+      pass-colour (col/set-alpha colour: colour value: (/ alpha passes))
+      rng (prng/build min: -1 max: 1 seed: seed))
+    (on-matrix-stack
+     (translate vector: [x y])
+     (loop (i from: 0 to: passes)
+           (define [rr rx ry] (prng/take num: 3 from: rng))
+           (on-matrix-stack
+            (rotate angle: (math/radians->degrees angle: (* rr 0.02 volatility)))
+            (rect position: [(* rx 5 volatility) (* ry 5 volatility)]
+                  width: width
+                  height: height
+                  colour: pass-colour)))))
+
+(fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
+    (+ y (* s (prng/perlin x: x y: y z: z))))
+
+(fn (wash variation: 200
+          line-width: 70
+          line-segments: 5
+          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+          seed: 272)
+    (define 
+      w/3 (/ canvas/width 3)
+      h/3 (/ canvas/height 3))
+    (loop (h from: -20 to: 1020 increment: 20)
+          (bezier tessellation: line-segments
+                  line-width: line-width
+                  coords: [[0 (wash-wobble x: 0 y: h z: seed s: variation)]
+                           [w/3 (wash-wobble x: w/3 y: h z: seed s: variation)]
+                           [(* w/3 2) (wash-wobble x: (* w/3 2) y: h z: seed s: variation)]
+                           [canvas/width (wash-wobble x: canvas/width y: h z: seed s: variation)]]
+                  colour: colour)
+
+          (bezier tessellation: line-segments
+                  line-width: line-width
+                  coords: [[(wash-wobble x: 0 y: h z: seed s: variation) 0]
+                           [(wash-wobble x: h/3 y: h z: seed s: variation) h/3]
+                           [(wash-wobble x: (* h/3 2) y: h z: seed s: variation) (* h/3 2)]
+                           [(wash-wobble x: canvas/height y: h z: seed s: variation) canvas/height]]
+                  colour: colour)))
+
+
