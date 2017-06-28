@@ -2123,7 +2123,30 @@ void compile_on_matrix_stack(seni_node *ast, seni_program *program)
   program_emit_opcode_i32(program, MTX_POP, 0, 0);
 }
 
-seni_fn_info *get_local_fn_info(seni_node *node, seni_program *program)
+// returns the index into program->fn_info that represents this function
+i32 get_fn_info_index(seni_node *node, seni_program *program)
+{
+  if (node->type != NODE_NAME) {
+    SENI_ERROR("get_fn_info_index not given a name node");
+    return -1;
+  }
+
+  i32 name = node->value.i;
+  
+  for (i32 i = 0; i < MAX_TOP_LEVEL_FUNCTIONS; i++) {
+    if (program->fn_info[i].active == false) {
+      return -1;
+    }
+    if (program->fn_info[i].fn_name == name) {
+      return i;
+    }
+  }
+
+  SENI_ERROR("get_fn_info_index unable to find fn_info for a function");
+  return -1;
+}
+
+seni_fn_info *get_fn_info(seni_node *node, seni_program *program)
 {
   if (node->type != NODE_NAME) {
     return NULL;
@@ -2275,7 +2298,7 @@ void compile_fn(seni_node *ast, seni_program *program)
   seni_node *signature = safe_next(ast);
 
   seni_node *fn_name = signature->value.first_child;
-  seni_fn_info *fn_info = get_local_fn_info(fn_name, program);
+  seni_fn_info *fn_info = get_fn_info(fn_name, program);
   if (fn_info == NULL) {
     SENI_ERROR("Unable to find fn_info for function %d", fn_name->value.i);
     return;
@@ -2331,12 +2354,75 @@ void compile_fn(seni_node *ast, seni_program *program)
   program->current_fn_info = NULL;
 }
 
-void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *fn_info)
+void correct_function_addresses(seni_program *program)
+{
+  // go through the bytecode fixing up function call addresses
+
+  seni_bytecode *bc = program->code;
+  i32 fn_info_index, label_value;
+  seni_fn_info *fn_info;
+
+  for (i32 i = 0; i < program->code_size; i++) {
+    // replace the temporarily stored index in the args of CALL and CALL_0 with the actual values
+    if (bc->op == CALL) {
+      fn_info_index = bc->arg0.value.i; 
+      fn_info = &(program->fn_info[fn_info_index]);
+      
+      bc->arg0.value.i = fn_info->arg_address;
+      bc->arg1.value.i = fn_info->num_args;
+    }
+    
+    if (bc->op == CALL_0) {
+      fn_info_index = bc->arg0.value.i; 
+      fn_info = &(program->fn_info[fn_info_index]);
+      
+      bc->arg0.value.i = fn_info->body_address;
+      bc->arg1.value.i = fn_info->num_args;
+    }
+
+    if (bc->op == PLACEHOLDER_DEC_RC || bc->op == PLACEHOLDER_POP || bc->op == PLACEHOLDER_INC_RC) {
+      if (bc->op == PLACEHOLDER_DEC_RC) {
+        bc->op = DEC_RC;
+      }
+      if (bc->op == PLACEHOLDER_INC_RC) {
+        bc->op = INC_RC;
+      }
+      if (bc->op == PLACEHOLDER_POP) {
+        bc->op = POP;
+      }
+
+      // opcode's arg0 is the fn_info_index and arg1 is the label_value
+      fn_info_index = bc->arg0.value.i; 
+      fn_info = &(program->fn_info[fn_info_index]);
+      label_value = bc->arg1.value.i;
+      
+      i32 data_index = get_argument_mapping(fn_info, label_value);
+      bc->arg1.value.i = data_index;
+
+      if (data_index != -1) {
+        bc->arg0.value.i = MEM_SEG_ARGUMENT;
+      } else {
+        // otherwise this function was invoked with a parameter that is doesn't use
+        // so just essentially turn these ops into no-ops
+        bc->arg0.value.i = MEM_SEG_VOID;
+      }
+    }
+
+    bc++;
+  }
+}
+
+void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_index)
 {
   // ast == adder a: 10 b: 20
 
+  // NOTE: we're filling in the CALL, CALL_0 opcodes with placeholder values
+  // that will later be replaced by the actual addresses
+  // doing it this way enables functions to call other functions that are declared later in the script
+
   // prepare the MEM_SEG_ARGUMENT with default values
-  program_emit_opcode_i32(program, CALL, fn_info->arg_address, fn_info->num_args);
+
+  program_emit_opcode_i32(program, CALL, fn_info_index, fn_info_index);
 
   // overwrite the default arguments with the actual arguments given by the fn invocation
   seni_node *args = safe_next(ast); // pairs of label/value declarations
@@ -2344,29 +2430,24 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, seni_fn_info *
     seni_node *label = args;
     seni_node *value = safe_next(label);
 
-    // find the index within MEM_SEG_ARGUMENT that holds the default value for label
-    i32 data_index = get_argument_mapping(fn_info, label->value.i);
-    if (data_index != -1) {
-      // push value
-      compile(value, program);
-      program_emit_opcode_i32(program, DEC_RC, MEM_SEG_ARGUMENT, data_index);
-      program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, data_index);
+    // push value
+    compile(value, program);
+    program_emit_opcode_i32(program, PLACEHOLDER_DEC_RC, fn_info_index, label->value.i);
+    program_emit_opcode_i32(program, PLACEHOLDER_POP, fn_info_index, label->value.i);
 
-      if (value->type != NODE_VECTOR) {
-        // not an explicitly declared vector so increment it's rc
-        program_emit_opcode_i32(program, INC_RC, MEM_SEG_ARGUMENT, data_index);
+    if (value->type != NODE_VECTOR) {
+      // not an explicitly declared vector so increment it's rc
+      program_emit_opcode_i32(program, PLACEHOLDER_INC_RC, fn_info_index, label->value.i);
 
-        // explicitly declared vectors will have an rc of 1, when the function
-        // returns this will be decremented and they will be returned to the heap
-      }
+      // explicitly declared vectors will have an rc of 1, when the function
+      // returns this will be decremented and they will be returned to the heap
     }
 
     args = safe_next(value);
   }
   
   // call the body of the function
-  program_emit_opcode_i32(program, CALL_0, fn_info->body_address, fn_info->num_args);
-
+  program_emit_opcode_i32(program, CALL_0, fn_info_index, fn_info_index);
 }
 
 void compile_vector(seni_node *ast, seni_program *program)
@@ -2421,12 +2502,13 @@ seni_node *compile(seni_node *ast, seni_program *program)
   if (ast->type == NODE_LIST) {
     n = ast->value.first_child;
 
-    seni_fn_info *fn_info = get_local_fn_info(n, program);
-    if (fn_info) {
-      compile_fn_invocation(n, program, fn_info);
+    i32 fn_info_index = get_fn_info_index(n, program);
+    if (fn_info_index != -1) {
+      compile_fn_invocation(n, program, fn_info_index);
     } else {
       compile(n, program);
     }
+    
     return safe_next(ast);
   }
   if (ast->type == NODE_FLOAT) {
@@ -2633,6 +2715,9 @@ void compiler_compile(seni_node *ast, seni_program *program)
   
   program_emit_opcode_i32(program, STOP, 0, 0);
 
+  // we can now update the addreses used by CALL and CALL_0
+  correct_function_addresses(program);
+
   // printf("program compiled: %d lines\n", program->code_size);
 }
 
@@ -2775,6 +2860,8 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         } else if (dest->type == VAR_COLOUR) {
           colour_return_to_vm(vm, dest->value.c);
         }       
+      } else if (memory_segment_type == MEM_SEG_VOID) {
+        // no nothing
       } else {
         SENI_ERROR("DEC_RC: unknown memory segment type %d", bc->arg0.value.i);
       }
@@ -2788,6 +2875,8 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         if (dest->type == VAR_VEC_HEAD) {
           vector_ref_count_increment(vm, dest);
         }
+      } else if (memory_segment_type == MEM_SEG_VOID) {
+        // no nothing
       } else {
         SENI_ERROR("INC_RC: unknown memory segment type %d", bc->arg0.value.i);
       }
@@ -3144,7 +3233,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       
     case STOP:
       vm->sp = sp;
-      DEBUG_INFO_PRINT(vm);
+      // DEBUG_INFO_PRINT(vm);
       return;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));

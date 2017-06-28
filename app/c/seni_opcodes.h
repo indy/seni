@@ -53,3 +53,9 @@ OPCODE(MTX_POP, 0)
 
 OPCODE (NOP, 0)
 OPCODE (STOP, 0)
+
+
+// temporary opcodes which are replaced by their non-bastard versions during a compilation pass
+OPCODE(PLACEHOLDER_DEC_RC, 0)
+OPCODE(PLACEHOLDER_INC_RC, 0)
+OPCODE(PLACEHOLDER_POP, -1)

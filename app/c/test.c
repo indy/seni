@@ -337,53 +337,6 @@ void test_colour(void)
 //   printf("min %f, max %f\n", min, max);
 // }
 
-void test_prng(void)
-{
-  // seni_prng_state prng_state;
-  // seni_prng_set_state(&prng_state, 65493);
-
-  // f32 a = seni_prng_f32(&prng_state);
-  // f32 b = seni_prng_f32(&prng_state);
-  // printf("a = %.3f b = %.3f\n", a, b);
-
-
-  
-
-  // u32 u, umin, umax;
-  // umin = 10000;
-  // umax = 0;
-  // for (i32 i = 0; i < 100; i++) {
-  //   u = seni_prng_u32(&prng_state1, 10);
-  //   umax = u > umax ? u : umax;
-  //   umin = u < umin ? u : umin;
-  // }
-  // printf("u32 min %d, max %d\n", umin, umax);
-
-  // f32 w, min, max;
-  // min = 10000.0f;
-  // max = -10000.0f;
-  // for (i32 i = 0; i < 10000; i++) {
-  //   w = seni_prng_f32(&prng_state1);
-  //   max = w > max ? w : max;
-  //   min = w < min ? w : min;
-  // }
-
-  // printf("min %f, max %f\n", min, max);
-
-  // TEST_ASSERT_EQUAL(230, u);
-
-  // minmax(1.0f, 1.0f, 0.0f, 1);
-  // minmax(1.0f, 1.0f, 1.0f, 1);
-  // minmax(1.0f, 1.0f, 2.0f, 1);
-  // minmax(1.0f, 1.0f, 3.0f, 1);
-
-  // printf("%f\n", seni_perlin(0.0001f, 0.1f, 0.5f));
-  // printf("%f\n", seni_perlin(90.4f, 13.1f, 4394.0f));
-  // printf("%f\n", seni_perlin(0.122f, 0.1f, 0.3f));
-  // printf("%f\n", seni_perlin(0.1f, 0.1f, 0.1f));
-  
-}
-
 // --------------------------------------------------
 
 seni_word_lut *setup_vm_wl(seni_env *e)
@@ -600,6 +553,13 @@ void test_vm_callret(void)
 
   // global references a function, function references a global
   VM_COMPILE_F32("(define a 5 b (acc n: 2)) (fn (acc n: 0) (+ n a)) (+ a b)", 12);
+
+  // using a function before it's been declared
+  VM_COMPILE_F32("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66)", 621.0f);
+  
+  // passing an argument to a function that isn't being used
+  // produces DEC_RC, POP, INC_RC with VOID -1 args
+  VM_COMPILE_F32("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66 b: 8383)", 621.0f);
 }
 
 void test_vm_native(void)
@@ -720,6 +680,28 @@ void test_vm_interp(void)
   VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100] clamping: true)) (interp/call using: i val: -2.0)) (x)", 0.0f);
 }
 
+void test_prng(void)
+{
+
+  seni_prng_state state;
+  seni_prng_set_state(&state, 34342);
+  
+  f32 w;
+  f32 min = 1000.0f;
+  f32 max = -1000.0f;
+  for (i32 i = 0; i < 1000000; i++) {
+    w = seni_perlin(seni_prng_f32_range(&state, -100.0f, 100.0f),
+                    seni_prng_f32_range(&state, -100.0f, 100.0f),
+                    seni_prng_f32_range(&state, -100.0f, 100.0f));
+    max = w > max ? w : max;
+    min = w < min ? w : min;
+  }
+
+  printf("min %f, max %f\n", min, max);
+
+  TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_perlin(0.1f, 0.2f, 0.3f));
+}
+
 void test_vm_temp(void)
 {
 }
@@ -750,6 +732,8 @@ int main(void)
   RUN_TEST(test_vm_environmental);
   RUN_TEST(test_vm_interp);
 
+  
+  //RUN_TEST(test_prng);
   // RUN_TEST(test_vm_temp);
   
   return UNITY_END();
