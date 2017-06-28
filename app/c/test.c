@@ -468,23 +468,23 @@ void test_vm_bugs(void)
   // messed up decrementing ref counts for colours
   VM_COMPILE_F32("(fn (x colour: (col/rgb)) (+ 1 1)) (x colour: (col/rgb))", 2.0f);
 
-  // tmp in interpreter was decrementing ref count of previously held value
-     VM_COMPILE_F32("(fn (huh at: 0) 4)\
- (fn (x colour: (col/rgb)              \
-        volatility: 0                  \
-        passes: 1                      \
-        seed: 341)                     \
-   42)                                 \
- (x colour: (col/rgb))                 \
- (huh at: 5)", 4.0f);
+ //  // tmp in interpreter was decrementing ref count of previously held value
+  VM_COMPILE_F32("(fn (huh at: 0) 4)\
+  (fn (x colour: (col/rgb)              \
+         volatility: 0                  \
+         passes: 1                      \
+         seed: 341)                     \
+    42)                                 \
+  (x colour: (col/rgb))                 \
+  (huh at: 5)", 4.0f);
 
   VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/take num: 3 from: rng)))) (f) 1", 1.0f);
+  
+ //  // pre-assigned global wasn't being added to the global-mapping so references to them in functions wasn't working
+ VM_COMPILE_F32("(wash) (fn (wash) (define foo (/ canvas/width 3)) foo)", 333.3333f);
 
-  // pre-assigned global wasn't being added to the global-mapping so references to them in functions wasn't working
-  VM_COMPILE_F32("(wash) (fn (wash) (define foo (/ canvas/width 3)) foo)", 333.3333f);
-
-  // vm should use the caller function's ARG values not the callees.
-  VM_COMPILE_F32("(fn (v foo: 10) foo) (fn (wash seed: 272) (v foo: seed)) (wash seed: 66)", 66.0f);
+ //  // vm should use the caller function's ARG values not the callees.
+ VM_COMPILE_F32("(fn (v foo: 10) foo) (fn (wash seed: 272) (v foo: seed)) (wash seed: 66)", 66.0f);
 }
 
 void test_vm_bytecode(void)
@@ -575,6 +575,8 @@ void test_vm_destructure(void)
 {
   VM_COMPILE_F32("(define [a b] [22 33]) (- b a)", 11);
   VM_COMPILE_F32("(define [a b c] [22 33 44]) (+ a b c)", 99);
+
+  VM_COMPILE_F32("(fn (f pos: [3 5]) (define [j k] pos) (+ j k)) (f)", 8.0f);
 }
 
 void test_vm_vector(void)
@@ -704,6 +706,18 @@ void test_prng(void)
 
 void test_vm_temp(void)
 {
+  // this decrements the rc too much
+  VM_COMPILE_F32("(fn (f pos: [3 5]) (define [j k] pos) (+ j k)) (f)", 8.0f);
+  // how would this work?
+  // VM_COMPILE_F32("(fn (f) (define [j k] (prng/take num: 2 from: rng)) (+ j k)) (f)", 8.0f);
+
+
+  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/take num: 3 from: rng)))) (f) 1", 1.0f);
+
+  VM_COMPILE_F32("(define [a b] [22 33]) (- b a)", 11);
+  VM_COMPILE_F32("(define [a b c] [22 33 44]) (+ a b c)", 99);
+
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a b c] (prng/take num: 3 from: rng)) (+ a b c)) (x)", 0.881854f);
 }
 
 int main(void)
@@ -713,6 +727,7 @@ int main(void)
   UNITY_BEGIN();
 
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
+  //RUN_TEST(test_prng);
   
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
@@ -732,9 +747,7 @@ int main(void)
   RUN_TEST(test_vm_environmental);
   RUN_TEST(test_vm_interp);
 
-  
-  //RUN_TEST(test_prng);
   // RUN_TEST(test_vm_temp);
-  
+
   return UNITY_END();
 }

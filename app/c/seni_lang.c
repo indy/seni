@@ -1483,7 +1483,7 @@ bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
 
   var_rc->value.ref_count--;
 
-  // printf("vector_ref_count_decrement %p: %d\n", var_rc, var_rc->value.ref_count);
+  //printf("vector_ref_count_decrement %p: %d\n", var_rc, var_rc->value.ref_count);
 
   // decrement the ref counts of any nested vectors
   seni_var *element = var_rc->next;
@@ -1521,7 +1521,7 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
   printf("");
 #endif
 
-  // printf("vector_ref_count_increment %p: %d\n", var_rc, var_rc->value.ref_count);
+  //printf("vector_ref_count_increment %p: %d\n", var_rc, var_rc->value.ref_count);
 }
 
 bool safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
@@ -1551,7 +1551,7 @@ bool safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
   } else if (using == USE_V) {
     if (src->type == VAR_VEC_HEAD) {
       dest->value.v = src->value.v;
-      vector_ref_count_increment(vm, dest);
+      vector_ref_count_increment(vm, src);
     } else {
       SENI_ERROR("what the fuck?\n");
     }
@@ -1566,10 +1566,10 @@ bool safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
 
 // copying the src onto a var that we're not using (e.g. the top of a stack)
 // only the reference counts of the src should be updated
-void safe_var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src)
+bool safe_var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src)
 {
   if (dest == src) {
-    return;
+    return true;
   }
 
   dest->type = src->type;
@@ -1585,7 +1585,7 @@ void safe_var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src)
   } else if (using == USE_V) {
     if (src->type == VAR_VEC_HEAD) {
       dest->value.v = src->value.v;
-      vector_ref_count_increment(vm, dest);
+      vector_ref_count_increment(vm, src);
     } else {
       SENI_ERROR("what the fuck?\n");
     }
@@ -1594,6 +1594,8 @@ void safe_var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src)
   } else {
     SENI_ERROR("unknown seni_value_in_use for safe_var_copy");
   }
+
+  return true;
 }
 
 // like a seni_var_copy without any modifications to the ref count
@@ -2787,7 +2789,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         pretty_print_seni_var2("---", src);
         printf("--- hop_back is %d fp is %d\n", hop_back, fp);
 #endif
-        safe_var_move(v, src);
+        safe_var_copy_onto_junk(vm, v, src);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
 
         // if we're referencing a LOCAL in-between CALL and CALL_0 make sure we use the right frame
@@ -2839,7 +2841,11 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         // normally pop from the stack and lose the value
         // but if it's a vector then decrement its ref count
         if (v->type == VAR_VEC_HEAD) {
-          vector_ref_count_decrement(vm, v);
+          b1 = vector_ref_count_decrement(vm, v);
+          if (b1 == false) {
+            SENI_ERROR("POP MEM_SEG_VOID: vector_ref_count_decrement failed");
+            return;
+          }
         }
       } else {
         SENI_ERROR("POP: unknown memory segment type %d", bc->arg0.value.i);
@@ -2856,7 +2862,11 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
         if (dest->type == VAR_VEC_HEAD) {
-          vector_ref_count_decrement(vm, dest);
+          b1 = vector_ref_count_decrement(vm, dest);
+          if (b1 == false) {
+            SENI_ERROR("DEC_RC: vector_ref_count_decrement failed");
+            return;
+          }
         } else if (dest->type == VAR_COLOUR) {
           colour_return_to_vm(vm, dest->value.c);
         }       
@@ -2985,7 +2995,11 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
         tmp = &(vm->stack[vm->local + i]);
         if (tmp->type == VAR_VEC_HEAD) {
-          vector_ref_count_decrement(vm, tmp);
+          b1 = vector_ref_count_decrement(vm, tmp);
+          if (b1 == false) {
+            SENI_ERROR("RET local vector: vector_ref_count_decrement failed");
+            return;
+          }
         } else if (tmp->type == VAR_COLOUR && tmp != src) {
           colour_return_to_vm(vm, tmp->value.c);
         }
@@ -2994,7 +3008,11 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       for (i = 0; i < num_args; i++) {
         tmp = &(vm->stack[vm->fp - ((i+1) * 2)]);
         if (tmp->type == VAR_VEC_HEAD) {
-          vector_ref_count_decrement(vm, tmp);
+          b1 = vector_ref_count_decrement(vm, tmp);
+          if (b1 == false) {
+            SENI_ERROR("RET args: vector_ref_count_decrement failed");
+            return;
+          }
         } else if (tmp->type == VAR_COLOUR && tmp != src) {
           colour_return_to_vm(vm, tmp->value.c);
         }
@@ -3035,7 +3053,11 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         vm->sp -= 2;
         tmp = &(vm->stack[vm->sp + 1]);
         if (tmp->type == VAR_VEC_HEAD) {
-          vector_ref_count_decrement(vm, tmp);
+          b1 = vector_ref_count_decrement(vm, tmp);
+          if (b1 == false) {
+            SENI_ERROR("NATIVE: vector_ref_count_decrement failed");
+            return;
+          }
 
           // this is now off the stack, so blow away the vector head
           tmp->type = VAR_INT;
@@ -3087,21 +3109,16 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       // take num_args elements from the vector and push them onto the stack
       STACK_POP;
       seni_var _vec;
-      safe_var_copy_onto_junk(vm, &_vec, v);
+      safe_var_move(&_vec, v);
       src = _vec.value.v->next;
       for (i = 0; i < num_args; i++) {
         STACK_PUSH;
-        b1 = safe_var_copy(vm, v, src);
-        if (b1 == false) {
-          SENI_ERROR("safe_var_copy failed in PILE");
-          return;
-        }
-
+        safe_var_copy_onto_junk(vm, v, src);
         src = src->next;
       }
       b1 = vector_ref_count_decrement(vm, &_vec);
       if (b1 == false) {
-        SENI_ERROR("PILE: vector_ref_count_decrement");
+        SENI_ERROR("PILE: vector_ref_count_decrement failed");
         return;
       }
       break;

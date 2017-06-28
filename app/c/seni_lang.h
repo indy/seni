@@ -128,7 +128,7 @@ typedef enum {
 #define HEAP_SIZE 1024
 #define STACK_SIZE 1024
 #define MEMORY_GLOBAL_SIZE 10
-#define MEMORY_LOCAL_SIZE 20
+#define MEMORY_LOCAL_SIZE 40
 
 #define MAX_TOP_LEVEL_FUNCTIONS 32
 
