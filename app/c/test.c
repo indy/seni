@@ -715,6 +715,12 @@ void test_prng(void)
 
 void test_vm_temp(void)
 {
+  VM_COMPILE_F32("(fn (leak-colour colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)) \
+  (define \
+    lab-colour (col/set-alpha colour: (col/convert format: LAB colour: colour)\
+                              value: 0.1))\
+  42)\
+  (leak-colour)", 42.0f);
 }
 
 int main(void)

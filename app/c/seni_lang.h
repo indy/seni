@@ -85,7 +85,6 @@ typedef enum {
 } seni_value_in_use;
 
 typedef struct seni_var {
-  i32 id;
   seni_var_type type;
 
   union {
@@ -96,11 +95,6 @@ typedef struct seni_var {
     struct seni_var *v;
     seni_colour *c;             // reference to a colour allocated from vm->colour_slab
   } value;
-
-#ifdef SENI_DEBUG_MODE  
-  i32 debug_id;
-  bool debug_allocatable; 
-#endif
 
   bool allocated;
 
@@ -127,7 +121,7 @@ typedef enum {
 
 #define HEAP_SIZE 1024
 #define STACK_SIZE 1024
-#define MEMORY_GLOBAL_SIZE 10
+#define MEMORY_GLOBAL_SIZE 20
 #define MEMORY_LOCAL_SIZE 40
 
 #define MAX_TOP_LEVEL_FUNCTIONS 32
@@ -247,7 +241,7 @@ seni_var      *stack_peek(seni_vm *vm);
 seni_var      *var_get_from_heap(seni_vm *vm);
 void           var_return_to_heap(seni_vm *vm,  seni_var *var);
 seni_colour   *colour_get_from_vm(seni_vm *vm);
-void colour_return_to_vm(seni_vm *vm, seni_colour *colour); // temp
+void           colour_return_to_vm(seni_vm *vm, seni_colour *colour); // temp
 
 seni_vm       *vm_construct(i32 stack_size, i32 heap_size);
 void           vm_free(seni_vm *vm);

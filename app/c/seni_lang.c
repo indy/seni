@@ -804,76 +804,28 @@ void pretty_print_seni_var(seni_var *var, char* msg)
   char *type = var_type_name(var);
   seni_value_in_use using = get_value_in_use(var->type);
 
-#ifdef SENI_DEBUG_MODE
   switch(using) {
   case USE_I:
-    printf("debug_id:%d id:%d %s : %d %s\n", var->debug_id, var->id, type, var->value.i, msg);
+    printf("%s: %s : %d\n", msg, type, var->value.i);
     break;
   case USE_F:
-    printf("debug_id:%d id:%d %s : %.2f %s\n", var->debug_id, var->id,  type, var->value.f, msg);
+    printf("%s: %s : %.2f\n", msg,  type, var->value.f);
     break;
   case USE_L:
-    printf("debug_id:%d id:%d %s : %llu %s\n", var->debug_id, var->id, type, (long long unsigned int)(var->value.l), msg);
+    printf("%s: %s : %llu\n", msg, type, (long long unsigned int)(var->value.l));
     break;
   case USE_V:
     if (var->type == VAR_VEC_HEAD) {
-      printf("debug_id:%d id:%d %s : length %d %s\n", var->debug_id, var->id,  type, var_vector_length(var), msg);
+      seni_var *rc = var->value.v;
+      printf("%s: %s : length %d ref_count: %d\n", msg, type, var_vector_length(var), rc->value.ref_count);
     } else {
-      printf("debug_id:%d id:%d %s : %s\n", var->debug_id, var->id,  type, msg);
+      printf("%s: %s\n", msg,  type);
     }
     break;
   case USE_C:
-    printf("debug_id:%d id:%d %s : %p %s\n", var->debug_id, var->id,  type, var->value.c, msg);
+    printf("%s: %s : %p\n", msg,  type, var->value.c);
     break;
     
-  }
-#else
-  switch(using) {
-  case USE_I:
-    printf("%s : %d %s\n", type, var->value.i, msg);
-    break;
-  case USE_F:
-    printf("%s : %.2f %s\n", type, var->value.f, msg);
-    break;
-  case USE_L:
-    printf("%s : %llu %s\n", type, (long long unsigned int)(var->value.l), msg);
-    break;
-  case USE_V:
-    printf("%s : length %d %s\n", type, var_vector_length(var), msg);
-    break;
-  case USE_C:
-    printf("%s : %p %s\n", type, var->value.c, msg);
-    break;
-  }
-#endif
-}
-
-void pretty_print_seni_var2(char* msg, seni_var *var)
-{
-  if (var == NULL) {
-    SENI_ERROR("pretty_print_seni_var: given NULL");
-    return;
-  }
-  
-  char *type = var_type_name(var);
-  seni_value_in_use using = get_value_in_use(var->type);
-
-  switch(using) {
-  case USE_I:
-    printf("%s %s : %d\n", msg, type, var->value.i);
-    break;
-  case USE_F:
-    printf("%s %s : %.2f\n", msg, type, var->value.f);
-    break;
-  case USE_L:
-    printf("%s %s : %llu\n", msg, type, (long long unsigned int)(var->value.l));
-    break;
-  case USE_V:
-    printf("%s %s : length %d\n", msg, type, var_vector_length(var));
-    break;
-  case USE_C:
-    printf("%s %s : %p\n", msg, type, var->value.c);
-    break;
   }
 }
 
@@ -1329,10 +1281,6 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
 
   var = vm->heap_slab;
   for (i = 0; i < heap_size; i++) {
-#ifdef SENI_DEBUG_MODE
-    var[i].debug_id = i;
-    var[i].debug_allocatable = true;
-#endif
     var[i].allocated = false;
     DL_APPEND(vm->heap_avail, &(var[i]));
   }
@@ -1445,12 +1393,6 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
   }
 
   DEBUG_INFO_RETURN_TO_HEAP(vm);
-
-#ifdef SENI_DEBUG_MODE
-  if (var->debug_allocatable == false) {
-    SENI_ERROR("trying to return a seni_var to the pool that wasnt originally from the pool");
-  }
-#endif
 
   if (var->type == VAR_VEC_HEAD) {
     bool res = vector_ref_count_decrement(vm, var);
@@ -2790,7 +2732,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         
         src = &(vm->stack[fp - bc->arg1.value.i - 1]);
 #ifdef TRACE_PRINT_OPCODES
-        pretty_print_seni_var2("---", src);
+        pretty_print_seni_var(src, "---");
         printf("--- hop_back is %d fp is %d\n", hop_back, fp);
 #endif
         safe_var_copy_onto_junk(vm, v, src);
@@ -2832,7 +2774,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         // check the current value of dest,
         safe_var_move(dest, v);
 #ifdef TRACE_PRINT_OPCODES
-        pretty_print_seni_var2("---", dest);
+        pretty_print_seni_var(dest, "---");
         printf("--- fp is %d\n", vm->fp);
 #endif        
       } else if (memory_segment_type == MEM_SEG_LOCAL) {

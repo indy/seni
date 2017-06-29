@@ -1,10 +1,11 @@
-* TODO [0/8]
+* TODO [1/7]
   1. [ ] interp/bezier
   2. [ ] cleanup memory of parser
   3. [ ] structs for compile info and runtime info
   4. [ ] seni_env
   5. [ ] 'in' paramaeter for loop ?
   6. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  7. [X] remove id, debug_id and debug_allocatable from seni_var
 
 
 * wasm - opengl
@@ -501,3 +502,27 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   after a function returns, the frame is popped and the sp has increased by one as it holds the return value from the function
 
 
+
+
+
+
+
+
+* seni_var holding 4floats
+  problems:
+  1. seni_var holds a reference to a colour that's been allocated from the colour_slab. I've realised that to properly manage this we'll need to reference count VAR_COLOUR
+  2. there are a _lot_ of seni_var heap allocations taking place. This is because _every_ 2d vector involves using seni_vars from the heap.
+  
+
+  solution:
+  seni_var should hold 4 floats: 'f32_array' in addition to it's value union
+  these 4 floats can be used to represent:
+  - a colour (type == VAR_COLOUR, value.i == format, f32_array == components)
+  - a 2d vector (type == VAR_2D, f32_array == x,y)
+  - a quaternion (type == VAR_QUATERNION, f32_array == x,y,z,w)
+  - etc etc etc
+
+    the colour slab can be removed and there'll be no need to reference count colours since the safe_move, safe_copy, etc functions will also copy the f32_array
+
+    nth will need to be refactored so that it looks into f32_array when given a VAR_2D
+    append will need to be looked at (will any conversions be required?)
