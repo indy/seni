@@ -3,7 +3,7 @@
   gap-size 30
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
-  square-size (/ (- 1000 (* gap-size num-gaps)) num-squares))
+  square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares))
 
 (wash)
 
@@ -49,9 +49,6 @@
                   height: height
                   colour: pass-colour)))))
 
-(fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
-    (+ y (* s (prng/perlin x: x y: y z: z))))
-
 (fn (wash variation: 200
           line-width: 70
           line-segments: 5
@@ -77,4 +74,5 @@
                            [(wash-wobble x: canvas/height y: h z: seed s: variation) canvas/height]]
                   colour: colour)))
 
-
+(fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
+    (+ y (* s (prng/perlin x: x y: y z: z))))
