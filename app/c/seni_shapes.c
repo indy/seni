@@ -201,7 +201,6 @@ void render_bezier(seni_render_data *render_data,
   // get the uv co-ordinates for the specified brush
   //
   seni_brush_type brush_type = (seni_brush_type)(brush - g_keyword_iname_brush_flat);
-  printf("brush type %d\n", brush_type);
   seni_uv_mapping *uv = get_uv_mapping(brush_type, brush_subtype, true);
   v2 uv_a = uv->map[0];
   v2 uv_b = uv->map[1];

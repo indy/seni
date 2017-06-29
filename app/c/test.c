@@ -233,14 +233,14 @@ void assert_seni_var_col(seni_var *var, i32 format, f32 a, f32 b, f32 c, f32 d)
 {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_COLOUR, var->type, "VAR_COLOUR");
 
-  seni_colour *colour = var->value.c;
+  // seni_colour *colour = var->value.c;
 
-  TEST_ASSERT_EQUAL(format, (i32)colour->format);
+  TEST_ASSERT_EQUAL(format, (i32)var->value.i);
 
-  TEST_ASSERT_FLOAT_WITHIN(0.1f, a, colour->element[0]);
-  TEST_ASSERT_FLOAT_WITHIN(0.1f, b, colour->element[1]);
-  TEST_ASSERT_FLOAT_WITHIN(0.1f, c, colour->element[2]);
-  TEST_ASSERT_FLOAT_WITHIN(0.1f, d, colour->element[3]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, a, var->f32_array[0]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, b, var->f32_array[1]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, c, var->f32_array[2]);
+  TEST_ASSERT_FLOAT_WITHIN(0.1f, d, var->f32_array[3]);
 }
 
 void assert_seni_var_f32_within(seni_var *var, seni_var_type type, f32 f, f32 tolerance)
@@ -398,12 +398,6 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 #define VM_HEAP_SLAB_CHECK
 #endif
 
-#ifdef SENI_DEBUG_MODE
-#define VM_COLOUR_SLAB_CHECK TEST_ASSERT_EQUAL_MESSAGE(0, vm->colour_slab_info.delta, "vm colour slab leak")
-#else
-#define VM_COLOUR_SLAB_CHECK
-#endif
-
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
 #define VM_TEST_VEC2(A,B) assert_seni_var_v2(stack_peek(vm), A, B)
@@ -425,11 +419,11 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
-#define VM_COMPILE_F32(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_HEAP_SLAB_CHECK;VM_COLOUR_SLAB_CHECK;VM_CLEANUP;}
+#define VM_COMPILE_F32(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_HEAP_SLAB_CHECK;VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_HEAP_SLAB_CHECK;VM_CLEANUP;}
 #define VM_COMPILE_VEC2(EXPR,A,B) {EVM_COMPILE(EXPR);VM_TEST_VEC2(A,B);VM_CLEANUP;}
 #define VM_COMPILE_VEC4(EXPR,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_VEC4(A,B,C,D);VM_CLEANUP;}
-#define VM_COMPILE_COL(EXPR,F,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_COLOUR_SLAB_CHECK;VM_CLEANUP;}
+#define VM_COMPILE_COL(EXPR,F,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_CLEANUP;}
 // don't perform a heap check as we're assuming that the expr will be leaky
 #define VM_COMPILE_F32_L(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
 #define VM_COMPILE_COL_L(EXPR,F,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_CLEANUP;}

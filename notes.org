@@ -508,7 +508,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
 
 
-* seni_var holding 4floats
+* seni_var containing f32_array
   problems:
   1. seni_var holds a reference to a colour that's been allocated from the colour_slab. I've realised that to properly manage this we'll need to reference count VAR_COLOUR
   2. there are a _lot_ of seni_var heap allocations taking place. This is because _every_ 2d vector involves using seni_vars from the heap.
@@ -526,3 +526,5 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
     nth will need to be refactored so that it looks into f32_array when given a VAR_2D
     append will need to be looked at (will any conversions be required?)
+
+

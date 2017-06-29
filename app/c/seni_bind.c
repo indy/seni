@@ -71,8 +71,16 @@ typedef struct {
 
 #define READ_STACK_ARG_F32(n) if (name_1 == g_keyword_iname_##n) { IS_F32(n); n = value_1->value.f; }
 #define READ_STACK_ARG_I32(n) if (name_1 == g_keyword_iname_##n) { IS_I32(n); n = value_1->value.i; }
-#define READ_STACK_ARG_COL(n) if (name_1 == g_keyword_iname_##n) { IS_COL(n); n = value_1->value.c; }
 #define READ_STACK_ARG_VAR(n) if (name_1 == g_keyword_iname_##n) { n = value_1; }
+
+#define READ_STACK_ARG_COL(n) if (name_1 == g_keyword_iname_##n) {  \
+  IS_COL(n);                                                        \
+  n->format = value_1->value.i;                                     \
+  n->element[0] = value_1->f32_array[0];                            \
+  n->element[1] = value_1->f32_array[1];                            \
+  n->element[2] = value_1->f32_array[2];                            \
+  n->element[3] = value_1->f32_array[3];                            \
+}
 
 // traverse through the VAR_VEC_HEAD, VAR_VEC_RC nodes down into the values
 // todo: make a seni_var type that can hold VEC2
@@ -364,7 +372,7 @@ seni_var bind_col_convert(seni_vm *vm, i32 num_args)
   // the seni_var referencing the converted colour is going to be added to the VM's stack
   // so we need to get the referenced colour from the vm
   //
-  seni_colour *out = colour_get_from_vm(vm);
+  seni_colour out;
   seni_colour_format colour_format = RGB;
 
   if (format == g_keyword_iname_RGB) {
@@ -377,10 +385,10 @@ seni_var bind_col_convert(seni_vm *vm, i32 num_args)
     colour_format = HSV;
   }
   
-  colour_clone_as(out, colour, colour_format);
+  colour_clone_as(&out, colour, colour_format);
 
   seni_var ret;
-  colour_as_var(&ret, out);
+  colour_as_var(&ret, &out);
 
   return ret;
 }
@@ -403,17 +411,15 @@ seni_var bind_col_rgb(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(alpha);
   READ_STACK_ARGS_END;
 
+  seni_colour colour;
+  colour.format = RGB;
+  colour.element[0] = r;
+  colour.element[1] = g;
+  colour.element[2] = b;
+  colour.element[3] = alpha;
+
   seni_var ret;
-
-  seni_colour *colour = colour_get_from_vm(vm);
-  colour->format = RGB;
-  colour->element[0] = r;
-  colour->element[1] = g;
-  colour->element[2] = b;
-  colour->element[3] = alpha;
-
-  colour_as_var(&ret, colour);
-
+  colour_as_var(&ret, &colour);
 
   return ret;
 }
@@ -436,17 +442,15 @@ seni_var bind_col_hsl(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(alpha);
   READ_STACK_ARGS_END;
 
+  seni_colour colour;
+  colour.format = HSL;
+  colour.element[0] = h;
+  colour.element[1] = s;
+  colour.element[2] = l;
+  colour.element[3] = alpha;
+
   seni_var ret;
-
-  seni_colour *colour = colour_get_from_vm(vm);
-  colour->format = HSL;
-  colour->element[0] = h;
-  colour->element[1] = s;
-  colour->element[2] = l;
-  colour->element[3] = alpha;
-
-  colour_as_var(&ret, colour);
-
+  colour_as_var(&ret, &colour);
 
   return ret;
 }
@@ -469,17 +473,15 @@ seni_var bind_col_hsv(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(alpha);
   READ_STACK_ARGS_END;
 
+  seni_colour colour;
+  colour.format = HSV;
+  colour.element[0] = h;
+  colour.element[1] = s;
+  colour.element[2] = v;
+  colour.element[3] = alpha;
+
   seni_var ret;
-
-  seni_colour *colour = colour_get_from_vm(vm);
-  colour->format = HSV;
-  colour->element[0] = h;
-  colour->element[1] = s;
-  colour->element[2] = v;
-  colour->element[3] = alpha;
-
-  colour_as_var(&ret, colour);
-
+  colour_as_var(&ret, &colour);
 
   return ret;
 }
@@ -502,17 +504,15 @@ seni_var bind_col_lab(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(alpha);
   READ_STACK_ARGS_END;
 
+  seni_colour colour;
+  colour.format = LAB;
+  colour.element[0] = l;
+  colour.element[1] = a;
+  colour.element[2] = b;
+  colour.element[3] = alpha;
+
   seni_var ret;
-
-  seni_colour *colour = colour_get_from_vm(vm);
-  colour->format = LAB;
-  colour->element[0] = l;
-  colour->element[1] = a;
-  colour->element[2] = b;
-  colour->element[3] = alpha;
-
-  colour_as_var(&ret, colour);
-
+  colour_as_var(&ret, &colour);
 
   return ret;
 }
@@ -527,12 +527,11 @@ seni_var bind_col_complementary(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_COL(colour);
   READ_STACK_ARGS_END;
 
-  seni_colour *ret_colour = colour_get_from_vm(vm);
-  complementary(ret_colour, colour);
-
+  seni_colour ret_colour;
+  complementary(&ret_colour, colour);
 
   seni_var ret;
-  colour_as_var(&ret, ret_colour);
+  colour_as_var(&ret, &ret_colour);
   return ret;
 }
 
@@ -546,15 +545,15 @@ seni_var bind_col_split_complementary(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_COL(colour);
   READ_STACK_ARGS_END;
 
-  seni_colour *ret_colour0 = colour_get_from_vm(vm);
-  seni_colour *ret_colour1 = colour_get_from_vm(vm);
-  split_complementary(ret_colour0, ret_colour1, colour);
+  seni_colour ret_colour0;
+  seni_colour ret_colour1;
+  split_complementary(&ret_colour0, &ret_colour1, colour);
 
   // push the return values onto the stack as a vector
   seni_var ret;
   vector_construct(vm, &ret);
-  append_to_vector_col(vm, &ret, ret_colour0);
-  append_to_vector_col(vm, &ret, ret_colour1);
+  append_to_vector_col(vm, &ret, &ret_colour0);
+  append_to_vector_col(vm, &ret, &ret_colour1);
   return ret;
 }
 
@@ -568,15 +567,15 @@ seni_var bind_col_analagous(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_COL(colour);
   READ_STACK_ARGS_END;
 
-  seni_colour *ret_colour0 = colour_get_from_vm(vm);
-  seni_colour *ret_colour1 = colour_get_from_vm(vm);
-  analagous(ret_colour0, ret_colour1, colour);
+  seni_colour ret_colour0;
+  seni_colour ret_colour1;
+  analagous(&ret_colour0, &ret_colour1, colour);
 
   // push the return values onto the stack as a vector
   seni_var ret;
   vector_construct(vm, &ret);
-  append_to_vector_col(vm, &ret, ret_colour0);
-  append_to_vector_col(vm, &ret, ret_colour1);
+  append_to_vector_col(vm, &ret, &ret_colour0);
+  append_to_vector_col(vm, &ret, &ret_colour1);
   return ret;
 }
 
@@ -590,15 +589,15 @@ seni_var bind_col_triad(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_COL(colour);
   READ_STACK_ARGS_END;
 
-  seni_colour *ret_colour0 = colour_get_from_vm(vm);
-  seni_colour *ret_colour1 = colour_get_from_vm(vm);
-  triad(ret_colour0, ret_colour1, colour);
+  seni_colour ret_colour0;
+  seni_colour ret_colour1;
+  triad(&ret_colour0, &ret_colour1, colour);
 
   // push the return values onto the stack as a vector
   seni_var ret;
   vector_construct(vm, &ret);
-  append_to_vector_col(vm, &ret, ret_colour0);
-  append_to_vector_col(vm, &ret, ret_colour1);
+  append_to_vector_col(vm, &ret, &ret_colour0);
+  append_to_vector_col(vm, &ret, &ret_colour1);
   return ret;
 }
 
@@ -614,14 +613,14 @@ seni_var bind_col_darken(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(value);
   READ_STACK_ARGS_END;
 
-  seni_colour *ret_colour = colour_get_from_vm(vm);
+  seni_colour ret_colour;
 
-  colour_clone_as(ret_colour, colour, LAB);
-  ret_colour->element[0] = clamp(ret_colour->element[0] - value, 0.0f, 100.0f);
+  colour_clone_as(&ret_colour, colour, LAB);
+  ret_colour.element[0] = clamp(ret_colour.element[0] - value, 0.0f, 100.0f);
 
 
   seni_var ret;
-  colour_as_var(&ret, ret_colour);
+  colour_as_var(&ret, &ret_colour);
   return ret;
 }
 
@@ -637,14 +636,14 @@ seni_var bind_col_lighten(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(value);
   READ_STACK_ARGS_END;
 
-  seni_colour *ret_colour = colour_get_from_vm(vm);
+  seni_colour ret_colour;
 
-  colour_clone_as(ret_colour, colour, LAB);
-  ret_colour->element[0] = clamp(ret_colour->element[0] + value, 0.0f, 100.0f);
+  colour_clone_as(&ret_colour, colour, LAB);
+  ret_colour.element[0] = clamp(ret_colour.element[0] + value, 0.0f, 100.0f);
 
 
   seni_var ret;
-  colour_as_var(&ret, ret_colour);
+  colour_as_var(&ret, &ret_colour);
   return ret;
 }
 
@@ -660,14 +659,13 @@ seni_var bind_col_set_alpha(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(value);
   READ_STACK_ARGS_END;
 
-  seni_colour *ret_colour = colour_get_from_vm(vm);
+  seni_colour ret_colour;
 
-  colour_clone_as(ret_colour, colour, colour->format);
-  ret_colour->element[3] = value;
-
+  colour_clone_as(&ret_colour, colour, colour->format);
+  ret_colour.element[3] = value;
 
   seni_var ret;
-  colour_as_var(&ret, ret_colour);
+  colour_as_var(&ret, &ret_colour);
   return ret;
 }
 
@@ -700,14 +698,14 @@ seni_var bind_col_set_lab_l(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(value);
   READ_STACK_ARGS_END;
 
-  seni_colour *ret_colour = colour_get_from_vm(vm);
-  colour_clone_as(ret_colour, colour, LAB);
+  seni_colour ret_colour;
+  colour_clone_as(&ret_colour, colour, LAB);
 
   i32 l_index = 0; // L is the first element
-  ret_colour->element[l_index] = value;
+  ret_colour.element[l_index] = value;
 
   seni_var ret;
-  colour_as_var(&ret, ret_colour);
+  colour_as_var(&ret, &ret_colour);
   return ret;
 }
 

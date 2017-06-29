@@ -72,7 +72,7 @@ typedef enum {
   VAR_NAME,      // seni_word_lut[value.i]
   VAR_VEC_HEAD,  // pointer to vec_rc is in value.v
   VAR_VEC_RC,    // pointer to first vector element is in value.v
-  VAR_COLOUR,    // pointer to a colour
+  VAR_COLOUR,    // pointer to a colour: format is in value.i and elements in f32_array
 } seni_var_type;
 
 // which value to use
@@ -80,8 +80,7 @@ typedef enum {
   USE_I,                        // integer
   USE_F,                        // float
   USE_L,                        // long
-  USE_V,                        // pointer to seni_var
-  USE_C                         // pointer to a colour
+  USE_V                         // pointer to seni_var
 } seni_value_in_use;
 
 typedef struct seni_var {
@@ -93,10 +92,13 @@ typedef struct seni_var {
     u64 l;                      // long - used by seni_prng_state
     i32 ref_count;              // reference count for VAR_VEC_RC
     struct seni_var *v;
-    seni_colour *c;             // reference to a colour allocated from vm->colour_slab
   } value;
 
   bool allocated;
+
+  // 4 floats are very handy. they can be used to represent colours, 2d/3d/4d vectors and quaternions
+  // without resorting to expensive heap_slab allocated reference counted vectors
+  f32 f32_array[4];
 
   /* for linked list used by the pool and for elements in a vector */
   struct seni_var *prev;
@@ -128,8 +130,6 @@ typedef enum {
 
 #define MAX_NUM_ARGUMENTS 16
 
-#define COLOUR_SLAB_SIZE 256
-
 // Virtual Machine
 //
 typedef struct {
@@ -151,10 +151,6 @@ typedef struct seni_vm {
   seni_render_data *render_data;   // stores the generated vertex data
   
   seni_matrix_stack *matrix_stack;
-
-  seni_colour *colour_slab;        // a slab of pre-allocated colours
-  seni_colour *colour_avail;       // doubly linked list of unallocated seni_colours from the colour_slab
-  seni_slab_info colour_slab_info;
 
   seni_var *heap_slab;             // the contiguous block of allocated memory
   seni_var *heap_avail;            // doubly linked list of unallocated seni_vars from the heap_slab
@@ -240,8 +236,6 @@ char          *var_type_name(seni_var *var);
 seni_var      *stack_peek(seni_vm *vm);
 seni_var      *var_get_from_heap(seni_vm *vm);
 void           var_return_to_heap(seni_vm *vm,  seni_var *var);
-seni_colour   *colour_get_from_vm(seni_vm *vm);
-void           colour_return_to_vm(seni_vm *vm, seni_colour *colour); // temp
 
 seni_vm       *vm_construct(i32 stack_size, i32 heap_size);
 void           vm_free(seni_vm *vm);
@@ -269,5 +263,5 @@ bool           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 void           f32_as_var(seni_var *out, f32 f);
 void           i32_as_var(seni_var *out, i32 i);
 void           colour_as_var(seni_var *out, seni_colour *c);
-  
+
 #endif
