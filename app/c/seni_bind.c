@@ -351,7 +351,7 @@ seni_var bind_col_convert(seni_vm *vm, i32 num_args)
 {
   // (col/convert colour: col format: LAB)
   
-  i32 format = RGB;
+  i32 format = g_keyword_iname_RGB;
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
 
@@ -365,11 +365,22 @@ seni_var bind_col_convert(seni_vm *vm, i32 num_args)
   // so we need to get the referenced colour from the vm
   //
   seni_colour *out = colour_get_from_vm(vm);
-  colour_clone_as(out, colour, format);
+  seni_colour_format colour_format = RGB;
+
+  if (format == g_keyword_iname_RGB) {
+    colour_format = RGB;
+  } else if (format == g_keyword_iname_HSL) {
+    colour_format = HSL;
+  } else if (format == g_keyword_iname_LAB) {
+    colour_format = LAB;
+  } else if (format == g_keyword_iname_HSV) {
+    colour_format = HSV;
+  }
+  
+  colour_clone_as(out, colour, colour_format);
 
   seni_var ret;
   colour_as_var(&ret, out);
-
 
   return ret;
 }
@@ -673,6 +684,50 @@ seni_var bind_col_get_alpha(seni_vm *vm, i32 num_args)
   seni_var ret;
   f32_as_var(&ret, colour->element[3]);
 
+
+  return ret;
+}
+
+seni_var bind_col_set_lab_l(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+  f32 value = 0;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_F32(value);
+  READ_STACK_ARGS_END;
+
+  seni_colour *ret_colour = colour_get_from_vm(vm);
+  colour_clone_as(ret_colour, colour, LAB);
+
+  i32 l_index = 0; // L is the first element
+  ret_colour->element[l_index] = value;
+
+  seni_var ret;
+  colour_as_var(&ret, ret_colour);
+  return ret;
+}
+
+seni_var bind_col_get_lab_l(seni_vm *vm, i32 num_args)
+{
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARGS_END;
+
+  seni_colour lab_colour;
+  colour_clone_as(&lab_colour, colour, LAB);
+
+  i32 l_index = 0;
+
+  seni_var ret;
+  f32_as_var(&ret, colour->element[l_index]);
 
   return ret;
 }
@@ -1198,6 +1253,8 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_binding(wlut, e, "col/lighten", &bind_col_lighten);
   declare_binding(wlut, e, "col/set-alpha", &bind_col_set_alpha);
   declare_binding(wlut, e, "col/get-alpha", &bind_col_get_alpha);
+  declare_binding(wlut, e, "col/set-lab-l", &bind_col_set_lab_l);
+  declare_binding(wlut, e, "col/get-lab-l", &bind_col_get_lab_l);
 
   // col/procedural-fn-presets
   // col/procedural-fn
