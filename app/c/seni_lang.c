@@ -1537,6 +1537,10 @@ bool safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
       return false;
     }
   }
+
+  if (dest->type == VAR_COLOUR) {
+    colour_return_to_vm(vm, dest->value.c);
+  }
   
   dest->type = src->type;
 
@@ -2833,7 +2837,19 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 #endif        
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         dest = &(vm->stack[vm->local + bc->arg1.value.i]);
-        safe_var_move(dest, v);
+        // using a copy since we could have a define in a loop and so
+        // the previously assigned value will need to be reference counted
+        safe_var_copy(vm, dest, v);
+
+        // the stack no longer references the vector, so decrement the rc
+        if (v->type == VAR_VEC_HEAD) {
+          b1 = vector_ref_count_decrement(vm, v);
+          if (b1 == false) {
+            SENI_ERROR("POP MEM_SEG_LOCAL: vector_ref_count_decrement failed");
+            return;
+          }
+        }
+        
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         dest = &(vm->stack[vm->global + bc->arg1.value.i]);
         safe_var_move(dest, v);
