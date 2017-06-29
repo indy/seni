@@ -6,6 +6,8 @@
 #include "seni_shapes.h"
 #include "seni_lang.h"
 
+#include <time.h>
+
 seni_vm *g_vm = NULL;
 
 EMSCRIPTEN_KEEPALIVE
@@ -86,10 +88,17 @@ int compile_to_render_packets(char *script)
   g_vm = vm_construct(STACK_SIZE, HEAP_SIZE);
   g_vm->render_data = render_data;
 
+  clock_t start, diff;
+  start = clock();
 
   // compile and evaluate
   compiler_compile(ast, prog);
   vm_interpret(g_vm, prog);
+
+  diff = clock() - start;
+  int compile_and_evaluation_time = diff * 1000 / CLOCKS_PER_SEC;
+  printf("compile_and_evaluation_time: %d msec\n", compile_and_evaluation_time);
+
 
   // cleanup
   free_uv_mapper();

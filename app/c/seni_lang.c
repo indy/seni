@@ -2,6 +2,8 @@
 #include "seni_config.h"
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
+
+#include "time.h"
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -20,12 +22,15 @@
 void vm_debug_info_reset(seni_vm *vm)
 {
   slab_reset(&(vm->heap_slab_info));
+  vm->opcodes_executed = 0;
 }
 
 void vm_debug_info_print(seni_vm *vm)
 {
   printf("*** vm_debug_info_print ***\n");
   slab_print(&(vm->heap_slab_info), "heap slab");
+  printf("bytecodes executed:\t%llu\n", (long long unsigned int)(vm->opcodes_executed));
+  printf("bytecode execution time:\t%d msec\n", vm->execution_time);
 }
 
 // record information during execution of bytecode
@@ -2665,7 +2670,11 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 
   DEBUG_INFO_RESET(vm);
 
+  clock_t start, diff;
+  start = clock();
+  
   for (;;) {
+    vm->opcodes_executed++;
     bc = &(program->code[ip++]);
 
 #ifdef TRACE_PRINT_OPCODES
@@ -3160,7 +3169,9 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       
     case STOP:
       vm->sp = sp;
-      // DEBUG_INFO_PRINT(vm);
+      diff = clock() - start;
+      vm->execution_time = diff * 1000 / CLOCKS_PER_SEC;
+      DEBUG_INFO_PRINT(vm);
       return;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));
