@@ -1,7 +1,7 @@
 * TODO [1/7]
   1. [ ] interp/bezier
   2. [ ] cleanup memory of parser
-  3. [ ] structs for compile info and runtime info
+  3. [ ] structs for compile, runtim, performance info
   4. [ ] seni_env
   5. [ ] 'in' paramaeter for loop ?
   6. [ ] remove hsv colour space? - would this get rid of the illegal state?
@@ -688,3 +688,32 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
  (fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
      (+ y (* s (prng/perlin x: x y: y z: z))))
+
+
+* VAR_2D [7/9]
+  1. [X] update the compiler
+  2. [X] modify PILE, APPEND and NTH to also account for VAR_2D
+  3. [X] READ_STACK_ARG_VAR
+  4. [X] READ_STACK_ARG_VEC2 (bind macros should expect a VAR_2D)
+  5. [X] update void var_as_vec2(f32 *out0, f32 *out1, seni_var *var)
+  6. [X] look into void var_as_vec4(f32 *out0, f32 *out1, f32 *out2, f32 *out3, seni_var *var)
+  7. [X] check DEC_RC, INC_RC
+  8. [ ] update ADD, SUB, MUL, DIV, NEG
+  9. [ ] check EQ, LT, GT
+
+(define vec2d [4 5]) vec2d
+
+old:
+5       PUSH    VOID    0
+6       PUSH    CONST   4.00
+7       APPEND
+8       PUSH    CONST   5.00
+9       APPEND
+10      POP     GLOBAL  2
+
+new:
+PUSH CONST 4.00
+PUSH CONST 5.00
+SQUISH2
+POP     GLOBAL  2
+

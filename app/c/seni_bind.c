@@ -74,14 +74,19 @@ typedef struct {
 #define READ_STACK_ARG_VAR(n) if (name_1 == g_keyword_iname_##n) { n = value_1; }
 
 #define READ_STACK_ARG_COL(n) if (name_1 == g_keyword_iname_##n) {  \
-  IS_COL(n);                                                        \
-  n->format = value_1->value.i;                                     \
-  n->element[0] = value_1->f32_array[0];                            \
-  n->element[1] = value_1->f32_array[1];                            \
-  n->element[2] = value_1->f32_array[2];                            \
-  n->element[3] = value_1->f32_array[3];                            \
+    IS_COL(n);                                                      \
+    n->format = value_1->value.i;                                   \
+    n->element[0] = value_1->f32_array[0];                          \
+    n->element[1] = value_1->f32_array[1];                          \
+    n->element[2] = value_1->f32_array[2];                          \
+    n->element[3] = value_1->f32_array[3];                          \
 }
 
+#define READ_STACK_ARG_VEC2(n) if (name_1 == g_keyword_iname_##n) {  \
+    n[0] = value_1->f32_array[0];                                    \
+    n[1] = value_1->f32_array[1];                                    \
+}
+/*
 // traverse through the VAR_VEC_HEAD, VAR_VEC_RC nodes down into the values
 // todo: make a seni_var type that can hold VEC2
 #define READ_STACK_ARG_VEC2(n) if (name_1 == g_keyword_iname_##n) {     \
@@ -94,7 +99,7 @@ typedef struct {
     n[1] = value_1->value.f;                                            \
     value_1 = tmp_1;                                                    \
   }
-
+*/
 #define READ_STACK_ARG_PRNG(n) if (name_1 == g_keyword_iname_##n) {     \
     tmp_1 = value_1;                                                    \
     value_1 = (value_1->value.v)->next;                                 \
@@ -148,25 +153,17 @@ typedef struct {
 
 #define READ_STACK_ARG_COORD4(n) if (name_1 == g_keyword_iname_##n) { \
     tmp_1 = (value_1->value.v)->next;                                 \
-    tmp_2 = (tmp_1->value.v)->next;                                   \
-    n[0] = tmp_2->value.f;                                            \
-    tmp_2 = tmp_2->next;                                              \
-    n[1] = tmp_2->value.f;                                            \
+    n[0] = tmp_1->f32_array[0];                                       \
+    n[1] = tmp_1->f32_array[1];                                       \
     tmp_1 = tmp_1->next;                                              \
-    tmp_2 = (tmp_1->value.v)->next;                                   \
-    n[2] = tmp_2->value.f;                                            \
-    tmp_2 = tmp_2->next;                                              \
-    n[3] = tmp_2->value.f;                                            \
+    n[2] = tmp_1->f32_array[0];                                       \
+    n[3] = tmp_1->f32_array[1];                                       \
     tmp_1 = tmp_1->next;                                              \
-    tmp_2 = (tmp_1->value.v)->next;                                   \
-    n[4] = tmp_2->value.f;                                            \
-    tmp_2 = tmp_2->next;                                              \
-    n[5] = tmp_2->value.f;                                            \
+    n[4] = tmp_1->f32_array[0];                                       \
+    n[5] = tmp_1->f32_array[1];                                       \
     tmp_1 = tmp_1->next;                                              \
-    tmp_2 = (tmp_1->value.v)->next;                                   \
-    n[6] = tmp_2->value.f;                                            \
-    tmp_2 = tmp_2->next;                                              \
-    n[7] = tmp_2->value.f;                                            \
+    n[6] = tmp_1->f32_array[0];                                       \
+    n[7] = tmp_1->f32_array[1];                                       \
   }
 
 // a global var that represents true, used as the default
@@ -1193,23 +1190,30 @@ seni_var bind_nth(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(n);
   READ_STACK_ARGS_END;
 
-  if (from->type != VAR_VEC_HEAD) {
-    SENI_ERROR("wtf\n");
-    return g_var_true;
-  }
-
-  i32 nth = (i32)n;
-  seni_var *e = from->value.v;
-
-  // e is pointing to the rc, so even a nth of 0 requires one call to e->next
-  for (i32 i = 0; i <= nth; i++) {
-    e = e->next;
-  }
-
   seni_var ret;
-  bool copied = safe_var_copy(vm, &ret, e);
-  if (copied == false) {
-    SENI_ERROR("safe_var_copy failed in bind_nth");
+  i32 nth = (i32)n;
+
+  if (from->type == VAR_2D && nth >= 0 && nth < 2) {
+    
+    f32_as_var(&ret, from->f32_array[nth]);
+    
+  } else if (from->type == VAR_VEC_HEAD){
+    
+    seni_var *e = from->value.v;
+
+    // e is pointing to the rc, so even a nth of 0 requires one call to e->next
+    for (i32 i = 0; i <= nth; i++) {
+      e = e->next;
+    }
+
+    bool copied = safe_var_copy(vm, &ret, e);
+    if (copied == false) {
+      SENI_ERROR("safe_var_copy failed in bind_nth");
+    }
+    
+  } else {
+    SENI_ERROR("nth: neither a var_2d with n 0..2 or vector given\n");
+    return g_var_true;
   }
 
   return ret;

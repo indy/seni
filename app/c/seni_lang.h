@@ -73,6 +73,7 @@ typedef enum {
   VAR_VEC_HEAD,  // pointer to vec_rc is in value.v
   VAR_VEC_RC,    // pointer to first vector element is in value.v
   VAR_COLOUR,    // pointer to a colour: format is in value.i and elements in f32_array
+  VAR_2D,
 } seni_var_type;
 
 // which value to use
@@ -96,7 +97,7 @@ typedef struct seni_var {
 
   bool allocated;
 
-  // 4 floats are very handy. they can be used to represent colours, 2d/3d/4d vectors and quaternions
+  // 4 floats used to represent colours, 2d/3d/4d vectors and quaternions
   // without resorting to expensive heap_slab allocated reference counted vectors
   f32 f32_array[4];
 

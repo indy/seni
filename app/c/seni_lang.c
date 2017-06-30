@@ -733,6 +733,7 @@ seni_value_in_use get_value_in_use(seni_var_type type)
   case VAR_VEC_RC:
     return USE_I;
   default:
+    // default to something even though VAR_2D etc aren't going to use anything in the value union
     return USE_I;
   };
 }
@@ -748,6 +749,7 @@ char *var_type_name(seni_var *var)
   case VAR_VEC_HEAD: return "VAR_VEC_HEAD";
   case VAR_VEC_RC:   return "VAR_VEC_RC";
   case VAR_COLOUR:   return "VAR_COLOUR";
+  case VAR_2D:       return "VAR_2D";
   default: return "unknown seni_var type";
   }
 }
@@ -884,48 +886,6 @@ u64 var_as_long(seni_var *var)
   }
 
   return 0L;
-}
-
-void var_as_vec2(f32 *out0, f32 *out1, seni_var *var)
-{
-  int len = var_vector_length(var);
-  if (len != 2) {
-    return;
-  }
-
-  seni_var *rc = var->value.v;
-  seni_var *v = rc->value.v;
-
-  f32 f0 = var_as_float(v);
-  v = v->next;
-  f32 f1 = var_as_float(v);
-  
-  *out0 = f0;
-  *out1 = f1;
-}
-
-void var_as_vec4(f32 *out0, f32 *out1, f32 *out2, f32 *out3, seni_var *var)
-{
-  int len = var_vector_length(var);
-  if (len != 4) {
-    return;
-  }
-
-  seni_var *rc = var->value.v;
-  seni_var *v = rc->value.v;
-
-  f32 f0 = var_as_float(v);
-  v = v->next;
-  f32 f1 = var_as_float(v);
-  v = v->next;
-  f32 f2 = var_as_float(v);
-  v = v->next;
-  f32 f3 = var_as_float(v);
-  
-  *out0 = f0;
-  *out1 = f1;
-  *out2 = f2;
-  *out3 = f3;
 }
 
 void i32_as_var(seni_var *out, i32 i)
@@ -1706,6 +1666,15 @@ i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value)
 
 seni_node *compile(seni_node *ast, seni_program *program);
 
+i32 node_vector_length(seni_node *vector_node)
+{
+  i32 length = 0;
+  for (seni_node *node = vector_node->value.first_child; node != NULL; node = safe_next(node)) {
+    length++;
+  }
+  return length;
+}
+
 bool all_children_have_type(seni_node *parent, seni_node_type type)
 {
   if (parent->type != NODE_VECTOR && parent->type != NODE_LIST) {
@@ -1793,7 +1762,7 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
       if (all_children_have_type(lhs_node, NODE_NAME)) {
         i32 num_children = count_children(lhs_node);
 
-        // PILE will stack the elemtents in the rhs vector in order,
+        // PILE will stack the elements in the rhs vector in order,
         // so the lhs values have to be popped in reverse order
         program_emit_opcode_i32(program, PILE, num_children, 0);
         program->opcode_offset += num_children - 1;
@@ -2350,6 +2319,16 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_in
   program_emit_opcode_i32(program, CALL_0, fn_info_index, fn_info_index);
 }
 
+// ast is a NODE_VECTOR of length 2
+//
+void compile_2d(seni_node *ast, seni_program *program)
+{
+  for (seni_node *node = ast->value.first_child; node != NULL; node = safe_next(node)) {
+    compile(node, program);
+  }
+  program_emit_opcode_i32(program, SQUISH2, 0, 0);
+}
+
 void compile_vector(seni_node *ast, seni_program *program)
 {
   // pushing from the VOID means creating a new, empty vector
@@ -2420,7 +2399,11 @@ seni_node *compile(seni_node *ast, seni_program *program)
     return safe_next(ast);
   }
   if (ast->type == NODE_VECTOR) {
-    compile_vector(ast, program);
+    if (node_vector_length(ast) == 2) {
+      compile_2d(ast, program);
+    } else {
+      compile_vector(ast, program);
+    }
     return safe_next(ast);
   }
   if (ast->type == NODE_NAME) {
@@ -3013,22 +2996,63 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
     case PILE:
       num_args = bc->arg0.value.i;
-      // top of the stack contains a vector
-      // take num_args elements from the vector and push them onto the stack
+
       STACK_POP;
-      seni_var _vec;
-      safe_var_move(&_vec, v);
-      src = _vec.value.v->next;
-      for (i = 0; i < num_args; i++) {
+
+      if (num_args == 2 && v->type == VAR_2D) {
+        // top of the stack is a var_2d
+
+        f1 = v->f32_array[0];
+        f2 = v->f32_array[1];
+        
         STACK_PUSH;
-        safe_var_copy_onto_junk(vm, v, src);
-        src = src->next;
+        f32_as_var(v, f1);
+        STACK_PUSH;
+        f32_as_var(v, f2);
+        
+      } else {
+        // top of the stack contains a vector
+        // take num_args elements from the vector and push them onto the stack
+        seni_var _vec;
+        safe_var_move(&_vec, v);
+        src = _vec.value.v->next;
+        for (i = 0; i < num_args; i++) {
+          STACK_PUSH;
+          safe_var_copy_onto_junk(vm, v, src);
+          src = src->next;
+        }
+        b1 = vector_ref_count_decrement(vm, &_vec);
+        if (b1 == false) {
+          SENI_ERROR("PILE: vector_ref_count_decrement failed");
+          return false;
+        }
       }
-      b1 = vector_ref_count_decrement(vm, &_vec);
-      if (b1 == false) {
-        SENI_ERROR("PILE: vector_ref_count_decrement failed");
+      
+      break;
+
+    case SQUISH2:
+      STACK_POP;
+      if (v->type != VAR_FLOAT) {
+        SENI_ERROR("SQUISH2 expects a float - non float in 2nd element of vector");
+        // was the seni code declaring a vector of length 2 that didn't contain floats?
+        // e.g. (define z [LAB RGB])
+        // when would we ever want this kind of code?
         return false;
       }
+      f2 = v->value.f;
+
+      STACK_POP;
+      if (v->type != VAR_FLOAT) {
+        SENI_ERROR("SQUISH2 expects a float - non float in 1st element of vector");
+        return false;
+      }
+      f1 = v->value.f;
+
+      STACK_PUSH;
+      v->type = VAR_2D;
+      v->value.i = 0;
+      v->f32_array[0] = f1;
+      v->f32_array[1] = f2;
       break;
 
     case MTX_PUSH:
@@ -3163,6 +3187,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       return true;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));
+      return false;
     }
   }
 }

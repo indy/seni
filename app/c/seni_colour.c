@@ -18,9 +18,6 @@ seni_colour *colour_construct(seni_colour_format format, f32 e0, f32 e1, f32 e2,
   colour->element[2] = e2;
   colour->element[3] = alpha;
 
-  colour->next = NULL;
-  colour->prev = NULL;
-
   return colour;
 }
 
