@@ -93,11 +93,14 @@ int compile_to_render_packets(char *script)
 
   // compile and evaluate
   compiler_compile(ast, prog);
-  vm_interpret(g_vm, prog);
+  bool res = vm_interpret(g_vm, prog);
 
-  diff = clock() - start;
-  int compile_and_evaluation_time = diff * 1000 / CLOCKS_PER_SEC;
-  printf("compile_and_evaluation_time: %d msec\n", compile_and_evaluation_time);
+  if (res) {
+    DEBUG_INFO_PRINT(vm);
+    diff = clock() - start;
+    int compile_and_evaluation_time = diff * 1000 / CLOCKS_PER_SEC;
+    printf("compile_and_evaluation_time: %d msec\n", compile_and_evaluation_time);
+  }
 
 
   // cleanup

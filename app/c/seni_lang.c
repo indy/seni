@@ -33,17 +33,6 @@ void vm_debug_info_print(seni_vm *vm)
   printf("bytecode execution time:\t%d msec\n", vm->execution_time);
 }
 
-// record information during execution of bytecode
-#define DEBUG_INFO_RESET(vm) vm_debug_info_reset(vm)
-#define DEBUG_INFO_PRINT(vm) vm_debug_info_print(vm)
-#define DEBUG_INFO_GET_FROM_HEAP(vm) slab_get(&(vm->heap_slab_info))
-#define DEBUG_INFO_RETURN_TO_HEAP(vm) slab_return(&(vm->heap_slab_info), "RETURN_TO_HEAP")
-#else
-// do nothing
-#define DEBUG_INFO_RESET(vm)
-#define DEBUG_INFO_PRINT(vm)
-#define DEBUG_INFO_GET_FROM_HEAP(vm)
-#define DEBUG_INFO_RETURN_TO_HEAP(vm)
 #endif
 
 
@@ -2636,8 +2625,9 @@ void compiler_compile(seni_node *ast, seni_program *program)
 // VM bytecode interpreter
 // **************************************************
 
-// executes a program on a vm 
-void vm_interpret(seni_vm *vm, seni_program *program)
+// executes a program on a vm
+// returns true if we reached a STOP opcode
+bool vm_interpret(seni_vm *vm, seni_program *program)
 {
   bool b1, b2;
   f32 f1, f2;
@@ -2755,7 +2745,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
           b1 = vector_ref_count_decrement(vm, v);
           if (b1 == false) {
             SENI_ERROR("POP MEM_SEG_LOCAL: vector_ref_count_decrement failed");
-            return;
+            return false;
           }
         }
         
@@ -2769,7 +2759,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
           b1 = vector_ref_count_decrement(vm, v);
           if (b1 == false) {
             SENI_ERROR("POP MEM_SEG_VOID: vector_ref_count_decrement failed");
-            return;
+            return false;
           }
         }
       } else {
@@ -2790,7 +2780,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
           b1 = vector_ref_count_decrement(vm, dest);
           if (b1 == false) {
             SENI_ERROR("DEC_RC: vector_ref_count_decrement failed");
-            return;
+            return false;
           }
         }        
       } else if (memory_segment_type == MEM_SEG_VOID) {
@@ -2913,7 +2903,6 @@ void vm_interpret(seni_vm *vm, seni_program *program)
 
       num_args = vm->stack[vm->fp + 2].value.i;
 
-      //printf("RET-a\n");
       // decrement ref count on any locally defined vectors
       for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
         tmp = &(vm->stack[vm->local + i]);
@@ -2921,22 +2910,22 @@ void vm_interpret(seni_vm *vm, seni_program *program)
           b1 = vector_ref_count_decrement(vm, tmp);
           if (b1 == false) {
             SENI_ERROR("RET local vector: vector_ref_count_decrement failed");
-            return;
+            return false;
           }
         }
       }
-      //printf("RET-b\n");
+
       for (i = 0; i < num_args; i++) {
         tmp = &(vm->stack[vm->fp - ((i+1) * 2)]);
         if (tmp->type == VAR_VEC_HEAD) {
           b1 = vector_ref_count_decrement(vm, tmp);
           if (b1 == false) {
             SENI_ERROR("RET args: vector_ref_count_decrement failed");
-            return;
+            return false;
           }
         }
       }
-      //printf("RET-c\n");
+
       // update vm
       vm->sp = vm->fp - (num_args * 2);
       vm->ip = vm->stack[vm->fp + 1].value.i;
@@ -2975,7 +2964,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
           b1 = vector_ref_count_decrement(vm, tmp);
           if (b1 == false) {
             SENI_ERROR("NATIVE: vector_ref_count_decrement failed");
-            return;
+            return false;
           }
 
           // this is now off the stack, so blow away the vector head
@@ -3007,7 +2996,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       // v is the vector
       if (v->type != VAR_VEC_HEAD) {
         SENI_ERROR("APPEND expects the 2nd item on the stack to be a vector\n");
-        return;
+        return false;
       }
 
       b1 = append_to_vector(vm, v, src); // note: this uses a copy, should it be a move instead?
@@ -3016,7 +3005,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
         DEBUG_INFO_PRINT(vm);
         pretty_print_seni_var(v, "the vector");
         pretty_print_seni_var(src, "the item to append");
-        return;
+        return false;
       }
 
       STACK_PUSH;
@@ -3038,7 +3027,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       b1 = vector_ref_count_decrement(vm, &_vec);
       if (b1 == false) {
         SENI_ERROR("PILE: vector_ref_count_decrement failed");
-        return;
+        return false;
       }
       break;
 
@@ -3171,8 +3160,7 @@ void vm_interpret(seni_vm *vm, seni_program *program)
       vm->sp = sp;
       diff = clock() - start;
       vm->execution_time = diff * 1000 / CLOCKS_PER_SEC;
-      DEBUG_INFO_PRINT(vm);
-      return;
+      return true;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));
     }

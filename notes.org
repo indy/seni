@@ -530,10 +530,10 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
 * benchmarking
 
-  | date             | opcodes | heap count | water mark | render packets | bytecode time | total time |
-  |------------------+---------+------------+------------+----------------+---------------+------------|
-  | <2017-06-29 Thu> |  743718 |     122593 |         25 |             11 | 20ms          | 21ms       |
-  |                  |         |            |            |                |               |            |
+| hash    | date             | opcodes | heap count | water mark | packets | bytecode time | total time |
+|---------+------------------+---------+------------+------------+---------+---------------+------------|
+| 24318cb | <2017-06-29 Thu> |  743718 |     122593 |         25 |      11 | 20ms          | 21ms       |
+|         |                  |         |            |            |         |               |            |
    
 ** script
  (define 

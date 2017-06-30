@@ -250,7 +250,7 @@ seni_env      *env_construct();
 void           env_free(seni_env *e);
 
 void           compiler_compile(seni_node *ast, seni_program *program);
-void           vm_interpret(seni_vm *vm, seni_program *program);
+bool           vm_interpret(seni_vm *vm, seni_program *program);
 bool           safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
 
 void           pretty_print_seni_var(seni_var *var, char* msg);
@@ -265,5 +265,29 @@ bool           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 void           f32_as_var(seni_var *out, f32 f);
 void           i32_as_var(seni_var *out, i32 i);
 void           colour_as_var(seni_var *out, seni_colour *c);
+
+
+#ifdef SENI_DEBUG_MODE
+
+void vm_debug_info_reset(seni_vm *vm);
+void vm_debug_info_print(seni_vm *vm);
+
+// record information during execution of bytecode
+#define DEBUG_INFO_RESET(vm) vm_debug_info_reset(vm)
+#define DEBUG_INFO_PRINT(vm) vm_debug_info_print(vm)
+#define DEBUG_INFO_GET_FROM_HEAP(vm) slab_get(&(vm->heap_slab_info))
+#define DEBUG_INFO_RETURN_TO_HEAP(vm) slab_return(&(vm->heap_slab_info), "RETURN_TO_HEAP")
+
+#else
+
+// do nothing
+#define DEBUG_INFO_RESET(vm)
+#define DEBUG_INFO_PRINT(vm)
+#define DEBUG_INFO_GET_FROM_HEAP(vm)
+#define DEBUG_INFO_RETURN_TO_HEAP(vm)
+
+#endif
+
+
 
 #endif
