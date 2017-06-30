@@ -1,11 +1,12 @@
-* TODO [1/7]
+* TODO [1/8]
   1. [ ] interp/bezier
   2. [ ] cleanup memory of parser
   3. [ ] structs for compile, runtim, performance info
   4. [ ] seni_env
   5. [ ] 'in' paramaeter for loop ?
   6. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  7. [X] remove id, debug_id and debug_allocatable from seni_var
+  7. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  8. [X] remove id, debug_id and debug_allocatable from seni_var
 
 
 * wasm - opengl
@@ -502,38 +503,12 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   after a function returns, the frame is popped and the sp has increased by one as it holds the return value from the function
 
 
-
-
-
-
-
-
-* seni_var containing f32_array
-  problems:
-  1. seni_var holds a reference to a colour that's been allocated from the colour_slab. I've realised that to properly manage this we'll need to reference count VAR_COLOUR
-  2. there are a _lot_ of seni_var heap allocations taking place. This is because _every_ 2d vector involves using seni_vars from the heap.
-  
-
-  solution:
-  seni_var should hold 4 floats: 'f32_array' in addition to it's value union
-  these 4 floats can be used to represent:
-  - a colour (type == VAR_COLOUR, value.i == format, f32_array == components)
-  - a 2d vector (type == VAR_2D, f32_array == x,y)
-  - a quaternion (type == VAR_QUATERNION, f32_array == x,y,z,w)
-  - etc etc etc
-
-    the colour slab can be removed and there'll be no need to reference count colours since the safe_move, safe_copy, etc functions will also copy the f32_array
-
-    nth will need to be refactored so that it looks into f32_array when given a VAR_2D
-    append will need to be looked at (will any conversions be required?)
-
-
 * benchmarking
 
 | hash    | date             | opcodes | heap count | water mark | packets | bytecode time | total time |
 |---------+------------------+---------+------------+------------+---------+---------------+------------|
 | 24318cb | <2017-06-29 Thu> |  743718 |     122593 |         25 |      11 | 20ms          | 21ms       |
-|         |                  |         |            |            |         |               |            |
+| 46e6b1a | <2017-06-30 Fri> |  705086 |      64645 |         14 |      11 | 18ms          | 19ms       |
    
 ** script
  (define 
@@ -688,32 +663,3 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
  (fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
      (+ y (* s (prng/perlin x: x y: y z: z))))
-
-
-* VAR_2D [7/9]
-  1. [X] update the compiler
-  2. [X] modify PILE, APPEND and NTH to also account for VAR_2D
-  3. [X] READ_STACK_ARG_VAR
-  4. [X] READ_STACK_ARG_VEC2 (bind macros should expect a VAR_2D)
-  5. [X] update void var_as_vec2(f32 *out0, f32 *out1, seni_var *var)
-  6. [X] look into void var_as_vec4(f32 *out0, f32 *out1, f32 *out2, f32 *out3, seni_var *var)
-  7. [X] check DEC_RC, INC_RC
-  8. [ ] update ADD, SUB, MUL, DIV, NEG
-  9. [ ] check EQ, LT, GT
-
-(define vec2d [4 5]) vec2d
-
-old:
-5       PUSH    VOID    0
-6       PUSH    CONST   4.00
-7       APPEND
-8       PUSH    CONST   5.00
-9       APPEND
-10      POP     GLOBAL  2
-
-new:
-PUSH CONST 4.00
-PUSH CONST 5.00
-SQUISH2
-POP     GLOBAL  2
-
