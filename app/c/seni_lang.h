@@ -153,6 +153,7 @@ typedef struct seni_vm {
   
   seni_matrix_stack *matrix_stack;
 
+  i32 heap_size;
   seni_var *heap_slab;             // the contiguous block of allocated memory
   seni_var *heap_avail;            // doubly linked list of unallocated seni_vars from the heap_slab
   seni_slab_info heap_slab_info;
@@ -241,7 +242,9 @@ seni_var      *var_get_from_heap(seni_vm *vm);
 void           var_return_to_heap(seni_vm *vm,  seni_var *var);
 
 seni_vm       *vm_construct(i32 stack_size, i32 heap_size);
+void           vm_reset(seni_vm *vm);
 void           vm_free(seni_vm *vm);
+void           vm_free_render_data(seni_vm *vm);
 
 seni_program  *program_allocate(i32 code_max_size);
 void           program_free(seni_program *program);

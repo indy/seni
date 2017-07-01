@@ -10,6 +10,85 @@
 
 seni_vm *g_vm = NULL;
 
+// called once at startup
+EMSCRIPTEN_KEEPALIVE
+void startup()
+{
+  // build the global identity matrix used by the shape rendering
+  seni_shapes_init_globals();
+  init_uv_mapper();
+
+  if (g_vm != NULL) {
+    vm_free(g_vm);
+  }
+  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE);
+  
+}
+
+// called once at shutdown
+EMSCRIPTEN_KEEPALIVE
+void shutdown()
+{
+  vm_free(g_vm);
+  free_uv_mapper();
+}
+
+// ------------------------------
+
+EMSCRIPTEN_KEEPALIVE
+int compile_to_render_packets(char *script)
+{
+  seni_word_lut *wl = NULL;
+  seni_env *e = NULL;
+  seni_node *ast = NULL;
+  seni_program *prog = NULL;
+
+  int max_vertices = 10000;
+ 
+  seni_render_data *render_data = render_data_construct(max_vertices);
+  add_render_packet(render_data);
+
+  e = env_construct();
+  
+  wl = wlut_allocate();
+  declare_bindings(wl, e);
+  
+  ast = parser_parse(wl, script);
+  prog = program_allocate(1024);
+  prog->wl = wl;
+  prog->env = e;
+
+  vm_free_render_data(g_vm);
+  vm_reset(g_vm);
+  g_vm->render_data = render_data;
+
+  clock_t start, diff;
+  start = clock();
+
+  // compile and evaluate
+  compiler_compile(ast, prog);
+  bool res = vm_interpret(g_vm, prog);
+
+  if (res) {
+    DEBUG_INFO_PRINT(g_vm);
+    diff = clock() - start;
+    int compile_and_evaluation_time = diff * 1000 / CLOCKS_PER_SEC;
+    printf("compile_and_evaluation_time: %d msec\n", compile_and_evaluation_time);
+  }
+
+
+  // cleanup
+
+  wlut_free(wl);
+  parser_free_nodes(ast);
+  program_free(prog);
+  env_free(e);
+
+  return render_data->num_render_packets;
+}
+
+// ------------------------------
+
 EMSCRIPTEN_KEEPALIVE
 int get_render_packet_num_vertices(int packet_number)
 {
@@ -54,64 +133,11 @@ f32 *get_render_packet_tbuf(int packet_number)
   return render_packet->tbuf;
 }
 
+// ------------------------------
+
+// called once by js once it has finished with the render packets and that memory can be free'd
 EMSCRIPTEN_KEEPALIVE
-int compile_to_render_packets(char *script)
+void script_cleanup()
 {
-  seni_word_lut *wl = NULL;
-  seni_env *e = NULL;
-  seni_node *ast = NULL;
-  seni_program *prog = NULL;
-
-  int max_vertices = 10000;
-
-  // build the global identity matrix used by the shape rendering
-  seni_shapes_init_globals();
- 
-  seni_render_data *render_data = render_data_construct(max_vertices);
-  add_render_packet(render_data);
-
-  init_uv_mapper();
-  
-  e = env_construct();
-  
-  wl = wlut_allocate();
-  declare_bindings(wl, e);
-  
-  ast = parser_parse(wl, script);
-  prog = program_allocate(1024);
-  prog->wl = wl;
-  prog->env = e;
-
-  if (g_vm != NULL) {
-    vm_free(g_vm);
-  }
-  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE);
-  g_vm->render_data = render_data;
-
-  clock_t start, diff;
-  start = clock();
-
-  // compile and evaluate
-  compiler_compile(ast, prog);
-  bool res = vm_interpret(g_vm, prog);
-
-  if (res) {
-    DEBUG_INFO_PRINT(g_vm);
-    diff = clock() - start;
-    int compile_and_evaluation_time = diff * 1000 / CLOCKS_PER_SEC;
-    printf("compile_and_evaluation_time: %d msec\n", compile_and_evaluation_time);
-  }
-
-
-  // cleanup
-  free_uv_mapper();
-  wlut_free(wl);
-  parser_free_nodes(ast);
-  program_free(prog);
-  env_free(e);
-  //  vm_free(vm);
-
-  return render_data->num_render_packets;
+  vm_free_render_data(g_vm);
 }
-
-

@@ -1190,15 +1190,28 @@ void slab_print(seni_slab_info *slab_info, char *message)
 
 seni_vm *vm_construct(i32 stack_size, i32 heap_size)
 {
-  seni_var *var;
-  i32 base_offset = 0;
-  i32 i;
   seni_vm *vm = (seni_vm *)calloc(1, sizeof(seni_vm));
 
   vm->render_data = NULL;
 
-  vm->stack = (seni_var *)calloc(stack_size, sizeof(seni_var));
   vm->stack_size = stack_size;
+  vm->stack = (seni_var *)calloc(stack_size, sizeof(seni_var));
+
+  vm->heap_size = heap_size;
+  vm->heap_slab = (seni_var *)calloc(heap_size, sizeof(seni_var));
+
+  vm->matrix_stack = matrix_stack_construct();
+
+  vm_reset(vm);
+
+  return vm;
+}
+
+void vm_reset(seni_vm *vm)
+{
+  seni_var *var;
+  i32 base_offset = 0;
+  i32 i;
 
   vm->global = base_offset;
   base_offset += MEMORY_GLOBAL_SIZE;
@@ -1219,29 +1232,31 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
   base_offset += MEMORY_LOCAL_SIZE;
   vm->sp = base_offset;
 
-  vm->heap_slab = (seni_var *)calloc(heap_size, sizeof(seni_var));
   vm->heap_avail = NULL;
   slab_full_reset(&(vm->heap_slab_info));
-  vm->heap_slab_info.size = heap_size;
-
+  vm->heap_slab_info.size = vm->heap_size;
 
   var = vm->heap_slab;
-  for (i = 0; i < heap_size; i++) {
+  for (i = 0; i < vm->heap_size; i++) {
     var[i].allocated = false;
     DL_APPEND(vm->heap_avail, &(var[i]));
   }
 
-  vm->matrix_stack = matrix_stack_construct();
+  vm->matrix_stack->sp = 0;
   // add an identity matrix onto the stack so that further scale/rotate/translate ops can work
   seni_matrix *matrix = matrix_stack_push(vm->matrix_stack);
   matrix_identity(matrix);
+}
 
-  return vm;
+void vm_free_render_data(seni_vm *vm)
+{
+  render_data_free(vm->render_data);
+  vm->render_data = NULL;
 }
 
 void vm_free(seni_vm *vm)
 {
-  render_data_free(vm->render_data);
+  vm_free_render_data(vm);
   matrix_stack_free(vm->matrix_stack);
   free(vm->stack);
   free(vm->heap_slab);
