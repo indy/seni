@@ -700,3 +700,18 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   (fn-call @shabba)
   
   @ syntax mean 'address of' ie return the iname
+
+
+* setup/teardown
+
+one time init
+
+  per-script init (includes allocations for render data)
+    *run the compiled script*
+  per-script shutdown <- (on success) clean up as much of the script state as possible
+
+  *get render data from c-side to js-side* <- done by js-side when it wants to
+
+  per-script cleanup <- invoked by js-side, cleans up all run data including render-data allocations
+
+one time shutdown

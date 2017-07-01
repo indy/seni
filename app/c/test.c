@@ -781,18 +781,7 @@ void test_prng(void)
 
 void test_vm_temp(void)
 {
-  // constructing a VAR_2D
-  VM_COMPILE_2D("(define vec2d [4 5]) vec2d", 4.0f, 5.0f);
-
-  // destructuring works with VAR_2D
-  VM_COMPILE_F32("(define [a b] [4 5]) (- b a)", 1.0f);
-
-  // nth works with VAR_2D
-  VM_COMPILE_F32("(define j [4 5]) (nth from: j n: 0)", 4.0f);
-  VM_COMPILE_F32("(define j [4 5]) (nth from: j n: 1)", 5.0f);
-
-  // READ_STACK_ARG_VEC2 in seni_bind.c
-  VM_COMPILE_F32("(math/distance vec1: [0 3] vec2: [4 0])", 5.0f);
+  //VM_COMPILE_F32("(fn (k) (+ 9 8)) (line colour: k)", 5.0f);
 }
 
 int main(void)
@@ -824,8 +813,7 @@ int main(void)
   RUN_TEST(test_vm_interp);
 
   // todo: test READ_STACK_ARG_COORD4
-  
-  RUN_TEST(test_vm_temp);
+  // RUN_TEST(test_vm_temp);
 
   return UNITY_END();
 }

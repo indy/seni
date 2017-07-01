@@ -17,12 +17,15 @@
 
 /* word lookup table */
 typedef struct seni_word_lut {
+  // set once at startup - doesn't change
   char *native[MAX_NATIVE_LOOKUPS];  
   i32 native_count;
 
+  // set once at startup - doesn't change
   char *keyword[MAX_KEYWORD_LOOKUPS];  
   i32 keyword_count;
-  
+
+  // set once for each script
   char *word[MAX_WORD_LOOKUPS];
   i32 word_count;
 } seni_word_lut;
@@ -218,7 +221,7 @@ typedef struct {
 
   seni_fn_info fn_info[MAX_TOP_LEVEL_FUNCTIONS];
 
-  // todo: splut up seni_word_lut, keep the word array in seni_program but move the
+  // todo: split up seni_word_lut, keep the word array in seni_program but move the
   // native and keyword stuff into their own structure that can be shared amongst
   // multiple seni_programs
   seni_word_lut *wl;
@@ -230,6 +233,8 @@ typedef struct {
 // word lookup
 seni_word_lut *wlut_allocate();
 void           wlut_free(seni_word_lut *wlut);
+void           wlut_reset_words(seni_word_lut *wlut);
+  
 // parser
 seni_node     *parser_parse(seni_word_lut *wlut, char *s);
 void           parser_free_nodes(seni_node *nodes);

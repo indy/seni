@@ -158,6 +158,13 @@ void wlut_free(seni_word_lut *wlut)
   free(wlut);
 }
 
+// called after a script has been executed
+void wlut_reset_words(seni_word_lut *wlut)
+{
+  wlut_free_words(wlut);
+  // leave keywords and natives since they aren't mutable
+}
+
 bool is_minus(char c)
 {
   return c == '-';
@@ -707,7 +714,7 @@ seni_node *parser_parse(seni_word_lut *wlut, char *s)
   while(**src) {
     node = consume_item(wlut, src);
     if (node == NULL) {
-      // clean up and fuck off
+      // clean up
       parser_free_nodes(nodes);
       return NULL;
     }
