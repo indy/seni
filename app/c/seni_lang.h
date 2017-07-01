@@ -252,7 +252,7 @@ void           env_free(seni_env *e);
 
 void           compiler_compile(seni_node *ast, seni_program *program);
 bool           vm_interpret(seni_vm *vm, seni_program *program);
-bool           safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
+bool           var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
 
 void           pretty_print_seni_var(seni_var *var, char* msg);
 

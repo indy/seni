@@ -1,6 +1,7 @@
-
-OPCODE(PUSH, 1)
-OPCODE(POP, -1)
+// load (push) a seni_var onto the stack
+OPCODE(LOAD, 1)
+// store (pop) a seni_var from the stack
+OPCODE(STORE, -1)
 
 // pops the 2 f32 from the top of the stack,
 // combines them into one VAR_2D and pushes that onto the stack
@@ -26,12 +27,11 @@ OPCODE(JUMP, 0)
 OPCODE(JUMP_IF, -1)
 
 // _0 == keep the existing frame, don't push/pop one
-// CALL_0 is 1 because it results in a RET call and that will
-// push the top value of the last frame onto the current frame
 //
 OPCODE(CALL, 0)
-OPCODE(CALL_0, 1)
-OPCODE(RET, 0)
+OPCODE(CALL_0, 0)
+// RET will push the top value of the last frame onto the current frame
+OPCODE(RET, 1)
 OPCODE(RET_0, 0)
 
 // calls a native function, leaving the result on the stack
@@ -52,8 +52,8 @@ OPCODE(DEC_RC, 0)
 OPCODE(INC_RC, 0)
 
 // push/pop matrix stack
-OPCODE(MTX_PUSH, 0)
-OPCODE(MTX_POP, 0)
+OPCODE(MTX_LOAD, 0)
+OPCODE(MTX_STORE, 0)
 
 OPCODE (NOP, 0)
 OPCODE (STOP, 0)
@@ -61,4 +61,4 @@ OPCODE (STOP, 0)
 // temporary opcodes which are replaced by their non-placeholder versions during a compilation pass
 OPCODE(PLACEHOLDER_DEC_RC, 0)
 OPCODE(PLACEHOLDER_INC_RC, 0)
-OPCODE(PLACEHOLDER_POP, -1)
+OPCODE(PLACEHOLDER_STORE, -1)

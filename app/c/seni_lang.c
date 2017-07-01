@@ -980,7 +980,7 @@ void program_free(seni_program *program)
   free(program);
 }
 
-void safe_var_move(seni_var *dest, seni_var *src);
+void var_move(seni_var *dest, seni_var *src);
 
 seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, seni_var *arg0, seni_var *arg1)
 {
@@ -991,8 +991,8 @@ seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, seni_v
   
   seni_bytecode *b = &(program->code[program->code_size++]);
   b->op = op;
-  safe_var_move(&(b->arg0), arg0);
-  safe_var_move(&(b->arg1), arg1);
+  var_move(&(b->arg0), arg0);
+  var_move(&(b->arg1), arg1);
 
   program->opcode_offset += opcode_offset[op];
 
@@ -1054,7 +1054,7 @@ char *memory_segment_name(seni_memory_segment_type segment)
 
 void pretty_print_bytecode(i32 ip, seni_bytecode *b)
 {
-  if (b->op == PUSH || b->op == POP || b->op == DEC_RC || b->op == INC_RC) {
+  if (b->op == LOAD || b->op == STORE || b->op == DEC_RC || b->op == INC_RC) {
     printf("%d\t%s\t%s\t",
            ip,
            opcode_name(b->op),
@@ -1376,7 +1376,7 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
   //printf("vector_ref_count_increment %p: %d\n", var_rc, var_rc->value.ref_count);
 }
 
-bool safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
+bool var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
 {
   if (dest == src) {
     return true;
@@ -1385,7 +1385,7 @@ bool safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
   if (dest->type == VAR_VEC_HEAD) {
     bool res = vector_ref_count_decrement(vm, dest);
     if (res == false) {
-      SENI_ERROR("safe_var_copy - vector_ref_count_decrement failed");
+      SENI_ERROR("var_copy - vector_ref_count_decrement failed");
       return false;
     }
   }
@@ -1412,7 +1412,7 @@ bool safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
       SENI_ERROR("what the fuck?\n");
     }
   } else {
-    SENI_ERROR("unknown seni_value_in_use for safe_var_copy");
+    SENI_ERROR("unknown seni_value_in_use for var_copy");
   }
 
   return true;
@@ -1420,7 +1420,7 @@ bool safe_var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
 
 // copying the src onto a var that we're not using (e.g. the top of a stack)
 // only the reference counts of the src should be updated
-bool safe_var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src)
+bool var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src)
 {
   if (dest == src) {
     return true;
@@ -1448,14 +1448,14 @@ bool safe_var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src)
       SENI_ERROR("what the fuck?\n");
     }
   } else {
-    SENI_ERROR("unknown seni_value_in_use for safe_var_copy");
+    SENI_ERROR("unknown seni_value_in_use for var_copy_onto_junk");
   }
 
   return true;
 }
 
 // like a seni_var_copy without any modifications to the ref count
-void safe_var_move(seni_var *dest, seni_var *src)
+void var_move(seni_var *dest, seni_var *src)
 {
   if (dest == src) {
     return;
@@ -1482,7 +1482,7 @@ void safe_var_move(seni_var *dest, seni_var *src)
       SENI_ERROR("what the fuck?\n");
     }
   } else {
-    SENI_ERROR("unknown seni_value_in_use for safe_var_move");
+    SENI_ERROR("unknown seni_value_in_use for var_move");
   }
 }
 
@@ -1574,9 +1574,9 @@ bool append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
     return false;
   }
 
-  bool res = safe_var_copy(vm, child_value, val);
+  bool res = var_copy(vm, child_value, val);
   if (res == false) {
-    SENI_ERROR("safe_var_copy failed in append_to_vector");
+    SENI_ERROR("var_copy failed in append_to_vector");
     return false;
   }
   
@@ -1723,13 +1723,13 @@ i32 pop_from_stack_to_memory(seni_program *program, seni_node *node, seni_memory
         SENI_ERROR("pop_from_stack_to_memory: allocation failure");
       }
     }
-    program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, address);
+    program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, address);
   } else if (memory_segment_type == MEM_SEG_GLOBAL) {
     address = get_global_mapping(program, node->value.i);
     if (address == -1) {
       address = add_global_mapping(program, node->value.i);
     }
-    program_emit_opcode_i32(program, POP, MEM_SEG_GLOBAL, address);
+    program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
   } else {
     SENI_ERROR("pop_from_stack_to_memory: unknown memory_segment_type: %d", memory_segment_type);
   }
@@ -1848,12 +1848,12 @@ void compile_math(seni_node *ast, seni_program *program, seni_opcode opcode)
 {
   // + 3 4 5 6
   //
-  // 1	PUSH	CONST	3.00
-  // 2	PUSH	CONST	4.00
+  // 1	LOAD	CONST	3.00
+  // 2	LOAD	CONST	4.00
   // 3	ADD
-  // 4	PUSH	CONST	5.00
+  // 4	LOAD	CONST	5.00
   // 5	ADD
-  // 6	PUSH	CONST	6.00
+  // 6	LOAD	CONST	6.00
   // 7	ADD
   
   ast = safe_next(ast); // skip the opcode
@@ -1869,20 +1869,20 @@ void compile_loop(seni_node *ast, seni_program *program)
 {
   // (loop (x from: 0 to: 5) (+ 42 38))
   //
-  // 0       PUSH    CONST   0
-  // 1       POP     LOCAL   0
-  // 2       PUSH    LOCAL   0
-  // 3       PUSH    CONST   5
+  // 0       LOAD    CONST   0
+  // 1       STORE     LOCAL   0
+  // 2       LOAD    LOCAL   0
+  // 3       LOAD    CONST   5
   // 4       LT
   // 5       JUMP_IF +10
-  // 6       PUSH    CONST   42
-  // 7       PUSH    CONST   38
+  // 6       LOAD    CONST   42
+  // 7       LOAD    CONST   38
   // 8       ADD
-  // 9       POP     VOID    0
-  // 10      PUSH    LOCAL   0
-  // 11      PUSH    CONST   1
+  // 9       STORE     VOID    0
+  // 10      LOAD    LOCAL   0
+  // 11      LOAD    CONST   1
   // 12      ADD
-  // 13      POP     LOCAL   0
+  // 13      STORE     LOCAL   0
   // 14      JUMP    -12
   // 15      STOP
   
@@ -1933,11 +1933,11 @@ void compile_loop(seni_node *ast, seni_program *program)
   }
 
   // set looping variable x to 'from' value
-  if (have_from == true) {
+  if (have_from) {
     compile(from_node, program);
   } else {
     // else default to 0
-    program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, 0.0f);
+    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
   }
 
   i32 looper_address = pop_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
@@ -1949,7 +1949,7 @@ void compile_loop(seni_node *ast, seni_program *program)
   // compare looping variable against exit condition
   // and jump if looping variable >= exit value
   i32 addr_loop_start = program->code_size;
-  program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, looper_address);
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, looper_address);
   compile(to_node, program);
   program_emit_opcode_i32(program, LT, 0, 0);
   i32 addr_exit_check = program->code_size;
@@ -1966,19 +1966,19 @@ void compile_loop(seni_node *ast, seni_program *program)
 
   // pop off any values that the body might leave on the stack
   for(i32 i = 0;i < opcode_delta; i++) {
-    program_emit_opcode_i32(program, POP, MEM_SEG_VOID, 0);
+    program_emit_opcode_i32(program, STORE, MEM_SEG_VOID, 0);
   }
 
   // increment the looping variable
-  program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, looper_address);
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, looper_address);
 
-  if (have_increment == true) {
+  if (have_increment) {
     compile(increment_node, program);
   } else {
-    program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, 1.0f);
+    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
   }
   program_emit_opcode_i32(program, ADD, 0, 0);
-  program_emit_opcode_i32(program, POP, MEM_SEG_LOCAL, looper_address);
+  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, looper_address);
 
   // loop back to the comparison
   program_emit_opcode_i32(program, JUMP, -(program->code_size - addr_loop_start), 0);
@@ -1987,9 +1987,9 @@ void compile_loop(seni_node *ast, seni_program *program)
 
 void compile_on_matrix_stack(seni_node *ast, seni_program *program)
 {
-  program_emit_opcode_i32(program, MTX_PUSH, 0, 0);
+  program_emit_opcode_i32(program, MTX_LOAD, 0, 0);
   compile_rest(ast, program);
-  program_emit_opcode_i32(program, MTX_POP, 0, 0);
+  program_emit_opcode_i32(program, MTX_STORE, 0, 0);
 }
 
 // returns the index into program->fn_info that represents this function
@@ -2192,11 +2192,11 @@ void compile_fn(seni_node *ast, seni_program *program)
     fn_info->argument_offsets[argument_offsets_counter++] = label->value.i;
 
     // push pairs of label+value values onto the args stack
-    program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, label->value.i);
-    program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, counter++);
+    program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, label->value.i);
+    program_emit_opcode_i32(program, STORE, MEM_SEG_ARGUMENT, counter++);
 
     compile(value, program);
-    program_emit_opcode_i32(program, POP, MEM_SEG_ARGUMENT, counter++);
+    program_emit_opcode_i32(program, STORE, MEM_SEG_ARGUMENT, counter++);
 
     num_args++;
     args = safe_next(value);
@@ -2215,7 +2215,7 @@ void compile_fn(seni_node *ast, seni_program *program)
   // (+ a b)
   compile_rest(signature, program);
 
-  // Don't need any POP, MEM_SEG_VOID instructions as the RET will
+  // Don't need any STORE, MEM_SEG_VOID instructions as the RET will
   // pop the frame and blow the stack
 
   program_emit_opcode_i32(program, RET, 0, 0);
@@ -2249,15 +2249,15 @@ void correct_function_addresses(seni_program *program)
       bc->arg1.value.i = fn_info->num_args;
     }
 
-    if (bc->op == PLACEHOLDER_DEC_RC || bc->op == PLACEHOLDER_POP || bc->op == PLACEHOLDER_INC_RC) {
+    if (bc->op == PLACEHOLDER_DEC_RC || bc->op == PLACEHOLDER_STORE || bc->op == PLACEHOLDER_INC_RC) {
       if (bc->op == PLACEHOLDER_DEC_RC) {
         bc->op = DEC_RC;
       }
       if (bc->op == PLACEHOLDER_INC_RC) {
         bc->op = INC_RC;
       }
-      if (bc->op == PLACEHOLDER_POP) {
-        bc->op = POP;
+      if (bc->op == PLACEHOLDER_STORE) {
+        bc->op = STORE;
       }
 
       // opcode's arg0 is the fn_info_index and arg1 is the label_value
@@ -2302,7 +2302,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_in
     // push value
     compile(value, program);
     program_emit_opcode_i32(program, PLACEHOLDER_DEC_RC, fn_info_index, label->value.i);
-    program_emit_opcode_i32(program, PLACEHOLDER_POP, fn_info_index, label->value.i);
+    program_emit_opcode_i32(program, PLACEHOLDER_STORE, fn_info_index, label->value.i);
 
     if (value->type != NODE_VECTOR) {
       // not an explicitly declared vector so increment it's rc
@@ -2332,7 +2332,7 @@ void compile_2d(seni_node *ast, seni_program *program)
 void compile_vector(seni_node *ast, seni_program *program)
 {
   // pushing from the VOID means creating a new, empty vector
-  program_emit_opcode_i32(program, PUSH, MEM_SEG_VOID, 0);
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
 
   for (seni_node *node = ast->value.first_child; node != NULL; node = safe_next(node)) {
     compile(node, program);
@@ -2344,7 +2344,7 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
 {
   i32 local_mapping = get_local_mapping(program, iname);
   if (local_mapping != -1) {
-    program_emit_opcode_i32(program, PUSH, MEM_SEG_LOCAL, local_mapping);
+    program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, local_mapping);
     return safe_next(ast);
   }
 
@@ -2352,20 +2352,20 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
   if (program->current_fn_info) {
     i32 argument_mapping = get_argument_mapping(program->current_fn_info, iname);
     if (argument_mapping != -1) {
-      program_emit_opcode_i32(program, PUSH, MEM_SEG_ARGUMENT, argument_mapping);
+      program_emit_opcode_i32(program, LOAD, MEM_SEG_ARGUMENT, argument_mapping);
       return safe_next(ast);
     }
   }
 
   i32 global_mapping = get_global_mapping(program, iname);
   if (global_mapping != -1) {
-    program_emit_opcode_i32(program, PUSH, MEM_SEG_GLOBAL, global_mapping);
+    program_emit_opcode_i32(program, LOAD, MEM_SEG_GLOBAL, global_mapping);
     return safe_next(ast);
   }
 
   // could be a keyword such as linear, ease-in etc
   if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
-    program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, iname);
+    program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, iname);
     return safe_next(ast);
   }
 
@@ -2391,11 +2391,11 @@ seni_node *compile(seni_node *ast, seni_program *program)
     return safe_next(ast);
   }
   if (ast->type == NODE_FLOAT) {
-    program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, ast->value.f);
+    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, ast->value.f);
     return safe_next(ast);
   }
   if (ast->type == NODE_INT) {
-    program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, ast->value.i);
+    program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, ast->value.i);
     return safe_next(ast);
   }
   if (ast->type == NODE_VECTOR) {
@@ -2480,7 +2480,7 @@ seni_node *compile(seni_node *ast, seni_program *program)
         seni_node *label = args;
         seni_node *value = safe_next(label);
 
-        program_emit_opcode_i32(program, PUSH, MEM_SEG_CONSTANT, label->value.i);
+        program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, label->value.i);
         compile(value, program);
 
         num_args++;
@@ -2517,12 +2517,12 @@ bool is_list_beginning_with(seni_node *ast, i32 index)
 
 void compile_preamble_f32(seni_program *program, i32 iname, f32 value)
 {
-  program_emit_opcode_i32_f32(program, PUSH, MEM_SEG_CONSTANT, value);
+  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, value);
   i32 address = get_global_mapping(program, iname);
   if (address == -1) {
     address = add_global_mapping(program, iname);
   }
-  program_emit_opcode_i32(program, POP, MEM_SEG_GLOBAL, address);
+  program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
 }
 
 // NOTE: each entry in compile_preamble should have a corresponding entry here
@@ -2655,12 +2655,12 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 #endif
     
     switch(bc->op) {
-    case PUSH:
+    case LOAD:
       STACK_PUSH;
 
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_CONSTANT) {
-        safe_var_move(v, &(bc->arg1));
+        var_move(v, &(bc->arg1));
       } else if (memory_segment_type == MEM_SEG_ARGUMENT) {
 
         // if we're referencing an ARG in-between CALL and CALL_0 make sure we use the right frame
@@ -2675,7 +2675,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         pretty_print_seni_var(src, "---");
         printf("--- hop_back is %d fp is %d\n", hop_back, fp);
 #endif
-        safe_var_copy_onto_junk(vm, v, src);
+        var_copy_onto_junk(vm, v, src);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
 
         // if we're referencing a LOCAL in-between CALL and CALL_0 make sure we use the right frame
@@ -2686,14 +2686,14 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         local = fp + 3;         // get the correct frame's local
         
         src = &(vm->stack[local + bc->arg1.value.i]);
-        safe_var_copy_onto_junk(vm, v, src);
+        var_copy_onto_junk(vm, v, src);
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         src = &(vm->stack[vm->global + bc->arg1.value.i]);
-        safe_var_copy_onto_junk(vm, v, src);
+        var_copy_onto_junk(vm, v, src);
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // pushing from the void. i.e. create this object
 
-        // temp: for the moment just assume that any PUSH VOID
+        // temp: for the moment just assume that any LOAD VOID
         // means creating a new vector object.
 
         // also note that the VAR_VEC_HEAD is a seni_var from the stack
@@ -2701,18 +2701,18 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         vector_construct(vm, v);
         
       } else {
-        SENI_ERROR("PUSH: unknown memory segment type %d", bc->arg0.value.i);
+        SENI_ERROR("LOAD: unknown memory segment type %d", bc->arg0.value.i);
       }
       break;
 
-    case POP:
+    case STORE:
       STACK_POP;
 
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
         // check the current value of dest,
-        safe_var_move(dest, v);
+        var_move(dest, v);
 #ifdef TRACE_PRINT_OPCODES
         pretty_print_seni_var(dest, "---");
         printf("--- fp is %d\n", vm->fp);
@@ -2721,7 +2721,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         dest = &(vm->stack[vm->local + bc->arg1.value.i]);
         // using a copy since we could have a define in a loop and so
         // the previously assigned value will need to be reference counted
-        safe_var_copy(vm, dest, v);
+        var_copy(vm, dest, v);
 
         // the stack no longer references the vector, so decrement the rc
         if (v->type == VAR_VEC_HEAD) {
@@ -2734,19 +2734,19 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         dest = &(vm->stack[vm->global + bc->arg1.value.i]);
-        safe_var_move(dest, v);
+        var_move(dest, v);
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // normally pop from the stack and lose the value
         // but if it's a vector then decrement its ref count
         if (v->type == VAR_VEC_HEAD) {
           b1 = vector_ref_count_decrement(vm, v);
           if (b1 == false) {
-            SENI_ERROR("POP MEM_SEG_VOID: vector_ref_count_decrement failed");
+            SENI_ERROR("STORE MEM_SEG_VOID: vector_ref_count_decrement failed");
             return false;
           }
         }
       } else {
-        SENI_ERROR("POP: unknown memory segment type %d", bc->arg0.value.i);
+        SENI_ERROR("STORE: unknown memory segment type %d", bc->arg0.value.i);
       }
       break;
 
@@ -2922,7 +2922,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
       // copy the previous frame's top stack value onto the current frame's stack
       STACK_PUSH;
-      safe_var_move(v, src);
+      var_move(v, src);
 
 #ifdef TRACE_PRINT_OPCODES
         printf("--- fp is %d\n", vm->fp);
@@ -2953,15 +2953,11 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
           // this is now off the stack, so blow away the vector head
           tmp->type = VAR_INT;
           tmp->value.i = 0;
-
-          // IMPORTANT TODO: look at usage of safe_var_move/copy when the destination is
-          // the top of the stack don't increment the reference count on what was there.
-          // might need a third safe_var_??? function
         }
       }
       
       // put the return value at the top of the stack
-      safe_var_move(&(vm->stack[vm->sp++]), &var);
+      var_move(&(vm->stack[vm->sp++]), &var);
       
       // sync registers with vm
       sp = vm->sp;
@@ -3014,11 +3010,11 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         // top of the stack contains a vector
         // take num_args elements from the vector and push them onto the stack
         seni_var _vec;
-        safe_var_move(&_vec, v);
+        var_move(&_vec, v);
         src = _vec.value.v->next;
         for (i = 0; i < num_args; i++) {
           STACK_PUSH;
-          safe_var_copy_onto_junk(vm, v, src);
+          var_copy_onto_junk(vm, v, src);
           src = src->next;
         }
         b1 = vector_ref_count_decrement(vm, &_vec);
@@ -3055,14 +3051,14 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       v->f32_array[1] = f2;
       break;
 
-    case MTX_PUSH:
+    case MTX_LOAD:
       // note: should these just be normal functions and not opcodes?
       top = matrix_stack_peek(vm->matrix_stack);
       matrix = matrix_stack_push(vm->matrix_stack);
       matrix_copy(matrix, top);
       break;
 
-    case MTX_POP:
+    case MTX_STORE:
       matrix_stack_pop(vm->matrix_stack);
       break;
 

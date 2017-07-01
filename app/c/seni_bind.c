@@ -1206,9 +1206,9 @@ seni_var bind_nth(seni_vm *vm, i32 num_args)
       e = e->next;
     }
 
-    bool copied = safe_var_copy(vm, &ret, e);
+    bool copied = var_copy(vm, &ret, e);
     if (copied == false) {
-      SENI_ERROR("safe_var_copy failed in bind_nth");
+      SENI_ERROR("var_copy failed in bind_nth");
     }
     
   } else {
