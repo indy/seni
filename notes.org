@@ -1,13 +1,17 @@
-* TODO [1/8]
-  1. [ ] interp/bezier
-  2. [ ] cleanup memory of parser
-  3. [ ] structs for compile, runtim, performance info
-  4. [ ] seni_env
-  5. [ ] 'in' paramaeter for loop ?
-  6. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  7. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  8. [X] remove id, debug_id and debug_allocatable from seni_var
-
+* TODO [0/13]
+  1. [ ] 151c-flower - bezier-bulging
+  2. [ ] 154c-stroked-bezier - stroked-bezier-rect
+  3. [ ] 1556-biomorphs - repeat/symmetry-vertical - takes a 'draw' argument
+  4. [ ] 155j-chaotic-grid-2 - focal/point
+  5. [ ] 1560-path - make a function ???
+  6. [ ] 157e-tile-shadow - col/procedural-fn
+  7. [ ] 15fe-rotate-mirror - poly, repeat/rotate-mirrored
+  8. [ ] cleanup memory of parser
+  9. [ ] structs for compile, runtim, performance info
+  10. [ ] seni_env
+  11. [ ] 'in' paramaeter for loop ?
+  12. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  13. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
 
 * wasm - opengl
 
@@ -444,7 +448,6 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
 
   calling a function involves the following sequence being executed:
-  (KF == Keep Frame)
 
   CALL      Pushes a frame onto the stack and jumps to the given ip
   RET_0     Returns to the ip stored in the frame pointer on the stack without popping the frame
@@ -663,3 +666,37 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
  (fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
      (+ y (* s (prng/perlin x: x y: y z: z))))
+
+
+* calling functions
+
+  need
+  - INVOKE, INVOKE_0
+  - a way of pushing the iname of a function onto the stack and into variables etc
+  - vm needs access to fn_info
+
+  --------------------------------------------------------------------------------
+
+  INVOKE an equivalent to CALL but for when the called function isn't known at compile time.
+  instead the function's iname will be pushed onto the stack
+  will also need an INVOKE_0
+
+  --------------------------------------------------------------------------------
+
+  make fn_info array available to the vm
+  can then INVOKE a function by using it's iname and the addresses required by CALL and CALL_0 can be looked up in the fn_info
+
+  this will be required by map anyway
+
+  (define some-vector [1 2 3 4 5 6])
+  (fn (shabba a: 0) 
+      (+ a a))
+  (map a: some-vector fn: shabba)
+
+  compiler should loop through the some-vector
+  PUSH the iname of the function to call
+  INVOKE: a special variation of CALL that looks up an iname in fn_info
+
+  (fn-call @shabba)
+  
+  @ syntax mean 'address of' ie return the iname
