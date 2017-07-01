@@ -8,7 +8,7 @@
 #include <math.h>
 
 // extern global keyword variables - used to reference bezier line_width_mapping
-#define KEYWORD(val,_,name) extern i32 g_keyword_iname_##name;
+#define KEYWORD(_,__,name) extern i32 g_keyword_iname_##name;
 #include "seni_keywords.h"
 #undef KEYWORD
 

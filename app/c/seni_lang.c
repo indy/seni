@@ -12,7 +12,7 @@
 #include "utlist.h"
 
 // global keyword variables
-#define KEYWORD(val,_,name) i32 g_keyword_iname_##name = KEYWORD_START + val;
+#define KEYWORD(val,__,name) i32 g_keyword_iname_##name = KEYWORD_START + val;
 #include "seni_keywords.h"
 #undef KEYWORD
 
