@@ -37,11 +37,6 @@ typedef struct {
   i32 mapping;
 } seni_interp_state;
 
-// extern global keyword variables
-#define KEYWORD(_,__,name) extern i32 g_keyword_iname_##name;
-#include "seni_keywords.h"
-#undef KEYWORD
-
 // helper macros used by the bind code to parse arguments on the VM's stack
 //
 #define READ_STACK_ARGS_BEGIN i32 args_pointer_1 = vm->sp - (num_args * 2); \
@@ -69,11 +64,11 @@ typedef struct {
 #define IS_LONG
 #endif
 
-#define READ_STACK_ARG_F32(n) if (name_1 == g_keyword_iname_##n) { IS_F32(n); n = value_1->value.f; }
-#define READ_STACK_ARG_I32(n) if (name_1 == g_keyword_iname_##n) { IS_I32(n); n = value_1->value.i; }
-#define READ_STACK_ARG_VAR(n) if (name_1 == g_keyword_iname_##n) { n = value_1; }
+#define READ_STACK_ARG_F32(k, n) if (name_1 == k) { IS_F32(n); n = value_1->value.f; }
+#define READ_STACK_ARG_I32(k, n) if (name_1 == k) { IS_I32(n); n = value_1->value.i; }
+#define READ_STACK_ARG_VAR(k, n) if (name_1 == k) { n = value_1; }
 
-#define READ_STACK_ARG_COL(n) if (name_1 == g_keyword_iname_##n) {  \
+#define READ_STACK_ARG_COL(k, n) if (name_1 == k) {                 \
     IS_COL(n);                                                      \
     n->format = value_1->value.i;                                   \
     n->element[0] = value_1->f32_array[0];                          \
@@ -82,25 +77,12 @@ typedef struct {
     n->element[3] = value_1->f32_array[3];                          \
 }
 
-#define READ_STACK_ARG_VEC2(n) if (name_1 == g_keyword_iname_##n) {  \
+#define READ_STACK_ARG_VEC2(k, n) if (name_1 == k) {                 \
     n[0] = value_1->f32_array[0];                                    \
     n[1] = value_1->f32_array[1];                                    \
 }
-/*
-// traverse through the VAR_VEC_HEAD, VAR_VEC_RC nodes down into the values
-// todo: make a seni_var type that can hold VEC2
-#define READ_STACK_ARG_VEC2(n) if (name_1 == g_keyword_iname_##n) {     \
-    tmp_1 = value_1;                                                    \
-    value_1 = (value_1->value.v)->next;                                 \
-    IS_F32(#n);                                                         \
-    n[0] = value_1->value.f;                                            \
-    value_1 = value_1->next;                                            \
-    IS_F32(#n);                                                         \
-    n[1] = value_1->value.f;                                            \
-    value_1 = tmp_1;                                                    \
-  }
-*/
-#define READ_STACK_ARG_PRNG(n) if (name_1 == g_keyword_iname_##n) {     \
+
+#define READ_STACK_ARG_PRNG(k, n) if (name_1 == k) {                    \
     tmp_1 = value_1;                                                    \
     value_1 = (value_1->value.v)->next;                                 \
     IS_LONG(#n);                                                        \
@@ -119,7 +101,7 @@ typedef struct {
     value_1 = tmp_1;                                                    \
   }
 
-#define READ_STACK_ARG_INTERP(n) if (name_1 == g_keyword_iname_##n) {   \
+#define READ_STACK_ARG_INTERP(k, n) if (name_1 == k) {                  \
     tmp_1 = value_1;                                                    \
     value_1 = (value_1->value.v)->next;                                 \
     IS_I32(#n);                                                         \
@@ -151,7 +133,7 @@ typedef struct {
     value_1 = tmp_1;                                                    \
   }
 
-#define READ_STACK_ARG_COORD4(n) if (name_1 == g_keyword_iname_##n) { \
+#define READ_STACK_ARG_COORD4(k, n) if (name_1 == k) {                \
     tmp_1 = (value_1->value.v)->next;                                 \
     n[0] = tmp_1->f32_array[0];                                       \
     n[1] = tmp_1->f32_array[1];                                       \
@@ -216,10 +198,10 @@ seni_var bind_line(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(width);
-  READ_STACK_ARG_VEC2(from);
-  READ_STACK_ARG_VEC2(to);
-  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_F32(INAME_WIDTH, width);
+  READ_STACK_ARG_VEC2(INAME_FROM, from);
+  READ_STACK_ARG_VEC2(INAME_TO, to);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
   seni_render_data *render_data = vm->render_data;
@@ -242,10 +224,10 @@ seni_var bind_rect(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(width);
-  READ_STACK_ARG_F32(height);
-  READ_STACK_ARG_VEC2(position);
-  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_F32(INAME_WIDTH, width);
+  READ_STACK_ARG_F32(INAME_HEIGHT, height);
+  READ_STACK_ARG_VEC2(INAME_POSITION, position);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
   seni_render_data *render_data = vm->render_data;
@@ -270,12 +252,12 @@ seni_var bind_circle(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(width);
-  READ_STACK_ARG_F32(height);
-  READ_STACK_ARG_F32(radius);
-  READ_STACK_ARG_VEC2(position);
-  READ_STACK_ARG_COL(colour);
-  READ_STACK_ARG_F32(tessellation);
+  READ_STACK_ARG_F32(INAME_WIDTH, width);
+  READ_STACK_ARG_F32(INAME_HEIGHT, height);
+  READ_STACK_ARG_F32(INAME_RADIUS, radius);
+  READ_STACK_ARG_VEC2(INAME_POSITION, position);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_TESSELLATION, tessellation);
   READ_STACK_ARGS_END;
 
   // if the radius has been defined then it overrides the width and height parameters
@@ -299,14 +281,14 @@ seni_var bind_bezier(seni_vm *vm, i32 num_args)
   f32 line_width = -1.0f;
   f32 line_width_start = 4.0f;
   f32 line_width_end = 4.0f;
-  i32 line_width_mapping = g_keyword_iname_linear;
+  i32 line_width_mapping = INAME_LINEAR;
   f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
   f32 t_start = -1.0f;
   f32 t_end = 2.0f;
   f32 tessellation = 10.0f;
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
-  i32 brush = g_keyword_iname_brush_flat;
+  i32 brush = INAME_BRUSH_FLAT;
   f32 brush_subtype = 0.0f;
     
 
@@ -314,17 +296,17 @@ seni_var bind_bezier(seni_vm *vm, i32 num_args)
   
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(line_width);
-  READ_STACK_ARG_F32(line_width_start);
-  READ_STACK_ARG_F32(line_width_end);
-  READ_STACK_ARG_I32(line_width_mapping);
-  READ_STACK_ARG_COORD4(coords);
-  READ_STACK_ARG_F32(t_start);
-  READ_STACK_ARG_F32(t_end);
-  READ_STACK_ARG_COL(colour);
-  READ_STACK_ARG_F32(tessellation);
-  READ_STACK_ARG_I32(brush);
-  READ_STACK_ARG_F32(brush_subtype);
+  READ_STACK_ARG_F32(INAME_LINE_WIDTH, line_width);
+  READ_STACK_ARG_F32(INAME_LINE_WIDTH_START, line_width_start);
+  READ_STACK_ARG_F32(INAME_LINE_WIDTH_END, line_width_end);
+  READ_STACK_ARG_I32(INAME_LINE_WIDTH_MAPPING, line_width_mapping);
+  READ_STACK_ARG_COORD4(INAME_COORDS, coords);
+  READ_STACK_ARG_F32(INAME_T_START, t_start);
+  READ_STACK_ARG_F32(INAME_T_END, t_end);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_TESSELLATION, tessellation);
+  READ_STACK_ARG_I32(INAME_BRUSH, brush);
+  READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
   READ_STACK_ARGS_END;
 
   // if the line_width has been defined then it overrides the separate start/end variables
@@ -356,14 +338,14 @@ seni_var bind_col_convert(seni_vm *vm, i32 num_args)
 {
   // (col/convert colour: col format: LAB)
   
-  i32 format = g_keyword_iname_RGB;
+  i32 format = INAME_RGB;
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(format);
-  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_I32(INAME_FORMAT, format);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
   // the seni_var referencing the converted colour is going to be added to the VM's stack
@@ -372,13 +354,13 @@ seni_var bind_col_convert(seni_vm *vm, i32 num_args)
   seni_colour out;
   seni_colour_format colour_format = RGB;
 
-  if (format == g_keyword_iname_RGB) {
+  if (format == INAME_RGB) {
     colour_format = RGB;
-  } else if (format == g_keyword_iname_HSL) {
+  } else if (format == INAME_HSL) {
     colour_format = HSL;
-  } else if (format == g_keyword_iname_LAB) {
+  } else if (format == INAME_LAB) {
     colour_format = LAB;
-  } else if (format == g_keyword_iname_HSV) {
+  } else if (format == INAME_HSV) {
     colour_format = HSV;
   }
   
@@ -402,10 +384,10 @@ seni_var bind_col_rgb(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(r);
-  READ_STACK_ARG_F32(g);
-  READ_STACK_ARG_F32(b);
-  READ_STACK_ARG_F32(alpha);
+  READ_STACK_ARG_F32(INAME_R, r);
+  READ_STACK_ARG_F32(INAME_G, g);
+  READ_STACK_ARG_F32(INAME_B, b);
+  READ_STACK_ARG_F32(INAME_ALPHA, alpha);
   READ_STACK_ARGS_END;
 
   seni_colour colour;
@@ -433,10 +415,10 @@ seni_var bind_col_hsl(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(h);
-  READ_STACK_ARG_F32(s);
-  READ_STACK_ARG_F32(l);
-  READ_STACK_ARG_F32(alpha);
+  READ_STACK_ARG_F32(INAME_H, h);
+  READ_STACK_ARG_F32(INAME_S, s);
+  READ_STACK_ARG_F32(INAME_L, l);
+  READ_STACK_ARG_F32(INAME_ALPHA, alpha);
   READ_STACK_ARGS_END;
 
   seni_colour colour;
@@ -464,10 +446,10 @@ seni_var bind_col_hsv(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(h);
-  READ_STACK_ARG_F32(s);
-  READ_STACK_ARG_F32(v);
-  READ_STACK_ARG_F32(alpha);
+  READ_STACK_ARG_F32(INAME_H, h);
+  READ_STACK_ARG_F32(INAME_S, s);
+  READ_STACK_ARG_F32(INAME_V, v);
+  READ_STACK_ARG_F32(INAME_ALPHA, alpha);
   READ_STACK_ARGS_END;
 
   seni_colour colour;
@@ -495,10 +477,10 @@ seni_var bind_col_lab(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(l);
-  READ_STACK_ARG_F32(a);
-  READ_STACK_ARG_F32(b);
-  READ_STACK_ARG_F32(alpha);
+  READ_STACK_ARG_F32(INAME_L, l);
+  READ_STACK_ARG_F32(INAME_A, a);
+  READ_STACK_ARG_F32(INAME_B, b);
+  READ_STACK_ARG_F32(INAME_ALPHA, alpha);
   READ_STACK_ARGS_END;
 
   seni_colour colour;
@@ -521,7 +503,7 @@ seni_var bind_col_complementary(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour;
@@ -539,7 +521,7 @@ seni_var bind_col_split_complementary(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour0;
@@ -561,7 +543,7 @@ seni_var bind_col_analagous(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour0;
@@ -583,7 +565,7 @@ seni_var bind_col_triad(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour0;
@@ -606,8 +588,8 @@ seni_var bind_col_darken(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
-  READ_STACK_ARG_F32(value);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour;
@@ -629,8 +611,8 @@ seni_var bind_col_lighten(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
-  READ_STACK_ARG_F32(value);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour;
@@ -652,8 +634,8 @@ seni_var bind_col_set_alpha(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
-  READ_STACK_ARG_F32(value);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour;
@@ -673,7 +655,7 @@ seni_var bind_col_get_alpha(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -691,8 +673,8 @@ seni_var bind_col_set_lab_l(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
-  READ_STACK_ARG_F32(value);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour;
@@ -713,7 +695,7 @@ seni_var bind_col_get_lab_l(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(colour);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
   seni_colour lab_colour;
@@ -732,7 +714,7 @@ seni_var bind_translate(seni_vm *vm, i32 num_args)
   f32 vector[] = {0.0f, 0.0f};
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VEC2(vector);
+  READ_STACK_ARG_VEC2(INAME_VECTOR, vector);
   READ_STACK_ARGS_END;
 
   matrix_stack_translate(vm->matrix_stack, vector[0], vector[1]);
@@ -746,7 +728,7 @@ seni_var bind_rotate(seni_vm *vm, i32 num_args)
   f32 angle = 0.0f;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(angle);
+  READ_STACK_ARG_F32(INAME_ANGLE, angle);
   READ_STACK_ARGS_END;
 
   matrix_stack_rotate(vm->matrix_stack, deg_to_rad(angle));
@@ -760,8 +742,8 @@ seni_var bind_scale(seni_vm *vm, i32 num_args)
   f32 scalar = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VEC2(vector);
-  READ_STACK_ARG_F32(scalar);
+  READ_STACK_ARG_VEC2(INAME_VECTOR, vector);
+  READ_STACK_ARG_F32(INAME_SCALAR, scalar);
   READ_STACK_ARGS_END;
 
   if (scalar != 1.0f) {
@@ -781,8 +763,8 @@ seni_var bind_math_distance(seni_vm *vm, i32 num_args)
   
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VEC2(vec1);
-  READ_STACK_ARG_VEC2(vec2);
+  READ_STACK_ARG_VEC2(INAME_VEC1, vec1);
+  READ_STACK_ARG_VEC2(INAME_VEC2, vec2);
   READ_STACK_ARGS_END;
 
   v2 a,b;
@@ -814,9 +796,9 @@ seni_var bind_math_clamp(seni_vm *vm, i32 num_args)
   
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(val);
-  READ_STACK_ARG_F32(min);
-  READ_STACK_ARG_F32(max);
+  READ_STACK_ARG_F32(INAME_VAL, val);
+  READ_STACK_ARG_F32(INAME_MIN, min);
+  READ_STACK_ARG_F32(INAME_MAX, max);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -831,7 +813,7 @@ seni_var bind_math_radians_to_degrees(seni_vm *vm, i32 num_args)
   f32 angle = 0.0f;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(angle);
+  READ_STACK_ARG_F32(INAME_ANGLE, angle);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -849,9 +831,9 @@ seni_var bind_prng_build(seni_vm *vm, i32 num_args)
   
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(seed);
-  READ_STACK_ARG_F32(min);
-  READ_STACK_ARG_F32(max);
+  READ_STACK_ARG_F32(INAME_SEED, seed);
+  READ_STACK_ARG_F32(INAME_MIN, min);
+  READ_STACK_ARG_F32(INAME_MAX, max);
   READ_STACK_ARGS_END;
 
   u64 seed_u64 = (u64)seed;
@@ -890,8 +872,8 @@ seni_var bind_prng_take(seni_vm *vm, i32 num_args)
   from.seni_var_inc = NULL;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(num);
-  READ_STACK_ARG_PRNG(from);
+  READ_STACK_ARG_F32(INAME_NUM, num);
+  READ_STACK_ARG_PRNG(INAME_FROM, from);
   READ_STACK_ARGS_END;
 
   // build a seni_prng_state from the seni_prng_full_state
@@ -935,7 +917,7 @@ seni_var bind_prng_take_1(seni_vm *vm, i32 num_args)
   from.seni_var_inc = NULL;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_PRNG(from);
+  READ_STACK_ARG_PRNG(INAME_FROM, from);
   READ_STACK_ARGS_END;
 
   // build a seni_prng_state from the seni_prng_full_state
@@ -967,9 +949,9 @@ seni_var bind_prng_perlin(seni_vm *vm, i32 num_args)
   
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(x);
-  READ_STACK_ARG_F32(y);
-  READ_STACK_ARG_F32(z);
+  READ_STACK_ARG_F32(INAME_X, x);
+  READ_STACK_ARG_F32(INAME_Y, y);
+  READ_STACK_ARG_F32(INAME_Z, z);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -985,15 +967,15 @@ seni_var bind_interp_fn(seni_vm *vm, i32 num_args)
 {
   f32 from[] = {0.0f, 1.0f};
   f32 to[] = {0.0f, 100.0f};
-  i32 clamping = g_keyword_iname_false;
-  i32 mapping = g_keyword_iname_linear;
+  i32 clamping = INAME_FALSE;
+  i32 mapping = INAME_LINEAR;
   
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VEC2(from);
-  READ_STACK_ARG_VEC2(to);
-  READ_STACK_ARG_I32(clamping); // true | false
-  READ_STACK_ARG_I32(mapping);  // linear, quick, slow-in, slow-in-out
+  READ_STACK_ARG_VEC2(INAME_FROM, from);
+  READ_STACK_ARG_VEC2(INAME_TO, to);
+  READ_STACK_ARG_I32(INAME_CLAMPING, clamping); // true | FALSE, clamping); // true | false
+  READ_STACK_ARG_I32(INAME_MAPPING, mapping);  // linear, quick, slow-in, slow-in-out
   READ_STACK_ARGS_END;
 
   f32 from_m = mc_m(from[0], 0.0f, from[1], 1.0f);
@@ -1036,26 +1018,26 @@ seni_var bind_interp_call(seni_vm *vm, i32 num_args)
   using.mapping = 0;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_INTERP(using);
-  READ_STACK_ARG_F32(val);
+  READ_STACK_ARG_INTERP(INAME_USING, using);
+  READ_STACK_ARG_F32(INAME_VAL, val);
   READ_STACK_ARGS_END;
 
   f32 from_interp = (using.from_m * val) + using.from_c;
   f32 to_interp = from_interp;
 
-  if (using.mapping == g_keyword_iname_linear) {
+  if (using.mapping == INAME_LINEAR) {
     to_interp = from_interp;
-  } else if (using.mapping == g_keyword_iname_quick) {
+  } else if (using.mapping == INAME_QUICK) {
     to_interp = map_quick_ease(from_interp);
-  } else if (using.mapping == g_keyword_iname_slow_in) {
+  } else if (using.mapping == INAME_SLOW_IN) {
     to_interp = map_slow_ease_in(from_interp);
-  } else { // g_keyword_iname_slow_in_out
+  } else { // INAME_slow_in_out
     to_interp = map_slow_ease_in_ease_out(from_interp);
   }
 
   f32 res = (using.to_m * to_interp) + using.to_c;
 
-  if (using.clamping == g_keyword_iname_true) {
+  if (using.clamping == INAME_TRUE) {
     res = from_interp < 0.0f ? using.to0 : (from_interp > 1.0f) ? using.to1 : res;
   }
   
@@ -1072,9 +1054,9 @@ seni_var bind_interp_cos(seni_vm *vm, i32 num_args)
   f32 t = 1.0f;                 // t goes from 0 to TAU
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(amplitude);
-  READ_STACK_ARG_F32(frequency);
-  READ_STACK_ARG_F32(t);
+  READ_STACK_ARG_F32(INAME_AMPLITUDE, amplitude);
+  READ_STACK_ARG_F32(INAME_FREQUENCY, frequency);
+  READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -1091,9 +1073,9 @@ seni_var bind_interp_sin(seni_vm *vm, i32 num_args)
   f32 t = 1.0f;                 // t goes from 0 to TAU
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(amplitude);
-  READ_STACK_ARG_F32(frequency);
-  READ_STACK_ARG_F32(t);
+  READ_STACK_ARG_F32(INAME_AMPLITUDE, amplitude);
+  READ_STACK_ARG_F32(INAME_FREQUENCY, frequency);
+  READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -1109,8 +1091,8 @@ seni_var bind_interp_bezier(seni_vm *vm, i32 num_args)
   f32 t = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COORD4(coords);
-  READ_STACK_ARG_F32(t);
+  READ_STACK_ARG_COORD4(INAME_COORDS, coords);
+  READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -1129,8 +1111,8 @@ seni_var bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
   f32 t = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COORD4(coords);
-  READ_STACK_ARG_F32(t);
+  READ_STACK_ARG_COORD4(INAME_COORDS, coords);
+  READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -1150,9 +1132,9 @@ seni_var bind_interp_circle(seni_vm *vm, i32 num_args)
   f32 t = 0.0f;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VEC2(position);
-  READ_STACK_ARG_F32(radius);
-  READ_STACK_ARG_F32(t);
+  READ_STACK_ARG_VEC2(INAME_POSITION, position);
+  READ_STACK_ARG_F32(INAME_RADIUS, radius);
+  READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -1171,7 +1153,7 @@ seni_var  bind_debug_print(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VAR(val);
+  READ_STACK_ARG_VAR(INAME_VAL, val);
   READ_STACK_ARGS_END;
 
   
@@ -1186,8 +1168,8 @@ seni_var bind_nth(seni_vm *vm, i32 num_args)
   f32 n = 0;
   
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VAR(from);
-  READ_STACK_ARG_F32(n);
+  READ_STACK_ARG_VAR(INAME_FROM, from);
+  READ_STACK_ARG_F32(INAME_N, n);
   READ_STACK_ARGS_END;
 
   seni_var ret;
@@ -1229,9 +1211,9 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   // this fills out wlut->keyword and that's used in the wlut_lookup_ functions
   //
-#define KEYWORD(_,string,__) declare_vm_keyword(wlut, string);
+#define REGISTER_KEYWORD(string,_) declare_vm_keyword(wlut, string);
 #include "seni_keywords.h"
-#undef KEYWORD
+#undef REGISTER_KEYWORD
 
   declare_binding(wlut, e, "line", &bind_line);
   declare_binding(wlut, e, "rect", &bind_rect);

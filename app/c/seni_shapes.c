@@ -3,14 +3,10 @@
 #include "seni_uv_mapper.h"
 #include "seni_mathutil.h"
 #include "seni_render_packet.h"
+#include "seni_keyword_iname.h"
 
 #include <stdio.h>
 #include <math.h>
-
-// extern global keyword variables - used to reference bezier line_width_mapping
-#define KEYWORD(_,__,name) extern i32 g_keyword_iname_##name;
-#include "seni_keywords.h"
-#undef KEYWORD
 
 seni_matrix g_identity;
 seni_colour g_unseen_colour;
@@ -200,7 +196,7 @@ void render_bezier(seni_render_data *render_data,
 {
   // get the uv co-ordinates for the specified brush
   //
-  seni_brush_type brush_type = (seni_brush_type)(brush - g_keyword_iname_brush_flat);
+  seni_brush_type brush_type = (seni_brush_type)(brush - INAME_BRUSH_FLAT);
   seni_uv_mapping *uv = get_uv_mapping(brush_type, brush_subtype, true);
   v2 uv_a = uv->map[0];
   v2 uv_b = uv->map[1];
@@ -258,14 +254,20 @@ void render_bezier(seni_render_data *render_data,
     n2 = opposite_normal(n1);
     
     from_interp = (from_m * t_val) + from_c;
-    to_interp = from_interp;    // default behaviour as though 'linear' was chosen
-    if (line_width_mapping == g_keyword_iname_quick) {
+    switch(line_width_mapping) {
+    case INAME_QUICK:
       to_interp = map_quick_ease(from_interp);
-    } else if (line_width_mapping == g_keyword_iname_slow_in) {
+      break;
+    case INAME_SLOW_IN:
       to_interp = map_slow_ease_in(from_interp);
-    } else if (line_width_mapping == g_keyword_iname_slow_in_out) {
+      break;
+    case INAME_SLOW_IN_OUT:
       to_interp = map_slow_ease_in_ease_out(from_interp);
+      break;
+    default:
+      to_interp = from_interp;    // default behaviour as though 'linear' was chosen
     }
+
     half_width = (to_m * to_interp) + to_c;
 
     v_1.x = (n1.x * half_width) + xs;

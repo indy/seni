@@ -6,14 +6,7 @@
 #include "seni_render_packet.h"
 #include "seni_matrix.h"
 #include "seni_colour.h"
-
-#define MAX_WORD_LOOKUPS 128
-#define MAX_KEYWORD_LOOKUPS 128
-#define MAX_NATIVE_LOOKUPS 128
-
-#define WORD_START 0
-#define KEYWORD_START (WORD_START + MAX_WORD_LOOKUPS)
-#define NATIVE_START (KEYWORD_START + MAX_KEYWORD_LOOKUPS)
+#include "seni_keyword_iname.h"
 
 /* word lookup table */
 typedef struct seni_word_lut {

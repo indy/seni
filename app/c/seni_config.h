@@ -24,6 +24,15 @@
 // #define WHAT_THE_FUCK_MAC_HACK
 
 
+#define MAX_WORD_LOOKUPS 128
+#define MAX_KEYWORD_LOOKUPS 128
+#define MAX_NATIVE_LOOKUPS 128
+
+#define WORD_START 0
+#define KEYWORD_START (WORD_START + MAX_WORD_LOOKUPS)
+#define NATIVE_START (KEYWORD_START + MAX_KEYWORD_LOOKUPS)
+
+
 #ifdef SENI_DEBUG_MODE
 #include <stdio.h>
 #define SENI_ERROR(f_, ...) printf("ERROR: [%s %d] ", __FILE__, __LINE__); printf((f_), ##__VA_ARGS__); printf("\n")

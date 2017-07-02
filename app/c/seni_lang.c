@@ -11,12 +11,6 @@
 
 #include "utlist.h"
 
-// global keyword variables
-#define KEYWORD(val,__,name) i32 g_keyword_iname_##name = KEYWORD_START + val;
-#include "seni_keywords.h"
-#undef KEYWORD
-
-
 #ifdef SENI_DEBUG_MODE
 
 void vm_debug_info_reset(seni_vm *vm)
@@ -1928,15 +1922,15 @@ void compile_loop(seni_node *ast, seni_program *program)
     if (node == NULL) {
       break;
     }
-    if (node->value.i == g_keyword_iname_from) {
+    if (node->value.i == INAME_FROM) {
       have_from = true;
       from_node = safe_next(node);
     }
-    if (node->value.i == g_keyword_iname_to) {
+    if (node->value.i == INAME_TO) {
       have_to = true;
       to_node = safe_next(node);
     }
-    if (node->value.i == g_keyword_iname_increment) {
+    if (node->value.i == INAME_INCREMENT) {
       have_increment = true;
       increment_node = safe_next(node);
     }
@@ -2081,7 +2075,7 @@ void register_top_level_fns(seni_node *ast, seni_program *program)
     }      
 
     seni_node *fn_keyword = ast->value.first_child;
-    if (!(fn_keyword->type == NODE_NAME && fn_keyword->value.i == g_keyword_iname_fn)) {
+    if (!(fn_keyword->type == NODE_NAME && fn_keyword->value.i == INAME_FN)) {
       ast = safe_next(ast);
       continue;
     }
@@ -2151,7 +2145,7 @@ void register_top_level_defines(seni_node *ast, seni_program *program)
     }
 
     seni_node *define_keyword = ast->value.first_child;
-    if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == g_keyword_iname_define)) {
+    if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == INAME_DEFINE)) {
       ast = safe_next(ast);
       continue;
     }
@@ -2454,53 +2448,54 @@ seni_node *compile(seni_node *ast, seni_program *program)
       return compile_user_defined_name(ast, program, iname);
     } else if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
 
-      if (iname == g_keyword_iname_define) {
+      switch(iname) {
+      case INAME_DEFINE:
         return compile_define(ast, program, MEM_SEG_LOCAL);
-      } else if (iname == g_keyword_iname_if) {
+      case INAME_IF:
         compile_if(ast, program);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_loop) {
+      case INAME_LOOP:
         compile_loop(ast, program);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_on_matrix_stack) {
+      case INAME_ON_MATRIX_STACK:
         compile_on_matrix_stack(ast, program);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_fn) {
+      case INAME_FN:
         compile_fn(ast, program);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_plus) {
+      case INAME_PLUS:
         compile_math(ast, program, ADD);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_minus) {
+      case INAME_MINUS:
         // TODO: differentiate between neg and sub?
         compile_math(ast, program, SUB);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_mult) {
+      case INAME_MULT:
         compile_math(ast, program, MUL);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_divide) {
+      case INAME_DIVIDE:
         compile_math(ast, program, DIV);        
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_equal) {
+      case INAME_EQUAL:
         compile_math(ast, program, EQ);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_lt) {
+      case INAME_LT:
         compile_math(ast, program, LT);        
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_gt) {
+      case INAME_GT:
         compile_math(ast, program, GT);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_and) {
+      case INAME_AND:
         compile_math(ast, program, AND);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_or) {
+      case INAME_OR:
         compile_math(ast, program, OR);
         return safe_next(ast);
-      } else if (iname == g_keyword_iname_not) {
+      case INAME_NOT:
         compile_rest(ast, program);
         program_emit_opcode_i32(program, NOT, 0, 0);
         return safe_next(ast);
-      } else {
+      default:
         // look up the name as a user defined variable
         // normally get here when a script contains variables
         // that have the same name as common parameters.
@@ -2508,8 +2503,7 @@ seni_node *compile(seni_node *ast, seni_program *program)
         // or if we're passing a pre-defined argument value
         // e.g. linear in (bezier line-width-mapping: linear)
         return compile_user_defined_name(ast, program, iname);
-      }
-
+      };
     } else if ( iname >= NATIVE_START && iname < NATIVE_START + MAX_NATIVE_LOOKUPS){
       // NATIVE
 
@@ -2568,15 +2562,15 @@ void compile_preamble_f32(seni_program *program, i32 iname, f32 value)
 // NOTE: each entry in compile_preamble should have a corresponding entry here
 void register_top_level_preamble(seni_program *program)
 {
-  add_global_mapping(program, g_keyword_iname_canvas_width);
-  add_global_mapping(program, g_keyword_iname_canvas_height);
+  add_global_mapping(program, INAME_CANVAS_WIDTH);
+  add_global_mapping(program, INAME_CANVAS_HEIGHT);
 }
 
 // NOTE: each entry should have a corresponding entry in register_top_level_preamble
 void compile_preamble(seni_program *program)
 {
-  compile_preamble_f32(program, g_keyword_iname_canvas_width, 1000.0f);
-  compile_preamble_f32(program, g_keyword_iname_canvas_height, 1000.0f);
+  compile_preamble_f32(program, INAME_CANVAS_WIDTH, 1000.0f);
+  compile_preamble_f32(program, INAME_CANVAS_HEIGHT, 1000.0f);
 }
 
 
@@ -2600,7 +2594,7 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // compile the top-level functions
   seni_node *n = ast;
   while (n != NULL) {
-    if (is_list_beginning_with(n, g_keyword_iname_fn)) {
+    if (is_list_beginning_with(n, INAME_FN)) {
       n = compile(n, program);
     } else {
       n = safe_next(n);
@@ -2617,7 +2611,7 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // compile the top-level defines
   n = ast;
   while (n != NULL) {
-    if (is_list_beginning_with(n, g_keyword_iname_define)) {
+    if (is_list_beginning_with(n, INAME_DEFINE)) {
       compile_define(n->value.first_child, program, MEM_SEG_GLOBAL);
       n = safe_next(n);
     } else {
@@ -2628,8 +2622,8 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // compile all other top-level forms
   n = ast;
   while (n != NULL) {
-    if (is_list_beginning_with(n, g_keyword_iname_fn) == false &&
-        is_list_beginning_with(n, g_keyword_iname_define) == false) {
+    if (is_list_beginning_with(n, INAME_FN) == false &&
+        is_list_beginning_with(n, INAME_DEFINE) == false) {
       n = compile(n, program);
     } else {
       n = safe_next(n);
