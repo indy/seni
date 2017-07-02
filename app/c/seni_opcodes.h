@@ -28,8 +28,10 @@ OPCODE(JUMP_IF, -1)
 
 // _0 == keep the existing frame, don't push/pop one
 //
-OPCODE(CALL, 0)
-OPCODE(CALL_0, 0)
+// reads the function offset and num args from the stack
+OPCODE(CALL, -2)
+// reads the function's body offset from the stack
+OPCODE(CALL_0, -1)
 // RET will push the top value of the last frame onto the current frame
 OPCODE(RET, 1)
 OPCODE(RET_0, 0)

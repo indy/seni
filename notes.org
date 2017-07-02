@@ -1,17 +1,18 @@
-* TODO [0/13]
-  1. [ ] 151c-flower - bezier-bulging
-  2. [ ] 154c-stroked-bezier - stroked-bezier-rect
-  3. [ ] 1556-biomorphs - repeat/symmetry-vertical - takes a 'draw' argument
-  4. [ ] 155j-chaotic-grid-2 - focal/point
-  5. [ ] 1560-path - make a function ???
-  6. [ ] 157e-tile-shadow - col/procedural-fn
-  7. [ ] 15fe-rotate-mirror - poly, repeat/rotate-mirrored
-  8. [ ] cleanup memory of parser
-  9. [ ] structs for compile, runtim, performance info
-  10. [ ] seni_env
-  11. [ ] 'in' paramaeter for loop ?
-  12. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  13. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+* TODO [0/14]
+  1. [ ] modify CALL and CALL_0 into taking parameters from the stack
+  2. [ ] 151c-flower - bezier-bulging
+  3. [ ] 154c-stroked-bezier - stroked-bezier-rect
+  4. [ ] 1556-biomorphs - repeat/symmetry-vertical - takes a 'draw' argument
+  5. [ ] 155j-chaotic-grid-2 - focal/point
+  6. [ ] 1560-path - make a function ???
+  7. [ ] 157e-tile-shadow - col/procedural-fn
+  8. [ ] 15fe-rotate-mirror - poly, repeat/rotate-mirrored
+  9. [ ] cleanup memory of parser
+  10. [ ] structs for compile, runtim, performance info
+  11. [ ] seni_env
+  12. [ ] 'in' paramaeter for loop ?
+  13. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  14. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
 
 * wasm - opengl
 
@@ -668,23 +669,28 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
      (+ y (* s (prng/perlin x: x y: y z: z))))
 
 
-* calling functions
+* compiling function calls
 
-  need
-  - INVOKE, INVOKE_0
-  - a way of pushing the iname of a function onto the stack and into variables etc
-  - vm needs access to fn_info
+  the CALL and CALL_0 are compiled with their offsets as bytcode args. this limits them to only being used where function calls are known at compile time.
+  if CALL and CALL_0 got their offsets from the stack we could use them for calling functions that are not known until run-time
 
-  --------------------------------------------------------------------------------
 
-  INVOKE an equivalent to CALL but for when the called function isn't known at compile time.
-  instead the function's iname will be pushed onto the stack
-  will also need an INVOKE_0
+  (fn (j (z: 0)
+      (+ z z)))
 
-  --------------------------------------------------------------------------------
+  (address-of j)  <- would this be a special form in the compiler?
+
+  (define aj (address-of j))
+  (fn-call (aj z: 44))   <- this is definitely a special form
+  
+  has to be since something like:
+  (fn-call fn: aj z: 44)  
+  couldn't be used in case the called function accepts a parameter named 'fn'
+
+  ----------------------------------------------------------------------
 
   make fn_info array available to the vm
-  can then INVOKE a function by using it's iname and the addresses required by CALL and CALL_0 can be looked up in the fn_info
+  can then invoke a function by using it's iname and the addresses required by CALL and CALL_0 can be looked up in the fn_info
 
   this will be required by map anyway
 
@@ -701,7 +707,6 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   
   @ syntax mean 'address of' ie return the iname
 
-
 * setup/teardown
 
 one time init
@@ -715,3 +720,5 @@ one time init
   per-script cleanup <- invoked by js-side, cleans up all run data including render-data allocations
 
 one time shutdown
+
+

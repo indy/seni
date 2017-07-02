@@ -1111,12 +1111,6 @@ void pretty_print_bytecode(i32 ip, seni_bytecode *b)
            opcode_name(b->op),
            b->arg0.value.i,
            b->arg1.value.i);    
-  } else if (b->op == CALL_0 || b->op == CALL) {
-    printf("%d\t%s\t%d\t%d\n",
-           ip,
-           opcode_name(b->op),
-           b->arg0.value.i,
-           b->arg1.value.i);
   } else if (b->op == PILE) {
     printf("%d\t%s\t%d\n",
            ip,
@@ -2250,6 +2244,7 @@ void correct_function_addresses(seni_program *program)
   // go through the bytecode fixing up function call addresses
 
   seni_bytecode *bc = program->code;
+  seni_bytecode *offset = NULL;
   i32 fn_info_index, label_value;
   seni_fn_info *fn_info;
 
@@ -2258,17 +2253,35 @@ void correct_function_addresses(seni_program *program)
     if (bc->op == CALL) {
       fn_info_index = bc->arg0.value.i; 
       fn_info = &(program->fn_info[fn_info_index]);
+
+      // the previous two bytecodes will be LOADs of CONST.
+      // i - 2 == the address to call
+      // i - 1 == the number of arguments used by the function
+      offset = bc - 2;
+      if (offset->op != LOAD && offset->arg0.value.i != MEM_SEG_CONSTANT) {
+        SENI_ERROR("correct_function_addresses expected a 'LOAD CONST' 2 opcodes before a CALL");
+        return;
+      }
+      offset->arg1.value.i = fn_info->arg_address;
       
-      bc->arg0.value.i = fn_info->arg_address;
-      bc->arg1.value.i = fn_info->num_args;
+      offset = bc - 1;
+      if (offset->op != LOAD && offset->arg0.value.i != MEM_SEG_CONSTANT) {
+        SENI_ERROR("correct_function_addresses expected a 'LOAD CONST' 1 opcode before a CALL");
+        return;
+      }
+      offset->arg1.value.i = fn_info->num_args;
     }
     
     if (bc->op == CALL_0) {
       fn_info_index = bc->arg0.value.i; 
       fn_info = &(program->fn_info[fn_info_index]);
-      
-      bc->arg0.value.i = fn_info->body_address;
-      bc->arg1.value.i = fn_info->num_args;
+
+      offset = bc - 1;
+      if (offset->op != LOAD && offset->arg0.value.i != MEM_SEG_CONSTANT) {
+        SENI_ERROR("correct_function_addresses expected a 'LOAD CONST' 1 opcode before a CALL_0");
+        return;
+      }
+      offset->arg1.value.i = fn_info->body_address;
     }
 
     if (bc->op == PLACEHOLDER_DEC_RC || bc->op == PLACEHOLDER_STORE || bc->op == PLACEHOLDER_INC_RC) {
@@ -2307,12 +2320,16 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_in
 {
   // ast == adder a: 10 b: 20
 
-  // NOTE: we're filling in the CALL, CALL_0 opcodes with placeholder values
-  // that will later be replaced by the actual addresses
+  // NOTE: CALL and CALL_0 get their function offsets and num args from the stack
+  // so add some placeholder LOAD CONST opcodes and fill the CALL, CALL_0 with
+  // fn_info indexes that can later be used to fill in the LOAD CONST opcodes with their
+  // correct offsets
   // doing it this way enables functions to call other functions that are declared later in the script
 
   // prepare the MEM_SEG_ARGUMENT with default values
 
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, 666); // for the function address
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, 667); // for the num args
   program_emit_opcode_i32(program, CALL, fn_info_index, fn_info_index);
 
   // overwrite the default arguments with the actual arguments given by the fn invocation
@@ -2338,6 +2355,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_in
   }
   
   // call the body of the function
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, 668); // for the function body address
   program_emit_opcode_i32(program, CALL_0, fn_info_index, fn_info_index);
 }
 
@@ -2646,7 +2664,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
   register i32 sp = vm->sp;
   register seni_var *stack_d = &(vm->stack[sp]);
 
-  i32 num_args;
+  i32 num_args, addr;
   i32 iname;
   i32 i;
 
@@ -2826,7 +2844,13 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       break;
 
     case CALL:
-      num_args = bc->arg1.value.i;
+      STACK_POP;
+      num_args = v->value.i;
+
+      STACK_POP;
+      addr = v->value.i;
+      
+      //num_args = bc->arg1.value.i;
 
       // make room for the labelled arguments
       for (i = 0; i < num_args * 2; i++) {
@@ -2850,7 +2874,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       v->type = VAR_INT;
       v->value.i = num_args;
 
-      vm->ip = bc->arg0.value.i;
+      vm->ip = addr;
       vm->fp = fp;
       vm->local = sp;
 
@@ -2873,13 +2897,16 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       break;
 
     case CALL_0:
+      STACK_POP;
+      addr = v->value.i;
+      
       // like CALL but keep the existing frame and just update the ip and return ip
       
       // set the correct return ip
       vm->stack[vm->fp + 1].value.i = ip;
 
       // leap to a location
-      ip = bc->arg0.value.i;
+      ip = addr;
       vm->ip = ip;
 
       // we're now executing the body of the function so don't
