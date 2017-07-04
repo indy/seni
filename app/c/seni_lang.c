@@ -1055,11 +1055,22 @@ char *memory_segment_name(seni_memory_segment_type segment)
 
 void pretty_print_bytecode(i32 ip, seni_bytecode *b)
 {
-  if (b->op == LOAD || b->op == STORE || b->op == DEC_RC || b->op == INC_RC) {
-    printf("%d\t%s\t%s\t",
-           ip,
-           opcode_name(b->op),
-           memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
+  if (b->op == LOAD || b->op == STORE || b->op == DEC_RC || b->op == INC_RC ||
+      b->op == FLU_STORE || b->op == FLU_DEC_RC || b->op == FLU_INC_RC) {
+
+
+    if (b->op == LOAD || b->op == STORE || b->op == DEC_RC || b->op == INC_RC) {
+      printf("%d\t%s\t\t%s\t\t",
+             ip,
+             opcode_name(b->op),
+             memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
+      
+    } else if (b->op == FLU_STORE || b->op == FLU_DEC_RC || b->op == FLU_INC_RC) {
+      printf("%d\t%s\t%s\t\t",
+             ip,
+             opcode_name(b->op),
+             memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
+    } 
 
     seni_value_in_use using = get_value_in_use(b->arg1.type);
     switch(using) {
@@ -1089,7 +1100,7 @@ void pretty_print_bytecode(i32 ip, seni_bytecode *b)
     }
     
   } else if (b->op == JUMP_IF || b->op == JUMP) {
-    printf("%d\t%s\t",
+    printf("%d\t%s\t\t",
            ip,
            opcode_name(b->op));
     if (b->arg0.value.i > 0) {
@@ -1100,13 +1111,13 @@ void pretty_print_bytecode(i32 ip, seni_bytecode *b)
       printf("WTF!\n");
     }
   } else if (b->op == NATIVE) {
-    printf("%d\t%s\t%d\t%d\n",
+    printf("%d\t%s\t\t%d\t\t%d\n",
            ip,
            opcode_name(b->op),
            b->arg0.value.i,
            b->arg1.value.i);    
   } else if (b->op == PILE) {
-    printf("%d\t%s\t%d\n",
+    printf("%d\t%s\t\t%d\n",
            ip,
            opcode_name(b->op),
            b->arg0.value.i);
@@ -1674,6 +1685,49 @@ i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value)
   return -1;
 }
 
+
+// returns the index into program->fn_info that represents this function
+i32 get_fn_info_index(seni_node *node, seni_program *program)
+{
+  if (node->type != NODE_NAME) {
+    SENI_ERROR("get_fn_info_index not given a name node");
+    return -1;
+  }
+
+  i32 name = node->value.i;
+  
+  for (i32 i = 0; i < MAX_TOP_LEVEL_FUNCTIONS; i++) {
+    if (program->fn_info[i].active == false) {
+      return -1;
+    }
+    if (program->fn_info[i].fn_name == name) {
+      return i;
+    }
+  }
+
+  SENI_ERROR("get_fn_info_index unable to find fn_info for a function");
+  return -1;
+}
+
+seni_fn_info *get_fn_info(seni_node *node, seni_program *program)
+{
+  if (node->type != NODE_NAME) {
+    return NULL;
+  }
+
+  i32 name = node->value.i;
+  
+  for (i32 i = 0; i < MAX_TOP_LEVEL_FUNCTIONS; i++) {
+    if (program->fn_info[i].active == false) {
+      return NULL;
+    }
+    if (program->fn_info[i].fn_name == name) {
+      return &(program->fn_info[i]);
+    }
+  }
+  return NULL;
+}
+
 seni_node *compile(seni_node *ast, seni_program *program);
 
 i32 node_vector_length(seni_node *vector_node)
@@ -1875,6 +1929,86 @@ void compile_math(seni_node *ast, seni_program *program, seni_opcode opcode)
   }
 }
 
+void compile_address_of(seni_node *ast, seni_program *program)
+{
+  seni_node *fn_name = safe_next(ast);
+
+  // fn_name should be a defined function's name
+  // it will be known at compile time
+  
+  if (fn_name->type != NODE_NAME) {
+    SENI_ERROR("compile_address_of given non-function-name argument");
+    return;
+  }
+
+  seni_fn_info *fn_info = get_fn_info(fn_name, program);
+  if (fn_info == NULL) {
+    SENI_ERROR("address-of could not find function");
+    return;
+  }
+
+  // store the index into program->fn_info in the program
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, fn_info->index);
+
+  return;
+}
+
+//   (fn-call (aj z: 44))
+void compile_fn_call(seni_node *ast, seni_program *program)
+{
+  seni_node *invocation = safe_next(ast);
+
+  // fn_name should be a defined function's name
+  // it will be known at compile time
+  
+  if (invocation->type != NODE_LIST) {
+    SENI_ERROR("compile_fn_call given non-list to invoke");
+    return;
+  }
+
+  seni_node *fn_info_index = invocation->value.first_child;
+
+  // place the fn_info_index onto the stack so that CALL_F can find the function offset and num args
+  compile(fn_info_index, program);
+  program_emit_opcode_i32(program, CALL_F, 0, 0);
+
+  // compile the rest of the arguments
+
+  // how is this going to work if we don't know the indices of the arguments?
+  
+
+  // overwrite the default arguments with the actual arguments given by the fn invocation
+  seni_node *args = safe_next(fn_info_index); // pairs of label/value declarations
+  while (args != NULL) {
+    seni_node *label = args;
+    seni_node *value = safe_next(label);
+
+    // push value
+    compile(value, program);
+    compile(fn_info_index, program); // push the actual fn_info index so that the _FLU opcode can find it
+    program_emit_opcode_i32(program, FLU_DEC_RC, MEM_SEG_ARGUMENT, label->value.i);
+    compile(fn_info_index, program);
+    program_emit_opcode_i32(program, FLU_STORE, MEM_SEG_ARGUMENT, label->value.i);
+
+    if (value->type != NODE_VECTOR) {
+      // not an explicitly declared vector so increment it's rc
+      compile(fn_info_index, program);
+      program_emit_opcode_i32(program, FLU_INC_RC, MEM_SEG_ARGUMENT, label->value.i);
+      // explicitly declared vectors will have an rc of 1, when the function
+      // returns this will be decremented and they will be returned to the heap
+    }
+
+    args = safe_next(value);
+  }
+
+
+  // place the fn_info_index onto the stack so that CALL_F_0 can find the function's body offset
+  compile(fn_info_index, program);
+  program_emit_opcode_i32(program, CALL_F_0, 0, 0);
+  
+  return;
+}
+
 void compile_loop(seni_node *ast, seni_program *program)
 {
   // (loop (x from: 0 to: 5) (+ 42 38))
@@ -2001,49 +2135,6 @@ void compile_on_matrix_stack(seni_node *ast, seni_program *program)
   compile_rest(ast, program);
   program_emit_opcode_i32(program, MTX_STORE, 0, 0);
 }
-
-// returns the index into program->fn_info that represents this function
-i32 get_fn_info_index(seni_node *node, seni_program *program)
-{
-  if (node->type != NODE_NAME) {
-    SENI_ERROR("get_fn_info_index not given a name node");
-    return -1;
-  }
-
-  i32 name = node->value.i;
-  
-  for (i32 i = 0; i < MAX_TOP_LEVEL_FUNCTIONS; i++) {
-    if (program->fn_info[i].active == false) {
-      return -1;
-    }
-    if (program->fn_info[i].fn_name == name) {
-      return i;
-    }
-  }
-
-  SENI_ERROR("get_fn_info_index unable to find fn_info for a function");
-  return -1;
-}
-
-seni_fn_info *get_fn_info(seni_node *node, seni_program *program)
-{
-  if (node->type != NODE_NAME) {
-    return NULL;
-  }
-
-  i32 name = node->value.i;
-  
-  for (i32 i = 0; i < MAX_TOP_LEVEL_FUNCTIONS; i++) {
-    if (program->fn_info[i].active == false) {
-      return NULL;
-    }
-    if (program->fn_info[i].fn_name == name) {
-      return &(program->fn_info[i]);
-    }
-  }
-  return NULL;
-}
-
 
 i32 index_of_keyword(const char *keyword, seni_word_lut *wl)
 {
@@ -2495,6 +2586,12 @@ seni_node *compile(seni_node *ast, seni_program *program)
         compile_rest(ast, program);
         program_emit_opcode_i32(program, NOT, 0, 0);
         return safe_next(ast);
+      case INAME_ADDRESS_OF:
+        compile_address_of(ast, program);
+        return safe_next(ast);
+      case INAME_FN_CALL:
+        compile_fn_call(ast, program);
+        return safe_next(ast);
       default:
         // look up the name as a user defined variable
         // normally get here when a script contains variables
@@ -2642,6 +2739,26 @@ void compiler_compile(seni_node *ast, seni_program *program)
 // VM bytecode interpreter
 // **************************************************
 
+
+seni_var *arg_memory_from_iname(seni_fn_info *fn_info, i32 iname, seni_var *args)
+{
+  // args is the point on the stack that contains the args for the function about to be called
+
+  i32 num_args = fn_info->num_args;
+
+  // search the ARG memory for iname
+  for (i32 i = 0; i < num_args; i++) {
+    if (args->value.i == iname) {
+      args--; // move from the label onto the arg's default value
+      return args;
+    }
+    args--; // the value of the arg
+    args--; // the next label's iname
+  }
+
+  return NULL;
+}
+
 // executes a program on a vm
 // returns true if we reached a STOP opcode
 bool vm_interpret(seni_vm *vm, seni_program *program)
@@ -2649,6 +2766,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
   bool b1, b2;
   f32 f1, f2;
   seni_memory_segment_type memory_segment_type;
+  seni_fn_info *fn_info;
   seni_var *src, *dest, *tmp;
   seni_matrix *top, *matrix;
 
@@ -2972,6 +3090,86 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 #endif        
       break;
 
+    case CALL_F:
+      // like CALL but gets it's function information from program->fn_info
+      
+      // read the index into program->fn_name
+      STACK_POP;
+      i = v->value.i;
+      fn_info = &(program->fn_info[i]);
+
+      num_args = fn_info->num_args;
+      addr = fn_info->arg_address;
+      
+      //num_args = bc->arg1.value.i;
+
+      // make room for the labelled arguments
+      for (i = 0; i < num_args * 2; i++) {
+        STACK_PUSH;
+      }
+      
+      fp = sp;
+
+      // push the caller's fp
+      STACK_PUSH;
+      v->type = VAR_INT;
+      v->value.i = vm->fp;
+
+      // push ip
+      STACK_PUSH;
+      v->type = VAR_INT;
+      v->value.i = ip;
+
+      // push num_args
+      STACK_PUSH;
+      v->type = VAR_INT;
+      v->value.i = num_args;
+
+      vm->ip = addr;
+      vm->fp = fp;
+      vm->local = sp;
+
+      // clear the memory that's going to be used for locals
+      for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
+        // setting all memory as VAR_INT will prevent any weird ref count
+        // stuff when we deal with the RET opcodes later on
+        vm->stack[sp].type = VAR_INT; 
+        sp++;
+      }
+
+      stack_d = &(vm->stack[sp]);
+      ip = vm->ip;
+      
+      vm->sp = sp;
+
+#ifdef TRACE_PRINT_OPCODES
+        printf("--- fp is %d\n", vm->fp);
+#endif        
+      break;
+
+    case CALL_F_0:
+      // like CALL_0 but gets it's function information from program->fn_info      
+      // read the index into program->fn_name
+      STACK_POP;
+      i = v->value.i;
+      fn_info = &(program->fn_info[i]);
+
+      addr = fn_info->body_address;
+      
+      // like CALL but keep the existing frame and just update the ip and return ip
+      
+      // set the correct return ip
+      vm->stack[vm->fp + 1].value.i = ip;
+
+      // leap to a location
+      ip = addr;
+      vm->ip = ip;
+
+      // we're now executing the body of the function so don't
+      // hop back when we push any arguments or locals onto the stack
+      hop_back = 0;
+      break;
+
     case NATIVE:
       iname = bc->arg0.value.i - NATIVE_START;
       num_args = bc->arg1.value.i;
@@ -3218,7 +3416,82 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       v->value.i = !b1;
       v->type = VAR_BOOLEAN;
       break;
+
+
+    case FLU_STORE:
+      STACK_POP;
+      i = v->value.i;
       
+      STACK_POP;
+
+      memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
+      if (memory_segment_type == MEM_SEG_ARGUMENT) {
+
+        fn_info = &(program->fn_info[i]);
+        iname = bc->arg1.value.i;
+        
+        dest = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+        if (dest != NULL) {
+          var_move(dest, v);
+        }
+      } else {
+        SENI_ERROR("FLU_STORE: unknown memory segment type %d", bc->arg0.value.i);
+      }
+      break;
+
+    case FLU_DEC_RC:
+      STACK_POP;
+
+      // the var referenced by the bytecode is a default value for a function argument
+      // it's going to be overwritten by a parameter that was specified by the calling
+      // code.
+      // We'll need to decrement it's ref count
+      //
+      memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
+      if (memory_segment_type == MEM_SEG_ARGUMENT) {
+        i = v->value.i;
+        fn_info = &(program->fn_info[i]);
+        iname = bc->arg1.value.i; // get the iname of the argument
+
+        dest = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+        if (dest != NULL) {
+          if (dest->type == VAR_VEC_HEAD) {
+            b1 = vector_ref_count_decrement(vm, dest);
+            if (b1 == false) {
+              SENI_ERROR("FLU_DEC_RC: vector_ref_count_decrement failed");
+              return false;
+            }
+          }          
+        }
+
+      } else if (memory_segment_type == MEM_SEG_VOID) {
+        // no nothing
+      } else {
+        SENI_ERROR("FLU_DEC_RC: unknown memory segment type %d", bc->arg0.value.i);
+      }
+      break;
+
+    case FLU_INC_RC:
+      STACK_POP;
+      
+      memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
+      if (memory_segment_type == MEM_SEG_ARGUMENT) {
+        i = v->value.i;
+        fn_info = &(program->fn_info[i]);
+        iname = bc->arg1.value.i; // get the iname of the argument
+
+        dest = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+        if (dest != NULL) {
+          if (dest->type == VAR_VEC_HEAD) {
+            vector_ref_count_increment(vm, dest);
+          }
+        }
+      } else if (memory_segment_type == MEM_SEG_VOID) {
+        // no nothing
+      } else {
+        SENI_ERROR("FLU_INC_RC: unknown memory segment type %d", bc->arg0.value.i);
+      }
+      break;
     case STOP:
       vm->sp = sp;
       diff = clock() - start;

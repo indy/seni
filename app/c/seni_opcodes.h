@@ -36,6 +36,12 @@ OPCODE(CALL_0, -1)
 OPCODE(RET, 1)
 OPCODE(RET_0, 0)
 
+// like CALL and CALL_0 except it reads an index from the stack
+// then it indexes into program->fn_info[index]
+OPCODE(CALL_F, -1)
+OPCODE(CALL_F_0, -1)
+
+
 // calls a native function, leaving the result on the stack
 // offset is 0 as the vm->opcode_offset is modified by the native helper function
 OPCODE(NATIVE, 0)
@@ -53,14 +59,24 @@ OPCODE(PILE, 0)
 OPCODE(DEC_RC, 0)
 OPCODE(INC_RC, 0)
 
-// push/pop matrix stack
-OPCODE(MTX_LOAD, 0)
-OPCODE(MTX_STORE, 0)
-
-OPCODE (NOP, 0)
-OPCODE (STOP, 0)
+// function look-up versions of DEC_RC, INC_RC, STORE
+// they will pop a value from the stack which is the index into program->fn_info
+// this will then be used along with the argument's iname to find the index into the MEM_SEG_ARGUMENT memory
+OPCODE(FLU_DEC_RC, -1)
+OPCODE(FLU_INC_RC, -1)
+OPCODE(FLU_STORE, -2)
 
 // temporary opcodes which are replaced by their non-placeholder versions during a compilation pass
 OPCODE(PLACEHOLDER_DEC_RC, 0)
 OPCODE(PLACEHOLDER_INC_RC, 0)
 OPCODE(PLACEHOLDER_STORE, -1)
+
+
+// push/pop matrix stack
+OPCODE(MTX_LOAD, 0)
+OPCODE(MTX_STORE, 0)
+
+OPCODE(NOP, 0)
+OPCODE(STOP, 0)
+
+

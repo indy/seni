@@ -174,7 +174,7 @@ void declare_vm_keyword(seni_word_lut *wlut, char *name)
   }
 }
 
-void declare_binding(seni_word_lut *wlut, seni_env *e, char *name, native_function_ptr function_ptr)
+void declare_native(seni_word_lut *wlut, seni_env *e, char *name, native_function_ptr function_ptr)
 {
   string_copy(&(wlut->native[wlut->native_count]), name);
 
@@ -1215,59 +1215,59 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 #include "seni_keywords.h"
 #undef REGISTER_KEYWORD
 
-  declare_binding(wlut, e, "line", &bind_line);
-  declare_binding(wlut, e, "rect", &bind_rect);
-  declare_binding(wlut, e, "circle", &bind_circle);
-  declare_binding(wlut, e, "bezier", &bind_bezier);
+  declare_native(wlut, e, "line", &bind_line);
+  declare_native(wlut, e, "rect", &bind_rect);
+  declare_native(wlut, e, "circle", &bind_circle);
+  declare_native(wlut, e, "bezier", &bind_bezier);
 
-  declare_binding(wlut, e, "translate", &bind_translate);
-  declare_binding(wlut, e, "rotate", &bind_rotate);
-  declare_binding(wlut, e, "scale", &bind_scale);
+  declare_native(wlut, e, "translate", &bind_translate);
+  declare_native(wlut, e, "rotate", &bind_rotate);
+  declare_native(wlut, e, "scale", &bind_scale);
 
-  declare_binding(wlut, e, "col/convert", &bind_col_convert);
-  declare_binding(wlut, e, "col/rgb", &bind_col_rgb);
-  declare_binding(wlut, e, "col/hsl", &bind_col_hsl);
-  declare_binding(wlut, e, "col/hsv", &bind_col_hsv);
-  declare_binding(wlut, e, "col/lab", &bind_col_lab);
-  declare_binding(wlut, e, "col/complementary", &bind_col_complementary);
-  declare_binding(wlut, e, "col/split-complementary", &bind_col_split_complementary);
-  declare_binding(wlut, e, "col/analagous", &bind_col_analagous);
-  declare_binding(wlut, e, "col/triad", &bind_col_triad);
-  declare_binding(wlut, e, "col/darken", &bind_col_darken);
-  declare_binding(wlut, e, "col/lighten", &bind_col_lighten);
-  declare_binding(wlut, e, "col/set-alpha", &bind_col_set_alpha);
-  declare_binding(wlut, e, "col/get-alpha", &bind_col_get_alpha);
-  declare_binding(wlut, e, "col/set-lab-l", &bind_col_set_lab_l);
-  declare_binding(wlut, e, "col/get-lab-l", &bind_col_get_lab_l);
+  declare_native(wlut, e, "col/convert", &bind_col_convert);
+  declare_native(wlut, e, "col/rgb", &bind_col_rgb);
+  declare_native(wlut, e, "col/hsl", &bind_col_hsl);
+  declare_native(wlut, e, "col/hsv", &bind_col_hsv);
+  declare_native(wlut, e, "col/lab", &bind_col_lab);
+  declare_native(wlut, e, "col/complementary", &bind_col_complementary);
+  declare_native(wlut, e, "col/split-complementary", &bind_col_split_complementary);
+  declare_native(wlut, e, "col/analagous", &bind_col_analagous);
+  declare_native(wlut, e, "col/triad", &bind_col_triad);
+  declare_native(wlut, e, "col/darken", &bind_col_darken);
+  declare_native(wlut, e, "col/lighten", &bind_col_lighten);
+  declare_native(wlut, e, "col/set-alpha", &bind_col_set_alpha);
+  declare_native(wlut, e, "col/get-alpha", &bind_col_get_alpha);
+  declare_native(wlut, e, "col/set-lab-l", &bind_col_set_lab_l);
+  declare_native(wlut, e, "col/get-lab-l", &bind_col_get_lab_l);
 
   // col/procedural-fn-presets
   // col/procedural-fn
   // col/bezier-fn
   // col/quadratic-fn
 
-  declare_binding(wlut, e, "math/distance", &bind_math_distance);
-  declare_binding(wlut, e, "math/clamp", &bind_math_clamp);
-  declare_binding(wlut, e, "math/radians->degrees", &bind_math_radians_to_degrees);
+  declare_native(wlut, e, "math/distance", &bind_math_distance);
+  declare_native(wlut, e, "math/clamp", &bind_math_clamp);
+  declare_native(wlut, e, "math/radians->degrees", &bind_math_radians_to_degrees);
 
-  declare_binding(wlut, e, "prng/build", &bind_prng_build);
-  declare_binding(wlut, e, "prng/take", &bind_prng_take);
-  declare_binding(wlut, e, "prng/take-1", &bind_prng_take_1);
-  declare_binding(wlut, e, "prng/perlin", &bind_prng_perlin);
+  declare_native(wlut, e, "prng/build", &bind_prng_build);
+  declare_native(wlut, e, "prng/take", &bind_prng_take);
+  declare_native(wlut, e, "prng/take-1", &bind_prng_take_1);
+  declare_native(wlut, e, "prng/perlin", &bind_prng_perlin);
 
-  declare_binding(wlut, e, "interp/fn", &bind_interp_fn);
-  declare_binding(wlut, e, "interp/call", &bind_interp_call);
-  declare_binding(wlut, e, "interp/cos", &bind_interp_cos);
-  declare_binding(wlut, e, "interp/sin", &bind_interp_sin);
-  declare_binding(wlut, e, "interp/bezier", &bind_interp_bezier);
-  declare_binding(wlut, e, "interp/bezier-tangent", &bind_interp_bezier_tangent);
-  declare_binding(wlut, e, "interp/circle", &bind_interp_circle);
+  declare_native(wlut, e, "interp/fn", &bind_interp_fn);
+  declare_native(wlut, e, "interp/call", &bind_interp_call);
+  declare_native(wlut, e, "interp/cos", &bind_interp_cos);
+  declare_native(wlut, e, "interp/sin", &bind_interp_sin);
+  declare_native(wlut, e, "interp/bezier", &bind_interp_bezier);
+  declare_native(wlut, e, "interp/bezier-tangent", &bind_interp_bezier_tangent);
+  declare_native(wlut, e, "interp/circle", &bind_interp_circle);
 
   // map
 
   // path/???
 
-  declare_binding(wlut, e, "debug/print", &bind_debug_print);
+  declare_native(wlut, e, "debug/print", &bind_debug_print);
 
-  declare_binding(wlut, e, "nth", &bind_nth);
+  declare_native(wlut, e, "nth", &bind_nth);
 }
 

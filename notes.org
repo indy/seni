@@ -1,5 +1,5 @@
 * TODO [0/14]
-  1. [ ] modify CALL and CALL_0 into taking parameters from the stack
+  1. [ ] test new setup/teardown code
   2. [ ] 151c-flower - bezier-bulging
   3. [ ] 154c-stroked-bezier - stroked-bezier-rect
   4. [ ] 1556-biomorphs - repeat/symmetry-vertical - takes a 'draw' argument

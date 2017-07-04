@@ -43,19 +43,22 @@ const Shabba = {};
 const gWasmHack = true;
 
 function configureWasmModule() {
-  Shabba.compile_to_render_packets = Module.cwrap('compile_to_render_packets',
+  Shabba.compileToRenderPackets = Module.cwrap('compile_to_render_packets',
                                                   'number', ['string']);
 
-  Shabba.get_render_packet_vbuf = Module.cwrap('get_render_packet_vbuf',
-                                               'number', ['number']);
-  Shabba.get_render_packet_cbuf = Module.cwrap('get_render_packet_cbuf',
-                                               'number', ['number']);
-  Shabba.get_render_packet_tbuf = Module.cwrap('get_render_packet_tbuf',
-                                               'number', ['number']);
+  Shabba.seniStartup = Module.cwrap('seni_startup', null);
+  Shabba.seniShutdown = Module.cwrap('seni_shutdown', null);
+  Shabba.scriptCleanup = Module.cwrap('script_cleanup', null);
 
-  Shabba.get_render_packet_num_vertices =
-    Module.cwrap('get_render_packet_num_vertices',
-                 'number', ['number']);
+  Shabba.getRenderPacketNumVertices = Module.cwrap(
+    'get_render_packet_num_vertices', 'number', ['number']);
+
+  Shabba.getRenderPacketVBuf = Module.cwrap('get_render_packet_vbuf',
+                                               'number', ['number']);
+  Shabba.getRenderPacketCBuf = Module.cwrap('get_render_packet_cbuf',
+                                               'number', ['number']);
+  Shabba.getRenderPacketTBuf = Module.cwrap('get_render_packet_tbuf',
+                                               'number', ['number']);
 }
 
 /*
@@ -333,16 +336,16 @@ function renderScriptWithWASM(state, imageElement) {
 
   const buffers = [];
 
-  const numRenderPackets = Shabba.compile_to_render_packets(script);
+  const numRenderPackets = Shabba.compileToRenderPackets(script);
   console.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
-    const numVertices = Shabba.get_render_packet_num_vertices(i);
+    const numVertices = Shabba.getRenderPacketNumVertices(i);
     console.log(`render_packet ${i}: numVertices = ${numVertices}`);
 
-    const vbuf = Shabba.get_render_packet_vbuf(i);
-    const cbuf = Shabba.get_render_packet_cbuf(i);
-    const tbuf = Shabba.get_render_packet_tbuf(i);
+    const vbuf = Shabba.getRenderPacketVBuf(i);
+    const cbuf = Shabba.getRenderPacketCBuf(i);
+    const tbuf = Shabba.getRenderPacketTBuf(i);
 
     const buffer = {};
     buffer.vbuf = pointerToFloat32Array(vbuf, numVertices * 2);
@@ -353,6 +356,8 @@ function renderScriptWithWASM(state, imageElement) {
   }
 
   renderGeometryBuffers(buffers, imageElement);
+
+  Shabba.scriptCleanup();
 
   stopFn('renderScriptWASM', gUI.konsole);
 }
@@ -1007,4 +1012,5 @@ export default function main() {
   }).catch(error => console.error(error));
 
   configureWasmModule();
+  Shabba.seniStartup();
 }

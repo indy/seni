@@ -11,6 +11,7 @@
 #include "seni_uv_mapper.h"
 #include "seni_colour.h"
 #include "seni_prng.h"
+#include "seni_keyword_iname.h"
 
 #include "time.h"
 #include "stdio.h"
@@ -757,6 +758,24 @@ void test_vm_interp(void)
   VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100] clamping: true)) (interp/call using: i val: -2.0)) (x)", 0.0f);
 }
 
+void test_vm_function_address(void)
+{
+  VM_COMPILE_F32("(fn (k a: 5) (+ a a)) (fn (l a: 5) (+ a a)) (define foo (address-of l)) (fn-call (foo a: 99 b: 88))", 198.0f);
+
+  // normal
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of dbl)) (fn-call (foo a: 44))", 88.0f);
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of trp)) (fn-call (foo a: 44))", 132.0f);
+
+  // invalid arguments - use defaults
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of dbl)) (fn-call (foo z: 44))", 10.0f);
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of trp)) (fn-call (foo z: 44))", 15.0f);
+
+  // some invalid arguments
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of dbl)) (fn-call (foo z: 100 a: 44))", 88.0f);
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of trp)) (fn-call (foo z: 41 a: 44))", 132.0f);
+  
+}
+
 void test_prng(void)
 {
 
@@ -784,9 +803,14 @@ void test_vm_temp(void)
   //VM_COMPILE_F32("(fn (k) (+ 9 8)) (line colour: k)", 5.0f);
 }
 
+
 int main(void)
 {
   // timing();
+
+  if (INAME_NUMBER_OF_KNOWN_WORDS >= NATIVE_START) {
+    printf("WARNING: keywords are overwriting into NATIVE_START area\n");
+  }
     
   UNITY_BEGIN();
 
@@ -811,6 +835,7 @@ int main(void)
   RUN_TEST(test_vm_prng);
   RUN_TEST(test_vm_environmental);
   RUN_TEST(test_vm_interp);
+  RUN_TEST(test_vm_function_address);
 
   // todo: test READ_STACK_ARG_COORD4
   // RUN_TEST(test_vm_temp);

@@ -14,7 +14,7 @@ seni_env *g_e = NULL;
 
 // called once at startup
 EMSCRIPTEN_KEEPALIVE
-void startup()
+void seni_startup()
 {
   // build the global identity matrix used by the shape rendering
   seni_shapes_init_globals();
@@ -33,7 +33,7 @@ void startup()
 
 // called once at shutdown
 EMSCRIPTEN_KEEPALIVE
-void shutdown()
+void seni_shutdown()
 {
   wlut_free(g_wl);
   env_free(g_e);
