@@ -42,46 +42,27 @@ const Shabba = {};
 // TODO: delete this when the wasm work is completed
 const gWasmHack = true;
 
-function configureWasmModule() {
+function configureWasmModule(wasmInstance) {
   Shabba.compileToRenderPackets =
-  Module.instance.exports.compile_to_render_packets;
+  wasmInstance.exports.compile_to_render_packets;
 
-  Shabba.seniStartup = Module.instance.exports.seni_startup;
-  Shabba.seniShutdown = Module.instance.exports.seni_shutdown;
-  Shabba.scriptCleanup = Module.instance.exports.script_cleanup;
+  Shabba.seniStartup = wasmInstance.exports.seni_startup;
+  Shabba.seniShutdown = wasmInstance.exports.seni_shutdown;
+  Shabba.scriptCleanup = wasmInstance.exports.script_cleanup;
 
   Shabba.getRenderPacketNumVertices =
-    Module.instance.exports.get_render_packet_num_vertices;
+    wasmInstance.exports.get_render_packet_num_vertices;
 
-  Shabba.getRenderPacketVBuf = Module.instance.exports.get_render_packet_vbuf;
+  Shabba.getRenderPacketVBuf = wasmInstance.exports.get_render_packet_vbuf;
 
-  Shabba.getRenderPacketCBuf = Module.instance.exports.get_render_packet_cbuf;
+  Shabba.getRenderPacketCBuf = wasmInstance.exports.get_render_packet_cbuf;
 
-  Shabba.getRenderPacketTBuf = Module.instance.exports.get_render_packet_tbuf;
+  Shabba.getRenderPacketTBuf = wasmInstance.exports.get_render_packet_tbuf;
 
-  Shabba.string_buffer = Module.instance.exports.allocate_string_buffer();
-  Shabba.setString = Module.instance.memory.setString;
+  Shabba.string_buffer = wasmInstance.exports.allocate_string_buffer();
+  Shabba.setString = wasmInstance.memory.setString;
 
-  Shabba.instance = Module.instance;
-
-/*
-  Shabba.compileToRenderPackets = Module.cwrap('compile_to_render_packets',
-                                                  'number', ['string']);
-
-  Shabba.seniStartup = Module.cwrap('seni_startup', null);
-  Shabba.seniShutdown = Module.cwrap('seni_shutdown', null);
-  Shabba.scriptCleanup = Module.cwrap('script_cleanup', null);
-
-  Shabba.getRenderPacketNumVertices = Module.cwrap(
-    'get_render_packet_num_vertices', 'number', ['number']);
-
-  Shabba.getRenderPacketVBuf = Module.cwrap('get_render_packet_vbuf',
-                                               'number', ['number']);
-  Shabba.getRenderPacketCBuf = Module.cwrap('get_render_packet_cbuf',
-                                               'number', ['number']);
-  Shabba.getRenderPacketTBuf = Module.cwrap('get_render_packet_tbuf',
-                                               'number', ['number']);
-*/
+  Shabba.instance = wasmInstance;
 }
 
 
@@ -97,7 +78,7 @@ function freeModule() {
 function pointerToFloat32Array(ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
-  return Module.instance.memory.F32.subarray(pos, pos + length);
+  return Shabba.instance.memory.F32.subarray(pos, pos + length);
 }
 
 function get(url) {
@@ -1018,7 +999,7 @@ function allocateWorkers(state) {
   Job.setup(numWorkers);
 }
 
-export default function main() {
+export default function main(wasmInstance) {
   initFirebase();
   initFirebaseSignIn();
 
@@ -1039,6 +1020,6 @@ export default function main() {
     return removeKonsoleInvisibility();
   }).catch(error => console.error(error));
 
-  configureWasmModule();
+  configureWasmModule(wasmInstance);
   Shabba.seniStartup();
 }

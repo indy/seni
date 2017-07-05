@@ -15,6 +15,7 @@ module.exports = {
     sourceMapFilename: '[file].map'
   },
   module: {
+    /*
     preLoaders: [
       {
         loader: 'eslint-loader',
@@ -23,6 +24,7 @@ module.exports = {
         exclude: /node_modules/
       }
     ],
+    */
     loaders: [
       {
         loader: 'babel',

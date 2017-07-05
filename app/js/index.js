@@ -405,8 +405,7 @@ function loadWASM(file, options) {
 document.addEventListener('DOMContentLoaded', () => {
   compatibilityHacks();
 
-  loadWASM('dist/seni-wasm.wasm').then(instance => {
-    Module.instance = instance; // temp
-    main();
+  loadWASM('dist/seni-wasm.wasm').then(wasmInstance => {
+    main(wasmInstance);
   });
 });
