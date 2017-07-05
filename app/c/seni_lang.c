@@ -3173,7 +3173,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       vm->sp = sp;
 
       native_function_ptr native_func = program->env->function_ptr[iname];
-      seni_var var = native_func(vm, num_args);
+      seni_var *var = native_func(vm, num_args);
       
       // move vm->sp below the arguments, and decrement the rc of any vectors
       for (i = 0; i < num_args; i++) {
@@ -3193,7 +3193,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       }
       
       // put the return value at the top of the stack
-      var_move(&(vm->stack[vm->sp++]), &var);
+      var_move(&(vm->stack[vm->sp++]), var);
       
       // sync registers with vm
       sp = vm->sp;

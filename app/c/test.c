@@ -712,11 +712,13 @@ void test_vm_prng(void)
   // leaky because the global rng is a vector
   //
   VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng)", 16.32348f);
+
   // state of rng is changing, returning a different number than previous tests
   VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng) (prng/take-1 from: rng)", 13.451335f);
 
   // wrapped in a function so that it's not leaky
   VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng)) (x)", 16.32348f);
+
   // state of rng is changing, returning a different number than previous tests
   VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng) (prng/take-1 from: rng)) (x)", 13.451335f);
 
@@ -732,7 +734,6 @@ void test_vm_prng(void)
 
   // prng, destructuring, multiple args to '+'
   VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a b c] (prng/take num: 3 from: rng)) (+ a b c)) (x)", 0.881854f);
-  
 }
 
 void test_vm_environmental(void)
@@ -816,6 +817,9 @@ int main(void)
 
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   //RUN_TEST(test_prng);
+
+
+
   
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);

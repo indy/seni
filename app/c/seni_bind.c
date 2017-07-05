@@ -151,6 +151,8 @@ typedef struct {
 // return type for bindings that only have side-effects
 //
 seni_var g_var_true;
+// temporary seni_var, returned by native functions
+seni_var g_var_scratch;
 
 void string_copy(char **dst, char *src)
 {
@@ -186,7 +188,7 @@ void declare_native(seni_word_lut *wlut, seni_env *e, char *name, native_functio
   }
 }
 
-seni_var bind_line(seni_vm *vm, i32 num_args)
+seni_var *bind_line(seni_vm *vm, i32 num_args)
 {
   // default values for line
   f32 width = 4.0f;
@@ -209,10 +211,10 @@ seni_var bind_line(seni_vm *vm, i32 num_args)
   render_line(render_data, matrix, from[0], from[1], to[0], to[1], width, colour);
 
 
-  return g_var_true;
+  return &g_var_true;
 }
 
-seni_var bind_rect(seni_vm *vm, i32 num_args)
+seni_var *bind_rect(seni_vm *vm, i32 num_args)
 {
   // default values for rect
   f32 width = 4.0f;
@@ -235,10 +237,10 @@ seni_var bind_rect(seni_vm *vm, i32 num_args)
   render_rect(render_data, matrix, position[0], position[1], width, height, colour);
 
 
-  return g_var_true;
+  return &g_var_true;
 }
 
-seni_var bind_circle(seni_vm *vm, i32 num_args)
+seni_var *bind_circle(seni_vm *vm, i32 num_args)
 {
   // default values for circle
   f32 width = 4.0f;
@@ -271,10 +273,10 @@ seni_var bind_circle(seni_vm *vm, i32 num_args)
   render_circle(render_data, matrix, position[0], position[1], width, height, colour, (i32)tessellation);
 
 
-  return g_var_true;
+  return &g_var_true;
 }
 
-seni_var bind_bezier(seni_vm *vm, i32 num_args)
+seni_var *bind_bezier(seni_vm *vm, i32 num_args)
 {
   // default values for bezier
   f32 line_width = -1.0f;
@@ -330,10 +332,10 @@ seni_var bind_bezier(seni_vm *vm, i32 num_args)
                 t_start, t_end, colour, (i32)tessellation, brush, (i32)brush_subtype);
 
 
-  return g_var_true;
+  return &g_var_true;
 }
 
-seni_var bind_col_convert(seni_vm *vm, i32 num_args)
+seni_var *bind_col_convert(seni_vm *vm, i32 num_args)
 {
   // (col/convert colour: col format: LAB)
   
@@ -365,13 +367,11 @@ seni_var bind_col_convert(seni_vm *vm, i32 num_args)
   
   colour_clone_as(&out, colour, colour_format);
 
-  seni_var ret;
-  colour_as_var(&ret, &out);
-
-  return ret;
+  colour_as_var(&g_var_scratch, &out);
+  return &g_var_scratch;
 }
 
-seni_var bind_col_rgb(seni_vm *vm, i32 num_args)
+seni_var *bind_col_rgb(seni_vm *vm, i32 num_args)
 {
   // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
   
@@ -396,13 +396,12 @@ seni_var bind_col_rgb(seni_vm *vm, i32 num_args)
   colour.element[2] = b;
   colour.element[3] = alpha;
 
-  seni_var ret;
-  colour_as_var(&ret, &colour);
 
-  return ret;
+  colour_as_var(&g_var_scratch, &colour);
+  return &g_var_scratch;
 }
 
-seni_var bind_col_hsl(seni_vm *vm, i32 num_args)
+seni_var *bind_col_hsl(seni_vm *vm, i32 num_args)
 {
   // (col/hsl h: 180.0 s: 0.1 l: 0.2 alpha: 0.4)
   
@@ -427,13 +426,11 @@ seni_var bind_col_hsl(seni_vm *vm, i32 num_args)
   colour.element[2] = l;
   colour.element[3] = alpha;
 
-  seni_var ret;
-  colour_as_var(&ret, &colour);
-
-  return ret;
+  colour_as_var(&g_var_scratch, &colour);
+  return &g_var_scratch;
 }
 
-seni_var bind_col_hsv(seni_vm *vm, i32 num_args)
+seni_var *bind_col_hsv(seni_vm *vm, i32 num_args)
 {
   // (col/hsv h: 180.0 s: 0.1 v: 0.2 alpha: 0.4)
   
@@ -458,13 +455,11 @@ seni_var bind_col_hsv(seni_vm *vm, i32 num_args)
   colour.element[2] = v;
   colour.element[3] = alpha;
 
-  seni_var ret;
-  colour_as_var(&ret, &colour);
-
-  return ret;
+  colour_as_var(&g_var_scratch, &colour);
+  return &g_var_scratch;
 }
 
-seni_var bind_col_lab(seni_vm *vm, i32 num_args)
+seni_var *bind_col_lab(seni_vm *vm, i32 num_args)
 {
   // (col/lab l: 0.2 a: -0.1 b: -0.3 alpha: 0.4)
   
@@ -489,13 +484,11 @@ seni_var bind_col_lab(seni_vm *vm, i32 num_args)
   colour.element[2] = b;
   colour.element[3] = alpha;
 
-  seni_var ret;
-  colour_as_var(&ret, &colour);
-
-  return ret;
+  colour_as_var(&g_var_scratch, &colour);
+  return &g_var_scratch;
 }
 
-seni_var bind_col_complementary(seni_vm *vm, i32 num_args)
+seni_var *bind_col_complementary(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -508,12 +501,11 @@ seni_var bind_col_complementary(seni_vm *vm, i32 num_args)
   seni_colour ret_colour;
   complementary(&ret_colour, colour);
 
-  seni_var ret;
-  colour_as_var(&ret, &ret_colour);
-  return ret;
+  colour_as_var(&g_var_scratch, &ret_colour);
+  return &g_var_scratch;
 }
 
-seni_var bind_col_split_complementary(seni_vm *vm, i32 num_args)
+seni_var *bind_col_split_complementary(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -528,14 +520,15 @@ seni_var bind_col_split_complementary(seni_vm *vm, i32 num_args)
   split_complementary(&ret_colour0, &ret_colour1, colour);
 
   // push the return values onto the stack as a vector
-  seni_var ret;
-  vector_construct(vm, &ret);
-  append_to_vector_col(vm, &ret, &ret_colour0);
-  append_to_vector_col(vm, &ret, &ret_colour1);
-  return ret;
+
+  vector_construct(vm, &g_var_scratch);
+  append_to_vector_col(vm, &g_var_scratch, &ret_colour0);
+  append_to_vector_col(vm, &g_var_scratch, &ret_colour1);
+
+  return &g_var_scratch;
 }
 
-seni_var bind_col_analagous(seni_vm *vm, i32 num_args)
+seni_var *bind_col_analagous(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -550,14 +543,14 @@ seni_var bind_col_analagous(seni_vm *vm, i32 num_args)
   analagous(&ret_colour0, &ret_colour1, colour);
 
   // push the return values onto the stack as a vector
-  seni_var ret;
-  vector_construct(vm, &ret);
-  append_to_vector_col(vm, &ret, &ret_colour0);
-  append_to_vector_col(vm, &ret, &ret_colour1);
-  return ret;
+  vector_construct(vm, &g_var_scratch);
+  append_to_vector_col(vm, &g_var_scratch, &ret_colour0);
+  append_to_vector_col(vm, &g_var_scratch, &ret_colour1);
+
+  return &g_var_scratch;
 }
 
-seni_var bind_col_triad(seni_vm *vm, i32 num_args)
+seni_var *bind_col_triad(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -572,14 +565,14 @@ seni_var bind_col_triad(seni_vm *vm, i32 num_args)
   triad(&ret_colour0, &ret_colour1, colour);
 
   // push the return values onto the stack as a vector
-  seni_var ret;
-  vector_construct(vm, &ret);
-  append_to_vector_col(vm, &ret, &ret_colour0);
-  append_to_vector_col(vm, &ret, &ret_colour1);
-  return ret;
+  vector_construct(vm, &g_var_scratch);
+  append_to_vector_col(vm, &g_var_scratch, &ret_colour0);
+  append_to_vector_col(vm, &g_var_scratch, &ret_colour1);
+
+  return &g_var_scratch;
 }
 
-seni_var bind_col_darken(seni_vm *vm, i32 num_args)
+seni_var *bind_col_darken(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -596,13 +589,11 @@ seni_var bind_col_darken(seni_vm *vm, i32 num_args)
   colour_clone_as(&ret_colour, colour, LAB);
   ret_colour.element[0] = clamp(ret_colour.element[0] - value, 0.0f, 100.0f);
 
-
-  seni_var ret;
-  colour_as_var(&ret, &ret_colour);
-  return ret;
+  colour_as_var(&g_var_scratch, &ret_colour);
+  return &g_var_scratch;
 }
 
-seni_var bind_col_lighten(seni_vm *vm, i32 num_args)
+seni_var *bind_col_lighten(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -619,13 +610,11 @@ seni_var bind_col_lighten(seni_vm *vm, i32 num_args)
   colour_clone_as(&ret_colour, colour, LAB);
   ret_colour.element[0] = clamp(ret_colour.element[0] + value, 0.0f, 100.0f);
 
-
-  seni_var ret;
-  colour_as_var(&ret, &ret_colour);
-  return ret;
+  colour_as_var(&g_var_scratch, &ret_colour);
+  return &g_var_scratch;
 }
 
-seni_var bind_col_set_alpha(seni_vm *vm, i32 num_args)
+seni_var *bind_col_set_alpha(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -642,12 +631,11 @@ seni_var bind_col_set_alpha(seni_vm *vm, i32 num_args)
   colour_clone_as(&ret_colour, colour, colour->format);
   ret_colour.element[3] = value;
 
-  seni_var ret;
-  colour_as_var(&ret, &ret_colour);
-  return ret;
+  colour_as_var(&g_var_scratch, &ret_colour);
+  return &g_var_scratch;
 }
 
-seni_var bind_col_get_alpha(seni_vm *vm, i32 num_args)
+seni_var *bind_col_get_alpha(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -657,14 +645,12 @@ seni_var bind_col_get_alpha(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
-  f32_as_var(&ret, colour->element[3]);
+  f32_as_var(&g_var_scratch, colour->element[3]);
 
-
-  return ret;
+  return &g_var_scratch;
 }
 
-seni_var bind_col_set_lab_l(seni_vm *vm, i32 num_args)
+seni_var *bind_col_set_lab_l(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -682,12 +668,12 @@ seni_var bind_col_set_lab_l(seni_vm *vm, i32 num_args)
   i32 l_index = 0; // L is the first element
   ret_colour.element[l_index] = value;
 
-  seni_var ret;
-  colour_as_var(&ret, &ret_colour);
-  return ret;
+  colour_as_var(&g_var_scratch, &ret_colour);
+
+  return &g_var_scratch;
 }
 
-seni_var bind_col_get_lab_l(seni_vm *vm, i32 num_args)
+seni_var *bind_col_get_lab_l(seni_vm *vm, i32 num_args)
 {
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
@@ -702,13 +688,12 @@ seni_var bind_col_get_lab_l(seni_vm *vm, i32 num_args)
 
   i32 l_index = 0;
 
-  seni_var ret;
-  f32_as_var(&ret, colour->element[l_index]);
+  f32_as_var(&g_var_scratch, colour->element[l_index]);
 
-  return ret;
+  return &g_var_scratch;
 }
 
-seni_var bind_translate(seni_vm *vm, i32 num_args)
+seni_var *bind_translate(seni_vm *vm, i32 num_args)
 {
   f32 vector[] = {0.0f, 0.0f};
 
@@ -718,10 +703,10 @@ seni_var bind_translate(seni_vm *vm, i32 num_args)
 
   matrix_stack_translate(vm->matrix_stack, vector[0], vector[1]);
 
-  return g_var_true;
+  return &g_var_true;
 }
 
-seni_var bind_rotate(seni_vm *vm, i32 num_args)
+seni_var *bind_rotate(seni_vm *vm, i32 num_args)
 {
   // angle in degrees
   f32 angle = 0.0f;
@@ -732,10 +717,10 @@ seni_var bind_rotate(seni_vm *vm, i32 num_args)
 
   matrix_stack_rotate(vm->matrix_stack, deg_to_rad(angle));
 
-  return g_var_true;
+  return &g_var_true;
 }
 
-seni_var bind_scale(seni_vm *vm, i32 num_args)
+seni_var *bind_scale(seni_vm *vm, i32 num_args)
 {
   f32 vector[] = {1.0f, 1.0f};
   f32 scalar = 1.0f;
@@ -751,11 +736,10 @@ seni_var bind_scale(seni_vm *vm, i32 num_args)
     matrix_stack_scale(vm->matrix_stack, vector[0], vector[1]);
   }
 
-  return g_var_true;
+  return &g_var_true;
 }
 
-
-seni_var bind_math_distance(seni_vm *vm, i32 num_args)
+seni_var *bind_math_distance(seni_vm *vm, i32 num_args)
 {
   f32 vec1[] = {0.0f, 0.0f};
   f32 vec2[] = {0.0f, 0.0f};
@@ -772,14 +756,12 @@ seni_var bind_math_distance(seni_vm *vm, i32 num_args)
 
   f32 distance = distance_v2(a, b);
   
-  seni_var ret;
-  f32_as_var(&ret, distance);
+  f32_as_var(&g_var_scratch, distance);
 
-
-  return ret;
+  return &g_var_scratch;
 }
 
-seni_var bind_math_clamp(seni_vm *vm, i32 num_args)
+seni_var *bind_math_clamp(seni_vm *vm, i32 num_args)
 {
   // todo: try and move functions like this into ones that initially
   // create and return a function that takes a single argument.
@@ -800,14 +782,12 @@ seni_var bind_math_clamp(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_MAX, max);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
-  f32_as_var(&ret, clamp(val, min, max));
-  
-
-  return ret;
+  f32_as_var(&g_var_scratch, clamp(val, min, max));
+ 
+  return &g_var_scratch;
 }
 
-seni_var bind_math_radians_to_degrees(seni_vm *vm, i32 num_args)
+seni_var *bind_math_radians_to_degrees(seni_vm *vm, i32 num_args)
 {
   f32 angle = 0.0f;
 
@@ -815,14 +795,13 @@ seni_var bind_math_radians_to_degrees(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_ANGLE, angle);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
-  f32_as_var(&ret, rad_to_deg(angle));
+  f32_as_var(&g_var_scratch, rad_to_deg(angle));
 
-  return ret;
+  return &g_var_scratch;
 }
 
 // (prng/build seed: 4324 min: 40 max: 100)
-seni_var bind_prng_build(seni_vm *vm, i32 num_args)
+seni_var *bind_prng_build(seni_vm *vm, i32 num_args)
 {
   f32 seed = 12322.0f;            // todo: in docs mention that seed should be in range 1..some-large-number
   f32 min = 0.0f;
@@ -847,18 +826,17 @@ seni_var bind_prng_build(seni_vm *vm, i32 num_args)
   // the vector needs to represent a seni_prng_state struct as well as the min + max values
   // i.e. [u64 state, u64 inc, f32 min, f32 max]
   //
-  seni_var ret;
-  vector_construct(vm, &ret);
-  append_to_vector_u64(vm, &ret, prng_state.state);
-  append_to_vector_u64(vm, &ret, prng_state.inc);
-  append_to_vector_f32(vm, &ret, min);
-  append_to_vector_f32(vm, &ret, max);
+  vector_construct(vm, &g_var_scratch);
+  append_to_vector_u64(vm, &g_var_scratch, prng_state.state);
+  append_to_vector_u64(vm, &g_var_scratch, prng_state.inc);
+  append_to_vector_f32(vm, &g_var_scratch, min);
+  append_to_vector_f32(vm, &g_var_scratch, max);
 
-  return ret;
+  return &g_var_scratch;
 }
 
 // (prng/take num: 5 from: rng)
-seni_var bind_prng_take(seni_vm *vm, i32 num_args)
+seni_var *bind_prng_take(seni_vm *vm, i32 num_args)
 {
   f32 num = 1.0f;
   seni_prng_full_state from;
@@ -881,15 +859,14 @@ seni_var bind_prng_take(seni_vm *vm, i32 num_args)
   prng_state.inc = from.inc;
 
   // create the return vector
-  seni_var ret;
   f32 value;
 
   i32 inum = (i32)num;
 
-  vector_construct(vm, &ret);
+  vector_construct(vm, &g_var_scratch);
   for (i32 i = 0; i < inum; i++) {
     value = seni_prng_f32_range(&prng_state, from.min, from.max);
-    append_to_vector_f32(vm, &ret, value);
+    append_to_vector_f32(vm, &g_var_scratch, value);
   }
 
   // update the state and inc values stored in the vector on the vm's stack
@@ -900,11 +877,11 @@ seni_var bind_prng_take(seni_vm *vm, i32 num_args)
     SENI_ERROR("seni_prng_full_state has null pointers ???");
   }
 
-  return ret;
+  return &g_var_scratch;
 }
 
 // (prng/take-1 from: rng)
-seni_var bind_prng_take_1(seni_vm *vm, i32 num_args)
+seni_var *bind_prng_take_1(seni_vm *vm, i32 num_args)
 {
   seni_prng_full_state from;
   // just have anything as the default values, this function should always be given a 'from' parameter
@@ -924,10 +901,8 @@ seni_var bind_prng_take_1(seni_vm *vm, i32 num_args)
   prng_state.state = from.state;
   prng_state.inc = from.inc;
 
-
-  seni_var ret;
   f32 value = seni_prng_f32_range(&prng_state, from.min, from.max);
-  f32_as_var(&ret, value);
+  f32_as_var(&g_var_scratch, value);
 
   // update the state and inc values stored in the vector on the vm's stack
   if (from.seni_var_state != NULL && from.seni_var_inc != NULL) {
@@ -937,10 +912,10 @@ seni_var bind_prng_take_1(seni_vm *vm, i32 num_args)
     SENI_ERROR("seni_prng_full_state has null pointers ???");
   }
 
-  return ret;
+  return &g_var_scratch;
 }
 
-seni_var bind_prng_perlin(seni_vm *vm, i32 num_args)
+seni_var *bind_prng_perlin(seni_vm *vm, i32 num_args)
 {
   f32 x = 1.0f;
   f32 y = 1.0f;
@@ -953,16 +928,14 @@ seni_var bind_prng_perlin(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_Z, z);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
   f32 value = seni_perlin(x, y, z);
-  // printf("bind_prng_perlin was called with x: %.2f y: %.2f z: %.2f result: %.2f\n", x, y, z, value);
 
-  f32_as_var(&ret, value);
+  f32_as_var(&g_var_scratch, value);
 
-  return ret;
+  return &g_var_scratch;
 }
 
-seni_var bind_interp_fn(seni_vm *vm, i32 num_args)
+seni_var *bind_interp_fn(seni_vm *vm, i32 num_args)
 {
   f32 from[] = {0.0f, 1.0f};
   f32 to[] = {0.0f, 100.0f};
@@ -986,22 +959,21 @@ seni_var bind_interp_fn(seni_vm *vm, i32 num_args)
   // id to signify that this structure stores data for interpolation
   i32 interp_fn_id = 42;
 
-  seni_var ret;
-  vector_construct(vm, &ret);
-  append_to_vector_i32(vm, &ret, interp_fn_id);
-  append_to_vector_f32(vm, &ret, from_m);
-  append_to_vector_f32(vm, &ret, to_m);
-  append_to_vector_f32(vm, &ret, from_c);
-  append_to_vector_f32(vm, &ret, to_c);
-  append_to_vector_f32(vm, &ret, to[0]);
-  append_to_vector_f32(vm, &ret, to[1]);
-  append_to_vector_i32(vm, &ret, clamping);
-  append_to_vector_i32(vm, &ret, mapping);
+  vector_construct(vm, &g_var_scratch);
+  append_to_vector_i32(vm, &g_var_scratch, interp_fn_id);
+  append_to_vector_f32(vm, &g_var_scratch, from_m);
+  append_to_vector_f32(vm, &g_var_scratch, to_m);
+  append_to_vector_f32(vm, &g_var_scratch, from_c);
+  append_to_vector_f32(vm, &g_var_scratch, to_c);
+  append_to_vector_f32(vm, &g_var_scratch, to[0]);
+  append_to_vector_f32(vm, &g_var_scratch, to[1]);
+  append_to_vector_i32(vm, &g_var_scratch, clamping);
+  append_to_vector_i32(vm, &g_var_scratch, mapping);
   
-  return ret;
+  return &g_var_scratch;
 }
 
-seni_var bind_interp_call(seni_vm *vm, i32 num_args)
+seni_var *bind_interp_call(seni_vm *vm, i32 num_args)
 {
   seni_interp_state using;
   f32 val = 0.0f;
@@ -1040,13 +1012,12 @@ seni_var bind_interp_call(seni_vm *vm, i32 num_args)
     res = from_interp < 0.0f ? using.to0 : (from_interp > 1.0f) ? using.to1 : res;
   }
   
-  seni_var ret;
-  f32_as_var(&ret, res);
+  f32_as_var(&g_var_scratch, res);
 
-  return ret;
+  return &g_var_scratch;
 }
 
-seni_var bind_interp_cos(seni_vm *vm, i32 num_args)
+seni_var *bind_interp_cos(seni_vm *vm, i32 num_args)
 {
   f32 amplitude = 1.0f;
   f32 frequency = 1.0f;
@@ -1058,14 +1029,13 @@ seni_var bind_interp_cos(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
   f32 value = seni_interp_cos(amplitude, frequency, t);
-  f32_as_var(&ret, value);
+  f32_as_var(&g_var_scratch, value);
 
-  return ret;
+  return &g_var_scratch;
 }
 
-seni_var bind_interp_sin(seni_vm *vm, i32 num_args)
+seni_var *bind_interp_sin(seni_vm *vm, i32 num_args)
 {
   f32 amplitude = 1.0f;
   f32 frequency = 1.0f;
@@ -1077,14 +1047,13 @@ seni_var bind_interp_sin(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
   f32 value = seni_interp_sin(amplitude, frequency, t);
-  f32_as_var(&ret, value);
+  f32_as_var(&g_var_scratch, value);
 
-  return ret;
+  return &g_var_scratch;
 }
 
-seni_var bind_interp_bezier(seni_vm *vm, i32 num_args)
+seni_var *bind_interp_bezier(seni_vm *vm, i32 num_args)
 {
   f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
   f32 t = 1.0f;
@@ -1094,17 +1063,17 @@ seni_var bind_interp_bezier(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
   v2 point = seni_interp_bezier(coords, t);
 
   // push the return values onto the stack as a vector
-  vector_construct(vm, &ret);
-  append_to_vector_f32(vm, &ret, point.x);
-  append_to_vector_f32(vm, &ret, point.y);
-  return ret;
+  vector_construct(vm, &g_var_scratch);
+  append_to_vector_f32(vm, &g_var_scratch, point.x);
+  append_to_vector_f32(vm, &g_var_scratch, point.y);
+
+  return &g_var_scratch;
 }
 
-seni_var bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
+seni_var *bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
 {
   f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
   f32 t = 1.0f;
@@ -1114,17 +1083,17 @@ seni_var bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
   v2 point = seni_interp_bezier_tangent(coords, t);
 
   // push the return values onto the stack as a vector
-  vector_construct(vm, &ret);
-  append_to_vector_f32(vm, &ret, point.x);
-  append_to_vector_f32(vm, &ret, point.y);
-  return ret;
+  vector_construct(vm, &g_var_scratch);
+  append_to_vector_f32(vm, &g_var_scratch, point.x);
+  append_to_vector_f32(vm, &g_var_scratch, point.y);
+
+  return &g_var_scratch;
 }
 
-seni_var bind_interp_circle(seni_vm *vm, i32 num_args)
+seni_var *bind_interp_circle(seni_vm *vm, i32 num_args)
 {
   f32 position[] = {0.0f, 0.0f};
   f32 radius = 1.0f;
@@ -1136,17 +1105,17 @@ seni_var bind_interp_circle(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
   v2 point = seni_interp_circle(position, radius, t);
 
   // push the return values onto the stack as a vector
-  vector_construct(vm, &ret);
-  append_to_vector_f32(vm, &ret, point.x);
-  append_to_vector_f32(vm, &ret, point.y);
-  return ret;
+  vector_construct(vm, &g_var_scratch);
+  append_to_vector_f32(vm, &g_var_scratch, point.x);
+  append_to_vector_f32(vm, &g_var_scratch, point.y);
+
+  return &g_var_scratch;
 }
 
-seni_var  bind_debug_print(seni_vm *vm, i32 num_args)
+seni_var *bind_debug_print(seni_vm *vm, i32 num_args)
 {
   seni_var *val = NULL;
 
@@ -1155,13 +1124,12 @@ seni_var  bind_debug_print(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_VAR(INAME_VAL, val);
   READ_STACK_ARGS_END;
 
-  
   pretty_print_seni_var(val, "debug");
 
-  return g_var_true;
+  return &g_var_true;
 }
 
-seni_var bind_nth(seni_vm *vm, i32 num_args)
+seni_var *bind_nth(seni_vm *vm, i32 num_args)
 {
   seni_var *from = NULL;
   f32 n = 0;
@@ -1171,12 +1139,11 @@ seni_var bind_nth(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_N, n);
   READ_STACK_ARGS_END;
 
-  seni_var ret;
   i32 nth = (i32)n;
 
   if (from->type == VAR_2D && nth >= 0 && nth < 2) {
     
-    f32_as_var(&ret, from->f32_array[nth]);
+    f32_as_var(&g_var_scratch, from->f32_array[nth]);
     
   } else if (from->type == VAR_VEC_HEAD){
     
@@ -1187,17 +1154,17 @@ seni_var bind_nth(seni_vm *vm, i32 num_args)
       e = e->next;
     }
 
-    bool copied = var_copy(vm, &ret, e);
+    bool copied = var_copy_onto_junk(vm, &g_var_scratch, e);
     if (copied == false) {
-      SENI_ERROR("var_copy failed in bind_nth");
+      SENI_ERROR("var_copy_onto_junk failed in bind_nth");
     }
     
   } else {
     SENI_ERROR("nth: neither a var_2d with n 0..2 or vector given\n");
-    return g_var_true;
+    return &g_var_true;
   }
 
-  return ret;
+  return &g_var_scratch;
 }
 
 

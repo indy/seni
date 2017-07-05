@@ -194,7 +194,7 @@ typedef struct {
 } seni_fn_info;
 
 // todo: replace returned seni_var with a seni_var *
-typedef seni_var (*native_function_ptr)(seni_vm *vm, i32 num_args);
+typedef seni_var *(*native_function_ptr)(seni_vm *vm, i32 num_args);
 typedef struct {
   native_function_ptr function_ptr[MAX_NATIVE_LOOKUPS];
 } seni_env;
@@ -254,6 +254,7 @@ void           env_free(seni_env *e);
 void           compiler_compile(seni_node *ast, seni_program *program);
 bool           vm_interpret(seni_vm *vm, seni_program *program);
 bool           var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
+bool           var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src);
 
 void           pretty_print_seni_var(seni_var *var, char* msg);
 
