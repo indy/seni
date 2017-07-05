@@ -33,7 +33,7 @@
 #define NATIVE_START (KEYWORD_START + MAX_KEYWORD_LOOKUPS)
 
 
-#ifdef SENI_GEN_WASM
+#ifdef SENI_BUILD_WASM
 #include <webassembly.h>
 #define SENI_PRINT(f_, ...) console_log((f_), ##__VA_ARGS__)
 #else
@@ -45,7 +45,7 @@
 // todo: errors probably shouldn't be silent when debug mode is switched off
 #ifdef SENI_DEBUG_MODE
 
-#ifdef SENI_GEN_WASM
+#ifdef SENI_BUILD_WASM
 #define SENI_ERROR(f_, ...) console_log("ERROR: [%s %d] ", __FILE__, __LINE__); console_log((f_), ##__VA_ARGS__); console_log("\n")
 #else
 #define SENI_ERROR(f_, ...) printf("ERROR: [%s %d] ", __FILE__, __LINE__); printf((f_), ##__VA_ARGS__); printf("\n")
