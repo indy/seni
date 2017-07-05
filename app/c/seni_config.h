@@ -16,14 +16,6 @@
 //
 // #define TRACE_PRINT_OPCODES
 
-
-// tests that pass on both windows and unix fail on macs
-// they complain of ref_count becoming negative
-// the fix is to add a useless printf("") to vector_ref_count_increment
-// fuck knows why this is happening
-// #define WHAT_THE_FUCK_MAC_HACK
-
-
 #define MAX_WORD_LOOKUPS 128
 #define MAX_KEYWORD_LOOKUPS 128
 #define MAX_NATIVE_LOOKUPS 128

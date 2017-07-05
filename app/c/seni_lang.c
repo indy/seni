@@ -1372,14 +1372,6 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
   
   var_rc->value.ref_count++;
 
-#ifdef WHAT_THE_FUCK_MAC_HACK
-  /* 
-     this SENI_PRINT should have absolutely no effect, but it does prevent some of the 
-     unit tests failing on OSX
-  */
-  SENI_PRINT("");
-#endif
-
   //SENI_PRINT("vector_ref_count_increment %p: %d\n", var_rc, var_rc->value.ref_count);
 }
 
