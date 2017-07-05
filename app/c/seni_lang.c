@@ -2,6 +2,7 @@
 #include "seni_config.h"
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
+#include "seni_strtof.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -440,27 +441,14 @@ seni_node *consume_quoted_form(seni_word_lut *wlut, char **src)
 
   return node;
 }
-/*
-  seni_node *consume_int(char **src)
-  {
-  char *end_ptr;
-  
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
-  node->type = NODE_INT;
-  node->value.i = (i32)strtoimax(*src, &end_ptr, 10);
 
-  *src = end_ptr;
-  
-  return node;
-  }
-*/
 seni_node *consume_float(char **src)
 {
   char *end_ptr;
   
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_FLOAT;
-  node->value.f = (f32)strtof(*src, &end_ptr);
+  node->value.f = (f32)seni_strtof(*src, &end_ptr);
 
   *src = end_ptr;
   

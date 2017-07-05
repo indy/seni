@@ -12,6 +12,7 @@
 #include "seni_colour.h"
 #include "seni_prng.h"
 #include "seni_keyword_iname.h"
+#include "seni_strtof.h"
 
 #include "time.h"
 #include "stdio.h"
@@ -339,24 +340,20 @@ void test_colour(void)
   }
 }
 
-// void minmax(f32 lacunarity, f32 gain, f32 offset, i32 octaves)
-// {
-//   f32 w, min, max;
+void test_strtof(void)
+{
+  char **end = NULL;
 
-//   i32 i, j;
-//   min = 10000.0f;
-//   max = -10000.0f;
-//   for (j = 0; j < 500; j++) {
-//     for (i = 0; i < 500; i++) {
-//       w = seni_perlin((f32)j / 4701.0f, (f32)i / 41.0f, ((f32)j / 471.0f) + ((f32)i / 471.0f));
-//       max = w > max ? w : max;
-//       min = w < min ? w : min;
-//     }
-//   }
-//   printf("min %f, max %f\n", min, max);
-// }
+  TEST_ASSERT_EQUAL_FLOAT(3.14f, seni_strtof("3.14", end));
+  TEST_ASSERT_EQUAL_FLOAT(-3.14f, seni_strtof("-3.14", end));
+  TEST_ASSERT_EQUAL_FLOAT(3.14f, seni_strtof(" 3.14", end));
+  TEST_ASSERT_EQUAL_FLOAT(3.14f, seni_strtof(" 3.14  ", end));
 
-// --------------------------------------------------
+  TEST_ASSERT_EQUAL_FLOAT(0.99f, seni_strtof(".99", end));
+  TEST_ASSERT_EQUAL_FLOAT(15.0f, seni_strtof("15", end));
+  TEST_ASSERT_EQUAL_FLOAT(0.0f, seni_strtof("0", end));
+  TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_strtof("1", end));
+}
 
 seni_word_lut *setup_vm_wl(seni_env *e)
 {
@@ -818,13 +815,11 @@ int main(void)
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   //RUN_TEST(test_prng);
 
-
-
-  
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
   RUN_TEST(test_uv_mapper);
   RUN_TEST(test_colour);
+  RUN_TEST(test_strtof);
   
   // vm
   RUN_TEST(test_vm_bugs);
