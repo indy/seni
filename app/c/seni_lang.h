@@ -171,9 +171,9 @@ typedef struct seni_vm {
 // codes
 //
 typedef enum {
-#define OPCODE(name,_) name,
+#define OPCODE(__,name,_) name,
 #include "seni_opcodes.h"
-#undef OPCODE  
+#undef OPCODE
 } seni_opcode;
 
 typedef struct {

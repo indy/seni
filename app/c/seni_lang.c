@@ -929,13 +929,10 @@ seni_var *stack_peek(seni_vm *vm)
 // Program
 // **************************************************
 
-#define STR(x) #x
-#define XSTR(x) STR(x)
-
 char *opcode_name(seni_opcode opcode)
 {
   char *names[] = {
-#define OPCODE(name,_) STR(name),
+#define OPCODE(name,__,_) name,
 #include "seni_opcodes.h"
 #undef OPCODE
   };
@@ -944,7 +941,7 @@ char *opcode_name(seni_opcode opcode)
 }
 
 i32 opcode_offset[] = {
-#define OPCODE(_,offset) offset,
+#define OPCODE(_,__,offset) offset,
 #include "seni_opcodes.h"
 #undef OPCODE
 };
