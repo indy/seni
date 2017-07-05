@@ -8,6 +8,10 @@
 #define COLOUR_TRIAD_ANGLE (COLOUR_UNIT_ANGLE * 4)
 
 
+#ifdef SENI_BUILD_WASM
+#define powf Math_pow
+#endif
+
 seni_colour *colour_construct(seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha)
 {
   seni_colour *colour = (seni_colour *)calloc(1, sizeof(seni_colour));
