@@ -43,6 +43,28 @@ const Shabba = {};
 const gWasmHack = true;
 
 function configureWasmModule() {
+  Shabba.compileToRenderPackets =
+  Module.instance.exports.compile_to_render_packets;
+
+  Shabba.seniStartup = Module.instance.exports.seni_startup;
+  Shabba.seniShutdown = Module.instance.exports.seni_shutdown;
+  Shabba.scriptCleanup = Module.instance.exports.script_cleanup;
+
+  Shabba.getRenderPacketNumVertices =
+    Module.instance.exports.get_render_packet_num_vertices;
+
+  Shabba.getRenderPacketVBuf = Module.instance.exports.get_render_packet_vbuf;
+
+  Shabba.getRenderPacketCBuf = Module.instance.exports.get_render_packet_cbuf;
+
+  Shabba.getRenderPacketTBuf = Module.instance.exports.get_render_packet_tbuf;
+
+  Shabba.string_buffer = Module.instance.exports.allocate_string_buffer();
+  Shabba.setString = Module.instance.memory.setString;
+
+  Shabba.instance = Module.instance;
+
+/*
   Shabba.compileToRenderPackets = Module.cwrap('compile_to_render_packets',
                                                   'number', ['string']);
 
@@ -59,7 +81,9 @@ function configureWasmModule() {
                                                'number', ['number']);
   Shabba.getRenderPacketTBuf = Module.cwrap('get_render_packet_tbuf',
                                                'number', ['number']);
+*/
 }
+
 
 /*
 function freeModule() {
@@ -73,7 +97,7 @@ function freeModule() {
 function pointerToFloat32Array(ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
-  return Module.HEAPF32.subarray(pos, pos + length);
+  return Module.instance.memory.F32.subarray(pos, pos + length);
 }
 
 function get(url) {
@@ -336,7 +360,9 @@ function renderScriptWithWASM(state, imageElement) {
 
   const buffers = [];
 
-  const numRenderPackets = Shabba.compileToRenderPackets(script);
+  // need to setString before calling compileToRenderPackets
+  Shabba.setString(Shabba.string_buffer, script);
+  const numRenderPackets = Shabba.compileToRenderPackets();
   console.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
@@ -346,6 +372,8 @@ function renderScriptWithWASM(state, imageElement) {
     const vbuf = Shabba.getRenderPacketVBuf(i);
     const cbuf = Shabba.getRenderPacketCBuf(i);
     const tbuf = Shabba.getRenderPacketTBuf(i);
+
+
 
     const buffer = {};
     buffer.vbuf = pointerToFloat32Array(vbuf, numVertices * 2);

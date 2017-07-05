@@ -931,13 +931,16 @@ seni_var *stack_peek(seni_vm *vm)
 
 char *opcode_name(seni_opcode opcode)
 {
-  char *names[] = {
-#define OPCODE(name,__,_) name,
+#define STR(x) #x
+  
+  switch(opcode) {
+#define OPCODE(st,id,_) case id: return STR(id);
 #include "seni_opcodes.h"
 #undef OPCODE
-  };
-
-  return names[opcode];
+  default:
+    return "unknown opcode";
+  }
+#undef STR
 }
 
 i32 opcode_offset[] = {

@@ -6,9 +6,13 @@
 #include "seni_shapes.h"
 #include "seni_lang.h"
 
+#define STRING_BUFFER_SIZE 80000
+char *g_string_buffer;
+
 seni_vm *g_vm = NULL;
 seni_word_lut *g_wl = NULL;
 seni_env *g_e = NULL;
+
 
 // called once at startup
 export
@@ -43,8 +47,10 @@ void seni_shutdown()
 // ------------------------------
 
 export
-int compile_to_render_packets(char *script)
+int compile_to_render_packets(void)
 {
+  char *script = g_string_buffer;
+  
   seni_node *ast = NULL;
   seni_program *prog = NULL;
 
@@ -131,4 +137,17 @@ export
 void script_cleanup()
 {
   vm_free_render_data(g_vm);
+}
+
+
+export char *allocate_string_buffer()
+{
+  g_string_buffer = (char *)malloc(STRING_BUFFER_SIZE * sizeof(char));
+
+  return g_string_buffer;
+}
+
+export void free_string_buffer()
+{
+  free(g_string_buffer);
 }

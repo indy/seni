@@ -66,12 +66,12 @@ float _strtof_powersOf10_[] = {	// Table giving binary powers of 10.  Entry
  *----------------------------------------------------------------------
  */
 
-int isspace(char c)
+int seni_isspace(char c)
 {
   return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == ',';
 }
 
-int isdigit(char c)
+int seni_isdigit(char c)
 {
   return c >= '0' && c <= '9';
 }
@@ -119,7 +119,7 @@ seni_strtof(char *string,		/* A decimal ASCII floating-point number,
 	 */
 
 	p = string;
-	while (isspace(*p)) {
+	while (seni_isspace(*p)) {
 		p += 1;
 	}
 	if (*p == '-') {
@@ -141,7 +141,7 @@ seni_strtof(char *string,		/* A decimal ASCII floating-point number,
 	for (mantSize = 0; ; mantSize += 1)
 	{
 		c = *p;
-		if (!isdigit((char)c)) {
+		if (!seni_isdigit((char)c)) {
 			if ((c != '.') || (decPt >= 0)) {
 				break;
 			}
@@ -217,7 +217,7 @@ seni_strtof(char *string,		/* A decimal ASCII floating-point number,
 			}
 			expSign = FALSE;
 		}
-		while (isdigit(*p)) {
+		while (seni_isdigit(*p)) {
 			exp = exp * 10 + (*p - '0');
 			p += 1;
 		}
