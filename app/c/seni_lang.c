@@ -934,7 +934,7 @@ char *opcode_name(seni_opcode opcode)
 #define STR(x) #x
   
   switch(opcode) {
-#define OPCODE(st,id,_) case id: return STR(id);
+#define OPCODE(id,_) case id: return STR(id);
 #include "seni_opcodes.h"
 #undef OPCODE
   default:
@@ -944,7 +944,7 @@ char *opcode_name(seni_opcode opcode)
 }
 
 i32 opcode_offset[] = {
-#define OPCODE(_,__,offset) offset,
+#define OPCODE(_,offset) offset,
 #include "seni_opcodes.h"
 #undef OPCODE
 };
