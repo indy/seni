@@ -3,11 +3,9 @@
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
 
-#include "time.h"
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include <stdio.h>              /* for debug only */
 
 #include "utlist.h"
 
@@ -21,10 +19,10 @@ void vm_debug_info_reset(seni_vm *vm)
 
 void vm_debug_info_print(seni_vm *vm)
 {
-  printf("*** vm_debug_info_print ***\n");
+  SENI_PRINT("*** vm_debug_info_print ***\n");
   slab_print(&(vm->heap_slab_info), "heap slab");
-  printf("bytecodes executed:\t%llu\n", (long long unsigned int)(vm->opcodes_executed));
-  printf("bytecode execution time:\t%d msec\n", vm->execution_time);
+  SENI_PRINT("bytecodes executed:\t%llu\n", (long long unsigned int)(vm->opcodes_executed));
+  SENI_PRINT("bytecode execution time:\t%d msec\n", vm->execution_time);
 }
 
 #endif
@@ -443,8 +441,8 @@ seni_node *consume_quoted_form(seni_word_lut *wlut, char **src)
   return node;
 }
 /*
-seni_node *consume_int(char **src)
-{
+  seni_node *consume_int(char **src)
+  {
   char *end_ptr;
   
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
@@ -454,7 +452,7 @@ seni_node *consume_int(char **src)
   *src = end_ptr;
   
   return node;
-}
+  }
 */
 seni_node *consume_float(char **src)
 {
@@ -687,7 +685,7 @@ void parser_free_nodes(seni_node *nodes)
       }
     }
 
-    // printf("freeing node: %s %u\n", node_type_name(node), (u32)node);
+    // SENI_PRINT("freeing node: %s %u\n", node_type_name(node), (u32)node);
     free(node);
     
     node = next;
@@ -779,10 +777,10 @@ i32 var_vector_length(seni_var *var)
 void pretty_print_seni_node(seni_node *node, char* msg)
 {
   if (node == NULL) {
-    printf("NULL NODE %s\n", msg);
+    SENI_PRINT("NULL NODE %s\n", msg);
     return;
   }
-  printf("%s %s\n", node_type_name(node), msg);
+  SENI_PRINT("%s %s\n", node_type_name(node), msg);
 }
 
 void pretty_print_seni_var(seni_var *var, char* msg)
@@ -798,24 +796,24 @@ void pretty_print_seni_var(seni_var *var, char* msg)
   switch(using) {
   case USE_I:
     if (var->type == VAR_COLOUR) {
-      printf("%s: %s : %d (%.2f, %.2f, %.2f, %.2f)\n", msg, type, var->value.i,
-             var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
+      SENI_PRINT("%s: %s : %d (%.2f, %.2f, %.2f, %.2f)\n", msg, type, var->value.i,
+                 var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
     } else {
-      printf("%s: %s : %d\n", msg, type, var->value.i);
+      SENI_PRINT("%s: %s : %d\n", msg, type, var->value.i);
     }
     break;
   case USE_F:
-    printf("%s: %s : %.2f\n", msg,  type, var->value.f);
+    SENI_PRINT("%s: %s : %.2f\n", msg,  type, var->value.f);
     break;
   case USE_L:
-    printf("%s: %s : %llu\n", msg, type, (long long unsigned int)(var->value.l));
+    SENI_PRINT("%s: %s : %llu\n", msg, type, (long long unsigned int)(var->value.l));
     break;
   case USE_V:
     if (var->type == VAR_VEC_HEAD) {
       seni_var *rc = var->value.v;
-      printf("%s: %s : length %d ref_count: %d\n", msg, type, var_vector_length(var), rc->value.ref_count);
+      SENI_PRINT("%s: %s : length %d ref_count: %d\n", msg, type, var_vector_length(var), rc->value.ref_count);
     } else {
-      printf("%s: %s\n", msg,  type);
+      SENI_PRINT("%s: %s\n", msg,  type);
     }
     break;
   }
@@ -1060,69 +1058,69 @@ void pretty_print_bytecode(i32 ip, seni_bytecode *b)
 
 
     if (b->op == LOAD || b->op == STORE || b->op == DEC_RC || b->op == INC_RC) {
-      printf("%d\t%s\t\t%s\t\t",
-             ip,
-             opcode_name(b->op),
-             memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
+      SENI_PRINT("%d\t%s\t\t%s\t\t",
+                 ip,
+                 opcode_name(b->op),
+                 memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
       
     } else if (b->op == FLU_STORE || b->op == FLU_DEC_RC || b->op == FLU_INC_RC) {
-      printf("%d\t%s\t%s\t\t",
-             ip,
-             opcode_name(b->op),
-             memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
+      SENI_PRINT("%d\t%s\t%s\t\t",
+                 ip,
+                 opcode_name(b->op),
+                 memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
     } 
 
     seni_value_in_use using = get_value_in_use(b->arg1.type);
     switch(using) {
     case USE_I:
       if (b->arg1.type == VAR_COLOUR) {
-        printf("colour: %d (%.2f, %.2f, %.2f, %.2f)\n", b->arg1.value.i,
-               b->arg1.f32_array[0], b->arg1.f32_array[1], b->arg1.f32_array[2], b->arg1.f32_array[3]);
+        SENI_PRINT("colour: %d (%.2f, %.2f, %.2f, %.2f)\n", b->arg1.value.i,
+                   b->arg1.f32_array[0], b->arg1.f32_array[1], b->arg1.f32_array[2], b->arg1.f32_array[3]);
       } else {
-        printf("%d\n", b->arg1.value.i);
+        SENI_PRINT("%d\n", b->arg1.value.i);
       }
       break;
     case USE_F:
-      printf("%.2f\n", b->arg1.value.f);
+      SENI_PRINT("%.2f\n", b->arg1.value.f);
       break;
     case USE_L:
-      printf("%llu\n", (long long unsigned int)(b->arg1.value.l));
+      SENI_PRINT("%llu\n", (long long unsigned int)(b->arg1.value.l));
       break;
     case USE_V:
       if (b->arg1.type == VAR_VEC_HEAD) {
-        printf("[..]len %d\n", var_vector_length(&(b->arg1)));
+        SENI_PRINT("[..]len %d\n", var_vector_length(&(b->arg1)));
       } else {
-        printf("[..]\n");
+        SENI_PRINT("[..]\n");
       }
       break;
     default:
-      printf("unknown type\n");
+      SENI_PRINT("unknown type\n");
     }
     
   } else if (b->op == JUMP_IF || b->op == JUMP) {
-    printf("%d\t%s\t\t",
-           ip,
-           opcode_name(b->op));
+    SENI_PRINT("%d\t%s\t\t",
+               ip,
+               opcode_name(b->op));
     if (b->arg0.value.i > 0) {
-      printf("+%d\n", b->arg0.value.i);
+      SENI_PRINT("+%d\n", b->arg0.value.i);
     } else if (b->arg0.value.i < 0) {
-      printf("%d\n", b->arg0.value.i);
+      SENI_PRINT("%d\n", b->arg0.value.i);
     } else {
-      printf("WTF!\n");
+      SENI_PRINT("WTF!\n");
     }
   } else if (b->op == NATIVE) {
-    printf("%d\t%s\t\t%d\t\t%d\n",
-           ip,
-           opcode_name(b->op),
-           b->arg0.value.i,
-           b->arg1.value.i);    
+    SENI_PRINT("%d\t%s\t\t%d\t\t%d\n",
+               ip,
+               opcode_name(b->op),
+               b->arg0.value.i,
+               b->arg1.value.i);    
   } else if (b->op == PILE) {
-    printf("%d\t%s\t\t%d\n",
-           ip,
-           opcode_name(b->op),
-           b->arg0.value.i);
+    SENI_PRINT("%d\t%s\t\t%d\n",
+               ip,
+               opcode_name(b->op),
+               b->arg0.value.i);
   } else {
-    printf("%d\t%s\n", ip, opcode_name(b->op));
+    SENI_PRINT("%d\t%s\n", ip, opcode_name(b->op));
   }  
 }
 
@@ -1132,7 +1130,7 @@ void pretty_print_program(seni_program *program)
     seni_bytecode *b = &(program->code[i]);
     pretty_print_bytecode(i, b);
   }
-  printf("\n");
+  SENI_PRINT("\n");
 }
 
 seni_env *env_construct()
@@ -1185,9 +1183,9 @@ void slab_return(seni_slab_info *slab_info, char *msg)
 
 void slab_print(seni_slab_info *slab_info, char *message)
 {
-  printf("%s\tsize: %d\n", message, slab_info->size);
-  printf("\t\tget_count %d\treturn_count %d\n", slab_info->get_count, slab_info->return_count);
-  printf("\t\tdelta: %d\thigh_water_mark %d\n", slab_info->delta, slab_info->high_water_mark);
+  SENI_PRINT("%s\tsize: %d\n", message, slab_info->size);
+  SENI_PRINT("\t\tget_count %d\treturn_count %d\n", slab_info->get_count, slab_info->return_count);
+  SENI_PRINT("\t\tdelta: %d\thigh_water_mark %d\n", slab_info->delta, slab_info->high_water_mark);
 }
 
 // **************************************************
@@ -1271,18 +1269,18 @@ void vm_free(seni_vm *vm)
 
 void pretty_print_vm(seni_vm *vm, char* msg)
 {
-  printf("%s\tvm: fp:%d sp:%d ip:%d local:%d\n",
-         msg,
-         vm->fp,
-         vm->sp,
-         vm->ip,
-         vm->local);
+  SENI_PRINT("%s\tvm: fp:%d sp:%d ip:%d local:%d\n",
+             msg,
+             vm->fp,
+             vm->sp,
+             vm->ip,
+             vm->local);
 
   seni_var *fp = &(vm->stack[vm->fp]);
   i32 onStackFP = (fp + 0)->value.i;
   i32 onStackIP = (fp + 1)->value.i;
   i32 onStackNumArgs = (fp + 2)->value.i;
-  printf("\ton stack: fp:%d ip:%d numArgs:%d\n", onStackFP, onStackIP, onStackNumArgs);
+  SENI_PRINT("\ton stack: fp:%d ip:%d numArgs:%d\n", onStackFP, onStackIP, onStackNumArgs);
 }
 
 bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head);
@@ -1356,7 +1354,7 @@ bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
 
   var_rc->value.ref_count--;
 
-  //printf("vector_ref_count_decrement %p: %d\n", var_rc, var_rc->value.ref_count);
+  //SENI_PRINT("vector_ref_count_decrement %p: %d\n", var_rc, var_rc->value.ref_count);
 
   // decrement the ref counts of any nested vectors
   seni_var *element = var_rc->next;
@@ -1388,13 +1386,13 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
 
 #ifdef WHAT_THE_FUCK_MAC_HACK
   /* 
-     this printf should have absolutely no effect, but it does prevent some of the 
+     this SENI_PRINT should have absolutely no effect, but it does prevent some of the 
      unit tests failing on OSX
-   */
-  printf("");
+  */
+  SENI_PRINT("");
 #endif
 
-  //printf("vector_ref_count_increment %p: %d\n", var_rc, var_rc->value.ref_count);
+  //SENI_PRINT("vector_ref_count_increment %p: %d\n", var_rc, var_rc->value.ref_count);
 }
 
 bool var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
@@ -1846,16 +1844,16 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
           child = safe_prev(child);
         }
         /*        
-        while (child != NULL) {
-          pop_from_stack_to_memory(program, child, memory_segment_type);
-          child = safe_next(child);
-        }
+                  while (child != NULL) {
+                  pop_from_stack_to_memory(program, child, memory_segment_type);
+                  child = safe_next(child);
+                  }
         */
         
         
       } else {
         // this may be recursive
-        printf("todo: push each item onto stack using nth");
+        SENI_PRINT("todo: push each item onto stack using nth");
       }
 
     } else {
@@ -2732,7 +2730,7 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // we can now update the addreses used by CALL and CALL_0
   correct_function_addresses(program);
 
-  // printf("program compiled: %d lines\n", program->code_size);
+  // SENI_PRINT("program compiled: %d lines\n", program->code_size);
 }
 
 // **************************************************
@@ -2795,9 +2793,6 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
   DEBUG_INFO_RESET(vm);
 
-  clock_t start, diff;
-  start = clock();
-  
   for (;;) {
     vm->opcodes_executed++;
     bc = &(program->code[ip++]);
@@ -2825,7 +2820,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         src = &(vm->stack[fp - bc->arg1.value.i - 1]);
 #ifdef TRACE_PRINT_OPCODES
         pretty_print_seni_var(src, "---");
-        printf("--- hop_back is %d fp is %d\n", hop_back, fp);
+        SENI_PRINT("--- hop_back is %d fp is %d\n", hop_back, fp);
 #endif
         var_copy_onto_junk(vm, v, src);
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
@@ -2867,7 +2862,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         var_move(dest, v);
 #ifdef TRACE_PRINT_OPCODES
         pretty_print_seni_var(dest, "---");
-        printf("--- fp is %d\n", vm->fp);
+        SENI_PRINT("--- fp is %d\n", vm->fp);
 #endif        
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         dest = &(vm->stack[vm->local + bc->arg1.value.i]);
@@ -3004,7 +2999,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       vm->sp = sp;
 
 #ifdef TRACE_PRINT_OPCODES
-        printf("--- fp is %d\n", vm->fp);
+      SENI_PRINT("--- fp is %d\n", vm->fp);
 #endif        
       break;
 
@@ -3086,7 +3081,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       var_move(v, src);
 
 #ifdef TRACE_PRINT_OPCODES
-        printf("--- fp is %d\n", vm->fp);
+      SENI_PRINT("--- fp is %d\n", vm->fp);
 #endif        
       break;
 
@@ -3143,7 +3138,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       vm->sp = sp;
 
 #ifdef TRACE_PRINT_OPCODES
-        printf("--- fp is %d\n", vm->fp);
+      SENI_PRINT("--- fp is %d\n", vm->fp);
 #endif        
       break;
 
@@ -3494,8 +3489,6 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       break;
     case STOP:
       vm->sp = sp;
-      diff = clock() - start;
-      vm->execution_time = diff * 1000 / CLOCKS_PER_SEC;
       return true;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));

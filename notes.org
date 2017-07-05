@@ -1,18 +1,19 @@
-* TODO [0/14]
-  1. [ ] test new setup/teardown code
-  2. [ ] 151c-flower - bezier-bulging
-  3. [ ] 154c-stroked-bezier - stroked-bezier-rect
-  4. [ ] 1556-biomorphs - repeat/symmetry-vertical - takes a 'draw' argument
-  5. [ ] 155j-chaotic-grid-2 - focal/point
-  6. [ ] 1560-path - make a function ???
-  7. [ ] 157e-tile-shadow - col/procedural-fn
-  8. [ ] 15fe-rotate-mirror - poly, repeat/rotate-mirrored
-  9. [ ] cleanup memory of parser
-  10. [ ] structs for compile, runtim, performance info
-  11. [ ] seni_env
-  12. [ ] 'in' paramaeter for loop ?
-  13. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  14. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+* TODO [0/15]
+  1. [ ] update int compile_to_render_packets(char *script)
+  2. [ ] test new setup/teardown code
+  3. [ ] 151c-flower - bezier-bulging
+  4. [ ] 154c-stroked-bezier - stroked-bezier-rect
+  5. [ ] 1556-biomorphs - repeat/symmetry-vertical - takes a 'draw' argument
+  6. [ ] 155j-chaotic-grid-2 - focal/point
+  7. [ ] 1560-path - make a function ???
+  8. [ ] 157e-tile-shadow - col/procedural-fn
+  9. [ ] 15fe-rotate-mirror - poly, repeat/rotate-mirrored
+  10. [ ] cleanup memory of parser
+  11. [ ] structs for compile, runtim, performance info
+  12. [ ] seni_env
+  13. [ ] 'in' paramaeter for loop ?
+  14. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  15. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
 
 * wasm - opengl
 

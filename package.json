@@ -9,6 +9,7 @@
     "build": "webpack --progress",
     "build:watch": "webpack --progress --watch",
     "build:min": "webpack --progress --config webpack.config.min.js",
+    "build:wasm": "wa compile -D SENI_GEN_WASM -o app/dist/seni-wasm.wasm app/c/wasm.c -i app/c/seni_bind.c -i app/c/seni_colour.c -i app/c/seni_interp.c -i app/c/seni_lang.c -i app/c/seni_mathutil.c -i app/c/seni_matrix.c -i app/c/seni_prng.c -i app/c/seni_render_packet.c -i app/c/seni_shapes.c -i app/c/seni_uv_mapper.c -I app/c",
     "clean": "rm -rf app/dist",
     "docs": "documentation app/js/index.js -f html -o docs"
   },
@@ -54,6 +55,7 @@
     "eslint-loader": "^1.6.1",
     "mocha": "^3.2.0",
     "mocha-loader": "^1.0.0",
+    "webassembly": "^0.11.0",
     "webpack": "^1.14.0",
     "webpack-dev-server": "^1.16.2"
   }

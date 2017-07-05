@@ -8,7 +8,6 @@
 #include "seni_prng.h"
 #include "seni_interp.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 

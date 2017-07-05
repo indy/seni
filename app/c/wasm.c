@@ -1,4 +1,4 @@
-#include <emscripten/emscripten.h>
+#include <webassembly.h>
 #include <stdlib.h>
 #include "seni_render_packet.h"
 #include "seni_bind.h"
@@ -6,14 +6,12 @@
 #include "seni_shapes.h"
 #include "seni_lang.h"
 
-#include <time.h>
-
 seni_vm *g_vm = NULL;
 seni_word_lut *g_wl = NULL;
 seni_env *g_e = NULL;
 
 // called once at startup
-EMSCRIPTEN_KEEPALIVE
+export
 void seni_startup()
 {
   // build the global identity matrix used by the shape rendering
@@ -32,7 +30,7 @@ void seni_startup()
 }
 
 // called once at shutdown
-EMSCRIPTEN_KEEPALIVE
+export
 void seni_shutdown()
 {
   wlut_free(g_wl);
@@ -44,7 +42,7 @@ void seni_shutdown()
 
 // ------------------------------
 
-EMSCRIPTEN_KEEPALIVE
+export
 int compile_to_render_packets(char *script)
 {
   seni_node *ast = NULL;
@@ -64,18 +62,12 @@ int compile_to_render_packets(char *script)
   vm_reset(g_vm);
   g_vm->render_data = render_data;
 
-  clock_t start, diff;
-  start = clock();
-
   // compile and evaluate
   compiler_compile(ast, prog);
   bool res = vm_interpret(g_vm, prog);
 
   if (res) {
     DEBUG_INFO_PRINT(g_vm);
-    diff = clock() - start;
-    int compile_and_evaluation_time = diff * 1000 / CLOCKS_PER_SEC;
-    printf("compile_and_evaluation_time: %d msec\n", compile_and_evaluation_time);
   }
 
   // cleanup
@@ -88,7 +80,7 @@ int compile_to_render_packets(char *script)
 
 // ------------------------------
 
-EMSCRIPTEN_KEEPALIVE
+export
 int get_render_packet_num_vertices(int packet_number)
 {
   seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
@@ -99,7 +91,7 @@ int get_render_packet_num_vertices(int packet_number)
   return render_packet->num_vertices;
 }
 
-EMSCRIPTEN_KEEPALIVE
+export
 f32 *get_render_packet_vbuf(int packet_number)
 {
   seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
@@ -110,7 +102,7 @@ f32 *get_render_packet_vbuf(int packet_number)
   return render_packet->vbuf;
 }
 
-EMSCRIPTEN_KEEPALIVE
+export
 f32 *get_render_packet_cbuf(int packet_number)
 {
   seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
@@ -121,7 +113,7 @@ f32 *get_render_packet_cbuf(int packet_number)
   return render_packet->cbuf;
 }
 
-EMSCRIPTEN_KEEPALIVE
+export
 f32 *get_render_packet_tbuf(int packet_number)
 {
   seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
@@ -135,7 +127,7 @@ f32 *get_render_packet_tbuf(int packet_number)
 // ------------------------------
 
 // called once by js once it has finished with the render packets and that memory can be free'd
-EMSCRIPTEN_KEEPALIVE
+export
 void script_cleanup()
 {
   vm_free_render_data(g_vm);

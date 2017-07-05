@@ -5,7 +5,6 @@
 #include "seni_render_packet.h"
 #include "seni_keyword_iname.h"
 
-#include <stdio.h>
 #include <math.h>
 
 seni_matrix g_identity;
