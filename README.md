@@ -14,6 +14,7 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 ### Build:
 
 1. `npm run build`
+2. `npm run build:wasm`
 
 ### Test:
 
@@ -22,6 +23,15 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 http://localhost:8080/testBundle
 
 The tests will automatically re-run in the browser whenever the source code changes.
+
+* compiling natively and running tests on Linux/MacOS:
+
+./make/unix.sh
+
+* compiling natively and running tests on Windows
+
+make\win.bat test
+
 
 ### Running
 
@@ -44,38 +54,6 @@ You will need to build a server.exe and add it to the Firewall whitelist in orde
 Keep things simple by using C.
 Avoid C++, even trying to use it as a 'nicer C' results in increased compilation times, obtuse error messages, complicates the build/link commands and reduces platform independance.
 Switch to Rust if you need a better C
-
-
-
-* compiling and testing on Linux/MacOS:
-
-./make/unix.sh
-
-* compiling WebAssembly on Linux/MacOS:
-
-run this once in the console:
-source misc\setup_wasm.sh
-
-then for each compile run:
-./make/unix.sh wasm
-
-test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
-
-
-* compiling for Windows:
-
-setup the paths by running this once in the console:
-misc\setup_win.bat
-
-* compiling and testing on Windows
-
-make\win.bat
-
-* compiling for WebAssembly on Windows:
-
-then for each compile run:
-make\win.bat wasm
-
 
 
 test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly

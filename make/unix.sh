@@ -1,21 +1,13 @@
 #!/bin/bash
 
-if [ "$1" == "wasm" ]; then
+# build for the native platform and run tests
+mkdir build_unix
+pushd build_unix    
+cc -o test -std=c99 ../app/c/test.c ../app/c/unity/unity.c ../app/c/seni_*.c -lm
+popd
 
-    pushd app/dist
-    emcc -o seni-wasm.js ../c/wasm.c ../c/seni_*.c -O3 -s WASM=1
-    popd
-
-else
-
-    # build for the native platform and run tests
-    mkdir build_unix
-    pushd build_unix    
-    cc -o test -std=c99 ../app/c/test.c ../app/c/unity/unity.c ../app/c/seni_*.c -lm
-    popd
-
-    if [ "$1" == "test" ]; then
-        ./build_unix/test
-    fi
-
+if [ "$1" == "test" ]; then
+    ./build_unix/test
 fi
+
+
