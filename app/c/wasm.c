@@ -5,6 +5,10 @@
 #include "seni_uv_mapper.h"
 #include "seni_shapes.h"
 #include "seni_lang.h"
+#include "seni_vm_parser.h"
+#include "seni_vm_compiler.h"
+#include "seni_vm_interpreter.h"
+
 
 #define STRING_BUFFER_SIZE 80000
 char *g_string_buffer;

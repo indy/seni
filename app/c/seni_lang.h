@@ -228,21 +228,19 @@ seni_word_lut *wlut_allocate();
 void           wlut_free(seni_word_lut *wlut);
 void           wlut_reset_words(seni_word_lut *wlut);
   
-// parser
-seni_node     *parser_parse(seni_word_lut *wlut, char *s);
-void           parser_free_nodes(seni_node *nodes);
-
+seni_value_in_use get_value_in_use(seni_var_type type);
+  
 char          *node_type_name(seni_node *node);
 char          *var_type_name(seni_var *var);
 
 seni_var      *stack_peek(seni_vm *vm);
-seni_var      *var_get_from_heap(seni_vm *vm);
-void           var_return_to_heap(seni_vm *vm,  seni_var *var);
 
 seni_vm       *vm_construct(i32 stack_size, i32 heap_size);
 void           vm_reset(seni_vm *vm);
 void           vm_free(seni_vm *vm);
 void           vm_free_render_data(seni_vm *vm);
+
+char          *opcode_name(seni_opcode opcode);
 
 seni_program  *program_allocate(i32 code_max_size);
 void           program_free(seni_program *program);
@@ -251,19 +249,7 @@ void           pretty_print_program(seni_program *program);
 seni_env      *env_construct();
 void           env_free(seni_env *e);
 
-void           compiler_compile(seni_node *ast, seni_program *program);
-bool           vm_interpret(seni_vm *vm, seni_program *program);
-bool           var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
-bool           var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src);
-
 void           pretty_print_seni_var(seni_var *var, char* msg);
-
-void           vector_construct(seni_vm *vm, seni_var *head);
-void           append_to_vector_i32(seni_vm *vm, seni_var *head, i32 val);
-void           append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
-void           append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val);
-void           append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col);
-bool           append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 
 void           f32_as_var(seni_var *out, f32 f);
 void           i32_as_var(seni_var *out, i32 i);

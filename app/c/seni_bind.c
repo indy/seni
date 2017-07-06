@@ -3,6 +3,7 @@
 #include "seni_shapes.h"
 #include "seni_render_packet.h"
 #include "seni_lang.h"
+#include "seni_vm_interpreter.h"
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
 #include "seni_prng.h"
