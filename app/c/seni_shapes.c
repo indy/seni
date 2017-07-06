@@ -500,3 +500,84 @@ void render_stroked_bezier(seni_render_data *render_data,
 }
 
 
+void render_stroked_bezier_rect(seni_render_data *render_data,
+                                seni_matrix *matrix,
+                                f32 *position, f32 width, f32 height, f32 volatility, f32 overlap, f32 iterations,
+                                f32 seed,
+                                i32 tessellation, i32 stroke_tessellation, f32 stroke_noise,
+                                seni_colour *colour, f32 colour_volatility,
+                                i32 brush, i32 brush_subtype)
+{
+  f32 x = position[0];
+  f32 y = position[1];
+
+  f32 x_start = x - (width / 2.0f);
+  f32 y_start = y - (height / 2.0f);
+
+  f32 th_width = width / 3.0f;
+  f32 th_height = height / 3.0f;
+  f32 vol = volatility;
+
+  f32 h_delta = height / iterations;
+  f32 h_strip_width = height / iterations;
+
+  f32 v_delta = width / iterations;
+  f32 v_strip_width = width / iterations;
+
+  seni_colour half_alpha_col;
+  colour_clone_as(&half_alpha_col, colour, LAB);
+  half_alpha_col.element[3] = half_alpha_col.element[3] / 2.0f;
+
+  seni_prng_state prng_state;
+  seni_prng_set_state(&prng_state, (u64)seed); // ???
+
+  i32 i;
+  i32 iiterations = (i32)iterations;
+
+  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 900.0f };
+  f32 stroke_line_width_start = overlap + h_strip_width;
+  f32 stroke_line_width_end = overlap + h_strip_width;
+  
+  for (i = iiterations; i > 0; i--) {
+
+    coords[0] = (seni_prng_f32(&prng_state) * vol) + x_start + (0 * th_width);
+    coords[1] = ((i * h_delta) + (seni_prng_f32(&prng_state) * vol) + y_start);
+
+    coords[2] = (seni_prng_f32(&prng_state) * vol) + x_start + (1 * th_width);
+    coords[3] = ((i * h_delta) + (seni_prng_f32(&prng_state) * vol) + y_start);
+
+    coords[4] = (seni_prng_f32(&prng_state) * vol) + x_start + (2 * th_width);
+    coords[5] = ((i * h_delta) + (seni_prng_f32(&prng_state) * vol) + y_start);
+
+    coords[6] = (seni_prng_f32(&prng_state) * vol) + x_start + (3 * th_width);
+    coords[7] = ((i * h_delta) + (seni_prng_f32(&prng_state) * vol) + y_start);
+
+    render_stroked_bezier(render_data, matrix, coords, &half_alpha_col, tessellation,
+                          stroke_line_width_start, stroke_line_width_end, stroke_noise,
+                          stroke_tessellation, colour_volatility, seni_prng_f32(&prng_state),
+                          INAME_LINEAR, brush, brush_subtype);
+
+  }
+
+  stroke_line_width_start = overlap + v_strip_width;
+  stroke_line_width_end = overlap + v_strip_width;
+  
+  for (i = iiterations; i > 0; i--) {
+    coords[0] = ((i * v_delta) + (seni_prng_f32(&prng_state) * vol) + x_start);
+    coords[1] = (seni_prng_f32(&prng_state) * vol) + y_start + (0 * th_height);
+
+    coords[2] = ((i * v_delta) + (seni_prng_f32(&prng_state) * vol) + x_start);
+    coords[3] = (seni_prng_f32(&prng_state) * vol) + y_start + (1 * th_height);
+
+    coords[4] = ((i * v_delta) + (seni_prng_f32(&prng_state) * vol) + x_start);
+    coords[5] = (seni_prng_f32(&prng_state) * vol) + y_start + (2 * th_height);
+
+    coords[6] = ((i * v_delta) + (seni_prng_f32(&prng_state) * vol) + x_start);
+    coords[7] = (seni_prng_f32(&prng_state) * vol) + y_start + (3 * th_height);
+
+    render_stroked_bezier(render_data, matrix, coords, &half_alpha_col, tessellation,
+                          stroke_line_width_start, stroke_line_width_end, stroke_noise,
+                          stroke_tessellation, colour_volatility, seni_prng_f32(&prng_state),
+                          INAME_LINEAR, brush, brush_subtype);
+  }
+}

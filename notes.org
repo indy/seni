@@ -1,41 +1,33 @@
-* TODO [0/15]
-  1. [ ] update int compile_to_render_packets(char *script)
+* TODO [0/8]
+  1. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
   2. [ ] test new setup/teardown code
-  3. [ ] 151c-flower - bezier-bulging
-  4. [ ] 154c-stroked-bezier - stroked-bezier-rect
-  5. [ ] 1556-biomorphs - repeat/symmetry-vertical - takes a 'draw' argument
-  6. [ ] 155j-chaotic-grid-2 - focal/point
-  7. [ ] 1560-path - make a function ???
-  8. [ ] 157e-tile-shadow - col/procedural-fn
-  9. [ ] 15fe-rotate-mirror - poly, repeat/rotate-mirrored
-  10. [ ] cleanup memory of parser
-  11. [ ] structs for compile, runtim, performance info
-  12. [ ] seni_env
-  13. [ ] 'in' paramaeter for loop ?
-  14. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  15. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-
+  3. [ ] cleanup memory of parser
+  4. [ ] structs for compile, runtim, performance info
+  5. [ ] seni_env
+  6. [ ] 'in' paramaeter for loop ?
+  7. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  8. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
 
 * updating scripts [3/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
-  4. [ ] 14fh-rothko-1.seni
-  5. [ ] 151c-flower.seni
+  4. [ ] 14fh-rothko-1.seni - stroked-bezier-rect
+  5. [ ] 151c-flower.seni - bezier-bulging
   6. [ ] 1531-four-squares.seni
   7. [ ] 154c-stroked-bezier.seni
   8. [ ] 154h-rothko-2.seni
-  9. [ ] 1556-biomorphs.seni
+  9. [ ] 1556-biomorphs.seni - repeat/symmetry-vertical - takes a 'draw' argument
   10. [ ] 155b-spiral-derived.seni
-  11. [ ] 155j-chaotic-grid-2.seni
+  11. [ ] 155j-chaotic-grid-2.seni - focal/point
   12. [ ] 155j-chaotic-grid-3.seni
-  13. [ ] 1560-path.seni
+  13. [ ] 1560-path.seni - make a function ???
   14. [ ] 1565-hex-grid.seni
   15. [ ] 156h-tri-grid.seni
-  16. [ ] 157e-tile-shadow.seni
+  16. [ ] 157e-tile-shadow.seni - col/procedural-fn
   17. [ ] 1580-quilt.seni
   18. [ ] 1585-seeds.seni
-  19. [ ] 15fe-rotate-mirror.seni
+  19. [ ] 15fe-rotate-mirror.seni - poly, repeat/rotate-mirrored
   20. [ ] 15h3-polychrome.seni
   21. [ ] 15h3-rotate-mirror-2.seni
   22. [ ] 15h3-tri-grid.seni

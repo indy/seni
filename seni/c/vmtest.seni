@@ -1,3 +1,35 @@
+
+(stroked-bezier tessellation: 4
+                coords: [[900 500] [600 700] [300 0] [100 500]]
+                stroke-tessellation: 30
+                stroke-noise: 60
+                stroke-line-width-start: 60
+                stroke-line-width-end: 50
+                colour: (col/rgb r: 1.0 g: 0.0 b: 0.2 alpha: 0.8)
+                seed: 446
+                colour-volatility: 60
+                brush: brush-g
+                brush-subtype: 1)
+
+
+(stroked-bezier-rect position: [(/ canvas/width 2) 600]
+                     tessellation: 2
+                     stroke-tessellation: 3
+                     stroke-noise: 130
+                     width: 800 height: 600
+                     colour-volatility: {30 (gen/int min: 0 max: 60)}
+                     colour: (col/rgb r: {0.8 (gen/scalar)}
+                                      g: {0.0 (gen/scalar)}
+                                      b: {0.0 (gen/scalar)}
+                                      alpha: 0.3)
+                     volatility: {9 (gen/int min: 0 max: 100)}
+                     iterations: {90 (gen/int min: 0 max: 100)}
+                     seed: {43 (gen/int min: 0 max: 100)}
+                     overlap: {50.0 (gen/scalar min: 0 max: 5.0)}
+                     brush: brush-e
+                     brush-subtype: 0)
+
+
 (rect position: [500 700] width: 50 height: 50)
 
 (circle radius: 20 position: [500 500] tessellation: 20 colour: (col/rgb r: 0.4 g: 0.0 b: 0.8 alpha: 1.0))

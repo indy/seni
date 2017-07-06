@@ -53,5 +53,11 @@ void render_stroked_bezier(seni_render_data *render_data,
                            i32 stroke_tessellation, f32 colour_volatility, f32 seed,
                            i32 line_width_mapping, i32 brush, i32 brush_subtype);
 
-
+void render_stroked_bezier_rect(seni_render_data *render_data,
+                                seni_matrix *matrix,
+                                f32 *position, f32 width, f32 height, f32 volatility, f32 overlap, f32 iterations,
+                                f32 seed,
+                                i32 tessellation, i32 stroke_tessellation, f32 stroke_noise,
+                                seni_colour *colour, f32 colour_volatility,
+                                i32 brush, i32 brush_subtype);
 #endif

@@ -402,6 +402,8 @@ seni_var *bind_stroked_bezier_rect(seni_vm *vm, i32 num_args)
   seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
   seni_colour *colour = &col;
   f32 colour_volatility = 40.0f;
+  i32 brush = INAME_BRUSH_FLAT;
+  f32 brush_subtype = 0.0f;
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -417,87 +419,17 @@ seni_var *bind_stroked_bezier_rect(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_STROKE_NOISE, stroke_noise);
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARG_F32(INAME_COLOUR_VOLATILITY, colour_volatility);
+  READ_STACK_ARG_I32(INAME_BRUSH, brush);
+  READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
   READ_STACK_ARGS_END;
 
-/*
-  const strokeTessellation = fullParams['stroke-tessellation'];
-  const strokeNoise = fullParams['stroke-noise'];
-  const colourVolatility = fullParams['colour-volatility'];
+  seni_render_data *render_data = vm->render_data;
+  seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  const [x, y] = position;
-
-  const xStart = x - (width / 2);
-  const yStart = y - (height / 2);
-
-  const thWidth = width / 3;
-  const thHeight = height / 3;
-  const vol = volatility;
-
-  const hDelta = height / iterations;
-  const hStripWidth = height / iterations;
-
-  const vDelta = width / iterations;
-  const vStripWidth = width / iterations;
-
-  const halfAlphaCol = Colour.cloneAs(colour, Colour.Format.LAB);
-  const lab = Colour.setAlpha(halfAlphaCol, Colour.getAlpha(halfAlphaCol) / 2);
-
-  const rng = PseudoRandom.buildSigned(seed);
-  let i;
-
-  for (i = iterations; i > 0; i--) {
-    const hParams = {
-      tessellation,
-      'line-width': overlap + hStripWidth,
-      coords: [
-        [(rng() * vol) + xStart + (0 * thWidth),
-         ((i * hDelta) + (rng() * vol) + yStart)],
-        [(rng() * vol) + xStart + (1 * thWidth),
-         ((i * hDelta) + (rng() * vol) + yStart)],
-        [(rng() * vol) + xStart + (2 * thWidth),
-         ((i * hDelta) + (rng() * vol) + yStart)],
-        [(rng() * vol) + xStart + (3 * thWidth),
-         ((i * hDelta) + (rng() * vol) + yStart)]
-      ],
-      'stroke-tessellation': strokeTessellation,
-      'stroke-noise': strokeNoise,
-      colour: lab,
-      'colour-volatility': colourVolatility
-    };
-    renderStrokedBezier(strokedBezierBinding, hParams, renderer);
-  }
-
-  for (i = iterations; i > 0; i--) {
-    const vParams = {
-      tessellation,
-      'line-width': overlap + vStripWidth,
-      coords: [
-        [((i * vDelta) + (rng() * vol) + xStart),
-         (rng() * vol) + yStart + (0 * thHeight)],
-        [((i * vDelta) + (rng() * vol) + xStart),
-         (rng() * vol) + yStart + (1 * thHeight)],
-        [((i * vDelta) + (rng() * vol) + xStart),
-         (rng() * vol) + yStart + (2 * thHeight)],
-        [((i * vDelta) + (rng() * vol) + xStart),
-         (rng() * vol) + yStart + (3 * thHeight)]
-      ],
-      'stroke-tessellation': strokeTessellation,
-      'stroke-noise': strokeNoise,
-      colour: lab,
-      'colour-volatility': colourVolatility
-    };
-    renderStrokedBezier(strokedBezierBinding, vParams, renderer);
-*/
-
-
-
-  // seni_render_data *render_data = vm->render_data;
-  // seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
-
-  // render_bezier(render_data, matrix,
-  //               coords, line_width_start, line_width_end, line_width_mapping,
-  //               t_start, t_end, colour, (i32)tessellation, brush, (i32)brush_subtype);
-
+  render_stroked_bezier_rect(render_data, matrix,
+                             position, width, height, volatility, overlap, iterations, seed,
+                             (i32)tessellation, (i32)stroke_tessellation, stroke_noise, colour, colour_volatility,
+                             brush, (i32)brush_subtype);
 
   return &g_var_true;
 }
