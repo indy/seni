@@ -16,10 +16,10 @@
   15. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
 
 
-* updating scripts [0/57]
-  1. [ ] 14ef-blur-grid.seni
-  2. [ ] 14eg-marker-grid.seni
-  3. [ ] 14eh-chaotic-grid.seni
+* updating scripts [3/57]
+  1. [X] 14ef-blur-grid.seni
+  2. [X] 14eg-marker-grid.seni
+  3. [X] 14eh-chaotic-grid.seni
   4. [ ] 14fh-rothko-1.seni
   5. [ ] 151c-flower.seni
   6. [ ] 1531-four-squares.seni

@@ -1,5 +1,7 @@
 [
-  {"id":57,"name":"c/14eg-marker-grid","image":"img/seni/blank.png"},
+  {"id":59,"name":"c/14fh-rothko-1","image":"img/seni/14fh-rothko-1.png"},    
+  {"id":58,"name":"c/14eh-chaotic-grid","image":"img/seni/14eh-chaotic-grid.png"},
+  {"id":57,"name":"c/14eg-marker-grid","image":"img/seni/14eg-marker-grid.png"},
   {"id":56,"name":"c/14ef-blur-grid","image":"img/seni/14ef-blur-grid.png"},
   {"id":55,"name":"1643-paren","image":"img/seni/1643-paren.png"},
   {"id":54,"name":"1643-thorn","image":"img/seni/1643-thorn.png"},
