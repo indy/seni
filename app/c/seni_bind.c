@@ -380,7 +380,7 @@ seni_var *bind_col_rgb(seni_vm *vm, i32 num_args)
   f32 r = 0.0f;                 // 0..1
   f32 g = 0.0f;                 // 0..1
   f32 b = 0.0f;                 // 0..1
-  f32 alpha = 0.0f;             // 0..1
+  f32 alpha = 1.0f;             // 0..1
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -410,7 +410,7 @@ seni_var *bind_col_hsl(seni_vm *vm, i32 num_args)
   f32 h = 0.0f;                 // 0..360
   f32 s = 0.0f;                 // 0..1
   f32 l = 0.0f;                 // 0..1
-  f32 alpha = 0.0f;             // 0..1
+  f32 alpha = 1.0f;             // 0..1
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -439,7 +439,7 @@ seni_var *bind_col_hsv(seni_vm *vm, i32 num_args)
   f32 h = 0.0f;                 // 0..360
   f32 s = 0.0f;                 // 0..1
   f32 v = 0.0f;                 // 0..1
-  f32 alpha = 0.0f;             // 0..1
+  f32 alpha = 1.0f;             // 0..1
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -468,7 +468,7 @@ seni_var *bind_col_lab(seni_vm *vm, i32 num_args)
   f32 l = 0.0f;                 // 0..
   f32 a = 0.0f;                 // -1..1
   f32 b = 0.0f;                 // -1..1
-  f32 alpha = 0.0f;             // 0..1
+  f32 alpha = 1.0f;             // 0..1
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
