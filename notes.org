@@ -15,54 +15,65 @@
   14. [ ] remove hsv colour space? - would this get rid of the illegal state?
   15. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
 
-* wasm - opengl
 
-  main issue is that the c-side should be allocating memory for the rendering. this will enable the renderpacket method 
-
-  options are:
-  a. call js from c, passing in the pointers to the vertex data. js side renders with OpenGL
-  b. call OpenGL from c
-
-  with a:
-  render the vertices (compile+run code)
-  then later on the js-side will call a 'render-to-opengl' method on the c-side
-  the c-side will call a 'render-render-packets' function on the js-side multiple times
-  
-  with b:
-  pass in a canvas to c-side, let something initialise an opengGL context
-  render the vertices (compile+run code)
-  js-side will call a 'render-to-opengl' method and we're done
-
-  how will b work in a web-worker situation? - can the gl context be shared? could the vertex data from one c-side web-worker be transferred for use in the c-side of a worker that has the gl context?
-  
-
-* first class functions / ghetto-equivalents
-  don't know how to implement closures in a stack vm
-  SECD machines? lua implementation?
-
-  could hack in a prng/range equivalent:
-  store a vector containing seed+inc+min+max
-
-  replacing old (prng/range seed: 1 min: 0 max: 100) with (prng/build seed: 1 min: 0 max: 100)
-  replace code like (take num: 3 from: rng) with (prng/take num: 3 from: rng)
-  replace code like (rng) with (prng/take-1 from: rng)
-
-  without first class functions how will code like take work?
-
-  'map' could work if it's limited to functions that are defined at the top-level of the script
-
-  'interp/fn' could return a structure similar to the prng/range workaround
-  so rather than (define foo (interp/fn from: [0 1] to: [123 345])) (foo val: 42)
-  we'd have      (define foo (interp/build from: [0 1] to: [123 345])) (interp use: foo val: 42)
-
-  have some sort of 'invoke' function/special form
-  e.g. (invoke (address-of draw-fn) a: 4 b: 5)
-  with the restriction that it can only invoke top-level functions
-  and address-of returns the value.i of the given name
-
-  'path/bezier' : ??? (e.g. 1560-path.seni)
-  1638-night.seni : impossible?
-
+* updating scripts [0/57]
+  1. [ ] 14ef-blur-grid.seni
+  2. [ ] 14eg-marker-grid.seni
+  3. [ ] 14eh-chaotic-grid.seni
+  4. [ ] 14fh-rothko-1.seni
+  5. [ ] 151c-flower.seni
+  6. [ ] 1531-four-squares.seni
+  7. [ ] 154c-stroked-bezier.seni
+  8. [ ] 154h-rothko-2.seni
+  9. [ ] 1556-biomorphs.seni
+  10. [ ] 155b-spiral-derived.seni
+  11. [ ] 155j-chaotic-grid-2.seni
+  12. [ ] 155j-chaotic-grid-3.seni
+  13. [ ] 1560-path.seni
+  14. [ ] 1565-hex-grid.seni
+  15. [ ] 156h-tri-grid.seni
+  16. [ ] 157e-tile-shadow.seni
+  17. [ ] 1580-quilt.seni
+  18. [ ] 1585-seeds.seni
+  19. [ ] 15fe-rotate-mirror.seni
+  20. [ ] 15h3-polychrome.seni
+  21. [ ] 15h3-rotate-mirror-2.seni
+  22. [ ] 15h3-tri-grid.seni
+  23. [ ] 15h4-chromatic-layers-1.seni
+  24. [ ] 15h4-chromatic-layers-2.seni
+  25. [ ] 15h4-chromatic-layers-3.seni
+  26. [ ] 15h4-mirror-layers.seni
+  27. [ ] 15h4-rotate-mirror.seni
+  28. [ ] 15he-cos-1.seni
+  29. [ ] 15he-cos-2.seni
+  30. [ ] 15he-cos-3.seni
+  31. [ ] 15he-mirror-layers.seni
+  32. [ ] 15he-rotate-mirror.seni
+  33. [ ] 160c-schotter.seni
+  34. [ ] 161g-grid-flow.seni
+  35. [ ] 161j-trump.seni
+  36. [ ] 1626-embers.seni
+  37. [ ] 1626-orchid.seni
+  38. [ ] 162e-alien.seni
+  39. [ ] 162e-mask.seni
+  40. [ ] 162e-slice.seni
+  41. [ ] 162e-star.seni
+  42. [ ] 162e-x.seni
+  43. [ ] 1632-star.seni
+  44. [ ] 1633-dune.seni
+  45. [ ] 1633-orchid.seni
+  46. [ ] 1633-petal.seni
+  47. [ ] 1634-cryst.seni
+  48. [ ] 1638-night.seni
+  49. [ ] 163a-scale-green.seni
+  50. [ ] 1642-book-stack.seni
+  51. [ ] 1642-stacks.seni
+  52. [ ] 1643-hyp.seni
+  53. [ ] 1643-paren.seni
+  54. [ ] 1643-rose.seni
+  55. [ ] 1643-thorn.seni
+  56. [ ] 1648-chalk-boxes.seni
+  57. [ ] 1669-zero.seni
 
 * seni_env
 
@@ -332,54 +343,6 @@ In other architectures, the instruction pointer is sometimes called the "program
 
  python ../../libuv.py download
  python ../../libuv.py build -32
-
-* timings
-
-<2017-05-07 Sun>
-
-A. full run but with SUB popping the stack
-
-Eval Time taken 2 seconds 568 milliseconds
-VM Time taken 2 seconds 986 milliseconds
-
-
---------------------------------------------------------------------------------
-
-B. early return from vm_interpret
-
-Eval Time taken 2 seconds 568 milliseconds
-VM Time taken 0 seconds 0 milliseconds
-
---------------------------------------------------------------------------------
-
-C. replacing safe_var_move with simpler dest.value.i = src.value.i
-
-Eval Time taken 2 seconds 570 milliseconds
-VM Time taken 2 seconds 945 milliseconds
-
---------------------------------------------------------------------------------
-
-D. keeping a local variable indicating stack position and doing simple pointer increment/decrements
-
-Eval Time taken 2 seconds 568 milliseconds
-VM Time taken 1 seconds 552 milliseconds
-
---------------------------------------------------------------------------------
-
-E. C + D
-
-Eval Time taken 2 seconds 568 milliseconds
-VM Time taken 1 seconds 502 milliseconds
-
---------------------------------------------------------------------------------
-
-F. D + using 'register' keyword on commonly accessed variables in interpreter loop
-
-Eval Time taken 2 seconds 665 milliseconds
-VM Time taken 0 seconds 759 milliseconds
-
-(/ 2665.0 759)
-3.5111989459815547
 
 * looking up arguments during bytecode execution
 
