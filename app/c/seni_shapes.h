@@ -26,6 +26,16 @@ void render_circle(seni_render_data *render_data,
                    f32 width, f32 height,
                    seni_colour *colour,
                    i32 tessellation);
+
+void render_quadratic(seni_render_data *render_data,
+                      seni_matrix *matrix,
+                      f32 *coords,
+                      f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
+                      f32 t_start, f32 t_end,
+                      seni_colour *colour,
+                      i32 tessellation,
+                      i32 brush, i32 brush_subtype);
+
 void render_bezier(seni_render_data *render_data,
                    seni_matrix *matrix,
                    f32 *coords,
@@ -34,5 +44,14 @@ void render_bezier(seni_render_data *render_data,
                    seni_colour *colour,
                    i32 tessellation,
                    i32 brush, i32 brush_subtype);
+
+void render_stroked_bezier(seni_render_data *render_data,
+                           seni_matrix *matrix,
+                           f32 *coords,
+                           seni_colour *colour, i32 tessellation,
+                           f32 stroke_line_width_start, f32 stroke_line_width_end, f32 stroke_noise,
+                           i32 stroke_tessellation, f32 colour_volatility, f32 seed,
+                           i32 line_width_mapping, i32 brush, i32 brush_subtype);
+
 
 #endif

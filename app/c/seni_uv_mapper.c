@@ -43,7 +43,7 @@ void init_uv_mapper()
   num_uv_mappings[BRUSH_F] = 1;
   num_uv_mappings[BRUSH_G] = 2;
 
-  for (i32 i=BRUSH_FLAT; i < NUM_BRUSHES; i++) {
+  for (i32 i = BRUSH_FLAT; i < NUM_BRUSHES; i++) {
     g_brush_info[i] = (seni_uv_mapping *)malloc(num_uv_mappings[i] * sizeof(seni_uv_mapping));
   }
 

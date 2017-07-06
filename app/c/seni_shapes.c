@@ -4,6 +4,8 @@
 #include "seni_mathutil.h"
 #include "seni_render_packet.h"
 #include "seni_keyword_iname.h"
+#include "seni_colour.h"
+#include "seni_prng.h"
 
 #include <math.h>
 
@@ -184,6 +186,134 @@ void render_circle(seni_render_data *render_data,
   add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, uv);
 }
 
+void render_quadratic(seni_render_data *render_data,
+                      seni_matrix *matrix,
+                      f32 *coords,
+                      f32 line_width_start, f32 line_width_end, i32 line_width_mapping,
+                      f32 t_start, f32 t_end,
+                      seni_colour *colour,
+                      i32 tessellation,
+                      i32 brush, i32 brush_subtype)
+{
+  // get the uv co-ordinates for the specified brush
+  //
+  seni_brush_type brush_type = (seni_brush_type)(brush - INAME_BRUSH_FLAT);
+  seni_uv_mapping *uv = get_uv_mapping(brush_type, brush_subtype, true);
+  v2 uv_a = uv->map[0];
+  v2 uv_b = uv->map[1];
+  v2 uv_c = uv->map[2];
+  v2 uv_d = uv->map[3];
+
+  // modify the width so that the brush textures provide good coverage
+  //
+  line_width_start *= uv->width_scale;
+  line_width_end *= uv->width_scale;
+
+  // variables for interpolating the curve's width
+  //
+  f32 half_width_start = line_width_start / 2.0f;
+  f32 half_width_end = line_width_end / 2.0f;
+  f32 from_m = mc_m(t_start, 0.0f, t_end, 1.0f);
+  f32 from_c = mc_c(t_start, 0.0f, from_m);
+  f32 to_m = mc_m(0.0f, half_width_start, 1.0f, half_width_end);
+  f32 to_c = mc_c(0.0f, half_width_start, to_m);
+  f32 from_interp, to_interp, half_width;
+
+  f32 x0 = coords[0], x1 = coords[2], x2 = coords[4];
+  f32 y0 = coords[1], y1 = coords[3], y2 = coords[5];
+  f32 xs, ys, xs_next, ys_next;
+  v2 n1, n2, v_1, v_2;
+ 
+  i32 i;
+  f32 unit = (t_end - t_start) / (tessellation - 1.0f);
+  f32 t_val, t_val_next;
+
+  f32 tex_t = 1.0f / tessellation;
+  f32 uv_t;
+  v2 t_uv;
+
+  // vertex colours have to be in rgb space
+  seni_colour *rgb, rgb_colour;
+  if (colour->format == RGB) {
+    rgb = colour;
+  } else {
+    colour_clone_as(&rgb_colour, colour, RGB);
+    rgb = &rgb_colour;
+  }
+  
+  for (i = 0; i < tessellation - 1; i++) {
+    t_val = t_start + ((f32)i * unit);
+    t_val_next = t_start + ((f32)(i + 1) * unit);
+
+    xs = quadratic_point(x0, x1, x2, t_val);
+    ys = quadratic_point(y0, y1, y2, t_val);
+    xs_next = quadratic_point(x0, x1, x2, t_val_next);
+    ys_next = quadratic_point(y0, y1, y2, t_val_next);
+
+    // addVerticesAsStrip
+    n1 = normal(xs, ys, xs_next, ys_next);
+    n2 = opposite_normal(n1);
+    
+    from_interp = (from_m * t_val) + from_c;
+    switch(line_width_mapping) {
+    case INAME_QUICK:
+      to_interp = map_quick_ease(from_interp);
+      break;
+    case INAME_SLOW_IN:
+      to_interp = map_slow_ease_in(from_interp);
+      break;
+    case INAME_SLOW_IN_OUT:
+      to_interp = map_slow_ease_in_ease_out(from_interp);
+      break;
+    default:
+      to_interp = from_interp;    // default behaviour as though 'linear' was chosen
+    }
+
+    half_width = (to_m * to_interp) + to_c;
+
+    v_1.x = (n1.x * half_width) + xs;
+    v_1.y = (n1.y * half_width) + ys;
+    v_2.x = (n2.x * half_width) + xs;
+    v_2.y = (n2.y * half_width) + ys;
+
+    if (i == 0) {
+      prepare_to_add_triangle_strip(render_data, matrix, tessellation * 2, v_1.x, v_1.y);
+    }
+
+    uv_t = tex_t * (f32)i;
+
+    t_uv.x = lerp(uv_t, uv_b.x, uv_d.x);
+    t_uv.y = lerp(uv_t, uv_b.y, uv_d.y);
+    add_vertex(render_data->current_render_packet, matrix, v_1.x, v_1.y, rgb, t_uv);
+
+    t_uv.x = lerp(uv_t, uv_a.x, uv_c.x);
+    t_uv.y = lerp(uv_t, uv_a.y, uv_c.y);
+    add_vertex(render_data->current_render_packet, matrix, v_2.x, v_2.y, rgb, t_uv);
+  }
+
+  // final 2 vertices for the end point
+  i = tessellation - 2;
+
+  t_val = t_start + ((f32)i * unit);
+  t_val_next = t_start + ((f32)(i + 1) * unit);
+
+  xs = quadratic_point(x0, x1, x2, t_val);
+  ys = quadratic_point(y0, y1, y2, t_val);
+  xs_next = quadratic_point(x0, x1, x2, t_val_next);
+  ys_next = quadratic_point(y0, y1, y2, t_val_next);
+
+  n1 = normal(xs, ys, xs_next, ys_next);
+  n2 = opposite_normal(n1);
+
+  v_1.x = (n1.x * half_width_end) + xs_next;
+  v_1.y = (n1.y * half_width_end) + ys_next;
+  v_2.x = (n2.x * half_width_end) + xs_next;
+  v_2.y = (n2.y * half_width_end) + ys_next;
+
+  add_vertex(render_data->current_render_packet, matrix, v_1.x, v_1.y, rgb, uv_d);
+  add_vertex(render_data->current_render_packet, matrix, v_2.x, v_2.y, rgb, uv_c);
+}
+
 void render_bezier(seni_render_data *render_data,
                    seni_matrix *matrix,
                    f32 *coords,
@@ -311,4 +441,62 @@ void render_bezier(seni_render_data *render_data,
   add_vertex(render_data->current_render_packet, matrix, v_1.x, v_1.y, rgb, uv_d);
   add_vertex(render_data->current_render_packet, matrix, v_2.x, v_2.y, rgb, uv_c);
 }
+
+
+void render_stroked_bezier(seni_render_data *render_data,
+                           seni_matrix *matrix,
+                           f32 *coords,
+                           seni_colour *colour, i32 tessellation,
+                           f32 stroke_line_width_start, f32 stroke_line_width_end, f32 stroke_noise,
+                           i32 stroke_tessellation, f32 colour_volatility, f32 seed,
+                           i32 line_width_mapping, i32 brush, i32 brush_subtype)
+{
+  f32 x1 = coords[0], x2 = coords[2], x3 = coords[4], x4 = coords[6];
+  f32 y1 = coords[1], y2 = coords[3], y3 = coords[5], y4 = coords[7];
+
+  i32 si_num = tessellation + 2;
+  f32 si_unit = 1.0f / (f32)(si_num - 1);
+
+  seni_colour lab;
+  colour_clone_as(&lab, colour, LAB);
+  f32 lab_l = lab.element[0];
+
+  f32 tvals0, tvals1, tvals2;
+  f32 xx1, xx2, xx3;
+  f32 yy1, yy2, yy3;
+  f32 ns;
+  f32 quad_coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f };
+
+  for (i32 i = 0; i < tessellation; i++) {
+    tvals0 = (i + 0) * si_unit;
+    tvals1 = (i + 1) * si_unit;
+    tvals2 = (i + 2) * si_unit;
+    
+    // get 3 points on the bezier curve
+    xx1 = bezier_point(x1, x2, x3, x4, tvals0);
+    xx2 = bezier_point(x1, x2, x3, x4, tvals1);
+    xx3 = bezier_point(x1, x2, x3, x4, tvals2);
+
+    yy1 = bezier_point(y1, y2, y3, y4, tvals0);
+    yy2 = bezier_point(y1, y2, y3, y4, tvals1);
+    yy3 = bezier_point(y1, y2, y3, y4, tvals2);
+
+    ns = stroke_noise;
+
+    lab.element[0] = lab_l + (seni_perlin(xx1, xx1, xx1) * colour_volatility);
+      
+    quad_coords[0] = xx1 + (ns * seni_perlin(xx1, xx1, seed));
+    quad_coords[1] = yy1 + (ns * seni_perlin(yy1, yy1, seed));
+    quad_coords[2] = xx2 + (ns * seni_perlin(xx2, xx1, seed));
+    quad_coords[3] = yy2 + (ns * seni_perlin(yy2, yy1, seed));
+    quad_coords[4] = xx3 + (ns * seni_perlin(xx3, xx1, seed));
+    quad_coords[5] = yy3 + (ns * seni_perlin(yy3, yy1, seed));
+
+      
+    render_quadratic(render_data, matrix, quad_coords,
+                     stroke_line_width_start, stroke_line_width_end, line_width_mapping,
+                     0.0f, 1.0f, &lab, stroke_tessellation, brush, brush_subtype);
+  }
+}
+
 

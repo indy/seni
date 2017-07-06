@@ -336,6 +336,172 @@ seni_var *bind_bezier(seni_vm *vm, i32 num_args)
   return &g_var_true;
 }
 
+seni_var *bind_stroked_bezier(seni_vm *vm, i32 num_args)
+{
+  // default values for stroked-bezier
+  f32 tessellation = 15.0f;
+  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
+  f32 stroke_tessellation = 10.0f;
+  f32 stroke_noise = 25;
+  f32 stroke_line_width_start = 1.0f;
+  f32 stroke_line_width_end = 1.0f;
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+  f32 colour_volatility = 0.0f;
+  f32 seed = 0.0f;
+
+  i32 line_width_mapping = INAME_LINEAR;
+  i32 brush = INAME_BRUSH_FLAT;
+  f32 brush_subtype = 0.0f;
+    
+
+  // line_width_mapping will be one of several constants
+  
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_TESSELLATION, tessellation);
+  READ_STACK_ARG_COORD4(INAME_COORDS, coords);
+  READ_STACK_ARG_F32(INAME_STROKE_TESSELLATION, stroke_tessellation);
+  READ_STACK_ARG_F32(INAME_STROKE_NOISE, stroke_noise);
+  READ_STACK_ARG_F32(INAME_STROKE_LINE_WIDTH_START, stroke_line_width_start);
+  READ_STACK_ARG_F32(INAME_STROKE_LINE_WIDTH_END, stroke_line_width_end);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_COLOUR_VOLATILITY, colour_volatility);
+  READ_STACK_ARG_F32(INAME_SEED, seed);
+  READ_STACK_ARG_I32(INAME_LINE_WIDTH_MAPPING, line_width_mapping);
+  READ_STACK_ARG_I32(INAME_BRUSH, brush);
+  READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
+  READ_STACK_ARGS_END;
+
+  seni_render_data *render_data = vm->render_data;
+  seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
+
+  render_stroked_bezier(render_data, matrix,
+                        coords, colour, (i32)tessellation,
+                        stroke_line_width_start, stroke_line_width_end, stroke_noise, (i32)stroke_tessellation,
+                        colour_volatility, seed,
+                        line_width_mapping, brush, (i32)brush_subtype);
+
+
+  return &g_var_true;
+}
+
+seni_var *bind_stroked_bezier_rect(seni_vm *vm, i32 num_args)
+{
+  // default values for stroked-bezier-rect
+  f32 position[] = {100.0f, 100.0f};
+  f32 width = 800.0f;
+  f32 height = 600.0f;
+  f32 volatility = 30.0f;
+  f32 overlap = 0.0f;
+  f32 iterations = 10.0f;
+  f32 seed = 0.0f;
+  f32 tessellation = 15;
+  f32 stroke_tessellation = 10.0f;
+  f32 stroke_noise = 25;
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+  f32 colour_volatility = 40.0f;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(INAME_POSITION, position);
+  READ_STACK_ARG_F32(INAME_WIDTH, width);
+  READ_STACK_ARG_F32(INAME_HEIGHT, height);
+  READ_STACK_ARG_F32(INAME_VOLATILITY, volatility);
+  READ_STACK_ARG_F32(INAME_OVERLAP, overlap);
+  READ_STACK_ARG_F32(INAME_ITERATIONS, iterations);
+  READ_STACK_ARG_F32(INAME_SEED, seed);
+  READ_STACK_ARG_F32(INAME_TESSELLATION, tessellation);
+  READ_STACK_ARG_F32(INAME_STROKE_TESSELLATION, stroke_tessellation);
+  READ_STACK_ARG_F32(INAME_STROKE_NOISE, stroke_noise);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_COLOUR_VOLATILITY, colour_volatility);
+  READ_STACK_ARGS_END;
+
+/*
+  const strokeTessellation = fullParams['stroke-tessellation'];
+  const strokeNoise = fullParams['stroke-noise'];
+  const colourVolatility = fullParams['colour-volatility'];
+
+  const [x, y] = position;
+
+  const xStart = x - (width / 2);
+  const yStart = y - (height / 2);
+
+  const thWidth = width / 3;
+  const thHeight = height / 3;
+  const vol = volatility;
+
+  const hDelta = height / iterations;
+  const hStripWidth = height / iterations;
+
+  const vDelta = width / iterations;
+  const vStripWidth = width / iterations;
+
+  const halfAlphaCol = Colour.cloneAs(colour, Colour.Format.LAB);
+  const lab = Colour.setAlpha(halfAlphaCol, Colour.getAlpha(halfAlphaCol) / 2);
+
+  const rng = PseudoRandom.buildSigned(seed);
+  let i;
+
+  for (i = iterations; i > 0; i--) {
+    const hParams = {
+      tessellation,
+      'line-width': overlap + hStripWidth,
+      coords: [
+        [(rng() * vol) + xStart + (0 * thWidth),
+         ((i * hDelta) + (rng() * vol) + yStart)],
+        [(rng() * vol) + xStart + (1 * thWidth),
+         ((i * hDelta) + (rng() * vol) + yStart)],
+        [(rng() * vol) + xStart + (2 * thWidth),
+         ((i * hDelta) + (rng() * vol) + yStart)],
+        [(rng() * vol) + xStart + (3 * thWidth),
+         ((i * hDelta) + (rng() * vol) + yStart)]
+      ],
+      'stroke-tessellation': strokeTessellation,
+      'stroke-noise': strokeNoise,
+      colour: lab,
+      'colour-volatility': colourVolatility
+    };
+    renderStrokedBezier(strokedBezierBinding, hParams, renderer);
+  }
+
+  for (i = iterations; i > 0; i--) {
+    const vParams = {
+      tessellation,
+      'line-width': overlap + vStripWidth,
+      coords: [
+        [((i * vDelta) + (rng() * vol) + xStart),
+         (rng() * vol) + yStart + (0 * thHeight)],
+        [((i * vDelta) + (rng() * vol) + xStart),
+         (rng() * vol) + yStart + (1 * thHeight)],
+        [((i * vDelta) + (rng() * vol) + xStart),
+         (rng() * vol) + yStart + (2 * thHeight)],
+        [((i * vDelta) + (rng() * vol) + xStart),
+         (rng() * vol) + yStart + (3 * thHeight)]
+      ],
+      'stroke-tessellation': strokeTessellation,
+      'stroke-noise': strokeNoise,
+      colour: lab,
+      'colour-volatility': colourVolatility
+    };
+    renderStrokedBezier(strokedBezierBinding, vParams, renderer);
+*/
+
+
+
+  // seni_render_data *render_data = vm->render_data;
+  // seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
+
+  // render_bezier(render_data, matrix,
+  //               coords, line_width_start, line_width_end, line_width_mapping,
+  //               t_start, t_end, colour, (i32)tessellation, brush, (i32)brush_subtype);
+
+
+  return &g_var_true;
+}
+
 seni_var *bind_col_convert(seni_vm *vm, i32 num_args)
 {
   // (col/convert colour: col format: LAB)
@@ -1186,6 +1352,8 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "rect", &bind_rect);
   declare_native(wlut, e, "circle", &bind_circle);
   declare_native(wlut, e, "bezier", &bind_bezier);
+  declare_native(wlut, e, "stroked-bezier", &bind_stroked_bezier);
+  declare_native(wlut, e, "stroked-bezier-rect", &bind_stroked_bezier_rect);
 
   declare_native(wlut, e, "translate", &bind_translate);
   declare_native(wlut, e, "rotate", &bind_rotate);
