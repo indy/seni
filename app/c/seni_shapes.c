@@ -516,7 +516,7 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
 
   f32 th_width = width / 3.0f;
   f32 th_height = height / 3.0f;
-  f32 vol = volatility;
+  f32 vol = volatility;  
 
   f32 h_delta = height / iterations;
   f32 h_strip_width = height / iterations;
@@ -529,7 +529,7 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
   half_alpha_col.element[3] = half_alpha_col.element[3] / 2.0f;
 
   seni_prng_state prng_state;
-  seni_prng_set_state(&prng_state, (u64)seed); // ???
+  seni_prng_set_state(&prng_state, (u64)seed);
 
   i32 i;
   i32 iiterations = (i32)iterations;
@@ -537,20 +537,25 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
   f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 900.0f };
   f32 stroke_line_width_start = overlap + h_strip_width;
   f32 stroke_line_width_end = overlap + h_strip_width;
-  
+  f32 stroke_line_half_width = stroke_line_width_start / 2.0f;
+
+  // horizontal strokes
+  //
+  f32 h;
   for (i = iiterations; i > 0; i--) {
+    h = (i * h_delta) + y_start - stroke_line_half_width;
+    
+    coords[0] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start + (0 * th_width);
+    coords[1] = h + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
 
-    coords[0] = (seni_prng_f32(&prng_state) * vol) + x_start + (0 * th_width);
-    coords[1] = ((i * h_delta) + (seni_prng_f32(&prng_state) * vol) + y_start);
+    coords[2] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start + (1 * th_width);
+    coords[3] = h + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
 
-    coords[2] = (seni_prng_f32(&prng_state) * vol) + x_start + (1 * th_width);
-    coords[3] = ((i * h_delta) + (seni_prng_f32(&prng_state) * vol) + y_start);
+    coords[4] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start + (2 * th_width);
+    coords[5] = h + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
 
-    coords[4] = (seni_prng_f32(&prng_state) * vol) + x_start + (2 * th_width);
-    coords[5] = ((i * h_delta) + (seni_prng_f32(&prng_state) * vol) + y_start);
-
-    coords[6] = (seni_prng_f32(&prng_state) * vol) + x_start + (3 * th_width);
-    coords[7] = ((i * h_delta) + (seni_prng_f32(&prng_state) * vol) + y_start);
+    coords[6] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start + (3 * th_width);
+    coords[7] = h + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
 
     render_stroked_bezier(render_data, matrix, coords, &half_alpha_col, tessellation,
                           stroke_line_width_start, stroke_line_width_end, stroke_noise,
@@ -558,26 +563,32 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
                           INAME_LINEAR, brush, brush_subtype);
 
   }
+
 
   stroke_line_width_start = overlap + v_strip_width;
   stroke_line_width_end = overlap + v_strip_width;
-  
+  stroke_line_half_width = stroke_line_width_start / 2.0f;
+
+  f32 v;
   for (i = iiterations; i > 0; i--) {
-    coords[0] = ((i * v_delta) + (seni_prng_f32(&prng_state) * vol) + x_start);
-    coords[1] = (seni_prng_f32(&prng_state) * vol) + y_start + (0 * th_height);
+    v = (i * v_delta) + x_start - stroke_line_half_width;
+    
+    coords[0] = v + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
+    coords[1] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (0 * th_height);
 
-    coords[2] = ((i * v_delta) + (seni_prng_f32(&prng_state) * vol) + x_start);
-    coords[3] = (seni_prng_f32(&prng_state) * vol) + y_start + (1 * th_height);
+    coords[2] = v + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
+    coords[3] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (1 * th_height);
 
-    coords[4] = ((i * v_delta) + (seni_prng_f32(&prng_state) * vol) + x_start);
-    coords[5] = (seni_prng_f32(&prng_state) * vol) + y_start + (2 * th_height);
+    coords[4] = v + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
+    coords[5] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (2 * th_height);
 
-    coords[6] = ((i * v_delta) + (seni_prng_f32(&prng_state) * vol) + x_start);
-    coords[7] = (seni_prng_f32(&prng_state) * vol) + y_start + (3 * th_height);
+    coords[6] = v + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
+    coords[7] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (3 * th_height);
 
     render_stroked_bezier(render_data, matrix, coords, &half_alpha_col, tessellation,
                           stroke_line_width_start, stroke_line_width_end, stroke_noise,
                           stroke_tessellation, colour_volatility, seni_prng_f32(&prng_state),
                           INAME_LINEAR, brush, brush_subtype);
   }
+
 }
