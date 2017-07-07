@@ -1,0 +1,28 @@
+(rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+      width: canvas/width
+      height: canvas/height
+      colour: (col/rgb r: 0 g: 0 b: 0 alpha: 1))
+
+(translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+(rotate angle: 90)
+
+(stroked-bezier-rect position: [0 0]
+                     width: {900 (gen/int min: 500 max: canvas/width)}
+                     height: {900 (gen/int min: 500 max: canvas/height)}
+
+                     iterations: {42 (gen/int min: 5 max: 100)}
+                     overlap: {15 (gen/int min: 0 max: 50)}
+
+                     tessellation: {45 (gen/int min: 4 max: 90)}
+
+                     stroke-tessellation: {5 (gen/int min: 3 max: 20)}
+                     stroke-noise: {50 (gen/int min: 0 max: 100)}
+
+                     colour: (col/rgb r: {0.2 (gen/scalar max: 0.3)} 
+                                      g: {0.0 (gen/scalar max: 0.3)} 
+                                      b: {0.1 (gen/scalar max: 0.3)} 
+                                      alpha: 0.9)
+                     colour-volatility: {100 (gen/int min: 0 max: 140)}
+
+                     volatility: {1 (gen/int min: 0 max: 50)}
+                     seed: {43 (gen/int min: 0 max: 3433)})
