@@ -801,7 +801,7 @@ void test_prng(void)
 
 void test_vm_temp(void)
 {
-  //VM_COMPILE_F32("(fn (k) (+ 9 8)) (line colour: k)", 5.0f);
+  VM_COMPILE_F32("(fn (k) (+ 9 8)) (k)", 15.0f);
 }
 
 
@@ -810,7 +810,7 @@ int main(void)
   // timing();
 
   if (INAME_NUMBER_OF_KNOWN_WORDS >= NATIVE_START) {
-    printf("WARNING: keywords are overwriting into NATIVE_START area\n");
+    SENI_LOG("WARNING: keywords are overwriting into NATIVE_START area");
   }
     
   UNITY_BEGIN();
@@ -818,29 +818,29 @@ int main(void)
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   //RUN_TEST(test_prng);
 
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_parser);
-  RUN_TEST(test_uv_mapper);
-  RUN_TEST(test_colour);
-  RUN_TEST(test_strtof);
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_parser);
+  // RUN_TEST(test_uv_mapper);
+  // RUN_TEST(test_colour);
+  // RUN_TEST(test_strtof);
   
-  // vm
-  RUN_TEST(test_vm_bugs);
-  RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_callret);
-  RUN_TEST(test_vm_native);  
-  RUN_TEST(test_vm_destructure);
-  RUN_TEST(test_vm_2d);
-  RUN_TEST(test_vm_vector);
-  RUN_TEST(test_vm_col_rgb);
-  RUN_TEST(test_vm_math);
-  RUN_TEST(test_vm_prng);
-  RUN_TEST(test_vm_environmental);
-  RUN_TEST(test_vm_interp);
-  RUN_TEST(test_vm_function_address);
+  // // vm
+  // RUN_TEST(test_vm_bugs);
+  // RUN_TEST(test_vm_bytecode);
+  // RUN_TEST(test_vm_callret);
+  // RUN_TEST(test_vm_native);  
+  // RUN_TEST(test_vm_destructure);
+  // RUN_TEST(test_vm_2d);
+  // RUN_TEST(test_vm_vector);
+  // RUN_TEST(test_vm_col_rgb);
+  // RUN_TEST(test_vm_math);
+  // RUN_TEST(test_vm_prng);
+  // RUN_TEST(test_vm_environmental);
+  // RUN_TEST(test_vm_interp);
+  // RUN_TEST(test_vm_function_address);
 
   // todo: test READ_STACK_ARG_COORD4
-  // RUN_TEST(test_vm_temp);
+  RUN_TEST(test_vm_temp);
 
   return UNITY_END();
 }

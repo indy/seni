@@ -2,6 +2,7 @@
 #include "seni_config.h"
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
+#include "seni_printf.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -19,10 +20,10 @@ void vm_debug_info_reset(seni_vm *vm)
 
 void vm_debug_info_print(seni_vm *vm)
 {
-  SENI_PRINT("*** vm_debug_info_print ***\n");
+  SENI_LOG("*** vm_debug_info_print ***");
   slab_print(&(vm->heap_slab_info), "heap slab");
-  SENI_PRINT("bytecodes executed:\t%llu\n", (long long unsigned int)(vm->opcodes_executed));
-  SENI_PRINT("bytecode execution time:\t%d msec\n", vm->execution_time);
+  SENI_LOG("bytecodes executed:\t%llu", (long long unsigned int)(vm->opcodes_executed));
+  SENI_LOG("bytecode execution time:\t%d msec", vm->execution_time);
 }
 
 #endif
@@ -141,10 +142,10 @@ i32 var_vector_length(seni_var *var)
 void pretty_print_seni_node(seni_node *node, char* msg)
 {
   if (node == NULL) {
-    SENI_PRINT("NULL NODE %s\n", msg);
+    SENI_LOG("NULL NODE %s", msg);
     return;
   }
-  SENI_PRINT("%s %s\n", node_type_name(node), msg);
+  SENI_LOG("%s %s", node_type_name(node), msg);
 }
 
 void pretty_print_seni_var(seni_var *var, char* msg)
@@ -160,24 +161,24 @@ void pretty_print_seni_var(seni_var *var, char* msg)
   switch(using) {
   case USE_I:
     if (var->type == VAR_COLOUR) {
-      SENI_PRINT("%s: %s : %d (%.2f, %.2f, %.2f, %.2f)\n", msg, type, var->value.i,
+      SENI_LOG("%s: %s : %d (%.2f, %.2f, %.2f, %.2f)", msg, type, var->value.i,
                  var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
     } else {
-      SENI_PRINT("%s: %s : %d\n", msg, type, var->value.i);
+      SENI_LOG("%s: %s : %d", msg, type, var->value.i);
     }
     break;
   case USE_F:
-    SENI_PRINT("%s: %s : %.2f\n", msg,  type, var->value.f);
+    SENI_LOG("%s: %s : %.2f", msg,  type, var->value.f);
     break;
   case USE_L:
-    SENI_PRINT("%s: %s : %llu\n", msg, type, (long long unsigned int)(var->value.l));
+    SENI_LOG("%s: %s : %llu", msg, type, (long long unsigned int)(var->value.l));
     break;
   case USE_V:
     if (var->type == VAR_VEC_HEAD) {
       seni_var *rc = var->value.v;
-      SENI_PRINT("%s: %s : length %d ref_count: %d\n", msg, type, var_vector_length(var), rc->value.ref_count);
+      SENI_LOG("%s: %s : length %d ref_count: %d", msg, type, var_vector_length(var), rc->value.ref_count);
     } else {
-      SENI_PRINT("%s: %s\n", msg,  type);
+      SENI_LOG("%s: %s", msg,  type);
     }
     break;
   }
@@ -334,75 +335,75 @@ char *memory_segment_name(seni_memory_segment_type segment)
 
 void pretty_print_bytecode(i32 ip, seni_bytecode *b)
 {
+  const int buf_size = 200;
+  char buf[buf_size];
+  char buf_len = 0;
+  char *buf_start = &buf[0];
+
+#define PRINT_BC buf_len += seni_sprintf
+#define BUF_ARGS buf_start + buf_len, buf_size - buf_len
+
+  buf[0] = 0;  
+  
   if (b->op == LOAD || b->op == STORE || b->op == DEC_RC || b->op == INC_RC ||
       b->op == FLU_STORE || b->op == FLU_DEC_RC || b->op == FLU_INC_RC) {
 
+    char *seg_name = memory_segment_name((seni_memory_segment_type)b->arg0.value.i);
 
     if (b->op == LOAD || b->op == STORE || b->op == DEC_RC || b->op == INC_RC) {
-      SENI_PRINT("%d\t%s\t\t%s\t\t",
-                 ip,
-                 opcode_name(b->op),
-                 memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
-      
+      PRINT_BC(BUF_ARGS, "%d\t%s\t\t%s\t\t", ip, opcode_name(b->op), seg_name);
     } else if (b->op == FLU_STORE || b->op == FLU_DEC_RC || b->op == FLU_INC_RC) {
-      SENI_PRINT("%d\t%s\t%s\t\t",
-                 ip,
-                 opcode_name(b->op),
-                 memory_segment_name((seni_memory_segment_type)b->arg0.value.i));
+      PRINT_BC(BUF_ARGS, "%d\t%s\t%s\t\t", ip, opcode_name(b->op), seg_name);
     } 
 
     seni_value_in_use using = get_value_in_use(b->arg1.type);
     switch(using) {
     case USE_I:
       if (b->arg1.type == VAR_COLOUR) {
-        SENI_PRINT("colour: %d (%.2f, %.2f, %.2f, %.2f)\n", b->arg1.value.i,
-                   b->arg1.f32_array[0], b->arg1.f32_array[1], b->arg1.f32_array[2], b->arg1.f32_array[3]);
+        i32 type = b->arg1.value.i;
+        f32 *a = b->arg1.f32_array;
+        PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0], a[1], a[2], a[3]);
       } else {
-        SENI_PRINT("%d\n", b->arg1.value.i);
+        PRINT_BC(BUF_ARGS, "%d", b->arg1.value.i);
       }
       break;
     case USE_F:
-      SENI_PRINT("%.2f\n", b->arg1.value.f);
+      PRINT_BC(BUF_ARGS, "%.2f", b->arg1.value.f);
       break;
     case USE_L:
-      SENI_PRINT("%llu\n", (long long unsigned int)(b->arg1.value.l));
+      PRINT_BC(BUF_ARGS, "%llu", (long long unsigned int)(b->arg1.value.l));
       break;
     case USE_V:
       if (b->arg1.type == VAR_VEC_HEAD) {
-        SENI_PRINT("[..]len %d\n", var_vector_length(&(b->arg1)));
+        PRINT_BC(BUF_ARGS, "[..]len %d", var_vector_length(&(b->arg1)));
       } else {
-        SENI_PRINT("[..]\n");
+        PRINT_BC(BUF_ARGS, "[..]");
       }
       break;
     default:
-      SENI_PRINT("unknown type\n");
+      PRINT_BC(BUF_ARGS, "unknown type");
     }
     
   } else if (b->op == JUMP_IF || b->op == JUMP) {
-    SENI_PRINT("%d\t%s\t\t",
-               ip,
-               opcode_name(b->op));
+    PRINT_BC(BUF_ARGS, "%d\t%s\t\t", ip, opcode_name(b->op));
     if (b->arg0.value.i > 0) {
-      SENI_PRINT("+%d\n", b->arg0.value.i);
+      PRINT_BC(BUF_ARGS, "+%d", b->arg0.value.i);
     } else if (b->arg0.value.i < 0) {
-      SENI_PRINT("%d\n", b->arg0.value.i);
+      PRINT_BC(BUF_ARGS, "%d", b->arg0.value.i);
     } else {
-      SENI_PRINT("WTF!\n");
+      PRINT_BC(BUF_ARGS, "WTF!");
     }
   } else if (b->op == NATIVE) {
-    SENI_PRINT("%d\t%s\t\t%d\t\t%d\n",
-               ip,
-               opcode_name(b->op),
-               b->arg0.value.i,
-               b->arg1.value.i);    
+    PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d\t\t%d",
+             ip, opcode_name(b->op), b->arg0.value.i, b->arg1.value.i);    
   } else if (b->op == PILE) {
-    SENI_PRINT("%d\t%s\t\t%d\n",
-               ip,
-               opcode_name(b->op),
-               b->arg0.value.i);
+    PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d",
+             ip, opcode_name(b->op), b->arg0.value.i);
   } else {
-    SENI_PRINT("%d\t%s\n", ip, opcode_name(b->op));
-  }  
+    PRINT_BC(BUF_ARGS, "%d\t%s", ip, opcode_name(b->op));
+  }
+
+  SENI_PRINT("%s", buf);
 }
 
 void pretty_print_program(seni_program *program)
@@ -411,7 +412,7 @@ void pretty_print_program(seni_program *program)
     seni_bytecode *b = &(program->code[i]);
     pretty_print_bytecode(i, b);
   }
-  SENI_PRINT("\n");
+  SENI_LOG("\n");
 }
 
 seni_env *env_construct()
@@ -464,9 +465,9 @@ void slab_return(seni_slab_info *slab_info, char *msg)
 
 void slab_print(seni_slab_info *slab_info, char *message)
 {
-  SENI_PRINT("%s\tsize: %d\n", message, slab_info->size);
-  SENI_PRINT("\t\tget_count %d\treturn_count %d\n", slab_info->get_count, slab_info->return_count);
-  SENI_PRINT("\t\tdelta: %d\thigh_water_mark %d\n", slab_info->delta, slab_info->high_water_mark);
+  SENI_LOG("%s\tsize: %d", message, slab_info->size);
+  SENI_LOG("\t\tget_count %d\treturn_count %d", slab_info->get_count, slab_info->return_count);
+  SENI_LOG("\t\tdelta: %d\thigh_water_mark %d", slab_info->delta, slab_info->high_water_mark);
 }
 
 // **************************************************
@@ -550,7 +551,7 @@ void vm_free(seni_vm *vm)
 
 void pretty_print_vm(seni_vm *vm, char* msg)
 {
-  SENI_PRINT("%s\tvm: fp:%d sp:%d ip:%d local:%d\n",
+  SENI_LOG("%s\tvm: fp:%d sp:%d ip:%d local:%d",
              msg,
              vm->fp,
              vm->sp,
@@ -561,6 +562,6 @@ void pretty_print_vm(seni_vm *vm, char* msg)
   i32 onStackFP = (fp + 0)->value.i;
   i32 onStackIP = (fp + 1)->value.i;
   i32 onStackNumArgs = (fp + 2)->value.i;
-  SENI_PRINT("\ton stack: fp:%d ip:%d numArgs:%d\n", onStackFP, onStackIP, onStackNumArgs);
+  SENI_LOG("\ton stack: fp:%d ip:%d numArgs:%d", onStackFP, onStackIP, onStackNumArgs);
 }
 

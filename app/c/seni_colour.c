@@ -9,6 +9,7 @@
 
 
 #ifdef SENI_BUILD_WASM
+#include <webassembly.h>
 #define powf Math_pow
 #endif
 

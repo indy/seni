@@ -9,6 +9,8 @@
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
 
+#include "seni_printf.h"
+
 
 #define STRING_BUFFER_SIZE 80000
 char *g_string_buffer;
@@ -134,8 +136,6 @@ f32 *get_render_packet_tbuf(int packet_number)
   return render_packet->tbuf;
 }
 
-// ------------------------------
-
 // called once by js once it has finished with the render packets and that memory can be free'd
 export
 void script_cleanup()
@@ -144,14 +144,16 @@ void script_cleanup()
 }
 
 
-export char *allocate_string_buffer()
+export
+char *allocate_string_buffer()
 {
   g_string_buffer = (char *)malloc(STRING_BUFFER_SIZE * sizeof(char));
 
   return g_string_buffer;
 }
 
-export void free_string_buffer()
+export
+void free_string_buffer()
 {
   free(g_string_buffer);
 }

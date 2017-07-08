@@ -365,7 +365,7 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
         
       } else {
         // this may be recursive
-        SENI_PRINT("todo: push each item onto stack using nth");
+        SENI_LOG("todo: push each item onto stack using nth");
       }
 
     } else {
@@ -1242,6 +1242,6 @@ void compiler_compile(seni_node *ast, seni_program *program)
   // we can now update the addreses used by CALL and CALL_0
   correct_function_addresses(program);
 
-  // SENI_PRINT("program compiled: %d lines\n", program->code_size);
+  // SENI_LOG("program compiled: %d lines\n", program->code_size);
 }
 

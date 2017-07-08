@@ -595,7 +595,7 @@ void parser_free_nodes(seni_node *nodes)
       }
     }
 
-    // SENI_PRINT("freeing node: %s %u\n", node_type_name(node), (u32)node);
+    // SENI_LOG("freeing node: %s %u", node_type_name(node), (u32)node);
     free(node);
     
     node = next;
