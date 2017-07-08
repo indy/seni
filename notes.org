@@ -1,23 +1,24 @@
-* TODO [0/9]
-  1. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  2. [ ] play around with stroked-bezier-rect
-  3. [ ] test new setup/teardown code
-  4. [ ] cleanup memory of parser
-  5. [ ] structs for compile, runtim, performance info
-  6. [ ] seni_env
-  7. [ ] 'in' paramaeter for loop ?
-  8. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  9. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+* TODO [0/10]
+  1. [ ] fix console_log - maybe use a sprintf?
+  2. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  3. [ ] play around with stroked-bezier-rect
+  4. [ ] test new setup/teardown code
+  5. [ ] cleanup memory of parser
+  6. [ ] structs for compile, runtim, performance info
+  7. [ ] seni_env
+  8. [ ] 'in' paramaeter for loop ?
+  9. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  10. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
 
-* updating scripts [6/57]
+* updating scripts [7/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
-  4. [X] 14fh-rothko-1.seni - stroked-bezier-rect
+  4. [X] 14fh-rothko-1.seni
   5. [ ] 151c-flower.seni - bezier-bulging
   6. [X] 1531-four-squares.seni
   7. [X] 154c-stroked-bezier.seni
-  8. [ ] 154h-rothko-2.seni
+  8. [X] 154h-rothko-2.seni -- TODO: THIS IS SLOW
   9. [ ] 1556-biomorphs.seni - repeat/symmetry-vertical - takes a 'draw' argument
   10. [ ] 155b-spiral-derived.seni
   11. [ ] 155j-chaotic-grid-2.seni - focal/point
