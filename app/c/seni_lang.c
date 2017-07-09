@@ -20,10 +20,10 @@ void vm_debug_info_reset(seni_vm *vm)
 
 void vm_debug_info_print(seni_vm *vm)
 {
-  SENI_LOG("*** vm_debug_info_print ***");
+  SENI_PRINT("*** vm_debug_info_print ***");
   slab_print(&(vm->heap_slab_info), "heap slab");
-  SENI_LOG("bytecodes executed:\t%llu", (long long unsigned int)(vm->opcodes_executed));
-  SENI_LOG("bytecode execution time:\t%d msec", vm->execution_time);
+  SENI_PRINT("bytecodes executed:\t%llu", (long long unsigned int)(vm->opcodes_executed));
+  SENI_PRINT("bytecode execution time:\t%.2f msec", vm->execution_time);
 }
 
 #endif
@@ -465,9 +465,9 @@ void slab_return(seni_slab_info *slab_info, char *msg)
 
 void slab_print(seni_slab_info *slab_info, char *message)
 {
-  SENI_LOG("%s\tsize: %d", message, slab_info->size);
-  SENI_LOG("\t\tget_count %d\treturn_count %d", slab_info->get_count, slab_info->return_count);
-  SENI_LOG("\t\tdelta: %d\thigh_water_mark %d", slab_info->delta, slab_info->high_water_mark);
+  SENI_PRINT("%s\tsize: %d", message, slab_info->size);
+  SENI_PRINT("\t\tget_count %d\treturn_count %d", slab_info->get_count, slab_info->return_count);
+  SENI_PRINT("\t\tdelta: %d\thigh_water_mark %d", slab_info->delta, slab_info->high_water_mark);
 }
 
 // **************************************************

@@ -1,4 +1,5 @@
 #include "seni_vm_interpreter.h"
+#include "seni_timing.h"
 
 #include "utlist.h"
 
@@ -371,6 +372,8 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 #define STACK_PUSH v = stack_d; stack_d++; sp++
 
   DEBUG_INFO_RESET(vm);
+
+  TIMING_UNIT timing = get_timing();
 
   for (;;) {
     vm->opcodes_executed++;
@@ -1068,6 +1071,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       break;
     case STOP:
       vm->sp = sp;
+      vm->execution_time = timing_delta_from(timing);
       return true;
     default:
       SENI_ERROR("Unhandled opcode: %s\n", opcode_name(bc->op));

@@ -88,7 +88,7 @@ int compile_to_render_packets(void)
   program_free(prog);
 
   f32 delta = timing_delta_from(timing_a);
-  SENI_PRINT("time taken %.2f ms", delta);
+  SENI_PRINT("total c-side time taken %.2f ms", delta);
 
   return render_data->num_render_packets;
 }

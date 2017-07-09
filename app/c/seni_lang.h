@@ -154,7 +154,7 @@ typedef struct seni_vm {
   seni_var *heap_avail;            // doubly linked list of unallocated seni_vars from the heap_slab
   seni_slab_info heap_slab_info;
   u64 opcodes_executed;
-  i32 execution_time;              // in msec
+  f32 execution_time;              // in msec
   
   seni_var *stack;
   i32 stack_size;
