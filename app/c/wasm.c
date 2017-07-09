@@ -19,7 +19,6 @@ seni_vm *g_vm = NULL;
 seni_word_lut *g_wl = NULL;
 seni_env *g_e = NULL;
 
-
 // called once at startup
 export
 void seni_startup()

@@ -4,6 +4,7 @@
     "sourceType": "module"
   },
   "globals": {
+    "WebAssembly": false,
     "console": true,
     "CodeMirror": false,
     "Module": false,
