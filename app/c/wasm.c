@@ -1,5 +1,6 @@
 #include <webassembly.h>
 #include <stdlib.h>
+#include "seni_js_imports.h"
 #include "seni_render_packet.h"
 #include "seni_bind.h"
 #include "seni_uv_mapper.h"
@@ -8,9 +9,8 @@
 #include "seni_vm_parser.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
-
 #include "seni_printf.h"
-
+#include "seni_timing.h"
 
 #define STRING_BUFFER_SIZE 80000
 char *g_string_buffer;
@@ -35,7 +35,6 @@ void seni_startup()
   g_e = env_construct();
   g_wl = wlut_allocate();
   declare_bindings(g_wl, g_e);
-
 }
 
 // called once at shutdown
@@ -54,6 +53,8 @@ void seni_shutdown()
 export
 int compile_to_render_packets(void)
 {
+  TIMING_UNIT timing_a = get_timing();
+  
   char *script = g_string_buffer;
   
   seni_node *ast = NULL;
@@ -85,6 +86,9 @@ int compile_to_render_packets(void)
   wlut_reset_words(g_wl);
   parser_free_nodes(ast);
   program_free(prog);
+
+  f32 delta = timing_delta_from(timing_a);
+  SENI_PRINT("time taken %.2f ms", delta);
 
   return render_data->num_render_packets;
 }

@@ -16,8 +16,8 @@
 #include "seni_prng.h"
 #include "seni_keyword_iname.h"
 #include "seni_strtof.h"
+#include "seni_timing.h"
 
-#include "time.h"
 #include "stdio.h"
 #include <stdlib.h>
 #include <string.h>
@@ -465,16 +465,13 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 
 void timing(void)
 {
-  clock_t start, diff;
-  int msec;
   {
-    start = clock();
+    TIMING_UNIT start = get_timing();
+    //start = clock();
     //VM_COMPILE_F32("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
 
     VM_COMPILE_F32("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
-    diff = clock() - start;
-    msec = diff * 1000 / CLOCKS_PER_SEC;
-    printf("VM Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
+    SENI_PRINT("VM Time taken %.2f", timing_delta_from(start));
   }
 }
 
@@ -801,7 +798,7 @@ void test_prng(void)
 
 void test_vm_temp(void)
 {
-  VM_COMPILE_F32("(fn (k) (+ 9 8)) (k)", 15.0f);
+  VM_COMPILE_F32("(fn (k) (+ 9 8)) (k)", 17.0f);
 }
 
 

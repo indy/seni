@@ -43,7 +43,7 @@ function loadWASM(file, options) {
 
   // Initialize memory
 
-  const memory = imports.memory;
+  let memory = imports.memory;
   if (!memory) {
     const opts = { initial: options.initialMemory || 1 };
     if (options.maximumMemory) {
@@ -240,7 +240,15 @@ function loadWASM(file, options) {
 document.addEventListener('DOMContentLoaded', () => {
   compatibilityHacks();
 
-  loadWASM('dist/seni-wasm.wasm').then(wasmInstance => {
+  const options = {
+    imports: {
+      performance_now() {
+        return performance.now();
+      }
+    }
+  };
+
+  loadWASM('dist/seni-wasm.wasm', options).then(wasmInstance => {
     main(wasmInstance);
   });
 });
