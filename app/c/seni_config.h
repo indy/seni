@@ -3,11 +3,6 @@
 
 #define SENI_DEBUG_MODE
 
-// define to run the test code, otherwise it will be printed
-// (only used by test.c)
-//
-#define EXECUTE_BYTECODE
-
 // define to perform run-time type checks on parameters passed into bindings
 //
 #define CHECK_STACK_ARGS

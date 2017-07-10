@@ -358,58 +358,16 @@ void test_strtof(void)
   TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_strtof("1", end));
 }
 
-seni_word_lut *setup_vm_wl(seni_env *e)
-{
-  seni_word_lut *wl = wlut_allocate();
-  // add keywords to the seni_word_lut and setup function pointers within the interpreter
-  declare_bindings(wl, e);
-
-  return wl;
-}
-
-void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
-{
-  wlut_free(wl);
-  parser_free_nodes(ast);
-}
-
-// debug version of VM_COMPILE - prints the bytecode
-//
-#define DVM_COMPILE(EXPR) seni_word_lut *wl = NULL;       \
-  seni_env *e = NULL;                                     \
-  seni_node *ast = NULL;                                  \
-  seni_program *prog = NULL;                              \
-  seni_vm *vm = NULL;                                     \
-  e = env_construct();                                    \
-  wl = setup_vm_wl(e);                                    \
-  ast = parser_parse(wl, EXPR);                           \
-  prog = program_allocate(256);                           \
-  prog->wl = wl;                                          \
-  prog->env = e;                                          \
-  compiler_compile(ast, prog);                            \
-  vm = vm_construct(STACK_SIZE,HEAP_SIZE);                \
-  printf("%s\n", EXPR);                                   \
-  pretty_print_program(prog);
-
-// --------------------------------------------------
-
-// eval version of VM_COMPILE - evals and compares result to an int
-//
-#define EVM_COMPILE(EXPR) seni_word_lut *wl = NULL;         \
-  seni_env *e = NULL;                                       \
-  seni_node *ast = NULL;                                    \
-  seni_program *prog = NULL;                                \
-  seni_vm *vm = NULL;                                       \
-  e = env_construct();                                      \
-  wl = setup_vm_wl(e);                                      \
-  ast = parser_parse(wl, EXPR);                             \
-  prog = program_allocate(256);                             \
-  prog->wl = wl;                                            \
-  prog->env = e;                                            \
-  compiler_compile(ast, prog);                              \
-  vm = vm_construct(STACK_SIZE,HEAP_SIZE);                  \
+#define EVM_COMPILE(EXPR) seni_word_lut *wl = wlut_allocate();     \
+  seni_env *e = env_construct();                                     \
+  declare_bindings(wl, e);                                           \
+  seni_node *ast = parser_parse(wl, EXPR);                           \
+  seni_program *prog = program_allocate(256);                        \
+  prog->wl = wl;                                                     \
+  prog->env = e;                                                     \
+  compiler_compile(ast, prog);                                       \
+  seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE);                  \
   vm_interpret(vm, prog)
-
 
 #ifdef SENI_DEBUG_MODE
 #define VM_HEAP_SLAB_CHECK TEST_ASSERT_EQUAL_MESSAGE(0, vm->heap_slab_info.delta, "vm heap slab leak")
@@ -424,17 +382,11 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 #define VM_TEST_COL(F,A,B,C,D) assert_seni_var_col(stack_peek(vm), F, A, B, C, D)
 #define VM_TEST_2D(A,B) assert_seni_var_2d(stack_peek(vm), A, B)
 
-
-#define VM_CLEANUP shutdown_interpreter_test(wl, ast);  \
-  program_free(prog);                                   \
-  env_free(e);                                          \
+#define VM_CLEANUP wlut_free(wl); \
+  parser_free_nodes(ast);         \
+  program_free(prog);             \
+  env_free(e);                    \
   vm_free(vm)
-
-
-// COMPILE macros that eval and compare results
-//
-// 0 == print out bytecode, 1 == execute bytecode
-#ifdef EXECUTE_BYTECODE
 
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
@@ -448,20 +400,6 @@ void shutdown_interpreter_test(seni_word_lut *wl, seni_node *ast)
 // don't perform a heap check as we're assuming that the expr will be leaky
 #define VM_COMPILE_F32_L(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
 #define VM_COMPILE_COL_L(EXPR,F,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_CLEANUP;}
-
-#else
-// COMPILE macros that print out bytecode
-//
-#define VM_COMPILE_F32(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-#define VM_COMPILE_BOOL(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-#define VM_COMPILE_2D(EXPR,_,_1) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-#define VM_COMPILE_VEC4(EXPR,_,_1,_2,_3) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-#define VM_COMPILE_VEC5(EXPR,_,_1,_2,_3,_4) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-#define VM_COMPILE_COL(EXPR,_,_1,_2,_3,_4) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-#define VM_COMPILE_F32_L(EXPR,_) {DVM_COMPILE(EXPR);VM_CLEANUP;}
-#define VM_COMPILE_COL_L(EXPR,F,A,B,C,D) {EVM_COMPILE(EXPR);VM_CLEANUP;}
-#endif
-// --------------------------------------------------
 
 void timing(void)
 {
@@ -796,12 +734,6 @@ void test_prng(void)
   TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_perlin(0.1f, 0.2f, 0.3f));
 }
 
-void test_vm_temp(void)
-{
-  VM_COMPILE_F32("(fn (k) (+ 9 8)) (k)", 17.0f);
-}
-
-
 int main(void)
 {
   // timing();
@@ -815,29 +747,28 @@ int main(void)
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   //RUN_TEST(test_prng);
 
-  // RUN_TEST(test_mathutil);
-  // RUN_TEST(test_parser);
-  // RUN_TEST(test_uv_mapper);
-  // RUN_TEST(test_colour);
-  // RUN_TEST(test_strtof);
+  RUN_TEST(test_mathutil);
+  RUN_TEST(test_parser);
+  RUN_TEST(test_uv_mapper);
+  RUN_TEST(test_colour);
+  RUN_TEST(test_strtof);
   
-  // // vm
-  // RUN_TEST(test_vm_bugs);
-  // RUN_TEST(test_vm_bytecode);
-  // RUN_TEST(test_vm_callret);
-  // RUN_TEST(test_vm_native);  
-  // RUN_TEST(test_vm_destructure);
-  // RUN_TEST(test_vm_2d);
-  // RUN_TEST(test_vm_vector);
-  // RUN_TEST(test_vm_col_rgb);
-  // RUN_TEST(test_vm_math);
-  // RUN_TEST(test_vm_prng);
-  // RUN_TEST(test_vm_environmental);
-  // RUN_TEST(test_vm_interp);
-  // RUN_TEST(test_vm_function_address);
+  // vm
+  RUN_TEST(test_vm_bugs);
+  RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_native);  
+  RUN_TEST(test_vm_destructure);
+  RUN_TEST(test_vm_2d);
+  RUN_TEST(test_vm_vector);
+  RUN_TEST(test_vm_col_rgb);
+  RUN_TEST(test_vm_math);
+  RUN_TEST(test_vm_prng);
+  RUN_TEST(test_vm_environmental);
+  RUN_TEST(test_vm_interp);
+  RUN_TEST(test_vm_function_address);
 
   // todo: test READ_STACK_ARG_COORD4
-  RUN_TEST(test_vm_temp);
 
   return UNITY_END();
 }
