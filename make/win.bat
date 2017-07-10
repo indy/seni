@@ -32,6 +32,20 @@ popd
 )
 
 
+if "%1" == "native" (
+
+pushd build_win
+rem cl can expand wildcards
+set compile_sources=..\app\c\main_native.c ..\app\c\seni_*.c
+
+rem https://docs.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-alphabetically
+cl /nologo /W4 /wd4146 /wd4127 /wd4001 -Zi -Za /D_CRT_SECURE_NO_DEPRECATE /TC !compile_sources! /link /OUT:native.exe
+popd
+
+.\build_win\native.exe
+)
+
+
 
 
 

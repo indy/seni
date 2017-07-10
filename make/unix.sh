@@ -18,3 +18,11 @@ if [ "$1" == "compile" ]; then
 fi
 
 
+if [ "$1" == "native" ]; then
+    pushd build_unix    
+    cc -o native -std=c99 ../app/c/main_native.c ../app/c/seni_*.c -lm -O1
+    popd
+    ./build_unix/native
+fi
+
+

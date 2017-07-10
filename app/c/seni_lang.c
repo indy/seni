@@ -298,6 +298,15 @@ char *opcode_name(seni_opcode opcode)
 #undef STR
 }
 
+seni_program  *program_construct(i32 code_max_size, seni_word_lut *wl, seni_env *env)
+{
+  seni_program *program = program_allocate(code_max_size);
+  program->wl = wl;
+  program->env = env;
+
+  return program;
+}
+
 seni_program *program_allocate(i32 code_max_size)
 {
   seni_program *program = (seni_program *)calloc(1, sizeof(seni_program));
@@ -335,13 +344,14 @@ char *memory_segment_name(seni_memory_segment_type segment)
 
 void pretty_print_bytecode(i32 ip, seni_bytecode *b)
 {
-  const int buf_size = 200;
-  char buf[buf_size];
-  char buf_len = 0;
+#define PPC_BUF_SIZE 200
+
+  char buf[PPC_BUF_SIZE];
+  int buf_len = 0;
   char *buf_start = &buf[0];
 
 #define PRINT_BC buf_len += seni_sprintf
-#define BUF_ARGS buf_start + buf_len, buf_size - buf_len
+#define BUF_ARGS buf_start + buf_len, PPC_BUF_SIZE - buf_len
 
   buf[0] = 0;  
   

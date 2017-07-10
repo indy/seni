@@ -243,6 +243,7 @@ void           vm_free_render_data(seni_vm *vm);
 char          *opcode_name(seni_opcode opcode);
 
 seni_program  *program_allocate(i32 code_max_size);
+seni_program  *program_construct(i32 code_max_size, seni_word_lut *wl, seni_env *env);
 void           program_free(seni_program *program);
 void           pretty_print_program(seni_program *program);
 
