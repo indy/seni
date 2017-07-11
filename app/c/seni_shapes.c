@@ -527,12 +527,6 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
   f32 th_height = height / 3.0f;
   f32 vol = volatility;  
 
-  f32 h_delta = height / iterations;
-  f32 h_strip_width = height / iterations;
-
-  f32 v_delta = width / iterations;
-  f32 v_strip_width = width / iterations;
-
   seni_colour half_alpha_col;
   colour_clone_as(&half_alpha_col, colour, LAB);
   half_alpha_col.element[3] = half_alpha_col.element[3] / 2.0f;
@@ -540,19 +534,22 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
   seni_prng_state prng_state;
   seni_prng_set_state(&prng_state, (u64)seed);
 
+  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 900.0f };
+
   i32 i;
   i32 iiterations = (i32)iterations;
-
-  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 900.0f };
-  f32 stroke_line_width_start = overlap + h_strip_width;
-  f32 stroke_line_width_end = overlap + h_strip_width;
-  f32 stroke_line_half_width = stroke_line_width_start / 2.0f;
+  
+  // sum of all strip thicknesses
+  f32 sum_thicknesses = height + ((iterations - 1) * overlap);
+  f32 stroke_thickness = sum_thicknesses / iterations;
+  f32 stroke_half_thickness = stroke_thickness / 2.0f;
+  f32 stroke_offset_factor = (height - overlap) / iterations;
 
   // horizontal strokes
   //
   f32 h;
-  for (i = iiterations; i > 0; i--) {
-    h = (i * h_delta) + y_start - stroke_line_half_width;
+  for (i = 0; i < iiterations; i++) {
+    h = y_start + stroke_half_thickness + ((f32)i * stroke_offset_factor);
     
     coords[0] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start + (0 * th_width);
     coords[1] = h + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
@@ -567,20 +564,20 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
     coords[7] = h + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
 
     render_stroked_bezier(render_data, matrix, coords, &half_alpha_col, tessellation,
-                          stroke_line_width_start, stroke_line_width_end, stroke_noise,
+                          stroke_thickness, stroke_thickness, stroke_noise,
                           stroke_tessellation, colour_volatility, seni_prng_f32(&prng_state),
                           INAME_LINEAR, brush, brush_subtype);
 
   }
 
-
-  stroke_line_width_start = overlap + v_strip_width;
-  stroke_line_width_end = overlap + v_strip_width;
-  stroke_line_half_width = stroke_line_width_start / 2.0f;
+  sum_thicknesses = width + ((iterations - 1) * overlap);
+  stroke_thickness = sum_thicknesses / iterations;
+  stroke_half_thickness = stroke_thickness / 2.0f;
+  stroke_offset_factor = (width - overlap) / iterations;
 
   f32 v;
-  for (i = iiterations; i > 0; i--) {
-    v = (i * v_delta) + x_start - stroke_line_half_width;
+  for (i = 0; i < iiterations; i++) {
+    v = x_start + stroke_half_thickness + ((f32)i * stroke_offset_factor);
     
     coords[0] = v + (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
     coords[1] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (0 * th_height);
@@ -595,7 +592,7 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
     coords[7] = (seni_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (3 * th_height);
 
     render_stroked_bezier(render_data, matrix, coords, &half_alpha_col, tessellation,
-                          stroke_line_width_start, stroke_line_width_end, stroke_noise,
+                          stroke_thickness, stroke_thickness, stroke_noise,
                           stroke_tessellation, colour_volatility, seni_prng_f32(&prng_state),
                           INAME_LINEAR, brush, brush_subtype);
   }
