@@ -9,12 +9,12 @@
   8. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
   9. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [7/57]
+* updating scripts [8/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
   4. [X] 14fh-rothko-1.seni
-  5. [ ] 151c-flower.seni - bezier-bulging
+  5. [X] 151c-flower.seni - bezier-bulging
   6. [X] 1531-four-squares.seni
   7. [X] 154c-stroked-bezier.seni
   8. [X] 154h-rothko-2.seni -- TODO: THIS IS SLOW

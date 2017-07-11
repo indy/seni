@@ -452,6 +452,39 @@ void render_bezier(seni_render_data *render_data,
 }
 
 
+void render_bezier_bulging(seni_render_data *render_data,
+                           seni_matrix *matrix,
+                           f32 *coords,
+                           f32 line_width,
+                           f32 t_start, f32 t_end,
+                           seni_colour *colour,
+                           i32 tessellation,
+                           i32 brush, i32 brush_subtype)
+{
+
+
+  f32 t_mid = (t_start + t_end) / 2.0f;
+  i32 new_tess = tessellation >> 1;
+
+  // thin_fat
+  render_bezier(render_data, matrix, coords,
+                0.0f, line_width, INAME_SLOW_IN_OUT,
+                t_start, t_mid,
+                colour,
+                new_tess,
+                brush, brush_subtype);
+
+  // fat_thin
+  render_bezier(render_data, matrix, coords,
+                line_width, 0.0f, INAME_SLOW_IN_OUT,
+                t_mid, t_end,
+                colour,
+                new_tess,
+                brush, brush_subtype);
+
+}
+
+
 void render_stroked_bezier(seni_render_data *render_data,
                            seni_matrix *matrix,
                            f32 *coords,

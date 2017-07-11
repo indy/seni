@@ -336,6 +336,56 @@ seni_var *bind_bezier(seni_vm *vm, i32 num_args)
   return &g_var_true;
 }
 
+seni_var *bind_bezier_bulging(seni_vm *vm, i32 num_args)
+{
+  // default values for bezier
+  f32 line_width = 5.0f;
+  // f32 line_width_start = 4.0f;
+  // f32 line_width_end = 4.0f;
+  // i32 line_width_mapping = INAME_LINEAR;
+  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
+  f32 t_start = -1.0f;
+  f32 t_end = 2.0f;
+  f32 tessellation = 10.0f;
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+  i32 brush = INAME_BRUSH_FLAT;
+  f32 brush_subtype = 0.0f;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_LINE_WIDTH, line_width);
+  // READ_STACK_ARG_F32(INAME_LINE_WIDTH_START, line_width_start);
+  // READ_STACK_ARG_F32(INAME_LINE_WIDTH_END, line_width_end);
+  // READ_STACK_ARG_I32(INAME_LINE_WIDTH_MAPPING, line_width_mapping);
+  READ_STACK_ARG_COORD4(INAME_COORDS, coords);
+  READ_STACK_ARG_F32(INAME_T_START, t_start);
+  READ_STACK_ARG_F32(INAME_T_END, t_end);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_TESSELLATION, tessellation);
+  READ_STACK_ARG_I32(INAME_BRUSH, brush);
+  READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
+  READ_STACK_ARGS_END;
+
+  if (t_start < 0.0f) {
+    t_start = 0.0f;
+  }
+  
+  if (t_end > 1.0f) {
+    t_end = 1.0f;
+  }
+
+  seni_render_data *render_data = vm->render_data;
+  seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
+
+  render_bezier_bulging(render_data, matrix,
+                        coords, line_width, t_start, t_end, colour, (i32)tessellation,
+                        brush, (i32)brush_subtype);
+
+
+  return &g_var_true;
+}
+
 seni_var *bind_stroked_bezier(seni_vm *vm, i32 num_args)
 {
   // default values for stroked-bezier
@@ -1284,6 +1334,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "rect", &bind_rect);
   declare_native(wlut, e, "circle", &bind_circle);
   declare_native(wlut, e, "bezier", &bind_bezier);
+  declare_native(wlut, e, "bezier-bulging", &bind_bezier_bulging);
   declare_native(wlut, e, "stroked-bezier", &bind_stroked_bezier);
   declare_native(wlut, e, "stroked-bezier-rect", &bind_stroked_bezier_rect);
 

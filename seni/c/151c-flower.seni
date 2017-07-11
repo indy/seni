@@ -1,0 +1,105 @@
+(define math/TAU 6.283185)
+
+(wash)
+(flower colour: (col/rgb r: {0.8 (gen/scalar)}
+                         g: {0.3 (gen/scalar)}
+                         b: {0.2 (gen/scalar)}
+                         alpha: {0.4 (gen/scalar)})
+        posx: (/ canvas/width 2)
+        posy: (/ canvas/height 2)
+        sc: {1.0 (gen/scalar min: 0.6 max: 2.0)})
+
+(fn (petal-1 angle: 0
+             colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
+  (on-matrix-stack
+    (rotate angle: (math/radians->degrees angle: angle))
+    (bezier-bulging tessellation: 20
+                    line-width: {50 (gen/int min: 10 max: 200)}
+                    colour: colour
+                    coords: [[0 0]
+                             [233.33 100]
+                             [566.66 -100]
+                             [800 0]])))
+
+(fn (petal-2 angle: 0
+             colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0))
+  (on-matrix-stack
+    (rotate angle: (math/radians->degrees angle: angle))
+    (bezier-bulging tessellation: 20
+                    line-width: {50 (gen/int min: 10 max: 200)}
+                    colour: colour
+                    coords: [[0 0]
+                             [233.33 -100]
+                             [566.66 100]
+                             [800 0]])))
+
+(fn (circ-1 petals: 0
+            colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
+            sc: 1.0)
+  (on-matrix-stack
+    (scale scalar: sc)
+    (define 
+      strokes petals
+      colcol (col/set-alpha colour: colour value: 0.3)
+      rem (interp/fn from: [0 strokes] to: [0 math/TAU]))
+    (loop (i from: 0 to: strokes)
+      (petal-1 angle: (interp/call using: rem val: i) colour: colcol))))
+
+(fn (circ-2 petals: 0
+            colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
+            sc: 1.0)
+  (on-matrix-stack
+    (scale scalar: sc)
+    (define 
+      strokes petals
+      colcol (col/set-alpha colour: colour value: 0.4)
+      rem (interp/fn from: [0 strokes] to: [0 math/TAU]))
+    (loop (i from: 0 to: strokes)
+      (petal-2 angle: (interp/call using: rem val: i) colour: colcol))))
+
+(fn (layered-petals petals: 0
+                    colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 1.0)
+                    sc: 1.0)
+  (circ-1 petals: petals colour: colour sc: sc)
+  (rotate angle: (math/radians->degrees angle: {0.1 (gen/scalar min: 0.01 max: 0.4)}))
+  (circ-2 petals: petals colour: colour sc: sc))
+
+(fn (flower colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)
+            posx: 0
+            posy: 0
+            sc: 1)
+  (on-matrix-stack
+    (translate vector: [posx posy])
+    (scale scalar: sc)
+    (define [c2 c3] (col/analagous colour: colour))
+    (layered-petals petals: {23 (gen/int min: 1 max: 50)} colour: colour sc: {0.6 (gen/scalar min: 0.1 max: 0.9)})
+    (layered-petals petals: {19 (gen/int min: 1 max: 50)} colour: c3 sc: {0.5 (gen/scalar min: 0.1 max: 0.9)})
+    (layered-petals petals: {17 (gen/int min: 1 max: 50)} colour: c2 sc: {0.3 (gen/scalar min: 0.1 max: 0.9)})))
+
+(fn (wash variation: 200
+          line-width: 70
+          line-segments: 5
+          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+          seed: 272)
+    (define 
+      w/3 (/ canvas/width 3)
+      h/3 (/ canvas/height 3))
+    (loop (h from: -20 to: 1020 increment: 20)
+          (bezier tessellation: line-segments
+                  line-width: line-width
+                  coords: [[0 (wash-wobble x: 0 y: h z: seed s: variation)]
+                           [w/3 (wash-wobble x: w/3 y: h z: seed s: variation)]
+                           [(* w/3 2) (wash-wobble x: (* w/3 2) y: h z: seed s: variation)]
+                           [canvas/width (wash-wobble x: canvas/width y: h z: seed s: variation)]]
+                  colour: colour)
+
+          (bezier tessellation: line-segments
+                  line-width: line-width
+                  coords: [[(wash-wobble x: 0 y: h z: seed s: variation) 0]
+                           [(wash-wobble x: h/3 y: h z: seed s: variation) h/3]
+                           [(wash-wobble x: (* h/3 2) y: h z: seed s: variation) (* h/3 2)]
+                           [(wash-wobble x: canvas/height y: h z: seed s: variation) canvas/height]]
+                  colour: colour)))
+
+(fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
+    (+ y (* s (prng/perlin x: x y: y z: z))))

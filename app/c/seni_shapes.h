@@ -45,6 +45,15 @@ void render_bezier(seni_render_data *render_data,
                    i32 tessellation,
                    i32 brush, i32 brush_subtype);
 
+void render_bezier_bulging(seni_render_data *render_data,
+                           seni_matrix *matrix,
+                           f32 *coords,
+                           f32 line_width,
+                           f32 t_start, f32 t_end,
+                           seni_colour *colour,
+                           i32 tessellation,
+                           i32 brush, i32 brush_subtype);
+
 void render_stroked_bezier(seni_render_data *render_data,
                            seni_matrix *matrix,
                            f32 *coords,
