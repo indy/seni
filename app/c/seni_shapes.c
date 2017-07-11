@@ -240,15 +240,23 @@ void render_quadratic(seni_render_data *render_data,
     colour_clone_as(&rgb_colour, colour, RGB);
     rgb = &rgb_colour;
   }
+
+
+  f32 x_r = ((x1 - x0) - 0.5f * (x2 - x0)) / (0.5f * (0.5f - 1));
+  f32 x_s = x2 - x0 - x_r;
+
+  f32 y_r = ((y1 - y0) - 0.5f * (y2 - y0)) / (0.5f * (0.5f - 1));
+  f32 y_s = y2 - y0 - y_r;
   
   for (i = 0; i < tessellation - 1; i++) {
     t_val = t_start + ((f32)i * unit);
     t_val_next = t_start + ((f32)(i + 1) * unit);
 
-    xs = quadratic_point(x0, x1, x2, t_val);
-    ys = quadratic_point(y0, y1, y2, t_val);
-    xs_next = quadratic_point(x0, x1, x2, t_val_next);
-    ys_next = quadratic_point(y0, y1, y2, t_val_next);
+    xs = (x_r * t_val * t_val) + (x_s * t_val) + x0;
+    ys = (y_r * t_val * t_val) + (y_s * t_val) + y0;
+
+    xs_next = (x_r * t_val_next * t_val_next) + (x_s * t_val_next) + x0;
+    ys_next = (y_r * t_val_next * t_val_next) + (y_s * t_val_next) + y0;
 
     // addVerticesAsStrip
     n1 = normal(xs, ys, xs_next, ys_next);
@@ -297,10 +305,11 @@ void render_quadratic(seni_render_data *render_data,
   t_val = t_start + ((f32)i * unit);
   t_val_next = t_start + ((f32)(i + 1) * unit);
 
-  xs = quadratic_point(x0, x1, x2, t_val);
-  ys = quadratic_point(y0, y1, y2, t_val);
-  xs_next = quadratic_point(x0, x1, x2, t_val_next);
-  ys_next = quadratic_point(y0, y1, y2, t_val_next);
+  xs = (x_r * t_val * t_val) + (x_s * t_val) + x0;
+  ys = (y_r * t_val * t_val) + (y_s * t_val) + y0;
+
+  xs_next = (x_r * t_val_next * t_val_next) + (x_s * t_val_next) + x0;
+  ys_next = (y_r * t_val_next * t_val_next) + (y_s * t_val_next) + y0;
 
   n1 = normal(xs, ys, xs_next, ys_next);
   n2 = opposite_normal(n1);
