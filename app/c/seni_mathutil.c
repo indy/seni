@@ -66,57 +66,41 @@ f32 mc_c(f32 xa, f32 ya, f32 m)
   return ya - (m * xa);
 }
 
-f32 length_v2(v2 v)
+f32 length_v2(f32 x, f32 y)
 {
-  return (f32)sqrt((v.x * v.x) + (v.y * v.y));
+  return (f32)sqrt((x * x) + (y * y));
 }
 
-v2 sub_v2(v2 a, v2 b)
+f32 distance_v2(f32 ax, f32 ay, f32 bx, f32 by)
 {
-  v2 ret;
+  f32 xdiff = ax - bx;
+  f32 ydiff = ay - by;
 
-  ret.x = a.x - b.x;
-  ret.y = a.y - b.y;
-
-  return ret;
-}
-
-f32 distance_v2(v2 a, v2 b)
-{
-  v2 diff = sub_v2(a, b);
-  f32 dist = length_v2(diff);
+  f32 dist = length_v2(xdiff, ydiff);
 
   return dist;
 }
 
-v2 normalize(v2 v)
+void normalize(f32 *outx, f32 *outy, f32 x, f32 y)
 {
-  f32 len = length_v2(v);
-  v2 ret;
+  f32 len = length_v2(x, y);
   
-  ret.x = v.x / len;
-  ret.y = v.y / len;
-  
-  return ret;
+  *outx = x / len;
+  *outy = y / len;
 }
 
-v2 normal(f32 x1, f32 y1, f32 x2, f32 y2)
+void normal(f32 *outx, f32 *outy, f32 x1, f32 y1, f32 x2, f32 y2)
 {
   f32 dx = x2 - x1;
   f32 dy = y2 - y1;
-
-  v2 v;
-  v.x = -dy;
-  v.y = dx;
   
-  return normalize(v);
+  normalize(outx, outy, -dy, dx);
 }
 
-v2 opposite_normal(v2 n)
+void opposite_normal(f32 *outx, f32 *outy, f32 x, f32 y)
 {
-  n.x = -n.x;
-  n.y = -n.y;
-  return n;
+  *outx = -x;
+  *outy = -y;
 }
 
 f32 quadratic_point(f32 a, f32 b, f32 c, f32 t)

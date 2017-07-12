@@ -18,28 +18,4 @@ typedef uint64_t u64;
 typedef float    f32;
 typedef double   f64;
 
-#define SENI_SCALAR
-typedef f32 scalar;
-
-typedef struct
-{
-  scalar x;
-  scalar y;
-
-  /*
-  // 25/04/2017
-  // can't use this as the Microsoft compiler doesn't support anonymous unions which are part of C11
-  //
-  union {
-    scalar x;
-    scalar u;
-  };
-  union {
-    scalar y;
-    scalar v;
-  };
-  */
-} v2;
-
-
 #endif  /* SENI_TYPES_H */

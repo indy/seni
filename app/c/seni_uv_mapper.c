@@ -7,10 +7,10 @@ seni_uv_mapping **g_brush_info = NULL;
 
 f32 texture_dim = 1024.0f;
 
-void make_uv(v2 *out, f32 in_u, f32 in_v)
+void make_uv(f32 *outx, f32 *outy, f32 in_u, f32 in_v)
 {
-  out->x = in_u / texture_dim;
-  out->y = in_v / texture_dim;
+  *outx = in_u / texture_dim;
+  *outy = in_v / texture_dim;
 }
 
 void allocate_uv_mapping(seni_brush_type type, i32 sub_type,
@@ -19,14 +19,14 @@ void allocate_uv_mapping(seni_brush_type type, i32 sub_type,
 {
   seni_uv_mapping *m = &(g_brush_info[type][sub_type]);
 
-  m->map = malloc(4 * sizeof(v2));
+  m->map = malloc(8 * sizeof(f32));
 
   m->width_scale = width_scale;
 
-  make_uv(&(m->map[0]), (f32)max_x, (f32)min_y);
-  make_uv(&(m->map[1]), (f32)max_x, (f32)max_y);
-  make_uv(&(m->map[2]), (f32)min_x, (f32)min_y);
-  make_uv(&(m->map[3]), (f32)min_x, (f32)max_y);
+  make_uv(&(m->map[0]), &(m->map[1]), (f32)max_x, (f32)min_y);
+  make_uv(&(m->map[2]), &(m->map[3]), (f32)max_x, (f32)max_y);
+  make_uv(&(m->map[4]), &(m->map[5]), (f32)min_x, (f32)min_y);
+  make_uv(&(m->map[6]), &(m->map[7]), (f32)min_x, (f32)max_y);
 }
 
 void init_uv_mapper()

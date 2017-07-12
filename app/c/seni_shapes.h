@@ -5,7 +5,7 @@
 #include "seni_render_packet.h"
 #include "seni_matrix.h"
 #include "seni_colour.h"
-
+  
 void seni_shapes_init_globals();
 
 void render_line(seni_render_data *render_data,

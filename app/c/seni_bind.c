@@ -899,11 +899,7 @@ seni_var *bind_math_distance(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_VEC2(INAME_VEC2, vec2);
   READ_STACK_ARGS_END;
 
-  v2 a,b;
-  a.x = vec1[0]; a.y = vec1[1];
-  b.x = vec2[0]; b.y = vec2[1];
-
-  f32 distance = distance_v2(a, b);
+  f32 distance = distance_v2(vec1[0], vec1[1], vec2[0], vec2[1]);
   
   f32_as_var(&g_var_scratch, distance);
 
@@ -1212,12 +1208,13 @@ seni_var *bind_interp_bezier(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  v2 point = seni_interp_bezier(coords, t);
+  f32 x, y;
+  seni_interp_bezier(&x, &y, coords, t);
 
   // push the return values onto the stack as a vector
   vector_construct(vm, &g_var_scratch);
-  append_to_vector_f32(vm, &g_var_scratch, point.x);
-  append_to_vector_f32(vm, &g_var_scratch, point.y);
+  append_to_vector_f32(vm, &g_var_scratch, x);
+  append_to_vector_f32(vm, &g_var_scratch, y);
 
   return &g_var_scratch;
 }
@@ -1232,12 +1229,13 @@ seni_var *bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  v2 point = seni_interp_bezier_tangent(coords, t);
+  f32 x, y;
+  seni_interp_bezier_tangent(&x, &y, coords, t);
 
   // push the return values onto the stack as a vector
   vector_construct(vm, &g_var_scratch);
-  append_to_vector_f32(vm, &g_var_scratch, point.x);
-  append_to_vector_f32(vm, &g_var_scratch, point.y);
+  append_to_vector_f32(vm, &g_var_scratch, x);
+  append_to_vector_f32(vm, &g_var_scratch, y);
 
   return &g_var_scratch;
 }
@@ -1254,12 +1252,13 @@ seni_var *bind_interp_circle(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  v2 point = seni_interp_circle(position, radius, t);
+  f32 x, y;
+  seni_interp_circle(&x, &y, position, radius, t);
 
   // push the return values onto the stack as a vector
   vector_construct(vm, &g_var_scratch);
-  append_to_vector_f32(vm, &g_var_scratch, point.x);
-  append_to_vector_f32(vm, &g_var_scratch, point.y);
+  append_to_vector_f32(vm, &g_var_scratch, x);
+  append_to_vector_f32(vm, &g_var_scratch, y);
 
   return &g_var_scratch;
 }

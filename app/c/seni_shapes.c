@@ -11,28 +11,27 @@
 
 seni_matrix g_identity;
 seni_colour g_unseen_colour;
-v2 g_unseen_uv;
 
 void seni_shapes_init_globals()
 {
   matrix_identity(&g_identity);
   colour_set(&g_unseen_colour, RGB, 0.0f, 0.0f, 0.0f, 0.0f);
-  g_unseen_uv.x = 0.0f; g_unseen_uv.y = 0.0f; // u v
 }
 
-void add_vertex(seni_render_packet *render_packet, seni_matrix *matrix, f32 x, f32 y, seni_colour *rgb, v2 uv)
-{
-  i32 vertex_item_size = 2;
-  i32 v_index = render_packet->num_vertices * vertex_item_size;
-  i32 colour_item_size = 4;
-  i32 c_index = render_packet->num_vertices * colour_item_size;
-  i32 texture_item_size = 2;
-  i32 t_index = render_packet->num_vertices * texture_item_size;
+#define VERTEX_ITEM_SIZE 2
+#define COLOUR_ITEM_SIZE 4
+#define TEXTURE_ITEM_SIZE 2
 
-  f32 out[2];
-  matrix_transform_vec2(out, matrix, x, y);
-  render_packet->vbuf[v_index + 0] = out[0];
-  render_packet->vbuf[v_index + 1] = out[1];
+void add_vertex(seni_render_packet *render_packet, seni_matrix *matrix, f32 x, f32 y, seni_colour *rgb, f32 u, f32 v)
+{
+  i32 v_index = render_packet->num_vertices * VERTEX_ITEM_SIZE;
+  i32 c_index = render_packet->num_vertices * COLOUR_ITEM_SIZE;
+  i32 t_index = render_packet->num_vertices * TEXTURE_ITEM_SIZE;
+
+  f32 outx, outy;
+  matrix_transform_vec2(&outx, &outy, matrix, x, y);
+  render_packet->vbuf[v_index + 0] = outx;
+  render_packet->vbuf[v_index + 1] = outy;
 
   // pre-multiply the alpha
   // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
@@ -43,8 +42,8 @@ void add_vertex(seni_render_packet *render_packet, seni_matrix *matrix, f32 x, f
   render_packet->cbuf[c_index + 2] = rgb->element[2] * alpha;
   render_packet->cbuf[c_index + 3] = rgb->element[3];
 
-  render_packet->tbuf[t_index + 0] = uv.x; // u
-  render_packet->tbuf[t_index + 1] = uv.y; // v
+  render_packet->tbuf[t_index + 0] = u;
+  render_packet->tbuf[t_index + 1] = v;
 
   render_packet->num_vertices++;
 }
@@ -59,10 +58,10 @@ void form_degenerate_triangle(seni_render_packet *render_packet, seni_matrix *ma
   // note: colour doesn't matter since these triangles won't be rendered
   f32 *last_v = &(render_packet->vbuf[index]);
 
-  add_vertex(render_packet, &g_identity, last_v[0], last_v[1], &g_unseen_colour, g_unseen_uv);
+  add_vertex(render_packet, &g_identity, last_v[0], last_v[1], &g_unseen_colour, 0.0f, 0.0f);
 
   // add the new vertex to complete the degenerate triangle
-  add_vertex(render_packet, matrix, x, y, &g_unseen_colour, g_unseen_uv);
+  add_vertex(render_packet, matrix, x, y, &g_unseen_colour, 0.0f, 0.0f);
   
   // Note: still need to call addVertex on the first
   // vertex when we 'really' render the strip
@@ -101,8 +100,9 @@ void render_line(seni_render_data *render_data,
 
   f32 hw = (width * uv->width_scale) / 2.0f;
 
-  v2 n = normal(from_x, from_y, to_x, to_y);
-  v2 n2 = opposite_normal(n);
+  f32 nx, ny, n2x, n2y;
+  normal(&nx, &ny, from_x, from_y, to_x, to_y);
+  opposite_normal(&n2x, &n2y, nx, ny);
 
   seni_colour *rgb, rgb_colour;
   if (colour->format == RGB) {
@@ -112,11 +112,19 @@ void render_line(seni_render_data *render_data,
     rgb = &rgb_colour;
   }
 
-  prepare_to_add_triangle_strip(render_data, matrix, 4, from_x + (hw * n.x), from_y + (hw * n.y));
-  add_vertex(render_data->current_render_packet, matrix, from_x + (hw * n.x),  from_y + (hw * n.y),  rgb, uv->map[0]);
-  add_vertex(render_data->current_render_packet, matrix, from_x + (hw * n2.x), from_y + (hw * n2.y), rgb, uv->map[1]);
-  add_vertex(render_data->current_render_packet, matrix, to_x   + (hw * n.x),    to_y + (hw * n.y),  rgb, uv->map[2]);
-  add_vertex(render_data->current_render_packet, matrix, to_x   + (hw * n2.x),   to_y + (hw * n2.y), rgb, uv->map[3]);
+  prepare_to_add_triangle_strip(render_data, matrix, 4, from_x + (hw * nx), from_y + (hw * ny));
+  add_vertex(render_data->current_render_packet, matrix,
+             from_x + (hw * nx),  from_y + (hw * ny),
+             rgb, uv->map[0], uv->map[1]);
+  add_vertex(render_data->current_render_packet, matrix,
+             from_x + (hw * n2x), from_y + (hw * n2y),
+             rgb, uv->map[2], uv->map[3]);
+  add_vertex(render_data->current_render_packet, matrix,
+             to_x + (hw * nx), to_y + (hw * ny),
+             rgb, uv->map[4], uv->map[5]);
+  add_vertex(render_data->current_render_packet, matrix,
+             to_x + (hw * n2x), to_y + (hw * n2y),
+             rgb, uv->map[6], uv->map[7]);
 }
 
 
@@ -140,10 +148,18 @@ void render_rect(seni_render_data *render_data,
   }
 
   prepare_to_add_triangle_strip(render_data, matrix, 4, x - half_width, y - half_height);
-  add_vertex(render_data->current_render_packet, matrix, x - half_width, y - half_height, rgb, uv->map[0]);
-  add_vertex(render_data->current_render_packet, matrix, x + half_width, y - half_height, rgb, uv->map[1]);
-  add_vertex(render_data->current_render_packet, matrix, x - half_width, y + half_height, rgb, uv->map[2]);
-  add_vertex(render_data->current_render_packet, matrix, x + half_width, y + half_height, rgb, uv->map[3]);
+  add_vertex(render_data->current_render_packet, matrix,
+             x - half_width, y - half_height,
+             rgb, uv->map[0], uv->map[1]);
+  add_vertex(render_data->current_render_packet, matrix,
+             x + half_width, y - half_height,
+             rgb, uv->map[2], uv->map[3]);
+  add_vertex(render_data->current_render_packet, matrix,
+             x - half_width, y + half_height,
+             rgb, uv->map[4], uv->map[5]);
+  add_vertex(render_data->current_render_packet, matrix,
+             x + half_width, y + half_height,
+             rgb, uv->map[6], uv->map[7]);
 }
 
 void render_circle(seni_render_data *render_data,
@@ -153,8 +169,8 @@ void render_circle(seni_render_data *render_data,
                    seni_colour *colour,
                    i32 tessellation)
 {
-  v2 uv;
-  make_uv(&uv, 1.0f, 1.0f);
+  f32 u, v;
+  make_uv(&u, &v, 1.0f, 1.0f);
 
   prepare_to_add_triangle_strip(render_data, matrix, (tessellation * 2) + 2, x, y);
 
@@ -174,16 +190,16 @@ void render_circle(seni_render_data *render_data,
     vx = ((f32)(sin(angle)) * width) + x;
     vy = ((f32)(cos(angle)) * height) + y;
 
-    add_vertex(render_data->current_render_packet, matrix, x, y, rgb, uv);
-    add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, uv);
+    add_vertex(render_data->current_render_packet, matrix, x, y, rgb, u, v);
+    add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
   }
 
   angle = 0.0f;
   vx = ((f32)(sin(angle)) * width) + x;
   vy = ((f32)(cos(angle)) * height) + y;
 
-  add_vertex(render_data->current_render_packet, matrix, x, y, rgb, uv);
-  add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, uv);
+  add_vertex(render_data->current_render_packet, matrix, x, y, rgb, u, v);
+  add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
 }
 
 void render_quadratic(seni_render_data *render_data,
@@ -199,10 +215,15 @@ void render_quadratic(seni_render_data *render_data,
   //
   seni_brush_type brush_type = (seni_brush_type)(brush - INAME_BRUSH_FLAT);
   seni_uv_mapping *uv = get_uv_mapping(brush_type, brush_subtype, true);
-  v2 uv_a = uv->map[0];
-  v2 uv_b = uv->map[1];
-  v2 uv_c = uv->map[2];
-  v2 uv_d = uv->map[3];
+
+  f32 au = uv->map[0];
+  f32 av = uv->map[1];
+  f32 bu = uv->map[2];
+  f32 bv = uv->map[3];
+  f32 cu = uv->map[4];
+  f32 cv = uv->map[5];
+  f32 du = uv->map[6];
+  f32 dv = uv->map[7];
 
   // modify the width so that the brush textures provide good coverage
   //
@@ -222,7 +243,8 @@ void render_quadratic(seni_render_data *render_data,
   f32 x0 = coords[0], x1 = coords[2], x2 = coords[4];
   f32 y0 = coords[1], y1 = coords[3], y2 = coords[5];
   f32 xs, ys, xs_next, ys_next;
-  v2 n1, n2, v_1, v_2;
+  f32 v1x, v1y, v2x, v2y;
+  f32 n1x, n1y, n2x, n2y;
  
   i32 i;
   f32 unit = (t_end - t_start) / (tessellation - 1.0f);
@@ -230,7 +252,7 @@ void render_quadratic(seni_render_data *render_data,
 
   f32 tex_t = 1.0f / tessellation;
   f32 uv_t;
-  v2 t_uv;
+  f32 u, v;
 
   // vertex colours have to be in rgb space
   seni_colour *rgb, rgb_colour;
@@ -259,8 +281,9 @@ void render_quadratic(seni_render_data *render_data,
     ys_next = (y_r * t_val_next * t_val_next) + (y_s * t_val_next) + y0;
 
     // addVerticesAsStrip
-    n1 = normal(xs, ys, xs_next, ys_next);
-    n2 = opposite_normal(n1);
+    
+    normal(&n1x, &n1y, xs, ys, xs_next, ys_next);
+    opposite_normal(&n2x, &n2y, n1x, n1y);
     
     from_interp = (from_m * t_val) + from_c;
     switch(line_width_mapping) {
@@ -279,24 +302,24 @@ void render_quadratic(seni_render_data *render_data,
 
     half_width = (to_m * to_interp) + to_c;
 
-    v_1.x = (n1.x * half_width) + xs;
-    v_1.y = (n1.y * half_width) + ys;
-    v_2.x = (n2.x * half_width) + xs;
-    v_2.y = (n2.y * half_width) + ys;
+    v1x = (n1x * half_width) + xs;
+    v1y = (n1y * half_width) + ys;
+    v2x = (n2x * half_width) + xs;
+    v2y = (n2y * half_width) + ys;
 
     if (i == 0) {
-      prepare_to_add_triangle_strip(render_data, matrix, tessellation * 2, v_1.x, v_1.y);
+      prepare_to_add_triangle_strip(render_data, matrix, tessellation * 2, v1x, v1y);
     }
 
     uv_t = tex_t * (f32)i;
 
-    t_uv.x = lerp(uv_t, uv_b.x, uv_d.x);
-    t_uv.y = lerp(uv_t, uv_b.y, uv_d.y);
-    add_vertex(render_data->current_render_packet, matrix, v_1.x, v_1.y, rgb, t_uv);
+    u = lerp(uv_t, bu, du);
+    v = lerp(uv_t, bv, dv);
+    add_vertex(render_data->current_render_packet, matrix, v1x, v1y, rgb, u, v);
 
-    t_uv.x = lerp(uv_t, uv_a.x, uv_c.x);
-    t_uv.y = lerp(uv_t, uv_a.y, uv_c.y);
-    add_vertex(render_data->current_render_packet, matrix, v_2.x, v_2.y, rgb, t_uv);
+    u = lerp(uv_t, au, cu);
+    v = lerp(uv_t, av, cv);
+    add_vertex(render_data->current_render_packet, matrix, v2x, v2y, rgb, u, v);
   }
 
   // final 2 vertices for the end point
@@ -311,16 +334,16 @@ void render_quadratic(seni_render_data *render_data,
   xs_next = (x_r * t_val_next * t_val_next) + (x_s * t_val_next) + x0;
   ys_next = (y_r * t_val_next * t_val_next) + (y_s * t_val_next) + y0;
 
-  n1 = normal(xs, ys, xs_next, ys_next);
-  n2 = opposite_normal(n1);
+  normal(&n1x, &n1y, xs, ys, xs_next, ys_next);
+  opposite_normal(&n2x, &n2y, n1x, n1y);
 
-  v_1.x = (n1.x * half_width_end) + xs_next;
-  v_1.y = (n1.y * half_width_end) + ys_next;
-  v_2.x = (n2.x * half_width_end) + xs_next;
-  v_2.y = (n2.y * half_width_end) + ys_next;
+  v1x = (n1x * half_width_end) + xs_next;
+  v1y = (n1y * half_width_end) + ys_next;
+  v2x = (n2x * half_width_end) + xs_next;
+  v2y = (n2y * half_width_end) + ys_next;
 
-  add_vertex(render_data->current_render_packet, matrix, v_1.x, v_1.y, rgb, uv_d);
-  add_vertex(render_data->current_render_packet, matrix, v_2.x, v_2.y, rgb, uv_c);
+  add_vertex(render_data->current_render_packet, matrix, v1x, v1y, rgb, du, dv);
+  add_vertex(render_data->current_render_packet, matrix, v2x, v2y, rgb, cu, cv);
 }
 
 void render_bezier(seni_render_data *render_data,
@@ -336,10 +359,15 @@ void render_bezier(seni_render_data *render_data,
   //
   seni_brush_type brush_type = (seni_brush_type)(brush - INAME_BRUSH_FLAT);
   seni_uv_mapping *uv = get_uv_mapping(brush_type, brush_subtype, true);
-  v2 uv_a = uv->map[0];
-  v2 uv_b = uv->map[1];
-  v2 uv_c = uv->map[2];
-  v2 uv_d = uv->map[3];
+
+  f32 au = uv->map[0];
+  f32 av = uv->map[1];
+  f32 bu = uv->map[2];
+  f32 bv = uv->map[3];
+  f32 cu = uv->map[4];
+  f32 cv = uv->map[5];
+  f32 du = uv->map[6];
+  f32 dv = uv->map[7];
 
   // modify the width so that the brush textures provide good coverage
   //
@@ -359,7 +387,8 @@ void render_bezier(seni_render_data *render_data,
   f32 x0 = coords[0], x1 = coords[2], x2 = coords[4], x3 = coords[6];
   f32 y0 = coords[1], y1 = coords[3], y2 = coords[5], y3 = coords[7];
   f32 xs, ys, xs_next, ys_next;
-  v2 n1, n2, v_1, v_2;
+  f32 v1x, v1y, v2x, v2y;
+  f32 n1x, n1y, n2x, n2y;
  
   i32 i;
   f32 unit = (t_end - t_start) / (tessellation - 1.0f);
@@ -367,7 +396,7 @@ void render_bezier(seni_render_data *render_data,
 
   f32 tex_t = 1.0f / tessellation;
   f32 uv_t;
-  v2 t_uv;
+  f32 u, v;
 
   // vertex colours have to be in rgb space
   seni_colour *rgb, rgb_colour;
@@ -388,8 +417,8 @@ void render_bezier(seni_render_data *render_data,
     ys_next = bezier_point(y0, y1, y2, y3, t_val_next);
 
     // addVerticesAsStrip
-    n1 = normal(xs, ys, xs_next, ys_next);
-    n2 = opposite_normal(n1);
+    normal(&n1x, &n1y, xs, ys, xs_next, ys_next);
+    opposite_normal(&n2x, &n2y, n1x, n1y);
     
     from_interp = (from_m * t_val) + from_c;
     switch(line_width_mapping) {
@@ -408,24 +437,24 @@ void render_bezier(seni_render_data *render_data,
 
     half_width = (to_m * to_interp) + to_c;
 
-    v_1.x = (n1.x * half_width) + xs;
-    v_1.y = (n1.y * half_width) + ys;
-    v_2.x = (n2.x * half_width) + xs;
-    v_2.y = (n2.y * half_width) + ys;
+    v1x = (n1x * half_width) + xs;
+    v1y = (n1y * half_width) + ys;
+    v2x = (n2x * half_width) + xs;
+    v2y = (n2y * half_width) + ys;
 
     if (i == 0) {
-      prepare_to_add_triangle_strip(render_data, matrix, tessellation * 2, v_1.x, v_1.y);
+      prepare_to_add_triangle_strip(render_data, matrix, tessellation * 2, v1x, v1y);
     }
 
     uv_t = tex_t * (f32)i;
 
-    t_uv.x = lerp(uv_t, uv_b.x, uv_d.x);
-    t_uv.y = lerp(uv_t, uv_b.y, uv_d.y);
-    add_vertex(render_data->current_render_packet, matrix, v_1.x, v_1.y, rgb, t_uv);
+    u = lerp(uv_t, bu, du);
+    v = lerp(uv_t, bv, dv);
+    add_vertex(render_data->current_render_packet, matrix, v1x, v1y, rgb, u, v);
 
-    t_uv.x = lerp(uv_t, uv_a.x, uv_c.x);
-    t_uv.y = lerp(uv_t, uv_a.y, uv_c.y);
-    add_vertex(render_data->current_render_packet, matrix, v_2.x, v_2.y, rgb, t_uv);
+    u = lerp(uv_t, au, cu);
+    v = lerp(uv_t, av, cv);
+    add_vertex(render_data->current_render_packet, matrix, v2x, v2y, rgb, u, v);
   }
 
   // final 2 vertices for the end point
@@ -439,16 +468,16 @@ void render_bezier(seni_render_data *render_data,
   xs_next = bezier_point(x0, x1, x2, x3, t_val_next);
   ys_next = bezier_point(y0, y1, y2, y3, t_val_next);
 
-  n1 = normal(xs, ys, xs_next, ys_next);
-  n2 = opposite_normal(n1);
+  normal(&n1x, &n1y, xs, ys, xs_next, ys_next);
+  opposite_normal(&n2x, &n2y, n1x, n1y);
 
-  v_1.x = (n1.x * half_width_end) + xs_next;
-  v_1.y = (n1.y * half_width_end) + ys_next;
-  v_2.x = (n2.x * half_width_end) + xs_next;
-  v_2.y = (n2.y * half_width_end) + ys_next;
+  v1x = (n1x * half_width_end) + xs_next;
+  v1y = (n1y * half_width_end) + ys_next;
+  v2x = (n2x * half_width_end) + xs_next;
+  v2y = (n2y * half_width_end) + ys_next;
 
-  add_vertex(render_data->current_render_packet, matrix, v_1.x, v_1.y, rgb, uv_d);
-  add_vertex(render_data->current_render_packet, matrix, v_2.x, v_2.y, rgb, uv_c);
+  add_vertex(render_data->current_render_packet, matrix, v1x, v1y, rgb, du, dv);
+  add_vertex(render_data->current_render_packet, matrix, v2x, v2y, rgb, cu, cv);
 }
 
 

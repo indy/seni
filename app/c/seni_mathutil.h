@@ -30,13 +30,12 @@ f64 linear_remap(f64 x, f64 x_min, f64 x_max, f64 out_min, f64 out_max);
 f32 mc_m(f32 xa, f32 ya, f32 xb, f32 yb);
 f32 mc_c(f32 xa, f32 ya, f32 m);
 
-f32 length_v2(v2 v);
-v2 sub_v2(v2 a, v2 b);
-f32 distance_v2(v2 a, v2 b);
+f32 length_v2(f32 x, f32 y);
+f32 distance_v2(f32 ax, f32 ay, f32 bx, f32 by);
 
-v2 normalize(v2 v);
-v2 normal(f32 x1, f32 y1, f32 x2, f32 y2);
-v2 opposite_normal(v2 n);
+void normalize(f32 *outx, f32 *outy, f32 x, f32 y);
+void normal(f32 *outx, f32 *outy, f32 x1, f32 y1, f32 x2, f32 y2);
+void opposite_normal(f32 *outx, f32 *outy, f32 x, f32 y);
 
 f32 quadratic_point(f32 a, f32 b, f32 c, f32 t);
 f32 bezier_point(f32 a, f32 b, f32 c, f32 d, f32 t);

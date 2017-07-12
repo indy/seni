@@ -182,19 +182,19 @@ void matrix_rotate_z(seni_matrix *out, seni_matrix *a, f32 rad)
   out->m[7] = a13 * c - a03 * s;
 }
 
-void matrix_transform_vec2(f32 *out, seni_matrix *m, f32 x, f32 y)
+void matrix_transform_vec2(f32 *outx, f32 *outy, seni_matrix *m, f32 x, f32 y)
 {
-  out[0] = m->m[0] * x + m->m[4] * y + m->m[12];
-  out[1] = m->m[1] * x + m->m[5] * y + m->m[13];
+  *outx = m->m[0] * x + m->m[4] * y + m->m[12];
+  *outy = m->m[1] * x + m->m[5] * y + m->m[13];
 }
 
-void matrix_transform_vec3(f32 *out, seni_matrix *m, f32 x, f32 y, f32 z)
+void matrix_transform_vec3(f32 *outx, f32 *outy, f32 *outz, seni_matrix *m, f32 x, f32 y, f32 z)
 {
   f32 w = m->m[3] * x + m->m[7] * y + m->m[11] * z + m->m[15];
   w = w == 0.0f ? 1.0f : w;
-  out[0] = (m->m[0] * x + m->m[4] * y + m->m[8] * z + m->m[12]) / w;
-  out[1] = (m->m[1] * x + m->m[5] * y + m->m[9] * z + m->m[13]) / w;
-  out[2] = (m->m[2] * x + m->m[6] * y + m->m[10] * z + m->m[14]) / w;
+  *outx = (m->m[0] * x + m->m[4] * y + m->m[8] * z + m->m[12]) / w;
+  *outy = (m->m[1] * x + m->m[5] * y + m->m[9] * z + m->m[13]) / w;
+  *outz = (m->m[2] * x + m->m[6] * y + m->m[10] * z + m->m[14]) / w;
 }
 
 
@@ -280,14 +280,14 @@ void matrix_stack_rotate(seni_matrix_stack *matrix_stack, f32 a)
   matrix_multiply(head, head, m);
 }
 
-void matrix_stack_transform_vec2(f32 *out, seni_matrix_stack *matrix_stack, f32 x, f32 y)
+void matrix_stack_transform_vec2(f32 *outx, f32 *outy, seni_matrix_stack *matrix_stack, f32 x, f32 y)
 {
   seni_matrix *head = matrix_stack_peek(matrix_stack);
-  matrix_transform_vec2(out, head, x, y);
+  matrix_transform_vec2(outx, outy, head, x, y);
 }
 
-void matrix_stack_transform_vec3(f32 *out, seni_matrix_stack *matrix_stack, f32 x, f32 y, f32 z)
+void matrix_stack_transform_vec3(f32 *outx, f32 *outy, f32 *outz, seni_matrix_stack *matrix_stack, f32 x, f32 y, f32 z)
 {
   seni_matrix *head = matrix_stack_peek(matrix_stack);
-  matrix_transform_vec3(out, head, x, y, z);
+  matrix_transform_vec3(outx, outy, outz, head, x, y, z);
 }
