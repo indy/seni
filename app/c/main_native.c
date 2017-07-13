@@ -109,6 +109,7 @@ int main(int argc, char **argv)
   // execute
   //
   TIMING_UNIT interpret_start = get_timing();
+  DEBUG_INFO_RESET(vm);
   vm_interpret(vm, prog);
   TIMING_UNIT interpret_stop = get_timing();
 

@@ -144,30 +144,6 @@ void slab_get(seni_slab_info *slab_info);
 void slab_return(seni_slab_info *slab_info, char *msg);
 void slab_print(seni_slab_info *slab_info, char *message);
 
-typedef struct seni_vm {
-  seni_render_data *render_data;   // stores the generated vertex data
-  
-  seni_matrix_stack *matrix_stack;
-
-  i32 heap_size;
-  seni_var *heap_slab;             // the contiguous block of allocated memory
-  seni_var *heap_avail;            // doubly linked list of unallocated seni_vars from the heap_slab
-  seni_slab_info heap_slab_info;
-  u64 opcodes_executed;
-  f32 execution_time;              // in msec
-  
-  seni_var *stack;
-  i32 stack_size;
-
-  i32 fp;                          // frame pointer
-  i32 sp;                          // stack pointer
-  i32 ip;                          // instruction pointer
-
-  i32 global;                      // single segment of memory at top of stack
-  i32 local;                       // per-frame segment of memory for local variables
-
-} seni_vm;
-
 // codes
 //
 typedef enum {
@@ -193,8 +169,10 @@ typedef struct {
   i32 argument_offsets[MAX_NUM_ARGUMENTS];
 } seni_fn_info;
 
+struct seni_vm;
+
 // todo: replace returned seni_var with a seni_var *
-typedef seni_var *(*native_function_ptr)(seni_vm *vm, i32 num_args);
+typedef seni_var *(*native_function_ptr)(struct seni_vm *vm, i32 num_args);
 typedef struct {
   native_function_ptr function_ptr[MAX_NATIVE_LOOKUPS];
 } seni_env;
@@ -223,6 +201,32 @@ typedef struct {
 
 } seni_program;
 
+typedef struct seni_vm {
+  seni_program *program;
+  
+  seni_render_data *render_data;   // stores the generated vertex data
+  
+  seni_matrix_stack *matrix_stack;
+
+  i32 heap_size;
+  seni_var *heap_slab;             // the contiguous block of allocated memory
+  seni_var *heap_avail;            // doubly linked list of unallocated seni_vars from the heap_slab
+  seni_slab_info heap_slab_info;
+  u64 opcodes_executed;
+  f32 execution_time;              // in msec
+  
+  seni_var *stack;
+  i32 stack_size;
+
+  i32 fp;                          // frame pointer
+  i32 sp;                          // stack pointer
+  i32 ip;                          // instruction pointer
+
+  i32 global;                      // single segment of memory at top of stack
+  i32 local;                       // per-frame segment of memory for local variables
+
+} seni_vm;
+
 // word lookup
 seni_word_lut *wlut_allocate();
 void           wlut_free(seni_word_lut *wlut);
@@ -239,12 +243,14 @@ seni_vm       *vm_construct(i32 stack_size, i32 heap_size);
 void           vm_reset(seni_vm *vm);
 void           vm_free(seni_vm *vm);
 void           vm_free_render_data(seni_vm *vm);
+void           pretty_print_vm(seni_vm *vm, char* msg);
 
 char          *opcode_name(seni_opcode opcode);
 
 seni_program  *program_allocate(i32 code_max_size);
 seni_program  *program_construct(i32 code_max_size, seni_word_lut *wl, seni_env *env);
 void           program_free(seni_program *program);
+i32            program_stop_location(seni_program *program);
 void           pretty_print_program(seni_program *program);
 
 seni_env      *env_construct();

@@ -189,6 +189,58 @@ void declare_native(seni_word_lut *wlut, seni_env *e, char *name, native_functio
   }
 }
 
+seni_var *bind_debug_print(seni_vm *vm, i32 num_args)
+{
+  seni_var *val = NULL;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VAR(INAME_VAL, val);
+  READ_STACK_ARGS_END;
+
+  pretty_print_seni_var(val, "debug");
+
+  return &g_var_true;
+}
+
+seni_var *bind_nth(seni_vm *vm, i32 num_args)
+{
+  seni_var *from = NULL;
+  f32 n = 0;
+  
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VAR(INAME_FROM, from);
+  READ_STACK_ARG_F32(INAME_N, n);
+  READ_STACK_ARGS_END;
+
+  i32 nth = (i32)n;
+
+  if (from->type == VAR_2D && nth >= 0 && nth < 2) {
+    
+    f32_as_var(&g_var_scratch, from->f32_array[nth]);
+    
+  } else if (from->type == VAR_VEC_HEAD){
+    
+    seni_var *e = from->value.v;
+
+    // e is pointing to the rc, so even a nth of 0 requires one call to e->next
+    for (i32 i = 0; i <= nth; i++) {
+      e = e->next;
+    }
+
+    bool copied = var_copy_onto_junk(vm, &g_var_scratch, e);
+    if (copied == false) {
+      SENI_ERROR("var_copy_onto_junk failed in bind_nth");
+    }
+    
+  } else {
+    SENI_ERROR("nth: neither a var_2d with n 0..2 or vector given\n");
+    return &g_var_true;
+  }
+
+  return &g_var_scratch;
+}
+
 seni_var *bind_line(seni_vm *vm, i32 num_args)
 {
   // default values for line
@@ -1263,58 +1315,30 @@ seni_var *bind_interp_circle(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_debug_print(seni_vm *vm, i32 num_args)
+seni_var *bind_repeat_test(seni_vm *vm, i32 num_args)
 {
-  seni_var *val = NULL;
+  // draw is the index into program->fn_info (obtained with address-of)
+  i32 draw = -1;
 
-  // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VAR(INAME_VAL, val);
+  READ_STACK_ARG_I32(INAME_DRAW, draw);
   READ_STACK_ARGS_END;
 
-  pretty_print_seni_var(val, "debug");
-
-  return &g_var_true;
-}
-
-seni_var *bind_nth(seni_vm *vm, i32 num_args)
-{
-  seni_var *from = NULL;
-  f32 n = 0;
-  
-  READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VAR(INAME_FROM, from);
-  READ_STACK_ARG_F32(INAME_N, n);
-  READ_STACK_ARGS_END;
-
-  i32 nth = (i32)n;
-
-  if (from->type == VAR_2D && nth >= 0 && nth < 2) {
-    
-    f32_as_var(&g_var_scratch, from->f32_array[nth]);
-    
-  } else if (from->type == VAR_VEC_HEAD){
-    
-    seni_var *e = from->value.v;
-
-    // e is pointing to the rc, so even a nth of 0 requires one call to e->next
-    for (i32 i = 0; i <= nth; i++) {
-      e = e->next;
-    }
-
-    bool copied = var_copy_onto_junk(vm, &g_var_scratch, e);
-    if (copied == false) {
-      SENI_ERROR("var_copy_onto_junk failed in bind_nth");
-    }
-    
-  } else {
-    SENI_ERROR("nth: neither a var_2d with n 0..2 or vector given\n");
+  if (draw == -1) {
     return &g_var_true;
   }
 
-  return &g_var_scratch;
-}
+  seni_program *program = vm->program;
+  seni_fn_info *fn_info = &(program->fn_info[draw]);
 
+
+  //pretty_print_vm(vm, "before vm_invoke_no_arg_function");
+  vm_invoke_no_arg_function(vm, fn_info);
+  //pretty_print_vm(vm, "after vm_invoke_no_arg_function");
+  
+
+  return &g_var_true;
+}
 
 void declare_bindings(seni_word_lut *wlut, seni_env *e)
 {
@@ -1328,6 +1352,9 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 #define REGISTER_KEYWORD(string,_) declare_vm_keyword(wlut, string);
 #include "seni_keywords.h"
 #undef REGISTER_KEYWORD
+
+  declare_native(wlut, e, "debug/print", &bind_debug_print);
+  declare_native(wlut, e, "nth", &bind_nth);
 
   declare_native(wlut, e, "line", &bind_line);
   declare_native(wlut, e, "rect", &bind_rect);
@@ -1383,8 +1410,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   // path/???
 
-  declare_native(wlut, e, "debug/print", &bind_debug_print);
-
-  declare_native(wlut, e, "nth", &bind_nth);
+  // repeat
+  declare_native(wlut, e, "repeat/test", &bind_repeat_test);
 }
 

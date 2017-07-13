@@ -1,104 +1,41 @@
 
+
+(fn (monkey)
+    (rect position: [500 500]
+          colour: (col/rgb r: 1)
+          width: 100
+          height: 100))
+
+
+(repeat/test draw: (address-of monkey))
+
 (define overlap 60)
 
-(rect position: [500 600]
-      width: 870 height: 600
-      colour: (col/rgb g: 0.51 alpha: 0.4))
-
-
-;; bullshit
-(stroked-bezier-rect position: [(/ canvas/width 2) 600]
-                     width: 800 
-                     height: 600
-                     tessellation: 15
-                     stroke-tessellation: 5
-                     stroke-noise: 0
-                     colour-volatility: {90 (gen/int min: 0 max: 60)}
-                     colour: (col/rgb r: {0.8 (gen/scalar)}
-                                      g: {0.0 (gen/scalar)}
-                                      b: {0.0 (gen/scalar)}
-                                      alpha: 0.7)
-                     volatility: {0 (gen/int min: 0 max: 100)}
-                     iterations: {3 (gen/int min: 0 max: 100)}
-                     seed: {40 (gen/int min: 0 max: 100)}
-                     overlap: {overlap (gen/scalar min: 0 max: 5.0)})
-
-(rect position: [500 300]
-      colour: (col/rgb)
-      width: (/ overlap 2)
-      height: (/ overlap 2))
-
-;(stroked-bezier-rect position: [(/ canvas/width 2) 600]
-;                     tessellation: 10
-;                     stroke-tessellation: 12
-;                     stroke-noise: 11
-;                     width: 800 
-;                     height: 600
-;                     colour-volatility: {0 (gen/int min: 0 max: 60)}
-;                     colour: (col/rgb r: {0.8 (gen/scalar)}
-;                                      g: {0.0 (gen/scalar)}
-;                                      b: {0.0 (gen/scalar)}
-;                                      alpha: 0.3)
-;                     volatility: {0(gen/int min: 0 max: 100)}
-;                     iterations: {1 (gen/int min: 0 max: 100)}
-;                     seed: {40 (gen/int min: 0 max: 100)}
-;                     overlap: {10.0 (gen/scalar min: 0 max: 5.0)}
-;                     brush: brush-flat
-;                     brush-subtype: 0)
-
-
-
-
-
-;; (stroked-bezier-rect position: [250 250]
-;;                      tessellation: 1
-;;                      stroke-tessellation: 12
-;;                      stroke-noise: 1
-;;                      width: 300 height: 300
-;;                      colour-volatility: {0 (gen/int min: 0 max: 60)}
-;;                      colour: (col/rgb r: {0.8 (gen/scalar)}
-;;                                       g: {0.0 (gen/scalar)}
-;;                                       b: {0.0 (gen/scalar)}
-;;                                       alpha: 0.83)
-;;                      volatility: {2 (gen/int min: 0 max: 100)}
-;;                      iterations: {15 (gen/int min: 0 max: 100)}
-;;                      seed: {43 (gen/int min: 0 max: 100)}
-;;                      overlap: {2 (gen/scalar min: 0 max: 5.0)}
-;;                      brush: brush-flat
-;;                      brush-subtype: 0)
-
-
-
-;; (stroked-bezier tessellation: 4
-;;                 coords: [[900 500] [600 700] [300 0] [100 500]]
-;;                 stroke-tessellation: 30
-;;                 stroke-noise: 60
-;;                 stroke-line-width-start: 60
-;;                 stroke-line-width-end: 50
-;;                 colour: (col/rgb r: 1.0 g: 0.0 b: 0.2 alpha: 0.8)
-;;                 seed: 446
-;;                 colour-volatility: 60
-;;                 brush: brush-g
-;;                 brush-subtype: 1)
+;; (rect position: [500 600]
+;;       width: 870 height: 600
+;;       colour: (col/rgb g: 0.51 alpha: 0.4))
 
 
 ;; (stroked-bezier-rect position: [(/ canvas/width 2) 600]
-;;                      tessellation: 2
-;;                      stroke-tessellation: 3
-;;                      stroke-noise: 130
-;;                      width: 800 height: 600
-;;                      colour-volatility: {30 (gen/int min: 0 max: 60)}
+;;                      width: 800 
+;;                      height: 600
+;;                      tessellation: 15
+;;                      stroke-tessellation: 5
+;;                      stroke-noise: 0
+;;                      colour-volatility: {90 (gen/int min: 0 max: 60)}
 ;;                      colour: (col/rgb r: {0.8 (gen/scalar)}
 ;;                                       g: {0.0 (gen/scalar)}
 ;;                                       b: {0.0 (gen/scalar)}
-;;                                       alpha: 0.3)
-;;                      volatility: {9 (gen/int min: 0 max: 100)}
-;;                      iterations: {90 (gen/int min: 0 max: 100)}
-;;                      seed: {43 (gen/int min: 0 max: 100)}
-;;                      overlap: {50.0 (gen/scalar min: 0 max: 5.0)}
-;;                      brush: brush-e
-;;                      brush-subtype: 0)
+;;                                       alpha: 0.7)
+;;                      volatility: {0 (gen/int min: 0 max: 100)}
+;;                      iterations: {3 (gen/int min: 0 max: 100)}
+;;                      seed: {40 (gen/int min: 0 max: 100)}
+;;                      overlap: {overlap (gen/scalar min: 0 max: 5.0)})
 
+;; (rect position: [500 300]
+;;       colour: (col/rgb)
+;;       width: (/ overlap 2)
+;;       height: (/ overlap 2))
 
 ;; (rect position: [500 700] width: 50 height: 50)
 

@@ -21,6 +21,9 @@ void      append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
 void      append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val);
 void      append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col);
 
+bool      vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info);
+
 bool      vm_interpret(seni_vm *vm, seni_program *program);
+
 
 #endif

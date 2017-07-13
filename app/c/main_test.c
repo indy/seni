@@ -367,6 +367,7 @@ void test_strtof(void)
   prog->env = e;                                                     \
   compiler_compile(ast, prog);                                       \
   seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE);                  \
+  DEBUG_INFO_RESET(vm);                                              \
   vm_interpret(vm, prog)
 
 #ifdef SENI_DEBUG_MODE
@@ -712,6 +713,12 @@ void test_vm_function_address(void)
   
 }
 
+void test_vm_repeat(void)
+{
+  VM_COMPILE_F32("(fn (k) (+ 2 3)) (repeat/test draw: (address-of k)) 10", 10.0f);
+  VM_COMPILE_F32("(fn (k) [4 5]) (repeat/test draw: (address-of k)) 10", 10.0f);
+}
+
 void test_prng(void)
 {
 
@@ -767,6 +774,7 @@ int main(void)
   RUN_TEST(test_vm_environmental);
   RUN_TEST(test_vm_interp);
   RUN_TEST(test_vm_function_address);
+  RUN_TEST(test_vm_repeat);
 
   // todo: test READ_STACK_ARG_COORD4
 

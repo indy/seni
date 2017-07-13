@@ -1,13 +1,14 @@
-* TODO [0/9]
-  1. [ ] play around with stroked-bezier-rect
-  2. [ ] test new setup/teardown code
-  3. [ ] cleanup memory of parser
-  4. [ ] structs for compile, runtim, performance info
-  5. [ ] seni_env
-  6. [ ] 'in' paramaeter for loop ?
-  7. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  8. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  9. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+* TODO [0/10]
+  1. [ ] colour presets
+  2. [ ] play around with stroked-bezier-rect
+  3. [ ] test new setup/teardown code
+  4. [ ] cleanup memory of parser
+  5. [ ] structs for compile, runtim, performance info
+  6. [ ] seni_env
+  7. [ ] 'in' paramaeter for loop ?
+  8. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  9. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  10. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
 * updating scripts [8/57]
   1. [X] 14ef-blur-grid.seni
@@ -19,7 +20,7 @@
   7. [X] 154c-stroked-bezier.seni
   8. [X] 154h-rothko-2.seni -- TODO: THIS IS SLOW
   9. [ ] 1556-biomorphs.seni - repeat/symmetry-vertical - takes a 'draw' argument
-  10. [ ] 155b-spiral-derived.seni
+  10. [ ] 155b-spiral-derived.seni - path/circle
   11. [ ] 155j-chaotic-grid-2.seni - focal/point
   12. [ ] 155j-chaotic-grid-3.seni
   13. [ ] 1560-path.seni - make a function ???
@@ -626,7 +627,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
      (+ y (* s (prng/perlin x: x y: y z: z))))
 
 
-* compiling function calls
+* compiling function calls - TODO write up about implementation
 
   the CALL and CALL_0 are compiled with their offsets as bytcode args. this limits them to only being used where function calls are known at compile time.
   if CALL and CALL_0 got their offsets from the stack we could use them for calling functions that are not known until run-time
@@ -664,6 +665,12 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   
   @ syntax mean 'address of' ie return the iname
 
+  --------------------------------------------------
+
+  implementation:
+
+  address-of : works at compile time to LOAD the seni_fn_info index onto the stack. This means that address-of can only work with user-defined functions that are explicitly passed in.
+
 * setup/teardown
 
 one time init
@@ -678,6 +685,34 @@ one time init
 
 one time shutdown
 
+
+
+
+
+
+* native functions that accept function arguments [0/2]
+
+  1. [ ] create a dummy native function that accepts a 'draw' argument
+  2. [ ] it's bind.c impl will invoke a function with the behaviour given below
+
+  will need a vm_interpret like function that does the following:
+
+  - create a stack frame
+  - push an IP that is the current program's STOP instruction
+  - invoke vm_interpret so that it starts at the function's CALL_0 location
+  - once it's done it will RET and end up at the STOP
+
+  this will all happen 'inside' a NATIVE call from the real vm_interpret
+
+
+  --------------------------------------------------
+     
+
+  (repeat/symmetry-vertical draw: (address-of some-fn))
+
+// invoke a function that has no arguments
+// quite hacky but it will do for the repeat/* functions
+call_no_arg_function
 
 
 

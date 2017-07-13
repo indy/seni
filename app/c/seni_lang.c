@@ -325,6 +325,12 @@ void program_free(seni_program *program)
   free(program);
 }
 
+i32 program_stop_location(seni_program *program)
+{
+  // the final opcode in the program will always be a STOP
+  return program->code_size - 1;
+}
+
 char *memory_segment_name(seni_memory_segment_type segment)
 {
   switch(segment) {
@@ -422,7 +428,7 @@ void pretty_print_program(seni_program *program)
     seni_bytecode *b = &(program->code[i]);
     pretty_print_bytecode(i, b);
   }
-  SENI_LOG("\n");
+  SENI_PRINT("\n");
 }
 
 seni_env *env_construct()

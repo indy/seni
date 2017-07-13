@@ -41,12 +41,10 @@ bool var_copy(seni_vm *vm, seni_var *dest, seni_var *src)
     return true;
   }
 
-  if (dest->type == VAR_VEC_HEAD) {
-    bool res = vector_ref_count_decrement(vm, dest);
-    if (res == false) {
-      SENI_ERROR("var_copy - vector_ref_count_decrement failed");
-      return false;
-    }
+  bool res = vector_ref_count_decrement(vm, dest);
+  if (res == false) {
+    SENI_ERROR("var_copy - vector_ref_count_decrement failed");
+    return false;
   }
 
   dest->type = src->type;
@@ -155,11 +153,9 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
 
   DEBUG_INFO_RETURN_TO_HEAP(vm);
 
-  if (var->type == VAR_VEC_HEAD) {
-    bool res = vector_ref_count_decrement(vm, var);
-    if(res == false) {
-      SENI_ERROR("var_return_to_heap");
-    }
+  bool res = vector_ref_count_decrement(vm, var);
+  if(res == false) {
+    SENI_ERROR("var_return_to_heap");
   }
 
   // the var is part of an allocated list
@@ -173,6 +169,10 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
   
 bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
 {
+  if (vec_head->type != VAR_VEC_HEAD) {
+    return true;
+  }
+  
   seni_var *var_rc = vec_head->value.v;
   if (var_rc->type != VAR_VEC_RC) {
     SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC???");
@@ -187,9 +187,7 @@ bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
   // decrement the ref counts of any nested vectors
   seni_var *element = var_rc->next;
   while (element != NULL) {
-    if (element->type == VAR_VEC_HEAD) {
-      vector_ref_count_decrement(vm, element);
-    }    
+    vector_ref_count_decrement(vm, element);
     element = element->next;
   }
       
@@ -205,6 +203,9 @@ bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
 
 void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
 {
+  if (vec_head->type != VAR_VEC_HEAD) {
+    return;
+  }
   seni_var *var_rc = vec_head->value.v;
   if (var_rc->type != VAR_VEC_RC) {
     SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC %d???", vm->sp);
@@ -337,6 +338,73 @@ seni_var *arg_memory_from_iname(seni_fn_info *fn_info, i32 iname, seni_var *args
   return NULL;
 }
 
+// invokes a no-arg function during execution of a program (some native functions use this)
+// push a frame onto the vm's stack, and invoke vm_interpret so that
+// it executes the given function and then stops
+//
+bool vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info)
+{
+  if (fn_info->num_args != 0) {
+    SENI_ERROR("repeat/test draw function cannot have any arguments");
+    return false;
+  }
+
+  // push a frame onto the stack whose return address is the program's STOP instruction
+  i32 stop_address = program_stop_location(vm->program);
+
+  seni_var *stack_d = &(vm->stack[vm->sp]);
+  seni_var *v = NULL;
+
+  i32 fp = vm->sp;
+
+  // push the caller's fp
+  v = stack_d; stack_d++; vm->sp++;
+  v->type = VAR_INT;
+  v->value.i = vm->fp;
+
+  // push stop address ip
+  v = stack_d; stack_d++; vm->sp++;
+  v->type = VAR_INT;
+  v->value.i = stop_address;
+
+  // push num_args
+  v = stack_d; stack_d++; vm->sp++;
+  v->type = VAR_INT;
+  v->value.i = 0;
+
+  vm->ip = fn_info->body_address;
+  vm->fp = fp;
+  vm->local = vm->sp;
+
+  // clear the memory that's going to be used for locals
+  for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
+    // setting all memory as VAR_INT will prevent any weird ref count
+    // stuff when we deal with the RET opcodes later on
+    vm->stack[vm->sp].type = VAR_INT; 
+    vm->sp++;
+  }
+
+  // vm is now in a state that will execute the given function and then return to the STOP opcode
+  //
+  vm_interpret(vm, vm->program);
+
+
+  // the above vm_interpret will eventually hit a RET, pop the frame,
+  // push the function's result onto the stack and then jump to the stop_address
+  // so we'll need to pop that function's return value off the stack
+
+  vm->sp--;
+  // correct ref-count if the function returned a vector
+  v = &(vm->stack[vm->sp]);
+  bool b1 = vector_ref_count_decrement(vm, v);
+  if (b1 == false) {
+    SENI_ERROR("vm_invoke_no_arg_function: vector_ref_count_decrement failed");
+    return false;
+  }
+
+  return true;
+}
+
 // executes a program on a vm
 // returns true if we reached a STOP opcode
 bool vm_interpret(seni_vm *vm, seni_program *program)
@@ -358,8 +426,6 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
   i32 iname;
   i32 i;
 
-  // isg_col = 0;
-
   // the function calling convention means that references to LOCAL variables after a
   // CALL need to hop-back down the frame pointers to the real local frame that they
   // should be referencing. (see notes.org: bytecode sequence when calling functions)
@@ -371,9 +437,11 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 #define STACK_POP stack_d--; sp--; v = stack_d
 #define STACK_PUSH v = stack_d; stack_d++; sp++
 
-  DEBUG_INFO_RESET(vm);
-
   TIMING_UNIT timing = get_timing();
+
+  // store a reference to the program in the vm
+  // required in case any of the native functions need to invoke vm_interpret
+  vm->program = program;
 
   for (;;) {
     vm->opcodes_executed++;
@@ -453,12 +521,10 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         var_copy(vm, dest, v);
 
         // the stack no longer references the vector, so decrement the rc
-        if (v->type == VAR_VEC_HEAD) {
-          b1 = vector_ref_count_decrement(vm, v);
-          if (b1 == false) {
-            SENI_ERROR("POP MEM_SEG_LOCAL: vector_ref_count_decrement failed");
-            return false;
-          }
+        b1 = vector_ref_count_decrement(vm, v);
+        if (b1 == false) {
+          SENI_ERROR("POP MEM_SEG_LOCAL: vector_ref_count_decrement failed");
+          return false;
         }
         
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
@@ -467,12 +533,10 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // normally pop from the stack and lose the value
         // but if it's a vector then decrement its ref count
-        if (v->type == VAR_VEC_HEAD) {
-          b1 = vector_ref_count_decrement(vm, v);
-          if (b1 == false) {
-            SENI_ERROR("STORE MEM_SEG_VOID: vector_ref_count_decrement failed");
-            return false;
-          }
+        b1 = vector_ref_count_decrement(vm, v);
+        if (b1 == false) {
+          SENI_ERROR("STORE MEM_SEG_VOID: vector_ref_count_decrement failed");
+          return false;
         }
       } else {
         SENI_ERROR("STORE: unknown memory segment type %d", bc->arg0.value.i);
@@ -488,13 +552,11 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
-        if (dest->type == VAR_VEC_HEAD) {
-          b1 = vector_ref_count_decrement(vm, dest);
-          if (b1 == false) {
-            SENI_ERROR("DEC_RC: vector_ref_count_decrement failed");
-            return false;
-          }
-        }        
+        b1 = vector_ref_count_decrement(vm, dest);
+        if (b1 == false) {
+          SENI_ERROR("DEC_RC: vector_ref_count_decrement failed");
+          return false;
+        }
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // no nothing
       } else {
@@ -507,9 +569,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
-        if (dest->type == VAR_VEC_HEAD) {
-          vector_ref_count_increment(vm, dest);
-        }
+        vector_ref_count_increment(vm, dest);
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // no nothing
       } else {
@@ -538,8 +598,6 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
       STACK_POP;
       addr = v->value.i;
-      
-      //num_args = bc->arg1.value.i;
 
       // make room for the labelled arguments
       for (i = 0; i < num_args * 2; i++) {
@@ -618,32 +676,26 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
       // grab whatever was the last value on the soon to be popped frame
       src = &(vm->stack[sp - 1]);
-      if (src->type == VAR_VEC_HEAD) {
-        vector_ref_count_increment(vm, src);
-      }
+      vector_ref_count_increment(vm, src);
 
       num_args = vm->stack[vm->fp + 2].value.i;
 
       // decrement ref count on any locally defined vectors
       for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
         tmp = &(vm->stack[vm->local + i]);
-        if (tmp->type == VAR_VEC_HEAD) {
-          b1 = vector_ref_count_decrement(vm, tmp);
-          if (b1 == false) {
-            SENI_ERROR("RET local vector: vector_ref_count_decrement failed");
-            return false;
-          }
+        b1 = vector_ref_count_decrement(vm, tmp);
+        if (b1 == false) {
+          SENI_ERROR("RET local vector: vector_ref_count_decrement failed");
+          return false;
         }
       }
 
       for (i = 0; i < num_args; i++) {
         tmp = &(vm->stack[vm->fp - ((i+1) * 2)]);
-        if (tmp->type == VAR_VEC_HEAD) {
-          b1 = vector_ref_count_decrement(vm, tmp);
-          if (b1 == false) {
-            SENI_ERROR("RET args: vector_ref_count_decrement failed");
-            return false;
-          }
+        b1 = vector_ref_count_decrement(vm, tmp);
+        if (b1 == false) {
+          SENI_ERROR("RET args: vector_ref_count_decrement failed");
+          return false;
         }
       }
 
@@ -784,8 +836,8 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       break;
 
     case APPEND:
-      // pops top two values: a value and a vector
-      // appends the value onto the vector
+      // pops top two values: a value and a vector appends the value onto the vector
+      
       STACK_POP;
       src = v;                      // the seni_var to append onto the vector
 
@@ -809,22 +861,28 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       break;
 
     case PILE:
+      // takes a VAR_2D or a VECTOR and pushes the given number of elements onto the stack
+      
       num_args = bc->arg0.value.i;
 
       STACK_POP;
 
-      if (num_args == 2 && v->type == VAR_2D) {
+      if (v->type == VAR_2D) {
         // top of the stack is a var_2d
 
-        f1 = v->f32_array[0];
-        f2 = v->f32_array[1];
+        if (num_args == 2) {
+          f1 = v->f32_array[0];
+          f2 = v->f32_array[1];
         
-        STACK_PUSH;
-        f32_as_var(v, f1);
-        STACK_PUSH;
-        f32_as_var(v, f2);
+          STACK_PUSH;
+          f32_as_var(v, f1);
+          STACK_PUSH;
+          f32_as_var(v, f2);
+        } else {
+          SENI_ERROR("PILE: VAR_2D num_args = %d, requires 2", num_args);
+        }
         
-      } else {
+      } else if (v->type == VAR_VEC_HEAD) {
         // top of the stack contains a vector
         // take num_args elements from the vector and push them onto the stack
         seni_var _vec;
@@ -840,11 +898,16 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
           SENI_ERROR("PILE: vector_ref_count_decrement failed");
           return false;
         }
+      } else {
+        SENI_ERROR("PILE: expected to work with either VAR_2D or a Vector");
+        pretty_print_seni_var(v, "PILE input");
       }
       
       break;
 
     case SQUISH2:
+      // combines two floats from the stack into a single VAR_2D
+      
       STACK_POP;
       if (v->type != VAR_FLOAT) {
         SENI_ERROR("SQUISH2 expects a float - non float in 2nd element of vector");
@@ -994,8 +1057,11 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       v->type = VAR_BOOLEAN;
       break;
 
-
     case FLU_STORE:
+      // function look-up version of STORE
+      // pops the fn_info_index from the stack in order to determine
+      // the correct location to store an argument parameter
+      
       STACK_POP;
       i = v->value.i;
       
@@ -1012,11 +1078,15 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
           var_move(dest, v);
         }
       } else {
-        SENI_ERROR("FLU_STORE: unknown memory segment type %d", bc->arg0.value.i);
+        SENI_ERROR("FLU_STORE: should only be used with MEM_SEG_ARGUMENT, not %d", memory_segment_type);
       }
       break;
 
     case FLU_DEC_RC:
+      // function look-up version of DEC_RC
+      // pops the fn_info_index from the stack in order to determine
+      // the correct location to decrement a vector's ref-count
+      
       STACK_POP;
 
       // the var referenced by the bytecode is a default value for a function argument
@@ -1032,23 +1102,25 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
         dest = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
         if (dest != NULL) {
-          if (dest->type == VAR_VEC_HEAD) {
-            b1 = vector_ref_count_decrement(vm, dest);
-            if (b1 == false) {
-              SENI_ERROR("FLU_DEC_RC: vector_ref_count_decrement failed");
-              return false;
-            }
-          }          
+          b1 = vector_ref_count_decrement(vm, dest);
+          if (b1 == false) {
+            SENI_ERROR("FLU_DEC_RC: vector_ref_count_decrement failed");
+            return false;
+          }
         }
 
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // no nothing
       } else {
-        SENI_ERROR("FLU_DEC_RC: unknown memory segment type %d", bc->arg0.value.i);
+        SENI_ERROR("FLU_DEC_RC: unknown memory segment type %d", memory_segment_type);
       }
       break;
 
     case FLU_INC_RC:
+      // function look-up version of INC_RC
+      // pops the fn_info_index from the stack in order to determine
+      // the correct location to increment a vector's ref-count
+
       STACK_POP;
       
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
@@ -1059,17 +1131,17 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
         dest = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
         if (dest != NULL) {
-          if (dest->type == VAR_VEC_HEAD) {
-            vector_ref_count_increment(vm, dest);
-          }
+          vector_ref_count_increment(vm, dest);
         }
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // no nothing
       } else {
-        SENI_ERROR("FLU_INC_RC: unknown memory segment type %d", bc->arg0.value.i);
+        SENI_ERROR("FLU_INC_RC: unknown memory segment type %d", memory_segment_type);
       }
       break;
     case STOP:
+      // stop execution of the program on this vm and return
+      
       vm->sp = sp;
       vm->execution_time = timing_delta_from(timing);
       return true;
