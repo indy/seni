@@ -35,7 +35,8 @@ typedef struct {
 
 seni_matrix_stack *matrix_stack_construct();
 void matrix_stack_free(seni_matrix_stack *matrix_stack);
-
+void matrix_stack_reset(seni_matrix_stack *matrix_stack);
+  
 seni_matrix *matrix_stack_push(seni_matrix_stack *matrix_stack);
 seni_matrix *matrix_stack_pop(seni_matrix_stack *matrix_stack);
 seni_matrix *matrix_stack_peek(seni_matrix_stack *matrix_stack);

@@ -415,7 +415,6 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
   seni_memory_segment_type memory_segment_type;
   seni_fn_info *fn_info;
   seni_var *src, *dest, *tmp;
-  seni_matrix *top, *matrix;
 
   register seni_bytecode *bc = NULL;
   register seni_var *v = NULL;
@@ -940,10 +939,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       break;
 
     case MTX_LOAD:
-      // note: should these just be normal functions and not opcodes?
-      top = matrix_stack_peek(vm->matrix_stack);
-      matrix = matrix_stack_push(vm->matrix_stack);
-      matrix_copy(matrix, top);
+      matrix_stack_push(vm->matrix_stack);
       break;
 
     case MTX_STORE:

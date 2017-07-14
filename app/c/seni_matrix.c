@@ -219,15 +219,30 @@ void matrix_stack_free(seni_matrix_stack *matrix_stack)
   free(matrix_stack);
 }
 
+void matrix_stack_reset(seni_matrix_stack *matrix_stack)
+{
+  // add an identity matrix onto the stack so that further scale/rotate/translate ops can work
+  seni_matrix *m = &(matrix_stack->stack[0]);
+  matrix_identity(m);
+
+  matrix_stack->sp = 1;
+}
+
 seni_matrix *matrix_stack_push(seni_matrix_stack *matrix_stack)
 {
   if (matrix_stack->sp == MATRIX_STACK_SIZE) {
     SENI_ERROR("matrix_stack_push: matrix stack is full");
     return NULL;
   }
+
+  seni_matrix *old_top = &(matrix_stack->stack[matrix_stack->sp - 1]);
+  seni_matrix *new_top = &(matrix_stack->stack[matrix_stack->sp]);
+
+  matrix_stack->sp++;
+
+  matrix_copy(new_top, old_top);
   
-  seni_matrix *m = &(matrix_stack->stack[matrix_stack->sp++]);
-  return m;
+  return new_top;
 }
 
 seni_matrix *matrix_stack_pop(seni_matrix_stack *matrix_stack)

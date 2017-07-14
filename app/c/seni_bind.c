@@ -8,6 +8,7 @@
 #include "seni_mathutil.h"
 #include "seni_prng.h"
 #include "seni_interp.h"
+#include "seni_repeat.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -1340,6 +1341,78 @@ seni_var *bind_repeat_test(seni_vm *vm, i32 num_args)
   return &g_var_true;
 }
 
+seni_var *bind_repeat_symmetry_vertical(seni_vm *vm, i32 num_args)
+{
+  // draw is the index into program->fn_info (obtained with address-of)
+  i32 draw = -1;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARGS_END;
+
+  if (draw == -1) {
+    return &g_var_true;
+  }
+
+  repeat_symmetry_vertical(vm, draw);
+
+  return &g_var_true;
+}
+
+seni_var *bind_repeat_symmetry_horizontal(seni_vm *vm, i32 num_args)
+{
+  // draw is the index into program->fn_info (obtained with address-of)
+  i32 draw = -1;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARGS_END;
+
+  if (draw == -1) {
+    return &g_var_true;
+  }
+
+  repeat_symmetry_horizontal(vm, draw);
+
+  return &g_var_true;
+}
+
+seni_var *bind_repeat_symmetry_4(seni_vm *vm, i32 num_args)
+{
+  // draw is the index into program->fn_info (obtained with address-of)
+  i32 draw = -1;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARGS_END;
+
+  if (draw == -1) {
+    return &g_var_true;
+  }
+
+  repeat_symmetry_4(vm, draw);
+
+  return &g_var_true;
+}
+
+seni_var *bind_repeat_symmetry_8(seni_vm *vm, i32 num_args)
+{
+  // draw is the index into program->fn_info (obtained with address-of)
+  i32 draw = -1;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARGS_END;
+
+  if (draw == -1) {
+    return &g_var_true;
+  }
+
+  repeat_symmetry_8(vm, draw);
+
+  return &g_var_true;
+}
+
 void declare_bindings(seni_word_lut *wlut, seni_env *e)
 {
   g_var_true.type = VAR_BOOLEAN;
@@ -1412,5 +1485,9 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   // repeat
   declare_native(wlut, e, "repeat/test", &bind_repeat_test);
+  declare_native(wlut, e, "repeat/symmetry-vertical", &bind_repeat_symmetry_vertical);
+  declare_native(wlut, e, "repeat/symmetry-horizontal", &bind_repeat_symmetry_horizontal);
+  declare_native(wlut, e, "repeat/symmetry-4", &bind_repeat_symmetry_4);
+  declare_native(wlut, e, "repeat/symmetry-8", &bind_repeat_symmetry_8);
 }
 

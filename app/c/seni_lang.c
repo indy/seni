@@ -548,10 +548,7 @@ void vm_reset(seni_vm *vm)
     DL_APPEND(vm->heap_avail, &(var[i]));
   }
 
-  vm->matrix_stack->sp = 0;
-  // add an identity matrix onto the stack so that further scale/rotate/translate ops can work
-  seni_matrix *matrix = matrix_stack_push(vm->matrix_stack);
-  matrix_identity(matrix);
+  matrix_stack_reset(vm->matrix_stack);
 }
 
 void vm_free_render_data(seni_vm *vm)
