@@ -54,6 +54,8 @@ export
 int compile_to_render_packets(void)
 {
   TIMING_UNIT timing_a = get_timing();
+
+  vm_reset(g_vm);
   
   char *script = g_string_buffer;
   

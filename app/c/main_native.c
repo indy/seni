@@ -121,10 +121,15 @@ int main(int argc, char **argv)
     num_vertices += render_packet->num_vertices;
   }
 
-  SENI_PRINT("\nrendered %d vertices in %d render packets", num_vertices, render_data->num_render_packets);
-  print_timings(timing_delta(construct_start, construct_stop),
-                timing_delta(compilation_start, compilation_stop),
-                timing_delta(interpret_start, interpret_stop));
+  if (num_vertices != 0) {
+    SENI_PRINT("\nrendered %d vertices in %d render packets", num_vertices, render_data->num_render_packets);
+    print_timings(timing_delta(construct_start, construct_stop),
+                  timing_delta(compilation_start, compilation_stop),
+                  timing_delta(interpret_start, interpret_stop));
+  }
+
+  SENI_LOG("heap slab delta: %d", vm->heap_slab_info.delta);
+
 
   // free memory
   //

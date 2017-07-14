@@ -14,14 +14,14 @@
 
 void vm_debug_info_reset(seni_vm *vm)
 {
-  slab_reset(&(vm->heap_slab_info));
+  slab_info_reset(&(vm->heap_slab_info));
   vm->opcodes_executed = 0;
 }
 
 void vm_debug_info_print(seni_vm *vm)
 {
   SENI_PRINT("*** vm_debug_info_print ***");
-  slab_print(&(vm->heap_slab_info), "heap slab");
+  slab_info_print(&(vm->heap_slab_info), "heap slab");
   SENI_PRINT("bytecodes executed:\t%llu", (long long unsigned int)(vm->opcodes_executed));
   SENI_PRINT("bytecode execution time:\t%.2f msec", vm->execution_time);
 }
@@ -161,24 +161,24 @@ void pretty_print_seni_var(seni_var *var, char* msg)
   switch(using) {
   case USE_I:
     if (var->type == VAR_COLOUR) {
-      SENI_LOG("%s: %s : %d (%.2f, %.2f, %.2f, %.2f)", msg, type, var->value.i,
+      SENI_PRINT("%s: %s : %d (%.2f, %.2f, %.2f, %.2f)", msg, type, var->value.i,
                  var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
     } else {
-      SENI_LOG("%s: %s : %d", msg, type, var->value.i);
+      SENI_PRINT("%s: %s : %d", msg, type, var->value.i);
     }
     break;
   case USE_F:
-    SENI_LOG("%s: %s : %.2f", msg,  type, var->value.f);
+    SENI_PRINT("%s: %s : %.2f", msg,  type, var->value.f);
     break;
   case USE_L:
-    SENI_LOG("%s: %s : %llu", msg, type, (long long unsigned int)(var->value.l));
+    SENI_PRINT("%s: %s : %llu", msg, type, (long long unsigned int)(var->value.l));
     break;
   case USE_V:
     if (var->type == VAR_VEC_HEAD) {
       seni_var *rc = var->value.v;
-      SENI_LOG("%s: %s : length %d ref_count: %d", msg, type, var_vector_length(var), rc->value.ref_count);
+      SENI_PRINT("%s: %s : length %d ref_count: %d", msg, type, var_vector_length(var), rc->value.ref_count);
     } else {
-      SENI_LOG("%s: %s", msg,  type);
+      SENI_PRINT("%s: %s", msg,  type);
     }
     break;
   }
@@ -446,7 +446,7 @@ void env_free(seni_env *e)
 // Slab Info
 // **************************************************
 
-void slab_reset(seni_slab_info *slab_info)
+void slab_info_reset(seni_slab_info *slab_info)
 {
   slab_info->get_count = 0;
   slab_info->return_count = 0;
@@ -454,22 +454,22 @@ void slab_reset(seni_slab_info *slab_info)
   slab_info->delta = 0;
 }
 
-void slab_full_reset(seni_slab_info *slab_info)
+void slab_info_full_reset(seni_slab_info *slab_info)
 {
-  slab_reset(slab_info);
+  slab_info_reset(slab_info);
 
   slab_info->size = 0;
   slab_info->high_water_mark = 0;
 }
 
-void slab_get(seni_slab_info *slab_info)
+void slab_info_get(seni_slab_info *slab_info)
 {
   slab_info->get_count++;
   slab_info->delta++;
   slab_info->high_water_mark = max_i32(slab_info->high_water_mark, slab_info->delta);
 }
 
-void slab_return(seni_slab_info *slab_info, char *msg)
+void slab_info_return(seni_slab_info *slab_info, char *msg)
 {
   slab_info->return_count++;
   slab_info->delta--;
@@ -479,7 +479,7 @@ void slab_return(seni_slab_info *slab_info, char *msg)
   }
 }
 
-void slab_print(seni_slab_info *slab_info, char *message)
+void slab_info_print(seni_slab_info *slab_info, char *message)
 {
   SENI_PRINT("%s\tsize: %d", message, slab_info->size);
   SENI_PRINT("\t\tget_count %d\treturn_count %d", slab_info->get_count, slab_info->return_count);
@@ -535,8 +535,12 @@ void vm_reset(seni_vm *vm)
   vm->sp = base_offset;
 
   vm->heap_avail = NULL;
-  slab_full_reset(&(vm->heap_slab_info));
+  slab_info_full_reset(&(vm->heap_slab_info));
   vm->heap_slab_info.size = vm->heap_size;
+  for (i = 0; i < vm->heap_size; i++) {
+    vm->heap_slab[i].next = NULL;
+    vm->heap_slab[i].prev = NULL;
+  }
 
   var = vm->heap_slab;
   for (i = 0; i < vm->heap_size; i++) {

@@ -138,11 +138,11 @@ typedef struct {
   i32 high_water_mark;          // max(delta) == the highest number of elements that were in use at one time
 } seni_slab_info;
 
-void slab_reset(seni_slab_info *slab_info);
-void slab_full_reset(seni_slab_info *slab_info);
-void slab_get(seni_slab_info *slab_info);
-void slab_return(seni_slab_info *slab_info, char *msg);
-void slab_print(seni_slab_info *slab_info, char *message);
+void slab_info_reset(seni_slab_info *slab_info);
+void slab_info_full_reset(seni_slab_info *slab_info);
+void slab_info_get(seni_slab_info *slab_info);
+void slab_info_return(seni_slab_info *slab_info, char *msg);
+void slab_info_print(seni_slab_info *slab_info, char *message);
 
 // codes
 //
@@ -271,8 +271,8 @@ void vm_debug_info_print(seni_vm *vm);
 // record information during execution of bytecode
 #define DEBUG_INFO_RESET(vm) vm_debug_info_reset(vm)
 #define DEBUG_INFO_PRINT(vm) vm_debug_info_print(vm)
-#define DEBUG_INFO_GET_FROM_HEAP(vm) slab_get(&(vm->heap_slab_info))
-#define DEBUG_INFO_RETURN_TO_HEAP(vm) slab_return(&(vm->heap_slab_info), "RETURN_TO_HEAP")
+#define DEBUG_INFO_GET_FROM_HEAP(vm) slab_info_get(&(vm->heap_slab_info))
+#define DEBUG_INFO_RETURN_TO_HEAP(vm) slab_info_return(&(vm->heap_slab_info), "RETURN_TO_HEAP")
 
 #else
 

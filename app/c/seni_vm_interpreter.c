@@ -182,14 +182,14 @@ bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
 
   var_rc->value.ref_count--;
 
-  //SENI_LOG("vector_ref_count_decrement %p: %d\n", var_rc, var_rc->value.ref_count);
-
   // decrement the ref counts of any nested vectors
   seni_var *element = var_rc->next;
   while (element != NULL) {
     vector_ref_count_decrement(vm, element);
     element = element->next;
   }
+
+  // pretty_print_seni_var(vec_head, "dec");
       
   if (var_rc->value.ref_count == 0) {
     var_return_to_heap(vm, var_rc);
@@ -213,7 +213,7 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
   
   var_rc->value.ref_count++;
 
-  //SENI_LOG("vector_ref_count_increment %p: %d\n", var_rc, var_rc->value.ref_count);
+  // pretty_print_seni_var(vec_head, "inc");
 }
 
 // [ ] <<- this is the VAR_VEC_HEAD (value.v points to VAR_VEC_RC)
@@ -396,6 +396,7 @@ bool vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info)
   vm->sp--;
   // correct ref-count if the function returned a vector
   v = &(vm->stack[vm->sp]);
+
   bool b1 = vector_ref_count_decrement(vm, v);
   if (b1 == false) {
     SENI_ERROR("vm_invoke_no_arg_function: vector_ref_count_decrement failed");
@@ -472,7 +473,9 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         pretty_print_seni_var(src, "---");
         SENI_LOG("--- hop_back is %d fp is %d\n", hop_back, fp);
 #endif
+
         var_copy_onto_junk(vm, v, src);
+        
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
 
         // if we're referencing a LOCAL in-between CALL and CALL_0 make sure we use the right frame
@@ -483,10 +486,14 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         local = fp + 3;         // get the correct frame's local
         
         src = &(vm->stack[local + bc->arg1.value.i]);
+
         var_copy_onto_junk(vm, v, src);
+        
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         src = &(vm->stack[vm->global + bc->arg1.value.i]);
+
         var_copy_onto_junk(vm, v, src);
+
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // pushing from the void. i.e. create this object
 
