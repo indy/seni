@@ -8,8 +8,8 @@ void repeat_symmetry_vertical(seni_vm *vm, i32 draw);
 void repeat_symmetry_horizontal(seni_vm *vm, i32 draw);
 void repeat_symmetry_4(seni_vm *vm, i32 draw);
 void repeat_symmetry_8(seni_vm *vm, i32 draw);
-void repeat_rotate(seni_vm *vm, i32 draw);
-void repeat_rotate_mirrored(seni_vm *vm, i32 draw);
+void repeat_rotate(seni_vm *vm, i32 draw, i32 copies);
+void repeat_rotate_mirrored(seni_vm *vm, i32 draw, i32 copies);
 
 
 #endif

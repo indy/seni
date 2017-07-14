@@ -1413,6 +1413,46 @@ seni_var *bind_repeat_symmetry_8(seni_vm *vm, i32 num_args)
   return &g_var_true;
 }
 
+seni_var *bind_repeat_rotate(seni_vm *vm, i32 num_args)
+{
+  // draw is the index into program->fn_info (obtained with address-of)
+  i32 draw = -1;
+  f32 copies = 3.0f;
+  
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARG_F32(INAME_COPIES, copies);
+  READ_STACK_ARGS_END;
+
+  if (draw == -1) {
+    return &g_var_true;
+  }
+
+  repeat_rotate(vm, draw, (i32)copies);
+
+  return &g_var_true;
+}
+
+seni_var *bind_repeat_rotate_mirrored(seni_vm *vm, i32 num_args)
+{
+  // draw is the index into program->fn_info (obtained with address-of)
+  i32 draw = -1;
+  f32 copies = 3.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARG_F32(INAME_COPIES, copies);
+  READ_STACK_ARGS_END;
+
+  if (draw == -1) {
+    return &g_var_true;
+  }
+
+  repeat_rotate_mirrored(vm, draw, (i32)copies);
+
+  return &g_var_true;
+}
+
 void declare_bindings(seni_word_lut *wlut, seni_env *e)
 {
   g_var_true.type = VAR_BOOLEAN;
@@ -1489,5 +1529,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "repeat/symmetry-horizontal", &bind_repeat_symmetry_horizontal);
   declare_native(wlut, e, "repeat/symmetry-4", &bind_repeat_symmetry_4);
   declare_native(wlut, e, "repeat/symmetry-8", &bind_repeat_symmetry_8);
+  declare_native(wlut, e, "repeat/rotate", &bind_repeat_rotate);
+  declare_native(wlut, e, "repeat/rotate_mirrored", &bind_repeat_rotate_mirrored);
 }
 
