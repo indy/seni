@@ -1,15 +1,14 @@
-* TODO [0/11]
-  1. [ ] make sure that the heap is fully restored in between running scripts
-  2. [ ] colour presets
-  3. [ ] play around with stroked-bezier-rect
-  4. [ ] test new setup/teardown code
-  5. [ ] cleanup memory of parser
-  6. [ ] structs for compile, runtim, performance info
-  7. [ ] seni_env
-  8. [ ] 'in' paramaeter for loop ?
-  9. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  10. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+* TODO [2/10]
+  1. [ ] test new setup/teardown code
+  2. [ ] cleanup memory of parser
+  3. [ ] structs for compile, runtim, performance info
+  4. [ ] seni_env
+  5. [ ] 'in' parameter for loop ?
+  6. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  7. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  8. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  9. [X] make sure that the heap is fully restored in between running scripts
+  10. [X] colour presets
 
 * updating scripts [9/57]
   1. [X] 14ef-blur-grid.seni

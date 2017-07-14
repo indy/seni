@@ -1166,18 +1166,70 @@ void compile_preamble_f32(seni_program *program, i32 iname, f32 value)
   program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
 }
 
+void compile_preamble_col(seni_program *program, i32 iname, f32 r, f32 g, f32 b, f32 a)
+{
+  seni_var mem_location, colour_arg;
+
+  i32_as_var(&mem_location, MEM_SEG_CONSTANT);
+
+  colour_arg.type = VAR_COLOUR;
+  colour_arg.value.i = RGB;
+  
+  colour_arg.f32_array[0] = r;
+  colour_arg.f32_array[1] = g;
+  colour_arg.f32_array[2] = b;
+  colour_arg.f32_array[3] = a;
+
+  program_emit_opcode(program, LOAD, &mem_location, &colour_arg);
+
+  i32 address = get_global_mapping(program, iname);
+  if (address == -1) {
+    address = add_global_mapping(program, iname);
+  }
+  program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
+}
+
+
 // NOTE: each entry in compile_preamble should have a corresponding entry here
 void register_top_level_preamble(seni_program *program)
 {
   add_global_mapping(program, INAME_CANVAS_WIDTH);
   add_global_mapping(program, INAME_CANVAS_HEIGHT);
+
+  add_global_mapping(program, INAME_WHITE);
+  add_global_mapping(program, INAME_BLACK);
+
+  add_global_mapping(program, INAME_RED);
+  add_global_mapping(program, INAME_GREEN);
+  add_global_mapping(program, INAME_BLUE);
+
+  add_global_mapping(program, INAME_YELLOW);
+  add_global_mapping(program, INAME_MAGENTA);
+  add_global_mapping(program, INAME_CYAN);
 }
 
-// NOTE: each entry should have a corresponding entry in register_top_level_preamble
 void compile_preamble(seni_program *program)
 {
+// ********************************************************************************
+// NOTE: each entry should have a corresponding entry in register_top_level_preamble
+// ********************************************************************************
   compile_preamble_f32(program, INAME_CANVAS_WIDTH, 1000.0f);
   compile_preamble_f32(program, INAME_CANVAS_HEIGHT, 1000.0f);
+
+  compile_preamble_col(program, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f);
+  compile_preamble_col(program, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f);
+  
+  compile_preamble_col(program, INAME_RED, 1.0f, 0.0f, 0.0f, 1.0f);
+  compile_preamble_col(program, INAME_GREEN, 0.0f, 1.0f, 0.0f, 1.0f);
+  compile_preamble_col(program, INAME_BLUE, 0.0f, 0.0f, 1.0f, 1.0f);
+
+  compile_preamble_col(program, INAME_YELLOW, 1.0f, 1.0f, 0.0f, 1.0f);
+  compile_preamble_col(program, INAME_MAGENTA, 1.0f, 0.0f, 1.0f, 1.0f);
+  compile_preamble_col(program, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f);
+// ********************************************************************************
+// NOTE: each entry should have a corresponding entry in register_top_level_preamble
+// ********************************************************************************
+  
 }
 
 
