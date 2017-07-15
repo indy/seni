@@ -1189,7 +1189,6 @@ void compile_preamble_col(seni_program *program, i32 iname, f32 r, f32 g, f32 b,
   program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
 }
 
-
 // NOTE: each entry in compile_preamble should have a corresponding entry here
 void register_top_level_preamble(seni_program *program)
 {
@@ -1229,9 +1228,7 @@ void compile_preamble(seni_program *program)
 // ********************************************************************************
 // NOTE: each entry should have a corresponding entry in register_top_level_preamble
 // ********************************************************************************
-  
 }
-
 
 // compiles the ast into bytecode for a stack based VM
 //

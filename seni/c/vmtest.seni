@@ -1,17 +1,21 @@
-(rect position: [500 500]
-      colour: (col/rgb g: 1)
-      width: 20
-      height: 20)
-
 (fn (monkey)
   (bezier coords: [[0 -90] [50 90] [100 -90] [150 90]]
           tessellation: 30
-          colour: (col/rgb b: 1))
+          colour: blue)
   (rect position: [50 30]
-        colour: (col/rgb r: 1)
+        colour: green
         width: 40
         height: 40))
 
-(on-matrix-stack
-  (translate vector: [500 500])
-  (repeat/rotate draw: (address-of monkey) copies: 3))
+(fn (shabba step: 0
+            position: [0 0]
+            t: 0)
+  (on-matrix-stack
+    (translate vector: position)
+    (repeat/rotate fn: (address-of monkey) copies: step)
+    (rect position: [0 0]
+      colour: red
+      width: (* t 50)
+      height: (* t 50))))
+
+(path/linear from: [100 700] to: [800 200] steps: 10 fn: (address-of shabba))

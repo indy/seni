@@ -28,10 +28,8 @@
 void test_vm_temp(void)
 {
   //  COMPILE("(fn (k) (+ 9 8)) (k)");
-
-
-  COMPILE("(fn (monkey)    (define foo [1 2 3 4])    (rect position: [200 500]          colour: (col/rgb g: 1)          width: 100          height: 100)    foo)(monkey)");
-  
+  // COMPILE("(fn (monkey)    (define foo [1 2 3 4])    (rect position: [200 500]          colour: (col/rgb g: 1)          width: 100          height: 100)    foo)(monkey)");
+  COMPILE("(fn (k a: 10 b: 20 c: 30) (+ a b c)) (k a: 40 b: 50 c: 60)");
 }
 
 int main(void)

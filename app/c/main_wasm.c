@@ -76,6 +76,7 @@ int compile_to_render_packets(void)
 
   // compile and evaluate
   compiler_compile(ast, prog);
+
   DEBUG_INFO_RESET(g_vm);
   bool res = vm_interpret(g_vm, prog);
 

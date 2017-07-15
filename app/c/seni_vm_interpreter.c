@@ -349,12 +349,24 @@ bool vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info)
     return false;
   }
 
+  vm_setup_function_invoke(vm, fn_info);
+  return vm_function_invoke(vm);
+}
+
+void vm_setup_function_invoke(seni_vm *vm, seni_fn_info *fn_info)
+{
   // push a frame onto the stack whose return address is the program's STOP instruction
   i32 stop_address = program_stop_location(vm->program);
+  i32 i;
 
   seni_var *stack_d = &(vm->stack[vm->sp]);
   seni_var *v = NULL;
 
+  // make room for the labelled arguments
+  for (i = 0; i < fn_info->num_args * 2; i++) {
+    v = stack_d; stack_d++; vm->sp++;
+  }
+  
   i32 fp = vm->sp;
 
   // push the caller's fp
@@ -370,7 +382,7 @@ bool vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info)
   // push num_args
   v = stack_d; stack_d++; vm->sp++;
   v->type = VAR_INT;
-  v->value.i = 0;
+  v->value.i = fn_info->num_args;
 
   vm->ip = fn_info->body_address;
   vm->fp = fp;
@@ -383,7 +395,10 @@ bool vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info)
     vm->stack[vm->sp].type = VAR_INT; 
     vm->sp++;
   }
+}
 
+bool vm_function_invoke(seni_vm *vm)
+{
   // vm is now in a state that will execute the given function and then return to the STOP opcode
   //
   vm_interpret(vm, vm->program);
@@ -395,7 +410,7 @@ bool vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info)
 
   vm->sp--;
   // correct ref-count if the function returned a vector
-  v = &(vm->stack[vm->sp]);
+  seni_var *v = &(vm->stack[vm->sp]);
 
   bool b1 = vector_ref_count_decrement(vm, v);
   if (b1 == false) {
@@ -514,6 +529,10 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
+
+        SENI_PRINT("STORE argument at %d (fp = %d)", vm->fp - bc->arg1.value.i - 1, vm->fp);
+        pretty_print_seni_var(v, "");
+        
         // check the current value of dest,
         var_move(dest, v);
 #ifdef TRACE_PRINT_OPCODES

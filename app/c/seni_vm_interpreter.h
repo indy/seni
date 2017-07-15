@@ -23,6 +23,11 @@ void      append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col);
 
 bool      vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info);
 
+// setup vm to invoke a single function and then stop
+void      vm_setup_function_invoke(seni_vm *vm, seni_fn_info *fn_info);
+// run the vm after it's been setup to invoke a single function
+bool      vm_function_invoke(seni_vm *vm);
+
 bool      vm_interpret(seni_vm *vm, seni_program *program);
 
 

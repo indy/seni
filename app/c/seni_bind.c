@@ -9,6 +9,7 @@
 #include "seni_prng.h"
 #include "seni_interp.h"
 #include "seni_repeat.h"
+#include "seni_path.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -132,6 +133,18 @@ typedef struct {
     IS_I32(#n);                                                         \
     n.mapping = value_1->value.i;                                       \
     value_1 = tmp_1;                                                    \
+  }
+
+#define READ_STACK_ARG_COORD3(k, n) if (name_1 == k) {                \
+    tmp_1 = (value_1->value.v)->next;                                 \
+    n[0] = tmp_1->f32_array[0];                                       \
+    n[1] = tmp_1->f32_array[1];                                       \
+    tmp_1 = tmp_1->next;                                              \
+    n[2] = tmp_1->f32_array[0];                                       \
+    n[3] = tmp_1->f32_array[1];                                       \
+    tmp_1 = tmp_1->next;                                              \
+    n[4] = tmp_1->f32_array[0];                                       \
+    n[5] = tmp_1->f32_array[1];                                       \
   }
 
 #define READ_STACK_ARG_COORD4(k, n) if (name_1 == k) {                \
@@ -1316,27 +1329,107 @@ seni_var *bind_interp_circle(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_repeat_test(seni_vm *vm, i32 num_args)
+seni_var *bind_path_linear(seni_vm *vm, i32 num_args)
 {
-  // draw is the index into program->fn_info (obtained with address-of)
-  i32 draw = -1;
+  // (path/linear fn: foo steps: 10 from: [0 0] to: [100 100])
+  f32 from[] = {0.0f, 0.0f};
+  f32 to[] = {100.0f, 100.0f};
+  f32 steps = 10.0f;
+  f32 t_start = 0.0f;
+  f32 t_end = 1.0f;
+  i32 fn = -1;                // todo: rename to fn
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARG_VEC2(INAME_FROM, from);
+  READ_STACK_ARG_VEC2(INAME_TO, to);
+  READ_STACK_ARG_F32(INAME_STEPS, steps);
+  READ_STACK_ARG_F32(INAME_T_START, t_start);
+  READ_STACK_ARG_F32(INAME_T_END, t_end);
+  READ_STACK_ARG_I32(INAME_FN, fn);
   READ_STACK_ARGS_END;
 
-  if (draw == -1) {
+  if (fn == -1) {
     return &g_var_true;
   }
 
-  seni_program *program = vm->program;
-  seni_fn_info *fn_info = &(program->fn_info[draw]);
+  path_linear(vm, fn, (i32)steps, t_start, t_end, from[0], from[1], to[0], to[1]);
 
+  return &g_var_true;
+}
 
-  //pretty_print_vm(vm, "before vm_invoke_no_arg_function");
-  vm_invoke_no_arg_function(vm, fn_info);
-  //pretty_print_vm(vm, "after vm_invoke_no_arg_function");
-  
+seni_var *bind_path_circle(seni_vm *vm, i32 num_args)
+{
+  f32 pos[] = {0.0f, 0.0f};
+  f32 radius = 100.0f;
+  f32 steps = 10.0f;
+  f32 t_start = 0.0f;
+  f32 t_end = 1.0f;
+  i32 fn = -1;                // todo: rename to fn
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(INAME_POSITION, pos);
+  READ_STACK_ARG_F32(INAME_RADIUS, radius);
+  READ_STACK_ARG_F32(INAME_STEPS, steps);
+  READ_STACK_ARG_F32(INAME_T_START, t_start);
+  READ_STACK_ARG_F32(INAME_T_END, t_end);
+  READ_STACK_ARG_I32(INAME_FN, fn);
+  READ_STACK_ARGS_END;
+
+  if (fn == -1) {
+    return &g_var_true;
+  }
+
+  path_circle(vm, fn, (i32)steps, t_start, t_end, pos[0], pos[1], radius);
+
+  return &g_var_true;
+}
+
+seni_var *bind_path_spline(seni_vm *vm, i32 num_args)
+{
+  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f };
+  f32 steps = 10.0f;
+  f32 t_start = 0.0f;
+  f32 t_end = 1.0f;
+  i32 fn = -1;                // todo: rename to fn
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COORD3(INAME_COORDS, coords);
+  READ_STACK_ARG_F32(INAME_STEPS, steps);
+  READ_STACK_ARG_F32(INAME_T_START, t_start);
+  READ_STACK_ARG_F32(INAME_T_END, t_end);
+  READ_STACK_ARG_I32(INAME_FN, fn);
+  READ_STACK_ARGS_END;
+
+  if (fn == -1) {
+    return &g_var_true;
+  }
+
+  path_spline(vm, fn, (i32)steps, t_start, t_end, coords);
+
+  return &g_var_true;
+}
+
+seni_var *bind_path_bezier(seni_vm *vm, i32 num_args)
+{
+  f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
+  f32 steps = 10.0f;
+  f32 t_start = 0.0f;
+  f32 t_end = 1.0f;
+  i32 fn = -1;                // todo: rename to fn
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COORD4(INAME_COORDS, coords);
+  READ_STACK_ARG_F32(INAME_STEPS, steps);
+  READ_STACK_ARG_F32(INAME_T_START, t_start);
+  READ_STACK_ARG_F32(INAME_T_END, t_end);
+  READ_STACK_ARG_I32(INAME_FN, fn);
+  READ_STACK_ARGS_END;
+
+  if (fn == -1) {
+    return &g_var_true;
+  }
+
+  path_bezier(vm, fn, (i32)steps, t_start, t_end, coords);
 
   return &g_var_true;
 }
@@ -1344,17 +1437,17 @@ seni_var *bind_repeat_test(seni_vm *vm, i32 num_args)
 seni_var *bind_repeat_symmetry_vertical(seni_vm *vm, i32 num_args)
 {
   // draw is the index into program->fn_info (obtained with address-of)
-  i32 draw = -1;
+  i32 fn = -1;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARG_I32(INAME_FN, fn);
   READ_STACK_ARGS_END;
 
-  if (draw == -1) {
+  if (fn == -1) {
     return &g_var_true;
   }
 
-  repeat_symmetry_vertical(vm, draw);
+  repeat_symmetry_vertical(vm, fn);
 
   return &g_var_true;
 }
@@ -1362,93 +1455,93 @@ seni_var *bind_repeat_symmetry_vertical(seni_vm *vm, i32 num_args)
 seni_var *bind_repeat_symmetry_horizontal(seni_vm *vm, i32 num_args)
 {
   // draw is the index into program->fn_info (obtained with address-of)
-  i32 draw = -1;
+  i32 fn = -1;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARG_I32(INAME_FN, fn);
   READ_STACK_ARGS_END;
 
-  if (draw == -1) {
+  if (fn == -1) {
     return &g_var_true;
   }
 
-  repeat_symmetry_horizontal(vm, draw);
+  repeat_symmetry_horizontal(vm, fn);
 
   return &g_var_true;
 }
 
 seni_var *bind_repeat_symmetry_4(seni_vm *vm, i32 num_args)
 {
-  // draw is the index into program->fn_info (obtained with address-of)
-  i32 draw = -1;
+  // fn is the index into program->fn_info (obtained with address-of)
+  i32 fn = -1;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARG_I32(INAME_FN, fn);
   READ_STACK_ARGS_END;
 
-  if (draw == -1) {
+  if (fn == -1) {
     return &g_var_true;
   }
 
-  repeat_symmetry_4(vm, draw);
+  repeat_symmetry_4(vm, fn);
 
   return &g_var_true;
 }
 
 seni_var *bind_repeat_symmetry_8(seni_vm *vm, i32 num_args)
 {
-  // draw is the index into program->fn_info (obtained with address-of)
-  i32 draw = -1;
+  // fn is the index into program->fn_info (obtained with address-of)
+  i32 fn = -1;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARG_I32(INAME_FN, fn);
   READ_STACK_ARGS_END;
 
-  if (draw == -1) {
+  if (fn == -1) {
     return &g_var_true;
   }
 
-  repeat_symmetry_8(vm, draw);
+  repeat_symmetry_8(vm, fn);
 
   return &g_var_true;
 }
 
 seni_var *bind_repeat_rotate(seni_vm *vm, i32 num_args)
 {
-  // draw is the index into program->fn_info (obtained with address-of)
-  i32 draw = -1;
+  // fn is the index into program->fn_info (obtained with address-of)
+  i32 fn = -1;
   f32 copies = 3.0f;
   
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARG_I32(INAME_FN, fn);
   READ_STACK_ARG_F32(INAME_COPIES, copies);
   READ_STACK_ARGS_END;
 
-  if (draw == -1) {
+  if (fn == -1) {
     return &g_var_true;
   }
 
-  repeat_rotate(vm, draw, (i32)copies);
+  repeat_rotate(vm, fn, (i32)copies);
 
   return &g_var_true;
 }
 
 seni_var *bind_repeat_rotate_mirrored(seni_vm *vm, i32 num_args)
 {
-  // draw is the index into program->fn_info (obtained with address-of)
-  i32 draw = -1;
+  // fn is the index into program->fn_info (obtained with address-of)
+  i32 fn = -1;
   f32 copies = 3.0f;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_DRAW, draw);
+  READ_STACK_ARG_I32(INAME_FN, fn);
   READ_STACK_ARG_F32(INAME_COPIES, copies);
   READ_STACK_ARGS_END;
 
-  if (draw == -1) {
+  if (fn == -1) {
     return &g_var_true;
   }
 
-  repeat_rotate_mirrored(vm, draw, (i32)copies);
+  repeat_rotate_mirrored(vm, fn, (i32)copies);
 
   return &g_var_true;
 }
@@ -1521,10 +1614,13 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   // map
 
-  // path/???
+  // path
+  declare_native(wlut, e, "path/linear", &bind_path_linear);
+  declare_native(wlut, e, "path/circle", &bind_path_circle);
+  declare_native(wlut, e, "path/spline", &bind_path_spline);
+  declare_native(wlut, e, "path/bezier", &bind_path_bezier);
 
   // repeat
-  declare_native(wlut, e, "repeat/test", &bind_repeat_test);
   declare_native(wlut, e, "repeat/symmetry-vertical", &bind_repeat_symmetry_vertical);
   declare_native(wlut, e, "repeat/symmetry-horizontal", &bind_repeat_symmetry_horizontal);
   declare_native(wlut, e, "repeat/symmetry-4", &bind_repeat_symmetry_4);
