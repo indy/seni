@@ -33,6 +33,7 @@
   },
   "babel": {
     "plugins": [
+      "transform-es2015-block-scoping",       
       "transform-es2015-modules-commonjs"
     ]
   },
@@ -40,6 +41,7 @@
     "babel-cli": "^6.18.0",
     "babel-core": "^6.20.0",
     "babel-loader": "^6.2.9",
+    "babel-plugin-transform-es2015-block-scoping": "^6.20.0",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
     "chai": "^3.5.0",
     "chai-immutable": "^1.6.0",
