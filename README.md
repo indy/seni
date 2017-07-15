@@ -15,6 +15,7 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 1. `npm run build`
 2. `npm run build:wasm`
+3. `go build server.go`
 
 ### Test:
 
@@ -35,7 +36,7 @@ make\win.bat test
 
 ### Running
 
-1. `go run server.go`
+1. `./server`
 2. visit http://localhost:3000
 
 ## Windows 10 Shenanigans
