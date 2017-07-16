@@ -10,14 +10,6 @@ if [ "$1" == "test" ]; then
     ./build_unix/test
 fi
 
-if [ "$1" == "compile" ]; then
-    pushd build_unix    
-    cc -o compile -std=c99 ../app/c/main_compile.c ../app/c/seni_*.c -lm -O1
-    popd
-    ./build_unix/compile
-fi
-
-
 if [ "$1" == "native" ]; then
     pushd build_unix    
     cc -o native -std=c99 ../app/c/main_native.c ../app/c/seni_*.c -lm -O1

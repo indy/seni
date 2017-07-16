@@ -63,23 +63,8 @@ void print_timings(f32 construct, f32 compile, f32 interpret)
   SENI_PRINT("interpret time   : %.2f ms\t(%.2f%%)", interpret, percentage(total, interpret));
 }
 
-int main(int argc, char **argv)
+void execute_source(char *source)
 {
-  char *source = NULL;
-  
-  if (argc > 1) {
-    source = load_file(argv[1]);
-  }
-
-  if (source == NULL) {
-    return 1;
-  }
-
-  if (INAME_NUMBER_OF_KNOWN_WORDS >= NATIVE_START) {
-    SENI_ERROR("WARNING: keywords are overwriting into NATIVE_START area");
-    return 1;
-  }
-
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
@@ -139,7 +124,69 @@ int main(int argc, char **argv)
   env_free(e);
   vm_free(vm);
   free_uv_mapper();
+}
 
+
+
+void print_compiled_program(char *source)
+{
+  // construct
+  seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE);  
+  seni_word_lut *wl = wlut_allocate();
+  seni_env *e = env_construct();
+
+  // setup
+  declare_bindings(wl, e);
+
+  // compile program
+  seni_node *ast = parser_parse(wl, source);
+  seni_program *prog = program_construct(1024, wl, e);
+  compiler_compile(ast, prog);
+
+  // print
+  printf("%s\n", source);
+  pretty_print_program(prog);
+
+  // cleanup
+  wlut_free(wl);
+  parser_free_nodes(ast);
+  program_free(prog);
+  env_free(e);
+  vm_free(vm);
+}
+
+// print the compiled program:
+// native.exe seni/c/script.seni -print
+
+// execute script:
+// native.exe seni/c/script.seni
+
+// execute script, printing out the executed opcodes
+// native.exe seni/c/script.seni -debug
+
+int main(int argc, char **argv)
+{
+  char *source = NULL;
+  
+  if (argc > 1) {
+    source = load_file(argv[1]);
+  }
+
+  if (source == NULL) {
+    return 1;
+  }
+
+  if (INAME_NUMBER_OF_KNOWN_WORDS >= NATIVE_START) {
+    SENI_ERROR("WARNING: keywords are overwriting into NATIVE_START area");
+    return 1;
+  }
+
+  if (argc == 2) {
+    // just a filename
+    execute_source(source);
+  } else if (argc == 3) {
+    print_compiled_program(source);
+  }
 
   free(source);
   
