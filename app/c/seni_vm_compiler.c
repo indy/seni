@@ -556,16 +556,15 @@ void compile_loop(seni_node *ast, seni_program *program)
   // the looping variable x
   seni_node *name_node = parameters_node->value.first_child;
 
-
-
   seni_node *from_node = NULL;
   seni_node *to_node = NULL;
+  seni_node *upto_node = NULL;
   seni_node *increment_node = NULL;
   bool have_from = false;
   bool have_to = false;
+  bool have_upto = false;
   bool have_increment = false;
   
-
   seni_node *node = name_node;
 
   while (node) {
@@ -581,6 +580,10 @@ void compile_loop(seni_node *ast, seni_program *program)
       have_to = true;
       to_node = safe_next(node);
     }
+    if (node->value.i == INAME_UPTO) {
+      have_upto = true;
+      upto_node = safe_next(node);
+    }
     if (node->value.i == INAME_INCREMENT) {
       have_increment = true;
       increment_node = safe_next(node);
@@ -588,9 +591,15 @@ void compile_loop(seni_node *ast, seni_program *program)
     node = safe_next(node); // the value part
   }
 
+  bool use_to = false;
+  
   if (have_to == false) {
-    SENI_ERROR("loop form requires a 'to' parameter");
-    return;
+    if (have_upto == false) {
+      SENI_ERROR("loop form requires either a 'to' or 'upto' parameter");
+      return;
+    }
+  } else {
+    use_to = true;
   }
 
   // set looping variable x to 'from' value
@@ -611,11 +620,20 @@ void compile_loop(seni_node *ast, seni_program *program)
   // and jump if looping variable >= exit value
   i32 addr_loop_start = program->code_size;
   program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, looper_address);
-  compile(to_node, program);
-  program_emit_opcode_i32(program, LT, 0, 0);
+
+  if (use_to) {
+    // so jump if looping variable >= exit value
+    compile(to_node, program);
+    program_emit_opcode_i32(program, LT, 0, 0);
+  } else {
+    // so jump if looping variable > exit value    
+    compile(upto_node, program);
+    program_emit_opcode_i32(program, GT, 0, 0);
+    program_emit_opcode_i32(program, NOT, 0, 0);
+  }
+
   i32 addr_exit_check = program->code_size;
   seni_bytecode *bc_exit_check = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
-
 
   i32 pre_body_opcode_offset = program->opcode_offset;
 
