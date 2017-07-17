@@ -1,0 +1,73 @@
+(define 
+  scalefactor {1.5 (gen/scalar min: 0.5 max: 3)}
+  hex-size {30 (gen/int min: 10 max: 100)}
+
+  background {(col/rgb r: 1 g: 1 b: 1 alpha: 1) (gen/col)}
+  colour-a {(col/rgb r: 0 g: 0 b: 0.4 alpha: 1) (gen/col)}
+  colour-b {(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col)}
+
+  focalpoint (focal/point position: [{500 (gen/int max: canvas/width)}
+                                     {500 (gen/int max: canvas/height)}]
+                          distance: {400 (gen/int min: 200 max: canvas/width)})
+
+  centre [(/ canvas/width 2) (/ canvas/height 2)])
+
+
+(fn (hexagon position: centre
+             colour: black
+             size: 100)
+  (circle colour: colour
+          radius: (* size 0.95) 
+          position: position
+          tessellation: 6))
+
+(fn (hex-grid from: [0 0]
+              to: [canvas/width canvas/height]
+              colour: red
+              size: 30)
+  (define
+    [fx fy] from
+    [tx ty] to
+    height (* size 2)
+    vert (* height 0.75)
+    width (* (/ 1.7320508 2) height))
+  (loop (y from: fy
+           to: (+ ty vert vert)
+           increment: (+ vert vert))
+    (loop (x from: fx
+             to: (+ tx width)
+             increment: width)
+      (hexagon size: size
+               colour: (col/set-alpha colour: colour
+                                      value: (focal/call using: focalpoint position: [x y]))
+               position: [x y])))
+
+  (loop (y from: (+ fy vert)
+           to: (+ ty vert vert)
+           increment: (+ vert vert))
+    (loop (x from: (+ fx (/ width 2))
+             to: (+ tx width)
+             increment: width)
+      (hexagon size: size
+               colour: (col/set-alpha colour: colour
+                                      value: (focal/call using: focalpoint position: [x y]))
+               position: [x y]))))
+
+(rect position: centre
+      width: canvas/width
+      height: canvas/height
+      colour: background)
+
+(translate vector: centre)
+(rotate angle: {35 (gen/scalar max: 360)})
+(scale scalar: scalefactor)
+
+(hex-grid from: [-700 -700]
+          to: [700 700]
+          size: hex-size
+          colour: colour-a)
+
+(hex-grid from: [-500 -500]
+          to: centre
+          size: hex-size
+          colour: colour-b)
