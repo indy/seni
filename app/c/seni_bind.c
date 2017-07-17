@@ -10,6 +10,7 @@
 #include "seni_interp.h"
 #include "seni_repeat.h"
 #include "seni_path.h"
+#include "seni_focal.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -38,6 +39,14 @@ typedef struct {
   i32 clamping;
   i32 mapping;
 } seni_interp_state;
+
+typedef struct {
+  seni_focal_type type;
+  f32 x;
+  f32 y;
+  f32 distance;
+  i32 mapping;
+} seni_focal_state;
 
 // helper macros used by the bind code to parse arguments on the VM's stack
 //
@@ -133,6 +142,20 @@ typedef struct {
     IS_I32(#n);                                                         \
     n.mapping = value_1->value.i;                                       \
     value_1 = tmp_1;                                                    \
+  }
+
+#define READ_STACK_ARG_FOCAL(k, n) if (name_1 == k) { \
+    tmp_1 = value_1;                                  \
+    value_1 = (value_1->value.v)->next;               \
+    IS_I32(#n);                                       \
+    n.type = value_1->value.i;                        \
+    n.x = value_1->f32_array[0];                      \
+    n.y = value_1->f32_array[1];                      \
+    n.distance = value_1->f32_array[2];               \
+    value_1 = value_1->next;                          \
+    IS_I32(#n);                                       \
+    n.mapping = value_1->value.i;                     \
+    value_1 = tmp_1;                                  \
   }
 
 #define READ_STACK_ARG_COORD3(k, n) if (name_1 == k) {                \
@@ -1168,6 +1191,7 @@ seni_var *bind_interp_fn(seni_vm *vm, i32 num_args)
   f32 to_c = mc_c(0.0f, to[0], to_m);
 
   // id to signify that this structure stores data for interpolation
+  // todo: fill this out properly and do the same for the other structures
   i32 interp_fn_id = 42;
 
   vector_construct(vm, &g_var_scratch);
@@ -1546,6 +1570,91 @@ seni_var *bind_repeat_rotate_mirrored(seni_vm *vm, i32 num_args)
   return &g_var_true;
 }
 
+seni_var *bind_focal_generic(seni_vm *vm, i32 num_args, seni_focal_type type)
+{
+  f32 position[] = { 0.0f, 0.0f };
+  f32 distance = 1.0f;
+  i32 mapping = INAME_LINEAR;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(INAME_POSITION, position);
+  READ_STACK_ARG_F32(INAME_DISTANCE, distance);
+  READ_STACK_ARG_I32(INAME_MAPPING, mapping);  // linear, quick, slow-in, slow-in-out
+  READ_STACK_ARGS_END;
+
+  // store position in canvas space coordinates
+  f32 x, y;
+  matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
+
+  // returns vector where:
+  // first item contains format in value.i, postion in f32_array[0,1] and distance in f32_array[2]
+  // second item contains mapping in value.i
+
+  vector_construct(vm, &g_var_scratch);
+  seni_var *v = append_to_vector_i32(vm, &g_var_scratch, type);
+  v->f32_array[0] = x;
+  v->f32_array[1] = y;
+  v->f32_array[2] = distance;
+  
+  append_to_vector_i32(vm, &g_var_scratch, mapping);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_focal_point(seni_vm *vm, i32 num_args)
+{
+  return bind_focal_generic(vm, num_args, FOCAL_POINT);
+}
+
+seni_var *bind_focal_vline(seni_vm *vm, i32 num_args)
+{
+  return bind_focal_generic(vm, num_args, FOCAL_VLINE);
+}
+
+seni_var *bind_focal_hline(seni_vm *vm, i32 num_args)
+{
+  return bind_focal_generic(vm, num_args, FOCAL_HLINE);
+}
+
+seni_var *bind_focal_call(seni_vm *vm, i32 num_args)
+{
+  seni_focal_state using;
+  f32 position[] = { 0.0f, 0.0f };
+
+  using.type = FOCAL_UNKNOWN;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_FOCAL(INAME_USING, using);
+  READ_STACK_ARG_VEC2(INAME_POSITION, position);
+  READ_STACK_ARGS_END;
+
+  f32 res = 0.0f;
+
+  // transform position to canvas space coordinates
+  f32 x, y;
+  matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
+
+  switch(using.type) {
+  case FOCAL_POINT:
+    res = focal_point(x, y, using.distance, using.mapping, using.x, using.y);
+    break;
+  case FOCAL_HLINE:
+    res = focal_hline(y, using.distance, using.mapping, using.y);
+    break;
+  case FOCAL_VLINE:
+    res = focal_vline(x, using.distance, using.mapping, using.x);
+    break;
+  default:
+    // FOCAL_UNKNOWN
+    SENI_ERROR("invalid focal structure given to focal/call");
+    break;
+  }
+
+  f32_as_var(&g_var_scratch, res);
+  
+  return &g_var_scratch;
+}
+
 void declare_bindings(seni_word_lut *wlut, seni_env *e)
 {
   g_var_true.type = VAR_BOOLEAN;
@@ -1561,6 +1670,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   declare_native(wlut, e, "debug/print", &bind_debug_print);
   declare_native(wlut, e, "nth", &bind_nth);
+  // map
 
   declare_native(wlut, e, "line", &bind_line);
   declare_native(wlut, e, "rect", &bind_rect);
@@ -1612,20 +1722,21 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "interp/bezier-tangent", &bind_interp_bezier_tangent);
   declare_native(wlut, e, "interp/circle", &bind_interp_circle);
 
-  // map
-
-  // path
   declare_native(wlut, e, "path/linear", &bind_path_linear);
   declare_native(wlut, e, "path/circle", &bind_path_circle);
   declare_native(wlut, e, "path/spline", &bind_path_spline);
   declare_native(wlut, e, "path/bezier", &bind_path_bezier);
 
-  // repeat
   declare_native(wlut, e, "repeat/symmetry-vertical", &bind_repeat_symmetry_vertical);
   declare_native(wlut, e, "repeat/symmetry-horizontal", &bind_repeat_symmetry_horizontal);
   declare_native(wlut, e, "repeat/symmetry-4", &bind_repeat_symmetry_4);
   declare_native(wlut, e, "repeat/symmetry-8", &bind_repeat_symmetry_8);
   declare_native(wlut, e, "repeat/rotate", &bind_repeat_rotate);
   declare_native(wlut, e, "repeat/rotate_mirrored", &bind_repeat_rotate_mirrored);
+
+  declare_native(wlut, e, "focal/call", &bind_focal_call);
+  declare_native(wlut, e, "focal/point", &bind_focal_point);
+  declare_native(wlut, e, "focal/vline", &bind_focal_vline);
+  declare_native(wlut, e, "focal/hline", &bind_focal_hline);
 }
 

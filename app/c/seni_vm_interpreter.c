@@ -260,58 +260,66 @@ bool append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
   return true;
 }
 
-void append_to_vector_i32(seni_vm *vm, seni_var *head, i32 val)
+seni_var *append_to_vector_i32(seni_vm *vm, seni_var *head, i32 val)
 {
   seni_var *v = var_get_from_heap(vm);
   if (v == NULL) {
     SENI_ERROR("append_to_vector_i32");
-    return;
+    return NULL;
   }
   
   v->type = VAR_INT;
   v->value.i = val;
 
   DL_APPEND(head->value.v, v);
+
+  return v;
 }
 
-void append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
+seni_var *append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
 {
   seni_var *v = var_get_from_heap(vm);
   if (v == NULL) {
     SENI_ERROR("append_to_vector_f32");
-    return;
+    return NULL;
   }
   
   v->type = VAR_FLOAT;
   v->value.f = val;
 
   DL_APPEND(head->value.v, v);
+
+  return v;
 }
 
-void append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val)
+seni_var *append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val)
 {
   seni_var *v = var_get_from_heap(vm);
   if (v == NULL) {
     SENI_ERROR("append_to_vector_u64");
-    return;
+    return NULL;
   }
   v->type = VAR_LONG;
   v->value.l = val;
 
   DL_APPEND(head->value.v, v);
+
+  return v;
 }
 
-void append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col)
+seni_var *append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col)
 {
   seni_var *v = var_get_from_heap(vm);
   if (v == NULL) {
     SENI_ERROR("append_to_vector_col");
-    return;
+    return NULL;
   }
 
   colour_as_var(v, col);
 
   DL_APPEND(head->value.v, v);
+
+  return v;
 }
 
 // **************************************************
@@ -529,9 +537,6 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
-
-        SENI_PRINT("STORE argument at %d (fp = %d)", vm->fp - bc->arg1.value.i - 1, vm->fp);
-        pretty_print_seni_var(v, "");
         
         // check the current value of dest,
         var_move(dest, v);

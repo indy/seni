@@ -715,8 +715,10 @@ void test_vm_function_address(void)
 
 void test_vm_repeat(void)
 {
-  VM_COMPILE_F32("(fn (k) (+ 2 3)) (repeat/test draw: (address-of k)) 10", 10.0f);
-  VM_COMPILE_F32("(fn (k) [4 5]) (repeat/test draw: (address-of k)) 10", 10.0f);
+  // VM_COMPILE_F32("(fn (k) (+ 2 3)) (repeat/test draw: (address-of k)) 10", 10.0f);
+  // VM_COMPILE_F32("(fn (k) [4 5]) (repeat/test draw: (address-of k)) 10", 10.0f);
+
+  VM_COMPILE_F32("(fn (k a: 10 b: 20 c: 30) (+ a b c)) (k a: 40 b: 50 c: 60) 44", 44.0f);
 }
 
 void test_prng(void)
@@ -754,26 +756,28 @@ int main(void)
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   //RUN_TEST(test_prng);
 
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_parser);
-  RUN_TEST(test_uv_mapper);
-  RUN_TEST(test_colour);
-  RUN_TEST(test_strtof);
+
   
-  // vm
-  RUN_TEST(test_vm_bugs);
-  RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_callret);
-  RUN_TEST(test_vm_native);  
-  RUN_TEST(test_vm_destructure);
-  RUN_TEST(test_vm_2d);
-  RUN_TEST(test_vm_vector);
-  RUN_TEST(test_vm_col_rgb);
-  RUN_TEST(test_vm_math);
-  RUN_TEST(test_vm_prng);
-  RUN_TEST(test_vm_environmental);
-  RUN_TEST(test_vm_interp);
-  RUN_TEST(test_vm_function_address);
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_parser);
+  // RUN_TEST(test_uv_mapper);
+  // RUN_TEST(test_colour);
+  // RUN_TEST(test_strtof);
+  
+  // // vm
+  // RUN_TEST(test_vm_bugs);
+  // RUN_TEST(test_vm_bytecode);
+  // RUN_TEST(test_vm_callret);
+  // RUN_TEST(test_vm_native);  
+  // RUN_TEST(test_vm_destructure);
+  // RUN_TEST(test_vm_2d);
+  // RUN_TEST(test_vm_vector);
+  // RUN_TEST(test_vm_col_rgb);
+  // RUN_TEST(test_vm_math);
+  // RUN_TEST(test_vm_prng);
+  // RUN_TEST(test_vm_environmental);
+  // RUN_TEST(test_vm_interp);
+  // RUN_TEST(test_vm_function_address);
   RUN_TEST(test_vm_repeat);
 
   // todo: test READ_STACK_ARG_COORD4

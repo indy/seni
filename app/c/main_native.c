@@ -58,9 +58,11 @@ void print_timings(f32 construct, f32 compile, f32 interpret)
   f32 total = construct + compile + interpret;
 
   SENI_PRINT("total time taken : %.2f ms", total);
-  SENI_PRINT("construct time   : %.2f ms\t(%.2f%%)", construct, percentage(total, construct));
-  SENI_PRINT("compile time     : %.2f ms\t(%.2f%%)", compile, percentage(total, compile));
-  SENI_PRINT("interpret time   : %.2f ms\t(%.2f%%)", interpret, percentage(total, interpret));
+  if (total > 0.0f) {
+    SENI_PRINT("construct time   : %.2f ms\t(%.2f%%)", construct, percentage(total, construct));
+    SENI_PRINT("compile time     : %.2f ms\t(%.2f%%)", compile, percentage(total, compile));
+    SENI_PRINT("interpret time   : %.2f ms\t(%.2f%%)", interpret, percentage(total, interpret));
+  }
 }
 
 void execute_source(char *source)

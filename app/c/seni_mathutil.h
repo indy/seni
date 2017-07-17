@@ -11,6 +11,7 @@
 #define deg_to_rad(a)  ((a)*(PI/180))
 #define rad_to_deg(a)  ((a)*(180/PI))
 
+#define absf(x)             ((x) < 0.0f ? -(x) : (x))
 #define lerp(t,a,b)        ( (a) + (t) * (f32) ((b)-(a)) )
 #define unlerp(t,a,b)      ( ((t) - (a)) / (f32) ((b) - (a)) )
 #define clamp(x,xmin,xmax) ((x) < (xmin) ? (xmin) : (x) > (xmax) ? (xmax) : (x))
