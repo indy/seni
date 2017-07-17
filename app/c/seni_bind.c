@@ -366,6 +366,26 @@ seni_var *bind_circle(seni_vm *vm, i32 num_args)
   return &g_var_true;
 }
 
+seni_var *bind_poly(seni_vm *vm, i32 num_args)
+{
+  // default values for poly
+  seni_var *coords = NULL;
+  seni_var *colours = NULL;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VAR(INAME_COORDS, coords);
+  READ_STACK_ARG_VAR(INAME_COLOURS, colours);
+  READ_STACK_ARGS_END;
+
+  seni_render_data *render_data = vm->render_data;
+  seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
+
+  render_poly(render_data, matrix, coords, colours);
+  
+  return &g_var_true;
+}
+
 seni_var *bind_bezier(seni_vm *vm, i32 num_args)
 {
   // default values for bezier
@@ -1679,6 +1699,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "line", &bind_line);
   declare_native(wlut, e, "rect", &bind_rect);
   declare_native(wlut, e, "circle", &bind_circle);
+  declare_native(wlut, e, "poly", &bind_poly);
   declare_native(wlut, e, "bezier", &bind_bezier);
   declare_native(wlut, e, "bezier-bulging", &bind_bezier_bulging);
   declare_native(wlut, e, "stroked-bezier", &bind_stroked_bezier);

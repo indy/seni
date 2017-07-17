@@ -89,7 +89,7 @@ void execute_source(char *source)
   //
   TIMING_UNIT compilation_start = get_timing();
   seni_node *ast = parser_parse(wl, source);
-  seni_program *prog = program_construct(1024, wl, e);
+  seni_program *prog = program_construct(MAX_PROGRAM_SIZE, wl, e);
   compiler_compile(ast, prog);
   TIMING_UNIT compilation_stop = get_timing();
 
@@ -142,7 +142,7 @@ void print_compiled_program(char *source)
 
   // compile program
   seni_node *ast = parser_parse(wl, source);
-  seni_program *prog = program_construct(1024, wl, e);
+  seni_program *prog = program_construct(MAX_PROGRAM_SIZE, wl, e);
   compiler_compile(ast, prog);
 
   // print

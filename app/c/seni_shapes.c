@@ -202,6 +202,61 @@ void render_circle(seni_render_data *render_data,
   add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
 }
 
+void render_poly(seni_render_data *render_data,
+                 seni_matrix *matrix,
+                 seni_var *coords,
+                 seni_var *colours)
+{
+  f32 u, v;
+  make_uv(&u, &v, 1.0f, 1.0f);
+
+  seni_var *coord = (coords->value.v)->next; // move past the rc
+  seni_var *colour = (colours->value.v)->next;
+
+  seni_colour rgb_colour, other_colour;
+
+  i32 count = 0;
+  
+  while (coord && colour) {
+    count++;
+    coord = coord->next;
+    colour = colour->next;
+  }
+
+  coord = (coords->value.v)->next;
+  colour = (colours->value.v)->next;
+  
+  prepare_to_add_triangle_strip(render_data, matrix,
+                                count,
+                                coord->f32_array[0], coord->f32_array[1]);
+  
+  while (coord && colour) {
+    if (colour->value.i == RGB) {
+      rgb_colour.format = RGB;
+      rgb_colour.element[0] = colour->f32_array[0];
+      rgb_colour.element[1] = colour->f32_array[1];
+      rgb_colour.element[2] = colour->f32_array[2];
+      rgb_colour.element[3] = colour->f32_array[3];
+    } else {
+      colour_set(&other_colour,
+                 colour->value.i,
+                 colour->f32_array[0],
+                 colour->f32_array[1],
+                 colour->f32_array[2],
+                 colour->f32_array[3]);
+      colour_clone_as(&rgb_colour, &other_colour, RGB);
+    }
+
+    add_vertex(render_data->current_render_packet, matrix,
+               coord->f32_array[0], coord->f32_array[1],
+               &rgb_colour,
+               u, v);
+
+    coord = coord->next;
+    colour = colour->next;
+  }
+}
+
 void render_quadratic(seni_render_data *render_data,
                       seni_matrix *matrix,
                       f32 *coords,

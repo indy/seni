@@ -5,6 +5,7 @@
 #include "seni_render_packet.h"
 #include "seni_matrix.h"
 #include "seni_colour.h"
+#include "seni_lang.h"
   
 void seni_shapes_init_globals();
 
@@ -26,6 +27,11 @@ void render_circle(seni_render_data *render_data,
                    f32 width, f32 height,
                    seni_colour *colour,
                    i32 tessellation);
+
+void render_poly(seni_render_data *render_data,
+                 seni_matrix *matrix,
+                 seni_var *coords,
+                 seni_var *colours);
 
 void render_quadratic(seni_render_data *render_data,
                       seni_matrix *matrix,

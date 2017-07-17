@@ -68,7 +68,7 @@ int compile_to_render_packets(void)
   add_render_packet(render_data);
 
   ast = parser_parse(g_wl, script);
-  prog = program_construct(1024, g_wl, g_e);
+  prog = program_construct(MAX_PROGRAM_SIZE, g_wl, g_e);
 
   vm_free_render_data(g_vm);
   vm_reset(g_vm);

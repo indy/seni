@@ -19,6 +19,8 @@
 #define KEYWORD_START (WORD_START + MAX_WORD_LOOKUPS)
 #define NATIVE_START (KEYWORD_START + MAX_KEYWORD_LOOKUPS)
 
+#define MAX_PROGRAM_SIZE 2048
+
 // todo: errors probably shouldn't be silent when debug mode is switched off
 //
 #ifdef SENI_DEBUG_MODE
