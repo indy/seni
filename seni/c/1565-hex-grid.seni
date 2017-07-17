@@ -30,7 +30,7 @@
     [tx ty] to
     height (* size 2)
     vert (* height 0.75)
-    width (* (/ 1.7320508 2) height))
+    width (* (/ (sqrt 3) 2) height))
   (loop (y from: fy
            to: (+ ty vert vert)
            increment: (+ vert vert))

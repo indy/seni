@@ -456,20 +456,6 @@ void test_vm_bytecode(void)
   VM_COMPILE_F32("(define a 42) (define b 52) 10", 10);
   VM_COMPILE_F32("(define a 6) (define b 7) (+ a b)", 13);
   VM_COMPILE_F32("(define a 8 b 9) (+ a b)", 17);
-  VM_COMPILE_F32("(+ 3 4)", 7);
-  VM_COMPILE_F32("(+ 3 4 5)", 12);
-  VM_COMPILE_F32("(+ 3 4 5 6)", 18);
-  VM_COMPILE_F32("(- (+ 1 2) 3)", 0);
-  VM_COMPILE_F32("(* 3 4)", 12);
-  VM_COMPILE_F32("(* 3 4 5)", 60);
-  VM_COMPILE_F32("(/ 90 10)", 9);
-  VM_COMPILE_F32("(/ 90 10 3)", 3);
-  VM_COMPILE_BOOL("(> 5 10)", false);
-  VM_COMPILE_BOOL("(< 5 10)", true);
-  VM_COMPILE_BOOL("(< 1 2 3 4 5 10)", true);
-  VM_COMPILE_BOOL("(= 2 2)", true);
-  VM_COMPILE_BOOL("(= 1 2)", false);
-  VM_COMPILE_BOOL("(= 1 1 1 1 1 2)", false);
   VM_COMPILE_BOOL("(and (< 1 2) (< 3 4))", true);
   VM_COMPILE_BOOL("(and (< 1 2) (< 3 4) (< 5 6) (< 7 8))", true);
   VM_COMPILE_BOOL("(and (< 1 2) (> 3 4))", false);
@@ -640,6 +626,23 @@ void test_vm_col_rgb(void)
 
 void test_vm_math(void)
 {
+  VM_COMPILE_F32("(+ 3 4)", 7);
+  VM_COMPILE_F32("(+ 3 4 5)", 12);
+  VM_COMPILE_F32("(+ 3 4 5 6)", 18);
+  VM_COMPILE_F32("(- (+ 1 2) 3)", 0);
+  VM_COMPILE_F32("(* 3 4)", 12);
+  VM_COMPILE_F32("(* 3 4 5)", 60);
+  VM_COMPILE_F32("(/ 90 10)", 9);
+  VM_COMPILE_F32("(/ 90 10 3)", 3);
+  VM_COMPILE_BOOL("(> 5 10)", false);
+  VM_COMPILE_BOOL("(< 5 10)", true);
+  VM_COMPILE_BOOL("(< 1 2 3 4 5 10)", true);
+  VM_COMPILE_BOOL("(= 2 2)", true);
+  VM_COMPILE_BOOL("(= 1 2)", false);
+  VM_COMPILE_BOOL("(= 1 1 1 1 1 2)", false);
+
+  VM_COMPILE_F32("(sqrt 144)", 12);
+  
   VM_COMPILE_F32("(math/distance vec1: [0 0] vec2: [0 20])", 20.0f);
   VM_COMPILE_F32("(math/distance vec1: [0 5] vec2: [0 20])", 15.0f);
   VM_COMPILE_F32("(math/clamp val: 0.1 min: 0.0 max: 5)", 0.1f);

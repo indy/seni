@@ -1,7 +1,9 @@
 #include "seni_vm_interpreter.h"
 #include "seni_timing.h"
+#include "seni_mathutil.h"
 
 #include "utlist.h"
+
 
 // like a seni_var_copy without any modifications to the ref count
 void var_move(seni_var *dest, seni_var *src)
@@ -1086,6 +1088,14 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       v->type = VAR_BOOLEAN;
       break;
 
+    case SQRT:
+      STACK_POP;
+      f1 = v->value.f;
+      
+      STACK_PUSH;
+      v->value.f = (f32)(sqrt(f1));
+      break;
+      
     case FLU_STORE:
       // function look-up version of STORE
       // pops the fn_info_index from the stack in order to determine

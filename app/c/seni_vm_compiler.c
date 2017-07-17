@@ -418,6 +418,13 @@ void compile_rest(seni_node *ast, seni_program *program)
   }
 }
 
+// compiles the next node after the current ast point
+void compile_next_one(seni_node *ast, seni_program *program)
+{
+  ast = safe_next(ast);
+  compile(ast, program);
+}
+
 void compile_math(seni_node *ast, seni_program *program, seni_opcode opcode)
 {
   // + 3 4 5 6
@@ -1093,8 +1100,12 @@ seni_node *compile(seni_node *ast, seni_program *program)
         compile_math(ast, program, OR);
         return safe_next(ast);
       case INAME_NOT:
-        compile_rest(ast, program);
+        compile_next_one(ast, program);
         program_emit_opcode_i32(program, NOT, 0, 0);
+        return safe_next(ast);
+      case INAME_SQRT:
+        compile_next_one(ast, program);
+        program_emit_opcode_i32(program, SQRT, 0, 0);
         return safe_next(ast);
       case INAME_ADDRESS_OF:
         compile_address_of(ast, program);
