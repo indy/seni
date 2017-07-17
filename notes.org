@@ -1,18 +1,19 @@
-* TODO [2/12]
-  1. [ ] use the f32_array to pack in the values required by the prng and interp structs
-  2. [ ] ensure that there's a dist folder before running npm run build:wasm
-  3. [ ] test new setup/teardown code
-  4. [ ] cleanup memory of parser
-  5. [ ] structs for compile, runtim, performance info
-  6. [ ] seni_env
-  7. [ ] 'in' parameter for loop ?
-  8. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  9. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  10. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  11. [X] make sure that the heap is fully restored in between running scripts
-  12. [X] colour presets
+* TODO [2/13]
+  1. [ ] mark and sweep gc
+  2. [ ] use the f32_array to pack in the values required by the prng and interp structs
+  3. [ ] ensure that there's a dist folder before running npm run build:wasm
+  4. [ ] test new setup/teardown code
+  5. [ ] cleanup memory of parser
+  6. [ ] structs for compile, runtim, performance info
+  7. [ ] seni_env
+  8. [ ] 'in' parameter for loop ?
+  9. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  10. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  12. [X] make sure that the heap is fully restored in between running scripts
+  13. [X] colour presets
 
-* updating scripts [10/57]
+* updating scripts [12/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -23,8 +24,8 @@
   8. [X] 154h-rothko-2.seni -- TODO: THIS IS SLOW
   9. [X] 1556-biomorphs.seni - repeat/symmetry-vertical - takes a 'draw' argument
   10. [X] 155b-spiral-derived.seni - path/circle
-  11. [ ] 155j-chaotic-grid-2.seni - focal/point
-  12. [ ] 155j-chaotic-grid-3.seni
+  11. [X] 155j-chaotic-grid-2.seni - focal/point
+  12. [X] 155j-chaotic-grid-3.seni
   13. [ ] 1560-path.seni - make a function ???
   14. [ ] 1565-hex-grid.seni
   15. [ ] 156h-tri-grid.seni

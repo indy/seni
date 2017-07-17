@@ -1,5 +1,8 @@
 [
-  {"id":66,"name":"c/vmtest","image":"img/seni/blank.png"},
+  {"id":69,"name":"c/vmtest","image":"img/seni/blank.png"},
+  {"id":68,"name":"c/1565-hex-grid","image":"img/seni/1565-hex-grid.png"},
+  {"id":67,"name":"c/155j-chaotic-grid-3","image":"img/seni/155j-chaotic-grid-3.png"},    
+  {"id":66,"name":"c/155j-chaotic-grid-2","image":"img/seni/155j-chaotic-grid-2.png"},
   {"id":65,"name":"c/155b-spiral-derived","image":"img/seni/155b-spiral-derived.png"},
   {"id":64,"name":"c/1556-biomorphs","image":"img/seni/1556-biomorphs.png"},
   {"id":63,"name":"c/154h-rothko-2","image":"img/seni/154h-rothko-2.png"},
