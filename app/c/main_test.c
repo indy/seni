@@ -420,7 +420,7 @@ void test_vm_bugs(void)
   // messed up decrementing ref counts for colours
   VM_COMPILE_F32("(fn (x colour: (col/rgb)) (+ 1 1)) (x colour: (col/rgb))", 2.0f);
 
- //  // tmp in interpreter was decrementing ref count of previously held value
+  // tmp in interpreter was decrementing ref count of previously held value
   VM_COMPILE_F32("(fn (huh at: 0) 4)\
   (fn (x colour: (col/rgb)              \
          volatility: 0                  \
@@ -438,12 +438,16 @@ void test_vm_bugs(void)
   // vm should use the caller function's ARG values not the callees.
   VM_COMPILE_F32("(fn (v foo: 10) foo) (fn (wash seed: 272) (v foo: seed)) (wash seed: 66)", 66.0f);
 
-
   // heap slab leak - overwriting local k in loop
   // return vectors to slab when it's overwritten
   VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 4) (define k [1 2])) 22)(f)", 22.0f);
+
   // return colours to slab when it's overwritten
   VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 10) (define k (col/rgb r: 0 g: 0 b: 0 alpha: 1))) 22)(f)", 22.0f);
+
+  // wasn't POP voiding function return values in a loop (CALL_0 offset was incorrect)
+  // so have a loop that would overflow the stack if the return value of whatever fn wasn't being popped
+  VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/point position: [0 0] distance: 100))(focal/call using: focalpoint position: [0 0])(loop (y from: 0 to: 2000) (whatever))(focal/call using: focalpoint position: [0 50]))(go)", 0.5f);
 
 }
 
@@ -758,26 +762,26 @@ int main(void)
 
 
   
-  // RUN_TEST(test_mathutil);
-  // RUN_TEST(test_parser);
-  // RUN_TEST(test_uv_mapper);
-  // RUN_TEST(test_colour);
-  // RUN_TEST(test_strtof);
+  RUN_TEST(test_mathutil);
+  RUN_TEST(test_parser);
+  RUN_TEST(test_uv_mapper);
+  RUN_TEST(test_colour);
+  RUN_TEST(test_strtof);
   
-  // // vm
-  // RUN_TEST(test_vm_bugs);
-  // RUN_TEST(test_vm_bytecode);
-  // RUN_TEST(test_vm_callret);
-  // RUN_TEST(test_vm_native);  
-  // RUN_TEST(test_vm_destructure);
-  // RUN_TEST(test_vm_2d);
-  // RUN_TEST(test_vm_vector);
-  // RUN_TEST(test_vm_col_rgb);
-  // RUN_TEST(test_vm_math);
-  // RUN_TEST(test_vm_prng);
-  // RUN_TEST(test_vm_environmental);
-  // RUN_TEST(test_vm_interp);
-  // RUN_TEST(test_vm_function_address);
+  // vm
+  RUN_TEST(test_vm_bugs);
+  RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_native);  
+  RUN_TEST(test_vm_destructure);
+  RUN_TEST(test_vm_2d);
+  RUN_TEST(test_vm_vector);
+  RUN_TEST(test_vm_col_rgb);
+  RUN_TEST(test_vm_math);
+  RUN_TEST(test_vm_prng);
+  RUN_TEST(test_vm_environmental);
+  RUN_TEST(test_vm_interp);
+  RUN_TEST(test_vm_function_address);
   RUN_TEST(test_vm_repeat);
 
   // todo: test READ_STACK_ARG_COORD4

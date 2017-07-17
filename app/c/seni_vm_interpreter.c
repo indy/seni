@@ -209,6 +209,7 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
   seni_var *var_rc = vec_head->value.v;
   if (var_rc->type != VAR_VEC_RC) {
     SENI_ERROR("a VAR_VEC_HEAD that isn't pointing to a VAR_VEC_RC %d???", vm->sp);
+    pretty_print_seni_var(var_rc, "expected VAR_VEC_RC");
   }
   
   var_rc->value.ref_count++;
@@ -397,7 +398,7 @@ void vm_setup_function_invoke(seni_vm *vm, seni_fn_info *fn_info)
   vm->local = vm->sp;
 
   // clear the memory that's going to be used for locals
-  for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
+  for (i = 0; i < MEMORY_LOCAL_SIZE; i++) {
     // setting all memory as VAR_INT will prevent any weird ref count
     // stuff when we deal with the RET opcodes later on
     vm->stack[vm->sp].type = VAR_INT; 
@@ -455,10 +456,11 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
   //
   i32 hop_back = 0;
   i32 local, fp;
+  i32 stack_size = vm->stack_size;
 
 #define STACK_PEEK v = stack_d - 1
 #define STACK_POP stack_d--; sp--; v = stack_d
-#define STACK_PUSH v = stack_d; stack_d++; sp++
+#define STACK_PUSH v = stack_d; stack_d++; sp++; if(sp == stack_size) { SENI_ERROR("Reached stack limit of %d", stack_size); return false;}
 
   TIMING_UNIT timing = get_timing();
 

@@ -1622,6 +1622,10 @@ seni_var *bind_focal_call(seni_vm *vm, i32 num_args)
   f32 position[] = { 0.0f, 0.0f };
 
   using.type = FOCAL_UNKNOWN;
+  using.distance = 0.0f;
+  using.x = 0.0f;
+  using.y = 0.0f;
+  using.mapping = INAME_LINEAR;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_FOCAL(INAME_USING, using);

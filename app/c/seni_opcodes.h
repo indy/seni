@@ -30,16 +30,17 @@ OPCODE(JUMP_IF, -1)
 //
 // reads the function offset and num args from the stack
 OPCODE(CALL, -2)
-// reads the function's body offset from the stack
-OPCODE(CALL_0, -1)
+// reads the function's body offset from the stack (-1) and then push a return value onto the stack (+1) => -1 + +1 == 0
+OPCODE(CALL_0, 0)
 // RET will push the top value of the last frame onto the current frame
-OPCODE(RET, 1)
+OPCODE(RET, 0)
 OPCODE(RET_0, 0)
 
 // like CALL and CALL_0 except it reads an index from the stack
 // then it indexes into program->fn_info[index]
 OPCODE(CALL_F, -1)
-OPCODE(CALL_F_0, -1)
+// read index from stack (-1) then push a return value onto the stack (+1) => -1 + +1 == 0
+OPCODE(CALL_F_0, 0)
 
 
 // calls a native function, leaving the result on the stack

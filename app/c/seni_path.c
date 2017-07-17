@@ -61,6 +61,11 @@ void path_linear(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 a_x
   f32 y_unit = (b_y - a_y) / (f32)(steps - 1);
   f32 x, y, t, step;
 
+  // todo: actually use t_start and t_end
+
+  x = t_end;                    // prevent compiler warning for t_end
+  x = t_start;
+
   for (i32 i = 0; i < steps; i++) {
     step = (f32)i;
     t = (f32)i / (f32)steps;
@@ -82,8 +87,8 @@ void path_circle(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 pos
   for (i32 i = 0; i < steps; i++) {
     step = (f32)i;
     angle = (unit_angle * step) + (t_start * TAU);
-    vx = (sin(angle) * radius) + pos_x;
-    vy = (cos(angle) * radius) + pos_y;
+    vx = ((f32)sin(angle) * radius) + pos_x;
+    vy = ((f32)cos(angle) * radius) + pos_y;
     t = t_start + (unit * step);
 
     invoke_function(vm, fn, step, t, vx, vy);
