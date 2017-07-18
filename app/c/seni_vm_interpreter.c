@@ -4,6 +4,64 @@
 
 #include "utlist.h"
 
+void gc_mark_vector(seni_var *vector)
+{
+  seni_var *v = vector->value.v; // the rc seni_var
+
+  if (v->type != VAR_VEC_RC) {
+    SENI_ERROR("gc_mark_vector VAR_VEC_HEAD not pointing to a VAR_VEC_RC?");
+    pretty_print_seni_var(v, "should be VAR_VEC_RC");
+    return;
+  }
+  
+  while(v != NULL) {
+    v->mark = true;
+    if (v->type == VAR_VEC_HEAD) {
+      gc_mark_vector(v);
+    }
+    v = v->next;
+  }
+}
+
+void gc_mark(seni_vm *vm)
+{
+  seni_var *v = vm->stack;
+  
+  for (i32 i = 0; i < vm->sp; i++) {
+    // only VAR_VEC_HEAD seni_vars allocated from the heap
+    if (v->type == VAR_VEC_HEAD) {
+      gc_mark_vector(v);
+    }
+    v++;
+  }
+}
+
+void gc_sweep(seni_vm *vm)
+{
+  vm->heap_avail = NULL;
+  vm->gc_available = 0;
+
+  seni_var *v = vm->heap_slab;
+  
+  for (i32 i = 0; i < vm->heap_size; i++) {
+    if (v->mark == true) {
+      // in use, so clear mark for next gc
+      v->mark = false;
+    } else {
+      // clear and add to heap_avail
+      v->next = NULL;
+      v->prev = NULL;
+      v->type = VAR_INT;
+      v->value.i = 0;
+      v->allocated = false; // todo: remove this
+      DL_APPEND(vm->heap_avail, v);
+
+      vm->gc_available++;
+    }
+
+    v++;
+  }
+}
 
 // like a seni_var_copy without any modifications to the ref count
 void var_move(seni_var *dest, seni_var *src)
@@ -121,15 +179,17 @@ seni_var *var_get_from_heap(seni_vm *vm)
     DEBUG_INFO_GET_FROM_HEAP(vm);
     DL_DELETE(vm->heap_avail, head);
   } else {
-    SENI_ERROR("no more vars in pool");
+    SENI_ERROR("out of heap memory error");
     return NULL;
   }
 
-  if (head->allocated) {
+  if (head->allocated == true) {
     SENI_ERROR("how did an already allocated seni_var get on the heap?");
     pretty_print_seni_var(head, "ERROR: var_get_from_heap");
     return NULL;
   }
+
+  vm->gc_available--;
 
   head->allocated = true;
 
@@ -139,13 +199,12 @@ seni_var *var_get_from_heap(seni_vm *vm)
   head->value.i = 0;
   head->type = VAR_INT;         // just make sure that it isn't VAR_VEC_HEAD from a previous allocation
 
-  //pretty_print_seni_var(head, "getting");
-
   return head;
 }
 
 void var_return_to_heap(seni_vm *vm,  seni_var *var)
 {
+#if 0  
   if(var->allocated == false) {
     // in case of 2 bindings to the same variable
     // e.g. (define a [1 2]) (define b [3 4]) (setq a b)
@@ -167,10 +226,12 @@ void var_return_to_heap(seni_vm *vm,  seni_var *var)
 
   var->allocated = false;
   DL_APPEND(vm->heap_avail, var);
+#endif
 }
   
 bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
 {
+#if 0
   if (vec_head->type != VAR_VEC_HEAD) {
     return true;
   }
@@ -199,12 +260,13 @@ bool vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head)
     SENI_ERROR("vector_ref_count_decrement: ref_count is %d", var_rc->value.ref_count);
     return false;
   }
-
+#endif
   return true;
 }
 
 void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
 {
+#if 0
   if (vec_head->type != VAR_VEC_HEAD) {
     return;
   }
@@ -217,6 +279,7 @@ void vector_ref_count_increment(seni_vm *vm, seni_var *vec_head)
   var_rc->value.ref_count++;
 
   // pretty_print_seni_var(vec_head, "inc");
+#endif
 }
 
 // [ ] <<- this is the VAR_VEC_HEAD (value.v points to VAR_VEC_RC)
@@ -471,6 +534,13 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
   vm->program = program;
 
   for (;;) {
+
+    if (vm->gc_available < 10) {
+      SENI_LOG("GC Mark and Sweep");
+      gc_mark(vm);
+      gc_sweep(vm);
+    }
+    
     vm->opcodes_executed++;
     bc = &(program->code[ip++]);
 
@@ -521,6 +591,9 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         var_copy_onto_junk(vm, v, src);
 
       } else if (memory_segment_type == MEM_SEG_VOID) {
+        // potential gc so sync vm->sp
+        vm->sp = sp;
+
         // pushing from the void. i.e. create this object
 
         // temp: for the moment just assume that any LOAD VOID
@@ -871,6 +944,15 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
     case APPEND:
       // pops top two values: a value and a vector appends the value onto the vector
+
+      // potential gc so sync vm->sp
+      vm->sp = sp;
+      
+      seni_var *child_value = var_get_from_heap(vm);
+      if (child_value == NULL) {
+        SENI_ERROR("APPEND: cannot allocate child_value from pool");
+        return false;
+      }
       
       STACK_POP;
       src = v;                      // the seni_var to append onto the vector
@@ -882,7 +964,9 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         return false;
       }
 
-      b1 = append_to_vector(vm, v, src); // note: this uses a copy, should it be a move instead?
+      b1 = var_copy(vm, child_value, src);
+
+      //b1 = append_to_vector(vm, v, src); // note: this uses a copy, should it be a move instead?
       if (b1 == false) {
         SENI_ERROR("append_to_vector failed in APPEND");
         DEBUG_INFO_PRINT(vm);
@@ -890,6 +974,8 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         pretty_print_seni_var(src, "the item to append");
         return false;
       }
+
+      DL_APPEND(v->value.v, child_value);
 
       STACK_PUSH;
       break;

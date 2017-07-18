@@ -92,6 +92,7 @@ typedef struct seni_var {
   } value;
 
   bool allocated;
+  bool mark;
 
   // 4 floats used to represent colours, 2d/3d/4d vectors and quaternions
   // without resorting to expensive heap_slab allocated reference counted vectors
@@ -212,6 +213,11 @@ typedef struct seni_vm {
   seni_var *heap_slab;             // the contiguous block of allocated memory
   seni_var *heap_avail;            // doubly linked list of unallocated seni_vars from the heap_slab
   seni_slab_info heap_slab_info;
+
+  i32 gc_available;
+  
+
+
   u64 opcodes_executed;
   f32 execution_time;              // in msec
   

@@ -545,8 +545,11 @@ void vm_reset(seni_vm *vm)
   var = vm->heap_slab;
   for (i = 0; i < vm->heap_size; i++) {
     var[i].allocated = false;
+    var[i].mark = false;
     DL_APPEND(vm->heap_avail, &(var[i]));
   }
+
+  vm->gc_available = vm->heap_size;
 
   matrix_stack_reset(vm->matrix_stack);
 }
