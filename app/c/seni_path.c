@@ -36,7 +36,7 @@ void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y)
   dest = &(vm->stack[arg - istep]);
   src.type = VAR_FLOAT;
   src.value.f = step;
-  var_move(dest, &src);
+  var_copy(dest, &src);
 
   // value for position
   dest = &(vm->stack[arg - ipos]);
@@ -44,13 +44,13 @@ void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y)
   src.value.i = 0;
   src.f32_array[0] = x;
   src.f32_array[1] = y;
-  var_move(dest, &src);
+  var_copy(dest, &src);
 
   // value for t
   dest = &(vm->stack[arg - it]);
   src.type = VAR_FLOAT;
   src.value.f = t;
-  var_move(dest, &src);
+  var_copy(dest, &src);
     
   vm_function_invoke(vm);  
 }

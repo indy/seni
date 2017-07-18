@@ -141,6 +141,37 @@ void pretty_print_seni_node(seni_node *node, char* msg)
   SENI_LOG("%s %s", node_type_name(node), msg);
 }
 
+void var_copy(seni_var *dest, seni_var *src)
+{
+  if (dest == src) {
+    return;
+  }
+
+  dest->type = src->type;
+  dest->f32_array[0] = src->f32_array[0];
+  dest->f32_array[1] = src->f32_array[1];
+  dest->f32_array[2] = src->f32_array[2];
+  dest->f32_array[3] = src->f32_array[3];
+
+  seni_value_in_use using = get_value_in_use(src->type);
+  
+  if (using == USE_I) {
+    dest->value.i = src->value.i;
+  } else if (using == USE_F) {
+    dest->value.f = src->value.f;
+  } else if (using == USE_L) {
+    dest->value.l = src->value.l;
+  } else if (using == USE_V) {
+    if (src->type == VAR_VECTOR) {
+      dest->value.v = src->value.v;
+    } else {
+      SENI_ERROR("what the fuck?\n");
+    }
+  } else {
+    SENI_ERROR("unknown seni_value_in_use for var_copy");
+  }
+}
+
 void pretty_print_seni_var(seni_var *var, char* msg)
 {
   if (var == NULL) {
@@ -535,7 +566,6 @@ void vm_reset(seni_vm *vm)
 
   var = vm->heap_slab;
   for (i = 0; i < vm->heap_size; i++) {
-    var[i].allocated = false;
     var[i].mark = false;
     DL_APPEND(vm->heap_avail, &(var[i]));
   }

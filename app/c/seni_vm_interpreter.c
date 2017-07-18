@@ -47,44 +47,13 @@ void gc_sweep(seni_vm *vm)
       v->prev = NULL;
       v->type = VAR_INT;
       v->value.i = 0;
-      v->allocated = false; // todo: remove this
+
       DL_APPEND(vm->heap_avail, v);
 
       vm->gc_available++;
     }
 
     v++;
-  }
-}
-
-void var_move(seni_var *dest, seni_var *src)
-{
-  if (dest == src) {
-    return;
-  }
-
-  dest->type = src->type;
-  dest->f32_array[0] = src->f32_array[0];
-  dest->f32_array[1] = src->f32_array[1];
-  dest->f32_array[2] = src->f32_array[2];
-  dest->f32_array[3] = src->f32_array[3];
-
-  seni_value_in_use using = get_value_in_use(src->type);
-  
-  if (using == USE_I) {
-    dest->value.i = src->value.i;
-  } else if (using == USE_F) {
-    dest->value.f = src->value.f;
-  } else if (using == USE_L) {
-    dest->value.l = src->value.l;
-  } else if (using == USE_V) {
-    if (src->type == VAR_VECTOR) {
-      dest->value.v = src->value.v;
-    } else {
-      SENI_ERROR("what the fuck?\n");
-    }
-  } else {
-    SENI_ERROR("unknown seni_value_in_use for var_move");
   }
 }
 
@@ -100,15 +69,7 @@ seni_var *var_get_from_heap(seni_vm *vm)
     return NULL;
   }
 
-  if (head->allocated == true) {
-    SENI_ERROR("how did an already allocated seni_var get on the heap?");
-    pretty_print_seni_var(head, "ERROR: var_get_from_heap");
-    return NULL;
-  }
-
   vm->gc_available--;
-
-  head->allocated = true;
 
   head->next = NULL;
   head->prev = NULL;
@@ -141,7 +102,7 @@ bool append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
     return false;
   }
 
-  var_move(child_value, val);
+  var_copy(child_value, val);
   
   DL_APPEND(head->value.v, child_value);
   return true;
@@ -367,7 +328,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
       memory_segment_type = (seni_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_CONSTANT) {
-        var_move(v, &(bc->arg1));
+        var_copy(v, &(bc->arg1));
       } else if (memory_segment_type == MEM_SEG_ARGUMENT) {
 
         // if we're referencing an ARG in-between CALL and CALL_0 make sure we use the right frame
@@ -383,7 +344,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         SENI_LOG("--- hop_back is %d fp is %d\n", hop_back, fp);
 #endif
 
-        var_move(v, src);
+        var_copy(v, src);
         
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
 
@@ -396,12 +357,12 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         
         src = &(vm->stack[local + bc->arg1.value.i]);
 
-        var_move(v, src);
+        var_copy(v, src);
         
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         src = &(vm->stack[vm->global + bc->arg1.value.i]);
 
-        var_move(v, src);
+        var_copy(v, src);
 
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // potential gc so sync vm->sp
@@ -429,7 +390,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
         
         // check the current value of dest,
-        var_move(dest, v);
+        var_copy(dest, v);
 #ifdef TRACE_PRINT_OPCODES
         pretty_print_seni_var(dest, "---");
         SENI_LOG("--- fp is %d\n", vm->fp);
@@ -438,11 +399,11 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         dest = &(vm->stack[vm->local + bc->arg1.value.i]);
         // using a copy since we could have a define in a loop and so
         // the previously assigned value will need to be reference counted
-        var_move(dest, v);
+        var_copy(dest, v);
         
       } else if (memory_segment_type == MEM_SEG_GLOBAL) {
         dest = &(vm->stack[vm->global + bc->arg1.value.i]);
-        var_move(dest, v);
+        var_copy(dest, v);
       } else if (memory_segment_type == MEM_SEG_VOID) {
         // normally pop from the stack and lose the value
         // but if it's a vector then decrement its ref count
@@ -566,7 +527,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
       // copy the previous frame's top stack value onto the current frame's stack
       STACK_PUSH;
-      var_move(v, src);
+      var_copy(v, src);
 
 #ifdef TRACE_PRINT_OPCODES
       SENI_LOG("--- fp is %d\n", vm->fp);
@@ -675,7 +636,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       }
       
       // put the return value at the top of the stack
-      var_move(&(vm->stack[vm->sp++]), var);
+      var_copy(&(vm->stack[vm->sp++]), var);
       
       // sync registers with vm
       sp = vm->sp;
@@ -705,7 +666,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         return false;
       }
 
-      var_move(child_value, src);
+      var_copy(child_value, src);
 
       DL_APPEND(v->value.v, child_value);
 
@@ -738,11 +699,11 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         // top of the stack contains a vector
         // take num_args elements from the vector and push them onto the stack
         seni_var _vec;
-        var_move(&_vec, v);
+        var_copy(&_vec, v);
         src = _vec.value.v;
         for (i = 0; i < num_args; i++) {
           STACK_PUSH;
-          var_move(v, src);
+          var_copy(v, src);
           src = src->next;
         }
         
@@ -928,7 +889,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         
         dest = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
         if (dest != NULL) {
-          var_move(dest, v);
+          var_copy(dest, v);
         }
       } else {
         SENI_ERROR("FLU_STORE: should only be used with MEM_SEG_ARGUMENT, not %d", memory_segment_type);

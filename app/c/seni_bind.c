@@ -264,7 +264,7 @@ seni_var *bind_nth(seni_vm *vm, i32 num_args)
       e = e->next;
     }
 
-    var_move(&g_var_scratch, e);
+    var_copy(&g_var_scratch, e);
   } else {
     SENI_ERROR("nth: neither a var_2d with n 0..2 or vector given\n");
     return &g_var_true;

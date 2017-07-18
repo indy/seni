@@ -89,7 +89,6 @@ typedef struct seni_var {
     struct seni_var *v;
   } value;
 
-  bool allocated;
   bool mark;
 
   // 4 floats used to represent colours, 2d/3d/4d vectors and quaternions
@@ -258,6 +257,7 @@ void           pretty_print_program(seni_program *program);
 seni_env      *env_construct();
 void           env_free(seni_env *e);
 
+void           var_copy(seni_var *dest, seni_var *src);
 void           pretty_print_seni_var(seni_var *var, char* msg);
 
 void           f32_as_var(seni_var *out, f32 f);

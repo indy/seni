@@ -1,4 +1,5 @@
 #include "seni_vm_compiler.h"
+#include "seni_lang.h"
 
 #include <string.h>
 
@@ -30,38 +31,6 @@ seni_node *safe_prev(seni_node *expr)
   return sibling;
 }
 
-// todo: replace with var_move
-void var_dup(seni_var *dest, seni_var *src)
-{
-  if (dest == src) {
-    return;
-  }
-
-  dest->type = src->type;
-  dest->f32_array[0] = src->f32_array[0];
-  dest->f32_array[1] = src->f32_array[1];
-  dest->f32_array[2] = src->f32_array[2];
-  dest->f32_array[3] = src->f32_array[3];
-
-  seni_value_in_use using = get_value_in_use(src->type);
-  
-  if (using == USE_I) {
-    dest->value.i = src->value.i;
-  } else if (using == USE_F) {
-    dest->value.f = src->value.f;
-  } else if (using == USE_L) {
-    dest->value.l = src->value.l;
-  } else if (using == USE_V) {
-    if (src->type == VAR_VECTOR) {
-      dest->value.v = src->value.v;
-    } else {
-      SENI_ERROR("var_dup USE_V but non-VAR_VECTOR?\n");
-    }
-  } else {
-    SENI_ERROR("unknown seni_value_in_use for var_dup");
-  }
-}
-
 seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, seni_var *arg0, seni_var *arg1)
 {
   if (program->code_size >= program->code_max_size) {
@@ -71,8 +40,8 @@ seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, seni_v
   
   seni_bytecode *b = &(program->code[program->code_size++]);
   b->op = op;
-  var_dup(&(b->arg0), arg0);
-  var_dup(&(b->arg1), arg1);
+  var_copy(&(b->arg0), arg0);
+  var_copy(&(b->arg1), arg1);
 
   program->opcode_offset += opcode_offset[op];
 
