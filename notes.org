@@ -1,18 +1,24 @@
-* TODO [3/14]
+* TODO [3/20]
   1. [ ] mark and sweep gc
-  2. [ ] use the f32_array to pack in the values required by the prng and interp structs
-  3. [ ] ensure that there's a dist folder before running npm run build:wasm
-  4. [ ] test new setup/teardown code
-  5. [ ] cleanup memory of parser
-  6. [ ] structs for compile, runtim, performance info
-  7. [ ] seni_env
-  8. [ ] 'in' parameter for loop ?
-  9. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  10. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  12. [X] sqrt - and fix up hex-grid
-  13. [X] make sure that the heap is fully restored in between running scripts
-  14. [X] colour presets
+  2. [ ] remove seni_var.allocated (after mark and sweep)
+  3. [ ] remove VM_HEAP_SLAB_CHECK from main_test
+  4. [ ] var_copy_onto_junk, var_copy
+  5. [ ] replace var_dup with var_move
+  6. [ ] test gc
+  7. [ ] call and fn naming convention - also use same arg naming
+  8. [ ] use the f32_array to pack in the values required by the prng and interp structs
+  9. [ ] ensure that there's a dist folder before running npm run build:wasm
+  10. [ ] test new setup/teardown code
+  11. [ ] cleanup memory of parser
+  12. [ ] structs for compile, runtim, performance info
+  13. [ ] seni_env
+  14. [ ] 'in' parameter for loop ?
+  15. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  16. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  17. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  18. [X] sqrt - and fix up hex-grid
+  19. [X] make sure that the heap is fully restored in between running scripts
+  20. [X] colour presets
 
 * updating scripts [13/57]
   1. [X] 14ef-blur-grid.seni

@@ -30,7 +30,7 @@ seni_node *safe_prev(seni_node *expr)
   return sibling;
 }
 
-// like a seni_var_copy without any modifications to the ref count
+// todo: replace with var_move
 void var_dup(seni_var *dest, seni_var *src)
 {
   if (dest == src) {
@@ -503,17 +503,7 @@ void compile_fn_call(seni_node *ast, seni_program *program)
     // push value
     compile(value, program);
     compile(fn_info_index, program); // push the actual fn_info index so that the _FLU opcode can find it
-    program_emit_opcode_i32(program, FLU_DEC_RC, MEM_SEG_ARGUMENT, label->value.i);
-    compile(fn_info_index, program);
     program_emit_opcode_i32(program, FLU_STORE, MEM_SEG_ARGUMENT, label->value.i);
-
-    if (value->type != NODE_VECTOR) {
-      // not an explicitly declared vector so increment it's rc
-      compile(fn_info_index, program);
-      program_emit_opcode_i32(program, FLU_INC_RC, MEM_SEG_ARGUMENT, label->value.i);
-      // explicitly declared vectors will have an rc of 1, when the function
-      // returns this will be decremented and they will be returned to the heap
-    }
 
     args = safe_next(value);
   }
@@ -904,16 +894,8 @@ void correct_function_addresses(seni_program *program)
       offset->arg1.value.i = fn_info->body_address;
     }
 
-    if (bc->op == PLACEHOLDER_DEC_RC || bc->op == PLACEHOLDER_STORE || bc->op == PLACEHOLDER_INC_RC) {
-      if (bc->op == PLACEHOLDER_DEC_RC) {
-        bc->op = DEC_RC;
-      }
-      if (bc->op == PLACEHOLDER_INC_RC) {
-        bc->op = INC_RC;
-      }
-      if (bc->op == PLACEHOLDER_STORE) {
-        bc->op = STORE;
-      }
+    if (bc->op == PLACEHOLDER_STORE) {
+      bc->op = STORE;
 
       // opcode's arg0 is the fn_info_index and arg1 is the label_value
       fn_info_index = bc->arg0.value.i; 
@@ -960,16 +942,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_in
 
     // push value
     compile(value, program);
-    program_emit_opcode_i32(program, PLACEHOLDER_DEC_RC, fn_info_index, label->value.i);
     program_emit_opcode_i32(program, PLACEHOLDER_STORE, fn_info_index, label->value.i);
-
-    if (value->type != NODE_VECTOR) {
-      // not an explicitly declared vector so increment it's rc
-      program_emit_opcode_i32(program, PLACEHOLDER_INC_RC, fn_info_index, label->value.i);
-
-      // explicitly declared vectors will have an rc of 1, when the function
-      // returns this will be decremented and they will be returned to the heap
-    }
 
     args = safe_next(value);
   }

@@ -175,8 +175,7 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     break;
   case USE_V:
     if (var->type == VAR_VEC_HEAD) {
-      seni_var *rc = var->value.v;
-      SENI_PRINT("%s: %s : length %d ref_count: %d", msg, type, var_vector_length(var), rc->value.ref_count);
+      SENI_PRINT("%s: %s : length %d", msg, type, var_vector_length(var));
     } else {
       SENI_PRINT("%s: %s", msg,  type);
     }
@@ -361,14 +360,13 @@ void pretty_print_bytecode(i32 ip, seni_bytecode *b)
 
   buf[0] = 0;  
   
-  if (b->op == LOAD || b->op == STORE || b->op == DEC_RC || b->op == INC_RC ||
-      b->op == FLU_STORE || b->op == FLU_DEC_RC || b->op == FLU_INC_RC) {
+  if (b->op == LOAD || b->op == STORE || b->op == FLU_STORE) {
 
     char *seg_name = memory_segment_name((seni_memory_segment_type)b->arg0.value.i);
 
-    if (b->op == LOAD || b->op == STORE || b->op == DEC_RC || b->op == INC_RC) {
+    if (b->op == LOAD || b->op == STORE) {
       PRINT_BC(BUF_ARGS, "%d\t%s\t\t%s\t\t", ip, opcode_name(b->op), seg_name);
-    } else if (b->op == FLU_STORE || b->op == FLU_DEC_RC || b->op == FLU_INC_RC) {
+    } else if (b->op == FLU_STORE) {
       PRINT_BC(BUF_ARGS, "%d\t%s\t%s\t\t", ip, opcode_name(b->op), seg_name);
     } 
 

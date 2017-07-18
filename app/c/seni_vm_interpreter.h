@@ -7,12 +7,8 @@
 
 void      var_move(seni_var *dest, seni_var *src);
 bool      var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
-bool      var_copy_onto_junk(seni_vm *vm, seni_var *dest, seni_var *src);
 
 seni_var *var_get_from_heap(seni_vm *vm);
-void      var_return_to_heap(seni_vm *vm,  seni_var *var);
-bool      vector_ref_count_decrement(seni_vm *vm, seni_var *vec_head);
-void      vector_ref_count_increment(seni_vm *vm, seni_var *vec_head);
 
 void      vector_construct(seni_vm *vm, seni_var *head);
 bool      append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);

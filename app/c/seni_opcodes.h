@@ -57,20 +57,12 @@ OPCODE(APPEND, -1)
 // vm->opcode_offset is modified by the compiler
 OPCODE(PILE, 0)
 
-// decrements ref count of seni_var at given memory location
-OPCODE(DEC_RC, 0)
-OPCODE(INC_RC, 0)
-
-// function look-up versions of DEC_RC, INC_RC, STORE
-// they will pop a value from the stack which is the index into program->fn_info
-// this will then be used along with the argument's iname to find the index into the MEM_SEG_ARGUMENT memory
-OPCODE(FLU_DEC_RC, -1)
-OPCODE(FLU_INC_RC, -1)
+// function look-up version of STORE
+// pop a value from the stack which is the index into program->fn_info
+// will then be used along with the argument's iname to find the index into the MEM_SEG_ARGUMENT memory
 OPCODE(FLU_STORE, -2)
 
 // temporary opcodes which are replaced by their non-placeholder versions during a compilation pass
-OPCODE(PLACEHOLDER_DEC_RC, 0)
-OPCODE(PLACEHOLDER_INC_RC, 0)
 OPCODE(PLACEHOLDER_STORE, -1)
 
 

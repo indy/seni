@@ -508,7 +508,7 @@ void test_vm_callret(void)
   VM_COMPILE_F32("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66)", 621.0f);
   
   // passing an argument to a function that isn't being used
-  // produces DEC_RC, POP, INC_RC with VOID -1 args
+  // produces POP with VOID -1 args
   VM_COMPILE_F32("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66 b: 8383)", 621.0f);
 }
 

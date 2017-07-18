@@ -87,7 +87,6 @@ typedef struct seni_var {
     i32 i;
     f32 f;
     u64 l;                      // long - used by seni_prng_state
-    i32 ref_count;              // reference count for VAR_VEC_RC
     struct seni_var *v;
   } value;
 
@@ -216,8 +215,6 @@ typedef struct seni_vm {
 
   i32 gc_available;
   
-
-
   u64 opcodes_executed;
   f32 execution_time;              // in msec
   
