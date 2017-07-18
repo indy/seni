@@ -24,7 +24,7 @@
     (rect position: [(/ canvas/width 2) (/ canvas/height 2)]
           width: canvas/width
           height: canvas/height
-          colour: colour)))
+          colour: colour))
 
 (fn (map-to-position at: 0)
   (+ (* (+ gap-size square-size) at) (/ square-size 2) gap-size))
