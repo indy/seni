@@ -370,12 +370,6 @@ void test_strtof(void)
   DEBUG_INFO_RESET(vm);                                              \
   vm_interpret(vm, prog)
 
-#ifdef SENI_DEBUG_MODE
-#define VM_HEAP_SLAB_CHECK TEST_ASSERT_EQUAL_MESSAGE(0, vm->heap_slab_info.delta, "vm heap slab leak")
-#else
-#define VM_HEAP_SLAB_CHECK
-#endif
-
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
 #define VM_TEST_VEC4(A,B,C,D) assert_seni_var_v4(stack_peek(vm), A, B, C, D)
@@ -392,8 +386,8 @@ void test_strtof(void)
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
-#define VM_COMPILE_F32(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_HEAP_SLAB_CHECK;VM_CLEANUP;}
-#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_HEAP_SLAB_CHECK;VM_CLEANUP;}
+#define VM_COMPILE_F32(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
+#define VM_COMPILE_BOOL(EXPR,RES) {EVM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 #define VM_COMPILE_2D(EXPR,A,B) {EVM_COMPILE(EXPR);VM_TEST_2D(A,B);VM_CLEANUP;}
 #define VM_COMPILE_VEC4(EXPR,A,B,C,D) {EVM_COMPILE(EXPR);VM_TEST_VEC4(A,B,C,D);VM_CLEANUP;}
 #define VM_COMPILE_VEC5(EXPR,A,B,C,D,E) {EVM_COMPILE(EXPR);VM_TEST_VEC5(A,B,C,D,E);VM_CLEANUP;}
