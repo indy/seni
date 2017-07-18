@@ -210,8 +210,8 @@ void render_poly(seni_render_data *render_data,
   f32 u, v;
   make_uv(&u, &v, 1.0f, 1.0f);
 
-  seni_var *coord = (coords->value.v)->next; // move past the rc
-  seni_var *colour = (colours->value.v)->next;
+  seni_var *coord = coords->value.v;
+  seni_var *colour = colours->value.v;
 
   seni_colour rgb_colour, other_colour;
 
@@ -223,8 +223,8 @@ void render_poly(seni_render_data *render_data,
     colour = colour->next;
   }
 
-  coord = (coords->value.v)->next;
-  colour = (colours->value.v)->next;
+  coord = coords->value.v;
+  colour = colours->value.v;
   
   prepare_to_add_triangle_strip(render_data, matrix,
                                 count,

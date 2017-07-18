@@ -52,10 +52,10 @@ void var_dup(seni_var *dest, seni_var *src)
   } else if (using == USE_L) {
     dest->value.l = src->value.l;
   } else if (using == USE_V) {
-    if (src->type == VAR_VEC_HEAD) {
+    if (src->type == VAR_VECTOR) {
       dest->value.v = src->value.v;
     } else {
-      SENI_ERROR("var_dup USE_V but non-VAR_VEC_HEAD?\n");
+      SENI_ERROR("var_dup USE_V but non-VAR_VECTOR?\n");
     }
   } else {
     SENI_ERROR("unknown seni_value_in_use for var_dup");

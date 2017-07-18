@@ -10,7 +10,7 @@ bool      var_copy(seni_vm *vm, seni_var *dest, seni_var *src);
 
 seni_var *var_get_from_heap(seni_vm *vm);
 
-void      vector_construct(seni_vm *vm, seni_var *head);
+void      vector_construct(seni_var *head);
 bool      append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
 seni_var *append_to_vector_i32(seni_vm *vm, seni_var *head, i32 val);
 seni_var *append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);

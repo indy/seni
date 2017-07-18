@@ -90,11 +90,9 @@ seni_value_in_use get_value_in_use(seni_var_type type)
     return USE_F;
   case VAR_LONG:
     return USE_L;
-  case VAR_VEC_HEAD:
+  case VAR_VECTOR:
     return USE_V;
   case VAR_COLOUR:
-    return USE_I;
-  case VAR_VEC_RC:
     return USE_I;
   default:
     // default to something even though VAR_2D etc aren't going to use anything in the value union
@@ -110,8 +108,7 @@ char *var_type_name(seni_var *var)
   case VAR_BOOLEAN:  return "VAR_BOOLEAN";
   case VAR_LONG:     return "VAR_LONG";
   case VAR_NAME:     return "VAR_NAME";
-  case VAR_VEC_HEAD: return "VAR_VEC_HEAD";
-  case VAR_VEC_RC:   return "VAR_VEC_RC";
+  case VAR_VECTOR: return "VAR_VECTOR";
   case VAR_COLOUR:   return "VAR_COLOUR";
   case VAR_2D:       return "VAR_2D";
   default: return "unknown seni_var type";
@@ -120,17 +117,13 @@ char *var_type_name(seni_var *var)
 
 i32 var_vector_length(seni_var *var)
 {
-  if (var->type != VAR_VEC_HEAD) {
+  if (var->type != VAR_VECTOR) {
     return 0;
   }
 
   i32 len = 0;
   seni_var *v = var->value.v;
-  if (v->type != VAR_VEC_RC) {
-    return 0;
-  }
-  v = v->next;
-  
+
   while (v != NULL) {
     len++;
     v = v->next;
@@ -174,7 +167,7 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     SENI_PRINT("%s: %s : %llu", msg, type, (long long unsigned int)(var->value.l));
     break;
   case USE_V:
-    if (var->type == VAR_VEC_HEAD) {
+    if (var->type == VAR_VECTOR) {
       SENI_PRINT("%s: %s : length %d", msg, type, var_vector_length(var));
     } else {
       SENI_PRINT("%s: %s", msg,  type);
@@ -388,7 +381,7 @@ void pretty_print_bytecode(i32 ip, seni_bytecode *b)
       PRINT_BC(BUF_ARGS, "%llu", (long long unsigned int)(b->arg1.value.l));
       break;
     case USE_V:
-      if (b->arg1.type == VAR_VEC_HEAD) {
+      if (b->arg1.type == VAR_VECTOR) {
         PRINT_BC(BUF_ARGS, "[..]len %d", var_vector_length(&(b->arg1)));
       } else {
         PRINT_BC(BUF_ARGS, "[..]");

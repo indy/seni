@@ -95,7 +95,7 @@ typedef struct {
 
 #define READ_STACK_ARG_PRNG(k, n) if (name_1 == k) {                    \
     tmp_1 = value_1;                                                    \
-    value_1 = (value_1->value.v)->next;                                 \
+    value_1 = value_1->value.v;                                         \
     IS_LONG(#n);                                                        \
     n.state = value_1->value.l;                                         \
     n.seni_var_state = value_1;                                         \
@@ -114,7 +114,7 @@ typedef struct {
 
 #define READ_STACK_ARG_INTERP(k, n) if (name_1 == k) {                  \
     tmp_1 = value_1;                                                    \
-    value_1 = (value_1->value.v)->next;                                 \
+    value_1 = value_1->value.v;                                         \
     IS_I32(#n);                                                         \
     n.interp_fn_id = value_1->value.i;                                  \
     value_1 = value_1->next;                                            \
@@ -146,7 +146,7 @@ typedef struct {
 
 #define READ_STACK_ARG_FOCAL(k, n) if (name_1 == k) { \
     tmp_1 = value_1;                                  \
-    value_1 = (value_1->value.v)->next;               \
+    value_1 = value_1->value.v;                       \
     IS_I32(#n);                                       \
     n.type = value_1->value.i;                        \
     n.x = value_1->f32_array[0];                      \
@@ -159,7 +159,7 @@ typedef struct {
   }
 
 #define READ_STACK_ARG_COORD3(k, n) if (name_1 == k) {                \
-    tmp_1 = (value_1->value.v)->next;                                 \
+    tmp_1 = value_1->value.v;                                         \
     n[0] = tmp_1->f32_array[0];                                       \
     n[1] = tmp_1->f32_array[1];                                       \
     tmp_1 = tmp_1->next;                                              \
@@ -171,7 +171,7 @@ typedef struct {
   }
 
 #define READ_STACK_ARG_COORD4(k, n) if (name_1 == k) {                \
-    tmp_1 = (value_1->value.v)->next;                                 \
+    tmp_1 = value_1->value.v;                                         \
     n[0] = tmp_1->f32_array[0];                                       \
     n[1] = tmp_1->f32_array[1];                                       \
     tmp_1 = tmp_1->next;                                              \
@@ -256,12 +256,11 @@ seni_var *bind_nth(seni_vm *vm, i32 num_args)
     
     f32_as_var(&g_var_scratch, from->f32_array[nth]);
     
-  } else if (from->type == VAR_VEC_HEAD){
+  } else if (from->type == VAR_VECTOR){
     
     seni_var *e = from->value.v;
 
-    // e is pointing to the rc, so even a nth of 0 requires one call to e->next
-    for (i32 i = 0; i <= nth; i++) {
+    for (i32 i = 0; i < nth; i++) {
       e = e->next;
     }
 
@@ -775,7 +774,7 @@ seni_var *bind_col_split_complementary(seni_vm *vm, i32 num_args)
 
   // push the return values onto the stack as a vector
 
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   append_to_vector_col(vm, &g_var_scratch, &ret_colour0);
   append_to_vector_col(vm, &g_var_scratch, &ret_colour1);
 
@@ -797,7 +796,7 @@ seni_var *bind_col_analagous(seni_vm *vm, i32 num_args)
   analagous(&ret_colour0, &ret_colour1, colour);
 
   // push the return values onto the stack as a vector
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   append_to_vector_col(vm, &g_var_scratch, &ret_colour0);
   append_to_vector_col(vm, &g_var_scratch, &ret_colour1);
 
@@ -819,7 +818,7 @@ seni_var *bind_col_triad(seni_vm *vm, i32 num_args)
   triad(&ret_colour0, &ret_colour1, colour);
 
   // push the return values onto the stack as a vector
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   append_to_vector_col(vm, &g_var_scratch, &ret_colour0);
   append_to_vector_col(vm, &g_var_scratch, &ret_colour1);
 
@@ -1076,7 +1075,7 @@ seni_var *bind_prng_build(seni_vm *vm, i32 num_args)
   // the vector needs to represent a seni_prng_state struct as well as the min + max values
   // i.e. [u64 state, u64 inc, f32 min, f32 max]
   //
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   append_to_vector_u64(vm, &g_var_scratch, prng_state.state);
   append_to_vector_u64(vm, &g_var_scratch, prng_state.inc);
   append_to_vector_f32(vm, &g_var_scratch, min);
@@ -1113,7 +1112,7 @@ seni_var *bind_prng_take(seni_vm *vm, i32 num_args)
 
   i32 inum = (i32)num;
 
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   for (i32 i = 0; i < inum; i++) {
     value = seni_prng_f32_range(&prng_state, from.min, from.max);
     append_to_vector_f32(vm, &g_var_scratch, value);
@@ -1210,7 +1209,7 @@ seni_var *bind_interp_fn(seni_vm *vm, i32 num_args)
   // todo: fill this out properly and do the same for the other structures
   i32 interp_fn_id = 42;
 
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   append_to_vector_i32(vm, &g_var_scratch, interp_fn_id);
   append_to_vector_f32(vm, &g_var_scratch, from_m);
   append_to_vector_f32(vm, &g_var_scratch, to_m);
@@ -1318,7 +1317,7 @@ seni_var *bind_interp_bezier(seni_vm *vm, i32 num_args)
   seni_interp_bezier(&x, &y, coords, t);
 
   // push the return values onto the stack as a vector
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   append_to_vector_f32(vm, &g_var_scratch, x);
   append_to_vector_f32(vm, &g_var_scratch, y);
 
@@ -1339,7 +1338,7 @@ seni_var *bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
   seni_interp_bezier_tangent(&x, &y, coords, t);
 
   // push the return values onto the stack as a vector
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   append_to_vector_f32(vm, &g_var_scratch, x);
   append_to_vector_f32(vm, &g_var_scratch, y);
 
@@ -1362,7 +1361,7 @@ seni_var *bind_interp_circle(seni_vm *vm, i32 num_args)
   seni_interp_circle(&x, &y, position, radius, t);
 
   // push the return values onto the stack as a vector
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   append_to_vector_f32(vm, &g_var_scratch, x);
   append_to_vector_f32(vm, &g_var_scratch, y);
 
@@ -1606,7 +1605,7 @@ seni_var *bind_focal_generic(seni_vm *vm, i32 num_args, seni_focal_type type)
   // first item contains format in value.i, postion in f32_array[0,1] and distance in f32_array[2]
   // second item contains mapping in value.i
 
-  vector_construct(vm, &g_var_scratch);
+  vector_construct(&g_var_scratch);
   seni_var *v = append_to_vector_i32(vm, &g_var_scratch, type);
   v->f32_array[0] = x;
   v->f32_array[1] = y;

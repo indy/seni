@@ -6,17 +6,11 @@
 
 void gc_mark_vector(seni_var *vector)
 {
-  seni_var *v = vector->value.v; // the rc seni_var
-
-  if (v->type != VAR_VEC_RC) {
-    SENI_ERROR("gc_mark_vector VAR_VEC_HEAD not pointing to a VAR_VEC_RC?");
-    pretty_print_seni_var(v, "should be VAR_VEC_RC");
-    return;
-  }
+  seni_var *v = vector->value.v; // the first heap-allocated seni_var
   
   while(v != NULL) {
     v->mark = true;
-    if (v->type == VAR_VEC_HEAD) {
+    if (v->type == VAR_VECTOR) {
       gc_mark_vector(v);
     }
     v = v->next;
@@ -28,8 +22,8 @@ void gc_mark(seni_vm *vm)
   seni_var *v = vm->stack;
   
   for (i32 i = 0; i < vm->sp; i++) {
-    // only VAR_VEC_HEAD seni_vars allocated from the heap
-    if (v->type == VAR_VEC_HEAD) {
+    // only VAR_VECTOR seni_vars allocated from the heap
+    if (v->type == VAR_VECTOR) {
       gc_mark_vector(v);
     }
     v++;
@@ -84,7 +78,7 @@ void var_move(seni_var *dest, seni_var *src)
   } else if (using == USE_L) {
     dest->value.l = src->value.l;
   } else if (using == USE_V) {
-    if (src->type == VAR_VEC_HEAD) {
+    if (src->type == VAR_VECTOR) {
       dest->value.v = src->value.v;
     } else {
       SENI_ERROR("what the fuck?\n");
@@ -120,37 +114,26 @@ seni_var *var_get_from_heap(seni_vm *vm)
   head->prev = NULL;
 
   head->value.i = 0;
-  head->type = VAR_INT;         // just make sure that it isn't VAR_VEC_HEAD from a previous allocation
+  head->type = VAR_INT;         // just make sure that it isn't VAR_VECTOR from a previous allocation
 
   return head;
 }
 
-// [ ] <<- this is the VAR_VEC_HEAD (value.v points to VAR_VEC_RC)
+// [ ] <<- this is the VAR_VECTOR (value.v points to the first heap allocated seni_var)
 //  |
-// [ ] <<- this is the VAR_VEC_RC (OBSOLETE: remove VAR_VEC_RC)
-//  |
-//  v  <<= the VAR_VEC_RC's next pointer points to the contents of the vector
-// [4] -> [7] -> [3] -> [5] -> NULL  <<- these are seni_vars
+//  v 
+// [4] -> [7] -> [3] -> [5] -> NULL  <<- these are heap allocated seni_vars
 //
-void vector_construct(seni_vm *vm, seni_var *head)
+void vector_construct(seni_var *head)
 {
-  seni_var *rc = var_get_from_heap(vm);    // get a vec_rc
-  if (rc == NULL) {
-    SENI_ERROR("vector_construct");
-    return;
-  }
-  
-  rc->type = VAR_VEC_RC;
-
   // assuming that it's ok to wipe out head->value.v
-  head->type = VAR_VEC_HEAD;
+  head->type = VAR_VECTOR;
   head->value.v = NULL;           // attach vec_rc to vec_head
-  DL_APPEND(head->value.v, rc);
 }
 
 bool append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
 {
-  // assuming that head is VAR_VEC_HEAD
+  // assuming that head is VAR_VECTOR
   
   seni_var *child_value = var_get_from_heap(vm);
   if (child_value == NULL) {
@@ -429,9 +412,9 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
         // temp: for the moment just assume that any LOAD VOID
         // means creating a new vector object.
 
-        // also note that the VAR_VEC_HEAD is a seni_var from the stack
+        // also note that the VAR_VECTOR is a seni_var from the stack
         // so it should never be sent to the vm->heap_avail
-        vector_construct(vm, v);
+        vector_construct(v);
         
       } else {
         SENI_ERROR("LOAD: unknown memory segment type %d", bc->arg0.value.i);
@@ -684,7 +667,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       for (i = 0; i < num_args; i++) {
         vm->sp -= 2;
         tmp = &(vm->stack[vm->sp + 1]);
-        if (tmp->type == VAR_VEC_HEAD) {
+        if (tmp->type == VAR_VECTOR) {
           // this is now off the stack, so blow away the vector head
           tmp->type = VAR_INT;
           tmp->value.i = 0;
@@ -717,7 +700,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
       STACK_POP;
       // v is the vector
-      if (v->type != VAR_VEC_HEAD) {
+      if (v->type != VAR_VECTOR) {
         SENI_ERROR("APPEND expects the 2nd item on the stack to be a vector\n");
         return false;
       }
@@ -751,12 +734,12 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
           SENI_ERROR("PILE: VAR_2D num_args = %d, requires 2", num_args);
         }
         
-      } else if (v->type == VAR_VEC_HEAD) {
+      } else if (v->type == VAR_VECTOR) {
         // top of the stack contains a vector
         // take num_args elements from the vector and push them onto the stack
         seni_var _vec;
         var_move(&_vec, v);
-        src = _vec.value.v->next;
+        src = _vec.value.v;
         for (i = 0; i < num_args; i++) {
           STACK_PUSH;
           var_move(v, src);

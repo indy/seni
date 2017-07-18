@@ -203,12 +203,9 @@ void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
 
 void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_HEAD, var->type, "VAR_VEC_HEAD");
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "VAR_VECTOR");
 
-  seni_var *rc = var->value.v;
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_RC, rc->type, "VAR_VEC_RC");
-
-  seni_var *val = rc->next;
+  seni_var *val = var->value.v;
   TEST_ASSERT_EQUAL_FLOAT(a, val->value.f);
 
   val = val->next;
@@ -223,12 +220,9 @@ void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d)
 
 void assert_seni_var_v5(seni_var *var, f32 a, f32 b, f32 c, f32 d, f32 e)
 {
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_HEAD, var->type, "VAR_VEC_HEAD");
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "VAR_VECTOR");
 
-  seni_var *rc = var->value.v;
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_VEC_RC, rc->type, "VAR_VEC_RC");
-
-  seni_var *val = rc->next;
+  seni_var *val = var->value.v;
   TEST_ASSERT_EQUAL_FLOAT(a, val->value.f);
 
   val = val->next;
@@ -522,7 +516,7 @@ void test_vm_destructure(void)
 
   // destructure a VAR_2D
   VM_COMPILE_F32("(fn (f pos: [3 5]) (define [j k] pos) (+ j k)) (f)", 8.0f);
-  // destructure a VAR_VEC_HEAD
+  // destructure a VAR_VECTOR
   VM_COMPILE_F32("(fn (f pos: [3 5 7]) (define [j k l] pos) (+ j k l)) (f)", 15.0f);
 }
 

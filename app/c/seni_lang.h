@@ -66,8 +66,7 @@ typedef enum {
   VAR_BOOLEAN,   // value.i
   VAR_LONG,      // value.l
   VAR_NAME,      // seni_word_lut[value.i]
-  VAR_VEC_HEAD,  // pointer to vec_rc is in value.v
-  VAR_VEC_RC,    // pointer to first vector element is in value.v
+  VAR_VECTOR,    // pointer to first heap allocated seni_var is in value.v
   VAR_COLOUR,    // pointer to a colour: format is in value.i and elements in f32_array
   VAR_2D,
 } seni_var_type;
