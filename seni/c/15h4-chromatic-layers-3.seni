@@ -1,0 +1,40 @@
+(define 
+  coords1 {[[547.283 553.546]
+            [601.495 512.983]
+            [357.072 534.317]
+            [673.376 792.043]]
+           (gen/vector)}
+  coords2 {[[300.977 639.640]
+            [298.601 896.576]
+            [118.546 296.133]
+            [405.939 364.961]]
+           (gen/vector)}
+  coords3 {[[264.277 770.780]
+            [940.109 468.015]
+            [794.465 761.604]
+            [136.380 84.402]]
+           (gen/vector)}
+
+  col-fn-1 (col/procedural-fn a: {[0.254 0.843 0.072] (gen/scalar)}
+                              b: {[0.180 0.048 0.396] (gen/scalar)}
+                              c: {[0.763 0.455 0.242] (gen/scalar)}
+                              d: {[0.533 0.771 0.864] (gen/scalar)}
+                              alpha: 0.08)
+  col-fn-2 (col/procedural-fn a: {[0.317 0.377 0.768] (gen/scalar)}
+                              b: {[0.816 0.297 0.921] (gen/scalar)}
+                              c: {[0.505 0.939 0.680] (gen/scalar)}
+                              d: {[0.645 0.205 0.802] (gen/scalar)}
+                              alpha: 0.08)
+  col-fn-3 (col/procedural-fn a: {[0.400 0.319 0.657] (gen/scalar)}
+                              b: {[0.809 0.689 0.953] (gen/scalar)}
+                              c: {[0.306 0.661 0.324] (gen/scalar)}
+                              d: {[0.963 0.998 0.383] (gen/scalar)}
+                              alpha: 0.08))
+
+(loop (t from: 0 upto: 1 steps: 500)
+  (poly coords: [(interp/bezier t: t coords: coords1)
+                 (interp/bezier t: t coords: coords2)
+                 (interp/bezier t: t coords: coords3)]
+        colours: [(col-fn-1 t: t)
+                  (col-fn-2 t: t)
+                  (col-fn-3 t: t)]))

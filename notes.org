@@ -1,20 +1,18 @@
-* TODO [1/14]
+* TODO [0/12]
   1. [ ] test gc
-  2. [X] replace ?/call with ?/fn use: foo
-  3. [ ] look into replacing append_to_vector with append_heap_var_to_vector
-  4. [ ] poly should also accept a uv parameter
-  5. [ ] call and fn naming convention - also use same arg naming
-  6. [ ] use the f32_array to pack in the values required by the prng and interp structs
-  7. [ ] ensure that there's a dist folder before running npm run build:wasm
-  8. [ ] test new setup/teardown code
-  9. [ ] cleanup memory of parser
-  10. [ ] structs for compile, runtim, performance info
-  11. [ ] seni_env
-  12. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  13. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  14. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  2. [ ] look into replacing append_to_vector with append_heap_var_to_vector
+  3. [ ] poly should also accept a uv parameter
+  4. [ ] use the f32_array to pack in the values required by the prng and interp structs
+  5. [ ] ensure that there's a dist folder before running npm run build:wasm
+  6. [ ] test new setup/teardown code
+  7. [ ] cleanup memory of parser
+  8. [ ] structs for compile, runtim, performance info
+  9. [ ] seni_env
+  10. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  11. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [14/57]
+* updating scripts [20/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -30,7 +28,7 @@
   13. [ ] 1560-path.seni - make a function ???
   14. [X] 1565-hex-grid.seni
   15. [X] 156h-tri-grid.seni
-  16. [ ] 157e-tile-shadow.seni - col/procedural-fn
+  16. [X] 157e-tile-shadow.seni - col/procedural-fn
   17. [ ] 1580-quilt.seni
   18. [ ] 1585-seeds.seni
   19. [ ] 15fe-rotate-mirror.seni - poly, repeat/rotate-mirrored
@@ -52,11 +50,11 @@
   35. [ ] 161j-trump.seni
   36. [ ] 1626-embers.seni
   37. [ ] 1626-orchid.seni
-  38. [ ] 162e-alien.seni
-  39. [ ] 162e-mask.seni
-  40. [ ] 162e-slice.seni
-  41. [ ] 162e-star.seni
-  42. [ ] 162e-x.seni
+  38. [X] 162e-alien.seni
+  39. [X] 162e-mask.seni
+  40. [X] 162e-slice.seni
+  41. [X] 162e-star.seni
+  42. [X] 162e-x.seni
   43. [ ] 1632-star.seni
   44. [ ] 1633-dune.seni
   45. [ ] 1633-orchid.seni

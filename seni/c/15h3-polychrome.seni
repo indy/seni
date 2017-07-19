@@ -1,0 +1,33 @@
+;; imitating/inspired by Karl Gerstner's Polychrome of Pure Colors (1956-58)
+
+;; Not using Karl Garstner's palette but I am retaining the horizontal and
+;; vertical colour gradients on alternating squares
+
+(define 
+  steps 14
+  box-dim (/ canvas/width steps)
+  half-box-dim (/ box-dim 2)
+  remap (interp/fn from: [0 steps] to: [0 1])
+  col-fn-1 (col/procedural-fn a: [0.5 0.5 0.5]
+                              b: [0.5 0.5 0.5]
+                              c: {[0.990 0.406 0.048] (gen/scalar)}
+                              d: {[0.015 0.723 0.116] (gen/scalar)}
+                              alpha: 1)
+  col-fn-2 (col/procedural-fn a: [0.5 0.5 0.5]
+                              b: [0.5 0.5 0.5]
+                              c: {[0.664 0.776 0.153] (gen/scalar)}
+                              d: {[0.372 0.515 0.756] (gen/scalar)}
+                              alpha: 1))
+
+(loop (y from: 0 to: steps)
+  (loop (x from: 0 to: steps)
+    (define
+      checked (if (= (mod y 2) 1) (mod x 2) (- 1 (mod x 2)))
+      colour (if (= checked 0) 
+                 (col-fn-1 t: (remap val: x))
+                 (col-fn-2 t: (remap val: y))))
+    (rect colour: colour
+          position: [(+ (* x box-dim) half-box-dim)
+                     (+ (* y box-dim) half-box-dim)]
+          width: box-dim
+          height: box-dim)))
