@@ -1,4 +1,6 @@
 #include "seni_colour.h"
+#include "seni_keyword_iname.h"
+#include "seni_mathutil.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -489,4 +491,67 @@ void analagous(seni_colour *out0, seni_colour *out1, seni_colour *in)
 void triad(seni_colour *out0, seni_colour *out1, seni_colour *in)
 {
   pair(out0, out1, in, COLOUR_TRIAD_ANGLE);
+}
+
+
+void get_colour_presets(f32 *a, f32 *b, f32 *c, f32 *d, i32 preset)
+{
+  switch(preset) {
+  case INAME_CHROME:
+    a[0] = 0.5f; a[1] = 0.5f; a[2] = 0.5f;
+    b[0] = 0.5f; b[1] = 0.5f; b[2] = 0.5f;
+    c[0] = 1.0f; c[1] = 1.0f; c[2] = 1.0f;
+    d[0] = 0.0f; d[1] = 0.1f; d[2] = 0.2f;
+    break;
+  case INAME_HOTLINE_MIAMI:
+    a[0] = 0.5f; a[1] = 0.5f; a[2] = 0.5f;
+    b[0] = 0.5f; b[1] = 0.5f; b[2] = 0.5f;
+    c[0] = 2.0f; c[1] = 1.0f; c[2] = 0.0f;
+    d[0] = 0.5f; d[1] = 0.2f; d[2] = 0.25f;
+    break;
+  case INAME_KNIGHT_RIDER:
+    a[0] = 0.5f; a[1] = 0.5f; a[2] = 0.5f;
+    b[0] = 0.5f; b[1] = 0.5f; b[2] = 0.5f;
+    c[0] = 1.0f; c[1] = 0.7f; c[2] = 0.4f;
+    d[0] = 0.0f; d[1] = 0.15f; d[2] = 0.2f;
+    break;
+  case INAME_MARS:
+    a[0] = 0.8f; a[1] = 0.5f; a[2] = 0.4f;
+    b[0] = 0.2f; b[1] = 0.4f; b[2] = 0.2f;
+    c[0] = 2.0f; c[1] = 1.0f; c[2] = 1.0f;
+    d[0] = 0.0f; d[1] = 0.25f; d[2] = 0.25f;
+    break;
+  case INAME_RAINBOW:
+    a[0] = 0.5f; a[1] = 0.5f; a[2] = 0.5f;
+    b[0] = 0.5f; b[1] = 0.5f; b[2] = 0.5f;
+    c[0] = 1.0f; c[1] = 1.0f; c[2] = 1.0f;
+    d[0] = 0.0f; d[1] = 3.33f; d[2] = 6.67f;
+    break;
+  case INAME_ROBOCOP:
+    a[0] = 0.5f; a[1] = 0.5f; a[2] = 0.5f;
+    b[0] = 0.5f; b[1] = 0.5f; b[2] = 0.5f;
+    c[0] = 1.0f; c[1] = 1.0f; c[2] = 1.0f;
+    d[0] = 0.3f; d[1] = 0.2f; d[2] = 0.2f;
+    break;
+  case INAME_TRANSFORMERS:
+    a[0] = 0.5f; a[1] = 0.5f; a[2] = 0.5f;
+    b[0] = 0.5f; b[1] = 0.5f; b[2] = 0.5f;
+    c[0] = 1.0f; c[1] = 1.0f; c[2] = 0.5f;
+    d[0] = 0.8f; d[1] = 0.9f; d[2] = 0.3f;
+    break;
+  }
+}
+
+void colour_procedural(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t)
+{
+  f32 *a = colour_fn_state->a;
+  f32 *b = colour_fn_state->b;
+  f32 *c = colour_fn_state->c;
+  f32 *d = colour_fn_state->d;
+
+  out->format = RGB;
+  out->element[0] = a[0] + b[0] * (f32)cos(TAU * (c[0] * t + d[0]));
+  out->element[1] = a[1] + b[1] * (f32)cos(TAU * (c[1] * t + d[1]));
+  out->element[2] = a[2] + b[2] * (f32)cos(TAU * (c[2] * t + d[2]));
+  out->element[3] = 1.0f;
 }

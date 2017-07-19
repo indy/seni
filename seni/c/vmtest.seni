@@ -1,6 +1,44 @@
 
 
-(poly coords: [[10 10]
-               [100 10]
-              [50 100]]
-      colours: [red green blue])
+(define colfn (col/procedural-fn preset: robocop))
+
+(poly coords: [[100 100]
+               [100 700]
+               [200 100]
+               [200 700]
+               [300 100]
+               [300 700]
+               [400 100]
+               [400 700]
+               [500 100]
+               [500 700]
+               [600 100]
+               [600 700]
+               [700 100]
+               [700 700]
+               [800 100]
+               [800 700]
+               [900 100]
+               [900 700]
+               [1000 100]
+               [1000 700]]
+      colours: [(col/call fn: colfn t: 0.0)
+                (col/call fn: colfn t: 0.0)
+                (col/call fn: colfn t: 0.1)
+                (col/call fn: colfn t: 0.1)
+                (col/call fn: colfn t: 0.2)
+                (col/call fn: colfn t: 0.2)
+                (col/call fn: colfn t: 0.3)
+                (col/call fn: colfn t: 0.3)
+                (col/call fn: colfn t: 0.4)
+                (col/call fn: colfn t: 0.4)
+                (col/call fn: colfn t: 0.5)
+                (col/call fn: colfn t: 0.5)
+                (col/call fn: colfn t: 0.6)
+                (col/call fn: colfn t: 0.6)
+                (col/call fn: colfn t: 0.7)
+                (col/call fn: colfn t: 0.7)
+                (col/call fn: colfn t: 0.8)
+                (col/call fn: colfn t: 0.8)
+                (col/call fn: colfn t: 0.9)
+                (col/call fn: colfn t: 0.9)])

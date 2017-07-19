@@ -1,0 +1,90 @@
+(define colfn (col/procedural-fn a: [0.5 0.5 0.5]
+                                 b: [0.5 0.5 0.5]
+                                 c: [0.1 0.8 1]
+                                 d: [0 0.1 0.2]))
+
+(define colfn2 (col/procedural-fn preset: robocop))
+
+(translate vector: [-50 0])
+
+(poly coords: [[100 100]
+               [100 400]
+               [200 100]
+               [200 400]
+               [300 100]
+               [300 400]
+               [400 100]
+               [400 400]
+               [500 100]
+               [500 400]
+               [600 100]
+               [600 400]
+               [700 100]
+               [700 400]
+               [800 100]
+               [800 400]
+               [900 100]
+               [900 400]
+               [1000 100]
+               [1000 400]]
+      colours: [(col/call fn: colfn t: 0.0)
+                (col/call fn: colfn t: 0.0)
+                (col/call fn: colfn t: 0.1)
+                (col/call fn: colfn t: 0.1)
+                (col/call fn: colfn t: 0.2)
+                (col/call fn: colfn t: 0.2)
+                (col/call fn: colfn t: 0.3)
+                (col/call fn: colfn t: 0.3)
+                (col/call fn: colfn t: 0.4)
+                (col/call fn: colfn t: 0.4)
+                (col/call fn: colfn t: 0.5)
+                (col/call fn: colfn t: 0.5)
+                (col/call fn: colfn t: 0.6)
+                (col/call fn: colfn t: 0.6)
+                (col/call fn: colfn t: 0.7)
+                (col/call fn: colfn t: 0.7)
+                (col/call fn: colfn t: 0.8)
+                (col/call fn: colfn t: 0.8)
+                (col/call fn: colfn t: 0.9)
+                (col/call fn: colfn t: 0.9)])
+
+(poly coords: [[100 500]
+               [100 900]
+               [200 500]
+               [200 900]
+               [300 500]
+               [300 900]
+               [400 500]
+               [400 900]
+               [500 500]
+               [500 900]
+               [600 500]
+               [600 900]
+               [700 500]
+               [700 900]
+               [800 500]
+               [800 900]
+               [900 500]
+               [900 900]
+               [1000 500]
+               [1000 900]]
+      colours: [(col/call fn: colfn2 t: 0.0)
+                (col/call fn: colfn2 t: 0.0)
+                (col/call fn: colfn2 t: 0.1)
+                (col/call fn: colfn2 t: 0.1)
+                (col/call fn: colfn2 t: 0.2)
+                (col/call fn: colfn2 t: 0.2)
+                (col/call fn: colfn2 t: 0.3)
+                (col/call fn: colfn2 t: 0.3)
+                (col/call fn: colfn2 t: 0.4)
+                (col/call fn: colfn2 t: 0.4)
+                (col/call fn: colfn2 t: 0.5)
+                (col/call fn: colfn2 t: 0.5)
+                (col/call fn: colfn2 t: 0.6)
+                (col/call fn: colfn2 t: 0.6)
+                (col/call fn: colfn2 t: 0.7)
+                (col/call fn: colfn2 t: 0.7)
+                (col/call fn: colfn2 t: 0.8)
+                (col/call fn: colfn2 t: 0.8)
+                (col/call fn: colfn2 t: 0.9)
+                (col/call fn: colfn2 t: 0.9)])

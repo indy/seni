@@ -79,110 +79,153 @@ typedef struct {
 #define READ_STACK_ARG_I32(k, n) if (name_1 == k) { IS_I32(n); n = value_1->value.i; }
 #define READ_STACK_ARG_VAR(k, n) if (name_1 == k) { n = value_1; }
 
-#define READ_STACK_ARG_COL(k, n) if (name_1 == k) {                 \
-    IS_COL(n);                                                      \
-    n->format = value_1->value.i;                                   \
-    n->element[0] = value_1->f32_array[0];                          \
-    n->element[1] = value_1->f32_array[1];                          \
-    n->element[2] = value_1->f32_array[2];                          \
-    n->element[3] = value_1->f32_array[3];                          \
-}
-
-#define READ_STACK_ARG_VEC2(k, n) if (name_1 == k) {                 \
-    n[0] = value_1->f32_array[0];                                    \
-    n[1] = value_1->f32_array[1];                                    \
-}
-
-#define READ_STACK_ARG_PRNG(k, n) if (name_1 == k) {                    \
-    tmp_1 = value_1;                                                    \
-    value_1 = value_1->value.v;                                         \
-    IS_LONG(#n);                                                        \
-    n.state = value_1->value.l;                                         \
-    n.seni_var_state = value_1;                                         \
-    value_1 = value_1->next;                                            \
-    IS_LONG(#n);                                                        \
-    n.inc = value_1->value.l;                                           \
-    n.seni_var_inc = value_1;                                           \
-    value_1 = value_1->next;                                            \
-    IS_F32(#n);                                                         \
-    n.min = value_1->value.f;                                           \
-    value_1 = value_1->next;                                            \
-    IS_F32(#n);                                                         \
-    n.max = value_1->value.f;                                           \
-    value_1 = tmp_1;                                                    \
+#define READ_STACK_ARG_COL(k, n) if (name_1 == k) {       \
+    IS_COL(n);                                            \
+    n->format = value_1->value.i;                         \
+    n->element[0] = value_1->f32_array[0];                \
+    n->element[1] = value_1->f32_array[1];                \
+    n->element[2] = value_1->f32_array[2];                \
+    n->element[3] = value_1->f32_array[3];                \
   }
 
-#define READ_STACK_ARG_INTERP(k, n) if (name_1 == k) {                  \
-    tmp_1 = value_1;                                                    \
-    value_1 = value_1->value.v;                                         \
-    IS_I32(#n);                                                         \
-    n.interp_fn_id = value_1->value.i;                                  \
-    value_1 = value_1->next;                                            \
-    IS_F32(#n);                                                         \
-    n.from_m = value_1->value.f;                                        \
-    value_1 = value_1->next;                                            \
-    IS_F32(#n);                                                         \
-    n.to_m = value_1->value.f;                                          \
-    value_1 = value_1->next;                                            \
-    IS_F32(#n);                                                         \
-    n.from_c = value_1->value.f;                                        \
-    value_1 = value_1->next;                                            \
-    IS_F32(#n);                                                         \
-    n.to_c = value_1->value.f;                                          \
-    value_1 = value_1->next;                                            \
-    IS_F32(#n);                                                         \
-    n.to0 = value_1->value.f;                                           \
-    value_1 = value_1->next;                                            \
-    IS_F32(#n);                                                         \
-    n.to1 = value_1->value.f;                                           \
-    value_1 = value_1->next;                                            \
-    IS_I32(#n);                                                         \
-    n.clamping = value_1->value.i;                                      \
-    value_1 = value_1->next;                                            \
-    IS_I32(#n);                                                         \
-    n.mapping = value_1->value.i;                                       \
-    value_1 = tmp_1;                                                    \
+#define READ_STACK_ARG_VEC2(k, n) if (name_1 == k) {      \
+    n[0] = value_1->f32_array[0];                         \
+    n[1] = value_1->f32_array[1];                         \
   }
 
-#define READ_STACK_ARG_FOCAL(k, n) if (name_1 == k) { \
-    tmp_1 = value_1;                                  \
-    value_1 = value_1->value.v;                       \
-    IS_I32(#n);                                       \
-    n.type = value_1->value.i;                        \
-    n.x = value_1->f32_array[0];                      \
-    n.y = value_1->f32_array[1];                      \
-    n.distance = value_1->f32_array[2];               \
-    value_1 = value_1->next;                          \
-    IS_I32(#n);                                       \
-    n.mapping = value_1->value.i;                     \
-    value_1 = tmp_1;                                  \
+// todo: eventually just pack a vec3 into a single seni_var's f32_array
+//
+#define READ_STACK_ARG_VEC3(k, n) if (name_1 == k) {      \
+    tmp_1 = value_1;                                      \
+    value_1 = value_1->value.v;                           \
+    IS_F32(#n);                                           \
+    n[0] = value_1->value.f;                              \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n[1] = value_1->value.f;                              \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n[2] = value_1->value.f;                              \
+    value_1 = tmp_1;                                      \
   }
 
-#define READ_STACK_ARG_COORD3(k, n) if (name_1 == k) {                \
-    tmp_1 = value_1->value.v;                                         \
-    n[0] = tmp_1->f32_array[0];                                       \
-    n[1] = tmp_1->f32_array[1];                                       \
-    tmp_1 = tmp_1->next;                                              \
-    n[2] = tmp_1->f32_array[0];                                       \
-    n[3] = tmp_1->f32_array[1];                                       \
-    tmp_1 = tmp_1->next;                                              \
-    n[4] = tmp_1->f32_array[0];                                       \
-    n[5] = tmp_1->f32_array[1];                                       \
+#define READ_STACK_ARG_PRNG(k, n) if (name_1 == k) {      \
+    tmp_1 = value_1;                                      \
+    value_1 = value_1->value.v;                           \
+    IS_LONG(#n);                                          \
+    n.state = value_1->value.l;                           \
+    n.seni_var_state = value_1;                           \
+    value_1 = value_1->next;                              \
+    IS_LONG(#n);                                          \
+    n.inc = value_1->value.l;                             \
+    n.seni_var_inc = value_1;                             \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n.min = value_1->value.f;                             \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n.max = value_1->value.f;                             \
+    value_1 = tmp_1;                                      \
   }
 
-#define READ_STACK_ARG_COORD4(k, n) if (name_1 == k) {                \
-    tmp_1 = value_1->value.v;                                         \
-    n[0] = tmp_1->f32_array[0];                                       \
-    n[1] = tmp_1->f32_array[1];                                       \
-    tmp_1 = tmp_1->next;                                              \
-    n[2] = tmp_1->f32_array[0];                                       \
-    n[3] = tmp_1->f32_array[1];                                       \
-    tmp_1 = tmp_1->next;                                              \
-    n[4] = tmp_1->f32_array[0];                                       \
-    n[5] = tmp_1->f32_array[1];                                       \
-    tmp_1 = tmp_1->next;                                              \
-    n[6] = tmp_1->f32_array[0];                                       \
-    n[7] = tmp_1->f32_array[1];                                       \
+#define READ_STACK_ARG_INTERP(k, n) if (name_1 == k) {    \
+    tmp_1 = value_1;                                      \
+    value_1 = value_1->value.v;                           \
+    IS_I32(#n);                                           \
+    n.interp_fn_id = value_1->value.i;                    \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n.from_m = value_1->value.f;                          \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n.to_m = value_1->value.f;                            \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n.from_c = value_1->value.f;                          \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n.to_c = value_1->value.f;                            \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n.to0 = value_1->value.f;                             \
+    value_1 = value_1->next;                              \
+    IS_F32(#n);                                           \
+    n.to1 = value_1->value.f;                             \
+    value_1 = value_1->next;                              \
+    IS_I32(#n);                                           \
+    n.clamping = value_1->value.i;                        \
+    value_1 = value_1->next;                              \
+    IS_I32(#n);                                           \
+    n.mapping = value_1->value.i;                         \
+    value_1 = tmp_1;                                      \
+  }
+
+#define READ_STACK_ARG_FOCAL(k, n) if (name_1 == k) {     \
+    tmp_1 = value_1;                                      \
+    value_1 = value_1->value.v;                           \
+    IS_I32(#n);                                           \
+    n.type = value_1->value.i;                            \
+    n.x = value_1->f32_array[0];                          \
+    n.y = value_1->f32_array[1];                          \
+    n.distance = value_1->f32_array[2];                   \
+    value_1 = value_1->next;                              \
+    IS_I32(#n);                                           \
+    n.mapping = value_1->value.i;                         \
+    value_1 = tmp_1;                                      \
+  }
+
+#define READ_STACK_ARG_COORD3(k, n) if (name_1 == k) {    \
+    tmp_1 = value_1->value.v;                             \
+    n[0] = tmp_1->f32_array[0];                           \
+    n[1] = tmp_1->f32_array[1];                           \
+    tmp_1 = tmp_1->next;                                  \
+    n[2] = tmp_1->f32_array[0];                           \
+    n[3] = tmp_1->f32_array[1];                           \
+    tmp_1 = tmp_1->next;                                  \
+    n[4] = tmp_1->f32_array[0];                           \
+    n[5] = tmp_1->f32_array[1];                           \
+  }
+
+#define READ_STACK_ARG_COORD4(k, n) if (name_1 == k) {    \
+    tmp_1 = value_1->value.v;                             \
+    n[0] = tmp_1->f32_array[0];                           \
+    n[1] = tmp_1->f32_array[1];                           \
+    tmp_1 = tmp_1->next;                                  \
+    n[2] = tmp_1->f32_array[0];                           \
+    n[3] = tmp_1->f32_array[1];                           \
+    tmp_1 = tmp_1->next;                                  \
+    n[4] = tmp_1->f32_array[0];                           \
+    n[5] = tmp_1->f32_array[1];                           \
+    tmp_1 = tmp_1->next;                                  \
+    n[6] = tmp_1->f32_array[0];                           \
+    n[7] = tmp_1->f32_array[1];                           \
+  }
+
+#define READ_STACK_ARG_COLFN(k, n) if (name_1 == k) {     \
+    tmp_1 = value_1;                                      \
+    value_1 = value_1->value.v;                           \
+    IS_I32(#n);                                           \
+    n.type = value_1->value.i;                            \
+    n.a[0] = value_1->f32_array[0];                       \
+    n.a[1] = value_1->f32_array[1];                       \
+    n.a[2] = value_1->f32_array[2];                       \
+    n.a[3] = value_1->f32_array[3];                       \
+    value_1 = value_1->next;                              \
+    n.b[0] = value_1->f32_array[0];                       \
+    n.b[1] = value_1->f32_array[1];                       \
+    n.b[2] = value_1->f32_array[2];                       \
+    n.b[3] = value_1->f32_array[3];                       \
+    value_1 = value_1->next;                              \
+    n.c[0] = value_1->f32_array[0];                       \
+    n.c[1] = value_1->f32_array[1];                       \
+    n.c[2] = value_1->f32_array[2];                       \
+    n.c[3] = value_1->f32_array[3];                       \
+    value_1 = value_1->next;                              \
+    n.d[0] = value_1->f32_array[0];                       \
+    n.d[1] = value_1->f32_array[1];                       \
+    n.d[2] = value_1->f32_array[2];                       \
+    n.d[3] = value_1->f32_array[3];                       \
+    value_1 = tmp_1;                                      \
   }
 
 // a global var that represents true, used as the default
@@ -944,6 +987,88 @@ seni_var *bind_col_get_lab_l(seni_vm *vm, i32 num_args)
   f32_as_var(&g_var_scratch, colour->element[l_index]);
 
   return &g_var_scratch;
+}
+
+seni_var *bind_col_procedural_fn(seni_vm *vm, i32 num_args)
+{
+  // colour fn structure need to store 4 colours (for bezier-fn)
+  // first element's value.i will represent procedural, bezier or quadratic
+
+  i32 preset = 0;
+  f32 a[3], b[3], c[3], d[3];
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(INAME_PRESET, preset);
+  READ_STACK_ARG_VEC3(INAME_A, a);
+  READ_STACK_ARG_VEC3(INAME_B, b);
+  READ_STACK_ARG_VEC3(INAME_C, c);
+  READ_STACK_ARG_VEC3(INAME_D, d);
+  READ_STACK_ARGS_END;
+  
+  if (preset != 0) {
+    get_colour_presets(a, b, c, d, preset);
+  }
+
+  seni_var *v;
+  vector_construct(&g_var_scratch);
+
+  v = var_get_from_heap(vm);
+  v->type = VAR_INT;
+  v->value.i = COLOUR_FN_PROCEDURAL;
+  v->f32_array[0] = a[0];
+  v->f32_array[1] = a[1];
+  v->f32_array[2] = a[2];
+  append_heap_var_to_vector(&g_var_scratch, v);
+
+  v = var_get_from_heap(vm);
+  v->type = VAR_INT;
+  v->value.i = COLOUR_FN_PROCEDURAL;
+  v->f32_array[0] = b[0];
+  v->f32_array[1] = b[1];
+  v->f32_array[2] = b[2];
+  append_heap_var_to_vector(&g_var_scratch, v);
+
+  v = var_get_from_heap(vm);
+  v->type = VAR_INT;
+  v->value.i = COLOUR_FN_PROCEDURAL;
+  v->f32_array[0] = c[0];
+  v->f32_array[1] = c[1];
+  v->f32_array[2] = c[2];
+  append_heap_var_to_vector(&g_var_scratch, v);
+
+  v = var_get_from_heap(vm);
+  v->type = VAR_INT;
+  v->value.i = COLOUR_FN_PROCEDURAL;
+  v->f32_array[0] = d[0];
+  v->f32_array[1] = d[1];
+  v->f32_array[2] = d[2];
+  append_heap_var_to_vector(&g_var_scratch, v);
+
+  return &g_var_scratch;  
+}
+
+seni_var *bind_col_call(seni_vm *vm, i32 num_args)
+{
+  seni_colour_fn_state colour_fn_state;
+  f32 t = 0.0f;
+
+  colour_fn_state.type = COLOUR_FN_UNKNOWN;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COLFN(INAME_FN, colour_fn_state);
+  READ_STACK_ARG_F32(INAME_T, t);
+  READ_STACK_ARGS_END;
+
+  seni_colour ret_colour;
+    
+  if (colour_fn_state.type == COLOUR_FN_PROCEDURAL) {
+    colour_procedural(&ret_colour, &colour_fn_state, t);
+  } else {
+    SENI_ERROR("unknown colour_fn_state.type %d", colour_fn_state.type);
+  }
+
+  colour_as_var(&g_var_scratch, &ret_colour);
+  return &g_var_scratch;  
 }
 
 seni_var *bind_translate(seni_vm *vm, i32 num_args)
@@ -1720,10 +1845,18 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "col/set-lab-l", &bind_col_set_lab_l);
   declare_native(wlut, e, "col/get-lab-l", &bind_col_get_lab_l);
 
-  // col/procedural-fn-presets
-  // col/procedural-fn
-  // col/bezier-fn
-  // col/quadratic-fn
+  declare_native(wlut, e, "col/procedural-fn", &bind_col_procedural_fn);
+  declare_native(wlut, e, "col/call", &bind_col_call);
+  /*
+    all return a structure that will be called by col/call along with a t parameter
+
+    (col/procedural-fn preset: robocop)
+    (col/procedural-fn a: [0.5, 0.5, 0.5] b: [0.5, 0.5, 0.5] c: [0.5, 0.5, 0.5] d: [0.5, 0.5, 0.5])
+    (col/bezier-fn a: red b: red c: red d: red)
+    (col/quadratic-fn a: red b: red c: red)
+
+    (col/call fn: whatever t: 0.3)
+   */
 
   declare_native(wlut, e, "math/distance", &bind_math_distance);
   declare_native(wlut, e, "math/clamp", &bind_math_clamp);

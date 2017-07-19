@@ -92,6 +92,12 @@ void vector_construct(seni_var *head)
   head->value.v = NULL;           // attach vec_rc to vec_head
 }
 
+void append_heap_var_to_vector(seni_var *head, seni_var *val)
+{
+  // assuming that head is VAR_VECTOR and val is a seni_var from the heap
+  DL_APPEND(head->value.v, val);
+}
+
 bool append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
 {
   // assuming that head is VAR_VECTOR
