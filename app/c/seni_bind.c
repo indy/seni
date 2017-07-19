@@ -211,6 +211,7 @@ typedef struct {
     n.a[2] = value_1->f32_array[2];                       \
     n.a[3] = value_1->f32_array[3];                       \
     value_1 = value_1->next;                              \
+    n.alpha = value_1->value.f;                           \
     n.b[0] = value_1->f32_array[0];                       \
     n.b[1] = value_1->f32_array[1];                       \
     n.b[2] = value_1->f32_array[2];                       \
@@ -995,10 +996,12 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
   // first element's value.i will represent procedural, bezier or quadratic
 
   i32 preset = 0;
+  f32 alpha = 1.0f;
   f32 a[3], b[3], c[3], d[3];
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_I32(INAME_PRESET, preset);
+  READ_STACK_ARG_F32(INAME_ALPHA, alpha);
   READ_STACK_ARG_VEC3(INAME_A, a);
   READ_STACK_ARG_VEC3(INAME_B, b);
   READ_STACK_ARG_VEC3(INAME_C, c);
@@ -1021,8 +1024,8 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
   append_heap_var_to_vector(&g_var_scratch, v);
 
   v = var_get_from_heap(vm);
-  v->type = VAR_INT;
-  v->value.i = COLOUR_FN_PROCEDURAL;
+  v->type = VAR_FLOAT;
+  v->value.f = alpha;
   v->f32_array[0] = b[0];
   v->f32_array[1] = b[1];
   v->f32_array[2] = b[2];
@@ -1030,7 +1033,7 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
 
   v = var_get_from_heap(vm);
   v->type = VAR_INT;
-  v->value.i = COLOUR_FN_PROCEDURAL;
+  v->value.i = 0;
   v->f32_array[0] = c[0];
   v->f32_array[1] = c[1];
   v->f32_array[2] = c[2];
@@ -1038,7 +1041,7 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
 
   v = var_get_from_heap(vm);
   v->type = VAR_INT;
-  v->value.i = COLOUR_FN_PROCEDURAL;
+  v->value.i = 0;
   v->f32_array[0] = d[0];
   v->f32_array[1] = d[1];
   v->f32_array[2] = d[2];
@@ -1441,10 +1444,9 @@ seni_var *bind_interp_bezier(seni_vm *vm, i32 num_args)
   f32 x, y;
   seni_interp_bezier(&x, &y, coords, t);
 
-  // push the return values onto the stack as a vector
-  vector_construct(&g_var_scratch);
-  append_to_vector_f32(vm, &g_var_scratch, x);
-  append_to_vector_f32(vm, &g_var_scratch, y);
+  g_var_scratch.type = VAR_2D;
+  g_var_scratch.f32_array[0] = x;
+  g_var_scratch.f32_array[1] = y;
 
   return &g_var_scratch;
 }
@@ -1462,10 +1464,9 @@ seni_var *bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
   f32 x, y;
   seni_interp_bezier_tangent(&x, &y, coords, t);
 
-  // push the return values onto the stack as a vector
-  vector_construct(&g_var_scratch);
-  append_to_vector_f32(vm, &g_var_scratch, x);
-  append_to_vector_f32(vm, &g_var_scratch, y);
+  g_var_scratch.type = VAR_2D;
+  g_var_scratch.f32_array[0] = x;
+  g_var_scratch.f32_array[1] = y;
 
   return &g_var_scratch;
 }
@@ -1485,10 +1486,9 @@ seni_var *bind_interp_circle(seni_vm *vm, i32 num_args)
   f32 x, y;
   seni_interp_circle(&x, &y, position, radius, t);
 
-  // push the return values onto the stack as a vector
-  vector_construct(&g_var_scratch);
-  append_to_vector_f32(vm, &g_var_scratch, x);
-  append_to_vector_f32(vm, &g_var_scratch, y);
+  g_var_scratch.type = VAR_2D;
+  g_var_scratch.f32_array[0] = x;
+  g_var_scratch.f32_array[1] = y;
 
   return &g_var_scratch;
 }
@@ -1814,6 +1814,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   declare_native(wlut, e, "debug/print", &bind_debug_print);
   declare_native(wlut, e, "nth", &bind_nth);
+
   // map
 
   declare_native(wlut, e, "line", &bind_line);
@@ -1847,16 +1848,6 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   declare_native(wlut, e, "col/build-procedural", &bind_col_build_procedural);
   declare_native(wlut, e, "col/value", &bind_col_value);
-  /*
-    all return a structure that will be called by col/call along with a t parameter
-
-    (col/procedural-fn preset: robocop)
-    (col/procedural-fn a: [0.5, 0.5, 0.5] b: [0.5, 0.5, 0.5] c: [0.5, 0.5, 0.5] d: [0.5, 0.5, 0.5])
-    (col/bezier-fn a: red b: red c: red d: red)
-    (col/quadratic-fn a: red b: red c: red)
-
-    (col/call fn: whatever t: 0.3)
-   */
 
   declare_native(wlut, e, "math/distance", &bind_math_distance);
   declare_native(wlut, e, "math/clamp", &bind_math_clamp);
@@ -1885,7 +1876,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "repeat/symmetry-4", &bind_repeat_symmetry_4);
   declare_native(wlut, e, "repeat/symmetry-8", &bind_repeat_symmetry_8);
   declare_native(wlut, e, "repeat/rotate", &bind_repeat_rotate);
-  declare_native(wlut, e, "repeat/rotate_mirrored", &bind_repeat_rotate_mirrored);
+  declare_native(wlut, e, "repeat/rotate-mirrored", &bind_repeat_rotate_mirrored);
 
   declare_native(wlut, e, "focal/build-point", &bind_focal_build_point);
   declare_native(wlut, e, "focal/build-vline", &bind_focal_build_vline);

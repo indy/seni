@@ -30,6 +30,7 @@ typedef struct {
   f32 b[4];
   f32 c[4];
   f32 d[4];
+  f32 alpha;
 } seni_colour_fn_state;
 
 seni_colour *colour_construct(seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha);

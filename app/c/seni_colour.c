@@ -553,5 +553,5 @@ void colour_procedural(seni_colour *out, seni_colour_fn_state *colour_fn_state, 
   out->element[0] = a[0] + b[0] * (f32)cos(TAU * (c[0] * t + d[0]));
   out->element[1] = a[1] + b[1] * (f32)cos(TAU * (c[1] * t + d[1]));
   out->element[2] = a[2] + b[2] * (f32)cos(TAU * (c[2] * t + d[2]));
-  out->element[3] = 1.0f;
+  out->element[3] = colour_fn_state->alpha;
 }
