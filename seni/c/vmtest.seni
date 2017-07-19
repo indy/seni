@@ -1,6 +1,6 @@
 
 
-(define colfn (col/procedural-fn preset: robocop))
+(define colfn (col/build-procedural preset: robocop))
 
 (poly coords: [[100 100]
                [100 700]
@@ -22,23 +22,23 @@
                [900 700]
                [1000 100]
                [1000 700]]
-      colours: [(col/call fn: colfn t: 0.0)
-                (col/call fn: colfn t: 0.0)
-                (col/call fn: colfn t: 0.1)
-                (col/call fn: colfn t: 0.1)
-                (col/call fn: colfn t: 0.2)
-                (col/call fn: colfn t: 0.2)
-                (col/call fn: colfn t: 0.3)
-                (col/call fn: colfn t: 0.3)
-                (col/call fn: colfn t: 0.4)
-                (col/call fn: colfn t: 0.4)
-                (col/call fn: colfn t: 0.5)
-                (col/call fn: colfn t: 0.5)
-                (col/call fn: colfn t: 0.6)
-                (col/call fn: colfn t: 0.6)
-                (col/call fn: colfn t: 0.7)
-                (col/call fn: colfn t: 0.7)
-                (col/call fn: colfn t: 0.8)
-                (col/call fn: colfn t: 0.8)
-                (col/call fn: colfn t: 0.9)
-                (col/call fn: colfn t: 0.9)])
+      colours: [(col/value from: colfn t: 0.0)
+                (col/value from: colfn t: 0.0)
+                (col/value from: colfn t: 0.1)
+                (col/value from: colfn t: 0.1)
+                (col/value from: colfn t: 0.2)
+                (col/value from: colfn t: 0.2)
+                (col/value from: colfn t: 0.3)
+                (col/value from: colfn t: 0.3)
+                (col/value from: colfn t: 0.4)
+                (col/value from: colfn t: 0.4)
+                (col/value from: colfn t: 0.5)
+                (col/value from: colfn t: 0.5)
+                (col/value from: colfn t: 0.6)
+                (col/value from: colfn t: 0.6)
+                (col/value from: colfn t: 0.7)
+                (col/value from: colfn t: 0.7)
+                (col/value from: colfn t: 0.8)
+                (col/value from: colfn t: 0.8)
+                (col/value from: colfn t: 0.9)
+                (col/value from: colfn t: 0.9)])

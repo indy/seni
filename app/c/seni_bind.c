@@ -271,14 +271,14 @@ void declare_native(seni_word_lut *wlut, seni_env *e, char *name, native_functio
 
 seni_var *bind_debug_print(seni_vm *vm, i32 num_args)
 {
-  seni_var *val = NULL;
+  seni_var *value = NULL;
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VAR(INAME_VAL, val);
+  READ_STACK_ARG_VAR(INAME_VALUE, value);
   READ_STACK_ARGS_END;
 
-  pretty_print_seni_var(val, "debug");
+  pretty_print_seni_var(value, "debug");
 
   return &g_var_true;
 }
@@ -989,7 +989,7 @@ seni_var *bind_col_get_lab_l(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_col_procedural_fn(seni_vm *vm, i32 num_args)
+seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
 {
   // colour fn structure need to store 4 colours (for bezier-fn)
   // first element's value.i will represent procedural, bezier or quadratic
@@ -1047,7 +1047,7 @@ seni_var *bind_col_procedural_fn(seni_vm *vm, i32 num_args)
   return &g_var_scratch;  
 }
 
-seni_var *bind_col_call(seni_vm *vm, i32 num_args)
+seni_var *bind_col_value(seni_vm *vm, i32 num_args)
 {
   seni_colour_fn_state colour_fn_state;
   f32 t = 0.0f;
@@ -1055,7 +1055,7 @@ seni_var *bind_col_call(seni_vm *vm, i32 num_args)
   colour_fn_state.type = COLOUR_FN_UNKNOWN;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COLFN(INAME_FN, colour_fn_state);
+  READ_STACK_ARG_COLFN(INAME_FROM, colour_fn_state);
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
@@ -1145,18 +1145,18 @@ seni_var *bind_math_clamp(seni_vm *vm, i32 num_args)
   //
   // then optimize for single argument functions as these will be much faster to parse
   //
-  f32 val = 0.0f;
+  f32 value = 0.0f;
   f32 min = 0.0f;
   f32 max = 1.0f;
   
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(INAME_VAL, val);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
   READ_STACK_ARG_F32(INAME_MIN, min);
   READ_STACK_ARG_F32(INAME_MAX, max);
   READ_STACK_ARGS_END;
 
-  f32_as_var(&g_var_scratch, clamp(val, min, max));
+  f32_as_var(&g_var_scratch, clamp(value, min, max));
  
   return &g_var_scratch;
 }
@@ -1209,8 +1209,8 @@ seni_var *bind_prng_build(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-// (prng/take num: 5 from: rng)
-seni_var *bind_prng_take(seni_vm *vm, i32 num_args)
+// (prng/values from: rng num: 5)
+seni_var *bind_prng_values(seni_vm *vm, i32 num_args)
 {
   f32 num = 1.0f;
   seni_prng_full_state from;
@@ -1254,8 +1254,8 @@ seni_var *bind_prng_take(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-// (prng/take-1 from: rng)
-seni_var *bind_prng_take_1(seni_vm *vm, i32 num_args)
+// (prng/value from: rng)
+seni_var *bind_prng_value(seni_vm *vm, i32 num_args)
 {
   seni_prng_full_state from;
   // just have anything as the default values, this function should always be given a 'from' parameter
@@ -1309,7 +1309,7 @@ seni_var *bind_prng_perlin(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_interp_fn(seni_vm *vm, i32 num_args)
+seni_var *bind_interp_build(seni_vm *vm, i32 num_args)
 {
   f32 from[] = {0.0f, 1.0f};
   f32 to[] = {0.0f, 100.0f};
@@ -1348,10 +1348,10 @@ seni_var *bind_interp_fn(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_interp_call(seni_vm *vm, i32 num_args)
+seni_var *bind_interp_value(seni_vm *vm, i32 num_args)
 {
   seni_interp_state using;
-  f32 val = 0.0f;
+  f32 t = 0.0f;
 
   using.interp_fn_id = 0;
   using.from_m = 0.0f;
@@ -1364,11 +1364,11 @@ seni_var *bind_interp_call(seni_vm *vm, i32 num_args)
   using.mapping = 0;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_INTERP(INAME_USING, using);
-  READ_STACK_ARG_F32(INAME_VAL, val);
+  READ_STACK_ARG_INTERP(INAME_FROM, using);
+  READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  f32 from_interp = (using.from_m * val) + using.from_c;
+  f32 from_interp = (using.from_m * t) + using.from_c;
   f32 to_interp = from_interp;
 
   if (using.mapping == INAME_LINEAR) {
@@ -1741,22 +1741,22 @@ seni_var *bind_focal_generic(seni_vm *vm, i32 num_args, seni_focal_type type)
   return &g_var_scratch;
 }
 
-seni_var *bind_focal_point(seni_vm *vm, i32 num_args)
+seni_var *bind_focal_build_point(seni_vm *vm, i32 num_args)
 {
   return bind_focal_generic(vm, num_args, FOCAL_POINT);
 }
 
-seni_var *bind_focal_vline(seni_vm *vm, i32 num_args)
+seni_var *bind_focal_build_vline(seni_vm *vm, i32 num_args)
 {
   return bind_focal_generic(vm, num_args, FOCAL_VLINE);
 }
 
-seni_var *bind_focal_hline(seni_vm *vm, i32 num_args)
+seni_var *bind_focal_build_hline(seni_vm *vm, i32 num_args)
 {
   return bind_focal_generic(vm, num_args, FOCAL_HLINE);
 }
 
-seni_var *bind_focal_call(seni_vm *vm, i32 num_args)
+seni_var *bind_focal_value(seni_vm *vm, i32 num_args)
 {
   seni_focal_state using;
   f32 position[] = { 0.0f, 0.0f };
@@ -1768,7 +1768,7 @@ seni_var *bind_focal_call(seni_vm *vm, i32 num_args)
   using.mapping = INAME_LINEAR;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_FOCAL(INAME_USING, using);
+  READ_STACK_ARG_FOCAL(INAME_FROM, using);
   READ_STACK_ARG_VEC2(INAME_POSITION, position);
   READ_STACK_ARGS_END;
 
@@ -1845,8 +1845,8 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "col/set-lab-l", &bind_col_set_lab_l);
   declare_native(wlut, e, "col/get-lab-l", &bind_col_get_lab_l);
 
-  declare_native(wlut, e, "col/procedural-fn", &bind_col_procedural_fn);
-  declare_native(wlut, e, "col/call", &bind_col_call);
+  declare_native(wlut, e, "col/build-procedural", &bind_col_build_procedural);
+  declare_native(wlut, e, "col/value", &bind_col_value);
   /*
     all return a structure that will be called by col/call along with a t parameter
 
@@ -1863,12 +1863,12 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "math/radians->degrees", &bind_math_radians_to_degrees);
 
   declare_native(wlut, e, "prng/build", &bind_prng_build);
-  declare_native(wlut, e, "prng/take", &bind_prng_take);
-  declare_native(wlut, e, "prng/take-1", &bind_prng_take_1);
+  declare_native(wlut, e, "prng/values", &bind_prng_values);
+  declare_native(wlut, e, "prng/value", &bind_prng_value);
   declare_native(wlut, e, "prng/perlin", &bind_prng_perlin);
 
-  declare_native(wlut, e, "interp/fn", &bind_interp_fn);
-  declare_native(wlut, e, "interp/call", &bind_interp_call);
+  declare_native(wlut, e, "interp/build", &bind_interp_build);
+  declare_native(wlut, e, "interp/value", &bind_interp_value);
   declare_native(wlut, e, "interp/cos", &bind_interp_cos);
   declare_native(wlut, e, "interp/sin", &bind_interp_sin);
   declare_native(wlut, e, "interp/bezier", &bind_interp_bezier);
@@ -1887,9 +1887,9 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "repeat/rotate", &bind_repeat_rotate);
   declare_native(wlut, e, "repeat/rotate_mirrored", &bind_repeat_rotate_mirrored);
 
-  declare_native(wlut, e, "focal/call", &bind_focal_call);
-  declare_native(wlut, e, "focal/point", &bind_focal_point);
-  declare_native(wlut, e, "focal/vline", &bind_focal_vline);
-  declare_native(wlut, e, "focal/hline", &bind_focal_hline);
+  declare_native(wlut, e, "focal/build-point", &bind_focal_build_point);
+  declare_native(wlut, e, "focal/build-vline", &bind_focal_build_vline);
+  declare_native(wlut, e, "focal/build-hline", &bind_focal_build_hline);
+  declare_native(wlut, e, "focal/value", &bind_focal_value);
 }
 

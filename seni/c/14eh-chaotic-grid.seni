@@ -24,9 +24,9 @@
                             vec1: [{500 (gen/int min:0 max: canvas/width)}
                                    {800 (gen/int min:0 max: canvas/height)}]
                             vec2: [x-pos y-pos])
-      volatility (math/clamp val: (/ (- (/ canvas/width 2)
-                                        distance-from-centre)
-                                     {12 (gen/int min:5 max: 50)})
+      volatility (math/clamp value: (/ (- (/ canvas/width 2)
+                                          distance-from-centre)
+                                       {12 (gen/int min:5 max: 50)})
                              min: 0
                              max: 50))
 
@@ -76,9 +76,9 @@
     ; horizontal strips
     (loop (i to: iterations)
       (define 
-        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/take num: 8 from: rng)
+        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/values num: 8 from: rng)
         lightness (+ (col/get-lab-l colour: lab-colour)
-                     (* colour-volatility (prng/take-1 from: rng)))
+                     (* colour-volatility (prng/value from: rng)))
         current-colour (col/set-lab-l colour: lab-colour value: lightness))
       (bezier tessellation: 10
               line-width: (+ overlap h-strip-width)
@@ -105,9 +105,9 @@
     ; vertical strips
     (loop (i to: iterations)
       (define 
-        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/take num: 8 from: rng)
+        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/values num: 8 from: rng)
         lightness (+ (col/get-lab-l colour: lab-colour)
-                     (* colour-volatility (prng/take-1 from: rng)))
+                     (* colour-volatility (prng/value from: rng)))
         current-colour (col/set-lab-l colour: lab-colour value: lightness))
       (bezier tessellation: 10
               line-width: (+ overlap v-strip-width)

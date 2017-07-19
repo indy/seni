@@ -15,7 +15,7 @@
                        b: {0.3 (gen/scalar)}
                        alpha: 1.0)
   colour-volatility {20 (gen/int min: 2 max: 40)}
-  focal-point (focal/point position: [{500 (gen/int max: canvas/width)}
+  focal-point (focal/build-point position: [{500 (gen/int max: canvas/width)}
                                       {500 (gen/int max: canvas/height)}]
                            distance: {500 (gen/int max: canvas/width)})
   focal-power {50 (gen/scalar max: 200)})
@@ -35,7 +35,7 @@
     (loop (x from: 1 to:  (- num-squares 1))
       (define 
         p [(map-to-position at: x) (map-to-position at: y)]
-        volatility (* (focal/call using: focal-point position: p) focal-power))
+        volatility (* (focal/value from: focal-point position: p) focal-power))
       (stroked-bezier-rect position: p
                            width: square-size
                            height: square-size

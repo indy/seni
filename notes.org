@@ -1,6 +1,6 @@
-* TODO [0/14]
+* TODO [1/14]
   1. [ ] test gc
-  2. [ ] replace ?/call with ?/invoke call: foo
+  2. [X] replace ?/call with ?/fn use: foo
   3. [ ] look into replacing append_to_vector with append_heap_var_to_vector
   4. [ ] poly should also accept a uv parameter
   5. [ ] call and fn naming convention - also use same arg naming
@@ -743,3 +743,6 @@ call_no_arg_function
 
 
 
+
+
+ 

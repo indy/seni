@@ -58,7 +58,7 @@
   (on-matrix-stack
     (translate vector: position)
     (loop (i to: passes)
-      (define [rr xr yr] (prng/take num: 3 from: rng))
+      (define [rr xr yr] (prng/values num: 3 from: rng))
       (on-matrix-stack
         (rotate angle: (radians->degrees angle: (* rr 0.02 volatility)))
         (rect position: [(* xr 5 volatility) (* yr 5 volatility)]

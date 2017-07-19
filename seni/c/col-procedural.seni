@@ -1,9 +1,9 @@
-(define colfn (col/procedural-fn a: [0.5 0.5 0.5]
-                                 b: [0.5 0.5 0.5]
-                                 c: [0.1 0.8 1]
-                                 d: [0 0.1 0.2]))
+(define colfn (col/build-procedural a: [0.5 0.5 0.5]
+                                    b: [0.5 0.5 0.5]
+                                    c: [0.1 0.8 1]
+                                    d: [0 0.1 0.2]))
 
-(define colfn2 (col/procedural-fn preset: robocop))
+(define colfn2 (col/build-procedural preset: robocop))
 
 (translate vector: [-50 0])
 
@@ -27,26 +27,26 @@
                [900 400]
                [1000 100]
                [1000 400]]
-      colours: [(col/call fn: colfn t: 0.0)
-                (col/call fn: colfn t: 0.0)
-                (col/call fn: colfn t: 0.1)
-                (col/call fn: colfn t: 0.1)
-                (col/call fn: colfn t: 0.2)
-                (col/call fn: colfn t: 0.2)
-                (col/call fn: colfn t: 0.3)
-                (col/call fn: colfn t: 0.3)
-                (col/call fn: colfn t: 0.4)
-                (col/call fn: colfn t: 0.4)
-                (col/call fn: colfn t: 0.5)
-                (col/call fn: colfn t: 0.5)
-                (col/call fn: colfn t: 0.6)
-                (col/call fn: colfn t: 0.6)
-                (col/call fn: colfn t: 0.7)
-                (col/call fn: colfn t: 0.7)
-                (col/call fn: colfn t: 0.8)
-                (col/call fn: colfn t: 0.8)
-                (col/call fn: colfn t: 0.9)
-                (col/call fn: colfn t: 0.9)])
+      colours: [(col/value from: colfn t: 0.0)
+                (col/value from: colfn t: 0.0)
+                (col/value from: colfn t: 0.1)
+                (col/value from: colfn t: 0.1)
+                (col/value from: colfn t: 0.2)
+                (col/value from: colfn t: 0.2)
+                (col/value from: colfn t: 0.3)
+                (col/value from: colfn t: 0.3)
+                (col/value from: colfn t: 0.4)
+                (col/value from: colfn t: 0.4)
+                (col/value from: colfn t: 0.5)
+                (col/value from: colfn t: 0.5)
+                (col/value from: colfn t: 0.6)
+                (col/value from: colfn t: 0.6)
+                (col/value from: colfn t: 0.7)
+                (col/value from: colfn t: 0.7)
+                (col/value from: colfn t: 0.8)
+                (col/value from: colfn t: 0.8)
+                (col/value from: colfn t: 0.9)
+                (col/value from: colfn t: 0.9)])
 
 (poly coords: [[100 500]
                [100 900]
@@ -68,23 +68,23 @@
                [900 900]
                [1000 500]
                [1000 900]]
-      colours: [(col/call fn: colfn2 t: 0.0)
-                (col/call fn: colfn2 t: 0.0)
-                (col/call fn: colfn2 t: 0.1)
-                (col/call fn: colfn2 t: 0.1)
-                (col/call fn: colfn2 t: 0.2)
-                (col/call fn: colfn2 t: 0.2)
-                (col/call fn: colfn2 t: 0.3)
-                (col/call fn: colfn2 t: 0.3)
-                (col/call fn: colfn2 t: 0.4)
-                (col/call fn: colfn2 t: 0.4)
-                (col/call fn: colfn2 t: 0.5)
-                (col/call fn: colfn2 t: 0.5)
-                (col/call fn: colfn2 t: 0.6)
-                (col/call fn: colfn2 t: 0.6)
-                (col/call fn: colfn2 t: 0.7)
-                (col/call fn: colfn2 t: 0.7)
-                (col/call fn: colfn2 t: 0.8)
-                (col/call fn: colfn2 t: 0.8)
-                (col/call fn: colfn2 t: 0.9)
-                (col/call fn: colfn2 t: 0.9)])
+      colours: [(col/value from: colfn2 t: 0.0)
+                (col/value from: colfn2 t: 0.0)
+                (col/value from: colfn2 t: 0.1)
+                (col/value from: colfn2 t: 0.1)
+                (col/value from: colfn2 t: 0.2)
+                (col/value from: colfn2 t: 0.2)
+                (col/value from: colfn2 t: 0.3)
+                (col/value from: colfn2 t: 0.3)
+                (col/value from: colfn2 t: 0.4)
+                (col/value from: colfn2 t: 0.4)
+                (col/value from: colfn2 t: 0.5)
+                (col/value from: colfn2 t: 0.5)
+                (col/value from: colfn2 t: 0.6)
+                (col/value from: colfn2 t: 0.6)
+                (col/value from: colfn2 t: 0.7)
+                (col/value from: colfn2 t: 0.7)
+                (col/value from: colfn2 t: 0.8)
+                (col/value from: colfn2 t: 0.8)
+                (col/value from: colfn2 t: 0.9)
+                (col/value from: colfn2 t: 0.9)])
