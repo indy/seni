@@ -1045,6 +1045,9 @@ seni_node *compile(seni_node *ast, seni_program *program)
       case INAME_DIVIDE:
         compile_math(ast, program, DIV);        
         return safe_next(ast);
+      case INAME_MOD:
+        compile_math(ast, program, MOD);
+        return safe_next(ast);
       case INAME_EQUAL:
         compile_math(ast, program, EQ);
         return safe_next(ast);

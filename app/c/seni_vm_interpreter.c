@@ -800,6 +800,22 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       v->value.f = f1 / f2;
       break;
 
+    case MOD:
+      STACK_POP;
+      f2 = v->value.f;
+      
+      STACK_POP;
+      f1 = v->value.f;
+
+      STACK_PUSH;
+
+      SENI_LOG("MOD args: %.2f %% %.2f", f1, f2)
+
+      i = (i32)f1 % (i32)f2;
+      
+      v->value.f = (f32)i;
+      break;
+
     case EQ:
       STACK_POP;
       f2 = v->value.f;
