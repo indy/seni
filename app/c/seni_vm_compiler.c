@@ -1,5 +1,6 @@
 #include "seni_vm_compiler.h"
 #include "seni_lang.h"
+#include "seni_mathutil.h"
 
 #include <string.h>
 
@@ -1165,6 +1166,8 @@ void register_top_level_preamble(seni_program *program)
 {
   add_global_mapping(program, INAME_CANVAS_WIDTH);
   add_global_mapping(program, INAME_CANVAS_HEIGHT);
+  
+  add_global_mapping(program, INAME_MATH_TAU);
 
   add_global_mapping(program, INAME_WHITE);
   add_global_mapping(program, INAME_BLACK);
@@ -1185,6 +1188,8 @@ void compile_preamble(seni_program *program)
 // ********************************************************************************
   compile_preamble_f32(program, INAME_CANVAS_WIDTH, 1000.0f);
   compile_preamble_f32(program, INAME_CANVAS_HEIGHT, 1000.0f);
+
+  compile_preamble_f32(program, INAME_MATH_TAU, TAU);
 
   compile_preamble_col(program, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f);
   compile_preamble_col(program, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f);

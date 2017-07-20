@@ -399,8 +399,54 @@ seni_var *bind_circle(seni_vm *vm, i32 num_args)
   seni_render_data *render_data = vm->render_data;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_circle(render_data, matrix, position[0], position[1], width, height, colour, (i32)tessellation);
+  render_circle(render_data, matrix,
+                position[0], position[1], width, height, colour, (i32)tessellation);
 
+
+  return &g_var_true;
+}
+
+seni_var *bind_circle_slice(seni_vm *vm, i32 num_args)
+{
+  // default values for circle-slice
+  f32 width = 4.0f;
+  f32 height = 10.0f;
+  f32 radius = -1.0f;
+  f32 position[] = {10.0f, 23.0f};
+  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  seni_colour *colour = &col;
+  f32 tessellation = 10.0f;
+  f32 angle_start = 0.0f;       // degrees
+  f32 angle_end = 0.0f;
+  f32 inner_width = 1.0f;
+  f32 inner_height = 1.0f;
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_WIDTH, width);
+  READ_STACK_ARG_F32(INAME_HEIGHT, height);
+  READ_STACK_ARG_F32(INAME_RADIUS, radius);
+  READ_STACK_ARG_VEC2(INAME_POSITION, position);
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_TESSELLATION, tessellation);
+  READ_STACK_ARG_F32(INAME_ANGLE_START, angle_start);
+  READ_STACK_ARG_F32(INAME_ANGLE_END, angle_end);
+  READ_STACK_ARG_F32(INAME_INNER_WIDTH, inner_width);
+  READ_STACK_ARG_F32(INAME_INNER_HEIGHT, inner_height);
+  READ_STACK_ARGS_END;
+
+  // if the radius has been defined then it overrides the width and height parameters
+  if (radius > 0.0f) {
+    width = radius;
+    height = radius;
+  }
+
+  seni_render_data *render_data = vm->render_data;
+  seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
+
+  render_circle_slice(render_data, matrix,
+                      position[0], position[1], width, height, colour, (i32)tessellation,
+                      angle_start, angle_end, inner_width, inner_height);
 
   return &g_var_true;
 }
@@ -1177,6 +1223,32 @@ seni_var *bind_math_radians_to_degrees(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
+seni_var *bind_math_cos(seni_vm *vm, i32 num_args)
+{
+  f32 angle = 0.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_ANGLE, angle);
+  READ_STACK_ARGS_END;
+
+  f32_as_var(&g_var_scratch, (f32)cos(angle));
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_math_sin(seni_vm *vm, i32 num_args)
+{
+  f32 angle = 0.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_ANGLE, angle);
+  READ_STACK_ARGS_END;
+
+  f32_as_var(&g_var_scratch, (f32)sin(angle));
+
+  return &g_var_scratch;
+}
+
 // (prng/build seed: 4324 min: 40 max: 100)
 seni_var *bind_prng_build(seni_vm *vm, i32 num_args)
 {
@@ -1820,6 +1892,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "line", &bind_line);
   declare_native(wlut, e, "rect", &bind_rect);
   declare_native(wlut, e, "circle", &bind_circle);
+  declare_native(wlut, e, "circle-slice", &bind_circle_slice);
   declare_native(wlut, e, "poly", &bind_poly);
   declare_native(wlut, e, "bezier", &bind_bezier);
   declare_native(wlut, e, "bezier-bulging", &bind_bezier_bulging);
@@ -1852,6 +1925,8 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "math/distance", &bind_math_distance);
   declare_native(wlut, e, "math/clamp", &bind_math_clamp);
   declare_native(wlut, e, "math/radians->degrees", &bind_math_radians_to_degrees);
+  declare_native(wlut, e, "math/cos", &bind_math_cos);
+  declare_native(wlut, e, "math/sin", &bind_math_sin);
 
   declare_native(wlut, e, "prng/build", &bind_prng_build);
   declare_native(wlut, e, "prng/values", &bind_prng_values);

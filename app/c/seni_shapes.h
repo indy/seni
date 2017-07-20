@@ -28,6 +28,15 @@ void render_circle(seni_render_data *render_data,
                    seni_colour *colour,
                    i32 tessellation);
 
+void render_circle_slice(seni_render_data *render_data,
+                         seni_matrix *matrix,
+                         f32 x, f32 y,
+                         f32 width, f32 height,
+                         seni_colour *colour,
+                         i32 tessellation,
+                         f32 angle_start, f32 angle_end,
+                         f32 inner_width, f32 inner_height);
+
 void render_poly(seni_render_data *render_data,
                  seni_matrix *matrix,
                  seni_var *coords,

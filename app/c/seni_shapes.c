@@ -202,6 +202,66 @@ void render_circle(seni_render_data *render_data,
   add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
 }
 
+void render_circle_slice(seni_render_data *render_data,
+                         seni_matrix *matrix,
+                         f32 x, f32 y,
+                         f32 width, f32 height,
+                         seni_colour *colour,
+                         i32 tessellation,
+                         f32 angle_start, f32 angle_end,
+                         f32 inner_width, f32 inner_height)
+{
+  f32 u, v;
+  make_uv(&u, &v, 1.0f, 1.0f);
+
+  seni_colour *rgb, rgb_colour;
+  if (colour->format == RGB) {
+    rgb = colour;
+  } else {
+    colour_clone_as(&rgb_colour, colour, RGB);
+    rgb = &rgb_colour;
+  }
+
+  if (angle_start > angle_end) {
+    SENI_LOG("angle-start (%.2f) > angle-end (%.2f) ???", angle_start, angle_end);
+  }
+
+  f32 r_start = deg_to_rad(angle_start);
+  f32 r_end = deg_to_rad(angle_end);
+  f32 unit_angle = (r_end - r_start) / tessellation;
+  
+  f32 angle, vx, vy, innervx, innervy;
+
+  angle = r_start;
+  innervx = ((f32)sin(angle) * inner_width) + x;
+  innervy = ((f32)cos(angle) * inner_height) + y;
+
+  prepare_to_add_triangle_strip(render_data, matrix, (tessellation * 2) + 2, innervx, innervy);
+  
+  for (int i = 0; i < tessellation; i++) {
+    angle = r_start + (unit_angle * i);
+
+    innervx = ((f32)sin(angle) * inner_width) + x;
+    innervy = ((f32)cos(angle) * inner_height) + y;
+    
+    vx = ((f32)(sin(angle)) * width) + x;
+    vy = ((f32)(cos(angle)) * height) + y;
+
+    add_vertex(render_data->current_render_packet, matrix, innervx, innervy, rgb, u, v);
+    add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
+  }
+
+  angle = r_end;
+  innervx = ((f32)sin(angle) * inner_width) + x;
+  innervy = ((f32)cos(angle) * inner_height) + y;
+
+  vx = ((f32)(sin(angle)) * width) + x;
+  vy = ((f32)(cos(angle)) * height) + y;
+
+  add_vertex(render_data->current_render_packet, matrix, innervx, innervy, rgb, u, v);
+  add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
+}
+
 void render_poly(seni_render_data *render_data,
                  seni_matrix *matrix,
                  seni_var *coords,
