@@ -418,7 +418,7 @@ void test_vm_bugs(void)
   (x colour: (col/rgb))                 \
   (huh at: 5)", 4.0f);
 
-  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/take num: 3 from: rng)))) (f) 1", 1.0f);
+  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/values num: 3 from: rng)))) (f) 1", 1.0f);
   
   // pre-assigned global wasn't being added to the global-mapping so references to them in functions wasn't working
   VM_COMPILE_F32("(wash) (fn (wash) (define foo (/ canvas/width 3)) foo)", 333.3333f);
@@ -435,7 +435,7 @@ void test_vm_bugs(void)
 
   // wasn't POP voiding function return values in a loop (CALL_0 offset was incorrect)
   // so have a loop that would overflow the stack if the return value of whatever fn wasn't being popped
-  VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/point position: [0 0] distance: 100))(focal/call using: focalpoint position: [0 0])(loop (y from: 0 to: 2000) (whatever))(focal/call using: focalpoint position: [0 50]))(go)", 0.5f);
+  VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/build-point position: [0 0] distance: 100))(focal/value from: focalpoint position: [0 0])(loop (y from: 0 to: 2000) (whatever))(focal/value from: focalpoint position: [0 50]))(go)", 0.5f);
 
 }
 
@@ -633,38 +633,38 @@ void test_vm_math(void)
   
   VM_COMPILE_F32("(math/distance vec1: [0 0] vec2: [0 20])", 20.0f);
   VM_COMPILE_F32("(math/distance vec1: [0 5] vec2: [0 20])", 15.0f);
-  VM_COMPILE_F32("(math/clamp val: 0.1 min: 0.0 max: 5)", 0.1f);
-  VM_COMPILE_F32("(math/clamp val: -0.1 min: 0.0 max: 5)", 0.0f);
-  VM_COMPILE_F32("(math/clamp val: 10 min: 0.0 max: 5)", 5.0f);
+  VM_COMPILE_F32("(math/clamp value: 0.1 min: 0.0 max: 5)", 0.1f);
+  VM_COMPILE_F32("(math/clamp value: -0.1 min: 0.0 max: 5)", 0.0f);
+  VM_COMPILE_F32("(math/clamp value: 10 min: 0.0 max: 5)", 5.0f);
 }
 
 void test_vm_prng(void)
 {
   // leaky because the global rng is a vector
   //
-  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng)", 16.32348f);
+  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng)", 16.32348f);
 
   // state of rng is changing, returning a different number than previous tests
-  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng) (prng/take-1 from: rng)", 13.451335f);
+  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng) (prng/value from: rng)", 13.451335f);
 
   // wrapped in a function so that it's not leaky
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng)) (x)", 16.32348f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng)) (x)", 16.32348f);
 
   // state of rng is changing, returning a different number than previous tests
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/take-1 from: rng) (prng/take-1 from: rng)) (x)", 13.451335f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng) (prng/value from: rng)) (x)", 13.451335f);
 
   // prng/take returning a vector
-  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 0 from: foo)", 0.27065f);
-  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 1 from: foo)", 0.75259f);
-  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 2 from: foo)", -0.141389f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 0 from: foo)", 0.27065f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 1 from: foo)", 0.75259f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 2 from: foo)", -0.141389f);
 
   // non-leaky version of above
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 0 from: foo)) (x)", 0.27065f);
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 1 from: foo)) (x)", 0.75259f);
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/take num: 3 from: rng)) (nth n: 2 from: foo)) (x)", -0.141389f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 0 from: foo)) (x)", 0.27065f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 1 from: foo)) (x)", 0.75259f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 2 from: foo)) (x)", -0.141389f);
 
   // prng, destructuring, multiple args to '+'
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a b c] (prng/take num: 3 from: rng)) (+ a b c)) (x)", 0.881854f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a b c] (prng/values num: 3 from: rng)) (+ a b c)) (x)", 0.881854f);
 }
 
 void test_vm_environmental(void)
@@ -676,18 +676,18 @@ void test_vm_environmental(void)
 
 void test_vm_interp(void)
 {
-  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100])) (interp/call using: i val: 0.5)) (x)", 50.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100])) (interp/value from: i t: 0.5)) (x)", 50.0f);
 
-  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [10 20] to: [50 200])) (interp/call using: i val: 10.0)) (x)", 50.0f);
-  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [10 20] to: [50 200])) (interp/call using: i val: 20.0)) (x)", 200.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [10 20] to: [50 200])) (interp/value from: i t: 10.0)) (x)", 50.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [10 20] to: [50 200])) (interp/value from: i t: 20.0)) (x)", 200.0f);
 
-  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [50 10] to: [100 1000])) (interp/call using: i val: 50.0)) (x)", 100.0f);
-  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [50 10] to: [100 1000])) (interp/call using: i val: 10.0)) (x)", 1000.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [50 10] to: [100 1000])) (interp/value from: i t: 50.0)) (x)", 100.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [50 10] to: [100 1000])) (interp/value from: i t: 10.0)) (x)", 1000.0f);
 
   // clamping
-  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100] clamping: false)) (interp/call using: i val: 2.0)) (x)", 200.0f);
-  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100] clamping: true)) (interp/call using: i val: 2.0)) (x)", 100.0f);
-  VM_COMPILE_F32("(fn (x) (define i (interp/fn from: [0 1] to: [0 100] clamping: true)) (interp/call using: i val: -2.0)) (x)", 0.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100] clamping: false)) (interp/value from: i t: 2.0)) (x)", 200.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100] clamping: true)) (interp/value from: i t: 2.0)) (x)", 100.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100] clamping: true)) (interp/value from: i t: -2.0)) (x)", 0.0f);
 }
 
 void test_vm_function_address(void)
@@ -751,8 +751,6 @@ int main(void)
   //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   //RUN_TEST(test_prng);
 
-
-  
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
   RUN_TEST(test_uv_mapper);
