@@ -1,0 +1,36 @@
+
+; infinit loop:
+
+
+;; seg faults
+;;
+;; (loop (x from: 0 to: 21)
+;;       (define checked (if (= (+ x 2) 1) 1 2))
+;;       (if (= checked 0) 1 2))
+
+;; works
+;;
+;; (loop (x from: 0 to: 21)
+;;       (define checked (if (> 5 6) 7 8))
+;;       (if (> checked 9) 10 11))
+
+
+;; loads of GCs then seg faults
+;;
+(loop (x from: 0 to: 21)
+      (define checked (if (= 5 1) 1 2))
+      (if (= checked 0) 1 2))
+
+;; seg faults
+
+;; (loop (x from: 0 to: 21)
+;;       (define checked (if (> 6 1) 1 2))
+;;       (if (> checked 0) 1 2))
+
+;; this works! but changing (if (> checked 9) 3 4) to (if (> checked 9) 1 2) causes a weird free error
+;; *** Error in `/home/indy/work/seni/build_unix/native': munmap_chunk(): invalid pointer: 0x00000000010ee160 ***
+;; aborted (core dumped)
+
+;; (loop (x from: 0 to: 21)
+;;       (define checked (if (> 5 1) 7 8))
+;;       (if (> checked 9) 3 4))
