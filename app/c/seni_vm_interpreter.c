@@ -33,7 +33,7 @@ void gc_mark(seni_vm *vm)
 void gc_sweep(seni_vm *vm)
 {
   vm->heap_avail = NULL;
-  vm->gc_available = 0;
+  vm->heap_avail_size = 0;
 
   seni_var *v = vm->heap_slab;
   
@@ -50,7 +50,7 @@ void gc_sweep(seni_vm *vm)
 
       DL_APPEND(vm->heap_avail, v);
 
-      vm->gc_available++;
+      vm->heap_avail_size++;
     }
 
     v++;
@@ -62,14 +62,13 @@ seni_var *var_get_from_heap(seni_vm *vm)
   seni_var *head = vm->heap_avail;
 
   if (head != NULL) {
-    DEBUG_INFO_GET_FROM_HEAP(vm);
     DL_DELETE(vm->heap_avail, head);
   } else {
     SENI_ERROR("out of heap memory error");
     return NULL;
   }
 
-  vm->gc_available--;
+  vm->heap_avail_size--;
 
   head->next = NULL;
   head->prev = NULL;
@@ -315,7 +314,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
   for (;;) {
 
-    if (vm->gc_available < 10) {
+    if (vm->heap_avail_size < vm->heap_avail_size_before_gc) {
       SENI_LOG("GC Mark and Sweep");
       gc_mark(vm);
       gc_sweep(vm);

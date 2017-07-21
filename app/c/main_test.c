@@ -360,8 +360,8 @@ void test_strtof(void)
   prog->wl = wl;                                                     \
   prog->env = e;                                                     \
   compiler_compile(ast, prog);                                       \
-  seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE);                  \
-  DEBUG_INFO_RESET(vm);                                              \
+  seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE,HEAP_MIN_SIZE);    \
+  vm_debug_info_reset(vm);                                           \
   vm_interpret(vm, prog)
 
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)

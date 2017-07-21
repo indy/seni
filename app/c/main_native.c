@@ -70,7 +70,7 @@ void execute_source(char *source)
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
-  seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE);
+  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE);  
   seni_word_lut *wl = wlut_allocate();
   seni_env *e = env_construct();
   declare_bindings(wl, e);
@@ -96,7 +96,7 @@ void execute_source(char *source)
   // execute
   //
   TIMING_UNIT interpret_start = get_timing();
-  DEBUG_INFO_RESET(vm);
+  vm_debug_info_reset(vm);
   vm_interpret(vm, prog);
   TIMING_UNIT interpret_stop = get_timing();
 
@@ -115,9 +115,6 @@ void execute_source(char *source)
                   timing_delta(interpret_start, interpret_stop));
   }
 
-  SENI_LOG("heap slab delta: %d", vm->heap_slab_info.delta);
-
-
   // free memory
   //
   wlut_free(wl);
@@ -133,7 +130,7 @@ void execute_source(char *source)
 void print_compiled_program(char *source)
 {
   // construct
-  seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE);  
+  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE);  
   seni_word_lut *wl = wlut_allocate();
   seni_env *e = env_construct();
 

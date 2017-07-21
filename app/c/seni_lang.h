@@ -7,6 +7,7 @@
 #include "seni_matrix.h"
 #include "seni_colour.h"
 #include "seni_keyword_iname.h"
+#include "seni_prng.h"
 
 /* word lookup table */
 typedef struct seni_word_lut {
@@ -118,6 +119,10 @@ typedef enum {
 
 #define HEAP_SIZE 1024
 #define STACK_SIZE 1024
+
+// how low can the heap go before a GC is invoked
+//
+#define HEAP_MIN_SIZE 10
 #define MEMORY_GLOBAL_SIZE 20
 #define MEMORY_LOCAL_SIZE 40
 
@@ -127,20 +132,6 @@ typedef enum {
 
 // Virtual Machine
 //
-typedef struct {
-  i32 size;
-  i32 get_count;
-  i32 return_count;
-
-  i32 delta;                    // get == +1, return == -1
-  i32 high_water_mark;          // max(delta) == the highest number of elements that were in use at one time
-} seni_slab_info;
-
-void slab_info_reset(seni_slab_info *slab_info);
-void slab_info_full_reset(seni_slab_info *slab_info);
-void slab_info_get(seni_slab_info *slab_info);
-void slab_info_return(seni_slab_info *slab_info, char *msg);
-void slab_info_print(seni_slab_info *slab_info, char *message);
 
 // codes
 //
@@ -206,12 +197,14 @@ typedef struct seni_vm {
   
   seni_matrix_stack *matrix_stack;
 
+  seni_prng_state prng_state;      // only used when evaluating bracket bindings
+
   i32 heap_size;
   seni_var *heap_slab;             // the contiguous block of allocated memory
   seni_var *heap_avail;            // doubly linked list of unallocated seni_vars from the heap_slab
-  seni_slab_info heap_slab_info;
+  i32 heap_avail_size_before_gc;   // how small can the heap get before a gc is invoked
 
-  i32 gc_available;
+  i32 heap_avail_size;
   
   u64 opcodes_executed;
   f32 execution_time;              // in msec
@@ -240,7 +233,7 @@ char          *var_type_name(seni_var *var);
 
 seni_var      *stack_peek(seni_vm *vm);
 
-seni_vm       *vm_construct(i32 stack_size, i32 heap_size);
+seni_vm       *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size);
 void           vm_reset(seni_vm *vm);
 void           vm_free(seni_vm *vm);
 void           vm_free_render_data(seni_vm *vm);
@@ -264,28 +257,7 @@ void           f32_as_var(seni_var *out, f32 f);
 void           i32_as_var(seni_var *out, i32 i);
 void           colour_as_var(seni_var *out, seni_colour *c);
 
-
-#ifdef SENI_DEBUG_MODE
-
-void vm_debug_info_reset(seni_vm *vm);
-void vm_debug_info_print(seni_vm *vm);
-
-// record information during execution of bytecode
-#define DEBUG_INFO_RESET(vm) vm_debug_info_reset(vm)
-#define DEBUG_INFO_PRINT(vm) vm_debug_info_print(vm)
-#define DEBUG_INFO_GET_FROM_HEAP(vm) slab_info_get(&(vm->heap_slab_info))
-#define DEBUG_INFO_RETURN_TO_HEAP(vm) slab_info_return(&(vm->heap_slab_info), "RETURN_TO_HEAP")
-
-#else
-
-// do nothing
-#define DEBUG_INFO_RESET(vm)
-#define DEBUG_INFO_PRINT(vm)
-#define DEBUG_INFO_GET_FROM_HEAP(vm)
-#define DEBUG_INFO_RETURN_TO_HEAP(vm)
-
-#endif
-
-
+void           vm_debug_info_reset(seni_vm *vm);
+void           vm_debug_info_print(seni_vm *vm);
 
 #endif

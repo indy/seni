@@ -30,7 +30,7 @@ void seni_startup()
   if (g_vm != NULL) {
     vm_free(g_vm);
   }
-  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE);
+  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE);
 
   g_e = env_construct();
   g_wl = wlut_allocate();
@@ -77,11 +77,11 @@ int compile_to_render_packets(void)
   // compile and evaluate
   compiler_compile(ast, prog);
 
-  DEBUG_INFO_RESET(g_vm);
+  vm_debug_info_reset(g_vm);
   bool res = vm_interpret(g_vm, prog);
 
   if (res) {
-    DEBUG_INFO_PRINT(g_vm);
+    vm_debug_info_print(g_vm);
   }
 
   // cleanup

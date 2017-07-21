@@ -14,14 +14,12 @@
 
 void vm_debug_info_reset(seni_vm *vm)
 {
-  slab_info_reset(&(vm->heap_slab_info));
   vm->opcodes_executed = 0;
 }
 
 void vm_debug_info_print(seni_vm *vm)
 {
   SENI_PRINT("*** vm_debug_info_print ***");
-  slab_info_print(&(vm->heap_slab_info), "heap slab");
   SENI_PRINT("bytecodes executed:\t%llu", (long long unsigned int)(vm->opcodes_executed));
   SENI_PRINT("bytecode execution time:\t%.2f msec", vm->execution_time);
 }
@@ -465,54 +463,10 @@ void env_free(seni_env *e)
 }
 
 // **************************************************
-// Slab Info
-// **************************************************
-
-void slab_info_reset(seni_slab_info *slab_info)
-{
-  slab_info->get_count = 0;
-  slab_info->return_count = 0;
-
-  slab_info->delta = 0;
-}
-
-void slab_info_full_reset(seni_slab_info *slab_info)
-{
-  slab_info_reset(slab_info);
-
-  slab_info->size = 0;
-  slab_info->high_water_mark = 0;
-}
-
-void slab_info_get(seni_slab_info *slab_info)
-{
-  slab_info->get_count++;
-  slab_info->delta++;
-  slab_info->high_water_mark = max_i32(slab_info->high_water_mark, slab_info->delta);
-}
-
-void slab_info_return(seni_slab_info *slab_info, char *msg)
-{
-  slab_info->return_count++;
-  slab_info->delta--;
-
-  if (slab_info->delta < 0) {
-    SENI_ERROR("slab_return called more often than slab_get %s", msg);
-  }
-}
-
-void slab_info_print(seni_slab_info *slab_info, char *message)
-{
-  SENI_PRINT("%s\tsize: %d", message, slab_info->size);
-  SENI_PRINT("\t\tget_count %d\treturn_count %d", slab_info->get_count, slab_info->return_count);
-  SENI_PRINT("\t\tdelta: %d\thigh_water_mark %d", slab_info->delta, slab_info->high_water_mark);
-}
-
-// **************************************************
 // Virtual Machine
 // **************************************************
 
-seni_vm *vm_construct(i32 stack_size, i32 heap_size)
+seni_vm *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size)
 {
   seni_vm *vm = (seni_vm *)calloc(1, sizeof(seni_vm));
 
@@ -523,6 +477,8 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size)
 
   vm->heap_size = heap_size;
   vm->heap_slab = (seni_var *)calloc(heap_size, sizeof(seni_var));
+
+  vm->heap_avail_size_before_gc = heap_min_size;
 
   vm->matrix_stack = matrix_stack_construct();
 
@@ -557,8 +513,6 @@ void vm_reset(seni_vm *vm)
   vm->sp = base_offset;
 
   vm->heap_avail = NULL;
-  slab_info_full_reset(&(vm->heap_slab_info));
-  vm->heap_slab_info.size = vm->heap_size;
   for (i = 0; i < vm->heap_size; i++) {
     vm->heap_slab[i].next = NULL;
     vm->heap_slab[i].prev = NULL;
@@ -570,7 +524,7 @@ void vm_reset(seni_vm *vm)
     DL_APPEND(vm->heap_avail, &(var[i]));
   }
 
-  vm->gc_available = vm->heap_size;
+  vm->heap_avail_size = vm->heap_size;
 
   matrix_stack_reset(vm->matrix_stack);
 }
