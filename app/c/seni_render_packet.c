@@ -45,13 +45,12 @@ seni_render_data *render_data_construct(i32 max_vertices)
   return render_data;
 }
 
-void render_data_free(seni_render_data *render_data)
+void render_data_free_render_packets(seni_render_data *render_data)
 {
   if(render_data == NULL) {
     return;
   }
-    
-  // todo: free the render_packets
+
   seni_render_packet *render_packet = render_data->render_packets;
   seni_render_packet *next = NULL;
 
@@ -60,6 +59,15 @@ void render_data_free(seni_render_data *render_data)
     render_packet_free(render_packet);
     render_packet = next;
   }
+}
+
+void render_data_free(seni_render_data *render_data)
+{
+  if(render_data == NULL) {
+    return;
+  }
+
+  render_data_free_render_packets(render_data);
 
   // paranoid
   render_data->num_render_packets = 0;

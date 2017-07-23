@@ -37,7 +37,8 @@ typedef struct {
 seni_render_data *render_data_construct(i32 max_vertices);
 void render_data_free(seni_render_data *render_data);
 
-
+void render_data_free_render_packets(seni_render_data *render_data);
+  
 seni_render_packet *add_render_packet(seni_render_data *render_data);
 seni_render_packet *get_render_packet(seni_render_data *render_data, i32 index);
 

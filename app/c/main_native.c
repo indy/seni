@@ -70,21 +70,14 @@ void execute_source(char *source)
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
-  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE);  
+  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_word_lut *wl = wlut_allocate();
   seni_env *e = env_construct();
   declare_bindings(wl, e);
   seni_shapes_init_globals();
   init_uv_mapper();
-
-  // prepare storage for vertices
-  //
-  int max_vertices = 10000;
-  seni_render_data *render_data = render_data_construct(max_vertices);
-  add_render_packet(render_data);
-  vm->render_data = render_data;
   TIMING_UNIT construct_stop = get_timing();
-
+  
   // parse/compile
   //
   TIMING_UNIT compilation_start = get_timing();
@@ -103,13 +96,14 @@ void execute_source(char *source)
   // stats
   //
   i32 num_vertices = 0;
-  for (int i = 0; i < render_data->num_render_packets; i++) {
+  for (int i = 0; i < vm->render_data->num_render_packets; i++) {
     seni_render_packet *render_packet = get_render_packet(vm->render_data, i);
     num_vertices += render_packet->num_vertices;
   }
 
   if (num_vertices != 0) {
-    SENI_PRINT("\nrendered %d vertices in %d render packets", num_vertices, render_data->num_render_packets);
+    SENI_PRINT("\nrendered %d vertices in %d render packets",
+               num_vertices, vm->render_data->num_render_packets);
     print_timings(timing_delta(construct_start, construct_stop),
                   timing_delta(compilation_start, compilation_stop),
                   timing_delta(interpret_start, interpret_stop));
@@ -130,7 +124,7 @@ void execute_source(char *source)
 void print_compiled_program(char *source)
 {
   // construct
-  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE);  
+  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_word_lut *wl = wlut_allocate();
   seni_env *e = env_construct();
 

@@ -233,7 +233,7 @@ char          *var_type_name(seni_var *var);
 
 seni_var      *stack_peek(seni_vm *vm);
 
-seni_vm       *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size);
+seni_vm       *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices);
 void           vm_reset(seni_vm *vm);
 void           vm_free(seni_vm *vm);
 void           vm_free_render_data(seni_vm *vm);

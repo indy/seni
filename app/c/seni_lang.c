@@ -466,7 +466,7 @@ void env_free(seni_env *e)
 // Virtual Machine
 // **************************************************
 
-seni_vm *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size)
+seni_vm *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices)
 {
   seni_vm *vm = (seni_vm *)calloc(1, sizeof(seni_vm));
 
@@ -482,6 +482,10 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size)
 
   vm->matrix_stack = matrix_stack_construct();
 
+  // prepare storage for vertices
+  seni_render_data *render_data = render_data_construct(vertex_packet_num_vertices);
+  vm->render_data = render_data;
+  
   vm_reset(vm);
 
   return vm;
@@ -527,6 +531,9 @@ void vm_reset(seni_vm *vm)
   vm->heap_avail_size = vm->heap_size;
 
   matrix_stack_reset(vm->matrix_stack);
+
+  render_data_free_render_packets(vm->render_data);
+  add_render_packet(vm->render_data);
 }
 
 void vm_free_render_data(seni_vm *vm)

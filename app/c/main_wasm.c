@@ -30,7 +30,7 @@ void seni_startup()
   if (g_vm != NULL) {
     vm_free(g_vm);
   }
-  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE);
+  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
   g_e = env_construct();
   g_wl = wlut_allocate();
@@ -62,17 +62,8 @@ int compile_to_render_packets(void)
   seni_node *ast = NULL;
   seni_program *prog = NULL;
 
-  int max_vertices = 10000;
- 
-  seni_render_data *render_data = render_data_construct(max_vertices);
-  add_render_packet(render_data);
-
   ast = parser_parse(g_wl, script);
   prog = program_construct(MAX_PROGRAM_SIZE, g_wl, g_e);
-
-  vm_free_render_data(g_vm);
-  vm_reset(g_vm);
-  g_vm->render_data = render_data;
 
   // compile and evaluate
   compiler_compile(ast, prog);
@@ -92,7 +83,7 @@ int compile_to_render_packets(void)
   f32 delta = timing_delta_from(timing_a);
   SENI_PRINT("total c-side time taken %.2f ms", delta);
 
-  return render_data->num_render_packets;
+  return vm->render_data->num_render_packets;
 }
 
 // ------------------------------

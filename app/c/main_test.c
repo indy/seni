@@ -352,16 +352,16 @@ void test_strtof(void)
   TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_strtof("1", end));
 }
 
-#define EVM_COMPILE(EXPR) seni_word_lut *wl = wlut_allocate();     \
-  seni_env *e = env_construct();                                     \
-  declare_bindings(wl, e);                                           \
-  seni_node *ast = parser_parse(wl, EXPR);                           \
-  seni_program *prog = program_allocate(256);                        \
-  prog->wl = wl;                                                     \
-  prog->env = e;                                                     \
-  compiler_compile(ast, prog);                                       \
-  seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE,HEAP_MIN_SIZE);    \
-  vm_debug_info_reset(vm);                                           \
+#define EVM_COMPILE(EXPR) seni_word_lut *wl = wlut_allocate();          \
+  seni_env *e = env_construct();                                        \
+  declare_bindings(wl, e);                                              \
+  seni_node *ast = parser_parse(wl, EXPR);                              \
+  seni_program *prog = program_allocate(256);                           \
+  prog->wl = wl;                                                        \
+  prog->env = e;                                                        \
+  compiler_compile(ast, prog);                                          \
+  seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE,HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
+  vm_debug_info_reset(vm);                                              \
   vm_interpret(vm, prog)
 
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
