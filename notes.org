@@ -744,3 +744,16 @@ call_no_arg_function
 
 
  
+
+
+
+* diagnostic information
+
+  delete stats calculation in main_native.c
+
+  number of GCs
+  vertices rendered
+  timing information
+  opcodes executed
+  success or failure in execution
+
