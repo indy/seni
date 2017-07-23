@@ -18,10 +18,16 @@ char *g_string_buffer;
 seni_vm *g_vm = NULL;
 seni_env *g_e = NULL;
 
+//#define SHOW_WASM_CALLS
+
 // called once at startup
 export
 void seni_startup()
 {
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("seni_startup");
+#endif
+  
   // build the global identity matrix used by the shape rendering
   seni_shapes_init_globals();
   init_uv_mapper();
@@ -38,6 +44,10 @@ void seni_startup()
 export
 void seni_shutdown()
 {
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("seni_shutdown");
+#endif
+  
   env_free(g_e);
 
   vm_free(g_vm);
@@ -49,6 +59,10 @@ void seni_shutdown()
 export
 int compile_to_render_packets(void)
 {
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("compile_to_render_packets");
+#endif
+  
   TIMING_UNIT timing_a = get_timing();
 
   vm_reset(g_vm);
@@ -72,7 +86,7 @@ int compile_to_render_packets(void)
   f32 delta = timing_delta_from(timing_a);
   SENI_PRINT("total c-side time taken %.2f ms", delta);
 
-  return vm->render_data->num_render_packets;
+  return g_vm->render_data->num_render_packets;
 }
 
 // ------------------------------
@@ -80,6 +94,10 @@ int compile_to_render_packets(void)
 export
 int get_render_packet_num_vertices(int packet_number)
 {
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("get_render_packet_num_vertices");
+#endif
+  
   seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return 0;
@@ -91,6 +109,10 @@ int get_render_packet_num_vertices(int packet_number)
 export
 f32 *get_render_packet_vbuf(int packet_number)
 {
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("get_render_packet_vbuf");
+#endif
+  
   seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return NULL;
@@ -102,6 +124,10 @@ f32 *get_render_packet_vbuf(int packet_number)
 export
 f32 *get_render_packet_cbuf(int packet_number)
 {
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("get_render_packet_cbuf");
+#endif
+
   seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return NULL;
@@ -113,6 +139,10 @@ f32 *get_render_packet_cbuf(int packet_number)
 export
 f32 *get_render_packet_tbuf(int packet_number)
 {
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("get_render_packet_tbuf");
+#endif
+  
   seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return NULL;
@@ -125,13 +155,20 @@ f32 *get_render_packet_tbuf(int packet_number)
 export
 void script_cleanup()
 {
-  vm_free_render_data(g_vm);
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("script_cleanup");
+#endif
+
 }
 
 
 export
 char *allocate_string_buffer()
 {
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("allocate_string_buffer");
+#endif
+  
   g_string_buffer = (char *)malloc(STRING_BUFFER_SIZE * sizeof(char));
 
   return g_string_buffer;
@@ -140,5 +177,9 @@ char *allocate_string_buffer()
 export
 void free_string_buffer()
 {
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("free_string_buffer");
+#endif
+  
   free(g_string_buffer);
 }

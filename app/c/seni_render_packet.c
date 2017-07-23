@@ -59,6 +59,10 @@ void render_data_free_render_packets(seni_render_data *render_data)
     render_packet_free(render_packet);
     render_packet = next;
   }
+
+  render_data->num_render_packets = 0;
+  render_data->render_packets = NULL;
+  render_data->current_render_packet = NULL;
 }
 
 void render_data_free(seni_render_data *render_data)
@@ -69,16 +73,15 @@ void render_data_free(seni_render_data *render_data)
 
   render_data_free_render_packets(render_data);
 
-  // paranoid
-  render_data->num_render_packets = 0;
-  render_data->render_packets = NULL;
-  render_data->current_render_packet = NULL;
-  
   free(render_data);
 }
 
 seni_render_packet *add_render_packet(seni_render_data *render_data)
 {
+  if (render_data == NULL) {
+    SENI_ERROR("add_render_packet: render_data is a NULL pointer");
+    return NULL;
+  }
   seni_render_packet *render_packet = render_packet_construct(render_data->max_vertices,
                                                               render_data->vbuf_element_size,
                                                               render_data->cbuf_element_size,
