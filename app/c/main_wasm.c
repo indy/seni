@@ -16,7 +16,6 @@
 char *g_string_buffer;
 
 seni_vm *g_vm = NULL;
-seni_word_lut *g_wl = NULL;
 seni_env *g_e = NULL;
 
 // called once at startup
@@ -33,15 +32,12 @@ void seni_startup()
   g_vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
   g_e = env_construct();
-  g_wl = wlut_allocate();
-  declare_bindings(g_wl, g_e);
 }
 
 // called once at shutdown
 export
 void seni_shutdown()
 {
-  wlut_free(g_wl);
   env_free(g_e);
 
   vm_free(g_vm);
@@ -58,15 +54,8 @@ int compile_to_render_packets(void)
   vm_reset(g_vm);
   
   char *script = g_string_buffer;
-  
-  seni_node *ast = NULL;
-  seni_program *prog = NULL;
 
-  ast = parser_parse(g_wl, script);
-  prog = program_construct(MAX_PROGRAM_SIZE, g_wl, g_e);
-
-  // compile and evaluate
-  compiler_compile(ast, prog);
+  seni_program *prog = program_compile(g_e, MAX_PROGRAM_SIZE, script);
 
   vm_debug_info_reset(g_vm);
   bool res = vm_interpret(g_vm, prog);
@@ -76,8 +65,8 @@ int compile_to_render_packets(void)
   }
 
   // cleanup
-  wlut_reset_words(g_wl);
-  parser_free_nodes(ast);
+  wlut_reset_words(g_e->wl);
+  //parser_free_nodes(ast);
   program_free(prog);
 
   f32 delta = timing_delta_from(timing_a);

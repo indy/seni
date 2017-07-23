@@ -3,6 +3,9 @@
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
 #include "seni_printf.h"
+#include "seni_bind.h"
+#include "seni_vm_parser.h"
+#include "seni_vm_compiler.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -319,15 +322,6 @@ char *opcode_name(seni_opcode opcode)
 #undef STR
 }
 
-seni_program  *program_construct(i32 code_max_size, seni_word_lut *wl, seni_env *env)
-{
-  seni_program *program = program_allocate(code_max_size);
-  program->wl = wl;
-  program->env = env;
-
-  return program;
-}
-
 seni_program *program_allocate(i32 code_max_size)
 {
   seni_program *program = (seni_program *)calloc(1, sizeof(seni_program));
@@ -340,10 +334,29 @@ seni_program *program_allocate(i32 code_max_size)
   return program;
 }
 
+seni_program *program_construct(i32 code_max_size, seni_word_lut *wl, seni_env *env)
+{
+  seni_program *program = program_allocate(code_max_size);
+  program->wl = wl;
+  program->env = env;
+
+  return program;
+}
+
 void program_free(seni_program *program)
 {
   free(program->code);
   free(program);
+}
+
+seni_program *program_compile(seni_env *env, i32 code_max_size, char *source)
+{
+  seni_node *ast = parser_parse(env->wl, source);
+  seni_program *prog = program_construct(code_max_size, env->wl, env);
+  compiler_compile(ast, prog);
+
+  parser_free_nodes(ast);
+  return prog;
 }
 
 i32 program_stop_location(seni_program *program)
@@ -454,11 +467,16 @@ void pretty_print_program(seni_program *program)
 seni_env *env_construct()
 {
   seni_env *e = (seni_env *)calloc(1, sizeof(seni_env));
+  e->wl = wlut_allocate();
+
+  declare_bindings(e->wl, e);
+  
   return e;
 }
 
 void env_free(seni_env *e)
 {
+  wlut_free(e->wl);
   free(e);
 }
 

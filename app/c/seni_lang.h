@@ -24,6 +24,11 @@ typedef struct seni_word_lut {
   i32 word_count;
 } seni_word_lut;
 
+// word lookup
+seni_word_lut *wlut_allocate();
+void           wlut_free(seni_word_lut *wlut);
+void           wlut_reset_words(seni_word_lut *wlut);
+
 typedef enum {
   NODE_LIST = 0,
   NODE_VECTOR,
@@ -160,12 +165,15 @@ typedef struct {
 
 struct seni_vm;
 
-// todo: replace returned seni_var with a seni_var *
 typedef seni_var *(*native_function_ptr)(struct seni_vm *vm, i32 num_args);
 typedef struct {
   native_function_ptr function_ptr[MAX_NATIVE_LOOKUPS];
+
+  seni_word_lut *wl;
 } seni_env;
 
+seni_env      *env_construct();
+void           env_free(seni_env *e);
 
 typedef struct {
   seni_bytecode *code;
@@ -189,6 +197,13 @@ typedef struct {
   seni_env *env;
 
 } seni_program;
+
+seni_program  *program_construct(i32 code_max_size, seni_word_lut *wl, seni_env *env);
+void           program_free(seni_program *program);
+i32            program_stop_location(seni_program *program);
+void           pretty_print_program(seni_program *program);
+
+seni_program *program_compile(seni_env *env, i32 code_max_size, char *source);
 
 typedef struct seni_vm {
   seni_program *program;
@@ -220,18 +235,11 @@ typedef struct seni_vm {
   i32 local;                       // per-frame segment of memory for local variables
 
 } seni_vm;
-
-// word lookup
-seni_word_lut *wlut_allocate();
-void           wlut_free(seni_word_lut *wlut);
-void           wlut_reset_words(seni_word_lut *wlut);
   
 seni_value_in_use get_value_in_use(seni_var_type type);
   
 char          *node_type_name(seni_node *node);
 char          *var_type_name(seni_var *var);
-
-seni_var      *stack_peek(seni_vm *vm);
 
 seni_vm       *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices);
 void           vm_reset(seni_vm *vm);
@@ -239,16 +247,9 @@ void           vm_free(seni_vm *vm);
 void           vm_free_render_data(seni_vm *vm);
 void           pretty_print_vm(seni_vm *vm, char* msg);
 
+seni_var      *stack_peek(seni_vm *vm);
+
 char          *opcode_name(seni_opcode opcode);
-
-seni_program  *program_allocate(i32 code_max_size);
-seni_program  *program_construct(i32 code_max_size, seni_word_lut *wl, seni_env *env);
-void           program_free(seni_program *program);
-i32            program_stop_location(seni_program *program);
-void           pretty_print_program(seni_program *program);
-
-seni_env      *env_construct();
-void           env_free(seni_env *e);
 
 void           var_copy(seni_var *dest, seni_var *src);
 void           pretty_print_seni_var(seni_var *var, char* msg);
