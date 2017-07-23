@@ -262,7 +262,7 @@ bool vm_function_invoke(seni_vm *vm)
 {
   // vm is now in a state that will execute the given function and then return to the STOP opcode
   //
-  vm_interpret(vm, vm->program);
+  vm_interpret(vm, vm->env, vm->program);
 
 
   // the above vm_interpret will eventually hit a RET, pop the frame,
@@ -276,7 +276,7 @@ bool vm_function_invoke(seni_vm *vm)
 
 // executes a program on a vm
 // returns true if we reached a STOP opcode
-bool vm_interpret(seni_vm *vm, seni_program *program)
+bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
 {
   bool b1, b2;
   f32 f1, f2;
@@ -308,9 +308,10 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
 
   TIMING_UNIT timing = get_timing();
 
-  // store a reference to the program in the vm
+  // store a reference to the program and env in the vm
   // required in case any of the native functions need to invoke vm_interpret
   vm->program = program;
+  vm->env = env;
 
   for (;;) {
 
@@ -626,7 +627,7 @@ bool vm_interpret(seni_vm *vm, seni_program *program)
       // sync vm with registers
       vm->sp = sp;
 
-      native_function_ptr native_func = program->env->function_ptr[iname];
+      native_function_ptr native_func = env->function_ptr[iname];
       seni_var *var = native_func(vm, num_args);
       
       // move vm->sp below the arguments, and decrement the rc of any vectors

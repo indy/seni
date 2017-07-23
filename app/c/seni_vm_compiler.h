@@ -5,6 +5,6 @@
 
 i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value);
   
-void compiler_compile(seni_node *ast, seni_program *program);
+seni_program *compile_program(seni_node *ast, i32 program_max_size);
 
 #endif

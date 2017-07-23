@@ -86,7 +86,7 @@ void execute_source(char *source)
   //
   TIMING_UNIT interpret_start = get_timing();
   vm_debug_info_reset(vm);
-  vm_interpret(vm, prog);
+  vm_interpret(vm, e, prog);
   TIMING_UNIT interpret_stop = get_timing();
 
   // stats

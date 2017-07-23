@@ -22,7 +22,7 @@ void      vm_setup_function_invoke(seni_vm *vm, seni_fn_info *fn_info);
 // run the vm after it's been setup to invoke a single function
 bool      vm_function_invoke(seni_vm *vm);
 
-bool      vm_interpret(seni_vm *vm, seni_program *program);
+bool      vm_interpret(seni_vm *vm, seni_env *env, seni_program *program);
 
 
 #endif

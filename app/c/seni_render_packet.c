@@ -1,4 +1,5 @@
 #include "seni_render_packet.h"
+#include "seni_config.h"
 
 #include <stdlib.h>
 #include "utlist.h"

@@ -334,29 +334,21 @@ seni_program *program_allocate(i32 code_max_size)
   return program;
 }
 
-seni_program *program_construct(i32 code_max_size, seni_word_lut *wl, seni_env *env)
-{
-  seni_program *program = program_allocate(code_max_size);
-  program->wl = wl;
-  program->env = env;
-
-  return program;
-}
-
 void program_free(seni_program *program)
 {
   free(program->code);
   free(program);
 }
 
-seni_program *program_compile(seni_env *env, i32 code_max_size, char *source)
+seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
 {
   seni_node *ast = parser_parse(env->wl, source);
-  seni_program *prog = program_construct(code_max_size, env->wl, env);
-  compiler_compile(ast, prog);
+
+  seni_program *program = compile_program(ast, program_max_size);
 
   parser_free_nodes(ast);
-  return prog;
+
+  return program;
 }
 
 i32 program_stop_location(seni_program *program)
@@ -480,6 +472,11 @@ void env_free(seni_env *e)
   free(e);
 }
 
+void env_post_interpret_cleanup(seni_env *e)
+{
+  wlut_reset_words(e->wl);
+}
+
 // **************************************************
 // Virtual Machine
 // **************************************************
@@ -553,6 +550,7 @@ void vm_reset(seni_vm *vm)
   render_data_free_render_packets(vm->render_data);
   add_render_packet(vm->render_data);
 }
+
 
 void vm_free_render_data(seni_vm *vm)
 {

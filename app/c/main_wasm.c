@@ -35,8 +35,8 @@ void seni_startup()
   if (g_vm != NULL) {
     vm_free(g_vm);
   }
-  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
+  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   g_e = env_construct();
 }
 
@@ -72,15 +72,14 @@ int compile_to_render_packets(void)
   seni_program *prog = program_compile(g_e, MAX_PROGRAM_SIZE, script);
 
   vm_debug_info_reset(g_vm);
-  bool res = vm_interpret(g_vm, prog);
+  bool res = vm_interpret(g_vm, g_e, prog);
 
   if (res) {
     vm_debug_info_print(g_vm);
   }
 
   // cleanup
-  wlut_reset_words(g_e->wl);
-  //parser_free_nodes(ast);
+  env_post_interpret_cleanup(g_e);
   program_free(prog);
 
   f32 delta = timing_delta_from(timing_a);

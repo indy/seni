@@ -1211,8 +1211,10 @@ void compile_preamble(seni_program *program)
 
 // compiles the ast into bytecode for a stack based VM
 //
-void compiler_compile(seni_node *ast, seni_program *program)
+seni_program *compile_program(seni_node *ast, i32 program_max_size)
 {
+  seni_program *program = program_allocate(program_max_size);
+  
   clear_global_mappings(program);
   clear_local_mappings(program);
   program->current_fn_info = NULL;
@@ -1271,5 +1273,7 @@ void compiler_compile(seni_node *ast, seni_program *program)
   correct_function_addresses(program);
 
   // SENI_LOG("program compiled: %d lines\n", program->code_size);
+
+  return program;
 }
 

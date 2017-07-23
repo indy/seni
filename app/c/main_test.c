@@ -356,7 +356,7 @@ void test_strtof(void)
   seni_program *prog = program_compile(e, 256, EXPR);                   \
   seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE,HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
   vm_debug_info_reset(vm);                                              \
-  vm_interpret(vm, prog)
+  vm_interpret(vm, e, prog)
 
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)

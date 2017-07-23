@@ -27,7 +27,6 @@ typedef struct seni_word_lut {
 // word lookup
 seni_word_lut *wlut_allocate();
 void           wlut_free(seni_word_lut *wlut);
-void           wlut_reset_words(seni_word_lut *wlut);
 
 typedef enum {
   NODE_LIST = 0,
@@ -174,6 +173,7 @@ typedef struct {
 
 seni_env      *env_construct();
 void           env_free(seni_env *e);
+void           env_post_interpret_cleanup(seni_env *e);
 
 typedef struct {
   seni_bytecode *code;
@@ -189,24 +189,18 @@ typedef struct {
 
   seni_fn_info fn_info[MAX_TOP_LEVEL_FUNCTIONS];
 
-  // todo: split up seni_word_lut, keep the word array in seni_program but move the
-  // native and keyword stuff into their own structure that can be shared amongst
-  // multiple seni_programs
-  seni_word_lut *wl;
-
-  seni_env *env;
-
 } seni_program;
 
-seni_program  *program_construct(i32 code_max_size, seni_word_lut *wl, seni_env *env);
 void           program_free(seni_program *program);
 i32            program_stop_location(seni_program *program);
 void           pretty_print_program(seni_program *program);
 
-seni_program *program_compile(seni_env *env, i32 code_max_size, char *source);
+seni_program  *program_allocate(i32 code_max_size);
+seni_program  *program_compile(seni_env *env, i32 program_max_size, char *source);
 
 typedef struct seni_vm {
   seni_program *program;
+  seni_env *env;
   
   seni_render_data *render_data;   // stores the generated vertex data
   
