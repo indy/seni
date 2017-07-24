@@ -325,7 +325,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
     bc = &(program->code[ip++]);
 
 #ifdef TRACE_PRINT_OPCODES
-    pretty_print_bytecode(ip-1, bc); // 0-index the ip so that it matches the pretty print program output
+    pretty_print_bytecode(ip-1, bc); // ip has been incremented so back up to get the current ip
 #endif
     
     switch(bc->op) {
@@ -808,8 +808,6 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
       f1 = v->value.f;
 
       STACK_PUSH;
-
-      SENI_LOG("MOD args: %.2f %% %.2f", f1, f2)
 
       i = (i32)f1 % (i32)f2;
       

@@ -12,7 +12,7 @@
   11. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
   12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [21/57]
+* updating scripts [22/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -32,7 +32,7 @@
   17. [ ] 1580-quilt.seni
   18. [X] 1585-seeds.seni
   19. [ ] 15fe-rotate-mirror.seni - poly, repeat/rotate-mirrored
-  20. [ ] 15h3-polychrome.seni
+  20. [X] 15h3-polychrome.seni
   21. [ ] 15h3-rotate-mirror-2.seni
   22. [ ] 15h3-tri-grid.seni
   23. [ ] 15h4-chromatic-layers-1.seni

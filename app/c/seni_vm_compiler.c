@@ -358,13 +358,25 @@ void compile_if(seni_node *ast, seni_program *program)
   seni_node *else_node = safe_next(then_node); // could be NULL
 
   compile(if_node, program);
+
   // insert jump to after the 'then' node if not true
   i32 addr_jump_then = program->code_size;
   seni_bytecode *bc_jump_then = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
 
+  // the offset after the if
+  i32 offset_after_if = program->opcode_offset;
+
   compile(then_node, program);
 
+  i32 offset_after_then = program->opcode_offset;
+
   if (else_node) {
+    // logically we're now going to go down one of possibly two paths
+    // so we can't just continue to add the program->opcode_offset since that would result
+    // in the offset taking both of the conditional's paths
+    
+    program->opcode_offset = offset_after_if;
+    
     // insert a bc_jump_else opcode
     i32 addr_jump_else = program->code_size;
     seni_bytecode *bc_jump_else = program_emit_opcode_i32(program, JUMP, 0, 0);
@@ -372,6 +384,15 @@ void compile_if(seni_node *ast, seni_program *program)
     bc_jump_then->arg0.value.i = program->code_size - addr_jump_then;
 
     compile(else_node, program);
+
+    i32 offset_after_else = program->opcode_offset;
+
+    if (offset_after_then != offset_after_else) {
+      // is this case actually going to happen?
+      // if so we can check which of the two paths has the lower opcode offset
+      // and pad out that path by inserting some LOAD CONST 9999 into the program
+      SENI_ERROR("different opcode_offsets for the two paths in a conditional");
+    }
 
     bc_jump_else->arg0.value.i = program->code_size - addr_jump_else;
   } else {
@@ -602,7 +623,7 @@ void compile_loop(seni_node *ast, seni_program *program)
 
   i32 post_body_opcode_offset = program->opcode_offset;
   i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
-
+  
   // pop off any values that the body might leave on the stack
   for(i32 i = 0;i < opcode_delta; i++) {
     program_emit_opcode_i32(program, STORE, MEM_SEG_VOID, 0);
