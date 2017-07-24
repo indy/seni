@@ -1,18 +1,19 @@
-* TODO [0/12]
+* TODO [0/13]
   1. [ ] test gc
-  2. [ ] look into replacing append_to_vector with append_heap_var_to_vector
-  3. [ ] poly should also accept a uv parameter
-  4. [ ] use the f32_array to pack in the values required by the prng and interp structs
-  5. [ ] ensure that there's a dist folder before running npm run build:wasm
-  6. [ ] test new setup/teardown code
-  7. [ ] cleanup memory of parser
-  8. [ ] structs for compile, runtim, performance info
-  9. [ ] seni_env
-  10. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  11. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  2. [ ] check if minus numbers work? (should do)
+  3. [ ] look into replacing append_to_vector with append_heap_var_to_vector
+  4. [ ] poly should also accept a uv parameter
+  5. [ ] use the f32_array to pack in the values required by the prng and interp structs
+  6. [ ] ensure that there's a dist folder before running npm run build:wasm
+  7. [ ] test new setup/teardown code
+  8. [ ] cleanup memory of parser
+  9. [ ] structs for compile, runtim, performance info
+  10. [ ] seni_env
+  11. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  12. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  13. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [22/57]
+* updating scripts [23/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -31,10 +32,10 @@
   16. [X] 157e-tile-shadow.seni - col/procedural-fn
   17. [ ] 1580-quilt.seni
   18. [X] 1585-seeds.seni
-  19. [ ] 15fe-rotate-mirror.seni - poly, repeat/rotate-mirrored
+  19. [ ] 15fe-rotate-mirror.seni - poly, repeat/rotate-mirrored, vector/append
   20. [X] 15h3-polychrome.seni
   21. [ ] 15h3-rotate-mirror-2.seni
-  22. [ ] 15h3-tri-grid.seni
+  22. [X] 15h3-tri-grid.seni
   23. [ ] 15h4-chromatic-layers-1.seni
   24. [ ] 15h4-chromatic-layers-2.seni
   25. [ ] 15h4-chromatic-layers-3.seni
