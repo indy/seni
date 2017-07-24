@@ -251,6 +251,7 @@ char          *opcode_name(seni_opcode opcode);
 void           var_copy(seni_var *dest, seni_var *src);
 void           pretty_print_seni_var(seni_var *var, char* msg);
 
+void           v2_as_var(seni_var *out, f32 x, f32 y);
 void           f32_as_var(seni_var *out, f32 f);
 void           i32_as_var(seni_var *out, i32 i);
 void           colour_as_var(seni_var *out, seni_colour *c);

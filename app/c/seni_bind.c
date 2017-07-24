@@ -1419,49 +1419,54 @@ seni_var *bind_interp_build(seni_vm *vm, i32 num_args)
   append_to_vector_f32(vm, &g_var_scratch, to[1]);
   append_to_vector_i32(vm, &g_var_scratch, clamping);
   append_to_vector_i32(vm, &g_var_scratch, mapping);
-  
+
   return &g_var_scratch;
 }
 
 seni_var *bind_interp_value(seni_vm *vm, i32 num_args)
 {
-  seni_interp_state using;
+  seni_interp_state from;
   f32 t = 0.0f;
 
-  using.interp_fn_id = 0;
-  using.from_m = 0.0f;
-  using.to_m = 0.0f;
-  using.from_c = 0.0f;
-  using.to_c = 0.0f;
-  using.to0 = 0.0f;
-  using.to1 = 1.0f;
-  using.clamping = 0;
-  using.mapping = 0;
+  from.interp_fn_id = 0;
+  from.from_m = 0.0f;
+  from.to_m = 0.0f;
+  from.from_c = 0.0f;
+  from.to_c = 0.0f;
+  from.to0 = 0.0f;
+  from.to1 = 1.0f;
+  from.clamping = 0;
+  from.mapping = 0;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_INTERP(INAME_FROM, using);
+  READ_STACK_ARG_INTERP(INAME_FROM, from);
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  f32 from_interp = (using.from_m * t) + using.from_c;
+  if (from.interp_fn_id != 42) {
+    SENI_ERROR("interp/value requires a user specified 'from' parameter");
+    return &g_var_true;
+  }
+
+  f32 from_interp = (from.from_m * t) + from.from_c;
   f32 to_interp = from_interp;
 
-  if (using.mapping == INAME_LINEAR) {
+  if (from.mapping == INAME_LINEAR) {
     to_interp = from_interp;
-  } else if (using.mapping == INAME_QUICK) {
+  } else if (from.mapping == INAME_QUICK) {
     to_interp = map_quick_ease(from_interp);
-  } else if (using.mapping == INAME_SLOW_IN) {
+  } else if (from.mapping == INAME_SLOW_IN) {
     to_interp = map_slow_ease_in(from_interp);
   } else { // INAME_slow_in_out
     to_interp = map_slow_ease_in_ease_out(from_interp);
   }
 
-  f32 res = (using.to_m * to_interp) + using.to_c;
+  f32 res = (from.to_m * to_interp) + from.to_c;
 
-  if (using.clamping == INAME_TRUE) {
-    res = from_interp < 0.0f ? using.to0 : (from_interp > 1.0f) ? using.to1 : res;
+  if (from.clamping == INAME_TRUE) {
+    res = from_interp < 0.0f ? from.to0 : (from_interp > 1.0f) ? from.to1 : res;
   }
-  
+
   f32_as_var(&g_var_scratch, res);
 
   return &g_var_scratch;
@@ -1482,6 +1487,7 @@ seni_var *bind_interp_cos(seni_vm *vm, i32 num_args)
   f32 value = seni_interp_cos(amplitude, frequency, t);
   f32_as_var(&g_var_scratch, value);
 
+  // SENI_PRINT("amp %.2f, freq %.2f, t %.2f value = %.2f", amplitude, frequency, t, value);
   return &g_var_scratch;
 }
 
@@ -1830,17 +1836,17 @@ seni_var *bind_focal_build_hline(seni_vm *vm, i32 num_args)
 
 seni_var *bind_focal_value(seni_vm *vm, i32 num_args)
 {
-  seni_focal_state using;
+  seni_focal_state from;
   f32 position[] = { 0.0f, 0.0f };
 
-  using.type = FOCAL_UNKNOWN;
-  using.distance = 0.0f;
-  using.x = 0.0f;
-  using.y = 0.0f;
-  using.mapping = INAME_LINEAR;
+  from.type = FOCAL_UNKNOWN;
+  from.distance = 0.0f;
+  from.x = 0.0f;
+  from.y = 0.0f;
+  from.mapping = INAME_LINEAR;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_FOCAL(INAME_FROM, using);
+  READ_STACK_ARG_FOCAL(INAME_FROM, from);
   READ_STACK_ARG_VEC2(INAME_POSITION, position);
   READ_STACK_ARGS_END;
 
@@ -1850,15 +1856,15 @@ seni_var *bind_focal_value(seni_vm *vm, i32 num_args)
   f32 x, y;
   matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
 
-  switch(using.type) {
+  switch(from.type) {
   case FOCAL_POINT:
-    res = focal_point(x, y, using.distance, using.mapping, using.x, using.y);
+    res = focal_point(x, y, from.distance, from.mapping, from.x, from.y);
     break;
   case FOCAL_HLINE:
-    res = focal_hline(y, using.distance, using.mapping, using.y);
+    res = focal_hline(y, from.distance, from.mapping, from.y);
     break;
   case FOCAL_VLINE:
-    res = focal_vline(x, using.distance, using.mapping, using.x);
+    res = focal_vline(x, from.distance, from.mapping, from.x);
     break;
   default:
     // FOCAL_UNKNOWN
@@ -1867,6 +1873,116 @@ seni_var *bind_focal_value(seni_vm *vm, i32 num_args)
   }
 
   f32_as_var(&g_var_scratch, res);
+  
+  return &g_var_scratch;
+}
+
+seni_var *bind_gen_int(seni_vm *vm, i32 num_args)
+{
+  i32 min = 0;
+  i32 max = 1000;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(INAME_MIN, min);
+  READ_STACK_ARG_I32(INAME_MAX, max);
+  READ_STACK_ARGS_END;
+
+  f32 value = seni_prng_f32_range(&(vm->prng_state), (f32)min, (f32)max);
+
+  i32_as_var(&g_var_scratch, (i32)value);
+  
+  return &g_var_scratch;
+}
+
+seni_var *bind_gen_scalar(seni_vm *vm, i32 num_args)
+{
+  f32 min = 0.0f;
+  f32 max = 1.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_MIN, min);
+  READ_STACK_ARG_F32(INAME_MAX, max);
+  READ_STACK_ARGS_END;
+
+  f32 value = seni_prng_f32_range(&(vm->prng_state), min, max);
+
+  f32_as_var(&g_var_scratch, value);
+  
+  return &g_var_scratch;
+}
+
+seni_var *bind_gen_vector(seni_vm *vm, i32 num_args)
+{
+  f32 min = 0.0f;
+  f32 max = 1.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_MIN, min);
+  READ_STACK_ARG_F32(INAME_MAX, max);
+  READ_STACK_ARGS_END;
+
+  f32 x = seni_prng_f32_range(&(vm->prng_state), min, max);
+  f32 y = seni_prng_f32_range(&(vm->prng_state), min, max);
+
+  v2_as_var(&g_var_scratch, x, y);
+  
+  return &g_var_scratch;
+}
+
+// TODO
+seni_var *bind_gen_select(seni_vm *vm, i32 num_args)
+{
+  /*
+
+  **********
+  ** NOTE **
+  **********
+  this 'vector' could be a vector or a 2D
+
+    new PublicBinding(
+    'gen/select',
+    { description: 'selects a value from a vector',
+      args: [['from', 'a vector of values']],
+      returns: 'one of the values in the from vector' },
+    { from: [] },
+    (self, rng) => params => {
+      const {from} = self.mergeWithDefaults(params);
+      if (from instanceof Array && from.length > 0) {
+        const index = Number.parseInt(from.length * rng(), 10);
+        return from[index];
+      }
+      console.log("select's from parameter should be a list");
+      return undefined;
+    }
+  )
+   */
+  i32 value = 0;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_I32(INAME_VALUE, value);
+  READ_STACK_ARGS_END;
+
+  i32_as_var(&g_var_scratch, value);
+  
+  return &g_var_scratch;
+}
+
+seni_var *bind_gen_col(seni_vm *vm, i32 num_args)
+{
+  f32 alpha = 1.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_ALPHA, alpha);
+  READ_STACK_ARGS_END;
+
+  seni_colour colour;
+  colour.format = RGB;
+  colour.element[0] = seni_prng_f32_range(&(vm->prng_state), 0.0f, 1.0f);
+  colour.element[1] = seni_prng_f32_range(&(vm->prng_state), 0.0f, 1.0f);
+  colour.element[2] = seni_prng_f32_range(&(vm->prng_state), 0.0f, 1.0f);
+  colour.element[3] = alpha;
+
+  colour_as_var(&g_var_scratch, &colour);
   
   return &g_var_scratch;
 }
@@ -1957,5 +2073,11 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "focal/build-vline", &bind_focal_build_vline);
   declare_native(wlut, e, "focal/build-hline", &bind_focal_build_hline);
   declare_native(wlut, e, "focal/value", &bind_focal_value);
+
+  declare_native(wlut, e, "gen/int", &bind_gen_int);
+  declare_native(wlut, e, "gen/scalar", &bind_gen_scalar);
+  declare_native(wlut, e, "gen/vector", &bind_gen_vector);
+  declare_native(wlut, e, "gen/select", &bind_gen_select);
+  declare_native(wlut, e, "gen/col", &bind_gen_col);
 }
 

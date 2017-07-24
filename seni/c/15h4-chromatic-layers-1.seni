@@ -15,28 +15,29 @@
             [67.447 509.225]]
            (gen/vector)}
 
-  col-fn-1 (col/procedural-fn a: {[0.916 0.796 0.438] (gen/scalar)}
-                              b: {[0.858 0.350 0.089] (gen/scalar)}
-                              c: {[0.271 0.700 0.795] (gen/scalar)}
-                              d: {[0.706 0.805 0.200] (gen/scalar)}
-                              alpha: 0.08)
-  col-fn-2 (col/procedural-fn a: {[0.410 0.127 0.907] (gen/scalar)}
-                              b: {[0.074 0.079 0.117] (gen/scalar)}
-                              c: {[0.851 0.894 0.758] (gen/scalar)}
-                              d: {[0.562 0.803 0.927] (gen/scalar)}
-                              alpha: 0.08)
-  col-fn-3 (col/procedural-fn a: {[0.108 0.990 0.499] (gen/scalar)}
-                              b: {[0.142 0.776 0.091] (gen/scalar)}
-                              c: {[0.298 0.231 0.118] (gen/scalar)}
-                              d: {[0.131 0.430 0.635] (gen/scalar)}
-                              alpha: 0.08))
+  col-fn-1 (col/build-procedural a: {[0.916 0.796 0.438] (gen/scalar)}
+                                 b: {[0.858 0.350 0.089] (gen/scalar)}
+                                 c: {[0.271 0.700 0.795] (gen/scalar)}
+                                 d: {[0.706 0.805 0.200] (gen/scalar)}
+                                 alpha: 0.08)
+  col-fn-2 (col/build-procedural a: {[0.410 0.127 0.907] (gen/scalar)}
+                                 b: {[0.074 0.079 0.117] (gen/scalar)}
+                                 c: {[0.851 0.894 0.758] (gen/scalar)}
+                                 d: {[0.562 0.803 0.927] (gen/scalar)}
+                                 alpha: 0.08)
+  col-fn-3 (col/build-procedural a: {[0.108 0.990 0.499] (gen/scalar)}
+                                 b: {[0.142 0.776 0.091] (gen/scalar)}
+                                 c: {[0.298 0.231 0.118] (gen/scalar)}
+                                 d: {[0.131 0.430 0.635] (gen/scalar)}
+                                 alpha: 0.08)
+  step (/ 1 500))
 
-(loop (t from: 0 upto: 1 steps: 500)
-  (poly coords: [(interp/bezier t: t coords: coords1)
-                 (interp/bezier t: t coords: coords2)
-                 (interp/bezier t: t coords: coords3)]
-        colours: [(col-fn-1 t: t)
-                  (col-fn-2 t: t)
-                  (col-fn-3 t: t)]))
+(loop (t from: 0 upto: 1 increment: step)
+      (poly coords: [(interp/bezier t: t coords: coords1)
+                     (interp/bezier t: t coords: coords2)
+                     (interp/bezier t: t coords: coords3)]
+            colours: [(col/value from: col-fn-1 t: t)
+                      (col/value from: col-fn-2 t: t)
+                      (col/value from: col-fn-3 t: t)]))
 
 

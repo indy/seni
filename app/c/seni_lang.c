@@ -262,6 +262,13 @@ u64 var_as_long(seni_var *var)
   return 0L;
 }
 
+void v2_as_var(seni_var *out, f32 x, f32 y)
+{
+  out->type = VAR_2D;
+  out->f32_array[0] = x;
+  out->f32_array[1] = y;
+}
+
 void i32_as_var(seni_var *out, i32 i)
 {
   out->type = VAR_INT;

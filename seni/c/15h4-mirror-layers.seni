@@ -15,69 +15,65 @@
             [-322.526 376.519]]
                       (gen/vector min: -500 max: 500)}
 
-  col-fn-1 (col/procedural-fn a: {[0.891 0.811 0.868] (gen/scalar)}
-                              b: {[0.156 0.066 0.056] (gen/scalar)}
-                              c: {[0.347 0.829 0.601] (gen/scalar)}
-                              d: {[0.338 0.410 0.046] (gen/scalar)}
-                              alpha: 0.08)
-  col-fn-2 (col/procedural-fn a: {[0.428 0.073 0.831] (gen/scalar)}
-                              b: {[0.264 0.198 0.053] (gen/scalar)}
-                              c: {[0.762 0.699 0.282] (gen/scalar)}
-                              d: {[0.144 0.733 0.766] (gen/scalar)}
-                              alpha: 0.08)
-  col-fn-3 (col/procedural-fn a: {[0.924 0.452 0.984] (gen/scalar)}
-                              b: {[0.611 0.596 0.500] (gen/scalar)}
-                              c: {[0.506 0.995 0.425] (gen/scalar)}
-                              d: {[0.845 0.317 0.302] (gen/scalar)}
-                              alpha: 0.08))
+  col-fn-1 (col/build-procedural a: {[0.891 0.811 0.868] (gen/scalar)}
+                                 b: {[0.156 0.066 0.056] (gen/scalar)}
+                                 c: {[0.347 0.829 0.601] (gen/scalar)}
+                                 d: {[0.338 0.410 0.046] (gen/scalar)}
+                                 alpha: 0.08)
+  col-fn-2 (col/build-procedural a: {[0.428 0.073 0.831] (gen/scalar)}
+                                 b: {[0.264 0.198 0.053] (gen/scalar)}
+                                 c: {[0.762 0.699 0.282] (gen/scalar)}
+                                 d: {[0.144 0.733 0.766] (gen/scalar)}
+                                 alpha: 0.08)
+  col-fn-3 (col/build-procedural a: {[0.924 0.452 0.984] (gen/scalar)}
+                                 b: {[0.611 0.596 0.500] (gen/scalar)}
+                                 c: {[0.506 0.995 0.425] (gen/scalar)}
+                                 d: {[0.845 0.317 0.302] (gen/scalar)}
+                                 alpha: 0.08)
+  step (/ 1 200))
 
+(fn (draw)
+    (loop (t from: 0 upto: 1 increment: step)
+    (poly coords: [(interp/bezier t: t coords: coords1)
+                   (interp/bezier t: t coords: coords2)
+                   (interp/bezier t: t coords: coords3)]
+          colours: [(col/value from: col-fn-1 t: t)
+                    (col/value from: col-fn-2 t: t)
+                    (col/value from: col-fn-3 t: t)])))
+
+(fn (render)
+  (wash colour: {(col/rgb r: 0.800 g: 0.800 b: 1) (gen/col)})
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (repeat/rotate-mirrored fn: (address-of draw)
+                            copies: {4 (gen/int min: 1 max: 30)})))
+
+(render)
 
 (fn (wash variation: 200
           line-width: 70
           line-segments: 5
           colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
           seed: 272)
-
-  (fn (v x: 0 y: 0 z: 0 scale: 1)
-    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
-
   (define 
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
-
   (loop (h from: -20 to: 1020 increment: 20)
     (bezier tessellation: line-segments
             line-width: line-width
-            coords: [[0 (v x: 0 y: h z: seed scale: variation)]
-                     [w/3 (v x: w/3 y: h z: seed scale: variation)]
-                     [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
-                     [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
+            coords: [[0 (wash-wobble x: 0 y: h z: seed s: variation)]
+                     [w/3 (wash-wobble x: w/3 y: h z: seed s: variation)]
+                     [(* w/3 2) (wash-wobble x: (* w/3 2) y: h z: seed s: variation)]
+                     [canvas/width (wash-wobble x: canvas/width y: h z: seed s: variation)]]
             colour: colour)
 
     (bezier tessellation: line-segments
             line-width: line-width
-            coords: [[(v x: 0 y: h z: seed scale: variation) 0]
-                     [(v x: h/3 y: h z: seed scale: variation) h/3]
-                     [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
-                     [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
+            coords: [[(wash-wobble x: 0 y: h z: seed s: variation) 0]
+                     [(wash-wobble x: h/3 y: h z: seed s: variation) h/3]
+                     [(wash-wobble x: (* h/3 2) y: h z: seed s: variation) (* h/3 2)]
+                     [(wash-wobble x: canvas/height y: h z: seed s: variation) canvas/height]]
             colour: colour)))
 
-
-(fn (draw)
-  (loop (t from: 0 upto: 1 steps: 200)
-    (poly coords: [(interp/bezier t: t coords: coords1)
-                   (interp/bezier t: t coords: coords2)
-                   (interp/bezier t: t coords: coords3)]
-          colours: [(col-fn-1 t: t)
-                    (col-fn-2 t: t)
-                    (col-fn-3 t: t)])))
-
-(fn (render)
-  (wash colour: {(col/rgb r: 0.800 g: 0.800 b: 1) (gen/col)})
-  (on-matrix-stack
-    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
-    (repeat/rotate-mirrored draw: draw
-                            copies: {4 (gen/int min: 1 max: 30)})))
-
-(render)
-
+(fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
+  (+ y (* s (prng/perlin x: x y: y z: z))))

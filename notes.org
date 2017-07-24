@@ -1,19 +1,21 @@
-* TODO [0/13]
-  1. [ ] test gc
-  2. [ ] check if minus numbers work? (should do)
-  3. [ ] look into replacing append_to_vector with append_heap_var_to_vector
-  4. [ ] poly should also accept a uv parameter
-  5. [ ] use the f32_array to pack in the values required by the prng and interp structs
-  6. [ ] ensure that there's a dist folder before running npm run build:wasm
-  7. [ ] test new setup/teardown code
-  8. [ ] cleanup memory of parser
-  9. [ ] structs for compile, runtim, performance info
-  10. [ ] seni_env
-  11. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  12. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  13. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+* TODO [0/15]
+  1. [ ] tidy up js side when it receives 0 vertices to render
+  2. [ ] interp_fn_id equivalents + error messages when missing
+  3. [ ] test gc
+  4. [ ] check if minus numbers work? (should do)
+  5. [ ] look into replacing append_to_vector with append_heap_var_to_vector
+  6. [ ] poly should also accept a uv parameter
+  7. [ ] use the f32_array to pack in the values required by the prng and interp structs
+  8. [ ] ensure that there's a dist folder before running npm run build:wasm
+  9. [ ] test new setup/teardown code
+  10. [ ] cleanup memory of parser
+  11. [ ] structs for compile, runtim, performance info
+  12. [ ] seni_env
+  13. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  14. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [23/57]
+* updating scripts [30/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -36,14 +38,14 @@
   20. [X] 15h3-polychrome.seni
   21. [ ] 15h3-rotate-mirror-2.seni
   22. [X] 15h3-tri-grid.seni
-  23. [ ] 15h4-chromatic-layers-1.seni
-  24. [ ] 15h4-chromatic-layers-2.seni
-  25. [ ] 15h4-chromatic-layers-3.seni
-  26. [ ] 15h4-mirror-layers.seni
+  23. [X] 15h4-chromatic-layers-1.seni
+  24. [X] 15h4-chromatic-layers-2.seni
+  25. [X] 15h4-chromatic-layers-3.seni
+  26. [X] 15h4-mirror-layers.seni - todo: look into banding issue
   27. [ ] 15h4-rotate-mirror.seni
-  28. [ ] 15he-cos-1.seni
-  29. [ ] 15he-cos-2.seni
-  30. [ ] 15he-cos-3.seni
+  28. [X] 15he-cos-1.seni
+  29. [X] 15he-cos-2.seni
+  30. [X] 15he-cos-3.seni
   31. [ ] 15he-mirror-layers.seni
   32. [ ] 15he-rotate-mirror.seni
   33. [ ] 160c-schotter.seni
