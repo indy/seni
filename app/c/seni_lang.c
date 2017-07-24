@@ -83,6 +83,14 @@ void wlut_reset_words(seni_word_lut *wlut)
   // leave keywords and natives since they aren't mutable
 }
 
+char *wlut_get_word(seni_word_lut *word_lut, i32 iword)
+{
+  if (iword < word_lut->word_count) {
+    return word_lut->word[iword];
+  }
+  return "UNKNOWN WORD";
+}
+
 
 seni_value_in_use get_value_in_use(seni_var_type type)
 {
@@ -344,7 +352,7 @@ seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
 {
   seni_node *ast = parser_parse(env->wl, source);
 
-  seni_program *program = compile_program(ast, program_max_size);
+  seni_program *program = compile_program(ast, program_max_size, env->wl);
 
   parser_free_nodes(ast);
 

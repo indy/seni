@@ -27,6 +27,7 @@ typedef struct seni_word_lut {
 // word lookup
 seni_word_lut *wlut_allocate();
 void           wlut_free(seni_word_lut *wlut);
+char          *wlut_get_word(seni_word_lut *word_lut, i32 iword);
 
 typedef enum {
   NODE_LIST = 0,
@@ -188,6 +189,8 @@ typedef struct {
   seni_fn_info *current_fn_info;
 
   seni_fn_info fn_info[MAX_TOP_LEVEL_FUNCTIONS];
+
+  seni_word_lut *word_lut;      //  needed in seni_program for error messages
 
 } seni_program;
 

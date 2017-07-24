@@ -973,7 +973,7 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
   }
 
 
-  SENI_ERROR("compile_user_defined_name: unknown mapping for %d", iname);
+  SENI_ERROR("unknown mapping for: %s", wlut_get_word(program->word_lut, iname));
   return safe_next(ast);
 }
 
@@ -1211,9 +1211,10 @@ void compile_preamble(seni_program *program)
 
 // compiles the ast into bytecode for a stack based VM
 //
-seni_program *compile_program(seni_node *ast, i32 program_max_size)
+seni_program *compile_program(seni_node *ast, i32 program_max_size, seni_word_lut *word_lut)
 {
   seni_program *program = program_allocate(program_max_size);
+  program->word_lut = word_lut;
   
   clear_global_mappings(program);
   clear_local_mappings(program);
