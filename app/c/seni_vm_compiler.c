@@ -507,6 +507,36 @@ void compile_fn_call(seni_node *ast, seni_program *program)
   return;
 }
 
+void compile_vector_append(seni_node *ast, seni_program *program)
+{
+  // (vector/append vector value)
+
+  seni_node *vector = safe_next(ast);
+  compile(vector, program);
+  
+  seni_node *value = safe_next(vector);
+  compile(value, program);
+
+  program_emit_opcode_i32(program, APPEND, 0, 0);
+
+  if (vector->type == NODE_NAME) {
+
+    i32 address = get_local_mapping(program, vector->value.i);
+    if (address != -1) {
+      program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, address);
+      return;
+    }
+    
+    address = get_global_mapping(program, vector->value.i);
+    if (address != -1) {
+      program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
+      return;
+    }
+    
+    SENI_ERROR("compile_vector_append: can't find local or global variable");
+  }
+}
+
 void compile_loop(seni_node *ast, seni_program *program)
 {
   // (loop (x from: 0 to: 5) (+ 42 38))
@@ -1097,6 +1127,9 @@ seni_node *compile(seni_node *ast, seni_program *program)
         return safe_next(ast);
       case INAME_FN_CALL:
         compile_fn_call(ast, program);
+        return safe_next(ast);
+      case INAME_VECTOR_APPEND:
+        compile_vector_append(ast, program);
         return safe_next(ast);
       default:
         // look up the name as a user defined variable

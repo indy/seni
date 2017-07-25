@@ -249,6 +249,8 @@ seni_var      *stack_peek(seni_vm *vm);
 char          *opcode_name(seni_opcode opcode);
 
 void           var_copy(seni_var *dest, seni_var *src);
+i32            var_vector_length(seni_var *var);
+  
 void           pretty_print_seni_var(seni_var *var, char* msg);
 
 void           v2_as_var(seni_var *out, f32 x, f32 y);

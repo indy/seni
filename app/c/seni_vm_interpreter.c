@@ -108,8 +108,9 @@ bool append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
   }
 
   var_copy(child_value, val);
-  
+
   DL_APPEND(head->value.v, child_value);
+  
   return true;
 }
 
@@ -653,7 +654,6 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
     case APPEND:
       // pops top two values: a value and a vector appends the value onto the vector
 
-      // potential gc so sync vm->sp
       vm->sp = sp;
       
       seni_var *child_value = var_get_from_heap(vm);

@@ -11,7 +11,7 @@
   10. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
   11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [37/57]
+* updating scripts [42/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -30,20 +30,20 @@
   16. [X] 157e-tile-shadow.seni - col/procedural-fn
   17. [ ] 1580-quilt.seni
   18. [X] 1585-seeds.seni
-  19. [ ] 15fe-rotate-mirror.seni - poly, repeat/rotate-mirrored, vector/append
+  19. [X] 15fe-rotate-mirror.seni - poly, repeat/rotate-mirrored, vector/append
   20. [X] 15h3-polychrome.seni
-  21. [ ] 15h3-rotate-mirror-2.seni
+  21. [X] 15h3-rotate-mirror-2.seni
   22. [X] 15h3-tri-grid.seni
   23. [X] 15h4-chromatic-layers-1.seni
   24. [X] 15h4-chromatic-layers-2.seni
   25. [X] 15h4-chromatic-layers-3.seni
   26. [X] 15h4-mirror-layers.seni - todo: look into banding issue
-  27. [ ] 15h4-rotate-mirror.seni
+  27. [X] 15h4-rotate-mirror.seni
   28. [X] 15he-cos-1.seni
   29. [X] 15he-cos-2.seni
   30. [X] 15he-cos-3.seni
-  31. [ ] 15he-mirror-layers.seni
-  32. [ ] 15he-rotate-mirror.seni
+  31. [X] 15he-mirror-layers.seni
+  32. [X] 15he-rotate-mirror.seni
   33. [ ] 160c-schotter.seni
   34. [ ] 161g-grid-flow.seni
   35. [ ] 161j-trump.seni

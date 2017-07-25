@@ -335,6 +335,27 @@ seni_var *bind_nth(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
+seni_var *bind_vector_length(seni_vm *vm, i32 num_args)
+{
+  seni_var *vector = NULL;
+  
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VAR(INAME_VECTOR, vector);
+  READ_STACK_ARGS_END;
+
+  if (vector == NULL) {
+    SENI_ERROR("vector/length expects a 'vector' parameter");
+    return &g_var_true;
+  }
+
+  i32 len = var_vector_length(vector);
+
+  i32_as_var(&g_var_scratch, len);
+  
+  return &g_var_scratch;
+}
+
 seni_var *bind_line(seni_vm *vm, i32 num_args)
 {
   // default values for line
@@ -2042,6 +2063,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   declare_native(wlut, e, "debug/print", &bind_debug_print);
   declare_native(wlut, e, "nth", &bind_nth);
+  declare_native(wlut, e, "vector/length", &bind_vector_length);
 
   // map
 
@@ -2074,7 +2096,6 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "col/get-alpha", &bind_col_get_alpha);
   declare_native(wlut, e, "col/set-lab-l", &bind_col_set_lab_l);
   declare_native(wlut, e, "col/get-lab-l", &bind_col_get_lab_l);
-
   declare_native(wlut, e, "col/build-procedural", &bind_col_build_procedural);
   declare_native(wlut, e, "col/value", &bind_col_value);
 
