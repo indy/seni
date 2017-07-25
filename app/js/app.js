@@ -350,21 +350,23 @@ function renderScriptWithWASM(state, imageElement) {
     const numVertices = Shabba.getRenderPacketNumVertices(i);
     console.log(`render_packet ${i}: numVertices = ${numVertices}`);
 
-    const vbuf = Shabba.getRenderPacketVBuf(i);
-    const cbuf = Shabba.getRenderPacketCBuf(i);
-    const tbuf = Shabba.getRenderPacketTBuf(i);
+    if (numVertices > 0) {
+      const vbuf = Shabba.getRenderPacketVBuf(i);
+      const cbuf = Shabba.getRenderPacketCBuf(i);
+      const tbuf = Shabba.getRenderPacketTBuf(i);
 
-
-
-    const buffer = {};
-    buffer.vbuf = pointerToFloat32Array(vbuf, numVertices * 2);
-    buffer.cbuf = pointerToFloat32Array(cbuf, numVertices * 4);
-    buffer.tbuf = pointerToFloat32Array(tbuf, numVertices * 2);
-    buffer.numVertices = numVertices;
-    buffers.push(buffer);
+      const buffer = {};
+      buffer.vbuf = pointerToFloat32Array(vbuf, numVertices * 2);
+      buffer.cbuf = pointerToFloat32Array(cbuf, numVertices * 4);
+      buffer.tbuf = pointerToFloat32Array(tbuf, numVertices * 2);
+      buffer.numVertices = numVertices;
+      buffers.push(buffer);
+    }
   }
 
-  renderGeometryBuffers(buffers, imageElement);
+  if (buffers.length > 0) {
+    renderGeometryBuffers(buffers, imageElement);
+  }
 
   Shabba.scriptCleanup();
 

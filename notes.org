@@ -1,19 +1,15 @@
-* TODO [0/15]
-  1. [ ] tidy up js side when it receives 0 vertices to render
-  2. [ ] interp_fn_id equivalents + error messages when missing
-  3. [ ] test gc
-  4. [ ] check if minus numbers work? (should do)
-  5. [ ] look into replacing append_to_vector with append_heap_var_to_vector
-  6. [ ] poly should also accept a uv parameter
-  7. [ ] use the f32_array to pack in the values required by the prng and interp structs
-  8. [ ] ensure that there's a dist folder before running npm run build:wasm
-  9. [ ] test new setup/teardown code
-  10. [ ] cleanup memory of parser
-  11. [ ] structs for compile, runtim, performance info
-  12. [ ] seni_env
-  13. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  14. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+* TODO [0/11]
+  1. [ ] test gc
+  2. [ ] look into replacing append_to_vector with append_heap_var_to_vector
+  3. [ ] poly should also accept a uv parameter
+  4. [ ] ensure that there's a dist folder before running npm run build:wasm
+  5. [ ] test new setup/teardown code
+  6. [ ] cleanup memory of parser
+  7. [ ] structs for compile, runtim, performance info
+  8. [ ] seni_env
+  9. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  10. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
 * updating scripts [30/57]
   1. [X] 14ef-blur-grid.seni
