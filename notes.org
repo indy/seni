@@ -11,7 +11,7 @@
   10. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
   11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [30/57]
+* updating scripts [37/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -48,19 +48,19 @@
   34. [ ] 161g-grid-flow.seni
   35. [ ] 161j-trump.seni
   36. [ ] 1626-embers.seni
-  37. [ ] 1626-orchid.seni
+  37. [X] 1626-orchid.seni
   38. [X] 162e-alien.seni
   39. [X] 162e-mask.seni
   40. [X] 162e-slice.seni
   41. [X] 162e-star.seni
   42. [X] 162e-x.seni
-  43. [ ] 1632-star.seni
-  44. [ ] 1633-dune.seni
-  45. [ ] 1633-orchid.seni
-  46. [ ] 1633-petal.seni
-  47. [ ] 1634-cryst.seni
+  43. [X] 1632-star.seni
+  44. [X] 1633-dune.seni
+  45. [X] 1633-orchid.seni
+  46. [X] 1633-petal.seni
+  47. [X] 1634-cryst.seni
   48. [ ] 1638-night.seni
-  49. [ ] 163a-scale-green.seni
+  49. [X] 163a-scale-green.seni
   50. [ ] 1642-book-stack.seni
   51. [ ] 1642-stacks.seni
   52. [ ] 1643-hyp.seni

@@ -1,0 +1,66 @@
+(define
+  step-y (/ 1000 {8 (gen/int min: 2 max: 18)})
+  step-x (/ 1000 {10 (gen/int min: 2 max: 18)}))
+
+(fn (interesting-circle position: [500 500]
+                        colour: red
+                        seed: 564
+                        radius: 300)
+  (define 
+    rng (prng/build seed: seed)
+    outer-exterior (prng/build seed: (prng/value from: rng) min: 170 max: 210)
+    outer-interior (prng/build seed: (prng/value from: rng) min: 80 max: 170)
+    inner-exterior (prng/build seed: (prng/value from: rng) min: 100 max: 150)
+    inner-interior (prng/build seed: (prng/value from: rng) min: 0 max: 100)
+    srng (prng/build min: -1 max: 1 seed: seed))
+
+  (on-matrix-stack
+    (translate vector: position)
+    (scale scalar: (/ radius 210))
+    (loop (i to: 8)
+      (on-matrix-stack
+        (rotate angle: (* 360 (prng/value from: rng)))
+        ;; outer ring
+        (circle-slice tessellation: 30
+                      position: [0 0]
+                      colour: (col/lighten colour: colour
+                                           value: (* {411 (gen/int min: 20 max: 600)} (prng/value from: srng)))
+                      angle-start: 0
+                      angle-end: 320
+                      width: (prng/value from: outer-exterior)
+                      inner-width: (prng/value from: outer-interior)
+                      height: (prng/value from: outer-exterior)
+                      inner-height: (prng/value from: outer-interior))
+        ;; inner ring
+        (circle-slice tessellation: 10
+                      position: [0 0]
+                      colour: (col/lighten colour: colour
+                                           value: (* {24 (gen/int min: 10 max: 400)} (prng/value from: srng)))
+                      angle-start: 0
+                      angle-end: 320
+                      width: (prng/value from: inner-exterior)
+                      inner-width: (prng/value from: inner-interior)
+                      height: (prng/value from: inner-exterior)
+                      inner-height: (prng/value from: inner-interior))))
+    ;; centre fill
+    (circle-slice tessellation: 10
+                  position: [0 0]
+                  colour: (col/lighten colour: colour 
+                                       value: (* {140 (gen/int min: 5 max: 200)} (prng/value from: srng)))
+                  angle-start: 0
+                  angle-end: 360
+                  radius: 30)))
+
+(define initial-seed (prng/build seed: {77 (gen/int max: 1000)} min: 1 max: 1000))
+
+(on-matrix-stack
+  (translate vector: [500 500])
+  (scale scalar: {1.320 (gen/scalar min: 1 max: 2)})
+  (rotate angle: {156 (gen/int min: 0 max: 360)})
+  (loop (y from: -500 upto: 500 increment: step-y)
+        (loop (x from: -500 upto: 500 increment: step-x)
+      (interesting-circle position: [x y]
+                          seed: (prng/value from: initial-seed)
+                          radius: {98 (gen/int min: 45 max: 100)}
+                          colour: {(col/rgb r: 0.053 g: 0.613 b: 0.424 alpha: 0.400) (gen/col alpha: 0.4)}))))
+
