@@ -12,13 +12,13 @@
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares)
-  focal-point ({focal/hline (gen/select from: ['focal/point
-                                           'focal/hline
-                                           'focal/vline])} 
+  focal-point ({focal/build-hline (gen/select from: ['focal/build-point
+                                                     'focal/build-hline
+                                                     'focal/build-vline])} 
                position: [{500 (gen/select from: [0 500 1000])} 
                           {0 (gen/select from: [0 500 1000])}] 
                distance: {1300 (gen/scalar min: 300 max: 1300)})
-  rng-fn (prng/range min: -1 max: 1 seed: 454)
+  rng-fn (prng/build min: -1 max: 1 seed: 454)
   box-colour (col/rgb r: 0.2 g: 0.2 b: 0.2 alpha: 0.7))
 
 (fn (stroked-box seed: 0 
@@ -31,9 +31,9 @@
 
   (on-matrix-stack
     ;; displace the box according to volatility
-    (rotate angle: (* (rng-fn) volatility {135.923 (gen/scalar min: 0 max: 200)}))
-    (translate vector: [(* (rng-fn) volatility {1.826 (gen/scalar min: 0 max: 100)})
-                        (* (rng-fn) volatility {29.980 (gen/scalar min: 0 max: 100)})])
+   (rotate angle: (* (prng/value from: rng-fn) volatility {135.923 (gen/scalar min: 0 max: 200)}))
+   (translate vector: [(* (prng/value from: rng-fn) volatility {1.826 (gen/scalar min: 0 max: 100)})
+                       (* (prng/value from: rng-fn) volatility {29.980 (gen/scalar min: 0 max: 100)})])
     ;; draw a box around the origin
     (line from: [(+ half-size- half-thickness) half-size-]
           to: [(- half-size+ half-thickness) half-size-]
@@ -69,11 +69,10 @@
         (on-matrix-stack
           (translate vector: position)
           (stroked-box seed: (+ x (* y num-squares))
-                       volatility: (focal-point position: position)))))))
+                       volatility: (focal/value from: focal-point position: position)))))))
 
 (fn (render-background colour: (col/rgb r: 1 g: 1 b: 0.9))
-  (rect x: (/ canvas/width 2)
-        y: (/ canvas/height 2)
+  (rect position: [(/ canvas/width 2) (/ canvas/height 2)]
         width: canvas/width
         height: canvas/height
         colour: colour))

@@ -11,7 +11,7 @@
   10. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
   11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [42/57]
+* updating scripts [50/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -44,7 +44,7 @@
   30. [X] 15he-cos-3.seni
   31. [X] 15he-mirror-layers.seni
   32. [X] 15he-rotate-mirror.seni
-  33. [ ] 160c-schotter.seni
+  33. [X] 160c-schotter.seni
   34. [ ] 161g-grid-flow.seni
   35. [ ] 161j-trump.seni
   36. [ ] 1626-embers.seni
@@ -61,14 +61,14 @@
   47. [X] 1634-cryst.seni
   48. [ ] 1638-night.seni
   49. [X] 163a-scale-green.seni
-  50. [ ] 1642-book-stack.seni
-  51. [ ] 1642-stacks.seni
-  52. [ ] 1643-hyp.seni
-  53. [ ] 1643-paren.seni
-  54. [ ] 1643-rose.seni
-  55. [ ] 1643-thorn.seni
-  56. [ ] 1648-chalk-boxes.seni
-  57. [ ] 1669-zero.seni
+  50. [X] 1642-book-stack.seni
+  51. [X] 1642-stacks.seni
+  52. [X] 1643-hyp.seni
+  53. [X] 1643-paren.seni
+  54. [X] 1643-rose.seni
+  55. [X] 1643-thorn.seni
+  56. [X] 1648-chalk-boxes.seni
+  57. [ ] 1669-zero.seni - map
 
 
 * bugs
