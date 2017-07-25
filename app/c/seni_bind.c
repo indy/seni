@@ -15,8 +15,23 @@
 #include <string.h>
 #include <stdlib.h>
 
+typedef enum {
+  HEAP_STRUCTURE_UNDEFINED = 0,
+  HEAP_STRUCTURE_PRNG,
+  HEAP_STRUCTURE_INTERP,
+  HEAP_STRUCTURE_FOCAL
+} seni_heap_structure_type;
+
 // struct used by binding functions for prng/take and prng/take-1
+//
+// [ VAR_VECTOR ->
+//  (VAR_INT(structure_id) + min, max) ->
+//  (VAR_LONG(state)) ->
+//  (VAR_LONE(inc))
+// ]
+//
 typedef struct {
+  seni_heap_structure_type structure_id;
   u64 state;
   u64 inc;
   f32 min;
@@ -28,8 +43,14 @@ typedef struct {
   seni_var *seni_var_inc;
 } seni_prng_full_state;
 
+// [ VAR_VECTOR ->
+//  (VAR_INT(structure_id) + from_m, to_m, from_c, to_c) ->
+//  (VAR_INT(clamping) + to0, to1) ->
+//  (VAR_INT(mapping))
+// ]
+//
 typedef struct {
-  i32 interp_fn_id;
+  seni_heap_structure_type structure_id;
   f32 from_m;
   f32 to_m;
   f32 from_c;
@@ -40,7 +61,14 @@ typedef struct {
   i32 mapping;
 } seni_interp_state;
 
+// [ VAR_VECTOR ->
+//  (VAR_INT(structure_id) + x, y, distance) ->
+//  (VAR_INT(type)) ->
+//  (VAR_INT(mapping))
+// ]
+//
 typedef struct {
+  seni_heap_structure_type structure_id;
   seni_focal_type type;
   f32 x;
   f32 y;
@@ -112,6 +140,11 @@ typedef struct {
 #define READ_STACK_ARG_PRNG(k, n) if (name_1 == k) {      \
     tmp_1 = value_1;                                      \
     value_1 = value_1->value.v;                           \
+    IS_I32(#n);                                           \
+    n.structure_id = value_1->value.i;               \
+    n.min = value_1->f32_array[0];                        \
+    n.max = value_1->f32_array[1];                        \
+    value_1 = value_1->next;                              \
     IS_LONG(#n);                                          \
     n.state = value_1->value.l;                           \
     n.seni_var_state = value_1;                           \
@@ -119,12 +152,6 @@ typedef struct {
     IS_LONG(#n);                                          \
     n.inc = value_1->value.l;                             \
     n.seni_var_inc = value_1;                             \
-    value_1 = value_1->next;                              \
-    IS_F32(#n);                                           \
-    n.min = value_1->value.f;                             \
-    value_1 = value_1->next;                              \
-    IS_F32(#n);                                           \
-    n.max = value_1->value.f;                             \
     value_1 = tmp_1;                                      \
   }
 
@@ -132,28 +159,16 @@ typedef struct {
     tmp_1 = value_1;                                      \
     value_1 = value_1->value.v;                           \
     IS_I32(#n);                                           \
-    n.interp_fn_id = value_1->value.i;                    \
-    value_1 = value_1->next;                              \
-    IS_F32(#n);                                           \
-    n.from_m = value_1->value.f;                          \
-    value_1 = value_1->next;                              \
-    IS_F32(#n);                                           \
-    n.to_m = value_1->value.f;                            \
-    value_1 = value_1->next;                              \
-    IS_F32(#n);                                           \
-    n.from_c = value_1->value.f;                          \
-    value_1 = value_1->next;                              \
-    IS_F32(#n);                                           \
-    n.to_c = value_1->value.f;                            \
-    value_1 = value_1->next;                              \
-    IS_F32(#n);                                           \
-    n.to0 = value_1->value.f;                             \
-    value_1 = value_1->next;                              \
-    IS_F32(#n);                                           \
-    n.to1 = value_1->value.f;                             \
+    n.structure_id = value_1->value.i;                    \
+    n.from_m = value_1->f32_array[0];                     \
+    n.to_m = value_1->f32_array[1];                       \
+    n.from_c = value_1->f32_array[2];                     \
+    n.to_c = value_1->f32_array[3];                       \
     value_1 = value_1->next;                              \
     IS_I32(#n);                                           \
     n.clamping = value_1->value.i;                        \
+    n.to0 = value_1->f32_array[0];                        \
+    n.to1 = value_1->f32_array[1];                        \
     value_1 = value_1->next;                              \
     IS_I32(#n);                                           \
     n.mapping = value_1->value.i;                         \
@@ -164,10 +179,13 @@ typedef struct {
     tmp_1 = value_1;                                      \
     value_1 = value_1->value.v;                           \
     IS_I32(#n);                                           \
-    n.type = value_1->value.i;                            \
+    n.structure_id = value_1->value.i;              \
     n.x = value_1->f32_array[0];                          \
     n.y = value_1->f32_array[1];                          \
     n.distance = value_1->f32_array[2];                   \
+    value_1 = value_1->next;                              \
+    IS_I32(#n);                                           \
+    n.type = value_1->value.i;                            \
     value_1 = value_1->next;                              \
     IS_I32(#n);                                           \
     n.mapping = value_1->value.i;                         \
@@ -1275,11 +1293,13 @@ seni_var *bind_prng_build(seni_vm *vm, i32 num_args)
   // the vector needs to represent a seni_prng_state struct as well as the min + max values
   // i.e. [u64 state, u64 inc, f32 min, f32 max]
   //
+  seni_var *v;
   vector_construct(&g_var_scratch);
+  v = append_to_vector_i32(vm, &g_var_scratch, HEAP_STRUCTURE_PRNG);
+  v->f32_array[0] = min;
+  v->f32_array[1] = max;
   append_to_vector_u64(vm, &g_var_scratch, prng_state.state);
   append_to_vector_u64(vm, &g_var_scratch, prng_state.inc);
-  append_to_vector_f32(vm, &g_var_scratch, min);
-  append_to_vector_f32(vm, &g_var_scratch, max);
 
   return &g_var_scratch;
 }
@@ -1289,7 +1309,8 @@ seni_var *bind_prng_values(seni_vm *vm, i32 num_args)
 {
   f32 num = 1.0f;
   seni_prng_full_state from;
-  // just have anything as the default values, this function should always be given a 'from' parameter
+
+  from.structure_id = HEAP_STRUCTURE_UNDEFINED;
   from.state = 2222;
   from.inc = 1;
   from.min = 0.0f;
@@ -1301,6 +1322,11 @@ seni_var *bind_prng_values(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_NUM, num);
   READ_STACK_ARG_PRNG(INAME_FROM, from);
   READ_STACK_ARGS_END;
+
+  if (from.structure_id != HEAP_STRUCTURE_PRNG) {
+    SENI_ERROR("prng/values requires a user specified 'from' parameter");
+    return &g_var_true;
+  }
 
   // build a seni_prng_state from the seni_prng_full_state
   seni_prng_state prng_state;
@@ -1333,7 +1359,8 @@ seni_var *bind_prng_values(seni_vm *vm, i32 num_args)
 seni_var *bind_prng_value(seni_vm *vm, i32 num_args)
 {
   seni_prng_full_state from;
-  // just have anything as the default values, this function should always be given a 'from' parameter
+
+  from.structure_id = HEAP_STRUCTURE_UNDEFINED;
   from.state = 2222;
   from.inc = 1;
   from.min = 0.0f;
@@ -1344,6 +1371,11 @@ seni_var *bind_prng_value(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_PRNG(INAME_FROM, from);
   READ_STACK_ARGS_END;
+
+  if (from.structure_id != HEAP_STRUCTURE_PRNG) {
+    SENI_ERROR("prng/value requires a user specified 'from' parameter");
+    return &g_var_true;
+  }
 
   // build a seni_prng_state from the seni_prng_full_state
   seni_prng_state prng_state;
@@ -1407,19 +1439,19 @@ seni_var *bind_interp_build(seni_vm *vm, i32 num_args)
 
   // id to signify that this structure stores data for interpolation
   // todo: fill this out properly and do the same for the other structures
-  i32 interp_fn_id = 42;
+  seni_var *v;
 
   vector_construct(&g_var_scratch);
-  append_to_vector_i32(vm, &g_var_scratch, interp_fn_id);
-  append_to_vector_f32(vm, &g_var_scratch, from_m);
-  append_to_vector_f32(vm, &g_var_scratch, to_m);
-  append_to_vector_f32(vm, &g_var_scratch, from_c);
-  append_to_vector_f32(vm, &g_var_scratch, to_c);
-  append_to_vector_f32(vm, &g_var_scratch, to[0]);
-  append_to_vector_f32(vm, &g_var_scratch, to[1]);
-  append_to_vector_i32(vm, &g_var_scratch, clamping);
+  v = append_to_vector_i32(vm, &g_var_scratch, HEAP_STRUCTURE_INTERP);
+  v->f32_array[0] = from_m;
+  v->f32_array[1] = to_m;
+  v->f32_array[2] = from_c;
+  v->f32_array[3] = to_c;
+  v = append_to_vector_i32(vm, &g_var_scratch, clamping);
+  v->f32_array[0] = to[0];
+  v->f32_array[1] = to[1];
   append_to_vector_i32(vm, &g_var_scratch, mapping);
-
+  
   return &g_var_scratch;
 }
 
@@ -1428,7 +1460,7 @@ seni_var *bind_interp_value(seni_vm *vm, i32 num_args)
   seni_interp_state from;
   f32 t = 0.0f;
 
-  from.interp_fn_id = 0;
+  from.structure_id = 0;
   from.from_m = 0.0f;
   from.to_m = 0.0f;
   from.from_c = 0.0f;
@@ -1443,7 +1475,7 @@ seni_var *bind_interp_value(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  if (from.interp_fn_id != 42) {
+  if (from.structure_id != HEAP_STRUCTURE_INTERP) {
     SENI_ERROR("interp/value requires a user specified 'from' parameter");
     return &g_var_true;
   }
@@ -1808,12 +1840,14 @@ seni_var *bind_focal_generic(seni_vm *vm, i32 num_args, seni_focal_type type)
   // first item contains format in value.i, postion in f32_array[0,1] and distance in f32_array[2]
   // second item contains mapping in value.i
 
+  seni_var *v;
+  
   vector_construct(&g_var_scratch);
-  seni_var *v = append_to_vector_i32(vm, &g_var_scratch, type);
+  v = append_to_vector_i32(vm, &g_var_scratch, HEAP_STRUCTURE_FOCAL);
   v->f32_array[0] = x;
   v->f32_array[1] = y;
   v->f32_array[2] = distance;
-  
+  append_to_vector_i32(vm, &g_var_scratch, type);
   append_to_vector_i32(vm, &g_var_scratch, mapping);
 
   return &g_var_scratch;
@@ -1839,6 +1873,7 @@ seni_var *bind_focal_value(seni_vm *vm, i32 num_args)
   seni_focal_state from;
   f32 position[] = { 0.0f, 0.0f };
 
+  from.structure_id = HEAP_STRUCTURE_UNDEFINED;
   from.type = FOCAL_UNKNOWN;
   from.distance = 0.0f;
   from.x = 0.0f;
@@ -1849,6 +1884,11 @@ seni_var *bind_focal_value(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_FOCAL(INAME_FROM, from);
   READ_STACK_ARG_VEC2(INAME_POSITION, position);
   READ_STACK_ARGS_END;
+
+  if (from.structure_id != HEAP_STRUCTURE_FOCAL) {
+    SENI_ERROR("focal/value requires a user specified 'from' parameter");
+    return &g_var_true;
+  }
 
   f32 res = 0.0f;
 
