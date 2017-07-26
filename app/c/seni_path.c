@@ -12,45 +12,38 @@ void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y)
   seni_var *dest;
   seni_var src;
 
-  i32 istep = get_argument_mapping(fn_info, INAME_STEP);
-  if (istep == -1) {
-    SENI_ERROR("unable to find step argument in path function");
-    return;
-  }
-  i32 ipos = get_argument_mapping(fn_info, INAME_POSITION);
-  if (ipos == -1) {
-    SENI_ERROR("unable to find pos argument in path function");
-    return;
-  }
-  i32 it = get_argument_mapping(fn_info, INAME_T);
-  if (it == -1) {
-    SENI_ERROR("unable to find t argument in path function");
-    return;
-  }
-
   vm_setup_function_invoke(vm, fn_info);
   
   i32 arg = vm->fp - 1;
 
-  // value for step
-  dest = &(vm->stack[arg - istep]);
-  src.type = VAR_FLOAT;
-  src.value.f = step;
-  var_copy(dest, &src);
+  i32 istep = get_argument_mapping(fn_info, INAME_STEP);
+  if (istep != -1) {
+    // value for step
+    dest = &(vm->stack[arg - istep]);
+    src.type = VAR_FLOAT;
+    src.value.f = step;
+    var_copy(dest, &src);
+  }
 
-  // value for position
-  dest = &(vm->stack[arg - ipos]);
-  src.type = VAR_2D;
-  src.value.i = 0;
-  src.f32_array[0] = x;
-  src.f32_array[1] = y;
-  var_copy(dest, &src);
+  i32 ipos = get_argument_mapping(fn_info, INAME_POSITION);
+  if (ipos != -1) {
+    // value for position
+    dest = &(vm->stack[arg - ipos]);
+    src.type = VAR_2D;
+    src.value.i = 0;
+    src.f32_array[0] = x;
+    src.f32_array[1] = y;
+    var_copy(dest, &src);
+  }
 
-  // value for t
-  dest = &(vm->stack[arg - it]);
-  src.type = VAR_FLOAT;
-  src.value.f = t;
-  var_copy(dest, &src);
+  i32 it = get_argument_mapping(fn_info, INAME_T);
+  if (it != -1) {
+    // value for t
+    dest = &(vm->stack[arg - it]);
+    src.type = VAR_FLOAT;
+    src.value.f = t;
+    var_copy(dest, &src);
+  }
     
   vm_function_invoke(vm);  
 }

@@ -13,7 +13,7 @@
   12. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
   13. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [51/57]
+* updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -26,7 +26,7 @@
   10. [X] 155b-spiral-derived.seni - path/circle
   11. [X] 155j-chaotic-grid-2.seni - focal/point
   12. [X] 155j-chaotic-grid-3.seni
-  13. [ ] 1560-path.seni - make a function ???
+  13. [X] 1560-path.seni - make a function ???
   14. [X] 1565-hex-grid.seni
   15. [X] 156h-tri-grid.seni
   16. [X] 157e-tile-shadow.seni - col/procedural-fn
@@ -48,8 +48,8 @@
   32. [X] 15he-rotate-mirror.seni
   33. [X] 160c-schotter.seni
   34. [X] 161g-grid-flow.seni
-  35. [ ] 161j-trump.seni
-  36. [ ] 1626-embers.seni
+  35. [X] 161j-trump.seni
+  36. [X] 1626-embers.seni
   37. [X] 1626-orchid.seni
   38. [X] 162e-alien.seni
   39. [X] 162e-mask.seni
@@ -61,7 +61,7 @@
   45. [X] 1633-orchid.seni
   46. [X] 1633-petal.seni
   47. [X] 1634-cryst.seni
-  48. [ ] 1638-night.seni
+  48. [X] 1638-night.seni
   49. [X] 163a-scale-green.seni
   50. [X] 1642-book-stack.seni
   51. [X] 1642-stacks.seni

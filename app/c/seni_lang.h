@@ -128,7 +128,7 @@ typedef enum {
 // how low can the heap go before a GC is invoked
 //
 #define HEAP_MIN_SIZE 10
-#define MEMORY_GLOBAL_SIZE 20
+#define MEMORY_GLOBAL_SIZE 40
 #define MEMORY_LOCAL_SIZE 40
 
 #define MAX_TOP_LEVEL_FUNCTIONS 32

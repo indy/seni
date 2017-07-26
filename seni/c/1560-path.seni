@@ -1,0 +1,178 @@
+; apply a full-canvas dark texture
+(stroked-bezier-rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+                     overlap: 90
+                     iterations: 80
+                     tessellation: 20
+                     stroke-noise: 20
+                     width: 1100 
+                     height: 1100
+                     colour: (col/rgb r: 0 g: 0 b: 0.1 alpha: 0.9))
+
+; further darken the background
+(rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+      width: canvas/width height: canvas/height
+      colour: (col/rgb r: 0 g: 0 b: 0.0 alpha: 0.5))
+
+;; the coords that the bezier path will take
+(define 
+  coords {[[0 500] [333 100] [666 900] [999 500]]
+          (gen/vector min: 0 max: 1000)}
+
+  ;; as the bezier path progresses, change the circle's LAB a component
+  remap-a (interp/build from: [0 1]
+                        to: [{-80 (gen/scalar min: -100 max: 100)}
+                             { 80 (gen/scalar min: -100 max: 100)}])
+
+  ;; as the bezier path progresses, change the circle's LAB b component
+  remap-b (interp/build from: [0 1]
+                        to: [{-100 (gen/scalar min: -100 max: 100)}
+                             { 100 (gen/scalar min: -100 max: 100)}]))
+
+(define tessellation {20 (gen/int min: 3 max: 20)})
+
+
+
+(define random1 (prng/build min: -1 max: 1 seed: 124))
+(fn (fn1 position: [0 0] t: 0)
+    (define
+      [x y] position
+      radius 500
+      radius-factor 0
+      random-factor 40
+      l-val 6
+      alpha 0.005)
+    (circle position: [(+ x (* random-factor (prng/value from: random1)))
+                       (+ y (* random-factor (prng/value from: random1)))]
+            radius: (+ radius (* radius (prng/value from: random1) radius-factor))
+            tessellation: tessellation
+            colour: (col/lab l: l-val
+                             a: (interp/value from: remap-a t: t)
+                             b: (interp/value from: remap-b t: t)
+                             alpha: alpha)))
+
+(path/bezier fn: (address-of fn1)
+             steps: 70
+             coords: coords)
+
+
+
+(define random2 (prng/build min: -1 max: 1 seed: 124))
+(fn (fn2 position: [0 0] t: 0)
+    (define
+      [x y] position
+      radius 300
+      radius-factor 0.4
+      random-factor 40
+      l-val 12
+      alpha 0.01)
+    (circle position: [(+ x (* random-factor (prng/value from: random2)))
+                       (+ y (* random-factor (prng/value from: random2)))]
+            radius: (+ radius (* radius (prng/value from: random2) radius-factor))
+            tessellation: tessellation
+            colour: (col/lab l: l-val
+                             a: (interp/value from: remap-a t: t)
+                             b: (interp/value from: remap-b t: t)
+                             alpha: alpha)))
+
+(path/bezier fn: (address-of fn2)
+             steps: 70
+             coords: coords)
+
+
+
+
+(define steps {20 (gen/int min: 5 max: 50)})
+
+
+(define random3 (prng/build min: -1 max: 1 seed: 423))
+(fn (fn3 position: [0 0] t: 0)
+    (define
+      [x y] position
+      radius 100
+      radius-factor 0.4
+      random-factor 40
+      l-val 25
+      alpha 0.2)
+    (circle position: [(+ x (* random-factor (prng/value from: random3)))
+                       (+ y (* random-factor (prng/value from: random3)))]
+            radius: (+ radius (* radius (prng/value from: random3) radius-factor))
+            tessellation: tessellation
+            colour: (col/lab l: l-val
+                             a: (interp/value from: remap-a t: t)
+                             b: (interp/value from: remap-b t: t)
+                             alpha: alpha)))
+
+(path/bezier fn: (address-of fn3)
+             steps: steps
+             coords: coords)
+
+
+
+(define random4 (prng/build min: -1 max: 1 seed: 424))
+(fn (fn4 position: [0 0] t: 0)
+    (define
+      [x y] position
+      radius 40
+      radius-factor 0.4
+      random-factor 40
+      l-val 40
+      alpha 0.5)
+    (circle position: [(+ x (* random-factor (prng/value from: random4)))
+                       (+ y (* random-factor (prng/value from: random4)))]
+            radius: (+ radius (* radius (prng/value from: random4) radius-factor))
+            tessellation: tessellation
+            colour: (col/lab l: l-val
+                             a: (interp/value from: remap-a t: t)
+                             b: (interp/value from: remap-b t: t)
+                             alpha: alpha)))
+
+(path/bezier fn: (address-of fn4)
+             steps: steps
+             coords: coords)
+
+
+(define random5 (prng/build min: -1 max: 1 seed: 863))
+(fn (fn5 position: [0 0] t: 0)
+    (define
+      [x y] position
+      radius 10
+      radius-factor 0.4
+      random-factor 40
+      l-val 60
+      alpha 0.8)
+    (circle position: [(+ x (* random-factor (prng/value from: random5)))
+                       (+ y (* random-factor (prng/value from: random5)))]
+            radius: (+ radius (* radius (prng/value from: random5) radius-factor))
+            tessellation: tessellation
+            colour: (col/lab l: l-val
+                             a: (interp/value from: remap-a t: t)
+                             b: (interp/value from: remap-b t: t)
+                             alpha: alpha)))
+
+(path/bezier fn: (address-of fn5)
+             steps: steps
+             coords: coords)
+
+
+(define random6 (prng/build min: -1 max: 1 seed: 564))
+(fn (fn6 position: [0 0] t: 0)
+    (define
+      [x y] position
+      radius 5
+      radius-factor 1.4
+      random-factor 100
+      l-val 90
+      alpha 0.6)
+    (circle position: [(+ x (* random-factor (prng/value from: random6)))
+                       (+ y (* random-factor (prng/value from: random6)))]
+            radius: (+ radius (* radius (prng/value from: random6) radius-factor))
+            tessellation: tessellation
+            colour: (col/lab l: l-val
+                             a: (interp/value from: remap-a t: t)
+                             b: (interp/value from: remap-b t: t)
+                             alpha: alpha)))
+
+(path/bezier fn: (address-of fn6)
+             steps: steps
+             coords: coords)
+
