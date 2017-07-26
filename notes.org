@@ -1,17 +1,19 @@
-* TODO [0/11]
+* TODO [0/13]
   1. [ ] test gc
   2. [ ] look into replacing append_to_vector with append_heap_var_to_vector
-  3. [ ] poly should also accept a uv parameter
-  4. [ ] ensure that there's a dist folder before running npm run build:wasm
-  5. [ ] test new setup/teardown code
-  6. [ ] cleanup memory of parser
-  7. [ ] structs for compile, runtim, performance info
-  8. [ ] seni_env
-  9. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  10. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  3. [ ] maybe have a required specifier in functions?
+  4. [ ] fence keyword? (fencepost version of loop) (fence from: 0 to: 10 steps: 11)
+  5. [ ] poly should also accept a uv parameter
+  6. [ ] ensure that there's a dist folder before running npm run build:wasm
+  7. [ ] test new setup/teardown code
+  8. [ ] cleanup memory of parser
+  9. [ ] structs for compile, runtim, performance info
+  10. [ ] seni_env
+  11. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  12. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  13. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
-* updating scripts [50/57]
+* updating scripts [51/57]
   1. [X] 14ef-blur-grid.seni
   2. [X] 14eg-marker-grid.seni
   3. [X] 14eh-chaotic-grid.seni
@@ -45,7 +47,7 @@
   31. [X] 15he-mirror-layers.seni
   32. [X] 15he-rotate-mirror.seni
   33. [X] 160c-schotter.seni
-  34. [ ] 161g-grid-flow.seni
+  34. [X] 161g-grid-flow.seni
   35. [ ] 161j-trump.seni
   36. [ ] 1626-embers.seni
   37. [X] 1626-orchid.seni
@@ -69,6 +71,44 @@
   55. [X] 1643-thorn.seni
   56. [X] 1648-chalk-boxes.seni
   57. [ ] 1669-zero.seni - map
+
+
+* loop syntax
+  from to
+  to
+  from to increment
+  from upto
+  from upto steps
+
+
+
+  rename loop to step
+
+  step should have from, to and increment  parameters only
+  will sequence from (inclusive) -> to (exclusive) by increment steps
+  e.g.
+  (step (a from: 0 to: 20 increment: 5))
+  a == 0, 5, 10, 15
+  (step (a from: 0 to: 4 increment: 1))
+  a == 0, 1, 2, 3
+
+  should there still be an upto??
+  (step (a from: 0 upto: 20 increment: 5))
+  a == 0, 5, 10, 15, 20
+  (step (a from: 0 upto: 4 increment: 1))
+  a == 0, 1, 2, 3, 4
+
+
+
+
+  fence can have from, to, quantity
+  will sequence from -> to inclusive 'quantity' number of times
+  e.g.
+  (fence (a from: 0 to: 20 quantity: 5))
+  a == 0, 5, 10, 15, 20
+  (fence (a from: 0 to: 20 quantity: 3))
+  a == 0, 10, 20
+
 
 
 * bugs
@@ -139,12 +179,6 @@ push val D,
 sub. 
 
 
-* loop usage
-from to
-to
-from to increment
-from upto
-from upto steps
 
 * bytecode vm design for guile
   https://www.gnu.org/software/guile/manual/html_node/Why-a-VM_003f.html#Why-a-VM_003f

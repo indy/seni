@@ -555,3 +555,19 @@ void colour_procedural(seni_colour *out, seni_colour_fn_state *colour_fn_state, 
   out->element[2] = a[2] + b[2] * (f32)cos(TAU * (c[2] * t + d[2]));
   out->element[3] = colour_fn_state->alpha;
 }
+
+void colour_bezier(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t)
+{
+  f32 *a = colour_fn_state->a;
+  f32 *b = colour_fn_state->b;
+  f32 *c = colour_fn_state->c;
+  f32 *d = colour_fn_state->d;
+
+  // assuming that seni_bind is using RGB colour space
+  // todo: experiment with different colour spaces
+  out->format = RGB;
+  out->element[0] = bezier_point(a[0], b[0], c[0], d[0], t);
+  out->element[1] = bezier_point(a[1], b[1], c[1], d[1], t);
+  out->element[2] = bezier_point(a[2], b[2], c[2], d[2], t);
+  out->element[3] = bezier_point(a[3], b[3], c[3], d[3], t);
+}

@@ -107,13 +107,13 @@ typedef struct {
 #define READ_STACK_ARG_I32(k, n) if (name_1 == k) { IS_I32(n); n = value_1->value.i; }
 #define READ_STACK_ARG_VAR(k, n) if (name_1 == k) { n = value_1; }
 
-#define READ_STACK_ARG_COL(k, n) if (name_1 == k) {       \
-    IS_COL(n);                                            \
-    n->format = value_1->value.i;                         \
-    n->element[0] = value_1->f32_array[0];                \
-    n->element[1] = value_1->f32_array[1];                \
-    n->element[2] = value_1->f32_array[2];                \
-    n->element[3] = value_1->f32_array[3];                \
+#define READ_STACK_ARG_COL(k, n) if (name_1 == k) { \
+    IS_COL(#n);                                     \
+    n.format = value_1->value.i;                    \
+    n.element[0] = value_1->f32_array[0];           \
+    n.element[1] = value_1->f32_array[1];           \
+    n.element[2] = value_1->f32_array[2];           \
+    n.element[3] = value_1->f32_array[3];           \
   }
 
 #define READ_STACK_ARG_VEC2(k, n) if (name_1 == k) {      \
@@ -362,8 +362,9 @@ seni_var *bind_line(seni_vm *vm, i32 num_args)
   f32 width = 4.0f;
   f32 from[] = {10.0f, 10.0f};
   f32 to[] = {900.0f, 500.0f};
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -376,8 +377,7 @@ seni_var *bind_line(seni_vm *vm, i32 num_args)
   seni_render_data *render_data = vm->render_data;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_line(render_data, matrix, from[0], from[1], to[0], to[1], width, colour);
-
+  render_line(render_data, matrix, from[0], from[1], to[0], to[1], width, &colour);
 
   return &g_var_true;
 }
@@ -388,8 +388,9 @@ seni_var *bind_rect(seni_vm *vm, i32 num_args)
   f32 width = 4.0f;
   f32 height = 10.0f;
   f32 position[] = {10.0f, 23.0f};
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -402,8 +403,7 @@ seni_var *bind_rect(seni_vm *vm, i32 num_args)
   seni_render_data *render_data = vm->render_data;
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
-  render_rect(render_data, matrix, position[0], position[1], width, height, colour);
-
+  render_rect(render_data, matrix, position[0], position[1], width, height, &colour);
 
   return &g_var_true;
 }
@@ -414,10 +414,11 @@ seni_var *bind_circle(seni_vm *vm, i32 num_args)
   f32 width = 4.0f;
   f32 height = 10.0f;
   f32 position[] = {10.0f, 23.0f};
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
   f32 tessellation = 10.0f;
   f32 radius = -1.0f;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -439,8 +440,7 @@ seni_var *bind_circle(seni_vm *vm, i32 num_args)
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
   render_circle(render_data, matrix,
-                position[0], position[1], width, height, colour, (i32)tessellation);
-
+                position[0], position[1], width, height, &colour, (i32)tessellation);
 
   return &g_var_true;
 }
@@ -452,13 +452,14 @@ seni_var *bind_circle_slice(seni_vm *vm, i32 num_args)
   f32 height = 10.0f;
   f32 radius = -1.0f;
   f32 position[] = {10.0f, 23.0f};
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
   f32 tessellation = 10.0f;
   f32 angle_start = 0.0f;       // degrees
   f32 angle_end = 0.0f;
   f32 inner_width = 1.0f;
   f32 inner_height = 1.0f;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -484,7 +485,7 @@ seni_var *bind_circle_slice(seni_vm *vm, i32 num_args)
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
   render_circle_slice(render_data, matrix,
-                      position[0], position[1], width, height, colour, (i32)tessellation,
+                      position[0], position[1], width, height, &colour, (i32)tessellation,
                       angle_start, angle_end, inner_width, inner_height);
 
   return &g_var_true;
@@ -521,12 +522,12 @@ seni_var *bind_bezier(seni_vm *vm, i32 num_args)
   f32 t_start = -1.0f;
   f32 t_end = 2.0f;
   f32 tessellation = 10.0f;
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
   i32 brush = INAME_BRUSH_FLAT;
   f32 brush_subtype = 0.0f;
     
-
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  
   // line_width_mapping will be one of several constants
   
   // update with values from stack
@@ -563,8 +564,7 @@ seni_var *bind_bezier(seni_vm *vm, i32 num_args)
 
   render_bezier(render_data, matrix,
                 coords, line_width_start, line_width_end, line_width_mapping,
-                t_start, t_end, colour, (i32)tessellation, brush, (i32)brush_subtype);
-
+                t_start, t_end, &colour, (i32)tessellation, brush, (i32)brush_subtype);
 
   return &g_var_true;
 }
@@ -580,10 +580,11 @@ seni_var *bind_bezier_bulging(seni_vm *vm, i32 num_args)
   f32 t_start = -1.0f;
   f32 t_end = 2.0f;
   f32 tessellation = 10.0f;
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
   i32 brush = INAME_BRUSH_FLAT;
   f32 brush_subtype = 0.0f;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -612,9 +613,8 @@ seni_var *bind_bezier_bulging(seni_vm *vm, i32 num_args)
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
   render_bezier_bulging(render_data, matrix,
-                        coords, line_width, t_start, t_end, colour, (i32)tessellation,
+                        coords, line_width, t_start, t_end, &colour, (i32)tessellation,
                         brush, (i32)brush_subtype);
-
 
   return &g_var_true;
 }
@@ -628,8 +628,7 @@ seni_var *bind_stroked_bezier(seni_vm *vm, i32 num_args)
   f32 stroke_noise = 25;
   f32 stroke_line_width_start = 1.0f;
   f32 stroke_line_width_end = 1.0f;
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
   f32 colour_volatility = 0.0f;
   f32 seed = 0.0f;
 
@@ -637,7 +636,8 @@ seni_var *bind_stroked_bezier(seni_vm *vm, i32 num_args)
   i32 brush = INAME_BRUSH_FLAT;
   f32 brush_subtype = 0.0f;
     
-
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+  
   // line_width_mapping will be one of several constants
   
   // update with values from stack
@@ -660,11 +660,11 @@ seni_var *bind_stroked_bezier(seni_vm *vm, i32 num_args)
   seni_matrix *matrix = matrix_stack_peek(vm->matrix_stack);
 
   render_stroked_bezier(render_data, matrix,
-                        coords, colour, (i32)tessellation,
-                        stroke_line_width_start, stroke_line_width_end, stroke_noise, (i32)stroke_tessellation,
+                        coords, &colour, (i32)tessellation,
+                        stroke_line_width_start, stroke_line_width_end,
+                        stroke_noise, (i32)stroke_tessellation,
                         colour_volatility, seed,
                         line_width_mapping, brush, (i32)brush_subtype);
-
 
   return &g_var_true;
 }
@@ -682,11 +682,12 @@ seni_var *bind_stroked_bezier_rect(seni_vm *vm, i32 num_args)
   f32 tessellation = 15;
   f32 stroke_tessellation = 10.0f;
   f32 stroke_noise = 25;
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
   f32 colour_volatility = 40.0f;
   i32 brush = INAME_BRUSH_FLAT;
   f32 brush_subtype = 0.0f;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -711,7 +712,8 @@ seni_var *bind_stroked_bezier_rect(seni_vm *vm, i32 num_args)
 
   render_stroked_bezier_rect(render_data, matrix,
                              position, width, height, volatility, overlap, iterations, seed,
-                             (i32)tessellation, (i32)stroke_tessellation, stroke_noise, colour, colour_volatility,
+                             (i32)tessellation, (i32)stroke_tessellation, stroke_noise,
+                             &colour, colour_volatility,
                              brush, (i32)brush_subtype);
 
   return &g_var_true;
@@ -722,8 +724,9 @@ seni_var *bind_col_convert(seni_vm *vm, i32 num_args)
   // (col/convert colour: col format: LAB)
   
   i32 format = INAME_RGB;
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -747,7 +750,7 @@ seni_var *bind_col_convert(seni_vm *vm, i32 num_args)
     colour_format = HSV;
   }
   
-  colour_clone_as(&out, colour, colour_format);
+  colour_clone_as(&out, &colour, colour_format);
 
   colour_as_var(&g_var_scratch, &out);
   return &g_var_scratch;
@@ -872,8 +875,9 @@ seni_var *bind_col_lab(seni_vm *vm, i32 num_args)
 
 seni_var *bind_col_complementary(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -881,7 +885,7 @@ seni_var *bind_col_complementary(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour;
-  complementary(&ret_colour, colour);
+  complementary(&ret_colour, &colour);
 
   colour_as_var(&g_var_scratch, &ret_colour);
   return &g_var_scratch;
@@ -889,8 +893,9 @@ seni_var *bind_col_complementary(seni_vm *vm, i32 num_args)
 
 seni_var *bind_col_split_complementary(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -899,7 +904,7 @@ seni_var *bind_col_split_complementary(seni_vm *vm, i32 num_args)
 
   seni_colour ret_colour0;
   seni_colour ret_colour1;
-  split_complementary(&ret_colour0, &ret_colour1, colour);
+  split_complementary(&ret_colour0, &ret_colour1, &colour);
 
   // push the return values onto the stack as a vector
 
@@ -912,8 +917,9 @@ seni_var *bind_col_split_complementary(seni_vm *vm, i32 num_args)
 
 seni_var *bind_col_analagous(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -922,7 +928,7 @@ seni_var *bind_col_analagous(seni_vm *vm, i32 num_args)
 
   seni_colour ret_colour0;
   seni_colour ret_colour1;
-  analagous(&ret_colour0, &ret_colour1, colour);
+  analagous(&ret_colour0, &ret_colour1, &colour);
 
   // push the return values onto the stack as a vector
   vector_construct(&g_var_scratch);
@@ -934,8 +940,9 @@ seni_var *bind_col_analagous(seni_vm *vm, i32 num_args)
 
 seni_var *bind_col_triad(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -944,7 +951,7 @@ seni_var *bind_col_triad(seni_vm *vm, i32 num_args)
 
   seni_colour ret_colour0;
   seni_colour ret_colour1;
-  triad(&ret_colour0, &ret_colour1, colour);
+  triad(&ret_colour0, &ret_colour1, &colour);
 
   // push the return values onto the stack as a vector
   vector_construct(&g_var_scratch);
@@ -956,9 +963,10 @@ seni_var *bind_col_triad(seni_vm *vm, i32 num_args)
 
 seni_var *bind_col_darken(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
   f32 value = 0;                // 0..100
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -968,7 +976,7 @@ seni_var *bind_col_darken(seni_vm *vm, i32 num_args)
 
   seni_colour ret_colour;
 
-  colour_clone_as(&ret_colour, colour, LAB);
+  colour_clone_as(&ret_colour, &colour, LAB);
   ret_colour.element[0] = clamp(ret_colour.element[0] - value, 0.0f, 100.0f);
 
   colour_as_var(&g_var_scratch, &ret_colour);
@@ -977,9 +985,10 @@ seni_var *bind_col_darken(seni_vm *vm, i32 num_args)
 
 seni_var *bind_col_lighten(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour; 
   f32 value = 0;                // 0..100
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -989,7 +998,7 @@ seni_var *bind_col_lighten(seni_vm *vm, i32 num_args)
 
   seni_colour ret_colour;
 
-  colour_clone_as(&ret_colour, colour, LAB);
+  colour_clone_as(&ret_colour, &colour, LAB);
   ret_colour.element[0] = clamp(ret_colour.element[0] + value, 0.0f, 100.0f);
 
   colour_as_var(&g_var_scratch, &ret_colour);
@@ -998,9 +1007,10 @@ seni_var *bind_col_lighten(seni_vm *vm, i32 num_args)
 
 seni_var *bind_col_set_alpha(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
   f32 value = 0;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -1010,7 +1020,7 @@ seni_var *bind_col_set_alpha(seni_vm *vm, i32 num_args)
 
   seni_colour ret_colour;
 
-  colour_clone_as(&ret_colour, colour, colour->format);
+  colour_clone_as(&ret_colour, &colour, colour.format);
   ret_colour.element[3] = value;
 
   colour_as_var(&g_var_scratch, &ret_colour);
@@ -1019,24 +1029,26 @@ seni_var *bind_col_set_alpha(seni_vm *vm, i32 num_args)
 
 seni_var *bind_col_get_alpha(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
-  f32_as_var(&g_var_scratch, colour->element[3]);
+  f32_as_var(&g_var_scratch, colour.element[3]);
 
   return &g_var_scratch;
 }
 
 seni_var *bind_col_set_lab_l(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
   f32 value = 0;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -1045,7 +1057,7 @@ seni_var *bind_col_set_lab_l(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_END;
 
   seni_colour ret_colour;
-  colour_clone_as(&ret_colour, colour, LAB);
+  colour_clone_as(&ret_colour, &colour, LAB);
 
   i32 l_index = 0; // L is the first element
   ret_colour.element[l_index] = value;
@@ -1057,8 +1069,9 @@ seni_var *bind_col_set_lab_l(seni_vm *vm, i32 num_args)
 
 seni_var *bind_col_get_lab_l(seni_vm *vm, i32 num_args)
 {
-  seni_colour col; colour_set(&col, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-  seni_colour *colour = &col;
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -1066,11 +1079,11 @@ seni_var *bind_col_get_lab_l(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_END;
 
   seni_colour lab_colour;
-  colour_clone_as(&lab_colour, colour, LAB);
+  colour_clone_as(&lab_colour, &colour, LAB);
 
   i32 l_index = 0;
 
-  f32_as_var(&g_var_scratch, colour->element[l_index]);
+  f32_as_var(&g_var_scratch, colour.element[l_index]);
 
   return &g_var_scratch;
 }
@@ -1135,6 +1148,70 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
   return &g_var_scratch;  
 }
 
+seni_var *bind_col_build_bezier(seni_vm *vm, i32 num_args)
+{
+  // colour fn structure need to store 4 colours (for bezier-fn)
+  // first element's value.i will represent procedural, bezier or quadratic
+
+  seni_colour a, b, c, d;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_A, a);
+  READ_STACK_ARG_COL(INAME_B, b);
+  READ_STACK_ARG_COL(INAME_C, c);
+  READ_STACK_ARG_COL(INAME_D, d);
+  READ_STACK_ARGS_END;
+
+  seni_colour a_rgb, b_rgb, c_rgb, d_rgb;
+
+  // todo: maybe default to a different colour space (LAB?)
+  colour_clone_as(&a_rgb, &a, RGB);
+  colour_clone_as(&b_rgb, &b, RGB);
+  colour_clone_as(&c_rgb, &c, RGB);
+  colour_clone_as(&d_rgb, &d, RGB);
+
+  seni_var *v;
+  vector_construct(&g_var_scratch);
+
+  v = var_get_from_heap(vm);
+  v->type = VAR_INT;
+  v->value.i = COLOUR_FN_BEZIER;
+  v->f32_array[0] = a_rgb.element[0];
+  v->f32_array[1] = a_rgb.element[1];
+  v->f32_array[2] = a_rgb.element[2];
+  v->f32_array[3] = a_rgb.element[3];
+  append_heap_var_to_vector(&g_var_scratch, v);
+
+  v = var_get_from_heap(vm);
+  v->type = VAR_FLOAT;
+  v->value.f = 1.0f;
+  v->f32_array[0] = b_rgb.element[0];
+  v->f32_array[1] = b_rgb.element[1];
+  v->f32_array[2] = b_rgb.element[2];
+  v->f32_array[3] = b_rgb.element[3];
+  append_heap_var_to_vector(&g_var_scratch, v);
+
+  v = var_get_from_heap(vm);
+  v->type = VAR_INT;
+  v->value.i = 0;
+  v->f32_array[0] = c_rgb.element[0];
+  v->f32_array[1] = c_rgb.element[1];
+  v->f32_array[2] = c_rgb.element[2];
+  v->f32_array[3] = c_rgb.element[3];
+  append_heap_var_to_vector(&g_var_scratch, v);
+
+  v = var_get_from_heap(vm);
+  v->type = VAR_INT;
+  v->value.i = 0;
+  v->f32_array[0] = d_rgb.element[0];
+  v->f32_array[1] = d_rgb.element[1];
+  v->f32_array[2] = d_rgb.element[2];
+  v->f32_array[3] = d_rgb.element[3];
+  append_heap_var_to_vector(&g_var_scratch, v);
+
+  return &g_var_scratch;  
+}
+
 seni_var *bind_col_value(seni_vm *vm, i32 num_args)
 {
   seni_colour_fn_state colour_fn_state;
@@ -1151,6 +1228,8 @@ seni_var *bind_col_value(seni_vm *vm, i32 num_args)
     
   if (colour_fn_state.type == COLOUR_FN_PROCEDURAL) {
     colour_procedural(&ret_colour, &colour_fn_state, t);
+  } else if (colour_fn_state.type == COLOUR_FN_BEZIER) {
+    colour_bezier(&ret_colour, &colour_fn_state, t);
   } else {
     SENI_ERROR("unknown colour_fn_state.type %d", colour_fn_state.type);
   }
@@ -2097,6 +2176,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "col/set-lab-l", &bind_col_set_lab_l);
   declare_native(wlut, e, "col/get-lab-l", &bind_col_get_lab_l);
   declare_native(wlut, e, "col/build-procedural", &bind_col_build_procedural);
+  declare_native(wlut, e, "col/build-bezier", &bind_col_build_bezier);
   declare_native(wlut, e, "col/value", &bind_col_value);
 
   declare_native(wlut, e, "math/distance", &bind_math_distance);
