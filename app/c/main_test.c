@@ -387,9 +387,9 @@ void timing(void)
   {
     TIMING_UNIT start = get_timing();
     //start = clock();
-    //VM_COMPILE_F32("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+    //VM_COMPILE_F32("(step (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
 
-    VM_COMPILE_F32("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
+    VM_COMPILE_F32("(step (x from: 0 to: 10000) (step (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
     SENI_PRINT("VM Time taken %.2f", timing_delta_from(start));
   }
 }
@@ -410,7 +410,7 @@ void test_vm_bugs(void)
   (x colour: (col/rgb))                 \
   (huh at: 5)", 4.0f);
 
-  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/values num: 3 from: rng)))) (f) 1", 1.0f);
+  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (step (i from: 0 to: 2) (define [rr rx ry] (prng/values num: 3 from: rng)))) (f) 1", 1.0f);
   
   // pre-assigned global wasn't being added to the global-mapping so references to them in functions wasn't working
   VM_COMPILE_F32("(wash) (fn (wash) (define foo (/ canvas/width 3)) foo)", 333.3333f);
@@ -418,16 +418,16 @@ void test_vm_bugs(void)
   // vm should use the caller function's ARG values not the callees.
   VM_COMPILE_F32("(fn (v foo: 10) foo) (fn (wash seed: 272) (v foo: seed)) (wash seed: 66)", 66.0f);
 
-  // heap slab leak - overwriting local k in loop
+  // heap slab leak - overwriting local k in step
   // return vectors to slab when it's overwritten
-  VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 4) (define k [1 2])) 22)(f)", 22.0f);
+  VM_COMPILE_F32("(fn (f) (step (i from: 0 to: 4) (define k [1 2])) 22)(f)", 22.0f);
 
   // return colours to slab when it's overwritten
-  VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 10) (define k (col/rgb r: 0 g: 0 b: 0 alpha: 1))) 22)(f)", 22.0f);
+  VM_COMPILE_F32("(fn (f) (step (i from: 0 to: 10) (define k (col/rgb r: 0 g: 0 b: 0 alpha: 1))) 22)(f)", 22.0f);
 
   // wasn't POP voiding function return values in a loop (CALL_0 offset was incorrect)
   // so have a loop that would overflow the stack if the return value of whatever fn wasn't being popped
-  VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/build-point position: [0 0] distance: 100))(focal/value from: focalpoint position: [0 0])(loop (y from: 0 to: 2000) (whatever))(focal/value from: focalpoint position: [0 50]))(go)", 0.5f);
+  VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/build-point position: [0 0] distance: 100))(focal/value from: focalpoint position: [0 0])(step (y from: 0 to: 2000) (whatever))(focal/value from: focalpoint position: [0 50]))(go)", 0.5f);
 
 }
 
@@ -450,8 +450,8 @@ void test_vm_bytecode(void)
   VM_COMPILE_BOOL("(if (> 99 88) (= 3 4) (= 5 5))", false);
   VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
 
-  VM_COMPILE_F32("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
-  VM_COMPILE_F32("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
+  VM_COMPILE_F32("(step (x from: 0 to: 5) (+ 42 38)) 9", 9);
+  VM_COMPILE_F32("(step (x from: 0 to: 5) (step (y from: 0 to: 5) (+ 3 4))) 9", 9);
 }
 
 void test_vm_callret(void)
@@ -564,7 +564,7 @@ void test_vm_vector(void)
 {
   VM_COMPILE_VEC5("[4 5 6 7 8]", 4, 5, 6, 7, 8);
 
-  VM_COMPILE_F32("(loop (x from: 0 to: 5) [1 2 3 4 5]) 9", 9);
+  VM_COMPILE_F32("(step (x from: 0 to: 5) [1 2 3 4 5]) 9", 9);
 
   // explicitly defined vector is returned
   VM_COMPILE_VEC5("(fn (f a: 3) [1 2 3 4 5]) (fn (x) (f)) (x)", 1, 2, 3, 4, 5);

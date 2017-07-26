@@ -2,9 +2,9 @@
   ;; fn to convert the x co-ordinates into angles for cosine
   r (interp/build from: [0 1000] to: [0 math/TAU])
   high 1000
-  step (/ high 2400))
+  step-1 (/ high 2400))
 
-(loop (x from: 0 upto: 1000 increment: step)
+(loop (x from: 0 upto: 1000 increment: step-1)
   (rect position: [x (+ (interp/cos amplitude: {282 (gen/int min: 1 max: 1000)} 
                                     frequency: {8.582 (gen/scalar min: 0.1 max: 10)} 
                                     t: (interp/value from: r t: x)) 

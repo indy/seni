@@ -41,8 +41,8 @@ function seniMode() {
 
   // keywords are core to the seni language
   const keywords =
-        makeKeywords('begin define fn if loop on-matrix-stack quote');
-  const indentKeys = makeKeywords('define loop on-matrix-stack fn');
+        makeKeywords('begin define fn if step fence on-matrix-stack quote');
+  const indentKeys = makeKeywords('define step fence on-matrix-stack fn');
 
   // functions from the common seni library
   const seniCommon = makeKeywords(`* + - / < = > append begin bezier
@@ -52,15 +52,15 @@ col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l
 col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsv col/lab col/lighten
 col/procedural-fn col/quadratic-fn col/rgb col/set-alpha col/set-lab-a
 col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r
-col/split-complementary col/triad define degrees->radians fn focal/hline
+col/split-complementary col/triad define degrees->radians fence fn focal/hline
 focal/point focal/vline if interp/bezier interp/bezier-fn interp/bezier-tangent
 interp/bezier-tangent-fn interp/circle interp/fn line list list/get list/length
-log loop math/PI math/TAU math/atan2 math/clamp math/cos math/distance-2d
+log math/PI math/TAU math/atan2 math/clamp math/cos math/distance-2d
 math/sin mod on-matrix-stack path/bezier path/circle path/linear path/spline
 poly pop-matrix print prng/perlin-signed prng/perlin-unsigned prng/range
 push-matrix quote radians->degrees rect repeat/rotate repeat/rotate-mirrored
 repeat/symmetry-4 repeat/symmetry-8 repeat/symmetry-horizontal
-repeat/symmetry-vertical rotate scale spline sqrt stroked-bezier
+repeat/symmetry-vertical rotate scale spline sqrt step stroked-bezier
 stroked-bezier-rect take translate`);
 
   function StateStack(indent, type, prev) { // represents a state stack object

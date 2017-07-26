@@ -30,10 +30,10 @@
                               c: {[0.839 0.740 0.371] (gen/scalar)}
                               d: {[0.717 0.631 0.202] (gen/scalar)}
                               alpha: 0.08)
-  step (/ 1 200))
+  step-1 (/ 1 200))
 
 (fn (draw)
-    (loop (t from: 0 upto: 1 increment: step)
+    (loop (t from: 0 upto: 1 increment: step-1)
     (poly coords: [(interp/bezier t: t coords: coords1)
                    (interp/bezier t: t coords: coords2)
                    (interp/bezier t: t coords: coords3)]

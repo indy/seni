@@ -13,9 +13,9 @@
               position: [{-68 (gen/int min: -300 max: 300)} 
                          {212 (gen/int min: -300 max: 300)}]
               distance: {819 (gen/int min: 300 max: 900)})
-  step (/ 1 {39 (gen/int min: 5 max: 100)}))
+  step-1 (/ 1 {39 (gen/int min: 5 max: 100)}))
 
-(loop (t from: 0 upto: 1 increment: step)
+(loop (t from: 0 upto: 1 increment: step-1)
   (define
     p1 (interp/bezier t: t
                       coords: {[[-249.550 -79.597] [194.782 -180.117] [21.536 106.905] [-82.513 153.607]]

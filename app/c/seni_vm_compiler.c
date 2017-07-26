@@ -537,9 +537,9 @@ void compile_vector_append(seni_node *ast, seni_program *program)
   }
 }
 
-void compile_loop(seni_node *ast, seni_program *program)
+void compile_step(seni_node *ast, seni_program *program)
 {
-  // (loop (x from: 0 to: 5) (+ 42 38))
+  // (step (x from: 0 to: 5) (+ 42 38))
   //
   // 0       LOAD    CONST   0
   // 1       STORE     LOCAL   0
@@ -560,7 +560,7 @@ void compile_loop(seni_node *ast, seni_program *program)
   
   seni_node *parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
-    SENI_ERROR("expected a list that defines loop parameters");
+    SENI_ERROR("expected a list that defines step parameters");
     return;
   }
 
@@ -606,7 +606,7 @@ void compile_loop(seni_node *ast, seni_program *program)
   
   if (have_to == false) {
     if (have_upto == false) {
-      SENI_ERROR("loop form requires either a 'to' or 'upto' parameter");
+      SENI_ERROR("step form requires either a 'to' or 'upto' parameter");
       return;
     }
   } else {
@@ -623,7 +623,7 @@ void compile_loop(seni_node *ast, seni_program *program)
 
   i32 looper_address = pop_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
   if (looper_address == -1) {
-    SENI_ERROR("compile_loop: allocation failure");
+    SENI_ERROR("compile_step: allocation failure");
     return;
   }
 
@@ -1074,8 +1074,8 @@ seni_node *compile(seni_node *ast, seni_program *program)
       case INAME_IF:
         compile_if(ast, program);
         return safe_next(ast);
-      case INAME_LOOP:
-        compile_loop(ast, program);
+      case INAME_STEP:
+        compile_step(ast, program);
         return safe_next(ast);
       case INAME_ON_MATRIX_STACK:
         compile_on_matrix_stack(ast, program);
