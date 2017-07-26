@@ -3,8 +3,8 @@
       height: canvas/height
       colour: {white (gen/col)})
 
-(loop (y from: 1 to: (- num-squares 1))
-  (loop (x from: 1 to: (- num-squares 1))
+(step (y from: 1 to: (- num-squares 1))
+  (step (x from: 1 to: (- num-squares 1))
     (define
       position [(map-to-position at: x) (map-to-position at: y)]
       [px py] position

@@ -31,10 +31,10 @@
     height (* size 2)
     vert (* height 0.75)
     width (* (/ (sqrt 3) 2) height))
-  (loop (y from: fy
+  (step (y from: fy
            to: (+ ty vert vert)
            increment: (+ vert vert))
-    (loop (x from: fx
+    (step (x from: fx
              to: (+ tx width)
              increment: width)
       (hexagon size: size
@@ -42,10 +42,10 @@
                                       value: (focal/value from: focalpoint position: [x y]))
                position: [x y])))
 
-  (loop (y from: (+ fy vert)
+  (step (y from: (+ fy vert)
            to: (+ ty vert vert)
            increment: (+ vert vert))
-    (loop (x from: (+ fx (/ width 2))
+    (step (x from: (+ fx (/ width 2))
              to: (+ tx width)
              increment: width)
       (hexagon size: size

@@ -62,8 +62,8 @@
     y-sub {1 (gen/int min: 1 max: 10)})
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
-    (loop (y from: y-sub to: (- num-squares y-sub))
-      (loop (x from: x-sub to: (- num-squares x-sub))
+    (step (y from: y-sub to: (- num-squares y-sub))
+      (step (x from: x-sub to: (- num-squares x-sub))
         (define 
           position [(map-to-position at: x) (map-to-position at: y)])
         (on-matrix-stack

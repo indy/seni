@@ -19,8 +19,8 @@
                                  d: {[0.372 0.515 0.756] (gen/scalar)}
                                  alpha: 1))
 
-(loop (y from: 0 to: steps)
-  (loop (x from: 0 to: steps)
+(step (y from: 0 to: steps)
+  (step (x from: 0 to: steps)
     (define
       checked (if (= (mod y 2) 1) (mod x 2) (- 1 (mod x 2)))
       colour (if (= checked 0) 

@@ -76,8 +76,8 @@
                       to: [{94 (gen/int min: -120 max: 120)}
                            {32 (gen/int min: -120 max: 120)}]))
 
-  (loop (y from: 0 upto: canvas/height increment: (* 2 h))
-    (loop (x from: 0 to: canvas/width increment: (* 4 w))
+  (step (y from: 0 upto: canvas/height increment: (* 2 h))
+    (step (x from: 0 to: canvas/width increment: (* 4 w))
       (define 
         b (interp/value from: rmb t: (+ y (* (prng/value from: colour-offset) colour-scale)))
         col-1 (col/lab l: (interp/value from: li t: (prng/value from: r))
@@ -102,8 +102,8 @@
                     to: [{0.284 (gen/scalar min: 0.2 max: 0.5)} 
                          {0.904 (gen/scalar min: 0.4 max: 1)}]))
 
-  (loop (y from: 0 upto: canvas/height increment: (* 2 h))
-    (loop (x from: 0 to: canvas/width increment: (* 4 w))
+  (step (y from: 0 upto: canvas/height increment: (* 2 h))
+    (step (x from: 0 to: canvas/width increment: (* 4 w))
       (define 
         b  (interp/value from: fn-l t: (+ y (* (prng/value from: colour-offset) colour-scale)))
         col-1 (col/hsl h: (interp/value from: fn-h t: (+ x (* (prng/value from: colour-offset) colour-scale)))
@@ -114,7 +114,7 @@
       (right-side x: (+ x w w) y: y w: w h: h colour: col-2))))
 
 
-(fn (wash variation: 200
+(fn (wash vol: 200
           line-width: 70
           line-segments: 5
           colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
@@ -122,22 +122,22 @@
   (define 
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
-  (loop (h from: -20 to: 1020 increment: 20)
+  (step (d from: -20 to: 1020 increment: 20)
     (bezier tessellation: line-segments
             line-width: line-width
-            coords: [[0 (wash-wobble x: 0 y: h z: seed s: variation)]
-                     [w/3 (wash-wobble x: w/3 y: h z: seed s: variation)]
-                     [(* w/3 2) (wash-wobble x: (* w/3 2) y: h z: seed s: variation)]
-                     [canvas/width (wash-wobble x: canvas/width y: h z: seed s: variation)]]
+            coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]
+                     [w/3          (wash-n x: w/3          d: d seed: seed vol: vol)]
+                     [(* w/3 2)    (wash-n x: (* w/3 2)    d: d seed: seed vol: vol)]
+                     [canvas/width (wash-n x: canvas/width d: d seed: seed vol: vol)]]
             colour: colour)
 
     (bezier tessellation: line-segments
             line-width: line-width
-            coords: [[(wash-wobble x: 0 y: h z: seed s: variation) 0]
-                     [(wash-wobble x: h/3 y: h z: seed s: variation) h/3]
-                     [(wash-wobble x: (* h/3 2) y: h z: seed s: variation) (* h/3 2)]
-                     [(wash-wobble x: canvas/height y: h z: seed s: variation) canvas/height]]
+            coords: [[(wash-n x: 0             d: d seed: seed vol: vol) 0]
+                     [(wash-n x: h/3           d: d seed: seed vol: vol) h/3]
+                     [(wash-n x: (* h/3 2)     d: d seed: seed vol: vol) (* h/3 2)]
+                     [(wash-n x: canvas/height d: d seed: seed vol: vol) canvas/height]]
             colour: colour)))
 
-(fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
-  (+ y (* s (prng/perlin x: x y: y z: z))))
+(fn (wash-n x: 0 d: 0 seed: 0 vol: 1)
+  (+ d (* vol (prng/perlin x: x y: d z: seed))))

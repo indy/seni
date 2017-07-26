@@ -1,18 +1,19 @@
-* TODO [0/14]
-  1. [ ] test vector/append
-  2. [ ] test gc
-  3. [ ] look into replacing append_to_vector with append_heap_var_to_vector
-  4. [ ] maybe have a required specifier in functions?
-  5. [ ] fence keyword? (fencepost version of loop) (fence from: 0 to: 10 steps: 11)
-  6. [ ] poly should also accept a uv parameter
-  7. [ ] ensure that there's a dist folder before running npm run build:wasm
-  8. [ ] test new setup/teardown code
-  9. [ ] cleanup memory of parser
-  10. [ ] structs for compile, runtim, performance info
-  11. [ ] seni_env
-  12. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  13. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  14. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+* TODO [0/15]
+  1. [ ] fix path/ functions (step arg)
+  2. [ ] test vector/append
+  3. [ ] test gc
+  4. [ ] look into replacing append_to_vector with append_heap_var_to_vector
+  5. [ ] maybe have a required specifier in functions?
+  6. [ ] fence keyword? (fencepost version of loop) (fence from: 0 to: 10 steps: 11)
+  7. [ ] poly should also accept a uv parameter
+  8. [ ] ensure that there's a dist folder before running npm run build:wasm
+  9. [ ] test new setup/teardown code
+  10. [ ] cleanup memory of parser
+  11. [ ] structs for compile, runtim, performance info
+  12. [ ] seni_env
+  13. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  14. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
+  15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni

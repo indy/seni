@@ -31,8 +31,8 @@
      (/ canvas/width 2)))
 
 (fn (render-main)
-  (loop (y from: 1 to:  (- num-squares 1))
-    (loop (x from: 1 to:  (- num-squares 1))
+  (step (y from: 1 to:  (- num-squares 1))
+    (step (x from: 1 to:  (- num-squares 1))
       (define 
         p [(map-to-position at: x) (map-to-position at: y)]
         volatility (* (focal/value from: focal-point position: p) focal-power))

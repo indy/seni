@@ -1,5 +1,5 @@
-(loop (y from: 0 to: 5)
-      (loop (x from: 0 to: 5)
+(step (y from: 0 to: 5)
+      (step (x from: 0 to: 5)
             (define checked (if (= (mod y 2) 1)
                                 (mod x 2)
                                 (- 1 (mod x 2))))

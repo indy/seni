@@ -29,10 +29,9 @@
                                  b: {[0.142 0.776 0.091] (gen/scalar)}
                                  c: {[0.298 0.231 0.118] (gen/scalar)}
                                  d: {[0.131 0.430 0.635] (gen/scalar)}
-                                 alpha: 0.08)
-  step-1 (/ 1 500))
+                                 alpha: 0.08))
 
-(loop (t from: 0 upto: 1 increment: step-1)
+(fence (t quantity: 500)
       (poly coords: [(interp/bezier t: t coords: coords1)
                      (interp/bezier t: t coords: coords2)
                      (interp/bezier t: t coords: coords3)]

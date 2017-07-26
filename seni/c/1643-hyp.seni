@@ -1,3 +1,5 @@
+(render)
+
 (define 
   coords1 {[[153.326 66.565]
             [-143.219 370.216]
@@ -29,40 +31,10 @@
                                  b: {[0.714 0.956 0.862] (gen/scalar)}
                                  c: {[0.789 0.114 0.110] (gen/scalar)}
                                  d: {[0.203 0.077 0.798] (gen/scalar)}
-                                 alpha: 0.08)
-  step-1 (/ 1 200))
-
-
-(fn (wash variation: 200
-          line-width: 70
-          line-segments: 5
-          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
-          seed: 272)
-  (define 
-    w/3 (/ canvas/width 3)
-    h/3 (/ canvas/height 3))
-  (loop (h from: -20 to: 1020 increment: 20)
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: [[0 (wash-wobble x: 0 y: h z: seed s: variation)]
-                     [w/3 (wash-wobble x: w/3 y: h z: seed s: variation)]
-                     [(* w/3 2) (wash-wobble x: (* w/3 2) y: h z: seed s: variation)]
-                     [canvas/width (wash-wobble x: canvas/width y: h z: seed s: variation)]]
-            colour: colour)
-
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: [[(wash-wobble x: 0 y: h z: seed s: variation) 0]
-                     [(wash-wobble x: h/3 y: h z: seed s: variation) h/3]
-                     [(wash-wobble x: (* h/3 2) y: h z: seed s: variation) (* h/3 2)]
-                     [(wash-wobble x: canvas/height y: h z: seed s: variation) canvas/height]]
-            colour: colour)))
-
-(fn (wash-wobble x: 0 y: 0 z: 0 s: 1)
-  (+ y (* s (prng/perlin x: x y: y z: z))))
+                                 alpha: 0.08))
 
 (fn (draw)
-    (loop (t from: 0 upto: 1 increment: step-1)
+    (fence (t quantity: 200)
     (poly coords: [(interp/bezier t: t coords: coords1)
                    (interp/bezier t: t coords: coords2)
                    (interp/bezier t: t coords: coords3)]
@@ -78,4 +50,30 @@
     (repeat/rotate-mirrored fn: (address-of draw)
                             copies: {4 (gen/int min: 1 max: 10)})))
 
-(render)
+(fn (wash vol: 200
+          line-width: 70
+          line-segments: 5
+          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+          seed: 272)
+  (define 
+    w/3 (/ canvas/width 3)
+    h/3 (/ canvas/height 3))
+  (step (d from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]
+                     [w/3          (wash-n x: w/3          d: d seed: seed vol: vol)]
+                     [(* w/3 2)    (wash-n x: (* w/3 2)    d: d seed: seed vol: vol)]
+                     [canvas/width (wash-n x: canvas/width d: d seed: seed vol: vol)]]
+            colour: colour)
+
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[(wash-n x: 0             d: d seed: seed vol: vol) 0]
+                     [(wash-n x: h/3           d: d seed: seed vol: vol) h/3]
+                     [(wash-n x: (* h/3 2)     d: d seed: seed vol: vol) (* h/3 2)]
+                     [(wash-n x: canvas/height d: d seed: seed vol: vol) canvas/height]]
+            colour: colour)))
+
+(fn (wash-n x: 0 d: 0 seed: 0 vol: 1)
+  (+ d (* vol (prng/perlin x: x y: d z: seed))))

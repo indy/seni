@@ -29,12 +29,10 @@
                               b: {[0.014 0.900 0.972] (scalar)}
                               c: {[0.650 0.115 0.842] (scalar)}
                               d: {[0.571 0.494 0.150] (scalar)}
-                              alpha: 0.08)
-
-  step-1 (/ 1 200))
+                              alpha: 0.08))
 
 (fn (draw)
-    (loop (t from: 0 upto: 1 increment: step-1)
+    (fence (t quantity: 200)
           (poly coords: [(interp/bezier t: t coords: coords1)
                          (interp/bezier t: t coords: coords2)
                          (interp/bezier t: t coords: coords3)]

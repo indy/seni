@@ -596,6 +596,21 @@ void test_vm_vector(void)
   VM_COMPILE_VEC5("(fn (f a: [3 4 5 6 7]) a) (fn (x) (f a: [1 2 3 4 5])) (x)", 1, 2, 3, 4, 5);
 }
 
+void test_vm_fence(void)
+{
+  VM_COMPILE_F32("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) (vector/length vector: v)", 3);
+  VM_COMPILE_F32("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) (nth from: v n: 0)", 0);
+  VM_COMPILE_F32("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) (nth from: v n: 1)", 5);
+  VM_COMPILE_F32("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) (nth from: v n: 2)", 10);
+
+  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (vector/length vector: v)", 5);
+  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 0)", 0.0f);
+  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 1)", 0.25f);
+  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 2)", 0.5f);
+  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 3)", 0.75f);
+  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 4)", 1.0f);
+}
+
 void test_vm_col_rgb(void)
 {
   VM_COMPILE_COL_L("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4)", RGB, 0.1f, 0.2f, 0.3f, 0.4f);

@@ -675,6 +675,128 @@ void compile_step(seni_node *ast, seni_program *program)
   bc_exit_check->arg0.value.i = program->code_size - addr_exit_check;
 }
 
+
+void compile_fence(seni_node *ast, seni_program *program)
+{
+  // (fence (x from: 0 to: 5 quantity: 5) (+ 42 38))
+  
+  seni_node *parameters_node = safe_next(ast);
+  if (parameters_node->type != NODE_LIST) {
+    SENI_ERROR("expected a list that defines fence parameters");
+    return;
+  }
+
+  // the looping variable x
+  seni_node *name_node = parameters_node->value.first_child;
+
+  seni_node *from_node = NULL;
+  seni_node *to_node = NULL;
+  seni_node *quantity_node = NULL;
+  bool have_from = false;
+  bool have_to = false;
+  bool have_quantity = false;
+  
+  seni_node *node = name_node;
+
+  while (node) {
+    node = safe_next(node);  // the label part
+    if (node == NULL) {
+      break;
+    }
+    if (node->value.i == INAME_FROM) {
+      have_from = true;
+      from_node = safe_next(node);
+    }
+    if (node->value.i == INAME_TO) {
+      have_to = true;
+      to_node = safe_next(node);
+    }
+    if (node->value.i == INAME_QUANTITY) {
+      have_quantity = true;
+      quantity_node = safe_next(node);
+    }
+    node = safe_next(node); // the value part
+  }
+
+  // set looping variable x to 'from' value
+  if (have_from) {
+    compile(from_node, program);
+  } else {
+    // else default to 0
+    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
+  }
+
+  i32 looper_address = pop_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
+  if (looper_address == -1) {
+    SENI_ERROR("compile_fence: allocation failure");
+    return;
+  }
+
+  // compare looping variable against exit condition
+  // and jump if looping variable >= exit value
+  i32 addr_loop_start = program->code_size;
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, looper_address);
+
+  // so jump if looping variable > exit value
+
+  if (have_to) {
+    compile(to_node, program);
+  } else {
+    // else default to 1
+    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
+  }
+
+  program_emit_opcode_i32(program, GT, 0, 0);
+  program_emit_opcode_i32(program, NOT, 0, 0);
+
+  i32 addr_exit_check = program->code_size;
+  seni_bytecode *bc_exit_check = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
+
+  i32 pre_body_opcode_offset = program->opcode_offset;
+
+  // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
+  compile_rest(parameters_node, program);
+
+  i32 post_body_opcode_offset = program->opcode_offset;
+  i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
+  
+  // pop off any values that the body might leave on the stack
+  for(i32 i = 0;i < opcode_delta; i++) {
+    program_emit_opcode_i32(program, STORE, MEM_SEG_VOID, 0);
+  }
+
+  // load the looping variable
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, looper_address);
+
+  // calc increment: (to - from) / (quantity - 1)
+  if (have_to) {
+    compile(to_node, program);
+  } else {
+    // else default to 1
+    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
+  }
+  if (have_from) {
+    compile(from_node, program);
+  } else {
+    // else default to 0
+    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
+  }
+  program_emit_opcode_i32(program, SUB, 0, 0);
+
+  compile(quantity_node, program);
+  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
+  program_emit_opcode_i32(program, SUB, 0, 0);
+  program_emit_opcode_i32(program, DIV, 0, 0);
+
+  // increment the looping variable
+  program_emit_opcode_i32(program, ADD, 0, 0);
+  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, looper_address);
+
+  // loop back to the comparison
+  program_emit_opcode_i32(program, JUMP, -(program->code_size - addr_loop_start), 0);
+  bc_exit_check->arg0.value.i = program->code_size - addr_exit_check;
+}
+
 void compile_on_matrix_stack(seni_node *ast, seni_program *program)
 {
   program_emit_opcode_i32(program, MTX_LOAD, 0, 0);
@@ -1076,6 +1198,9 @@ seni_node *compile(seni_node *ast, seni_program *program)
         return safe_next(ast);
       case INAME_STEP:
         compile_step(ast, program);
+        return safe_next(ast);
+      case INAME_FENCE:
+        compile_fence(ast, program);
         return safe_next(ast);
       case INAME_ON_MATRIX_STACK:
         compile_on_matrix_stack(ast, program);
