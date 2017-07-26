@@ -351,7 +351,7 @@ seni_var *bind_vector_length(seni_vm *vm, i32 num_args)
 
   i32 len = var_vector_length(vector);
 
-  i32_as_var(&g_var_scratch, len);
+  f32_as_var(&g_var_scratch, (f32)len);
   
   return &g_var_scratch;
 }
@@ -909,8 +909,8 @@ seni_var *bind_col_split_complementary(seni_vm *vm, i32 num_args)
   // push the return values onto the stack as a vector
 
   vector_construct(&g_var_scratch);
-  append_to_vector_col(vm, &g_var_scratch, &ret_colour0);
-  append_to_vector_col(vm, &g_var_scratch, &ret_colour1);
+  vector_append_col(vm, &g_var_scratch, &ret_colour0);
+  vector_append_col(vm, &g_var_scratch, &ret_colour1);
 
   return &g_var_scratch;
 }
@@ -932,8 +932,8 @@ seni_var *bind_col_analagous(seni_vm *vm, i32 num_args)
 
   // push the return values onto the stack as a vector
   vector_construct(&g_var_scratch);
-  append_to_vector_col(vm, &g_var_scratch, &ret_colour0);
-  append_to_vector_col(vm, &g_var_scratch, &ret_colour1);
+  vector_append_col(vm, &g_var_scratch, &ret_colour0);
+  vector_append_col(vm, &g_var_scratch, &ret_colour1);
 
   return &g_var_scratch;
 }
@@ -955,8 +955,8 @@ seni_var *bind_col_triad(seni_vm *vm, i32 num_args)
 
   // push the return values onto the stack as a vector
   vector_construct(&g_var_scratch);
-  append_to_vector_col(vm, &g_var_scratch, &ret_colour0);
-  append_to_vector_col(vm, &g_var_scratch, &ret_colour1);
+  vector_append_col(vm, &g_var_scratch, &ret_colour0);
+  vector_append_col(vm, &g_var_scratch, &ret_colour1);
 
   return &g_var_scratch;
 }
@@ -1119,7 +1119,7 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
   v->f32_array[0] = a[0];
   v->f32_array[1] = a[1];
   v->f32_array[2] = a[2];
-  append_heap_var_to_vector(&g_var_scratch, v);
+  vector_append_heap_var(&g_var_scratch, v);
 
   v = var_get_from_heap(vm);
   v->type = VAR_FLOAT;
@@ -1127,7 +1127,7 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
   v->f32_array[0] = b[0];
   v->f32_array[1] = b[1];
   v->f32_array[2] = b[2];
-  append_heap_var_to_vector(&g_var_scratch, v);
+  vector_append_heap_var(&g_var_scratch, v);
 
   v = var_get_from_heap(vm);
   v->type = VAR_INT;
@@ -1135,7 +1135,7 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
   v->f32_array[0] = c[0];
   v->f32_array[1] = c[1];
   v->f32_array[2] = c[2];
-  append_heap_var_to_vector(&g_var_scratch, v);
+  vector_append_heap_var(&g_var_scratch, v);
 
   v = var_get_from_heap(vm);
   v->type = VAR_INT;
@@ -1143,7 +1143,7 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
   v->f32_array[0] = d[0];
   v->f32_array[1] = d[1];
   v->f32_array[2] = d[2];
-  append_heap_var_to_vector(&g_var_scratch, v);
+  vector_append_heap_var(&g_var_scratch, v);
 
   return &g_var_scratch;  
 }
@@ -1180,7 +1180,7 @@ seni_var *bind_col_build_bezier(seni_vm *vm, i32 num_args)
   v->f32_array[1] = a_rgb.element[1];
   v->f32_array[2] = a_rgb.element[2];
   v->f32_array[3] = a_rgb.element[3];
-  append_heap_var_to_vector(&g_var_scratch, v);
+  vector_append_heap_var(&g_var_scratch, v);
 
   v = var_get_from_heap(vm);
   v->type = VAR_FLOAT;
@@ -1189,7 +1189,7 @@ seni_var *bind_col_build_bezier(seni_vm *vm, i32 num_args)
   v->f32_array[1] = b_rgb.element[1];
   v->f32_array[2] = b_rgb.element[2];
   v->f32_array[3] = b_rgb.element[3];
-  append_heap_var_to_vector(&g_var_scratch, v);
+  vector_append_heap_var(&g_var_scratch, v);
 
   v = var_get_from_heap(vm);
   v->type = VAR_INT;
@@ -1198,7 +1198,7 @@ seni_var *bind_col_build_bezier(seni_vm *vm, i32 num_args)
   v->f32_array[1] = c_rgb.element[1];
   v->f32_array[2] = c_rgb.element[2];
   v->f32_array[3] = c_rgb.element[3];
-  append_heap_var_to_vector(&g_var_scratch, v);
+  vector_append_heap_var(&g_var_scratch, v);
 
   v = var_get_from_heap(vm);
   v->type = VAR_INT;
@@ -1207,7 +1207,7 @@ seni_var *bind_col_build_bezier(seni_vm *vm, i32 num_args)
   v->f32_array[1] = d_rgb.element[1];
   v->f32_array[2] = d_rgb.element[2];
   v->f32_array[3] = d_rgb.element[3];
-  append_heap_var_to_vector(&g_var_scratch, v);
+  vector_append_heap_var(&g_var_scratch, v);
 
   return &g_var_scratch;  
 }
@@ -1395,11 +1395,11 @@ seni_var *bind_prng_build(seni_vm *vm, i32 num_args)
   //
   seni_var *v;
   vector_construct(&g_var_scratch);
-  v = append_to_vector_i32(vm, &g_var_scratch, HEAP_STRUCTURE_PRNG);
+  v = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_PRNG);
   v->f32_array[0] = min;
   v->f32_array[1] = max;
-  append_to_vector_u64(vm, &g_var_scratch, prng_state.state);
-  append_to_vector_u64(vm, &g_var_scratch, prng_state.inc);
+  vector_append_u64(vm, &g_var_scratch, prng_state.state);
+  vector_append_u64(vm, &g_var_scratch, prng_state.inc);
 
   return &g_var_scratch;
 }
@@ -1441,7 +1441,7 @@ seni_var *bind_prng_values(seni_vm *vm, i32 num_args)
   vector_construct(&g_var_scratch);
   for (i32 i = 0; i < inum; i++) {
     value = seni_prng_f32_range(&prng_state, from.min, from.max);
-    append_to_vector_f32(vm, &g_var_scratch, value);
+    vector_append_f32(vm, &g_var_scratch, value);
   }
 
   // update the state and inc values stored in the vector on the vm's stack
@@ -1542,15 +1542,15 @@ seni_var *bind_interp_build(seni_vm *vm, i32 num_args)
   seni_var *v;
 
   vector_construct(&g_var_scratch);
-  v = append_to_vector_i32(vm, &g_var_scratch, HEAP_STRUCTURE_INTERP);
+  v = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_INTERP);
   v->f32_array[0] = from_m;
   v->f32_array[1] = to_m;
   v->f32_array[2] = from_c;
   v->f32_array[3] = to_c;
-  v = append_to_vector_i32(vm, &g_var_scratch, clamping);
+  v = vector_append_i32(vm, &g_var_scratch, clamping);
   v->f32_array[0] = to[0];
   v->f32_array[1] = to[1];
-  append_to_vector_i32(vm, &g_var_scratch, mapping);
+  vector_append_i32(vm, &g_var_scratch, mapping);
   
   return &g_var_scratch;
 }
@@ -1943,12 +1943,12 @@ seni_var *bind_focal_generic(seni_vm *vm, i32 num_args, seni_focal_type type)
   seni_var *v;
   
   vector_construct(&g_var_scratch);
-  v = append_to_vector_i32(vm, &g_var_scratch, HEAP_STRUCTURE_FOCAL);
+  v = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_FOCAL);
   v->f32_array[0] = x;
   v->f32_array[1] = y;
   v->f32_array[2] = distance;
-  append_to_vector_i32(vm, &g_var_scratch, type);
-  append_to_vector_i32(vm, &g_var_scratch, mapping);
+  vector_append_i32(vm, &g_var_scratch, type);
+  vector_append_i32(vm, &g_var_scratch, mapping);
 
   return &g_var_scratch;
 }

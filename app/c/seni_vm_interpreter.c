@@ -91,34 +91,17 @@ void vector_construct(seni_var *head)
   head->value.v = NULL;           // attach vec_rc to vec_head
 }
 
-void append_heap_var_to_vector(seni_var *head, seni_var *val)
+void vector_append_heap_var(seni_var *head, seni_var *val)
 {
   // assuming that head is VAR_VECTOR and val is a seni_var from the heap
   DL_APPEND(head->value.v, val);
 }
 
-bool append_to_vector(seni_vm *vm, seni_var *head, seni_var *val)
-{
-  // assuming that head is VAR_VECTOR
-  
-  seni_var *child_value = var_get_from_heap(vm);
-  if (child_value == NULL) {
-    SENI_ERROR("cannot allocate child_value from pool");
-    return false;
-  }
-
-  var_copy(child_value, val);
-
-  DL_APPEND(head->value.v, child_value);
-  
-  return true;
-}
-
-seni_var *append_to_vector_i32(seni_vm *vm, seni_var *head, i32 val)
+seni_var *vector_append_i32(seni_vm *vm, seni_var *head, i32 val)
 {
   seni_var *v = var_get_from_heap(vm);
   if (v == NULL) {
-    SENI_ERROR("append_to_vector_i32");
+    SENI_ERROR("vector_append_i32");
     return NULL;
   }
   
@@ -130,11 +113,11 @@ seni_var *append_to_vector_i32(seni_vm *vm, seni_var *head, i32 val)
   return v;
 }
 
-seni_var *append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
+seni_var *vector_append_f32(seni_vm *vm, seni_var *head, f32 val)
 {
   seni_var *v = var_get_from_heap(vm);
   if (v == NULL) {
-    SENI_ERROR("append_to_vector_f32");
+    SENI_ERROR("vector_append_f32");
     return NULL;
   }
   
@@ -146,11 +129,11 @@ seni_var *append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val)
   return v;
 }
 
-seni_var *append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val)
+seni_var *vector_append_u64(seni_vm *vm, seni_var *head, u64 val)
 {
   seni_var *v = var_get_from_heap(vm);
   if (v == NULL) {
-    SENI_ERROR("append_to_vector_u64");
+    SENI_ERROR("vector_append_u64");
     return NULL;
   }
   v->type = VAR_LONG;
@@ -161,11 +144,11 @@ seni_var *append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val)
   return v;
 }
 
-seni_var *append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col)
+seni_var *vector_append_col(seni_vm *vm, seni_var *head, seni_colour *col)
 {
   seni_var *v = var_get_from_heap(vm);
   if (v == NULL) {
-    SENI_ERROR("append_to_vector_col");
+    SENI_ERROR("vector_append_col");
     return NULL;
   }
 
@@ -667,9 +650,22 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
 
       STACK_POP;
       // v is the vector
+
       if (v->type != VAR_VECTOR) {
-        SENI_ERROR("APPEND expects the 2nd item on the stack to be a vector\n");
-        return false;
+        if (v->type == VAR_2D) {
+          // convert the VAR_2D into a VAR_VECTOR
+          f1 = v->f32_array[0];
+          f2 = v->f32_array[1];
+
+          vector_construct(v);
+          vector_append_f32(vm, v, f1);
+          vector_append_f32(vm, v, f2);
+          
+        } else {
+          SENI_ERROR("APPEND expects the 2nd item on the stack to be a vector\n");
+          pretty_print_seni_var(v, "APPEND expects a vector");
+          return false;
+        }
       }
 
       var_copy(child_value, src);

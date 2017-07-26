@@ -8,12 +8,11 @@
 seni_var *var_get_from_heap(seni_vm *vm);
 
 void      vector_construct(seni_var *head);
-void      append_heap_var_to_vector(seni_var *head, seni_var *val);
-bool      append_to_vector(seni_vm *vm, seni_var *head, seni_var *val);
-seni_var *append_to_vector_i32(seni_vm *vm, seni_var *head, i32 val);
-seni_var *append_to_vector_f32(seni_vm *vm, seni_var *head, f32 val);
-seni_var *append_to_vector_u64(seni_vm *vm, seni_var *head, u64 val);
-seni_var *append_to_vector_col(seni_vm *vm, seni_var *head, seni_colour *col);
+void      vector_append_heap_var(seni_var *head, seni_var *val);
+seni_var *vector_append_i32(seni_vm *vm, seni_var *head, i32 val);
+seni_var *vector_append_f32(seni_vm *vm, seni_var *head, f32 val);
+seni_var *vector_append_u64(seni_vm *vm, seni_var *head, u64 val);
+seni_var *vector_append_col(seni_vm *vm, seni_var *head, seni_colour *col);
 
 bool      vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info);
 

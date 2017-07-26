@@ -596,6 +596,15 @@ void test_vm_vector(void)
   VM_COMPILE_VEC5("(fn (f a: [3 4 5 6 7]) a) (fn (x) (f a: [1 2 3 4 5])) (x)", 1, 2, 3, 4, 5);
 }
 
+void test_vm_vector_append(void)
+{
+  VM_COMPILE_F32("(define v []) (vector/append v 100) (vector/length vector: v)", 1);
+  VM_COMPILE_F32("(define v [1]) (vector/append v 100) (vector/length vector: v)", 2);
+  VM_COMPILE_F32("(define v [1 2]) (vector/append v 100) (vector/length vector: v)", 3);
+  VM_COMPILE_F32("(define v [1 2 3]) (vector/append v 100) (vector/length vector: v)", 4);
+  VM_COMPILE_F32("(define v [1 2 3 4]) (vector/append v 100) (vector/length vector: v)", 5);
+}
+
 void test_vm_fence(void)
 {
   VM_COMPILE_F32("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) (vector/length vector: v)", 3);
@@ -772,6 +781,8 @@ int main(void)
   RUN_TEST(test_vm_destructure);
   RUN_TEST(test_vm_2d);
   RUN_TEST(test_vm_vector);
+  RUN_TEST(test_vm_vector_append);
+  RUN_TEST(test_vm_fence);
   RUN_TEST(test_vm_col_rgb);
   RUN_TEST(test_vm_math);
   RUN_TEST(test_vm_prng);
