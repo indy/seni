@@ -1,11 +1,11 @@
 (define [cx cy] [(/ canvas/width 2) (/ canvas/height 2)])
 
 (fn (render-circle position: [0 0]
-                   step: 0
+                   n: 0
                    t: 0)
   (define
     rad (- {415 (gen/int min: 200 max: 600)}
-           (* step {0.58 (gen/scalar max: 2)}))
+           (* n {0.58 (gen/scalar max: 2)}))
     [px py] position)
   (circle position: [(+ cx (* px rad)) (+ cy (* py rad))]
           radius: {11 (gen/int min: 5 max: 50)}

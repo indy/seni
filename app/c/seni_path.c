@@ -16,7 +16,7 @@ void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y)
   
   i32 arg = vm->fp - 1;
 
-  i32 istep = get_argument_mapping(fn_info, INAME_STEP);
+  i32 istep = get_argument_mapping(fn_info, INAME_N);
   if (istep != -1) {
     // value for step
     dest = &(vm->stack[arg - istep]);
