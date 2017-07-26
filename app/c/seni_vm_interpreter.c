@@ -57,112 +57,9 @@ void gc_sweep(seni_vm *vm)
   }
 }
 
-seni_var *var_get_from_heap(seni_vm *vm)
-{
-  seni_var *head = vm->heap_avail;
-
-  if (head != NULL) {
-    DL_DELETE(vm->heap_avail, head);
-  } else {
-    SENI_ERROR("out of heap memory error");
-    return NULL;
-  }
-
-  vm->heap_avail_size--;
-
-  head->next = NULL;
-  head->prev = NULL;
-
-  head->value.i = 0;
-  head->type = VAR_INT;         // just make sure that it isn't VAR_VECTOR from a previous allocation
-
-  return head;
-}
-
-// [ ] <<- this is the VAR_VECTOR (value.v points to the first heap allocated seni_var)
-//  |
-//  v 
-// [4] -> [7] -> [3] -> [5] -> NULL  <<- these are heap allocated seni_vars
-//
-void vector_construct(seni_var *head)
-{
-  // assuming that it's ok to wipe out head->value.v
-  head->type = VAR_VECTOR;
-  head->value.v = NULL;           // attach vec_rc to vec_head
-}
-
-void vector_append_heap_var(seni_var *head, seni_var *val)
-{
-  // assuming that head is VAR_VECTOR and val is a seni_var from the heap
-  DL_APPEND(head->value.v, val);
-}
-
-seni_var *vector_append_i32(seni_vm *vm, seni_var *head, i32 val)
-{
-  seni_var *v = var_get_from_heap(vm);
-  if (v == NULL) {
-    SENI_ERROR("vector_append_i32");
-    return NULL;
-  }
-  
-  v->type = VAR_INT;
-  v->value.i = val;
-
-  DL_APPEND(head->value.v, v);
-
-  return v;
-}
-
-seni_var *vector_append_f32(seni_vm *vm, seni_var *head, f32 val)
-{
-  seni_var *v = var_get_from_heap(vm);
-  if (v == NULL) {
-    SENI_ERROR("vector_append_f32");
-    return NULL;
-  }
-  
-  v->type = VAR_FLOAT;
-  v->value.f = val;
-
-  DL_APPEND(head->value.v, v);
-
-  return v;
-}
-
-seni_var *vector_append_u64(seni_vm *vm, seni_var *head, u64 val)
-{
-  seni_var *v = var_get_from_heap(vm);
-  if (v == NULL) {
-    SENI_ERROR("vector_append_u64");
-    return NULL;
-  }
-  v->type = VAR_LONG;
-  v->value.l = val;
-
-  DL_APPEND(head->value.v, v);
-
-  return v;
-}
-
-seni_var *vector_append_col(seni_vm *vm, seni_var *head, seni_colour *col)
-{
-  seni_var *v = var_get_from_heap(vm);
-  if (v == NULL) {
-    SENI_ERROR("vector_append_col");
-    return NULL;
-  }
-
-  colour_as_var(v, col);
-
-  DL_APPEND(head->value.v, v);
-
-  return v;
-}
-
 // **************************************************
 // VM bytecode interpreter
 // **************************************************
-
 
 seni_var *arg_memory_from_iname(seni_fn_info *fn_info, i32 iname, seni_var *args)
 {
@@ -330,7 +227,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
         
         src = &(vm->stack[fp - bc->arg1.value.i - 1]);
 #ifdef TRACE_PRINT_OPCODES
-        pretty_print_seni_var(src, "---");
+        var_pretty_print(src, "---");
         SENI_LOG("--- hop_back is %d fp is %d\n", hop_back, fp);
 #endif
 
@@ -382,7 +279,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
         // check the current value of dest,
         var_copy(dest, v);
 #ifdef TRACE_PRINT_OPCODES
-        pretty_print_seni_var(dest, "---");
+        var_pretty_print(dest, "---");
         SENI_LOG("--- fp is %d\n", vm->fp);
 #endif        
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
@@ -663,7 +560,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
           
         } else {
           SENI_ERROR("APPEND expects the 2nd item on the stack to be a vector\n");
-          pretty_print_seni_var(v, "APPEND expects a vector");
+          var_pretty_print(v, "APPEND expects a vector");
           return false;
         }
       }
@@ -711,7 +608,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
         
       } else {
         SENI_ERROR("PILE: expected to work with either VAR_2D or a Vector");
-        pretty_print_seni_var(v, "PILE input");
+        var_pretty_print(v, "PILE input");
       }
       
       break;

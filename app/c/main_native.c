@@ -126,7 +126,7 @@ void print_compiled_program(char *source)
 
   // print
   printf("%s\n", source);
-  pretty_print_program(prog);
+  program_pretty_print(prog);
 
   // cleanup
   program_free(prog);

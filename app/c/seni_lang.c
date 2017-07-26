@@ -124,7 +124,28 @@ char *var_type_name(seni_var *var)
   }
 }
 
-i32 var_vector_length(seni_var *var)
+void pretty_print_seni_node(seni_node *node, char* msg)
+{
+  if (node == NULL) {
+    SENI_LOG("NULL NODE %s", msg);
+    return;
+  }
+  SENI_LOG("%s %s", node_type_name(node), msg);
+}
+
+// [ ] <<- this is the VAR_VECTOR (value.v points to the first heap allocated seni_var)
+//  |
+//  v 
+// [4] -> [7] -> [3] -> [5] -> NULL  <<- these are heap allocated seni_vars
+//
+void vector_construct(seni_var *head)
+{
+  // assuming that it's ok to wipe out head->value.v
+  head->type = VAR_VECTOR;
+  head->value.v = NULL;           // attach vec_rc to vec_head
+}
+
+i32 vector_length(seni_var *var)
 {
   if (var->type != VAR_VECTOR) {
     return 0;
@@ -141,13 +162,94 @@ i32 var_vector_length(seni_var *var)
   return len;
 }
 
-void pretty_print_seni_node(seni_node *node, char* msg)
+void vector_append_heap_var(seni_var *head, seni_var *val)
 {
-  if (node == NULL) {
-    SENI_LOG("NULL NODE %s", msg);
-    return;
+  // assuming that head is VAR_VECTOR and val is a seni_var from the heap
+  DL_APPEND(head->value.v, val);
+}
+
+seni_var *vector_append_i32(seni_vm *vm, seni_var *head, i32 val)
+{
+  seni_var *v = var_get_from_heap(vm);
+  if (v == NULL) {
+    SENI_ERROR("vector_append_i32");
+    return NULL;
   }
-  SENI_LOG("%s %s", node_type_name(node), msg);
+  
+  v->type = VAR_INT;
+  v->value.i = val;
+
+  DL_APPEND(head->value.v, v);
+
+  return v;
+}
+
+seni_var *vector_append_f32(seni_vm *vm, seni_var *head, f32 val)
+{
+  seni_var *v = var_get_from_heap(vm);
+  if (v == NULL) {
+    SENI_ERROR("vector_append_f32");
+    return NULL;
+  }
+  
+  v->type = VAR_FLOAT;
+  v->value.f = val;
+
+  DL_APPEND(head->value.v, v);
+
+  return v;
+}
+
+seni_var *vector_append_u64(seni_vm *vm, seni_var *head, u64 val)
+{
+  seni_var *v = var_get_from_heap(vm);
+  if (v == NULL) {
+    SENI_ERROR("vector_append_u64");
+    return NULL;
+  }
+  v->type = VAR_LONG;
+  v->value.l = val;
+
+  DL_APPEND(head->value.v, v);
+
+  return v;
+}
+
+seni_var *vector_append_col(seni_vm *vm, seni_var *head, seni_colour *col)
+{
+  seni_var *v = var_get_from_heap(vm);
+  if (v == NULL) {
+    SENI_ERROR("vector_append_col");
+    return NULL;
+  }
+
+  colour_as_var(v, col);
+
+  DL_APPEND(head->value.v, v);
+
+  return v;
+}
+
+seni_var *var_get_from_heap(seni_vm *vm)
+{
+  seni_var *head = vm->heap_avail;
+
+  if (head != NULL) {
+    DL_DELETE(vm->heap_avail, head);
+  } else {
+    SENI_ERROR("out of heap memory error");
+    return NULL;
+  }
+
+  vm->heap_avail_size--;
+
+  head->next = NULL;
+  head->prev = NULL;
+
+  head->value.i = 0;
+  head->type = VAR_INT;         // just make sure that it isn't VAR_VECTOR from a previous allocation
+
+  return head;
 }
 
 void var_copy(seni_var *dest, seni_var *src)
@@ -181,10 +283,10 @@ void var_copy(seni_var *dest, seni_var *src)
   }
 }
 
-void pretty_print_seni_var(seni_var *var, char* msg)
+void var_pretty_print(seni_var *var, char* msg)
 {
   if (var == NULL) {
-    SENI_ERROR("pretty_print_seni_var: given NULL");
+    SENI_ERROR("var_pretty_print: given NULL");
     return;
   }
   
@@ -208,7 +310,7 @@ void pretty_print_seni_var(seni_var *var, char* msg)
     break;
   case USE_V:
     if (var->type == VAR_VECTOR) {
-      SENI_PRINT("%s: %s : length %d", msg, type, var_vector_length(var));
+      SENI_PRINT("%s: %s : length %d", msg, type, vector_length(var));
     } else {
       SENI_PRINT("%s: %s", msg,  type);
     }
@@ -431,7 +533,7 @@ void pretty_print_bytecode(i32 ip, seni_bytecode *b)
       break;
     case USE_V:
       if (b->arg1.type == VAR_VECTOR) {
-        PRINT_BC(BUF_ARGS, "[..]len %d", var_vector_length(&(b->arg1)));
+        PRINT_BC(BUF_ARGS, "[..]len %d", vector_length(&(b->arg1)));
       } else {
         PRINT_BC(BUF_ARGS, "[..]");
       }
@@ -462,7 +564,7 @@ void pretty_print_bytecode(i32 ip, seni_bytecode *b)
   SENI_PRINT("%s", buf);
 }
 
-void pretty_print_program(seni_program *program)
+void program_pretty_print(seni_program *program)
 {
   for (i32 i = 0; i < program->code_size; i++) {
     seni_bytecode *b = &(program->code[i]);
@@ -582,7 +684,7 @@ void vm_free(seni_vm *vm)
   free(vm);
 }
 
-void pretty_print_vm(seni_vm *vm, char* msg)
+void vm_pretty_print(seni_vm *vm, char* msg)
 {
   SENI_LOG("%s\tvm: fp:%d sp:%d ip:%d local:%d",
              msg,

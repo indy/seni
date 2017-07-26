@@ -92,7 +92,7 @@ typedef struct {
 #define READ_STACK_ARGS_END };
 
 #ifdef CHECK_STACK_ARGS
-#define IS_F32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected f32 for: %s", #n); pretty_print_seni_var(value_1, "this is what was received"); }
+#define IS_F32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected f32 for: %s", #n); var_pretty_print(value_1, "this is what was received"); }
 #define IS_I32(n) if (value_1->type != VAR_INT) { SENI_ERROR("expected i32 for: %s", #n); }
 #define IS_COL(n) if (value_1->type != VAR_COLOUR) { SENI_ERROR("expected colour for: %s", #n); }
 #define IS_LONG(n) if (value_1->type != VAR_LONG) { SENI_ERROR("expected long for: %s", #n); }
@@ -297,7 +297,7 @@ seni_var *bind_debug_print(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_VAR(INAME_VALUE, value);
   READ_STACK_ARGS_END;
 
-  pretty_print_seni_var(value, "debug");
+  var_pretty_print(value, "debug");
 
   return &g_var_true;
 }
@@ -349,7 +349,7 @@ seni_var *bind_vector_length(seni_vm *vm, i32 num_args)
     return &g_var_true;
   }
 
-  i32 len = var_vector_length(vector);
+  i32 len = vector_length(vector);
 
   f32_as_var(&g_var_scratch, (f32)len);
   
