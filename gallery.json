@@ -1,5 +1,5 @@
 [
-  {"id":111,"name":"c/vmtest","image":"img/seni/blank.png"},
+  {"id":111,"name":"c/local/vmtest","image":"img/seni/blank.png"},
   {"id":110,"name":"c/1643-paren","image":"img/seni/1643-paren.png"},
   {"id":109,"name":"c/1643-thorn","image":"img/seni/1643-thorn.png"},
   {"id":108,"name":"c/1643-hyp","image":"img/seni/1643-hyp.png"},

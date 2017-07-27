@@ -1,13 +1,11 @@
-* TODO [0/12]
+* TODO [0/7]
   1. [ ] test gc
-  2. [ ] look into replacing append_to_vector with append_heap_var_to_vector
-  3. [ ] maybe have a required specifier in functions?
-  4. [ ] poly should also accept a uv parameter
-  5. [ ] ensure that there's a dist folder before running npm run build:wasm
-  8. [ ] structs for compile, runtim, performance info
-  10. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  11. [ ] should ADD, SUB, MUL, DIV, NEG be updated to take into account VAR_2D?
-  12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  2. [ ] maybe have a required specifier in functions?
+  3. [ ] poly should also accept a uv parameter
+  4. [ ] ensure that there's a dist folder before running npm run build:wasm
+  5. [ ] structs for compile, runtim, performance info
+  6. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  7. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
@@ -786,3 +784,16 @@ call_no_arg_function
   opcodes executed
   success or failure in execution
 
+
+
+
+* genetic algorithm
+
+  is the alterable code lexed and parsed into an AST?
+
+  compile and collect the alterable programs (traits?)
+  - ga_build_traits
+  - ga_create_from_initial_values(traits)
+  - ga_create_from_traits(traits, seed)
+  - ga_next_generation
+  
