@@ -789,7 +789,8 @@ call_no_arg_function
 
 * genetic algorithm
 
-  is the alterable code lexed and parsed into an AST?
+  Q. is the alterable code lexed and parsed into an AST?
+  A. yes, node->parameter_ast
 
   compile and collect the alterable programs (traits?)
   - ga_build_traits
