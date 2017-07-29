@@ -65,6 +65,10 @@ typedef struct seni_node {
   struct seni_node *next;
 } seni_node;
 
+seni_node *safe_next(seni_node *expr);
+seni_node *safe_prev(seni_node *expr);
+char      *node_type_name(seni_node *node);
+
 // start at 128 just to make it easier to spot mistakes when transforming seni_node_type -> seni_var_type
 typedef enum {
   VAR_INT = 128, // value.i
@@ -84,6 +88,8 @@ typedef enum {
   USE_L,                        // long
   USE_V                         // pointer to seni_var
 } seni_value_in_use;
+
+seni_value_in_use get_value_in_use(seni_var_type type);
 
 typedef struct seni_var {
   seni_var_type type;
@@ -105,6 +111,13 @@ typedef struct seni_var {
   struct seni_var *prev;
   struct seni_var *next;
 } seni_var;
+
+char     *var_type_name(seni_var *var);
+void      v2_as_var(seni_var *out, f32 x, f32 y);
+void      f32_as_var(seni_var *out, f32 f);
+void      i32_as_var(seni_var *out, i32 i);
+void      colour_as_var(seni_var *out, seni_colour *c);
+
 
 // Memory Segments
 //
@@ -194,12 +207,15 @@ typedef struct {
 
 } seni_program;
 
+char           *opcode_name(seni_opcode opcode);
+
 void           program_free(seni_program *program);
 i32            program_stop_location(seni_program *program);
 void           program_pretty_print(seni_program *program);
 
 seni_program  *program_allocate(i32 code_max_size);
 seni_program  *program_compile(seni_env *env, i32 program_max_size, char *source);
+void bytecode_pretty_print(i32 ip, seni_bytecode *b);
 
 typedef struct seni_vm {
   seni_program *program;
@@ -232,11 +248,6 @@ typedef struct seni_vm {
   i32 local;                       // per-frame segment of memory for local variables
 
 } seni_vm;
-  
-seni_value_in_use get_value_in_use(seni_var_type type);
-  
-char     *node_type_name(seni_node *node);
-char     *var_type_name(seni_var *var);
 
 seni_vm  *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices);
 void      vm_reset(seni_vm *vm);
@@ -245,8 +256,6 @@ void      vm_free_render_data(seni_vm *vm);
 void      vm_pretty_print(seni_vm *vm, char* msg);
 
 seni_var *stack_peek(seni_vm *vm);
-
-char     *opcode_name(seni_opcode opcode);
 
 void      vector_construct(seni_var *head);
 i32       vector_length(seni_var *var);
@@ -259,11 +268,6 @@ seni_var *vector_append_col(seni_vm *vm, seni_var *head, seni_colour *col);
 seni_var *var_get_from_heap(seni_vm *vm);
 void      var_copy(seni_var *dest, seni_var *src);
 void      var_pretty_print(seni_var *var, char* msg);
-
-void      v2_as_var(seni_var *out, f32 x, f32 y);
-void      f32_as_var(seni_var *out, f32 f);
-void      i32_as_var(seni_var *out, i32 i);
-void      colour_as_var(seni_var *out, seni_colour *c);
 
 void      vm_debug_info_reset(seni_vm *vm);
 void      vm_debug_info_print(seni_vm *vm);

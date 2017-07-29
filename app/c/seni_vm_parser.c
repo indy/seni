@@ -552,22 +552,6 @@ seni_node *consume_item(seni_word_lut *wlut, char **src)
   return NULL;
 }
 
-char *node_type_name(seni_node *node)
-{
-  switch(node->type) {
-  case NODE_LIST:       return "NODE_LIST";
-  case NODE_VECTOR:     return "NODE_VECTOR";
-  case NODE_INT:        return "NODE_INT";
-  case NODE_FLOAT:      return "NODE_FLOAT";
-  case NODE_NAME:       return "NODE_NAME";
-  case NODE_LABEL:      return "NODE_LABEL";
-  case NODE_STRING:     return "NODE_STRING";
-  case NODE_WHITESPACE: return "NODE_WHITESPACE";
-  case NODE_COMMENT:    return "NODE_COMMENT";
-  default: return "unknown seni_node type";
-  };
-}
-
 void parser_free_nodes(seni_node *nodes)
 {
   seni_node *node = nodes;

@@ -10,28 +10,6 @@ i32 opcode_offset[] = {
 #undef OPCODE
 };
 
-seni_node *safe_next(seni_node *expr)
-{
-  seni_node *sibling = expr->next;
-  while(sibling && (sibling->type == NODE_WHITESPACE ||
-                    sibling->type == NODE_COMMENT)) {
-    sibling = sibling->next;
-  }
-
-  return sibling;
-}
-
-seni_node *safe_prev(seni_node *expr)
-{
-  seni_node *sibling = expr->prev;
-  while(sibling && (sibling->type == NODE_WHITESPACE ||
-                    sibling->type == NODE_COMMENT)) {
-    sibling = sibling->prev;
-  }
-
-  return sibling;
-}
-
 seni_bytecode *program_emit_opcode(seni_program *program, seni_opcode op, seni_var *arg0, seni_var *arg1)
 {
   if (program->code_size >= program->code_max_size) {

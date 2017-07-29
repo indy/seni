@@ -206,7 +206,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
     bc = &(program->code[ip++]);
 
 #ifdef TRACE_PRINT_OPCODES
-    pretty_print_bytecode(ip-1, bc); // ip has been incremented so back up to get the current ip
+    bytecode_pretty_print(ip-1, bc); // ip has been incremented so back up to get the current ip
 #endif
     
     switch(bc->op) {

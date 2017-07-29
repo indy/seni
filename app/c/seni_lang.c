@@ -7,27 +7,13 @@
 #include "seni_vm_parser.h"
 #include "seni_vm_compiler.h"
 
+#include "seni_ga.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
 
 #include "utlist.h"
-
-#ifdef SENI_DEBUG_MODE
-
-void vm_debug_info_reset(seni_vm *vm)
-{
-  vm->opcodes_executed = 0;
-}
-
-void vm_debug_info_print(seni_vm *vm)
-{
-  SENI_PRINT("*** vm_debug_info_print ***");
-  SENI_PRINT("bytecodes executed:\t%llu", (long long unsigned int)(vm->opcodes_executed));
-  SENI_PRINT("bytecode execution time:\t%.2f msec", vm->execution_time);
-}
-
-#endif
 
 void wlut_free_keywords(seni_word_lut *wlut)
 {
@@ -91,6 +77,43 @@ char *wlut_get_word(seni_word_lut *word_lut, i32 iword)
   return "UNKNOWN WORD";
 }
 
+seni_node *safe_next(seni_node *expr)
+{
+  seni_node *sibling = expr->next;
+  while(sibling && (sibling->type == NODE_WHITESPACE ||
+                    sibling->type == NODE_COMMENT)) {
+    sibling = sibling->next;
+  }
+
+  return sibling;
+}
+
+seni_node *safe_prev(seni_node *expr)
+{
+  seni_node *sibling = expr->prev;
+  while(sibling && (sibling->type == NODE_WHITESPACE ||
+                    sibling->type == NODE_COMMENT)) {
+    sibling = sibling->prev;
+  }
+
+  return sibling;
+}
+
+char *node_type_name(seni_node *node)
+{
+  switch(node->type) {
+  case NODE_LIST:       return "NODE_LIST";
+  case NODE_VECTOR:     return "NODE_VECTOR";
+  case NODE_INT:        return "NODE_INT";
+  case NODE_FLOAT:      return "NODE_FLOAT";
+  case NODE_NAME:       return "NODE_NAME";
+  case NODE_LABEL:      return "NODE_LABEL";
+  case NODE_STRING:     return "NODE_STRING";
+  case NODE_WHITESPACE: return "NODE_WHITESPACE";
+  case NODE_COMMENT:    return "NODE_COMMENT";
+  default: return "unknown seni_node type";
+  };
+}
 
 seni_value_in_use get_value_in_use(seni_var_type type)
 {
@@ -124,13 +147,345 @@ char *var_type_name(seni_var *var)
   }
 }
 
-void pretty_print_seni_node(seni_node *node, char* msg)
+void v2_as_var(seni_var *out, f32 x, f32 y)
 {
-  if (node == NULL) {
-    SENI_LOG("NULL NODE %s", msg);
-    return;
+  out->type = VAR_2D;
+  out->f32_array[0] = x;
+  out->f32_array[1] = y;
+}
+
+void f32_as_var(seni_var *out, f32 f)
+{
+  out->type = VAR_FLOAT;
+  out->value.f = f;
+}
+
+void i32_as_var(seni_var *out, i32 i)
+{
+  out->type = VAR_INT;
+  out->value.i = i;
+}
+
+void colour_as_var(seni_var *out, seni_colour *c)
+{
+  out->type = VAR_COLOUR;
+
+  out->value.i = (i32)(c->format);
+
+  out->f32_array[0] = c->element[0];
+  out->f32_array[1] = c->element[1];
+  out->f32_array[2] = c->element[2];
+  out->f32_array[3] = c->element[3];  
+}
+
+seni_env *env_construct()
+{
+  seni_env *e = (seni_env *)calloc(1, sizeof(seni_env));
+  e->wl = wlut_allocate();
+
+  declare_bindings(e->wl, e);
+  
+  return e;
+}
+
+void env_free(seni_env *e)
+{
+  wlut_free(e->wl);
+  free(e);
+}
+
+void env_post_interpret_cleanup(seni_env *e)
+{
+  wlut_reset_words(e->wl);
+}
+
+// **************************************************
+// Program
+// **************************************************
+
+char *opcode_name(seni_opcode opcode)
+{
+#define STR(x) #x
+  
+  switch(opcode) {
+#define OPCODE(id,_) case id: return STR(id);
+#include "seni_opcodes.h"
+#undef OPCODE
+  default:
+    return "unknown opcode";
   }
-  SENI_LOG("%s %s", node_type_name(node), msg);
+#undef STR
+}
+
+seni_program *program_allocate(i32 code_max_size)
+{
+  seni_program *program = (seni_program *)calloc(1, sizeof(seni_program));
+
+  program->code = (seni_bytecode *)calloc(code_max_size, sizeof(seni_bytecode));
+  program->code_max_size = code_max_size;
+  program->code_size = 0;
+  program->opcode_offset = 0;
+
+  return program;
+}
+
+void program_free(seni_program *program)
+{
+  free(program->code);
+  free(program);
+}
+
+seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
+{
+  seni_node *ast = parser_parse(env->wl, source);
+
+  seni_program *program = compile_program(ast, program_max_size, env->wl);
+
+  // HACK
+  ga_build_traits(ast, env->wl);
+  
+  parser_free_nodes(ast);
+
+  return program;
+}
+
+i32 program_stop_location(seni_program *program)
+{
+  // the final opcode in the program will always be a STOP
+  return program->code_size - 1;
+}
+
+char *memory_segment_name(seni_memory_segment_type segment)
+{
+  switch(segment) {
+  case MEM_SEG_ARGUMENT:
+    return "ARG";
+  case MEM_SEG_LOCAL:
+    return "LOCAL";
+  case MEM_SEG_GLOBAL:
+    return "GLOBAL";
+  case MEM_SEG_CONSTANT:
+    return "CONST";
+  case MEM_SEG_VOID:
+    return "VOID";
+  }
+  return "UNKNOWN";
+}
+
+void bytecode_pretty_print(i32 ip, seni_bytecode *b)
+{
+#define PPC_BUF_SIZE 200
+
+  char buf[PPC_BUF_SIZE];
+  int buf_len = 0;
+  char *buf_start = &buf[0];
+
+#define PRINT_BC buf_len += seni_sprintf
+#define BUF_ARGS buf_start + buf_len, PPC_BUF_SIZE - buf_len
+
+  buf[0] = 0;  
+  
+  if (b->op == LOAD || b->op == STORE || b->op == FLU_STORE) {
+
+    char *seg_name = memory_segment_name((seni_memory_segment_type)b->arg0.value.i);
+
+    if (b->op == LOAD || b->op == STORE) {
+      PRINT_BC(BUF_ARGS, "%d\t%s\t\t%s\t\t", ip, opcode_name(b->op), seg_name);
+    } else if (b->op == FLU_STORE) {
+      PRINT_BC(BUF_ARGS, "%d\t%s\t%s\t\t", ip, opcode_name(b->op), seg_name);
+    } 
+
+    seni_value_in_use using = get_value_in_use(b->arg1.type);
+    switch(using) {
+    case USE_I:
+      if (b->arg1.type == VAR_COLOUR) {
+        i32 type = b->arg1.value.i;
+        f32 *a = b->arg1.f32_array;
+        PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0], a[1], a[2], a[3]);
+      } else {
+        PRINT_BC(BUF_ARGS, "%d", b->arg1.value.i);
+      }
+      break;
+    case USE_F:
+      PRINT_BC(BUF_ARGS, "%.2f", b->arg1.value.f);
+      break;
+    case USE_L:
+      PRINT_BC(BUF_ARGS, "%llu", (long long unsigned int)(b->arg1.value.l));
+      break;
+    case USE_V:
+      if (b->arg1.type == VAR_VECTOR) {
+        PRINT_BC(BUF_ARGS, "[..]len %d", vector_length(&(b->arg1)));
+      } else {
+        PRINT_BC(BUF_ARGS, "[..]");
+      }
+      break;
+    default:
+      PRINT_BC(BUF_ARGS, "unknown type");
+    }
+    
+  } else if (b->op == JUMP_IF || b->op == JUMP) {
+    PRINT_BC(BUF_ARGS, "%d\t%s\t\t", ip, opcode_name(b->op));
+    if (b->arg0.value.i > 0) {
+      PRINT_BC(BUF_ARGS, "+%d", b->arg0.value.i);
+    } else if (b->arg0.value.i < 0) {
+      PRINT_BC(BUF_ARGS, "%d", b->arg0.value.i);
+    } else {
+      PRINT_BC(BUF_ARGS, "WTF!");
+    }
+  } else if (b->op == NATIVE) {
+    PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d\t\t%d",
+             ip, opcode_name(b->op), b->arg0.value.i, b->arg1.value.i);    
+  } else if (b->op == PILE) {
+    PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d",
+             ip, opcode_name(b->op), b->arg0.value.i);
+  } else {
+    PRINT_BC(BUF_ARGS, "%d\t%s", ip, opcode_name(b->op));
+  }
+
+  SENI_PRINT("%s", buf);
+}
+
+void program_pretty_print(seni_program *program)
+{
+  for (i32 i = 0; i < program->code_size; i++) {
+    seni_bytecode *b = &(program->code[i]);
+    bytecode_pretty_print(i, b);
+  }
+  SENI_PRINT("\n");
+}
+
+
+// **************************************************
+// Virtual Machine
+// **************************************************
+
+seni_vm *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices)
+{
+  seni_vm *vm = (seni_vm *)calloc(1, sizeof(seni_vm));
+
+  vm->render_data = NULL;
+
+  vm->stack_size = stack_size;
+  vm->stack = (seni_var *)calloc(stack_size, sizeof(seni_var));
+
+  vm->heap_size = heap_size;
+  vm->heap_slab = (seni_var *)calloc(heap_size, sizeof(seni_var));
+
+  vm->heap_avail_size_before_gc = heap_min_size;
+
+  vm->matrix_stack = matrix_stack_construct();
+
+  // prepare storage for vertices
+  seni_render_data *render_data = render_data_construct(vertex_packet_num_vertices);
+  vm->render_data = render_data;
+  
+  vm_reset(vm);
+
+  return vm;
+}
+
+void vm_reset(seni_vm *vm)
+{
+  seni_var *var;
+  i32 base_offset = 0;
+  i32 i;
+
+  vm->global = base_offset;
+  base_offset += MEMORY_GLOBAL_SIZE;
+
+  vm->ip = 0;
+  
+  vm->fp = base_offset;
+  var = &(vm->stack[vm->fp]);
+  var->type = VAR_INT;
+  var->value.i = vm->fp;
+
+  // add some offsets so that the memory after fp matches a standard format
+  base_offset++;                // the caller's frame pointer
+  base_offset++;                // the caller's ip
+  base_offset++;                // the num_args of the called function
+
+  vm->local = base_offset;
+  base_offset += MEMORY_LOCAL_SIZE;
+  vm->sp = base_offset;
+
+  vm->heap_avail = NULL;
+  for (i = 0; i < vm->heap_size; i++) {
+    vm->heap_slab[i].next = NULL;
+    vm->heap_slab[i].prev = NULL;
+  }
+
+  var = vm->heap_slab;
+  for (i = 0; i < vm->heap_size; i++) {
+    var[i].mark = false;
+    DL_APPEND(vm->heap_avail, &(var[i]));
+  }
+
+  vm->heap_avail_size = vm->heap_size;
+
+  matrix_stack_reset(vm->matrix_stack);
+
+  render_data_free_render_packets(vm->render_data);
+  add_render_packet(vm->render_data);
+}
+
+
+void vm_free_render_data(seni_vm *vm)
+{
+  render_data_free(vm->render_data);
+  vm->render_data = NULL;
+}
+
+void vm_free(seni_vm *vm)
+{
+  vm_free_render_data(vm);
+  matrix_stack_free(vm->matrix_stack);
+  free(vm->stack);
+  free(vm->heap_slab);
+  free(vm);
+}
+
+void vm_pretty_print(seni_vm *vm, char* msg)
+{
+  SENI_LOG("%s\tvm: fp:%d sp:%d ip:%d local:%d",
+             msg,
+             vm->fp,
+             vm->sp,
+             vm->ip,
+             vm->local);
+
+  seni_var *fp = &(vm->stack[vm->fp]);
+  i32 onStackFP = (fp + 0)->value.i;
+  i32 onStackIP = (fp + 1)->value.i;
+  i32 onStackNumArgs = (fp + 2)->value.i;
+  SENI_LOG("\ton stack: fp:%d ip:%d numArgs:%d", onStackFP, onStackIP, onStackNumArgs);
+}
+
+
+// returns the next available seni_var that the calling code can write to
+seni_var *stack_push(seni_vm *vm)
+{
+  seni_var *var = &(vm->stack[vm->sp]);
+  vm->sp++;
+  return var;
+}
+
+seni_var *stack_pop(seni_vm *vm)
+{
+  if (vm->sp == 0) {
+    return NULL;
+  }
+  
+  vm->sp--;
+  return &(vm->stack[vm->sp]);
+}
+
+seni_var *stack_peek(seni_vm *vm)
+{
+  if (vm->sp == 0) {
+    return NULL;
+  }
+  return &(vm->stack[vm->sp - 1]);
 }
 
 // [ ] <<- this is the VAR_VECTOR (value.v points to the first heap allocated seni_var)
@@ -318,385 +673,18 @@ void var_pretty_print(seni_var *var, char* msg)
   }
 }
 
-i32 var_as_int(seni_var *var)
+#ifdef SENI_DEBUG_MODE
+
+void vm_debug_info_reset(seni_vm *vm)
 {
-  seni_value_in_use using = get_value_in_use(var->type);
-
-  if (using == USE_I) {
-    return var->value.i;
-  } else if (using == USE_F) {
-    return (i32)(var->value.f);
-  } else {
-    SENI_ERROR("var_as_int given unconvertable seni_var");
-  }
-
-  return -1;
+  vm->opcodes_executed = 0;
 }
 
-f32 var_as_float(seni_var *var)
+void vm_debug_info_print(seni_vm *vm)
 {
-  seni_value_in_use using = get_value_in_use(var->type);
-
-  if (using == USE_I) {
-    return (f32)(var->value.i);
-  } else if (using == USE_F) {
-    return var->value.f;
-  } else {
-    SENI_ERROR("var_as_float given unconvertable seni_var");
-  }
-
-  return -1.0f;
+  SENI_PRINT("*** vm_debug_info_print ***");
+  SENI_PRINT("bytecodes executed:\t%llu", (long long unsigned int)(vm->opcodes_executed));
+  SENI_PRINT("bytecode execution time:\t%.2f msec", vm->execution_time);
 }
 
-u64 var_as_long(seni_var *var)
-{
-  seni_value_in_use using = get_value_in_use(var->type);
-
-  if (using == USE_L) {
-    return var->value.l;
-  } else if (using == USE_I) {
-    SENI_ERROR("Converting seni_var.value.i to u64");             // todo: should be a SENI_WARN
-    return (u64)(var->value.i);
-  } else {
-    SENI_ERROR("var_as_long given unconvertable seni_var");
-  }
-
-  return 0L;
-}
-
-void v2_as_var(seni_var *out, f32 x, f32 y)
-{
-  out->type = VAR_2D;
-  out->f32_array[0] = x;
-  out->f32_array[1] = y;
-}
-
-void i32_as_var(seni_var *out, i32 i)
-{
-  out->type = VAR_INT;
-  out->value.i = i;
-}
-
-void f32_as_var(seni_var *out, f32 f)
-{
-  out->type = VAR_FLOAT;
-  out->value.f = f;
-}
-
-void colour_as_var(seni_var *out, seni_colour *c)
-{
-  out->type = VAR_COLOUR;
-
-  out->value.i = (i32)(c->format);
-
-  out->f32_array[0] = c->element[0];
-  out->f32_array[1] = c->element[1];
-  out->f32_array[2] = c->element[2];
-  out->f32_array[3] = c->element[3];  
-}
-
-// returns the next available seni_var that the calling code can write to
-seni_var *stack_push(seni_vm *vm)
-{
-  seni_var *var = &(vm->stack[vm->sp]);
-  vm->sp++;
-  return var;
-}
-
-seni_var *stack_pop(seni_vm *vm)
-{
-  if (vm->sp == 0) {
-    return NULL;
-  }
-  
-  vm->sp--;
-  return &(vm->stack[vm->sp]);
-}
-
-seni_var *stack_peek(seni_vm *vm)
-{
-  if (vm->sp == 0) {
-    return NULL;
-  }
-  return &(vm->stack[vm->sp - 1]);
-}
-
-// **************************************************
-// Program
-// **************************************************
-
-char *opcode_name(seni_opcode opcode)
-{
-#define STR(x) #x
-  
-  switch(opcode) {
-#define OPCODE(id,_) case id: return STR(id);
-#include "seni_opcodes.h"
-#undef OPCODE
-  default:
-    return "unknown opcode";
-  }
-#undef STR
-}
-
-seni_program *program_allocate(i32 code_max_size)
-{
-  seni_program *program = (seni_program *)calloc(1, sizeof(seni_program));
-
-  program->code = (seni_bytecode *)calloc(code_max_size, sizeof(seni_bytecode));
-  program->code_max_size = code_max_size;
-  program->code_size = 0;
-  program->opcode_offset = 0;
-
-  return program;
-}
-
-void program_free(seni_program *program)
-{
-  free(program->code);
-  free(program);
-}
-
-seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
-{
-  seni_node *ast = parser_parse(env->wl, source);
-
-  seni_program *program = compile_program(ast, program_max_size, env->wl);
-
-  parser_free_nodes(ast);
-
-  return program;
-}
-
-i32 program_stop_location(seni_program *program)
-{
-  // the final opcode in the program will always be a STOP
-  return program->code_size - 1;
-}
-
-char *memory_segment_name(seni_memory_segment_type segment)
-{
-  switch(segment) {
-  case MEM_SEG_ARGUMENT:
-    return "ARG";
-  case MEM_SEG_LOCAL:
-    return "LOCAL";
-  case MEM_SEG_GLOBAL:
-    return "GLOBAL";
-  case MEM_SEG_CONSTANT:
-    return "CONST";
-  case MEM_SEG_VOID:
-    return "VOID";
-  }
-  return "UNKNOWN";
-}
-
-void pretty_print_bytecode(i32 ip, seni_bytecode *b)
-{
-#define PPC_BUF_SIZE 200
-
-  char buf[PPC_BUF_SIZE];
-  int buf_len = 0;
-  char *buf_start = &buf[0];
-
-#define PRINT_BC buf_len += seni_sprintf
-#define BUF_ARGS buf_start + buf_len, PPC_BUF_SIZE - buf_len
-
-  buf[0] = 0;  
-  
-  if (b->op == LOAD || b->op == STORE || b->op == FLU_STORE) {
-
-    char *seg_name = memory_segment_name((seni_memory_segment_type)b->arg0.value.i);
-
-    if (b->op == LOAD || b->op == STORE) {
-      PRINT_BC(BUF_ARGS, "%d\t%s\t\t%s\t\t", ip, opcode_name(b->op), seg_name);
-    } else if (b->op == FLU_STORE) {
-      PRINT_BC(BUF_ARGS, "%d\t%s\t%s\t\t", ip, opcode_name(b->op), seg_name);
-    } 
-
-    seni_value_in_use using = get_value_in_use(b->arg1.type);
-    switch(using) {
-    case USE_I:
-      if (b->arg1.type == VAR_COLOUR) {
-        i32 type = b->arg1.value.i;
-        f32 *a = b->arg1.f32_array;
-        PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0], a[1], a[2], a[3]);
-      } else {
-        PRINT_BC(BUF_ARGS, "%d", b->arg1.value.i);
-      }
-      break;
-    case USE_F:
-      PRINT_BC(BUF_ARGS, "%.2f", b->arg1.value.f);
-      break;
-    case USE_L:
-      PRINT_BC(BUF_ARGS, "%llu", (long long unsigned int)(b->arg1.value.l));
-      break;
-    case USE_V:
-      if (b->arg1.type == VAR_VECTOR) {
-        PRINT_BC(BUF_ARGS, "[..]len %d", vector_length(&(b->arg1)));
-      } else {
-        PRINT_BC(BUF_ARGS, "[..]");
-      }
-      break;
-    default:
-      PRINT_BC(BUF_ARGS, "unknown type");
-    }
-    
-  } else if (b->op == JUMP_IF || b->op == JUMP) {
-    PRINT_BC(BUF_ARGS, "%d\t%s\t\t", ip, opcode_name(b->op));
-    if (b->arg0.value.i > 0) {
-      PRINT_BC(BUF_ARGS, "+%d", b->arg0.value.i);
-    } else if (b->arg0.value.i < 0) {
-      PRINT_BC(BUF_ARGS, "%d", b->arg0.value.i);
-    } else {
-      PRINT_BC(BUF_ARGS, "WTF!");
-    }
-  } else if (b->op == NATIVE) {
-    PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d\t\t%d",
-             ip, opcode_name(b->op), b->arg0.value.i, b->arg1.value.i);    
-  } else if (b->op == PILE) {
-    PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d",
-             ip, opcode_name(b->op), b->arg0.value.i);
-  } else {
-    PRINT_BC(BUF_ARGS, "%d\t%s", ip, opcode_name(b->op));
-  }
-
-  SENI_PRINT("%s", buf);
-}
-
-void program_pretty_print(seni_program *program)
-{
-  for (i32 i = 0; i < program->code_size; i++) {
-    seni_bytecode *b = &(program->code[i]);
-    pretty_print_bytecode(i, b);
-  }
-  SENI_PRINT("\n");
-}
-
-seni_env *env_construct()
-{
-  seni_env *e = (seni_env *)calloc(1, sizeof(seni_env));
-  e->wl = wlut_allocate();
-
-  declare_bindings(e->wl, e);
-  
-  return e;
-}
-
-void env_free(seni_env *e)
-{
-  wlut_free(e->wl);
-  free(e);
-}
-
-void env_post_interpret_cleanup(seni_env *e)
-{
-  wlut_reset_words(e->wl);
-}
-
-// **************************************************
-// Virtual Machine
-// **************************************************
-
-seni_vm *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices)
-{
-  seni_vm *vm = (seni_vm *)calloc(1, sizeof(seni_vm));
-
-  vm->render_data = NULL;
-
-  vm->stack_size = stack_size;
-  vm->stack = (seni_var *)calloc(stack_size, sizeof(seni_var));
-
-  vm->heap_size = heap_size;
-  vm->heap_slab = (seni_var *)calloc(heap_size, sizeof(seni_var));
-
-  vm->heap_avail_size_before_gc = heap_min_size;
-
-  vm->matrix_stack = matrix_stack_construct();
-
-  // prepare storage for vertices
-  seni_render_data *render_data = render_data_construct(vertex_packet_num_vertices);
-  vm->render_data = render_data;
-  
-  vm_reset(vm);
-
-  return vm;
-}
-
-void vm_reset(seni_vm *vm)
-{
-  seni_var *var;
-  i32 base_offset = 0;
-  i32 i;
-
-  vm->global = base_offset;
-  base_offset += MEMORY_GLOBAL_SIZE;
-
-  vm->ip = 0;
-  
-  vm->fp = base_offset;
-  var = &(vm->stack[vm->fp]);
-  var->type = VAR_INT;
-  var->value.i = vm->fp;
-
-  // add some offsets so that the memory after fp matches a standard format
-  base_offset++;                // the caller's frame pointer
-  base_offset++;                // the caller's ip
-  base_offset++;                // the num_args of the called function
-
-  vm->local = base_offset;
-  base_offset += MEMORY_LOCAL_SIZE;
-  vm->sp = base_offset;
-
-  vm->heap_avail = NULL;
-  for (i = 0; i < vm->heap_size; i++) {
-    vm->heap_slab[i].next = NULL;
-    vm->heap_slab[i].prev = NULL;
-  }
-
-  var = vm->heap_slab;
-  for (i = 0; i < vm->heap_size; i++) {
-    var[i].mark = false;
-    DL_APPEND(vm->heap_avail, &(var[i]));
-  }
-
-  vm->heap_avail_size = vm->heap_size;
-
-  matrix_stack_reset(vm->matrix_stack);
-
-  render_data_free_render_packets(vm->render_data);
-  add_render_packet(vm->render_data);
-}
-
-
-void vm_free_render_data(seni_vm *vm)
-{
-  render_data_free(vm->render_data);
-  vm->render_data = NULL;
-}
-
-void vm_free(seni_vm *vm)
-{
-  vm_free_render_data(vm);
-  matrix_stack_free(vm->matrix_stack);
-  free(vm->stack);
-  free(vm->heap_slab);
-  free(vm);
-}
-
-void vm_pretty_print(seni_vm *vm, char* msg)
-{
-  SENI_LOG("%s\tvm: fp:%d sp:%d ip:%d local:%d",
-             msg,
-             vm->fp,
-             vm->sp,
-             vm->ip,
-             vm->local);
-
-  seni_var *fp = &(vm->stack[vm->fp]);
-  i32 onStackFP = (fp + 0)->value.i;
-  i32 onStackIP = (fp + 1)->value.i;
-  i32 onStackNumArgs = (fp + 2)->value.i;
-  SENI_LOG("\ton stack: fp:%d ip:%d numArgs:%d", onStackFP, onStackIP, onStackNumArgs);
-}
-
+#endif
