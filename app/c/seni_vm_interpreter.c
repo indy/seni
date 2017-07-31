@@ -227,7 +227,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
         
         src = &(vm->stack[fp - bc->arg1.value.i - 1]);
 #ifdef TRACE_PRINT_OPCODES
-        var_pretty_print(src, "---");
+        var_pretty_print("---", src);
         SENI_LOG("--- hop_back is %d fp is %d\n", hop_back, fp);
 #endif
 
@@ -279,7 +279,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
         // check the current value of dest,
         var_copy(dest, v);
 #ifdef TRACE_PRINT_OPCODES
-        var_pretty_print(dest, "---");
+        var_pretty_print("---", dest);
         SENI_LOG("--- fp is %d\n", vm->fp);
 #endif        
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
@@ -560,7 +560,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
           
         } else {
           SENI_ERROR("APPEND expects the 2nd item on the stack to be a vector\n");
-          var_pretty_print(v, "APPEND expects a vector");
+          var_pretty_print("APPEND expects a vector", v);
           return false;
         }
       }
@@ -608,7 +608,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
         
       } else {
         SENI_ERROR("PILE: expected to work with either VAR_2D or a Vector");
-        var_pretty_print(v, "PILE input");
+        var_pretty_print("PILE input", v);
       }
       
       break;

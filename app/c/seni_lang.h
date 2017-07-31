@@ -28,6 +28,17 @@ typedef struct seni_word_lut {
 seni_word_lut *wlut_allocate();
 void           wlut_free(seni_word_lut *wlut);
 char          *wlut_get_word(seni_word_lut *word_lut, i32 iword);
+char          *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword);
+
+// which value to use from the unions that are specified in both seni_node and seni_var
+typedef enum {
+  USE_I,                        // integer
+  USE_F,                        // float
+  USE_L,                        // long
+  USE_V,                        // pointer to seni_var
+  USE_S,                        // (seni_node only) char *
+  USE_FIRST_CHILD               // (seni_node only) first_child
+} seni_value_in_use;
 
 typedef enum {
   NODE_LIST = 0,
@@ -40,6 +51,8 @@ typedef enum {
   NODE_WHITESPACE,
   NODE_COMMENT
 } seni_node_type;
+
+seni_value_in_use get_node_value_in_use(seni_node_type type);
 
 typedef struct seni_node {
   seni_node_type type;
@@ -68,6 +81,7 @@ typedef struct seni_node {
 seni_node *safe_next(seni_node *expr);
 seni_node *safe_prev(seni_node *expr);
 char      *node_type_name(seni_node *node);
+void       node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut);
 
 // start at 128 just to make it easier to spot mistakes when transforming seni_node_type -> seni_var_type
 typedef enum {
@@ -81,15 +95,7 @@ typedef enum {
   VAR_2D,
 } seni_var_type;
 
-// which value to use
-typedef enum {
-  USE_I,                        // integer
-  USE_F,                        // float
-  USE_L,                        // long
-  USE_V                         // pointer to seni_var
-} seni_value_in_use;
-
-seni_value_in_use get_value_in_use(seni_var_type type);
+seni_value_in_use get_var_value_in_use(seni_var_type type);
 
 typedef struct seni_var {
   seni_var_type type;
@@ -113,6 +119,7 @@ typedef struct seni_var {
 } seni_var;
 
 char     *var_type_name(seni_var *var);
+void      var_pretty_print(char* msg, seni_var *var);
 void      v2_as_var(seni_var *out, f32 x, f32 y);
 void      f32_as_var(seni_var *out, f32 f);
 void      i32_as_var(seni_var *out, i32 i);
@@ -267,7 +274,6 @@ seni_var *vector_append_col(seni_vm *vm, seni_var *head, seni_colour *col);
 
 seni_var *var_get_from_heap(seni_vm *vm);
 void      var_copy(seni_var *dest, seni_var *src);
-void      var_pretty_print(seni_var *var, char* msg);
 
 void      vm_debug_info_reset(seni_vm *vm);
 void      vm_debug_info_print(seni_vm *vm);

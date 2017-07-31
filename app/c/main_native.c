@@ -2,6 +2,7 @@
 #include "stdlib.h"
 
 #include "seni_lang.h"
+#include "seni_ga.h"
 #include "seni_vm_parser.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
@@ -65,13 +66,18 @@ void print_timings(f32 construct, f32 compile, f32 interpret)
   }
 }
 
+char *pluralise(i32 count, char *singular, char *plural)
+{
+  return count == 1 ? singular : plural;
+}
+
 void execute_source(char *source)
 {
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
   seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *e = env_construct();
+  seni_env *env = env_construct();
   seni_shapes_init_globals();
   init_uv_mapper();
   TIMING_UNIT construct_stop = get_timing();
@@ -79,14 +85,22 @@ void execute_source(char *source)
   // parse/compile
   //
   TIMING_UNIT compilation_start = get_timing();
-  seni_program *prog = program_compile(e, MAX_PROGRAM_SIZE, source);
+
+  seni_node *ast = parser_parse(env->wl, source);
+
+  seni_program *prog = compile_program(ast, MAX_PROGRAM_SIZE, env->wl);
+  seni_trait_set *trait_set = ga_compile_traits(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+  
+  parser_free_nodes(ast);
+
+  
   TIMING_UNIT compilation_stop = get_timing();
 
   // execute
   //
   TIMING_UNIT interpret_start = get_timing();
   vm_debug_info_reset(vm);
-  vm_interpret(vm, e, prog);
+  vm_interpret(vm, env, prog);
   TIMING_UNIT interpret_stop = get_timing();
 
   // stats
@@ -105,10 +119,16 @@ void execute_source(char *source)
                   timing_delta(interpret_start, interpret_stop));
   }
 
+  i32 num_traits = ga_num_traits(trait_set);
+  if (num_traits > 0) {
+    SENI_PRINT("%d %s", num_traits, pluralise(num_traits, "trait", "traits"));
+  }
+
+
   // free memory
   //
   program_free(prog);
-  env_free(e);
+  env_free(env);
   vm_free(vm);
   free_uv_mapper();
 }
