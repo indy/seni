@@ -7,7 +7,7 @@
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
 #include "seni_prng.h"
-#include "seni_interp.h"
+#include "seni_parametric.h"
 #include "seni_repeat.h"
 #include "seni_path.h"
 #include "seni_focal.h"
@@ -18,7 +18,7 @@
 typedef enum {
   HEAP_STRUCTURE_UNDEFINED = 0,
   HEAP_STRUCTURE_PRNG,
-  HEAP_STRUCTURE_INTERP,
+  HEAP_STRUCTURE_PARAMETRIC,
   HEAP_STRUCTURE_FOCAL
 } seni_heap_structure_type;
 
@@ -59,7 +59,7 @@ typedef struct {
   f32 to1;
   i32 clamping;
   i32 mapping;
-} seni_interp_state;
+} seni_parametric_state;
 
 // [ VAR_VECTOR ->
 //  (VAR_INT(structure_id) + x, y, distance) ->
@@ -155,7 +155,7 @@ typedef struct {
     value_1 = tmp_1;                                      \
   }
 
-#define READ_STACK_ARG_INTERP(k, n) if (name_1 == k) {    \
+#define READ_STACK_ARG_PARAMETRIC(k, n) if (name_1 == k) {    \
     tmp_1 = value_1;                                      \
     value_1 = value_1->value.v;                           \
     IS_I32(#n);                                           \
@@ -1516,7 +1516,7 @@ seni_var *bind_prng_perlin(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_interp_build(seni_vm *vm, i32 num_args)
+seni_var *bind_parametric_build(seni_vm *vm, i32 num_args)
 {
   f32 from[] = {0.0f, 1.0f};
   f32 to[] = {0.0f, 100.0f};
@@ -1542,7 +1542,7 @@ seni_var *bind_interp_build(seni_vm *vm, i32 num_args)
   seni_var *v;
 
   vector_construct(&g_var_scratch);
-  v = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_INTERP);
+  v = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_PARAMETRIC);
   v->f32_array[0] = from_m;
   v->f32_array[1] = to_m;
   v->f32_array[2] = from_c;
@@ -1555,9 +1555,9 @@ seni_var *bind_interp_build(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_interp_value(seni_vm *vm, i32 num_args)
+seni_var *bind_parametric_value(seni_vm *vm, i32 num_args)
 {
-  seni_interp_state from;
+  seni_parametric_state from;
   f32 t = 0.0f;
 
   from.structure_id = 0;
@@ -1571,11 +1571,11 @@ seni_var *bind_interp_value(seni_vm *vm, i32 num_args)
   from.mapping = 0;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_INTERP(INAME_FROM, from);
+  READ_STACK_ARG_PARAMETRIC(INAME_FROM, from);
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  if (from.structure_id != HEAP_STRUCTURE_INTERP) {
+  if (from.structure_id != HEAP_STRUCTURE_PARAMETRIC) {
     SENI_ERROR("interp/value requires a user specified 'from' parameter");
     return &g_var_true;
   }
@@ -1604,7 +1604,7 @@ seni_var *bind_interp_value(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_interp_cos(seni_vm *vm, i32 num_args)
+seni_var *bind_parametric_cos(seni_vm *vm, i32 num_args)
 {
   f32 amplitude = 1.0f;
   f32 frequency = 1.0f;
@@ -1616,14 +1616,14 @@ seni_var *bind_interp_cos(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  f32 value = seni_interp_cos(amplitude, frequency, t);
+  f32 value = seni_parametric_cos(amplitude, frequency, t);
   f32_as_var(&g_var_scratch, value);
 
   // SENI_PRINT("amp %.2f, freq %.2f, t %.2f value = %.2f", amplitude, frequency, t, value);
   return &g_var_scratch;
 }
 
-seni_var *bind_interp_sin(seni_vm *vm, i32 num_args)
+seni_var *bind_parametric_sin(seni_vm *vm, i32 num_args)
 {
   f32 amplitude = 1.0f;
   f32 frequency = 1.0f;
@@ -1635,13 +1635,13 @@ seni_var *bind_interp_sin(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_T, t);
   READ_STACK_ARGS_END;
 
-  f32 value = seni_interp_sin(amplitude, frequency, t);
+  f32 value = seni_parametric_sin(amplitude, frequency, t);
   f32_as_var(&g_var_scratch, value);
 
   return &g_var_scratch;
 }
 
-seni_var *bind_interp_bezier(seni_vm *vm, i32 num_args)
+seni_var *bind_parametric_bezier(seni_vm *vm, i32 num_args)
 {
   f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
   f32 t = 1.0f;
@@ -1652,7 +1652,7 @@ seni_var *bind_interp_bezier(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_END;
 
   f32 x, y;
-  seni_interp_bezier(&x, &y, coords, t);
+  seni_parametric_bezier(&x, &y, coords, t);
 
   g_var_scratch.type = VAR_2D;
   g_var_scratch.f32_array[0] = x;
@@ -1661,7 +1661,7 @@ seni_var *bind_interp_bezier(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
+seni_var *bind_parametric_bezier_tangent(seni_vm *vm, i32 num_args)
 {
   f32 coords[] = { 100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f };
   f32 t = 1.0f;
@@ -1672,7 +1672,7 @@ seni_var *bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_END;
 
   f32 x, y;
-  seni_interp_bezier_tangent(&x, &y, coords, t);
+  seni_parametric_bezier_tangent(&x, &y, coords, t);
 
   g_var_scratch.type = VAR_2D;
   g_var_scratch.f32_array[0] = x;
@@ -1681,7 +1681,7 @@ seni_var *bind_interp_bezier_tangent(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_interp_circle(seni_vm *vm, i32 num_args)
+seni_var *bind_parametric_circle(seni_vm *vm, i32 num_args)
 {
   f32 position[] = {0.0f, 0.0f};
   f32 radius = 1.0f;
@@ -1694,7 +1694,7 @@ seni_var *bind_interp_circle(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_END;
 
   f32 x, y;
-  seni_interp_circle(&x, &y, position, radius, t);
+  seni_parametric_circle(&x, &y, position, radius, t);
 
   g_var_scratch.type = VAR_2D;
   g_var_scratch.f32_array[0] = x;
@@ -2017,19 +2017,22 @@ seni_var *bind_focal_value(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
+// NOTE: gen/int should still parse values as float
+// as seni scripts won't produce any real ints
+//
 seni_var *bind_gen_int(seni_vm *vm, i32 num_args)
 {
-  i32 min = 0;
-  i32 max = 1000;
+  f32 min = 0.0f;
+  f32 max = 1000.0f;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_MIN, min);
-  READ_STACK_ARG_I32(INAME_MAX, max);
+  READ_STACK_ARG_F32(INAME_MIN, min);
+  READ_STACK_ARG_F32(INAME_MAX, max);
   READ_STACK_ARGS_END;
 
-  f32 value = seni_prng_f32_range(&(vm->prng_state), (f32)min, (f32)max);
+  f32 value = seni_prng_f32_range(&(vm->prng_state), min, max);
 
-  i32_as_var(&g_var_scratch, (i32)value);
+  f32_as_var(&g_var_scratch, value);
   
   return &g_var_scratch;
 }
@@ -2190,13 +2193,13 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "prng/value", &bind_prng_value);
   declare_native(wlut, e, "prng/perlin", &bind_prng_perlin);
 
-  declare_native(wlut, e, "interp/build", &bind_interp_build);
-  declare_native(wlut, e, "interp/value", &bind_interp_value);
-  declare_native(wlut, e, "interp/cos", &bind_interp_cos);
-  declare_native(wlut, e, "interp/sin", &bind_interp_sin);
-  declare_native(wlut, e, "interp/bezier", &bind_interp_bezier);
-  declare_native(wlut, e, "interp/bezier-tangent", &bind_interp_bezier_tangent);
-  declare_native(wlut, e, "interp/circle", &bind_interp_circle);
+  declare_native(wlut, e, "interp/build", &bind_parametric_build);
+  declare_native(wlut, e, "interp/value", &bind_parametric_value);
+  declare_native(wlut, e, "interp/cos", &bind_parametric_cos);
+  declare_native(wlut, e, "interp/sin", &bind_parametric_sin);
+  declare_native(wlut, e, "interp/bezier", &bind_parametric_bezier);
+  declare_native(wlut, e, "interp/bezier-tangent", &bind_parametric_bezier_tangent);
+  declare_native(wlut, e, "interp/circle", &bind_parametric_circle);
 
   declare_native(wlut, e, "path/linear", &bind_path_linear);
   declare_native(wlut, e, "path/circle", &bind_path_circle);

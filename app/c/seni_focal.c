@@ -1,5 +1,5 @@
 #include "seni_focal.h"
-#include "seni_interp.h"
+#include "seni_parametric.h"
 #include "seni_mathutil.h"
 #include "seni_config.h"
 #include "seni_keyword_iname.h"
@@ -15,7 +15,7 @@ f32 focal_point(f32 x, f32 y, f32 distance, i32 mapping, f32 centre_x, f32 centr
     return 1.0f;
   }
 
-  f32 res = seni_interp(d, 0.0f, distance, 1.0f, 0.0f, mapping, true);
+  f32 res = seni_parametric(d, 0.0f, distance, 1.0f, 0.0f, mapping, true);
   
   return res;
 }
@@ -29,7 +29,7 @@ f32 focal_hline(f32 y, f32 distance, i32 mapping, f32 centre_y)
     return 1.0f;
   }
 
-  f32 res = seni_interp(d, 0.0f, distance, 1.0f, 0.0f, mapping, true);
+  f32 res = seni_parametric(d, 0.0f, distance, 1.0f, 0.0f, mapping, true);
   
   return res;
 }
@@ -43,7 +43,7 @@ f32 focal_vline(f32 x, f32 distance, i32 mapping, f32 centre_x)
     return 1.0f;
   }
 
-  f32 res = seni_interp(d, 0.0f, distance, 1.0f, 0.0f, mapping, true);
+  f32 res = seni_parametric(d, 0.0f, distance, 1.0f, 0.0f, mapping, true);
   
   return res;
 }
