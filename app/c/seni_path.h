@@ -1,5 +1,4 @@
-#ifndef SENI_PATH_H
-#define SENI_PATH_H
+#pragma once
 
 #include "seni_types.h"
 #include "seni_lang.h"
@@ -9,4 +8,3 @@ void path_circle(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 pos
 void path_spline(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 *coords);
 void path_bezier(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 *coords);
 
-#endif

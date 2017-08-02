@@ -1,5 +1,4 @@
-#ifndef SENI_COLOUR_H
-#define SENI_COLOUR_H
+#pragma once
 
 #include "seni_config.h"
 #include "seni_types.h"
@@ -48,4 +47,3 @@ void get_colour_presets(f32 *a, f32 *b, f32 *c, f32 *d, i32 preset);
 void colour_procedural(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t);
 void colour_bezier(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t);
 
-#endif

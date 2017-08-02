@@ -1,5 +1,4 @@
-#ifndef SENI_PARAMETRIC_H
-#define SENI_PARAMETRIC_H
+#pragma once
 
 #include "seni_types.h"
 
@@ -12,4 +11,3 @@ void seni_parametric_bezier(f32 *outx, f32 *outy, f32 *coords, f32 t);
 void seni_parametric_bezier_tangent(f32 *outx, f32 *outy, f32 *coords, f32 t);
 void seni_parametric_circle(f32 *outx, f32 *outy, f32 *position, f32 radius, f32 t);
 
-#endif

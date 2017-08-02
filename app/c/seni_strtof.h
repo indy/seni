@@ -1,6 +1,4 @@
-#ifndef SENI_STRTOF
-#define SENI_STRTOF
+#pragma once
 
 float seni_strtof(char *string, char **endPtr);
 
-#endif

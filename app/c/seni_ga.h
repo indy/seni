@@ -1,5 +1,4 @@
-#ifndef SENI_GA_H
-#define SENI_GA_H
+#pragma once
 
 #include "seni_lang.h"
 
@@ -18,6 +17,10 @@ typedef struct seni_trait_set {
   seni_trait *traits;
 } seni_trait_set;
 
+void trait_set_free(seni_trait_set *trait_set);
+seni_trait_set *trait_set_compile(seni_node *ast, i32 trait_program_max_size, seni_word_lut *word_lut);
+i32 trait_set_count(seni_trait_set *trait_set);
+
 typedef struct seni_gene {
   seni_var var;
   
@@ -27,11 +30,10 @@ typedef struct seni_gene {
 
 typedef struct seni_genotype {
   seni_gene *genes;
+
+  // set/get by compiler when compiling program with a genotype
+  seni_gene *current_gene;
 } seni_genotype;
 
-seni_trait_set *ga_compile_traits(seni_node *ast, i32 trait_program_max_size, seni_word_lut *word_lut);
-i32 ga_num_traits(seni_trait_set *trait_set);
-
-
-
-#endif
+seni_genotype *genotype_build(seni_vm *vm, seni_env *env, seni_trait_set *trait_set, i32 seed);
+void genotype_free(seni_genotype *genotype);

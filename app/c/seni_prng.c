@@ -173,6 +173,10 @@ void seni_prng_set_state(seni_prng_state *prng_state, u64 seed)
 {
   prng_state->state = seed;
   prng_state->inc = 1;
+
+  // get the first value as this is often clamped to the minimum
+  // todo: this is a bug that needs to be fixed
+  seni_prng_f32(prng_state);
 }
 
 u32 seni_prng_u32(seni_prng_state* rng, u32 max)

@@ -1,5 +1,4 @@
-#ifndef SENI_LANG_H
-#define SENI_LANG_H
+#pragma once
 
 #include "seni_config.h"
 #include "seni_types.h"
@@ -29,9 +28,11 @@ seni_word_lut *wlut_allocate();
 void           wlut_free(seni_word_lut *wlut);
 char          *wlut_get_word(seni_word_lut *word_lut, i32 iword);
 char          *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword);
+void           wlut_pretty_print(char *msg, seni_word_lut *word_lut);
 
 // which value to use from the unions that are specified in both seni_node and seni_var
 typedef enum {
+  USE_UNKNOWN,
   USE_I,                        // integer
   USE_F,                        // float
   USE_L,                        // long
@@ -54,6 +55,8 @@ typedef enum {
 
 seni_value_in_use get_node_value_in_use(seni_node_type type);
 
+struct seni_gene;
+
 typedef struct seni_node {
   seni_node_type type;
 
@@ -65,6 +68,7 @@ typedef struct seni_node {
   } value;
 
   bool alterable;
+  struct seni_gene *gene;       // only valid if alterable == true
 
   // node mutate specific
   struct seni_node *parameter_ast;
@@ -278,4 +282,3 @@ void      var_copy(seni_var *dest, seni_var *src);
 void      vm_debug_info_reset(seni_vm *vm);
 void      vm_debug_info_print(seni_vm *vm);
 
-#endif

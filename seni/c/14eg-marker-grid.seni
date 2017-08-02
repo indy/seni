@@ -67,7 +67,7 @@
     ; horizontal strips
     (step (i to: iterations)
       (define 
-        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (p/take num: 8 from: rng)
+        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/values num: 8 from: rng)
         lightness (+ (col/get-lab-l colour: lab-colour)
                      (* colour-volatility (prng/value from: rng)))
         current-colour (col/set-lab-l colour: lab-colour value: lightness))

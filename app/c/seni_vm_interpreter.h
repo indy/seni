@@ -1,5 +1,4 @@
-#ifndef SENI_VM_INTERPRETER
-#define SENI_VM_INTERPRETER
+#pragma once
 
 #include "seni_lang.h"
 
@@ -13,4 +12,3 @@ bool vm_function_invoke(seni_vm *vm);
 bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program);
 
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef SENI_MATRIX_H
-#define SENI_MATRIX_H
+#pragma once
 
 #include "seni_types.h"
 
@@ -51,4 +50,3 @@ void matrix_stack_rotate(seni_matrix_stack *matrix_stack, f32 a);
 void matrix_stack_transform_vec2(f32 *outx, f32 *outy, seni_matrix_stack *matrix_stack, f32 x, f32 y);
 void matrix_stack_transform_vec3(f32 *outx, f32 *outy, f32 *outz, seni_matrix_stack *matrix_stack, f32 x, f32 y, f32 z);
 
-#endif

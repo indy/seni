@@ -89,6 +89,13 @@ char *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword)
   return "UNKNOWN WORD";
 }
 
+void wlut_pretty_print(char *msg, seni_word_lut *word_lut)
+{
+  SENI_PRINT("%s native_count: %d", msg, word_lut->native_count);
+  SENI_PRINT("%s keyword_count: %d", msg, word_lut->keyword_count);
+  SENI_PRINT("%s word_count: %d", msg, word_lut->word_count);
+}
+
 seni_value_in_use get_node_value_in_use(seni_node_type type)
 {
   switch(type) {
@@ -120,6 +127,8 @@ seni_value_in_use get_node_value_in_use(seni_node_type type)
     return USE_S;
     break;
   }
+
+  return USE_UNKNOWN;
 }
 
 seni_node *safe_next(seni_node *expr)
@@ -171,6 +180,9 @@ void node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut)
   seni_value_in_use using = get_node_value_in_use(node->type);
 
   switch(using) {
+  case USE_UNKNOWN:
+    SENI_PRINT("%s: UNKNOWN %s", msg,  type);
+    break;
   case USE_I:
     if (word_lut != NULL &&
         (node->type == NODE_NAME || node->type == NODE_LABEL || node->type == NODE_STRING)) {
@@ -182,11 +194,18 @@ void node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut)
   case USE_F:
     SENI_PRINT("%s: %s : %.2f", msg,  type, node->value.f);
     break;
-  case USE_FIRST_CHILD:
-    SENI_PRINT("%s: %s", msg,  type);
+  case USE_L:
+    SENI_PRINT("%s: L %s", msg,  type);
+    break;
+  case USE_V:
+    SENI_PRINT("%s: V %s", msg,  type);
     break;
   case USE_S:
     SENI_PRINT("%s: %s", msg,  type);
+    break;
+  case USE_FIRST_CHILD:
+    SENI_PRINT("%s: %s", msg,  type);
+    break;
   default:
     SENI_ERROR("unknown using value for a seni_node: %d", using);
   }

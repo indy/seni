@@ -1,5 +1,4 @@
-#ifndef SENI_MATHUTIL
-#define SENI_MATHUTIL
+#pragma once
 
 #include "seni_types.h"
 #include <math.h>
@@ -42,4 +41,3 @@ f32 quadratic_point(f32 a, f32 b, f32 c, f32 t);
 f32 bezier_point(f32 a, f32 b, f32 c, f32 d, f32 t);
 f32 bezier_tangent(f32 a, f32 b, f32 c, f32 d, f32 t);
 
-#endif /* SENI_MATHUTIL */

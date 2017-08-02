@@ -1,5 +1,4 @@
-#ifndef SENI_PRNG_H
-#define SENI_PRNG_H
+#pragma once
 
 #include "seni_types.h"
 
@@ -21,4 +20,3 @@ f32 seni_prng_f32_range(seni_prng_state* prng_state, f32 min, f32 max);
 // returns a number in the range -0.293498..0.293498
 f32 seni_perlin(f32 x, f32 y, f32 z);
 
-#endif

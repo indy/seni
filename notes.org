@@ -1,11 +1,13 @@
-* TODO [0/7]
-  1. [ ] test gc
-  2. [ ] maybe have a required specifier in functions?
-  3. [ ] poly should also accept a uv parameter
-  4. [ ] ensure that there's a dist folder before running npm run build:wasm
-  5. [ ] structs for compile, runtim, performance info
-  6. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  7. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+* TODO [0/9]
+  1. [ ] test -O2 and -O3 flags for unix
+  2. [ ] look into restrict keyword in C99
+  3. [ ] test gc
+  4. [ ] maybe have a required specifier in functions?
+  5. [ ] poly should also accept a uv parameter
+  6. [ ] ensure that there's a dist folder before running npm run build:wasm
+  7. [ ] structs for compile, runtim, performance info
+  8. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  9. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
@@ -66,6 +68,9 @@
   56. [X] 1648-chalk-boxes.seni
   57. [ ] 1669-zero.seni - map
 
+
+* c
+  https://matt.sh/howto-c
 
 * loop syntax
   from to

@@ -1,5 +1,4 @@
-#ifndef SENI_SHAPES_H
-#define SENI_SHAPES_H
+#pragma once
 
 #include "seni_types.h"
 #include "seni_render_packet.h"
@@ -84,4 +83,3 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
                                 i32 tessellation, i32 stroke_tessellation, f32 stroke_noise,
                                 seni_colour *colour, f32 colour_volatility,
                                 i32 brush, i32 brush_subtype);
-#endif

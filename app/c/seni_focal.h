@@ -1,5 +1,4 @@
-#ifndef SENI_FOCAL_H
-#define SENI_FOCAL_H
+#pragma once
 
 #include "seni_types.h"
 
@@ -26,4 +25,3 @@ f32 focal_point(f32 x, f32 y, f32 distance, i32 mapping, f32 centre_x, f32 centr
 f32 focal_hline(f32 y, f32 distance, i32 mapping, f32 centre_y);
 f32 focal_vline(f32 x, f32 distance, i32 mapping, f32 centre_x);
 
-#endif

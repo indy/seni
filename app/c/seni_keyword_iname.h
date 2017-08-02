@@ -1,5 +1,4 @@
-#ifndef SENI_KEYWORD_INAME_H
-#define SENI_KEYWORD_INAME_H
+#pragma once
 
 #include "seni_config.h"
 
@@ -13,4 +12,3 @@ typedef enum {
 // todo: have a check at startup to assert that INAME_NUMBER_OF_KNOWN_WORDS < NATIVE_START
 
 
-#endif 

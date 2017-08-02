@@ -1,5 +1,4 @@
-#ifndef SENI_REPEAT_H
-#define SENI_REPEAT_H
+#pragma once
 
 #include "seni_types.h"
 #include "seni_lang.h"
@@ -12,4 +11,3 @@ void repeat_rotate(seni_vm *vm, i32 fn, i32 copies);
 void repeat_rotate_mirrored(seni_vm *vm, i32 fn, i32 copies);
 
 
-#endif

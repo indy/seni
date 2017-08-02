@@ -1,7 +1,5 @@
-#ifndef SENI_TYPES_H
-#define SENI_TYPES_H
+#pragma once
 
-#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -18,4 +16,3 @@ typedef uint64_t u64;
 typedef float    f32;
 typedef double   f64;
 
-#endif  /* SENI_TYPES_H */

@@ -1,5 +1,4 @@
-#ifndef SENI_UV_MAPPER_H
-#define SENI_UV_MAPPER_H
+#pragma once
 
 #include "seni_types.h"
 
@@ -27,4 +26,3 @@ void free_uv_mapper();
 void make_uv(f32 *outx, f32 *ouyt, f32 in_u, f32 in_v);
 seni_uv_mapping *get_uv_mapping(seni_brush_type type, i32 sub_type, bool wrap_sub_type);
 
-#endif

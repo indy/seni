@@ -1,5 +1,4 @@
-#ifndef SENI_CONFIG_H
-#define SENI_CONFIG_H
+#pragma once
 
 #define SENI_DEBUG_MODE
 
@@ -37,4 +36,4 @@
 #define SENI_LOG(f_, ...)
 #define SENI_ERROR(f_, ...)
 #endif
-#endif // SENI_CONFIG_H
+
