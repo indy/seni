@@ -29,7 +29,7 @@ char *load_file(char *filename)
     }
     fseek(fp, 0, SEEK_SET);
 
-    ret = (char *)malloc((file_size + 1) * sizeof(char));
+    ret = (char *)calloc(file_size + 1, sizeof(char));
 
     read_size = fread(ret, sizeof(char), file_size, fp);
 

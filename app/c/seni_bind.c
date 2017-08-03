@@ -258,7 +258,7 @@ void string_copy(char **dst, char *src)
 {
   size_t len = strlen(src);
   
-  char *c = (char *)malloc(sizeof(char) * (len + 1));
+  char *c = (char *)calloc(len + 1, sizeof(char));
   strncpy(c, src, len);
   c[len] = '\0';
 

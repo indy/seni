@@ -127,7 +127,7 @@ char *find_next(char *s, char target)
 
 void string_copy_len(char **dst, char *src, size_t len)
 {
-  char *c = (char *)malloc(sizeof(char) * (len + 1));
+  char *c = (char *)calloc(len + 1, sizeof(char));
   strncpy(c, src, len);
   c[len] = '\0';
 
@@ -236,9 +236,12 @@ seni_node *build_text_node_of_length(char **src, seni_node_type type, size_t len
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = type;
 
-  char *str = (char *)malloc(sizeof(char) * (len + 1));
+  char *str = (char *)calloc(len + 1, sizeof(char));
   strncpy(str, *src, len);
   str[len] = '\0';
+
+  node->src = *src;
+  node->src_len = (i32)len;
 
   *src += len;
   

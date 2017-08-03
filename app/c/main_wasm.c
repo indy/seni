@@ -168,7 +168,7 @@ char *allocate_string_buffer()
   SENI_LOG("allocate_string_buffer");
 #endif
   
-  g_string_buffer = (char *)malloc(STRING_BUFFER_SIZE * sizeof(char));
+  g_string_buffer = (char *)calloc(STRING_BUFFER_SIZE, sizeof(char));
 
   return g_string_buffer;
 }

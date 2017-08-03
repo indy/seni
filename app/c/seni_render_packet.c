@@ -11,9 +11,9 @@ seni_render_packet *render_packet_construct(i32 max_vertices, i32 vbuf_element_s
 
   render_packet->num_vertices = 0;
 
-  render_packet->vbuf = (f32 *)malloc(max_vertices * sizeof(f32) * vbuf_element_size);
-  render_packet->cbuf = (f32 *)malloc(max_vertices * sizeof(f32) * cbuf_element_size);
-  render_packet->tbuf = (f32 *)malloc(max_vertices * sizeof(f32) * tbuf_element_size);
+  render_packet->vbuf = (f32 *)calloc(max_vertices * vbuf_element_size, sizeof(f32));
+  render_packet->cbuf = (f32 *)calloc(max_vertices * cbuf_element_size, sizeof(f32));
+  render_packet->tbuf = (f32 *)calloc(max_vertices * tbuf_element_size, sizeof(f32));
 
   render_packet->prev = NULL;
   render_packet->next = NULL;

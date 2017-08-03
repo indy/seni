@@ -19,7 +19,7 @@ void allocate_uv_mapping(seni_brush_type type, i32 sub_type,
 {
   seni_uv_mapping *m = &(g_brush_info[type][sub_type]);
 
-  m->map = malloc(8 * sizeof(f32));
+  m->map = calloc(8, sizeof(f32));
 
   m->width_scale = width_scale;
 
@@ -31,9 +31,9 @@ void allocate_uv_mapping(seni_brush_type type, i32 sub_type,
 
 void init_uv_mapper()
 {
-  g_brush_info = (seni_uv_mapping **)malloc(NUM_BRUSHES * sizeof (seni_uv_mapping *));
+  g_brush_info = (seni_uv_mapping **)calloc(NUM_BRUSHES, sizeof(seni_uv_mapping *));
 
-  num_uv_mappings = (i32 *)malloc(NUM_BRUSHES * sizeof(i32));
+  num_uv_mappings = (i32 *)calloc(NUM_BRUSHES, sizeof(i32));
   num_uv_mappings[BRUSH_FLAT] = 1;
   num_uv_mappings[BRUSH_A] = 1;
   num_uv_mappings[BRUSH_B] = 6;
@@ -44,7 +44,7 @@ void init_uv_mapper()
   num_uv_mappings[BRUSH_G] = 2;
 
   for (i32 i = BRUSH_FLAT; i < NUM_BRUSHES; i++) {
-    g_brush_info[i] = (seni_uv_mapping *)malloc(num_uv_mappings[i] * sizeof(seni_uv_mapping));
+    g_brush_info[i] = (seni_uv_mapping *)calloc(num_uv_mappings[i], sizeof(seni_uv_mapping));
   }
 
   // BRUSH_FLAT
