@@ -4,7 +4,7 @@
 
 #include "seni_lang.h"
 #include "seni_ga.h"
-#include "seni_vm_parser.h"
+#include "seni_parser.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
 #include "seni_shapes.h"
@@ -154,7 +154,7 @@ void execute_source_with_seed(char *source, i32 seed_value)
   parser_free_nodes(ast);
 
   
-  gTIMING_UNIT compilation_stop = get_timing();
+  TIMING_UNIT compilation_stop = get_timing();
 
   // execute
   //

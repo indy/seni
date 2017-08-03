@@ -4,7 +4,7 @@
 #include "seni_mathutil.h"
 #include "seni_printf.h"
 #include "seni_bind.h"
-#include "seni_vm_parser.h"
+#include "seni_parser.h"
 #include "seni_vm_compiler.h"
 
 #include <string.h>

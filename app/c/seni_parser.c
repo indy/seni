@@ -1,4 +1,4 @@
-#include "seni_vm_parser.h"
+#include "seni_parser.h"
 #include "seni_strtof.h"
 
 #include "utlist.h"

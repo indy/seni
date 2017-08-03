@@ -6,7 +6,7 @@
 #include "seni_uv_mapper.h"
 #include "seni_shapes.h"
 #include "seni_lang.h"
-#include "seni_vm_parser.h"
+#include "seni_parser.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
 #include "seni_printf.h"
