@@ -38,6 +38,13 @@ int seni_sprintf(char *buf, int buffer_size, char const * fmt, ... )
   return len;
 }
 
+int seni_vsprintf(char *buf, int buffer_size, char const * fmt, va_list va)
+{
+  int len = stbsp_vsnprintf(buf, buffer_size, fmt, va);
+
+  return len;
+}
+
 
 void seni_fileline_sprintf(char *buf, int buffer_size, char *file, int line, char const * fmt, va_list va)
 {

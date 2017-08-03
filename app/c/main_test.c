@@ -3,20 +3,22 @@
 */
 #include "unity/unity.h"
 
-#include "seni_config.h"
-#include "seni_types.h"
-#include "seni_mathutil.h"
-#include "seni_lang.h"
-#include "seni_vm_parser.h"
-#include "seni_vm_compiler.h"
-#include "seni_vm_interpreter.h"
 #include "seni_bind.h"
-#include "seni_uv_mapper.h"
 #include "seni_colour.h"
-#include "seni_prng.h"
+#include "seni_config.h"
 #include "seni_keyword_iname.h"
+#include "seni_lang.h"
+#include "seni_mathutil.h"
+#include "seni_parser.h"
+#include "seni_prng.h"
+#include "seni_shapes.h"
 #include "seni_strtof.h"
 #include "seni_timing.h"
+#include "seni_types.h"
+#include "seni_unparser.h"
+#include "seni_uv_mapper.h"
+#include "seni_vm_compiler.h"
+#include "seni_vm_interpreter.h"
 
 #include "stdio.h"
 #include <stdlib.h>
@@ -754,6 +756,52 @@ void test_prng(void)
   TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_perlin(0.1f, 0.2f, 0.3f));
 }
 
+void unparse_compare(i32 seed_value, char *source, char *expected)
+{
+  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_construct();
+  seni_shapes_init_globals();
+  init_uv_mapper();
+
+  seni_node *ast = parser_parse(env->wl, source);
+
+  seni_trait_set *trait_set = trait_set_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+
+  // using the vm to build the genes
+  seni_genotype *genotype = genotype_build(vm, env, trait_set, seed_value);
+
+  i32 unparsed_source_size = 256;
+  char *unparsed_source = (char *)calloc(unparsed_source_size, sizeof(char));
+  unparse(unparsed_source, unparsed_source_size, env, ast, genotype);
+
+  if (expected != NULL) {
+    TEST_ASSERT_EQUAL_STRING(expected, unparsed_source);
+  } else {
+    TEST_ASSERT_EQUAL_STRING(source, unparsed_source);
+  }
+
+
+  free(unparsed_source);
+
+  parser_free_nodes(ast);
+  genotype_free(genotype);
+  trait_set_free(trait_set);
+  env_free(env);
+  vm_free(vm);
+  free_uv_mapper();
+}
+
+
+void test_unparser(void) {
+  unparse_compare(9875, "(+ 4 2.0)", NULL);
+  unparse_compare(9875, "(+ 4 [1 2 3])", NULL);
+  unparse_compare(9875, "(+ 4 [1.0 2.22 3.333 4.4444 5.55555])", NULL);
+  unparse_compare(9875, "red", NULL);
+  unparse_compare(9875, "foo:", NULL);
+  unparse_compare(9875, "foo ; some comment \"here\"", NULL);
+  unparse_compare(9875, "(fn (a b: 10) (+ b 20))", NULL);
+}
+
 int main(void)
 {
   // timing();
@@ -764,34 +812,36 @@ int main(void)
     
   UNITY_BEGIN();
 
-  //RUN_TEST(debug_lang_interpret_mem); // for debugging/development
-  //RUN_TEST(test_prng);
-
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_parser);
-  RUN_TEST(test_uv_mapper);
-  RUN_TEST(test_colour);
-  RUN_TEST(test_strtof);
-  
-  // vm
-  RUN_TEST(test_vm_bugs);
-  RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_callret);
-  RUN_TEST(test_vm_native);  
-  RUN_TEST(test_vm_destructure);
-  RUN_TEST(test_vm_2d);
-  RUN_TEST(test_vm_vector);
-  RUN_TEST(test_vm_vector_append);
-  RUN_TEST(test_vm_fence);
-  RUN_TEST(test_vm_col_rgb);
-  RUN_TEST(test_vm_math);
-  RUN_TEST(test_vm_prng);
-  RUN_TEST(test_vm_environmental);
-  RUN_TEST(test_vm_interp);
-  RUN_TEST(test_vm_function_address);
-  RUN_TEST(test_vm_repeat);
-
+  // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
+  // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
+
+
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_parser);
+  // RUN_TEST(test_uv_mapper);
+  // RUN_TEST(test_colour);
+  // RUN_TEST(test_strtof);
+  
+  // // vm
+  // RUN_TEST(test_vm_bugs);
+  // RUN_TEST(test_vm_bytecode);
+  // RUN_TEST(test_vm_callret);
+  // RUN_TEST(test_vm_native);  
+  // RUN_TEST(test_vm_destructure);
+  // RUN_TEST(test_vm_2d);
+  // RUN_TEST(test_vm_vector);
+  // RUN_TEST(test_vm_vector_append);
+  // RUN_TEST(test_vm_fence);
+  // RUN_TEST(test_vm_col_rgb);
+  // RUN_TEST(test_vm_math);
+  // RUN_TEST(test_vm_prng);
+  // RUN_TEST(test_vm_environmental);
+  // RUN_TEST(test_vm_interp);
+  // RUN_TEST(test_vm_function_address);
+  // RUN_TEST(test_vm_repeat);
+
+  RUN_TEST(test_unparser);
 
   return UNITY_END();
 }

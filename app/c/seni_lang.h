@@ -67,6 +67,9 @@ typedef struct seni_node {
     struct seni_node *first_child;  /* list node */
   } value;
 
+  char *src;                    // pointer back into the source
+  i32 src_len;                  // length of source item
+
   bool alterable;
   struct seni_gene *gene;       // only valid if alterable == true
 

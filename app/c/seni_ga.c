@@ -58,7 +58,7 @@ seni_node *ga_traverse(seni_node *node, i32 program_max_size)
   seni_node *n = node;
   
   if (n->alterable) {
-    node_pretty_print("ga ALTERABLE!!!", n, g_ga_wl);
+    // node_pretty_print("ga ALTERABLE!!!", n, g_ga_wl);
 
     seni_trait *trait = trait_construct();
     
@@ -66,7 +66,7 @@ seni_node *ga_traverse(seni_node *node, i32 program_max_size)
     trait->program = compile_program(n->parameter_ast, program_max_size, g_ga_wl);
     trait_set_add_trait(g_ga_trait_set, trait);
   } else {
-    node_pretty_print("ga             ", n, g_ga_wl);
+    // node_pretty_print("ga             ", n, g_ga_wl);
   }
 
   if (n->type == NODE_LIST) {

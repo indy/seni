@@ -224,6 +224,10 @@ seni_node *build_text_lookup_node_of_length(seni_word_lut *wlut, char **src, sen
 
   node->type = type;
   node->value.i = k;
+
+  node->src = *src;
+  node->src_len = (i32)len;
+  
   *src += len;
 
   return node;
@@ -374,6 +378,9 @@ seni_node *consume_float(char **src)
   seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
   node->type = NODE_FLOAT;
   node->value.f = (f32)seni_strtof(*src, &end_ptr);
+
+  node->src = *src;
+  node->src_len = (i32)(end_ptr - *src);
 
   *src = end_ptr;
   
