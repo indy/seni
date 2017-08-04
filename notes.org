@@ -1,12 +1,13 @@
-* TODO [0/8]
-  1. [ ] test gc
-  2. [ ] maybe have a required specifier in functions?
-  3. [ ] poly should also accept a uv parameter
-  4. [ ] ensure that there's a dist folder before running npm run build:wasm
-  5. [ ] structs for compile, runtim, performance info
-  6. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  7. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  8. [ ] look into restrict keyword in C99
+* TODO [0/9]
+  1. [ ] web assembly lives inside a web worker
+  2. [ ] test gc
+  3. [ ] maybe have a required specifier in functions?
+  4. [ ] poly should also accept a uv parameter
+  5. [ ] ensure that there's a dist folder before running npm run build:wasm
+  6. [ ] structs for compile, runtim, performance info
+  7. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  8. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  9. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
@@ -791,7 +792,14 @@ call_no_arg_function
 
 
 
-* genetic algorithm
+* genetic algorithm [0/2]
+
+  1. [ ] serialise a genotype
+  2. [ ] deserialise a genotype
+
+     
+
+  --------------------------------------------------------------------------------
 
   Q. is the alterable code lexed and parsed into an AST?
   A. yes, node->parameter_ast
@@ -801,4 +809,8 @@ call_no_arg_function
   - ga_create_from_initial_values(traits)
   - ga_create_from_traits(traits, seed)
   - ga_next_generation
+  
+
+
+
   
