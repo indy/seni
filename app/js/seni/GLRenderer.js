@@ -20,6 +20,12 @@ import Matrix from './Matrix';
 
 const logToConsole = false;
 
+function pointerToFloat32Array(mem, ptr, length) {
+  const nByte = 4;
+  const pos = ptr / nByte;
+  return mem.subarray(pos, pos + length);
+}
+
 function initGL(canvas) {
   try {
     const gl = canvas.getContext('experimental-webgl', {
@@ -219,6 +225,50 @@ export default class GLRenderer {
     gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform,
                         false,
                         this.mvMatrix);
+  }
+
+  drawBufferFromWasm(memory, buffer) {
+    const gl = this.gl;
+    const shaderProgram = this.shaderProgram;
+
+    const glVertexBuffer = this.glVertexBuffer;
+    const glColourBuffer = this.glColourBuffer;
+    const glTextureBuffer = this.glTextureBuffer;
+
+    const vertexItemSize = 2;
+    const colourItemSize = 4;
+    const textureItemSize = 2;
+
+    const F32 = new Float32Array(memory);
+    const vbuf = pointerToFloat32Array(F32,
+                                       buffer.vbufAddress,
+                                       buffer.numVertices * vertexItemSize);
+    const cbuf = pointerToFloat32Array(F32,
+                                       buffer.cbufAddress,
+                                       buffer.numVertices * colourItemSize);
+    const tbuf = pointerToFloat32Array(F32,
+                                       buffer.tbufAddress,
+                                       buffer.numVertices * textureItemSize);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vbuf, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shaderProgram.positionAttribute,
+                           vertexItemSize,
+                           gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, cbuf, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shaderProgram.colourAttribute,
+                           colourItemSize,
+                           gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, tbuf, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shaderProgram.textureAttribute,
+                           textureItemSize,
+                           gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.numVertices);
   }
 
   drawBuffer(buffer) {

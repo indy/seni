@@ -30,6 +30,7 @@ import { startTiming } from './timer';
 import { SeniMode } from './ui/SeniMode';
 import Job from './job';
 import { jobRender,
+         jobRenderWasm,
          jobUnparse,
          jobGenerateHelp } from './jobTypes';
 import { initFirebase,
@@ -38,48 +39,8 @@ import { initFirebase,
 let gUI = {};
 let gGLRenderer = undefined;
 
-const Shabba = {};
 // TODO: delete this when the wasm work is completed
 const gWasmHack = true;
-
-function configureWasmModule(wasmInstance) {
-  Shabba.compileToRenderPackets =
-  wasmInstance.exports.compile_to_render_packets;
-
-  Shabba.seniStartup = wasmInstance.exports.seni_startup;
-  Shabba.seniShutdown = wasmInstance.exports.seni_shutdown;
-  Shabba.scriptCleanup = wasmInstance.exports.script_cleanup;
-
-  Shabba.getRenderPacketNumVertices =
-    wasmInstance.exports.get_render_packet_num_vertices;
-
-  Shabba.getRenderPacketVBuf = wasmInstance.exports.get_render_packet_vbuf;
-
-  Shabba.getRenderPacketCBuf = wasmInstance.exports.get_render_packet_cbuf;
-
-  Shabba.getRenderPacketTBuf = wasmInstance.exports.get_render_packet_tbuf;
-
-  Shabba.string_buffer = wasmInstance.exports.allocate_string_buffer();
-  Shabba.setString = wasmInstance.memory.setString;
-
-  Shabba.instance = wasmInstance;
-}
-
-
-/*
-function freeModule() {
-  Module._free(Shabba.ptr);
-  Module._free(Shabba.vbuf);
-  Module._free(Shabba.cbuf);
-  Module._free(Shabba.tbuf);
-}
-*/
-
-function pointerToFloat32Array(ptr, length) {
-  const nByte = 4;
-  const pos = ptr / nByte;
-  return Shabba.instance.memory.F32.subarray(pos, pos + length);
-}
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -229,21 +190,25 @@ function updateSelectionUI(state) {
   });
 }
 
-function renderGeometryBuffers(buffers, imageElement, w, h) {
+function renderGeometryBuffers(jobType, memory, buffers, imageElement, w, h) {
   let destWidth = undefined;
   let destHeight = undefined;
   if (w !== undefined && h !== undefined) {
     destWidth = w;
     destHeight = h;
   } else {
-    destWidth = imageElement.clientWidth;
+    destWidth  = imageElement.clientWidth;
     destHeight = imageElement.clientHeight;
   }
 
   gGLRenderer.preDrawScene(destWidth, destHeight);
 
   buffers.forEach(buffer => {
-    gGLRenderer.drawBuffer(buffer);
+    if (jobType === jobRenderWasm) {
+      gGLRenderer.drawBufferFromWasm(memory, buffer);
+    } else {
+      gGLRenderer.drawBuffer(buffer);
+    }
   });
 
   imageElement.src = gGLRenderer.getImageData();
@@ -272,7 +237,7 @@ function renderGeneration(state) {
         genotype: genotypes.get(i).toJS()
       }).then(({ title, buffers }) => {
         const imageElement = phenotypes.getIn([i, 'imageElement']);
-        renderGeometryBuffers(buffers, imageElement);
+        renderGeometryBuffers(jobRender, null, buffers, imageElement);
         hackTitle = title;
       }).catch(error => {
         // handle error
@@ -326,7 +291,7 @@ function renderScript(state, imageElement) {
     // display any log/print messages that were generated
     // during the execution of the script
     gUI.konsole.log(logMessages);
-    renderGeometryBuffers(buffers, imageElement);
+    renderGeometryBuffers(jobRender, null, buffers, imageElement);
     stopFn(`renderScript-${title}`, gUI.konsole);
   }).catch(error => {
     // handle error
@@ -337,40 +302,20 @@ function renderScript(state, imageElement) {
 function renderScriptWithWASM(state, imageElement) {
   const stopFn = startTiming();
 
-  const script = state.get('script');
+  Job.request(jobRenderWasm, {
+    script: state.get('script'),
+    scriptHash: state.get('scriptHash')
+  }).then(({ title, memory, buffers, logMessages }) => {
+    // display any log/print messages that were generated
+    // during the execution of the script
 
-  const buffers = [];
-
-  // need to setString before calling compileToRenderPackets
-  Shabba.setString(Shabba.string_buffer, script);
-  const numRenderPackets = Shabba.compileToRenderPackets();
-  console.log(`numRenderPackets = ${numRenderPackets}`);
-
-  for (let i = 0; i < numRenderPackets; i++) {
-    const numVertices = Shabba.getRenderPacketNumVertices(i);
-    console.log(`render_packet ${i}: numVertices = ${numVertices}`);
-
-    if (numVertices > 0) {
-      const vbuf = Shabba.getRenderPacketVBuf(i);
-      const cbuf = Shabba.getRenderPacketCBuf(i);
-      const tbuf = Shabba.getRenderPacketTBuf(i);
-
-      const buffer = {};
-      buffer.vbuf = pointerToFloat32Array(vbuf, numVertices * 2);
-      buffer.cbuf = pointerToFloat32Array(cbuf, numVertices * 4);
-      buffer.tbuf = pointerToFloat32Array(tbuf, numVertices * 2);
-      buffer.numVertices = numVertices;
-      buffers.push(buffer);
-    }
-  }
-
-  if (buffers.length > 0) {
-    renderGeometryBuffers(buffers, imageElement);
-  }
-
-  Shabba.scriptCleanup();
-
-  stopFn('renderScriptWASM', gUI.konsole);
+    gUI.konsole.log(logMessages);
+    renderGeometryBuffers(jobRenderWasm, memory, buffers, imageElement);
+    stopFn(`renderScriptWithWASM-${title}`, gUI.konsole);
+  }).catch(error => {
+    // handle error
+    console.log(`worker: error of ${error}`);
+  });
 }
 
 // function that takes a read-only state and updates the UI
@@ -385,6 +330,7 @@ function updateUI(state) {
     showScriptInEditor(state);
     if (gWasmHack) {
       // WASM
+      renderScriptWithWASM(state, gUI.renderImage);
     } else {
       renderScript(state, gUI.renderImage);
     }
@@ -477,7 +423,7 @@ function renderHighRes(state, genotype) {
   }).then(({ title, buffers }) => {
     const [width, height] = state.get('highResolution');
 
-    renderGeometryBuffers(buffers, image, width, height);
+    renderGeometryBuffers(jobRender, null, buffers, image, width, height);
 
     stopFn(`renderHighRes-${title}`, gUI.konsole);
 
@@ -685,7 +631,11 @@ function createEditor(store, editorTextArea) {
   const extraKeys = {
     'Ctrl-E': () => {
       setScript(store, getScriptFromEditor()).then(state => {
-        return renderScript(state, gUI.renderImage);
+        if (gWasmHack) {
+          return renderScriptWithWASM(state, gUI.renderImage);
+        } else {
+          return renderScript(state, gUI.renderImage);
+        }
       }).catch(error => {
         console.log(`worker setScript error: ${error}`);
       });
@@ -1001,7 +951,7 @@ function allocateWorkers(state) {
   Job.setup(numWorkers);
 }
 
-export default function main(wasmInstance) {
+export default function main() {
   initFirebase();
   initFirebaseSignIn();
 
@@ -1021,7 +971,4 @@ export default function main(wasmInstance) {
   getGallery().then(() => {
     return removeKonsoleInvisibility();
   }).catch(error => console.error(error));
-
-  configureWasmModule(wasmInstance);
-  Shabba.seniStartup();
 }

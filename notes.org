@@ -1,13 +1,10 @@
-* TODO [0/9]
-  1. [ ] web assembly lives inside a web worker
-  2. [ ] test gc
-  3. [ ] maybe have a required specifier in functions?
-  4. [ ] poly should also accept a uv parameter
-  5. [ ] ensure that there's a dist folder before running npm run build:wasm
-  6. [ ] structs for compile, runtim, performance info
-  7. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  8. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  9. [ ] look into restrict keyword in C99
+* TODO [0/6]
+  1. [ ] maybe have a required specifier in functions?
+  2. [ ] poly should also accept a uv parameter
+  3. [ ] ensure that there's a dist folder before running npm run build:wasm
+  4. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  5. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  6. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
@@ -813,4 +810,9 @@ call_no_arg_function
 
 
 
+  
+
+* assembly-worker
+
+  size of worker and main before/after
   
