@@ -203,9 +203,11 @@ function renderGeometryBuffers(jobType, memory, buffers, imageElement, w, h) {
 
   gGLRenderer.preDrawScene(destWidth, destHeight);
 
+  const memoryF32 = new Float32Array(memory);
+
   buffers.forEach(buffer => {
     if (jobType === jobRenderWasm) {
-      gGLRenderer.drawBufferFromWasm(memory, buffer);
+      gGLRenderer.drawBufferFromWasm(memoryF32, buffer);
     } else {
       gGLRenderer.drawBuffer(buffer);
     }

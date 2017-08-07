@@ -227,7 +227,7 @@ export default class GLRenderer {
                         this.mvMatrix);
   }
 
-  drawBufferFromWasm(memory, buffer) {
+  drawBufferFromWasm(memoryF32, buffer) {
     const gl = this.gl;
     const shaderProgram = this.shaderProgram;
 
@@ -239,14 +239,13 @@ export default class GLRenderer {
     const colourItemSize = 4;
     const textureItemSize = 2;
 
-    const F32 = new Float32Array(memory);
-    const vbuf = pointerToFloat32Array(F32,
+    const vbuf = pointerToFloat32Array(memoryF32,
                                        buffer.vbufAddress,
                                        buffer.numVertices * vertexItemSize);
-    const cbuf = pointerToFloat32Array(F32,
+    const cbuf = pointerToFloat32Array(memoryF32,
                                        buffer.cbufAddress,
                                        buffer.numVertices * colourItemSize);
-    const tbuf = pointerToFloat32Array(F32,
+    const tbuf = pointerToFloat32Array(memoryF32,
                                        buffer.tbufAddress,
                                        buffer.numVertices * textureItemSize);
 
