@@ -197,7 +197,7 @@ function renderGeometryBuffers(jobType, memory, buffers, imageElement, w, h) {
     destWidth = w;
     destHeight = h;
   } else {
-    destWidth  = imageElement.clientWidth;
+    destWidth = imageElement.clientWidth;
     destHeight = imageElement.clientHeight;
   }
 

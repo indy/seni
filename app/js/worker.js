@@ -343,6 +343,7 @@ function render({ script, scriptHash, genotype }) {
   return { title, buffers, logMessages };
 }
 
+/*
 function pointerToFloat32Array(ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
@@ -354,8 +355,9 @@ function pointerToArrayBufferCopy(ptr, length) {
   const pos = ptr / nByte;
   return Shabba.instance.memory.F32.slice(pos, pos + length);
 }
+*/
 
-function renderWasm({ script, scriptHash, genotype }) {
+function renderWasm({ script /*, scriptHash, genotype*/ }) {
   konsoleProxy.clear();
 
   const buffers = [];
@@ -386,7 +388,7 @@ function renderWasm({ script, scriptHash, genotype }) {
   Shabba.scriptCleanup();
 
   const logMessages = konsoleProxy.collectMessages();
-  const title = "WASM woohoo";
+  const title = 'WASM woohoo';
   return { title, memory, buffers, logMessages };
 }
 
@@ -471,8 +473,7 @@ function register(callback) {
           console.log(`sending over ${n} transferrable sets`);
         }
         self.postMessage([null, result], transferrable);
-      } else if(type === jobRenderWasm) {
-
+      } else if (type === jobRenderWasm) {
         const transferrable = [];
 
         if (result.buffers.length > 0) {
@@ -530,11 +531,11 @@ function freeModule() {
 }
 */
 
-console.log("about to start");
+//console.log("about to start");
 loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
   configureWasmModule(wasmInstance);
   Shabba.seniStartup();
-  console.log("ready");
+  // console.log("ready");
 
   register((type, data) => {
     switch (type) {
