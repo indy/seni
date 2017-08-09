@@ -125,10 +125,32 @@ void format_node_value(seni_buffer_writer *buffer_writer, seni_env *env, char *v
 
 seni_node *unparse_ast_node(seni_buffer_writer *buffer_writer, seni_env *env, seni_node *ast, seni_genotype *genotype)
 {
-
   seni_node *n;
   
   if (ast->alterable == true) {
+
+    buffer_writer_sprintf(buffer_writer, "{");
+    if (ast->parameter_prefix != NULL) {
+      unparse_ast_node(buffer_writer, env, ast->parameter_prefix, genotype);
+    }
+
+    // // use value from genotype
+    // if (node.type === NodeType.VECTOR) {
+    //   // a vector requires multiple values from the genotype
+    //   [v, geno] = getMultipleValuesFromGenotype(node.children, geno);
+    // } else {
+    //   [v, geno] = pullValueFromGenotype(geno);
+    //   v = formatNodeValue(v, node);
+    // }
+    format_node_value(buffer_writer, env, NULL, ast);    
+
+    n = ast->parameter_ast;
+    while (n != NULL) {
+      unparse_ast_node(buffer_writer, env, n, genotype);
+      n = n->next;
+    }
+
+    buffer_writer_sprintf(buffer_writer, "}");    
   } else {
     if (ast->type == NODE_LIST) {
 
