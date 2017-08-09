@@ -2032,7 +2032,7 @@ seni_var *bind_gen_int(seni_vm *vm, i32 num_args)
 
   f32 value = seni_prng_f32_range(&(vm->prng_state), min, max);
 
-  f32_as_var(&g_var_scratch, value);
+  f32_as_var(&g_var_scratch, (f32)floor_f32(value));
   
   return &g_var_scratch;
 }

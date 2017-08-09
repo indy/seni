@@ -1,5 +1,10 @@
 #include "seni_mathutil.h"
 
+i32 floor_f32(f32 a)
+{
+	i32 ai = (i32) a;
+	return (a < ai) ? ai-1 : ai;
+}
 
 i32 max_i32(i32 a, i32 b)
 {

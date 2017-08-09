@@ -756,6 +756,30 @@ void test_prng(void)
   TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_perlin(0.1f, 0.2f, 0.3f));
 }
 
+seni_genotype *genotype_test(i32 seed_value, char *source)
+{
+  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_construct();
+  seni_shapes_init_globals();
+  init_uv_mapper();
+
+  seni_node *ast = parser_parse(env->wl, source);
+
+  seni_trait_set *trait_set = trait_set_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+
+  // using the vm to build the genes
+  seni_genotype *genotype = genotype_build(vm, env, trait_set, seed_value);
+
+  trait_set_free(trait_set);
+  parser_free_nodes(ast);
+
+  env_free(env);
+  vm_free(vm);
+  free_uv_mapper();
+
+  return genotype;
+}
+
 void unparse_compare(i32 seed_value, char *source, char *expected)
 {
   seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
@@ -780,7 +804,6 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
     TEST_ASSERT_EQUAL_STRING(source, unparsed_source);
   }
 
-
   free(unparsed_source);
 
   parser_free_nodes(ast);
@@ -791,6 +814,19 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   free_uv_mapper();
 }
 
+void test_genotype(void) {
+  seni_genotype *genotype;
+  seni_gene *g;
+
+  {
+    genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 85.0f);
+    genotype_free(genotype);
+  }
+  
+}
 
 void test_unparser(void) {
   unparse_compare(9875, "(+ 4 2.0)", NULL);
@@ -800,6 +836,8 @@ void test_unparser(void) {
   unparse_compare(9875, "foo:", NULL);
   unparse_compare(9875, "foo ; some comment \"here\"", NULL);
   unparse_compare(9875, "(fn (a b: 10) (+ b 20))", NULL);
+  unparse_compare(9875, "(+ 6 {3 (gen/int min: 3 max: 4)})", NULL);
+  unparse_compare(9875, "(+ 7 { 4 (gen/int min: 2 max: 6)})", NULL);
 }
 
 int main(void)
@@ -815,7 +853,6 @@ int main(void)
   // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
-
 
   // RUN_TEST(test_mathutil);
   // RUN_TEST(test_parser);
@@ -841,6 +878,7 @@ int main(void)
   // RUN_TEST(test_vm_function_address);
   // RUN_TEST(test_vm_repeat);
 
+  RUN_TEST(test_genotype);
   RUN_TEST(test_unparser);
 
   return UNITY_END();

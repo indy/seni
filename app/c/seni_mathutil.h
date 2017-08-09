@@ -15,6 +15,8 @@
 #define unlerp(t,a,b)      ( ((t) - (a)) / (f32) ((b) - (a)) )
 #define clamp(x,xmin,xmax) ((x) < (xmin) ? (xmin) : (x) > (xmax) ? (xmax) : (x))
 
+i32 floor_f32(f32 a);
+
 i32 max_i32(i32 a, i32 b);
 i32 min_i32(i32 a, i32 b);
 
