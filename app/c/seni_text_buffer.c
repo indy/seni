@@ -1,4 +1,5 @@
 #include "seni_text_buffer.h"
+
 #include "seni_config.h"
 #include "seni_printf.h"
 #include "seni_strtof.h"
@@ -8,7 +9,7 @@
 #include <inttypes.h>
 #include <stdarg.h>
 
-seni_text_buffer *text_buffer_construct(char *buffer, i32 buffer_size)
+seni_text_buffer *text_buffer_allocate(char *buffer, i32 buffer_size)
 {
   seni_text_buffer *text_buffer = (seni_text_buffer *)calloc(1, sizeof(seni_text_buffer));
 

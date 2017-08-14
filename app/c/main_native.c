@@ -1,19 +1,19 @@
+#include "seni_bind.h"
+#include "seni_ga.h"
+#include "seni_keyword_iname.h"
+#include "seni_lang.h"
+#include "seni_parser.h"
+#include "seni_printf.h"
+#include "seni_render_packet.h"
+#include "seni_shapes.h"
+#include "seni_timing.h"
+#include "seni_uv_mapper.h"
+#include "seni_vm_compiler.h"
+#include "seni_vm_interpreter.h"
+
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-
-#include "seni_lang.h"
-#include "seni_ga.h"
-#include "seni_parser.h"
-#include "seni_vm_compiler.h"
-#include "seni_vm_interpreter.h"
-#include "seni_shapes.h"
-#include "seni_uv_mapper.h"
-#include "seni_bind.h"
-
-#include "seni_printf.h"
-#include "seni_timing.h"
-
 
 char *load_file(char *filename)
 {
@@ -77,8 +77,8 @@ void execute_source(char *source)
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
-  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_construct();
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_allocate();
   seni_shapes_init_globals();
   init_uv_mapper();
   TIMING_UNIT construct_stop = get_timing();
@@ -132,8 +132,8 @@ void execute_source_with_seed(char *source, i32 seed_value)
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
-  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_construct();
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_allocate();
   seni_shapes_init_globals();
   init_uv_mapper();
   TIMING_UNIT construct_stop = get_timing();
@@ -205,8 +205,8 @@ void execute_source_with_seed(char *source, i32 seed_value)
 void print_compiled_program(char *source)
 {
   // construct
-  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *e = env_construct();
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *e = env_allocate();
 
   // compile program
   seni_program *program = program_compile(e, MAX_PROGRAM_SIZE, source);

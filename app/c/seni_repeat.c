@@ -1,8 +1,9 @@
 #include "seni_repeat.h"
-#include "seni_vm_interpreter.h"
-#include "seni_matrix.h"
-#include "seni_mathutil.h"
 
+#include "seni_lang.h"
+#include "seni_mathutil.h"
+#include "seni_matrix.h"
+#include "seni_vm_interpreter.h"
 
 void flip(seni_vm *vm, seni_fn_info *fn_info, f32 sx, f32 sy)
 {

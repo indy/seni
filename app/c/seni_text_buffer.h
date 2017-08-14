@@ -11,7 +11,7 @@ struct seni_text_buffer {
   
 };
 
-seni_text_buffer *text_buffer_construct(char *buffer, i32 buffer_size);
+seni_text_buffer *text_buffer_allocate(char *buffer, i32 buffer_size);
 void text_buffer_free(seni_text_buffer *text_buffer);
 
 void text_buffer_pretty_print(seni_text_buffer *text_buffer);

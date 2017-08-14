@@ -2,11 +2,10 @@
 
 #include "seni_types.h"
 
-typedef struct {
+struct seni_prng_state {
   u64 state;
   u64 inc;
-} seni_prng_state;
-
+};
 
 void seni_prng_set_state(seni_prng_state *prng_state, u64 seed);
 

@@ -1,10 +1,11 @@
 #include "seni_render_packet.h"
+
 #include "seni_config.h"
 
 #include <stdlib.h>
 #include "utlist.h"
 
-seni_render_packet *render_packet_construct(i32 max_vertices, i32 vbuf_element_size,
+seni_render_packet *render_packet_allocate(i32 max_vertices, i32 vbuf_element_size,
                                             i32 cbuf_element_size, i32 tbuf_element_size)
 {
   seni_render_packet *render_packet = (seni_render_packet *)calloc(1, sizeof(seni_render_packet));
@@ -30,7 +31,7 @@ void render_packet_free(seni_render_packet *render_packet)
   free(render_packet);
 }
 
-seni_render_data *render_data_construct(i32 max_vertices)
+seni_render_data *render_data_allocate(i32 max_vertices)
 {
   seni_render_data *render_data = (seni_render_data *)calloc(1, sizeof(seni_render_data));
 
@@ -83,7 +84,7 @@ seni_render_packet *add_render_packet(seni_render_data *render_data)
     SENI_ERROR("add_render_packet: render_data is a NULL pointer");
     return NULL;
   }
-  seni_render_packet *render_packet = render_packet_construct(render_data->max_vertices,
+  seni_render_packet *render_packet = render_packet_allocate(render_data->max_vertices,
                                                               render_data->vbuf_element_size,
                                                               render_data->cbuf_element_size,
                                                               render_data->tbuf_element_size);

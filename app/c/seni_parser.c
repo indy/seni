@@ -1,4 +1,6 @@
 #include "seni_parser.h"
+
+#include "seni_lang.h"
 #include "seni_strtof.h"
 
 #include "utlist.h"

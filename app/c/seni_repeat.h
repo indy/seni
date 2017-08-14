@@ -1,7 +1,6 @@
 #pragma once
 
 #include "seni_types.h"
-#include "seni_lang.h"
 
 void repeat_symmetry_vertical(seni_vm *vm, i32 fn);
 void repeat_symmetry_horizontal(seni_vm *vm, i32 fn);

@@ -1,6 +1,7 @@
 #include "seni_unparser.h"
-#include "seni_lang.h"
+
 #include "seni_ga.h"
+#include "seni_lang.h"
 #include "seni_printf.h"
 #include "seni_text_buffer.h"
 
@@ -222,7 +223,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_env *env, seni_n
 bool unparse(char *out, i32 out_size, seni_env *env, seni_node *ast, seni_genotype *genotype)
 {
 
-  seni_text_buffer *text_buffer = text_buffer_construct(out, out_size);
+  seni_text_buffer *text_buffer = text_buffer_allocate(out, out_size);
   
   seni_node *n = ast;
   genotype->current_gene = genotype->genes;

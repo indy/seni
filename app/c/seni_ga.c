@@ -1,9 +1,10 @@
 #include "seni_ga.h"
+
 #include "seni_lang.h"
-#include "seni_vm_compiler.h"
-#include "seni_vm_interpreter.h"
 #include "seni_prng.h"
 #include "seni_text_buffer.h"
+#include "seni_vm_compiler.h"
+#include "seni_vm_interpreter.h"
 
 #include <stdlib.h>
 #include "utlist.h"
@@ -12,7 +13,7 @@
 seni_word_lut *g_ga_wl;
 seni_trait_set *g_ga_trait_set;
 
-seni_trait *trait_construct()
+seni_trait *trait_allocate()
 {
   seni_trait *trait = (seni_trait *)calloc(1, sizeof(seni_trait));
 
@@ -50,7 +51,7 @@ bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer)
 }
 
 
-seni_trait_set *trait_set_construct()
+seni_trait_set *trait_set_allocate()
 {
   seni_trait_set *trait_set = (seni_trait_set *)calloc(1, sizeof(seni_trait_set));
 
@@ -84,7 +85,7 @@ seni_node *ga_traverse(seni_node *node, i32 program_max_size)
   if (n->alterable) {
     // node_pretty_print("ga ALTERABLE!!!", n, g_ga_wl);
 
-    seni_trait *trait = trait_construct();
+    seni_trait *trait = trait_allocate();
     
     // can compile the parameter_ast
     trait->program = compile_program(n->parameter_ast, program_max_size, g_ga_wl);
@@ -110,7 +111,7 @@ seni_trait_set *trait_set_compile(seni_node *ast, i32 trait_program_max_size, se
   // iterate through and build some traits
 
   g_ga_wl = word_lut;
-  g_ga_trait_set = trait_set_construct();
+  g_ga_trait_set = trait_set_allocate();
 
   seni_node *n = ast;
   while (n != NULL) {
@@ -161,7 +162,7 @@ bool trait_set_deserialize(seni_trait_set *out, seni_text_buffer *text_buffer)
   seni_trait_set *trait_set = out;
 
   for (i32 i = 0; i < count; i++) {
-    seni_trait *trait = trait_construct();
+    seni_trait *trait = trait_allocate();
     trait_deserialize(trait, text_buffer);
     trait_set_add_trait(trait_set, trait);
     if (i < count - 1) {
@@ -217,7 +218,7 @@ seni_genotype *genotype_build(seni_vm *vm, seni_env *env, seni_trait_set *trait_
 {
   // the seed is set once per genotype (should it be once per-gene?)
   //
-  seni_prng_set_state(&(vm->prng_state), (u64)seed);
+  seni_prng_set_state(vm->prng_state, (u64)seed);
 
   seni_genotype *genotype = (seni_genotype *)calloc(1, sizeof(seni_genotype));
 

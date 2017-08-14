@@ -1,4 +1,5 @@
 #include "seni_timing.h"
+
 #include "seni_js_imports.h"
 
 TIMING_UNIT get_timing()

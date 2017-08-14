@@ -1,4 +1,5 @@
 #include "seni_prng.h"
+
 #include "seni_mathutil.h"
 
 // *Really* minimal PCG32 code / (c) 2014 M.E. O'Neill / pcg-random.org

@@ -1,9 +1,15 @@
 #include "seni_lang.h"
-#include "seni_config.h"
-#include "seni_matrix.h"
-#include "seni_mathutil.h"
+
 #include "seni_bind.h"
+#include "seni_colour.h"
+#include "seni_config.h"
+#include "seni_keyword_iname.h"
+#include "seni_mathutil.h"
+#include "seni_matrix.h"
 #include "seni_parser.h"
+#include "seni_prng.h"
+#include "seni_render_packet.h"
+#include "seni_text_buffer.h"
 #include "seni_vm_compiler.h"
 
 #include <string.h>
@@ -559,7 +565,7 @@ bool bytecode_deserialize(seni_bytecode *out, seni_text_buffer *text_buffer)
   return true;
 }
 
-seni_env *env_construct()
+seni_env *env_allocate()
 {
   seni_env *e = (seni_env *)calloc(1, sizeof(seni_env));
   e->wl = wlut_allocate();
@@ -701,7 +707,7 @@ bool program_deserialize(seni_program *out, seni_text_buffer *text_buffer)
 // Virtual Machine
 // **************************************************
 
-seni_vm *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices)
+seni_vm *vm_allocate(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices)
 {
   seni_vm *vm = (seni_vm *)calloc(1, sizeof(seni_vm));
 
@@ -715,11 +721,13 @@ seni_vm *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vert
 
   vm->heap_avail_size_before_gc = heap_min_size;
 
-  vm->matrix_stack = matrix_stack_construct();
+  vm->matrix_stack = matrix_stack_allocate();
 
   // prepare storage for vertices
-  seni_render_data *render_data = render_data_construct(vertex_packet_num_vertices);
+  seni_render_data *render_data = render_data_allocate(vertex_packet_num_vertices);
   vm->render_data = render_data;
+
+  vm->prng_state = (seni_prng_state *)calloc(1, sizeof(seni_prng_state));
   
   vm_reset(vm);
 
@@ -784,6 +792,7 @@ void vm_free(seni_vm *vm)
   matrix_stack_free(vm->matrix_stack);
   free(vm->stack);
   free(vm->heap_slab);
+  free(vm->prng_state);
   free(vm);
 }
 

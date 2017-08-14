@@ -1,10 +1,6 @@
 #pragma once
 
 #include "seni_types.h"
-#include "seni_render_packet.h"
-#include "seni_matrix.h"
-#include "seni_colour.h"
-#include "seni_lang.h"
   
 void seni_shapes_init_globals();
 

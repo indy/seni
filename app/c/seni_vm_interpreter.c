@@ -1,6 +1,9 @@
 #include "seni_vm_interpreter.h"
-#include "seni_timing.h"
+
+#include "seni_lang.h"
 #include "seni_mathutil.h"
+#include "seni_matrix.h"
+#include "seni_timing.h"
 
 #include "utlist.h"
 

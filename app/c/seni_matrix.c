@@ -1,9 +1,11 @@
 #include "seni_matrix.h"
+
 #include "seni_config.h"
+
 #include "stdlib.h"
 #include <math.h>
 
-seni_matrix *matrix_construct()
+seni_matrix *matrix_allocate()
 {
   seni_matrix *out = (seni_matrix *)calloc(1, sizeof(seni_matrix));
   return out;
@@ -198,14 +200,14 @@ void matrix_transform_vec3(f32 *outx, f32 *outy, f32 *outz, seni_matrix *m, f32 
 }
 
 
-seni_matrix_stack *matrix_stack_construct()
+seni_matrix_stack *matrix_stack_allocate()
 {
   seni_matrix_stack *matrix_stack = (seni_matrix_stack *)calloc(1, sizeof(seni_matrix_stack));
 
   matrix_stack->stack_size = MATRIX_STACK_SIZE;
   matrix_stack->stack = (seni_matrix *)calloc(MATRIX_STACK_SIZE, sizeof(seni_matrix));
 
-  matrix_stack->wip_transform = matrix_construct();
+  matrix_stack->wip_transform = matrix_allocate();
 
   matrix_stack->sp = 0;
   

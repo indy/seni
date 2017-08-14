@@ -1,16 +1,19 @@
 #include "seni_bind.h"
+
+#include "seni_colour.h"
 #include "seni_config.h"
-#include "seni_shapes.h"
-#include "seni_render_packet.h"
-#include "seni_lang.h"
-#include "seni_vm_interpreter.h"
-#include "seni_matrix.h"
-#include "seni_mathutil.h"
-#include "seni_prng.h"
-#include "seni_parametric.h"
-#include "seni_repeat.h"
-#include "seni_path.h"
 #include "seni_focal.h"
+#include "seni_keyword_iname.h"
+#include "seni_lang.h"
+#include "seni_mathutil.h"
+#include "seni_matrix.h"
+#include "seni_parametric.h"
+#include "seni_path.h"
+#include "seni_prng.h"
+#include "seni_render_packet.h"
+#include "seni_repeat.h"
+#include "seni_shapes.h"
+#include "seni_vm_interpreter.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -2031,7 +2034,7 @@ seni_var *bind_gen_int(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_END;
 
   // value should be inclusive of both min and max (hence the + 1.0f)
-  f32 value = seni_prng_f32_range(&(vm->prng_state), min, max + 1.0f);
+  f32 value = seni_prng_f32_range(vm->prng_state, min, max + 1.0f);
 
   f32_as_var(&g_var_scratch, (f32)floor_f32(value));
   
@@ -2048,7 +2051,7 @@ seni_var *bind_gen_scalar(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_MAX, max);
   READ_STACK_ARGS_END;
 
-  f32 value = seni_prng_f32_range(&(vm->prng_state), min, max);
+  f32 value = seni_prng_f32_range(vm->prng_state, min, max);
 
   f32_as_var(&g_var_scratch, value);
   
@@ -2065,8 +2068,8 @@ seni_var *bind_gen_vector(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_MAX, max);
   READ_STACK_ARGS_END;
 
-  f32 x = seni_prng_f32_range(&(vm->prng_state), min, max);
-  f32 y = seni_prng_f32_range(&(vm->prng_state), min, max);
+  f32 x = seni_prng_f32_range(vm->prng_state, min, max);
+  f32 y = seni_prng_f32_range(vm->prng_state, min, max);
 
   v2_as_var(&g_var_scratch, x, y);
   
@@ -2121,9 +2124,9 @@ seni_var *bind_gen_col(seni_vm *vm, i32 num_args)
 
   seni_colour colour;
   colour.format = RGB;
-  colour.element[0] = seni_prng_f32_range(&(vm->prng_state), 0.0f, 1.0f);
-  colour.element[1] = seni_prng_f32_range(&(vm->prng_state), 0.0f, 1.0f);
-  colour.element[2] = seni_prng_f32_range(&(vm->prng_state), 0.0f, 1.0f);
+  colour.element[0] = seni_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
+  colour.element[1] = seni_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
+  colour.element[2] = seni_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
   colour.element[3] = alpha;
 
   colour_as_var(&g_var_scratch, &colour);

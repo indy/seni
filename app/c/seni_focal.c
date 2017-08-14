@@ -1,8 +1,9 @@
 #include "seni_focal.h"
-#include "seni_parametric.h"
-#include "seni_mathutil.h"
+
 #include "seni_config.h"
 #include "seni_keyword_iname.h"
+#include "seni_mathutil.h"
+#include "seni_parametric.h"
 
 // TODO: find out how small this can be and place it somewhere more accessible for other code
 #define SENI_EPSILON 0.000001f

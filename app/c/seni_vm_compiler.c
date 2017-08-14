@@ -1,6 +1,9 @@
 #include "seni_vm_compiler.h"
 #include "seni_lang.h"
+#include "seni_ga.h"
 #include "seni_mathutil.h"
+#include "seni_colour.h"
+#include "seni_keyword_iname.h"
 
 #include <string.h>
 

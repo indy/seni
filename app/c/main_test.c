@@ -6,6 +6,7 @@
 #include "seni_bind.h"
 #include "seni_colour.h"
 #include "seni_config.h"
+#include "seni_ga.h"
 #include "seni_keyword_iname.h"
 #include "seni_lang.h"
 #include "seni_mathutil.h"
@@ -13,6 +14,7 @@
 #include "seni_prng.h"
 #include "seni_shapes.h"
 #include "seni_strtof.h"
+#include "seni_text_buffer.h"
 #include "seni_timing.h"
 #include "seni_types.h"
 #include "seni_unparser.h"
@@ -305,7 +307,7 @@ void assert_colour(seni_colour *expected, seni_colour *colour)
 void test_colour(void)
 {
   {
-    seni_colour *c = colour_construct(RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+    seni_colour *c = colour_allocate(RGB, 0.0f, 0.0f, 0.0f, 1.0f);
     TEST_ASSERT_EQUAL(RGB, c->format);
     TEST_ASSERT_EQUAL_FLOAT(0.0f, c->element[0]);
     TEST_ASSERT_EQUAL_FLOAT(0.0f, c->element[1]);
@@ -315,9 +317,9 @@ void test_colour(void)
   }
 
   {
-    seni_colour *rgb = colour_construct(RGB, 0.2f, 0.1f, 0.5f, 1.0f);
-    seni_colour *hsl = colour_construct(HSL, 255.0f, 0.6666f, 0.3f, 1.0f);
-    seni_colour *lab = colour_construct(LAB, 19.9072f, 39.6375f, -52.7720f, 1.0f);
+    seni_colour *rgb = colour_allocate(RGB, 0.2f, 0.1f, 0.5f, 1.0f);
+    seni_colour *hsl = colour_allocate(HSL, 255.0f, 0.6666f, 0.3f, 1.0f);
+    seni_colour *lab = colour_allocate(LAB, 19.9072f, 39.6375f, -52.7720f, 1.0f);
 
     seni_colour res;
 
@@ -354,9 +356,9 @@ void test_strtof(void)
   TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_strtof("1", end));
 }
 
-#define EVM_COMPILE(EXPR) seni_env *e = env_construct();                \
+#define EVM_COMPILE(EXPR) seni_env *e = env_allocate();                \
   seni_program *prog = program_compile(e, 256, EXPR);                   \
-  seni_vm *vm = vm_construct(STACK_SIZE,HEAP_SIZE,HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
+  seni_vm *vm = vm_allocate(STACK_SIZE,HEAP_SIZE,HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
   vm_debug_info_reset(vm);                                              \
   vm_interpret(vm, e, prog)
 
@@ -758,8 +760,8 @@ void test_prng(void)
 
 seni_genotype *genotype_test(i32 seed_value, char *source)
 {
-  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_construct();
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_allocate();
   seni_shapes_init_globals();
   init_uv_mapper();
 
@@ -782,8 +784,8 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
 
 void unparse_compare(i32 seed_value, char *source, char *expected)
 {
-  seni_vm *vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_construct();
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_allocate();
   seni_shapes_init_globals();
   init_uv_mapper();
 
@@ -924,7 +926,7 @@ void serialize_deserialize_var(seni_var *var)
   seni_var out;
   bool res;
 
-  seni_text_buffer *text_buffer = text_buffer_construct(buffer, buffer_size);
+  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
 
   res = var_serialize(text_buffer, var);
   
@@ -992,7 +994,7 @@ void test_serialization(void)
   i32 buffer_size = 128;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));
 
-  seni_text_buffer *text_buffer = text_buffer_construct(buffer, buffer_size);
+  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
 
   {
     // double serialize
@@ -1044,13 +1046,13 @@ void test_serialization(void)
 
 void test_serialization_program(void)
 {
-  seni_env *env = env_construct();
+  seni_env *env = env_allocate();
   seni_program *program = program_compile(env, 256, "(gen/int min: 2 max: 6)");
 
   i32 buffer_size = 4096;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));
 
-  seni_text_buffer *text_buffer = text_buffer_construct(buffer, buffer_size);
+  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
 
   bool res = program_serialize(text_buffer, program);
   TEST_ASSERT_TRUE(res);

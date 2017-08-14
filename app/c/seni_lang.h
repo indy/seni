@@ -2,15 +2,9 @@
 
 #include "seni_config.h"
 #include "seni_types.h"
-#include "seni_render_packet.h"
-#include "seni_matrix.h"
-#include "seni_colour.h"
-#include "seni_keyword_iname.h"
-#include "seni_prng.h"
-#include "seni_text_buffer.h"
 
 /* word lookup table */
-typedef struct seni_word_lut {
+struct seni_word_lut {
   // set once at startup - doesn't change
   char *native[MAX_NATIVE_LOOKUPS];  
   i32 native_count;
@@ -22,7 +16,7 @@ typedef struct seni_word_lut {
   // set once for each script
   char *word[MAX_WORD_LOOKUPS];
   i32 word_count;
-} seni_word_lut;
+};
 
 // word lookup
 seni_word_lut *wlut_allocate();
@@ -58,7 +52,7 @@ seni_value_in_use get_node_value_in_use(seni_node_type type);
 
 struct seni_gene;
 
-typedef struct seni_node {
+struct seni_node {
   seni_node_type type;
 
   union {
@@ -84,7 +78,7 @@ typedef struct seni_node {
   /* for parameter_ast, parameter_prefix, first_child */
   struct seni_node *prev;
   struct seni_node *next;
-} seni_node;
+};
 
 seni_node *safe_next(seni_node *expr);
 seni_node *safe_prev(seni_node *expr);
@@ -105,7 +99,7 @@ typedef enum {
 
 seni_value_in_use get_var_value_in_use(seni_var_type type);
 
-typedef struct seni_var {
+struct seni_var {
   seni_var_type type;
 
   union {
@@ -124,7 +118,7 @@ typedef struct seni_var {
   /* for linked list used by the pool and for elements in a vector */
   struct seni_var *prev;
   struct seni_var *next;
-} seni_var;
+};
 
 char     *var_type_name(seni_var *var);
 void      var_pretty_print(char* msg, seni_var *var);
@@ -134,7 +128,6 @@ void      v2_as_var(seni_var *out, f32 x, f32 y);
 void      f32_as_var(seni_var *out, f32 f);
 void      i32_as_var(seni_var *out, i32 i);
 void      colour_as_var(seni_var *out, seni_colour *c);
-
 
 // Memory Segments
 //
@@ -182,17 +175,17 @@ static const char *opcode_string[] = {
 #undef OPCODE
 };
 
-typedef struct {
+struct seni_bytecode {
   seni_opcode op;
   seni_var arg0;
   seni_var arg1;
-} seni_bytecode;
+};
 
 void bytecode_pretty_print(i32 ip, seni_bytecode *b);
 bool bytecode_serialize(seni_text_buffer *text_buffer, seni_bytecode *bytecode);
 bool bytecode_deserialize(seni_bytecode *out, seni_text_buffer *text_buffer);
 
-typedef struct {
+struct seni_fn_info {
   bool active;                  // is this struct being used
 
   i32 index;                    // the index into program->fn_info
@@ -201,22 +194,23 @@ typedef struct {
   i32 body_address;
   i32 num_args;
   i32 argument_offsets[MAX_NUM_ARGUMENTS];
-} seni_fn_info;
+};
 
 struct seni_vm;
 
 typedef seni_var *(*native_function_ptr)(struct seni_vm *vm, i32 num_args);
-typedef struct {
+
+struct seni_env {
   native_function_ptr function_ptr[MAX_NATIVE_LOOKUPS];
 
   seni_word_lut *wl;
-} seni_env;
+};
 
-seni_env      *env_construct();
+seni_env      *env_allocate();
 void           env_free(seni_env *e);
 void           env_post_interpret_cleanup(seni_env *e);
 
-typedef struct {
+struct seni_program {
   seni_bytecode *code;
   i32 code_max_size;
   i32 code_size;
@@ -232,7 +226,7 @@ typedef struct {
 
   seni_word_lut *word_lut;      //  needed in seni_program for error messages
 
-} seni_program;
+};
 
 char           *opcode_name(seni_opcode opcode);
 
@@ -246,7 +240,7 @@ bool           program_deserialize(seni_program *out, seni_text_buffer *text_buf
 seni_program  *program_allocate(i32 code_max_size);
 seni_program  *program_compile(seni_env *env, i32 program_max_size, char *source);
 
-typedef struct seni_vm {
+struct seni_vm {
   seni_program *program;
   seni_env *env;
   
@@ -254,7 +248,7 @@ typedef struct seni_vm {
   
   seni_matrix_stack *matrix_stack;
 
-  seni_prng_state prng_state;      // only used when evaluating bracket bindings
+  seni_prng_state *prng_state;     // only used when evaluating bracket bindings
 
   i32 heap_size;
   seni_var *heap_slab;             // the contiguous block of allocated memory
@@ -276,9 +270,9 @@ typedef struct seni_vm {
   i32 global;                      // single segment of memory at top of stack
   i32 local;                       // per-frame segment of memory for local variables
 
-} seni_vm;
+};
 
-seni_vm  *vm_construct(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices);
+seni_vm  *vm_allocate(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices);
 void      vm_reset(seni_vm *vm);
 void      vm_free(seni_vm *vm);
 void      vm_free_render_data(seni_vm *vm);
@@ -300,3 +294,9 @@ void      var_copy(seni_var *dest, seni_var *src);
 void      vm_debug_info_reset(seni_vm *vm);
 void      vm_debug_info_print(seni_vm *vm);
 
+struct seni_gene {
+  seni_var var;
+    
+  struct seni_gene *next;
+  struct seni_gene *prev;
+};

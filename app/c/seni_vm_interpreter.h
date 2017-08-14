@@ -1,6 +1,6 @@
 #pragma once
 
-#include "seni_lang.h"
+#include "seni_types.h"
 
 bool vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info);
 

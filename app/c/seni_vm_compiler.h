@@ -1,7 +1,6 @@
 #pragma once
 
-#include "seni_lang.h"
-#include "seni_ga.h"
+#include "seni_types.h"
 
 i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value);
   

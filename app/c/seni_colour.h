@@ -11,10 +11,10 @@ typedef enum {
   XYZ
 } seni_colour_format;
 
-typedef struct seni_colour {
+struct seni_colour {
   seni_colour_format format;
   f32 element[4];
-} seni_colour;
+};
 
 typedef enum {
   COLOUR_FN_UNKNOWN = 0,
@@ -23,16 +23,16 @@ typedef enum {
   COLOUR_FN_QUADRATIC
 } seni_colour_fn_type;
 
-typedef struct {
+struct seni_colour_fn_state {
   seni_colour_fn_type type;
   f32 a[4];
   f32 b[4];
   f32 c[4];
   f32 d[4];
   f32 alpha;
-} seni_colour_fn_state;
+};
 
-seni_colour *colour_construct(seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha);
+seni_colour *colour_allocate(seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha);
 void colour_free(seni_colour *colour);
 
 void colour_set(seni_colour *out, seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha);

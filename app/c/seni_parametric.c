@@ -1,6 +1,7 @@
 #include "seni_parametric.h"
-#include "seni_mathutil.h"
+
 #include "seni_keyword_iname.h"
+#include "seni_mathutil.h"
 
 f32 seni_parametric(f32 val, f32 from_a, f32 from_b, f32 to_a, f32 to_b, i32 mapping, bool clamping)
 {

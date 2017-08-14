@@ -1,11 +1,13 @@
 #include "seni_shapes.h"
-#include "seni_types.h"
-#include "seni_uv_mapper.h"
-#include "seni_mathutil.h"
-#include "seni_render_packet.h"
-#include "seni_keyword_iname.h"
+
 #include "seni_colour.h"
+#include "seni_keyword_iname.h"
+#include "seni_lang.h"
+#include "seni_mathutil.h"
+#include "seni_matrix.h"
 #include "seni_prng.h"
+#include "seni_render_packet.h"
+#include "seni_uv_mapper.h"
 
 #include <math.h>
 

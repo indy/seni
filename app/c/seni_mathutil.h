@@ -1,7 +1,6 @@
 #pragma once
 
 #include "seni_types.h"
-#include <math.h>
 
 #define PI 3.14159265358979323846f
 #define TAU 6.283185307179586f

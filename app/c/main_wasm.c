@@ -1,16 +1,17 @@
 #include <webassembly.h>
 #include <stdlib.h>
-#include "seni_js_imports.h"
-#include "seni_render_packet.h"
+
 #include "seni_bind.h"
-#include "seni_uv_mapper.h"
-#include "seni_shapes.h"
+#include "seni_js_imports.h"
 #include "seni_lang.h"
 #include "seni_parser.h"
+#include "seni_printf.h"
+#include "seni_render_packet.h"
+#include "seni_shapes.h"
+#include "seni_timing.h"
+#include "seni_uv_mapper.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
-#include "seni_printf.h"
-#include "seni_timing.h"
 
 #define STRING_BUFFER_SIZE 80000
 char *g_string_buffer;
@@ -36,8 +37,8 @@ void seni_startup()
     vm_free(g_vm);
   }
 
-  g_vm = vm_construct(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  g_e = env_construct();
+  g_vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  g_e = env_allocate();
 }
 
 // called once at shutdown

@@ -1,8 +1,11 @@
 #include "seni_path.h"
+
+#include "seni_keyword_iname.h"
+#include "seni_lang.h"
+#include "seni_mathutil.h"
+#include "seni_matrix.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
-#include "seni_matrix.h"
-#include "seni_mathutil.h"
 
 // invoke a function with 3 args: step, position and t
 void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y)

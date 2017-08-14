@@ -2,7 +2,7 @@
 
 #include "seni_types.h"
 
-typedef struct seni_render_packet {
+struct seni_render_packet {
   // number of vertices actually in the render_packet
   int num_vertices;
 
@@ -12,10 +12,9 @@ typedef struct seni_render_packet {
 
   struct seni_render_packet *prev;
   struct seni_render_packet *next;
-} seni_render_packet;
+};
 
-
-typedef struct {
+struct seni_render_data {
   // max number of vertices that can fit in a single render_packet
   i32 max_vertices;
 
@@ -30,10 +29,9 @@ typedef struct {
 
   // the current render packet that should be filled in
   seni_render_packet *current_render_packet;
-  
-} seni_render_data;
+};
 
-seni_render_data *render_data_construct(i32 max_vertices);
+seni_render_data *render_data_allocate(i32 max_vertices);
 void render_data_free(seni_render_data *render_data);
 
 void render_data_free_render_packets(seni_render_data *render_data);

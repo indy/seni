@@ -1,4 +1,5 @@
 #include "seni_colour.h"
+
 #include "seni_keyword_iname.h"
 #include "seni_mathutil.h"
 
@@ -15,7 +16,7 @@
 #define powf Math_pow
 #endif
 
-seni_colour *colour_construct(seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha)
+seni_colour *colour_allocate(seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha)
 {
   seni_colour *colour = (seni_colour *)calloc(1, sizeof(seni_colour));
 
