@@ -1072,6 +1072,41 @@ void test_serialization_program(void)
   env_free(env);
 }
 
+void test_serialization_trait_set(void)
+{
+  char *source = "(rect position: [500 500] width: {100 (gen/int min: 20 max: 200)} height: {30 (gen/int min: 10 max: 40)})";
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_allocate();
+  seni_shapes_init_globals();
+  init_uv_mapper();
+
+  seni_node *ast = parser_parse(env->wl, source);
+  seni_trait_set *trait_set = trait_set_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+
+  i32 buffer_size = 4096;
+  char *buffer = (char *)calloc(buffer_size, sizeof(char));
+  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
+  bool res = trait_set_serialize(text_buffer, trait_set);
+  TEST_ASSERT_TRUE(res);
+
+  text_buffer_reset(text_buffer);
+
+  seni_trait_set *out = trait_set_allocate();
+  res = trait_set_deserialize(out, text_buffer);
+  TEST_ASSERT_TRUE(res);
+
+  i32 count = trait_set_count(out);
+  TEST_ASSERT_EQUAL(2, count);
+
+  parser_free_nodes(ast);
+
+  trait_set_free(trait_set);
+  trait_set_free(out);
+  env_free(env);
+  vm_free(vm);
+  free_uv_mapper();
+}
+
 int main(void)
 {
   // timing();
@@ -1115,7 +1150,7 @@ int main(void)
 
   RUN_TEST(test_serialization);
   RUN_TEST(test_serialization_program);
-      
+  RUN_TEST(test_serialization_trait_set);
 
   return UNITY_END();
 }
