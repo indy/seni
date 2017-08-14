@@ -2,6 +2,7 @@
 #include "seni_lang.h"
 #include "seni_ga.h"
 #include "seni_printf.h"
+#include "seni_text_buffer.h"
 
 #include "string.h"
 #include <stdlib.h>
@@ -12,32 +13,6 @@
 #else
 #include <stdio.h>
 #endif
-#include "stdarg.h"
-
-typedef struct {
-  char *buffer;
-  i32 buffer_size;
-
-  char *cursor;
-  i32 current_size;
-  
-} seni_buffer_writer;
-
-void buffer_writer_sprintf(seni_buffer_writer *buffer_writer, char const * fmt, ... )
-{
-  va_list va;
-  va_start(va, fmt);
-  int len = seni_vsprintf(buffer_writer->cursor, buffer_writer->current_size, fmt, va);
-  va_end(va);
-
-  buffer_writer->current_size -= len;
-  if (buffer_writer->current_size > 0) {
-    buffer_writer->cursor += len;
-  } else {
-    SENI_ERROR("seni_buffer_writer: buffer is full");
-  }
-
-}
 
 i32 count_decimals(seni_node *float_node)
 {
@@ -58,26 +33,36 @@ i32 count_decimals(seni_node *float_node)
   return res;
 }
 
-void format_node_value_float(seni_buffer_writer *buffer_writer, seni_node *node)
+void print_decimals(seni_text_buffer *text_buffer, i32 decimals, f32 f)
 {
-  i32 decimals = count_decimals(node);
-
   switch(decimals) {
-  case 0: buffer_writer_sprintf(buffer_writer, "%.0f", node->value.f); break;
-  case 1: buffer_writer_sprintf(buffer_writer, "%.1f", node->value.f); break;
-  case 2: buffer_writer_sprintf(buffer_writer, "%.2f", node->value.f); break;
-  case 3: buffer_writer_sprintf(buffer_writer, "%.3f", node->value.f); break;
-  case 4: buffer_writer_sprintf(buffer_writer, "%.4f", node->value.f); break;
-  case 5: buffer_writer_sprintf(buffer_writer, "%.5f", node->value.f); break;
-  case 6: buffer_writer_sprintf(buffer_writer, "%.6f", node->value.f); break;
-  case 7: buffer_writer_sprintf(buffer_writer, "%.7f", node->value.f); break;
-  case 8: buffer_writer_sprintf(buffer_writer, "%.8f", node->value.f); break;
-  case 9: buffer_writer_sprintf(buffer_writer, "%.9f", node->value.f); break;
-  default: buffer_writer_sprintf(buffer_writer, "%f", node->value.f);
+  case 0: text_buffer_sprintf(text_buffer, "%.0f", f); break;
+  case 1: text_buffer_sprintf(text_buffer, "%.1f", f); break;
+  case 2: text_buffer_sprintf(text_buffer, "%.2f", f); break;
+  case 3: text_buffer_sprintf(text_buffer, "%.3f", f); break;
+  case 4: text_buffer_sprintf(text_buffer, "%.4f", f); break;
+  case 5: text_buffer_sprintf(text_buffer, "%.5f", f); break;
+  case 6: text_buffer_sprintf(text_buffer, "%.6f", f); break;
+  case 7: text_buffer_sprintf(text_buffer, "%.7f", f); break;
+  case 8: text_buffer_sprintf(text_buffer, "%.8f", f); break;
+  case 9: text_buffer_sprintf(text_buffer, "%.9f", f); break;
+  default: text_buffer_sprintf(text_buffer, "%f", f);
   };
 }
 
-void format_node_value(seni_buffer_writer *buffer_writer, seni_env *env, char *value, seni_node *node)
+void format_node_value_float(seni_text_buffer *text_buffer, seni_node *node)
+{
+  i32 decimals = count_decimals(node);
+  print_decimals(text_buffer, decimals, node->value.f);
+}
+
+void format_var_value_float(seni_text_buffer *text_buffer, seni_node *node, seni_var *var)
+{
+  i32 decimals = count_decimals(node);
+  print_decimals(text_buffer, decimals, var->value.f);
+}
+
+void format_node_value(seni_text_buffer *text_buffer, seni_env *env, char *value, seni_node *node)
 {
   char *c;
   
@@ -90,28 +75,28 @@ void format_node_value(seni_buffer_writer *buffer_writer, seni_env *env, char *v
     SENI_ERROR("NODE_VECTOR ???");
     break;
   case NODE_INT:
-    buffer_writer_sprintf(buffer_writer, "%d", node->value.i);
+    text_buffer_sprintf(text_buffer, "%d", node->value.i);
     break;
   case NODE_FLOAT:
-    format_node_value_float(buffer_writer, node);
+    format_node_value_float(text_buffer, node);
     break;
   case NODE_NAME:
     c = wlut_reverse_lookup(env->wl, node->value.i);
-    buffer_writer_sprintf(buffer_writer, "%s", c);
+    text_buffer_sprintf(text_buffer, "%s", c);
     break;
   case NODE_LABEL:
     c = wlut_reverse_lookup(env->wl, node->value.i);
-    buffer_writer_sprintf(buffer_writer, "%s:", c);
+    text_buffer_sprintf(text_buffer, "%s:", c);
     break;
   case NODE_STRING:
     c = wlut_reverse_lookup(env->wl, node->value.i);
-    buffer_writer_sprintf(buffer_writer, "\"%s\"", c);
+    text_buffer_sprintf(text_buffer, "\"%s\"", c);
     break;
   case NODE_WHITESPACE:
-    buffer_writer_sprintf(buffer_writer, "%s", node->value.s);
+    text_buffer_sprintf(text_buffer, "%s", node->value.s);
     break;
   case NODE_COMMENT:
-    buffer_writer_sprintf(buffer_writer, "%s", node->value.s);
+    text_buffer_sprintf(text_buffer, "%s", node->value.s);
     break;
   default:
     SENI_ERROR("???");
@@ -123,15 +108,55 @@ void format_node_value(seni_buffer_writer *buffer_writer, seni_env *env, char *v
   };
 }
 
-seni_node *unparse_ast_node(seni_buffer_writer *buffer_writer, seni_env *env, seni_node *ast, seni_genotype *genotype)
+seni_gene *genotype_pull_gene(seni_genotype *genotype)
+{
+  seni_gene *gene = genotype->current_gene;
+  if (gene == NULL) {
+    SENI_ERROR("genotype_pull_gene: current gene is null");
+    return NULL;
+  }
+
+  genotype->current_gene = genotype->current_gene->next;
+
+  return gene;
+}
+
+void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genotype *genotype)
+{
+  seni_gene *gene = genotype_pull_gene(genotype); 
+  seni_var *var = &(gene->var);
+  
+  switch (var->type) {
+  case VAR_INT:
+    text_buffer_sprintf(text_buffer, "%d", var->value.i);
+    break;
+  case VAR_FLOAT:
+    format_var_value_float(text_buffer, node, var);
+    break;
+  case VAR_VECTOR:
+    // a vector requires multiple values from the genotype
+    SENI_ERROR("???");
+    break;
+  case VAR_COLOUR:
+    SENI_ERROR("???");
+    break;
+  case VAR_2D:
+    SENI_ERROR("???");
+    break;
+  default:
+    SENI_ERROR("???");
+  };
+}
+
+seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_env *env, seni_node *ast, seni_genotype *genotype)
 {
   seni_node *n;
   
   if (ast->alterable == true) {
 
-    buffer_writer_sprintf(buffer_writer, "{");
+    text_buffer_sprintf(text_buffer, "{");
     if (ast->parameter_prefix != NULL) {
-      unparse_ast_node(buffer_writer, env, ast->parameter_prefix, genotype);
+      unparse_ast_node(text_buffer, env, ast->parameter_prefix, genotype);
     }
 
     // // use value from genotype
@@ -142,15 +167,15 @@ seni_node *unparse_ast_node(seni_buffer_writer *buffer_writer, seni_env *env, se
     //   [v, geno] = pullValueFromGenotype(geno);
     //   v = formatNodeValue(v, node);
     // }
-    format_node_value(buffer_writer, env, NULL, ast);    
-
+    format_var_value(text_buffer, ast, genotype);
+    
     n = ast->parameter_ast;
     while (n != NULL) {
-      unparse_ast_node(buffer_writer, env, n, genotype);
+      unparse_ast_node(text_buffer, env, n, genotype);
       n = n->next;
     }
 
-    buffer_writer_sprintf(buffer_writer, "}");    
+    text_buffer_sprintf(text_buffer, "}");    
   } else {
     if (ast->type == NODE_LIST) {
 
@@ -158,32 +183,32 @@ seni_node *unparse_ast_node(seni_buffer_writer *buffer_writer, seni_env *env, se
       // }
       // else
       {
-        buffer_writer_sprintf(buffer_writer, "(");
+        text_buffer_sprintf(text_buffer, "(");
 
         n = ast->value.first_child;
         while (n != NULL) {
-          unparse_ast_node(buffer_writer, env, n, genotype);
+          unparse_ast_node(text_buffer, env, n, genotype);
           n = n->next;
         }
-        buffer_writer_sprintf(buffer_writer, ")");
+        text_buffer_sprintf(text_buffer, ")");
         
       }
       
     } else if (ast->type == NODE_VECTOR) {
       {
-        buffer_writer_sprintf(buffer_writer, "[");
+        text_buffer_sprintf(text_buffer, "[");
 
         n = ast->value.first_child;
         while (n != NULL) {
-          unparse_ast_node(buffer_writer, env, n, genotype);
+          unparse_ast_node(text_buffer, env, n, genotype);
           n = n->next;
         }
-        buffer_writer_sprintf(buffer_writer, "]");
+        text_buffer_sprintf(text_buffer, "]");
         
       }
  
     } else {
-      format_node_value(buffer_writer, env, NULL, ast);
+      format_node_value(text_buffer, env, NULL, ast);
     }
 
     // term = formatNodeValue(v, node);
@@ -197,17 +222,15 @@ seni_node *unparse_ast_node(seni_buffer_writer *buffer_writer, seni_env *env, se
 bool unparse(char *out, i32 out_size, seni_env *env, seni_node *ast, seni_genotype *genotype)
 {
 
-  seni_buffer_writer buffer_writer = {
-    .buffer = out,
-    .buffer_size = out_size,
-    .cursor = out,
-    .current_size = out_size
-  };
+  seni_text_buffer *text_buffer = text_buffer_construct(out, out_size);
   
   seni_node *n = ast;
+  genotype->current_gene = genotype->genes;
   while (n != NULL) {
-    n = unparse_ast_node(&buffer_writer, env, n, genotype);
+    n = unparse_ast_node(text_buffer, env, n, genotype);
   }
+
+  text_buffer_free(text_buffer);
 
   return true;
 }

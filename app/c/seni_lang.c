@@ -2,7 +2,6 @@
 #include "seni_config.h"
 #include "seni_matrix.h"
 #include "seni_mathutil.h"
-#include "seni_printf.h"
 #include "seni_bind.h"
 #include "seni_parser.h"
 #include "seni_vm_compiler.h"
@@ -280,6 +279,93 @@ void var_pretty_print(char* msg, seni_var *var)
   }
 }
 
+bool var_serialize(seni_text_buffer *text_buffer, seni_var *var)
+{
+  switch(var->type) {
+  case VAR_INT:
+    text_buffer_sprintf(text_buffer, "INT %d", var->value.i);
+    break;
+  case VAR_FLOAT:
+    text_buffer_sprintf(text_buffer, "FLOAT %.4f", var->value.f);
+    break;
+  case VAR_BOOLEAN:
+    text_buffer_sprintf(text_buffer, "BOOLEAN %d", var->value.i);
+    break;
+  case VAR_LONG:
+    text_buffer_sprintf(text_buffer, "LONG %" PRIu64 "", var->value.l);
+    break;
+  case VAR_NAME:
+    text_buffer_sprintf(text_buffer, "NAME %d", var->value.i);
+    break;
+  case VAR_VECTOR:
+    SENI_ERROR("var_serialize: serializing a vector?");
+    return false;
+    break;
+  case VAR_COLOUR:
+    text_buffer_sprintf(text_buffer, "COLOUR %d %.4f %.4f %.4f %.4f",
+                         var->value.i,
+                         var->f32_array[0],
+                         var->f32_array[1],
+                         var->f32_array[2],
+                         var->f32_array[3]);
+    break;
+  case VAR_2D:
+    text_buffer_sprintf(text_buffer, "2D %.4f %.4f",
+                         var->f32_array[0],
+                         var->f32_array[1]);
+    break;
+  default:
+    SENI_ERROR("var_serialize: unknown seni_var type");
+    return false;
+  }
+  
+  return true;
+}
+
+bool var_deserialize(seni_var *out, seni_text_buffer *text_buffer)
+{
+  // assuming that the buffer is at the start of a serialized seni_var
+  //
+  if (text_buffer_eat_text(text_buffer, "INT")) {
+    out->type = VAR_INT;
+    out->value.i = text_buffer_eat_i32(text_buffer);
+    return true;
+  } else if (text_buffer_eat_text(text_buffer, "NAME")) {
+    out->type = VAR_NAME;
+    out->value.i = text_buffer_eat_i32(text_buffer);
+    return true;
+  } else if (text_buffer_eat_text(text_buffer, "FLOAT")) {
+    out->type = VAR_FLOAT;
+    out->value.f = text_buffer_eat_f32(text_buffer);
+    return true;
+  } else if (text_buffer_eat_text(text_buffer, "2D")) {
+    out->type = VAR_2D;
+    out->f32_array[0] = text_buffer_eat_f32(text_buffer);
+    out->f32_array[1] = text_buffer_eat_f32(text_buffer);
+    return true;
+  } else if (text_buffer_eat_text(text_buffer, "COLOUR")) {
+    out->type = VAR_COLOUR;
+    out->value.i = text_buffer_eat_i32(text_buffer);
+    out->f32_array[0] = text_buffer_eat_f32(text_buffer);
+    out->f32_array[1] = text_buffer_eat_f32(text_buffer);
+    out->f32_array[2] = text_buffer_eat_f32(text_buffer);
+    out->f32_array[3] = text_buffer_eat_f32(text_buffer);
+    return true;
+  } else if (text_buffer_eat_text(text_buffer, "BOOLEAN")) {
+    out->type = VAR_BOOLEAN;
+    out->value.i = text_buffer_eat_i32(text_buffer);
+    return true;
+  } else if (text_buffer_eat_text(text_buffer, "LONG")) {
+    out->type = VAR_LONG;
+    out->value.l = text_buffer_eat_u64(text_buffer);
+    return true;
+  } else if (text_buffer_eat_text(text_buffer, "VECTOR")) {
+    return false;
+  }  
+  
+  return false;
+}
+
 void v2_as_var(seni_var *out, f32 x, f32 y)
 {
   out->type = VAR_2D;
@@ -309,80 +395,6 @@ void colour_as_var(seni_var *out, seni_colour *c)
   out->f32_array[1] = c->element[1];
   out->f32_array[2] = c->element[2];
   out->f32_array[3] = c->element[3];  
-}
-
-seni_env *env_construct()
-{
-  seni_env *e = (seni_env *)calloc(1, sizeof(seni_env));
-  e->wl = wlut_allocate();
-
-  declare_bindings(e->wl, e);
-  
-  return e;
-}
-
-void env_free(seni_env *e)
-{
-  wlut_free(e->wl);
-  free(e);
-}
-
-void env_post_interpret_cleanup(seni_env *e)
-{
-  wlut_reset_words(e->wl);
-}
-
-// **************************************************
-// Program
-// **************************************************
-
-char *opcode_name(seni_opcode opcode)
-{
-#define STR(x) #x
-  
-  switch(opcode) {
-#define OPCODE(id,_) case id: return STR(id);
-#include "seni_opcodes.h"
-#undef OPCODE
-  default:
-    return "unknown opcode";
-  }
-#undef STR
-}
-
-seni_program *program_allocate(i32 code_max_size)
-{
-  seni_program *program = (seni_program *)calloc(1, sizeof(seni_program));
-
-  program->code = (seni_bytecode *)calloc(code_max_size, sizeof(seni_bytecode));
-  program->code_max_size = code_max_size;
-  program->code_size = 0;
-  program->opcode_offset = 0;
-
-  return program;
-}
-
-void program_free(seni_program *program)
-{
-  free(program->code);
-  free(program);
-}
-
-seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
-{
-  seni_node *ast = parser_parse(env->wl, source);
-
-  seni_program *program = compile_program(ast, program_max_size, env->wl);
-  
-  parser_free_nodes(ast);
-
-  return program;
-}
-
-i32 program_stop_location(seni_program *program)
-{
-  // the final opcode in the program will always be a STOP
-  return program->code_size - 1;
 }
 
 char *memory_segment_name(seni_memory_segment_type segment)
@@ -475,6 +487,154 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b)
   SENI_PRINT("%s", buf);
 }
 
+bool bytecode_serialize(seni_text_buffer *text_buffer, seni_bytecode *bytecode)
+{
+  text_buffer_sprintf(text_buffer, "%s", opcode_string[bytecode->op]);
+  text_buffer_sprintf(text_buffer, " ");
+
+  if(!var_serialize(text_buffer, &(bytecode->arg0)))
+    return false;
+
+  text_buffer_sprintf(text_buffer, " ");
+
+  if(!var_serialize(text_buffer, &(bytecode->arg1)))
+    return false;
+
+  return true;
+}
+
+bool opcode_deserialize(seni_opcode *out, seni_text_buffer *text_buffer)
+{
+  if (text_buffer_eat_text(text_buffer, "LOAD"))      { *out = LOAD;      return true; }
+  if (text_buffer_eat_text(text_buffer, "STORE"))     { *out = STORE;     return true; }
+  if (text_buffer_eat_text(text_buffer, "SQUISH2"))   { *out = SQUISH2;   return true; }
+  if (text_buffer_eat_text(text_buffer, "ADD"))       { *out = ADD;       return true; }
+  if (text_buffer_eat_text(text_buffer, "SUB"))       { *out = SUB;       return true; }
+  if (text_buffer_eat_text(text_buffer, "MUL"))       { *out = MUL;       return true; }
+  if (text_buffer_eat_text(text_buffer, "DIV"))       { *out = DIV;       return true; }
+  if (text_buffer_eat_text(text_buffer, "MOD"))       { *out = MOD;       return true; }
+  if (text_buffer_eat_text(text_buffer, "NEG"))       { *out = NEG;       return true; }
+  if (text_buffer_eat_text(text_buffer, "SQRT"))      { *out = SQRT;      return true; }
+  if (text_buffer_eat_text(text_buffer, "EQ"))        { *out = EQ;        return true; }
+  if (text_buffer_eat_text(text_buffer, "GT"))        { *out = GT;        return true; }
+  if (text_buffer_eat_text(text_buffer, "LT"))        { *out = LT;        return true; }
+  if (text_buffer_eat_text(text_buffer, "AND"))       { *out = AND;       return true; }
+  if (text_buffer_eat_text(text_buffer, "OR"))        { *out = OR;        return true; }
+  if (text_buffer_eat_text(text_buffer, "NOT"))       { *out = NOT;       return true; }
+  if (text_buffer_eat_text(text_buffer, "JUMP"))      { *out = JUMP;      return true; }
+  if (text_buffer_eat_text(text_buffer, "JUMP_IF"))   { *out = JUMP_IF;   return true; }
+  if (text_buffer_eat_text(text_buffer, "CALL"))      { *out = CALL;      return true; }
+  if (text_buffer_eat_text(text_buffer, "CALL_0"))    { *out = CALL_0;    return true; }
+  if (text_buffer_eat_text(text_buffer, "RET"))       { *out = RET;       return true; }
+  if (text_buffer_eat_text(text_buffer, "RET_0"))     { *out = RET_0;     return true; }
+  if (text_buffer_eat_text(text_buffer, "CALL_F"))    { *out = CALL_F;    return true; }
+  if (text_buffer_eat_text(text_buffer, "CALL_F_0"))  { *out = CALL_F_0;  return true; }
+  if (text_buffer_eat_text(text_buffer, "NATIVE"))    { *out = NATIVE;    return true; }
+  if (text_buffer_eat_text(text_buffer, "APPEND"))    { *out = APPEND;    return true; }
+  if (text_buffer_eat_text(text_buffer, "PILE"))      { *out = PILE;      return true; }
+  if (text_buffer_eat_text(text_buffer, "FLU_STORE")) { *out = FLU_STORE; return true; }
+  if (text_buffer_eat_text(text_buffer, "MTX_LOAD"))  { *out = MTX_LOAD;  return true; }
+  if (text_buffer_eat_text(text_buffer, "MTX_STORE")) { *out = MTX_STORE; return true; }
+  if (text_buffer_eat_text(text_buffer, "NOP"))       { *out = NOP;       return true; }
+  if (text_buffer_eat_text(text_buffer, "STOP"))      { *out = STOP;      return true; }
+
+  return false;
+}
+
+bool bytecode_deserialize(seni_bytecode *out, seni_text_buffer *text_buffer)
+{
+  if (!opcode_deserialize(&(out->op), text_buffer))
+    return false;
+  
+  text_buffer_eat_space(text_buffer);
+  
+  if(!var_deserialize(&(out->arg0), text_buffer))
+    return false;
+  
+  text_buffer_eat_space(text_buffer);
+  
+  if(!var_deserialize(&(out->arg1), text_buffer))
+    return false;
+  
+  return true;
+}
+
+seni_env *env_construct()
+{
+  seni_env *e = (seni_env *)calloc(1, sizeof(seni_env));
+  e->wl = wlut_allocate();
+
+  declare_bindings(e->wl, e);
+  
+  return e;
+}
+
+void env_free(seni_env *e)
+{
+  wlut_free(e->wl);
+  free(e);
+}
+
+void env_post_interpret_cleanup(seni_env *e)
+{
+  wlut_reset_words(e->wl);
+}
+
+// **************************************************
+// Program
+// **************************************************
+
+char *opcode_name(seni_opcode opcode)
+{
+#define STR(x) #x
+  
+  switch(opcode) {
+#define OPCODE(id,_) case id: return STR(id);
+#include "seni_opcodes.h"
+#undef OPCODE
+  default:
+    return "unknown opcode";
+  }
+#undef STR
+}
+
+seni_program *program_allocate(i32 code_max_size)
+{
+  seni_program *program = (seni_program *)calloc(1, sizeof(seni_program));
+
+  if (code_max_size > 0) {
+    program->code = (seni_bytecode *)calloc(code_max_size, sizeof(seni_bytecode));
+  }
+  program->code_max_size = code_max_size;
+  program->code_size = 0;
+  program->opcode_offset = 0;
+
+  return program;
+}
+
+void program_free(seni_program *program)
+{
+  free(program->code);
+  free(program);
+}
+
+seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
+{
+  seni_node *ast = parser_parse(env->wl, source);
+
+  seni_program *program = compile_program(ast, program_max_size, env->wl);
+  
+  parser_free_nodes(ast);
+
+  return program;
+}
+
+i32 program_stop_location(seni_program *program)
+{
+  // the final opcode in the program will always be a STOP
+  return program->code_size - 1;
+}
+
 void program_pretty_print(seni_program *program)
 {
   for (i32 i = 0; i < program->code_size; i++) {
@@ -483,6 +643,58 @@ void program_pretty_print(seni_program *program)
   }
   SENI_PRINT("\n");
 }
+
+// note: only using the serialize/deserialize functions for code in traits
+// so the program->fn_info isn't being serialized. (it should if there's
+// ever a need for proper program serialization)
+//
+bool program_serialize(seni_text_buffer *text_buffer, seni_program *program)
+{
+  text_buffer_sprintf(text_buffer, "%d", program->code_max_size);
+  text_buffer_sprintf(text_buffer, " ");
+  text_buffer_sprintf(text_buffer, "%d", program->code_size);
+  text_buffer_sprintf(text_buffer, " ");
+
+  seni_bytecode *bytecode = program->code;
+  for (i32 i = 0; i < program->code_size; i++) {
+    if (!bytecode_serialize(text_buffer, bytecode)) {
+      SENI_ERROR("program_serialize: bytecode_serialize at instruction %d", i);
+      return false;
+    }
+    // interleave bytecodes with a space
+    if (i < program->code_size - 1) {
+      text_buffer_sprintf(text_buffer, " ");
+    }
+    bytecode++;
+  }
+  
+  return true;
+}
+
+bool program_deserialize(seni_program *out, seni_text_buffer *text_buffer)
+{
+  out->code_max_size = text_buffer_eat_i32(text_buffer);
+  text_buffer_eat_space(text_buffer);
+  out->code_size = text_buffer_eat_i32(text_buffer);
+  text_buffer_eat_space(text_buffer);
+
+  if(out->code != NULL) {
+    free(out->code);
+  }
+  out->code = (seni_bytecode *)calloc(out->code_max_size, sizeof(seni_bytecode));
+
+  for (i32 i = 0; i < out->code_size; i++) {
+    if(!bytecode_deserialize(&(out->code[i]), text_buffer)) {
+      return false;
+    }
+    if (i < out->code_size - 1) {    
+      text_buffer_eat_space(text_buffer);
+    }
+  }
+  
+  return true;
+}
+
 
 
 // **************************************************

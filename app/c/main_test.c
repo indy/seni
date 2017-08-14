@@ -814,7 +814,8 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   free_uv_mapper();
 }
 
-void test_genotype(void) {
+void test_genotype(void)
+{
   seni_genotype *genotype;
   seni_gene *g;
 
@@ -822,13 +823,30 @@ void test_genotype(void) {
     genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 85.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 86.0f);
+    genotype_free(genotype);
+  }
+
+  {
+    genotype = genotype_test(3421, "(+ 6 {3 (gen/scalar min: 1 max: 100)})");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 85.998f);
+    genotype_free(genotype);
+  }
+
+  {
+    genotype = genotype_test(9834, "(+ 6 {3 (gen/int min: 1 max: 100)})");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 50.0f);
     genotype_free(genotype);
   }
   
 }
 
-void test_unparser(void) {
+void test_unparser(void)
+{
   unparse_compare(9875, "(+ 4 2.0)", NULL);
   unparse_compare(9875, "(+ 4 [1 2 3])", NULL);
   unparse_compare(9875, "(+ 4 [1.0 2.22 3.333 4.4444 5.55555])", NULL);
@@ -836,8 +854,220 @@ void test_unparser(void) {
   unparse_compare(9875, "foo:", NULL);
   unparse_compare(9875, "foo ; some comment \"here\"", NULL);
   unparse_compare(9875, "(fn (a b: 10) (+ b 20))", NULL);
-  unparse_compare(9875, "(+ 6 {3 (gen/int min: 3 max: 4)})", NULL);
-  unparse_compare(9875, "(+ 7 { 4 (gen/int min: 2 max: 6)})", NULL);
+  unparse_compare(9875, "(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 {31 (gen/int min: 1 max: 50)})");
+  unparse_compare(9875, "(+ 7 { 4 (gen/int min: 2 max: 6)})", "(+ 7 { 5 (gen/int min: 2 max: 6)})");
+
+  unparse_compare(6534, "{3.45 (gen/scalar min: 0 max: 9)}", "{7.06 (gen/scalar min: 0 max: 9)}");
+  unparse_compare(6534, "{3.4 (gen/scalar min: 0 max: 9)}", "{7.1 (gen/scalar min: 0 max: 9)}");
+}
+
+// serialize/deserialize seni_var
+
+void compare_seni_var(seni_var *a, seni_var *b)
+{
+  TEST_ASSERT_EQUAL(a->type, b->type);
+  switch(a->type) {
+  case VAR_INT:
+    TEST_ASSERT_EQUAL(a->value.i, b->value.i);
+    break;
+  case VAR_FLOAT:
+    TEST_ASSERT_EQUAL_FLOAT(a->value.f, b->value.f);
+    break;
+  case VAR_BOOLEAN:
+    TEST_ASSERT_EQUAL(a->value.i, b->value.i);
+    break;
+  case VAR_LONG:
+    TEST_ASSERT_EQUAL(a->value.l, b->value.l);
+    break;
+  case VAR_NAME:
+    TEST_ASSERT_EQUAL(a->value.i, b->value.i);
+    break;
+  case VAR_VECTOR:
+    TEST_ASSERT_EQUAL(a->value.v, b->value.v);
+    break;
+  case VAR_COLOUR:
+    TEST_ASSERT_EQUAL(a->value.i, b->value.i);
+    TEST_ASSERT_EQUAL(a->f32_array[0], b->f32_array[0]);
+    TEST_ASSERT_EQUAL(a->f32_array[1], b->f32_array[1]);
+    TEST_ASSERT_EQUAL(a->f32_array[2], b->f32_array[2]);
+    TEST_ASSERT_EQUAL(a->f32_array[3], b->f32_array[3]);
+    break;
+  case VAR_2D:
+    TEST_ASSERT_EQUAL(a->f32_array[0], b->f32_array[0]);
+    TEST_ASSERT_EQUAL(a->f32_array[1], b->f32_array[1]);
+    break;
+  default:
+    SENI_ERROR("unknown seni_var type");
+  }
+}
+
+void compare_seni_bytecode(seni_bytecode *a, seni_bytecode *b)
+{
+  TEST_ASSERT_EQUAL(a->op, b->op);
+  compare_seni_var(&(a->arg0), &(b->arg0));
+  compare_seni_var(&(a->arg1), &(b->arg1));
+}
+
+void compare_seni_program(seni_program *a, seni_program *b)
+{
+  TEST_ASSERT_EQUAL(a->code_size, b->code_size);
+  for(i32 i = 0; i < a->code_size; i++) {
+    compare_seni_bytecode(&(a->code[i]), &(b->code[i]));
+  }
+}
+
+void serialize_deserialize_var(seni_var *var)
+{
+  i32 buffer_size = 128;
+  char *buffer = (char *)calloc(buffer_size, sizeof(char));
+
+  seni_var out;
+  bool res;
+
+  seni_text_buffer *text_buffer = text_buffer_construct(buffer, buffer_size);
+
+  res = var_serialize(text_buffer, var);
+  
+  TEST_ASSERT_TRUE(res);
+
+  text_buffer_reset(text_buffer);
+    
+  res = var_deserialize(&out, text_buffer);
+
+  TEST_ASSERT_TRUE(res);
+
+  compare_seni_var(var, &out);
+
+  text_buffer_free(text_buffer);
+  free(buffer);
+}
+
+void test_serialization(void)
+{
+  seni_var var;
+
+  {
+    var.type = VAR_INT;
+    var.value.i = 42;
+    serialize_deserialize_var(&var);
+  }
+  {
+    var.type = VAR_FLOAT;
+    var.value.f = 12.34f;
+    serialize_deserialize_var(&var);
+  }
+  {
+    var.type = VAR_BOOLEAN;
+    var.value.i = 0;
+    serialize_deserialize_var(&var);
+    var.value.i = 1;
+    serialize_deserialize_var(&var);
+  }
+  {
+    var.type = VAR_LONG;
+    var.value.l = (u64)934872325L;
+    serialize_deserialize_var(&var);
+  }
+  {
+    var.type = VAR_NAME;
+    var.value.i = 12;
+    serialize_deserialize_var(&var);
+  }
+  {
+    var.type = VAR_COLOUR;
+    var.value.i = RGB;
+    var.f32_array[0] = 0.1f;
+    var.f32_array[1] = 0.2f;
+    var.f32_array[2] = 0.3f;
+    var.f32_array[3] = 0.4f;
+    serialize_deserialize_var(&var);
+  }
+  {
+    var.type = VAR_2D;
+    var.f32_array[0] = 0.5f;
+    var.f32_array[1] = 0.6f;
+    serialize_deserialize_var(&var);
+  }
+
+  i32 buffer_size = 128;
+  char *buffer = (char *)calloc(buffer_size, sizeof(char));
+
+  seni_text_buffer *text_buffer = text_buffer_construct(buffer, buffer_size);
+
+  {
+    // double serialize
+    var.type = VAR_INT;
+    var.value.i = 12;
+
+    text_buffer_clear(text_buffer);
+    var_serialize(text_buffer, &var);
+    text_buffer_sprintf(text_buffer, " ");
+
+    seni_var var2;
+    var2.type = VAR_INT;
+    var2.value.i = 34;
+    var_serialize(text_buffer, &var2);
+
+    text_buffer_reset(text_buffer);
+
+    seni_var out_var;
+    var_deserialize(&out_var, text_buffer);
+    compare_seni_var(&out_var, &var);
+    text_buffer_eat_space(text_buffer);
+    var_deserialize(&out_var, text_buffer);
+    compare_seni_var(&out_var, &var2);
+  }
+  
+  {
+    // seni_bytecode
+    seni_bytecode bytecode;
+    bytecode.op = STORE;
+    bytecode.arg0.type = VAR_INT;
+    bytecode.arg0.value.i = 2;
+    bytecode.arg1.type = VAR_INT;
+    bytecode.arg1.value.i = 4;
+
+    text_buffer_clear(text_buffer);
+    bytecode_serialize(text_buffer, &bytecode);
+
+    text_buffer_reset(text_buffer);
+
+    seni_bytecode out_bytecode;
+    bytecode_deserialize(&out_bytecode, text_buffer);
+
+    compare_seni_bytecode(&out_bytecode, &bytecode);
+  }
+
+  text_buffer_free(text_buffer);
+  free(buffer);
+}
+
+void test_serialization_program(void)
+{
+  seni_env *env = env_construct();
+  seni_program *program = program_compile(env, 256, "(gen/int min: 2 max: 6)");
+
+  i32 buffer_size = 4096;
+  char *buffer = (char *)calloc(buffer_size, sizeof(char));
+
+  seni_text_buffer *text_buffer = text_buffer_construct(buffer, buffer_size);
+
+  bool res = program_serialize(text_buffer, program);
+  TEST_ASSERT_TRUE(res);
+
+  text_buffer_reset(text_buffer);
+
+  seni_program *out = program_allocate(256);
+  res = program_deserialize(out, text_buffer);
+  TEST_ASSERT_TRUE(res);
+
+  compare_seni_program(out, program);
+  
+  free(buffer);
+  text_buffer_free(text_buffer);
+  program_free(program);
+  program_free(out);
+  env_free(env);
 }
 
 int main(void)
@@ -854,32 +1084,36 @@ int main(void)
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-  // RUN_TEST(test_mathutil);
-  // RUN_TEST(test_parser);
-  // RUN_TEST(test_uv_mapper);
-  // RUN_TEST(test_colour);
-  // RUN_TEST(test_strtof);
+  RUN_TEST(test_mathutil);
+  RUN_TEST(test_parser);
+  RUN_TEST(test_uv_mapper);
+  RUN_TEST(test_colour);
+  RUN_TEST(test_strtof);
   
-  // // vm
-  // RUN_TEST(test_vm_bugs);
-  // RUN_TEST(test_vm_bytecode);
-  // RUN_TEST(test_vm_callret);
-  // RUN_TEST(test_vm_native);  
-  // RUN_TEST(test_vm_destructure);
-  // RUN_TEST(test_vm_2d);
-  // RUN_TEST(test_vm_vector);
-  // RUN_TEST(test_vm_vector_append);
-  // RUN_TEST(test_vm_fence);
-  // RUN_TEST(test_vm_col_rgb);
-  // RUN_TEST(test_vm_math);
-  // RUN_TEST(test_vm_prng);
-  // RUN_TEST(test_vm_environmental);
-  // RUN_TEST(test_vm_interp);
-  // RUN_TEST(test_vm_function_address);
-  // RUN_TEST(test_vm_repeat);
+  // vm
+  RUN_TEST(test_vm_bugs);
+  RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_native);  
+  RUN_TEST(test_vm_destructure);
+  RUN_TEST(test_vm_2d);
+  RUN_TEST(test_vm_vector);
+  RUN_TEST(test_vm_vector_append);
+  RUN_TEST(test_vm_fence);
+  RUN_TEST(test_vm_col_rgb);
+  RUN_TEST(test_vm_math);
+  RUN_TEST(test_vm_prng);
+  RUN_TEST(test_vm_environmental);
+  RUN_TEST(test_vm_interp);
+  RUN_TEST(test_vm_function_address);
+  RUN_TEST(test_vm_repeat);
 
   RUN_TEST(test_genotype);
   RUN_TEST(test_unparser);
+
+  RUN_TEST(test_serialization);
+  RUN_TEST(test_serialization_program);
+      
 
   return UNITY_END();
 }

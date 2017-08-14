@@ -1,10 +1,12 @@
-* TODO [0/6]
-  1. [ ] maybe have a required specifier in functions?
-  2. [ ] poly should also accept a uv parameter
-  3. [ ] ensure that there's a dist folder before running npm run build:wasm
-  4. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  5. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  6. [ ] look into restrict keyword in C99
+* TODO [0/8]
+  1. [ ] _construct -> _allocate
+  2. [ ] unify args to *_pretty_print
+  3. [ ] maybe have a required specifier in functions?
+  4. [ ] poly should also accept a uv parameter
+  5. [ ] ensure that there's a dist folder before running npm run build:wasm
+  6. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  7. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  8. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
@@ -789,12 +791,13 @@ call_no_arg_function
 
 
 
-* genetic algorithm [0/2]
+* genetic algorithm [0/5]
 
-  1. [ ] serialise a genotype
-  2. [ ] deserialise a genotype
-
-     
+  1. [ ] serialise/deserialise seni_trait + seni_program + seni_bytecode + seni_var
+  2. [ ] serialise only pre-amble part of a program
+  3. [ ] serialise everything but the pre-amble part of a program
+  4. [ ] pass traits between js and c side
+  5. [ ] serialise/deserialise a genotype
 
   --------------------------------------------------------------------------------
 
@@ -806,11 +809,6 @@ call_no_arg_function
   - ga_create_from_initial_values(traits)
   - ga_create_from_traits(traits, seed)
   - ga_next_generation
-  
-
-
-
-  
 
 * assembly-worker
 

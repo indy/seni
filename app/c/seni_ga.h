@@ -1,5 +1,6 @@
 #pragma once
 
+#include "seni_types.h"
 #include "seni_lang.h"
 
 typedef struct seni_trait {
@@ -12,6 +13,9 @@ typedef struct seni_trait {
   
 } seni_trait;
 
+bool trait_serialize(seni_text_buffer *text_buffer, seni_trait *trait);
+bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer);
+
 // store a list of traits
 typedef struct seni_trait_set {
   seni_trait *traits;
@@ -20,6 +24,10 @@ typedef struct seni_trait_set {
 void trait_set_free(seni_trait_set *trait_set);
 seni_trait_set *trait_set_compile(seni_node *ast, i32 trait_program_max_size, seni_word_lut *word_lut);
 i32 trait_set_count(seni_trait_set *trait_set);
+
+bool trait_set_serialize(seni_text_buffer *text_buffer, seni_trait_set *trait_set);
+bool trait_set_deserialize(seni_trait_set *out, seni_text_buffer *text_buffer);
+
 
 typedef struct seni_gene {
   seni_var var;

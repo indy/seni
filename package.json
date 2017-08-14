@@ -9,7 +9,7 @@
     "build": "webpack --progress",
     "build:watch": "webpack --progress --watch",
     "build:min": "webpack --progress --config webpack.config.min.js",
-    "build:wasm": "wa compile -D SENI_BUILD_WASM -o app/dist/seni-wasm.wasm app/c/main_wasm.c -i app/c/seni_lang.c -i app/c/seni_parser.c -i app/c/seni_unparser.c -i app/c/seni_vm_compiler.c -i app/c/seni_vm_interpreter.c -i app/c/seni_bind.c -i app/c/seni_colour.c -i app/c/seni_parametric.c -i app/c/seni_mathutil.c -i app/c/seni_matrix.c -i app/c/seni_prng.c -i app/c/seni_render_packet.c -i app/c/seni_shapes.c -i app/c/seni_uv_mapper.c -i app/c/seni_repeat.c -i app/c/seni_path.c -i app/c/seni_focal.c -i app/c/seni_ga.c -i app/c/seni_strtof.c -i app/c/seni_printf.c -i app/c/seni_timing.c -I app/c",
+    "build:wasm": "wa compile -D SENI_BUILD_WASM -o app/dist/seni-wasm.wasm app/c/main_wasm.c -i app/c/seni_lang.c -i app/c/seni_parser.c -i app/c/seni_unparser.c -i app/c/seni_vm_compiler.c -i app/c/seni_vm_interpreter.c -i app/c/seni_bind.c -i app/c/seni_colour.c -i app/c/seni_parametric.c -i app/c/seni_mathutil.c -i app/c/seni_matrix.c -i app/c/seni_prng.c -i app/c/seni_render_packet.c -i app/c/seni_shapes.c -i app/c/seni_uv_mapper.c -i app/c/seni_repeat.c -i app/c/seni_path.c -i app/c/seni_focal.c -i app/c/seni_ga.c -i app/c/seni_strtof.c -i app/c/seni_printf.c -i app/c/seni_timing.c -i app/c/seni_text_buffer.c -I app/c",
     "clean": "rm -rf app/dist",
     "docs": "documentation app/js/index.js -f html -o docs"
   },

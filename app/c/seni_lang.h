@@ -7,6 +7,7 @@
 #include "seni_colour.h"
 #include "seni_keyword_iname.h"
 #include "seni_prng.h"
+#include "seni_text_buffer.h"
 
 /* word lookup table */
 typedef struct seni_word_lut {
@@ -127,6 +128,8 @@ typedef struct seni_var {
 
 char     *var_type_name(seni_var *var);
 void      var_pretty_print(char* msg, seni_var *var);
+bool      var_serialize(seni_text_buffer *text_buffer, seni_var *var);
+bool      var_deserialize(seni_var *out, seni_text_buffer *text_buffer);
 void      v2_as_var(seni_var *out, f32 x, f32 y);
 void      f32_as_var(seni_var *out, f32 f);
 void      i32_as_var(seni_var *out, i32 i);
@@ -173,11 +176,21 @@ typedef enum {
 #undef OPCODE
 } seni_opcode;
 
+static const char *opcode_string[] = {
+#define OPCODE(name,_) #name,
+#include "seni_opcodes.h"
+#undef OPCODE
+};
+
 typedef struct {
   seni_opcode op;
   seni_var arg0;
   seni_var arg1;
 } seni_bytecode;
+
+void bytecode_pretty_print(i32 ip, seni_bytecode *b);
+bool bytecode_serialize(seni_text_buffer *text_buffer, seni_bytecode *bytecode);
+bool bytecode_deserialize(seni_bytecode *out, seni_text_buffer *text_buffer);
 
 typedef struct {
   bool active;                  // is this struct being used
@@ -227,9 +240,11 @@ void           program_free(seni_program *program);
 i32            program_stop_location(seni_program *program);
 void           program_pretty_print(seni_program *program);
 
+bool           program_serialize(seni_text_buffer *text_buffer, seni_program *program);
+bool           program_deserialize(seni_program *out, seni_text_buffer *text_buffer);
+
 seni_program  *program_allocate(i32 code_max_size);
 seni_program  *program_compile(seni_env *env, i32 program_max_size, char *source);
-void bytecode_pretty_print(i32 ip, seni_bytecode *b);
 
 typedef struct seni_vm {
   seni_program *program;

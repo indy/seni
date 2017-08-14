@@ -2030,7 +2030,8 @@ seni_var *bind_gen_int(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_MAX, max);
   READ_STACK_ARGS_END;
 
-  f32 value = seni_prng_f32_range(&(vm->prng_state), min, max);
+  // value should be inclusive of both min and max (hence the + 1.0f)
+  f32 value = seni_prng_f32_range(&(vm->prng_state), min, max + 1.0f);
 
   f32_as_var(&g_var_scratch, (f32)floor_f32(value));
   

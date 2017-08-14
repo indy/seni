@@ -3,6 +3,7 @@
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
 #include "seni_prng.h"
+#include "seni_text_buffer.h"
 
 #include <stdlib.h>
 #include "utlist.h"
@@ -25,6 +26,29 @@ void trait_free(seni_trait *trait)
   }
   free(trait);
 }
+
+bool trait_serialize(seni_text_buffer *text_buffer, seni_trait *trait)
+{
+  text_buffer_sprintf(text_buffer, "%d", trait->id);
+  text_buffer_sprintf(text_buffer, " ");
+  program_serialize(text_buffer, trait->program);
+  return true;
+}
+
+bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer)
+{
+  out->id = text_buffer_eat_i32(text_buffer);
+  text_buffer_eat_space(text_buffer);
+
+  if (out->program != NULL) {
+    free(out->program);
+  }
+  out->program = program_allocate(0);
+  program_deserialize(out->program, text_buffer);
+
+  return true;
+}
+
 
 seni_trait_set *trait_set_construct()
 {
@@ -108,6 +132,46 @@ i32 trait_set_count(seni_trait_set *trait_set)
 
   return count;
 }
+
+bool trait_set_serialize(seni_text_buffer *text_buffer, seni_trait_set *trait_set)
+{
+  // number of traits
+  i32 count = trait_set_count(trait_set);
+  text_buffer_sprintf(text_buffer, "%d", count);
+  text_buffer_sprintf(text_buffer, " ");
+
+  // sequence of traits
+  seni_trait *t = trait_set->traits;
+  while (t != NULL) {
+    trait_serialize(text_buffer, t);
+    if (t->next != NULL) {
+      text_buffer_sprintf(text_buffer, " ");
+    }
+    t = t->next;
+  }
+
+  return true;
+}
+
+bool trait_set_deserialize(seni_trait_set *out, seni_text_buffer *text_buffer)
+{
+  i32 count = text_buffer_eat_i32(text_buffer);
+  text_buffer_eat_space(text_buffer);
+
+  seni_trait_set *trait_set = out;
+
+  for (i32 i = 0; i < count; i++) {
+    seni_trait *trait = trait_construct();
+    trait_deserialize(trait, text_buffer);
+    trait_set_add_trait(trait_set, trait);
+    if (i < count - 1) {
+      text_buffer_eat_space(text_buffer);
+    }
+  }
+
+  return true;
+}
+
 
 // gene
 
