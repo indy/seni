@@ -5,6 +5,7 @@
 struct seni_trait {
   i32 id;
 
+  seni_var *initial_value;
   seni_program *program;
 
   struct seni_trait *next;

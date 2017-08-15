@@ -1,5 +1,5 @@
 * TODO [0/8]
-  1. [ ] _construct -> _allocate
+  1. [ ] better seni_ga.c::hack_node_to_var (colours, lists, 2d etc)
   2. [ ] unify args to *_pretty_print
   3. [ ] maybe have a required specifier in functions?
   4. [ ] poly should also accept a uv parameter

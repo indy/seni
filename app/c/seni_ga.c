@@ -17,6 +17,8 @@ seni_trait *trait_allocate()
 {
   seni_trait *trait = (seni_trait *)calloc(1, sizeof(seni_trait));
 
+  trait->initial_value = (seni_var *)calloc(1, sizeof(seni_var));
+
   return trait;
 }
 
@@ -25,6 +27,11 @@ void trait_free(seni_trait *trait)
   if (trait->program) {
     program_free(trait->program);
   }
+
+  if (trait->initial_value) {
+    free(trait->initial_value);
+  }
+  
   free(trait);
 }
 
@@ -32,13 +39,21 @@ bool trait_serialize(seni_text_buffer *text_buffer, seni_trait *trait)
 {
   text_buffer_sprintf(text_buffer, "%d", trait->id);
   text_buffer_sprintf(text_buffer, " ");
+
+  var_serialize(text_buffer, trait->initial_value);
+  text_buffer_sprintf(text_buffer, " ");
+
   program_serialize(text_buffer, trait->program);
+
   return true;
 }
 
 bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer)
 {
   out->id = text_buffer_eat_i32(text_buffer);
+  text_buffer_eat_space(text_buffer);
+
+  var_deserialize(out->initial_value, text_buffer);
   text_buffer_eat_space(text_buffer);
 
   if (out->program != NULL) {
@@ -49,7 +64,6 @@ bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer)
 
   return true;
 }
-
 
 seni_trait_set *trait_set_allocate()
 {
@@ -78,20 +92,44 @@ void trait_set_add_trait(seni_trait_set *trait_set, seni_trait *trait)
   DL_APPEND(trait_set->traits, trait);
 }
 
+bool hack_node_to_var(seni_var *out, seni_node *node)
+{
+  switch(node->type) {
+  case NODE_INT:
+    out->type = VAR_INT;
+    out->value.i = node->value.i;
+    break;
+  case NODE_FLOAT:
+    out->type = VAR_FLOAT;
+    out->value.f = node->value.f;
+    break;
+  case NODE_NAME:
+    out->type = VAR_NAME;
+    out->value.i = node->value.i;
+    break;
+  default:
+    // todo: check NODE_LIST for colour, 2D etc
+    return false;
+  }
+
+  return true;
+}
+
 seni_node *ga_traverse(seni_node *node, i32 program_max_size)
 {
   seni_node *n = node;
-  
-  if (n->alterable) {
-    // node_pretty_print("ga ALTERABLE!!!", n, g_ga_wl);
 
+  if (n->alterable) {
     seni_trait *trait = trait_allocate();
+
+    if (hack_node_to_var(trait->initial_value, n) == false) {
+      SENI_PRINT("hack_node_to_var failed");
+    }
     
     // can compile the parameter_ast
     trait->program = compile_program(n->parameter_ast, program_max_size, g_ga_wl);
+    
     trait_set_add_trait(g_ga_trait_set, trait);
-  } else {
-    // node_pretty_print("ga             ", n, g_ga_wl);
   }
 
   if (n->type == NODE_LIST) {
