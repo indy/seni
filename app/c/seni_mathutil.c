@@ -1,5 +1,7 @@
 #include "seni_mathutil.h"
 
+#include <math.h>
+
 i32 floor_f32(f32 a)
 {
 	i32 ai = (i32) a;

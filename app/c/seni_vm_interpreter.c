@@ -7,6 +7,8 @@
 
 #include "utlist.h"
 
+#include <math.h>
+
 void gc_mark_vector(seni_var *vector)
 {
   seni_var *v = vector->value.v; // the first heap-allocated seni_var

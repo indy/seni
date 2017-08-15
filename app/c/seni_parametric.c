@@ -3,6 +3,8 @@
 #include "seni_keyword_iname.h"
 #include "seni_mathutil.h"
 
+#include <math.h>
+
 f32 seni_parametric(f32 val, f32 from_a, f32 from_b, f32 to_a, f32 to_b, i32 mapping, bool clamping)
 {
   f32 from_m = mc_m(from_a, 0.0f, from_b, 1.0f);

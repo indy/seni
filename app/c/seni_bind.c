@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 typedef enum {
   HEAP_STRUCTURE_UNDEFINED = 0,
