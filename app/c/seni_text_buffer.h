@@ -20,6 +20,7 @@ void text_buffer_sprintf(seni_text_buffer *text_buffer, char const * fmt, ... );
 
 void text_buffer_reset(seni_text_buffer *text_buffer);
 void text_buffer_clear(seni_text_buffer *text_buffer);
+void text_buffer_write_null(seni_text_buffer *text_buffer);
 
 bool text_buffer_forward(seni_text_buffer *text_buffer, i32 amount);
 bool text_buffer_compare(seni_text_buffer *text_buffer, char *c, i32 len);

@@ -24,6 +24,8 @@ seni_text_buffer *text_buffer_allocate(char *buffer, i32 buffer_size)
 
 void text_buffer_free(seni_text_buffer *text_buffer)
 {
+  text_buffer->buffer = NULL;   // don't free the buffer memory, text_buffer doesn't own it
+  text_buffer->cursor = NULL;
   free(text_buffer);
 }
 
@@ -63,6 +65,14 @@ void text_buffer_clear(seni_text_buffer *text_buffer)
     *c++ = 0;
   }
   text_buffer_reset(text_buffer);
+}
+
+void text_buffer_write_null(seni_text_buffer *text_buffer)
+{
+  if (text_buffer->current_size < text_buffer->buffer_size) {
+    *(text_buffer->cursor++) = '\0';
+    text_buffer->current_size++;
+  }
 }
 
 bool text_buffer_forward(seni_text_buffer *text_buffer, i32 amount)

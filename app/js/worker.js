@@ -400,6 +400,7 @@ function unparse({ script, scriptHash, genotype }) {
   return { script: newScript };
 }
 
+/*
 // this isn't saving the intermediate ASTs, perhaps do so later?
 function buildTraits({ script, scriptHash }) {
   if (scriptHash !== gScriptHash) {
@@ -415,6 +416,19 @@ function buildTraits({ script, scriptHash }) {
   }
 
   const traits = Genetic.buildTraits(gBackAst);
+
+  return { traits };
+}
+*/
+
+function buildTraitsWasm({ script /*, scriptHash */ }) {
+  Shabba.setString(Shabba.string_buffer, script);
+
+  const numTraits = Shabba.buildTraits();
+  console.log(`built ${numTraits} traits`);
+
+  const traits = Shabba.getString(Shabba.string_buffer);
+  console.log(`js side recieved: ${traits}`);
 
   return { traits };
 }
@@ -500,6 +514,8 @@ const options = {
   };
 
 function configureWasmModule(wasmInstance) {
+  Shabba.instance = wasmInstance;
+
   Shabba.compileToRenderPackets =
   wasmInstance.exports.compile_to_render_packets;
 
@@ -511,15 +527,15 @@ function configureWasmModule(wasmInstance) {
     wasmInstance.exports.get_render_packet_num_vertices;
 
   Shabba.getRenderPacketVBuf = wasmInstance.exports.get_render_packet_vbuf;
-
   Shabba.getRenderPacketCBuf = wasmInstance.exports.get_render_packet_cbuf;
-
   Shabba.getRenderPacketTBuf = wasmInstance.exports.get_render_packet_tbuf;
 
-  Shabba.string_buffer = wasmInstance.exports.allocate_string_buffer();
-  Shabba.setString = wasmInstance.memory.setString;
+  Shabba.buildTraits = wasmInstance.exports.build_traits;
 
-  Shabba.instance = wasmInstance;
+  Shabba.string_buffer = wasmInstance.exports.allocate_string_buffer();
+
+  Shabba.setString = wasmInstance.memory.setString;
+  Shabba.getString = wasmInstance.memory.getString;
 }
 
 /*
@@ -546,7 +562,7 @@ loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
     case jobUnparse:
       return unparse(data);
     case jobBuildTraits:
-      return buildTraits(data);
+      return buildTraitsWasm(data);
     case jobInitialGeneration:
       return createInitialGeneration(data);
     case jobNewGeneration:

@@ -151,6 +151,40 @@ f32 *get_render_packet_tbuf(int packet_number)
   return render_packet->tbuf;
 }
 
+export
+i32 build_traits()
+{
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("build_traits");
+#endif
+
+  TIMING_UNIT timing_a = get_timing();
+
+  seni_text_buffer *text_buffer = text_buffer_allocate(g_string_buffer, STRING_BUFFER_SIZE);
+
+  char *source = g_string_buffer;
+
+  seni_node *ast = parser_parse(g_e->wl, source);
+  seni_trait_set *trait_set = trait_set_compile(ast, MAX_TRAIT_PROGRAM_SIZE, g_e->wl);
+  i32 num_traits = trait_set_count(trait_set);
+
+  bool res = trait_set_serialize(text_buffer, trait_set);
+  if (res == false) {
+    SENI_ERROR("trait_set_serialize returned false");
+  }
+  text_buffer_write_null(text_buffer);
+
+  f32 delta = timing_delta_from(timing_a);
+
+  parser_free_nodes(ast);
+  trait_set_free(trait_set);
+  text_buffer_free(text_buffer);
+
+  SENI_PRINT("build_traits: total c-side time taken %.2f ms", delta);
+  
+  return num_traits;
+}
+
 // called once by js once it has finished with the render packets and that memory can be free'd
 export
 void script_cleanup()
@@ -160,7 +194,6 @@ void script_cleanup()
 #endif
 
 }
-
 
 export
 char *allocate_string_buffer()

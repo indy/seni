@@ -1098,6 +1098,9 @@ void test_serialization_trait_set(void)
   i32 count = trait_set_count(out);
   TEST_ASSERT_EQUAL(2, count);
 
+  compare_seni_program(out->traits->program, trait_set->traits->program);
+  compare_seni_program(out->traits->next->program, trait_set->traits->next->program);
+
   parser_free_nodes(ast);
 
   trait_set_free(trait_set);
