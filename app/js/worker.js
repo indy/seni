@@ -363,7 +363,7 @@ function renderWasm({ script /*, scriptHash, genotype*/ }) {
   const buffers = [];
 
   // need to setString before calling compileToRenderPackets
-  Shabba.setString(Shabba.string_buffer, script);
+  Shabba.setString(Shabba.source_buffer, script);
   const numRenderPackets = Shabba.compileToRenderPackets();
   console.log(`numRenderPackets = ${numRenderPackets}`);
 
@@ -422,18 +422,18 @@ function buildTraits({ script, scriptHash }) {
 */
 
 function buildTraitsWasm({ script /*, scriptHash */ }) {
-  Shabba.setString(Shabba.string_buffer, script);
+  Shabba.setString(Shabba.source_buffer, script);
 
   const numTraits = Shabba.buildTraits();
   console.log(`built ${numTraits} traits`);
 
-  const traits = Shabba.getString(Shabba.string_buffer);
+  const traits = Shabba.getString(Shabba.traits_buffer);
   console.log(`js side recieved: ${traits}`);
 
   return { traits };
 }
 
-
+/*
 function createInitialGeneration({ populationSize, traits }) {
   const random = performance.now();
   const genotypes = [];
@@ -445,6 +445,27 @@ function createInitialGeneration({ populationSize, traits }) {
     const genotype = Genetic.createGenotypeFromTraits(traits, i + random);
     genotypes.push(genotype.toJS());
   }
+
+  return { genotypes };
+}
+*/
+
+function createInitialGenerationWasm({ populationSize, traits }) {
+  console.log('createInitialGenerationWasm');
+  Shabba.setString(Shabba.traits_buffer, traits);
+
+  console.log(populationSize);
+  Shabba.createFoo(populationSize);
+  // Shabba.createInitialGeneration(populationSize);
+
+  const genotypes = [];
+  // let s;
+
+  // for (let i = 0; i < populationSize; i++) {
+  //   Shabba.genotypeMoveToBuffer(i);
+  //   s = Shabba.getString(Shabba.genotype_buffer);
+  //   genotypes.push(s);
+  // }
 
   return { genotypes };
 }
@@ -514,36 +535,44 @@ const options = {
   };
 
 function configureWasmModule(wasmInstance) {
-  Shabba.instance = wasmInstance;
+  const w = wasmInstance;
 
-  Shabba.compileToRenderPackets =
-  wasmInstance.exports.compile_to_render_packets;
+  Shabba.instance = w;
 
-  Shabba.seniStartup = wasmInstance.exports.seni_startup;
-  Shabba.seniShutdown = wasmInstance.exports.seni_shutdown;
-  Shabba.scriptCleanup = wasmInstance.exports.script_cleanup;
+  // declare string functions
+  Shabba.setString = w.memory.setString;
+  Shabba.getString = w.memory.getString;
 
-  Shabba.getRenderPacketNumVertices =
-    wasmInstance.exports.get_render_packet_num_vertices;
+  // declare Seni's wasm insterface
+  Shabba.seniStartup = w.exports.seni_startup;
+  Shabba.seniShutdown = w.exports.seni_shutdown;
+  Shabba.scriptCleanup = w.exports.script_cleanup;
 
-  Shabba.getRenderPacketVBuf = wasmInstance.exports.get_render_packet_vbuf;
-  Shabba.getRenderPacketCBuf = wasmInstance.exports.get_render_packet_cbuf;
-  Shabba.getRenderPacketTBuf = wasmInstance.exports.get_render_packet_tbuf;
+  Shabba.compileToRenderPackets = w.exports.compile_to_render_packets;
+  Shabba.getRenderPacketNumVertices = w.exports.get_render_packet_num_vertices;
+  Shabba.getRenderPacketVBuf = w.exports.get_render_packet_vbuf;
+  Shabba.getRenderPacketCBuf = w.exports.get_render_packet_cbuf;
+  Shabba.getRenderPacketTBuf = w.exports.get_render_packet_tbuf;
 
-  Shabba.buildTraits = wasmInstance.exports.build_traits;
+  Shabba.buildTraits = w.exports.build_traits;
+  Shabba.createFoo = w.exports.create_foo;
+  Shabba.createInitialGeneration = w.exports.create_initial_generation;
+  Shabba.genotypeMoveToBuffer = w.exports.genotype_move_to_buffer;
 
-  Shabba.string_buffer = wasmInstance.exports.allocate_string_buffer();
-
-  Shabba.setString = wasmInstance.memory.setString;
-  Shabba.getString = wasmInstance.memory.getString;
+  Shabba.getSourceBuffer = w.exports.get_source_buffer;
+  Shabba.getTraitsBuffer = w.exports.get_traits_buffer;
+  Shabba.getGenotypeBuffer = w.exports.get_genotype_buffer;
 }
 
 /*
 function freeModule() {
+
   Module._free(Shabba.ptr);
   Module._free(Shabba.vbuf);
   Module._free(Shabba.cbuf);
   Module._free(Shabba.tbuf);
+
+  Shabba.seniShutdown();
 }
 */
 
@@ -551,7 +580,10 @@ function freeModule() {
 loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
   configureWasmModule(wasmInstance);
   Shabba.seniStartup();
-  // console.log("ready");
+  // get string buffers
+  Shabba.source_buffer = Shabba.getSourceBuffer();
+  Shabba.traits_buffer = Shabba.getTraitsBuffer();
+  Shabba.genotype_buffer = Shabba.getGenotypeBuffer();
 
   register((type, data) => {
     switch (type) {
@@ -564,7 +596,8 @@ loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
     case jobBuildTraits:
       return buildTraitsWasm(data);
     case jobInitialGeneration:
-      return createInitialGeneration(data);
+      // return createInitialGeneration(data);
+      return createInitialGenerationWasm(data);
     case jobNewGeneration:
       return newGeneration(data);
     case jobGenerateHelp:

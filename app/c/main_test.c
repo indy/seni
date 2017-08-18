@@ -767,12 +767,12 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
 
   seni_node *ast = parser_parse(env->wl, source);
 
-  seni_trait_set *trait_set = trait_set_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
 
   // using the vm to build the genes
-  seni_genotype *genotype = genotype_build(vm, env, trait_set, seed_value);
+  seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
 
-  trait_set_free(trait_set);
+  trait_list_free(trait_list);
   parser_free_nodes(ast);
 
   env_free(env);
@@ -791,10 +791,10 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
 
   seni_node *ast = parser_parse(env->wl, source);
 
-  seni_trait_set *trait_set = trait_set_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
 
   // using the vm to build the genes
-  seni_genotype *genotype = genotype_build(vm, env, trait_set, seed_value);
+  seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
 
   i32 unparsed_source_size = 256;
   char *unparsed_source = (char *)calloc(unparsed_source_size, sizeof(char));
@@ -810,7 +810,7 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
 
   parser_free_nodes(ast);
   genotype_free(genotype);
-  trait_set_free(trait_set);
+  trait_list_free(trait_list);
   env_free(env);
   vm_free(vm);
   free_uv_mapper();
@@ -1072,7 +1072,147 @@ void test_serialization_program(void)
   env_free(env);
 }
 
-void test_serialization_trait_set(void)
+void test_serialization_genotype(void)
+{
+  seni_genotype *genotype;
+  seni_gene *g;
+
+  i32 buffer_size = 4096;
+  char *buffer = (char *)calloc(buffer_size, sizeof(char));
+  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
+  bool res;
+
+  {
+    text_buffer_reset(text_buffer);
+    
+    genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
+    TEST_ASSERT(genotype);
+
+    res = genotype_serialize(text_buffer, genotype);
+    TEST_ASSERT_TRUE(res);
+
+    text_buffer_reset(text_buffer);
+
+    seni_genotype *out = genotype_allocate();
+    res = genotype_deserialize(out, text_buffer);
+    TEST_ASSERT_TRUE(res);
+
+    g = out->genes;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 86.0f);
+    
+    genotype_free(out);
+    genotype_free(genotype);
+  }
+
+  {
+    text_buffer_reset(text_buffer);
+    
+    genotype = genotype_test(7534, "(+ {2 (gen/int min: 1 max: 30)} {5 (gen/int min: 1 max: 30)})");
+    TEST_ASSERT(genotype);
+
+    res = genotype_serialize(text_buffer, genotype);
+    TEST_ASSERT_TRUE(res);
+
+    text_buffer_reset(text_buffer);
+
+    seni_genotype *out = genotype_allocate();
+    res = genotype_deserialize(out, text_buffer);
+    TEST_ASSERT_TRUE(res);
+
+    g = out->genes;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 29.0f);
+
+    g = g->next;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 22.0f);
+
+    g = g->next;
+    TEST_ASSERT_NULL(g);
+    
+    genotype_free(out);
+    genotype_free(genotype);
+  }
+  
+  text_buffer_free(text_buffer);
+  free(buffer);
+}
+
+void test_serialization_genotype_list(void)
+{
+  seni_genotype_list *genotype_list;
+  seni_genotype *genotype;
+  seni_gene *g;
+
+  genotype_list = genotype_list_allocate();
+
+  i32 buffer_size = 4096;
+  char *buffer = (char *)calloc(buffer_size, sizeof(char));
+  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
+  bool res;
+
+  {
+    text_buffer_reset(text_buffer);
+    
+    genotype = genotype_test(7534, "(+ {2 (gen/int min: 1 max: 30)} {5 (gen/int min: 1 max: 30)})");
+    TEST_ASSERT(genotype);
+    genotype_list_add_genotype(genotype_list, genotype);
+
+    genotype = genotype_test(2313, "(+ {2 (gen/int min: 1 max: 30)} {5 (gen/int min: 1 max: 30)})");
+    TEST_ASSERT(genotype);
+    genotype_list_add_genotype(genotype_list, genotype);
+
+    genotype = genotype_test(4562, "(+ {2 (gen/int min: 1 max: 30)} {5 (gen/int min: 1 max: 30)})");
+    TEST_ASSERT(genotype);
+    genotype_list_add_genotype(genotype_list, genotype);
+
+    res = genotype_list_serialize(text_buffer, genotype_list);
+    TEST_ASSERT_TRUE(res);
+
+    text_buffer_reset(text_buffer);
+
+    seni_genotype_list *out = genotype_list_allocate();
+    res = genotype_list_deserialize(out, text_buffer);
+    TEST_ASSERT_TRUE(res);
+
+    i32 count = genotype_list_count(out);
+    TEST_ASSERT_EQUAL(3, count);
+
+    genotype = out->genotypes;
+    g = genotype->genes;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 29.0f);
+    g = g->next;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 22.0f);
+    g = g->next;
+    TEST_ASSERT_NULL(g);
+
+    genotype = genotype->next;
+    g = genotype->genes;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 4.0f);
+    g = g->next;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 26.0f);
+    g = g->next;
+    TEST_ASSERT_NULL(g);
+
+    genotype = genotype->next;
+    g = genotype->genes;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 27.0f);
+    g = g->next;
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 21.0f);
+    g = g->next;
+    TEST_ASSERT_NULL(g);
+
+    genotype = genotype->next;
+    TEST_ASSERT_NULL(genotype);
+    
+    genotype_list_free(out);
+  }
+  
+  text_buffer_free(text_buffer);
+  free(buffer);
+
+  genotype_list_free(genotype_list);
+}
+
+void test_serialization_trait_list(void)
 {
   char *source = "(rect position: [500 500] width: {100 (gen/int min: 20 max: 200)} height: {30 (gen/int min: 10 max: 40)})";
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
@@ -1081,33 +1221,35 @@ void test_serialization_trait_set(void)
   init_uv_mapper();
 
   seni_node *ast = parser_parse(env->wl, source);
-  seni_trait_set *trait_set = trait_set_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
 
   i32 buffer_size = 4096;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));
   seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
-  bool res = trait_set_serialize(text_buffer, trait_set);
+  bool res = trait_list_serialize(text_buffer, trait_list);
   TEST_ASSERT_TRUE(res);
 
   text_buffer_reset(text_buffer);
 
-  seni_trait_set *out = trait_set_allocate();
-  res = trait_set_deserialize(out, text_buffer);
+  seni_trait_list *out = trait_list_allocate();
+  res = trait_list_deserialize(out, text_buffer);
   TEST_ASSERT_TRUE(res);
 
-  i32 count = trait_set_count(out);
+  i32 count = trait_list_count(out);
   TEST_ASSERT_EQUAL(2, count);
 
-  compare_seni_var(out->traits->initial_value, trait_set->traits->initial_value);
-  compare_seni_program(out->traits->program, trait_set->traits->program);
+  compare_seni_var(out->traits->initial_value, trait_list->traits->initial_value);
+  compare_seni_program(out->traits->program, trait_list->traits->program);
 
-  compare_seni_var(out->traits->next->initial_value, trait_set->traits->next->initial_value);
-  compare_seni_program(out->traits->next->program, trait_set->traits->next->program);
+  compare_seni_var(out->traits->next->initial_value, trait_list->traits->next->initial_value);
+  compare_seni_program(out->traits->next->program, trait_list->traits->next->program);
 
   parser_free_nodes(ast);
 
-  trait_set_free(trait_set);
-  trait_set_free(out);
+  text_buffer_free(text_buffer);
+  free(buffer);
+  trait_list_free(trait_list);
+  trait_list_free(out);
   env_free(env);
   vm_free(vm);
   free_uv_mapper();
@@ -1156,7 +1298,9 @@ int main(void)
 
   RUN_TEST(test_serialization);
   RUN_TEST(test_serialization_program);
-  RUN_TEST(test_serialization_trait_set);
+  RUN_TEST(test_serialization_genotype);
+  RUN_TEST(test_serialization_genotype_list);
+  RUN_TEST(test_serialization_trait_list);
 
   return UNITY_END();
 }

@@ -144,10 +144,10 @@ void execute_source_with_seed(char *source, i32 seed_value)
 
   seni_node *ast = parser_parse(env->wl, source);
 
-  seni_trait_set *trait_set = trait_set_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
 
   // using the vm to build the genes
-  seni_genotype *genotype = genotype_build(vm, env, trait_set, seed_value);
+  seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
 
   seni_program *program = compile_program_with_genotype(ast, MAX_PROGRAM_SIZE, env->wl, genotype);
   
@@ -179,7 +179,7 @@ void execute_source_with_seed(char *source, i32 seed_value)
                   timing_delta(interpret_start, interpret_stop));
   }
 
-  i32 num_traits = trait_set_count(trait_set);
+  i32 num_traits = trait_list_count(trait_list);
   if (num_traits > 0) {
     SENI_PRINT("%d %s", num_traits, pluralise(num_traits, "trait", "traits"));
   }
@@ -195,7 +195,7 @@ void execute_source_with_seed(char *source, i32 seed_value)
   // free memory
   //
   genotype_free(genotype);
-  trait_set_free(trait_set);
+  trait_list_free(trait_list);
   program_free(program);
   env_free(env);
   vm_free(vm);
