@@ -239,6 +239,7 @@ bool           program_deserialize(seni_program *out, seni_text_buffer *text_buf
 
 seni_program  *program_allocate(i32 code_max_size);
 seni_program  *program_compile(seni_env *env, i32 program_max_size, char *source);
+seni_program  *program_compile2(seni_env *env, i32 program_max_size, char *source);
 
 struct seni_vm {
   seni_program *program;

@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const logToConsole = false;
+const logToConsole = true;
 
 let numWorkers = 0;
 const promiseWorkers = [];
@@ -82,11 +82,13 @@ class PromiseWorker {
 }
 
 function setup(numWorkersParam) {
+  numWorkers = numWorkersParam;
+  numWorkers = 1;
+
   if (logToConsole) {
-    console.log(`workers::numWorkers = ${numWorkersParam}`);
+    console.log(`workers::numWorkers = ${numWorkers}`);
   }
 
-  numWorkers = numWorkersParam;
   for (let i = 0; i < numWorkers; i++) {
     promiseWorkers[i] = new PromiseWorker(i, '/dist/worker.bundle.js');
   }

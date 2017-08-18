@@ -115,6 +115,44 @@ int compile_to_render_packets(void)
   return g_vm->render_data->num_render_packets;
 }
 
+int g_called = 0;
+
+export
+int compile_to_render_packets2(void)
+{
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("compile_to_render_packets");
+#endif
+  
+  // TIMING_UNIT timing_a = get_timing();
+
+  vm_reset(g_vm);
+  
+  char *script = g_source_buffer;
+
+  SENI_PRINT("g_called is : %d", g_called++);
+
+  seni_program *prog = program_compile2(g_e, MAX_PROGRAM_SIZE, script);
+
+  // vm_debug_info_reset(g_vm);
+  // bool res = vm_interpret(g_vm, g_e, prog);
+
+  // if (res) {
+  //   vm_debug_info_print(g_vm);
+  // }
+
+  // // cleanup
+  // env_post_interpret_cleanup(g_e);
+  // program_free(prog);
+
+  // f32 delta = timing_delta_from(timing_a);
+  // SENI_PRINT("total c-side time taken %.2f ms", delta);
+
+  // return g_vm->render_data->num_render_packets;
+
+  return 654;
+}
+
 // ------------------------------
 
 export
@@ -220,19 +258,14 @@ i32 create_foo(i32 population_size)
 export
 i32 create_initial_generation(i32 population_size)
 {
-  SENI_PRINT("create_initial_generation");
-  
   // read in traits and create an array of genotypes
   text_buffer_reset(g_traits_text_buffer);
-  SENI_PRINT("create_initial_generation 2");
-
   seni_trait_list *trait_list = trait_list_allocate();
   bool res = trait_list_deserialize(trait_list, g_traits_text_buffer);
   if (res == false) {
     SENI_ERROR("create_initial_generation: trait_list_deserialize returned false");
     return 0;
   }
-  SENI_PRINT("create_initial_generation 3");
   
   if (g_genotype_list != NULL) {
     genotype_list_free(g_genotype_list);
@@ -244,7 +277,6 @@ i32 create_initial_generation(i32 population_size)
     SENI_ERROR("create_initial_generation: genotype_list_create_initial_generation returned null");
     return 0;
   }
-  SENI_PRINT("create_initial_generation 4");
 
   i32 count = genotype_list_count(g_genotype_list);
   if (count != population_size) {
@@ -253,11 +285,9 @@ i32 create_initial_generation(i32 population_size)
                population_size, count);
     return 0;
   }
-  SENI_PRINT("create_initial_generation 5");
 
   trait_list_free(trait_list);
 
-  SENI_PRINT("create_initial_generation 6");
   return population_size;
 }
 

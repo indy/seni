@@ -1482,12 +1482,48 @@ void compile_preamble(seni_program *program)
 // ********************************************************************************
 }
 
+int isg_extra_debug = 0;
+#include <string.h>
+#include <stdlib.h>
+
 // compiles the ast into bytecode for a stack based VM
 //
 seni_program *compile_program_common(seni_node *ast, i32 program_max_size, seni_word_lut *word_lut)
 {
-  seni_program *program = program_allocate(program_max_size);
+  //seni_program *program = program_allocate(program_max_size);
+
+  seni_program *program = (seni_program *)calloc(1, sizeof(seni_program));
+
+  if (program == 0) {
+    SENI_PRINT("program is NULL???????????");
+    return program;
+  }
+
+  if (program_max_size > 0) {
+    SENI_PRINT("2nd calloc for bytecode");
+    program->code = (seni_bytecode *)calloc(program_max_size, sizeof(seni_bytecode));
+  }
+
+  if(isg_extra_debug == 1) {
+    return program;
+  }
+
+  program->code_max_size = program_max_size;
+  program->code_size = 0;
+  program->opcode_offset = 0;
+
+  if(isg_extra_debug == 1) {
+    return program;
+  }
+
+
+
+
+
+
+  
   program->word_lut = word_lut;
+
   
   clear_global_mappings(program);
   clear_local_mappings(program);
@@ -1556,6 +1592,17 @@ seni_program *compile_program_common(seni_node *ast, i32 program_max_size, seni_
 seni_program *compile_program(seni_node *ast, i32 program_max_size, seni_word_lut *word_lut)
 {
   g_use_genes = false;
+  isg_extra_debug = 0;
+  
+  seni_program *program = compile_program_common(ast, program_max_size, word_lut);
+
+  return program;
+}
+
+seni_program *compile_program2(seni_node *ast, i32 program_max_size, seni_word_lut *word_lut)
+{
+  g_use_genes = false;
+  isg_extra_debug = 1;
   
   seni_program *program = compile_program_common(ast, program_max_size, word_lut);
 
@@ -1566,6 +1613,8 @@ seni_program *compile_program_with_genotype(seni_node *ast, i32 program_max_size
 {
   g_use_genes = true;
   genotype_assign_to_ast(genotype, ast);
+
+  isg_extra_debug = 0;
   
   seni_program *program = compile_program_common(ast, program_max_size, word_lut);  
 

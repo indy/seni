@@ -26,6 +26,7 @@ import Renderer from './seni/Renderer';
 import Genetic from './lang/Genetic';
 import { jobRender,
          jobRenderWasm,
+         jobDebug,
          jobUnparse,
          jobBuildTraits,
          jobInitialGeneration,
@@ -392,6 +393,16 @@ function renderWasm({ script /*, scriptHash, genotype*/ }) {
   return { title, memory, buffers, logMessages };
 }
 
+function debugfoo({ script /*, scriptHash, genotype*/ }) {
+  // need to setString before calling compileToRenderPackets
+  console.log('debugfoo');
+  Shabba.setString(Shabba.source_buffer, script);
+  const numRenderPackets = Shabba.compileToRenderPackets2();
+  console.log(`numRenderPackets = ${numRenderPackets}`);
+
+  return 3;
+}
+
 function unparse({ script, scriptHash, genotype }) {
   updateState(script, scriptHash, Immutable.fromJS(genotype));
 
@@ -455,17 +466,16 @@ function createInitialGenerationWasm({ populationSize, traits }) {
   Shabba.setString(Shabba.traits_buffer, traits);
 
   console.log(populationSize);
-  Shabba.createFoo(populationSize);
-  // Shabba.createInitialGeneration(populationSize);
+  Shabba.createInitialGeneration(populationSize);
 
   const genotypes = [];
-  // let s;
+  let s;
 
-  // for (let i = 0; i < populationSize; i++) {
-  //   Shabba.genotypeMoveToBuffer(i);
-  //   s = Shabba.getString(Shabba.genotype_buffer);
-  //   genotypes.push(s);
-  // }
+  for (let i = 0; i < populationSize; i++) {
+    Shabba.genotypeMoveToBuffer(i);
+    s = Shabba.getString(Shabba.genotype_buffer);
+    genotypes.push(s);
+  }
 
   return { genotypes };
 }
@@ -562,6 +572,8 @@ function configureWasmModule(wasmInstance) {
   Shabba.getSourceBuffer = w.exports.get_source_buffer;
   Shabba.getTraitsBuffer = w.exports.get_traits_buffer;
   Shabba.getGenotypeBuffer = w.exports.get_genotype_buffer;
+
+  Shabba.compileToRenderPackets2 = w.exports.compile_to_render_packets2;
 }
 
 /*
@@ -591,6 +603,8 @@ loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
       return render(data);
     case jobRenderWasm:
       return renderWasm(data);
+    case jobDebug:
+      return debugfoo(data);
     case jobUnparse:
       return unparse(data);
     case jobBuildTraits:

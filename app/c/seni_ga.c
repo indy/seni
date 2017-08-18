@@ -487,6 +487,19 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
   seni_genotype *genotype = genotype_build_from_initial_values(trait_list);
   genotype_list_add_genotype(genotype_list, genotype);
 
+  /*
+    the genotype_build function (or vm setup) seems to be crashing wasm
+   */
+#define GENO_HACK
+#ifdef GENO_HACK
+
+  for (i32 i = 1; i < population_size; i++) {
+    genotype = genotype_build_from_initial_values(trait_list);
+    genotype_list_add_genotype(genotype_list, genotype);
+  }
+
+#else
+
   // fill out the remaining population with generated values
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
@@ -499,6 +512,9 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
 
   env_free(env);
   vm_free(vm);
+
+#endif
+  
 
   return genotype_list;
 }

@@ -69,10 +69,12 @@ function actionInitialGeneration(state) {
       traits: state.get('traits'),
       populationSize: state.get('populationSize')
     }).then(({ genotypes }) => {
+      console.log(genotypes);
       const im = Immutable.fromJS(genotypes);
-
+      const im2 = new Immutable.List(im);
+      console.log(im2);
       currentState = state
-        .set('genotypes', new Immutable.List(im))
+        .set('genotypes', im2)
         .set('previouslySelectedGenotypes', new Immutable.List())
         .set('selectedIndices', new Immutable.List());
 

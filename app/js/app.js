@@ -31,6 +31,7 @@ import { SeniMode } from './ui/SeniMode';
 import Job from './job';
 import { jobRender,
          jobRenderWasm,
+         jobDebug,
          jobUnparse,
          jobGenerateHelp } from './jobTypes';
 import { initFirebase,
@@ -222,6 +223,9 @@ function renderGeneration(state) {
     const scriptHash = state.get('scriptHash');
 
     const genotypes = state.get('genotypes');
+    console.log(genotypes);
+    const q = genotypes.get(0);
+    console.log(q);
 
     // TODO: stop generating  if the user has switched to edit mode
     const phenotypes = gUI.phenotypes;
@@ -232,14 +236,16 @@ function renderGeneration(state) {
 
     const stopFn = startTiming();
 
-    for (let i = 0;i < phenotypes.size; i++) {
-      const workerJob = Job.request(jobRender, {
+    //for (let i = 0;i < phenotypes.size; i++) {
+    for (let i = 0;i < 1; i++) {
+      console.log(i);
+      const workerJob = Job.request(jobRenderWasm, { // jobRenderWasm
         script,
         scriptHash,
-        genotype: genotypes.get(i).toJS()
-      }).then(({ title, buffers }) => {
-        const imageElement = phenotypes.getIn([i, 'imageElement']);
-        renderGeometryBuffers(jobRender, null, buffers, imageElement);
+        genotype: genotypes.get(i)
+      }).then(({ title /*, memory, buffers */}) => {
+        // const imageElement = phenotypes.getIn([i, 'imageElement']);
+        // renderGeometryBuffers(jobRenderWasm, memory, buffers, imageElement);
         hackTitle = title;
       }).catch(error => {
         // handle error
@@ -599,24 +605,25 @@ function createKonsole(element) {
     theme: 'konsole'
   });
 
-  Job.request(jobGenerateHelp, {
-  }).then(documentation => {
-    const commander = new KonsoleCommander();
-    addDefaultCommands(documentation, commander);
+  // Job.request(jobGenerateHelp, {
+  // }).then(documentation => {
+  //   console.log('generate help returned something');
+  //   const commander = new KonsoleCommander();
+  //   addDefaultCommands(documentation, commander);
 
-    konsole.initCallbacks({
-      commandValidate(line) {
-        return line.length > 0;
-      },
-      commandHandle(line, report, prompt) {
-        console.log('commandHandle', line, report, prompt);
-        commander.commandHandle(line, report, prompt);
-      }
-    });
-  }).catch(error => {
-    // handle error
-    console.log(`worker: error of ${error}`);
-  });
+  //   konsole.initCallbacks({
+  //     commandValidate(line) {
+  //       return line.length > 0;
+  //     },
+  //     commandHandle(line, report, prompt) {
+  //       console.log('commandHandle', line, report, prompt);
+  //       commander.commandHandle(line, report, prompt);
+  //     }
+  //   });
+  // }).catch(error => {
+  //   // handle error
+  //   console.log(`worker: error of ${error}`);
+  // });
 
   return konsole;
 }

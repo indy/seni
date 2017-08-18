@@ -16,12 +16,12 @@ module.exports = {
   },
   module: {
     preLoaders: [
-      {
-        loader: 'eslint-loader',
-        test: /\.js$/,
+      // {
+      //   loader: 'eslint-loader',
+      //   test: /\.js$/,
 
-        exclude: /node_modules/
-      }
+      //   exclude: /node_modules/
+      // }
     ],
     loaders: [
       {
