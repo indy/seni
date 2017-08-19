@@ -490,7 +490,7 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
   /*
     the genotype_build function (or vm setup) seems to be crashing wasm
    */
-#define GENO_HACK
+  //#define GENO_HACK
 #ifdef GENO_HACK
 
   for (i32 i = 1; i < population_size; i++) {
@@ -506,6 +506,7 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
 
   i32 seed_value = 42;
   for (i32 i = 1; i < population_size; i++) {
+    seed_value += 1425;
     genotype = genotype_build(vm, env, trait_list, seed_value);
     genotype_list_add_genotype(genotype_list, genotype);
   }

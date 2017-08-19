@@ -83,7 +83,6 @@ class PromiseWorker {
 
 function setup(numWorkersParam) {
   numWorkers = numWorkersParam;
-  numWorkers = 1;
 
   if (logToConsole) {
     console.log(`workers::numWorkers = ${numWorkers}`);

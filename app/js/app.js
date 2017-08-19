@@ -31,7 +31,6 @@ import { SeniMode } from './ui/SeniMode';
 import Job from './job';
 import { jobRender,
          jobRenderWasm,
-         jobDebug,
          jobUnparse,
          jobGenerateHelp } from './jobTypes';
 import { initFirebase,
@@ -223,9 +222,6 @@ function renderGeneration(state) {
     const scriptHash = state.get('scriptHash');
 
     const genotypes = state.get('genotypes');
-    console.log(genotypes);
-    const q = genotypes.get(0);
-    console.log(q);
 
     // TODO: stop generating  if the user has switched to edit mode
     const phenotypes = gUI.phenotypes;
@@ -236,16 +232,14 @@ function renderGeneration(state) {
 
     const stopFn = startTiming();
 
-    //for (let i = 0;i < phenotypes.size; i++) {
-    for (let i = 0;i < 1; i++) {
-      console.log(i);
-      const workerJob = Job.request(jobRenderWasm, { // jobRenderWasm
+    for (let i = 0;i < phenotypes.size; i++) {
+      const workerJob = Job.request(jobRenderWasm, {
         script,
         scriptHash,
         genotype: genotypes.get(i)
-      }).then(({ title /*, memory, buffers */}) => {
-        // const imageElement = phenotypes.getIn([i, 'imageElement']);
-        // renderGeometryBuffers(jobRenderWasm, memory, buffers, imageElement);
+      }).then(({ title , memory, buffers }) => {
+        const imageElement = phenotypes.getIn([i, 'imageElement']);
+        renderGeometryBuffers(jobRenderWasm, memory, buffers, imageElement);
         hackTitle = title;
       }).catch(error => {
         // handle error

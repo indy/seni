@@ -115,44 +115,6 @@ int compile_to_render_packets(void)
   return g_vm->render_data->num_render_packets;
 }
 
-int g_called = 0;
-
-export
-int compile_to_render_packets2(void)
-{
-#ifdef SHOW_WASM_CALLS
-  SENI_LOG("compile_to_render_packets");
-#endif
-  
-  // TIMING_UNIT timing_a = get_timing();
-
-  vm_reset(g_vm);
-  
-  char *script = g_source_buffer;
-
-  SENI_PRINT("g_called is : %d", g_called++);
-
-  seni_program *prog = program_compile2(g_e, MAX_PROGRAM_SIZE, script);
-
-  // vm_debug_info_reset(g_vm);
-  // bool res = vm_interpret(g_vm, g_e, prog);
-
-  // if (res) {
-  //   vm_debug_info_print(g_vm);
-  // }
-
-  // // cleanup
-  // env_post_interpret_cleanup(g_e);
-  // program_free(prog);
-
-  // f32 delta = timing_delta_from(timing_a);
-  // SENI_PRINT("total c-side time taken %.2f ms", delta);
-
-  // return g_vm->render_data->num_render_packets;
-
-  return 654;
-}
-
 // ------------------------------
 
 export
