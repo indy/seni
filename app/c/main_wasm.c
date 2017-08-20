@@ -21,6 +21,7 @@ char *g_traits_buffer;
 seni_text_buffer *g_traits_text_buffer;
 
 #define GENOTYPE_BUFFER_SIZE 8000
+bool g_use_genotype_when_compiling;
 char *g_genotype_buffer;
 seni_text_buffer *g_genotype_text_buffer;
 seni_genotype_list *g_genotype_list;
@@ -57,6 +58,7 @@ void seni_startup()
   g_genotype_buffer = (char *)calloc(GENOTYPE_BUFFER_SIZE, sizeof(char));
   g_genotype_text_buffer = text_buffer_allocate(g_genotype_buffer, GENOTYPE_BUFFER_SIZE);
   g_genotype_list = NULL;
+  g_use_genotype_when_compiling = false;
 }
 
 // called once at shutdown
@@ -90,27 +92,36 @@ int compile_to_render_packets(void)
   SENI_LOG("compile_to_render_packets");
 #endif
   
-  TIMING_UNIT timing_a = get_timing();
+  //TIMING_UNIT timing_a = get_timing();
+
 
   vm_reset(g_vm);
+
+  seni_program *program = NULL;
   
-  char *script = g_source_buffer;
-
-  seni_program *prog = program_compile(g_e, MAX_PROGRAM_SIZE, script);
-
+  if (g_use_genotype_when_compiling) {
+    seni_genotype *genotype = genotype_allocate();
+    text_buffer_reset(g_genotype_text_buffer);
+    genotype_deserialize(genotype, g_genotype_text_buffer);
+    program = program_compile_with_genotype(g_e, MAX_PROGRAM_SIZE, g_source_buffer, genotype);
+    genotype_free(genotype);
+  } else {
+    program = program_compile(g_e, MAX_PROGRAM_SIZE, g_source_buffer);
+  }
+  
   vm_debug_info_reset(g_vm);
-  bool res = vm_interpret(g_vm, g_e, prog);
+  bool res = vm_interpret(g_vm, g_e, program);
 
   if (res) {
-    vm_debug_info_print(g_vm);
+    // vm_debug_info_print(g_vm);
   }
 
   // cleanup
   env_post_interpret_cleanup(g_e);
-  program_free(prog);
+  program_free(program);
 
-  f32 delta = timing_delta_from(timing_a);
-  SENI_PRINT("total c-side time taken %.2f ms", delta);
+  //f32 delta = timing_delta_from(timing_a);
+  //SENI_PRINT("total c-side time taken %.2f ms", delta);
 
   return g_vm->render_data->num_render_packets;
 }
@@ -211,13 +222,6 @@ i32 build_traits()
 }
 
 export
-i32 create_foo(i32 population_size)
-{
-  SENI_PRINT("hello from foo!!");
-  return population_size;
-}
-
-export
 i32 create_initial_generation(i32 population_size)
 {
   // read in traits and create an array of genotypes
@@ -311,3 +315,61 @@ char *get_genotype_buffer()
   return g_genotype_buffer;
 }
 
+export
+void use_genotype_when_compiling(bool use_genotype)
+{
+  SENI_PRINT("use_genotype_when_compiling is %d", use_genotype);
+  g_use_genotype_when_compiling = use_genotype;
+}
+
+
+export
+void next_generation_prepare()
+{
+  if (g_genotype_list != NULL) {
+    genotype_list_free(g_genotype_list);
+  }
+  g_genotype_list = genotype_list_allocate();
+}
+
+export
+void next_generation_add_genotype()
+{
+  seni_genotype *genotype = genotype_allocate();
+  
+  text_buffer_reset(g_genotype_text_buffer);
+  genotype_deserialize(genotype, g_genotype_text_buffer);
+
+  genotype_list_add_genotype(g_genotype_list, genotype);
+}
+
+export
+bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_rate, i32 rng)
+{
+  // confirm that we have parent_size genotypes in g_genotype_list
+  i32 count = genotype_list_count(g_genotype_list);
+  if (count != parent_size) {
+    SENI_ERROR("next_generation_build: parent_size (%d) mismatch with genotypes given (%d)", parent_size, count);
+    return false;
+  }
+
+  text_buffer_reset(g_traits_text_buffer);
+  seni_trait_list *trait_list = trait_list_allocate();
+  bool res = trait_list_deserialize(trait_list, g_traits_text_buffer);
+  if (res == false) {
+    SENI_ERROR("next_generation_build: trait_list_deserialize returned false");
+    return false;
+  }
+
+  seni_genotype_list *new_generation = genotype_list_next_generation(g_genotype_list, parent_size, population_size, mutation_rate, rng, trait_list);
+
+  trait_list_free(trait_list);
+  
+  // free the parent genotypes
+  genotype_list_free(g_genotype_list);
+
+  // assign the new generation
+  g_genotype_list = new_generation;
+
+  return true;
+}

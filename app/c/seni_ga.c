@@ -254,7 +254,7 @@ seni_gene *gene_build_from_initial_value(seni_trait *trait)
 
 seni_gene *gene_clone(seni_gene *source)
 {
-  seni_gene *gene = (seni_gene *)calloc(1, sizeof(seni_gene));
+  seni_gene *gene = gene_allocate();
 
   var_copy(&(gene->var), &(source->var));
 
@@ -351,6 +351,46 @@ i32 genotype_count(seni_genotype *genotype)
   return count;
 }
 
+seni_genotype *genotype_clone(seni_genotype *genotype)
+{
+  seni_genotype *cloned_genotype = genotype_allocate();
+
+  seni_gene *src_gene = genotype->genes;
+
+  while (src_gene) {
+    seni_gene *cloned_gene = gene_clone(src_gene);
+    genotype_add_gene(cloned_genotype, cloned_gene);
+    
+    src_gene = src_gene->next;
+  }
+  
+  return cloned_genotype;
+}
+
+seni_genotype *genotype_crossover(seni_genotype *a, seni_genotype *b, i32 crossover_index, i32 genotype_length)
+{
+  seni_genotype *genotype = genotype_allocate();
+  seni_gene *gene;
+  seni_gene *gene_a = a->genes;
+  seni_gene *gene_b = b->genes;
+  i32 i;
+  
+  for (i = 0; i < crossover_index; i++) {
+    gene = gene_clone(gene_a);
+    genotype_add_gene(genotype, gene);
+    gene_a = gene_a->next;
+    gene_b = gene_b->next;      // keep gene_b in sync
+  }
+
+  for (i = crossover_index; i < genotype_length; i++) {
+    gene = gene_clone(gene_b);
+    genotype_add_gene(genotype, gene);
+    gene_b = gene_b->next;
+  }
+
+  return genotype;
+}
+
 bool genotype_serialize(seni_text_buffer *text_buffer, seni_genotype *genotype)
 {
   // number of genes
@@ -421,6 +461,22 @@ void genotype_list_free(seni_genotype_list *genotype_list)
 void genotype_list_add_genotype(seni_genotype_list *genotype_list, seni_genotype *genotype)
 {
   DL_APPEND(genotype_list->genotypes, genotype);
+}
+
+seni_genotype *genotype_list_get_genotype(seni_genotype_list *genotype_list, i32 index)
+{
+  seni_genotype *genotype = genotype_list->genotypes;
+  i32 i = 0;
+
+  while (i < index) {
+    if (genotype == NULL) {
+      return NULL;
+    }
+    genotype = genotype->next;
+    i++;
+  }
+
+  return genotype;
 }
 
 i32 genotype_list_count(seni_genotype_list *genotype_list)
@@ -517,5 +573,67 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
 #endif
   
 
+  return genotype_list;
+}
+
+seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
+                                                  i32 num_parents,
+                                                  i32 population_size,
+                                                  f32 mutation_rate,
+                                                  i32 rng,
+                                                  seni_trait_list *trait_list)
+{
+  seni_genotype_list *genotype_list = genotype_list_allocate();
+
+  i32 population_remaining = population_size;
+
+  // copy the parents onto the new generation
+  seni_genotype *genotype;
+  seni_genotype *parent_genotype = parents->genotypes;
+  while (parent_genotype) {
+    genotype = genotype_clone(parent_genotype);
+    genotype_list_add_genotype(genotype_list, genotype);
+    parent_genotype = parent_genotype->next;
+    population_remaining--;
+  }
+
+  SENI_PRINT("genotype_list_next_generation: rng = %d", rng);
+  seni_prng_state prng_state;
+  seni_prng_set_state(&prng_state, (u64)rng);
+  i32 retry_count = 10;
+  
+  SENI_PRINT("num_parents = %d", num_parents);
+  
+  while (population_remaining) {
+    u32 a_index = seni_prng_u32(&prng_state, num_parents);
+    u32 b_index = a_index;
+    for (i32 retry = 0; retry < retry_count; retry++) {
+      b_index = seni_prng_u32(&prng_state, num_parents);
+      if (b_index != a_index) {
+        break;
+      }
+    }
+    if (b_index == a_index) {
+      b_index = (a_index + 1) % num_parents;
+    }
+    SENI_PRINT("a_index = %d, b_index = %d", a_index, b_index);
+
+    seni_genotype *a = genotype_list_get_genotype(parents, a_index);
+    seni_genotype *b = genotype_list_get_genotype(parents, b_index);
+
+    i32 genotype_length = genotype_count(a);
+    i32 crossover_index = seni_prng_u32(&prng_state, genotype_length);
+
+    SENI_PRINT("genotype_length %d, crossover_index %d", genotype_length, crossover_index);
+    
+    seni_genotype *g = genotype_crossover(a, b, crossover_index, genotype_length);
+    genotype_list_add_genotype(genotype_list, g);
+
+    population_remaining--;
+  }
+
+  i32 final_count = genotype_list_count(genotype_list);
+  SENI_PRINT("population_size = %d, final_count = %d", population_size, final_count);
+  
   return genotype_list;
 }

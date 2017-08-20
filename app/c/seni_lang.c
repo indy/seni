@@ -635,6 +635,18 @@ seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
   return program;
 }
 
+seni_program  *program_compile_with_genotype(seni_env *env, i32 program_max_size, char *source, seni_genotype *genotype)
+{
+  seni_node *ast = parser_parse(env->wl, source);
+
+  seni_program *program = compile_program_with_genotype(ast, program_max_size, env->wl, genotype);
+  
+  parser_free_nodes(ast);
+
+  return program;
+}
+  
+
 i32 program_stop_location(seni_program *program)
 {
   // the final opcode in the program will always be a STOP

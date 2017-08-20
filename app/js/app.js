@@ -23,16 +23,17 @@ import GLRenderer from './seni/GLRenderer';
 import History from './ui/History';
 import Editor from './ui/Editor';
 import Konsole from './ui/Konsole';
-import KonsoleCommander from './ui/KonsoleCommander';
-import { addDefaultCommands } from './ui/KonsoleCommands';
+//import KonsoleCommander from './ui/KonsoleCommander';
+//import { addDefaultCommands } from './ui/KonsoleCommands';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
 import { SeniMode } from './ui/SeniMode';
 import Job from './job';
 import { jobRender,
          jobRenderWasm,
-         jobUnparse,
-         jobGenerateHelp } from './jobTypes';
+         jobUnparse
+         // jobGenerateHelp
+       } from './jobTypes';
 import { initFirebase,
          initFirebaseSignIn} from './fb';
 
@@ -504,7 +505,7 @@ function onNextGen(store) {
 
     showPlaceholderImages(state);
 
-    return store.dispatch({type: 'NEXT_GENERATION', rng: 42});
+    return store.dispatch({type: 'NEXT_GENERATION', rng: 4242});
   }).then(state => {
     if (state === undefined) {
       return;

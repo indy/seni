@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const logToConsole = true;
+const logToConsole = false;
 
 let numWorkers = 0;
 const promiseWorkers = [];

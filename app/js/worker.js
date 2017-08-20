@@ -357,10 +357,17 @@ function pointerToArrayBufferCopy(ptr, length) {
 }
 */
 
-function renderWasm({ script /*, scriptHash, genotype*/ }) {
+function renderWasm({ script /*, scriptHash*/, genotype }) {
   konsoleProxy.clear();
 
   const buffers = [];
+
+  if (genotype) {
+    Shabba.useGenotypeWhenCompiling(true);
+    Shabba.setString(Shabba.genotype_buffer, genotype);
+  } else {
+    Shabba.useGenotypeWhenCompiling(false);
+  }
 
   // need to setString before calling compileToRenderPackets
   Shabba.setString(Shabba.source_buffer, script);
@@ -433,30 +440,8 @@ function buildTraitsWasm({ script /*, scriptHash */ }) {
   return { traits };
 }
 
-/*
-function createInitialGeneration({ populationSize, traits }) {
-  const random = performance.now();
-  const genotypes = [];
-
-  const initialGeno = Genetic.createGenotypeFromInitialValues(traits);
-  genotypes.push(initialGeno.toJS());
-
-  for (let i = 1; i < populationSize; i++) {
-    const genotype = Genetic.createGenotypeFromTraits(traits, i + random);
-    genotypes.push(genotype.toJS());
-  }
-
-  return { genotypes };
-}
-*/
-
-function createInitialGenerationWasm({ populationSize, traits }) {
-  console.log('createInitialGenerationWasm');
-  Shabba.setString(Shabba.traits_buffer, traits);
-
-  console.log(populationSize);
-  Shabba.createInitialGeneration(populationSize);
-
+// transfers the contents of g_genotype_list from the wasm side
+function getGenotypesFromWasm(populationSize) {
   const genotypes = [];
   let s;
 
@@ -466,15 +451,45 @@ function createInitialGenerationWasm({ populationSize, traits }) {
     genotypes.push(s);
   }
 
+  return genotypes;
+}
+
+function createInitialGenerationWasm({ populationSize, traits }) {
+  console.log('createInitialGenerationWasm');
+  Shabba.setString(Shabba.traits_buffer, traits);
+
+  console.log(populationSize);
+  Shabba.createInitialGeneration(populationSize);
+
+  const genotypes = getGenotypesFromWasm(populationSize);
+
   return { genotypes };
 }
 
+/*
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   const newGenotypes = Genetic.nextGeneration(Immutable.fromJS(genotypes),
                                               populationSize,
                                               mutationRate,
                                               traits,
                                               rng);
+  return { genotypes: newGenotypes };
+}
+*/
+
+function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
+  Shabba.nextGenerationPrepare();
+  for (let i = 0; i < genotypes.length; i++) {
+    Shabba.setString(Shabba.genotype_buffer, genotypes[i]);
+    Shabba.nextGenerationAddGenotype();
+  }
+
+  Shabba.setString(Shabba.traits_buffer, traits);
+  Shabba.nextGenerationBuild(genotypes.length, populationSize,
+                             mutationRate, rng);
+
+  const newGenotypes = getGenotypesFromWasm(populationSize);
+
   return { genotypes: newGenotypes };
 }
 
@@ -554,9 +569,13 @@ function configureWasmModule(wasmInstance) {
   Shabba.getRenderPacketTBuf = w.exports.get_render_packet_tbuf;
 
   Shabba.buildTraits = w.exports.build_traits;
-  Shabba.createFoo = w.exports.create_foo;
   Shabba.createInitialGeneration = w.exports.create_initial_generation;
   Shabba.genotypeMoveToBuffer = w.exports.genotype_move_to_buffer;
+  Shabba.useGenotypeWhenCompiling = w.exports.use_genotype_when_compiling;
+
+  Shabba.nextGenerationPrepare = w.exports.next_generation_prepare;
+  Shabba.nextGenerationAddGenotype = w.exports.next_generation_add_genotype;
+  Shabba.nextGenerationBuild = w.exports.next_generation_build;
 
   Shabba.getSourceBuffer = w.exports.get_source_buffer;
   Shabba.getTraitsBuffer = w.exports.get_traits_buffer;
@@ -595,7 +614,6 @@ loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
     case jobBuildTraits:
       return buildTraitsWasm(data);
     case jobInitialGeneration:
-      // return createInitialGeneration(data);
       return createInitialGenerationWasm(data);
     case jobNewGeneration:
       return newGeneration(data);
