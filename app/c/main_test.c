@@ -662,29 +662,29 @@ void test_vm_prng(void)
 {
   // leaky because the global rng is a vector
   //
-  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng)", 16.32348f);
+  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng)", 9.1355f);
 
   // state of rng is changing, returning a different number than previous tests
-  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng) (prng/value from: rng)", 13.451335f);
+  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng) (prng/value from: rng)", 16.5308f);
 
   // wrapped in a function so that it's not leaky
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng)) (x)", 16.32348f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng)) (x)", 9.1355f);
 
   // state of rng is changing, returning a different number than previous tests
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng) (prng/value from: rng)) (x)", 13.451335f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng) (prng/value from: rng)) (x)", 16.5308f);
 
   // prng/take returning a vector
-  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 0 from: foo)", 0.27065f);
-  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 1 from: foo)", 0.75259f);
-  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 2 from: foo)", -0.141389f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 0 from: foo)", 0.505207f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 1 from: foo)", -0.406514f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 2 from: foo)", 0.803599f);
 
   // non-leaky version of above
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 0 from: foo)) (x)", 0.27065f);
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 1 from: foo)) (x)", 0.75259f);
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 2 from: foo)) (x)", -0.141389f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 0 from: foo)) (x)", 0.505207f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 1 from: foo)) (x)", -0.406514f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 2 from: foo)) (x)", 0.803599f);
 
   // prng, destructuring, multiple args to '+'
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a b c] (prng/values num: 3 from: rng)) (+ a b c)) (x)", 0.881854f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a b c] (prng/values num: 3 from: rng)) (+ a b c)) (x)", 0.902292);
 }
 
 void test_vm_environmental(void)

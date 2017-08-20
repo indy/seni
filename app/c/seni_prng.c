@@ -7,9 +7,6 @@
 #define RND_U64 u64
 #include "lib/rnd.h"
 
-// todo: change seni_prng_state to match rnd_pcg_t
-rnd_pcg_t g_pcg;
-
 static unsigned char permutations[512] =
   {
     151, 160, 137, 91, 90, 15, 131, 13, 201, 95,
@@ -167,20 +164,12 @@ f32 noise(f32 x_, f32 y_, f32 z_)
 
 void seni_prng_set_state(seni_prng_state *prng_state, u64 seed)
 {
-  rnd_pcg_seed(&g_pcg, (u32)seed);
-  prng_state->state = g_pcg.state[0];
-  prng_state->inc = g_pcg.state[1];
+  rnd_pcg_seed((rnd_pcg_t *)prng_state, (u32)seed);
 }
 
 i32 seni_prng_i32_range(seni_prng_state* prng_state, i32 min, i32 max)
 {
-  g_pcg.state[0] = prng_state->state;
-  g_pcg.state[1] = prng_state->inc;
-
-  i32 res = rnd_pcg_range(&g_pcg, min, max);
-
-  prng_state->state = g_pcg.state[0];
-  prng_state->inc   = g_pcg.state[1];
+  i32 res = rnd_pcg_range((rnd_pcg_t *)prng_state, min, max);
 
   return res;
 }
@@ -188,14 +177,7 @@ i32 seni_prng_i32_range(seni_prng_state* prng_state, i32 min, i32 max)
 // 0..1
 f32 seni_prng_f32(seni_prng_state* prng_state)
 {
-  g_pcg.state[0] = prng_state->state;
-  g_pcg.state[1] = prng_state->inc;
-
-  f32 res = rnd_pcg_nextf(&g_pcg);
-  
-  prng_state->state = g_pcg.state[0];
-  prng_state->inc   = g_pcg.state[1];
-  
+  f32 res = rnd_pcg_nextf((rnd_pcg_t *)prng_state);
   return res;
 }
 

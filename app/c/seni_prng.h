@@ -3,8 +3,7 @@
 #include "seni_types.h"
 
 struct seni_prng_state {
-  u64 state;
-  u64 inc;
+  u64 state[2];
 };
 
 void seni_prng_set_state(seni_prng_state *prng_state, u64 seed);

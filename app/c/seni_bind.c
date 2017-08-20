@@ -30,21 +30,21 @@ typedef enum {
 //
 // [ VAR_VECTOR ->
 //  (VAR_INT(structure_id) + min, max) ->
-//  (VAR_LONG(state)) ->
-//  (VAR_LONE(inc))
+//  (VAR_LONG(state0)) ->
+//  (VAR_LONE(state1))
 // ]
 //
 typedef struct {
   seni_heap_structure_type structure_id;
-  u64 state;
-  u64 inc;
+  u64 state0;
+  u64 state1;
   f32 min;
   f32 max;
 
   // references to the heap allocated seni_vars on the vector need to be updated after seni_prng_f32 is called
   //
-  seni_var *seni_var_state;
-  seni_var *seni_var_inc;
+  seni_var *seni_var_state0;
+  seni_var *seni_var_state1;
 } seni_prng_full_state;
 
 // [ VAR_VECTOR ->
@@ -145,17 +145,17 @@ typedef struct {
     tmp_1 = value_1;                                      \
     value_1 = value_1->value.v;                           \
     IS_I32(#n);                                           \
-    n.structure_id = value_1->value.i;               \
+    n.structure_id = value_1->value.i;                    \
     n.min = value_1->f32_array[0];                        \
     n.max = value_1->f32_array[1];                        \
     value_1 = value_1->next;                              \
     IS_LONG(#n);                                          \
-    n.state = value_1->value.l;                           \
-    n.seni_var_state = value_1;                           \
+    n.state0 = value_1->value.l;                          \
+    n.seni_var_state0 = value_1;                          \
     value_1 = value_1->next;                              \
     IS_LONG(#n);                                          \
-    n.inc = value_1->value.l;                             \
-    n.seni_var_inc = value_1;                             \
+    n.state1 = value_1->value.l;                          \
+    n.seni_var_state1 = value_1;                          \
     value_1 = tmp_1;                                      \
   }
 
@@ -1385,13 +1385,9 @@ seni_var *bind_prng_build(seni_vm *vm, i32 num_args)
   READ_STACK_ARG_F32(INAME_MAX, max);
   READ_STACK_ARGS_END;
 
-  u64 seed_u64 = (u64)seed;
-
   // build a seni_prng_state and call it once - this always returns 0 but further calls will be valid
   seni_prng_state prng_state;
-  prng_state.state = seed_u64;
-  prng_state.inc = 1L;
-  seni_prng_f32(&prng_state);
+  seni_prng_set_state(&prng_state, (u64)seed);
   
   // push the return values onto the stack as a vector
   // the vector needs to represent a seni_prng_state struct as well as the min + max values
@@ -1402,8 +1398,8 @@ seni_var *bind_prng_build(seni_vm *vm, i32 num_args)
   v = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_PRNG);
   v->f32_array[0] = min;
   v->f32_array[1] = max;
-  vector_append_u64(vm, &g_var_scratch, prng_state.state);
-  vector_append_u64(vm, &g_var_scratch, prng_state.inc);
+  vector_append_u64(vm, &g_var_scratch, prng_state.state[0]);
+  vector_append_u64(vm, &g_var_scratch, prng_state.state[1]);
 
   return &g_var_scratch;
 }
@@ -1415,12 +1411,12 @@ seni_var *bind_prng_values(seni_vm *vm, i32 num_args)
   seni_prng_full_state from;
 
   from.structure_id = HEAP_STRUCTURE_UNDEFINED;
-  from.state = 2222;
-  from.inc = 1;
+  from.state0 = 2222;
+  from.state1 = 1;
   from.min = 0.0f;
   from.max = 1.0f;
-  from.seni_var_state = NULL;
-  from.seni_var_inc = NULL;
+  from.seni_var_state0 = NULL;
+  from.seni_var_state1 = NULL;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_NUM, num);
@@ -1434,8 +1430,8 @@ seni_var *bind_prng_values(seni_vm *vm, i32 num_args)
 
   // build a seni_prng_state from the seni_prng_full_state
   seni_prng_state prng_state;
-  prng_state.state = from.state;
-  prng_state.inc = from.inc;
+  prng_state.state[0] = from.state0;
+  prng_state.state[1] = from.state1;
 
   // create the return vector
   f32 value;
@@ -1449,9 +1445,9 @@ seni_var *bind_prng_values(seni_vm *vm, i32 num_args)
   }
 
   // update the state and inc values stored in the vector on the vm's stack
-  if (from.seni_var_state != NULL && from.seni_var_inc != NULL) {
-    from.seni_var_state->value.l = prng_state.state;
-    from.seni_var_inc->value.l = prng_state.inc;
+  if (from.seni_var_state0 != NULL && from.seni_var_state1 != NULL) {
+    from.seni_var_state0->value.l = prng_state.state[0];
+    from.seni_var_state1->value.l = prng_state.state[1];
   } else {
     SENI_ERROR("seni_prng_full_state has null pointers ???");
   }
@@ -1465,12 +1461,12 @@ seni_var *bind_prng_value(seni_vm *vm, i32 num_args)
   seni_prng_full_state from;
 
   from.structure_id = HEAP_STRUCTURE_UNDEFINED;
-  from.state = 2222;
-  from.inc = 1;
+  from.state0 = 2222;
+  from.state1 = 1;
   from.min = 0.0f;
   from.max = 1.0f;
-  from.seni_var_state = NULL;
-  from.seni_var_inc = NULL;
+  from.seni_var_state0 = NULL;
+  from.seni_var_state1 = NULL;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_PRNG(INAME_FROM, from);
@@ -1483,16 +1479,16 @@ seni_var *bind_prng_value(seni_vm *vm, i32 num_args)
 
   // build a seni_prng_state from the seni_prng_full_state
   seni_prng_state prng_state;
-  prng_state.state = from.state;
-  prng_state.inc = from.inc;
+  prng_state.state[0] = from.state0;
+  prng_state.state[1] = from.state1;
 
   f32 value = seni_prng_f32_range(&prng_state, from.min, from.max);
   f32_as_var(&g_var_scratch, value);
 
   // update the state and inc values stored in the vector on the vm's stack
-  if (from.seni_var_state != NULL && from.seni_var_inc != NULL) {
-    from.seni_var_state->value.l = prng_state.state;
-    from.seni_var_inc->value.l = prng_state.inc;
+  if (from.seni_var_state0 != NULL && from.seni_var_state1 != NULL) {
+    from.seni_var_state0->value.l = prng_state.state[0];
+    from.seni_var_state1->value.l = prng_state.state[1];
   } else {
     SENI_ERROR("seni_prng_full_state has null pointers ???");
   }
