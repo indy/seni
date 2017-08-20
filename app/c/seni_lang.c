@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include "utlist.h"
+#include "lib/utlist.h"
 
 void wlut_free_keywords(seni_word_lut *wlut)
 {

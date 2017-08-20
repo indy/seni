@@ -3,7 +3,7 @@
 #include "seni_config.h"
 
 #include <stdlib.h>
-#include "utlist.h"
+#include "lib/utlist.h"
 
 seni_render_packet *render_packet_allocate(i32 max_vertices, i32 vbuf_element_size,
                                             i32 cbuf_element_size, i32 tbuf_element_size)

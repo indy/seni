@@ -5,7 +5,7 @@
 #include "seni_matrix.h"
 #include "seni_timing.h"
 
-#include "utlist.h"
+#include "lib/utlist.h"
 
 #include <math.h>
 

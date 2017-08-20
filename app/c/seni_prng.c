@@ -2,18 +2,13 @@
 
 #include "seni_mathutil.h"
 
-// *Really* minimal PCG32 code / (c) 2014 M.E. O'Neill / pcg-random.org
-// Licensed under Apache License 2.0 (NO WARRANTY, etc. see website)
-u32 seni_prng(seni_prng_state* prng_state)
-{
-    u64 oldstate = prng_state->state;
-    // Advance internal state
-    prng_state->state = oldstate * 6364136223846793005ULL + (prng_state->inc|1);
-    // Calculate output function (XSH RR), uses old state for max ILP
-    u32 xorshifted = (u32)(((oldstate >> 18u) ^ oldstate) >> 27u);
-    u32 rot = oldstate >> 59u;
-    return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
-}
+#define  RND_IMPLEMENTATION
+#define RND_U32 u32
+#define RND_U64 u64
+#include "lib/rnd.h"
+
+// todo: change seni_prng_state to match rnd_pcg_t
+rnd_pcg_t g_pcg;
 
 static unsigned char permutations[512] =
   {
@@ -172,25 +167,36 @@ f32 noise(f32 x_, f32 y_, f32 z_)
 
 void seni_prng_set_state(seni_prng_state *prng_state, u64 seed)
 {
-  prng_state->state = seed;
-  prng_state->inc = 1;
-
-  // get the first value as this is often clamped to the minimum
-  // todo: this is a bug that needs to be fixed
-  seni_prng_f32(prng_state);
+  rnd_pcg_seed(&g_pcg, (u32)seed);
+  prng_state->state = g_pcg.state[0];
+  prng_state->inc = g_pcg.state[1];
 }
 
-u32 seni_prng_u32(seni_prng_state* rng, u32 max)
+i32 seni_prng_i32_range(seni_prng_state* prng_state, i32 min, i32 max)
 {
-  return seni_prng(rng) % max;
-}
+  g_pcg.state[0] = prng_state->state;
+  g_pcg.state[1] = prng_state->inc;
 
+  i32 res = rnd_pcg_range(&g_pcg, min, max);
+
+  prng_state->state = g_pcg.state[0];
+  prng_state->inc   = g_pcg.state[1];
+
+  return res;
+}
 
 // 0..1
 f32 seni_prng_f32(seni_prng_state* prng_state)
 {
-  u32 largest_u32 = (u32)(-1);
-  return (f32)seni_prng(prng_state) / (f32)largest_u32;
+  g_pcg.state[0] = prng_state->state;
+  g_pcg.state[1] = prng_state->inc;
+
+  f32 res = rnd_pcg_nextf(&g_pcg);
+  
+  prng_state->state = g_pcg.state[0];
+  prng_state->inc   = g_pcg.state[1];
+  
+  return res;
 }
 
 f32 seni_prng_f32_range(seni_prng_state* prng_state, f32 min, f32 max)
@@ -200,7 +206,6 @@ f32 seni_prng_f32_range(seni_prng_state* prng_state, f32 min, f32 max)
 
   return value;
 }
-
 
 // some wrappers around the stb perlin noise implementation
 // -1..1

@@ -7,7 +7,7 @@
 #include "seni_vm_interpreter.h"
 
 #include <stdlib.h>
-#include "utlist.h"
+#include "lib/utlist.h"
 
 // global genetic algorithm word lookup table
 seni_word_lut *g_ga_wl;
@@ -605,10 +605,10 @@ seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
   SENI_PRINT("num_parents = %d", num_parents);
   
   while (population_remaining) {
-    u32 a_index = seni_prng_u32(&prng_state, num_parents);
+    u32 a_index = seni_prng_i32_range(&prng_state, 0, num_parents - 1);
     u32 b_index = a_index;
     for (i32 retry = 0; retry < retry_count; retry++) {
-      b_index = seni_prng_u32(&prng_state, num_parents);
+      b_index = seni_prng_i32_range(&prng_state, 0, num_parents - 1);
       if (b_index != a_index) {
         break;
       }
@@ -622,7 +622,7 @@ seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
     seni_genotype *b = genotype_list_get_genotype(parents, b_index);
 
     i32 genotype_length = genotype_count(a);
-    i32 crossover_index = seni_prng_u32(&prng_state, genotype_length);
+    i32 crossover_index = seni_prng_i32_range(&prng_state, 0, genotype_length - 1);
 
     SENI_PRINT("genotype_length %d, crossover_index %d", genotype_length, crossover_index);
     

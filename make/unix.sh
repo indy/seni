@@ -5,7 +5,7 @@ mkdir build_unix
 
 if [ "$1" == "test" ]; then
     pushd build_unix    
-    cc -o test -std=c99 ../app/c/main_test.c ../app/c/unity/unity.c ../app/c/seni_*.c -lm -O2
+    cc -o test -std=c99 ../app/c/main_test.c ../app/c/lib/unity/unity.c ../app/c/seni_*.c -lm -O2
     popd
     ./build_unix/test
 fi

@@ -3,7 +3,7 @@
 #include "seni_lang.h"
 #include "seni_strtof.h"
 
-#include "utlist.h"
+#include "lib/utlist.h"
 
 #include <stdlib.h>
 #include <string.h>

@@ -1,7 +1,7 @@
 /*
   Runs tests using the native compiler
 */
-#include "unity/unity.h"
+#include "lib/unity/unity.h"
 
 #include "seni_bind.h"
 #include "seni_colour.h"
@@ -736,7 +736,7 @@ void test_vm_repeat(void)
   VM_COMPILE_F32("(fn (k a: 10 b: 20 c: 30) (+ a b c)) (k a: 40 b: 50 c: 60) 44", 44.0f);
 }
 
-void test_prng(void)
+void test_prng_old(void)
 {
 
   seni_prng_state state;
@@ -830,7 +830,7 @@ void test_genotype(void)
     genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 86.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 81.0f);
     genotype_free(genotype);
   }
 
@@ -838,7 +838,7 @@ void test_genotype(void)
     genotype = genotype_test(3421, "(+ 6 {3 (gen/scalar min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 85.998f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 80.271f);
     genotype_free(genotype);
   }
 
@@ -846,7 +846,7 @@ void test_genotype(void)
     genotype = genotype_test(9834, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 50.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 17.0f);
     genotype_free(genotype);
   }
   
@@ -861,11 +861,11 @@ void test_unparser(void)
   unparse_compare(9875, "foo:", NULL);
   unparse_compare(9875, "foo ; some comment \"here\"", NULL);
   unparse_compare(9875, "(fn (a b: 10) (+ b 20))", NULL);
-  unparse_compare(9875, "(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 {31 (gen/int min: 1 max: 50)})");
-  unparse_compare(9875, "(+ 7 { 4 (gen/int min: 2 max: 6)})", "(+ 7 { 5 (gen/int min: 2 max: 6)})");
+  unparse_compare(9875, "(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 {48 (gen/int min: 1 max: 50)})");
+  unparse_compare(9875, "(+ 7 { 4 (gen/int min: 2 max: 6)})", "(+ 7 { 6 (gen/int min: 2 max: 6)})");
 
-  unparse_compare(6534, "{3.45 (gen/scalar min: 0 max: 9)}", "{7.06 (gen/scalar min: 0 max: 9)}");
-  unparse_compare(6534, "{3.4 (gen/scalar min: 0 max: 9)}", "{7.1 (gen/scalar min: 0 max: 9)}");
+  unparse_compare(6534, "{3.45 (gen/scalar min: 0 max: 9)}", "{7.52 (gen/scalar min: 0 max: 9)}");
+  unparse_compare(6534, "{3.4 (gen/scalar min: 0 max: 9)}", "{7.5 (gen/scalar min: 0 max: 9)}");
 }
 
 // serialize/deserialize seni_var
@@ -1103,7 +1103,7 @@ void test_serialization_genotype(void)
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 86.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 81.0f);
     
     genotype_free(out);
     genotype_free(genotype);
@@ -1125,10 +1125,10 @@ void test_serialization_genotype(void)
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 29.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 5.0f);
 
     g = g->next;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 22.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 4.0f);
 
     g = g->next;
     TEST_ASSERT_NULL(g);
@@ -1183,9 +1183,9 @@ void test_serialization_genotype_list(void)
 
     genotype = out->genotypes;
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 29.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 5.0f);
     g = g->next;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 22.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 4.0f);
     g = g->next;
     TEST_ASSERT_NULL(g);
 
@@ -1193,15 +1193,15 @@ void test_serialization_genotype_list(void)
     g = genotype->genes;
     assert_seni_var_f32(&(g->var), VAR_FLOAT, 4.0f);
     g = g->next;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 26.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 5.0f);
     g = g->next;
     TEST_ASSERT_NULL(g);
 
     genotype = genotype->next;
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 27.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 23.0f);
     g = g->next;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 21.0f);
+    assert_seni_var_f32(&(g->var), VAR_FLOAT, 18.0f);
     g = g->next;
     TEST_ASSERT_NULL(g);
 
@@ -1274,6 +1274,7 @@ int main(void)
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
+  
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
   RUN_TEST(test_uv_mapper);
