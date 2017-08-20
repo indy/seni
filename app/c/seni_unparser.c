@@ -63,7 +63,7 @@ void format_var_value_float(seni_text_buffer *text_buffer, seni_node *node, seni
   print_decimals(text_buffer, decimals, var->value.f);
 }
 
-void format_node_value(seni_text_buffer *text_buffer, seni_env *env, char *value, seni_node *node)
+void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, char *value, seni_node *node)
 {
   char *c;
   
@@ -82,15 +82,15 @@ void format_node_value(seni_text_buffer *text_buffer, seni_env *env, char *value
     format_node_value_float(text_buffer, node);
     break;
   case NODE_NAME:
-    c = wlut_reverse_lookup(env->wl, node->value.i);
+    c = wlut_reverse_lookup(word_lut, node->value.i);
     text_buffer_sprintf(text_buffer, "%s", c);
     break;
   case NODE_LABEL:
-    c = wlut_reverse_lookup(env->wl, node->value.i);
+    c = wlut_reverse_lookup(word_lut, node->value.i);
     text_buffer_sprintf(text_buffer, "%s:", c);
     break;
   case NODE_STRING:
-    c = wlut_reverse_lookup(env->wl, node->value.i);
+    c = wlut_reverse_lookup(word_lut, node->value.i);
     text_buffer_sprintf(text_buffer, "\"%s\"", c);
     break;
   case NODE_WHITESPACE:
@@ -149,7 +149,7 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
   };
 }
 
-seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_env *env, seni_node *ast, seni_genotype *genotype)
+seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
 {
   seni_node *n;
   
@@ -157,7 +157,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_env *env, seni_n
 
     text_buffer_sprintf(text_buffer, "{");
     if (ast->parameter_prefix != NULL) {
-      unparse_ast_node(text_buffer, env, ast->parameter_prefix, genotype);
+      unparse_ast_node(text_buffer, word_lut, ast->parameter_prefix, genotype);
     }
 
     // // use value from genotype
@@ -172,7 +172,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_env *env, seni_n
     
     n = ast->parameter_ast;
     while (n != NULL) {
-      unparse_ast_node(text_buffer, env, n, genotype);
+      unparse_ast_node(text_buffer, word_lut, n, genotype);
       n = n->next;
     }
 
@@ -188,7 +188,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_env *env, seni_n
 
         n = ast->value.first_child;
         while (n != NULL) {
-          unparse_ast_node(text_buffer, env, n, genotype);
+          unparse_ast_node(text_buffer, word_lut, n, genotype);
           n = n->next;
         }
         text_buffer_sprintf(text_buffer, ")");
@@ -201,7 +201,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_env *env, seni_n
 
         n = ast->value.first_child;
         while (n != NULL) {
-          unparse_ast_node(text_buffer, env, n, genotype);
+          unparse_ast_node(text_buffer, word_lut, n, genotype);
           n = n->next;
         }
         text_buffer_sprintf(text_buffer, "]");
@@ -209,7 +209,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_env *env, seni_n
       }
  
     } else {
-      format_node_value(text_buffer, env, NULL, ast);
+      format_node_value(text_buffer, word_lut, NULL, ast);
     }
 
     // term = formatNodeValue(v, node);
@@ -220,18 +220,13 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_env *env, seni_n
 
 // out is a pre-allocated array
 //
-bool unparse(char *out, i32 out_size, seni_env *env, seni_node *ast, seni_genotype *genotype)
+bool unparse(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
 {
-
-  seni_text_buffer *text_buffer = text_buffer_allocate(out, out_size);
-  
   seni_node *n = ast;
   genotype->current_gene = genotype->genes;
   while (n != NULL) {
-    n = unparse_ast_node(text_buffer, env, n, genotype);
+    n = unparse_ast_node(text_buffer, word_lut, n, genotype);
   }
-
-  text_buffer_free(text_buffer);
 
   return true;
 }

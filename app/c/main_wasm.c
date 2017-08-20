@@ -12,6 +12,7 @@
 #include "seni_uv_mapper.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
+#include "seni_unparser.h"
 
 #define SOURCE_BUFFER_SIZE 80000
 char *g_source_buffer;
@@ -372,4 +373,25 @@ bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_ra
   g_genotype_list = new_generation;
 
   return true;
+}
+
+export
+void unparse_with_genotype()
+{
+  seni_genotype *genotype = genotype_allocate();
+  text_buffer_reset(g_genotype_text_buffer);
+  genotype_deserialize(genotype, g_genotype_text_buffer);
+
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_allocate();
+  seni_node *ast = parser_parse(env->wl, g_source_buffer);
+  seni_text_buffer *text_buffer = text_buffer_allocate(g_source_buffer, SOURCE_BUFFER_SIZE);
+
+  unparse(text_buffer, env->wl, ast, genotype);
+
+  text_buffer_free(text_buffer);
+  parser_free_nodes(ast);
+  env_free(env);
+  vm_free(vm);
+  genotype_free(genotype);
 }

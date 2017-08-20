@@ -422,7 +422,7 @@ function renderHighRes(state, genotype) {
   Job.request(jobRender, {
     script: state.get('script'),
     scriptHash: state.get('scriptHash'),
-    genotype: genotype ? genotype.toJS() : undefined
+    genotype: genotype ? genotype : undefined
   }).then(({ title, buffers }) => {
     const [width, height] = state.get('highResolution');
 
@@ -460,7 +460,7 @@ function showEditFromEvolve(store, element) {
       Job.request(jobUnparse, {
         script: state.get('script'),
         scriptHash: state.get('scriptHash'),
-        genotype: genotypes.get(index).toJS()
+        genotype: genotypes.get(index)
       }).then(({ script }) => {
         setScript(store, script).then(() => {
           return ensureMode(store, SeniMode.edit);

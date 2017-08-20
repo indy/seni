@@ -402,7 +402,14 @@ function renderWasm({ script /*, scriptHash*/, genotype }) {
 function unparse({ script, scriptHash, genotype }) {
   updateState(script, scriptHash, Immutable.fromJS(genotype));
 
-  const newScript = Runtime.unparse(gFrontAst.nodes, gGenotype);
+  // const newScript = Runtime.unparse(gFrontAst.nodes, gGenotype);
+
+  console.log(`genotype is ${genotype}`);
+  Shabba.setString(Shabba.source_buffer, script);
+  Shabba.setString(Shabba.genotype_buffer, genotype);
+
+  Shabba.unparseWithGenotype();
+  const newScript = Shabba.getString(Shabba.source_buffer);
 
   return { script: newScript };
 }
@@ -572,6 +579,7 @@ function configureWasmModule(wasmInstance) {
   Shabba.createInitialGeneration = w.exports.create_initial_generation;
   Shabba.genotypeMoveToBuffer = w.exports.genotype_move_to_buffer;
   Shabba.useGenotypeWhenCompiling = w.exports.use_genotype_when_compiling;
+  Shabba.unparseWithGenotype = w.exports.unparse_with_genotype;
 
   Shabba.nextGenerationPrepare = w.exports.next_generation_prepare;
   Shabba.nextGenerationAddGenotype = w.exports.next_generation_add_genotype;

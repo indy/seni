@@ -798,7 +798,10 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
 
   i32 unparsed_source_size = 256;
   char *unparsed_source = (char *)calloc(unparsed_source_size, sizeof(char));
-  unparse(unparsed_source, unparsed_source_size, env, ast, genotype);
+
+  seni_text_buffer *text_buffer = text_buffer_allocate(unparsed_source, unparsed_source_size);
+  
+  unparse(text_buffer, env->wl, ast, genotype);
 
   if (expected != NULL) {
     TEST_ASSERT_EQUAL_STRING(expected, unparsed_source);
@@ -807,6 +810,8 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   }
 
   free(unparsed_source);
+
+  text_buffer_free(text_buffer);
 
   parser_free_nodes(ast);
   genotype_free(genotype);
