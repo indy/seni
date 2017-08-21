@@ -832,7 +832,7 @@ worker.bundle.js.map  601 kB       1  [emitted]  worker
    [0] multi worker 28 bytes {1} [built]
     + 57 hidden modules
 
-
+------------------------------------------------------------
 Without JS:
 
 Hash: 23a6095841df47f7b32a
@@ -851,4 +851,14 @@ worker.bundle.js.map  29.5 kB       1  [emitted]  worker
 worker.bundle.js from 384kB downto 17.4kB
 seni-wasm.wasm is 202kB
 
+------------------------------------------------------------
+Updated Webpack:
 
+Hash: c5243215cf837a56e5a0
+Version: webpack 3.5.5
+Time: 2187ms
+               Asset     Size  Chunks                    Chunk Names
+      seni.bundle.js   631 kB       0  [emitted]  [big]  seni
+    worker.bundle.js  17.4 kB       1  [emitted]         worker
+  seni.bundle.js.map   759 kB       0  [emitted]         seni
+worker.bundle.js.map    20 kB       1  [emitted]         worker

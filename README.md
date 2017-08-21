@@ -19,12 +19,6 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 ### Test:
 
-1. `npm run test:web`
-2. visit http://localhost:8080/webpack-dev-server/testBundle
-http://localhost:8080/testBundle
-
-The tests will automatically re-run in the browser whenever the source code changes.
-
 * compiling natively and running tests on Linux/MacOS:
 
 ./make/unix.sh
@@ -49,13 +43,11 @@ You will need to build a server.exe and add it to the Firewall whitelist in orde
    and add the server.exe that was just created
 3. `server.exe`
 
-
 ## C used in WebAssembly
 
 Keep things simple by using C.
 Avoid C++, even trying to use it as a 'nicer C' results in increased compilation times, obtuse error messages, complicates the build/link commands and reduces platform independance.
 Switch to Rust if you need a better C
-
 
 test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
 
