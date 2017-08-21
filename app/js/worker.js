@@ -16,26 +16,12 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Immutable from 'immutable';
-
-import SpecialDebug from './seni/SpecialDebug';
-
-import Bind from './lang/Bind';
-import Runtime from './lang/Runtime';
-import Renderer from './seni/Renderer';
-import Genetic from './lang/Genetic';
-import { jobRender,
-         jobRenderWasm,
+import { jobRenderWasm,
          jobUnparse,
          jobBuildTraits,
          jobInitialGeneration,
-         jobNewGeneration,
-         jobGenerateHelp } from './jobTypes';
-
-const logToConsole = false;
-const gRenderer = new Renderer();
-const gEnv = Bind.addBindings(Runtime.createEnv(), gRenderer);
-
+         jobNewGeneration
+       } from './jobTypes';
 const Shabba = {};
 
 const getOwnPropertyNames = Object.getOwnPropertyNames;
@@ -267,81 +253,7 @@ class KonsoleProxy {
 }
 
 const konsoleProxy = new KonsoleProxy();
-SpecialDebug.useKonsole(konsoleProxy);
 
-
-let gScriptHash = '';
-let gFrontAst = undefined;
-let gBackAst = undefined;
-let gGenotype = undefined;
-
-// todo: return more informative errors
-function updateState(script, scriptHash, genotype) {
-  if (scriptHash !== gScriptHash) {
-    gScriptHash = scriptHash;
-
-    gFrontAst = Runtime.buildFrontAst(script);
-    if (gFrontAst.error) {
-      return false;
-    }
-
-    gBackAst = Runtime.compileBackAst(gFrontAst.nodes);
-  }
-
-  if (genotype !== undefined) {
-    gGenotype = genotype;
-  } else {
-    const traits = Genetic.buildTraits(gBackAst);
-    gGenotype = Genetic.createGenotypeFromInitialValues(traits);
-  }
-  return true;
-}
-
-function titleForScript(env, scriptHash) {
-  // default the scriptTitle to scriptHash
-  // (but replace with 'title' binding if it's defined in the script)
-  let scriptTitle = scriptHash;
-  if (env) {
-    const titleBinding = env.get('title');
-    if (titleBinding) {
-      scriptTitle = titleBinding.binding;
-    }
-  }
-  return scriptTitle;
-}
-
-function render({ script, scriptHash, genotype }) {
-  konsoleProxy.clear();
-  gRenderer.preDrawScene();
-
-  updateState(script, scriptHash, Immutable.fromJS(genotype));
-
-  const res = Runtime.evalAst(gEnv, gBackAst, gGenotype);
-  if (res === undefined) {
-    throw new Error('worker.js::render evalAst returned undefined');
-  }
-
-  const finalEnv = res[0];
-  const title = titleForScript(finalEnv, scriptHash);
-
-  gRenderer.postDrawScene();
-
-  const renderPackets = gRenderer.getRenderPackets();
-
-  const buffers = renderPackets.map(packet => {
-    const bufferData = {
-      vbuf: packet.abVertex,
-      cbuf: packet.abColour,
-      tbuf: packet.abTexture,
-      numVertices: packet.bufferLevel
-    };
-    return bufferData;
-  });
-
-  const logMessages = konsoleProxy.collectMessages();
-
-  return { title, buffers, logMessages };
-}
 
 /*
 function pointerToFloat32Array(ptr, length) {
@@ -399,11 +311,7 @@ function renderWasm({ script /*, scriptHash*/, genotype }) {
   return { title, memory, buffers, logMessages };
 }
 
-function unparse({ script, scriptHash, genotype }) {
-  updateState(script, scriptHash, Immutable.fromJS(genotype));
-
-  // const newScript = Runtime.unparse(gFrontAst.nodes, gGenotype);
-
+function unparse({ script/*, scriptHash*/, genotype }) {
   console.log(`genotype is ${genotype}`);
   Shabba.setString(Shabba.source_buffer, script);
   Shabba.setString(Shabba.genotype_buffer, genotype);
@@ -413,27 +321,6 @@ function unparse({ script, scriptHash, genotype }) {
 
   return { script: newScript };
 }
-
-/*
-// this isn't saving the intermediate ASTs, perhaps do so later?
-function buildTraits({ script, scriptHash }) {
-  if (scriptHash !== gScriptHash) {
-    gScriptHash = scriptHash;
-    gFrontAst = Runtime.buildFrontAst(script);
-
-    if (gFrontAst.error) {
-      // don't cache the current compilation state variables
-      gScriptHash = undefined;
-      throw new Error(`worker.js::buildTraits: ${gFrontAst.error}`);
-    }
-    gBackAst = Runtime.compileBackAst(gFrontAst.nodes);
-  }
-
-  const traits = Genetic.buildTraits(gBackAst);
-
-  return { traits };
-}
-*/
 
 function buildTraitsWasm({ script /*, scriptHash */ }) {
   Shabba.setString(Shabba.source_buffer, script);
@@ -473,17 +360,6 @@ function createInitialGenerationWasm({ populationSize, traits }) {
   return { genotypes };
 }
 
-/*
-function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
-  const newGenotypes = Genetic.nextGeneration(Immutable.fromJS(genotypes),
-                                              populationSize,
-                                              mutationRate,
-                                              traits,
-                                              rng);
-  return { genotypes: newGenotypes };
-}
-*/
-
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   Shabba.nextGenerationPrepare();
   for (let i = 0; i < genotypes.length; i++) {
@@ -500,16 +376,6 @@ function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   return { genotypes: newGenotypes };
 }
 
-function generateHelp() {
-  // create a hash of document objects
-  const res = gEnv.reduce((a, v, k) => {
-    a[k] = v.pb.doc;
-    return a;
-  }, {});
-
-  return res;
-}
-
 function register(callback) {
   self.addEventListener('message', e => {
     try {
@@ -517,19 +383,7 @@ function register(callback) {
 
       const result = callback(type, data);
 
-      if (type === jobRender) {
-        const transferrable = [];
-        result.buffers.forEach(buffer => {
-          transferrable.push(buffer.vbuf);
-          transferrable.push(buffer.cbuf);
-          transferrable.push(buffer.tbuf);
-        });
-        if (logToConsole) {
-          const n = transferrable.length / 3;
-          console.log(`sending over ${n} transferrable sets`);
-        }
-        self.postMessage([null, result], transferrable);
-      } else if (type === jobRenderWasm) {
+      if (type === jobRenderWasm) {
         const transferrable = [];
 
         if (result.buffers.length > 0) {
@@ -613,8 +467,6 @@ loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
 
   register((type, data) => {
     switch (type) {
-    case jobRender:
-      return render(data);
     case jobRenderWasm:
       return renderWasm(data);
     case jobUnparse:
@@ -625,8 +477,6 @@ loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
       return createInitialGenerationWasm(data);
     case jobNewGeneration:
       return newGeneration(data);
-    case jobGenerateHelp:
-      return generateHelp(data);
     default:
       // throw unknown type
       throw new Error(`worker.js: Unknown type: ${type}`);

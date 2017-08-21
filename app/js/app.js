@@ -17,7 +17,6 @@
  */
 
 import Immutable from 'immutable';
-import Trivia from './seni/Trivia';
 import GLRenderer from './seni/GLRenderer';
 
 import History from './ui/History';
@@ -960,7 +959,6 @@ export default function main() {
   initFirebaseSignIn();
 
   resizeContainers();
-  console.log(Trivia.getTitle());
 
   const state = createInitialState();
   const store = createStore(state);

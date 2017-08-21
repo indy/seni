@@ -814,3 +814,41 @@ call_no_arg_function
 
   size of worker and main before/after
   
+
+
+* removing js implementation
+
+With JS:
+
+Hash: 680de03c7327567dc556
+Version: webpack 1.15.0
+Time: 10396ms
+               Asset    Size  Chunks             Chunk Names
+      seni.bundle.js  647 kB       0  [emitted]  seni
+    worker.bundle.js  384 kB       1  [emitted]  worker
+  seni.bundle.js.map  828 kB       0  [emitted]  seni
+worker.bundle.js.map  601 kB       1  [emitted]  worker
+   [0] multi seni 28 bytes {0} [built]
+   [0] multi worker 28 bytes {1} [built]
+    + 57 hidden modules
+
+
+Without JS:
+
+Hash: 23a6095841df47f7b32a
+Version: webpack 1.15.0
+Time: 4920ms
+               Asset     Size  Chunks             Chunk Names
+      seni.bundle.js   645 kB       0  [emitted]  seni
+    worker.bundle.js  17.4 kB       1  [emitted]  worker
+  seni.bundle.js.map   824 kB       0  [emitted]  seni
+worker.bundle.js.map  29.5 kB       1  [emitted]  worker
+   [0] multi seni 28 bytes {0} [built]
+   [0] multi worker 28 bytes {1} [built]
+    + 20 hidden modules
+
+
+worker.bundle.js from 384kB downto 17.4kB
+seni-wasm.wasm is 202kB
+
+
