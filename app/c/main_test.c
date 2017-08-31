@@ -1260,6 +1260,46 @@ void test_serialization_trait_list(void)
   free_uv_mapper();
 }
 
+void test_gene_pool(void)
+{
+  seni_gene *gene = NULL;
+  struct seni_gene_pool *gene_pool = gene_pool_allocate(1, 10, 2);
+
+  TEST_ASSERT_EQUAL(gene_pool->num_slabs, 1);
+  TEST_ASSERT_EQUAL(gene_pool->max_slabs_allowed, 2);
+  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 0);
+  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 0);
+  
+  gene = gene_pool_get(gene_pool);
+  TEST_ASSERT_EQUAL(gene_pool->get_count, 1);
+  TEST_ASSERT_EQUAL(gene_pool->return_count, 0);
+  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 1);
+  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 1);
+
+  gene = gene_pool_get(gene_pool);
+  TEST_ASSERT_EQUAL(gene_pool->get_count, 2);
+  TEST_ASSERT_EQUAL(gene_pool->return_count, 0);
+  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 2);
+  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 2);
+
+  gene_pool_return(gene_pool, gene);
+  TEST_ASSERT_EQUAL(gene_pool->get_count, 2);
+  TEST_ASSERT_EQUAL(gene_pool->return_count, 1);
+  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 2);
+  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 1);
+
+  // get enough seni_genes to allocate a new slab
+  for (i32 i = 0; i < 15; i++) {
+    gene = gene_pool_get(gene_pool);
+  }
+  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 16);
+  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 16);
+
+  TEST_ASSERT_EQUAL(gene_pool->num_slabs, 2);
+
+  gene_pool_free(gene_pool);
+}
+
 int main(void)
 {
   // timing();
@@ -1307,6 +1347,8 @@ int main(void)
   RUN_TEST(test_serialization_genotype);
   RUN_TEST(test_serialization_genotype_list);
   RUN_TEST(test_serialization_trait_list);
+
+  RUN_TEST(test_gene_pool);
 
   return UNITY_END();
 }

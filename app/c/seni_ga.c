@@ -214,19 +214,29 @@ bool trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer)
 
 // gene
 
+void gene_constructor(seni_gene *gene)
+{
+  seni_var *var = (seni_var *)calloc(1, sizeof(seni_var));
+  gene->var = var;
+}
+
+void gene_destructor(seni_gene *gene)
+{
+  free(gene->var);
+}
+
 seni_gene *gene_allocate()
 {
   seni_gene *gene = (seni_gene *)calloc(1, sizeof(seni_gene));
-  seni_var *var = (seni_var *)calloc(1, sizeof(seni_var));
 
-  gene->var = var;
-
+  gene_constructor(gene);
+  
   return gene;
 }
 
 void gene_free(seni_gene *gene)
 {
-  free(gene->var);
+  gene_destructor(gene);
   free(gene);
 }
 
@@ -264,6 +274,126 @@ seni_gene *gene_clone(seni_gene *source)
 
   return gene;
 }
+
+// gene pool
+
+struct seni_gene_slab *gene_slab_allocate(i32 num_items)
+{
+  struct seni_gene_slab *gene_slab = (struct seni_gene_slab *)calloc(1, sizeof(struct seni_gene_slab));
+
+  gene_slab->slab_size = num_items;
+  gene_slab->genes = (seni_gene *)calloc(num_items, sizeof(seni_gene));
+
+  seni_gene *gene = gene_slab->genes;
+  for (i32 i = 0; i < gene_slab->slab_size; i++) {
+    gene_constructor(gene);
+    gene++;
+  }
+  
+  return gene_slab;
+}
+
+void gene_slab_free(struct seni_gene_slab *gene_slab)
+{
+  seni_gene *gene = gene_slab->genes;
+  for (i32 i = 0; i < gene_slab->slab_size; i++) {
+    gene_destructor(gene);
+    gene++;
+  }
+  
+  free(gene_slab);
+}
+
+bool gene_pool_add_slab(struct seni_gene_pool *gene_pool)
+{
+  if (gene_pool->num_slabs >= gene_pool->max_slabs_allowed) {
+    SENI_ERROR("will not allocate more than %d gene_slabs", gene_pool->max_slabs_allowed)
+    return false;
+  }
+  
+  struct seni_gene_slab *gene_slab = gene_slab_allocate(gene_pool->slab_size);
+  DL_APPEND(gene_pool->gene_slabs, gene_slab);
+
+  // add the newly created seni_genes to the available pool
+  seni_gene *gene = gene_slab->genes;
+  for (i32 i = 0; i < gene_pool->slab_size; i++) {
+    DL_APPEND(gene_pool->available, gene);
+    gene++;
+  }
+
+  gene_pool->num_slabs++;
+
+  return true;
+}
+
+void gene_pool_free(struct seni_gene_pool *gene_pool)
+{
+  struct seni_gene_slab *gene_slab = gene_pool->gene_slabs;
+  struct seni_gene_slab *next;
+
+  for (i32 i = 0; i < gene_pool->num_slabs; i++) {
+    if (gene_slab) {
+      next = gene_slab->next;
+    }
+    gene_slab_free(gene_slab);
+    gene_slab = next;
+  }
+
+  free(gene_pool);
+}
+
+struct seni_gene_pool *gene_pool_allocate(i32 num_slabs, i32 slab_size, i32 max_slabs_allowed)
+{
+  struct seni_gene_pool *gene_pool = (struct seni_gene_pool *)calloc(1, sizeof(struct seni_gene_pool));
+  gene_pool->slab_size = slab_size;
+  // gene_pool->num_slabs updated by gene_pool_add_slab
+  gene_pool->max_slabs_allowed = max_slabs_allowed;
+
+  for(i32 i = 0; i < num_slabs; i++) {
+    if (!gene_pool_add_slab(gene_pool)) {
+      gene_pool_free(gene_pool);
+      return NULL;
+    }
+  }
+  
+  return gene_pool;
+}
+
+seni_gene *gene_pool_get(struct seni_gene_pool *gene_pool)
+{
+  if (gene_pool->available == NULL) {
+    if (!gene_pool_add_slab(gene_pool)) {
+      SENI_ERROR("cannot add more than %d seni_gene_slabs", gene_pool->max_slabs_allowed);
+      return NULL;
+    }
+  }
+
+  seni_gene *head = gene_pool->available;
+  DL_DELETE(gene_pool->available, head);
+
+  head->next = NULL;
+  head->prev = NULL;
+
+  gene_pool->get_count++;
+  gene_pool->current_water_mark++;
+  if (gene_pool->current_water_mark > gene_pool->high_water_mark) {
+    gene_pool->high_water_mark = gene_pool->current_water_mark;
+  }
+
+  return head;
+}
+
+void gene_pool_return(struct seni_gene_pool *gene_pool, seni_gene *gene)
+{
+  gene->next = NULL;
+  gene->prev = NULL;
+
+  DL_APPEND(gene_pool->available, gene);
+
+  gene_pool->return_count++;
+  gene_pool->current_water_mark--;
+}
+
 
 // genotype
 

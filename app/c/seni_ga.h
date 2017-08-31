@@ -34,6 +34,39 @@ struct seni_gene {
   struct seni_gene *prev;
 };
 
+struct seni_gene_slab {
+  seni_gene *genes;
+
+  i32 slab_size;
+
+  struct seni_gene_slab *next;
+  struct seni_gene_slab *prev;
+};
+
+struct seni_gene_pool {
+  struct seni_gene_slab *gene_slabs;
+  i32 slab_size;
+  i32 num_slabs;
+  i32 max_slabs_allowed;
+
+  seni_gene *available;
+
+  i32 get_count;
+  i32 return_count;
+  i32 high_water_mark;
+  i32 current_water_mark;
+};
+
+// void gene_constructor(seni_gene *gene);
+// void gene_destructor(seni_gene *gene);
+// struct seni_gene_slab *gene_slab_allocate(i32 num_items);
+// void gene_slab_free(struct seni_gene_slab *gene_slab);
+// bool gene_pool_add_slab(struct seni_gene_pool *gene_pool);
+void gene_pool_free(struct seni_gene_pool *gene_pool);
+struct seni_gene_pool *gene_pool_allocate(i32 num_slabs, i32 slab_size, i32 max_slabs_allowed);
+seni_gene *gene_pool_get(struct seni_gene_pool *gene_pool);
+void gene_pool_return(struct seni_gene_pool *gene_pool, seni_gene *gene);
+
 struct seni_genotype {
   seni_gene *genes;
 
