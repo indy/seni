@@ -51,7 +51,7 @@ seni_var *get_node_value_var(seni_node *node)
       SENI_ERROR("null gene returned");
       return NULL;
     }
-    return &(gene->var);
+    return gene->var;
   } else {
     SENI_ERROR("get_node_value_var: expected an alterable node");
     return NULL;
@@ -66,8 +66,8 @@ i32 get_node_value_i32(seni_node *node)
       SENI_ERROR("null gene returned");
       return 0;
     }
-    SENI_PRINT("using an altered i32 node!!! %d", gene->var.value.i);
-    return gene->var.value.i;
+    SENI_PRINT("using an altered i32 node!!! %d", gene->var->value.i);
+    return gene->var->value.i;
   } else {
     return node->value.i;
   }
@@ -81,8 +81,8 @@ f32 get_node_value_f32(seni_node *node)
       SENI_ERROR("null gene returned");
       return 0.0f;
     }
-    SENI_PRINT("using an altered f32 node!!! %.2f", gene->var.value.f);
-    return gene->var.value.f;
+    SENI_PRINT("using an altered f32 node!!! %.2f", gene->var->value.f);
+    return gene->var->value.f;
   } else {
     return node->value.f;
   }

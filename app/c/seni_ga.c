@@ -217,12 +217,16 @@ bool trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer)
 seni_gene *gene_allocate()
 {
   seni_gene *gene = (seni_gene *)calloc(1, sizeof(seni_gene));
+  seni_var *var = (seni_var *)calloc(1, sizeof(seni_var));
+
+  gene->var = var;
 
   return gene;
 }
 
 void gene_free(seni_gene *gene)
 {
+  free(gene->var);
   free(gene);
 }
 
@@ -238,7 +242,7 @@ seni_gene *gene_build(seni_vm *vm, seni_env *env, seni_trait *trait)
 
   seni_gene *gene = gene_allocate();
 
-  var_copy(&(gene->var), &(vm->stack[vm->sp - 1])); // is this right?
+  var_copy(gene->var, &(vm->stack[vm->sp - 1])); // is this right?
 
   return gene;
 }
@@ -247,7 +251,7 @@ seni_gene *gene_build_from_initial_value(seni_trait *trait)
 {
   seni_gene *gene = gene_allocate();
 
-  var_copy(&(gene->var), trait->initial_value);
+  var_copy(gene->var, trait->initial_value);
   
   return gene;  
 }
@@ -256,7 +260,7 @@ seni_gene *gene_clone(seni_gene *source)
 {
   seni_gene *gene = gene_allocate();
 
-  var_copy(&(gene->var), &(source->var));
+  var_copy(gene->var, source->var);
 
   return gene;
 }
@@ -400,7 +404,7 @@ bool genotype_serialize(seni_text_buffer *text_buffer, seni_genotype *genotype)
   
   seni_gene *gene = genotype->genes;
   while (gene != NULL) {
-    var_serialize(text_buffer, &(gene->var));
+    var_serialize(text_buffer, gene->var);
     if (gene->next != NULL) {
       text_buffer_sprintf(text_buffer, " ");
     }
@@ -419,7 +423,7 @@ bool genotype_deserialize(seni_genotype *out, seni_text_buffer *text_buffer)
 
   for (i32 i = 0; i < count; i++) {
     seni_gene *gene = gene_allocate();
-    var_deserialize(&(gene->var), text_buffer);
+    var_deserialize(gene->var, text_buffer);
     genotype_add_gene(genotype, gene);
     if (i < count - 1) {
       text_buffer_eat_space(text_buffer);

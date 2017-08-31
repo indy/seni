@@ -27,6 +27,13 @@ i32              trait_list_count(seni_trait_list *trait_list);
 bool             trait_list_serialize(seni_text_buffer *text_buffer, seni_trait_list *trait_list);
 bool             trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer);
 
+struct seni_gene {
+  struct seni_var *var;
+    
+  struct seni_gene *next;
+  struct seni_gene *prev;
+};
+
 struct seni_genotype {
   seni_gene *genes;
 

@@ -50,8 +50,6 @@ typedef enum {
 
 seni_value_in_use get_node_value_in_use(seni_node_type type);
 
-struct seni_gene;
-
 struct seni_node {
   seni_node_type type;
 
@@ -294,10 +292,3 @@ void      var_copy(seni_var *dest, seni_var *src);
 
 void      vm_debug_info_reset(seni_vm *vm);
 void      vm_debug_info_print(seni_vm *vm);
-
-struct seni_gene {
-  seni_var var;
-    
-  struct seni_gene *next;
-  struct seni_gene *prev;
-};

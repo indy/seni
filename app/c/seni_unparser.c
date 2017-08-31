@@ -125,7 +125,7 @@ seni_gene *genotype_pull_gene(seni_genotype *genotype)
 void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genotype *genotype)
 {
   seni_gene *gene = genotype_pull_gene(genotype); 
-  seni_var *var = &(gene->var);
+  seni_var *var = gene->var;
   
   switch (var->type) {
   case VAR_INT:

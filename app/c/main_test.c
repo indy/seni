@@ -830,7 +830,7 @@ void test_genotype(void)
     genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 81.0f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 81.0f);
     genotype_free(genotype);
   }
 
@@ -838,7 +838,7 @@ void test_genotype(void)
     genotype = genotype_test(3421, "(+ 6 {3 (gen/scalar min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 80.271f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 80.271f);
     genotype_free(genotype);
   }
 
@@ -846,7 +846,7 @@ void test_genotype(void)
     genotype = genotype_test(9834, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 17.0f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 17.0f);
     genotype_free(genotype);
   }
   
@@ -1103,7 +1103,7 @@ void test_serialization_genotype(void)
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 81.0f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 81.0f);
     
     genotype_free(out);
     genotype_free(genotype);
@@ -1125,10 +1125,10 @@ void test_serialization_genotype(void)
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 5.0f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 5.0f);
 
     g = g->next;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 4.0f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 4.0f);
 
     g = g->next;
     TEST_ASSERT_NULL(g);
@@ -1183,25 +1183,25 @@ void test_serialization_genotype_list(void)
 
     genotype = out->genotypes;
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 5.0f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 5.0f);
     g = g->next;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 4.0f);
-    g = g->next;
-    TEST_ASSERT_NULL(g);
-
-    genotype = genotype->next;
-    g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 4.0f);
-    g = g->next;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 5.0f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 4.0f);
     g = g->next;
     TEST_ASSERT_NULL(g);
 
     genotype = genotype->next;
     g = genotype->genes;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 23.0f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 4.0f);
     g = g->next;
-    assert_seni_var_f32(&(g->var), VAR_FLOAT, 18.0f);
+    assert_seni_var_f32(g->var, VAR_FLOAT, 5.0f);
+    g = g->next;
+    TEST_ASSERT_NULL(g);
+
+    genotype = genotype->next;
+    g = genotype->genes;
+    assert_seni_var_f32(g->var, VAR_FLOAT, 23.0f);
+    g = g->next;
+    assert_seni_var_f32(g->var, VAR_FLOAT, 18.0f);
     g = g->next;
     TEST_ASSERT_NULL(g);
 
