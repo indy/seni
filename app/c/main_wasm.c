@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "seni_bind.h"
+#include "seni_ga.h"
 #include "seni_js_imports.h"
 #include "seni_lang.h"
 #include "seni_parser.h"
@@ -39,10 +40,11 @@ void seni_startup()
 #ifdef SHOW_WASM_CALLS
   SENI_LOG("seni_startup");
 #endif
-  
+
+  ga_startup();
   // build the global identity matrix used by the shape rendering
   seni_shapes_init_globals();
-  init_uv_mapper();
+  uv_mapper_init();
 
   if (g_vm != NULL) {
     vm_free(g_vm);
@@ -81,7 +83,8 @@ void seni_shutdown()
   env_free(g_e);
 
   vm_free(g_vm);
-  free_uv_mapper();
+  uv_mapper_free();
+  ga_shutdown();
 }
 
 // ------------------------------

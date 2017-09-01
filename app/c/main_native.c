@@ -80,7 +80,7 @@ void execute_source(char *source)
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   seni_shapes_init_globals();
-  init_uv_mapper();
+  uv_mapper_init();
   TIMING_UNIT construct_stop = get_timing();
   
   // parse/compile
@@ -124,7 +124,7 @@ void execute_source(char *source)
   program_free(program);
   env_free(env);
   vm_free(vm);
-  free_uv_mapper();
+  uv_mapper_free();
 }
 
 void execute_source_with_seed(char *source, i32 seed_value)
@@ -135,7 +135,7 @@ void execute_source_with_seed(char *source, i32 seed_value)
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   seni_shapes_init_globals();
-  init_uv_mapper();
+  uv_mapper_init();
   TIMING_UNIT construct_stop = get_timing();
   
   // parse/compile
@@ -199,7 +199,7 @@ void execute_source_with_seed(char *source, i32 seed_value)
   program_free(program);
   env_free(env);
   vm_free(vm);
-  free_uv_mapper();
+  uv_mapper_free();
 }
 
 void print_compiled_program(char *source)

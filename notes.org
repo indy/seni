@@ -107,30 +107,6 @@
   (fence (a from: 0 to: 20 quantity: 3))
   a == 0, 10, 20
 
-
-
-* bugs
-
-the reference count is wrong on the following:
-
-(fn (monkey)
-    (define foo [1 2 3 4])
-    (rect position: [200 500]
-          colour: (col/rgb g: 1)
-          width: 100
-          height: 100)
-    foo)
-(monkey)
-
-the returned vector will have an rc of 2 when it should be 1
-
---------------------------------------------------------------------------------
-
-
-
-
-
-
 * seni_env
 
   standard universal bindings (done once, immutable, applied to all compiled/executed programs)
@@ -862,3 +838,27 @@ Time: 2187ms
     worker.bundle.js  17.4 kB       1  [emitted]         worker
   seni.bundle.js.map   759 kB       0  [emitted]         seni
 worker.bundle.js.map    20 kB       1  [emitted]         worker
+
+
+* naming convention
+
+  void $NAME_startup() / void $NAME_shutdown()
+  - one time startup and shutdown functions - used to initialise global variables (e.g pools)
+
+  seni_$NAME $NAME_allocate()
+  - allocates memory for the named struct
+
+  seni_$NAME $NAME_free()
+  - deallocates memory for the named struct
+
+  void $NAME_constructor(seni_$NAME *$NAME)
+  - function for filling in an already allocated structure (used by pools)
+
+  void $NAME_destructor(seni_$NAME *$NAME)
+  - function for running code in a soon to be free'd structure (used by pools)
+
+  bool $NAME_serialize(seni_text_buffer *text_buffer, seni_$NAME *$NAME)
+  - serializes structure to the text buffer
+
+  bool $NAME_deserialize(seni_$NAME *out, seni_text_buffer *text_buffer)
+  - deserializes structure from the text buffer

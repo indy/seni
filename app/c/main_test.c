@@ -21,10 +21,13 @@
 #include "seni_uv_mapper.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
+#include "seni_pool_macro.h"
 
 #include "stdio.h"
 #include <stdlib.h>
 #include <string.h>
+
+#include "lib/utlist.h"
 
 /* way of working with boolean and TEST macros */
 bool test_true = true;
@@ -33,6 +36,116 @@ bool test_false = false;
 /* required by unity */
 void setUp(void) { }
 void tearDown(void) { }
+
+
+// testing the pool macro
+static i32 seni_item_counter = 0;
+
+struct seni_item {
+  i32 id;
+  
+  struct seni_item *next;
+  struct seni_item *prev;
+};
+typedef struct seni_item seni_item;
+
+void item_constructor(seni_item *item)
+{
+  item->id = seni_item_counter++;
+}
+
+void item_destructor(seni_item *item)
+{
+}
+
+SENI_POOL(seni_item, item);
+
+void test_macro_pool(void)
+{
+  seni_item *item;
+  struct seni_item_pool *item_pool;
+  i32 i;
+  
+  {
+    item = NULL;
+    item_pool = item_pool_allocate(1, 10, 2);
+
+    TEST_ASSERT_EQUAL(item_pool->num_slabs, 1);
+    TEST_ASSERT_EQUAL(item_pool->max_slabs_allowed, 2);
+    TEST_ASSERT_EQUAL(item_pool->high_water_mark, 0);
+    TEST_ASSERT_EQUAL(item_pool->current_water_mark, 0);
+  
+    item = item_pool_get(item_pool);
+    TEST_ASSERT_EQUAL(item_pool->get_count, 1);
+    TEST_ASSERT_EQUAL(item_pool->return_count, 0);
+    TEST_ASSERT_EQUAL(item_pool->high_water_mark, 1);
+    TEST_ASSERT_EQUAL(item_pool->current_water_mark, 1);
+
+    item = item_pool_get(item_pool);
+    TEST_ASSERT_EQUAL(item_pool->get_count, 2);
+    TEST_ASSERT_EQUAL(item_pool->return_count, 0);
+    TEST_ASSERT_EQUAL(item_pool->high_water_mark, 2);
+    TEST_ASSERT_EQUAL(item_pool->current_water_mark, 2);
+
+    item_pool_return(item_pool, item);
+    TEST_ASSERT_EQUAL(item_pool->get_count, 2);
+    TEST_ASSERT_EQUAL(item_pool->return_count, 1);
+    TEST_ASSERT_EQUAL(item_pool->high_water_mark, 2);
+    TEST_ASSERT_EQUAL(item_pool->current_water_mark, 1);
+
+    // get enough seni_items to allocate a new slab
+    for (i = 0; i < 15; i++) {
+      item = item_pool_get(item_pool);
+    }
+    TEST_ASSERT_EQUAL(item_pool->high_water_mark, 16);
+    TEST_ASSERT_EQUAL(item_pool->current_water_mark, 16);
+
+    TEST_ASSERT_EQUAL(item_pool->num_slabs, 2);
+
+    item_pool_free(item_pool);
+  }
+
+  {
+    item = NULL;
+    item_pool = item_pool_allocate(1, 10, 2);
+    // repeatedly allocate and return a seni_item
+    for (i = 0; i < 150; i++) {
+      item = item_pool_get(item_pool);
+      item_pool_return(item_pool, item);
+    }
+    // should still only be 1 slab allocated
+    TEST_ASSERT_EQUAL(item_pool->num_slabs, 1);
+
+    TEST_ASSERT_EQUAL(item_pool->high_water_mark, 1);
+    TEST_ASSERT_EQUAL(item_pool->current_water_mark, 0);
+
+    item_pool_free(item_pool);
+  }
+
+  {
+    item = NULL;
+    item_pool = item_pool_allocate(1, 10, 2);
+    i32 j;
+    seni_item *items[10];
+    
+    // repeatedly allocate and return sets of seni_items
+    for (i = 0; i < 50; i++) {
+      for(j = 0; j < 10; j++) {
+        items[j] = item_pool_get(item_pool);
+      }
+      for(j = 0; j < 10; j++) {
+        item_pool_return(item_pool, items[j]);
+      }
+    }
+    // should still only be 1 slab allocated
+    TEST_ASSERT_EQUAL(item_pool->num_slabs, 1);
+
+    TEST_ASSERT_EQUAL(item_pool->high_water_mark, 10);
+    TEST_ASSERT_EQUAL(item_pool->current_water_mark, 0);
+
+    item_pool_free(item_pool);
+  }
+}
 
 void test_mathutil(void)
 {
@@ -278,7 +391,7 @@ void assert_seni_var_bool(seni_var *var, bool b)
 
 void test_uv_mapper(void)
 {
-  init_uv_mapper();
+  uv_mapper_init();
 
   seni_uv_mapping *flat = get_uv_mapping(BRUSH_FLAT, 0, true);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f, flat->width_scale);
@@ -292,7 +405,7 @@ void test_uv_mapper(void)
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 326.0f / 1024.0f, c->map[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 556.0f / 1024.0f, c->map[1]);
 
-  free_uv_mapper();
+  uv_mapper_free();
 }
 
 void assert_colour(seni_colour *expected, seni_colour *colour)
@@ -763,7 +876,7 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   seni_shapes_init_globals();
-  init_uv_mapper();
+  uv_mapper_init();
 
   seni_node *ast = parser_parse(env->wl, source);
 
@@ -777,7 +890,7 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
 
   env_free(env);
   vm_free(vm);
-  free_uv_mapper();
+  uv_mapper_free();
 
   return genotype;
 }
@@ -787,7 +900,7 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   seni_shapes_init_globals();
-  init_uv_mapper();
+  uv_mapper_init();
 
   seni_node *ast = parser_parse(env->wl, source);
 
@@ -818,7 +931,7 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   trait_list_free(trait_list);
   env_free(env);
   vm_free(vm);
-  free_uv_mapper();
+  uv_mapper_free();
 }
 
 void test_genotype(void)
@@ -1223,7 +1336,7 @@ void test_serialization_trait_list(void)
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   seni_shapes_init_globals();
-  init_uv_mapper();
+  uv_mapper_init();
 
   seni_node *ast = parser_parse(env->wl, source);
   seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
@@ -1257,47 +1370,7 @@ void test_serialization_trait_list(void)
   trait_list_free(out);
   env_free(env);
   vm_free(vm);
-  free_uv_mapper();
-}
-
-void test_gene_pool(void)
-{
-  seni_gene *gene = NULL;
-  struct seni_gene_pool *gene_pool = gene_pool_allocate(1, 10, 2);
-
-  TEST_ASSERT_EQUAL(gene_pool->num_slabs, 1);
-  TEST_ASSERT_EQUAL(gene_pool->max_slabs_allowed, 2);
-  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 0);
-  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 0);
-  
-  gene = gene_pool_get(gene_pool);
-  TEST_ASSERT_EQUAL(gene_pool->get_count, 1);
-  TEST_ASSERT_EQUAL(gene_pool->return_count, 0);
-  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 1);
-  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 1);
-
-  gene = gene_pool_get(gene_pool);
-  TEST_ASSERT_EQUAL(gene_pool->get_count, 2);
-  TEST_ASSERT_EQUAL(gene_pool->return_count, 0);
-  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 2);
-  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 2);
-
-  gene_pool_return(gene_pool, gene);
-  TEST_ASSERT_EQUAL(gene_pool->get_count, 2);
-  TEST_ASSERT_EQUAL(gene_pool->return_count, 1);
-  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 2);
-  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 1);
-
-  // get enough seni_genes to allocate a new slab
-  for (i32 i = 0; i < 15; i++) {
-    gene = gene_pool_get(gene_pool);
-  }
-  TEST_ASSERT_EQUAL(gene_pool->high_water_mark, 16);
-  TEST_ASSERT_EQUAL(gene_pool->current_water_mark, 16);
-
-  TEST_ASSERT_EQUAL(gene_pool->num_slabs, 2);
-
-  gene_pool_free(gene_pool);
+  uv_mapper_free();
 }
 
 int main(void)
@@ -1314,6 +1387,7 @@ int main(void)
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
+  RUN_TEST(test_macro_pool);
   
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
@@ -1347,8 +1421,6 @@ int main(void)
   RUN_TEST(test_serialization_genotype);
   RUN_TEST(test_serialization_genotype_list);
   RUN_TEST(test_serialization_trait_list);
-
-  RUN_TEST(test_gene_pool);
 
   return UNITY_END();
 }
