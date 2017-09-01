@@ -15,7 +15,7 @@ module.exports = {
   module: {
     loaders: [
       {
-        loader: 'babel',
+        loader: 'babel-loader',
 
         // Only run `.js` files through Babel
         test: /\.js$/,
