@@ -80,6 +80,7 @@ void execute_source(char *source)
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   lang_pools_startup();
+  parser_pools_startup();
   ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
@@ -93,7 +94,7 @@ void execute_source(char *source)
 
   seni_program *program = compile_program(ast, MAX_PROGRAM_SIZE, env->wl);
 
-  parser_free_nodes(ast);
+  parser_return_nodes_to_pool(ast);
 
   
   TIMING_UNIT compilation_stop = get_timing();
@@ -128,6 +129,7 @@ void execute_source(char *source)
   vm_free(vm);
   uv_mapper_free();
   ga_pools_shutdown();
+  parser_pools_shutdown();
   lang_pools_shutdown();
 }
 
@@ -139,6 +141,7 @@ void execute_source_with_seed(char *source, i32 seed_value)
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   lang_pools_startup();
+  parser_pools_startup();
   ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
@@ -157,7 +160,7 @@ void execute_source_with_seed(char *source, i32 seed_value)
 
   seni_program *program = compile_program_with_genotype(ast, MAX_PROGRAM_SIZE, env->wl, genotype);
   
-  parser_free_nodes(ast);
+  parser_return_nodes_to_pool(ast);
 
   
   TIMING_UNIT compilation_stop = get_timing();
@@ -207,6 +210,7 @@ void execute_source_with_seed(char *source, i32 seed_value)
   vm_free(vm);
   uv_mapper_free();
   ga_pools_shutdown();
+  parser_pools_shutdown();
   lang_pools_shutdown();
 }
 

@@ -42,6 +42,7 @@ void seni_startup()
 #endif
 
   lang_pools_startup();
+  parser_pools_startup();
   ga_pools_startup();
   // build the global identity matrix used by the shape rendering
   seni_shapes_init_globals();
@@ -86,6 +87,7 @@ void seni_shutdown()
   vm_free(g_vm);
   uv_mapper_free();
   ga_pools_shutdown();
+  parser_pools_shutdown();
   lang_pools_shutdown();
 }
 
@@ -219,7 +221,7 @@ i32 build_traits()
 
   // text_buffer_free(text_buffer);
   trait_list_return_to_pool(trait_list);
-  parser_free_nodes(ast);
+  parser_return_nodes_to_pool(ast);
   
   f32 delta = timing_delta_from(timing_a);
   SENI_PRINT("build_traits: total c-side time taken %.2f ms", delta);
@@ -395,7 +397,7 @@ void unparse_with_genotype()
   unparse(text_buffer, env->wl, ast, genotype);
 
   text_buffer_free(text_buffer);
-  parser_free_nodes(ast);
+  parser_return_nodes_to_pool(ast);
   env_free(env);
   vm_free(vm);
   genotype_return_to_pool(genotype);

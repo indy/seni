@@ -191,11 +191,13 @@ seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *va
   return node->next;
 }
 
-#define PARSE(EXPR) wl = wlut_allocate(); \
+#define PARSE(EXPR) parser_pools_startup(); \
+  wl = wlut_allocate();                     \
   nodes = parser_parse(wl, EXPR)
 
 #define PARSE_CLEANUP wlut_free(wl); \
-  parser_free_nodes(nodes)
+  parser_return_nodes_to_pool(nodes); \
+  parser_pools_shutdown();
 
 
 void test_parser(void)
@@ -469,7 +471,8 @@ void test_strtof(void)
   TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_strtof("1", end));
 }
 
-#define EVM_COMPILE(EXPR) seni_env *e = env_allocate();                \
+#define EVM_COMPILE(EXPR) parser_pools_startup();                       \
+  seni_env *e = env_allocate();                                         \
   seni_program *prog = program_compile(e, 256, EXPR);                   \
   seni_vm *vm = vm_allocate(STACK_SIZE,HEAP_SIZE,HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
   vm_debug_info_reset(vm);                                              \
@@ -484,7 +487,8 @@ void test_strtof(void)
 
 #define VM_CLEANUP program_free(prog);          \
   env_free(e);                                  \
-  vm_free(vm)
+  vm_free(vm);                                  \
+  parser_pools_shutdown()
 
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
@@ -545,7 +549,6 @@ void test_vm_bugs(void)
   // wasn't POP voiding function return values in a loop (CALL_0 offset was incorrect)
   // so have a loop that would overflow the stack if the return value of whatever fn wasn't being popped
   VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/build-point position: [0 0] distance: 100))(focal/value from: focalpoint position: [0 0])(step (y from: 0 to: 2000) (whatever))(focal/value from: focalpoint position: [0 50]))(go)", 0.5f);
-
 }
 
 void test_vm_bytecode(void)
@@ -886,7 +889,7 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
   seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
 
   trait_list_return_to_pool(trait_list);
-  parser_free_nodes(ast);
+  parser_return_nodes_to_pool(ast);
 
   env_free(env);
   vm_free(vm);
@@ -900,6 +903,7 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   lang_pools_startup();
+  parser_pools_startup();
   ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
@@ -928,13 +932,14 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
 
   text_buffer_free(text_buffer);
 
-  parser_free_nodes(ast);
+  parser_return_nodes_to_pool(ast);
   genotype_return_to_pool(genotype);
   trait_list_return_to_pool(trait_list);
   env_free(env);
   vm_free(vm);
   uv_mapper_free();
   ga_pools_shutdown();
+  parser_pools_shutdown();
   lang_pools_shutdown();
 }
 
@@ -945,6 +950,7 @@ void test_genotype(void)
 
   // startup/shutdown here and not in genotype_test as the tests compare genotypes
   lang_pools_startup();
+  parser_pools_startup();
   ga_pools_startup();
   
   {
@@ -972,6 +978,7 @@ void test_genotype(void)
   }
 
   ga_pools_shutdown();
+  parser_pools_shutdown();
   lang_pools_shutdown();
 }
 
@@ -1174,6 +1181,7 @@ void test_serialization(void)
 
 void test_serialization_program(void)
 {
+  parser_pools_startup();
   seni_env *env = env_allocate();
   seni_program *program = program_compile(env, 256, "(gen/int min: 2 max: 6)");
 
@@ -1198,6 +1206,7 @@ void test_serialization_program(void)
   program_free(program);
   program_free(out);
   env_free(env);
+  parser_pools_shutdown();
 }
 
 void test_serialization_genotype(void)
@@ -1211,6 +1220,7 @@ void test_serialization_genotype(void)
   bool res;
 
   lang_pools_startup();
+  parser_pools_startup();
   ga_pools_startup();
 
   {
@@ -1264,6 +1274,7 @@ void test_serialization_genotype(void)
   }
 
   ga_pools_shutdown();
+  parser_pools_shutdown();
   lang_pools_shutdown();
   
   text_buffer_free(text_buffer);
@@ -1284,6 +1295,7 @@ void test_serialization_genotype_list(void)
   bool res;
 
   lang_pools_startup();
+  parser_pools_startup();
   ga_pools_startup();
 
   {
@@ -1344,6 +1356,7 @@ void test_serialization_genotype_list(void)
   }
 
   ga_pools_shutdown();
+  parser_pools_shutdown();
   lang_pools_shutdown();
   
   text_buffer_free(text_buffer);
@@ -1358,6 +1371,7 @@ void test_serialization_trait_list(void)
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   lang_pools_startup();
+  parser_pools_startup();
   ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
@@ -1386,7 +1400,7 @@ void test_serialization_trait_list(void)
   compare_seni_var(out->traits->next->initial_value, trait_list->traits->next->initial_value);
   compare_seni_program(out->traits->next->program, trait_list->traits->next->program);
 
-  parser_free_nodes(ast);
+  parser_return_nodes_to_pool(ast);
 
   text_buffer_free(text_buffer);
   free(buffer);
@@ -1396,6 +1410,7 @@ void test_serialization_trait_list(void)
   vm_free(vm);
   uv_mapper_free();
   ga_pools_shutdown();
+  parser_pools_shutdown();
   lang_pools_shutdown();
 }
 
@@ -1412,6 +1427,9 @@ int main(void)
   // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
+
+
+
 
   RUN_TEST(test_macro_pool);
   

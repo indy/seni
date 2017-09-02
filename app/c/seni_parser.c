@@ -8,6 +8,43 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "seni_pool_macro.h"
+
+// constructor + destructor impls required by SENI_POOL
+void node_constructor(seni_node *node)
+{
+}
+
+void node_destructor(seni_node *node)
+{
+}
+
+SENI_POOL(seni_node, node);
+
+struct seni_node_pool *g_node_pool;
+
+void parser_pools_startup()
+{
+  g_node_pool = node_pool_allocate(1, 100, 10);
+}
+
+void parser_pools_shutdown()
+{
+  node_pool_free(g_node_pool);
+}
+
+seni_node *node_get_from_pool()
+{
+  seni_node *node = node_pool_get(g_node_pool);
+
+  return node;
+}
+
+void node_return_to_pool(seni_node *node)
+{
+  node_pool_return(g_node_pool, node);
+}
+
 seni_node *eat_item();
 
 bool is_minus(char c)
@@ -201,7 +238,7 @@ i32 wlut_lookup_or_add(seni_word_lut *wlut, char *string, size_t len)
 
 seni_node *build_text_lookup_node_from_string(seni_word_lut *wlut, seni_node_type type, char *string)
 {
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
+  seni_node *node = node_get_from_pool();
   size_t len = strlen(string);
 
   i32 k = wlut_lookup_or_add(wlut, string, len);
@@ -217,7 +254,7 @@ seni_node *build_text_lookup_node_from_string(seni_word_lut *wlut, seni_node_typ
 
 seni_node *build_text_lookup_node_of_length(seni_word_lut *wlut, char **src, seni_node_type type, size_t len)
 {
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
+  seni_node *node = node_get_from_pool();
 
   i32 k = wlut_lookup_or_add(wlut, *src, len);
   if (k == -1) {
@@ -239,7 +276,7 @@ seni_node *build_text_lookup_node_of_length(seni_word_lut *wlut, char **src, sen
 //
 seni_node *build_text_node_of_length(char **src, seni_node_type type, size_t len)
 {
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
+  seni_node *node = node_get_from_pool();
   node->type = type;
 
   char *str = (char *)calloc(len + 1, sizeof(char));
@@ -258,7 +295,7 @@ seni_node *build_text_node_of_length(char **src, seni_node_type type, size_t len
 
 seni_node *eat_list(seni_word_lut *wlut, char **src)
 {
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
+  seni_node *node = node_get_from_pool();
   node->type = NODE_LIST;
 
   (*src)++; // (
@@ -281,7 +318,7 @@ seni_node *eat_list(seni_word_lut *wlut, char **src)
 
 seni_node *eat_vector(seni_word_lut *wlut, char **src)
 {
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
+  seni_node *node = node_get_from_pool();
   node->type = NODE_VECTOR;
 
   (*src)++; // [
@@ -357,7 +394,7 @@ seni_node *eat_quoted_form(seni_word_lut *wlut, char **src)
 {
   (*src)++; // '
   
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
+  seni_node *node = node_get_from_pool();
   node->type = NODE_LIST;
 
   seni_node *quote_name = build_text_lookup_node_from_string(wlut, NODE_NAME, "quote");
@@ -377,7 +414,7 @@ seni_node *eat_float(char **src)
 {
   char *end_ptr;
   
-  seni_node *node = (seni_node *)calloc(1, sizeof(seni_node));
+  seni_node *node = node_get_from_pool();
   node->type = NODE_FLOAT;
   node->value.f = (f32)seni_strtof(*src, &end_ptr);
 
@@ -564,20 +601,20 @@ seni_node *eat_item(seni_word_lut *wlut, char **src)
   return NULL;
 }
 
-void parser_free_nodes(seni_node *nodes)
+void parser_return_nodes_to_pool(seni_node *nodes)
 {
   seni_node *node = nodes;
   seni_node *next;
 
   while(node != NULL) {
     if (node->type == NODE_LIST && node->value.first_child) {
-      parser_free_nodes(node->value.first_child);
+      parser_return_nodes_to_pool(node->value.first_child);
     }
     if (node->parameter_ast) {
-      parser_free_nodes(node->parameter_ast);
+      parser_return_nodes_to_pool(node->parameter_ast);
     }
     if (node->parameter_prefix) {
-      parser_free_nodes(node->parameter_prefix);
+      parser_return_nodes_to_pool(node->parameter_prefix);
     }
     
     next = node->next;
@@ -591,8 +628,7 @@ void parser_free_nodes(seni_node *nodes)
       }
     }
 
-    // SENI_LOG("freeing node: %s %u", node_type_name(node), (u32)node);
-    free(node);
+    node_return_to_pool(node);
     
     node = next;
   }
@@ -613,7 +649,7 @@ seni_node *parser_parse(seni_word_lut *wlut, char *s)
     node = eat_item(wlut, src);
     if (node == NULL) {
       // clean up
-      parser_free_nodes(nodes);
+      parser_return_nodes_to_pool(nodes);
       return NULL;
     }
 

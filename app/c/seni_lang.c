@@ -640,7 +640,7 @@ seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
 
   seni_program *program = compile_program(ast, program_max_size, env->wl);
   
-  parser_free_nodes(ast);
+  parser_return_nodes_to_pool(ast);
 
   return program;
 }
@@ -651,7 +651,7 @@ seni_program  *program_compile_with_genotype(seni_env *env, i32 program_max_size
 
   seni_program *program = compile_program_with_genotype(ast, program_max_size, env->wl, genotype);
   
-  parser_free_nodes(ast);
+  parser_return_nodes_to_pool(ast);
 
   return program;
 }
