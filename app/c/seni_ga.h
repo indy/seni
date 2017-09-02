@@ -2,8 +2,8 @@
 
 #include "seni_types.h"
 
-void ga_startup();
-void ga_shutdown();
+void ga_pools_startup();
+void ga_pools_shutdown();
 
 struct seni_trait {
   i32 id;
@@ -21,11 +21,14 @@ bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer);
 // store a list of traits
 struct seni_trait_list {
   seni_trait *traits;
+
+  seni_trait_list *next;
+  seni_trait_list *prev;
 };
 
 seni_trait_list *trait_list_compile(seni_node *ast, i32 trait_program_max_size, seni_word_lut *word_lut);
-seni_trait_list *trait_list_allocate();
-void             trait_list_free(seni_trait_list *trait_list);
+seni_trait_list *trait_list_get_from_pool();
+void             trait_list_return_to_pool(seni_trait_list *trait_list);
 i32              trait_list_count(seni_trait_list *trait_list);
 bool             trait_list_serialize(seni_text_buffer *text_buffer, seni_trait_list *trait_list);
 bool             trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer);
@@ -48,8 +51,8 @@ struct seni_genotype {
   struct seni_genotype *prev;
 };
 
-seni_genotype *genotype_allocate();
-void           genotype_free(seni_genotype *genotype);
+seni_genotype *genotype_get_from_pool();
+void           genotype_return_to_pool(seni_genotype *genotype);
 seni_genotype *genotype_build(seni_vm *vm, seni_env *env, seni_trait_list *trait_list, i32 seed);
 seni_genotype *genotype_build_from_initial_values(seni_trait_list *trait_list);
 seni_genotype *genotype_clone(seni_genotype *genotype);
@@ -60,10 +63,13 @@ bool           genotype_deserialize(seni_genotype *out, seni_text_buffer *text_b
 
 struct seni_genotype_list {
   seni_genotype *genotypes;
+
+  struct seni_genotype_list *next;
+  struct seni_genotype_list *prev;
 };
 
-seni_genotype_list *genotype_list_allocate();
-void                genotype_list_free(seni_genotype_list *genotype_list);
+seni_genotype_list *genotype_list_get_from_pool();
+void                genotype_list_return_to_pool(seni_genotype_list *genotype_list);
 void                genotype_list_add_genotype(seni_genotype_list *genotype_list, seni_genotype *genotype);
 seni_genotype      *genotype_list_get_genotype(seni_genotype_list *genotype_list, i32 index);
 i32                 genotype_list_count(seni_genotype_list *genotype_list);

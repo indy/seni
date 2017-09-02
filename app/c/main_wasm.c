@@ -41,7 +41,8 @@ void seni_startup()
   SENI_LOG("seni_startup");
 #endif
 
-  ga_startup();
+  lang_pools_startup();
+  ga_pools_startup();
   // build the global identity matrix used by the shape rendering
   seni_shapes_init_globals();
   uv_mapper_init();
@@ -78,13 +79,14 @@ void seni_shutdown()
   free(g_traits_buffer);
   free(g_genotype_buffer);
 
-  genotype_list_free(g_genotype_list);
+  genotype_list_return_to_pool(g_genotype_list);
   
   env_free(g_e);
 
   vm_free(g_vm);
   uv_mapper_free();
-  ga_shutdown();
+  ga_pools_shutdown();
+  lang_pools_shutdown();
 }
 
 // ------------------------------
@@ -104,11 +106,11 @@ int compile_to_render_packets(void)
   seni_program *program = NULL;
   
   if (g_use_genotype_when_compiling) {
-    seni_genotype *genotype = genotype_allocate();
+    seni_genotype *genotype = genotype_get_from_pool();
     text_buffer_reset(g_genotype_text_buffer);
     genotype_deserialize(genotype, g_genotype_text_buffer);
     program = program_compile_with_genotype(g_e, MAX_PROGRAM_SIZE, g_source_buffer, genotype);
-    genotype_free(genotype);
+    genotype_return_to_pool(genotype);
   } else {
     program = program_compile(g_e, MAX_PROGRAM_SIZE, g_source_buffer);
   }
@@ -216,7 +218,7 @@ i32 build_traits()
   text_buffer_write_null(g_traits_text_buffer);
 
   // text_buffer_free(text_buffer);
-  trait_list_free(trait_list);
+  trait_list_return_to_pool(trait_list);
   parser_free_nodes(ast);
   
   f32 delta = timing_delta_from(timing_a);
@@ -230,7 +232,7 @@ i32 create_initial_generation(i32 population_size)
 {
   // read in traits and create an array of genotypes
   text_buffer_reset(g_traits_text_buffer);
-  seni_trait_list *trait_list = trait_list_allocate();
+  seni_trait_list *trait_list = trait_list_get_from_pool();
   bool res = trait_list_deserialize(trait_list, g_traits_text_buffer);
   if (res == false) {
     SENI_ERROR("create_initial_generation: trait_list_deserialize returned false");
@@ -238,25 +240,25 @@ i32 create_initial_generation(i32 population_size)
   }
   
   if (g_genotype_list != NULL) {
-    genotype_list_free(g_genotype_list);
+    genotype_list_return_to_pool(g_genotype_list);
   }
   
   g_genotype_list = genotype_list_create_initial_generation(trait_list, population_size);
   if (g_genotype_list == NULL) {
-    trait_list_free(trait_list);
+    trait_list_return_to_pool(trait_list);
     SENI_ERROR("create_initial_generation: genotype_list_create_initial_generation returned null");
     return 0;
   }
 
   i32 count = genotype_list_count(g_genotype_list);
   if (count != population_size) {
-    trait_list_free(trait_list);
+    trait_list_return_to_pool(trait_list);
     SENI_ERROR("create_initial_generation: population size mismatch %d requested, %d created",
                population_size, count);
     return 0;
   }
 
-  trait_list_free(trait_list);
+  trait_list_return_to_pool(trait_list);
 
   return population_size;
 }
@@ -331,15 +333,15 @@ export
 void next_generation_prepare()
 {
   if (g_genotype_list != NULL) {
-    genotype_list_free(g_genotype_list);
+    genotype_list_return_to_pool(g_genotype_list);
   }
-  g_genotype_list = genotype_list_allocate();
+  g_genotype_list = genotype_list_get_from_pool();
 }
 
 export
 void next_generation_add_genotype()
 {
-  seni_genotype *genotype = genotype_allocate();
+  seni_genotype *genotype = genotype_get_from_pool();
   
   text_buffer_reset(g_genotype_text_buffer);
   genotype_deserialize(genotype, g_genotype_text_buffer);
@@ -358,7 +360,7 @@ bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_ra
   }
 
   text_buffer_reset(g_traits_text_buffer);
-  seni_trait_list *trait_list = trait_list_allocate();
+  seni_trait_list *trait_list = trait_list_get_from_pool();
   bool res = trait_list_deserialize(trait_list, g_traits_text_buffer);
   if (res == false) {
     SENI_ERROR("next_generation_build: trait_list_deserialize returned false");
@@ -367,10 +369,10 @@ bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_ra
 
   seni_genotype_list *new_generation = genotype_list_next_generation(g_genotype_list, parent_size, population_size, mutation_rate, rng, trait_list);
 
-  trait_list_free(trait_list);
+  trait_list_return_to_pool(trait_list);
   
   // free the parent genotypes
-  genotype_list_free(g_genotype_list);
+  genotype_list_return_to_pool(g_genotype_list);
 
   // assign the new generation
   g_genotype_list = new_generation;
@@ -381,7 +383,7 @@ bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_ra
 export
 void unparse_with_genotype()
 {
-  seni_genotype *genotype = genotype_allocate();
+  seni_genotype *genotype = genotype_get_from_pool();
   text_buffer_reset(g_genotype_text_buffer);
   genotype_deserialize(genotype, g_genotype_text_buffer);
 
@@ -396,5 +398,5 @@ void unparse_with_genotype()
   parser_free_nodes(ast);
   env_free(env);
   vm_free(vm);
-  genotype_free(genotype);
+  genotype_return_to_pool(genotype);
 }

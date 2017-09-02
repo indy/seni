@@ -79,6 +79,8 @@ void execute_source(char *source)
   TIMING_UNIT construct_start = get_timing();
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
+  lang_pools_startup();
+  ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
   TIMING_UNIT construct_stop = get_timing();
@@ -125,6 +127,8 @@ void execute_source(char *source)
   env_free(env);
   vm_free(vm);
   uv_mapper_free();
+  ga_pools_shutdown();
+  lang_pools_shutdown();
 }
 
 void execute_source_with_seed(char *source, i32 seed_value)
@@ -134,6 +138,8 @@ void execute_source_with_seed(char *source, i32 seed_value)
   TIMING_UNIT construct_start = get_timing();
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
+  lang_pools_startup();
+  ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
   TIMING_UNIT construct_stop = get_timing();
@@ -194,12 +200,14 @@ void execute_source_with_seed(char *source, i32 seed_value)
 
   // free memory
   //
-  genotype_free(genotype);
-  trait_list_free(trait_list);
+  genotype_return_to_pool(genotype);
+  trait_list_return_to_pool(trait_list);
   program_free(program);
   env_free(env);
   vm_free(vm);
   uv_mapper_free();
+  ga_pools_shutdown();
+  lang_pools_shutdown();
 }
 
 void print_compiled_program(char *source)

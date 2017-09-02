@@ -842,20 +842,29 @@ worker.bundle.js.map    20 kB       1  [emitted]         worker
 
 * naming convention
 
-  void $NAME_startup() / void $NAME_shutdown()
+  void $SUBSYSTEM_NAME_startup() / void $SUBSYSTEM_NAME_shutdown()
   - one time startup and shutdown functions - used to initialise global variables (e.g pools)
+
+  void $NAME_cleanup(seni_$NAME *$NAME)
+  - function used by *_free, *_return, *_destructor functions to clean up a struct
 
   seni_$NAME $NAME_allocate()
   - allocates memory for the named struct
 
-  seni_$NAME $NAME_free()
+  void $NAME_free(seni_$NAME *$NAME)
   - deallocates memory for the named struct
 
+  seni_$NAME $NAME_get_from_pool()
+  - gets a struct from a pool
+
+  void $NAME_return_to_pool(seni_$NAME *$NAME)
+  - returns a struct to a pool
+
   void $NAME_constructor(seni_$NAME *$NAME)
-  - function for filling in an already allocated structure (used by pools)
+  - function for filling in an already allocated structure (used by pools during allocation)
 
   void $NAME_destructor(seni_$NAME *$NAME)
-  - function for running code in a soon to be free'd structure (used by pools)
+  - function for running code in a soon to be free'd structure (used by pools during deallocation)
 
   bool $NAME_serialize(seni_text_buffer *text_buffer, seni_$NAME *$NAME)
   - serializes structure to the text buffer

@@ -18,6 +18,16 @@
 
 #include "lib/utlist.h"
 
+#include "seni_pool_macro.h"
+
+void var_constructor(seni_var *var);
+void var_destructor(seni_var *var);
+
+SENI_POOL(seni_var, var);
+
+struct seni_var_pool *g_var_pool;
+
+
 void wlut_free_keywords(seni_word_lut *wlut)
 {
   for( int i = 0; i < MAX_KEYWORD_LOOKUPS; i++) {
@@ -1016,3 +1026,35 @@ void vm_debug_info_print(seni_vm *vm)
 }
 
 #endif
+
+void lang_pools_startup()
+{
+  // start with 1 slab of 100, allocate upto a max of 10 slabs
+  g_var_pool = var_pool_allocate(1, 100, 10);  
+}
+
+void lang_pools_shutdown()
+{
+  var_pool_free(g_var_pool);
+}
+
+void var_constructor(seni_var *var)
+{
+}
+
+void var_destructor(seni_var *var)
+{
+}
+
+seni_var *var_get_from_pool()
+{
+  seni_var *var = var_pool_get(g_var_pool);
+
+  return var;
+}
+
+void var_return_to_pool(seni_var *var)
+{
+  var_pool_return(g_var_pool, var);
+}
+

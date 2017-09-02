@@ -885,13 +885,13 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
   // using the vm to build the genes
   seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
 
-  trait_list_free(trait_list);
+  trait_list_return_to_pool(trait_list);
   parser_free_nodes(ast);
 
   env_free(env);
   vm_free(vm);
   uv_mapper_free();
-
+  
   return genotype;
 }
 
@@ -899,6 +899,8 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
 {
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
+  lang_pools_startup();
+  ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
 
@@ -927,11 +929,13 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   text_buffer_free(text_buffer);
 
   parser_free_nodes(ast);
-  genotype_free(genotype);
-  trait_list_free(trait_list);
+  genotype_return_to_pool(genotype);
+  trait_list_return_to_pool(trait_list);
   env_free(env);
   vm_free(vm);
   uv_mapper_free();
+  ga_pools_shutdown();
+  lang_pools_shutdown();
 }
 
 void test_genotype(void)
@@ -939,12 +943,16 @@ void test_genotype(void)
   seni_genotype *genotype;
   seni_gene *g;
 
+  // startup/shutdown here and not in genotype_test as the tests compare genotypes
+  lang_pools_startup();
+  ga_pools_startup();
+  
   {
     genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     assert_seni_var_f32(g->var, VAR_FLOAT, 81.0f);
-    genotype_free(genotype);
+    genotype_return_to_pool(genotype);
   }
 
   {
@@ -952,7 +960,7 @@ void test_genotype(void)
     TEST_ASSERT(genotype);
     g = genotype->genes;
     assert_seni_var_f32(g->var, VAR_FLOAT, 80.271f);
-    genotype_free(genotype);
+    genotype_return_to_pool(genotype);
   }
 
   {
@@ -960,9 +968,11 @@ void test_genotype(void)
     TEST_ASSERT(genotype);
     g = genotype->genes;
     assert_seni_var_f32(g->var, VAR_FLOAT, 17.0f);
-    genotype_free(genotype);
+    genotype_return_to_pool(genotype);
   }
-  
+
+  ga_pools_shutdown();
+  lang_pools_shutdown();
 }
 
 void test_unparser(void)
@@ -1200,6 +1210,9 @@ void test_serialization_genotype(void)
   seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
   bool res;
 
+  lang_pools_startup();
+  ga_pools_startup();
+
   {
     text_buffer_reset(text_buffer);
     
@@ -1211,15 +1224,15 @@ void test_serialization_genotype(void)
 
     text_buffer_reset(text_buffer);
 
-    seni_genotype *out = genotype_allocate();
+    seni_genotype *out = genotype_get_from_pool();
     res = genotype_deserialize(out, text_buffer);
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
     assert_seni_var_f32(g->var, VAR_FLOAT, 81.0f);
     
-    genotype_free(out);
-    genotype_free(genotype);
+    genotype_return_to_pool(out);
+    genotype_return_to_pool(genotype);
   }
 
   {
@@ -1233,7 +1246,7 @@ void test_serialization_genotype(void)
 
     text_buffer_reset(text_buffer);
 
-    seni_genotype *out = genotype_allocate();
+    seni_genotype *out = genotype_get_from_pool();
     res = genotype_deserialize(out, text_buffer);
     TEST_ASSERT_TRUE(res);
 
@@ -1246,9 +1259,12 @@ void test_serialization_genotype(void)
     g = g->next;
     TEST_ASSERT_NULL(g);
     
-    genotype_free(out);
-    genotype_free(genotype);
+    genotype_return_to_pool(out);
+    genotype_return_to_pool(genotype);
   }
+
+  ga_pools_shutdown();
+  lang_pools_shutdown();
   
   text_buffer_free(text_buffer);
   free(buffer);
@@ -1260,12 +1276,15 @@ void test_serialization_genotype_list(void)
   seni_genotype *genotype;
   seni_gene *g;
 
-  genotype_list = genotype_list_allocate();
+  genotype_list = genotype_list_get_from_pool();
 
   i32 buffer_size = 4096;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));
   seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
   bool res;
+
+  lang_pools_startup();
+  ga_pools_startup();
 
   {
     text_buffer_reset(text_buffer);
@@ -1287,7 +1306,7 @@ void test_serialization_genotype_list(void)
 
     text_buffer_reset(text_buffer);
 
-    seni_genotype_list *out = genotype_list_allocate();
+    seni_genotype_list *out = genotype_list_get_from_pool();
     res = genotype_list_deserialize(out, text_buffer);
     TEST_ASSERT_TRUE(res);
 
@@ -1321,13 +1340,16 @@ void test_serialization_genotype_list(void)
     genotype = genotype->next;
     TEST_ASSERT_NULL(genotype);
     
-    genotype_list_free(out);
+    genotype_list_return_to_pool(out);
   }
+
+  ga_pools_shutdown();
+  lang_pools_shutdown();
   
   text_buffer_free(text_buffer);
   free(buffer);
 
-  genotype_list_free(genotype_list);
+  genotype_list_return_to_pool(genotype_list);
 }
 
 void test_serialization_trait_list(void)
@@ -1335,6 +1357,8 @@ void test_serialization_trait_list(void)
   char *source = "(rect position: [500 500] width: {100 (gen/int min: 20 max: 200)} height: {30 (gen/int min: 10 max: 40)})";
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
+  lang_pools_startup();
+  ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
 
@@ -1349,7 +1373,7 @@ void test_serialization_trait_list(void)
 
   text_buffer_reset(text_buffer);
 
-  seni_trait_list *out = trait_list_allocate();
+  seni_trait_list *out = trait_list_get_from_pool();
   res = trait_list_deserialize(out, text_buffer);
   TEST_ASSERT_TRUE(res);
 
@@ -1366,11 +1390,13 @@ void test_serialization_trait_list(void)
 
   text_buffer_free(text_buffer);
   free(buffer);
-  trait_list_free(trait_list);
-  trait_list_free(out);
+  trait_list_return_to_pool(trait_list);
+  trait_list_return_to_pool(out);
   env_free(env);
   vm_free(vm);
   uv_mapper_free();
+  ga_pools_shutdown();
+  lang_pools_shutdown();
 }
 
 int main(void)
@@ -1415,7 +1441,7 @@ int main(void)
 
   RUN_TEST(test_genotype);
   RUN_TEST(test_unparser);
-
+  
   RUN_TEST(test_serialization);
   RUN_TEST(test_serialization_program);
   RUN_TEST(test_serialization_genotype);

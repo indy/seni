@@ -292,3 +292,10 @@ void      var_copy(seni_var *dest, seni_var *src);
 
 void      vm_debug_info_reset(seni_vm *vm);
 void      vm_debug_info_print(seni_vm *vm);
+
+
+void lang_pools_startup();
+void lang_pools_shutdown();
+// get/return seni_var from pool
+seni_var *var_get_from_pool();
+void var_return_to_pool(seni_var *var);
