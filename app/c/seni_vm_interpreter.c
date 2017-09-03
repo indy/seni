@@ -43,7 +43,7 @@ void gc_sweep(seni_vm *vm)
   seni_var *v = vm->heap_slab;
   
   for (i32 i = 0; i < vm->heap_size; i++) {
-    if (v->mark == true) {
+    if (v->mark) {
       // in use, so clear mark for next gc
       v->mark = false;
     } else {

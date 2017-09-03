@@ -153,7 +153,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
 {
   seni_node *n;
   
-  if (ast->alterable == true) {
+  if (ast->alterable) {
 
     text_buffer_sprintf(text_buffer, "{");
     if (ast->parameter_prefix != NULL) {

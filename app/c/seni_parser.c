@@ -358,7 +358,7 @@ seni_node *eat_alterable(seni_word_lut *wlut, char **src)
       DL_APPEND(parameter_prefix, c);
     } else {
       node = c;
-      node->alterable = true;
+      node->alterable = 1;
       node->parameter_prefix = parameter_prefix;
       break;
     }

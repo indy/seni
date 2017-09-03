@@ -19,7 +19,7 @@ char *load_file(char *filename)
 {
   char *ret = NULL;
   
-  int file_size = 0;
+  size_t file_size = 0;
   size_t read_size = 0;
   
   FILE *fp = fopen(filename, "r");  

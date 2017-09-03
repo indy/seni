@@ -63,8 +63,8 @@ struct seni_node {
   char *src;                    // pointer back into the source
   i32 src_len;                  // length of source item
 
-  bool alterable;
-  struct seni_gene *gene;       // only valid if alterable == true
+  int alterable;
+  struct seni_gene *gene;       // only valid if alterable != 0
 
   // node mutate specific
   struct seni_node *parameter_ast;

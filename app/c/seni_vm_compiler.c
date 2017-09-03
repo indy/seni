@@ -15,13 +15,13 @@ i32 opcode_offset[] = {
 
 bool g_use_genes;
 
-void gene_assign_to_node(seni_gene *gene, seni_node *node)
+void gene_assign_to_node(seni_genotype *genotype, seni_node *node)
 {
-  if (node->alterable == true) {
-    // SENI_PRINT("assigning a gene to a node");
-    node->gene = gene;
-    gene = gene->next;
-    if (gene == NULL) {
+  if (node->alterable) {
+    // SENI_PRINT("assigning a genotype->current_gene to a node");
+    node->gene = genotype->current_gene;
+    genotype->current_gene = genotype->current_gene->next;
+    if (genotype->current_gene == NULL) {
       return;
     }
   } else {
@@ -29,23 +29,24 @@ void gene_assign_to_node(seni_gene *gene, seni_node *node)
   }
 
   if (get_node_value_in_use(node->type) == USE_FIRST_CHILD) {
-    gene_assign_to_node(gene, node->value.first_child);
+    gene_assign_to_node(genotype, node->value.first_child);
   }
 
   // todo: is it safe to assume that node->next will always be valid? and that leaf nodes will have next == null?
   if (node->next) {
-    gene_assign_to_node(gene, node->next);
+    gene_assign_to_node(genotype, node->next);
   }
 }
 
 void genotype_assign_to_ast(seni_genotype *genotype, seni_node *ast)
 {
-  gene_assign_to_node(genotype->genes, ast);
+  genotype->current_gene = genotype->genes;
+  gene_assign_to_node(genotype, ast);
 }
 
 seni_var *get_node_value_var(seni_node *node)
 {
-  if (node->alterable == true && g_use_genes == true) {
+  if (node->alterable && g_use_genes) {
     seni_gene *gene = node->gene;
     if (gene == NULL) {
       SENI_ERROR("null gene returned");
@@ -60,13 +61,16 @@ seni_var *get_node_value_var(seni_node *node)
 
 i32 get_node_value_i32(seni_node *node)
 {
-  if (node->alterable == true && g_use_genes == true) {
+  if (node->alterable && g_use_genes) {
     seni_gene *gene = node->gene;
     if (gene == NULL) {
       SENI_ERROR("null gene returned");
       return 0;
     }
-    SENI_PRINT("using an altered i32 node!!! %d", gene->var->value.i);
+
+    // printf("gene var addr: %p", gene->var);
+    // SENI_PRINT("using an altered i32 node!!! %d", gene->var->value.i);
+    
     return gene->var->value.i;
   } else {
     return node->value.i;
@@ -75,13 +79,16 @@ i32 get_node_value_i32(seni_node *node)
 
 f32 get_node_value_f32(seni_node *node)
 {
-  if (node->alterable == true && g_use_genes == true) {
+  if (node->alterable && g_use_genes) {
     seni_gene *gene = node->gene;
     if (gene == NULL) {
       SENI_ERROR("null gene returned");
       return 0.0f;
     }
-    SENI_PRINT("using an altered f32 node!!! %.2f", gene->var->value.f);
+
+    // printf("gene var addr: %p", gene->var);
+    // SENI_PRINT("using an altered f32 node!!! %.2f", gene->var->value.f);
+    
     return gene->var->value.f;
   } else {
     return node->value.f;
@@ -91,7 +98,7 @@ f32 get_node_value_f32(seni_node *node)
 // a temporary message for unimplemented alterable nodes
 void warn_if_alterable(char *msg, seni_node *node)
 {
-  if (node->alterable == true) {
+  if (node->alterable) {
     SENI_ERROR("%s: alterable node not being handled properly", msg);
   }
 }
