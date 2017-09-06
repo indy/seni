@@ -110,7 +110,7 @@ void text_buffer_eat_nonspace(seni_text_buffer *text_buffer)
 
 bool text_buffer_eat_text(seni_text_buffer *text_buffer, char *c)
 {
-  i32 len = strlen(c);
+  i32 len = (i32)strlen(c);
   
   if (text_buffer_compare(text_buffer, c, len)) {
     text_buffer_forward(text_buffer, len);
@@ -136,7 +136,7 @@ f32 text_buffer_eat_f32(seni_text_buffer *text_buffer)
   text_buffer_eat_space(text_buffer);
 
   f32 f = seni_strtof(text_buffer->cursor, &end_ptr);
-  i32 len = end_ptr - text_buffer->cursor;
+  i32 len = (i32)(end_ptr - text_buffer->cursor);
 
   text_buffer_forward(text_buffer, len);
   text_buffer_eat_nonspace(text_buffer);

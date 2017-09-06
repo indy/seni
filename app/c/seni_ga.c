@@ -25,15 +25,6 @@ void gene_cleanup(seni_gene *gene)
   }
 }
 
-void gene_constructor(seni_gene *gene)
-{
-}
-
-void gene_destructor(seni_gene *gene)
-{
-  gene_cleanup(gene);
-}
-
 void trait_cleanup(seni_trait *trait)
 {
   if (trait->program) {
@@ -45,15 +36,6 @@ void trait_cleanup(seni_trait *trait)
     var_return_to_pool(trait->initial_value);
     trait->initial_value = NULL;
   }
-}
-
-void trait_constructor(seni_trait *trait)
-{
-}
-
-void trait_destructor(seni_trait *trait)
-{
-  trait_cleanup(trait);
 }
 
 void genotype_cleanup(seni_genotype *genotype)
@@ -68,15 +50,6 @@ void genotype_cleanup(seni_genotype *genotype)
   }
   genotype->genes = NULL;
   genotype->current_gene = NULL;
-}
-
-void genotype_constructor(seni_genotype *genotype)
-{
-}
-
-void genotype_destructor(seni_genotype *genotype)
-{
-  genotype_cleanup(genotype);
 }
 
 void trait_list_cleanup(seni_trait_list *trait_list)
@@ -94,15 +67,6 @@ void trait_list_cleanup(seni_trait_list *trait_list)
   trait_list->traits = NULL;
 }
 
-void trait_list_constructor(seni_trait_list *trait_list)
-{
-}
-
-void trait_list_destructor(seni_trait_list *trait_list)
-{
-  trait_list_cleanup(trait_list);
-}
-
 void genotype_list_cleanup(seni_genotype_list *genotype_list)
 {
   // todo: test this
@@ -118,22 +82,14 @@ void genotype_list_cleanup(seni_genotype_list *genotype_list)
   genotype_list->genotypes = NULL;
 }
 
-void genotype_list_constructor(seni_genotype_list *genotype_list)
-{
-}
-
-void genotype_list_destructor(seni_genotype_list *genotype_list)
-{
-  genotype_list_cleanup(genotype_list);
-}
-
 // define the pool structures
 //
-SENI_POOL(seni_gene, gene);
-SENI_POOL(seni_trait, trait);
-SENI_POOL(seni_genotype, genotype);
-SENI_POOL(seni_trait_list, trait_list);
-SENI_POOL(seni_genotype_list, genotype_list);
+
+SENI_POOL(seni_gene, gene)
+SENI_POOL(seni_trait, trait)
+SENI_POOL(seni_genotype, genotype)
+SENI_POOL(seni_trait_list, trait_list)
+SENI_POOL(seni_genotype_list, genotype_list)
 
 struct seni_gene_pool *g_gene_pool;
 struct seni_trait_pool *g_trait_pool;
@@ -574,10 +530,10 @@ bool genotype_deserialize(seni_genotype *out, seni_text_buffer *text_buffer)
 }
 
 // todo: add mutation_rate, traits, env and vm
-void random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
-{
-  // assuming that both genotypes are of the given length
-}
+// void random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
+// {
+//   // assuming that both genotypes are of the given length
+// }
 
 void genotype_list_add_genotype(seni_genotype_list *genotype_list, seni_genotype *genotype)
 {

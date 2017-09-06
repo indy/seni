@@ -11,15 +11,12 @@
 #include "seni_pool_macro.h"
 
 // constructor + destructor impls required by SENI_POOL
-void node_constructor(seni_node *node)
+void node_cleanup(seni_node *node)
 {
+  node->value.first_child = NULL;
 }
 
-void node_destructor(seni_node *node)
-{
-}
-
-SENI_POOL(seni_node, node);
+SENI_POOL(seni_node, node)
 
 struct seni_node_pool *g_node_pool;
 

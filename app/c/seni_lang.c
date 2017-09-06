@@ -20,10 +20,14 @@
 
 #include "seni_pool_macro.h"
 
-void var_constructor(seni_var *var);
-void var_destructor(seni_var *var);
 
-SENI_POOL(seni_var, var);
+// required by SENI_POOL macro
+void var_cleanup(seni_var *var)
+{
+  var->value.v = NULL;
+}
+
+SENI_POOL(seni_var, var)
 
 struct seni_var_pool *g_var_pool;
 
@@ -1069,14 +1073,6 @@ void lang_pools_startup()
 void lang_pools_shutdown()
 {
   var_pool_free(g_var_pool);
-}
-
-void var_constructor(seni_var *var)
-{
-}
-
-void var_destructor(seni_var *var)
-{
 }
 
 seni_var *var_get_from_pool()

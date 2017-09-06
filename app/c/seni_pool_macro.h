@@ -1,27 +1,23 @@
 #pragma once
   
-// macros that create a pool allocator for a given struct.
+// macro that create a pool allocator for a given struct.
 // the requirements for the struct are:
 // - it should contain 'next' and 'prev' pointers
-// - there should be constructor and destructor functions
+// - there should be cleanup function
 //
 // e.g. 
 //
-//   struct seni_item {
+//   typedef struct seni_item {
 //     struct seni_item *next;
 //     struct seni_item *prev;
-//   };
+//   } seni_item;
 //
-//   typedef struct seni_item seni_item;
-//
-//   void item_constructor(seni_item *item) { }
-//   void item_destructor(seni_item *item) { }
-//
+//   void item_cleanup(seni_item *item) { }
 //
 // if this is defined in a source file then the pool can be
 // created by calling the SENI_POOL macro:
 //
-//   SENI_POOL(seni_item, item);
+// SENI_POOL(seni_item, item)
 //
 // the first argument is the name of the struct and the second
 // is the prefix for the generated functions.
@@ -36,31 +32,43 @@
 //   seni_item *item_pool_get(struct seni_item_pool *item_pool);
 //   void item_pool_return(struct seni_item_pool *item_pool, seni_item *item);
 //
-// implementation detail structures and functions that shouldn't be called:
-//   seni_item_slab : housekeeping structure for managing blocks of memory
+// *** RECOMMENDATIONS ***
 //
-//   struct seni_item_slab *item_slab_allocate(i32 num_items);
-//   void item_slab_free(struct seni_item_slab *item_slab);
-//   bool item_pool_add_slab(struct seni_item_pool *item_pool);
+// have global level pool structures:
 //
-// if the pool structures have to be split into a header file
-// declaration and a source file definition then use the
-// SENI_POOL_DECL and SENI_POOL_IMPL macros:
+//   struct seni_item_pool *g_item_pool;
 //
-// in the header file:
-//   #include "seni_pool_macro.h"
-//   SENI_POOL_DECL(seni_item, item);
+// have system level startup/shutdown functions for pool allocation/freeing:
 //
-// in the source file:
-//   #include "seni_pool_macro.h"
-//   #include "lib/utlist.h"
-//   SENI_POOL_IMPL(seni_item, item);
+//   void some_system_startup()
+//   {
+//     g_item_pool = item_pool_allocate(1, 20, 10);
+//   }
+// 
+//   void some_system_shutdown()
+//   {
+//     item_pool_free(g_item_pool);
+//   }
+//
+// implement functions to get and return items from/to the pool:
+//
+//   seni_item *item_get_from_pool()
+//   {
+//     seni_item *item = item_pool_get(g_item_pool);
+//     return item;
+//   }
+//
+//   void item_return_to_pool(seni_item *item)
+//   {
+//     item_pool_return(g_item_pool, item);
+//   }
+//
+// the rest of the code will use these functions and not refer
+// to any of the generated functions or global pool variables
 
-#define SENI_POOL(ITEM, ITEM_NAME) \
-  SENI_POOL_DECL(ITEM, ITEM_NAME); \
-  SENI_POOL_IMPL(ITEM, ITEM_NAME)
 
-#define SENI_POOL_DECL(ITEM, ITEM_NAME) struct ITEM##_slab {            \
+
+#define SENI_POOL(ITEM, ITEM_NAME) struct ITEM##_slab {                 \
     ITEM *ITEM_NAME##s;                                                 \
     i32 slab_size;                                                      \
     struct ITEM##_slab *next;                                           \
@@ -86,9 +94,9 @@
   extern void ITEM_NAME##_pool_free(struct ITEM##_pool *ITEM_NAME##_pool); \
   extern struct ITEM##_pool *ITEM_NAME##_pool_allocate(i32 num_slabs, i32 slab_size, i32 max_slabs_allowed); \
   extern ITEM *ITEM_NAME##_pool_get(struct ITEM##_pool *ITEM_NAME##_pool); \
-  extern void ITEM_NAME##_pool_return(struct ITEM##_pool *ITEM_NAME##_pool, ITEM *ITEM_NAME);
-
-#define SENI_POOL_IMPL(ITEM, ITEM_NAME) struct ITEM##_slab *ITEM_NAME##_slab_allocate(i32 num_items) \
+  extern void ITEM_NAME##_pool_return(struct ITEM##_pool *ITEM_NAME##_pool, ITEM *ITEM_NAME); \
+                                                                        \
+  struct ITEM##_slab *ITEM_NAME##_slab_allocate(i32 num_items)          \
   {                                                                     \
     struct ITEM##_slab *ITEM_NAME##_slab = (struct ITEM##_slab *)calloc(1, sizeof(struct ITEM##_slab)); \
                                                                         \
@@ -97,7 +105,6 @@
                                                                         \
     ITEM *ITEM_NAME = ITEM_NAME##_slab->ITEM_NAME##s;                   \
     for (i32 i = 0; i < ITEM_NAME##_slab->slab_size; i++) {             \
-      ITEM_NAME##_constructor(ITEM_NAME);                               \
       ITEM_NAME++;                                                      \
     }                                                                   \
                                                                         \
@@ -108,7 +115,7 @@
   {                                                                     \
     ITEM *ITEM_NAME = ITEM_NAME##_slab->ITEM_NAME##s;                   \
     for (i32 i = 0; i < ITEM_NAME##_slab->slab_size; i++) {             \
-      ITEM_NAME##_destructor(ITEM_NAME);                                \
+      ITEM_NAME##_cleanup(ITEM_NAME);                                   \
       ITEM_NAME++;                                                      \
     }                                                                   \
                                                                         \
@@ -139,11 +146,14 @@
   void ITEM_NAME##_pool_free(struct ITEM##_pool *ITEM_NAME##_pool)      \
   {                                                                     \
     struct ITEM##_slab *ITEM_NAME##_slab = ITEM_NAME##_pool->ITEM_NAME##_slabs; \
-    struct ITEM##_slab *next;                                           \
+    struct ITEM##_slab *next = NULL;                                    \
                                                                         \
     for (i32 i = 0; i < ITEM_NAME##_pool->num_slabs; i++) {             \
       if (ITEM_NAME##_slab) {                                           \
         next = ITEM_NAME##_slab->next;                                  \
+      } else {                                                          \
+        SENI_ERROR("slab unexpectedly null");                           \
+        break;                                                          \
       }                                                                 \
       ITEM_NAME##_slab_free(ITEM_NAME##_slab);                          \
       ITEM_NAME##_slab = next;                                          \
@@ -202,7 +212,3 @@
     ITEM_NAME##_pool->return_count++;                                   \
     ITEM_NAME##_pool->current_water_mark--;                             \
   }
-
-
-
-
