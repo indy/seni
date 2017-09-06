@@ -146,6 +146,19 @@ seni_value_in_use get_node_value_in_use(seni_node_type type)
   return USE_UNKNOWN;
 }
 
+// returns the first meaningful (non-whitespace, non-comment) node
+seni_node *safe_first(seni_node *expr)
+{
+  if (expr == NULL) {
+    return NULL;
+  }
+  if (expr->type != NODE_WHITESPACE && expr->type != NODE_COMMENT) {
+    return expr;
+  }
+
+  return safe_next(expr);
+}
+
 seni_node *safe_next(seni_node *expr)
 {
   seni_node *sibling = expr->next;
@@ -890,6 +903,26 @@ i32 vector_length(seni_var *var)
   return len;
 }
 
+seni_var *vector_get(seni_var *var, i32 index)
+{
+  if (var->type != VAR_VECTOR) {
+    return 0;
+  }
+
+  seni_var *res = var->value.v;
+
+  while (index > 0) {
+    index--;
+    res = res->next;
+    if (res == NULL) {
+      // index is greater than the length of the vector
+      return NULL;
+    }
+  }
+
+  return res;
+}
+
 void vector_append_heap_var(seni_var *head, seni_var *val)
 {
   // assuming that head is VAR_VECTOR and val is a seni_var from the heap
@@ -1049,6 +1082,9 @@ void var_destructor(seni_var *var)
 seni_var *var_get_from_pool()
 {
   seni_var *var = var_pool_get(g_var_pool);
+
+  // reset the value field to NULL, required if this var is going to be used as a VAR_VECTOR
+  var->value.v = NULL;
 
   return var;
 }

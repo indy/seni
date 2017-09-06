@@ -915,7 +915,7 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   // using the vm to build the genes
   seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
 
-  i32 unparsed_source_size = 256;
+  i32 unparsed_source_size = 1024;
   char *unparsed_source = (char *)calloc(unparsed_source_size, sizeof(char));
 
   seni_text_buffer *text_buffer = text_buffer_allocate(unparsed_source, unparsed_source_size);
@@ -952,7 +952,6 @@ void test_genotype(void)
   lang_pools_startup();
   parser_pools_startup();
   ga_pools_startup();
-  
   {
     genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
@@ -984,18 +983,30 @@ void test_genotype(void)
 
 void test_unparser(void)
 {
-  unparse_compare(9875, "(+ 4 2.0)", NULL);
-  unparse_compare(9875, "(+ 4 [1 2 3])", NULL);
-  unparse_compare(9875, "(+ 4 [1.0 2.22 3.333 4.4444 5.55555])", NULL);
-  unparse_compare(9875, "red", NULL);
-  unparse_compare(9875, "foo:", NULL);
-  unparse_compare(9875, "foo ; some comment \"here\"", NULL);
-  unparse_compare(9875, "(fn (a b: 10) (+ b 20))", NULL);
-  unparse_compare(9875, "(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 {48 (gen/int min: 1 max: 50)})");
-  unparse_compare(9875, "(+ 7 { 4 (gen/int min: 2 max: 6)})", "(+ 7 { 6 (gen/int min: 2 max: 6)})");
+  // unparse_compare(9875, "(+ 4 2.0)", NULL);
+  // unparse_compare(9875, "(+ 4 [1 2 3])", NULL);
+  // unparse_compare(9875, "(+ 4 [1.0 2.22 3.333 4.4444 5.55555])", NULL);
+  // unparse_compare(9875, "red", NULL);
+  // unparse_compare(9875, "foo:", NULL);
+  // unparse_compare(9875, "foo ; some comment \"here\"", NULL);
+  // unparse_compare(9875, "(fn (a b: 10) (+ b 20))", NULL);
+  // unparse_compare(9875, "(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 {48 (gen/int min: 1 max: 50)})");
+  // unparse_compare(9875, "(+ 7 { 4 (gen/int min: 2 max: 6)})", "(+ 7 { 6 (gen/int min: 2 max: 6)})");
+  // unparse_compare(9875, "[8 {3 (gen/int min: 0 max: 9)}]", "[8 {9 (gen/int min: 0 max: 9)}]");
+  
+  // unparse_compare(6534, "{3.45 (gen/scalar min: 0 max: 9)}", "{7.52 (gen/scalar min: 0 max: 9)}");
+  // unparse_compare(6534, "{3.4 (gen/scalar min: 0 max: 9)}", "{7.5 (gen/scalar min: 0 max: 9)}");
 
-  unparse_compare(6534, "{3.45 (gen/scalar min: 0 max: 9)}", "{7.52 (gen/scalar min: 0 max: 9)}");
-  unparse_compare(6534, "{3.4 (gen/scalar min: 0 max: 9)}", "{7.5 (gen/scalar min: 0 max: 9)}");
+  // unparse_compare(6534, "(col/rgb r: {0.4 (gen/scalar)} g: 0.1)", "(col/rgb r: {0.8 (gen/scalar)} g: 0.1)");
+
+  // unparse_compare(6534, "{3 (gen/select from: '(4 5 6 7))}", "{7 (gen/select from: (quote (4 5 6 7)))}");
+  
+
+  // // there was a bug which wasn't correctly traversing the ast to assign genes
+  // unparse_compare(6542, "(rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)})", "(rect position: [500 500] colour: red width: {91 (gen/int min: 80 max: 400)} height: {561 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {228 (gen/int min: 80 max: 400)} height: {257 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {380 (gen/int min: 80 max: 400)} height: {416 (gen/int min: 80 max: 670)})");
+
+  // unparse_compare(6534, "{red (gen/select from: '(red green blue))}", "{blue (gen/select from: (quote (red green blue)))}");
+  unparse_compare(6534, "{b (gen/select from: '(a b c))}", "{blue (gen/select from: (quote (red green blue)))}");
 }
 
 // serialize/deserialize seni_var
@@ -1431,40 +1442,40 @@ int main(void)
 
 
 
-  RUN_TEST(test_macro_pool);
+  // RUN_TEST(test_macro_pool);
   
-  RUN_TEST(test_mathutil);
-  RUN_TEST(test_parser);
-  RUN_TEST(test_uv_mapper);
-  RUN_TEST(test_colour);
-  RUN_TEST(test_strtof);
+  // RUN_TEST(test_mathutil);
+  // RUN_TEST(test_parser);
+  // RUN_TEST(test_uv_mapper);
+  // RUN_TEST(test_colour);
+  // RUN_TEST(test_strtof);
   
-  // vm
-  RUN_TEST(test_vm_bugs);
-  RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_callret);
-  RUN_TEST(test_vm_native);  
-  RUN_TEST(test_vm_destructure);
-  RUN_TEST(test_vm_2d);
-  RUN_TEST(test_vm_vector);
-  RUN_TEST(test_vm_vector_append);
-  RUN_TEST(test_vm_fence);
-  RUN_TEST(test_vm_col_rgb);
-  RUN_TEST(test_vm_math);
-  RUN_TEST(test_vm_prng);
-  RUN_TEST(test_vm_environmental);
-  RUN_TEST(test_vm_interp);
-  RUN_TEST(test_vm_function_address);
-  RUN_TEST(test_vm_repeat);
+  // // vm
+  // RUN_TEST(test_vm_bugs);
+  // RUN_TEST(test_vm_bytecode);
+  // RUN_TEST(test_vm_callret);
+  // RUN_TEST(test_vm_native);  
+  // RUN_TEST(test_vm_destructure);
+  // RUN_TEST(test_vm_2d);
+  // RUN_TEST(test_vm_vector);
+  // RUN_TEST(test_vm_vector_append);
+  // RUN_TEST(test_vm_fence);
+  // RUN_TEST(test_vm_col_rgb);
+  // RUN_TEST(test_vm_math);
+  // RUN_TEST(test_vm_prng);
+  // RUN_TEST(test_vm_environmental);
+  // RUN_TEST(test_vm_interp);
+  // RUN_TEST(test_vm_function_address);
+  // RUN_TEST(test_vm_repeat);
 
-  RUN_TEST(test_genotype);
+  // RUN_TEST(test_genotype);
   RUN_TEST(test_unparser);
   
-  RUN_TEST(test_serialization);
-  RUN_TEST(test_serialization_program);
-  RUN_TEST(test_serialization_genotype);
-  RUN_TEST(test_serialization_genotype_list);
-  RUN_TEST(test_serialization_trait_list);
+  // RUN_TEST(test_serialization);
+  // RUN_TEST(test_serialization_program);
+  // RUN_TEST(test_serialization_genotype);
+  // RUN_TEST(test_serialization_genotype_list);
+  // RUN_TEST(test_serialization_trait_list);
 
   return UNITY_END();
 }

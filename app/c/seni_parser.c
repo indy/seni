@@ -37,6 +37,17 @@ seni_node *node_get_from_pool()
 {
   seni_node *node = node_pool_get(g_node_pool);
 
+  node->alterable = 0;
+  node->src = NULL;
+  node->src_len = 0;
+  node->value.first_child = NULL; // empty the value union
+  node->parameter_ast = NULL;
+  node->parameter_prefix = NULL;
+
+  if (node == NULL) {
+    SENI_LOG("OH NO NODE IS NULL");
+  }
+
   return node;
 }
 
@@ -297,6 +308,7 @@ seni_node *eat_list(seni_word_lut *wlut, char **src)
 {
   seni_node *node = node_get_from_pool();
   node->type = NODE_LIST;
+  node->value.first_child = NULL;
 
   (*src)++; // (
 

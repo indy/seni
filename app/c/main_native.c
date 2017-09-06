@@ -152,16 +152,15 @@ void execute_source_with_seed(char *source, i32 seed_value)
   TIMING_UNIT compilation_start = get_timing();
 
   seni_node *ast = parser_parse(env->wl, source);
-
+  
   seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
-
+  
   // using the vm to build the genes
   seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
-
-  seni_program *program = compile_program_with_genotype(ast, MAX_PROGRAM_SIZE, env->wl, genotype);
   
-  parser_return_nodes_to_pool(ast);
+  seni_program *program = compile_program_with_genotype(ast, MAX_PROGRAM_SIZE, env->wl, genotype);
 
+  parser_return_nodes_to_pool(ast);
   
   TIMING_UNIT compilation_stop = get_timing();
 
@@ -192,15 +191,7 @@ void execute_source_with_seed(char *source, i32 seed_value)
   if (num_traits > 0) {
     SENI_PRINT("%d %s", num_traits, pluralise(num_traits, "trait", "traits"));
   }
-
-
-  // seni_gene *gene = genotype->genes;
-  // while (gene) {
-  //   var_pretty_print("gene: ", &(gene->var));
-  //   gene = gene->next;
-  // }
   
-
   // free memory
   //
   genotype_return_to_pool(genotype);
@@ -219,6 +210,8 @@ void print_compiled_program(char *source)
   // construct
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *e = env_allocate();
+  lang_pools_startup();
+  parser_pools_startup();
 
   // compile program
   seni_program *program = program_compile(e, MAX_PROGRAM_SIZE, source);
@@ -231,6 +224,9 @@ void print_compiled_program(char *source)
   program_free(program);
   env_free(e);
   vm_free(vm);
+
+  parser_pools_shutdown();
+  lang_pools_shutdown();
 }
 
 void print_usage()
@@ -254,7 +250,7 @@ int main(int argc, char **argv)
 
   if (argc == 1) {
     // invoked native without any command line options
-    print_usage();
+    //    print_usage();
     return 0;
   }
 
@@ -264,7 +260,7 @@ int main(int argc, char **argv)
   }
 
   if (INAME_NUMBER_OF_KNOWN_WORDS >= NATIVE_START) {
-    SENI_ERROR("WARNING: keywords are overwriting into NATIVE_START area");
+    SENI_ERROR("WARNING: %d keywords so NATIVE_START area is being overwritten", INAME_NUMBER_OF_KNOWN_WORDS);
     return 1;
   }
 

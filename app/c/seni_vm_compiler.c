@@ -15,6 +15,8 @@ i32 opcode_offset[] = {
 
 bool g_use_genes;
 
+void compile_vector(seni_node *ast, seni_program *program);
+
 void gene_assign_to_node(seni_genotype *genotype, seni_node *node)
 {
   if (node->alterable) {
@@ -29,7 +31,7 @@ void gene_assign_to_node(seni_genotype *genotype, seni_node *node)
   }
 
   if (get_node_value_in_use(node->type) == USE_FIRST_CHILD) {
-    gene_assign_to_node(genotype, node->value.first_child);
+    gene_assign_to_node(genotype, safe_first(node->value.first_child));
   }
 
   // todo: is it safe to assume that node->next will always be valid? and that leaf nodes will have next == null?
@@ -284,7 +286,7 @@ seni_node *compile(seni_node *ast, seni_program *program);
 i32 node_vector_length(seni_node *vector_node)
 {
   i32 length = 0;
-  for (seni_node *node = vector_node->value.first_child; node != NULL; node = safe_next(node)) {
+  for (seni_node *node = safe_first(vector_node->value.first_child); node != NULL; node = safe_next(node)) {
     length++;
   }
   return length;
@@ -316,7 +318,7 @@ i32 count_children(seni_node *parent)
   }
 
   i32 count = 0;
-  seni_node *child = parent->value.first_child;
+  seni_node *child = safe_first(parent->value.first_child);
   while (child != NULL) {
     count++;
     child = safe_next(child);
@@ -382,7 +384,7 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
         program_emit_opcode_i32(program, PILE, num_children, 0);
         program->opcode_offset += num_children - 1;
 
-        seni_node *child = lhs_node->value.first_child;
+        seni_node *child = safe_first(lhs_node->value.first_child);
 
 
         for (i = 1; i < num_children; i++) {
@@ -547,7 +549,7 @@ void compile_fn_call(seni_node *ast, seni_program *program)
 
   warn_if_alterable("compile_fn_call invocation", invocation);
   
-  seni_node *fn_info_index = invocation->value.first_child;
+  seni_node *fn_info_index = safe_first(invocation->value.first_child);
 
   // place the fn_info_index onto the stack so that CALL_F can find the function offset and num args
   compile(fn_info_index, program);
@@ -614,6 +616,18 @@ void compile_vector_append(seni_node *ast, seni_program *program)
   }
 }
 
+void compile_quote(seni_node *ast, seni_program *program)
+{
+  seni_node *quoted_form = safe_next(ast);
+
+  if (quoted_form->type == NODE_LIST) {
+    // compile each entry individually, don't treat the list as a normal function invocation
+    compile_vector(quoted_form, program);
+  } else {
+    compile(quoted_form, program);
+  }
+}
+
 void compile_step(seni_node *ast, seni_program *program)
 {
   // (step (x from: 0 to: 5) (+ 42 38))
@@ -644,7 +658,7 @@ void compile_step(seni_node *ast, seni_program *program)
   warn_if_alterable("compile_step parameters_node", parameters_node);
 
   // the looping variable x
-  seni_node *name_node = parameters_node->value.first_child;
+  seni_node *name_node = safe_first(parameters_node->value.first_child);
 
   seni_node *from_node = NULL;
   seni_node *to_node = NULL;
@@ -768,7 +782,7 @@ void compile_fence(seni_node *ast, seni_program *program)
   warn_if_alterable("compile_fence parameters_node", parameters_node);
 
   // the looping variable x
-  seni_node *name_node = parameters_node->value.first_child;
+  seni_node *name_node = safe_first(parameters_node->value.first_child);
 
   seni_node *from_node = NULL;
   seni_node *to_node = NULL;
@@ -918,7 +932,7 @@ void register_top_level_fns(seni_node *ast, seni_program *program)
     // take a gene from the genotype since we'll go out of sync because the bodies aren't being parsed yet
     warn_if_alterable("register_top_level_fns", ast);
 
-    seni_node *fn_keyword = ast->value.first_child;
+    seni_node *fn_keyword = safe_first(ast->value.first_child);
     if (!(fn_keyword->type == NODE_NAME && fn_keyword->value.i == INAME_FN)) {
       ast = safe_next(ast);
       continue;
@@ -932,7 +946,7 @@ void register_top_level_fns(seni_node *ast, seni_program *program)
       continue;
     }
 
-    seni_node *name = name_and_params->value.first_child;
+    seni_node *name = safe_first(name_and_params->value.first_child);
     i32 name_value = name->value.i;
 
     // we have a named top-level fn declaration
@@ -971,7 +985,7 @@ void register_names_in_define(seni_node *lhs, seni_program *program)
     // (define [a b] (something))
     // (define [a [x y]] (something))
 
-    seni_node *child = lhs->value.first_child;
+    seni_node *child = safe_first(lhs->value.first_child);
 
     while (child != NULL) {
       register_names_in_define(child, program);
@@ -991,7 +1005,7 @@ void register_top_level_defines(seni_node *ast, seni_program *program)
     }
 
     warn_if_alterable("register_top_level_defines define_keyword", ast);
-    seni_node *define_keyword = ast->value.first_child;
+    seni_node *define_keyword = safe_first(ast->value.first_child);
     if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == INAME_DEFINE)) {
       ast = safe_next(ast);
       continue;
@@ -1024,7 +1038,7 @@ void compile_fn(seni_node *ast, seni_program *program)
   seni_node *signature = safe_next(ast);
 
   warn_if_alterable("compile_fn signature", signature);
-  seni_node *fn_name = signature->value.first_child;
+  seni_node *fn_name = safe_first(signature->value.first_child);
   seni_fn_info *fn_info = get_fn_info(fn_name, program);
   if (fn_info == NULL) {
     SENI_ERROR("Unable to find fn_info for function %d", fn_name->value.i);
@@ -1192,7 +1206,7 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_in
 void compile_2d(seni_node *ast, seni_program *program)
 {
   warn_if_alterable("compile_2d", ast);
-  for (seni_node *node = ast->value.first_child; node != NULL; node = safe_next(node)) {
+  for (seni_node *node = safe_first(ast->value.first_child); node != NULL; node = safe_next(node)) {
     compile(node, program);
   }
   program_emit_opcode_i32(program, SQUISH2, 0, 0);
@@ -1204,7 +1218,7 @@ void compile_vector(seni_node *ast, seni_program *program)
   program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
 
   warn_if_alterable("compile_vector", ast);
-  for (seni_node *node = ast->value.first_child; node != NULL; node = safe_next(node)) {
+  for (seni_node *node = safe_first(ast->value.first_child); node != NULL; node = safe_next(node)) {
     compile(node, program);
     program_emit_opcode_i32(program, APPEND, 0, 0);
   }
@@ -1252,7 +1266,7 @@ seni_node *compile(seni_node *ast, seni_program *program)
 
   if (ast->type == NODE_LIST) {
     warn_if_alterable("NODE_LIST", ast);
-    n = ast->value.first_child;
+    n = safe_first(ast->value.first_child);
 
     i32 fn_info_index = get_fn_info_index(n, program);
     if (fn_info_index != -1) {
@@ -1356,6 +1370,9 @@ seni_node *compile(seni_node *ast, seni_program *program)
       case INAME_VECTOR_APPEND:
         compile_vector_append(ast, program);
         return safe_next(ast);
+      case INAME_QUOTE:
+        compile_quote(ast, program);
+        return safe_next(ast);        
       default:
         // look up the name as a user defined variable
         // normally get here when a script contains variables
@@ -1402,7 +1419,7 @@ bool is_list_beginning_with(seni_node *ast, i32 index)
     return false;
   }      
 
-  seni_node *keyword = ast->value.first_child;
+  seni_node *keyword = safe_first(ast->value.first_child);
   if (keyword->type == NODE_NAME && keyword->value.i == index) {
     return true;
   }
@@ -1531,7 +1548,7 @@ seni_program *compile_program_common(seni_node *ast, i32 program_max_size, seni_
   n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_DEFINE)) {
-      compile_define(n->value.first_child, program, MEM_SEG_GLOBAL);
+      compile_define(safe_first(n->value.first_child), program, MEM_SEG_GLOBAL);
       n = safe_next(n);
     } else {
       n = safe_next(n);

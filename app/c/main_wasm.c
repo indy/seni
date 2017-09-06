@@ -31,7 +31,7 @@ seni_genotype_list *g_genotype_list;
 seni_vm *g_vm = NULL;
 seni_env *g_e = NULL;
 
-//#define SHOW_WASM_CALLS
+// #define SHOW_WASM_CALLS
 
 // called once at startup
 export
@@ -205,11 +205,9 @@ i32 build_traits()
 #endif
 
   TIMING_UNIT timing_a = get_timing();
-
   seni_node *ast = parser_parse(g_e->wl, g_source_buffer);
   seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, g_e->wl);
   i32 num_traits = trait_list_count(trait_list);
-
   // g_traits_text_buffer is wrapping g_traits_buffer
   text_buffer_reset(g_traits_text_buffer);
 
@@ -218,7 +216,6 @@ i32 build_traits()
     SENI_ERROR("trait_list_serialize returned false");
   }
   text_buffer_write_null(g_traits_text_buffer);
-
   // text_buffer_free(text_buffer);
   trait_list_return_to_pool(trait_list);
   parser_return_nodes_to_pool(ast);

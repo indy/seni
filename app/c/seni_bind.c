@@ -2073,41 +2073,33 @@ seni_var *bind_gen_vector(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-// TODO
 seni_var *bind_gen_select(seni_vm *vm, i32 num_args)
 {
-  /*
-
-  **********
-  ** NOTE **
-  **********
-  this 'vector' could be a vector or a 2D
-
-    new PublicBinding(
-    'gen/select',
-    { description: 'selects a value from a vector',
-      args: [['from', 'a vector of values']],
-      returns: 'one of the values in the from vector' },
-    { from: [] },
-    (self, rng) => params => {
-      const {from} = self.mergeWithDefaults(params);
-      if (from instanceof Array && from.length > 0) {
-        const index = Number.parseInt(from.length * rng(), 10);
-        return from[index];
-      }
-      console.log("select's from parameter should be a list");
-      return undefined;
-    }
-  )
-   */
-  i32 value = 0;
+  // 'from' parameter should be a list
+  // i.e. (gen/select from: '(1 2 3 4 5))
+  //
+  // this prevents any confusion between a vector and vec_2d
+  // e.g. (gen/select from: [1 2 3 4 5]) vs. (gen/select from: [1 2])
+  
+  seni_var *from = NULL;
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_VALUE, value);
+  READ_STACK_ARG_VAR(INAME_FROM, from);
   READ_STACK_ARGS_END;
 
-  i32_as_var(&g_var_scratch, value);
-  
+  i32 from_length = vector_length(from);
+  i32 index = seni_prng_i32_range(vm->prng_state, 0, from_length - 1);
+
+  seni_var *v = from->value.v;
+  while (v) {
+    var_pretty_print("select var", v);
+    v = v->next;
+  }
+
+  seni_var *res = vector_get(from, index);
+
+  var_copy(&g_var_scratch, res);
+
   return &g_var_scratch;
 }
 

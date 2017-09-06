@@ -171,10 +171,10 @@
   ITEM *ITEM_NAME##_pool_get(struct ITEM##_pool *ITEM_NAME##_pool)      \
   {                                                                     \
     if (ITEM_NAME##_pool->available == NULL) {                          \
-    if (!ITEM_NAME##_pool_add_slab(ITEM_NAME##_pool)) {                 \
-      SENI_ERROR("cannot add more than %d ITEM##_slabs", ITEM_NAME##_pool->max_slabs_allowed); \
-      return NULL;                                                      \
-    }                                                                   \
+      if (!ITEM_NAME##_pool_add_slab(ITEM_NAME##_pool)) {               \
+        SENI_ERROR("cannot add more than %d ITEM##_slabs", ITEM_NAME##_pool->max_slabs_allowed); \
+        return NULL;                                                    \
+      }                                                                 \
     }                                                                   \
                                                                         \
     ITEM *head = ITEM_NAME##_pool->available;                           \

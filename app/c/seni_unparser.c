@@ -126,6 +126,9 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
 {
   seni_gene *gene = genotype_pull_gene(genotype); 
   seni_var *var = gene->var;
+
+  // /SENI_LOG("format_var_value %d", var->type);
+  // var_pretty_print("what is this?", var);
   
   switch (var->type) {
   case VAR_INT:
@@ -134,15 +137,18 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
   case VAR_FLOAT:
     format_var_value_float(text_buffer, node, var);
     break;
+  case VAR_NAME:
+    SENI_LOG("we have a name!!!");
+    break;
   case VAR_VECTOR:
     // a vector requires multiple values from the genotype
-    SENI_ERROR("???");
+    SENI_ERROR("vector ???");
     break;
   case VAR_COLOUR:
-    SENI_ERROR("???");
+    SENI_ERROR("colour ???");
     break;
   case VAR_2D:
-    SENI_ERROR("???");
+    SENI_ERROR("2d ???");
     break;
   default:
     SENI_ERROR("???");

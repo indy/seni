@@ -12,20 +12,120 @@
 
 #include "seni_pool_macro.h"
 
-void gene_constructor(seni_gene *gene);
-void gene_destructor(seni_gene *gene);
+void gene_return_to_pool(seni_gene *gene);
+void trait_return_to_pool(seni_trait *trait);
 
-void trait_constructor(seni_trait *trait);
-void trait_destructor(seni_trait *trait);
+// setup pools
 
-void genotype_constructor(seni_genotype *genotype);
-void genotype_destructor(seni_genotype *genotype);
+void gene_cleanup(seni_gene *gene)
+{
+  if (gene->var) {
+    var_return_to_pool(gene->var);
+    gene->var = NULL;
+  }
+}
 
-void trait_list_constructor(seni_trait_list *trait_list);
-void trait_list_destructor(seni_trait_list *trait_list);
+void gene_constructor(seni_gene *gene)
+{
+}
 
-void genotype_list_constructor(seni_genotype_list *genotype_list);
-void genotype_list_destructor(seni_genotype_list *genotype_list);
+void gene_destructor(seni_gene *gene)
+{
+  gene_cleanup(gene);
+}
+
+void trait_cleanup(seni_trait *trait)
+{
+  if (trait->program) {
+    program_free(trait->program);
+    trait->program = NULL;
+  }
+
+  if (trait->initial_value) {
+    var_return_to_pool(trait->initial_value);
+    trait->initial_value = NULL;
+  }
+}
+
+void trait_constructor(seni_trait *trait)
+{
+}
+
+void trait_destructor(seni_trait *trait)
+{
+  trait_cleanup(trait);
+}
+
+void genotype_cleanup(seni_genotype *genotype)
+{
+  seni_gene *g = genotype->genes;
+  seni_gene *next;
+  while (g != NULL) {
+    next = g->next;
+    DL_DELETE(genotype->genes, g);
+    gene_return_to_pool(g);
+    g = next;
+  }
+  genotype->genes = NULL;
+  genotype->current_gene = NULL;
+}
+
+void genotype_constructor(seni_genotype *genotype)
+{
+}
+
+void genotype_destructor(seni_genotype *genotype)
+{
+  genotype_cleanup(genotype);
+}
+
+void trait_list_cleanup(seni_trait_list *trait_list)
+{
+  seni_trait *t = trait_list->traits;
+  seni_trait *next;
+  while (t != NULL) {
+    next = t->next;
+    DL_DELETE(trait_list->traits, t);
+  
+    trait_return_to_pool(t);
+    t = next;
+  }
+
+  trait_list->traits = NULL;
+}
+
+void trait_list_constructor(seni_trait_list *trait_list)
+{
+}
+
+void trait_list_destructor(seni_trait_list *trait_list)
+{
+  trait_list_cleanup(trait_list);
+}
+
+void genotype_list_cleanup(seni_genotype_list *genotype_list)
+{
+  // todo: test this
+  seni_genotype *g = genotype_list->genotypes;
+  seni_genotype *next;
+  while (g != NULL) {
+    next = g->next;
+    DL_DELETE(genotype_list->genotypes, g);
+    genotype_return_to_pool(g);
+    g = next;
+  }
+
+  genotype_list->genotypes = NULL;
+}
+
+void genotype_list_constructor(seni_genotype_list *genotype_list)
+{
+}
+
+void genotype_list_destructor(seni_genotype_list *genotype_list)
+{
+  genotype_list_cleanup(genotype_list);
+}
 
 // define the pool structures
 //
@@ -40,6 +140,79 @@ struct seni_trait_pool *g_trait_pool;
 struct seni_genotype_pool *g_genotype_pool;
 struct seni_trait_list_pool *g_trait_list_pool;
 struct seni_genotype_list_pool *g_genotype_list_pool;
+
+seni_gene *gene_get_from_pool()
+{
+  seni_gene *gene = gene_pool_get(g_gene_pool);
+
+  seni_var *var = var_get_from_pool();
+  gene->var = var;
+
+  return gene;
+}
+
+void gene_return_to_pool(seni_gene *gene)
+{
+  gene_cleanup(gene);
+  gene_pool_return(g_gene_pool, gene);
+}
+
+seni_trait *trait_get_from_pool()
+{
+  seni_trait *trait = trait_pool_get(g_trait_pool);
+
+  // get a var from the pool in seni_lang
+  seni_var *var = var_get_from_pool();
+  trait->initial_value = var;
+
+  return trait;
+}
+
+void trait_return_to_pool(seni_trait *trait)
+{
+  // free up any memory used to store the program and initial_value
+  trait_cleanup(trait);
+  trait_pool_return(g_trait_pool, trait);
+}
+
+seni_genotype *genotype_get_from_pool()
+{
+  seni_genotype *genotype = genotype_pool_get(g_genotype_pool);
+
+  return genotype;
+}
+
+void genotype_return_to_pool(seni_genotype *genotype)
+{
+  genotype_cleanup(genotype);
+  genotype_pool_return(g_genotype_pool, genotype);
+}
+
+seni_trait_list *trait_list_get_from_pool()
+{
+  seni_trait_list *trait_list = trait_list_pool_get(g_trait_list_pool);
+
+  return trait_list;
+}
+
+void trait_list_return_to_pool(seni_trait_list *trait_list)
+{
+  trait_list_cleanup(trait_list);
+  trait_list_pool_return(g_trait_list_pool, trait_list);
+}
+
+seni_genotype_list *genotype_list_get_from_pool()
+{
+  seni_genotype_list *genotype_list = genotype_list_pool_get(g_genotype_list_pool);
+
+  return genotype_list;
+}
+
+void genotype_list_return_to_pool(seni_genotype_list *genotype_list)
+{
+  genotype_list_cleanup(genotype_list);
+  genotype_list_pool_return(g_genotype_list_pool, genotype_list);
+}
 
 void ga_pools_startup()
 {
@@ -60,26 +233,6 @@ void ga_pools_shutdown()
   genotype_pool_free(g_genotype_pool);
   trait_pool_free(g_trait_pool);
   gene_pool_free(g_gene_pool);
-}
-
-void trait_constructor(seni_trait *trait)
-{
-  // get a var from the pool in seni_lang
-  seni_var *var = var_get_from_pool();
-  trait->initial_value = var;
-}
-
-void trait_destructor(seni_trait *trait)
-{
-  if (trait->program) {
-    program_free(trait->program);
-    trait->program = NULL;
-  }
-
-  if (trait->initial_value) {
-    var_return_to_pool(trait->initial_value);
-    trait->initial_value = NULL;
-  }
 }
 
 bool trait_serialize(seni_text_buffer *text_buffer, seni_trait *trait)
@@ -110,45 +263,6 @@ bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer)
   program_deserialize(out->program, text_buffer);
 
   return true;
-}
-
-void trait_list_cleanup(seni_trait_list *trait_list)
-{
-  seni_trait *t = trait_list->traits;
-  seni_trait *next;
-  while (t != NULL) {
-    next = t->next;
-    DL_DELETE(trait_list->traits, t);
-
-    // free up any memory used to store the program and initial_value
-    trait_destructor(t);
-  
-    trait_pool_return(g_trait_pool, t);
-    t = next;
-  }
-
-  trait_list->traits = NULL;
-}
-
-void trait_list_constructor(seni_trait_list *trait_list)
-{
-}
-
-void trait_list_destructor(seni_trait_list *trait_list)
-{
-  trait_list_cleanup(trait_list);
-}
-
-seni_trait_list *trait_list_get_from_pool()
-{
-  seni_trait_list *trait_list = trait_list_pool_get(g_trait_list_pool);
-  return trait_list;
-}
-
-void trait_list_return_to_pool(seni_trait_list *trait_list)
-{
-  trait_list_cleanup(trait_list);
-  trait_list_pool_return(g_trait_list_pool, trait_list);
 }
 
 void trait_list_add_trait(seni_trait_list *trait_list, seni_trait *trait)
@@ -184,10 +298,11 @@ seni_node *ga_traverse(seni_node *node, i32 program_max_size, seni_trait_list *t
   seni_node *n = node;
 
   if (n->alterable) {
-    seni_trait *trait = trait_pool_get(g_trait_pool);
+    seni_trait *trait = trait_get_from_pool();
 
     if (hack_node_to_var(trait->initial_value, n) == false) {
       SENI_PRINT("hack_node_to_var failed");
+      node_pretty_print("failed node", n, word_lut);
     }
     
     // can compile the parameter_ast
@@ -196,7 +311,7 @@ seni_node *ga_traverse(seni_node *node, i32 program_max_size, seni_trait_list *t
     trait_list_add_trait(trait_list, trait);
   }
 
-  if (n->type == NODE_LIST) {
+  if (n->type == NODE_LIST || n->type == NODE_VECTOR) {
     n = n->value.first_child;
 
     while (n != NULL) {
@@ -262,7 +377,7 @@ bool trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer)
   seni_trait_list *trait_list = out;
 
   for (i32 i = 0; i < count; i++) {
-    seni_trait *trait = trait_pool_get(g_trait_pool);
+    seni_trait *trait = trait_get_from_pool();
     trait_deserialize(trait, text_buffer);
     trait_list_add_trait(trait_list, trait);
     if (i < count - 1) {
@@ -276,19 +391,6 @@ bool trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer)
 
 // gene
 
-void gene_constructor(seni_gene *gene)
-{
-  // get a var from the pool in seni_lang
-  seni_var *var = var_get_from_pool();
-  gene->var = var;
-}
-
-void gene_destructor(seni_gene *gene)
-{
-  var_return_to_pool(gene->var);
-  gene->var = NULL;
-}
-
 seni_gene *gene_build(seni_vm *vm, seni_env *env, seni_trait *trait)
 {
   // todo: possibly implement a 'soft-reset' which is quicker than a vm_reset?
@@ -299,7 +401,7 @@ seni_gene *gene_build(seni_vm *vm, seni_env *env, seni_trait *trait)
     return NULL;
   }
 
-  seni_gene *gene = gene_pool_get(g_gene_pool);
+  seni_gene *gene = gene_get_from_pool();
 
   var_copy(gene->var, &(vm->stack[vm->sp - 1])); // is this right?
 
@@ -308,7 +410,7 @@ seni_gene *gene_build(seni_vm *vm, seni_env *env, seni_trait *trait)
 
 seni_gene *gene_build_from_initial_value(seni_trait *trait)
 {
-  seni_gene *gene = gene_pool_get(g_gene_pool); //  gene_allocate();
+  seni_gene *gene = gene_get_from_pool(); //  gene_allocate();
 
   var_copy(gene->var, trait->initial_value);
   
@@ -317,7 +419,7 @@ seni_gene *gene_build_from_initial_value(seni_trait *trait)
 
 seni_gene *gene_clone(seni_gene *source)
 {
-  seni_gene *gene = gene_pool_get(g_gene_pool);
+  seni_gene *gene = gene_get_from_pool();
 
   var_copy(gene->var, source->var);
 
@@ -325,40 +427,6 @@ seni_gene *gene_clone(seni_gene *source)
 }
 
 // genotype
-
-void genotype_constructor(seni_genotype *genotype)
-{
-}
-
-void genotype_cleanup(seni_genotype *genotype)
-{
-  seni_gene *g = genotype->genes;
-  seni_gene *next;
-  while (g != NULL) {
-    next = g->next;
-    DL_DELETE(genotype->genes, g);
-    gene_pool_return(g_gene_pool, g);
-    g = next;
-  }
-  genotype->genes = NULL;
-}
-
-void genotype_destructor(seni_genotype *genotype)
-{
-  genotype_cleanup(genotype);
-}
-
-seni_genotype *genotype_get_from_pool()
-{
-  seni_genotype *genotype = genotype_pool_get(g_genotype_pool);
-  return genotype;
-}
-
-void genotype_return_to_pool(seni_genotype *genotype)
-{
-  genotype_cleanup(genotype);
-  genotype_pool_return(g_genotype_pool, genotype);
-}
 
 void genotype_add_gene(seni_genotype *genotype, seni_gene *gene)
 {
@@ -494,7 +562,7 @@ bool genotype_deserialize(seni_genotype *out, seni_text_buffer *text_buffer)
   seni_genotype *genotype = out;
 
   for (i32 i = 0; i < count; i++) {
-    seni_gene *gene = gene_pool_get(g_gene_pool);
+    seni_gene *gene = gene_get_from_pool();
     var_deserialize(gene->var, text_buffer);
     genotype_add_gene(genotype, gene);
     if (i < count - 1) {
@@ -509,43 +577,6 @@ bool genotype_deserialize(seni_genotype *out, seni_text_buffer *text_buffer)
 void random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
 {
   // assuming that both genotypes are of the given length
-}
-
-void genotype_list_cleanup(seni_genotype_list *genotype_list)
-{
-  // todo: test this
-  seni_genotype *g = genotype_list->genotypes;
-  seni_genotype *next;
-  while (g != NULL) {
-    next = g->next;
-    DL_DELETE(genotype_list->genotypes, g);
-    genotype_return_to_pool(g);
-    g = next;
-  }
-
-  genotype_list->genotypes = NULL;
-}
-
-void genotype_list_constructor(seni_genotype_list *genotype_list)
-{
-}
-
-void genotype_list_destructor(seni_genotype_list *genotype_list)
-{
-  genotype_list_cleanup(genotype_list);
-}
-
-seni_genotype_list *genotype_list_get_from_pool()
-{
-  seni_genotype_list *genotype_list = genotype_list_pool_get(g_genotype_list_pool);
-
-  return genotype_list;
-}
-
-void genotype_list_return_to_pool(seni_genotype_list *genotype_list)
-{
-  genotype_list_cleanup(genotype_list);
-  genotype_list_pool_return(g_genotype_list_pool, genotype_list);
 }
 
 void genotype_list_add_genotype(seni_genotype_list *genotype_list, seni_genotype *genotype)

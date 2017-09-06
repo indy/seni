@@ -78,6 +78,9 @@ struct seni_node {
   struct seni_node *next;
 };
 
+// returns the first meaningful (non-whitespace, non-comment) node from expr onwards
+seni_node *safe_first(seni_node *expr);
+// returns the next meaningful (non-whitespace, non-comment) node from expr
 seni_node *safe_next(seni_node *expr);
 seni_node *safe_prev(seni_node *expr);
 char      *node_type_name(seni_node *node);
@@ -281,6 +284,7 @@ seni_var *stack_peek(seni_vm *vm);
 
 void      vector_construct(seni_var *head);
 i32       vector_length(seni_var *var);
+seni_var *vector_get(seni_var *var, i32 index);
 void      vector_append_heap_var(seni_var *head, seni_var *val);
 seni_var *vector_append_i32(seni_vm *vm, seni_var *head, i32 val);
 seni_var *vector_append_f32(seni_vm *vm, seni_var *head, f32 val);
