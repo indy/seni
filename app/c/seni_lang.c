@@ -418,6 +418,12 @@ void i32_as_var(seni_var *out, i32 i)
   out->value.i = i;
 }
 
+void name_as_var(seni_var *out, i32 name)
+{
+  out->type = VAR_NAME;
+  out->value.i = name;
+}
+
 void colour_as_var(seni_var *out, seni_colour *c)
 {
   out->type = VAR_COLOUR;
@@ -477,6 +483,8 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b)
         i32 type = b->arg1.value.i;
         f32 *a = b->arg1.f32_array;
         PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0], a[1], a[2], a[3]);
+      } else if(b->arg1.type == VAR_NAME) {
+        PRINT_BC(BUF_ARGS, "name: %d", b->arg1.value.i);
       } else {
         PRINT_BC(BUF_ARGS, "%d", b->arg1.value.i);
       }

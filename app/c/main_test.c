@@ -907,6 +907,9 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
 
   seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
 
+  // seni_trait *trait = trait_list->traits;
+  // program_pretty_print(trait->program);
+
   // using the vm to build the genes
   seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
 
@@ -1000,8 +1003,9 @@ void test_unparser(void)
   // there was a bug which wasn't correctly traversing the ast to assign genes
   unparse_compare(6542, "(rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)})", "(rect position: [500 500] colour: red width: {91 (gen/int min: 80 max: 400)} height: {561 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {228 (gen/int min: 80 max: 400)} height: {257 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {380 (gen/int min: 80 max: 400)} height: {416 (gen/int min: 80 max: 670)})");
 
-  // unparse_compare(6534, "{red (gen/select from: '(red green blue))}", "{blue (gen/select from: (quote (red green blue)))}");
-  // unparse_compare(6534, "{b (gen/select from: '(a b c))}", "{blue (gen/select from: (quote (red green blue)))}");
+  unparse_compare(6534, "{b (gen/select from: '(a b c))}", "{c (gen/select from: (quote (a b c)))}");
+  unparse_compare(6534, "{red (gen/select from: '(red green blue))}", "{blue (gen/select from: (quote (red green blue)))}");
+
 }
 
 // serialize/deserialize seni_var

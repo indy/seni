@@ -122,14 +122,12 @@ seni_gene *genotype_pull_gene(seni_genotype *genotype)
   return gene;
 }
 
-void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genotype *genotype)
+void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genotype *genotype, seni_word_lut *word_lut)
 {
   seni_gene *gene = genotype_pull_gene(genotype); 
   seni_var *var = gene->var;
+  char *name = NULL;            // used by VAR_NAME
 
-  // /SENI_LOG("format_var_value %d", var->type);
-  // var_pretty_print("what is this?", var);
-  
   switch (var->type) {
   case VAR_INT:
     text_buffer_sprintf(text_buffer, "%d", var->value.i);
@@ -138,7 +136,8 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
     format_var_value_float(text_buffer, node, var);
     break;
   case VAR_NAME:
-    SENI_LOG("we have a name!!!");
+    name = wlut_reverse_lookup(word_lut, var->value.i);
+    text_buffer_sprintf(text_buffer, "%s", name);
     break;
   case VAR_VECTOR:
     // a vector requires multiple values from the genotype
@@ -174,7 +173,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
     //   [v, geno] = pullValueFromGenotype(geno);
     //   v = formatNodeValue(v, node);
     // }
-    format_var_value(text_buffer, ast, genotype);
+    format_var_value(text_buffer, ast, genotype, word_lut);
     
     n = ast->parameter_ast;
     while (n != NULL) {

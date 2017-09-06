@@ -140,6 +140,24 @@ seni_bytecode *program_emit_opcode_i32(seni_program *program, seni_opcode op, i3
   return b;
 }
 
+// emits an <opcode, i32, name> triplet
+seni_bytecode *program_emit_opcode_i32_name(seni_program *program, seni_opcode op, i32 arg0, i32 name)
+{
+  if (program->code_size >= program->code_max_size) {
+    SENI_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
+    return NULL;
+  }
+  
+  seni_bytecode *b = &(program->code[program->code_size++]);
+  b->op = op;
+  i32_as_var(&(b->arg0), arg0);
+  name_as_var(&(b->arg1), name);
+
+  program->opcode_offset += opcode_offset[op];
+
+  return b;
+}
+
 // emits an <opcode, i32, f32> triplet
 seni_bytecode *program_emit_opcode_i32_f32(seni_program *program, seni_opcode op, i32 arg0, f32 arg1)
 {
@@ -616,15 +634,39 @@ void compile_vector_append(seni_node *ast, seni_program *program)
   }
 }
 
+void compile_vector_in_quote(seni_node *ast, seni_program *program)
+{
+  // pushing from the VOID means creating a new, empty vector
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
+
+  warn_if_alterable("compile_vector_in_quote", ast);
+  for (seni_node *node = safe_first(ast->value.first_child); node != NULL; node = safe_next(node)) {
+    // slightly hackish
+    // if this is a form like: '(red green blue)
+    // the compiler should output the names rather than the colours that are actually referenced
+    // (compile_user_defined_name would genereate a MEM_SEG_GLOBAL LOAD code)
+    //
+    if (node->type == NODE_NAME) {
+      program_emit_opcode_i32_name(program, LOAD, MEM_SEG_CONSTANT, node->value.i);     
+    } else {
+      compile(node, program);
+    }
+    program_emit_opcode_i32(program, APPEND, 0, 0);
+  }
+}
+
 void compile_quote(seni_node *ast, seni_program *program)
 {
   seni_node *quoted_form = safe_next(ast);
-
   if (quoted_form->type == NODE_LIST) {
     // compile each entry individually, don't treat the list as a normal function invocation
-    compile_vector(quoted_form, program);
+    compile_vector_in_quote(quoted_form, program);
   } else {
-    compile(quoted_form, program);
+    if (quoted_form->type == NODE_NAME) {
+      program_emit_opcode_i32_name(program, LOAD, MEM_SEG_CONSTANT, quoted_form->value.i);     
+    } else {
+      compile(quoted_form, program);
+    }
   }
 }
 
@@ -1228,7 +1270,7 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
 {
   i32 local_mapping = get_local_mapping(program, iname);
   if (local_mapping != -1) {
-    program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, local_mapping);
+    program_emit_opcode_i32_name(program, LOAD, MEM_SEG_LOCAL, local_mapping);
     return safe_next(ast);
   }
 
@@ -1236,20 +1278,20 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
   if (program->current_fn_info) {
     i32 argument_mapping = get_argument_mapping(program->current_fn_info, iname);
     if (argument_mapping != -1) {
-      program_emit_opcode_i32(program, LOAD, MEM_SEG_ARGUMENT, argument_mapping);
+      program_emit_opcode_i32_name(program, LOAD, MEM_SEG_ARGUMENT, argument_mapping);
       return safe_next(ast);
     }
   }
 
   i32 global_mapping = get_global_mapping(program, iname);
   if (global_mapping != -1) {
-    program_emit_opcode_i32(program, LOAD, MEM_SEG_GLOBAL, global_mapping);
+    program_emit_opcode_i32_name(program, LOAD, MEM_SEG_GLOBAL, global_mapping);
     return safe_next(ast);
   }
 
   // could be a keyword such as linear, ease-in etc
   if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
-    program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, iname);
+    program_emit_opcode_i32_name(program, LOAD, MEM_SEG_CONSTANT, iname);
     return safe_next(ast);
   }
 

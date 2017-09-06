@@ -128,6 +128,7 @@ bool      var_deserialize(seni_var *out, seni_text_buffer *text_buffer);
 void      v2_as_var(seni_var *out, f32 x, f32 y);
 void      f32_as_var(seni_var *out, f32 f);
 void      i32_as_var(seni_var *out, i32 i);
+void      name_as_var(seni_var *out, i32 name);
 void      colour_as_var(seni_var *out, seni_colour *c);
 
 // Memory Segments

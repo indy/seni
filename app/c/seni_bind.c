@@ -98,6 +98,7 @@ typedef struct {
 #ifdef CHECK_STACK_ARGS
 #define IS_F32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected f32 for: %s", #n); var_pretty_print("this is what was received", value_1); }
 #define IS_I32(n) if (value_1->type != VAR_INT) { SENI_ERROR("expected i32 for: %s", #n); }
+#define IS_NAME(n) if (value_1->type != VAR_NAME) { SENI_ERROR("expected name for: %s", #n); }
 #define IS_COL(n) if (value_1->type != VAR_COLOUR) { SENI_ERROR("expected colour for: %s", #n); }
 #define IS_LONG(n) if (value_1->type != VAR_LONG) { SENI_ERROR("expected long for: %s", #n); }
 #else
@@ -109,6 +110,7 @@ typedef struct {
 
 #define READ_STACK_ARG_F32(k, n) if (name_1 == k) { IS_F32(n); n = value_1->value.f; }
 #define READ_STACK_ARG_I32(k, n) if (name_1 == k) { IS_I32(n); n = value_1->value.i; }
+#define READ_STACK_ARG_NAME(k, n) if (name_1 == k) { IS_NAME(n); n = value_1->value.i; }
 #define READ_STACK_ARG_VAR(k, n) if (name_1 == k) { n = value_1; }
 
 #define READ_STACK_ARG_COL(k, n) if (name_1 == k) { \
@@ -1527,7 +1529,7 @@ seni_var *bind_parametric_build(seni_vm *vm, i32 num_args)
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_FROM, from);
   READ_STACK_ARG_VEC2(INAME_TO, to);
-  READ_STACK_ARG_I32(INAME_CLAMPING, clamping); // true | FALSE, clamping); // true | false
+  READ_STACK_ARG_NAME(INAME_CLAMPING, clamping); // true | FALSE, clamping); // true | false
   READ_STACK_ARG_I32(INAME_MAPPING, mapping);  // linear, quick, slow-in, slow-in-out
   READ_STACK_ARGS_END;
 
@@ -2090,11 +2092,11 @@ seni_var *bind_gen_select(seni_vm *vm, i32 num_args)
   i32 from_length = vector_length(from);
   i32 index = seni_prng_i32_range(vm->prng_state, 0, from_length - 1);
 
-  seni_var *v = from->value.v;
-  while (v) {
-    var_pretty_print("select var", v);
-    v = v->next;
-  }
+  // seni_var *v = from->value.v;
+  // while (v) {
+  //   var_pretty_print("select var", v);
+  //   v = v->next;
+  // }
 
   seni_var *res = vector_get(from, index);
 
