@@ -125,7 +125,8 @@
   bool ITEM_NAME##_pool_add_slab(struct ITEM##_pool *ITEM_NAME##_pool)  \
   {                                                                     \
     if (ITEM_NAME##_pool->num_slabs >= ITEM_NAME##_pool->max_slabs_allowed) { \
-      SENI_ERROR("will not allocate more than %d ITEM_NAME##_slabs", ITEM_NAME##_pool->max_slabs_allowed); \
+      const char *slab_name = #ITEM_NAME"_slabs";                       \
+      SENI_ERROR("will not allocate more than %d %s", ITEM_NAME##_pool->max_slabs_allowed, slab_name); \
       return false;                                                     \
     }                                                                   \
                                                                         \
@@ -182,7 +183,8 @@
   {                                                                     \
     if (ITEM_NAME##_pool->available == NULL) {                          \
       if (!ITEM_NAME##_pool_add_slab(ITEM_NAME##_pool)) {               \
-        SENI_ERROR("cannot add more than %d ITEM##_slabs", ITEM_NAME##_pool->max_slabs_allowed); \
+        const char *slab_name = #ITEM_NAME"_slabs";                     \
+        SENI_ERROR("cannot add more than %d %s", ITEM_NAME##_pool->max_slabs_allowed, slab_name); \
         return NULL;                                                    \
       }                                                                 \
     }                                                                   \
@@ -211,4 +213,20 @@
                                                                         \
     ITEM_NAME##_pool->return_count++;                                   \
     ITEM_NAME##_pool->current_water_mark--;                             \
+  }                                                                     \
+                                                                        \
+  void ITEM_NAME##_pool_pretty_print(struct ITEM##_pool *ITEM_NAME##_pool) \
+  {                                                                     \
+    const char *item_name = #ITEM_NAME;                                 \
+    SENI_LOG("%s_pool:", item_name);                                    \
+    SENI_LOG("\tslab_size: %d num_slabs: %d max_slabs_allowed %d",      \
+             ITEM_NAME##_pool->slab_size,                               \
+             ITEM_NAME##_pool->num_slabs,                               \
+             ITEM_NAME##_pool->max_slabs_allowed);                      \
+    SENI_LOG("\tget_count: %d return_count: %d",                        \
+             ITEM_NAME##_pool->get_count,                               \
+             ITEM_NAME##_pool->get_count);                              \
+    SENI_LOG("\thigh_water_mark: %d current_water_mark: %d",            \
+             ITEM_NAME##_pool->high_water_mark,                         \
+             ITEM_NAME##_pool->current_water_mark);                     \
   }

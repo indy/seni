@@ -10,10 +10,14 @@
 
 #include "seni_pool_macro.h"
 
-// constructor + destructor impls required by SENI_POOL
 void node_cleanup(seni_node *node)
 {
-  node->value.first_child = NULL;
+  node->alterable = 0;
+  node->src = NULL;
+  node->src_len = 0;
+  node->value.first_child = NULL; // empty the value union
+  node->parameter_ast = NULL;
+  node->parameter_prefix = NULL;
 }
 
 SENI_POOL(seni_node, node)
@@ -22,7 +26,7 @@ struct seni_node_pool *g_node_pool;
 
 void parser_pools_startup()
 {
-  g_node_pool = node_pool_allocate(1, 100, 10);
+  g_node_pool = node_pool_allocate(1, 1000, 10);
 }
 
 void parser_pools_shutdown()
@@ -34,15 +38,9 @@ seni_node *node_get_from_pool()
 {
   seni_node *node = node_pool_get(g_node_pool);
 
-  node->alterable = 0;
-  node->src = NULL;
-  node->src_len = 0;
-  node->value.first_child = NULL; // empty the value union
-  node->parameter_ast = NULL;
-  node->parameter_prefix = NULL;
-
   if (node == NULL) {
-    SENI_LOG("OH NO NODE IS NULL");
+    SENI_ERROR("OH NO NODE IS NULL");
+    return NULL;
   }
 
   return node;
@@ -50,6 +48,7 @@ seni_node *node_get_from_pool()
 
 void node_return_to_pool(seni_node *node)
 {
+  node_cleanup(node);  
   node_pool_return(g_node_pool, node);
 }
 
@@ -664,6 +663,8 @@ seni_node *parser_parse(seni_word_lut *wlut, char *s)
 
     DL_APPEND(nodes, node);
   }
+
+  node_pool_pretty_print(g_node_pool);
 
   // NOTE: not strictly a tree as the ast root could have siblings
   return nodes;
