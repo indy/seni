@@ -1469,15 +1469,19 @@ bool is_list_beginning_with(seni_node *ast, i32 index)
   return false;  
 }
 
-
-void compile_preamble_f32(seni_program *program, i32 iname, f32 value)
+void store_globally(seni_program *program, i32 iname)
 {
-  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, value);
   i32 address = get_global_mapping(program, iname);
   if (address == -1) {
     address = add_global_mapping(program, iname);
   }
   program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
+}
+
+void compile_preamble_f32(seni_program *program, i32 iname, f32 value)
+{
+  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, value);
+  store_globally(program, iname);
 }
 
 void compile_preamble_col(seni_program *program, i32 iname, f32 r, f32 g, f32 b, f32 a)
@@ -1496,11 +1500,30 @@ void compile_preamble_col(seni_program *program, i32 iname, f32 r, f32 g, f32 b,
 
   program_emit_opcode(program, LOAD, &mem_location, &colour_arg);
 
-  i32 address = get_global_mapping(program, iname);
-  if (address == -1) {
-    address = add_global_mapping(program, iname);
-  }
-  program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
+  store_globally(program, iname);
+}
+
+void append_name(seni_program *program, i32 iname)
+{
+  program_emit_opcode_i32_name(program, LOAD, MEM_SEG_CONSTANT, iname);
+  program_emit_opcode_i32(program, APPEND, 0, 0);
+}
+
+void compile_preamble_procedural_presets(seni_program *program)
+{
+  // create a vector
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
+
+  // append the names
+  append_name(program, INAME_CHROME);
+  append_name(program, INAME_HOTLINE_MIAMI);
+  append_name(program, INAME_KNIGHT_RIDER);
+  append_name(program, INAME_MARS);
+  append_name(program, INAME_RAINBOW);
+  append_name(program, INAME_ROBOCOP);
+  append_name(program, INAME_TRANSFORMERS);
+
+  store_globally(program, INAME_COL_PROCEDURAL_FN_PRESETS);
 }
 
 // NOTE: each entry in compile_preamble should have a corresponding entry here
@@ -1521,6 +1544,8 @@ void register_top_level_preamble(seni_program *program)
   add_global_mapping(program, INAME_YELLOW);
   add_global_mapping(program, INAME_MAGENTA);
   add_global_mapping(program, INAME_CYAN);
+
+  add_global_mapping(program, INAME_COL_PROCEDURAL_FN_PRESETS);
 }
 
 void compile_preamble(seni_program *program)
@@ -1543,6 +1568,8 @@ void compile_preamble(seni_program *program)
   compile_preamble_col(program, INAME_YELLOW, 1.0f, 1.0f, 0.0f, 1.0f);
   compile_preamble_col(program, INAME_MAGENTA, 1.0f, 0.0f, 1.0f, 1.0f);
   compile_preamble_col(program, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f);
+
+  compile_preamble_procedural_presets(program);
 // ********************************************************************************
 // NOTE: each entry should have a corresponding entry in register_top_level_preamble
 // ********************************************************************************

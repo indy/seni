@@ -61,6 +61,7 @@ REGISTER_KEYWORD("mars", INAME_MARS)
 REGISTER_KEYWORD("rainbow", INAME_RAINBOW)
 REGISTER_KEYWORD("robocop", INAME_ROBOCOP)
 REGISTER_KEYWORD("transformers", INAME_TRANSFORMERS)
+REGISTER_KEYWORD("col/procedural-fn-presets", INAME_COL_PROCEDURAL_FN_PRESETS)
 
 // enumerations for brush types
 //

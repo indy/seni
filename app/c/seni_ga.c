@@ -660,6 +660,10 @@ seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
                                                   i32 rng,
                                                   seni_trait_list *trait_list)
 {
+  // pleasing the compiler
+  trait_list = NULL;
+  mutation_rate = 0;
+  
   seni_genotype_list *genotype_list = genotype_list_get_from_pool();
 
   i32 population_remaining = population_size;

@@ -997,15 +997,16 @@ void test_unparser(void)
 
   unparse_compare(6534, "(col/rgb r: {0.4 (gen/scalar)} g: 0.1)", "(col/rgb r: {0.8 (gen/scalar)} g: 0.1)");
 
-  unparse_compare(6534, "{3 (gen/select from: '(4 5 6 7))}", "{7 (gen/select from: (quote (4 5 6 7)))}");
+  unparse_compare(6534, "{3 (gen/select from: '(4 5 6 7))}", "{7 (gen/select from: '(4 5 6 7))}");
   
 
   // there was a bug which wasn't correctly traversing the ast to assign genes
   unparse_compare(6542, "(rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)})", "(rect position: [500 500] colour: red width: {91 (gen/int min: 80 max: 400)} height: {561 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {228 (gen/int min: 80 max: 400)} height: {257 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {380 (gen/int min: 80 max: 400)} height: {416 (gen/int min: 80 max: 670)})");
 
-  unparse_compare(6534, "{b (gen/select from: '(a b c))}", "{c (gen/select from: (quote (a b c)))}");
-  unparse_compare(6534, "{red (gen/select from: '(red green blue))}", "{blue (gen/select from: (quote (red green blue)))}");
+  unparse_compare(6534, "{b (gen/select from: '(a b c))}", "{c (gen/select from: '(a b c))}");
+  unparse_compare(6534, "{red (gen/select from: '(red green blue))}", "{blue (gen/select from: '(red green blue))}");
 
+  unparse_compare(6534, "{rainbow (gen/select from: col/procedural-fn-presets)}", "{robocop (gen/select from: col/procedural-fn-presets)}");
 }
 
 // serialize/deserialize seni_var
@@ -1437,9 +1438,6 @@ int main(void)
   // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
-
-
-
 
   RUN_TEST(test_macro_pool);
   
