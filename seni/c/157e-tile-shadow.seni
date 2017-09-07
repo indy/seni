@@ -22,7 +22,7 @@
                         d: {[0.00 0.25 0.25] (gen/scalar)}))
 
 (define 
-  focalpoint ({focal/build-point (gen/select from: ['focal/point 'focal/hline 'focal/vline])} 
+  focalpoint ({focal/build-point (gen/select from: '(focal/point focal/hline focal/vline))} 
               position: [{500 (gen/int max: canvas/width)} 
                          {500 (gen/int max: canvas/height)}]
               distance: {800 (gen/int min: (/ canvas/width 2) max: canvas/width)})

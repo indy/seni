@@ -1,14 +1,17 @@
-* TODO [1/10]
-  1. [ ] impl: random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
-  2. [ ] better seni_ga.c::hack_node_to_var (colours, lists, 2d etc)
-  3. [X] does ( + 1 1) work? (space between list start and function name)
-  4. [ ] unify args to *_pretty_print
-  5. [ ] maybe have a required specifier in functions?
-  6. [ ] poly should also accept a uv parameter
-  7. [ ] ensure that there's a dist folder before running npm run build:wasm
-  8. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  9. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  10. [ ] look into restrict keyword in C99
+* TODO [1/13]
+  1. [ ] pretty print program emits names
+  2. [ ] delete seni/seni files
+  3. [ ] col/procedural-fn-presets
+  4. [ ] impl: random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
+  5. [ ] better seni_ga.c::hack_node_to_var (colours, lists, 2d etc)
+  6. [X] does ( + 1 1) work? (space between list start and function name)
+  7. [ ] unify args to *_pretty_print
+  8. [ ] maybe have a required specifier in functions?
+  9. [ ] poly should also accept a uv parameter
+  10. [ ] ensure that there's a dist folder before running npm run build:wasm
+  11. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  13. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
