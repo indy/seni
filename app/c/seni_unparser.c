@@ -4,6 +4,7 @@
 #include "seni_lang.h"
 #include "seni_printf.h"
 #include "seni_text_buffer.h"
+#include "seni_keyword_iname.h"
 
 #include "string.h"
 #include <stdlib.h>
@@ -63,7 +64,7 @@ void format_var_value_float(seni_text_buffer *text_buffer, seni_node *node, seni
   print_decimals(text_buffer, decimals, var->value.f);
 }
 
-void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, char *value, seni_node *node)
+void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *node)
 {
   char *c;
   
@@ -183,15 +184,27 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
 
     text_buffer_sprintf(text_buffer, "}");    
   } else {
-    if (ast->type == NODE_LIST) {
 
-      // if (node.usingAbbreviation) {
-      // }
-      // else
-      {
+    n = ast->value.first_child;
+    
+    if (ast->type == NODE_LIST) {
+      if (n->type == NODE_NAME && n->value.i == INAME_QUOTE) {
+        // rather than outputing: (quote (1 2 3))
+        // we want: '(1 2 3)
+        //
+        text_buffer_sprintf(text_buffer, "'");
+
+        n = n->next;       // skip past the "quote"
+        n = safe_next(n);  // skip past the whitespace
+        
+        while (n != NULL) {
+          unparse_ast_node(text_buffer, word_lut, n, genotype);
+          n = n->next;
+        }
+        
+      } else {
         text_buffer_sprintf(text_buffer, "(");
 
-        n = ast->value.first_child;
         while (n != NULL) {
           unparse_ast_node(text_buffer, word_lut, n, genotype);
           n = n->next;
@@ -204,7 +217,6 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
       {
         text_buffer_sprintf(text_buffer, "[");
 
-        n = ast->value.first_child;
         while (n != NULL) {
           unparse_ast_node(text_buffer, word_lut, n, genotype);
           n = n->next;
@@ -214,7 +226,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
       }
  
     } else {
-      format_node_value(text_buffer, word_lut, NULL, ast);
+      format_node_value(text_buffer, word_lut, ast);
     }
 
     // term = formatNodeValue(v, node);
