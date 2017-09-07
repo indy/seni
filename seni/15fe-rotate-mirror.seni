@@ -1,19 +1,19 @@
 (define
   coords []
   colours []
-  make-colour (col/procedural-fn a: {[0.80 0.50 0.40] (gen/scalar)}
-                                 b: {[0.20 0.40 0.20] (gen/scalar)}
-                                 c: {[2.00 1.00 1.00] (gen/scalar)}
-                                 d: {[0.00 0.25 0.25] (gen/scalar)})
+  make-colour (col/build-procedural a: {[0.80 0.50 0.40] (gen/scalar)}
+                                    b: {[0.20 0.40 0.20] (gen/scalar)}
+                                    c: {[2.00 1.00 1.00] (gen/scalar)}
+                                    d: {[0.00 0.25 0.25] (gen/scalar)})
 
-  focalpoint ({focal/point (gen/select from: ['focal/point
-                                          'focal/hline
-                                          'focal/vline])} 
+  focalpoint ({focal/build-point (gen/select from: '(focal/build-point
+                                                     focal/build-hline
+                                                     focal/build-vline))} 
               position: [{0 (gen/int min: -300 max: 300)} 
                          {0 (gen/int min: -300 max: 300)}]
               distance: {390 (gen/int min: 300 max: 900)}))
 
-(loop (t from: 0 upto: 1 steps: {30 (gen/int min: 5 max: 100)})
+(fence (t quantity: {30 (gen/int min: 5 max: 100)})
   (define
     p1 (interp/bezier t: t
                       coords: {[[0 200] [-133 100] [266 -100] [399 -200]]
@@ -21,11 +21,12 @@
     p2 (interp/bezier t: t
                       coords: {[[-100 200] [133 -300] [66 100] [-99 200]]
                                       (gen/vector min: -300 max: 300)})
-    c1 (make-colour t: (focalpoint position: p1))
-    c2 (make-colour t: (focalpoint position: p2)))
-  (vector/append coords p1 p2)
-  (vector/append colours c1 c2))
-
+    c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
+    c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
+  (vector/append coords p1)
+  (vector/append coords p2)
+  (vector/append colours c1)
+  (vector/append colours c2))
 
 (fn (draw)
   (poly coords: coords colours: colours))
@@ -33,7 +34,7 @@
 (fn (render)
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
-    (repeat/rotate-mirrored draw: draw
+    (repeat/rotate-mirrored fn: (address-of draw)
                             copies: {5 (gen/int min: 1 max: 30)})))
 
 (render)

@@ -6,7 +6,7 @@
   colour-a {(col/rgb r: 0 g: 0 b: 0.4 alpha: 1) (gen/col)}
   colour-b {(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col)}
 
-  focalpoint (focal/point position: [{500 (gen/int max: canvas/width)}
+  focalpoint (focal/build-point position: [{500 (gen/int max: canvas/width)}
                                      {500 (gen/int max: canvas/height)}]
                           distance: {400 (gen/int min: 200 max: canvas/width)})
 
@@ -31,26 +31,26 @@
     height (* size 2)
     vert (* height 0.75)
     width (* (/ (sqrt 3) 2) height))
-  (loop (y from: fy
+  (step (y from: fy
            to: (+ ty vert vert)
            increment: (+ vert vert))
-    (loop (x from: fx
+    (step (x from: fx
              to: (+ tx width)
              increment: width)
       (hexagon size: size
                colour: (col/set-alpha colour: colour
-                                      value: (focalpoint position: [x y]))
+                                      value: (focal/value from: focalpoint position: [x y]))
                position: [x y])))
 
-  (loop (y from: (+ fy vert)
+  (step (y from: (+ fy vert)
            to: (+ ty vert vert)
            increment: (+ vert vert))
-    (loop (x from: (+ fx (/ width 2))
+    (step (x from: (+ fx (/ width 2))
              to: (+ tx width)
              increment: width)
       (hexagon size: size
                colour: (col/set-alpha colour: colour
-                                      value: (focalpoint position: [x y]))
+                                      value: (focal/value from: focalpoint position: [x y]))
                position: [x y]))))
 
 (rect position: centre

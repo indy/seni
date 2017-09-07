@@ -1,77 +1,80 @@
 (define
-  title "night"
   ;; fade out any lines which are far away from the focal points
-  interest (interp/fn from: [0.2 1.5] to: [0 1] clamping: true))
+  interest (interp/build from: [0.2 1.5] to: [0 1] clamping: true))
 
 ;; call 'fun' for every point on a nXn grid on the canvas
-(fn (grid n: 10 fun: (fn (a) 1))
-  (define
-    remap-x (interp/fn from: [0 (- n 1)] to: [0 canvas/width])
-    remap-y (interp/fn from: [0 (- n 1)] to: [0 canvas/height]))
-  (loop (y from: 0 to: n)
-    (loop (x from: 0 to: n)
-      (fun position: [(remap-x val: x) (remap-y val: y)]))))
-
-(fn (make-draw-element focal-fn-a: 1
-                       focal-fn-b: 1
-                       rotate-factor: 1
-                       width: 21
-                       height: 239
-                       col-fn: 1)
-  (fn (draw-element position: [0 0])
+(fn (grid n: 10 fun: 1)
     (define
-      interest-a (focal-fn-a position: position)
-      interest-b (focal-fn-b position: position)
-      combined-interest (+ interest-a interest-b)
-      alpha (interest val: combined-interest))
-    (on-matrix-stack
-      (translate vector: position)
-      (rotate angle: (* combined-interest rotate-factor))
-      (circle position: [0 0]
-              colour: (col/set-alpha colour: (col-fn t: interest-a) value: alpha)
-              width: width
-              height: height))))
+      remap-x (interp/build from: [0 (- n 1)] to: [0 canvas/width])
+      remap-y (interp/build from: [0 (- n 1)] to: [0 canvas/height]))
+    (step (y from: 0 to: n)
+          (step (x from: 0 to: n)
+                (fn-call (fun position: [(interp/value from: remap-x t: x)
+                                         (interp/value from: remap-y t: y)])))))
+
 
 ;; render the background grid
 (define
-  focal-bg-a (focal/point position: [{525 (gen/int min: 400 max: 600)} 
-                                     {348 (gen/int min: 100 max: 400)}]
-                          distance: {750 (gen/int min: 700 max: 1000)}
-                          falloff: "linear")
-  focal-bg-b (focal/point position: [{542 (gen/int min: 400 max: 600)} 
-                                     {765 (gen/int min: 600 max: 900)}]
-                          distance: {891 (gen/int min: 700 max: 1000)}
-                          falloff: "linear")
-  col-fn-bg (col/bezier-fn a: {(col/rgb r: 0.093 g: 0.208 b: 0.298 alpha: 0.247) (gen/col)}
-                           b: {(col/rgb r: 0.422 g: 0.034 b: 0.083 alpha: 0.373) (gen/col)}
-                           c: {(col/rgb r: 0.279 g: 0.904 b: 0.485 alpha: 0.503) (gen/col)}
-                           d: {(col/rgb r: 0.299 g: 0.192 b: 0.862 alpha: 0.987) (gen/col)}))
+  focal-bg-a (focal/build-point position: [{525 (gen/int min: 400 max: 600)} 
+                                           {348 (gen/int min: 100 max: 400)}]
+                                distance: {750 (gen/int min: 700 max: 1000)}
+                                falloff: linear)
+  focal-bg-b (focal/build-point position: [{542 (gen/int min: 400 max: 600)} 
+                                           {765 (gen/int min: 600 max: 900)}]
+                                distance: {891 (gen/int min: 700 max: 1000)}
+                                falloff: linear)
+  col-fn-bg (col/build-bezier a: {(col/rgb r: 0.093 g: 0.208 b: 0.298 alpha: 0.247) (gen/col)}
+                              b: {(col/rgb r: 0.422 g: 0.034 b: 0.083 alpha: 0.373) (gen/col)}
+                              c: {(col/rgb r: 0.279 g: 0.904 b: 0.485 alpha: 0.503) (gen/col)}
+                              d: {(col/rgb r: 0.299 g: 0.192 b: 0.862 alpha: 0.987) (gen/col)}))
+
+
+
+(fn (draw-element-bg position: [0 0])
+    (define
+      interest-a (focal/value from: focal-bg-a position: position)
+      interest-b (focal/value from: focal-bg-b position: position)
+      combined-interest (+ interest-a interest-b)
+      alpha (interp/value from: interest t: combined-interest))
+    (on-matrix-stack
+      (translate vector: position)
+      (rotate angle: (* combined-interest {334 (gen/int min: 300 max: 400)}))
+      (circle position: [0 0]
+              colour: (col/set-alpha colour: (col/value from: col-fn-bg t: interest-a) value: alpha)
+              width: {41 (gen/int min: 30 max: 60)}
+              height: {461 (gen/int min: 400 max: 500)}
+              tessellation: 20)))
 
 (grid n: {35 (gen/int min: 30 max: 40)}
-      fun: (make-draw-element focal-fn-a: focal-bg-a
-                              focal-fn-b: focal-bg-b
-                              rotate-factor: {334 (gen/int min: 300 max: 400)}
-                              width: {41 (gen/int min: 30 max: 60)}
-                              height: {461 (gen/int min: 400 max: 500)}
-                              col-fn: col-fn-bg))
+      fun: (address-of draw-element-bg))
 
 ;; render the foreground
 (define
-  focal-fg-a (focal/point position: {[311 396] (gen/int min: 0 max: 1000)}
-                          distance: {453 (gen/int min: 0 max: 500)}
-                          falloff: "linear")
-  focal-fg-b (focal/point position: {[157 178] (gen/int min: 0 max: 1000)}
-                          distance: {386 (gen/int min: 0 max: 600)}
-                          falloff: "linear")
-  col-fn-fg (col/bezier-fn a: {(col/rgb r: 0.762 g: 0.048 b: 0.407 alpha: 0.093) (gen/col)}
-                           b: {(col/rgb r: 0.474 g: 0.751 b: 0.507 alpha: 0.657) (gen/col)}
-                           c: {(col/rgb r: 0.179 g: 0.398 b: 0.683 alpha: 0.380) (gen/col)}
-                           d: {(col/rgb r: 0.425 g: 0.207 b: 0.393 alpha: 0.825) (gen/col)}))
+  focal-fg-a (focal/build-point position: {[311 396] (gen/int min: 0 max: 1000)}
+                                distance: {453 (gen/int min: 0 max: 500)}
+                                falloff: linear)
+  focal-fg-b (focal/build-point position: {[157 178] (gen/int min: 0 max: 1000)}
+                                distance: {386 (gen/int min: 0 max: 600)}
+                                falloff: linear)
+  col-fn-fg (col/build-bezier a: {(col/rgb r: 0.762 g: 0.048 b: 0.407 alpha: 0.093) (gen/col)}
+                              b: {(col/rgb r: 0.474 g: 0.751 b: 0.507 alpha: 0.657) (gen/col)}
+                              c: {(col/rgb r: 0.179 g: 0.398 b: 0.683 alpha: 0.380) (gen/col)}
+                              d: {(col/rgb r: 0.425 g: 0.207 b: 0.393 alpha: 0.825) (gen/col)}))
+
+(fn (draw-element-fg position: [0 0])
+    (define
+      interest-a (focal/value from: focal-fg-a position: position)
+      interest-b (focal/value from: focal-fg-b position: position)
+      combined-interest (+ interest-a interest-b)
+      alpha (interp/value from: interest t: combined-interest))
+    (on-matrix-stack
+      (translate vector: position)
+      (rotate angle: (* combined-interest {151 (gen/int min: 1 max: 200)}))
+      (circle position: [0 0]
+              colour: (col/set-alpha colour: (col/value from: col-fn-fg t: interest-a) value: alpha)
+              width: {13 (gen/int min: 10 max: 30)}
+              height: {263 (gen/int min: 100 max: 300)}
+              tessellation: 20)))
 
 (grid n: {36 (gen/int min: 30 max: 40)}
-      fun: (make-draw-element focal-fn-a: focal-fg-a
-                              focal-fn-b: focal-fg-b
-                              rotate-factor: {151 (gen/int min: 1 max: 200)}
-                              width: {13 (gen/int min: 10 max: 30)}
-                              height: {263 (gen/int min: 100 max: 300)}
-                              col-fn: col-fn-fg))
+      fun: (address-of draw-element-fg))

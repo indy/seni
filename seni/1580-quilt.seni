@@ -171,7 +171,7 @@
                 p1 p2 p3 p4 p5 p6 p7 p8 p9
                 p1 p2 p3 p4 p5 p6 p7 p8 p9
                 p1]
-                   (gen/select from: ['p1 'p2 'p3 'p4 'p5 'p6 'p7 'p8 'p9])})
+               (gen/select from: '(p1 p2 p3 p4 p5 p6 p7 p8 p9))})
 
 (define 
   rots ['(1 1) '(1 -1) '(-1 1) '(-1 -1)]
@@ -189,8 +189,8 @@
       height: canvas/height
       colour: background)
 
-(loop (y from: 0 to: 10)
-  (loop (x from: 0 to: 10)
+(step (y from: 0 to: 10)
+  (step (x from: 0 to: 10)
     (define 
       index (+ x (* y 10))
       draw-fn (list/get from: funct nth: index)

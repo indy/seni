@@ -1,17 +1,17 @@
 (define
   ;; fn to convert the x co-ordinates into angles for cosine
-  r (interp/fn from: [0 1000] to: [0 math/TAU]))
+  r (interp/build from: [0 1000] to: [0 math/TAU]))
 
-(loop (x from: 0 upto: 1000 steps: 2400)
+(fence (x from: 0 to: 1000 quantity: 2400)
   (rect position: [x (+ (interp/cos amplitude: {282 (gen/int min: 1 max: 1000)} 
                                     frequency: {8.582 (gen/scalar min: 0.1 max: 10)} 
-                                    t: (r val: x)) 
+                                    t: (interp/value from: r t: x)) 
                         500)]
         width: {292 (gen/int min: 10 max: 300)}
         height: {283 (gen/int min: 10 max: 300)}
         colour: (col/lab l: (+ {-34.850 (gen/scalar min: -50 max: 100)}
                                (interp/cos amplitude: {98 (gen/int min: 1 max: 100)}
                                            frequency: {3.185 (gen/scalar min: 0.1 max: 10)}
-                                           t: (r val: x))) 
+                                           t: (interp/value from: r t: x))) 
                          a: {68.792 (gen/scalar min: -50 max: 100)}
                          b: {66.426 (gen/scalar min: -50 max: 100)})))

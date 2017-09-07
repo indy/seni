@@ -1,7 +1,7 @@
 (define 
-  num-squaresToRender 15
+  num-squares-to-render 3
   gap-size 30
-  num-squares (+ 2 num-squaresToRender)
+  num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares))
 
@@ -10,8 +10,8 @@
       line-segments: 5
       colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
 
-(loop (y from: 1 to: (- num-squares 1))
-  (loop (x from: 1 to: (- num-squares 1))
+(step (y from: 1 to: (- num-squares 1))
+  (step (x from: 1 to: (- num-squares 1))
     (define 
       x-pos (map-to-position at: x)
       y-pos (map-to-position at: y))
@@ -35,12 +35,12 @@
 (fn (stroked-bezier-rect position: [0 0]
                          width: 10
                          height: 10
-                         colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 a: 0.5)
+                         colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)
                          colour-volatility: 0
                          volatility: 0
                          overlap: 3
                          iterations: 10
-                         seed: "shabba")
+                         seed: 343)
     (define 
       [x y] position
       third-width (/ width 3)
@@ -58,18 +58,18 @@
       v-strip-width (/ width iterations)
       half-v-strip-width (/ v-strip-width 2)
 
-      rng (prng/range min: -1 max: 1 seed: seed)
+      rng (prng/build min: -1 max: 1 seed: seed)
 
       half-alpha (/ (col/get-alpha colour: colour) 2)
       lab-colour (col/set-alpha colour: (col/convert format: LAB colour: colour)
                                 value: half-alpha))
 
     ; horizontal strips
-    (loop (i to: iterations)
+    (step (i to: iterations)
       (define 
-        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
+        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/values num: 8 from: rng)
         lightness (+ (col/get-lab-l colour: lab-colour)
-                     (* colour-volatility (rng)))
+                     (* colour-volatility (prng/value from: rng)))
         current-colour (col/set-lab-l colour: lab-colour value: lightness))
       (bezier tessellation: 10
               line-width: (+ overlap h-strip-width)
@@ -94,11 +94,11 @@
                            half-h-strip-width)]]
               colour: current-colour))
     ; vertical strips
-    (loop (i to: iterations)
+    (step (i to: iterations)
       (define 
-        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (take num: 8 from: rng)
+        [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/values num: 8 from: rng)
         lightness (+ (col/get-lab-l colour: lab-colour)
-                     (* colour-volatility (rng)))
+                     (* colour-volatility (prng/value from: rng)))
         current-colour (col/set-lab-l colour: lab-colour value: lightness))
       (bezier tessellation: 10
               line-width: (+ overlap v-strip-width)
@@ -123,32 +123,30 @@
                            (* 3 third-height))]]
               colour: current-colour)))
 
-(fn (v x: 0 y: 0 z: 0 scale: 1)
-    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
-
-(fn (wash variation: 200
+(fn (wash vol: 200
           line-width: 70
           line-segments: 5
           colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
           seed: 272)
-    (define
-      w/3 (/ canvas/width 3)
-      h/3 (/ canvas/height 3))
-    (loop (h from: -20 to: 1020 increment: 20)
-      (bezier tessellation: line-segments
-              line-width: line-width
-              coords: [[0 (v x: 0 y: h z: seed scale: variation)]
-                       [w/3 (v x: w/3 y: h z: seed scale: variation)]
-                       [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
-                       [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
-              colour: colour)
+  (define 
+    w/3 (/ canvas/width 3)
+    h/3 (/ canvas/height 3))
+  (step (d from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]
+                     [w/3          (wash-n x: w/3          d: d seed: seed vol: vol)]
+                     [(* w/3 2)    (wash-n x: (* w/3 2)    d: d seed: seed vol: vol)]
+                     [canvas/width (wash-n x: canvas/width d: d seed: seed vol: vol)]]
+            colour: colour)
 
-      (bezier tessellation: line-segments
-              line-width: line-width
-              coords: [[(v x: 0 y: h z: seed scale: variation) 0]
-                       [(v x: h/3 y: h z: seed scale: variation) h/3]
-                       [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
-                       [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
-              colour: colour)))
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[(wash-n x: 0             d: d seed: seed vol: vol) 0]
+                     [(wash-n x: h/3           d: d seed: seed vol: vol) h/3]
+                     [(wash-n x: (* h/3 2)     d: d seed: seed vol: vol) (* h/3 2)]
+                     [(wash-n x: canvas/height d: d seed: seed vol: vol) canvas/height]]
+            colour: colour)))
 
-
+(fn (wash-n x: 0 d: 0 seed: 0 vol: 1)
+  (+ d (* vol (prng/perlin x: x y: d z: seed))))

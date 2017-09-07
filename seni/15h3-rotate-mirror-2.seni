@@ -1,21 +1,20 @@
 ;; a variation of 15fe-rotate-mirror with wash added as a background
-
 (define
   coords []
   colours []
-  make-colour (col/procedural-fn a: {[0.394 0.056 0.377] (gen/scalar)}
-                                 b: {[0.453 0.611 0.477] (gen/scalar)}
-                                 c: {[0.587 0.435 0.449] (gen/scalar)}
-                                 d: {[0.608 0.516 0.252] (gen/scalar)})
+  make-colour (col/build-procedural a: {[0.394 0.056 0.377] (gen/scalar)}
+                                    b: {[0.453 0.611 0.477] (gen/scalar)}
+                                    c: {[0.587 0.435 0.449] (gen/scalar)}
+                                    d: {[0.608 0.516 0.252] (gen/scalar)})
 
-  focalpoint ({focal/point (gen/select from: ['focal/point
-                                          'focal/hline
-                                          'focal/vline])} 
+  focalpoint ({focal/build-point (gen/select from: '(focal/point
+                                                     focal/hline
+                                                     focal/vline))} 
               position: [{-68 (gen/int min: -300 max: 300)} 
                          {212 (gen/int min: -300 max: 300)}]
               distance: {819 (gen/int min: 300 max: 900)}))
 
-(loop (t from: 0 upto: 1 steps: {39 (gen/int min: 5 max: 100)})
+(fence (t quantity: {39 (gen/int min: 5 max: 100)})
   (define
     p1 (interp/bezier t: t
                       coords: {[[-249.550 -79.597] [194.782 -180.117] [21.536 106.905] [-82.513 153.607]]
@@ -23,42 +22,12 @@
     p2 (interp/bezier t: t
                       coords: {[[90.069 -189.886] [-84.464 59.473] [144.670 -74.757] [182.469 159.561]]
                                 (gen/vector min: -300 max: 300)})
-    c1 (make-colour t: (focalpoint position: p1))
-    c2 (make-colour t: (focalpoint position: p2)))
-  (vector/append coords p1 p2)
-  (vector/append colours c1 c2))
-
-(fn (wash variation: 200
-          line-width: 70
-          line-segments: 5
-          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
-          seed: 272)
-
-  (fn (v x: 0 y: 0 z: 0 scale: 1)
-    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
-
-  (define 
-    w/3 (/ canvas/width 3)
-    h/3 (/ canvas/height 3))
-  (loop (h from: -20 to: 1020 increment: 20)
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: [[0 (v x: 0 y: h z: seed scale: variation)]
-                     [w/3 (v x: w/3 y: h z: seed scale: variation)]
-                     [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
-                     [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
-            colour: colour)
-
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: [[(v x: 0 y: h z: seed scale: variation) 0]
-                     [(v x: h/3 y: h z: seed scale: variation) h/3]
-                     [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
-                     [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
-            colour: colour)))
-
-(fn (draw)
-  (poly coords: coords colours: colours))
+    c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
+    c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
+  (vector/append coords p1)
+  (vector/append coords p2)
+  (vector/append colours c1)
+  (vector/append colours c2))
 
 (wash colour: {(col/rgb r: 0.932 g: 0.422 b: 0.096 alpha: 0.204) (gen/col)})
 
@@ -66,6 +35,36 @@
   (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
   (scale scalar: {1.602 (gen/scalar min: 0.8 max: 2)})
   (rotate angle: {167.393 (gen/scalar min: 0 max: 360)})
-  (repeat/rotate-mirrored draw: draw
+  (repeat/rotate-mirrored fn: (address-of draw)
                           copies: {25 (gen/int min: 1 max: 30)}))
 
+(fn (draw)
+  (poly coords: coords colours: colours))
+
+(fn (wash vol: 200
+          line-width: 70
+          line-segments: 5
+          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+          seed: 272)
+  (define 
+    w/3 (/ canvas/width 3)
+    h/3 (/ canvas/height 3))
+  (step (d from: -20 to: 1020 increment: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]
+                     [w/3          (wash-n x: w/3          d: d seed: seed vol: vol)]
+                     [(* w/3 2)    (wash-n x: (* w/3 2)    d: d seed: seed vol: vol)]
+                     [canvas/width (wash-n x: canvas/width d: d seed: seed vol: vol)]]
+            colour: colour)
+
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[(wash-n x: 0             d: d seed: seed vol: vol) 0]
+                     [(wash-n x: h/3           d: d seed: seed vol: vol) h/3]
+                     [(wash-n x: (* h/3 2)     d: d seed: seed vol: vol) (* h/3 2)]
+                     [(wash-n x: canvas/height d: d seed: seed vol: vol) canvas/height]]
+            colour: colour)))
+
+(fn (wash-n x: 0 d: 0 seed: 0 vol: 1)
+  (+ d (* vol (prng/perlin x: x y: d z: seed))))

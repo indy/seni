@@ -53,4 +53,4 @@
 (fn (render)
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
-    (repeat/symmetry-vertical draw: render-half)))
+    (repeat/symmetry-vertical fn: (address-of render-half))))

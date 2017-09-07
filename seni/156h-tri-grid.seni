@@ -1,3 +1,5 @@
+(define seed 329)
+
 (wash colour:  {(col/rgb r: 0.9 g: 0.9 b: 0.9) (gen/col)})
 (tri-hsl alpha: {0.3 (gen/scalar)})
 (tri-lab alpha: {0.3 (gen/scalar)})
@@ -6,76 +8,67 @@
   (define
     w 86.6
     h 50.0
-    r (prng/range)
+    r (prng/build min: -1 max: 1 seed: seed)
     colour-scale {100 (gen/int max: 900)}
-    colour-offset (prng/range min: -1 max: 1)
-    li (interp/fn from: [0 1]
-                  to: [{60 (gen/int min: 0 max: 120)} 
-                       {110 (gen/int min: 0 max: 120)}])
-    rma (interp/fn from: [0 canvas/width]
-                   to: [{-80 (gen/int min: -100 max: 100)} 
-                        {80 (gen/int min: -100 max: 100)}])
-    rmb (interp/fn from: [0 canvas/height]
-                   to: [{-100 (gen/int min: -120 max: 120)}
-                        {100 (gen/int min: -120 max: 120)}]))
+    colour-offset (prng/build min: -1 max: 1 seed: seed)
+    li (interp/build from: [0 1]
+                     to: [{60 (gen/int min: 0 max: 120)} {110 (gen/int min: 0 max: 120)}])
+    rma (interp/build from: [0 canvas/width]
+                      to: [{-80 (gen/int min: -100 max: 100)} {80 (gen/int min: -100 max: 100)}])
+    rmb (interp/build from: [0 canvas/height]
+                      to: [{-100 (gen/int min: -120 max: 120)} {100 (gen/int min: -120 max: 120)}]))
 
-  (loop (y from: 0 upto: canvas/height increment: 100)
-    (loop (x from: 0 upto: canvas/width increment: (* 2 w))
+  (step (y from: 0 upto: canvas/height increment: 100)
+    (step (x from: 0 upto: canvas/width increment: (* 2 w))
       (define 
-        a (rma val: (+ x (* (colour-offset) colour-scale)))
-        b (rmb val: (+ y (* (colour-offset) colour-scale))))
+        a (interp/value from: rma t: (+ x (* (prng/value from: colour-offset) colour-scale)))
+        b (interp/value from: rmb t: (+ y (* (prng/value from: colour-offset) colour-scale))))
       (poly coords: [[x (+ y 0)]
                      [(+ x w) (+ y h)]
                      [x (+ y h h)]]
-            colours: [(col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                      (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                      (col/lab l: (li val: (r)) a: a b: b alpha: alpha)])
+            colours: [(col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)
+                      (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)
+                      (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)])
       (poly coords: [[x (+ y 0)]
                      [(+ x w) (+ y h)]
                      [(+ x w) (- y h)]]
-            colours: [(col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                      (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                      (col/lab l: (li val: (r)) a: a b: b alpha: alpha)]))
+            colours: [(col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)
+                      (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)
+                      (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)]))
 
-    (loop (x from: w upto: canvas/width increment: (* 2 w))
+    (step (x from: w upto: canvas/width increment: (* 2 w))
       (define
-        a (rma val: (+ x (* (colour-offset) colour-scale)))
-        b (rmb val: (+ y (* (colour-offset) colour-scale))))
+        a (interp/value from: rma t: (+ x (* (prng/value from: colour-offset) colour-scale)))
+        b (interp/value from: rmb t: (+ y (* (prng/value from: colour-offset) colour-scale))))
 
       (poly coords: [[x (+ y h)]
                      [(+ x w) (+ y h h)]
                      [(+ x w) (+ y 0)]]
-            colours: [(col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                      (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                      (col/lab l: (li val: (r)) a: a b: b alpha: alpha)])
+            colours: [(col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)
+                      (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)
+                      (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)])
       (poly coords: [[x (+ y h)]
                      [(+ x w) (+ y 0)]
                      [x (- y h)]]
-            colours: [(col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                      (col/lab l: (li val: (r)) a: a b: b alpha: alpha)
-                      (col/lab l: (li val: (r)) a: a b: b alpha: alpha)]))))
+            colours: [(col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)
+                      (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)
+                      (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)]))))
 
 (fn (tri-hsl alpha: 1)
   (define 
     w 86.6
     h 50.0
-    r (prng/range)
     colour-scale {100 (gen/int max: 900)}
-    colour-offset (prng/range min: -1 max: 1)
-    li (interp/fn from: [0 1]
-                  to: [{60 (gen/int min: 0 max: 120)} 
-                       {110 (gen/int min: 0 max: 120)}])
-    fn-h (interp/fn from: [0 canvas/width]
-                    to: [{0 (gen/int max: 360)} 
-                         {360 (gen/int max: 360)}])
-    fn-l (interp/fn from: [0 canvas/height]
-                    to: [{0.4 (gen/scalar min: 0.2 max: 0.5)} 
-                         {0.7 (gen/scalar min: 0.4 max: 1.0)}]))
-  (loop (y from: 0 upto: canvas/height increment: 100)
-    (loop (x from: 0 upto: canvas/width increment: (* 2 w))
+    colour-offset (prng/build min: -1 max: 1 seed: seed)
+    fn-h (interp/build from: [0 canvas/width]
+                       to: [{0 (gen/int max: 360)} {360 (gen/int max: 360)}])
+    fn-l (interp/build from: [0 canvas/height]
+                       to: [{0.4 (gen/scalar min: 0.2 max: 0.5)} {0.7 (gen/scalar min: 0.4 max: 1.0)}]))
+  (step (y from: 0 upto: canvas/height increment: 100)
+    (step (x from: 0 upto: canvas/width increment: (* 2 w))
       (define 
-        a (fn-h val: (+ x (* (colour-offset) colour-scale)))
-        b (fn-l val: (+ y (* (colour-offset) colour-scale))))
+        a (interp/value from: fn-h t: (+ x (* (prng/value from: colour-offset) colour-scale)))
+        b (interp/value from: fn-l t: (+ y (* (prng/value from: colour-offset) colour-scale))))
 
       (poly coords: [[x (+ y 0)]
                      [(+ x w) (+ y h)]
@@ -90,10 +83,10 @@
                       (col/hsl h: a s: 1 l: b alpha: alpha)
                       (col/hsl h: a s: 1 l: b alpha: alpha)]))
 
-    (loop (x from: w upto: canvas/width increment: (* 2 w))
+    (step (x from: w upto: canvas/width increment: (* 2 w))
       (define 
-        a (fn-h val: (+ x (* (colour-offset) colour-scale)))
-        b (fn-l val: (+ y (* (colour-offset) colour-scale))))
+        a (interp/value from: fn-h t: (+ x (* (prng/value from: colour-offset) colour-scale)))
+        b (interp/value from: fn-l t: (+ y (* (prng/value from: colour-offset) colour-scale))))
 
       (poly coords: [[x (+ y h)]
                      [(+ x w) (+ y h h)]
@@ -108,31 +101,30 @@
                       (col/hsl h: a s: 1 l: b alpha: alpha)
                       (col/hsl h: a s: 1 l: b alpha: alpha)]))))
 
-(fn (wash variation: 200
+(fn (wash vol: 200
           line-width: 70
           line-segments: 5
           colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
           seed: 272)
-
-  (fn (v x: 0 y: 0 z: 0 scale: 1)
-    (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
-
   (define 
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
-  (loop (h from: -20 to: 1020 increment: 20)
+  (step (d from: -20 to: 1020 increment: 20)
     (bezier tessellation: line-segments
             line-width: line-width
-            coords: [[0 (v x: 0 y: h z: seed scale: variation)]
-                     [w/3 (v x: w/3 y: h z: seed scale: variation)]
-                     [(* w/3 2) (v x: (* w/3 2) y: h z: seed scale: variation)]
-                     [canvas/width (v x: canvas/width y: h z: seed scale: variation)]]
+            coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]
+                     [w/3          (wash-n x: w/3          d: d seed: seed vol: vol)]
+                     [(* w/3 2)    (wash-n x: (* w/3 2)    d: d seed: seed vol: vol)]
+                     [canvas/width (wash-n x: canvas/width d: d seed: seed vol: vol)]]
             colour: colour)
 
     (bezier tessellation: line-segments
             line-width: line-width
-            coords: [[(v x: 0 y: h z: seed scale: variation) 0]
-                     [(v x: h/3 y: h z: seed scale: variation) h/3]
-                     [(v x: (* h/3 2) y: h z: seed scale: variation) (* h/3 2)]
-                     [(v x: canvas/height y: h z: seed scale: variation) canvas/height]]
+            coords: [[(wash-n x: 0             d: d seed: seed vol: vol) 0]
+                     [(wash-n x: h/3           d: d seed: seed vol: vol) h/3]
+                     [(wash-n x: (* h/3 2)     d: d seed: seed vol: vol) (* h/3 2)]
+                     [(wash-n x: canvas/height d: d seed: seed vol: vol) canvas/height]]
             colour: colour)))
+
+(fn (wash-n x: 0 d: 0 seed: 0 vol: 1)
+  (+ d (* vol (prng/perlin x: x y: d z: seed))))

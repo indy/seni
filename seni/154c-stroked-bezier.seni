@@ -1,7 +1,7 @@
 (rect position: [(/ canvas/width 2) (/ canvas/height 2)]
       width: canvas/width
       height: canvas/height
-      colour: (col/rgb r: 0 g: 0 b: 0 alpha 1))
+      colour: (col/rgb r: 0 g: 0 b: 0 alpha: 1))
 
 (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
 (rotate angle: 90)

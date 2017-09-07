@@ -1,0 +1,10 @@
+
+
+(rect position: [500 500]
+      colour: red
+      width: {100 (gen/int min: 80 max: 120)}
+      height: {90 (gen/int min: 70 max: 110)})
+
+
+
+

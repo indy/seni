@@ -3,12 +3,12 @@
       height: canvas/height
       colour: {white (gen/col)})
 
-(loop (y from: 1 to: (- num-squares 1))
-  (loop (x from: 1 to: (- num-squares 1))
+(step (y from: 1 to: (- num-squares 1))
+  (step (x from: 1 to: (- num-squares 1))
     (define
       position [(map-to-position at: x) (map-to-position at: y)]
       [px py] position
-      colour (make-colour t: (focalpoint position: position)))
+      colour (col/value from: make-colour t: (focal/value from: focalpoint position: position)))
 
     (draw-tile position: [(+ px 5) (- py 5)]
                colour: (col/set-lab-l colour: colour value: 50))
@@ -16,13 +16,13 @@
                colour: colour)))
 
 (define make-colour
-  (col/procedural-fn a: {[0.80 0.50 0.40] (gen/scalar)}
-                     b: {[0.20 0.40 0.20] (gen/scalar)}
-                     c: {[2.00 1.00 1.00] (gen/scalar)}
-                     d: {[0.00 0.25 0.25] (gen/scalar)}))
+  (col/build-procedural a: {[0.80 0.50 0.40] (gen/scalar)}
+                        b: {[0.20 0.40 0.20] (gen/scalar)}
+                        c: {[2.00 1.00 1.00] (gen/scalar)}
+                        d: {[0.00 0.25 0.25] (gen/scalar)}))
 
 (define 
-  focalpoint ({focal/point (gen/select from: ['focal/point 'focal/hline 'focal/vline])} 
+  focalpoint ({focal/build-point (gen/select from: '(focal/point focal/hline focal/vline))} 
               position: [{500 (gen/int max: canvas/width)} 
                          {500 (gen/int max: canvas/height)}]
               distance: {800 (gen/int min: (/ canvas/width 2) max: canvas/width)})

@@ -1,0 +1,11 @@
+(fn (draw-box x: 10)
+    (rect position: [x 500]
+          width: 20
+          height: 20
+          colour: red))
+
+(fn (call-draw-box f: 1 x: 20)
+  (fn-call (f x: x)))
+
+(call-draw-box f: (address-of draw-box)
+               x: 200)

@@ -664,7 +664,7 @@ seni_node *parser_parse(seni_word_lut *wlut, char *s)
     DL_APPEND(nodes, node);
   }
 
-  node_pool_pretty_print(g_node_pool);
+  // node_pool_pretty_print(g_node_pool);
 
   // NOTE: not strictly a tree as the ast root could have siblings
   return nodes;

@@ -1,0 +1,4 @@
+(loop (i upto: 5)
+  (rect position: [(+ 300 (* i 100)) 500]
+        width: 20
+        height: 20))
