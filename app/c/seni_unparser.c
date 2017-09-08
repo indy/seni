@@ -5,6 +5,7 @@
 #include "seni_printf.h"
 #include "seni_text_buffer.h"
 #include "seni_keyword_iname.h"
+#include "seni_colour.h"
 
 #include "string.h"
 #include <stdlib.h>
@@ -62,6 +63,29 @@ void format_var_value_float(seni_text_buffer *text_buffer, seni_node *node, seni
 {
   i32 decimals = count_decimals(node);
   print_decimals(text_buffer, decimals, var->value.f);
+}
+
+void format_var_value_colour(seni_text_buffer *text_buffer, seni_node *node, seni_var *var)
+{
+  node = NULL;
+  switch(var->value.i) {
+  case RGB:
+    text_buffer_sprintf(text_buffer, "(col/rgb r: %.2f g: %.2f b: %.2f alpha: %.2f)",
+                        var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
+    break;
+  case HSL:
+    text_buffer_sprintf(text_buffer, "(col/hsl h: %.2f s: %.2f l: %.2f alpha: %.2f)",
+                        var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
+    break;
+  case LAB:
+    text_buffer_sprintf(text_buffer, "(col/lab l: %.2f a: %.2f b: %.2f alpha: %.2f)",
+                        var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
+    break;
+  case HSV:
+    text_buffer_sprintf(text_buffer, "(col/hsv h: %.2f s: %.2f v: %.2f alpha: %.2f)",
+                        var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
+    break;
+  }
 }
 
 void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *node)
@@ -145,7 +169,7 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
     SENI_ERROR("vector ???");
     break;
   case VAR_COLOUR:
-    SENI_ERROR("colour ???");
+    format_var_value_colour(text_buffer, node, var);
     break;
   case VAR_2D:
     SENI_ERROR("2d ???");

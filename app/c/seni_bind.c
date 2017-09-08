@@ -19,6 +19,19 @@
 #include <stdlib.h>
 #include <math.h>
 
+i32 g_colour_constructor_start = 0;
+i32 g_colour_constructor_end = 0;
+
+i32 get_colour_constructor_start()
+{
+  return g_colour_constructor_start;
+}
+
+i32 get_colour_constructor_end()
+{
+  return g_colour_constructor_end;
+}
+
 typedef enum {
   HEAP_STRUCTURE_UNDEFINED = 0,
   HEAP_STRUCTURE_PRNG,
@@ -2107,7 +2120,7 @@ seni_var *bind_gen_select(seni_vm *vm, i32 num_args)
 
 seni_var *bind_gen_col(seni_vm *vm, i32 num_args)
 {
-  f32 alpha = 1.0f;
+  f32 alpha = -1.0f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_ALPHA, alpha);
@@ -2118,7 +2131,13 @@ seni_var *bind_gen_col(seni_vm *vm, i32 num_args)
   colour.element[0] = seni_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
   colour.element[1] = seni_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
   colour.element[2] = seni_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
-  colour.element[3] = alpha;
+
+  if (alpha < 0.0f) {
+    // no alpha was given so generate a random value
+    colour.element[3] = seni_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
+  } else {
+    colour.element[3] = alpha;
+  }
 
   colour_as_var(&g_var_scratch, &colour);
   
@@ -2159,10 +2178,12 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
   declare_native(wlut, e, "scale", &bind_scale);
 
   declare_native(wlut, e, "col/convert", &bind_col_convert);
+  g_colour_constructor_start = wlut->native_count;
   declare_native(wlut, e, "col/rgb", &bind_col_rgb);
   declare_native(wlut, e, "col/hsl", &bind_col_hsl);
   declare_native(wlut, e, "col/hsv", &bind_col_hsv);
   declare_native(wlut, e, "col/lab", &bind_col_lab);
+  g_colour_constructor_end = wlut->native_count;
   declare_native(wlut, e, "col/complementary", &bind_col_complementary);
   declare_native(wlut, e, "col/split-complementary", &bind_col_split_complementary);
   declare_native(wlut, e, "col/analagous", &bind_col_analagous);

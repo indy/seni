@@ -6,6 +6,9 @@
 #include "seni_text_buffer.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
+#include "seni_bind.h"
+#include "seni_keyword_iname.h"
+#include "seni_colour.h"
 
 #include <stdlib.h>
 #include "lib/utlist.h"
@@ -226,6 +229,87 @@ void trait_list_add_trait(seni_trait_list *trait_list, seni_trait *trait)
   DL_APPEND(trait_list->traits, trait);
 }
 
+bool is_node_colour_constructor(seni_node *node)
+{
+  if (node->type != NODE_LIST) {
+    return false;
+  }
+
+  seni_node *child = safe_first(node->value.first_child);
+  if (child->type != NODE_NAME) {
+    return false;
+  }
+
+  // get the wlut indices of the col/* constructor functions
+  //
+  i32 colour_constructor_start = get_colour_constructor_start();
+  i32 colour_constructor_end = get_colour_constructor_end();
+
+  i32 native_index = child->value.i - NATIVE_START;
+  if (native_index < colour_constructor_start || native_index >= colour_constructor_end) {
+    return false;
+  }
+  
+  return true;
+}
+
+// this is terrible and should be replaced with an interpreter asap
+bool super_hacky_colour_parser(seni_var *out, seni_node *node)
+{
+  // assume that node is pointing to a list like: (col/rgb r: 1 g: 0 b: 0.3 alpha: 0.3)
+
+  // also assuming that the first colour constructor in seni_bind is col/rgb
+  //
+  i32 rgb_constructor_fn_index = get_colour_constructor_start();
+
+  seni_node *constructor_fn_name_node = safe_first(node->value.first_child);
+  i32 native_index = constructor_fn_name_node->value.i - NATIVE_START;
+  if (native_index != rgb_constructor_fn_index) {
+    SENI_ERROR("super_hacky_colour_parser only works with col/rgb");
+    return false;
+  }
+
+  f32 r, g, b; 
+  f32 alpha = 1.0f;
+  r = g = b = 0.0f;
+  
+  seni_node *n = safe_next(constructor_fn_name_node);
+  seni_node *val;
+
+  while (n != NULL && n->type == NODE_LABEL) {
+    val = safe_next(n);
+    if (val == NULL) {
+      break;
+    }
+
+    if (n->value.i == INAME_R) {
+      r = val->value.f;
+    }
+    if (n->value.i == INAME_G) {
+      g = val->value.f;
+    }
+    if (n->value.i == INAME_B) {
+      b = val->value.f;
+    }
+    if (n->value.i == INAME_ALPHA) {
+      alpha = val->value.f;
+    }
+    
+    n = safe_next(val);                // skip past the value
+  }
+
+  out->type = VAR_COLOUR;
+  out->value.i = RGB;
+  out->f32_array[0] = r;
+  out->f32_array[1] = g;
+  out->f32_array[2] = b;
+  out->f32_array[3] = alpha;
+
+  return true;
+}
+
+// TODO: could really do with a small interpreter here that parses the seni_node ast
+//
 bool hack_node_to_var(seni_var *out, seni_node *node)
 {
   switch(node->type) {
@@ -241,8 +325,17 @@ bool hack_node_to_var(seni_var *out, seni_node *node)
     out->type = VAR_NAME;
     out->value.i = node->value.i;
     break;
+  case NODE_LIST:
+    if (is_node_colour_constructor(node)) {
+      if (super_hacky_colour_parser(out, node) == false) {
+        return false;
+      }
+      break;
+    } else {
+      SENI_LOG("list that isn't a colour");
+      return false;
+    }
   default:
-    // todo: check NODE_LIST for colour, 2D etc
     return false;
   }
 

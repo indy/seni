@@ -1007,6 +1007,9 @@ void test_unparser(void)
   unparse_compare(6534, "{red (gen/select from: '(red green blue))}", "{blue (gen/select from: '(red green blue))}");
 
   unparse_compare(6534, "{rainbow (gen/select from: col/procedural-fn-presets)}", "{robocop (gen/select from: col/procedural-fn-presets)}");
+
+  unparse_compare(9999, "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col)}", "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 0.26) (gen/col)}");
+  unparse_compare(9999, "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}", "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 1.00) (gen/col alpha: 1)}");
 }
 
 // serialize/deserialize seni_var
