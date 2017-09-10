@@ -210,18 +210,17 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
   };
 }
 
-void unparse_alterable_vector_of_2d_vectors(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
+void unparse_alterable_vector(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
 {
   text_buffer_sprintf(text_buffer, "[");
 
   seni_node *n = ast->value.first_child;
 
   while (n) {
-    if (n->type == NODE_VECTOR) {
-      format_var_value(text_buffer, n, genotype, word_lut);
-    } else {
-      // whitespace
+    if (n->type == NODE_WHITESPACE || n->type == NODE_COMMENT) {
       format_node_value(text_buffer, word_lut, n);
+    } else {
+      format_var_value(text_buffer, n, genotype, word_lut);
     }
     n = n->next;
   }
@@ -241,11 +240,7 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
     }
 
     if (ast->type == NODE_VECTOR) {
-      if (is_vector_of_2d_vectors(ast)) {
-        unparse_alterable_vector_of_2d_vectors(text_buffer, word_lut, ast, genotype);
-      } else {
-        SENI_ERROR("alterable vector should only contain 2d vectors");
-      }
+      unparse_alterable_vector(text_buffer, word_lut, ast, genotype);
     } else {
       format_var_value(text_buffer, ast, genotype, word_lut);
     }

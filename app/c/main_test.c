@@ -997,6 +997,22 @@ void test_genotype(void)
     genotype_return_to_pool(genotype);
   }
 
+  ga_pools_shutdown();
+  parser_pools_shutdown();
+  lang_pools_shutdown();
+}
+
+void test_genotype_vectors(void)
+{
+  seni_genotype *genotype;
+  seni_gene *g;
+  seni_var *v;
+
+  // startup/shutdown here and not in genotype_test as the tests compare genotypes
+  lang_pools_startup();
+  parser_pools_startup();
+  ga_pools_startup();
+
   {
     genotype = genotype_test(9834, "{[[0.1 0.2] [0.3 0.4]] (gen/vector)}");
     TEST_ASSERT(genotype);
@@ -1046,6 +1062,43 @@ void test_genotype(void)
   lang_pools_shutdown();
 }
 
+void test_genotype_multiple_floats(void)
+{
+  seni_genotype *genotype;
+  seni_gene *g;
+  seni_var *v;
+
+  // startup/shutdown here and not in genotype_test as the tests compare genotypes
+  lang_pools_startup();
+  parser_pools_startup();
+  ga_pools_startup();
+
+  {
+    genotype = genotype_test(9834, "{[0.977 0.416 0.171] (gen/scalar)}");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    v = g->var;
+
+    // this will create 3 genes, each one for each float
+    TEST_ASSERT_EQUAL(VAR_FLOAT, v->type);
+
+    g = g->next;
+    v = g->var;
+    TEST_ASSERT_EQUAL(VAR_FLOAT, v->type);
+
+    g = g->next;
+    v = g->var;
+    TEST_ASSERT_EQUAL(VAR_FLOAT, v->type);
+
+    g = g->next;
+    TEST_ASSERT_NULL(g);
+  }
+
+  ga_pools_shutdown();
+  parser_pools_shutdown();
+  lang_pools_shutdown();
+}
+
 void test_unparser(void)
 {
   unparse_compare(9875, "(+ 4 2.0)", NULL);
@@ -1079,7 +1132,7 @@ void test_unparser(void)
   unparse_compare(9999, "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}", "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 1.00) (gen/col alpha: 1)}");
 }
 
-void test_unparser_2d_vector()
+void test_unparser_vectors()
 {
   unparse_compare(9999,
                   "{[[1.00 2.00] [3.00 4.00]] (gen/vector)}",
@@ -1100,6 +1153,14 @@ void test_unparser_2d_vector()
   unparse_compare(9999,
                   "{ [ [ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/vector min: 40 max: 90) }",
                   "{ [ [ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/vector min: 40 max: 90) }");
+}
+
+void test_unparser_multiple_floats()
+{
+  unparse_compare(3455,
+                  "{[0.977 0.416 0.171] (gen/scalar)}",
+                  "{[0.022 0.737 0.898] (gen/scalar)}");
+    
 }
 
 // serialize/deserialize seni_var
@@ -1532,41 +1593,46 @@ int main(void)
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-  // RUN_TEST(test_macro_pool);
-  
-  // RUN_TEST(test_mathutil);
-  // RUN_TEST(test_parser);
-  // RUN_TEST(test_uv_mapper);
-  // RUN_TEST(test_colour);
-  // RUN_TEST(test_strtof);
-  
-  // // vm
-  // RUN_TEST(test_vm_bugs);
-  // RUN_TEST(test_vm_bytecode);
-  // RUN_TEST(test_vm_callret);
-  // RUN_TEST(test_vm_native);  
-  // RUN_TEST(test_vm_destructure);
-  // RUN_TEST(test_vm_2d);
-  // RUN_TEST(test_vm_vector);
-  // RUN_TEST(test_vm_vector_append);
-  // RUN_TEST(test_vm_fence);
-  // RUN_TEST(test_vm_col_rgb);
-  // RUN_TEST(test_vm_math);
-  // RUN_TEST(test_vm_prng);
-  // RUN_TEST(test_vm_environmental);
-  // RUN_TEST(test_vm_interp);
-  // RUN_TEST(test_vm_function_address);
-  // RUN_TEST(test_vm_repeat);
 
-  // RUN_TEST(test_genotype);
-  // RUN_TEST(test_unparser);
-  RUN_TEST(test_unparser_2d_vector);
   
-  // RUN_TEST(test_serialization);
-  // RUN_TEST(test_serialization_program);
-  // RUN_TEST(test_serialization_genotype);
-  // RUN_TEST(test_serialization_genotype_list);
-  // RUN_TEST(test_serialization_trait_list);
+  RUN_TEST(test_macro_pool);
+  
+  RUN_TEST(test_mathutil);
+  RUN_TEST(test_parser);
+  RUN_TEST(test_uv_mapper);
+  RUN_TEST(test_colour);
+  RUN_TEST(test_strtof);
+  
+  // vm
+  RUN_TEST(test_vm_bugs);
+  RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_native);  
+  RUN_TEST(test_vm_destructure);
+  RUN_TEST(test_vm_2d);
+  RUN_TEST(test_vm_vector);
+  RUN_TEST(test_vm_vector_append);
+  RUN_TEST(test_vm_fence);
+  RUN_TEST(test_vm_col_rgb);
+  RUN_TEST(test_vm_math);
+  RUN_TEST(test_vm_prng);
+  RUN_TEST(test_vm_environmental);
+  RUN_TEST(test_vm_interp);
+  RUN_TEST(test_vm_function_address);
+  RUN_TEST(test_vm_repeat);
+
+  RUN_TEST(test_genotype);
+  RUN_TEST(test_genotype_vectors);
+  RUN_TEST(test_genotype_multiple_floats);
+  RUN_TEST(test_unparser);
+  RUN_TEST(test_unparser_vectors);
+  RUN_TEST(test_unparser_multiple_floats);
+  
+  RUN_TEST(test_serialization);
+  RUN_TEST(test_serialization_program);
+  RUN_TEST(test_serialization_genotype);
+  RUN_TEST(test_serialization_genotype_list);
+  RUN_TEST(test_serialization_trait_list);
 
   return UNITY_END();
 }

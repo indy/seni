@@ -84,6 +84,3 @@ seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
                                                   f32 mutation_rate,
                                                   i32 rng,
                                                   seni_trait_list *trait_list);
-
-bool is_2d_vector(seni_node *node);
-bool is_vector_of_2d_vectors(seni_node *node);

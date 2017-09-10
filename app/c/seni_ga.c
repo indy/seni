@@ -365,28 +365,6 @@ bool is_2d_vector(seni_node *node)
   return false;
 }
 
-bool is_vector_of_2d_vectors(seni_node *node)
-{
-  if (node->type != NODE_VECTOR) {
-    return false;
-  }
-
-  seni_node *n = safe_first(node->value.first_child);
-  if (n == NULL) {
-    // the empty vector
-    return false;
-  }
-  
-  while(n) {
-    if (is_2d_vector(n) == false) {
-      return false;
-    }
-    n = safe_next(n);
-  }
-  
-  return true;
-}
-
 // TODO: could really do with a small interpreter here that parses the seni_node ast
 //
 bool hack_node_to_var(seni_var *out, seni_node *node)
@@ -431,30 +409,7 @@ bool hack_node_to_var(seni_var *out, seni_node *node)
   return true;
 }
 
-void add_multiple_traits(seni_node *node, i32 program_max_size, seni_trait_list *trait_list, seni_word_lut *word_lut)
-{
-  seni_node *vector_of_vectors = node;
-  seni_node *n = safe_first(node->value.first_child);
-  seni_trait *trait = NULL;
-
-  while(n) {
-    trait = trait_get_from_pool();
-
-    if (hack_node_to_var(trait->initial_value, n) == false) {
-      SENI_PRINT("hack_node_to_var failed");
-      node_pretty_print("failed node", n, word_lut);
-    }
-    
-    // can compile the parameter_ast
-    trait->program = compile_program(vector_of_vectors->parameter_ast, program_max_size, word_lut);
-    
-    trait_list_add_trait(trait_list, trait);
-    
-    n = safe_next(n);
-  }
-}
-
-void add_single_trait(seni_node *node, i32 program_max_size, seni_trait_list *trait_list, seni_word_lut *word_lut)
+void add_trait(seni_node *node, seni_node *parameter_ast, i32 program_max_size, seni_trait_list *trait_list, seni_word_lut *word_lut)
 {
   seni_trait *trait = trait_get_from_pool();
 
@@ -464,9 +419,25 @@ void add_single_trait(seni_node *node, i32 program_max_size, seni_trait_list *tr
   }
     
   // can compile the parameter_ast
-  trait->program = compile_program(node->parameter_ast, program_max_size, word_lut);
+  trait->program = compile_program(parameter_ast, program_max_size, word_lut);
     
   trait_list_add_trait(trait_list, trait);
+}
+
+void add_single_trait(seni_node *node, i32 program_max_size, seni_trait_list *trait_list, seni_word_lut *word_lut)
+{
+  add_trait(node, node->parameter_ast, program_max_size, trait_list, word_lut);
+}
+
+void add_multiple_traits(seni_node *node, i32 program_max_size, seni_trait_list *trait_list, seni_word_lut *word_lut)
+{
+  seni_node *vector = node;
+  seni_node *n = safe_first(node->value.first_child);
+
+  while(n) {
+    add_trait(n, vector->parameter_ast, program_max_size, trait_list, word_lut);
+    n = safe_next(n);
+  }
 }
 
 seni_node *ga_traverse(seni_node *node, i32 program_max_size, seni_trait_list *trait_list, seni_word_lut *word_lut)
@@ -474,14 +445,8 @@ seni_node *ga_traverse(seni_node *node, i32 program_max_size, seni_trait_list *t
   seni_node *n = node;
 
   if (n->alterable) {
-
     if (n->type == NODE_VECTOR) {
-      if (is_vector_of_2d_vectors(n)) {
-        // generate multiple genes, 1 for each vector
-        add_multiple_traits(n, program_max_size, trait_list, word_lut);
-      } else {
-        SENI_ERROR("alterable vector should only contain 2d vectors");
-      }
+      add_multiple_traits(n, program_max_size, trait_list, word_lut);
     } else {
       add_single_trait(n, program_max_size, trait_list, word_lut);
     }
