@@ -53,16 +53,10 @@ void print_decimals(seni_text_buffer *text_buffer, i32 decimals, f32 f)
   };
 }
 
-void format_node_value_float(seni_text_buffer *text_buffer, seni_node *node)
+void format_float_using_node(seni_text_buffer *text_buffer, seni_node *node, f32 f)
 {
   i32 decimals = count_decimals(node);
-  print_decimals(text_buffer, decimals, node->value.f);
-}
-
-void format_var_value_float(seni_text_buffer *text_buffer, seni_node *node, seni_var *var)
-{
-  i32 decimals = count_decimals(node);
-  print_decimals(text_buffer, decimals, var->value.f);
+  print_decimals(text_buffer, decimals, f);
 }
 
 void format_var_value_colour(seni_text_buffer *text_buffer, seni_node *node, seni_var *var)
@@ -104,7 +98,7 @@ void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, s
     text_buffer_sprintf(text_buffer, "%d", node->value.i);
     break;
   case NODE_FLOAT:
-    format_node_value_float(text_buffer, node);
+    format_float_using_node(text_buffer, node, node->value.f);
     break;
   case NODE_NAME:
     c = wlut_reverse_lookup(word_lut, node->value.i);
@@ -152,33 +146,89 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
   seni_gene *gene = genotype_pull_gene(genotype); 
   seni_var *var = gene->var;
   char *name = NULL;            // used by VAR_NAME
+  seni_node *n;
 
   switch (var->type) {
   case VAR_INT:
     text_buffer_sprintf(text_buffer, "%d", var->value.i);
     break;
   case VAR_FLOAT:
-    format_var_value_float(text_buffer, node, var);
+    format_float_using_node(text_buffer, node, var->value.f);
     break;
   case VAR_NAME:
     name = wlut_reverse_lookup(word_lut, var->value.i);
     text_buffer_sprintf(text_buffer, "%s", name);
     break;
   case VAR_VECTOR:
-    // a vector requires multiple values from the genotype
     SENI_ERROR("vector ???");
+
     break;
   case VAR_COLOUR:
     format_var_value_colour(text_buffer, node, var);
     break;
   case VAR_2D:
-    SENI_ERROR("2d ???");
+
+    // node is a NODE_VECTOR
+    
+    text_buffer_sprintf(text_buffer, "[");
+    
+    n = node->value.first_child;
+    while (n && n->type != NODE_FLOAT) {
+      format_node_value(text_buffer, word_lut, n);
+      n = n->next;
+    }
+    if (n == NULL) {
+      SENI_ERROR("null node trying to unparse first float in VAR_2D");
+      return;
+    }
+
+    format_float_using_node(text_buffer, n, var->f32_array[0]);
+    n = n->next;
+
+    while (n && n->type != NODE_FLOAT) {
+      format_node_value(text_buffer, word_lut, n);
+      n = n->next;
+    }
+    if (n == NULL) {
+      SENI_ERROR("null node trying to unparse second float in VAR_2D");
+      return;
+    }
+
+    format_float_using_node(text_buffer, n, var->f32_array[1]);
+    n = n->next;
+
+    // output any trailing spaces
+    while (n) {
+      format_node_value(text_buffer, word_lut, n);
+      n = n->next;
+    }
+
+    text_buffer_sprintf(text_buffer, "]");
     break;
   default:
     SENI_ERROR("???");
   };
 }
 
+void unparse_alterable_vector_of_2d_vectors(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
+{
+  text_buffer_sprintf(text_buffer, "[");
+
+  seni_node *n = ast->value.first_child;
+
+  while (n) {
+    if (n->type == NODE_VECTOR) {
+      format_var_value(text_buffer, n, genotype, word_lut);
+    } else {
+      // whitespace
+      format_node_value(text_buffer, word_lut, n);
+    }
+    n = n->next;
+  }
+
+  text_buffer_sprintf(text_buffer, "]");
+}
+  
 seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
 {
   seni_node *n;
@@ -190,16 +240,16 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
       unparse_ast_node(text_buffer, word_lut, ast->parameter_prefix, genotype);
     }
 
-    // // use value from genotype
-    // if (node.type === NodeType.VECTOR) {
-    //   // a vector requires multiple values from the genotype
-    //   [v, geno] = getMultipleValuesFromGenotype(node.children, geno);
-    // } else {
-    //   [v, geno] = pullValueFromGenotype(geno);
-    //   v = formatNodeValue(v, node);
-    // }
-    format_var_value(text_buffer, ast, genotype, word_lut);
-    
+    if (ast->type == NODE_VECTOR) {
+      if (is_vector_of_2d_vectors(ast)) {
+        unparse_alterable_vector_of_2d_vectors(text_buffer, word_lut, ast, genotype);
+      } else {
+        SENI_ERROR("alterable vector should only contain 2d vectors");
+      }
+    } else {
+      format_var_value(text_buffer, ast, genotype, word_lut);
+    }
+
     n = ast->parameter_ast;
     while (n != NULL) {
       unparse_ast_node(text_buffer, word_lut, n, genotype);
@@ -207,11 +257,11 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
     }
 
     text_buffer_sprintf(text_buffer, "}");    
-  } else {
 
-    n = ast->value.first_child;
+  } else {
     
     if (ast->type == NODE_LIST) {
+      n = safe_first(ast->value.first_child);
       if (n->type == NODE_NAME && n->value.i == INAME_QUOTE) {
         // rather than outputing: (quote (1 2 3))
         // we want: '(1 2 3)
@@ -238,16 +288,14 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
       }
       
     } else if (ast->type == NODE_VECTOR) {
-      {
-        text_buffer_sprintf(text_buffer, "[");
+      n = safe_first(ast->value.first_child);
+      text_buffer_sprintf(text_buffer, "[");
 
-        while (n != NULL) {
-          unparse_ast_node(text_buffer, word_lut, n, genotype);
-          n = n->next;
-        }
-        text_buffer_sprintf(text_buffer, "]");
-        
+      while (n != NULL) {
+        unparse_ast_node(text_buffer, word_lut, n, genotype);
+        n = n->next;
       }
+      text_buffer_sprintf(text_buffer, "]");
  
     } else {
       format_node_value(text_buffer, word_lut, ast);
@@ -267,6 +315,11 @@ bool unparse(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *
   genotype->current_gene = genotype->genes;
   while (n != NULL) {
     n = unparse_ast_node(text_buffer, word_lut, n, genotype);
+  }
+
+  if (genotype->current_gene && genotype->current_gene->next != NULL) {
+    SENI_ERROR("unparse: genes remaining after unparse?");
+    return false;
   }
 
   return true;
