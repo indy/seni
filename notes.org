@@ -1,16 +1,24 @@
-* TODO [0/12]
-  1. [ ] gen/vector & rename to gen/2d-vectors
-  2. [ ] don't have multiple copies of the same program for gen/vector (share instead)
-  3. [ ] pretty print program emits names
-  4. [ ] impl: random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
-  5. [ ] better seni_ga.c::hack_node_to_var (lists, 2d etc)
-  6. [ ] unify args to *_pretty_print
-  7. [ ] maybe have a required specifier in functions?
-  8. [ ] poly should also accept a uv parameter
-  9. [ ] ensure that there's a dist folder before running npm run build:wasm
-  10. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  12. [ ] look into restrict keyword in C99
+* TODO [1/20]
+  1. [ ] gen/vector & rename to gen/2d-vector
+  2. [ ] check usage of warn_if_alterable
+  3. [ ] add an END token to serialized output, use as a sanity check
+  4. [ ] check buffer sizes and pool usage during a typical render/evolve session
+  5. [X] quiten down the logging
+  6. [ ] separate CodeMirror out from the build, load in it's own script tag
+  7. [ ] remove Immutable
+  8. [ ] add unit tests for compiling with a genotype
+  9. [ ] add a sanity check when assigning genes to an ast in the compiler to make sure that all genes have been assigned
+  10. [ ] don't have multiple copies of the same program for gen/vector (share instead)
+  11. [ ] pretty print program emits names
+  12. [ ] impl: random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
+  13. [ ] better seni_ga.c::hack_node_to_var (lists, 2d etc)
+  14. [ ] unify args to *_pretty_print
+  15. [ ] maybe have a required specifier in functions?
+  16. [ ] poly should also accept a uv parameter
+  17. [ ] ensure that there's a dist folder before running npm run build:wasm
+  18. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  19. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  20. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni

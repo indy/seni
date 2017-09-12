@@ -8,6 +8,7 @@
 #include "seni_vm_interpreter.h"
 #include "seni_keyword_iname.h"
 #include "seni_colour.h"
+#include "seni_bind.h"
 
 #include <stdlib.h>
 #include "lib/utlist.h"

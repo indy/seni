@@ -202,7 +202,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
   for (;;) {
 
     if (vm->heap_avail_size < vm->heap_avail_size_before_gc) {
-      SENI_LOG("GC Mark and Sweep");
+      // SENI_LOG("GC Mark and Sweep");
       gc_mark(vm);
       gc_sweep(vm);
     }

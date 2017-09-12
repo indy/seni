@@ -275,7 +275,7 @@ function renderWasm({ script /*, scriptHash*/, genotype }) {
   const buffers = [];
 
   if (genotype) {
-    console.log(`renderWasm genotype: ${genotype}`);
+    // console.log(`renderWasm genotype: ${genotype}`);
     Shabba.useGenotypeWhenCompiling(true);
     Shabba.setString(Shabba.genotype_buffer, genotype);
   } else {
@@ -285,11 +285,11 @@ function renderWasm({ script /*, scriptHash*/, genotype }) {
   // need to setString before calling compileToRenderPackets
   Shabba.setString(Shabba.source_buffer, script);
   const numRenderPackets = Shabba.compileToRenderPackets();
-  console.log(`numRenderPackets = ${numRenderPackets}`);
+  // console.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
     const numVertices = Shabba.getRenderPacketNumVertices(i);
-    console.log(`render_packet ${i}: numVertices = ${numVertices}`);
+    // console.log(`render_packet ${i}: numVertices = ${numVertices}`);
 
     if (numVertices > 0) {
       const buffer = {};
@@ -333,7 +333,7 @@ function buildTraitsWasm({ script /*, scriptHash */ }) {
   console.log(`built ${numTraits} traits`);
 
   const traits = Shabba.getString(Shabba.traits_buffer);
-  console.log(`js side recieved: ${traits}`);
+  // console.log(`js side recieved: ${traits}`);
 
   return { traits };
 }

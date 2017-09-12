@@ -1118,8 +1118,9 @@ void test_unparser(void)
   unparse_compare(6534, "(col/rgb r: {0.4 (gen/scalar)} g: 0.1)", "(col/rgb r: {0.8 (gen/scalar)} g: 0.1)");
 
   unparse_compare(6534, "{3 (gen/select from: '(4 5 6 7))}", "{7 (gen/select from: '(4 5 6 7))}");
-  
 
+  unparse_compare(5246, "(define c (col/build-procedural preset: robocop alpha: 0.08))", NULL);
+  
   // there was a bug which wasn't correctly traversing the ast to assign genes
   unparse_compare(6542, "(rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)})", "(rect position: [500 500] colour: red width: {91 (gen/int min: 80 max: 400)} height: {561 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {228 (gen/int min: 80 max: 400)} height: {257 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {380 (gen/int min: 80 max: 400)} height: {416 (gen/int min: 80 max: 670)})");
 

@@ -15,20 +15,20 @@
             [-284.530 207.528]]
            (gen/vector min: -500 max: 500)}
 
-  col-1 (col/build-procedural a: {[0.500 0.688 0.908] (scalar)}
-                              b: {[0.256 0.838 0.984] (scalar)}
-                              c: {[0.104 0.601 0.336] (scalar)}
-                              d: {[0.073 0.403 0.759] (scalar)}
+  col-1 (col/build-procedural a: {[0.500 0.688 0.908] (gen/scalar)}
+                              b: {[0.256 0.838 0.984] (gen/scalar)}
+                              c: {[0.104 0.601 0.336] (gen/scalar)}
+                              d: {[0.073 0.403 0.759] (gen/scalar)}
                               alpha: 0.08)
-  col-2 (col/build-procedural a: {[0.642 0.748 0.334] (scalar)}
-                              b: {[0.928 0.543 0.441] (scalar)}
-                              c: {[0.237 0.239 0.426] (scalar)}
-                              d: {[0.739 0.418 0.843] (scalar)}
+  col-2 (col/build-procedural a: {[0.642 0.748 0.334] (gen/scalar)}
+                              b: {[0.928 0.543 0.441] (gen/scalar)}
+                              c: {[0.237 0.239 0.426] (gen/scalar)}
+                              d: {[0.739 0.418 0.843] (gen/scalar)}
                               alpha: 0.08)
-  col-3 (col/build-procedural a: {[0.174 0.541 0.742] (scalar)}
-                              b: {[0.014 0.900 0.972] (scalar)}
-                              c: {[0.650 0.115 0.842] (scalar)}
-                              d: {[0.571 0.494 0.150] (scalar)}
+  col-3 (col/build-procedural a: {[0.174 0.541 0.742] (gen/scalar)}
+                              b: {[0.014 0.900 0.972] (gen/scalar)}
+                              c: {[0.650 0.115 0.842] (gen/scalar)}
+                              d: {[0.571 0.494 0.150] (gen/scalar)}
                               alpha: 0.08))
 
 (fn (draw)

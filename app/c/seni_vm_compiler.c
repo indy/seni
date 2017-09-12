@@ -72,9 +72,14 @@ f32 get_node_value_f32_from_gene(seni_node *node)
   return gene->var->value.f;
 }
 
+bool alterable(seni_node *node)
+{
+  return node->alterable && g_use_genes;
+}
+
 i32 get_node_value_i32(seni_node *node)
 {
-  if (node->alterable && g_use_genes) {
+  if (alterable(node)) {
     seni_gene *gene = node->gene;
     if (gene == NULL) {
       SENI_ERROR("null gene returned");
@@ -92,7 +97,7 @@ i32 get_node_value_i32(seni_node *node)
 
 f32 get_node_value_f32(seni_node *node)
 {
-  if (node->alterable && g_use_genes) {
+  if (alterable(node)) {
     seni_gene *gene = node->gene;
     if (gene == NULL) {
       SENI_ERROR("null gene returned");
@@ -112,7 +117,7 @@ f32 get_node_value_f32(seni_node *node)
 void warn_if_alterable(char *msg, seni_node *node)
 {
   if (node->alterable) {
-    // SENI_ERROR("%s: alterable node not being handled properly", msg);
+    SENI_ERROR("warn_if_alterable: %s", msg);
   }
 }
 
@@ -1285,7 +1290,7 @@ void compile_vector(seni_node *ast, seni_program *program)
   program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
 
   // if this is an alterable vector, we'll have to pull values for each element from the genes
-  bool use_gene = ast->alterable && g_use_genes;
+  bool use_gene = alterable(ast);
 
   for (seni_node *node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
     if (use_gene) {
@@ -1354,7 +1359,7 @@ seni_node *compile(seni_node *ast, seni_program *program)
   f32 f;
 
   if (ast->type == NODE_LIST) {
-    if (ast->alterable && g_use_genes && is_node_colour_constructor(ast)) {
+    if (alterable(ast) && is_node_colour_constructor(ast)) {
       seni_var *var = ast->gene->var;
       seni_var arg0;
 
@@ -1365,7 +1370,7 @@ seni_node *compile(seni_node *ast, seni_program *program)
       program_emit_opcode(program, LOAD, &arg0, var);
       
     } else {
-      if (ast->alterable && g_use_genes) {
+      if (alterable(ast)) {
         warn_if_alterable("NODE_LIST", ast);
         SENI_ERROR("given an alterable list that wasn't a colour constructor???");
       }

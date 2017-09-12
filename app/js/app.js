@@ -285,10 +285,10 @@ function renderScript(state, imageElement) {
   Job.request(jobRender, {
     script: state.get('script'),
     scriptHash: state.get('scriptHash')
-  }).then(({ title, buffers, logMessages }) => {
+  }).then(({ title, buffers }) => {
     // display any log/print messages that were generated
     // during the execution of the script
-    gUI.konsole.log(logMessages);
+    // gUI.konsole.log(logMessages);
     renderGeometryBuffers(jobRender, null, buffers, imageElement);
     stopFn(`renderScript-${title}`, gUI.konsole);
   }).catch(error => {
@@ -303,7 +303,7 @@ function renderScriptWithWASM(state, imageElement) {
   Job.request(jobRenderWasm, {
     script: state.get('script'),
     scriptHash: state.get('scriptHash')
-  }).then(({ title, memory, buffers, logMessages }) => {
+  }).then(({ title, memory, buffers }) => {
     // display any log/print messages that were generated
     // during the execution of the script
 
