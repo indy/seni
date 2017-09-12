@@ -6,7 +6,6 @@
 #include "seni_text_buffer.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
-#include "seni_bind.h"
 #include "seni_keyword_iname.h"
 #include "seni_colour.h"
 
@@ -227,30 +226,6 @@ bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer)
 void trait_list_add_trait(seni_trait_list *trait_list, seni_trait *trait)
 {
   DL_APPEND(trait_list->traits, trait);
-}
-
-bool is_node_colour_constructor(seni_node *node)
-{
-  if (node->type != NODE_LIST) {
-    return false;
-  }
-
-  seni_node *child = safe_first(node->value.first_child);
-  if (child->type != NODE_NAME) {
-    return false;
-  }
-
-  // get the wlut indices of the col/* constructor functions
-  //
-  i32 colour_constructor_start = get_colour_constructor_start();
-  i32 colour_constructor_end = get_colour_constructor_end();
-
-  i32 native_index = child->value.i - NATIVE_START;
-  if (native_index < colour_constructor_start || native_index >= colour_constructor_end) {
-    return false;
-  }
-  
-  return true;
 }
 
 // this is terrible and should be replaced with an interpreter asap

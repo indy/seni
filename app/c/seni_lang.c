@@ -255,6 +255,30 @@ void node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut)
   }
 }
 
+bool is_node_colour_constructor(seni_node *node)
+{
+  if (node->type != NODE_LIST) {
+    return false;
+  }
+
+  seni_node *child = safe_first(node->value.first_child);
+  if (child->type != NODE_NAME) {
+    return false;
+  }
+
+  // get the wlut indices of the col/* constructor functions
+  //
+  i32 colour_constructor_start = get_colour_constructor_start();
+  i32 colour_constructor_end = get_colour_constructor_end();
+
+  i32 native_index = child->value.i - NATIVE_START;
+  if (native_index < colour_constructor_start || native_index >= colour_constructor_end) {
+    return false;
+  }
+  
+  return true;
+}
+
 seni_value_in_use get_var_value_in_use(seni_var_type type)
 {
   switch(type) {

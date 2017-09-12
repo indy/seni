@@ -31,10 +31,11 @@ void gene_assign_to_node(seni_genotype *genotype, seni_node *node)
     
   } else {
     node->gene = NULL;
-  }
 
-  if (get_node_value_in_use(node->type) == USE_FIRST_CHILD) {
-    gene_assign_to_node(genotype, safe_first(node->value.first_child));
+    if (get_node_value_in_use(node->type) == USE_FIRST_CHILD) {
+      gene_assign_to_node(genotype, safe_first(node->value.first_child));
+    }
+    
   }
 
   // todo: is it safe to assume that node->next will always be valid? and that leaf nodes will have next == null?
@@ -49,19 +50,26 @@ void genotype_assign_to_ast(seni_genotype *genotype, seni_node *ast)
   gene_assign_to_node(genotype, ast);
 }
 
-seni_var *get_node_value_var(seni_node *node)
+i32 get_node_value_i32_from_gene(seni_node *node)
 {
-  if (node->alterable && g_use_genes) {
-    seni_gene *gene = node->gene;
-    if (gene == NULL) {
-      SENI_ERROR("null gene returned");
-      return NULL;
-    }
-    return gene->var;
-  } else {
-    SENI_ERROR("get_node_value_var: expected an alterable node");
-    return NULL;
+  seni_gene *gene = node->gene;
+  if (gene == NULL) {
+    SENI_ERROR("null gene returned");
+    return 0;
   }
+
+  return gene->var->value.i;
+}
+
+f32 get_node_value_f32_from_gene(seni_node *node)
+{
+  seni_gene *gene = node->gene;
+  if (gene == NULL) {
+    SENI_ERROR("null gene returned");
+    return 0.0f;
+  }
+
+  return gene->var->value.f;
 }
 
 i32 get_node_value_i32(seni_node *node)
@@ -104,7 +112,7 @@ f32 get_node_value_f32(seni_node *node)
 void warn_if_alterable(char *msg, seni_node *node)
 {
   if (node->alterable) {
-    SENI_ERROR("%s: alterable node not being handled properly", msg);
+    // SENI_ERROR("%s: alterable node not being handled properly", msg);
   }
 }
 
@@ -1248,10 +1256,24 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_in
 
 // ast is a NODE_VECTOR of length 2
 //
+void compile_2d_from_gene(seni_node *ast, seni_program *program)
+{
+  seni_gene *gene = ast->gene;
+
+  f32 a = gene->var->f32_array[0];
+  f32 b = gene->var->f32_array[1];
+  
+  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, a);
+  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, b);
+
+  program_emit_opcode_i32(program, SQUISH2, 0, 0);
+}
+
+// ast is a NODE_VECTOR of length 2
+//
 void compile_2d(seni_node *ast, seni_program *program)
 {
-  warn_if_alterable("compile_2d", ast);
-  for (seni_node *node = safe_first(ast->value.first_child); node != NULL; node = safe_next(node)) {
+  for (seni_node *node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
     compile(node, program);
   }
   program_emit_opcode_i32(program, SQUISH2, 0, 0);
@@ -1262,9 +1284,31 @@ void compile_vector(seni_node *ast, seni_program *program)
   // pushing from the VOID means creating a new, empty vector
   program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
 
-  warn_if_alterable("compile_vector", ast);
-  for (seni_node *node = safe_first(ast->value.first_child); node != NULL; node = safe_next(node)) {
-    compile(node, program);
+  // if this is an alterable vector, we'll have to pull values for each element from the genes
+  bool use_gene = ast->alterable && g_use_genes;
+
+  for (seni_node *node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
+    if (use_gene) {
+
+      if (node->type == NODE_FLOAT) {
+        f32 f = get_node_value_f32_from_gene(node);
+        program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, f);
+      }
+      else if (node->type == NODE_INT) {
+        i32 i = get_node_value_i32_from_gene(node);
+        program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, i);
+      }
+      else if (node->type == NODE_VECTOR) {
+        if (node_vector_length(node) == 2) {
+          compile_2d_from_gene(node, program);
+        } else {
+          compile_vector(node, program);
+        }
+      }
+      
+    } else {
+      compile(node, program);
+    }
     program_emit_opcode_i32(program, APPEND, 0, 0);
   }
 }
@@ -1310,17 +1354,32 @@ seni_node *compile(seni_node *ast, seni_program *program)
   f32 f;
 
   if (ast->type == NODE_LIST) {
-    warn_if_alterable("NODE_LIST", ast);
-    n = safe_first(ast->value.first_child);
+    if (ast->alterable && g_use_genes && is_node_colour_constructor(ast)) {
+      seni_var *var = ast->gene->var;
+      seni_var arg0;
 
-    i32 fn_info_index = get_fn_info_index(n, program);
-    if (fn_info_index != -1) {
-      compile_fn_invocation(n, program, fn_info_index);
+      // we have an alterable colour constructor so just
+      // load in the colour value stored in the gene
+      //
+      i32_as_var(&arg0, MEM_SEG_CONSTANT);
+      program_emit_opcode(program, LOAD, &arg0, var);
+      
     } else {
-      compile(n, program);
-    }
+      if (ast->alterable && g_use_genes) {
+        warn_if_alterable("NODE_LIST", ast);
+        SENI_ERROR("given an alterable list that wasn't a colour constructor???");
+      }
+      n = safe_first(ast->value.first_child);
+
+      i32 fn_info_index = get_fn_info_index(n, program);
+      if (fn_info_index != -1) {
+        compile_fn_invocation(n, program, fn_info_index);
+      } else {
+        compile(n, program);
+      }
     
-    return safe_next(ast);
+      return safe_next(ast);      
+    }
   }
   if (ast->type == NODE_FLOAT) {
     f = get_node_value_f32(ast);
@@ -1333,7 +1392,6 @@ seni_node *compile(seni_node *ast, seni_program *program)
     return safe_next(ast);
   }
   if (ast->type == NODE_VECTOR) {
-    warn_if_alterable("NODE_VECTOR", ast);
     if (node_vector_length(ast) == 2) {
       compile_2d(ast, program);
     } else {

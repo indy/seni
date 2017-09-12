@@ -109,11 +109,11 @@ typedef struct {
 #define READ_STACK_ARGS_END };
 
 #ifdef CHECK_STACK_ARGS
-#define IS_F32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected f32 for: %s", #n); var_pretty_print("this is what was received", value_1); }
-#define IS_I32(n) if (value_1->type != VAR_INT) { SENI_ERROR("expected i32 for: %s", #n); }
-#define IS_NAME(n) if (value_1->type != VAR_NAME) { SENI_ERROR("expected name for: %s", #n); }
-#define IS_COL(n) if (value_1->type != VAR_COLOUR) { SENI_ERROR("expected colour for: %s", #n); }
-#define IS_LONG(n) if (value_1->type != VAR_LONG) { SENI_ERROR("expected long for: %s", #n); }
+#define IS_F32(n) if (value_1->type != VAR_FLOAT) { SENI_ERROR("expected f32 for: %s", #n); var_pretty_print("received: ", value_1); }
+#define IS_I32(n) if (value_1->type != VAR_INT) { SENI_ERROR("expected i32 for: %s", #n); var_pretty_print("received: ", value_1); }
+#define IS_NAME(n) if (value_1->type != VAR_NAME) { SENI_ERROR("expected name for: %s", #n); var_pretty_print("received: ", value_1); }
+#define IS_COL(n) if (value_1->type != VAR_COLOUR) { SENI_ERROR("expected colour for: %s", #n); var_pretty_print("received: ", value_1); }
+#define IS_LONG(n) if (value_1->type != VAR_LONG) { SENI_ERROR("expected long for: %s", #n); var_pretty_print("received: ", value_1); }
 #else
 #define IS_F32
 #define IS_I32
@@ -1117,7 +1117,7 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
   f32 a[3], b[3], c[3], d[3];
 
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_PRESET, preset);
+  READ_STACK_ARG_NAME(INAME_PRESET, preset);
   READ_STACK_ARG_F32(INAME_ALPHA, alpha);
   READ_STACK_ARG_VEC3(INAME_A, a);
   READ_STACK_ARG_VEC3(INAME_B, b);
@@ -2114,6 +2114,8 @@ seni_var *bind_gen_select(seni_vm *vm, i32 num_args)
   seni_var *res = vector_get(from, index);
 
   var_copy(&g_var_scratch, res);
+
+  // var_pretty_print("gen/select returns", &g_var_scratch);
 
   return &g_var_scratch;
 }

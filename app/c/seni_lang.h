@@ -88,6 +88,8 @@ seni_node *safe_prev(seni_node *expr);
 char      *node_type_name(seni_node *node);
 void       node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut);
 
+bool       is_node_colour_constructor(seni_node *node);
+
 // start at 128 just to make it easier to spot mistakes when transforming seni_node_type -> seni_var_type
 typedef enum {
   VAR_INT = 128, // value.i
