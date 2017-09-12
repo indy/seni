@@ -18,9 +18,6 @@
 
 /* eslint-disable no-unused-vars */
 
-import CodeMirror from 'codemirror';
-import * as cb from 'codemirror/addon/edit/closebrackets';
-import * as mb from 'codemirror/addon/edit/matchbrackets';
 import CodeMirrorSeni from './CodeMirrorSeni';
 
 /* eslint-enable no-unused-vars */

@@ -48,9 +48,6 @@
  *
  */
 
-import CodeMirror from 'codemirror';
-
-
 /* ------------------------------------------------------------ */
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-return-assign */
