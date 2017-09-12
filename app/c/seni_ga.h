@@ -59,7 +59,7 @@ seni_genotype *genotype_clone(seni_genotype *genotype);
 seni_genotype *genotype_crossover(seni_genotype *a, seni_genotype *b, i32 crossover_index, i32 genotype_length);
 bool           genotype_serialize(seni_text_buffer *text_buffer, seni_genotype *genotype);
 bool           genotype_deserialize(seni_genotype *out, seni_text_buffer *text_buffer);
-
+seni_gene     *genotype_pull_gene(seni_genotype *genotype);
 
 struct seni_genotype_list {
   seni_genotype *genotypes;

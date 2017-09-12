@@ -23,6 +23,9 @@ i32 count_decimals(seni_node *float_node)
     return 0;
   }
 
+  // SENI_LOG("src = %s", float_node->src);
+  // SENI_LOG("src_len = %d", float_node->src_len);
+  
   i32 i = 0;
   for (i = 0; i < float_node->src_len; i++) {
     if (float_node->src[i] == '.') {
@@ -32,6 +35,9 @@ i32 count_decimals(seni_node *float_node)
   }
 
   i32 res = float_node->src_len - i;
+
+  // SENI_LOG("i = %d", i);
+  // SENI_LOG("res = %d", res);
 
   return res;
 }
@@ -126,19 +132,6 @@ void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, s
     break;
     */
   };
-}
-
-seni_gene *genotype_pull_gene(seni_genotype *genotype)
-{
-  seni_gene *gene = genotype->current_gene;
-  if (gene == NULL) {
-    SENI_ERROR("genotype_pull_gene: current gene is null");
-    return NULL;
-  }
-
-  genotype->current_gene = genotype->current_gene->next;
-
-  return gene;
 }
 
 void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genotype *genotype, seni_word_lut *word_lut)

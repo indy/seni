@@ -275,6 +275,7 @@ function renderWasm({ script /*, scriptHash*/, genotype }) {
   const buffers = [];
 
   if (genotype) {
+    console.log(`renderWasm genotype: ${genotype}`);
     Shabba.useGenotypeWhenCompiling(true);
     Shabba.setString(Shabba.genotype_buffer, genotype);
   } else {
@@ -312,12 +313,15 @@ function renderWasm({ script /*, scriptHash*/, genotype }) {
 }
 
 function unparse({ script/*, scriptHash*/, genotype }) {
-  console.log(`genotype is ${genotype}`);
+  // console.log(`genotype is ${genotype}`);
+  // console.log(`script is ${script}`);
   Shabba.setString(Shabba.source_buffer, script);
   Shabba.setString(Shabba.genotype_buffer, genotype);
 
   Shabba.unparseWithGenotype();
-  const newScript = Shabba.getString(Shabba.source_buffer);
+  const newScript = Shabba.getString(Shabba.out_source_buffer);
+
+  // console.log(`new script: ${newScript}`);
 
   return { script: newScript };
 }
@@ -440,6 +444,7 @@ function configureWasmModule(wasmInstance) {
   Shabba.nextGenerationBuild = w.exports.next_generation_build;
 
   Shabba.getSourceBuffer = w.exports.get_source_buffer;
+  Shabba.getOutSourceBuffer = w.exports.get_out_source_buffer;
   Shabba.getTraitsBuffer = w.exports.get_traits_buffer;
   Shabba.getGenotypeBuffer = w.exports.get_genotype_buffer;
 }
@@ -462,6 +467,7 @@ loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
   Shabba.seniStartup();
   // get string buffers
   Shabba.source_buffer = Shabba.getSourceBuffer();
+  Shabba.out_source_buffer = Shabba.getOutSourceBuffer();
   Shabba.traits_buffer = Shabba.getTraitsBuffer();
   Shabba.genotype_buffer = Shabba.getGenotypeBuffer();
 

@@ -20,12 +20,15 @@ void compile_vector(seni_node *ast, seni_program *program);
 void gene_assign_to_node(seni_genotype *genotype, seni_node *node)
 {
   if (node->alterable) {
-    // SENI_PRINT("assigning a genotype->current_gene to a node");
-    node->gene = genotype->current_gene;
-    genotype->current_gene = genotype->current_gene->next;
-    if (genotype->current_gene == NULL) {
-      return;
+    if (node->type == NODE_VECTOR) {
+      // grab a gene for every element in this vector
+      for (seni_node *n = safe_first_child(node); n != NULL; n = safe_next(n)) {
+        n->gene = genotype_pull_gene(genotype);
+      }
+    } else {
+      node->gene = genotype_pull_gene(genotype);
     }
+    
   } else {
     node->gene = NULL;
   }

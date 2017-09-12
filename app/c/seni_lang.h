@@ -80,6 +80,8 @@ struct seni_node {
 
 // returns the first meaningful (non-whitespace, non-comment) node from expr onwards
 seni_node *safe_first(seni_node *expr);
+// returns the first meaningful (non-whitespace, non-comment) child node from expr onwards
+seni_node *safe_first_child(seni_node *expr);
 // returns the next meaningful (non-whitespace, non-comment) node from expr
 seni_node *safe_next(seni_node *expr);
 seni_node *safe_prev(seni_node *expr);

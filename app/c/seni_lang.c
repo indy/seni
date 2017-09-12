@@ -163,6 +163,18 @@ seni_node *safe_first(seni_node *expr)
   return safe_next(expr);
 }
 
+seni_node *safe_first_child(seni_node *expr)
+{
+  if (get_node_value_in_use(expr->type) != USE_FIRST_CHILD) {
+    SENI_ERROR("calling safe_first_child on a node that doesn't have a valid first child");
+    return NULL;
+  }
+
+  seni_node *n = safe_first(expr->value.first_child);
+
+  return n;
+}
+
 seni_node *safe_next(seni_node *expr)
 {
   seni_node *sibling = expr->next;
@@ -1075,7 +1087,7 @@ void vm_debug_info_print(seni_vm *vm)
 void lang_pools_startup()
 {
   // start with 1 slab of 100, allocate upto a max of 10 slabs
-  g_var_pool = var_pool_allocate(1, 100, 10);  
+  g_var_pool = var_pool_allocate(1, 100, 50);  
 }
 
 void lang_pools_shutdown()

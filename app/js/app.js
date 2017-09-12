@@ -82,7 +82,6 @@ function showButtonsFor(mode) {
   const evalBtn = document.getElementById('eval-btn');
   const evolveBtn = document.getElementById('evolve-btn');
   const renderBtn = document.getElementById('render-btn');
-  const wasmBtn = document.getElementById('wasm-btn');
   const nextBtn = document.getElementById('next-btn');
   const shuffleBtn = document.getElementById('shuffle-btn');
 
@@ -91,7 +90,6 @@ function showButtonsFor(mode) {
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
-    wasmBtn.classList.add('hidden');
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
@@ -99,7 +97,6 @@ function showButtonsFor(mode) {
     evalBtn.classList.remove('hidden');
     evolveBtn.classList.remove('hidden');
     renderBtn.classList.remove('hidden');
-    wasmBtn.classList.remove('hidden');
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
@@ -107,7 +104,6 @@ function showButtonsFor(mode) {
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
-    wasmBtn.classList.add('hidden');
     nextBtn.classList.remove('hidden');
     shuffleBtn.classList.remove('hidden');
     break;
@@ -311,7 +307,7 @@ function renderScriptWithWASM(state, imageElement) {
     // display any log/print messages that were generated
     // during the execution of the script
 
-    gUI.konsole.log(logMessages);
+    // gUI.konsole.log(logMessages);
     renderGeometryBuffers(jobRenderWasm, memory, buffers, imageElement);
     stopFn(`renderScriptWithWASM-${title}`, gUI.konsole);
   }).catch(error => {
@@ -708,16 +704,6 @@ function setupUI(store) {
     event.preventDefault();
   });
 
-  addClickEvent('wasm-btn', event => {
-    setScript(store, getScriptFromEditor()).then(state => {
-      renderScriptWithWASM(state, gUI.renderImage);
-    }).catch(error => {
-      // handle error
-      console.log(`eval-btn:click : error of ${error}`);
-    });
-    event.preventDefault();
-  });
-
   addClickEvent('shuffle-btn', event => {
     showPlaceholderImages(store.getState());
     store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11}).then(state => {
@@ -732,7 +718,7 @@ function setupUI(store) {
 
   addClickEvent('eval-btn', event => {
     setScript(store, getScriptFromEditor()).then(state => {
-      renderScript(state, gUI.renderImage);
+      renderScriptWithWASM(state, gUI.renderImage);
     }).catch(error => {
       // handle error
       console.log(`eval-btn:click : error of ${error}`);

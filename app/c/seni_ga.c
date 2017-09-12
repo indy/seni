@@ -176,13 +176,13 @@ void genotype_list_return_to_pool(seni_genotype_list *genotype_list)
 void ga_pools_startup()
 {
   // create 1 slab
-  // each slab contains 20 genes
+  // each slab contains 200 genes
   // max of 10 slabs can be allocated
-  g_gene_pool = gene_pool_allocate(1, 20, 10);
-  g_trait_pool = trait_pool_allocate(1, 20, 10);
-  g_genotype_pool = genotype_pool_allocate(1, 20, 10);
-  g_trait_list_pool = trait_list_pool_allocate(1, 20, 10);
-  g_genotype_list_pool = genotype_list_pool_allocate(1, 20, 10);
+  g_gene_pool = gene_pool_allocate(1, 200, 10);
+  g_trait_pool = trait_pool_allocate(1, 200, 10);
+  g_genotype_pool = genotype_pool_allocate(1, 200, 10);
+  g_trait_list_pool = trait_list_pool_allocate(1, 200, 10);
+  g_genotype_list_pool = genotype_list_pool_allocate(1, 200, 10);
 }
 
 void ga_pools_shutdown()
@@ -713,6 +713,20 @@ bool genotype_deserialize(seni_genotype *out, seni_text_buffer *text_buffer)
 
   return true;
 }
+
+seni_gene *genotype_pull_gene(seni_genotype *genotype)
+{
+  seni_gene *gene = genotype->current_gene;
+  if (gene == NULL) {
+    SENI_ERROR("genotype_pull_gene: current gene is null");
+    return NULL;
+  }
+
+  genotype->current_gene = genotype->current_gene->next;
+
+  return gene;
+}
+
 
 // todo: add mutation_rate, traits, env and vm
 // void random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)

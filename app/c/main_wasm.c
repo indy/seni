@@ -17,12 +17,13 @@
 
 #define SOURCE_BUFFER_SIZE 80000
 char *g_source_buffer;
+char *g_out_source_buffer;
 
-#define TRAITS_BUFFER_SIZE 8000
+#define TRAITS_BUFFER_SIZE 80000
 char *g_traits_buffer;
 seni_text_buffer *g_traits_text_buffer;
 
-#define GENOTYPE_BUFFER_SIZE 8000
+#define GENOTYPE_BUFFER_SIZE 80000
 bool g_use_genotype_when_compiling;
 char *g_genotype_buffer;
 seni_text_buffer *g_genotype_text_buffer;
@@ -56,6 +57,7 @@ void seni_startup()
   g_e = env_allocate();
 
   g_source_buffer = (char *)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
+  g_out_source_buffer = (char *)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
 
   g_traits_buffer = (char *)calloc(TRAITS_BUFFER_SIZE, sizeof(char));
   g_traits_text_buffer = text_buffer_allocate(g_traits_buffer, TRAITS_BUFFER_SIZE);
@@ -77,6 +79,7 @@ void seni_shutdown()
   text_buffer_free(g_traits_text_buffer);
   
   free(g_source_buffer);
+  free(g_out_source_buffer);
   free(g_traits_buffer);
   free(g_genotype_buffer);
 
@@ -101,7 +104,6 @@ int compile_to_render_packets(void)
 #endif
   
   //TIMING_UNIT timing_a = get_timing();
-
 
   vm_reset(g_vm);
 
@@ -301,6 +303,16 @@ char *get_source_buffer()
 }
 
 export
+char *get_out_source_buffer()
+{
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("get_out_source_buffer");
+#endif
+
+  return g_out_source_buffer;
+}
+
+export
 char *get_traits_buffer()
 {
 #ifdef SHOW_WASM_CALLS
@@ -323,7 +335,10 @@ char *get_genotype_buffer()
 export
 void use_genotype_when_compiling(bool use_genotype)
 {
-  SENI_PRINT("use_genotype_when_compiling is %d", use_genotype);
+#ifdef SHOW_WASM_CALLS
+  SENI_LOG("use_genotype_when_compiling is %d", use_genotype);
+#endif
+
   g_use_genotype_when_compiling = use_genotype;
 }
 
@@ -389,9 +404,11 @@ void unparse_with_genotype()
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   seni_node *ast = parser_parse(env->wl, g_source_buffer);
-  seni_text_buffer *text_buffer = text_buffer_allocate(g_source_buffer, SOURCE_BUFFER_SIZE);
+  seni_text_buffer *text_buffer = text_buffer_allocate(g_out_source_buffer, SOURCE_BUFFER_SIZE);
 
+  //SENI_LOG("before: %s", g_source_buffer);
   unparse(text_buffer, env->wl, ast, genotype);
+  //SENI_LOG("after: %s", g_out_source_buffer);
 
   text_buffer_free(text_buffer);
   parser_return_nodes_to_pool(ast);
