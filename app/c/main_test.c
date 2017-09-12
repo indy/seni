@@ -1014,7 +1014,7 @@ void test_genotype_vectors(void)
   ga_pools_startup();
 
   {
-    genotype = genotype_test(9834, "{[[0.1 0.2] [0.3 0.4]] (gen/vector)}");
+    genotype = genotype_test(9834, "{[[0.1 0.2] [0.3 0.4]] (gen/2d)}");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
@@ -1036,7 +1036,7 @@ void test_genotype_vectors(void)
   }
 
   {
-    genotype = genotype_test(9834, "{[[0.1 0.2] [0.3 0.4]] (gen/vector min: 50 max: 60)}");
+    genotype = genotype_test(9834, "{[[0.1 0.2] [0.3 0.4]] (gen/2d min: 50 max: 60)}");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
@@ -1136,24 +1136,24 @@ void test_unparser(void)
 void test_unparser_vectors()
 {
   unparse_compare(9999,
-                  "{[[1.00 2.00] [3.00 4.00]] (gen/vector)}",
-                  "{[[0.00 0.72] [0.16 0.26]] (gen/vector)}");
+                  "{[[1.00 2.00] [3.00 4.00]] (gen/2d)}",
+                  "{[[0.00 0.72] [0.16 0.26]] (gen/2d)}");
 
   unparse_compare(9999,
-                  "{[[  1.00   2.00  ] [  3.00   4.00  ]] (gen/vector)}",
-                  "{[[  0.00   0.72  ] [  0.16   0.26  ]] (gen/vector)}");
+                  "{[[  1.00   2.00  ] [  3.00   4.00  ]] (gen/2d)}",
+                  "{[[  0.00   0.72  ] [  0.16   0.26  ]] (gen/2d)}");
 
   unparse_compare(9999,
-                  "{[[10 20] [30 40]] (gen/vector min: 60 max: 70)}",
-                  "{[[60 67] [62 63]] (gen/vector min: 60 max: 70)}");
+                  "{[[10 20] [30 40]] (gen/2d min: 60 max: 70)}",
+                  "{[[60 67] [62 63]] (gen/2d min: 60 max: 70)}");
 
   unparse_compare(9999,
-                  "{[[ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/vector min: 40 max: 90)}",
-                  "{[[ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/vector min: 40 max: 90)}");
+                  "{[[ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/2d min: 40 max: 90)}",
+                  "{[[ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/2d min: 40 max: 90)}");
 
   unparse_compare(9999,
-                  "{ [ [ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/vector min: 40 max: 90) }",
-                  "{ [ [ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/vector min: 40 max: 90) }");
+                  "{ [ [ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/2d min: 40 max: 90) }",
+                  "{ [ [ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/2d min: 40 max: 90) }");
 }
 
 void test_unparser_multiple_floats()

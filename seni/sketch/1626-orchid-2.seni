@@ -3,17 +3,17 @@
             [381.086 165.115]
             [244.222 -24.375]
             [-303.775 -142.624]]
-           (gen/vector min: -500 max: 500)}
+           (gen/2d min: -500 max: 500)}
   coords2 {[[479.130 244.656]
             [-356.596 -40.355]
             [-392.151 22.662]
             [-407.968 -470.355]]
-           (gen/vector min: -500 max: 500)}
+           (gen/2d min: -500 max: 500)}
   coords3 {[[-412.063 -149.809]
             [-78.466 -66.429]
             [58.852 146.280]
             [96.709 -286.538]]
-           (gen/vector min: -500 max: 500)}
+           (gen/2d min: -500 max: 500)}
 
   col-fn-1 (col/procedural-fn preset: {"chrome" (gen/select from: col/procedural-fn-presets)}
                               alpha: 0.08)

@@ -2070,7 +2070,7 @@ seni_var *bind_gen_scalar(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_gen_vector(seni_vm *vm, i32 num_args)
+seni_var *bind_gen_2d(seni_vm *vm, i32 num_args)
 {
   f32 min = 0.0f;
   f32 max = 1.0f;
@@ -2238,7 +2238,7 @@ void declare_bindings(seni_word_lut *wlut, seni_env *e)
 
   declare_native(wlut, e, "gen/int", &bind_gen_int);
   declare_native(wlut, e, "gen/scalar", &bind_gen_scalar);
-  declare_native(wlut, e, "gen/vector", &bind_gen_vector);
+  declare_native(wlut, e, "gen/2d", &bind_gen_2d);
   declare_native(wlut, e, "gen/select", &bind_gen_select);
   declare_native(wlut, e, "gen/col", &bind_gen_col);
 }

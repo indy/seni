@@ -16,7 +16,7 @@
 ;; the coords that the bezier path will take
 (define 
   coords {[[0 500] [333 100] [666 900] [999 500]]
-          (gen/vector min: 0 max: 1000)}
+          (gen/2d min: 0 max: 1000)}
 
   ;; as the bezier path progresses, change the circle's LAB a component
   remap-a (interp/build from: [0 1]

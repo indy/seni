@@ -1,5 +1,5 @@
-* TODO [1/20]
-  1. [ ] gen/vector & rename to gen/2d-vector
+* TODO [2/20]
+  1. [X] gen/vector & rename to gen/2d
   2. [ ] check usage of warn_if_alterable
   3. [ ] add an END token to serialized output, use as a sanity check
   4. [ ] check buffer sizes and pool usage during a typical render/evolve session

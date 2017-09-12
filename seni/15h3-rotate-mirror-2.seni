@@ -18,10 +18,10 @@
   (define
     p1 (interp/bezier t: t
                       coords: {[[-249.550 -79.597] [194.782 -180.117] [21.536 106.905] [-82.513 153.607]]
-                                (gen/vector min: -300 max: 300)})
+                                (gen/2d min: -300 max: 300)})
     p2 (interp/bezier t: t
                       coords: {[[90.069 -189.886] [-84.464 59.473] [144.670 -74.757] [182.469 159.561]]
-                                (gen/vector min: -300 max: 300)})
+                                (gen/2d min: -300 max: 300)})
     c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
     c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
   (vector/append coords p1)

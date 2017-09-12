@@ -3,17 +3,17 @@
             [-285.454 -474.428]
             [342.392 234.727]
             [110.418 -159.441]]
-           (gen/vector min: -500 max: 500)}
+           (gen/2d min: -500 max: 500)}
   coords2 {[[-93.395 -113.432]
             [363.150 -29.463]
             [-164.617 308.666]
             [16.711 61.422]]
-           (gen/vector min: -500 max: 500)}
+           (gen/2d min: -500 max: 500)}
   coords3 {[[31.337 -75.713]
             [-380.814 96.363]
             [-77.547 -11.253]
             [-274.251 -349.727]]
-           (gen/vector min: -500 max: 500)}
+           (gen/2d min: -500 max: 500)}
 
   col-1 (col/build-procedural preset: {robocop (gen/select from: col/procedural-fn-presets)}
                               alpha: 0.08)

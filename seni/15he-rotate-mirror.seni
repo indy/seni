@@ -20,13 +20,13 @@
                                 [166.582 -132.939] 
                                 [8.370 -108.305] 
                                 [204.349 -212.830]]
-                               (gen/vector min: -300 max: 300)})
+                               (gen/2d min: -300 max: 300)})
     p2 (interp/bezier t: t
                       coords: {[[6.482 -255.821] 
                                 [-11.347 100.004]
                                 [201.458 -218.061]
                                 [168.957 84.215]]
-                               (gen/vector min: -300 max: 300)})
+                               (gen/2d min: -300 max: 300)})
     c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
     c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
   (vector/append coords p1)
