@@ -1,25 +1,22 @@
-* TODO [4/21]
-  1. [X] gen/vector & rename to gen/2d
-  2. [X] check usage of warn_if_alterable
-  3. [ ] add an END token to serialized output, use as a sanity check
+* TODO [1/18]
+  1. [X] add a sanity check when assigning genes to an ast in the compiler to make sure that all genes have been assigned
+  2. [ ] impl: random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
+  3. [ ] impl: initial seed
   4. [ ] check buffer sizes and pool usage during a typical render/evolve session
-  5. [X] quiten down the logging
-  6. [X] separate CodeMirror out from the build, load in it's own script tag
-  7. [ ] remove Immutable
-  8. [ ] add unit tests for compiling with a genotype
-  9. [ ] add a sanity check when assigning genes to an ast in the compiler to make sure that all genes have been assigned
-  10. [ ] don't have multiple copies of the same program for gen/vector (share instead)
-  11. [ ] pretty print program emits names
-  12. [ ] impl: random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
-  13. [ ] impl: initial seed
-  14. [ ] better seni_ga.c::hack_node_to_var (lists, 2d etc)
-  15. [ ] unify args to *_pretty_print
-  16. [ ] maybe have a required specifier in functions?
-  17. [ ] poly should also accept a uv parameter
-  18. [ ] ensure that there's a dist folder before running npm run build:wasm
-  19. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  20. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  21. [ ] look into restrict keyword in C99
+  5. [ ] add an END token to serialized output, use as a sanity check
+  6. [ ] share codegen preamble between traits
+  7. [ ] add unit tests for compiling with a genotype
+  8. [ ] remove Immutable
+  9. [ ] get high-res render working
+  10. [ ] pretty print program emits names
+  11. [ ] better seni_ga.c::hack_node_to_var (lists, 2d etc)
+  12. [ ] unify args to *_pretty_print
+  13. [ ] maybe have a required specifier in functions?
+  14. [ ] poly should also accept a uv parameter
+  15. [ ] ensure that there's a dist folder before running npm run build:wasm
+  16. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  17. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  18. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
