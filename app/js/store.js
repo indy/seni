@@ -16,8 +16,6 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Immutable from 'immutable';
-
 import Util from './seni/Util';
 import { SeniMode } from './ui/SeniMode';
 import Job from './job';
@@ -29,23 +27,22 @@ let currentState = undefined;
 
 function actionSetMode(state, { mode }) {
   return new Promise((resolve, _reject) => {
-    currentState = state.set('currentMode', mode);
-    resolve(currentState);
+    state.currentMode = mode;
+    resolve(state);
   });
 }
 
 function actionSetScript(state, { script }) {
   return new Promise((resolve, reject) => {
-    currentState = state
-      .set('script', script)
-      .set('scriptHash', Util.hashCode(script));
+    state.script = script;
+    state.scriptHash = Util.hashCode(script);
 
     Job.request(jobBuildTraits, {
-      script: currentState.get('script'),
-      scriptHash: currentState.get('scriptHash')
+      script: state.script,
+      scriptHash: state.scriptHash
     }).then(({ traits }) => {
-      currentState = currentState.set('traits', traits);
-      resolve(currentState);
+      state.traits = traits;
+      resolve(state);
     }).catch(error => {
       // handle error
       console.log(`worker: error of ${error}`);
@@ -56,9 +53,8 @@ function actionSetScript(state, { script }) {
 
 function actionSetSelectedIndices(state, { selectedIndices }) {
   return new Promise((resolve, _reject) => {
-    const si = selectedIndices || new Immutable.List();
-    currentState = state.set('selectedIndices', si);
-    resolve(currentState);
+    state.selectedIndices = selectedIndices || [];
+    resolve(state);
   });
 }
 
@@ -66,19 +62,13 @@ function actionSetSelectedIndices(state, { selectedIndices }) {
 function actionInitialGeneration(state) {
   return new Promise((resolve, reject) => {
     Job.request(jobInitialGeneration, {
-      traits: state.get('traits'),
-      populationSize: state.get('populationSize')
+      traits: state.traits,
+      populationSize: state.populationSize
     }).then(({ genotypes }) => {
-      console.log(genotypes);
-      const im = Immutable.fromJS(genotypes);
-      const im2 = new Immutable.List(im);
-      console.log(im2);
-      currentState = state
-        .set('genotypes', im2)
-        .set('previouslySelectedGenotypes', new Immutable.List())
-        .set('selectedIndices', new Immutable.List());
-
-      resolve(currentState);
+      state.genotypes = genotypes;
+      state.previouslySelectedGenotypes = [];
+      state.selectedIndices = [];
+      resolve(state);
     }).catch(error => {
       // handle error
       console.log(`worker: error of ${error}`);
@@ -89,9 +79,9 @@ function actionInitialGeneration(state) {
 
 function actionShuffleGeneration(state, { rng }) {
   return new Promise((resolve, reject) => {
-    const prev = state.get('previouslySelectedGenotypes');
+    const prev = state.previouslySelectedGenotypes;
 
-    if (prev.size === 0) {
+    if (prev.length === 0) {
       actionInitialGeneration(state).then(s => {
         resolve(s);
       }).catch(error1 => {
@@ -101,19 +91,15 @@ function actionShuffleGeneration(state, { rng }) {
       });
     } else {
       Job.request(jobNewGeneration, {
-        genotypes: prev.toJS(),
-        populationSize: state.get('populationSize'),
-        traits: state.get('traits'),
-        mutationRate: state.get('mutationRate'),
+        genotypes: prev,
+        populationSize: state.populationSize,
+        traits: state.traits,
+        mutationRate: state.mutationRate,
         rng
       }).then(({ genotypes }) => {
-        const im = Immutable.fromJS(genotypes);
-
-        currentState = state
-          .set('genotypes', new Immutable.List(im))
-          .set('selectedIndices', new Immutable.List());
-
-        resolve(currentState);
+        state.genotypes = genotypes;
+        state.selectedIndices = [];
+        resolve(state);
       }).catch(error => {
         // handle error
         console.log(`worker: error of ${error}`);
@@ -125,29 +111,28 @@ function actionShuffleGeneration(state, { rng }) {
 
 function actionNextGeneration(state, { rng }) {
   return new Promise((resolve, reject) => {
-    const pg = state.get('genotypes');
-    const selectedIndices = state.get('selectedIndices');
-    let selectedGenos = new Immutable.List();
-    for (let i = 0; i < selectedIndices.size; i++) {
-      selectedGenos = selectedGenos.push(pg.get(selectedIndices.get(i)));
+    const pg = state.genotypes;
+    const selectedIndices = state.selectedIndices;
+    const selectedGenos = [];
+    for (let i = 0; i < selectedIndices.length; i++) {
+      selectedGenos.push(pg[selectedIndices[i]]);
     }
 
     Job.request(jobNewGeneration, {
-      genotypes: selectedGenos.toJS(),
-      populationSize: state.get('populationSize'),
-      traits: state.get('traits'),
-      mutationRate: state.get('mutationRate'),
+      genotypes: selectedGenos,
+      populationSize: state.populationSize,
+      traits: state.traits,
+      mutationRate: state.mutationRate,
       rng
     }).then(({ genotypes }) => {
-      const im = Immutable.fromJS(genotypes);
-      const previouslySelectedGenotypes = im.slice(0, selectedIndices.size);
+      const previouslySelectedGenotypes =
+            genotypes.slice(0, selectedIndices.length);
 
-      currentState = state
-        .set('genotypes', im)
-        .set('previouslySelectedGenotypes', previouslySelectedGenotypes)
-        .set('selectedIndices', new Immutable.List());
+      state.genotypes = genotypes;
+      state.previouslySelectedGenotypes = previouslySelectedGenotypes;
+      state.selectedIndices = [];
 
-      resolve(currentState);
+      resolve(state);
     }).catch(error => {
       // handle error
       console.log(`worker: error of ${error}`);
@@ -158,19 +143,12 @@ function actionNextGeneration(state, { rng }) {
 
 function wrapInPromise(state) {
   return new Promise((resolve, _reject) => {
-    currentState = state;
-    resolve(currentState);
+    resolve(state);
   });
 }
 
-/**
- * Creates the immutable SeniState
- *
- * @private
- * @returns {Immutable Map} a basic SeniState with a valid renderer and env
- */
 export function createInitialState() {
-  return Immutable.fromJS({
+  return {
     // the resolution of the high res image
     highResolution: [2048, 2048],
     placeholder: 'img/spinner.gif',
@@ -184,7 +162,7 @@ export function createInitialState() {
     scriptHash: undefined,
     genotypes: [],
     traits: []
-  });
+  };
 }
 
 export function createStore(initialState) {

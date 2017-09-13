@@ -17,7 +17,6 @@
  */
 
 import { SeniMode } from './SeniMode';
-import Immutable from 'immutable';
 
 const logToConsole = false;
 
@@ -35,8 +34,8 @@ function seniModeAsString(mode) {
 }
 
 function buildState(appState) {
-  const state = appState.toJS();
-  const currentMode = appState.get('currentMode');
+  const state = appState;
+  const currentMode = appState.currentMode;
   const uri = `#${seniModeAsString(currentMode)}`;
   return [state, uri];
 }
@@ -61,13 +60,8 @@ function restoreState(state) {
   if (logToConsole) {
     console.log('historyRestore', state);
   }
-  const allImmutable = Immutable.fromJS(state);
 
-  // hack: state.traits is expected to consist of JS data structures
-  // so convert that part of allImmutable back into JS
-  //
-  const immutableTraits = allImmutable.get('traits');
-  return allImmutable.set('traits', immutableTraits.toJS());
+  return state;
 }
 
 export default {

@@ -16,7 +16,6 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Immutable from 'immutable';
 import GLRenderer from './seni/GLRenderer';
 
 import History from './ui/History';
@@ -116,21 +115,21 @@ function showButtonsFor(mode) {
 function showCurrentMode(state) {
   // show the current container, hide the others
   const containers = gUI.containers;
-  const currentMode = state.get('currentMode');
+  const currentMode = state.currentMode;
 
   for (let i = 0; i < SeniMode.numSeniModes; i++) {
-    containers.get(i).className = i === currentMode ? '' : 'hidden';
+    containers[i].className = i === currentMode ? '' : 'hidden';
   }
   showButtonsFor(currentMode);
 }
 
 function showPlaceholderImages(state) {
-  const placeholder = state.get('placeholder');
-  const populationSize = state.get('populationSize');
+  const placeholder = state.placeholder;
+  const populationSize = state.populationSize;
   const phenotypes = gUI.phenotypes;
 
   for (let i = 0; i < populationSize; i++) {
-    const imageElement = phenotypes.getIn([i, 'imageElement']);
+    const imageElement = phenotypes[i].imageElement;
     imageElement.src = placeholder;
   }
 }
@@ -143,7 +142,7 @@ function afterLoadingPlaceholderImages(state) {
     const phenotypes = gUI.phenotypes;
 
     return phenotypes.every(phenotype => {
-      const imageElement = phenotype.get('imageElement');
+      const imageElement = phenotype.imageElement;
       const loaded = imageElement.getAttribute('data-image-load-timestamp');
       return loaded > timeStamp;
     });
@@ -170,17 +169,17 @@ function afterLoadingPlaceholderImages(state) {
 // update the selected phenotypes in the evolve screen according to the
 // values in selectedIndices
 function updateSelectionUI(state) {
-  const selectedIndices = state.get('selectedIndices');
-  const populationSize = state.get('populationSize');
+  const selectedIndices = state.selectedIndices;
+  const populationSize = state.populationSize;
   const phenotypes = gUI.phenotypes;
 
   for (let i = 0; i < populationSize; i++) {
-    const element = phenotypes.getIn([i, 'phenotypeElement']);
+    const element = phenotypes[i].phenotypeElement;
     element.classList.remove('selected');
   }
 
   selectedIndices.forEach(i => {
-    const element = gUI.phenotypes.getIn([i, 'phenotypeElement']);
+    const element = phenotypes[i].phenotypeElement;
     element.classList.add('selected');
     return true;
   });
@@ -214,10 +213,10 @@ function renderGeometryBuffers(jobType, memory, buffers, imageElement, w, h) {
 
 function renderGeneration(state) {
   return new Promise((resolve, _reject) => {
-    const script = state.get('script');
-    const scriptHash = state.get('scriptHash');
+    const script = state.script;
+    const scriptHash = state.scriptHash;
 
-    const genotypes = state.get('genotypes');
+    const genotypes = state.genotypes;
 
     // TODO: stop generating  if the user has switched to edit mode
     const phenotypes = gUI.phenotypes;
@@ -228,13 +227,13 @@ function renderGeneration(state) {
 
     const stopFn = startTiming();
 
-    for (let i = 0;i < phenotypes.size; i++) {
+    for (let i = 0;i < phenotypes.length; i++) {
       const workerJob = Job.request(jobRenderWasm, {
         script,
         scriptHash,
-        genotype: genotypes.get(i)
+        genotype: genotypes[i]
       }).then(({ title , memory, buffers }) => {
-        const imageElement = phenotypes.getIn([i, 'imageElement']);
+        const imageElement = phenotypes[i].imageElement;
         renderGeometryBuffers(jobRenderWasm, memory, buffers, imageElement);
         hackTitle = title;
       }).catch(error => {
@@ -275,7 +274,7 @@ function setupEvolveUI(store) {
 function showScriptInEditor(state) {
   const editor = gUI.editor;
 
-  editor.getDoc().setValue(state.get('script'));
+  editor.getDoc().setValue(state.script);
   editor.refresh();
 }
 
@@ -283,8 +282,8 @@ function renderScript(state, imageElement) {
   const stopFn = startTiming();
 
   Job.request(jobRender, {
-    script: state.get('script'),
-    scriptHash: state.get('scriptHash')
+    script: state.script,
+    scriptHash: state.scriptHash
   }).then(({ title, buffers }) => {
     // display any log/print messages that were generated
     // during the execution of the script
@@ -301,8 +300,8 @@ function renderScriptWithWASM(state, imageElement) {
   const stopFn = startTiming();
 
   Job.request(jobRenderWasm, {
-    script: state.get('script'),
-    scriptHash: state.get('scriptHash')
+    script: state.script,
+    scriptHash: state.scriptHash
   }).then(({ title, memory, buffers }) => {
     // display any log/print messages that were generated
     // during the execution of the script
@@ -321,7 +320,7 @@ function renderScriptWithWASM(state, imageElement) {
 function updateUI(state) {
   showCurrentMode(state);
 
-  switch (state.get('currentMode')) {
+  switch (state.currentMode) {
   case SeniMode.gallery :
     break;
   case SeniMode.edit :
@@ -345,7 +344,7 @@ function updateUI(state) {
 
 function ensureMode(store, mode) {
   return new Promise((resolve, reject) => {
-    if (store.getState().get('currentMode') === mode) {
+    if (store.getState().currentMode === mode) {
       resolve();
       return;
     }
@@ -415,11 +414,11 @@ function renderHighRes(state, genotype) {
   const stopFn = startTiming();
 
   Job.request(jobRender, {
-    script: state.get('script'),
-    scriptHash: state.get('scriptHash'),
+    script: state.script,
+    scriptHash: state.scriptHash,
     genotype: genotype ? genotype : undefined
   }).then(({ title, buffers }) => {
-    const [width, height] = state.get('highResolution');
+    const [width, height] = state.highResolution;
 
     renderGeometryBuffers(jobRender, null, buffers, image, width, height);
 
@@ -450,12 +449,12 @@ function showEditFromEvolve(store, element) {
     const [index, _] = getPhenoIdFromDom(element);
     if (index !== -1) {
       const state = store.getState();
-      const genotypes = state.get('genotypes');
+      const genotypes = state.genotypes;
 
       Job.request(jobUnparse, {
-        script: state.get('script'),
-        scriptHash: state.get('scriptHash'),
-        genotype: genotypes.get(index)
+        script: state.script,
+        scriptHash: state.scriptHash,
+        genotype: genotypes[index]
       }).then(({ script }) => {
         setScript(store, script).then(() => {
           return ensureMode(store, SeniMode.edit);
@@ -477,20 +476,20 @@ function showEditFromEvolve(store, element) {
 
 function onNextGen(store) {
   // get the selected genotypes for the next generation
-  const populationSize = store.getState().get('populationSize');
+  const populationSize = store.getState().populationSize;
   const phenotypes = gUI.phenotypes;
-  let selectedIndices = new Immutable.List();
+  const selectedIndices = [];
 
   for (let i = 0; i < populationSize; i++) {
-    const element = phenotypes.getIn([i, 'phenotypeElement']);
+    const element = phenotypes[i].phenotypeElement;
     if (element.classList.contains('selected')) {
-      selectedIndices = selectedIndices.push(i);
+      selectedIndices.push(i);
     }
   }
 
   const command = {type: 'SET_SELECTED_INDICES', selectedIndices};
   store.dispatch(command).then(state => {
-    if (selectedIndices.size === 0) {
+    if (selectedIndices.length === 0) {
       // no phenotypes were selected
       return undefined;
     }
@@ -665,10 +664,9 @@ function setupUI(store) {
   const editorTextArea = d.getElementById('edit-textarea');
 
   gUI = {
-    // the 3 main UI areas, stored in an Immutable.List
-    containers: new Immutable.List([d.getElementById('gallery-container'),
-                                    d.getElementById('edit-container'),
-                                    d.getElementById('evolve-container')]),
+    containers: [d.getElementById('gallery-container'),
+                 d.getElementById('edit-container'),
+                 d.getElementById('evolve-container')],
     // the top nav bar across the state
     navbar: d.getElementById('seni-navbar'),
     // the img destination that shows the rendered script in edit mode
@@ -742,8 +740,8 @@ function setupUI(store) {
 
     if (target.classList.contains('render')) {
       if (index !== -1) {
-        const genotypes = store.getState().get('genotypes');
-        const genotype = genotypes.get(index);
+        const genotypes = store.getState().genotypes;
+        const genotype = genotypes[index];
         renderHighRes(store.getState(), genotype);
       }
     } else if (target.classList.contains('edit')) {
@@ -786,7 +784,7 @@ function setupUI(store) {
   const dKey = 68;
   document.addEventListener('keydown', event => {
     if (event.ctrlKey && event.keyCode === dKey &&
-        store.getState().get('currentMode') === SeniMode.evolve) {
+        store.getState().currentMode === SeniMode.evolve) {
       event.preventDefault();
       onNextGen(store);
     }
@@ -805,7 +803,7 @@ function setupUI(store) {
   row.className = 'cards';
   evolveGallery.appendChild(row);
 
-  const populationSize = store.getState().get('populationSize');
+  const populationSize = store.getState().populationSize;
   const phenotypes = [];
   for (let i = 0; i < populationSize; i++) {
     const phenotypeElement = createPhenotypeElement(i, '');
@@ -818,20 +816,20 @@ function setupUI(store) {
 
     row.appendChild(phenotypeElement);
 
-    phenotypes.push(new Immutable.Map({
+    phenotypes.push({
       phenotypeElement,
       imageElement
-    }));
+    });
   }
 
-  gUI.phenotypes = new Immutable.List(phenotypes);
+  gUI.phenotypes = phenotypes;
 
   window.addEventListener('popstate', event => {
     if (event.state) {
       const savedState = History.restoreState(event.state);
       store.dispatch({type: 'SET_STATE', state: savedState}).then(state => {
         updateUI(state);
-        if (state.get('currentMode') === SeniMode.evolve) {
+        if (state.currentMode === SeniMode.evolve) {
           restoreEvolveUI(store);
         }
       }).catch(error => {
@@ -933,9 +931,9 @@ function removeKonsoleInvisibility() {
 function allocateWorkers(state) {
   const defaultNumWorkers = 4;
   let numWorkers = navigator.hardwareConcurrency || defaultNumWorkers;
-  if (numWorkers > state.get('populationSize')) {
+  if (numWorkers > state.populationSize) {
     // don't allocate more workers than necessary
-    numWorkers = state.get('populationSize');
+    numWorkers = state.populationSize;
   }
   Job.setup(numWorkers);
 }
