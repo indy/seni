@@ -321,6 +321,11 @@ void var_pretty_print(char* msg, seni_var *var)
   char *type = var_type_name(var);
   seni_value_in_use using = get_var_value_in_use(var->type);
 
+  if(var->type == VAR_2D) {
+    SENI_PRINT("%s: %s : [%.2f %.2f]", msg,  type, var->f32_array[0], var->f32_array[1]);
+    return;
+  }
+    
   switch(using) {
   case USE_I:
     if (var->type == VAR_COLOUR) {

@@ -53,7 +53,7 @@ struct seni_genotype {
 
 seni_genotype *genotype_get_from_pool();
 void           genotype_return_to_pool(seni_genotype *genotype);
-seni_genotype *genotype_build(seni_vm *vm, seni_env *env, seni_trait_list *trait_list, i32 seed);
+seni_genotype *genotype_build_from_program(seni_trait_list *trait_list, seni_vm *vm, seni_env *env, i32 seed);
 seni_genotype *genotype_build_from_initial_values(seni_trait_list *trait_list);
 seni_genotype *genotype_clone(seni_genotype *genotype);
 seni_genotype *genotype_crossover(seni_genotype *a, seni_genotype *b, i32 crossover_index, i32 genotype_length);

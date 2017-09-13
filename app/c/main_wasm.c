@@ -381,7 +381,12 @@ bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_ra
     return false;
   }
 
-  seni_genotype_list *new_generation = genotype_list_next_generation(g_genotype_list, parent_size, population_size, mutation_rate, rng, trait_list);
+  seni_genotype_list *new_generation = genotype_list_next_generation(g_genotype_list,
+                                                                     parent_size,
+                                                                     population_size,
+                                                                     mutation_rate,
+                                                                     rng,
+                                                                     trait_list);
 
   trait_list_return_to_pool(trait_list);
   
