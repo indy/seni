@@ -749,7 +749,7 @@ seni_var *bind_col_convert(seni_vm *vm, i32 num_args)
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_I32(INAME_FORMAT, format);
+  READ_STACK_ARG_NAME(INAME_FORMAT, format);
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
