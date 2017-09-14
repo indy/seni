@@ -44,10 +44,22 @@ void gene_assign_to_node(seni_genotype *genotype, seni_node *node)
   }
 }
 
-void genotype_assign_to_ast(seni_genotype *genotype, seni_node *ast)
+bool genotype_assign_to_ast(seni_genotype *genotype, seni_node *ast)
 {
   genotype->current_gene = genotype->genes;
   gene_assign_to_node(genotype, ast);
+
+  // current gene should be null since traversing the ast
+  // and assigning genes to alterable nodes should have
+  // resulted in all of the genes being assigned
+  //
+  seni_gene *gene = genotype->current_gene;
+  if (gene != NULL) {
+    SENI_ERROR("genotype_assign_to_ast: genes remaining after assigning genotype to ast");
+    return false;
+  }
+
+  return true;
 }
 
 i32 get_node_value_i32_from_gene(seni_node *node)
@@ -1725,7 +1737,12 @@ seni_program *compile_program(seni_node *ast, i32 program_max_size, seni_word_lu
 seni_program *compile_program_with_genotype(seni_node *ast, i32 program_max_size, seni_word_lut *word_lut, seni_genotype *genotype)
 {
   g_use_genes = true;
-  genotype_assign_to_ast(genotype, ast);
+  
+  bool all_genes_assigned = genotype_assign_to_ast(genotype, ast);
+  if (all_genes_assigned == false) {
+    SENI_ERROR("not all genes were assigned");
+    return NULL;
+  }
   
   seni_program *program = compile_program_common(ast, program_max_size, word_lut);  
 

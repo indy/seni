@@ -881,7 +881,7 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
   seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
 
   // using the vm to build the genes
-  seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
+  seni_genotype *genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
 
   trait_list_return_to_pool(trait_list);
   parser_return_nodes_to_pool(ast);
@@ -911,7 +911,7 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   // program_pretty_print(trait->program);
 
   // using the vm to build the genes
-  seni_genotype *genotype = genotype_build(vm, env, trait_list, seed_value);
+  seni_genotype *genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
 
   i32 unparsed_source_size = 1024;
   char *unparsed_source = (char *)calloc(unparsed_source_size, sizeof(char));

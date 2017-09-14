@@ -508,28 +508,28 @@ bool trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer)
 
 // gene
 
-seni_gene *gene_build(seni_vm *vm, seni_env *env, seni_trait *trait)
+seni_gene *gene_build_from_program(seni_vm *vm, seni_env *env, seni_program *program)
 {
   // todo: possibly implement a 'soft-reset' which is quicker than a vm_reset?
   vm_reset(vm);
 
-  bool res = vm_interpret(vm, env, trait->program);
+  bool res = vm_interpret(vm, env, program);
   if (res == false) {
     return NULL;
   }
 
   seni_gene *gene = gene_get_from_pool();
 
-  var_copy(gene->var, &(vm->stack[vm->sp - 1])); // is this right?
+  var_copy(gene->var, &(vm->stack[vm->sp - 1]));
 
   return gene;
 }
 
-seni_gene *gene_build_from_initial_value(seni_trait *trait)
+seni_gene *gene_build_from_initial_value(seni_var *initial_value)
 {
-  seni_gene *gene = gene_get_from_pool(); //  gene_allocate();
+  seni_gene *gene = gene_get_from_pool();
 
-  var_copy(gene->var, trait->initial_value);
+  var_copy(gene->var, initial_value);
   
   return gene;  
 }
@@ -550,7 +550,7 @@ void genotype_add_gene(seni_genotype *genotype, seni_gene *gene)
   DL_APPEND(genotype->genes, gene);
 }
 
-seni_genotype *genotype_build(seni_vm *vm, seni_env *env, seni_trait_list *trait_list, i32 seed)
+seni_genotype *genotype_build_from_program(seni_trait_list *trait_list, seni_vm *vm, seni_env *env, i32 seed)
 {
   // the seed is set once per genotype (should it be once per-gene?)
   //
@@ -560,12 +560,12 @@ seni_genotype *genotype_build(seni_vm *vm, seni_env *env, seni_trait_list *trait
 
   seni_trait *trait = trait_list->traits;
   while (trait != NULL) {
-    seni_gene *gene = gene_build(vm, env, trait);
+    seni_gene *gene = gene_build_from_program(vm, env, trait->program);
 
     if (gene != NULL) {
       genotype_add_gene(genotype, gene);
     } else {
-      SENI_ERROR("gene_build returned NULL gene");
+      SENI_ERROR("gene_build_from_program returned NULL gene");
       genotype_return_to_pool(genotype);
       return NULL;
     }
@@ -582,12 +582,12 @@ seni_genotype *genotype_build_from_initial_values(seni_trait_list *trait_list)
 
   seni_trait *trait = trait_list->traits;
   while (trait != NULL) {
-    seni_gene *gene = gene_build_from_initial_value(trait);
+    seni_gene *gene = gene_build_from_initial_value(trait->initial_value);
 
     if (gene != NULL) {
       genotype_add_gene(genotype, gene);
     } else {
-      SENI_ERROR("gene_build returned NULL gene");
+      SENI_ERROR("gene_build_from_initial_value returned NULL gene");
       genotype_return_to_pool(genotype);
       return NULL;
     }
@@ -703,13 +703,6 @@ seni_gene *genotype_pull_gene(seni_genotype *genotype)
   return gene;
 }
 
-
-// todo: add mutation_rate, traits, env and vm
-// void random_crossover(seni_genotype *a, seni_genotype *b, i32 genotype_length)
-// {
-//   // assuming that both genotypes are of the given length
-// }
-
 void genotype_list_add_genotype(seni_genotype_list *genotype_list, seni_genotype *genotype)
 {
   DL_APPEND(genotype_list->genotypes, genotype);
@@ -795,19 +788,6 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
   seni_genotype *genotype = genotype_build_from_initial_values(trait_list);
   genotype_list_add_genotype(genotype_list, genotype);
 
-  /*
-    the genotype_build function (or vm setup) seems to be crashing wasm
-   */
-  //#define GENO_HACK
-#ifdef GENO_HACK
-
-  for (i32 i = 1; i < population_size; i++) {
-    genotype = genotype_build_from_initial_values(trait_list);
-    genotype_list_add_genotype(genotype_list, genotype);
-  }
-
-#else
-
   // fill out the remaining population with generated values
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
@@ -815,17 +795,61 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
   i32 seed_value = 42;
   for (i32 i = 1; i < population_size; i++) {
     seed_value += 1425;
-    genotype = genotype_build(vm, env, trait_list, seed_value);
+    genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
     genotype_list_add_genotype(genotype_list, genotype);
   }
 
   env_free(env);
   vm_free(vm);
 
-#endif
-  
-
   return genotype_list;
+}
+
+// mutates the gene and the prng_state
+void gene_generate_new_var(seni_gene *gene, seni_trait *trait, seni_prng_state *prng_state)
+{
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_allocate();
+
+  seni_prng_copy(vm->prng_state, prng_state);
+
+  bool res = vm_interpret(vm, env, trait->program);
+  if (res == false) {
+    SENI_ERROR("gene_generate_new_var: vm_interpret returned false");
+    return;
+  }
+
+  var_copy(gene->var, &(vm->stack[vm->sp - 1]));
+
+  // now update the prng_state
+  seni_prng_copy(prng_state, vm->prng_state);
+  env_free(env);
+  vm_free(vm);
+}
+
+seni_genotype *genotype_possibly_mutate(seni_genotype *genotype,
+                                        i32 genotype_length,
+                                        f32 mutation_rate,
+                                        seni_prng_state *prng_state,
+                                        seni_trait_list *trait_list)
+{
+  seni_gene *gene = genotype->genes;
+  seni_trait *trait = trait_list->traits;
+  f32 prng_num = 0.0f;
+
+  for (i32 i = 0; i < genotype_length; i++) {
+    prng_num = seni_prng_f32(prng_state);
+    if (prng_num < mutation_rate) {
+      // SENI_LOG("we have a mutation! (index: %d mutation_rate: %.3f, random number: %.3f)", i, mutation_rate, prng_num);
+      // replace the var in gene with a newly created one
+      gene_generate_new_var(gene, trait, prng_state);
+    }
+
+    gene = gene->next;
+    trait = trait->next;
+  }
+
+  return genotype;
 }
 
 seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
@@ -835,10 +859,6 @@ seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
                                                   i32 rng,
                                                   seni_trait_list *trait_list)
 {
-  // pleasing the compiler
-  trait_list = NULL;
-  mutation_rate = 0;
-  
   seni_genotype_list *genotype_list = genotype_list_get_from_pool();
 
   i32 population_remaining = population_size;
@@ -852,13 +872,11 @@ seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
     parent_genotype = parent_genotype->next;
     population_remaining--;
   }
+  genotype = NULL;              // going to re-use the genotype variable later
 
-  SENI_PRINT("genotype_list_next_generation: rng = %d", rng);
   seni_prng_state prng_state;
   seni_prng_set_state(&prng_state, (u64)rng);
   i32 retry_count = 10;
-  
-  SENI_PRINT("num_parents = %d", num_parents);
   
   while (population_remaining) {
     u32 a_index = seni_prng_i32_range(&prng_state, 0, num_parents - 1);
@@ -872,7 +890,6 @@ seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
     if (b_index == a_index) {
       b_index = (a_index + 1) % num_parents;
     }
-    SENI_PRINT("a_index = %d, b_index = %d", a_index, b_index);
 
     seni_genotype *a = genotype_list_get_genotype(parents, a_index);
     seni_genotype *b = genotype_list_get_genotype(parents, b_index);
@@ -880,16 +897,13 @@ seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
     i32 genotype_length = genotype_count(a);
     i32 crossover_index = seni_prng_i32_range(&prng_state, 0, genotype_length - 1);
 
-    SENI_PRINT("genotype_length %d, crossover_index %d", genotype_length, crossover_index);
+    genotype = genotype_crossover(a, b, crossover_index, genotype_length);
+    genotype = genotype_possibly_mutate(genotype, genotype_length, mutation_rate, &prng_state, trait_list);
     
-    seni_genotype *g = genotype_crossover(a, b, crossover_index, genotype_length);
-    genotype_list_add_genotype(genotype_list, g);
+    genotype_list_add_genotype(genotype_list, genotype);
 
     population_remaining--;
   }
 
-  i32 final_count = genotype_list_count(genotype_list);
-  SENI_PRINT("population_size = %d, final_count = %d", population_size, final_count);
-  
   return genotype_list;
 }

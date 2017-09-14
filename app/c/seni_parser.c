@@ -26,7 +26,7 @@ struct seni_node_pool *g_node_pool;
 
 void parser_pools_startup()
 {
-  g_node_pool = node_pool_allocate(1, 1000, 10);
+  g_node_pool = node_pool_allocate(1, 1000, 20);
 }
 
 void parser_pools_shutdown()

@@ -7,6 +7,7 @@ struct seni_prng_state {
 };
 
 void seni_prng_set_state(seni_prng_state *prng_state, u64 seed);
+void seni_prng_copy(seni_prng_state *dest_prng_state, seni_prng_state *src_prng_state);
 
 i32 seni_prng_i32_range(seni_prng_state* prng_state, i32 min, i32 max);
 

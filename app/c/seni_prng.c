@@ -167,6 +167,12 @@ void seni_prng_set_state(seni_prng_state *prng_state, u64 seed)
   rnd_pcg_seed((rnd_pcg_t *)prng_state, (u32)seed);
 }
 
+void seni_prng_copy(seni_prng_state *dest_prng_state, seni_prng_state *src_prng_state)
+{
+  dest_prng_state->state[0] = src_prng_state->state[0];
+  dest_prng_state->state[1] = src_prng_state->state[1];
+}
+
 i32 seni_prng_i32_range(seni_prng_state* prng_state, i32 min, i32 max)
 {
   i32 res = rnd_pcg_range((rnd_pcg_t *)prng_state, min, max);
