@@ -209,7 +209,7 @@ typedef seni_var *(*native_function_ptr)(struct seni_vm *vm, i32 num_args);
 struct seni_env {
   native_function_ptr function_ptr[MAX_NATIVE_LOOKUPS];
 
-  seni_word_lut *wl;
+  seni_word_lut *word_lut;
 };
 
 seni_env      *env_allocate();

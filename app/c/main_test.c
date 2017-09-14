@@ -876,9 +876,9 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
   seni_shapes_init_globals();
   uv_mapper_init();
 
-  seni_node *ast = parser_parse(env->wl, source);
+  seni_node *ast = parser_parse(env->word_lut, source);
 
-  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
 
   // using the vm to build the genes
   seni_genotype *genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
@@ -903,9 +903,9 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   seni_shapes_init_globals();
   uv_mapper_init();
 
-  seni_node *ast = parser_parse(env->wl, source);
+  seni_node *ast = parser_parse(env->word_lut, source);
 
-  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
 
   // seni_trait *trait = trait_list->traits;
   // program_pretty_print(trait->program);
@@ -918,7 +918,7 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
 
   seni_text_buffer *text_buffer = text_buffer_allocate(unparsed_source, unparsed_source_size);
   
-  unparse(text_buffer, env->wl, ast, genotype);
+  unparse(text_buffer, env->word_lut, ast, genotype);
 
   if (expected != NULL) {
     TEST_ASSERT_EQUAL_STRING(expected, unparsed_source);
@@ -1542,8 +1542,8 @@ void test_serialization_trait_list(void)
   seni_shapes_init_globals();
   uv_mapper_init();
 
-  seni_node *ast = parser_parse(env->wl, source);
-  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+  seni_node *ast = parser_parse(env->word_lut, source);
+  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
 
   i32 buffer_size = 4096;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));

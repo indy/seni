@@ -644,22 +644,22 @@ bool bytecode_deserialize(seni_bytecode *out, seni_text_buffer *text_buffer)
 seni_env *env_allocate()
 {
   seni_env *e = (seni_env *)calloc(1, sizeof(seni_env));
-  e->wl = wlut_allocate();
+  e->word_lut = wlut_allocate();
 
-  declare_bindings(e->wl, e);
+  declare_bindings(e->word_lut, e);
   
   return e;
 }
 
 void env_free(seni_env *e)
 {
-  wlut_free(e->wl);
+  wlut_free(e->word_lut);
   free(e);
 }
 
 void env_post_interpret_cleanup(seni_env *e)
 {
-  wlut_reset_words(e->wl);
+  wlut_reset_words(e->word_lut);
 }
 
 // **************************************************
@@ -702,9 +702,9 @@ void program_free(seni_program *program)
 
 seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
 {
-  seni_node *ast = parser_parse(env->wl, source);
+  seni_node *ast = parser_parse(env->word_lut, source);
 
-  seni_program *program = compile_program(ast, program_max_size, env->wl);
+  seni_program *program = compile_program(ast, program_max_size, env->word_lut);
   
   parser_return_nodes_to_pool(ast);
 
@@ -713,9 +713,9 @@ seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
 
 seni_program  *program_compile_with_genotype(seni_env *env, i32 program_max_size, char *source, seni_genotype *genotype)
 {
-  seni_node *ast = parser_parse(env->wl, source);
+  seni_node *ast = parser_parse(env->word_lut, source);
 
-  seni_program *program = compile_program_with_genotype(ast, program_max_size, env->wl, genotype);
+  seni_program *program = compile_program_with_genotype(ast, program_max_size, env->word_lut, genotype);
   
   parser_return_nodes_to_pool(ast);
 

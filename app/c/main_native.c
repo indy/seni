@@ -90,9 +90,9 @@ void execute_source(char *source)
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  seni_node *ast = parser_parse(env->wl, source);
+  seni_node *ast = parser_parse(env->word_lut, source);
 
-  seni_program *program = compile_program(ast, MAX_PROGRAM_SIZE, env->wl);
+  seni_program *program = compile_program(ast, MAX_PROGRAM_SIZE, env->word_lut);
 
   parser_return_nodes_to_pool(ast);
 
@@ -151,14 +151,14 @@ void execute_source_with_seed(char *source, i32 seed_value)
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  seni_node *ast = parser_parse(env->wl, source);
+  seni_node *ast = parser_parse(env->word_lut, source);
   
-  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->wl);
+  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
   
   // using the vm to build the genes
   seni_genotype *genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
   
-  seni_program *program = compile_program_with_genotype(ast, MAX_PROGRAM_SIZE, env->wl, genotype);
+  seni_program *program = compile_program_with_genotype(ast, MAX_PROGRAM_SIZE, env->word_lut, genotype);
 
   parser_return_nodes_to_pool(ast);
   

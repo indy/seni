@@ -17,6 +17,7 @@
 
 #define SOURCE_BUFFER_SIZE 20000
 char *g_source_buffer;
+
 char *g_out_source_buffer;
 seni_text_buffer *g_out_source_text_buffer;
 
@@ -242,8 +243,8 @@ i32 build_traits()
   debug_size_source_buffer();
 
   TIMING_UNIT timing_a = get_timing();
-  seni_node *ast = parser_parse(g_e->wl, g_source_buffer);
-  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, g_e->wl);
+  seni_node *ast = parser_parse(g_e->word_lut, g_source_buffer);
+  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, g_e->word_lut);
   i32 num_traits = trait_list_count(trait_list);
   // g_traits_text_buffer is wrapping g_traits_buffer
   text_buffer_reset(g_traits_text_buffer);
@@ -456,11 +457,11 @@ void unparse_with_genotype()
 
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
-  seni_node *ast = parser_parse(env->wl, g_source_buffer);
+  seni_node *ast = parser_parse(env->word_lut, g_source_buffer);
 
   text_buffer_reset(g_out_source_text_buffer);
 
-  unparse(g_out_source_text_buffer, env->wl, ast, genotype);
+  unparse(g_out_source_text_buffer, env->word_lut, ast, genotype);
 
   parser_return_nodes_to_pool(ast);
   env_free(env);
