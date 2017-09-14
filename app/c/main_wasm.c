@@ -15,15 +15,16 @@
 #include "seni_vm_interpreter.h"
 #include "seni_unparser.h"
 
-#define SOURCE_BUFFER_SIZE 80000
+#define SOURCE_BUFFER_SIZE 20000
 char *g_source_buffer;
 char *g_out_source_buffer;
+seni_text_buffer *g_out_source_text_buffer;
 
 #define TRAITS_BUFFER_SIZE 80000
 char *g_traits_buffer;
 seni_text_buffer *g_traits_text_buffer;
 
-#define GENOTYPE_BUFFER_SIZE 80000
+#define GENOTYPE_BUFFER_SIZE 5000
 bool g_use_genotype_when_compiling;
 char *g_genotype_buffer;
 seni_text_buffer *g_genotype_text_buffer;
@@ -33,6 +34,32 @@ seni_vm *g_vm = NULL;
 seni_env *g_e = NULL;
 
 // #define SHOW_WASM_CALLS
+
+
+void debug_size_source_buffer()
+{
+  size_t len = strlen(g_source_buffer);
+  SENI_LOG("g_source_buffer size %d", len);
+}
+
+void debug_size_out_source_buffer()
+{
+  size_t len = strlen(g_out_source_buffer);
+  SENI_LOG("g_out_source_buffer size %d", len);
+}
+
+void debug_size_traits_buffer()
+{
+  size_t len = strlen(g_traits_buffer);
+  SENI_LOG("g_traits_buffer size %d", len);
+}
+
+void debug_size_genotype_buffer()
+{
+  size_t len = strlen(g_genotype_buffer);
+  SENI_LOG("g_genotye_buffer size %d", len);
+}
+
 
 // called once at startup
 export
@@ -57,7 +84,9 @@ void seni_startup()
   g_e = env_allocate();
 
   g_source_buffer = (char *)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
+
   g_out_source_buffer = (char *)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
+  g_out_source_text_buffer = text_buffer_allocate(g_out_source_buffer, SOURCE_BUFFER_SIZE);
 
   g_traits_buffer = (char *)calloc(TRAITS_BUFFER_SIZE, sizeof(char));
   g_traits_text_buffer = text_buffer_allocate(g_traits_buffer, TRAITS_BUFFER_SIZE);
@@ -76,6 +105,7 @@ void seni_shutdown()
   SENI_LOG("seni_shutdown");
 #endif
 
+  text_buffer_free(g_out_source_text_buffer);
   text_buffer_free(g_traits_text_buffer);
   
   free(g_source_buffer);
@@ -105,6 +135,9 @@ int compile_to_render_packets(void)
   
   //TIMING_UNIT timing_a = get_timing();
 
+  debug_size_source_buffer();
+  debug_size_genotype_buffer();
+  
   vm_reset(g_vm);
 
   seni_program *program = NULL;
@@ -206,6 +239,8 @@ i32 build_traits()
   SENI_LOG("build_traits");
 #endif
 
+  debug_size_source_buffer();
+
   TIMING_UNIT timing_a = get_timing();
   seni_node *ast = parser_parse(g_e->wl, g_source_buffer);
   seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, g_e->wl);
@@ -218,12 +253,13 @@ i32 build_traits()
     SENI_ERROR("trait_list_serialize returned false");
   }
   text_buffer_write_null(g_traits_text_buffer);
-  // text_buffer_free(text_buffer);
   trait_list_return_to_pool(trait_list);
   parser_return_nodes_to_pool(ast);
   
   f32 delta = timing_delta_from(timing_a);
   SENI_PRINT("build_traits: total c-side time taken %.2f ms", delta);
+
+  debug_size_traits_buffer();
   
   return num_traits;
 }
@@ -231,6 +267,8 @@ i32 build_traits()
 export
 i32 create_initial_generation(i32 population_size)
 {
+  debug_size_traits_buffer();
+  
   // read in traits and create an array of genotypes
   text_buffer_reset(g_traits_text_buffer);
   seni_trait_list *trait_list = trait_list_get_from_pool();
@@ -280,6 +318,8 @@ void genotype_move_to_buffer(i32 index)
   if (res == false) {
     SENI_ERROR("genotype_move_to_buffer: genotype_serialize returned false (for index %d)", index);
   }
+
+  debug_size_genotype_buffer();
 }
 
 // called once by js once it has finished with the render packets and that memory can be free'd
@@ -355,6 +395,8 @@ void next_generation_prepare()
 export
 void next_generation_add_genotype()
 {
+  debug_size_genotype_buffer();
+    
   seni_genotype *genotype = genotype_get_from_pool();
   
   text_buffer_reset(g_genotype_text_buffer);
@@ -366,6 +408,9 @@ void next_generation_add_genotype()
 export
 bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_rate, i32 rng)
 {
+
+  debug_size_traits_buffer();
+  
   // confirm that we have parent_size genotypes in g_genotype_list
   i32 count = genotype_list_count(g_genotype_list);
   if (count != parent_size) {
@@ -402,6 +447,9 @@ bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_ra
 export
 void unparse_with_genotype()
 {
+  debug_size_genotype_buffer();
+  debug_size_source_buffer();
+  
   seni_genotype *genotype = genotype_get_from_pool();
   text_buffer_reset(g_genotype_text_buffer);
   genotype_deserialize(genotype, g_genotype_text_buffer);
@@ -409,15 +457,15 @@ void unparse_with_genotype()
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
   seni_node *ast = parser_parse(env->wl, g_source_buffer);
-  seni_text_buffer *text_buffer = text_buffer_allocate(g_out_source_buffer, SOURCE_BUFFER_SIZE);
 
-  //SENI_LOG("before: %s", g_source_buffer);
-  unparse(text_buffer, env->wl, ast, genotype);
-  //SENI_LOG("after: %s", g_out_source_buffer);
+  text_buffer_reset(g_out_source_text_buffer);
 
-  text_buffer_free(text_buffer);
+  unparse(g_out_source_text_buffer, env->wl, ast, genotype);
+
   parser_return_nodes_to_pool(ast);
   env_free(env);
   vm_free(vm);
   genotype_return_to_pool(genotype);
+
+  debug_size_out_source_buffer();
 }
