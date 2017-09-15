@@ -2,7 +2,7 @@
 
 #include "seni_types.h"
   
-void seni_shapes_init_globals();
+void shapes_subsystem_startup();
 
 void render_line(seni_render_data *render_data,
                  seni_matrix *matrix,

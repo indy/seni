@@ -10,6 +10,7 @@
 #include "seni_uv_mapper.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
+#include "seni_lib.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -77,15 +78,11 @@ void execute_source(char *source)
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
-  lang_pools_startup();
-  parser_pools_startup();
-  ga_pools_startup();
-  seni_shapes_init_globals();
-  uv_mapper_init();
-  compiler_startup();
-  
-  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_allocate();
+
+  seni_systems_startup();
+
+  seni_vm *vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = seni_allocate_env();
 
   TIMING_UNIT construct_stop = get_timing();
   
@@ -93,13 +90,8 @@ void execute_source(char *source)
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  seni_node *ast = parser_parse(env->word_lut, source);
+  seni_program *program = seni_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
 
-  seni_program *program = compile_program(ast, MAX_PROGRAM_SIZE, env->word_lut);
-
-  parser_return_nodes_to_pool(ast);
-
-  
   TIMING_UNIT compilation_stop = get_timing();
 
   // execute
@@ -129,14 +121,10 @@ void execute_source(char *source)
   //
   program_free(program);
   
-  env_free(env);
-  vm_free(vm);
+  seni_free_env(env);
+  seni_free_vm(vm);
 
-  compiler_shutdown();
-  uv_mapper_free();
-  ga_pools_shutdown();
-  parser_pools_shutdown();
-  lang_pools_shutdown();
+  seni_systems_shutdown();
 }
 
 void execute_source_with_seed(char *source, i32 seed_value)
@@ -144,15 +132,10 @@ void execute_source_with_seed(char *source, i32 seed_value)
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
-  lang_pools_startup();
-  parser_pools_startup();
-  ga_pools_startup();
-  seni_shapes_init_globals();
-  uv_mapper_init();
-  compiler_startup();
+  seni_systems_startup();
 
-  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_allocate();
+  seni_vm *vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = seni_allocate_env();
 
   TIMING_UNIT construct_stop = get_timing();
   
@@ -207,27 +190,22 @@ void execute_source_with_seed(char *source, i32 seed_value)
   trait_list_return_to_pool(trait_list);
   program_free(program);
   
-  env_free(env);
-  vm_free(vm);
+  seni_free_env(env);
+  seni_free_vm(vm);
 
-  compiler_shutdown();
-  uv_mapper_free();
-  ga_pools_shutdown();
-  parser_pools_shutdown();
-  lang_pools_shutdown();
+  seni_systems_shutdown();
 }
 
 void print_compiled_program(char *source)
 {
   // construct
-  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *e = env_allocate();
-  lang_pools_startup();
-  parser_pools_startup();
-  compiler_startup();
+  seni_systems_startup();
+  
+  seni_vm *vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *e = seni_allocate_env();
 
   // compile program
-  seni_program *program = program_compile(e, MAX_PROGRAM_SIZE, source);
+  seni_program *program = seni_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
 
   // print
   printf("%s\n", source);
@@ -235,12 +213,10 @@ void print_compiled_program(char *source)
 
   // cleanup
   program_free(program);
-  env_free(e);
-  vm_free(vm);
+  seni_free_env(e);
+  seni_free_vm(vm);
 
-  compiler_shutdown();
-  parser_pools_shutdown();
-  lang_pools_shutdown();
+  seni_systems_shutdown();
 }
 
 void print_usage()

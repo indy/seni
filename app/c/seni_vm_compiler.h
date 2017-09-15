@@ -2,8 +2,8 @@
 
 #include "seni_types.h"
 
-void compiler_startup();
-void compiler_shutdown();
+void compiler_subsystem_startup();
+void compiler_subsystem_shutdown();
 
 seni_program *get_preamble_program();
 

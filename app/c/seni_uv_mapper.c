@@ -29,7 +29,7 @@ void allocate_uv_mapping(seni_brush_type type, i32 sub_type,
   make_uv(&(m->map[6]), &(m->map[7]), (f32)min_x, (f32)max_y);
 }
 
-void uv_mapper_init()
+void uv_mapper_subsystem_startup()
 {
   g_brush_info = (seni_uv_mapping **)calloc(NUM_BRUSHES, sizeof(seni_uv_mapping *));
 
@@ -93,7 +93,7 @@ void free_uv_mapping(seni_brush_type type)
   free(m);
 }
 
-void uv_mapper_free()
+void uv_mapper_subsystem_shutdown()
 {
   free_uv_mapping(BRUSH_FLAT);
   free_uv_mapping(BRUSH_A);

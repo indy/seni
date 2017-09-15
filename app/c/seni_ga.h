@@ -2,8 +2,8 @@
 
 #include "seni_types.h"
 
-void ga_pools_startup();
-void ga_pools_shutdown();
+void ga_subsystem_startup();
+void ga_subsystem_shutdown();
 
 struct seni_trait {
   i32 id;

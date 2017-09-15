@@ -14,7 +14,7 @@
 seni_matrix g_identity;
 seni_colour g_unseen_colour;
 
-void seni_shapes_init_globals()
+void shapes_subsystem_startup()
 {
   matrix_identity(&g_identity);
   colour_set(&g_unseen_colour, RGB, 0.0f, 0.0f, 0.0f, 0.0f);

@@ -662,11 +662,6 @@ void env_free(seni_env *e)
   free(e);
 }
 
-void env_post_interpret_cleanup(seni_env *e)
-{
-  wlut_reset_words(e->word_lut);
-}
-
 // **************************************************
 // Program
 // **************************************************
@@ -704,29 +699,6 @@ void program_free(seni_program *program)
   free(program->code);
   free(program);
 }
-
-seni_program *program_compile(seni_env *env, i32 program_max_size, char *source)
-{
-  seni_node *ast = parser_parse(env->word_lut, source);
-
-  seni_program *program = compile_program(ast, program_max_size, env->word_lut);
-  
-  parser_return_nodes_to_pool(ast);
-
-  return program;
-}
-
-seni_program  *program_compile_with_genotype(seni_env *env, i32 program_max_size, char *source, seni_genotype *genotype)
-{
-  seni_node *ast = parser_parse(env->word_lut, source);
-
-  seni_program *program = compile_program_with_genotype(ast, program_max_size, env->word_lut, genotype);
-  
-  parser_return_nodes_to_pool(ast);
-
-  return program;
-}
-  
 
 i32 program_stop_location(seni_program *program)
 {
@@ -1118,13 +1090,13 @@ void vm_debug_info_print(seni_vm *vm)
 
 #endif
 
-void lang_pools_startup()
+void lang_subsystem_startup()
 {
   // start with 1 slab of 100, allocate upto a max of 10 slabs
   g_var_pool = var_pool_allocate(1, 100, 50);  
 }
 
-void lang_pools_shutdown()
+void lang_subsystem_shutdown()
 {
   var_pool_free(g_var_pool);
 }

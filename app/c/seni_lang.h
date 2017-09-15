@@ -21,6 +21,7 @@ struct seni_word_lut {
 // word lookup
 seni_word_lut *wlut_allocate();
 void           wlut_free(seni_word_lut *wlut);
+void           wlut_reset_words(seni_word_lut *wlut);
 char          *wlut_get_word(seni_word_lut *word_lut, i32 iword);
 char          *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword);
 void           wlut_pretty_print(char *msg, seni_word_lut *word_lut);
@@ -214,7 +215,6 @@ struct seni_env {
 
 seni_env      *env_allocate();
 void           env_free(seni_env *e);
-void           env_post_interpret_cleanup(seni_env *e);
 
 struct seni_program {
   seni_bytecode *code;
@@ -244,8 +244,6 @@ bool           program_serialize(seni_text_buffer *text_buffer, seni_program *pr
 bool           program_deserialize(seni_program *out, seni_text_buffer *text_buffer);
 
 seni_program  *program_allocate(i32 code_max_size);
-seni_program  *program_compile(seni_env *env, i32 program_max_size, char *source);
-seni_program  *program_compile_with_genotype(seni_env *env, i32 program_max_size, char *source, seni_genotype *genotype);
 
 struct seni_vm {
   seni_program *program;
@@ -303,8 +301,8 @@ void      vm_debug_info_reset(seni_vm *vm);
 void      vm_debug_info_print(seni_vm *vm);
 
 
-void lang_pools_startup();
-void lang_pools_shutdown();
+void lang_subsystem_startup();
+void lang_subsystem_shutdown();
 // get/return seni_var from pool
 seni_var *var_get_from_pool();
 void var_return_to_pool(seni_var *var);

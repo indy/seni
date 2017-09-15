@@ -23,7 +23,7 @@ void register_top_level_preamble(seni_program *program);
 void compile_preamble(seni_program *program);
 seni_bytecode *program_emit_opcode_i32(seni_program *program, seni_opcode op, i32 arg0, i32 arg1);
 
-void compiler_startup()
+void compiler_subsystem_startup()
 {
   i32 program_max_size = 100; // ???
   seni_program *program = program_allocate(program_max_size);
@@ -41,7 +41,7 @@ void compiler_startup()
   g_preamble_program = program;
 }
 
-void compiler_shutdown()
+void compiler_subsystem_shutdown()
 {
   program_free(g_preamble_program);
 }

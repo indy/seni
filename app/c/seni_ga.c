@@ -173,7 +173,7 @@ void genotype_list_return_to_pool(seni_genotype_list *genotype_list)
   genotype_list_pool_return(g_genotype_list_pool, genotype_list);
 }
 
-void ga_pools_startup()
+void ga_subsystem_startup()
 {
   // create 1 slab
   // each slab contains 200 genes
@@ -185,7 +185,7 @@ void ga_pools_startup()
   g_genotype_list_pool = genotype_list_pool_allocate(1, 200, 10);
 }
 
-void ga_pools_shutdown()
+void ga_subsystem_shutdown()
 {
   genotype_list_pool_free(g_genotype_list_pool);
   trait_list_pool_free(g_trait_list_pool);

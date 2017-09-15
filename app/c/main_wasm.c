@@ -1,16 +1,16 @@
 #include <webassembly.h>
 #include <stdlib.h>
 
-#include "seni_bind.h"
+
+#include "seni_text_buffer.h"
 #include "seni_ga.h"
 #include "seni_js_imports.h"
 #include "seni_lang.h"
+#include "seni_lib.h"
 #include "seni_parser.h"
 #include "seni_printf.h"
 #include "seni_render_packet.h"
-#include "seni_shapes.h"
 #include "seni_timing.h"
-#include "seni_uv_mapper.h"
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
 #include "seni_unparser.h"
@@ -21,7 +21,7 @@ char *g_source_buffer;
 char *g_out_source_buffer;
 seni_text_buffer *g_out_source_text_buffer;
 
-#define TRAITS_BUFFER_SIZE 80000
+#define TRAITS_BUFFER_SIZE 40000
 char *g_traits_buffer;
 seni_text_buffer *g_traits_text_buffer;
 
@@ -39,26 +39,34 @@ seni_env *g_e = NULL;
 
 void debug_size_source_buffer()
 {
+#ifdef SHOW_WASM_CALLS  
   size_t len = strlen(g_source_buffer);
   SENI_LOG("g_source_buffer size %d", len);
+#endif
 }
 
 void debug_size_out_source_buffer()
 {
+#ifdef SHOW_WASM_CALLS
   size_t len = strlen(g_out_source_buffer);
   SENI_LOG("g_out_source_buffer size %d", len);
+#endif
 }
 
 void debug_size_traits_buffer()
 {
+#ifdef SHOW_WASM_CALLS
   size_t len = strlen(g_traits_buffer);
   SENI_LOG("g_traits_buffer size %d", len);
+#endif
 }
 
 void debug_size_genotype_buffer()
 {
+#ifdef SHOW_WASM_CALLS
   size_t len = strlen(g_genotype_buffer);
   SENI_LOG("g_genotye_buffer size %d", len);
+#endif
 }
 
 
@@ -70,20 +78,14 @@ void seni_startup()
   SENI_LOG("seni_startup");
 #endif
 
-  lang_pools_startup();
-  parser_pools_startup();
-  ga_pools_startup();
-  // build the global identity matrix used by the shape rendering
-  seni_shapes_init_globals();
-  uv_mapper_init();
-  compiler_startup();
+  seni_systems_startup();
 
   if (g_vm != NULL) {
-    vm_free(g_vm);
+    seni_free_vm(g_vm);
   }
 
-  g_vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  g_e = env_allocate();
+  g_vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  g_e = seni_allocate_env();
 
   g_source_buffer = (char *)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
 
@@ -117,14 +119,10 @@ void seni_shutdown()
 
   genotype_list_return_to_pool(g_genotype_list);
   
-  env_free(g_e);
-  vm_free(g_vm);
+  seni_free_env(g_e);
+  seni_free_vm(g_vm);
 
-  compiler_shutdown();
-  uv_mapper_free();
-  ga_pools_shutdown();
-  parser_pools_shutdown();
-  lang_pools_shutdown();
+  seni_systems_shutdown();
 }
 
 // ------------------------------
@@ -140,19 +138,17 @@ int compile_to_render_packets(void)
 
   debug_size_source_buffer();
   debug_size_genotype_buffer();
-  
-  vm_reset(g_vm);
+
+  seni_reset_vm(g_vm);
 
   seni_program *program = NULL;
   
   if (g_use_genotype_when_compiling) {
-    seni_genotype *genotype = genotype_get_from_pool();
-    text_buffer_reset(g_genotype_text_buffer);
-    genotype_deserialize(genotype, g_genotype_text_buffer);
-    program = program_compile_with_genotype(g_e, MAX_PROGRAM_SIZE, g_source_buffer, genotype);
+    seni_genotype *genotype = seni_deserialize_genotype(g_genotype_text_buffer);
+    program = seni_compile_program_with_genotype(g_source_buffer, genotype, g_e->word_lut, MAX_PROGRAM_SIZE);
     genotype_return_to_pool(genotype);
   } else {
-    program = program_compile(g_e, MAX_PROGRAM_SIZE, g_source_buffer);
+    program = seni_compile_program(g_source_buffer, g_e->word_lut, MAX_PROGRAM_SIZE);
   }
   
   vm_debug_info_reset(g_vm);
@@ -163,7 +159,7 @@ int compile_to_render_packets(void)
   }
 
   // cleanup
-  env_post_interpret_cleanup(g_e);
+  wlut_reset_words(g_e->word_lut);
   program_free(program);
 
   //f32 delta = timing_delta_from(timing_a);
@@ -245,19 +241,17 @@ i32 build_traits()
   debug_size_source_buffer();
 
   TIMING_UNIT timing_a = get_timing();
-  seni_node *ast = parser_parse(g_e->word_lut, g_source_buffer);
-  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, g_e->word_lut);
-  i32 num_traits = trait_list_count(trait_list);
-  // g_traits_text_buffer is wrapping g_traits_buffer
-  text_buffer_reset(g_traits_text_buffer);
 
-  bool res = trait_list_serialize(g_traits_text_buffer, trait_list);
+  seni_trait_list *trait_list = seni_compile_trait_list(g_source_buffer, g_e->word_lut);
+  bool res = seni_serialize_trait_list(trait_list, g_traits_text_buffer);
   if (res == false) {
-    SENI_ERROR("trait_list_serialize returned false");
+    SENI_ERROR("seni_serialize_trait_list returned false");
+    return 0;
   }
-  text_buffer_write_null(g_traits_text_buffer);
+
+  i32 num_traits = trait_list_count(trait_list);  
+
   trait_list_return_to_pool(trait_list);
-  parser_return_nodes_to_pool(ast);
   
   f32 delta = timing_delta_from(timing_a);
   SENI_PRINT("build_traits: total c-side time taken %.2f ms", delta);
@@ -273,13 +267,7 @@ i32 create_initial_generation(i32 population_size)
   debug_size_traits_buffer();
   
   // read in traits and create an array of genotypes
-  text_buffer_reset(g_traits_text_buffer);
-  seni_trait_list *trait_list = trait_list_get_from_pool();
-  bool res = trait_list_deserialize(trait_list, g_traits_text_buffer);
-  if (res == false) {
-    SENI_ERROR("create_initial_generation: trait_list_deserialize returned false");
-    return 0;
-  }
+  seni_trait_list *trait_list = seni_deserialize_trait_list(g_traits_text_buffer);
   
   if (g_genotype_list != NULL) {
     genotype_list_return_to_pool(g_genotype_list);
@@ -400,10 +388,7 @@ void next_generation_add_genotype()
 {
   debug_size_genotype_buffer();
     
-  seni_genotype *genotype = genotype_get_from_pool();
-  
-  text_buffer_reset(g_genotype_text_buffer);
-  genotype_deserialize(genotype, g_genotype_text_buffer);
+  seni_genotype *genotype = seni_deserialize_genotype(g_genotype_text_buffer);
 
   genotype_list_add_genotype(g_genotype_list, genotype);
 }
@@ -421,13 +406,7 @@ bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_ra
     return false;
   }
 
-  text_buffer_reset(g_traits_text_buffer);
-  seni_trait_list *trait_list = trait_list_get_from_pool();
-  bool res = trait_list_deserialize(trait_list, g_traits_text_buffer);
-  if (res == false) {
-    SENI_ERROR("next_generation_build: trait_list_deserialize returned false");
-    return false;
-  }
+  seni_trait_list *trait_list = seni_deserialize_trait_list(g_traits_text_buffer);
 
   seni_genotype_list *new_generation = genotype_list_next_generation(g_genotype_list,
                                                                      parent_size,
@@ -452,22 +431,11 @@ void unparse_with_genotype()
 {
   debug_size_genotype_buffer();
   debug_size_source_buffer();
+
+  seni_genotype *genotype = seni_deserialize_genotype(g_genotype_text_buffer);
   
-  seni_genotype *genotype = genotype_get_from_pool();
-  text_buffer_reset(g_genotype_text_buffer);
-  genotype_deserialize(genotype, g_genotype_text_buffer);
+  seni_unparse_with_genotype(g_out_source_text_buffer, g_source_buffer, genotype, g_e->word_lut);
 
-  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_allocate();
-  seni_node *ast = parser_parse(env->word_lut, g_source_buffer);
-
-  text_buffer_reset(g_out_source_text_buffer);
-
-  unparse(g_out_source_text_buffer, env->word_lut, ast, genotype);
-
-  parser_return_nodes_to_pool(ast);
-  env_free(env);
-  vm_free(vm);
   genotype_return_to_pool(genotype);
 
   debug_size_out_source_buffer();
