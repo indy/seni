@@ -14,8 +14,42 @@ i32 opcode_offset[] = {
 };
 
 bool g_use_genes;
+seni_program *g_preamble_program;
 
 void compile_vector(seni_node *ast, seni_program *program);
+void clear_global_mappings(seni_program *program);
+void clear_local_mappings(seni_program *program);
+void register_top_level_preamble(seni_program *program);
+void compile_preamble(seni_program *program);
+seni_bytecode *program_emit_opcode_i32(seni_program *program, seni_opcode op, i32 arg0, i32 arg1);
+
+void compiler_startup()
+{
+  i32 program_max_size = 100; // ???
+  seni_program *program = program_allocate(program_max_size);
+
+  clear_global_mappings(program);
+  clear_local_mappings(program);
+  program->current_fn_info = NULL;
+
+  register_top_level_preamble(program);
+  compile_preamble(program);
+
+  // slap a stop onto the end of this program
+  program_emit_opcode_i32(program, STOP, 0, 0);
+
+  g_preamble_program = program;
+}
+
+void compiler_shutdown()
+{
+  program_free(g_preamble_program);
+}
+
+seni_program *get_preamble_program()
+{
+  return g_preamble_program;
+}
 
 void gene_assign_to_node(seni_genotype *genotype, seni_node *node)
 {
@@ -1349,7 +1383,7 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
 
   i32 global_mapping = get_global_mapping(program, iname);
   if (global_mapping != -1) {
-    program_emit_opcode_i32_name(program, LOAD, MEM_SEG_GLOBAL, global_mapping);
+    program_emit_opcode_i32(program, LOAD, MEM_SEG_GLOBAL, global_mapping);
     return safe_next(ast);
   }
 
@@ -1665,11 +1699,12 @@ seni_program *compile_program_common(seni_node *ast, i32 program_max_size, seni_
   clear_local_mappings(program);
   program->current_fn_info = NULL;
 
+  register_top_level_preamble(program);
+
   // register top-level functions
   register_top_level_fns(ast, program);
 
   // register top-level defines
-  register_top_level_preamble(program);
   register_top_level_defines(ast, program);
 
   seni_bytecode *start = program_emit_opcode_i32(program, JUMP, 0, 0);
@@ -1689,7 +1724,6 @@ seni_program *compile_program_common(seni_node *ast, i32 program_max_size, seni_
   // this is where the program will start from
   start->arg0.type = VAR_INT;
   start->arg0.value.i = program->code_size;
-  compile_preamble(program);
 
   // compile the top-level defines
   n = ast;

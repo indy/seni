@@ -513,7 +513,7 @@ seni_gene *gene_build_from_program(seni_vm *vm, seni_env *env, seni_program *pro
   // todo: possibly implement a 'soft-reset' which is quicker than a vm_reset?
   vm_reset(vm);
 
-  bool res = vm_interpret(vm, env, program);
+  bool res = vm_run(vm, env, program);
   if (res == false) {
     return NULL;
   }
@@ -813,7 +813,7 @@ void gene_generate_new_var(seni_gene *gene, seni_trait *trait, seni_prng_state *
 
   seni_prng_copy(vm->prng_state, prng_state);
 
-  bool res = vm_interpret(vm, env, trait->program);
+  bool res = vm_run(vm, env, trait->program);
   if (res == false) {
     SENI_ERROR("gene_generate_new_var: vm_interpret returned false");
     return;

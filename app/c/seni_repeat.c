@@ -10,12 +10,12 @@ void flip(seni_vm *vm, seni_fn_info *fn_info, f32 sx, f32 sy)
   seni_matrix_stack *matrix_stack = vm->matrix_stack;
   
   matrix_stack_push(matrix_stack);
-  vm_invoke_no_arg_function(vm, fn_info);
+  vm_setup_and_call_function(vm, fn_info);
   matrix_stack_pop(matrix_stack);
 
   matrix_stack_push(matrix_stack);
   matrix_stack_scale(matrix_stack, sx, sy);
-  vm_invoke_no_arg_function(vm, fn_info);
+  vm_setup_and_call_function(vm, fn_info);
   matrix_stack_pop(matrix_stack);
 }
 
@@ -78,7 +78,7 @@ void repeat_rotate(seni_vm *vm, i32 fn, i32 copies)
   for(i32 i = 0; i < copies; i++) {
     matrix_stack_push(matrix_stack);
     matrix_stack_rotate(matrix_stack, delta * (f32)i);
-    vm_invoke_no_arg_function(vm, fn_info);    
+    vm_setup_and_call_function(vm, fn_info);    
     matrix_stack_pop(matrix_stack);
   }
 }
@@ -96,7 +96,7 @@ void repeat_rotate_mirrored(seni_vm *vm, i32 fn, i32 copies)
   for(i = 0; i < copies; i++) {
     matrix_stack_push(matrix_stack);
     matrix_stack_rotate(matrix_stack, delta * (f32)i);
-    vm_invoke_no_arg_function(vm, fn_info);    
+    vm_setup_and_call_function(vm, fn_info);    
     matrix_stack_pop(matrix_stack);
   }
 
@@ -105,7 +105,7 @@ void repeat_rotate_mirrored(seni_vm *vm, i32 fn, i32 copies)
   for(i = 0; i < copies; i++) {
     matrix_stack_push(matrix_stack);
     matrix_stack_rotate(matrix_stack, delta * (f32)i);
-    vm_invoke_no_arg_function(vm, fn_info);    
+    vm_setup_and_call_function(vm, fn_info);    
     matrix_stack_pop(matrix_stack);
   }
   matrix_stack_pop(matrix_stack);

@@ -4,10 +4,13 @@
 #include "seni_mathutil.h"
 #include "seni_matrix.h"
 #include "seni_timing.h"
+#include "seni_vm_compiler.h"
 
 #include "lib/utlist.h"
 
 #include <math.h>
+
+bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program);
 
 void gc_mark_vector(seni_var *vector)
 {
@@ -89,18 +92,18 @@ seni_var *arg_memory_from_iname(seni_fn_info *fn_info, i32 iname, seni_var *args
 // push a frame onto the vm's stack, and invoke vm_interpret so that
 // it executes the given function and then stops
 //
-bool vm_invoke_no_arg_function(seni_vm *vm, seni_fn_info *fn_info)
+bool vm_setup_and_call_function(seni_vm *vm, seni_fn_info *fn_info)
 {
   if (fn_info->num_args != 0) {
-    SENI_ERROR("repeat/test draw function cannot have any arguments");
+    SENI_ERROR("vm_setup_and_call_function: called function cannot have any arguments");
     return false;
   }
 
-  vm_setup_function_invoke(vm, fn_info);
-  return vm_function_invoke(vm);
+  vm_setup_function(vm, fn_info);
+  return vm_call_function(vm);
 }
 
-void vm_setup_function_invoke(seni_vm *vm, seni_fn_info *fn_info)
+void vm_setup_function(seni_vm *vm, seni_fn_info *fn_info)
 {
   // push a frame onto the stack whose return address is the program's STOP instruction
   i32 stop_address = program_stop_location(vm->program);
@@ -144,7 +147,7 @@ void vm_setup_function_invoke(seni_vm *vm, seni_fn_info *fn_info)
   }
 }
 
-bool vm_function_invoke(seni_vm *vm)
+bool vm_call_function(seni_vm *vm)
 {
   // vm is now in a state that will execute the given function and then return to the STOP opcode
   //
@@ -156,6 +159,35 @@ bool vm_function_invoke(seni_vm *vm)
   // so we'll need to pop that function's return value off the stack
 
   vm->sp--;
+
+  return true;
+}
+
+bool vm_run(seni_vm *vm, seni_env *env, seni_program *program)
+{
+  bool res;
+  
+  // the preamble program defines the global variables that all
+  // user programs assume exist. e.g. 'red', 'canvas/width' etc
+  seni_program *preamble = get_preamble_program();
+  if (preamble == NULL) {
+    SENI_ERROR("vm_run: pre-amble program is null");
+    return false;
+  }
+
+  // setup the env with the global variables in preamble
+  res = vm_interpret(vm, env, preamble);
+  if (res == false) {
+    SENI_ERROR("vm_run: preamble vm_interpret returned false");
+    return false;
+  }
+
+  // can now run the user program
+  res = vm_interpret(vm, env, program);
+  if (res == false) {
+    SENI_ERROR("vm_run: program vm_interpret returned false");
+    return false;
+  }
 
   return true;
 }
@@ -211,7 +243,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
     bc = &(program->code[ip++]);
 
 #ifdef TRACE_PRINT_OPCODES
-    bytecode_pretty_print(ip-1, bc); // ip has been incremented so back up to get the current ip
+    bytecode_pretty_print(ip-1, bc, program->word_lut); // ip has been incremented so back up to get the current ip
 #endif
     
     switch(bc->op) {

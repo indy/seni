@@ -494,7 +494,7 @@ char *memory_segment_name(seni_memory_segment_type segment)
   return "UNKNOWN";
 }
 
-void bytecode_pretty_print(i32 ip, seni_bytecode *b)
+void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut)
 {
 #define PPC_BUF_SIZE 200
 
@@ -525,7 +525,12 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b)
         f32 *a = b->arg1.f32_array;
         PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0], a[1], a[2], a[3]);
       } else if(b->arg1.type == VAR_NAME) {
-        PRINT_BC(BUF_ARGS, "name: %d", b->arg1.value.i);
+        i32 iname = b->arg1.value.i;
+        if (word_lut != NULL) {
+          PRINT_BC(BUF_ARGS, "name: %s (%d)", wlut_reverse_lookup(word_lut, iname), iname);
+        } else {
+          PRINT_BC(BUF_ARGS, "name: (%d)", iname);
+        }
       } else {
         PRINT_BC(BUF_ARGS, "%d", b->arg1.value.i);
       }
@@ -733,7 +738,7 @@ void program_pretty_print(seni_program *program)
 {
   for (i32 i = 0; i < program->code_size; i++) {
     seni_bytecode *b = &(program->code[i]);
-    bytecode_pretty_print(i, b);
+    bytecode_pretty_print(i, b, program->word_lut);
   }
   SENI_PRINT("\n");
 }

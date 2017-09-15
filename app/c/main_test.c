@@ -467,11 +467,12 @@ void test_strtof(void)
 }
 
 #define EVM_COMPILE(EXPR) parser_pools_startup();                       \
+  compiler_startup();                                                   \
   seni_env *e = env_allocate();                                         \
   seni_program *prog = program_compile(e, 256, EXPR);                   \
   seni_vm *vm = vm_allocate(STACK_SIZE,HEAP_SIZE,HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
   vm_debug_info_reset(vm);                                              \
-  vm_interpret(vm, e, prog)
+  vm_run(vm, e, prog)
 
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
@@ -483,6 +484,7 @@ void test_strtof(void)
 #define VM_CLEANUP program_free(prog);          \
   env_free(e);                                  \
   vm_free(vm);                                  \
+  compiler_shutdown();                          \
   parser_pools_shutdown()
 
 // ************************************************
@@ -875,6 +877,7 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
   seni_env *env = env_allocate();
   seni_shapes_init_globals();
   uv_mapper_init();
+  compiler_startup();
 
   seni_node *ast = parser_parse(env->word_lut, source);
 
@@ -886,8 +889,11 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
   trait_list_return_to_pool(trait_list);
   parser_return_nodes_to_pool(ast);
 
+
   env_free(env);
   vm_free(vm);
+
+  compiler_shutdown();
   uv_mapper_free();
   
   return genotype;
@@ -895,13 +901,15 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
 
 void unparse_compare(i32 seed_value, char *source, char *expected)
 {
-  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_allocate();
   lang_pools_startup();
   parser_pools_startup();
   ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
+  compiler_startup();
+
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_allocate();
 
   seni_node *ast = parser_parse(env->word_lut, source);
 
@@ -933,8 +941,11 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   parser_return_nodes_to_pool(ast);
   genotype_return_to_pool(genotype);
   trait_list_return_to_pool(trait_list);
+
   env_free(env);
   vm_free(vm);
+
+  compiler_shutdown();
   uv_mapper_free();
   ga_pools_shutdown();
   parser_pools_shutdown();
@@ -1133,7 +1144,7 @@ void test_unparser(void)
   unparse_compare(9999, "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}", "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 1.00) (gen/col alpha: 1)}");
 }
 
-void test_unparser_vectors()
+void test_unparser_vectors(void)
 {
   unparse_compare(9999,
                   "{[[1.00 2.00] [3.00 4.00]] (gen/2d)}",
@@ -1156,7 +1167,7 @@ void test_unparser_vectors()
                   "{ [ [ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/2d min: 40 max: 90) }");
 }
 
-void test_unparser_multiple_floats()
+void test_unparser_multiple_floats(void)
 {
   unparse_compare(3455,
                   "{[0.977 0.416 0.171] (gen/scalar)}",
@@ -1534,13 +1545,15 @@ void test_serialization_genotype_list(void)
 void test_serialization_trait_list(void)
 {
   char *source = "(rect position: [500 500] width: {100 (gen/int min: 20 max: 200)} height: {30 (gen/int min: 10 max: 40)})";
-  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_allocate();
   lang_pools_startup();
   parser_pools_startup();
   ga_pools_startup();
   seni_shapes_init_globals();
   uv_mapper_init();
+  compiler_startup();
+
+  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env *env = env_allocate();
 
   seni_node *ast = parser_parse(env->word_lut, source);
   seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
@@ -1572,8 +1585,11 @@ void test_serialization_trait_list(void)
   free(buffer);
   trait_list_return_to_pool(trait_list);
   trait_list_return_to_pool(out);
+
   env_free(env);
   vm_free(vm);
+
+  compiler_shutdown();
   uv_mapper_free();
   ga_pools_shutdown();
   parser_pools_shutdown();

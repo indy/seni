@@ -17,7 +17,7 @@ void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y)
   seni_var *dest;
   seni_var src;
 
-  vm_setup_function_invoke(vm, fn_info);
+  vm_setup_function(vm, fn_info);
   
   i32 arg = vm->fp - 1;
 
@@ -50,7 +50,7 @@ void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y)
     var_copy(dest, &src);
   }
     
-  vm_function_invoke(vm);  
+  vm_call_function(vm);  
 }
 
 void path_linear(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 a_x, f32 a_y, f32 b_x, f32 b_y)

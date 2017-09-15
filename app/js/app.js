@@ -413,14 +413,14 @@ function renderHighRes(state, genotype) {
 
   const stopFn = startTiming();
 
-  Job.request(jobRender, {
+  Job.request(jobRenderWasm, {
     script: state.script,
     scriptHash: state.scriptHash,
     genotype: genotype ? genotype : undefined
-  }).then(({ title, buffers }) => {
+  }).then(({ title, memory, buffers }) => {
     const [width, height] = state.highResolution;
 
-    renderGeometryBuffers(jobRender, null, buffers, image, width, height);
+    renderGeometryBuffers(jobRenderWasm, memory, buffers, image, width, height);
 
     stopFn(`renderHighRes-${title}`, gUI.konsole);
 

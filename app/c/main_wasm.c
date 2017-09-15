@@ -76,6 +76,7 @@ void seni_startup()
   // build the global identity matrix used by the shape rendering
   seni_shapes_init_globals();
   uv_mapper_init();
+  compiler_startup();
 
   if (g_vm != NULL) {
     vm_free(g_vm);
@@ -117,8 +118,9 @@ void seni_shutdown()
   genotype_list_return_to_pool(g_genotype_list);
   
   env_free(g_e);
-
   vm_free(g_vm);
+
+  compiler_shutdown();
   uv_mapper_free();
   ga_pools_shutdown();
   parser_pools_shutdown();
@@ -154,7 +156,7 @@ int compile_to_render_packets(void)
   }
   
   vm_debug_info_reset(g_vm);
-  bool res = vm_interpret(g_vm, g_e, program);
+  bool res = vm_run(g_vm, g_e, program);
 
   if (res) {
     // vm_debug_info_print(g_vm);

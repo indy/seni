@@ -187,7 +187,7 @@ struct seni_bytecode {
   seni_var arg1;
 };
 
-void bytecode_pretty_print(i32 ip, seni_bytecode *b);
+void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut);
 bool bytecode_serialize(seni_text_buffer *text_buffer, seni_bytecode *bytecode);
 bool bytecode_deserialize(seni_bytecode *out, seni_text_buffer *text_buffer);
 
