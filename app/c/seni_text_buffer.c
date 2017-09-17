@@ -49,7 +49,20 @@ void text_buffer_sprintf(seni_text_buffer *text_buffer, char const * fmt, ... )
   } else {
     SENI_ERROR("seni_text_buffer: buffer is full");
   }
+}
 
+bool text_buffer_strncpy(seni_text_buffer *text_buffer, char *c, i32 len)
+{
+  if (text_buffer->current_size - len < 0) {
+    return false;
+  }
+
+  strncpy(text_buffer->cursor, c, len);
+
+  text_buffer->cursor += len;
+  text_buffer->current_size -= len;
+
+  return true;
 }
 
 void text_buffer_reset(seni_text_buffer *text_buffer)
@@ -71,7 +84,7 @@ void text_buffer_write_null(seni_text_buffer *text_buffer)
 {
   if (text_buffer->current_size < text_buffer->buffer_size) {
     *(text_buffer->cursor++) = '\0';
-    text_buffer->current_size++;
+    text_buffer->current_size--;
   }
 }
 

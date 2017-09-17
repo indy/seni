@@ -17,6 +17,7 @@ void text_buffer_free(seni_text_buffer *text_buffer);
 void text_buffer_pretty_print(seni_text_buffer *text_buffer);
 
 void text_buffer_sprintf(seni_text_buffer *text_buffer, char const * fmt, ... );
+bool text_buffer_strncpy(seni_text_buffer *text_buffer, char *c, i32 len);
 
 void text_buffer_reset(seni_text_buffer *text_buffer);
 void text_buffer_clear(seni_text_buffer *text_buffer);

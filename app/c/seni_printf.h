@@ -4,6 +4,7 @@
 #include <webassembly.h>
 #else
 #include <stdio.h>
+#include <stdarg.h>
 #endif
 
 void seni_printf(char const * fmt, ... );

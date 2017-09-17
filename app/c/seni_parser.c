@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "seni_pool_macro.h"
+#include "seni_multistring_buffer.h"
 
 void node_cleanup(seni_node *node)
 {
@@ -286,16 +287,16 @@ seni_node *build_text_node_of_length(char **src, seni_node_type type, size_t len
   seni_node *node = node_get_from_pool();
   node->type = type;
 
-  char *str = (char *)calloc(len + 1, sizeof(char));
-  strncpy(str, *src, len);
-  str[len] = '\0';
+  //char *str = (char *)calloc(len + 1, sizeof(char));
+  //strncpy(str, *src, len);
+  //str[len] = '\0';
 
   node->src = *src;
   node->src_len = (i32)len;
 
   *src += len;
   
-  node->value.s = str;
+  // node->value.s = str;
   
   return node;
 }
@@ -627,15 +628,6 @@ void parser_return_nodes_to_pool(seni_node *nodes)
     
     next = node->next;
 
-    if (node->type == NODE_COMMENT || node->type == NODE_WHITESPACE) {
-      // freeing a pointer in a union, so make sure that the value in
-      // the union only comes from the 's' component and not 'i' or 'f'
-      //
-      if (node->value.s != NULL) {
-        free(node->value.s);
-      }
-    }
-
     node_return_to_pool(node);
     
     node = next;
@@ -650,7 +642,7 @@ seni_node *parser_parse(seni_word_lut *word_lut, char *s)
 
   // clear out any words defined by previous scripts
   wlut_reset_words(word_lut);
-
+  
   char **src = &s;
 
   seni_node *nodes = NULL;

@@ -1,17 +1,18 @@
-* TODO [3/19]
-  1. [ ] get high-res render working
-  2. [ ] impl: initial seed
-  3. [ ] add an END token to serialized output, use as a sanity check
-  4. [ ] add unit tests for compiling with a genotype
-  5. [ ] pretty print program emits names
-  6. [ ] better seni_ga.c::hack_node_to_var (lists, 2d etc)
-  7. [ ] unify args to *_pretty_print
-  8. [ ] maybe have a required specifier in functions?
-  9. [ ] poly should also accept a uv parameter
-  10. [ ] ensure that there's a dist folder before running npm run build:wasm
-  11. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  13. [ ] look into restrict keyword in C99
+* TODO [0/14]
+  1. [ ] don't malloc during parsing
+  2. [ ] get high-res render working
+  3. [ ] impl: initial seed
+  4. [ ] add an END token to serialized output, use as a sanity check
+  5. [ ] add unit tests for compiling with a genotype
+  6. [ ] pretty print program emits names
+  7. [ ] better seni_ga.c::hack_node_to_var (lists, 2d etc)
+  8. [ ] unify args to *_pretty_print
+  9. [ ] maybe have a required specifier in functions?
+  10. [ ] poly should also accept a uv parameter
+  11. [ ] ensure that there's a dist folder before running npm run build:wasm
+  12. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  13. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  14. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
@@ -875,4 +876,15 @@ worker.bundle.js.map    20 kB       1  [emitted]         worker
 
   bool $NAME_deserialize(seni_$NAME *out, seni_text_buffer *text_buffer)
   - deserializes structure from the text buffer
+
+
+
+* don't malloc during parsing
+  multistring_buffer - an append only buffer
+
+  seni_string_ref indexes into the multistring_buffer
+
+  word_lut:
+  - have a multistring_buffer for native + keywords
+  - and a separate one for words (this will get reset before each parse)
 

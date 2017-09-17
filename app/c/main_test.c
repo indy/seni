@@ -173,7 +173,19 @@ seni_node *assert_parser_node_f32(seni_node *node, f32 val)
 seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *val)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
-  TEST_ASSERT_EQUAL_STRING(val, node->value.s);
+
+  i32 count = 0;
+  char *expected = val;
+  char *actual = node->src;
+  while(*expected != '\0') {
+    count++;
+    TEST_ASSERT_EQUAL(*expected, *actual);
+    expected++;
+    actual++;
+  }
+
+  TEST_ASSERT_EQUAL(count, node->src_len);
+
   return node->next;
 }
 

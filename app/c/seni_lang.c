@@ -140,10 +140,10 @@ seni_value_in_use get_node_value_in_use(seni_node_type type)
     return USE_I;
     break;
   case NODE_WHITESPACE:
-    return USE_S;
+    return USE_SRC;
     break;
   case NODE_COMMENT:
-    return USE_S;
+    return USE_SRC;
     break;
   }
 
@@ -244,8 +244,8 @@ void node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut)
   case USE_V:
     SENI_PRINT("%s: V %s", msg,  type);
     break;
-  case USE_S:
-    SENI_PRINT("%s: %s", msg,  type);
+  case USE_SRC:
+    SENI_PRINT("%s: %s '%.*s'", msg,  type, node->src_len, node->src);
     break;
   case USE_FIRST_CHILD:
     SENI_PRINT("%s: %s", msg,  type);

@@ -102,10 +102,10 @@ void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, s
     text_buffer_sprintf(text_buffer, "\"%s\"", c);
     break;
   case NODE_WHITESPACE:
-    text_buffer_sprintf(text_buffer, "%s", node->value.s);
+    text_buffer_strncpy(text_buffer, node->src, node->src_len);
     break;
   case NODE_COMMENT:
-    text_buffer_sprintf(text_buffer, "%s", node->value.s);
+    text_buffer_strncpy(text_buffer, node->src, node->src_len);
     break;
   default:
     SENI_ERROR("???");

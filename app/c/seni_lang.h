@@ -33,7 +33,7 @@ typedef enum {
   USE_F,                        // float
   USE_L,                        // long
   USE_V,                        // pointer to seni_var
-  USE_S,                        // (seni_node only) char *
+  USE_SRC,                      // (seni_node only) pointer to original source (for whitespace + comments)
   USE_FIRST_CHILD               // (seni_node only) first_child
 } seni_value_in_use;
 
@@ -57,7 +57,6 @@ struct seni_node {
   union {
     i32 i;
     f32 f;
-    char* s;                     /* needed for whitespace/comment nodes */
     struct seni_node *first_child;  /* list node */
   } value;
 
