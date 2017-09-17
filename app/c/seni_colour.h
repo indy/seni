@@ -32,9 +32,6 @@ struct seni_colour_fn_state {
   f32 alpha;
 };
 
-seni_colour *colour_allocate(seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha);
-void colour_free(seni_colour *colour);
-
 void colour_set(seni_colour *out, seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha);
 
 seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_format new_format);

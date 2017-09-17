@@ -431,6 +431,24 @@ void assert_colour(seni_colour *expected, seni_colour *colour)
   TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[3], colour->element[3]);
 }
 
+seni_colour *colour_allocate(seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha)
+{
+  seni_colour *colour = (seni_colour *)calloc(1, sizeof(seni_colour));
+
+  colour->format = format;
+  colour->element[0] = e0;
+  colour->element[1] = e1;
+  colour->element[2] = e2;
+  colour->element[3] = alpha;
+
+  return colour;
+}
+
+void colour_free(seni_colour *colour)
+{
+  free(colour);
+}
+
 void test_colour(void)
 {
   {
