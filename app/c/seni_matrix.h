@@ -6,9 +6,6 @@ struct seni_matrix {
   f32 m[16];
 };
 
-seni_matrix *matrix_allocate();
-void matrix_free(seni_matrix* matrix);
-
 void matrix_copy(seni_matrix *out, seni_matrix *a);
 void matrix_identity(seni_matrix *out);
 void matrix_ortho(seni_matrix *out, f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far);

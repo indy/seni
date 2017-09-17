@@ -5,17 +5,6 @@
 #include "stdlib.h"
 #include <math.h>
 
-seni_matrix *matrix_allocate()
-{
-  seni_matrix *out = (seni_matrix *)calloc(1, sizeof(seni_matrix));
-  return out;
-}
-
-void matrix_free(seni_matrix *matrix)
-{
-  free(matrix);
-}
-
 void matrix_copy(seni_matrix *out, seni_matrix *a)
 {
   out->m[0] = a->m[0];
@@ -207,7 +196,7 @@ seni_matrix_stack *matrix_stack_allocate()
   matrix_stack->stack_size = MATRIX_STACK_SIZE;
   matrix_stack->stack = (seni_matrix *)calloc(MATRIX_STACK_SIZE, sizeof(seni_matrix));
 
-  matrix_stack->wip_transform = matrix_allocate();
+  matrix_stack->wip_transform = (seni_matrix *)calloc(1, sizeof(seni_matrix));
 
   matrix_stack->sp = 0;
   
