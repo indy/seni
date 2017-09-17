@@ -1,5 +1,5 @@
-* TODO [0/14]
-  1. [ ] don't malloc during parsing
+* TODO [1/14]
+  1. [X] don't malloc during parsing
   2. [ ] get high-res render working
   3. [ ] impl: initial seed
   4. [ ] add an END token to serialized output, use as a sanity check
@@ -876,15 +876,3 @@ worker.bundle.js.map    20 kB       1  [emitted]         worker
 
   bool $NAME_deserialize(seni_$NAME *out, seni_text_buffer *text_buffer)
   - deserializes structure from the text buffer
-
-
-
-* don't malloc during parsing
-  multistring_buffer - an append only buffer
-
-  seni_string_ref indexes into the multistring_buffer
-
-  word_lut:
-  - have a multistring_buffer for native + keywords
-  - and a separate one for words (this will get reset before each parse)
-
