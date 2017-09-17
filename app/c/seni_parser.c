@@ -172,22 +172,18 @@ char *find_next(char *s, char target)
   return NULL;
 }
 
-void string_copy_len(char **dst, char *src, size_t len)
-{
-  char *c = (char *)calloc(len + 1, sizeof(char));
-  strncpy(c, src, len);
-  c[len] = '\0';
-
-  *dst = c;
-}
-
 /* returns 0 if not found */
-i32 lookup_name(char **words, i32 word_count, i32 offset, char *string, size_t len)
+i32 lookup_name(seni_string_ref *string_refs, i32 word_count, i32 offset, char *string, size_t len)
 {
   i32 i = 0;
+  seni_string_ref *string_ref = string_refs;
+  
   for (i = 0; i < word_count; i++) {
-    char *name = words[i];
+    char *name = string_ref->c;
     bool found = true;
+
+    // can also compare len with string_ref->len for an early test exit
+    
     /* can't use string_compare since 'string' could be a substring */
     size_t j = 0;
     for (j = 0; j < len; j++) {
@@ -200,6 +196,8 @@ i32 lookup_name(char **words, i32 word_count, i32 offset, char *string, size_t l
     if (name[j] == '\0' && found) {
       return i + offset;
     }
+
+    string_ref++;
   }
 
   return -1;  
@@ -207,17 +205,17 @@ i32 lookup_name(char **words, i32 word_count, i32 offset, char *string, size_t l
 
 i32 word_lut_lookup_(seni_word_lut *word_lut, char *string, size_t len)
 {
-  i32 native = lookup_name(word_lut->native, word_lut->native_count, NATIVE_START, string, len);
+  i32 native = lookup_name(word_lut->native_ref, word_lut->native_count, NATIVE_START, string, len);
   if (native != -1) {
     return native;
   }
 
-  i32 keyword = lookup_name(word_lut->keyword, word_lut->keyword_count, KEYWORD_START, string, len);
+  i32 keyword = lookup_name(word_lut->keyword_ref, word_lut->keyword_count, KEYWORD_START, string, len);
   if (keyword != -1) {
     return keyword;
   }
 
-  i32 word = lookup_name(word_lut->word, word_lut->word_count, WORD_START, string, len);
+  i32 word = lookup_name(word_lut->word_ref, word_lut->word_count, WORD_START, string, len);
   if (word != -1) {
     return word;
   }
@@ -232,14 +230,12 @@ i32 word_lut_lookup_or_add(seni_word_lut *word_lut, char *string, size_t len)
     return iname;
   }
 
-  /* string is not in the table and there's no room for another entry */
-  if (word_lut->word_count >= MAX_WORD_LOOKUPS) {
-    return -1;
-  }
-
   // the string is not in the lookup table, so add it
-  string_copy_len(&(word_lut->word[word_lut->word_count]), string, len);
-  word_lut->word_count++;
+  bool res = wlut_add_word(word_lut, string, len);
+  if (res == false) {
+    SENI_ERROR("word_lut_lookup_or_add failed");
+    return 0;
+  }
 
   return word_lut->word_count - 1;
 }
@@ -287,17 +283,11 @@ seni_node *build_text_node_of_length(char **src, seni_node_type type, size_t len
   seni_node *node = node_get_from_pool();
   node->type = type;
 
-  //char *str = (char *)calloc(len + 1, sizeof(char));
-  //strncpy(str, *src, len);
-  //str[len] = '\0';
-
   node->src = *src;
   node->src_len = (i32)len;
 
   *src += len;
-  
-  // node->value.s = str;
-  
+
   return node;
 }
 

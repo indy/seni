@@ -5,16 +5,21 @@
 
 /* word lookup table */
 struct seni_word_lut {
+
+  seni_multistring_buffer *native_buffer;
+  seni_multistring_buffer *keyword_buffer;
+  seni_multistring_buffer *word_buffer;
+  
   // set once at startup - doesn't change
-  char *native[MAX_NATIVE_LOOKUPS];  
+  seni_string_ref *native_ref; // array MAX_NATIVE_LOOKUPS in size
   i32 native_count;
 
   // set once at startup - doesn't change
-  char *keyword[MAX_KEYWORD_LOOKUPS];  
+  seni_string_ref *keyword_ref; // array MAX_KEYWORD_LOOKUPS in size
   i32 keyword_count;
 
   // set once for each script
-  char *word[MAX_WORD_LOOKUPS];
+  seni_string_ref *word_ref; // array MAX_WORD_LOOKUPS in size
   i32 word_count;
 };
 
@@ -25,6 +30,10 @@ void           wlut_reset_words(seni_word_lut *wlut);
 char          *wlut_get_word(seni_word_lut *word_lut, i32 iword);
 char          *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword);
 void           wlut_pretty_print(char *msg, seni_word_lut *word_lut);
+
+bool           wlut_add_native(seni_word_lut *wlut, char *name);
+bool           wlut_add_keyword(seni_word_lut *wlut, char *name);
+bool           wlut_add_word(seni_word_lut *wlut, char *name, size_t len);
 
 // which value to use from the unions that are specified in both seni_node and seni_var
 typedef enum {

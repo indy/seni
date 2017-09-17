@@ -23,6 +23,7 @@
 #include "seni_vm_compiler.h"
 #include "seni_vm_interpreter.h"
 #include "seni_pool_macro.h"
+#include "seni_multistring_buffer.h"
 
 #include "stdio.h"
 #include <stdlib.h>
@@ -193,8 +194,11 @@ seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *va
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
-  char *c = wlut->word[node->value.i];
-  TEST_ASSERT_EQUAL_STRING(val, c);
+  i32 i = node->value.i;
+  TEST_ASSERT_TRUE(wlut->word_count > i);
+  
+  seni_string_ref *string_ref = &(wlut->word_ref[i]);
+  TEST_ASSERT_EQUAL_STRING(val, string_ref->c);
   
   return node->next;
 }
@@ -531,13 +535,13 @@ void test_vm_bugs(void)
 
   // tmp in interpreter was decrementing ref count of previously held value
   VM_COMPILE_F32("(fn (huh at: 0) 4)\
-  (fn (x colour: (col/rgb)              \
-         volatility: 0                  \
-         passes: 1                      \
-         seed: 341)                     \
-    42)                                 \
-  (x colour: (col/rgb))                 \
-  (huh at: 5)", 4.0f);
+   (fn (x colour: (col/rgb)              \
+          volatility: 0                  \
+          passes: 1                      \
+          seed: 341)                     \
+     42)                                 \
+   (x colour: (col/rgb))                 \
+   (huh at: 5)", 4.0f);
 
   VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (step (i from: 0 to: 2) (define [rr rx ry] (prng/values num: 3 from: rng)))) (f) 1", 1.0f);
   
@@ -557,6 +561,7 @@ void test_vm_bugs(void)
   // wasn't POP voiding function return values in a loop (CALL_0 offset was incorrect)
   // so have a loop that would overflow the stack if the return value of whatever fn wasn't being popped
   VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/build-point position: [0 0] distance: 100))(focal/value from: focalpoint position: [0 0])(step (y from: 0 to: 2000) (whatever))(focal/value from: focalpoint position: [0 50]))(go)", 0.5f);
+
 }
 
 void test_vm_bytecode(void)
@@ -1589,7 +1594,6 @@ int main(void)
   RUN_TEST(test_colour);
   RUN_TEST(test_strtof);
   
-  // vm
   RUN_TEST(test_vm_bugs);
   RUN_TEST(test_vm_bytecode);
   RUN_TEST(test_vm_callret);

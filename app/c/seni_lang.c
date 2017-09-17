@@ -11,6 +11,7 @@
 #include "seni_render_packet.h"
 #include "seni_text_buffer.h"
 #include "seni_vm_compiler.h"
+#include "seni_multistring_buffer.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -31,79 +32,66 @@ SENI_POOL(seni_var, var)
 
 struct seni_var_pool *g_var_pool;
 
-
-void wlut_free_keywords(seni_word_lut *wlut)
-{
-  for( int i = 0; i < MAX_KEYWORD_LOOKUPS; i++) {
-    if (wlut->keyword[i]) {
-      free(wlut->keyword[i]);
-    }
-    wlut->keyword[i] = 0;      
-  }
-  wlut->keyword_count = 0;
-}
-
-void wlut_free_natives(seni_word_lut *wlut)
-{
-  for( int i = 0; i < MAX_NATIVE_LOOKUPS; i++) {
-    if (wlut->native[i]) {
-      free(wlut->native[i]);
-    }
-    wlut->native[i] = 0;      
-  }
-  wlut->native_count = 0;
-}
-
-void wlut_free_words(seni_word_lut *wlut)
-{
-  for( int i = 0; i < MAX_WORD_LOOKUPS; i++) {
-    if (wlut->word[i]) {
-      free(wlut->word[i]);
-    }
-    wlut->word[i] = 0;      
-  }
-  wlut->word_count = 0;
-}
-
 seni_word_lut *wlut_allocate()
 {
   seni_word_lut *wl = (seni_word_lut *)calloc(1, sizeof(seni_word_lut));
+
+  wl->native_buffer = multistring_buffer_allocate(5000); // todo: check this size
+  wl->keyword_buffer = multistring_buffer_allocate(5000); // todo: check this size
+  wl->word_buffer = multistring_buffer_allocate(5000); // todo: check this size
+
+  wl->native_ref = (seni_string_ref *)calloc(MAX_NATIVE_LOOKUPS, sizeof(seni_string_ref));
+  wl->keyword_ref = (seni_string_ref *)calloc(MAX_KEYWORD_LOOKUPS, sizeof(seni_string_ref));
+  wl->word_ref = (seni_string_ref *)calloc(MAX_WORD_LOOKUPS, sizeof(seni_string_ref));
+  
   return wl;
 }
 
 void wlut_free(seni_word_lut *wlut)
 {
-  wlut_free_words(wlut);
-  wlut_free_keywords(wlut);
-  wlut_free_natives(wlut);
+  free(wlut->word_ref);
+  free(wlut->keyword_ref);
+  free(wlut->native_ref);
+
+  multistring_buffer_free(wlut->native_buffer);
+  multistring_buffer_free(wlut->keyword_buffer);
+  multistring_buffer_free(wlut->word_buffer);
+
   free(wlut);
 }
 
 // called after a script has been executed
+// leave keywords and natives since they aren't mutable
 void wlut_reset_words(seni_word_lut *wlut)
 {
-  wlut_free_words(wlut);
-  // leave keywords and natives since they aren't mutable
+  wlut->word_count = 0;
+  multistring_buffer_reset(wlut->word_buffer);
 }
 
 char *wlut_get_word(seni_word_lut *word_lut, i32 iword)
 {
   if (iword < word_lut->word_count) {
-    return word_lut->word[iword];
+    seni_string_ref *string_ref = &(word_lut->word_ref[iword]);
+    return string_ref->c;
   }
   return "UNKNOWN WORD";
 }
 
 char *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword)
 {
+  seni_string_ref *string_ref;
+  
   if (iword < word_lut->word_count) {
-    return word_lut->word[iword];
+    string_ref = &(word_lut->word_ref[iword]);
+    return string_ref->c;
   }
   if (iword >= KEYWORD_START && iword < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
-    return word_lut->keyword[iword - KEYWORD_START];
+    string_ref = &(word_lut->keyword_ref[iword - KEYWORD_START]);
+    return string_ref->c;
   }
   if (iword >= NATIVE_START && iword < NATIVE_START + MAX_NATIVE_LOOKUPS) {
-    return word_lut->native[iword - NATIVE_START];
+    string_ref = &(word_lut->native_ref[iword - NATIVE_START]);
+    return string_ref->c;
   }
   return "UNKNOWN WORD";
 }
@@ -113,6 +101,68 @@ void wlut_pretty_print(char *msg, seni_word_lut *word_lut)
   SENI_PRINT("%s native_count: %d", msg, word_lut->native_count);
   SENI_PRINT("%s keyword_count: %d", msg, word_lut->keyword_count);
   SENI_PRINT("%s word_count: %d", msg, word_lut->word_count);
+}
+
+bool wlut_add_native(seni_word_lut *wlut, char *name)
+{
+  if (wlut->native_count >= MAX_NATIVE_LOOKUPS) {
+    SENI_ERROR("wlut_add_native: cannot declare native - wlut is full");
+    return false;
+  }
+
+  size_t len = strlen(name);
+  seni_multistring_buffer *mb = wlut->native_buffer;
+  seni_string_ref *string_ref = &(wlut->native_ref[wlut->native_count]);
+  wlut->native_count++;
+
+  bool res = multistring_add(mb, string_ref, name, len);
+  if (res == false) {
+    SENI_ERROR("wlut_add_native: multistring_add failed with %s", name);
+    return false;
+  }
+
+  return true;
+}
+
+bool wlut_add_keyword(seni_word_lut *wlut, char *name)
+{
+  if (wlut->keyword_count >= MAX_KEYWORD_LOOKUPS) {
+    SENI_ERROR("wlut_add_keyword: cannot declare keyword - wlut is full");
+    return false;
+  }
+
+  size_t len = strlen(name);
+  seni_multistring_buffer *mb = wlut->keyword_buffer;
+  seni_string_ref *string_ref = &(wlut->keyword_ref[wlut->keyword_count]);
+  wlut->keyword_count++;
+
+  bool res = multistring_add(mb, string_ref, name, len);
+  if (res == false) {
+    SENI_ERROR("wlut_add_keyword: multistring_add failed with %s", name);
+    return false;
+  }
+
+  return true;
+}
+
+bool wlut_add_word(seni_word_lut *wlut, char *name, size_t len)
+{
+  if (wlut->word_count >= MAX_WORD_LOOKUPS) {
+    SENI_ERROR("wlut_add_word: cannot declare word - wlut is full");
+    return false;
+  }
+
+  seni_multistring_buffer *mb = wlut->word_buffer;
+  seni_string_ref *string_ref = &(wlut->word_ref[wlut->word_count]);
+  wlut->word_count++;
+
+  bool res = multistring_add(mb, string_ref, name, len);
+  if (res == false) {
+    SENI_ERROR("wlut_add_word: multistring_add failed with %s", name);
+    return false;
+  }
+
+  return true;
 }
 
 seni_value_in_use get_node_value_in_use(seni_node_type type)

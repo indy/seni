@@ -14,6 +14,7 @@
 #include "seni_repeat.h"
 #include "seni_shapes.h"
 #include "seni_vm_interpreter.h"
+#include "seni_multistring_buffer.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -273,38 +274,42 @@ seni_var g_var_true;
 // temporary seni_var, returned by native functions
 seni_var g_var_scratch;
 
-void string_copy(char **dst, char *src)
-{
-  size_t len = strlen(src);
+// void string_copy(char **dst, char *src)
+// {
+//   size_t len = strlen(src);
   
-  char *c = (char *)calloc(len + 1, sizeof(char));
-  strncpy(c, src, len);
-  c[len] = '\0';
+//   char *c = (char *)calloc(len + 1, sizeof(char));
+//   strncpy(c, src, len);
+//   c[len] = '\0';
 
-  *dst = c;
-}
+//   *dst = c;
+// }
 
 void declare_vm_keyword(seni_word_lut *wlut, char *name)
 {
-  string_copy(&(wlut->keyword[wlut->keyword_count]), name);
-  wlut->keyword_count++;
-
-  if (wlut->keyword_count > MAX_KEYWORD_LOOKUPS) {
-    SENI_ERROR("cannot declare keyword - wlut is full");
+  bool res = wlut_add_keyword(wlut, name);
+  if (res == false) {
+    SENI_ERROR("declare_vm_keyword: failed to add keword: %s", name);
   }
 }
 
+
 void declare_native(seni_word_lut *wlut, seni_env *e, char *name, native_function_ptr function_ptr)
 {
-  string_copy(&(wlut->native[wlut->native_count]), name);
-
   e->function_ptr[wlut->native_count] = function_ptr;
 
-  wlut->native_count++;
-
-  if (wlut->native_count > MAX_NATIVE_LOOKUPS) {
-    SENI_ERROR("cannot declare native - wlut is full");
+  bool res = wlut_add_native(wlut, name);
+  if (res == false) {
+    SENI_ERROR("declare_native: failed to add keword: %s", name);
   }
+
+  // string_copy(&(wlut->native[wlut->native_count]), name);
+
+  // wlut->native_count++;
+
+  // if (wlut->native_count > MAX_NATIVE_LOOKUPS) {
+  //   SENI_ERROR("cannot declare native - wlut is full");
+  // }
 }
 
 seni_var *bind_debug_print(seni_vm *vm, i32 num_args)

@@ -4,6 +4,7 @@
 #include "seni_mathutil.h"
 #include "seni_colour.h"
 #include "seni_keyword_iname.h"
+#include "seni_multistring_buffer.h"
 
 #include <string.h>
 
@@ -1001,17 +1002,6 @@ void compile_on_matrix_stack(seni_node *ast, seni_program *program)
   program_emit_opcode_i32(program, MTX_LOAD, 0, 0);
   compile_rest(ast, program);
   program_emit_opcode_i32(program, MTX_STORE, 0, 0);
-}
-
-i32 index_of_keyword(const char *keyword, seni_word_lut *wl)
-{
-  for (i32 i = 0; i < wl->keyword_count; i++) {
-    if (strcmp(keyword, wl->keyword[i]) == 0) {
-      return KEYWORD_START + i; // the keywords have KEYWORD_START added onto their index
-    }
-  }
-
-  return -1;
 }
 
 void register_top_level_fns(seni_node *ast, seni_program *program)

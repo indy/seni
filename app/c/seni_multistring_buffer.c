@@ -30,7 +30,7 @@ bool multistring_add(seni_multistring_buffer *mb, seni_string_ref *string_ref, c
 {
   // string_ref already allocated
 
-  if (mb->cursor + len + 1 > mb->buffer) {
+  if ((mb->cursor + len + 1) > (mb->buffer + mb->buffer_size)) {
     SENI_ERROR("not enough capacity in multistring buffer");
     return false;
   }
