@@ -42,27 +42,10 @@ i32 count_decimals(seni_node *float_node)
   return res;
 }
 
-void print_decimals(seni_text_buffer *text_buffer, i32 decimals, f32 f)
-{
-  switch(decimals) {
-  case 0: text_buffer_sprintf(text_buffer, "%.0f", f); break;
-  case 1: text_buffer_sprintf(text_buffer, "%.1f", f); break;
-  case 2: text_buffer_sprintf(text_buffer, "%.2f", f); break;
-  case 3: text_buffer_sprintf(text_buffer, "%.3f", f); break;
-  case 4: text_buffer_sprintf(text_buffer, "%.4f", f); break;
-  case 5: text_buffer_sprintf(text_buffer, "%.5f", f); break;
-  case 6: text_buffer_sprintf(text_buffer, "%.6f", f); break;
-  case 7: text_buffer_sprintf(text_buffer, "%.7f", f); break;
-  case 8: text_buffer_sprintf(text_buffer, "%.8f", f); break;
-  case 9: text_buffer_sprintf(text_buffer, "%.9f", f); break;
-  default: text_buffer_sprintf(text_buffer, "%f", f);
-  };
-}
-
 void format_float_using_node(seni_text_buffer *text_buffer, seni_node *node, f32 f)
 {
   i32 decimals = count_decimals(node);
-  print_decimals(text_buffer, decimals, f);
+  text_buffer_sprintf(text_buffer, "%.*f", decimals, f);
 }
 
 void format_var_value_colour(seni_text_buffer *text_buffer, seni_node *node, seni_var *var)
