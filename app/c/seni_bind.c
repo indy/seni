@@ -274,42 +274,23 @@ seni_var g_var_true;
 // temporary seni_var, returned by native functions
 seni_var g_var_scratch;
 
-// void string_copy(char **dst, char *src)
-// {
-//   size_t len = strlen(src);
-  
-//   char *c = (char *)calloc(len + 1, sizeof(char));
-//   strncpy(c, src, len);
-//   c[len] = '\0';
-
-//   *dst = c;
-// }
-
-void declare_vm_keyword(seni_word_lut *wlut, char *name)
+void declare_vm_keyword(seni_word_lut *word_lut, char *name)
 {
-  bool res = wlut_add_keyword(wlut, name);
+  bool res = wlut_add_keyword(word_lut, name);
   if (res == false) {
     SENI_ERROR("declare_vm_keyword: failed to add keword: %s", name);
   }
 }
 
 
-void declare_native(seni_word_lut *wlut, seni_env *e, char *name, native_function_ptr function_ptr)
+void declare_native(seni_word_lut *word_lut, seni_env *e, char *name, native_function_ptr function_ptr)
 {
-  e->function_ptr[wlut->native_count] = function_ptr;
+  e->function_ptr[word_lut->native_count] = function_ptr;
 
-  bool res = wlut_add_native(wlut, name);
+  bool res = wlut_add_native(word_lut, name);
   if (res == false) {
     SENI_ERROR("declare_native: failed to add keword: %s", name);
   }
-
-  // string_copy(&(wlut->native[wlut->native_count]), name);
-
-  // wlut->native_count++;
-
-  // if (wlut->native_count > MAX_NATIVE_LOOKUPS) {
-  //   SENI_ERROR("cannot declare native - wlut is full");
-  // }
 }
 
 seni_var *bind_debug_print(seni_vm *vm, i32 num_args)
@@ -2151,100 +2132,100 @@ seni_var *bind_gen_col(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-void declare_bindings(seni_word_lut *wlut, seni_env *e)
+void declare_bindings(seni_word_lut *word_lut, seni_env *e)
 {
   g_var_true.type = VAR_BOOLEAN;
   g_var_true.value.i = 1;
   
-  wlut->keyword_count = 0;
+  word_lut->keyword_count = 0;
 
-  // this fills out wlut->keyword and that's used in the wlut_lookup_ functions
+  // this fills out word_lut->keyword and that's used in the wlut_lookup_ functions
   //
-#define REGISTER_KEYWORD(string,_) declare_vm_keyword(wlut, string);
+#define REGISTER_KEYWORD(string,_) declare_vm_keyword(word_lut, string);
 #include "seni_keywords.h"
 #undef REGISTER_KEYWORD
 
-  declare_native(wlut, e, "debug/print", &bind_debug_print);
-  declare_native(wlut, e, "nth", &bind_nth);
-  declare_native(wlut, e, "vector/length", &bind_vector_length);
+  declare_native(word_lut, e, "debug/print", &bind_debug_print);
+  declare_native(word_lut, e, "nth", &bind_nth);
+  declare_native(word_lut, e, "vector/length", &bind_vector_length);
 
   // map
 
-  declare_native(wlut, e, "line", &bind_line);
-  declare_native(wlut, e, "rect", &bind_rect);
-  declare_native(wlut, e, "circle", &bind_circle);
-  declare_native(wlut, e, "circle-slice", &bind_circle_slice);
-  declare_native(wlut, e, "poly", &bind_poly);
-  declare_native(wlut, e, "bezier", &bind_bezier);
-  declare_native(wlut, e, "bezier-bulging", &bind_bezier_bulging);
-  declare_native(wlut, e, "stroked-bezier", &bind_stroked_bezier);
-  declare_native(wlut, e, "stroked-bezier-rect", &bind_stroked_bezier_rect);
+  declare_native(word_lut, e, "line", &bind_line);
+  declare_native(word_lut, e, "rect", &bind_rect);
+  declare_native(word_lut, e, "circle", &bind_circle);
+  declare_native(word_lut, e, "circle-slice", &bind_circle_slice);
+  declare_native(word_lut, e, "poly", &bind_poly);
+  declare_native(word_lut, e, "bezier", &bind_bezier);
+  declare_native(word_lut, e, "bezier-bulging", &bind_bezier_bulging);
+  declare_native(word_lut, e, "stroked-bezier", &bind_stroked_bezier);
+  declare_native(word_lut, e, "stroked-bezier-rect", &bind_stroked_bezier_rect);
 
-  declare_native(wlut, e, "translate", &bind_translate);
-  declare_native(wlut, e, "rotate", &bind_rotate);
-  declare_native(wlut, e, "scale", &bind_scale);
+  declare_native(word_lut, e, "translate", &bind_translate);
+  declare_native(word_lut, e, "rotate", &bind_rotate);
+  declare_native(word_lut, e, "scale", &bind_scale);
 
-  declare_native(wlut, e, "col/convert", &bind_col_convert);
-  g_colour_constructor_start = wlut->native_count;
-  declare_native(wlut, e, "col/rgb", &bind_col_rgb);
-  declare_native(wlut, e, "col/hsl", &bind_col_hsl);
-  declare_native(wlut, e, "col/hsv", &bind_col_hsv);
-  declare_native(wlut, e, "col/lab", &bind_col_lab);
-  g_colour_constructor_end = wlut->native_count;
-  declare_native(wlut, e, "col/complementary", &bind_col_complementary);
-  declare_native(wlut, e, "col/split-complementary", &bind_col_split_complementary);
-  declare_native(wlut, e, "col/analagous", &bind_col_analagous);
-  declare_native(wlut, e, "col/triad", &bind_col_triad);
-  declare_native(wlut, e, "col/darken", &bind_col_darken);
-  declare_native(wlut, e, "col/lighten", &bind_col_lighten);
-  declare_native(wlut, e, "col/set-alpha", &bind_col_set_alpha);
-  declare_native(wlut, e, "col/get-alpha", &bind_col_get_alpha);
-  declare_native(wlut, e, "col/set-lab-l", &bind_col_set_lab_l);
-  declare_native(wlut, e, "col/get-lab-l", &bind_col_get_lab_l);
-  declare_native(wlut, e, "col/build-procedural", &bind_col_build_procedural);
-  declare_native(wlut, e, "col/build-bezier", &bind_col_build_bezier);
-  declare_native(wlut, e, "col/value", &bind_col_value);
+  declare_native(word_lut, e, "col/convert", &bind_col_convert);
+  g_colour_constructor_start = word_lut->native_count;
+  declare_native(word_lut, e, "col/rgb", &bind_col_rgb);
+  declare_native(word_lut, e, "col/hsl", &bind_col_hsl);
+  declare_native(word_lut, e, "col/hsv", &bind_col_hsv);
+  declare_native(word_lut, e, "col/lab", &bind_col_lab);
+  g_colour_constructor_end = word_lut->native_count;
+  declare_native(word_lut, e, "col/complementary", &bind_col_complementary);
+  declare_native(word_lut, e, "col/split-complementary", &bind_col_split_complementary);
+  declare_native(word_lut, e, "col/analagous", &bind_col_analagous);
+  declare_native(word_lut, e, "col/triad", &bind_col_triad);
+  declare_native(word_lut, e, "col/darken", &bind_col_darken);
+  declare_native(word_lut, e, "col/lighten", &bind_col_lighten);
+  declare_native(word_lut, e, "col/set-alpha", &bind_col_set_alpha);
+  declare_native(word_lut, e, "col/get-alpha", &bind_col_get_alpha);
+  declare_native(word_lut, e, "col/set-lab-l", &bind_col_set_lab_l);
+  declare_native(word_lut, e, "col/get-lab-l", &bind_col_get_lab_l);
+  declare_native(word_lut, e, "col/build-procedural", &bind_col_build_procedural);
+  declare_native(word_lut, e, "col/build-bezier", &bind_col_build_bezier);
+  declare_native(word_lut, e, "col/value", &bind_col_value);
 
-  declare_native(wlut, e, "math/distance", &bind_math_distance);
-  declare_native(wlut, e, "math/clamp", &bind_math_clamp);
-  declare_native(wlut, e, "math/radians->degrees", &bind_math_radians_to_degrees);
-  declare_native(wlut, e, "math/cos", &bind_math_cos);
-  declare_native(wlut, e, "math/sin", &bind_math_sin);
+  declare_native(word_lut, e, "math/distance", &bind_math_distance);
+  declare_native(word_lut, e, "math/clamp", &bind_math_clamp);
+  declare_native(word_lut, e, "math/radians->degrees", &bind_math_radians_to_degrees);
+  declare_native(word_lut, e, "math/cos", &bind_math_cos);
+  declare_native(word_lut, e, "math/sin", &bind_math_sin);
 
-  declare_native(wlut, e, "prng/build", &bind_prng_build);
-  declare_native(wlut, e, "prng/values", &bind_prng_values);
-  declare_native(wlut, e, "prng/value", &bind_prng_value);
-  declare_native(wlut, e, "prng/perlin", &bind_prng_perlin);
+  declare_native(word_lut, e, "prng/build", &bind_prng_build);
+  declare_native(word_lut, e, "prng/values", &bind_prng_values);
+  declare_native(word_lut, e, "prng/value", &bind_prng_value);
+  declare_native(word_lut, e, "prng/perlin", &bind_prng_perlin);
 
-  declare_native(wlut, e, "interp/build", &bind_parametric_build);
-  declare_native(wlut, e, "interp/value", &bind_parametric_value);
-  declare_native(wlut, e, "interp/cos", &bind_parametric_cos);
-  declare_native(wlut, e, "interp/sin", &bind_parametric_sin);
-  declare_native(wlut, e, "interp/bezier", &bind_parametric_bezier);
-  declare_native(wlut, e, "interp/bezier-tangent", &bind_parametric_bezier_tangent);
-  declare_native(wlut, e, "interp/circle", &bind_parametric_circle);
+  declare_native(word_lut, e, "interp/build", &bind_parametric_build);
+  declare_native(word_lut, e, "interp/value", &bind_parametric_value);
+  declare_native(word_lut, e, "interp/cos", &bind_parametric_cos);
+  declare_native(word_lut, e, "interp/sin", &bind_parametric_sin);
+  declare_native(word_lut, e, "interp/bezier", &bind_parametric_bezier);
+  declare_native(word_lut, e, "interp/bezier-tangent", &bind_parametric_bezier_tangent);
+  declare_native(word_lut, e, "interp/circle", &bind_parametric_circle);
 
-  declare_native(wlut, e, "path/linear", &bind_path_linear);
-  declare_native(wlut, e, "path/circle", &bind_path_circle);
-  declare_native(wlut, e, "path/spline", &bind_path_spline);
-  declare_native(wlut, e, "path/bezier", &bind_path_bezier);
+  declare_native(word_lut, e, "path/linear", &bind_path_linear);
+  declare_native(word_lut, e, "path/circle", &bind_path_circle);
+  declare_native(word_lut, e, "path/spline", &bind_path_spline);
+  declare_native(word_lut, e, "path/bezier", &bind_path_bezier);
 
-  declare_native(wlut, e, "repeat/symmetry-vertical", &bind_repeat_symmetry_vertical);
-  declare_native(wlut, e, "repeat/symmetry-horizontal", &bind_repeat_symmetry_horizontal);
-  declare_native(wlut, e, "repeat/symmetry-4", &bind_repeat_symmetry_4);
-  declare_native(wlut, e, "repeat/symmetry-8", &bind_repeat_symmetry_8);
-  declare_native(wlut, e, "repeat/rotate", &bind_repeat_rotate);
-  declare_native(wlut, e, "repeat/rotate-mirrored", &bind_repeat_rotate_mirrored);
+  declare_native(word_lut, e, "repeat/symmetry-vertical", &bind_repeat_symmetry_vertical);
+  declare_native(word_lut, e, "repeat/symmetry-horizontal", &bind_repeat_symmetry_horizontal);
+  declare_native(word_lut, e, "repeat/symmetry-4", &bind_repeat_symmetry_4);
+  declare_native(word_lut, e, "repeat/symmetry-8", &bind_repeat_symmetry_8);
+  declare_native(word_lut, e, "repeat/rotate", &bind_repeat_rotate);
+  declare_native(word_lut, e, "repeat/rotate-mirrored", &bind_repeat_rotate_mirrored);
 
-  declare_native(wlut, e, "focal/build-point", &bind_focal_build_point);
-  declare_native(wlut, e, "focal/build-vline", &bind_focal_build_vline);
-  declare_native(wlut, e, "focal/build-hline", &bind_focal_build_hline);
-  declare_native(wlut, e, "focal/value", &bind_focal_value);
+  declare_native(word_lut, e, "focal/build-point", &bind_focal_build_point);
+  declare_native(word_lut, e, "focal/build-vline", &bind_focal_build_vline);
+  declare_native(word_lut, e, "focal/build-hline", &bind_focal_build_hline);
+  declare_native(word_lut, e, "focal/value", &bind_focal_value);
 
-  declare_native(wlut, e, "gen/int", &bind_gen_int);
-  declare_native(wlut, e, "gen/scalar", &bind_gen_scalar);
-  declare_native(wlut, e, "gen/2d", &bind_gen_2d);
-  declare_native(wlut, e, "gen/select", &bind_gen_select);
-  declare_native(wlut, e, "gen/col", &bind_gen_col);
+  declare_native(word_lut, e, "gen/int", &bind_gen_int);
+  declare_native(word_lut, e, "gen/scalar", &bind_gen_scalar);
+  declare_native(word_lut, e, "gen/2d", &bind_gen_2d);
+  declare_native(word_lut, e, "gen/select", &bind_gen_select);
+  declare_native(word_lut, e, "gen/col", &bind_gen_col);
 }
 

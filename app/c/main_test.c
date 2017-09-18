@@ -190,35 +190,34 @@ seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *va
   return node->next;
 }
 
-seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, seni_word_lut *wlut)
+seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, seni_word_lut *word_lut)
 {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
   i32 i = node->value.i;
-  TEST_ASSERT_TRUE(wlut->word_count > i);
+  TEST_ASSERT_TRUE(word_lut->word_count > i);
   
-  seni_string_ref *string_ref = &(wlut->word_ref[i]);
+  seni_string_ref *string_ref = &(word_lut->word_ref[i]);
   TEST_ASSERT_EQUAL_STRING(val, string_ref->c);
   
   return node->next;
 }
 
 #define PARSE(EXPR) parser_subsystem_startup(); \
-  wl = wlut_allocate();                     \
-  nodes = parser_parse(wl, EXPR)
+  word_lut = wlut_allocate();                     \
+  nodes = parser_parse(word_lut, EXPR)
 
-#define PARSE_CLEANUP wlut_free(wl); \
+#define PARSE_CLEANUP wlut_free(word_lut); \
   parser_return_nodes_to_pool(nodes); \
   parser_subsystem_shutdown();
-
 
 void test_parser(void)
 {
   seni_node *nodes, *iter, *iter2;
-  seni_word_lut *wl;
+  seni_word_lut *word_lut;
 
   PARSE("hello");
-  assert_parser_node_txt(nodes, NODE_NAME, "hello", wl);
+  assert_parser_node_txt(nodes, NODE_NAME, "hello", word_lut);
   PARSE_CLEANUP;
 
   PARSE("5");
@@ -233,7 +232,7 @@ void test_parser(void)
   iter = nodes->value.first_child;
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "add", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_f32(iter, 1);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
@@ -245,7 +244,7 @@ void test_parser(void)
   PARSE("[add 9 8 (foo)]");
   assert_parser_node_raw(nodes, NODE_VECTOR);
   iter = nodes->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "add", wl);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "add", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_f32(iter, 9);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
@@ -265,15 +264,15 @@ void test_parser(void)
   PARSE("'(runall \"shabba\") ; woohoo");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "quote", wl);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "quote", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter;
   iter = assert_parser_node_raw(iter, NODE_LIST);
   TEST_ASSERT_NULL(iter);
   iter = iter2->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "runall", wl);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "runall", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_txt(iter, NODE_STRING, "shabba", wl);
+  iter = assert_parser_node_txt(iter, NODE_STRING, "shabba", word_lut);
   iter = nodes->next;
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_str(iter, NODE_COMMENT, "; woohoo");
@@ -283,13 +282,13 @@ void test_parser(void)
   PARSE("(fun i: 42 f: 12.34)");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "fun", wl);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "fun", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_txt(iter, NODE_LABEL, "i", wl);
+  iter = assert_parser_node_txt(iter, NODE_LABEL, "i", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_f32(iter, 42);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
-  iter = assert_parser_node_txt(iter, NODE_LABEL, "f", wl);
+  iter = assert_parser_node_txt(iter, NODE_LABEL, "f", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_f32(iter, 12.34f);
   TEST_ASSERT_NULL(iter);
@@ -299,7 +298,7 @@ void test_parser(void)
   PARSE("(a 1) (b 2)");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "a", wl);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "a", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_f32(iter, 1);
   TEST_ASSERT_NULL(iter);
@@ -307,7 +306,7 @@ void test_parser(void)
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   assert_parser_node_raw(iter, NODE_LIST);
   iter = iter->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "b", wl);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "b", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter = assert_parser_node_f32(iter, 2);
   TEST_ASSERT_NULL(iter);
@@ -316,7 +315,7 @@ void test_parser(void)
   PARSE("(a {[1 2]})");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "a", wl);
+  iter = assert_parser_node_txt(iter, NODE_NAME, "a", word_lut);
   iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter; // the vector
   iter = assert_parser_node_raw(iter, NODE_VECTOR);

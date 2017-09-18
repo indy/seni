@@ -251,11 +251,11 @@ void clear_local_mappings(seni_program *program)
   }
 }
 
-i32 add_local_mapping(seni_program *program, i32 wlut_value)
+i32 add_local_mapping(seni_program *program, i32 word_lut_value)
 {
   for (i32 i=0; i < MEMORY_LOCAL_SIZE; i++) {
     if(program->local_mappings[i] == -1) {
-      program->local_mappings[i] = wlut_value;
+      program->local_mappings[i] = word_lut_value;
       return i;
     }
   }
@@ -264,10 +264,10 @@ i32 add_local_mapping(seni_program *program, i32 wlut_value)
   return -1;
 }
 
-i32 get_local_mapping(seni_program *program, i32 wlut_value)
+i32 get_local_mapping(seni_program *program, i32 word_lut_value)
 {
   for (i32 i=0; i < MEMORY_LOCAL_SIZE; i++) {
-    if(program->local_mappings[i] == wlut_value) {
+    if(program->local_mappings[i] == word_lut_value) {
       return i;
     }
   }
@@ -282,11 +282,11 @@ void clear_global_mappings(seni_program *program)
   }
 }
 
-i32 add_global_mapping(seni_program *program, i32 wlut_value)
+i32 add_global_mapping(seni_program *program, i32 word_lut_value)
 {
   for (i32 i=0; i < MEMORY_GLOBAL_SIZE; i++) {
     if(program->global_mappings[i] == -1) {
-      program->global_mappings[i] = wlut_value;
+      program->global_mappings[i] = word_lut_value;
       return i;
     }
   }
@@ -295,10 +295,10 @@ i32 add_global_mapping(seni_program *program, i32 wlut_value)
   return -1;
 }
 
-i32 get_global_mapping(seni_program *program, i32 wlut_value)
+i32 get_global_mapping(seni_program *program, i32 word_lut_value)
 {
   for (i32 i=0; i < MEMORY_GLOBAL_SIZE; i++) {
-    if(program->global_mappings[i] == wlut_value) {
+    if(program->global_mappings[i] == word_lut_value) {
       return i;
     }
   }
@@ -306,13 +306,13 @@ i32 get_global_mapping(seni_program *program, i32 wlut_value)
   return -1;
 }
 
-i32 get_argument_mapping(seni_fn_info *fn_info, i32 wlut_value)
+i32 get_argument_mapping(seni_fn_info *fn_info, i32 word_lut_value)
 {
   for (i32 i = 0; i < MAX_NUM_ARGUMENTS; i++) {
     if (fn_info->argument_offsets[i] == -1) {
       return -1;
     }
-    if (fn_info->argument_offsets[i] == wlut_value) {
+    if (fn_info->argument_offsets[i] == word_lut_value) {
       return (i * 2) + 1;
     }
   }

@@ -25,15 +25,15 @@ struct seni_word_lut {
 
 // word lookup
 seni_word_lut *wlut_allocate();
-void           wlut_free(seni_word_lut *wlut);
-void           wlut_reset_words(seni_word_lut *wlut);
+void           wlut_free(seni_word_lut *word_lut);
+void           wlut_reset_words(seni_word_lut *word_lut);
 char          *wlut_get_word(seni_word_lut *word_lut, i32 iword);
 char          *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword);
 void           wlut_pretty_print(char *msg, seni_word_lut *word_lut);
 
-bool           wlut_add_native(seni_word_lut *wlut, char *name);
-bool           wlut_add_keyword(seni_word_lut *wlut, char *name);
-bool           wlut_add_word(seni_word_lut *wlut, char *name, size_t len);
+bool           wlut_add_native(seni_word_lut *word_lut, char *name);
+bool           wlut_add_keyword(seni_word_lut *word_lut, char *name);
+bool           wlut_add_word(seni_word_lut *word_lut, char *name, size_t len);
 
 // which value to use from the unions that are specified in both seni_node and seni_var
 typedef enum {
@@ -233,7 +233,7 @@ struct seni_program {
   //
   i32 opcode_offset;
   i32 global_mappings[MEMORY_GLOBAL_SIZE]; // top-level defines
-  i32 local_mappings[MEMORY_LOCAL_SIZE]; // store which wlut values are stored in which local memory addresses
+  i32 local_mappings[MEMORY_LOCAL_SIZE]; // store which word_lut values are stored in which local memory addresses
   seni_fn_info *current_fn_info;
 
   seni_fn_info fn_info[MAX_TOP_LEVEL_FUNCTIONS];
