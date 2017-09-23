@@ -356,8 +356,11 @@ function createInitialGenerationWasm({ populationSize, traits }) {
   console.log('createInitialGenerationWasm');
   Shabba.setString(Shabba.traits_buffer, traits);
 
-  console.log(populationSize);
-  Shabba.createInitialGeneration(populationSize);
+  const seed = Math.floor(Math.random() * 1024);
+  console.log(`createInitialGenerationWasm seed: ${seed}`);
+  console.log(`createInitialGenerationWasm populationSize: ${populationSize}`);
+
+  Shabba.createInitialGeneration(populationSize, seed);
 
   const genotypes = getGenotypesFromWasm(populationSize);
 

@@ -468,6 +468,10 @@ i32 trait_list_count(seni_trait_list *trait_list)
 
 bool trait_list_serialize(seni_text_buffer *text_buffer, seni_trait_list *trait_list)
 {
+  // seed value
+  text_buffer_sprintf(text_buffer, "%d", trait_list->seed_value);
+  text_buffer_sprintf(text_buffer, " ");
+  
   // number of traits
   i32 count = trait_list_count(trait_list);
   text_buffer_sprintf(text_buffer, "%d", count);
@@ -488,10 +492,14 @@ bool trait_list_serialize(seni_text_buffer *text_buffer, seni_trait_list *trait_
 
 bool trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer)
 {
+  seni_trait_list *trait_list = out;
+
+  i32 seed_value = text_buffer_eat_i32(text_buffer);
+  text_buffer_eat_space(text_buffer);
+  trait_list->seed_value = seed_value;
+  
   i32 count = text_buffer_eat_i32(text_buffer);
   text_buffer_eat_space(text_buffer);
-
-  seni_trait_list *trait_list = out;
 
   for (i32 i = 0; i < count; i++) {
     seni_trait *trait = trait_get_from_pool();
@@ -776,7 +784,7 @@ bool genotype_list_deserialize(seni_genotype_list *out, seni_text_buffer *text_b
   return true;
 }
 
-seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *trait_list, i32 population_size)
+seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *trait_list, i32 population_size, i32 seed)
 {
   seni_genotype_list *genotype_list = genotype_list_get_from_pool();
   if (population_size == 0) {
@@ -788,14 +796,21 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
   seni_genotype *genotype = genotype_build_from_initial_values(trait_list);
   genotype_list_add_genotype(genotype_list, genotype);
 
+  SENI_LOG("genotype_list_create_initial_generation seed: %d", seed);
+  seni_prng_state prng_state;
+  seni_prng_set_state(&prng_state, (u64)seed);
+  i32 prng_min = 1 << 0;
+  i32 prng_max = 1 << 16;
+  i32 genotype_seed;
+
   // fill out the remaining population with generated values
   seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
 
-  i32 seed_value = 42;
   for (i32 i = 1; i < population_size; i++) {
-    seed_value += 1425;
-    genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+    genotype_seed = seni_prng_i32_range(&prng_state, prng_min, prng_max);
+    SENI_LOG("%d genotype_seed %d", i, genotype_seed);
+    genotype = genotype_build_from_program(trait_list, vm, env, genotype_seed);
     genotype_list_add_genotype(genotype_list, genotype);
   }
 

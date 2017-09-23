@@ -21,6 +21,7 @@ bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer);
 // store a list of traits
 struct seni_trait_list {
   seni_trait *traits;
+  i32 seed_value;
 
   seni_trait_list *next;
   seni_trait_list *prev;
@@ -76,7 +77,7 @@ i32                 genotype_list_count(seni_genotype_list *genotype_list);
 bool                genotype_list_serialize(seni_text_buffer *text_buffer, seni_genotype_list *genotype_list);
 bool                genotype_list_deserialize(seni_genotype_list *out, seni_text_buffer *text_buffer);
 
-seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *trait_list, i32 population_size);
+seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *trait_list, i32 population_size, i32 seed);
 
 seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
                                                   i32 num_parents,

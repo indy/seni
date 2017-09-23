@@ -262,7 +262,7 @@ i32 build_traits()
 }
 
 export
-i32 create_initial_generation(i32 population_size)
+i32 create_initial_generation(i32 population_size, i32 seed)
 {
   debug_size_traits_buffer();
   
@@ -272,8 +272,8 @@ i32 create_initial_generation(i32 population_size)
   if (g_genotype_list != NULL) {
     genotype_list_return_to_pool(g_genotype_list);
   }
-  
-  g_genotype_list = genotype_list_create_initial_generation(trait_list, population_size);
+
+  g_genotype_list = genotype_list_create_initial_generation(trait_list, population_size, seed);
   if (g_genotype_list == NULL) {
     trait_list_return_to_pool(trait_list);
     SENI_ERROR("create_initial_generation: genotype_list_create_initial_generation returned null");

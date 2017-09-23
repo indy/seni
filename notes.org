@@ -1,18 +1,16 @@
-* TODO [1/14]
-  1. [X] don't malloc during parsing
-  2. [ ] get high-res render working
-  3. [ ] impl: initial seed
+* TODO [0/12]
+  1. [ ] remove vm/env from genotype_list_create_initial_generation
+  2. [ ] impl: initial seed
+  3. [ ] get high-res render working
   4. [ ] add an END token to serialized output, use as a sanity check
   5. [ ] add unit tests for compiling with a genotype
-  6. [ ] pretty print program emits names
-  7. [ ] better seni_ga.c::hack_node_to_var (lists, 2d etc)
-  8. [ ] unify args to *_pretty_print
-  9. [ ] maybe have a required specifier in functions?
-  10. [ ] poly should also accept a uv parameter
-  11. [ ] ensure that there's a dist folder before running npm run build:wasm
-  12. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  13. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  14. [ ] look into restrict keyword in C99
+  6. [ ] unify args to *_pretty_print
+  7. [ ] maybe have a required specifier in functions?
+  8. [ ] poly should also accept a uv parameter
+  9. [ ] ensure that there's a dist folder before running npm run build:wasm
+  10. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  12. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
