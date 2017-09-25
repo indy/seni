@@ -6,9 +6,9 @@
 /* word lookup table */
 struct seni_word_lut {
 
-  seni_multistring_buffer *native_buffer;
-  seni_multistring_buffer *keyword_buffer;
-  seni_multistring_buffer *word_buffer;
+  seni_multistring *native_buffer;
+  seni_multistring *keyword_buffer;
+  seni_multistring *word_buffer;
   
   // set once at startup - doesn't change
   seni_string_ref *native_ref; // array MAX_NATIVE_LOOKUPS in size

@@ -1,9 +1,8 @@
 #include <webassembly.h>
 #include <stdlib.h>
 
-
 #include "seni/text_buffer.h"
-#include "seni/ga.h"
+#include "seni/genetic.h"
 #include "seni/js_imports.h"
 #include "seni/lang.h"
 #include "seni/lib.h"

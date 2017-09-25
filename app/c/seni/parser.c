@@ -9,7 +9,7 @@
 #include <string.h>
 
 #include "pool_macro.h"
-#include "multistring_buffer.h"
+#include "multistring.h"
 
 void node_cleanup(seni_node *node)
 {

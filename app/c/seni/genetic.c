@@ -1,4 +1,4 @@
-#include "ga.h"
+#include "genetic.h"
 #include "config.h"
 
 #include "lang.h"

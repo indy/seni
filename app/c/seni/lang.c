@@ -11,7 +11,7 @@
 #include "render_packet.h"
 #include "text_buffer.h"
 #include "vm_compiler.h"
-#include "multistring_buffer.h"
+#include "multistring.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -36,9 +36,9 @@ seni_word_lut *wlut_allocate()
 {
   seni_word_lut *word_lut = (seni_word_lut *)calloc(1, sizeof(seni_word_lut));
 
-  word_lut->native_buffer = multistring_buffer_allocate(5000); // todo: check this size
-  word_lut->keyword_buffer = multistring_buffer_allocate(5000); // todo: check this size
-  word_lut->word_buffer = multistring_buffer_allocate(5000); // todo: check this size
+  word_lut->native_buffer = multistring_allocate(5000); // todo: check this size
+  word_lut->keyword_buffer = multistring_allocate(5000); // todo: check this size
+  word_lut->word_buffer = multistring_allocate(5000); // todo: check this size
 
   word_lut->native_ref = (seni_string_ref *)calloc(MAX_NATIVE_LOOKUPS, sizeof(seni_string_ref));
   word_lut->keyword_ref = (seni_string_ref *)calloc(MAX_KEYWORD_LOOKUPS, sizeof(seni_string_ref));
@@ -53,9 +53,9 @@ void wlut_free(seni_word_lut *word_lut)
   free(word_lut->keyword_ref);
   free(word_lut->native_ref);
 
-  multistring_buffer_free(word_lut->native_buffer);
-  multistring_buffer_free(word_lut->keyword_buffer);
-  multistring_buffer_free(word_lut->word_buffer);
+  multistring_free(word_lut->native_buffer);
+  multistring_free(word_lut->keyword_buffer);
+  multistring_free(word_lut->word_buffer);
 
   free(word_lut);
 }
@@ -65,7 +65,7 @@ void wlut_free(seni_word_lut *word_lut)
 void wlut_reset_words(seni_word_lut *word_lut)
 {
   word_lut->word_count = 0;
-  multistring_buffer_reset(word_lut->word_buffer);
+  multistring_reset(word_lut->word_buffer);
 }
 
 char *wlut_get_word(seni_word_lut *word_lut, i32 iword)
@@ -111,7 +111,7 @@ bool wlut_add_native(seni_word_lut *word_lut, char *name)
   }
 
   size_t len = strlen(name);
-  seni_multistring_buffer *mb = word_lut->native_buffer;
+  seni_multistring *mb = word_lut->native_buffer;
   seni_string_ref *string_ref = &(word_lut->native_ref[word_lut->native_count]);
   word_lut->native_count++;
 
@@ -132,7 +132,7 @@ bool wlut_add_keyword(seni_word_lut *word_lut, char *name)
   }
 
   size_t len = strlen(name);
-  seni_multistring_buffer *mb = word_lut->keyword_buffer;
+  seni_multistring *mb = word_lut->keyword_buffer;
   seni_string_ref *string_ref = &(word_lut->keyword_ref[word_lut->keyword_count]);
   word_lut->keyword_count++;
 
@@ -152,7 +152,7 @@ bool wlut_add_word(seni_word_lut *word_lut, char *name, size_t len)
     return false;
   }
 
-  seni_multistring_buffer *mb = word_lut->word_buffer;
+  seni_multistring *mb = word_lut->word_buffer;
   seni_string_ref *string_ref = &(word_lut->word_ref[word_lut->word_count]);
   word_lut->word_count++;
 

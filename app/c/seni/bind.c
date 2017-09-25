@@ -14,7 +14,6 @@
 #include "repeat.h"
 #include "shapes.h"
 #include "vm_interpreter.h"
-#include "multistring_buffer.h"
 
 #include <string.h>
 #include <stdlib.h>

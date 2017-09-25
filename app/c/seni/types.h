@@ -30,7 +30,7 @@ typedef struct seni_genotype seni_genotype;
 typedef struct seni_genotype_list seni_genotype_list;
 typedef struct seni_matrix seni_matrix;
 typedef struct seni_matrix_stack seni_matrix_stack;
-typedef struct seni_multistring_buffer seni_multistring_buffer;
+typedef struct seni_multistring seni_multistring;
 typedef struct seni_node seni_node;
 typedef struct seni_prng_state seni_prng_state;
 typedef struct seni_program seni_program;

@@ -1,10 +1,9 @@
 #include "vm_compiler.h"
 #include "lang.h"
-#include "ga.h"
+#include "genetic.h"
 #include "mathutil.h"
 #include "colour.h"
 #include "keyword_iname.h"
-#include "multistring_buffer.h"
 
 #include <string.h>
 

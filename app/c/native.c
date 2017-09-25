@@ -1,5 +1,5 @@
 #include "seni/bind.h"
-#include "seni/ga.h"
+#include "seni/genetic.h"
 #include "seni/keyword_iname.h"
 #include "seni/lang.h"
 #include "seni/parser.h"

@@ -1,7 +1,7 @@
 #include "lib.h"
 
 #include "text_buffer.h"
-#include "ga.h"
+#include "genetic.h"
 #include "lang.h"
 #include "parser.h"
 #include "shapes.h"

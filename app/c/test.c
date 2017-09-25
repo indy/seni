@@ -6,7 +6,7 @@
 #include "seni/bind.h"
 #include "seni/colour.h"
 #include "seni/config.h"
-#include "seni/ga.h"
+#include "seni/genetic.h"
 #include "seni/keyword_iname.h"
 #include "seni/lang.h"
 #include "seni/lib.h"
@@ -23,7 +23,7 @@
 #include "seni/vm_compiler.h"
 #include "seni/vm_interpreter.h"
 #include "seni/pool_macro.h"
-#include "seni/multistring_buffer.h"
+#include "seni/multistring.h"
 
 #include "stdio.h"
 #include <stdlib.h>

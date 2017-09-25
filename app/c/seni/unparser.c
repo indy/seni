@@ -1,6 +1,6 @@
 #include "unparser.h"
 
-#include "ga.h"
+#include "genetic.h"
 #include "lang.h"
 #include "printf.h"
 #include "text_buffer.h"
