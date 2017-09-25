@@ -5,7 +5,7 @@
   "scripts": {
     "build": "webpack --progress",
     "build:watch": "webpack --progress --watch",
-    "build:wasm": "wa compile -D SENI_BUILD_WASM -o app/dist/seni-wasm.wasm app/c/main_wasm.c -i app/c/seni_lib.c -i app/c/seni_lang.c -i app/c/seni_parser.c -i app/c/seni_unparser.c -i app/c/seni_vm_compiler.c -i app/c/seni_vm_interpreter.c -i app/c/seni_bind.c -i app/c/seni_colour.c -i app/c/seni_parametric.c -i app/c/seni_mathutil.c -i app/c/seni_matrix.c -i app/c/seni_prng.c -i app/c/seni_render_packet.c -i app/c/seni_shapes.c -i app/c/seni_uv_mapper.c -i app/c/seni_repeat.c -i app/c/seni_path.c -i app/c/seni_focal.c -i app/c/seni_ga.c -i app/c/seni_strtof.c -i app/c/seni_printf.c -i app/c/seni_timing.c -i app/c/seni_text_buffer.c -i app/c/seni_multistring_buffer.c -I app/c",
+    "build:wasm": "wa compile -D SENI_BUILD_WASM -o app/dist/seni-wasm.wasm app/c/main_wasm.c -i app/c/seni/lib.c -i app/c/seni/lang.c -i app/c/seni/parser.c -i app/c/seni/unparser.c -i app/c/seni/vm_compiler.c -i app/c/seni/vm_interpreter.c -i app/c/seni/bind.c -i app/c/seni/colour.c -i app/c/seni/parametric.c -i app/c/seni/mathutil.c -i app/c/seni/matrix.c -i app/c/seni/prng.c -i app/c/seni/render_packet.c -i app/c/seni/shapes.c -i app/c/seni/uv_mapper.c -i app/c/seni/repeat.c -i app/c/seni/path.c -i app/c/seni/focal.c -i app/c/seni/ga.c -i app/c/seni/strtof.c -i app/c/seni/printf.c -i app/c/seni/timing.c -i app/c/seni/text_buffer.c -i app/c/seni/multistring_buffer.c -I app/c",
     "hack:min:seni": "uglifyjs --compress --mangle --output app/dist/seni.bundle.min.js -- app/dist/seni.bundle.js",
     "hack:min:worker": "uglifyjs --compress --mangle --output app/dist/worker.bundle.min.js -- app/dist/worker.bundle.js",
     "clean": "rm -rf app/dist",

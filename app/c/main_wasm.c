@@ -2,18 +2,18 @@
 #include <stdlib.h>
 
 
-#include "seni_text_buffer.h"
-#include "seni_ga.h"
-#include "seni_js_imports.h"
-#include "seni_lang.h"
-#include "seni_lib.h"
-#include "seni_parser.h"
-#include "seni_printf.h"
-#include "seni_render_packet.h"
-#include "seni_timing.h"
-#include "seni_vm_compiler.h"
-#include "seni_vm_interpreter.h"
-#include "seni_unparser.h"
+#include "seni/text_buffer.h"
+#include "seni/ga.h"
+#include "seni/js_imports.h"
+#include "seni/lang.h"
+#include "seni/lib.h"
+#include "seni/parser.h"
+#include "seni/printf.h"
+#include "seni/render_packet.h"
+#include "seni/timing.h"
+#include "seni/vm_compiler.h"
+#include "seni/vm_interpreter.h"
+#include "seni/unparser.h"
 
 #define SOURCE_BUFFER_SIZE 20000
 char *g_source_buffer;
