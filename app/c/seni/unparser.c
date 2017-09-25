@@ -3,7 +3,7 @@
 #include "genetic.h"
 #include "lang.h"
 #include "printf.h"
-#include "text_buffer.h"
+#include "cursor.h"
 #include "keyword_iname.h"
 #include "colour.h"
 
@@ -42,36 +42,36 @@ i32 count_decimals(seni_node *float_node)
   return res;
 }
 
-void format_float_using_node(seni_text_buffer *text_buffer, seni_node *node, f32 f)
+void format_float_using_node(seni_cursor *cursor, seni_node *node, f32 f)
 {
   i32 decimals = count_decimals(node);
-  text_buffer_sprintf(text_buffer, "%.*f", decimals, f);
+  cursor_sprintf(cursor, "%.*f", decimals, f);
 }
 
-void format_var_value_colour(seni_text_buffer *text_buffer, seni_node *node, seni_var *var)
+void format_var_value_colour(seni_cursor *cursor, seni_node *node, seni_var *var)
 {
   node = NULL;
   switch(var->value.i) {
   case RGB:
-    text_buffer_sprintf(text_buffer, "(col/rgb r: %.2f g: %.2f b: %.2f alpha: %.2f)",
+    cursor_sprintf(cursor, "(col/rgb r: %.2f g: %.2f b: %.2f alpha: %.2f)",
                         var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
     break;
   case HSL:
-    text_buffer_sprintf(text_buffer, "(col/hsl h: %.2f s: %.2f l: %.2f alpha: %.2f)",
+    cursor_sprintf(cursor, "(col/hsl h: %.2f s: %.2f l: %.2f alpha: %.2f)",
                         var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
     break;
   case LAB:
-    text_buffer_sprintf(text_buffer, "(col/lab l: %.2f a: %.2f b: %.2f alpha: %.2f)",
+    cursor_sprintf(cursor, "(col/lab l: %.2f a: %.2f b: %.2f alpha: %.2f)",
                         var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
     break;
   case HSV:
-    text_buffer_sprintf(text_buffer, "(col/hsv h: %.2f s: %.2f v: %.2f alpha: %.2f)",
+    cursor_sprintf(cursor, "(col/hsv h: %.2f s: %.2f v: %.2f alpha: %.2f)",
                         var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
     break;
   }
 }
 
-void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *node)
+void format_node_value(seni_cursor *cursor, seni_word_lut *word_lut, seni_node *node)
 {
   char *c;
   
@@ -84,28 +84,28 @@ void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, s
     SENI_ERROR("NODE_VECTOR ???");
     break;
   case NODE_INT:
-    text_buffer_sprintf(text_buffer, "%d", node->value.i);
+    cursor_sprintf(cursor, "%d", node->value.i);
     break;
   case NODE_FLOAT:
-    format_float_using_node(text_buffer, node, node->value.f);
+    format_float_using_node(cursor, node, node->value.f);
     break;
   case NODE_NAME:
     c = wlut_reverse_lookup(word_lut, node->value.i);
-    text_buffer_sprintf(text_buffer, "%s", c);
+    cursor_sprintf(cursor, "%s", c);
     break;
   case NODE_LABEL:
     c = wlut_reverse_lookup(word_lut, node->value.i);
-    text_buffer_sprintf(text_buffer, "%s:", c);
+    cursor_sprintf(cursor, "%s:", c);
     break;
   case NODE_STRING:
     c = wlut_reverse_lookup(word_lut, node->value.i);
-    text_buffer_sprintf(text_buffer, "\"%s\"", c);
+    cursor_sprintf(cursor, "\"%s\"", c);
     break;
   case NODE_WHITESPACE:
-    text_buffer_strncpy(text_buffer, node->src, node->src_len);
+    cursor_strncpy(cursor, node->src, node->src_len);
     break;
   case NODE_COMMENT:
-    text_buffer_strncpy(text_buffer, node->src, node->src_len);
+    cursor_strncpy(cursor, node->src, node->src_len);
     break;
   default:
     SENI_ERROR("???");
@@ -117,7 +117,7 @@ void format_node_value(seni_text_buffer *text_buffer, seni_word_lut *word_lut, s
   };
 }
 
-void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genotype *genotype, seni_word_lut *word_lut)
+void format_var_value(seni_cursor *cursor, seni_node *node, seni_genotype *genotype, seni_word_lut *word_lut)
 {
   seni_gene *gene = genotype_pull_gene(genotype); 
   seni_var *var = gene->var;
@@ -126,31 +126,31 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
 
   switch (var->type) {
   case VAR_INT:
-    text_buffer_sprintf(text_buffer, "%d", var->value.i);
+    cursor_sprintf(cursor, "%d", var->value.i);
     break;
   case VAR_FLOAT:
-    format_float_using_node(text_buffer, node, var->value.f);
+    format_float_using_node(cursor, node, var->value.f);
     break;
   case VAR_NAME:
     name = wlut_reverse_lookup(word_lut, var->value.i);
-    text_buffer_sprintf(text_buffer, "%s", name);
+    cursor_sprintf(cursor, "%s", name);
     break;
   case VAR_VECTOR:
     SENI_ERROR("vector ???");
 
     break;
   case VAR_COLOUR:
-    format_var_value_colour(text_buffer, node, var);
+    format_var_value_colour(cursor, node, var);
     break;
   case VAR_2D:
 
     // node is a NODE_VECTOR
     
-    text_buffer_sprintf(text_buffer, "[");
+    cursor_sprintf(cursor, "[");
     
     n = node->value.first_child;
     while (n && n->type != NODE_FLOAT) {
-      format_node_value(text_buffer, word_lut, n);
+      format_node_value(cursor, word_lut, n);
       n = n->next;
     }
     if (n == NULL) {
@@ -158,11 +158,11 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
       return;
     }
 
-    format_float_using_node(text_buffer, n, var->f32_array[0]);
+    format_float_using_node(cursor, n, var->f32_array[0]);
     n = n->next;
 
     while (n && n->type != NODE_FLOAT) {
-      format_node_value(text_buffer, word_lut, n);
+      format_node_value(cursor, word_lut, n);
       n = n->next;
     }
     if (n == NULL) {
@@ -170,64 +170,64 @@ void format_var_value(seni_text_buffer *text_buffer, seni_node *node, seni_genot
       return;
     }
 
-    format_float_using_node(text_buffer, n, var->f32_array[1]);
+    format_float_using_node(cursor, n, var->f32_array[1]);
     n = n->next;
 
     // output any trailing spaces
     while (n) {
-      format_node_value(text_buffer, word_lut, n);
+      format_node_value(cursor, word_lut, n);
       n = n->next;
     }
 
-    text_buffer_sprintf(text_buffer, "]");
+    cursor_sprintf(cursor, "]");
     break;
   default:
     SENI_ERROR("???");
   };
 }
 
-void unparse_alterable_vector(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
+void unparse_alterable_vector(seni_cursor *cursor, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
 {
-  text_buffer_sprintf(text_buffer, "[");
+  cursor_sprintf(cursor, "[");
 
   seni_node *n = ast->value.first_child;
 
   while (n) {
     if (n->type == NODE_WHITESPACE || n->type == NODE_COMMENT) {
-      format_node_value(text_buffer, word_lut, n);
+      format_node_value(cursor, word_lut, n);
     } else {
-      format_var_value(text_buffer, n, genotype, word_lut);
+      format_var_value(cursor, n, genotype, word_lut);
     }
     n = n->next;
   }
 
-  text_buffer_sprintf(text_buffer, "]");
+  cursor_sprintf(cursor, "]");
 }
   
-seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
+seni_node *unparse_ast_node(seni_cursor *cursor, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
 {
   seni_node *n;
   
   if (ast->alterable) {
 
-    text_buffer_sprintf(text_buffer, "{");
+    cursor_sprintf(cursor, "{");
     if (ast->parameter_prefix != NULL) {
-      unparse_ast_node(text_buffer, word_lut, ast->parameter_prefix, genotype);
+      unparse_ast_node(cursor, word_lut, ast->parameter_prefix, genotype);
     }
 
     if (ast->type == NODE_VECTOR) {
-      unparse_alterable_vector(text_buffer, word_lut, ast, genotype);
+      unparse_alterable_vector(cursor, word_lut, ast, genotype);
     } else {
-      format_var_value(text_buffer, ast, genotype, word_lut);
+      format_var_value(cursor, ast, genotype, word_lut);
     }
 
     n = ast->parameter_ast;
     while (n != NULL) {
-      unparse_ast_node(text_buffer, word_lut, n, genotype);
+      unparse_ast_node(cursor, word_lut, n, genotype);
       n = n->next;
     }
 
-    text_buffer_sprintf(text_buffer, "}");    
+    cursor_sprintf(cursor, "}");    
 
   } else {
     
@@ -237,39 +237,39 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
         // rather than outputing: (quote (1 2 3))
         // we want: '(1 2 3)
         //
-        text_buffer_sprintf(text_buffer, "'");
+        cursor_sprintf(cursor, "'");
 
         n = n->next;       // skip past the "quote"
         n = safe_next(n);  // skip past the whitespace
         
         while (n != NULL) {
-          unparse_ast_node(text_buffer, word_lut, n, genotype);
+          unparse_ast_node(cursor, word_lut, n, genotype);
           n = n->next;
         }
         
       } else {
-        text_buffer_sprintf(text_buffer, "(");
+        cursor_sprintf(cursor, "(");
 
         while (n != NULL) {
-          unparse_ast_node(text_buffer, word_lut, n, genotype);
+          unparse_ast_node(cursor, word_lut, n, genotype);
           n = n->next;
         }
-        text_buffer_sprintf(text_buffer, ")");
+        cursor_sprintf(cursor, ")");
         
       }
       
     } else if (ast->type == NODE_VECTOR) {
       n = safe_first(ast->value.first_child);
-      text_buffer_sprintf(text_buffer, "[");
+      cursor_sprintf(cursor, "[");
 
       while (n != NULL) {
-        unparse_ast_node(text_buffer, word_lut, n, genotype);
+        unparse_ast_node(cursor, word_lut, n, genotype);
         n = n->next;
       }
-      text_buffer_sprintf(text_buffer, "]");
+      cursor_sprintf(cursor, "]");
  
     } else {
-      format_node_value(text_buffer, word_lut, ast);
+      format_node_value(cursor, word_lut, ast);
     }
 
     // term = formatNodeValue(v, node);
@@ -280,12 +280,12 @@ seni_node *unparse_ast_node(seni_text_buffer *text_buffer, seni_word_lut *word_l
 
 // out is a pre-allocated array
 //
-bool unparse(seni_text_buffer *text_buffer, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
+bool unparse(seni_cursor *cursor, seni_word_lut *word_lut, seni_node *ast, seni_genotype *genotype)
 {
   seni_node *n = ast;
   genotype->current_gene = genotype->genes;
   while (n != NULL) {
-    n = unparse_ast_node(text_buffer, word_lut, n, genotype);
+    n = unparse_ast_node(cursor, word_lut, n, genotype);
   }
 
   if (genotype->current_gene && genotype->current_gene->next != NULL) {

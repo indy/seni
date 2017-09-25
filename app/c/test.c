@@ -15,7 +15,7 @@
 #include "seni/prng.h"
 #include "seni/shapes.h"
 #include "seni/strtof.h"
-#include "seni/text_buffer.h"
+#include "seni/cursor.h"
 #include "seni/timing.h"
 #include "seni/types.h"
 #include "seni/unparser.h"
@@ -945,9 +945,9 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   i32 unparsed_source_size = 1024;
   char *unparsed_source = (char *)calloc(unparsed_source_size, sizeof(char));
 
-  seni_text_buffer *text_buffer = text_buffer_allocate(unparsed_source, unparsed_source_size);
+  seni_cursor *cursor = cursor_allocate(unparsed_source, unparsed_source_size);
   
-  unparse(text_buffer, env->word_lut, ast, genotype);
+  unparse(cursor, env->word_lut, ast, genotype);
 
   if (expected != NULL) {
     TEST_ASSERT_EQUAL_STRING(expected, unparsed_source);
@@ -957,7 +957,7 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
 
   free(unparsed_source);
 
-  text_buffer_free(text_buffer);
+  cursor_free(cursor);
 
   parser_return_nodes_to_pool(ast);
   genotype_return_to_pool(genotype);
@@ -1243,21 +1243,21 @@ void serialize_deserialize_var(seni_var *var)
   seni_var out;
   bool res;
 
-  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
+  seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
 
-  res = var_serialize(text_buffer, var);
+  res = var_serialize(cursor, var);
   
   TEST_ASSERT_TRUE(res);
 
-  text_buffer_reset(text_buffer);
+  cursor_reset(cursor);
     
-  res = var_deserialize(&out, text_buffer);
+  res = var_deserialize(&out, cursor);
 
   TEST_ASSERT_TRUE(res);
 
   compare_seni_var(var, &out);
 
-  text_buffer_free(text_buffer);
+  cursor_free(cursor);
   free(buffer);
 }
 
@@ -1311,29 +1311,29 @@ void test_serialization(void)
   i32 buffer_size = 128;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));
 
-  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
+  seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
 
   {
     // double serialize
     var.type = VAR_INT;
     var.value.i = 12;
 
-    text_buffer_clear(text_buffer);
-    var_serialize(text_buffer, &var);
-    text_buffer_sprintf(text_buffer, " ");
+    cursor_clear(cursor);
+    var_serialize(cursor, &var);
+    cursor_sprintf(cursor, " ");
 
     seni_var var2;
     var2.type = VAR_INT;
     var2.value.i = 34;
-    var_serialize(text_buffer, &var2);
+    var_serialize(cursor, &var2);
 
-    text_buffer_reset(text_buffer);
+    cursor_reset(cursor);
 
     seni_var out_var;
-    var_deserialize(&out_var, text_buffer);
+    var_deserialize(&out_var, cursor);
     compare_seni_var(&out_var, &var);
-    text_buffer_eat_space(text_buffer);
-    var_deserialize(&out_var, text_buffer);
+    cursor_eat_space(cursor);
+    var_deserialize(&out_var, cursor);
     compare_seni_var(&out_var, &var2);
   }
   
@@ -1346,18 +1346,18 @@ void test_serialization(void)
     bytecode.arg1.type = VAR_INT;
     bytecode.arg1.value.i = 4;
 
-    text_buffer_clear(text_buffer);
-    bytecode_serialize(text_buffer, &bytecode);
+    cursor_clear(cursor);
+    bytecode_serialize(cursor, &bytecode);
 
-    text_buffer_reset(text_buffer);
+    cursor_reset(cursor);
 
     seni_bytecode out_bytecode;
-    bytecode_deserialize(&out_bytecode, text_buffer);
+    bytecode_deserialize(&out_bytecode, cursor);
 
     compare_seni_bytecode(&out_bytecode, &bytecode);
   }
 
-  text_buffer_free(text_buffer);
+  cursor_free(cursor);
   free(buffer);
 }
 
@@ -1371,21 +1371,21 @@ void test_serialization_program(void)
   i32 buffer_size = 4096;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));
 
-  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
+  seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
 
-  bool res = program_serialize(text_buffer, program);
+  bool res = program_serialize(cursor, program);
   TEST_ASSERT_TRUE(res);
 
-  text_buffer_reset(text_buffer);
+  cursor_reset(cursor);
 
   seni_program *out = program_allocate(256);
-  res = program_deserialize(out, text_buffer);
+  res = program_deserialize(out, cursor);
   TEST_ASSERT_TRUE(res);
 
   compare_seni_program(out, program);
   
   free(buffer);
-  text_buffer_free(text_buffer);
+  cursor_free(cursor);
   program_free(program);
   program_free(out);
   env_free(env);
@@ -1400,24 +1400,24 @@ void test_serialization_genotype(void)
 
   i32 buffer_size = 4096;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));
-  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
+  seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
   bool res;
 
   seni_systems_startup();
   
   {
-    text_buffer_reset(text_buffer);
+    cursor_reset(cursor);
     
     genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
 
-    res = genotype_serialize(text_buffer, genotype);
+    res = genotype_serialize(cursor, genotype);
     TEST_ASSERT_TRUE(res);
 
-    text_buffer_reset(text_buffer);
+    cursor_reset(cursor);
 
     seni_genotype *out = genotype_get_from_pool();
-    res = genotype_deserialize(out, text_buffer);
+    res = genotype_deserialize(out, cursor);
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
@@ -1428,18 +1428,18 @@ void test_serialization_genotype(void)
   }
 
   {
-    text_buffer_reset(text_buffer);
+    cursor_reset(cursor);
     
     genotype = genotype_test(7534, "(+ {2 (gen/int min: 1 max: 30)} {5 (gen/int min: 1 max: 30)})");
     TEST_ASSERT(genotype);
 
-    res = genotype_serialize(text_buffer, genotype);
+    res = genotype_serialize(cursor, genotype);
     TEST_ASSERT_TRUE(res);
 
-    text_buffer_reset(text_buffer);
+    cursor_reset(cursor);
 
     seni_genotype *out = genotype_get_from_pool();
-    res = genotype_deserialize(out, text_buffer);
+    res = genotype_deserialize(out, cursor);
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
@@ -1457,7 +1457,7 @@ void test_serialization_genotype(void)
 
   seni_systems_shutdown();
   
-  text_buffer_free(text_buffer);
+  cursor_free(cursor);
   free(buffer);
 }
 
@@ -1473,11 +1473,11 @@ void test_serialization_genotype_list(void)
 
   i32 buffer_size = 4096;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));
-  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
+  seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
   bool res;
 
   {
-    text_buffer_reset(text_buffer);
+    cursor_reset(cursor);
     
     genotype = genotype_test(7534, "(+ {2 (gen/int min: 1 max: 30)} {5 (gen/int min: 1 max: 30)})");
     TEST_ASSERT(genotype);
@@ -1491,13 +1491,13 @@ void test_serialization_genotype_list(void)
     TEST_ASSERT(genotype);
     genotype_list_add_genotype(genotype_list, genotype);
 
-    res = genotype_list_serialize(text_buffer, genotype_list);
+    res = genotype_list_serialize(cursor, genotype_list);
     TEST_ASSERT_TRUE(res);
 
-    text_buffer_reset(text_buffer);
+    cursor_reset(cursor);
 
     seni_genotype_list *out = genotype_list_get_from_pool();
-    res = genotype_list_deserialize(out, text_buffer);
+    res = genotype_list_deserialize(out, cursor);
     TEST_ASSERT_TRUE(res);
 
     i32 count = genotype_list_count(out);
@@ -1533,7 +1533,7 @@ void test_serialization_genotype_list(void)
     genotype_list_return_to_pool(out);
   }
 
-  text_buffer_free(text_buffer);
+  cursor_free(cursor);
   free(buffer);
 
   genotype_list_return_to_pool(genotype_list);
@@ -1555,14 +1555,14 @@ void test_serialization_trait_list(void)
 
   i32 buffer_size = 4096;
   char *buffer = (char *)calloc(buffer_size, sizeof(char));
-  seni_text_buffer *text_buffer = text_buffer_allocate(buffer, buffer_size);
-  bool res = trait_list_serialize(text_buffer, trait_list);
+  seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
+  bool res = trait_list_serialize(cursor, trait_list);
   TEST_ASSERT_TRUE(res);
 
-  text_buffer_reset(text_buffer);
+  cursor_reset(cursor);
 
   seni_trait_list *out = trait_list_get_from_pool();
-  res = trait_list_deserialize(out, text_buffer);
+  res = trait_list_deserialize(out, cursor);
   TEST_ASSERT_TRUE(res);
 
   i32 count = trait_list_count(out);
@@ -1576,7 +1576,7 @@ void test_serialization_trait_list(void)
 
   parser_return_nodes_to_pool(ast);
 
-  text_buffer_free(text_buffer);
+  cursor_free(cursor);
   free(buffer);
   trait_list_return_to_pool(trait_list);
   trait_list_return_to_pool(out);

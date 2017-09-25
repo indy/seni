@@ -5,7 +5,7 @@
   "scripts": {
     "build": "webpack --progress",
     "build:watch": "webpack --progress --watch",
-    "build:wasm": "wa compile -D SENI_BUILD_WASM -o app/dist/seni-wasm.wasm app/c/wasm.c -i app/c/seni/lib.c -i app/c/seni/lang.c -i app/c/seni/parser.c -i app/c/seni/unparser.c -i app/c/seni/vm_compiler.c -i app/c/seni/vm_interpreter.c -i app/c/seni/bind.c -i app/c/seni/colour.c -i app/c/seni/parametric.c -i app/c/seni/mathutil.c -i app/c/seni/matrix.c -i app/c/seni/prng.c -i app/c/seni/render_packet.c -i app/c/seni/shapes.c -i app/c/seni/uv_mapper.c -i app/c/seni/repeat.c -i app/c/seni/path.c -i app/c/seni/focal.c -i app/c/seni/genetic.c -i app/c/seni/strtof.c -i app/c/seni/printf.c -i app/c/seni/timing.c -i app/c/seni/text_buffer.c -i app/c/seni/multistring.c -I app/c",
+    "build:wasm": "wa compile -D SENI_BUILD_WASM -o app/dist/seni-wasm.wasm app/c/wasm.c -i app/c/seni/bind.c -i app/c/seni/colour.c -i app/c/seni/cursor.c -i app/c/seni/focal.c -i app/c/seni/genetic.c -i app/c/seni/lang.c -i app/c/seni/lib.c -i app/c/seni/mathutil.c -i app/c/seni/matrix.c -i app/c/seni/multistring.c -i app/c/seni/parametric.c -i app/c/seni/parser.c -i app/c/seni/path.c -i app/c/seni/printf.c -i app/c/seni/prng.c -i app/c/seni/render_packet.c -i app/c/seni/repeat.c -i app/c/seni/shapes.c -i app/c/seni/strtof.c -i app/c/seni/timing.c -i app/c/seni/unparser.c -i app/c/seni/uv_mapper.c -i app/c/seni/vm_compiler.c -i app/c/seni/vm_interpreter.c -I app/c",
     "hack:min:seni": "uglifyjs --compress --mangle --output app/dist/seni.bundle.min.js -- app/dist/seni.bundle.js",
     "hack:min:worker": "uglifyjs --compress --mangle --output app/dist/worker.bundle.min.js -- app/dist/worker.bundle.js",
     "clean": "rm -rf app/dist",

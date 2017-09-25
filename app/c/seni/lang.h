@@ -136,8 +136,8 @@ struct seni_var {
 
 char     *var_type_name(seni_var *var);
 void      var_pretty_print(char* msg, seni_var *var);
-bool      var_serialize(seni_text_buffer *text_buffer, seni_var *var);
-bool      var_deserialize(seni_var *out, seni_text_buffer *text_buffer);
+bool      var_serialize(seni_cursor *cursor, seni_var *var);
+bool      var_deserialize(seni_var *out, seni_cursor *cursor);
 void      v2_as_var(seni_var *out, f32 x, f32 y);
 void      f32_as_var(seni_var *out, f32 f);
 void      i32_as_var(seni_var *out, i32 i);
@@ -197,8 +197,8 @@ struct seni_bytecode {
 };
 
 void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut);
-bool bytecode_serialize(seni_text_buffer *text_buffer, seni_bytecode *bytecode);
-bool bytecode_deserialize(seni_bytecode *out, seni_text_buffer *text_buffer);
+bool bytecode_serialize(seni_cursor *cursor, seni_bytecode *bytecode);
+bool bytecode_deserialize(seni_bytecode *out, seni_cursor *cursor);
 
 struct seni_fn_info {
   bool active;                  // is this struct being used
@@ -248,8 +248,8 @@ void           program_free(seni_program *program);
 i32            program_stop_location(seni_program *program);
 void           program_pretty_print(seni_program *program);
 
-bool           program_serialize(seni_text_buffer *text_buffer, seni_program *program);
-bool           program_deserialize(seni_program *out, seni_text_buffer *text_buffer);
+bool           program_serialize(seni_cursor *cursor, seni_program *program);
+bool           program_deserialize(seni_program *out, seni_cursor *cursor);
 
 seni_program  *program_allocate(i32 code_max_size);
 

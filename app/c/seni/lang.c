@@ -9,7 +9,7 @@
 #include "parser.h"
 #include "prng.h"
 #include "render_packet.h"
-#include "text_buffer.h"
+#include "cursor.h"
 #include "vm_compiler.h"
 #include "multistring.h"
 
@@ -403,30 +403,30 @@ void var_pretty_print(char* msg, seni_var *var)
   }
 }
 
-bool var_serialize(seni_text_buffer *text_buffer, seni_var *var)
+bool var_serialize(seni_cursor *cursor, seni_var *var)
 {
   switch(var->type) {
   case VAR_INT:
-    text_buffer_sprintf(text_buffer, "INT %d", var->value.i);
+    cursor_sprintf(cursor, "INT %d", var->value.i);
     break;
   case VAR_FLOAT:
-    text_buffer_sprintf(text_buffer, "FLOAT %.4f", var->value.f);
+    cursor_sprintf(cursor, "FLOAT %.4f", var->value.f);
     break;
   case VAR_BOOLEAN:
-    text_buffer_sprintf(text_buffer, "BOOLEAN %d", var->value.i);
+    cursor_sprintf(cursor, "BOOLEAN %d", var->value.i);
     break;
   case VAR_LONG:
-    text_buffer_sprintf(text_buffer, "LONG %" PRIu64 "", var->value.l);
+    cursor_sprintf(cursor, "LONG %" PRIu64 "", var->value.l);
     break;
   case VAR_NAME:
-    text_buffer_sprintf(text_buffer, "NAME %d", var->value.i);
+    cursor_sprintf(cursor, "NAME %d", var->value.i);
     break;
   case VAR_VECTOR:
     SENI_ERROR("var_serialize: serializing a vector?");
     return false;
     break;
   case VAR_COLOUR:
-    text_buffer_sprintf(text_buffer, "COLOUR %d %.4f %.4f %.4f %.4f",
+    cursor_sprintf(cursor, "COLOUR %d %.4f %.4f %.4f %.4f",
                          var->value.i,
                          var->f32_array[0],
                          var->f32_array[1],
@@ -434,7 +434,7 @@ bool var_serialize(seni_text_buffer *text_buffer, seni_var *var)
                          var->f32_array[3]);
     break;
   case VAR_2D:
-    text_buffer_sprintf(text_buffer, "2D %.4f %.4f",
+    cursor_sprintf(cursor, "2D %.4f %.4f",
                          var->f32_array[0],
                          var->f32_array[1]);
     break;
@@ -446,44 +446,44 @@ bool var_serialize(seni_text_buffer *text_buffer, seni_var *var)
   return true;
 }
 
-bool var_deserialize(seni_var *out, seni_text_buffer *text_buffer)
+bool var_deserialize(seni_var *out, seni_cursor *cursor)
 {
   // assuming that the buffer is at the start of a serialized seni_var
   //
-  if (text_buffer_eat_text(text_buffer, "INT")) {
+  if (cursor_eat_text(cursor, "INT")) {
     out->type = VAR_INT;
-    out->value.i = text_buffer_eat_i32(text_buffer);
+    out->value.i = cursor_eat_i32(cursor);
     return true;
-  } else if (text_buffer_eat_text(text_buffer, "NAME")) {
+  } else if (cursor_eat_text(cursor, "NAME")) {
     out->type = VAR_NAME;
-    out->value.i = text_buffer_eat_i32(text_buffer);
+    out->value.i = cursor_eat_i32(cursor);
     return true;
-  } else if (text_buffer_eat_text(text_buffer, "FLOAT")) {
+  } else if (cursor_eat_text(cursor, "FLOAT")) {
     out->type = VAR_FLOAT;
-    out->value.f = text_buffer_eat_f32(text_buffer);
+    out->value.f = cursor_eat_f32(cursor);
     return true;
-  } else if (text_buffer_eat_text(text_buffer, "2D")) {
+  } else if (cursor_eat_text(cursor, "2D")) {
     out->type = VAR_2D;
-    out->f32_array[0] = text_buffer_eat_f32(text_buffer);
-    out->f32_array[1] = text_buffer_eat_f32(text_buffer);
+    out->f32_array[0] = cursor_eat_f32(cursor);
+    out->f32_array[1] = cursor_eat_f32(cursor);
     return true;
-  } else if (text_buffer_eat_text(text_buffer, "COLOUR")) {
+  } else if (cursor_eat_text(cursor, "COLOUR")) {
     out->type = VAR_COLOUR;
-    out->value.i = text_buffer_eat_i32(text_buffer);
-    out->f32_array[0] = text_buffer_eat_f32(text_buffer);
-    out->f32_array[1] = text_buffer_eat_f32(text_buffer);
-    out->f32_array[2] = text_buffer_eat_f32(text_buffer);
-    out->f32_array[3] = text_buffer_eat_f32(text_buffer);
+    out->value.i = cursor_eat_i32(cursor);
+    out->f32_array[0] = cursor_eat_f32(cursor);
+    out->f32_array[1] = cursor_eat_f32(cursor);
+    out->f32_array[2] = cursor_eat_f32(cursor);
+    out->f32_array[3] = cursor_eat_f32(cursor);
     return true;
-  } else if (text_buffer_eat_text(text_buffer, "BOOLEAN")) {
+  } else if (cursor_eat_text(cursor, "BOOLEAN")) {
     out->type = VAR_BOOLEAN;
-    out->value.i = text_buffer_eat_i32(text_buffer);
+    out->value.i = cursor_eat_i32(cursor);
     return true;
-  } else if (text_buffer_eat_text(text_buffer, "LONG")) {
+  } else if (cursor_eat_text(cursor, "LONG")) {
     out->type = VAR_LONG;
-    out->value.l = text_buffer_eat_u64(text_buffer);
+    out->value.l = cursor_eat_u64(cursor);
     return true;
-  } else if (text_buffer_eat_text(text_buffer, "VECTOR")) {
+  } else if (cursor_eat_text(cursor, "VECTOR")) {
     return false;
   }  
   
@@ -624,73 +624,73 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut)
   SENI_PRINT("%s", buf);
 }
 
-bool bytecode_serialize(seni_text_buffer *text_buffer, seni_bytecode *bytecode)
+bool bytecode_serialize(seni_cursor *cursor, seni_bytecode *bytecode)
 {
-  text_buffer_sprintf(text_buffer, "%s", opcode_string[bytecode->op]);
-  text_buffer_sprintf(text_buffer, " ");
+  cursor_sprintf(cursor, "%s", opcode_string[bytecode->op]);
+  cursor_sprintf(cursor, " ");
 
-  if(!var_serialize(text_buffer, &(bytecode->arg0)))
+  if(!var_serialize(cursor, &(bytecode->arg0)))
     return false;
 
-  text_buffer_sprintf(text_buffer, " ");
+  cursor_sprintf(cursor, " ");
 
-  if(!var_serialize(text_buffer, &(bytecode->arg1)))
+  if(!var_serialize(cursor, &(bytecode->arg1)))
     return false;
 
   return true;
 }
 
-bool opcode_deserialize(seni_opcode *out, seni_text_buffer *text_buffer)
+bool opcode_deserialize(seni_opcode *out, seni_cursor *cursor)
 {
-  if (text_buffer_eat_text(text_buffer, "LOAD"))      { *out = LOAD;      return true; }
-  if (text_buffer_eat_text(text_buffer, "STORE"))     { *out = STORE;     return true; }
-  if (text_buffer_eat_text(text_buffer, "SQUISH2"))   { *out = SQUISH2;   return true; }
-  if (text_buffer_eat_text(text_buffer, "ADD"))       { *out = ADD;       return true; }
-  if (text_buffer_eat_text(text_buffer, "SUB"))       { *out = SUB;       return true; }
-  if (text_buffer_eat_text(text_buffer, "MUL"))       { *out = MUL;       return true; }
-  if (text_buffer_eat_text(text_buffer, "DIV"))       { *out = DIV;       return true; }
-  if (text_buffer_eat_text(text_buffer, "MOD"))       { *out = MOD;       return true; }
-  if (text_buffer_eat_text(text_buffer, "NEG"))       { *out = NEG;       return true; }
-  if (text_buffer_eat_text(text_buffer, "SQRT"))      { *out = SQRT;      return true; }
-  if (text_buffer_eat_text(text_buffer, "EQ"))        { *out = EQ;        return true; }
-  if (text_buffer_eat_text(text_buffer, "GT"))        { *out = GT;        return true; }
-  if (text_buffer_eat_text(text_buffer, "LT"))        { *out = LT;        return true; }
-  if (text_buffer_eat_text(text_buffer, "AND"))       { *out = AND;       return true; }
-  if (text_buffer_eat_text(text_buffer, "OR"))        { *out = OR;        return true; }
-  if (text_buffer_eat_text(text_buffer, "NOT"))       { *out = NOT;       return true; }
-  if (text_buffer_eat_text(text_buffer, "JUMP"))      { *out = JUMP;      return true; }
-  if (text_buffer_eat_text(text_buffer, "JUMP_IF"))   { *out = JUMP_IF;   return true; }
-  if (text_buffer_eat_text(text_buffer, "CALL"))      { *out = CALL;      return true; }
-  if (text_buffer_eat_text(text_buffer, "CALL_0"))    { *out = CALL_0;    return true; }
-  if (text_buffer_eat_text(text_buffer, "RET"))       { *out = RET;       return true; }
-  if (text_buffer_eat_text(text_buffer, "RET_0"))     { *out = RET_0;     return true; }
-  if (text_buffer_eat_text(text_buffer, "CALL_F"))    { *out = CALL_F;    return true; }
-  if (text_buffer_eat_text(text_buffer, "CALL_F_0"))  { *out = CALL_F_0;  return true; }
-  if (text_buffer_eat_text(text_buffer, "NATIVE"))    { *out = NATIVE;    return true; }
-  if (text_buffer_eat_text(text_buffer, "APPEND"))    { *out = APPEND;    return true; }
-  if (text_buffer_eat_text(text_buffer, "PILE"))      { *out = PILE;      return true; }
-  if (text_buffer_eat_text(text_buffer, "FLU_STORE")) { *out = FLU_STORE; return true; }
-  if (text_buffer_eat_text(text_buffer, "MTX_LOAD"))  { *out = MTX_LOAD;  return true; }
-  if (text_buffer_eat_text(text_buffer, "MTX_STORE")) { *out = MTX_STORE; return true; }
-  if (text_buffer_eat_text(text_buffer, "NOP"))       { *out = NOP;       return true; }
-  if (text_buffer_eat_text(text_buffer, "STOP"))      { *out = STOP;      return true; }
+  if (cursor_eat_text(cursor, "LOAD"))      { *out = LOAD;      return true; }
+  if (cursor_eat_text(cursor, "STORE"))     { *out = STORE;     return true; }
+  if (cursor_eat_text(cursor, "SQUISH2"))   { *out = SQUISH2;   return true; }
+  if (cursor_eat_text(cursor, "ADD"))       { *out = ADD;       return true; }
+  if (cursor_eat_text(cursor, "SUB"))       { *out = SUB;       return true; }
+  if (cursor_eat_text(cursor, "MUL"))       { *out = MUL;       return true; }
+  if (cursor_eat_text(cursor, "DIV"))       { *out = DIV;       return true; }
+  if (cursor_eat_text(cursor, "MOD"))       { *out = MOD;       return true; }
+  if (cursor_eat_text(cursor, "NEG"))       { *out = NEG;       return true; }
+  if (cursor_eat_text(cursor, "SQRT"))      { *out = SQRT;      return true; }
+  if (cursor_eat_text(cursor, "EQ"))        { *out = EQ;        return true; }
+  if (cursor_eat_text(cursor, "GT"))        { *out = GT;        return true; }
+  if (cursor_eat_text(cursor, "LT"))        { *out = LT;        return true; }
+  if (cursor_eat_text(cursor, "AND"))       { *out = AND;       return true; }
+  if (cursor_eat_text(cursor, "OR"))        { *out = OR;        return true; }
+  if (cursor_eat_text(cursor, "NOT"))       { *out = NOT;       return true; }
+  if (cursor_eat_text(cursor, "JUMP"))      { *out = JUMP;      return true; }
+  if (cursor_eat_text(cursor, "JUMP_IF"))   { *out = JUMP_IF;   return true; }
+  if (cursor_eat_text(cursor, "CALL"))      { *out = CALL;      return true; }
+  if (cursor_eat_text(cursor, "CALL_0"))    { *out = CALL_0;    return true; }
+  if (cursor_eat_text(cursor, "RET"))       { *out = RET;       return true; }
+  if (cursor_eat_text(cursor, "RET_0"))     { *out = RET_0;     return true; }
+  if (cursor_eat_text(cursor, "CALL_F"))    { *out = CALL_F;    return true; }
+  if (cursor_eat_text(cursor, "CALL_F_0"))  { *out = CALL_F_0;  return true; }
+  if (cursor_eat_text(cursor, "NATIVE"))    { *out = NATIVE;    return true; }
+  if (cursor_eat_text(cursor, "APPEND"))    { *out = APPEND;    return true; }
+  if (cursor_eat_text(cursor, "PILE"))      { *out = PILE;      return true; }
+  if (cursor_eat_text(cursor, "FLU_STORE")) { *out = FLU_STORE; return true; }
+  if (cursor_eat_text(cursor, "MTX_LOAD"))  { *out = MTX_LOAD;  return true; }
+  if (cursor_eat_text(cursor, "MTX_STORE")) { *out = MTX_STORE; return true; }
+  if (cursor_eat_text(cursor, "NOP"))       { *out = NOP;       return true; }
+  if (cursor_eat_text(cursor, "STOP"))      { *out = STOP;      return true; }
 
   return false;
 }
 
-bool bytecode_deserialize(seni_bytecode *out, seni_text_buffer *text_buffer)
+bool bytecode_deserialize(seni_bytecode *out, seni_cursor *cursor)
 {
-  if (!opcode_deserialize(&(out->op), text_buffer))
+  if (!opcode_deserialize(&(out->op), cursor))
     return false;
   
-  text_buffer_eat_space(text_buffer);
+  cursor_eat_space(cursor);
   
-  if(!var_deserialize(&(out->arg0), text_buffer))
+  if(!var_deserialize(&(out->arg0), cursor))
     return false;
   
-  text_buffer_eat_space(text_buffer);
+  cursor_eat_space(cursor);
   
-  if(!var_deserialize(&(out->arg1), text_buffer))
+  if(!var_deserialize(&(out->arg1), cursor))
     return false;
   
   return true;
@@ -769,22 +769,22 @@ void program_pretty_print(seni_program *program)
 // so the program->fn_info isn't being serialized. (it should if there's
 // ever a need for proper program serialization)
 //
-bool program_serialize(seni_text_buffer *text_buffer, seni_program *program)
+bool program_serialize(seni_cursor *cursor, seni_program *program)
 {
-  text_buffer_sprintf(text_buffer, "%d", program->code_max_size);
-  text_buffer_sprintf(text_buffer, " ");
-  text_buffer_sprintf(text_buffer, "%d", program->code_size);
-  text_buffer_sprintf(text_buffer, " ");
+  cursor_sprintf(cursor, "%d", program->code_max_size);
+  cursor_sprintf(cursor, " ");
+  cursor_sprintf(cursor, "%d", program->code_size);
+  cursor_sprintf(cursor, " ");
 
   seni_bytecode *bytecode = program->code;
   for (i32 i = 0; i < program->code_size; i++) {
-    if (!bytecode_serialize(text_buffer, bytecode)) {
+    if (!bytecode_serialize(cursor, bytecode)) {
       SENI_ERROR("program_serialize: bytecode_serialize at instruction %d", i);
       return false;
     }
     // interleave bytecodes with a space
     if (i < program->code_size - 1) {
-      text_buffer_sprintf(text_buffer, " ");
+      cursor_sprintf(cursor, " ");
     }
     bytecode++;
   }
@@ -792,12 +792,12 @@ bool program_serialize(seni_text_buffer *text_buffer, seni_program *program)
   return true;
 }
 
-bool program_deserialize(seni_program *out, seni_text_buffer *text_buffer)
+bool program_deserialize(seni_program *out, seni_cursor *cursor)
 {
-  out->code_max_size = text_buffer_eat_i32(text_buffer);
-  text_buffer_eat_space(text_buffer);
-  out->code_size = text_buffer_eat_i32(text_buffer);
-  text_buffer_eat_space(text_buffer);
+  out->code_max_size = cursor_eat_i32(cursor);
+  cursor_eat_space(cursor);
+  out->code_size = cursor_eat_i32(cursor);
+  cursor_eat_space(cursor);
 
   if(out->code != NULL) {
     free(out->code);
@@ -805,11 +805,11 @@ bool program_deserialize(seni_program *out, seni_text_buffer *text_buffer)
   out->code = (seni_bytecode *)calloc(out->code_max_size, sizeof(seni_bytecode));
 
   for (i32 i = 0; i < out->code_size; i++) {
-    if(!bytecode_deserialize(&(out->code[i]), text_buffer)) {
+    if(!bytecode_deserialize(&(out->code[i]), cursor)) {
       return false;
     }
     if (i < out->code_size - 1) {    
-      text_buffer_eat_space(text_buffer);
+      cursor_eat_space(cursor);
     }
   }
   

@@ -15,8 +15,8 @@ struct seni_trait {
   struct seni_trait *prev;
 };
 
-bool trait_serialize(seni_text_buffer *text_buffer, seni_trait *trait);
-bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer);
+bool trait_serialize(seni_cursor *cursor, seni_trait *trait);
+bool trait_deserialize(seni_trait *out, seni_cursor *cursor);
 
 // store a list of traits
 struct seni_trait_list {
@@ -31,8 +31,8 @@ seni_trait_list *trait_list_compile(seni_node *ast, i32 trait_program_max_size, 
 seni_trait_list *trait_list_get_from_pool();
 void             trait_list_return_to_pool(seni_trait_list *trait_list);
 i32              trait_list_count(seni_trait_list *trait_list);
-bool             trait_list_serialize(seni_text_buffer *text_buffer, seni_trait_list *trait_list);
-bool             trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer);
+bool             trait_list_serialize(seni_cursor *cursor, seni_trait_list *trait_list);
+bool             trait_list_deserialize(seni_trait_list *out, seni_cursor *cursor);
 
 struct seni_gene {
   struct seni_var *var;
@@ -58,8 +58,8 @@ seni_genotype *genotype_build_from_program(seni_trait_list *trait_list, seni_vm 
 seni_genotype *genotype_build_from_initial_values(seni_trait_list *trait_list);
 seni_genotype *genotype_clone(seni_genotype *genotype);
 seni_genotype *genotype_crossover(seni_genotype *a, seni_genotype *b, i32 crossover_index, i32 genotype_length);
-bool           genotype_serialize(seni_text_buffer *text_buffer, seni_genotype *genotype);
-bool           genotype_deserialize(seni_genotype *out, seni_text_buffer *text_buffer);
+bool           genotype_serialize(seni_cursor *cursor, seni_genotype *genotype);
+bool           genotype_deserialize(seni_genotype *out, seni_cursor *cursor);
 seni_gene     *genotype_pull_gene(seni_genotype *genotype);
 
 struct seni_genotype_list {
@@ -74,8 +74,8 @@ void                genotype_list_return_to_pool(seni_genotype_list *genotype_li
 void                genotype_list_add_genotype(seni_genotype_list *genotype_list, seni_genotype *genotype);
 seni_genotype      *genotype_list_get_genotype(seni_genotype_list *genotype_list, i32 index);
 i32                 genotype_list_count(seni_genotype_list *genotype_list);
-bool                genotype_list_serialize(seni_text_buffer *text_buffer, seni_genotype_list *genotype_list);
-bool                genotype_list_deserialize(seni_genotype_list *out, seni_text_buffer *text_buffer);
+bool                genotype_list_serialize(seni_cursor *cursor, seni_genotype_list *genotype_list);
+bool                genotype_list_deserialize(seni_genotype_list *out, seni_cursor *cursor);
 
 seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *trait_list, i32 population_size, i32 seed);
 

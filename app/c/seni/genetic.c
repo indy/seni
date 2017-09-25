@@ -3,7 +3,7 @@
 
 #include "lang.h"
 #include "prng.h"
-#include "text_buffer.h"
+#include "cursor.h"
 #include "vm_compiler.h"
 #include "vm_interpreter.h"
 #include "keyword_iname.h"
@@ -194,32 +194,32 @@ void ga_subsystem_shutdown()
   gene_pool_free(g_gene_pool);
 }
 
-bool trait_serialize(seni_text_buffer *text_buffer, seni_trait *trait)
+bool trait_serialize(seni_cursor *cursor, seni_trait *trait)
 {
-  text_buffer_sprintf(text_buffer, "%d", trait->id);
-  text_buffer_sprintf(text_buffer, " ");
+  cursor_sprintf(cursor, "%d", trait->id);
+  cursor_sprintf(cursor, " ");
 
-  var_serialize(text_buffer, trait->initial_value);
-  text_buffer_sprintf(text_buffer, " ");
+  var_serialize(cursor, trait->initial_value);
+  cursor_sprintf(cursor, " ");
 
-  program_serialize(text_buffer, trait->program);
+  program_serialize(cursor, trait->program);
 
   return true;
 }
 
-bool trait_deserialize(seni_trait *out, seni_text_buffer *text_buffer)
+bool trait_deserialize(seni_trait *out, seni_cursor *cursor)
 {
-  out->id = text_buffer_eat_i32(text_buffer);
-  text_buffer_eat_space(text_buffer);
+  out->id = cursor_eat_i32(cursor);
+  cursor_eat_space(cursor);
 
-  var_deserialize(out->initial_value, text_buffer);
-  text_buffer_eat_space(text_buffer);
+  var_deserialize(out->initial_value, cursor);
+  cursor_eat_space(cursor);
 
   if (out->program != NULL) {
     free(out->program);
   }
   out->program = program_allocate(0);
-  program_deserialize(out->program, text_buffer);
+  program_deserialize(out->program, cursor);
 
   return true;
 }
@@ -466,23 +466,23 @@ i32 trait_list_count(seni_trait_list *trait_list)
   return count;
 }
 
-bool trait_list_serialize(seni_text_buffer *text_buffer, seni_trait_list *trait_list)
+bool trait_list_serialize(seni_cursor *cursor, seni_trait_list *trait_list)
 {
   // seed value
-  text_buffer_sprintf(text_buffer, "%d", trait_list->seed_value);
-  text_buffer_sprintf(text_buffer, " ");
+  cursor_sprintf(cursor, "%d", trait_list->seed_value);
+  cursor_sprintf(cursor, " ");
   
   // number of traits
   i32 count = trait_list_count(trait_list);
-  text_buffer_sprintf(text_buffer, "%d", count);
-  text_buffer_sprintf(text_buffer, " ");
+  cursor_sprintf(cursor, "%d", count);
+  cursor_sprintf(cursor, " ");
 
   // sequence of traits
   seni_trait *t = trait_list->traits;
   while (t != NULL) {
-    trait_serialize(text_buffer, t);
+    trait_serialize(cursor, t);
     if (t->next != NULL) {
-      text_buffer_sprintf(text_buffer, " ");
+      cursor_sprintf(cursor, " ");
     }
     t = t->next;
   }
@@ -490,23 +490,23 @@ bool trait_list_serialize(seni_text_buffer *text_buffer, seni_trait_list *trait_
   return true;
 }
 
-bool trait_list_deserialize(seni_trait_list *out, seni_text_buffer *text_buffer)
+bool trait_list_deserialize(seni_trait_list *out, seni_cursor *cursor)
 {
   seni_trait_list *trait_list = out;
 
-  i32 seed_value = text_buffer_eat_i32(text_buffer);
-  text_buffer_eat_space(text_buffer);
+  i32 seed_value = cursor_eat_i32(cursor);
+  cursor_eat_space(cursor);
   trait_list->seed_value = seed_value;
   
-  i32 count = text_buffer_eat_i32(text_buffer);
-  text_buffer_eat_space(text_buffer);
+  i32 count = cursor_eat_i32(cursor);
+  cursor_eat_space(cursor);
 
   for (i32 i = 0; i < count; i++) {
     seni_trait *trait = trait_get_from_pool();
-    trait_deserialize(trait, text_buffer);
+    trait_deserialize(trait, cursor);
     trait_list_add_trait(trait_list, trait);
     if (i < count - 1) {
-      text_buffer_eat_space(text_buffer);
+      cursor_eat_space(cursor);
     }
   }
 
@@ -660,18 +660,18 @@ seni_genotype *genotype_crossover(seni_genotype *a, seni_genotype *b, i32 crosso
   return genotype;
 }
 
-bool genotype_serialize(seni_text_buffer *text_buffer, seni_genotype *genotype)
+bool genotype_serialize(seni_cursor *cursor, seni_genotype *genotype)
 {
   // number of genes
   i32 count = genotype_count(genotype);
-  text_buffer_sprintf(text_buffer, "%d", count);
-  text_buffer_sprintf(text_buffer, " ");
+  cursor_sprintf(cursor, "%d", count);
+  cursor_sprintf(cursor, " ");
   
   seni_gene *gene = genotype->genes;
   while (gene != NULL) {
-    var_serialize(text_buffer, gene->var);
+    var_serialize(cursor, gene->var);
     if (gene->next != NULL) {
-      text_buffer_sprintf(text_buffer, " ");
+      cursor_sprintf(cursor, " ");
     }
     gene = gene->next;
   }
@@ -679,19 +679,19 @@ bool genotype_serialize(seni_text_buffer *text_buffer, seni_genotype *genotype)
   return true;
 }
 
-bool genotype_deserialize(seni_genotype *out, seni_text_buffer *text_buffer)
+bool genotype_deserialize(seni_genotype *out, seni_cursor *cursor)
 {
-  i32 count = text_buffer_eat_i32(text_buffer);
-  text_buffer_eat_space(text_buffer);
+  i32 count = cursor_eat_i32(cursor);
+  cursor_eat_space(cursor);
 
   seni_genotype *genotype = out;
 
   for (i32 i = 0; i < count; i++) {
     seni_gene *gene = gene_get_from_pool();
-    var_deserialize(gene->var, text_buffer);
+    var_deserialize(gene->var, cursor);
     genotype_add_gene(genotype, gene);
     if (i < count - 1) {
-      text_buffer_eat_space(text_buffer);
+      cursor_eat_space(cursor);
     }
   }
 
@@ -745,19 +745,19 @@ i32 genotype_list_count(seni_genotype_list *genotype_list)
   return count;
 }
 
-bool genotype_list_serialize(seni_text_buffer *text_buffer, seni_genotype_list *genotype_list)
+bool genotype_list_serialize(seni_cursor *cursor, seni_genotype_list *genotype_list)
 {
   // number of genotypes
   i32 count = genotype_list_count(genotype_list);
-  text_buffer_sprintf(text_buffer, "%d", count);
-  text_buffer_sprintf(text_buffer, " ");
+  cursor_sprintf(cursor, "%d", count);
+  cursor_sprintf(cursor, " ");
 
   // sequence of genotypes
   seni_genotype *g = genotype_list->genotypes;
   while (g != NULL) {
-    genotype_serialize(text_buffer, g);
+    genotype_serialize(cursor, g);
     if (g->next != NULL) {
-      text_buffer_sprintf(text_buffer, " ");
+      cursor_sprintf(cursor, " ");
     }
     g = g->next;
   }
@@ -765,19 +765,19 @@ bool genotype_list_serialize(seni_text_buffer *text_buffer, seni_genotype_list *
   return true;
 }
 
-bool genotype_list_deserialize(seni_genotype_list *out, seni_text_buffer *text_buffer)
+bool genotype_list_deserialize(seni_genotype_list *out, seni_cursor *cursor)
 {
-  i32 count = text_buffer_eat_i32(text_buffer);
-  text_buffer_eat_space(text_buffer);
+  i32 count = cursor_eat_i32(cursor);
+  cursor_eat_space(cursor);
 
   seni_genotype_list *genotype_list = out;
 
   for (i32 i = 0; i < count; i++) {
     seni_genotype *genotype = genotype_get_from_pool();
-    genotype_deserialize(genotype, text_buffer);
+    genotype_deserialize(genotype, cursor);
     genotype_list_add_genotype(genotype_list, genotype);
     if (i < count - 1) {
-      text_buffer_eat_space(text_buffer);
+      cursor_eat_space(cursor);
     }
   }
 

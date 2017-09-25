@@ -1,7 +1,7 @@
 #include <webassembly.h>
 #include <stdlib.h>
 
-#include "seni/text_buffer.h"
+#include "seni/cursor.h"
 #include "seni/genetic.h"
 #include "seni/js_imports.h"
 #include "seni/lang.h"
@@ -18,16 +18,16 @@
 char *g_source_buffer;
 
 char *g_out_source_buffer;
-seni_text_buffer *g_out_source_text_buffer;
+seni_cursor *g_out_source_cursor;
 
 #define TRAITS_BUFFER_SIZE 40000
 char *g_traits_buffer;
-seni_text_buffer *g_traits_text_buffer;
+seni_cursor *g_traits_cursor;
 
 #define GENOTYPE_BUFFER_SIZE 5000
 bool g_use_genotype_when_compiling;
 char *g_genotype_buffer;
-seni_text_buffer *g_genotype_text_buffer;
+seni_cursor *g_genotype_cursor;
 seni_genotype_list *g_genotype_list;
 
 seni_vm *g_vm = NULL;
@@ -89,13 +89,13 @@ void seni_startup()
   g_source_buffer = (char *)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
 
   g_out_source_buffer = (char *)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
-  g_out_source_text_buffer = text_buffer_allocate(g_out_source_buffer, SOURCE_BUFFER_SIZE);
+  g_out_source_cursor = cursor_allocate(g_out_source_buffer, SOURCE_BUFFER_SIZE);
 
   g_traits_buffer = (char *)calloc(TRAITS_BUFFER_SIZE, sizeof(char));
-  g_traits_text_buffer = text_buffer_allocate(g_traits_buffer, TRAITS_BUFFER_SIZE);
+  g_traits_cursor = cursor_allocate(g_traits_buffer, TRAITS_BUFFER_SIZE);
 
   g_genotype_buffer = (char *)calloc(GENOTYPE_BUFFER_SIZE, sizeof(char));
-  g_genotype_text_buffer = text_buffer_allocate(g_genotype_buffer, GENOTYPE_BUFFER_SIZE);
+  g_genotype_cursor = cursor_allocate(g_genotype_buffer, GENOTYPE_BUFFER_SIZE);
   g_genotype_list = NULL;
   g_use_genotype_when_compiling = false;
 }
@@ -108,8 +108,8 @@ void seni_shutdown()
   SENI_LOG("seni_shutdown");
 #endif
 
-  text_buffer_free(g_out_source_text_buffer);
-  text_buffer_free(g_traits_text_buffer);
+  cursor_free(g_out_source_cursor);
+  cursor_free(g_traits_cursor);
   
   free(g_source_buffer);
   free(g_out_source_buffer);
@@ -143,7 +143,7 @@ int compile_to_render_packets(void)
   seni_program *program = NULL;
   
   if (g_use_genotype_when_compiling) {
-    seni_genotype *genotype = seni_deserialize_genotype(g_genotype_text_buffer);
+    seni_genotype *genotype = seni_deserialize_genotype(g_genotype_cursor);
     program = seni_compile_program_with_genotype(g_source_buffer, genotype, g_e->word_lut, MAX_PROGRAM_SIZE);
     genotype_return_to_pool(genotype);
   } else {
@@ -242,7 +242,7 @@ i32 build_traits()
   TIMING_UNIT timing_a = get_timing();
 
   seni_trait_list *trait_list = seni_compile_trait_list(g_source_buffer, g_e->word_lut);
-  bool res = seni_serialize_trait_list(trait_list, g_traits_text_buffer);
+  bool res = seni_serialize_trait_list(trait_list, g_traits_cursor);
   if (res == false) {
     SENI_ERROR("seni_serialize_trait_list returned false");
     return 0;
@@ -266,7 +266,7 @@ i32 create_initial_generation(i32 population_size, i32 seed)
   debug_size_traits_buffer();
   
   // read in traits and create an array of genotypes
-  seni_trait_list *trait_list = seni_deserialize_trait_list(g_traits_text_buffer);
+  seni_trait_list *trait_list = seni_deserialize_trait_list(g_traits_cursor);
   
   if (g_genotype_list != NULL) {
     genotype_list_return_to_pool(g_genotype_list);
@@ -295,7 +295,7 @@ i32 create_initial_generation(i32 population_size, i32 seed)
 export
 void genotype_move_to_buffer(i32 index)
 {
-  text_buffer_reset(g_genotype_text_buffer);
+  cursor_reset(g_genotype_cursor);
 
   seni_genotype *genotype = g_genotype_list->genotypes;
   i32 i = 0;
@@ -304,7 +304,7 @@ void genotype_move_to_buffer(i32 index)
     i++;
   }
   
-  bool res = genotype_serialize(g_genotype_text_buffer, genotype);
+  bool res = genotype_serialize(g_genotype_cursor, genotype);
   if (res == false) {
     SENI_ERROR("genotype_move_to_buffer: genotype_serialize returned false (for index %d)", index);
   }
@@ -387,7 +387,7 @@ void next_generation_add_genotype()
 {
   debug_size_genotype_buffer();
     
-  seni_genotype *genotype = seni_deserialize_genotype(g_genotype_text_buffer);
+  seni_genotype *genotype = seni_deserialize_genotype(g_genotype_cursor);
 
   genotype_list_add_genotype(g_genotype_list, genotype);
 }
@@ -405,7 +405,7 @@ bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_ra
     return false;
   }
 
-  seni_trait_list *trait_list = seni_deserialize_trait_list(g_traits_text_buffer);
+  seni_trait_list *trait_list = seni_deserialize_trait_list(g_traits_cursor);
 
   seni_genotype_list *new_generation = genotype_list_next_generation(g_genotype_list,
                                                                      parent_size,
@@ -431,9 +431,9 @@ void unparse_with_genotype()
   debug_size_genotype_buffer();
   debug_size_source_buffer();
 
-  seni_genotype *genotype = seni_deserialize_genotype(g_genotype_text_buffer);
+  seni_genotype *genotype = seni_deserialize_genotype(g_genotype_cursor);
   
-  seni_unparse_with_genotype(g_out_source_text_buffer, g_source_buffer, genotype, g_e->word_lut);
+  seni_unparse_with_genotype(g_out_source_cursor, g_source_buffer, genotype, g_e->word_lut);
 
   genotype_return_to_pool(genotype);
 
