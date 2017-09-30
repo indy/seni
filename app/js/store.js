@@ -23,6 +23,8 @@ import { jobBuildTraits,
          jobInitialGeneration,
          jobNewGeneration } from './jobTypes';
 
+const logToConsole = true;
+
 let currentState = undefined;
 
 function actionSetMode(state, { mode }) {
@@ -152,7 +154,7 @@ export function createInitialState() {
     // the resolution of the high res image
     highResolution: [2048, 2048],
     placeholder: 'img/spinner.gif',
-    populationSize: 24,
+    populationSize: 4,
     mutationRate: 0.1,
 
     currentMode: SeniMode.gallery,
@@ -165,12 +167,34 @@ export function createInitialState() {
   };
 }
 
+function logMode(mode) {
+  let name = '';
+  switch(mode) {
+  case SeniMode.gallery:
+    name = 'gallery';
+    break;
+  case SeniMode.edit:
+    name = 'edit';
+    break;
+  case SeniMode.evolve:
+    name = 'evolve';
+    break;
+  default:
+    name = 'unknown';
+    break;
+  }
+  console.log(`SET_MODE: ${name}`);
+}
+
 export function createStore(initialState) {
   currentState = initialState;
 
   function reducer(state, action) {
     switch (action.type) {
     case 'SET_MODE':
+      if (logToConsole) {
+        logMode(action.mode);
+      }
       return actionSetMode(state, action);
     case 'SET_SCRIPT':
       return actionSetScript(state, action);
@@ -183,6 +207,9 @@ export function createStore(initialState) {
     case 'SHUFFLE_GENERATION':
       return actionShuffleGeneration(state, action);
     case 'SET_STATE':
+      if (logToConsole) {
+        console.log(`SET_STATE: ${action.state}`);
+      }
       return wrapInPromise(action.state);
     default:
       return wrapInPromise(state);
@@ -194,6 +221,9 @@ export function createStore(initialState) {
   }
 
   function dispatch(action) {
+    if (logToConsole) {
+      console.log(`dispatch: action = ${action.type}`);
+    }
     return reducer(currentState, action);
   }
 

@@ -18,7 +18,7 @@
 
 import { SeniMode } from './SeniMode';
 
-const logToConsole = false;
+const logToConsole = true;
 
 function seniModeAsString(mode) {
   switch (mode) {
