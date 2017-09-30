@@ -1,16 +1,17 @@
-* TODO [0/12]
-  1. [ ] remove vm/env from genotype_list_create_initial_generation
-  2. [ ] impl: initial seed
-  3. [ ] get high-res render working
-  4. [ ] add an END token to serialized output, use as a sanity check
-  5. [ ] add unit tests for compiling with a genotype
-  6. [ ] unify args to *_pretty_print
-  7. [ ] maybe have a required specifier in functions?
-  8. [ ] poly should also accept a uv parameter
-  9. [ ] ensure that there's a dist folder before running npm run build:wasm
-  10. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  11. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  12. [ ] look into restrict keyword in C99
+* TODO [0/13]
+  1. [ ] {red (gen/col alpha: 1)} bug?
+  2. [ ] remove vm/env from genotype_list_create_initial_generation
+  3. [ ] impl: initial seed
+  4. [ ] get high-res render working
+  5. [ ] add an END token to serialized output, use as a sanity check
+  6. [ ] add unit tests for compiling with a genotype
+  7. [ ] unify args to *_pretty_print
+  8. [ ] maybe have a required specifier in functions?
+  9. [ ] poly should also accept a uv parameter
+  10. [ ] ensure that there's a dist folder before running npm run build:wasm
+  11. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  13. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
@@ -874,3 +875,23 @@ worker.bundle.js.map    20 kB       1  [emitted]         worker
 
   bool $NAME_deserialize(seni_$NAME *out, seni_text_buffer *text_buffer)
   - deserializes structure from the text buffer
+
+
+* folder structure
+
+/assets and /dist will be served to the user
+
+/src is used to generate /dist files
+
+/server contains files used by server
+
+where does /seni go? (/server)
+
+--------------------------------------------------------------------------------
+
+rename server.go -> server/serve.go
+
+remove build_unix folder, place output in /output?
+
+remove /make prefix files with make_ and place in root
+

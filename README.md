@@ -15,7 +15,7 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 1. `npm run build`
 2. `npm run build:wasm`
-3. `go build server.go`
+3. `go build server/serve.go`
 
 ### Test:
 
@@ -30,18 +30,18 @@ make\win.bat test
 
 ### Running
 
-1. `./server`
+1. `./serve`
 2. visit http://localhost:3000
 
 ## Windows 10 Shenanigans
 
 You will need to build a server.exe and add it to the Firewall whitelist in order to prevent a Windows Firewall dialog appearing every time.
 
-1. `go build -o server.exe`
+1. `go build server/serve.go -o serve.exe`
 2. In the windows control panel go to:
    `Control Panel\All Control Panel Items\Windows Firewall\Allowed applications`
-   and add the server.exe that was just created
-3. `server.exe`
+   and add the serve.exe that was just created
+3. `serve.exe`
 
 ## C used in WebAssembly
 

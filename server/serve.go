@@ -23,7 +23,7 @@ var galleryItems []GalleryItem
 
 func galleryListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	body, err := ioutil.ReadFile("gallery.json")
+	body, err := ioutil.ReadFile("server/gallery.json")
 	if err != nil {
 		return
 	}
@@ -45,7 +45,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename := "seni/" + galleryItem.Name + ".seni"
+	filename := "server/seni/" + galleryItem.Name + ".seni"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		http.Redirect(w, r, "/gallery", http.StatusFound)
@@ -65,7 +65,7 @@ func getGalleryItem(id int) (*GalleryItem, error) {
 }
 
 func parseGallery() ([]GalleryItem, error) {
-	body, err := ioutil.ReadFile("gallery.json")
+	body, err := ioutil.ReadFile("server/gallery.json")
 	if err != nil {
 		return nil, err
 	}
