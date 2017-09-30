@@ -3,8 +3,8 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    seni: ['./app/js/index.js'],
-    worker: ['./app/js/worker.js']
+    seni: ['./src/js/index.js'],
+    worker: ['./src/js/worker.js']
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -22,7 +22,7 @@ module.exports = {
 
         // Skip any files outside of your project's `js` directory
         include: [
-          path.resolve(__dirname, 'app', 'js')
+          path.resolve(__dirname, 'src', 'js')
         ]
       }
     ]
