@@ -95,11 +95,11 @@ func main() {
 	http.HandleFunc("/gallery", galleryListHandler)
 	http.HandleFunc("/gallery/", galleryHandler)
 
-	fs := http.FileServer(http.Dir("app"))
+	fs := http.FileServer(http.Dir("assets"))
 	http.Handle("/", maxAgeHandler(0, fs))
 
-	fs = http.FileServer(http.Dir("node_modules"))
-	http.Handle("/node_modules/", http.StripPrefix("/node_modules/", fs))
+	fs = http.FileServer(http.Dir("dist"))
+	http.Handle("/dist/", http.StripPrefix("/dist/", fs))
 
 	http.ListenAndServe(":3000", nil)
 }

@@ -1,13 +1,9 @@
 serve
 serve.exe
-todo.org
 
 .DS_Store
-/app/dist
-docs/
 
 /seni/c/local
-
 
 # Logs
 logs
@@ -25,9 +21,3 @@ pids
 node_modules
 coverage
 tmp
-
-**/build_wasm/
-**/build_unix/
-**/build_win/
-**/build_osx/
-
