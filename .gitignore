@@ -3,7 +3,8 @@ serve.exe
 
 .DS_Store
 
-/seni/c/local
+/app/dist
+/build_unix
 
 # Logs
 logs
@@ -13,7 +14,6 @@ logs
 pids
 *.pid
 *.seed
-
 
 # Dependency directory
 # Commenting this out is preferred by some people, see
