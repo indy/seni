@@ -43,7 +43,7 @@ seni_word_lut *wlut_allocate()
   word_lut->native_ref = (seni_string_ref *)calloc(MAX_NATIVE_LOOKUPS, sizeof(seni_string_ref));
   word_lut->keyword_ref = (seni_string_ref *)calloc(MAX_KEYWORD_LOOKUPS, sizeof(seni_string_ref));
   word_lut->word_ref = (seni_string_ref *)calloc(MAX_WORD_LOOKUPS, sizeof(seni_string_ref));
-  
+
   return word_lut;
 }
 
@@ -80,7 +80,7 @@ char *wlut_get_word(seni_word_lut *word_lut, i32 iword)
 char *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword)
 {
   seni_string_ref *string_ref;
-  
+
   if (iword < word_lut->word_count) {
     string_ref = &(word_lut->word_ref[iword]);
     return string_ref->c;
@@ -269,7 +269,7 @@ void node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut)
     SENI_ERROR("node_pretty_print: given NULL");
     return;
   }
-  
+
   char *type = node_type_name(node);
   seni_value_in_use using = get_node_value_in_use(node->type);
 
@@ -325,7 +325,7 @@ bool is_node_colour_constructor(seni_node *node)
   if (native_index < colour_constructor_start || native_index >= colour_constructor_end) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -367,7 +367,7 @@ void var_pretty_print(char* msg, seni_var *var)
     SENI_ERROR("var_pretty_print: given NULL");
     return;
   }
-  
+
   char *type = var_type_name(var);
   seni_value_in_use using = get_var_value_in_use(var->type);
 
@@ -375,7 +375,7 @@ void var_pretty_print(char* msg, seni_var *var)
     SENI_PRINT("%s: %s : [%.2f %.2f]", msg,  type, var->f32_array[0], var->f32_array[1]);
     return;
   }
-    
+
   switch(using) {
   case USE_I:
     if (var->type == VAR_COLOUR) {
@@ -442,7 +442,7 @@ bool var_serialize(seni_cursor *cursor, seni_var *var)
     SENI_ERROR("var_serialize: unknown seni_var type");
     return false;
   }
-  
+
   return true;
 }
 
@@ -485,8 +485,8 @@ bool var_deserialize(seni_var *out, seni_cursor *cursor)
     return true;
   } else if (cursor_eat_text(cursor, "VECTOR")) {
     return false;
-  }  
-  
+  }
+
   return false;
 }
 
@@ -524,7 +524,7 @@ void colour_as_var(seni_var *out, seni_colour *c)
   out->f32_array[0] = c->element[0];
   out->f32_array[1] = c->element[1];
   out->f32_array[2] = c->element[2];
-  out->f32_array[3] = c->element[3];  
+  out->f32_array[3] = c->element[3];
 }
 
 char *memory_segment_name(seni_memory_segment_type segment)
@@ -555,8 +555,8 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut)
 #define PRINT_BC buf_len += seni_sprintf
 #define BUF_ARGS buf_start + buf_len, PPC_BUF_SIZE - buf_len
 
-  buf[0] = 0;  
-  
+  buf[0] = 0;
+
   if (b->op == LOAD || b->op == STORE || b->op == FLU_STORE) {
 
     char *seg_name = memory_segment_name((seni_memory_segment_type)b->arg0.value.i);
@@ -565,7 +565,7 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut)
       PRINT_BC(BUF_ARGS, "%d\t%s\t\t%s\t\t", ip, opcode_name(b->op), seg_name);
     } else if (b->op == FLU_STORE) {
       PRINT_BC(BUF_ARGS, "%d\t%s\t%s\t\t", ip, opcode_name(b->op), seg_name);
-    } 
+    }
 
     seni_value_in_use using = get_var_value_in_use(b->arg1.type);
     switch(using) {
@@ -601,7 +601,7 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut)
     default:
       PRINT_BC(BUF_ARGS, "unknown type");
     }
-    
+
   } else if (b->op == JUMP_IF || b->op == JUMP) {
     PRINT_BC(BUF_ARGS, "%d\t%s\t\t", ip, opcode_name(b->op));
     if (b->arg0.value.i > 0) {
@@ -613,7 +613,7 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut)
     }
   } else if (b->op == NATIVE) {
     PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d\t\t%d",
-             ip, opcode_name(b->op), b->arg0.value.i, b->arg1.value.i);    
+             ip, opcode_name(b->op), b->arg0.value.i, b->arg1.value.i);
   } else if (b->op == PILE) {
     PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d",
              ip, opcode_name(b->op), b->arg0.value.i);
@@ -682,17 +682,17 @@ bool bytecode_deserialize(seni_bytecode *out, seni_cursor *cursor)
 {
   if (!opcode_deserialize(&(out->op), cursor))
     return false;
-  
+
   cursor_eat_space(cursor);
-  
+
   if(!var_deserialize(&(out->arg0), cursor))
     return false;
-  
+
   cursor_eat_space(cursor);
-  
+
   if(!var_deserialize(&(out->arg1), cursor))
     return false;
-  
+
   return true;
 }
 
@@ -702,7 +702,7 @@ seni_env *env_allocate()
   e->word_lut = wlut_allocate();
 
   declare_bindings(e->word_lut, e);
-  
+
   return e;
 }
 
@@ -719,7 +719,7 @@ void env_free(seni_env *e)
 char *opcode_name(seni_opcode opcode)
 {
 #define STR(x) #x
-  
+
   switch(opcode) {
 #define OPCODE(id,_) case id: return STR(id);
 #include "opcodes.h"
@@ -788,7 +788,7 @@ bool program_serialize(seni_cursor *cursor, seni_program *program)
     }
     bytecode++;
   }
-  
+
   return true;
 }
 
@@ -808,11 +808,11 @@ bool program_deserialize(seni_program *out, seni_cursor *cursor)
     if(!bytecode_deserialize(&(out->code[i]), cursor)) {
       return false;
     }
-    if (i < out->code_size - 1) {    
+    if (i < out->code_size - 1) {
       cursor_eat_space(cursor);
     }
   }
-  
+
   return true;
 }
 
@@ -843,7 +843,7 @@ seni_vm *vm_allocate(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 verte
   vm->render_data = render_data;
 
   vm->prng_state = (seni_prng_state *)calloc(1, sizeof(seni_prng_state));
-  
+
   vm_reset(vm);
 
   return vm;
@@ -859,7 +859,7 @@ void vm_reset(seni_vm *vm)
   base_offset += MEMORY_GLOBAL_SIZE;
 
   vm->ip = 0;
-  
+
   vm->fp = base_offset;
   var = &(vm->stack[vm->fp]);
   var->type = VAR_INT;
@@ -941,7 +941,7 @@ seni_var *stack_pop(seni_vm *vm)
   if (vm->sp == 0) {
     return NULL;
   }
-  
+
   vm->sp--;
   return &(vm->stack[vm->sp]);
 }
@@ -956,14 +956,14 @@ seni_var *stack_peek(seni_vm *vm)
 
 // [ ] <<- this is the VAR_VECTOR (value.v points to the first heap allocated seni_var)
 //  |
-//  v 
+//  v
 // [4] -> [7] -> [3] -> [5] -> NULL  <<- these are heap allocated seni_vars
 //
 void vector_construct(seni_var *head)
 {
   // assuming that it's ok to wipe out head->value.v
   head->type = VAR_VECTOR;
-  head->value.v = NULL;           // attach vec_rc to vec_head
+  head->value.v = NULL;
 }
 
 i32 vector_length(seni_var *var)
@@ -1016,7 +1016,7 @@ seni_var *vector_append_i32(seni_vm *vm, seni_var *head, i32 val)
     SENI_ERROR("vector_append_i32");
     return NULL;
   }
-  
+
   v->type = VAR_INT;
   v->value.i = val;
 
@@ -1032,7 +1032,7 @@ seni_var *vector_append_f32(seni_vm *vm, seni_var *head, f32 val)
     SENI_ERROR("vector_append_f32");
     return NULL;
   }
-  
+
   v->type = VAR_FLOAT;
   v->value.f = val;
 
@@ -1106,7 +1106,7 @@ void var_copy(seni_var *dest, seni_var *src)
   dest->f32_array[3] = src->f32_array[3];
 
   seni_value_in_use using = get_var_value_in_use(src->type);
-  
+
   if (using == USE_I) {
     dest->value.i = src->value.i;
   } else if (using == USE_F) {
@@ -1143,7 +1143,7 @@ void vm_debug_info_print(seni_vm *vm)
 void lang_subsystem_startup()
 {
   // start with 1 slab of 100, allocate upto a max of 10 slabs
-  g_var_pool = var_pool_allocate(1, 100, 50);  
+  g_var_pool = var_pool_allocate(1, 100, 50);
 }
 
 void lang_subsystem_shutdown()
@@ -1165,4 +1165,3 @@ void var_return_to_pool(seni_var *var)
 {
   var_pool_return(g_var_pool, var);
 }
-
