@@ -938,11 +938,37 @@ function allocateWorkers(state) {
   Job.setup(numWorkers);
 }
 
-export default function main() {
-  initFirebase();
-  initFirebaseSignIn();
+// https://developer.mozilla.org/en-US/docs/Web/Events/resize
+function throttle(type, name, obj) {
+  const obj2 = obj || window;
+  let running = false;
+  const func = () => {
+    if (running) { return; }
+    running = true;
+    requestAnimationFrame(() => {
+      obj2.dispatchEvent(new CustomEvent(name));
+      running = false;
+    });
+  };
+  obj2.addEventListener(type, func);
+}
+
+function setupResizeability() {
+  // define a version of the resize event which fires less frequently
+  throttle('resize', 'throttledResize');
+
+  window.addEventListener('throttledResize', () => {
+    resizeContainers();
+  });
 
   resizeContainers();
+}
+
+export default function main() {
+  setupResizeability();
+
+  initFirebase();
+  initFirebaseSignIn();
 
   const state = createInitialState();
   const store = createStore(state);
