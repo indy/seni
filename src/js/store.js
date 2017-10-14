@@ -27,24 +27,50 @@ const logToConsole = true;
 
 let currentState = undefined;
 
+function cloneState(state) {
+  const clone = {};
+
+  clone.highResolution = state.highResolution;
+  clone.placeholder = state.placeholder;
+  clone.populationSize = state.populationSize;
+  clone.mutationRate = state.mutationRate;
+
+  clone.currentMode = state.currentMode;
+  clone.previouslySelectedGenotypes = state.previouslySelectedGenotypes;
+  clone.selectedIndices = state.selectedIndices;
+  clone.script = state.script;
+  clone.scriptHash = state.scriptHash;
+  clone.genotypes = state.genotypes;
+  clone.traits = state.traits;
+
+  return clone;
+}
+
+function resolveAsCurrentState(resolve, state) {
+  currentState = state;
+  resolve(currentState);
+}
+
 function actionSetMode(state, { mode }) {
   return new Promise((resolve, _reject) => {
-    state.currentMode = mode;
-    resolve(state);
+    const newState = cloneState(state);
+    newState.currentMode = mode;
+    resolveAsCurrentState(resolve, newState);
   });
 }
 
 function actionSetScript(state, { script }) {
   return new Promise((resolve, reject) => {
-    state.script = script;
-    state.scriptHash = Util.hashCode(script);
+    const newState = cloneState(state);
+    newState.script = script;
+    newState.scriptHash = Util.hashCode(script);
 
     Job.request(jobBuildTraits, {
-      script: state.script,
-      scriptHash: state.scriptHash
+      script: newState.script,
+      scriptHash: newState.scriptHash
     }).then(({ traits }) => {
-      state.traits = traits;
-      resolve(state);
+      newState.traits = traits;
+      resolveAsCurrentState(resolve, newState);
     }).catch(error => {
       // handle error
       console.log(`worker: error of ${error}`);
@@ -55,22 +81,24 @@ function actionSetScript(state, { script }) {
 
 function actionSetSelectedIndices(state, { selectedIndices }) {
   return new Promise((resolve, _reject) => {
-    state.selectedIndices = selectedIndices || [];
-    resolve(state);
+    const newState = cloneState(state);
+    newState.selectedIndices = selectedIndices || [];
+    resolveAsCurrentState(resolve, newState);
   });
 }
 
 // todo: should populationSize be passed in the action?
 function actionInitialGeneration(state) {
   return new Promise((resolve, reject) => {
+    const newState = cloneState(state);
     Job.request(jobInitialGeneration, {
-      traits: state.traits,
-      populationSize: state.populationSize
+      traits: newState.traits,
+      populationSize: newState.populationSize
     }).then(({ genotypes }) => {
-      state.genotypes = genotypes;
-      state.previouslySelectedGenotypes = [];
-      state.selectedIndices = [];
-      resolve(state);
+      newState.genotypes = genotypes;
+      newState.previouslySelectedGenotypes = [];
+      newState.selectedIndices = [];
+      resolveAsCurrentState(resolve, newState);
     }).catch(error => {
       // handle error
       console.log(`worker: error of ${error}`);
@@ -81,11 +109,12 @@ function actionInitialGeneration(state) {
 
 function actionShuffleGeneration(state, { rng }) {
   return new Promise((resolve, reject) => {
-    const prev = state.previouslySelectedGenotypes;
+    const newState = cloneState(state);
+    const prev = newState.previouslySelectedGenotypes;
 
     if (prev.length === 0) {
-      actionInitialGeneration(state).then(s => {
-        resolve(s);
+      actionInitialGeneration(newState).then(s => {
+        resolveAsCurrentState(resolve, s);
       }).catch(error1 => {
         // handle error
         console.log(`worker: error of ${error1}`);
@@ -94,14 +123,14 @@ function actionShuffleGeneration(state, { rng }) {
     } else {
       Job.request(jobNewGeneration, {
         genotypes: prev,
-        populationSize: state.populationSize,
-        traits: state.traits,
-        mutationRate: state.mutationRate,
+        populationSize: newState.populationSize,
+        traits: newState.traits,
+        mutationRate: newState.mutationRate,
         rng
       }).then(({ genotypes }) => {
-        state.genotypes = genotypes;
-        state.selectedIndices = [];
-        resolve(state);
+        newState.genotypes = genotypes;
+        newState.selectedIndices = [];
+        resolveAsCurrentState(resolve, newState);
       }).catch(error => {
         // handle error
         console.log(`worker: error of ${error}`);
@@ -113,8 +142,9 @@ function actionShuffleGeneration(state, { rng }) {
 
 function actionNextGeneration(state, { rng }) {
   return new Promise((resolve, reject) => {
-    const pg = state.genotypes;
-    const selectedIndices = state.selectedIndices;
+    const newState = cloneState(state);
+    const pg = newState.genotypes;
+    const selectedIndices = newState.selectedIndices;
     const selectedGenos = [];
     for (let i = 0; i < selectedIndices.length; i++) {
       selectedGenos.push(pg[selectedIndices[i]]);
@@ -122,19 +152,19 @@ function actionNextGeneration(state, { rng }) {
 
     Job.request(jobNewGeneration, {
       genotypes: selectedGenos,
-      populationSize: state.populationSize,
-      traits: state.traits,
-      mutationRate: state.mutationRate,
+      populationSize: newState.populationSize,
+      traits: newState.traits,
+      mutationRate: newState.mutationRate,
       rng
     }).then(({ genotypes }) => {
       const previouslySelectedGenotypes =
             genotypes.slice(0, selectedIndices.length);
 
-      state.genotypes = genotypes;
-      state.previouslySelectedGenotypes = previouslySelectedGenotypes;
-      state.selectedIndices = [];
+      newState.genotypes = genotypes;
+      newState.previouslySelectedGenotypes = previouslySelectedGenotypes;
+      newState.selectedIndices = [];
 
-      resolve(state);
+      resolveAsCurrentState(resolve, newState);
     }).catch(error => {
       // handle error
       console.log(`worker: error of ${error}`);
@@ -145,7 +175,7 @@ function actionNextGeneration(state, { rng }) {
 
 function wrapInPromise(state) {
   return new Promise((resolve, _reject) => {
-    resolve(state);
+    resolveAsCurrentState(resolve, state);
   });
 }
 
@@ -169,7 +199,7 @@ export function createInitialState() {
 
 function logMode(mode) {
   let name = '';
-  switch(mode) {
+  switch (mode) {
   case SeniMode.gallery:
     name = 'gallery';
     break;
