@@ -1,17 +1,19 @@
-* TODO [0/13]
-  1. [ ] {red (gen/col alpha: 1)} bug?
-  2. [ ] remove vm/env from genotype_list_create_initial_generation
-  3. [ ] impl: initial seed
-  4. [ ] get high-res render working
-  5. [ ] add an END token to serialized output, use as a sanity check
-  6. [ ] add unit tests for compiling with a genotype
-  7. [ ] unify args to *_pretty_print
-  8. [ ] maybe have a required specifier in functions?
-  9. [ ] poly should also accept a uv parameter
-  10. [ ] ensure that there's a dist folder before running npm run build:wasm
-  11. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  13. [ ] look into restrict keyword in C99
+* TODO [0/15]
+  1. [ ] hsl colour space should be 0..100 for s and l
+  2. [ ] {red (gen/col alpha: 1)} bug?
+  3. [ ] a way of passing arguments to called functions (those that use address-of)
+  4. [ ] remove vm/env from genotype_list_create_initial_generation
+  5. [ ] impl: initial seed
+  6. [ ] get high-res render working
+  7. [ ] add an END token to serialized output, use as a sanity check
+  8. [ ] add unit tests for compiling with a genotype
+  9. [ ] unify args to *_pretty_print
+  10. [ ] maybe have a required specifier in functions?
+  11. [ ] poly should also accept a uv parameter
+  12. [ ] ensure that there's a dist folder before running npm run build:wasm
+  13. [ ] remove hsv colour space? - would this get rid of the illegal state?
+  14. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  15. [ ] look into restrict keyword in C99
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni

@@ -37,12 +37,16 @@ REGISTER_KEYWORD("canvas/width", INAME_CANVAS_WIDTH)
 REGISTER_KEYWORD("canvas/height", INAME_CANVAS_HEIGHT)
 REGISTER_KEYWORD("math/TAU", INAME_MATH_TAU)
 
-// enumerations for colours and colour formats
+// colour formats
 //
 REGISTER_KEYWORD("RGB", INAME_RGB)
 REGISTER_KEYWORD("HSL", INAME_HSL)
+REGISTER_KEYWORD("HSLuv", INAME_HSLUV)
 REGISTER_KEYWORD("LAB", INAME_LAB)
 REGISTER_KEYWORD("HSV", INAME_HSV)
+
+// pre-defined colours
+//
 REGISTER_KEYWORD("white", INAME_WHITE)
 REGISTER_KEYWORD("black", INAME_BLACK)
 REGISTER_KEYWORD("red", INAME_RED)
@@ -52,7 +56,7 @@ REGISTER_KEYWORD("yellow", INAME_YELLOW)
 REGISTER_KEYWORD("magenta", INAME_MAGENTA)
 REGISTER_KEYWORD("cyan", INAME_CYAN)
 
-// enumerations for procedural colours
+// procedural colours
 //
 REGISTER_KEYWORD("chrome", INAME_CHROME)
 REGISTER_KEYWORD("hotline-miami", INAME_HOTLINE_MIAMI)
@@ -63,7 +67,7 @@ REGISTER_KEYWORD("robocop", INAME_ROBOCOP)
 REGISTER_KEYWORD("transformers", INAME_TRANSFORMERS)
 REGISTER_KEYWORD("col/procedural-fn-presets", INAME_COL_PROCEDURAL_FN_PRESETS)
 
-// enumerations for brush types
+// brush types
 //
 REGISTER_KEYWORD("brush-flat", INAME_BRUSH_FLAT)
 REGISTER_KEYWORD("brush-a", INAME_BRUSH_A)
@@ -74,7 +78,7 @@ REGISTER_KEYWORD("brush-e", INAME_BRUSH_E)
 REGISTER_KEYWORD("brush-f", INAME_BRUSH_F)
 REGISTER_KEYWORD("brush-g", INAME_BRUSH_G)
 
-// enumerations for interpolation
+// interpolation
 //
 REGISTER_KEYWORD("linear", INAME_LINEAR)
 REGISTER_KEYWORD("quick", INAME_QUICK)

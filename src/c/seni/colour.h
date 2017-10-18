@@ -3,9 +3,20 @@
 #include "config.h"
 #include "types.h"
 
+
+// |--------+-----------+-------------+-------------|
+// | format | element 0 | element 1   | element 2   |
+// |--------+-----------+-------------+-------------|
+// | RGB    | R 0..1    | G 0..1      | B 0..1      |
+// | HSL    | H 0..360  | S 0..1      | L 0..1      |  the 0..1 should be 0..100
+// | HSLuv  | H 0..360  | S 0..100    | L 0..100    |
+// | LAB    | L 0..100  | A -128..128 | B -128..128 |
+// |--------+-----------+-------------+-------------|
+
 typedef enum {
   RGB,
   HSL,
+  HSLuv,
   LAB,
   HSV,
   XYZ
@@ -43,4 +54,3 @@ void triad(seni_colour *out0, seni_colour *out1, seni_colour *in);
 void get_colour_presets(f32 *a, f32 *b, f32 *c, f32 *d, i32 preset);
 void colour_procedural(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t);
 void colour_bezier(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t);
-

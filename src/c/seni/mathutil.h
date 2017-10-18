@@ -6,8 +6,8 @@
 #define TAU 6.283185307179586f
 #define PI_BY_2 1.5707963267948966f
 
-#define deg_to_rad(a)  ((a)*(PI/180))
-#define rad_to_deg(a)  ((a)*(180/PI))
+#define deg_to_rad(a)  ((a)*(PI/180.0f))
+#define rad_to_deg(a)  ((a)*(180.0f/PI))
 
 #define absf(x)             ((x) < 0.0f ? -(x) : (x))
 #define lerp(t,a,b)        ( (a) + (t) * (f32) ((b)-(a)) )
