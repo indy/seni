@@ -1121,6 +1121,315 @@ seni_var *bind_col_get_lab_l(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
+seni_var *col_set_element(seni_vm *vm, i32 num_args, seni_colour_format format, i32 index)
+{
+  seni_colour colour;
+  f32 value = 0;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
+  READ_STACK_ARGS_END;
+
+  seni_colour ret_colour;
+  colour_clone_as(&ret_colour, &colour, colour.format);
+
+  if (colour.format == format) {
+    ret_colour.element[index] = value;
+  } else {
+    SENI_ERROR("col_set_element: colour is in the incorrect format"); 
+  }
+
+  colour_as_var(&g_var_scratch, &ret_colour);
+
+  return &g_var_scratch;
+}
+
+
+seni_var *col_get_element(seni_vm *vm, i32 num_args, seni_colour_format format, i32 index)
+{
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARGS_END;
+
+  f32 value = 0.0f;
+  
+  if (colour.format == format) {
+    value = colour.element[index];
+  } else {
+    SENI_ERROR("col_get_element: colour is in the incorrect format");
+  }
+
+  f32_as_var(&g_var_scratch, value);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_col_set_r(seni_vm *vm, i32 num_args)
+{
+  return col_set_element(vm, num_args, RGB, 0);
+}
+
+seni_var *bind_col_get_r(seni_vm *vm, i32 num_args)
+{
+  return col_get_element(vm, num_args, RGB, 0);
+}
+
+seni_var *bind_col_set_g(seni_vm *vm, i32 num_args)
+{
+  return col_set_element(vm, num_args, RGB, 1);
+}
+
+seni_var *bind_col_get_g(seni_vm *vm, i32 num_args)
+{
+  return col_get_element(vm, num_args, RGB, 1);
+}
+
+seni_var *bind_col_set_b(seni_vm *vm, i32 num_args)
+{
+  seni_colour colour;
+  f32 value = 0;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
+  READ_STACK_ARGS_END;
+
+  seni_colour ret_colour;
+  colour_clone_as(&ret_colour, &colour, colour.format);
+
+  i32 index = 2;
+  
+  if (colour.format == RGB || colour.format == LAB) {
+    ret_colour.element[index] = value;
+  } else {
+    SENI_ERROR("bind_col_set_b: colour is in the incorrect format"); 
+  }
+
+  colour_as_var(&g_var_scratch, &ret_colour);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_col_get_b(seni_vm *vm, i32 num_args)
+{
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARGS_END;
+
+  f32 value = 0.0f;
+  i32 index = 2;
+
+  if (colour.format == RGB || colour.format == LAB) {
+    value = colour.element[index];
+  } else {
+    SENI_ERROR("bind_col_get_b: colour is in the incorrect format");
+  }
+
+  f32_as_var(&g_var_scratch, value);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_col_set_h(seni_vm *vm, i32 num_args)
+{
+  seni_colour colour;
+  f32 value = 0;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
+  READ_STACK_ARGS_END;
+
+  seni_colour ret_colour;
+  colour_clone_as(&ret_colour, &colour, colour.format);
+
+  i32 index = 0;
+  
+  if (colour.format == HSL || colour.format == HSLuv || colour.format == HSV) {
+    ret_colour.element[index] = value;
+  } else {
+    SENI_ERROR("bind_col_set_h: colour is in the incorrect format"); 
+  }
+
+  colour_as_var(&g_var_scratch, &ret_colour);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_col_get_h(seni_vm *vm, i32 num_args)
+{
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARGS_END;
+
+  f32 value = 0.0f;
+  i32 index = 0;
+  
+  if (colour.format == HSL || colour.format == HSLuv || colour.format == HSV) {
+    value = colour.element[index];
+  } else {
+    SENI_ERROR("bind_col_get_h: colour is in the incorrect format");
+  }
+
+  f32_as_var(&g_var_scratch, value);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_col_set_s(seni_vm *vm, i32 num_args)
+{
+  seni_colour colour;
+  f32 value = 0;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
+  READ_STACK_ARGS_END;
+
+  seni_colour ret_colour;
+  colour_clone_as(&ret_colour, &colour, colour.format);
+
+  i32 index = 1;
+  
+  if (colour.format == HSL || colour.format == HSLuv || colour.format == HSV) {
+    ret_colour.element[index] = value;
+  } else {
+    SENI_ERROR("bind_col_set_s: colour is in the incorrect format"); 
+  }
+
+  colour_as_var(&g_var_scratch, &ret_colour);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_col_get_s(seni_vm *vm, i32 num_args)
+{
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARGS_END;
+
+  f32 value = 0.0f;
+  i32 index = 1;
+  
+  if (colour.format == HSL || colour.format == HSLuv || colour.format == HSV) {
+    value = colour.element[index];
+  } else {
+    SENI_ERROR("bind_col_get_s: colour is in the incorrect format");
+  }
+
+  f32_as_var(&g_var_scratch, value);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_col_set_l(seni_vm *vm, i32 num_args)
+{
+  seni_colour colour;
+  f32 value = 0;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_F32(INAME_VALUE, value);
+  READ_STACK_ARGS_END;
+
+  seni_colour ret_colour;
+  colour_clone_as(&ret_colour, &colour, colour.format);
+
+  if (colour.format == HSL || colour.format == HSLuv) {
+    ret_colour.element[2] = value;
+  } else if (colour.format == LAB) {
+    ret_colour.element[0] = value;
+  } else {
+    SENI_ERROR("bind_col_set_l: colour is in the incorrect format"); 
+  }
+
+  colour_as_var(&g_var_scratch, &ret_colour);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_col_get_l(seni_vm *vm, i32 num_args)
+{
+  seni_colour colour;
+
+  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARGS_END;
+
+  f32 value = 0.0f;
+  
+  if (colour.format == HSL || colour.format == HSLuv) {
+    value = colour.element[2];
+  } else if (colour.format == LAB) {
+    value = colour.element[0];
+  } else {
+    SENI_ERROR("bind_col_get_l: colour is in the incorrect format"); 
+  }
+
+  f32_as_var(&g_var_scratch, value);
+
+  return &g_var_scratch;
+}
+
+seni_var *bind_col_set_a(seni_vm *vm, i32 num_args)
+{
+  return col_set_element(vm, num_args, LAB, 1);
+}
+
+seni_var *bind_col_get_a(seni_vm *vm, i32 num_args)
+{
+  return col_get_element(vm, num_args, LAB, 1);
+}
+
+seni_var *bind_col_set_v(seni_vm *vm, i32 num_args)
+{
+  return col_set_element(vm, num_args, HSV, 2);
+}
+
+seni_var *bind_col_get_v(seni_vm *vm, i32 num_args)
+{
+  return col_get_element(vm, num_args, HSV, 2);
+}
+
 seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args)
 {
   // colour fn structure need to store 4 colours (for bezier-fn)
@@ -2207,10 +2516,28 @@ void declare_bindings(seni_word_lut *word_lut, seni_env *e)
   declare_native(word_lut, e, "col/triad", &bind_col_triad);
   declare_native(word_lut, e, "col/darken", &bind_col_darken);
   declare_native(word_lut, e, "col/lighten", &bind_col_lighten);
+
   declare_native(word_lut, e, "col/set-alpha", &bind_col_set_alpha);
   declare_native(word_lut, e, "col/get-alpha", &bind_col_get_alpha);
-  declare_native(word_lut, e, "col/set-lab-l", &bind_col_set_lab_l);
-  declare_native(word_lut, e, "col/get-lab-l", &bind_col_get_lab_l);
+  declare_native(word_lut, e, "col/set-lab-l", &bind_col_set_lab_l); // todo: delete this
+  declare_native(word_lut, e, "col/get-lab-l", &bind_col_get_lab_l); // todo: delete this
+  declare_native(word_lut, e, "col/set-r", &bind_col_set_r);
+  declare_native(word_lut, e, "col/get-r", &bind_col_get_r);
+  declare_native(word_lut, e, "col/set-g", &bind_col_set_g);
+  declare_native(word_lut, e, "col/get-g", &bind_col_get_g);
+  declare_native(word_lut, e, "col/set-b", &bind_col_set_b);
+  declare_native(word_lut, e, "col/get-b", &bind_col_get_b);
+  declare_native(word_lut, e, "col/set-h", &bind_col_set_h);
+  declare_native(word_lut, e, "col/get-h", &bind_col_get_h);
+  declare_native(word_lut, e, "col/set-s", &bind_col_set_s);
+  declare_native(word_lut, e, "col/get-s", &bind_col_get_s);
+  declare_native(word_lut, e, "col/set-l", &bind_col_set_l);
+  declare_native(word_lut, e, "col/get-l", &bind_col_get_l);
+  declare_native(word_lut, e, "col/set-a", &bind_col_set_a);
+  declare_native(word_lut, e, "col/get-a", &bind_col_get_a);
+  declare_native(word_lut, e, "col/set-v", &bind_col_set_v);
+  declare_native(word_lut, e, "col/get-v", &bind_col_get_v);
+  
   declare_native(word_lut, e, "col/build-procedural", &bind_col_build_procedural);
   declare_native(word_lut, e, "col/build-bezier", &bind_col_build_bezier);
   declare_native(word_lut, e, "col/value", &bind_col_value);
