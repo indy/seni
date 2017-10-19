@@ -1076,51 +1076,6 @@ seni_var *bind_col_get_alpha(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
-seni_var *bind_col_set_lab_l(seni_vm *vm, i32 num_args)
-{
-  seni_colour colour;
-  f32 value = 0;
-
-  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-
-  // update with values from stack
-  READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(INAME_COLOUR, colour);
-  READ_STACK_ARG_F32(INAME_VALUE, value);
-  READ_STACK_ARGS_END;
-
-  seni_colour ret_colour;
-  colour_clone_as(&ret_colour, &colour, LAB);
-
-  i32 l_index = 0; // L is the first element
-  ret_colour.element[l_index] = value;
-
-  colour_as_var(&g_var_scratch, &ret_colour);
-
-  return &g_var_scratch;
-}
-
-seni_var *bind_col_get_lab_l(seni_vm *vm, i32 num_args)
-{
-  seni_colour colour;
-
-  colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-
-  // update with values from stack
-  READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_COL(INAME_COLOUR, colour);
-  READ_STACK_ARGS_END;
-
-  seni_colour lab_colour;
-  colour_clone_as(&lab_colour, &colour, LAB);
-
-  i32 l_index = 0;
-
-  f32_as_var(&g_var_scratch, colour.element[l_index]);
-
-  return &g_var_scratch;
-}
-
 seni_var *col_set_element(seni_vm *vm, i32 num_args, seni_colour_format format, i32 index)
 {
   seni_colour colour;
@@ -2519,8 +2474,6 @@ void declare_bindings(seni_word_lut *word_lut, seni_env *e)
 
   declare_native(word_lut, e, "col/set-alpha", &bind_col_set_alpha);
   declare_native(word_lut, e, "col/get-alpha", &bind_col_get_alpha);
-  declare_native(word_lut, e, "col/set-lab-l", &bind_col_set_lab_l); // todo: delete this
-  declare_native(word_lut, e, "col/get-lab-l", &bind_col_get_lab_l); // todo: delete this
   declare_native(word_lut, e, "col/set-r", &bind_col_set_r);
   declare_native(word_lut, e, "col/get-r", &bind_col_get_r);
   declare_native(word_lut, e, "col/set-g", &bind_col_set_g);

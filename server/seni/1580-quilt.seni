@@ -200,8 +200,8 @@
     (on-matrix-stack
       (translate vector: pos)
       (scale vector: [(* scale-x 100) (* scale-y 100)])
-      (draw-fn primary: (col/set-lab-l colour: primary
-                                       value: brightness)
-               accent: (col/set-lab-l colour: accent
-                                      value: brightness)
-               background: (col/set-lab-l colour: background value: brightness)))))
+      (draw-fn primary: (col/set-l colour: primary
+                                   value: brightness)
+               accent: (col/set-l colour: accent
+                                  value: brightness)
+               background: (col/set-l colour: background value: brightness)))))
