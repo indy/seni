@@ -1,0 +1,9 @@
+
+(fn (foo stepa: 4)
+    (rect position: [stepa 500]
+          colour: red))
+
+(foo stepa: 500)
+
+
+

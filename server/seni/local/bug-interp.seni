@@ -1,0 +1,6 @@
+(define
+  foo (interp/build from: [10 25] to: [0.2 math/TAU]))
+
+(debug/print value: (interp/value using: foo t: 0.3))
+
+(rect)

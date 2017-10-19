@@ -5,6 +5,8 @@ serve.exe
 
 /app/dist
 /build_unix
+/build_wasm
+/build_win
 
 # Logs
 logs
