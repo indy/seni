@@ -819,6 +819,35 @@ seni_var *bind_col_hsl(seni_vm *vm, i32 num_args)
   return &g_var_scratch;
 }
 
+seni_var *bind_col_hsluv(seni_vm *vm, i32 num_args)
+{
+  // (col/hsluv h: 180.0 s: 0.1 l: 0.2 alpha: 0.4)
+  
+  // default values for line
+  f32 h = 0.0f;                 // 0..360
+  f32 s = 0.0f;                 // 0..100
+  f32 l = 0.0f;                 // 0..100
+  f32 alpha = 1.0f;             // 0..1
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_H, h);
+  READ_STACK_ARG_F32(INAME_S, s);
+  READ_STACK_ARG_F32(INAME_L, l);
+  READ_STACK_ARG_F32(INAME_ALPHA, alpha);
+  READ_STACK_ARGS_END;
+
+  seni_colour colour;
+  colour.format = HSLuv;
+  colour.element[0] = h;
+  colour.element[1] = s;
+  colour.element[2] = l;
+  colour.element[3] = alpha;
+
+  colour_as_var(&g_var_scratch, &colour);
+  return &g_var_scratch;
+}
+
 seni_var *bind_col_hsv(seni_vm *vm, i32 num_args)
 {
   // (col/hsv h: 180.0 s: 0.1 v: 0.2 alpha: 0.4)
@@ -2168,6 +2197,7 @@ void declare_bindings(seni_word_lut *word_lut, seni_env *e)
   g_colour_constructor_start = word_lut->native_count;
   declare_native(word_lut, e, "col/rgb", &bind_col_rgb);
   declare_native(word_lut, e, "col/hsl", &bind_col_hsl);
+  declare_native(word_lut, e, "col/hsluv", &bind_col_hsluv);
   declare_native(word_lut, e, "col/hsv", &bind_col_hsv);
   declare_native(word_lut, e, "col/lab", &bind_col_lab);
   g_colour_constructor_end = word_lut->native_count;
