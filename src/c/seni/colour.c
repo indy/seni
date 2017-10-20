@@ -168,24 +168,34 @@ i32 min_channel(seni_colour *colour)
   return colour->element[2] < colour->element[low] ? 2 : low;
 }
 
+// http://www.rapidtables.com/convert/color/rgb-to-hsl.htm
 f32 hue(seni_colour *colour, i32 max_chan, f32 chroma)
 {
   if (chroma == 0.0f) {
     return 0.0f;        // invalid hue
   }
 
+  f32 angle = 0.0f;
+  
   switch (max_chan) {
   case 0:                       // R
-    return 60.0f * ((f32)fmod(colour->element[1] - colour->element[2], chroma) / 6.0f);
+    angle  = 60.0f * ((f32)fmod((colour->element[1] - colour->element[2]) / chroma, 6.0f));
+    break;
   case 1:                       // G
-    return 60.0f * (((colour->element[2] - colour->element[0]) / chroma) + 2.0f);
+    angle = 60.0f * (((colour->element[2] - colour->element[0]) / chroma) + 2.0f);
+    break;
   case 2:                       // B
-    return 60.0f * (((colour->element[0] - colour->element[1]) / chroma) + 4.0f);
+    angle = 60.0f * (((colour->element[0] - colour->element[1]) / chroma) + 4.0f);
+    break;
   default:
     break;
   }
 
-  return 0.0f;            // should never get here
+  while (angle < 0.0f) {
+    angle += 360.0f;
+  }
+
+  return angle;
 }
 
 f32 abso(f32 in)
@@ -193,6 +203,7 @@ f32 abso(f32 in)
   return in < 0.0f ? -in : in;
 }
 
+// http://www.rapidtables.com/convert/color/rgb-to-hsl.htm
 seni_colour *hsl_from_rgb(seni_colour *col)
 {
   i32 min_ch = min_channel(col);
@@ -201,25 +212,25 @@ seni_colour *hsl_from_rgb(seni_colour *col)
   i32 max_ch = max_channel(col);
   f32 max_val = col->element[max_ch];
 
-  f32 chroma = max_val - min_val;
-  f32 h = hue(col, max_ch, chroma);
-  // bool valid_hue = (chroma != 0.0);
+  f32 delta = max_val - min_val;
+
+  
+  f32 h = hue(col, max_ch, delta);
+
 
   f32 lightness = 0.5f * (min_val + max_val);
+
   f32 saturation;
-  if (chroma == 0.0f) {
+  if (delta == 0.0f) {
     saturation = 0.0f;
   } else {
-    saturation = chroma / (1.0f - abso((2.0f * lightness) - 1.0f));
+    saturation = delta / (1.0f - abso((2.0f * lightness) - 1.0f));
   }
 
   col->format = HSL;
   col->element[0] = h;
   col->element[1] = saturation;
   col->element[2] = lightness;
-
-  // TODO: set valid_hue
-  // return col.set('valid_hue', valid_hue);
 
   return col;
 }

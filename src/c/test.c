@@ -455,68 +455,78 @@ void colour_def(seni_colour *out, seni_colour_format format, f32 e0, f32 e1, f32
   out->element[3] = alpha;
 }
 
-seni_colour *colour_allocate(seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha)
+void assert_colour_rgb_hsl(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l)
 {
-  seni_colour *colour = (seni_colour *)calloc(1, sizeof(seni_colour));
+  seni_colour rgb, hsl, res;
 
-  colour_def(colour, format, e0, e1, e2, alpha);
+  colour_def(&rgb, RGB, r, g, b, 1.0f);
+  colour_def(&hsl, HSL, h, s, l, 1.0f);
 
-  return colour;
-}
+  // convert RGB to HSL
+  colour_clone_as(&res, &rgb, HSL);
+  assert_colour_e(&res, HSL, h, s, l, 1.0f);
 
-void colour_free(seni_colour *colour)
-{
-  free(colour);
+  // convert HSL to RGB
+  colour_clone_as(&res, &hsl, RGB);
+  assert_colour_e(&res, RGB, r, g, b, 1.0f);
 }
 
 void test_colour(void)
 {
-  {
-    seni_colour *c = colour_allocate(RGB, 0.0f, 0.0f, 0.0f, 1.0f);
-    TEST_ASSERT_EQUAL(RGB, c->format);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, c->element[0]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, c->element[1]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, c->element[2]);
-    TEST_ASSERT_EQUAL_FLOAT(1.0f, c->element[3]);
-    colour_free(c);
-  }
+  seni_colour c, rgb, hsl, lab, hsluv, res;
 
+  {
+    colour_def(&c, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
+    TEST_ASSERT_EQUAL(RGB, c.format);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, c.element[0]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, c.element[1]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, c.element[2]);
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, c.element[3]);
+  }
   
   {
-    seni_colour *rgb = colour_allocate(RGB, 0.2f, 0.09803921568627451f, 0.49019607843137253f, 1.0f);
-    seni_colour *hsl = colour_allocate(HSL, 255.0f, 0.6666f, 0.3f, 1.0f);
-    seni_colour *lab = colour_allocate(LAB, 19.555676428108306f, 39.130689315704764f, -51.76254071703564f, 1.0f);
+    colour_def(&rgb, RGB, 0.2f, 0.09803921568627451f, 0.49019607843137253f, 1.0f); // (51, 25, 125)
+    colour_def(&hsl, HSL, 255.6f, 0.6666f, 0.294f, 1.0f);
+    colour_def(&lab, LAB, 19.555676428108306f, 39.130689315704764f, -51.76254071703564f, 1.0f);
 
-    seni_colour res;
+    assert_colour(&rgb, colour_clone_as(&res, &rgb, RGB));
+    assert_colour(&hsl, colour_clone_as(&res, &rgb, HSL));
+    assert_colour(&lab, colour_clone_as(&res, &rgb, LAB));
 
-    assert_colour(rgb, colour_clone_as(&res, rgb, RGB));
-    // assert_colour(hsl, colour_clone_as(&res, rgb, HSL));
-    assert_colour(lab, colour_clone_as(&res, rgb, LAB));
+    assert_colour(&rgb, colour_clone_as(&res, &hsl, RGB));
+    assert_colour(&hsl, colour_clone_as(&res, &hsl, HSL));
+    assert_colour(&lab, colour_clone_as(&res, &hsl, LAB));
 
-    assert_colour(rgb, colour_clone_as(&res, hsl, RGB));
-    assert_colour(hsl, colour_clone_as(&res, hsl, HSL));
-    // assert_colour(lab, colour_clone_as(&res, hsl, LAB));
-
-    assert_colour(rgb, colour_clone_as(&res, lab, RGB));
-    // assert_colour(hsl, colour_clone_as(&res, lab, HSL));
-    assert_colour(lab, colour_clone_as(&res, lab, LAB));
-
-    colour_free(rgb);
-    colour_free(hsl);
-    colour_free(lab);
+    assert_colour(&rgb, colour_clone_as(&res, &lab, RGB));
+    assert_colour(&hsl, colour_clone_as(&res, &lab, HSL));
+    assert_colour(&lab, colour_clone_as(&res, &lab, LAB));
   }
 
   {
-    seni_colour *rgb = colour_allocate(RGB, 0.066666f, 0.8f, 0.86666666f, 1.0f);
-    seni_colour *hsluv = colour_allocate(HSLuv, 205.7022764106217f, 98.91247496876854f, 75.15356872935901f, 1.0f);
+    colour_def(&rgb, RGB, 0.066666f, 0.8f, 0.86666666f, 1.0f);
+    colour_def(&hsluv, HSLuv, 205.7022764106217f, 98.91247496876854f, 75.15356872935901f, 1.0f);
+    assert_colour(&rgb, colour_clone_as(&res, &hsluv, RGB));
+    assert_colour(&hsluv, colour_clone_as(&res, &rgb, HSLuv));
+  }
 
-    seni_colour res;
-
-    assert_colour(rgb, colour_clone_as(&res, hsluv, RGB));
-    assert_colour(hsluv, colour_clone_as(&res, rgb, HSLuv));
-
-    colour_free(rgb);
-    colour_free(hsluv);
+  // hsl <-> rgb
+  {
+    assert_colour_rgb_hsl(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    assert_colour_rgb_hsl(1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f);
+    assert_colour_rgb_hsl(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.5f);
+    assert_colour_rgb_hsl(0.0f, 1.0f, 0.0f, 120.0f, 1.0f, 0.5f);
+    assert_colour_rgb_hsl(0.0f,0.0f,1.0f, 240.0f,1.0f,0.5f);
+    assert_colour_rgb_hsl(1.0f,1.0f,0.0f, 60.0f,1.0f,0.5f);
+    assert_colour_rgb_hsl(0.0f,1.0f,1.0f, 180.0f,1.0f,0.5f);
+    assert_colour_rgb_hsl(1.0f,0.0f,1.0f, 300.0f,1.0f,0.5f);
+    assert_colour_rgb_hsl(0.7529f,0.7529f,0.7529f, 0.0f,0.0f,0.75f);
+    assert_colour_rgb_hsl(0.5f,0.5f,0.5f, 0.0f,0.0f,0.5f);
+    assert_colour_rgb_hsl(0.5f,0.0f,0.0f, 0.0f,1.0f,0.25f);
+    assert_colour_rgb_hsl(0.5f,0.5f,0.0f, 60.0f,1.0f,0.25f);
+    assert_colour_rgb_hsl(0.0f,0.5f,0.0f, 120.0f,1.0f,0.25f);
+    assert_colour_rgb_hsl(0.5f,0.0f,0.5f, 300.0f,1.0f,0.25f);
+    assert_colour_rgb_hsl(0.0f,0.5f,0.5f, 180.0f,1.0f,0.25f);
+    assert_colour_rgb_hsl(0.0f,0.0f,0.5f, 240.0f,1.0f,0.25f);
   }
 }
 
