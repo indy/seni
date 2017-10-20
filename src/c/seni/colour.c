@@ -5,16 +5,12 @@
 
 #include <stdlib.h>
 // float.h for FLT_MAX
-// #include <float.h>
+ #include <float.h>
 #include <math.h>
-
-
-// #define FLT_MAX 9999.0f
 
 #define COLOUR_UNIT_ANGLE (360.0f / 12.0f)
 #define COLOUR_COMPLIMENTARY_ANGLE (COLOUR_UNIT_ANGLE * 6.0f)
 #define COLOUR_TRIAD_ANGLE (COLOUR_UNIT_ANGLE * 4)
-
 
 //  http://www.brucelindbloom.com/index.html?Equations.html
 //  http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
@@ -636,6 +632,16 @@ seni_colour* hsluv_from_lch(seni_colour* col)
   return col;
 }
 
+seni_colour* xyz_from_hsluv(seni_colour* hsluv)
+{
+  return xyz_from_luv(luv_from_lch(lch_from_hsluv(hsluv)));
+}
+
+seni_colour* hsluv_from_xyz(seni_colour* xyz)
+{
+  return hsluv_from_lch(lch_from_luv(luv_from_xyz(xyz)));
+}
+
 seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_format new_format)
 {
   if (out != in) {
@@ -643,46 +649,18 @@ seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_form
   }
   
   switch(out->format) {
-  case LAB:
-    switch(new_format) {
-    case RGB:
-      return rgb_from_xyz(xyz_from_lab(out));
-    case HSV:
-      return hsv_from_rgb(rgb_from_xyz(xyz_from_lab(out)));
-    case HSL:
-      return hsl_from_rgb(rgb_from_xyz(xyz_from_lab(out)));
-    case LAB:
-      return out;
-    default:
-      SENI_ERROR("unknown colour format %d", new_format);
-      break;
-    }
-    break;
-  case HSV:
-    switch(new_format) {
-    case RGB:
-      return rgb_from_hsv(out);
-    case HSV:
-      return out;
-    case HSL:
-      return hsl_from_rgb(rgb_from_hsv(out));
-    case LAB:
-      return lab_from_xyz(xyz_from_rgb(rgb_from_hsv(out)));
-    default:
-      SENI_ERROR("unknown colour format %d", new_format);
-      break;
-    }
-    break;
   case HSL:
     switch(new_format) {
-    case RGB:
-      return rgb_from_hsl(out);
-    case HSV:
-      return hsv_from_rgb(rgb_from_hsl(out));
     case HSL:
       return out;
+    case HSLuv:
+      return hsluv_from_xyz(xyz_from_rgb(rgb_from_hsl(out)));
+    case HSV:
+      return hsv_from_rgb(rgb_from_hsl(out));
     case LAB:
       return lab_from_xyz(xyz_from_rgb(rgb_from_hsl(out)));
+    case RGB:
+      return rgb_from_hsl(out);
     default:
       SENI_ERROR("unknown colour format %d", new_format);
       break;
@@ -690,27 +668,67 @@ seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_form
     break;
   case HSLuv:
     switch(new_format) {
-    case RGB:
-      return rgb_from_xyz(xyz_from_luv(luv_from_lch(lch_from_hsluv(out))));
+    case HSL:
+      return hsl_from_rgb(rgb_from_xyz(xyz_from_hsluv(out)));
     case HSLuv:
       return out;
+    case HSV:
+      return hsv_from_rgb(rgb_from_xyz(xyz_from_hsluv(out)));
+    case LAB:
+      return lab_from_xyz(xyz_from_hsluv(out));
+    case RGB:
+      return rgb_from_xyz(xyz_from_hsluv(out));
     default:
       SENI_ERROR("unknown colour format %d", new_format);
       break;
     }    
     break;
+  case HSV:
+    switch(new_format) {
+    case HSL:
+      return hsl_from_rgb(rgb_from_hsv(out));
+    case HSLuv:
+      return hsluv_from_xyz(xyz_from_rgb(rgb_from_hsv(out)));
+    case HSV:
+      return out;
+    case LAB:
+      return lab_from_xyz(xyz_from_rgb(rgb_from_hsv(out)));
+    case RGB:
+      return rgb_from_hsv(out);
+    default:
+      SENI_ERROR("unknown colour format %d", new_format);
+      break;
+    }
+    break;
+  case LAB:
+    switch(new_format) {
+    case HSL:
+      return hsl_from_rgb(rgb_from_xyz(xyz_from_lab(out)));
+    case HSLuv:
+      return hsluv_from_xyz(xyz_from_lab(out));
+    case HSV:
+      return hsv_from_rgb(rgb_from_xyz(xyz_from_lab(out)));
+    case LAB:
+      return out;
+    case RGB:
+      return rgb_from_xyz(xyz_from_lab(out));
+    default:
+      SENI_ERROR("unknown colour format %d", new_format);
+      break;
+    }
+    break;
   case RGB:
     switch(new_format) {
-    case RGB:
-      return out;
-    case HSV:
-      return hsv_from_rgb(out);
     case HSL:
       return hsl_from_rgb(out);
     case HSLuv:
-      return hsluv_from_lch(lch_from_luv(luv_from_xyz(xyz_from_rgb(out))));
+      return hsluv_from_xyz(xyz_from_rgb(out));
+    case HSV:
+      return hsv_from_rgb(out);
     case LAB:
       return lab_from_xyz(xyz_from_rgb(out));
+    case RGB:
+      return out;
     default:
       SENI_ERROR("unknown colour format %d", new_format);
       break;
