@@ -68,7 +68,7 @@
           rem (interp/fn from: [min-pos-rad max-pos-rad]
                          to: [20 1]))
 
-  (loop (r from: min-pos-rad to: max-pos-rad increment: 20)
+  (loop (r from: min-pos-rad to: max-pos-rad inc: 20)
         (interesting-circle position: [(+ x (* cosa r))
                                           (+ y (* sina r))]
                             radius: (rem val: r)

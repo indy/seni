@@ -41,7 +41,7 @@
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
 
-  (loop (h from: -20 to: 1020 increment: 20)
+  (loop (h from: -20 to: 1020 inc: 20)
     (bezier tessellation: line-segments
             line-width: line-width
             coords: [[0 (v x: 0 y: h z: seed scale: variation)]

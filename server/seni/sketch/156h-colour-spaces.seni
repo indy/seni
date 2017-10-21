@@ -5,8 +5,8 @@
       fn-l (interp/fn from: [0 1000]
                       to: [0.4 0.7]))
 
-  (loop (y from: 50 to: 1000 increment: 100)
-        (loop (x from: 50 to: 1000 increment: 100)
+  (loop (y from: 50 to: 1000 inc: 100)
+        (loop (x from: 50 to: 1000 inc: 100)
               (rect position: [x y]
                     width: 50
                     height: 50
@@ -22,8 +22,8 @@
       fn-l (interp/fn from: [0 1000]
                       to: [0.4 0.8]))
 
-  (loop (y from: 50 to: 1000 increment: 100)
-    (loop (x from: 50 to: 1000 increment: 100)
+  (loop (y from: 50 to: 1000 inc: 100)
+    (loop (x from: 50 to: 1000 inc: 100)
           (rect position: [x y]
             width: 50
             height: 50

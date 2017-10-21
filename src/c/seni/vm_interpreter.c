@@ -820,7 +820,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
       v->value.f = (f32)(sqrt(f1));
       break;
       
-    case FLU_STORE:
+    case STORE_F:
       // function look-up version of STORE
       // pops the fn_info_index from the stack in order to determine
       // the correct location to store an argument parameter
@@ -839,9 +839,10 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
         dest = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
         if (dest != NULL) {
           var_copy(dest, v);
-        }
+        } // else this is trying to assign a parameter that doesn't exist for the function
+        
       } else {
-        SENI_ERROR("FLU_STORE: should only be used with MEM_SEG_ARGUMENT, not %d", memory_segment_type);
+        SENI_ERROR("STORE_F: should only be used with MEM_SEG_ARGUMENT, not %d", memory_segment_type);
       }
       break;
     case STOP:

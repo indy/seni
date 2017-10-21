@@ -54,7 +54,7 @@
       colour: {(col/rgb r: 0.827 g: 0.850 b: 0.940 alpha: 0.800) (gen/col alpha: 0.8)})
 
 (fn (box-stroke x1: 0 y1: 0 x2: 100 y2: 100 colour: red)
-  (loop (x from: x1 to: x2 increment: 50)
+  (loop (x from: x1 to: x2 inc: 50)
     (brush-line colour: (col/lighten colour: colour
                                      value: (* (rng) 0.5))
                 width: 60
@@ -62,7 +62,7 @@
                 to: [x y2]
                 brush-type: "brushC"
                 brush-subtype: (rng)))
-  (loop (y from: y1 to: y2 increment: 50)
+  (loop (y from: y1 to: y2 inc: 50)
     (brush-line colour: (col/lighten colour: colour
                                      value: (* (rng) 0.5))
                 width: 60

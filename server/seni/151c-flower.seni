@@ -84,7 +84,7 @@
   (define 
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
-  (loop (d from: -20 to: 1020 increment: 20)
+  (loop (d from: -20 to: 1020 inc: 20)
     (bezier tessellation: line-segments
             line-width: line-width
             coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]

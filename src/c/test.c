@@ -819,28 +819,28 @@ void test_vm_vector_append(void)
 void test_vm_fence(void)
 {
   {
-    VM_COMPILE("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) v");
+    VM_COMPILE("(define v []) (fence (x from: 0 to: 10 num: 3) (vector/append v x)) v");
     f32 expected[] = {0.0f, 5.0f, 10.0f};
     assert_seni_var_f32vec(stack_peek(vm), 3, expected);
     VM_CLEANUP;
   }
 
   {
-    VM_COMPILE("(define v []) (fence (x from: 10 to: 0 quantity: 3) (vector/append v x)) v");
+    VM_COMPILE("(define v []) (fence (x from: 10 to: 0 num: 3) (vector/append v x)) v");
     f32 expected[] = {10.0f, 5.0f, 0.0f};
     assert_seni_var_f32vec(stack_peek(vm), 3, expected);
     VM_CLEANUP;
   }
 
   {
-    VM_COMPILE("(define v []) (fence (x quantity: 5) (vector/append v x)) v");
+    VM_COMPILE("(define v []) (fence (x num: 5) (vector/append v x)) v");
     f32 expected[] = {0.0f, 0.25f, 0.5f, 0.75f, 1.0f};
     assert_seni_var_f32vec(stack_peek(vm), 5, expected);
     VM_CLEANUP;
   }
 
   {
-    VM_COMPILE("(define v []) (fence (x from: 100 to: 900 quantity: 10) (vector/append v x)) v");
+    VM_COMPILE("(define v []) (fence (x from: 100 to: 900 num: 10) (vector/append v x)) v");
     f32 expected[] = {100.0000f, 188.8889f, 277.7778f, 366.6667f, 455.5555f, 544.4445f, 633.3333f, 722.2222f, 811.1111f, 900.0000f};
     assert_seni_var_f32vec(stack_peek(vm), 10, expected);
     VM_CLEANUP;
@@ -865,14 +865,14 @@ void test_vm_loop(void)
   }
 
   {
-    VM_COMPILE("(define v []) (loop (x from: 0 to: 10 increment: 2) (vector/append v x)) v");
+    VM_COMPILE("(define v []) (loop (x from: 0 to: 10 inc: 2) (vector/append v x)) v");
     f32 expected[] = {0.0f, 2.0f, 4.0f, 6.0f, 8.0f};
     assert_seni_var_f32vec(stack_peek(vm), 5, expected);
     VM_CLEANUP;
   }
 
   {
-    VM_COMPILE("(define v []) (loop (x from: 0 upto: 10 increment: 2) (vector/append v x)) v");
+    VM_COMPILE("(define v []) (loop (x from: 0 upto: 10 inc: 2) (vector/append v x)) v");
     f32 expected[] = {0.0f, 2.0f, 4.0f, 6.0f, 8.0f, 10.0f};
     assert_seni_var_f32vec(stack_peek(vm), 6, expected);
     VM_CLEANUP;

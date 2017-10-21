@@ -48,8 +48,8 @@
   (on-matrix-stack
     (translate vector: centre)
     (rotate angle: master-angle)
-    (loop (y from: -700 upto: 700 increment: (* 2 master-radius))
-      (loop (x from: -700 upto: 700 increment: (* 2 master-radius))
+    (loop (y from: -700 upto: 700 inc: (* 2 master-radius))
+      (loop (x from: -700 upto: 700 inc: (* 2 master-radius))
             (draw-octagon position: [x y]
                       radius: master-radius
                       colour: main-col))))
@@ -57,8 +57,8 @@
   (on-matrix-stack
     (translate vector: centre)
     (rotate angle: master-angle)
-    (loop (y from: -700 upto: 700 increment: (* 2 master-radius))
-      (loop (x from: -700 upto: 700 increment: (* 2 master-radius))
+    (loop (y from: -700 upto: 700 inc: (* 2 master-radius))
+      (loop (x from: -700 upto: 700 inc: (* 2 master-radius))
             (draw-corner-square position: [x y]
                             radius: master-radius
                             colour: triad-c)))))

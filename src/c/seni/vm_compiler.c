@@ -656,9 +656,6 @@ void compile_fn_call(seni_node *ast, seni_program *program)
 
   // compile the rest of the arguments
 
-  // how is this going to work if we don't know the indices of the arguments?
-  
-
   // overwrite the default arguments with the actual arguments given by the fn invocation
   seni_node *args = safe_next(fn_info_index); // pairs of label/value declarations
   while (args != NULL) {
@@ -670,7 +667,7 @@ void compile_fn_call(seni_node *ast, seni_program *program)
     compile(fn_info_index, program); // push the actual fn_info index so that the _FLU opcode can find it
 
     i32 label_i = get_node_value_i32(label);
-    program_emit_opcode_i32(program, FLU_STORE, MEM_SEG_ARGUMENT, label_i);
+    program_emit_opcode_i32(program, STORE_F, MEM_SEG_ARGUMENT, label_i);
 
     args = safe_next(value);
   }
@@ -792,7 +789,7 @@ void compile_loop(seni_node *ast, seni_program *program)
       have_upto = true;
       upto_node = safe_next(node);
     }
-    if (node->value.i == INAME_INCREMENT) {
+    if (node->value.i == INAME_INC) {
       have_increment = true;
       increment_node = safe_next(node);
     }

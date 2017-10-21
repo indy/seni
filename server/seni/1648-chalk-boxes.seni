@@ -76,8 +76,8 @@
                       to: [{94 (gen/int min: -120 max: 120)}
                            {32 (gen/int min: -120 max: 120)}]))
 
-  (loop (y from: 0 upto: canvas/height increment: (* 2 h))
-    !(loop (x from: 0 to: canvas/width increment: (* 4 w))
+  (loop (y from: 0 upto: canvas/height inc: (* 2 h))
+    !(loop (x from: 0 to: canvas/width inc: (* 4 w))
       (define 
         b (interp/value from: rmb t: (+ y (* (prng/value from: colour-offset) colour-scale)))
         col-1 (col/lab l: (interp/value from: li t: (prng/value from: r))
@@ -102,8 +102,8 @@
                     to: [{0.284 (gen/scalar min: 0.2 max: 0.5)} 
                          {0.904 (gen/scalar min: 0.4 max: 1)}]))
 
-  !(loop (y from: 0 upto: canvas/height increment: (* 2 h))
-    (loop (x from: 0 to: canvas/width increment: (* 4 w))
+  !(loop (y from: 0 upto: canvas/height inc: (* 2 h))
+    (loop (x from: 0 to: canvas/width inc: (* 4 w))
       (define 
         b  (interp/value from: fn-l t: (+ y (* (prng/value from: colour-offset) colour-scale)))
         col-1 (col/hsl h: (interp/value from: fn-h t: (+ x (* (prng/value from: colour-offset) colour-scale)))
@@ -122,7 +122,7 @@
   (define 
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
-  (loop (d from: -20 to: 1020 increment: 20)
+  (loop (d from: -20 to: 1020 inc: 20)
     (bezier tessellation: line-segments
             line-width: line-width
             coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]

@@ -18,8 +18,8 @@
     rmb (interp/build from: [0 canvas/height]
                       to: [{-100 (gen/int min: -120 max: 120)} {100 (gen/int min: -120 max: 120)}]))
 
-  (loop (y from: 0 upto: canvas/height increment: 100)
-    (loop (x from: 0 upto: canvas/width increment: (* 2 w))
+  (loop (y from: 0 upto: canvas/height inc: 100)
+    (loop (x from: 0 upto: canvas/width inc: (* 2 w))
       (define 
         a (interp/value from: rma t: (+ x (* (prng/value from: colour-offset) colour-scale)))
         b (interp/value from: rmb t: (+ y (* (prng/value from: colour-offset) colour-scale))))
@@ -36,7 +36,7 @@
                       (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)
                       (col/lab l: (interp/value from: li t: (prng/value from: r)) a: a b: b alpha: alpha)]))
 
-    (loop (x from: w upto: canvas/width increment: (* 2 w))
+    (loop (x from: w upto: canvas/width inc: (* 2 w))
       (define
         a (interp/value from: rma t: (+ x (* (prng/value from: colour-offset) colour-scale)))
         b (interp/value from: rmb t: (+ y (* (prng/value from: colour-offset) colour-scale))))
@@ -64,8 +64,8 @@
                        to: [{0 (gen/int max: 360)} {360 (gen/int max: 360)}])
     fn-l (interp/build from: [0 canvas/height]
                        to: [{0.4 (gen/scalar min: 0.2 max: 0.5)} {0.7 (gen/scalar min: 0.4 max: 1.0)}]))
-  (loop (y from: 0 upto: canvas/height increment: 100)
-    (loop (x from: 0 upto: canvas/width increment: (* 2 w))
+  (loop (y from: 0 upto: canvas/height inc: 100)
+    (loop (x from: 0 upto: canvas/width inc: (* 2 w))
       (define 
         a (interp/value from: fn-h t: (+ x (* (prng/value from: colour-offset) colour-scale)))
         b (interp/value from: fn-l t: (+ y (* (prng/value from: colour-offset) colour-scale))))
@@ -83,7 +83,7 @@
                       (col/hsl h: a s: 1 l: b alpha: alpha)
                       (col/hsl h: a s: 1 l: b alpha: alpha)]))
 
-    (loop (x from: w upto: canvas/width increment: (* 2 w))
+    (loop (x from: w upto: canvas/width inc: (* 2 w))
       (define 
         a (interp/value from: fn-h t: (+ x (* (prng/value from: colour-offset) colour-scale)))
         b (interp/value from: fn-l t: (+ y (* (prng/value from: colour-offset) colour-scale))))
@@ -109,7 +109,7 @@
   (define 
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
-  (loop (d from: -20 to: 1020 increment: 20)
+  (loop (d from: -20 to: 1020 inc: 20)
     (bezier tessellation: line-segments
             line-width: line-width
             coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]

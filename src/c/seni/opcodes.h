@@ -61,7 +61,7 @@ OPCODE(PILE, 0)
 // function look-up version of STORE
 // pop a value from the stack which is the index into program->fn_info
 // will then be used along with the argument's iname to find the index into the MEM_SEG_ARGUMENT memory
-OPCODE(FLU_STORE, -2)
+OPCODE(STORE_F, -2)
 
 // temporary opcodes which are replaced by their non-placeholder versions during a compilation pass
 OPCODE(PLACEHOLDER_STORE, -1)

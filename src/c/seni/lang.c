@@ -557,14 +557,14 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut)
 
   buf[0] = 0;
 
-  if (b->op == LOAD || b->op == STORE || b->op == FLU_STORE) {
+  if (b->op == LOAD || b->op == STORE || b->op == STORE_F) {
 
     char *seg_name = memory_segment_name((seni_memory_segment_type)b->arg0.value.i);
 
     if (b->op == LOAD || b->op == STORE) {
       PRINT_BC(BUF_ARGS, "%d\t%s\t\t%s\t\t", ip, opcode_name(b->op), seg_name);
-    } else if (b->op == FLU_STORE) {
-      PRINT_BC(BUF_ARGS, "%d\t%s\t%s\t\t", ip, opcode_name(b->op), seg_name);
+    } else if (b->op == STORE_F) {
+      PRINT_BC(BUF_ARGS, "%d\t%s\t\t%s\t\t", ip, opcode_name(b->op), seg_name);
     }
 
     seni_value_in_use using = get_var_value_in_use(b->arg1.type);
@@ -669,7 +669,7 @@ bool opcode_deserialize(seni_opcode *out, seni_cursor *cursor)
   if (cursor_eat_text(cursor, "NATIVE"))    { *out = NATIVE;    return true; }
   if (cursor_eat_text(cursor, "APPEND"))    { *out = APPEND;    return true; }
   if (cursor_eat_text(cursor, "PILE"))      { *out = PILE;      return true; }
-  if (cursor_eat_text(cursor, "FLU_STORE")) { *out = FLU_STORE; return true; }
+  if (cursor_eat_text(cursor, "STORE_F"))   { *out = STORE_F;   return true; }
   if (cursor_eat_text(cursor, "MTX_LOAD"))  { *out = MTX_LOAD;  return true; }
   if (cursor_eat_text(cursor, "MTX_STORE")) { *out = MTX_STORE; return true; }
   if (cursor_eat_text(cursor, "NOP"))       { *out = NOP;       return true; }
