@@ -752,6 +752,10 @@ seni_var *bind_col_convert(seni_vm *vm, i32 num_args)
     colour_format = LAB;
   } else if (format == INAME_HSV) {
     colour_format = HSV;
+  } else if (format == INAME_HSLUV) {
+    colour_format = HSLuv;
+  } else {
+    SENI_ERROR("bind_col_convert: unknown colour format: %d", format);
   }
   
   colour_clone_as(&out, &colour, colour_format);
@@ -1248,7 +1252,7 @@ seni_var *bind_col_get_h(seni_vm *vm, i32 num_args)
   if (colour.format == HSL || colour.format == HSLuv || colour.format == HSV) {
     value = colour.element[index];
   } else {
-    SENI_ERROR("bind_col_get_h: colour is in the incorrect format");
+    SENI_ERROR("bind_col_get_h: colour is in the incorrect format: %d", colour.format);
   }
 
   f32_as_var(&g_var_scratch, value);
