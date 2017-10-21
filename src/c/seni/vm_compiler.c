@@ -751,7 +751,7 @@ void compile_quote(seni_node *ast, seni_program *program)
   }
 }
 
-void compile_step(seni_node *ast, seni_program *program)
+void compile_loop(seni_node *ast, seni_program *program)
 {
   seni_node *parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
@@ -759,7 +759,7 @@ void compile_step(seni_node *ast, seni_program *program)
     return;
   }
 
-  warn_if_alterable("compile_step parameters_node", parameters_node);
+  warn_if_alterable("compile_loop parameters_node", parameters_node);
 
   // the looping variable x
   seni_node *name_node = safe_first(parameters_node->value.first_child);
@@ -820,7 +820,7 @@ void compile_step(seni_node *ast, seni_program *program)
 
   i32 looper_address = store_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
   if (looper_address == -1) {
-    SENI_ERROR("compile_step: allocation failure");
+    SENI_ERROR("compile_loop: allocation failure");
     return;
   }
 
@@ -890,10 +890,10 @@ void compile_fence(seni_node *ast, seni_program *program)
 
   seni_node *from_node = NULL;
   seni_node *to_node = NULL;
-  seni_node *quantity_node = NULL;
+  seni_node *num_node = NULL;
   bool have_from = false;
   bool have_to = false;
-  bool have_quantity = false;
+  bool have_num = false;
   
   seni_node *node = name_node;
 
@@ -910,17 +910,17 @@ void compile_fence(seni_node *ast, seni_program *program)
       have_to = true;
       to_node = safe_next(node);
     }
-    if (node->value.i == INAME_QUANTITY) {
-      have_quantity = true;
-      quantity_node = safe_next(node);
+    if (node->value.i == INAME_NUM) {
+      have_num = true;
+      num_node = safe_next(node);
     }
     node = safe_next(node); // the value part
   }
 
   // store the quantity
   i32 quantity_address = add_internal_local_mapping(program);
-  if (have_quantity) {
-    compile(quantity_node, program);
+  if (have_num) {
+    compile(num_node, program);
   } else {
     // else default to 2
     program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 2.0f);
@@ -951,7 +951,7 @@ void compile_fence(seni_node *ast, seni_program *program)
   }
   program_emit_opcode_i32(program, SUB, 0, 0);
 
-  compile(quantity_node, program);
+  compile(num_node, program);
   program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
   program_emit_opcode_i32(program, SUB, 0, 0);
   program_emit_opcode_i32(program, DIV, 0, 0);
@@ -1486,8 +1486,8 @@ seni_node *compile(seni_node *ast, seni_program *program)
       case INAME_IF:
         compile_if(ast, program);
         return safe_next(ast);
-      case INAME_STEP:
-        compile_step(ast, program);
+      case INAME_LOOP:
+        compile_loop(ast, program);
         return safe_next(ast);
       case INAME_FENCE:
         compile_fence(ast, program);

@@ -7,8 +7,8 @@
     (define
       remap-x (interp/build from: [0 (- n 1)] to: [0 canvas/width])
       remap-y (interp/build from: [0 (- n 1)] to: [0 canvas/height]))
-    (step (y from: 0 to: n)
-          (step (x from: 0 to: n)
+    (loop (y from: 0 to: n)
+          (loop (x from: 0 to: n)
                 (fn-call (fun position: [(interp/value from: remap-x t: x)
                                          (interp/value from: remap-y t: y)])))))
 

@@ -34,7 +34,7 @@
   interp-lab-a (interp/build from: [left-x right-x] to: [(col/get-a colour: left-lab) (col/get-a colour: right-lab)])
   interp-lab-b (interp/build from: [left-x right-x] to: [(col/get-b colour: left-lab) (col/get-b colour: right-lab)]))
 
-(fence (x from: left-x to: right-x quantity: 9)
+(fence (x from: left-x to: right-x num: 9)
   (debug/print value: x)
   (rect position: [x 610]
         width: width
@@ -62,7 +62,7 @@
                          b: (interp/value from: interp-lab-b t: x))))
 
 ;; (fn (circ radius: 10 iterations: 20 s: 100 l: 50)
-;;   (fence (angle from: 0 to: 360 quantity: iterations)
+;;   (fence (angle from: 0 to: 360 num: iterations)
 ;;     (on-matrix-stack
 ;;       (rotate angle: angle)
 ;;       (rect position: [0 radius]

@@ -13,7 +13,7 @@
                          {0 (gen/int min: -300 max: 300)}]
               distance: {390 (gen/int min: 300 max: 900)}))
 
-(fence (t quantity: {30 (gen/int min: 5 max: 100)})
+(fence (t num: {30 (gen/int min: 5 max: 100)})
   (define
     p1 (interp/bezier t: t
                       coords: {[[0 200] [-133 100] [266 -100] [399 -200]]

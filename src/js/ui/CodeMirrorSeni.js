@@ -55,12 +55,12 @@ col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r
 col/split-complementary col/triad define degrees->radians fence fn focal/hline
 focal/point focal/vline if interp/bezier interp/bezier-fn interp/bezier-tangent
 interp/bezier-tangent-fn interp/circle interp/fn line list list/get list/length
-log math/PI math/TAU math/atan2 math/clamp math/cos math/distance-2d
+log loop math/PI math/TAU math/atan2 math/clamp math/cos math/distance-2d
 math/sin mod on-matrix-stack path/bezier path/circle path/linear path/spline
 poly pop-matrix print prng/perlin-signed prng/perlin-unsigned prng/range
 push-matrix quote radians->degrees rect repeat/rotate repeat/rotate-mirrored
 repeat/symmetry-4 repeat/symmetry-8 repeat/symmetry-horizontal
-repeat/symmetry-vertical rotate scale spline sqrt step stroked-bezier
+repeat/symmetry-vertical rotate scale spline sqrt stroked-bezier
 stroked-bezier-rect take translate`);
 
   function StateStack(indent, type, prev) { // represents a state stack object

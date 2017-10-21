@@ -7,8 +7,8 @@
 
 (wash)
 
-(step (y from: 1 to: (- num-squares 1))
-  (step (x from: 1 to: (- num-squares 1))
+(loop (y from: 1 to: (- num-squares 1))
+  (loop (x from: 1 to: (- num-squares 1))
     (define 
       x-pos (map-to-position at: x)
       y-pos (map-to-position at: y))
@@ -40,7 +40,7 @@
       rng (prng/build min: -1 max: 1 seed: seed))
     (on-matrix-stack
      (translate vector: [x y])
-     (step (i from: 0 to: passes)
+     (loop (i from: 0 to: passes)
            (define [rr rx ry] (prng/values num: 3 from: rng))
            (on-matrix-stack
             (rotate angle: (math/radians->degrees angle: (* rr 0.02 volatility)))
@@ -57,7 +57,7 @@
   (define 
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
-  (step (d from: -20 to: 1020 increment: 20)
+  (loop (d from: -20 to: 1020 increment: 20)
     (bezier tessellation: line-segments
             line-width: line-width
             coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]

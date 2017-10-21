@@ -27,7 +27,7 @@
   (on-matrix-stack
     (translate vector: position)
     (scale scalar: (/ radius 210))
-    (step (i to: 3)
+    (loop (i to: 3)
       (on-matrix-stack
        (rotate angle: (* 360 (prng/value from: rng)))
         ;; outer ring
@@ -70,7 +70,7 @@
 (on-matrix-stack
  (translate vector: [500 500])
  (scale scalar: 8)
-  (step (i to: seeds)
+  (loop (i to: seeds)
     (define 
       theta (/ (* i math/TAU) phi)
       r (* scale-factor (sqrt i))

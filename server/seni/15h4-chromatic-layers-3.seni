@@ -31,7 +31,7 @@
                               d: {[0.963 0.998 0.383] (gen/scalar)}
                               alpha: 0.08))
 
-(fence (t quantity: 500)
+(fence (t num: 500)
   (poly coords: [(interp/bezier t: t coords: coords1)
                  (interp/bezier t: t coords: coords2)
                  (interp/bezier t: t coords: coords3)]

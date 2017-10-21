@@ -189,8 +189,8 @@
       height: canvas/height
       colour: background)
 
-(step (y from: 0 to: 10)
-  (step (x from: 0 to: 10)
+(loop (y from: 0 to: 10)
+  (loop (x from: 0 to: 10)
     (define 
       index (+ x (* y 10))
       draw-fn (list/get from: funct nth: index)

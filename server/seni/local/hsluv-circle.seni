@@ -1,6 +1,6 @@
 
 (fn (circ radius: 10 iterations: 20 s: 100 l: 50)
-  (fence (angle from: 0 to: 360 quantity: iterations)
+  (fence (angle from: 0 to: 360 num: iterations)
     (on-matrix-stack
       (rotate angle: angle)
       (rect position: [0 radius]

@@ -15,7 +15,7 @@
                          {268 (gen/int min: -300 max: 300)}]
               distance: {488 (gen/int min: 300 max: 900)}))
 
-(fence (t quantity: {63 (gen/int min: 5 max: 100)})
+(fence (t num: {63 (gen/int min: 5 max: 100)})
       (define
         p1 (interp/bezier t: t
                           coords: {[[26.352 71.412] [23.830 24.871] [-133.484 -181.749] [267.624 -253.808]]
@@ -50,7 +50,7 @@
   (define 
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
-  (step (d from: -20 to: 1020 increment: 20)
+  (loop (d from: -20 to: 1020 increment: 20)
     (bezier tessellation: line-segments
             line-width: line-width
             coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]
