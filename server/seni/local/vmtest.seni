@@ -1,6 +1,78 @@
+;; boxes to compare colour transitions
 
-(rect position: [{500 (gen/scalar min: 200 max: 800)} {500 (gen/scalar min: 200 max: 800)}]
-      width: {200 (gen/scalar min: 100 max: 600)}
-      height: {300 (gen/scalar min: 100 max: 600)}
-      colour: {(col/rgb r: 0.127 g: 0.791 b: 0.743 alpha: 0.740) (gen/col)})
+(define
+  left-x 100
+  right-x 900
+  width 95
+  height 100
+  
+  left-rgb {(col/rgb r: 0.9 g: 1.0 b: 0 alpha: 1) (gen/col alpha: 1)}
+  right-rgb {(col/rgb r: 0.1 g: 0.0 b: 1 alpha: 1) (gen/col alpha: 1)}
 
+  left-hsluv (col/convert colour: left-rgb format: HSLuv)
+  right-hsluv (col/convert colour: right-rgb format: HSLuv)
+  interp-hsluv-h (interp/build from: [left-x right-x] to: [(col/get-h colour: left-hsluv) (col/get-h colour: right-hsluv)])
+  interp-hsluv-s (interp/build from: [left-x right-x] to: [(col/get-s colour: left-hsluv) (col/get-s colour: right-hsluv)])
+  interp-hsluv-l (interp/build from: [left-x right-x] to: [(col/get-l colour: left-hsluv) (col/get-l colour: right-hsluv)])
+  
+  left-hsl (col/convert colour: left-rgb format: HSL)
+  right-hsl (col/convert colour: right-rgb format: HSL)
+  interp-hsl-h (interp/build from: [left-x right-x] to: [(col/get-h colour: left-hsl) (col/get-h colour: right-hsl)])
+  interp-hsl-s (interp/build from: [left-x right-x] to: [(col/get-s colour: left-hsl) (col/get-s colour: right-hsl)])
+  interp-hsl-l (interp/build from: [left-x right-x] to: [(col/get-l colour: left-hsl) (col/get-l colour: right-hsl)])
+
+  left-hsv (col/convert colour: left-rgb format: HSV)
+  right-hsv (col/convert colour: right-rgb format: HSV)
+  interp-hsv-h (interp/build from: [left-x right-x] to: [(col/get-h colour: left-hsv) (col/get-h colour: right-hsv)])
+  interp-hsv-s (interp/build from: [left-x right-x] to: [(col/get-s colour: left-hsv) (col/get-s colour: right-hsv)])
+  interp-hsv-v (interp/build from: [left-x right-x] to: [(col/get-v colour: left-hsv) (col/get-v colour: right-hsv)])
+
+
+  left-lab (col/convert colour: left-rgb format: LAB)
+  right-lab (col/convert colour: right-rgb format: LAB)
+  interp-lab-l (interp/build from: [left-x right-x] to: [(col/get-l colour: left-lab) (col/get-l colour: right-lab)])
+  interp-lab-a (interp/build from: [left-x right-x] to: [(col/get-a colour: left-lab) (col/get-a colour: right-lab)])
+  interp-lab-b (interp/build from: [left-x right-x] to: [(col/get-b colour: left-lab) (col/get-b colour: right-lab)]))
+
+(fence (x from: left-x to: right-x quantity: 9)
+  (debug/print value: x)
+  (rect position: [x 610]
+        width: width
+        height: height
+        colour: (col/hsluv h: (interp/value from: interp-hsluv-h t: x)
+                           s: (interp/value from: interp-hsluv-s t: x)
+                           l: (interp/value from: interp-hsluv-l t: x)))
+  (rect position: [x 500]
+        width: width
+        height: height
+        colour: (col/hsl h: (interp/value from: interp-hsl-h t: x)
+                         s: (interp/value from: interp-hsl-s t: x)
+                         l: (interp/value from: interp-hsl-l t: x)))
+  (rect position: [x 390]
+        width: width
+        height: height
+        colour: (col/hsv h: (interp/value from: interp-hsv-h t: x)
+                         s: (interp/value from: interp-hsv-s t: x)
+                         v: (interp/value from: interp-hsv-v t: x)))
+  (rect position: [x 280]
+        width: width
+        height: height
+        colour: (col/lab l: (interp/value from: interp-lab-l t: x)
+                         a: (interp/value from: interp-lab-a t: x)
+                         b: (interp/value from: interp-lab-b t: x))))
+
+;; (fn (circ radius: 10 iterations: 20 s: 100 l: 50)
+;;   (fence (angle from: 0 to: 360 quantity: iterations)
+;;     (on-matrix-stack
+;;       (rotate angle: angle)
+;;       (rect position: [0 radius]
+;;         width: 50
+;;         height: 50
+;;         colour: (col/hsluv h: angle s: s l: l)))))
+
+;; (on-matrix-stack
+;;   (translate vector: [500 500])
+;;   (circ radius: 400
+;;         iterations: 40
+;;         s: 100
+;;         l: 60))

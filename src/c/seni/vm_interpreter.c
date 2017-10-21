@@ -329,8 +329,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
         dest = &(vm->stack[vm->global + bc->arg1.value.i]);
         var_copy(dest, v);
       } else if (memory_segment_type == MEM_SEG_VOID) {
-        // normally pop from the stack and lose the value
-        // but if it's a vector then decrement its ref count
+        // pop from the stack and lose the value
       } else {
         SENI_ERROR("STORE: unknown memory segment type %d", bc->arg0.value.i);
       }

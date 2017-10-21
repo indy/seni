@@ -331,6 +331,20 @@ void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
+void assert_seni_var_f32vec(seni_var *var, i32 len, f32 *vec)
+{
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "assert_seni_var_f32vec: VAR_VECTOR");
+  TEST_ASSERT_EQUAL(len, vector_length(var));
+
+  seni_var *element;
+  for(i32 i = 0; i < len; i++) {
+    element = vector_get(var, i);
+    TEST_ASSERT_EQUAL_MESSAGE(VAR_FLOAT, element->type, "assert_seni_var_f32vec: VAR_FLOAT");
+    TEST_ASSERT_EQUAL_FLOAT(vec[i], element->value.f);
+  }
+}
+
+
 void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d)
 {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "VAR_VECTOR");
@@ -554,6 +568,7 @@ void test_strtof(void)
 
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
+#define VM_TEST_F32VEC(LEN,VEC) assert_seni_var_f32vec(stack_peek(vm), LEN, VEC)
 #define VM_TEST_VEC4(A,B,C,D) assert_seni_var_v4(stack_peek(vm), A, B, C, D)
 #define VM_TEST_VEC5(A,B,C,D,E) assert_seni_var_v5(stack_peek(vm), A, B, C, D, E)
 #define VM_TEST_COL(F,A,B,C,D) assert_seni_var_col(stack_peek(vm), F, A, B, C, D)
@@ -570,6 +585,7 @@ void test_strtof(void)
 #define VM_COMPILE_F32(EXPR,RES) {VM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {VM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 #define VM_COMPILE_2D(EXPR,A,B) {VM_COMPILE(EXPR);VM_TEST_2D(A,B);VM_CLEANUP;}
+#define VM_COMPILE_F32VEC(EXPR,LEN,VEC) {VM_COMPILE(EXPR);VM_TEST_F32VEC(LEN,VEC);VM_CLEANUP;}
 #define VM_COMPILE_VEC4(EXPR,A,B,C,D) {VM_COMPILE(EXPR);VM_TEST_VEC4(A,B,C,D);VM_CLEANUP;}
 #define VM_COMPILE_VEC5(EXPR,A,B,C,D,E) {VM_COMPILE(EXPR);VM_TEST_VEC5(A,B,C,D,E);VM_CLEANUP;}
 #define VM_COMPILE_COL(EXPR,F,A,B,C,D) {VM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_CLEANUP;}
@@ -802,17 +818,66 @@ void test_vm_vector_append(void)
 
 void test_vm_fence(void)
 {
-  VM_COMPILE_F32("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) (vector/length vector: v)", 3);
-  VM_COMPILE_F32("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) (nth from: v n: 0)", 0);
-  VM_COMPILE_F32("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) (nth from: v n: 1)", 5);
-  VM_COMPILE_F32("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) (nth from: v n: 2)", 10);
+  {
+    VM_COMPILE("(define v []) (fence (x from: 0 to: 10 quantity: 3) (vector/append v x)) v");
+    f32 expected[] = {0.0f, 5.0f, 10.0f};
+    assert_seni_var_f32vec(stack_peek(vm), 3, expected);
+    VM_CLEANUP;
+  }
 
-  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (vector/length vector: v)", 5);
-  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 0)", 0.0f);
-  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 1)", 0.25f);
-  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 2)", 0.5f);
-  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 3)", 0.75f);
-  VM_COMPILE_F32("(define v []) (fence (x quantity: 5) (vector/append v x)) (nth from: v n: 4)", 1.0f);
+  {
+    VM_COMPILE("(define v []) (fence (x from: 10 to: 0 quantity: 3) (vector/append v x)) v");
+    f32 expected[] = {10.0f, 5.0f, 0.0f};
+    assert_seni_var_f32vec(stack_peek(vm), 3, expected);
+    VM_CLEANUP;
+  }
+
+  {
+    VM_COMPILE("(define v []) (fence (x quantity: 5) (vector/append v x)) v");
+    f32 expected[] = {0.0f, 0.25f, 0.5f, 0.75f, 1.0f};
+    assert_seni_var_f32vec(stack_peek(vm), 5, expected);
+    VM_CLEANUP;
+  }
+
+  {
+    VM_COMPILE("(define v []) (fence (x from: 100 to: 900 quantity: 10) (vector/append v x)) v");
+    f32 expected[] = {100.0000f, 188.8889f, 277.7778f, 366.6667f, 455.5555f, 544.4445f, 633.3333f, 722.2222f, 811.1111f, 900.0000f};
+    assert_seni_var_f32vec(stack_peek(vm), 10, expected);
+    VM_CLEANUP;
+  }
+  
+}
+
+void test_vm_step(void)
+{
+  {
+    VM_COMPILE("(define v []) (step (x from: 0 to: 4) (vector/append v x)) v");
+    f32 expected[] = {0.0f, 1.0f, 2.0f, 3.0f};
+    assert_seni_var_f32vec(stack_peek(vm), 4, expected);
+    VM_CLEANUP;
+  }
+
+  {
+    VM_COMPILE("(define v []) (step (x from: 0 upto: 4) (vector/append v x)) v");
+    f32 expected[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f};
+    assert_seni_var_f32vec(stack_peek(vm), 5, expected);
+    VM_CLEANUP;
+  }
+
+  {
+    VM_COMPILE("(define v []) (step (x from: 0 to: 10 increment: 2) (vector/append v x)) v");
+    f32 expected[] = {0.0f, 2.0f, 4.0f, 6.0f, 8.0f};
+    assert_seni_var_f32vec(stack_peek(vm), 5, expected);
+    VM_CLEANUP;
+  }
+
+  {
+    VM_COMPILE("(define v []) (step (x from: 0 upto: 10 increment: 2) (vector/append v x)) v");
+    f32 expected[] = {0.0f, 2.0f, 4.0f, 6.0f, 8.0f, 10.0f};
+    assert_seni_var_f32vec(stack_peek(vm), 6, expected);
+    VM_CLEANUP;
+  }
+
 }
 
 void test_vm_col_rgb(void)
@@ -1646,43 +1711,43 @@ int main(void)
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-
-  // RUN_TEST(test_macro_pool);
-  // RUN_TEST(test_mathutil);
-  // RUN_TEST(test_parser);
-  // RUN_TEST(test_uv_mapper);
+  RUN_TEST(test_macro_pool);
+  RUN_TEST(test_mathutil);
+  RUN_TEST(test_parser);
+  RUN_TEST(test_uv_mapper);
   RUN_TEST(test_colour);
-  // RUN_TEST(test_strtof);
+  RUN_TEST(test_strtof);
   
-  // RUN_TEST(test_vm_bugs);
-  // RUN_TEST(test_vm_bytecode);
-  // RUN_TEST(test_vm_callret);
-  // RUN_TEST(test_vm_native);  
-  // RUN_TEST(test_vm_destructure);
-  // RUN_TEST(test_vm_2d);
-  // RUN_TEST(test_vm_vector);
-  // RUN_TEST(test_vm_vector_append);
-  // RUN_TEST(test_vm_fence);
-  // RUN_TEST(test_vm_col_rgb);
-  // RUN_TEST(test_vm_math);
-  // RUN_TEST(test_vm_prng);
-  // RUN_TEST(test_vm_environmental);
-  // RUN_TEST(test_vm_interp);
-  // RUN_TEST(test_vm_function_address);
-  // RUN_TEST(test_vm_repeat);
+  RUN_TEST(test_vm_bugs);
+  RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_native);  
+  RUN_TEST(test_vm_destructure);
+  RUN_TEST(test_vm_2d);
+  RUN_TEST(test_vm_vector);
+  RUN_TEST(test_vm_vector_append);
+  RUN_TEST(test_vm_fence);
+  RUN_TEST(test_vm_step);  
+  RUN_TEST(test_vm_col_rgb);
+  RUN_TEST(test_vm_math);
+  RUN_TEST(test_vm_prng);
+  RUN_TEST(test_vm_environmental);
+  RUN_TEST(test_vm_interp);
+  RUN_TEST(test_vm_function_address);
+  RUN_TEST(test_vm_repeat);
 
-  // RUN_TEST(test_genotype);
-  // RUN_TEST(test_genotype_vectors);
-  // RUN_TEST(test_genotype_multiple_floats);
-  // RUN_TEST(test_unparser);
-  // RUN_TEST(test_unparser_vectors);
-  // RUN_TEST(test_unparser_multiple_floats);
+  RUN_TEST(test_genotype);
+  RUN_TEST(test_genotype_vectors);
+  RUN_TEST(test_genotype_multiple_floats);
+  RUN_TEST(test_unparser);
+  RUN_TEST(test_unparser_vectors);
+  RUN_TEST(test_unparser_multiple_floats);
   
-  // RUN_TEST(test_serialization);
-  // RUN_TEST(test_serialization_program);
-  // RUN_TEST(test_serialization_genotype);
-  // RUN_TEST(test_serialization_genotype_list);
-  // RUN_TEST(test_serialization_trait_list);
+  RUN_TEST(test_serialization);
+  RUN_TEST(test_serialization_program);
+  RUN_TEST(test_serialization_genotype);
+  RUN_TEST(test_serialization_genotype_list);
+  RUN_TEST(test_serialization_trait_list);
 
   return UNITY_END();
 }

@@ -1,8 +1,8 @@
-* TODO [0/16]
-  1. [ ] hsl colour space should be 0..100 for s and l
-  2. [ ] col/[gs]et-r, g, b, l, a, h, s, v  -- no colour conversion, just works out the correct index
+* TODO [0/14]
+  1. [ ] look at, test properly and document 'fence' and 'step'
+  2. [ ] a way of passing arguments to called functions (those that use address-of)
   3. [ ] {red (gen/col alpha: 1)} bug?
-  4. [ ] a way of passing arguments to called functions (those that use address-of)
+  4. [ ] poly should also accept a uv parameter
   5. [ ] remove vm/env from genotype_list_create_initial_generation
   6. [ ] impl: initial seed
   7. [ ] get high-res render working
@@ -10,11 +10,30 @@
   9. [ ] add unit tests for compiling with a genotype
   10. [ ] unify args to *_pretty_print
   11. [ ] maybe have a required specifier in functions?
-  12. [ ] poly should also accept a uv parameter
-  13. [ ] ensure that there's a dist folder before running npm run build:wasm
-  14. [ ] remove hsv colour space? - would this get rid of the illegal state?
-  15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  16. [ ] look into restrict keyword in C99
+  12. [ ] ensure that there's a dist folder before running npm run build:wasm
+  13. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  14. [ ] look into restrict keyword in C99
+
+
+* bugs
+
+why does fence only draw 9 boxes?:
+
+(define
+  left-col (col/rgb r: 0.1 g: 1.0 b: 0 alpha: 1)
+  right-col (col/rgb r: 0.1 g: 0.0 b: 1 alpha: 1))
+
+
+(fence (x from: 100 to: 900 quantity: 10)
+  (debug/print value: x)
+  (rect position: [x 500]
+        width: 80
+        height: 100
+        colour: left-col))
+
+
+(fence (x from: 100 to: 900 quantity: 10)
+  (debug/print value: x))
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
@@ -710,24 +729,6 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
   address-of : works at compile time to LOAD the seni_fn_info index onto the stack. This means that address-of can only work with user-defined functions that are explicitly passed in.
 
-* setup/teardown
-
-one time init
-
-  per-script init (includes allocations for render data)
-    *run the compiled script*
-  per-script shutdown <- (on success) clean up as much of the script state as possible
-
-  *get render data from c-side to js-side* <- done by js-side when it wants to
-
-  per-script cleanup <- invoked by js-side, cleans up all run data including render-data allocations
-
-one time shutdown
-
-
-
-
-
 
 * native functions that accept function arguments [0/2]
 
@@ -792,59 +793,6 @@ call_no_arg_function
   - ga_create_from_initial_values(traits)
   - ga_create_from_traits(traits, seed)
   - ga_next_generation
-
-* assembly-worker
-
-  size of worker and main before/after
-  
-
-
-* removing js implementation
-
-With JS:
-
-Hash: 680de03c7327567dc556
-Version: webpack 1.15.0
-Time: 10396ms
-               Asset    Size  Chunks             Chunk Names
-      seni.bundle.js  647 kB       0  [emitted]  seni
-    worker.bundle.js  384 kB       1  [emitted]  worker
-  seni.bundle.js.map  828 kB       0  [emitted]  seni
-worker.bundle.js.map  601 kB       1  [emitted]  worker
-   [0] multi seni 28 bytes {0} [built]
-   [0] multi worker 28 bytes {1} [built]
-    + 57 hidden modules
-
-------------------------------------------------------------
-Without JS:
-
-Hash: 23a6095841df47f7b32a
-Version: webpack 1.15.0
-Time: 4920ms
-               Asset     Size  Chunks             Chunk Names
-      seni.bundle.js   645 kB       0  [emitted]  seni
-    worker.bundle.js  17.4 kB       1  [emitted]  worker
-  seni.bundle.js.map   824 kB       0  [emitted]  seni
-worker.bundle.js.map  29.5 kB       1  [emitted]  worker
-   [0] multi seni 28 bytes {0} [built]
-   [0] multi worker 28 bytes {1} [built]
-    + 20 hidden modules
-
-
-worker.bundle.js from 384kB downto 17.4kB
-seni-wasm.wasm is 202kB
-
-------------------------------------------------------------
-Updated Webpack:
-
-Hash: c5243215cf837a56e5a0
-Version: webpack 3.5.5
-Time: 2187ms
-               Asset     Size  Chunks                    Chunk Names
-      seni.bundle.js   631 kB       0  [emitted]  [big]  seni
-    worker.bundle.js  17.4 kB       1  [emitted]         worker
-  seni.bundle.js.map   759 kB       0  [emitted]         seni
-worker.bundle.js.map    20 kB       1  [emitted]         worker
 
 
 * naming convention

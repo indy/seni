@@ -242,6 +242,9 @@ seni_bytecode *program_emit_opcode_i32_f32(seni_program *program, seni_opcode op
 // Compiler
 // **************************************************
 
+// local_mappings :   -1 == no mapping
+//                    -2 == internal local mapping
+//                  >= 0 == maps a word from word_lut
 
 void clear_local_mappings(seni_program *program)
 {
@@ -252,7 +255,7 @@ void clear_local_mappings(seni_program *program)
 
 i32 add_local_mapping(seni_program *program, i32 word_lut_value)
 {
-  for (i32 i=0; i < MEMORY_LOCAL_SIZE; i++) {
+  for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
     if(program->local_mappings[i] == -1) {
       program->local_mappings[i] = word_lut_value;
       return i;
@@ -263,9 +266,25 @@ i32 add_local_mapping(seni_program *program, i32 word_lut_value)
   return -1;
 }
 
+// we want a local mapping that's going to be used to store an internal variable
+// (e.g. during a fence loop)
+// note: it's up to the caller to manage this reference
+i32 add_internal_local_mapping(seni_program *program)
+{
+  for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
+    if (program->local_mappings[i] == -1) {
+      program->local_mappings[i] = -2;
+      return i;
+    }
+  }
+
+  SENI_ERROR("add_internal_local_mapping failed: increase MEMORY_LOCAL_SIZE from %d", MEMORY_LOCAL_SIZE);  
+  return -1;
+}
+
 i32 get_local_mapping(seni_program *program, i32 word_lut_value)
 {
-  for (i32 i=0; i < MEMORY_LOCAL_SIZE; i++) {
+  for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
     if(program->local_mappings[i] == word_lut_value) {
       return i;
     }
@@ -407,7 +426,7 @@ i32 count_children(seni_node *parent)
   return count;
 }
 
-i32 pop_from_stack_to_memory(seni_program *program, seni_node *node, seni_memory_segment_type memory_segment_type)
+i32 store_from_stack_to_memory(seni_program *program, seni_node *node, seni_memory_segment_type memory_segment_type)
 {
   i32 address = -1;
   
@@ -417,7 +436,7 @@ i32 pop_from_stack_to_memory(seni_program *program, seni_node *node, seni_memory
       address = add_local_mapping(program, node->value.i);
       if (address == -1) {
         // failed to allocate
-        SENI_ERROR("pop_from_stack_to_memory: allocation failure");
+        SENI_ERROR("store_from_stack_to_memory: allocation failure");
       }
     }
     program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, address);
@@ -428,7 +447,7 @@ i32 pop_from_stack_to_memory(seni_program *program, seni_node *node, seni_memory
     }
     program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
   } else {
-    SENI_ERROR("pop_from_stack_to_memory: unknown memory_segment_type: %d", memory_segment_type);
+    SENI_ERROR("store_from_stack_to_memory: unknown memory_segment_type: %d", memory_segment_type);
   }
 
   return address;
@@ -447,7 +466,7 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
 
     if (lhs_node->type == NODE_NAME) {
       // define foo 10
-      m = pop_from_stack_to_memory(program, lhs_node, memory_segment_type);
+      m = store_from_stack_to_memory(program, lhs_node, memory_segment_type);
       if (m == -1) {
         SENI_ERROR("compile_define: allocation failure in define");
         return NULL;
@@ -471,7 +490,7 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
           child = safe_next(child);
         }
         for (i = 0; i < num_children; i++) {
-          m = pop_from_stack_to_memory(program, child, memory_segment_type);
+          m = store_from_stack_to_memory(program, child, memory_segment_type);
           if (m == -1) {
             SENI_ERROR("compile_define: allocation failure during destructure");
             return NULL;
@@ -480,7 +499,7 @@ seni_node *compile_define(seni_node *ast, seni_program *program, seni_memory_seg
         }
         /*        
                   while (child != NULL) {
-                  pop_from_stack_to_memory(program, child, memory_segment_type);
+                  store_from_stack_to_memory(program, child, memory_segment_type);
                   child = safe_next(child);
                   }
         */
@@ -734,25 +753,6 @@ void compile_quote(seni_node *ast, seni_program *program)
 
 void compile_step(seni_node *ast, seni_program *program)
 {
-  // (step (x from: 0 to: 5) (+ 42 38))
-  //
-  // 0       LOAD    CONST   0
-  // 1       STORE     LOCAL   0
-  // 2       LOAD    LOCAL   0
-  // 3       LOAD    CONST   5
-  // 4       LT
-  // 5       JUMP_IF +10
-  // 6       LOAD    CONST   42
-  // 7       LOAD    CONST   38
-  // 8       ADD
-  // 9       STORE     VOID    0
-  // 10      LOAD    LOCAL   0
-  // 11      LOAD    CONST   1
-  // 12      ADD
-  // 13      STORE     LOCAL   0
-  // 14      JUMP    -12
-  // 15      STOP
-  
   seni_node *parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
     SENI_ERROR("expected a list that defines step parameters");
@@ -818,7 +818,7 @@ void compile_step(seni_node *ast, seni_program *program)
     program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
   }
 
-  i32 looper_address = pop_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
+  i32 looper_address = store_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
   if (looper_address == -1) {
     SENI_ERROR("compile_step: allocation failure");
     return;
@@ -917,57 +917,26 @@ void compile_fence(seni_node *ast, seni_program *program)
     node = safe_next(node); // the value part
   }
 
-  // set looping variable x to 'from' value
-  if (have_from) {
-    compile(from_node, program);
+  // store the quantity
+  i32 quantity_address = add_internal_local_mapping(program);
+  if (have_quantity) {
+    compile(quantity_node, program);
   } else {
-    // else default to 0
-    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
+    // else default to 2
+    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 2.0f);
   }
+  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, quantity_address);
 
-  i32 looper_address = pop_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
-  if (looper_address == -1) {
-    SENI_ERROR("compile_fence: allocation failure");
-    return;
-  }
 
-  // compare looping variable against exit condition
-  // and jump if looping variable >= exit value
-  i32 addr_loop_start = program->code_size;
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, looper_address);
+  // reserve a memory location in local memory for a counter from 0 to quantity
+  i32 counter_address = add_internal_local_mapping(program);
+  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
+  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, counter_address);
 
-  // so jump if looping variable > exit value
 
-  if (have_to) {
-    compile(to_node, program);
-  } else {
-    // else default to 1
-    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
-  }
-
-  program_emit_opcode_i32(program, GT, 0, 0);
-  program_emit_opcode_i32(program, NOT, 0, 0);
-
-  i32 addr_exit_check = program->code_size;
-  seni_bytecode *bc_exit_check = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
-
-  i32 pre_body_opcode_offset = program->opcode_offset;
-
-  // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-  compile_rest(parameters_node, program);
-
-  i32 post_body_opcode_offset = program->opcode_offset;
-  i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
-  
-  // pop off any values that the body might leave on the stack
-  for(i32 i = 0;i < opcode_delta; i++) {
-    program_emit_opcode_i32(program, STORE, MEM_SEG_VOID, 0);
-  }
-
-  // load the looping variable
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, looper_address);
-
-  // calc increment: (to - from) / (quantity - 1)
+  // delta that needs to be added at every iteration
+  //
+  // (to - from) / (quantity - 1)
   if (have_to) {
     compile(to_node, program);
   } else {
@@ -987,9 +956,73 @@ void compile_fence(seni_node *ast, seni_program *program)
   program_emit_opcode_i32(program, SUB, 0, 0);
   program_emit_opcode_i32(program, DIV, 0, 0);
 
-  // increment the looping variable
+  i32 delta_address = add_internal_local_mapping(program);
+  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, delta_address);
+
+
+  // set looping variable x to 'from' value
+  if (have_from) {
+    compile(from_node, program);
+  } else {
+    // else default to 0
+    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
+  }
+
+  i32 from_address = add_internal_local_mapping(program);
+  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, from_address);
+
+
+  // store the starting 'from' value in the locally scoped variable
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, from_address);
+  i32 looper_address = store_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
+  if (looper_address == -1) {
+    SENI_ERROR("compile_fence: allocation failure");
+    return;
+  }
+
+  // compare looping variable against exit condition
+  // and jump if looping variable >= exit value
+  i32 addr_loop_start = program->code_size;
+
+
+  // load from counter address
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, counter_address);
+
+  // load from quantity address
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, quantity_address);
+  
+  // exit check
+  program_emit_opcode_i32(program, LT, 0, 0);
+
+  i32 addr_exit_check = program->code_size;
+  seni_bytecode *bc_exit_check = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
+
+  // looper = from + (counter * delta)
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, from_address);
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, counter_address);
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, delta_address);
+  program_emit_opcode_i32(program, MUL, 0, 0);
   program_emit_opcode_i32(program, ADD, 0, 0);
   program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, looper_address);
+
+  i32 pre_body_opcode_offset = program->opcode_offset;
+  
+  // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
+  compile_rest(parameters_node, program);
+
+  i32 post_body_opcode_offset = program->opcode_offset;
+  i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
+  
+  // pop off any values that the body might leave on the stack
+  for(i32 i = 0;i < opcode_delta; i++) {
+    program_emit_opcode_i32(program, STORE, MEM_SEG_VOID, 0);
+  }
+  
+  // increment counter
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, counter_address);
+  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
+  program_emit_opcode_i32(program, ADD, 0, 0);
+  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, counter_address);
 
   // loop back to the comparison
   program_emit_opcode_i32(program, JUMP, -(program->code_size - addr_loop_start), 0);

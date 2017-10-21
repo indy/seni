@@ -184,7 +184,7 @@ export function createInitialState() {
     // the resolution of the high res image
     highResolution: [2048, 2048],
     placeholder: 'img/spinner.gif',
-    populationSize: 4,
+    populationSize: 24,
     mutationRate: 0.1,
 
     currentMode: SeniMode.gallery,
