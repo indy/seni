@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdarg.h>
+
 #include "lib/utlist.h"
 
 /* way of working with boolean and TEST macros */
@@ -331,20 +333,6 @@ void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
-void assert_seni_var_f32vec(seni_var *var, i32 len, f32 *vec)
-{
-  TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "assert_seni_var_f32vec: VAR_VECTOR");
-  TEST_ASSERT_EQUAL(len, vector_length(var));
-
-  seni_var *element;
-  for(i32 i = 0; i < len; i++) {
-    element = vector_get(var, i);
-    TEST_ASSERT_EQUAL_MESSAGE(VAR_FLOAT, element->type, "assert_seni_var_f32vec: VAR_FLOAT");
-    TEST_ASSERT_EQUAL_FLOAT(vec[i], element->value.f);
-  }
-}
-
-
 void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d)
 {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "VAR_VECTOR");
@@ -568,7 +556,6 @@ void test_strtof(void)
 
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
-#define VM_TEST_F32VEC(LEN,VEC) assert_seni_var_f32vec(stack_peek(vm), LEN, VEC)
 #define VM_TEST_VEC4(A,B,C,D) assert_seni_var_v4(stack_peek(vm), A, B, C, D)
 #define VM_TEST_VEC5(A,B,C,D,E) assert_seni_var_v5(stack_peek(vm), A, B, C, D, E)
 #define VM_TEST_COL(F,A,B,C,D) assert_seni_var_col(stack_peek(vm), F, A, B, C, D)
@@ -585,13 +572,40 @@ void test_strtof(void)
 #define VM_COMPILE_F32(EXPR,RES) {VM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
 #define VM_COMPILE_BOOL(EXPR,RES) {VM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
 #define VM_COMPILE_2D(EXPR,A,B) {VM_COMPILE(EXPR);VM_TEST_2D(A,B);VM_CLEANUP;}
-#define VM_COMPILE_F32VEC(EXPR,LEN,VEC) {VM_COMPILE(EXPR);VM_TEST_F32VEC(LEN,VEC);VM_CLEANUP;}
 #define VM_COMPILE_VEC4(EXPR,A,B,C,D) {VM_COMPILE(EXPR);VM_TEST_VEC4(A,B,C,D);VM_CLEANUP;}
 #define VM_COMPILE_VEC5(EXPR,A,B,C,D,E) {VM_COMPILE(EXPR);VM_TEST_VEC5(A,B,C,D,E);VM_CLEANUP;}
 #define VM_COMPILE_COL(EXPR,F,A,B,C,D) {VM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_CLEANUP;}
 // don't perform a heap check as we're assuming that the expr will be leaky
 #define VM_COMPILE_F32_L(EXPR,RES) {VM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
 #define VM_COMPILE_COL_L(EXPR,F,A,B,C,D) {VM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_CLEANUP;}
+
+
+void f32v(char *exp, i32 len, ... )
+{
+  VM_COMPILE(exp);
+
+  seni_var *var = stack_peek(vm);
+  TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "f32v: VAR_VECTOR");
+  TEST_ASSERT_EQUAL(len, vector_length(var));
+  
+  va_list va;
+  va_start(va, len);
+
+  f32 val;
+  seni_var *element;
+  for(i32 i = 0; i < len; i++) {
+    element = vector_get(var, i);
+    TEST_ASSERT_EQUAL_MESSAGE(VAR_FLOAT, element->type, "f32v: VAR_FLOAT");
+
+    val = (f32)va_arg(va, double);
+    TEST_ASSERT_EQUAL_FLOAT(val, element->value.f);
+  }
+
+  va_end(va);
+
+  VM_CLEANUP;
+}
+
 
 void timing(void)
 {
@@ -818,66 +832,28 @@ void test_vm_vector_append(void)
 
 void test_vm_fence(void)
 {
-  {
-    VM_COMPILE("(define v []) (fence (x from: 0 to: 10 num: 3) (vector/append v x)) v");
-    f32 expected[] = {0.0f, 5.0f, 10.0f};
-    assert_seni_var_f32vec(stack_peek(vm), 3, expected);
-    VM_CLEANUP;
-  }
-
-  {
-    VM_COMPILE("(define v []) (fence (x from: 10 to: 0 num: 3) (vector/append v x)) v");
-    f32 expected[] = {10.0f, 5.0f, 0.0f};
-    assert_seni_var_f32vec(stack_peek(vm), 3, expected);
-    VM_CLEANUP;
-  }
-
-  {
-    VM_COMPILE("(define v []) (fence (x num: 5) (vector/append v x)) v");
-    f32 expected[] = {0.0f, 0.25f, 0.5f, 0.75f, 1.0f};
-    assert_seni_var_f32vec(stack_peek(vm), 5, expected);
-    VM_CLEANUP;
-  }
-
-  {
-    VM_COMPILE("(define v []) (fence (x from: 100 to: 900 num: 10) (vector/append v x)) v");
-    f32 expected[] = {100.0000f, 188.8889f, 277.7778f, 366.6667f, 455.5555f, 544.4445f, 633.3333f, 722.2222f, 811.1111f, 900.0000f};
-    assert_seni_var_f32vec(stack_peek(vm), 10, expected);
-    VM_CLEANUP;
-  }
-  
+  f32v("(define v []) (fence (x from: 0 to: 10 num: 3) (vector/append v x)) v",
+       3, 0.0f, 5.0f, 10.0f);
+  f32v("(define v []) (fence (x from: 10 to: 0 num: 3) (vector/append v x)) v",
+       3, 10.0f, 5.0f, 0.0f);
+  f32v("(define v []) (fence (x num: 5) (vector/append v x)) v",
+       5, 0.0f, 0.25f, 0.5f, 0.75f, 1.0f);
+  f32v("(define v []) (fence (x from: 100 to: 900 num: 10) (vector/append v x)) v",
+       10,
+       100.0000f, 188.8889f, 277.7778f, 366.6667f, 455.5555f,
+       544.4445f, 633.3333f, 722.2222f, 811.1111f, 900.0000f);
 }
 
 void test_vm_loop(void)
 {
-  {
-    VM_COMPILE("(define v []) (loop (x from: 0 to: 4) (vector/append v x)) v");
-    f32 expected[] = {0.0f, 1.0f, 2.0f, 3.0f};
-    assert_seni_var_f32vec(stack_peek(vm), 4, expected);
-    VM_CLEANUP;
-  }
-
-  {
-    VM_COMPILE("(define v []) (loop (x from: 0 upto: 4) (vector/append v x)) v");
-    f32 expected[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f};
-    assert_seni_var_f32vec(stack_peek(vm), 5, expected);
-    VM_CLEANUP;
-  }
-
-  {
-    VM_COMPILE("(define v []) (loop (x from: 0 to: 10 inc: 2) (vector/append v x)) v");
-    f32 expected[] = {0.0f, 2.0f, 4.0f, 6.0f, 8.0f};
-    assert_seni_var_f32vec(stack_peek(vm), 5, expected);
-    VM_CLEANUP;
-  }
-
-  {
-    VM_COMPILE("(define v []) (loop (x from: 0 upto: 10 inc: 2) (vector/append v x)) v");
-    f32 expected[] = {0.0f, 2.0f, 4.0f, 6.0f, 8.0f, 10.0f};
-    assert_seni_var_f32vec(stack_peek(vm), 6, expected);
-    VM_CLEANUP;
-  }
-
+  f32v("(define v []) (loop (x from: 0 to: 4) (vector/append v x)) v",
+       4, 0.0f, 1.0f, 2.0f, 3.0f);
+  f32v("(define v []) (loop (x from: 0 upto: 4) (vector/append v x)) v",
+       5, 0.0f, 1.0f, 2.0f, 3.0f, 4.0f);
+  f32v("(define v []) (loop (x from: 0 to: 10 inc: 2) (vector/append v x)) v",
+       5, 0.0f, 2.0f, 4.0f, 6.0f, 8.0f);
+  f32v("(define v []) (loop (x from: 0 upto: 10 inc: 2) (vector/append v x)) v",
+       6, 0.0f, 2.0f, 4.0f, 6.0f, 8.0f, 10.0f);
 }
 
 void test_vm_col_rgb(void)
@@ -986,32 +962,8 @@ void test_vm_function_address(void)
 
 void test_vm_repeat(void)
 {
-  // VM_COMPILE_F32("(fn (k) (+ 2 3)) (repeat/test draw: (address-of k)) 10", 10.0f);
-  // VM_COMPILE_F32("(fn (k) [4 5]) (repeat/test draw: (address-of k)) 10", 10.0f);
-
-  VM_COMPILE_F32("(fn (k a: 10 b: 20 c: 30) (+ a b c)) (k a: 40 b: 50 c: 60) 44", 44.0f);
-}
-
-void test_prng_old(void)
-{
-
-  seni_prng_state state;
-  seni_prng_set_state(&state, 34342);
-  
-  f32 w;
-  f32 min = 1000.0f;
-  f32 max = -1000.0f;
-  for (i32 i = 0; i < 1000000; i++) {
-    w = seni_perlin(seni_prng_f32_range(&state, -100.0f, 100.0f),
-                    seni_prng_f32_range(&state, -100.0f, 100.0f),
-                    seni_prng_f32_range(&state, -100.0f, 100.0f));
-    max = w > max ? w : max;
-    min = w < min ? w : min;
-  }
-
-  printf("min %f, max %f\n", min, max);
-
-  TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_perlin(0.1f, 0.2f, 0.3f));
+  f32v("(define v []) (fn (k) (vector/append v 1)) (repeat/rotate fn: (address-of k) copies: 3) v",
+       3, 1.0f, 1.0f, 1.0f);
 }
 
 seni_genotype *genotype_test(i32 seed_value, char *source)
