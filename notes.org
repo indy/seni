@@ -1,18 +1,17 @@
-* TODO [0/14]
-  1. [ ] look at, test properly and document 'fence' and 'step'
-  2. [ ] a way of passing arguments to called functions (those that use address-of)
-  3. [ ] {red (gen/col alpha: 1)} bug?
-  4. [ ] poly should also accept a uv parameter
-  5. [ ] remove vm/env from genotype_list_create_initial_generation
-  6. [ ] impl: initial seed
-  7. [ ] get high-res render working
-  8. [ ] add an END token to serialized output, use as a sanity check
-  9. [ ] add unit tests for compiling with a genotype
-  10. [ ] unify args to *_pretty_print
-  11. [ ] maybe have a required specifier in functions?
-  12. [ ] ensure that there's a dist folder before running npm run build:wasm
-  13. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  14. [ ] look into restrict keyword in C99
+* TODO [0/13]
+  1. [ ] repeat/* pass in information to the fn calls
+  2. [ ] {red (gen/col alpha: 1)} bug?
+  3. [ ] poly should also accept a uv parameter
+  4. [ ] remove vm/env from genotype_list_create_initial_generation
+  5. [ ] impl: initial seed
+  6. [ ] get high-res render working
+  7. [ ] add an END token to serialized output, use as a sanity check
+  8. [ ] add unit tests for compiling with a genotype
+  9. [ ] unify args to *_pretty_print
+  10. [ ] maybe have a required specifier in functions?
+  11. [ ] ensure that there's a dist folder before running npm run build:wasm
+  12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  13. [ ] look into restrict keyword in C99
 
 
 * bugs
