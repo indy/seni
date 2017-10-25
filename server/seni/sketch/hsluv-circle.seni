@@ -1,0 +1,16 @@
+
+(fn (circ radius: 10 iterations: 20 s: 100 l: 50)
+  (fence (angle from: 0 to: 360 num: iterations)
+    (on-matrix-stack
+      (rotate angle: angle)
+      (rect position: [0 radius]
+        width: 50
+        height: 50
+        colour: (col/hsluv h: angle s: s l: l)))))
+
+(on-matrix-stack
+  (translate vector: [500 500])
+  (circ radius: 400
+        iterations: 40
+        s: 100
+        l: 60))
