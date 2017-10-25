@@ -208,6 +208,10 @@ struct seni_fn_info {
   i32 arg_address;
   i32 body_address;
   i32 num_args;
+
+  // need to know the argument's inames and default values
+  // add a new constraint that the default arguments need to be easily evaluatable at compile time
+  
   i32 argument_offsets[MAX_NUM_ARGUMENTS];
 };
 

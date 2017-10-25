@@ -88,22 +88,35 @@ seni_var *arg_memory_from_iname(seni_fn_info *fn_info, i32 iname, seni_var *args
   return NULL;
 }
 
-// invokes a no-arg function during execution of a program (some native functions use this)
-// push a frame onto the vm's stack, and invoke vm_interpret so that
-// it executes the given function and then stops
-//
-bool vm_setup_and_call_function(seni_vm *vm, seni_fn_info *fn_info)
+void vm_function_set_argument_to_var(seni_vm *vm, seni_fn_info *fn_info, i32 iname, seni_var *src)
 {
-  if (fn_info->num_args != 0) {
-    SENI_ERROR("vm_setup_and_call_function: called function cannot have any arguments");
-    return false;
+  seni_var *arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+  if (arg != NULL) {
+    var_copy(arg, src);
+  }  
+}
+void vm_function_set_argument_to_f32(seni_vm *vm, seni_fn_info *fn_info, i32 iname, f32 f)
+{
+  seni_var *arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+  if (arg != NULL) {
+    arg->type = VAR_FLOAT;
+    arg->value.f = f;
   }
-
-  vm_setup_function(vm, fn_info);
-  return vm_call_function(vm);
 }
 
-void vm_setup_function(seni_vm *vm, seni_fn_info *fn_info)
+void vm_function_set_argument_to_2d(seni_vm *vm, seni_fn_info *fn_info, i32 iname, f32 x, f32 y)
+{
+  seni_var *arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+  if (arg != NULL) {
+    arg->type = VAR_2D;
+    arg->value.i = 0;
+    arg->f32_array[0] = x;
+    arg->f32_array[1] = y;
+  }
+}
+
+// this is CALL_F
+void vm_function_call_default_arguments(seni_vm *vm, seni_fn_info *fn_info)
 {
   // push a frame onto the stack whose return address is the program's STOP instruction
   i32 stop_address = program_stop_location(vm->program);
@@ -112,8 +125,10 @@ void vm_setup_function(seni_vm *vm, seni_fn_info *fn_info)
   seni_var *stack_d = &(vm->stack[vm->sp]);
   seni_var *v = NULL;
 
+  i32 num_args = fn_info->num_args;
+
   // make room for the labelled arguments
-  for (i = 0; i < fn_info->num_args * 2; i++) {
+  for (i = 0; i < num_args * 2; i++) {
     v = stack_d; stack_d++; vm->sp++;
   }
   
@@ -132,9 +147,9 @@ void vm_setup_function(seni_vm *vm, seni_fn_info *fn_info)
   // push num_args
   v = stack_d; stack_d++; vm->sp++;
   v->type = VAR_INT;
-  v->value.i = fn_info->num_args;
+  v->value.i = num_args;
 
-  vm->ip = fn_info->body_address;
+  vm->ip = fn_info->arg_address;
   vm->fp = fp;
   vm->local = vm->sp;
 
@@ -145,22 +160,27 @@ void vm_setup_function(seni_vm *vm, seni_fn_info *fn_info)
     vm->stack[vm->sp].type = VAR_INT; 
     vm->sp++;
   }
+
+  vm_interpret(vm, vm->env, vm->program); // run code to setup the function's arguments
 }
 
-bool vm_call_function(seni_vm *vm)
+void vm_function_call_body(seni_vm *vm, seni_fn_info *fn_info)
 {
-  // vm is now in a state that will execute the given function and then return to the STOP opcode
-  //
-  vm_interpret(vm, vm->env, vm->program);
+  // push a frame onto the stack whose return address is the program's STOP instruction
+  i32 stop_address = program_stop_location(vm->program);
 
+  // set the correct return ip
+  vm->stack[vm->fp + 1].value.i = stop_address;
+
+  // leap to a location
+  vm->ip = fn_info->body_address;
+
+  vm_interpret(vm, vm->env, vm->program);
 
   // the above vm_interpret will eventually hit a RET, pop the frame,
   // push the function's result onto the stack and then jump to the stop_address
   // so we'll need to pop that function's return value off the stack
-
   vm->sp--;
-
-  return true;
 }
 
 bool vm_run(seni_vm *vm, seni_env *env, seni_program *program)
@@ -467,8 +487,6 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program)
 
       num_args = fn_info->num_args;
       addr = fn_info->arg_address;
-      
-      //num_args = bc->arg1.value.i;
 
       // make room for the labelled arguments
       for (i = 0; i < num_args * 2; i++) {

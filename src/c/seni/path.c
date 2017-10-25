@@ -14,43 +14,12 @@ void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y)
 {
   seni_program *program = vm->program;
   seni_fn_info *fn_info = &(program->fn_info[fn]);
-  seni_var *dest;
-  seni_var src;
 
-  vm_setup_function(vm, fn_info);
-  
-  i32 arg = vm->fp - 1;
-
-  i32 istep = get_argument_mapping(fn_info, INAME_N);
-  if (istep != -1) {
-    // value for step
-    dest = &(vm->stack[arg - istep]);
-    src.type = VAR_FLOAT;
-    src.value.f = step;
-    var_copy(dest, &src);
-  }
-
-  i32 ipos = get_argument_mapping(fn_info, INAME_POSITION);
-  if (ipos != -1) {
-    // value for position
-    dest = &(vm->stack[arg - ipos]);
-    src.type = VAR_2D;
-    src.value.i = 0;
-    src.f32_array[0] = x;
-    src.f32_array[1] = y;
-    var_copy(dest, &src);
-  }
-
-  i32 it = get_argument_mapping(fn_info, INAME_T);
-  if (it != -1) {
-    // value for t
-    dest = &(vm->stack[arg - it]);
-    src.type = VAR_FLOAT;
-    src.value.f = t;
-    var_copy(dest, &src);
-  }
-    
-  vm_call_function(vm);  
+  vm_function_call_default_arguments(vm, fn_info);
+  vm_function_set_argument_to_f32(vm, fn_info, INAME_N, step);
+  vm_function_set_argument_to_f32(vm, fn_info, INAME_T, t);
+  vm_function_set_argument_to_2d(vm, fn_info, INAME_POSITION, x, y);
+  vm_function_call_body(vm, fn_info);
 }
 
 void path_linear(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 a_x, f32 a_y, f32 b_x, f32 b_y)

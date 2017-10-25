@@ -1395,7 +1395,7 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
   if (program->current_fn_info) {
     i32 argument_mapping = get_argument_mapping(program->current_fn_info, iname);
     if (argument_mapping != -1) {
-      program_emit_opcode_i32_name(program, LOAD, MEM_SEG_ARGUMENT, argument_mapping);
+      program_emit_opcode_i32(program, LOAD, MEM_SEG_ARGUMENT, argument_mapping);
       return safe_next(ast);
     }
   }
