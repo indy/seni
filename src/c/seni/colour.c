@@ -12,20 +12,27 @@
 #define COLOUR_COMPLIMENTARY_ANGLE (COLOUR_UNIT_ANGLE * 6.0f)
 #define COLOUR_TRIAD_ANGLE (COLOUR_UNIT_ANGLE * 4)
 
+typedef struct seni_colour_64 {
+  seni_colour_format format;
+  f64 element[4];
+} seni_colour_64;
+
+const f64 ref_u = 0.19783000664283680764;
+const f64 ref_v = 0.46831999493879100370;
+
 //  http://www.brucelindbloom.com/index.html?Equations.html
 //  http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
 
 // we're using an sRGB working space with a D65 reference white
 
-
 // https://uk.mathworks.com/help/images/ref/whitepoint.html
 // the D65 whitepoint
-#define WHITEPOINT_0 0.9504f
-#define WHITEPOINT_1 1.0f
-#define WHITEPOINT_2 1.0888f
+#define WHITEPOINT_0 0.9504
+#define WHITEPOINT_1 1.0
+#define WHITEPOINT_2 1.0888
 
-#define CIE_EPSILON 0.008856f
-#define CIE_KAPPA 903.3f
+#define CIE_EPSILON 0.008856
+#define CIE_KAPPA 903.3
 
 // intent from the CIE
 //
@@ -42,11 +49,31 @@
 // -0.9692660  1.8760108  0.0415560
 //  0.0556434 -0.2040259  1.0572252
 
-
 #ifdef SENI_BUILD_WASM
 #include <webassembly.h>
 #define powf Math_pow
+#define pow Math_pow
 #endif
+
+seni_colour_64 *colour_64_from_colour(seni_colour_64 *out, seni_colour *in) {
+  out->format = in->format;
+  out->element[0] = (f64)(in->element[0]);
+  out->element[1] = (f64)(in->element[1]);
+  out->element[2] = (f64)(in->element[2]);
+  out->element[3] = (f64)(in->element[3]);
+
+  return out;
+}
+
+seni_colour *colour_from_colour_64(seni_colour *out, seni_colour_64 *in) {
+  out->format = in->format;
+  out->element[0] = (f32)(in->element[0]);
+  out->element[1] = (f32)(in->element[1]);
+  out->element[2] = (f32)(in->element[2]);
+  out->element[3] = (f32)(in->element[3]);
+
+  return out;
+}
 
 void colour_set(seni_colour *out, seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha)
 {
@@ -71,54 +98,54 @@ seni_colour *colour_clone(seni_colour *out, seni_colour *in)
 // http://www.brucelindbloom.com/index.html?Equations.html
 // inverse sRGB companding
 //
-f32 colour_to_axis(f32 component)
+f64 colour_to_axis(f64 component)
 {
-  f32 temp;
-  if (component > 0.04045f) {
-    temp = powf((component + 0.055f) / 1.055f, 2.4f);
+  f64 temp;
+  if (component > 0.04045) {
+    temp = pow((component + 0.055) / 1.055, 2.4);
   } else {
-    temp = component / 12.92f;
+    temp = component / 12.92;
   }
 
   return temp;
 }
 
-f32 axis_to_colour(f32 a)
+f64 axis_to_colour(f64 a)
 {
-  if (a > 0.0031308f) {
-    return (1.055f * powf(a, 1.0f / 2.4f)) - 0.055f;
+  if (a > 0.0031308) {
+    return (1.055 * pow(a, 1.0 / 2.4)) - 0.055;
   } else {
-    return a * 12.92f;
+    return a * 12.92;
   }
 }
 
-seni_colour *xyz_from_rgb(seni_colour *col)
+seni_colour_64 *xyz_from_rgb(seni_colour_64 *col)
 {
-  f32 r = colour_to_axis(col->element[0]);
-  f32 g = colour_to_axis(col->element[1]);
-  f32 b = colour_to_axis(col->element[2]);
+  f64 r = colour_to_axis(col->element[0]);
+  f64 g = colour_to_axis(col->element[1]);
+  f64 b = colour_to_axis(col->element[2]);
 
   // multiply by matrix
   // see http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
   // sRGB colour space with D65 reference white
   //
   col->format = XYZ;
-  col->element[0] = (r * 0.4124f) + (g * 0.3576f) + (b * 0.1805f);
-  col->element[1] = (r * 0.2126f) + (g * 0.7152f) + (b * 0.0722f);
-  col->element[2] = (r * 0.0193f) + (g * 0.1192f) + (b * 0.9505f);
+  col->element[0] = (r * 0.41239079926595948129) + (g * 0.35758433938387796373) + (b * 0.18048078840183428751);
+  col->element[1] = (r * 0.21263900587151035754) + (g * 0.71516867876775592746) + (b * 0.07219231536073371500);
+  col->element[2] = (r * 0.01933081871559185069) + (g * 0.11919477979462598791) + (b * 0.95053215224966058086);
   
   return col;
 }
 
-seni_colour *rgb_from_xyz(seni_colour *col)
+seni_colour_64 *rgb_from_xyz(seni_colour_64 *col)
 {
-  f32 xx = col->element[0];
-  f32 yy = col->element[1];
-  f32 zz = col->element[2];
+  f64 xx = col->element[0];
+  f64 yy = col->element[1];
+  f64 zz = col->element[2];
 
-  f32 r = (xx *  3.2406f) + (yy * -1.5372f) + (zz * -0.4986f);
-  f32 g = (xx * -0.9689f) + (yy *  1.8758f) + (zz *  0.0415f);
-  f32 b = (xx *  0.0557f) + (yy * -0.2040f) + (zz *  1.0570f);
+  f64 r = (xx *  3.24096994190452134377) + (yy * -1.53738317757009345794) + (zz * -0.49861076029300328366);
+  f64 g = (xx * -0.96924363628087982613) + (yy *  1.87596750150772066772) + (zz *  0.04155505740717561247);
+  f64 b = (xx *  0.05563007969699360846) + (yy * -0.20397695888897656435) + (zz *  1.05697151424287856072);
 
   col->format = RGB;
   col->element[0] = axis_to_colour(r);
@@ -128,103 +155,103 @@ seni_colour *rgb_from_xyz(seni_colour *col)
   return col;
 }
 
-f32 axis_to_LAB_component(f32 a)
+f64 axis_to_LAB_component(f64 a)
 {
   if (a > CIE_EPSILON) {
-    return (f32)cbrt(a);        // cube root
+    return cbrt(a);        // cube root
   } else {
-    return ((CIE_KAPPA * a) + 16.0f) / 116.0f;
+    return ((CIE_KAPPA * a) + 16.0) / 116.0;
   }
 }
 
-seni_colour *lab_from_xyz(seni_colour *col)
+seni_colour_64 *lab_from_xyz(seni_colour_64 *col)
 {
-  f32 xr = col->element[0] / WHITEPOINT_0;
-  f32 yr = col->element[1] / WHITEPOINT_1;
-  f32 zr = col->element[2] / WHITEPOINT_2;
+  f64 xr = col->element[0] / WHITEPOINT_0;
+  f64 yr = col->element[1] / WHITEPOINT_1;
+  f64 zr = col->element[2] / WHITEPOINT_2;
   
-  f32 fx = axis_to_LAB_component(xr);
-  f32 fy = axis_to_LAB_component(yr);
-  f32 fz = axis_to_LAB_component(zr);
+  f64 fx = axis_to_LAB_component(xr);
+  f64 fy = axis_to_LAB_component(yr);
+  f64 fz = axis_to_LAB_component(zr);
 
   col->format = LAB;
-  col->element[0] = (116.0f * fy) - 16.0f;
-  col->element[1] = 500.0f * (fx - fy);
-  col->element[2] = 200.0f * (fy - fz);
+  col->element[0] = (116.0 * fy) - 16.0;
+  col->element[1] = 500.0 * (fx - fy);
+  col->element[2] = 200.0 * (fy - fz);
 
   return col;
 }
 
-i32 max_channel(seni_colour *colour)
+i32 max_channel(seni_colour_64 *colour)
 {
   i32 hi = colour->element[0] > colour->element[1] ? 0 : 1;
   return colour->element[2] > colour->element[hi] ? 2 : hi;
 }
 
 
-i32 min_channel(seni_colour *colour)
+i32 min_channel(seni_colour_64 *colour)
 {
   i32 low = colour->element[0] < colour->element[1] ? 0 : 1;
   return colour->element[2] < colour->element[low] ? 2 : low;
 }
 
 // http://www.rapidtables.com/convert/color/rgb-to-hsl.htm
-f32 hue(seni_colour *colour, i32 max_chan, f32 chroma)
+f64 hue(seni_colour_64 *colour, i32 max_chan, f64 chroma)
 {
-  if (chroma == 0.0f) {
-    return 0.0f;        // invalid hue
+  if (chroma == 0.0) {
+    return 0.0;        // invalid hue
   }
 
-  f32 angle = 0.0f;
+  f64 angle = 0.0;
   
   switch (max_chan) {
   case 0:                       // R
-    angle  = 60.0f * ((f32)fmod((colour->element[1] - colour->element[2]) / chroma, 6.0f));
+    angle  = 60.0 * ((f32)fmod((colour->element[1] - colour->element[2]) / chroma, 6.0));
     break;
   case 1:                       // G
-    angle = 60.0f * (((colour->element[2] - colour->element[0]) / chroma) + 2.0f);
+    angle = 60.0 * (((colour->element[2] - colour->element[0]) / chroma) + 2.0);
     break;
   case 2:                       // B
-    angle = 60.0f * (((colour->element[0] - colour->element[1]) / chroma) + 4.0f);
+    angle = 60.0 * (((colour->element[0] - colour->element[1]) / chroma) + 4.0);
     break;
   default:
     break;
   }
 
-  while (angle < 0.0f) {
-    angle += 360.0f;
+  while (angle < 0.0) {
+    angle += 360.0;
   }
 
   return angle;
 }
 
-f32 abso(f32 in)
+f64 abso(f64 in)
 {
-  return in < 0.0f ? -in : in;
+  return in < 0.0 ? -in : in;
 }
 
 // http://www.rapidtables.com/convert/color/rgb-to-hsl.htm
-seni_colour *hsl_from_rgb(seni_colour *col)
+seni_colour_64 *hsl_from_rgb(seni_colour_64 *col)
 {
   i32 min_ch = min_channel(col);
-  f32 min_val = col->element[min_ch];
+  f64 min_val = col->element[min_ch];
 
   i32 max_ch = max_channel(col);
-  f32 max_val = col->element[max_ch];
+  f64 max_val = col->element[max_ch];
 
-  f32 delta = max_val - min_val;
+  f64 delta = max_val - min_val;
 
   
-  f32 h = hue(col, max_ch, delta);
+  f64 h = hue(col, max_ch, delta);
 
 
-  f32 lightness = 0.5f * (min_val + max_val);
+  f64 lightness = 0.5 * (min_val + max_val);
 
-  f32 saturation;
-  if (delta == 0.0f) {
-    saturation = 0.0f;
+  f64 saturation;
+  if (delta == 0.0) {
+    saturation = 0.0;
   } else {
-    saturation = delta / (1.0f - abso((2.0f * lightness) - 1.0f));
+    saturation = delta / (1.0 - abso((2.0 * lightness) - 1.0));
   }
 
   col->format = HSL;
@@ -235,23 +262,23 @@ seni_colour *hsl_from_rgb(seni_colour *col)
   return col;
 }
 
-seni_colour *hsv_from_rgb(seni_colour *col)
+seni_colour_64 *hsv_from_rgb(seni_colour_64 *col)
 {
   i32 min_ch = min_channel(col);
-  f32 min_val = col->element[min_ch];
+  f64 min_val = col->element[min_ch];
 
   i32 max_ch = max_channel(col);
-  f32 max_val = col->element[max_ch];
+  f64 max_val = col->element[max_ch];
 
-  f32 chroma = max_val - min_val;
-  f32 h = hue(col, max_ch, chroma);
+  f64 chroma = max_val - min_val;
+  f64 h = hue(col, max_ch, chroma);
   // bool valid_hue = (chroma != 0.0);
 
-  f32 value = max_val;
+  f64 value = max_val;
 
-  f32 saturation;
-  if (chroma == 0.0f) {
-    saturation = 0.0f;
+  f64 saturation;
+  if (chroma == 0.0) {
+    saturation = 0.0;
   } else {
     saturation = chroma / value;
   }
@@ -267,7 +294,7 @@ seni_colour *hsv_from_rgb(seni_colour *col)
   return col;
 }
 
-seni_colour *rgb_from_chm(seni_colour *col, f32 chroma, f32 h, f32 m)
+seni_colour_64 *rgb_from_chm(seni_colour_64 *col, f64 chroma, f64 h, f64 m)
 {
   // todo: validhue test
   //
@@ -275,33 +302,33 @@ seni_colour *rgb_from_chm(seni_colour *col, f32 chroma, f32 h, f32 m)
   //return construct(Format.RGB, [m, m, m, element(c, ALPHA)]);
   //}
 
-  f32 hprime = h / 60.0f;
-  f32 x = chroma * (1.0f - abso((f32)fmod(hprime, 2.0f) - 1.0f));
-  f32 r = 0.0f;
-  f32 g = 0.0f;
-  f32 b = 0.0f;
+  f64 hprime = h / 60.0;
+  f64 x = chroma * (1.0 - abso((f64)fmod(hprime, 2.0) - 1.0));
+  f64 r = 0.0;
+  f64 g = 0.0;
+  f64 b = 0.0;
 
-  if (hprime < 1.0f) {
+  if (hprime < 1.0) {
     r = chroma;
     g = x;
     b = 0.0;
-  } else if (hprime < 2.0f) {
+  } else if (hprime < 2.0) {
     r = x;
     g = chroma;
     b = 0.0;
-  } else if (hprime < 3.0f) {
+  } else if (hprime < 3.0) {
     r = 0.0;
     g = chroma;
     b = x;
-  } else if (hprime < 4.0f) {
+  } else if (hprime < 4.0) {
     r = 0.0;
     g = x;
     b = chroma;
-  } else if (hprime < 5.0f) {
+  } else if (hprime < 5.0) {
     r = x;
     g = 0.0;
     b = chroma;
-  } else if (hprime < 6.0f) {
+  } else if (hprime < 6.0) {
     r = chroma;
     g = 0.0;
     b = x;
@@ -315,44 +342,44 @@ seni_colour *rgb_from_chm(seni_colour *col, f32 chroma, f32 h, f32 m)
   return col;
 }
 
-seni_colour *rgb_from_hsl(seni_colour *col)
+seni_colour_64 *rgb_from_hsl(seni_colour_64 *col)
 {
-  f32 h = col->element[0];
-  f32 s = col->element[1];
-  f32 l = col->element[2];
-  f32 chroma = (1.0f - abso((2.0f * l) - 1.0f)) * s;
-  f32 m = l - (0.5f * chroma);
+  f64 h = col->element[0];
+  f64 s = col->element[1];
+  f64 l = col->element[2];
+  f64 chroma = (1.0 - abso((2.0 * l) - 1.0)) * s;
+  f64 m = l - (0.5 * chroma);
 
   // todo: set validhue
-  // f32 col = c.set('validHue', true);
+  // f64 col = c.set('validHue', true);
 
   return rgb_from_chm(col, chroma, h, m);
 }
 
-f32 lab_component_to_axis(f32 l)
+f64 lab_component_to_axis(f64 l)
 {
-  if (powf(l, 3.0f) > CIE_EPSILON) {
-    return powf(l, 3.0f);
+  if (pow(l, 3.0) > CIE_EPSILON) {
+    return pow(l, 3.0);
   } else {
-    return ((116.0f * l) - 16.0f) / CIE_KAPPA;
+    return ((116.0 * l) - 16.0) / CIE_KAPPA;
   }
 }
 
-seni_colour *xyz_from_lab(seni_colour *col)
+seni_colour_64 *xyz_from_lab(seni_colour_64 *col)
 {
-  f32 fy = (col->element[0] + 16.0f) / 116.0f;
-  f32 fz = fy - (col->element[2] / 200.0f);
-  f32 fx = (col->element[1] / 500.0f) + fy;
+  f64 fy = (col->element[0] + 16.0) / 116.0;
+  f64 fz = fy - (col->element[2] / 200.0);
+  f64 fx = (col->element[1] / 500.0) + fy;
 
-  f32 xr = lab_component_to_axis(fx);
-  f32 yr = 0.0f;
+  f64 xr = lab_component_to_axis(fx);
+  f64 yr = 0.0;
   if (col->element[0] > (CIE_EPSILON * CIE_KAPPA)) {
-    yr = ((col->element[0] + 16.0f) / 116.0f);
+    yr = ((col->element[0] + 16.0) / 116.0);
     yr = yr * yr * yr;
   } else {
     yr = col->element[0] / CIE_KAPPA;
   }
-  f32 zr = lab_component_to_axis(fz);
+  f64 zr = lab_component_to_axis(fz);
 
   col->format = XYZ;
   col->element[0] = WHITEPOINT_0 * xr;
@@ -362,13 +389,13 @@ seni_colour *xyz_from_lab(seni_colour *col)
   return col;
 }
 
-seni_colour *rgb_from_hsv(seni_colour *col)
+seni_colour_64 *rgb_from_hsv(seni_colour_64 *col)
 {
-  f32 h = col->element[0];
-  f32 s = col->element[1];
-  f32 v = col->element[2];
-  f32 chroma = v * s;
-  f32 m = v - chroma;
+  f64 h = col->element[0];
+  f64 s = col->element[1];
+  f64 v = col->element[2];
+  f64 chroma = v * s;
+  f64 m = v - chroma;
 
   return rgb_from_chm(col, chroma, h, m);
 }
@@ -403,33 +430,32 @@ seni_colour *rgb_from_hsv(seni_colour *col)
 
 typedef struct Bounds_tag Bounds;
 struct Bounds_tag {
-  f32 a;
-  f32 b;
+  f64 a;
+  f64 b;
 };
 
-void get_bounds(f32 l, Bounds bounds[6])
+void get_bounds(f64 l, Bounds bounds[6])
 {
-  f32 tl = l + 16.0f;
-  f32 sub1 = (tl * tl * tl) / 1560896.0f;
-  f32 sub2 = sub1 > CIE_EPSILON ? sub1 : (l / CIE_KAPPA);
+  f64 tl = l + 16.0;
+  f64 sub1 = (tl * tl * tl) / 1560896.0;
+  f64 sub2 = sub1 > CIE_EPSILON ? sub1 : (l / CIE_KAPPA);
   int channel;
   int t;
 
-  f32 m[3][3];
-  m[0][0] =  3.24096994190452134377f; m[0][1] = -1.53738317757009345794f; m[0][2] = -0.49861076029300328366f;
-  m[1][0] = -0.96924363628087982613f; m[1][1] =  1.87596750150772066772f; m[1][2] =  0.04155505740717561247f;
-  m[2][0] =  0.05563007969699360846f; m[2][1] = -0.20397695888897656435f; m[2][2] =  1.05697151424287856072f;
-  
+  f64 m[3][3];
+  m[0][0] =  3.24096994190452134377; m[0][1] = -1.53738317757009345794; m[0][2] = -0.49861076029300328366;
+  m[1][0] = -0.96924363628087982613; m[1][1] =  1.87596750150772066772; m[1][2] =  0.04155505740717561247;
+  m[2][0] =  0.05563007969699360846; m[2][1] = -0.20397695888897656435; m[2][2] =  1.05697151424287856072;
   
   for(channel = 0; channel < 3; channel++) {
-    f32 m1 = m[channel][0];
-    f32 m2 = m[channel][1];
-    f32 m3 = m[channel][2];
+    f64 m1 = m[channel][0];
+    f64 m2 = m[channel][1];
+    f64 m3 = m[channel][2];
 
     for (t = 0; t < 2; t++) {
-      f32 top1 = (284517.0f * m1 - 94839.0f * m3) * sub2;
-      f32 top2 = (838422.0f * m3 + 769860.0f * m2 + 731718.0f * m1) * l * sub2 - 769860.0f * t * l;
-      f32 bottom = (632260.0f * m3 - 126452.0f * m2) * sub2 + 126452.0f * t;
+      f64 top1 = (284517.0 * m1 - 94839.0 * m3) * sub2;
+      f64 top2 = (838422.0 * m3 + 769860.0 * m2 + 731718.0 * m1) * l * sub2 - 769860.0 * t * l;
+      f64 bottom = (632260.0 * m3 - 126452.0 * m2) * sub2 + 126452.0 * t;
 
       bounds[channel * 2 + t].a = top1 / bottom;
       bounds[channel * 2 + t].b = top2 / bottom;
@@ -437,59 +463,59 @@ void get_bounds(f32 l, Bounds bounds[6])
   }
 }
 
-f32 intersect_line_line(const Bounds* line1, const Bounds* line2)
+f64 intersect_line_line(const Bounds* line1, const Bounds* line2)
 {
   return (line1->b - line2->b) / (line2->a - line1->a);
 }
 
-f32 dist_from_pole(f32 x, f32 y)
+f64 dist_from_pole(f64 x, f64 y)
 {
-  return sqrtf(x * x + y * y);
+  return sqrt(x * x + y * y);
 }
 
-f32 ray_length_until_intersect(f32 theta, const Bounds* line)
+f64 ray_length_until_intersect(f64 theta, const Bounds* line)
 {
-  return line->b / (sinf(theta) - line->a * cosf(theta));
+  return line->b / (sin(theta) - line->a * cos(theta));
 }
 
-f32 max_safe_chroma_for_l(f32 l)
+f64 max_safe_chroma_for_l(f64 l)
 {
-  f32 min_len = FLT_MAX;
+  f64 min_len = FLT_MAX;
   Bounds bounds[6];
   int i;
 
   get_bounds(l, bounds);
   for(i = 0; i < 6; i++) {
-    f32 m1 = bounds[i].a;
-    f32 b1 = bounds[i].b;
+    f64 m1 = bounds[i].a;
+    f64 b1 = bounds[i].b;
 
     /* x where line intersects with perpendicular running though (0, 0) */
     Bounds line2;
-    line2.a = -1.0f / m1;
-    line2.b = 0.0f;
+    line2.a = -1.0 / m1;
+    line2.b = 0.0;
         
-    f32 x = intersect_line_line(&bounds[i], &line2);
-    f32 distance = dist_from_pole(x, b1 + x * m1);
+    f64 x = intersect_line_line(&bounds[i], &line2);
+    f64 distance = dist_from_pole(x, b1 + x * m1);
 
-    if(distance >= 0.0f && distance < min_len)
+    if(distance >= 0.0 && distance < min_len)
       min_len = distance;
   }
 
   return min_len;
 }
 
-f32 max_chroma_for_lh(f32 l, f32 h)
+f64 max_chroma_for_lh(f64 l, f64 h)
 {
-  f32 min_len = FLT_MAX;
-  f32 hrad = h * 0.01745329251994329577f; /* (2 * pi / 260) */
+  f64 min_len = FLT_MAX;
+  f64 hrad = h * 0.01745329251994329577; /* (2 * pi / 260) */
   Bounds bounds[6];
   int i;
 
   get_bounds(l, bounds);
   for(i = 0; i < 6; i++) {
-    f32 l2 = ray_length_until_intersect(hrad, &bounds[i]);
+    f64 l2 = ray_length_until_intersect(hrad, &bounds[i]);
 
-    if(l2 >= 0.0f  &&  l2 < min_len)
+    if(l2 >= 0.0  &&  l2 < min_len)
       min_len = l2;
   }
   return min_len;
@@ -500,39 +526,42 @@ f32 max_chroma_for_lh(f32 l, f32 h)
  * illuminant D65, so Yn (see refY in Maxima file) equals 1. The formula is
  * simplified accordingly.
  */
-f32 y2l(f32 y)
+f64 y2l(f64 y)
 {
   if(y <= CIE_EPSILON)
     return y * CIE_KAPPA;
   else
-    return 116.0f * (f32)cbrt(y) - 16.0f;
+    return 116.0 * cbrt(y) - 16.0;
 }
 
-f32 l2y(f32 l)
+f64 l2y(f64 l)
 {
-  if(l <= 8.0f) {
+  if(l <= 8.0) {
     return l / CIE_KAPPA;
   } else {
-    f32 x = (l + 16.0f) / 116.0f;
+    f64 x = (l + 16.0) / 116.0;
     return (x * x * x);
   }
 }
 
-const f32 ref_u = 0.19783000664283680764f;
-const f32 ref_v = 0.46831999493879100370f;
-
-seni_colour* luv_from_xyz(seni_colour* col)
+seni_colour_64* luv_from_xyz(seni_colour_64* col)
 {
-  f32 var_u = (4.0f * col->element[0]) / (col->element[0] + (15.0f * col->element[1]) + (3.0f * col->element[2]));
-  f32 var_v = (9.0f * col->element[1]) / (col->element[0] + (15.0f * col->element[1]) + (3.0f * col->element[2]));
-  f32 l = y2l(col->element[1]);
-  f32 u = 13.0f * l * (var_u - ref_u);
-  f32 v = 13.0f * l * (var_v - ref_v);
+  f64 var_u = (4.0 * col->element[0]) / (col->element[0] + (15.0 * col->element[1]) + (3.0 * col->element[2]));
+  f64 var_v = (9.0 * col->element[1]) / (col->element[0] + (15.0 * col->element[1]) + (3.0 * col->element[2]));
+  f64 l = y2l(col->element[1]);
+  f64 u = 13.0 * l * (var_u - ref_u);
+  f64 v = 13.0 * l * (var_v - ref_v);
+
+  // SENI_LOG("");
+  // SENI_LOG("var_u - ref_u %.5f", (var_u - ref_u));
+  // SENI_LOG("var_v - ref_v %.5f", (var_v - ref_v));
+  // SENI_LOG("var_u %.5f, var_v %.5f", var_u, var_v);
+  // SENI_LOG("");
 
   col->element[0] = l;
-  if(l < 0.00000001f) {
-    col->element[1] = 0.0f;
-    col->element[2] = 0.0f;
+  if(l < 0.00000001) {
+    col->element[1] = 0.0;
+    col->element[2] = 0.0;
   } else {
     col->element[1] = u;
     col->element[2] = v;
@@ -541,20 +570,20 @@ seni_colour* luv_from_xyz(seni_colour* col)
   return col;
 }
 
-seni_colour* xyz_from_luv(seni_colour* col)
+seni_colour_64* xyz_from_luv(seni_colour_64* col)
 {
-  if(col->element[0] <= 0.00000001f) {
-    col->element[0] = 0.0f;
-    col->element[1] = 0.0f;
-    col->element[2] = 0.0f;
+  if(col->element[0] <= 0.00000001) {
+    col->element[0] = 0.0;
+    col->element[1] = 0.0;
+    col->element[2] = 0.0;
     return col;
   }
 
-  f32 var_u = col->element[1] / (13.0f * col->element[0]) + ref_u;
-  f32 var_v = col->element[2] / (13.0f * col->element[0]) + ref_v;
-  f32 y = l2y(col->element[0]);
-  f32 x = -(9.0f * y * var_u) / ((var_u - 4.0f) * var_v - var_u * var_v);
-  f32 z = (9.0f * y - (15.0f * var_v * y) - (var_v * x)) / (3.0f * var_v);
+  f64 var_u = col->element[1] / (13.0 * col->element[0]) + ref_u;
+  f64 var_v = col->element[2] / (13.0 * col->element[0]) + ref_v;
+  f64 y = l2y(col->element[0]);
+  f64 x = -(9.0 * y * var_u) / ((var_u - 4.0) * var_v - var_u * var_v);
+  f64 z = (9.0 * y - (15.0 * var_v * y) - (var_v * x)) / (3.0 * var_v);
     
   col->element[0] = x;
   col->element[1] = y;
@@ -563,17 +592,20 @@ seni_colour* xyz_from_luv(seni_colour* col)
   return col;
 }
 
-seni_colour* lch_from_luv(seni_colour* col)
+seni_colour_64* lch_from_luv(seni_colour_64* col)
 {
-  f32 l = col->element[0];
-  f32 u = col->element[1];
-  f32 v = col->element[2];
-  f32 h;
-  f32 c = sqrtf(u * u + v * v);
+  f64 l = col->element[0];
+  f64 u = col->element[1];
+  f64 v = col->element[2];
+  f64 h;
+  f64 c = sqrtf(u * u + v * v);
 
+  // SENI_LOG("lch_from_luv c %.5f", c);
+  
   if(c < 0.00000001f) {
     h = 0.0f;
   } else {
+    // SENI_LOG("lch_from_luv atan2f(v, u): %.5f", atan2f(v, u));
     h = atan2f(v, u) * 57.29577951308232087680f;  /* (180 / pi) */
     if(h < 0.0f)
       h += 360.0f;
@@ -586,11 +618,11 @@ seni_colour* lch_from_luv(seni_colour* col)
   return col;
 }
 
-seni_colour* luv_from_lch(seni_colour* col)
+seni_colour_64* luv_from_lch(seni_colour_64* col)
 {
-  f32 hrad = col->element[2] * 0.01745329251994329577f;  /* (pi / 180.0) */
-  f32 u = cosf(hrad) * col->element[1];
-  f32 v = sinf(hrad) * col->element[1];
+  f64 hrad = col->element[2] * 0.01745329251994329577f;  /* (pi / 180.0) */
+  f64 u = cosf(hrad) * col->element[1];
+  f64 v = sinf(hrad) * col->element[1];
 
   col->element[1] = u;
   col->element[2] = v;
@@ -598,20 +630,20 @@ seni_colour* luv_from_lch(seni_colour* col)
   return col;
 }
 
-seni_colour* lch_from_hsluv(seni_colour* col)
+seni_colour_64* lch_from_hsluv(seni_colour_64* col)
 {
-  f32 h = col->element[0];
-  f32 s = col->element[1];
-  f32 l = col->element[2];
-  f32 c;
+  f64 h = col->element[0];
+  f64 s = col->element[1];
+  f64 l = col->element[2];
+  f64 c;
 
-  if(l > 99.9999999f || l < 0.00000001f)
-    c = 0.0f;
+  if(l > 99.9999999 || l < 0.00000001)
+    c = 0.0;
   else
-    c = max_chroma_for_lh(l, h) / 100.0f * s;
+    c = max_chroma_for_lh(l, h) / 100.0 * s;
 
-  if (s < 0.00000001f)
-    h = 0.0f;
+  if (s < 0.00000001)
+    h = 0.0;
 
   col->element[0] = l;
   col->element[1] = c;
@@ -620,20 +652,20 @@ seni_colour* lch_from_hsluv(seni_colour* col)
   return col;
 }
 
-seni_colour* hsluv_from_lch(seni_colour* col)
+seni_colour_64* hsluv_from_lch(seni_colour_64* col)
 {
-  f32 l = col->element[0];
-  f32 c = col->element[1];
-  f32 h = col->element[2];
-  f32 s;
+  f64 l = col->element[0];
+  f64 c = col->element[1];
+  f64 h = col->element[2];
+  f64 s;
 
-  if(l > 99.9999999f || l < 0.00000001f)
-    s = 0.0f;
+  if(l > 99.9999999 || l < 0.00000001)
+    s = 0.0;
   else
-    s = c / max_chroma_for_lh(l, h) * 100.0f;
+    s = c / max_chroma_for_lh(l, h) * 100.0;
 
-  if (c < 0.00000001f)
-    h = 0.0f;
+  if (c < 0.00000001)
+    h = 0.0;
 
   col->format = HSLuv;
   col->element[0] = h;
@@ -643,12 +675,12 @@ seni_colour* hsluv_from_lch(seni_colour* col)
   return col;
 }
 
-seni_colour* xyz_from_hsluv(seni_colour* hsluv)
+seni_colour_64* xyz_from_hsluv(seni_colour_64* hsluv)
 {
   return xyz_from_luv(luv_from_lch(lch_from_hsluv(hsluv)));
 }
 
-seni_colour* hsluv_from_xyz(seni_colour* xyz)
+seni_colour_64* hsluv_from_xyz(seni_colour_64* xyz)
 {
   return hsluv_from_lch(lch_from_luv(luv_from_xyz(xyz)));
 }
@@ -658,20 +690,25 @@ seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_form
   if (out != in) {
     colour_clone(out, in);
   }
-  
-  switch(out->format) {
+
+  if (out->format == new_format) {
+    return out;
+  }
+
+  seni_colour_64 c64;
+  colour_64_from_colour(&c64, out);
+
+  switch(c64.format) {
   case HSL:
     switch(new_format) {
-    case HSL:
-      return out;
     case HSLuv:
-      return hsluv_from_xyz(xyz_from_rgb(rgb_from_hsl(out)));
+      hsluv_from_xyz(xyz_from_rgb(rgb_from_hsl(&c64))); break;
     case HSV:
-      return hsv_from_rgb(rgb_from_hsl(out));
+      hsv_from_rgb(rgb_from_hsl(&c64)); break;
     case LAB:
-      return lab_from_xyz(xyz_from_rgb(rgb_from_hsl(out)));
+      lab_from_xyz(xyz_from_rgb(rgb_from_hsl(&c64))); break;
     case RGB:
-      return rgb_from_hsl(out);
+      rgb_from_hsl(&c64); break;
     default:
       SENI_ERROR("unknown colour format %d", new_format);
       break;
@@ -680,15 +717,13 @@ seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_form
   case HSLuv:
     switch(new_format) {
     case HSL:
-      return hsl_from_rgb(rgb_from_xyz(xyz_from_hsluv(out)));
-    case HSLuv:
-      return out;
+      hsl_from_rgb(rgb_from_xyz(xyz_from_hsluv(&c64))); break;
     case HSV:
-      return hsv_from_rgb(rgb_from_xyz(xyz_from_hsluv(out)));
+      hsv_from_rgb(rgb_from_xyz(xyz_from_hsluv(&c64))); break;
     case LAB:
-      return lab_from_xyz(xyz_from_hsluv(out));
+      lab_from_xyz(xyz_from_hsluv(&c64)); break;
     case RGB:
-      return rgb_from_xyz(xyz_from_hsluv(out));
+      rgb_from_xyz(xyz_from_hsluv(&c64)); break;
     default:
       SENI_ERROR("unknown colour format %d", new_format);
       break;
@@ -697,15 +732,13 @@ seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_form
   case HSV:
     switch(new_format) {
     case HSL:
-      return hsl_from_rgb(rgb_from_hsv(out));
+      hsl_from_rgb(rgb_from_hsv(&c64)); break;
     case HSLuv:
-      return hsluv_from_xyz(xyz_from_rgb(rgb_from_hsv(out)));
-    case HSV:
-      return out;
+      hsluv_from_xyz(xyz_from_rgb(rgb_from_hsv(&c64))); break;
     case LAB:
-      return lab_from_xyz(xyz_from_rgb(rgb_from_hsv(out)));
+      lab_from_xyz(xyz_from_rgb(rgb_from_hsv(&c64))); break;
     case RGB:
-      return rgb_from_hsv(out);
+      rgb_from_hsv(&c64); break;
     default:
       SENI_ERROR("unknown colour format %d", new_format);
       break;
@@ -714,15 +747,13 @@ seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_form
   case LAB:
     switch(new_format) {
     case HSL:
-      return hsl_from_rgb(rgb_from_xyz(xyz_from_lab(out)));
+      hsl_from_rgb(rgb_from_xyz(xyz_from_lab(&c64))); break;
     case HSLuv:
-      return hsluv_from_xyz(xyz_from_lab(out));
+      hsluv_from_xyz(xyz_from_lab(&c64)); break;
     case HSV:
-      return hsv_from_rgb(rgb_from_xyz(xyz_from_lab(out)));
-    case LAB:
-      return out;
+      hsv_from_rgb(rgb_from_xyz(xyz_from_lab(&c64))); break;
     case RGB:
-      return rgb_from_xyz(xyz_from_lab(out));
+      rgb_from_xyz(xyz_from_lab(&c64)); break;
     default:
       SENI_ERROR("unknown colour format %d", new_format);
       break;
@@ -731,15 +762,13 @@ seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_form
   case RGB:
     switch(new_format) {
     case HSL:
-      return hsl_from_rgb(out);
+      hsl_from_rgb(&c64); break;
     case HSLuv:
-      return hsluv_from_xyz(xyz_from_rgb(out));
+      hsluv_from_xyz(xyz_from_rgb(&c64)); break;
     case HSV:
-      return hsv_from_rgb(out);
+      hsv_from_rgb(&c64); break;
     case LAB:
-      return lab_from_xyz(xyz_from_rgb(out));
-    case RGB:
-      return out;
+      lab_from_xyz(xyz_from_rgb(&c64)); break;
     default:
       SENI_ERROR("unknown colour format %d", new_format);
       break;
@@ -749,6 +778,8 @@ seni_colour *colour_clone_as(seni_colour *out, seni_colour *in, seni_colour_form
     SENI_ERROR("unknown colour format %d", in->format);
     break;
   }
+
+  colour_from_colour_64(out, &c64);
 
   return out;
 }

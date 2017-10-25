@@ -1,18 +1,43 @@
 * TODO [0/13]
-  1. [ ] repeat/* pass in information to the fn calls
+  1. [ ] better error messages when gen/scalar was mis-spelt
   2. [ ] {red (gen/col alpha: 1)} bug?
-  3. [ ] poly should also accept a uv parameter
-  4. [ ] remove vm/env from genotype_list_create_initial_generation
-  5. [ ] impl: initial seed
-  6. [ ] get high-res render working
-  7. [ ] add an END token to serialized output, use as a sanity check
-  8. [ ] add unit tests for compiling with a genotype
-  9. [ ] unify args to *_pretty_print
+  3. [ ] way more tests for colour conversion
+  4. [ ] poly should also accept a uv parameter
+  5. [ ] remove vm/env from genotype_list_create_initial_generation
+  6. [ ] impl: initial seed
+  7. [ ] get high-res render working
+  8. [ ] add an END token to serialized output, use as a sanity check?
+  9. [ ] add unit tests for compiling with a genotype
   10. [ ] maybe have a required specifier in functions?
   11. [ ] ensure that there's a dist folder before running npm run build:wasm
   12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
   13. [ ] look into restrict keyword in C99
 
+
+* fn call
+  check level of stack after manually calling the function invocation code
+  
+  pass in 'sided' parameter to repeat functions
+
+* replacing argument_offsets
+
+current state is that the repeat/* functions have hacked-in argument passing. 
+
+struct seni_fn_arg_info {
+  i32 iname
+  seni_var default_value  // how will this work with arrays???
+  offset // currently done with argument_offsets
+}
+
+will there be a need for vm_interpreter::arg_memory_from_iname ???
+
+how will the (fn-call (address-of foo)) argument passing be changed???
+how does this currently work wrt argument passing?
+
+will the current bytecode dance of setting-up default args be changed???
+
+small helper functions for getting a parameter's value location in the stack
+e.g. &(vm->stack[vm->fp - angle_iname_location - 1]);
 
 * bugs
 

@@ -962,8 +962,21 @@ void test_vm_function_address(void)
 
 void test_vm_repeat(void)
 {
-  f32v("(define v []) (fn (k) (vector/append v 1)) (repeat/rotate fn: (address-of k) copies: 3) v",
-       3, 1.0f, 1.0f, 1.0f);
+  // angle is being sent to the function
+  f32v("(define v []) (fn (k angle: 0) (vector/append v angle)) (repeat/rotate fn: (address-of k) copies: 3) v",
+       3, 0.0f, 120.0f, 240.0f);
+
+  // num is being sent to the function
+  f32v("(define v []) (fn (k num: 0) (vector/append v num)) (repeat/rotate fn: (address-of k) copies: 3) v",
+       3, 0.0f, 1.0f, 2.0f);
+
+  // default arguments are being set
+  f32v("(define v []) (fn (k angle: 0 shabba: 5.0) (vector/append v (+ shabba angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
+       3, 5.0f, 125.0f, 245.0f);
+
+  f32v("(define v []) (fn (k num: 0 angle: 0 shabba: 5.0) (vector/append v (+ num shabba angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
+       3, 5.0f, 126.0f, 247.0f);  
+
 }
 
 seni_genotype *genotype_test(i32 seed_value, char *source)
@@ -1649,6 +1662,59 @@ void test_serialization_trait_list(void)
   seni_systems_shutdown();
 }
 
+void assert_rgb_hsluv(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l)
+{
+  seni_colour rgb;
+  rgb.format = RGB;
+  rgb.element[0] = r;
+  rgb.element[1] = g;
+  rgb.element[2] = b;
+  rgb.element[3] = 1.0f;
+
+  seni_colour hsluv;
+  hsluv.format = HSLuv;
+  hsluv.element[0] = h;
+  hsluv.element[1] = s;
+  hsluv.element[2] = l;
+  hsluv.element[3] = 1.0f;
+
+  seni_colour res;
+  colour_clone_as(&res, &rgb, HSLuv);
+
+  TEST_ASSERT_EQUAL(HSLuv, res.format);
+  TEST_ASSERT_FLOAT_WITHIN(0.001f, h, res.element[0]);
+  TEST_ASSERT_FLOAT_WITHIN(0.001f, s, res.element[1]);
+  TEST_ASSERT_FLOAT_WITHIN(0.001f, l, res.element[2]);
+  TEST_ASSERT_EQUAL_FLOAT(1.0f, res.element[3]);
+
+  colour_clone_as(&res, &hsluv, RGB);
+
+  TEST_ASSERT_EQUAL(RGB, res.format);
+  TEST_ASSERT_FLOAT_WITHIN(0.001f, r, res.element[0]);
+  TEST_ASSERT_FLOAT_WITHIN(0.001f, g, res.element[1]);
+  TEST_ASSERT_FLOAT_WITHIN(0.001f, b, res.element[2]);
+  TEST_ASSERT_EQUAL_FLOAT(1.0f, res.element[3]);  
+}
+
+void test_rgb_hsluv_conversion()
+{
+  FILE *fp = fopen("colours_rgb_hsluv.txt", "r");
+  double r, g, b, h, s, l;
+  int read;
+  i32 count = 0;
+
+  read = fscanf(fp, "%lf %lf %lf %lf %lf %lf", &r, &g, &b, &h, &s, &l);
+  while (read == 6) {
+    count++;
+    assert_rgb_hsluv(r, g, b, h, s, l);
+    read = fscanf(fp, "%lf %lf %lf %lf %lf %lf", &r, &g, &b, &h, &s, &l);
+  }
+
+  TEST_ASSERT_EQUAL(4096, count);
+
+  fclose(fp);
+}
+
 int main(void)
 {
   // timing();
@@ -1700,6 +1766,8 @@ int main(void)
   RUN_TEST(test_serialization_genotype);
   RUN_TEST(test_serialization_genotype_list);
   RUN_TEST(test_serialization_trait_list);
+
+  RUN_TEST(test_rgb_hsluv_conversion);
 
   return UNITY_END();
 }
