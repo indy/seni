@@ -2118,7 +2118,8 @@ seni_var *bind_repeat_symmetry_vertical(seni_vm *vm, i32 num_args)
     return &g_var_true;
   }
 
-  repeat_symmetry_vertical(vm, fn);
+  i32 copy = 0;
+  repeat_symmetry_vertical(vm, fn, &copy);
 
   return &g_var_true;
 }
@@ -2136,7 +2137,8 @@ seni_var *bind_repeat_symmetry_horizontal(seni_vm *vm, i32 num_args)
     return &g_var_true;
   }
 
-  repeat_symmetry_horizontal(vm, fn);
+  i32 copy = 0;
+  repeat_symmetry_horizontal(vm, fn, &copy);
 
   return &g_var_true;
 }
@@ -2154,7 +2156,8 @@ seni_var *bind_repeat_symmetry_4(seni_vm *vm, i32 num_args)
     return &g_var_true;
   }
 
-  repeat_symmetry_4(vm, fn);
+  i32 copy = 0;
+  repeat_symmetry_4(vm, fn, &copy);
 
   return &g_var_true;
 }
@@ -2172,7 +2175,8 @@ seni_var *bind_repeat_symmetry_8(seni_vm *vm, i32 num_args)
     return &g_var_true;
   }
 
-  repeat_symmetry_8(vm, fn);
+  i32 copy = 0;
+  repeat_symmetry_8(vm, fn, &copy);
 
   return &g_var_true;
 }
