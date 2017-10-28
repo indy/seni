@@ -5,6 +5,7 @@
 
 #include "seni/bind.h"
 #include "seni/colour.h"
+#include "seni/colour_scheme.h"
 #include "seni/config.h"
 #include "seni/genetic.h"
 #include "seni/keyword_iname.h"
@@ -967,14 +968,14 @@ void test_vm_repeat(void)
        3, 0.0f, 120.0f, 240.0f);
 
   // num is being sent to the function
-  f32v("(define v []) (fn (k num: 0) (vector/append v num)) (repeat/rotate fn: (address-of k) copies: 3) v",
+  f32v("(define v []) (fn (k copy: 0) (vector/append v copy)) (repeat/rotate fn: (address-of k) copies: 3) v",
        3, 0.0f, 1.0f, 2.0f);
 
   // default arguments are being set
   f32v("(define v []) (fn (k angle: 0 shabba: 5.0) (vector/append v (+ shabba angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
        3, 5.0f, 125.0f, 245.0f);
 
-  f32v("(define v []) (fn (k num: 0 angle: 0 shabba: 5.0) (vector/append v (+ num shabba angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
+  f32v("(define v []) (fn (k copy: 0 angle: 0 shabba: 5.0) (vector/append v (+ copy shabba angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
        3, 5.0f, 126.0f, 247.0f);  
 
 }

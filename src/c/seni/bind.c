@@ -1,6 +1,7 @@
 #include "bind.h"
 
 #include "colour.h"
+#include "colour_scheme.h"
 #include "config.h"
 #include "focal.h"
 #include "keyword_iname.h"
@@ -1335,7 +1336,7 @@ seni_var *bind_col_set_l(seni_vm *vm, i32 num_args)
   } else if (colour.format == LAB) {
     ret_colour.element[0] = value;
   } else {
-    SENI_ERROR("bind_col_set_l: colour is in the incorrect format"); 
+    SENI_ERROR("bind_col_set_l: colour is in the incorrect format: %d", colour.format); 
   }
 
   colour_as_var(&g_var_scratch, &ret_colour);
