@@ -12,11 +12,11 @@
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares)
-  focal-point ({focal/build-hline (gen/select from: '(focal/build-point
+  focal-point ({focal/build-hline (gen/select from: (focal/build-point
                                                       focal/build-hline
                                                       focal/build-vline))} 
-               position: [{500 (gen/select from: (0 500 1000))} 
-                          {0 (gen/select from: (0 500 1000))}] 
+               position: [{500 (gen/select from: '(0 500 1000))} 
+                          {0 (gen/select from: '(0 500 1000))}] 
                distance: {1300 (gen/scalar min: 300 max: 1300)})
   rng-fn (prng/build min: -1 max: 1 seed: 454)
   box-colour (col/rgb r: 0.2 g: 0.2 b: 0.2 alpha: 0.7))

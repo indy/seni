@@ -1,5 +1,5 @@
 (define 
-  num-squares-to-render 3
+  num-squares-to-render 15
   gap-size 30
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)

@@ -67,9 +67,11 @@ void gene_assign_to_node(seni_genotype *genotype, seni_node *node)
     node->gene = NULL;
 
     if (get_node_value_in_use(node->type) == USE_FIRST_CHILD) {
-      gene_assign_to_node(genotype, safe_first(node->value.first_child));
+      seni_node *first_child = safe_first(node->value.first_child);
+      if (first_child) {
+        gene_assign_to_node(genotype, first_child);
+      }
     }
-    
   }
 
   // todo: is it safe to assume that node->next will always be valid? and that leaf nodes will have next == null?
@@ -343,6 +345,7 @@ i32 get_fn_info_index(seni_node *node, seni_program *program)
 {
   if (node->type != NODE_NAME) {
     SENI_ERROR("get_fn_info_index not given a name node");
+    node_pretty_print("get_fn_info_index non-name node:", node, NULL);
     return -1;
   }
 

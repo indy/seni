@@ -303,6 +303,22 @@ void node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut)
   default:
     SENI_ERROR("unknown using value for a seni_node: %d", using);
   }
+
+  // if (node->src) {
+  //   char c[50];
+  //   i32 size = node->src_len > 20 ? node->src_len : 20;
+  //   i32 i;
+  //   for (i = 0; i < size; i++) {
+  //     if (node->src[i] == '\0') {
+  //       // reached the end of the script
+  //       break;
+  //     }
+  //     SENI_LOG("%c", c[i]);
+  //     c[i] = node->src[i];
+  //   }
+  //   c[i] = '\0';
+  //   SENI_PRINT("src: %d", c);
+  // }
 }
 
 bool is_node_colour_constructor(seni_node *node)

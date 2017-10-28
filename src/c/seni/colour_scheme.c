@@ -10,30 +10,33 @@
 #define COLOUR_COMPLIMENTARY_ANGLE (COLOUR_UNIT_ANGLE * 6.0f)
 #define COLOUR_TRIAD_ANGLE (COLOUR_UNIT_ANGLE * 4)
 
-seni_colour *add_angle_to_hsl(seni_colour *out, seni_colour *in, f32 delta)
+seni_colour *add_angle_to_hsluv(seni_colour *out, seni_colour *in, f32 delta)
 {
   i32 H = 0;
 
+  seni_colour_format original_format = in->format;
+
   // rotate the hue by the given delta
-  colour_clone_as(out, in, HSL);
+  colour_clone_as(out, in, HSLuv);
   out->element[H] = (f32)fmod(out->element[H] + delta, 360.0f);
 
-  return out;
+  // return the new colour in the format of the original colour
+  return colour_clone_as(out, out, original_format);
 }
 
 // Return the 2 colours either side of this that are 'ang' degrees away
 //
 void pair(seni_colour *out0, seni_colour *out1, seni_colour *in, f32 ang)
 {
-  add_angle_to_hsl(out0, in, -ang);
-  add_angle_to_hsl(out1, in, ang);
+  add_angle_to_hsluv(out0, in, -ang);
+  add_angle_to_hsluv(out1, in, ang);
 }
 
 // Returns the colour at the opposite end of the wheel
 //
 seni_colour *complementary(seni_colour *out, seni_colour *in)
 {
-  return add_angle_to_hsl(out, in, COLOUR_COMPLIMENTARY_ANGLE);
+  return add_angle_to_hsluv(out, in, COLOUR_COMPLIMENTARY_ANGLE);
 }
 
 // Returns the 2 colours next to a complementary colour.
@@ -43,7 +46,7 @@ seni_colour *complementary(seni_colour *out, seni_colour *in)
 void split_complementary(seni_colour *out0, seni_colour *out1, seni_colour *in)
 {
   seni_colour tmp;
-  pair(out0, out1, add_angle_to_hsl(&tmp, in, COLOUR_COMPLIMENTARY_ANGLE), COLOUR_UNIT_ANGLE);
+  pair(out0, out1, add_angle_to_hsluv(&tmp, in, COLOUR_COMPLIMENTARY_ANGLE), COLOUR_UNIT_ANGLE);
 }
 
 // Returns the adjacent colours.

@@ -41,8 +41,8 @@ function seniMode() {
 
   // keywords are core to the seni language
   const keywords =
-        makeKeywords('begin define fn if step fence on-matrix-stack quote');
-  const indentKeys = makeKeywords('define step fence on-matrix-stack fn');
+        makeKeywords('begin define fn if fence loop on-matrix-stack quote');
+  const indentKeys = makeKeywords('define fence loop on-matrix-stack fn');
 
   // functions from the common seni library
   const seniCommon = makeKeywords(`* + - / < = > append begin bezier

@@ -1,63 +1,25 @@
-* TODO [0/13]
-  1. [ ] better error messages when gen/scalar was mis-spelt
-  2. [ ] {red (gen/col alpha: 1)} bug?
-  3. [ ] way more tests for colour conversion
-  4. [ ] poly should also accept a uv parameter
-  5. [ ] remove vm/env from genotype_list_create_initial_generation
-  6. [ ] impl: initial seed
-  7. [ ] get high-res render working
-  8. [ ] add an END token to serialized output, use as a sanity check?
-  9. [ ] add unit tests for compiling with a genotype
-  10. [ ] maybe have a required specifier in functions?
-  11. [ ] ensure that there's a dist folder before running npm run build:wasm
-  12. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  13. [ ] look into restrict keyword in C99
+* TODO [0/16]
+  1. [ ] [[check node->src and node->src_len]]
+  2. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
+  3. [ ] quilt
+  4. [ ] better error messages when gen/scalar was mis-spelt
+  5. [ ] {red (gen/col alpha: 1)} bug?
+  6. [ ] way more tests for colour conversion
+  7. [ ] poly should also accept a uv parameter
+  8. [ ] remove vm/env from genotype_list_create_initial_generation
+  9. [ ] impl: initial seed
+  10. [ ] get high-res render working
+  11. [ ] add an END token to serialized output, use as a sanity check?
+  12. [ ] add unit tests for compiling with a genotype
+  13. [ ] maybe have a required specifier in functions?
+  14. [ ] ensure that there's a dist folder before running npm run build:wasm
+  15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  16. [ ] look into restrict keyword in C99
 
+* todo
+** check node->src and node->src_len
+   node_pretty_print
 
-* fn call
-  check level of stack after manually calling the function invocation code
-  
-  pass in 'sided' parameter to repeat functions
-
-* replacing argument_offsets
-
-current state is that the repeat/* functions have hacked-in argument passing. 
-
-struct seni_fn_arg_info {
-  i32 iname
-  seni_var default_value  // how will this work with arrays???
-  offset // currently done with argument_offsets
-}
-
-will there be a need for vm_interpreter::arg_memory_from_iname ???
-
-how will the (fn-call (address-of foo)) argument passing be changed???
-how does this currently work wrt argument passing?
-
-will the current bytecode dance of setting-up default args be changed???
-
-small helper functions for getting a parameter's value location in the stack
-e.g. &(vm->stack[vm->fp - angle_iname_location - 1]);
-
-* bugs
-
-why does fence only draw 9 boxes?:
-
-(define
-  left-col (col/rgb r: 0.1 g: 1.0 b: 0 alpha: 1)
-  right-col (col/rgb r: 0.1 g: 0.0 b: 1 alpha: 1))
-
-
-(fence (x from: 100 to: 900 quantity: 10)
-  (debug/print value: x)
-  (rect position: [x 500]
-        width: 80
-        height: 100
-        colour: left-col))
-
-
-(fence (x from: 100 to: 900 quantity: 10)
-  (debug/print value: x))
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.seni
@@ -118,44 +80,6 @@ why does fence only draw 9 boxes?:
   56. [X] 1648-chalk-boxes.seni
   57. [ ] 1669-zero.seni - map
 
-* c
-  https://matt.sh/howto-c
-
-* loop syntax
-  from to
-  to
-  from to increment
-  from upto
-  from upto steps
-
-
-
-  rename loop to step
-
-  step should have from, to and increment  parameters only
-  will sequence from (inclusive) -> to (exclusive) by increment steps
-  e.g.
-  (step (a from: 0 to: 20 increment: 5))
-  a == 0, 5, 10, 15
-  (step (a from: 0 to: 4 increment: 1))
-  a == 0, 1, 2, 3
-
-  should there still be an upto??
-  (step (a from: 0 upto: 20 increment: 5))
-  a == 0, 5, 10, 15, 20
-  (step (a from: 0 upto: 4 increment: 1))
-  a == 0, 1, 2, 3, 4
-
-
-
-
-  fence can have from, to, quantity
-  will sequence from -> to inclusive 'quantity' number of times
-  e.g.
-  (fence (a from: 0 to: 20 quantity: 5))
-  a == 0, 5, 10, 15, 20
-  (fence (a from: 0 to: 20 quantity: 3))
-  a == 0, 10, 20
 
 * seni_env
 
@@ -869,4 +793,5 @@ rename server.go -> server/serve.go
 remove build_unix folder, place output in /output?
 
 remove /make prefix files with make_ and place in root
+
 
