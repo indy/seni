@@ -270,55 +270,91 @@ void node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut)
     return;
   }
 
+#define MAX_SRC_LEN 20
+  // copy the relevent section of the source code into src_buffer
+  char src_buffer[MAX_SRC_LEN];
+  char *c = src_buffer;
+
+  i32 max_size = MAX_SRC_LEN - 2 - 1; // minus quotes and null terminator
+  i32 size = node->src_len < max_size ? node->src_len : max_size;
+  i32 i;
+
+  *c++ = '"';
+  for (i = 0; i < size; i++) {
+    if (node->src[i] == '\0') {
+      break;
+    }
+    *c++ = node->src[i];
+  }
+  *c++ = '"';
+  *c++ = '\0';
+
   char *type = node_type_name(node);
   seni_value_in_use using = get_node_value_in_use(node->type);
 
   switch(using) {
   case USE_UNKNOWN:
-    SENI_PRINT("%s: UNKNOWN %s", msg,  type);
+    SENI_PRINT("%s UNKNOWN %s", msg, type);
     break;
   case USE_I:
     if (word_lut != NULL &&
         (node->type == NODE_NAME || node->type == NODE_LABEL || node->type == NODE_STRING)) {
-      SENI_PRINT("%s: %s : %s (%d)", msg, type, wlut_reverse_lookup(word_lut, node->value.i), node->value.i);
+      SENI_PRINT("%s %s : %s (value.i:%d) (src:%s)", msg, type, wlut_reverse_lookup(word_lut, node->value.i), node->value.i, src_buffer);
     } else {
-      SENI_PRINT("%s: %s : %d", msg, type, node->value.i);
+      SENI_PRINT("%s %s : %d (src:%s)", msg, type, node->value.i, src_buffer);
     }
     break;
   case USE_F:
-    SENI_PRINT("%s: %s : %.2f", msg,  type, node->value.f);
+    SENI_PRINT("%s %s : %.2f (src:%s)", msg, type, node->value.f, src_buffer);
     break;
   case USE_L:
-    SENI_PRINT("%s: L %s", msg,  type);
+    SENI_PRINT("%s L %s (src:%s)", msg, type, src_buffer);
     break;
   case USE_V:
-    SENI_PRINT("%s: V %s", msg,  type);
+    SENI_PRINT("%s V %s (src:%s)", msg, type, src_buffer);
     break;
   case USE_SRC:
-    SENI_PRINT("%s: %s '%.*s'", msg,  type, node->src_len, node->src);
+    if (node->type == NODE_WHITESPACE) {
+      SENI_PRINT("%s %s", msg, type);
+    } else {
+      SENI_PRINT("%s %s '%.*s' (src:%s)", msg, type, node->src_len, node->src, src_buffer);
+    }
     break;
   case USE_FIRST_CHILD:
-    SENI_PRINT("%s: %s", msg,  type);
+    SENI_PRINT("%s %s", msg, type);
     break;
   default:
     SENI_ERROR("unknown using value for a seni_node: %d", using);
   }
+}
 
-  // if (node->src) {
-  //   char c[50];
-  //   i32 size = node->src_len > 20 ? node->src_len : 20;
-  //   i32 i;
-  //   for (i = 0; i < size; i++) {
-  //     if (node->src[i] == '\0') {
-  //       // reached the end of the script
-  //       break;
-  //     }
-  //     SENI_LOG("%c", c[i]);
-  //     c[i] = node->src[i];
-  //   }
-  //   c[i] = '\0';
-  //   SENI_PRINT("src: %d", c);
-  // }
+void ast_pretty_print_(seni_node *ast, seni_word_lut *word_lut, i32 indent)
+{
+#define TRAVERSE_AST_INDENT_BUFFER_LEN 100
+  char in[TRAVERSE_AST_INDENT_BUFFER_LEN];
+  i32 i;
+  i32 max_indent_capacity = TRAVERSE_AST_INDENT_BUFFER_LEN - 1;
+  if (indent > max_indent_capacity) {
+    indent = max_indent_capacity;
+  }
+  for (i = 0; i < indent; i++) {
+    in[i] = ' ';
+  }
+  in[i] = '\0';
+  
+  seni_node *n = ast;
+  while (n != NULL) {
+    node_pretty_print(in, n, word_lut);
+    if (get_node_value_in_use(n->type) == USE_FIRST_CHILD) {
+      ast_pretty_print_(n->value.first_child, word_lut, indent + 2);
+    }
+    n = n->next;
+  }
+}
+
+void ast_pretty_print(seni_node *ast, seni_word_lut *word_lut)
+{
+  ast_pretty_print_(ast, word_lut, 0);
 }
 
 bool is_node_colour_constructor(seni_node *node)
@@ -388,7 +424,7 @@ void var_pretty_print(char* msg, seni_var *var)
   seni_value_in_use using = get_var_value_in_use(var->type);
 
   if(var->type == VAR_2D) {
-    SENI_PRINT("%s: %s : [%.2f %.2f]", msg,  type, var->f32_array[0], var->f32_array[1]);
+    SENI_PRINT("%s: %s : [%.2f %.2f]", msg, type, var->f32_array[0], var->f32_array[1]);
     return;
   }
 
@@ -402,7 +438,7 @@ void var_pretty_print(char* msg, seni_var *var)
     }
     break;
   case USE_F:
-    SENI_PRINT("%s: %s : %.2f", msg,  type, var->value.f);
+    SENI_PRINT("%s: %s : %.2f", msg, type, var->value.f);
     break;
   case USE_L:
     SENI_PRINT("%s: %s : %llu", msg, type, (long long unsigned int)(var->value.l));
@@ -411,7 +447,7 @@ void var_pretty_print(char* msg, seni_var *var)
     if (var->type == VAR_VECTOR) {
       SENI_PRINT("%s: %s : length %d", msg, type, vector_length(var));
     } else {
-      SENI_PRINT("%s: %s", msg,  type);
+      SENI_PRINT("%s: %s", msg, type);
     }
     break;
   default:

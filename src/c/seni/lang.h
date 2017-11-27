@@ -96,6 +96,7 @@ seni_node *safe_next(seni_node *expr);
 seni_node *safe_prev(seni_node *expr);
 char      *node_type_name(seni_node *node);
 void       node_pretty_print(char* msg, seni_node *node, seni_word_lut *word_lut);
+void       ast_pretty_print(seni_node *ast, seni_word_lut *word_lut);
 
 bool       is_node_colour_constructor(seni_node *node);
 

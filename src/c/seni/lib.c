@@ -64,8 +64,10 @@ seni_program *seni_compile_program(char *source, seni_word_lut *word_lut, i32 pr
 {
   seni_node *ast = parser_parse(word_lut, source);
 
+  // ast_pretty_print(ast, word_lut);
+
   seni_program *program = compile_program(ast, program_max_size, word_lut);
-  
+
   parser_return_nodes_to_pool(ast);
 
   return program;
@@ -76,7 +78,7 @@ seni_program *seni_compile_program_with_genotype(char *source, seni_genotype *ge
   seni_node *ast = parser_parse(word_lut, source);
 
   seni_program *program = compile_program_with_genotype(ast, program_max_size, word_lut, genotype);
-  
+
   parser_return_nodes_to_pool(ast);
 
   return program;
@@ -89,6 +91,8 @@ void seni_unparse_with_genotype(seni_cursor *out_cursor, char *source, seni_geno
   cursor_reset(out_cursor);
 
   unparse(out_cursor, word_lut, ast, genotype);
+
+  cursor_write_null(out_cursor);
 
   parser_return_nodes_to_pool(ast);
 }

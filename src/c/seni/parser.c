@@ -49,7 +49,7 @@ seni_node *node_get_from_pool()
 
 void node_return_to_pool(seni_node *node)
 {
-  node_cleanup(node);  
+  node_cleanup(node);
   node_pool_return(g_node_pool, node);
 }
 
@@ -177,13 +177,13 @@ i32 lookup_name(seni_string_ref *string_refs, i32 word_count, i32 offset, char *
 {
   i32 i = 0;
   seni_string_ref *string_ref = string_refs;
-  
+
   for (i = 0; i < word_count; i++) {
     char *name = string_ref->c;
     bool found = true;
 
     // can also compare len with string_ref->len for an early test exit
-    
+
     /* can't use string_compare since 'string' could be a substring */
     size_t j = 0;
     for (j = 0; j < len; j++) {
@@ -200,7 +200,7 @@ i32 lookup_name(seni_string_ref *string_refs, i32 word_count, i32 offset, char *
     string_ref++;
   }
 
-  return -1;  
+  return -1;
 }
 
 i32 word_lut_lookup_(seni_word_lut *word_lut, char *string, size_t len)
@@ -252,7 +252,7 @@ seni_node *build_text_lookup_node_from_string(seni_word_lut *word_lut, seni_node
 
   node->type = type;
   node->value.i = k;
-  
+
   return node;
 }
 
@@ -270,7 +270,7 @@ seni_node *build_text_lookup_node_of_length(seni_word_lut *word_lut, char **src,
 
   node->src = *src;
   node->src_len = (i32)len;
-  
+
   *src += len;
 
   return node;
@@ -321,7 +321,7 @@ seni_node *eat_vector(seni_word_lut *word_lut, char **src)
   node->type = NODE_VECTOR;
 
   (*src)++; // [
-  
+
   while (1) {
     if (is_vector_end(**src)) {
       (*src)++; // ]
@@ -343,9 +343,9 @@ seni_node *eat_alterable(seni_word_lut *word_lut, char **src)
   seni_node *node;
   seni_node *parameter_prefix = NULL;
   seni_node *c;
-  
+
   (*src)++; // {
-  
+
   while (1) {
     c = eat_item(word_lut, src);
     if (c == NULL) {
@@ -372,7 +372,7 @@ seni_node *eat_alterable(seni_word_lut *word_lut, char **src)
       SENI_ERROR("non-mutable node within curly brackets: %s", node_type_name(node));
       return NULL;
     }
-  
+
   while (1) {
     if (is_alterable_end(**src)) {
       (*src)++; // }
@@ -392,7 +392,7 @@ seni_node *eat_alterable(seni_word_lut *word_lut, char **src)
 seni_node *eat_quoted_form(seni_word_lut *word_lut, char **src)
 {
   (*src)++; // '
-  
+
   seni_node *node = node_get_from_pool();
   node->type = NODE_LIST;
 
@@ -412,7 +412,7 @@ seni_node *eat_quoted_form(seni_word_lut *word_lut, char **src)
 seni_node *eat_float(char **src)
 {
   char *end_ptr;
-  
+
   seni_node *node = node_get_from_pool();
   node->type = NODE_FLOAT;
   node->value.f = (f32)seni_strtof(*src, &end_ptr);
@@ -421,7 +421,7 @@ seni_node *eat_float(char **src)
   node->src_len = (i32)(end_ptr - *src);
 
   *src = end_ptr;
-  
+
   return node;
 }
 
@@ -457,7 +457,7 @@ seni_node *eat_string(seni_word_lut *word_lut, char **src)
   seni_node *node = build_text_lookup_node_of_length(word_lut, src, NODE_STRING, string_len);
 
   (*src)++; // skip the second \"
-  
+
   return node;
 }
 
@@ -490,7 +490,7 @@ seni_node *eat_comment(char **src)
 {
   size_t i = 0;
   char *rem = *src;
-  
+
   while (rem[i]) {
     char c = rem[i];
     if (is_newline(c)) {
@@ -504,7 +504,7 @@ seni_node *eat_comment(char **src)
   if (is_newline(*rem)) {
     (*src)++;        /* skip past the newline */
   }
-    
+
   return node;
 }
 
@@ -513,7 +513,7 @@ seni_node *eat_whitespace(char **src)
   size_t i = 0;
   char *rem = *src;
   char c = rem[i];
-  
+
   while(c) {
     if (!is_whitespace(c)) {
       break;
@@ -581,7 +581,7 @@ seni_node *eat_item(seni_word_lut *word_lut, char **src)
         word_len++;
         s++;
       }
-      
+
       if (is_label(*src, word_len)) {
         return eat_label(word_lut, src);
       }
@@ -589,7 +589,7 @@ seni_node *eat_item(seni_word_lut *word_lut, char **src)
       return eat_name(word_lut, src);
     }
   }
-  
+
   if (is_digit(c) || is_minus(c) || is_period(c)) {
     return eat_float(src);
   }
@@ -615,11 +615,11 @@ void parser_return_nodes_to_pool(seni_node *nodes)
     if (node->parameter_prefix) {
       parser_return_nodes_to_pool(node->parameter_prefix);
     }
-    
+
     next = node->next;
 
     node_return_to_pool(node);
-    
+
     node = next;
   }
 }
@@ -632,7 +632,7 @@ seni_node *parser_parse(seni_word_lut *word_lut, char *s)
 
   // clear out any words defined by previous scripts
   wlut_reset_words(word_lut);
-  
+
   char **src = &s;
 
   seni_node *nodes = NULL;

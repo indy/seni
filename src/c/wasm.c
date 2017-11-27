@@ -309,6 +309,8 @@ void genotype_move_to_buffer(i32 index)
     SENI_ERROR("genotype_move_to_buffer: genotype_serialize returned false (for index %d)", index);
   }
 
+  cursor_write_null(g_genotype_cursor);
+
   debug_size_genotype_buffer();
 }
 

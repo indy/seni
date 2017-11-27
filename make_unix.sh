@@ -9,9 +9,11 @@ if [ "$1" == "test" ]; then
     ./dist/test
 fi
 
+# -g flag is for producing debug information
+
 if [ "$1" == "native" ]; then
     pushd dist    
-    cc -o native -std=c99 ../src/c/native.c ../src/c/seni/*.c -lm -O2
+    cc -o native -std=c99 ../src/c/native.c ../src/c/seni/*.c -lm -O2 -g
     popd
     ./dist/native $2
 fi
