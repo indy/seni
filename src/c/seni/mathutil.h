@@ -6,13 +6,13 @@
 #define TAU 6.283185307179586f
 #define PI_BY_2 1.5707963267948966f
 
-#define deg_to_rad(a)  ((a)*(PI/180.0f))
-#define rad_to_deg(a)  ((a)*(180.0f/PI))
+#define deg_to_rad(a) ((a) * (PI / 180.0f))
+#define rad_to_deg(a) ((a) * (180.0f / PI))
 
-#define absf(x)             ((x) < 0.0f ? -(x) : (x))
-#define lerp(t,a,b)        ( (a) + (t) * (f32) ((b)-(a)) )
-#define unlerp(t,a,b)      ( ((t) - (a)) / (f32) ((b) - (a)) )
-#define clamp(x,xmin,xmax) ((x) < (xmin) ? (xmin) : (x) > (xmax) ? (xmax) : (x))
+#define absf(x) ((x) < 0.0f ? -(x) : (x))
+#define lerp(t, a, b) ((a) + (t) * (f32)((b) - (a)))
+#define unlerp(t, a, b) (((t) - (a)) / (f32)((b) - (a)))
+#define clamp(x, xmin, xmax) ((x) < (xmin) ? (xmin) : (x) > (xmax) ? (xmax) : (x))
 
 i32 floor_f32(f32 a);
 
@@ -41,4 +41,3 @@ void opposite_normal(f32 *outx, f32 *outy, f32 x, f32 y);
 f32 quadratic_point(f32 a, f32 b, f32 c, f32 t);
 f32 bezier_point(f32 a, f32 b, f32 c, f32 d, f32 t);
 f32 bezier_tangent(f32 a, f32 b, f32 c, f32 d, f32 t);
-

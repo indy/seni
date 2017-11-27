@@ -8,5 +8,3 @@ void repeat_symmetry_4(seni_vm *vm, i32 fn, i32 *copy);
 void repeat_symmetry_8(seni_vm *vm, i32 fn, i32 *copy);
 void repeat_rotate(seni_vm *vm, i32 fn, i32 copies);
 void repeat_rotate_mirrored(seni_vm *vm, i32 fn, i32 copies);
-
-

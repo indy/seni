@@ -7,24 +7,24 @@
 #include "seni/colour.h"
 #include "seni/colour_scheme.h"
 #include "seni/config.h"
+#include "seni/cursor.h"
 #include "seni/genetic.h"
 #include "seni/keyword_iname.h"
 #include "seni/lang.h"
 #include "seni/lib.h"
 #include "seni/mathutil.h"
+#include "seni/multistring.h"
 #include "seni/parser.h"
+#include "seni/pool_macro.h"
 #include "seni/prng.h"
 #include "seni/shapes.h"
 #include "seni/strtof.h"
-#include "seni/cursor.h"
 #include "seni/timing.h"
 #include "seni/types.h"
 #include "seni/unparser.h"
 #include "seni/uv_mapper.h"
 #include "seni/vm_compiler.h"
 #include "seni/vm_interpreter.h"
-#include "seni/pool_macro.h"
-#include "seni/multistring.h"
 
 #include "stdio.h"
 #include <stdlib.h>
@@ -35,46 +35,41 @@
 #include "lib/utlist.h"
 
 /* way of working with boolean and TEST macros */
-bool test_true = true;
+bool test_true  = true;
 bool test_false = false;
 
 /* required by unity */
-void setUp(void) { }
-void tearDown(void) { }
-
+void setUp(void) {}
+void tearDown(void) {}
 
 // testing the pool macro
 
 struct seni_item {
   i32 id;
-  
+
   struct seni_item *next;
   struct seni_item *prev;
 };
 typedef struct seni_item seni_item;
 
-void item_cleanup(seni_item *item)
-{
-  item->id = 0;
-}
+void item_cleanup(seni_item *item) { item->id = 0; }
 
 SENI_POOL(seni_item, item)
 
-void test_macro_pool(void)
-{
-  seni_item *item;
+void test_macro_pool(void) {
+  seni_item *            item;
   struct seni_item_pool *item_pool;
-  i32 i;
-  
+  i32                    i;
+
   {
-    item = NULL;
+    item      = NULL;
     item_pool = item_pool_allocate(1, 10, 2);
 
     TEST_ASSERT_EQUAL(item_pool->num_slabs, 1);
     TEST_ASSERT_EQUAL(item_pool->max_slabs_allowed, 2);
     TEST_ASSERT_EQUAL(item_pool->high_water_mark, 0);
     TEST_ASSERT_EQUAL(item_pool->current_water_mark, 0);
-  
+
     item = item_pool_get(item_pool);
     TEST_ASSERT_EQUAL(item_pool->get_count, 1);
     TEST_ASSERT_EQUAL(item_pool->return_count, 0);
@@ -106,7 +101,7 @@ void test_macro_pool(void)
   }
 
   {
-    item = NULL;
+    item      = NULL;
     item_pool = item_pool_allocate(1, 10, 2);
     // repeatedly allocate and return a seni_item
     for (i = 0; i < 150; i++) {
@@ -123,17 +118,17 @@ void test_macro_pool(void)
   }
 
   {
-    item = NULL;
+    item      = NULL;
     item_pool = item_pool_allocate(1, 10, 2);
-    i32 j;
+    i32        j;
     seni_item *items[10];
-    
+
     // repeatedly allocate and return sets of seni_items
     for (i = 0; i < 50; i++) {
-      for(j = 0; j < 10; j++) {
+      for (j = 0; j < 10; j++) {
         items[j] = item_pool_get(item_pool);
       }
-      for(j = 0; j < 10; j++) {
+      for (j = 0; j < 10; j++) {
         item_pool_return(item_pool, items[j]);
       }
     }
@@ -147,41 +142,36 @@ void test_macro_pool(void)
   }
 }
 
-void test_mathutil(void)
-{
+void test_mathutil(void) {
   TEST_ASSERT_EQUAL_FLOAT(1.5f, deg_to_rad(rad_to_deg(1.5f)));
   TEST_ASSERT_EQUAL_FLOAT(0.44444f, mc_m(1.0f, 1.0f, 10.0f, 5.0f));
   TEST_ASSERT_EQUAL_FLOAT(0.55556f, mc_c(1.0f, 1.0f, 0.444444f));
 }
 
-seni_node *assert_parser_node_raw(seni_node *node, seni_node_type type)
-{
+seni_node *assert_parser_node_raw(seni_node *node, seni_node_type type) {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
   return node->next;
 }
 
-seni_node *assert_parser_node_i32(seni_node *node, seni_node_type type, i32 val)
-{
+seni_node *assert_parser_node_i32(seni_node *node, seni_node_type type, i32 val) {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
   TEST_ASSERT_EQUAL(val, node->value.i);
   return node->next;
 }
 
-seni_node *assert_parser_node_f32(seni_node *node, f32 val)
-{
+seni_node *assert_parser_node_f32(seni_node *node, f32 val) {
   TEST_ASSERT_EQUAL_MESSAGE(NODE_FLOAT, node->type, node_type_name(node));
   TEST_ASSERT_EQUAL_FLOAT(val, node->value.f);
   return node->next;
 }
 
-seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *val)
-{
+seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *val) {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
-  i32 count = 0;
+  i32   count    = 0;
   char *expected = val;
-  char *actual = node->src;
-  while(*expected != '\0') {
+  char *actual   = node->src;
+  while (*expected != '\0') {
     count++;
     TEST_ASSERT_EQUAL(*expected, *actual);
     expected++;
@@ -193,30 +183,31 @@ seni_node *assert_parser_node_str(seni_node *node, seni_node_type type, char *va
   return node->next;
 }
 
-seni_node *assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, seni_word_lut *word_lut)
-{
+seni_node *
+assert_parser_node_txt(seni_node *node, seni_node_type type, char *val, seni_word_lut *word_lut) {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
   i32 i = node->value.i;
   TEST_ASSERT_TRUE(word_lut->word_count > i);
-  
+
   seni_string_ref *string_ref = &(word_lut->word_ref[i]);
   TEST_ASSERT_EQUAL_STRING(val, string_ref->c);
-  
+
   return node->next;
 }
 
-#define PARSE(EXPR) parser_subsystem_startup(); \
-  word_lut = wlut_allocate();                     \
-  nodes = parser_parse(word_lut, EXPR)
+#define PARSE(EXPR)           \
+  parser_subsystem_startup(); \
+  word_lut = wlut_allocate(); \
+  nodes    = parser_parse(word_lut, EXPR)
 
-#define PARSE_CLEANUP wlut_free(word_lut); \
+#define PARSE_CLEANUP                 \
+  wlut_free(word_lut);                \
   parser_return_nodes_to_pool(nodes); \
   parser_subsystem_shutdown();
 
-void test_parser(void)
-{
-  seni_node *nodes, *iter, *iter2;
+void test_parser(void) {
+  seni_node *    nodes, *iter, *iter2;
   seni_word_lut *word_lut;
 
   PARSE("hello");
@@ -266,11 +257,11 @@ void test_parser(void)
   // note: can parse string but it isn't being used - should it be removed?
   PARSE("'(runall \"shabba\") ; woohoo");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "quote", word_lut);
-  iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
+  iter  = nodes->value.first_child;
+  iter  = assert_parser_node_txt(iter, NODE_NAME, "quote", word_lut);
+  iter  = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter;
-  iter = assert_parser_node_raw(iter, NODE_LIST);
+  iter  = assert_parser_node_raw(iter, NODE_LIST);
   TEST_ASSERT_NULL(iter);
   iter = iter2->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "runall", word_lut);
@@ -317,25 +308,23 @@ void test_parser(void)
 
   PARSE("(a {[1 2]})");
   assert_parser_node_raw(nodes, NODE_LIST);
-  iter = nodes->value.first_child;
-  iter = assert_parser_node_txt(iter, NODE_NAME, "a", word_lut);
-  iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
+  iter  = nodes->value.first_child;
+  iter  = assert_parser_node_txt(iter, NODE_NAME, "a", word_lut);
+  iter  = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
   iter2 = iter; // the vector
-  iter = assert_parser_node_raw(iter, NODE_VECTOR);
+  iter  = assert_parser_node_raw(iter, NODE_VECTOR);
   TEST_ASSERT_NULL(iter);
   TEST_ASSERT_EQUAL(test_true, iter2->alterable);
   TEST_ASSERT_NULL(nodes->next);
   PARSE_CLEANUP;
 }
 
-void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f)
-{
+void assert_seni_var_f32(seni_var *var, seni_var_type type, f32 f) {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
-void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d)
-{
+void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "VAR_VECTOR");
 
   seni_var *val = var->value.v;
@@ -351,8 +340,7 @@ void assert_seni_var_v4(seni_var *var, f32 a, f32 b, f32 c, f32 d)
   TEST_ASSERT_EQUAL_FLOAT(d, val->value.f);
 }
 
-void assert_seni_var_v5(seni_var *var, f32 a, f32 b, f32 c, f32 d, f32 e)
-{
+void assert_seni_var_v5(seni_var *var, f32 a, f32 b, f32 c, f32 d, f32 e) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "VAR_VECTOR");
 
   seni_var *val = var->value.v;
@@ -371,8 +359,7 @@ void assert_seni_var_v5(seni_var *var, f32 a, f32 b, f32 c, f32 d, f32 e)
   TEST_ASSERT_EQUAL_FLOAT(e, val->value.f);
 }
 
-void assert_seni_var_col(seni_var *var, i32 format, f32 a, f32 b, f32 c, f32 d)
-{
+void assert_seni_var_col(seni_var *var, i32 format, f32 a, f32 b, f32 c, f32 d) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_COLOUR, var->type, "VAR_COLOUR");
 
   // seni_colour *colour = var->value.c;
@@ -385,35 +372,31 @@ void assert_seni_var_col(seni_var *var, i32 format, f32 a, f32 b, f32 c, f32 d)
   TEST_ASSERT_FLOAT_WITHIN(0.1f, d, var->f32_array[3]);
 }
 
-void assert_seni_var_2d(seni_var *var, f32 a, f32 b)
-{
+void assert_seni_var_2d(seni_var *var, f32 a, f32 b) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_2D, var->type, "VAR_2D");
 
   TEST_ASSERT_FLOAT_WITHIN(0.1f, a, var->f32_array[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, b, var->f32_array[1]);
 }
 
-void assert_seni_var_f32_within(seni_var *var, seni_var_type type, f32 f, f32 tolerance)
-{
+void assert_seni_var_f32_within(seni_var *var, seni_var_type type, f32 f, f32 tolerance) {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
   TEST_ASSERT_FLOAT_WITHIN(tolerance, f, var->value.f);
 }
 
-void assert_seni_var_bool(seni_var *var, bool b)
-{
+void assert_seni_var_bool(seni_var *var, bool b) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var));
   TEST_ASSERT_EQUAL(b ? 1 : 0, var->value.i);
 }
 
-void test_uv_mapper(void)
-{
+void test_uv_mapper(void) {
   uv_mapper_subsystem_startup();
 
   seni_uv_mapping *flat = get_uv_mapping(BRUSH_FLAT, 0, true);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f, flat->width_scale);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 2.0f / 1024.0f, flat->map[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f / 1024.0f, flat->map[1]);
-  
+
   TEST_ASSERT_NULL(get_uv_mapping(BRUSH_FLAT, 1, false)); // out of range
 
   seni_uv_mapping *c = get_uv_mapping(BRUSH_C, 8, false);
@@ -425,13 +408,16 @@ void test_uv_mapper(void)
 }
 
 // temp printing: DELETE THIS
-void colour_print(char *msg, seni_colour *colour)
-{
-  SENI_PRINT("%s: %d [%.4f, %.4f, %.4f]", msg, colour->format, colour->element[0], colour->element[1], colour->element[2]);
+void colour_print(char *msg, seni_colour *colour) {
+  SENI_PRINT("%s: %d [%.4f, %.4f, %.4f]",
+             msg,
+             colour->format,
+             colour->element[0],
+             colour->element[1],
+             colour->element[2]);
 }
 
-void assert_colour(seni_colour *expected, seni_colour *colour)
-{
+void assert_colour(seni_colour *expected, seni_colour *colour) {
   // colour_print("in assert", colour);
   TEST_ASSERT_EQUAL(expected->format, colour->format);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[0], colour->element[0]);
@@ -440,8 +426,12 @@ void assert_colour(seni_colour *expected, seni_colour *colour)
   TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[3], colour->element[3]);
 }
 
-void assert_colour_e(seni_colour *colour, seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha)
-{
+void assert_colour_e(seni_colour *      colour,
+                     seni_colour_format format,
+                     f32                e0,
+                     f32                e1,
+                     f32                e2,
+                     f32                alpha) {
   TEST_ASSERT_EQUAL(format, colour->format);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, e0, colour->element[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, e1, colour->element[1]);
@@ -449,17 +439,15 @@ void assert_colour_e(seni_colour *colour, seni_colour_format format, f32 e0, f32
   TEST_ASSERT_FLOAT_WITHIN(0.1f, alpha, colour->element[3]);
 }
 
-void colour_def(seni_colour *out, seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha)
-{
-  out->format = format;
+void colour_def(seni_colour *out, seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha) {
+  out->format     = format;
   out->element[0] = e0;
   out->element[1] = e1;
   out->element[2] = e2;
   out->element[3] = alpha;
 }
 
-void assert_colour_rgb_hsl(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l)
-{
+void assert_colour_rgb_hsl(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l) {
   seni_colour rgb, hsl, res;
 
   colour_def(&rgb, RGB, r, g, b, 1.0f);
@@ -474,8 +462,7 @@ void assert_colour_rgb_hsl(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l)
   assert_colour_e(&res, RGB, r, g, b, 1.0f);
 }
 
-void test_colour(void)
-{
+void test_colour(void) {
   seni_colour c, rgb, hsl, lab, hsluv, res;
 
   {
@@ -486,9 +473,10 @@ void test_colour(void)
     TEST_ASSERT_EQUAL_FLOAT(0.0f, c.element[2]);
     TEST_ASSERT_EQUAL_FLOAT(1.0f, c.element[3]);
   }
-  
+
   {
-    colour_def(&rgb, RGB, 0.2f, 0.09803921568627451f, 0.49019607843137253f, 1.0f); // (51, 25, 125)
+    colour_def(&rgb, RGB, 0.2f, 0.09803921568627451f, 0.49019607843137253f,
+               1.0f); // (51, 25, 125)
     colour_def(&hsl, HSL, 255.6f, 0.6666f, 0.294f, 1.0f);
     colour_def(&lab, LAB, 19.555676428108306f, 39.130689315704764f, -51.76254071703564f, 1.0f);
 
@@ -518,23 +506,22 @@ void test_colour(void)
     assert_colour_rgb_hsl(1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f);
     assert_colour_rgb_hsl(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.5f);
     assert_colour_rgb_hsl(0.0f, 1.0f, 0.0f, 120.0f, 1.0f, 0.5f);
-    assert_colour_rgb_hsl(0.0f,0.0f,1.0f, 240.0f,1.0f,0.5f);
-    assert_colour_rgb_hsl(1.0f,1.0f,0.0f, 60.0f,1.0f,0.5f);
-    assert_colour_rgb_hsl(0.0f,1.0f,1.0f, 180.0f,1.0f,0.5f);
-    assert_colour_rgb_hsl(1.0f,0.0f,1.0f, 300.0f,1.0f,0.5f);
-    assert_colour_rgb_hsl(0.7529f,0.7529f,0.7529f, 0.0f,0.0f,0.75f);
-    assert_colour_rgb_hsl(0.5f,0.5f,0.5f, 0.0f,0.0f,0.5f);
-    assert_colour_rgb_hsl(0.5f,0.0f,0.0f, 0.0f,1.0f,0.25f);
-    assert_colour_rgb_hsl(0.5f,0.5f,0.0f, 60.0f,1.0f,0.25f);
-    assert_colour_rgb_hsl(0.0f,0.5f,0.0f, 120.0f,1.0f,0.25f);
-    assert_colour_rgb_hsl(0.5f,0.0f,0.5f, 300.0f,1.0f,0.25f);
-    assert_colour_rgb_hsl(0.0f,0.5f,0.5f, 180.0f,1.0f,0.25f);
-    assert_colour_rgb_hsl(0.0f,0.0f,0.5f, 240.0f,1.0f,0.25f);
+    assert_colour_rgb_hsl(0.0f, 0.0f, 1.0f, 240.0f, 1.0f, 0.5f);
+    assert_colour_rgb_hsl(1.0f, 1.0f, 0.0f, 60.0f, 1.0f, 0.5f);
+    assert_colour_rgb_hsl(0.0f, 1.0f, 1.0f, 180.0f, 1.0f, 0.5f);
+    assert_colour_rgb_hsl(1.0f, 0.0f, 1.0f, 300.0f, 1.0f, 0.5f);
+    assert_colour_rgb_hsl(0.7529f, 0.7529f, 0.7529f, 0.0f, 0.0f, 0.75f);
+    assert_colour_rgb_hsl(0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 0.5f);
+    assert_colour_rgb_hsl(0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.25f);
+    assert_colour_rgb_hsl(0.5f, 0.5f, 0.0f, 60.0f, 1.0f, 0.25f);
+    assert_colour_rgb_hsl(0.0f, 0.5f, 0.0f, 120.0f, 1.0f, 0.25f);
+    assert_colour_rgb_hsl(0.5f, 0.0f, 0.5f, 300.0f, 1.0f, 0.25f);
+    assert_colour_rgb_hsl(0.0f, 0.5f, 0.5f, 180.0f, 1.0f, 0.25f);
+    assert_colour_rgb_hsl(0.0f, 0.0f, 0.5f, 240.0f, 1.0f, 0.25f);
   }
 }
 
-void test_strtof(void)
-{
+void test_strtof(void) {
   char **end = NULL;
 
   TEST_ASSERT_EQUAL_FLOAT(3.14f, seni_strtof("3.14", end));
@@ -548,53 +535,93 @@ void test_strtof(void)
   TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_strtof("1", end));
 }
 
-#define VM_COMPILE(EXPR) seni_systems_startup();                        \
-  seni_env *e = env_allocate();                                         \
-  seni_program *prog = seni_compile_program(EXPR, e->word_lut, 256);    \
-  seni_vm *vm = vm_allocate(STACK_SIZE,HEAP_SIZE,HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
-  vm_debug_info_reset(vm);                                              \
+#define VM_COMPILE(EXPR)                                                                            \
+  seni_systems_startup();                                                                           \
+  seni_env *    e    = env_allocate();                                                              \
+  seni_program *prog = seni_compile_program(EXPR, e->word_lut, 256);                                \
+  seni_vm *     vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
+  vm_debug_info_reset(vm);                                                                          \
   vm_run(vm, e, prog)
 
 #define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
-#define VM_TEST_VEC4(A,B,C,D) assert_seni_var_v4(stack_peek(vm), A, B, C, D)
-#define VM_TEST_VEC5(A,B,C,D,E) assert_seni_var_v5(stack_peek(vm), A, B, C, D, E)
-#define VM_TEST_COL(F,A,B,C,D) assert_seni_var_col(stack_peek(vm), F, A, B, C, D)
-#define VM_TEST_2D(A,B) assert_seni_var_2d(stack_peek(vm), A, B)
+#define VM_TEST_VEC4(A, B, C, D) assert_seni_var_v4(stack_peek(vm), A, B, C, D)
+#define VM_TEST_VEC5(A, B, C, D, E) assert_seni_var_v5(stack_peek(vm), A, B, C, D, E)
+#define VM_TEST_COL(F, A, B, C, D) assert_seni_var_col(stack_peek(vm), F, A, B, C, D)
+#define VM_TEST_2D(A, B) assert_seni_var_2d(stack_peek(vm), A, B)
 
-#define VM_CLEANUP program_free(prog);          \
-  env_free(e);                                  \
-  vm_free(vm);                                  \
+#define VM_CLEANUP    \
+  program_free(prog); \
+  env_free(e);        \
+  vm_free(vm);        \
   seni_systems_shutdown();
 
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
 // ************************************************
-#define VM_COMPILE_F32(EXPR,RES) {VM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
-#define VM_COMPILE_BOOL(EXPR,RES) {VM_COMPILE(EXPR);VM_TEST_BOOL(RES);VM_CLEANUP;}
-#define VM_COMPILE_2D(EXPR,A,B) {VM_COMPILE(EXPR);VM_TEST_2D(A,B);VM_CLEANUP;}
-#define VM_COMPILE_VEC4(EXPR,A,B,C,D) {VM_COMPILE(EXPR);VM_TEST_VEC4(A,B,C,D);VM_CLEANUP;}
-#define VM_COMPILE_VEC5(EXPR,A,B,C,D,E) {VM_COMPILE(EXPR);VM_TEST_VEC5(A,B,C,D,E);VM_CLEANUP;}
-#define VM_COMPILE_COL(EXPR,F,A,B,C,D) {VM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_CLEANUP;}
+#define VM_COMPILE_F32(EXPR, RES) \
+  {                               \
+    VM_COMPILE(EXPR);             \
+    VM_TEST_FLOAT(RES);           \
+    VM_CLEANUP;                   \
+  }
+#define VM_COMPILE_BOOL(EXPR, RES) \
+  {                                \
+    VM_COMPILE(EXPR);              \
+    VM_TEST_BOOL(RES);             \
+    VM_CLEANUP;                    \
+  }
+#define VM_COMPILE_2D(EXPR, A, B) \
+  {                               \
+    VM_COMPILE(EXPR);             \
+    VM_TEST_2D(A, B);             \
+    VM_CLEANUP;                   \
+  }
+#define VM_COMPILE_VEC4(EXPR, A, B, C, D) \
+  {                                       \
+    VM_COMPILE(EXPR);                     \
+    VM_TEST_VEC4(A, B, C, D);             \
+    VM_CLEANUP;                           \
+  }
+#define VM_COMPILE_VEC5(EXPR, A, B, C, D, E) \
+  {                                          \
+    VM_COMPILE(EXPR);                        \
+    VM_TEST_VEC5(A, B, C, D, E);             \
+    VM_CLEANUP;                              \
+  }
+#define VM_COMPILE_COL(EXPR, F, A, B, C, D) \
+  {                                         \
+    VM_COMPILE(EXPR);                       \
+    VM_TEST_COL(F, A, B, C, D);             \
+    VM_CLEANUP;                             \
+  }
 // don't perform a heap check as we're assuming that the expr will be leaky
-#define VM_COMPILE_F32_L(EXPR,RES) {VM_COMPILE(EXPR);VM_TEST_FLOAT(RES);VM_CLEANUP;}
-#define VM_COMPILE_COL_L(EXPR,F,A,B,C,D) {VM_COMPILE(EXPR);VM_TEST_COL(F,A,B,C,D);VM_CLEANUP;}
+#define VM_COMPILE_F32_L(EXPR, RES) \
+  {                                 \
+    VM_COMPILE(EXPR);               \
+    VM_TEST_FLOAT(RES);             \
+    VM_CLEANUP;                     \
+  }
+#define VM_COMPILE_COL_L(EXPR, F, A, B, C, D) \
+  {                                           \
+    VM_COMPILE(EXPR);                         \
+    VM_TEST_COL(F, A, B, C, D);               \
+    VM_CLEANUP;                               \
+  }
 
-
-void f32v(char *exp, i32 len, ... )
-{
+void f32v(char *exp, i32 len, ...) {
   VM_COMPILE(exp);
 
   seni_var *var = stack_peek(vm);
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "f32v: VAR_VECTOR");
   TEST_ASSERT_EQUAL(len, vector_length(var));
-  
+
   va_list va;
   va_start(va, len);
 
-  f32 val;
+  f32       val;
   seni_var *element;
-  for(i32 i = 0; i < len; i++) {
+  for (i32 i = 0; i < len; i++) {
     element = vector_get(var, i);
     TEST_ASSERT_EQUAL_MESSAGE(VAR_FLOAT, element->type, "f32v: VAR_FLOAT");
 
@@ -607,22 +634,23 @@ void f32v(char *exp, i32 len, ... )
   VM_CLEANUP;
 }
 
-
-void timing(void)
-{
+void timing(void) {
   {
     TIMING_UNIT start = get_timing();
-    //start = clock();
-    //VM_COMPILE_F32("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
+    // start = clock();
+    // VM_COMPILE_F32("(loop (x from: 0 to: 1000000) (- 1 1) (- 1 1) (- 1 1) (-
+    // 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1
+    // 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
 
-    VM_COMPILE_F32("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9", 9);
+    VM_COMPILE_F32("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 "
+                   "1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9",
+                   9);
     SENI_PRINT("VM Time taken %.2f", timing_delta_from(start));
   }
 }
 
 // code that exposed bugs - but was later fixed
-void test_vm_bugs(void)
-{
+void test_vm_bugs(void) {
   // messed up decrementing ref counts for colours
   VM_COMPILE_F32("(fn (x colour: (col/rgb)) (+ 1 1)) (x colour: (col/rgb))", 2.0f);
 
@@ -634,31 +662,43 @@ void test_vm_bugs(void)
           seed: 341)                     \
      42)                                 \
    (x colour: (col/rgb))                 \
-   (huh at: 5)", 4.0f);
+   (huh at: 5)",
+                 4.0f);
 
-  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) (loop (i from: 0 to: 2) (define [rr rx ry] (prng/values num: 3 from: rng)))) (f) 1", 1.0f);
-  
-  // pre-assigned global wasn't being added to the global-mapping so references to them in functions wasn't working
+  VM_COMPILE_F32("(fn (f) (define rng (prng/build min: -1 max: 1 seed: 111)) "
+                 "(loop (i from: 0 to: 2) (define [rr rx ry] (prng/values num: "
+                 "3 from: rng)))) (f) 1",
+                 1.0f);
+
+  // pre-assigned global wasn't being added to the global-mapping so references
+  // to them in functions wasn't working
   VM_COMPILE_F32("(wash) (fn (wash) (define foo (/ canvas/width 3)) foo)", 333.3333f);
 
   // vm should use the caller function's ARG values not the callees.
-  VM_COMPILE_F32("(fn (v foo: 10) foo) (fn (wash seed: 272) (v foo: seed)) (wash seed: 66)", 66.0f);
+  VM_COMPILE_F32("(fn (v foo: 10) foo) (fn (wash seed: 272) (v foo: seed)) "
+                 "(wash seed: 66)",
+                 66.0f);
 
   // heap slab leak - overwriting local k in loop
   // return vectors to slab when it's overwritten
   VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 4) (define k [1 2])) 22)(f)", 22.0f);
 
   // return colours to slab when it's overwritten
-  VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 10) (define k (col/rgb r: 0 g: 0 b: 0 alpha: 1))) 22)(f)", 22.0f);
+  VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 10) (define k (col/rgb r: 0 g: "
+                 "0 b: 0 alpha: 1))) 22)(f)",
+                 22.0f);
 
-  // wasn't POP voiding function return values in a loop (CALL_0 offset was incorrect)
-  // so have a loop that would overflow the stack if the return value of whatever fn wasn't being popped
-  VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/build-point position: [0 0] distance: 100))(focal/value from: focalpoint position: [0 0])(loop (y from: 0 to: 2000) (whatever))(focal/value from: focalpoint position: [0 50]))(go)", 0.5f);
-
+  // wasn't POP voiding function return values in a loop (CALL_0 offset was
+  // incorrect) so have a loop that would overflow the stack if the return value
+  // of whatever fn wasn't being popped
+  VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/build-point position: "
+                 "[0 0] distance: 100))(focal/value from: focalpoint position: [0 "
+                 "0])(loop (y from: 0 to: 2000) (whatever))(focal/value from: focalpoint "
+                 "position: [0 50]))(go)",
+                 0.5f);
 }
 
-void test_vm_bytecode(void)
-{
+void test_vm_bytecode(void) {
   VM_COMPILE_F32("(define a 42) (define b 52) 10", 10);
   VM_COMPILE_F32("(define a 6) (define b 7) (+ a b)", 13);
   VM_COMPILE_F32("(define a 8 b 9) (+ a b)", 17);
@@ -680,29 +720,37 @@ void test_vm_bytecode(void)
   VM_COMPILE_F32("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
 }
 
-void test_vm_callret(void)
-{
+void test_vm_callret(void) {
   // basic invocation
   VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8);
-  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))", 12); // calc required for value
-  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)", 13); // non-existent argument
-  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder)", 17); // only default arguments
-  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)", 18); // missing argument
-  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29); // missing argument
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))",
+                 12); // calc required for value
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)",
+                 13); // non-existent argument
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder)",
+                 17); // only default arguments
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)",
+                 18); // missing argument
+  VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)",
+                 29); // missing argument
 
   VM_COMPILE_F32("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))", 20);
   VM_COMPILE_F32("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
-  VM_COMPILE_F32("(fn (p2 a: 2) (+ a 5))(fn (p3 a: 3) (+ a 6))(fn (p4 a: 4) (+ a 7))(p2 a: (p3 a: (p4 a: 20)))", 38);
+  VM_COMPILE_F32("(fn (p2 a: 2) (+ a 5))(fn (p3 a: 3) (+ a 6))(fn (p4 a: 4) (+ "
+                 "a 7))(p2 a: (p3 a: (p4 a: 20)))",
+                 38);
 
   // functions calling functions
-  VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)",       6);
-  VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",      10);
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)", 6);
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)", 10);
   VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
-  
+
   // function calling another function, passing on one of it's local variables
   // (make use of the hop_back method of referring to the correct LOCAL frame)
   VM_COMPILE_F32("(fn (z a: 1) (+ a 5)) (fn (y) (define x 10) (z a: x)) (y)", 15);
-  VM_COMPILE_F32("(fn (z a: 1) (+ a 5)) (fn (zz a: 1) (+ a 9))(fn (y) (define x 10) (z a: (zz a: x))) (y)", 24);
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 5)) (fn (zz a: 1) (+ a 9))(fn (y) (define "
+                 "x 10) (z a: (zz a: x))) (y)",
+                 24);
 
   // function referencing a global
   VM_COMPILE_F32("(define gs 30)(fn (foo at: 0) (+ at gs))(foo at: 10)", 40);
@@ -712,23 +760,21 @@ void test_vm_callret(void)
 
   // using a function before it's been declared
   VM_COMPILE_F32("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66)", 621.0f);
-  
+
   // passing an argument to a function that isn't being used
   // produces POP with VOID -1 args
   VM_COMPILE_F32("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66 b: 8383)", 621.0f);
 }
 
-void test_vm_native(void)
-{
+void test_vm_native(void) {
   // call native functions that have vector arguments (tests ref counting)
   VM_COMPILE_F32("(nth n: 0 from: [22 33])", 22);
-  VM_COMPILE_F32_L("(define aa [22 33]) (nth n: 0 from: aa)", 22);  
+  VM_COMPILE_F32_L("(define aa [22 33]) (nth n: 0 from: aa)", 22);
   VM_COMPILE_F32("(fn (x) (nth n: 0 from: [22 33])) (x)", 22);
   VM_COMPILE_F32("(math/distance vec1: [0 0] vec2: [0 20])", 20.0f);
 }
 
-void test_vm_destructure(void)
-{
+void test_vm_destructure(void) {
   VM_COMPILE_F32("(define [a b] [22 33]) (- b a)", 11);
   VM_COMPILE_F32("(define [a b c] [22 33 44]) (+ a b c)", 99);
 
@@ -738,8 +784,7 @@ void test_vm_destructure(void)
   VM_COMPILE_F32("(fn (f pos: [3 5 7]) (define [j k l] pos) (+ j k l)) (f)", 15.0f);
 }
 
-void test_vm_2d(void)
-{
+void test_vm_2d(void) {
   // constructing a VAR_2D
   VM_COMPILE_2D("(define vec2d [4 5]) vec2d", 4.0f, 5.0f);
 
@@ -753,7 +798,6 @@ void test_vm_2d(void)
   // READ_STACK_ARG_VEC2 in seni_bind.c
   VM_COMPILE_F32("(math/distance vec1: [0 3] vec2: [4 0])", 5.0f);
 
-  
   VM_COMPILE_2D("[4 5]", 4, 5);
 
   // explicitly defined VAR_2D is returned
@@ -781,13 +825,12 @@ void test_vm_2d(void)
 
   // default argument for function is not returned
   VM_COMPILE_F32("(fn (f a: [1 2]) a) (fn (x) (f a: 5)) (x)", 5);
-  
+
   // argument into function is returned
   VM_COMPILE_2D("(fn (f a: [3 4]) a) (fn (x) (f a: [1 2])) (x)", 1, 2);
 }
 
-void test_vm_vector(void)
-{
+void test_vm_vector(void) {
   VM_COMPILE_VEC5("[4 5 6 7 8]", 4, 5, 6, 7, 8);
 
   VM_COMPILE_F32("(loop (x from: 0 to: 5) [1 2 3 4 5]) 9", 9);
@@ -817,13 +860,12 @@ void test_vm_vector(void)
 
   // default argument for function is not returned
   VM_COMPILE_F32("(fn (f a: [1 2 3 4 5]) a) (fn (x) (f a: 5)) (x)", 5);
-  
+
   // argument into function is returned
   VM_COMPILE_VEC5("(fn (f a: [3 4 5 6 7]) a) (fn (x) (f a: [1 2 3 4 5])) (x)", 1, 2, 3, 4, 5);
 }
 
-void test_vm_vector_append(void)
-{
+void test_vm_vector_append(void) {
   VM_COMPILE_F32("(define v []) (vector/append v 100) (vector/length vector: v)", 1);
   VM_COMPILE_F32("(define v [1]) (vector/append v 100) (vector/length vector: v)", 2);
   VM_COMPILE_F32("(define v [1 2]) (vector/append v 100) (vector/length vector: v)", 3);
@@ -831,42 +873,68 @@ void test_vm_vector_append(void)
   VM_COMPILE_F32("(define v [1 2 3 4]) (vector/append v 100) (vector/length vector: v)", 5);
 }
 
-void test_vm_fence(void)
-{
+void test_vm_fence(void) {
   f32v("(define v []) (fence (x from: 0 to: 10 num: 3) (vector/append v x)) v",
-       3, 0.0f, 5.0f, 10.0f);
+       3,
+       0.0f,
+       5.0f,
+       10.0f);
   f32v("(define v []) (fence (x from: 10 to: 0 num: 3) (vector/append v x)) v",
-       3, 10.0f, 5.0f, 0.0f);
-  f32v("(define v []) (fence (x num: 5) (vector/append v x)) v",
-       5, 0.0f, 0.25f, 0.5f, 0.75f, 1.0f);
-  f32v("(define v []) (fence (x from: 100 to: 900 num: 10) (vector/append v x)) v",
+       3,
+       10.0f,
+       5.0f,
+       0.0f);
+  f32v("(define v []) (fence (x num: 5) (vector/append v x)) v", 5, 0.0f, 0.25f, 0.5f, 0.75f, 1.0f);
+  f32v("(define v []) (fence (x from: 100 to: 900 num: 10) (vector/append v "
+       "x)) v",
        10,
-       100.0000f, 188.8889f, 277.7778f, 366.6667f, 455.5555f,
-       544.4445f, 633.3333f, 722.2222f, 811.1111f, 900.0000f);
+       100.0000f,
+       188.8889f,
+       277.7778f,
+       366.6667f,
+       455.5555f,
+       544.4445f,
+       633.3333f,
+       722.2222f,
+       811.1111f,
+       900.0000f);
 }
 
-void test_vm_loop(void)
-{
-  f32v("(define v []) (loop (x from: 0 to: 4) (vector/append v x)) v",
-       4, 0.0f, 1.0f, 2.0f, 3.0f);
+void test_vm_loop(void) {
+  f32v("(define v []) (loop (x from: 0 to: 4) (vector/append v x)) v", 4, 0.0f, 1.0f, 2.0f, 3.0f);
   f32v("(define v []) (loop (x from: 0 upto: 4) (vector/append v x)) v",
-       5, 0.0f, 1.0f, 2.0f, 3.0f, 4.0f);
+       5,
+       0.0f,
+       1.0f,
+       2.0f,
+       3.0f,
+       4.0f);
   f32v("(define v []) (loop (x from: 0 to: 10 inc: 2) (vector/append v x)) v",
-       5, 0.0f, 2.0f, 4.0f, 6.0f, 8.0f);
+       5,
+       0.0f,
+       2.0f,
+       4.0f,
+       6.0f,
+       8.0f);
   f32v("(define v []) (loop (x from: 0 upto: 10 inc: 2) (vector/append v x)) v",
-       6, 0.0f, 2.0f, 4.0f, 6.0f, 8.0f, 10.0f);
+       6,
+       0.0f,
+       2.0f,
+       4.0f,
+       6.0f,
+       8.0f,
+       10.0f);
 }
 
-void test_vm_col_rgb(void)
-{
+void test_vm_col_rgb(void) {
   VM_COMPILE_COL_L("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4)", RGB, 0.1f, 0.2f, 0.3f, 0.4f);
   // checking colour_avail
   // TODO: this leaks colour, what should happen instead?
-  // VM_COMPILE_F32("(fn (f) (col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4) 5) (f)", 5.0f);
+  // VM_COMPILE_F32("(fn (f) (col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4) 5)
+  // (f)", 5.0f);
 }
 
-void test_vm_math(void)
-{
+void test_vm_math(void) {
   VM_COMPILE_F32("(+ 3 4)", 7);
   VM_COMPILE_F32("(+ 3 4 5)", 12);
   VM_COMPILE_F32("(+ 3 4 5 6)", 18);
@@ -883,7 +951,7 @@ void test_vm_math(void)
   VM_COMPILE_BOOL("(= 1 1 1 1 1 2)", false);
 
   VM_COMPILE_F32("(sqrt 144)", 12);
-  
+
   VM_COMPILE_F32("(math/distance vec1: [0 0] vec2: [0 20])", 20.0f);
   VM_COMPILE_F32("(math/distance vec1: [0 5] vec2: [0 20])", 15.0f);
   VM_COMPILE_F32("(math/clamp value: 0.1 min: 0.0 max: 5)", 0.1f);
@@ -891,98 +959,157 @@ void test_vm_math(void)
   VM_COMPILE_F32("(math/clamp value: 10 min: 0.0 max: 5)", 5.0f);
 }
 
-void test_vm_prng(void)
-{
+void test_vm_prng(void) {
   // leaky because the global rng is a vector
   //
-  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng)", 9.1355f);
+  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) "
+                   "(prng/value from: rng)",
+                   9.1355f);
 
   // state of rng is changing, returning a different number than previous tests
-  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng) (prng/value from: rng)", 16.5308f);
+  VM_COMPILE_F32_L("(define rng (prng/build seed: 43215 min: 5 max: 20)) "
+                   "(prng/value from: rng) (prng/value from: rng)",
+                   16.5308f);
 
   // wrapped in a function so that it's not leaky
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng)) (x)", 9.1355f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) "
+                 "(prng/value from: rng)) (x)",
+                 9.1355f);
 
   // state of rng is changing, returning a different number than previous tests
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) (prng/value from: rng) (prng/value from: rng)) (x)", 16.5308f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build seed: 43215 min: 5 max: 20)) "
+                 "(prng/value from: rng) (prng/value from: rng)) (x)",
+                 16.5308f);
 
   // prng/take returning a vector
-  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 0 from: foo)", 0.505207f);
-  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 1 from: foo)", -0.406514f);
-  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 2 from: foo)", 0.803599f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                   "(prng/values num: 3 from: rng)) (nth n: 0 from: foo)",
+                   0.505207f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                   "(prng/values num: 3 from: rng)) (nth n: 1 from: foo)",
+                   -0.406514f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                   "(prng/values num: 3 from: rng)) (nth n: 2 from: foo)",
+                   0.803599f);
 
   // non-leaky version of above
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 0 from: foo)) (x)", 0.505207f);
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 1 from: foo)) (x)", -0.406514f);
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo (prng/values num: 3 from: rng)) (nth n: 2 from: foo)) (x)", 0.803599f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                 "(prng/values num: 3 from: rng)) (nth n: 0 from: foo)) (x)",
+                 0.505207f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                 "(prng/values num: 3 from: rng)) (nth n: 1 from: foo)) (x)",
+                 -0.406514f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                 "(prng/values num: 3 from: rng)) (nth n: 2 from: foo)) (x)",
+                 0.803599f);
 
   // prng, destructuring, multiple args to '+'
-  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a b c] (prng/values num: 3 from: rng)) (+ a b c)) (x)", 0.902292f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a "
+                 "b c] (prng/values num: 3 from: rng)) (+ a b c)) (x)",
+                 0.902292f);
 }
 
-void test_vm_environmental(void)
-{
+void test_vm_environmental(void) {
   VM_COMPILE_F32("canvas/width", 1000.0f);
   VM_COMPILE_F32("canvas/height", 1000.0f);
-
 }
 
-void test_vm_interp(void)
-{
-  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100])) (interp/value from: i t: 0.5)) (x)", 50.0f);
+void test_vm_interp(void) {
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100])) "
+                 "(interp/value from: i t: 0.5)) (x)",
+                 50.0f);
 
-  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [10 20] to: [50 200])) (interp/value from: i t: 10.0)) (x)", 50.0f);
-  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [10 20] to: [50 200])) (interp/value from: i t: 20.0)) (x)", 200.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [10 20] to: [50 200])) "
+                 "(interp/value from: i t: 10.0)) (x)",
+                 50.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [10 20] to: [50 200])) "
+                 "(interp/value from: i t: 20.0)) (x)",
+                 200.0f);
 
-  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [50 10] to: [100 1000])) (interp/value from: i t: 50.0)) (x)", 100.0f);
-  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [50 10] to: [100 1000])) (interp/value from: i t: 10.0)) (x)", 1000.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [50 10] to: [100 "
+                 "1000])) (interp/value from: i t: 50.0)) (x)",
+                 100.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [50 10] to: [100 "
+                 "1000])) (interp/value from: i t: 10.0)) (x)",
+                 1000.0f);
 
   // clamping
-  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100] clamping: false)) (interp/value from: i t: 2.0)) (x)", 200.0f);
-  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100] clamping: true)) (interp/value from: i t: 2.0)) (x)", 100.0f);
-  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100] clamping: true)) (interp/value from: i t: -2.0)) (x)", 0.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100] "
+                 "clamping: false)) (interp/value from: i t: 2.0)) (x)",
+                 200.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100] "
+                 "clamping: true)) (interp/value from: i t: 2.0)) (x)",
+                 100.0f);
+  VM_COMPILE_F32("(fn (x) (define i (interp/build from: [0 1] to: [0 100] "
+                 "clamping: true)) (interp/value from: i t: -2.0)) (x)",
+                 0.0f);
 }
 
-void test_vm_function_address(void)
-{
-  VM_COMPILE_F32("(fn (k a: 5) (+ a a)) (fn (l a: 5) (+ a a)) (define foo (address-of l)) (fn-call (foo a: 99 b: 88))", 198.0f);
+void test_vm_function_address(void) {
+  VM_COMPILE_F32("(fn (k a: 5) (+ a a)) (fn (l a: 5) (+ a a)) (define foo "
+                 "(address-of l)) (fn-call (foo a: 99 b: 88))",
+                 198.0f);
 
   // normal
-  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of dbl)) (fn-call (foo a: 44))", 88.0f);
-  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of trp)) (fn-call (foo a: 44))", 132.0f);
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo "
+                 "(address-of dbl)) (fn-call (foo a: 44))",
+                 88.0f);
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo "
+                 "(address-of trp)) (fn-call (foo a: 44))",
+                 132.0f);
 
   // invalid arguments - use defaults
-  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of dbl)) (fn-call (foo z: 44))", 10.0f);
-  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of trp)) (fn-call (foo z: 44))", 15.0f);
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo "
+                 "(address-of dbl)) (fn-call (foo z: 44))",
+                 10.0f);
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo "
+                 "(address-of trp)) (fn-call (foo z: 44))",
+                 15.0f);
 
   // some invalid arguments
-  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of dbl)) (fn-call (foo z: 100 a: 44))", 88.0f);
-  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo (address-of trp)) (fn-call (foo z: 41 a: 44))", 132.0f);
-  
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo "
+                 "(address-of dbl)) (fn-call (foo z: 100 a: 44))",
+                 88.0f);
+  VM_COMPILE_F32("(fn (dbl a: 5) (* a 2)) (fn (trp a: 5) (* a 3)) (define foo "
+                 "(address-of trp)) (fn-call (foo z: 41 a: 44))",
+                 132.0f);
 }
 
-void test_vm_repeat(void)
-{
+void test_vm_repeat(void) {
   // angle is being sent to the function
-  f32v("(define v []) (fn (k angle: 0) (vector/append v angle)) (repeat/rotate fn: (address-of k) copies: 3) v",
-       3, 0.0f, 120.0f, 240.0f);
+  f32v("(define v []) (fn (k angle: 0) (vector/append v angle)) (repeat/rotate "
+       "fn: (address-of k) copies: 3) v",
+       3,
+       0.0f,
+       120.0f,
+       240.0f);
 
   // num is being sent to the function
-  f32v("(define v []) (fn (k copy: 0) (vector/append v copy)) (repeat/rotate fn: (address-of k) copies: 3) v",
-       3, 0.0f, 1.0f, 2.0f);
+  f32v("(define v []) (fn (k copy: 0) (vector/append v copy)) (repeat/rotate "
+       "fn: (address-of k) copies: 3) v",
+       3,
+       0.0f,
+       1.0f,
+       2.0f);
 
   // default arguments are being set
-  f32v("(define v []) (fn (k angle: 0 shabba: 5.0) (vector/append v (+ shabba angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
-       3, 5.0f, 125.0f, 245.0f);
+  f32v("(define v []) (fn (k angle: 0 shabba: 5.0) (vector/append v (+ shabba "
+       "angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
+       3,
+       5.0f,
+       125.0f,
+       245.0f);
 
-  f32v("(define v []) (fn (k copy: 0 angle: 0 shabba: 5.0) (vector/append v (+ copy shabba angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
-       3, 5.0f, 126.0f, 247.0f);  
-
+  f32v("(define v []) (fn (k copy: 0 angle: 0 shabba: 5.0) (vector/append v (+ "
+       "copy shabba angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
+       3,
+       5.0f,
+       126.0f,
+       247.0f);
 }
 
-seni_genotype *genotype_test(i32 seed_value, char *source)
-{
-  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+seni_genotype *genotype_test(i32 seed_value, char *source) {
+  seni_vm * vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
 
   seni_node *ast = parser_parse(env->word_lut, source);
@@ -1001,11 +1128,10 @@ seni_genotype *genotype_test(i32 seed_value, char *source)
   return genotype;
 }
 
-void unparse_compare(i32 seed_value, char *source, char *expected)
-{
+void unparse_compare(i32 seed_value, char *source, char *expected) {
   seni_systems_startup();
 
-  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_vm * vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
 
   seni_node *ast = parser_parse(env->word_lut, source);
@@ -1018,11 +1144,11 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   // using the vm to build the genes
   seni_genotype *genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
 
-  i32 unparsed_source_size = 1024;
-  char *unparsed_source = (char *)calloc(unparsed_source_size, sizeof(char));
+  i32   unparsed_source_size = 1024;
+  char *unparsed_source      = (char *)calloc(unparsed_source_size, sizeof(char));
 
   seni_cursor *cursor = cursor_allocate(unparsed_source, unparsed_source_size);
-  
+
   unparse(cursor, env->word_lut, ast, genotype);
 
   if (expected != NULL) {
@@ -1045,22 +1171,22 @@ void unparse_compare(i32 seed_value, char *source, char *expected)
   seni_systems_shutdown();
 }
 
-void test_genotype(void)
-{
+void test_genotype(void) {
   seni_genotype *genotype;
-  seni_gene *g;
-  seni_var *v;
+  seni_gene *    g;
+  seni_var *     v;
 
-  // startup/shutdown here and not in genotype_test as the tests compare genotypes
+  // startup/shutdown here and not in genotype_test as the tests compare
+  // genotypes
   seni_systems_startup();
-  
+
   {
     genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
     assert_seni_var_f32(v, VAR_FLOAT, 81.0f);
-    TEST_ASSERT_NULL(g->next);  // only 1 gene
+    TEST_ASSERT_NULL(g->next); // only 1 gene
     genotype_return_to_pool(genotype);
   }
 
@@ -1070,7 +1196,7 @@ void test_genotype(void)
     g = genotype->genes;
     v = g->var;
     assert_seni_var_f32(v, VAR_FLOAT, 80.271f);
-    TEST_ASSERT_NULL(g->next);  // only 1 gene
+    TEST_ASSERT_NULL(g->next); // only 1 gene
     genotype_return_to_pool(genotype);
   }
 
@@ -1080,7 +1206,7 @@ void test_genotype(void)
     g = genotype->genes;
     v = g->var;
     assert_seni_var_f32(v, VAR_FLOAT, 17.0f);
-    TEST_ASSERT_NULL(g->next);  // only 1 gene
+    TEST_ASSERT_NULL(g->next); // only 1 gene
     genotype_return_to_pool(genotype);
   }
 
@@ -1095,20 +1221,20 @@ void test_genotype(void)
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.5588f, v->f32_array[1]);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.1425f, v->f32_array[2]);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.3, v->f32_array[3]);
-    TEST_ASSERT_NULL(g->next);  // only 1 gene
+    TEST_ASSERT_NULL(g->next); // only 1 gene
     genotype_return_to_pool(genotype);
   }
 
   seni_systems_shutdown();
 }
 
-void test_genotype_vectors(void)
-{
+void test_genotype_vectors(void) {
   seni_genotype *genotype;
-  seni_gene *g;
-  seni_var *v;
+  seni_gene *    g;
+  seni_var *     v;
 
-  // startup/shutdown here and not in genotype_test as the tests compare genotypes
+  // startup/shutdown here and not in genotype_test as the tests compare
+  // genotypes
   seni_systems_startup();
 
   {
@@ -1118,7 +1244,7 @@ void test_genotype_vectors(void)
     v = g->var;
 
     // this will create 2 genes, each one for a VAR_2D
-    
+
     TEST_ASSERT_EQUAL(VAR_2D, v->type);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.1653f, v->f32_array[0]);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.5588f, v->f32_array[1]);
@@ -1140,7 +1266,7 @@ void test_genotype_vectors(void)
     v = g->var;
 
     // this will create 2 genes, each one for a VAR_2D
-    
+
     TEST_ASSERT_EQUAL(VAR_2D, v->type);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 51.6535f, v->f32_array[0]);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 55.5886f, v->f32_array[1]);
@@ -1158,13 +1284,13 @@ void test_genotype_vectors(void)
   seni_systems_shutdown();
 }
 
-void test_genotype_multiple_floats(void)
-{
+void test_genotype_multiple_floats(void) {
   seni_genotype *genotype;
-  seni_gene *g;
-  seni_var *v;
+  seni_gene *    g;
+  seni_var *     v;
 
-  // startup/shutdown here and not in genotype_test as the tests compare genotypes
+  // startup/shutdown here and not in genotype_test as the tests compare
+  // genotypes
   seni_systems_startup();
 
   {
@@ -1191,8 +1317,7 @@ void test_genotype_multiple_floats(void)
   seni_systems_shutdown();
 }
 
-void test_unparser(void)
-{
+void test_unparser(void) {
   unparse_compare(9875, "(+ 4 2.0)", NULL);
   unparse_compare(9875, "(+ 4 [1 2 3])", NULL);
   unparse_compare(9875, "(+ 4 [1.0 2.22 3.333 4.4444 5.55555])", NULL);
@@ -1200,36 +1325,56 @@ void test_unparser(void)
   unparse_compare(9875, "foo:", NULL);
   unparse_compare(9875, "foo ; some comment \"here\"", NULL);
   unparse_compare(9875, "(fn (a b: 10) (+ b 20))", NULL);
-  unparse_compare(9875, "(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 {48 (gen/int min: 1 max: 50)})");
+  unparse_compare(
+      9875, "(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 {48 (gen/int min: 1 max: 50)})");
   unparse_compare(9875, "(+ 7 { 4 (gen/int min: 2 max: 6)})", "(+ 7 { 6 (gen/int min: 2 max: 6)})");
   unparse_compare(9875, "[8 {3 (gen/int min: 0 max: 9)}]", "[8 {9 (gen/int min: 0 max: 9)}]");
-  
+
   unparse_compare(6534, "{3.45 (gen/scalar min: 0 max: 9)}", "{7.52 (gen/scalar min: 0 max: 9)}");
   unparse_compare(6534, "{3.4 (gen/scalar min: 0 max: 9)}", "{7.5 (gen/scalar min: 0 max: 9)}");
 
-  unparse_compare(6534, "(col/rgb r: {0.4 (gen/scalar)} g: 0.1)", "(col/rgb r: {0.8 (gen/scalar)} g: 0.1)");
+  unparse_compare(
+      6534, "(col/rgb r: {0.4 (gen/scalar)} g: 0.1)", "(col/rgb r: {0.8 (gen/scalar)} g: 0.1)");
 
   unparse_compare(6534, "{3 (gen/select from: '(4 5 6 7))}", "{7 (gen/select from: '(4 5 6 7))}");
 
   unparse_compare(5246, "(define c (col/build-procedural preset: robocop alpha: 0.08))", NULL);
-  
+
   // there was a bug which wasn't correctly traversing the ast to assign genes
-  unparse_compare(6542, "(rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 max: 670)})", "(rect position: [500 500] colour: red width: {91 (gen/int min: 80 max: 400)} height: {561 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {228 (gen/int min: 80 max: 400)} height: {257 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red width: {380 (gen/int min: 80 max: 400)} height: {416 (gen/int min: 80 max: 670)})");
+  unparse_compare(6542,
+                  "(rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: "
+                  "400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 "
+                  "500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 "
+                  "(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red "
+                  "width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 "
+                  "max: 670)})",
+                  "(rect position: [500 500] colour: red width: {91 (gen/int min: 80 max: "
+                  "400)} height: {561 (gen/int min: 80 max: 670)}) (rect position: [500 "
+                  "500] colour: red width: {228 (gen/int min: 80 max: 400)} height: {257 "
+                  "(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red "
+                  "width: {380 (gen/int min: 80 max: 400)} height: {416 (gen/int min: 80 "
+                  "max: 670)})");
 
   unparse_compare(6534, "{b (gen/select from: '(a b c))}", "{c (gen/select from: '(a b c))}");
-  unparse_compare(6534, "{red (gen/select from: '(red green blue))}", "{blue (gen/select from: '(red green blue))}");
+  unparse_compare(6534,
+                  "{red (gen/select from: '(red green blue))}",
+                  "{blue (gen/select from: '(red green blue))}");
 
-  unparse_compare(6534, "{rainbow (gen/select from: col/procedural-fn-presets)}", "{robocop (gen/select from: col/procedural-fn-presets)}");
+  unparse_compare(6534,
+                  "{rainbow (gen/select from: col/procedural-fn-presets)}",
+                  "{robocop (gen/select from: col/procedural-fn-presets)}");
 
-  unparse_compare(9999, "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col)}", "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 0.26) (gen/col)}");
-  unparse_compare(9999, "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}", "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 1.00) (gen/col alpha: 1)}");
+  unparse_compare(9999,
+                  "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col)}",
+                  "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 0.26) (gen/col)}");
+  unparse_compare(9999,
+                  "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}",
+                  "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 1.00) (gen/col alpha: 1)}");
 }
 
-void test_unparser_vectors(void)
-{
-  unparse_compare(9999,
-                  "{[[1.00 2.00] [3.00 4.00]] (gen/2d)}",
-                  "{[[0.00 0.72] [0.16 0.26]] (gen/2d)}");
+void test_unparser_vectors(void) {
+  unparse_compare(
+      9999, "{[[1.00 2.00] [3.00 4.00]] (gen/2d)}", "{[[0.00 0.72] [0.16 0.26]] (gen/2d)}");
 
   unparse_compare(9999,
                   "{[[  1.00   2.00  ] [  3.00   4.00  ]] (gen/2d)}",
@@ -1248,20 +1393,15 @@ void test_unparser_vectors(void)
                   "{ [ [ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/2d min: 40 max: 90) }");
 }
 
-void test_unparser_multiple_floats(void)
-{
-  unparse_compare(3455,
-                  "{[0.977 0.416 0.171] (gen/scalar)}",
-                  "{[0.022 0.737 0.898] (gen/scalar)}");
-    
+void test_unparser_multiple_floats(void) {
+  unparse_compare(3455, "{[0.977 0.416 0.171] (gen/scalar)}", "{[0.022 0.737 0.898] (gen/scalar)}");
 }
 
 // serialize/deserialize seni_var
 
-void compare_seni_var(seni_var *a, seni_var *b)
-{
+void compare_seni_var(seni_var *a, seni_var *b) {
   TEST_ASSERT_EQUAL(a->type, b->type);
-  switch(a->type) {
+  switch (a->type) {
   case VAR_INT:
     TEST_ASSERT_EQUAL(a->value.i, b->value.i);
     break;
@@ -1296,37 +1436,34 @@ void compare_seni_var(seni_var *a, seni_var *b)
   }
 }
 
-void compare_seni_bytecode(seni_bytecode *a, seni_bytecode *b)
-{
+void compare_seni_bytecode(seni_bytecode *a, seni_bytecode *b) {
   TEST_ASSERT_EQUAL(a->op, b->op);
   compare_seni_var(&(a->arg0), &(b->arg0));
   compare_seni_var(&(a->arg1), &(b->arg1));
 }
 
-void compare_seni_program(seni_program *a, seni_program *b)
-{
+void compare_seni_program(seni_program *a, seni_program *b) {
   TEST_ASSERT_EQUAL(a->code_size, b->code_size);
-  for(i32 i = 0; i < a->code_size; i++) {
+  for (i32 i = 0; i < a->code_size; i++) {
     compare_seni_bytecode(&(a->code[i]), &(b->code[i]));
   }
 }
 
-void serialize_deserialize_var(seni_var *var)
-{
-  i32 buffer_size = 128;
-  char *buffer = (char *)calloc(buffer_size, sizeof(char));
+void serialize_deserialize_var(seni_var *var) {
+  i32   buffer_size = 128;
+  char *buffer      = (char *)calloc(buffer_size, sizeof(char));
 
   seni_var out;
-  bool res;
+  bool     res;
 
   seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
 
   res = var_serialize(cursor, var);
-  
+
   TEST_ASSERT_TRUE(res);
 
   cursor_reset(cursor);
-    
+
   res = var_deserialize(&out, cursor);
 
   TEST_ASSERT_TRUE(res);
@@ -1337,40 +1474,39 @@ void serialize_deserialize_var(seni_var *var)
   free(buffer);
 }
 
-void test_serialization(void)
-{
+void test_serialization(void) {
   seni_var var;
 
   {
-    var.type = VAR_INT;
+    var.type    = VAR_INT;
     var.value.i = 42;
     serialize_deserialize_var(&var);
   }
   {
-    var.type = VAR_FLOAT;
+    var.type    = VAR_FLOAT;
     var.value.f = 12.34f;
     serialize_deserialize_var(&var);
   }
   {
-    var.type = VAR_BOOLEAN;
+    var.type    = VAR_BOOLEAN;
     var.value.i = 0;
     serialize_deserialize_var(&var);
     var.value.i = 1;
     serialize_deserialize_var(&var);
   }
   {
-    var.type = VAR_LONG;
+    var.type    = VAR_LONG;
     var.value.l = (u64)934872325L;
     serialize_deserialize_var(&var);
   }
   {
-    var.type = VAR_NAME;
+    var.type    = VAR_NAME;
     var.value.i = 12;
     serialize_deserialize_var(&var);
   }
   {
-    var.type = VAR_COLOUR;
-    var.value.i = RGB;
+    var.type         = VAR_COLOUR;
+    var.value.i      = RGB;
     var.f32_array[0] = 0.1f;
     var.f32_array[1] = 0.2f;
     var.f32_array[2] = 0.3f;
@@ -1378,20 +1514,20 @@ void test_serialization(void)
     serialize_deserialize_var(&var);
   }
   {
-    var.type = VAR_2D;
+    var.type         = VAR_2D;
     var.f32_array[0] = 0.5f;
     var.f32_array[1] = 0.6f;
     serialize_deserialize_var(&var);
   }
 
-  i32 buffer_size = 128;
-  char *buffer = (char *)calloc(buffer_size, sizeof(char));
+  i32   buffer_size = 128;
+  char *buffer      = (char *)calloc(buffer_size, sizeof(char));
 
   seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
 
   {
     // double serialize
-    var.type = VAR_INT;
+    var.type    = VAR_INT;
     var.value.i = 12;
 
     cursor_clear(cursor);
@@ -1399,7 +1535,7 @@ void test_serialization(void)
     cursor_sprintf(cursor, " ");
 
     seni_var var2;
-    var2.type = VAR_INT;
+    var2.type    = VAR_INT;
     var2.value.i = 34;
     var_serialize(cursor, &var2);
 
@@ -1412,14 +1548,14 @@ void test_serialization(void)
     var_deserialize(&out_var, cursor);
     compare_seni_var(&out_var, &var2);
   }
-  
+
   {
     // seni_bytecode
     seni_bytecode bytecode;
-    bytecode.op = STORE;
-    bytecode.arg0.type = VAR_INT;
+    bytecode.op           = STORE;
+    bytecode.arg0.type    = VAR_INT;
     bytecode.arg0.value.i = 2;
-    bytecode.arg1.type = VAR_INT;
+    bytecode.arg1.type    = VAR_INT;
     bytecode.arg1.value.i = 4;
 
     cursor_clear(cursor);
@@ -1437,15 +1573,14 @@ void test_serialization(void)
   free(buffer);
 }
 
-void test_serialization_program(void)
-{
+void test_serialization_program(void) {
   parser_subsystem_startup();
 
-  seni_env *env = env_allocate();
+  seni_env *    env     = env_allocate();
   seni_program *program = seni_compile_program("(gen/int min: 2 max: 6)", env->word_lut, 256);
 
-  i32 buffer_size = 4096;
-  char *buffer = (char *)calloc(buffer_size, sizeof(char));
+  i32   buffer_size = 4096;
+  char *buffer      = (char *)calloc(buffer_size, sizeof(char));
 
   seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
 
@@ -1455,35 +1590,34 @@ void test_serialization_program(void)
   cursor_reset(cursor);
 
   seni_program *out = program_allocate(256);
-  res = program_deserialize(out, cursor);
+  res               = program_deserialize(out, cursor);
   TEST_ASSERT_TRUE(res);
 
   compare_seni_program(out, program);
-  
+
   free(buffer);
   cursor_free(cursor);
   program_free(program);
   program_free(out);
   env_free(env);
-  
+
   parser_subsystem_shutdown();
 }
 
-void test_serialization_genotype(void)
-{
+void test_serialization_genotype(void) {
   seni_genotype *genotype;
-  seni_gene *g;
+  seni_gene *    g;
 
-  i32 buffer_size = 4096;
-  char *buffer = (char *)calloc(buffer_size, sizeof(char));
-  seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
-  bool res;
+  i32          buffer_size = 4096;
+  char *       buffer      = (char *)calloc(buffer_size, sizeof(char));
+  seni_cursor *cursor      = cursor_allocate(buffer, buffer_size);
+  bool         res;
 
   seni_systems_startup();
-  
+
   {
     cursor_reset(cursor);
-    
+
     genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
 
@@ -1493,19 +1627,19 @@ void test_serialization_genotype(void)
     cursor_reset(cursor);
 
     seni_genotype *out = genotype_get_from_pool();
-    res = genotype_deserialize(out, cursor);
+    res                = genotype_deserialize(out, cursor);
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
     assert_seni_var_f32(g->var, VAR_FLOAT, 81.0f);
-    
+
     genotype_return_to_pool(out);
     genotype_return_to_pool(genotype);
   }
 
   {
     cursor_reset(cursor);
-    
+
     genotype = genotype_test(7534, "(+ {2 (gen/int min: 1 max: 30)} {5 (gen/int min: 1 max: 30)})");
     TEST_ASSERT(genotype);
 
@@ -1515,7 +1649,7 @@ void test_serialization_genotype(void)
     cursor_reset(cursor);
 
     seni_genotype *out = genotype_get_from_pool();
-    res = genotype_deserialize(out, cursor);
+    res                = genotype_deserialize(out, cursor);
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
@@ -1526,35 +1660,34 @@ void test_serialization_genotype(void)
 
     g = g->next;
     TEST_ASSERT_NULL(g);
-    
+
     genotype_return_to_pool(out);
     genotype_return_to_pool(genotype);
   }
 
   seni_systems_shutdown();
-  
+
   cursor_free(cursor);
   free(buffer);
 }
 
-void test_serialization_genotype_list(void)
-{
+void test_serialization_genotype_list(void) {
   seni_systems_startup();
 
   seni_genotype_list *genotype_list;
-  seni_genotype *genotype;
-  seni_gene *g;
+  seni_genotype *     genotype;
+  seni_gene *         g;
 
   genotype_list = genotype_list_get_from_pool();
 
-  i32 buffer_size = 4096;
-  char *buffer = (char *)calloc(buffer_size, sizeof(char));
-  seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
-  bool res;
+  i32          buffer_size = 4096;
+  char *       buffer      = (char *)calloc(buffer_size, sizeof(char));
+  seni_cursor *cursor      = cursor_allocate(buffer, buffer_size);
+  bool         res;
 
   {
     cursor_reset(cursor);
-    
+
     genotype = genotype_test(7534, "(+ {2 (gen/int min: 1 max: 30)} {5 (gen/int min: 1 max: 30)})");
     TEST_ASSERT(genotype);
     genotype_list_add_genotype(genotype_list, genotype);
@@ -1573,14 +1706,14 @@ void test_serialization_genotype_list(void)
     cursor_reset(cursor);
 
     seni_genotype_list *out = genotype_list_get_from_pool();
-    res = genotype_list_deserialize(out, cursor);
+    res                     = genotype_list_deserialize(out, cursor);
     TEST_ASSERT_TRUE(res);
 
     i32 count = genotype_list_count(out);
     TEST_ASSERT_EQUAL(3, count);
 
     genotype = out->genotypes;
-    g = genotype->genes;
+    g        = genotype->genes;
     assert_seni_var_f32(g->var, VAR_FLOAT, 5.0f);
     g = g->next;
     assert_seni_var_f32(g->var, VAR_FLOAT, 4.0f);
@@ -1588,7 +1721,7 @@ void test_serialization_genotype_list(void)
     TEST_ASSERT_NULL(g);
 
     genotype = genotype->next;
-    g = genotype->genes;
+    g        = genotype->genes;
     assert_seni_var_f32(g->var, VAR_FLOAT, 4.0f);
     g = g->next;
     assert_seni_var_f32(g->var, VAR_FLOAT, 5.0f);
@@ -1596,7 +1729,7 @@ void test_serialization_genotype_list(void)
     TEST_ASSERT_NULL(g);
 
     genotype = genotype->next;
-    g = genotype->genes;
+    g        = genotype->genes;
     assert_seni_var_f32(g->var, VAR_FLOAT, 23.0f);
     g = g->next;
     assert_seni_var_f32(g->var, VAR_FLOAT, 18.0f);
@@ -1605,7 +1738,7 @@ void test_serialization_genotype_list(void)
 
     genotype = genotype->next;
     TEST_ASSERT_NULL(genotype);
-    
+
     genotype_list_return_to_pool(out);
   }
 
@@ -1617,28 +1750,28 @@ void test_serialization_genotype_list(void)
   seni_systems_shutdown();
 }
 
-void test_serialization_trait_list(void)
-{
-  char *source = "(rect position: [500 500] width: {100 (gen/int min: 20 max: 200)} height: {30 (gen/int min: 10 max: 40)})";
+void test_serialization_trait_list(void) {
+  char *source = "(rect position: [500 500] width: {100 (gen/int min: 20 max: "
+                 "200)} height: {30 (gen/int min: 10 max: 40)})";
 
   seni_systems_startup();
 
-  seni_vm *vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_vm * vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   seni_env *env = env_allocate();
 
-  seni_node *ast = parser_parse(env->word_lut, source);
+  seni_node *      ast        = parser_parse(env->word_lut, source);
   seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
 
-  i32 buffer_size = 4096;
-  char *buffer = (char *)calloc(buffer_size, sizeof(char));
-  seni_cursor *cursor = cursor_allocate(buffer, buffer_size);
-  bool res = trait_list_serialize(cursor, trait_list);
+  i32          buffer_size = 4096;
+  char *       buffer      = (char *)calloc(buffer_size, sizeof(char));
+  seni_cursor *cursor      = cursor_allocate(buffer, buffer_size);
+  bool         res         = trait_list_serialize(cursor, trait_list);
   TEST_ASSERT_TRUE(res);
 
   cursor_reset(cursor);
 
   seni_trait_list *out = trait_list_get_from_pool();
-  res = trait_list_deserialize(out, cursor);
+  res                  = trait_list_deserialize(out, cursor);
   TEST_ASSERT_TRUE(res);
 
   i32 count = trait_list_count(out);
@@ -1663,17 +1796,16 @@ void test_serialization_trait_list(void)
   seni_systems_shutdown();
 }
 
-void assert_rgb_hsluv(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l)
-{
+void assert_rgb_hsluv(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l) {
   seni_colour rgb;
-  rgb.format = RGB;
+  rgb.format     = RGB;
   rgb.element[0] = r;
   rgb.element[1] = g;
   rgb.element[2] = b;
   rgb.element[3] = 1.0f;
 
   seni_colour hsluv;
-  hsluv.format = HSLuv;
+  hsluv.format     = HSLuv;
   hsluv.element[0] = h;
   hsluv.element[1] = s;
   hsluv.element[2] = l;
@@ -1694,15 +1826,14 @@ void assert_rgb_hsluv(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l)
   TEST_ASSERT_FLOAT_WITHIN(0.001f, r, res.element[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.001f, g, res.element[1]);
   TEST_ASSERT_FLOAT_WITHIN(0.001f, b, res.element[2]);
-  TEST_ASSERT_EQUAL_FLOAT(1.0f, res.element[3]);  
+  TEST_ASSERT_EQUAL_FLOAT(1.0f, res.element[3]);
 }
 
-void test_rgb_hsluv_conversion()
-{
-  FILE *fp = fopen("colours_rgb_hsluv.txt", "r");
+void test_rgb_hsluv_conversion() {
+  FILE * fp = fopen("colours_rgb_hsluv.txt", "r");
   double r, g, b, h, s, l;
-  int read;
-  i32 count = 0;
+  int    read;
+  i32    count = 0;
 
   read = fscanf(fp, "%lf %lf %lf %lf %lf %lf", &r, &g, &b, &h, &s, &l);
   while (read == 6) {
@@ -1716,14 +1847,13 @@ void test_rgb_hsluv_conversion()
   fclose(fp);
 }
 
-int main(void)
-{
+int main(void) {
   // timing();
 
   if (INAME_NUMBER_OF_KNOWN_WORDS >= NATIVE_START) {
     SENI_LOG("WARNING: keywords are overwriting into NATIVE_START area");
   }
-    
+
   UNITY_BEGIN();
 
   // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
@@ -1736,17 +1866,17 @@ int main(void)
   RUN_TEST(test_uv_mapper);
   RUN_TEST(test_colour);
   RUN_TEST(test_strtof);
-  
+
   RUN_TEST(test_vm_bugs);
   RUN_TEST(test_vm_bytecode);
   RUN_TEST(test_vm_callret);
-  RUN_TEST(test_vm_native);  
+  RUN_TEST(test_vm_native);
   RUN_TEST(test_vm_destructure);
   RUN_TEST(test_vm_2d);
   RUN_TEST(test_vm_vector);
   RUN_TEST(test_vm_vector_append);
   RUN_TEST(test_vm_fence);
-  RUN_TEST(test_vm_loop);  
+  RUN_TEST(test_vm_loop);
   RUN_TEST(test_vm_col_rgb);
   RUN_TEST(test_vm_math);
   RUN_TEST(test_vm_prng);
@@ -1761,7 +1891,7 @@ int main(void)
   RUN_TEST(test_unparser);
   RUN_TEST(test_unparser_vectors);
   RUN_TEST(test_unparser_multiple_floats);
-  
+
   RUN_TEST(test_serialization);
   RUN_TEST(test_serialization_program);
   RUN_TEST(test_serialization_genotype);

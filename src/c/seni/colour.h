@@ -12,18 +12,11 @@
 // | LAB    | L 0..100  | A -128..128 | B -128..128 |
 // |--------+-----------+-------------+-------------|
 
-typedef enum {
-  RGB,
-  HSL,
-  HSLuv,
-  LAB,
-  HSV,
-  XYZ
-} seni_colour_format;
+typedef enum { RGB, HSL, HSLuv, LAB, HSV, XYZ } seni_colour_format;
 
 struct seni_colour {
   seni_colour_format format;
-  f32 element[4];
+  f32                element[4];
 };
 
 void colour_set(seni_colour *out, seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha);

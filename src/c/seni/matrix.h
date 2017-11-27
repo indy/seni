@@ -22,17 +22,17 @@ void matrix_transform_vec3(f32 *outx, f32 *outy, f32 *outz, seni_matrix *m, f32 
 struct seni_matrix_stack {
   // stack
   seni_matrix *stack;
-  i32 stack_size;
+  i32          stack_size;
 
   i32 sp;
 
-  seni_matrix *wip_transform;        // a matrix for performing calculations
+  seni_matrix *wip_transform; // a matrix for performing calculations
 };
 
 seni_matrix_stack *matrix_stack_allocate();
-void matrix_stack_free(seni_matrix_stack *matrix_stack);
-void matrix_stack_reset(seni_matrix_stack *matrix_stack);
-  
+void               matrix_stack_free(seni_matrix_stack *matrix_stack);
+void               matrix_stack_reset(seni_matrix_stack *matrix_stack);
+
 seni_matrix *matrix_stack_push(seni_matrix_stack *matrix_stack);
 seni_matrix *matrix_stack_pop(seni_matrix_stack *matrix_stack);
 seni_matrix *matrix_stack_peek(seni_matrix_stack *matrix_stack);
@@ -44,6 +44,15 @@ void matrix_stack_scale(seni_matrix_stack *matrix_stack, f32 sx, f32 sy);
 void matrix_stack_translate(seni_matrix_stack *matrix_stack, f32 tx, f32 ty);
 void matrix_stack_rotate(seni_matrix_stack *matrix_stack, f32 a);
 
-void matrix_stack_transform_vec2(f32 *outx, f32 *outy, seni_matrix_stack *matrix_stack, f32 x, f32 y);
-void matrix_stack_transform_vec3(f32 *outx, f32 *outy, f32 *outz, seni_matrix_stack *matrix_stack, f32 x, f32 y, f32 z);
-
+void matrix_stack_transform_vec2(f32 *              outx,
+                                 f32 *              outy,
+                                 seni_matrix_stack *matrix_stack,
+                                 f32                x,
+                                 f32                y);
+void matrix_stack_transform_vec3(f32 *              outx,
+                                 f32 *              outy,
+                                 f32 *              outz,
+                                 seni_matrix_stack *matrix_stack,
+                                 f32                x,
+                                 f32                y,
+                                 f32                z);

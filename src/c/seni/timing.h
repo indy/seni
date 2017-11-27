@@ -10,6 +10,5 @@
 #endif
 
 TIMING_UNIT get_timing();
-f32 timing_delta(TIMING_UNIT a, TIMING_UNIT b);
-f32 timing_delta_from(TIMING_UNIT earlier);
-  
+f32         timing_delta(TIMING_UNIT a, TIMING_UNIT b);
+f32         timing_delta_from(TIMING_UNIT earlier);

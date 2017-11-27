@@ -21,7 +21,6 @@
 #define MAX_PROGRAM_SIZE 2048
 #define MAX_TRAIT_PROGRAM_SIZE 256
 
-
 #define VERTEX_PACKET_NUM_VERTICES 10000
 
 // todo: errors probably shouldn't be silent when debug mode is switched off
@@ -36,4 +35,3 @@
 #define SENI_LOG(f_, ...)
 #define SENI_ERROR(f_, ...)
 #endif
-
