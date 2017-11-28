@@ -52,8 +52,8 @@ typedef struct {
   // references to the heap allocated seni_vars on the vector need to be updated
   // after seni_prng_f32 is called
   //
-  seni_var *seni_var_state0;
-  seni_var *seni_var_state1;
+  seni_var* seni_var_state0;
+  seni_var* seni_var_state1;
 } seni_prng_full_state;
 
 // [ VAR_VECTOR ->
@@ -316,16 +316,16 @@ seni_var g_var_true;
 // temporary seni_var, returned by native functions
 seni_var g_var_scratch;
 
-void declare_vm_keyword(seni_word_lut *word_lut, char *name) {
+void declare_vm_keyword(seni_word_lut* word_lut, char* name) {
   bool res = wlut_add_keyword(word_lut, name);
   if (res == false) {
     SENI_ERROR("declare_vm_keyword: failed to add keword: %s", name);
   }
 }
 
-void declare_native(seni_word_lut *     word_lut,
-                    seni_env *          e,
-                    char *              name,
+void declare_native(seni_word_lut*      word_lut,
+                    seni_env*           e,
+                    char*               name,
                     native_function_ptr function_ptr) {
   e->function_ptr[word_lut->native_count] = function_ptr;
 
@@ -335,8 +335,8 @@ void declare_native(seni_word_lut *     word_lut,
   }
 }
 
-seni_var *bind_debug_print(seni_vm *vm, i32 num_args) {
-  seni_var *value = NULL;
+seni_var* bind_debug_print(seni_vm* vm, i32 num_args) {
+  seni_var* value = NULL;
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -348,8 +348,8 @@ seni_var *bind_debug_print(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_nth(seni_vm *vm, i32 num_args) {
-  seni_var *from = NULL;
+seni_var* bind_nth(seni_vm* vm, i32 num_args) {
+  seni_var* from = NULL;
   f32       n    = 0;
 
   READ_STACK_ARGS_BEGIN;
@@ -365,7 +365,7 @@ seni_var *bind_nth(seni_vm *vm, i32 num_args) {
 
   } else if (from->type == VAR_VECTOR) {
 
-    seni_var *e = from->value.v;
+    seni_var* e = from->value.v;
 
     for (i32 i = 0; i < nth; i++) {
       e = e->next;
@@ -380,8 +380,8 @@ seni_var *bind_nth(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_vector_length(seni_vm *vm, i32 num_args) {
-  seni_var *vector = NULL;
+seni_var* bind_vector_length(seni_vm* vm, i32 num_args) {
+  seni_var* vector = NULL;
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -400,7 +400,7 @@ seni_var *bind_vector_length(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_line(seni_vm *vm, i32 num_args) {
+seni_var* bind_line(seni_vm* vm, i32 num_args) {
   // default values for line
   f32         width  = 4.0f;
   f32         from[] = {10.0f, 10.0f};
@@ -417,15 +417,15 @@ seni_var *bind_line(seni_vm *vm, i32 num_args) {
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
-  seni_render_data *render_data = vm->render_data;
-  seni_matrix *     matrix      = matrix_stack_peek(vm->matrix_stack);
+  seni_render_data* render_data = vm->render_data;
+  seni_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
   render_line(render_data, matrix, from[0], from[1], to[0], to[1], width, &colour);
 
   return &g_var_true;
 }
 
-seni_var *bind_rect(seni_vm *vm, i32 num_args) {
+seni_var* bind_rect(seni_vm* vm, i32 num_args) {
   // default values for rect
   f32         width      = 4.0f;
   f32         height     = 10.0f;
@@ -442,15 +442,15 @@ seni_var *bind_rect(seni_vm *vm, i32 num_args) {
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARGS_END;
 
-  seni_render_data *render_data = vm->render_data;
-  seni_matrix *     matrix      = matrix_stack_peek(vm->matrix_stack);
+  seni_render_data* render_data = vm->render_data;
+  seni_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
   render_rect(render_data, matrix, position[0], position[1], width, height, &colour);
 
   return &g_var_true;
 }
 
-seni_var *bind_circle(seni_vm *vm, i32 num_args) {
+seni_var* bind_circle(seni_vm* vm, i32 num_args) {
   // default values for circle
   f32         width      = 4.0f;
   f32         height     = 10.0f;
@@ -478,8 +478,8 @@ seni_var *bind_circle(seni_vm *vm, i32 num_args) {
     height = radius;
   }
 
-  seni_render_data *render_data = vm->render_data;
-  seni_matrix *     matrix      = matrix_stack_peek(vm->matrix_stack);
+  seni_render_data* render_data = vm->render_data;
+  seni_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
   render_circle(
       render_data, matrix, position[0], position[1], width, height, &colour, (i32)tessellation);
@@ -487,7 +487,7 @@ seni_var *bind_circle(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_circle_slice(seni_vm *vm, i32 num_args) {
+seni_var* bind_circle_slice(seni_vm* vm, i32 num_args) {
   // default values for circle-slice
   f32         width      = 4.0f;
   f32         height     = 10.0f;
@@ -523,8 +523,8 @@ seni_var *bind_circle_slice(seni_vm *vm, i32 num_args) {
     height = radius;
   }
 
-  seni_render_data *render_data = vm->render_data;
-  seni_matrix *     matrix      = matrix_stack_peek(vm->matrix_stack);
+  seni_render_data* render_data = vm->render_data;
+  seni_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
   render_circle_slice(render_data,
                       matrix,
@@ -542,10 +542,10 @@ seni_var *bind_circle_slice(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_poly(seni_vm *vm, i32 num_args) {
+seni_var* bind_poly(seni_vm* vm, i32 num_args) {
   // default values for poly
-  seni_var *coords  = NULL;
-  seni_var *colours = NULL;
+  seni_var* coords  = NULL;
+  seni_var* colours = NULL;
 
   // update with values from stack
   READ_STACK_ARGS_BEGIN;
@@ -553,15 +553,15 @@ seni_var *bind_poly(seni_vm *vm, i32 num_args) {
   READ_STACK_ARG_VAR(INAME_COLOURS, colours);
   READ_STACK_ARGS_END;
 
-  seni_render_data *render_data = vm->render_data;
-  seni_matrix *     matrix      = matrix_stack_peek(vm->matrix_stack);
+  seni_render_data* render_data = vm->render_data;
+  seni_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
   render_poly(render_data, matrix, coords, colours);
 
   return &g_var_true;
 }
 
-seni_var *bind_bezier(seni_vm *vm, i32 num_args) {
+seni_var* bind_bezier(seni_vm* vm, i32 num_args) {
   // default values for bezier
   f32         line_width         = -1.0f;
   f32         line_width_start   = 4.0f;
@@ -609,8 +609,8 @@ seni_var *bind_bezier(seni_vm *vm, i32 num_args) {
     t_end = 1.0f;
   }
 
-  seni_render_data *render_data = vm->render_data;
-  seni_matrix *     matrix      = matrix_stack_peek(vm->matrix_stack);
+  seni_render_data* render_data = vm->render_data;
+  seni_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
   render_bezier(render_data,
                 matrix,
@@ -628,7 +628,7 @@ seni_var *bind_bezier(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_bezier_bulging(seni_vm *vm, i32 num_args) {
+seni_var* bind_bezier_bulging(seni_vm* vm, i32 num_args) {
   // default values for bezier
   f32 line_width = 5.0f;
   // f32 line_width_start = 4.0f;
@@ -667,8 +667,8 @@ seni_var *bind_bezier_bulging(seni_vm *vm, i32 num_args) {
     t_end = 1.0f;
   }
 
-  seni_render_data *render_data = vm->render_data;
-  seni_matrix *     matrix      = matrix_stack_peek(vm->matrix_stack);
+  seni_render_data* render_data = vm->render_data;
+  seni_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
   render_bezier_bulging(render_data,
                         matrix,
@@ -684,7 +684,7 @@ seni_var *bind_bezier_bulging(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_stroked_bezier(seni_vm *vm, i32 num_args) {
+seni_var* bind_stroked_bezier(seni_vm* vm, i32 num_args) {
   // default values for stroked-bezier
   f32         tessellation = 15.0f;
   f32         coords[]     = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
@@ -720,8 +720,8 @@ seni_var *bind_stroked_bezier(seni_vm *vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
   READ_STACK_ARGS_END;
 
-  seni_render_data *render_data = vm->render_data;
-  seni_matrix *     matrix      = matrix_stack_peek(vm->matrix_stack);
+  seni_render_data* render_data = vm->render_data;
+  seni_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
   render_stroked_bezier(render_data,
                         matrix,
@@ -741,7 +741,7 @@ seni_var *bind_stroked_bezier(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_stroked_bezier_rect(seni_vm *vm, i32 num_args) {
+seni_var* bind_stroked_bezier_rect(seni_vm* vm, i32 num_args) {
   // default values for stroked-bezier-rect
   f32         position[]          = {100.0f, 100.0f};
   f32         width               = 800.0f;
@@ -778,8 +778,8 @@ seni_var *bind_stroked_bezier_rect(seni_vm *vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
   READ_STACK_ARGS_END;
 
-  seni_render_data *render_data = vm->render_data;
-  seni_matrix *     matrix      = matrix_stack_peek(vm->matrix_stack);
+  seni_render_data* render_data = vm->render_data;
+  seni_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
   render_stroked_bezier_rect(render_data,
                              matrix,
@@ -801,7 +801,7 @@ seni_var *bind_stroked_bezier_rect(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_col_convert(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_convert(seni_vm* vm, i32 num_args) {
   // (col/convert colour: col format: LAB)
 
   i32         format = INAME_RGB;
@@ -841,7 +841,7 @@ seni_var *bind_col_convert(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_rgb(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_rgb(seni_vm* vm, i32 num_args) {
   // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
 
   // default values for line
@@ -869,7 +869,7 @@ seni_var *bind_col_rgb(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_hsl(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_hsl(seni_vm* vm, i32 num_args) {
   // (col/hsl h: 180.0 s: 0.1 l: 0.2 alpha: 0.4)
 
   // default values for line
@@ -897,7 +897,7 @@ seni_var *bind_col_hsl(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_hsluv(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_hsluv(seni_vm* vm, i32 num_args) {
   // (col/hsluv h: 180.0 s: 0.1 l: 0.2 alpha: 0.4)
 
   // default values for line
@@ -925,7 +925,7 @@ seni_var *bind_col_hsluv(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_hsv(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_hsv(seni_vm* vm, i32 num_args) {
   // (col/hsv h: 180.0 s: 0.1 v: 0.2 alpha: 0.4)
 
   // default values for line
@@ -953,7 +953,7 @@ seni_var *bind_col_hsv(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_lab(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_lab(seni_vm* vm, i32 num_args) {
   // (col/lab l: 0.2 a: -0.1 b: -0.3 alpha: 0.4)
 
   // default values for line
@@ -981,7 +981,7 @@ seni_var *bind_col_lab(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_complementary(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_complementary(seni_vm* vm, i32 num_args) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -998,7 +998,7 @@ seni_var *bind_col_complementary(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_split_complementary(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_split_complementary(seni_vm* vm, i32 num_args) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1021,7 +1021,7 @@ seni_var *bind_col_split_complementary(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_analagous(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_analagous(seni_vm* vm, i32 num_args) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1043,7 +1043,7 @@ seni_var *bind_col_analagous(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_triad(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_triad(seni_vm* vm, i32 num_args) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1065,7 +1065,7 @@ seni_var *bind_col_triad(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_darken(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_darken(seni_vm* vm, i32 num_args) {
   seni_colour colour;
   f32         value = 0; // 0..100
 
@@ -1086,7 +1086,7 @@ seni_var *bind_col_darken(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_lighten(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_lighten(seni_vm* vm, i32 num_args) {
   seni_colour colour;
   f32         value = 0; // 0..100
 
@@ -1107,7 +1107,7 @@ seni_var *bind_col_lighten(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_set_alpha(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_set_alpha(seni_vm* vm, i32 num_args) {
   seni_colour colour;
   f32         value = 0;
 
@@ -1128,7 +1128,7 @@ seni_var *bind_col_set_alpha(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_get_alpha(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_get_alpha(seni_vm* vm, i32 num_args) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1143,7 +1143,7 @@ seni_var *bind_col_get_alpha(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *col_set_element(seni_vm *vm, i32 num_args, seni_colour_format format, i32 index) {
+seni_var* col_set_element(seni_vm* vm, i32 num_args, seni_colour_format format, i32 index) {
   seni_colour colour;
   f32         value = 0;
 
@@ -1169,7 +1169,7 @@ seni_var *col_set_element(seni_vm *vm, i32 num_args, seni_colour_format format, 
   return &g_var_scratch;
 }
 
-seni_var *col_get_element(seni_vm *vm, i32 num_args, seni_colour_format format, i32 index) {
+seni_var* col_get_element(seni_vm* vm, i32 num_args, seni_colour_format format, i32 index) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1192,23 +1192,23 @@ seni_var *col_get_element(seni_vm *vm, i32 num_args, seni_colour_format format, 
   return &g_var_scratch;
 }
 
-seni_var *bind_col_set_r(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_set_r(seni_vm* vm, i32 num_args) {
   return col_set_element(vm, num_args, RGB, 0);
 }
 
-seni_var *bind_col_get_r(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_get_r(seni_vm* vm, i32 num_args) {
   return col_get_element(vm, num_args, RGB, 0);
 }
 
-seni_var *bind_col_set_g(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_set_g(seni_vm* vm, i32 num_args) {
   return col_set_element(vm, num_args, RGB, 1);
 }
 
-seni_var *bind_col_get_g(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_get_g(seni_vm* vm, i32 num_args) {
   return col_get_element(vm, num_args, RGB, 1);
 }
 
-seni_var *bind_col_set_b(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_set_b(seni_vm* vm, i32 num_args) {
   seni_colour colour;
   f32         value = 0;
 
@@ -1236,7 +1236,7 @@ seni_var *bind_col_set_b(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_get_b(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_get_b(seni_vm* vm, i32 num_args) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1260,7 +1260,7 @@ seni_var *bind_col_get_b(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_set_h(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_set_h(seni_vm* vm, i32 num_args) {
   seni_colour colour;
   f32         value = 0;
 
@@ -1288,7 +1288,7 @@ seni_var *bind_col_set_h(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_get_h(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_get_h(seni_vm* vm, i32 num_args) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1312,7 +1312,7 @@ seni_var *bind_col_get_h(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_set_s(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_set_s(seni_vm* vm, i32 num_args) {
   seni_colour colour;
   f32         value = 0;
 
@@ -1340,7 +1340,7 @@ seni_var *bind_col_set_s(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_get_s(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_get_s(seni_vm* vm, i32 num_args) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1364,7 +1364,7 @@ seni_var *bind_col_get_s(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_set_l(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_set_l(seni_vm* vm, i32 num_args) {
   seni_colour colour;
   f32         value = 0;
 
@@ -1392,7 +1392,7 @@ seni_var *bind_col_set_l(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_get_l(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_get_l(seni_vm* vm, i32 num_args) {
   seni_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1417,23 +1417,23 @@ seni_var *bind_col_get_l(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_set_a(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_set_a(seni_vm* vm, i32 num_args) {
   return col_set_element(vm, num_args, LAB, 1);
 }
 
-seni_var *bind_col_get_a(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_get_a(seni_vm* vm, i32 num_args) {
   return col_get_element(vm, num_args, LAB, 1);
 }
 
-seni_var *bind_col_set_v(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_set_v(seni_vm* vm, i32 num_args) {
   return col_set_element(vm, num_args, HSV, 2);
 }
 
-seni_var *bind_col_get_v(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_get_v(seni_vm* vm, i32 num_args) {
   return col_get_element(vm, num_args, HSV, 2);
 }
 
-seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_build_procedural(seni_vm* vm, i32 num_args) {
   // colour fn structure need to store 4 colours (for bezier-fn)
   // first element's value.i will represent procedural, bezier or quadratic
 
@@ -1454,7 +1454,7 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args) {
     get_colour_presets(a, b, c, d, preset);
   }
 
-  seni_var *v;
+  seni_var* v;
   vector_construct(&g_var_scratch);
 
   v               = var_get_from_heap(vm);
@@ -1492,7 +1492,7 @@ seni_var *bind_col_build_procedural(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_build_bezier(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_build_bezier(seni_vm* vm, i32 num_args) {
   // colour fn structure need to store 4 colours (for bezier-fn)
   // first element's value.i will represent procedural, bezier or quadratic
 
@@ -1513,7 +1513,7 @@ seni_var *bind_col_build_bezier(seni_vm *vm, i32 num_args) {
   colour_clone_as(&c_rgb, &c, RGB);
   colour_clone_as(&d_rgb, &d, RGB);
 
-  seni_var *v;
+  seni_var* v;
   vector_construct(&g_var_scratch);
 
   v               = var_get_from_heap(vm);
@@ -1555,7 +1555,7 @@ seni_var *bind_col_build_bezier(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_col_value(seni_vm *vm, i32 num_args) {
+seni_var* bind_col_value(seni_vm* vm, i32 num_args) {
   seni_colour_fn_state colour_fn_state;
   f32                  t = 0.0f;
 
@@ -1580,7 +1580,7 @@ seni_var *bind_col_value(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_translate(seni_vm *vm, i32 num_args) {
+seni_var* bind_translate(seni_vm* vm, i32 num_args) {
   f32 vector[] = {0.0f, 0.0f};
 
   READ_STACK_ARGS_BEGIN;
@@ -1592,7 +1592,7 @@ seni_var *bind_translate(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_rotate(seni_vm *vm, i32 num_args) {
+seni_var* bind_rotate(seni_vm* vm, i32 num_args) {
   // angle in degrees
   f32 angle = 0.0f;
 
@@ -1605,7 +1605,7 @@ seni_var *bind_rotate(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_scale(seni_vm *vm, i32 num_args) {
+seni_var* bind_scale(seni_vm* vm, i32 num_args) {
   f32 vector[] = {1.0f, 1.0f};
   f32 scalar   = 1.0f;
 
@@ -1623,7 +1623,7 @@ seni_var *bind_scale(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_math_distance(seni_vm *vm, i32 num_args) {
+seni_var* bind_math_distance(seni_vm* vm, i32 num_args) {
   f32 vec1[] = {0.0f, 0.0f};
   f32 vec2[] = {0.0f, 0.0f};
 
@@ -1640,7 +1640,7 @@ seni_var *bind_math_distance(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_math_clamp(seni_vm *vm, i32 num_args) {
+seni_var* bind_math_clamp(seni_vm* vm, i32 num_args) {
   // todo: try and move functions like this into ones that initially
   // create and return a function that takes a single argument.
   // e.g.
@@ -1666,7 +1666,7 @@ seni_var *bind_math_clamp(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_math_radians_to_degrees(seni_vm *vm, i32 num_args) {
+seni_var* bind_math_radians_to_degrees(seni_vm* vm, i32 num_args) {
   f32 angle = 0.0f;
 
   READ_STACK_ARGS_BEGIN;
@@ -1678,7 +1678,7 @@ seni_var *bind_math_radians_to_degrees(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_math_cos(seni_vm *vm, i32 num_args) {
+seni_var* bind_math_cos(seni_vm* vm, i32 num_args) {
   f32 angle = 0.0f;
 
   READ_STACK_ARGS_BEGIN;
@@ -1690,7 +1690,7 @@ seni_var *bind_math_cos(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_math_sin(seni_vm *vm, i32 num_args) {
+seni_var* bind_math_sin(seni_vm* vm, i32 num_args) {
   f32 angle = 0.0f;
 
   READ_STACK_ARGS_BEGIN;
@@ -1703,7 +1703,7 @@ seni_var *bind_math_sin(seni_vm *vm, i32 num_args) {
 }
 
 // (prng/build seed: 4324 min: 40 max: 100)
-seni_var *bind_prng_build(seni_vm *vm, i32 num_args) {
+seni_var* bind_prng_build(seni_vm* vm, i32 num_args) {
   f32 seed = 12322.0f; // todo: in docs mention that seed should be in
                        // range 1..some-large-number
   f32 min = 0.0f;
@@ -1725,7 +1725,7 @@ seni_var *bind_prng_build(seni_vm *vm, i32 num_args) {
   // the vector needs to represent a seni_prng_state struct as well as the min +
   // max values i.e. [u64 state, u64 inc, f32 min, f32 max]
   //
-  seni_var *v;
+  seni_var* v;
   vector_construct(&g_var_scratch);
   v               = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_PRNG);
   v->f32_array[0] = min;
@@ -1737,7 +1737,7 @@ seni_var *bind_prng_build(seni_vm *vm, i32 num_args) {
 }
 
 // (prng/values from: rng num: 5)
-seni_var *bind_prng_values(seni_vm *vm, i32 num_args) {
+seni_var* bind_prng_values(seni_vm* vm, i32 num_args) {
   f32                  num = 1.0f;
   seni_prng_full_state from;
 
@@ -1787,7 +1787,7 @@ seni_var *bind_prng_values(seni_vm *vm, i32 num_args) {
 }
 
 // (prng/value from: rng)
-seni_var *bind_prng_value(seni_vm *vm, i32 num_args) {
+seni_var* bind_prng_value(seni_vm* vm, i32 num_args) {
   seni_prng_full_state from;
 
   from.structure_id    = HEAP_STRUCTURE_UNDEFINED;
@@ -1826,7 +1826,7 @@ seni_var *bind_prng_value(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_prng_perlin(seni_vm *vm, i32 num_args) {
+seni_var* bind_prng_perlin(seni_vm* vm, i32 num_args) {
   f32 x = 1.0f;
   f32 y = 1.0f;
   f32 z = 1.0f;
@@ -1845,7 +1845,7 @@ seni_var *bind_prng_perlin(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_parametric_build(seni_vm *vm, i32 num_args) {
+seni_var* bind_parametric_build(seni_vm* vm, i32 num_args) {
   f32 from[]   = {0.0f, 1.0f};
   f32 to[]     = {0.0f, 100.0f};
   i32 clamping = INAME_FALSE;
@@ -1869,7 +1869,7 @@ seni_var *bind_parametric_build(seni_vm *vm, i32 num_args) {
 
   // id to signify that this structure stores data for interpolation
   // todo: fill this out properly and do the same for the other structures
-  seni_var *v;
+  seni_var* v;
 
   vector_construct(&g_var_scratch);
   v               = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_PARAMETRIC);
@@ -1885,7 +1885,7 @@ seni_var *bind_parametric_build(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_parametric_value(seni_vm *vm, i32 num_args) {
+seni_var* bind_parametric_value(seni_vm* vm, i32 num_args) {
   seni_parametric_state from;
   f32                   t = 0.0f;
 
@@ -1933,7 +1933,7 @@ seni_var *bind_parametric_value(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_parametric_cos(seni_vm *vm, i32 num_args) {
+seni_var* bind_parametric_cos(seni_vm* vm, i32 num_args) {
   f32 amplitude = 1.0f;
   f32 frequency = 1.0f;
   f32 t         = 1.0f; // t goes from 0 to TAU
@@ -1952,7 +1952,7 @@ seni_var *bind_parametric_cos(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_parametric_sin(seni_vm *vm, i32 num_args) {
+seni_var* bind_parametric_sin(seni_vm* vm, i32 num_args) {
   f32 amplitude = 1.0f;
   f32 frequency = 1.0f;
   f32 t         = 1.0f; // t goes from 0 to TAU
@@ -1969,7 +1969,7 @@ seni_var *bind_parametric_sin(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_parametric_bezier(seni_vm *vm, i32 num_args) {
+seni_var* bind_parametric_bezier(seni_vm* vm, i32 num_args) {
   f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
   f32 t        = 1.0f;
 
@@ -1988,7 +1988,7 @@ seni_var *bind_parametric_bezier(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_parametric_bezier_tangent(seni_vm *vm, i32 num_args) {
+seni_var* bind_parametric_bezier_tangent(seni_vm* vm, i32 num_args) {
   f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
   f32 t        = 1.0f;
 
@@ -2007,7 +2007,7 @@ seni_var *bind_parametric_bezier_tangent(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_parametric_circle(seni_vm *vm, i32 num_args) {
+seni_var* bind_parametric_circle(seni_vm* vm, i32 num_args) {
   f32 position[] = {0.0f, 0.0f};
   f32 radius     = 1.0f;
   f32 t          = 0.0f;
@@ -2028,7 +2028,7 @@ seni_var *bind_parametric_circle(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_path_linear(seni_vm *vm, i32 num_args) {
+seni_var* bind_path_linear(seni_vm* vm, i32 num_args) {
   // (path/linear fn: foo steps: 10 from: [0 0] to: [100 100])
   f32 from[]  = {0.0f, 0.0f};
   f32 to[]    = {100.0f, 100.0f};
@@ -2055,7 +2055,7 @@ seni_var *bind_path_linear(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_path_circle(seni_vm *vm, i32 num_args) {
+seni_var* bind_path_circle(seni_vm* vm, i32 num_args) {
   f32 pos[]   = {0.0f, 0.0f};
   f32 radius  = 100.0f;
   f32 steps   = 10.0f;
@@ -2081,7 +2081,7 @@ seni_var *bind_path_circle(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_path_spline(seni_vm *vm, i32 num_args) {
+seni_var* bind_path_spline(seni_vm* vm, i32 num_args) {
   f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f};
   f32 steps    = 10.0f;
   f32 t_start  = 0.0f;
@@ -2105,7 +2105,7 @@ seni_var *bind_path_spline(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_path_bezier(seni_vm *vm, i32 num_args) {
+seni_var* bind_path_bezier(seni_vm* vm, i32 num_args) {
   f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
   f32 steps    = 10.0f;
   f32 t_start  = 0.0f;
@@ -2129,7 +2129,7 @@ seni_var *bind_path_bezier(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_repeat_symmetry_vertical(seni_vm *vm, i32 num_args) {
+seni_var* bind_repeat_symmetry_vertical(seni_vm* vm, i32 num_args) {
   // draw is the index into program->fn_info (obtained with address-of)
   i32 fn = -1;
 
@@ -2147,7 +2147,7 @@ seni_var *bind_repeat_symmetry_vertical(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_repeat_symmetry_horizontal(seni_vm *vm, i32 num_args) {
+seni_var* bind_repeat_symmetry_horizontal(seni_vm* vm, i32 num_args) {
   // draw is the index into program->fn_info (obtained with address-of)
   i32 fn = -1;
 
@@ -2165,7 +2165,7 @@ seni_var *bind_repeat_symmetry_horizontal(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_repeat_symmetry_4(seni_vm *vm, i32 num_args) {
+seni_var* bind_repeat_symmetry_4(seni_vm* vm, i32 num_args) {
   // fn is the index into program->fn_info (obtained with address-of)
   i32 fn = -1;
 
@@ -2183,7 +2183,7 @@ seni_var *bind_repeat_symmetry_4(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_repeat_symmetry_8(seni_vm *vm, i32 num_args) {
+seni_var* bind_repeat_symmetry_8(seni_vm* vm, i32 num_args) {
   // fn is the index into program->fn_info (obtained with address-of)
   i32 fn = -1;
 
@@ -2201,7 +2201,7 @@ seni_var *bind_repeat_symmetry_8(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_repeat_rotate(seni_vm *vm, i32 num_args) {
+seni_var* bind_repeat_rotate(seni_vm* vm, i32 num_args) {
   // fn is the index into program->fn_info (obtained with address-of)
   i32 fn     = -1;
   f32 copies = 3.0f;
@@ -2220,7 +2220,7 @@ seni_var *bind_repeat_rotate(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_repeat_rotate_mirrored(seni_vm *vm, i32 num_args) {
+seni_var* bind_repeat_rotate_mirrored(seni_vm* vm, i32 num_args) {
   // fn is the index into program->fn_info (obtained with address-of)
   i32 fn     = -1;
   f32 copies = 3.0f;
@@ -2239,7 +2239,7 @@ seni_var *bind_repeat_rotate_mirrored(seni_vm *vm, i32 num_args) {
   return &g_var_true;
 }
 
-seni_var *bind_focal_generic(seni_vm *vm, i32 num_args, seni_focal_type type) {
+seni_var* bind_focal_generic(seni_vm* vm, i32 num_args, seni_focal_type type) {
   f32 position[] = {0.0f, 0.0f};
   f32 distance   = 1.0f;
   i32 mapping    = INAME_LINEAR;
@@ -2259,7 +2259,7 @@ seni_var *bind_focal_generic(seni_vm *vm, i32 num_args, seni_focal_type type) {
   // first item contains format in value.i, postion in f32_array[0,1] and
   // distance in f32_array[2] second item contains mapping in value.i
 
-  seni_var *v;
+  seni_var* v;
 
   vector_construct(&g_var_scratch);
   v               = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_FOCAL);
@@ -2272,19 +2272,19 @@ seni_var *bind_focal_generic(seni_vm *vm, i32 num_args, seni_focal_type type) {
   return &g_var_scratch;
 }
 
-seni_var *bind_focal_build_point(seni_vm *vm, i32 num_args) {
+seni_var* bind_focal_build_point(seni_vm* vm, i32 num_args) {
   return bind_focal_generic(vm, num_args, FOCAL_POINT);
 }
 
-seni_var *bind_focal_build_vline(seni_vm *vm, i32 num_args) {
+seni_var* bind_focal_build_vline(seni_vm* vm, i32 num_args) {
   return bind_focal_generic(vm, num_args, FOCAL_VLINE);
 }
 
-seni_var *bind_focal_build_hline(seni_vm *vm, i32 num_args) {
+seni_var* bind_focal_build_hline(seni_vm* vm, i32 num_args) {
   return bind_focal_generic(vm, num_args, FOCAL_HLINE);
 }
 
-seni_var *bind_focal_value(seni_vm *vm, i32 num_args) {
+seni_var* bind_focal_value(seni_vm* vm, i32 num_args) {
   seni_focal_state from;
   f32              position[] = {0.0f, 0.0f};
 
@@ -2335,7 +2335,7 @@ seni_var *bind_focal_value(seni_vm *vm, i32 num_args) {
 // NOTE: gen/int should still parse values as float
 // as seni scripts won't produce any real ints
 //
-seni_var *bind_gen_int(seni_vm *vm, i32 num_args) {
+seni_var* bind_gen_int(seni_vm* vm, i32 num_args) {
   f32 min = 0.0f;
   f32 max = 1000.0f;
 
@@ -2352,7 +2352,7 @@ seni_var *bind_gen_int(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_gen_scalar(seni_vm *vm, i32 num_args) {
+seni_var* bind_gen_scalar(seni_vm* vm, i32 num_args) {
   f32 min = 0.0f;
   f32 max = 1.0f;
 
@@ -2368,7 +2368,7 @@ seni_var *bind_gen_scalar(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_gen_2d(seni_vm *vm, i32 num_args) {
+seni_var* bind_gen_2d(seni_vm* vm, i32 num_args) {
   f32 min = 0.0f;
   f32 max = 1.0f;
 
@@ -2385,14 +2385,14 @@ seni_var *bind_gen_2d(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_gen_select(seni_vm *vm, i32 num_args) {
+seni_var* bind_gen_select(seni_vm* vm, i32 num_args) {
   // 'from' parameter should be a list
   // i.e. (gen/select from: '(1 2 3 4 5))
   //
   // this prevents any confusion between a vector and vec_2d
   // e.g. (gen/select from: [1 2 3 4 5]) vs. (gen/select from: [1 2])
 
-  seni_var *from = NULL;
+  seni_var* from = NULL;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VAR(INAME_FROM, from);
@@ -2407,7 +2407,7 @@ seni_var *bind_gen_select(seni_vm *vm, i32 num_args) {
   //   v = v->next;
   // }
 
-  seni_var *res = vector_get(from, index);
+  seni_var* res = vector_get(from, index);
 
   var_copy(&g_var_scratch, res);
 
@@ -2416,7 +2416,7 @@ seni_var *bind_gen_select(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-seni_var *bind_gen_col(seni_vm *vm, i32 num_args) {
+seni_var* bind_gen_col(seni_vm* vm, i32 num_args) {
   f32 alpha = -1.0f;
 
   READ_STACK_ARGS_BEGIN;
@@ -2441,7 +2441,7 @@ seni_var *bind_gen_col(seni_vm *vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-void declare_bindings(seni_word_lut *word_lut, seni_env *e) {
+void declare_bindings(seni_word_lut* word_lut, seni_env* e) {
   g_var_true.type    = VAR_BOOLEAN;
   g_var_true.value.i = 1;
 

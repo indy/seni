@@ -10,9 +10,9 @@
 #include <math.h>
 
 // invoke a function with 3 args: step, position and t
-void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y) {
-  seni_program *program = vm->program;
-  seni_fn_info *fn_info = &(program->fn_info[fn]);
+void invoke_function(seni_vm* vm, i32 fn, f32 step, f32 t, f32 x, f32 y) {
+  seni_program* program = vm->program;
+  seni_fn_info* fn_info = &(program->fn_info[fn]);
 
   vm_function_call_default_arguments(vm, fn_info);
   vm_function_set_argument_to_f32(vm, fn_info, INAME_N, step);
@@ -21,7 +21,7 @@ void invoke_function(seni_vm *vm, i32 fn, f32 step, f32 t, f32 x, f32 y) {
   vm_function_call_body(vm, fn_info);
 }
 
-void path_linear(seni_vm *vm,
+void path_linear(seni_vm* vm,
                  i32      fn,
                  i32      steps,
                  f32      t_start,
@@ -48,7 +48,7 @@ void path_linear(seni_vm *vm,
   }
 }
 
-void path_circle(seni_vm *vm,
+void path_circle(seni_vm* vm,
                  i32      fn,
                  i32      steps,
                  f32      t_start,
@@ -74,7 +74,7 @@ void path_circle(seni_vm *vm,
   }
 }
 
-void path_spline(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 *coords) {
+void path_spline(seni_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32* coords) {
   f32 unit = (t_end - t_start) / ((f32)steps - 1.0f);
   f32 t, x, y;
 
@@ -88,7 +88,7 @@ void path_spline(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 *co
   }
 }
 
-void path_bezier(seni_vm *vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 *coords) {
+void path_bezier(seni_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32* coords) {
   f32 unit = (t_end - t_start) / ((f32)steps - 1.0f);
   f32 t, x, y;
 

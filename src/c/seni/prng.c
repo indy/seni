@@ -77,7 +77,7 @@ static f32 grad(i32 hash, f32 x, f32 y, f32 z) {
       4, 5, 6, 7, 8,  9,  10, 11, 0, 1, 2,  3,  4, 5, 6, 7,  8,  9,  10, 11,
   };
 
-  f32 *grad = basis[indices[hash & 15]];
+  f32* grad = basis[indices[hash & 15]];
 
   return grad[0] * x + grad[1] * y + grad[2] * z;
 }
@@ -129,28 +129,28 @@ f32 noise(f32 x_, f32 y_, f32 z_) {
 
 // ----------------------------------------------------------------------
 
-void seni_prng_set_state(seni_prng_state *prng_state, u64 seed) {
-  rnd_pcg_seed((rnd_pcg_t *)prng_state, (u32)seed);
+void seni_prng_set_state(seni_prng_state* prng_state, u64 seed) {
+  rnd_pcg_seed((rnd_pcg_t*)prng_state, (u32)seed);
 }
 
-void seni_prng_copy(seni_prng_state *dest_prng_state, seni_prng_state *src_prng_state) {
+void seni_prng_copy(seni_prng_state* dest_prng_state, seni_prng_state* src_prng_state) {
   dest_prng_state->state[0] = src_prng_state->state[0];
   dest_prng_state->state[1] = src_prng_state->state[1];
 }
 
-i32 seni_prng_i32_range(seni_prng_state *prng_state, i32 min, i32 max) {
-  i32 res = rnd_pcg_range((rnd_pcg_t *)prng_state, min, max);
+i32 seni_prng_i32_range(seni_prng_state* prng_state, i32 min, i32 max) {
+  i32 res = rnd_pcg_range((rnd_pcg_t*)prng_state, min, max);
 
   return res;
 }
 
 // 0..1
-f32 seni_prng_f32(seni_prng_state *prng_state) {
-  f32 res = rnd_pcg_nextf((rnd_pcg_t *)prng_state);
+f32 seni_prng_f32(seni_prng_state* prng_state) {
+  f32 res = rnd_pcg_nextf((rnd_pcg_t*)prng_state);
   return res;
 }
 
-f32 seni_prng_f32_range(seni_prng_state *prng_state, f32 min, f32 max) {
+f32 seni_prng_f32_range(seni_prng_state* prng_state, f32 min, f32 max) {
   f32 value = seni_prng_f32(prng_state);
   value     = (value * (max - min)) + min;
 

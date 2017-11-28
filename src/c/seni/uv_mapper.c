@@ -2,12 +2,12 @@
 
 #include <stdlib.h>
 
-i32 *             num_uv_mappings = NULL;
-seni_uv_mapping **g_brush_info    = NULL;
+i32*              num_uv_mappings = NULL;
+seni_uv_mapping** g_brush_info    = NULL;
 
 f32 texture_dim = 1024.0f;
 
-void make_uv(f32 *outx, f32 *outy, f32 in_u, f32 in_v) {
+void make_uv(f32* outx, f32* outy, f32 in_u, f32 in_v) {
   *outx = in_u / texture_dim;
   *outy = in_v / texture_dim;
 }
@@ -19,7 +19,7 @@ void allocate_uv_mapping(seni_brush_type type,
                          i32             max_x,
                          i32             max_y,
                          f32             width_scale) {
-  seni_uv_mapping *m = &(g_brush_info[type][sub_type]);
+  seni_uv_mapping* m = &(g_brush_info[type][sub_type]);
 
   m->map = calloc(8, sizeof(f32));
 
@@ -32,9 +32,9 @@ void allocate_uv_mapping(seni_brush_type type,
 }
 
 void uv_mapper_subsystem_startup() {
-  g_brush_info = (seni_uv_mapping **)calloc(NUM_BRUSHES, sizeof(seni_uv_mapping *));
+  g_brush_info = (seni_uv_mapping**)calloc(NUM_BRUSHES, sizeof(seni_uv_mapping*));
 
-  num_uv_mappings             = (i32 *)calloc(NUM_BRUSHES, sizeof(i32));
+  num_uv_mappings             = (i32*)calloc(NUM_BRUSHES, sizeof(i32));
   num_uv_mappings[BRUSH_FLAT] = 1;
   num_uv_mappings[BRUSH_A]    = 1;
   num_uv_mappings[BRUSH_B]    = 6;
@@ -45,7 +45,7 @@ void uv_mapper_subsystem_startup() {
   num_uv_mappings[BRUSH_G]    = 2;
 
   for (i32 i = BRUSH_FLAT; i < NUM_BRUSHES; i++) {
-    g_brush_info[i] = (seni_uv_mapping *)calloc(num_uv_mappings[i], sizeof(seni_uv_mapping));
+    g_brush_info[i] = (seni_uv_mapping*)calloc(num_uv_mappings[i], sizeof(seni_uv_mapping));
   }
 
   // BRUSH_FLAT
@@ -81,11 +81,11 @@ void uv_mapper_subsystem_startup() {
 }
 
 void free_uv_mapping(seni_brush_type type) {
-  seni_uv_mapping *m   = g_brush_info[type];
+  seni_uv_mapping* m   = g_brush_info[type];
   i32              num = num_uv_mappings[type];
 
   for (i32 i = 0; i < num; i++) {
-    seni_uv_mapping *p = &(m[i]);
+    seni_uv_mapping* p = &(m[i]);
     free(p->map);
   }
 
@@ -106,7 +106,7 @@ void uv_mapper_subsystem_shutdown() {
   free(num_uv_mappings);
 }
 
-seni_uv_mapping *get_uv_mapping(seni_brush_type type, i32 sub_type, bool wrap_sub_type) {
+seni_uv_mapping* get_uv_mapping(seni_brush_type type, i32 sub_type, bool wrap_sub_type) {
   if (wrap_sub_type == false && sub_type >= num_uv_mappings[type]) {
     return NULL;
   }

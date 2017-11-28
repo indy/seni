@@ -14,18 +14,18 @@ i32 opcode_offset[] = {
 };
 
 bool          g_use_genes;
-seni_program *g_preamble_program;
+seni_program* g_preamble_program;
 
-void           compile_vector(seni_node *ast, seni_program *program);
-void           clear_global_mappings(seni_program *program);
-void           clear_local_mappings(seni_program *program);
-void           register_top_level_preamble(seni_program *program);
-void           compile_preamble(seni_program *program);
-seni_bytecode *program_emit_opcode_i32(seni_program *program, seni_opcode op, i32 arg0, i32 arg1);
+void           compile_vector(seni_node* ast, seni_program* program);
+void           clear_global_mappings(seni_program* program);
+void           clear_local_mappings(seni_program* program);
+void           register_top_level_preamble(seni_program* program);
+void           compile_preamble(seni_program* program);
+seni_bytecode* program_emit_opcode_i32(seni_program* program, seni_opcode op, i32 arg0, i32 arg1);
 
 void compiler_subsystem_startup() {
   i32           program_max_size = 100; // ???
-  seni_program *program          = program_allocate(program_max_size);
+  seni_program* program          = program_allocate(program_max_size);
 
   clear_global_mappings(program);
   clear_local_mappings(program);
@@ -42,13 +42,13 @@ void compiler_subsystem_startup() {
 
 void compiler_subsystem_shutdown() { program_free(g_preamble_program); }
 
-seni_program *get_preamble_program() { return g_preamble_program; }
+seni_program* get_preamble_program() { return g_preamble_program; }
 
-void gene_assign_to_node(seni_genotype *genotype, seni_node *node) {
+void gene_assign_to_node(seni_genotype* genotype, seni_node* node) {
   if (node->alterable) {
     if (node->type == NODE_VECTOR) {
       // grab a gene for every element in this vector
-      for (seni_node *n = safe_first_child(node); n != NULL; n = safe_next(n)) {
+      for (seni_node* n = safe_first_child(node); n != NULL; n = safe_next(n)) {
         n->gene = genotype_pull_gene(genotype);
       }
     } else {
@@ -59,7 +59,7 @@ void gene_assign_to_node(seni_genotype *genotype, seni_node *node) {
     node->gene = NULL;
 
     if (get_node_value_in_use(node->type) == USE_FIRST_CHILD) {
-      seni_node *first_child = safe_first(node->value.first_child);
+      seni_node* first_child = safe_first(node->value.first_child);
       if (first_child) {
         gene_assign_to_node(genotype, first_child);
       }
@@ -73,7 +73,7 @@ void gene_assign_to_node(seni_genotype *genotype, seni_node *node) {
   }
 }
 
-bool genotype_assign_to_ast(seni_genotype *genotype, seni_node *ast) {
+bool genotype_assign_to_ast(seni_genotype* genotype, seni_node* ast) {
   genotype->current_gene = genotype->genes;
   gene_assign_to_node(genotype, ast);
 
@@ -81,7 +81,7 @@ bool genotype_assign_to_ast(seni_genotype *genotype, seni_node *ast) {
   // and assigning genes to alterable nodes should have
   // resulted in all of the genes being assigned
   //
-  seni_gene *gene = genotype->current_gene;
+  seni_gene* gene = genotype->current_gene;
   if (gene != NULL) {
     SENI_ERROR("genotype_assign_to_ast: genes remaining after assigning "
                "genotype to ast");
@@ -91,8 +91,8 @@ bool genotype_assign_to_ast(seni_genotype *genotype, seni_node *ast) {
   return true;
 }
 
-i32 get_node_value_i32_from_gene(seni_node *node) {
-  seni_gene *gene = node->gene;
+i32 get_node_value_i32_from_gene(seni_node* node) {
+  seni_gene* gene = node->gene;
   if (gene == NULL) {
     SENI_ERROR("null gene returned");
     return 0;
@@ -101,8 +101,8 @@ i32 get_node_value_i32_from_gene(seni_node *node) {
   return gene->var->value.i;
 }
 
-f32 get_node_value_f32_from_gene(seni_node *node) {
-  seni_gene *gene = node->gene;
+f32 get_node_value_f32_from_gene(seni_node* node) {
+  seni_gene* gene = node->gene;
   if (gene == NULL) {
     SENI_ERROR("null gene returned");
     return 0.0f;
@@ -111,11 +111,11 @@ f32 get_node_value_f32_from_gene(seni_node *node) {
   return gene->var->value.f;
 }
 
-bool alterable(seni_node *node) { return node->alterable && g_use_genes; }
+bool alterable(seni_node* node) { return node->alterable && g_use_genes; }
 
-i32 get_node_value_i32(seni_node *node) {
+i32 get_node_value_i32(seni_node* node) {
   if (alterable(node)) {
-    seni_gene *gene = node->gene;
+    seni_gene* gene = node->gene;
     if (gene == NULL) {
       SENI_ERROR("null gene returned");
       return 0;
@@ -130,9 +130,9 @@ i32 get_node_value_i32(seni_node *node) {
   }
 }
 
-f32 get_node_value_f32(seni_node *node) {
+f32 get_node_value_f32(seni_node* node) {
   if (alterable(node)) {
-    seni_gene *gene = node->gene;
+    seni_gene* gene = node->gene;
     if (gene == NULL) {
       SENI_ERROR("null gene returned");
       return 0.0f;
@@ -148,20 +148,20 @@ f32 get_node_value_f32(seni_node *node) {
 }
 
 // a temporary message for unimplemented alterable nodes
-void warn_if_alterable(char *msg, seni_node *node) {
+void warn_if_alterable(char* msg, seni_node* node) {
   if (node->alterable) {
     SENI_ERROR("warn_if_alterable: %s", msg);
   }
 }
 
-seni_bytecode *
-program_emit_opcode(seni_program *program, seni_opcode op, seni_var *arg0, seni_var *arg1) {
+seni_bytecode*
+program_emit_opcode(seni_program* program, seni_opcode op, seni_var* arg0, seni_var* arg1) {
   if (program->code_size >= program->code_max_size) {
     SENI_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
     return NULL;
   }
 
-  seni_bytecode *b = &(program->code[program->code_size++]);
+  seni_bytecode* b = &(program->code[program->code_size++]);
   b->op            = op;
   var_copy(&(b->arg0), arg0);
   var_copy(&(b->arg1), arg1);
@@ -172,13 +172,13 @@ program_emit_opcode(seni_program *program, seni_opcode op, seni_var *arg0, seni_
 }
 
 // emits an <opcode, i32, i32> triplet
-seni_bytecode *program_emit_opcode_i32(seni_program *program, seni_opcode op, i32 arg0, i32 arg1) {
+seni_bytecode* program_emit_opcode_i32(seni_program* program, seni_opcode op, i32 arg0, i32 arg1) {
   if (program->code_size >= program->code_max_size) {
     SENI_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
     return NULL;
   }
 
-  seni_bytecode *b = &(program->code[program->code_size++]);
+  seni_bytecode* b = &(program->code[program->code_size++]);
   b->op            = op;
   i32_as_var(&(b->arg0), arg0);
   i32_as_var(&(b->arg1), arg1);
@@ -189,14 +189,14 @@ seni_bytecode *program_emit_opcode_i32(seni_program *program, seni_opcode op, i3
 }
 
 // emits an <opcode, i32, name> triplet
-seni_bytecode *
-program_emit_opcode_i32_name(seni_program *program, seni_opcode op, i32 arg0, i32 name) {
+seni_bytecode*
+program_emit_opcode_i32_name(seni_program* program, seni_opcode op, i32 arg0, i32 name) {
   if (program->code_size >= program->code_max_size) {
     SENI_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
     return NULL;
   }
 
-  seni_bytecode *b = &(program->code[program->code_size++]);
+  seni_bytecode* b = &(program->code[program->code_size++]);
   b->op            = op;
   i32_as_var(&(b->arg0), arg0);
   name_as_var(&(b->arg1), name);
@@ -207,14 +207,14 @@ program_emit_opcode_i32_name(seni_program *program, seni_opcode op, i32 arg0, i3
 }
 
 // emits an <opcode, i32, f32> triplet
-seni_bytecode *
-program_emit_opcode_i32_f32(seni_program *program, seni_opcode op, i32 arg0, f32 arg1) {
+seni_bytecode*
+program_emit_opcode_i32_f32(seni_program* program, seni_opcode op, i32 arg0, f32 arg1) {
   if (program->code_size >= program->code_max_size) {
     SENI_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
     return NULL;
   }
 
-  seni_bytecode *b = &(program->code[program->code_size++]);
+  seni_bytecode* b = &(program->code[program->code_size++]);
   b->op            = op;
   i32_as_var(&(b->arg0), arg0);
   f32_as_var(&(b->arg1), arg1);
@@ -232,13 +232,13 @@ program_emit_opcode_i32_f32(seni_program *program, seni_opcode op, i32 arg0, f32
 //                    -2 == internal local mapping
 //                  >= 0 == maps a word from word_lut
 
-void clear_local_mappings(seni_program *program) {
+void clear_local_mappings(seni_program* program) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
     program->local_mappings[i] = -1;
   }
 }
 
-i32 add_local_mapping(seni_program *program, i32 word_lut_value) {
+i32 add_local_mapping(seni_program* program, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
     if (program->local_mappings[i] == -1) {
       program->local_mappings[i] = word_lut_value;
@@ -253,7 +253,7 @@ i32 add_local_mapping(seni_program *program, i32 word_lut_value) {
 // we want a local mapping that's going to be used to store an internal variable
 // (e.g. during a fence loop)
 // note: it's up to the caller to manage this reference
-i32 add_internal_local_mapping(seni_program *program) {
+i32 add_internal_local_mapping(seni_program* program) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
     if (program->local_mappings[i] == -1) {
       program->local_mappings[i] = -2;
@@ -266,7 +266,7 @@ i32 add_internal_local_mapping(seni_program *program) {
   return -1;
 }
 
-i32 get_local_mapping(seni_program *program, i32 word_lut_value) {
+i32 get_local_mapping(seni_program* program, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
     if (program->local_mappings[i] == word_lut_value) {
       return i;
@@ -276,13 +276,13 @@ i32 get_local_mapping(seni_program *program, i32 word_lut_value) {
   return -1;
 }
 
-void clear_global_mappings(seni_program *program) {
+void clear_global_mappings(seni_program* program) {
   for (i32 i = 0; i < MEMORY_GLOBAL_SIZE; i++) {
     program->global_mappings[i] = -1;
   }
 }
 
-i32 add_global_mapping(seni_program *program, i32 word_lut_value) {
+i32 add_global_mapping(seni_program* program, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_GLOBAL_SIZE; i++) {
     if (program->global_mappings[i] == -1) {
       program->global_mappings[i] = word_lut_value;
@@ -294,7 +294,7 @@ i32 add_global_mapping(seni_program *program, i32 word_lut_value) {
   return -1;
 }
 
-i32 get_global_mapping(seni_program *program, i32 word_lut_value) {
+i32 get_global_mapping(seni_program* program, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_GLOBAL_SIZE; i++) {
     if (program->global_mappings[i] == word_lut_value) {
       return i;
@@ -304,7 +304,7 @@ i32 get_global_mapping(seni_program *program, i32 word_lut_value) {
   return -1;
 }
 
-i32 get_argument_mapping(seni_fn_info *fn_info, i32 word_lut_value) {
+i32 get_argument_mapping(seni_fn_info* fn_info, i32 word_lut_value) {
   for (i32 i = 0; i < MAX_NUM_ARGUMENTS; i++) {
     if (fn_info->argument_offsets[i] == -1) {
       return -1;
@@ -317,7 +317,7 @@ i32 get_argument_mapping(seni_fn_info *fn_info, i32 word_lut_value) {
 }
 
 // returns the index into program->fn_info that represents this function
-i32 get_fn_info_index(seni_node *node, seni_program *program) {
+i32 get_fn_info_index(seni_node* node, seni_program* program) {
   if (node->type != NODE_NAME) {
     SENI_ERROR("get_fn_info_index not given a name node");
     node_pretty_print("get_fn_info_index non-name node:", node, NULL);
@@ -339,7 +339,7 @@ i32 get_fn_info_index(seni_node *node, seni_program *program) {
   return -1;
 }
 
-seni_fn_info *get_fn_info(seni_node *node, seni_program *program) {
+seni_fn_info* get_fn_info(seni_node* node, seni_program* program) {
   if (node->type != NODE_NAME) {
     return NULL;
   }
@@ -357,24 +357,24 @@ seni_fn_info *get_fn_info(seni_node *node, seni_program *program) {
   return NULL;
 }
 
-seni_node *compile(seni_node *ast, seni_program *program);
+seni_node* compile(seni_node* ast, seni_program* program);
 
-i32 node_vector_length(seni_node *vector_node) {
+i32 node_vector_length(seni_node* vector_node) {
   i32 length = 0;
-  for (seni_node *node = safe_first(vector_node->value.first_child); node != NULL;
+  for (seni_node* node = safe_first(vector_node->value.first_child); node != NULL;
        node            = safe_next(node)) {
     length++;
   }
   return length;
 }
 
-bool all_children_have_type(seni_node *parent, seni_node_type type) {
+bool all_children_have_type(seni_node* parent, seni_node_type type) {
   if (parent->type != NODE_VECTOR && parent->type != NODE_LIST) {
     SENI_ERROR("all_children_have_type need a vector or list");
     return false;
   }
 
-  seni_node *child = parent->value.first_child;
+  seni_node* child = parent->value.first_child;
   while (child != NULL) {
     if (child->type != type) {
       return false;
@@ -385,14 +385,14 @@ bool all_children_have_type(seni_node *parent, seni_node_type type) {
   return true;
 }
 
-i32 count_children(seni_node *parent) {
+i32 count_children(seni_node* parent) {
   if (parent->type != NODE_VECTOR && parent->type != NODE_LIST) {
     SENI_ERROR("count_children need a vector or list");
     return 0;
   }
 
   i32        count = 0;
-  seni_node *child = safe_first(parent->value.first_child);
+  seni_node* child = safe_first(parent->value.first_child);
   while (child != NULL) {
     count++;
     child = safe_next(child);
@@ -401,8 +401,8 @@ i32 count_children(seni_node *parent) {
   return count;
 }
 
-i32 store_from_stack_to_memory(seni_program *           program,
-                               seni_node *              node,
+i32 store_from_stack_to_memory(seni_program*            program,
+                               seni_node*               node,
                                seni_memory_segment_type memory_segment_type) {
   i32 address = -1;
 
@@ -429,11 +429,11 @@ i32 store_from_stack_to_memory(seni_program *           program,
   return address;
 }
 
-seni_node *compile_define(seni_node *              ast,
-                          seni_program *           program,
+seni_node* compile_define(seni_node*               ast,
+                          seni_program*            program,
                           seni_memory_segment_type memory_segment_type) {
-  seni_node *lhs_node = safe_next(ast);
-  seni_node *value_node;
+  seni_node* lhs_node = safe_next(ast);
+  seni_node* value_node;
   i32        i, m;
 
   while (lhs_node != NULL) {
@@ -460,7 +460,7 @@ seni_node *compile_define(seni_node *              ast,
         program_emit_opcode_i32(program, PILE, num_children, 0);
         program->opcode_offset += num_children - 1;
 
-        seni_node *child = safe_first(lhs_node->value.first_child);
+        seni_node* child = safe_first(lhs_node->value.first_child);
 
         for (i = 1; i < num_children; i++) {
           child = safe_next(child);
@@ -495,18 +495,18 @@ seni_node *compile_define(seni_node *              ast,
   return NULL;
 }
 
-void compile_if(seni_node *ast, seni_program *program) {
+void compile_if(seni_node* ast, seni_program* program) {
   // if (> 200 100) 12 24
   // ^
-  seni_node *if_node   = safe_next(ast);
-  seni_node *then_node = safe_next(if_node);
-  seni_node *else_node = safe_next(then_node); // could be NULL
+  seni_node* if_node   = safe_next(ast);
+  seni_node* then_node = safe_next(if_node);
+  seni_node* else_node = safe_next(then_node); // could be NULL
 
   compile(if_node, program);
 
   // insert jump to after the 'then' node if not true
   i32            addr_jump_then = program->code_size;
-  seni_bytecode *bc_jump_then   = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
+  seni_bytecode* bc_jump_then   = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
 
   // the offset after the if
   i32 offset_after_if = program->opcode_offset;
@@ -524,7 +524,7 @@ void compile_if(seni_node *ast, seni_program *program) {
 
     // insert a bc_jump_else opcode
     i32            addr_jump_else = program->code_size;
-    seni_bytecode *bc_jump_else   = program_emit_opcode_i32(program, JUMP, 0, 0);
+    seni_bytecode* bc_jump_else   = program_emit_opcode_i32(program, JUMP, 0, 0);
 
     bc_jump_then->arg0.value.i = program->code_size - addr_jump_then;
 
@@ -547,7 +547,7 @@ void compile_if(seni_node *ast, seni_program *program) {
 }
 
 // compiles everything after the current ast point
-void compile_rest(seni_node *ast, seni_program *program) {
+void compile_rest(seni_node* ast, seni_program* program) {
   ast = safe_next(ast);
   while (ast) {
     ast = compile(ast, program);
@@ -555,12 +555,12 @@ void compile_rest(seni_node *ast, seni_program *program) {
 }
 
 // compiles the next node after the current ast point
-void compile_next_one(seni_node *ast, seni_program *program) {
+void compile_next_one(seni_node* ast, seni_program* program) {
   ast = safe_next(ast);
   compile(ast, program);
 }
 
-void compile_math(seni_node *ast, seni_program *program, seni_opcode opcode) {
+void compile_math(seni_node* ast, seni_program* program, seni_opcode opcode) {
   // + 3 4 5 6
   //
   // 1	LOAD	CONST	3.00
@@ -580,8 +580,8 @@ void compile_math(seni_node *ast, seni_program *program, seni_opcode opcode) {
   }
 }
 
-void compile_address_of(seni_node *ast, seni_program *program) {
-  seni_node *fn_name = safe_next(ast);
+void compile_address_of(seni_node* ast, seni_program* program) {
+  seni_node* fn_name = safe_next(ast);
 
   // fn_name should be a defined function's name
   // it will be known at compile time
@@ -591,7 +591,7 @@ void compile_address_of(seni_node *ast, seni_program *program) {
     return;
   }
 
-  seni_fn_info *fn_info = get_fn_info(fn_name, program);
+  seni_fn_info* fn_info = get_fn_info(fn_name, program);
   if (fn_info == NULL) {
     SENI_ERROR("address-of could not find function");
     return;
@@ -604,8 +604,8 @@ void compile_address_of(seni_node *ast, seni_program *program) {
 }
 
 //   (fn-call (aj z: 44))
-void compile_fn_call(seni_node *ast, seni_program *program) {
-  seni_node *invocation = safe_next(ast);
+void compile_fn_call(seni_node* ast, seni_program* program) {
+  seni_node* invocation = safe_next(ast);
 
   // fn_name should be a defined function's name
   // it will be known at compile time
@@ -617,7 +617,7 @@ void compile_fn_call(seni_node *ast, seni_program *program) {
 
   warn_if_alterable("compile_fn_call invocation", invocation);
 
-  seni_node *fn_info_index = safe_first(invocation->value.first_child);
+  seni_node* fn_info_index = safe_first(invocation->value.first_child);
 
   // place the fn_info_index onto the stack so that CALL_F can find the function
   // offset and num args
@@ -628,10 +628,10 @@ void compile_fn_call(seni_node *ast, seni_program *program) {
 
   // overwrite the default arguments with the actual arguments given by the fn
   // invocation
-  seni_node *args = safe_next(fn_info_index); // pairs of label/value declarations
+  seni_node* args = safe_next(fn_info_index); // pairs of label/value declarations
   while (args != NULL) {
-    seni_node *label = args;
-    seni_node *value = safe_next(label);
+    seni_node* label = args;
+    seni_node* value = safe_next(label);
 
     // push value
     compile(value, program);
@@ -652,13 +652,13 @@ void compile_fn_call(seni_node *ast, seni_program *program) {
   return;
 }
 
-void compile_vector_append(seni_node *ast, seni_program *program) {
+void compile_vector_append(seni_node* ast, seni_program* program) {
   // (vector/append vector value)
 
-  seni_node *vector = safe_next(ast);
+  seni_node* vector = safe_next(ast);
   compile(vector, program);
 
-  seni_node *value = safe_next(vector);
+  seni_node* value = safe_next(vector);
   compile(value, program);
 
   program_emit_opcode_i32(program, APPEND, 0, 0);
@@ -683,12 +683,12 @@ void compile_vector_append(seni_node *ast, seni_program *program) {
   }
 }
 
-void compile_vector_in_quote(seni_node *ast, seni_program *program) {
+void compile_vector_in_quote(seni_node* ast, seni_program* program) {
   // pushing from the VOID means creating a new, empty vector
   program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
 
   warn_if_alterable("compile_vector_in_quote", ast);
-  for (seni_node *node = safe_first(ast->value.first_child); node != NULL; node = safe_next(node)) {
+  for (seni_node* node = safe_first(ast->value.first_child); node != NULL; node = safe_next(node)) {
     // slightly hackish
     // if this is a form like: '(red green blue)
     // the compiler should output the names rather than the colours that are
@@ -704,8 +704,8 @@ void compile_vector_in_quote(seni_node *ast, seni_program *program) {
   }
 }
 
-void compile_quote(seni_node *ast, seni_program *program) {
-  seni_node *quoted_form = safe_next(ast);
+void compile_quote(seni_node* ast, seni_program* program) {
+  seni_node* quoted_form = safe_next(ast);
   if (quoted_form->type == NODE_LIST) {
     // compile each entry individually, don't treat the list as a normal
     // function invocation
@@ -719,8 +719,8 @@ void compile_quote(seni_node *ast, seni_program *program) {
   }
 }
 
-void compile_loop(seni_node *ast, seni_program *program) {
-  seni_node *parameters_node = safe_next(ast);
+void compile_loop(seni_node* ast, seni_program* program) {
+  seni_node* parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
     SENI_ERROR("expected a list that defines step parameters");
     return;
@@ -729,18 +729,18 @@ void compile_loop(seni_node *ast, seni_program *program) {
   warn_if_alterable("compile_loop parameters_node", parameters_node);
 
   // the looping variable x
-  seni_node *name_node = safe_first(parameters_node->value.first_child);
+  seni_node* name_node = safe_first(parameters_node->value.first_child);
 
-  seni_node *from_node      = NULL;
-  seni_node *to_node        = NULL;
-  seni_node *upto_node      = NULL;
-  seni_node *increment_node = NULL;
+  seni_node* from_node      = NULL;
+  seni_node* to_node        = NULL;
+  seni_node* upto_node      = NULL;
+  seni_node* increment_node = NULL;
   bool       have_from      = false;
   bool       have_to        = false;
   bool       have_upto      = false;
   bool       have_increment = false;
 
-  seni_node *node = name_node;
+  seni_node* node = name_node;
 
   while (node) {
     node = safe_next(node); // the label part
@@ -808,7 +808,7 @@ void compile_loop(seni_node *ast, seni_program *program) {
   }
 
   i32            addr_exit_check = program->code_size;
-  seni_bytecode *bc_exit_check   = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
+  seni_bytecode* bc_exit_check   = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
 
   i32 pre_body_opcode_offset = program->opcode_offset;
 
@@ -839,10 +839,10 @@ void compile_loop(seni_node *ast, seni_program *program) {
   bc_exit_check->arg0.value.i = program->code_size - addr_exit_check;
 }
 
-void compile_fence(seni_node *ast, seni_program *program) {
+void compile_fence(seni_node* ast, seni_program* program) {
   // (fence (x from: 0 to: 5 quantity: 5) (+ 42 38))
 
-  seni_node *parameters_node = safe_next(ast);
+  seni_node* parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
     SENI_ERROR("expected a list that defines fence parameters");
     return;
@@ -851,16 +851,16 @@ void compile_fence(seni_node *ast, seni_program *program) {
   warn_if_alterable("compile_fence parameters_node", parameters_node);
 
   // the looping variable x
-  seni_node *name_node = safe_first(parameters_node->value.first_child);
+  seni_node* name_node = safe_first(parameters_node->value.first_child);
 
-  seni_node *from_node = NULL;
-  seni_node *to_node   = NULL;
-  seni_node *num_node  = NULL;
+  seni_node* from_node = NULL;
+  seni_node* to_node   = NULL;
+  seni_node* num_node  = NULL;
   bool       have_from = false;
   bool       have_to   = false;
   bool       have_num  = false;
 
-  seni_node *node = name_node;
+  seni_node* node = name_node;
 
   while (node) {
     node = safe_next(node); // the label part
@@ -955,7 +955,7 @@ void compile_fence(seni_node *ast, seni_program *program) {
   program_emit_opcode_i32(program, LT, 0, 0);
 
   i32            addr_exit_check = program->code_size;
-  seni_bytecode *bc_exit_check   = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
+  seni_bytecode* bc_exit_check   = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
 
   // looper = from + (counter * delta)
   program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, from_address);
@@ -989,13 +989,13 @@ void compile_fence(seni_node *ast, seni_program *program) {
   bc_exit_check->arg0.value.i = program->code_size - addr_exit_check;
 }
 
-void compile_on_matrix_stack(seni_node *ast, seni_program *program) {
+void compile_on_matrix_stack(seni_node* ast, seni_program* program) {
   program_emit_opcode_i32(program, MTX_LOAD, 0, 0);
   compile_rest(ast, program);
   program_emit_opcode_i32(program, MTX_STORE, 0, 0);
 }
 
-void register_top_level_fns(seni_node *ast, seni_program *program) {
+void register_top_level_fns(seni_node* ast, seni_program* program) {
   i32 i;
   i32 num_fns = 0;
 
@@ -1017,7 +1017,7 @@ void register_top_level_fns(seni_node *ast, seni_program *program) {
     // bodies aren't being parsed yet
     warn_if_alterable("register_top_level_fns", ast);
 
-    seni_node *fn_keyword = safe_first(ast->value.first_child);
+    seni_node* fn_keyword = safe_first(ast->value.first_child);
     if (!(fn_keyword->type == NODE_NAME && fn_keyword->value.i == INAME_FN)) {
       ast = safe_next(ast);
       continue;
@@ -1025,17 +1025,17 @@ void register_top_level_fns(seni_node *ast, seni_program *program) {
 
     // (fn (add-up a: 0 b: 0) (+ a b))
     // get the name of the fn
-    seni_node *name_and_params = safe_next(fn_keyword);
+    seni_node* name_and_params = safe_next(fn_keyword);
     if (name_and_params->type != NODE_LIST) {
       ast = safe_next(ast);
       continue;
     }
 
-    seni_node *name       = safe_first(name_and_params->value.first_child);
+    seni_node* name       = safe_first(name_and_params->value.first_child);
     i32        name_value = name->value.i;
 
     // we have a named top-level fn declaration
-    seni_fn_info *fn_info = &(program->fn_info[num_fns]);
+    seni_fn_info* fn_info = &(program->fn_info[num_fns]);
     num_fns++;
     if (num_fns > MAX_TOP_LEVEL_FUNCTIONS) {
       SENI_ERROR("Script has more than %d top-level functions\n", MAX_TOP_LEVEL_FUNCTIONS);
@@ -1056,7 +1056,7 @@ void register_top_level_fns(seni_node *ast, seni_program *program) {
   }
 }
 
-void register_names_in_define(seni_node *lhs, seni_program *program) {
+void register_names_in_define(seni_node* lhs, seni_program* program) {
   warn_if_alterable("register_names_in_define lhs", lhs);
   if (lhs->type == NODE_NAME) {
     // (define foo 42)
@@ -1068,7 +1068,7 @@ void register_names_in_define(seni_node *lhs, seni_program *program) {
     // (define [a b] (something))
     // (define [a [x y]] (something))
 
-    seni_node *child = safe_first(lhs->value.first_child);
+    seni_node* child = safe_first(lhs->value.first_child);
 
     while (child != NULL) {
       register_names_in_define(child, program);
@@ -1077,7 +1077,7 @@ void register_names_in_define(seni_node *lhs, seni_program *program) {
   }
 }
 
-void register_top_level_defines(seni_node *ast, seni_program *program) {
+void register_top_level_defines(seni_node* ast, seni_program* program) {
   // register top level fns
   while (ast != NULL) {
 
@@ -1087,13 +1087,13 @@ void register_top_level_defines(seni_node *ast, seni_program *program) {
     }
 
     warn_if_alterable("register_top_level_defines define_keyword", ast);
-    seni_node *define_keyword = safe_first(ast->value.first_child);
+    seni_node* define_keyword = safe_first(ast->value.first_child);
     if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == INAME_DEFINE)) {
       ast = safe_next(ast);
       continue;
     }
 
-    seni_node *lhs = safe_next(define_keyword);
+    seni_node* lhs = safe_next(define_keyword);
     while (lhs != NULL) {
       register_names_in_define(lhs, program);
       lhs = safe_next(lhs); // points to the value
@@ -1110,17 +1110,17 @@ void register_top_level_defines(seni_node *ast, seni_program *program) {
   code will then overwrite specific data in arg memory invoking code will then
   CALL into the body_address
 */
-void compile_fn(seni_node *ast, seni_program *program) {
+void compile_fn(seni_node* ast, seni_program* program) {
   // fn (adder a: 0 b: 0) (+ a b)
 
   clear_local_mappings(program);
 
   // (adder a: 0 b: 0)
-  seni_node *signature = safe_next(ast);
+  seni_node* signature = safe_next(ast);
 
   warn_if_alterable("compile_fn signature", signature);
-  seni_node *   fn_name = safe_first(signature->value.first_child);
-  seni_fn_info *fn_info = get_fn_info(fn_name, program);
+  seni_node*    fn_name = safe_first(signature->value.first_child);
+  seni_fn_info* fn_info = get_fn_info(fn_name, program);
   if (fn_info == NULL) {
     SENI_ERROR("Unable to find fn_info for function %d", fn_name->value.i);
     return;
@@ -1133,14 +1133,14 @@ void compile_fn(seni_node *ast, seni_program *program) {
   // -------------
 
   fn_info->arg_address                = program->code_size;
-  seni_node *args                     = safe_next(fn_name); // pairs of label/value declarations
+  seni_node* args                     = safe_next(fn_name); // pairs of label/value declarations
   i32        num_args                 = 0;
   i32        counter                  = 0;
   i32        argument_offsets_counter = 0;
   while (args != NULL) {
-    seni_node *label   = args;
+    seni_node* label   = args;
     i32        label_i = get_node_value_i32(label);
-    seni_node *value   = safe_next(label);
+    seni_node* value   = safe_next(label);
 
     // get_argument_mapping
     fn_info->argument_offsets[argument_offsets_counter++] = label_i;
@@ -1177,13 +1177,13 @@ void compile_fn(seni_node *ast, seni_program *program) {
   program->current_fn_info = NULL;
 }
 
-void correct_function_addresses(seni_program *program) {
+void correct_function_addresses(seni_program* program) {
   // go through the bytecode fixing up function call addresses
 
-  seni_bytecode *bc     = program->code;
-  seni_bytecode *offset = NULL;
+  seni_bytecode* bc     = program->code;
+  seni_bytecode* offset = NULL;
   i32            fn_info_index, label_value;
-  seni_fn_info * fn_info;
+  seni_fn_info*  fn_info;
 
   for (i32 i = 0; i < program->code_size; i++) {
     // replace the temporarily stored index in the args of CALL and CALL_0 with
@@ -1249,7 +1249,7 @@ void correct_function_addresses(seni_program *program) {
   }
 }
 
-void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_index) {
+void compile_fn_invocation(seni_node* ast, seni_program* program, i32 fn_info_index) {
   // ast == adder a: 10 b: 20
 
   // NOTE: CALL and CALL_0 get their function offsets and num args from the
@@ -1268,12 +1268,12 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_in
 
   // overwrite the default arguments with the actual arguments given by the fn
   // invocation
-  seni_node *args = safe_next(ast); // pairs of label/value declarations
+  seni_node* args = safe_next(ast); // pairs of label/value declarations
   while (args != NULL) {
-    seni_node *label   = args;
+    seni_node* label   = args;
     i32        label_i = get_node_value_i32(label);
 
-    seni_node *value = safe_next(label);
+    seni_node* value = safe_next(label);
 
     // push value
     compile(value, program);
@@ -1290,8 +1290,8 @@ void compile_fn_invocation(seni_node *ast, seni_program *program, i32 fn_info_in
 
 // ast is a NODE_VECTOR of length 2
 //
-void compile_2d_from_gene(seni_node *ast, seni_program *program) {
-  seni_gene *gene = ast->gene;
+void compile_2d_from_gene(seni_node* ast, seni_program* program) {
+  seni_gene* gene = ast->gene;
 
   f32 a = gene->var->f32_array[0];
   f32 b = gene->var->f32_array[1];
@@ -1304,14 +1304,14 @@ void compile_2d_from_gene(seni_node *ast, seni_program *program) {
 
 // ast is a NODE_VECTOR of length 2
 //
-void compile_2d(seni_node *ast, seni_program *program) {
-  for (seni_node *node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
+void compile_2d(seni_node* ast, seni_program* program) {
+  for (seni_node* node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
     compile(node, program);
   }
   program_emit_opcode_i32(program, SQUISH2, 0, 0);
 }
 
-void compile_vector(seni_node *ast, seni_program *program) {
+void compile_vector(seni_node* ast, seni_program* program) {
   // pushing from the VOID means creating a new, empty vector
   program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
 
@@ -1319,7 +1319,7 @@ void compile_vector(seni_node *ast, seni_program *program) {
   // from the genes
   bool use_gene = alterable(ast);
 
-  for (seni_node *node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
+  for (seni_node* node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
     if (use_gene) {
 
       if (node->type == NODE_FLOAT) {
@@ -1343,7 +1343,7 @@ void compile_vector(seni_node *ast, seni_program *program) {
   }
 }
 
-seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 iname) {
+seni_node* compile_user_defined_name(seni_node* ast, seni_program* program, i32 iname) {
   i32 local_mapping = get_local_mapping(program, iname);
   if (local_mapping != -1) {
     program_emit_opcode_i32_name(program, LOAD, MEM_SEG_LOCAL, local_mapping);
@@ -1375,14 +1375,14 @@ seni_node *compile_user_defined_name(seni_node *ast, seni_program *program, i32 
   return safe_next(ast);
 }
 
-seni_node *compile(seni_node *ast, seni_program *program) {
-  seni_node *n;
+seni_node* compile(seni_node* ast, seni_program* program) {
+  seni_node* n;
   i32        i;
   f32        f;
 
   if (ast->type == NODE_LIST) {
     if (alterable(ast) && is_node_colour_constructor(ast)) {
-      seni_var *var = ast->gene->var;
+      seni_var* var = ast->gene->var;
       seni_var  arg0;
 
       // we have an alterable colour constructor so just
@@ -1517,10 +1517,10 @@ seni_node *compile(seni_node *ast, seni_program *program) {
 
       // note: how to count the stack delta? how many pop voids are required?
       i32        num_args = 0;
-      seni_node *args     = safe_next(ast); // pairs of label/value declarations
+      seni_node* args     = safe_next(ast); // pairs of label/value declarations
       while (args != NULL) {
-        seni_node *label = args;
-        seni_node *value = safe_next(label);
+        seni_node* label = args;
+        seni_node* value = safe_next(label);
 
         i = get_node_value_i32(label);
         program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, i);
@@ -1542,12 +1542,12 @@ seni_node *compile(seni_node *ast, seni_program *program) {
   return safe_next(ast);
 }
 
-bool is_list_beginning_with(seni_node *ast, i32 index) {
+bool is_list_beginning_with(seni_node* ast, i32 index) {
   if (ast->type != NODE_LIST) {
     return false;
   }
 
-  seni_node *keyword = safe_first(ast->value.first_child);
+  seni_node* keyword = safe_first(ast->value.first_child);
   if (keyword->type == NODE_NAME && keyword->value.i == index) {
     return true;
   }
@@ -1555,7 +1555,7 @@ bool is_list_beginning_with(seni_node *ast, i32 index) {
   return false;
 }
 
-void store_globally(seni_program *program, i32 iname) {
+void store_globally(seni_program* program, i32 iname) {
   i32 address = get_global_mapping(program, iname);
   if (address == -1) {
     address = add_global_mapping(program, iname);
@@ -1563,12 +1563,12 @@ void store_globally(seni_program *program, i32 iname) {
   program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
 }
 
-void compile_preamble_f32(seni_program *program, i32 iname, f32 value) {
+void compile_preamble_f32(seni_program* program, i32 iname, f32 value) {
   program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, value);
   store_globally(program, iname);
 }
 
-void compile_preamble_col(seni_program *program, i32 iname, f32 r, f32 g, f32 b, f32 a) {
+void compile_preamble_col(seni_program* program, i32 iname, f32 r, f32 g, f32 b, f32 a) {
   seni_var mem_location, colour_arg;
 
   i32_as_var(&mem_location, MEM_SEG_CONSTANT);
@@ -1586,12 +1586,12 @@ void compile_preamble_col(seni_program *program, i32 iname, f32 r, f32 g, f32 b,
   store_globally(program, iname);
 }
 
-void append_name(seni_program *program, i32 iname) {
+void append_name(seni_program* program, i32 iname) {
   program_emit_opcode_i32_name(program, LOAD, MEM_SEG_CONSTANT, iname);
   program_emit_opcode_i32(program, APPEND, 0, 0);
 }
 
-void compile_preamble_procedural_presets(seni_program *program) {
+void compile_preamble_procedural_presets(seni_program* program) {
   // create a vector
   program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
 
@@ -1608,7 +1608,7 @@ void compile_preamble_procedural_presets(seni_program *program) {
 }
 
 // NOTE: each entry in compile_preamble should have a corresponding entry here
-void register_top_level_preamble(seni_program *program) {
+void register_top_level_preamble(seni_program* program) {
   add_global_mapping(program, INAME_CANVAS_WIDTH);
   add_global_mapping(program, INAME_CANVAS_HEIGHT);
 
@@ -1628,7 +1628,7 @@ void register_top_level_preamble(seni_program *program) {
   add_global_mapping(program, INAME_COL_PROCEDURAL_FN_PRESETS);
 }
 
-void compile_preamble(seni_program *program) {
+void compile_preamble(seni_program* program) {
   // ********************************************************************************
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble
@@ -1658,9 +1658,9 @@ void compile_preamble(seni_program *program) {
 
 // compiles the ast into bytecode for a stack based VM
 //
-seni_program *
-compile_program_common(seni_node *ast, i32 program_max_size, seni_word_lut *word_lut) {
-  seni_program *program = program_allocate(program_max_size);
+seni_program*
+compile_program_common(seni_node* ast, i32 program_max_size, seni_word_lut* word_lut) {
+  seni_program* program = program_allocate(program_max_size);
 
   program->word_lut = word_lut;
 
@@ -1676,10 +1676,10 @@ compile_program_common(seni_node *ast, i32 program_max_size, seni_word_lut *word
   // register top-level defines
   register_top_level_defines(ast, program);
 
-  seni_bytecode *start = program_emit_opcode_i32(program, JUMP, 0, 0);
+  seni_bytecode* start = program_emit_opcode_i32(program, JUMP, 0, 0);
 
   // compile the top-level functions
-  seni_node *n = ast;
+  seni_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_FN)) {
       n = compile(n, program);
@@ -1728,18 +1728,18 @@ compile_program_common(seni_node *ast, i32 program_max_size, seni_word_lut *word
 
 // compiles the ast into bytecode for a stack based VM
 //
-seni_program *compile_program(seni_node *ast, i32 program_max_size, seni_word_lut *word_lut) {
+seni_program* compile_program(seni_node* ast, i32 program_max_size, seni_word_lut* word_lut) {
   g_use_genes = false;
 
-  seni_program *program = compile_program_common(ast, program_max_size, word_lut);
+  seni_program* program = compile_program_common(ast, program_max_size, word_lut);
 
   return program;
 }
 
-seni_program *compile_program_with_genotype(seni_node *    ast,
+seni_program* compile_program_with_genotype(seni_node*     ast,
                                             i32            program_max_size,
-                                            seni_word_lut *word_lut,
-                                            seni_genotype *genotype) {
+                                            seni_word_lut* word_lut,
+                                            seni_genotype* genotype) {
   g_use_genes = true;
 
   bool all_genes_assigned = genotype_assign_to_ast(genotype, ast);
@@ -1748,7 +1748,7 @@ seni_program *compile_program_with_genotype(seni_node *    ast,
     return NULL;
   }
 
-  seni_program *program = compile_program_common(ast, program_max_size, word_lut);
+  seni_program* program = compile_program_common(ast, program_max_size, word_lut);
 
   return program;
 }

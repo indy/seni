@@ -23,11 +23,11 @@ void shapes_subsystem_startup() {
 #define COLOUR_ITEM_SIZE 4
 #define TEXTURE_ITEM_SIZE 2
 
-void add_vertex(seni_render_packet *render_packet,
-                seni_matrix *       matrix,
+void add_vertex(seni_render_packet* render_packet,
+                seni_matrix*        matrix,
                 f32                 x,
                 f32                 y,
-                seni_colour *       rgb,
+                seni_colour*        rgb,
                 f32                 u,
                 f32                 v) {
   i32 v_index = render_packet->num_vertices * VERTEX_ITEM_SIZE;
@@ -54,8 +54,8 @@ void add_vertex(seni_render_packet *render_packet,
   render_packet->num_vertices++;
 }
 
-void form_degenerate_triangle(seni_render_packet *render_packet,
-                              seni_matrix *       matrix,
+void form_degenerate_triangle(seni_render_packet* render_packet,
+                              seni_matrix*        matrix,
                               f32                 x,
                               f32                 y) {
   i32 vertex_item_size = 2;
@@ -64,7 +64,7 @@ void form_degenerate_triangle(seni_render_packet *render_packet,
 
   // just copy the previous entries
   // note: colour doesn't matter since these triangles won't be rendered
-  f32 *last_v = &(render_packet->vbuf[index]);
+  f32* last_v = &(render_packet->vbuf[index]);
 
   add_vertex(render_packet, &g_identity, last_v[0], last_v[1], &g_unseen_colour, 0.0f, 0.0f);
 
@@ -75,16 +75,16 @@ void form_degenerate_triangle(seni_render_packet *render_packet,
   // vertex when we 'really' render the strip
 }
 
-bool can_vertices_fit(seni_render_packet *render_packet, i32 num, i32 max_vertices) {
+bool can_vertices_fit(seni_render_packet* render_packet, i32 num, i32 max_vertices) {
   return render_packet->num_vertices < (max_vertices - (num + 2));
 }
 
-bool is_render_packet_empty(seni_render_packet *render_packet) {
+bool is_render_packet_empty(seni_render_packet* render_packet) {
   return render_packet->num_vertices == 0;
 }
 
-void prepare_to_add_triangle_strip(seni_render_data *render_data,
-                                   seni_matrix *     matrix,
+void prepare_to_add_triangle_strip(seni_render_data* render_data,
+                                   seni_matrix*      matrix,
                                    i32               num_vertices,
                                    f32               x,
                                    f32               y) {
@@ -93,22 +93,22 @@ void prepare_to_add_triangle_strip(seni_render_data *render_data,
     add_render_packet(render_data);
   }
 
-  seni_render_packet *render_packet = render_data->current_render_packet;
+  seni_render_packet* render_packet = render_data->current_render_packet;
 
   if (is_render_packet_empty(render_packet) == false) {
     form_degenerate_triangle(render_packet, matrix, x, y);
   }
 }
 
-void render_line(seni_render_data *render_data,
-                 seni_matrix *     matrix,
+void render_line(seni_render_data* render_data,
+                 seni_matrix*      matrix,
                  f32               from_x,
                  f32               from_y,
                  f32               to_x,
                  f32               to_y,
                  f32               width,
-                 seni_colour *     colour) {
-  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0, true);
+                 seni_colour*      colour) {
+  seni_uv_mapping* uv = get_uv_mapping(BRUSH_FLAT, 0, true);
 
   f32 hw = (width * uv->width_scale) / 2.0f;
 
@@ -155,14 +155,14 @@ void render_line(seni_render_data *render_data,
              uv->map[7]);
 }
 
-void render_rect(seni_render_data *render_data,
-                 seni_matrix *     matrix,
+void render_rect(seni_render_data* render_data,
+                 seni_matrix*      matrix,
                  f32               x,
                  f32               y,
                  f32               width,
                  f32               height,
-                 seni_colour *     colour) {
-  seni_uv_mapping *uv = get_uv_mapping(BRUSH_FLAT, 0, true);
+                 seni_colour*      colour) {
+  seni_uv_mapping* uv = get_uv_mapping(BRUSH_FLAT, 0, true);
 
   f32 half_width  = width / 2.0f;
   f32 half_height = height / 2.0f;
@@ -206,13 +206,13 @@ void render_rect(seni_render_data *render_data,
              uv->map[7]);
 }
 
-void render_circle(seni_render_data *render_data,
-                   seni_matrix *     matrix,
+void render_circle(seni_render_data* render_data,
+                   seni_matrix*      matrix,
                    f32               x,
                    f32               y,
                    f32               width,
                    f32               height,
-                   seni_colour *     colour,
+                   seni_colour*      colour,
                    i32               tessellation) {
   f32 u, v;
   make_uv(&u, &v, 1.0f, 1.0f);
@@ -247,13 +247,13 @@ void render_circle(seni_render_data *render_data,
   add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
 }
 
-void render_circle_slice(seni_render_data *render_data,
-                         seni_matrix *     matrix,
+void render_circle_slice(seni_render_data* render_data,
+                         seni_matrix*      matrix,
                          f32               x,
                          f32               y,
                          f32               width,
                          f32               height,
-                         seni_colour *     colour,
+                         seni_colour*      colour,
                          i32               tessellation,
                          f32               angle_start,
                          f32               angle_end,
@@ -310,15 +310,15 @@ void render_circle_slice(seni_render_data *render_data,
   add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
 }
 
-void render_poly(seni_render_data *render_data,
-                 seni_matrix *     matrix,
-                 seni_var *        coords,
-                 seni_var *        colours) {
+void render_poly(seni_render_data* render_data,
+                 seni_matrix*      matrix,
+                 seni_var*         coords,
+                 seni_var*         colours) {
   f32 u, v;
   make_uv(&u, &v, 1.0f, 1.0f);
 
-  seni_var *coord  = coords->value.v;
-  seni_var *colour = colours->value.v;
+  seni_var* coord  = coords->value.v;
+  seni_var* colour = colours->value.v;
 
   seni_colour rgb_colour, other_colour;
 
@@ -366,22 +366,22 @@ void render_poly(seni_render_data *render_data,
   }
 }
 
-void render_quadratic(seni_render_data *render_data,
-                      seni_matrix *     matrix,
-                      f32 *             coords,
+void render_quadratic(seni_render_data* render_data,
+                      seni_matrix*      matrix,
+                      f32*              coords,
                       f32               line_width_start,
                       f32               line_width_end,
                       i32               line_width_mapping,
                       f32               t_start,
                       f32               t_end,
-                      seni_colour *     colour,
+                      seni_colour*      colour,
                       i32               tessellation,
                       i32               brush,
                       i32               brush_subtype) {
   // get the uv co-ordinates for the specified brush
   //
   seni_brush_type  brush_type = (seni_brush_type)(brush - INAME_BRUSH_FLAT);
-  seni_uv_mapping *uv         = get_uv_mapping(brush_type, brush_subtype, true);
+  seni_uv_mapping* uv         = get_uv_mapping(brush_type, brush_subtype, true);
 
   f32 au = uv->map[0];
   f32 av = uv->map[1];
@@ -512,22 +512,22 @@ void render_quadratic(seni_render_data *render_data,
   add_vertex(render_data->current_render_packet, matrix, v2x, v2y, rgb, cu, cv);
 }
 
-void render_bezier(seni_render_data *render_data,
-                   seni_matrix *     matrix,
-                   f32 *             coords,
+void render_bezier(seni_render_data* render_data,
+                   seni_matrix*      matrix,
+                   f32*              coords,
                    f32               line_width_start,
                    f32               line_width_end,
                    i32               line_width_mapping,
                    f32               t_start,
                    f32               t_end,
-                   seni_colour *     colour,
+                   seni_colour*      colour,
                    i32               tessellation,
                    i32               brush,
                    i32               brush_subtype) {
   // get the uv co-ordinates for the specified brush
   //
   seni_brush_type  brush_type = (seni_brush_type)(brush - INAME_BRUSH_FLAT);
-  seni_uv_mapping *uv         = get_uv_mapping(brush_type, brush_subtype, true);
+  seni_uv_mapping* uv         = get_uv_mapping(brush_type, brush_subtype, true);
 
   f32 au = uv->map[0];
   f32 av = uv->map[1];
@@ -649,13 +649,13 @@ void render_bezier(seni_render_data *render_data,
   add_vertex(render_data->current_render_packet, matrix, v2x, v2y, rgb, cu, cv);
 }
 
-void render_bezier_bulging(seni_render_data *render_data,
-                           seni_matrix *     matrix,
-                           f32 *             coords,
+void render_bezier_bulging(seni_render_data* render_data,
+                           seni_matrix*      matrix,
+                           f32*              coords,
                            f32               line_width,
                            f32               t_start,
                            f32               t_end,
-                           seni_colour *     colour,
+                           seni_colour*      colour,
                            i32               tessellation,
                            i32               brush,
                            i32               brush_subtype) {
@@ -692,10 +692,10 @@ void render_bezier_bulging(seni_render_data *render_data,
                 brush_subtype);
 }
 
-void render_stroked_bezier(seni_render_data *render_data,
-                           seni_matrix *     matrix,
-                           f32 *             coords,
-                           seni_colour *     colour,
+void render_stroked_bezier(seni_render_data* render_data,
+                           seni_matrix*      matrix,
+                           f32*              coords,
+                           seni_colour*      colour,
                            i32               tessellation,
                            f32               stroke_line_width_start,
                            f32               stroke_line_width_end,
@@ -762,9 +762,9 @@ void render_stroked_bezier(seni_render_data *render_data,
   }
 }
 
-void render_stroked_bezier_rect(seni_render_data *render_data,
-                                seni_matrix *     matrix,
-                                f32 *             position,
+void render_stroked_bezier_rect(seni_render_data* render_data,
+                                seni_matrix*      matrix,
+                                f32*              position,
                                 f32               width,
                                 f32               height,
                                 f32               volatility,
@@ -774,7 +774,7 @@ void render_stroked_bezier_rect(seni_render_data *render_data,
                                 i32               tessellation,
                                 i32               stroke_tessellation,
                                 f32               stroke_noise,
-                                seni_colour *     colour,
+                                seni_colour*      colour,
                                 f32               colour_volatility,
                                 i32               brush,
                                 i32               brush_subtype) {

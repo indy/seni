@@ -7,8 +7,8 @@
 #include "vm_compiler.h"
 #include "vm_interpreter.h"
 
-void flip(seni_vm *vm, seni_fn_info *fn_info, f32 sx, f32 sy, i32 *copy) {
-  seni_matrix_stack *matrix_stack = vm->matrix_stack;
+void flip(seni_vm* vm, seni_fn_info* fn_info, f32 sx, f32 sy, i32* copy) {
+  seni_matrix_stack* matrix_stack = vm->matrix_stack;
 
   matrix_stack_push(matrix_stack);
   {
@@ -30,25 +30,25 @@ void flip(seni_vm *vm, seni_fn_info *fn_info, f32 sx, f32 sy, i32 *copy) {
   (*copy)++;
 }
 
-void repeat_symmetry_vertical(seni_vm *vm, i32 fn, i32 *copy) {
-  seni_program *program = vm->program;
-  seni_fn_info *fn_info = &(program->fn_info[fn]);
+void repeat_symmetry_vertical(seni_vm* vm, i32 fn, i32* copy) {
+  seni_program* program = vm->program;
+  seni_fn_info* fn_info = &(program->fn_info[fn]);
 
   flip(vm, fn_info, -1.0f, 1.0f, copy);
 }
 
-void repeat_symmetry_horizontal(seni_vm *vm, i32 fn, i32 *copy) {
-  seni_program *program = vm->program;
-  seni_fn_info *fn_info = &(program->fn_info[fn]);
+void repeat_symmetry_horizontal(seni_vm* vm, i32 fn, i32* copy) {
+  seni_program* program = vm->program;
+  seni_fn_info* fn_info = &(program->fn_info[fn]);
 
   flip(vm, fn_info, 1.0f, -1.0f, copy);
 }
 
-void repeat_symmetry_4(seni_vm *vm, i32 fn, i32 *copy) {
-  seni_program *program = vm->program;
-  seni_fn_info *fn_info = &(program->fn_info[fn]);
+void repeat_symmetry_4(seni_vm* vm, i32 fn, i32* copy) {
+  seni_program* program = vm->program;
+  seni_fn_info* fn_info = &(program->fn_info[fn]);
 
-  seni_matrix_stack *matrix_stack = vm->matrix_stack;
+  seni_matrix_stack* matrix_stack = vm->matrix_stack;
 
   matrix_stack_push(matrix_stack);
   flip(vm, fn_info, -1.0f, 1.0f, copy);
@@ -60,8 +60,8 @@ void repeat_symmetry_4(seni_vm *vm, i32 fn, i32 *copy) {
   matrix_stack_pop(matrix_stack);
 }
 
-void repeat_symmetry_8(seni_vm *vm, i32 fn, i32 *copy) {
-  seni_matrix_stack *matrix_stack = vm->matrix_stack;
+void repeat_symmetry_8(seni_vm* vm, i32 fn, i32* copy) {
+  seni_matrix_stack* matrix_stack = vm->matrix_stack;
 
   matrix_stack_push(matrix_stack);
   repeat_symmetry_4(vm, fn, copy);
@@ -73,11 +73,11 @@ void repeat_symmetry_8(seni_vm *vm, i32 fn, i32 *copy) {
   matrix_stack_pop(matrix_stack);
 }
 
-void repeat_rotate(seni_vm *vm, i32 fn, i32 copies) {
-  seni_program *program = vm->program;
-  seni_fn_info *fn_info = &(program->fn_info[fn]);
+void repeat_rotate(seni_vm* vm, i32 fn, i32 copies) {
+  seni_program* program = vm->program;
+  seni_fn_info* fn_info = &(program->fn_info[fn]);
 
-  seni_matrix_stack *matrix_stack = vm->matrix_stack;
+  seni_matrix_stack* matrix_stack = vm->matrix_stack;
 
   f32 delta = TAU / (f32)copies;
   f32 angle;
@@ -96,11 +96,11 @@ void repeat_rotate(seni_vm *vm, i32 fn, i32 copies) {
   }
 }
 
-void repeat_rotate_mirrored(seni_vm *vm, i32 fn, i32 copies) {
-  seni_program *program = vm->program;
-  seni_fn_info *fn_info = &(program->fn_info[fn]);
+void repeat_rotate_mirrored(seni_vm* vm, i32 fn, i32 copies) {
+  seni_program* program = vm->program;
+  seni_fn_info* fn_info = &(program->fn_info[fn]);
 
-  seni_matrix_stack *matrix_stack = vm->matrix_stack;
+  seni_matrix_stack* matrix_stack = vm->matrix_stack;
 
   f32 delta = TAU / (f32)copies;
   f32 angle;

@@ -16,20 +16,20 @@
 #include "stdlib.h"
 #include "string.h"
 
-char *load_file(char *filename) {
-  char *ret = NULL;
+char* load_file(char* filename) {
+  char* ret = NULL;
 
   size_t file_size = 0;
   size_t read_size = 0;
 
-  FILE *fp = fopen(filename, "r");
+  FILE* fp = fopen(filename, "r");
   if (fp) {
     while (getc(fp) != EOF) {
       file_size++;
     }
     fseek(fp, 0, SEEK_SET);
 
-    ret = (char *)calloc(file_size + 1, sizeof(char));
+    ret = (char*)calloc(file_size + 1, sizeof(char));
 
     read_size = fread(ret, sizeof(char), file_size, fp);
 
@@ -62,17 +62,17 @@ void print_timings(f32 construct, f32 compile, f32 interpret) {
   }
 }
 
-char *pluralise(i32 count, char *singular, char *plural) { return count == 1 ? singular : plural; }
+char* pluralise(i32 count, char* singular, char* plural) { return count == 1 ? singular : plural; }
 
-void execute_source(char *source) {
+void execute_source(char* source) {
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
 
   seni_systems_startup();
 
-  seni_vm * vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = seni_allocate_env();
+  seni_vm*  vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env* env = seni_allocate_env();
 
   TIMING_UNIT construct_stop = get_timing();
 
@@ -80,7 +80,7 @@ void execute_source(char *source) {
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  seni_program *program = seni_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
+  seni_program* program = seni_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
 
   TIMING_UNIT compilation_stop = get_timing();
 
@@ -95,7 +95,7 @@ void execute_source(char *source) {
   //
   i32 num_vertices = 0;
   for (int i = 0; i < vm->render_data->num_render_packets; i++) {
-    seni_render_packet *render_packet = get_render_packet(vm->render_data, i);
+    seni_render_packet* render_packet = get_render_packet(vm->render_data, i);
     num_vertices += render_packet->num_vertices;
   }
 
@@ -118,14 +118,14 @@ void execute_source(char *source) {
   seni_systems_shutdown();
 }
 
-void execute_source_with_seed(char *source, i32 seed_value) {
+void execute_source_with_seed(char* source, i32 seed_value) {
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
   seni_systems_startup();
 
-  seni_vm * vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = seni_allocate_env();
+  seni_vm*  vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env* env = seni_allocate_env();
 
   TIMING_UNIT construct_stop = get_timing();
 
@@ -133,14 +133,14 @@ void execute_source_with_seed(char *source, i32 seed_value) {
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  seni_node *ast = parser_parse(env->word_lut, source);
+  seni_node* ast = parser_parse(env->word_lut, source);
 
-  seni_trait_list *trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
+  seni_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
 
   // using the vm to build the genes
-  seni_genotype *genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+  seni_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
 
-  seni_program *program =
+  seni_program* program =
       compile_program_with_genotype(ast, MAX_PROGRAM_SIZE, env->word_lut, genotype);
 
   parser_return_nodes_to_pool(ast);
@@ -158,7 +158,7 @@ void execute_source_with_seed(char *source, i32 seed_value) {
   //
   i32 num_vertices = 0;
   for (int i = 0; i < vm->render_data->num_render_packets; i++) {
-    seni_render_packet *render_packet = get_render_packet(vm->render_data, i);
+    seni_render_packet* render_packet = get_render_packet(vm->render_data, i);
     num_vertices += render_packet->num_vertices;
   }
 
@@ -188,15 +188,15 @@ void execute_source_with_seed(char *source, i32 seed_value) {
   seni_systems_shutdown();
 }
 
-void print_compiled_program(char *source) {
+void print_compiled_program(char* source) {
   // construct
   seni_systems_startup();
 
-  seni_vm * vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *e  = seni_allocate_env();
+  seni_vm*  vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env* e  = seni_allocate_env();
 
   // compile program
-  seni_program *program = seni_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
+  seni_program* program = seni_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
 
   // print
   printf("%s\n", source);
@@ -228,8 +228,8 @@ void print_usage() {
 #endif
 }
 
-int main(int argc, char **argv) {
-  char *source = NULL;
+int main(int argc, char** argv) {
+  char* source = NULL;
 
   if (argc == 1) {
     // invoked native without any command line options

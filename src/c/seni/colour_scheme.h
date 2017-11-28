@@ -19,11 +19,11 @@ struct seni_colour_fn_state {
   f32                 alpha;
 };
 
-seni_colour *complementary(seni_colour *out, seni_colour *in);
-void         split_complementary(seni_colour *out0, seni_colour *out1, seni_colour *in);
-void         analagous(seni_colour *out0, seni_colour *out1, seni_colour *in);
-void         triad(seni_colour *out0, seni_colour *out1, seni_colour *in);
+seni_colour* complementary(seni_colour* out, seni_colour* in);
+void         split_complementary(seni_colour* out0, seni_colour* out1, seni_colour* in);
+void         analagous(seni_colour* out0, seni_colour* out1, seni_colour* in);
+void         triad(seni_colour* out0, seni_colour* out1, seni_colour* in);
 
-void get_colour_presets(f32 *a, f32 *b, f32 *c, f32 *d, i32 preset);
-void colour_procedural(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t);
-void colour_bezier(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t);
+void get_colour_presets(f32* a, f32* b, f32* c, f32* d, i32 preset);
+void colour_procedural(seni_colour* out, seni_colour_fn_state* colour_fn_state, f32 t);
+void colour_bezier(seni_colour* out, seni_colour_fn_state* colour_fn_state, f32 t);

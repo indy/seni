@@ -15,23 +15,23 @@
 #include "seni/vm_interpreter.h"
 
 #define SOURCE_BUFFER_SIZE 20000
-char *g_source_buffer;
+char* g_source_buffer;
 
-char *       g_out_source_buffer;
-seni_cursor *g_out_source_cursor;
+char*        g_out_source_buffer;
+seni_cursor* g_out_source_cursor;
 
 #define TRAITS_BUFFER_SIZE 40000
-char *       g_traits_buffer;
-seni_cursor *g_traits_cursor;
+char*        g_traits_buffer;
+seni_cursor* g_traits_cursor;
 
 #define GENOTYPE_BUFFER_SIZE 5000
 bool                g_use_genotype_when_compiling;
-char *              g_genotype_buffer;
-seni_cursor *       g_genotype_cursor;
-seni_genotype_list *g_genotype_list;
+char*               g_genotype_buffer;
+seni_cursor*        g_genotype_cursor;
+seni_genotype_list* g_genotype_list;
 
-seni_vm * g_vm = NULL;
-seni_env *g_e  = NULL;
+seni_vm*  g_vm = NULL;
+seni_env* g_e  = NULL;
 
 // #define SHOW_WASM_CALLS
 
@@ -78,15 +78,15 @@ export void seni_startup() {
   g_vm = seni_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   g_e  = seni_allocate_env();
 
-  g_source_buffer = (char *)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
+  g_source_buffer = (char*)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
 
-  g_out_source_buffer = (char *)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
+  g_out_source_buffer = (char*)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
   g_out_source_cursor = cursor_allocate(g_out_source_buffer, SOURCE_BUFFER_SIZE);
 
-  g_traits_buffer = (char *)calloc(TRAITS_BUFFER_SIZE, sizeof(char));
+  g_traits_buffer = (char*)calloc(TRAITS_BUFFER_SIZE, sizeof(char));
   g_traits_cursor = cursor_allocate(g_traits_buffer, TRAITS_BUFFER_SIZE);
 
-  g_genotype_buffer             = (char *)calloc(GENOTYPE_BUFFER_SIZE, sizeof(char));
+  g_genotype_buffer             = (char*)calloc(GENOTYPE_BUFFER_SIZE, sizeof(char));
   g_genotype_cursor             = cursor_allocate(g_genotype_buffer, GENOTYPE_BUFFER_SIZE);
   g_genotype_list               = NULL;
   g_use_genotype_when_compiling = false;
@@ -128,10 +128,10 @@ export int compile_to_render_packets(void) {
 
   seni_reset_vm(g_vm);
 
-  seni_program *program = NULL;
+  seni_program* program = NULL;
 
   if (g_use_genotype_when_compiling) {
-    seni_genotype *genotype = seni_deserialize_genotype(g_genotype_cursor);
+    seni_genotype* genotype = seni_deserialize_genotype(g_genotype_cursor);
     program                 = seni_compile_program_with_genotype(
         g_source_buffer, genotype, g_e->word_lut, MAX_PROGRAM_SIZE);
     genotype_return_to_pool(genotype);
@@ -163,7 +163,7 @@ export int get_render_packet_num_vertices(int packet_number) {
   SENI_LOG("get_render_packet_num_vertices");
 #endif
 
-  seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
+  seni_render_packet* render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return 0;
   }
@@ -171,12 +171,12 @@ export int get_render_packet_num_vertices(int packet_number) {
   return render_packet->num_vertices;
 }
 
-export f32 *get_render_packet_vbuf(int packet_number) {
+export f32* get_render_packet_vbuf(int packet_number) {
 #ifdef SHOW_WASM_CALLS
   SENI_LOG("get_render_packet_vbuf");
 #endif
 
-  seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
+  seni_render_packet* render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return NULL;
   }
@@ -184,12 +184,12 @@ export f32 *get_render_packet_vbuf(int packet_number) {
   return render_packet->vbuf;
 }
 
-export f32 *get_render_packet_cbuf(int packet_number) {
+export f32* get_render_packet_cbuf(int packet_number) {
 #ifdef SHOW_WASM_CALLS
   SENI_LOG("get_render_packet_cbuf");
 #endif
 
-  seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
+  seni_render_packet* render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return NULL;
   }
@@ -197,12 +197,12 @@ export f32 *get_render_packet_cbuf(int packet_number) {
   return render_packet->cbuf;
 }
 
-export f32 *get_render_packet_tbuf(int packet_number) {
+export f32* get_render_packet_tbuf(int packet_number) {
 #ifdef SHOW_WASM_CALLS
   SENI_LOG("get_render_packet_tbuf");
 #endif
 
-  seni_render_packet *render_packet = get_render_packet(g_vm->render_data, packet_number);
+  seni_render_packet* render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return NULL;
   }
@@ -220,7 +220,7 @@ export i32 build_traits() {
 
   TIMING_UNIT timing_a = get_timing();
 
-  seni_trait_list *trait_list = seni_compile_trait_list(g_source_buffer, g_e->word_lut);
+  seni_trait_list* trait_list = seni_compile_trait_list(g_source_buffer, g_e->word_lut);
   bool             res        = seni_serialize_trait_list(trait_list, g_traits_cursor);
   if (res == false) {
     SENI_ERROR("seni_serialize_trait_list returned false");
@@ -243,7 +243,7 @@ export i32 create_initial_generation(i32 population_size, i32 seed) {
   debug_size_traits_buffer();
 
   // read in traits and create an array of genotypes
-  seni_trait_list *trait_list = seni_deserialize_trait_list(g_traits_cursor);
+  seni_trait_list* trait_list = seni_deserialize_trait_list(g_traits_cursor);
 
   if (g_genotype_list != NULL) {
     genotype_list_return_to_pool(g_genotype_list);
@@ -275,7 +275,7 @@ export i32 create_initial_generation(i32 population_size, i32 seed) {
 export void genotype_move_to_buffer(i32 index) {
   cursor_reset(g_genotype_cursor);
 
-  seni_genotype *genotype = g_genotype_list->genotypes;
+  seni_genotype* genotype = g_genotype_list->genotypes;
   i32            i        = 0;
   while (i != index) {
     genotype = genotype->next;
@@ -302,7 +302,7 @@ export void script_cleanup() {
 #endif
 }
 
-export char *get_source_buffer() {
+export char* get_source_buffer() {
 #ifdef SHOW_WASM_CALLS
   SENI_LOG("get_source_buffer");
 #endif
@@ -310,7 +310,7 @@ export char *get_source_buffer() {
   return g_source_buffer;
 }
 
-export char *get_out_source_buffer() {
+export char* get_out_source_buffer() {
 #ifdef SHOW_WASM_CALLS
   SENI_LOG("get_out_source_buffer");
 #endif
@@ -318,7 +318,7 @@ export char *get_out_source_buffer() {
   return g_out_source_buffer;
 }
 
-export char *get_traits_buffer() {
+export char* get_traits_buffer() {
 #ifdef SHOW_WASM_CALLS
   SENI_LOG("get_traits_buffer");
 #endif
@@ -326,7 +326,7 @@ export char *get_traits_buffer() {
   return g_traits_buffer;
 }
 
-export char *get_genotype_buffer() {
+export char* get_genotype_buffer() {
 #ifdef SHOW_WASM_CALLS
   SENI_LOG("get_genotype_buffer");
 #endif
@@ -352,7 +352,7 @@ export void next_generation_prepare() {
 export void next_generation_add_genotype() {
   debug_size_genotype_buffer();
 
-  seni_genotype *genotype = seni_deserialize_genotype(g_genotype_cursor);
+  seni_genotype* genotype = seni_deserialize_genotype(g_genotype_cursor);
 
   genotype_list_add_genotype(g_genotype_list, genotype);
 }
@@ -372,9 +372,9 @@ next_generation_build(i32 parent_size, i32 population_size, f32 mutation_rate, i
     return false;
   }
 
-  seni_trait_list *trait_list = seni_deserialize_trait_list(g_traits_cursor);
+  seni_trait_list* trait_list = seni_deserialize_trait_list(g_traits_cursor);
 
-  seni_genotype_list *new_generation = genotype_list_next_generation(
+  seni_genotype_list* new_generation = genotype_list_next_generation(
       g_genotype_list, parent_size, population_size, mutation_rate, rng, trait_list);
 
   trait_list_return_to_pool(trait_list);
@@ -392,7 +392,7 @@ export void unparse_with_genotype() {
   debug_size_genotype_buffer();
   debug_size_source_buffer();
 
-  seni_genotype *genotype = seni_deserialize_genotype(g_genotype_cursor);
+  seni_genotype* genotype = seni_deserialize_genotype(g_genotype_cursor);
 
   seni_unparse_with_genotype(g_out_source_cursor, g_source_buffer, genotype, g_e->word_lut);
 

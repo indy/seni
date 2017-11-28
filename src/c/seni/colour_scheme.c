@@ -10,7 +10,7 @@
 #define COLOUR_COMPLIMENTARY_ANGLE (COLOUR_UNIT_ANGLE * 6.0f)
 #define COLOUR_TRIAD_ANGLE (COLOUR_UNIT_ANGLE * 4)
 
-seni_colour *add_angle_to_hsluv(seni_colour *out, seni_colour *in, f32 delta) {
+seni_colour* add_angle_to_hsluv(seni_colour* out, seni_colour* in, f32 delta) {
   i32 H = 0;
 
   seni_colour_format original_format = in->format;
@@ -25,14 +25,14 @@ seni_colour *add_angle_to_hsluv(seni_colour *out, seni_colour *in, f32 delta) {
 
 // Return the 2 colours either side of this that are 'ang' degrees away
 //
-void pair(seni_colour *out0, seni_colour *out1, seni_colour *in, f32 ang) {
+void pair(seni_colour* out0, seni_colour* out1, seni_colour* in, f32 ang) {
   add_angle_to_hsluv(out0, in, -ang);
   add_angle_to_hsluv(out1, in, ang);
 }
 
 // Returns the colour at the opposite end of the wheel
 //
-seni_colour *complementary(seni_colour *out, seni_colour *in) {
+seni_colour* complementary(seni_colour* out, seni_colour* in) {
   return add_angle_to_hsluv(out, in, COLOUR_COMPLIMENTARY_ANGLE);
 }
 
@@ -40,7 +40,7 @@ seni_colour *complementary(seni_colour *out, seni_colour *in) {
 // e.g. if the input colour is at the 12 o'clock position,
 // this will return the 5 o'clock and 7 o'clock colours
 //
-void split_complementary(seni_colour *out0, seni_colour *out1, seni_colour *in) {
+void split_complementary(seni_colour* out0, seni_colour* out1, seni_colour* in) {
   seni_colour tmp;
   pair(out0, out1, add_angle_to_hsluv(&tmp, in, COLOUR_COMPLIMENTARY_ANGLE), COLOUR_UNIT_ANGLE);
 }
@@ -49,7 +49,7 @@ void split_complementary(seni_colour *out0, seni_colour *out1, seni_colour *in) 
 // e.g. given a colour at 3 o'clock this will return the
 // colours at 2 o'clock and 4 o'clock
 //
-void analagous(seni_colour *out0, seni_colour *out1, seni_colour *in) {
+void analagous(seni_colour* out0, seni_colour* out1, seni_colour* in) {
   pair(out0, out1, in, COLOUR_UNIT_ANGLE);
 }
 
@@ -57,11 +57,11 @@ void analagous(seni_colour *out0, seni_colour *out1, seni_colour *in) {
 // being evenly spaced around the colour wheel.
 // e.g. given 12 o'clock this will return 4 o'clock and 8 o'clock
 //
-void triad(seni_colour *out0, seni_colour *out1, seni_colour *in) {
+void triad(seni_colour* out0, seni_colour* out1, seni_colour* in) {
   pair(out0, out1, in, COLOUR_TRIAD_ANGLE);
 }
 
-void get_colour_presets(f32 *a, f32 *b, f32 *c, f32 *d, i32 preset) {
+void get_colour_presets(f32* a, f32* b, f32* c, f32* d, i32 preset) {
   switch (preset) {
   case INAME_CHROME:
     a[0] = 0.5f;
@@ -164,11 +164,11 @@ void get_colour_presets(f32 *a, f32 *b, f32 *c, f32 *d, i32 preset) {
   }
 }
 
-void colour_procedural(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t) {
-  f32 *a = colour_fn_state->a;
-  f32 *b = colour_fn_state->b;
-  f32 *c = colour_fn_state->c;
-  f32 *d = colour_fn_state->d;
+void colour_procedural(seni_colour* out, seni_colour_fn_state* colour_fn_state, f32 t) {
+  f32* a = colour_fn_state->a;
+  f32* b = colour_fn_state->b;
+  f32* c = colour_fn_state->c;
+  f32* d = colour_fn_state->d;
 
   out->format     = RGB;
   out->element[0] = a[0] + b[0] * (f32)cos(TAU * (c[0] * t + d[0]));
@@ -177,11 +177,11 @@ void colour_procedural(seni_colour *out, seni_colour_fn_state *colour_fn_state, 
   out->element[3] = colour_fn_state->alpha;
 }
 
-void colour_bezier(seni_colour *out, seni_colour_fn_state *colour_fn_state, f32 t) {
-  f32 *a = colour_fn_state->a;
-  f32 *b = colour_fn_state->b;
-  f32 *c = colour_fn_state->c;
-  f32 *d = colour_fn_state->d;
+void colour_bezier(seni_colour* out, seni_colour_fn_state* colour_fn_state, f32 t) {
+  f32* a = colour_fn_state->a;
+  f32* b = colour_fn_state->b;
+  f32* c = colour_fn_state->c;
+  f32* d = colour_fn_state->d;
 
   // assuming that seni_bind is using RGB colour space
   // todo: experiment with different colour spaces

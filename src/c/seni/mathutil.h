@@ -34,9 +34,9 @@ f32 mc_c(f32 xa, f32 ya, f32 m);
 f32 length_v2(f32 x, f32 y);
 f32 distance_v2(f32 ax, f32 ay, f32 bx, f32 by);
 
-void normalize(f32 *outx, f32 *outy, f32 x, f32 y);
-void normal(f32 *outx, f32 *outy, f32 x1, f32 y1, f32 x2, f32 y2);
-void opposite_normal(f32 *outx, f32 *outy, f32 x, f32 y);
+void normalize(f32* outx, f32* outy, f32 x, f32 y);
+void normal(f32* outx, f32* outy, f32 x1, f32 y1, f32 x2, f32 y2);
+void opposite_normal(f32* outx, f32* outy, f32 x, f32 y);
 
 f32 quadratic_point(f32 a, f32 b, f32 c, f32 t);
 f32 bezier_point(f32 a, f32 b, f32 c, f32 d, f32 t);

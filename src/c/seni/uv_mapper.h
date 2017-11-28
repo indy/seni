@@ -16,11 +16,11 @@ typedef enum {
 
 struct seni_uv_mapping {
   f32  width_scale;
-  f32 *map; // array of 8 (4 pairs of xy)
+  f32* map; // array of 8 (4 pairs of xy)
 };
 
 void uv_mapper_subsystem_startup();
 void uv_mapper_subsystem_shutdown();
 
-void             make_uv(f32 *outx, f32 *ouyt, f32 in_u, f32 in_v);
-seni_uv_mapping *get_uv_mapping(seni_brush_type type, i32 sub_type, bool wrap_sub_type);
+void             make_uv(f32* outx, f32* ouyt, f32 in_u, f32 in_v);
+seni_uv_mapping* get_uv_mapping(seni_brush_type type, i32 sub_type, bool wrap_sub_type);

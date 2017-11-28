@@ -15,19 +15,19 @@
 
 #include "pool_macro.h"
 
-void gene_return_to_pool(seni_gene *gene);
-void trait_return_to_pool(seni_trait *trait);
+void gene_return_to_pool(seni_gene* gene);
+void trait_return_to_pool(seni_trait* trait);
 
 // setup pools
 
-void gene_cleanup(seni_gene *gene) {
+void gene_cleanup(seni_gene* gene) {
   if (gene->var) {
     var_return_to_pool(gene->var);
     gene->var = NULL;
   }
 }
 
-void trait_cleanup(seni_trait *trait) {
+void trait_cleanup(seni_trait* trait) {
   if (trait->program) {
     program_free(trait->program);
     trait->program = NULL;
@@ -39,9 +39,9 @@ void trait_cleanup(seni_trait *trait) {
   }
 }
 
-void genotype_cleanup(seni_genotype *genotype) {
-  seni_gene *g = genotype->genes;
-  seni_gene *next;
+void genotype_cleanup(seni_genotype* genotype) {
+  seni_gene* g = genotype->genes;
+  seni_gene* next;
   while (g != NULL) {
     next = g->next;
     DL_DELETE(genotype->genes, g);
@@ -52,9 +52,9 @@ void genotype_cleanup(seni_genotype *genotype) {
   genotype->current_gene = NULL;
 }
 
-void trait_list_cleanup(seni_trait_list *trait_list) {
-  seni_trait *t = trait_list->traits;
-  seni_trait *next;
+void trait_list_cleanup(seni_trait_list* trait_list) {
+  seni_trait* t = trait_list->traits;
+  seni_trait* next;
   while (t != NULL) {
     next = t->next;
     DL_DELETE(trait_list->traits, t);
@@ -66,10 +66,10 @@ void trait_list_cleanup(seni_trait_list *trait_list) {
   trait_list->traits = NULL;
 }
 
-void genotype_list_cleanup(seni_genotype_list *genotype_list) {
+void genotype_list_cleanup(seni_genotype_list* genotype_list) {
   // todo: test this
-  seni_genotype *g = genotype_list->genotypes;
-  seni_genotype *next;
+  seni_genotype* g = genotype_list->genotypes;
+  seni_genotype* next;
   while (g != NULL) {
     next = g->next;
     DL_DELETE(genotype_list->genotypes, g);
@@ -89,71 +89,71 @@ SENI_POOL(seni_genotype, genotype)
 SENI_POOL(seni_trait_list, trait_list)
 SENI_POOL(seni_genotype_list, genotype_list)
 
-struct seni_gene_pool *         g_gene_pool;
-struct seni_trait_pool *        g_trait_pool;
-struct seni_genotype_pool *     g_genotype_pool;
-struct seni_trait_list_pool *   g_trait_list_pool;
-struct seni_genotype_list_pool *g_genotype_list_pool;
+struct seni_gene_pool*          g_gene_pool;
+struct seni_trait_pool*         g_trait_pool;
+struct seni_genotype_pool*      g_genotype_pool;
+struct seni_trait_list_pool*    g_trait_list_pool;
+struct seni_genotype_list_pool* g_genotype_list_pool;
 
-seni_gene *gene_get_from_pool() {
-  seni_gene *gene = gene_pool_get(g_gene_pool);
+seni_gene* gene_get_from_pool() {
+  seni_gene* gene = gene_pool_get(g_gene_pool);
 
-  seni_var *var = var_get_from_pool();
+  seni_var* var = var_get_from_pool();
   gene->var     = var;
 
   return gene;
 }
 
-void gene_return_to_pool(seni_gene *gene) {
+void gene_return_to_pool(seni_gene* gene) {
   gene_cleanup(gene);
   gene_pool_return(g_gene_pool, gene);
 }
 
-seni_trait *trait_get_from_pool() {
-  seni_trait *trait = trait_pool_get(g_trait_pool);
+seni_trait* trait_get_from_pool() {
+  seni_trait* trait = trait_pool_get(g_trait_pool);
 
   // get a var from the pool in seni_lang
-  seni_var *var        = var_get_from_pool();
+  seni_var* var        = var_get_from_pool();
   trait->initial_value = var;
 
   return trait;
 }
 
-void trait_return_to_pool(seni_trait *trait) {
+void trait_return_to_pool(seni_trait* trait) {
   // free up any memory used to store the program and initial_value
   trait_cleanup(trait);
   trait_pool_return(g_trait_pool, trait);
 }
 
-seni_genotype *genotype_get_from_pool() {
-  seni_genotype *genotype = genotype_pool_get(g_genotype_pool);
+seni_genotype* genotype_get_from_pool() {
+  seni_genotype* genotype = genotype_pool_get(g_genotype_pool);
 
   return genotype;
 }
 
-void genotype_return_to_pool(seni_genotype *genotype) {
+void genotype_return_to_pool(seni_genotype* genotype) {
   genotype_cleanup(genotype);
   genotype_pool_return(g_genotype_pool, genotype);
 }
 
-seni_trait_list *trait_list_get_from_pool() {
-  seni_trait_list *trait_list = trait_list_pool_get(g_trait_list_pool);
+seni_trait_list* trait_list_get_from_pool() {
+  seni_trait_list* trait_list = trait_list_pool_get(g_trait_list_pool);
 
   return trait_list;
 }
 
-void trait_list_return_to_pool(seni_trait_list *trait_list) {
+void trait_list_return_to_pool(seni_trait_list* trait_list) {
   trait_list_cleanup(trait_list);
   trait_list_pool_return(g_trait_list_pool, trait_list);
 }
 
-seni_genotype_list *genotype_list_get_from_pool() {
-  seni_genotype_list *genotype_list = genotype_list_pool_get(g_genotype_list_pool);
+seni_genotype_list* genotype_list_get_from_pool() {
+  seni_genotype_list* genotype_list = genotype_list_pool_get(g_genotype_list_pool);
 
   return genotype_list;
 }
 
-void genotype_list_return_to_pool(seni_genotype_list *genotype_list) {
+void genotype_list_return_to_pool(seni_genotype_list* genotype_list) {
   genotype_list_cleanup(genotype_list);
   genotype_list_pool_return(g_genotype_list_pool, genotype_list);
 }
@@ -177,7 +177,7 @@ void ga_subsystem_shutdown() {
   gene_pool_free(g_gene_pool);
 }
 
-bool trait_serialize(seni_cursor *cursor, seni_trait *trait) {
+bool trait_serialize(seni_cursor* cursor, seni_trait* trait) {
   cursor_sprintf(cursor, "%d", trait->id);
   cursor_sprintf(cursor, " ");
 
@@ -189,7 +189,7 @@ bool trait_serialize(seni_cursor *cursor, seni_trait *trait) {
   return true;
 }
 
-bool trait_deserialize(seni_trait *out, seni_cursor *cursor) {
+bool trait_deserialize(seni_trait* out, seni_cursor* cursor) {
   out->id = cursor_eat_i32(cursor);
   cursor_eat_space(cursor);
 
@@ -205,12 +205,12 @@ bool trait_deserialize(seni_trait *out, seni_cursor *cursor) {
   return true;
 }
 
-void trait_list_add_trait(seni_trait_list *trait_list, seni_trait *trait) {
+void trait_list_add_trait(seni_trait_list* trait_list, seni_trait* trait) {
   DL_APPEND(trait_list->traits, trait);
 }
 
 // this is terrible and should be replaced with an interpreter asap
-bool super_hacky_colour_parser(seni_var *out, seni_node *node) {
+bool super_hacky_colour_parser(seni_var* out, seni_node* node) {
   // assume that node is pointing to a list like: (col/rgb r: 1 g: 0 b: 0.3
   // alpha: 0.3)
 
@@ -218,7 +218,7 @@ bool super_hacky_colour_parser(seni_var *out, seni_node *node) {
   //
   i32 rgb_constructor_fn_index = get_colour_constructor_start();
 
-  seni_node *constructor_fn_name_node = safe_first(node->value.first_child);
+  seni_node* constructor_fn_name_node = safe_first(node->value.first_child);
   i32        native_index             = constructor_fn_name_node->value.i - NATIVE_START;
   if (native_index != rgb_constructor_fn_index) {
     SENI_ERROR("super_hacky_colour_parser only works with col/rgb");
@@ -229,8 +229,8 @@ bool super_hacky_colour_parser(seni_var *out, seni_node *node) {
   f32 alpha = 1.0f;
   r = g = b = 0.0f;
 
-  seni_node *n = safe_next(constructor_fn_name_node);
-  seni_node *val;
+  seni_node* n = safe_next(constructor_fn_name_node);
+  seni_node* val;
 
   while (n != NULL && n->type == NODE_LABEL) {
     val = safe_next(n);
@@ -264,14 +264,14 @@ bool super_hacky_colour_parser(seni_var *out, seni_node *node) {
   return true;
 }
 
-bool super_hacky_2d_vector_parser(seni_var *out, seni_node *node) {
+bool super_hacky_2d_vector_parser(seni_var* out, seni_node* node) {
   if (node->type != NODE_VECTOR) {
     return false;
   }
 
   f32 a, b;
 
-  seni_node *n = safe_first(node->value.first_child);
+  seni_node* n = safe_first(node->value.first_child);
   if (n == NULL || n->type != NODE_FLOAT) {
     return false;
   }
@@ -291,12 +291,12 @@ bool super_hacky_2d_vector_parser(seni_var *out, seni_node *node) {
   return true;
 }
 
-bool is_2d_vector(seni_node *node) {
+bool is_2d_vector(seni_node* node) {
   if (node->type != NODE_VECTOR) {
     return false;
   }
 
-  seni_node *n = safe_first(node->value.first_child);
+  seni_node* n = safe_first(node->value.first_child);
   // first element can't be null
   if (n == NULL) {
     return false;
@@ -319,7 +319,7 @@ bool is_2d_vector(seni_node *node) {
 // TODO: could really do with a small interpreter here that parses the seni_node
 // ast
 //
-bool hack_node_to_var(seni_var *out, seni_node *node) {
+bool hack_node_to_var(seni_var* out, seni_node* node) {
   switch (node->type) {
   case NODE_INT:
     out->type    = VAR_INT;
@@ -360,12 +360,12 @@ bool hack_node_to_var(seni_var *out, seni_node *node) {
   return true;
 }
 
-void add_trait(seni_node *      node,
-               seni_node *      parameter_ast,
+void add_trait(seni_node*       node,
+               seni_node*       parameter_ast,
                i32              program_max_size,
-               seni_trait_list *trait_list,
-               seni_word_lut *  word_lut) {
-  seni_trait *trait = trait_get_from_pool();
+               seni_trait_list* trait_list,
+               seni_word_lut*   word_lut) {
+  seni_trait* trait = trait_get_from_pool();
 
   if (hack_node_to_var(trait->initial_value, node) == false) {
     SENI_PRINT("hack_node_to_var failed");
@@ -378,19 +378,19 @@ void add_trait(seni_node *      node,
   trait_list_add_trait(trait_list, trait);
 }
 
-void add_single_trait(seni_node *      node,
+void add_single_trait(seni_node*       node,
                       i32              program_max_size,
-                      seni_trait_list *trait_list,
-                      seni_word_lut *  word_lut) {
+                      seni_trait_list* trait_list,
+                      seni_word_lut*   word_lut) {
   add_trait(node, node->parameter_ast, program_max_size, trait_list, word_lut);
 }
 
-void add_multiple_traits(seni_node *      node,
+void add_multiple_traits(seni_node*       node,
                          i32              program_max_size,
-                         seni_trait_list *trait_list,
-                         seni_word_lut *  word_lut) {
-  seni_node *vector = node;
-  seni_node *n      = safe_first(node->value.first_child);
+                         seni_trait_list* trait_list,
+                         seni_word_lut*   word_lut) {
+  seni_node* vector = node;
+  seni_node* n      = safe_first(node->value.first_child);
 
   while (n) {
     add_trait(n, vector->parameter_ast, program_max_size, trait_list, word_lut);
@@ -398,11 +398,11 @@ void add_multiple_traits(seni_node *      node,
   }
 }
 
-seni_node *ga_traverse(seni_node *      node,
+seni_node* ga_traverse(seni_node*       node,
                        i32              program_max_size,
-                       seni_trait_list *trait_list,
-                       seni_word_lut *  word_lut) {
-  seni_node *n = node;
+                       seni_trait_list* trait_list,
+                       seni_word_lut*   word_lut) {
+  seni_node* n = node;
 
   if (n->alterable) {
     if (n->type == NODE_VECTOR) {
@@ -424,12 +424,12 @@ seni_node *ga_traverse(seni_node *      node,
   return safe_next(node);
 }
 
-seni_trait_list *
-trait_list_compile(seni_node *ast, i32 trait_program_max_size, seni_word_lut *word_lut) {
+seni_trait_list*
+trait_list_compile(seni_node* ast, i32 trait_program_max_size, seni_word_lut* word_lut) {
   // iterate through and build some traits
-  seni_trait_list *trait_list = trait_list_get_from_pool();
+  seni_trait_list* trait_list = trait_list_get_from_pool();
 
-  seni_node *n = ast;
+  seni_node* n = ast;
   while (n != NULL) {
     n = ga_traverse(n, trait_program_max_size, trait_list, word_lut);
   }
@@ -437,8 +437,8 @@ trait_list_compile(seni_node *ast, i32 trait_program_max_size, seni_word_lut *wo
   return trait_list;
 }
 
-i32 trait_list_count(seni_trait_list *trait_list) {
-  seni_trait *t     = trait_list->traits;
+i32 trait_list_count(seni_trait_list* trait_list) {
+  seni_trait* t     = trait_list->traits;
   i32         count = 0;
 
   while (t != NULL) {
@@ -449,7 +449,7 @@ i32 trait_list_count(seni_trait_list *trait_list) {
   return count;
 }
 
-bool trait_list_serialize(seni_cursor *cursor, seni_trait_list *trait_list) {
+bool trait_list_serialize(seni_cursor* cursor, seni_trait_list* trait_list) {
   // seed value
   cursor_sprintf(cursor, "%d", trait_list->seed_value);
   cursor_sprintf(cursor, " ");
@@ -460,7 +460,7 @@ bool trait_list_serialize(seni_cursor *cursor, seni_trait_list *trait_list) {
   cursor_sprintf(cursor, " ");
 
   // sequence of traits
-  seni_trait *t = trait_list->traits;
+  seni_trait* t = trait_list->traits;
   while (t != NULL) {
     trait_serialize(cursor, t);
     if (t->next != NULL) {
@@ -472,8 +472,8 @@ bool trait_list_serialize(seni_cursor *cursor, seni_trait_list *trait_list) {
   return true;
 }
 
-bool trait_list_deserialize(seni_trait_list *out, seni_cursor *cursor) {
-  seni_trait_list *trait_list = out;
+bool trait_list_deserialize(seni_trait_list* out, seni_cursor* cursor) {
+  seni_trait_list* trait_list = out;
 
   i32 seed_value = cursor_eat_i32(cursor);
   cursor_eat_space(cursor);
@@ -483,7 +483,7 @@ bool trait_list_deserialize(seni_trait_list *out, seni_cursor *cursor) {
   cursor_eat_space(cursor);
 
   for (i32 i = 0; i < count; i++) {
-    seni_trait *trait = trait_get_from_pool();
+    seni_trait* trait = trait_get_from_pool();
     trait_deserialize(trait, cursor);
     trait_list_add_trait(trait_list, trait);
     if (i < count - 1) {
@@ -496,7 +496,7 @@ bool trait_list_deserialize(seni_trait_list *out, seni_cursor *cursor) {
 
 // gene
 
-seni_gene *gene_build_from_program(seni_vm *vm, seni_env *env, seni_program *program) {
+seni_gene* gene_build_from_program(seni_vm* vm, seni_env* env, seni_program* program) {
   // todo: possibly implement a 'soft-reset' which is quicker than a vm_reset?
   vm_reset(vm);
 
@@ -505,23 +505,23 @@ seni_gene *gene_build_from_program(seni_vm *vm, seni_env *env, seni_program *pro
     return NULL;
   }
 
-  seni_gene *gene = gene_get_from_pool();
+  seni_gene* gene = gene_get_from_pool();
 
   var_copy(gene->var, &(vm->stack[vm->sp - 1]));
 
   return gene;
 }
 
-seni_gene *gene_build_from_initial_value(seni_var *initial_value) {
-  seni_gene *gene = gene_get_from_pool();
+seni_gene* gene_build_from_initial_value(seni_var* initial_value) {
+  seni_gene* gene = gene_get_from_pool();
 
   var_copy(gene->var, initial_value);
 
   return gene;
 }
 
-seni_gene *gene_clone(seni_gene *source) {
-  seni_gene *gene = gene_get_from_pool();
+seni_gene* gene_clone(seni_gene* source) {
+  seni_gene* gene = gene_get_from_pool();
 
   var_copy(gene->var, source->var);
 
@@ -530,21 +530,21 @@ seni_gene *gene_clone(seni_gene *source) {
 
 // genotype
 
-void genotype_add_gene(seni_genotype *genotype, seni_gene *gene) {
+void genotype_add_gene(seni_genotype* genotype, seni_gene* gene) {
   DL_APPEND(genotype->genes, gene);
 }
 
-seni_genotype *
-genotype_build_from_program(seni_trait_list *trait_list, seni_vm *vm, seni_env *env, i32 seed) {
+seni_genotype*
+genotype_build_from_program(seni_trait_list* trait_list, seni_vm* vm, seni_env* env, i32 seed) {
   // the seed is set once per genotype (should it be once per-gene?)
   //
   seni_prng_set_state(vm->prng_state, (u64)seed);
 
-  seni_genotype *genotype = genotype_get_from_pool();
+  seni_genotype* genotype = genotype_get_from_pool();
 
-  seni_trait *trait = trait_list->traits;
+  seni_trait* trait = trait_list->traits;
   while (trait != NULL) {
-    seni_gene *gene = gene_build_from_program(vm, env, trait->program);
+    seni_gene* gene = gene_build_from_program(vm, env, trait->program);
 
     if (gene != NULL) {
       genotype_add_gene(genotype, gene);
@@ -560,12 +560,12 @@ genotype_build_from_program(seni_trait_list *trait_list, seni_vm *vm, seni_env *
   return genotype;
 }
 
-seni_genotype *genotype_build_from_initial_values(seni_trait_list *trait_list) {
-  seni_genotype *genotype = genotype_get_from_pool();
+seni_genotype* genotype_build_from_initial_values(seni_trait_list* trait_list) {
+  seni_genotype* genotype = genotype_get_from_pool();
 
-  seni_trait *trait = trait_list->traits;
+  seni_trait* trait = trait_list->traits;
   while (trait != NULL) {
-    seni_gene *gene = gene_build_from_initial_value(trait->initial_value);
+    seni_gene* gene = gene_build_from_initial_value(trait->initial_value);
 
     if (gene != NULL) {
       genotype_add_gene(genotype, gene);
@@ -581,8 +581,8 @@ seni_genotype *genotype_build_from_initial_values(seni_trait_list *trait_list) {
   return genotype;
 }
 
-i32 genotype_count(seni_genotype *genotype) {
-  seni_gene *g     = genotype->genes;
+i32 genotype_count(seni_genotype* genotype) {
+  seni_gene* g     = genotype->genes;
   i32        count = 0;
 
   while (g != NULL) {
@@ -593,13 +593,13 @@ i32 genotype_count(seni_genotype *genotype) {
   return count;
 }
 
-seni_genotype *genotype_clone(seni_genotype *genotype) {
-  seni_genotype *cloned_genotype = genotype_get_from_pool();
+seni_genotype* genotype_clone(seni_genotype* genotype) {
+  seni_genotype* cloned_genotype = genotype_get_from_pool();
 
-  seni_gene *src_gene = genotype->genes;
+  seni_gene* src_gene = genotype->genes;
 
   while (src_gene) {
-    seni_gene *cloned_gene = gene_clone(src_gene);
+    seni_gene* cloned_gene = gene_clone(src_gene);
     genotype_add_gene(cloned_genotype, cloned_gene);
 
     src_gene = src_gene->next;
@@ -608,12 +608,12 @@ seni_genotype *genotype_clone(seni_genotype *genotype) {
   return cloned_genotype;
 }
 
-seni_genotype *
-genotype_crossover(seni_genotype *a, seni_genotype *b, i32 crossover_index, i32 genotype_length) {
-  seni_genotype *genotype = genotype_get_from_pool();
-  seni_gene *    gene;
-  seni_gene *    gene_a = a->genes;
-  seni_gene *    gene_b = b->genes;
+seni_genotype*
+genotype_crossover(seni_genotype* a, seni_genotype* b, i32 crossover_index, i32 genotype_length) {
+  seni_genotype* genotype = genotype_get_from_pool();
+  seni_gene*     gene;
+  seni_gene*     gene_a = a->genes;
+  seni_gene*     gene_b = b->genes;
   i32            i;
 
   for (i = 0; i < crossover_index; i++) {
@@ -632,13 +632,13 @@ genotype_crossover(seni_genotype *a, seni_genotype *b, i32 crossover_index, i32 
   return genotype;
 }
 
-bool genotype_serialize(seni_cursor *cursor, seni_genotype *genotype) {
+bool genotype_serialize(seni_cursor* cursor, seni_genotype* genotype) {
   // number of genes
   i32 count = genotype_count(genotype);
   cursor_sprintf(cursor, "%d", count);
   cursor_sprintf(cursor, " ");
 
-  seni_gene *gene = genotype->genes;
+  seni_gene* gene = genotype->genes;
   while (gene != NULL) {
     var_serialize(cursor, gene->var);
     if (gene->next != NULL) {
@@ -650,14 +650,14 @@ bool genotype_serialize(seni_cursor *cursor, seni_genotype *genotype) {
   return true;
 }
 
-bool genotype_deserialize(seni_genotype *out, seni_cursor *cursor) {
+bool genotype_deserialize(seni_genotype* out, seni_cursor* cursor) {
   i32 count = cursor_eat_i32(cursor);
   cursor_eat_space(cursor);
 
-  seni_genotype *genotype = out;
+  seni_genotype* genotype = out;
 
   for (i32 i = 0; i < count; i++) {
-    seni_gene *gene = gene_get_from_pool();
+    seni_gene* gene = gene_get_from_pool();
     var_deserialize(gene->var, cursor);
     genotype_add_gene(genotype, gene);
     if (i < count - 1) {
@@ -668,8 +668,8 @@ bool genotype_deserialize(seni_genotype *out, seni_cursor *cursor) {
   return true;
 }
 
-seni_gene *genotype_pull_gene(seni_genotype *genotype) {
-  seni_gene *gene = genotype->current_gene;
+seni_gene* genotype_pull_gene(seni_genotype* genotype) {
+  seni_gene* gene = genotype->current_gene;
   if (gene == NULL) {
     SENI_ERROR("genotype_pull_gene: current gene is null");
     return NULL;
@@ -680,12 +680,12 @@ seni_gene *genotype_pull_gene(seni_genotype *genotype) {
   return gene;
 }
 
-void genotype_list_add_genotype(seni_genotype_list *genotype_list, seni_genotype *genotype) {
+void genotype_list_add_genotype(seni_genotype_list* genotype_list, seni_genotype* genotype) {
   DL_APPEND(genotype_list->genotypes, genotype);
 }
 
-seni_genotype *genotype_list_get_genotype(seni_genotype_list *genotype_list, i32 index) {
-  seni_genotype *genotype = genotype_list->genotypes;
+seni_genotype* genotype_list_get_genotype(seni_genotype_list* genotype_list, i32 index) {
+  seni_genotype* genotype = genotype_list->genotypes;
   i32            i        = 0;
 
   while (i < index) {
@@ -699,8 +699,8 @@ seni_genotype *genotype_list_get_genotype(seni_genotype_list *genotype_list, i32
   return genotype;
 }
 
-i32 genotype_list_count(seni_genotype_list *genotype_list) {
-  seni_genotype *g     = genotype_list->genotypes;
+i32 genotype_list_count(seni_genotype_list* genotype_list) {
+  seni_genotype* g     = genotype_list->genotypes;
   i32            count = 0;
 
   while (g != NULL) {
@@ -711,14 +711,14 @@ i32 genotype_list_count(seni_genotype_list *genotype_list) {
   return count;
 }
 
-bool genotype_list_serialize(seni_cursor *cursor, seni_genotype_list *genotype_list) {
+bool genotype_list_serialize(seni_cursor* cursor, seni_genotype_list* genotype_list) {
   // number of genotypes
   i32 count = genotype_list_count(genotype_list);
   cursor_sprintf(cursor, "%d", count);
   cursor_sprintf(cursor, " ");
 
   // sequence of genotypes
-  seni_genotype *g = genotype_list->genotypes;
+  seni_genotype* g = genotype_list->genotypes;
   while (g != NULL) {
     genotype_serialize(cursor, g);
     if (g->next != NULL) {
@@ -730,14 +730,14 @@ bool genotype_list_serialize(seni_cursor *cursor, seni_genotype_list *genotype_l
   return true;
 }
 
-bool genotype_list_deserialize(seni_genotype_list *out, seni_cursor *cursor) {
+bool genotype_list_deserialize(seni_genotype_list* out, seni_cursor* cursor) {
   i32 count = cursor_eat_i32(cursor);
   cursor_eat_space(cursor);
 
-  seni_genotype_list *genotype_list = out;
+  seni_genotype_list* genotype_list = out;
 
   for (i32 i = 0; i < count; i++) {
-    seni_genotype *genotype = genotype_get_from_pool();
+    seni_genotype* genotype = genotype_get_from_pool();
     genotype_deserialize(genotype, cursor);
     genotype_list_add_genotype(genotype_list, genotype);
     if (i < count - 1) {
@@ -748,17 +748,17 @@ bool genotype_list_deserialize(seni_genotype_list *out, seni_cursor *cursor) {
   return true;
 }
 
-seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *trait_list,
+seni_genotype_list* genotype_list_create_initial_generation(seni_trait_list* trait_list,
                                                             i32              population_size,
                                                             i32              seed) {
-  seni_genotype_list *genotype_list = genotype_list_get_from_pool();
+  seni_genotype_list* genotype_list = genotype_list_get_from_pool();
   if (population_size == 0) {
     SENI_ERROR("genotype_list_create_initial_generation: population_size of 0 ???");
     return genotype_list;
   }
 
   // create a genotype using the initial valued from the traits
-  seni_genotype *genotype = genotype_build_from_initial_values(trait_list);
+  seni_genotype* genotype = genotype_build_from_initial_values(trait_list);
   genotype_list_add_genotype(genotype_list, genotype);
 
   SENI_LOG("genotype_list_create_initial_generation seed: %d", seed);
@@ -769,8 +769,8 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
   i32 genotype_seed;
 
   // fill out the remaining population with generated values
-  seni_vm * vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_allocate();
+  seni_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env* env = env_allocate();
 
   for (i32 i = 1; i < population_size; i++) {
     genotype_seed = seni_prng_i32_range(&prng_state, prng_min, prng_max);
@@ -786,9 +786,9 @@ seni_genotype_list *genotype_list_create_initial_generation(seni_trait_list *tra
 }
 
 // mutates the gene and the prng_state
-void gene_generate_new_var(seni_gene *gene, seni_trait *trait, seni_prng_state *prng_state) {
-  seni_vm * vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env *env = env_allocate();
+void gene_generate_new_var(seni_gene* gene, seni_trait* trait, seni_prng_state* prng_state) {
+  seni_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  seni_env* env = env_allocate();
 
   seni_prng_copy(vm->prng_state, prng_state);
 
@@ -806,13 +806,13 @@ void gene_generate_new_var(seni_gene *gene, seni_trait *trait, seni_prng_state *
   vm_free(vm);
 }
 
-seni_genotype *genotype_possibly_mutate(seni_genotype *  genotype,
+seni_genotype* genotype_possibly_mutate(seni_genotype*   genotype,
                                         i32              genotype_length,
                                         f32              mutation_rate,
-                                        seni_prng_state *prng_state,
-                                        seni_trait_list *trait_list) {
-  seni_gene * gene     = genotype->genes;
-  seni_trait *trait    = trait_list->traits;
+                                        seni_prng_state* prng_state,
+                                        seni_trait_list* trait_list) {
+  seni_gene*  gene     = genotype->genes;
+  seni_trait* trait    = trait_list->traits;
   f32         prng_num = 0.0f;
 
   for (i32 i = 0; i < genotype_length; i++) {
@@ -831,19 +831,19 @@ seni_genotype *genotype_possibly_mutate(seni_genotype *  genotype,
   return genotype;
 }
 
-seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
+seni_genotype_list* genotype_list_next_generation(seni_genotype_list* parents,
                                                   i32                 num_parents,
                                                   i32                 population_size,
                                                   f32                 mutation_rate,
                                                   i32                 rng,
-                                                  seni_trait_list *   trait_list) {
-  seni_genotype_list *genotype_list = genotype_list_get_from_pool();
+                                                  seni_trait_list*    trait_list) {
+  seni_genotype_list* genotype_list = genotype_list_get_from_pool();
 
   i32 population_remaining = population_size;
 
   // copy the parents onto the new generation
-  seni_genotype *genotype;
-  seni_genotype *parent_genotype = parents->genotypes;
+  seni_genotype* genotype;
+  seni_genotype* parent_genotype = parents->genotypes;
   while (parent_genotype) {
     genotype = genotype_clone(parent_genotype);
     genotype_list_add_genotype(genotype_list, genotype);
@@ -869,8 +869,8 @@ seni_genotype_list *genotype_list_next_generation(seni_genotype_list *parents,
       b_index = (a_index + 1) % num_parents;
     }
 
-    seni_genotype *a = genotype_list_get_genotype(parents, a_index);
-    seni_genotype *b = genotype_list_get_genotype(parents, b_index);
+    seni_genotype* a = genotype_list_get_genotype(parents, a_index);
+    seni_genotype* b = genotype_list_get_genotype(parents, b_index);
 
     i32 genotype_length = genotype_count(a);
     i32 crossover_index = seni_prng_i32_range(&prng_state, 0, genotype_length - 1);

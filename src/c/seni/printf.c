@@ -12,7 +12,7 @@
 
 #define SENI_PRINTF_BUFFER_SIZE 500
 
-void seni_printf(char const *fmt, ...) {
+void seni_printf(char const* fmt, ...) {
   char buffer[SENI_PRINTF_BUFFER_SIZE];
 
   va_list va;
@@ -27,7 +27,7 @@ void seni_printf(char const *fmt, ...) {
 #endif
 }
 
-int seni_sprintf(char *buf, int buffer_size, char const *fmt, ...) {
+int seni_sprintf(char* buf, int buffer_size, char const* fmt, ...) {
   va_list va;
   va_start(va, fmt);
   int len = stbsp_vsnprintf(buf, buffer_size, fmt, va);
@@ -36,26 +36,26 @@ int seni_sprintf(char *buf, int buffer_size, char const *fmt, ...) {
   return len;
 }
 
-int seni_vsprintf(char *buf, int buffer_size, char const *fmt, va_list va) {
+int seni_vsprintf(char* buf, int buffer_size, char const* fmt, va_list va) {
   int len = stbsp_vsnprintf(buf, buffer_size, fmt, va);
 
   return len;
 }
 
-void seni_fileline_sprintf(char *      buf,
+void seni_fileline_sprintf(char*       buf,
                            int         buffer_size,
-                           char *      file,
+                           char*       file,
                            int         line,
-                           char const *fmt,
+                           char const* fmt,
                            va_list     va) {
   int   len = stbsp_snprintf(buf, buffer_size, "%s:%d: ", file, line);
-  char *pp  = &(buf[len]);
+  char* pp  = &(buf[len]);
 
   buffer_size -= len;
   stbsp_vsnprintf(pp, buffer_size, fmt, va);
 }
 
-void seni_printf_log(char *file, int line, char const *fmt, ...) {
+void seni_printf_log(char* file, int line, char const* fmt, ...) {
   char buffer[SENI_PRINTF_BUFFER_SIZE];
 
   va_list va;
@@ -70,7 +70,7 @@ void seni_printf_log(char *file, int line, char const *fmt, ...) {
 #endif
 }
 
-void seni_printf_error(char *file, int line, char const *fmt, ...) {
+void seni_printf_error(char* file, int line, char const* fmt, ...) {
   char buffer[SENI_PRINTF_BUFFER_SIZE];
 
   va_list va;

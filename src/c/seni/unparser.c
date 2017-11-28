@@ -17,7 +17,7 @@
 #include <stdio.h>
 #endif
 
-i32 count_decimals(seni_node *float_node) {
+i32 count_decimals(seni_node* float_node) {
   if (float_node->type != NODE_FLOAT) {
     return 0;
   }
@@ -41,12 +41,12 @@ i32 count_decimals(seni_node *float_node) {
   return res;
 }
 
-void format_float_using_node(seni_cursor *cursor, seni_node *node, f32 f) {
+void format_float_using_node(seni_cursor* cursor, seni_node* node, f32 f) {
   i32 decimals = count_decimals(node);
   cursor_sprintf(cursor, "%.*f", decimals, f);
 }
 
-void format_var_value_colour(seni_cursor *cursor, seni_node *node, seni_var *var) {
+void format_var_value_colour(seni_cursor* cursor, seni_node* node, seni_var* var) {
   node = NULL;
   switch (var->value.i) {
   case RGB:
@@ -84,8 +84,8 @@ void format_var_value_colour(seni_cursor *cursor, seni_node *node, seni_var *var
   }
 }
 
-void format_node_value(seni_cursor *cursor, seni_word_lut *word_lut, seni_node *node) {
-  char *c;
+void format_node_value(seni_cursor* cursor, seni_word_lut* word_lut, seni_node* node) {
+  char* c;
 
   switch (node->type) {
 
@@ -129,14 +129,14 @@ void format_node_value(seni_cursor *cursor, seni_word_lut *word_lut, seni_node *
   };
 }
 
-void format_var_value(seni_cursor *  cursor,
-                      seni_node *    node,
-                      seni_genotype *genotype,
-                      seni_word_lut *word_lut) {
-  seni_gene *gene = genotype_pull_gene(genotype);
-  seni_var * var  = gene->var;
-  char *     name = NULL; // used by VAR_NAME
-  seni_node *n;
+void format_var_value(seni_cursor*   cursor,
+                      seni_node*     node,
+                      seni_genotype* genotype,
+                      seni_word_lut* word_lut) {
+  seni_gene* gene = genotype_pull_gene(genotype);
+  seni_var*  var  = gene->var;
+  char*      name = NULL; // used by VAR_NAME
+  seni_node* n;
 
   switch (var->type) {
   case VAR_INT:
@@ -200,13 +200,13 @@ void format_var_value(seni_cursor *  cursor,
   };
 }
 
-void unparse_alterable_vector(seni_cursor *  cursor,
-                              seni_word_lut *word_lut,
-                              seni_node *    ast,
-                              seni_genotype *genotype) {
+void unparse_alterable_vector(seni_cursor*   cursor,
+                              seni_word_lut* word_lut,
+                              seni_node*     ast,
+                              seni_genotype* genotype) {
   cursor_sprintf(cursor, "[");
 
-  seni_node *n = ast->value.first_child;
+  seni_node* n = ast->value.first_child;
 
   while (n) {
     if (n->type == NODE_WHITESPACE || n->type == NODE_COMMENT) {
@@ -220,11 +220,11 @@ void unparse_alterable_vector(seni_cursor *  cursor,
   cursor_sprintf(cursor, "]");
 }
 
-seni_node *unparse_ast_node(seni_cursor *  cursor,
-                            seni_word_lut *word_lut,
-                            seni_node *    ast,
-                            seni_genotype *genotype) {
-  seni_node *n;
+seni_node* unparse_ast_node(seni_cursor*   cursor,
+                            seni_word_lut* word_lut,
+                            seni_node*     ast,
+                            seni_genotype* genotype) {
+  seni_node* n;
 
   if (ast->alterable) {
 
@@ -297,11 +297,11 @@ seni_node *unparse_ast_node(seni_cursor *  cursor,
 
 // out is a pre-allocated array
 //
-bool unparse(seni_cursor *  cursor,
-             seni_word_lut *word_lut,
-             seni_node *    ast,
-             seni_genotype *genotype) {
-  seni_node *n           = ast;
+bool unparse(seni_cursor*   cursor,
+             seni_word_lut* word_lut,
+             seni_node*     ast,
+             seni_genotype* genotype) {
+  seni_node* n           = ast;
   genotype->current_gene = genotype->genes;
   while (n != NULL) {
     n = unparse_ast_node(cursor, word_lut, n, genotype);

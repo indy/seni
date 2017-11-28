@@ -10,10 +10,10 @@
 
 #include <math.h>
 
-bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program);
+bool vm_interpret(seni_vm* vm, seni_env* env, seni_program* program);
 
-void gc_mark_vector(seni_var *vector) {
-  seni_var *v = vector->value.v; // the first heap-allocated seni_var
+void gc_mark_vector(seni_var* vector) {
+  seni_var* v = vector->value.v; // the first heap-allocated seni_var
 
   while (v != NULL) {
     v->mark = true;
@@ -24,8 +24,8 @@ void gc_mark_vector(seni_var *vector) {
   }
 }
 
-void gc_mark(seni_vm *vm) {
-  seni_var *v = vm->stack;
+void gc_mark(seni_vm* vm) {
+  seni_var* v = vm->stack;
 
   for (i32 i = 0; i < vm->sp; i++) {
     // only VAR_VECTOR seni_vars allocated from the heap
@@ -36,11 +36,11 @@ void gc_mark(seni_vm *vm) {
   }
 }
 
-void gc_sweep(seni_vm *vm) {
+void gc_sweep(seni_vm* vm) {
   vm->heap_avail      = NULL;
   vm->heap_avail_size = 0;
 
-  seni_var *v = vm->heap_slab;
+  seni_var* v = vm->heap_slab;
 
   for (i32 i = 0; i < vm->heap_size; i++) {
     if (v->mark) {
@@ -66,7 +66,7 @@ void gc_sweep(seni_vm *vm) {
 // VM bytecode interpreter
 // **************************************************
 
-seni_var *arg_memory_from_iname(seni_fn_info *fn_info, i32 iname, seni_var *args) {
+seni_var* arg_memory_from_iname(seni_fn_info* fn_info, i32 iname, seni_var* args) {
   // args is the point on the stack that contains the args for the function
   // about to be called
 
@@ -85,22 +85,22 @@ seni_var *arg_memory_from_iname(seni_fn_info *fn_info, i32 iname, seni_var *args
   return NULL;
 }
 
-void vm_function_set_argument_to_var(seni_vm *vm, seni_fn_info *fn_info, i32 iname, seni_var *src) {
-  seni_var *arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+void vm_function_set_argument_to_var(seni_vm* vm, seni_fn_info* fn_info, i32 iname, seni_var* src) {
+  seni_var* arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
   if (arg != NULL) {
     var_copy(arg, src);
   }
 }
-void vm_function_set_argument_to_f32(seni_vm *vm, seni_fn_info *fn_info, i32 iname, f32 f) {
-  seni_var *arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+void vm_function_set_argument_to_f32(seni_vm* vm, seni_fn_info* fn_info, i32 iname, f32 f) {
+  seni_var* arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
   if (arg != NULL) {
     arg->type    = VAR_FLOAT;
     arg->value.f = f;
   }
 }
 
-void vm_function_set_argument_to_2d(seni_vm *vm, seni_fn_info *fn_info, i32 iname, f32 x, f32 y) {
-  seni_var *arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+void vm_function_set_argument_to_2d(seni_vm* vm, seni_fn_info* fn_info, i32 iname, f32 x, f32 y) {
+  seni_var* arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
   if (arg != NULL) {
     arg->type         = VAR_2D;
     arg->value.i      = 0;
@@ -110,14 +110,14 @@ void vm_function_set_argument_to_2d(seni_vm *vm, seni_fn_info *fn_info, i32 inam
 }
 
 // this is CALL_F
-void vm_function_call_default_arguments(seni_vm *vm, seni_fn_info *fn_info) {
+void vm_function_call_default_arguments(seni_vm* vm, seni_fn_info* fn_info) {
   // push a frame onto the stack whose return address is the program's STOP
   // instruction
   i32 stop_address = program_stop_location(vm->program);
   i32 i;
 
-  seni_var *stack_d = &(vm->stack[vm->sp]);
-  seni_var *v       = NULL;
+  seni_var* stack_d = &(vm->stack[vm->sp]);
+  seni_var* v       = NULL;
 
   i32 num_args = fn_info->num_args;
 
@@ -167,7 +167,7 @@ void vm_function_call_default_arguments(seni_vm *vm, seni_fn_info *fn_info) {
                vm->program); // run code to setup the function's arguments
 }
 
-void vm_function_call_body(seni_vm *vm, seni_fn_info *fn_info) {
+void vm_function_call_body(seni_vm* vm, seni_fn_info* fn_info) {
   // push a frame onto the stack whose return address is the program's STOP
   // instruction
   i32 stop_address = program_stop_location(vm->program);
@@ -186,12 +186,12 @@ void vm_function_call_body(seni_vm *vm, seni_fn_info *fn_info) {
   vm->sp--;
 }
 
-bool vm_run(seni_vm *vm, seni_env *env, seni_program *program) {
+bool vm_run(seni_vm* vm, seni_env* env, seni_program* program) {
   bool res;
 
   // the preamble program defines the global variables that all
   // user programs assume exist. e.g. 'red', 'canvas/width' etc
-  seni_program *preamble = get_preamble_program();
+  seni_program* preamble = get_preamble_program();
   if (preamble == NULL) {
     SENI_ERROR("vm_run: pre-amble program is null");
     return false;
@@ -216,18 +216,18 @@ bool vm_run(seni_vm *vm, seni_env *env, seni_program *program) {
 
 // executes a program on a vm
 // returns true if we reached a STOP opcode
-bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program) {
+bool vm_interpret(seni_vm* vm, seni_env* env, seni_program* program) {
   bool                     b1, b2;
   f32                      f1, f2;
   seni_memory_segment_type memory_segment_type;
-  seni_fn_info *           fn_info;
+  seni_fn_info*            fn_info;
   seni_var *               src, *dest, *tmp;
 
-  register seni_bytecode *bc      = NULL;
-  register seni_var *     v       = NULL;
+  register seni_bytecode* bc      = NULL;
+  register seni_var*      v       = NULL;
   register i32            ip      = vm->ip;
   register i32            sp      = vm->sp;
-  register seni_var *     stack_d = &(vm->stack[sp]);
+  register seni_var*      stack_d = &(vm->stack[sp]);
 
   i32 num_args, addr;
   i32 iname;
@@ -583,7 +583,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program) {
       vm->sp = sp;
 
       native_function_ptr native_func = env->function_ptr[iname];
-      seni_var *          var         = native_func(vm, num_args);
+      seni_var*           var         = native_func(vm, num_args);
 
       // move vm->sp below the arguments, and decrement the rc of any vectors
       for (i = 0; i < num_args; i++) {
@@ -611,7 +611,7 @@ bool vm_interpret(seni_vm *vm, seni_env *env, seni_program *program) {
 
       vm->sp = sp;
 
-      seni_var *child_value = var_get_from_heap(vm);
+      seni_var* child_value = var_get_from_heap(vm);
       if (child_value == NULL) {
         SENI_ERROR("APPEND: cannot allocate child_value from pool");
         return false;

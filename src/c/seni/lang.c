@@ -22,27 +22,27 @@
 #include "pool_macro.h"
 
 // required by SENI_POOL macro
-void var_cleanup(seni_var *var) { var->value.v = NULL; }
+void var_cleanup(seni_var* var) { var->value.v = NULL; }
 
 SENI_POOL(seni_var, var)
 
-struct seni_var_pool *g_var_pool;
+struct seni_var_pool* g_var_pool;
 
-seni_word_lut *wlut_allocate() {
-  seni_word_lut *word_lut = (seni_word_lut *)calloc(1, sizeof(seni_word_lut));
+seni_word_lut* wlut_allocate() {
+  seni_word_lut* word_lut = (seni_word_lut*)calloc(1, sizeof(seni_word_lut));
 
   word_lut->native_buffer  = multistring_allocate(5000); // todo: check this size
   word_lut->keyword_buffer = multistring_allocate(5000); // todo: check this size
   word_lut->word_buffer    = multistring_allocate(5000); // todo: check this size
 
-  word_lut->native_ref  = (seni_string_ref *)calloc(MAX_NATIVE_LOOKUPS, sizeof(seni_string_ref));
-  word_lut->keyword_ref = (seni_string_ref *)calloc(MAX_KEYWORD_LOOKUPS, sizeof(seni_string_ref));
-  word_lut->word_ref    = (seni_string_ref *)calloc(MAX_WORD_LOOKUPS, sizeof(seni_string_ref));
+  word_lut->native_ref  = (seni_string_ref*)calloc(MAX_NATIVE_LOOKUPS, sizeof(seni_string_ref));
+  word_lut->keyword_ref = (seni_string_ref*)calloc(MAX_KEYWORD_LOOKUPS, sizeof(seni_string_ref));
+  word_lut->word_ref    = (seni_string_ref*)calloc(MAX_WORD_LOOKUPS, sizeof(seni_string_ref));
 
   return word_lut;
 }
 
-void wlut_free(seni_word_lut *word_lut) {
+void wlut_free(seni_word_lut* word_lut) {
   free(word_lut->word_ref);
   free(word_lut->keyword_ref);
   free(word_lut->native_ref);
@@ -56,21 +56,21 @@ void wlut_free(seni_word_lut *word_lut) {
 
 // called after a script has been executed
 // leave keywords and natives since they aren't mutable
-void wlut_reset_words(seni_word_lut *word_lut) {
+void wlut_reset_words(seni_word_lut* word_lut) {
   word_lut->word_count = 0;
   multistring_reset(word_lut->word_buffer);
 }
 
-char *wlut_get_word(seni_word_lut *word_lut, i32 iword) {
+char* wlut_get_word(seni_word_lut* word_lut, i32 iword) {
   if (iword < word_lut->word_count) {
-    seni_string_ref *string_ref = &(word_lut->word_ref[iword]);
+    seni_string_ref* string_ref = &(word_lut->word_ref[iword]);
     return string_ref->c;
   }
   return "UNKNOWN WORD";
 }
 
-char *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword) {
-  seni_string_ref *string_ref;
+char* wlut_reverse_lookup(seni_word_lut* word_lut, i32 iword) {
+  seni_string_ref* string_ref;
 
   if (iword < word_lut->word_count) {
     string_ref = &(word_lut->word_ref[iword]);
@@ -87,21 +87,21 @@ char *wlut_reverse_lookup(seni_word_lut *word_lut, i32 iword) {
   return "UNKNOWN WORD";
 }
 
-void wlut_pretty_print(char *msg, seni_word_lut *word_lut) {
+void wlut_pretty_print(char* msg, seni_word_lut* word_lut) {
   SENI_PRINT("%s native_count: %d", msg, word_lut->native_count);
   SENI_PRINT("%s keyword_count: %d", msg, word_lut->keyword_count);
   SENI_PRINT("%s word_count: %d", msg, word_lut->word_count);
 }
 
-bool wlut_add_native(seni_word_lut *word_lut, char *name) {
+bool wlut_add_native(seni_word_lut* word_lut, char* name) {
   if (word_lut->native_count >= MAX_NATIVE_LOOKUPS) {
     SENI_ERROR("wlut_add_native: cannot declare native - word_lut is full");
     return false;
   }
 
   size_t            len        = strlen(name);
-  seni_multistring *mb         = word_lut->native_buffer;
-  seni_string_ref * string_ref = &(word_lut->native_ref[word_lut->native_count]);
+  seni_multistring* mb         = word_lut->native_buffer;
+  seni_string_ref*  string_ref = &(word_lut->native_ref[word_lut->native_count]);
   word_lut->native_count++;
 
   bool res = multistring_add(mb, string_ref, name, (i32)len);
@@ -113,15 +113,15 @@ bool wlut_add_native(seni_word_lut *word_lut, char *name) {
   return true;
 }
 
-bool wlut_add_keyword(seni_word_lut *word_lut, char *name) {
+bool wlut_add_keyword(seni_word_lut* word_lut, char* name) {
   if (word_lut->keyword_count >= MAX_KEYWORD_LOOKUPS) {
     SENI_ERROR("wlut_add_keyword: cannot declare keyword - word_lut is full");
     return false;
   }
 
   size_t            len        = strlen(name);
-  seni_multistring *mb         = word_lut->keyword_buffer;
-  seni_string_ref * string_ref = &(word_lut->keyword_ref[word_lut->keyword_count]);
+  seni_multistring* mb         = word_lut->keyword_buffer;
+  seni_string_ref*  string_ref = &(word_lut->keyword_ref[word_lut->keyword_count]);
   word_lut->keyword_count++;
 
   bool res = multistring_add(mb, string_ref, name, (i32)len);
@@ -133,14 +133,14 @@ bool wlut_add_keyword(seni_word_lut *word_lut, char *name) {
   return true;
 }
 
-bool wlut_add_word(seni_word_lut *word_lut, char *name, size_t len) {
+bool wlut_add_word(seni_word_lut* word_lut, char* name, size_t len) {
   if (word_lut->word_count >= MAX_WORD_LOOKUPS) {
     SENI_ERROR("wlut_add_word: cannot declare word - word_lut is full");
     return false;
   }
 
-  seni_multistring *mb         = word_lut->word_buffer;
-  seni_string_ref * string_ref = &(word_lut->word_ref[word_lut->word_count]);
+  seni_multistring* mb         = word_lut->word_buffer;
+  seni_string_ref*  string_ref = &(word_lut->word_ref[word_lut->word_count]);
   word_lut->word_count++;
 
   bool res = multistring_add(mb, string_ref, name, (i32)len);
@@ -187,7 +187,7 @@ seni_value_in_use get_node_value_in_use(seni_node_type type) {
 }
 
 // returns the first meaningful (non-whitespace, non-comment) node
-seni_node *safe_first(seni_node *expr) {
+seni_node* safe_first(seni_node* expr) {
   if (expr == NULL) {
     return NULL;
   }
@@ -198,20 +198,20 @@ seni_node *safe_first(seni_node *expr) {
   return safe_next(expr);
 }
 
-seni_node *safe_first_child(seni_node *expr) {
+seni_node* safe_first_child(seni_node* expr) {
   if (get_node_value_in_use(expr->type) != USE_FIRST_CHILD) {
     SENI_ERROR("calling safe_first_child on a node that doesn't have a valid "
                "first child");
     return NULL;
   }
 
-  seni_node *n = safe_first(expr->value.first_child);
+  seni_node* n = safe_first(expr->value.first_child);
 
   return n;
 }
 
-seni_node *safe_next(seni_node *expr) {
-  seni_node *sibling = expr->next;
+seni_node* safe_next(seni_node* expr) {
+  seni_node* sibling = expr->next;
   while (sibling && (sibling->type == NODE_WHITESPACE || sibling->type == NODE_COMMENT)) {
     sibling = sibling->next;
   }
@@ -219,8 +219,8 @@ seni_node *safe_next(seni_node *expr) {
   return sibling;
 }
 
-seni_node *safe_prev(seni_node *expr) {
-  seni_node *sibling = expr->prev;
+seni_node* safe_prev(seni_node* expr) {
+  seni_node* sibling = expr->prev;
   while (sibling && (sibling->type == NODE_WHITESPACE || sibling->type == NODE_COMMENT)) {
     sibling = sibling->prev;
   }
@@ -228,7 +228,7 @@ seni_node *safe_prev(seni_node *expr) {
   return sibling;
 }
 
-char *node_type_name(seni_node *node) {
+char* node_type_name(seni_node* node) {
   switch (node->type) {
   case NODE_LIST:
     return "NODE_LIST";
@@ -253,7 +253,7 @@ char *node_type_name(seni_node *node) {
   };
 }
 
-void node_pretty_print(char *msg, seni_node *node, seni_word_lut *word_lut) {
+void node_pretty_print(char* msg, seni_node* node, seni_word_lut* word_lut) {
   if (node == NULL) {
     SENI_ERROR("node_pretty_print: given NULL");
     return;
@@ -262,7 +262,7 @@ void node_pretty_print(char *msg, seni_node *node, seni_word_lut *word_lut) {
 #define MAX_SRC_LEN 20
   // copy the relevent section of the source code into src_buffer
   char  src_buffer[MAX_SRC_LEN];
-  char *c = src_buffer;
+  char* c = src_buffer;
 
   i32 max_size = MAX_SRC_LEN - 2 - 1; // minus quotes and null terminator
   i32 size     = node->src_len < max_size ? node->src_len : max_size;
@@ -278,7 +278,7 @@ void node_pretty_print(char *msg, seni_node *node, seni_word_lut *word_lut) {
   *c++ = '"';
   *c++ = '\0';
 
-  char *type              = node_type_name(node);
+  char* type              = node_type_name(node);
   seni_value_in_use using = get_node_value_in_use(node->type);
 
   switch (using) {
@@ -322,7 +322,7 @@ void node_pretty_print(char *msg, seni_node *node, seni_word_lut *word_lut) {
   }
 }
 
-void ast_pretty_print_(seni_node *ast, seni_word_lut *word_lut, i32 indent) {
+void ast_pretty_print_(seni_node* ast, seni_word_lut* word_lut, i32 indent) {
 #define TRAVERSE_AST_INDENT_BUFFER_LEN 100
   char in[TRAVERSE_AST_INDENT_BUFFER_LEN];
   i32  i;
@@ -335,7 +335,7 @@ void ast_pretty_print_(seni_node *ast, seni_word_lut *word_lut, i32 indent) {
   }
   in[i] = '\0';
 
-  seni_node *n = ast;
+  seni_node* n = ast;
   while (n != NULL) {
     node_pretty_print(in, n, word_lut);
     if (get_node_value_in_use(n->type) == USE_FIRST_CHILD) {
@@ -345,16 +345,16 @@ void ast_pretty_print_(seni_node *ast, seni_word_lut *word_lut, i32 indent) {
   }
 }
 
-void ast_pretty_print(seni_node *ast, seni_word_lut *word_lut) {
+void ast_pretty_print(seni_node* ast, seni_word_lut* word_lut) {
   ast_pretty_print_(ast, word_lut, 0);
 }
 
-bool is_node_colour_constructor(seni_node *node) {
+bool is_node_colour_constructor(seni_node* node) {
   if (node->type != NODE_LIST) {
     return false;
   }
 
-  seni_node *child = safe_first(node->value.first_child);
+  seni_node* child = safe_first(node->value.first_child);
   if (child->type != NODE_NAME) {
     return false;
   }
@@ -389,7 +389,7 @@ seni_value_in_use get_var_value_in_use(seni_var_type type) {
   };
 }
 
-char *var_type_name(seni_var *var) {
+char* var_type_name(seni_var* var) {
   switch (var->type) {
   case VAR_INT:
     return "VAR_INT";
@@ -412,13 +412,13 @@ char *var_type_name(seni_var *var) {
   }
 }
 
-void var_pretty_print(char *msg, seni_var *var) {
+void var_pretty_print(char* msg, seni_var* var) {
   if (var == NULL) {
     SENI_ERROR("var_pretty_print: given NULL");
     return;
   }
 
-  char *type              = var_type_name(var);
+  char* type              = var_type_name(var);
   seni_value_in_use using = get_var_value_in_use(var->type);
 
   if (var->type == VAR_2D) {
@@ -459,7 +459,7 @@ void var_pretty_print(char *msg, seni_var *var) {
   }
 }
 
-bool var_serialize(seni_cursor *cursor, seni_var *var) {
+bool var_serialize(seni_cursor* cursor, seni_var* var) {
   switch (var->type) {
   case VAR_INT:
     cursor_sprintf(cursor, "INT %d", var->value.i);
@@ -500,7 +500,7 @@ bool var_serialize(seni_cursor *cursor, seni_var *var) {
   return true;
 }
 
-bool var_deserialize(seni_var *out, seni_cursor *cursor) {
+bool var_deserialize(seni_var* out, seni_cursor* cursor) {
   // assuming that the buffer is at the start of a serialized seni_var
   //
   if (cursor_eat_text(cursor, "INT")) {
@@ -543,28 +543,28 @@ bool var_deserialize(seni_var *out, seni_cursor *cursor) {
   return false;
 }
 
-void v2_as_var(seni_var *out, f32 x, f32 y) {
+void v2_as_var(seni_var* out, f32 x, f32 y) {
   out->type         = VAR_2D;
   out->f32_array[0] = x;
   out->f32_array[1] = y;
 }
 
-void f32_as_var(seni_var *out, f32 f) {
+void f32_as_var(seni_var* out, f32 f) {
   out->type    = VAR_FLOAT;
   out->value.f = f;
 }
 
-void i32_as_var(seni_var *out, i32 i) {
+void i32_as_var(seni_var* out, i32 i) {
   out->type    = VAR_INT;
   out->value.i = i;
 }
 
-void name_as_var(seni_var *out, i32 name) {
+void name_as_var(seni_var* out, i32 name) {
   out->type    = VAR_NAME;
   out->value.i = name;
 }
 
-void colour_as_var(seni_var *out, seni_colour *c) {
+void colour_as_var(seni_var* out, seni_colour* c) {
   out->type = VAR_COLOUR;
 
   out->value.i = (i32)(c->format);
@@ -575,7 +575,7 @@ void colour_as_var(seni_var *out, seni_colour *c) {
   out->f32_array[3] = c->element[3];
 }
 
-char *memory_segment_name(seni_memory_segment_type segment) {
+char* memory_segment_name(seni_memory_segment_type segment) {
   switch (segment) {
   case MEM_SEG_ARGUMENT:
     return "ARG";
@@ -591,12 +591,12 @@ char *memory_segment_name(seni_memory_segment_type segment) {
   return "UNKNOWN";
 }
 
-void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut) {
+void bytecode_pretty_print(i32 ip, seni_bytecode* b, seni_word_lut* word_lut) {
 #define PPC_BUF_SIZE 200
 
   char  buf[PPC_BUF_SIZE];
   int   buf_len   = 0;
-  char *buf_start = &buf[0];
+  char* buf_start = &buf[0];
 
 #define PRINT_BC buf_len += seni_sprintf
 #define BUF_ARGS buf_start + buf_len, PPC_BUF_SIZE - buf_len
@@ -605,7 +605,7 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut) {
 
   if (b->op == LOAD || b->op == STORE || b->op == STORE_F) {
 
-    char *seg_name = memory_segment_name((seni_memory_segment_type)b->arg0.value.i);
+    char* seg_name = memory_segment_name((seni_memory_segment_type)b->arg0.value.i);
 
     if (b->op == LOAD || b->op == STORE) {
       PRINT_BC(BUF_ARGS, "%d\t%s\t\t%s\t\t", ip, opcode_name(b->op), seg_name);
@@ -618,7 +618,7 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut) {
     case USE_I:
       if (b->arg1.type == VAR_COLOUR) {
         i32  type = b->arg1.value.i;
-        f32 *a    = b->arg1.f32_array;
+        f32* a    = b->arg1.f32_array;
         PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0], a[1], a[2], a[3]);
       } else if (b->arg1.type == VAR_NAME) {
         i32 iname = b->arg1.value.i;
@@ -669,7 +669,7 @@ void bytecode_pretty_print(i32 ip, seni_bytecode *b, seni_word_lut *word_lut) {
   SENI_PRINT("%s", buf);
 }
 
-bool bytecode_serialize(seni_cursor *cursor, seni_bytecode *bytecode) {
+bool bytecode_serialize(seni_cursor* cursor, seni_bytecode* bytecode) {
   cursor_sprintf(cursor, "%s", opcode_string[bytecode->op]);
   cursor_sprintf(cursor, " ");
 
@@ -684,7 +684,7 @@ bool bytecode_serialize(seni_cursor *cursor, seni_bytecode *bytecode) {
   return true;
 }
 
-bool opcode_deserialize(seni_opcode *out, seni_cursor *cursor) {
+bool opcode_deserialize(seni_opcode* out, seni_cursor* cursor) {
   if (cursor_eat_text(cursor, "LOAD")) {
     *out = LOAD;
     return true;
@@ -817,7 +817,7 @@ bool opcode_deserialize(seni_opcode *out, seni_cursor *cursor) {
   return false;
 }
 
-bool bytecode_deserialize(seni_bytecode *out, seni_cursor *cursor) {
+bool bytecode_deserialize(seni_bytecode* out, seni_cursor* cursor) {
   if (!opcode_deserialize(&(out->op), cursor))
     return false;
 
@@ -834,8 +834,8 @@ bool bytecode_deserialize(seni_bytecode *out, seni_cursor *cursor) {
   return true;
 }
 
-seni_env *env_allocate() {
-  seni_env *e = (seni_env *)calloc(1, sizeof(seni_env));
+seni_env* env_allocate() {
+  seni_env* e = (seni_env*)calloc(1, sizeof(seni_env));
   e->word_lut = wlut_allocate();
 
   declare_bindings(e->word_lut, e);
@@ -843,7 +843,7 @@ seni_env *env_allocate() {
   return e;
 }
 
-void env_free(seni_env *e) {
+void env_free(seni_env* e) {
   wlut_free(e->word_lut);
   free(e);
 }
@@ -852,7 +852,7 @@ void env_free(seni_env *e) {
 // Program
 // **************************************************
 
-char *opcode_name(seni_opcode opcode) {
+char* opcode_name(seni_opcode opcode) {
 #define STR(x) #x
 
   switch (opcode) {
@@ -867,11 +867,11 @@ char *opcode_name(seni_opcode opcode) {
 #undef STR
 }
 
-seni_program *program_allocate(i32 code_max_size) {
-  seni_program *program = (seni_program *)calloc(1, sizeof(seni_program));
+seni_program* program_allocate(i32 code_max_size) {
+  seni_program* program = (seni_program*)calloc(1, sizeof(seni_program));
 
   if (code_max_size > 0) {
-    program->code = (seni_bytecode *)calloc(code_max_size, sizeof(seni_bytecode));
+    program->code = (seni_bytecode*)calloc(code_max_size, sizeof(seni_bytecode));
   }
   program->code_max_size = code_max_size;
   program->code_size     = 0;
@@ -880,19 +880,19 @@ seni_program *program_allocate(i32 code_max_size) {
   return program;
 }
 
-void program_free(seni_program *program) {
+void program_free(seni_program* program) {
   free(program->code);
   free(program);
 }
 
-i32 program_stop_location(seni_program *program) {
+i32 program_stop_location(seni_program* program) {
   // the final opcode in the program will always be a STOP
   return program->code_size - 1;
 }
 
-void program_pretty_print(seni_program *program) {
+void program_pretty_print(seni_program* program) {
   for (i32 i = 0; i < program->code_size; i++) {
-    seni_bytecode *b = &(program->code[i]);
+    seni_bytecode* b = &(program->code[i]);
     bytecode_pretty_print(i, b, program->word_lut);
   }
   SENI_PRINT("\n");
@@ -902,13 +902,13 @@ void program_pretty_print(seni_program *program) {
 // so the program->fn_info isn't being serialized. (it should if there's
 // ever a need for proper program serialization)
 //
-bool program_serialize(seni_cursor *cursor, seni_program *program) {
+bool program_serialize(seni_cursor* cursor, seni_program* program) {
   cursor_sprintf(cursor, "%d", program->code_max_size);
   cursor_sprintf(cursor, " ");
   cursor_sprintf(cursor, "%d", program->code_size);
   cursor_sprintf(cursor, " ");
 
-  seni_bytecode *bytecode = program->code;
+  seni_bytecode* bytecode = program->code;
   for (i32 i = 0; i < program->code_size; i++) {
     if (!bytecode_serialize(cursor, bytecode)) {
       SENI_ERROR("program_serialize: bytecode_serialize at instruction %d", i);
@@ -924,7 +924,7 @@ bool program_serialize(seni_cursor *cursor, seni_program *program) {
   return true;
 }
 
-bool program_deserialize(seni_program *out, seni_cursor *cursor) {
+bool program_deserialize(seni_program* out, seni_cursor* cursor) {
   out->code_max_size = cursor_eat_i32(cursor);
   cursor_eat_space(cursor);
   out->code_size = cursor_eat_i32(cursor);
@@ -933,7 +933,7 @@ bool program_deserialize(seni_program *out, seni_cursor *cursor) {
   if (out->code != NULL) {
     free(out->code);
   }
-  out->code = (seni_bytecode *)calloc(out->code_max_size, sizeof(seni_bytecode));
+  out->code = (seni_bytecode*)calloc(out->code_max_size, sizeof(seni_bytecode));
 
   for (i32 i = 0; i < out->code_size; i++) {
     if (!bytecode_deserialize(&(out->code[i]), cursor)) {
@@ -951,35 +951,35 @@ bool program_deserialize(seni_program *out, seni_cursor *cursor) {
 // Virtual Machine
 // **************************************************
 
-seni_vm *
+seni_vm*
 vm_allocate(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices) {
-  seni_vm *vm = (seni_vm *)calloc(1, sizeof(seni_vm));
+  seni_vm* vm = (seni_vm*)calloc(1, sizeof(seni_vm));
 
   vm->render_data = NULL;
 
   vm->stack_size = stack_size;
-  vm->stack      = (seni_var *)calloc(stack_size, sizeof(seni_var));
+  vm->stack      = (seni_var*)calloc(stack_size, sizeof(seni_var));
 
   vm->heap_size = heap_size;
-  vm->heap_slab = (seni_var *)calloc(heap_size, sizeof(seni_var));
+  vm->heap_slab = (seni_var*)calloc(heap_size, sizeof(seni_var));
 
   vm->heap_avail_size_before_gc = heap_min_size;
 
   vm->matrix_stack = matrix_stack_allocate();
 
   // prepare storage for vertices
-  seni_render_data *render_data = render_data_allocate(vertex_packet_num_vertices);
+  seni_render_data* render_data = render_data_allocate(vertex_packet_num_vertices);
   vm->render_data               = render_data;
 
-  vm->prng_state = (seni_prng_state *)calloc(1, sizeof(seni_prng_state));
+  vm->prng_state = (seni_prng_state*)calloc(1, sizeof(seni_prng_state));
 
   vm_reset(vm);
 
   return vm;
 }
 
-void vm_reset(seni_vm *vm) {
-  seni_var *var;
+void vm_reset(seni_vm* vm) {
+  seni_var* var;
   i32       base_offset = 0;
   i32       i;
 
@@ -1022,12 +1022,12 @@ void vm_reset(seni_vm *vm) {
   add_render_packet(vm->render_data);
 }
 
-void vm_free_render_data(seni_vm *vm) {
+void vm_free_render_data(seni_vm* vm) {
   render_data_free(vm->render_data);
   vm->render_data = NULL;
 }
 
-void vm_free(seni_vm *vm) {
+void vm_free(seni_vm* vm) {
   vm_free_render_data(vm);
   matrix_stack_free(vm->matrix_stack);
   free(vm->stack);
@@ -1036,10 +1036,10 @@ void vm_free(seni_vm *vm) {
   free(vm);
 }
 
-void vm_pretty_print(seni_vm *vm, char *msg) {
+void vm_pretty_print(seni_vm* vm, char* msg) {
   SENI_LOG("%s\tvm: fp:%d sp:%d ip:%d local:%d", msg, vm->fp, vm->sp, vm->ip, vm->local);
 
-  seni_var *fp             = &(vm->stack[vm->fp]);
+  seni_var* fp             = &(vm->stack[vm->fp]);
   i32       onStackFP      = (fp + 0)->value.i;
   i32       onStackIP      = (fp + 1)->value.i;
   i32       onStackNumArgs = (fp + 2)->value.i;
@@ -1047,13 +1047,13 @@ void vm_pretty_print(seni_vm *vm, char *msg) {
 }
 
 // returns the next available seni_var that the calling code can write to
-seni_var *stack_push(seni_vm *vm) {
-  seni_var *var = &(vm->stack[vm->sp]);
+seni_var* stack_push(seni_vm* vm) {
+  seni_var* var = &(vm->stack[vm->sp]);
   vm->sp++;
   return var;
 }
 
-seni_var *stack_pop(seni_vm *vm) {
+seni_var* stack_pop(seni_vm* vm) {
   if (vm->sp == 0) {
     return NULL;
   }
@@ -1062,7 +1062,7 @@ seni_var *stack_pop(seni_vm *vm) {
   return &(vm->stack[vm->sp]);
 }
 
-seni_var *stack_peek(seni_vm *vm) {
+seni_var* stack_peek(seni_vm* vm) {
   if (vm->sp == 0) {
     return NULL;
   }
@@ -1075,19 +1075,19 @@ seni_var *stack_peek(seni_vm *vm) {
 //  v
 // [4] -> [7] -> [3] -> [5] -> NULL  <<- these are heap allocated seni_vars
 //
-void vector_construct(seni_var *head) {
+void vector_construct(seni_var* head) {
   // assuming that it's ok to wipe out head->value.v
   head->type    = VAR_VECTOR;
   head->value.v = NULL;
 }
 
-i32 vector_length(seni_var *var) {
+i32 vector_length(seni_var* var) {
   if (var->type != VAR_VECTOR) {
     return 0;
   }
 
   i32       len = 0;
-  seni_var *v   = var->value.v;
+  seni_var* v   = var->value.v;
 
   while (v != NULL) {
     len++;
@@ -1097,12 +1097,12 @@ i32 vector_length(seni_var *var) {
   return len;
 }
 
-seni_var *vector_get(seni_var *var, i32 index) {
+seni_var* vector_get(seni_var* var, i32 index) {
   if (var->type != VAR_VECTOR) {
     return 0;
   }
 
-  seni_var *res = var->value.v;
+  seni_var* res = var->value.v;
 
   while (index > 0) {
     index--;
@@ -1116,13 +1116,13 @@ seni_var *vector_get(seni_var *var, i32 index) {
   return res;
 }
 
-void vector_append_heap_var(seni_var *head, seni_var *val) {
+void vector_append_heap_var(seni_var* head, seni_var* val) {
   // assuming that head is VAR_VECTOR and val is a seni_var from the heap
   DL_APPEND(head->value.v, val);
 }
 
-seni_var *vector_append_i32(seni_vm *vm, seni_var *head, i32 val) {
-  seni_var *v = var_get_from_heap(vm);
+seni_var* vector_append_i32(seni_vm* vm, seni_var* head, i32 val) {
+  seni_var* v = var_get_from_heap(vm);
   if (v == NULL) {
     SENI_ERROR("vector_append_i32");
     return NULL;
@@ -1136,8 +1136,8 @@ seni_var *vector_append_i32(seni_vm *vm, seni_var *head, i32 val) {
   return v;
 }
 
-seni_var *vector_append_f32(seni_vm *vm, seni_var *head, f32 val) {
-  seni_var *v = var_get_from_heap(vm);
+seni_var* vector_append_f32(seni_vm* vm, seni_var* head, f32 val) {
+  seni_var* v = var_get_from_heap(vm);
   if (v == NULL) {
     SENI_ERROR("vector_append_f32");
     return NULL;
@@ -1151,8 +1151,8 @@ seni_var *vector_append_f32(seni_vm *vm, seni_var *head, f32 val) {
   return v;
 }
 
-seni_var *vector_append_u64(seni_vm *vm, seni_var *head, u64 val) {
-  seni_var *v = var_get_from_heap(vm);
+seni_var* vector_append_u64(seni_vm* vm, seni_var* head, u64 val) {
+  seni_var* v = var_get_from_heap(vm);
   if (v == NULL) {
     SENI_ERROR("vector_append_u64");
     return NULL;
@@ -1165,8 +1165,8 @@ seni_var *vector_append_u64(seni_vm *vm, seni_var *head, u64 val) {
   return v;
 }
 
-seni_var *vector_append_col(seni_vm *vm, seni_var *head, seni_colour *col) {
-  seni_var *v = var_get_from_heap(vm);
+seni_var* vector_append_col(seni_vm* vm, seni_var* head, seni_colour* col) {
+  seni_var* v = var_get_from_heap(vm);
   if (v == NULL) {
     SENI_ERROR("vector_append_col");
     return NULL;
@@ -1179,8 +1179,8 @@ seni_var *vector_append_col(seni_vm *vm, seni_var *head, seni_colour *col) {
   return v;
 }
 
-seni_var *var_get_from_heap(seni_vm *vm) {
-  seni_var *head = vm->heap_avail;
+seni_var* var_get_from_heap(seni_vm* vm) {
+  seni_var* head = vm->heap_avail;
 
   if (head != NULL) {
     DL_DELETE(vm->heap_avail, head);
@@ -1201,7 +1201,7 @@ seni_var *var_get_from_heap(seni_vm *vm) {
   return head;
 }
 
-void var_copy(seni_var *dest, seni_var *src) {
+void var_copy(seni_var* dest, seni_var* src) {
   if (dest == src) {
     return;
   }
@@ -1233,9 +1233,9 @@ void var_copy(seni_var *dest, seni_var *src) {
 
 #ifdef SENI_DEBUG_MODE
 
-void vm_debug_info_reset(seni_vm *vm) { vm->opcodes_executed = 0; }
+void vm_debug_info_reset(seni_vm* vm) { vm->opcodes_executed = 0; }
 
-void vm_debug_info_print(seni_vm *vm) {
+void vm_debug_info_print(seni_vm* vm) {
   SENI_PRINT("*** vm_debug_info_print ***");
   SENI_PRINT("bytecodes executed:\t%llu", (long long unsigned int)(vm->opcodes_executed));
   SENI_PRINT("bytecode execution time:\t%.2f msec", vm->execution_time);
@@ -1250,8 +1250,8 @@ void lang_subsystem_startup() {
 
 void lang_subsystem_shutdown() { var_pool_free(g_var_pool); }
 
-seni_var *var_get_from_pool() {
-  seni_var *var = var_pool_get(g_var_pool);
+seni_var* var_get_from_pool() {
+  seni_var* var = var_pool_get(g_var_pool);
 
   // reset the value field to NULL, required if this var is going to be used as
   // a VAR_VECTOR
@@ -1260,4 +1260,4 @@ seni_var *var_get_from_pool() {
   return var;
 }
 
-void var_return_to_pool(seni_var *var) { var_pool_return(g_var_pool, var); }
+void var_return_to_pool(seni_var* var) { var_pool_return(g_var_pool, var); }

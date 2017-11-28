@@ -58,21 +58,21 @@ f32 distance_v2(f32 ax, f32 ay, f32 bx, f32 by) {
   return dist;
 }
 
-void normalize(f32 *outx, f32 *outy, f32 x, f32 y) {
+void normalize(f32* outx, f32* outy, f32 x, f32 y) {
   f32 len = length_v2(x, y);
 
   *outx = x / len;
   *outy = y / len;
 }
 
-void normal(f32 *outx, f32 *outy, f32 x1, f32 y1, f32 x2, f32 y2) {
+void normal(f32* outx, f32* outy, f32 x1, f32 y1, f32 x2, f32 y2) {
   f32 dx = x2 - x1;
   f32 dy = y2 - y1;
 
   normalize(outx, outy, -dy, dx);
 }
 
-void opposite_normal(f32 *outx, f32 *outy, f32 x, f32 y) {
+void opposite_normal(f32* outx, f32* outy, f32 x, f32 y) {
   *outx = -x;
   *outy = -y;
 }

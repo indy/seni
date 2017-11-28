@@ -69,7 +69,7 @@ int seni_isspace(char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r
 
 int seni_isdigit(char c) { return c >= '0' && c <= '9'; }
 
-float seni_strtof(char *string, /* A decimal ASCII floating-point number,
+float seni_strtof(char* string, /* A decimal ASCII floating-point number,
                                  * optionally preceded by white space.
                                  * Must have form "-I.FE-X", where I is the
                                  * integer part of the mantissa, F is the
@@ -81,13 +81,13 @@ float seni_strtof(char *string, /* A decimal ASCII floating-point number,
                                  * The "E" may actually be an "e".  E and X
                                  * may both be omitted (but not just one).
                                  */
-                  char **endPtr /* If non-NULL, store terminating character's
+                  char** endPtr /* If non-NULL, store terminating character's
                                  * address here. */
 ) {
   int    sign, expSign = FALSE;
   float  fraction, dblExp;
-  float *d;
-  char * p;
+  float* d;
+  char*  p;
   int    c;
   int    exp     = 0; /* Exponent read from "EX" field. */
   int    fracExp = 0; /* Exponent that derives from the fractional
@@ -102,7 +102,7 @@ float seni_strtof(char *string, /* A decimal ASCII floating-point number,
   int mantSize;       /* Number of digits in mantissa. */
   int decPt;          /* Number of mantissa digits BEFORE decimal
                        * point. */
-  char *pExp;         /* Temporarily holds location of exponent
+  char* pExp;         /* Temporarily holds location of exponent
                        * in string. */
 
   /*
@@ -290,7 +290,7 @@ float seni_strtof(char *string, /* A decimal ASCII floating-point number,
 
 done:
   if (endPtr != NULL) {
-    *endPtr = (char *)p;
+    *endPtr = (char*)p;
   }
 
   if (sign) {
