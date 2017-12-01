@@ -15,6 +15,16 @@
   14. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
   15. [ ] look into restrict keyword in C99
 
+
+
+
+* srgb.glsl
+  https://gist.github.com/tomaka/0ef19530fdbf6a1d30ebf9c0bcd0df72
+
+  vec3 srgb_to_linear(vec3 c) {
+    return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
+  }
+
 * todo
 ** check node->src and node->src_len
    node_pretty_print
@@ -112,7 +122,7 @@ push constant 10
 push constant 2
 sub
 
-B + C - D  ==> 
+B + C - D  ==>
 
 B C + D -  (post fix)
 (- (+ B C) D) (pre fix)
@@ -120,10 +130,10 @@ traverse ast: lhs, rhs, op
 
 
 push val B,
-push val C, 
+push val C,
 add,
 push val D,
-sub. 
+sub.
 
 
 
@@ -151,7 +161,7 @@ In other architectures, the instruction pointer is sometimes called the "program
 
 
 
-  
+
 
 * simple bytecode vm
   https://www.youtube.com/watch?v=8k5h-A7JaaE&t=6s&index=36&list=WL
@@ -197,7 +207,7 @@ In other architectures, the instruction pointer is sometimes called the "program
         // return whats on top of the stack
         return sp[-1];
       }
- 
+
     }
   }
 
@@ -261,10 +271,10 @@ In other architectures, the instruction pointer is sometimes called the "program
       wrenStringFormat returns a large number
   is interpreter called twice? first for core module then for the user specified main module?
   loadModule calls wrenCompile
-  
+
   wrenCompile <<<<-- wren_compiler.c
     lexer parser etc
-    
+
 
   static WrenInterpretResult runInterpreter(WrenVM* vm, register ObjFiber* fiber) <<<<<-- wren_vm.c
 
@@ -415,7 +425,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
   CALL      Pushes a frame onto the stack and jumps to the given ip
   RET_0     Returns to the ip stored in the frame pointer on the stack without popping the frame
-  CALL_0    Jumps to the given ip without pushing a new frame (it does modify the ip on the frame 
+  CALL_0    Jumps to the given ip without pushing a new frame (it does modify the ip on the frame
             so that execution will return to the correct location at the next RET)
   RET       Returns to the ip stored in the frame pointer on the stack and pops the current frame
 
@@ -429,7 +439,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   6. The body is executed
   7. RET pops the frame and copies the last value from the function onto the current stack
 
-  a flaw in this scheme is that LOCAL will now reference the new frame created 
+  a flaw in this scheme is that LOCAL will now reference the new frame created
   after CALL and nothing will be found e.g.
 
   17      CALL    1       1    <<<< - creates a new frame
@@ -441,17 +451,17 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
 
 
-  another thing to note are the DEC_RC and INC_RC opcodes. These ensure that default arguments 
-  which are vectors and will be overidden by the calling code will have their reference counts 
+  another thing to note are the DEC_RC and INC_RC opcodes. These ensure that default arguments
+  which are vectors and will be overidden by the calling code will have their reference counts
   correctly altered
 
-  17      CALL    1       1    
-  18      PUSH    LOCAL   0    
+  17      CALL    1       1
+  18      PUSH    LOCAL   0
   19      DEC_RC  ARG     1    <<<< - decrement the reference count for the default argument
   20      POP     ARG     1
   21      INC_RC  ARG     1    <<<< - increment the caller supplied argument
   22      CALL_0  6       1
-  
+
 
 * frame structure
 
@@ -476,9 +486,9 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 |---------+------------------+---------+------------+------------+---------+---------------+------------|
 | 24318cb | <2017-06-29 Thu> |  743718 |     122593 |         25 |      11 | 20ms          | 21ms       |
 | 46e6b1a | <2017-06-30 Fri> |  705086 |      64645 |         14 |      11 | 18ms          | 19ms       |
-   
+
 ** script
- (define 
+ (define
    num-squares-to-render 15
    gap-size 30
    num-squares (+ 2 num-squares-to-render)
@@ -492,7 +502,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
  (loop (y from: 1 to: (- num-squares 1))
    (loop (x from: 1 to: (- num-squares 1))
-     (define 
+     (define
        x-pos (map-to-position at: x)
        y-pos (map-to-position at: y))
      (stroked-bezier-rect position: [x-pos y-pos]
@@ -502,7 +512,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
                                                         vec2: [x-pos y-pos])
                                          100)
                           seed: (+ x (* y num-squares))
-                          width: square-size 
+                          width: square-size
                           height: square-size
                           colour: (col/rgb r: 1.0
                                            g: 0.0
@@ -521,7 +531,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
                           overlap: 3
                           iterations: 10
                           seed: 343)
-     (define 
+     (define
        [x y] position
        third-width (/ width 3)
        third-height (/ height 3)
@@ -546,7 +556,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
      ; horizontal strips
      (loop (i to: iterations)
-       (define 
+       (define
          [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/take num: 8 from: rng)
          lightness (+ (col/get-lab-l colour: lab-colour)
                       (* colour-volatility (prng/take-1 from: rng)))
@@ -575,7 +585,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
                colour: current-colour))
      ; vertical strips
      (loop (i to: iterations)
-       (define 
+       (define
          [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/take num: 8 from: rng)
          lightness (+ (col/get-lab-l colour: lab-colour)
                       (* colour-volatility (prng/take-1 from: rng)))
@@ -608,7 +618,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
            line-segments: 5
            colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
            seed: 272)
-     (define 
+     (define
        w/3 (/ canvas/width 3)
        h/3 (/ canvas/height 3))
      (loop (h from: -20 to: 1020 increment: 20)
@@ -645,9 +655,9 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
   (define aj (address-of j))
   (fn-call (aj z: 44))   <- this is definitely a special form
-  
+
   has to be since something like:
-  (fn-call fn: aj z: 44)  
+  (fn-call fn: aj z: 44)
   couldn't be used in case the called function accepts a parameter named 'fn'
 
   ----------------------------------------------------------------------
@@ -658,7 +668,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   this will be required by map anyway
 
   (define some-vector [1 2 3 4 5 6])
-  (fn (shabba a: 0) 
+  (fn (shabba a: 0)
       (+ a a))
   (map a: some-vector fn: shabba)
 
@@ -667,7 +677,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
   INVOKE: a special variation of CALL that looks up an iname in fn_info
 
   (fn-call @shabba)
-  
+
   @ syntax mean 'address of' ie return the iname
 
   --------------------------------------------------
@@ -693,7 +703,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
 
   --------------------------------------------------
-     
+
 
   (repeat/symmetry-vertical draw: (address-of some-fn))
 
@@ -705,7 +715,7 @@ call_no_arg_function
 
 
 
- 
+
 
 
 
@@ -792,5 +802,3 @@ rename server.go -> server/serve.go
 remove build_unix folder, place output in /output?
 
 remove /make prefix files with make_ and place in root
-
-
