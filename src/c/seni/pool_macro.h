@@ -214,15 +214,16 @@
                                                                                                    \
   void ITEM_NAME##_pool_pretty_print(struct ITEM##_pool* ITEM_NAME##_pool) {                       \
     const char* item_name = #ITEM_NAME;                                                            \
-    SENI_LOG("%s_pool:", item_name);                                                               \
-    SENI_LOG("\tslab_size: %d num_slabs: %d max_slabs_allowed %d",                                 \
+    SENI_LOG("%s_pool:"                                                                            \
+             "\tslab_size: %d num_slabs: %d max_slabs_allowed %d"                                  \
+             "\tget_count: %d return_count: %d"                                                    \
+             "\thigh_water_mark: %d current_water_mark: %d",                                       \
+             item_name,                                                                            \
              ITEM_NAME##_pool->slab_size,                                                          \
              ITEM_NAME##_pool->num_slabs,                                                          \
-             ITEM_NAME##_pool->max_slabs_allowed);                                                 \
-    SENI_LOG("\tget_count: %d return_count: %d",                                                   \
+             ITEM_NAME##_pool->max_slabs_allowed,                                                  \
              ITEM_NAME##_pool->get_count,                                                          \
-             ITEM_NAME##_pool->get_count);                                                         \
-    SENI_LOG("\thigh_water_mark: %d current_water_mark: %d",                                       \
+             ITEM_NAME##_pool->return_count,                                                       \
              ITEM_NAME##_pool->high_water_mark,                                                    \
              ITEM_NAME##_pool->current_water_mark);                                                \
   }

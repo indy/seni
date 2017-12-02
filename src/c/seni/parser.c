@@ -30,11 +30,7 @@ void parser_subsystem_shutdown() { node_pool_free(g_node_pool); }
 
 seni_node* node_get_from_pool() {
   seni_node* node = node_pool_get(g_node_pool);
-
-  if (node == NULL) {
-    SENI_ERROR("OH NO NODE IS NULL");
-    return NULL;
-  }
+  RETURN_IF_NULL(node, "node_get_from_pool: OH NO NODE IS NULL");
 
   return node;
 }
@@ -263,7 +259,8 @@ seni_node* eat_vector(seni_word_lut* word_lut, char** src) {
   seni_node* node = node_get_from_pool();
   RETURN_IF_NULL(node, "eat_vector: NULL node");
 
-  node->type = NODE_VECTOR;
+  node->type              = NODE_VECTOR;
+  node->value.first_child = NULL;
 
   (*src)++; // [
 
@@ -539,6 +536,9 @@ void parser_return_nodes_to_pool(seni_node* nodes) {
     if (node->type == NODE_LIST && node->value.first_child) {
       parser_return_nodes_to_pool(node->value.first_child);
     }
+    if (node->type == NODE_VECTOR && node->value.first_child) {
+      parser_return_nodes_to_pool(node->value.first_child);
+    }
     if (node->parameter_ast) {
       parser_return_nodes_to_pool(node->parameter_ast);
     }
@@ -555,9 +555,7 @@ void parser_return_nodes_to_pool(seni_node* nodes) {
 }
 
 seni_node* parser_parse(seni_word_lut* word_lut, char* s) {
-  if (s == NULL) {
-    return NULL;
-  }
+  RETURN_IF_NULL(s, "parser_parse: s");
 
   // clear out any words defined by previous scripts
   wlut_reset_words(word_lut);
