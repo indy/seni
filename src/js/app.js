@@ -384,12 +384,16 @@ function addClickEvent(id, fn) {
 function getIdNumberFromDom(element, regexp) {
   let e = element;
   while (e) {
-    const m = e.id.match(regexp);
-    if (m && m.length === 2) {
-      const index = Number.parseInt(m[1], 10);
-      return [index, e];
-    } else {
+    if (!e.id) {
       e = e.parentNode;
+    } else {
+      const m = e.id.match(regexp);
+      if (m && m.length === 2) {
+        const index = Number.parseInt(m[1], 10);
+        return [index, e];
+      } else {
+        e = e.parentNode;
+      }
     }
   }
   return [-1, null];
