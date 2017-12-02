@@ -9,8 +9,8 @@
     "format": "clang-format src/c/wasm.c src/c/native.c src/c/test.c --glob=src/c/seni/*.[ch] -i -style=file",
     "hack:min:seni": "uglifyjs --compress --mangle --output dist/seni.bundle.min.js -- dist/seni.bundle.js",
     "hack:min:worker": "uglifyjs --compress --mangle --output dist/worker.bundle.min.js -- dist/worker.bundle.js",
-   "clean": "rm dist/*.js",
-   "build:all": "npm run clean && npm run build && npm run build:wasm && npm run hack:min:seni && npm run hack:min:worker"
+    "clean": "rm dist/*.js",
+    "build:all": "npm run clean && npm run build && npm run build:wasm && npm run hack:min:seni && npm run hack:min:worker"
   },
   "repository": {
     "type": "git",
