@@ -15,7 +15,7 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 1. `npm run build`
 2. `npm run build:wasm`
-3. `go build server/serve.go`
+3. `npm run build:server`
 
 ### Test:
 
@@ -57,5 +57,3 @@ test the output by opening build_wasm\seni-wasm.html in a browser that supports 
   Insert any breakpoints
   Press F11 to begin execution
   When exiting for the first time, save the MSDev solution to the build_win folder
-
-
