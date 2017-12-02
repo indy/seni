@@ -377,9 +377,7 @@ seni_node* eat_string(seni_word_lut* word_lut, char** src) {
   (*src)++; // skip the first \"
 
   char* next_quote = find_next(*src, '\"');
-  if (next_quote == NULL) {
-    return NULL;
-  }
+  RETURN_IF_NULL(next_quote, "eat_string: cannot find closing quote");
 
   size_t string_len = next_quote - *src;
 

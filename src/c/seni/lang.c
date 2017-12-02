@@ -1123,10 +1123,7 @@ void vector_append_heap_var(seni_var* head, seni_var* val) {
 
 seni_var* vector_append_i32(seni_vm* vm, seni_var* head, i32 val) {
   seni_var* v = var_get_from_heap(vm);
-  if (v == NULL) {
-    SENI_ERROR("vector_append_i32");
-    return NULL;
-  }
+  RETURN_IF_NULL(v, "vector_append_i32");
 
   v->type    = VAR_INT;
   v->value.i = val;
@@ -1138,10 +1135,7 @@ seni_var* vector_append_i32(seni_vm* vm, seni_var* head, i32 val) {
 
 seni_var* vector_append_f32(seni_vm* vm, seni_var* head, f32 val) {
   seni_var* v = var_get_from_heap(vm);
-  if (v == NULL) {
-    SENI_ERROR("vector_append_f32");
-    return NULL;
-  }
+  RETURN_IF_NULL(v, "vector_append_f32");
 
   v->type    = VAR_FLOAT;
   v->value.f = val;
@@ -1153,10 +1147,8 @@ seni_var* vector_append_f32(seni_vm* vm, seni_var* head, f32 val) {
 
 seni_var* vector_append_u64(seni_vm* vm, seni_var* head, u64 val) {
   seni_var* v = var_get_from_heap(vm);
-  if (v == NULL) {
-    SENI_ERROR("vector_append_u64");
-    return NULL;
-  }
+  RETURN_IF_NULL(v, "vector_append_u64");
+
   v->type    = VAR_LONG;
   v->value.l = val;
 
@@ -1167,10 +1159,7 @@ seni_var* vector_append_u64(seni_vm* vm, seni_var* head, u64 val) {
 
 seni_var* vector_append_col(seni_vm* vm, seni_var* head, seni_colour* col) {
   seni_var* v = var_get_from_heap(vm);
-  if (v == NULL) {
-    SENI_ERROR("vector_append_col");
-    return NULL;
-  }
+  RETURN_IF_NULL(v, "vector_append_col");
 
   colour_as_var(v, col);
 
@@ -1181,19 +1170,14 @@ seni_var* vector_append_col(seni_vm* vm, seni_var* head, seni_colour* col) {
 
 seni_var* var_get_from_heap(seni_vm* vm) {
   seni_var* head = vm->heap_avail;
+  RETURN_IF_NULL(head, "out of heap memory error");
 
-  if (head != NULL) {
-    DL_DELETE(vm->heap_avail, head);
-  } else {
-    SENI_ERROR("out of heap memory error");
-    return NULL;
-  }
+  DL_DELETE(vm->heap_avail, head);
 
   vm->heap_avail_size--;
 
-  head->next = NULL;
-  head->prev = NULL;
-
+  head->next    = NULL;
+  head->prev    = NULL;
   head->value.i = 0;
   head->type    = VAR_INT; // just make sure that it isn't VAR_VECTOR from a
                            // previous allocation

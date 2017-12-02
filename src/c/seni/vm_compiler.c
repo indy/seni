@@ -115,16 +115,7 @@ bool alterable(seni_node* node) { return node->alterable && g_use_genes; }
 
 i32 get_node_value_i32(seni_node* node) {
   if (alterable(node)) {
-    seni_gene* gene = node->gene;
-    if (gene == NULL) {
-      SENI_ERROR("null gene returned");
-      return 0;
-    }
-
-    // printf("gene var addr: %p", gene->var);
-    // SENI_PRINT("using an altered i32 node!!! %d", gene->var->value.i);
-
-    return gene->var->value.i;
+    return get_node_value_i32_from_gene(node);
   } else {
     return node->value.i;
   }
@@ -132,16 +123,7 @@ i32 get_node_value_i32(seni_node* node) {
 
 f32 get_node_value_f32(seni_node* node) {
   if (alterable(node)) {
-    seni_gene* gene = node->gene;
-    if (gene == NULL) {
-      SENI_ERROR("null gene returned");
-      return 0.0f;
-    }
-
-    // printf("gene var addr: %p", gene->var);
-    // SENI_PRINT("using an altered f32 node!!! %.2f", gene->var->value.f);
-
-    return gene->var->value.f;
+    return get_node_value_f32_from_gene(node);
   } else {
     return node->value.f;
   }

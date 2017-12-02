@@ -76,10 +76,8 @@ void render_data_free(seni_render_data* render_data) {
 }
 
 seni_render_packet* add_render_packet(seni_render_data* render_data) {
-  if (render_data == NULL) {
-    SENI_ERROR("add_render_packet: render_data is a NULL pointer");
-    return NULL;
-  }
+  RETURN_IF_NULL(render_data, "add_render_packet: render_data is a NULL pointer");
+
   seni_render_packet* render_packet = render_packet_allocate(render_data->max_vertices,
                                                              render_data->vbuf_element_size,
                                                              render_data->cbuf_element_size,

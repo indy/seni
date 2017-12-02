@@ -670,10 +670,7 @@ bool genotype_deserialize(seni_genotype* out, seni_cursor* cursor) {
 
 seni_gene* genotype_pull_gene(seni_genotype* genotype) {
   seni_gene* gene = genotype->current_gene;
-  if (gene == NULL) {
-    SENI_ERROR("genotype_pull_gene: current gene is null");
-    return NULL;
-  }
+  RETURN_IF_NULL(gene, "genotype_pull_gene: current gene is null");
 
   genotype->current_gene = genotype->current_gene->next;
 
