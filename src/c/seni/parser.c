@@ -185,9 +185,10 @@ i32 word_lut_lookup_or_add(seni_word_lut* word_lut, char* string, size_t len) {
 seni_node*
 build_text_lookup_node_from_string(seni_word_lut* word_lut, seni_node_type type, char* string) {
   seni_node* node = node_get_from_pool();
-  size_t     len  = strlen(string);
+  RETURN_IF_NULL(node, "build_text_lookup_node_from_string: NULL node");
 
-  i32 k = word_lut_lookup_or_add(word_lut, string, len);
+  size_t len = strlen(string);
+  i32    k   = word_lut_lookup_or_add(word_lut, string, len);
   if (k == -1) {
     return NULL;
   }
@@ -203,6 +204,7 @@ seni_node* build_text_lookup_node_of_length(seni_word_lut* word_lut,
                                             seni_node_type type,
                                             size_t         len) {
   seni_node* node = node_get_from_pool();
+  RETURN_IF_NULL(node, "build_text_lookup_node_of_length: NULL node");
 
   i32 k = word_lut_lookup_or_add(word_lut, *src, len);
   if (k == -1) {
@@ -211,7 +213,6 @@ seni_node* build_text_lookup_node_of_length(seni_word_lut* word_lut,
 
   node->type    = type;
   node->value.i = k;
-
   node->src     = *src;
   node->src_len = (i32)len;
 
@@ -225,8 +226,9 @@ seni_node* build_text_lookup_node_of_length(seni_word_lut* word_lut,
 //
 seni_node* build_text_node_of_length(char** src, seni_node_type type, size_t len) {
   seni_node* node = node_get_from_pool();
-  node->type      = type;
+  RETURN_IF_NULL(node, "build_text_node_of_length: NULL node");
 
+  node->type    = type;
   node->src     = *src;
   node->src_len = (i32)len;
 
@@ -236,7 +238,9 @@ seni_node* build_text_node_of_length(char** src, seni_node_type type, size_t len
 }
 
 seni_node* eat_list(seni_word_lut* word_lut, char** src) {
-  seni_node* node         = node_get_from_pool();
+  seni_node* node = node_get_from_pool();
+  RETURN_IF_NULL(node, "eat_list: NULL node");
+
   node->type              = NODE_LIST;
   node->value.first_child = NULL;
 
@@ -249,10 +253,7 @@ seni_node* eat_list(seni_word_lut* word_lut, char** src) {
     }
 
     seni_node* child = eat_item(word_lut, src);
-    if (child == NULL) {
-      SENI_ERROR("unable to eat element of list");
-      return NULL;
-    }
+    RETURN_IF_NULL(child, "unable to eat element of list");
 
     DL_APPEND(node->value.first_child, child);
   }
@@ -260,7 +261,9 @@ seni_node* eat_list(seni_word_lut* word_lut, char** src) {
 
 seni_node* eat_vector(seni_word_lut* word_lut, char** src) {
   seni_node* node = node_get_from_pool();
-  node->type      = NODE_VECTOR;
+  RETURN_IF_NULL(node, "eat_vector: NULL node");
+
+  node->type = NODE_VECTOR;
 
   (*src)++; // [
 
@@ -271,10 +274,7 @@ seni_node* eat_vector(seni_word_lut* word_lut, char** src) {
     }
 
     seni_node* child = eat_item(word_lut, src);
-    if (child == NULL) {
-      SENI_ERROR("unable to eat element of vector");
-      return NULL;
-    }
+    RETURN_IF_NULL(child, "unable to eat element of vector");
 
     DL_APPEND(node->value.first_child, child);
   }
@@ -289,10 +289,7 @@ seni_node* eat_alterable(seni_word_lut* word_lut, char** src) {
 
   while (1) {
     c = eat_item(word_lut, src);
-    if (c == NULL) {
-      SENI_ERROR("unable to eat element of alterable");
-      return NULL;
-    }
+    RETURN_IF_NULL(c, "unable to eat element of alterable");
 
     if (c->type == NODE_COMMENT || c->type == NODE_WHITESPACE) {
       DL_APPEND(parameter_prefix, c);
@@ -317,10 +314,7 @@ seni_node* eat_alterable(seni_word_lut* word_lut, char** src) {
     }
 
     seni_node* child = eat_item(word_lut, src);
-    if (child == NULL) {
-      SENI_ERROR("unable to eat element of bracket");
-      return NULL;
-    }
+    RETURN_IF_NULL(child, "unable to eat element of bracket");
 
     DL_APPEND(node->parameter_ast, child);
   }
@@ -330,16 +324,21 @@ seni_node* eat_quoted_form(seni_word_lut* word_lut, char** src) {
   (*src)++; // '
 
   seni_node* node = node_get_from_pool();
-  node->type      = NODE_LIST;
+  RETURN_IF_NULL(node, "eat_quoted_form: NULL node");
+
+  node->type = NODE_LIST;
 
   seni_node* quote_name = build_text_lookup_node_from_string(word_lut, NODE_NAME, "quote");
+  RETURN_IF_NULL(quote_name, "eat_quoted_form: quote_name");
   DL_APPEND(node->value.first_child, quote_name);
 
   char*      wst = " ";
   seni_node* ws  = build_text_node_of_length(&wst, NODE_WHITESPACE, 1);
+  RETURN_IF_NULL(ws, "eat_quoted_form: build_text_node_of_length");
   DL_APPEND(node->value.first_child, ws);
 
   seni_node* child = eat_item(word_lut, src);
+  RETURN_IF_NULL(child, "eat_quoted_form: eat_item");
   DL_APPEND(node->value.first_child, child);
 
   return node;
@@ -349,9 +348,10 @@ seni_node* eat_float(char** src) {
   char* end_ptr;
 
   seni_node* node = node_get_from_pool();
-  node->type      = NODE_FLOAT;
-  node->value.f   = (f32)seni_strtof(*src, &end_ptr);
+  RETURN_IF_NULL(node, "eat_float: NULL node");
 
+  node->type    = NODE_FLOAT;
+  node->value.f = (f32)seni_strtof(*src, &end_ptr);
   node->src     = *src;
   node->src_len = (i32)(end_ptr - *src);
 
@@ -373,7 +373,6 @@ seni_node* eat_name(seni_word_lut* word_lut, char** src) {
   }
 
   seni_node* node = build_text_lookup_node_of_length(word_lut, src, NODE_NAME, i);
-
   return node;
 }
 
@@ -388,6 +387,7 @@ seni_node* eat_string(seni_word_lut* word_lut, char** src) {
   size_t string_len = next_quote - *src;
 
   seni_node* node = build_text_lookup_node_of_length(word_lut, src, NODE_STRING, string_len);
+  RETURN_IF_NULL(node, "eat_string");
 
   (*src)++; // skip the second \"
 
@@ -408,6 +408,7 @@ seni_node* eat_label(seni_word_lut* word_lut, char** src) {
 
   // read the label name - the ':' character
   seni_node* node = build_text_lookup_node_of_length(word_lut, src, NODE_LABEL, i);
+  RETURN_IF_NULL(node, "eat_label: build_text_lookup_node_of_length");
 
   if (**src != ':') {
     return NULL;
@@ -431,6 +432,7 @@ seni_node* eat_comment(char** src) {
   }
 
   seni_node* node = build_text_node_of_length(src, NODE_COMMENT, i);
+  RETURN_IF_NULL(node, "eat_comment: build_text_node_of_length");
 
   if (is_newline(*rem)) {
     (*src)++; /* skip past the newline */

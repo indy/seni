@@ -35,3 +35,9 @@
 #define SENI_LOG(f_, ...)
 #define SENI_ERROR(f_, ...)
 #endif
+
+#define RETURN_IF_NULL(expr, msg) \
+  if ((expr) == NULL) {           \
+    SENI_ERROR(msg);              \
+    return NULL;                  \
+  }
