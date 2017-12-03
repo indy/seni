@@ -101,5 +101,6 @@ func main() {
 	fs = http.FileServer(http.Dir("dist"))
 	http.Handle("/dist/", http.StripPrefix("/dist/", fs))
 
+	fmt.Printf("Serving localhost:3000\n")
 	http.ListenAndServe(":3000", nil)
 }
