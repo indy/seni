@@ -17,7 +17,6 @@
  */
 
 export const jobRender = 'RENDER';
-export const jobRenderWasm = 'RENDER_WASM';
 export const jobUnparse = 'UNPARSE';
 export const jobBuildTraits = 'BUILD_TRAITS';
 export const jobInitialGeneration = 'INITIAL_GENERATION';

@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { jobRenderWasm,
+import { jobRender,
          jobUnparse,
          jobBuildTraits,
          jobInitialGeneration,
@@ -269,7 +269,7 @@ function pointerToArrayBufferCopy(ptr, length) {
 }
 */
 
-function renderWasm({ script /*, scriptHash*/, genotype }) {
+function render({ script /*, scriptHash*/, genotype }) {
   konsoleProxy.clear();
 
   const buffers = [];
@@ -390,7 +390,7 @@ function register(callback) {
 
       const result = callback(type, data);
 
-      if (type === jobRenderWasm) {
+      if (type === jobRender) {
         const transferrable = [];
 
         if (result.buffers.length > 0) {
@@ -476,8 +476,8 @@ loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
 
   register((type, data) => {
     switch (type) {
-    case jobRenderWasm:
-      return renderWasm(data);
+    case jobRender:
+      return render(data);
     case jobUnparse:
       return unparse(data);
     case jobBuildTraits:

@@ -227,7 +227,7 @@ export default class GLRenderer {
                         this.mvMatrix);
   }
 
-  drawBufferFromWasm(memoryF32, buffer) {
+  drawBuffer(memoryF32, buffer) {
     const gl = this.gl;
     const shaderProgram = this.shaderProgram;
 
@@ -263,39 +263,6 @@ export default class GLRenderer {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, tbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.textureAttribute,
-                           textureItemSize,
-                           gl.FLOAT, false, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.numVertices);
-  }
-
-  drawBuffer(buffer) {
-    const gl = this.gl;
-    const shaderProgram = this.shaderProgram;
-
-    const glVertexBuffer = this.glVertexBuffer;
-    const glColourBuffer = this.glColourBuffer;
-    const glTextureBuffer = this.glTextureBuffer;
-
-    const vertexItemSize = 2;
-    const colourItemSize = 4;
-    const textureItemSize = 2;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, buffer.vbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.positionAttribute,
-                           vertexItemSize,
-                           gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, buffer.cbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.colourAttribute,
-                           colourItemSize,
-                           gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, buffer.tbuf, gl.STATIC_DRAW);
     gl.vertexAttribPointer(shaderProgram.textureAttribute,
                            textureItemSize,
                            gl.FLOAT, false, 0, 0);

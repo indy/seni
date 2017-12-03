@@ -28,7 +28,6 @@ import { startTiming } from './timer';
 import { SeniMode } from './ui/SeniMode';
 import Job from './job';
 import { jobRender,
-         jobRenderWasm,
          jobUnparse
          // jobGenerateHelp
        } from './jobTypes';
@@ -37,9 +36,6 @@ import { initFirebase,
 
 let gUI = {};
 let gGLRenderer = undefined;
-
-// TODO: delete this when the wasm work is completed
-const gWasmHack = true;
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -185,7 +181,7 @@ function updateSelectionUI(state) {
   });
 }
 
-function renderGeometryBuffers(jobType, memory, buffers, imageElement, w, h) {
+function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
   let destWidth = undefined;
   let destHeight = undefined;
   if (w !== undefined && h !== undefined) {
@@ -201,11 +197,7 @@ function renderGeometryBuffers(jobType, memory, buffers, imageElement, w, h) {
   const memoryF32 = new Float32Array(memory);
 
   buffers.forEach(buffer => {
-    if (jobType === jobRenderWasm) {
-      gGLRenderer.drawBufferFromWasm(memoryF32, buffer);
-    } else {
-      gGLRenderer.drawBuffer(buffer);
-    }
+    gGLRenderer.drawBuffer(memoryF32, buffer);
   });
 
   imageElement.src = gGLRenderer.getImageData();
@@ -228,13 +220,13 @@ function renderGeneration(state) {
     const stopFn = startTiming();
 
     for (let i = 0;i < phenotypes.length; i++) {
-      const workerJob = Job.request(jobRenderWasm, {
+      const workerJob = Job.request(jobRender, {
         script,
         scriptHash,
         genotype: genotypes[i]
       }).then(({ title , memory, buffers }) => {
         const imageElement = phenotypes[i].imageElement;
-        renderGeometryBuffers(jobRenderWasm, memory, buffers, imageElement);
+        renderGeometryBuffers(memory, buffers, imageElement);
         hackTitle = title;
       }).catch(error => {
         // handle error
@@ -284,31 +276,13 @@ function renderScript(state, imageElement) {
   Job.request(jobRender, {
     script: state.script,
     scriptHash: state.scriptHash
-  }).then(({ title, buffers }) => {
-    // display any log/print messages that were generated
-    // during the execution of the script
-    // gUI.konsole.log(logMessages);
-    renderGeometryBuffers(jobRender, null, buffers, imageElement);
-    stopFn(`renderScript-${title}`, gUI.konsole);
-  }).catch(error => {
-    // handle error
-    console.log(`worker: error of ${error}`);
-  });
-}
-
-function renderScriptWithWASM(state, imageElement) {
-  const stopFn = startTiming();
-
-  Job.request(jobRenderWasm, {
-    script: state.script,
-    scriptHash: state.scriptHash
   }).then(({ title, memory, buffers }) => {
     // display any log/print messages that were generated
     // during the execution of the script
 
     // gUI.konsole.log(logMessages);
-    renderGeometryBuffers(jobRenderWasm, memory, buffers, imageElement);
-    stopFn(`renderScriptWithWASM-${title}`, gUI.konsole);
+    renderGeometryBuffers(memory, buffers, imageElement);
+    stopFn(`renderScript-${title}`, gUI.konsole);
   }).catch(error => {
     // handle error
     console.log(`worker: error of ${error}`);
@@ -325,12 +299,7 @@ function updateUI(state) {
     break;
   case SeniMode.edit :
     showScriptInEditor(state);
-    if (gWasmHack) {
-      // WASM
-      renderScriptWithWASM(state, gUI.renderImage);
-    } else {
-      renderScript(state, gUI.renderImage);
-    }
+    renderScript(state, gUI.renderImage);
     break;
   case SeniMode.evolve :
     // will only get here from History.restoreState
@@ -417,14 +386,14 @@ function renderHighRes(state, genotype) {
 
   const stopFn = startTiming();
 
-  Job.request(jobRenderWasm, {
+  Job.request(jobRender, {
     script: state.script,
     scriptHash: state.scriptHash,
     genotype: genotype ? genotype : undefined
   }).then(({ title, memory, buffers }) => {
     const [width, height] = state.highResolution;
 
-    renderGeometryBuffers(jobRenderWasm, memory, buffers, image, width, height);
+    renderGeometryBuffers(memory, buffers, image, width, height);
 
     stopFn(`renderHighRes-${title}`, gUI.konsole);
 
@@ -633,11 +602,7 @@ function createEditor(store, editorTextArea) {
   const extraKeys = {
     'Ctrl-E': () => {
       setScript(store, getScriptFromEditor()).then(state => {
-        if (gWasmHack) {
-          return renderScriptWithWASM(state, gUI.renderImage);
-        } else {
-          return renderScript(state, gUI.renderImage);
-        }
+        return renderScript(state, gUI.renderImage);
       }).catch(error => {
         console.log(`worker setScript error: ${error}`);
       });
@@ -720,7 +685,7 @@ function setupUI(store) {
 
   addClickEvent('eval-btn', event => {
     setScript(store, getScriptFromEditor()).then(state => {
-      renderScriptWithWASM(state, gUI.renderImage);
+      renderScript(state, gUI.renderImage);
     }).catch(error => {
       // handle error
       console.log(`eval-btn:click : error of ${error}`);
