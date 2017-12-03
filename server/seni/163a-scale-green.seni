@@ -6,7 +6,7 @@
                         colour: red
                         seed: 564
                         radius: 300)
-  (define 
+  (define
     rng (prng/build seed: seed)
     outer-exterior (prng/build seed: (prng/value from: rng) min: 170 max: 210)
     outer-interior (prng/build seed: (prng/value from: rng) min: 80 max: 170)
@@ -17,7 +17,7 @@
   (on-matrix-stack
     (translate vector: position)
     (scale scalar: (/ radius 210))
-    (step (i to: 8)
+    (loop (i to: 8)
       (on-matrix-stack
         (rotate angle: (* 360 (prng/value from: rng)))
         ;; outer ring
@@ -45,7 +45,7 @@
     ;; centre fill
     (circle-slice tessellation: 10
                   position: [0 0]
-                  colour: (col/lighten colour: colour 
+                  colour: (col/lighten colour: colour
                                        value: (* {140 (gen/int min: 5 max: 200)} (prng/value from: srng)))
                   angle-start: 0
                   angle-end: 360
@@ -63,4 +63,3 @@
                           seed: (prng/value from: initial-seed)
                           radius: {98 (gen/int min: 45 max: 100)}
                           colour: {(col/rgb r: 0.053 g: 0.613 b: 0.424 alpha: 0.400) (gen/col alpha: 0.4)}))))
-
