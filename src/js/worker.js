@@ -303,12 +303,23 @@ function render({ script /*, scriptHash*/, genotype }) {
     }
   }
 
-  const memory = Shabba.instance.memory.buffer;
-
   Shabba.scriptCleanup();
 
   const logMessages = konsoleProxy.collectMessages();
   const title = 'WASM woohoo';
+
+  // make a copy of the wasm memory
+  //
+  // note: (05-12-2017) required by Firefox as that doesn't allow transferring
+  // Wasm ArrayBuffers to different threads
+  // (errors with: cannot transfer WebAssembly/asm.js ArrayBuffer)
+  //
+  // WTF note: Expected a perfomance cost in Chrome due to the slice operation
+  // but it seemed to either have no effect or to make the rendering faster!?!
+  //
+  const wasmMemory = Shabba.instance.memory.buffer;
+  const memory = wasmMemory.slice();
+
   return { title, memory, buffers, logMessages };
 }
 
@@ -393,7 +404,7 @@ function register(callback) {
       if (type === jobRender) {
         const transferrable = [];
 
-        if (result.buffers.length > 0) {
+        if (result.buffers && result.buffers.length > 0) {
           transferrable.push(result.memory);
         }
 
