@@ -1,7 +1,7 @@
 * TODO [0/15]
-  1. [ ] [[check node->src and node->src_len]]
-  2. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
-  3. [ ] quilt
+  1. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
+  2. [ ] quilt
+  3. [ ] map (1669-zero.seni)
   4. [ ] better error messages when gen/scalar was mis-spelt
   5. [ ] {red (gen/col alpha: 1)} bug?
   6. [ ] poly should also accept a uv parameter
@@ -10,7 +10,6 @@
   9. [ ] get high-res render working
   10. [ ] add an END token to serialized output, use as a sanity check?
   11. [ ] add unit tests for compiling with a genotype
-  12. [ ] maybe have a required specifier in functions?
   13. [ ] ensure that there's a dist folder before running npm run build:wasm
   14. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
   15. [ ] look into restrict keyword in C99
