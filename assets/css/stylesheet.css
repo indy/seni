@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 .cm-s-default .cm-paren {color: #997;}
 .cm-s-default .cm-bracket {color: #997;}
 
@@ -19,12 +23,13 @@
 /* ------------------------------------------------------------ */
 
 .CodeMirror {
-  height: 100%; 
+  height: 100%;
 }
 
 body {
   background: #eee;
   font-family: 'RobotoDraft', 'HelveticaNeue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  margin: 0;
 }
 
 .container {
@@ -118,7 +123,7 @@ body {
 
   -webkit-align-items: center;
   align-items: center;
-  
+
   -webkit-justify-content: center;
   justify-content: center;
 
@@ -152,27 +157,18 @@ body {
 /* ------------------- Cards -------------------------------------------- */
 
 .cards {
-  margin: 0;
-  border: 0;
-  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 
   margin-left: 2em;
-
-  height: 100%;
-  width: 100%;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-flex-direction: row;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
 }
 
 .card-holder {
+  display: block;
+  width: 85%;
+
   margin: 1.5em;
   padding: 1em;
-  order: 1;
-  width: 16em;
   background: white;
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
 }
@@ -210,7 +206,7 @@ button:disabled {
   transition: background-color 1.5s ease;
   transition: border-color 1.5s ease;
   transition: color 1.5s ease;
-  
+
   margin-top: 1em;
   margin-right: 1em;
 
@@ -245,7 +241,7 @@ button:disabled {
   transition: background-color 1.5s ease;
   transition: border-color 1.5s ease;
   transition: color 1.5s ease;
-  
+
   color: rgba(0, 0, 0, 0.25);
   background-color: rgba(85, 85, 85, 0.1);
   border-color: rgba(85, 85, 85, 0.1);
@@ -267,7 +263,7 @@ button:disabled {
 }
 
 .left-more {
-  float: left;  
+  float: left;
   margin-left: 9rem;
 }
 
@@ -311,12 +307,12 @@ button:disabled {
 
 #high-res-loader {
   display: inline-block;
-  
+
   border: 1px solid #eef;
   border-top-color: #223;
   border-radius: 100%;
   border-width: 0.5rem;
-  
+
   height: 6rem;
   width: 6rem;
 
@@ -410,7 +406,7 @@ button#console-btn {
 @media only screen and (min-width : 601px) {
 
   #navbar-buttons {
-    /* todo: replace 50% with calculated pixels 
+    /* todo: replace 50% with calculated pixels
      (scrollbars appearing on OSX shift the buttons to the left)
    */
     margin-left: 50%;
@@ -446,7 +442,7 @@ button#console-btn {
 
     -webkit-align-items: center;
     align-items: center;
-    
+
     -webkit-justify-content: center;
     justify-content: center;
 
@@ -494,7 +490,7 @@ button#console-btn {
 
     -webkit-align-items: center;
     align-items: center;
-    
+
     -webkit-justify-content: center;
     justify-content: center;
 
