@@ -1,5 +1,5 @@
 /*
- *  Seni
+ *  Senie
  *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify

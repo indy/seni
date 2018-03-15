@@ -3,28 +3,28 @@
 */
 #include "lib/unity/unity.h"
 
-#include "seni/bind.h"
-#include "seni/colour.h"
-#include "seni/colour_scheme.h"
-#include "seni/config.h"
-#include "seni/cursor.h"
-#include "seni/genetic.h"
-#include "seni/keyword_iname.h"
-#include "seni/lang.h"
-#include "seni/lib.h"
-#include "seni/mathutil.h"
-#include "seni/multistring.h"
-#include "seni/parser.h"
-#include "seni/pool_macro.h"
-#include "seni/prng.h"
-#include "seni/shapes.h"
-#include "seni/strtof.h"
-#include "seni/timing.h"
-#include "seni/types.h"
-#include "seni/unparser.h"
-#include "seni/uv_mapper.h"
-#include "seni/vm_compiler.h"
-#include "seni/vm_interpreter.h"
+#include "senie/bind.h"
+#include "senie/colour.h"
+#include "senie/colour_scheme.h"
+#include "senie/config.h"
+#include "senie/cursor.h"
+#include "senie/genetic.h"
+#include "senie/keyword_iname.h"
+#include "senie/lang.h"
+#include "senie/lib.h"
+#include "senie/mathutil.h"
+#include "senie/multistring.h"
+#include "senie/parser.h"
+#include "senie/pool_macro.h"
+#include "senie/prng.h"
+#include "senie/shapes.h"
+#include "senie/strtof.h"
+#include "senie/timing.h"
+#include "senie/types.h"
+#include "senie/unparser.h"
+#include "senie/uv_mapper.h"
+#include "senie/vm_compiler.h"
+#include "senie/vm_interpreter.h"
 
 #include "stdio.h"
 #include <stdlib.h>
@@ -44,22 +44,22 @@ void tearDown(void) {}
 
 // testing the pool macro
 
-struct seni_item {
+struct senie_item {
   i32 id;
 
-  struct seni_item* next;
-  struct seni_item* prev;
+  struct senie_item* next;
+  struct senie_item* prev;
 };
-typedef struct seni_item seni_item;
+typedef struct senie_item senie_item;
 
-void item_cleanup(seni_item* item) { item->id = 0; }
+void item_cleanup(senie_item* item) { item->id = 0; }
 
-SENI_POOL(seni_item, item)
+SENIE_POOL(senie_item, item)
 
 void test_macro_pool(void) {
-  seni_item*             item;
-  struct seni_item_pool* item_pool;
-  i32                    i;
+  senie_item*             item;
+  struct senie_item_pool* item_pool;
+  i32                     i;
 
   {
     item      = NULL;
@@ -88,7 +88,7 @@ void test_macro_pool(void) {
     TEST_ASSERT_EQUAL(item_pool->high_water_mark, 2);
     TEST_ASSERT_EQUAL(item_pool->current_water_mark, 1);
 
-    // get enough seni_items to allocate a new slab
+    // get enough senie_items to allocate a new slab
     for (i = 0; i < 15; i++) {
       item = item_pool_get(item_pool);
     }
@@ -103,7 +103,7 @@ void test_macro_pool(void) {
   {
     item      = NULL;
     item_pool = item_pool_allocate(1, 10, 2);
-    // repeatedly allocate and return a seni_item
+    // repeatedly allocate and return a senie_item
     for (i = 0; i < 150; i++) {
       item = item_pool_get(item_pool);
       item_pool_return(item_pool, item);
@@ -120,10 +120,10 @@ void test_macro_pool(void) {
   {
     item      = NULL;
     item_pool = item_pool_allocate(1, 10, 2);
-    i32        j;
-    seni_item* items[10];
+    i32         j;
+    senie_item* items[10];
 
-    // repeatedly allocate and return sets of seni_items
+    // repeatedly allocate and return sets of senie_items
     for (i = 0; i < 50; i++) {
       for (j = 0; j < 10; j++) {
         items[j] = item_pool_get(item_pool);
@@ -148,24 +148,24 @@ void test_mathutil(void) {
   TEST_ASSERT_EQUAL_FLOAT(0.55556f, mc_c(1.0f, 1.0f, 0.444444f));
 }
 
-seni_node* assert_parser_node_raw(seni_node* node, seni_node_type type) {
+senie_node* assert_parser_node_raw(senie_node* node, senie_node_type type) {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
   return node->next;
 }
 
-seni_node* assert_parser_node_i32(seni_node* node, seni_node_type type, i32 val) {
+senie_node* assert_parser_node_i32(senie_node* node, senie_node_type type, i32 val) {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
   TEST_ASSERT_EQUAL(val, node->value.i);
   return node->next;
 }
 
-seni_node* assert_parser_node_f32(seni_node* node, f32 val) {
+senie_node* assert_parser_node_f32(senie_node* node, f32 val) {
   TEST_ASSERT_EQUAL_MESSAGE(NODE_FLOAT, node->type, node_type_name(node));
   TEST_ASSERT_EQUAL_FLOAT(val, node->value.f);
   return node->next;
 }
 
-seni_node* assert_parser_node_str(seni_node* node, seni_node_type type, char* val) {
+senie_node* assert_parser_node_str(senie_node* node, senie_node_type type, char* val) {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
   i32   count    = 0;
@@ -183,14 +183,16 @@ seni_node* assert_parser_node_str(seni_node* node, seni_node_type type, char* va
   return node->next;
 }
 
-seni_node*
-assert_parser_node_txt(seni_node* node, seni_node_type type, char* val, seni_word_lut* word_lut) {
+senie_node* assert_parser_node_txt(senie_node*     node,
+                                   senie_node_type type,
+                                   char*           val,
+                                   senie_word_lut* word_lut) {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
   i32 i = node->value.i;
   TEST_ASSERT_TRUE(word_lut->word_count > i);
 
-  seni_string_ref* string_ref = &(word_lut->word_ref[i]);
+  senie_string_ref* string_ref = &(word_lut->word_ref[i]);
   TEST_ASSERT_EQUAL_STRING(val, string_ref->c);
 
   return node->next;
@@ -207,8 +209,8 @@ assert_parser_node_txt(seni_node* node, seni_node_type type, char* val, seni_wor
   parser_subsystem_shutdown();
 
 void test_parser(void) {
-  seni_node *    nodes, *iter, *iter2;
-  seni_word_lut* word_lut;
+  senie_node *    nodes, *iter, *iter2;
+  senie_word_lut* word_lut;
 
   PARSE("hello");
   assert_parser_node_txt(nodes, NODE_NAME, "hello", word_lut);
@@ -319,15 +321,15 @@ void test_parser(void) {
   PARSE_CLEANUP;
 }
 
-void assert_seni_var_f32(seni_var* var, seni_var_type type, f32 f) {
+void assert_senie_var_f32(senie_var* var, senie_var_type type, f32 f) {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
 }
 
-void assert_seni_var_v4(seni_var* var, f32 a, f32 b, f32 c, f32 d) {
+void assert_senie_var_v4(senie_var* var, f32 a, f32 b, f32 c, f32 d) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "VAR_VECTOR");
 
-  seni_var* val = var->value.v;
+  senie_var* val = var->value.v;
   TEST_ASSERT_EQUAL_FLOAT(a, val->value.f);
 
   val = val->next;
@@ -340,10 +342,10 @@ void assert_seni_var_v4(seni_var* var, f32 a, f32 b, f32 c, f32 d) {
   TEST_ASSERT_EQUAL_FLOAT(d, val->value.f);
 }
 
-void assert_seni_var_v5(seni_var* var, f32 a, f32 b, f32 c, f32 d, f32 e) {
+void assert_senie_var_v5(senie_var* var, f32 a, f32 b, f32 c, f32 d, f32 e) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "VAR_VECTOR");
 
-  seni_var* val = var->value.v;
+  senie_var* val = var->value.v;
   TEST_ASSERT_EQUAL_FLOAT(a, val->value.f);
 
   val = val->next;
@@ -359,10 +361,10 @@ void assert_seni_var_v5(seni_var* var, f32 a, f32 b, f32 c, f32 d, f32 e) {
   TEST_ASSERT_EQUAL_FLOAT(e, val->value.f);
 }
 
-void assert_seni_var_col(seni_var* var, i32 format, f32 a, f32 b, f32 c, f32 d) {
+void assert_senie_var_col(senie_var* var, i32 format, f32 a, f32 b, f32 c, f32 d) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_COLOUR, var->type, "VAR_COLOUR");
 
-  // seni_colour *colour = var->value.c;
+  // senie_colour *colour = var->value.c;
 
   TEST_ASSERT_EQUAL(format, (i32)var->value.i);
 
@@ -372,19 +374,19 @@ void assert_seni_var_col(seni_var* var, i32 format, f32 a, f32 b, f32 c, f32 d) 
   TEST_ASSERT_FLOAT_WITHIN(0.1f, d, var->f32_array[3]);
 }
 
-void assert_seni_var_2d(seni_var* var, f32 a, f32 b) {
+void assert_senie_var_2d(senie_var* var, f32 a, f32 b) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_2D, var->type, "VAR_2D");
 
   TEST_ASSERT_FLOAT_WITHIN(0.1f, a, var->f32_array[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, b, var->f32_array[1]);
 }
 
-void assert_seni_var_f32_within(seni_var* var, seni_var_type type, f32 f, f32 tolerance) {
+void assert_senie_var_f32_within(senie_var* var, senie_var_type type, f32 f, f32 tolerance) {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
   TEST_ASSERT_FLOAT_WITHIN(tolerance, f, var->value.f);
 }
 
-void assert_seni_var_bool(seni_var* var, bool b) {
+void assert_senie_var_bool(senie_var* var, bool b) {
   TEST_ASSERT_EQUAL_MESSAGE(VAR_BOOLEAN, var->type, var_type_name(var));
   TEST_ASSERT_EQUAL(b ? 1 : 0, var->value.i);
 }
@@ -392,14 +394,14 @@ void assert_seni_var_bool(seni_var* var, bool b) {
 void test_uv_mapper(void) {
   uv_mapper_subsystem_startup();
 
-  seni_uv_mapping* flat = get_uv_mapping(BRUSH_FLAT, 0, true);
+  senie_uv_mapping* flat = get_uv_mapping(BRUSH_FLAT, 0, true);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f, flat->width_scale);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 2.0f / 1024.0f, flat->map[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.0f / 1024.0f, flat->map[1]);
 
   TEST_ASSERT_NULL(get_uv_mapping(BRUSH_FLAT, 1, false)); // out of range
 
-  seni_uv_mapping* c = get_uv_mapping(BRUSH_C, 8, false);
+  senie_uv_mapping* c = get_uv_mapping(BRUSH_C, 8, false);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 1.1f, c->width_scale);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 326.0f / 1024.0f, c->map[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, 556.0f / 1024.0f, c->map[1]);
@@ -408,16 +410,16 @@ void test_uv_mapper(void) {
 }
 
 // temp printing: DELETE THIS
-void colour_print(char* msg, seni_colour* colour) {
-  SENI_PRINT("%s: %d [%.4f, %.4f, %.4f]",
-             msg,
-             colour->format,
-             colour->element[0],
-             colour->element[1],
-             colour->element[2]);
+void colour_print(char* msg, senie_colour* colour) {
+  SENIE_PRINT("%s: %d [%.4f, %.4f, %.4f]",
+              msg,
+              colour->format,
+              colour->element[0],
+              colour->element[1],
+              colour->element[2]);
 }
 
-void assert_colour(seni_colour* expected, seni_colour* colour) {
+void assert_colour(senie_colour* expected, senie_colour* colour) {
   // colour_print("in assert", colour);
   TEST_ASSERT_EQUAL(expected->format, colour->format);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[0], colour->element[0]);
@@ -426,12 +428,12 @@ void assert_colour(seni_colour* expected, seni_colour* colour) {
   TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[3], colour->element[3]);
 }
 
-void assert_colour_e(seni_colour*       colour,
-                     seni_colour_format format,
-                     f32                e0,
-                     f32                e1,
-                     f32                e2,
-                     f32                alpha) {
+void assert_colour_e(senie_colour*       colour,
+                     senie_colour_format format,
+                     f32                 e0,
+                     f32                 e1,
+                     f32                 e2,
+                     f32                 alpha) {
   TEST_ASSERT_EQUAL(format, colour->format);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, e0, colour->element[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, e1, colour->element[1]);
@@ -439,7 +441,7 @@ void assert_colour_e(seni_colour*       colour,
   TEST_ASSERT_FLOAT_WITHIN(0.1f, alpha, colour->element[3]);
 }
 
-void colour_def(seni_colour* out, seni_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha) {
+void colour_def(senie_colour* out, senie_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha) {
   out->format     = format;
   out->element[0] = e0;
   out->element[1] = e1;
@@ -448,7 +450,7 @@ void colour_def(seni_colour* out, seni_colour_format format, f32 e0, f32 e1, f32
 }
 
 void assert_colour_rgb_hsl(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l) {
-  seni_colour rgb, hsl, res;
+  senie_colour rgb, hsl, res;
 
   colour_def(&rgb, RGB, r, g, b, 1.0f);
   colour_def(&hsl, HSL, h, s, l, 1.0f);
@@ -463,7 +465,7 @@ void assert_colour_rgb_hsl(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l) {
 }
 
 void test_colour(void) {
-  seni_colour c, rgb, hsl, lab, hsluv, res;
+  senie_colour c, rgb, hsl, lab, hsluv, res;
 
   {
     colour_def(&c, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -524,37 +526,37 @@ void test_colour(void) {
 void test_strtof(void) {
   char** end = NULL;
 
-  TEST_ASSERT_EQUAL_FLOAT(3.14f, seni_strtof("3.14", end));
-  TEST_ASSERT_EQUAL_FLOAT(-3.14f, seni_strtof("-3.14", end));
-  TEST_ASSERT_EQUAL_FLOAT(3.14f, seni_strtof(" 3.14", end));
-  TEST_ASSERT_EQUAL_FLOAT(3.14f, seni_strtof(" 3.14  ", end));
+  TEST_ASSERT_EQUAL_FLOAT(3.14f, senie_strtof("3.14", end));
+  TEST_ASSERT_EQUAL_FLOAT(-3.14f, senie_strtof("-3.14", end));
+  TEST_ASSERT_EQUAL_FLOAT(3.14f, senie_strtof(" 3.14", end));
+  TEST_ASSERT_EQUAL_FLOAT(3.14f, senie_strtof(" 3.14  ", end));
 
-  TEST_ASSERT_EQUAL_FLOAT(0.99f, seni_strtof(".99", end));
-  TEST_ASSERT_EQUAL_FLOAT(15.0f, seni_strtof("15", end));
-  TEST_ASSERT_EQUAL_FLOAT(0.0f, seni_strtof("0", end));
-  TEST_ASSERT_EQUAL_FLOAT(1.0f, seni_strtof("1", end));
+  TEST_ASSERT_EQUAL_FLOAT(0.99f, senie_strtof(".99", end));
+  TEST_ASSERT_EQUAL_FLOAT(15.0f, senie_strtof("15", end));
+  TEST_ASSERT_EQUAL_FLOAT(0.0f, senie_strtof("0", end));
+  TEST_ASSERT_EQUAL_FLOAT(1.0f, senie_strtof("1", end));
 }
 
-#define VM_COMPILE(EXPR)                                                                            \
-  seni_systems_startup();                                                                           \
-  seni_env*     e    = env_allocate();                                                              \
-  seni_program* prog = seni_compile_program(EXPR, e->word_lut, 256);                                \
-  seni_vm*      vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
-  vm_debug_info_reset(vm);                                                                          \
+#define VM_COMPILE(EXPR)                                                                             \
+  senie_systems_startup();                                                                           \
+  senie_env*     e    = env_allocate();                                                              \
+  senie_program* prog = senie_compile_program(EXPR, e->word_lut, 256);                               \
+  senie_vm*      vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
+  vm_debug_info_reset(vm);                                                                           \
   vm_run(vm, e, prog)
 
-#define VM_TEST_FLOAT(RES) assert_seni_var_f32(stack_peek(vm), VAR_FLOAT, RES)
-#define VM_TEST_BOOL(RES) assert_seni_var_bool(stack_peek(vm), RES)
-#define VM_TEST_VEC4(A, B, C, D) assert_seni_var_v4(stack_peek(vm), A, B, C, D)
-#define VM_TEST_VEC5(A, B, C, D, E) assert_seni_var_v5(stack_peek(vm), A, B, C, D, E)
-#define VM_TEST_COL(F, A, B, C, D) assert_seni_var_col(stack_peek(vm), F, A, B, C, D)
-#define VM_TEST_2D(A, B) assert_seni_var_2d(stack_peek(vm), A, B)
+#define VM_TEST_FLOAT(RES) assert_senie_var_f32(stack_peek(vm), VAR_FLOAT, RES)
+#define VM_TEST_BOOL(RES) assert_senie_var_bool(stack_peek(vm), RES)
+#define VM_TEST_VEC4(A, B, C, D) assert_senie_var_v4(stack_peek(vm), A, B, C, D)
+#define VM_TEST_VEC5(A, B, C, D, E) assert_senie_var_v5(stack_peek(vm), A, B, C, D, E)
+#define VM_TEST_COL(F, A, B, C, D) assert_senie_var_col(stack_peek(vm), F, A, B, C, D)
+#define VM_TEST_2D(A, B) assert_senie_var_2d(stack_peek(vm), A, B)
 
 #define VM_CLEANUP    \
   program_free(prog); \
   env_free(e);        \
   vm_free(vm);        \
-  seni_systems_shutdown();
+  senie_systems_shutdown();
 
 // ************************************************
 // TODO: use the above definition of VM_COMPILE_INT
@@ -612,15 +614,15 @@ void test_strtof(void) {
 void f32v(char* exp, i32 len, ...) {
   VM_COMPILE(exp);
 
-  seni_var* var = stack_peek(vm);
+  senie_var* var = stack_peek(vm);
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "f32v: VAR_VECTOR");
   TEST_ASSERT_EQUAL(len, vector_length(var));
 
   va_list va;
   va_start(va, len);
 
-  f32       val;
-  seni_var* element;
+  f32        val;
+  senie_var* element;
   for (i32 i = 0; i < len; i++) {
     element = vector_get(var, i);
     TEST_ASSERT_EQUAL_MESSAGE(VAR_FLOAT, element->type, "f32v: VAR_FLOAT");
@@ -645,7 +647,7 @@ void timing(void) {
     VM_COMPILE_F32("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 "
                    "1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9",
                    9);
-    SENI_PRINT("VM Time taken %.2f", timing_delta_from(start));
+    SENIE_PRINT("VM Time taken %.2f", timing_delta_from(start));
   }
 }
 
@@ -795,7 +797,7 @@ void test_vm_2d(void) {
   VM_COMPILE_F32("(define j [4 5]) (nth from: j n: 0)", 4.0f);
   VM_COMPILE_F32("(define j [4 5]) (nth from: j n: 1)", 5.0f);
 
-  // READ_STACK_ARG_VEC2 in seni_bind.c
+  // READ_STACK_ARG_VEC2 in senie_bind.c
   VM_COMPILE_F32("(math/distance vec1: [0 3] vec2: [4 0])", 5.0f);
 
   VM_COMPILE_2D("[4 5]", 4, 5);
@@ -1108,16 +1110,16 @@ void test_vm_repeat(void) {
        247.0f);
 }
 
-seni_genotype* genotype_test(i32 seed_value, char* source) {
-  seni_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env* env = env_allocate();
+senie_genotype* genotype_test(i32 seed_value, char* source) {
+  senie_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  senie_env* env = env_allocate();
 
-  seni_node* ast = parser_parse(env->word_lut, source);
+  senie_node* ast = parser_parse(env->word_lut, source);
 
-  seni_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
+  senie_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
 
   // using the vm to build the genes
-  seni_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+  senie_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
 
   trait_list_return_to_pool(trait_list);
   parser_return_nodes_to_pool(ast);
@@ -1129,25 +1131,25 @@ seni_genotype* genotype_test(i32 seed_value, char* source) {
 }
 
 void unparse_compare(i32 seed_value, char* source, char* expected) {
-  seni_systems_startup();
+  senie_systems_startup();
 
-  seni_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env* env = env_allocate();
+  senie_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  senie_env* env = env_allocate();
 
-  seni_node* ast = parser_parse(env->word_lut, source);
+  senie_node* ast = parser_parse(env->word_lut, source);
 
-  seni_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
+  senie_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
 
-  // seni_trait *trait = trait_list->traits;
+  // senie_trait *trait = trait_list->traits;
   // program_pretty_print(trait->program);
 
   // using the vm to build the genes
-  seni_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+  senie_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
 
   i32   unparsed_source_size = 1024;
   char* unparsed_source      = (char*)calloc(unparsed_source_size, sizeof(char));
 
-  seni_cursor* cursor = cursor_allocate(unparsed_source, unparsed_source_size);
+  senie_cursor* cursor = cursor_allocate(unparsed_source, unparsed_source_size);
 
   unparse(cursor, env->word_lut, ast, genotype);
 
@@ -1168,24 +1170,24 @@ void unparse_compare(i32 seed_value, char* source, char* expected) {
   env_free(env);
   vm_free(vm);
 
-  seni_systems_shutdown();
+  senie_systems_shutdown();
 }
 
 void test_genotype(void) {
-  seni_genotype* genotype;
-  seni_gene*     g;
-  seni_var*      v;
+  senie_genotype* genotype;
+  senie_gene*     g;
+  senie_var*      v;
 
   // startup/shutdown here and not in genotype_test as the tests compare
   // genotypes
-  seni_systems_startup();
+  senie_systems_startup();
 
   {
     genotype = genotype_test(3421, "(+ 6 {3 (gen/int min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
-    assert_seni_var_f32(v, VAR_FLOAT, 81.0f);
+    assert_senie_var_f32(v, VAR_FLOAT, 81.0f);
     TEST_ASSERT_NULL(g->next); // only 1 gene
     genotype_return_to_pool(genotype);
   }
@@ -1195,7 +1197,7 @@ void test_genotype(void) {
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
-    assert_seni_var_f32(v, VAR_FLOAT, 80.271f);
+    assert_senie_var_f32(v, VAR_FLOAT, 80.271f);
     TEST_ASSERT_NULL(g->next); // only 1 gene
     genotype_return_to_pool(genotype);
   }
@@ -1205,7 +1207,7 @@ void test_genotype(void) {
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
-    assert_seni_var_f32(v, VAR_FLOAT, 17.0f);
+    assert_senie_var_f32(v, VAR_FLOAT, 17.0f);
     TEST_ASSERT_NULL(g->next); // only 1 gene
     genotype_return_to_pool(genotype);
   }
@@ -1225,17 +1227,17 @@ void test_genotype(void) {
     genotype_return_to_pool(genotype);
   }
 
-  seni_systems_shutdown();
+  senie_systems_shutdown();
 }
 
 void test_genotype_vectors(void) {
-  seni_genotype* genotype;
-  seni_gene*     g;
-  seni_var*      v;
+  senie_genotype* genotype;
+  senie_gene*     g;
+  senie_var*      v;
 
   // startup/shutdown here and not in genotype_test as the tests compare
   // genotypes
-  seni_systems_startup();
+  senie_systems_startup();
 
   {
     genotype = genotype_test(9834, "{[[0.1 0.2] [0.3 0.4]] (gen/2d)}");
@@ -1281,17 +1283,17 @@ void test_genotype_vectors(void) {
     TEST_ASSERT_NULL(g);
   }
 
-  seni_systems_shutdown();
+  senie_systems_shutdown();
 }
 
 void test_genotype_multiple_floats(void) {
-  seni_genotype* genotype;
-  seni_gene*     g;
-  seni_var*      v;
+  senie_genotype* genotype;
+  senie_gene*     g;
+  senie_var*      v;
 
   // startup/shutdown here and not in genotype_test as the tests compare
   // genotypes
-  seni_systems_startup();
+  senie_systems_startup();
 
   {
     genotype = genotype_test(9834, "{[0.977 0.416 0.171] (gen/scalar)}");
@@ -1314,7 +1316,7 @@ void test_genotype_multiple_floats(void) {
     TEST_ASSERT_NULL(g);
   }
 
-  seni_systems_shutdown();
+  senie_systems_shutdown();
 }
 
 void test_unparser(void) {
@@ -1397,9 +1399,9 @@ void test_unparser_multiple_floats(void) {
   unparse_compare(3455, "{[0.977 0.416 0.171] (gen/scalar)}", "{[0.022 0.737 0.898] (gen/scalar)}");
 }
 
-// serialize/deserialize seni_var
+// serialize/deserialize senie_var
 
-void compare_seni_var(seni_var* a, seni_var* b) {
+void compare_senie_var(senie_var* a, senie_var* b) {
   TEST_ASSERT_EQUAL(a->type, b->type);
   switch (a->type) {
   case VAR_INT:
@@ -1432,31 +1434,31 @@ void compare_seni_var(seni_var* a, seni_var* b) {
     TEST_ASSERT_EQUAL(a->f32_array[1], b->f32_array[1]);
     break;
   default:
-    SENI_ERROR("unknown seni_var type");
+    SENIE_ERROR("unknown senie_var type");
   }
 }
 
-void compare_seni_bytecode(seni_bytecode* a, seni_bytecode* b) {
+void compare_senie_bytecode(senie_bytecode* a, senie_bytecode* b) {
   TEST_ASSERT_EQUAL(a->op, b->op);
-  compare_seni_var(&(a->arg0), &(b->arg0));
-  compare_seni_var(&(a->arg1), &(b->arg1));
+  compare_senie_var(&(a->arg0), &(b->arg0));
+  compare_senie_var(&(a->arg1), &(b->arg1));
 }
 
-void compare_seni_program(seni_program* a, seni_program* b) {
+void compare_senie_program(senie_program* a, senie_program* b) {
   TEST_ASSERT_EQUAL(a->code_size, b->code_size);
   for (i32 i = 0; i < a->code_size; i++) {
-    compare_seni_bytecode(&(a->code[i]), &(b->code[i]));
+    compare_senie_bytecode(&(a->code[i]), &(b->code[i]));
   }
 }
 
-void serialize_deserialize_var(seni_var* var) {
+void serialize_deserialize_var(senie_var* var) {
   i32   buffer_size = 128;
   char* buffer      = (char*)calloc(buffer_size, sizeof(char));
 
-  seni_var out;
-  bool     res;
+  senie_var out;
+  bool      res;
 
-  seni_cursor* cursor = cursor_allocate(buffer, buffer_size);
+  senie_cursor* cursor = cursor_allocate(buffer, buffer_size);
 
   res = var_serialize(cursor, var);
 
@@ -1468,14 +1470,14 @@ void serialize_deserialize_var(seni_var* var) {
 
   TEST_ASSERT_TRUE(res);
 
-  compare_seni_var(var, &out);
+  compare_senie_var(var, &out);
 
   cursor_free(cursor);
   free(buffer);
 }
 
 void test_serialization(void) {
-  seni_var var;
+  senie_var var;
 
   {
     var.type    = VAR_INT;
@@ -1523,7 +1525,7 @@ void test_serialization(void) {
   i32   buffer_size = 128;
   char* buffer      = (char*)calloc(buffer_size, sizeof(char));
 
-  seni_cursor* cursor = cursor_allocate(buffer, buffer_size);
+  senie_cursor* cursor = cursor_allocate(buffer, buffer_size);
 
   {
     // double serialize
@@ -1534,24 +1536,24 @@ void test_serialization(void) {
     var_serialize(cursor, &var);
     cursor_sprintf(cursor, " ");
 
-    seni_var var2;
+    senie_var var2;
     var2.type    = VAR_INT;
     var2.value.i = 34;
     var_serialize(cursor, &var2);
 
     cursor_reset(cursor);
 
-    seni_var out_var;
+    senie_var out_var;
     var_deserialize(&out_var, cursor);
-    compare_seni_var(&out_var, &var);
+    compare_senie_var(&out_var, &var);
     cursor_eat_space(cursor);
     var_deserialize(&out_var, cursor);
-    compare_seni_var(&out_var, &var2);
+    compare_senie_var(&out_var, &var2);
   }
 
   {
-    // seni_bytecode
-    seni_bytecode bytecode;
+    // senie_bytecode
+    senie_bytecode bytecode;
     bytecode.op           = STORE;
     bytecode.arg0.type    = VAR_INT;
     bytecode.arg0.value.i = 2;
@@ -1563,10 +1565,10 @@ void test_serialization(void) {
 
     cursor_reset(cursor);
 
-    seni_bytecode out_bytecode;
+    senie_bytecode out_bytecode;
     bytecode_deserialize(&out_bytecode, cursor);
 
-    compare_seni_bytecode(&out_bytecode, &bytecode);
+    compare_senie_bytecode(&out_bytecode, &bytecode);
   }
 
   cursor_free(cursor);
@@ -1576,24 +1578,24 @@ void test_serialization(void) {
 void test_serialization_program(void) {
   parser_subsystem_startup();
 
-  seni_env*     env     = env_allocate();
-  seni_program* program = seni_compile_program("(gen/int min: 2 max: 6)", env->word_lut, 256);
+  senie_env*     env     = env_allocate();
+  senie_program* program = senie_compile_program("(gen/int min: 2 max: 6)", env->word_lut, 256);
 
   i32   buffer_size = 4096;
   char* buffer      = (char*)calloc(buffer_size, sizeof(char));
 
-  seni_cursor* cursor = cursor_allocate(buffer, buffer_size);
+  senie_cursor* cursor = cursor_allocate(buffer, buffer_size);
 
   bool res = program_serialize(cursor, program);
   TEST_ASSERT_TRUE(res);
 
   cursor_reset(cursor);
 
-  seni_program* out = program_allocate(256);
-  res               = program_deserialize(out, cursor);
+  senie_program* out = program_allocate(256);
+  res                = program_deserialize(out, cursor);
   TEST_ASSERT_TRUE(res);
 
-  compare_seni_program(out, program);
+  compare_senie_program(out, program);
 
   free(buffer);
   cursor_free(cursor);
@@ -1605,15 +1607,15 @@ void test_serialization_program(void) {
 }
 
 void test_serialization_genotype(void) {
-  seni_genotype* genotype;
-  seni_gene*     g;
+  senie_genotype* genotype;
+  senie_gene*     g;
 
-  i32          buffer_size = 4096;
-  char*        buffer      = (char*)calloc(buffer_size, sizeof(char));
-  seni_cursor* cursor      = cursor_allocate(buffer, buffer_size);
-  bool         res;
+  i32           buffer_size = 4096;
+  char*         buffer      = (char*)calloc(buffer_size, sizeof(char));
+  senie_cursor* cursor      = cursor_allocate(buffer, buffer_size);
+  bool          res;
 
-  seni_systems_startup();
+  senie_systems_startup();
 
   {
     cursor_reset(cursor);
@@ -1626,12 +1628,12 @@ void test_serialization_genotype(void) {
 
     cursor_reset(cursor);
 
-    seni_genotype* out = genotype_get_from_pool();
-    res                = genotype_deserialize(out, cursor);
+    senie_genotype* out = genotype_get_from_pool();
+    res                 = genotype_deserialize(out, cursor);
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
-    assert_seni_var_f32(g->var, VAR_FLOAT, 81.0f);
+    assert_senie_var_f32(g->var, VAR_FLOAT, 81.0f);
 
     genotype_return_to_pool(out);
     genotype_return_to_pool(genotype);
@@ -1648,15 +1650,15 @@ void test_serialization_genotype(void) {
 
     cursor_reset(cursor);
 
-    seni_genotype* out = genotype_get_from_pool();
-    res                = genotype_deserialize(out, cursor);
+    senie_genotype* out = genotype_get_from_pool();
+    res                 = genotype_deserialize(out, cursor);
     TEST_ASSERT_TRUE(res);
 
     g = out->genes;
-    assert_seni_var_f32(g->var, VAR_FLOAT, 5.0f);
+    assert_senie_var_f32(g->var, VAR_FLOAT, 5.0f);
 
     g = g->next;
-    assert_seni_var_f32(g->var, VAR_FLOAT, 4.0f);
+    assert_senie_var_f32(g->var, VAR_FLOAT, 4.0f);
 
     g = g->next;
     TEST_ASSERT_NULL(g);
@@ -1665,25 +1667,25 @@ void test_serialization_genotype(void) {
     genotype_return_to_pool(genotype);
   }
 
-  seni_systems_shutdown();
+  senie_systems_shutdown();
 
   cursor_free(cursor);
   free(buffer);
 }
 
 void test_serialization_genotype_list(void) {
-  seni_systems_startup();
+  senie_systems_startup();
 
-  seni_genotype_list* genotype_list;
-  seni_genotype*      genotype;
-  seni_gene*          g;
+  senie_genotype_list* genotype_list;
+  senie_genotype*      genotype;
+  senie_gene*          g;
 
   genotype_list = genotype_list_get_from_pool();
 
-  i32          buffer_size = 4096;
-  char*        buffer      = (char*)calloc(buffer_size, sizeof(char));
-  seni_cursor* cursor      = cursor_allocate(buffer, buffer_size);
-  bool         res;
+  i32           buffer_size = 4096;
+  char*         buffer      = (char*)calloc(buffer_size, sizeof(char));
+  senie_cursor* cursor      = cursor_allocate(buffer, buffer_size);
+  bool          res;
 
   {
     cursor_reset(cursor);
@@ -1705,8 +1707,8 @@ void test_serialization_genotype_list(void) {
 
     cursor_reset(cursor);
 
-    seni_genotype_list* out = genotype_list_get_from_pool();
-    res                     = genotype_list_deserialize(out, cursor);
+    senie_genotype_list* out = genotype_list_get_from_pool();
+    res                      = genotype_list_deserialize(out, cursor);
     TEST_ASSERT_TRUE(res);
 
     i32 count = genotype_list_count(out);
@@ -1714,25 +1716,25 @@ void test_serialization_genotype_list(void) {
 
     genotype = out->genotypes;
     g        = genotype->genes;
-    assert_seni_var_f32(g->var, VAR_FLOAT, 5.0f);
+    assert_senie_var_f32(g->var, VAR_FLOAT, 5.0f);
     g = g->next;
-    assert_seni_var_f32(g->var, VAR_FLOAT, 4.0f);
-    g = g->next;
-    TEST_ASSERT_NULL(g);
-
-    genotype = genotype->next;
-    g        = genotype->genes;
-    assert_seni_var_f32(g->var, VAR_FLOAT, 4.0f);
-    g = g->next;
-    assert_seni_var_f32(g->var, VAR_FLOAT, 5.0f);
+    assert_senie_var_f32(g->var, VAR_FLOAT, 4.0f);
     g = g->next;
     TEST_ASSERT_NULL(g);
 
     genotype = genotype->next;
     g        = genotype->genes;
-    assert_seni_var_f32(g->var, VAR_FLOAT, 23.0f);
+    assert_senie_var_f32(g->var, VAR_FLOAT, 4.0f);
     g = g->next;
-    assert_seni_var_f32(g->var, VAR_FLOAT, 18.0f);
+    assert_senie_var_f32(g->var, VAR_FLOAT, 5.0f);
+    g = g->next;
+    TEST_ASSERT_NULL(g);
+
+    genotype = genotype->next;
+    g        = genotype->genes;
+    assert_senie_var_f32(g->var, VAR_FLOAT, 23.0f);
+    g = g->next;
+    assert_senie_var_f32(g->var, VAR_FLOAT, 18.0f);
     g = g->next;
     TEST_ASSERT_NULL(g);
 
@@ -1747,41 +1749,41 @@ void test_serialization_genotype_list(void) {
 
   genotype_list_return_to_pool(genotype_list);
 
-  seni_systems_shutdown();
+  senie_systems_shutdown();
 }
 
 void test_serialization_trait_list(void) {
   char* source = "(rect position: [500 500] width: {100 (gen/int min: 20 max: "
                  "200)} height: {30 (gen/int min: 10 max: 40)})";
 
-  seni_systems_startup();
+  senie_systems_startup();
 
-  seni_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  seni_env* env = env_allocate();
+  senie_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  senie_env* env = env_allocate();
 
-  seni_node*       ast        = parser_parse(env->word_lut, source);
-  seni_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
+  senie_node*       ast        = parser_parse(env->word_lut, source);
+  senie_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
 
-  i32          buffer_size = 4096;
-  char*        buffer      = (char*)calloc(buffer_size, sizeof(char));
-  seni_cursor* cursor      = cursor_allocate(buffer, buffer_size);
-  bool         res         = trait_list_serialize(cursor, trait_list);
+  i32           buffer_size = 4096;
+  char*         buffer      = (char*)calloc(buffer_size, sizeof(char));
+  senie_cursor* cursor      = cursor_allocate(buffer, buffer_size);
+  bool          res         = trait_list_serialize(cursor, trait_list);
   TEST_ASSERT_TRUE(res);
 
   cursor_reset(cursor);
 
-  seni_trait_list* out = trait_list_get_from_pool();
-  res                  = trait_list_deserialize(out, cursor);
+  senie_trait_list* out = trait_list_get_from_pool();
+  res                   = trait_list_deserialize(out, cursor);
   TEST_ASSERT_TRUE(res);
 
   i32 count = trait_list_count(out);
   TEST_ASSERT_EQUAL(2, count);
 
-  compare_seni_var(out->traits->initial_value, trait_list->traits->initial_value);
-  compare_seni_program(out->traits->program, trait_list->traits->program);
+  compare_senie_var(out->traits->initial_value, trait_list->traits->initial_value);
+  compare_senie_program(out->traits->program, trait_list->traits->program);
 
-  compare_seni_var(out->traits->next->initial_value, trait_list->traits->next->initial_value);
-  compare_seni_program(out->traits->next->program, trait_list->traits->next->program);
+  compare_senie_var(out->traits->next->initial_value, trait_list->traits->next->initial_value);
+  compare_senie_program(out->traits->next->program, trait_list->traits->next->program);
 
   parser_return_nodes_to_pool(ast);
 
@@ -1793,25 +1795,25 @@ void test_serialization_trait_list(void) {
   env_free(env);
   vm_free(vm);
 
-  seni_systems_shutdown();
+  senie_systems_shutdown();
 }
 
 void assert_rgb_hsluv(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l) {
-  seni_colour rgb;
+  senie_colour rgb;
   rgb.format     = RGB;
   rgb.element[0] = r;
   rgb.element[1] = g;
   rgb.element[2] = b;
   rgb.element[3] = 1.0f;
 
-  seni_colour hsluv;
+  senie_colour hsluv;
   hsluv.format     = HSLuv;
   hsluv.element[0] = h;
   hsluv.element[1] = s;
   hsluv.element[2] = l;
   hsluv.element[3] = 1.0f;
 
-  seni_colour res;
+  senie_colour res;
   colour_clone_as(&res, &rgb, HSLuv);
 
   TEST_ASSERT_EQUAL(HSLuv, res.format);
@@ -1851,7 +1853,7 @@ int main(void) {
   // timing();
 
   if (INAME_NUMBER_OF_KNOWN_WORDS >= NATIVE_START) {
-    SENI_LOG("WARNING: keywords are overwriting into NATIVE_START area");
+    SENIE_LOG("WARNING: keywords are overwriting into NATIVE_START area");
   }
 
   UNITY_BEGIN();

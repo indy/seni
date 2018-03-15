@@ -1,5 +1,5 @@
 /*
- *  Seni
+ *  Senie
  *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -436,9 +436,9 @@ function configureWasmModule(wasmInstance) {
   Shabba.setString = w.memory.setString;
   Shabba.getString = w.memory.getString;
 
-  // declare Seni's wasm insterface
-  Shabba.seniStartup = w.exports.seni_startup;
-  Shabba.seniShutdown = w.exports.seni_shutdown;
+  // declare Senie's wasm insterface
+  Shabba.senieStartup = w.exports.senie_startup;
+  Shabba.senieShutdown = w.exports.senie_shutdown;
   Shabba.scriptCleanup = w.exports.script_cleanup;
 
   Shabba.compileToRenderPackets = w.exports.compile_to_render_packets;
@@ -471,14 +471,14 @@ function freeModule() {
   Module._free(Shabba.cbuf);
   Module._free(Shabba.tbuf);
 
-  Shabba.seniShutdown();
+  Shabba.senieShutdown();
 }
 */
 
 //console.log("about to start");
-loadWASM('seni-wasm.wasm', options).then(wasmInstance => {
+loadWASM('senie-wasm.wasm', options).then(wasmInstance => {
   configureWasmModule(wasmInstance);
-  Shabba.seniStartup();
+  Shabba.senieStartup();
   // get string buffers
   Shabba.source_buffer = Shabba.getSourceBuffer();
   Shabba.out_source_buffer = Shabba.getOutSourceBuffer();

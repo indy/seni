@@ -45,7 +45,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename := "server/seni/" + galleryItem.Name + ".seni"
+	filename := "server/senie/" + galleryItem.Name + ".senie"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		http.Redirect(w, r, "/gallery", http.StatusFound)

@@ -1,5 +1,5 @@
 /*
- *  Seni
+ *  Senie
  *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Util from './seni/Util';
-import { SeniMode } from './ui/SeniMode';
+import Util from './senie/Util';
+import { SenieMode } from './ui/SenieMode';
 import Job from './job';
 import { jobBuildTraits,
          jobInitialGeneration,
@@ -187,7 +187,7 @@ export function createInitialState() {
     populationSize: 24,
     mutationRate: 0.1,
 
-    currentMode: SeniMode.gallery,
+    currentMode: SenieMode.gallery,
     previouslySelectedGenotypes: [],
     selectedIndices: [],
     script: undefined,
@@ -200,13 +200,13 @@ export function createInitialState() {
 function logMode(mode) {
   let name = '';
   switch (mode) {
-  case SeniMode.gallery:
+  case SenieMode.gallery:
     name = 'gallery';
     break;
-  case SeniMode.edit:
+  case SenieMode.edit:
     name = 'edit';
     break;
-  case SeniMode.evolve:
+  case SenieMode.evolve:
     name = 'evolve';
     break;
   default:

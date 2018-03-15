@@ -1,5 +1,5 @@
 /*
- *  Seni
+ *  Senie
  *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import GLRenderer from './seni/GLRenderer';
+import GLRenderer from './senie/GLRenderer';
 
 import History from './ui/History';
 import Editor from './ui/Editor';
@@ -25,7 +25,7 @@ import Konsole from './ui/Konsole';
 //import { addDefaultCommands } from './ui/KonsoleCommands';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
-import { SeniMode } from './ui/SeniMode';
+import { SenieMode } from './ui/SenieMode';
 import Job from './job';
 import { jobRender,
          jobUnparse
@@ -87,7 +87,7 @@ function showButtonsFor(mode) {
   const shuffleBtn = document.getElementById('shuffle-btn');
 
   switch (mode) {
-  case SeniMode.gallery :
+  case SenieMode.gallery :
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
@@ -100,7 +100,7 @@ function showButtonsFor(mode) {
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
-  case SeniMode.edit :
+  case SenieMode.edit :
     evalBtn.classList.remove('hidden');
     evolveBtn.classList.remove('hidden');
     renderBtn.classList.remove('hidden');
@@ -113,7 +113,7 @@ function showButtonsFor(mode) {
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
-  case SeniMode.evolve :
+  case SenieMode.evolve :
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
@@ -127,7 +127,7 @@ function showButtonsFor(mode) {
     shuffleBtn.classList.remove('hidden');
     break;
   default:
-    console.log('unknown seni mode');
+    console.log('unknown senie mode');
     break;
   }
 }
@@ -137,7 +137,7 @@ function showCurrentMode(state) {
   const containers = gUI.containers;
   const currentMode = state.currentMode;
 
-  for (let i = 0; i < SeniMode.numSeniModes; i++) {
+  for (let i = 0; i < SenieMode.numSenieModes; i++) {
     containers[i].className = i === currentMode ? '' : 'hidden';
   }
   showButtonsFor(currentMode);
@@ -341,18 +341,18 @@ function updateUI(state) {
   showCurrentMode(state);
 
   switch (state.currentMode) {
-  case SeniMode.gallery :
+  case SenieMode.gallery :
     break;
-  case SeniMode.edit :
+  case SenieMode.edit :
     showScriptInEditor(state);
     renderScript(state, gUI.renderImage);
     break;
-  case SeniMode.evolve :
+  case SenieMode.evolve :
     // will only get here from History.restoreState
     // NOTE: the popstate event listener is handling this case
     break;
   default:
-    console.log('unknown SeniMode');
+    console.log('unknown SenieMode');
     break;
   }
 }
@@ -367,7 +367,7 @@ function ensureMode(store, mode) {
     store.dispatch({type: 'SET_MODE', mode}).then(state => {
       History.pushState(state);
 
-      if (mode === SeniMode.evolve) {
+      if (mode === SenieMode.evolve) {
         showCurrentMode(state);
         setupEvolveUI(store).then(latestState => {
           // make sure that the history for the first evolve generation
@@ -511,7 +511,7 @@ function showEditFromEvolve(store, element) {
         genotype: genotypes[index]
       }).then(({ script }) => {
         setScript(store, script).then(() => {
-          return ensureMode(store, SeniMode.edit);
+          return ensureMode(store, SenieMode.edit);
         }).then(resolve).catch(e => {
           // handle error
           console.log(`worker: error of ${e}`);
@@ -613,7 +613,7 @@ function showEditFromGallery(store, element) {
       }).then(data => {
         return setScript(store, data);
       }).then(() => {
-        return ensureMode(store, SeniMode.edit);
+        return ensureMode(store, SenieMode.edit);
       }).then(resolve).catch(error => {
         console.log(`showEditFromGallery error ${error}`);
         reject(error);
@@ -627,7 +627,7 @@ function showEditFromGallery(store, element) {
 
 // take the height of the navbar into consideration
 function resizeContainers() {
-  const navbar = document.getElementById('seni-navbar');
+  const navbar = document.getElementById('senie-navbar');
 
   const edit = document.getElementById('edit-container');
   edit.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
@@ -718,7 +718,7 @@ function setupUI(store) {
                  d.getElementById('edit-container'),
                  d.getElementById('evolve-container')],
     // the top nav bar across the state
-    navbar: d.getElementById('seni-navbar'),
+    navbar: d.getElementById('senie-navbar'),
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById('render-img'),
     // console CodeMirror element in the edit screen
@@ -728,10 +728,10 @@ function setupUI(store) {
 
   konsoleElement.style.height = '0%';
 
-  showButtonsFor(SeniMode.gallery);
+  showButtonsFor(SenieMode.gallery);
 
   addClickEvent('home', event => {
-    ensureMode(store, SeniMode.gallery);
+    ensureMode(store, SenieMode.gallery);
     event.preventDefault();
   });
 
@@ -739,7 +739,7 @@ function setupUI(store) {
     // get the latest script from the editor
     setScript(store, getScriptFromEditor()).then(state => {
       History.replaceState(state);
-      ensureMode(store, SeniMode.evolve);
+      ensureMode(store, SenieMode.evolve);
     }).catch(error => {
       // handle error
       console.log(`evolve-btn:click : error of ${error}`);
@@ -830,7 +830,7 @@ function setupUI(store) {
 
     // remove target='_blank' and add a download attribute
     highResLink.removeAttribute('target');
-    highResLink.setAttribute('download', 'seni-image.png');
+    highResLink.setAttribute('download', 'senie-image.png');
 
     highResLink.click();
 
@@ -851,7 +851,7 @@ function setupUI(store) {
   const dKey = 68;
   document.addEventListener('keydown', event => {
     if (event.ctrlKey && event.keyCode === dKey &&
-        store.getState().currentMode === SeniMode.evolve) {
+        store.getState().currentMode === SenieMode.evolve) {
       event.preventDefault();
       onNextGen(store);
     }
@@ -896,7 +896,7 @@ function setupUI(store) {
       const savedState = History.restoreState(event.state);
       store.dispatch({type: 'SET_STATE', state: savedState}).then(state => {
         updateUI(state);
-        if (state.currentMode === SeniMode.evolve) {
+        if (state.currentMode === SenieMode.evolve) {
           restoreEvolveUI(store);
         }
       }).catch(error => {
@@ -906,7 +906,7 @@ function setupUI(store) {
     } else {
       // no event.state so behave as if the user has visited
       // the '/' of the state
-      ensureMode(store, SeniMode.gallery);
+      ensureMode(store, SenieMode.gallery);
     }
   });
 

@@ -3,7 +3,7 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    seni: ['./src/js/index.js'],
+    senie: ['./src/js/index.js'],
     worker: ['./src/js/worker.js']
   },
   output: {

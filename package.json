@@ -1,21 +1,21 @@
 {
-  "name": "seni",
+  "name": "senie",
   "version": "0.0.1",
   "description": "Generate Art",
   "scripts": {
     "build": "webpack --progress",
     "build:watch": "webpack --progress --watch",
-    "build:wasm": "wa compile -D SENI_BUILD_WASM -o dist/seni-wasm.wasm src/c/wasm.c -i src/c/seni/bind.c -i src/c/seni/colour.c -i src/c/seni/colour_scheme.c -i src/c/seni/cursor.c -i src/c/seni/focal.c -i src/c/seni/genetic.c -i src/c/seni/lang.c -i src/c/seni/lib.c -i src/c/seni/mathutil.c -i src/c/seni/matrix.c -i src/c/seni/multistring.c -i src/c/seni/parametric.c -i src/c/seni/parser.c -i src/c/seni/path.c -i src/c/seni/printf.c -i src/c/seni/prng.c -i src/c/seni/render_packet.c -i src/c/seni/repeat.c -i src/c/seni/shapes.c -i src/c/seni/strtof.c -i src/c/seni/timing.c -i src/c/seni/unparser.c -i src/c/seni/uv_mapper.c -i src/c/seni/vm_compiler.c -i src/c/seni/vm_interpreter.c -I src/c",
+    "build:wasm": "wa compile -D SENIE_BUILD_WASM -o dist/senie-wasm.wasm src/c/wasm.c -i src/c/senie/bind.c -i src/c/senie/colour.c -i src/c/senie/colour_scheme.c -i src/c/senie/cursor.c -i src/c/senie/focal.c -i src/c/senie/genetic.c -i src/c/senie/lang.c -i src/c/senie/lib.c -i src/c/senie/mathutil.c -i src/c/senie/matrix.c -i src/c/senie/multistring.c -i src/c/senie/parametric.c -i src/c/senie/parser.c -i src/c/senie/path.c -i src/c/senie/printf.c -i src/c/senie/prng.c -i src/c/senie/render_packet.c -i src/c/senie/repeat.c -i src/c/senie/shapes.c -i src/c/senie/strtof.c -i src/c/senie/timing.c -i src/c/senie/unparser.c -i src/c/senie/uv_mapper.c -i src/c/senie/vm_compiler.c -i src/c/senie/vm_interpreter.c -I src/c",
     "build:server": "go build src/go/serve.go",
-    "format": "clang-format src/c/wasm.c src/c/native.c src/c/test.c --glob=src/c/seni/*.[ch] -i -style=file",
-    "hack:min:seni": "uglifyjs --compress --mangle --output dist/seni.bundle.min.js -- dist/seni.bundle.js",
+    "format": "clang-format src/c/wasm.c src/c/native.c src/c/test.c --glob=src/c/senie/*.[ch] -i -style=file",
+    "hack:min:senie": "uglifyjs --compress --mangle --output dist/senie.bundle.min.js -- dist/senie.bundle.js",
     "hack:min:worker": "uglifyjs --compress --mangle --output dist/worker.bundle.min.js -- dist/worker.bundle.js",
     "clean": "rm dist/*.js",
-    "build:all": "npm run clean && npm run build && npm run build:wasm && npm run hack:min:seni && npm run hack:min:worker"
+    "build:all": "npm run clean && npm run build && npm run build:wasm && npm run hack:min:senie && npm run hack:min:worker"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/indy/seni.git"
+    "url": "https://github.com/indy/senie.git"
   },
   "keywords": [
     "generative art",
@@ -24,9 +24,9 @@
   "author": "Inderjit Gill <email@indy.io>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/indy/seni/issues"
+    "url": "https://github.com/indy/senie/issues"
   },
-  "homepage": "https://github.com/indy/seni",
+  "homepage": "https://github.com/indy/senie",
   "babel": {
     "plugins": [
       "transform-es2015-block-scoping",

@@ -1,7 +1,7 @@
 * TODO [0/15]
   1. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
   2. [ ] quilt
-  3. [ ] map (1669-zero.seni)
+  3. [ ] map (1669-zero.senie)
   4. [ ] better error messages when gen/scalar was mis-spelt
   5. [ ] {red (gen/col alpha: 1)} bug?
   6. [ ] poly should also accept a uv parameter
@@ -27,69 +27,69 @@
 
 
 * updating scripts [55/57]
-  1. [X] 14ef-blur-grid.seni
-  2. [X] 14eg-marker-grid.seni
-  3. [X] 14eh-chaotic-grid.seni
-  4. [X] 14fh-rothko-1.seni
-  5. [X] 151c-flower.seni - bezier-bulging
-  6. [X] 1531-four-squares.seni
-  7. [X] 154c-stroked-bezier.seni
-  8. [X] 154h-rothko-2.seni -- TODO: THIS IS SLOW
-  9. [X] 1556-biomorphs.seni - repeat/symmetry-vertical - takes a 'draw' argument
-  10. [X] 155b-spiral-derived.seni - path/circle
-  11. [X] 155j-chaotic-grid-2.seni - focal/point
-  12. [X] 155j-chaotic-grid-3.seni
-  13. [X] 1560-path.seni - make a function ???
-  14. [X] 1565-hex-grid.seni
-  15. [X] 156h-tri-grid.seni
-  16. [X] 157e-tile-shadow.seni - col/procedural-fn
-  17. [ ] 1580-quilt.seni
-  18. [X] 1585-seeds.seni
-  19. [X] 15fe-rotate-mirror.seni - poly, repeat/rotate-mirrored, vector/append
-  20. [X] 15h3-polychrome.seni
-  21. [X] 15h3-rotate-mirror-2.seni
-  22. [X] 15h3-tri-grid.seni
-  23. [X] 15h4-chromatic-layers-1.seni
-  24. [X] 15h4-chromatic-layers-2.seni
-  25. [X] 15h4-chromatic-layers-3.seni
-  26. [X] 15h4-mirror-layers.seni - todo: look into banding issue
-  27. [X] 15h4-rotate-mirror.seni
-  28. [X] 15he-cos-1.seni
-  29. [X] 15he-cos-2.seni
-  30. [X] 15he-cos-3.seni
-  31. [X] 15he-mirror-layers.seni
-  32. [X] 15he-rotate-mirror.seni
-  33. [X] 160c-schotter.seni
-  34. [X] 161g-grid-flow.seni
-  35. [X] 161j-trump.seni
-  36. [X] 1626-embers.seni
-  37. [X] 1626-orchid.seni
-  38. [X] 162e-alien.seni
-  39. [X] 162e-mask.seni
-  40. [X] 162e-slice.seni
-  41. [X] 162e-star.seni
-  42. [X] 162e-x.seni
-  43. [X] 1632-star.seni
-  44. [X] 1633-dune.seni
-  45. [X] 1633-orchid.seni
-  46. [X] 1633-petal.seni
-  47. [X] 1634-cryst.seni
-  48. [X] 1638-night.seni
-  49. [X] 163a-scale-green.seni
-  50. [X] 1642-book-stack.seni
-  51. [X] 1642-stacks.seni
-  52. [X] 1643-hyp.seni
-  53. [X] 1643-paren.seni
-  54. [X] 1643-rose.seni
-  55. [X] 1643-thorn.seni
-  56. [X] 1648-chalk-boxes.seni
-  57. [ ] 1669-zero.seni - map
+  1. [X] 14ef-blur-grid.senie
+  2. [X] 14eg-marker-grid.senie
+  3. [X] 14eh-chaotic-grid.senie
+  4. [X] 14fh-rothko-1.senie
+  5. [X] 151c-flower.senie - bezier-bulging
+  6. [X] 1531-four-squares.senie
+  7. [X] 154c-stroked-bezier.senie
+  8. [X] 154h-rothko-2.senie -- TODO: THIS IS SLOW
+  9. [X] 1556-biomorphs.senie - repeat/symmetry-vertical - takes a 'draw' argument
+  10. [X] 155b-spiral-derived.senie - path/circle
+  11. [X] 155j-chaotic-grid-2.senie - focal/point
+  12. [X] 155j-chaotic-grid-3.senie
+  13. [X] 1560-path.senie - make a function ???
+  14. [X] 1565-hex-grid.senie
+  15. [X] 156h-tri-grid.senie
+  16. [X] 157e-tile-shadow.senie - col/procedural-fn
+  17. [ ] 1580-quilt.senie
+  18. [X] 1585-seeds.senie
+  19. [X] 15fe-rotate-mirror.senie - poly, repeat/rotate-mirrored, vector/append
+  20. [X] 15h3-polychrome.senie
+  21. [X] 15h3-rotate-mirror-2.senie
+  22. [X] 15h3-tri-grid.senie
+  23. [X] 15h4-chromatic-layers-1.senie
+  24. [X] 15h4-chromatic-layers-2.senie
+  25. [X] 15h4-chromatic-layers-3.senie
+  26. [X] 15h4-mirror-layers.senie - todo: look into banding issue
+  27. [X] 15h4-rotate-mirror.senie
+  28. [X] 15he-cos-1.senie
+  29. [X] 15he-cos-2.senie
+  30. [X] 15he-cos-3.senie
+  31. [X] 15he-mirror-layers.senie
+  32. [X] 15he-rotate-mirror.senie
+  33. [X] 160c-schotter.senie
+  34. [X] 161g-grid-flow.senie
+  35. [X] 161j-trump.senie
+  36. [X] 1626-embers.senie
+  37. [X] 1626-orchid.senie
+  38. [X] 162e-alien.senie
+  39. [X] 162e-mask.senie
+  40. [X] 162e-slice.senie
+  41. [X] 162e-star.senie
+  42. [X] 162e-x.senie
+  43. [X] 1632-star.senie
+  44. [X] 1633-dune.senie
+  45. [X] 1633-orchid.senie
+  46. [X] 1633-petal.senie
+  47. [X] 1634-cryst.senie
+  48. [X] 1638-night.senie
+  49. [X] 163a-scale-green.senie
+  50. [X] 1642-book-stack.senie
+  51. [X] 1642-stacks.senie
+  52. [X] 1643-hyp.senie
+  53. [X] 1643-paren.senie
+  54. [X] 1643-rose.senie
+  55. [X] 1643-thorn.senie
+  56. [X] 1648-chalk-boxes.senie
+  57. [ ] 1669-zero.senie - map
 
 
-* seni_env
+* senie_env
 
   standard universal bindings (done once, immutable, applied to all compiled/executed programs)
-  e.g. the standard api functions in seni_env
+  e.g. the standard api functions in senie_env
 
   standard per-program bindings (done at program start, equivalent to a set of known global variables)
   e.g. global bindings like canvas/width which require a call to add_global_mapping.
@@ -98,7 +98,7 @@
 
 
 
-* seni_vm
+* senie_vm
   four types of command in the VM:
   1. Arithmetic: perform arithmetic and logical operations on the stack
   2. Memory access: transfer data between the stack and virtual memory
@@ -258,7 +258,7 @@ In other architectures, the instruction pointer is sometimes called the "program
       wrenInitializeCore                <<<-- wren_core.c
         define root Object class
         PRIMITIVE macro ?
-        all the core primitives (keywords in seni?) have now been defined
+        all the core primitives (keywords in senie?) have now been defined
 
   WrenInterpretResult result = wrenInterpret(vm, source); <<<-- vm.c
     WrenVM is passed around
@@ -680,7 +680,7 @@ fn_info would then have 2 addresses - 1 for setting up args, the other for the b
 
   implementation:
 
-  address-of : works at compile time to LOAD the seni_fn_info index onto the stack. This means that address-of can only work with user-defined functions that are explicitly passed in.
+  address-of : works at compile time to LOAD the senie_fn_info index onto the stack. This means that address-of can only work with user-defined functions that are explicitly passed in.
 
 
 * native functions that accept function arguments [0/2]
@@ -730,7 +730,7 @@ call_no_arg_function
 
 * genetic algorithm [0/5]
 
-  1. [ ] serialise/deserialise seni_trait + seni_program + seni_bytecode + seni_var
+  1. [ ] serialise/deserialise senie_trait + senie_program + senie_bytecode + senie_var
   2. [ ] serialise only pre-amble part of a program
   3. [ ] serialise everything but the pre-amble part of a program
   4. [ ] pass traits between js and c side
@@ -753,31 +753,31 @@ call_no_arg_function
   void $SUBSYSTEM_NAME_startup() / void $SUBSYSTEM_NAME_shutdown()
   - one time startup and shutdown functions - used to initialise global variables (e.g pools)
 
-  void $NAME_cleanup(seni_$NAME *$NAME)
+  void $NAME_cleanup(senie_$NAME *$NAME)
   - function used by *_free, *_return, *_destructor functions to clean up a struct
 
-  seni_$NAME $NAME_allocate()
+  senie_$NAME $NAME_allocate()
   - allocates memory for the named struct
 
-  void $NAME_free(seni_$NAME *$NAME)
+  void $NAME_free(senie_$NAME *$NAME)
   - deallocates memory for the named struct
 
-  seni_$NAME $NAME_get_from_pool()
+  senie_$NAME $NAME_get_from_pool()
   - gets a struct from a pool
 
-  void $NAME_return_to_pool(seni_$NAME *$NAME)
+  void $NAME_return_to_pool(senie_$NAME *$NAME)
   - returns a struct to a pool
 
-  void $NAME_constructor(seni_$NAME *$NAME)
+  void $NAME_constructor(senie_$NAME *$NAME)
   - function for filling in an already allocated structure (used by pools during allocation)
 
-  void $NAME_destructor(seni_$NAME *$NAME)
+  void $NAME_destructor(senie_$NAME *$NAME)
   - function for running code in a soon to be free'd structure (used by pools during deallocation)
 
-  bool $NAME_serialize(seni_text_buffer *text_buffer, seni_$NAME *$NAME)
+  bool $NAME_serialize(senie_text_buffer *text_buffer, senie_$NAME *$NAME)
   - serializes structure to the text buffer
 
-  bool $NAME_deserialize(seni_$NAME *out, seni_text_buffer *text_buffer)
+  bool $NAME_deserialize(senie_$NAME *out, senie_text_buffer *text_buffer)
   - deserializes structure from the text buffer
 
 
@@ -789,7 +789,7 @@ call_no_arg_function
 
 /server contains files used by server
 
-where does /seni go? (/server)
+where does /senie go? (/server)
 
 --------------------------------------------------------------------------------
 

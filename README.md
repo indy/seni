@@ -1,6 +1,6 @@
-# Seni
+# Senie
 
-Seni is a Scheme-like graphical language that runs on modern web browsers.
+Senie is a Scheme-like graphical language that runs on modern web browsers.
 
 It's scripts can be annotated so that genetic algorithms can generate variations and the user can select which of the generated images should be used in future generations.
 
@@ -49,7 +49,7 @@ Keep things simple by using C.
 Avoid C++, even trying to use it as a 'nicer C' results in increased compilation times, obtuse error messages, complicates the build/link commands and reduces platform independance.
 Switch to Rust if you need a better C
 
-test the output by opening build_wasm\seni-wasm.html in a browser that supports WebAssembly
+test the output by opening build_wasm\senie-wasm.html in a browser that supports WebAssembly
 
 * visual studio integration with the native windows build
   build the windows version (test.exe)

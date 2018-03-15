@@ -1,5 +1,5 @@
 /*
- *  Seni
+ *  Senie
  *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -18,20 +18,20 @@
 
 /* eslint-disable no-unused-vars */
 
-import CodeMirrorSeni from './CodeMirrorSeni';
+import CodeMirrorSenie from './CodeMirrorSenie';
 
 /* eslint-enable no-unused-vars */
 
-const modeName = 'seni';
+const modeName = 'senie';
 
-function defineSeniMode() {
-  // return an instance of CodeMirror with Seni mode defined
-  CodeMirror.defineMode(modeName, CodeMirrorSeni.seniMode);
+function defineSenieMode() {
+  // return an instance of CodeMirror with Senie mode defined
+  CodeMirror.defineMode(modeName, CodeMirrorSenie.senieMode);
   return CodeMirror;
 }
 
 function createEditor(element, customConfig) {
-  const codeMirrorSeniMode = defineSeniMode();
+  const codeMirrorSenieMode = defineSenieMode();
   const defaultConfig = {
     lineNumbers: false,
     mode: modeName,
@@ -40,7 +40,7 @@ function createEditor(element, customConfig) {
   };
   const res = Object.assign({}, defaultConfig, customConfig);
 
-  return codeMirrorSeniMode.fromTextArea(element, res);
+  return codeMirrorSenieMode.fromTextArea(element, res);
 }
 
 export default {
