@@ -197,7 +197,7 @@ export default class GLRenderer {
     return this.glDomElement.toDataURL();
   }
 
-  preDrawScene(destWidth, destHeight) {
+  preDrawScene(destWidth, destHeight, section) {
     const gl = this.gl;
     const domElement = this.glDomElement;
 
@@ -219,9 +219,27 @@ export default class GLRenderer {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+
+    if (section === undefined) {
+      // render the entirety of the scene
+      Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
+    } else {
+      switch (section) {
+        // bottom left
+      case 0: Matrix.ortho(this.pMatrix,   0,  500,   0,  500, 10, -10); break;
+        // bottom right
+      case 1: Matrix.ortho(this.pMatrix, 500, 1000,   0,  500, 10, -10); break;
+        // top left
+      case 2: Matrix.ortho(this.pMatrix,   0,  500, 500, 1000, 10, -10); break;
+        // top right
+      case 3: Matrix.ortho(this.pMatrix, 500, 1000, 500, 1000, 10, -10); break;
+      }
+    }
+
     gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform,
                         false,
                         this.pMatrix);
+
     gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform,
                         false,
                         this.mvMatrix);

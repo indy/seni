@@ -77,6 +77,12 @@ function showButtonsFor(mode) {
   const evalBtn = document.getElementById('eval-btn');
   const evolveBtn = document.getElementById('evolve-btn');
   const renderBtn = document.getElementById('render-btn');
+
+  const renderBLBtn = document.getElementById('render-bl-btn');
+  const renderBRBtn = document.getElementById('render-br-btn');
+  const renderTLBtn = document.getElementById('render-tl-btn');
+  const renderTRBtn = document.getElementById('render-tr-btn');
+
   const nextBtn = document.getElementById('next-btn');
   const shuffleBtn = document.getElementById('shuffle-btn');
 
@@ -85,6 +91,12 @@ function showButtonsFor(mode) {
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
+
+    renderBLBtn.classList.add('hidden');
+    renderBRBtn.classList.add('hidden');
+    renderTLBtn.classList.add('hidden');
+    renderTRBtn.classList.add('hidden');
+
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
@@ -92,6 +104,12 @@ function showButtonsFor(mode) {
     evalBtn.classList.remove('hidden');
     evolveBtn.classList.remove('hidden');
     renderBtn.classList.remove('hidden');
+
+    renderBLBtn.classList.remove('hidden');
+    renderBRBtn.classList.remove('hidden');
+    renderTLBtn.classList.remove('hidden');
+    renderTRBtn.classList.remove('hidden');
+
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
@@ -99,6 +117,12 @@ function showButtonsFor(mode) {
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
+
+    renderBLBtn.classList.add('hidden');
+    renderBRBtn.classList.add('hidden');
+    renderTLBtn.classList.add('hidden');
+    renderTRBtn.classList.add('hidden');
+
     nextBtn.classList.remove('hidden');
     shuffleBtn.classList.remove('hidden');
     break;
@@ -193,6 +217,28 @@ function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
   }
 
   gGLRenderer.preDrawScene(destWidth, destHeight);
+
+  const memoryF32 = new Float32Array(memory);
+
+  buffers.forEach(buffer => {
+    gGLRenderer.drawBuffer(memoryF32, buffer);
+  });
+
+  imageElement.src = gGLRenderer.getImageData();
+}
+
+function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, section) {
+  let destWidth = undefined;
+  let destHeight = undefined;
+  if (w !== undefined && h !== undefined) {
+    destWidth = w;
+    destHeight = h;
+  } else {
+    destWidth = imageElement.clientWidth;
+    destHeight = imageElement.clientHeight;
+  }
+
+  gGLRenderer.preDrawScene(destWidth, destHeight, section);
 
   const memoryF32 = new Float32Array(memory);
 
@@ -396,6 +442,41 @@ function renderHighRes(state, genotype) {
     renderGeometryBuffers(memory, buffers, image, width, height);
 
     stopFn(`renderHighRes-${title}`, gUI.konsole);
+
+    image.classList.remove('hidden');
+    const link = document.getElementById('high-res-link');
+    link.href = image.src;
+    loader.classList.add('hidden');
+  }).catch(error => {
+    // handle error
+    console.log(`worker: error of ${error}`);
+    gUI.konsole.log(error);
+    image.classList.remove('hidden');
+    loader.classList.add('hidden');
+  });
+}
+
+function renderHighResSection(state, section) {
+  const container = document.getElementById('high-res-container');
+  const loader = document.getElementById('high-res-loader');
+  const image = document.getElementById('high-res-image');
+
+  container.classList.remove('hidden');
+  loader.classList.remove('hidden');
+  image.classList.add('hidden');
+
+  const stopFn = startTiming();
+
+  Job.request(jobRender, {
+    script: state.script,
+    scriptHash: state.scriptHash,
+    genotype: undefined
+  }).then(({ title, memory, buffers }) => {
+    const [width, height] = state.highResolution;
+
+    renderGeometryBuffersSection(memory, buffers, image, width, height, section);
+
+    stopFn(`renderHighResSection-${title}-${section}`, gUI.konsole);
 
     image.classList.remove('hidden');
     const link = document.getElementById('high-res-link');
@@ -668,6 +749,23 @@ function setupUI(store) {
 
   addClickEvent('render-btn', event => {
     renderHighRes(store.getState());
+    event.preventDefault();
+  });
+
+  addClickEvent('render-bl-btn', event => {
+    renderHighResSection(store.getState(), 0);
+    event.preventDefault();
+  });
+  addClickEvent('render-br-btn', event => {
+    renderHighResSection(store.getState(), 1);
+    event.preventDefault();
+  });
+  addClickEvent('render-tl-btn', event => {
+    renderHighResSection(store.getState(), 2);
+    event.preventDefault();
+  });
+  addClickEvent('render-tr-btn', event => {
+    renderHighResSection(store.getState(), 3);
     event.preventDefault();
   });
 

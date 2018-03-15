@@ -182,7 +182,7 @@ function wrapInPromise(state) {
 export function createInitialState() {
   return {
     // the resolution of the high res image
-    highResolution: [2048, 2048],
+    highResolution: [4096, 4096],
     placeholder: 'img/spinner.gif',
     populationSize: 24,
     mutationRate: 0.1,
