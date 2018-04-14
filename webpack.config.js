@@ -4,7 +4,8 @@ const path = require('path');
 module.exports = {
   entry: {
     senie: ['./src/js/index.js'],
-    worker: ['./src/js/worker.js']
+    worker: ['./src/js/worker.js'],
+    piece: ['./src/js/piece.js']
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

@@ -27,6 +27,7 @@ class PromiseWorker {
 
     this.worker = new Worker(workerUrl);
     this.id = id;
+    this.initialised = false; // true when the worker has loaded it's wasm file
     this.working = false;
     this.reject = undefined;
     this.resolve = undefined;
@@ -34,21 +35,30 @@ class PromiseWorker {
     this.worker.addEventListener('message', event => {
       // string data is always going to be in JSON formation
       // otherwise it will be a string encoded in an ArrayBuffer
-      let error = undefined;
+      let status = undefined;
       let result = undefined;
 
       if (typeof(event.data) === 'string') {
-        [error, result] = JSON.parse(event.data);
+        [status, result] = JSON.parse(event.data);
+
+        if (status.systemInitialised) {
+          self.initialised = true;
+          return;
+        }
+
       } else {                  // ArrayBuffer
-        // [error, result] = JSON.parse(ab2str(event.data));
-        [error, result] = event.data;
-        return self.resolve(result);
+        [status, result] = event.data;
       }
 
-      if (error) {
-        return self.reject(new Error(error.message));
+      if (status.logMessages && status.logMessages.length > 0) {
+        console.log(status.logMessages);
       }
-      return self.resolve(result);
+
+      if (status.error) {
+        self.reject(new Error(status.error.message));
+      } else {
+        self.resolve(result);
+      }
     });
   }
 
@@ -70,6 +80,10 @@ class PromiseWorker {
   release() {
     this.working = false;
     return this;
+  }
+
+  isInitialised() {
+    return this.initialised;
   }
 
   isWorking() {
@@ -97,7 +111,8 @@ function findAvailableWorker() {
   return new Promise((resolve, _reject) => {
     setTimeout(function go() {
       for (let i=0;i<numWorkers;i++) {
-        if (promiseWorkers[i].isWorking() === false) {
+        if (promiseWorkers[i].isInitialised() === true &&
+            promiseWorkers[i].isWorking() === false) {
           resolve(promiseWorkers[i].employ());
           return;
         }

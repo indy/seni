@@ -745,6 +745,24 @@ bool genotype_list_deserialize(senie_genotype_list* out, senie_cursor* cursor) {
   return true;
 }
 
+senie_genotype_list* genotype_list_create_single_genotype(senie_trait_list* trait_list, i32 seed) {
+  senie_genotype_list* genotype_list = genotype_list_get_from_pool();
+
+  SENIE_LOG("genotype_list_create_single_genotype seed: %d", seed);
+
+  // fill out the remaining population with generated values
+  senie_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  senie_env* env = env_allocate();
+
+  senie_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed);
+  genotype_list_add_genotype(genotype_list, genotype);
+
+  env_free(env);
+  vm_free(vm);
+
+  return genotype_list;
+}
+
 senie_genotype_list* genotype_list_create_initial_generation(senie_trait_list* trait_list,
                                                              i32               population_size,
                                                              i32               seed) {
@@ -754,7 +772,7 @@ senie_genotype_list* genotype_list_create_initial_generation(senie_trait_list* t
     return genotype_list;
   }
 
-  // create a genotype using the initial valued from the traits
+  // create a genotype using the initial values from the traits
   senie_genotype* genotype = genotype_build_from_initial_values(trait_list);
   genotype_list_add_genotype(genotype_list, genotype);
 

@@ -239,6 +239,28 @@ export i32 build_traits() {
   return num_traits;
 }
 
+export i32 single_genotype_from_seed(i32 seed) {
+  debug_size_traits_buffer();
+
+  senie_trait_list* trait_list = senie_deserialize_trait_list(g_traits_cursor);
+
+  if (g_genotype_list != NULL) {
+    genotype_list_return_to_pool(g_genotype_list);
+  }
+
+  g_genotype_list = genotype_list_create_single_genotype(trait_list, seed);
+  if (g_genotype_list == NULL) {
+    trait_list_return_to_pool(trait_list);
+    SENIE_ERROR("create_initial_generation: "
+                "genotype_list_create_initial_generation returned null");
+    return 0;
+  }
+
+  trait_list_return_to_pool(trait_list);
+
+  return 1;
+}
+
 export i32 create_initial_generation(i32 population_size, i32 seed) {
   debug_size_traits_buffer();
 

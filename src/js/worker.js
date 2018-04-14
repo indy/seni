@@ -20,9 +20,10 @@ import { jobRender,
          jobUnparse,
          jobBuildTraits,
          jobInitialGeneration,
-         jobNewGeneration
+         jobNewGeneration,
+         jobSingleGenotypeFromSeed
        } from './jobTypes';
-const Shabba = {};
+const SenieWasm = {};
 
 const getOwnPropertyNames = Object.getOwnPropertyNames;
 /* eslint-disable no-param-reassign */
@@ -259,51 +260,50 @@ const konsoleProxy = new KonsoleProxy();
 function pointerToFloat32Array(ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
-  return Shabba.instance.memory.F32.subarray(pos, pos + length);
+  return SenieWasm.instance.memory.F32.subarray(pos, pos + length);
 }
 
 function pointerToArrayBufferCopy(ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
-  return Shabba.instance.memory.F32.slice(pos, pos + length);
+  return SenieWasm.instance.memory.F32.slice(pos, pos + length);
 }
 */
 
 function render({ script /*, scriptHash*/, genotype }) {
   konsoleProxy.clear();
-
   const buffers = [];
 
   if (genotype) {
     // console.log(`renderWasm genotype: ${genotype}`);
-    Shabba.useGenotypeWhenCompiling(true);
-    Shabba.setString(Shabba.genotype_buffer, genotype);
+    SenieWasm.useGenotypeWhenCompiling(true);
+    SenieWasm.setString(SenieWasm.genotype_buffer, genotype);
   } else {
-    Shabba.useGenotypeWhenCompiling(false);
+    SenieWasm.useGenotypeWhenCompiling(false);
   }
 
   // need to setString before calling compileToRenderPackets
-  Shabba.setString(Shabba.source_buffer, script);
-  const numRenderPackets = Shabba.compileToRenderPackets();
-  // console.log(`numRenderPackets = ${numRenderPackets}`);
+  SenieWasm.setString(SenieWasm.source_buffer, script);
+  const numRenderPackets = SenieWasm.compileToRenderPackets();
+  konsoleProxy.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
-    const numVertices = Shabba.getRenderPacketNumVertices(i);
-    // console.log(`render_packet ${i}: numVertices = ${numVertices}`);
+    const numVertices = SenieWasm.getRenderPacketNumVertices(i);
+    konsoleProxy.log(`render_packet ${i}: numVertices = ${numVertices}`);
 
     if (numVertices > 0) {
       const buffer = {};
 
-      buffer.vbufAddress = Shabba.getRenderPacketVBuf(i);
-      buffer.cbufAddress = Shabba.getRenderPacketCBuf(i);
-      buffer.tbufAddress = Shabba.getRenderPacketTBuf(i);
+      buffer.vbufAddress = SenieWasm.getRenderPacketVBuf(i);
+      buffer.cbufAddress = SenieWasm.getRenderPacketCBuf(i);
+      buffer.tbufAddress = SenieWasm.getRenderPacketTBuf(i);
 
       buffer.numVertices = numVertices;
       buffers.push(buffer);
     }
   }
 
-  Shabba.scriptCleanup();
+  SenieWasm.scriptCleanup();
 
   const logMessages = konsoleProxy.collectMessages();
   const title = 'WASM woohoo';
@@ -317,36 +317,45 @@ function render({ script /*, scriptHash*/, genotype }) {
   // WTF note: Expected a perfomance cost in Chrome due to the slice operation
   // but it seemed to either have no effect or to make the rendering faster!?!
   //
-  const wasmMemory = Shabba.instance.memory.buffer;
+  const wasmMemory = SenieWasm.instance.memory.buffer;
   const memory = wasmMemory.slice();
 
-  return { title, memory, buffers, logMessages };
+  return [{ ok: true, logMessages }, { title, memory, buffers }];
 }
 
 function unparse({ script/*, scriptHash*/, genotype }) {
+  konsoleProxy.clear();
+
   // console.log(`genotype is ${genotype}`);
   // console.log(`script is ${script}`);
-  Shabba.setString(Shabba.source_buffer, script);
-  Shabba.setString(Shabba.genotype_buffer, genotype);
 
-  Shabba.unparseWithGenotype();
-  const newScript = Shabba.getString(Shabba.out_source_buffer);
+  SenieWasm.setString(SenieWasm.source_buffer, script);
+  SenieWasm.setString(SenieWasm.genotype_buffer, genotype);
+
+  SenieWasm.unparseWithGenotype();
+  const newScript = SenieWasm.getString(SenieWasm.out_source_buffer);
 
   // console.log(`new script: ${newScript}`);
 
-  return { script: newScript };
+  const logMessages = konsoleProxy.collectMessages();
+
+  return [{ ok: true, logMessages }, { script: newScript }];
 }
 
-function buildTraitsWasm({ script /*, scriptHash */ }) {
-  Shabba.setString(Shabba.source_buffer, script);
+function buildTraits({ script /*, scriptHash */ }) {
+  konsoleProxy.clear();
+  konsoleProxy.log('hello from buildTraits');
 
-  const numTraits = Shabba.buildTraits();
-  console.log(`built ${numTraits} traits`);
+  SenieWasm.setString(SenieWasm.source_buffer, script);
 
-  const traits = Shabba.getString(Shabba.traits_buffer);
-  // console.log(`js side recieved: ${traits}`);
+  const numTraits = SenieWasm.buildTraits();
+  konsoleProxy.log(`built ${numTraits} traits`);
 
-  return { traits };
+  const traits = SenieWasm.getString(SenieWasm.traits_buffer);
+
+  const logMessages = konsoleProxy.collectMessages();
+
+  return [{ ok: true, logMessages }, { traits }];
 }
 
 // transfers the contents of g_genotype_list from the wasm side
@@ -355,68 +364,68 @@ function getGenotypesFromWasm(populationSize) {
   let s;
 
   for (let i = 0; i < populationSize; i++) {
-    Shabba.genotypeMoveToBuffer(i);
-    s = Shabba.getString(Shabba.genotype_buffer);
+    SenieWasm.genotypeMoveToBuffer(i);
+    s = SenieWasm.getString(SenieWasm.genotype_buffer);
     genotypes.push(s);
   }
 
   return genotypes;
 }
 
-function createInitialGenerationWasm({ populationSize, traits }) {
-  console.log('createInitialGenerationWasm');
-  Shabba.setString(Shabba.traits_buffer, traits);
+function createInitialGeneration({ populationSize, traits }) {
+  konsoleProxy.clear();
+
+  konsoleProxy.log('createInitialGeneration');
+  SenieWasm.setString(SenieWasm.traits_buffer, traits);
 
   const seed = Math.floor(Math.random() * 1024);
-  console.log(`createInitialGenerationWasm seed: ${seed}`);
-  console.log(`createInitialGenerationWasm populationSize: ${populationSize}`);
+  konsoleProxy.log(`createInitialGeneration seed: ${seed}`);
+  konsoleProxy.log(`createInitialGeneration populationSize: ${populationSize}`);
 
-  Shabba.createInitialGeneration(populationSize, seed);
+  SenieWasm.createInitialGeneration(populationSize, seed);
 
   const genotypes = getGenotypesFromWasm(populationSize);
 
-  return { genotypes };
+  const logMessages = konsoleProxy.collectMessages();
+
+  return [{ok: true, logMessages}, { genotypes }];
+}
+
+function singleGenotypeFromSeed({ seed, traits }) {
+  konsoleProxy.clear();
+
+  konsoleProxy.log('singleGenotypeFromSeed');
+  SenieWasm.setString(SenieWasm.traits_buffer, traits);
+
+  konsoleProxy.log(`singleGenotypeFromSeed seed: ${seed}`);
+
+  SenieWasm.singleGenotypeFromSeed(seed);
+
+  const genotypes = getGenotypesFromWasm(1);
+
+  const logMessages = konsoleProxy.collectMessages();
+
+  return [{ok: true, logMessages}, { genotype: genotypes[0] }];
 }
 
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
-  Shabba.nextGenerationPrepare();
+  konsoleProxy.clear();
+
+  SenieWasm.nextGenerationPrepare();
   for (let i = 0; i < genotypes.length; i++) {
-    Shabba.setString(Shabba.genotype_buffer, genotypes[i]);
-    Shabba.nextGenerationAddGenotype();
+    SenieWasm.setString(SenieWasm.genotype_buffer, genotypes[i]);
+    SenieWasm.nextGenerationAddGenotype();
   }
 
-  Shabba.setString(Shabba.traits_buffer, traits);
-  Shabba.nextGenerationBuild(genotypes.length, populationSize,
+  SenieWasm.setString(SenieWasm.traits_buffer, traits);
+  SenieWasm.nextGenerationBuild(genotypes.length, populationSize,
                              mutationRate, rng);
 
   const newGenotypes = getGenotypesFromWasm(populationSize);
 
-  return { genotypes: newGenotypes };
-}
+  const logMessages = konsoleProxy.collectMessages();
 
-function register(callback) {
-  self.addEventListener('message', e => {
-    try {
-      const { type, data } = JSON.parse(e.data);
-
-      const result = callback(type, data);
-
-      if (type === jobRender) {
-        const transferrable = [];
-
-        if (result.buffers && result.buffers.length > 0) {
-          transferrable.push(result.memory);
-        }
-
-        self.postMessage([null, result], transferrable);
-      } else {
-        const sendData = JSON.stringify([null, result]);
-        self.postMessage(sendData);
-      }
-    } catch (error) {
-      self.postMessage(JSON.stringify([{message: error.message}]));
-    }
-  });
+  return [{ok: true, logMessages }, { genotypes: newGenotypes }];
 }
 
 const options = {
@@ -430,76 +439,118 @@ const options = {
 function configureWasmModule(wasmInstance) {
   const w = wasmInstance;
 
-  Shabba.instance = w;
+  SenieWasm.instance = w;
 
   // declare string functions
-  Shabba.setString = w.memory.setString;
-  Shabba.getString = w.memory.getString;
+  SenieWasm.setString = w.memory.setString;
+  SenieWasm.getString = w.memory.getString;
 
   // declare Senie's wasm insterface
-  Shabba.senieStartup = w.exports.senie_startup;
-  Shabba.senieShutdown = w.exports.senie_shutdown;
-  Shabba.scriptCleanup = w.exports.script_cleanup;
+  SenieWasm.senieStartup = w.exports.senie_startup;
+  SenieWasm.senieShutdown = w.exports.senie_shutdown;
+  SenieWasm.scriptCleanup = w.exports.script_cleanup;
 
-  Shabba.compileToRenderPackets = w.exports.compile_to_render_packets;
-  Shabba.getRenderPacketNumVertices = w.exports.get_render_packet_num_vertices;
-  Shabba.getRenderPacketVBuf = w.exports.get_render_packet_vbuf;
-  Shabba.getRenderPacketCBuf = w.exports.get_render_packet_cbuf;
-  Shabba.getRenderPacketTBuf = w.exports.get_render_packet_tbuf;
+  SenieWasm.compileToRenderPackets = w.exports.compile_to_render_packets;
+  SenieWasm.getRenderPacketNumVertices = w.exports.get_render_packet_num_vertices;
+  SenieWasm.getRenderPacketVBuf = w.exports.get_render_packet_vbuf;
+  SenieWasm.getRenderPacketCBuf = w.exports.get_render_packet_cbuf;
+  SenieWasm.getRenderPacketTBuf = w.exports.get_render_packet_tbuf;
 
-  Shabba.buildTraits = w.exports.build_traits;
-  Shabba.createInitialGeneration = w.exports.create_initial_generation;
-  Shabba.genotypeMoveToBuffer = w.exports.genotype_move_to_buffer;
-  Shabba.useGenotypeWhenCompiling = w.exports.use_genotype_when_compiling;
-  Shabba.unparseWithGenotype = w.exports.unparse_with_genotype;
+  SenieWasm.buildTraits = w.exports.build_traits;
+  SenieWasm.createInitialGeneration = w.exports.create_initial_generation;
+  SenieWasm.singleGenotypeFromSeed = w.exports.single_genotype_from_seed;
+  SenieWasm.genotypeMoveToBuffer = w.exports.genotype_move_to_buffer;
+  SenieWasm.useGenotypeWhenCompiling = w.exports.use_genotype_when_compiling;
+  SenieWasm.unparseWithGenotype = w.exports.unparse_with_genotype;
 
-  Shabba.nextGenerationPrepare = w.exports.next_generation_prepare;
-  Shabba.nextGenerationAddGenotype = w.exports.next_generation_add_genotype;
-  Shabba.nextGenerationBuild = w.exports.next_generation_build;
+  SenieWasm.nextGenerationPrepare = w.exports.next_generation_prepare;
+  SenieWasm.nextGenerationAddGenotype = w.exports.next_generation_add_genotype;
+  SenieWasm.nextGenerationBuild = w.exports.next_generation_build;
 
-  Shabba.getSourceBuffer = w.exports.get_source_buffer;
-  Shabba.getOutSourceBuffer = w.exports.get_out_source_buffer;
-  Shabba.getTraitsBuffer = w.exports.get_traits_buffer;
-  Shabba.getGenotypeBuffer = w.exports.get_genotype_buffer;
+  SenieWasm.getSourceBuffer = w.exports.get_source_buffer;
+  SenieWasm.getOutSourceBuffer = w.exports.get_out_source_buffer;
+  SenieWasm.getTraitsBuffer = w.exports.get_traits_buffer;
+  SenieWasm.getGenotypeBuffer = w.exports.get_genotype_buffer;
 }
 
 /*
 function freeModule() {
 
-  Module._free(Shabba.ptr);
-  Module._free(Shabba.vbuf);
-  Module._free(Shabba.cbuf);
-  Module._free(Shabba.tbuf);
+  Module._free(SenieWasm.ptr);
+  Module._free(SenieWasm.vbuf);
+  Module._free(SenieWasm.cbuf);
+  Module._free(SenieWasm.tbuf);
 
-  Shabba.senieShutdown();
+  SenieWasm.senieShutdown();
 }
 */
 
-//console.log("about to start");
+
 loadWASM('senie-wasm.wasm', options).then(wasmInstance => {
   configureWasmModule(wasmInstance);
-  Shabba.senieStartup();
+  SenieWasm.senieStartup();
   // get string buffers
-  Shabba.source_buffer = Shabba.getSourceBuffer();
-  Shabba.out_source_buffer = Shabba.getOutSourceBuffer();
-  Shabba.traits_buffer = Shabba.getTraitsBuffer();
-  Shabba.genotype_buffer = Shabba.getGenotypeBuffer();
+  SenieWasm.source_buffer = SenieWasm.getSourceBuffer();
+  SenieWasm.out_source_buffer = SenieWasm.getOutSourceBuffer();
+  SenieWasm.traits_buffer = SenieWasm.getTraitsBuffer();
+  SenieWasm.genotype_buffer = SenieWasm.getGenotypeBuffer();
 
-  register((type, data) => {
-    switch (type) {
-    case jobRender:
-      return render(data);
-    case jobUnparse:
-      return unparse(data);
-    case jobBuildTraits:
-      return buildTraitsWasm(data);
-    case jobInitialGeneration:
-      return createInitialGenerationWasm(data);
-    case jobNewGeneration:
-      return newGeneration(data);
-    default:
-      // throw unknown type
-      throw new Error(`worker.js: Unknown type: ${type}`);
+  // send the job system an initialised message so
+  // that it can start sending jobs to this worker
+  const sendData = JSON.stringify([{systemInitialised: true}]);
+  postMessage(sendData);
+});
+
+function messageHandler(type, data) {
+  switch (type) {
+  case jobRender:
+    return render(data);
+  case jobUnparse:
+    return unparse(data);
+  case jobBuildTraits:
+    return buildTraits(data);
+  case jobInitialGeneration:
+    return createInitialGeneration(data);
+  case jobSingleGenotypeFromSeed:
+    return singleGenotypeFromSeed(data);
+  case jobNewGeneration:
+    return newGeneration(data);
+  default:
+    // throw unknown type
+    throw new Error(`worker.js: Unknown type: ${type}`);
+  }
+}
+
+/*
+postMessage will always return an array of two items: [status, result]
+
+status = {
+ ok: true
+ error: { message: "something fucked up" }
+ systemInitialised: true
+ logMessages: []
+}
+*/
+
+addEventListener('message', e => {
+  try {
+    const { type, data } = JSON.parse(e.data);
+
+    const [status, result] = messageHandler(type, data);
+
+    if (type === jobRender) {
+      const transferrable = [];
+
+      if (result.buffers && result.buffers.length > 0) {
+        transferrable.push(result.memory);
+      }
+
+      postMessage([status, result], transferrable);
+    } else {
+      const sendData = JSON.stringify([status, result]);
+      postMessage(sendData);
     }
-  });
+  } catch (error) {
+    postMessage(JSON.stringify([{error: {message: error.message}}, undefined]));
+  }
 });

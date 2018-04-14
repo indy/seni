@@ -16,10 +16,17 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-export const jobRender = 'RENDER';
-export const jobUnparse = 'UNPARSE';
-export const jobBuildTraits = 'BUILD_TRAITS';
-export const jobInitialGeneration = 'INITIAL_GENERATION';
-export const jobNewGeneration = 'NEW_GENERATION';
-export const jobGenerateHelp = 'GENERATE_HELP';
-export const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
+import main from './app-piece.js';
+
+function compatibilityHacks() {
+  // Safari doesn't have Number.parseInt (yet)
+  // Safari is the new IE
+  if (Number.parseInt === undefined) {
+    Number.parseInt = parseInt;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  compatibilityHacks();
+  main();
+});

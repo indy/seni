@@ -158,19 +158,6 @@ function handleTextureLoaded(gl, image, texture, shaderProgram) {
   gl.uniform1i(gl.getUniformLocation(shaderProgram, 'uSampler'), 0);
 }
 
-function initTexture(gl, shaderProgram) {
-  const texture = gl.createTexture();
-  const image = new Image();
-  image.onload = () => {
-    console.log('GLRenderer.js: loading a texture');
-    handleTextureLoaded(gl, image, texture, shaderProgram);
-  };
-
-  image.src = '/img/texture.png';
-
-  return texture;
-}
-
 export default class GLRenderer {
   constructor(canvasElement) {
     this.glDomElement = canvasElement;
@@ -182,8 +169,6 @@ export default class GLRenderer {
     this.shaderProgram = setupShaders(gl);
     setupGLState(gl);
 
-    this.texture = initTexture(gl, this.shaderProgram);
-
     this.glVertexBuffer = gl.createBuffer();
     this.glColourBuffer = gl.createBuffer();
     this.glTextureBuffer = gl.createBuffer();
@@ -191,6 +176,28 @@ export default class GLRenderer {
     this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
     Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
+  }
+
+  loadTexture(src) {
+    let that = this;
+
+    return new Promise(function(resolve, reject) {
+
+      const gl = that.gl;
+      that.texture = gl.createTexture();
+      const image = new Image();
+
+      image.addEventListener('load', () => {
+        handleTextureLoaded(that.gl, image, that.texture, that.shaderProgram);
+        resolve();
+      });
+
+      image.addEventListener('error', () => {
+        reject();
+      });
+
+      image.src = src;
+    });
   }
 
   getImageData() {

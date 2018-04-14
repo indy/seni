@@ -323,10 +323,6 @@ function renderScript(state, imageElement) {
     script: state.script,
     scriptHash: state.scriptHash
   }).then(({ title, memory, buffers }) => {
-    // display any log/print messages that were generated
-    // during the execution of the script
-
-    // gUI.konsole.log(logMessages);
     renderGeometryBuffers(memory, buffers, imageElement);
     stopFn(`renderScript-${title}`, gUI.konsole);
   }).catch(error => {
@@ -1045,9 +1041,10 @@ export default function main() {
   const canvasElement = document.getElementById('render-canvas');
   gGLRenderer = new GLRenderer(canvasElement);
 
-  setupUI(store);
-
-  getGallery().then(() => {
+  gGLRenderer.loadTexture('/img/texture.png').then(() => {
+    setupUI(store);
+    return getGallery();
+  }).then(() => {
     return removeKonsoleInvisibility();
-  }).catch(error => console.error(error));
+  }).catch(error => console.error(error));;
 }
