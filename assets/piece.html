@@ -9,18 +9,53 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <link rel="stylesheet" href="css/bones.css">
-    <link rel="stylesheet" href="css/stylesheet.css">
+    <link rel="stylesheet" href="css/indyio.css">
   </head>
 
   <body>
-    <canvas id="render-canvas" width="500" height="500"></canvas>
 
-    <button id="eval-btn" class="navbar-button eval-btn">Eval</button>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"/></svg>
+  </i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://indy.io/">indy.io</a>
+  </div>
+</header>
 
-    <textarea id="edit-textarea">
-(define
-  r (interp/build from: [0 1000] to: [0 math/TAU]))
+      <div id="main" data-behavior="4"
+        class="
+               hasCoverMetaIn
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+
+            <div class="post-header main-content-wrap text-left">
+
+    <h1 class="post-title" itemprop="headline">
+      1748 Orchid B
+    </h1>
+
+
+  <div class="postShorten-meta post-meta">
+
+      <time itemprop="datePublished" datetime="2017-04-23T22:55:05-04:00">
+
+  April 23, 2017
+
+      </time>
+
+  </div>
+
+</div>
+
+          <div class="seni-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <canvas id="piece-canvas" width="500" height="500"></canvas>
+              <button id="piece-eval-original" class="navbar-button eval-btn">Show Original</button>
+              <button id="piece-eval" class="navbar-button eval-btn">Generate with random seed</button>
+              <input id="piece-seed" type="number" value="3">
+              <pre><code id="piece-script">(define r (interp/build from: [0 1000] to: [0 math/TAU]))
 
 (fence (x from: 0 to: 1000 num: 1600)
   (rect position: [x (+ (interp/cos amplitude: {160 (gen/int min: 1 max: 1000)}
@@ -35,7 +70,38 @@
                                            t: (interp/value from: r t: x)))
                          a: {-25.618 (gen/scalar min: -50 max: 100)}
                          b: {12.205 (gen/scalar min: -50 max: 100)})))
-</textarea>
+              </code></pre>
+            </div>
+          </div>
+        </article>
+        <footer id="footer" class="main-content-wrap">
+  <span class="copyrights">
+    &copy; 2018 Inderjit Gill. All Rights Reserved
+  </span>
+</footer>
+      </div>
+    </div>
     <script src="dist/piece.bundle.js"></script>
   </body>
 </html>
+
+
+<!--
+
+define
+  r (interp/build from: [0 1000] to: [0 math/TAU]))
+
+(fence (x from: 0 to: 1000 num: 1600)
+  (rect position: [x (+ (interp/cos amplitude: {931 (gen/int min: 1 max: 1000)}
+                                    frequency: {7.597 (gen/scalar min: 0.1 max: 10)}
+                                    t: (interp/value from: r t: x))
+                        500)]
+        width: {249 (gen/int min: 10 max: 300)}
+        height: {19 (gen/int min: 10 max: 300)}
+        colour: (col/lab l: (+ {81.818 (gen/scalar min: -50 max: 100)}
+                               (interp/cos amplitude: {79 (gen/int min: 1 max: 100)}
+                                           frequency: {8.127 (gen/scalar min: 0.1 max: 10)}
+                                           t: (interp/value from: r t: x)))
+                         a: {92.128 (gen/scalar min: -50 max: 100)}
+                         b: {-12.072 (gen/scalar min: -50 max: 100)})))
+ -->

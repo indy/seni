@@ -38,7 +38,7 @@ function renderBuffers(memory, buffers, w, h) {
 
 function renderScript(config) {
   return Job.request(jobRender, config)
-    .then(({ title, memory, buffers }) => {
+    .then(({ memory, buffers }) => {
       renderBuffers(memory, buffers, 500, 500);
     }).catch(error => {
       // handle error
@@ -54,25 +54,53 @@ function buildGenotype(config) {
   return Job.request(jobSingleGenotypeFromSeed, config);
 }
 
+function unparse(config) {
+  return Job.request(jobUnparse, config);
+}
+
+function getSeedValue(element) {
+  return parseInt(element.value, 10);
+}
+
+
 export default function main() {
   Job.setup(2);
 
-  const textArea = document.getElementById('edit-textarea');
-  const canvasElement = document.getElementById('render-canvas');
-
-  const script = textArea.value;
+  const scriptElement = document.getElementById('piece-script');
+  const canvasElement = document.getElementById('piece-canvas');
+  const seedElement = document.getElementById('piece-seed');
+  const script = scriptElement.textContent;
   const scriptHash = Util.hashCode(script);
+  const originalScript = script.slice();
 
-  const button = document.getElementById('eval-btn');
-  button.addEventListener('click', event => {
+  document.getElementById('piece-eval-original').addEventListener('click', () => {
+    renderScript({ script: originalScript, scriptHash });
+    scriptElement.textContent = originalScript;
+  });
 
+  document.getElementById('piece-eval').addEventListener('click', () => {
+    const seedValue = getSeedValue(seedElement);
     buildTraits({ script, scriptHash })
-      .then(({ traits }) => buildGenotype({ traits, seed: 3 }))
-      .then(({ genotype }) => renderScript({ script, scriptHash, genotype }))
+      .then(({ traits }) => buildGenotype({ traits, seed: seedValue }))
+      .then(({ genotype }) => {
+        const config = { script, scriptHash };
+        if (seedValue !== 0) {
+          config.genotype = genotype;
+        }
+        renderScript(config);
+
+        return unparse({ script, genotype });
+      })
+      .then(({ script }) => {
+        scriptElement.textContent = script;
+      })
       .catch(error => {
         console.log('fooked');
         console.error(error);
       });
+
+    const newSeed = Math.random() * (1 << 30);
+    seedElement.value = parseInt(newSeed, 10);
   });
 
   gGLRenderer = new GLRenderer(canvasElement);
@@ -82,5 +110,4 @@ export default function main() {
       renderScript({ script, scriptHash });
     })
     .catch(error => console.error(error));
-
 }
