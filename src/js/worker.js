@@ -285,11 +285,11 @@ function render({ script /*, scriptHash*/, genotype }) {
   // need to setString before calling compileToRenderPackets
   SenieWasm.setString(SenieWasm.source_buffer, script);
   const numRenderPackets = SenieWasm.compileToRenderPackets();
-  konsoleProxy.log(`numRenderPackets = ${numRenderPackets}`);
+  // konsoleProxy.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
     const numVertices = SenieWasm.getRenderPacketNumVertices(i);
-    konsoleProxy.log(`render_packet ${i}: numVertices = ${numVertices}`);
+    // konsoleProxy.log(`render_packet ${i}: numVertices = ${numVertices}`);
 
     if (numVertices > 0) {
       const buffer = {};
@@ -344,12 +344,11 @@ function unparse({ script/*, scriptHash*/, genotype }) {
 
 function buildTraits({ script /*, scriptHash */ }) {
   konsoleProxy.clear();
-  konsoleProxy.log('hello from buildTraits');
 
   SenieWasm.setString(SenieWasm.source_buffer, script);
 
   const numTraits = SenieWasm.buildTraits();
-  konsoleProxy.log(`built ${numTraits} traits`);
+  // konsoleProxy.log(`built ${numTraits} traits`);
 
   const traits = SenieWasm.getString(SenieWasm.traits_buffer);
 
@@ -375,12 +374,11 @@ function getGenotypesFromWasm(populationSize) {
 function createInitialGeneration({ populationSize, traits }) {
   konsoleProxy.clear();
 
-  konsoleProxy.log('createInitialGeneration');
   SenieWasm.setString(SenieWasm.traits_buffer, traits);
 
   const seed = Math.floor(Math.random() * 1024);
-  konsoleProxy.log(`createInitialGeneration seed: ${seed}`);
-  konsoleProxy.log(`createInitialGeneration populationSize: ${populationSize}`);
+  // konsoleProxy.log(`createInitialGeneration seed: ${seed}`);
+  // konsoleProxy.log(`createInitialGeneration populationSize: ${populationSize}`);
 
   SenieWasm.createInitialGeneration(populationSize, seed);
 
@@ -394,10 +392,9 @@ function createInitialGeneration({ populationSize, traits }) {
 function singleGenotypeFromSeed({ seed, traits }) {
   konsoleProxy.clear();
 
-  konsoleProxy.log('singleGenotypeFromSeed');
   SenieWasm.setString(SenieWasm.traits_buffer, traits);
 
-  konsoleProxy.log(`singleGenotypeFromSeed seed: ${seed}`);
+  // konsoleProxy.log(`singleGenotypeFromSeed seed: ${seed}`);
 
   SenieWasm.singleGenotypeFromSeed(seed);
 

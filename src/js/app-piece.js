@@ -59,13 +59,16 @@ function unparse(config) {
 }
 
 function getSeedValue(element) {
-  return parseInt(element.value, 10);
+  const res = parseInt(element.value, 10);
+  return res;
 }
 
 
 export default function main() {
   Job.setup(2);
 
+  const originalButton = document.getElementById('piece-eval-original');
+  const evalButton = document.getElementById('piece-eval');
   const scriptElement = document.getElementById('piece-script');
   const canvasElement = document.getElementById('piece-canvas');
   const seedElement = document.getElementById('piece-seed');
@@ -73,12 +76,14 @@ export default function main() {
   const scriptHash = Util.hashCode(script);
   const originalScript = script.slice();
 
-  document.getElementById('piece-eval-original').addEventListener('click', () => {
+  originalButton.addEventListener('click', () => {
     renderScript({ script: originalScript, scriptHash });
     scriptElement.textContent = originalScript;
+    originalButton.disabled = true;
   });
 
-  document.getElementById('piece-eval').addEventListener('click', () => {
+  evalButton.addEventListener('click', () => {
+    originalButton.disabled = false;
     const seedValue = getSeedValue(seedElement);
     buildTraits({ script, scriptHash })
       .then(({ traits }) => buildGenotype({ traits, seed: seedValue }))
@@ -106,7 +111,6 @@ export default function main() {
   gGLRenderer = new GLRenderer(canvasElement);
   gGLRenderer.loadTexture('/img/texture.png')
     .then(() => {
-      console.log('loaded texture');
       renderScript({ script, scriptHash });
     })
     .catch(error => console.error(error));
