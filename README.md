@@ -37,7 +37,7 @@ make\win.bat test
 
 You will need to build a server.exe and add it to the Firewall whitelist in order to prevent a Windows Firewall dialog appearing every time.
 
-1. `go build server/serve.go -o serve.exe`
+1. `go build src/go/serve.go`
 2. In the windows control panel go to:
    `Control Panel\All Control Panel Items\Windows Firewall\Allowed applications`
    and add the serve.exe that was just created

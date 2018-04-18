@@ -84,14 +84,12 @@ export default function main() {
   fetchScript(57).then(code => {
     script = code;
     originalScript = script.slice();
+    scriptElement.textContent = script;
 
     return gGLRenderer.loadTexture('/img/texture.png');
   })
     .then(() => renderScript({ script, scriptHash }))
     .catch(error => console.error(error));
-
-  const newSeed = Math.random() * (1 << 30);
-  seedElement.value = parseInt(newSeed, 10);
 
   originalButton.addEventListener('click', () => {
     renderScript({ script: originalScript, scriptHash });
@@ -101,6 +99,10 @@ export default function main() {
 
   evalButton.addEventListener('click', () => {
     originalButton.disabled = false;
+
+    const newSeed = Math.random() * (1 << 30);
+    seedElement.value = parseInt(newSeed, 10);
+
     const seedValue = getSeedValue(seedElement);
     buildTraits({ script, scriptHash })
       .then(({ traits }) => buildGenotype({ traits, seed: seedValue }))
