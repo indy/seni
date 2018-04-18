@@ -63,6 +63,9 @@ function getSeedValue(element) {
   return res;
 }
 
+function fetchScript(id) {
+  return fetch(`/gallery/${id}`).then(response => response.text());
+}
 
 export default function main() {
   Job.setup(2);
@@ -72,9 +75,23 @@ export default function main() {
   const scriptElement = document.getElementById('piece-script');
   const canvasElement = document.getElementById('piece-canvas');
   const seedElement = document.getElementById('piece-seed');
-  const script = scriptElement.textContent;
-  const scriptHash = Util.hashCode(script);
-  const originalScript = script.slice();
+
+  let script, originalScript;
+  const scriptHash = Util.hashCode('whatever');
+
+  gGLRenderer = new GLRenderer(canvasElement);
+
+  fetchScript(57).then(code => {
+    script = code;
+    originalScript = script.slice();
+
+    return gGLRenderer.loadTexture('/img/texture.png');
+  })
+    .then(() => renderScript({ script, scriptHash }))
+    .catch(error => console.error(error));
+
+  const newSeed = Math.random() * (1 << 30);
+  seedElement.value = parseInt(newSeed, 10);
 
   originalButton.addEventListener('click', () => {
     renderScript({ script: originalScript, scriptHash });
@@ -103,15 +120,6 @@ export default function main() {
         console.log('fooked');
         console.error(error);
       });
-
-    const newSeed = Math.random() * (1 << 30);
-    seedElement.value = parseInt(newSeed, 10);
   });
 
-  gGLRenderer = new GLRenderer(canvasElement);
-  gGLRenderer.loadTexture('/img/texture.png')
-    .then(() => {
-      renderScript({ script, scriptHash });
-    })
-    .catch(error => console.error(error));
 }
