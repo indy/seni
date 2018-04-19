@@ -92,13 +92,18 @@ export default function main() {
 
   gGLRenderer = new GLRenderer(canvasElement);
 
-  fetchScript(57).then(code => {
-    script = code;
-    originalScript = script.slice();
-    scriptElement.textContent = script;
+  script = scriptElement.textContent;
+  originalScript = script.slice();
 
-    return gGLRenderer.loadTexture(texturePathElement.textContent);
-  })
+  // fetchScript(57).then(code => {
+  //   script = code;
+  //   originalScript = script.slice();
+  //   scriptElement.textContent = script;
+
+  //   return gGLRenderer.loadTexture(texturePathElement.textContent);
+  // })
+
+  gGLRenderer.loadTexture(texturePathElement.textContent)
     .then(() => renderScript({ script, scriptHash }))
     .catch(error => console.error(error));
 

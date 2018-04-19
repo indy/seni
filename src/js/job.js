@@ -99,6 +99,7 @@ function setup(numWorkersParam, path) {
   numWorkers = numWorkersParam;
 
   if (logToConsole) {
+    console.log(`workers::path = ${path}`);
     console.log(`workers::numWorkers = ${numWorkers}`);
   }
 

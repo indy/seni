@@ -482,7 +482,6 @@ function freeModule() {
 }
 */
 
-
 loadWASM('senie-wasm.wasm', options).then(wasmInstance => {
   configureWasmModule(wasmInstance);
   SenieWasm.senieStartup();
