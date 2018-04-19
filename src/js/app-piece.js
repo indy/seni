@@ -67,14 +67,25 @@ function fetchScript(id) {
   return fetch(`/gallery/${id}`).then(response => response.text());
 }
 
-export default function main() {
-  Job.setup(2);
+function getRequiredElement(id) {
+  const element = document.getElementById(id);
+  if (!element) {
+    console.error(`required element ${id} not found in dom`);
+  }
+  return element;
+}
 
-  const originalButton = document.getElementById('piece-eval-original');
-  const evalButton = document.getElementById('piece-eval');
-  const scriptElement = document.getElementById('piece-script');
-  const canvasElement = document.getElementById('piece-canvas');
-  const seedElement = document.getElementById('piece-seed');
+export default function main() {
+  const texturePathElement = getRequiredElement('piece-texture-path');
+  const workerPathElement = getRequiredElement('piece-worker-path');
+
+  Job.setup(2, workerPathElement.textContent);
+
+  const originalButton = getRequiredElement('piece-eval-original');
+  const evalButton = getRequiredElement('piece-eval');
+  const scriptElement = getRequiredElement('piece-script');
+  const canvasElement = getRequiredElement('piece-canvas');
+  const seedElement = getRequiredElement('piece-seed');
 
   let script, originalScript;
   const scriptHash = Util.hashCode('whatever');
@@ -86,7 +97,7 @@ export default function main() {
     originalScript = script.slice();
     scriptElement.textContent = script;
 
-    return gGLRenderer.loadTexture('/img/texture.png');
+    return gGLRenderer.loadTexture(texturePathElement.textContent);
   })
     .then(() => renderScript({ script, scriptHash }))
     .catch(error => console.error(error));

@@ -998,7 +998,7 @@ function allocateWorkers(state) {
     // don't allocate more workers than necessary
     numWorkers = state.populationSize;
   }
-  Job.setup(numWorkers);
+  Job.setup(numWorkers, '/dist/worker.bundle.js');
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/Events/resize

@@ -95,7 +95,7 @@ class PromiseWorker {
   }
 }
 
-function setup(numWorkersParam) {
+function setup(numWorkersParam, path) {
   numWorkers = numWorkersParam;
 
   if (logToConsole) {
@@ -103,7 +103,7 @@ function setup(numWorkersParam) {
   }
 
   for (let i = 0; i < numWorkers; i++) {
-    promiseWorkers[i] = new PromiseWorker(i, '/dist/worker.bundle.js');
+    promiseWorkers[i] = new PromiseWorker(i, path);
   }
 }
 
