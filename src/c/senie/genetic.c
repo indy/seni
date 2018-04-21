@@ -364,7 +364,8 @@ void add_trait(senie_node*       node,
                senie_node*       parameter_ast,
                i32               program_max_size,
                senie_trait_list* trait_list,
-               senie_word_lut*   word_lut) {
+               senie_word_lut*   word_lut,
+               i32               vary) {
   senie_trait* trait = trait_get_from_pool();
 
   if (hack_node_to_var(trait->initial_value, node) == false) {
@@ -372,8 +373,11 @@ void add_trait(senie_node*       node,
     node_pretty_print("failed node", node, word_lut);
   }
 
-  // can compile the parameter_ast
-  trait->program = compile_program(parameter_ast, program_max_size, word_lut);
+  if (vary == 1) {
+    trait->program = compile_program_for_vary_trait(parameter_ast, program_max_size, word_lut, node);
+  } else {
+    trait->program = compile_program_for_trait(parameter_ast, program_max_size, word_lut, node);
+  }
 
   trait_list_add_trait(trait_list, trait);
 }
@@ -381,19 +385,21 @@ void add_trait(senie_node*       node,
 void add_single_trait(senie_node*       node,
                       i32               program_max_size,
                       senie_trait_list* trait_list,
-                      senie_word_lut*   word_lut) {
-  add_trait(node, node->parameter_ast, program_max_size, trait_list, word_lut);
+                      senie_word_lut*   word_lut,
+                      i32               vary) {
+  add_trait(node, node->parameter_ast, program_max_size, trait_list, word_lut, vary);
 }
 
 void add_multiple_traits(senie_node*       node,
                          i32               program_max_size,
                          senie_trait_list* trait_list,
-                         senie_word_lut*   word_lut) {
+                         senie_word_lut*   word_lut,
+                         i32               vary) {
   senie_node* vector = node;
   senie_node* n      = safe_first(node->value.first_child);
 
   while (n) {
-    add_trait(n, vector->parameter_ast, program_max_size, trait_list, word_lut);
+    add_trait(n, vector->parameter_ast, program_max_size, trait_list, word_lut, vary);
     n = safe_next(n);
   }
 }
@@ -401,14 +407,15 @@ void add_multiple_traits(senie_node*       node,
 senie_node* ga_traverse(senie_node*       node,
                         i32               program_max_size,
                         senie_trait_list* trait_list,
-                        senie_word_lut*   word_lut) {
+                        senie_word_lut*   word_lut,
+                        i32               vary) {
   senie_node* n = node;
 
   if (n->alterable) {
     if (n->type == NODE_VECTOR) {
-      add_multiple_traits(n, program_max_size, trait_list, word_lut);
+      add_multiple_traits(n, program_max_size, trait_list, word_lut, vary);
     } else {
-      add_single_trait(n, program_max_size, trait_list, word_lut);
+      add_single_trait(n, program_max_size, trait_list, word_lut, vary);
     }
   }
 
@@ -416,7 +423,7 @@ senie_node* ga_traverse(senie_node*       node,
     n = n->value.first_child;
 
     while (n != NULL) {
-      ga_traverse(n, program_max_size, trait_list, word_lut);
+      ga_traverse(n, program_max_size, trait_list, word_lut, vary);
       n = safe_next(n);
     }
   }
@@ -425,13 +432,13 @@ senie_node* ga_traverse(senie_node*       node,
 }
 
 senie_trait_list*
-trait_list_compile(senie_node* ast, i32 trait_program_max_size, senie_word_lut* word_lut) {
+trait_list_compile(senie_node* ast, i32 trait_program_max_size, senie_word_lut* word_lut, i32 vary) {
   // iterate through and build some traits
   senie_trait_list* trait_list = trait_list_get_from_pool();
 
   senie_node* n = ast;
   while (n != NULL) {
-    n = ga_traverse(n, trait_program_max_size, trait_list, word_lut);
+    n = ga_traverse(n, trait_program_max_size, trait_list, word_lut, vary);
   }
 
   return trait_list;

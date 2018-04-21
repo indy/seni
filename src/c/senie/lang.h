@@ -242,7 +242,7 @@ struct senie_program {
   i32             code_max_size;
   i32             code_size;
 
-  // variables used during compilation phase
+  // variables used during compilation phase, won't be available during runtime
   //
   i32 opcode_offset;
   i32 global_mappings[MEMORY_GLOBAL_SIZE]; // top-level defines
@@ -307,7 +307,9 @@ void vm_free(senie_vm* vm);
 void vm_free_render_data(senie_vm* vm);
 void vm_pretty_print(senie_vm* vm, char* msg);
 
-senie_var* stack_peek(senie_vm* vm);
+// access global variables when they're in a known location
+senie_var* vm_get_from_global_offset(senie_vm* vm, i32 offset);
+senie_var* vm_stack_peek(senie_vm* vm);
 
 void       vector_construct(senie_var* head);
 i32        vector_length(senie_var* var);

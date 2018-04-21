@@ -385,32 +385,46 @@ i32 count_children(senie_node* parent) {
   return count;
 }
 
+i32 store_locally(senie_program* program, i32 iname) {
+  i32 address = get_local_mapping(program, iname);
+  if (address == -1) {
+    address = add_local_mapping(program, iname);
+    if (address == -1) {
+      // failed to allocate
+      SENIE_ERROR("store_locally: allocation failure");
+    }
+  }
+  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, address);
+
+  return address;
+}
+
+i32 store_globally(senie_program* program, i32 iname) {
+  i32 address = get_global_mapping(program, iname);
+  if (address == -1) {
+    address = add_global_mapping(program, iname);
+    if (address == -1) {
+      // failed to allocate
+      SENIE_ERROR("store_globally: allocation failure");
+    }
+  }
+  program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
+
+  return address;
+}
+
 i32 store_from_stack_to_memory(senie_program*            program,
                                senie_node*               node,
                                senie_memory_segment_type memory_segment_type) {
-  i32 address = -1;
-
   if (memory_segment_type == MEM_SEG_LOCAL) {
-    address = get_local_mapping(program, node->value.i);
-    if (address == -1) {
-      address = add_local_mapping(program, node->value.i);
-      if (address == -1) {
-        // failed to allocate
-        SENIE_ERROR("store_from_stack_to_memory: allocation failure");
-      }
-    }
-    program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, address);
+    return store_locally(program, node->value.i);
   } else if (memory_segment_type == MEM_SEG_GLOBAL) {
-    address = get_global_mapping(program, node->value.i);
-    if (address == -1) {
-      address = add_global_mapping(program, node->value.i);
-    }
-    program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
+    return store_globally(program, node->value.i);
   } else {
     SENIE_ERROR("store_from_stack_to_memory: unknown memory_segment_type: %d", memory_segment_type);
   }
 
-  return address;
+  return -1;
 }
 
 senie_node* compile_define(senie_node*               ast,
@@ -1540,20 +1554,22 @@ bool is_list_beginning_with(senie_node* ast, i32 index) {
   return false;
 }
 
-void store_globally(senie_program* program, i32 iname) {
-  i32 address = get_global_mapping(program, iname);
-  if (address == -1) {
-    address = add_global_mapping(program, iname);
-  }
-  program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
+void compile_global_bind_node(senie_program* program, i32 iname, senie_node* node) {
+  compile(node, program);
+  store_globally(program, iname);
 }
 
-void compile_preamble_f32(senie_program* program, i32 iname, f32 value) {
+void compile_global_bind_i32(senie_program* program, i32 iname, i32 value) {
+  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, value);
+  store_globally(program, iname);
+}
+
+void compile_global_bind_f32(senie_program* program, i32 iname, f32 value) {
   program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, value);
   store_globally(program, iname);
 }
 
-void compile_preamble_col(senie_program* program, i32 iname, f32 r, f32 g, f32 b, f32 a) {
+void compile_global_bind_col(senie_program* program, i32 iname, f32 r, f32 g, f32 b, f32 a) {
   senie_var mem_location, colour_arg;
 
   i32_as_var(&mem_location, MEM_SEG_CONSTANT);
@@ -1576,7 +1592,7 @@ void append_name(senie_program* program, i32 iname) {
   program_emit_opcode_i32(program, APPEND, 0, 0);
 }
 
-void compile_preamble_procedural_presets(senie_program* program) {
+void compile_global_bind_procedural_presets(senie_program* program) {
   // create a vector
   program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
 
@@ -1594,6 +1610,9 @@ void compile_preamble_procedural_presets(senie_program* program) {
 
 // NOTE: each entry in compile_preamble should have a corresponding entry here
 void register_top_level_preamble(senie_program* program) {
+  add_global_mapping(program, INAME_GEN_USE_VARY);
+  add_global_mapping(program, INAME_GEN_INITIAL);
+
   add_global_mapping(program, INAME_CANVAS_WIDTH);
   add_global_mapping(program, INAME_CANVAS_HEIGHT);
 
@@ -1618,33 +1637,34 @@ void compile_preamble(senie_program* program) {
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble
   // ********************************************************************************
-  compile_preamble_f32(program, INAME_CANVAS_WIDTH, 1000.0f);
-  compile_preamble_f32(program, INAME_CANVAS_HEIGHT, 1000.0f);
+  compile_global_bind_i32(program, INAME_GEN_USE_VARY, 0);
+  compile_global_bind_i32(program, INAME_GEN_INITIAL, 0);
 
-  compile_preamble_f32(program, INAME_MATH_TAU, TAU);
+  compile_global_bind_f32(program, INAME_CANVAS_WIDTH, 1000.0f);
+  compile_global_bind_f32(program, INAME_CANVAS_HEIGHT, 1000.0f);
 
-  compile_preamble_col(program, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f);
-  compile_preamble_col(program, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f);
+  compile_global_bind_f32(program, INAME_MATH_TAU, TAU);
 
-  compile_preamble_col(program, INAME_RED, 1.0f, 0.0f, 0.0f, 1.0f);
-  compile_preamble_col(program, INAME_GREEN, 0.0f, 1.0f, 0.0f, 1.0f);
-  compile_preamble_col(program, INAME_BLUE, 0.0f, 0.0f, 1.0f, 1.0f);
+  compile_global_bind_col(program, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f);
+  compile_global_bind_col(program, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f);
 
-  compile_preamble_col(program, INAME_YELLOW, 1.0f, 1.0f, 0.0f, 1.0f);
-  compile_preamble_col(program, INAME_MAGENTA, 1.0f, 0.0f, 1.0f, 1.0f);
-  compile_preamble_col(program, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f);
+  compile_global_bind_col(program, INAME_RED, 1.0f, 0.0f, 0.0f, 1.0f);
+  compile_global_bind_col(program, INAME_GREEN, 0.0f, 1.0f, 0.0f, 1.0f);
+  compile_global_bind_col(program, INAME_BLUE, 0.0f, 0.0f, 1.0f, 1.0f);
 
-  compile_preamble_procedural_presets(program);
+  compile_global_bind_col(program, INAME_YELLOW, 1.0f, 1.0f, 0.0f, 1.0f);
+  compile_global_bind_col(program, INAME_MAGENTA, 1.0f, 0.0f, 1.0f, 1.0f);
+  compile_global_bind_col(program, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f);
+
+  compile_global_bind_procedural_presets(program);
   // ********************************************************************************
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble
   // ********************************************************************************
 }
 
-// compiles the ast into bytecode for a stack based VM
-//
 senie_program*
-compile_program_common(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut) {
+compile_common_prologue(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut) {
   senie_program* program = program_allocate(program_max_size);
 
   program->word_lut = word_lut;
@@ -1661,6 +1681,11 @@ compile_program_common(senie_node* ast, i32 program_max_size, senie_word_lut* wo
   // register top-level defines
   register_top_level_defines(ast, program);
 
+
+  return program;
+}
+
+senie_program* compile_common_top_level_fns(senie_program* program, senie_node* ast) {
   senie_bytecode* start = program_emit_opcode_i32(program, JUMP, 0, 0);
 
   // compile the top-level functions
@@ -1679,8 +1704,11 @@ compile_program_common(senie_node* ast, i32 program_max_size, senie_word_lut* wo
   start->arg0.type    = VAR_INT;
   start->arg0.value.i = program->code_size;
 
-  // compile the top-level defines
-  n = ast;
+  return program;
+}
+
+senie_program* compile_common_top_level_defines(senie_program* program, senie_node* ast) {
+  senie_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_DEFINE)) {
       compile_define(safe_first(n->value.first_child), program, MEM_SEG_GLOBAL);
@@ -1690,8 +1718,11 @@ compile_program_common(senie_node* ast, i32 program_max_size, senie_word_lut* wo
     }
   }
 
-  // compile all other top-level forms
-  n = ast;
+  return program;
+}
+
+senie_program* compile_common_top_level_forms(senie_program* program, senie_node* ast) {
+  senie_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_FN) == false &&
         is_list_beginning_with(n, INAME_DEFINE) == false) {
@@ -1701,13 +1732,30 @@ compile_program_common(senie_node* ast, i32 program_max_size, senie_word_lut* wo
     }
   }
 
+  return program;
+}
+
+senie_program* compile_common_epilogue(senie_program* program) {
   program_emit_opcode_i32(program, STOP, 0, 0);
 
   // we can now update the addreses used by CALL and CALL_0
   correct_function_addresses(program);
 
-  // SENIE_LOG("program compiled: %d lines\n", program->code_size);
+  return program;
+}
 
+// compiles the ast into bytecode for a stack based VM
+//
+senie_program*
+compile_common(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut) {
+
+  senie_program* program = compile_common_prologue(ast, program_max_size, word_lut);
+  program = compile_common_top_level_fns(program, ast);
+  program = compile_common_top_level_defines(program, ast);
+  program = compile_common_top_level_forms(program, ast);
+  program = compile_common_epilogue(program);
+
+  // SENIE_LOG("program compiled: %d lines\n", program->code_size);
   return program;
 }
 
@@ -1716,7 +1764,7 @@ compile_program_common(senie_node* ast, i32 program_max_size, senie_word_lut* wo
 senie_program* compile_program(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut) {
   g_use_genes = false;
 
-  senie_program* program = compile_program_common(ast, program_max_size, word_lut);
+  senie_program* program = compile_common(ast, program_max_size, word_lut);
 
   return program;
 }
@@ -1733,7 +1781,46 @@ senie_program* compile_program_with_genotype(senie_node*     ast,
     return NULL;
   }
 
-  senie_program* program = compile_program_common(ast, program_max_size, word_lut);
+  senie_program* program = compile_common(ast, program_max_size, word_lut);
+
+  return program;
+}
+
+
+
+senie_program* compile_program_for_trait(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut, senie_node* gen_initial_value) {
+
+  g_use_genes = false;
+
+  senie_program* program = compile_common_prologue(ast, program_max_size, word_lut);
+  program = compile_common_top_level_fns(program, ast);
+
+  // this is a sub-program for a trait, bind the initial value to gen/initial-value
+  compile_global_bind_node(program, INAME_GEN_INITIAL, gen_initial_value);
+
+  program = compile_common_top_level_defines(program, ast);
+  program = compile_common_top_level_forms(program, ast);
+  program = compile_common_epilogue(program);
+
+  return program;
+}
+
+senie_program* compile_program_for_vary_trait(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut, senie_node* gen_initial_value) {
+
+  g_use_genes = false;
+
+  senie_program* program = compile_common_prologue(ast, program_max_size, word_lut);
+  program = compile_common_top_level_fns(program, ast);
+
+  // this is a sub-program for a trait, bind the initial value to gen/initial-value
+  compile_global_bind_node(program, INAME_GEN_INITIAL, gen_initial_value);
+
+  // set a global gen/use-vary binding to 1
+  compile_global_bind_i32(program, INAME_GEN_USE_VARY, 1);
+
+  program = compile_common_top_level_defines(program, ast);
+  program = compile_common_top_level_forms(program, ast);
+  program = compile_common_epilogue(program);
 
   return program;
 }

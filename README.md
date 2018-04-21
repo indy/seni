@@ -21,11 +21,11 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 * compiling natively and running tests on Linux/MacOS:
 
-./make/unix.sh
+./make_unix.sh test
 
 * compiling natively and running tests on Windows
 
-make\win.bat test
+make_win.bat test
 
 
 ### Running

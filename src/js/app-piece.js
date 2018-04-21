@@ -115,7 +115,8 @@ export default function main() {
     seedElement.value = parseInt(newSeed, 10);
 
     const seedValue = getSeedValue(seedElement);
-    buildTraits({ script, scriptHash })
+    const vary = 1;
+    buildTraits({ script, scriptHash, vary })
       .then(({ traits }) => buildGenotype({ traits, seed: seedValue }))
       .then(({ genotype }) => {
         const config = { script, scriptHash };

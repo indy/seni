@@ -1,15 +1,16 @@
 * TODO [0/15]
-  1. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
-  2. [ ] quilt
-  3. [ ] map (1669-zero.senie)
-  4. [ ] better error messages when gen/scalar was mis-spelt
-  5. [ ] {red (gen/col alpha: 1)} bug?
-  6. [ ] poly should also accept a uv parameter
-  7. [ ] remove vm/env from genotype_list_create_initial_generation
-  8. [ ] impl: initial seed
-  9. [ ] get high-res render working
-  10. [ ] add an END token to serialized output, use as a sanity check?
-  11. [ ] add unit tests for compiling with a genotype
+  1. [ ] bind_gen_col should take 'vary' into account
+  2. [ ] bind_gen_select should take 'vary' into account
+  3. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
+  4. [ ] quilt
+  5. [ ] map (1669-zero.senie)
+  6. [ ] better error messages when gen/scalar was mis-spelt
+  7. [ ] {red (gen/col alpha: 1)} bug?
+  8. [ ] poly should also accept a uv parameter
+  9. [ ] remove vm/env from genotype_list_create_initial_generation
+  10. [ ] impl: initial seed
+  11. [ ] add an END token to serialized output, use as a sanity check?
+  12. [ ] add unit tests for compiling with a genotype
   13. [ ] ensure that there's a dist folder before running npm run build:wasm
   14. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
   15. [ ] look into restrict keyword in C99
@@ -798,3 +799,63 @@ rename server.go -> server/serve.go
 remove build_unix folder, place output in /output?
 
 remove /make prefix files with make_ and place in root
+
+
+* trait program should have access to the initial value
+
+
+run-time vs. compile-time
+
+senie_vm variables used by get_global_mapping?
+
+how do normal global variables work?
+can in-built functions not access the global variables?
+
+when are program->global_mappings set/updated/read?
+
+
+
+MEM_SEG_CONSTANT, MEM_SEG_ARGUMENT, MEM_SEG_GLOBAL, MEM_SEG_LOCAL, MEM_SEG_VOID
+
+
+MEM_SEG_KNOWN : a (very) small set of known locations
+0: the initial value of a trait
+1: the 'gen/use-vary' value
+
+the other way is that we always know where in global memory these variables will be
+
+--------------------------------------------------------------------------------
+
+
+
+vm_compiler: compile_program_for_trait sets a gen_initial_value
+
+
+compile the script using default alterable parameters
+compile the script using a genotype to replace the alterable parameters
+compile the script using variation of the default alterable parameters by a particular %
+compile a subprogram within the script related to a particular trait
+(maybe?) compile the script using variation of the default alterable parameters according to per-trait animation parameters
+
+--------------------------------------------------------------------------------
+
+(+ 6 {3 (define arse [42 69]) (gen/int min: 1 max: 100)})
+
+the trait code in the expression above compiles to the following bytecode:
+
+ 0	JUMP		+1
+ 1	LOAD		CONST		42.00
+ 2	LOAD		CONST		69.00
+ 3	SQUISH2
+ 4	STORE		GLOBAL	12
+ 5	LOAD		CONST		235
+ 6	LOAD		CONST		1.00
+ 7	LOAD		CONST		234
+ 8	LOAD		CONST		100.00
+ 9	NATIVE	398			2
+10	STOP
+
+given an initial value, need to automatically add bytecode that's the equivalent of:
+
+(define gen/initial-value ##INITIAL_VALUE##)
+which coresspond to lines 1..4 in the bytecode above

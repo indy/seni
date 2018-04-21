@@ -1,5 +1,5 @@
 
-(define 
+(define
   coords1 {[[348.973 481.238]
             [374.290 249.944]
             [174.617 251.729]
@@ -48,4 +48,3 @@
                             copies: num-copies)))
 
 (render)
-

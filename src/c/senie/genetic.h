@@ -28,7 +28,7 @@ struct senie_trait_list {
 };
 
 senie_trait_list*
-                  trait_list_compile(senie_node* ast, i32 trait_program_max_size, senie_word_lut* word_lut);
+trait_list_compile(senie_node* ast, i32 trait_program_max_size, senie_word_lut* word_lut, i32 vary);
 senie_trait_list* trait_list_get_from_pool();
 void              trait_list_return_to_pool(senie_trait_list* trait_list);
 i32               trait_list_count(senie_trait_list* trait_list);

@@ -342,12 +342,12 @@ function unparse({ script/*, scriptHash*/, genotype }) {
   return [{ ok: true, logMessages }, { script: newScript }];
 }
 
-function buildTraits({ script /*, scriptHash */ }) {
+function buildTraits({ script, vary /*, scriptHash */ }) {
   konsoleProxy.clear();
 
   SenieWasm.setString(SenieWasm.source_buffer, script);
 
-  const numTraits = SenieWasm.buildTraits();
+  const numTraits = SenieWasm.buildTraits(vary ? 1 : 0);
   // konsoleProxy.log(`built ${numTraits} traits`);
 
   const traits = SenieWasm.getString(SenieWasm.traits_buffer);
