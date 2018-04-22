@@ -2456,6 +2456,12 @@ senie_var* bind_gen_select(senie_vm* vm, i32 num_args) {
 
   senie_var* res = vector_get(from, index);
 
+  // percentages don't make sense for gen/select since the options may not be ordinal
+  // So work as normal, but if vary is set to 0 use the initial value
+  if(using_vary(vm) && vary == 0.0f) {
+    res = get_gen_initial(vm);
+  }
+
   var_copy(&g_var_scratch, res);
 
   return &g_var_scratch;
@@ -2486,11 +2492,16 @@ senie_var* bind_gen_col(senie_vm* vm, i32 num_args) {
     }
   } else {
     senie_var* initial_value = get_gen_initial(vm);
+
+    // todo: set min and max according to colour format
+    f32 min = 0.0f;
+    f32 max = 1.0f;
+
     colour.format     = initial_value->value.i;
-    colour.element[0] = initial_value->f32_array[0];
-    colour.element[1] = initial_value->f32_array[1];
-    colour.element[2] = initial_value->f32_array[2];
-    colour.element[3] = initial_value->f32_array[3];
+    colour.element[0] = senie_prng_f32_around(vm->prng_state, initial_value->f32_array[0], vary, min, max);
+    colour.element[1] = senie_prng_f32_around(vm->prng_state, initial_value->f32_array[1], vary, min, max);
+    colour.element[2] = senie_prng_f32_around(vm->prng_state, initial_value->f32_array[2], vary, min, max);
+    colour.element[3] = senie_prng_f32_around(vm->prng_state, initial_value->f32_array[3], vary, min, max);
   }
 
   colour_as_var(&g_var_scratch, &colour);

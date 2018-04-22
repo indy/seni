@@ -92,7 +92,7 @@ export default function main() {
 
   gGLRenderer = new GLRenderer(canvasElement);
 
-  fetchScript(57).then(code => {
+  fetchScript(19).then(code => {
     script = code;
     originalScript = script.slice();
     scriptElement.textContent = script;

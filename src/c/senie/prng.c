@@ -1,5 +1,6 @@
 #include "prng.h"
 
+#include "config.h"
 #include "mathutil.h"
 
 #define RND_IMPLEMENTATION
