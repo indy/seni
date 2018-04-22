@@ -22,6 +22,7 @@
 
 i32 g_colour_constructor_start = 0;
 i32 g_colour_constructor_end   = 0;
+f32 g_vary_default = 5.0f;
 
 i32 get_colour_constructor_start() { return g_colour_constructor_start; }
 
@@ -2360,7 +2361,7 @@ senie_var* get_gen_initial(senie_vm* vm) {
 senie_var* bind_gen_int(senie_vm* vm, i32 num_args) {
   f32 min = 0.0f;
   f32 max = 1000.0f;
-  f32 vary = 10.0f;                // 10%
+  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_MIN, min);
@@ -2385,7 +2386,7 @@ senie_var* bind_gen_int(senie_vm* vm, i32 num_args) {
 senie_var* bind_gen_scalar(senie_vm* vm, i32 num_args) {
   f32 min = 0.0f;
   f32 max = 1.0f;
-  f32 vary = 10.0f;                // 10%
+  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_MIN, min);
@@ -2412,7 +2413,7 @@ senie_var* bind_gen_scalar(senie_vm* vm, i32 num_args) {
 senie_var* bind_gen_2d(senie_vm* vm, i32 num_args) {
   f32 min = 0.0f;
   f32 max = 1.0f;
-  f32 vary = 10.0f;                // 10%
+  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_MIN, min);
@@ -2444,7 +2445,7 @@ senie_var* bind_gen_select(senie_vm* vm, i32 num_args) {
   // e.g. (gen/select from: [1 2 3 4 5]) vs. (gen/select from: [1 2])
 
   senie_var* from = NULL;
-  f32 vary = 10.0f;                // 10%
+  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VAR(INAME_FROM, from);
@@ -2469,7 +2470,7 @@ senie_var* bind_gen_select(senie_vm* vm, i32 num_args) {
 
 senie_var* bind_gen_col(senie_vm* vm, i32 num_args) {
   f32 alpha = -1.0f;
-  f32 vary = 10.0f;                // 10%
+  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_ALPHA, alpha);

@@ -116,16 +116,16 @@ export default function main() {
 
     const seedValue = getSeedValue(seedElement);
     const vary = 1;
-    buildTraits({ script, scriptHash, vary })
+    buildTraits({ script: originalScript, scriptHash, vary })
       .then(({ traits }) => buildGenotype({ traits, seed: seedValue }))
       .then(({ genotype }) => {
-        const config = { script, scriptHash };
+        const config = { script: originalScript, scriptHash };
         if (seedValue !== 0) {
           config.genotype = genotype;
         }
         renderScript(config);
 
-        return unparse({ script, genotype });
+        return unparse({ script: originalScript, genotype });
       })
       .then(({ script }) => {
         scriptElement.textContent = script;
