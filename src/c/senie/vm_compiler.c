@@ -1681,7 +1681,6 @@ compile_common_prologue(senie_node* ast, i32 program_max_size, senie_word_lut* w
   // register top-level defines
   register_top_level_defines(ast, program);
 
-
   return program;
 }
 
@@ -1746,14 +1745,13 @@ senie_program* compile_common_epilogue(senie_program* program) {
 
 // compiles the ast into bytecode for a stack based VM
 //
-senie_program*
-compile_common(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut) {
+senie_program* compile_common(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut) {
 
   senie_program* program = compile_common_prologue(ast, program_max_size, word_lut);
-  program = compile_common_top_level_fns(program, ast);
-  program = compile_common_top_level_defines(program, ast);
-  program = compile_common_top_level_forms(program, ast);
-  program = compile_common_epilogue(program);
+  program                = compile_common_top_level_fns(program, ast);
+  program                = compile_common_top_level_defines(program, ast);
+  program                = compile_common_top_level_forms(program, ast);
+  program                = compile_common_epilogue(program);
 
   // SENIE_LOG("program compiled: %d lines\n", program->code_size);
   return program;
@@ -1786,14 +1784,15 @@ senie_program* compile_program_with_genotype(senie_node*     ast,
   return program;
 }
 
-
-
-senie_program* compile_program_for_trait(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut, senie_node* gen_initial_value) {
+senie_program* compile_program_for_trait(senie_node*     ast,
+                                         i32             program_max_size,
+                                         senie_word_lut* word_lut,
+                                         senie_node*     gen_initial_value) {
 
   g_use_genes = false;
 
   senie_program* program = compile_common_prologue(ast, program_max_size, word_lut);
-  program = compile_common_top_level_fns(program, ast);
+  program                = compile_common_top_level_fns(program, ast);
 
   // this is a sub-program for a trait, bind the initial value to gen/initial-value
   compile_global_bind_node(program, INAME_GEN_INITIAL, gen_initial_value);
@@ -1805,12 +1804,15 @@ senie_program* compile_program_for_trait(senie_node* ast, i32 program_max_size, 
   return program;
 }
 
-senie_program* compile_program_for_vary_trait(senie_node* ast, i32 program_max_size, senie_word_lut* word_lut, senie_node* gen_initial_value) {
+senie_program* compile_program_for_vary_trait(senie_node*     ast,
+                                              i32             program_max_size,
+                                              senie_word_lut* word_lut,
+                                              senie_node*     gen_initial_value) {
 
   g_use_genes = false;
 
   senie_program* program = compile_common_prologue(ast, program_max_size, word_lut);
-  program = compile_common_top_level_fns(program, ast);
+  program                = compile_common_top_level_fns(program, ast);
 
   // this is a sub-program for a trait, bind the initial value to gen/initial-value
   compile_global_bind_node(program, INAME_GEN_INITIAL, gen_initial_value);

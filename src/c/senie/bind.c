@@ -22,7 +22,7 @@
 
 i32 g_colour_constructor_start = 0;
 i32 g_colour_constructor_end   = 0;
-f32 g_vary_default = 5.0f;
+f32 g_vary_default             = 5.0f;
 
 i32 get_colour_constructor_start() { return g_colour_constructor_start; }
 
@@ -2349,8 +2349,8 @@ bool using_vary(senie_vm* vm) {
 
 senie_var* get_gen_initial(senie_vm* vm) {
   // vm_compiler::register_top_level_preamble : the 2nd global mapping
-  i32 gen_initial_global_offset = 1;
-  senie_var* initial_value = vm_get_from_global_offset(vm, gen_initial_global_offset);
+  i32        gen_initial_global_offset = 1;
+  senie_var* initial_value             = vm_get_from_global_offset(vm, gen_initial_global_offset);
 
   return initial_value;
 }
@@ -2359,8 +2359,8 @@ senie_var* get_gen_initial(senie_vm* vm) {
 // as senie scripts won't produce any real ints
 //
 senie_var* bind_gen_int(senie_vm* vm, i32 num_args) {
-  f32 min = 0.0f;
-  f32 max = 1000.0f;
+  f32 min  = 0.0f;
+  f32 max  = 1000.0f;
   f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
@@ -2370,12 +2370,12 @@ senie_var* bind_gen_int(senie_vm* vm, i32 num_args) {
   READ_STACK_ARGS_END;
 
   f32 value;
-  if(using_vary(vm) == false) {
+  if (using_vary(vm) == false) {
     // value should be inclusive of both min and max (hence the + 1.0f)
     value = senie_prng_f32_range(vm->prng_state, min, max + 1.0f);
   } else {
     senie_var* initial_value = get_gen_initial(vm);
-    value = initial_value->value.f;
+    value                    = initial_value->value.f;
   }
 
   f32_as_var(&g_var_scratch, (f32)floor_f32(value));
@@ -2384,8 +2384,8 @@ senie_var* bind_gen_int(senie_vm* vm, i32 num_args) {
 }
 
 senie_var* bind_gen_scalar(senie_vm* vm, i32 num_args) {
-  f32 min = 0.0f;
-  f32 max = 1.0f;
+  f32 min  = 0.0f;
+  f32 max  = 1.0f;
   f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
@@ -2395,7 +2395,7 @@ senie_var* bind_gen_scalar(senie_vm* vm, i32 num_args) {
   READ_STACK_ARGS_END;
 
   f32 value;
-  if(using_vary(vm) == false) {
+  if (using_vary(vm) == false) {
     // pick a scalar between min and max
     value = senie_prng_f32_range(vm->prng_state, min, max);
   } else {
@@ -2411,8 +2411,8 @@ senie_var* bind_gen_scalar(senie_vm* vm, i32 num_args) {
 }
 
 senie_var* bind_gen_2d(senie_vm* vm, i32 num_args) {
-  f32 min = 0.0f;
-  f32 max = 1.0f;
+  f32 min  = 0.0f;
+  f32 max  = 1.0f;
   f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
@@ -2423,7 +2423,7 @@ senie_var* bind_gen_2d(senie_vm* vm, i32 num_args) {
 
   f32 x, y;
 
-  if(using_vary(vm) == false) {
+  if (using_vary(vm) == false) {
     x = senie_prng_f32_range(vm->prng_state, min, max);
     y = senie_prng_f32_range(vm->prng_state, min, max);
   } else {
@@ -2445,7 +2445,7 @@ senie_var* bind_gen_select(senie_vm* vm, i32 num_args) {
   // e.g. (gen/select from: [1 2 3 4 5]) vs. (gen/select from: [1 2])
 
   senie_var* from = NULL;
-  f32 vary = g_vary_default;
+  f32        vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VAR(INAME_FROM, from);
@@ -2459,7 +2459,7 @@ senie_var* bind_gen_select(senie_vm* vm, i32 num_args) {
 
   // percentages don't make sense for gen/select since the options may not be ordinal
   // So work as normal, but if vary is set to 0 use the initial value
-  if(using_vary(vm) && vary == 0.0f) {
+  if (using_vary(vm) && vary == 0.0f) {
     res = get_gen_initial(vm);
   }
 
@@ -2470,7 +2470,7 @@ senie_var* bind_gen_select(senie_vm* vm, i32 num_args) {
 
 senie_var* bind_gen_col(senie_vm* vm, i32 num_args) {
   f32 alpha = -1.0f;
-  f32 vary = g_vary_default;
+  f32 vary  = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_ALPHA, alpha);
@@ -2479,7 +2479,7 @@ senie_var* bind_gen_col(senie_vm* vm, i32 num_args) {
 
   senie_colour colour;
 
-  if(using_vary(vm) == false) {
+  if (using_vary(vm) == false) {
     colour.format     = RGB;
     colour.element[0] = senie_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
     colour.element[1] = senie_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
@@ -2498,11 +2498,15 @@ senie_var* bind_gen_col(senie_vm* vm, i32 num_args) {
     f32 min = 0.0f;
     f32 max = 1.0f;
 
-    colour.format     = initial_value->value.i;
-    colour.element[0] = senie_prng_f32_around(vm->prng_state, initial_value->f32_array[0], vary, min, max);
-    colour.element[1] = senie_prng_f32_around(vm->prng_state, initial_value->f32_array[1], vary, min, max);
-    colour.element[2] = senie_prng_f32_around(vm->prng_state, initial_value->f32_array[2], vary, min, max);
-    colour.element[3] = senie_prng_f32_around(vm->prng_state, initial_value->f32_array[3], vary, min, max);
+    colour.format = initial_value->value.i;
+    colour.element[0] =
+        senie_prng_f32_around(vm->prng_state, initial_value->f32_array[0], vary, min, max);
+    colour.element[1] =
+        senie_prng_f32_around(vm->prng_state, initial_value->f32_array[1], vary, min, max);
+    colour.element[2] =
+        senie_prng_f32_around(vm->prng_state, initial_value->f32_array[2], vary, min, max);
+    colour.element[3] =
+        senie_prng_f32_around(vm->prng_state, initial_value->f32_array[3], vary, min, max);
   }
 
   colour_as_var(&g_var_scratch, &colour);

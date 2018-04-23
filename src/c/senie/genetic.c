@@ -374,7 +374,8 @@ void add_trait(senie_node*       node,
   }
 
   if (vary == 1) {
-    trait->program = compile_program_for_vary_trait(parameter_ast, program_max_size, word_lut, node);
+    trait->program =
+        compile_program_for_vary_trait(parameter_ast, program_max_size, word_lut, node);
   } else {
     trait->program = compile_program_for_trait(parameter_ast, program_max_size, word_lut, node);
   }
@@ -431,8 +432,10 @@ senie_node* ga_traverse(senie_node*       node,
   return safe_next(node);
 }
 
-senie_trait_list*
-trait_list_compile(senie_node* ast, i32 trait_program_max_size, senie_word_lut* word_lut, i32 vary) {
+senie_trait_list* trait_list_compile(senie_node*     ast,
+                                     i32             trait_program_max_size,
+                                     senie_word_lut* word_lut,
+                                     i32             vary) {
   // iterate through and build some traits
   senie_trait_list* trait_list = trait_list_get_from_pool();
 

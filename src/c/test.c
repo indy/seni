@@ -1849,13 +1849,6 @@ void test_rgb_hsluv_conversion() {
   fclose(fp);
 }
 
-
-
-
-
-
-
-
 senie_genotype* genotype_test_initial_value(i32 seed_value, char* source) {
   senie_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   senie_env* env = env_allocate();
@@ -1886,7 +1879,8 @@ void test_genotype_initial_value(void) {
   {
     // genotype = genotype_test_initial_value(3421, "{42 (gen/int min: 2 max: 56)}");
     // genotype = genotype_test_initial_value(3421, "{[[0.1 0.2] [0.3 0.4]] (gen/2d)}");
-    genotype = genotype_test_initial_value(3421, "(+ 6 {3.2 (gen/scalar min: 1 max: 100 vary: 24)})");
+    genotype =
+        genotype_test_initial_value(3421, "(+ 6 {3.2 (gen/scalar min: 1 max: 100 vary: 24)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
@@ -1910,7 +1904,6 @@ int main(void) {
   // RUN_TEST(debug_lang_interpret_mem); // for debugging/development
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
-
 
 #if 0
   RUN_TEST(test_macro_pool);

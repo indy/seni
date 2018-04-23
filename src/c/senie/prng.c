@@ -159,15 +159,16 @@ f32 senie_prng_f32_range(senie_prng_state* prng_state, f32 min, f32 max) {
 }
 
 f32 senie_prng_f32_around(senie_prng_state* prng_state, f32 val, f32 percent, f32 min, f32 max) {
-  f32 value = senie_prng_f32(prng_state);
-  f32 range = ((max - min) / 100.0f) * percent;
-  f32 lowest = val - range;
+  f32 value   = senie_prng_f32(prng_state);
+  f32 range   = ((max - min) / 100.0f) * percent;
+  f32 lowest  = val - range;
   f32 highest = val + range;
-  f32 res = (value * (highest - lowest)) + lowest;
+  f32 res     = (value * (highest - lowest)) + lowest;
 
   res = clamp(res, min, max);
 
-  // SENIE_LOG("senie_prng_f32_around: res: %.2f, val: %.2f, percent: %.2f, min: %.2f, max: %.2f", res, val, percent, min, max);
+  // SENIE_LOG("senie_prng_f32_around: res: %.2f, val: %.2f, percent: %.2f, min: %.2f, max: %.2f",
+  // res, val, percent, min, max);
 
   return res;
 }
