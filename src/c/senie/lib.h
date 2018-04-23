@@ -26,6 +26,6 @@ void           senie_unparse_with_genotype(senie_cursor*   out_cursor,
 
 senie_genotype* senie_deserialize_genotype(senie_cursor* cursor);
 
-senie_trait_list* senie_compile_trait_list(char* source, senie_word_lut* word_lut);
+senie_trait_list* senie_compile_trait_list(char* source, senie_word_lut* word_lut, i32 vary);
 bool              senie_serialize_trait_list(senie_trait_list* trait_list, senie_cursor* cursor);
 senie_trait_list* senie_deserialize_trait_list(senie_cursor* cursor);

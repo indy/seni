@@ -545,12 +545,12 @@ void test_strtof(void) {
   vm_debug_info_reset(vm);                                                                           \
   vm_run(vm, e, prog)
 
-#define VM_TEST_FLOAT(RES) assert_senie_var_f32(stack_peek(vm), VAR_FLOAT, RES)
-#define VM_TEST_BOOL(RES) assert_senie_var_bool(stack_peek(vm), RES)
-#define VM_TEST_VEC4(A, B, C, D) assert_senie_var_v4(stack_peek(vm), A, B, C, D)
-#define VM_TEST_VEC5(A, B, C, D, E) assert_senie_var_v5(stack_peek(vm), A, B, C, D, E)
-#define VM_TEST_COL(F, A, B, C, D) assert_senie_var_col(stack_peek(vm), F, A, B, C, D)
-#define VM_TEST_2D(A, B) assert_senie_var_2d(stack_peek(vm), A, B)
+#define VM_TEST_FLOAT(RES) assert_senie_var_f32(vm_stack_peek(vm), VAR_FLOAT, RES)
+#define VM_TEST_BOOL(RES) assert_senie_var_bool(vm_stack_peek(vm), RES)
+#define VM_TEST_VEC4(A, B, C, D) assert_senie_var_v4(vm_stack_peek(vm), A, B, C, D)
+#define VM_TEST_VEC5(A, B, C, D, E) assert_senie_var_v5(vm_stack_peek(vm), A, B, C, D, E)
+#define VM_TEST_COL(F, A, B, C, D) assert_senie_var_col(vm_stack_peek(vm), F, A, B, C, D)
+#define VM_TEST_2D(A, B) assert_senie_var_2d(vm_stack_peek(vm), A, B)
 
 #define VM_CLEANUP    \
   program_free(prog); \
@@ -614,7 +614,7 @@ void test_strtof(void) {
 void f32v(char* exp, i32 len, ...) {
   VM_COMPILE(exp);
 
-  senie_var* var = stack_peek(vm);
+  senie_var* var = vm_stack_peek(vm);
   TEST_ASSERT_EQUAL_MESSAGE(VAR_VECTOR, var->type, "f32v: VAR_VECTOR");
   TEST_ASSERT_EQUAL(len, vector_length(var));
 
@@ -1116,7 +1116,12 @@ senie_genotype* genotype_test(i32 seed_value, char* source) {
 
   senie_node* ast = parser_parse(env->word_lut, source);
 
-  senie_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
+  senie_compiler_config compiler_config;
+  compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
+  compiler_config.word_lut         = env->word_lut;
+  compiler_config.vary             = 0;
+
+  senie_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
   // using the vm to build the genes
   senie_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
@@ -1138,7 +1143,12 @@ void unparse_compare(i32 seed_value, char* source, char* expected) {
 
   senie_node* ast = parser_parse(env->word_lut, source);
 
-  senie_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
+  senie_compiler_config compiler_config;
+  compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
+  compiler_config.word_lut         = env->word_lut;
+  compiler_config.vary             = 0;
+
+  senie_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
   // senie_trait *trait = trait_list->traits;
   // program_pretty_print(trait->program);
@@ -1761,8 +1771,14 @@ void test_serialization_trait_list(void) {
   senie_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   senie_env* env = env_allocate();
 
-  senie_node*       ast        = parser_parse(env->word_lut, source);
-  senie_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut);
+  senie_node* ast = parser_parse(env->word_lut, source);
+
+  senie_compiler_config compiler_config;
+  compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
+  compiler_config.word_lut         = env->word_lut;
+  compiler_config.vary             = 0;
+
+  senie_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
   i32           buffer_size = 4096;
   char*         buffer      = (char*)calloc(buffer_size, sizeof(char));
@@ -1849,6 +1865,54 @@ void test_rgb_hsluv_conversion() {
   fclose(fp);
 }
 
+senie_genotype* genotype_test_initial_value(i32 seed_value, char* source) {
+  senie_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  senie_env* env = env_allocate();
+
+  senie_node* ast = parser_parse(env->word_lut, source);
+
+  senie_compiler_config compiler_config;
+  compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
+  compiler_config.word_lut         = env->word_lut;
+  compiler_config.vary             = 1;
+
+  senie_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
+
+  // using the vm to build the genes
+  senie_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+
+  trait_list_return_to_pool(trait_list);
+  parser_return_nodes_to_pool(ast);
+
+  env_free(env);
+  vm_free(vm);
+
+  return genotype;
+}
+
+void test_genotype_initial_value(void) {
+  senie_genotype* genotype;
+  senie_gene*     g;
+  senie_var*      v;
+
+  senie_systems_startup();
+
+  {
+    // genotype = genotype_test_initial_value(3421, "{42 (gen/int min: 2 max: 56)}");
+    // genotype = genotype_test_initial_value(3421, "{[[0.1 0.2] [0.3 0.4]] (gen/2d)}");
+    genotype =
+        genotype_test_initial_value(3421, "(+ 6 {3.2 (gen/scalar min: 1 max: 100 vary: 24)})");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    v = g->var;
+    assert_senie_var_f32(v, VAR_FLOAT, 81.0f);
+    TEST_ASSERT_NULL(g->next); // only 1 gene
+    genotype_return_to_pool(genotype);
+  }
+
+  senie_systems_shutdown();
+}
+
 int main(void) {
   // timing();
 
@@ -1862,6 +1926,7 @@ int main(void) {
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
+#if 1
   RUN_TEST(test_macro_pool);
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
@@ -1901,6 +1966,9 @@ int main(void) {
   RUN_TEST(test_serialization_trait_list);
 
   RUN_TEST(test_rgb_hsluv_conversion);
+#endif
+
+  //  RUN_TEST(test_genotype_initial_value);
 
   return UNITY_END();
 }

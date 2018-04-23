@@ -92,8 +92,15 @@ export default function main() {
 
   gGLRenderer = new GLRenderer(canvasElement);
 
+
   script = scriptElement.textContent;
   originalScript = script.slice();
+
+  // fetchScript(19).then(code => {
+  //   script = code;
+  //   originalScript = script.slice();
+  //   scriptElement.textContent = script;
+
 
   // fetchScript(57).then(code => {
   //   script = code;
@@ -120,16 +127,17 @@ export default function main() {
     seedElement.value = parseInt(newSeed, 10);
 
     const seedValue = getSeedValue(seedElement);
-    buildTraits({ script, scriptHash })
+    const vary = 1;
+    buildTraits({ script: originalScript, scriptHash, vary })
       .then(({ traits }) => buildGenotype({ traits, seed: seedValue }))
       .then(({ genotype }) => {
-        const config = { script, scriptHash };
+        const config = { script: originalScript, scriptHash };
         if (seedValue !== 0) {
           config.genotype = genotype;
         }
         renderScript(config);
 
-        return unparse({ script, genotype });
+        return unparse({ script: originalScript, genotype });
       })
       .then(({ script }) => {
         scriptElement.textContent = script;

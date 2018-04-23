@@ -874,10 +874,15 @@ senie_program* program_allocate(i32 code_max_size) {
     program->code = (senie_bytecode*)calloc(code_max_size, sizeof(senie_bytecode));
   }
   program->code_max_size = code_max_size;
-  program->code_size     = 0;
-  program->opcode_offset = 0;
+
+  program_reset(program);
 
   return program;
+}
+
+void program_reset(senie_program* program) {
+  program->code_size     = 0;
+  program->opcode_offset = 0;
 }
 
 void program_free(senie_program* program) {
@@ -1046,23 +1051,13 @@ void vm_pretty_print(senie_vm* vm, char* msg) {
   SENIE_LOG("\ton stack: fp:%d ip:%d numArgs:%d", onStackFP, onStackIP, onStackNumArgs);
 }
 
-// returns the next available senie_var that the calling code can write to
-senie_var* stack_push(senie_vm* vm) {
-  senie_var* var = &(vm->stack[vm->sp]);
-  vm->sp++;
+senie_var* vm_get_from_global_offset(senie_vm* vm, i32 offset) {
+  senie_var* var = &(vm->stack[vm->global + offset]);
+
   return var;
 }
 
-senie_var* stack_pop(senie_vm* vm) {
-  if (vm->sp == 0) {
-    return NULL;
-  }
-
-  vm->sp--;
-  return &(vm->stack[vm->sp]);
-}
-
-senie_var* stack_peek(senie_vm* vm) {
+senie_var* vm_stack_peek(senie_vm* vm) {
   if (vm->sp == 0) {
     return NULL;
   }

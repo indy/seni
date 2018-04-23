@@ -360,55 +360,56 @@ bool hack_node_to_var(senie_var* out, senie_node* node) {
   return true;
 }
 
-void add_trait(senie_node*       node,
-               senie_node*       parameter_ast,
-               i32               program_max_size,
-               senie_trait_list* trait_list,
-               senie_word_lut*   word_lut) {
+// senie_var* play_with_compiler(senie_node* node) {
+//   senie_program *program = compile_program_for_trait();
+// }
+
+void add_trait(senie_node*            node,
+               senie_node*            parameter_ast,
+               senie_trait_list*      trait_list,
+               senie_compiler_config* compiler_config) {
   senie_trait* trait = trait_get_from_pool();
+
+  // play_with_compiler(node);
 
   if (hack_node_to_var(trait->initial_value, node) == false) {
     SENIE_PRINT("hack_node_to_var failed");
-    node_pretty_print("failed node", node, word_lut);
+    node_pretty_print("failed node", node, compiler_config->word_lut);
   }
 
-  // can compile the parameter_ast
-  trait->program = compile_program(parameter_ast, program_max_size, word_lut);
+  trait->program = compile_program_for_trait(parameter_ast, compiler_config, node);
 
   trait_list_add_trait(trait_list, trait);
 }
 
-void add_single_trait(senie_node*       node,
-                      i32               program_max_size,
-                      senie_trait_list* trait_list,
-                      senie_word_lut*   word_lut) {
-  add_trait(node, node->parameter_ast, program_max_size, trait_list, word_lut);
+void add_single_trait(senie_node*            node,
+                      senie_trait_list*      trait_list,
+                      senie_compiler_config* compiler_config) {
+  add_trait(node, node->parameter_ast, trait_list, compiler_config);
 }
 
-void add_multiple_traits(senie_node*       node,
-                         i32               program_max_size,
-                         senie_trait_list* trait_list,
-                         senie_word_lut*   word_lut) {
+void add_multiple_traits(senie_node*            node,
+                         senie_trait_list*      trait_list,
+                         senie_compiler_config* compiler_config) {
   senie_node* vector = node;
   senie_node* n      = safe_first(node->value.first_child);
 
   while (n) {
-    add_trait(n, vector->parameter_ast, program_max_size, trait_list, word_lut);
+    add_trait(n, vector->parameter_ast, trait_list, compiler_config);
     n = safe_next(n);
   }
 }
 
-senie_node* ga_traverse(senie_node*       node,
-                        i32               program_max_size,
-                        senie_trait_list* trait_list,
-                        senie_word_lut*   word_lut) {
+senie_node* ga_traverse(senie_node*            node,
+                        senie_trait_list*      trait_list,
+                        senie_compiler_config* compiler_config) {
   senie_node* n = node;
 
   if (n->alterable) {
     if (n->type == NODE_VECTOR) {
-      add_multiple_traits(n, program_max_size, trait_list, word_lut);
+      add_multiple_traits(n, trait_list, compiler_config);
     } else {
-      add_single_trait(n, program_max_size, trait_list, word_lut);
+      add_single_trait(n, trait_list, compiler_config);
     }
   }
 
@@ -416,7 +417,7 @@ senie_node* ga_traverse(senie_node*       node,
     n = n->value.first_child;
 
     while (n != NULL) {
-      ga_traverse(n, program_max_size, trait_list, word_lut);
+      ga_traverse(n, trait_list, compiler_config);
       n = safe_next(n);
     }
   }
@@ -424,14 +425,13 @@ senie_node* ga_traverse(senie_node*       node,
   return safe_next(node);
 }
 
-senie_trait_list*
-trait_list_compile(senie_node* ast, i32 trait_program_max_size, senie_word_lut* word_lut) {
+senie_trait_list* trait_list_compile(senie_node* ast, senie_compiler_config* compiler_config) {
   // iterate through and build some traits
   senie_trait_list* trait_list = trait_list_get_from_pool();
 
   senie_node* n = ast;
   while (n != NULL) {
-    n = ga_traverse(n, trait_program_max_size, trait_list, word_lut);
+    n = ga_traverse(n, trait_list, compiler_config);
   }
 
   return trait_list;

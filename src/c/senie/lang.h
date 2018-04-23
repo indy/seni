@@ -242,7 +242,7 @@ struct senie_program {
   i32             code_max_size;
   i32             code_size;
 
-  // variables used during compilation phase
+  // variables used during compilation phase, won't be available during runtime
   //
   i32 opcode_offset;
   i32 global_mappings[MEMORY_GLOBAL_SIZE]; // top-level defines
@@ -258,14 +258,14 @@ struct senie_program {
 
 char* opcode_name(senie_opcode opcode);
 
-void program_free(senie_program* program);
-i32  program_stop_location(senie_program* program);
-void program_pretty_print(senie_program* program);
+senie_program* program_allocate(i32 code_max_size);
+void           program_reset(senie_program* program);
+void           program_free(senie_program* program);
+i32            program_stop_location(senie_program* program);
+void           program_pretty_print(senie_program* program);
 
 bool program_serialize(senie_cursor* cursor, senie_program* program);
 bool program_deserialize(senie_program* out, senie_cursor* cursor);
-
-senie_program* program_allocate(i32 code_max_size);
 
 struct senie_vm {
   senie_program* program;
@@ -307,7 +307,9 @@ void vm_free(senie_vm* vm);
 void vm_free_render_data(senie_vm* vm);
 void vm_pretty_print(senie_vm* vm, char* msg);
 
-senie_var* stack_peek(senie_vm* vm);
+// access global variables when they're in a known location
+senie_var* vm_get_from_global_offset(senie_vm* vm, i32 offset);
+senie_var* vm_stack_peek(senie_vm* vm);
 
 void       vector_construct(senie_var* head);
 i32        vector_length(senie_var* var);

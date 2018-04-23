@@ -23,6 +23,7 @@ typedef double f64;
 typedef struct senie_bytecode        senie_bytecode;
 typedef struct senie_colour          senie_colour;
 typedef struct senie_colour_fn_state senie_colour_fn_state;
+typedef struct senie_compiler_config senie_compiler_config;
 typedef struct senie_cursor          senie_cursor;
 typedef struct senie_env             senie_env;
 typedef struct senie_fn_info         senie_fn_info;

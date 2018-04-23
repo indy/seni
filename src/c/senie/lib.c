@@ -55,7 +55,11 @@ senie_program* senie_compile_program(char* source, senie_word_lut* word_lut, i32
 
   // ast_pretty_print(ast, word_lut);
 
-  senie_program* program = compile_program(ast, program_max_size, word_lut);
+  senie_compiler_config compiler_config;
+  compiler_config.program_max_size = program_max_size;
+  compiler_config.word_lut         = word_lut;
+
+  senie_program* program = compile_program(ast, &compiler_config);
 
   parser_return_nodes_to_pool(ast);
 
@@ -68,7 +72,11 @@ senie_program* senie_compile_program_with_genotype(char*           source,
                                                    i32             program_max_size) {
   senie_node* ast = parser_parse(word_lut, source);
 
-  senie_program* program = compile_program_with_genotype(ast, program_max_size, word_lut, genotype);
+  senie_compiler_config compiler_config;
+  compiler_config.program_max_size = program_max_size;
+  compiler_config.word_lut         = word_lut;
+
+  senie_program* program = compile_program_with_genotype(ast, &compiler_config, genotype);
 
   parser_return_nodes_to_pool(ast);
 
@@ -103,9 +111,15 @@ senie_genotype* senie_deserialize_genotype(senie_cursor* cursor) {
   return genotype;
 }
 
-senie_trait_list* senie_compile_trait_list(char* source, senie_word_lut* word_lut) {
-  senie_node*       ast        = parser_parse(word_lut, source);
-  senie_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, word_lut);
+senie_trait_list* senie_compile_trait_list(char* source, senie_word_lut* word_lut, i32 vary) {
+  senie_node* ast = parser_parse(word_lut, source);
+
+  senie_compiler_config compiler_config;
+  compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
+  compiler_config.word_lut         = word_lut;
+  compiler_config.vary             = vary;
+
+  senie_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
   parser_return_nodes_to_pool(ast);
 

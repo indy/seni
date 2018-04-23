@@ -15,5 +15,11 @@ i32 senie_prng_i32_range(senie_prng_state* prng_state, i32 min, i32 max);
 f32 senie_prng_f32(senie_prng_state* prng_state);
 f32 senie_prng_f32_range(senie_prng_state* prng_state, f32 min, f32 max);
 
+// given a val, return a number that's within x percent of it
+// e.g. given (50, 10, 0, 200) return a number that's within 50 +- 10%
+// where the absolute range for 10% is found by max - min
+// in this example 10% is 20, so the returned value will be 50 +- 20
+f32 senie_prng_f32_around(senie_prng_state* prng_state, f32 val, f32 percent, f32 min, f32 max);
+
 // returns a number in the range -0.293498..0.293498
 f32 senie_perlin(f32 x, f32 y, f32 z);
