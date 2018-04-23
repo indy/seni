@@ -258,14 +258,14 @@ struct senie_program {
 
 char* opcode_name(senie_opcode opcode);
 
-void program_free(senie_program* program);
-i32  program_stop_location(senie_program* program);
-void program_pretty_print(senie_program* program);
+senie_program* program_allocate(i32 code_max_size);
+void           program_reset(senie_program* program);
+void           program_free(senie_program* program);
+i32            program_stop_location(senie_program* program);
+void           program_pretty_print(senie_program* program);
 
 bool program_serialize(senie_cursor* cursor, senie_program* program);
 bool program_deserialize(senie_program* out, senie_cursor* cursor);
-
-senie_program* program_allocate(i32 code_max_size);
 
 struct senie_vm {
   senie_program* program;

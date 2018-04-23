@@ -137,13 +137,20 @@ void execute_source_with_seed(char* source, i32 seed_value) {
 
   senie_node* ast = parser_parse(env->word_lut, source);
 
-  senie_trait_list* trait_list = trait_list_compile(ast, MAX_TRAIT_PROGRAM_SIZE, env->word_lut, 0);
+  senie_compiler_config compiler_config_trait;
+  compiler_config_trait.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
+  compiler_config_trait.word_lut         = env->word_lut;
+  compiler_config_trait.vary             = 0;
+  senie_trait_list* trait_list           = trait_list_compile(ast, &compiler_config_trait);
 
   // using the vm to build the genes
   senie_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
 
-  senie_program* program =
-      compile_program_with_genotype(ast, MAX_PROGRAM_SIZE, env->word_lut, genotype);
+  senie_compiler_config compiler_config;
+  compiler_config.program_max_size = MAX_PROGRAM_SIZE;
+  compiler_config.word_lut         = env->word_lut;
+
+  senie_program* program = compile_program_with_genotype(ast, &compiler_config, genotype);
 
   parser_return_nodes_to_pool(ast);
 

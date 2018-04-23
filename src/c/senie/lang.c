@@ -874,10 +874,15 @@ senie_program* program_allocate(i32 code_max_size) {
     program->code = (senie_bytecode*)calloc(code_max_size, sizeof(senie_bytecode));
   }
   program->code_max_size = code_max_size;
-  program->code_size     = 0;
-  program->opcode_offset = 0;
+
+  program_reset(program);
 
   return program;
+}
+
+void program_reset(senie_program* program) {
+  program->code_size     = 0;
+  program->opcode_offset = 0;
 }
 
 void program_free(senie_program* program) {
