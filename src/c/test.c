@@ -1847,7 +1847,7 @@ void assert_rgb_hsluv(f32 r, f32 g, f32 b, f32 h, f32 s, f32 l) {
   TEST_ASSERT_EQUAL_FLOAT(1.0f, res.element[3]);
 }
 
-void test_rgb_hsluv_conversion() {
+void test_rgb_hsluv_conversion(void) {
   FILE*  fp = fopen("colours_rgb_hsluv.txt", "r");
   double r, g, b, h, s, l;
   int    read;
@@ -1856,7 +1856,7 @@ void test_rgb_hsluv_conversion() {
   read = fscanf(fp, "%lf %lf %lf %lf %lf %lf", &r, &g, &b, &h, &s, &l);
   while (read == 6) {
     count++;
-    assert_rgb_hsluv(r, g, b, h, s, l);
+    assert_rgb_hsluv((f32)r, (f32)g, (f32)b, (f32)h, (f32)s, (f32)l);
     read = fscanf(fp, "%lf %lf %lf %lf %lf %lf", &r, &g, &b, &h, &s, &l);
   }
 

@@ -570,7 +570,7 @@ senie_colour_64* lch_from_luv(senie_colour_64* col) {
   f64 u = col->element[1];
   f64 v = col->element[2];
   f64 h;
-  f64 c = sqrtf(u * u + v * v);
+  f64 c = sqrtf((float)(u * u + v * v));
 
   // SENIE_LOG("lch_from_luv c %.5f", c);
 
@@ -578,7 +578,7 @@ senie_colour_64* lch_from_luv(senie_colour_64* col) {
     h = 0.0f;
   } else {
     // SENIE_LOG("lch_from_luv atan2f(v, u): %.5f", atan2f(v, u));
-    h = atan2f(v, u) * 57.29577951308232087680f; /* (180 / pi) */
+    h = atan2f((float)v, (float)u) * 57.29577951308232087680f; /* (180 / pi) */
     if (h < 0.0f)
       h += 360.0f;
   }
@@ -592,8 +592,8 @@ senie_colour_64* lch_from_luv(senie_colour_64* col) {
 
 senie_colour_64* luv_from_lch(senie_colour_64* col) {
   f64 hrad = col->element[2] * 0.01745329251994329577f; /* (pi / 180.0) */
-  f64 u    = cosf(hrad) * col->element[1];
-  f64 v    = sinf(hrad) * col->element[1];
+  f64 u    = cosf((float)hrad) * col->element[1];
+  f64 v    = sinf((float)hrad) * col->element[1];
 
   col->element[1] = u;
   col->element[2] = v;
