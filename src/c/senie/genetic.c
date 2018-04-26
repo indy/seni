@@ -15,6 +15,11 @@
 
 #include "pool_macro.h"
 
+// used to evaluate the initial values of traits
+senie_vm*      g_ga_vm;
+senie_env*     g_ga_env;
+senie_program* g_ga_program;
+
 void gene_return_to_pool(senie_gene* gene);
 void trait_return_to_pool(senie_trait* trait);
 
@@ -167,9 +172,22 @@ void ga_subsystem_startup() {
   g_genotype_pool      = genotype_pool_allocate(1, 200, 10);
   g_trait_list_pool    = trait_list_pool_allocate(1, 200, 10);
   g_genotype_list_pool = genotype_list_pool_allocate(1, 200, 10);
+
+  g_ga_vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  g_ga_env = env_allocate();
+
+  // global decl of program that's used for evaling initial values of traits
+  senie_compiler_config compiler_config;
+  compiler_config.program_max_size = MAX_PROGRAM_SIZE;
+  compiler_config.word_lut         = NULL;
+  g_ga_program                     = program_construct(&compiler_config);
 }
 
 void ga_subsystem_shutdown() {
+  program_free(g_ga_program);
+  env_free(g_ga_env);
+  vm_free(g_ga_vm);
+
   genotype_list_pool_free(g_genotype_list_pool);
   trait_list_pool_free(g_trait_list_pool);
   genotype_pool_free(g_genotype_pool);
@@ -209,193 +227,58 @@ void trait_list_add_trait(senie_trait_list* trait_list, senie_trait* trait) {
   DL_APPEND(trait_list->traits, trait);
 }
 
-// this is terrible and should be replaced with an interpreter asap
-bool super_hacky_colour_parser(senie_var* out, senie_node* node) {
-  // assume that node is pointing to a list like: (col/rgb r: 1 g: 0 b: 0.3
-  // alpha: 0.3)
+senie_var* compile_and_execute_node(senie_node* node) {
 
-  // also assuming that the first colour constructor in senie_bind is col/rgb
-  //
-  i32 rgb_constructor_fn_index = get_colour_constructor_start();
+  program_reset(g_ga_program);
+  senie_program* program = g_ga_program;
 
-  senie_node* constructor_fn_name_node = safe_first(node->value.first_child);
-  i32         native_index             = constructor_fn_name_node->value.i - NATIVE_START;
-  if (native_index != rgb_constructor_fn_index) {
-    SENIE_ERROR("super_hacky_colour_parser only works with col/rgb");
-    return false;
-  }
+  // only compile this node, not any of the neighbouring ASTs
+  senie_node* next = node->next;
+  node->next       = NULL;
+  program          = compile_program(program, node);
+  node->next       = next;
 
-  f32 r, g, b;
-  f32 alpha = 1.0f;
-  r = g = b = 0.0f;
+  env_reset(g_ga_env);
+  vm_reset(g_ga_vm);
 
-  senie_node* n = safe_next(constructor_fn_name_node);
-  senie_node* val;
+  vm_run(g_ga_vm, g_ga_env, program);
 
-  while (n != NULL && n->type == NODE_LABEL) {
-    val = safe_next(n);
-    if (val == NULL) {
-      break;
-    }
+  senie_var* result = vm_stack_peek(g_ga_vm);
 
-    if (n->value.i == INAME_R) {
-      r = val->value.f;
-    }
-    if (n->value.i == INAME_G) {
-      g = val->value.f;
-    }
-    if (n->value.i == INAME_B) {
-      b = val->value.f;
-    }
-    if (n->value.i == INAME_ALPHA) {
-      alpha = val->value.f;
-    }
-
-    n = safe_next(val); // skip past the value
-  }
-
-  out->type         = VAR_COLOUR;
-  out->value.i      = RGB;
-  out->f32_array[0] = r;
-  out->f32_array[1] = g;
-  out->f32_array[2] = b;
-  out->f32_array[3] = alpha;
-
-  return true;
+  return result;
 }
 
-bool super_hacky_2d_vector_parser(senie_var* out, senie_node* node) {
-  if (node->type != NODE_VECTOR) {
-    return false;
-  }
-
-  f32 a, b;
-
-  senie_node* n = safe_first(node->value.first_child);
-  if (n == NULL || n->type != NODE_FLOAT) {
-    return false;
-  }
-  a = n->value.f;
-
-  n = safe_next(n);
-  // second element can't be null
-  if (n == NULL || n->type != NODE_FLOAT) {
-    return false;
-  }
-  b = n->value.f;
-
-  out->type         = VAR_2D;
-  out->f32_array[0] = a;
-  out->f32_array[1] = b;
-
-  return true;
-}
-
-bool is_2d_vector(senie_node* node) {
-  if (node->type != NODE_VECTOR) {
-    return false;
-  }
-
-  senie_node* n = safe_first(node->value.first_child);
-  // first element can't be null
-  if (n == NULL) {
-    return false;
-  }
-  n = safe_next(n);
-  // second element can't be null
-  if (n == NULL) {
-    return false;
-  }
-
-  n = safe_next(n);
-  // should be no third element, it has to be null
-  if (n == NULL) {
-    return true;
-  }
-
-  return false;
-}
-
-// TODO: could really do with a small interpreter here that parses the senie_node
-// ast
-//
-bool hack_node_to_var(senie_var* out, senie_node* node) {
-  switch (node->type) {
-  case NODE_INT:
-    out->type    = VAR_INT;
-    out->value.i = node->value.i;
-    break;
-  case NODE_FLOAT:
-    out->type    = VAR_FLOAT;
-    out->value.f = node->value.f;
-    break;
-  case NODE_NAME:
-    out->type    = VAR_NAME;
-    out->value.i = node->value.i;
-    break;
-  case NODE_LIST:
-    if (is_node_colour_constructor(node)) {
-      if (super_hacky_colour_parser(out, node) == false) {
-        return false;
-      }
-      break;
-    } else {
-      SENIE_LOG("list that isn't a colour");
-      return false;
-    }
-  case NODE_VECTOR:
-    if (is_2d_vector(node)) {
-      if (super_hacky_2d_vector_parser(out, node) == false) {
-        return false;
-      }
-    } else {
-      SENIE_LOG("vector that isn't 2d");
-      return false;
-    }
-    break;
-  default:
-    return false;
-  }
-
-  return true;
-}
-
-// senie_var* play_with_compiler(senie_node* node) {
-//   senie_program *program = compile_program_for_trait();
-// }
-
-void add_trait(senie_node*            node,
-               senie_node*            parameter_ast,
-               senie_trait_list*      trait_list,
-               senie_compiler_config* compiler_config) {
+senie_trait*
+trait_build(senie_node* node, senie_node* parameter_ast, senie_compiler_config* compiler_config) {
   senie_trait* trait = trait_get_from_pool();
 
-  // play_with_compiler(node);
+  senie_var* res = compile_and_execute_node(node);
+  var_copy(trait->initial_value, res);
 
-  if (hack_node_to_var(trait->initial_value, node) == false) {
-    SENIE_PRINT("hack_node_to_var failed");
-    node_pretty_print("failed node", node, compiler_config->word_lut);
-  }
+  // NOTE: this is allocating memory for program
+  senie_program* program = program_construct(compiler_config);
+  trait->program = compile_program_for_trait(program, parameter_ast, node, compiler_config->vary);
 
-  trait->program = compile_program_for_trait(parameter_ast, compiler_config, node);
+  return trait;
+}
 
+void add_single_trait(senie_trait_list*      trait_list,
+                      senie_node*            node,
+                      senie_compiler_config* compiler_config) {
+  senie_trait* trait = trait_build(node, node->parameter_ast, compiler_config);
   trait_list_add_trait(trait_list, trait);
 }
 
-void add_single_trait(senie_node*            node,
-                      senie_trait_list*      trait_list,
-                      senie_compiler_config* compiler_config) {
-  add_trait(node, node->parameter_ast, trait_list, compiler_config);
-}
-
-void add_multiple_traits(senie_node*            node,
-                         senie_trait_list*      trait_list,
+void add_multiple_traits(senie_trait_list*      trait_list,
+                         senie_node*            node,
                          senie_compiler_config* compiler_config) {
   senie_node* vector = node;
   senie_node* n      = safe_first(node->value.first_child);
 
   while (n) {
-    add_trait(n, vector->parameter_ast, trait_list, compiler_config);
+    senie_trait* trait = trait_build(n, vector->parameter_ast, compiler_config);
+    trait_list_add_trait(trait_list, trait);
+
     n = safe_next(n);
   }
 }
@@ -407,9 +290,9 @@ senie_node* ga_traverse(senie_node*            node,
 
   if (n->alterable) {
     if (n->type == NODE_VECTOR) {
-      add_multiple_traits(n, trait_list, compiler_config);
+      add_multiple_traits(trait_list, n, compiler_config);
     } else {
-      add_single_trait(n, trait_list, compiler_config);
+      add_single_trait(trait_list, n, compiler_config);
     }
   }
 
@@ -428,6 +311,8 @@ senie_node* ga_traverse(senie_node*            node,
 senie_trait_list* trait_list_compile(senie_node* ast, senie_compiler_config* compiler_config) {
   // iterate through and build some traits
   senie_trait_list* trait_list = trait_list_get_from_pool();
+
+  g_ga_program->word_lut = compiler_config->word_lut;
 
   senie_node* n = ast;
   while (n != NULL) {

@@ -236,6 +236,7 @@ struct senie_env {
 
 senie_env* env_allocate();
 void       env_free(senie_env* e);
+void       env_reset(senie_env* e);
 
 struct senie_program {
   senie_bytecode* code;
@@ -258,6 +259,7 @@ struct senie_program {
 
 char* opcode_name(senie_opcode opcode);
 
+senie_program* program_construct(senie_compiler_config* compiler_config);
 senie_program* program_allocate(i32 code_max_size);
 void           program_reset(senie_program* program);
 void           program_free(senie_program* program);

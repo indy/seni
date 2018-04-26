@@ -1014,7 +1014,7 @@ void register_top_level_fns(senie_node* ast, senie_program* program) {
     // if any of these 'register' functions encounter an alterable node we can't
     // just take a gene from the genotype since we'll go out of sync because the
     // bodies aren't being parsed yet
-    warn_if_alterable("register_top_level_fns", ast);
+    // warn_if_alterable("register_top_level_fns", ast);
 
     senie_node* fn_keyword = safe_first(ast->value.first_child);
     if (!(fn_keyword->type == NODE_NAME && fn_keyword->value.i == INAME_FN)) {
@@ -1085,7 +1085,8 @@ void register_top_level_defines(senie_node* ast, senie_program* program) {
       continue;
     }
 
-    warn_if_alterable("register_top_level_defines define_keyword", ast);
+    // warn_if_alterable("register_top_level_defines define_keyword", ast);
+
     senie_node* define_keyword = safe_first(ast->value.first_child);
     if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == INAME_DEFINE)) {
       ast = safe_next(ast);
@@ -1663,11 +1664,7 @@ void compile_preamble(senie_program* program) {
   // ********************************************************************************
 }
 
-senie_program* compile_common_prologue(senie_node* ast, senie_compiler_config* compiler_config) {
-  senie_program* program = program_allocate(compiler_config->program_max_size);
-
-  program->word_lut = compiler_config->word_lut;
-
+senie_program* compile_common_prologue(senie_program* program, senie_node* ast) {
   clear_global_mappings(program);
   clear_local_mappings(program);
   program->current_fn_info = NULL;
@@ -1744,13 +1741,12 @@ senie_program* compile_common_epilogue(senie_program* program) {
 
 // compiles the ast into bytecode for a stack based VM
 //
-senie_program* compile_common(senie_node* ast, senie_compiler_config* compiler_config) {
-
-  senie_program* program = compile_common_prologue(ast, compiler_config);
-  program                = compile_common_top_level_fns(program, ast);
-  program                = compile_common_top_level_defines(program, ast);
-  program                = compile_common_top_level_forms(program, ast);
-  program                = compile_common_epilogue(program);
+senie_program* compile_common(senie_program* program, senie_node* ast) {
+  program = compile_common_prologue(program, ast);
+  program = compile_common_top_level_fns(program, ast);
+  program = compile_common_top_level_defines(program, ast);
+  program = compile_common_top_level_forms(program, ast);
+  program = compile_common_epilogue(program);
 
   // SENIE_LOG("program compiled: %d lines\n", program->code_size);
   return program;
@@ -1758,17 +1754,16 @@ senie_program* compile_common(senie_node* ast, senie_compiler_config* compiler_c
 
 // compiles the ast into bytecode for a stack based VM
 //
-senie_program* compile_program(senie_node* ast, senie_compiler_config* compiler_config) {
+senie_program* compile_program(senie_program* program, senie_node* ast) {
   g_use_genes = false;
 
-  senie_program* program = compile_common(ast, compiler_config);
+  program = compile_common(program, ast);
 
   return program;
 }
 
-senie_program* compile_program_with_genotype(senie_node*            ast,
-                                             senie_compiler_config* compiler_config,
-                                             senie_genotype*        genotype) {
+senie_program*
+compile_program_with_genotype(senie_program* program, senie_node* ast, senie_genotype* genotype) {
   g_use_genes = true;
 
   bool all_genes_assigned = genotype_assign_to_ast(genotype, ast);
@@ -1777,25 +1772,26 @@ senie_program* compile_program_with_genotype(senie_node*            ast,
     return NULL;
   }
 
-  senie_program* program = compile_common(ast, compiler_config);
+  program = compile_common(program, ast);
 
   return program;
 }
 
-senie_program* compile_program_for_trait(senie_node*            ast,
-                                         senie_compiler_config* compiler_config,
-                                         senie_node*            gen_initial_value) {
+senie_program* compile_program_for_trait(senie_program* program,
+                                         senie_node*    ast,
+                                         senie_node*    gen_initial_value,
+                                         i32            vary) {
 
   g_use_genes = false;
 
-  senie_program* program = compile_common_prologue(ast, compiler_config);
-  program                = compile_common_top_level_fns(program, ast);
+  program = compile_common_prologue(program, ast);
+  program = compile_common_top_level_fns(program, ast);
 
   // this is a sub-program for a trait, bind the initial value to gen/initial-value
   compile_global_bind_node(program, INAME_GEN_INITIAL, gen_initial_value);
 
   // INAME_GEN_USE_VARY is set globally to 0 anyway, so only generate code if it's 1
-  if (compiler_config->vary) {
+  if (vary) {
     // set a global gen/use-vary binding to 1
     compile_global_bind_i32(program, INAME_GEN_USE_VARY, 1);
   }

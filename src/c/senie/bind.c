@@ -2375,7 +2375,8 @@ senie_var* bind_gen_int(senie_vm* vm, i32 num_args) {
     value = senie_prng_f32_range(vm->prng_state, min, max + 1.0f);
   } else {
     senie_var* initial_value = get_gen_initial(vm);
-    value                    = initial_value->value.f;
+    //    value                    = initial_value->value.f;
+    value = senie_prng_f32_around(vm->prng_state, initial_value->value.f, vary, min, max);
   }
 
   f32_as_var(&g_var_scratch, (f32)floor_f32(value));

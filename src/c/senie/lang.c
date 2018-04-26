@@ -843,6 +843,8 @@ senie_env* env_allocate() {
   return e;
 }
 
+void env_reset(senie_env* e) { wlut_reset_words(e->word_lut); }
+
 void env_free(senie_env* e) {
   wlut_free(e->word_lut);
   free(e);
@@ -865,6 +867,13 @@ char* opcode_name(senie_opcode opcode) {
     return "unknown opcode";
   }
 #undef STR
+}
+
+senie_program* program_construct(senie_compiler_config* compiler_config) {
+  senie_program* program = program_allocate(compiler_config->program_max_size);
+  program->word_lut      = compiler_config->word_lut;
+
+  return program;
 }
 
 senie_program* program_allocate(i32 code_max_size) {

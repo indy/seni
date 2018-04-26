@@ -347,6 +347,7 @@ function buildTraits({ script, vary /*, scriptHash */ }) {
 
   SenieWasm.setString(SenieWasm.source_buffer, script);
 
+  konsoleProxy.log('worker:buildTraits');
   const numTraits = SenieWasm.buildTraits(vary ? 1 : 0);
   // konsoleProxy.log(`built ${numTraits} traits`);
 
@@ -484,7 +485,7 @@ function freeModule() {
 
 
 // set this to true when building for the indy.io gallery
-const loadForWebsite = true;
+const loadForWebsite = false;
 
 let wasmFile = loadForWebsite ? '/seni/senie-wasm.wasm' : 'senie-wasm.wasm';
 

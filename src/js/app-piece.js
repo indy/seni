@@ -87,28 +87,26 @@ export default function main() {
   const canvasElement = getRequiredElement('piece-canvas');
   const seedElement = getRequiredElement('piece-seed');
 
+  // not really required, hack to load in other pieces
+  const loadIdElement = getRequiredElement('piece-load-id');
+  loadIdElement.addEventListener('change', event => {
+    const iVal = parseInt(event.target.value, 10);
+
+    fetchScript(iVal).then(code => {
+      script = code;
+      originalScript = script.slice();
+      scriptElement.textContent = script;
+      return renderScript({ script, scriptHash });
+    }).catch(error => console.error(error));
+  });
+
   let script, originalScript;
   const scriptHash = Util.hashCode('whatever');
 
   gGLRenderer = new GLRenderer(canvasElement);
 
-
   script = scriptElement.textContent;
   originalScript = script.slice();
-
-  // fetchScript(19).then(code => {
-  //   script = code;
-  //   originalScript = script.slice();
-  //   scriptElement.textContent = script;
-
-
-  // fetchScript(57).then(code => {
-  //   script = code;
-  //   originalScript = script.slice();
-  //   scriptElement.textContent = script;
-
-  //   return gGLRenderer.loadTexture(texturePathElement.textContent);
-  // })
 
   gGLRenderer.loadTexture(texturePathElement.textContent)
     .then(() => renderScript({ script, scriptHash }))

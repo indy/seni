@@ -53,7 +53,7 @@ test the output by opening build_wasm\senie-wasm.html in a browser that supports
 
 * visual studio integration with the native windows build
   build the windows version (test.exe)
-  load visual studio with: devenv build_win\test.exe
+  load visual studio with: devenv build\test.exe
   Insert any breakpoints
   Press F11 to begin execution
-  When exiting for the first time, save the MSDev solution to the build_win folder
+  When exiting for the first time, save the MSDev solution

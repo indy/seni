@@ -59,7 +59,8 @@ senie_program* senie_compile_program(char* source, senie_word_lut* word_lut, i32
   compiler_config.program_max_size = program_max_size;
   compiler_config.word_lut         = word_lut;
 
-  senie_program* program = compile_program(ast, &compiler_config);
+  senie_program* program = program_construct(&compiler_config);
+  program                = compile_program(program, ast);
 
   parser_return_nodes_to_pool(ast);
 
@@ -76,7 +77,9 @@ senie_program* senie_compile_program_with_genotype(char*           source,
   compiler_config.program_max_size = program_max_size;
   compiler_config.word_lut         = word_lut;
 
-  senie_program* program = compile_program_with_genotype(ast, &compiler_config, genotype);
+  senie_program* program = program_construct(&compiler_config);
+
+  program = compile_program_with_genotype(program, ast, genotype);
 
   parser_return_nodes_to_pool(ast);
 

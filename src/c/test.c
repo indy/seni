@@ -308,6 +308,26 @@ void test_parser(void) {
   TEST_ASSERT_NULL(iter);
   PARSE_CLEANUP;
 
+  PARSE("[[0.1 0.2] [0.3 0.4]]");
+  assert_parser_node_raw(nodes, NODE_VECTOR); // outer []
+  iter = nodes->value.first_child;
+  assert_parser_node_raw(iter, NODE_VECTOR); // [0.1 0.2]
+  iter2 = iter->value.first_child;
+  iter2 = assert_parser_node_f32(iter2, 0.1f);
+  iter2 = assert_parser_node_str(iter2, NODE_WHITESPACE, " ");
+  iter2 = assert_parser_node_f32(iter2, 0.2f);
+  TEST_ASSERT_NULL(iter2);
+  iter = iter->next;
+  iter = assert_parser_node_str(iter, NODE_WHITESPACE, " ");
+  assert_parser_node_raw(iter, NODE_VECTOR); // [0.3 0.4]
+  iter2 = iter->value.first_child;
+  iter2 = assert_parser_node_f32(iter2, 0.3f);
+  iter2 = assert_parser_node_str(iter2, NODE_WHITESPACE, " ");
+  iter2 = assert_parser_node_f32(iter2, 0.4f);
+  TEST_ASSERT_NULL(iter2);
+  TEST_ASSERT_NULL(iter->next);
+  PARSE_CLEANUP;
+
   PARSE("(a {[1 2]})");
   assert_parser_node_raw(nodes, NODE_LIST);
   iter  = nodes->value.first_child;
@@ -1898,10 +1918,11 @@ void test_genotype_initial_value(void) {
   senie_systems_startup();
 
   {
-    // genotype = genotype_test_initial_value(3421, "{42 (gen/int min: 2 max: 56)}");
+    genotype = genotype_test_initial_value(3421, "{42 (gen/int min: 2 max: 56)}");
     // genotype = genotype_test_initial_value(3421, "{[[0.1 0.2] [0.3 0.4]] (gen/2d)}");
-    genotype =
-        genotype_test_initial_value(3421, "(+ 6 {3.2 (gen/scalar min: 1 max: 100 vary: 24)})");
+    // genotype =
+    //         genotype_test_initial_value(3421, "(+ 6 {3.2 (gen/scalar min: 1 max: 100 vary:
+    //         24)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
@@ -1966,9 +1987,12 @@ int main(void) {
   RUN_TEST(test_serialization_trait_list);
 
   RUN_TEST(test_rgb_hsluv_conversion);
-#endif
 
-  //  RUN_TEST(test_genotype_initial_value);
+#else
+
+  RUN_TEST(test_genotype_initial_value);
+
+#endif
 
   return UNITY_END();
 }

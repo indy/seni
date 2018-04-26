@@ -150,7 +150,9 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   compiler_config.program_max_size = MAX_PROGRAM_SIZE;
   compiler_config.word_lut         = env->word_lut;
 
-  senie_program* program = compile_program_with_genotype(ast, &compiler_config, genotype);
+  senie_program* program = program_construct(&compiler_config);
+
+  program = compile_program_with_genotype(program, ast, genotype);
 
   parser_return_nodes_to_pool(ast);
 
