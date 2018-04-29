@@ -889,10 +889,7 @@ senie_program* program_allocate(i32 code_max_size) {
   return program;
 }
 
-void program_reset(senie_program* program) {
-  program->code_size     = 0;
-  program->opcode_offset = 0;
-}
+void program_reset(senie_program* program) { program->code_size = 0; }
 
 void program_free(senie_program* program) {
   free(program->code);

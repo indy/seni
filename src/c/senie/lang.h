@@ -243,17 +243,7 @@ struct senie_program {
   i32             code_max_size;
   i32             code_size;
 
-  // variables used during compilation phase, won't be available during runtime
-  //
-  i32 opcode_offset;
-  i32 global_mappings[MEMORY_GLOBAL_SIZE]; // top-level defines
-  i32 local_mappings[MEMORY_LOCAL_SIZE];   // store which word_lut values are
-                                           // stored in which local memory
-                                           // addresses
-  senie_fn_info* current_fn_info;
-
-  senie_fn_info fn_info[MAX_TOP_LEVEL_FUNCTIONS];
-
+  senie_fn_info   fn_info[MAX_TOP_LEVEL_FUNCTIONS];
   senie_word_lut* word_lut; //  needed in senie_program for error messages
 };
 

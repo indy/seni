@@ -7,6 +7,22 @@
 
 #include <string.h>
 
+typedef struct senie_compilation {
+  senie_program* program;
+
+  i32 opcode_offset;
+  i32 global_mappings[MEMORY_GLOBAL_SIZE]; // top-level defines
+  i32 local_mappings[MEMORY_LOCAL_SIZE];   // store which word_lut values are
+                                           // stored in which local memory
+                                           // addresses
+  senie_fn_info* current_fn_info;
+} senie_compilation;
+
+void senie_compilation_init(senie_compilation* compilation, senie_program* program) {
+  compilation->program       = program;
+  compilation->opcode_offset = 0;
+}
+
 i32 opcode_offset[] = {
 #define OPCODE(_, offset) offset,
 #include "opcodes.h"
@@ -16,27 +32,30 @@ i32 opcode_offset[] = {
 bool           g_use_genes;
 senie_program* g_preamble_program;
 
-void compile_vector(senie_node* ast, senie_program* program);
-void clear_global_mappings(senie_program* program);
-void clear_local_mappings(senie_program* program);
-void register_top_level_preamble(senie_program* program);
-void compile_preamble(senie_program* program);
+void compile_vector(senie_compilation* compilation, senie_node* ast);
+void clear_global_mappings(senie_compilation* compilation);
+void clear_local_mappings(senie_compilation* compilation);
+void register_top_level_preamble(senie_compilation* compilation);
+void compile_preamble(senie_compilation* compilation);
 senie_bytecode*
-program_emit_opcode_i32(senie_program* program, senie_opcode op, i32 arg0, i32 arg1);
+emit_opcode_i32(senie_compilation* compilation, senie_opcode op, i32 arg0, i32 arg1);
 
 void compiler_subsystem_startup() {
   i32            program_max_size = 100; // ???
   senie_program* program          = program_allocate(program_max_size);
 
-  clear_global_mappings(program);
-  clear_local_mappings(program);
-  program->current_fn_info = NULL;
+  senie_compilation compilation;
+  senie_compilation_init(&compilation, program);
 
-  register_top_level_preamble(program);
-  compile_preamble(program);
+  clear_global_mappings(&compilation);
+  clear_local_mappings(&compilation);
+  compilation.current_fn_info = NULL;
+
+  register_top_level_preamble(&compilation);
+  compile_preamble(&compilation);
 
   // slap a stop onto the end of this program
-  program_emit_opcode_i32(program, STOP, 0, 0);
+  emit_opcode_i32(&compilation, STOP, 0, 0);
 
   g_preamble_program = program;
 }
@@ -138,7 +157,9 @@ void warn_if_alterable(char* msg, senie_node* node) {
 }
 
 senie_bytecode*
-program_emit_opcode(senie_program* program, senie_opcode op, senie_var* arg0, senie_var* arg1) {
+emit_opcode(senie_compilation* compilation, senie_opcode op, senie_var* arg0, senie_var* arg1) {
+  senie_program* program = compilation->program;
+
   if (program->code_size >= program->code_max_size) {
     SENIE_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
     return NULL;
@@ -149,14 +170,16 @@ program_emit_opcode(senie_program* program, senie_opcode op, senie_var* arg0, se
   var_copy(&(b->arg0), arg0);
   var_copy(&(b->arg1), arg1);
 
-  program->opcode_offset += opcode_offset[op];
+  compilation->opcode_offset += opcode_offset[op];
 
   return b;
 }
 
 // emits an <opcode, i32, i32> triplet
 senie_bytecode*
-program_emit_opcode_i32(senie_program* program, senie_opcode op, i32 arg0, i32 arg1) {
+emit_opcode_i32(senie_compilation* compilation, senie_opcode op, i32 arg0, i32 arg1) {
+  senie_program* program = compilation->program;
+
   if (program->code_size >= program->code_max_size) {
     SENIE_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
     return NULL;
@@ -167,14 +190,16 @@ program_emit_opcode_i32(senie_program* program, senie_opcode op, i32 arg0, i32 a
   i32_as_var(&(b->arg0), arg0);
   i32_as_var(&(b->arg1), arg1);
 
-  program->opcode_offset += opcode_offset[op];
+  compilation->opcode_offset += opcode_offset[op];
 
   return b;
 }
 
 // emits an <opcode, i32, name> triplet
 senie_bytecode*
-program_emit_opcode_i32_name(senie_program* program, senie_opcode op, i32 arg0, i32 name) {
+emit_opcode_i32_name(senie_compilation* compilation, senie_opcode op, i32 arg0, i32 name) {
+  senie_program* program = compilation->program;
+
   if (program->code_size >= program->code_max_size) {
     SENIE_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
     return NULL;
@@ -185,14 +210,16 @@ program_emit_opcode_i32_name(senie_program* program, senie_opcode op, i32 arg0, 
   i32_as_var(&(b->arg0), arg0);
   name_as_var(&(b->arg1), name);
 
-  program->opcode_offset += opcode_offset[op];
+  compilation->opcode_offset += opcode_offset[op];
 
   return b;
 }
 
 // emits an <opcode, i32, f32> triplet
 senie_bytecode*
-program_emit_opcode_i32_f32(senie_program* program, senie_opcode op, i32 arg0, f32 arg1) {
+emit_opcode_i32_f32(senie_compilation* compilation, senie_opcode op, i32 arg0, f32 arg1) {
+  senie_program* program = compilation->program;
+
   if (program->code_size >= program->code_max_size) {
     SENIE_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
     return NULL;
@@ -203,7 +230,7 @@ program_emit_opcode_i32_f32(senie_program* program, senie_opcode op, i32 arg0, f
   i32_as_var(&(b->arg0), arg0);
   f32_as_var(&(b->arg1), arg1);
 
-  program->opcode_offset += opcode_offset[op];
+  compilation->opcode_offset += opcode_offset[op];
 
   return b;
 }
@@ -216,16 +243,16 @@ program_emit_opcode_i32_f32(senie_program* program, senie_opcode op, i32 arg0, f
 //                    -2 == internal local mapping
 //                  >= 0 == maps a word from word_lut
 
-void clear_local_mappings(senie_program* program) {
+void clear_local_mappings(senie_compilation* compilation) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
-    program->local_mappings[i] = -1;
+    compilation->local_mappings[i] = -1;
   }
 }
 
-i32 add_local_mapping(senie_program* program, i32 word_lut_value) {
+i32 add_local_mapping(senie_compilation* compilation, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
-    if (program->local_mappings[i] == -1) {
-      program->local_mappings[i] = word_lut_value;
+    if (compilation->local_mappings[i] == -1) {
+      compilation->local_mappings[i] = word_lut_value;
       return i;
     }
   }
@@ -237,10 +264,10 @@ i32 add_local_mapping(senie_program* program, i32 word_lut_value) {
 // we want a local mapping that's going to be used to store an internal variable
 // (e.g. during a fence loop)
 // note: it's up to the caller to manage this reference
-i32 add_internal_local_mapping(senie_program* program) {
+i32 add_internal_local_mapping(senie_compilation* compilation) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
-    if (program->local_mappings[i] == -1) {
-      program->local_mappings[i] = -2;
+    if (compilation->local_mappings[i] == -1) {
+      compilation->local_mappings[i] = -2;
       return i;
     }
   }
@@ -250,9 +277,9 @@ i32 add_internal_local_mapping(senie_program* program) {
   return -1;
 }
 
-i32 get_local_mapping(senie_program* program, i32 word_lut_value) {
+i32 get_local_mapping(senie_compilation* compilation, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
-    if (program->local_mappings[i] == word_lut_value) {
+    if (compilation->local_mappings[i] == word_lut_value) {
       return i;
     }
   }
@@ -260,16 +287,16 @@ i32 get_local_mapping(senie_program* program, i32 word_lut_value) {
   return -1;
 }
 
-void clear_global_mappings(senie_program* program) {
+void clear_global_mappings(senie_compilation* compilation) {
   for (i32 i = 0; i < MEMORY_GLOBAL_SIZE; i++) {
-    program->global_mappings[i] = -1;
+    compilation->global_mappings[i] = -1;
   }
 }
 
-i32 add_global_mapping(senie_program* program, i32 word_lut_value) {
+i32 add_global_mapping(senie_compilation* compilation, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_GLOBAL_SIZE; i++) {
-    if (program->global_mappings[i] == -1) {
-      program->global_mappings[i] = word_lut_value;
+    if (compilation->global_mappings[i] == -1) {
+      compilation->global_mappings[i] = word_lut_value;
       return i;
     }
   }
@@ -278,9 +305,9 @@ i32 add_global_mapping(senie_program* program, i32 word_lut_value) {
   return -1;
 }
 
-i32 get_global_mapping(senie_program* program, i32 word_lut_value) {
+i32 get_global_mapping(senie_compilation* compilation, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_GLOBAL_SIZE; i++) {
-    if (program->global_mappings[i] == word_lut_value) {
+    if (compilation->global_mappings[i] == word_lut_value) {
       return i;
     }
   }
@@ -341,7 +368,7 @@ senie_fn_info* get_fn_info(senie_node* node, senie_program* program) {
   return NULL;
 }
 
-senie_node* compile(senie_node* ast, senie_program* program);
+senie_node* compile(senie_compilation* compilation, senie_node* ast);
 
 i32 node_vector_length(senie_node* vector_node) {
   i32 length = 0;
@@ -385,41 +412,41 @@ i32 count_children(senie_node* parent) {
   return count;
 }
 
-i32 store_locally(senie_program* program, i32 iname) {
-  i32 address = get_local_mapping(program, iname);
+i32 store_locally(senie_compilation* compilation, i32 iname) {
+  i32 address = get_local_mapping(compilation, iname);
   if (address == -1) {
-    address = add_local_mapping(program, iname);
+    address = add_local_mapping(compilation, iname);
     if (address == -1) {
       // failed to allocate
       SENIE_ERROR("store_locally: allocation failure");
     }
   }
-  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, address);
+  emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, address);
 
   return address;
 }
 
-i32 store_globally(senie_program* program, i32 iname) {
-  i32 address = get_global_mapping(program, iname);
+i32 store_globally(senie_compilation* compilation, i32 iname) {
+  i32 address = get_global_mapping(compilation, iname);
   if (address == -1) {
-    address = add_global_mapping(program, iname);
+    address = add_global_mapping(compilation, iname);
     if (address == -1) {
       // failed to allocate
       SENIE_ERROR("store_globally: allocation failure");
     }
   }
-  program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
+  emit_opcode_i32(compilation, STORE, MEM_SEG_GLOBAL, address);
 
   return address;
 }
 
-i32 store_from_stack_to_memory(senie_program*            program,
+i32 store_from_stack_to_memory(senie_compilation*        compilation,
                                senie_node*               node,
                                senie_memory_segment_type memory_segment_type) {
   if (memory_segment_type == MEM_SEG_LOCAL) {
-    return store_locally(program, node->value.i);
+    return store_locally(compilation, node->value.i);
   } else if (memory_segment_type == MEM_SEG_GLOBAL) {
-    return store_globally(program, node->value.i);
+    return store_globally(compilation, node->value.i);
   } else {
     SENIE_ERROR("store_from_stack_to_memory: unknown memory_segment_type: %d", memory_segment_type);
   }
@@ -427,8 +454,8 @@ i32 store_from_stack_to_memory(senie_program*            program,
   return -1;
 }
 
-senie_node* compile_define(senie_node*               ast,
-                           senie_program*            program,
+senie_node* compile_define(senie_compilation*        compilation,
+                           senie_node*               ast,
                            senie_memory_segment_type memory_segment_type) {
   senie_node* lhs_node = safe_next(ast);
   senie_node* value_node;
@@ -437,11 +464,11 @@ senie_node* compile_define(senie_node*               ast,
   while (lhs_node != NULL) {
 
     value_node = safe_next(lhs_node);
-    compile(value_node, program);
+    compile(compilation, value_node);
 
     if (lhs_node->type == NODE_NAME) {
       // define foo 10
-      m = store_from_stack_to_memory(program, lhs_node, memory_segment_type);
+      m = store_from_stack_to_memory(compilation, lhs_node, memory_segment_type);
       if (m == -1) {
         SENIE_ERROR("compile_define: allocation failure in define");
         return NULL;
@@ -455,8 +482,8 @@ senie_node* compile_define(senie_node*               ast,
 
         // PILE will stack the elements in the rhs vector in order,
         // so the lhs values have to be popped in reverse order
-        program_emit_opcode_i32(program, PILE, num_children, 0);
-        program->opcode_offset += num_children - 1;
+        emit_opcode_i32(compilation, PILE, num_children, 0);
+        compilation->opcode_offset += num_children - 1;
 
         senie_node* child = safe_first(lhs_node->value.first_child);
 
@@ -464,7 +491,7 @@ senie_node* compile_define(senie_node*               ast,
           child = safe_next(child);
         }
         for (i = 0; i < num_children; i++) {
-          m = store_from_stack_to_memory(program, child, memory_segment_type);
+          m = store_from_stack_to_memory(compilation, child, memory_segment_type);
           if (m == -1) {
             SENIE_ERROR("compile_define: allocation failure during destructure");
             return NULL;
@@ -493,42 +520,42 @@ senie_node* compile_define(senie_node*               ast,
   return NULL;
 }
 
-void compile_if(senie_node* ast, senie_program* program) {
+void compile_if(senie_compilation* compilation, senie_node* ast) {
   // if (> 200 100) 12 24
   // ^
   senie_node* if_node   = safe_next(ast);
   senie_node* then_node = safe_next(if_node);
   senie_node* else_node = safe_next(then_node); // could be NULL
 
-  compile(if_node, program);
+  compile(compilation, if_node);
 
   // insert jump to after the 'then' node if not true
-  i32             addr_jump_then = program->code_size;
-  senie_bytecode* bc_jump_then   = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
+  i32             addr_jump_then = compilation->program->code_size;
+  senie_bytecode* bc_jump_then   = emit_opcode_i32(compilation, JUMP_IF, 0, 0);
 
   // the offset after the if
-  i32 offset_after_if = program->opcode_offset;
+  i32 offset_after_if = compilation->opcode_offset;
 
-  compile(then_node, program);
+  compile(compilation, then_node);
 
-  i32 offset_after_then = program->opcode_offset;
+  i32 offset_after_then = compilation->opcode_offset;
 
   if (else_node) {
     // logically we're now going to go down one of possibly two paths
-    // so we can't just continue to add the program->opcode_offset since that
+    // so we can't just continue to add the compilation->opcode_offset since that
     // would result in the offset taking both of the conditional's paths
 
-    program->opcode_offset = offset_after_if;
+    compilation->opcode_offset = offset_after_if;
 
     // insert a bc_jump_else opcode
-    i32             addr_jump_else = program->code_size;
-    senie_bytecode* bc_jump_else   = program_emit_opcode_i32(program, JUMP, 0, 0);
+    i32             addr_jump_else = compilation->program->code_size;
+    senie_bytecode* bc_jump_else   = emit_opcode_i32(compilation, JUMP, 0, 0);
 
-    bc_jump_then->arg0.value.i = program->code_size - addr_jump_then;
+    bc_jump_then->arg0.value.i = compilation->program->code_size - addr_jump_then;
 
-    compile(else_node, program);
+    compile(compilation, else_node);
 
-    i32 offset_after_else = program->opcode_offset;
+    i32 offset_after_else = compilation->opcode_offset;
 
     if (offset_after_then != offset_after_else) {
       // is this case actually going to happen?
@@ -538,27 +565,27 @@ void compile_if(senie_node* ast, senie_program* program) {
       SENIE_ERROR("different opcode_offsets for the two paths in a conditional");
     }
 
-    bc_jump_else->arg0.value.i = program->code_size - addr_jump_else;
+    bc_jump_else->arg0.value.i = compilation->program->code_size - addr_jump_else;
   } else {
-    bc_jump_then->arg0.value.i = program->code_size - addr_jump_then;
+    bc_jump_then->arg0.value.i = compilation->program->code_size - addr_jump_then;
   }
 }
 
 // compiles everything after the current ast point
-void compile_rest(senie_node* ast, senie_program* program) {
+void compile_rest(senie_compilation* compilation, senie_node* ast) {
   ast = safe_next(ast);
   while (ast) {
-    ast = compile(ast, program);
+    ast = compile(compilation, ast);
   }
 }
 
 // compiles the next node after the current ast point
-void compile_next_one(senie_node* ast, senie_program* program) {
+void compile_next_one(senie_compilation* compilation, senie_node* ast) {
   ast = safe_next(ast);
-  compile(ast, program);
+  compile(compilation, ast);
 }
 
-void compile_math(senie_node* ast, senie_program* program, senie_opcode opcode) {
+void compile_math(senie_compilation* compilation, senie_node* ast, senie_opcode opcode) {
   // + 3 4 5 6
   //
   // 1	LOAD	CONST	3.00
@@ -571,14 +598,14 @@ void compile_math(senie_node* ast, senie_program* program, senie_opcode opcode) 
 
   ast = safe_next(ast); // skip the opcode
 
-  ast = compile(ast, program); // compile the first argument
+  ast = compile(compilation, ast); // compile the first argument
   while (ast) {
-    ast = compile(ast, program); // compile the next argument
-    program_emit_opcode_i32(program, opcode, 0, 0);
+    ast = compile(compilation, ast); // compile the next argument
+    emit_opcode_i32(compilation, opcode, 0, 0);
   }
 }
 
-void compile_address_of(senie_node* ast, senie_program* program) {
+void compile_address_of(senie_compilation* compilation, senie_node* ast) {
   senie_node* fn_name = safe_next(ast);
 
   // fn_name should be a defined function's name
@@ -589,20 +616,20 @@ void compile_address_of(senie_node* ast, senie_program* program) {
     return;
   }
 
-  senie_fn_info* fn_info = get_fn_info(fn_name, program);
+  senie_fn_info* fn_info = get_fn_info(fn_name, compilation->program);
   if (fn_info == NULL) {
     SENIE_ERROR("address-of could not find function");
     return;
   }
 
   // store the index into program->fn_info in the program
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, fn_info->index);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, fn_info->index);
 
   return;
 }
 
 //   (fn-call (aj z: 44))
-void compile_fn_call(senie_node* ast, senie_program* program) {
+void compile_fn_call(senie_compilation* compilation, senie_node* ast) {
   senie_node* invocation = safe_next(ast);
 
   // fn_name should be a defined function's name
@@ -619,8 +646,8 @@ void compile_fn_call(senie_node* ast, senie_program* program) {
 
   // place the fn_info_index onto the stack so that CALL_F can find the function
   // offset and num args
-  compile(fn_info_index, program);
-  program_emit_opcode_i32(program, CALL_F, 0, 0);
+  compile(compilation, fn_info_index);
+  emit_opcode_i32(compilation, CALL_F, 0, 0);
 
   // compile the rest of the arguments
 
@@ -632,48 +659,48 @@ void compile_fn_call(senie_node* ast, senie_program* program) {
     senie_node* value = safe_next(label);
 
     // push value
-    compile(value, program);
-    compile(fn_info_index, program); // push the actual fn_info index so that
-                                     // the _FLU opcode can find it
+    compile(compilation, value);
+    compile(compilation, fn_info_index); // push the actual fn_info index so that
+                                         // the _FLU opcode can find it
 
     i32 label_i = get_node_value_i32(label);
-    program_emit_opcode_i32(program, STORE_F, MEM_SEG_ARGUMENT, label_i);
+    emit_opcode_i32(compilation, STORE_F, MEM_SEG_ARGUMENT, label_i);
 
     args = safe_next(value);
   }
 
   // place the fn_info_index onto the stack so that CALL_F_0 can find the
   // function's body offset
-  compile(fn_info_index, program);
-  program_emit_opcode_i32(program, CALL_F_0, 0, 0);
+  compile(compilation, fn_info_index);
+  emit_opcode_i32(compilation, CALL_F_0, 0, 0);
 
   return;
 }
 
-void compile_vector_append(senie_node* ast, senie_program* program) {
+void compile_vector_append(senie_compilation* compilation, senie_node* ast) {
   // (vector/append vector value)
 
   senie_node* vector = safe_next(ast);
-  compile(vector, program);
+  compile(compilation, vector);
 
   senie_node* value = safe_next(vector);
-  compile(value, program);
+  compile(compilation, value);
 
-  program_emit_opcode_i32(program, APPEND, 0, 0);
+  emit_opcode_i32(compilation, APPEND, 0, 0);
 
   if (vector->type == NODE_NAME) {
 
     i32 vector_i = get_node_value_i32(vector);
 
-    i32 address = get_local_mapping(program, vector_i);
+    i32 address = get_local_mapping(compilation, vector_i);
     if (address != -1) {
-      program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, address);
+      emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, address);
       return;
     }
 
-    address = get_global_mapping(program, vector_i);
+    address = get_global_mapping(compilation, vector_i);
     if (address != -1) {
-      program_emit_opcode_i32(program, STORE, MEM_SEG_GLOBAL, address);
+      emit_opcode_i32(compilation, STORE, MEM_SEG_GLOBAL, address);
       return;
     }
 
@@ -681,9 +708,9 @@ void compile_vector_append(senie_node* ast, senie_program* program) {
   }
 }
 
-void compile_vector_in_quote(senie_node* ast, senie_program* program) {
+void compile_vector_in_quote(senie_compilation* compilation, senie_node* ast) {
   // pushing from the VOID means creating a new, empty vector
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0);
 
   warn_if_alterable("compile_vector_in_quote", ast);
   for (senie_node* node = safe_first(ast->value.first_child); node != NULL;
@@ -695,30 +722,30 @@ void compile_vector_in_quote(senie_node* ast, senie_program* program) {
     // MEM_SEG_GLOBAL LOAD code)
     //
     if (node->type == NODE_NAME) {
-      program_emit_opcode_i32_name(program, LOAD, MEM_SEG_CONSTANT, node->value.i);
+      emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, node->value.i);
     } else {
-      compile(node, program);
+      compile(compilation, node);
     }
-    program_emit_opcode_i32(program, APPEND, 0, 0);
+    emit_opcode_i32(compilation, APPEND, 0, 0);
   }
 }
 
-void compile_quote(senie_node* ast, senie_program* program) {
+void compile_quote(senie_compilation* compilation, senie_node* ast) {
   senie_node* quoted_form = safe_next(ast);
   if (quoted_form->type == NODE_LIST) {
     // compile each entry individually, don't treat the list as a normal
     // function invocation
-    compile_vector_in_quote(quoted_form, program);
+    compile_vector_in_quote(compilation, quoted_form);
   } else {
     if (quoted_form->type == NODE_NAME) {
-      program_emit_opcode_i32_name(program, LOAD, MEM_SEG_CONSTANT, quoted_form->value.i);
+      emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, quoted_form->value.i);
     } else {
-      compile(quoted_form, program);
+      compile(compilation, quoted_form);
     }
   }
 }
 
-void compile_loop(senie_node* ast, senie_program* program) {
+void compile_loop(senie_compilation* compilation, senie_node* ast) {
   senie_node* parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
     SENIE_ERROR("expected a list that defines step parameters");
@@ -778,13 +805,13 @@ void compile_loop(senie_node* ast, senie_program* program) {
 
   // set looping variable x to 'from' value
   if (have_from) {
-    compile(from_node, program);
+    compile(compilation, from_node);
   } else {
     // else default to 0
-    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
+    emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f);
   }
 
-  i32 looper_address = store_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
+  i32 looper_address = store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL);
   if (looper_address == -1) {
     SENIE_ERROR("compile_loop: allocation failure");
     return;
@@ -792,53 +819,53 @@ void compile_loop(senie_node* ast, senie_program* program) {
 
   // compare looping variable against exit condition
   // and jump if looping variable >= exit value
-  i32 addr_loop_start = program->code_size;
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, looper_address);
+  i32 addr_loop_start = compilation->program->code_size;
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, looper_address);
 
   if (use_to) {
     // so jump if looping variable >= exit value
-    compile(to_node, program);
-    program_emit_opcode_i32(program, LT, 0, 0);
+    compile(compilation, to_node);
+    emit_opcode_i32(compilation, LT, 0, 0);
   } else {
     // so jump if looping variable > exit value
-    compile(upto_node, program);
-    program_emit_opcode_i32(program, GT, 0, 0);
-    program_emit_opcode_i32(program, NOT, 0, 0);
+    compile(compilation, upto_node);
+    emit_opcode_i32(compilation, GT, 0, 0);
+    emit_opcode_i32(compilation, NOT, 0, 0);
   }
 
-  i32             addr_exit_check = program->code_size;
-  senie_bytecode* bc_exit_check   = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
+  i32             addr_exit_check = compilation->program->code_size;
+  senie_bytecode* bc_exit_check   = emit_opcode_i32(compilation, JUMP_IF, 0, 0);
 
-  i32 pre_body_opcode_offset = program->opcode_offset;
+  i32 pre_body_opcode_offset = compilation->opcode_offset;
 
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-  compile_rest(parameters_node, program);
+  compile_rest(compilation, parameters_node);
 
-  i32 post_body_opcode_offset = program->opcode_offset;
+  i32 post_body_opcode_offset = compilation->opcode_offset;
   i32 opcode_delta            = post_body_opcode_offset - pre_body_opcode_offset;
 
   // pop off any values that the body might leave on the stack
   for (i32 i = 0; i < opcode_delta; i++) {
-    program_emit_opcode_i32(program, STORE, MEM_SEG_VOID, 0);
+    emit_opcode_i32(compilation, STORE, MEM_SEG_VOID, 0);
   }
 
   // increment the looping variable
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, looper_address);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, looper_address);
 
   if (have_increment) {
-    compile(increment_node, program);
+    compile(compilation, increment_node);
   } else {
-    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
+    emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f);
   }
-  program_emit_opcode_i32(program, ADD, 0, 0);
-  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, looper_address);
+  emit_opcode_i32(compilation, ADD, 0, 0);
+  emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address);
 
   // loop back to the comparison
-  program_emit_opcode_i32(program, JUMP, -(program->code_size - addr_loop_start), 0);
-  bc_exit_check->arg0.value.i = program->code_size - addr_exit_check;
+  emit_opcode_i32(compilation, JUMP, -(compilation->program->code_size - addr_loop_start), 0);
+  bc_exit_check->arg0.value.i = compilation->program->code_size - addr_exit_check;
 }
 
-void compile_fence(senie_node* ast, senie_program* program) {
+void compile_fence(senie_compilation* compilation, senie_node* ast) {
   // (fence (x from: 0 to: 5 quantity: 5) (+ 42 38))
 
   senie_node* parameters_node = safe_next(ast);
@@ -882,59 +909,59 @@ void compile_fence(senie_node* ast, senie_program* program) {
   }
 
   // store the quantity
-  i32 quantity_address = add_internal_local_mapping(program);
+  i32 quantity_address = add_internal_local_mapping(compilation);
   if (have_num) {
-    compile(num_node, program);
+    compile(compilation, num_node);
   } else {
     // else default to 2
-    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 2.0f);
+    emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 2.0f);
   }
-  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, quantity_address);
+  emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, quantity_address);
 
   // reserve a memory location in local memory for a counter from 0 to quantity
-  i32 counter_address = add_internal_local_mapping(program);
-  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
-  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, counter_address);
+  i32 counter_address = add_internal_local_mapping(compilation);
+  emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f);
+  emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address);
 
   // delta that needs to be added at every iteration
   //
   // (to - from) / (quantity - 1)
   if (have_to) {
-    compile(to_node, program);
+    compile(compilation, to_node);
   } else {
     // else default to 1
-    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
+    emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f);
   }
   if (have_from) {
-    compile(from_node, program);
+    compile(compilation, from_node);
   } else {
     // else default to 0
-    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
+    emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f);
   }
-  program_emit_opcode_i32(program, SUB, 0, 0);
+  emit_opcode_i32(compilation, SUB, 0, 0);
 
-  compile(num_node, program);
-  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
-  program_emit_opcode_i32(program, SUB, 0, 0);
-  program_emit_opcode_i32(program, DIV, 0, 0);
+  compile(compilation, num_node);
+  emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f);
+  emit_opcode_i32(compilation, SUB, 0, 0);
+  emit_opcode_i32(compilation, DIV, 0, 0);
 
-  i32 delta_address = add_internal_local_mapping(program);
-  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, delta_address);
+  i32 delta_address = add_internal_local_mapping(compilation);
+  emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, delta_address);
 
   // set looping variable x to 'from' value
   if (have_from) {
-    compile(from_node, program);
+    compile(compilation, from_node);
   } else {
     // else default to 0
-    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 0.0f);
+    emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f);
   }
 
-  i32 from_address = add_internal_local_mapping(program);
-  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, from_address);
+  i32 from_address = add_internal_local_mapping(compilation);
+  emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, from_address);
 
   // store the starting 'from' value in the locally scoped variable
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, from_address);
-  i32 looper_address = store_from_stack_to_memory(program, name_node, MEM_SEG_LOCAL);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address);
+  i32 looper_address = store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL);
   if (looper_address == -1) {
     SENIE_ERROR("compile_fence: allocation failure");
     return;
@@ -942,65 +969,65 @@ void compile_fence(senie_node* ast, senie_program* program) {
 
   // compare looping variable against exit condition
   // and jump if looping variable >= exit value
-  i32 addr_loop_start = program->code_size;
+  i32 addr_loop_start = compilation->program->code_size;
 
   // load from counter address
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, counter_address);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address);
 
   // load from quantity address
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, quantity_address);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, quantity_address);
 
   // exit check
-  program_emit_opcode_i32(program, LT, 0, 0);
+  emit_opcode_i32(compilation, LT, 0, 0);
 
-  i32             addr_exit_check = program->code_size;
-  senie_bytecode* bc_exit_check   = program_emit_opcode_i32(program, JUMP_IF, 0, 0);
+  i32             addr_exit_check = compilation->program->code_size;
+  senie_bytecode* bc_exit_check   = emit_opcode_i32(compilation, JUMP_IF, 0, 0);
 
   // looper = from + (counter * delta)
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, from_address);
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, counter_address);
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, delta_address);
-  program_emit_opcode_i32(program, MUL, 0, 0);
-  program_emit_opcode_i32(program, ADD, 0, 0);
-  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, looper_address);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, delta_address);
+  emit_opcode_i32(compilation, MUL, 0, 0);
+  emit_opcode_i32(compilation, ADD, 0, 0);
+  emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address);
 
-  i32 pre_body_opcode_offset = program->opcode_offset;
+  i32 pre_body_opcode_offset = compilation->opcode_offset;
 
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-  compile_rest(parameters_node, program);
+  compile_rest(compilation, parameters_node);
 
-  i32 post_body_opcode_offset = program->opcode_offset;
+  i32 post_body_opcode_offset = compilation->opcode_offset;
   i32 opcode_delta            = post_body_opcode_offset - pre_body_opcode_offset;
 
   // pop off any values that the body might leave on the stack
   for (i32 i = 0; i < opcode_delta; i++) {
-    program_emit_opcode_i32(program, STORE, MEM_SEG_VOID, 0);
+    emit_opcode_i32(compilation, STORE, MEM_SEG_VOID, 0);
   }
 
   // increment counter
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_LOCAL, counter_address);
-  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, 1.0f);
-  program_emit_opcode_i32(program, ADD, 0, 0);
-  program_emit_opcode_i32(program, STORE, MEM_SEG_LOCAL, counter_address);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address);
+  emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f);
+  emit_opcode_i32(compilation, ADD, 0, 0);
+  emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address);
 
   // loop back to the comparison
-  program_emit_opcode_i32(program, JUMP, -(program->code_size - addr_loop_start), 0);
-  bc_exit_check->arg0.value.i = program->code_size - addr_exit_check;
+  emit_opcode_i32(compilation, JUMP, -(compilation->program->code_size - addr_loop_start), 0);
+  bc_exit_check->arg0.value.i = compilation->program->code_size - addr_exit_check;
 }
 
-void compile_on_matrix_stack(senie_node* ast, senie_program* program) {
-  program_emit_opcode_i32(program, MTX_LOAD, 0, 0);
-  compile_rest(ast, program);
-  program_emit_opcode_i32(program, MTX_STORE, 0, 0);
+void compile_on_matrix_stack(senie_compilation* compilation, senie_node* ast) {
+  emit_opcode_i32(compilation, MTX_LOAD, 0, 0);
+  compile_rest(compilation, ast);
+  emit_opcode_i32(compilation, MTX_STORE, 0, 0);
 }
 
-void register_top_level_fns(senie_node* ast, senie_program* program) {
+void register_top_level_fns(senie_compilation* compilation, senie_node* ast) {
   i32 i;
   i32 num_fns = 0;
 
   // clear all fn data
   for (i = 0; i < MAX_TOP_LEVEL_FUNCTIONS; i++) {
-    program->fn_info[i].active = false;
+    compilation->program->fn_info[i].active = false;
   }
 
   // register top level fns
@@ -1034,7 +1061,7 @@ void register_top_level_fns(senie_node* ast, senie_program* program) {
     i32         name_value = name->value.i;
 
     // we have a named top-level fn declaration
-    senie_fn_info* fn_info = &(program->fn_info[num_fns]);
+    senie_fn_info* fn_info = &(compilation->program->fn_info[num_fns]);
     num_fns++;
     if (num_fns > MAX_TOP_LEVEL_FUNCTIONS) {
       SENIE_ERROR("Script has more than %d top-level functions\n", MAX_TOP_LEVEL_FUNCTIONS);
@@ -1055,13 +1082,13 @@ void register_top_level_fns(senie_node* ast, senie_program* program) {
   }
 }
 
-void register_names_in_define(senie_node* lhs, senie_program* program) {
+void register_names_in_define(senie_compilation* compilation, senie_node* lhs) {
   warn_if_alterable("register_names_in_define lhs", lhs);
   if (lhs->type == NODE_NAME) {
     // (define foo 42)
-    i32 global_address = get_global_mapping(program, lhs->value.i);
+    i32 global_address = get_global_mapping(compilation, lhs->value.i);
     if (global_address == -1) {
-      global_address = add_global_mapping(program, lhs->value.i);
+      global_address = add_global_mapping(compilation, lhs->value.i);
     }
   } else if (lhs->type == NODE_LIST || lhs->type == NODE_VECTOR) {
     // (define [a b] (something))
@@ -1070,13 +1097,13 @@ void register_names_in_define(senie_node* lhs, senie_program* program) {
     senie_node* child = safe_first(lhs->value.first_child);
 
     while (child != NULL) {
-      register_names_in_define(child, program);
+      register_names_in_define(compilation, child);
       child = safe_next(child);
     }
   }
 }
 
-void register_top_level_defines(senie_node* ast, senie_program* program) {
+void register_top_level_defines(senie_compilation* compilation, senie_node* ast) {
   // register top level fns
   while (ast != NULL) {
 
@@ -1095,7 +1122,7 @@ void register_top_level_defines(senie_node* ast, senie_program* program) {
 
     senie_node* lhs = safe_next(define_keyword);
     while (lhs != NULL) {
-      register_names_in_define(lhs, program);
+      register_names_in_define(compilation, lhs);
       lhs = safe_next(lhs); // points to the value
       lhs = safe_next(lhs); // points to the next define statement if there multiple
     }
@@ -1110,29 +1137,29 @@ void register_top_level_defines(senie_node* ast, senie_program* program) {
   code will then overwrite specific data in arg memory invoking code will then
   CALL into the body_address
 */
-void compile_fn(senie_node* ast, senie_program* program) {
+void compile_fn(senie_compilation* compilation, senie_node* ast) {
   // fn (adder a: 0 b: 0) (+ a b)
 
-  clear_local_mappings(program);
+  clear_local_mappings(compilation);
 
   // (adder a: 0 b: 0)
   senie_node* signature = safe_next(ast);
 
   warn_if_alterable("compile_fn signature", signature);
   senie_node*    fn_name = safe_first(signature->value.first_child);
-  senie_fn_info* fn_info = get_fn_info(fn_name, program);
+  senie_fn_info* fn_info = get_fn_info(fn_name, compilation->program);
   if (fn_info == NULL) {
     SENIE_ERROR("Unable to find fn_info for function %d", fn_name->value.i);
     return;
   }
 
-  program->current_fn_info = fn_info;
+  compilation->current_fn_info = fn_info;
 
   // -------------
   // the arguments
   // -------------
 
-  fn_info->arg_address                 = program->code_size;
+  fn_info->arg_address                 = compilation->program->code_size;
   senie_node* args                     = safe_next(fn_name); // pairs of label/value declarations
   i32         num_args                 = 0;
   i32         counter                  = 0;
@@ -1146,11 +1173,11 @@ void compile_fn(senie_node* ast, senie_program* program) {
     fn_info->argument_offsets[argument_offsets_counter++] = label_i;
 
     // push pairs of label+value values onto the args stack
-    program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, label_i);
-    program_emit_opcode_i32(program, STORE, MEM_SEG_ARGUMENT, counter++);
+    emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, label_i);
+    emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++);
 
-    compile(value, program);
-    program_emit_opcode_i32(program, STORE, MEM_SEG_ARGUMENT, counter++);
+    compile(compilation, value);
+    emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++);
 
     num_args++;
     args = safe_next(value);
@@ -1158,39 +1185,39 @@ void compile_fn(senie_node* ast, senie_program* program) {
 
   fn_info->num_args = num_args;
 
-  program_emit_opcode_i32(program, RET_0, 0, 0);
+  emit_opcode_i32(compilation, RET_0, 0, 0);
 
   // --------
   // the body
   // --------
 
-  fn_info->body_address = program->code_size;
+  fn_info->body_address = compilation->program->code_size;
 
   // (+ a b)
-  compile_rest(signature, program);
+  compile_rest(compilation, signature);
 
   // Don't need any STORE, MEM_SEG_VOID instructions as the RET will
   // pop the frame and blow the stack
 
-  program_emit_opcode_i32(program, RET, 0, 0);
+  emit_opcode_i32(compilation, RET, 0, 0);
 
-  program->current_fn_info = NULL;
+  compilation->current_fn_info = NULL;
 }
 
-void correct_function_addresses(senie_program* program) {
+void correct_function_addresses(senie_compilation* compilation) {
   // go through the bytecode fixing up function call addresses
 
-  senie_bytecode* bc     = program->code;
+  senie_bytecode* bc     = compilation->program->code;
   senie_bytecode* offset = NULL;
   i32             fn_info_index, label_value;
   senie_fn_info*  fn_info;
 
-  for (i32 i = 0; i < program->code_size; i++) {
+  for (i32 i = 0; i < compilation->program->code_size; i++) {
     // replace the temporarily stored index in the args of CALL and CALL_0 with
     // the actual values
     if (bc->op == CALL) {
       fn_info_index = bc->arg0.value.i;
-      fn_info       = &(program->fn_info[fn_info_index]);
+      fn_info       = &(compilation->program->fn_info[fn_info_index]);
 
       // the previous two bytecodes will be LOADs of CONST.
       // i - 2 == the address to call
@@ -1214,7 +1241,7 @@ void correct_function_addresses(senie_program* program) {
 
     if (bc->op == CALL_0) {
       fn_info_index = bc->arg0.value.i;
-      fn_info       = &(program->fn_info[fn_info_index]);
+      fn_info       = &(compilation->program->fn_info[fn_info_index]);
 
       offset = bc - 1;
       if (offset->op != LOAD && offset->arg0.value.i != MEM_SEG_CONSTANT) {
@@ -1230,7 +1257,7 @@ void correct_function_addresses(senie_program* program) {
 
       // opcode's arg0 is the fn_info_index and arg1 is the label_value
       fn_info_index = bc->arg0.value.i;
-      fn_info       = &(program->fn_info[fn_info_index]);
+      fn_info       = &(compilation->program->fn_info[fn_info_index]);
       label_value   = bc->arg1.value.i;
 
       i32 data_index   = get_argument_mapping(fn_info, label_value);
@@ -1249,7 +1276,7 @@ void correct_function_addresses(senie_program* program) {
   }
 }
 
-void compile_fn_invocation(senie_node* ast, senie_program* program, i32 fn_info_index) {
+void compile_fn_invocation(senie_compilation* compilation, senie_node* ast, i32 fn_info_index) {
   // ast == adder a: 10 b: 20
 
   // NOTE: CALL and CALL_0 get their function offsets and num args from the
@@ -1260,11 +1287,11 @@ void compile_fn_invocation(senie_node* ast, senie_program* program, i32 fn_info_
 
   // prepare the MEM_SEG_ARGUMENT with default values
 
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT,
-                          666); // for the function address
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT,
-                          667); // for the num args
-  program_emit_opcode_i32(program, CALL, fn_info_index, fn_info_index);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT,
+                  666); // for the function address
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT,
+                  667); // for the num args
+  emit_opcode_i32(compilation, CALL, fn_info_index, fn_info_index);
 
   // overwrite the default arguments with the actual arguments given by the fn
   // invocation
@@ -1276,44 +1303,44 @@ void compile_fn_invocation(senie_node* ast, senie_program* program, i32 fn_info_
     senie_node* value = safe_next(label);
 
     // push value
-    compile(value, program);
-    program_emit_opcode_i32(program, PLACEHOLDER_STORE, fn_info_index, label_i);
+    compile(compilation, value);
+    emit_opcode_i32(compilation, PLACEHOLDER_STORE, fn_info_index, label_i);
 
     args = safe_next(value);
   }
 
   // call the body of the function
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT,
-                          668); // for the function body address
-  program_emit_opcode_i32(program, CALL_0, fn_info_index, fn_info_index);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT,
+                  668); // for the function body address
+  emit_opcode_i32(compilation, CALL_0, fn_info_index, fn_info_index);
 }
 
 // ast is a NODE_VECTOR of length 2
 //
-void compile_2d_from_gene(senie_node* ast, senie_program* program) {
+void compile_2d_from_gene(senie_compilation* compilation, senie_node* ast) {
   senie_gene* gene = ast->gene;
 
   f32 a = gene->var->f32_array[0];
   f32 b = gene->var->f32_array[1];
 
-  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, a);
-  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, b);
+  emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, a);
+  emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, b);
 
-  program_emit_opcode_i32(program, SQUISH2, 0, 0);
+  emit_opcode_i32(compilation, SQUISH2, 0, 0);
 }
 
 // ast is a NODE_VECTOR of length 2
 //
-void compile_2d(senie_node* ast, senie_program* program) {
+void compile_2d(senie_compilation* compilation, senie_node* ast) {
   for (senie_node* node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
-    compile(node, program);
+    compile(compilation, node);
   }
-  program_emit_opcode_i32(program, SQUISH2, 0, 0);
+  emit_opcode_i32(compilation, SQUISH2, 0, 0);
 }
 
-void compile_vector(senie_node* ast, senie_program* program) {
+void compile_vector(senie_compilation* compilation, senie_node* ast) {
   // pushing from the VOID means creating a new, empty vector
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0);
 
   // if this is an alterable vector, we'll have to pull values for each element
   // from the genes
@@ -1324,58 +1351,58 @@ void compile_vector(senie_node* ast, senie_program* program) {
 
       if (node->type == NODE_FLOAT) {
         f32 f = get_node_value_f32_from_gene(node);
-        program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, f);
+        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, f);
       } else if (node->type == NODE_INT) {
         i32 i = get_node_value_i32_from_gene(node);
-        program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, i);
+        emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i);
       } else if (node->type == NODE_VECTOR) {
         if (node_vector_length(node) == 2) {
-          compile_2d_from_gene(node, program);
+          compile_2d_from_gene(compilation, node);
         } else {
-          compile_vector(node, program);
+          compile_vector(compilation, node);
         }
       }
 
     } else {
-      compile(node, program);
+      compile(compilation, node);
     }
-    program_emit_opcode_i32(program, APPEND, 0, 0);
+    emit_opcode_i32(compilation, APPEND, 0, 0);
   }
 }
 
-senie_node* compile_user_defined_name(senie_node* ast, senie_program* program, i32 iname) {
-  i32 local_mapping = get_local_mapping(program, iname);
+senie_node* compile_user_defined_name(senie_compilation* compilation, senie_node* ast, i32 iname) {
+  i32 local_mapping = get_local_mapping(compilation, iname);
   if (local_mapping != -1) {
-    program_emit_opcode_i32_name(program, LOAD, MEM_SEG_LOCAL, local_mapping);
+    emit_opcode_i32_name(compilation, LOAD, MEM_SEG_LOCAL, local_mapping);
     return safe_next(ast);
   }
 
   // check arguments if we're in a function
-  if (program->current_fn_info) {
-    i32 argument_mapping = get_argument_mapping(program->current_fn_info, iname);
+  if (compilation->current_fn_info) {
+    i32 argument_mapping = get_argument_mapping(compilation->current_fn_info, iname);
     if (argument_mapping != -1) {
-      program_emit_opcode_i32(program, LOAD, MEM_SEG_ARGUMENT, argument_mapping);
+      emit_opcode_i32(compilation, LOAD, MEM_SEG_ARGUMENT, argument_mapping);
       return safe_next(ast);
     }
   }
 
-  i32 global_mapping = get_global_mapping(program, iname);
+  i32 global_mapping = get_global_mapping(compilation, iname);
   if (global_mapping != -1) {
-    program_emit_opcode_i32(program, LOAD, MEM_SEG_GLOBAL, global_mapping);
+    emit_opcode_i32(compilation, LOAD, MEM_SEG_GLOBAL, global_mapping);
     return safe_next(ast);
   }
 
   // could be a keyword such as linear, ease-in etc
   if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
-    program_emit_opcode_i32_name(program, LOAD, MEM_SEG_CONSTANT, iname);
+    emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, iname);
     return safe_next(ast);
   }
 
-  SENIE_ERROR("unknown mapping for: %s", wlut_get_word(program->word_lut, iname));
+  SENIE_ERROR("unknown mapping for: %s", wlut_get_word(compilation->program->word_lut, iname));
   return safe_next(ast);
 }
 
-senie_node* compile(senie_node* ast, senie_program* program) {
+senie_node* compile(senie_compilation* compilation, senie_node* ast) {
   senie_node* n;
   i32         i;
   f32         f;
@@ -1389,7 +1416,7 @@ senie_node* compile(senie_node* ast, senie_program* program) {
       // load in the colour value stored in the gene
       //
       i32_as_var(&arg0, MEM_SEG_CONSTANT);
-      program_emit_opcode(program, LOAD, &arg0, var);
+      emit_opcode(compilation, LOAD, &arg0, var);
 
     } else {
       if (alterable(ast)) {
@@ -1398,11 +1425,11 @@ senie_node* compile(senie_node* ast, senie_program* program) {
       }
       n = safe_first(ast->value.first_child);
 
-      i32 fn_info_index = get_fn_info_index(n, program);
+      i32 fn_info_index = get_fn_info_index(n, compilation->program);
       if (fn_info_index != -1) {
-        compile_fn_invocation(n, program, fn_info_index);
+        compile_fn_invocation(compilation, n, fn_info_index);
       } else {
-        compile(n, program);
+        compile(compilation, n);
       }
 
       return safe_next(ast);
@@ -1410,19 +1437,19 @@ senie_node* compile(senie_node* ast, senie_program* program) {
   }
   if (ast->type == NODE_FLOAT) {
     f = get_node_value_f32(ast);
-    program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, f);
+    emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, f);
     return safe_next(ast);
   }
   if (ast->type == NODE_INT) {
     i = get_node_value_i32(ast);
-    program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, i);
+    emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i);
     return safe_next(ast);
   }
   if (ast->type == NODE_VECTOR) {
     if (node_vector_length(ast) == 2) {
-      compile_2d(ast, program);
+      compile_2d(compilation, ast);
     } else {
-      compile_vector(ast, program);
+      compile_vector(compilation, ast);
     }
     return safe_next(ast);
   }
@@ -1431,77 +1458,77 @@ senie_node* compile(senie_node* ast, senie_program* program) {
     i32 iname = get_node_value_i32(ast);
 
     if (iname >= WORD_START && iname < WORD_START + MAX_WORD_LOOKUPS) { // a user defined name
-      return compile_user_defined_name(ast, program, iname);
+      return compile_user_defined_name(compilation, ast, iname);
     } else if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
 
       switch (iname) {
       case INAME_DEFINE:
-        return compile_define(ast, program, MEM_SEG_LOCAL);
+        return compile_define(compilation, ast, MEM_SEG_LOCAL);
       case INAME_IF:
-        compile_if(ast, program);
+        compile_if(compilation, ast);
         return safe_next(ast);
       case INAME_LOOP:
-        compile_loop(ast, program);
+        compile_loop(compilation, ast);
         return safe_next(ast);
       case INAME_FENCE:
-        compile_fence(ast, program);
+        compile_fence(compilation, ast);
         return safe_next(ast);
       case INAME_ON_MATRIX_STACK:
-        compile_on_matrix_stack(ast, program);
+        compile_on_matrix_stack(compilation, ast);
         return safe_next(ast);
       case INAME_FN:
-        compile_fn(ast, program);
+        compile_fn(compilation, ast);
         return safe_next(ast);
       case INAME_PLUS:
-        compile_math(ast, program, ADD);
+        compile_math(compilation, ast, ADD);
         return safe_next(ast);
       case INAME_MINUS:
         // TODO: differentiate between neg and sub?
-        compile_math(ast, program, SUB);
+        compile_math(compilation, ast, SUB);
         return safe_next(ast);
       case INAME_MULT:
-        compile_math(ast, program, MUL);
+        compile_math(compilation, ast, MUL);
         return safe_next(ast);
       case INAME_DIVIDE:
-        compile_math(ast, program, DIV);
+        compile_math(compilation, ast, DIV);
         return safe_next(ast);
       case INAME_MOD:
-        compile_math(ast, program, MOD);
+        compile_math(compilation, ast, MOD);
         return safe_next(ast);
       case INAME_EQUAL:
-        compile_math(ast, program, EQ);
+        compile_math(compilation, ast, EQ);
         return safe_next(ast);
       case INAME_LT:
-        compile_math(ast, program, LT);
+        compile_math(compilation, ast, LT);
         return safe_next(ast);
       case INAME_GT:
-        compile_math(ast, program, GT);
+        compile_math(compilation, ast, GT);
         return safe_next(ast);
       case INAME_AND:
-        compile_math(ast, program, AND);
+        compile_math(compilation, ast, AND);
         return safe_next(ast);
       case INAME_OR:
-        compile_math(ast, program, OR);
+        compile_math(compilation, ast, OR);
         return safe_next(ast);
       case INAME_NOT:
-        compile_next_one(ast, program);
-        program_emit_opcode_i32(program, NOT, 0, 0);
+        compile_next_one(compilation, ast);
+        emit_opcode_i32(compilation, NOT, 0, 0);
         return safe_next(ast);
       case INAME_SQRT:
-        compile_next_one(ast, program);
-        program_emit_opcode_i32(program, SQRT, 0, 0);
+        compile_next_one(compilation, ast);
+        emit_opcode_i32(compilation, SQRT, 0, 0);
         return safe_next(ast);
       case INAME_ADDRESS_OF:
-        compile_address_of(ast, program);
+        compile_address_of(compilation, ast);
         return safe_next(ast);
       case INAME_FN_CALL:
-        compile_fn_call(ast, program);
+        compile_fn_call(compilation, ast);
         return safe_next(ast);
       case INAME_VECTOR_APPEND:
-        compile_vector_append(ast, program);
+        compile_vector_append(compilation, ast);
         return safe_next(ast);
       case INAME_QUOTE:
-        compile_quote(ast, program);
+        compile_quote(compilation, ast);
         return safe_next(ast);
       default:
         // look up the name as a user defined variable
@@ -1510,7 +1537,7 @@ senie_node* compile(senie_node* ast, senie_program* program) {
         // e.g. r, g, b, alpha
         // or if we're passing a pre-defined argument value
         // e.g. linear in (bezier line-width-mapping: linear)
-        return compile_user_defined_name(ast, program, iname);
+        return compile_user_defined_name(compilation, ast, iname);
       };
     } else if (iname >= NATIVE_START && iname < NATIVE_START + MAX_NATIVE_LOOKUPS) {
       // NATIVE
@@ -1523,17 +1550,17 @@ senie_node* compile(senie_node* ast, senie_program* program) {
         senie_node* value = safe_next(label);
 
         i = get_node_value_i32(label);
-        program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, i);
-        compile(value, program);
+        emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i);
+        compile(compilation, value);
 
         num_args++;
         args = safe_next(value);
       }
 
-      program_emit_opcode_i32(program, NATIVE, iname, num_args);
+      emit_opcode_i32(compilation, NATIVE, iname, num_args);
 
       // modify opcode_offset according to how many args were given
-      program->opcode_offset -= (num_args * 2) - 1;
+      compilation->opcode_offset -= (num_args * 2) - 1;
 
       return safe_next(ast);
     }
@@ -1555,22 +1582,27 @@ bool is_list_beginning_with(senie_node* ast, i32 index) {
   return false;
 }
 
-void compile_global_bind_node(senie_program* program, i32 iname, senie_node* node) {
-  compile(node, program);
-  store_globally(program, iname);
+void compile_global_bind_node(senie_compilation* compilation, i32 iname, senie_node* node) {
+  compile(compilation, node);
+  store_globally(compilation, iname);
 }
 
-void compile_global_bind_i32(senie_program* program, i32 iname, i32 value) {
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_CONSTANT, value);
-  store_globally(program, iname);
+void compile_global_bind_i32(senie_compilation* compilation, i32 iname, i32 value) {
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, value);
+  store_globally(compilation, iname);
 }
 
-void compile_global_bind_f32(senie_program* program, i32 iname, f32 value) {
-  program_emit_opcode_i32_f32(program, LOAD, MEM_SEG_CONSTANT, value);
-  store_globally(program, iname);
+void compile_global_bind_f32(senie_compilation* compilation, i32 iname, f32 value) {
+  emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, value);
+  store_globally(compilation, iname);
 }
 
-void compile_global_bind_col(senie_program* program, i32 iname, f32 r, f32 g, f32 b, f32 a) {
+void compile_global_bind_col(senie_compilation* compilation,
+                             i32                iname,
+                             f32                r,
+                             f32                g,
+                             f32                b,
+                             f32                a) {
   senie_var mem_location, colour_arg;
 
   i32_as_var(&mem_location, MEM_SEG_CONSTANT);
@@ -1583,111 +1615,109 @@ void compile_global_bind_col(senie_program* program, i32 iname, f32 r, f32 g, f3
   colour_arg.f32_array[2] = b;
   colour_arg.f32_array[3] = a;
 
-  program_emit_opcode(program, LOAD, &mem_location, &colour_arg);
+  emit_opcode(compilation, LOAD, &mem_location, &colour_arg);
 
-  store_globally(program, iname);
+  store_globally(compilation, iname);
 }
 
-void append_name(senie_program* program, i32 iname) {
-  program_emit_opcode_i32_name(program, LOAD, MEM_SEG_CONSTANT, iname);
-  program_emit_opcode_i32(program, APPEND, 0, 0);
+void append_name(senie_compilation* compilation, i32 iname) {
+  emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, iname);
+  emit_opcode_i32(compilation, APPEND, 0, 0);
 }
 
-void compile_global_bind_procedural_presets(senie_program* program) {
+void compile_global_bind_procedural_presets(senie_compilation* compilation) {
   // create a vector
-  program_emit_opcode_i32(program, LOAD, MEM_SEG_VOID, 0);
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0);
 
   // append the names
-  append_name(program, INAME_CHROME);
-  append_name(program, INAME_HOTLINE_MIAMI);
-  append_name(program, INAME_KNIGHT_RIDER);
-  append_name(program, INAME_MARS);
-  append_name(program, INAME_RAINBOW);
-  append_name(program, INAME_ROBOCOP);
-  append_name(program, INAME_TRANSFORMERS);
+  append_name(compilation, INAME_CHROME);
+  append_name(compilation, INAME_HOTLINE_MIAMI);
+  append_name(compilation, INAME_KNIGHT_RIDER);
+  append_name(compilation, INAME_MARS);
+  append_name(compilation, INAME_RAINBOW);
+  append_name(compilation, INAME_ROBOCOP);
+  append_name(compilation, INAME_TRANSFORMERS);
 
-  store_globally(program, INAME_COL_PROCEDURAL_FN_PRESETS);
+  store_globally(compilation, INAME_COL_PROCEDURAL_FN_PRESETS);
 }
 
 // NOTE: each entry in compile_preamble should have a corresponding entry here
-void register_top_level_preamble(senie_program* program) {
-  add_global_mapping(program, INAME_GEN_USE_VARY);
-  add_global_mapping(program, INAME_GEN_INITIAL);
+void register_top_level_preamble(senie_compilation* compilation) {
+  add_global_mapping(compilation, INAME_GEN_USE_VARY);
+  add_global_mapping(compilation, INAME_GEN_INITIAL);
 
-  add_global_mapping(program, INAME_CANVAS_WIDTH);
-  add_global_mapping(program, INAME_CANVAS_HEIGHT);
+  add_global_mapping(compilation, INAME_CANVAS_WIDTH);
+  add_global_mapping(compilation, INAME_CANVAS_HEIGHT);
 
-  add_global_mapping(program, INAME_MATH_TAU);
+  add_global_mapping(compilation, INAME_MATH_TAU);
 
-  add_global_mapping(program, INAME_WHITE);
-  add_global_mapping(program, INAME_BLACK);
+  add_global_mapping(compilation, INAME_WHITE);
+  add_global_mapping(compilation, INAME_BLACK);
 
-  add_global_mapping(program, INAME_RED);
-  add_global_mapping(program, INAME_GREEN);
-  add_global_mapping(program, INAME_BLUE);
+  add_global_mapping(compilation, INAME_RED);
+  add_global_mapping(compilation, INAME_GREEN);
+  add_global_mapping(compilation, INAME_BLUE);
 
-  add_global_mapping(program, INAME_YELLOW);
-  add_global_mapping(program, INAME_MAGENTA);
-  add_global_mapping(program, INAME_CYAN);
+  add_global_mapping(compilation, INAME_YELLOW);
+  add_global_mapping(compilation, INAME_MAGENTA);
+  add_global_mapping(compilation, INAME_CYAN);
 
-  add_global_mapping(program, INAME_COL_PROCEDURAL_FN_PRESETS);
+  add_global_mapping(compilation, INAME_COL_PROCEDURAL_FN_PRESETS);
 }
 
-void compile_preamble(senie_program* program) {
+void compile_preamble(senie_compilation* compilation) {
   // ********************************************************************************
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble
   // ********************************************************************************
-  compile_global_bind_i32(program, INAME_GEN_USE_VARY, 0);
-  compile_global_bind_i32(program, INAME_GEN_INITIAL, 0);
+  compile_global_bind_i32(compilation, INAME_GEN_USE_VARY, 0);
+  compile_global_bind_i32(compilation, INAME_GEN_INITIAL, 0);
 
-  compile_global_bind_f32(program, INAME_CANVAS_WIDTH, 1000.0f);
-  compile_global_bind_f32(program, INAME_CANVAS_HEIGHT, 1000.0f);
+  compile_global_bind_f32(compilation, INAME_CANVAS_WIDTH, 1000.0f);
+  compile_global_bind_f32(compilation, INAME_CANVAS_HEIGHT, 1000.0f);
 
-  compile_global_bind_f32(program, INAME_MATH_TAU, TAU);
+  compile_global_bind_f32(compilation, INAME_MATH_TAU, TAU);
 
-  compile_global_bind_col(program, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f);
-  compile_global_bind_col(program, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f);
+  compile_global_bind_col(compilation, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f);
+  compile_global_bind_col(compilation, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f);
 
-  compile_global_bind_col(program, INAME_RED, 1.0f, 0.0f, 0.0f, 1.0f);
-  compile_global_bind_col(program, INAME_GREEN, 0.0f, 1.0f, 0.0f, 1.0f);
-  compile_global_bind_col(program, INAME_BLUE, 0.0f, 0.0f, 1.0f, 1.0f);
+  compile_global_bind_col(compilation, INAME_RED, 1.0f, 0.0f, 0.0f, 1.0f);
+  compile_global_bind_col(compilation, INAME_GREEN, 0.0f, 1.0f, 0.0f, 1.0f);
+  compile_global_bind_col(compilation, INAME_BLUE, 0.0f, 0.0f, 1.0f, 1.0f);
 
-  compile_global_bind_col(program, INAME_YELLOW, 1.0f, 1.0f, 0.0f, 1.0f);
-  compile_global_bind_col(program, INAME_MAGENTA, 1.0f, 0.0f, 1.0f, 1.0f);
-  compile_global_bind_col(program, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f);
+  compile_global_bind_col(compilation, INAME_YELLOW, 1.0f, 1.0f, 0.0f, 1.0f);
+  compile_global_bind_col(compilation, INAME_MAGENTA, 1.0f, 0.0f, 1.0f, 1.0f);
+  compile_global_bind_col(compilation, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f);
 
-  compile_global_bind_procedural_presets(program);
+  compile_global_bind_procedural_presets(compilation);
   // ********************************************************************************
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble
   // ********************************************************************************
 }
 
-senie_program* compile_common_prologue(senie_program* program, senie_node* ast) {
-  clear_global_mappings(program);
-  clear_local_mappings(program);
-  program->current_fn_info = NULL;
+void compile_common_prologue(senie_compilation* compilation, senie_node* ast) {
+  clear_global_mappings(compilation);
+  clear_local_mappings(compilation);
+  compilation->current_fn_info = NULL;
 
-  register_top_level_preamble(program);
+  register_top_level_preamble(compilation);
 
   // register top-level functions
-  register_top_level_fns(ast, program);
+  register_top_level_fns(compilation, ast);
 
   // register top-level defines
-  register_top_level_defines(ast, program);
-
-  return program;
+  register_top_level_defines(compilation, ast);
 }
 
-senie_program* compile_common_top_level_fns(senie_program* program, senie_node* ast) {
-  senie_bytecode* start = program_emit_opcode_i32(program, JUMP, 0, 0);
+void compile_common_top_level_fns(senie_compilation* compilation, senie_node* ast) {
+  senie_bytecode* start = emit_opcode_i32(compilation, JUMP, 0, 0);
 
   // compile the top-level functions
   senie_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_FN)) {
-      n = compile(n, program);
+      n = compile(compilation, n);
     } else {
       n = safe_next(n);
     }
@@ -1697,59 +1727,50 @@ senie_program* compile_common_top_level_fns(senie_program* program, senie_node* 
   // (e.g. canvas/width)
   // this is where the program will start from
   start->arg0.type    = VAR_INT;
-  start->arg0.value.i = program->code_size;
-
-  return program;
+  start->arg0.value.i = compilation->program->code_size;
 }
 
-senie_program* compile_common_top_level_defines(senie_program* program, senie_node* ast) {
+void compile_common_top_level_defines(senie_compilation* compilation, senie_node* ast) {
   senie_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_DEFINE)) {
-      compile_define(safe_first(n->value.first_child), program, MEM_SEG_GLOBAL);
+      compile_define(compilation, safe_first(n->value.first_child), MEM_SEG_GLOBAL);
       n = safe_next(n);
     } else {
       n = safe_next(n);
     }
   }
-
-  return program;
 }
 
-senie_program* compile_common_top_level_forms(senie_program* program, senie_node* ast) {
+void compile_common_top_level_forms(senie_compilation* compilation, senie_node* ast) {
   senie_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_FN) == false &&
         is_list_beginning_with(n, INAME_DEFINE) == false) {
-      n = compile(n, program);
+      n = compile(compilation, n);
     } else {
       n = safe_next(n);
     }
   }
-
-  return program;
 }
 
-senie_program* compile_common_epilogue(senie_program* program) {
-  program_emit_opcode_i32(program, STOP, 0, 0);
+void compile_common_epilogue(senie_compilation* compilation) {
+  emit_opcode_i32(compilation, STOP, 0, 0);
 
   // we can now update the addreses used by CALL and CALL_0
-  correct_function_addresses(program);
-
-  return program;
+  correct_function_addresses(compilation);
 }
 
 // compiles the ast into bytecode for a stack based VM
 //
-senie_program* compile_common(senie_program* program, senie_node* ast) {
-  program = compile_common_prologue(program, ast);
-  program = compile_common_top_level_fns(program, ast);
-  program = compile_common_top_level_defines(program, ast);
-  program = compile_common_top_level_forms(program, ast);
-  program = compile_common_epilogue(program);
+void compile_common(senie_compilation* compilation, senie_node* ast) {
+  compile_common_prologue(compilation, ast);
+  compile_common_top_level_fns(compilation, ast);
+  compile_common_top_level_defines(compilation, ast);
+  compile_common_top_level_forms(compilation, ast);
+  compile_common_epilogue(compilation);
 
   // SENIE_LOG("program compiled: %d lines\n", program->code_size);
-  return program;
 }
 
 // compiles the ast into bytecode for a stack based VM
@@ -1757,9 +1778,12 @@ senie_program* compile_common(senie_program* program, senie_node* ast) {
 senie_program* compile_program(senie_program* program, senie_node* ast) {
   g_use_genes = false;
 
-  program = compile_common(program, ast);
+  senie_compilation compilation;
+  senie_compilation_init(&compilation, program);
 
-  return program;
+  compile_common(&compilation, ast);
+
+  return compilation.program;
 }
 
 senie_program*
@@ -1772,9 +1796,12 @@ compile_program_with_genotype(senie_program* program, senie_node* ast, senie_gen
     return NULL;
   }
 
-  program = compile_common(program, ast);
+  senie_compilation compilation;
+  senie_compilation_init(&compilation, program);
 
-  return program;
+  compile_common(&compilation, ast);
+
+  return compilation.program;
 }
 
 senie_program* compile_program_for_trait(senie_program* program,
@@ -1784,21 +1811,24 @@ senie_program* compile_program_for_trait(senie_program* program,
 
   g_use_genes = false;
 
-  program = compile_common_prologue(program, ast);
-  program = compile_common_top_level_fns(program, ast);
+  senie_compilation compilation;
+  senie_compilation_init(&compilation, program);
+
+  compile_common_prologue(&compilation, ast);
+  compile_common_top_level_fns(&compilation, ast);
 
   // this is a sub-program for a trait, bind the initial value to gen/initial-value
-  compile_global_bind_node(program, INAME_GEN_INITIAL, gen_initial_value);
+  compile_global_bind_node(&compilation, INAME_GEN_INITIAL, gen_initial_value);
 
   // INAME_GEN_USE_VARY is set globally to 0 anyway, so only generate code if it's 1
   if (vary) {
     // set a global gen/use-vary binding to 1
-    compile_global_bind_i32(program, INAME_GEN_USE_VARY, 1);
+    compile_global_bind_i32(&compilation, INAME_GEN_USE_VARY, 1);
   }
 
-  program = compile_common_top_level_defines(program, ast);
-  program = compile_common_top_level_forms(program, ast);
-  program = compile_common_epilogue(program);
+  compile_common_top_level_defines(&compilation, ast);
+  compile_common_top_level_forms(&compilation, ast);
+  compile_common_epilogue(&compilation);
 
-  return program;
+  return compilation.program;
 }
