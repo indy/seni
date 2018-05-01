@@ -1,5 +1,5 @@
 /*
- *  Senie
+ *  Sen
  *  Copyright (C) 2018 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import GLRenderer from './senie/GLRenderer';
-import Util from './senie/Util';
+import GLRenderer from './sen/GLRenderer';
+import Util from './sen/Util';
 import Job from './job';
 import { jobRender,
          jobUnparse,

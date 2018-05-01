@@ -1,16 +1,16 @@
-#include "senie/bind.h"
-#include "senie/genetic.h"
-#include "senie/keyword_iname.h"
-#include "senie/lang.h"
-#include "senie/lib.h"
-#include "senie/parser.h"
-#include "senie/printf.h"
-#include "senie/render_packet.h"
-#include "senie/shapes.h"
-#include "senie/timing.h"
-#include "senie/uv_mapper.h"
-#include "senie/vm_compiler.h"
-#include "senie/vm_interpreter.h"
+#include "sen/bind.h"
+#include "sen/genetic.h"
+#include "sen/keyword_iname.h"
+#include "sen/lang.h"
+#include "sen/lib.h"
+#include "sen/parser.h"
+#include "sen/printf.h"
+#include "sen/render_packet.h"
+#include "sen/shapes.h"
+#include "sen/timing.h"
+#include "sen/uv_mapper.h"
+#include "sen/vm_compiler.h"
+#include "sen/vm_interpreter.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -36,14 +36,14 @@ char* load_file(char* filename) {
     ret[file_size] = '\0';
 
     if (file_size != read_size) {
-      SENIE_ERROR("file_size %d read_size %d\n", file_size, read_size);
+      SEN_ERROR("file_size %d read_size %d\n", file_size, read_size);
       free(ret);
       ret = NULL;
     }
 
     fclose(fp);
   } else {
-    SENIE_ERROR("fopen failed");
+    SEN_ERROR("fopen failed");
   }
 
   return ret;
@@ -54,11 +54,11 @@ f32 percentage(f32 total, f32 element) { return (100.0f / total) * element; }
 void print_timings(f32 construct, f32 compile, f32 interpret) {
   f32 total = construct + compile + interpret;
 
-  SENIE_PRINT("total time taken : %.2f ms", total);
+  SEN_PRINT("total time taken : %.2f ms", total);
   if (total > 0.0f) {
-    SENIE_PRINT("construct time   : %.2f ms\t(%.2f%%)", construct, percentage(total, construct));
-    SENIE_PRINT("compile time     : %.2f ms\t(%.2f%%)", compile, percentage(total, compile));
-    SENIE_PRINT("interpret time   : %.2f ms\t(%.2f%%)", interpret, percentage(total, interpret));
+    SEN_PRINT("construct time   : %.2f ms\t(%.2f%%)", construct, percentage(total, construct));
+    SEN_PRINT("compile time     : %.2f ms\t(%.2f%%)", compile, percentage(total, compile));
+    SEN_PRINT("interpret time   : %.2f ms\t(%.2f%%)", interpret, percentage(total, interpret));
   }
 }
 
@@ -69,11 +69,10 @@ void execute_source(char* source) {
   //
   TIMING_UNIT construct_start = get_timing();
 
-  senie_systems_startup();
+  sen_systems_startup();
 
-  senie_vm* vm =
-      senie_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  senie_env* env = senie_allocate_env();
+  sen_vm*  vm  = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  sen_env* env = sen_allocate_env();
 
   TIMING_UNIT construct_stop = get_timing();
 
@@ -81,7 +80,7 @@ void execute_source(char* source) {
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  senie_program* program = senie_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
+  sen_program* program = sen_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
 
   TIMING_UNIT compilation_stop = get_timing();
 
@@ -96,14 +95,14 @@ void execute_source(char* source) {
   //
   i32 num_vertices = 0;
   for (int i = 0; i < vm->render_data->num_render_packets; i++) {
-    senie_render_packet* render_packet = get_render_packet(vm->render_data, i);
+    sen_render_packet* render_packet = get_render_packet(vm->render_data, i);
     num_vertices += render_packet->num_vertices;
   }
 
   if (num_vertices != 0) {
-    SENIE_PRINT("\nrendered %d vertices in %d render packets",
-                num_vertices,
-                vm->render_data->num_render_packets);
+    SEN_PRINT("\nrendered %d vertices in %d render packets",
+              num_vertices,
+              vm->render_data->num_render_packets);
     print_timings(timing_delta(construct_start, construct_stop),
                   timing_delta(compilation_start, compilation_stop),
                   timing_delta(interpret_start, interpret_stop));
@@ -113,21 +112,20 @@ void execute_source(char* source) {
   //
   program_free(program);
 
-  senie_free_env(env);
-  senie_free_vm(vm);
+  sen_free_env(env);
+  sen_free_vm(vm);
 
-  senie_systems_shutdown();
+  sen_systems_shutdown();
 }
 
 void execute_source_with_seed(char* source, i32 seed_value) {
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
-  senie_systems_startup();
+  sen_systems_startup();
 
-  senie_vm* vm =
-      senie_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  senie_env* env = senie_allocate_env();
+  sen_vm*  vm  = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  sen_env* env = sen_allocate_env();
 
   TIMING_UNIT construct_stop = get_timing();
 
@@ -135,22 +133,22 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  senie_node* ast = parser_parse(env->word_lut, source);
+  sen_node* ast = parser_parse(env->word_lut, source);
 
-  senie_compiler_config compiler_config_trait;
+  sen_compiler_config compiler_config_trait;
   compiler_config_trait.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config_trait.word_lut         = env->word_lut;
   compiler_config_trait.vary             = 0;
-  senie_trait_list* trait_list           = trait_list_compile(ast, &compiler_config_trait);
+  sen_trait_list* trait_list             = trait_list_compile(ast, &compiler_config_trait);
 
   // using the vm to build the genes
-  senie_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+  sen_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
 
-  senie_compiler_config compiler_config;
+  sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_PROGRAM_SIZE;
   compiler_config.word_lut         = env->word_lut;
 
-  senie_program* program = program_construct(&compiler_config);
+  sen_program* program = program_construct(&compiler_config);
 
   program = compile_program_with_genotype(program, ast, genotype);
 
@@ -169,14 +167,14 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   //
   i32 num_vertices = 0;
   for (int i = 0; i < vm->render_data->num_render_packets; i++) {
-    senie_render_packet* render_packet = get_render_packet(vm->render_data, i);
+    sen_render_packet* render_packet = get_render_packet(vm->render_data, i);
     num_vertices += render_packet->num_vertices;
   }
 
   if (num_vertices != 0) {
-    SENIE_PRINT("\nrendered %d vertices in %d render packets",
-                num_vertices,
-                vm->render_data->num_render_packets);
+    SEN_PRINT("\nrendered %d vertices in %d render packets",
+              num_vertices,
+              vm->render_data->num_render_packets);
     print_timings(timing_delta(construct_start, construct_stop),
                   timing_delta(compilation_start, compilation_stop),
                   timing_delta(interpret_start, interpret_stop));
@@ -184,7 +182,7 @@ void execute_source_with_seed(char* source, i32 seed_value) {
 
   i32 num_traits = trait_list_count(trait_list);
   if (num_traits > 0) {
-    SENIE_PRINT("%d %s", num_traits, pluralise(num_traits, "trait", "traits"));
+    SEN_PRINT("%d %s", num_traits, pluralise(num_traits, "trait", "traits"));
   }
 
   // free memory
@@ -193,22 +191,21 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   trait_list_return_to_pool(trait_list);
   program_free(program);
 
-  senie_free_env(env);
-  senie_free_vm(vm);
+  sen_free_env(env);
+  sen_free_vm(vm);
 
-  senie_systems_shutdown();
+  sen_systems_shutdown();
 }
 
 void print_compiled_program(char* source) {
   // construct
-  senie_systems_startup();
+  sen_systems_startup();
 
-  senie_vm* vm =
-      senie_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
-  senie_env* e = senie_allocate_env();
+  sen_vm*  vm = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  sen_env* e  = sen_allocate_env();
 
   // compile program
-  senie_program* program = senie_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
+  sen_program* program = sen_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
 
   // print
   printf("%s\n", source);
@@ -216,27 +213,27 @@ void print_compiled_program(char* source) {
 
   // cleanup
   program_free(program);
-  senie_free_env(e);
-  senie_free_vm(vm);
+  sen_free_env(e);
+  sen_free_vm(vm);
 
-  senie_systems_shutdown();
+  sen_systems_shutdown();
 }
 
 void print_usage() {
-#ifdef SENIE_BUILD_WINDOWS
-  SENIE_PRINT("native.exe                            << prints usage");
-  SENIE_PRINT("native.exe senie\\c\\script.senie         << execute the script "
-              "using defaults and give stats");
-  SENIE_PRINT("native.exe senie\\c\\script.senie -s 43   << execute the script "
-              "using the given seed and give stats");
-  SENIE_PRINT("native.exe senie\\c\\script.senie -d      << debug - output the bytecode");
+#ifdef SEN_BUILD_WINDOWS
+  SEN_PRINT("native.exe                            << prints usage");
+  SEN_PRINT("native.exe sen\\c\\script.sen         << execute the script "
+            "using defaults and give stats");
+  SEN_PRINT("native.exe sen\\c\\script.sen -s 43   << execute the script "
+            "using the given seed and give stats");
+  SEN_PRINT("native.exe sen\\c\\script.sen -d      << debug - output the bytecode");
 #else
-  SENIE_PRINT("native                            << prints usage");
-  SENIE_PRINT("native senie/c/script.senie         << execute the script using "
-              "defaults and give stats");
-  SENIE_PRINT("native senie/c/script.senie -s 43   << execute the script using "
-              "the given seed and give stats");
-  SENIE_PRINT("native senie/c/script.senie -d      << debug - output the bytecode");
+  SEN_PRINT("native                            << prints usage");
+  SEN_PRINT("native sen/c/script.sen         << execute the script using "
+            "defaults and give stats");
+  SEN_PRINT("native sen/c/script.sen -s 43   << execute the script using "
+            "the given seed and give stats");
+  SEN_PRINT("native sen/c/script.sen -d      << debug - output the bytecode");
 #endif
 }
 
@@ -255,8 +252,8 @@ int main(int argc, char** argv) {
   }
 
   if (INAME_NUMBER_OF_KNOWN_WORDS >= NATIVE_START) {
-    SENIE_ERROR("WARNING: %d keywords so NATIVE_START area is being overwritten",
-                INAME_NUMBER_OF_KNOWN_WORDS);
+    SEN_ERROR("WARNING: %d keywords so NATIVE_START area is being overwritten",
+              INAME_NUMBER_OF_KNOWN_WORDS);
     return 1;
   }
 

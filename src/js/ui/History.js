@@ -1,5 +1,5 @@
 /*
- *  Senie
+ *  Sen
  *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,27 +16,27 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { SenieMode } from './SenieMode';
+import { SenMode } from './SenMode';
 
 const logToConsole = true;
 
-function senieModeAsString(mode) {
+function senModeAsString(mode) {
   switch (mode) {
-  case SenieMode.gallery:
+  case SenMode.gallery:
     return 'gallery';
-  case SenieMode.edit:
+  case SenMode.edit:
     return 'edit';
-  case SenieMode.evolve:
+  case SenMode.evolve:
     return 'evolve';
   default:
-    return 'error unknown SenieMode value';
+    return 'error unknown SenMode value';
   }
 }
 
 function buildState(appState) {
   const state = appState;
   const currentMode = appState.currentMode;
-  const uri = `#${senieModeAsString(currentMode)}`;
+  const uri = `#${senModeAsString(currentMode)}`;
   return [state, uri];
 }
 
