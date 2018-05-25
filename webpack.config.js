@@ -3,6 +3,7 @@ const path = require('path');
 
 module.exports = [
   {
+    mode: "development",
     entry: {
       sen: ['./src/js/index.js'],
       worker: ['./src/js/worker.js'],
