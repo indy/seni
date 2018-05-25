@@ -20,7 +20,7 @@ import Matrix from './Matrix';
 
 const logToConsole = false;
 
-function pointerToFloat32Array(mem, ptr, length) {
+function memorySubArray(mem, ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
   return mem.subarray(pos, pos + length);
@@ -264,15 +264,15 @@ export default class GLRenderer {
     const colourItemSize = 4;
     const textureItemSize = 2;
 
-    const vbuf = pointerToFloat32Array(memoryF32,
-                                       buffer.vbufAddress,
-                                       buffer.numVertices * vertexItemSize);
-    const cbuf = pointerToFloat32Array(memoryF32,
-                                       buffer.cbufAddress,
-                                       buffer.numVertices * colourItemSize);
-    const tbuf = pointerToFloat32Array(memoryF32,
-                                       buffer.tbufAddress,
-                                       buffer.numVertices * textureItemSize);
+    const vbuf = memorySubArray(memoryF32,
+                                buffer.vbufAddress,
+                                buffer.numVertices * vertexItemSize);
+    const cbuf = memorySubArray(memoryF32,
+                                buffer.cbufAddress,
+                                buffer.numVertices * colourItemSize);
+    const tbuf = memorySubArray(memoryF32,
+                                buffer.tbufAddress,
+                                buffer.numVertices * textureItemSize);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vbuf, gl.STATIC_DRAW);

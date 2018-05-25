@@ -496,7 +496,9 @@ export default class Konsole {
 
   initCallbacks(options) {
     this.commandValidate = options.commandValidate;
-    return this.commandHandle = options.commandHandle;
+    this.commandHandle = options.commandHandle;
+
+    return true;
   }
 
   submit() {

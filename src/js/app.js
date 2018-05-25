@@ -21,7 +21,7 @@ import GLRenderer from './sen/GLRenderer';
 import History from './ui/History';
 import Editor from './ui/Editor';
 import Konsole from './ui/Konsole';
-//import KonsoleCommander from './ui/KonsoleCommander';
+import KonsoleCommander from './ui/KonsoleCommander';
 //import { addDefaultCommands } from './ui/KonsoleCommands';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
@@ -36,6 +36,7 @@ import { initFirebase,
 
 let gUI = {};
 let gGLRenderer = undefined;
+let gKonsoleToggle = 0;
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -78,11 +79,6 @@ function showButtonsFor(mode) {
   const evolveBtn = document.getElementById('evolve-btn');
   const renderBtn = document.getElementById('render-btn');
 
-  const renderBLBtn = document.getElementById('render-bl-btn');
-  const renderBRBtn = document.getElementById('render-br-btn');
-  const renderTLBtn = document.getElementById('render-tl-btn');
-  const renderTRBtn = document.getElementById('render-tr-btn');
-
   const nextBtn = document.getElementById('next-btn');
   const shuffleBtn = document.getElementById('shuffle-btn');
 
@@ -92,11 +88,6 @@ function showButtonsFor(mode) {
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
 
-    renderBLBtn.classList.add('hidden');
-    renderBRBtn.classList.add('hidden');
-    renderTLBtn.classList.add('hidden');
-    renderTRBtn.classList.add('hidden');
-
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
@@ -105,11 +96,6 @@ function showButtonsFor(mode) {
     evolveBtn.classList.remove('hidden');
     renderBtn.classList.remove('hidden');
 
-    renderBLBtn.classList.remove('hidden');
-    renderBRBtn.classList.remove('hidden');
-    renderTLBtn.classList.remove('hidden');
-    renderTRBtn.classList.remove('hidden');
-
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
@@ -117,11 +103,6 @@ function showButtonsFor(mode) {
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
-
-    renderBLBtn.classList.add('hidden');
-    renderBRBtn.classList.add('hidden');
-    renderTLBtn.classList.add('hidden');
-    renderTRBtn.classList.add('hidden');
 
     nextBtn.classList.remove('hidden');
     shuffleBtn.classList.remove('hidden');
@@ -632,8 +613,29 @@ function resizeContainers() {
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
+function createExtraKonsoleCommands(store, commander) {
+  const createExtraRenderCommand = (keyword, section) => {
+    return {
+      canHandle(command) {
+        const state = store.getState();
+        return state.currentMode === SenMode.edit && command === keyword;
+      },
+      execute() {
+        toggleKonsole(); // konsole is visible, so hide it
+        renderHighResSection(store.getState(), section);
+        return "rendering sub-section of image";
+      }
+    };
+  };
 
-function createKonsole(element) {
+  const renderBL = createExtraRenderCommand('render-bl', 0);
+  const renderBR = createExtraRenderCommand('render-br', 1);
+  const renderTL = createExtraRenderCommand('render-tl', 2);
+  const renderTR = createExtraRenderCommand('render-tr', 3);
+  [renderBL, renderBR, renderTL, renderTR].forEach(c => commander.addCommand(c));
+}
+
+function createKonsole(store, element) {
   const konsole = new Konsole(element, {
     prompt: '> ',
     historyLabel: 'cs-console-demo',
@@ -644,25 +646,19 @@ function createKonsole(element) {
     theme: 'konsole'
   });
 
-  // Job.request(jobGenerateHelp, {
-  // }).then(documentation => {
-  //   console.log('generate help returned something');
-  //   const commander = new KonsoleCommander();
-  //   addDefaultCommands(documentation, commander);
+  const commander = new KonsoleCommander();
 
-  //   konsole.initCallbacks({
-  //     commandValidate(line) {
-  //       return line.length > 0;
-  //     },
-  //     commandHandle(line, report, prompt) {
-  //       console.log('commandHandle', line, report, prompt);
-  //       commander.commandHandle(line, report, prompt);
-  //     }
-  //   });
-  // }).catch(error => {
-  //   // handle error
-  //   console.log(`worker: error of ${error}`);
-  // });
+  createExtraKonsoleCommands(store, commander);
+
+  konsole.initCallbacks({
+    commandValidate(line) {
+      return line.length > 0;
+    },
+    commandHandle(line, report, prompt) {
+      console.log('commandHandle', line, report, prompt);
+      commander.commandHandle(line, report, prompt);
+    }
+  });
 
   return konsole;
 }
@@ -718,7 +714,7 @@ function setupUI(store) {
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById('render-img'),
     // console CodeMirror element in the edit screen
-    konsole: createKonsole(konsoleElement),
+    konsole: createKonsole(store, konsoleElement),
     editor: createEditor(store, editorTextArea)
   };
 
@@ -745,23 +741,6 @@ function setupUI(store) {
 
   addClickEvent('render-btn', event => {
     renderHighRes(store.getState());
-    event.preventDefault();
-  });
-
-  addClickEvent('render-bl-btn', event => {
-    renderHighResSection(store.getState(), 0);
-    event.preventDefault();
-  });
-  addClickEvent('render-br-btn', event => {
-    renderHighResSection(store.getState(), 1);
-    event.preventDefault();
-  });
-  addClickEvent('render-tl-btn', event => {
-    renderHighResSection(store.getState(), 2);
-    event.preventDefault();
-  });
-  addClickEvent('render-tr-btn', event => {
-    renderHighResSection(store.getState(), 3);
     event.preventDefault();
   });
 
@@ -906,26 +885,6 @@ function setupUI(store) {
     }
   });
 
-  let konsoleToggle = 0;
-
-  function toggleKonsole() {
-    const konsolePanel = document.getElementById('konsole');
-    const konsoleButton = document.getElementById('console-btn');
-
-    konsoleToggle = 1 - konsoleToggle;
-    if (konsoleToggle === 1) {
-      konsolePanel.style.height = '50%';
-      konsoleButton.textContent = 'Hide Console';
-      gUI.konsole.focus();
-    } else {
-      gUI.editor.focus();
-      konsolePanel.style.height = '0%';
-      konsoleButton.textContent = 'Show Console';
-    }
-    gUI.konsole.refresh();
-    gUI.editor.refresh();
-  }
-
   document.onkeydown = evt_ => {
     const evt = evt_ || window.event;
 
@@ -938,6 +897,24 @@ function setupUI(store) {
   addClickEvent('console-btn', toggleKonsole);
 
   return store;
+}
+
+function toggleKonsole() {
+  const konsolePanel = document.getElementById('konsole');
+  const konsoleButton = document.getElementById('console-btn');
+
+  gKonsoleToggle = 1 - gKonsoleToggle;
+  if (gKonsoleToggle === 1) {
+    konsolePanel.style.height = '50%';
+    konsoleButton.textContent = 'Hide Console';
+    gUI.konsole.focus();
+  } else {
+    gUI.editor.focus();
+    konsolePanel.style.height = '0%';
+    konsoleButton.textContent = 'Show Console';
+  }
+  gUI.konsole.refresh();
+  gUI.editor.refresh();
 }
 
 function getGallery() {
