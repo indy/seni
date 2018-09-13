@@ -3,7 +3,7 @@ serve.exe
 
 .DS_Store
 
-/app/dist
+/dist
 /build_unix
 /build_wasm
 /build_win

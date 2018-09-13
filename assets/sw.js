@@ -18,6 +18,8 @@
 
 var version = 'v2::';
 
+// todo: UPDATE
+// /assets/lib/codemirror/codemirror.css is being used instead of this:
 var nodeModuleRequests = [
   '/node_modules/codemirror/lib/codemirror.css'
 ];

@@ -11,7 +11,10 @@
     "build:server": "go build src/go/serve.go",
     "format": "clang-format src/c/wasm.c src/c/native.c src/c/test.c --glob=src/c/sen/*.[ch] -i -style=file",
     "clean": "rm dist/*.js",
-    "build:all": "npm run clean && npm run build && npm run build:wasm"
+    "build:all": "npm run clean && npm run build && npm run build:wasm",
+    "build:all:production": "npm run clean && npm run build:production && npm run build:wasm",
+    "build:server:linode": "cross-env GOARCH=amd64 GOOS=linux go build src/go/serve.go",
+    "publish:local": "npm run build:all:production && npm run build:server:linode && mkdirp ../seni.app/public/_create && cp -r assets ../seni.app/public/_create/. && cp -r dist ../seni.app/public/_create/. && cp -r server ../seni.app/public/_create/. && cp serve ../seni.app/public/_create/."
   },
   "repository": {
     "type": "git",
@@ -40,6 +43,8 @@
     "babel-plugin-transform-es2015-block-scoping": "^6.20.0",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "clang-format": "^1.2.3",
+    "cross-env": "5.2.0",
+    "mkdirp": "0.5.1",
     "webassembly": "^0.11.0",
     "webpack": "^4.8.2",
     "webpack-cli": "^2.1.3",
