@@ -34,6 +34,8 @@ import { jobRender,
 import { initFirebase,
          initFirebaseSignIn} from './fb';
 
+const BASENAME = "/create";
+
 let gUI = {};
 let gGLRenderer = undefined;
 let gKonsoleToggle = 0;
@@ -583,7 +585,7 @@ function showEditFromGallery(store, element) {
   return new Promise((resolve, reject) => {
     const [index, _] = getIdNumberFromDom(element, /gallery-item-(\d+)/);
     if (index !== -1) {
-      const url = `/gallery/${index}`;
+      const url = `${BASENAME}/gallery/${index}`;
 
       get(url).catch(() => {
         reject(Error(`cannot connect to ${url}`));
@@ -944,7 +946,7 @@ function getGallery() {
     row.className = 'cards';
     list.appendChild(row);
 
-    const url = '/gallery';
+    const url = `${BASENAME}/gallery`;
     getJSON(url).then(galleryItems => {
       // gets an array of gallery items
       galleryItems.forEach(item => {
@@ -975,7 +977,7 @@ function allocateWorkers(state) {
     // don't allocate more workers than necessary
     numWorkers = state.populationSize;
   }
-  Job.setup(numWorkers, '/dist/worker.bundle.js');
+  Job.setup(numWorkers, `${BASENAME}/dist/worker.bundle.js`);
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/Events/resize
@@ -1018,7 +1020,7 @@ export default function main() {
   const canvasElement = document.getElementById('render-canvas');
   gGLRenderer = new GLRenderer(canvasElement);
 
-  gGLRenderer.loadTexture('/img/texture.png').then(() => {
+  gGLRenderer.loadTexture(`img/texture.png`).then(() => {
     setupUI(store);
     return getGallery();
   }).then(() => {

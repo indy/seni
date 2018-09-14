@@ -85,6 +85,9 @@ func maxAgeHandler(seconds int, h http.Handler) http.Handler {
 }
 
 func main() {
+
+	const BaseName = "/create/"
+
 	galleryItems2, err := parseGallery()
 	if err != nil {
 		fmt.Println("fooked")
@@ -92,14 +95,14 @@ func main() {
 	}
 	galleryItems = galleryItems2
 
-	http.HandleFunc("/gallery", galleryListHandler)
-	http.HandleFunc("/gallery/", galleryHandler)
+	http.HandleFunc(BaseName+"gallery", galleryListHandler)
+	http.HandleFunc(BaseName+"gallery/", galleryHandler)
 
 	fs := http.FileServer(http.Dir("assets"))
-	http.Handle("/", maxAgeHandler(0, fs))
+	http.Handle(BaseName, maxAgeHandler(0, http.StripPrefix(BaseName, fs)))
 
 	fs = http.FileServer(http.Dir("dist"))
-	http.Handle("/dist/", http.StripPrefix("/dist/", fs))
+	http.Handle(BaseName+"dist/", http.StripPrefix(BaseName+"dist/", fs))
 
 	fmt.Printf("Serving localhost:3210\n")
 	http.ListenAndServe(":3210", nil)
