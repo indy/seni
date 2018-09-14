@@ -86,7 +86,7 @@ func maxAgeHandler(seconds int, h http.Handler) http.Handler {
 
 func main() {
 
-	const BaseName = "/create/"
+	const BaseName = "/"
 
 	galleryItems2, err := parseGallery()
 	if err != nil {

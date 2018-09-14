@@ -27,11 +27,15 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 make_win.bat test
 
-
 ### Running
 
 1. `./serve`
 2. visit http://localhost:3000
+
+### Publishing
+
+1. `npm run publish:local`
+2. upload the app directory onto a server
 
 ## Windows 10 Shenanigans
 

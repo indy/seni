@@ -32,8 +32,6 @@ import { jobRender,
          // jobGenerateHelp
        } from './jobTypes';
 
-const BASENAME = "/create";
-
 let gUI = {};
 let gGLRenderer = undefined;
 let gKonsoleToggle = 0;
@@ -583,7 +581,7 @@ function showEditFromGallery(store, element) {
   return new Promise((resolve, reject) => {
     const [index, _] = getIdNumberFromDom(element, /gallery-item-(\d+)/);
     if (index !== -1) {
-      const url = `${BASENAME}/gallery/${index}`;
+      const url = `gallery/${index}`;
 
       get(url).catch(() => {
         reject(Error(`cannot connect to ${url}`));
@@ -944,7 +942,7 @@ function getGallery() {
     row.className = 'cards';
     list.appendChild(row);
 
-    const url = `${BASENAME}/gallery`;
+    const url = 'gallery';
     getJSON(url).then(galleryItems => {
       // gets an array of gallery items
       galleryItems.forEach(item => {
@@ -975,7 +973,7 @@ function allocateWorkers(state) {
     // don't allocate more workers than necessary
     numWorkers = state.populationSize;
   }
-  Job.setup(numWorkers, `${BASENAME}/dist/worker.bundle.js`);
+  Job.setup(numWorkers, 'dist/worker.bundle.js');
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/Events/resize

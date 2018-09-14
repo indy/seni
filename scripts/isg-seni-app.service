@@ -1,0 +1,9 @@
+[Unit]
+Description=Start seni.app/create
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /home/indy/work/seni.app/app/isg-start-seni-app.sh
+
+[Install]
+WantedBy=multi-user.target

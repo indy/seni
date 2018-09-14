@@ -14,7 +14,7 @@
     "build:all": "npm run clean && npm run build && npm run build:wasm",
     "build:all:production": "npm run clean && npm run build:production && npm run build:wasm",
     "build:server:linode": "cross-env GOARCH=amd64 GOOS=linux go build src/go/serve.go",
-    "publish:local": "npm run build:all:production && npm run build:server:linode && mkdirp ../seni.app/public/_create && cp -r assets ../seni.app/public/_create/. && cp -r dist ../seni.app/public/_create/. && cp -r server ../seni.app/public/_create/. && cp serve ../seni.app/public/_create/."
+    "publish:local": "npm run build:all:production && npm run build:server:linode && mkdirp app && cp -r assets app/. && cp -r dist app/. && cp -r server app/. && cp serve app/. && cp scripts/isg-start-seni-app.sh app/."
   },
   "repository": {
     "type": "git",
