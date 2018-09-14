@@ -31,8 +31,6 @@ import { jobRender,
          jobUnparse
          // jobGenerateHelp
        } from './jobTypes';
-import { initFirebase,
-         initFirebaseSignIn} from './fb';
 
 const BASENAME = "/create";
 
@@ -1008,9 +1006,6 @@ function setupResizeability() {
 
 export default function main() {
   setupResizeability();
-
-  initFirebase();
-  initFirebaseSignIn();
 
   const state = createInitialState();
   const store = createStore(state);

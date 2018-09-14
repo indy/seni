@@ -198,10 +198,6 @@ button:disabled {
   background-color: grey;
 }
 
-#firebase-sign-in {
-  float: right;
-}
-
 .navbar-button, .navbar-button:hover, .navbar-button:focus {
   transition: background-color 1.5s ease;
   transition: border-color 1.5s ease;
