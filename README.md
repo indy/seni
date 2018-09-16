@@ -30,7 +30,7 @@ make_win.bat test
 ### Running
 
 1. `./serve`
-2. visit http://localhost:3000
+2. visit http://localhost:3210
 
 ### Publishing
 

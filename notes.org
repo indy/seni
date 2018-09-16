@@ -16,6 +16,24 @@
   15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
   16. [ ] look into restrict keyword in C99
 
+
+* app colours
+
+| what               | path            | colour |
+|--------------------+-----------------+--------|
+| gallery background | body background | #eee   |
+|                    |                 |        |
+
+primary:       #f1edeb
+primary-light: #ffffff
+primary-dark:  #bebbb9
+text on primary: #3e2723
+
+secondary: #455a64
+S — Light: #718792
+S — Dark:  #1c313a
+text on secondary: #ffffff
+
 * srgb.glsl
   https://gist.github.com/tomaka/0ef19530fdbf6a1d30ebf9c0bcd0df72
 
