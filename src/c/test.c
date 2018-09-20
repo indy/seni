@@ -1201,6 +1201,44 @@ void unparse_compare(i32 seed_value, char* source, char* expected) {
   sen_systems_shutdown();
 }
 
+void simplified_unparse_compare(char* source, char* expected) {
+  sen_systems_startup();
+
+  sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  sen_env* env = env_allocate();
+
+  sen_node* ast = parser_parse(env->word_lut, source);
+
+  sen_compiler_config compiler_config;
+  compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
+  compiler_config.word_lut         = env->word_lut;
+  compiler_config.vary             = 0;
+
+  i32   unparsed_source_size = 1024;
+  char* unparsed_source      = (char*)calloc(unparsed_source_size, sizeof(char));
+
+  sen_cursor* cursor = cursor_allocate(unparsed_source, unparsed_source_size);
+
+  simplified_unparse(cursor, env->word_lut, ast);
+
+  if (expected != NULL) {
+    TEST_ASSERT_EQUAL_STRING(expected, unparsed_source);
+  } else {
+    TEST_ASSERT_EQUAL_STRING(source, unparsed_source);
+  }
+
+  free(unparsed_source);
+
+  cursor_free(cursor);
+
+  parser_return_nodes_to_pool(ast);
+
+  env_free(env);
+  vm_free(vm);
+
+  sen_systems_shutdown();
+}
+
 void test_genotype(void) {
   sen_genotype* genotype;
   sen_gene*     g;
@@ -1395,6 +1433,15 @@ void test_genotype_multiple_floats(void) {
   sen_systems_shutdown();
 }
 
+void test_simplified_unparser(void) {
+    simplified_unparse_compare("(+ 1 1)", "(+ 1 1)");
+    simplified_unparse_compare("(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 3)");
+    simplified_unparse_compare("(col/rgb r: {0.4 (gen/scalar)} g: 0.1)", "(col/rgb r: 0.4 g: 0.1)");
+    simplified_unparse_compare("{b (gen/select from: '(a b c))}", "b");
+    simplified_unparse_compare("{robocop (gen/select from: col/procedural-fn-presets)}", "robocop");
+    simplified_unparse_compare("{50 (gen/stray from: 50 by: 20)}", "50");
+}
+
 void test_unparser(void) {
   unparse_compare(9875, "(+ 4 2.0)", NULL);
   unparse_compare(9875, "(+ 4 [1 2 3])", NULL);
@@ -1448,6 +1495,8 @@ void test_unparser(void) {
   unparse_compare(9999,
                   "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}",
                   "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 1.00) (gen/col alpha: 1)}");
+
+  unparse_compare(6534, "{50 (gen/stray from: 50 by: 20)}", "{63 (gen/stray from: 50 by: 20)}");
 }
 
 void test_unparser_vectors(void) {
@@ -1469,6 +1518,12 @@ void test_unparser_vectors(void) {
   unparse_compare(9999,
                   "{ [ [ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/2d min: 40 max: 90) }",
                   "{ [ [ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/2d min: 40 max: 90) }");
+}
+
+void test_unparser_single_trait_vectors(void) {
+  unparse_compare(1298,
+                  "{[10 20] (gen/stray-2d from: [10 20] by: 5)}",
+                  "{[13 19] (gen/stray-2d from: [10 20] by: 5)}");
 }
 
 void test_unparser_multiple_floats(void) {
@@ -2024,8 +2079,10 @@ int main(void) {
   RUN_TEST(test_genotype_stray_2d);
   RUN_TEST(test_genotype_vectors);
   RUN_TEST(test_genotype_multiple_floats);
+  RUN_TEST(test_simplified_unparser);
   RUN_TEST(test_unparser);
   RUN_TEST(test_unparser_vectors);
+  RUN_TEST(test_unparser_single_trait_vectors);
   RUN_TEST(test_unparser_multiple_floats);
 
   RUN_TEST(test_serialization);

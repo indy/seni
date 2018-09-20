@@ -315,3 +315,63 @@ bool unparse(sen_cursor* cursor, sen_word_lut* word_lut, sen_node* ast, sen_geno
 
   return true;
 }
+
+
+sen_node* simplified_unparse_ast_node(sen_cursor*   cursor,
+                                      sen_word_lut* word_lut,
+                                      sen_node*     ast) {
+  sen_node* n;
+
+  if (ast->type == NODE_LIST) {
+      n = safe_first(ast->value.first_child);
+      if (n->type == NODE_NAME && n->value.i == INAME_QUOTE) {
+          // rather than outputing: (quote (1 2 3))
+          // we want: '(1 2 3)
+          //
+          cursor_sprintf(cursor, "'");
+
+          n = n->next;      // skip past the "quote"
+          n = safe_next(n); // skip past the whitespace
+
+          while (n != NULL) {
+              simplified_unparse_ast_node(cursor, word_lut, n);
+              n = n->next;
+          }
+
+      } else {
+          cursor_sprintf(cursor, "(");
+
+          while (n != NULL) {
+              simplified_unparse_ast_node(cursor, word_lut, n);
+              n = n->next;
+          }
+          cursor_sprintf(cursor, ")");
+      }
+
+  } else if (ast->type == NODE_VECTOR) {
+      n = safe_first(ast->value.first_child);
+      cursor_sprintf(cursor, "[");
+
+      while (n != NULL) {
+          simplified_unparse_ast_node(cursor, word_lut, n);
+          n = n->next;
+      }
+      cursor_sprintf(cursor, "]");
+
+  } else {
+      format_node_value(cursor, word_lut, ast);
+  }
+
+  return ast->next;
+}
+
+// out is a pre-allocated array
+//
+bool simplified_unparse(sen_cursor* cursor, sen_word_lut* word_lut, sen_node* ast) {
+  sen_node* n            = ast;
+  while (n != NULL) {
+    n = simplified_unparse_ast_node(cursor, word_lut, n);
+  }
+
+  return true;
+}
