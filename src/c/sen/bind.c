@@ -2339,6 +2339,35 @@ sen_var* get_gen_initial(sen_vm* vm) {
   return initial_value;
 }
 
+// NOTE: gen/stray should still parse values as float
+// as sen scripts won't produce any real ints
+//
+sen_var* bind_gen_stray(sen_vm* vm, i32 num_args) {
+  f32 from  = 1.0f;
+  f32 by  = 0.2f;
+  f32 vary = g_vary_default;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_FROM, from);
+  READ_STACK_ARG_F32(INAME_BY, by);
+  READ_STACK_ARG_F32(INAME_VARY, vary);
+  READ_STACK_ARGS_END;
+
+  by = absf(by);
+
+  f32 value;
+  if (using_vary(vm) == false) {
+    value = sen_prng_f32_range(vm->prng_state, from - by, from + by);
+  } else {
+    sen_var* initial_value = get_gen_initial(vm);
+    value = sen_prng_f32_around(vm->prng_state, initial_value->value.f, vary, from - by, from + by);
+  }
+
+  f32_as_var(&g_var_scratch, value);
+
+  return &g_var_scratch;
+}
+
 // NOTE: gen/int should still parse values as float
 // as sen scripts won't produce any real ints
 //
@@ -2606,9 +2635,10 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "focal/build-hline", &bind_focal_build_hline);
   declare_native(word_lut, e, "focal/value", &bind_focal_value);
 
+  declare_native(word_lut, e, "gen/stray", &bind_gen_stray);
   declare_native(word_lut, e, "gen/int", &bind_gen_int);
   declare_native(word_lut, e, "gen/scalar", &bind_gen_scalar);
   declare_native(word_lut, e, "gen/2d", &bind_gen_2d);
-  declare_native(word_lut, e, "gen/select", &bind_gen_select);
+  declare_native(word_lut, e, "gen/select", &bind_gen_select); // broken?
   declare_native(word_lut, e, "gen/col", &bind_gen_col);
 }

@@ -1258,6 +1258,28 @@ void test_genotype(void) {
   sen_systems_shutdown();
 }
 
+void test_genotype_stray(void) {
+  sen_genotype* genotype;
+  sen_gene*     g;
+  sen_var*      v;
+
+  // startup/shutdown here and not in genotype_test as the tests compare
+  // genotypes
+  sen_systems_startup();
+
+  {
+    genotype = genotype_test(3421, "{3 (gen/stray from: 3 by: 0.5)}");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    v = g->var;
+    assert_sen_var_f32(v, VAR_FLOAT, 3.300718f);
+    TEST_ASSERT_NULL(g->next); // only 1 gene
+    genotype_return_to_pool(genotype);
+  }
+
+  sen_systems_shutdown();
+}
+
 void test_genotype_vectors(void) {
   sen_genotype* genotype;
   sen_gene*     g;
@@ -1972,6 +1994,7 @@ int main(void) {
   RUN_TEST(test_vm_repeat);
 
   RUN_TEST(test_genotype);
+  RUN_TEST(test_genotype_stray);
   RUN_TEST(test_genotype_vectors);
   RUN_TEST(test_genotype_multiple_floats);
   RUN_TEST(test_unparser);
