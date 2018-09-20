@@ -1280,6 +1280,32 @@ void test_genotype_stray(void) {
   sen_systems_shutdown();
 }
 
+void test_genotype_stray_2d(void) {
+  sen_genotype* genotype;
+  sen_gene*     g;
+  sen_var*      v;
+
+  // startup/shutdown here and not in genotype_test as the tests compare
+  // genotypes
+  sen_systems_startup();
+
+  {
+    genotype = genotype_test(3421, "{[100 200] (gen/stray-2d from: [100 200] by: 10)}");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    v = g->var;
+
+    TEST_ASSERT_EQUAL(VAR_2D, v->type);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 106.014359f, v->f32_array[0]);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 207.37352f, v->f32_array[1]);
+
+    TEST_ASSERT_NULL(g->next); // only 1 gene
+    genotype_return_to_pool(genotype);
+  }
+
+  sen_systems_shutdown();
+}
+
 void test_genotype_vectors(void) {
   sen_genotype* genotype;
   sen_gene*     g;
@@ -1995,6 +2021,7 @@ int main(void) {
 
   RUN_TEST(test_genotype);
   RUN_TEST(test_genotype_stray);
+  RUN_TEST(test_genotype_stray_2d);
   RUN_TEST(test_genotype_vectors);
   RUN_TEST(test_genotype_multiple_floats);
   RUN_TEST(test_unparser);
@@ -2011,7 +2038,7 @@ int main(void) {
 
 #else
 
-  RUN_TEST(test_genotype_initial_value);
+  // RUN_TEST(test_genotype_initial_value);
 
 #endif
 
