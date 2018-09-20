@@ -150,7 +150,7 @@ void execute_source_with_seed(char* source, i32 seed_value) {
 
   sen_program* program = program_construct(&compiler_config);
 
-  program = compile_program_with_genotype(program, ast, genotype);
+  program = compile_program_with_genotype(program, env->word_lut, ast, genotype);
 
   parser_return_nodes_to_pool(ast);
 

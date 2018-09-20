@@ -63,12 +63,16 @@ void compiler_subsystem_shutdown() { program_free(g_preamble_program); }
 
 sen_program* get_preamble_program() { return g_preamble_program; }
 
-void gene_assign_to_node(sen_genotype* genotype, sen_node* node) {
+void gene_assign_to_node(sen_word_lut* word_lut, sen_genotype* genotype, sen_node* node) {
   if (node->alterable) {
     if (node->type == NODE_VECTOR) {
-      // grab a gene for every element in this vector
-      for (sen_node* n = safe_first_child(node); n != NULL; n = safe_next(n)) {
-        n->gene = genotype_pull_gene(genotype);
+      if (is_single_trait_vector(node, word_lut)) {
+        node->gene = genotype_pull_gene(genotype);
+      } else {
+        // grab a gene for every element in this vector
+        for (sen_node* n = safe_first_child(node); n != NULL; n = safe_next(n)) {
+          n->gene = genotype_pull_gene(genotype);
+        }
       }
     } else {
       node->gene = genotype_pull_gene(genotype);
@@ -80,7 +84,7 @@ void gene_assign_to_node(sen_genotype* genotype, sen_node* node) {
     if (get_node_value_in_use(node->type) == USE_FIRST_CHILD) {
       sen_node* first_child = safe_first(node->value.first_child);
       if (first_child) {
-        gene_assign_to_node(genotype, first_child);
+        gene_assign_to_node(word_lut, genotype, first_child);
       }
     }
   }
@@ -88,13 +92,13 @@ void gene_assign_to_node(sen_genotype* genotype, sen_node* node) {
   // todo: is it safe to assume that node->next will always be valid? and that
   // leaf nodes will have next == null?
   if (node->next) {
-    gene_assign_to_node(genotype, node->next);
+    gene_assign_to_node(word_lut, genotype, node->next);
   }
 }
 
-bool genotype_assign_to_ast(sen_genotype* genotype, sen_node* ast) {
+bool genotype_assign_to_ast(sen_word_lut* word_lut, sen_genotype* genotype, sen_node* ast) {
   genotype->current_gene = genotype->genes;
-  gene_assign_to_node(genotype, ast);
+  gene_assign_to_node(word_lut, genotype, ast);
 
   // current gene should be null since traversing the ast
   // and assigning genes to alterable nodes should have
@@ -1778,10 +1782,10 @@ sen_program* compile_program(sen_program* program, sen_node* ast) {
 }
 
 sen_program*
-compile_program_with_genotype(sen_program* program, sen_node* ast, sen_genotype* genotype) {
+compile_program_with_genotype(sen_program* program, sen_word_lut* word_lut, sen_node* ast, sen_genotype* genotype) {
   g_use_genes = true;
 
-  bool all_genes_assigned = genotype_assign_to_ast(genotype, ast);
+  bool all_genes_assigned = genotype_assign_to_ast(word_lut, genotype, ast);
   if (all_genes_assigned == false) {
     SEN_ERROR("not all genes were assigned");
     return NULL;

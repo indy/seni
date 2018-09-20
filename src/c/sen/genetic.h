@@ -5,6 +5,8 @@
 void ga_subsystem_startup();
 void ga_subsystem_shutdown();
 
+bool is_single_trait_vector(sen_node* p, sen_word_lut* word_lut);
+
 struct sen_trait {
   i32 id;
 

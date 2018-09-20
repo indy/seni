@@ -35,6 +35,7 @@ bool wlut_add_native(sen_word_lut* word_lut, char* name);
 bool wlut_add_keyword(sen_word_lut* word_lut, char* name);
 bool wlut_add_word(sen_word_lut* word_lut, char* name, size_t len);
 
+
 // which value to use from the unions that are specified in both sen_node and
 // sen_var
 typedef enum {

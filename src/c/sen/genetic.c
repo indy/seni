@@ -301,14 +301,24 @@ bool is_word_match(char* word, char* name) {
     return false;
 }
 
-bool is_single_trait_vector(sen_node* p, sen_compiler_config* compiler_config) {
+bool is_single_trait_vector(sen_node* p, sen_word_lut* word_lut) {
+
+    if (!p->alterable) {
+        return false;
+    }
+    if (p->type != NODE_VECTOR) {
+        return false;
+    }
+
+    p = p->parameter_ast;
+
     while (p) {
         if (p->type == NODE_LIST) {
             sen_node* pc = p->value.first_child;
 
             while(pc) {
                 if (pc->type == NODE_NAME) {
-                    char* word = wlut_reverse_lookup(compiler_config->word_lut, pc->value.i);
+                    char* word = wlut_reverse_lookup(word_lut, pc->value.i);
                     if (is_word_match(word, "gen/stray-2d")) {
                         return true;
                     }
@@ -337,7 +347,7 @@ ga_traverse(sen_node* node, sen_trait_list* trait_list, sen_compiler_config* com
         some functions like gen/stray-2d need to generate a single trait
         on the original vector.
        */
-      if (is_single_trait_vector(n->parameter_ast, compiler_config)) {
+      if (is_single_trait_vector(n, compiler_config->word_lut)) {
         add_single_trait(trait_list, n, compiler_config);
       } else {
         add_multiple_traits(trait_list, n, compiler_config);
