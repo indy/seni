@@ -99,6 +99,20 @@ void sen_unparse_with_genotype(sen_cursor*   out_cursor,
   parser_return_nodes_to_pool(ast);
 }
 
+void sen_simplify_script(sen_cursor*   out_cursor,
+                         char*         source,
+                         sen_word_lut* word_lut) {
+  sen_node* ast = parser_parse(word_lut, source);
+
+  cursor_reset(out_cursor);
+
+  simplified_unparse(out_cursor, word_lut, ast);
+
+  cursor_write_null(out_cursor);
+
+  parser_return_nodes_to_pool(ast);
+}
+
 sen_genotype* sen_deserialize_genotype(sen_cursor* cursor) {
   sen_genotype* genotype = genotype_get_from_pool();
   cursor_reset(cursor);

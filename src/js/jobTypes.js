@@ -23,3 +23,4 @@ export const jobInitialGeneration = 'INITIAL_GENERATION';
 export const jobNewGeneration = 'NEW_GENERATION';
 export const jobGenerateHelp = 'GENERATE_HELP';
 export const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
+export const jobSimplifyScript = 'SIMPLIFY_SCRIPT';

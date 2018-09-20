@@ -422,3 +422,12 @@ export void unparse_with_genotype() {
 
   debug_size_out_source_buffer();
 }
+
+
+export void simplify_script() {
+  debug_size_source_buffer();
+
+  sen_simplify_script(g_out_source_cursor, g_source_buffer, g_e->word_lut);
+
+  debug_size_out_source_buffer();
+}

@@ -45,7 +45,6 @@ class PromiseWorker {
           self.initialised = true;
           return;
         }
-
       } else {                  // ArrayBuffer
         [status, result] = event.data;
       }

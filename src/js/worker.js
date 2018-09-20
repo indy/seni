@@ -21,7 +21,8 @@ import { jobRender,
          jobBuildTraits,
          jobInitialGeneration,
          jobNewGeneration,
-         jobSingleGenotypeFromSeed
+         jobSingleGenotypeFromSeed,
+         jobSimplifyScript
        } from './jobTypes';
 const SenWasm = {};
 
@@ -406,6 +407,20 @@ function singleGenotypeFromSeed({ seed, traits }) {
   return [{ok: true, logMessages}, { genotype: genotypes[0] }];
 }
 
+function simplifyScript({ script }) {
+  konsoleProxy.clear();
+
+  SenWasm.setString(SenWasm.source_buffer, script);
+
+  SenWasm.simplifyScript();
+
+  const newScript = SenWasm.getString(SenWasm.out_source_buffer);
+
+  const logMessages = konsoleProxy.collectMessages();
+
+      return [{ ok: true, logMessages }, { script: newScript }];
+}
+
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   konsoleProxy.clear();
 
@@ -460,6 +475,7 @@ function configureWasmModule(wasmInstance) {
   SenWasm.genotypeMoveToBuffer = w.exports.genotype_move_to_buffer;
   SenWasm.useGenotypeWhenCompiling = w.exports.use_genotype_when_compiling;
   SenWasm.unparseWithGenotype = w.exports.unparse_with_genotype;
+  SenWasm.simplifyScript = w.exports.simplify_script;
 
   SenWasm.nextGenerationPrepare = w.exports.next_generation_prepare;
   SenWasm.nextGenerationAddGenotype = w.exports.next_generation_add_genotype;
@@ -516,6 +532,8 @@ function messageHandler(type, data) {
     return createInitialGeneration(data);
   case jobSingleGenotypeFromSeed:
     return singleGenotypeFromSeed(data);
+  case jobSimplifyScript:
+    return simplifyScript(data);
   case jobNewGeneration:
     return newGeneration(data);
   default:

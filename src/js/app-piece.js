@@ -22,7 +22,8 @@ import Job from './job';
 import { jobRender,
          jobUnparse,
          jobBuildTraits,
-         jobSingleGenotypeFromSeed
+         jobSingleGenotypeFromSeed,
+         jobSimplifyScript
        } from './jobTypes';
 let gGLRenderer = undefined;
 
@@ -75,6 +76,19 @@ function getRequiredElement(id) {
   return element;
 }
 
+function showSimplifiedScript(fullScript) {
+  Job.request(jobSimplifyScript, {
+    script: fullScript
+  }).then(({ script }) => {
+    const simplifiedScriptElement =
+          getRequiredElement('piece-simplified-script');
+    simplifiedScriptElement.textContent = script;
+  }).catch(error => {
+    // handle error
+    console.log(`worker: error of ${error}`);
+  });
+}
+
 export default function main() {
   const texturePathElement = getRequiredElement('piece-texture-path');
   const workerPathElement = getRequiredElement('piece-worker-path');
@@ -96,6 +110,7 @@ export default function main() {
       script = code;
       originalScript = script.slice();
       scriptElement.textContent = script;
+      showSimplifiedScript(script);
       return renderScript({ script, scriptHash });
     }).catch(error => console.error(error));
   });
@@ -107,6 +122,7 @@ export default function main() {
 
   script = scriptElement.textContent;
   originalScript = script.slice();
+  showSimplifiedScript(script);
 
   gGLRenderer.loadTexture(texturePathElement.textContent)
     .then(() => renderScript({ script, scriptHash }))
@@ -115,6 +131,7 @@ export default function main() {
   originalButton.addEventListener('click', () => {
     renderScript({ script: originalScript, scriptHash });
     scriptElement.textContent = originalScript;
+    showSimplifiedScript(originalScript);
     originalButton.disabled = true;
   });
 
@@ -139,6 +156,7 @@ export default function main() {
       })
       .then(({ script }) => {
         scriptElement.textContent = script;
+        showSimplifiedScript(script);
       })
       .catch(error => {
         console.log('fooked');
