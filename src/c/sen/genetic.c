@@ -283,13 +283,75 @@ void add_multiple_traits(sen_trait_list*      trait_list,
   }
 }
 
+bool is_word_match(char* word, char* name) {
+    char* wp = word;
+    char* np = name;
+
+    while(*wp && *np) {
+        if (*wp++ != *np++) {
+            return false;
+        }
+    }
+
+    // both word and name should have reached their end
+    if (*wp == 0 && *np == 0) {
+        return true;
+    }
+
+    return false;
+}
+
+bool is_single_trait_vector(sen_node* p, sen_word_lut* word_lut) {
+
+    if (!p->alterable) {
+        return false;
+    }
+    if (p->type != NODE_VECTOR) {
+        return false;
+    }
+
+    p = p->parameter_ast;
+
+    while (p) {
+        if (p->type == NODE_LIST) {
+            sen_node* pc = p->value.first_child;
+
+            while(pc) {
+                if (pc->type == NODE_NAME) {
+                    char* word = wlut_reverse_lookup(word_lut, pc->value.i);
+                    if (is_word_match(word, "gen/stray-2d")) {
+                        return true;
+                    }
+                    // only need to check the first NODE_NAME in the first list
+                    return false;
+                }
+                pc = pc->next;
+            }
+            // only check the first NODE_LIST
+            return false;
+        }
+        p = p->next;
+    }
+    return false;
+}
+
 sen_node*
 ga_traverse(sen_node* node, sen_trait_list* trait_list, sen_compiler_config* compiler_config) {
   sen_node* n = node;
 
   if (n->alterable) {
     if (n->type == NODE_VECTOR) {
-      add_multiple_traits(trait_list, n, compiler_config);
+      /*
+        by convention if a vector is alterable then the gen function
+        (e.g. gen/int) is applied to each member of the vector. However
+        some functions like gen/stray-2d need to generate a single trait
+        on the original vector.
+       */
+      if (is_single_trait_vector(n, compiler_config->word_lut)) {
+        add_single_trait(trait_list, n, compiler_config);
+      } else {
+        add_multiple_traits(trait_list, n, compiler_config);
+      }
     } else {
       add_single_trait(trait_list, n, compiler_config);
     }

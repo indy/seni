@@ -77,7 +77,7 @@ sen_program* sen_compile_program_with_genotype(char*         source,
 
   sen_program* program = program_construct(&compiler_config);
 
-  program = compile_program_with_genotype(program, ast, genotype);
+  program = compile_program_with_genotype(program, word_lut, ast, genotype);
 
   parser_return_nodes_to_pool(ast);
 

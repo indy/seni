@@ -22,4 +22,4 @@ sen_program* compile_program_for_trait(sen_program* program,
                                        i32          vary);
 
 sen_program*
-compile_program_with_genotype(sen_program* program, sen_node* ast, sen_genotype* genotype);
+compile_program_with_genotype(sen_program* program, sen_word_lut* word_lut, sen_node* ast, sen_genotype* genotype);
