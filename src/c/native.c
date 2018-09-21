@@ -142,7 +142,7 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   sen_trait_list* trait_list             = trait_list_compile(ast, &compiler_config_trait);
 
   // using the vm to build the genes
-  sen_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed_value);
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_PROGRAM_SIZE;

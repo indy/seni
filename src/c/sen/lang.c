@@ -1039,6 +1039,9 @@ void vm_reset(sen_vm* vm) {
 
   render_data_free_render_packets(vm->render_data);
   add_render_packet(vm->render_data);
+
+  vm->building_with_trait_within_vector = 0;
+  vm->trait_within_vector_index = 0;
 }
 
 void vm_free_render_data(sen_vm* vm) {

@@ -1,21 +1,19 @@
-* TODO [0/16]
+* TODO [0/15]
   1. [ ] program_allocate uses calloc, make sure program_free is called
-  2. [ ] pass in default variance value
-  3. [ ] bind_gen_col set min/max according to colour format
-  4. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
-  5. [ ] quilt
-  6. [ ] map (1669-zero.sen)
-  7. [ ] better error messages when gen/scalar was mis-spelt
-  8. [ ] {red (gen/col alpha: 1)} bug?
-  9. [ ] poly should also accept a uv parameter
-  10. [ ] remove vm/env from genotype_list_create_initial_generation
-  11. [ ] impl: initial seed
-  12. [ ] add an END token to serialized output, use as a sanity check?
-  13. [ ] add unit tests for compiling with a genotype
-  14. [ ] ensure that there's a dist folder before running npm run build:wasm
-  15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  16. [ ] look into restrict keyword in C99
-
+  2. [ ] bind_gen_col set min/max according to colour format
+  3. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
+  4. [ ] quilt
+  5. [ ] map (1669-zero.sen)
+  6. [ ] better error messages when gen/scalar was mis-spelt
+  7. [ ] {red (gen/col alpha: 1)} bug?
+  8. [ ] poly should also accept a uv parameter
+  9. [ ] remove vm/env from genotype_list_create_initial_generation
+  10. [ ] impl: initial seed
+  11. [ ] add an END token to serialized output, use as a sanity check?
+  12. [ ] add unit tests for compiling with a genotype
+  13. [ ] ensure that there's a dist folder before running npm run build:wasm
+  14. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  15. [ ] look into restrict keyword in C99
 
 * app colours
 

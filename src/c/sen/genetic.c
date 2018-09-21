@@ -199,6 +199,12 @@ bool trait_serialize(sen_cursor* cursor, sen_trait* trait) {
   cursor_sprintf(cursor, "%d", trait->id);
   cursor_sprintf(cursor, " ");
 
+  cursor_sprintf(cursor, "%d", trait->within_vector);
+  cursor_sprintf(cursor, " ");
+
+  cursor_sprintf(cursor, "%d", trait->index);
+  cursor_sprintf(cursor, " ");
+
   var_serialize(cursor, trait->initial_value);
   cursor_sprintf(cursor, " ");
 
@@ -209,6 +215,12 @@ bool trait_serialize(sen_cursor* cursor, sen_trait* trait) {
 
 bool trait_deserialize(sen_trait* out, sen_cursor* cursor) {
   out->id = cursor_eat_i32(cursor);
+  cursor_eat_space(cursor);
+
+  out->within_vector = cursor_eat_i32(cursor);
+  cursor_eat_space(cursor);
+
+  out->index = cursor_eat_i32(cursor);
   cursor_eat_space(cursor);
 
   var_deserialize(out->initial_value, cursor);
@@ -266,6 +278,8 @@ void add_single_trait(sen_trait_list*      trait_list,
                       sen_node*            node,
                       sen_compiler_config* compiler_config) {
   sen_trait* trait = trait_build(node, node->parameter_ast, compiler_config);
+  trait->within_vector = 0;
+  trait->index = 0;
   trait_list_add_trait(trait_list, trait);
 }
 
@@ -275,8 +289,12 @@ void add_multiple_traits(sen_trait_list*      trait_list,
   sen_node* vector = node;
   sen_node* n      = safe_first(node->value.first_child);
 
+  i32 i = 0;
+
   while (n) {
     sen_trait* trait = trait_build(n, vector->parameter_ast, compiler_config);
+    trait->within_vector = 1;
+    trait->index = i++;
     trait_list_add_trait(trait_list, trait);
 
     n = safe_next(n);
@@ -301,57 +319,13 @@ bool is_word_match(char* word, char* name) {
     return false;
 }
 
-bool is_single_trait_vector(sen_node* p, sen_word_lut* word_lut) {
-
-    if (!p->alterable) {
-        return false;
-    }
-    if (p->type != NODE_VECTOR) {
-        return false;
-    }
-
-    p = p->parameter_ast;
-
-    while (p) {
-        if (p->type == NODE_LIST) {
-            sen_node* pc = p->value.first_child;
-
-            while(pc) {
-                if (pc->type == NODE_NAME) {
-                    char* word = wlut_reverse_lookup(word_lut, pc->value.i);
-                    if (is_word_match(word, "gen/stray-2d")) {
-                        return true;
-                    }
-                    // only need to check the first NODE_NAME in the first list
-                    return false;
-                }
-                pc = pc->next;
-            }
-            // only check the first NODE_LIST
-            return false;
-        }
-        p = p->next;
-    }
-    return false;
-}
-
 sen_node*
 ga_traverse(sen_node* node, sen_trait_list* trait_list, sen_compiler_config* compiler_config) {
   sen_node* n = node;
 
   if (n->alterable) {
     if (n->type == NODE_VECTOR) {
-      /*
-        by convention if a vector is alterable then the gen function
-        (e.g. gen/int) is applied to each member of the vector. However
-        some functions like gen/stray-2d need to generate a single trait
-        on the original vector.
-       */
-      if (is_single_trait_vector(n, compiler_config->word_lut)) {
-        add_single_trait(trait_list, n, compiler_config);
-      } else {
-        add_multiple_traits(trait_list, n, compiler_config);
-      }
+      add_multiple_traits(trait_list, n, compiler_config);
     } else {
       add_single_trait(trait_list, n, compiler_config);
     }
@@ -442,14 +416,22 @@ bool trait_list_deserialize(sen_trait_list* out, sen_cursor* cursor) {
 
 // gene
 
-sen_gene* gene_build_from_program(sen_vm* vm, sen_env* env, sen_program* program) {
+sen_gene* gene_build_from_trait(sen_vm* vm, sen_env* env, sen_trait* trait) {
+  sen_program* program = trait->program;
+
   // todo: possibly implement a 'soft-reset' which is quicker than a vm_reset?
   vm_reset(vm);
+
+  vm->building_with_trait_within_vector = trait->within_vector;
+  vm->trait_within_vector_index = trait->index;
 
   bool res = vm_run(vm, env, program);
   if (res == false) {
     return NULL;
   }
+
+  vm->building_with_trait_within_vector = 0;
+  vm->trait_within_vector_index = 0;
 
   sen_gene* gene = gene_get_from_pool();
 
@@ -479,7 +461,7 @@ sen_gene* gene_clone(sen_gene* source) {
 void genotype_add_gene(sen_genotype* genotype, sen_gene* gene) { DL_APPEND(genotype->genes, gene); }
 
 sen_genotype*
-genotype_build_from_program(sen_trait_list* trait_list, sen_vm* vm, sen_env* env, i32 seed) {
+genotype_build_from_trait_list(sen_trait_list* trait_list, sen_vm* vm, sen_env* env, i32 seed) {
   // the seed is set once per genotype (should it be once per-gene?)
   //
   sen_prng_set_state(vm->prng_state, (u64)seed);
@@ -488,12 +470,12 @@ genotype_build_from_program(sen_trait_list* trait_list, sen_vm* vm, sen_env* env
 
   sen_trait* trait = trait_list->traits;
   while (trait != NULL) {
-    sen_gene* gene = gene_build_from_program(vm, env, trait->program);
+    sen_gene* gene = gene_build_from_trait(vm, env, trait);
 
     if (gene != NULL) {
       genotype_add_gene(genotype, gene);
     } else {
-      SEN_ERROR("gene_build_from_program returned NULL gene");
+      SEN_ERROR("gene_build_from_trait returned NULL gene");
       genotype_return_to_pool(genotype);
       return NULL;
     }
@@ -698,7 +680,7 @@ sen_genotype_list* genotype_list_create_single_genotype(sen_trait_list* trait_li
   sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
-  sen_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed);
+  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed);
   genotype_list_add_genotype(genotype_list, genotype);
 
   env_free(env);
@@ -733,7 +715,7 @@ genotype_list_create_initial_generation(sen_trait_list* trait_list, i32 populati
   for (i32 i = 1; i < population_size; i++) {
     genotype_seed = sen_prng_i32_range(&prng_state, prng_min, prng_max);
     SEN_LOG("%d genotype_seed %d", i, genotype_seed);
-    genotype = genotype_build_from_program(trait_list, vm, env, genotype_seed);
+    genotype = genotype_build_from_trait_list(trait_list, vm, env, genotype_seed);
     genotype_list_add_genotype(genotype_list, genotype);
   }
 

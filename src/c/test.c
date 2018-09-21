@@ -1138,7 +1138,7 @@ sen_genotype* genotype_construct(i32 seed_value, char* source) {
   sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
   // using the vm to build the genes
-  sen_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed_value);
 
   trait_list_return_to_pool(trait_list);
   parser_return_nodes_to_pool(ast);
@@ -1167,7 +1167,7 @@ void unparse_compare(i32 seed_value, char* source, char* expected) {
   // program_pretty_print(trait->program);
 
   // using the vm to build the genes
-  sen_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed_value);
 
   i32   unparsed_source_size = 1024;
   char* unparsed_source      = (char*)calloc(unparsed_source_size, sizeof(char));
@@ -1327,20 +1327,14 @@ void test_genotype_stray_2d(void) {
     g = genotype->genes;
     v = g->var;
 
-    TEST_ASSERT_EQUAL(VAR_2D, v->type);
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 106.014359f, v->f32_array[0]);
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 207.37352f, v->f32_array[1]);
+    assert_sen_var_f32(v, VAR_FLOAT, 106.014359f);
 
-    TEST_ASSERT_NULL(g->next); // only 1 gene
-    genotype_return_to_pool(genotype);
-  }
+    g = g->next;
+    v = g->var;
 
-  {
-    genotype = genotype_construct(3421, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
-    genotype = genotype_construct(3423, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
-    genotype = genotype_construct(3424, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
-    genotype = genotype_construct(3425, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
-    genotype = genotype_construct(3427, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
+    assert_sen_var_f32(v, VAR_FLOAT, 207.37352f);
+
+    TEST_ASSERT_NULL(g->next); // only 2 genes
     genotype_return_to_pool(genotype);
   }
 
@@ -1442,14 +1436,17 @@ sen_genotype* genotype_construct_initial_value(i32 seed_value, char* source) {
 
   sen_node* ast = parser_parse(env->word_lut, source);
 
+  //  ast_pretty_print(ast, env->word_lut);
+
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config.word_lut         = env->word_lut;
 
   sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
+  // SEN_LOG("num traits: %d", trait_list_count(trait_list));
 
   // using the vm to build the genes
-  sen_genotype* genotype = genotype_build_from_program(trait_list, vm, env, seed_value);
+  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed_value);
 
   trait_list_return_to_pool(trait_list);
   parser_return_nodes_to_pool(ast);
@@ -1467,6 +1464,14 @@ void vm_compile_f32_with_2_genes(char* expr, int seed, f32 expected_res, f32 exp
   sen_systems_startup();
   sen_env*     e    = env_allocate();
   sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
+
+  // sen_gene* gg = genotype->genes;
+  // SEN_LOG("%d", gg);
+  // gg = gg->next;
+  // SEN_LOG("%d", gg);
+  // gg = gg->next;
+  // SEN_LOG("%d", gg);
+
   sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
   // program_pretty_print(prog);
   sen_vm*      vm   = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
@@ -1501,6 +1506,11 @@ void test_f32_expr_with_genotype(void) {
 
   vm_compile_f32_with_2_genes("(define v {[150 250] (gen/scalar min: 10 max: 99)}) (nth from: v n: 0)",
                               1111, 78.578339f, 78.578339f, 49.573952f);
+
+  vm_compile_f32_with_2_genes("(define v {[364.374 334.649] (gen/stray-2d from: [100 200] by: 20)}) (nth from: v n: 0)",
+                              1111, 110.821724f, 110.821724f, 197.786041);
+  vm_compile_f32_with_2_genes("(define v {[364.374 334.649] (gen/stray-2d from: [100 200] by: 20)}) (nth from: v n: 1)",
+                              1111, 197.786041f, 110.821724f, 197.786041f);
 }
 
 void test_simplified_unparser(void) {
@@ -2056,11 +2066,13 @@ void test_rgb_hsluv_conversion(void) {
 }
 
 void bug_f32_expr_with_genotype(void) {
-  // vm_compile_f32_with_seed("(+ 3 4)", 3434, 7.0f);
-  // vm_compile_f32_with_seed("(+ 3 {4 (gen/scalar min: 10 max: 20)})", 3434, 17.264217f);
+  // vm_compile_f32_with_2_genes("(define v {[150 250] (gen/scalar min: 10 max: 99)}) (nth from: v n: 0)",
+  //                             1111, 78.578339f, 78.578339f, 49.573952f);
 
-  vm_compile_f32_with_2_genes("(define v {[364.374 334.649] (gen/stray-2d from: [100 200] by: 2000)}) (nth from: v n: 0)",
-                              1111, 78.578339f, 78.578339f, 49.573952f);
+  vm_compile_f32_with_2_genes("(define v {[364.374 334.649] (gen/stray-2d from: [100 200] by: 20)}) (nth from: v n: 0)",
+                              1111, 110.821724f, 110.821724f, 197.786041);
+  vm_compile_f32_with_2_genes("(define v {[364.374 334.649] (gen/stray-2d from: [100 200] by: 20)}) (nth from: v n: 1)",
+                              1111, 197.786041f, 110.821724f, 197.786041f);
 }
 
 int main(void) {
@@ -2076,7 +2088,7 @@ int main(void) {
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-#if 0
+#if 1
   RUN_TEST(test_macro_pool);
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
@@ -2125,8 +2137,8 @@ int main(void) {
   RUN_TEST(test_rgb_hsluv_conversion);
 
 #else
-
-  RUN_TEST(bug_f32_expr_with_genotype);
+  RUN_TEST(test_genotype_stray_2d);
+  // RUN_TEST(bug_f32_expr_with_genotype);
 
 #endif
 

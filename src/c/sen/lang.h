@@ -291,6 +291,9 @@ struct sen_vm {
 
   i32 global; // single segment of memory at top of stack
   i32 local;  // per-frame segment of memory for local variables
+
+  i32 building_with_trait_within_vector;
+  i32 trait_within_vector_index;
 };
 
 sen_vm*

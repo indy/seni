@@ -234,11 +234,7 @@ sen_node* unparse_ast_node(sen_cursor*   cursor,
     }
 
     if (ast->type == NODE_VECTOR) {
-      if (is_single_trait_vector(ast, word_lut)) {
-          format_var_value(cursor, ast, genotype, word_lut);
-      } else {
-          unparse_alterable_vector(cursor, word_lut, ast, genotype);
-      }
+      unparse_alterable_vector(cursor, word_lut, ast, genotype);
     } else {
       format_var_value(cursor, ast, genotype, word_lut);
     }

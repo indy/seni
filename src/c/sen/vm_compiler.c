@@ -66,13 +66,9 @@ sen_program* get_preamble_program() { return g_preamble_program; }
 void gene_assign_to_node(sen_word_lut* word_lut, sen_genotype* genotype, sen_node* node) {
   if (node->alterable) {
     if (node->type == NODE_VECTOR) {
-      if (is_single_trait_vector(node, word_lut)) {
-        node->gene = genotype_pull_gene(genotype);
-      } else {
-        // grab a gene for every element in this vector
-        for (sen_node* n = safe_first_child(node); n != NULL; n = safe_next(n)) {
-          n->gene = genotype_pull_gene(genotype);
-        }
+      // grab a gene for every element in this vector
+      for (sen_node* n = safe_first_child(node); n != NULL; n = safe_next(n)) {
+        n->gene = genotype_pull_gene(genotype);
       }
     } else {
       node->gene = genotype_pull_gene(genotype);

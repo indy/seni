@@ -2346,8 +2346,12 @@ sen_var* bind_gen_stray(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
+  if (vm->building_with_trait_within_vector != 1) {
+    SEN_LOG("bind_gen_stray_2d should always be called with building_with_trait_within_vector = 1");
+  }
+
   f32 from[] = {10.0f, 10.0f};
-  f32 by  = 1.0f;
+  f32 by  = 1.0f;               // todo: could also make 'by' a 2d vector
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_FROM, from);
@@ -2356,10 +2360,10 @@ sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
 
   by = absf(by);
 
-  f32 x = sen_prng_f32_range(vm->prng_state, from[0] - by, from[0] + by);
-  f32 y = sen_prng_f32_range(vm->prng_state, from[1] - by, from[1] + by);
+  i32 index = vm->trait_within_vector_index;
+  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by, from[index] + by);
 
-  v2_as_var(&g_var_scratch, x, y);
+  f32_as_var(&g_var_scratch, res);
 
   return &g_var_scratch;
 }

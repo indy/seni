@@ -5,10 +5,13 @@
 void ga_subsystem_startup();
 void ga_subsystem_shutdown();
 
-bool is_single_trait_vector(sen_node* p, sen_word_lut* word_lut);
-
 struct sen_trait {
   i32 id;
+
+  // 1 == instantiated as one of multiple traits within a vector
+  i32 within_vector;
+  // if within_vector then this is the index within the parent vector
+  i32 index;
 
   sen_var*     initial_value;
   sen_program* program;
@@ -57,7 +60,7 @@ struct sen_genotype {
 sen_genotype* genotype_get_from_pool();
 void          genotype_return_to_pool(sen_genotype* genotype);
 sen_genotype*
-              genotype_build_from_program(sen_trait_list* trait_list, sen_vm* vm, sen_env* env, i32 seed);
+              genotype_build_from_trait_list(sen_trait_list* trait_list, sen_vm* vm, sen_env* env, i32 seed);
 sen_genotype* genotype_build_from_initial_values(sen_trait_list* trait_list);
 sen_genotype* genotype_clone(sen_genotype* genotype);
 sen_genotype*
