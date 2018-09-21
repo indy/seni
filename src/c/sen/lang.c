@@ -288,34 +288,42 @@ void node_pretty_print(char* msg, sen_node* node, sen_word_lut* word_lut) {
   case USE_I:
     if (word_lut != NULL &&
         (node->type == NODE_NAME || node->type == NODE_LABEL || node->type == NODE_STRING)) {
-      SEN_PRINT("%s %s : %s (value.i:%d) (src:%s)",
+      SEN_PRINT("%s %s : %s (value.i:%d) (src:%s) %s",
                 msg,
                 type,
                 wlut_reverse_lookup(word_lut, node->value.i),
                 node->value.i,
-                src_buffer);
+                src_buffer,
+                node->alterable ? "alterable" : "");
     } else {
-      SEN_PRINT("%s %s : %d (src:%s)", msg, type, node->value.i, src_buffer);
+      SEN_PRINT("%s %s : %d (src:%s) %s", msg, type, node->value.i, src_buffer,
+                node->alterable ? "alterable" : "");
     }
     break;
   case USE_F:
-    SEN_PRINT("%s %s : %.2f (src:%s)", msg, type, node->value.f, src_buffer);
+    SEN_PRINT("%s %s : %.2f (src:%s) %s", msg, type, node->value.f, src_buffer,
+                node->alterable ? "alterable" : "");
     break;
   case USE_L:
-    SEN_PRINT("%s L %s (src:%s)", msg, type, src_buffer);
+    SEN_PRINT("%s L %s (src:%s) %s", msg, type, src_buffer,
+                node->alterable ? "alterable" : "");
     break;
   case USE_V:
-    SEN_PRINT("%s V %s (src:%s)", msg, type, src_buffer);
+    SEN_PRINT("%s V %s (src:%s) %s", msg, type, src_buffer,
+                node->alterable ? "alterable" : "");
     break;
   case USE_SRC:
     if (node->type == NODE_WHITESPACE) {
-      SEN_PRINT("%s %s", msg, type);
+      SEN_PRINT("%s %s %s", msg, type,
+                node->alterable ? "alterable" : "");
     } else {
-      SEN_PRINT("%s %s '%.*s' (src:%s)", msg, type, node->src_len, node->src, src_buffer);
+      SEN_PRINT("%s %s '%.*s' (src:%s) %s", msg, type, node->src_len, node->src, src_buffer,
+                node->alterable ? "alterable" : "");
     }
     break;
   case USE_FIRST_CHILD:
-    SEN_PRINT("%s %s", msg, type);
+    SEN_PRINT("%s %s %s", msg, type,
+                node->alterable ? "alterable" : "");
     break;
   default:
     SEN_ERROR("unknown using value for a sen_node: %d", using);
