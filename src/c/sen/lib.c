@@ -126,13 +126,12 @@ sen_genotype* sen_deserialize_genotype(sen_cursor* cursor) {
   return genotype;
 }
 
-sen_trait_list* sen_compile_trait_list(char* source, sen_word_lut* word_lut, i32 vary) {
+sen_trait_list* sen_compile_trait_list(char* source, sen_word_lut* word_lut) {
   sen_node* ast = parser_parse(word_lut, source);
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config.word_lut         = word_lut;
-  compiler_config.vary             = vary;
 
   sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 

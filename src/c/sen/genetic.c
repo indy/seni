@@ -257,7 +257,7 @@ trait_build(sen_node* node, sen_node* parameter_ast, sen_compiler_config* compil
 
   // NOTE: this is allocating memory for program
   sen_program* program = program_construct(compiler_config);
-  trait->program = compile_program_for_trait(program, parameter_ast, node, compiler_config->vary);
+  trait->program = compile_program_for_trait(program, parameter_ast, node);
 
   return trait;
 }

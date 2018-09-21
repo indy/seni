@@ -26,6 +26,6 @@ void         sen_unparse_with_genotype(sen_cursor*   out_cursor,
 
 sen_genotype* sen_deserialize_genotype(sen_cursor* cursor);
 
-sen_trait_list* sen_compile_trait_list(char* source, sen_word_lut* word_lut, i32 vary);
+sen_trait_list* sen_compile_trait_list(char* source, sen_word_lut* word_lut);
 bool            sen_serialize_trait_list(sen_trait_list* trait_list, sen_cursor* cursor);
 sen_trait_list* sen_deserialize_trait_list(sen_cursor* cursor);

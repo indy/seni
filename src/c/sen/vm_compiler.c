@@ -1638,7 +1638,6 @@ void compile_global_bind_procedural_presets(sen_compilation* compilation) {
 
 // NOTE: each entry in compile_preamble should have a corresponding entry here
 void register_top_level_preamble(sen_compilation* compilation) {
-  add_global_mapping(compilation, INAME_GEN_USE_VARY);
   add_global_mapping(compilation, INAME_GEN_INITIAL);
 
   add_global_mapping(compilation, INAME_CANVAS_WIDTH);
@@ -1665,7 +1664,6 @@ void compile_preamble(sen_compilation* compilation) {
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble
   // ********************************************************************************
-  compile_global_bind_i32(compilation, INAME_GEN_USE_VARY, 0);
   compile_global_bind_i32(compilation, INAME_GEN_INITIAL, 0);
 
   compile_global_bind_f32(compilation, INAME_CANVAS_WIDTH, 1000.0f);
@@ -1801,8 +1799,7 @@ compile_program_with_genotype(sen_program* program, sen_word_lut* word_lut, sen_
 
 sen_program* compile_program_for_trait(sen_program* program,
                                        sen_node*    ast,
-                                       sen_node*    gen_initial_value,
-                                       i32          vary) {
+                                       sen_node*    gen_initial_value) {
 
   g_use_genes = false;
 
@@ -1814,12 +1811,6 @@ sen_program* compile_program_for_trait(sen_program* program,
 
   // this is a sub-program for a trait, bind the initial value to gen/initial-value
   compile_global_bind_node(&compilation, INAME_GEN_INITIAL, gen_initial_value);
-
-  // INAME_GEN_USE_VARY is set globally to 0 anyway, so only generate code if it's 1
-  if (vary) {
-    // set a global gen/use-vary binding to 1
-    compile_global_bind_i32(&compilation, INAME_GEN_USE_VARY, 1);
-  }
 
   compile_common_top_level_defines(&compilation, ast);
   compile_common_top_level_forms(&compilation, ast);

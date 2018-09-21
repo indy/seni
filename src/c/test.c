@@ -1137,7 +1137,6 @@ sen_genotype* genotype_test(i32 seed_value, char* source) {
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config.word_lut         = env->word_lut;
-  compiler_config.vary             = 0;
 
   sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
@@ -1164,7 +1163,6 @@ void unparse_compare(i32 seed_value, char* source, char* expected) {
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config.word_lut         = env->word_lut;
-  compiler_config.vary             = 0;
 
   sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
@@ -1212,7 +1210,6 @@ void simplified_unparse_compare(char* source, char* expected) {
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config.word_lut         = env->word_lut;
-  compiler_config.vary             = 0;
 
   i32   unparsed_source_size = 1024;
   char* unparsed_source      = (char*)calloc(unparsed_source_size, sizeof(char));
@@ -1338,6 +1335,15 @@ void test_genotype_stray_2d(void) {
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 207.37352f, v->f32_array[1]);
 
     TEST_ASSERT_NULL(g->next); // only 1 gene
+    genotype_return_to_pool(genotype);
+  }
+
+  {
+    genotype = genotype_test(3421, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
+    genotype = genotype_test(3423, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
+    genotype = genotype_test(3424, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
+    genotype = genotype_test(3425, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
+    genotype = genotype_test(3427, "{[100 200] (gen/stray-2d from: [100 200] by: 90)}");
     genotype_return_to_pool(genotype);
   }
 
@@ -1897,7 +1903,6 @@ void test_serialization_trait_list(void) {
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config.word_lut         = env->word_lut;
-  compiler_config.vary             = 0;
 
   sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
@@ -1995,7 +2000,6 @@ sen_genotype* genotype_test_initial_value(i32 seed_value, char* source) {
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config.word_lut         = env->word_lut;
-  compiler_config.vary             = 1;
 
   sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
@@ -2035,6 +2039,38 @@ void test_genotype_initial_value(void) {
   sen_systems_shutdown();
 }
 
+
+void bug_genotype(void) {
+  sen_genotype* genotype;
+  sen_gene*     g;
+  sen_var*      v;
+
+  // startup/shutdown here and not in genotype_test as the tests compare
+  // genotypes
+  sen_systems_startup();
+
+  {
+    genotype = genotype_test(3421, "(+ 6 {3 (gen/scalar min: 1 max: 100)})");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    v = g->var;
+    assert_sen_var_f32(v, VAR_FLOAT, 80.271f);
+    TEST_ASSERT_NULL(g->next); // only 1 gene
+    genotype_return_to_pool(genotype);
+  }
+  {
+    genotype = genotype_test(3421, "(define i 10.0) (+ i {3 (gen/scalar min: 1 max: 100)})");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    v = g->var;
+    assert_sen_var_f32(v, VAR_FLOAT, 80.271f);
+    TEST_ASSERT_NULL(g->next); // only 1 gene
+    genotype_return_to_pool(genotype);
+  }
+
+  sen_systems_shutdown();
+}
+
 int main(void) {
   // timing();
 
@@ -2048,7 +2084,7 @@ int main(void) {
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-#if 1
+#if 0
   RUN_TEST(test_macro_pool);
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
@@ -2079,6 +2115,7 @@ int main(void) {
   RUN_TEST(test_genotype_stray_2d);
   RUN_TEST(test_genotype_vectors);
   RUN_TEST(test_genotype_multiple_floats);
+
   RUN_TEST(test_simplified_unparser);
   RUN_TEST(test_unparser);
   RUN_TEST(test_unparser_vectors);
@@ -2096,6 +2133,8 @@ int main(void) {
 #else
 
   // RUN_TEST(test_genotype_initial_value);
+  // RUN_TEST(test_genotype_stray_2d);
+  RUN_TEST(bug_genotype);
 
 #endif
 

@@ -211,7 +211,7 @@ export f32* get_render_packet_tbuf(int packet_number) {
 }
 
 // parses the g_source_buffer and serializes the traits to g_traits_buffer
-export i32 build_traits(i32 vary) {
+export i32 build_traits() {
 #ifdef SHOW_WASM_CALLS
   SEN_LOG("build_traits");
 #endif
@@ -220,7 +220,7 @@ export i32 build_traits(i32 vary) {
 
   TIMING_UNIT timing_a = get_timing();
 
-  sen_trait_list* trait_list = sen_compile_trait_list(g_source_buffer, g_e->word_lut, vary);
+  sen_trait_list* trait_list = sen_compile_trait_list(g_source_buffer, g_e->word_lut);
   bool            res        = sen_serialize_trait_list(trait_list, g_traits_cursor);
   if (res == false) {
     SEN_ERROR("sen_serialize_trait_list returned false");

@@ -142,8 +142,7 @@ export default function main() {
     seedElement.value = parseInt(newSeed, 10);
 
     const seedValue = getSeedValue(seedElement);
-    const vary = 1;
-    buildTraits({ script: originalScript, scriptHash, vary })
+    buildTraits({ script: originalScript, scriptHash })
       .then(({ traits }) => buildGenotype({ traits, seed: seedValue }))
       .then(({ genotype }) => {
         const config = { script: originalScript, scriptHash };
@@ -154,14 +153,13 @@ export default function main() {
 
         return unparse({ script: originalScript, genotype });
       })
-      .then(({ script }) => {
-        scriptElement.textContent = script;
-        showSimplifiedScript(script);
+      .then(({ script_ }) => {
+        scriptElement.textContent = script_;
+        showSimplifiedScript(script_);
       })
       .catch(error => {
         console.log('fooked');
         console.error(error);
       });
   });
-
 }

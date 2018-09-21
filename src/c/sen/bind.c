@@ -22,7 +22,6 @@
 
 i32 g_colour_constructor_start = 0;
 i32 g_colour_constructor_end   = 0;
-f32 g_vary_default             = 5.0f;
 
 i32 get_colour_constructor_start() { return g_colour_constructor_start; }
 
@@ -2317,20 +2316,6 @@ sen_var* bind_focal_value(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-bool using_vary(sen_vm* vm) {
-  // this is known from vm_compiler::register_top_level_preamble
-  // where INAME_GEN_USE_VARY is the first global mapping.
-  // vm_compiler::compile_preamble and compile_program_for_vary_trait
-  // compiles it as an i32 value
-  i32 use_vary_global_offset = 0;
-
-  sen_var* v = vm_get_from_global_offset(vm, use_vary_global_offset);
-  if (v->value.i == 1) {
-    return true;
-  }
-  return false;
-}
-
 sen_var* get_gen_initial(sen_vm* vm) {
   // vm_compiler::register_top_level_preamble : the 2nd global mapping
   i32      gen_initial_global_offset = 1;
@@ -2345,23 +2330,15 @@ sen_var* get_gen_initial(sen_vm* vm) {
 sen_var* bind_gen_stray(sen_vm* vm, i32 num_args) {
   f32 from  = 1.0f;
   f32 by  = 0.2f;
-  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_FROM, from);
   READ_STACK_ARG_F32(INAME_BY, by);
-  READ_STACK_ARG_F32(INAME_VARY, vary);
   READ_STACK_ARGS_END;
 
   by = absf(by);
 
-  f32 value;
-  if (using_vary(vm) == false) {
-    value = sen_prng_f32_range(vm->prng_state, from - by, from + by);
-  } else {
-    sen_var* initial_value = get_gen_initial(vm);
-    value = sen_prng_f32_around(vm->prng_state, initial_value->value.f, vary, from - by, from + by);
-  }
+  f32 value = sen_prng_f32_range(vm->prng_state, from - by, from + by);
 
   f32_as_var(&g_var_scratch, value);
 
@@ -2371,25 +2348,16 @@ sen_var* bind_gen_stray(sen_vm* vm, i32 num_args) {
 sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
   f32 from[] = {10.0f, 10.0f};
   f32 by  = 1.0f;
-  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_FROM, from);
   READ_STACK_ARG_F32(INAME_BY, by);
-  READ_STACK_ARG_F32(INAME_VARY, vary);
   READ_STACK_ARGS_END;
 
-  f32 x, y;
   by = absf(by);
 
-  if (using_vary(vm) == false) {
-    x = sen_prng_f32_range(vm->prng_state, from[0] - by, from[0] + by);
-    y = sen_prng_f32_range(vm->prng_state, from[1] - by, from[1] + by);
-  } else {
-    sen_var* initial_value = get_gen_initial(vm);
-    x = sen_prng_f32_around(vm->prng_state, initial_value->f32_array[0], vary, from[0] - by, from[0] + by);
-    y = sen_prng_f32_around(vm->prng_state, initial_value->f32_array[1], vary, from[1] - by, from[1] + by);
-  }
+  f32 x = sen_prng_f32_range(vm->prng_state, from[0] - by, from[0] + by);
+  f32 y = sen_prng_f32_range(vm->prng_state, from[1] - by, from[1] + by);
 
   v2_as_var(&g_var_scratch, x, y);
 
@@ -2399,27 +2367,19 @@ sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
 // sen_var* bind_gen_stray_3d(sen_vm* vm, i32 num_args) {
 //   f32 from[3];
 //   f32 by  = 1.0f;
-//   f32 vary = g_vary_default;
 
 //   READ_STACK_ARGS_BEGIN;
 //   READ_STACK_ARG_VEC3(INAME_FROM, from);
 //   READ_STACK_ARG_F32(INAME_BY, by);
-//   READ_STACK_ARG_F32(INAME_VARY, vary);
 //   READ_STACK_ARGS_END;
 
 //   f32 x, y, z;
 //   by = absf(by);
 
-//   if (using_vary(vm) == false) {
+
 //     x = sen_prng_f32_range(vm->prng_state, from[0] - by, from[0] + by);
 //     y = sen_prng_f32_range(vm->prng_state, from[1] - by, from[1] + by);
 //     z = sen_prng_f32_range(vm->prng_state, from[2] - by, from[2] + by);
-//   } else {
-//     sen_var* initial_value = get_gen_initial(vm);
-//     x = sen_prng_f32_around(vm->prng_state, initial_value->f32_array[0], vary, from[0] - by, from[0] + by);
-//     y = sen_prng_f32_around(vm->prng_state, initial_value->f32_array[1], vary, from[1] - by, from[1] + by);
-//     z = sen_prng_f32_around(vm->prng_state, initial_value->f32_array[2], vary, from[2] - by, from[2] + by);
-//   }
 
 
 //   // ??????????????
@@ -2434,23 +2394,14 @@ sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
 sen_var* bind_gen_int(sen_vm* vm, i32 num_args) {
   f32 min  = 0.0f;
   f32 max  = 1000.0f;
-  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_MIN, min);
   READ_STACK_ARG_F32(INAME_MAX, max);
-  READ_STACK_ARG_F32(INAME_VARY, vary);
   READ_STACK_ARGS_END;
 
-  f32 value;
-  if (using_vary(vm) == false) {
-    // value should be inclusive of both min and max (hence the + 1.0f)
-    value = sen_prng_f32_range(vm->prng_state, min, max + 1.0f);
-  } else {
-    sen_var* initial_value = get_gen_initial(vm);
-    //    value                    = initial_value->value.f;
-    value = sen_prng_f32_around(vm->prng_state, initial_value->value.f, vary, min, max);
-  }
+  // value should be inclusive of both min and max (hence the + 1.0f)
+  f32 value = sen_prng_f32_range(vm->prng_state, min, max + 1.0f);
 
   f32_as_var(&g_var_scratch, (f32)floor_f32(value));
 
@@ -2460,24 +2411,14 @@ sen_var* bind_gen_int(sen_vm* vm, i32 num_args) {
 sen_var* bind_gen_scalar(sen_vm* vm, i32 num_args) {
   f32 min  = 0.0f;
   f32 max  = 1.0f;
-  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_MIN, min);
   READ_STACK_ARG_F32(INAME_MAX, max);
-  READ_STACK_ARG_F32(INAME_VARY, vary);
   READ_STACK_ARGS_END;
 
-  f32 value;
-  if (using_vary(vm) == false) {
-    // pick a scalar between min and max
-    value = sen_prng_f32_range(vm->prng_state, min, max);
-  } else {
-    // pick a scalar that's +- vary percent of the trait's initial value
-    // the range of allowed values is between min and max
-    sen_var* initial_value = get_gen_initial(vm);
-    value = sen_prng_f32_around(vm->prng_state, initial_value->value.f, vary, min, max);
-  }
+  // pick a scalar between min and max
+  f32 value = sen_prng_f32_range(vm->prng_state, min, max);
 
   f32_as_var(&g_var_scratch, value);
 
@@ -2487,24 +2428,14 @@ sen_var* bind_gen_scalar(sen_vm* vm, i32 num_args) {
 sen_var* bind_gen_2d(sen_vm* vm, i32 num_args) {
   f32 min  = 0.0f;
   f32 max  = 1.0f;
-  f32 vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_MIN, min);
   READ_STACK_ARG_F32(INAME_MAX, max);
-  READ_STACK_ARG_F32(INAME_VARY, vary);
   READ_STACK_ARGS_END;
 
-  f32 x, y;
-
-  if (using_vary(vm) == false) {
-    x = sen_prng_f32_range(vm->prng_state, min, max);
-    y = sen_prng_f32_range(vm->prng_state, min, max);
-  } else {
-    sen_var* initial_value = get_gen_initial(vm);
-    x = sen_prng_f32_around(vm->prng_state, initial_value->f32_array[0], vary, min, max);
-    y = sen_prng_f32_around(vm->prng_state, initial_value->f32_array[1], vary, min, max);
-  }
+  f32 x = sen_prng_f32_range(vm->prng_state, min, max);
+  f32 y = sen_prng_f32_range(vm->prng_state, min, max);
 
   v2_as_var(&g_var_scratch, x, y);
 
@@ -2519,23 +2450,15 @@ sen_var* bind_gen_select(sen_vm* vm, i32 num_args) {
   // e.g. (gen/select from: [1 2 3 4 5]) vs. (gen/select from: [1 2])
 
   sen_var* from = NULL;
-  f32      vary = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VAR(INAME_FROM, from);
-  READ_STACK_ARG_F32(INAME_VARY, vary);
   READ_STACK_ARGS_END;
 
   i32 from_length = vector_length(from);
   i32 index       = sen_prng_i32_range(vm->prng_state, 0, from_length - 1);
 
   sen_var* res = vector_get(from, index);
-
-  // percentages don't make sense for gen/select since the options may not be ordinal
-  // So work as normal, but if vary is set to 0 use the initial value
-  if (using_vary(vm) && vary == 0.0f) {
-    res = get_gen_initial(vm);
-  }
 
   var_copy(&g_var_scratch, res);
 
@@ -2544,43 +2467,23 @@ sen_var* bind_gen_select(sen_vm* vm, i32 num_args) {
 
 sen_var* bind_gen_col(sen_vm* vm, i32 num_args) {
   f32 alpha = -1.0f;
-  f32 vary  = g_vary_default;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_ALPHA, alpha);
-  READ_STACK_ARG_F32(INAME_VARY, vary);
   READ_STACK_ARGS_END;
 
   sen_colour colour;
 
-  if (using_vary(vm) == false) {
-    colour.format     = RGB;
-    colour.element[0] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
-    colour.element[1] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
-    colour.element[2] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
+  colour.format     = RGB;
+  colour.element[0] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
+  colour.element[1] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
+  colour.element[2] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
 
-    if (alpha < 0.0f) {
+  if (alpha < 0.0f) {
       // no alpha was given so generate a random value
       colour.element[3] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
-    } else {
-      colour.element[3] = alpha;
-    }
   } else {
-    sen_var* initial_value = get_gen_initial(vm);
-
-    // todo: set min and max according to colour format
-    f32 min = 0.0f;
-    f32 max = 1.0f;
-
-    colour.format = initial_value->value.i;
-    colour.element[0] =
-        sen_prng_f32_around(vm->prng_state, initial_value->f32_array[0], vary, min, max);
-    colour.element[1] =
-        sen_prng_f32_around(vm->prng_state, initial_value->f32_array[1], vary, min, max);
-    colour.element[2] =
-        sen_prng_f32_around(vm->prng_state, initial_value->f32_array[2], vary, min, max);
-    colour.element[3] =
-        sen_prng_f32_around(vm->prng_state, initial_value->f32_array[3], vary, min, max);
+      colour.element[3] = alpha;
   }
 
   colour_as_var(&g_var_scratch, &colour);

@@ -343,13 +343,13 @@ function unparse({ script/*, scriptHash*/, genotype }) {
   return [{ ok: true, logMessages }, { script: newScript }];
 }
 
-function buildTraits({ script, vary /*, scriptHash */ }) {
+function buildTraits({ script /*, scriptHash */ }) {
   konsoleProxy.clear();
 
   SenWasm.setString(SenWasm.source_buffer, script);
 
   konsoleProxy.log('worker:buildTraits');
-  const numTraits = SenWasm.buildTraits(vary ? 1 : 0);
+  const numTraits = SenWasm.buildTraits();
   // konsoleProxy.log(`built ${numTraits} traits`);
 
   const traits = SenWasm.getString(SenWasm.traits_buffer);
