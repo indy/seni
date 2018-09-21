@@ -153,9 +153,9 @@ export default function main() {
 
         return unparse({ script: originalScript, genotype });
       })
-      .then(({ script_ }) => {
-        scriptElement.textContent = script_;
-        showSimplifiedScript(script_);
+      .then(({ script }) => {
+        scriptElement.textContent = script;
+        showSimplifiedScript(script);
       })
       .catch(error => {
         console.log('fooked');

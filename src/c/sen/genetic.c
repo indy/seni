@@ -692,7 +692,7 @@ bool genotype_list_deserialize(sen_genotype_list* out, sen_cursor* cursor) {
 sen_genotype_list* genotype_list_create_single_genotype(sen_trait_list* trait_list, i32 seed) {
   sen_genotype_list* genotype_list = genotype_list_get_from_pool();
 
-  SEN_LOG("genotype_list_create_single_genotype seed: %d", seed);
+  // SEN_LOG("genotype_list_create_single_genotype seed: %d", seed);
 
   // fill out the remaining population with generated values
   sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);

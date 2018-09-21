@@ -1329,11 +1329,34 @@ void compile_2d_from_gene(sen_compilation* compilation, sen_node* ast) {
   emit_opcode_i32(compilation, SQUISH2, 0, 0);
 }
 
+void compile_alterable_element(sen_compilation* compilation, sen_node* node) {
+  if (node->type == NODE_FLOAT) {
+    f32 f = get_node_value_f32_from_gene(node);
+    emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, f);
+  } else if (node->type == NODE_INT) {
+    i32 i = get_node_value_i32_from_gene(node);
+    emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i);
+  } else if (node->type == NODE_VECTOR) {
+    if (node_vector_length(node) == 2) {
+      compile_2d_from_gene(compilation, node);
+    } else {
+      compile_vector(compilation, node);
+    }
+  }
+}
+
 // ast is a NODE_VECTOR of length 2
 //
 void compile_2d(sen_compilation* compilation, sen_node* ast) {
+
+  bool use_gene = alterable(ast);
+
   for (sen_node* node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
-    compile(compilation, node);
+    if (use_gene) {
+      compile_alterable_element(compilation, node);
+    } else {
+      compile(compilation, node);
+    }
   }
   emit_opcode_i32(compilation, SQUISH2, 0, 0);
 }
@@ -1348,21 +1371,7 @@ void compile_vector(sen_compilation* compilation, sen_node* ast) {
 
   for (sen_node* node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
     if (use_gene) {
-
-      if (node->type == NODE_FLOAT) {
-        f32 f = get_node_value_f32_from_gene(node);
-        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, f);
-      } else if (node->type == NODE_INT) {
-        i32 i = get_node_value_i32_from_gene(node);
-        emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i);
-      } else if (node->type == NODE_VECTOR) {
-        if (node_vector_length(node) == 2) {
-          compile_2d_from_gene(compilation, node);
-        } else {
-          compile_vector(compilation, node);
-        }
-      }
-
+      compile_alterable_element(compilation, node);
     } else {
       compile(compilation, node);
     }
@@ -1788,6 +1797,8 @@ compile_program_with_genotype(sen_program* program, sen_word_lut* word_lut, sen_
     SEN_ERROR("not all genes were assigned");
     return NULL;
   }
+
+  // ast_pretty_print(ast, word_lut);
 
   sen_compilation compilation;
   sen_compilation_init(&compilation, program);

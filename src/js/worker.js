@@ -348,7 +348,7 @@ function buildTraits({ script /*, scriptHash */ }) {
 
   SenWasm.setString(SenWasm.source_buffer, script);
 
-  konsoleProxy.log('worker:buildTraits');
+  // konsoleProxy.log('worker:buildTraits');
   const numTraits = SenWasm.buildTraits();
   // konsoleProxy.log(`built ${numTraits} traits`);
 
