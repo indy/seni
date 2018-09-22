@@ -193,6 +193,26 @@ typedef struct {
     value_1 = tmp_1;              \
   }
 
+// todo: eventually just pack a vec4 into a single sen_var's f32_array
+//
+#define READ_STACK_ARG_VEC4(k, n) \
+  if (name_1 == k) {              \
+    tmp_1   = value_1;            \
+    value_1 = value_1->value.v;   \
+    IS_F32(#n);                   \
+    n[0]    = value_1->value.f;   \
+    value_1 = value_1->next;      \
+    IS_F32(#n);                   \
+    n[1]    = value_1->value.f;   \
+    value_1 = value_1->next;      \
+    IS_F32(#n);                   \
+    n[2]    = value_1->value.f;   \
+    value_1 = value_1->next;      \
+    IS_F32(#n);                   \
+    n[3]    = value_1->value.f;   \
+    value_1 = tmp_1;              \
+  }
+
 #define READ_STACK_ARG_PRNG(k, n)           \
   if (name_1 == k) {                        \
     tmp_1   = value_1;                      \
@@ -2358,40 +2378,58 @@ sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_VEC2(INAME_BY, by);
   READ_STACK_ARGS_END;
 
-  by[0] = absf(by[0]);
-  by[1] = absf(by[1]);
-
   i32 index = vm->trait_within_vector_index;
-  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index], from[index] + by[index]);
+  by[index] = absf(by[index]);
 
+  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index], from[index] + by[index]);
   f32_as_var(&g_var_scratch, res);
 
   return &g_var_scratch;
 }
 
-// sen_var* bind_gen_stray_3d(sen_vm* vm, i32 num_args) {
-//   f32 from[3];
-//   f32 by  = 1.0f;
+sen_var* bind_gen_stray_3d(sen_vm* vm, i32 num_args) {
+  if (vm->building_with_trait_within_vector != 1) {
+    SEN_LOG("bind_gen_stray_3d should always be called with building_with_trait_within_vector = 1");
+  }
 
-//   READ_STACK_ARGS_BEGIN;
-//   READ_STACK_ARG_VEC3(INAME_FROM, from);
-//   READ_STACK_ARG_F32(INAME_BY, by);
-//   READ_STACK_ARGS_END;
+  f32 from[] = {10.0f, 10.0f, 10.0f};
+  f32 by[]  = {1.0f, 1.0f, 1.0f};
 
-//   f32 x, y, z;
-//   by = absf(by);
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC3(INAME_FROM, from);
+  READ_STACK_ARG_VEC3(INAME_BY, by);
+  READ_STACK_ARGS_END;
 
+  i32 index = vm->trait_within_vector_index;
+  by[index] = absf(by[index]);
 
-//     x = sen_prng_f32_range(vm->prng_state, from[0] - by, from[0] + by);
-//     y = sen_prng_f32_range(vm->prng_state, from[1] - by, from[1] + by);
-//     z = sen_prng_f32_range(vm->prng_state, from[2] - by, from[2] + by);
+  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index], from[index] + by[index]);
+  f32_as_var(&g_var_scratch, res);
 
+  return &g_var_scratch;
+}
 
-//   // ??????????????
+sen_var* bind_gen_stray_4d(sen_vm* vm, i32 num_args) {
+  if (vm->building_with_trait_within_vector != 1) {
+    SEN_LOG("bind_gen_stray_4d should always be called with building_with_trait_within_vector = 1");
+  }
 
-//   return &g_var_scratch;
-// }
+  f32 from[] = {10.0f, 10.0f, 10.0f, 10.0f};
+  f32 by[]  = {1.0f, 1.0f, 1.0f, 1.0f};
 
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC4(INAME_FROM, from);
+  READ_STACK_ARG_VEC4(INAME_BY, by);
+  READ_STACK_ARGS_END;
+
+  i32 index = vm->trait_within_vector_index;
+  by[index] = absf(by[index]);
+
+  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index], from[index] + by[index]);
+  f32_as_var(&g_var_scratch, res);
+
+  return &g_var_scratch;
+}
 
 // NOTE: gen/int should still parse values as float
 // as sen scripts won't produce any real ints
@@ -2605,7 +2643,8 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
 
   declare_native(word_lut, e, "gen/stray", &bind_gen_stray);
   declare_native(word_lut, e, "gen/stray-2d", &bind_gen_stray_2d);
-  // declare_native(word_lut, e, "gen/stray-3d", &bind_gen_stray_3d);
+  declare_native(word_lut, e, "gen/stray-3d", &bind_gen_stray_3d);
+  declare_native(word_lut, e, "gen/stray-4d", &bind_gen_stray_4d);
   declare_native(word_lut, e, "gen/int", &bind_gen_int);
   declare_native(word_lut, e, "gen/scalar", &bind_gen_scalar);
   declare_native(word_lut, e, "gen/2d", &bind_gen_2d);

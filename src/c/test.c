@@ -1465,15 +1465,7 @@ void vm_compile_f32_with_2_genes(char* expr, int seed, f32 expected_res, f32 exp
   sen_env*     e    = env_allocate();
   sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
 
-  // sen_gene* gg = genotype->genes;
-  // SEN_LOG("%d", gg);
-  // gg = gg->next;
-  // SEN_LOG("%d", gg);
-  // gg = gg->next;
-  // SEN_LOG("%d", gg);
-
   sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
-  // program_pretty_print(prog);
   sen_vm*      vm   = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
   TEST_ASSERT(genotype);
@@ -1500,17 +1492,139 @@ void vm_compile_f32_with_2_genes(char* expr, int seed, f32 expected_res, f32 exp
   sen_systems_shutdown();
 }
 
-void test_f32_expr_with_genotype(void) {
-  // vm_compile_f32_with_seed("(+ 3 4)", 3434, 7.0f);
-  // vm_compile_f32_with_seed("(+ 3 {4 (gen/scalar min: 10 max: 20)})", 3434, 17.264217f);
 
-  vm_compile_f32_with_2_genes("(define v {[150 250] (gen/scalar min: 10 max: 99)}) (nth from: v n: 0)",
+void vm_compile_f32_with_3_genes(char* expr, int seed, f32 expected_res, f32 expected_g1, f32 expected_g2, f32 expected_g3) {
+  sen_systems_startup();
+  sen_env*     e    = env_allocate();
+  sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
+
+  sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_vm*      vm   = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+
+  TEST_ASSERT(genotype);
+  sen_gene* g = genotype->genes;
+  sen_var* v = g->var;
+  assert_sen_var_f32(v, VAR_FLOAT, expected_g1);
+
+  TEST_ASSERT(g->next);
+  g = g->next;
+  v = g->var;
+  assert_sen_var_f32(v, VAR_FLOAT, expected_g2);
+
+  TEST_ASSERT(g->next);
+  g = g->next;
+  v = g->var;
+  assert_sen_var_f32(v, VAR_FLOAT, expected_g3);
+
+  TEST_ASSERT_NULL(g->next); // only 3 genes
+
+  vm_debug_info_reset(vm);
+  vm_run(vm, e, prog);
+
+  assert_sen_var_f32(vm_stack_peek(vm), VAR_FLOAT, expected_res);
+
+  vm_free(vm);
+  program_free(prog);
+  genotype_return_to_pool(genotype);
+  env_free(e);
+  sen_systems_shutdown();
+}
+
+void vm_compile_f32_with_4_genes(char* expr, int seed, f32 expected_res, f32 expected_g1, f32 expected_g2, f32 expected_g3, f32 expected_g4) {
+  sen_systems_startup();
+  sen_env*     e    = env_allocate();
+  sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
+
+  sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_vm*      vm   = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+
+  TEST_ASSERT(genotype);
+  sen_gene* g = genotype->genes;
+  sen_var* v = g->var;
+  assert_sen_var_f32(v, VAR_FLOAT, expected_g1);
+
+  TEST_ASSERT(g->next);
+  g = g->next;
+  v = g->var;
+  assert_sen_var_f32(v, VAR_FLOAT, expected_g2);
+
+  TEST_ASSERT(g->next);
+  g = g->next;
+  v = g->var;
+  assert_sen_var_f32(v, VAR_FLOAT, expected_g3);
+
+  TEST_ASSERT(g->next);
+  g = g->next;
+  v = g->var;
+  assert_sen_var_f32(v, VAR_FLOAT, expected_g4);
+
+  TEST_ASSERT_NULL(g->next); // only 4 genes
+
+  vm_debug_info_reset(vm);
+  vm_run(vm, e, prog);
+
+  assert_sen_var_f32(vm_stack_peek(vm), VAR_FLOAT, expected_res);
+
+  vm_free(vm);
+  program_free(prog);
+  genotype_return_to_pool(genotype);
+  env_free(e);
+  sen_systems_shutdown();
+}
+
+void test_f32_expr_with_genotype(void) {
+  vm_compile_f32_with_2_genes("(define v {[150 250] (gen/scalar min: 10 max: 99)})"
+                              "(nth from: v n: 0)",
                               1111, 78.578339f, 78.578339f, 49.573952f);
 
-  vm_compile_f32_with_2_genes("(define v {[364.374 334.649] (gen/stray-2d from: [100 200] by: [20 20])}) (nth from: v n: 0)",
+  vm_compile_f32_with_2_genes("(define v {[364.374 334.649] "
+                              "           (gen/stray-2d from: [100 200] by: [20 20])})"
+                              "(nth from: v n: 0)",
                               1111, 110.821724f, 110.821724f, 197.786041);
-  vm_compile_f32_with_2_genes("(define v {[364.374 334.649] (gen/stray-2d from: [100 200] by: [20 20])}) (nth from: v n: 1)",
+
+  vm_compile_f32_with_2_genes("(define v {[364.374 334.649]"
+                              "           (gen/stray-2d from: [100 200] by: [20 20])})"
+                              "(nth from: v n: 1)",
                               1111, 197.786041f, 110.821724f, 197.786041f);
+
+  vm_compile_f32_with_3_genes("(define v {[100 200 300]"
+                              "           (gen/stray-3d from: [100 200 300] by: [50 50 50])})"
+                              "(nth from: v n: 0)",
+                              1111, 127.054306f, 127.054306f, 194.465118f, 315.870361f);
+  vm_compile_f32_with_3_genes("(define v {[100 200 300]"
+                              "           (gen/stray-3d from: [100 200 300] by: [50 50 50])})"
+                              "(nth from: v n: 1)",
+                              1111, 194.465118f, 127.054306f, 194.465118f, 315.870361f);
+  vm_compile_f32_with_3_genes("(define v {[100 200 300]"
+                              "           (gen/stray-3d from: [100 200 300] by: [50 50 50])})"
+                              "(nth from: v n: 2)",
+                              1111, 315.870361f, 127.054306f, 194.465118f, 315.870361f);
+
+
+  vm_compile_f32_with_4_genes("(define v {[900 800 700 600]"
+                              "           (gen/stray-4d from: [900 800 700 600]"
+                              "                         by: [50 50 50 50])})"
+                              "(nth from: v n: 0)",
+                              9876, 883.118774f,
+                              883.118774f, 791.929443f, 683.148071f, 621.788147f);
+  vm_compile_f32_with_4_genes("(define v {[900 800 700 600]"
+                              "           (gen/stray-4d from: [900 800 700 600]"
+                              "                         by: [50 50 50 50])})"
+                              "(nth from: v n: 1)",
+                              9876, 791.929443f,
+                              883.118774f, 791.929443f, 683.148071f, 621.788147f);
+  vm_compile_f32_with_4_genes("(define v {[900 800 700 600]"
+                              "           (gen/stray-4d from: [900 800 700 600]"
+                              "                         by: [50 50 50 50])})"
+                              "(nth from: v n: 2)",
+                              9876, 683.148071f,
+                              883.118774f, 791.929443f, 683.148071f, 621.788147f);
+  vm_compile_f32_with_4_genes("(define v {[900 800 700 600]"
+                              "           (gen/stray-4d from: [900 800 700 600]"
+                              "                         by: [50 50 50 50])})"
+                              "(nth from: v n: 3)",
+                              9876, 621.788147f,
+                              883.118774f, 791.929443f, 683.148071f, 621.788147f);
 }
 
 void test_simplified_unparser(void) {
