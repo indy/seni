@@ -2351,17 +2351,18 @@ sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
   }
 
   f32 from[] = {10.0f, 10.0f};
-  f32 by  = 1.0f;               // todo: could also make 'by' a 2d vector
+  f32 by[]  = {1.0f, 1.0f};
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_FROM, from);
-  READ_STACK_ARG_F32(INAME_BY, by);
+  READ_STACK_ARG_VEC2(INAME_BY, by);
   READ_STACK_ARGS_END;
 
-  by = absf(by);
+  by[0] = absf(by[0]);
+  by[1] = absf(by[1]);
 
   i32 index = vm->trait_within_vector_index;
-  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by, from[index] + by);
+  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index], from[index] + by[index]);
 
   f32_as_var(&g_var_scratch, res);
 
