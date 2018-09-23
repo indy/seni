@@ -1309,6 +1309,16 @@ void test_genotype_stray(void) {
     genotype_return_to_pool(genotype);
   }
 
+  {
+    genotype = genotype_construct(3421, "{3 (gen/stray-int from: 3 by: 2)}");
+    TEST_ASSERT(genotype);
+    g = genotype->genes;
+    v = g->var;
+    assert_sen_var_f32(v, VAR_FLOAT, 4.0f);
+    TEST_ASSERT_NULL(g->next); // only 1 gene
+    genotype_return_to_pool(genotype);
+  }
+
   sen_systems_shutdown();
 }
 
