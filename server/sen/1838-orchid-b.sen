@@ -44,7 +44,7 @@
     (translate vector: [(/ canvas/width 1) (/ canvas/height 2)])
     (scale scalar: 2)
     (repeat/rotate-mirrored fn: (address-of draw)
-                            copies: {10 (gen/int min: 1 max: 10)})))
+                            copies: {10 (gen/int min: 6 max: 10)})))
 
 (render)
 

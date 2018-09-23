@@ -101,27 +101,31 @@ export default function main() {
   const canvasElement = getRequiredElement('piece-canvas');
   const seedElement = getRequiredElement('piece-seed');
 
-  // not really required, hack to load in other pieces
-  const loadIdElement = getRequiredElement('piece-load-id');
-  loadIdElement.addEventListener('change', event => {
-    const iVal = parseInt(event.target.value, 10);
+  // set this to true when building for the indy.io gallery
+  const loadForWebsite = false;
 
-    fetchScript(iVal).then(code => {
-      script = code;
-      originalScript = script.slice();
-      scriptElement.textContent = script;
-      showSimplifiedScript(script);
-      return renderScript({ script, scriptHash });
-    }).catch(error => console.error(error));
-  });
+  if (loadForWebsite === false) {
+    // not really required, hack to load in other pieces
+    const loadIdElement = getRequiredElement('piece-load-id');
+    loadIdElement.addEventListener('change', event => {
+      const iVal = parseInt(event.target.value, 10);
 
-  let script, originalScript;
+      fetchScript(iVal).then(code => {
+        script = code;
+        originalScript = script.slice();
+        scriptElement.textContent = script;
+        showSimplifiedScript(script);
+        return renderScript({ script, scriptHash });
+      }).catch(error => console.error(error));
+    });
+  }
+
   const scriptHash = Util.hashCode('whatever');
 
   gGLRenderer = new GLRenderer(canvasElement);
 
-  script = scriptElement.textContent;
-  originalScript = script.slice();
+  const script = scriptElement.textContent;
+  const originalScript = script.slice();
   showSimplifiedScript(script);
 
   gGLRenderer.loadTexture(texturePathElement.textContent)

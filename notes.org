@@ -15,6 +15,12 @@
   14. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
   15. [ ] look into restrict keyword in C99
 
+
+* building for seni.app/gallery
+
+  set the loadForWebsite variable in src/js/app-piece.js to true
+  set the loadForWebsite variable in src/js/worker.js to true
+
 * app colours
 
 | what               | path            | colour |

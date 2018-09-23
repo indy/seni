@@ -218,7 +218,7 @@ export i32 build_traits() {
 
   debug_size_source_buffer();
 
-  TIMING_UNIT timing_a = get_timing();
+  // TIMING_UNIT timing_a = get_timing();
 
   sen_trait_list* trait_list = sen_compile_trait_list(g_source_buffer, g_e->word_lut);
   bool            res        = sen_serialize_trait_list(trait_list, g_traits_cursor);
@@ -231,8 +231,8 @@ export i32 build_traits() {
 
   trait_list_return_to_pool(trait_list);
 
-  f32 delta = timing_delta_from(timing_a);
-  SEN_PRINT("build_traits: total c-side time taken %.2f ms", delta);
+  // f32 delta = timing_delta_from(timing_a);
+  // SEN_PRINT("build_traits: total c-side time taken %.2f ms", delta);
 
   debug_size_traits_buffer();
 

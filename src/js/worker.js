@@ -503,7 +503,7 @@ function freeModule() {
 // set this to true when building for the indy.io gallery
 const loadForWebsite = false;
 
-let wasmFile = loadForWebsite ? '/seni/sen-wasm.wasm' : 'sen-wasm.wasm';
+const wasmFile = loadForWebsite ? '/seni/sen-wasm.wasm' : 'sen-wasm.wasm';
 
 loadWASM(wasmFile, options).then(wasmInstance => {
   configureWasmModule(wasmInstance);
