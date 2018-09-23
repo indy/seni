@@ -1,26 +1,30 @@
 (define
   coords []
   colours []
-  make-colour (col/build-procedural a: {[0.80 0.50 0.40] (gen/scalar)}
-                                    b: {[0.20 0.40 0.20] (gen/scalar)}
-                                    c: {[2.00 1.00 1.00] (gen/scalar)}
-                                    d: {[0.00 0.25 0.25] (gen/scalar)})
+  make-colour (col/build-procedural a: {[0.80 0.50 0.40] (gen/stray-3d from: [0.80 0.50 0.40] by: [0.1 0.1 0.1])}
+                                    b: {[0.20 0.40 0.20] (gen/stray-3d from: [0.20 0.40 0.20] by: [0.1 0.1 0.1])}
+                                    c: {[2.00 1.00 1.00] (gen/stray-3d from: [2.00 1.00 1.00] by: [0.1 0.1 0.1])}
+                                    d: {[0.00 0.25 0.25] (gen/stray-3d from: [0.00 0.25 0.25] by: [0.1 0.1 0.1])})
 
   focalpoint ({focal/build-point (gen/select from: '(focal/build-point
                                                      focal/build-hline
-                                                     focal/build-vline))} 
-              position: [{0 (gen/int min: -300 max: 300)} 
-                         {0 (gen/int min: -300 max: 300)}]
-              distance: {390 (gen/int min: 300 max: 900)}))
+                                                     focal/build-vline))}
+              position: [{0 (gen/int min: -30 max: 30)}
+                         {0 (gen/int min: -30 max: 30)}]
+              distance: {390 (gen/int min: 340 max: 440)}))
 
-(fence (t num: {30 (gen/int min: 5 max: 100)})
+(fence (t num: {30 (gen/int min: 25 max: 35)})
   (define
     p1 (interp/bezier t: t
-                      coords: {[[0 200] [-133 100] [266 -100] [399 -200]]
-                                   (gen/2d min: -300 max: 300)})
+                      coords: [{[0 200] (gen/stray-2d from: [0 200] by: [10 10])}
+                               {[-133 100] (gen/stray-2d from: [-133 100] by: [10 10])}
+                               {[266 -100] (gen/stray-2d from: [266 -100] by: [10 10])}
+                               {[399 -200] (gen/stray-2d from: [399 -200] by: [10 10])}])
     p2 (interp/bezier t: t
-                      coords: {[[-100 200] [133 -300] [66 100] [-99 200]]
-                                      (gen/2d min: -300 max: 300)})
+                      coords: [{[-100 200] (gen/stray-2d from: [-100 200] by: [10 10])}
+                               {[133 -300] (gen/stray-2d from: [133 -300] by: [10 10])}
+                               {[66 100] (gen/stray-2d from: [66 100] by: [10 10])}
+                               {[-99 200] (gen/stray-2d from: [-99 200] by: [10 10])}])
     c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
     c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
   (vector/append coords p1)
@@ -35,6 +39,6 @@
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (repeat/rotate-mirrored fn: (address-of draw)
-                            copies: {5 (gen/int min: 1 max: 30)})))
+                            copies: {5 (gen/int min: 3 max: 8)})))
 
 (render)
