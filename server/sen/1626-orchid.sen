@@ -1,19 +1,18 @@
-(define 
-  coords1 {[[128.909 488.683]
-            [381.086 165.115]
-            [244.222 -24.375]
-            [-303.775 -142.624]]
-           (gen/2d min: -500 max: 500)}
-  coords2 {[[479.130 244.656]
-            [-356.596 -40.355]
-            [-392.151 22.662]
-            [-407.968 -470.355]]
-           (gen/2d min: -500 max: 500)}
-  coords3 {[[-412.063 -149.809]
-            [-78.466 -66.429]
-            [58.852 146.280]
-            [96.709 -286.538]]
-           (gen/2d min: -500 max: 500)}
+(define
+  coords1 [{[128.909 488.683] (gen/stray-2d from: [128.909 488.683] by: [40 40])}
+           {[381.086 165.115] (gen/stray-2d from: [381.086 165.115] by: [40 40])}
+           {[244.222 -24.375] (gen/stray-2d from: [244.222 -24.375] by: [40 40])}
+           {[-303.775 -142.624] (gen/stray-2d from: [-303.775 -142.624] by: [40 40])}]
+
+  coords2 [{[479.130 244.656] (gen/stray-2d from: [479.130 244.656] by: [40 40])}
+           {[-356.596 -40.355] (gen/stray-2d from: [-356.596 -40.355] by: [40 40])}
+           {[-392.151 22.662] (gen/stray-2d from: [-392.151 22.662] by: [40 40])}
+           {[-407.968 -470.355] (gen/stray-2d from: [-407.968 -470.355] by: [40 40])}]
+
+  coords3 [{[-412.063 -149.809] (gen/stray-2d from: [-412.063 -149.809] by: [40 40])}
+           {[-78.466 -66.429] (gen/stray-2d from: [-78.466 -66.429] by: [40 40])}
+           {[58.852 146.280] (gen/stray-2d from: [58.852 146.280] by: [40 40])}
+           {[96.709 -286.538] (gen/stray-2d from: [96.709 -286.538] by: [40 40])}]
 
   col-fn-1 (col/build-procedural preset: {chrome (gen/select from: col/procedural-fn-presets)}
                                  alpha: 0.08)
@@ -39,6 +38,6 @@
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (repeat/rotate-mirrored fn: (address-of draw)
-                            copies: {3 (gen/int min: 1 max: 8)})))
+                            copies: 3)))
 
 (render)
