@@ -1,19 +1,18 @@
-(define 
-  coords1 {[[-3.718 -69.162]
-            [463.301 -57.804]
-            [456.097 -315.570]
-            [318.683 -384.297]]
-           (gen/2d min: -500 max: 500)}
-  coords2 {[[424.112 19.779]
-            [2.641 246.678]
-            [-449.001 -79.842]
-            [37.301 206.818]]
-           (gen/2d min: -500 max: 500)}
-  coords3 {[[83.331 -282.954]
-            [92.716 -393.120]
-            [426.686 -420.284]
-            [-29.734 335.671]]
-           (gen/2d min: -500 max: 500)}
+(define
+  coords1 [{[-3.718 -69.162] (gen/stray-2d from [-3.718 -69.162] by: [5 5])}
+           {[463.301 -57.804] (gen/stray-2d from [463.301 -57.804] by: [5 5])}
+           {[456.097 -315.570] (gen/stray-2d from [456.097 -315.570] by: [5 5])}
+           {[318.683 -384.297] (gen/stray-2d from [318.683 -384.297] by: [5 5])}]
+
+  coords2 [{[424.112 19.779] (gen/stray-2d from [424.112 19.779] by: [5 5])}
+           {[2.641 246.678] (gen/stray-2d from [2.641 246.678] by: [5 5])}
+           {[-449.001 -79.842] (gen/stray-2d from [-449.001 -79.842] by: [5 5])}
+           {[37.301 206.818] (gen/stray-2d from [37.301 206.818] by: [5 5])}]
+
+  coords3 [{[83.331 -282.954] (gen/stray-2d from [83.331 -282.954] by: [5 5])}
+           {[92.716 -393.120] (gen/stray-2d from [92.716 -393.120] by: [5 5])}
+           {[426.686 -420.284] (gen/stray-2d from [426.686 -420.284] by: [5 5])}
+           {[-29.734 335.671] (gen/stray-2d from [-29.734 335.671] by: [5 5])}]
 
   col-fn-1 (col/build-procedural preset: {transformers (gen/select from: col/procedural-fn-presets)}
                                  alpha: 0.08)
@@ -22,8 +21,8 @@
   col-fn-3 (col/build-procedural preset: {knight-rider (gen/select from: col/procedural-fn-presets)}
                                  alpha: 0.08)
 
-  num-copies {28 (gen/int min: 1 max: 28)}
-  squish (interp/build from: [0 (- num-copies 1)] to: [{1.2 (gen/scalar max: 2)} {0.45 (gen/scalar max: 2)}]))
+  num-copies {28 (gen/int min: 25 max: 30)}
+  squish (interp/build from: [0 (- num-copies 1)] to: [{1.2 (gen/scalar min: 1.0 max: 1.5)} {0.45 (gen/scalar min: 0.3 max: 1)}]))
 
 (fn (draw angle: 0 copy: 0)
   (scale vector: [(interp/value from: squish t: copy) (interp/value from: squish t: copy)])

@@ -1,0 +1,48 @@
+(define
+  coords []
+  colours []
+  make-colour (col/build-procedural a: {[0.687 0.399 0.476] (gen/scalar)}
+                                    b: {[0.778 0.405 0.253] (gen/scalar)}
+                                    c: {[0.436 0.590 0.885] (gen/scalar)}
+                                    d: {[0.517 0.439 0.391] (gen/scalar)})
+
+  focalpoint ({focal/build-vline (gen/select from: '(focal/build-point
+                                                     focal/build-hline
+                                                     focal/build-vline))} 
+              position: [{-148 (gen/int min: -300 max: 300)} 
+                         {239 (gen/int min: -300 max: 300)}]
+              distance: {458 (gen/int min: 300 max: 900)}))
+
+(fence (t num: {63 (gen/int min: 5 max: 100)})
+  (define
+    p1 (interp/bezier t: t
+                      coords: {[[-139.592 -150.389] 
+                                [166.582 -132.939] 
+                                [8.370 -108.305] 
+                                [204.349 -212.830]]
+                               (gen/2d min: -300 max: 300)})
+    p2 (interp/bezier t: t
+                      coords: {[[6.482 -255.821] 
+                                [-11.347 100.004]
+                                [201.458 -218.061]
+                                [168.957 84.215]]
+                               (gen/2d min: -300 max: 300)})
+    c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
+    c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
+  (vector/append coords p1)
+  (vector/append coords p2)
+  (vector/append colours c1)
+  (vector/append colours c2))
+
+
+(fn (draw)
+  (poly coords: coords colours: colours))
+
+(fn (render)
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (scale vector: [1.7 1.7])
+    (repeat/rotate-mirrored fn: (address-of draw)
+                            copies: {7 (gen/int min: 1 max: 30)})))
+
+(render)

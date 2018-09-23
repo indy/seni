@@ -1,0 +1,79 @@
+(render)
+
+(define 
+  coords1 {[[153.326 66.565]
+            [-143.219 370.216]
+            [-254.094 -214.417]
+            [368.038 -58.687]]
+           (gen/2d min: -500 max: 500)}
+  coords2 {[[29.449 -88.566]
+            [-181.104 317.846]
+            [-457.779 46.556]
+            [461.392 -414.827]]
+           (gen/2d min: -500 max: 500)}
+  coords3 {[[-445.078 -431.034]
+            [-287.184 -394.192]
+            [225.426 -71.645]
+            [311.633 -352.704]]
+           (gen/2d min: -500 max: 500)}
+
+  col-fn-1 (col/build-procedural a: {[0.224 0.120 0.710] (gen/scalar)}
+                              b: {[0.589 0.819 0.879] (gen/scalar)}
+                              c: {[0.622 0.476 0.884] (gen/scalar)}
+                              d: {[0.822 0.732 0.425] (gen/scalar)}
+                              alpha: 0.08)
+  col-fn-2 (col/build-procedural a: {[0.992 0.035 0.678] (gen/scalar)}
+                              b: {[0.136 0.560 0.367] (gen/scalar)}
+                              c: {[0.701 0.609 0.479] (gen/scalar)}
+                              d: {[0.515 0.340 0.555] (gen/scalar)}
+                              alpha: 0.08)
+  col-fn-3 (col/build-procedural a: {[0.212 0.128 0.661] (gen/scalar)}
+                              b: {[0.714 0.956 0.850] (gen/scalar)}
+                              c: {[0.756 0.936 0.227] (gen/scalar)}
+                              d: {[0.299 0.271 0.501] (gen/scalar)}
+                              alpha: 0.08))
+
+(fn (draw)
+    (fence (t num: 200)
+    (poly coords: [(interp/bezier t: t coords: coords1)
+                   (interp/bezier t: t coords: coords2)
+                   (interp/bezier t: t coords: coords3)]
+          colours: [(col/value from: col-fn-1 t: t)
+                    (col/value from: col-fn-2 t: t)
+                    (col/value from: col-fn-3 t: t)])))
+
+(fn (render)
+  (wash colour: {(col/rgb r: 0.280 g: 0.696 b: 0.652 alpha: 0.749) (gen/col)})
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 1) (/ canvas/height 2)])
+    (scale scalar: 2)
+    (repeat/rotate-mirrored fn: (address-of draw)
+                            copies: {2 (gen/int min: 1 max: 10)})))
+
+(fn (wash vol: 200
+          line-width: 70
+          line-segments: 5
+          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+          seed: 272)
+  (define 
+    w/3 (/ canvas/width 3)
+    h/3 (/ canvas/height 3))
+  (loop (d from: -20 to: 1020 inc: 20)
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]
+                     [w/3          (wash-n x: w/3          d: d seed: seed vol: vol)]
+                     [(* w/3 2)    (wash-n x: (* w/3 2)    d: d seed: seed vol: vol)]
+                     [canvas/width (wash-n x: canvas/width d: d seed: seed vol: vol)]]
+            colour: colour)
+
+    (bezier tessellation: line-segments
+            line-width: line-width
+            coords: [[(wash-n x: 0             d: d seed: seed vol: vol) 0]
+                     [(wash-n x: h/3           d: d seed: seed vol: vol) h/3]
+                     [(wash-n x: (* h/3 2)     d: d seed: seed vol: vol) (* h/3 2)]
+                     [(wash-n x: canvas/height d: d seed: seed vol: vol) canvas/height]]
+            colour: colour)))
+
+(fn (wash-n x: 0 d: 0 seed: 0 vol: 1)
+  (+ d (* vol (prng/perlin x: x y: d z: seed))))
