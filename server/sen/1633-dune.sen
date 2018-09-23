@@ -1,35 +1,35 @@
-(define 
-  coords1 {[[-384.501 -98.136]
-            [329.109 479.700]
-            [-379.652 -248.992]
-            [-408.700 443.968]]
-           (gen/2d min: -500 max: 500)}
-  coords2 {[[160.088 -124.315]
-            [-291.133 -357.968]
-            [290.588 432.570]
-            [442.875 475.219]]
-           (gen/2d min: -500 max: 500)}
-  coords3 {[[115.066 -95.138]
-            [-485.132 -200.796]
-            [-367.920 285.440]
-            [422.032 -212.102]]
-           (gen/2d min: -500 max: 500)}
+(define
+  coords1 [{[-384.501 -98.136] (gen/stray-2d from: [-384.501 -98.136] by: [10 10])}
+           {[329.109 479.700] (gen/stray-2d from: [329.109 479.700] by: [10 10])}
+           {[-379.652 -248.992] (gen/stray-2d from: [-379.652 -248.992] by: [10 10])}
+           {[-408.700 443.968] (gen/stray-2d from: [-408.700 443.968] by: [10 10])}]
 
-  col-fn-1 (col/build-procedural a: {[0.525 0.911 0.163] (gen/scalar)}
-                              b: {[0.091 0.084 0.211] (gen/scalar)}
-                              c: {[0.211 0.804 0.624] (gen/scalar)}
-                              d: {[0.498 0.672 0.286] (gen/scalar)}
-                              alpha: 0.08)
-  col-fn-2 (col/build-procedural a: {[0.265 0.977 0.017] (gen/scalar)}
-                              b: {[0.737 0.981 0.656] (gen/scalar)}
-                              c: {[0.029 0.116 0.078] (gen/scalar)}
-                              d: {[0.046 0.362 0.756] (gen/scalar)}
-                              alpha: 0.08)
-  col-fn-3 (col/build-procedural a: {[0.897 0.589 0.075] (gen/scalar)}
-                              b: {[0.561 0.365 0.110] (gen/scalar)}
-                              c: {[0.635 0.130 0.463] (gen/scalar)}
-                              d: {[0.481 0.974 0.761] (gen/scalar)}
-                              alpha: 0.08))
+  coords2 [{[160.088 -124.315] (gen/stray-2d from: [160.088 -124.315] by: [10 10])}
+           {[-291.133 -357.968] (gen/stray-2d from: [-291.133 -357.968] by: [10 10])}
+           {[290.588 432.570] (gen/stray-2d from: [290.588 432.570] by: [10 10])}
+           {[442.875 475.219] (gen/stray-2d from: [442.875 475.219] by: [10 10])}]
+
+  coords3 [{[115.066 -95.138] (gen/stray-2d from: [115.066 -95.138] by: [10 10])}
+           {[-485.132 -200.796] (gen/stray-2d from: [-485.132 -200.796] by: [10 10])}
+           {[-367.920 285.440] (gen/stray-2d from: [-367.920 285.440] by: [10 10])}
+           {[422.032 -212.102] (gen/stray-2d from: [422.032 -212.102] by: [10 10])}]
+
+
+  col-fn-1 (col/build-procedural a: {[0.525 0.911 0.163] (gen/stray-3d from: [0.525 0.911 0.163] by: [0.1 0.1 0.1])}
+                                 b: {[0.091 0.084 0.211] (gen/stray-3d from: [0.091 0.084 0.211] by: [0.1 0.1 0.1])}
+                                 c: {[0.211 0.804 0.624] (gen/stray-3d from: [0.211 0.804 0.624] by: [0.1 0.1 0.1])}
+                                 d: {[0.498 0.672 0.286] (gen/stray-3d from: [0.498 0.672 0.286] by: [0.1 0.1 0.1])}
+                                 alpha: 0.08)
+  col-fn-2 (col/build-procedural a: {[0.265 0.977 0.017] (gen/stray-3d from: [0.265 0.977 0.017] by: [0.1 0.1 0.1])}
+                                 b: {[0.737 0.981 0.656] (gen/stray-3d from: [0.737 0.981 0.656] by: [0.1 0.1 0.1])}
+                                 c: {[0.029 0.116 0.078] (gen/stray-3d from: [0.029 0.116 0.078] by: [0.1 0.1 0.1])}
+                                 d: {[0.046 0.362 0.756] (gen/stray-3d from: [0.046 0.362 0.756] by: [0.1 0.1 0.1])}
+                                 alpha: 0.08)
+  col-fn-3 (col/build-procedural a: {[0.897 0.589 0.075] (gen/stray-3d from: [0.897 0.589 0.075] by: [0.1 0.1 0.1])}
+                                 b: {[0.561 0.365 0.110] (gen/stray-3d from: [0.561 0.365 0.110] by: [0.1 0.1 0.1])}
+                                 c: {[0.635 0.130 0.463] (gen/stray-3d from: [0.635 0.130 0.463] by: [0.1 0.1 0.1])}
+                                 d: {[0.481 0.974 0.761] (gen/stray-3d from: [0.481 0.974 0.761] by: [0.1 0.1 0.1])}
+                                 alpha: 0.08))
 
 (fn (draw)
     (fence (t num: 200)
@@ -46,7 +46,7 @@
     (translate vector: [(/ canvas/width 1) (/ canvas/height 2)])
     (scale scalar: 2)
     (repeat/rotate-mirrored fn: (address-of draw)
-                            copies: {2 (gen/int min: 1 max: 30)})))
+                            copies: {2 (gen/int min: 1 max: 4)})))
 
 (render)
 
@@ -55,7 +55,7 @@
           line-segments: 5
           colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
           seed: 272)
-  (define 
+  (define
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
   (loop (d from: -20 to: 1020 inc: 20)

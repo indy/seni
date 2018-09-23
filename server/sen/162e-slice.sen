@@ -1,25 +1,25 @@
-(define 
-  coords1 {[[-306.440 -420.414]
-            [74.096 -347.654]
-            [-183.828 -380.454]
-            [139.696 -188.675]]
-           (gen/2d min: -500 max: 500)}
-  coords2 {[[-44.663 -282.768]
-            [-329.692 -130.704]
-            [313.436 448.917]
-            [164.377 197.854]]
-           (gen/2d min: -500 max: 500)}
-  coords3 {[[-114.835 -305.887]
-            [236.405 -310.621]
-            [-105.256 -58.435]
-            [-274.251 -349.727]]
-           (gen/2d min: -500 max: 500)}
+(define
+  coords1 [{[-306.440 -420.414] (gen/stray-2d from: [-306.440 -420.414] by: [50 50])}
+           {[74.096 -347.654] (gen/stray-2d from: [74.096 -347.654] by: [50 50])}
+           {[-183.828 -380.454] (gen/stray-2d from: [-183.828 -380.454] by: [50 50])}
+           {[139.696 -188.675] (gen/stray-2d from: [139.696 -188.675] by: [50 50])}]
 
-  col-1 (col/build-procedural preset: {robocop (gen/select from: col/procedural-fn-presets)}
+  coords2 [{[-44.663 -282.768] (gen/stray-2d from: [-44.663 -282.768] by: [50 50])}
+           {[-329.692 -130.704] (gen/stray-2d from: [-329.692 -130.704] by: [50 50])}
+           {[313.436 448.917] (gen/stray-2d from: [313.436 448.917] by: [50 50])}
+           {[164.377 197.854] (gen/stray-2d from: [164.377 197.854] by: [50 50])}]
+
+  coords3 [{[-114.835 -305.887] (gen/stray-2d from: [-114.835 -305.887] by: [50 50])}
+           {[236.405 -310.621] (gen/stray-2d from: [236.405 -310.621] by: [50 50])}
+           {[-105.256 -58.435] (gen/stray-2d from: [-105.256 -58.435] by: [50 50])}
+           {[-274.251 -349.727] (gen/stray-2d from: [-274.251 -349.727] by: [50 50])}]
+
+
+  col-1 (col/build-procedural preset: robocop
                               alpha: 0.08)
-  col-2 (col/build-procedural preset: {chrome (gen/select from: col/procedural-fn-presets)}
+  col-2 (col/build-procedural preset: chrome
                               alpha: 0.08)
-  col-3 (col/build-procedural preset: {chrome (gen/select from: col/procedural-fn-presets)}
+  col-3 (col/build-procedural preset: chrome
                               alpha: 0.08))
 
 (fn (draw)
@@ -35,7 +35,6 @@
     (on-matrix-stack
      (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
      (repeat/rotate-mirrored fn: (address-of draw)
-                             copies: {6 (gen/int min: 1 max: 8)})))
+                             copies: {6 (gen/int min: 4 max: 8)})))
 
 (render)
-

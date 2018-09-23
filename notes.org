@@ -15,7 +15,8 @@
   14. [ ] ensure that there's a dist folder before running npm run build:wasm
   15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
   16. [ ] look into restrict keyword in C99
-
+** check node->src and node->src_len
+   node_pretty_print
 
 * construction process
   1. play around in seni editor
@@ -38,10 +39,6 @@
     return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
 
 }
-* todo
-** check node->src and node->src_len
-   node_pretty_print
-
 
 * updating scripts [55/57]
   1. [X] 14ef-blur-grid.sen
