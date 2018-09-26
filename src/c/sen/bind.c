@@ -343,9 +343,7 @@ void declare_vm_keyword(sen_word_lut* word_lut, char* name) {
   }
 }
 
-void declare_native(sen_word_lut*       word_lut,
-                    sen_env*            e,
-                    char*               name,
+void declare_native(sen_word_lut* word_lut, sen_env* e, char* name,
                     native_function_ptr function_ptr) {
   e->function_ptr[word_lut->native_count] = function_ptr;
 
@@ -440,7 +438,8 @@ sen_var* bind_line(sen_vm* vm, i32 num_args) {
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  render_line(render_data, matrix, from[0], from[1], to[0], to[1], width, &colour);
+  render_line(render_data, matrix, from[0], from[1], to[0], to[1], width,
+              &colour);
 
   return &g_var_true;
 }
@@ -465,7 +464,8 @@ sen_var* bind_rect(sen_vm* vm, i32 num_args) {
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  render_rect(render_data, matrix, position[0], position[1], width, height, &colour);
+  render_rect(render_data, matrix, position[0], position[1], width, height,
+              &colour);
 
   return &g_var_true;
 }
@@ -501,8 +501,8 @@ sen_var* bind_circle(sen_vm* vm, i32 num_args) {
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  render_circle(
-      render_data, matrix, position[0], position[1], width, height, &colour, (i32)tessellation);
+  render_circle(render_data, matrix, position[0], position[1], width, height,
+                &colour, (i32)tessellation);
 
   return &g_var_true;
 }
@@ -546,18 +546,9 @@ sen_var* bind_circle_slice(sen_vm* vm, i32 num_args) {
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  render_circle_slice(render_data,
-                      matrix,
-                      position[0],
-                      position[1],
-                      width,
-                      height,
-                      &colour,
-                      (i32)tessellation,
-                      angle_start,
-                      angle_end,
-                      inner_width,
-                      inner_height);
+  render_circle_slice(render_data, matrix, position[0], position[1], width,
+                      height, &colour, (i32)tessellation, angle_start,
+                      angle_end, inner_width, inner_height);
 
   return &g_var_true;
 }
@@ -587,7 +578,8 @@ sen_var* bind_bezier(sen_vm* vm, i32 num_args) {
   f32        line_width_start   = 4.0f;
   f32        line_width_end     = 4.0f;
   i32        line_width_mapping = INAME_LINEAR;
-  f32        coords[]           = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
+  f32        coords[]           = {100.0f, 500.0f, 300.0f, 300.0f,
+                  600.0f, 700.0f, 900.0f, 500.0f};
   f32        t_start            = -1.0f;
   f32        t_end              = 2.0f;
   f32        tessellation       = 10.0f;
@@ -632,18 +624,9 @@ sen_var* bind_bezier(sen_vm* vm, i32 num_args) {
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  render_bezier(render_data,
-                matrix,
-                coords,
-                line_width_start,
-                line_width_end,
-                line_width_mapping,
-                t_start,
-                t_end,
-                &colour,
-                (i32)tessellation,
-                brush,
-                (i32)brush_subtype);
+  render_bezier(render_data, matrix, coords, line_width_start, line_width_end,
+                line_width_mapping, t_start, t_end, &colour, (i32)tessellation,
+                brush, (i32)brush_subtype);
 
   return &g_var_true;
 }
@@ -654,7 +637,8 @@ sen_var* bind_bezier_bulging(sen_vm* vm, i32 num_args) {
   // f32 line_width_start = 4.0f;
   // f32 line_width_end = 4.0f;
   // i32 line_width_mapping = INAME_LINEAR;
-  f32        coords[]     = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
+  f32        coords[]     = {100.0f, 500.0f, 300.0f, 300.0f,
+                  600.0f, 700.0f, 900.0f, 500.0f};
   f32        t_start      = -1.0f;
   f32        t_end        = 2.0f;
   f32        tessellation = 10.0f;
@@ -690,26 +674,19 @@ sen_var* bind_bezier_bulging(sen_vm* vm, i32 num_args) {
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  render_bezier_bulging(render_data,
-                        matrix,
-                        coords,
-                        line_width,
-                        t_start,
-                        t_end,
-                        &colour,
-                        (i32)tessellation,
-                        brush,
-                        (i32)brush_subtype);
+  render_bezier_bulging(render_data, matrix, coords, line_width, t_start, t_end,
+                        &colour, (i32)tessellation, brush, (i32)brush_subtype);
 
   return &g_var_true;
 }
 
 sen_var* bind_stroked_bezier(sen_vm* vm, i32 num_args) {
   // default values for stroked-bezier
-  f32        tessellation        = 15.0f;
-  f32        coords[]            = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
-  f32        stroke_tessellation = 10.0f;
-  f32        stroke_noise        = 25;
+  f32        tessellation            = 15.0f;
+  f32        coords[]                = {100.0f, 500.0f, 300.0f, 300.0f,
+                  600.0f, 700.0f, 900.0f, 500.0f};
+  f32        stroke_tessellation     = 10.0f;
+  f32        stroke_noise            = 25;
   f32        stroke_line_width_start = 1.0f;
   f32        stroke_line_width_end   = 1.0f;
   sen_colour colour;
@@ -743,19 +720,10 @@ sen_var* bind_stroked_bezier(sen_vm* vm, i32 num_args) {
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  render_stroked_bezier(render_data,
-                        matrix,
-                        coords,
-                        &colour,
-                        (i32)tessellation,
-                        stroke_line_width_start,
-                        stroke_line_width_end,
-                        stroke_noise,
-                        (i32)stroke_tessellation,
-                        colour_volatility,
-                        seed,
-                        line_width_mapping,
-                        brush,
+  render_stroked_bezier(render_data, matrix, coords, &colour, (i32)tessellation,
+                        stroke_line_width_start, stroke_line_width_end,
+                        stroke_noise, (i32)stroke_tessellation,
+                        colour_volatility, seed, line_width_mapping, brush,
                         (i32)brush_subtype);
 
   return &g_var_true;
@@ -801,22 +769,10 @@ sen_var* bind_stroked_bezier_rect(sen_vm* vm, i32 num_args) {
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  render_stroked_bezier_rect(render_data,
-                             matrix,
-                             position,
-                             width,
-                             height,
-                             volatility,
-                             overlap,
-                             iterations,
-                             seed,
-                             (i32)tessellation,
-                             (i32)stroke_tessellation,
-                             stroke_noise,
-                             &colour,
-                             colour_volatility,
-                             brush,
-                             (i32)brush_subtype);
+  render_stroked_bezier_rect(
+      render_data, matrix, position, width, height, volatility, overlap,
+      iterations, seed, (i32)tessellation, (i32)stroke_tessellation,
+      stroke_noise, &colour, colour_volatility, brush, (i32)brush_subtype);
 
   return &g_var_true;
 }
@@ -1163,7 +1119,8 @@ sen_var* bind_col_get_alpha(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-sen_var* col_set_element(sen_vm* vm, i32 num_args, sen_colour_format format, i32 index) {
+sen_var* col_set_element(sen_vm* vm, i32 num_args, sen_colour_format format,
+                         i32 index) {
   sen_colour colour;
   f32        value = 0;
 
@@ -1189,7 +1146,8 @@ sen_var* col_set_element(sen_vm* vm, i32 num_args, sen_colour_format format, i32
   return &g_var_scratch;
 }
 
-sen_var* col_get_element(sen_vm* vm, i32 num_args, sen_colour_format format, i32 index) {
+sen_var* col_get_element(sen_vm* vm, i32 num_args, sen_colour_format format,
+                         i32 index) {
   sen_colour colour;
 
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1212,13 +1170,21 @@ sen_var* col_get_element(sen_vm* vm, i32 num_args, sen_colour_format format, i32
   return &g_var_scratch;
 }
 
-sen_var* bind_col_set_r(sen_vm* vm, i32 num_args) { return col_set_element(vm, num_args, RGB, 0); }
+sen_var* bind_col_set_r(sen_vm* vm, i32 num_args) {
+  return col_set_element(vm, num_args, RGB, 0);
+}
 
-sen_var* bind_col_get_r(sen_vm* vm, i32 num_args) { return col_get_element(vm, num_args, RGB, 0); }
+sen_var* bind_col_get_r(sen_vm* vm, i32 num_args) {
+  return col_get_element(vm, num_args, RGB, 0);
+}
 
-sen_var* bind_col_set_g(sen_vm* vm, i32 num_args) { return col_set_element(vm, num_args, RGB, 1); }
+sen_var* bind_col_set_g(sen_vm* vm, i32 num_args) {
+  return col_set_element(vm, num_args, RGB, 1);
+}
 
-sen_var* bind_col_get_g(sen_vm* vm, i32 num_args) { return col_get_element(vm, num_args, RGB, 1); }
+sen_var* bind_col_get_g(sen_vm* vm, i32 num_args) {
+  return col_get_element(vm, num_args, RGB, 1);
+}
 
 sen_var* bind_col_set_b(sen_vm* vm, i32 num_args) {
   sen_colour colour;
@@ -1316,7 +1282,8 @@ sen_var* bind_col_get_h(sen_vm* vm, i32 num_args) {
   if (colour.format == HSL || colour.format == HSLuv || colour.format == HSV) {
     value = colour.element[index];
   } else {
-    SEN_ERROR("bind_col_get_h: colour is in the incorrect format: %d", colour.format);
+    SEN_ERROR("bind_col_get_h: colour is in the incorrect format: %d",
+              colour.format);
   }
 
   f32_as_var(&g_var_scratch, value);
@@ -1396,7 +1363,8 @@ sen_var* bind_col_set_l(sen_vm* vm, i32 num_args) {
   } else if (colour.format == LAB) {
     ret_colour.element[0] = value;
   } else {
-    SEN_ERROR("bind_col_set_l: colour is in the incorrect format: %d", colour.format);
+    SEN_ERROR("bind_col_set_l: colour is in the incorrect format: %d",
+              colour.format);
   }
 
   colour_as_var(&g_var_scratch, &ret_colour);
@@ -1429,13 +1397,21 @@ sen_var* bind_col_get_l(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-sen_var* bind_col_set_a(sen_vm* vm, i32 num_args) { return col_set_element(vm, num_args, LAB, 1); }
+sen_var* bind_col_set_a(sen_vm* vm, i32 num_args) {
+  return col_set_element(vm, num_args, LAB, 1);
+}
 
-sen_var* bind_col_get_a(sen_vm* vm, i32 num_args) { return col_get_element(vm, num_args, LAB, 1); }
+sen_var* bind_col_get_a(sen_vm* vm, i32 num_args) {
+  return col_get_element(vm, num_args, LAB, 1);
+}
 
-sen_var* bind_col_set_v(sen_vm* vm, i32 num_args) { return col_set_element(vm, num_args, HSV, 2); }
+sen_var* bind_col_set_v(sen_vm* vm, i32 num_args) {
+  return col_set_element(vm, num_args, HSV, 2);
+}
 
-sen_var* bind_col_get_v(sen_vm* vm, i32 num_args) { return col_get_element(vm, num_args, HSV, 2); }
+sen_var* bind_col_get_v(sen_vm* vm, i32 num_args) {
+  return col_get_element(vm, num_args, HSV, 2);
+}
 
 sen_var* bind_col_build_procedural(sen_vm* vm, i32 num_args) {
   // colour fn structure need to store 4 colours (for bezier-fn)
@@ -1876,7 +1852,7 @@ sen_var* bind_parametric_build(sen_vm* vm, i32 num_args) {
   sen_var* v;
 
   vector_construct(&g_var_scratch);
-  v               = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_PARAMETRIC);
+  v = vector_append_i32(vm, &g_var_scratch, HEAP_STRUCTURE_PARAMETRIC);
   v->f32_array[0] = from_m;
   v->f32_array[1] = to_m;
   v->f32_array[2] = from_c;
@@ -1974,7 +1950,8 @@ sen_var* bind_parametric_sin(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_parametric_bezier(sen_vm* vm, i32 num_args) {
-  f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
+  f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f,
+                  600.0f, 700.0f, 900.0f, 500.0f};
   f32 t        = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
@@ -1993,7 +1970,8 @@ sen_var* bind_parametric_bezier(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_parametric_bezier_tangent(sen_vm* vm, i32 num_args) {
-  f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
+  f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f,
+                  600.0f, 700.0f, 900.0f, 500.0f};
   f32 t        = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
@@ -2054,7 +2032,8 @@ sen_var* bind_path_linear(sen_vm* vm, i32 num_args) {
     return &g_var_true;
   }
 
-  path_linear(vm, fn, (i32)steps, t_start, t_end, from[0], from[1], to[0], to[1]);
+  path_linear(vm, fn, (i32)steps, t_start, t_end, from[0], from[1], to[0],
+              to[1]);
 
   return &g_var_true;
 }
@@ -2110,7 +2089,8 @@ sen_var* bind_path_spline(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_path_bezier(sen_vm* vm, i32 num_args) {
-  f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 500.0f};
+  f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f,
+                  600.0f, 700.0f, 900.0f, 500.0f};
   f32 steps    = 10.0f;
   f32 t_start  = 0.0f;
   f32 t_end    = 1.0f;
@@ -2257,7 +2237,8 @@ sen_var* bind_focal_generic(sen_vm* vm, i32 num_args, sen_focal_type type) {
 
   // store position in canvas space coordinates
   f32 x, y;
-  matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
+  matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0],
+                              position[1]);
 
   // returns vector where:
   // first item contains format in value.i, postion in f32_array[0,1] and
@@ -2313,7 +2294,8 @@ sen_var* bind_focal_value(sen_vm* vm, i32 num_args) {
 
   // transform position to canvas space coordinates
   f32 x, y;
-  matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
+  matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0],
+                              position[1]);
 
   switch (from.type) {
   case FOCAL_POINT:
@@ -2339,7 +2321,8 @@ sen_var* bind_focal_value(sen_vm* vm, i32 num_args) {
 sen_var* get_gen_initial(sen_vm* vm) {
   // vm_compiler::register_top_level_preamble : the 2nd global mapping
   i32      gen_initial_global_offset = 1;
-  sen_var* initial_value             = vm_get_from_global_offset(vm, gen_initial_global_offset);
+  sen_var* initial_value =
+      vm_get_from_global_offset(vm, gen_initial_global_offset);
 
   return initial_value;
 }
@@ -2349,7 +2332,7 @@ sen_var* get_gen_initial(sen_vm* vm) {
 //
 sen_var* bind_gen_stray_int(sen_vm* vm, i32 num_args) {
   f32 from = 0.0f;
-  f32 by = 1.0f;
+  f32 by   = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_FROM, from);
@@ -2358,7 +2341,7 @@ sen_var* bind_gen_stray_int(sen_vm* vm, i32 num_args) {
 
   by = absf(by);
 
-  i32 value = sen_prng_f32_range(vm->prng_state, from - by, from + by);
+  f32 value = sen_prng_f32_range(vm->prng_state, from - by, from + by);
 
   f32_as_var(&g_var_scratch, (f32)floor_f32(value));
 
@@ -2366,8 +2349,8 @@ sen_var* bind_gen_stray_int(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_gen_stray(sen_vm* vm, i32 num_args) {
-  f32 from  = 1.0f;
-  f32 by  = 0.2f;
+  f32 from = 1.0f;
+  f32 by   = 0.2f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_FROM, from);
@@ -2385,11 +2368,12 @@ sen_var* bind_gen_stray(sen_vm* vm, i32 num_args) {
 
 sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
   if (vm->building_with_trait_within_vector != 1) {
-    SEN_LOG("bind_gen_stray_2d should always be called with building_with_trait_within_vector = 1");
+    SEN_LOG("bind_gen_stray_2d should always be called with "
+            "building_with_trait_within_vector = 1");
   }
 
   f32 from[] = {10.0f, 10.0f};
-  f32 by[]  = {1.0f, 1.0f};
+  f32 by[]   = {1.0f, 1.0f};
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_FROM, from);
@@ -2399,7 +2383,8 @@ sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
   i32 index = vm->trait_within_vector_index;
   by[index] = absf(by[index]);
 
-  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index], from[index] + by[index]);
+  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index],
+                               from[index] + by[index]);
   f32_as_var(&g_var_scratch, res);
 
   return &g_var_scratch;
@@ -2407,11 +2392,12 @@ sen_var* bind_gen_stray_2d(sen_vm* vm, i32 num_args) {
 
 sen_var* bind_gen_stray_3d(sen_vm* vm, i32 num_args) {
   if (vm->building_with_trait_within_vector != 1) {
-    SEN_LOG("bind_gen_stray_3d should always be called with building_with_trait_within_vector = 1");
+    SEN_LOG("bind_gen_stray_3d should always be called with "
+            "building_with_trait_within_vector = 1");
   }
 
   f32 from[] = {10.0f, 10.0f, 10.0f};
-  f32 by[]  = {1.0f, 1.0f, 1.0f};
+  f32 by[]   = {1.0f, 1.0f, 1.0f};
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC3(INAME_FROM, from);
@@ -2421,7 +2407,8 @@ sen_var* bind_gen_stray_3d(sen_vm* vm, i32 num_args) {
   i32 index = vm->trait_within_vector_index;
   by[index] = absf(by[index]);
 
-  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index], from[index] + by[index]);
+  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index],
+                               from[index] + by[index]);
   f32_as_var(&g_var_scratch, res);
 
   return &g_var_scratch;
@@ -2429,11 +2416,12 @@ sen_var* bind_gen_stray_3d(sen_vm* vm, i32 num_args) {
 
 sen_var* bind_gen_stray_4d(sen_vm* vm, i32 num_args) {
   if (vm->building_with_trait_within_vector != 1) {
-    SEN_LOG("bind_gen_stray_4d should always be called with building_with_trait_within_vector = 1");
+    SEN_LOG("bind_gen_stray_4d should always be called with "
+            "building_with_trait_within_vector = 1");
   }
 
   f32 from[] = {10.0f, 10.0f, 10.0f, 10.0f};
-  f32 by[]  = {1.0f, 1.0f, 1.0f, 1.0f};
+  f32 by[]   = {1.0f, 1.0f, 1.0f, 1.0f};
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC4(INAME_FROM, from);
@@ -2443,7 +2431,8 @@ sen_var* bind_gen_stray_4d(sen_vm* vm, i32 num_args) {
   i32 index = vm->trait_within_vector_index;
   by[index] = absf(by[index]);
 
-  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index], from[index] + by[index]);
+  f32 res = sen_prng_f32_range(vm->prng_state, from[index] - by[index],
+                               from[index] + by[index]);
   f32_as_var(&g_var_scratch, res);
 
   return &g_var_scratch;
@@ -2453,8 +2442,8 @@ sen_var* bind_gen_stray_4d(sen_vm* vm, i32 num_args) {
 // as sen scripts won't produce any real ints
 //
 sen_var* bind_gen_int(sen_vm* vm, i32 num_args) {
-  f32 min  = 0.0f;
-  f32 max  = 1000.0f;
+  f32 min = 0.0f;
+  f32 max = 1000.0f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_MIN, min);
@@ -2470,8 +2459,8 @@ sen_var* bind_gen_int(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_gen_scalar(sen_vm* vm, i32 num_args) {
-  f32 min  = 0.0f;
-  f32 max  = 1.0f;
+  f32 min = 0.0f;
+  f32 max = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_MIN, min);
@@ -2487,8 +2476,8 @@ sen_var* bind_gen_scalar(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_gen_2d(sen_vm* vm, i32 num_args) {
-  f32 min  = 0.0f;
-  f32 max  = 1.0f;
+  f32 min = 0.0f;
+  f32 max = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_F32(INAME_MIN, min);
@@ -2541,10 +2530,10 @@ sen_var* bind_gen_col(sen_vm* vm, i32 num_args) {
   colour.element[2] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
 
   if (alpha < 0.0f) {
-      // no alpha was given so generate a random value
-      colour.element[3] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
+    // no alpha was given so generate a random value
+    colour.element[3] = sen_prng_f32_range(vm->prng_state, 0.0f, 1.0f);
   } else {
-      colour.element[3] = alpha;
+    colour.element[3] = alpha;
   }
 
   colour_as_var(&g_var_scratch, &colour);
@@ -2594,7 +2583,8 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "col/lab", &bind_col_lab);
   g_colour_constructor_end = word_lut->native_count;
   declare_native(word_lut, e, "col/complementary", &bind_col_complementary);
-  declare_native(word_lut, e, "col/split-complementary", &bind_col_split_complementary);
+  declare_native(word_lut, e, "col/split-complementary",
+                 &bind_col_split_complementary);
   declare_native(word_lut, e, "col/analagous", &bind_col_analagous);
   declare_native(word_lut, e, "col/triad", &bind_col_triad);
   declare_native(word_lut, e, "col/darken", &bind_col_darken);
@@ -2619,13 +2609,15 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "col/set-v", &bind_col_set_v);
   declare_native(word_lut, e, "col/get-v", &bind_col_get_v);
 
-  declare_native(word_lut, e, "col/build-procedural", &bind_col_build_procedural);
+  declare_native(word_lut, e, "col/build-procedural",
+                 &bind_col_build_procedural);
   declare_native(word_lut, e, "col/build-bezier", &bind_col_build_bezier);
   declare_native(word_lut, e, "col/value", &bind_col_value);
 
   declare_native(word_lut, e, "math/distance", &bind_math_distance);
   declare_native(word_lut, e, "math/clamp", &bind_math_clamp);
-  declare_native(word_lut, e, "math/radians->degrees", &bind_math_radians_to_degrees);
+  declare_native(word_lut, e, "math/radians->degrees",
+                 &bind_math_radians_to_degrees);
   declare_native(word_lut, e, "math/cos", &bind_math_cos);
   declare_native(word_lut, e, "math/sin", &bind_math_sin);
 
@@ -2639,7 +2631,8 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "interp/cos", &bind_parametric_cos);
   declare_native(word_lut, e, "interp/sin", &bind_parametric_sin);
   declare_native(word_lut, e, "interp/bezier", &bind_parametric_bezier);
-  declare_native(word_lut, e, "interp/bezier-tangent", &bind_parametric_bezier_tangent);
+  declare_native(word_lut, e, "interp/bezier-tangent",
+                 &bind_parametric_bezier_tangent);
   declare_native(word_lut, e, "interp/circle", &bind_parametric_circle);
 
   declare_native(word_lut, e, "path/linear", &bind_path_linear);
@@ -2647,12 +2640,15 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "path/spline", &bind_path_spline);
   declare_native(word_lut, e, "path/bezier", &bind_path_bezier);
 
-  declare_native(word_lut, e, "repeat/symmetry-vertical", &bind_repeat_symmetry_vertical);
-  declare_native(word_lut, e, "repeat/symmetry-horizontal", &bind_repeat_symmetry_horizontal);
+  declare_native(word_lut, e, "repeat/symmetry-vertical",
+                 &bind_repeat_symmetry_vertical);
+  declare_native(word_lut, e, "repeat/symmetry-horizontal",
+                 &bind_repeat_symmetry_horizontal);
   declare_native(word_lut, e, "repeat/symmetry-4", &bind_repeat_symmetry_4);
   declare_native(word_lut, e, "repeat/symmetry-8", &bind_repeat_symmetry_8);
   declare_native(word_lut, e, "repeat/rotate", &bind_repeat_rotate);
-  declare_native(word_lut, e, "repeat/rotate-mirrored", &bind_repeat_rotate_mirrored);
+  declare_native(word_lut, e, "repeat/rotate-mirrored",
+                 &bind_repeat_rotate_mirrored);
 
   declare_native(word_lut, e, "focal/build-point", &bind_focal_build_point);
   declare_native(word_lut, e, "focal/build-vline", &bind_focal_build_vline);

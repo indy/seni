@@ -35,17 +35,16 @@ bool wlut_add_native(sen_word_lut* word_lut, char* name);
 bool wlut_add_keyword(sen_word_lut* word_lut, char* name);
 bool wlut_add_word(sen_word_lut* word_lut, char* name, size_t len);
 
-
 // which value to use from the unions that are specified in both sen_node and
 // sen_var
 typedef enum {
   USE_UNKNOWN,
-  USE_I,          // integer
-  USE_F,          // float
-  USE_L,          // long
-  USE_V,          // pointer to sen_var
-  USE_SRC,        // (sen_node only) pointer to original source (for whitespace +
-                  // comments)
+  USE_I,   // integer
+  USE_F,   // float
+  USE_L,   // long
+  USE_V,   // pointer to sen_var
+  USE_SRC, // (sen_node only) pointer to original source (for whitespace +
+           // comments)
   USE_FIRST_CHILD // (sen_node only) first_child
 } sen_value_in_use;
 
@@ -271,9 +270,9 @@ struct sen_vm {
   sen_prng_state* prng_state; // only used when evaluating bracket bindings
 
   i32      heap_size;
-  sen_var* heap_slab;            // the contiguous block of allocated memory
-  sen_var* heap_avail;           // doubly linked list of unallocated sen_vars from the
-                                 // heap_slab
+  sen_var* heap_slab;  // the contiguous block of allocated memory
+  sen_var* heap_avail; // doubly linked list of unallocated sen_vars from the
+                       // heap_slab
   i32 heap_avail_size_before_gc; // how small can the heap get before a gc is
                                  // invoked
 
@@ -296,12 +295,12 @@ struct sen_vm {
   i32 trait_within_vector_index;
 };
 
-sen_vm*
-     vm_allocate(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices);
-void vm_reset(sen_vm* vm);
-void vm_free(sen_vm* vm);
-void vm_free_render_data(sen_vm* vm);
-void vm_pretty_print(sen_vm* vm, char* msg);
+sen_vm* vm_allocate(i32 stack_size, i32 heap_size, i32 heap_min_size,
+                    i32 vertex_packet_num_vertices);
+void    vm_reset(sen_vm* vm);
+void    vm_free(sen_vm* vm);
+void    vm_free_render_data(sen_vm* vm);
+void    vm_pretty_print(sen_vm* vm, char* msg);
 
 // access global variables when they're in a known location
 sen_var* vm_get_from_global_offset(sen_vm* vm, i32 offset);

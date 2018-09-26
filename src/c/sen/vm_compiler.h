@@ -14,10 +14,12 @@ sen_program* get_preamble_program();
 
 sen_program* compile_program(sen_program* program, sen_node* ast);
 
-// just like compile_program except that it binds initial_value to INAME_GEN_INITIAL
-sen_program* compile_program_for_trait(sen_program* program,
-                                       sen_node*    ast,
-                                       sen_node*    gen_initial_value);
+// just like compile_program except that it binds initial_value to
+// INAME_GEN_INITIAL
+sen_program* compile_program_for_trait(sen_program* program, sen_node* ast,
+                                       sen_node* gen_initial_value);
 
-sen_program*
-compile_program_with_genotype(sen_program* program, sen_word_lut* word_lut, sen_node* ast, sen_genotype* genotype);
+sen_program* compile_program_with_genotype(sen_program*  program,
+                                           sen_word_lut* word_lut,
+                                           sen_node*     ast,
+                                           sen_genotype* genotype);

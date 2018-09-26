@@ -29,9 +29,10 @@ void sen_systems_shutdown() {
   lang_subsystem_shutdown();
 }
 
-sen_vm*
-sen_allocate_vm(i32 stack_size, i32 heap_size, i32 heap_min_size, i32 vertex_packet_num_vertices) {
-  sen_vm* vm = vm_allocate(stack_size, heap_size, heap_min_size, vertex_packet_num_vertices);
+sen_vm* sen_allocate_vm(i32 stack_size, i32 heap_size, i32 heap_min_size,
+                        i32 vertex_packet_num_vertices) {
+  sen_vm* vm = vm_allocate(stack_size, heap_size, heap_min_size,
+                           vertex_packet_num_vertices);
 
   return vm;
 }
@@ -48,7 +49,8 @@ sen_env* sen_allocate_env() {
 
 void sen_free_env(sen_env* env) { env_free(env); }
 
-sen_program* sen_compile_program(char* source, sen_word_lut* word_lut, i32 program_max_size) {
+sen_program* sen_compile_program(char* source, sen_word_lut* word_lut,
+                                 i32 program_max_size) {
   sen_node* ast = parser_parse(word_lut, source);
 
   // ast_pretty_print(ast, word_lut);
@@ -84,10 +86,8 @@ sen_program* sen_compile_program_with_genotype(char*         source,
   return program;
 }
 
-void sen_unparse_with_genotype(sen_cursor*   out_cursor,
-                               char*         source,
-                               sen_genotype* genotype,
-                               sen_word_lut* word_lut) {
+void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source,
+                               sen_genotype* genotype, sen_word_lut* word_lut) {
   sen_node* ast = parser_parse(word_lut, source);
 
   cursor_reset(out_cursor);
@@ -99,8 +99,7 @@ void sen_unparse_with_genotype(sen_cursor*   out_cursor,
   parser_return_nodes_to_pool(ast);
 }
 
-void sen_simplify_script(sen_cursor*   out_cursor,
-                         char*         source,
+void sen_simplify_script(sen_cursor* out_cursor, char* source,
                          sen_word_lut* word_lut) {
   sen_node* ast = parser_parse(word_lut, source);
 
@@ -161,7 +160,8 @@ sen_trait_list* sen_deserialize_trait_list(sen_cursor* cursor) {
 
   bool res = trait_list_deserialize(trait_list, cursor);
   if (res == false) {
-    SEN_ERROR("sen_deserialize_trait_list: trait_list_deserialize returned false");
+    SEN_ERROR(
+        "sen_deserialize_trait_list: trait_list_deserialize returned false");
     return NULL;
   }
 

@@ -35,7 +35,8 @@ f32 smooth_step(f32 t) { return (3 - 2 * t) * (t * t); }
 
 f32 cubic_bezier_1d(f32 t, f32 p0, f32 p1, f32 p2, f32 p3) {
   f32 it = 1 - t;
-  return it * it * it * p0 + 3 * it * it * t * p1 + 3 * it * t * t * p2 + t * t * t * p3;
+  return it * it * it * p0 + 3 * it * it * t * p1 + 3 * it * t * t * p2 +
+         t * t * t * p3;
 }
 
 f64 linear_remap(f64 x, f64 x_min, f64 x_max, f64 out_min, f64 out_max) {
@@ -87,9 +88,11 @@ f32 quadratic_point(f32 a, f32 b, f32 c, f32 t) {
 f32 bezier_point(f32 a, f32 b, f32 c, f32 d, f32 t) {
   f32 t1 = 1 - t;
 
-  return (a * t1 * t1 * t1) + (3 * b * t * t1 * t1) + (3 * c * t * t * t1) + (d * t * t * t);
+  return (a * t1 * t1 * t1) + (3 * b * t * t1 * t1) + (3 * c * t * t * t1) +
+         (d * t * t * t);
 }
 
 f32 bezier_tangent(f32 a, f32 b, f32 c, f32 d, f32 t) {
-  return (3 * t * t * (-a + 3 * b - 3 * c + d) + 6 * t * (a - 2 * b + c) + 3 * (-a + b));
+  return (3 * t * t * (-a + 3 * b - 3 * c + d) + 6 * t * (a - 2 * b + c) +
+          3 * (-a + b));
 }

@@ -42,12 +42,8 @@ int sen_vsprintf(char* buf, int buffer_size, char const* fmt, va_list va) {
   return len;
 }
 
-void sen_fileline_sprintf(char*       buf,
-                          int         buffer_size,
-                          char*       file,
-                          int         line,
-                          char const* fmt,
-                          va_list     va) {
+void sen_fileline_sprintf(char* buf, int buffer_size, char* file, int line,
+                          char const* fmt, va_list va) {
   int   len = stbsp_snprintf(buf, buffer_size, "%s:%d: ", file, line);
   char* pp  = &(buf[len]);
 

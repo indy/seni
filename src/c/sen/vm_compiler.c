@@ -37,7 +37,8 @@ void          clear_global_mappings(sen_compilation* compilation);
 void          clear_local_mappings(sen_compilation* compilation);
 void          register_top_level_preamble(sen_compilation* compilation);
 void          compile_preamble(sen_compilation* compilation);
-sen_bytecode* emit_opcode_i32(sen_compilation* compilation, sen_opcode op, i32 arg0, i32 arg1);
+sen_bytecode* emit_opcode_i32(sen_compilation* compilation, sen_opcode op,
+                              i32 arg0, i32 arg1);
 
 void compiler_subsystem_startup() {
   i32          program_max_size = 100; // ???
@@ -63,7 +64,8 @@ void compiler_subsystem_shutdown() { program_free(g_preamble_program); }
 
 sen_program* get_preamble_program() { return g_preamble_program; }
 
-void gene_assign_to_node(sen_word_lut* word_lut, sen_genotype* genotype, sen_node* node) {
+void gene_assign_to_node(sen_word_lut* word_lut, sen_genotype* genotype,
+                         sen_node* node) {
   if (node->alterable) {
     if (node->type == NODE_VECTOR) {
       // grab a gene for every element in this vector
@@ -92,7 +94,8 @@ void gene_assign_to_node(sen_word_lut* word_lut, sen_genotype* genotype, sen_nod
   }
 }
 
-bool genotype_assign_to_ast(sen_word_lut* word_lut, sen_genotype* genotype, sen_node* ast) {
+bool genotype_assign_to_ast(sen_word_lut* word_lut, sen_genotype* genotype,
+                            sen_node* ast) {
   genotype->current_gene = genotype->genes;
   gene_assign_to_node(word_lut, genotype, ast);
 
@@ -155,8 +158,8 @@ void warn_if_alterable(char* msg, sen_node* node) {
   }
 }
 
-sen_bytecode*
-emit_opcode(sen_compilation* compilation, sen_opcode op, sen_var* arg0, sen_var* arg1) {
+sen_bytecode* emit_opcode(sen_compilation* compilation, sen_opcode op,
+                          sen_var* arg0, sen_var* arg1) {
   sen_program* program = compilation->program;
 
   if (program->code_size >= program->code_max_size) {
@@ -175,7 +178,8 @@ emit_opcode(sen_compilation* compilation, sen_opcode op, sen_var* arg0, sen_var*
 }
 
 // emits an <opcode, i32, i32> triplet
-sen_bytecode* emit_opcode_i32(sen_compilation* compilation, sen_opcode op, i32 arg0, i32 arg1) {
+sen_bytecode* emit_opcode_i32(sen_compilation* compilation, sen_opcode op,
+                              i32 arg0, i32 arg1) {
   sen_program* program = compilation->program;
 
   if (program->code_size >= program->code_max_size) {
@@ -194,8 +198,8 @@ sen_bytecode* emit_opcode_i32(sen_compilation* compilation, sen_opcode op, i32 a
 }
 
 // emits an <opcode, i32, name> triplet
-sen_bytecode*
-emit_opcode_i32_name(sen_compilation* compilation, sen_opcode op, i32 arg0, i32 name) {
+sen_bytecode* emit_opcode_i32_name(sen_compilation* compilation, sen_opcode op,
+                                   i32 arg0, i32 name) {
   sen_program* program = compilation->program;
 
   if (program->code_size >= program->code_max_size) {
@@ -214,7 +218,8 @@ emit_opcode_i32_name(sen_compilation* compilation, sen_opcode op, i32 arg0, i32 
 }
 
 // emits an <opcode, i32, f32> triplet
-sen_bytecode* emit_opcode_i32_f32(sen_compilation* compilation, sen_opcode op, i32 arg0, f32 arg1) {
+sen_bytecode* emit_opcode_i32_f32(sen_compilation* compilation, sen_opcode op,
+                                  i32 arg0, f32 arg1) {
   sen_program* program = compilation->program;
 
   if (program->code_size >= program->code_max_size) {
@@ -254,7 +259,8 @@ i32 add_local_mapping(sen_compilation* compilation, i32 word_lut_value) {
     }
   }
 
-  SEN_ERROR("add_local_mapping failed: increase MEMORY_LOCAL_SIZE from %d", MEMORY_LOCAL_SIZE);
+  SEN_ERROR("add_local_mapping failed: increase MEMORY_LOCAL_SIZE from %d",
+            MEMORY_LOCAL_SIZE);
   return -1;
 }
 
@@ -269,8 +275,9 @@ i32 add_internal_local_mapping(sen_compilation* compilation) {
     }
   }
 
-  SEN_ERROR("add_internal_local_mapping failed: increase MEMORY_LOCAL_SIZE from %d",
-            MEMORY_LOCAL_SIZE);
+  SEN_ERROR(
+      "add_internal_local_mapping failed: increase MEMORY_LOCAL_SIZE from %d",
+      MEMORY_LOCAL_SIZE);
   return -1;
 }
 
@@ -298,7 +305,8 @@ i32 add_global_mapping(sen_compilation* compilation, i32 word_lut_value) {
     }
   }
 
-  SEN_ERROR("add_global_mapping failed: increase MEMORY_GLOBAL_SIZE from %d", MEMORY_GLOBAL_SIZE);
+  SEN_ERROR("add_global_mapping failed: increase MEMORY_GLOBAL_SIZE from %d",
+            MEMORY_GLOBAL_SIZE);
   return -1;
 }
 
@@ -369,8 +377,8 @@ sen_node* compile(sen_compilation* compilation, sen_node* ast);
 
 i32 node_vector_length(sen_node* vector_node) {
   i32 length = 0;
-  for (sen_node* node = safe_first(vector_node->value.first_child); node != NULL;
-       node           = safe_next(node)) {
+  for (sen_node* node     = safe_first(vector_node->value.first_child);
+       node != NULL; node = safe_next(node)) {
     length++;
   }
   return length;
@@ -437,22 +445,21 @@ i32 store_globally(sen_compilation* compilation, i32 iname) {
   return address;
 }
 
-i32 store_from_stack_to_memory(sen_compilation*        compilation,
-                               sen_node*               node,
+i32 store_from_stack_to_memory(sen_compilation* compilation, sen_node* node,
                                sen_memory_segment_type memory_segment_type) {
   if (memory_segment_type == MEM_SEG_LOCAL) {
     return store_locally(compilation, node->value.i);
   } else if (memory_segment_type == MEM_SEG_GLOBAL) {
     return store_globally(compilation, node->value.i);
   } else {
-    SEN_ERROR("store_from_stack_to_memory: unknown memory_segment_type: %d", memory_segment_type);
+    SEN_ERROR("store_from_stack_to_memory: unknown memory_segment_type: %d",
+              memory_segment_type);
   }
 
   return -1;
 }
 
-sen_node* compile_define(sen_compilation*        compilation,
-                         sen_node*               ast,
+sen_node* compile_define(sen_compilation* compilation, sen_node* ast,
                          sen_memory_segment_type memory_segment_type) {
   sen_node* lhs_node = safe_next(ast);
   sen_node* value_node;
@@ -465,7 +472,8 @@ sen_node* compile_define(sen_compilation*        compilation,
 
     if (lhs_node->type == NODE_NAME) {
       // define foo 10
-      m = store_from_stack_to_memory(compilation, lhs_node, memory_segment_type);
+      m = store_from_stack_to_memory(compilation, lhs_node,
+                                     memory_segment_type);
       if (m == -1) {
         SEN_ERROR("compile_define: allocation failure in define");
         return NULL;
@@ -488,7 +496,8 @@ sen_node* compile_define(sen_compilation*        compilation,
           child = safe_next(child);
         }
         for (i = 0; i < num_children; i++) {
-          m = store_from_stack_to_memory(compilation, child, memory_segment_type);
+          m = store_from_stack_to_memory(compilation, child,
+                                         memory_segment_type);
           if (m == -1) {
             SEN_ERROR("compile_define: allocation failure during destructure");
             return NULL;
@@ -539,8 +548,8 @@ void compile_if(sen_compilation* compilation, sen_node* ast) {
 
   if (else_node) {
     // logically we're now going to go down one of possibly two paths
-    // so we can't just continue to add the compilation->opcode_offset since that
-    // would result in the offset taking both of the conditional's paths
+    // so we can't just continue to add the compilation->opcode_offset since
+    // that would result in the offset taking both of the conditional's paths
 
     compilation->opcode_offset = offset_after_if;
 
@@ -548,7 +557,8 @@ void compile_if(sen_compilation* compilation, sen_node* ast) {
     i32           addr_jump_else = compilation->program->code_size;
     sen_bytecode* bc_jump_else   = emit_opcode_i32(compilation, JUMP, 0, 0);
 
-    bc_jump_then->arg0.value.i = compilation->program->code_size - addr_jump_then;
+    bc_jump_then->arg0.value.i =
+        compilation->program->code_size - addr_jump_then;
 
     compile(compilation, else_node);
 
@@ -562,9 +572,11 @@ void compile_if(sen_compilation* compilation, sen_node* ast) {
       SEN_ERROR("different opcode_offsets for the two paths in a conditional");
     }
 
-    bc_jump_else->arg0.value.i = compilation->program->code_size - addr_jump_else;
+    bc_jump_else->arg0.value.i =
+        compilation->program->code_size - addr_jump_else;
   } else {
-    bc_jump_then->arg0.value.i = compilation->program->code_size - addr_jump_then;
+    bc_jump_then->arg0.value.i =
+        compilation->program->code_size - addr_jump_then;
   }
 }
 
@@ -582,7 +594,8 @@ void compile_next_one(sen_compilation* compilation, sen_node* ast) {
   compile(compilation, ast);
 }
 
-void compile_math(sen_compilation* compilation, sen_node* ast, sen_opcode opcode) {
+void compile_math(sen_compilation* compilation, sen_node* ast,
+                  sen_opcode opcode) {
   // + 3 4 5 6
   //
   // 1	LOAD	CONST	3.00
@@ -650,15 +663,16 @@ void compile_fn_call(sen_compilation* compilation, sen_node* ast) {
 
   // overwrite the default arguments with the actual arguments given by the fn
   // invocation
-  sen_node* args = safe_next(fn_info_index); // pairs of label/value declarations
+  sen_node* args =
+      safe_next(fn_info_index); // pairs of label/value declarations
   while (args != NULL) {
     sen_node* label = args;
     sen_node* value = safe_next(label);
 
     // push value
     compile(compilation, value);
-    compile(compilation, fn_info_index); // push the actual fn_info index so that
-                                         // the _FLU opcode can find it
+    compile(compilation, fn_info_index); // push the actual fn_info index so
+                                         // that the _FLU opcode can find it
 
     i32 label_i = get_node_value_i32(label);
     emit_opcode_i32(compilation, STORE_F, MEM_SEG_ARGUMENT, label_i);
@@ -710,7 +724,8 @@ void compile_vector_in_quote(sen_compilation* compilation, sen_node* ast) {
   emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0);
 
   warn_if_alterable("compile_vector_in_quote", ast);
-  for (sen_node* node = safe_first(ast->value.first_child); node != NULL; node = safe_next(node)) {
+  for (sen_node* node = safe_first(ast->value.first_child); node != NULL;
+       node           = safe_next(node)) {
     // slightly hackish
     // if this is a form like: '(red green blue)
     // the compiler should output the names rather than the colours that are
@@ -734,7 +749,8 @@ void compile_quote(sen_compilation* compilation, sen_node* ast) {
     compile_vector_in_quote(compilation, quoted_form);
   } else {
     if (quoted_form->type == NODE_NAME) {
-      emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, quoted_form->value.i);
+      emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT,
+                           quoted_form->value.i);
     } else {
       compile(compilation, quoted_form);
     }
@@ -807,7 +823,8 @@ void compile_loop(sen_compilation* compilation, sen_node* ast) {
     emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f);
   }
 
-  i32 looper_address = store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL);
+  i32 looper_address =
+      store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL);
   if (looper_address == -1) {
     SEN_ERROR("compile_loop: allocation failure");
     return;
@@ -838,7 +855,7 @@ void compile_loop(sen_compilation* compilation, sen_node* ast) {
   compile_rest(compilation, parameters_node);
 
   i32 post_body_opcode_offset = compilation->opcode_offset;
-  i32 opcode_delta            = post_body_opcode_offset - pre_body_opcode_offset;
+  i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
   // pop off any values that the body might leave on the stack
   for (i32 i = 0; i < opcode_delta; i++) {
@@ -857,8 +874,10 @@ void compile_loop(sen_compilation* compilation, sen_node* ast) {
   emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address);
 
   // loop back to the comparison
-  emit_opcode_i32(compilation, JUMP, -(compilation->program->code_size - addr_loop_start), 0);
-  bc_exit_check->arg0.value.i = compilation->program->code_size - addr_exit_check;
+  emit_opcode_i32(compilation, JUMP,
+                  -(compilation->program->code_size - addr_loop_start), 0);
+  bc_exit_check->arg0.value.i =
+      compilation->program->code_size - addr_exit_check;
 }
 
 void compile_fence(sen_compilation* compilation, sen_node* ast) {
@@ -957,7 +976,8 @@ void compile_fence(sen_compilation* compilation, sen_node* ast) {
 
   // store the starting 'from' value in the locally scoped variable
   emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address);
-  i32 looper_address = store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL);
+  i32 looper_address =
+      store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL);
   if (looper_address == -1) {
     SEN_ERROR("compile_fence: allocation failure");
     return;
@@ -993,7 +1013,7 @@ void compile_fence(sen_compilation* compilation, sen_node* ast) {
   compile_rest(compilation, parameters_node);
 
   i32 post_body_opcode_offset = compilation->opcode_offset;
-  i32 opcode_delta            = post_body_opcode_offset - pre_body_opcode_offset;
+  i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
   // pop off any values that the body might leave on the stack
   for (i32 i = 0; i < opcode_delta; i++) {
@@ -1007,8 +1027,10 @@ void compile_fence(sen_compilation* compilation, sen_node* ast) {
   emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address);
 
   // loop back to the comparison
-  emit_opcode_i32(compilation, JUMP, -(compilation->program->code_size - addr_loop_start), 0);
-  bc_exit_check->arg0.value.i = compilation->program->code_size - addr_exit_check;
+  emit_opcode_i32(compilation, JUMP,
+                  -(compilation->program->code_size - addr_loop_start), 0);
+  bc_exit_check->arg0.value.i =
+      compilation->program->code_size - addr_exit_check;
 }
 
 void compile_on_matrix_stack(sen_compilation* compilation, sen_node* ast) {
@@ -1060,7 +1082,8 @@ void register_top_level_fns(sen_compilation* compilation, sen_node* ast) {
     sen_fn_info* fn_info = &(compilation->program->fn_info[num_fns]);
     num_fns++;
     if (num_fns > MAX_TOP_LEVEL_FUNCTIONS) {
-      SEN_ERROR("Script has more than %d top-level functions\n", MAX_TOP_LEVEL_FUNCTIONS);
+      SEN_ERROR("Script has more than %d top-level functions\n",
+                MAX_TOP_LEVEL_FUNCTIONS);
       return;
     }
 
@@ -1111,7 +1134,8 @@ void register_top_level_defines(sen_compilation* compilation, sen_node* ast) {
     // warn_if_alterable("register_top_level_defines define_keyword", ast);
 
     sen_node* define_keyword = safe_first(ast->value.first_child);
-    if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == INAME_DEFINE)) {
+    if (!(define_keyword->type == NODE_NAME &&
+          define_keyword->value.i == INAME_DEFINE)) {
       ast = safe_next(ast);
       continue;
     }
@@ -1120,7 +1144,8 @@ void register_top_level_defines(sen_compilation* compilation, sen_node* ast) {
     while (lhs != NULL) {
       register_names_in_define(compilation, lhs);
       lhs = safe_next(lhs); // points to the value
-      lhs = safe_next(lhs); // points to the next define statement if there multiple
+      lhs = safe_next(
+          lhs); // points to the next define statement if there multiple
     }
 
     ast = safe_next(ast);
@@ -1155,10 +1180,10 @@ void compile_fn(sen_compilation* compilation, sen_node* ast) {
   // the arguments
   // -------------
 
-  fn_info->arg_address               = compilation->program->code_size;
-  sen_node* args                     = safe_next(fn_name); // pairs of label/value declarations
-  i32       num_args                 = 0;
-  i32       counter                  = 0;
+  fn_info->arg_address = compilation->program->code_size;
+  sen_node* args     = safe_next(fn_name); // pairs of label/value declarations
+  i32       num_args = 0;
+  i32       counter  = 0;
   i32       argument_offsets_counter = 0;
   while (args != NULL) {
     sen_node* label   = args;
@@ -1272,7 +1297,8 @@ void correct_function_addresses(sen_compilation* compilation) {
   }
 }
 
-void compile_fn_invocation(sen_compilation* compilation, sen_node* ast, i32 fn_info_index) {
+void compile_fn_invocation(sen_compilation* compilation, sen_node* ast,
+                           i32 fn_info_index) {
   // ast == adder a: 10 b: 20
 
   // NOTE: CALL and CALL_0 get their function offsets and num args from the
@@ -1347,7 +1373,8 @@ void compile_2d(sen_compilation* compilation, sen_node* ast) {
 
   bool use_gene = alterable(ast);
 
-  for (sen_node* node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
+  for (sen_node* node = safe_first_child(ast); node != NULL;
+       node           = safe_next(node)) {
     if (use_gene) {
       compile_alterable_element(compilation, node);
     } else {
@@ -1365,7 +1392,8 @@ void compile_vector(sen_compilation* compilation, sen_node* ast) {
   // from the genes
   bool use_gene = alterable(ast);
 
-  for (sen_node* node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
+  for (sen_node* node = safe_first_child(ast); node != NULL;
+       node           = safe_next(node)) {
     if (use_gene) {
       compile_alterable_element(compilation, node);
     } else {
@@ -1375,7 +1403,8 @@ void compile_vector(sen_compilation* compilation, sen_node* ast) {
   }
 }
 
-sen_node* compile_user_defined_name(sen_compilation* compilation, sen_node* ast, i32 iname) {
+sen_node* compile_user_defined_name(sen_compilation* compilation, sen_node* ast,
+                                    i32 iname) {
   i32 local_mapping = get_local_mapping(compilation, iname);
   if (local_mapping != -1) {
     emit_opcode_i32_name(compilation, LOAD, MEM_SEG_LOCAL, local_mapping);
@@ -1384,7 +1413,8 @@ sen_node* compile_user_defined_name(sen_compilation* compilation, sen_node* ast,
 
   // check arguments if we're in a function
   if (compilation->current_fn_info) {
-    i32 argument_mapping = get_argument_mapping(compilation->current_fn_info, iname);
+    i32 argument_mapping =
+        get_argument_mapping(compilation->current_fn_info, iname);
     if (argument_mapping != -1) {
       emit_opcode_i32(compilation, LOAD, MEM_SEG_ARGUMENT, argument_mapping);
       return safe_next(ast);
@@ -1403,7 +1433,8 @@ sen_node* compile_user_defined_name(sen_compilation* compilation, sen_node* ast,
     return safe_next(ast);
   }
 
-  SEN_ERROR("unknown mapping for: %s", wlut_get_word(compilation->program->word_lut, iname));
+  SEN_ERROR("unknown mapping for: %s",
+            wlut_get_word(compilation->program->word_lut, iname));
   return safe_next(ast);
 }
 
@@ -1426,7 +1457,8 @@ sen_node* compile(sen_compilation* compilation, sen_node* ast) {
     } else {
       if (alterable(ast)) {
         warn_if_alterable("NODE_LIST", ast);
-        SEN_ERROR("given an alterable list that wasn't a colour constructor???");
+        SEN_ERROR(
+            "given an alterable list that wasn't a colour constructor???");
       }
       n = safe_first(ast->value.first_child);
 
@@ -1462,9 +1494,11 @@ sen_node* compile(sen_compilation* compilation, sen_node* ast) {
 
     i32 iname = get_node_value_i32(ast);
 
-    if (iname >= WORD_START && iname < WORD_START + MAX_WORD_LOOKUPS) { // a user defined name
+    if (iname >= WORD_START &&
+        iname < WORD_START + MAX_WORD_LOOKUPS) { // a user defined name
       return compile_user_defined_name(compilation, ast, iname);
-    } else if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
+    } else if (iname >= KEYWORD_START &&
+               iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
 
       switch (iname) {
       case INAME_DEFINE:
@@ -1544,7 +1578,8 @@ sen_node* compile(sen_compilation* compilation, sen_node* ast) {
         // e.g. linear in (bezier line-width-mapping: linear)
         return compile_user_defined_name(compilation, ast, iname);
       };
-    } else if (iname >= NATIVE_START && iname < NATIVE_START + MAX_NATIVE_LOOKUPS) {
+    } else if (iname >= NATIVE_START &&
+               iname < NATIVE_START + MAX_NATIVE_LOOKUPS) {
       // NATIVE
 
       // note: how to count the stack delta? how many pop voids are required?
@@ -1587,22 +1622,26 @@ bool is_list_beginning_with(sen_node* ast, i32 index) {
   return false;
 }
 
-void compile_global_bind_node(sen_compilation* compilation, i32 iname, sen_node* node) {
+void compile_global_bind_node(sen_compilation* compilation, i32 iname,
+                              sen_node* node) {
   compile(compilation, node);
   store_globally(compilation, iname);
 }
 
-void compile_global_bind_i32(sen_compilation* compilation, i32 iname, i32 value) {
+void compile_global_bind_i32(sen_compilation* compilation, i32 iname,
+                             i32 value) {
   emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, value);
   store_globally(compilation, iname);
 }
 
-void compile_global_bind_f32(sen_compilation* compilation, i32 iname, f32 value) {
+void compile_global_bind_f32(sen_compilation* compilation, i32 iname,
+                             f32 value) {
   emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, value);
   store_globally(compilation, iname);
 }
 
-void compile_global_bind_col(sen_compilation* compilation, i32 iname, f32 r, f32 g, f32 b, f32 a) {
+void compile_global_bind_col(sen_compilation* compilation, i32 iname, f32 r,
+                             f32 g, f32 b, f32 a) {
   sen_var mem_location, colour_arg;
 
   i32_as_var(&mem_location, MEM_SEG_CONSTANT);
@@ -1728,11 +1767,13 @@ void compile_common_top_level_fns(sen_compilation* compilation, sen_node* ast) {
   start->arg0.value.i = compilation->program->code_size;
 }
 
-void compile_common_top_level_defines(sen_compilation* compilation, sen_node* ast) {
+void compile_common_top_level_defines(sen_compilation* compilation,
+                                      sen_node*        ast) {
   sen_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_DEFINE)) {
-      compile_define(compilation, safe_first(n->value.first_child), MEM_SEG_GLOBAL);
+      compile_define(compilation, safe_first(n->value.first_child),
+                     MEM_SEG_GLOBAL);
       n = safe_next(n);
     } else {
       n = safe_next(n);
@@ -1740,7 +1781,8 @@ void compile_common_top_level_defines(sen_compilation* compilation, sen_node* as
   }
 }
 
-void compile_common_top_level_forms(sen_compilation* compilation, sen_node* ast) {
+void compile_common_top_level_forms(sen_compilation* compilation,
+                                    sen_node*        ast) {
   sen_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_FN) == false &&
@@ -1784,8 +1826,10 @@ sen_program* compile_program(sen_program* program, sen_node* ast) {
   return compilation.program;
 }
 
-sen_program*
-compile_program_with_genotype(sen_program* program, sen_word_lut* word_lut, sen_node* ast, sen_genotype* genotype) {
+sen_program* compile_program_with_genotype(sen_program*  program,
+                                           sen_word_lut* word_lut,
+                                           sen_node*     ast,
+                                           sen_genotype* genotype) {
   g_use_genes = true;
 
   bool all_genes_assigned = genotype_assign_to_ast(word_lut, genotype, ast);
@@ -1804,9 +1848,8 @@ compile_program_with_genotype(sen_program* program, sen_word_lut* word_lut, sen_
   return compilation.program;
 }
 
-sen_program* compile_program_for_trait(sen_program* program,
-                                       sen_node*    ast,
-                                       sen_node*    gen_initial_value) {
+sen_program* compile_program_for_trait(sen_program* program, sen_node* ast,
+                                       sen_node* gen_initial_value) {
 
   g_use_genes = false;
 
@@ -1816,7 +1859,8 @@ sen_program* compile_program_for_trait(sen_program* program,
   compile_common_prologue(&compilation, ast);
   compile_common_top_level_fns(&compilation, ast);
 
-  // this is a sub-program for a trait, bind the initial value to gen/initial-value
+  // this is a sub-program for a trait, bind the initial value to
+  // gen/initial-value
   compile_global_bind_node(&compilation, INAME_GEN_INITIAL, gen_initial_value);
 
   compile_common_top_level_defines(&compilation, ast);

@@ -85,6 +85,8 @@ REGISTER_KEYWORD("quick", INAME_QUICK)
 REGISTER_KEYWORD("slow-in", INAME_SLOW_IN)
 REGISTER_KEYWORD("slow-in-out", INAME_SLOW_IN_OUT)
 
+REGISTER_KEYWORD("ease-in-sine", INAME_EASE_IN_SINE)
+
 // common parameter labels
 //
 REGISTER_KEYWORD("a", INAME_A)

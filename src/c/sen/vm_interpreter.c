@@ -85,22 +85,28 @@ sen_var* arg_memory_from_iname(sen_fn_info* fn_info, i32 iname, sen_var* args) {
   return NULL;
 }
 
-void vm_function_set_argument_to_var(sen_vm* vm, sen_fn_info* fn_info, i32 iname, sen_var* src) {
-  sen_var* arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+void vm_function_set_argument_to_var(sen_vm* vm, sen_fn_info* fn_info,
+                                     i32 iname, sen_var* src) {
+  sen_var* arg =
+      arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
   if (arg != NULL) {
     var_copy(arg, src);
   }
 }
-void vm_function_set_argument_to_f32(sen_vm* vm, sen_fn_info* fn_info, i32 iname, f32 f) {
-  sen_var* arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+void vm_function_set_argument_to_f32(sen_vm* vm, sen_fn_info* fn_info,
+                                     i32 iname, f32 f) {
+  sen_var* arg =
+      arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
   if (arg != NULL) {
     arg->type    = VAR_FLOAT;
     arg->value.f = f;
   }
 }
 
-void vm_function_set_argument_to_2d(sen_vm* vm, sen_fn_info* fn_info, i32 iname, f32 x, f32 y) {
-  sen_var* arg = arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
+void vm_function_set_argument_to_2d(sen_vm* vm, sen_fn_info* fn_info, i32 iname,
+                                    f32 x, f32 y) {
+  sen_var* arg =
+      arg_memory_from_iname(fn_info, iname, &(vm->stack[vm->fp - 1]));
   if (arg != NULL) {
     arg->type         = VAR_2D;
     arg->value.i      = 0;
@@ -275,8 +281,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
     bc = &(program->code[ip++]);
 
 #ifdef TRACE_PRINT_OPCODES
-    bytecode_pretty_print(ip - 1,
-                          bc,
+    bytecode_pretty_print(ip - 1, bc,
                           program->word_lut); // ip has been incremented so back
                                               // up to get the current ip
 #endif
@@ -634,7 +639,8 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
           vector_append_f32(vm, v, f2);
 
         } else {
-          SEN_ERROR("APPEND expects the 2nd item on the stack to be a vector\n");
+          SEN_ERROR(
+              "APPEND expects the 2nd item on the stack to be a vector\n");
           var_pretty_print("APPEND expects a vector", v);
           return false;
         }
@@ -694,7 +700,8 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
 
       STACK_POP;
       if (v->type != VAR_FLOAT) {
-        SEN_ERROR("SQUISH2 expects a float - non float in 2nd element of vector");
+        SEN_ERROR(
+            "SQUISH2 expects a float - non float in 2nd element of vector");
         // was the sen code declaring a vector of length 2 that didn't contain
         // floats? e.g. (define z [LAB RGB]) when would we ever want this kind
         // of code?
@@ -704,7 +711,8 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
 
       STACK_POP;
       if (v->type != VAR_FLOAT) {
-        SEN_ERROR("SQUISH2 expects a float - non float in 1st element of vector");
+        SEN_ERROR(
+            "SQUISH2 expects a float - non float in 1st element of vector");
         return false;
       }
       f1 = v->value.f;

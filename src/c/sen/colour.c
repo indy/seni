@@ -50,7 +50,8 @@ const f64 ref_v = 0.46831999493879100370;
 #define pow Math_pow
 #endif
 
-void colour_set(sen_colour* out, sen_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha) {
+void colour_set(sen_colour* out, sen_colour_format format, f32 e0, f32 e1,
+                f32 e2, f32 alpha) {
   out->format     = format;
   out->element[0] = e0;
   out->element[1] = e1;
@@ -119,13 +120,13 @@ sen_colour_64* xyz_from_rgb(sen_colour_64* col) {
   // see http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
   // sRGB colour space with D65 reference white
   //
-  col->format = XYZ;
-  col->element[0] =
-      (r * 0.41239079926595948129) + (g * 0.35758433938387796373) + (b * 0.18048078840183428751);
-  col->element[1] =
-      (r * 0.21263900587151035754) + (g * 0.71516867876775592746) + (b * 0.07219231536073371500);
-  col->element[2] =
-      (r * 0.01933081871559185069) + (g * 0.11919477979462598791) + (b * 0.95053215224966058086);
+  col->format     = XYZ;
+  col->element[0] = (r * 0.41239079926595948129) +
+                    (g * 0.35758433938387796373) + (b * 0.18048078840183428751);
+  col->element[1] = (r * 0.21263900587151035754) +
+                    (g * 0.71516867876775592746) + (b * 0.07219231536073371500);
+  col->element[2] = (r * 0.01933081871559185069) +
+                    (g * 0.11919477979462598791) + (b * 0.95053215224966058086);
 
   return col;
 }
@@ -195,7 +196,9 @@ f64 hue(sen_colour_64* colour, i32 max_chan, f64 chroma) {
 
   switch (max_chan) {
   case 0: // R
-    angle = 60.0 * ((f32)fmod((colour->element[1] - colour->element[2]) / chroma, 6.0));
+    angle =
+        60.0 *
+        ((f32)fmod((colour->element[1] - colour->element[2]) / chroma, 6.0));
     break;
   case 1: // G
     angle = 60.0 * (((colour->element[2] - colour->element[0]) / chroma) + 2.0);
@@ -435,8 +438,9 @@ void get_bounds(f64 l, Bounds bounds[6]) {
     f64 m3 = m[channel][2];
 
     for (t = 0; t < 2; t++) {
-      f64 top1   = (284517.0 * m1 - 94839.0 * m3) * sub2;
-      f64 top2   = (838422.0 * m3 + 769860.0 * m2 + 731718.0 * m1) * l * sub2 - 769860.0 * t * l;
+      f64 top1 = (284517.0 * m1 - 94839.0 * m3) * sub2;
+      f64 top2 = (838422.0 * m3 + 769860.0 * m2 + 731718.0 * m1) * l * sub2 -
+                 769860.0 * t * l;
       f64 bottom = (632260.0 * m3 - 126452.0 * m2) * sub2 + 126452.0 * t;
 
       bounds[channel * 2 + t].a = top1 / bottom;
@@ -518,10 +522,12 @@ f64 l2y(f64 l) {
 }
 
 sen_colour_64* luv_from_xyz(sen_colour_64* col) {
-  f64 var_u = (4.0 * col->element[0]) /
-              (col->element[0] + (15.0 * col->element[1]) + (3.0 * col->element[2]));
-  f64 var_v = (9.0 * col->element[1]) /
-              (col->element[0] + (15.0 * col->element[1]) + (3.0 * col->element[2]));
+  f64 var_u =
+      (4.0 * col->element[0]) /
+      (col->element[0] + (15.0 * col->element[1]) + (3.0 * col->element[2]));
+  f64 var_v =
+      (9.0 * col->element[1]) /
+      (col->element[0] + (15.0 * col->element[1]) + (3.0 * col->element[2]));
   f64 l = y2l(col->element[1]);
   f64 u = 13.0 * l * (var_u - ref_u);
   f64 v = 13.0 * l * (var_v - ref_v);
@@ -652,7 +658,8 @@ sen_colour_64* hsluv_from_xyz(sen_colour_64* xyz) {
   return hsluv_from_lch(lch_from_luv(luv_from_xyz(xyz)));
 }
 
-sen_colour* colour_clone_as(sen_colour* out, sen_colour* in, sen_colour_format new_format) {
+sen_colour* colour_clone_as(sen_colour* out, sen_colour* in,
+                            sen_colour_format new_format) {
   if (out != in) {
     colour_clone(out, in);
   }

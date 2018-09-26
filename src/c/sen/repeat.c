@@ -88,7 +88,8 @@ void repeat_rotate(sen_vm* vm, i32 fn, i32 copies) {
     matrix_stack_rotate(matrix_stack, angle);
 
     vm_function_call_default_arguments(vm, fn_info);
-    vm_function_set_argument_to_f32(vm, fn_info, INAME_ANGLE, rad_to_deg(angle));
+    vm_function_set_argument_to_f32(vm, fn_info, INAME_ANGLE,
+                                    rad_to_deg(angle));
     vm_function_set_argument_to_f32(vm, fn_info, INAME_COPY, (f32)i);
     vm_function_call_body(vm, fn_info);
 
@@ -113,7 +114,8 @@ void repeat_rotate_mirrored(sen_vm* vm, i32 fn, i32 copies) {
     matrix_stack_rotate(matrix_stack, angle);
 
     vm_function_call_default_arguments(vm, fn_info);
-    vm_function_set_argument_to_f32(vm, fn_info, INAME_ANGLE, rad_to_deg(angle));
+    vm_function_set_argument_to_f32(vm, fn_info, INAME_ANGLE,
+                                    rad_to_deg(angle));
     vm_function_set_argument_to_f32(vm, fn_info, INAME_COPY, (f32)copy++);
     vm_function_call_body(vm, fn_info);
 
@@ -128,7 +130,8 @@ void repeat_rotate_mirrored(sen_vm* vm, i32 fn, i32 copies) {
     matrix_stack_rotate(matrix_stack, angle);
 
     vm_function_call_default_arguments(vm, fn_info);
-    vm_function_set_argument_to_f32(vm, fn_info, INAME_ANGLE, -rad_to_deg(angle));
+    vm_function_set_argument_to_f32(vm, fn_info, INAME_ANGLE,
+                                    -rad_to_deg(angle));
     vm_function_set_argument_to_f32(vm, fn_info, INAME_COPY, (f32)copy++);
     vm_function_call_body(vm, fn_info);
 

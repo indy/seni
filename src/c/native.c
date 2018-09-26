@@ -56,13 +56,18 @@ void print_timings(f32 construct, f32 compile, f32 interpret) {
 
   SEN_PRINT("total time taken : %.2f ms", total);
   if (total > 0.0f) {
-    SEN_PRINT("construct time   : %.2f ms\t(%.2f%%)", construct, percentage(total, construct));
-    SEN_PRINT("compile time     : %.2f ms\t(%.2f%%)", compile, percentage(total, compile));
-    SEN_PRINT("interpret time   : %.2f ms\t(%.2f%%)", interpret, percentage(total, interpret));
+    SEN_PRINT("construct time   : %.2f ms\t(%.2f%%)", construct,
+              percentage(total, construct));
+    SEN_PRINT("compile time     : %.2f ms\t(%.2f%%)", compile,
+              percentage(total, compile));
+    SEN_PRINT("interpret time   : %.2f ms\t(%.2f%%)", interpret,
+              percentage(total, interpret));
   }
 }
 
-char* pluralise(i32 count, char* singular, char* plural) { return count == 1 ? singular : plural; }
+char* pluralise(i32 count, char* singular, char* plural) {
+  return count == 1 ? singular : plural;
+}
 
 void execute_source(char* source) {
   // construct
@@ -71,7 +76,8 @@ void execute_source(char* source) {
 
   sen_systems_startup();
 
-  sen_vm*  vm  = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm  = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
+                               VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = sen_allocate_env();
 
   TIMING_UNIT construct_stop = get_timing();
@@ -80,7 +86,8 @@ void execute_source(char* source) {
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  sen_program* program = sen_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
+  sen_program* program =
+      sen_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
 
   TIMING_UNIT compilation_stop = get_timing();
 
@@ -100,8 +107,7 @@ void execute_source(char* source) {
   }
 
   if (num_vertices != 0) {
-    SEN_PRINT("\nrendered %d vertices in %d render packets",
-              num_vertices,
+    SEN_PRINT("\nrendered %d vertices in %d render packets", num_vertices,
               vm->render_data->num_render_packets);
     print_timings(timing_delta(construct_start, construct_stop),
                   timing_delta(compilation_start, compilation_stop),
@@ -124,7 +130,8 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   TIMING_UNIT construct_start = get_timing();
   sen_systems_startup();
 
-  sen_vm*  vm  = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm  = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
+                               VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = sen_allocate_env();
 
   TIMING_UNIT construct_stop = get_timing();
@@ -139,10 +146,11 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   compiler_config_trait.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config_trait.word_lut         = env->word_lut;
   compiler_config_trait.vary             = 0;
-  sen_trait_list* trait_list             = trait_list_compile(ast, &compiler_config_trait);
+  sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config_trait);
 
   // using the vm to build the genes
-  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed_value);
+  sen_genotype* genotype =
+      genotype_build_from_trait_list(trait_list, vm, env, seed_value);
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_PROGRAM_SIZE;
@@ -150,7 +158,8 @@ void execute_source_with_seed(char* source, i32 seed_value) {
 
   sen_program* program = program_construct(&compiler_config);
 
-  program = compile_program_with_genotype(program, env->word_lut, ast, genotype);
+  program =
+      compile_program_with_genotype(program, env->word_lut, ast, genotype);
 
   parser_return_nodes_to_pool(ast);
 
@@ -172,8 +181,7 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   }
 
   if (num_vertices != 0) {
-    SEN_PRINT("\nrendered %d vertices in %d render packets",
-              num_vertices,
+    SEN_PRINT("\nrendered %d vertices in %d render packets", num_vertices,
               vm->render_data->num_render_packets);
     print_timings(timing_delta(construct_start, construct_stop),
                   timing_delta(compilation_start, compilation_stop),
@@ -201,11 +209,13 @@ void print_compiled_program(char* source) {
   // construct
   sen_systems_startup();
 
-  sen_vm*  vm = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
+                               VERTEX_PACKET_NUM_VERTICES);
   sen_env* e  = sen_allocate_env();
 
   // compile program
-  sen_program* program = sen_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
+  sen_program* program =
+      sen_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
 
   // print
   printf("%s\n", source);
@@ -226,7 +236,8 @@ void print_usage() {
             "using defaults and give stats");
   SEN_PRINT("native.exe sen\\c\\script.sen -s 43   << execute the script "
             "using the given seed and give stats");
-  SEN_PRINT("native.exe sen\\c\\script.sen -d      << debug - output the bytecode");
+  SEN_PRINT(
+      "native.exe sen\\c\\script.sen -d      << debug - output the bytecode");
 #else
   SEN_PRINT("native                            << prints usage");
   SEN_PRINT("native sen/c/script.sen         << execute the script using "

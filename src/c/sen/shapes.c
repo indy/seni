@@ -23,13 +23,8 @@ void shapes_subsystem_startup() {
 #define COLOUR_ITEM_SIZE 4
 #define TEXTURE_ITEM_SIZE 2
 
-void add_vertex(sen_render_packet* render_packet,
-                sen_matrix*        matrix,
-                f32                x,
-                f32                y,
-                sen_colour*        rgb,
-                f32                u,
-                f32                v) {
+void add_vertex(sen_render_packet* render_packet, sen_matrix* matrix, f32 x,
+                f32 y, sen_colour* rgb, f32 u, f32 v) {
   i32 v_index = render_packet->num_vertices * VERTEX_ITEM_SIZE;
   i32 c_index = render_packet->num_vertices * COLOUR_ITEM_SIZE;
   i32 t_index = render_packet->num_vertices * TEXTURE_ITEM_SIZE;
@@ -54,16 +49,19 @@ void add_vertex(sen_render_packet* render_packet,
   render_packet->num_vertices++;
 }
 
-void form_degenerate_triangle(sen_render_packet* render_packet, sen_matrix* matrix, f32 x, f32 y) {
+void form_degenerate_triangle(sen_render_packet* render_packet,
+                              sen_matrix* matrix, f32 x, f32 y) {
   i32 vertex_item_size = 2;
   // get the index of the last vertex that was added
-  i32 index = (render_packet->num_vertices * vertex_item_size) - vertex_item_size;
+  i32 index =
+      (render_packet->num_vertices * vertex_item_size) - vertex_item_size;
 
   // just copy the previous entries
   // note: colour doesn't matter since these triangles won't be rendered
   f32* last_v = &(render_packet->vbuf[index]);
 
-  add_vertex(render_packet, &g_identity, last_v[0], last_v[1], &g_unseen_colour, 0.0f, 0.0f);
+  add_vertex(render_packet, &g_identity, last_v[0], last_v[1], &g_unseen_colour,
+             0.0f, 0.0f);
 
   // add the new vertex to complete the degenerate triangle
   add_vertex(render_packet, matrix, x, y, &g_unseen_colour, 0.0f, 0.0f);
@@ -72,7 +70,8 @@ void form_degenerate_triangle(sen_render_packet* render_packet, sen_matrix* matr
   // vertex when we 'really' render the strip
 }
 
-bool can_vertices_fit(sen_render_packet* render_packet, i32 num, i32 max_vertices) {
+bool can_vertices_fit(sen_render_packet* render_packet, i32 num,
+                      i32 max_vertices) {
   return render_packet->num_vertices < (max_vertices - (num + 2));
 }
 
@@ -81,12 +80,10 @@ bool is_render_packet_empty(sen_render_packet* render_packet) {
 }
 
 void prepare_to_add_triangle_strip(sen_render_data* render_data,
-                                   sen_matrix*      matrix,
-                                   i32              num_vertices,
-                                   f32              x,
-                                   f32              y) {
-  if (can_vertices_fit(
-          render_data->current_render_packet, num_vertices, render_data->max_vertices) == false) {
+                                   sen_matrix* matrix, i32 num_vertices, f32 x,
+                                   f32 y) {
+  if (can_vertices_fit(render_data->current_render_packet, num_vertices,
+                       render_data->max_vertices) == false) {
     add_render_packet(render_data);
   }
 
@@ -97,14 +94,9 @@ void prepare_to_add_triangle_strip(sen_render_data* render_data,
   }
 }
 
-void render_line(sen_render_data* render_data,
-                 sen_matrix*      matrix,
-                 f32              from_x,
-                 f32              from_y,
-                 f32              to_x,
-                 f32              to_y,
-                 f32              width,
-                 sen_colour*      colour) {
+void render_line(sen_render_data* render_data, sen_matrix* matrix, f32 from_x,
+                 f32 from_y, f32 to_x, f32 to_y, f32 width,
+                 sen_colour* colour) {
   sen_uv_mapping* uv = get_uv_mapping(BRUSH_FLAT, 0, true);
 
   f32 hw = (width * uv->width_scale) / 2.0f;
@@ -121,44 +113,20 @@ void render_line(sen_render_data* render_data,
     rgb = &rgb_colour;
   }
 
-  prepare_to_add_triangle_strip(render_data, matrix, 4, from_x + (hw * nx), from_y + (hw * ny));
-  add_vertex(render_data->current_render_packet,
-             matrix,
-             from_x + (hw * nx),
-             from_y + (hw * ny),
-             rgb,
-             uv->map[0],
-             uv->map[1]);
-  add_vertex(render_data->current_render_packet,
-             matrix,
-             from_x + (hw * n2x),
-             from_y + (hw * n2y),
-             rgb,
-             uv->map[2],
-             uv->map[3]);
-  add_vertex(render_data->current_render_packet,
-             matrix,
-             to_x + (hw * nx),
-             to_y + (hw * ny),
-             rgb,
-             uv->map[4],
-             uv->map[5]);
-  add_vertex(render_data->current_render_packet,
-             matrix,
-             to_x + (hw * n2x),
-             to_y + (hw * n2y),
-             rgb,
-             uv->map[6],
-             uv->map[7]);
+  prepare_to_add_triangle_strip(render_data, matrix, 4, from_x + (hw * nx),
+                                from_y + (hw * ny));
+  add_vertex(render_data->current_render_packet, matrix, from_x + (hw * nx),
+             from_y + (hw * ny), rgb, uv->map[0], uv->map[1]);
+  add_vertex(render_data->current_render_packet, matrix, from_x + (hw * n2x),
+             from_y + (hw * n2y), rgb, uv->map[2], uv->map[3]);
+  add_vertex(render_data->current_render_packet, matrix, to_x + (hw * nx),
+             to_y + (hw * ny), rgb, uv->map[4], uv->map[5]);
+  add_vertex(render_data->current_render_packet, matrix, to_x + (hw * n2x),
+             to_y + (hw * n2y), rgb, uv->map[6], uv->map[7]);
 }
 
-void render_rect(sen_render_data* render_data,
-                 sen_matrix*      matrix,
-                 f32              x,
-                 f32              y,
-                 f32              width,
-                 f32              height,
-                 sen_colour*      colour) {
+void render_rect(sen_render_data* render_data, sen_matrix* matrix, f32 x, f32 y,
+                 f32 width, f32 height, sen_colour* colour) {
   sen_uv_mapping* uv = get_uv_mapping(BRUSH_FLAT, 0, true);
 
   f32 half_width  = width / 2.0f;
@@ -172,49 +140,26 @@ void render_rect(sen_render_data* render_data,
     rgb = &rgb_colour;
   }
 
-  prepare_to_add_triangle_strip(render_data, matrix, 4, x - half_width, y - half_height);
-  add_vertex(render_data->current_render_packet,
-             matrix,
-             x - half_width,
-             y - half_height,
-             rgb,
-             uv->map[0],
-             uv->map[1]);
-  add_vertex(render_data->current_render_packet,
-             matrix,
-             x + half_width,
-             y - half_height,
-             rgb,
-             uv->map[2],
-             uv->map[3]);
-  add_vertex(render_data->current_render_packet,
-             matrix,
-             x - half_width,
-             y + half_height,
-             rgb,
-             uv->map[4],
-             uv->map[5]);
-  add_vertex(render_data->current_render_packet,
-             matrix,
-             x + half_width,
-             y + half_height,
-             rgb,
-             uv->map[6],
-             uv->map[7]);
+  prepare_to_add_triangle_strip(render_data, matrix, 4, x - half_width,
+                                y - half_height);
+  add_vertex(render_data->current_render_packet, matrix, x - half_width,
+             y - half_height, rgb, uv->map[0], uv->map[1]);
+  add_vertex(render_data->current_render_packet, matrix, x + half_width,
+             y - half_height, rgb, uv->map[2], uv->map[3]);
+  add_vertex(render_data->current_render_packet, matrix, x - half_width,
+             y + half_height, rgb, uv->map[4], uv->map[5]);
+  add_vertex(render_data->current_render_packet, matrix, x + half_width,
+             y + half_height, rgb, uv->map[6], uv->map[7]);
 }
 
-void render_circle(sen_render_data* render_data,
-                   sen_matrix*      matrix,
-                   f32              x,
-                   f32              y,
-                   f32              width,
-                   f32              height,
-                   sen_colour*      colour,
-                   i32              tessellation) {
+void render_circle(sen_render_data* render_data, sen_matrix* matrix, f32 x,
+                   f32 y, f32 width, f32 height, sen_colour* colour,
+                   i32 tessellation) {
   f32 u, v;
   make_uv(&u, &v, 1.0f, 1.0f);
 
-  prepare_to_add_triangle_strip(render_data, matrix, (tessellation * 2) + 2, x, y);
+  prepare_to_add_triangle_strip(render_data, matrix, (tessellation * 2) + 2, x,
+                                y);
 
   f32 unit_angle = TAU / tessellation;
   f32 angle, vx, vy;
@@ -244,18 +189,10 @@ void render_circle(sen_render_data* render_data,
   add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
 }
 
-void render_circle_slice(sen_render_data* render_data,
-                         sen_matrix*      matrix,
-                         f32              x,
-                         f32              y,
-                         f32              width,
-                         f32              height,
-                         sen_colour*      colour,
-                         i32              tessellation,
-                         f32              angle_start,
-                         f32              angle_end,
-                         f32              inner_width,
-                         f32              inner_height) {
+void render_circle_slice(sen_render_data* render_data, sen_matrix* matrix,
+                         f32 x, f32 y, f32 width, f32 height,
+                         sen_colour* colour, i32 tessellation, f32 angle_start,
+                         f32 angle_end, f32 inner_width, f32 inner_height) {
   f32 u, v;
   make_uv(&u, &v, 1.0f, 1.0f);
 
@@ -268,7 +205,8 @@ void render_circle_slice(sen_render_data* render_data,
   }
 
   if (angle_start > angle_end) {
-    SEN_LOG("angle-start (%.2f) > angle-end (%.2f) ???", angle_start, angle_end);
+    SEN_LOG("angle-start (%.2f) > angle-end (%.2f) ???", angle_start,
+            angle_end);
   }
 
   f32 r_start    = deg_to_rad(angle_start);
@@ -281,7 +219,8 @@ void render_circle_slice(sen_render_data* render_data,
   innervx = ((f32)sin(angle) * inner_width) + x;
   innervy = ((f32)cos(angle) * inner_height) + y;
 
-  prepare_to_add_triangle_strip(render_data, matrix, (tessellation * 2) + 2, innervx, innervy);
+  prepare_to_add_triangle_strip(render_data, matrix, (tessellation * 2) + 2,
+                                innervx, innervy);
 
   for (int i = 0; i < tessellation; i++) {
     angle = r_start + (unit_angle * i);
@@ -292,7 +231,8 @@ void render_circle_slice(sen_render_data* render_data,
     vx = ((f32)(sin(angle)) * width) + x;
     vy = ((f32)(cos(angle)) * height) + y;
 
-    add_vertex(render_data->current_render_packet, matrix, innervx, innervy, rgb, u, v);
+    add_vertex(render_data->current_render_packet, matrix, innervx, innervy,
+               rgb, u, v);
     add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
   }
 
@@ -303,14 +243,13 @@ void render_circle_slice(sen_render_data* render_data,
   vx = ((f32)(sin(angle)) * width) + x;
   vy = ((f32)(cos(angle)) * height) + y;
 
-  add_vertex(render_data->current_render_packet, matrix, innervx, innervy, rgb, u, v);
+  add_vertex(render_data->current_render_packet, matrix, innervx, innervy, rgb,
+             u, v);
   add_vertex(render_data->current_render_packet, matrix, vx, vy, rgb, u, v);
 }
 
-void render_poly(sen_render_data* render_data,
-                 sen_matrix*      matrix,
-                 sen_var*         coords,
-                 sen_var*         colours) {
+void render_poly(sen_render_data* render_data, sen_matrix* matrix,
+                 sen_var* coords, sen_var* colours) {
   f32 u, v;
   make_uv(&u, &v, 1.0f, 1.0f);
 
@@ -330,8 +269,8 @@ void render_poly(sen_render_data* render_data,
   coord  = coords->value.v;
   colour = colours->value.v;
 
-  prepare_to_add_triangle_strip(
-      render_data, matrix, count, coord->f32_array[0], coord->f32_array[1]);
+  prepare_to_add_triangle_strip(render_data, matrix, count, coord->f32_array[0],
+                                coord->f32_array[1]);
 
   while (coord && colour) {
     if (colour->value.i == RGB) {
@@ -341,40 +280,25 @@ void render_poly(sen_render_data* render_data,
       rgb_colour.element[2] = colour->f32_array[2];
       rgb_colour.element[3] = colour->f32_array[3];
     } else {
-      colour_set(&other_colour,
-                 colour->value.i,
-                 colour->f32_array[0],
-                 colour->f32_array[1],
-                 colour->f32_array[2],
+      colour_set(&other_colour, colour->value.i, colour->f32_array[0],
+                 colour->f32_array[1], colour->f32_array[2],
                  colour->f32_array[3]);
       colour_clone_as(&rgb_colour, &other_colour, RGB);
     }
 
-    add_vertex(render_data->current_render_packet,
-               matrix,
-               coord->f32_array[0],
-               coord->f32_array[1],
-               &rgb_colour,
-               u,
-               v);
+    add_vertex(render_data->current_render_packet, matrix, coord->f32_array[0],
+               coord->f32_array[1], &rgb_colour, u, v);
 
     coord  = coord->next;
     colour = colour->next;
   }
 }
 
-void render_quadratic(sen_render_data* render_data,
-                      sen_matrix*      matrix,
-                      f32*             coords,
-                      f32              line_width_start,
-                      f32              line_width_end,
-                      i32              line_width_mapping,
-                      f32              t_start,
-                      f32              t_end,
-                      sen_colour*      colour,
-                      i32              tessellation,
-                      i32              brush,
-                      i32              brush_subtype) {
+void render_quadratic(sen_render_data* render_data, sen_matrix* matrix,
+                      f32* coords, f32 line_width_start, f32 line_width_end,
+                      i32 line_width_mapping, f32 t_start, f32 t_end,
+                      sen_colour* colour, i32 tessellation, i32 brush,
+                      i32 brush_subtype) {
   // get the uv co-ordinates for the specified brush
   //
   sen_brush_type  brush_type = (sen_brush_type)(brush - INAME_BRUSH_FLAT);
@@ -460,7 +384,8 @@ void render_quadratic(sen_render_data* render_data,
       to_interp = map_slow_ease_in_ease_out(from_interp);
       break;
     default:
-      to_interp = from_interp; // default behaviour as though 'linear' was chosen
+      to_interp =
+          from_interp; // default behaviour as though 'linear' was chosen
     }
 
     half_width = (to_m * to_interp) + to_c;
@@ -471,7 +396,8 @@ void render_quadratic(sen_render_data* render_data,
     v2y = (n2y * half_width) + ys;
 
     if (i == 0) {
-      prepare_to_add_triangle_strip(render_data, matrix, tessellation * 2, v1x, v1y);
+      prepare_to_add_triangle_strip(render_data, matrix, tessellation * 2, v1x,
+                                    v1y);
     }
 
     uv_t = tex_t * (f32)i;
@@ -509,18 +435,11 @@ void render_quadratic(sen_render_data* render_data,
   add_vertex(render_data->current_render_packet, matrix, v2x, v2y, rgb, cu, cv);
 }
 
-void render_bezier(sen_render_data* render_data,
-                   sen_matrix*      matrix,
-                   f32*             coords,
-                   f32              line_width_start,
-                   f32              line_width_end,
-                   i32              line_width_mapping,
-                   f32              t_start,
-                   f32              t_end,
-                   sen_colour*      colour,
-                   i32              tessellation,
-                   i32              brush,
-                   i32              brush_subtype) {
+void render_bezier(sen_render_data* render_data, sen_matrix* matrix,
+                   f32* coords, f32 line_width_start, f32 line_width_end,
+                   i32 line_width_mapping, f32 t_start, f32 t_end,
+                   sen_colour* colour, i32 tessellation, i32 brush,
+                   i32 brush_subtype) {
   // get the uv co-ordinates for the specified brush
   //
   sen_brush_type  brush_type = (sen_brush_type)(brush - INAME_BRUSH_FLAT);
@@ -598,7 +517,8 @@ void render_bezier(sen_render_data* render_data,
       to_interp = map_slow_ease_in_ease_out(from_interp);
       break;
     default:
-      to_interp = from_interp; // default behaviour as though 'linear' was chosen
+      to_interp =
+          from_interp; // default behaviour as though 'linear' was chosen
     }
 
     half_width = (to_m * to_interp) + to_c;
@@ -609,7 +529,8 @@ void render_bezier(sen_render_data* render_data,
     v2y = (n2y * half_width) + ys;
 
     if (i == 0) {
-      prepare_to_add_triangle_strip(render_data, matrix, tessellation * 2, v1x, v1y);
+      prepare_to_add_triangle_strip(render_data, matrix, tessellation * 2, v1x,
+                                    v1y);
     }
 
     uv_t = tex_t * (f32)i;
@@ -646,63 +567,32 @@ void render_bezier(sen_render_data* render_data,
   add_vertex(render_data->current_render_packet, matrix, v2x, v2y, rgb, cu, cv);
 }
 
-void render_bezier_bulging(sen_render_data* render_data,
-                           sen_matrix*      matrix,
-                           f32*             coords,
-                           f32              line_width,
-                           f32              t_start,
-                           f32              t_end,
-                           sen_colour*      colour,
-                           i32              tessellation,
-                           i32              brush,
-                           i32              brush_subtype) {
+void render_bezier_bulging(sen_render_data* render_data, sen_matrix* matrix,
+                           f32* coords, f32 line_width, f32 t_start, f32 t_end,
+                           sen_colour* colour, i32 tessellation, i32 brush,
+                           i32 brush_subtype) {
 
   f32 t_mid    = (t_start + t_end) / 2.0f;
   i32 new_tess = tessellation >> 1;
 
   // thin_fat
-  render_bezier(render_data,
-                matrix,
-                coords,
-                0.0f,
-                line_width,
-                INAME_SLOW_IN_OUT,
-                t_start,
-                t_mid,
-                colour,
-                new_tess,
-                brush,
+  render_bezier(render_data, matrix, coords, 0.0f, line_width,
+                INAME_SLOW_IN_OUT, t_start, t_mid, colour, new_tess, brush,
                 brush_subtype);
 
   // fat_thin
-  render_bezier(render_data,
-                matrix,
-                coords,
-                line_width,
-                0.0f,
-                INAME_SLOW_IN_OUT,
-                t_mid,
-                t_end,
-                colour,
-                new_tess,
-                brush,
+  render_bezier(render_data, matrix, coords, line_width, 0.0f,
+                INAME_SLOW_IN_OUT, t_mid, t_end, colour, new_tess, brush,
                 brush_subtype);
 }
 
-void render_stroked_bezier(sen_render_data* render_data,
-                           sen_matrix*      matrix,
-                           f32*             coords,
-                           sen_colour*      colour,
-                           i32              tessellation,
-                           f32              stroke_line_width_start,
-                           f32              stroke_line_width_end,
-                           f32              stroke_noise,
-                           i32              stroke_tessellation,
-                           f32              colour_volatility,
-                           f32              seed,
-                           i32              line_width_mapping,
-                           i32              brush,
-                           i32              brush_subtype) {
+void render_stroked_bezier(sen_render_data* render_data, sen_matrix* matrix,
+                           f32* coords, sen_colour* colour, i32 tessellation,
+                           f32 stroke_line_width_start,
+                           f32 stroke_line_width_end, f32 stroke_noise,
+                           i32 stroke_tessellation, f32 colour_volatility,
+                           f32 seed, i32 line_width_mapping, i32 brush,
+                           i32 brush_subtype) {
   f32 x1 = coords[0], x2 = coords[2], x3 = coords[4], x4 = coords[6];
   f32 y1 = coords[1], y2 = coords[3], y3 = coords[5], y4 = coords[7];
 
@@ -744,37 +634,19 @@ void render_stroked_bezier(sen_render_data* render_data,
     quad_coords[4] = xx3 + (ns * sen_perlin(xx3, xx1, seed));
     quad_coords[5] = yy3 + (ns * sen_perlin(yy3, yy1, seed));
 
-    render_quadratic(render_data,
-                     matrix,
-                     quad_coords,
-                     stroke_line_width_start,
-                     stroke_line_width_end,
-                     line_width_mapping,
-                     0.0f,
-                     1.0f,
-                     &lab,
-                     stroke_tessellation,
-                     brush,
-                     brush_subtype);
+    render_quadratic(render_data, matrix, quad_coords, stroke_line_width_start,
+                     stroke_line_width_end, line_width_mapping, 0.0f, 1.0f,
+                     &lab, stroke_tessellation, brush, brush_subtype);
   }
 }
 
 void render_stroked_bezier_rect(sen_render_data* render_data,
-                                sen_matrix*      matrix,
-                                f32*             position,
-                                f32              width,
-                                f32              height,
-                                f32              volatility,
-                                f32              overlap,
-                                f32              iterations,
-                                f32              seed,
-                                i32              tessellation,
-                                i32              stroke_tessellation,
-                                f32              stroke_noise,
-                                sen_colour*      colour,
-                                f32              colour_volatility,
-                                i32              brush,
-                                i32              brush_subtype) {
+                                sen_matrix* matrix, f32* position, f32 width,
+                                f32 height, f32 volatility, f32 overlap,
+                                f32 iterations, f32 seed, i32 tessellation,
+                                i32 stroke_tessellation, f32 stroke_noise,
+                                sen_colour* colour, f32 colour_volatility,
+                                i32 brush, i32 brush_subtype) {
   f32 x = position[0];
   f32 y = position[1];
 
@@ -792,7 +664,8 @@ void render_stroked_bezier_rect(sen_render_data* render_data,
   sen_prng_state prng_state;
   sen_prng_set_state(&prng_state, (u64)seed);
 
-  f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f, 600.0f, 700.0f, 900.0f, 900.0f};
+  f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f,
+                  600.0f, 700.0f, 900.0f, 900.0f};
 
   i32 i;
   i32 iiterations = (i32)iterations;
@@ -809,31 +682,26 @@ void render_stroked_bezier_rect(sen_render_data* render_data,
   for (i = 0; i < iiterations; i++) {
     h = y_start + stroke_half_thickness + ((f32)i * stroke_offset_factor);
 
-    coords[0] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start + (0 * th_width);
+    coords[0] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start +
+                (0 * th_width);
     coords[1] = h + (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
 
-    coords[2] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start + (1 * th_width);
+    coords[2] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start +
+                (1 * th_width);
     coords[3] = h + (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
 
-    coords[4] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start + (2 * th_width);
+    coords[4] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start +
+                (2 * th_width);
     coords[5] = h + (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
 
-    coords[6] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start + (3 * th_width);
+    coords[6] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + x_start +
+                (3 * th_width);
     coords[7] = h + (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
 
-    render_stroked_bezier(render_data,
-                          matrix,
-                          coords,
-                          &half_alpha_col,
-                          tessellation,
-                          stroke_thickness,
-                          stroke_thickness,
-                          stroke_noise,
-                          stroke_tessellation,
-                          colour_volatility,
-                          sen_prng_f32(&prng_state),
-                          INAME_LINEAR,
-                          brush,
+    render_stroked_bezier(render_data, matrix, coords, &half_alpha_col,
+                          tessellation, stroke_thickness, stroke_thickness,
+                          stroke_noise, stroke_tessellation, colour_volatility,
+                          sen_prng_f32(&prng_state), INAME_LINEAR, brush,
                           brush_subtype);
   }
 
@@ -847,30 +715,25 @@ void render_stroked_bezier_rect(sen_render_data* render_data,
     v = x_start + stroke_half_thickness + ((f32)i * stroke_offset_factor);
 
     coords[0] = v + (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
-    coords[1] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (0 * th_height);
+    coords[1] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start +
+                (0 * th_height);
 
     coords[2] = v + (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
-    coords[3] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (1 * th_height);
+    coords[3] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start +
+                (1 * th_height);
 
     coords[4] = v + (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
-    coords[5] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (2 * th_height);
+    coords[5] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start +
+                (2 * th_height);
 
     coords[6] = v + (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol);
-    coords[7] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start + (3 * th_height);
+    coords[7] = (sen_prng_f32_range(&prng_state, -1.0f, 1.0f) * vol) + y_start +
+                (3 * th_height);
 
-    render_stroked_bezier(render_data,
-                          matrix,
-                          coords,
-                          &half_alpha_col,
-                          tessellation,
-                          stroke_thickness,
-                          stroke_thickness,
-                          stroke_noise,
-                          stroke_tessellation,
-                          colour_volatility,
-                          sen_prng_f32(&prng_state),
-                          INAME_LINEAR,
-                          brush,
+    render_stroked_bezier(render_data, matrix, coords, &half_alpha_col,
+                          tessellation, stroke_thickness, stroke_thickness,
+                          stroke_noise, stroke_tessellation, colour_volatility,
+                          sen_prng_f32(&prng_state), INAME_LINEAR, brush,
                           brush_subtype);
   }
 }

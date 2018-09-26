@@ -43,7 +43,8 @@ void matrix_identity(sen_matrix* out) {
   out->m[15] = 1.0f;
 }
 
-void matrix_ortho(sen_matrix* out, f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far) {
+void matrix_ortho(sen_matrix* out, f32 left, f32 right, f32 bottom, f32 top,
+                  f32 near, f32 far) {
   f32 lr = 1.0f / (left - right);
   f32 bt = 1.0f / (bottom - top);
   f32 nf = 1.0f / (near - far);
@@ -189,7 +190,8 @@ void matrix_transform_vec2(f32* outx, f32* outy, sen_matrix* m, f32 x, f32 y) {
   *outy = m->m[1] * x + m->m[5] * y + m->m[13];
 }
 
-void matrix_transform_vec3(f32* outx, f32* outy, f32* outz, sen_matrix* m, f32 x, f32 y, f32 z) {
+void matrix_transform_vec3(f32* outx, f32* outy, f32* outz, sen_matrix* m,
+                           f32 x, f32 y, f32 z) {
   f32 w = m->m[3] * x + m->m[7] * y + m->m[11] * z + m->m[15];
   w     = w == 0.0f ? 1.0f : w;
   *outx = (m->m[0] * x + m->m[4] * y + m->m[8] * z + m->m[12]) / w;
@@ -198,10 +200,12 @@ void matrix_transform_vec3(f32* outx, f32* outy, f32* outz, sen_matrix* m, f32 x
 }
 
 sen_matrix_stack* matrix_stack_allocate() {
-  sen_matrix_stack* matrix_stack = (sen_matrix_stack*)calloc(1, sizeof(sen_matrix_stack));
+  sen_matrix_stack* matrix_stack =
+      (sen_matrix_stack*)calloc(1, sizeof(sen_matrix_stack));
 
   matrix_stack->stack_size = MATRIX_STACK_SIZE;
-  matrix_stack->stack      = (sen_matrix*)calloc(MATRIX_STACK_SIZE, sizeof(sen_matrix));
+  matrix_stack->stack =
+      (sen_matrix*)calloc(MATRIX_STACK_SIZE, sizeof(sen_matrix));
 
   matrix_stack->wip_transform = (sen_matrix*)calloc(1, sizeof(sen_matrix));
 
@@ -286,22 +290,15 @@ void matrix_stack_rotate(sen_matrix_stack* matrix_stack, f32 a) {
   matrix_multiply(head, head, m);
 }
 
-void matrix_stack_transform_vec2(f32*              outx,
-                                 f32*              outy,
-                                 sen_matrix_stack* matrix_stack,
-                                 f32               x,
-                                 f32               y) {
+void matrix_stack_transform_vec2(f32* outx, f32* outy,
+                                 sen_matrix_stack* matrix_stack, f32 x, f32 y) {
   sen_matrix* head = matrix_stack_peek(matrix_stack);
   matrix_transform_vec2(outx, outy, head, x, y);
 }
 
-void matrix_stack_transform_vec3(f32*              outx,
-                                 f32*              outy,
-                                 f32*              outz,
-                                 sen_matrix_stack* matrix_stack,
-                                 f32               x,
-                                 f32               y,
-                                 f32               z) {
+void matrix_stack_transform_vec3(f32* outx, f32* outy, f32* outz,
+                                 sen_matrix_stack* matrix_stack, f32 x, f32 y,
+                                 f32 z) {
   sen_matrix* head = matrix_stack_peek(matrix_stack);
   matrix_transform_vec3(outx, outy, outz, head, x, y, z);
 }

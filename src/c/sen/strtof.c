@@ -39,10 +39,7 @@
 float _strtof_powersOf10_[] = { // Table giving binary powers of 10.  Entry
     10.0f,                      // is 10^2^i.  Used to convert decimal
     100.0f,                     // exponents into floating-point numbers.
-    1.0e4f,
-    1.0e8f,
-    1.0e16f,
-    1.0e32f};
+    1.0e4f, 1.0e8f, 1.0e16f, 1.0e32f};
 
 /*
  *----------------------------------------------------------------------
@@ -65,7 +62,9 @@ float _strtof_powersOf10_[] = { // Table giving binary powers of 10.  Entry
  *----------------------------------------------------------------------
  */
 
-int sen_isspace(char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == ','; }
+int sen_isspace(char c) {
+  return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == ',';
+}
 
 int sen_isdigit(char c) { return c >= '0' && c <= '9'; }
 

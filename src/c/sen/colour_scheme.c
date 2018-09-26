@@ -42,7 +42,8 @@ sen_colour* complementary(sen_colour* out, sen_colour* in) {
 //
 void split_complementary(sen_colour* out0, sen_colour* out1, sen_colour* in) {
   sen_colour tmp;
-  pair(out0, out1, add_angle_to_hsluv(&tmp, in, COLOUR_COMPLIMENTARY_ANGLE), COLOUR_UNIT_ANGLE);
+  pair(out0, out1, add_angle_to_hsluv(&tmp, in, COLOUR_COMPLIMENTARY_ANGLE),
+       COLOUR_UNIT_ANGLE);
 }
 
 // Returns the adjacent colours.
@@ -164,7 +165,8 @@ void get_colour_presets(f32* a, f32* b, f32* c, f32* d, i32 preset) {
   }
 }
 
-void colour_procedural(sen_colour* out, sen_colour_fn_state* colour_fn_state, f32 t) {
+void colour_procedural(sen_colour* out, sen_colour_fn_state* colour_fn_state,
+                       f32 t) {
   f32* a = colour_fn_state->a;
   f32* b = colour_fn_state->b;
   f32* c = colour_fn_state->c;
@@ -177,7 +179,8 @@ void colour_procedural(sen_colour* out, sen_colour_fn_state* colour_fn_state, f3
   out->element[3] = colour_fn_state->alpha;
 }
 
-void colour_bezier(sen_colour* out, sen_colour_fn_state* colour_fn_state, f32 t) {
+void colour_bezier(sen_colour* out, sen_colour_fn_state* colour_fn_state,
+                   f32 t) {
   f32* a = colour_fn_state->a;
   f32* b = colour_fn_state->b;
   f32* c = colour_fn_state->c;
