@@ -1,45 +1,24 @@
+(define
+  segments 120
+  x-off 30
+  y-off 30
+  w (- canvas/width (* x-off 2))
+  wid (/ w (* segments 1.2))
 
-(define some-colour {(col/rgb r: 0.293 g: 0.408 b: 0.698 alpha: 0.847) (gen/col)})
+  easer (interp/build from: [0 1] to: [0 w] mapping: linear)
+  )
 
-(rect)
+(fence (t num: segments)
+  (rect position: [(+ x-off (* t w)) (+ y-off (/ (interp/value from: easer t: t) 2))]
+        width: wid
+        height: (interp/value from: easer t: t)
+        colour: red))
 
 
-; (define
-;   bastard []
-;   coords []
-;   colours []
-;   make-colour (col/build-procedural a: [0.80 0.50 0.40]
-;                                     b: [0.20 0.40 0.20]
-;                                     c: [2.00 1.00 1.00]
-;                                     d: [0.00 0.25 0.25])
-
-;   foocoords {[[0 200] [-133 100] [266 -100] [399 -200]]
-;              (gen/2d min: -300 max: 300)}
-
-;   focalpoint (focal/build-point
-;               position: [0 0]
-;               distance: 390))
-
-; (fence (t num: 30)
-;        (define
-;          p1 (interp/bezier t: t
-;                            coords: [[0 200] [-133 100] [266 -100] [399 -200]])
-;          p2 (interp/bezier t: t
-;                            coords: [[-100 200] [133 -300] [66 100] [-99 200]])
-;          c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
-;          c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
-;        (vector/append coords p1)
-;        (vector/append coords p2)
-;        (vector/append colours c1)
-;        (vector/append colours c2))
-
-; (fn (draw)
-;     (poly coords: coords colours: colours))
-
-; (fn (render)
-;     (on-matrix-stack
-;      (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
-;      (repeat/rotate-mirrored fn: (address-of draw)
-;                              copies: 5)))
-
-; (render)
+(on-matrix-stack
+  (translate vector: [x-off y-off])
+  (scale scalar: w)
+	(bezier coords: [[0 0] [1 0] [0 1] [1 1]]
+    	    line-width: 0.005
+        	colour: blue
+        	tessellation: 50))

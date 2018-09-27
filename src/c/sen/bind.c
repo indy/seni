@@ -3,6 +3,7 @@
 #include "colour.h"
 #include "colour_scheme.h"
 #include "config.h"
+#include "ease.h"
 #include "focal.h"
 #include "keyword_iname.h"
 #include "lang.h"
@@ -1837,8 +1838,8 @@ sen_var* bind_parametric_build(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_VEC2(INAME_TO, to);
   READ_STACK_ARG_NAME(INAME_CLAMPING,
                       clamping); // true | FALSE, clamping); // true | false
-  READ_STACK_ARG_I32(INAME_MAPPING,
-                     mapping); // linear, quick, slow-in, slow-in-out
+  READ_STACK_ARG_NAME(INAME_MAPPING,
+                      mapping); // linear or one of the easing functions
   READ_STACK_ARGS_END;
 
   f32 from_m = mc_m(from[0], 0.0f, from[1], 1.0f);
@@ -1890,19 +1891,8 @@ sen_var* bind_parametric_value(sen_vm* vm, i32 num_args) {
   }
 
   f32 from_interp = (from.from_m * t) + from.from_c;
-  f32 to_interp   = from_interp;
-
-  if (from.mapping == INAME_LINEAR) {
-    to_interp = from_interp;
-  } else if (from.mapping == INAME_QUICK) {
-    to_interp = map_quick_ease(from_interp);
-  } else if (from.mapping == INAME_SLOW_IN) {
-    to_interp = map_slow_ease_in(from_interp);
-  } else { // INAME_slow_in_out
-    to_interp = map_slow_ease_in_ease_out(from_interp);
-  }
-
-  f32 res = (from.to_m * to_interp) + from.to_c;
+  f32 to_interp   = easing(from_interp, from.mapping);
+  f32 res         = (from.to_m * to_interp) + from.to_c;
 
   if (from.clamping == INAME_TRUE) {
     res = from_interp < 0.0f ? from.to0 : (from_interp > 1.0f) ? from.to1 : res;
@@ -2231,8 +2221,8 @@ sen_var* bind_focal_generic(sen_vm* vm, i32 num_args, sen_focal_type type) {
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_POSITION, position);
   READ_STACK_ARG_F32(INAME_DISTANCE, distance);
-  READ_STACK_ARG_I32(INAME_MAPPING,
-                     mapping); // linear, quick, slow-in, slow-in-out
+  READ_STACK_ARG_NAME(INAME_MAPPING,
+                      mapping); // linear, quick, slow-in, slow-in-out
   READ_STACK_ARGS_END;
 
   // store position in canvas space coordinates

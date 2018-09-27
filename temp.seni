@@ -1,6 +1,0 @@
-(fn (shabba a: 5)
-    (+ a a))
-
-(define shabba-addr (address-of shabba))
-
-(fn-call (shabba-addr a: 99 yaka: 88))

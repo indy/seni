@@ -7,7 +7,7 @@
     "build": "webpack --mode=development --progress",
     "build:production": "webpack --mode=production --progress",
     "build:watch": "webpack --mode=development --progress --watch",
-    "build:wasm": "wa compile -D SEN_BUILD_WASM -o dist/sen-wasm.wasm src/c/wasm.c -i src/c/sen/bind.c -i src/c/sen/colour.c -i src/c/sen/colour_scheme.c -i src/c/sen/cursor.c -i src/c/sen/focal.c -i src/c/sen/genetic.c -i src/c/sen/lang.c -i src/c/sen/lib.c -i src/c/sen/mathutil.c -i src/c/sen/matrix.c -i src/c/sen/multistring.c -i src/c/sen/parametric.c -i src/c/sen/parser.c -i src/c/sen/path.c -i src/c/sen/printf.c -i src/c/sen/prng.c -i src/c/sen/render_packet.c -i src/c/sen/repeat.c -i src/c/sen/shapes.c -i src/c/sen/strtof.c -i src/c/sen/timing.c -i src/c/sen/unparser.c -i src/c/sen/uv_mapper.c -i src/c/sen/vm_compiler.c -i src/c/sen/vm_interpreter.c -I src/c",
+    "build:wasm": "wa compile -D SEN_BUILD_WASM -o dist/sen-wasm.wasm src/c/wasm.c -i src/c/sen/bind.c -i src/c/sen/colour.c -i src/c/sen/colour_scheme.c -i src/c/sen/cursor.c -i src/c/sen/ease.c -i src/c/sen/focal.c -i src/c/sen/genetic.c -i src/c/sen/lang.c -i src/c/sen/lib.c -i src/c/sen/mathutil.c -i src/c/sen/matrix.c -i src/c/sen/multistring.c -i src/c/sen/parametric.c -i src/c/sen/parser.c -i src/c/sen/path.c -i src/c/sen/printf.c -i src/c/sen/prng.c -i src/c/sen/render_packet.c -i src/c/sen/repeat.c -i src/c/sen/shapes.c -i src/c/sen/strtof.c -i src/c/sen/timing.c -i src/c/sen/unparser.c -i src/c/sen/uv_mapper.c -i src/c/sen/vm_compiler.c -i src/c/sen/vm_interpreter.c -I src/c",
     "build:server": "go build src/go/serve.go",
     "format": "clang-format src/c/wasm.c src/c/native.c src/c/test.c --glob=src/c/sen/*.[ch] -i -style=file",
     "clean": "rm dist/*.js",

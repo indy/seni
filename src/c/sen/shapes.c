@@ -1,6 +1,7 @@
 #include "shapes.h"
 
 #include "colour.h"
+#include "ease.h"
 #include "keyword_iname.h"
 #include "lang.h"
 #include "mathutil.h"
@@ -373,20 +374,7 @@ void render_quadratic(sen_render_data* render_data, sen_matrix* matrix,
     opposite_normal(&n2x, &n2y, n1x, n1y);
 
     from_interp = (from_m * t_val) + from_c;
-    switch (line_width_mapping) {
-    case INAME_QUICK:
-      to_interp = map_quick_ease(from_interp);
-      break;
-    case INAME_SLOW_IN:
-      to_interp = map_slow_ease_in(from_interp);
-      break;
-    case INAME_SLOW_IN_OUT:
-      to_interp = map_slow_ease_in_ease_out(from_interp);
-      break;
-    default:
-      to_interp =
-          from_interp; // default behaviour as though 'linear' was chosen
-    }
+    to_interp   = easing(from_interp, line_width_mapping);
 
     half_width = (to_m * to_interp) + to_c;
 
@@ -506,20 +494,7 @@ void render_bezier(sen_render_data* render_data, sen_matrix* matrix,
     opposite_normal(&n2x, &n2y, n1x, n1y);
 
     from_interp = (from_m * t_val) + from_c;
-    switch (line_width_mapping) {
-    case INAME_QUICK:
-      to_interp = map_quick_ease(from_interp);
-      break;
-    case INAME_SLOW_IN:
-      to_interp = map_slow_ease_in(from_interp);
-      break;
-    case INAME_SLOW_IN_OUT:
-      to_interp = map_slow_ease_in_ease_out(from_interp);
-      break;
-    default:
-      to_interp =
-          from_interp; // default behaviour as though 'linear' was chosen
-    }
+    to_interp   = easing(from_interp, line_width_mapping);
 
     half_width = (to_m * to_interp) + to_c;
 
@@ -577,12 +552,12 @@ void render_bezier_bulging(sen_render_data* render_data, sen_matrix* matrix,
 
   // thin_fat
   render_bezier(render_data, matrix, coords, 0.0f, line_width,
-                INAME_SLOW_IN_OUT, t_start, t_mid, colour, new_tess, brush,
+                INAME_EASE_SLOW_IN_OUT, t_start, t_mid, colour, new_tess, brush,
                 brush_subtype);
 
   // fat_thin
   render_bezier(render_data, matrix, coords, line_width, 0.0f,
-                INAME_SLOW_IN_OUT, t_mid, t_end, colour, new_tess, brush,
+                INAME_EASE_SLOW_IN_OUT, t_mid, t_end, colour, new_tess, brush,
                 brush_subtype);
 }
 

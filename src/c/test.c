@@ -8,6 +8,7 @@
 #include "sen/colour_scheme.h"
 #include "sen/config.h"
 #include "sen/cursor.h"
+#include "sen/ease.h"
 #include "sen/genetic.h"
 #include "sen/keyword_iname.h"
 #include "sen/lang.h"
@@ -2302,7 +2303,7 @@ int main(void) {
   RUN_TEST(test_rgb_hsluv_conversion);
 
 #else
-  RUN_TEST(test_genotype_stray_2d);
+  // RUN_TEST(test_genotype_stray_2d);
   // RUN_TEST(bug_f32_expr_with_genotype);
 
 #endif

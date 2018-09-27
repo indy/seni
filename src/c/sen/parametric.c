@@ -1,6 +1,6 @@
 #include "parametric.h"
 
-#include "keyword_iname.h"
+#include "ease.h"
 #include "mathutil.h"
 
 #include <math.h>
@@ -14,19 +14,8 @@ f32 sen_parametric(f32 val, f32 from_a, f32 from_b, f32 to_a, f32 to_b,
   f32 to_c = mc_c(0.0f, to_a, to_m);
 
   f32 from_interp = (from_m * val) + from_c;
-  f32 to_interp   = from_interp;
-
-  if (mapping == INAME_LINEAR) {
-    to_interp = from_interp;
-  } else if (mapping == INAME_QUICK) {
-    to_interp = map_quick_ease(from_interp);
-  } else if (mapping == INAME_SLOW_IN) {
-    to_interp = map_slow_ease_in(from_interp);
-  } else { // INAME_slow_in_out
-    to_interp = map_slow_ease_in_ease_out(from_interp);
-  }
-
-  f32 res = (to_m * to_interp) + to_c;
+  f32 to_interp   = easing(from_interp, mapping);
+  f32 res         = (to_m * to_interp) + to_c;
 
   if (clamping) {
     res = from_interp < 0.0f ? to_a : (from_interp > 1.0f) ? to_b : res;
