@@ -41,22 +41,26 @@ sen_bytecode* emit_opcode_i32(sen_compilation* compilation, sen_opcode op,
                               i32 arg0, i32 arg1);
 
 void compiler_subsystem_startup() {
-  i32          program_max_size = 100; // ???
-  sen_program* program          = program_allocate(program_max_size);
+  sen_program* program = program_allocate(MAX_PREAMBLE_PROGRAM_SIZE);
 
   sen_compilation compilation;
   sen_compilation_init(&compilation, program);
-
   clear_global_mappings(&compilation);
   clear_local_mappings(&compilation);
   compilation.current_fn_info = NULL;
-
   register_top_level_preamble(&compilation);
   compile_preamble(&compilation);
 
+  if (program->code_size == MAX_PREAMBLE_PROGRAM_SIZE) {
+    // try increasing the program_max_size
+    SEN_ERROR("compiler_subsystem_startup: program code size == "
+              "MAX_PREAMBLE_PROGRAM_SIZE ???");
+    SEN_ERROR("try increasing the MAX_PREAMBLE_PROGRAM_SIZE value in "
+              "compiler_subsystem_startup");
+  }
+
   // slap a stop onto the end of this program
   emit_opcode_i32(&compilation, STOP, 0, 0);
-
   g_preamble_program = program;
 }
 
@@ -183,7 +187,9 @@ sen_bytecode* emit_opcode_i32(sen_compilation* compilation, sen_opcode op,
   sen_program* program = compilation->program;
 
   if (program->code_size >= program->code_max_size) {
-    SEN_ERROR("%s %d program has reached max size", __FILE__, __LINE__);
+    SEN_ERROR(
+        "%s %d program has reached max size: program size=%d, max_size=%d",
+        __FILE__, __LINE__, program->code_size, program->code_max_size);
     return NULL;
   }
 
@@ -1680,6 +1686,49 @@ void compile_global_bind_procedural_presets(sen_compilation* compilation) {
   store_globally(compilation, INAME_COL_PROCEDURAL_FN_PRESETS);
 }
 
+void compile_global_bind_ease_presets(sen_compilation* compilation) {
+  // create a vector
+  emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0);
+
+  // append the names
+  append_name(compilation, INAME_LINEAR);
+  append_name(compilation, INAME_EASE_QUICK);
+  append_name(compilation, INAME_EASE_SLOW_IN);
+  append_name(compilation, INAME_EASE_SLOW_IN_OUT);
+  append_name(compilation, INAME_EASE_QUADRATIC_IN);
+  append_name(compilation, INAME_EASE_QUADRATIC_OUT);
+  append_name(compilation, INAME_EASE_QUADRATIC_IN_OUT);
+  append_name(compilation, INAME_EASE_CUBIC_IN);
+  append_name(compilation, INAME_EASE_CUBIC_OUT);
+  append_name(compilation, INAME_EASE_CUBIC_IN_OUT);
+  append_name(compilation, INAME_EASE_QUARTIC_IN);
+  append_name(compilation, INAME_EASE_QUARTIC_OUT);
+  append_name(compilation, INAME_EASE_QUARTIC_IN_OUT);
+  append_name(compilation, INAME_EASE_QUINTIC_IN);
+  append_name(compilation, INAME_EASE_QUINTIC_OUT);
+  append_name(compilation, INAME_EASE_QUINTIC_IN_OUT);
+  append_name(compilation, INAME_EASE_SIN_IN);
+  append_name(compilation, INAME_EASE_SIN_OUT);
+  append_name(compilation, INAME_EASE_SIN_IN_OUT);
+  append_name(compilation, INAME_EASE_CIRCULAR_IN);
+  append_name(compilation, INAME_EASE_CIRCULAR_OUT);
+  append_name(compilation, INAME_EASE_CIRCULAR_IN_OUT);
+  append_name(compilation, INAME_EASE_EXPONENTIAL_IN);
+  append_name(compilation, INAME_EASE_EXPONENTIAL_OUT);
+  append_name(compilation, INAME_EASE_EXPONENTIAL_IN_OUT);
+  append_name(compilation, INAME_EASE_ELASTIC_IN);
+  append_name(compilation, INAME_EASE_ELASTIC_OUT);
+  append_name(compilation, INAME_EASE_ELASTIC_IN_OUT);
+  append_name(compilation, INAME_EASE_BACK_IN);
+  append_name(compilation, INAME_EASE_BACK_OUT);
+  append_name(compilation, INAME_EASE_BACK_IN_OUT);
+  append_name(compilation, INAME_EASE_BOUNCE_IN);
+  append_name(compilation, INAME_EASE_BOUNCE_OUT);
+  append_name(compilation, INAME_EASE_BOUNCE_IN_OUT);
+
+  store_globally(compilation, INAME_EASE_PRESETS);
+}
+
 // NOTE: each entry in compile_preamble should have a corresponding entry here
 void register_top_level_preamble(sen_compilation* compilation) {
   add_global_mapping(compilation, INAME_GEN_INITIAL);
@@ -1701,6 +1750,7 @@ void register_top_level_preamble(sen_compilation* compilation) {
   add_global_mapping(compilation, INAME_CYAN);
 
   add_global_mapping(compilation, INAME_COL_PROCEDURAL_FN_PRESETS);
+  add_global_mapping(compilation, INAME_EASE_PRESETS);
 }
 
 void compile_preamble(sen_compilation* compilation) {
@@ -1727,6 +1777,7 @@ void compile_preamble(sen_compilation* compilation) {
   compile_global_bind_col(compilation, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f);
 
   compile_global_bind_procedural_presets(compilation);
+  compile_global_bind_ease_presets(compilation);
   // ********************************************************************************
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble

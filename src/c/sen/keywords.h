@@ -115,6 +115,8 @@ REGISTER_KEYWORD("ease/bounce-in", INAME_EASE_BOUNCE_IN)
 REGISTER_KEYWORD("ease/bounce-out", INAME_EASE_BOUNCE_OUT)
 REGISTER_KEYWORD("ease/bounce-in-out", INAME_EASE_BOUNCE_IN_OUT)
 
+REGISTER_KEYWORD("ease/presets", INAME_EASE_PRESETS)
+
 // common parameter labels
 //
 REGISTER_KEYWORD("a", INAME_A)
