@@ -1,0 +1,24 @@
+(define
+  segments 120
+  x-off 30
+  y-off 30
+  w (- canvas/width (* x-off 2))
+  wid (/ w (* segments 1.2))
+
+  easer (interp/build from: [0 1] to: [0 w] mapping: {linear (gen/select from: ease/presets)})
+  )
+
+(fence (t num: segments)
+  (rect position: [(+ x-off (* t w)) (+ y-off (/ (interp/value from: easer t: t) 2))]
+        width: wid
+        height: (interp/value from: easer t: t)
+        colour: red))
+
+
+(on-matrix-stack
+  (translate vector: [x-off y-off])
+  (scale scalar: w)
+	(bezier coords: [[0 0] [1 0] [0 1] [1 1]]
+    	    line-width: 0.005
+        	colour: blue
+        	tessellation: 50))
