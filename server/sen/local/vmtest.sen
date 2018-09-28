@@ -1,24 +1,67 @@
-(define
-  segments 120
-  x-off 30
-  y-off 30
-  w (- canvas/width (* x-off 2))
-  wid (/ w (* segments 1.2))
+;; some of the interp functions accept defining parameters as well as a 't' value
+;; but interp/build returns a structure that's used by interp/values and interp/value
 
-  easer (interp/build from: [0 1] to: [0 w] mapping: {linear (gen/select from: ease/presets)})
-  )
+;; generally any function that returns a structure will be called build and  have a complimentary function called 'value' to return a value
 
-(fence (t num: segments)
-  (rect position: [(+ x-off (* t w)) (+ y-off (/ (interp/value from: easer t: t) 2))]
-        width: wid
-        height: (interp/value from: easer t: t)
-        colour: red))
+;; some other functions like path/* take functions
+
+;; need
+;; interp/line
+;; (interp/line from: [10 10] to: [500 500]) ; + clamping and mapping
+
+;; math/normal given 2 points on a line
+
+(curves)
+
+(fn (curves seed: 123
+            source-pos: [200 500]
+            source-size: 80
+            dest-pos: [800 500]
+            dest-size: 200
+            num-curves: 4)
+  (define
+
+    half-source-size (/ source-size 2)
+    half-dest-size (/ dest-size 2)
+    source-rng (prng/build min: (* half-source-size -1) max: half-source-size seed: seed)
+    dest-rng (prng/build min: (* half-dest-size -1) max: half-dest-size seed: (+ 1 seed))
+
+    )
+  (loop (i to: num-curves)
+    (define
+      pa [(+ (nth from: source-pos n: 0) (prng/value from: source-rng))
+          (+ (nth from: source-pos n: 1) (prng/value from: source-rng))]
+      pd [(+ (nth from: dest-pos n: 0) (prng/value from: dest-rng))
+          (+ (nth from: dest-pos n: 1) (prng/value from: dest-rng))]
+      trace (interp/build from: pa to: pd)
+      pb (interp/value from: trace t: 0.333)
+      pc (interp/value from: trace t: 0.666)
+      )
+
+    ;; (bezier coords: [[0 0] [1 0] [0 1] [1 1]]
+    ;;         line-width: 0.005
+    ;;         colour: blue
+    ;;         tessellation: 50)
+
+    ;; debug
+    (rect position: source-pos
+          width: source-size
+          height: source-size
+          colour: (col/rgb g: 1.0 alpha: 0.2))
+    (rect position: dest-pos
+          width: dest-size
+          height: dest-size
+          colour: (col/rgb g: 1.0 alpha: 0.2))
+    (circle position: pb
+            radius: 50)
+    (circle position: pb
+            radius: 50)
+    (circle position: [500 500]
+            radius: 50)
+    (line from: pa
+          to: pd
+          colour: red
+          width: 10)
 
 
-(on-matrix-stack
-  (translate vector: [x-off y-off])
-  (scale scalar: w)
-	(bezier coords: [[0 0] [1 0] [0 1] [1 1]]
-    	    line-width: 0.005
-        	colour: blue
-        	tessellation: 50))
+    ))

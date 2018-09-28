@@ -2007,7 +2007,7 @@ sen_var* bind_path_linear(sen_vm* vm, i32 num_args) {
   f32 steps   = 10.0f;
   f32 t_start = 0.0f;
   f32 t_end   = 1.0f;
-  i32 fn      = -1; // todo: rename to fn
+  i32 fn      = -1;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_FROM, from);
@@ -2034,7 +2034,7 @@ sen_var* bind_path_circle(sen_vm* vm, i32 num_args) {
   f32 steps   = 10.0f;
   f32 t_start = 0.0f;
   f32 t_end   = 1.0f;
-  i32 fn      = -1; // todo: rename to fn
+  i32 fn      = -1;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_POSITION, pos);
@@ -2059,7 +2059,7 @@ sen_var* bind_path_spline(sen_vm* vm, i32 num_args) {
   f32 steps    = 10.0f;
   f32 t_start  = 0.0f;
   f32 t_end    = 1.0f;
-  i32 fn       = -1; // todo: rename to fn
+  i32 fn       = -1;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_COORD3(INAME_COORDS, coords);
@@ -2084,7 +2084,7 @@ sen_var* bind_path_bezier(sen_vm* vm, i32 num_args) {
   f32 steps    = 10.0f;
   f32 t_start  = 0.0f;
   f32 t_end    = 1.0f;
-  i32 fn       = -1; // todo: rename to fn
+  i32 fn       = -1;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_COORD4(INAME_COORDS, coords);
