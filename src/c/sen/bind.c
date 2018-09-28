@@ -73,7 +73,7 @@ typedef struct {
   f32                     to1;
   i32                     clamping;
   i32                     mapping;
-} sen_parametric_state;
+} sen_interp_state;
 
 // [ VAR_VECTOR ->
 //  (VAR_INT(structure_id) + x, y, distance) ->
@@ -1826,7 +1826,7 @@ sen_var* bind_prng_perlin(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-sen_var* bind_parametric_build(sen_vm* vm, i32 num_args) {
+sen_var* bind_interp_build(sen_vm* vm, i32 num_args) {
   f32 from[]   = {0.0f, 1.0f};
   f32 to[]     = {0.0f, 100.0f};
   i32 clamping = INAME_FALSE;
@@ -1866,8 +1866,8 @@ sen_var* bind_parametric_build(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-sen_var* bind_parametric_value(sen_vm* vm, i32 num_args) {
-  sen_parametric_state from;
+sen_var* bind_interp_value(sen_vm* vm, i32 num_args) {
+  sen_interp_state from;
   f32                  t = 0.0f;
 
   from.structure_id = 0;
@@ -1903,7 +1903,7 @@ sen_var* bind_parametric_value(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-sen_var* bind_parametric_cos(sen_vm* vm, i32 num_args) {
+sen_var* bind_interp_cos(sen_vm* vm, i32 num_args) {
   f32 amplitude = 1.0f;
   f32 frequency = 1.0f;
   f32 t         = 1.0f; // t goes from 0 to TAU
@@ -1922,7 +1922,7 @@ sen_var* bind_parametric_cos(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-sen_var* bind_parametric_sin(sen_vm* vm, i32 num_args) {
+sen_var* bind_interp_sin(sen_vm* vm, i32 num_args) {
   f32 amplitude = 1.0f;
   f32 frequency = 1.0f;
   f32 t         = 1.0f; // t goes from 0 to TAU
@@ -1939,7 +1939,7 @@ sen_var* bind_parametric_sin(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-sen_var* bind_parametric_bezier(sen_vm* vm, i32 num_args) {
+sen_var* bind_interp_bezier(sen_vm* vm, i32 num_args) {
   f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f,
                   600.0f, 700.0f, 900.0f, 500.0f};
   f32 t        = 1.0f;
@@ -1959,7 +1959,7 @@ sen_var* bind_parametric_bezier(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-sen_var* bind_parametric_bezier_tangent(sen_vm* vm, i32 num_args) {
+sen_var* bind_interp_bezier_tangent(sen_vm* vm, i32 num_args) {
   f32 coords[] = {100.0f, 500.0f, 300.0f, 300.0f,
                   600.0f, 700.0f, 900.0f, 500.0f};
   f32 t        = 1.0f;
@@ -1979,7 +1979,34 @@ sen_var* bind_parametric_bezier_tangent(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
-sen_var* bind_parametric_circle(sen_vm* vm, i32 num_args) {
+sen_var* bind_interp_line(sen_vm* vm, i32 num_args) {
+  f32 from[] = {0.0f, 0.0f};
+  f32 to[] = {1000.0f, 1000.0f};
+  i32 clamping = INAME_FALSE;
+  i32 mapping  = INAME_LINEAR;
+  f32 t          = 0.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(INAME_FROM, from);
+  READ_STACK_ARG_VEC2(INAME_TO, to);
+  // true | FALSE, clamping); // true | false
+  READ_STACK_ARG_NAME(INAME_CLAMPING, clamping);
+  // linear or one of the easing functions
+  READ_STACK_ARG_NAME(INAME_MAPPING, mapping);
+  READ_STACK_ARG_F32(INAME_T, t);
+  READ_STACK_ARGS_END;
+
+  f32 x = sen_parametric_scalar(from[0], to[0], mapping, clamping, t);
+  f32 y = sen_parametric_scalar(from[1], to[1], mapping, clamping, t);
+
+  g_var_scratch.type         = VAR_2D;
+  g_var_scratch.f32_array[0] = x;
+  g_var_scratch.f32_array[1] = y;
+
+  return &g_var_scratch;
+}
+
+sen_var* bind_interp_circle(sen_vm* vm, i32 num_args) {
   f32 position[] = {0.0f, 0.0f};
   f32 radius     = 1.0f;
   f32 t          = 0.0f;
@@ -2616,14 +2643,15 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "prng/value", &bind_prng_value);
   declare_native(word_lut, e, "prng/perlin", &bind_prng_perlin);
 
-  declare_native(word_lut, e, "interp/build", &bind_parametric_build);
-  declare_native(word_lut, e, "interp/value", &bind_parametric_value);
-  declare_native(word_lut, e, "interp/cos", &bind_parametric_cos);
-  declare_native(word_lut, e, "interp/sin", &bind_parametric_sin);
-  declare_native(word_lut, e, "interp/bezier", &bind_parametric_bezier);
+  declare_native(word_lut, e, "interp/build", &bind_interp_build);
+  declare_native(word_lut, e, "interp/value", &bind_interp_value);
+  declare_native(word_lut, e, "interp/cos", &bind_interp_cos);
+  declare_native(word_lut, e, "interp/sin", &bind_interp_sin);
+  declare_native(word_lut, e, "interp/bezier", &bind_interp_bezier);
   declare_native(word_lut, e, "interp/bezier-tangent",
-                 &bind_parametric_bezier_tangent);
-  declare_native(word_lut, e, "interp/circle", &bind_parametric_circle);
+                 &bind_interp_bezier_tangent);
+  declare_native(word_lut, e, "interp/line", &bind_interp_line);
+  declare_native(word_lut, e, "interp/circle", &bind_interp_circle);
 
   declare_native(word_lut, e, "path/linear", &bind_path_linear);
   declare_native(word_lut, e, "path/circle", &bind_path_circle);

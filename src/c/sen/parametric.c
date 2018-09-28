@@ -1,5 +1,6 @@
 #include "parametric.h"
 
+#include "config.h"
 #include "ease.h"
 #include "mathutil.h"
 
@@ -20,6 +21,19 @@ f32 sen_parametric(f32 val, f32 from_a, f32 from_b, f32 to_a, f32 to_b,
   if (clamping) {
     res = from_interp < 0.0f ? to_a : (from_interp > 1.0f) ? to_b : res;
   }
+
+  return res;
+}
+
+f32 sen_parametric_scalar(f32 a, f32 b, i32 mapping, bool clamping, f32 t) {
+  f32 new_t = easing(t, mapping);
+  f32 res = lerp(new_t, a, b);
+
+  if (clamping) {
+    res = new_t < 0.0f ? a : (new_t > 1.0f) ? b : res;
+  }
+
+  SEN_LOG("a: %.2f, b: %.2f, t: %.2f", a, b, t);
 
   return res;
 }

@@ -33,9 +33,8 @@
           (+ (nth from: source-pos n: 1) (prng/value from: source-rng))]
       pd [(+ (nth from: dest-pos n: 0) (prng/value from: dest-rng))
           (+ (nth from: dest-pos n: 1) (prng/value from: dest-rng))]
-      trace (interp/build from: pa to: pd)
-      pb (interp/value from: trace t: 0.333)
-      pc (interp/value from: trace t: 0.666)
+      pb (interp/line from: pa to: pd t: 0.333)
+      pc (interp/line from: pa to: pd t: 0.666)
       )
 
     ;; (bezier coords: [[0 0] [1 0] [0 1] [1 1]]
@@ -53,11 +52,11 @@
           height: dest-size
           colour: (col/rgb g: 1.0 alpha: 0.2))
     (circle position: pb
-            radius: 50)
-    (circle position: pb
-            radius: 50)
-    (circle position: [500 500]
-            radius: 50)
+            radius: 50
+            colour: (col/rgb b: 1.0 alpha: 0.2))
+    (circle position: pc
+            radius: 50
+            colour: (col/rgb r: 1.0 alpha: 0.2))
     (line from: pa
           to: pd
           colour: red
