@@ -1979,6 +1979,27 @@ sen_var* bind_interp_bezier_tangent(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
+sen_var* bind_interp_ray(sen_vm* vm, i32 num_args) {
+  f32 point[] = {0.0f, 0.0f};
+  f32 direction[] = {1000.0f, 1000.0f};
+  f32 t          = 0.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(INAME_POINT, point);
+  READ_STACK_ARG_VEC2(INAME_DIRECTION, direction);
+  READ_STACK_ARG_F32(INAME_T, t);
+  READ_STACK_ARGS_END;
+
+  f32 x, y;
+  sen_parametric_ray(&x, &y, point, direction, t);
+
+  g_var_scratch.type         = VAR_2D;
+  g_var_scratch.f32_array[0] = x;
+  g_var_scratch.f32_array[1] = y;
+
+  return &g_var_scratch;
+}
+
 sen_var* bind_interp_line(sen_vm* vm, i32 num_args) {
   f32 from[] = {0.0f, 0.0f};
   f32 to[] = {1000.0f, 1000.0f};
@@ -2650,6 +2671,7 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "interp/bezier", &bind_interp_bezier);
   declare_native(word_lut, e, "interp/bezier-tangent",
                  &bind_interp_bezier_tangent);
+  declare_native(word_lut, e, "interp/ray", &bind_interp_ray);
   declare_native(word_lut, e, "interp/line", &bind_interp_line);
   declare_native(word_lut, e, "interp/circle", &bind_interp_circle);
 

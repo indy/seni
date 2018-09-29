@@ -11,3 +11,4 @@ void sen_parametric_bezier(f32* outx, f32* outy, f32* coords, f32 t);
 void sen_parametric_bezier_tangent(f32* outx, f32* outy, f32* coords, f32 t);
 void sen_parametric_circle(f32* outx, f32* outy, f32* position, f32 radius,
                            f32 t);
+void sen_parametric_ray(f32* outx, f32* outy, f32* point, f32* direction, f32 t);
