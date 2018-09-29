@@ -5,22 +5,7 @@
 
 ;; some other functions like path/* take functions
 
-(curves-to-curve seed: 123
-                 source-pos: [{273 (gen/scalar min: 0 max: 1000)}
-                              {183 (gen/scalar min: 0 max: 1000)}]
-                 source-size: {9 (gen/scalar min: 5 max: 50)}
-                 dest-curve: {[[896 166]
-                               [82 15]
-                               [21 481]
-                               [861 931]]
-                              (gen/2d min: 0 max: 1000)}
-                 num-curves: {40 (gen/scalar min: 3 max: 50)})
-                                        ;(curves-to-area)
-
-;; pass in a function to curves-to-curve that accepts:
-;; bezier to draw, ith, t, rng
-
-;; also call a function with the dest-curve only
+(curves-to-area)
 
 ;; bezier curves that all end on a pre-defined curve
 (fn (curves-to-curve seed: 123
@@ -42,17 +27,17 @@
 
       norm (math/normal vec1: pa vec2: pd)
       pb (interp/ray point: (interp/line from: pa to: pd t: 0.333)
-                     direction: norm t: 150)
+                      direction: norm t: 150)
       pc (interp/ray point: (interp/line from: pa to: pd t: 0.666)
                      direction: norm t: -150)
 
 
       )
 
-    (bezier coords: [pa pb pc pd]
-            line-width: 5
-            colour: blue
-            tessellation: 50)
+     (bezier coords: [pa pb pc pd]
+             line-width: 5
+             colour: blue
+             tessellation: 50)
 
     ;; debug
     (rect position: source-pos
@@ -98,15 +83,15 @@
           (+ (nth from: dest-pos n: 1) (prng/value from: dest-rng))]
       norm (math/normal vec1: pa vec2: pd)
       pb (interp/ray point: (interp/line from: pa to: pd t: 0.333)
-                     direction: norm t: 150)
+                      direction: norm t: 150)
       pc (interp/ray point: (interp/line from: pa to: pd t: 0.666)
-                     direction: norm t: -150)
+                      direction: norm t: -150)
       )
 
-    (bezier coords: [pa pb pc pd]
-            line-width: 5
-            colour: blue
-            tessellation: 50)
+     (bezier coords: [pa pb pc pd]
+             line-width: 5
+             colour: blue
+             tessellation: 50)
 
     ;; debug
     (rect position: source-pos

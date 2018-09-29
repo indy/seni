@@ -5,62 +5,96 @@
 
 ;; some other functions like path/* take functions
 
-;; need
-;; interp/line
-;; (interp/line from: [10 10] to: [500 500]) ; + clamping and mapping
+;; all path/* functions should take a mapping
 
-;; math/normal given 2 points on a line
+(define
+  dest-curve {[[800 100] [600 200] [700 300] [800 500]] (gen/2d min: 0 max: 1000)})
 
-(curves)
+;;(curves-to-curve f: (address-of pass-debug))
+(curves-to-curve f: (address-of pass-background-bubbles)
+                 dest-curve: dest-curve)
+(curves-to-curve f: (address-of pass-background-curves)
+                 dest-curve: dest-curve)
+(curves-to-curve f: (address-of pass-foreground-curves)
+                 dest-curve: dest-curve)
 
-(fn (curves seed: 123
-            source-pos: [200 500]
-            source-size: 80
-            dest-pos: [800 500]
-            dest-size: 200
-            num-curves: 4)
+
+(fn (background-bubble position: [0 0] t: 0)
+    (circle position: position
+            radius: 10
+            colour: red))
+
+(fn (pass-background-bubbles curve: [[100 100] [200 200] [300 300] [400 400]]
+                             curves-in-piece: 1
+                             curve-id: 1)
+    ;; (define
+    ;;   rng (prng/build seed: (+ curve-id (nth from: (nth from: curve n: 0) n: 0)))
+    ;;   p (prng/value from: rng))
+    (path/bezier coords: curve
+                 steps: 10
+                 fn: (address-of background-bubble)))
+
+(fn (pass-background-curves curve: [[100 100] [200 200] [300 300] [400 400]]
+                            curves-in-piece: 1
+                            curve-id: 1)
+    (bezier coords: curve
+            line-width: 15
+            colour: green
+            tessellation: 50))
+
+(fn (pass-foreground-curves curve: [[100 100] [200 200] [300 300] [400 400]]
+                            curves-in-piece: 1
+                            curve-id: 1)
+    (bezier coords: curve
+            line-width: 5
+            colour: blue
+            tessellation: 50))
+
+(fn (pass-debug curve: [[100 100] [200 200] [300 300] [400 400]]
+                curves-in-piece: 1
+                curve-id: 1)
+    (circle position: (nth from: curve n: 1)
+            radius: 30
+            colour: (col/rgb r: 1.0 b: 1.0 alpha: 0.2))
+    (circle position: (nth from: curve n: 2)
+            radius: 30
+            colour: (col/rgb r: 1.0 g: 1.0 alpha: 0.2))
+    (line from: (nth from: curve n: 0)
+          to: (nth from: curve n: 3)
+          colour: (col/rgb r: 0.4 alpha: 0.1)
+          width: 10))
+
+;; bezier curves that all end on a pre-defined curve
+(fn (curves-to-curve seed: 123
+                     source-pos: [200 500]
+                     source-size: 18
+                     dest-curve: [[800 100] [600 200] [700 300] [800 500]]
+                     num-curves: 11
+                     f: 1)
   (define
-
     half-source-size (/ source-size 2)
-    half-dest-size (/ dest-size 2)
     source-rng (prng/build min: (* half-source-size -1) max: half-source-size seed: seed)
-    dest-rng (prng/build min: (* half-dest-size -1) max: half-dest-size seed: (+ 1 seed))
-
-    )
+    remap (interp/build from: [0 (- num-curves 1)] to: [0 1]))
   (loop (i to: num-curves)
     (define
+      t (interp/value from: remap t: i)
       pa [(+ (nth from: source-pos n: 0) (prng/value from: source-rng))
           (+ (nth from: source-pos n: 1) (prng/value from: source-rng))]
-      pd [(+ (nth from: dest-pos n: 0) (prng/value from: dest-rng))
-          (+ (nth from: dest-pos n: 1) (prng/value from: dest-rng))]
-      pb (interp/line from: pa to: pd t: 0.333)
-      pc (interp/line from: pa to: pd t: 0.666)
-      )
 
-    ;; (bezier coords: [[0 0] [1 0] [0 1] [1 1]]
-    ;;         line-width: 0.005
-    ;;         colour: blue
-    ;;         tessellation: 50)
+      pd (interp/bezier coords: dest-curve t: t)
 
-    ;; debug
-    (rect position: source-pos
-          width: source-size
-          height: source-size
-          colour: (col/rgb g: 1.0 alpha: 0.2))
-    (rect position: dest-pos
-          width: dest-size
-          height: dest-size
-          colour: (col/rgb g: 1.0 alpha: 0.2))
-    (circle position: pb
-            radius: 50
-            colour: (col/rgb b: 1.0 alpha: 0.2))
-    (circle position: pc
-            radius: 50
-            colour: (col/rgb r: 1.0 alpha: 0.2))
-    (line from: pa
-          to: pd
-          colour: red
-          width: 10)
+      norm (math/normal vec1: pa vec2: pd)
+      pb (interp/ray point: (interp/line from: pa to: pd t: 0.333)
+                      direction: norm t: 150)
+      pc (interp/ray point: (interp/line from: pa to: pd t: 0.666)
+                     direction: norm t: -150))
 
+    ;; (rect position: source-pos
+    ;;       width: source-size
+    ;;       height: source-size
+    ;;       colour: (col/rgb g: 1.0 alpha: 0.2))
 
-    ))
+    (fn-call (f curve: [pa pb pc pd]
+                curves-in-piece: num-curves
+                curve-id: i
+                ))))
