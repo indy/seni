@@ -1621,6 +1621,26 @@ sen_var* bind_math_distance(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
+sen_var* bind_math_normal(sen_vm* vm, i32 num_args) {
+  f32 vec1[] = {0.0f, 0.0f};
+  f32 vec2[] = {0.0f, 0.0f};
+
+  // update with values from stack
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(INAME_VEC1, vec1);
+  READ_STACK_ARG_VEC2(INAME_VEC2, vec2);
+  READ_STACK_ARGS_END;
+
+  f32 x, y;
+  normal(&x, &y, vec1[0], vec1[1], vec2[0], vec2[1]);
+
+  g_var_scratch.type         = VAR_2D;
+  g_var_scratch.f32_array[0] = x;
+  g_var_scratch.f32_array[1] = y;
+
+  return &g_var_scratch;
+}
+
 sen_var* bind_math_clamp(sen_vm* vm, i32 num_args) {
   // todo: try and move functions like this into ones that initially
   // create and return a function that takes a single argument.
@@ -2653,6 +2673,7 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "col/value", &bind_col_value);
 
   declare_native(word_lut, e, "math/distance", &bind_math_distance);
+  declare_native(word_lut, e, "math/normal", &bind_math_normal);
   declare_native(word_lut, e, "math/clamp", &bind_math_clamp);
   declare_native(word_lut, e, "math/radians->degrees",
                  &bind_math_radians_to_degrees);
