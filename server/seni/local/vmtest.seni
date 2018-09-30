@@ -8,7 +8,8 @@
 ;; all path/* functions should take a mapping
 
 (define
-  dest-curve {[[800 100] [600 200] [700 300] [800 500]] (gen/2d min: 0 max: 1000)})
+  dest-curve {[[800 100] [600 200] [700 300] [800 500]] (gen/2d min: 0 max: 1000)}
+  )
 
 ;;(curves-to-curve f: (address-of pass-debug))
 (curves-to-curve f: (address-of pass-background-bubbles)
@@ -16,6 +17,8 @@
 (curves-to-curve f: (address-of pass-background-curves)
                  dest-curve: dest-curve)
 (curves-to-curve f: (address-of pass-foreground-curves)
+                 dest-curve: dest-curve)
+(curves-to-curve f: (address-of pass-foreground-bubbles)
                  dest-curve: dest-curve)
 
 
@@ -32,7 +35,8 @@
     ;;   p (prng/value from: rng))
     (path/bezier coords: curve
                  steps: 10
-                 fn: (address-of background-bubble)))
+                 fn: (address-of background-bubble)
+                 mapping: ease/cubic-out))
 
 (fn (pass-background-curves curve: [[100 100] [200 200] [300 300] [400 400]]
                             curves-in-piece: 1
@@ -63,6 +67,20 @@
           to: (nth from: curve n: 3)
           colour: (col/rgb r: 0.4 alpha: 0.1)
           width: 10))
+
+(fn (foreground-bubble position: [0 0] t: 0)
+    (circle position: position
+            radius: 100
+            colour: (col/rgb r: 0.9 alpha: 0.03)))
+
+(fn (pass-foreground-bubbles curve: [[100 100] [200 200] [300 300] [400 400]]
+                             curves-in-piece: 1
+                             curve-id: 1)
+    (path/bezier coords: curve
+                 steps: 10
+                 fn: (address-of foreground-bubble)
+                 mapping: ease/cubic-out))
+
 
 ;; bezier curves that all end on a pre-defined curve
 (fn (curves-to-curve seed: 123

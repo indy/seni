@@ -1,20 +1,23 @@
-* TODO [0/16]
-  1. [ ] get npm run start to work again
-  2. [ ] program_allocate uses calloc, make sure program_free is called
-  3. [ ] bind_gen_col set min/max according to colour format
-  4. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
-  5. [ ] quilt
-  6. [ ] map (1669-zero.sen)
-  7. [ ] better error messages when gen/scalar was mis-spelt
-  8. [ ] {red (gen/col alpha: 1)} bug?
-  9. [ ] poly should also accept a uv parameter
-  10. [ ] remove vm/env from genotype_list_create_initial_generation
-  11. [ ] impl: initial seed
-  12. [ ] add an END token to serialized output, use as a sanity check?
-  13. [ ] add unit tests for compiling with a genotype
-  14. [ ] ensure that there's a dist folder before running npm run build:wasm
-  15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  16. [ ] look into restrict keyword in C99
+* TODO [0/19]
+  1. [ ] a page that starts at editing a particular piece
+  2. [ ] sen files should be seni files
+  3. [ ] path/linear: take t-start/t-end into account
+  4. [ ] get npm run start to work again
+  5. [ ] program_allocate uses calloc, make sure program_free is called
+  6. [ ] bind_gen_col set min/max according to colour format
+  7. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
+  8. [ ] quilt
+  9. [ ] map (1669-zero.sen)
+  10. [ ] better error messages when gen/scalar was mis-spelt
+  11. [ ] {red (gen/col alpha: 1)} bug?
+  12. [ ] poly should also accept a uv parameter
+  13. [ ] remove vm/env from genotype_list_create_initial_generation
+  14. [ ] impl: initial seed
+  15. [ ] add an END token to serialized output, use as a sanity check?
+  16. [ ] add unit tests for compiling with a genotype
+  17. [ ] ensure that there's a dist folder before running npm run build:wasm
+  18. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  19. [ ] look into restrict keyword in C99
 ** check node->src and node->src_len
    node_pretty_print
 
