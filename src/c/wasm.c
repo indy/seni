@@ -1,18 +1,18 @@
 #include <stdlib.h>
 #include <webassembly.h>
 
-#include "sen/cursor.h"
-#include "sen/genetic.h"
-#include "sen/js_imports.h"
-#include "sen/lang.h"
-#include "sen/lib.h"
-#include "sen/parser.h"
-#include "sen/printf.h"
-#include "sen/render_packet.h"
-#include "sen/timing.h"
-#include "sen/unparser.h"
-#include "sen/vm_compiler.h"
-#include "sen/vm_interpreter.h"
+#include "seni/cursor.h"
+#include "seni/genetic.h"
+#include "seni/js_imports.h"
+#include "seni/lang.h"
+#include "seni/lib.h"
+#include "seni/parser.h"
+#include "seni/printf.h"
+#include "seni/render_packet.h"
+#include "seni/timing.h"
+#include "seni/unparser.h"
+#include "seni/vm_compiler.h"
+#include "seni/vm_interpreter.h"
 
 #define SOURCE_BUFFER_SIZE 20000
 char* g_source_buffer;

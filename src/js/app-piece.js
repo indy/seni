@@ -16,8 +16,8 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import GLRenderer from './sen/GLRenderer';
-import Util from './sen/Util';
+import GLRenderer from './seni/GLRenderer';
+import Util from './seni/Util';
 import Job from './job';
 import { jobRender,
          jobUnparse,

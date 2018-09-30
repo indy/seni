@@ -1,16 +1,16 @@
-#include "sen/bind.h"
-#include "sen/genetic.h"
-#include "sen/keyword_iname.h"
-#include "sen/lang.h"
-#include "sen/lib.h"
-#include "sen/parser.h"
-#include "sen/printf.h"
-#include "sen/render_packet.h"
-#include "sen/shapes.h"
-#include "sen/timing.h"
-#include "sen/uv_mapper.h"
-#include "sen/vm_compiler.h"
-#include "sen/vm_interpreter.h"
+#include "seni/bind.h"
+#include "seni/genetic.h"
+#include "seni/keyword_iname.h"
+#include "seni/lang.h"
+#include "seni/lib.h"
+#include "seni/parser.h"
+#include "seni/printf.h"
+#include "seni/render_packet.h"
+#include "seni/shapes.h"
+#include "seni/timing.h"
+#include "seni/uv_mapper.h"
+#include "seni/vm_compiler.h"
+#include "seni/vm_interpreter.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -230,21 +230,21 @@ void print_compiled_program(char* source) {
 }
 
 void print_usage() {
-#ifdef SEN_BUILD_WINDOWS
+#ifdef SENI_BUILD_WINDOWS
   SEN_PRINT("native.exe                            << prints usage");
-  SEN_PRINT("native.exe sen\\c\\script.sen         << execute the script "
+  SEN_PRINT("native.exe seni\\c\\script.seni         << execute the script "
             "using defaults and give stats");
-  SEN_PRINT("native.exe sen\\c\\script.sen -s 43   << execute the script "
+  SEN_PRINT("native.exe seni\\c\\script.seni -s 43   << execute the script "
             "using the given seed and give stats");
   SEN_PRINT(
-      "native.exe sen\\c\\script.sen -d      << debug - output the bytecode");
+      "native.exe sen\\c\\script.seni -d      << debug - output the bytecode");
 #else
   SEN_PRINT("native                            << prints usage");
-  SEN_PRINT("native sen/c/script.sen         << execute the script using "
+  SEN_PRINT("native seni/c/script.sen         << execute the script using "
             "defaults and give stats");
-  SEN_PRINT("native sen/c/script.sen -s 43   << execute the script using "
+  SEN_PRINT("native seni/c/script.seni -s 43   << execute the script using "
             "the given seed and give stats");
-  SEN_PRINT("native sen/c/script.sen -d      << debug - output the bytecode");
+  SEN_PRINT("native seni/c/script.seni -d      << debug - output the bytecode");
 #endif
 }
 

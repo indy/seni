@@ -1461,7 +1461,7 @@ sen_var* bind_col_build_procedural(sen_vm* vm, i32 num_args) {
   // colour fn structure need to store 4 colours (for bezier-fn)
   // first element's value.i will represent procedural, bezier or quadratic
 
-  i32 preset = INAME_ROBOCOP;
+  i32 preset = 0;
   f32 alpha  = 1.0f;
   f32 a[3], b[3], c[3], d[3];
 

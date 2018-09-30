@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import GLRenderer from './sen/GLRenderer';
+import GLRenderer from './seni/GLRenderer';
 
 import History from './ui/History';
 import Editor from './ui/Editor';
@@ -602,7 +602,7 @@ function showEditFromGallery(store, element) {
 
 // take the height of the navbar into consideration
 function resizeContainers() {
-  const navbar = document.getElementById('sen-navbar');
+  const navbar = document.getElementById('seni-navbar');
 
   const edit = document.getElementById('edit-container');
   edit.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
@@ -708,7 +708,7 @@ function setupUI(store) {
                  d.getElementById('edit-container'),
                  d.getElementById('evolve-container')],
     // the top nav bar across the state
-    navbar: d.getElementById('sen-navbar'),
+    navbar: d.getElementById('seni-navbar'),
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById('render-img'),
     // console CodeMirror element in the edit screen
@@ -803,7 +803,7 @@ function setupUI(store) {
 
     // remove target='_blank' and add a download attribute
     highResLink.removeAttribute('target');
-    highResLink.setAttribute('download', 'sen-image.png');
+    highResLink.setAttribute('download', 'seni-image.png');
 
     highResLink.click();
 

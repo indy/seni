@@ -5,7 +5,7 @@ module.exports = [
   {
     mode: "development",
     entry: {
-      sen: ['./src/js/index.js'],
+      seni: ['./src/js/index.js'],
       worker: ['./src/js/worker.js'],
       piece: ['./src/js/piece.js']
     },

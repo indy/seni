@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Util from './sen/Util';
+import Util from './seni/Util';
 import { SenMode } from './ui/SenMode';
 import Job from './job';
 import { jobBuildTraits,
