@@ -2076,6 +2076,7 @@ sen_var* bind_path_linear(sen_vm* vm, i32 num_args) {
   f32 t_start = 0.0f;
   f32 t_end   = 1.0f;
   i32 fn      = -1;
+  i32 mapping  = INAME_LINEAR;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_FROM, from);
@@ -2084,6 +2085,7 @@ sen_var* bind_path_linear(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_T_START, t_start);
   READ_STACK_ARG_F32(INAME_T_END, t_end);
   READ_STACK_ARG_I32(INAME_FN, fn);
+  READ_STACK_ARG_NAME(INAME_MAPPING, mapping);
   READ_STACK_ARGS_END;
 
   if (fn == -1) {
@@ -2091,7 +2093,7 @@ sen_var* bind_path_linear(sen_vm* vm, i32 num_args) {
   }
 
   path_linear(vm, fn, (i32)steps, t_start, t_end, from[0], from[1], to[0],
-              to[1]);
+              to[1], mapping);
 
   return &g_var_true;
 }
@@ -2103,6 +2105,7 @@ sen_var* bind_path_circle(sen_vm* vm, i32 num_args) {
   f32 t_start = 0.0f;
   f32 t_end   = 1.0f;
   i32 fn      = -1;
+  i32 mapping  = INAME_LINEAR;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_POSITION, pos);
@@ -2111,13 +2114,14 @@ sen_var* bind_path_circle(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_T_START, t_start);
   READ_STACK_ARG_F32(INAME_T_END, t_end);
   READ_STACK_ARG_I32(INAME_FN, fn);
+  READ_STACK_ARG_NAME(INAME_MAPPING, mapping);
   READ_STACK_ARGS_END;
 
   if (fn == -1) {
     return &g_var_true;
   }
 
-  path_circle(vm, fn, (i32)steps, t_start, t_end, pos[0], pos[1], radius);
+  path_circle(vm, fn, (i32)steps, t_start, t_end, pos[0], pos[1], radius, mapping);
 
   return &g_var_true;
 }
@@ -2128,6 +2132,7 @@ sen_var* bind_path_spline(sen_vm* vm, i32 num_args) {
   f32 t_start  = 0.0f;
   f32 t_end    = 1.0f;
   i32 fn       = -1;
+  i32 mapping  = INAME_LINEAR;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_COORD3(INAME_COORDS, coords);
@@ -2135,13 +2140,14 @@ sen_var* bind_path_spline(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_T_START, t_start);
   READ_STACK_ARG_F32(INAME_T_END, t_end);
   READ_STACK_ARG_I32(INAME_FN, fn);
+  READ_STACK_ARG_NAME(INAME_MAPPING, mapping);
   READ_STACK_ARGS_END;
 
   if (fn == -1) {
     return &g_var_true;
   }
 
-  path_spline(vm, fn, (i32)steps, t_start, t_end, coords);
+  path_spline(vm, fn, (i32)steps, t_start, t_end, coords, mapping);
 
   return &g_var_true;
 }
@@ -2153,6 +2159,7 @@ sen_var* bind_path_bezier(sen_vm* vm, i32 num_args) {
   f32 t_start  = 0.0f;
   f32 t_end    = 1.0f;
   i32 fn       = -1;
+  i32 mapping  = INAME_LINEAR;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_COORD4(INAME_COORDS, coords);
@@ -2160,13 +2167,14 @@ sen_var* bind_path_bezier(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_T_START, t_start);
   READ_STACK_ARG_F32(INAME_T_END, t_end);
   READ_STACK_ARG_I32(INAME_FN, fn);
+  READ_STACK_ARG_NAME(INAME_MAPPING, mapping);
   READ_STACK_ARGS_END;
 
   if (fn == -1) {
     return &g_var_true;
   }
 
-  path_bezier(vm, fn, (i32)steps, t_start, t_end, coords);
+  path_bezier(vm, fn, (i32)steps, t_start, t_end, coords, mapping);
 
   return &g_var_true;
 }
