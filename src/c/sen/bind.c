@@ -778,6 +778,49 @@ sen_var* bind_stroked_bezier_rect(sen_vm* vm, i32 num_args) {
   return &g_var_true;
 }
 
+sen_var* bind_translate(sen_vm* vm, i32 num_args) {
+  f32 vector[] = {0.0f, 0.0f};
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(INAME_VECTOR, vector);
+  READ_STACK_ARGS_END;
+
+  matrix_stack_translate(vm->matrix_stack, vector[0], vector[1]);
+
+  return &g_var_true;
+}
+
+sen_var* bind_rotate(sen_vm* vm, i32 num_args) {
+  // angle in degrees
+  f32 angle = 0.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_F32(INAME_ANGLE, angle);
+  READ_STACK_ARGS_END;
+
+  matrix_stack_rotate(vm->matrix_stack, deg_to_rad(angle));
+
+  return &g_var_true;
+}
+
+sen_var* bind_scale(sen_vm* vm, i32 num_args) {
+  f32 vector[] = {1.0f, 1.0f};
+  f32 scalar   = 1.0f;
+
+  READ_STACK_ARGS_BEGIN;
+  READ_STACK_ARG_VEC2(INAME_VECTOR, vector);
+  READ_STACK_ARG_F32(INAME_SCALAR, scalar);
+  READ_STACK_ARGS_END;
+
+  if (scalar != 1.0f) {
+    matrix_stack_scale(vm->matrix_stack, scalar, scalar);
+  } else {
+    matrix_stack_scale(vm->matrix_stack, vector[0], vector[1]);
+  }
+
+  return &g_var_true;
+}
+
 sen_var* bind_col_convert(sen_vm* vm, i32 num_args) {
   // (col/convert colour: col format: LAB)
 
@@ -1418,7 +1461,7 @@ sen_var* bind_col_build_procedural(sen_vm* vm, i32 num_args) {
   // colour fn structure need to store 4 colours (for bezier-fn)
   // first element's value.i will represent procedural, bezier or quadratic
 
-  i32 preset = 0;
+  i32 preset = INAME_ROBOCOP;
   f32 alpha  = 1.0f;
   f32 a[3], b[3], c[3], d[3];
 
@@ -1559,49 +1602,6 @@ sen_var* bind_col_value(sen_vm* vm, i32 num_args) {
 
   colour_as_var(&g_var_scratch, &ret_colour);
   return &g_var_scratch;
-}
-
-sen_var* bind_translate(sen_vm* vm, i32 num_args) {
-  f32 vector[] = {0.0f, 0.0f};
-
-  READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VEC2(INAME_VECTOR, vector);
-  READ_STACK_ARGS_END;
-
-  matrix_stack_translate(vm->matrix_stack, vector[0], vector[1]);
-
-  return &g_var_true;
-}
-
-sen_var* bind_rotate(sen_vm* vm, i32 num_args) {
-  // angle in degrees
-  f32 angle = 0.0f;
-
-  READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_F32(INAME_ANGLE, angle);
-  READ_STACK_ARGS_END;
-
-  matrix_stack_rotate(vm->matrix_stack, deg_to_rad(angle));
-
-  return &g_var_true;
-}
-
-sen_var* bind_scale(sen_vm* vm, i32 num_args) {
-  f32 vector[] = {1.0f, 1.0f};
-  f32 scalar   = 1.0f;
-
-  READ_STACK_ARGS_BEGIN;
-  READ_STACK_ARG_VEC2(INAME_VECTOR, vector);
-  READ_STACK_ARG_F32(INAME_SCALAR, scalar);
-  READ_STACK_ARGS_END;
-
-  if (scalar != 1.0f) {
-    matrix_stack_scale(vm->matrix_stack, scalar, scalar);
-  } else {
-    matrix_stack_scale(vm->matrix_stack, vector[0], vector[1]);
-  }
-
-  return &g_var_true;
 }
 
 sen_var* bind_math_distance(sen_vm* vm, i32 num_args) {
@@ -2384,6 +2384,7 @@ sen_var* bind_focal_value(sen_vm* vm, i32 num_args) {
   return &g_var_scratch;
 }
 
+#if 0
 sen_var* get_gen_initial(sen_vm* vm) {
   // vm_compiler::register_top_level_preamble : the 2nd global mapping
   i32      gen_initial_global_offset = 1;
@@ -2392,6 +2393,7 @@ sen_var* get_gen_initial(sen_vm* vm) {
 
   return initial_value;
 }
+#endif
 
 // NOTE: gen/stray-int should still parse values as
 // float as sen scripts won't produce any real ints
@@ -2641,21 +2643,17 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "scale", &bind_scale);
 
   declare_native(word_lut, e, "col/convert", &bind_col_convert);
-  g_colour_constructor_start = word_lut->native_count;
   declare_native(word_lut, e, "col/rgb", &bind_col_rgb);
   declare_native(word_lut, e, "col/hsl", &bind_col_hsl);
   declare_native(word_lut, e, "col/hsluv", &bind_col_hsluv);
   declare_native(word_lut, e, "col/hsv", &bind_col_hsv);
   declare_native(word_lut, e, "col/lab", &bind_col_lab);
-  g_colour_constructor_end = word_lut->native_count;
   declare_native(word_lut, e, "col/complementary", &bind_col_complementary);
-  declare_native(word_lut, e, "col/split-complementary",
-                 &bind_col_split_complementary);
+  declare_native(word_lut, e, "col/split-complementary", &bind_col_split_complementary);
   declare_native(word_lut, e, "col/analagous", &bind_col_analagous);
   declare_native(word_lut, e, "col/triad", &bind_col_triad);
   declare_native(word_lut, e, "col/darken", &bind_col_darken);
   declare_native(word_lut, e, "col/lighten", &bind_col_lighten);
-
   declare_native(word_lut, e, "col/set-alpha", &bind_col_set_alpha);
   declare_native(word_lut, e, "col/get-alpha", &bind_col_get_alpha);
   declare_native(word_lut, e, "col/set-r", &bind_col_set_r);
@@ -2674,7 +2672,6 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   declare_native(word_lut, e, "col/get-a", &bind_col_get_a);
   declare_native(word_lut, e, "col/set-v", &bind_col_set_v);
   declare_native(word_lut, e, "col/get-v", &bind_col_get_v);
-
   declare_native(word_lut, e, "col/build-procedural",
                  &bind_col_build_procedural);
   declare_native(word_lut, e, "col/build-bezier", &bind_col_build_bezier);
