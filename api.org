@@ -1,907 +1,921 @@
 
-misc
-
-| name          | description  |
-|---------------+--------------|
-| [[debug/print]]   | prints debug |
-| [[nth]]           |              |
-| [[vector/length]] |              |
-
-shapes
-
-| name                | description                     |
-|---------------------+---------------------------------|
-| [[line]]                |                                 |
-| [[rect]]                | draws rect centered at position |
-| [[circle]]              |                                 |
-| [[circle-slice]]        |                                 |
-| [[poly]]                |                                 |
-| [[bezier]]              |                                 |
-| [[bezier-bulging]]      |                                 |
-| [[stroked-bezier]]      |                                 |
-| [[stroked-bezier-rect]] |                                 |
-
-transforms
-
-| name      | description |
-|-----------+-------------|
-| [[translate]] |             |
-| [[rotate]]    |             |
-| [[scale]]     |             |
-|           |             |
-
-colour
-
-| name                    | description |
-|-------------------------+-------------|
-| [[col/convert]]             |             |
-| [[col/rgb]]                 |             |
-| [[col/hsl]]                 |             |
-| [[col/hsluv]]               |             |
-| [[col/hsv]]                 |             |
-| [[col/lab]]                 |             |
-| [[col/complementary]]       |             |
-| [[col/split-complementary]] |             |
-| [[col/analagous]]           |             |
-| [[col/triad]]               |             |
-| [[col/darken]]              |             |
-| [[col/lighten]]             |             |
-| [[col/set-alpha]]           |             |
-| [[col/get-alpha]]           |             |
-| [[col/set-r]]               |             |
-| [[col/get-r]]               |             |
-| [[col/set-g]]               |             |
-| [[col/get-g]]               |             |
-| [[col/set-b]]               |             |
-| [[col/get-b]]               |             |
-| [[col/set-h]]               |             |
-| [[col/get-h]]               |             |
-| [[col/set-s]]               |             |
-| [[col/get-s]]               |             |
-| [[col/set-l]]               |             |
-| [[col/get-l]]               |             |
-| [[col/set-a]]               |             |
-| [[col/get-a]]               |             |
-| [[col/set-v]]               |             |
-| [[col/get-v]]               |             |
-| [[col/build-procedural]]    |             |
-| [[col/build-bezier]]        |             |
-| [[col/value]]               |             |
-|                         |             |
-
-math
-
-| name                  | description |
-|-----------------------+-------------|
-| [[math/distance]]         |             |
-| [[math/normal]]           |             |
-| [[math/clamp]]            |             |
-| [[math/radians->degrees]] |             |
-| [[math/cos]]              |             |
-| [[math/sin]]              |             |
-|                       |             |
-
-prng
-
-| name        | description |
-|-------------+-------------|
-| [[prng/build]]  |             |
-| [[prng/values]] |             |
-| [[prng/value]]  |             |
-| [[prng/perlin]] |             |
-|             |             |
-
-interp
-
-| name                  | description |
-|-----------------------+-------------|
-| [[interp/build]]          |             |
-| [[interp/value]]          |             |
-| [[interp/cos]]            |             |
-| [[interp/sin]]            |             |
-| [[interp/bezier]]         |             |
-| [[interp/bezier-tangent]] |             |
-| [[interp/ray]]            |             |
-| [[interp/line]]           |             |
-| [[interp/circle]]         |             |
-|                       |             |
-
-path
-
-| name        | description |
-|-------------+-------------|
-| [[path/linear]] |             |
-| [[path/circle]] |             |
-| [[path/spline]] |             |
-| [[path/bezier]] |             |
-|             |             |
-
-repeat
-
-| name                       | description |
-|----------------------------+-------------|
-| [[repeat/symmetry-vertical]]   |             |
-| [[repeat/symmetry-horizontal]] |             |
-| [[repeat/symmetry-4]]          |             |
-| [[repeat/symmetry-8]]          |             |
-| [[repeat/rotate]]              |             |
-| [[repeat/rotate-mirrored]]     |             |
-|                            |             |
-
-focal
-
-| name              | description |
-|-------------------+-------------|
-| [[focal/build-point]] |             |
-| [[focal/build-vline]] |             |
-| [[focal/build-hline]] |             |
-| [[focal/value]]       |             |
-|                   |             |
-
-gen
-
-| name          | description |
-|---------------+-------------|
-| [[gen/stray-int]] |             |
-| [[gen/stray]]     |             |
-| [[gen/stray-2d]]  |             |
-| [[gen/stray-3d]]  |             |
-| [[gen/stray-4d]]  |             |
-| [[gen/int]]       |             |
-| [[gen/scalar]]    |             |
-| [[gen/2d]]        |             |
-| [[gen/select]]    |             |
-| [[gen/col]]       |             |
-|               |             |
-
-
-* misc
-
-** debug/print
-
-   | parameter | default | description        |
-   |-----------+---------+--------------------|
-   | value     | NULL    | the value to print |
-   |           |         |                    |
-
-
-** nth
-
-   | parameter | default | description     |
-   |-----------+---------+-----------------|
-   | from      | NULL    | vector to index |
-   | n         | 0       | 0 based index   |
-
-
-
-** vector/length
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | vector    | NULL    |             |
-
-*  shapes
-
-** line
-
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | from      | [10 10]      |             |
-   | to        | [900 500]    |             |
-   | width     | 4            |             |
-   | colour    | RGB(0 0 0 1) |             |
-
-** rect
-
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | width     | 4            |             |
-   | height    | 10           |             |
-   | position  | [10 23]      |             |
-   | colour    | RGB(0 0 0 1) |             |
-
-** circle
-
-   | parameter    |      default | description |
-   |--------------+--------------+-------------|
-   | width        |            4 |             |
-   | height       |           10 |             |
-   | position     |      [10 23] |             |
-   | colour       | RGB(0 0 0 1) |             |
-   | tessellation |           10 |             |
-   | radius       |           -1 |             |
-
-** circle-slice
-
-   | parameter    |      default | description |
-   |--------------+--------------+-------------|
-   | width        |            4 |             |
-   | height       |           10 |             |
-   | radius       |           -1 |             |
-   | position     |      [10 23] |             |
-   | colour       | RGB(0 0 0 1) |             |
-   | tessellation |           10 |             |
-   | angle-start  |            0 |             |
-   | angle-end    |            0 |             |
-   | inner-width  |            1 |             |
-   | inner-height |            1 |             |
-
-** poly
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | coords    | NULL    |             |
-   | colours   | NULL    |             |
-
-** bezier
-
-   | parameter          |      default | description |
-   |--------------------+--------------+-------------|
-   | line-width         |            4 |             |
-   | line-width-start   |            4 |             |
-   | line-width-end     |            4 |             |
-   | line-width-mapping |       linear |             |
-   | coords             |              |             |
-   | t-start            |            0 |             |
-   | t-end              |            1 |             |
-   | tessellation       |           10 |             |
-   | colour             | RGB(0 0 0 1) |             |
-   | brush              |   brush-flat |             |
-   | brush-subtype      |            0 |             |
-
-** bezier-bulging
-
-   | parameter     |      default | description |
-   |---------------+--------------+-------------|
-   | line-width    |            4 |             |
-   | coords        |              |             |
-   | t-start       |            0 |             |
-   | t-end         |            1 |             |
-   | tessellation  |           10 |             |
-   | colour        | RGB(0 0 0 1) |             |
-   | brush         |   brush-flat |             |
-   | brush-subtype |            0 |             |
-
-** stroked-bezier
-
-   | parameter               |      default | description |
-   |-------------------------+--------------+-------------|
-   | tessellation            |           10 |             |
-   | coords                  |              |             |
-   | stroke-tessellation     |           10 |             |
-   | stroke-noise            |           25 |             |
-   | stroke-line-width-start |            1 |             |
-   | stroke-line-width-end   |            1 |             |
-   | colour                  | RGB(0 0 0 1) |             |
-   | colour-volatility       |            0 |             |
-   | seed                    |            0 |             |
-   | line-width-mapping      |       linear |             |
-   | brush                   |   brush-flat |             |
-   | brush-subtype           |            0 |             |
-
-** stroked-bezier-rect
-
-   | parameter           |      default | description |
-   |---------------------+--------------+-------------|
-   | position            |    [100 100] |             |
-   | width               |          800 |             |
-   | height              |          600 |             |
-   | volatility          |           30 |             |
-   | overlap             |            0 |             |
-   | iterations          |           10 |             |
-   | seed                |            0 |             |
-   | tessellation        |           10 |             |
-   | stroke-tessellation |           10 |             |
-   | stroke-noise        |           25 |             |
-   | colour              | RGB(0 0 0 1) |             |
-   | colour-volatility   |            0 |             |
-   | brush               |   brush-flat |             |
-   | brush-subtype       |            0 |             |
-
-* transforms
-
-** translate
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | vector    | [0 0]   |             |
-
-** rotate
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | angle     |       0 |             |
-
-** scale
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | vector    | [1 1]   |             |
-   | scale     | 1       |             |
-
-* colour
-
-** col/convert
-
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | format    | RGB          |             |
-   | colour    | RGB(0 0 0 1) |             |
-
-** col/rgb
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | r         |       0 |        0..1 |
-   | g         |       0 |        0..1 |
-   | b         |       0 |        0..1 |
-   | alpha     |       1 |        0..1 |
-
-** col/hsl
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | h         |       0 |      0..360 |
-   | s         |       0 |        0..1 |
-   | l         |       0 |        0..1 |
-   | alpha     |       1 |        0..1 |
-
-** col/hsluv
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | h         |       0 |      0..360 |
-   | s         |       0 |      0..100 |
-   | l         |       0 |      0..100 |
-   | alpha     |       1 |        0..1 |
-
-** col/hsv
-
-   | parameter | default | description |
-   |-----------+-------------|
-   | h         |       0 |      0..360 |
-   | s         |       0 |        0..1 |
-   | v         |       0 |        0..1 |
-   | alpha     |       1 |        0..1 |
-
-
-** col/lab
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | l         |       0 |         0.. |
-   | a         |       0 |       -1..1 |
-   | b         |       0 |       -1..1 |
-   | alpha     |       1 |        0..1 |
-
-** col/complementary
-
-   returns the complimentary colour
-
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-
-** col/split-complementary
-
-   returns a vector of 2 colours
-
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-
-** col/analagous
-
-   returns a vector of 2 colours
-
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-
-** col/triad
+|------------+-------------------------------------------------------------|
+| type       | description                                                 |
+|------------+-------------------------------------------------------------|
+| [[misc]]       |                                                             |
+| [[shapes]]     | rendering functions                                         |
+| [[transforms]] | matrix operations                                           |
+| [[colour]]     |                                                             |
+| [[math]]       |                                                             |
+| [[prng]]       | pseudo-random number generation                             |
+| [[interp]]     | parametrically define value                                 |
+| [[path]]       | invoke a function for every point                           |
+| [[repeat]]     | invoke a function repeatedly, altering the base view matrix |
+| [[focal]]      | answer the question: how important is this co-ordinate?     |
+| [[gen]]        | define how genotypes will be generated                      |
+|------------+-------------------------------------------------------------|
+
+* functions
+** misc
+
+ | name          | description  |
+ |---------------+--------------|
+ | [[debug/print]]   | prints debug |
+ | [[nth]]           |              |
+ | [[vector/length]] |              |
+
+** shapes
+
+ | name                | description                     |
+ |---------------------+---------------------------------|
+ | [[line]]                |                                 |
+ | [[rect]]                | draws rect centered at position |
+ | [[circle]]              |                                 |
+ | [[circle-slice]]        |                                 |
+ | [[poly]]                |                                 |
+ | [[bezier]]              |                                 |
+ | [[bezier-bulging]]      |                                 |
+ | [[stroked-bezier]]      |                                 |
+ | [[stroked-bezier-rect]] |                                 |
+
+** transforms
+
+ | name      | description |
+ |-----------+-------------|
+ | [[translate]] |             |
+ | [[rotate]]    |             |
+ | [[scale]]     |             |
+ |           |             |
+
+** colour
+
+ | name                    | description |
+ |-------------------------+-------------|
+ | [[col/convert]]             |             |
+ | [[col/rgb]]                 |             |
+ | [[col/hsl]]                 |             |
+ | [[col/hsluv]]               |             |
+ | [[col/hsv]]                 |             |
+ | [[col/lab]]                 |             |
+ | [[col/complementary]]       |             |
+ | [[col/split-complementary]] |             |
+ | [[col/analagous]]           |             |
+ | [[col/triad]]               |             |
+ | [[col/darken]]              |             |
+ | [[col/lighten]]             |             |
+ | [[col/set-alpha]]           |             |
+ | [[col/get-alpha]]           |             |
+ | [[col/set-r]]               |             |
+ | [[col/get-r]]               |             |
+ | [[col/set-g]]               |             |
+ | [[col/get-g]]               |             |
+ | [[col/set-b]]               |             |
+ | [[col/get-b]]               |             |
+ | [[col/set-h]]               |             |
+ | [[col/get-h]]               |             |
+ | [[col/set-s]]               |             |
+ | [[col/get-s]]               |             |
+ | [[col/set-l]]               |             |
+ | [[col/get-l]]               |             |
+ | [[col/set-a]]               |             |
+ | [[col/get-a]]               |             |
+ | [[col/set-v]]               |             |
+ | [[col/get-v]]               |             |
+ | [[col/build-procedural]]    |             |
+ | [[col/build-bezier]]        |             |
+ | [[col/value]]               |             |
+ |                         |             |
+
+** math
+
+ | name                  | description |
+ |-----------------------+-------------|
+ | [[math/distance]]         |             |
+ | [[math/normal]]           |             |
+ | [[math/clamp]]            |             |
+ | [[math/radians->degrees]] |             |
+ | [[math/cos]]              |             |
+ | [[math/sin]]              |             |
+ |                       |             |
+
+** prng
+
+ | name        | description |
+ |-------------+-------------|
+ | [[prng/build]]  |             |
+ | [[prng/values]] |             |
+ | [[prng/value]]  |             |
+ | [[prng/perlin]] |             |
+ |             |             |
+
+** interp
+
+ | name                  | description |
+ |-----------------------+-------------|
+ | [[interp/build]]          |             |
+ | [[interp/value]]          |             |
+ | [[interp/cos]]            |             |
+ | [[interp/sin]]            |             |
+ | [[interp/bezier]]         |             |
+ | [[interp/bezier-tangent]] |             |
+ | [[interp/ray]]            |             |
+ | [[interp/line]]           |             |
+ | [[interp/circle]]         |             |
+ |                       |             |
+
+** path
+
+ | name        | description |
+ |-------------+-------------|
+ | [[path/linear]] |             |
+ | [[path/circle]] |             |
+ | [[path/spline]] |             |
+ | [[path/bezier]] |             |
+ |             |             |
+
+** repeat
+
+ | name                       | description |
+ |----------------------------+-------------|
+ | [[repeat/symmetry-vertical]]   |             |
+ | [[repeat/symmetry-horizontal]] |             |
+ | [[repeat/symmetry-4]]          |             |
+ | [[repeat/symmetry-8]]          |             |
+ | [[repeat/rotate]]              |             |
+ | [[repeat/rotate-mirrored]]     |             |
+ |                            |             |
+
+** focal
+
+ | name              | description |
+ |-------------------+-------------|
+ | [[focal/build-point]] |             |
+ | [[focal/build-vline]] |             |
+ | [[focal/build-hline]] |             |
+ | [[focal/value]]       |             |
+ |                   |             |
+
+** gen
+
+ | name          | description |
+ |---------------+-------------|
+ | [[gen/stray-int]] |             |
+ | [[gen/stray]]     |             |
+ | [[gen/stray-2d]]  |             |
+ | [[gen/stray-3d]]  |             |
+ | [[gen/stray-4d]]  |             |
+ | [[gen/int]]       |             |
+ | [[gen/scalar]]    |             |
+ | [[gen/2d]]        |             |
+ | [[gen/select]]    |             |
+ | [[gen/col]]       |             |
+ |               |             |
+
+* function descriptions
+** misc
+
+*** debug/print
+
+    | parameter | default | description        |
+    |-----------+---------+--------------------|
+    | value     | NULL    | the value to print |
+    |           |         |                    |
+
+*** nth
+
+    | parameter | default | description     |
+    |-----------+---------+-----------------|
+    | from      | NULL    | vector to index |
+    | n         | 0       | 0 based index   |
+
+*** vector/length
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | vector    | NULL    |             |
+
+** shapes
+
+*** line
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | from      | [10 10]      |             |
+    | to        | [900 500]    |             |
+    | width     | 4            |             |
+    | colour    | RGB(0 0 0 1) |             |
+
+*** rect
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | width     | 4            |             |
+    | height    | 10           |             |
+    | position  | [10 23]      |             |
+    | colour    | RGB(0 0 0 1) |             |
+
+*** circle
+
+    | parameter    |      default | description |
+    |--------------+--------------+-------------|
+    | width        |            4 |             |
+    | height       |           10 |             |
+    | position     |      [10 23] |             |
+    | colour       | RGB(0 0 0 1) |             |
+    | tessellation |           10 |             |
+    | radius       |           -1 |             |
+
+*** circle-slice
+
+    | parameter    |      default | description |
+    |--------------+--------------+-------------|
+    | width        |            4 |             |
+    | height       |           10 |             |
+    | radius       |           -1 |             |
+    | position     |      [10 23] |             |
+    | colour       | RGB(0 0 0 1) |             |
+    | tessellation |           10 |             |
+    | angle-start  |            0 |             |
+    | angle-end    |            0 |             |
+    | inner-width  |            1 |             |
+    | inner-height |            1 |             |
+
+*** poly
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | coords    | NULL    |             |
+    | colours   | NULL    |             |
+
+*** bezier
+
+    | parameter          |      default | description |
+    |--------------------+--------------+-------------|
+    | line-width         |            4 |             |
+    | line-width-start   |            4 |             |
+    | line-width-end     |            4 |             |
+    | line-width-mapping |       linear |             |
+    | coords             |              |             |
+    | t-start            |            0 |             |
+    | t-end              |            1 |             |
+    | tessellation       |           10 |             |
+    | colour             | RGB(0 0 0 1) |             |
+    | brush              |   brush-flat |             |
+    | brush-subtype      |            0 |             |
+
+*** bezier-bulging
+
+    | parameter     |      default | description |
+    |---------------+--------------+-------------|
+    | line-width    |            4 |             |
+    | coords        |              |             |
+    | t-start       |            0 |             |
+    | t-end         |            1 |             |
+    | tessellation  |           10 |             |
+    | colour        | RGB(0 0 0 1) |             |
+    | brush         |   brush-flat |             |
+    | brush-subtype |            0 |             |
+
+*** stroked-bezier
+
+    | parameter               |      default | description |
+    |-------------------------+--------------+-------------|
+    | tessellation            |           10 |             |
+    | coords                  |              |             |
+    | stroke-tessellation     |           10 |             |
+    | stroke-noise            |           25 |             |
+    | stroke-line-width-start |            1 |             |
+    | stroke-line-width-end   |            1 |             |
+    | colour                  | RGB(0 0 0 1) |             |
+    | colour-volatility       |            0 |             |
+    | seed                    |            0 |             |
+    | line-width-mapping      |       linear |             |
+    | brush                   |   brush-flat |             |
+    | brush-subtype           |            0 |             |
+
+*** stroked-bezier-rect
+
+    | parameter           |      default | description |
+    |---------------------+--------------+-------------|
+    | position            |    [100 100] |             |
+    | width               |          800 |             |
+    | height              |          600 |             |
+    | volatility          |           30 |             |
+    | overlap             |            0 |             |
+    | iterations          |           10 |             |
+    | seed                |            0 |             |
+    | tessellation        |           10 |             |
+    | stroke-tessellation |           10 |             |
+    | stroke-noise        |           25 |             |
+    | colour              | RGB(0 0 0 1) |             |
+    | colour-volatility   |            0 |             |
+    | brush               |   brush-flat |             |
+    | brush-subtype       |            0 |             |
+
+** transforms
+
+*** translate
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | vector    | [0 0]   |             |
+
+*** rotate
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | angle     |       0 |             |
+
+*** scale
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | vector    | [1 1]   |             |
+    | scale     | 1       |             |
+
+** colour
+
+*** col/convert
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | format    | RGB          |             |
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/rgb
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | r         |       0 |        0..1 |
+    | g         |       0 |        0..1 |
+    | b         |       0 |        0..1 |
+    | alpha     |       1 |        0..1 |
+
+*** col/hsl
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | h         |       0 |      0..360 |
+    | s         |       0 |        0..1 |
+    | l         |       0 |        0..1 |
+    | alpha     |       1 |        0..1 |
+
+*** col/hsluv
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | h         |       0 |      0..360 |
+    | s         |       0 |      0..100 |
+    | l         |       0 |      0..100 |
+    | alpha     |       1 |        0..1 |
+
+*** col/hsv
+
+    | parameter | default | description |
+    |-----------+-------------|
+    | h         |       0 |      0..360 |
+    | s         |       0 |        0..1 |
+    | v         |       0 |        0..1 |
+    | alpha     |       1 |        0..1 |
+
+
+*** col/lab
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | l         |       0 |         0.. |
+    | a         |       0 |       -1..1 |
+    | b         |       0 |       -1..1 |
+    | alpha     |       1 |        0..1 |
+
+*** col/complementary
+
+    returns the complimentary colour
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/split-complementary
+
+    returns a vector of 2 colours
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/analagous
+
+    returns a vector of 2 colours
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/triad
+
+    returns a vector of 2 colours
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/darken
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |      0..100 |
+
+*** col/lighten
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |      0..100 |
+
+*** col/set-alpha
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |      0..100 |
+
+*** col/get-alpha
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/set-r
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+*** col/get-r
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/set-g
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+*** col/get-g
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/set-b
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+*** col/get-b
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/set-h
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+*** col/get-h
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/set-s
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+*** col/get-s
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+
+*** col/set-l
+
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
 
-   returns a vector of 2 colours
+*** col/get-l
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
 
-** col/darken
+*** col/set-a
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |      0..100 |
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
 
-** col/lighten
+*** col/get-a
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |      0..100 |
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
 
-** col/set-alpha
+*** col/set-v
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |      0..100 |
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
 
-** col/get-alpha
+*** col/get-v
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | colour    | RGB(0 0 0 1) |             |
 
-** col/set-r
+*** col/build-procedural
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |             |
+    returns COLOUR_FN_PROCEDURAL
 
-** col/get-r
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | preset    | robocop |             |
+    | alpha     | 1       |             |
+    | a         | [0 0 0] |             |
+    | b         | [0 0 0] |             |
+    | c         | [0 0 0] |             |
+    | d         | [0 0 0] |             |
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+*** col/build-bezier
 
-** col/set-g
+    returns COLOUR_FN_BEZIER
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |             |
+    | parameter | default      | description |
+    |-----------+--------------+-------------|
+    | a         | RGB(0 0 0 1) |             |
+    | b         | RGB(0 0 0 1) |             |
+    | c         | RGB(0 0 0 1) |             |
+    | d         | RGB(0 0 0 1) |             |
 
-** col/get-g
+*** col/value
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+    | parameter | default | description                         |
+    |-----------+---------+-------------------------------------|
+    | from      | NULL    | either a FN_PROCEDURAL or FN_BEZIER |
+    | t         | 0       |                                     |
 
-** col/set-b
+** math
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |             |
+*** math/distance
 
-** col/get-b
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | vec1      | [0 0]   |             |
+    | vec2      | [0 0]   |             |
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+*** math/normal
 
-** col/set-h
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | vec1      | [0 0]   |             |
+    | vec2      | [0 0]   |             |
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |             |
+*** math/clamp
 
-** col/get-h
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | value     |       0 |             |
+    | min       |       0 |             |
+    | max       |       1 |             |
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+*** math/radians->degrees
 
-** col/set-s
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | angle     | 0       |             |
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |             |
+*** math/cos
 
-** col/get-s
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | angle     | 0       |             |
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+*** math/sin
 
-** col/set-l
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | angle     | 0       |             |
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |             |
+** prng
 
-** col/get-l
+*** prng/build
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | seed      |   12322 |             |
+    | min       |       0 |             |
+    | max       |       1 |             |
 
-** col/set-a
+*** prng/values
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | from      |         |             |
+    | num       |         |             |
 
-** col/get-a
+*** prng/value
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | from      |         |             |
 
-** col/set-v
+*** prng/perlin
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
-   | value     | 0            |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | x         |       1 |             |
+    | y         |       1 |             |
+    | z         |       1 |             |
 
-** col/get-v
+** interp
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | colour    | RGB(0 0 0 1) |             |
+*** interp/build
 
-** col/build-procedural
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | from      | [0 1]   |             |
+    | to        | [0 100] |             |
+    | clamping  | false   |             |
+    | mapping   | linear  |             |
+
+*** interp/value
 
-   returns COLOUR_FN_PROCEDURAL
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | from      |         |             |
+    | t         | 0       |             |
+
+*** interp/cos
+
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | amplitude |       1 |             |
+    | frequency |       1 |             |
+    | t         |       1 |             |
+
+*** interp/sin
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | preset    | robocop |             |
-   | alpha     | 1       |             |
-   | a         | [0 0 0] |             |
-   | b         | [0 0 0] |             |
-   | c         | [0 0 0] |             |
-   | d         | [0 0 0] |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | amplitude |       1 |             |
+    | frequency |       1 |             |
+    | t         |       1 |             |
 
-** col/build-bezier
+*** interp/bezier
 
-   returns COLOUR_FN_BEZIER
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | coords    |         |             |
+    | t         |         |             |
 
-   | parameter | default      | description |
-   |-----------+--------------+-------------|
-   | a         | RGB(0 0 0 1) |             |
-   | b         | RGB(0 0 0 1) |             |
-   | c         | RGB(0 0 0 1) |             |
-   | d         | RGB(0 0 0 1) |             |
+*** interp/bezier-tangent
 
-** col/value
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | coords    |         |             |
+    | t         |         |             |
 
-   | parameter | default | description                         |
-   |-----------+---------+-------------------------------------|
-   | from      | NULL    | either a FN_PROCEDURAL or FN_BEZIER |
-   | t         | 0       |                                     |
+*** interp/ray
 
-* math
+    | parameter | default     | description |
+    |-----------+-------------+-------------|
+    | point     | [0 0]       |             |
+    | direction | [1000 1000] |             |
+    | t         | 0           |             |
 
-** math/distance
+*** interp/line
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | vec1      | [0 0]   |             |
-   | vec2      | [0 0]   |             |
+    | parameter | default     | description |
+    |-----------+-------------+-------------|
+    | from      | [0 0]       |             |
+    | to        | [1000 1000] |             |
+    | clamping  | false       |             |
+    | mapping   | linear      |             |
+    | t         | 0           |             |
 
-** math/normal
+*** interp/circle
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | vec1      | [0 0]   |             |
-   | vec2      | [0 0]   |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | position  |   [0 0] |             |
+    | radius    |       1 |             |
+    | t         |       0 |             |
 
-** math/clamp
+** path
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | value     |       0 |             |
-   | min       |       0 |             |
-   | max       |       1 |             |
+*** path/linear
 
-** math/radians->degrees
+    | parameter |   default | description |
+    |-----------+-----------+-------------|
+    | from      |     [0 0] |             |
+    | to        | [100 100] |             |
+    | steps     |        10 |             |
+    | t-start   |         0 |             |
+    | t-end     |         1 |             |
+    | fn        |           |             |
+    | mapping   | linear    |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | angle     | 0       |             |
+*** path/circle
 
-** math/cos
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | pos       |   [0 0] |             |
+    | radius    |     100 |             |
+    | steps     |      10 |             |
+    | t-start   |       0 |             |
+    | t-end     |       1 |             |
+    | fn        |         |             |
+    | mapping   |  linear |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | angle     | 0       |             |
+*** path/spline
 
-** math/sin
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | coords    |         |             |
+    | steps     |      10 |             |
+    | t-start   |       0 |             |
+    | t-end     |       1 |             |
+    | fn        |         |             |
+    | mapping   |  linear |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | angle     | 0       |             |
+*** path/bezier
 
-* prng
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | coords    |         |             |
+    | steps     |      10 |             |
+    | t-start   |       0 |             |
+    | t-end     |       1 |             |
+    | fn        |         |             |
+    | mapping   |  linear |             |
 
-** prng/build
+** repeat
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | seed      |   12322 |             |
-   | min       |       0 |             |
-   | max       |       1 |             |
+*** repeat/symmetry-vertical
 
-** prng/values
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | fn        |         |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | from      |         |             |
-   | num       |         |             |
+*** repeat/symmetry-horizontal
 
-** prng/value
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | fn        |         |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | from      |         |             |
+*** repeat/symmetry-4
 
-** prng/perlin
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | fn        |         |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | x         |       1 |             |
-   | y         |       1 |             |
-   | z         |       1 |             |
+*** repeat/symmetry-8
 
-* interp
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | fn        |         |             |
 
-** interp/build
+*** repeat/rotate
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | from      | [0 1]   |             |
-   | to        | [0 100] |             |
-   | clamping  | false   |             |
-   | mapping   | linear  |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | fn        |         |             |
+    | copies    | 3       |             |
 
-** interp/value
+*** repeat/rotate-mirrored
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | from      |         |             |
-   | t         | 0       |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | fn        |         |             |
+    | copies    |       3 |             |
 
-** interp/cos
+** focal
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | amplitude |       1 |             |
-   | frequency |       1 |             |
-   | t         |       1 |             |
+*** focal/build-point
 
-** interp/sin
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | position  | [0 0]   |             |
+    | distance  | 1       |             |
+    | mapping   | linear  |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | amplitude |       1 |             |
-   | frequency |       1 |             |
-   | t         |       1 |             |
+*** focal/build-vline
 
-** interp/bezier
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | position  | [0 0]   |             |
+    | distance  | 1       |             |
+    | mapping   | linear  |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | coords    |         |             |
-   | t         |         |             |
+*** focal/build-hline
 
-** interp/bezier-tangent
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | position  | [0 0]   |             |
+    | distance  | 1       |             |
+    | mapping   | linear  |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | coords    |         |             |
-   | t         |         |             |
+*** focal/value
 
-** interp/ray
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | from      |         |             |
+    | position  | [0 0]   |             |
 
-   | parameter | default     | description |
-   |-----------+-------------+-------------|
-   | point     | [0 0]       |             |
-   | direction | [1000 1000] |             |
-   | t         | 0           |             |
+** gen
 
-** interp/line
+*** gen/stray-int
 
-   | parameter | default     | description |
-   |-----------+-------------+-------------|
-   | from      | [0 0]       |             |
-   | to        | [1000 1000] |             |
-   | clamping  | false       |             |
-   | mapping   | linear      |             |
-   | t         | 0           |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | from      |       0 |             |
+    | by        |       1 |             |
 
-** interp/circle
+*** gen/stray
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | position  |   [0 0] |             |
-   | radius    |       1 |             |
-   | t         |       0 |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | from      |       1 |             |
+    | by        |     0.2 |             |
 
-* path
+*** gen/stray-2d
 
-** path/linear
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | from      | [10 10] |             |
+    | by        | [1 1]   |             |
 
-   | parameter |   default | description |
-   |-----------+-----------+-------------|
-   | from      |     [0 0] |             |
-   | to        | [100 100] |             |
-   | steps     |        10 |             |
-   | t-start   |         0 |             |
-   | t-end     |         1 |             |
-   | fn        |           |             |
-   | mapping   | linear    |             |
+*** gen/stray-3d
 
-** path/circle
+    | parameter | default    | description |
+    |-----------+------------+-------------|
+    | from      | [10 10 10] |             |
+    | by        | [1 1 1]    |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | pos       |   [0 0] |             |
-   | radius    |     100 |             |
-   | steps     |      10 |             |
-   | t-start   |       0 |             |
-   | t-end     |       1 |             |
-   | fn        |         |             |
-   | mapping   |  linear |             |
+*** gen/stray-4d
 
-** path/spline
+    | parameter | default       | description |
+    |-----------+---------------+-------------|
+    | from      | [10 10 10 10] |             |
+    | by        | [1 1 1 1]     |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | coords    |         |             |
-   | steps     |      10 |             |
-   | t-start   |       0 |             |
-   | t-end     |       1 |             |
-   | fn        |         |             |
-   | mapping   |  linear |             |
+*** gen/int
 
-** path/bezier
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | min       |       0 |             |
+    | max       |    1000 |             |
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | coords    |         |             |
-   | steps     |      10 |             |
-   | t-start   |       0 |             |
-   | t-end     |       1 |             |
-   | fn        |         |             |
-   | mapping   |  linear |             |
+*** gen/scalar
 
-* repeat
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | min       |       0 |             |
+    | max       |       1 |             |
 
-** repeat/symmetry-vertical
+*** gen/2d
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | fn        |         |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | min       |       0 |             |
+    | max       |       1 |             |
 
-** repeat/symmetry-horizontal
+*** gen/select
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | fn        |         |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | from      | NULL    |             |
 
-** repeat/symmetry-4
+*** gen/col
 
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | fn        |         |             |
-
-** repeat/symmetry-8
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | fn        |         |             |
-
-** repeat/rotate
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | fn        |         |             |
-   | copies    | 3       |             |
-
-** repeat/rotate-mirrored
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | fn        |         |             |
-   | copies    |       3 |             |
-
-* focal
-
-** focal/build-point
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | position  | [0 0]   |             |
-   | distance  | 1       |             |
-   | mapping   | linear  |             |
-
-** focal/build-vline
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | position  | [0 0]   |             |
-   | distance  | 1       |             |
-   | mapping   | linear  |             |
-
-** focal/build-hline
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | position  | [0 0]   |             |
-   | distance  | 1       |             |
-   | mapping   | linear  |             |
-
-** focal/value
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | from      |         |             |
-   | position  | [0 0]   |             |
-
-* gen
-
-** gen/stray-int
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | from      |       0 |             |
-   | by        |       1 |             |
-
-** gen/stray
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | from      |       1 |             |
-   | by        |     0.2 |             |
-
-** gen/stray-2d
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | from      | [10 10] |             |
-   | by        | [1 1]   |             |
-
-** gen/stray-3d
-
-   | parameter | default    | description |
-   |-----------+------------+-------------|
-   | from      | [10 10 10] |             |
-   | by        | [1 1 1]    |             |
-
-** gen/stray-4d
-
-   | parameter | default       | description |
-   |-----------+---------------+-------------|
-   | from      | [10 10 10 10] |             |
-   | by        | [1 1 1 1]     |             |
-
-** gen/int
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | min       |       0 |             |
-   | max       |    1000 |             |
-
-** gen/scalar
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | min       |       0 |             |
-   | max       |       1 |             |
-
-** gen/2d
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | min       |       0 |             |
-   | max       |       1 |             |
-
-** gen/select
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | from      | NULL    |             |
-
-** gen/col
-
-   | parameter | default | description |
-   |-----------+---------+-------------|
-   | alpha     |         |             |
+    | parameter | default | description |
+    |-----------+---------+-------------|
+    | alpha     |         |             |
