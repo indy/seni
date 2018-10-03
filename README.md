@@ -1,6 +1,6 @@
-# Sen
+# Seni
 
-Sen is a Scheme-like graphical language that runs on modern web browsers.
+Seni is a Scheme-like graphical language that runs on modern web browsers.
 
 It's scripts can be annotated so that genetic algorithms can generate variations and the user can select which of the generated images should be used in future generations.
 
