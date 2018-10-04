@@ -333,6 +333,18 @@ function updateUI(state) {
 }
 
 function ensureMode(store, mode) {
+
+  if (mode === SenMode.gallery && store.getState().galleryLoaded === false) {
+    // want to show the gallery but it hasn't been loaded yet. This occurs when
+    // editing a particular piece by loading it's id directly into the URL
+    // e.g. http://localhost:3210/#61
+    //
+    return getGallery(store).then(() => {
+      // gallery is loaded now so call this again to return the Promise below
+      return ensureMode(store, mode);
+    });
+  }
+
   return new Promise((resolve, reject) => {
     if (store.getState().currentMode === mode) {
       resolve();
@@ -473,6 +485,10 @@ function setScript(store, script) {
   return store.dispatch({type: 'SET_SCRIPT', script});
 }
 
+function setScriptId(store, id) {
+  return store.dispatch({type: 'SET_SCRIPT_ID', id});
+}
+
 function showEditFromEvolve(store, element) {
   return new Promise((resolve, reject) => {
     const [index, _] = getPhenoIdFromDom(element);
@@ -577,22 +593,29 @@ function restoreEvolveUI(store) {
   });
 }
 
+function loadScriptWithId(store, id) {
+  return new Promise((resolve, reject) => {
+    const url = `gallery/${id}`;
+    get(url).catch(() => {
+      reject(Error(`cannot connect to ${url}`));
+    }).then(data => {
+      return setScript(store, data);
+    }).then(() => {
+      return setScriptId(store, id);
+    }).then(() => {
+      return ensureMode(store, SenMode.edit);
+    }).then(resolve).catch(error => {
+      console.log(`loadScriptWithId error ${error}`);
+      reject(error);
+    });
+  });
+}
+
 function showEditFromGallery(store, element) {
   return new Promise((resolve, reject) => {
     const [index, _] = getIdNumberFromDom(element, /gallery-item-(\d+)/);
     if (index !== -1) {
-      const url = `gallery/${index}`;
-
-      get(url).catch(() => {
-        reject(Error(`cannot connect to ${url}`));
-      }).then(data => {
-        return setScript(store, data);
-      }).then(() => {
-        return ensureMode(store, SenMode.edit);
-      }).then(resolve).catch(error => {
-        console.log(`showEditFromGallery error ${error}`);
-        reject(error);
-      });
+      return loadScriptWithId(store, index);
     } else {
       resolve();
     }
@@ -915,7 +938,7 @@ function toggleKonsole() {
   gUI.editor.refresh();
 }
 
-function getGallery() {
+function getGallery(store) {
   const createGalleryElement = galleryItem => {
     const container = document.createElement('div');
 
@@ -949,6 +972,9 @@ function getGallery() {
         const e = createGalleryElement(item);
         row.appendChild(e);
       });
+
+      return store.dispatch({type: 'GALLERY_LOADED'});
+    }).then(() => {
       resolve();
     }).catch(() => {
       reject(Error(`cannot connect to ${url}`));
@@ -1015,7 +1041,14 @@ export default function main() {
 
   gGLRenderer.loadTexture(`img/texture.png`).then(() => {
     setupUI(store);
-    return getGallery();
+
+    const matched = window.location.hash.match(/^\#(\d+)/);
+    if (window.location.pathname === "/" && matched) {
+      const id = parseInt(matched[1], 10);
+      return loadScriptWithId(store, id);
+    } else {
+      return getGallery(store);
+    }
   }).then(() => {
     return removeKonsoleInvisibility();
   }).catch(error => console.error(error));;

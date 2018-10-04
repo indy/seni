@@ -36,8 +36,10 @@ function cloneState(state) {
   clone.mutationRate = state.mutationRate;
 
   clone.currentMode = state.currentMode;
+  clone.galleryLoaded = state.galleryLoaded;
   clone.previouslySelectedGenotypes = state.previouslySelectedGenotypes;
   clone.selectedIndices = state.selectedIndices;
+  clone.scriptId = state.scriptId;
   clone.script = state.script;
   clone.scriptHash = state.scriptHash;
   clone.genotypes = state.genotypes;
@@ -79,6 +81,16 @@ function actionSetScript(state, { script }) {
   });
 }
 
+function actionSetScriptId(state, { id }) {
+  console.log(`actionSetScriptId id: ${id}`);
+
+  return new Promise((resolve, _reject) => {
+    const newState = cloneState(state);
+    newState.scriptId = id;
+    resolveAsCurrentState(resolve, newState);
+  });
+}
+
 function actionSetSelectedIndices(state, { selectedIndices }) {
   return new Promise((resolve, _reject) => {
     const newState = cloneState(state);
@@ -104,6 +116,14 @@ function actionInitialGeneration(state) {
       console.log(`worker: error of ${error}`);
       reject(error);
     });
+  });
+}
+
+function actionGalleryIsLoaded(state) {
+  return new Promise((resolve, _reject) => {
+    const newState = cloneState(state);
+    newState.galleryLoaded = true;
+    resolveAsCurrentState(resolve, newState);
   });
 }
 
@@ -188,8 +208,10 @@ export function createInitialState() {
     mutationRate: 0.1,
 
     currentMode: SenMode.gallery,
+    galleryLoaded: false,
     previouslySelectedGenotypes: [],
     selectedIndices: [],
+    scriptId: undefined,
     script: undefined,
     scriptHash: undefined,
     genotypes: [],
@@ -228,6 +250,8 @@ export function createStore(initialState) {
       return actionSetMode(state, action);
     case 'SET_SCRIPT':
       return actionSetScript(state, action);
+    case 'SET_SCRIPT_ID':
+      return actionSetScriptId(state, action);
     case 'SET_SELECTED_INDICES':
       return actionSetSelectedIndices(state, action);
     case 'INITIAL_GENERATION':
@@ -241,6 +265,8 @@ export function createStore(initialState) {
         console.log(`SET_STATE: ${action.state}`);
       }
       return wrapInPromise(action.state);
+    case 'GALLERY_LOADED':
+      return actionGalleryIsLoaded(state, action);
     default:
       return wrapInPromise(state);
     }

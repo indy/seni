@@ -20,12 +20,14 @@ import { SenMode } from './SenMode';
 
 const logToConsole = true;
 
-function senModeAsString(mode) {
+function senModeAsString(state) {
+  const mode = state.currentMode;
+
   switch (mode) {
   case SenMode.gallery:
     return 'gallery';
   case SenMode.edit:
-    return 'edit';
+    return state.scriptId;
   case SenMode.evolve:
     return 'evolve';
   default:
@@ -35,8 +37,8 @@ function senModeAsString(mode) {
 
 function buildState(appState) {
   const state = appState;
-  const currentMode = appState.currentMode;
-  const uri = `#${senModeAsString(currentMode)}`;
+  const uri = `#${senModeAsString(state)}`;
+
   return [state, uri];
 }
 
