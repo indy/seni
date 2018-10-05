@@ -1888,7 +1888,7 @@ sen_var* bind_interp_build(sen_vm* vm, i32 num_args) {
 
 sen_var* bind_interp_value(sen_vm* vm, i32 num_args) {
   sen_interp_state from;
-  f32                  t = 0.0f;
+  f32              t = 0.0f;
 
   from.structure_id = 0;
   from.from_m       = 0.0f;
@@ -2000,9 +2000,9 @@ sen_var* bind_interp_bezier_tangent(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_interp_ray(sen_vm* vm, i32 num_args) {
-  f32 point[] = {0.0f, 0.0f};
+  f32 point[]     = {0.0f, 0.0f};
   f32 direction[] = {1000.0f, 1000.0f};
-  f32 t          = 0.0f;
+  f32 t           = 0.0f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_POINT, point);
@@ -2021,11 +2021,11 @@ sen_var* bind_interp_ray(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_interp_line(sen_vm* vm, i32 num_args) {
-  f32 from[] = {0.0f, 0.0f};
-  f32 to[] = {1000.0f, 1000.0f};
+  f32 from[]   = {0.0f, 0.0f};
+  f32 to[]     = {1000.0f, 1000.0f};
   i32 clamping = INAME_FALSE;
   i32 mapping  = INAME_LINEAR;
-  f32 t          = 0.0f;
+  f32 t        = 0.0f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_FROM, from);
@@ -2076,7 +2076,7 @@ sen_var* bind_path_linear(sen_vm* vm, i32 num_args) {
   f32 t_start = 0.0f;
   f32 t_end   = 1.0f;
   i32 fn      = -1;
-  i32 mapping  = INAME_LINEAR;
+  i32 mapping = INAME_LINEAR;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_FROM, from);
@@ -2105,7 +2105,7 @@ sen_var* bind_path_circle(sen_vm* vm, i32 num_args) {
   f32 t_start = 0.0f;
   f32 t_end   = 1.0f;
   i32 fn      = -1;
-  i32 mapping  = INAME_LINEAR;
+  i32 mapping = INAME_LINEAR;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_POSITION, pos);
@@ -2121,7 +2121,8 @@ sen_var* bind_path_circle(sen_vm* vm, i32 num_args) {
     return &g_var_true;
   }
 
-  path_circle(vm, fn, (i32)steps, t_start, t_end, pos[0], pos[1], radius, mapping);
+  path_circle(vm, fn, (i32)steps, t_start, t_end, pos[0], pos[1], radius,
+              mapping);
 
   return &g_var_true;
 }
@@ -2624,12 +2625,17 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
 
 #define BIND(string, fn) declare_native(word_lut, e, string, &fn)
 
+  // --------------------------------------------------
+  // misc
+  // --------------------------------------------------
   BIND("debug/print", bind_debug_print);
   BIND("nth", bind_nth);
   BIND("vector/length", bind_vector_length);
-
   // map
 
+  // --------------------------------------------------
+  // shapes
+  // --------------------------------------------------
   BIND("line", bind_line);
   BIND("rect", bind_rect);
   BIND("circle", bind_circle);
@@ -2640,11 +2646,18 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   BIND("stroked-bezier", bind_stroked_bezier);
   BIND("stroked-bezier-rect", bind_stroked_bezier_rect);
 
+  // --------------------------------------------------
+  // transforms
+  // --------------------------------------------------
   BIND("translate", bind_translate);
   BIND("rotate", bind_rotate);
   BIND("scale", bind_scale);
 
+  // --------------------------------------------------
+  // colour
+  // --------------------------------------------------
   BIND("col/convert", bind_col_convert);
+  // start of colour constructors
   g_colour_constructor_start = word_lut->native_count;
   BIND("col/rgb", bind_col_rgb);
   BIND("col/hsl", bind_col_hsl);
@@ -2652,6 +2665,7 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   BIND("col/hsv", bind_col_hsv);
   BIND("col/lab", bind_col_lab);
   g_colour_constructor_end = word_lut->native_count;
+  // end of colour constructors
   BIND("col/complementary", bind_col_complementary);
   BIND("col/split-complementary", bind_col_split_complementary);
   BIND("col/analagous", bind_col_analagous);
@@ -2680,6 +2694,9 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   BIND("col/build-bezier", bind_col_build_bezier);
   BIND("col/value", bind_col_value);
 
+  // --------------------------------------------------
+  // math
+  // --------------------------------------------------
   BIND("math/distance", bind_math_distance);
   BIND("math/normal", bind_math_normal);
   BIND("math/clamp", bind_math_clamp);
@@ -2687,11 +2704,17 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   BIND("math/cos", bind_math_cos);
   BIND("math/sin", bind_math_sin);
 
+  // --------------------------------------------------
+  // prng
+  // --------------------------------------------------
   BIND("prng/build", bind_prng_build);
   BIND("prng/values", bind_prng_values);
   BIND("prng/value", bind_prng_value);
   BIND("prng/perlin", bind_prng_perlin);
 
+  // --------------------------------------------------
+  // interp
+  // --------------------------------------------------
   BIND("interp/build", bind_interp_build);
   BIND("interp/value", bind_interp_value);
   BIND("interp/cos", bind_interp_cos);
@@ -2702,11 +2725,17 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   BIND("interp/line", bind_interp_line);
   BIND("interp/circle", bind_interp_circle);
 
+  // --------------------------------------------------
+  // path
+  // --------------------------------------------------
   BIND("path/linear", bind_path_linear);
   BIND("path/circle", bind_path_circle);
   BIND("path/spline", bind_path_spline);
   BIND("path/bezier", bind_path_bezier);
 
+  // --------------------------------------------------
+  // repeat
+  // --------------------------------------------------
   BIND("repeat/symmetry-vertical", bind_repeat_symmetry_vertical);
   BIND("repeat/symmetry-horizontal", bind_repeat_symmetry_horizontal);
   BIND("repeat/symmetry-4", bind_repeat_symmetry_4);
@@ -2714,11 +2743,17 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
   BIND("repeat/rotate", bind_repeat_rotate);
   BIND("repeat/rotate-mirrored", bind_repeat_rotate_mirrored);
 
+  // --------------------------------------------------
+  // focal
+  // --------------------------------------------------
   BIND("focal/build-point", bind_focal_build_point);
   BIND("focal/build-vline", bind_focal_build_vline);
   BIND("focal/build-hline", bind_focal_build_hline);
   BIND("focal/value", bind_focal_value);
 
+  // --------------------------------------------------
+  // gen
+  // --------------------------------------------------
   BIND("gen/stray-int", bind_gen_stray_int);
   BIND("gen/stray", bind_gen_stray);
   BIND("gen/stray-2d", bind_gen_stray_2d);

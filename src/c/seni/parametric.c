@@ -27,7 +27,7 @@ f32 sen_parametric(f32 val, f32 from_a, f32 from_b, f32 to_a, f32 to_b,
 
 f32 sen_parametric_scalar(f32 a, f32 b, i32 mapping, bool clamping, f32 t) {
   f32 new_t = easing(t, mapping);
-  f32 res = lerp(new_t, a, b);
+  f32 res   = lerp(new_t, a, b);
 
   if (clamping) {
     res = new_t < 0.0f ? a : (new_t > 1.0f) ? b : res;
@@ -62,7 +62,8 @@ void sen_parametric_circle(f32* outx, f32* outy, f32* position, f32 radius,
   *outy = ((f32)cos(angle) * radius) + position[1];
 }
 
-void sen_parametric_ray(f32* outx, f32* outy, f32* point, f32* direction, f32 t) {
+void sen_parametric_ray(f32* outx, f32* outy, f32* point, f32* direction,
+                        f32 t) {
   // direction should be a normalized vector
 
   *outx = point[0] + (direction[0] * t);
