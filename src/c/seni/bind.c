@@ -2622,113 +2622,113 @@ void declare_bindings(sen_word_lut* word_lut, sen_env* e) {
 #include "keywords.h"
 #undef REGISTER_KEYWORD
 
-  declare_native(word_lut, e, "debug/print", &bind_debug_print);
-  declare_native(word_lut, e, "nth", &bind_nth);
-  declare_native(word_lut, e, "vector/length", &bind_vector_length);
+#define BIND(string, fn) declare_native(word_lut, e, string, &fn)
+
+  BIND("debug/print", bind_debug_print);
+  BIND("nth", bind_nth);
+  BIND("vector/length", bind_vector_length);
 
   // map
 
-  declare_native(word_lut, e, "line", &bind_line);
-  declare_native(word_lut, e, "rect", &bind_rect);
-  declare_native(word_lut, e, "circle", &bind_circle);
-  declare_native(word_lut, e, "circle-slice", &bind_circle_slice);
-  declare_native(word_lut, e, "poly", &bind_poly);
-  declare_native(word_lut, e, "bezier", &bind_bezier);
-  declare_native(word_lut, e, "bezier-bulging", &bind_bezier_bulging);
-  declare_native(word_lut, e, "stroked-bezier", &bind_stroked_bezier);
-  declare_native(word_lut, e, "stroked-bezier-rect", &bind_stroked_bezier_rect);
+  BIND("line", bind_line);
+  BIND("rect", bind_rect);
+  BIND("circle", bind_circle);
+  BIND("circle-slice", bind_circle_slice);
+  BIND("poly", bind_poly);
+  BIND("bezier", bind_bezier);
+  BIND("bezier-bulging", bind_bezier_bulging);
+  BIND("stroked-bezier", bind_stroked_bezier);
+  BIND("stroked-bezier-rect", bind_stroked_bezier_rect);
 
-  declare_native(word_lut, e, "translate", &bind_translate);
-  declare_native(word_lut, e, "rotate", &bind_rotate);
-  declare_native(word_lut, e, "scale", &bind_scale);
+  BIND("translate", bind_translate);
+  BIND("rotate", bind_rotate);
+  BIND("scale", bind_scale);
 
-  declare_native(word_lut, e, "col/convert", &bind_col_convert);
-  declare_native(word_lut, e, "col/rgb", &bind_col_rgb);
-  declare_native(word_lut, e, "col/hsl", &bind_col_hsl);
-  declare_native(word_lut, e, "col/hsluv", &bind_col_hsluv);
-  declare_native(word_lut, e, "col/hsv", &bind_col_hsv);
-  declare_native(word_lut, e, "col/lab", &bind_col_lab);
-  declare_native(word_lut, e, "col/complementary", &bind_col_complementary);
-  declare_native(word_lut, e, "col/split-complementary", &bind_col_split_complementary);
-  declare_native(word_lut, e, "col/analagous", &bind_col_analagous);
-  declare_native(word_lut, e, "col/triad", &bind_col_triad);
-  declare_native(word_lut, e, "col/darken", &bind_col_darken);
-  declare_native(word_lut, e, "col/lighten", &bind_col_lighten);
-  declare_native(word_lut, e, "col/set-alpha", &bind_col_set_alpha);
-  declare_native(word_lut, e, "col/get-alpha", &bind_col_get_alpha);
-  declare_native(word_lut, e, "col/set-r", &bind_col_set_r);
-  declare_native(word_lut, e, "col/get-r", &bind_col_get_r);
-  declare_native(word_lut, e, "col/set-g", &bind_col_set_g);
-  declare_native(word_lut, e, "col/get-g", &bind_col_get_g);
-  declare_native(word_lut, e, "col/set-b", &bind_col_set_b);
-  declare_native(word_lut, e, "col/get-b", &bind_col_get_b);
-  declare_native(word_lut, e, "col/set-h", &bind_col_set_h);
-  declare_native(word_lut, e, "col/get-h", &bind_col_get_h);
-  declare_native(word_lut, e, "col/set-s", &bind_col_set_s);
-  declare_native(word_lut, e, "col/get-s", &bind_col_get_s);
-  declare_native(word_lut, e, "col/set-l", &bind_col_set_l);
-  declare_native(word_lut, e, "col/get-l", &bind_col_get_l);
-  declare_native(word_lut, e, "col/set-a", &bind_col_set_a);
-  declare_native(word_lut, e, "col/get-a", &bind_col_get_a);
-  declare_native(word_lut, e, "col/set-v", &bind_col_set_v);
-  declare_native(word_lut, e, "col/get-v", &bind_col_get_v);
-  declare_native(word_lut, e, "col/build-procedural",
-                 &bind_col_build_procedural);
-  declare_native(word_lut, e, "col/build-bezier", &bind_col_build_bezier);
-  declare_native(word_lut, e, "col/value", &bind_col_value);
+  BIND("col/convert", bind_col_convert);
+  g_colour_constructor_start = word_lut->native_count;
+  BIND("col/rgb", bind_col_rgb);
+  BIND("col/hsl", bind_col_hsl);
+  BIND("col/hsluv", bind_col_hsluv);
+  BIND("col/hsv", bind_col_hsv);
+  BIND("col/lab", bind_col_lab);
+  g_colour_constructor_end = word_lut->native_count;
+  BIND("col/complementary", bind_col_complementary);
+  BIND("col/split-complementary", bind_col_split_complementary);
+  BIND("col/analagous", bind_col_analagous);
+  BIND("col/triad", bind_col_triad);
+  BIND("col/darken", bind_col_darken);
+  BIND("col/lighten", bind_col_lighten);
+  BIND("col/set-alpha", bind_col_set_alpha);
+  BIND("col/get-alpha", bind_col_get_alpha);
+  BIND("col/set-r", bind_col_set_r);
+  BIND("col/get-r", bind_col_get_r);
+  BIND("col/set-g", bind_col_set_g);
+  BIND("col/get-g", bind_col_get_g);
+  BIND("col/set-b", bind_col_set_b);
+  BIND("col/get-b", bind_col_get_b);
+  BIND("col/set-h", bind_col_set_h);
+  BIND("col/get-h", bind_col_get_h);
+  BIND("col/set-s", bind_col_set_s);
+  BIND("col/get-s", bind_col_get_s);
+  BIND("col/set-l", bind_col_set_l);
+  BIND("col/get-l", bind_col_get_l);
+  BIND("col/set-a", bind_col_set_a);
+  BIND("col/get-a", bind_col_get_a);
+  BIND("col/set-v", bind_col_set_v);
+  BIND("col/get-v", bind_col_get_v);
+  BIND("col/build-procedural", bind_col_build_procedural);
+  BIND("col/build-bezier", bind_col_build_bezier);
+  BIND("col/value", bind_col_value);
 
-  declare_native(word_lut, e, "math/distance", &bind_math_distance);
-  declare_native(word_lut, e, "math/normal", &bind_math_normal);
-  declare_native(word_lut, e, "math/clamp", &bind_math_clamp);
-  declare_native(word_lut, e, "math/radians->degrees",
-                 &bind_math_radians_to_degrees);
-  declare_native(word_lut, e, "math/cos", &bind_math_cos);
-  declare_native(word_lut, e, "math/sin", &bind_math_sin);
+  BIND("math/distance", bind_math_distance);
+  BIND("math/normal", bind_math_normal);
+  BIND("math/clamp", bind_math_clamp);
+  BIND("math/radians->degrees", bind_math_radians_to_degrees);
+  BIND("math/cos", bind_math_cos);
+  BIND("math/sin", bind_math_sin);
 
-  declare_native(word_lut, e, "prng/build", &bind_prng_build);
-  declare_native(word_lut, e, "prng/values", &bind_prng_values);
-  declare_native(word_lut, e, "prng/value", &bind_prng_value);
-  declare_native(word_lut, e, "prng/perlin", &bind_prng_perlin);
+  BIND("prng/build", bind_prng_build);
+  BIND("prng/values", bind_prng_values);
+  BIND("prng/value", bind_prng_value);
+  BIND("prng/perlin", bind_prng_perlin);
 
-  declare_native(word_lut, e, "interp/build", &bind_interp_build);
-  declare_native(word_lut, e, "interp/value", &bind_interp_value);
-  declare_native(word_lut, e, "interp/cos", &bind_interp_cos);
-  declare_native(word_lut, e, "interp/sin", &bind_interp_sin);
-  declare_native(word_lut, e, "interp/bezier", &bind_interp_bezier);
-  declare_native(word_lut, e, "interp/bezier-tangent",
-                 &bind_interp_bezier_tangent);
-  declare_native(word_lut, e, "interp/ray", &bind_interp_ray);
-  declare_native(word_lut, e, "interp/line", &bind_interp_line);
-  declare_native(word_lut, e, "interp/circle", &bind_interp_circle);
+  BIND("interp/build", bind_interp_build);
+  BIND("interp/value", bind_interp_value);
+  BIND("interp/cos", bind_interp_cos);
+  BIND("interp/sin", bind_interp_sin);
+  BIND("interp/bezier", bind_interp_bezier);
+  BIND("interp/bezier-tangent", bind_interp_bezier_tangent);
+  BIND("interp/ray", bind_interp_ray);
+  BIND("interp/line", bind_interp_line);
+  BIND("interp/circle", bind_interp_circle);
 
-  declare_native(word_lut, e, "path/linear", &bind_path_linear);
-  declare_native(word_lut, e, "path/circle", &bind_path_circle);
-  declare_native(word_lut, e, "path/spline", &bind_path_spline);
-  declare_native(word_lut, e, "path/bezier", &bind_path_bezier);
+  BIND("path/linear", bind_path_linear);
+  BIND("path/circle", bind_path_circle);
+  BIND("path/spline", bind_path_spline);
+  BIND("path/bezier", bind_path_bezier);
 
-  declare_native(word_lut, e, "repeat/symmetry-vertical",
-                 &bind_repeat_symmetry_vertical);
-  declare_native(word_lut, e, "repeat/symmetry-horizontal",
-                 &bind_repeat_symmetry_horizontal);
-  declare_native(word_lut, e, "repeat/symmetry-4", &bind_repeat_symmetry_4);
-  declare_native(word_lut, e, "repeat/symmetry-8", &bind_repeat_symmetry_8);
-  declare_native(word_lut, e, "repeat/rotate", &bind_repeat_rotate);
-  declare_native(word_lut, e, "repeat/rotate-mirrored",
-                 &bind_repeat_rotate_mirrored);
+  BIND("repeat/symmetry-vertical", bind_repeat_symmetry_vertical);
+  BIND("repeat/symmetry-horizontal", bind_repeat_symmetry_horizontal);
+  BIND("repeat/symmetry-4", bind_repeat_symmetry_4);
+  BIND("repeat/symmetry-8", bind_repeat_symmetry_8);
+  BIND("repeat/rotate", bind_repeat_rotate);
+  BIND("repeat/rotate-mirrored", bind_repeat_rotate_mirrored);
 
-  declare_native(word_lut, e, "focal/build-point", &bind_focal_build_point);
-  declare_native(word_lut, e, "focal/build-vline", &bind_focal_build_vline);
-  declare_native(word_lut, e, "focal/build-hline", &bind_focal_build_hline);
-  declare_native(word_lut, e, "focal/value", &bind_focal_value);
+  BIND("focal/build-point", bind_focal_build_point);
+  BIND("focal/build-vline", bind_focal_build_vline);
+  BIND("focal/build-hline", bind_focal_build_hline);
+  BIND("focal/value", bind_focal_value);
 
-  declare_native(word_lut, e, "gen/stray-int", &bind_gen_stray_int);
-  declare_native(word_lut, e, "gen/stray", &bind_gen_stray);
-  declare_native(word_lut, e, "gen/stray-2d", &bind_gen_stray_2d);
-  declare_native(word_lut, e, "gen/stray-3d", &bind_gen_stray_3d);
-  declare_native(word_lut, e, "gen/stray-4d", &bind_gen_stray_4d);
-  declare_native(word_lut, e, "gen/int", &bind_gen_int);
-  declare_native(word_lut, e, "gen/scalar", &bind_gen_scalar);
-  declare_native(word_lut, e, "gen/2d", &bind_gen_2d);
-  declare_native(word_lut, e, "gen/select", &bind_gen_select); // broken?
-  declare_native(word_lut, e, "gen/col", &bind_gen_col);
+  BIND("gen/stray-int", bind_gen_stray_int);
+  BIND("gen/stray", bind_gen_stray);
+  BIND("gen/stray-2d", bind_gen_stray_2d);
+  BIND("gen/stray-3d", bind_gen_stray_3d);
+  BIND("gen/stray-4d", bind_gen_stray_4d);
+  BIND("gen/int", bind_gen_int);
+  BIND("gen/scalar", bind_gen_scalar);
+  BIND("gen/2d", bind_gen_2d);
+  BIND("gen/select", bind_gen_select); // broken?
+  BIND("gen/col", bind_gen_col);
+
+#undef BIND
 }
