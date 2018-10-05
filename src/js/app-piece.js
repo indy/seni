@@ -1,5 +1,5 @@
 /*
- *  Sen
+ *  Seni
  *  Copyright (C) 2018 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
