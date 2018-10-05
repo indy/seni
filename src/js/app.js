@@ -25,7 +25,7 @@ import KonsoleCommander from './ui/KonsoleCommander';
 //import { addDefaultCommands } from './ui/KonsoleCommands';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
-import { SenMode } from './ui/SenMode';
+import { SeniMode } from './ui/SeniMode';
 import Job from './job';
 import { jobRender,
          jobUnparse
@@ -81,7 +81,7 @@ function showButtonsFor(mode) {
   const shuffleBtn = document.getElementById('shuffle-btn');
 
   switch (mode) {
-  case SenMode.gallery :
+  case SeniMode.gallery :
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
@@ -89,7 +89,7 @@ function showButtonsFor(mode) {
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
-  case SenMode.edit :
+  case SeniMode.edit :
     evalBtn.classList.remove('hidden');
     evolveBtn.classList.remove('hidden');
     renderBtn.classList.remove('hidden');
@@ -97,7 +97,7 @@ function showButtonsFor(mode) {
     nextBtn.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
     break;
-  case SenMode.evolve :
+  case SeniMode.evolve :
     evalBtn.classList.add('hidden');
     evolveBtn.classList.add('hidden');
     renderBtn.classList.add('hidden');
@@ -116,7 +116,7 @@ function showCurrentMode(state) {
   const containers = gUI.containers;
   const currentMode = state.currentMode;
 
-  for (let i = 0; i < SenMode.numSenModes; i++) {
+  for (let i = 0; i < SeniMode.numSeniModes; i++) {
     containers[i].className = i === currentMode ? '' : 'hidden';
   }
   showButtonsFor(currentMode);
@@ -316,25 +316,25 @@ function updateUI(state) {
   showCurrentMode(state);
 
   switch (state.currentMode) {
-  case SenMode.gallery :
+  case SeniMode.gallery :
     break;
-  case SenMode.edit :
+  case SeniMode.edit :
     showScriptInEditor(state);
     renderScript(state, gUI.renderImage);
     break;
-  case SenMode.evolve :
+  case SeniMode.evolve :
     // will only get here from History.restoreState
     // NOTE: the popstate event listener is handling this case
     break;
   default:
-    console.log('unknown SenMode');
+    console.log('unknown SeniMode');
     break;
   }
 }
 
 function ensureMode(store, mode) {
 
-  if (mode === SenMode.gallery && store.getState().galleryLoaded === false) {
+  if (mode === SeniMode.gallery && store.getState().galleryLoaded === false) {
     // want to show the gallery but it hasn't been loaded yet. This occurs when
     // editing a particular piece by loading it's id directly into the URL
     // e.g. http://localhost:3210/#61
@@ -354,7 +354,7 @@ function ensureMode(store, mode) {
     store.dispatch({type: 'SET_MODE', mode}).then(state => {
       History.pushState(state);
 
-      if (mode === SenMode.evolve) {
+      if (mode === SeniMode.evolve) {
         showCurrentMode(state);
         setupEvolveUI(store).then(latestState => {
           // make sure that the history for the first evolve generation
@@ -502,7 +502,7 @@ function showEditFromEvolve(store, element) {
         genotype: genotypes[index]
       }).then(({ script }) => {
         setScript(store, script).then(() => {
-          return ensureMode(store, SenMode.edit);
+          return ensureMode(store, SeniMode.edit);
         }).then(resolve).catch(e => {
           // handle error
           console.log(`worker: error of ${e}`);
@@ -603,7 +603,7 @@ function loadScriptWithId(store, id) {
     }).then(() => {
       return setScriptId(store, id);
     }).then(() => {
-      return ensureMode(store, SenMode.edit);
+      return ensureMode(store, SeniMode.edit);
     }).then(resolve).catch(error => {
       console.log(`loadScriptWithId error ${error}`);
       reject(error);
@@ -639,7 +639,7 @@ function createExtraKonsoleCommands(store, commander) {
     return {
       canHandle(command) {
         const state = store.getState();
-        return state.currentMode === SenMode.edit && command === keyword;
+        return state.currentMode === SeniMode.edit && command === keyword;
       },
       execute() {
         toggleKonsole(); // konsole is visible, so hide it
@@ -741,10 +741,10 @@ function setupUI(store) {
 
   konsoleElement.style.height = '0%';
 
-  showButtonsFor(SenMode.gallery);
+  showButtonsFor(SeniMode.gallery);
 
   addClickEvent('home', event => {
-    ensureMode(store, SenMode.gallery);
+    ensureMode(store, SeniMode.gallery);
     event.preventDefault();
   });
 
@@ -752,7 +752,7 @@ function setupUI(store) {
     // get the latest script from the editor
     setScript(store, getScriptFromEditor()).then(state => {
       History.replaceState(state);
-      ensureMode(store, SenMode.evolve);
+      ensureMode(store, SeniMode.evolve);
     }).catch(error => {
       // handle error
       console.log(`evolve-btn:click : error of ${error}`);
@@ -847,7 +847,7 @@ function setupUI(store) {
   const dKey = 68;
   document.addEventListener('keydown', event => {
     if (event.ctrlKey && event.keyCode === dKey &&
-        store.getState().currentMode === SenMode.evolve) {
+        store.getState().currentMode === SeniMode.evolve) {
       event.preventDefault();
       onNextGen(store);
     }
@@ -892,7 +892,7 @@ function setupUI(store) {
       const savedState = History.restoreState(event.state);
       store.dispatch({type: 'SET_STATE', state: savedState}).then(state => {
         updateUI(state);
-        if (state.currentMode === SenMode.evolve) {
+        if (state.currentMode === SeniMode.evolve) {
           restoreEvolveUI(store);
         }
       }).catch(error => {
@@ -902,7 +902,7 @@ function setupUI(store) {
     } else {
       // no event.state so behave as if the user has visited
       // the '/' of the state
-      ensureMode(store, SenMode.gallery);
+      ensureMode(store, SeniMode.gallery);
     }
   });
 
@@ -1039,17 +1039,17 @@ export default function main() {
   const canvasElement = document.getElementById('render-canvas');
   gGLRenderer = new GLRenderer(canvasElement);
 
-  gGLRenderer.loadTexture(`img/texture.png`).then(() => {
+  gGLRenderer.loadTexture('img/texture.png').then(() => {
     setupUI(store);
 
     const matched = window.location.hash.match(/^\#(\d+)/);
-    if (window.location.pathname === "/" && matched) {
+    if (window.location.pathname === '/' && matched) {
       const id = parseInt(matched[1], 10);
       return loadScriptWithId(store, id);
     } else {
-      return getGallery(store);
+      return ensureMode(store, SeniMode.gallery);
     }
   }).then(() => {
     return removeKonsoleInvisibility();
-  }).catch(error => console.error(error));;
+  }).catch(error => console.error(error));
 }

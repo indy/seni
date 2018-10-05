@@ -17,7 +17,7 @@
  */
 
 import Util from './seni/Util';
-import { SenMode } from './ui/SenMode';
+import { SeniMode } from './ui/SeniMode';
 import Job from './job';
 import { jobBuildTraits,
          jobInitialGeneration,
@@ -199,6 +199,25 @@ function wrapInPromise(state) {
   });
 }
 
+function logMode(mode) {
+  let name = '';
+  switch (mode) {
+  case SeniMode.gallery:
+    name = 'gallery';
+    break;
+  case SeniMode.edit:
+    name = 'edit';
+    break;
+  case SeniMode.evolve:
+    name = 'evolve';
+    break;
+  default:
+    name = 'unknown';
+    break;
+  }
+  console.log(`SET_MODE: ${name}`);
+}
+
 export function createInitialState() {
   return {
     // the resolution of the high res image
@@ -207,7 +226,7 @@ export function createInitialState() {
     populationSize: 24,
     mutationRate: 0.1,
 
-    currentMode: SenMode.gallery,
+    currentMode: SeniMode.gallery,
     galleryLoaded: false,
     previouslySelectedGenotypes: [],
     selectedIndices: [],
@@ -217,25 +236,6 @@ export function createInitialState() {
     genotypes: [],
     traits: []
   };
-}
-
-function logMode(mode) {
-  let name = '';
-  switch (mode) {
-  case SenMode.gallery:
-    name = 'gallery';
-    break;
-  case SenMode.edit:
-    name = 'edit';
-    break;
-  case SenMode.evolve:
-    name = 'evolve';
-    break;
-  default:
-    name = 'unknown';
-    break;
-  }
-  console.log(`SET_MODE: ${name}`);
 }
 
 export function createStore(initialState) {

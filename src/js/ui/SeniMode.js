@@ -16,9 +16,9 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-export const SenMode = {
+export const SeniMode = {
   gallery: 0,
   edit: 1,
   evolve: 2,
-  numSenModes: 3
+  numSeniModes: 3
 };

@@ -16,22 +16,22 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { SenMode } from './SenMode';
+import { SeniMode } from './SeniMode';
 
-const logToConsole = true;
+const logToConsole = false;
 
 function senModeAsString(state) {
   const mode = state.currentMode;
 
   switch (mode) {
-  case SenMode.gallery:
+  case SeniMode.gallery:
     return 'gallery';
-  case SenMode.edit:
+  case SeniMode.edit:
     return state.scriptId;
-  case SenMode.evolve:
+  case SeniMode.evolve:
     return 'evolve';
   default:
-    return 'error unknown SenMode value';
+    return 'error unknown SeniMode value';
   }
 }
 
