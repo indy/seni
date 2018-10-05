@@ -1461,11 +1461,11 @@ sen_node* compile(sen_compilation* compilation, sen_node* ast) {
       emit_opcode(compilation, LOAD, &arg0, var);
 
     } else {
-      if (alterable(ast)) {
-        warn_if_alterable("NODE_LIST", ast);
-        SEN_ERROR(
-            "given an alterable list that wasn't a colour constructor???");
-      }
+      // if (alterable(ast)) {
+      //   warn_if_alterable("NODE_LIST", ast);
+      //   SEN_ERROR(
+      //       "given an alterable list that wasn't a colour constructor???");
+      // }
       n = safe_first(ast->value.first_child);
 
       i32 fn_info_index = get_fn_info_index(n, compilation->program);
