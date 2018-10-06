@@ -1,22 +1,20 @@
-* TODO [0/18]
-  1. [ ] a page that starts at editing a particular piece
-  2. [ ] path/linear: take t-start/t-end into account
-  3. [ ] get npm run start to work again
-  4. [ ] program_allocate uses calloc, make sure program_free is called
-  5. [ ] bind_gen_col set min/max according to colour format
-  6. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
-  7. [ ] quilt
-  8. [ ] map (1669-zero.sen)
-  9. [ ] better error messages when gen/scalar was mis-spelt
-  10. [ ] {red (gen/col alpha: 1)} bug?
-  11. [ ] poly should also accept a uv parameter
-  12. [ ] remove vm/env from genotype_list_create_initial_generation
-  13. [ ] impl: initial seed
-  14. [ ] add an END token to serialized output, use as a sanity check?
-  15. [ ] add unit tests for compiling with a genotype
-  16. [ ] ensure that there's a dist folder before running npm run build:wasm
-  17. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  18. [ ] look into restrict keyword in C99
+* TODO [0/16]
+  1. [ ] path/linear: take t-start/t-end into account
+  2. [ ] program_allocate uses calloc, make sure program_free is called
+  3. [ ] bind_gen_col set min/max according to colour format
+  4. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
+  5. [ ] quilt
+  6. [ ] map (1669-zero.sen)
+  7. [ ] better error messages when gen/scalar was mis-spelt
+  8. [ ] {red (gen/col alpha: 1)} bug?
+  9. [ ] poly should also accept a uv parameter
+  10. [ ] remove vm/env from genotype_list_create_initial_generation
+  11. [ ] impl: initial seed
+  12. [ ] add an END token to serialized output, use as a sanity check?
+  13. [ ] add unit tests for compiling with a genotype
+  14. [ ] ensure that there's a dist folder before running npm run build:wasm
+  15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  16. [ ] look into restrict keyword in C99
 ** check node->src and node->src_len
    node_pretty_print
 
@@ -31,8 +29,16 @@
 
 * building for seni.app/gallery
 
-  set the loadForWebsite variable in src/js/app-piece.js to true
-  set the loadForWebsite variable in src/js/worker.js to true
+  1. set the loadForWebsite variable in src/js/app-piece.js to true
+  2. set the loadForWebsite variable in src/js/worker.js to true
+  3. delete the dist folder
+  4. $ npm run build:production
+  5. $ npm run build:wasm
+  6. copy the following files into the seni.app/static/seni folder:
+     - dist/piece.bundle.js
+     - dist/sen-wasm.wasm
+     - dist/worker.bundle.js
+     - assets/img/texture.png
 
 * srgb.glsl
   https://gist.github.com/tomaka/0ef19530fdbf6a1d30ebf9c0bcd0df72
