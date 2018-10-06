@@ -24,7 +24,7 @@ import { jobRender,
          jobSingleGenotypeFromSeed,
          jobSimplifyScript
        } from './jobTypes';
-const SenWasm = {};
+const SeniWasm = {};
 
 const getOwnPropertyNames = Object.getOwnPropertyNames;
 /* eslint-disable no-param-reassign */
@@ -261,13 +261,13 @@ const konsoleProxy = new KonsoleProxy();
 function pointerToFloat32Array(ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
-  return SenWasm.instance.memory.F32.subarray(pos, pos + length);
+  return SeniWasm.instance.memory.F32.subarray(pos, pos + length);
 }
 
 function pointerToArrayBufferCopy(ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
-  return SenWasm.instance.memory.F32.slice(pos, pos + length);
+  return SeniWasm.instance.memory.F32.slice(pos, pos + length);
 }
 */
 
@@ -277,34 +277,34 @@ function render({ script /*, scriptHash*/, genotype }) {
 
   if (genotype) {
     // console.log(`renderWasm genotype: ${genotype}`);
-    SenWasm.useGenotypeWhenCompiling(true);
-    SenWasm.setString(SenWasm.genotype_buffer, genotype);
+    SeniWasm.useGenotypeWhenCompiling(true);
+    SeniWasm.setString(SeniWasm.genotype_buffer, genotype);
   } else {
-    SenWasm.useGenotypeWhenCompiling(false);
+    SeniWasm.useGenotypeWhenCompiling(false);
   }
 
   // need to setString before calling compileToRenderPackets
-  SenWasm.setString(SenWasm.source_buffer, script);
-  const numRenderPackets = SenWasm.compileToRenderPackets();
+  SeniWasm.setString(SeniWasm.source_buffer, script);
+  const numRenderPackets = SeniWasm.compileToRenderPackets();
   // konsoleProxy.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
-    const numVertices = SenWasm.getRenderPacketNumVertices(i);
+    const numVertices = SeniWasm.getRenderPacketNumVertices(i);
     // konsoleProxy.log(`render_packet ${i}: numVertices = ${numVertices}`);
 
     if (numVertices > 0) {
       const buffer = {};
 
-      buffer.vbufAddress = SenWasm.getRenderPacketVBuf(i);
-      buffer.cbufAddress = SenWasm.getRenderPacketCBuf(i);
-      buffer.tbufAddress = SenWasm.getRenderPacketTBuf(i);
+      buffer.vbufAddress = SeniWasm.getRenderPacketVBuf(i);
+      buffer.cbufAddress = SeniWasm.getRenderPacketCBuf(i);
+      buffer.tbufAddress = SeniWasm.getRenderPacketTBuf(i);
 
       buffer.numVertices = numVertices;
       buffers.push(buffer);
     }
   }
 
-  SenWasm.scriptCleanup();
+  SeniWasm.scriptCleanup();
 
   const logMessages = konsoleProxy.collectMessages();
   const title = 'WASM woohoo';
@@ -318,7 +318,7 @@ function render({ script /*, scriptHash*/, genotype }) {
   // WTF note: Expected a perfomance cost in Chrome due to the slice operation
   // but it seemed to either have no effect or to make the rendering faster!?!
   //
-  const wasmMemory = SenWasm.instance.memory.buffer;
+  const wasmMemory = SeniWasm.instance.memory.buffer;
   const memory = wasmMemory.slice();
 
   return [{ ok: true, logMessages }, { title, memory, buffers }];
@@ -330,11 +330,11 @@ function unparse({ script/*, scriptHash*/, genotype }) {
   // console.log(`genotype is ${genotype}`);
   // console.log(`script is ${script}`);
 
-  SenWasm.setString(SenWasm.source_buffer, script);
-  SenWasm.setString(SenWasm.genotype_buffer, genotype);
+  SeniWasm.setString(SeniWasm.source_buffer, script);
+  SeniWasm.setString(SeniWasm.genotype_buffer, genotype);
 
-  SenWasm.unparseWithGenotype();
-  const newScript = SenWasm.getString(SenWasm.out_source_buffer);
+  SeniWasm.unparseWithGenotype();
+  const newScript = SeniWasm.getString(SeniWasm.out_source_buffer);
 
   // console.log(`new script: ${newScript}`);
 
@@ -346,13 +346,13 @@ function unparse({ script/*, scriptHash*/, genotype }) {
 function buildTraits({ script /*, scriptHash */ }) {
   konsoleProxy.clear();
 
-  SenWasm.setString(SenWasm.source_buffer, script);
+  SeniWasm.setString(SeniWasm.source_buffer, script);
 
   // konsoleProxy.log('worker:buildTraits');
-  const numTraits = SenWasm.buildTraits();
+  const numTraits = SeniWasm.buildTraits();
   // konsoleProxy.log(`built ${numTraits} traits`);
 
-  const traits = SenWasm.getString(SenWasm.traits_buffer);
+  const traits = SeniWasm.getString(SeniWasm.traits_buffer);
 
   const logMessages = konsoleProxy.collectMessages();
 
@@ -365,8 +365,8 @@ function getGenotypesFromWasm(populationSize) {
   let s;
 
   for (let i = 0; i < populationSize; i++) {
-    SenWasm.genotypeMoveToBuffer(i);
-    s = SenWasm.getString(SenWasm.genotype_buffer);
+    SeniWasm.genotypeMoveToBuffer(i);
+    s = SeniWasm.getString(SeniWasm.genotype_buffer);
     genotypes.push(s);
   }
 
@@ -376,13 +376,13 @@ function getGenotypesFromWasm(populationSize) {
 function createInitialGeneration({ populationSize, traits }) {
   konsoleProxy.clear();
 
-  SenWasm.setString(SenWasm.traits_buffer, traits);
+  SeniWasm.setString(SeniWasm.traits_buffer, traits);
 
   const seed = Math.floor(Math.random() * 1024);
   // konsoleProxy.log(`createInitialGeneration seed: ${seed}`);
   // konsoleProxy.log(`createInitialGeneration populationSize: ${populationSize}`);
 
-  SenWasm.createInitialGeneration(populationSize, seed);
+  SeniWasm.createInitialGeneration(populationSize, seed);
 
   const genotypes = getGenotypesFromWasm(populationSize);
 
@@ -394,11 +394,11 @@ function createInitialGeneration({ populationSize, traits }) {
 function singleGenotypeFromSeed({ seed, traits }) {
   konsoleProxy.clear();
 
-  SenWasm.setString(SenWasm.traits_buffer, traits);
+  SeniWasm.setString(SeniWasm.traits_buffer, traits);
 
   // konsoleProxy.log(`singleGenotypeFromSeed seed: ${seed}`);
 
-  SenWasm.singleGenotypeFromSeed(seed);
+  SeniWasm.singleGenotypeFromSeed(seed);
 
   const genotypes = getGenotypesFromWasm(1);
 
@@ -410,11 +410,11 @@ function singleGenotypeFromSeed({ seed, traits }) {
 function simplifyScript({ script }) {
   konsoleProxy.clear();
 
-  SenWasm.setString(SenWasm.source_buffer, script);
+  SeniWasm.setString(SeniWasm.source_buffer, script);
 
-  SenWasm.simplifyScript();
+  SeniWasm.simplifyScript();
 
-  const newScript = SenWasm.getString(SenWasm.out_source_buffer);
+  const newScript = SeniWasm.getString(SeniWasm.out_source_buffer);
 
   const logMessages = konsoleProxy.collectMessages();
 
@@ -424,14 +424,14 @@ function simplifyScript({ script }) {
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   konsoleProxy.clear();
 
-  SenWasm.nextGenerationPrepare();
+  SeniWasm.nextGenerationPrepare();
   for (let i = 0; i < genotypes.length; i++) {
-    SenWasm.setString(SenWasm.genotype_buffer, genotypes[i]);
-    SenWasm.nextGenerationAddGenotype();
+    SeniWasm.setString(SeniWasm.genotype_buffer, genotypes[i]);
+    SeniWasm.nextGenerationAddGenotype();
   }
 
-  SenWasm.setString(SenWasm.traits_buffer, traits);
-  SenWasm.nextGenerationBuild(genotypes.length, populationSize,
+  SeniWasm.setString(SeniWasm.traits_buffer, traits);
+  SeniWasm.nextGenerationBuild(genotypes.length, populationSize,
                              mutationRate, rng);
 
   const newGenotypes = getGenotypesFromWasm(populationSize);
@@ -452,50 +452,50 @@ const options = {
 function configureWasmModule(wasmInstance) {
   const w = wasmInstance;
 
-  SenWasm.instance = w;
+  SeniWasm.instance = w;
 
   // declare string functions
-  SenWasm.setString = w.memory.setString;
-  SenWasm.getString = w.memory.getString;
+  SeniWasm.setString = w.memory.setString;
+  SeniWasm.getString = w.memory.getString;
 
   // declare Sen's wasm insterface
-  SenWasm.senStartup = w.exports.sen_startup;
-  SenWasm.senShutdown = w.exports.sen_shutdown;
-  SenWasm.scriptCleanup = w.exports.script_cleanup;
+  SeniWasm.senStartup = w.exports.sen_startup;
+  SeniWasm.senShutdown = w.exports.sen_shutdown;
+  SeniWasm.scriptCleanup = w.exports.script_cleanup;
 
-  SenWasm.compileToRenderPackets = w.exports.compile_to_render_packets;
-  SenWasm.getRenderPacketNumVertices = w.exports.get_render_packet_num_vertices;
-  SenWasm.getRenderPacketVBuf = w.exports.get_render_packet_vbuf;
-  SenWasm.getRenderPacketCBuf = w.exports.get_render_packet_cbuf;
-  SenWasm.getRenderPacketTBuf = w.exports.get_render_packet_tbuf;
+  SeniWasm.compileToRenderPackets = w.exports.compile_to_render_packets;
+  SeniWasm.getRenderPacketNumVertices = w.exports.get_render_packet_num_vertices;
+  SeniWasm.getRenderPacketVBuf = w.exports.get_render_packet_vbuf;
+  SeniWasm.getRenderPacketCBuf = w.exports.get_render_packet_cbuf;
+  SeniWasm.getRenderPacketTBuf = w.exports.get_render_packet_tbuf;
 
-  SenWasm.buildTraits = w.exports.build_traits;
-  SenWasm.createInitialGeneration = w.exports.create_initial_generation;
-  SenWasm.singleGenotypeFromSeed = w.exports.single_genotype_from_seed;
-  SenWasm.genotypeMoveToBuffer = w.exports.genotype_move_to_buffer;
-  SenWasm.useGenotypeWhenCompiling = w.exports.use_genotype_when_compiling;
-  SenWasm.unparseWithGenotype = w.exports.unparse_with_genotype;
-  SenWasm.simplifyScript = w.exports.simplify_script;
+  SeniWasm.buildTraits = w.exports.build_traits;
+  SeniWasm.createInitialGeneration = w.exports.create_initial_generation;
+  SeniWasm.singleGenotypeFromSeed = w.exports.single_genotype_from_seed;
+  SeniWasm.genotypeMoveToBuffer = w.exports.genotype_move_to_buffer;
+  SeniWasm.useGenotypeWhenCompiling = w.exports.use_genotype_when_compiling;
+  SeniWasm.unparseWithGenotype = w.exports.unparse_with_genotype;
+  SeniWasm.simplifyScript = w.exports.simplify_script;
 
-  SenWasm.nextGenerationPrepare = w.exports.next_generation_prepare;
-  SenWasm.nextGenerationAddGenotype = w.exports.next_generation_add_genotype;
-  SenWasm.nextGenerationBuild = w.exports.next_generation_build;
+  SeniWasm.nextGenerationPrepare = w.exports.next_generation_prepare;
+  SeniWasm.nextGenerationAddGenotype = w.exports.next_generation_add_genotype;
+  SeniWasm.nextGenerationBuild = w.exports.next_generation_build;
 
-  SenWasm.getSourceBuffer = w.exports.get_source_buffer;
-  SenWasm.getOutSourceBuffer = w.exports.get_out_source_buffer;
-  SenWasm.getTraitsBuffer = w.exports.get_traits_buffer;
-  SenWasm.getGenotypeBuffer = w.exports.get_genotype_buffer;
+  SeniWasm.getSourceBuffer = w.exports.get_source_buffer;
+  SeniWasm.getOutSourceBuffer = w.exports.get_out_source_buffer;
+  SeniWasm.getTraitsBuffer = w.exports.get_traits_buffer;
+  SeniWasm.getGenotypeBuffer = w.exports.get_genotype_buffer;
 }
 
 /*
 function freeModule() {
 
-  Module._free(SenWasm.ptr);
-  Module._free(SenWasm.vbuf);
-  Module._free(SenWasm.cbuf);
-  Module._free(SenWasm.tbuf);
+  Module._free(SeniWasm.ptr);
+  Module._free(SeniWasm.vbuf);
+  Module._free(SeniWasm.cbuf);
+  Module._free(SeniWasm.tbuf);
 
-  SenWasm.senShutdown();
+  SeniWasm.senShutdown();
 }
 */
 
@@ -503,16 +503,16 @@ function freeModule() {
 // set this to true when building for the indy.io gallery
 const loadForWebsite = false;
 
-const wasmFile = loadForWebsite ? '/seni/sen-wasm.wasm' : 'sen-wasm.wasm';
+const wasmFile = loadForWebsite ? '/seni/seni-wasm.wasm' : 'seni-wasm.wasm';
 
 loadWASM(wasmFile, options).then(wasmInstance => {
   configureWasmModule(wasmInstance);
-  SenWasm.senStartup();
+  SeniWasm.senStartup();
   // get string buffers
-  SenWasm.source_buffer = SenWasm.getSourceBuffer();
-  SenWasm.out_source_buffer = SenWasm.getOutSourceBuffer();
-  SenWasm.traits_buffer = SenWasm.getTraitsBuffer();
-  SenWasm.genotype_buffer = SenWasm.getGenotypeBuffer();
+  SeniWasm.source_buffer = SeniWasm.getSourceBuffer();
+  SeniWasm.out_source_buffer = SeniWasm.getOutSourceBuffer();
+  SeniWasm.traits_buffer = SeniWasm.getTraitsBuffer();
+  SeniWasm.genotype_buffer = SeniWasm.getGenotypeBuffer();
 
   // send the job system an initialised message so
   // that it can start sending jobs to this worker

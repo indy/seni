@@ -36,7 +36,7 @@
   5. $ npm run build:wasm
   6. copy the following files into the seni.app/static/seni folder:
      - dist/piece.bundle.js
-     - dist/sen-wasm.wasm
+     - dist/seni-wasm.wasm
      - dist/worker.bundle.js
      - assets/img/texture.png
 
