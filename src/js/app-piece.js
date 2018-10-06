@@ -101,10 +101,7 @@ export default function main() {
   const canvasElement = getRequiredElement('piece-canvas');
   const seedElement = getRequiredElement('piece-seed');
 
-  // set this to true when building for the indy.io gallery
-  const loadForWebsite = false;
-
-  if (loadForWebsite === false) {
+  if (LOAD_FOR_SENI_APP_GALLERY === false) {
     // not really required, hack to load in other pieces
     const loadIdElement = getRequiredElement('piece-load-id');
     loadIdElement.addEventListener('change', event => {

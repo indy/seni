@@ -499,13 +499,7 @@ function freeModule() {
 }
 */
 
-
-// set this to true when building for the indy.io gallery
-const loadForWebsite = false;
-
-const wasmFile = loadForWebsite ? '/seni/seni-wasm.wasm' : 'seni-wasm.wasm';
-
-loadWASM(wasmFile, options).then(wasmInstance => {
+loadWASM(WASM_FILE_URI, options).then(wasmInstance => {
   configureWasmModule(wasmInstance);
   SeniWasm.senStartup();
   // get string buffers

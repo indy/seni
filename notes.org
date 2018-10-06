@@ -27,19 +27,6 @@
   6. really tighten up gen parameters with gen/stray
   7. save and publish on seni.app/gallery - date-name-variation
 
-* building for seni.app/gallery
-
-  1. set the loadForWebsite variable in src/js/app-piece.js to true
-  2. set the loadForWebsite variable in src/js/worker.js to true
-  3. delete the dist folder
-  4. $ npm run build:production
-  5. $ npm run build:wasm
-  6. copy the following files into the seni.app/static/seni folder:
-     - dist/piece.bundle.js
-     - dist/seni-wasm.wasm
-     - dist/worker.bundle.js
-     - assets/img/texture.png
-
 * srgb.glsl
   https://gist.github.com/tomaka/0ef19530fdbf6a1d30ebf9c0bcd0df72
 

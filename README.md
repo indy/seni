@@ -13,9 +13,33 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 ### Build:
 
-1. `npm run build`
+#### Building for development:
+
+1. `npm run build:js`
 2. `npm run build:wasm`
 3. `npm run build:server`
+4. `./serve`
+5. visit http://localhost:3210
+
+#### Building for production:
+
+1. `npm run build:all:production`
+2. `./serve`
+3. visit http://localhost:3210
+
+#### Building for single piece gallery page on https://seni.app:
+
+1. `npm run build:js:piece`
+2. `npm run build:wasm`
+3. copy files from `dist` into appropriate folder of seni.app repo
+
+#### Building when developing single piece gallery page for https://seni.app:
+
+1. `npm run build:js:devpiece`
+2. `npm run build:wasm`
+3. `npm run build:server`
+4. `./serve`
+5. visit http://localhost:3210/piece.html
 
 ### Test:
 
@@ -26,11 +50,6 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 * compiling natively and running tests on Windows
 
 make_win.bat test
-
-### Running
-
-1. `./serve`
-2. visit http://localhost:3210
 
 ### Publishing
 
