@@ -3,14 +3,13 @@
   "version": "0.3.0",
   "description": "Generate Art",
   "scripts": {
-    "start": "webpack-dev-server --progress",
     "build": "webpack --mode=development --progress",
     "build:production": "webpack --mode=production --progress",
     "build:watch": "webpack --mode=development --progress --watch",
     "build:wasm": "wa compile -D SEN_BUILD_WASM -o dist/sen-wasm.wasm src/c/wasm.c -i src/c/seni/bind.c -i src/c/seni/colour.c -i src/c/seni/colour_scheme.c -i src/c/seni/cursor.c -i src/c/seni/ease.c -i src/c/seni/focal.c -i src/c/seni/genetic.c -i src/c/seni/lang.c -i src/c/seni/lib.c -i src/c/seni/mathutil.c -i src/c/seni/matrix.c -i src/c/seni/multistring.c -i src/c/seni/parametric.c -i src/c/seni/parser.c -i src/c/seni/path.c -i src/c/seni/printf.c -i src/c/seni/prng.c -i src/c/seni/render_packet.c -i src/c/seni/repeat.c -i src/c/seni/shapes.c -i src/c/seni/strtof.c -i src/c/seni/timing.c -i src/c/seni/unparser.c -i src/c/seni/uv_mapper.c -i src/c/seni/vm_compiler.c -i src/c/seni/vm_interpreter.c -I src/c",
     "build:server": "go build src/go/serve.go",
     "format": "clang-format src/c/wasm.c src/c/native.c src/c/test.c --glob=src/c/seni/*.[ch] -i -style=file",
-    "clean": "rm dist/*.js",
+    "clean": "rimraf dist",
     "build:all": "npm run clean && npm run build && npm run build:wasm",
     "build:all:production": "npm run clean && npm run build:production && npm run build:wasm",
     "build:server:linode": "cross-env GOARCH=amd64 GOOS=linux go build src/go/serve.go",
@@ -45,9 +44,9 @@
     "clang-format": "^1.2.3",
     "cross-env": "5.2.0",
     "mkdirp": "0.5.1",
+    "rimraf": "2.6.2",
     "webassembly": "^0.11.0",
     "webpack": "^4.8.2",
-    "webpack-cli": "^2.1.3",
-    "webpack-dev-server": "^3.1.4"
+    "webpack-cli": "^2.1.3"
   }
 }
