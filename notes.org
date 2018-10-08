@@ -802,8 +802,6 @@ where does /sen go? (/server)
 
 --------------------------------------------------------------------------------
 
-rename server.go -> server/serve.go
-
 remove build_unix folder, place output in /output?
 
 remove /make prefix files with make_ and place in root

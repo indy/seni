@@ -8,23 +8,29 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 ### Prerequisites:
 
-1. go and node.js should be installed
+1. rust and node.js should be installed
 2. `npm install`
 
 ### Build:
+
+#### Building the server:
+
+1. `cd server`
+2. `cargo build --release`'
+3. `cd ..`
+4. `cp server/target/release/seni-server .`
 
 #### Building for development:
 
 1. `npm run build:js`
 2. `npm run build:wasm`
-3. `npm run build:server`
-4. `./serve`
+4. `./seni-server`
 5. visit http://localhost:3210
 
 #### Building for production:
 
 1. `npm run build:all:production`
-2. `./serve`
+2. `./seni-server`
 3. visit http://localhost:3210
 
 #### Building for single piece gallery page on https://seni.app:
@@ -37,8 +43,7 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 1. `npm run build:js:devpiece`
 2. `npm run build:wasm`
-3. `npm run build:server`
-4. `./serve`
+4. `./seni-server`
 5. visit http://localhost:3210/piece.html
 
 ### Test:
@@ -58,13 +63,13 @@ make_win.bat test
 
 ## Windows 10 Shenanigans
 
-You will need to build a server.exe and add it to the Firewall whitelist in order to prevent a Windows Firewall dialog appearing every time.
+You will need to build a seni-server.exe and add it to the Firewall whitelist in order to prevent a Windows Firewall dialog appearing every time.
 
-1. `go build src/go/serve.go`
+1. Build the server using the instructions above
 2. In the windows control panel go to:
    `Control Panel\All Control Panel Items\Windows Firewall\Allowed applications`
-   and add the serve.exe that was just created
-3. `serve.exe`
+   and add the seni-server.exe that was just created
+3. `seni-server.exe`
 
 ## C used in WebAssembly
 
