@@ -35,11 +35,11 @@ f32 cubic_ease_out(f32 p) {
 // y = (1/2)((2x)^3)       ; [0, 0.5)
 // y = (1/2)((2x-2)^3 + 2) ; [0.5, 1]
 f32 cubic_ease_in_out(f32 p) {
-  if (p < 0.5) {
-    return 4 * p * p * p;
+  if (p < 0.5f) {
+    return 4.0f * p * p * p;
   } else {
-    f32 f = ((2 * p) - 2);
-    return 0.5 * f * f * f + 1;
+    f32 f = ((2.0f * p) - 2.0f);
+    return 0.5f * f * f * f + 1.0f;
   }
 }
 
@@ -77,11 +77,11 @@ f32 quintic_ease_out(f32 p) {
 // y = (1/2)((2x)^5)       ; [0, 0.5)
 // y = (1/2)((2x-2)^5 + 2) ; [0.5, 1]
 f32 quintic_ease_in_out(f32 p) {
-  if (p < 0.5) {
-    return 16 * p * p * p * p * p;
+  if (p < 0.5f) {
+    return 16.0f * p * p * p * p * p;
   } else {
-    f32 f = ((2 * p) - 2);
-    return 0.5 * f * f * f * f * f + 1;
+    f32 f = ((2.0f * p) - 2.0f);
+    return 0.5f * f * f * f * f * f + 1.0f;
   }
 }
 
@@ -92,7 +92,7 @@ f32 sin_ease_in(f32 p) { return sinf((p - 1) * PI_BY_2) + 1; }
 f32 sin_ease_out(f32 p) { return sinf(p * PI_BY_2); }
 
 // Modeled after half sine wave
-f32 sin_ease_in_out(f32 p) { return 0.5 * (1 - cos(p * PI)); }
+f32 sin_ease_in_out(f32 p) { return 0.5f * (1.0f - cosf(p * PI)); }
 
 // Modeled after shifted quadrant IV of unit circle
 f32 circular_ease_in(f32 p) { return 1 - sqrtf(1 - (p * p)); }
@@ -104,53 +104,53 @@ f32 circular_ease_out(f32 p) { return sqrtf((2 - p) * p); }
 // y = (1/2)(1 - sqrtf(1 - 4x^2))           ; [0, 0.5)
 // y = (1/2)(sqrtf(-(2x - 3)*(2x - 1)) + 1) ; [0.5, 1]
 f32 circular_ease_in_out(f32 p) {
-  if (p < 0.5) {
-    return 0.5 * (1 - sqrtf(1 - 4 * (p * p)));
+  if (p < 0.5f) {
+    return 0.5f * (1.0f - sqrtf(1.0f - 4.0f * (p * p)));
   } else {
-    return 0.5 * (sqrtf(-((2 * p) - 3) * ((2 * p) - 1)) + 1);
+    return 0.5f * (sqrtf(-((2.0f * p) - 3.0f) * ((2.0f * p) - 1.0f)) + 1.0f);
   }
 }
 
 // exponential function y = 2^(10(x - 1))
-f32 exponential_ease_in(f32 p) { return (p == 0.0) ? p : pow(2, 10 * (p - 1)); }
+f32 exponential_ease_in(f32 p) { return (p == 0.0f) ? p : powf(2.0f, 10.0f * (p - 1.0f)); }
 
 // exponential function y = -2^(-10x) + 1
-f32 exponential_ease_out(f32 p) { return (p == 1.0) ? p : 1 - pow(2, -10 * p); }
+f32 exponential_ease_out(f32 p) { return (p == 1.0f) ? p : 1.0f - powf(2.0f, -10.0f * p); }
 
 // piecewise exponential
 // y = (1/2)2^(10(2x - 1))         ; [0,0.5)
 // y = -(1/2)*2^(-10(2x - 1))) + 1 ; [0.5,1]
 f32 exponential_ease_in_out(f32 p) {
-  if (p == 0.0 || p == 1.0)
+  if (p == 0.0f || p == 1.0f)
     return p;
 
-  if (p < 0.5) {
-    return 0.5 * pow(2, (20 * p) - 10);
+  if (p < 0.5f) {
+    return 0.5f * powf(2.0f, (20.0f * p) - 10.0f);
   } else {
-    return -0.5 * pow(2, (-20 * p) + 10) + 1;
+    return -0.5f * powf(2.0f, (-20.0f * p) + 10.0f) + 1.0f;
   }
 }
 
 // damped sine wave y = sinf(13pi/2*x)*pow(2, 10 * (x - 1))
 f32 elastic_ease_in(f32 p) {
-  return sinf(13 * PI_BY_2 * p) * pow(2, 10 * (p - 1));
+  return sinf(13.0f * PI_BY_2 * p) * powf(2.0f, 10.0f * (p - 1.0f));
 }
 
 // damped sine wave y = sinf(-13pi/2*(x + 1))*pow(2, -10x) + 1
 f32 elastic_ease_out(f32 p) {
-  return sinf(-13 * PI_BY_2 * (p + 1)) * pow(2, -10 * p) + 1;
+  return sinf(-13 * PI_BY_2 * (p + 1.0f)) * powf(2.0f, -10.0f * p) + 1.0f;
 }
 
 // piecewise exponentially-damped sine wave:
 // y = (1/2)*sinf(13pi/2*(2*x))*pow(2, 10 * ((2*x) - 1))      ; [0,0.5)
 // y = (1/2)*(sinf(-13pi/2*((2x-1)+1))*pow(2,-10(2*x-1)) + 2) ; [0.5, 1]
 f32 elastic_ease_in_out(f32 p) {
-  if (p < 0.5) {
-    return 0.5 * sinf(13 * PI_BY_2 * (2 * p)) * pow(2, 10 * ((2 * p) - 1));
+  if (p < 0.5f) {
+    return 0.5f * sinf(13.0f * PI_BY_2 * (2.0f * p)) * powf(2.0f, 10.0f * ((2.0f * p) - 1.0f));
   } else {
-    return 0.5 * (sinf(-13 * PI_BY_2 * ((2 * p - 1) + 1)) *
-                      pow(2, -10 * (2 * p - 1)) +
-                  2);
+    return 0.5f * (sinf(-13.0f * PI_BY_2 * ((2.0f * p - 1.0f) + 1.0f)) *
+                      powf(2.0f, -10.0f * (2.0f * p - 1.0f)) +
+                   2.0f);
   }
 }
 
@@ -167,34 +167,34 @@ f32 back_ease_out(f32 p) {
 // y = (1/2)*((2x)^3-(2x)*sinf(2*x*pi))           ; [0, 0.5)
 // y = (1/2)*(1-((1-x)^3-(1-x)*sinf((1-x)*pi))+1) ; [0.5, 1]
 f32 back_ease_in_out(f32 p) {
-  if (p < 0.5) {
-    f32 f = 2 * p;
-    return 0.5 * (f * f * f - f * sinf(f * PI));
+  if (p < 0.5f) {
+    f32 f = 2.0f * p;
+    return 0.5f * (f * f * f - f * sinf(f * PI));
   } else {
-    f32 f = (1 - (2 * p - 1));
-    return 0.5 * (1 - (f * f * f - f * sinf(f * PI))) + 0.5;
+    f32 f = (1.0f - (2.0f * p - 1.0f));
+    return 0.5f * (1.0f - (f * f * f - f * sinf(f * PI))) + 0.5f;
   }
 }
 
 f32 bounce_ease_out(f32 p) {
-  if (p < 4 / 11.0) {
-    return (121 * p * p) / 16.0;
-  } else if (p < 8 / 11.0) {
-    return (363 / 40.0 * p * p) - (99 / 10.0 * p) + 17 / 5.0;
-  } else if (p < 9 / 10.0) {
-    return (4356 / 361.0 * p * p) - (35442 / 1805.0 * p) + 16061 / 1805.0;
+  if (p < 4.0f / 11.0f) {
+    return (121.0f * p * p) / 16.0f;
+  } else if (p < 8.0f / 11.0f) {
+    return (363.0f / 40.0f * p * p) - (99.0f / 10.0f * p) + 17.0f / 5.0f;
+  } else if (p < 9.0f / 10.0f) {
+    return (4356.0f / 361.0f * p * p) - (35442.0f / 1805.0f * p) + 16061.0f / 1805.0f;
   } else {
-    return (54 / 5.0 * p * p) - (513 / 25.0 * p) + 268 / 25.0;
+    return (54.0f / 5.0f * p * p) - (513.0f / 25.0f * p) + 268.0f / 25.0f;
   }
 }
 
 f32 bounce_ease_in(f32 p) { return 1 - bounce_ease_out(1 - p); }
 
 f32 bounce_ease_in_out(f32 p) {
-  if (p < 0.5) {
-    return 0.5 * bounce_ease_in(p * 2);
+  if (p < 0.5f) {
+    return 0.5f * bounce_ease_in(p * 2.0f);
   } else {
-    return 0.5 * bounce_ease_out(p * 2 - 1) + 0.5;
+    return 0.5f * bounce_ease_out(p * 2.0f - 1.0f) + 0.5f;
   }
 }
 
