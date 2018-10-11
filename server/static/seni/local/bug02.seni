@@ -1,0 +1,7 @@
+(define
+  focal-point ({focal/build-hline (gen/select from: '(focal/build-point
+                                                      focal/build-hline
+                                                      focal/build-vline))}
+               position: [500 0]
+               distance: 1300))
+(circle)

@@ -1,22 +1,67 @@
-* TODO [0/16]
-  1. [ ] path/linear: take t-start/t-end into account
-  2. [ ] program_allocate uses calloc, make sure program_free is called
-  3. [ ] bind_gen_col set min/max according to colour format
-  4. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
-  5. [ ] quilt
-  6. [ ] map (1669-zero.sen)
-  7. [ ] better error messages when gen/scalar was mis-spelt
-  8. [ ] {red (gen/col alpha: 1)} bug?
-  9. [ ] poly should also accept a uv parameter
-  10. [ ] remove vm/env from genotype_list_create_initial_generation
-  11. [ ] impl: initial seed
-  12. [ ] add an END token to serialized output, use as a sanity check?
-  13. [ ] add unit tests for compiling with a genotype
-  14. [ ] ensure that there's a dist folder before running npm run build:wasm
-  15. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
-  16. [ ] look into restrict keyword in C99
+* TODO [0/20]
+  1. [ ] app could have a +- controls for resizing the preview canvas (looks small on a big monitor)
+  2. [ ] poly-line to complement poly
+  3. [ ] line could take a per-vertex colour
+  4. [ ] var_copy doesn't copy mark. is this intentional?
+  5. [ ] path/linear: take t-start/t-end into account
+  6. [ ] program_allocate uses calloc, make sure program_free is called
+  7. [ ] bind_gen_col set min/max according to colour format
+  8. [ ] 161g-grid-flow (shows evolve mismatched rendering error)
+  9. [ ] quilt
+  10. [ ] map (1669-zero.sen)
+  11. [ ] better error messages when gen/scalar was mis-spelt
+  12. [ ] {red (gen/col alpha: 1)} bug?
+  13. [ ] poly should also accept a uv parameter
+  14. [ ] remove vm/env from genotype_list_create_initial_generation
+  15. [ ] impl: initial seed
+  16. [ ] add an END token to serialized output, use as a sanity check?
+  17. [ ] add unit tests for compiling with a genotype
+  18. [ ] ensure that there's a dist folder before running npm run build:wasm
+  19. [ ] look at colour palettes in https://www.npmjs.com/package/nice-color-palettes
+  20. [ ] look into restrict keyword in C99
 ** check node->src and node->src_len
    node_pretty_print
+
+
+* colour theory
+  https://pavelkosenko.wordpress.com/2015/08/13/what-is-good-color/
+
+  Good color is:
+  1. Rich color.
+  2. Harmonious color.
+  3. Expressive color.
+
+
+
+** Rich Colour
+   This means an abundance of gradients within color – they are called "valeurs" in painting.
+
+   Valeur (French meaning price, worth; from Latin "valere" to be worth) — in painting and drawing a shade of color. A system of valeurs in a work is an arrangement of lights and shades of some color.
+
+   Richness through brightness
+
+   Richness through saturation
+
+   Richness through hue
+
+
+   Surprising but true – the more saturated a photo is, the less nuanced and subtle its color.
+
+   To better distinguish varieties of perceived color, I talk about "colorful" vs. "gaudy." A colorful pictures has lots of gradients, a gaudy picture has few. Increasing saturation eliminates subtle shades, thefore saturated pictures have few colors. And vice versa: the more colorful an image, i.e. the greater the number of colors in it, the less saturated it’s going to be – inevitably.   
+
+   ----------------------------------------
+
+   It turns out that harmony is not about position of colors on the circle but their quantity. The fewer there are, the higher degree of saturation they can retain without harmony being threatened. And vice versa: the greater the number of pure colors in a composition, the closer it edges to chaos. To retain harmony with a large number of colors a designer or artist has to reduce their saturation. 
+
+   ----------------------------------------
+
+   In other words, a palette can be harmonized in just two ways:
+
+   1. Reduce the number of pure colors.
+   2. Reduce their saturation. 
+
+   Often both are done at the same time.
+
 
 * construction process
   1. play around in seni editor

@@ -7,7 +7,7 @@
 (render-main)
 
 (define
-  num-squares-to-render {25 (gen/int min: 10 max: 40)}
+  num-squares-to-render {25 (gen/int min: 14 max: 40)}
   gap-size {2 (gen/int min: 0 max: 10)}
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
@@ -58,8 +58,8 @@
 
 (fn (render-main)
   (define
-    x-sub {7 (gen/int min: 1 max: 10)}
-    y-sub {1 (gen/int min: 1 max: 10)})
+    x-sub {7 (gen/int min: 1 max: 8)}
+    y-sub {1 (gen/int min: 1 max: 8)})
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (loop (y from: y-sub to: (- num-squares y-sub))
