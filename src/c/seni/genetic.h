@@ -19,7 +19,7 @@ struct sen_trait {
   struct sen_trait* next;
   struct sen_trait* prev;
 };
-
+void trait_pretty_print(sen_trait* trait);
 bool trait_serialize(sen_cursor* cursor, sen_trait* trait);
 bool trait_deserialize(sen_trait* out, sen_cursor* cursor);
 
@@ -37,6 +37,7 @@ sen_trait_list* trait_list_compile(sen_node*            ast,
 sen_trait_list* trait_list_get_from_pool();
 void            trait_list_return_to_pool(sen_trait_list* trait_list);
 i32             trait_list_count(sen_trait_list* trait_list);
+void trait_list_pretty_print(char* msg, sen_trait_list* trait_list);
 bool trait_list_serialize(sen_cursor* cursor, sen_trait_list* trait_list);
 bool trait_list_deserialize(sen_trait_list* out, sen_cursor* cursor);
 

@@ -1,5 +1,17 @@
 
-;4
-(gen/select from: '(1 2 3 4 5))
-;(rect)
-;(+ 1 1)
+(define
+  focal-point ({focal/build-hline (gen/select from: '(focal/build-point
+                                                      focal/build-hline
+                                                      focal/build-vline))})
+
+;  focal-point ({focal/build-hline (gen/select from: '(f g h))})
+
+
+;  c {red (gen/select from: '(blue green red))}
+
+;  d {4 (gen/select from: '(2 3 4 5 6 7 8))}
+
+
+ )
+
+(circle)

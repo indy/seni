@@ -6,24 +6,24 @@
 (render-background)
 (render-main)
 
-(define 
+(define
   num-squares-to-render {25 (gen/int min: 10 max: 40)}
   gap-size {2 (gen/int min: 0 max: 10)}
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares)
-  focal-point ({focal/build-hline (gen/select from: (focal/build-point
+  focal-point ({focal/build-hline (gen/select from: '(focal/build-point
                                                       focal/build-hline
-                                                      focal/build-vline))} 
-               position: [{500 (gen/select from: '(0 500 1000))} 
-                          {0 (gen/select from: '(0 500 1000))}] 
+                                                      focal/build-vline))}
+               position: [{500 (gen/select from: '(0 500 1000))}
+                          {0 (gen/select from: '(0 500 1000))}]
                distance: {1300 (gen/scalar min: 300 max: 1300)})
   rng-fn (prng/build min: -1 max: 1 seed: 454)
   box-colour (col/rgb r: 0.2 g: 0.2 b: 0.2 alpha: 0.7))
 
-(fn (stroked-box seed: 0 
+(fn (stroked-box seed: 0
                  volatility: 0)
-  (define 
+  (define
     half-size+ (/ square-size 2)
     half-size- (* half-size+ -1)
     thickness {1.2 (gen/scalar min: 0.9 max: 3.0)}
@@ -57,14 +57,14 @@
      (/ canvas/height 2)))
 
 (fn (render-main)
-  (define 
+  (define
     x-sub {7 (gen/int min: 1 max: 10)}
     y-sub {1 (gen/int min: 1 max: 10)})
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (loop (y from: y-sub to: (- num-squares y-sub))
       (loop (x from: x-sub to: (- num-squares x-sub))
-        (define 
+        (define
           position [(map-to-position at: x) (map-to-position at: y)])
         (on-matrix-stack
           (translate vector: position)

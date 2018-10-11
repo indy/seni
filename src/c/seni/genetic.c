@@ -197,6 +197,12 @@ void ga_subsystem_shutdown() {
   gene_pool_free(g_gene_pool);
 }
 
+void trait_pretty_print(sen_trait* trait) {
+  SEN_PRINT("id: %d, within_vector: %d, index: %d", trait->id, trait->within_vector, trait->index);
+  var_pretty_print("initial_value", trait->initial_value);
+  program_pretty_print(trait->program);
+}
+
 bool trait_serialize(sen_cursor* cursor, sen_trait* trait) {
   cursor_sprintf(cursor, "%d", trait->id);
   cursor_sprintf(cursor, " ");
@@ -266,8 +272,31 @@ sen_trait* trait_build(sen_node* node, sen_node* parameter_ast,
                        sen_compiler_config* compiler_config) {
   sen_trait* trait = trait_get_from_pool();
 
-  sen_var* res = compile_and_execute_node(node);
-  var_copy(trait->initial_value, res);
+  // todo: what about NODE_LABEL and NODE_STRING?
+  /*
+   * Why is NODE_NAME a special case?
+   *
+   * It doesn't make sense to set the trait->initial_value to the result of
+   * compiling just a name. Something like the 'focal/build-*' functions return
+   * a structure that can be used by 'focal/value', but using that structure
+   * as the initial_value makes unparsing impossible.
+   *
+   * So here we're just manually converting a sen_node name into a sen_var name
+   * and normal execution of the program will do the appropriate evaluation.
+   */
+  if (node->type == NODE_NAME) {
+    sen_var res;
+
+    res.type = VAR_NAME;
+    res.value.i = node->value.i;
+    res.prev = NULL;
+    res.next = NULL;
+
+    var_copy(trait->initial_value, &res);
+  } else {
+    sen_var* res = compile_and_execute_node(node);
+    var_copy(trait->initial_value, res);
+  }
 
   // NOTE: this is allocating memory for program
   sen_program* program = program_construct(compiler_config);
@@ -368,6 +397,19 @@ i32 trait_list_count(sen_trait_list* trait_list) {
   }
 
   return count;
+}
+
+void trait_list_pretty_print(char* msg, sen_trait_list* trait_list) {
+  i32 count = trait_list_count(trait_list);
+  SEN_LOG("%s: count = %d", msg, count);
+
+  sen_trait* t = trait_list->traits;
+  while (t != NULL) {
+    trait_pretty_print(t);
+    t = t->next;
+  }
+
+  SEN_LOG("end of trait_list_pretty_print");
 }
 
 bool trait_list_serialize(sen_cursor* cursor, sen_trait_list* trait_list) {

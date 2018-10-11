@@ -145,7 +145,6 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   sen_compiler_config compiler_config_trait;
   compiler_config_trait.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
   compiler_config_trait.word_lut         = env->word_lut;
-  compiler_config_trait.vary             = 0;
   sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config_trait);
 
   // using the vm to build the genes
@@ -237,7 +236,7 @@ void print_usage() {
   SEN_PRINT("native.exe seni\\c\\script.seni -s 43   << execute the script "
             "using the given seed and give stats");
   SEN_PRINT(
-      "native.exe sen\\c\\script.seni -d      << debug - output the bytecode");
+      "native.exe seni\\c\\script.seni -d      << debug - output the bytecode");
 #else
   SEN_PRINT("native                            << prints usage");
   SEN_PRINT("native seni/c/script.sen         << execute the script using "
@@ -253,7 +252,7 @@ int main(int argc, char** argv) {
 
   if (argc == 1) {
     // invoked native without any command line options
-    //    print_usage();
+    print_usage();
     return 0;
   }
 

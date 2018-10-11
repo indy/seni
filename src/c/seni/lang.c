@@ -485,7 +485,8 @@ bool var_serialize(sen_cursor* cursor, sen_var* var) {
     cursor_sprintf(cursor, "NAME %d", var->value.i);
     break;
   case VAR_VECTOR:
-    SEN_ERROR("var_serialize: serializing a vector?");
+    var_pretty_print("var_serialize", var);
+    SEN_ERROR("var_serialize: serializing a vector???");
     return false;
     break;
   case VAR_COLOUR:
