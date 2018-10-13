@@ -24,20 +24,17 @@ void invoke_function(sen_vm* vm, i32 fn, f32 step, f32 t, f32 x, f32 y) {
 
 void path_linear(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 a_x,
                  f32 a_y, f32 b_x, f32 b_y, i32 mapping) {
-  f32 x_unit = (b_x - a_x) / (f32)(steps - 1);
-  f32 y_unit = (b_y - a_y) / (f32)(steps - 1);
+  f32 unit = (t_end - t_start) / ((f32)steps - 1.0f);
+
   f32 x, y, t, step;
-
-  // todo: actually use t_start and t_end
-
-  x = t_end; // prevent compiler warning for t_end
-  x = t_start;
 
   for (i32 i = 0; i < steps; i++) {
     step = (f32)i;
-    t    = easing((f32)i / (f32)steps, mapping);
-    x    = a_x + (i * x_unit);
-    y    = a_y + (i * y_unit);
+    t = easing(t_start + (i * unit), mapping);
+
+    x = a_x + (t * (b_x - a_x));
+    y = a_y + (t * (b_y - a_y));
+
     invoke_function(vm, fn, step, t, x, y);
   }
 }
