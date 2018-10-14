@@ -112,10 +112,14 @@ f32 circular_ease_in_out(f32 p) {
 }
 
 // exponential function y = 2^(10(x - 1))
-f32 exponential_ease_in(f32 p) { return (p == 0.0f) ? p : powf(2.0f, 10.0f * (p - 1.0f)); }
+f32 exponential_ease_in(f32 p) {
+  return (p == 0.0f) ? p : powf(2.0f, 10.0f * (p - 1.0f));
+}
 
 // exponential function y = -2^(-10x) + 1
-f32 exponential_ease_out(f32 p) { return (p == 1.0f) ? p : 1.0f - powf(2.0f, -10.0f * p); }
+f32 exponential_ease_out(f32 p) {
+  return (p == 1.0f) ? p : 1.0f - powf(2.0f, -10.0f * p);
+}
 
 // piecewise exponential
 // y = (1/2)2^(10(2x - 1))         ; [0,0.5)
@@ -146,10 +150,11 @@ f32 elastic_ease_out(f32 p) {
 // y = (1/2)*(sinf(-13pi/2*((2x-1)+1))*pow(2,-10(2*x-1)) + 2) ; [0.5, 1]
 f32 elastic_ease_in_out(f32 p) {
   if (p < 0.5f) {
-    return 0.5f * sinf(13.0f * PI_BY_2 * (2.0f * p)) * powf(2.0f, 10.0f * ((2.0f * p) - 1.0f));
+    return 0.5f * sinf(13.0f * PI_BY_2 * (2.0f * p)) *
+           powf(2.0f, 10.0f * ((2.0f * p) - 1.0f));
   } else {
     return 0.5f * (sinf(-13.0f * PI_BY_2 * ((2.0f * p - 1.0f) + 1.0f)) *
-                      powf(2.0f, -10.0f * (2.0f * p - 1.0f)) +
+                       powf(2.0f, -10.0f * (2.0f * p - 1.0f)) +
                    2.0f);
   }
 }
@@ -182,7 +187,8 @@ f32 bounce_ease_out(f32 p) {
   } else if (p < 8.0f / 11.0f) {
     return (363.0f / 40.0f * p * p) - (99.0f / 10.0f * p) + 17.0f / 5.0f;
   } else if (p < 9.0f / 10.0f) {
-    return (4356.0f / 361.0f * p * p) - (35442.0f / 1805.0f * p) + 16061.0f / 1805.0f;
+    return (4356.0f / 361.0f * p * p) - (35442.0f / 1805.0f * p) +
+           16061.0f / 1805.0f;
   } else {
     return (54.0f / 5.0f * p * p) - (513.0f / 25.0f * p) + 268.0f / 25.0f;
   }

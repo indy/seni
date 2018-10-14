@@ -198,7 +198,8 @@ void ga_subsystem_shutdown() {
 }
 
 void trait_pretty_print(sen_trait* trait) {
-  SEN_PRINT("id: %d, within_vector: %d, index: %d", trait->id, trait->within_vector, trait->index);
+  SEN_PRINT("id: %d, within_vector: %d, index: %d", trait->id,
+            trait->within_vector, trait->index);
   var_pretty_print("initial_value", trait->initial_value);
   program_pretty_print(trait->program);
 }
@@ -287,10 +288,10 @@ sen_trait* trait_build(sen_node* node, sen_node* parameter_ast,
   if (node->type == NODE_NAME) {
     sen_var res;
 
-    res.type = VAR_NAME;
+    res.type    = VAR_NAME;
     res.value.i = node->value.i;
-    res.prev = NULL;
-    res.next = NULL;
+    res.prev    = NULL;
+    res.next    = NULL;
 
     var_copy(trait->initial_value, &res);
   } else {
@@ -524,11 +525,12 @@ void genotype_pretty_print(sen_genotype* genotype) {
 
   // number of genes
   i32 count = genotype_count(genotype);
-  i32 i = 1;
+  i32 i     = 1;
 
   sen_gene* gene = genotype->genes;
   while (gene != NULL) {
-    sen_sprintf(buf, GENOTYPE_PRETTY_PRINT_BUFFER_SIZE, "genotype gene(%d/%d)", i, count);
+    sen_sprintf(buf, GENOTYPE_PRETTY_PRINT_BUFFER_SIZE, "genotype gene(%d/%d)",
+                i, count);
     gene_pretty_print(buf, gene);
     gene = gene->next;
     i++;

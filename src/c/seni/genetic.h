@@ -37,7 +37,7 @@ sen_trait_list* trait_list_compile(sen_node*            ast,
 sen_trait_list* trait_list_get_from_pool();
 void            trait_list_return_to_pool(sen_trait_list* trait_list);
 i32             trait_list_count(sen_trait_list* trait_list);
-void trait_list_pretty_print(char* msg, sen_trait_list* trait_list);
+void            trait_list_pretty_print(char* msg, sen_trait_list* trait_list);
 bool trait_list_serialize(sen_cursor* cursor, sen_trait_list* trait_list);
 bool trait_list_deserialize(sen_trait_list* out, sen_cursor* cursor);
 
@@ -61,7 +61,7 @@ struct sen_genotype {
   struct sen_genotype* prev;
 };
 
-void genotype_pretty_print(sen_genotype* genotype);
+void          genotype_pretty_print(sen_genotype* genotype);
 sen_genotype* genotype_get_from_pool();
 void          genotype_return_to_pool(sen_genotype* genotype);
 sen_genotype* genotype_build_from_trait_list(sen_trait_list* trait_list,

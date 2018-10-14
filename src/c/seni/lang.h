@@ -46,7 +46,7 @@ typedef enum {
   USE_SRC, // (sen_node only) pointer to original source (for whitespace +
            // comments)
   USE_I_AND_ARRAY, // used by VAR_COLOUR
-  USE_FIRST_CHILD // (sen_node only) first_child
+  USE_FIRST_CHILD  // (sen_node only) first_child
 } sen_value_in_use;
 
 typedef enum {

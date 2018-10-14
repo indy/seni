@@ -30,7 +30,7 @@ void path_linear(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 a_x,
 
   for (i32 i = 0; i < steps; i++) {
     step = (f32)i;
-    t = easing(t_start + (i * unit), mapping);
+    t    = easing(t_start + (i * unit), mapping);
 
     x = a_x + (t * (b_x - a_x));
     y = a_y + (t * (b_y - a_y));
