@@ -309,6 +309,7 @@ sen_trait* trait_build(sen_node* node, sen_node* parameter_ast,
 void add_single_trait(sen_trait_list* trait_list, sen_node* node,
                       sen_compiler_config* compiler_config) {
   sen_trait* trait = trait_build(node, node->parameter_ast, compiler_config);
+
   trait->within_vector = 0;
   trait->index         = 0;
   trait_list_add_trait(trait_list, trait);
@@ -464,7 +465,7 @@ void gene_pretty_print(char* msg, sen_gene* gene) {
   var_pretty_print(msg, gene->var);
 }
 
-sen_gene* gene_build_from_trait(sen_vm* vm, sen_env* env, sen_trait* trait) {
+bool gene_build_from_trait(sen_gene* gene, sen_vm* vm, sen_env* env, sen_trait* trait) {
   sen_program* program = trait->program;
 
   // todo: possibly implement a 'soft-reset' which is quicker than a vm_reset?
@@ -475,17 +476,15 @@ sen_gene* gene_build_from_trait(sen_vm* vm, sen_env* env, sen_trait* trait) {
 
   bool res = vm_run(vm, env, program);
   if (res == false) {
-    return NULL;
+    return false;
   }
 
   vm->building_with_trait_within_vector = 0;
   vm->trait_within_vector_index         = 0;
 
-  sen_gene* gene = gene_get_from_pool();
-
   var_copy(gene->var, &(vm->stack[vm->sp - 1]));
 
-  return gene;
+  return true;
 }
 
 sen_gene* gene_build_from_initial_value(sen_var* initial_value) {
@@ -552,15 +551,16 @@ sen_genotype* genotype_build_from_trait_list(sen_trait_list* trait_list,
 
   sen_trait* trait = trait_list->traits;
   while (trait != NULL) {
-    sen_gene* gene = gene_build_from_trait(vm, env, trait);
-
-    if (gene != NULL) {
-      genotype_add_gene(genotype, gene);
-    } else {
+    sen_gene* gene = gene_get_from_pool();
+    // gene_build_from_trait fills in the gene
+    bool res = gene_build_from_trait(gene, vm, env, trait);
+    if (res == false) {
       SEN_ERROR("gene_build_from_trait returned NULL gene");
+      gene_return_to_pool(gene);
       genotype_return_to_pool(genotype);
       return NULL;
     }
+    genotype_add_gene(genotype, gene);
 
     trait = trait->next;
   }
@@ -814,13 +814,11 @@ void gene_generate_new_var(sen_gene* gene, sen_trait* trait,
 
   sen_prng_copy(vm->prng_state, prng_state);
 
-  bool res = vm_run(vm, env, trait->program);
+  bool res = gene_build_from_trait(gene, vm, env, trait);
   if (res == false) {
-    SEN_ERROR("gene_generate_new_var: vm_interpret returned false");
+    SEN_ERROR("gene_generate_new_var: gene_build_from_trait returned false");
     return;
   }
-
-  var_copy(gene->var, &(vm->stack[vm->sp - 1]));
 
   // now update the prng_state
   sen_prng_copy(prng_state, vm->prng_state);
@@ -899,7 +897,6 @@ sen_genotype_list* genotype_list_next_generation(sen_genotype_list* parents,
     genotype = genotype_crossover(a, b, crossover_index, genotype_length);
     genotype = genotype_possibly_mutate(genotype, genotype_length,
                                         mutation_rate, &prng_state, trait_list);
-
     genotype_list_add_genotype(genotype_list, genotype);
 
     population_remaining--;
