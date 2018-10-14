@@ -392,7 +392,7 @@ sen_value_in_use get_var_value_in_use(sen_var_type type) {
   case VAR_VECTOR:
     return USE_V;
   case VAR_COLOUR:
-    return USE_I;
+    return USE_I_AND_ARRAY;
   default:
     // default to something even though VAR_2D etc aren't going to use anything
     // in the value union
@@ -440,13 +440,12 @@ void var_pretty_print(char* msg, sen_var* var) {
 
   switch (using) {
   case USE_I:
-    if (var->type == VAR_COLOUR) {
-      SEN_PRINT("%s: %s : %d (%.2f, %.2f, %.2f, %.2f)", msg, type, var->value.i,
-                var->f32_array[0], var->f32_array[1], var->f32_array[2],
-                var->f32_array[3]);
-    } else {
-      SEN_PRINT("%s: %s : %d", msg, type, var->value.i);
-    }
+    SEN_PRINT("%s: %s : %d", msg, type, var->value.i);
+    break;
+  case USE_I_AND_ARRAY:
+    SEN_PRINT("%s: %s : %d (%.2f, %.2f, %.2f, %.2f)", msg, type, var->value.i,
+              var->f32_array[0], var->f32_array[1], var->f32_array[2],
+              var->f32_array[3]);
     break;
   case USE_F:
     SEN_PRINT("%s: %s : %.2f", msg, type, var->value.f);
@@ -623,12 +622,7 @@ void bytecode_pretty_print(i32 ip, sen_bytecode* b, sen_word_lut* word_lut) {
     sen_value_in_use using = get_var_value_in_use(b->arg1.type);
     switch (using) {
     case USE_I:
-      if (b->arg1.type == VAR_COLOUR) {
-        i32  type = b->arg1.value.i;
-        f32* a    = b->arg1.f32_array;
-        PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0],
-                 a[1], a[2], a[3]);
-      } else if (b->arg1.type == VAR_NAME) {
+      if (b->arg1.type == VAR_NAME) {
         i32 iname = b->arg1.value.i;
         if (word_lut != NULL) {
           PRINT_BC(BUF_ARGS, "name: %s (%d)",
@@ -638,6 +632,14 @@ void bytecode_pretty_print(i32 ip, sen_bytecode* b, sen_word_lut* word_lut) {
         }
       } else {
         PRINT_BC(BUF_ARGS, "%d", b->arg1.value.i);
+      }
+      break;
+    case USE_I_AND_ARRAY:
+      if (b->arg1.type == VAR_COLOUR) {
+        i32  type = b->arg1.value.i;
+        f32* a    = b->arg1.f32_array;
+        PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0],
+                 a[1], a[2], a[3]);
       }
       break;
     case USE_F:
@@ -1215,6 +1217,8 @@ void var_copy(sen_var* dest, sen_var* src) {
   sen_value_in_use using = get_var_value_in_use(src->type);
 
   if (using == USE_I) {
+    dest->value.i = src->value.i;
+  } else if (using == USE_I_AND_ARRAY) {
     dest->value.i = src->value.i;
   } else if (using == USE_F) {
     dest->value.f = src->value.f;

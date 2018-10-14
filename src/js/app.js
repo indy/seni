@@ -244,7 +244,7 @@ function renderGeneration(state) {
 
     const stopFn = startTiming();
 
-    for (let i = 0;i < phenotypes.length; i++) {
+    for (let i = 0; i < phenotypes.length; i++) {
       const workerJob = Job.request(jobRender, {
         script,
         scriptHash,
@@ -995,6 +995,8 @@ function removeKonsoleInvisibility() {
 function allocateWorkers(state) {
   const defaultNumWorkers = 4;
   let numWorkers = navigator.hardwareConcurrency || defaultNumWorkers;
+  // console.log("setting numWorkers to 1");
+  // let numWorkers = 1;
   if (numWorkers > state.populationSize) {
     // don't allocate more workers than necessary
     numWorkers = state.populationSize;

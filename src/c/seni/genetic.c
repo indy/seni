@@ -459,6 +459,10 @@ bool trait_list_deserialize(sen_trait_list* out, sen_cursor* cursor) {
 
 // gene
 
+void gene_pretty_print(char* msg, sen_gene* gene) {
+  var_pretty_print(msg, gene->var);
+}
+
 sen_gene* gene_build_from_trait(sen_vm* vm, sen_env* env, sen_trait* trait) {
   sen_program* program = trait->program;
 
@@ -500,6 +504,36 @@ sen_gene* gene_clone(sen_gene* source) {
 }
 
 // genotype
+
+i32 genotype_count(sen_genotype* genotype) {
+  sen_gene* g     = genotype->genes;
+  i32       count = 0;
+
+  while (g != NULL) {
+    count++;
+    g = g->next;
+  }
+
+  return count;
+}
+
+#define GENOTYPE_PRETTY_PRINT_BUFFER_SIZE 100
+
+void genotype_pretty_print(sen_genotype* genotype) {
+  char buf[GENOTYPE_PRETTY_PRINT_BUFFER_SIZE];
+
+  // number of genes
+  i32 count = genotype_count(genotype);
+  i32 i = 1;
+
+  sen_gene* gene = genotype->genes;
+  while (gene != NULL) {
+    sen_sprintf(buf, GENOTYPE_PRETTY_PRINT_BUFFER_SIZE, "genotype gene(%d/%d)", i, count);
+    gene_pretty_print(buf, gene);
+    gene = gene->next;
+    i++;
+  }
+}
 
 void genotype_add_gene(sen_genotype* genotype, sen_gene* gene) {
   DL_APPEND(genotype->genes, gene);
@@ -551,18 +585,6 @@ sen_genotype* genotype_build_from_initial_values(sen_trait_list* trait_list) {
   }
 
   return genotype;
-}
-
-i32 genotype_count(sen_genotype* genotype) {
-  sen_gene* g     = genotype->genes;
-  i32       count = 0;
-
-  while (g != NULL) {
-    count++;
-    g = g->next;
-  }
-
-  return count;
 }
 
 sen_genotype* genotype_clone(sen_genotype* genotype) {

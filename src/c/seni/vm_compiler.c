@@ -124,6 +124,12 @@ i32 get_node_value_i32_from_gene(sen_node* node) {
     return 0;
   }
 
+  sen_value_in_use value_in_use = get_var_value_in_use(gene->var->type);
+  if (value_in_use != USE_I) {
+    SEN_ERROR("Gene won't return an integer that the Node is expecting");
+    gene_pretty_print("problematic gene:", gene);
+  }
+
   return gene->var->value.i;
 }
 
@@ -132,6 +138,12 @@ f32 get_node_value_f32_from_gene(sen_node* node) {
   if (gene == NULL) {
     SEN_ERROR("null gene returned");
     return 0.0f;
+  }
+
+  sen_value_in_use value_in_use = get_var_value_in_use(gene->var->type);
+  if (value_in_use != USE_F) {
+    SEN_ERROR("Gene won't return a float that the Node is expecting");
+    gene_pretty_print("problematic gene:", gene);
   }
 
   return gene->var->value.f;

@@ -48,6 +48,8 @@ struct sen_gene {
   struct sen_gene* prev;
 };
 
+void gene_pretty_print(char* msg, sen_gene* gene);
+
 struct sen_genotype {
   sen_gene* genes;
 
@@ -59,6 +61,7 @@ struct sen_genotype {
   struct sen_genotype* prev;
 };
 
+void genotype_pretty_print(sen_genotype* genotype);
 sen_genotype* genotype_get_from_pool();
 void          genotype_return_to_pool(sen_genotype* genotype);
 sen_genotype* genotype_build_from_trait_list(sen_trait_list* trait_list,
