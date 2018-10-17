@@ -2869,3 +2869,112 @@ figure.highlight,
 
 }
 */
+
+  .seni-hide {
+    display: none !important;
+  }
+
+  #seni-piece-controls {
+    padding-top: 1em;
+  }
+  .seni-button {
+    background: #ccc;
+    padding: .6em;
+    border-radius: 3px;
+    color: #4a4a4a;
+    text-decoration: none;
+    border: none;
+    box-shadow: 0px 0px 2px #333;
+  }
+
+  .seni-button:disabled {
+    background: #ddd;
+    color: #aaa;
+    border: none;
+    box-shadow: 0px 0px 1px #333;
+  }
+
+  .seni-button:hover:enabled {
+    border: none;
+    background: orange;
+    box-shadow: 0px 0px 1px #777;
+  }
+
+  .seni-centre-canvas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .seni-fade-out {
+    animation-duration: 0.5s;
+    animation-name: senifadeout;
+  }
+
+  .seni-fade-out-slideshow {
+    animation-duration: 2.0s;
+    animation-name: senifadeout;
+  }
+
+  @keyframes senifadeout {
+    from {
+      opacity: 1.0;
+    }
+
+    to {
+      opacity: 0.0;
+    }
+  }
+
+  .seni-fade-in {
+    animation-duration: 0.5s;
+    animation-name: senifadein;
+  }
+
+  .seni-fade-in-slideshow {
+    animation-duration: 2.0s;
+    animation-name: senifadein;
+  }
+
+  @keyframes senifadein {
+    from {
+      opacity: 0.0;
+    }
+
+    to {
+      opacity: 1.0;
+    }
+  }
+
+  #piece-canvas-container {
+    position: relative;
+  }
+
+  #piece-canvas {
+    opacity: 0.0;
+}
+
+  #piece-img-0 {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  #piece-img-1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .piece-content-wrap {
+    display: block;
+    max-width: 700px;
+    margin: 0 auto;
+    padding-right: 20px;
+    padding-left: 20px;
+    text-align: justify; }
+
+  .piece-holder {
+    display: block;
+    margin: 0 auto;
+    width: 500px; }
