@@ -1,0 +1,10 @@
+#pragma once
+
+typedef enum {
+  NONE,
+  ERROR_PARSE,
+  ERROR_PARSE_NON_MUTABLE_NODE,
+  ERROR_NULL_NODE,
+  ERROR_WLUT_ADD_FAILED,
+  ERROR_WLUT_LOOKUP_FAILED
+} sen_error;

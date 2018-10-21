@@ -465,7 +465,8 @@ void gene_pretty_print(char* msg, sen_gene* gene) {
   var_pretty_print(msg, gene->var);
 }
 
-bool gene_build_from_trait(sen_gene* gene, sen_vm* vm, sen_env* env, sen_trait* trait) {
+bool gene_build_from_trait(sen_gene* gene, sen_vm* vm, sen_env* env,
+                           sen_trait* trait) {
   sen_program* program = trait->program;
 
   // todo: possibly implement a 'soft-reset' which is quicker than a vm_reset?

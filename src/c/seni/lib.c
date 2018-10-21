@@ -51,7 +51,8 @@ void sen_free_env(sen_env* env) { env_free(env); }
 
 sen_program* sen_compile_program(char* source, sen_word_lut* word_lut,
                                  i32 program_max_size) {
-  sen_node* ast = parser_parse(word_lut, source);
+  sen_result_node result_node = parser_parse(word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   // ast_pretty_print(ast, word_lut);
 
@@ -71,7 +72,8 @@ sen_program* sen_compile_program_with_genotype(char*         source,
                                                sen_genotype* genotype,
                                                sen_word_lut* word_lut,
                                                i32           program_max_size) {
-  sen_node* ast = parser_parse(word_lut, source);
+  sen_result_node result_node = parser_parse(word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = program_max_size;
@@ -88,7 +90,8 @@ sen_program* sen_compile_program_with_genotype(char*         source,
 
 void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source,
                                sen_genotype* genotype, sen_word_lut* word_lut) {
-  sen_node* ast = parser_parse(word_lut, source);
+  sen_result_node result_node = parser_parse(word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   cursor_reset(out_cursor);
 
@@ -101,7 +104,8 @@ void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source,
 
 void sen_simplify_script(sen_cursor* out_cursor, char* source,
                          sen_word_lut* word_lut) {
-  sen_node* ast = parser_parse(word_lut, source);
+  sen_result_node result_node = parser_parse(word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   cursor_reset(out_cursor);
 
@@ -126,7 +130,8 @@ sen_genotype* sen_deserialize_genotype(sen_cursor* cursor) {
 }
 
 sen_trait_list* sen_compile_trait_list(char* source, sen_word_lut* word_lut) {
-  sen_node* ast = parser_parse(word_lut, source);
+  sen_result_node result_node = parser_parse(word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;

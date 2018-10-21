@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "error.h"
+
 #ifndef NULL
 #define NULL 0
 #endif
@@ -38,6 +40,8 @@ typedef struct sen_prng_state      sen_prng_state;
 typedef struct sen_program         sen_program;
 typedef struct sen_render_data     sen_render_data;
 typedef struct sen_render_packet   sen_render_packet;
+typedef struct sen_result_i32      sen_result_i32;
+typedef struct sen_result_node     sen_result_node;
 typedef struct sen_string_ref      sen_string_ref;
 typedef struct sen_trait           sen_trait;
 typedef struct sen_trait_list      sen_trait_list;
