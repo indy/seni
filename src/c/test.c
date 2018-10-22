@@ -361,6 +361,28 @@ void test_parser(void) {
   PARSE_CLEANUP;
 }
 
+void test_parser_failures(void) {
+  sen_node*       nodes;
+  sen_result_node result_node;
+  sen_word_lut*   word_lut;
+
+  PARSE("(add 1 2");
+  TEST_ASSERT_EQUAL(ERROR_PARSE_EXPECTED_END_OF_LIST, result_node.error);
+  PARSE_CLEANUP;
+
+  PARSE("[4 5 6");
+  TEST_ASSERT_EQUAL(ERROR_PARSE_EXPECTED_END_OF_VECTOR, result_node.error);
+  PARSE_CLEANUP;
+
+  // PARSE("add 1 2)");
+  // TEST_ASSERT_EQUAL(ERROR_NULL_NODE, result_node.error);
+  // PARSE_CLEANUP;
+
+  // PARSE("(add 1 2))");
+  // TEST_ASSERT_EQUAL(ERROR_NULL_NODE, result_node.error);
+  // PARSE_CLEANUP;
+}
+
 void assert_sen_var_f32(sen_var* var, sen_var_type type, f32 f) {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
   TEST_ASSERT_EQUAL_FLOAT(f, var->value.f);
@@ -2279,7 +2301,7 @@ int main(void) {
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-#if 1
+#if 0
   RUN_TEST(test_macro_pool);
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
@@ -2328,7 +2350,7 @@ int main(void) {
   RUN_TEST(test_rgb_hsluv_conversion);
 
 #else
-  RUN_TEST(test_parser);
+  RUN_TEST(test_parser_failures);
 #endif
 
   return UNITY_END();
