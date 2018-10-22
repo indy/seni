@@ -9,7 +9,7 @@
 #include "uv_mapper.h"
 #include "vm_compiler.h"
 
-void sen_systems_startup() {
+sen_error sen_systems_startup() {
   shapes_subsystem_startup();
 
   lang_subsystem_startup();
@@ -17,7 +17,13 @@ void sen_systems_startup() {
   ga_subsystem_startup();
   uv_mapper_subsystem_startup();
 
-  compiler_subsystem_startup();
+  sen_error err = compiler_subsystem_startup();
+  if (is_error(err)) {
+    SEN_ERROR("compiler_subsystem_startup");
+    return err;
+  }
+
+  return NONE;
 }
 
 void sen_systems_shutdown() {
@@ -60,8 +66,14 @@ sen_program* sen_compile_program(char* source, sen_word_lut* word_lut,
   compiler_config.program_max_size = program_max_size;
   compiler_config.word_lut         = word_lut;
 
-  sen_program* program = program_construct(&compiler_config);
-  program              = compile_program(program, ast);
+  sen_program*       program        = program_construct(&compiler_config);
+  sen_result_program result_program = compile_program(program, ast);
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR("sen_compile_program: compile_program");
+    // todo: return an error here
+    return NULL;
+  }
+  program = result_program.result;
 
   parser_return_nodes_to_pool(ast);
 
@@ -81,11 +93,18 @@ sen_program* sen_compile_program_with_genotype(char*         source,
 
   sen_program* program = program_construct(&compiler_config);
 
-  program = compile_program_with_genotype(program, word_lut, ast, genotype);
+  sen_result_program result_program =
+      compile_program_with_genotype(program, word_lut, ast, genotype);
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR(
+        "sen_compile_program_with_genotype: compile_program_with_genotype");
+    // todo: return an error code here
+    return NULL;
+  }
 
   parser_return_nodes_to_pool(ast);
 
-  return program;
+  return result_program.result;
 }
 
 void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source,

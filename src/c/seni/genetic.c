@@ -254,10 +254,16 @@ sen_var* compile_and_execute_node(sen_node* node) {
   sen_program* program = g_ga_program;
 
   // only compile this node, not any of the neighbouring ASTs
-  sen_node* next = node->next;
-  node->next     = NULL;
-  program        = compile_program(program, node);
-  node->next     = next;
+  sen_node* next                    = node->next;
+  node->next                        = NULL;
+  sen_result_program result_program = compile_program(program, node);
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR("compile_and_execute_node: compile_program");
+    // todo: better return value here
+    return NULL;
+  }
+  program    = result_program.result;
+  node->next = next;
 
   env_reset(g_ga_env);
   vm_reset(g_ga_vm);
@@ -300,8 +306,16 @@ sen_trait* trait_build(sen_node* node, sen_node* parameter_ast,
   }
 
   // NOTE: this is allocating memory for program
-  sen_program* program = program_construct(compiler_config);
-  trait->program = compile_program_for_trait(program, parameter_ast, node);
+  sen_program*       program = program_construct(compiler_config);
+  sen_result_program result_program =
+      compile_program_for_trait(program, parameter_ast, node);
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR("trait_build: compile_program_for_trait");
+    // todo: return an error here
+    return NULL;
+  }
+
+  trait->program = result_program.result;
 
   return trait;
 }

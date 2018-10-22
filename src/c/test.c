@@ -2301,7 +2301,7 @@ int main(void) {
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-#if 0
+#if 1
   RUN_TEST(test_macro_pool);
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
@@ -2350,7 +2350,7 @@ int main(void) {
   RUN_TEST(test_rgb_hsluv_conversion);
 
 #else
-  RUN_TEST(test_parser_failures);
+  RUN_TEST(test_vm_callret_debugging);
 #endif
 
   return UNITY_END();

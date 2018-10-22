@@ -74,7 +74,12 @@ void execute_source(char* source) {
   //
   TIMING_UNIT construct_start = get_timing();
 
-  sen_systems_startup();
+  sen_error err;
+
+  err = sen_systems_startup();
+  if (is_error(err)) {
+    SEN_ERROR("sen_systems_startup");
+  }
 
   sen_vm*  vm  = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
                                VERTEX_PACKET_NUM_VERTICES);
@@ -128,7 +133,12 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   // construct
   //
   TIMING_UNIT construct_start = get_timing();
-  sen_systems_startup();
+  sen_error   err;
+
+  err = sen_systems_startup();
+  if (is_error(err)) {
+    SEN_ERROR("sen_systems_startup");
+  }
 
   sen_vm*  vm  = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
                                VERTEX_PACKET_NUM_VERTICES);
@@ -162,8 +172,14 @@ void execute_source_with_seed(char* source, i32 seed_value) {
 
   sen_program* program = program_construct(&compiler_config);
 
-  program =
+  sen_result_program result_program =
       compile_program_with_genotype(program, env->word_lut, ast, genotype);
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR("execute_source_with_seed: compile_program_with_genotype");
+    // todo: should there be a return type here
+    return;
+  }
+  program = result_program.result;
 
   parser_return_nodes_to_pool(ast);
 
@@ -211,7 +227,12 @@ void execute_source_with_seed(char* source, i32 seed_value) {
 
 void print_compiled_program(char* source) {
   // construct
-  sen_systems_startup();
+  sen_error err;
+
+  err = sen_systems_startup();
+  if (is_error(err)) {
+    SEN_ERROR("sen_systems_startup");
+  }
 
   sen_vm*  vm = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
                                VERTEX_PACKET_NUM_VERTICES);
