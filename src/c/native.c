@@ -140,7 +140,12 @@ void execute_source_with_seed(char* source, i32 seed_value) {
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  sen_node* ast = parser_parse(env->word_lut, source);
+  sen_result_node result_node = parser_parse(env->word_lut, source);
+  if (result_node.error != NONE) {
+    // todo: print out the error
+    return;
+  }
+  sen_node* ast = result_node.result;
 
   sen_compiler_config compiler_config_trait;
   compiler_config_trait.program_max_size = MAX_TRAIT_PROGRAM_SIZE;

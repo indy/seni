@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "error.h"
+#include "result_macros.h"
+
 #ifndef NULL
 #define NULL 0
 #endif

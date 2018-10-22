@@ -198,33 +198,46 @@ sen_node* assert_parser_node_txt(sen_node* node, sen_node_type type, char* val,
   return node->next;
 }
 
-#define PARSE(EXPR)           \
-  parser_subsystem_startup(); \
-  word_lut = wlut_allocate(); \
-  nodes    = parser_parse(word_lut, EXPR)
+#define PARSE(EXPR)                           \
+  parser_subsystem_startup();                 \
+  word_lut    = wlut_allocate();              \
+  result_node = parser_parse(word_lut, EXPR); \
+  nodes       = result_node.result
 
 #define PARSE_CLEANUP                 \
   wlut_free(word_lut);                \
   parser_return_nodes_to_pool(nodes); \
-  parser_subsystem_shutdown();
+  parser_subsystem_shutdown();        \
+  result_node.error  = NONE;          \
+  result_node.result = NULL;
+
+void assert_parser_ok(sen_result_node* result_node) {
+  TEST_ASSERT_EQUAL(result_node->error, NONE);
+  TEST_ASSERT(result_node->result);
+}
 
 void test_parser(void) {
-  sen_node *    nodes, *iter, *iter2;
-  sen_word_lut* word_lut;
+  sen_node *      nodes, *iter, *iter2;
+  sen_result_node result_node;
+  sen_word_lut*   word_lut;
 
   PARSE("hello");
+  assert_parser_ok(&result_node);
   assert_parser_node_txt(nodes, NODE_NAME, "hello", word_lut);
   PARSE_CLEANUP;
 
   PARSE("5");
+  assert_parser_ok(&result_node);
   assert_parser_node_f32(nodes, 5);
   PARSE_CLEANUP;
 
   PARSE("(4)");
+  assert_parser_ok(&result_node);
   assert_parser_node_raw(nodes, NODE_LIST);
   PARSE_CLEANUP;
 
   PARSE("(add 1 2)");
+  assert_parser_ok(&result_node);
   iter = nodes->value.first_child;
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->value.first_child;
@@ -238,6 +251,7 @@ void test_parser(void) {
   PARSE_CLEANUP;
 
   PARSE("[add 9 8 (foo)]");
+  assert_parser_ok(&result_node);
   assert_parser_node_raw(nodes, NODE_VECTOR);
   iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "add", word_lut);
@@ -252,12 +266,14 @@ void test_parser(void) {
   PARSE_CLEANUP;
 
   PARSE(";[add 9 8 (foo)]");
+  assert_parser_ok(&result_node);
   assert_parser_node_str(nodes, NODE_COMMENT, ";[add 9 8 (foo)]");
   TEST_ASSERT_NULL(nodes->next);
   PARSE_CLEANUP;
 
   // note: can parse string but it isn't being used - should it be removed?
   PARSE("'(runall \"shabba\") ; woohoo");
+  assert_parser_ok(&result_node);
   assert_parser_node_raw(nodes, NODE_LIST);
   iter  = nodes->value.first_child;
   iter  = assert_parser_node_txt(iter, NODE_NAME, "quote", word_lut);
@@ -276,6 +292,7 @@ void test_parser(void) {
   PARSE_CLEANUP;
 
   PARSE("(fun i: 42 f: 12.34)");
+  assert_parser_ok(&result_node);
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "fun", word_lut);
@@ -292,6 +309,7 @@ void test_parser(void) {
   PARSE_CLEANUP;
 
   PARSE("(a 1) (b 2)");
+  assert_parser_ok(&result_node);
   assert_parser_node_raw(nodes, NODE_LIST);
   iter = nodes->value.first_child;
   iter = assert_parser_node_txt(iter, NODE_NAME, "a", word_lut);
@@ -309,6 +327,7 @@ void test_parser(void) {
   PARSE_CLEANUP;
 
   PARSE("[[0.1 0.2] [0.3 0.4]]");
+  assert_parser_ok(&result_node);
   assert_parser_node_raw(nodes, NODE_VECTOR); // outer []
   iter = nodes->value.first_child;
   assert_parser_node_raw(iter, NODE_VECTOR); // [0.1 0.2]
@@ -329,6 +348,7 @@ void test_parser(void) {
   PARSE_CLEANUP;
 
   PARSE("(a {[1 2]})");
+  assert_parser_ok(&result_node);
   assert_parser_node_raw(nodes, NODE_LIST);
   iter  = nodes->value.first_child;
   iter  = assert_parser_node_txt(iter, NODE_NAME, "a", word_lut);
@@ -339,6 +359,28 @@ void test_parser(void) {
   TEST_ASSERT_EQUAL(test_true, iter2->alterable);
   TEST_ASSERT_NULL(nodes->next);
   PARSE_CLEANUP;
+}
+
+void test_parser_failures(void) {
+  sen_node*       nodes;
+  sen_result_node result_node;
+  sen_word_lut*   word_lut;
+
+  PARSE("(add 1 2");
+  TEST_ASSERT_EQUAL(ERROR_PARSE_EXPECTED_END_OF_LIST, result_node.error);
+  PARSE_CLEANUP;
+
+  PARSE("[4 5 6");
+  TEST_ASSERT_EQUAL(ERROR_PARSE_EXPECTED_END_OF_VECTOR, result_node.error);
+  PARSE_CLEANUP;
+
+  // PARSE("add 1 2)");
+  // TEST_ASSERT_EQUAL(ERROR_NULL_NODE, result_node.error);
+  // PARSE_CLEANUP;
+
+  // PARSE("(add 1 2))");
+  // TEST_ASSERT_EQUAL(ERROR_NULL_NODE, result_node.error);
+  // PARSE_CLEANUP;
 }
 
 void assert_sen_var_f32(sen_var* var, sen_var_type type, f32 f) {
@@ -1124,7 +1166,8 @@ sen_genotype* genotype_construct(i32 seed_value, char* source) {
                            VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
-  sen_node* ast = parser_parse(env->word_lut, source);
+  sen_result_node result_node = parser_parse(env->word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
@@ -1152,7 +1195,8 @@ void unparse_compare(i32 seed_value, char* source, char* expected) {
                            VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
-  sen_node* ast = parser_parse(env->word_lut, source);
+  sen_result_node result_node = parser_parse(env->word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
@@ -1201,7 +1245,8 @@ void simplified_unparse_compare(char* source, char* expected) {
                            VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
-  sen_node* ast = parser_parse(env->word_lut, source);
+  sen_result_node result_node = parser_parse(env->word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
@@ -1448,7 +1493,8 @@ sen_genotype* genotype_construct_initial_value(i32 seed_value, char* source) {
                            VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
-  sen_node* ast = parser_parse(env->word_lut, source);
+  sen_result_node result_node = parser_parse(env->word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   //  ast_pretty_print(ast, env->word_lut);
 
@@ -2130,7 +2176,8 @@ void test_serialization_trait_list(void) {
                            VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
-  sen_node* ast = parser_parse(env->word_lut, source);
+  sen_result_node result_node = parser_parse(env->word_lut, source);
+  sen_node*       ast         = result_node.result;
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
@@ -2254,7 +2301,7 @@ int main(void) {
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-#if 1
+#if 0
   RUN_TEST(test_macro_pool);
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
@@ -2303,9 +2350,7 @@ int main(void) {
   RUN_TEST(test_rgb_hsluv_conversion);
 
 #else
-  // RUN_TEST(test_genotype_stray_2d);
-  // RUN_TEST(bug_f32_expr_with_genotype);
-
+  RUN_TEST(test_parser_failures);
 #endif
 
   return UNITY_END();
