@@ -11,11 +11,6 @@
 #include "multistring.h"
 #include "pool_macro.h"
 
-RESULT_STRUCT(i32, i32);
-
-RESULT_HELPER_FUNCTIONS(sen_node*, node);
-RESULT_HELPER_FUNCTIONS(i32, i32);
-
 void node_cleanup(sen_node* node) {
   node->alterable         = 0;
   node->src               = NULL;

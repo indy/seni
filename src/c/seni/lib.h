@@ -3,8 +3,8 @@
 #include "config.h"
 #include "types.h"
 
-void sen_systems_startup();
-void sen_systems_shutdown();
+sen_error sen_systems_startup();
+void      sen_systems_shutdown();
 
 sen_vm* sen_allocate_vm(i32 stack_size, i32 heap_size, i32 heap_min_size,
                         i32 vertex_packet_num_vertices);

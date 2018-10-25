@@ -48,3 +48,16 @@ typedef struct sen_uv_mapping      sen_uv_mapping;
 typedef struct sen_var             sen_var;
 typedef struct sen_vm              sen_vm;
 typedef struct sen_word_lut        sen_word_lut;
+
+// create result structures that hold either the given type or an error code
+// (implementation macros are defined in result_functions.c)
+//
+RESULT_STRUCT(bool, bool);
+RESULT_STRUCT(f32, f32);
+RESULT_STRUCT(i32, i32);
+RESULT_STRUCT(sen_bytecode*, bytecode);
+RESULT_STRUCT(sen_node*, node);
+RESULT_STRUCT(sen_program*, program);
+RESULT_STRUCT(sen_fn_info*, fn_info);
+
+OPTION_STRUCT(i32, i32);

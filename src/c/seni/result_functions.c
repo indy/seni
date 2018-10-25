@@ -1,0 +1,11 @@
+#include "types.h"
+
+RESULT_STRUCT_FUNCTIONS(bool, bool);
+RESULT_STRUCT_FUNCTIONS(f32, f32);
+RESULT_STRUCT_FUNCTIONS(i32, i32);
+RESULT_STRUCT_FUNCTIONS(sen_bytecode*, bytecode);
+RESULT_STRUCT_FUNCTIONS(sen_node*, node);
+RESULT_STRUCT_FUNCTIONS(sen_program*, program);
+RESULT_STRUCT_FUNCTIONS(sen_fn_info*, fn_info);
+
+OPTION_STRUCT_FUNCTIONS(i32, i32);

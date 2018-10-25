@@ -193,12 +193,6 @@ typedef enum {
 #undef OPCODE
 } sen_opcode;
 
-static const char* opcode_string[] = {
-#define OPCODE(name, _) #name,
-#include "opcodes.h"
-#undef OPCODE
-};
-
 struct sen_bytecode {
   sen_opcode op;
   sen_var    arg0;

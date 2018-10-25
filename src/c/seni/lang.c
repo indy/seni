@@ -680,6 +680,12 @@ void bytecode_pretty_print(i32 ip, sen_bytecode* b, sen_word_lut* word_lut) {
   SEN_PRINT("%s", buf);
 }
 
+static const char* opcode_string[] = {
+#define OPCODE(name, _) #name,
+#include "opcodes.h"
+#undef OPCODE
+};
+
 bool bytecode_serialize(sen_cursor* cursor, sen_bytecode* bytecode) {
   cursor_sprintf(cursor, "%s", opcode_string[bytecode->op]);
   cursor_sprintf(cursor, " ");

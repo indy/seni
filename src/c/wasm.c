@@ -68,8 +68,13 @@ export void sen_startup() {
 #ifdef SHOW_WASM_CALLS
   SEN_LOG("sen_startup");
 #endif
+  sen_error err;
 
-  sen_systems_startup();
+  err = sen_systems_startup();
+  if (is_error(err)) {
+    SEN_ERROR("sen_systems_startup");
+    return;
+  }
 
   if (g_vm != NULL) {
     sen_free_vm(g_vm);

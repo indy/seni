@@ -192,16 +192,18 @@ void vm_function_call_body(sen_vm* vm, sen_fn_info* fn_info) {
   vm->sp--;
 }
 
+// todo: replace bool return with an error
 bool vm_run(sen_vm* vm, sen_env* env, sen_program* program) {
   bool res;
 
   // the preamble program defines the global variables that all
   // user programs assume exist. e.g. 'red', 'canvas/width' etc
-  sen_program* preamble = get_preamble_program();
-  if (preamble == NULL) {
-    SEN_ERROR("vm_run: pre-amble program is null");
+  sen_result_program result_program = get_preamble_program();
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR("vm_run: get_preamble_program");
     return false;
   }
+  sen_program* preamble = result_program.result;
 
   // setup the env with the global variables in preamble
   res = vm_interpret(vm, env, preamble);
