@@ -7,6 +7,66 @@
 
 #include <string.h>
 
+// N_CHK (node check):
+// used by functions that return sen_error
+// invokes a function that returns a result_node
+// if it's an error, the error is logged and the current function returns
+//
+#define N_CHK(fn, msg)                     \
+  result_node = fn;                        \
+  if (is_result_node_error(result_node)) { \
+    SEN_ERROR(msg);                        \
+    return result_node.error;              \
+  }
+
+// B_CHK (bytecode check):
+// used by functions that return sen_error
+// invokes a function that returns a result_bytecode
+// if it's an error, the error is logged and the current function returns
+//
+#define B_CHK(fn, msg)                             \
+  result_bytecode = fn;                            \
+  if (is_result_bytecode_error(result_bytecode)) { \
+    SEN_ERROR(msg);                                \
+    return result_bytecode.error;                  \
+  }
+
+// E_CHK (error check):
+// used by functions that return sen_error
+// invokes a function that returns a sen_error
+// if it's an error, the error is logged and the current function returns
+//
+#define E_CHK(fn, msg) \
+  err = fn;            \
+  if (is_error(err)) { \
+    SEN_ERROR(msg);    \
+    return err;        \
+  }
+
+// I_CHK (i32 check):
+// used by functions that return sen_error
+// invokes a function that returns a result_i32
+// if it's an error, the error is logged and the current function returns
+//
+#define I_CHK(fn, msg)                   \
+  result_i32 = fn;                       \
+  if (is_result_i32_error(result_i32)) { \
+    SEN_ERROR(msg);                      \
+    return result_i32.error;             \
+  }
+
+// F_CHK (f32 check):
+// used by functions that return sen_error
+// invokes a function that returns a result_f32
+// if it's an error, the error is logged and the current function returns
+//
+#define F_CHK(fn, msg)                   \
+  result_f32 = fn;                       \
+  if (is_result_f32_error(result_f32)) { \
+    SEN_ERROR(msg);                      \
+    return result_f32.error;             \
+  }
+
 typedef struct sen_compilation {
   sen_program* program;
 
@@ -40,11 +100,10 @@ sen_error           compile_preamble(sen_compilation* compilation);
 sen_result_bytecode emit_opcode_i32(sen_compilation* compilation, sen_opcode op,
                                     i32 arg0, i32 arg1);
 
-// todo: add and check error codes for all functions called by
 // compiler_subsystem_startup
 //
 sen_error compiler_subsystem_startup() {
-  sen_error err;
+  sen_error    err;
   sen_program* program = program_allocate(MAX_PREAMBLE_PROGRAM_SIZE);
 
   sen_compilation compilation;
@@ -75,11 +134,9 @@ sen_error compiler_subsystem_startup() {
   }
 
   // slap a stop onto the end of this program
-  sen_result_bytecode result_bytecode =
-      emit_opcode_i32(&compilation, STOP, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  sen_result_bytecode result_bytecode;
+  B_CHK(emit_opcode_i32(&compilation, STOP, 0, 0),
+        "compiler_subsystem_startup: STOP");
 
   g_preamble_program = program;
 
@@ -177,7 +234,6 @@ sen_result_f32 get_node_value_f32_from_gene(sen_node* node) {
 
 bool alterable(sen_node* node) { return node->alterable && g_use_genes; }
 
-// todo: fix up call sites with this return code
 sen_result_i32 get_node_value_i32(sen_node* node) {
   if (alterable(node)) {
     return get_node_value_i32_from_gene(node);
@@ -186,7 +242,6 @@ sen_result_i32 get_node_value_i32(sen_node* node) {
   }
 }
 
-// todo: fix up call sites with this return code
 sen_result_f32 get_node_value_f32(sen_node* node) {
   if (alterable(node)) {
     return get_node_value_f32_from_gene(node);
@@ -195,7 +250,6 @@ sen_result_f32 get_node_value_f32(sen_node* node) {
   }
 }
 
-// todo: should this return an error code?
 // a temporary message for unimplemented alterable nodes
 void warn_if_alterable(char* msg, sen_node* node) {
   if (node->alterable) {
@@ -543,12 +597,9 @@ sen_error compile_define(sen_compilation* compilation, sen_node* ast,
 
     if (lhs_node->type == NODE_NAME) {
       // define foo 10
-      result_i32 = store_from_stack_to_memory(compilation, lhs_node,
-                                              memory_segment_type);
-      if (is_result_i32_error(result_i32)) {
-        SEN_ERROR("compile_define: allocation failure in define");
-        return result_i32.error;
-      }
+      I_CHK(store_from_stack_to_memory(compilation, lhs_node,
+                                       memory_segment_type),
+            "compile_define: allocation failure in define");
     } else if (lhs_node->type == NODE_VECTOR) {
       // define [a b] (something-that-returns-a-vector ...)
 
@@ -559,19 +610,13 @@ sen_error compile_define(sen_compilation* compilation, sen_node* ast,
       }
       bool all_children_have_type_name = result_bool.result;
       if (all_children_have_type_name) {
-        result_i32 = count_children(lhs_node);
-        if (is_result_i32_error(result_i32)) {
-          SEN_ERROR("compile_define: count_children");
-          return result_i32.error;
-        }
+        I_CHK(count_children(lhs_node), "compile_define: count_children");
         i32 num_children = result_i32.result;
 
         // PILE will stack the elements in the rhs vector in order,
         // so the lhs values have to be popped in reverse order
-        result_bytecode = emit_opcode_i32(compilation, PILE, num_children, 0);
-        if (is_result_bytecode_error(result_bytecode)) {
-          return result_bytecode.error;
-        }
+        B_CHK(emit_opcode_i32(compilation, PILE, num_children, 0),
+              "compile_define: PILE");
 
         compilation->opcode_offset += num_children - 1;
 
@@ -581,12 +626,9 @@ sen_error compile_define(sen_compilation* compilation, sen_node* ast,
           child = safe_next(child);
         }
         for (i = 0; i < num_children; i++) {
-          result_i32 = store_from_stack_to_memory(compilation, child,
-                                                  memory_segment_type);
-          if (is_result_i32_error(result_i32)) {
-            SEN_ERROR("compile_define: allocation failure during destructure");
-            return result_i32.error;
-          }
+          I_CHK(store_from_stack_to_memory(compilation, child,
+                                           memory_segment_type),
+                "compile_define: allocation failure during destructure");
           child = safe_prev(child);
         }
       } else {
@@ -617,10 +659,7 @@ sen_error compile_if(sen_compilation* compilation, sen_node* ast) {
 
   // insert jump to after the 'then' node if not true
   i32 addr_jump_then = compilation->program->code_size;
-  result_bytecode    = emit_opcode_i32(compilation, JUMP_IF, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, JUMP_IF, 0, 0), "compile_if: JUMP_IF");
   sen_bytecode* bc_jump_then = result_bytecode.result;
 
   // the offset after the if
@@ -640,10 +679,7 @@ sen_error compile_if(sen_compilation* compilation, sen_node* ast) {
     // insert a bc_jump_else opcode
     i32 addr_jump_else = compilation->program->code_size;
 
-    result_bytecode = emit_opcode_i32(compilation, JUMP, 0, 0);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, JUMP, 0, 0), "compile_if: JUMP");
     sen_bytecode* bc_jump_else = result_bytecode.result;
 
     bc_jump_then->arg0.value.i =
@@ -677,11 +713,7 @@ sen_error compile_rest(sen_compilation* compilation, sen_node* ast) {
 
   ast = safe_next(ast);
   while (ast) {
-    result_node = compile(compilation, ast);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_rest: compile");
-      return result_node.error;
-    }
+    N_CHK(compile(compilation, ast), "compile_rest: compile");
     ast = result_node.result;
   }
 
@@ -692,12 +724,8 @@ sen_error compile_rest(sen_compilation* compilation, sen_node* ast) {
 sen_error compile_next_one(sen_compilation* compilation, sen_node* ast) {
   sen_result_node result_node;
 
-  ast         = safe_next(ast);
-  result_node = compile(compilation, ast);
-  if (is_result_node_error(result_node)) {
-    SEN_ERROR("compile_next_one: compile");
-    return result_node.error;
-  }
+  ast = safe_next(ast);
+  N_CHK(compile(compilation, ast), "compile_next_one: compile");
 
   return NONE;
 }
@@ -718,31 +746,23 @@ sen_error compile_math(sen_compilation* compilation, sen_node* ast,
 
   ast = safe_next(ast); // skip the opcode
 
-  result_node = compile(compilation, ast); // compile the first argument
-  if (is_result_node_error(result_node)) {
-    SEN_ERROR("compile_math: compile");
-    return result_node.error;
-  }
+  // compile the first argument
+  N_CHK(compile(compilation, ast);, "compile_math: compile");
   ast = result_node.result;
   while (ast) {
-    result_node = compile(compilation, ast); // compile the next argument
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_math: compile");
-      return result_node.error;
-    }
+    // compile the next argument
+    N_CHK(compile(compilation, ast);, "compile_math: compile");
     ast = result_node.result;
 
     // store the index into program->fn_info in the program
-    result_bytecode = emit_opcode_i32(compilation, opcode, 0, 0);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, opcode, 0, 0), "compile_math: opcode");
   }
   return NONE;
 }
 
 sen_error compile_address_of(sen_compilation* compilation, sen_node* ast) {
-  sen_node* fn_name = safe_next(ast);
+  sen_result_bytecode result_bytecode;
+  sen_node*           fn_name = safe_next(ast);
 
   // fn_name should be a defined function's name
   // it will be known at compile time
@@ -760,11 +780,8 @@ sen_error compile_address_of(sen_compilation* compilation, sen_node* ast) {
   sen_fn_info* fn_info = result_fn_info.result;
 
   // store the index into program->fn_info in the program
-  sen_result_bytecode result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, fn_info->index);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, fn_info->index),
+        "compile_address_of: CONSTANT");
 
   return NONE;
 }
@@ -773,6 +790,7 @@ sen_error compile_address_of(sen_compilation* compilation, sen_node* ast) {
 sen_error compile_fn_call(sen_compilation* compilation, sen_node* ast) {
   sen_result_node     result_node;
   sen_result_bytecode result_bytecode;
+  sen_result_i32      result_i32;
   sen_node*           invocation = safe_next(ast);
 
   // fn_name should be a defined function's name
@@ -789,17 +807,9 @@ sen_error compile_fn_call(sen_compilation* compilation, sen_node* ast) {
 
   // place the fn_info_index onto the stack so that CALL_F can find the function
   // offset and num args
-  result_node = compile(compilation, fn_info_index);
-  if (is_result_node_error(result_node)) {
-    SEN_ERROR("compile_fn_call: compile");
-    return result_node.error;
-  }
-
-  result_bytecode = emit_opcode_i32(compilation, CALL_F, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_fn_call: emit_opcode_i32");
-    return result_bytecode.error;
-  }
+  N_CHK(compile(compilation, fn_info_index), "compile_fn_call: compile");
+  B_CHK(emit_opcode_i32(compilation, CALL_F, 0, 0),
+        "compile_fn_call: emit_opcode_i32");
 
   // compile the rest of the arguments
 
@@ -812,48 +822,25 @@ sen_error compile_fn_call(sen_compilation* compilation, sen_node* ast) {
     sen_node* value = safe_next(label);
 
     // push value
-    result_node = compile(compilation, value);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_fn_call: compile");
-      return result_node.error;
-    }
+    N_CHK(compile(compilation, value), "compile_fn_call: compile");
 
-    result_node =
-        compile(compilation, fn_info_index); // push the actual fn_info index so
-                                             // that the _FLU opcode can find it
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_fn_call: compile");
-      return result_node.error;
-    }
+    // push the actual fn_info index so that the _FLU opcode can find it
+    N_CHK(compile(compilation, fn_info_index), "compile_fn_call: compile");
 
-    sen_result_i32 result_i32 = get_node_value_i32(label);
-    if (is_result_i32_error(result_i32)) {
-      SEN_ERROR("compile_fn_call: get_node_value_i32");
-      return result_i32.error;
-    }
+    I_CHK(get_node_value_i32(label), "compile_fn_call: get_node_value_i32");
     i32 label_i = result_i32.result;
 
-    result_bytecode =
-        emit_opcode_i32(compilation, STORE_F, MEM_SEG_ARGUMENT, label_i);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, STORE_F, MEM_SEG_ARGUMENT, label_i),
+          "compile_fn_call: STORE_F");
 
     args = safe_next(value);
   }
 
   // place the fn_info_index onto the stack so that CALL_F_0 can find the
   // function's body offset
-  result_node = compile(compilation, fn_info_index);
-  if (is_result_node_error(result_node)) {
-    SEN_ERROR("compile_fn_call: compile");
-    return result_node.error;
-  }
-
-  result_bytecode = emit_opcode_i32(compilation, CALL_F_0, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  N_CHK(compile(compilation, fn_info_index), "compile_fn_call: compile");
+  B_CHK(emit_opcode_i32(compilation, CALL_F_0, 0, 0),
+        "compile_fn_call: CALL_F");
 
   return NONE;
 }
@@ -861,35 +848,20 @@ sen_error compile_fn_call(sen_compilation* compilation, sen_node* ast) {
 sen_error compile_vector_append(sen_compilation* compilation, sen_node* ast) {
   sen_result_node     result_node;
   sen_result_bytecode result_bytecode;
+  sen_result_i32      result_i32;
 
   // (vector/append vector value)
-
   sen_node* vector = safe_next(ast);
-  result_node      = compile(compilation, vector);
-  if (is_result_node_error(result_node)) {
-    SEN_ERROR("compile_vector_append: compile");
-    return result_node.error;
-  }
+  N_CHK(compile(compilation, vector), "compile_vector_append: compile");
 
   sen_node* value = safe_next(vector);
-  result_node     = compile(compilation, value);
-  if (is_result_node_error(result_node)) {
-    SEN_ERROR("compile_vector_append: compile");
-    return result_node.error;
-  }
-
-  result_bytecode = emit_opcode_i32(compilation, APPEND, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  N_CHK(compile(compilation, value), "compile_vector_append: compile");
+  B_CHK(emit_opcode_i32(compilation, APPEND, 0, 0),
+        "compile_vector_append: APPEND");
 
   if (vector->type == NODE_NAME) {
-
-    sen_result_i32 result_i32 = get_node_value_i32(vector);
-    if (is_result_i32_error(result_i32)) {
-      SEN_ERROR("compile_vector_append: get_node_value_i32");
-      return result_i32.error;
-    }
+    I_CHK(get_node_value_i32(vector),
+          "compile_vector_append: get_node_value_i32");
     i32 vector_i = result_i32.result;
 
     sen_option_i32 option_i32;
@@ -897,22 +869,16 @@ sen_error compile_vector_append(sen_compilation* compilation, sen_node* ast) {
     option_i32 = get_local_mapping(compilation, vector_i);
     if (is_option_i32_some(option_i32)) {
       i32 address = option_i32.some;
-      result_bytecode =
-          emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, address);
-      if (is_result_bytecode_error(result_bytecode)) {
-        return result_bytecode.error;
-      }
+      B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, address),
+            "compile_vector_append: STORE");
       return NONE;
     }
 
     option_i32 = get_global_mapping(compilation, vector_i);
     if (is_option_i32_some(option_i32)) {
       i32 address = option_i32.some;
-      result_bytecode =
-          emit_opcode_i32(compilation, STORE, MEM_SEG_GLOBAL, address);
-      if (is_result_bytecode_error(result_bytecode)) {
-        return result_bytecode.error;
-      }
+      B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_GLOBAL, address),
+            "compile_vector_append: STORE global");
       return NONE;
     }
 
@@ -928,10 +894,8 @@ sen_error compile_vector_in_quote(sen_compilation* compilation, sen_node* ast) {
   sen_result_bytecode result_bytecode;
 
   // pushing from the VOID means creating a new, empty vector
-  result_bytecode = emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0),
+        "compile_vector_in_quote: LOAD");
 
   warn_if_alterable("compile_vector_in_quote", ast);
   for (sen_node* node = safe_first(ast->value.first_child); node != NULL;
@@ -943,30 +907,24 @@ sen_error compile_vector_in_quote(sen_compilation* compilation, sen_node* ast) {
     // MEM_SEG_GLOBAL LOAD code)
     //
     if (node->type == NODE_NAME) {
-      result_bytecode = emit_opcode_i32_name(compilation, LOAD,
-                                             MEM_SEG_CONSTANT, node->value.i);
-      if (is_result_bytecode_error(result_bytecode)) {
-        return result_bytecode.error;
-      }
+      B_CHK(emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT,
+                                 node->value.i),
+            "compile_vector_in_quote: LOAD");
     } else {
-      result_node = compile(compilation, node);
-      if (is_result_node_error(result_node)) {
-        SEN_ERROR("compile_vector_in_quote: compile");
-        return result_node.error;
-      }
+      N_CHK(compile(compilation, node), "compile_vector_in_quote: compile");
     }
 
-    result_bytecode = emit_opcode_i32(compilation, APPEND, 0, 0);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, APPEND, 0, 0),
+          "compile_vector_in_quote: APPEND");
   }
 
   return NONE;
 }
 
 sen_error compile_quote(sen_compilation* compilation, sen_node* ast) {
-  sen_node* quoted_form = safe_next(ast);
+  sen_result_bytecode result_bytecode;
+  sen_result_node     result_node;
+  sen_node*           quoted_form = safe_next(ast);
 
   if (quoted_form->type == NODE_LIST) {
     // compile each entry individually, don't treat the list as a normal
@@ -978,18 +936,11 @@ sen_error compile_quote(sen_compilation* compilation, sen_node* ast) {
     }
   } else {
     if (quoted_form->type == NODE_NAME) {
-      sen_result_bytecode result_bytecode = emit_opcode_i32_name(
-          compilation, LOAD, MEM_SEG_CONSTANT, quoted_form->value.i);
-      if (is_result_bytecode_error(result_bytecode)) {
-        SEN_ERROR("compile_quote: emit_opcode_i32_name");
-        return result_bytecode.error;
-      }
+      B_CHK(emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT,
+                                 quoted_form->value.i),
+            "compile_quote: emit_opcode_i32_name");
     } else {
-      sen_result_node result_node = compile(compilation, quoted_form);
-      if (is_result_node_error(result_node)) {
-        SEN_ERROR("compile_quote: compile");
-        return result_node.error;
-      }
+      N_CHK(compile(compilation, quoted_form), "compile_quote: compile");
     }
   }
 
@@ -1012,14 +963,17 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
   sen_node* to_node        = NULL;
   sen_node* upto_node      = NULL;
   sen_node* increment_node = NULL;
+  sen_node* steps_node     = NULL;
   bool      have_from      = false;
   bool      have_to        = false;
   bool      have_upto      = false;
   bool      have_increment = false;
+  bool      have_steps     = false;
 
   sen_node*           node = name_node;
   sen_result_bytecode result_bytecode;
   sen_result_node     result_node;
+  sen_result_i32      result_i32;
   sen_error           err;
 
   while (node) {
@@ -1043,6 +997,11 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
       have_increment = true;
       increment_node = safe_next(node);
     }
+    // todo: not working yet
+    if (node->value.i == INAME_STEPS) {
+      have_steps = true;
+      steps_node = safe_next(node);
+    }
     node = safe_next(node); // the value part
   }
 
@@ -1059,146 +1018,86 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
 
   // set looping variable x to 'from' value
   if (have_from) {
-    result_node = compile(compilation, from_node);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_loop: compile");
-      return result_node.error;
-    }
+    N_CHK(compile(compilation, from_node), "compile_loop: compile")
   } else {
     // else default to 0
-    result_bytecode =
-        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f);
-    if (is_result_bytecode_error(result_bytecode)) {
-      SEN_ERROR("compile_loop: emit_opcode_i32_f32");
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f),
+          "compile_loop: emit_opcode_i32_f32");
   }
 
-  sen_result_i32 result_i32 =
-      store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL);
-  if (is_result_i32_error(result_i32)) {
-    SEN_ERROR("compile_loop: store_from_stack_to_memory");
-    return result_i32.error;
-  }
+  I_CHK(store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL),
+        "compile_loop: store_from_stack_to_memory");
   i32 looper_address = result_i32.result;
 
   // compare looping variable against exit condition
   // and jump if looping variable >= exit value
   i32 addr_loop_start = compilation->program->code_size;
 
-  result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, looper_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_loop: emit_opcode_i32");
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, looper_address),
+        "compile_loop: emit_opcode_i32");
 
   if (use_to) {
     // so jump if looping variable >= exit value
-    result_node = compile(compilation, to_node);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_loop: compile");
-      return result_node.error;
-    }
+    N_CHK(compile(compilation, to_node), "compile_loop: compile");
 
-    result_bytecode = emit_opcode_i32(compilation, LT, 0, 0);
-    if (is_result_bytecode_error(result_bytecode)) {
-      SEN_ERROR("compile_loop: emit_opcode_i32");
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, LT, 0, 0),
+          "compile_loop: emit_opcode_i32");
   } else {
     // so jump if looping variable > exit value
-    result_node = compile(compilation, upto_node);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_loop: compile");
-      return result_node.error;
-    }
+    N_CHK(compile(compilation, upto_node), "compile_loop: compile");
 
-    result_bytecode = emit_opcode_i32(compilation, GT, 0, 0);
-    if (is_result_bytecode_error(result_bytecode)) {
-      SEN_ERROR("compile_loop: emit_opcode_i32");
-      return result_bytecode.error;
-    }
-    result_bytecode = emit_opcode_i32(compilation, NOT, 0, 0);
-    if (is_result_bytecode_error(result_bytecode)) {
-      SEN_ERROR("compile_loop: emit_opcode_i32");
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, GT, 0, 0),
+          "compile_loop: emit_opcode_i32");
+    B_CHK(emit_opcode_i32(compilation, NOT, 0, 0),
+          "compile_loop: emit_opcode_i32");
   }
 
   i32 addr_exit_check = compilation->program->code_size;
 
-  result_bytecode = emit_opcode_i32(compilation, JUMP_IF, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, JUMP_IF, 0, 0), "compile_loop: JUMP_IF");
   sen_bytecode* bc_exit_check = result_bytecode.result;
 
   i32 pre_body_opcode_offset = compilation->opcode_offset;
 
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-  err = compile_rest(compilation, parameters_node);
-  if (is_error(err)) {
-    SEN_ERROR("compile_loop: compile_rest");
-    return err;
-  }
+  E_CHK(compile_rest(compilation, parameters_node),
+        "compile_loop: compile_rest");
 
   i32 post_body_opcode_offset = compilation->opcode_offset;
   i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
   // pop off any values that the body might leave on the stack
   for (i32 i = 0; i < opcode_delta; i++) {
-    result_bytecode = emit_opcode_i32(compilation, STORE, MEM_SEG_VOID, 0);
-    if (is_result_bytecode_error(result_bytecode)) {
-      SEN_ERROR("compile_loop: emit_opcode_i32");
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_VOID, 0),
+          "compile_loop: emit_opcode_i32");
   }
 
   // increment the looping variable
-  result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, looper_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_loop: emit_opcode_i32");
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, looper_address),
+        "compile_loop: emit_opcode_i32");
 
   if (have_increment) {
-    result_node = compile(compilation, increment_node);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_loop: compile");
-      return result_node.error;
-    }
+    N_CHK(compile(compilation, increment_node), "compile_loop: compile");
+  } else if (have_steps) {
+    // (to - from) / steps
+    // (upto - from) / (steps - 1)
+    N_CHK(compile(compilation, steps_node), "compile_loop: compile");
   } else {
-    result_bytecode =
-        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f);
-    if (is_result_bytecode_error(result_bytecode)) {
-      SEN_ERROR("compile_loop: emit_opcode_i32_f32");
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f),
+          "compile_loop: emit_opcode_i32_f32");
   }
 
-  result_bytecode = emit_opcode_i32(compilation, ADD, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_loop: emit_opcode_i32");
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, ADD, 0, 0),
+        "compile_loop: emit_opcode_i32");
 
-  result_bytecode =
-      emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_loop: emit_opcode_i32");
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address),
+        "compile_loop: emit_opcode_i32");
 
   // loop back to the comparison
-  result_bytecode =
-      emit_opcode_i32(compilation, JUMP,
-                      -(compilation->program->code_size - addr_loop_start), 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_loop: emit_opcode_i32");
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, JUMP,
+                        -(compilation->program->code_size - addr_loop_start),
+                        0),
+        "compile_loop: emit_opcode_i32");
 
   bc_exit_check->arg0.value.i =
       compilation->program->code_size - addr_exit_check;
@@ -1254,162 +1153,82 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
   }
 
   // store the quantity
-  result_i32 = add_internal_local_mapping(compilation);
-  if (is_result_i32_error(result_i32)) {
-    SEN_ERROR("compile_fence: add_internal_local_mapping");
-    return result_i32.error;
-  }
+  I_CHK(add_internal_local_mapping(compilation),
+        "compile_fence: add_internal_local_mapping");
   i32 quantity_address = result_i32.result;
   if (have_num) {
-    result_node = compile(compilation, num_node);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_fence: compile");
-      return result_node.error;
-    }
+    N_CHK(compile(compilation, num_node), "compile_fence: compile");
   } else {
     // else default to 2
-    result_bytecode =
-        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 2.0f);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 2.0f),
+          "compile_fence: LOAD");
   }
 
-  result_bytecode =
-      emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, quantity_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, quantity_address),
+        "compile_fence: STORE");
 
   // reserve a memory location in local memory for a counter from 0 to quantity
-  result_i32 = add_internal_local_mapping(compilation);
-  if (is_result_i32_error(result_i32)) {
-    SEN_ERROR("compile_loop: add_internal_local_mapping");
-    return result_i32.error;
-  }
+  I_CHK(add_internal_local_mapping(compilation),
+        "compile_loop: add_internal_local_mapping");
   i32 counter_address = result_i32.result;
 
-  result_bytecode =
-      emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-  result_bytecode =
-      emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f),
+        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address),
+        "compile_fence");
 
   // delta that needs to be added at every iteration
   //
   // (to - from) / (quantity - 1)
   if (have_to) {
-    result_node = compile(compilation, to_node);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_fence: compile");
-      return result_node.error;
-    }
-
+    N_CHK(compile(compilation, to_node), "compile_fence: compile");
   } else {
     // else default to 1
-    result_bytecode =
-        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f),
+          "compile_fence");
   }
   if (have_from) {
-    result_node = compile(compilation, from_node);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_fence: compile");
-      return result_node.error;
-    }
+    N_CHK(compile(compilation, from_node), "compile_fence: compile");
   } else {
     // else default to 0
-    result_bytecode =
-        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f),
+          "compile_fence");
   }
-  result_bytecode = emit_opcode_i32(compilation, SUB, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, SUB, 0, 0), "compile_fence");
 
-  result_node = compile(compilation, num_node);
-  if (is_result_node_error(result_node)) {
-    SEN_ERROR("compile_fence: compile");
-    return result_node.error;
-  }
-  result_bytecode =
-      emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-  result_bytecode = emit_opcode_i32(compilation, SUB, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-  result_bytecode = emit_opcode_i32(compilation, DIV, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_i32 = add_internal_local_mapping(compilation);
-  if (is_result_i32_error(result_i32)) {
-    SEN_ERROR("compile_loop: add_internal_local_mapping");
-    return result_i32.error;
-  }
+  N_CHK(compile(compilation, num_node), "compile_fence: compile");
+  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f),
+        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, SUB, 0, 0), "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, DIV, 0, 0), "compile_fence");
+  I_CHK(add_internal_local_mapping(compilation),
+        "compile_loop: add_internal_local_mapping");
   i32 delta_address = result_i32.result;
-  result_bytecode =
-      emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, delta_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, delta_address),
+        "compile_fence");
 
   // set looping variable x to 'from' value
   if (have_from) {
-    result_node = compile(compilation, from_node);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_fence: compile");
-      return result_node.error;
-    }
+    N_CHK(compile(compilation, from_node), "compile_fence: compile");
   } else {
     // else default to 0
-    result_bytecode =
-        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f),
+          "compile_fence");
   }
 
-  result_i32 = add_internal_local_mapping(compilation);
-  if (is_result_i32_error(result_i32)) {
-    SEN_ERROR("compile_loop: add_internal_local_mapping");
-    return result_i32.error;
-  }
+  I_CHK(add_internal_local_mapping(compilation),
+        "compile_loop: add_internal_local_mapping");
   i32 from_address = result_i32.result;
 
-  result_bytecode =
-      emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, from_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, from_address),
+        "compile_fence");
 
   // store the starting 'from' value in the locally scoped variable
-  result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address),
+        "compile_fence");
 
-  result_i32 =
-      store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL);
-  if (is_result_i32_error(result_i32)) {
-    SEN_ERROR("compile_loop: store_from_stack_to_memory");
-    return result_i32.error;
-  }
+  I_CHK(store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL),
+        "compile_loop: store_from_stack_to_memory");
   i32 looper_address = result_i32.result;
 
   // compare looping variable against exit condition
@@ -1417,112 +1236,56 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
   i32 addr_loop_start = compilation->program->code_size;
 
   // load from counter address
-  result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address),
+        "compile_fence");
 
   // load from quantity address
-  result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, quantity_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, quantity_address),
+        "compile_fence");
 
   // exit check
-  result_bytecode = emit_opcode_i32(compilation, LT, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LT, 0, 0), "compile_fence");
 
   i32 addr_exit_check = compilation->program->code_size;
 
-  result_bytecode = emit_opcode_i32(compilation, JUMP_IF, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, JUMP_IF, 0, 0), "compile_fence");
   sen_bytecode* bc_exit_check = result_bytecode.result;
 
   // looper = from + (counter * delta)
-
-  result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, delta_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode = emit_opcode_i32(compilation, MUL, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode = emit_opcode_i32(compilation, ADD, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode =
-      emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address),
+        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address),
+        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, delta_address),
+        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, MUL, 0, 0), "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, ADD, 0, 0), "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address),
+        "compile_fence");
 
   i32 pre_body_opcode_offset = compilation->opcode_offset;
 
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-  err = compile_rest(compilation, parameters_node);
-  if (is_error(err)) {
-    SEN_ERROR("compile_loop: compile_rest");
-    return err;
-  }
+  E_CHK(compile_rest(compilation, parameters_node),
+        "compile_loop: compile_rest");
 
   i32 post_body_opcode_offset = compilation->opcode_offset;
   i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
   // pop off any values that the body might leave on the stack
   for (i32 i = 0; i < opcode_delta; i++) {
-    result_bytecode = emit_opcode_i32(compilation, STORE, MEM_SEG_VOID, 0);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_VOID, 0),
+          "compile_fence");
   }
 
   // increment counter
-  result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode =
-      emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode = emit_opcode_i32(compilation, ADD, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode =
-      emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address),
+        "compile_fence");
+  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f),
+        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, ADD, 0, 0), "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address),
+        "compile_fence");
 
   // loop back to the comparison
   emit_opcode_i32(compilation, JUMP,
@@ -1535,22 +1298,14 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
 
 sen_error compile_on_matrix_stack(sen_compilation* compilation, sen_node* ast) {
   sen_result_bytecode result_bytecode;
+  sen_error           err;
 
-  result_bytecode = emit_opcode_i32(compilation, MTX_LOAD, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  sen_error err = compile_rest(compilation, ast);
-  if (is_error(err)) {
-    SEN_ERROR("compile_on_matrix_stack: compile_rest");
-    return err;
-  }
-
-  result_bytecode = emit_opcode_i32(compilation, MTX_STORE, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, MTX_LOAD, 0, 0),
+        "compile_on_matrix_stack");
+  E_CHK(compile_rest(compilation, ast),
+        "compile_on_matrix_stack: compile_rest");
+  B_CHK(emit_opcode_i32(compilation, MTX_STORE, 0, 0),
+        "compile_on_matrix_stack");
 
   return NONE;
 }
@@ -1667,12 +1422,10 @@ sen_error register_top_level_defines(sen_compilation* compilation,
     }
 
     sen_node* lhs = safe_next(define_keyword);
+    sen_error err;
     while (lhs != NULL) {
-      sen_error err = register_names_in_define(compilation, lhs);
-      if (is_error(err)) {
-        SEN_ERROR("register_top_level_defines: register_names_in_define");
-        return err;
-      }
+      E_CHK(register_names_in_define(compilation, lhs),
+            "register_top_level_defines: register_names_in_define");
       lhs = safe_next(lhs); // points to the value
       lhs = safe_next(
           lhs); // points to the next define statement if there multiple
@@ -1693,6 +1446,7 @@ sen_error register_top_level_defines(sen_compilation* compilation,
 sen_error compile_fn(sen_compilation* compilation, sen_node* ast) {
   sen_result_node     result_node;
   sen_result_bytecode result_bytecode;
+  sen_error           err;
   // fn (adder a: 0 b: 0) (+ a b)
 
   clear_local_mappings(compilation);
@@ -1725,11 +1479,7 @@ sen_error compile_fn(sen_compilation* compilation, sen_node* ast) {
   while (args != NULL) {
     sen_node* label = args;
 
-    result_i32 = get_node_value_i32(label);
-    if (is_result_i32_error(result_i32)) {
-      SEN_ERROR("compile_fn: get_node_value_i32");
-      return result_i32.error;
-    }
+    I_CHK(get_node_value_i32(label), "compile_fn: get_node_value_i32");
     i32 label_i = result_i32.result;
 
     sen_node* value = safe_next(label);
@@ -1738,27 +1488,14 @@ sen_error compile_fn(sen_compilation* compilation, sen_node* ast) {
     fn_info->argument_offsets[argument_offsets_counter++] = label_i;
 
     // push pairs of label+value values onto the args stack
-    result_bytecode =
-        emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, label_i);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
-    result_bytecode =
-        emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, label_i),
+          "compile_fn");
+    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++),
+          "compile_fn");
 
-    result_node = compile(compilation, value);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_fn: compile");
-      return result_node.error;
-    }
-    result_bytecode =
-        emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    N_CHK(compile(compilation, value), "compile_fn: compile");
+    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++),
+          "compile_fn");
 
     num_args++;
     args = safe_next(value);
@@ -1766,10 +1503,7 @@ sen_error compile_fn(sen_compilation* compilation, sen_node* ast) {
 
   fn_info->num_args = num_args;
 
-  result_bytecode = emit_opcode_i32(compilation, RET_0, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, RET_0, 0, 0), "compile_fn");
 
   // --------
   // the body
@@ -1778,18 +1512,11 @@ sen_error compile_fn(sen_compilation* compilation, sen_node* ast) {
   fn_info->body_address = compilation->program->code_size;
 
   // (+ a b)
-  sen_error err = compile_rest(compilation, signature);
-  if (is_error(err)) {
-    SEN_ERROR("compile_fn: compile_rest");
-    return err;
-  }
+  E_CHK(compile_rest(compilation, signature), "compile_fn: compile_rest");
 
   // Don't need any STORE, MEM_SEG_VOID instructions as the RET will
   // pop the frame and blow the stack
-  result_bytecode = emit_opcode_i32(compilation, RET, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, RET, 0, 0), "compile_fn");
 
   compilation->current_fn_info = NULL;
 
@@ -1870,7 +1597,6 @@ sen_error correct_function_addresses(sen_compilation* compilation) {
   return NONE;
 }
 
-// todo: fix call sites to test return error
 sen_error compile_fn_invocation(sen_compilation* compilation, sen_node* ast,
                                 i32 fn_info_index) {
   sen_result_node     result_node;
@@ -1884,21 +1610,15 @@ sen_error compile_fn_invocation(sen_compilation* compilation, sen_node* ast,
   // call other functions that are declared later in the script
 
   // prepare the MEM_SEG_ARGUMENT with default values
-  result_bytecode = emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT,
-                                    666); // for the function address
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-  result_bytecode = emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT,
-                                    667); // for the num args
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-  result_bytecode =
-      emit_opcode_i32(compilation, CALL, fn_info_index, fn_info_index);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+
+  // for the function address
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 666);
+        , "compile_fn_invocation");
+  // for the num args
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 667);
+        , "compile_fn_invocation");
+  B_CHK(emit_opcode_i32(compilation, CALL, fn_info_index, fn_info_index),
+        "compile_fn_invocation");
 
   // overwrite the default arguments with the actual arguments given by the fn
   // invocation
@@ -1906,47 +1626,32 @@ sen_error compile_fn_invocation(sen_compilation* compilation, sen_node* ast,
   sen_result_i32 result_i32;
   while (args != NULL) {
     sen_node* label = args;
-    result_i32      = get_node_value_i32(label);
-    if (is_result_i32_error(result_i32)) {
-      SEN_ERROR("compile_fn_invocation: get_node_value_i32");
-      return result_i32.error;
-    }
+    I_CHK(get_node_value_i32(label),
+          "compile_fn_invocation: get_node_value_i32");
+
     i32 label_i = result_i32.result;
 
     sen_node* value = safe_next(label);
 
     // push value
-    result_node = compile(compilation, value);
-    if (is_result_node_error(result_node)) {
-      SEN_ERROR("compile_fn_invocation: compile");
-      return result_node.error;
-    }
-    result_bytecode =
-        emit_opcode_i32(compilation, PLACEHOLDER_STORE, fn_info_index, label_i);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    N_CHK(compile(compilation, value), "compile_fn_invocation: compile");
+    B_CHK(
+        emit_opcode_i32(compilation, PLACEHOLDER_STORE, fn_info_index, label_i),
+        "compile_fn_invocation");
 
     args = safe_next(value);
   }
 
   // call the body of the function
-  result_bytecode = emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT,
-                                    668); // for the function body address
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode =
-      emit_opcode_i32(compilation, CALL_0, fn_info_index, fn_info_index);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  // for the function body address
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 668);
+        , "compile_fn_invocation");
+  B_CHK(emit_opcode_i32(compilation, CALL_0, fn_info_index, fn_info_index),
+        "compile_fn_invocation");
 
   return NONE;
 }
 
-// todo: check return codes
 // ast is a NODE_VECTOR of length 2
 //
 sen_error compile_2d_from_gene(sen_compilation* compilation, sen_node* ast) {
@@ -1956,65 +1661,43 @@ sen_error compile_2d_from_gene(sen_compilation* compilation, sen_node* ast) {
   f32 a = gene->var->f32_array[0];
   f32 b = gene->var->f32_array[1];
 
-  result_bytecode = emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, a);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_2d_from_gene: emit_opcode_i32_f32");
-    return result_bytecode.error;
-  }
-  result_bytecode = emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, b);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_2d_from_gene: emit_opcode_i32_f32");
-    return result_bytecode.error;
-  }
-
-  result_bytecode = emit_opcode_i32(compilation, SQUISH2, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_2d_from_gene: emit_opcode_i32");
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, a),
+        "compile_2d_from_gene: emit_opcode_i32_f32");
+  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, b),
+        "compile_2d_from_gene: emit_opcode_i32_f32");
+  B_CHK(emit_opcode_i32(compilation, SQUISH2, 0, 0),
+        "compile_2d_from_gene: emit_opcode_i32");
 
   return NONE;
 }
 
 sen_error compile_alterable_element(sen_compilation* compilation,
                                     sen_node*        node) {
+  sen_result_i32      result_i32;
+  sen_result_f32      result_f32;
+  sen_result_bytecode result_bytecode;
+  sen_error           err;
+
   if (node->type == NODE_FLOAT) {
-    sen_result_f32 result_f32 = get_node_value_f32_from_gene(node);
-    if (is_result_f32_error(result_f32)) {
-      return result_f32.error;
-    }
-    f32                 f = result_f32.result;
-    sen_result_bytecode result_bytecode =
-        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, f);
-    if (is_result_bytecode_error(result_bytecode)) {
-      SEN_ERROR("compile_alterable_element: emit_opcode_i32_f32");
-      return result_bytecode.error;
-    }
+    F_CHK(get_node_value_f32_from_gene(node), "compile_alterable_element");
+    f32 f = result_f32.result;
+
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, f),
+          "compile_alterable_element: emit_opcode_i32_f32");
   } else if (node->type == NODE_INT) {
-    sen_result_i32 result_i32 = get_node_value_i32_from_gene(node);
-    if (is_result_i32_error(result_i32)) {
-      return result_i32.error;
-    }
-    i32                 i = result_i32.result;
-    sen_result_bytecode result_bytecode =
-        emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+
+    I_CHK(get_node_value_i32_from_gene(node), "compile_alterable_element");
+    i32 i = result_i32.result;
+    B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i),
+          "compile_alterable_element");
   } else if (node->type == NODE_VECTOR) {
-    sen_error err;
+
     if (node_vector_length(node) == 2) {
-      err = compile_2d_from_gene(compilation, node);
-      if (is_error(err)) {
-        SEN_ERROR("compile_alterable_element: compile_2d_from_gene");
-        return err;
-      }
+      E_CHK(compile_2d_from_gene(compilation, node),
+            "compile_alterable_element: compile_2d_from_gene");
     } else {
-      err = compile_vector(compilation, node);
-      if (is_error(err)) {
-        SEN_ERROR("compile_alterable_element: compile_vector");
-        return err;
-      }
+      E_CHK(compile_vector(compilation, node),
+            "compile_alterable_element: compile_vector");
     }
   }
 
@@ -2031,25 +1714,15 @@ sen_error compile_2d(sen_compilation* compilation, sen_node* ast) {
   for (sen_node* node = safe_first_child(ast); node != NULL;
        node           = safe_next(node)) {
     if (use_gene) {
-      err = compile_alterable_element(compilation, node);
-      if (is_error(err)) {
-        SEN_ERROR("compile_2d: compile_alterable_element");
-        return err;
-      }
+      E_CHK(compile_alterable_element(compilation, node),
+            "compile_2d: compile_alterable_element");
     } else {
-      result_node = compile(compilation, node);
-      if (is_result_node_error(result_node)) {
-        SEN_ERROR("compile_2d: compile");
-        return result_node.error;
-      }
+      N_CHK(compile(compilation, node), "compile_2d: compile");
     }
   }
 
-  sen_result_bytecode result_bytecode =
-      emit_opcode_i32(compilation, SQUISH2, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  sen_result_bytecode result_bytecode;
+  B_CHK(emit_opcode_i32(compilation, SQUISH2, 0, 0), "compile_2d");
 
   return NONE;
 }
@@ -2072,23 +1745,13 @@ sen_error compile_vector(sen_compilation* compilation, sen_node* ast) {
   for (sen_node* node = safe_first_child(ast); node != NULL;
        node           = safe_next(node)) {
     if (use_gene) {
-      err = compile_alterable_element(compilation, node);
-      if (is_error(err)) {
-        SEN_ERROR("compile_2d: compile_alterable_element");
-        return err;
-      }
+      E_CHK(compile_alterable_element(compilation, node),
+            "compile_2d: compile_alterable_element");
     } else {
-      result_node = compile(compilation, node);
-      if (is_result_node_error(result_node)) {
-        SEN_ERROR("compile_2d: compile");
-        return result_node.error;
-      }
+      N_CHK(compile(compilation, node), "compile_2d: compile");
     }
 
-    result_bytecode = emit_opcode_i32(compilation, APPEND, 0, 0);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_bytecode.error;
-    }
+    B_CHK(emit_opcode_i32(compilation, APPEND, 0, 0), "compile_vector");
   }
 
   return NONE;
@@ -2113,6 +1776,7 @@ sen_result_node compile_user_defined_name(sen_compilation* compilation,
       result_bytecode = emit_opcode_i32(compilation, LOAD, MEM_SEG_ARGUMENT,
                                         argument_mapping);
       if (is_result_bytecode_error(result_bytecode)) {
+        SEN_ERROR("compile_user_defined_name");
         return result_node_error(result_bytecode.error);
       }
       return result_node_ok(safe_next(ast));
@@ -2478,54 +2142,44 @@ bool is_list_beginning_with(sen_node* ast, i32 index) {
 
 sen_error compile_global_bind_node(sen_compilation* compilation, i32 iname,
                                    sen_node* node) {
-  sen_result_node result_node = compile(compilation, node);
-  if (is_result_node_error(result_node)) {
-    return result_node.error;
-  }
-  sen_result_i32 result_i32 = store_globally(compilation, iname);
-  if (is_result_i32_error(result_i32)) {
-    return result_i32.error;
-  }
+  sen_result_node result_node;
+  sen_result_i32  result_i32;
+
+  N_CHK(compile(compilation, node), "compile_global_bind_node");
+  I_CHK(store_globally(compilation, iname), "compile_global_bind_node");
 
   return NONE;
 }
 
-// todo: check return codes
 sen_error compile_global_bind_i32(sen_compilation* compilation, i32 iname,
                                   i32 value) {
-  sen_result_bytecode result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, value);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  sen_result_bytecode result_bytecode;
+  sen_result_i32      result_i32;
 
-  sen_result_i32 result_i32 = store_globally(compilation, iname);
-  if (is_result_i32_error(result_i32)) {
-    return result_i32.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, value),
+        "compile_global_bind_i32");
+  I_CHK(store_globally(compilation, iname), "compile_global_bind_i32");
 
   return NONE;
 }
 
 sen_error compile_global_bind_f32(sen_compilation* compilation, i32 iname,
                                   f32 value) {
-  sen_result_bytecode result_bytecode =
-      emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, value);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  sen_result_bytecode result_bytecode;
+  sen_result_i32      result_i32;
 
-  sen_result_i32 result_i32 = store_globally(compilation, iname);
-  if (is_result_i32_error(result_i32)) {
-    return result_i32.error;
-  }
+  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, value),
+        "compile_global_bind_f32");
+  I_CHK(store_globally(compilation, iname), "compile_global_bind_f32");
 
   return NONE;
 }
 
-// todo: check return codes
 sen_error compile_global_bind_col(sen_compilation* compilation, i32 iname,
                                   f32 r, f32 g, f32 b, f32 a) {
+  sen_result_bytecode result_bytecode;
+  sen_result_i32      result_i32;
+
   sen_var mem_location, colour_arg;
 
   i32_as_var(&mem_location, MEM_SEG_CONSTANT);
@@ -2538,17 +2192,9 @@ sen_error compile_global_bind_col(sen_compilation* compilation, i32 iname,
   colour_arg.f32_array[2] = b;
   colour_arg.f32_array[3] = a;
 
-  sen_result_bytecode result_bytecode =
-      emit_opcode(compilation, LOAD, &mem_location, &colour_arg);
-  if (is_result_bytecode_error(result_bytecode)) {
-    SEN_ERROR("compile_global_bind_col: emit_opcode");
-    return result_bytecode.error;
-  }
-
-  sen_result_i32 result_i32 = store_globally(compilation, iname);
-  if (is_result_i32_error(result_i32)) {
-    return result_i32.error;
-  }
+  B_CHK(emit_opcode(compilation, LOAD, &mem_location, &colour_arg),
+        "compile_global_bind_col: emit_opcode");
+  I_CHK(store_globally(compilation, iname), "compile_global_bind_col");
 
   return NONE;
 }
@@ -2556,137 +2202,148 @@ sen_error compile_global_bind_col(sen_compilation* compilation, i32 iname,
 sen_error append_name(sen_compilation* compilation, i32 iname) {
   sen_result_bytecode result_bytecode;
 
-  result_bytecode =
-      emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, iname);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
-
-  result_bytecode = emit_opcode_i32(compilation, APPEND, 0, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, iname),
+        "append_name");
+  B_CHK(emit_opcode_i32(compilation, APPEND, 0, 0), "append_name");
 
   return NONE;
 }
 
-#define APPEND_NAME_TO_COMPILATION(compilation, name) \
-  err = append_name(compilation, name);               \
-  if (is_error(err)) {                                \
-    return err;                                       \
-  }
-
 sen_error compile_global_bind_procedural_presets(sen_compilation* compilation) {
-  sen_error err;
+  sen_result_bytecode result_bytecode;
+  sen_result_i32      result_i32;
+  sen_error           err;
 
   // create a vector
-  sen_result_bytecode result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0),
+        "compile_global_bind_procedural_presets");
 
   // append the names
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_CHROME);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_HOTLINE_MIAMI);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_KNIGHT_RIDER);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_MARS);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_RAINBOW);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_ROBOCOP);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_TRANSFORMERS);
+  E_CHK(append_name(compilation, INAME_CHROME), "INAME_CHROME");
+  E_CHK(append_name(compilation, INAME_HOTLINE_MIAMI), "INAME_HOTLINE_MIAMI");
+  E_CHK(append_name(compilation, INAME_KNIGHT_RIDER), "INAME_KNIGHT_RIDER");
+  E_CHK(append_name(compilation, INAME_MARS), "INAME_MARS");
+  E_CHK(append_name(compilation, INAME_RAINBOW), "INAME_RAINBOW");
+  E_CHK(append_name(compilation, INAME_ROBOCOP), "INAME_ROBOCOP");
+  E_CHK(append_name(compilation, INAME_TRANSFORMERS), "INAME_TRANSFORMERS");
 
-  sen_result_i32 result_i32 =
-      store_globally(compilation, INAME_COL_PROCEDURAL_FN_PRESETS);
-  if (is_result_i32_error(result_i32)) {
-    return result_i32.error;
-  }
+  I_CHK(store_globally(compilation, INAME_COL_PROCEDURAL_FN_PRESETS),
+        "compile_global_bind_procedural_presets");
 
   return NONE;
 }
 
 sen_error compile_global_bind_ease_presets(sen_compilation* compilation) {
-  sen_error err;
+  sen_result_bytecode result_bytecode;
+  sen_result_i32      result_i32;
+  sen_error           err;
 
   // create a vector
-  sen_result_bytecode result_bytecode =
-      emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0);
-  if (is_result_bytecode_error(result_bytecode)) {
-    return result_bytecode.error;
-  }
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0),
+        "compile_global_bind_ease_presets");
 
   // append the names
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_LINEAR);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUICK);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_SLOW_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_SLOW_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUADRATIC_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUADRATIC_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUADRATIC_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_CUBIC_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_CUBIC_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_CUBIC_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUARTIC_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUARTIC_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUARTIC_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUINTIC_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUINTIC_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_QUINTIC_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_SIN_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_SIN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_SIN_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_CIRCULAR_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_CIRCULAR_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_CIRCULAR_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_EXPONENTIAL_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_EXPONENTIAL_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_EXPONENTIAL_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_ELASTIC_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_ELASTIC_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_ELASTIC_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_BACK_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_BACK_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_BACK_IN_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_BOUNCE_IN);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_BOUNCE_OUT);
-  APPEND_NAME_TO_COMPILATION(compilation, INAME_EASE_BOUNCE_IN_OUT);
+  E_CHK(append_name(compilation, INAME_LINEAR), "INAME_LINEAR");
+  E_CHK(append_name(compilation, INAME_EASE_QUICK), "INAME_EASE_QUICK");
+  E_CHK(append_name(compilation, INAME_EASE_SLOW_IN), "INAME_EASE_SLOW_IN");
+  E_CHK(append_name(compilation, INAME_EASE_SLOW_IN_OUT),
+        "INAME_EASE_SLOW_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUADRATIC_IN),
+        "INAME_EASE_QUADRATIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_QUADRATIC_OUT),
+        "INAME_EASE_QUADRATIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUADRATIC_IN_OUT),
+        "INAME_EASE_QUADRATIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_CUBIC_IN), "INAME_EASE_CUBIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_CUBIC_OUT), "INAME_EASE_CUBIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_CUBIC_IN_OUT),
+        "INAME_EASE_CUBIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUARTIC_IN),
+        "INAME_EASE_QUARTIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_QUARTIC_OUT),
+        "INAME_EASE_QUARTIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUARTIC_IN_OUT),
+        "INAME_EASE_QUARTIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUINTIC_IN),
+        "INAME_EASE_QUINTIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_QUINTIC_OUT),
+        "INAME_EASE_QUINTIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUINTIC_IN_OUT),
+        "INAME_EASE_QUINTIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_SIN_IN), "INAME_EASE_SIN_IN");
+  E_CHK(append_name(compilation, INAME_EASE_SIN_OUT), "INAME_EASE_SIN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_SIN_IN_OUT),
+        "INAME_EASE_SIN_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_CIRCULAR_IN),
+        "INAME_EASE_CIRCULAR_IN");
+  E_CHK(append_name(compilation, INAME_EASE_CIRCULAR_OUT),
+        "INAME_EASE_CIRCULAR_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_CIRCULAR_IN_OUT),
+        "INAME_EASE_CIRCULAR_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_EXPONENTIAL_IN),
+        "INAME_EASE_EXPONENTIAL_IN");
+  E_CHK(append_name(compilation, INAME_EASE_EXPONENTIAL_OUT),
+        "INAME_EASE_EXPONENTIAL_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_EXPONENTIAL_IN_OUT),
+        "INAME_EASE_EXPONENTIAL_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_ELASTIC_IN),
+        "INAME_EASE_ELASTIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_ELASTIC_OUT),
+        "INAME_EASE_ELASTIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_ELASTIC_IN_OUT),
+        "INAME_EASE_ELASTIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_BACK_IN), "INAME_EASE_BACK_IN");
+  E_CHK(append_name(compilation, INAME_EASE_BACK_OUT), "INAME_EASE_BACK_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_BACK_IN_OUT),
+        "INAME_EASE_BACK_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_BOUNCE_IN), "INAME_EASE_BOUNCE_IN");
+  E_CHK(append_name(compilation, INAME_EASE_BOUNCE_OUT),
+        "INAME_EASE_BOUNCE_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_BOUNCE_IN_OUT),
+        "INAME_EASE_BOUNCE_IN_OUT");
 
-  sen_result_i32 result_i32 = store_globally(compilation, INAME_EASE_PRESETS);
-  if (is_result_i32_error(result_i32)) {
-    return result_i32.error;
-  }
+  I_CHK(store_globally(compilation, INAME_EASE_PRESETS),
+        "compile_global_bind_ease_presets");
 
   return NONE;
 }
-
-#define ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, name) \
-  result_i32 = add_global_mapping(compilation, name);        \
-  if (is_result_i32_error(result_i32)) {                     \
-    return result_i32.error;                                 \
-  }
 
 // NOTE: each entry in compile_preamble should have a corresponding entry here
 sen_error register_top_level_preamble(sen_compilation* compilation) {
   sen_result_i32 result_i32;
 
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_GEN_INITIAL);
+  I_CHK(add_global_mapping(compilation, INAME_GEN_INITIAL),
+        "register_top_level_preamble");
 
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_CANVAS_WIDTH);
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_CANVAS_HEIGHT);
+  I_CHK(add_global_mapping(compilation, INAME_CANVAS_WIDTH),
+        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_CANVAS_HEIGHT),
+        "register_top_level_preamble");
 
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_MATH_TAU);
+  I_CHK(add_global_mapping(compilation, INAME_MATH_TAU),
+        "register_top_level_preamble");
 
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_WHITE);
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_BLACK);
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_RED);
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_GREEN);
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_BLUE);
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_YELLOW);
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_MAGENTA);
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_CYAN);
+  I_CHK(add_global_mapping(compilation, INAME_WHITE),
+        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_BLACK),
+        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_RED),
+        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_GREEN),
+        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_BLUE),
+        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_YELLOW),
+        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_MAGENTA),
+        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_CYAN),
+        "register_top_level_preamble");
 
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation,
-                                    INAME_COL_PROCEDURAL_FN_PRESETS);
-  ADD_GLOBAL_MAPPING_TO_COMPILATION(compilation, INAME_EASE_PRESETS);
+  I_CHK(add_global_mapping(compilation, INAME_COL_PROCEDURAL_FN_PRESETS),
+        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_EASE_PRESETS),
+        "register_top_level_preamble");
 
   return NONE;
 }
@@ -2697,74 +2354,45 @@ sen_error compile_preamble(sen_compilation* compilation) {
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble
   // ********************************************************************************
-  err = compile_global_bind_i32(compilation, INAME_GEN_INITIAL, 0);
-  if (is_error(err)) {
-    return err;
-  }
-  err = compile_global_bind_f32(compilation, INAME_CANVAS_WIDTH, 1000.0f);
-  if (is_error(err)) {
-    return err;
-  }
-  err = compile_global_bind_f32(compilation, INAME_CANVAS_HEIGHT, 1000.0f);
-  if (is_error(err)) {
-    return err;
-  }
+  E_CHK(compile_global_bind_i32(compilation, INAME_GEN_INITIAL, 0),
+        "compile_preamble");
+  E_CHK(compile_global_bind_f32(compilation, INAME_CANVAS_WIDTH, 1000.0f),
+        "compile_preamble");
+  E_CHK(compile_global_bind_f32(compilation, INAME_CANVAS_HEIGHT, 1000.0f),
+        "compile_preamble");
 
-  err = compile_global_bind_f32(compilation, INAME_MATH_TAU, TAU);
-  if (is_error(err)) {
-    return err;
-  }
+  E_CHK(compile_global_bind_f32(compilation, INAME_MATH_TAU, TAU),
+        "compile_preamble");
 
-  err =
-      compile_global_bind_col(compilation, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f);
-  if (is_error(err)) {
-    return err;
-  }
-  err =
-      compile_global_bind_col(compilation, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f);
-  if (is_error(err)) {
-    return err;
-  }
+  E_CHK(
+      compile_global_bind_col(compilation, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f),
+      "compile_preamble");
+  E_CHK(
+      compile_global_bind_col(compilation, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f),
+      "compile_preamble");
 
-  err = compile_global_bind_col(compilation, INAME_RED, 1.0f, 0.0f, 0.0f, 1.0f);
-  if (is_error(err)) {
-    return err;
-  }
-  err =
-      compile_global_bind_col(compilation, INAME_GREEN, 0.0f, 1.0f, 0.0f, 1.0f);
-  if (is_error(err)) {
-    return err;
-  }
-  err =
-      compile_global_bind_col(compilation, INAME_BLUE, 0.0f, 0.0f, 1.0f, 1.0f);
-  if (is_error(err)) {
-    return err;
-  }
+  E_CHK(compile_global_bind_col(compilation, INAME_RED, 1.0f, 0.0f, 0.0f, 1.0f),
+        "compile_preamble");
+  E_CHK(
+      compile_global_bind_col(compilation, INAME_GREEN, 0.0f, 1.0f, 0.0f, 1.0f),
+      "compile_preamble");
+  E_CHK(
+      compile_global_bind_col(compilation, INAME_BLUE, 0.0f, 0.0f, 1.0f, 1.0f),
+      "compile_preamble");
 
-  err = compile_global_bind_col(compilation, INAME_YELLOW, 1.0f, 1.0f, 0.0f,
-                                1.0f);
-  if (is_error(err)) {
-    return err;
-  }
-  err = compile_global_bind_col(compilation, INAME_MAGENTA, 1.0f, 0.0f, 1.0f,
-                                1.0f);
-  if (is_error(err)) {
-    return err;
-  }
-  err =
-      compile_global_bind_col(compilation, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f);
-  if (is_error(err)) {
-    return err;
-  }
+  E_CHK(compile_global_bind_col(compilation, INAME_YELLOW, 1.0f, 1.0f, 0.0f,
+                                1.0f),
+        "compile_preamble");
+  E_CHK(compile_global_bind_col(compilation, INAME_MAGENTA, 1.0f, 0.0f, 1.0f,
+                                1.0f),
+        "compile_preamble");
+  E_CHK(
+      compile_global_bind_col(compilation, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f),
+      "compile_preamble");
 
-  err = compile_global_bind_procedural_presets(compilation);
-  if (is_error(err)) {
-    return err;
-  }
-  err = compile_global_bind_ease_presets(compilation);
-  if (is_error(err)) {
-    return err;
-  }
+  E_CHK(compile_global_bind_procedural_presets(compilation),
+        "compile_preamble");
+  E_CHK(compile_global_bind_ease_presets(compilation), "compile_preamble");
   // ********************************************************************************
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble
@@ -2780,20 +2408,10 @@ sen_error compile_common_prologue(sen_compilation* compilation, sen_node* ast) {
   clear_local_mappings(compilation);
   compilation->current_fn_info = NULL;
 
-  err = register_top_level_preamble(compilation);
-  if (is_error(err)) {
-    return err;
-  }
-
-  err = register_top_level_fns(compilation, ast);
-  if (is_error(err)) {
-    return err;
-  }
-
-  err = register_top_level_defines(compilation, ast);
-  if (is_error(err)) {
-    return err;
-  }
+  E_CHK(register_top_level_preamble(compilation), "compile_common_prologue");
+  E_CHK(register_top_level_fns(compilation, ast), "compile_common_prologue");
+  E_CHK(register_top_level_defines(compilation, ast),
+        "compile_common_prologue");
 
   return NONE;
 }
@@ -2812,11 +2430,7 @@ sen_error compile_common_top_level_fns(sen_compilation* compilation,
   sen_result_node result_node;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_FN)) {
-      result_node = compile(compilation, n);
-      if (is_result_node_error(result_node)) {
-        SEN_ERROR("compile_common_top_level_fns: compile");
-        return result_node.error;
-      }
+      N_CHK(compile(compilation, n), "compile_common_top_level_fns: compile");
       n = result_node.result;
     } else {
       n = safe_next(n);
@@ -2839,12 +2453,9 @@ sen_error compile_common_top_level_defines(sen_compilation* compilation,
   sen_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_DEFINE)) {
-      err = compile_define(compilation, safe_first(n->value.first_child),
-                           MEM_SEG_GLOBAL);
-      if (is_error(err)) {
-        SEN_ERROR("compile_common_top_level_defines: compile_define");
-        return err;
-      }
+      E_CHK(compile_define(compilation, safe_first(n->value.first_child),
+                           MEM_SEG_GLOBAL),
+            "compile_common_top_level_defines: compile_define");
       n = safe_next(n);
     } else {
       n = safe_next(n);
@@ -2861,12 +2472,7 @@ sen_error compile_common_top_level_forms(sen_compilation* compilation,
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_FN) == false &&
         is_list_beginning_with(n, INAME_DEFINE) == false) {
-
-      result_node = compile(compilation, n);
-      if (is_result_node_error(result_node)) {
-        SEN_ERROR("compile_common_top_level_forms: compile");
-        return result_node.error;
-      }
+      N_CHK(compile(compilation, n), "compile_common_top_level_forms: compile");
       n = result_node.result;
     } else {
       n = safe_next(n);
@@ -2884,11 +2490,10 @@ sen_error compile_common_epilogue(sen_compilation* compilation) {
   }
 
   // we can now update the addreses used by CALL and CALL_0
-  sen_error err = correct_function_addresses(compilation);
-  if (is_error(err)) {
-    SEN_ERROR("compile_common_epilogue: correct_function_addresses");
-    return err;
-  }
+  sen_error err;
+
+  E_CHK(correct_function_addresses(compilation),
+        "compile_common_epilogue: correct_function_addresses");
 
   return NONE;
 }
@@ -2898,26 +2503,11 @@ sen_error compile_common_epilogue(sen_compilation* compilation) {
 sen_error compile_common(sen_compilation* compilation, sen_node* ast) {
   sen_error err;
 
-  err = compile_common_prologue(compilation, ast);
-  if (is_error(err)) {
-    return err;
-  }
-  err = compile_common_top_level_fns(compilation, ast);
-  if (is_error(err)) {
-    return err;
-  }
-  err = compile_common_top_level_defines(compilation, ast);
-  if (is_error(err)) {
-    return err;
-  }
-  err = compile_common_top_level_forms(compilation, ast);
-  if (is_error(err)) {
-    return err;
-  }
-  err = compile_common_epilogue(compilation);
-  if (is_error(err)) {
-    return err;
-  }
+  E_CHK(compile_common_prologue(compilation, ast), "compile_common");
+  E_CHK(compile_common_top_level_fns(compilation, ast), "compile_common");
+  E_CHK(compile_common_top_level_defines(compilation, ast), "compile_common");
+  E_CHK(compile_common_top_level_forms(compilation, ast), "compile_common");
+  E_CHK(compile_common_epilogue(compilation), "compile_common");
 
   // SEN_LOG("program compiled: %d lines\n", program->code_size);
 
