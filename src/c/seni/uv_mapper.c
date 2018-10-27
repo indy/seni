@@ -12,8 +12,8 @@ void make_uv(f32* outx, f32* outy, f32 in_u, f32 in_v) {
   *outy = in_v / texture_dim;
 }
 
-void allocate_uv_mapping(sen_brush_type type, i32 sub_type, i32 min_x,
-                         i32 min_y, i32 max_x, i32 max_y, f32 width_scale) {
+void allocate_uv_mapping(sen_brush_type type, i32 sub_type, i32 min_x, i32 min_y, i32 max_x,
+                         i32 max_y, f32 width_scale) {
   sen_uv_mapping* m = &(g_brush_info[type][sub_type]);
 
   m->map = calloc(8, sizeof(f32));
@@ -40,8 +40,7 @@ void uv_mapper_subsystem_startup() {
   num_uv_mappings[BRUSH_G]    = 2;
 
   for (i32 i = BRUSH_FLAT; i < NUM_BRUSHES; i++) {
-    g_brush_info[i] =
-        (sen_uv_mapping*)calloc(num_uv_mappings[i], sizeof(sen_uv_mapping));
+    g_brush_info[i] = (sen_uv_mapping*)calloc(num_uv_mappings[i], sizeof(sen_uv_mapping));
   }
 
   // BRUSH_FLAT
@@ -102,8 +101,7 @@ void uv_mapper_subsystem_shutdown() {
   free(num_uv_mappings);
 }
 
-sen_uv_mapping* get_uv_mapping(sen_brush_type type, i32 sub_type,
-                               bool wrap_sub_type) {
+sen_uv_mapping* get_uv_mapping(sen_brush_type type, i32 sub_type, bool wrap_sub_type) {
   if (wrap_sub_type == false && sub_type >= num_uv_mappings[type]) {
     return NULL;
   }

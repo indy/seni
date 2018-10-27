@@ -166,8 +166,7 @@ sen_node* assert_parser_node_f32(sen_node* node, f32 val) {
   return node->next;
 }
 
-sen_node* assert_parser_node_str(sen_node* node, sen_node_type type,
-                                 char* val) {
+sen_node* assert_parser_node_str(sen_node* node, sen_node_type type, char* val) {
   TEST_ASSERT_EQUAL_MESSAGE(type, node->type, node_type_name(node));
 
   i32   count    = 0;
@@ -443,8 +442,7 @@ void assert_sen_var_2d(sen_var* var, f32 a, f32 b) {
   TEST_ASSERT_FLOAT_WITHIN(0.1f, b, var->f32_array[1]);
 }
 
-void assert_sen_var_f32_within(sen_var* var, sen_var_type type, f32 f,
-                               f32 tolerance) {
+void assert_sen_var_f32_within(sen_var* var, sen_var_type type, f32 f, f32 tolerance) {
   TEST_ASSERT_EQUAL_MESSAGE(type, var->type, var_type_name(var));
   TEST_ASSERT_FLOAT_WITHIN(tolerance, f, var->value.f);
 }
@@ -474,8 +472,8 @@ void test_uv_mapper(void) {
 
 // temp printing: DELETE THIS
 void colour_print(char* msg, sen_colour* colour) {
-  SEN_PRINT("%s: %d [%.4f, %.4f, %.4f]", msg, colour->format,
-            colour->element[0], colour->element[1], colour->element[2]);
+  SEN_PRINT("%s: %d [%.4f, %.4f, %.4f]", msg, colour->format, colour->element[0],
+            colour->element[1], colour->element[2]);
 }
 
 void assert_colour(sen_colour* expected, sen_colour* colour) {
@@ -487,8 +485,8 @@ void assert_colour(sen_colour* expected, sen_colour* colour) {
   TEST_ASSERT_FLOAT_WITHIN(0.1f, expected->element[3], colour->element[3]);
 }
 
-void assert_colour_e(sen_colour* colour, sen_colour_format format, f32 e0,
-                     f32 e1, f32 e2, f32 alpha) {
+void assert_colour_e(sen_colour* colour, sen_colour_format format, f32 e0, f32 e1, f32 e2,
+                     f32 alpha) {
   TEST_ASSERT_EQUAL(format, colour->format);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, e0, colour->element[0]);
   TEST_ASSERT_FLOAT_WITHIN(0.1f, e1, colour->element[1]);
@@ -496,8 +494,8 @@ void assert_colour_e(sen_colour* colour, sen_colour_format format, f32 e0,
   TEST_ASSERT_FLOAT_WITHIN(0.1f, alpha, colour->element[3]);
 }
 
-void colour_def(sen_colour* out, sen_colour_format format, f32 e0, f32 e1,
-                f32 e2, f32 alpha) {
+void colour_def(sen_colour* out, sen_colour_format format, f32 e0, f32 e1, f32 e2,
+                f32 alpha) {
   out->format     = format;
   out->element[0] = e0;
   out->element[1] = e1;
@@ -536,8 +534,8 @@ void test_colour(void) {
     colour_def(&rgb, RGB, 0.2f, 0.09803921568627451f, 0.49019607843137253f,
                1.0f); // (51, 25, 125)
     colour_def(&hsl, HSL, 255.6f, 0.6666f, 0.294f, 1.0f);
-    colour_def(&lab, LAB, 19.555676428108306f, 39.130689315704764f,
-               -51.76254071703564f, 1.0f);
+    colour_def(&lab, LAB, 19.555676428108306f, 39.130689315704764f, -51.76254071703564f,
+               1.0f);
 
     assert_colour(&rgb, colour_clone_as(&res, &rgb, RGB));
     assert_colour(&hsl, colour_clone_as(&res, &rgb, HSL));
@@ -554,8 +552,8 @@ void test_colour(void) {
 
   {
     colour_def(&rgb, RGB, 0.066666f, 0.8f, 0.86666666f, 1.0f);
-    colour_def(&hsluv, HSLuv, 205.7022764106217f, 98.91247496876854f,
-               75.15356872935901f, 1.0f);
+    colour_def(&hsluv, HSLuv, 205.7022764106217f, 98.91247496876854f, 75.15356872935901f,
+               1.0f);
     assert_colour(&rgb, colour_clone_as(&res, &hsluv, RGB));
     assert_colour(&hsluv, colour_clone_as(&res, &rgb, HSLuv));
   }
@@ -595,23 +593,20 @@ void test_strtof(void) {
   TEST_ASSERT_EQUAL_FLOAT(1.0f, sen_strtof("1", end));
 }
 
-#define VM_COMPILE(EXPR)                                                \
-  sen_systems_startup();                                                \
-  sen_env*     e    = env_allocate();                                   \
-  sen_program* prog = sen_compile_program(EXPR, e->word_lut, 256);      \
-  sen_vm*      vm   = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, \
-                           VERTEX_PACKET_NUM_VERTICES);          \
-  vm_debug_info_reset(vm);                                              \
+#define VM_COMPILE(EXPR)                                                             \
+  sen_systems_startup();                                                             \
+  sen_env*     e    = env_allocate();                                                \
+  sen_program* prog = sen_compile_program(EXPR, e->word_lut, 256);                   \
+  sen_vm*      vm =                                                                  \
+      vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
+  vm_debug_info_reset(vm);                                                           \
   vm_run(vm, e, prog)
 
 #define VM_TEST_FLOAT(RES) assert_sen_var_f32(vm_stack_peek(vm), VAR_FLOAT, RES)
 #define VM_TEST_BOOL(RES) assert_sen_var_bool(vm_stack_peek(vm), RES)
-#define VM_TEST_VEC4(A, B, C, D) \
-  assert_sen_var_v4(vm_stack_peek(vm), A, B, C, D)
-#define VM_TEST_VEC5(A, B, C, D, E) \
-  assert_sen_var_v5(vm_stack_peek(vm), A, B, C, D, E)
-#define VM_TEST_COL(F, A, B, C, D) \
-  assert_sen_var_col(vm_stack_peek(vm), F, A, B, C, D)
+#define VM_TEST_VEC4(A, B, C, D) assert_sen_var_v4(vm_stack_peek(vm), A, B, C, D)
+#define VM_TEST_VEC5(A, B, C, D, E) assert_sen_var_v5(vm_stack_peek(vm), A, B, C, D, E)
+#define VM_TEST_COL(F, A, B, C, D) assert_sen_var_col(vm_stack_peek(vm), F, A, B, C, D)
 #define VM_TEST_2D(A, B) assert_sen_var_2d(vm_stack_peek(vm), A, B)
 
 #define VM_CLEANUP    \
@@ -703,10 +698,9 @@ void timing(void) {
     // 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1
     // 1) (- 1 1) (- 1 1) (- 1 1)) 4", 4);
 
-    VM_COMPILE_F32(
-        "(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 "
-        "1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9",
-        9);
+    VM_COMPILE_F32("(loop (x from: 0 to: 10000) (loop (y from: 0 to: 1000) (- 1 1) (- 1 "
+                   "1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (- 1 1) (+ 3 4))) 9",
+                   9);
     SEN_PRINT("VM Time taken %.2f", timing_delta_from(start));
   }
 }
@@ -714,8 +708,7 @@ void timing(void) {
 // code that exposed bugs - but was later fixed
 void test_vm_bugs(void) {
   // messed up decrementing ref counts for colours
-  VM_COMPILE_F32("(fn (x colour: (col/rgb)) (+ 1 1)) (x colour: (col/rgb))",
-                 2.0f);
+  VM_COMPILE_F32("(fn (x colour: (col/rgb)) (+ 1 1)) (x colour: (col/rgb))", 2.0f);
 
   // tmp in interpreter was decrementing ref count of previously held value
   VM_COMPILE_F32("(fn (huh at: 0) 4)\
@@ -735,8 +728,7 @@ void test_vm_bugs(void) {
 
   // pre-assigned global wasn't being added to the global-mapping so references
   // to them in functions wasn't working
-  VM_COMPILE_F32("(wash) (fn (wash) (define foo (/ canvas/width 3)) foo)",
-                 333.3333f);
+  VM_COMPILE_F32("(wash) (fn (wash) (define foo (/ canvas/width 3)) foo)", 333.3333f);
 
   // vm should use the caller function's ARG values not the callees.
   VM_COMPILE_F32("(fn (v foo: 10) foo) (fn (wash seed: 272) (v foo: seed)) "
@@ -745,8 +737,7 @@ void test_vm_bugs(void) {
 
   // heap slab leak - overwriting local k in loop
   // return vectors to slab when it's overwritten
-  VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 4) (define k [1 2])) 22)(f)",
-                 22.0f);
+  VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 4) (define k [1 2])) 22)(f)", 22.0f);
 
   // return colours to slab when it's overwritten
   VM_COMPILE_F32("(fn (f) (loop (i from: 0 to: 10) (define k (col/rgb r: 0 g: "
@@ -756,12 +747,11 @@ void test_vm_bugs(void) {
   // wasn't POP voiding function return values in a loop (CALL_0 offset was
   // incorrect) so have a loop that would overflow the stack if the return value
   // of whatever fn wasn't being popped
-  VM_COMPILE_F32(
-      "(fn (whatever))(fn (go)(define focalpoint (focal/build-point position: "
-      "[0 0] distance: 100))(focal/value from: focalpoint position: [0 "
-      "0])(loop (y from: 0 to: 2000) (whatever))(focal/value from: focalpoint "
-      "position: [0 50]))(go)",
-      0.5f);
+  VM_COMPILE_F32("(fn (whatever))(fn (go)(define focalpoint (focal/build-point position: "
+                 "[0 0] distance: 100))(focal/value from: focalpoint position: [0 "
+                 "0])(loop (y from: 0 to: 2000) (whatever))(focal/value from: focalpoint "
+                 "position: [0 50]))(go)",
+                 0.5f);
 }
 
 void test_vm_bytecode(void) {
@@ -783,8 +773,7 @@ void test_vm_bytecode(void) {
   VM_COMPILE_BOOL("(if (< 99 88) (= 3 4) (= 5 5))", true);
 
   VM_COMPILE_F32("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9);
-  VM_COMPILE_F32("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9",
-                 9);
+  VM_COMPILE_F32("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9);
 }
 
 void test_vm_callret(void) {
@@ -801,11 +790,9 @@ void test_vm_callret(void) {
   VM_COMPILE_F32("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)",
                  29); // missing argument
 
-  VM_COMPILE_F32(
-      "(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))",
-      20);
-  VM_COMPILE_F32(
-      "(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
+  VM_COMPILE_F32("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))",
+                 20);
+  VM_COMPILE_F32("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15);
   VM_COMPILE_F32("(fn (p2 a: 2) (+ a 5))(fn (p3 a: 3) (+ a 6))(fn (p4 a: 4) (+ "
                  "a 7))(p2 a: (p3 a: (p4 a: 20)))",
                  38);
@@ -813,13 +800,11 @@ void test_vm_callret(void) {
   // functions calling functions
   VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z)))      (x)", 6);
   VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)", 10);
-  VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)",
-                 12);
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12);
 
   // function calling another function, passing on one of it's local variables
   // (make use of the hop_back method of referring to the correct LOCAL frame)
-  VM_COMPILE_F32("(fn (z a: 1) (+ a 5)) (fn (y) (define x 10) (z a: x)) (y)",
-                 15);
+  VM_COMPILE_F32("(fn (z a: 1) (+ a 5)) (fn (y) (define x 10) (z a: x)) (y)", 15);
   VM_COMPILE_F32("(fn (z a: 1) (+ a 5)) (fn (zz a: 1) (+ a 9))(fn (y) (define "
                  "x 10) (z a: (zz a: x))) (y)",
                  24);
@@ -828,18 +813,15 @@ void test_vm_callret(void) {
   VM_COMPILE_F32("(define gs 30)(fn (foo at: 0) (+ at gs))(foo at: 10)", 40);
 
   // global references a function, function references a global
-  VM_COMPILE_F32("(define a 5 b (acc n: 2)) (fn (acc n: 0) (+ n a)) (+ a b)",
-                 12);
+  VM_COMPILE_F32("(define a 5 b (acc n: 2)) (fn (acc n: 0) (+ n a)) (+ a b)", 12);
 
   // using a function before it's been declared
-  VM_COMPILE_F32("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66)",
-                 621.0f);
+  VM_COMPILE_F32("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66)", 621.0f);
 
   // passing an argument to a function that isn't being used
   // produces POP with VOID -1 args
-  VM_COMPILE_F32(
-      "(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66 b: 8383)",
-      621.0f);
+  VM_COMPILE_F32("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66 b: 8383)",
+                 621.0f);
 }
 
 void test_vm_native(void) {
@@ -857,8 +839,7 @@ void test_vm_destructure(void) {
   // destructure a VAR_2D
   VM_COMPILE_F32("(fn (f pos: [3 5]) (define [j k] pos) (+ j k)) (f)", 8.0f);
   // destructure a VAR_VECTOR
-  VM_COMPILE_F32("(fn (f pos: [3 5 7]) (define [j k l] pos) (+ j k l)) (f)",
-                 15.0f);
+  VM_COMPILE_F32("(fn (f pos: [3 5 7]) (define [j k l] pos) (+ j k l)) (f)", 15.0f);
 }
 
 void test_vm_2d(void) {
@@ -916,12 +897,10 @@ void test_vm_vector(void) {
   VM_COMPILE_VEC5("(fn (f a: 3) [1 2 3 4 5]) (fn (x) (f)) (x)", 1, 2, 3, 4, 5);
 
   // local var in function is returned
-  VM_COMPILE_VEC5("(fn (f a: 3) (define b [1 2 3 4 5]) b) (fn (x) (f)) (x)", 1,
-                  2, 3, 4, 5);
+  VM_COMPILE_VEC5("(fn (f a: 3) (define b [1 2 3 4 5]) b) (fn (x) (f)) (x)", 1, 2, 3, 4, 5);
 
   // local var in function is not returned
-  VM_COMPILE_F32("(fn (f a: 3) (define b [1 2 3 4 5]) 55) (fn (x) (f)) (x)",
-                 55);
+  VM_COMPILE_F32("(fn (f a: 3) (define b [1 2 3 4 5]) 55) (fn (x) (f)) (x)", 55);
 
   // default argument for function is returned
   VM_COMPILE_VEC5("(fn (f a: [1 2 3 4 5]) a) (fn (x) (f)) (x)", 1, 2, 3, 4, 5);
@@ -941,51 +920,43 @@ void test_vm_vector(void) {
   VM_COMPILE_F32("(fn (f a: [1 2 3 4 5]) a) (fn (x) (f a: 5)) (x)", 5);
 
   // argument into function is returned
-  VM_COMPILE_VEC5("(fn (f a: [3 4 5 6 7]) a) (fn (x) (f a: [1 2 3 4 5])) (x)",
-                  1, 2, 3, 4, 5);
+  VM_COMPILE_VEC5("(fn (f a: [3 4 5 6 7]) a) (fn (x) (f a: [1 2 3 4 5])) (x)", 1, 2, 3, 4, 5);
 }
 
 void test_vm_vector_append(void) {
-  VM_COMPILE_F32(
-      "(define v []) (vector/append v 100) (vector/length vector: v)", 1);
-  VM_COMPILE_F32(
-      "(define v [1]) (vector/append v 100) (vector/length vector: v)", 2);
-  VM_COMPILE_F32(
-      "(define v [1 2]) (vector/append v 100) (vector/length vector: v)", 3);
-  VM_COMPILE_F32(
-      "(define v [1 2 3]) (vector/append v 100) (vector/length vector: v)", 4);
-  VM_COMPILE_F32(
-      "(define v [1 2 3 4]) (vector/append v 100) (vector/length vector: v)",
-      5);
+  VM_COMPILE_F32("(define v []) (vector/append v 100) (vector/length vector: v)", 1);
+  VM_COMPILE_F32("(define v [1]) (vector/append v 100) (vector/length vector: v)", 2);
+  VM_COMPILE_F32("(define v [1 2]) (vector/append v 100) (vector/length vector: v)", 3);
+  VM_COMPILE_F32("(define v [1 2 3]) (vector/append v 100) (vector/length vector: v)", 4);
+  VM_COMPILE_F32("(define v [1 2 3 4]) (vector/append v 100) (vector/length vector: v)", 5);
 }
 
 void test_vm_fence(void) {
-  f32v("(define v []) (fence (x from: 0 to: 10 num: 3) (vector/append v x)) v",
-       3, 0.0f, 5.0f, 10.0f);
-  f32v("(define v []) (fence (x from: 10 to: 0 num: 3) (vector/append v x)) v",
-       3, 10.0f, 5.0f, 0.0f);
-  f32v("(define v []) (fence (x num: 5) (vector/append v x)) v", 5, 0.0f, 0.25f,
-       0.5f, 0.75f, 1.0f);
+  f32v("(define v []) (fence (x from: 0 to: 10 num: 3) (vector/append v x)) v", 3, 0.0f, 5.0f,
+       10.0f);
+  f32v("(define v []) (fence (x from: 10 to: 0 num: 3) (vector/append v x)) v", 3, 10.0f,
+       5.0f, 0.0f);
+  f32v("(define v []) (fence (x num: 5) (vector/append v x)) v", 5, 0.0f, 0.25f, 0.5f, 0.75f,
+       1.0f);
   f32v("(define v []) (fence (x from: 100 to: 900 num: 10) (vector/append v "
        "x)) v",
-       10, 100.0000f, 188.8889f, 277.7778f, 366.6667f, 455.5555f, 544.4445f,
-       633.3333f, 722.2222f, 811.1111f, 900.0000f);
+       10, 100.0000f, 188.8889f, 277.7778f, 366.6667f, 455.5555f, 544.4445f, 633.3333f,
+       722.2222f, 811.1111f, 900.0000f);
 }
 
 void test_vm_loop(void) {
-  f32v("(define v []) (loop (x from: 0 to: 4) (vector/append v x)) v", 4, 0.0f,
-       1.0f, 2.0f, 3.0f);
-  f32v("(define v []) (loop (x from: 0 upto: 4) (vector/append v x)) v", 5,
-       0.0f, 1.0f, 2.0f, 3.0f, 4.0f);
-  f32v("(define v []) (loop (x from: 0 to: 10 inc: 2) (vector/append v x)) v",
-       5, 0.0f, 2.0f, 4.0f, 6.0f, 8.0f);
-  f32v("(define v []) (loop (x from: 0 upto: 10 inc: 2) (vector/append v x)) v",
-       6, 0.0f, 2.0f, 4.0f, 6.0f, 8.0f, 10.0f);
+  f32v("(define v []) (loop (x from: 0 to: 4) (vector/append v x)) v", 4, 0.0f, 1.0f, 2.0f,
+       3.0f);
+  f32v("(define v []) (loop (x from: 0 upto: 4) (vector/append v x)) v", 5, 0.0f, 1.0f, 2.0f,
+       3.0f, 4.0f);
+  f32v("(define v []) (loop (x from: 0 to: 10 inc: 2) (vector/append v x)) v", 5, 0.0f, 2.0f,
+       4.0f, 6.0f, 8.0f);
+  f32v("(define v []) (loop (x from: 0 upto: 10 inc: 2) (vector/append v x)) v", 6, 0.0f,
+       2.0f, 4.0f, 6.0f, 8.0f, 10.0f);
 }
 
 void test_vm_col_rgb(void) {
-  VM_COMPILE_COL_L("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4)", RGB, 0.1f, 0.2f,
-                   0.3f, 0.4f);
+  VM_COMPILE_COL_L("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4)", RGB, 0.1f, 0.2f, 0.3f, 0.4f);
   // checking colour_avail
   // TODO: this leaks colour, what should happen instead?
   // VM_COMPILE_F32("(fn (f) (col/rgb r: 0.1 g: 0.2 b: 0.3 alpha 0.4) 5)
@@ -1040,38 +1011,31 @@ void test_vm_prng(void) {
                  16.5308f);
 
   // prng/take returning a vector
-  VM_COMPILE_F32_L(
-      "(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
-      "(prng/values num: 3 from: rng)) (nth n: 0 from: foo)",
-      0.505207f);
-  VM_COMPILE_F32_L(
-      "(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
-      "(prng/values num: 3 from: rng)) (nth n: 1 from: foo)",
-      -0.406514f);
-  VM_COMPILE_F32_L(
-      "(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
-      "(prng/values num: 3 from: rng)) (nth n: 2 from: foo)",
-      0.803599f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                   "(prng/values num: 3 from: rng)) (nth n: 0 from: foo)",
+                   0.505207f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                   "(prng/values num: 3 from: rng)) (nth n: 1 from: foo)",
+                   -0.406514f);
+  VM_COMPILE_F32_L("(define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                   "(prng/values num: 3 from: rng)) (nth n: 2 from: foo)",
+                   0.803599f);
 
   // non-leaky version of above
-  VM_COMPILE_F32(
-      "(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
-      "(prng/values num: 3 from: rng)) (nth n: 0 from: foo)) (x)",
-      0.505207f);
-  VM_COMPILE_F32(
-      "(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
-      "(prng/values num: 3 from: rng)) (nth n: 1 from: foo)) (x)",
-      -0.406514f);
-  VM_COMPILE_F32(
-      "(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
-      "(prng/values num: 3 from: rng)) (nth n: 2 from: foo)) (x)",
-      0.803599f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                 "(prng/values num: 3 from: rng)) (nth n: 0 from: foo)) (x)",
+                 0.505207f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                 "(prng/values num: 3 from: rng)) (nth n: 1 from: foo)) (x)",
+                 -0.406514f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define foo "
+                 "(prng/values num: 3 from: rng)) (nth n: 2 from: foo)) (x)",
+                 0.803599f);
 
   // prng, destructuring, multiple args to '+'
-  VM_COMPILE_F32(
-      "(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a "
-      "b c] (prng/values num: 3 from: rng)) (+ a b c)) (x)",
-      0.902292f);
+  VM_COMPILE_F32("(fn (x) (define rng (prng/build min: -1 max: 1 seed: 3234)) (define [a "
+                 "b c] (prng/values num: 3 from: rng)) (+ a b c)) (x)",
+                 0.902292f);
 }
 
 void test_vm_environmental(void) {
@@ -1162,8 +1126,7 @@ void test_vm_repeat(void) {
 }
 
 sen_genotype* genotype_construct(i32 seed_value, char* source) {
-  sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
   sen_result_node result_node = parser_parse(env->word_lut, source);
@@ -1176,8 +1139,7 @@ sen_genotype* genotype_construct(i32 seed_value, char* source) {
   sen_trait_list* trait_list = trait_list_compile(ast, &compiler_config);
 
   // using the vm to build the genes
-  sen_genotype* genotype =
-      genotype_build_from_trait_list(trait_list, vm, env, seed_value);
+  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed_value);
 
   trait_list_return_to_pool(trait_list);
   parser_return_nodes_to_pool(ast);
@@ -1191,8 +1153,7 @@ sen_genotype* genotype_construct(i32 seed_value, char* source) {
 void unparse_compare(i32 seed_value, char* source, char* expected) {
   sen_systems_startup();
 
-  sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
   sen_result_node result_node = parser_parse(env->word_lut, source);
@@ -1208,11 +1169,10 @@ void unparse_compare(i32 seed_value, char* source, char* expected) {
   // program_pretty_print(trait->program);
 
   // using the vm to build the genes
-  sen_genotype* genotype =
-      genotype_build_from_trait_list(trait_list, vm, env, seed_value);
+  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed_value);
 
   i32   unparsed_source_size = 1024;
-  char* unparsed_source = (char*)calloc(unparsed_source_size, sizeof(char));
+  char* unparsed_source      = (char*)calloc(unparsed_source_size, sizeof(char));
 
   sen_cursor* cursor = cursor_allocate(unparsed_source, unparsed_source_size);
 
@@ -1241,8 +1201,7 @@ void unparse_compare(i32 seed_value, char* source, char* expected) {
 void simplified_unparse_compare(char* source, char* expected) {
   sen_systems_startup();
 
-  sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
   sen_result_node result_node = parser_parse(env->word_lut, source);
@@ -1253,7 +1212,7 @@ void simplified_unparse_compare(char* source, char* expected) {
   compiler_config.word_lut         = env->word_lut;
 
   i32   unparsed_source_size = 1024;
-  char* unparsed_source = (char*)calloc(unparsed_source_size, sizeof(char));
+  char* unparsed_source      = (char*)calloc(unparsed_source_size, sizeof(char));
 
   sen_cursor* cursor = cursor_allocate(unparsed_source, unparsed_source_size);
 
@@ -1297,8 +1256,7 @@ void test_genotype(void) {
   }
 
   {
-    genotype =
-        genotype_construct(3421, "(+ 6 {3 (gen/scalar min: 1 max: 100)})");
+    genotype = genotype_construct(3421, "(+ 6 {3 (gen/scalar min: 1 max: 100)})");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
@@ -1318,8 +1276,7 @@ void test_genotype(void) {
   }
 
   {
-    genotype =
-        genotype_construct(9834, "{(col/rgb r: 0.1) (gen/col alpha: 0.3)}");
+    genotype = genotype_construct(9834, "{(col/rgb r: 0.1) (gen/col alpha: 0.3)}");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
@@ -1378,8 +1335,8 @@ void test_genotype_stray_2d(void) {
   sen_systems_startup();
 
   {
-    genotype = genotype_construct(
-        3421, "{[100 200] (gen/stray-2d from: [100 200] by: [10 10])}");
+    genotype =
+        genotype_construct(3421, "{[100 200] (gen/stray-2d from: [100 200] by: [10 10])}");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
@@ -1430,8 +1387,7 @@ void test_genotype_vectors(void) {
   }
 
   {
-    genotype = genotype_construct(
-        9834, "{[[0.1 0.2] [0.3 0.4]] (gen/2d min: 50 max: 60)}");
+    genotype = genotype_construct(9834, "{[[0.1 0.2] [0.3 0.4]] (gen/2d min: 50 max: 60)}");
     TEST_ASSERT(genotype);
     g = genotype->genes;
     v = g->var;
@@ -1489,8 +1445,7 @@ void test_genotype_multiple_floats(void) {
 }
 
 sen_genotype* genotype_construct_initial_value(i32 seed_value, char* source) {
-  sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
   sen_result_node result_node = parser_parse(env->word_lut, source);
@@ -1506,8 +1461,7 @@ sen_genotype* genotype_construct_initial_value(i32 seed_value, char* source) {
   // SEN_LOG("num traits: %d", trait_list_count(trait_list));
 
   // using the vm to build the genes
-  sen_genotype* genotype =
-      genotype_build_from_trait_list(trait_list, vm, env, seed_value);
+  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed_value);
 
   trait_list_return_to_pool(trait_list);
   parser_return_nodes_to_pool(ast);
@@ -1521,16 +1475,14 @@ sen_genotype* genotype_construct_initial_value(i32 seed_value, char* source) {
 // applies the given seed to generate a genotype, then compiles a program where
 // the expected output is an f32
 //
-void vm_compile_f32_with_2_genes(char* expr, int seed, f32 expected_res,
-                                 f32 expected_g1, f32 expected_g2) {
+void vm_compile_f32_with_2_genes(char* expr, int seed, f32 expected_res, f32 expected_g1,
+                                 f32 expected_g2) {
   sen_systems_startup();
   sen_env*      e        = env_allocate();
   sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
 
-  sen_program* prog =
-      sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
-  sen_vm* vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_vm* vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
   TEST_ASSERT(genotype);
   sen_gene* g = genotype->genes;
@@ -1556,17 +1508,14 @@ void vm_compile_f32_with_2_genes(char* expr, int seed, f32 expected_res,
   sen_systems_shutdown();
 }
 
-void vm_compile_f32_with_3_genes(char* expr, int seed, f32 expected_res,
-                                 f32 expected_g1, f32 expected_g2,
-                                 f32 expected_g3) {
+void vm_compile_f32_with_3_genes(char* expr, int seed, f32 expected_res, f32 expected_g1,
+                                 f32 expected_g2, f32 expected_g3) {
   sen_systems_startup();
   sen_env*      e        = env_allocate();
   sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
 
-  sen_program* prog =
-      sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
-  sen_vm* vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_vm* vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
   TEST_ASSERT(genotype);
   sen_gene* g = genotype->genes;
@@ -1597,17 +1546,14 @@ void vm_compile_f32_with_3_genes(char* expr, int seed, f32 expected_res,
   sen_systems_shutdown();
 }
 
-void vm_compile_f32_with_4_genes(char* expr, int seed, f32 expected_res,
-                                 f32 expected_g1, f32 expected_g2,
-                                 f32 expected_g3, f32 expected_g4) {
+void vm_compile_f32_with_4_genes(char* expr, int seed, f32 expected_res, f32 expected_g1,
+                                 f32 expected_g2, f32 expected_g3, f32 expected_g4) {
   sen_systems_startup();
   sen_env*      e        = env_allocate();
   sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
 
-  sen_program* prog =
-      sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
-  sen_vm* vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_vm* vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
   TEST_ASSERT(genotype);
   sen_gene* g = genotype->genes;
@@ -1644,63 +1590,57 @@ void vm_compile_f32_with_4_genes(char* expr, int seed, f32 expected_res,
 }
 
 void test_f32_expr_with_genotype(void) {
-  vm_compile_f32_with_2_genes(
-      "(define v {[150 250] (gen/scalar min: 10 max: 99)})"
-      "(nth from: v n: 0)",
-      1111, 78.578339f, 78.578339f, 49.573952f);
+  vm_compile_f32_with_2_genes("(define v {[150 250] (gen/scalar min: 10 max: 99)})"
+                              "(nth from: v n: 0)",
+                              1111, 78.578339f, 78.578339f, 49.573952f);
 
-  vm_compile_f32_with_2_genes(
-      "(define v {[364.374 334.649] "
-      "           (gen/stray-2d from: [100 200] by: [20 20])})"
-      "(nth from: v n: 0)",
-      1111, 110.821724f, 110.821724f, 197.786041f);
+  vm_compile_f32_with_2_genes("(define v {[364.374 334.649] "
+                              "           (gen/stray-2d from: [100 200] by: [20 20])})"
+                              "(nth from: v n: 0)",
+                              1111, 110.821724f, 110.821724f, 197.786041f);
 
-  vm_compile_f32_with_2_genes(
-      "(define v {[364.374 334.649]"
-      "           (gen/stray-2d from: [100 200] by: [20 20])})"
-      "(nth from: v n: 1)",
-      1111, 197.786041f, 110.821724f, 197.786041f);
+  vm_compile_f32_with_2_genes("(define v {[364.374 334.649]"
+                              "           (gen/stray-2d from: [100 200] by: [20 20])})"
+                              "(nth from: v n: 1)",
+                              1111, 197.786041f, 110.821724f, 197.786041f);
 
-  vm_compile_f32_with_3_genes(
-      "(define v {[100 200 300]"
-      "           (gen/stray-3d from: [100 200 300] by: [50 50 50])})"
-      "(nth from: v n: 0)",
-      1111, 127.054306f, 127.054306f, 194.465118f, 315.870361f);
-  vm_compile_f32_with_3_genes(
-      "(define v {[100 200 300]"
-      "           (gen/stray-3d from: [100 200 300] by: [50 50 50])})"
-      "(nth from: v n: 1)",
-      1111, 194.465118f, 127.054306f, 194.465118f, 315.870361f);
-  vm_compile_f32_with_3_genes(
-      "(define v {[100 200 300]"
-      "           (gen/stray-3d from: [100 200 300] by: [50 50 50])})"
-      "(nth from: v n: 2)",
-      1111, 315.870361f, 127.054306f, 194.465118f, 315.870361f);
+  vm_compile_f32_with_3_genes("(define v {[100 200 300]"
+                              "           (gen/stray-3d from: [100 200 300] by: [50 50 50])})"
+                              "(nth from: v n: 0)",
+                              1111, 127.054306f, 127.054306f, 194.465118f, 315.870361f);
+  vm_compile_f32_with_3_genes("(define v {[100 200 300]"
+                              "           (gen/stray-3d from: [100 200 300] by: [50 50 50])})"
+                              "(nth from: v n: 1)",
+                              1111, 194.465118f, 127.054306f, 194.465118f, 315.870361f);
+  vm_compile_f32_with_3_genes("(define v {[100 200 300]"
+                              "           (gen/stray-3d from: [100 200 300] by: [50 50 50])})"
+                              "(nth from: v n: 2)",
+                              1111, 315.870361f, 127.054306f, 194.465118f, 315.870361f);
 
   vm_compile_f32_with_4_genes("(define v {[900 800 700 600]"
                               "           (gen/stray-4d from: [900 800 700 600]"
                               "                         by: [50 50 50 50])})"
                               "(nth from: v n: 0)",
-                              9876, 883.118774f, 883.118774f, 791.929443f,
-                              683.148071f, 621.788147f);
+                              9876, 883.118774f, 883.118774f, 791.929443f, 683.148071f,
+                              621.788147f);
   vm_compile_f32_with_4_genes("(define v {[900 800 700 600]"
                               "           (gen/stray-4d from: [900 800 700 600]"
                               "                         by: [50 50 50 50])})"
                               "(nth from: v n: 1)",
-                              9876, 791.929443f, 883.118774f, 791.929443f,
-                              683.148071f, 621.788147f);
+                              9876, 791.929443f, 883.118774f, 791.929443f, 683.148071f,
+                              621.788147f);
   vm_compile_f32_with_4_genes("(define v {[900 800 700 600]"
                               "           (gen/stray-4d from: [900 800 700 600]"
                               "                         by: [50 50 50 50])})"
                               "(nth from: v n: 2)",
-                              9876, 683.148071f, 883.118774f, 791.929443f,
-                              683.148071f, 621.788147f);
+                              9876, 683.148071f, 883.118774f, 791.929443f, 683.148071f,
+                              621.788147f);
   vm_compile_f32_with_4_genes("(define v {[900 800 700 600]"
                               "           (gen/stray-4d from: [900 800 700 600]"
                               "                         by: [50 50 50 50])})"
                               "(nth from: v n: 3)",
-                              9876, 621.788147f, 883.118774f, 791.929443f,
-                              683.148071f, 621.788147f);
+                              9876, 621.788147f, 883.118774f, 791.929443f, 683.148071f,
+                              621.788147f);
 }
 
 void test_simplified_unparser(void) {
@@ -1709,8 +1649,8 @@ void test_simplified_unparser(void) {
   simplified_unparse_compare("(col/rgb r: {0.4 (gen/scalar)} g: 0.1)",
                              "(col/rgb r: 0.4 g: 0.1)");
   simplified_unparse_compare("{b (gen/select from: '(a b c))}", "b");
-  simplified_unparse_compare(
-      "{robocop (gen/select from: col/procedural-fn-presets)}", "robocop");
+  simplified_unparse_compare("{robocop (gen/select from: col/procedural-fn-presets)}",
+                             "robocop");
   simplified_unparse_compare("{50 (gen/stray from: 50 by: 20)}", "50");
 }
 
@@ -1726,8 +1666,7 @@ void test_unparser(void) {
                   "(+ 6 {48 (gen/int min: 1 max: 50)})");
   unparse_compare(9875, "(+ 7 { 4 (gen/int min: 2 max: 6)})",
                   "(+ 7 { 6 (gen/int min: 2 max: 6)})");
-  unparse_compare(9875, "[8 {3 (gen/int min: 0 max: 9)}]",
-                  "[8 {9 (gen/int min: 0 max: 9)}]");
+  unparse_compare(9875, "[8 {3 (gen/int min: 0 max: 9)}]", "[8 {9 (gen/int min: 0 max: 9)}]");
 
   unparse_compare(6534, "{3.45 (gen/scalar min: 0 max: 9)}",
                   "{7.52 (gen/scalar min: 0 max: 9)}");
@@ -1740,40 +1679,35 @@ void test_unparser(void) {
   unparse_compare(6534, "{3 (gen/select from: '(4 5 6 7))}",
                   "{7 (gen/select from: '(4 5 6 7))}");
 
-  unparse_compare(
-      5246, "(define c (col/build-procedural preset: robocop alpha: 0.08))",
-      NULL);
+  unparse_compare(5246, "(define c (col/build-procedural preset: robocop alpha: 0.08))",
+                  NULL);
 
   // there was a bug which wasn't correctly traversing the ast to assign genes
-  unparse_compare(
-      6542,
-      "(rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: "
-      "400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 "
-      "500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 "
-      "(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red "
-      "width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 "
-      "max: 670)})",
-      "(rect position: [500 500] colour: red width: {91 (gen/int min: 80 max: "
-      "400)} height: {561 (gen/int min: 80 max: 670)}) (rect position: [500 "
-      "500] colour: red width: {228 (gen/int min: 80 max: 400)} height: {257 "
-      "(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red "
-      "width: {380 (gen/int min: 80 max: 400)} height: {416 (gen/int min: 80 "
-      "max: 670)})");
+  unparse_compare(6542,
+                  "(rect position: [500 500] colour: red width: {120 (gen/int min: 80 max: "
+                  "400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500 "
+                  "500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140 "
+                  "(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red "
+                  "width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80 "
+                  "max: 670)})",
+                  "(rect position: [500 500] colour: red width: {91 (gen/int min: 80 max: "
+                  "400)} height: {561 (gen/int min: 80 max: 670)}) (rect position: [500 "
+                  "500] colour: red width: {228 (gen/int min: 80 max: 400)} height: {257 "
+                  "(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red "
+                  "width: {380 (gen/int min: 80 max: 400)} height: {416 (gen/int min: 80 "
+                  "max: 670)})");
 
-  unparse_compare(6534, "{b (gen/select from: '(a b c))}",
-                  "{c (gen/select from: '(a b c))}");
+  unparse_compare(6534, "{b (gen/select from: '(a b c))}", "{c (gen/select from: '(a b c))}");
   unparse_compare(6534, "{red (gen/select from: '(red green blue))}",
                   "{blue (gen/select from: '(red green blue))}");
 
-  unparse_compare(6534,
-                  "{rainbow (gen/select from: col/procedural-fn-presets)}",
+  unparse_compare(6534, "{rainbow (gen/select from: col/procedural-fn-presets)}",
                   "{robocop (gen/select from: col/procedural-fn-presets)}");
 
   unparse_compare(9999, "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col)}",
                   "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 0.26) (gen/col)}");
-  unparse_compare(
-      9999, "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}",
-      "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 1.00) (gen/col alpha: 1)}");
+  unparse_compare(9999, "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}",
+                  "{(col/rgb r: 0.00 g: 0.72 b: 0.16 alpha: 1.00) (gen/col alpha: 1)}");
 
   unparse_compare(6534, "{50 (gen/stray from: 50 by: 20)}",
                   "{63 (gen/stray from: 50 by: 20)}");
@@ -1789,13 +1723,11 @@ void test_unparser_vectors(void) {
   unparse_compare(9999, "{[[10 20] [30 40]] (gen/2d min: 60 max: 70)}",
                   "{[[60 67] [62 63]] (gen/2d min: 60 max: 70)}");
 
-  unparse_compare(
-      9999, "{[[ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/2d min: 40 max: 90)}",
-      "{[[ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/2d min: 40 max: 90)}");
+  unparse_compare(9999, "{[[ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/2d min: 40 max: 90)}",
+                  "{[[ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/2d min: 40 max: 90)}");
 
-  unparse_compare(
-      9999, "{ [ [ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/2d min: 40 max: 90) }",
-      "{ [ [ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/2d min: 40 max: 90) }");
+  unparse_compare(9999, "{ [ [ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/2d min: 40 max: 90) }",
+                  "{ [ [ 40.1 76.16 ] [ 47.912 52.8556 ]] (gen/2d min: 40 max: 90) }");
 }
 
 void test_unparser_single_trait_vectors(void) {
@@ -1987,9 +1919,8 @@ void test_serialization(void) {
 void test_serialization_program(void) {
   parser_subsystem_startup();
 
-  sen_env*     env = env_allocate();
-  sen_program* program =
-      sen_compile_program("(gen/int min: 2 max: 6)", env->word_lut, 256);
+  sen_env*     env     = env_allocate();
+  sen_program* program = sen_compile_program("(gen/int min: 2 max: 6)", env->word_lut, 256);
 
   i32   buffer_size = 4096;
   char* buffer      = (char*)calloc(buffer_size, sizeof(char));
@@ -2172,8 +2103,7 @@ void test_serialization_trait_list(void) {
 
   sen_systems_startup();
 
-  sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
   sen_result_node result_node = parser_parse(env->word_lut, source);
@@ -2200,14 +2130,11 @@ void test_serialization_trait_list(void) {
   i32 count = trait_list_count(out);
   TEST_ASSERT_EQUAL(2, count);
 
-  compare_sen_var(out->traits->initial_value,
-                  trait_list->traits->initial_value);
+  compare_sen_var(out->traits->initial_value, trait_list->traits->initial_value);
   compare_sen_program(out->traits->program, trait_list->traits->program);
 
-  compare_sen_var(out->traits->next->initial_value,
-                  trait_list->traits->next->initial_value);
-  compare_sen_program(out->traits->next->program,
-                      trait_list->traits->next->program);
+  compare_sen_var(out->traits->next->initial_value, trait_list->traits->next->initial_value);
+  compare_sen_program(out->traits->next->program, trait_list->traits->next->program);
 
   parser_return_nodes_to_pool(ast);
 

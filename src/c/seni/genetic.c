@@ -153,8 +153,7 @@ void trait_list_return_to_pool(sen_trait_list* trait_list) {
 }
 
 sen_genotype_list* genotype_list_get_from_pool() {
-  sen_genotype_list* genotype_list =
-      genotype_list_pool_get(g_genotype_list_pool);
+  sen_genotype_list* genotype_list = genotype_list_pool_get(g_genotype_list_pool);
 
   return genotype_list;
 }
@@ -174,8 +173,7 @@ void ga_subsystem_startup() {
   g_trait_list_pool    = trait_list_pool_allocate(1, 200, 10);
   g_genotype_list_pool = genotype_list_pool_allocate(1, 200, 10);
 
-  g_ga_vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                        VERTEX_PACKET_NUM_VERTICES);
+  g_ga_vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   g_ga_env = env_allocate();
 
   // global decl of program that's used for evaling initial values of traits
@@ -198,8 +196,8 @@ void ga_subsystem_shutdown() {
 }
 
 void trait_pretty_print(sen_trait* trait) {
-  SEN_PRINT("id: %d, within_vector: %d, index: %d", trait->id,
-            trait->within_vector, trait->index);
+  SEN_PRINT("id: %d, within_vector: %d, index: %d", trait->id, trait->within_vector,
+            trait->index);
   var_pretty_print("initial_value", trait->initial_value);
   program_pretty_print(trait->program);
 }
@@ -306,9 +304,8 @@ sen_trait* trait_build(sen_node* node, sen_node* parameter_ast,
   }
 
   // NOTE: this is allocating memory for program
-  sen_program*       program = program_construct(compiler_config);
-  sen_result_program result_program =
-      compile_program_for_trait(program, parameter_ast, node);
+  sen_program*       program        = program_construct(compiler_config);
+  sen_result_program result_program = compile_program_for_trait(program, parameter_ast, node);
   if (is_result_program_error(result_program)) {
     SEN_ERROR("trait_build: compile_program_for_trait");
     // todo: return an error here
@@ -337,7 +334,7 @@ void add_multiple_traits(sen_trait_list* trait_list, sen_node* node,
   i32 i = 0;
 
   while (n) {
-    sen_trait* trait = trait_build(n, vector->parameter_ast, compiler_config);
+    sen_trait* trait     = trait_build(n, vector->parameter_ast, compiler_config);
     trait->within_vector = 1;
     trait->index         = i++;
     trait_list_add_trait(trait_list, trait);
@@ -388,8 +385,7 @@ sen_node* ga_traverse(sen_node* node, sen_trait_list* trait_list,
   return safe_next(node);
 }
 
-sen_trait_list* trait_list_compile(sen_node*            ast,
-                                   sen_compiler_config* compiler_config) {
+sen_trait_list* trait_list_compile(sen_node* ast, sen_compiler_config* compiler_config) {
   // iterate through and build some traits
   sen_trait_list* trait_list = trait_list_get_from_pool();
 
@@ -475,12 +471,9 @@ bool trait_list_deserialize(sen_trait_list* out, sen_cursor* cursor) {
 
 // gene
 
-void gene_pretty_print(char* msg, sen_gene* gene) {
-  var_pretty_print(msg, gene->var);
-}
+void gene_pretty_print(char* msg, sen_gene* gene) { var_pretty_print(msg, gene->var); }
 
-bool gene_build_from_trait(sen_gene* gene, sen_vm* vm, sen_env* env,
-                           sen_trait* trait) {
+bool gene_build_from_trait(sen_gene* gene, sen_vm* vm, sen_env* env, sen_trait* trait) {
   sen_program* program = trait->program;
 
   // todo: possibly implement a 'soft-reset' which is quicker than a vm_reset?
@@ -543,8 +536,7 @@ void genotype_pretty_print(sen_genotype* genotype) {
 
   sen_gene* gene = genotype->genes;
   while (gene != NULL) {
-    sen_sprintf(buf, GENOTYPE_PRETTY_PRINT_BUFFER_SIZE, "genotype gene(%d/%d)",
-                i, count);
+    sen_sprintf(buf, GENOTYPE_PRETTY_PRINT_BUFFER_SIZE, "genotype gene(%d/%d)", i, count);
     gene_pretty_print(buf, gene);
     gene = gene->next;
     i++;
@@ -555,9 +547,8 @@ void genotype_add_gene(sen_genotype* genotype, sen_gene* gene) {
   DL_APPEND(genotype->genes, gene);
 }
 
-sen_genotype* genotype_build_from_trait_list(sen_trait_list* trait_list,
-                                             sen_vm* vm, sen_env* env,
-                                             i32 seed) {
+sen_genotype* genotype_build_from_trait_list(sen_trait_list* trait_list, sen_vm* vm,
+                                             sen_env* env, i32 seed) {
   // the seed is set once per genotype (should it be once per-gene?)
   //
   sen_prng_set_state(vm->prng_state, (u64)seed);
@@ -619,8 +610,8 @@ sen_genotype* genotype_clone(sen_genotype* genotype) {
   return cloned_genotype;
 }
 
-sen_genotype* genotype_crossover(sen_genotype* a, sen_genotype* b,
-                                 i32 crossover_index, i32 genotype_length) {
+sen_genotype* genotype_crossover(sen_genotype* a, sen_genotype* b, i32 crossover_index,
+                                 i32 genotype_length) {
   sen_genotype* genotype = genotype_get_from_pool();
   sen_gene*     gene;
   sen_gene*     gene_a = a->genes;
@@ -688,13 +679,11 @@ sen_gene* genotype_pull_gene(sen_genotype* genotype) {
   return gene;
 }
 
-void genotype_list_add_genotype(sen_genotype_list* genotype_list,
-                                sen_genotype*      genotype) {
+void genotype_list_add_genotype(sen_genotype_list* genotype_list, sen_genotype* genotype) {
   DL_APPEND(genotype_list->genotypes, genotype);
 }
 
-sen_genotype* genotype_list_get_genotype(sen_genotype_list* genotype_list,
-                                         i32                index) {
+sen_genotype* genotype_list_get_genotype(sen_genotype_list* genotype_list, i32 index) {
   sen_genotype* genotype = genotype_list->genotypes;
   i32           i        = 0;
 
@@ -721,8 +710,7 @@ i32 genotype_list_count(sen_genotype_list* genotype_list) {
   return count;
 }
 
-bool genotype_list_serialize(sen_cursor*        cursor,
-                             sen_genotype_list* genotype_list) {
+bool genotype_list_serialize(sen_cursor* cursor, sen_genotype_list* genotype_list) {
   // number of genotypes
   i32 count = genotype_list_count(genotype_list);
   cursor_sprintf(cursor, "%d", count);
@@ -759,19 +747,17 @@ bool genotype_list_deserialize(sen_genotype_list* out, sen_cursor* cursor) {
   return true;
 }
 
-sen_genotype_list*
-genotype_list_create_single_genotype(sen_trait_list* trait_list, i32 seed) {
+sen_genotype_list* genotype_list_create_single_genotype(sen_trait_list* trait_list,
+                                                        i32             seed) {
   sen_genotype_list* genotype_list = genotype_list_get_from_pool();
 
   // SEN_LOG("genotype_list_create_single_genotype seed: %d", seed);
 
   // fill out the remaining population with generated values
-  sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
-  sen_genotype* genotype =
-      genotype_build_from_trait_list(trait_list, vm, env, seed);
+  sen_genotype* genotype = genotype_build_from_trait_list(trait_list, vm, env, seed);
   genotype_list_add_genotype(genotype_list, genotype);
 
   env_free(env);
@@ -780,13 +766,11 @@ genotype_list_create_single_genotype(sen_trait_list* trait_list, i32 seed) {
   return genotype_list;
 }
 
-sen_genotype_list*
-genotype_list_create_initial_generation(sen_trait_list* trait_list,
-                                        i32 population_size, i32 seed) {
+sen_genotype_list* genotype_list_create_initial_generation(sen_trait_list* trait_list,
+                                                           i32 population_size, i32 seed) {
   sen_genotype_list* genotype_list = genotype_list_get_from_pool();
   if (population_size == 0) {
-    SEN_ERROR(
-        "genotype_list_create_initial_generation: population_size of 0 ???");
+    SEN_ERROR("genotype_list_create_initial_generation: population_size of 0 ???");
     return genotype_list;
   }
 
@@ -802,15 +786,13 @@ genotype_list_create_initial_generation(sen_trait_list* trait_list,
   i32 genotype_seed;
 
   // fill out the remaining population with generated values
-  sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+  sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
   for (i32 i = 1; i < population_size; i++) {
     genotype_seed = sen_prng_i32_range(&prng_state, prng_min, prng_max);
     SEN_LOG("%d genotype_seed %d", i, genotype_seed);
-    genotype =
-        genotype_build_from_trait_list(trait_list, vm, env, genotype_seed);
+    genotype = genotype_build_from_trait_list(trait_list, vm, env, genotype_seed);
     genotype_list_add_genotype(genotype_list, genotype);
   }
 
@@ -821,10 +803,8 @@ genotype_list_create_initial_generation(sen_trait_list* trait_list,
 }
 
 // mutates the gene and the prng_state
-void gene_generate_new_var(sen_gene* gene, sen_trait* trait,
-                           sen_prng_state* prng_state) {
-  sen_vm*  vm  = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                           VERTEX_PACKET_NUM_VERTICES);
+void gene_generate_new_var(sen_gene* gene, sen_trait* trait, sen_prng_state* prng_state) {
+  sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
 
   sen_prng_copy(vm->prng_state, prng_state);
@@ -841,9 +821,8 @@ void gene_generate_new_var(sen_gene* gene, sen_trait* trait,
   vm_free(vm);
 }
 
-sen_genotype* genotype_possibly_mutate(sen_genotype* genotype,
-                                       i32 genotype_length, f32 mutation_rate,
-                                       sen_prng_state* prng_state,
+sen_genotype* genotype_possibly_mutate(sen_genotype* genotype, i32 genotype_length,
+                                       f32 mutation_rate, sen_prng_state* prng_state,
                                        sen_trait_list* trait_list) {
   sen_gene*  gene     = genotype->genes;
   sen_trait* trait    = trait_list->traits;
@@ -865,11 +844,9 @@ sen_genotype* genotype_possibly_mutate(sen_genotype* genotype,
   return genotype;
 }
 
-sen_genotype_list* genotype_list_next_generation(sen_genotype_list* parents,
-                                                 i32                num_parents,
-                                                 i32 population_size,
-                                                 f32 mutation_rate, i32 rng,
-                                                 sen_trait_list* trait_list) {
+sen_genotype_list* genotype_list_next_generation(sen_genotype_list* parents, i32 num_parents,
+                                                 i32 population_size, f32 mutation_rate,
+                                                 i32 rng, sen_trait_list* trait_list) {
   sen_genotype_list* genotype_list = genotype_list_get_from_pool();
 
   i32 population_remaining = population_size;
@@ -906,12 +883,11 @@ sen_genotype_list* genotype_list_next_generation(sen_genotype_list* parents,
     sen_genotype* b = genotype_list_get_genotype(parents, b_index);
 
     i32 genotype_length = genotype_count(a);
-    i32 crossover_index =
-        sen_prng_i32_range(&prng_state, 0, genotype_length - 1);
+    i32 crossover_index = sen_prng_i32_range(&prng_state, 0, genotype_length - 1);
 
     genotype = genotype_crossover(a, b, crossover_index, genotype_length);
-    genotype = genotype_possibly_mutate(genotype, genotype_length,
-                                        mutation_rate, &prng_state, trait_list);
+    genotype = genotype_possibly_mutate(genotype, genotype_length, mutation_rate, &prng_state,
+                                        trait_list);
     genotype_list_add_genotype(genotype_list, genotype);
 
     population_remaining--;

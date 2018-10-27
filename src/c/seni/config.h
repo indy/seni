@@ -29,10 +29,8 @@
 #ifdef SEN_DEBUG_MODE
 #include "printf.h"
 #define SEN_PRINT(f_, ...) sen_printf((f_), ##__VA_ARGS__);
-#define SEN_LOG(f_, ...) \
-  sen_printf_log(__FILE__, __LINE__, (f_), ##__VA_ARGS__);
-#define SEN_ERROR(f_, ...) \
-  sen_printf_error(__FILE__, __LINE__, (f_), ##__VA_ARGS__);
+#define SEN_LOG(f_, ...) sen_printf_log(__FILE__, __LINE__, (f_), ##__VA_ARGS__);
+#define SEN_ERROR(f_, ...) sen_printf_error(__FILE__, __LINE__, (f_), ##__VA_ARGS__);
 #else
 #define SEN_PRINT(f_, ...)
 #define SEN_LOG(f_, ...)

@@ -9,8 +9,7 @@
 // for other code
 #define SEN_EPSILON 0.000001f
 
-f32 focal_point(f32 x, f32 y, f32 distance, i32 mapping, f32 centre_x,
-                f32 centre_y) {
+f32 focal_point(f32 x, f32 y, f32 distance, i32 mapping, f32 centre_x, f32 centre_y) {
   f32 d = distance_v2(x, y, centre_x, centre_y);
 
   if (d < SEN_EPSILON) {

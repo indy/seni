@@ -39,12 +39,12 @@ bool wlut_add_word(sen_word_lut* word_lut, char* name, size_t len);
 // sen_var
 typedef enum {
   USE_UNKNOWN,
-  USE_I,   // integer
-  USE_F,   // float
-  USE_L,   // long
-  USE_V,   // pointer to sen_var
-  USE_SRC, // (sen_node only) pointer to original source (for whitespace +
-           // comments)
+  USE_I,           // integer
+  USE_F,           // float
+  USE_L,           // long
+  USE_V,           // pointer to sen_var
+  USE_SRC,         // (sen_node only) pointer to original source (for whitespace +
+                   // comments)
   USE_I_AND_ARRAY, // used by VAR_COLOUR
   USE_FIRST_CHILD  // (sen_node only) first_child
 } sen_value_in_use;
@@ -265,9 +265,9 @@ struct sen_vm {
   sen_prng_state* prng_state; // only used when evaluating bracket bindings
 
   i32      heap_size;
-  sen_var* heap_slab;  // the contiguous block of allocated memory
-  sen_var* heap_avail; // doubly linked list of unallocated sen_vars from the
-                       // heap_slab
+  sen_var* heap_slab;            // the contiguous block of allocated memory
+  sen_var* heap_avail;           // doubly linked list of unallocated sen_vars from the
+                                 // heap_slab
   i32 heap_avail_size_before_gc; // how small can the heap get before a gc is
                                  // invoked
 

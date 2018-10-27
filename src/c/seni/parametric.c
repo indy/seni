@@ -6,8 +6,8 @@
 
 #include <math.h>
 
-f32 sen_parametric(f32 val, f32 from_a, f32 from_b, f32 to_a, f32 to_b,
-                   i32 mapping, bool clamping) {
+f32 sen_parametric(f32 val, f32 from_a, f32 from_b, f32 to_a, f32 to_b, i32 mapping,
+                   bool clamping) {
   f32 from_m = mc_m(from_a, 0.0f, from_b, 1.0f);
   f32 from_c = mc_c(from_a, 0.0f, from_m);
 
@@ -54,16 +54,14 @@ void sen_parametric_bezier_tangent(f32* outx, f32* outy, f32* coords, f32 t) {
   *outy = bezier_tangent(coords[1], coords[3], coords[5], coords[7], t);
 }
 
-void sen_parametric_circle(f32* outx, f32* outy, f32* position, f32 radius,
-                           f32 t) {
+void sen_parametric_circle(f32* outx, f32* outy, f32* position, f32 radius, f32 t) {
   f32 angle = t * TAU;
 
   *outx = ((f32)sin(angle) * radius) + position[0];
   *outy = ((f32)cos(angle) * radius) + position[1];
 }
 
-void sen_parametric_ray(f32* outx, f32* outy, f32* point, f32* direction,
-                        f32 t) {
+void sen_parametric_ray(f32* outx, f32* outy, f32* point, f32* direction, f32 t) {
   // direction should be a normalized vector
 
   *outx = point[0] + (direction[0] * t);

@@ -22,8 +22,8 @@ void invoke_function(sen_vm* vm, i32 fn, f32 step, f32 t, f32 x, f32 y) {
   vm_function_call_body(vm, fn_info);
 }
 
-void path_linear(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 a_x,
-                 f32 a_y, f32 b_x, f32 b_y, i32 mapping) {
+void path_linear(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 a_x, f32 a_y,
+                 f32 b_x, f32 b_y, i32 mapping) {
   f32 unit = (t_end - t_start) / ((f32)steps - 1.0f);
 
   f32 x, y, t, step;
@@ -39,8 +39,8 @@ void path_linear(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 a_x,
   }
 }
 
-void path_circle(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end,
-                 f32 pos_x, f32 pos_y, f32 radius, i32 mapping) {
+void path_circle(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32 pos_x, f32 pos_y,
+                 f32 radius, i32 mapping) {
   f32 unit       = (t_end - t_start) / (f32)steps;
   f32 unit_angle = unit * TAU;
 
@@ -59,8 +59,8 @@ void path_circle(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end,
   }
 }
 
-void path_spline(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end,
-                 f32* coords, i32 mapping) {
+void path_spline(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32* coords,
+                 i32 mapping) {
   f32 unit = (t_end - t_start) / ((f32)steps - 1.0f);
   f32 t, x, y;
 
@@ -74,8 +74,8 @@ void path_spline(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end,
   }
 }
 
-void path_bezier(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end,
-                 f32* coords, i32 mapping) {
+void path_bezier(sen_vm* vm, i32 fn, i32 steps, f32 t_start, f32 t_end, f32* coords,
+                 i32 mapping) {
   f32 unit = (t_end - t_start) / ((f32)steps - 1.0f);
   f32 t, x, y;
 

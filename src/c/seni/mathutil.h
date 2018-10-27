@@ -12,8 +12,7 @@
 #define absf(x) ((x) < 0.0f ? -(x) : (x))
 #define lerp(t, a, b) ((a) + (t) * (f32)((b) - (a)))
 #define unlerp(t, a, b) (((t) - (a)) / (f32)((b) - (a)))
-#define clamp(x, xmin, xmax) \
-  ((x) < (xmin) ? (xmin) : (x) > (xmax) ? (xmax) : (x))
+#define clamp(x, xmin, xmax) ((x) < (xmin) ? (xmin) : (x) > (xmax) ? (xmax) : (x))
 
 i32 floor_f32(f32 a);
 

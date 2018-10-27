@@ -23,8 +23,7 @@ void multistring_reset(sen_multistring* multistring) {
   multistring->cursor = multistring->buffer;
 }
 
-bool multistring_add(sen_multistring* mb, sen_string_ref* string_ref,
-                     char* string, i32 len) {
+bool multistring_add(sen_multistring* mb, sen_string_ref* string_ref, char* string, i32 len) {
   // string_ref already allocated
 
   if ((mb->cursor + len + 1) > (mb->buffer + mb->buffer_size)) {

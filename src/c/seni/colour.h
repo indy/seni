@@ -19,7 +19,5 @@ struct sen_colour {
   f32               element[4];
 };
 
-void colour_set(sen_colour* out, sen_colour_format format, f32 e0, f32 e1,
-                f32 e2, f32 alpha);
-sen_colour* colour_clone_as(sen_colour* out, sen_colour* in,
-                            sen_colour_format new_format);
+void colour_set(sen_colour* out, sen_colour_format format, f32 e0, f32 e1, f32 e2, f32 alpha);
+sen_colour* colour_clone_as(sen_colour* out, sen_colour* in, sen_colour_format new_format);

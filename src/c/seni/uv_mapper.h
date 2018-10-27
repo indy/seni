@@ -23,5 +23,4 @@ void uv_mapper_subsystem_startup();
 void uv_mapper_subsystem_shutdown();
 
 void            make_uv(f32* outx, f32* ouyt, f32 in_u, f32 in_v);
-sen_uv_mapping* get_uv_mapping(sen_brush_type type, i32 sub_type,
-                               bool wrap_sub_type);
+sen_uv_mapping* get_uv_mapping(sen_brush_type type, i32 sub_type, bool wrap_sub_type);

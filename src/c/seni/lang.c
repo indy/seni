@@ -31,17 +31,14 @@ struct sen_var_pool* g_var_pool;
 sen_word_lut* wlut_allocate() {
   sen_word_lut* word_lut = (sen_word_lut*)calloc(1, sizeof(sen_word_lut));
 
-  word_lut->native_buffer = multistring_allocate(5000); // todo: check this size
-  word_lut->keyword_buffer =
-      multistring_allocate(5000);                     // todo: check this size
-  word_lut->word_buffer = multistring_allocate(5000); // todo: check this size
+  word_lut->native_buffer  = multistring_allocate(5000); // todo: check this size
+  word_lut->keyword_buffer = multistring_allocate(5000); // todo: check this size
+  word_lut->word_buffer    = multistring_allocate(5000); // todo: check this size
 
-  word_lut->native_ref =
-      (sen_string_ref*)calloc(MAX_NATIVE_LOOKUPS, sizeof(sen_string_ref));
+  word_lut->native_ref = (sen_string_ref*)calloc(MAX_NATIVE_LOOKUPS, sizeof(sen_string_ref));
   word_lut->keyword_ref =
       (sen_string_ref*)calloc(MAX_KEYWORD_LOOKUPS, sizeof(sen_string_ref));
-  word_lut->word_ref =
-      (sen_string_ref*)calloc(MAX_WORD_LOOKUPS, sizeof(sen_string_ref));
+  word_lut->word_ref = (sen_string_ref*)calloc(MAX_WORD_LOOKUPS, sizeof(sen_string_ref));
 
   return word_lut;
 }
@@ -123,10 +120,9 @@ bool wlut_add_keyword(sen_word_lut* word_lut, char* name) {
     return false;
   }
 
-  size_t           len = strlen(name);
-  sen_multistring* mb  = word_lut->keyword_buffer;
-  sen_string_ref*  string_ref =
-      &(word_lut->keyword_ref[word_lut->keyword_count]);
+  size_t           len        = strlen(name);
+  sen_multistring* mb         = word_lut->keyword_buffer;
+  sen_string_ref*  string_ref = &(word_lut->keyword_ref[word_lut->keyword_count]);
   word_lut->keyword_count++;
 
   bool res = multistring_add(mb, string_ref, name, (i32)len);
@@ -217,8 +213,7 @@ sen_node* safe_first_child(sen_node* expr) {
 
 sen_node* safe_next(sen_node* expr) {
   sen_node* sibling = expr->next;
-  while (sibling &&
-         (sibling->type == NODE_WHITESPACE || sibling->type == NODE_COMMENT)) {
+  while (sibling && (sibling->type == NODE_WHITESPACE || sibling->type == NODE_COMMENT)) {
     sibling = sibling->next;
   }
 
@@ -227,8 +222,7 @@ sen_node* safe_next(sen_node* expr) {
 
 sen_node* safe_prev(sen_node* expr) {
   sen_node* sibling = expr->prev;
-  while (sibling &&
-         (sibling->type == NODE_WHITESPACE || sibling->type == NODE_COMMENT)) {
+  while (sibling && (sibling->type == NODE_WHITESPACE || sibling->type == NODE_COMMENT)) {
     sibling = sibling->prev;
   }
 
@@ -294,11 +288,10 @@ void node_pretty_print(char* msg, sen_node* node, sen_word_lut* word_lut) {
     break;
   case USE_I:
     if (word_lut != NULL &&
-        (node->type == NODE_NAME || node->type == NODE_LABEL ||
-         node->type == NODE_STRING)) {
+        (node->type == NODE_NAME || node->type == NODE_LABEL || node->type == NODE_STRING)) {
       SEN_PRINT("%s %s : %s (value.i:%d) (src:%s) %s", msg, type,
-                wlut_reverse_lookup(word_lut, node->value.i), node->value.i,
-                src_buffer, node->alterable ? "alterable" : "");
+                wlut_reverse_lookup(word_lut, node->value.i), node->value.i, src_buffer,
+                node->alterable ? "alterable" : "");
     } else {
       SEN_PRINT("%s %s : %d (src:%s) %s", msg, type, node->value.i, src_buffer,
                 node->alterable ? "alterable" : "");
@@ -320,8 +313,8 @@ void node_pretty_print(char* msg, sen_node* node, sen_word_lut* word_lut) {
     if (node->type == NODE_WHITESPACE) {
       SEN_PRINT("%s %s %s", msg, type, node->alterable ? "alterable" : "");
     } else {
-      SEN_PRINT("%s %s '%.*s' (src:%s) %s", msg, type, node->src_len, node->src,
-                src_buffer, node->alterable ? "alterable" : "");
+      SEN_PRINT("%s %s '%.*s' (src:%s) %s", msg, type, node->src_len, node->src, src_buffer,
+                node->alterable ? "alterable" : "");
     }
     break;
   case USE_FIRST_CHILD:
@@ -375,8 +368,7 @@ bool is_node_colour_constructor(sen_node* node) {
   i32 colour_constructor_end   = get_colour_constructor_end();
 
   i32 native_index = child->value.i - NATIVE_START;
-  if (native_index < colour_constructor_start ||
-      native_index >= colour_constructor_end) {
+  if (native_index < colour_constructor_start || native_index >= colour_constructor_end) {
     return false;
   }
 
@@ -433,8 +425,7 @@ void var_pretty_print(char* msg, sen_var* var) {
   sen_value_in_use using = get_var_value_in_use(var->type);
 
   if (var->type == VAR_2D) {
-    SEN_PRINT("%s: %s : [%.2f %.2f]", msg, type, var->f32_array[0],
-              var->f32_array[1]);
+    SEN_PRINT("%s: %s : [%.2f %.2f]", msg, type, var->f32_array[0], var->f32_array[1]);
     return;
   }
 
@@ -444,15 +435,13 @@ void var_pretty_print(char* msg, sen_var* var) {
     break;
   case USE_I_AND_ARRAY:
     SEN_PRINT("%s: %s : %d (%.2f, %.2f, %.2f, %.2f)", msg, type, var->value.i,
-              var->f32_array[0], var->f32_array[1], var->f32_array[2],
-              var->f32_array[3]);
+              var->f32_array[0], var->f32_array[1], var->f32_array[2], var->f32_array[3]);
     break;
   case USE_F:
     SEN_PRINT("%s: %s : %.2f", msg, type, var->value.f);
     break;
   case USE_L:
-    SEN_PRINT("%s: %s : %llu", msg, type,
-              (long long unsigned int)(var->value.l));
+    SEN_PRINT("%s: %s : %llu", msg, type, (long long unsigned int)(var->value.l));
     break;
   case USE_V:
     if (var->type == VAR_VECTOR) {
@@ -489,13 +478,11 @@ bool var_serialize(sen_cursor* cursor, sen_var* var) {
     return false;
     break;
   case VAR_COLOUR:
-    cursor_sprintf(cursor, "COLOUR %d %.4f %.4f %.4f %.4f", var->value.i,
-                   var->f32_array[0], var->f32_array[1], var->f32_array[2],
-                   var->f32_array[3]);
+    cursor_sprintf(cursor, "COLOUR %d %.4f %.4f %.4f %.4f", var->value.i, var->f32_array[0],
+                   var->f32_array[1], var->f32_array[2], var->f32_array[3]);
     break;
   case VAR_2D:
-    cursor_sprintf(cursor, "2D %.4f %.4f", var->f32_array[0],
-                   var->f32_array[1]);
+    cursor_sprintf(cursor, "2D %.4f %.4f", var->f32_array[0], var->f32_array[1]);
     break;
   default:
     SEN_ERROR("var_serialize: unknown sen_var type");
@@ -610,8 +597,7 @@ void bytecode_pretty_print(i32 ip, sen_bytecode* b, sen_word_lut* word_lut) {
 
   if (b->op == LOAD || b->op == STORE || b->op == STORE_F) {
 
-    char* seg_name =
-        memory_segment_name((sen_memory_segment_type)b->arg0.value.i);
+    char* seg_name = memory_segment_name((sen_memory_segment_type)b->arg0.value.i);
 
     if (b->op == LOAD || b->op == STORE) {
       PRINT_BC(BUF_ARGS, "%d\t%s\t\t%s\t\t", ip, opcode_name(b->op), seg_name);
@@ -625,8 +611,7 @@ void bytecode_pretty_print(i32 ip, sen_bytecode* b, sen_word_lut* word_lut) {
       if (b->arg1.type == VAR_NAME) {
         i32 iname = b->arg1.value.i;
         if (word_lut != NULL) {
-          PRINT_BC(BUF_ARGS, "name: %s (%d)",
-                   wlut_reverse_lookup(word_lut, iname), iname);
+          PRINT_BC(BUF_ARGS, "name: %s (%d)", wlut_reverse_lookup(word_lut, iname), iname);
         } else {
           PRINT_BC(BUF_ARGS, "name: (%d)", iname);
         }
@@ -638,8 +623,8 @@ void bytecode_pretty_print(i32 ip, sen_bytecode* b, sen_word_lut* word_lut) {
       if (b->arg1.type == VAR_COLOUR) {
         i32  type = b->arg1.value.i;
         f32* a    = b->arg1.f32_array;
-        PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0],
-                 a[1], a[2], a[3]);
+        PRINT_BC(BUF_ARGS, "colour: %d (%.2f, %.2f, %.2f, %.2f)", type, a[0], a[1], a[2],
+                 a[3]);
       }
       break;
     case USE_F:
@@ -669,8 +654,8 @@ void bytecode_pretty_print(i32 ip, sen_bytecode* b, sen_word_lut* word_lut) {
       PRINT_BC(BUF_ARGS, "WTF!");
     }
   } else if (b->op == NATIVE) {
-    PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d\t\t%d", ip, opcode_name(b->op),
-             b->arg0.value.i, b->arg1.value.i);
+    PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d\t\t%d", ip, opcode_name(b->op), b->arg0.value.i,
+             b->arg1.value.i);
   } else if (b->op == PILE) {
     PRINT_BC(BUF_ARGS, "%d\t%s\t\t%d", ip, opcode_name(b->op), b->arg0.value.i);
   } else {
@@ -996,9 +981,8 @@ sen_vm* vm_allocate(i32 stack_size, i32 heap_size, i32 heap_min_size,
   vm->matrix_stack = matrix_stack_allocate();
 
   // prepare storage for vertices
-  sen_render_data* render_data =
-      render_data_allocate(vertex_packet_num_vertices);
-  vm->render_data = render_data;
+  sen_render_data* render_data = render_data_allocate(vertex_packet_num_vertices);
+  vm->render_data              = render_data;
 
   vm->prng_state = (sen_prng_state*)calloc(1, sizeof(sen_prng_state));
 
@@ -1069,15 +1053,13 @@ void vm_free(sen_vm* vm) {
 }
 
 void vm_pretty_print(sen_vm* vm, char* msg) {
-  SEN_LOG("%s\tvm: fp:%d sp:%d ip:%d local:%d", msg, vm->fp, vm->sp, vm->ip,
-          vm->local);
+  SEN_LOG("%s\tvm: fp:%d sp:%d ip:%d local:%d", msg, vm->fp, vm->sp, vm->ip, vm->local);
 
   sen_var* fp             = &(vm->stack[vm->fp]);
   i32      onStackFP      = (fp + 0)->value.i;
   i32      onStackIP      = (fp + 1)->value.i;
   i32      onStackNumArgs = (fp + 2)->value.i;
-  SEN_LOG("\ton stack: fp:%d ip:%d numArgs:%d", onStackFP, onStackIP,
-          onStackNumArgs);
+  SEN_LOG("\ton stack: fp:%d ip:%d numArgs:%d", onStackFP, onStackIP, onStackNumArgs);
 }
 
 sen_var* vm_get_from_global_offset(sen_vm* vm, i32 offset) {
@@ -1247,8 +1229,7 @@ void vm_debug_info_reset(sen_vm* vm) { vm->opcodes_executed = 0; }
 
 void vm_debug_info_print(sen_vm* vm) {
   SEN_PRINT("*** vm_debug_info_print ***");
-  SEN_PRINT("bytecodes executed:\t%llu",
-            (long long unsigned int)(vm->opcodes_executed));
+  SEN_PRINT("bytecodes executed:\t%llu", (long long unsigned int)(vm->opcodes_executed));
   SEN_PRINT("bytecode execution time:\t%.2f msec", vm->execution_time);
 }
 

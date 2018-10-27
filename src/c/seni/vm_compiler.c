@@ -97,8 +97,8 @@ void                clear_global_mappings(sen_compilation* compilation);
 void                clear_local_mappings(sen_compilation* compilation);
 sen_error           register_top_level_preamble(sen_compilation* compilation);
 sen_error           compile_preamble(sen_compilation* compilation);
-sen_result_bytecode emit_opcode_i32(sen_compilation* compilation, sen_opcode op,
-                                    i32 arg0, i32 arg1);
+sen_result_bytecode emit_opcode_i32(sen_compilation* compilation, sen_opcode op, i32 arg0,
+                                    i32 arg1);
 
 // compiler_subsystem_startup
 //
@@ -135,8 +135,7 @@ sen_error compiler_subsystem_startup() {
 
   // slap a stop onto the end of this program
   sen_result_bytecode result_bytecode;
-  B_CHK(emit_opcode_i32(&compilation, STOP, 0, 0),
-        "compiler_subsystem_startup: STOP");
+  B_CHK(emit_opcode_i32(&compilation, STOP, 0, 0), "compiler_subsystem_startup: STOP");
 
   g_preamble_program = program;
 
@@ -145,12 +144,9 @@ sen_error compiler_subsystem_startup() {
 
 void compiler_subsystem_shutdown() { program_free(g_preamble_program); }
 
-sen_result_program get_preamble_program() {
-  return result_program_ok(g_preamble_program);
-}
+sen_result_program get_preamble_program() { return result_program_ok(g_preamble_program); }
 
-void gene_assign_to_node(sen_word_lut* word_lut, sen_genotype* genotype,
-                         sen_node* node) {
+void gene_assign_to_node(sen_word_lut* word_lut, sen_genotype* genotype, sen_node* node) {
   if (node->alterable) {
     if (node->type == NODE_VECTOR) {
       // grab a gene for every element in this vector
@@ -257,8 +253,8 @@ void warn_if_alterable(char* msg, sen_node* node) {
   }
 }
 
-sen_result_bytecode emit_opcode(sen_compilation* compilation, sen_opcode op,
-                                sen_var* arg0, sen_var* arg1) {
+sen_result_bytecode emit_opcode(sen_compilation* compilation, sen_opcode op, sen_var* arg0,
+                                sen_var* arg1) {
   sen_program* program = compilation->program;
 
   if (program->code_size >= program->code_max_size) {
@@ -277,14 +273,13 @@ sen_result_bytecode emit_opcode(sen_compilation* compilation, sen_opcode op,
 }
 
 // emits an <opcode, i32, i32> triplet
-sen_result_bytecode emit_opcode_i32(sen_compilation* compilation, sen_opcode op,
-                                    i32 arg0, i32 arg1) {
+sen_result_bytecode emit_opcode_i32(sen_compilation* compilation, sen_opcode op, i32 arg0,
+                                    i32 arg1) {
   sen_program* program = compilation->program;
 
   if (program->code_size >= program->code_max_size) {
-    SEN_ERROR(
-        "%s %d program has reached max size: program size=%d, max_size=%d",
-        __FILE__, __LINE__, program->code_size, program->code_max_size);
+    SEN_ERROR("%s %d program has reached max size: program size=%d, max_size=%d", __FILE__,
+              __LINE__, program->code_size, program->code_max_size);
     return result_bytecode_error(ERROR_COMPILER_PROGRAM_REACHED_MAX_SIZE);
   }
 
@@ -299,8 +294,8 @@ sen_result_bytecode emit_opcode_i32(sen_compilation* compilation, sen_opcode op,
 }
 
 // emits an <opcode, i32, name> triplet
-sen_result_bytecode emit_opcode_i32_name(sen_compilation* compilation,
-                                         sen_opcode op, i32 arg0, i32 name) {
+sen_result_bytecode emit_opcode_i32_name(sen_compilation* compilation, sen_opcode op,
+                                         i32 arg0, i32 name) {
   sen_program* program = compilation->program;
 
   if (program->code_size >= program->code_max_size) {
@@ -319,8 +314,8 @@ sen_result_bytecode emit_opcode_i32_name(sen_compilation* compilation,
 }
 
 // emits an <opcode, i32, f32> triplet
-sen_result_bytecode emit_opcode_i32_f32(sen_compilation* compilation,
-                                        sen_opcode op, i32 arg0, f32 arg1) {
+sen_result_bytecode emit_opcode_i32_f32(sen_compilation* compilation, sen_opcode op, i32 arg0,
+                                        f32 arg1) {
   sen_program* program = compilation->program;
 
   if (program->code_size >= program->code_max_size) {
@@ -352,8 +347,7 @@ void clear_local_mappings(sen_compilation* compilation) {
   }
 }
 
-sen_result_i32 add_local_mapping(sen_compilation* compilation,
-                                 i32              word_lut_value) {
+sen_result_i32 add_local_mapping(sen_compilation* compilation, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
     if (compilation->local_mappings[i] == -1) {
       compilation->local_mappings[i] = word_lut_value;
@@ -377,14 +371,12 @@ sen_result_i32 add_internal_local_mapping(sen_compilation* compilation) {
     }
   }
 
-  SEN_ERROR(
-      "add_internal_local_mapping failed: increase MEMORY_LOCAL_SIZE from %d",
-      MEMORY_LOCAL_SIZE);
+  SEN_ERROR("add_internal_local_mapping failed: increase MEMORY_LOCAL_SIZE from %d",
+            MEMORY_LOCAL_SIZE);
   return result_i32_error(ERROR_COMPILER_ALLOCATION_FAILURE);
 }
 
-sen_option_i32 get_local_mapping(sen_compilation* compilation,
-                                 i32              word_lut_value) {
+sen_option_i32 get_local_mapping(sen_compilation* compilation, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_LOCAL_SIZE; i++) {
     if (compilation->local_mappings[i] == word_lut_value) {
       return option_i32_some(i);
@@ -400,8 +392,7 @@ void clear_global_mappings(sen_compilation* compilation) {
   }
 }
 
-sen_result_i32 add_global_mapping(sen_compilation* compilation,
-                                  i32              word_lut_value) {
+sen_result_i32 add_global_mapping(sen_compilation* compilation, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_GLOBAL_SIZE; i++) {
     if (compilation->global_mappings[i] == -1) {
       compilation->global_mappings[i] = word_lut_value;
@@ -414,8 +405,7 @@ sen_result_i32 add_global_mapping(sen_compilation* compilation,
   return result_i32_error(ERROR_COMPILER_ALLOCATION_FAILURE);
 }
 
-sen_option_i32 get_global_mapping(sen_compilation* compilation,
-                                  i32              word_lut_value) {
+sen_option_i32 get_global_mapping(sen_compilation* compilation, i32 word_lut_value) {
   for (i32 i = 0; i < MEMORY_GLOBAL_SIZE; i++) {
     if (compilation->global_mappings[i] == word_lut_value) {
       return option_i32_some(i);
@@ -479,8 +469,8 @@ sen_result_node compile(sen_compilation* compilation, sen_node* ast);
 
 i32 node_vector_length(sen_node* vector_node) {
   i32 length = 0;
-  for (sen_node* node     = safe_first(vector_node->value.first_child);
-       node != NULL; node = safe_next(node)) {
+  for (sen_node* node = safe_first(vector_node->value.first_child); node != NULL;
+       node           = safe_next(node)) {
     length++;
   }
   return length;
@@ -567,9 +557,8 @@ sen_result_i32 store_globally(sen_compilation* compilation, i32 iname) {
   return result_i32_ok(address);
 }
 
-sen_result_i32
-store_from_stack_to_memory(sen_compilation* compilation, sen_node* node,
-                           sen_memory_segment_type memory_segment_type) {
+sen_result_i32 store_from_stack_to_memory(sen_compilation* compilation, sen_node* node,
+                                          sen_memory_segment_type memory_segment_type) {
   if (memory_segment_type == MEM_SEG_LOCAL) {
     return store_locally(compilation, node->value.i);
   } else if (memory_segment_type == MEM_SEG_GLOBAL) {
@@ -597,8 +586,7 @@ sen_error compile_define(sen_compilation* compilation, sen_node* ast,
 
     if (lhs_node->type == NODE_NAME) {
       // define foo 10
-      I_CHK(store_from_stack_to_memory(compilation, lhs_node,
-                                       memory_segment_type),
+      I_CHK(store_from_stack_to_memory(compilation, lhs_node, memory_segment_type),
             "compile_define: allocation failure in define");
     } else if (lhs_node->type == NODE_VECTOR) {
       // define [a b] (something-that-returns-a-vector ...)
@@ -615,8 +603,7 @@ sen_error compile_define(sen_compilation* compilation, sen_node* ast,
 
         // PILE will stack the elements in the rhs vector in order,
         // so the lhs values have to be popped in reverse order
-        B_CHK(emit_opcode_i32(compilation, PILE, num_children, 0),
-              "compile_define: PILE");
+        B_CHK(emit_opcode_i32(compilation, PILE, num_children, 0), "compile_define: PILE");
 
         compilation->opcode_offset += num_children - 1;
 
@@ -626,8 +613,7 @@ sen_error compile_define(sen_compilation* compilation, sen_node* ast,
           child = safe_next(child);
         }
         for (i = 0; i < num_children; i++) {
-          I_CHK(store_from_stack_to_memory(compilation, child,
-                                           memory_segment_type),
+          I_CHK(store_from_stack_to_memory(compilation, child, memory_segment_type),
                 "compile_define: allocation failure during destructure");
           child = safe_prev(child);
         }
@@ -682,8 +668,7 @@ sen_error compile_if(sen_compilation* compilation, sen_node* ast) {
     B_CHK(emit_opcode_i32(compilation, JUMP, 0, 0), "compile_if: JUMP");
     sen_bytecode* bc_jump_else = result_bytecode.result;
 
-    bc_jump_then->arg0.value.i =
-        compilation->program->code_size - addr_jump_then;
+    bc_jump_then->arg0.value.i = compilation->program->code_size - addr_jump_then;
 
     compile(compilation, else_node);
 
@@ -697,11 +682,9 @@ sen_error compile_if(sen_compilation* compilation, sen_node* ast) {
       SEN_ERROR("different opcode_offsets for the two paths in a conditional");
     }
 
-    bc_jump_else->arg0.value.i =
-        compilation->program->code_size - addr_jump_else;
+    bc_jump_else->arg0.value.i = compilation->program->code_size - addr_jump_else;
   } else {
-    bc_jump_then->arg0.value.i =
-        compilation->program->code_size - addr_jump_then;
+    bc_jump_then->arg0.value.i = compilation->program->code_size - addr_jump_then;
   }
 
   return NONE;
@@ -730,8 +713,7 @@ sen_error compile_next_one(sen_compilation* compilation, sen_node* ast) {
   return NONE;
 }
 
-sen_error compile_math(sen_compilation* compilation, sen_node* ast,
-                       sen_opcode opcode) {
+sen_error compile_math(sen_compilation* compilation, sen_node* ast, sen_opcode opcode) {
   sen_result_node     result_node;
   sen_result_bytecode result_bytecode;
   // + 3 4 5 6
@@ -771,8 +753,7 @@ sen_error compile_address_of(sen_compilation* compilation, sen_node* ast) {
     return ERROR_COMPILER_ADDRESS_OF_NAME;
   }
 
-  sen_result_fn_info result_fn_info =
-      get_fn_info(fn_name, compilation->program);
+  sen_result_fn_info result_fn_info = get_fn_info(fn_name, compilation->program);
   if (is_result_fn_info_error(result_fn_info)) {
     SEN_ERROR("address-of could not find function");
     return result_fn_info.error;
@@ -808,15 +789,13 @@ sen_error compile_fn_call(sen_compilation* compilation, sen_node* ast) {
   // place the fn_info_index onto the stack so that CALL_F can find the function
   // offset and num args
   N_CHK(compile(compilation, fn_info_index), "compile_fn_call: compile");
-  B_CHK(emit_opcode_i32(compilation, CALL_F, 0, 0),
-        "compile_fn_call: emit_opcode_i32");
+  B_CHK(emit_opcode_i32(compilation, CALL_F, 0, 0), "compile_fn_call: emit_opcode_i32");
 
   // compile the rest of the arguments
 
   // overwrite the default arguments with the actual arguments given by the fn
   // invocation
-  sen_node* args =
-      safe_next(fn_info_index); // pairs of label/value declarations
+  sen_node* args = safe_next(fn_info_index); // pairs of label/value declarations
   while (args != NULL) {
     sen_node* label = args;
     sen_node* value = safe_next(label);
@@ -839,8 +818,7 @@ sen_error compile_fn_call(sen_compilation* compilation, sen_node* ast) {
   // place the fn_info_index onto the stack so that CALL_F_0 can find the
   // function's body offset
   N_CHK(compile(compilation, fn_info_index), "compile_fn_call: compile");
-  B_CHK(emit_opcode_i32(compilation, CALL_F_0, 0, 0),
-        "compile_fn_call: CALL_F");
+  B_CHK(emit_opcode_i32(compilation, CALL_F_0, 0, 0), "compile_fn_call: CALL_F");
 
   return NONE;
 }
@@ -856,12 +834,10 @@ sen_error compile_vector_append(sen_compilation* compilation, sen_node* ast) {
 
   sen_node* value = safe_next(vector);
   N_CHK(compile(compilation, value), "compile_vector_append: compile");
-  B_CHK(emit_opcode_i32(compilation, APPEND, 0, 0),
-        "compile_vector_append: APPEND");
+  B_CHK(emit_opcode_i32(compilation, APPEND, 0, 0), "compile_vector_append: APPEND");
 
   if (vector->type == NODE_NAME) {
-    I_CHK(get_node_value_i32(vector),
-          "compile_vector_append: get_node_value_i32");
+    I_CHK(get_node_value_i32(vector), "compile_vector_append: get_node_value_i32");
     i32 vector_i = result_i32.result;
 
     sen_option_i32 option_i32;
@@ -894,8 +870,7 @@ sen_error compile_vector_in_quote(sen_compilation* compilation, sen_node* ast) {
   sen_result_bytecode result_bytecode;
 
   // pushing from the VOID means creating a new, empty vector
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0),
-        "compile_vector_in_quote: LOAD");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_VOID, 0), "compile_vector_in_quote: LOAD");
 
   warn_if_alterable("compile_vector_in_quote", ast);
   for (sen_node* node = safe_first(ast->value.first_child); node != NULL;
@@ -907,15 +882,13 @@ sen_error compile_vector_in_quote(sen_compilation* compilation, sen_node* ast) {
     // MEM_SEG_GLOBAL LOAD code)
     //
     if (node->type == NODE_NAME) {
-      B_CHK(emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT,
-                                 node->value.i),
+      B_CHK(emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, node->value.i),
             "compile_vector_in_quote: LOAD");
     } else {
       N_CHK(compile(compilation, node), "compile_vector_in_quote: compile");
     }
 
-    B_CHK(emit_opcode_i32(compilation, APPEND, 0, 0),
-          "compile_vector_in_quote: APPEND");
+    B_CHK(emit_opcode_i32(compilation, APPEND, 0, 0), "compile_vector_in_quote: APPEND");
   }
 
   return NONE;
@@ -936,8 +909,7 @@ sen_error compile_quote(sen_compilation* compilation, sen_node* ast) {
     }
   } else {
     if (quoted_form->type == NODE_NAME) {
-      B_CHK(emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT,
-                                 quoted_form->value.i),
+      B_CHK(emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, quoted_form->value.i),
             "compile_quote: emit_opcode_i32_name");
     } else {
       N_CHK(compile(compilation, quoted_form), "compile_quote: compile");
@@ -1040,16 +1012,13 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
     // so jump if looping variable >= exit value
     N_CHK(compile(compilation, to_node), "compile_loop: compile");
 
-    B_CHK(emit_opcode_i32(compilation, LT, 0, 0),
-          "compile_loop: emit_opcode_i32");
+    B_CHK(emit_opcode_i32(compilation, LT, 0, 0), "compile_loop: emit_opcode_i32");
   } else {
     // so jump if looping variable > exit value
     N_CHK(compile(compilation, upto_node), "compile_loop: compile");
 
-    B_CHK(emit_opcode_i32(compilation, GT, 0, 0),
-          "compile_loop: emit_opcode_i32");
-    B_CHK(emit_opcode_i32(compilation, NOT, 0, 0),
-          "compile_loop: emit_opcode_i32");
+    B_CHK(emit_opcode_i32(compilation, GT, 0, 0), "compile_loop: emit_opcode_i32");
+    B_CHK(emit_opcode_i32(compilation, NOT, 0, 0), "compile_loop: emit_opcode_i32");
   }
 
   i32 addr_exit_check = compilation->program->code_size;
@@ -1060,11 +1029,10 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
   i32 pre_body_opcode_offset = compilation->opcode_offset;
 
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-  E_CHK(compile_rest(compilation, parameters_node),
-        "compile_loop: compile_rest");
+  E_CHK(compile_rest(compilation, parameters_node), "compile_loop: compile_rest");
 
   i32 post_body_opcode_offset = compilation->opcode_offset;
-  i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
+  i32 opcode_delta            = post_body_opcode_offset - pre_body_opcode_offset;
 
   // pop off any values that the body might leave on the stack
   for (i32 i = 0; i < opcode_delta; i++) {
@@ -1087,20 +1055,17 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
           "compile_loop: emit_opcode_i32_f32");
   }
 
-  B_CHK(emit_opcode_i32(compilation, ADD, 0, 0),
-        "compile_loop: emit_opcode_i32");
+  B_CHK(emit_opcode_i32(compilation, ADD, 0, 0), "compile_loop: emit_opcode_i32");
 
   B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address),
         "compile_loop: emit_opcode_i32");
 
   // loop back to the comparison
   B_CHK(emit_opcode_i32(compilation, JUMP,
-                        -(compilation->program->code_size - addr_loop_start),
-                        0),
+                        -(compilation->program->code_size - addr_loop_start), 0),
         "compile_loop: emit_opcode_i32");
 
-  bc_exit_check->arg0.value.i =
-      compilation->program->code_size - addr_exit_check;
+  bc_exit_check->arg0.value.i = compilation->program->code_size - addr_exit_check;
 
   return NONE;
 }
@@ -1153,8 +1118,7 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
   }
 
   // store the quantity
-  I_CHK(add_internal_local_mapping(compilation),
-        "compile_fence: add_internal_local_mapping");
+  I_CHK(add_internal_local_mapping(compilation), "compile_fence: add_internal_local_mapping");
   i32 quantity_address = result_i32.result;
   if (have_num) {
     N_CHK(compile(compilation, num_node), "compile_fence: compile");
@@ -1168,14 +1132,11 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
         "compile_fence: STORE");
 
   // reserve a memory location in local memory for a counter from 0 to quantity
-  I_CHK(add_internal_local_mapping(compilation),
-        "compile_loop: add_internal_local_mapping");
+  I_CHK(add_internal_local_mapping(compilation), "compile_loop: add_internal_local_mapping");
   i32 counter_address = result_i32.result;
 
-  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f),
-        "compile_fence");
-  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address),
-        "compile_fence");
+  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f), "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address), "compile_fence");
 
   // delta that needs to be added at every iteration
   //
@@ -1184,48 +1145,39 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
     N_CHK(compile(compilation, to_node), "compile_fence: compile");
   } else {
     // else default to 1
-    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f),
-          "compile_fence");
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f), "compile_fence");
   }
   if (have_from) {
     N_CHK(compile(compilation, from_node), "compile_fence: compile");
   } else {
     // else default to 0
-    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f),
-          "compile_fence");
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f), "compile_fence");
   }
   B_CHK(emit_opcode_i32(compilation, SUB, 0, 0), "compile_fence");
 
   N_CHK(compile(compilation, num_node), "compile_fence: compile");
-  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f),
-        "compile_fence");
+  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, SUB, 0, 0), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, DIV, 0, 0), "compile_fence");
-  I_CHK(add_internal_local_mapping(compilation),
-        "compile_loop: add_internal_local_mapping");
+  I_CHK(add_internal_local_mapping(compilation), "compile_loop: add_internal_local_mapping");
   i32 delta_address = result_i32.result;
-  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, delta_address),
-        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, delta_address), "compile_fence");
 
   // set looping variable x to 'from' value
   if (have_from) {
     N_CHK(compile(compilation, from_node), "compile_fence: compile");
   } else {
     // else default to 0
-    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f),
-          "compile_fence");
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f), "compile_fence");
   }
 
-  I_CHK(add_internal_local_mapping(compilation),
-        "compile_loop: add_internal_local_mapping");
+  I_CHK(add_internal_local_mapping(compilation), "compile_loop: add_internal_local_mapping");
   i32 from_address = result_i32.result;
 
-  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, from_address),
-        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, from_address), "compile_fence");
 
   // store the starting 'from' value in the locally scoped variable
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address),
-        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address), "compile_fence");
 
   I_CHK(store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL),
         "compile_loop: store_from_stack_to_memory");
@@ -1236,12 +1188,10 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
   i32 addr_loop_start = compilation->program->code_size;
 
   // load from counter address
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address),
-        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address), "compile_fence");
 
   // load from quantity address
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, quantity_address),
-        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, quantity_address), "compile_fence");
 
   // exit check
   B_CHK(emit_opcode_i32(compilation, LT, 0, 0), "compile_fence");
@@ -1252,46 +1202,35 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
   sen_bytecode* bc_exit_check = result_bytecode.result;
 
   // looper = from + (counter * delta)
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address),
-        "compile_fence");
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address),
-        "compile_fence");
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, delta_address),
-        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address), "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address), "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, delta_address), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, MUL, 0, 0), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, ADD, 0, 0), "compile_fence");
-  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address),
-        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address), "compile_fence");
 
   i32 pre_body_opcode_offset = compilation->opcode_offset;
 
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-  E_CHK(compile_rest(compilation, parameters_node),
-        "compile_loop: compile_rest");
+  E_CHK(compile_rest(compilation, parameters_node), "compile_loop: compile_rest");
 
   i32 post_body_opcode_offset = compilation->opcode_offset;
-  i32 opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
+  i32 opcode_delta            = post_body_opcode_offset - pre_body_opcode_offset;
 
   // pop off any values that the body might leave on the stack
   for (i32 i = 0; i < opcode_delta; i++) {
-    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_VOID, 0),
-          "compile_fence");
+    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_VOID, 0), "compile_fence");
   }
 
   // increment counter
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address),
-        "compile_fence");
-  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f),
-        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, counter_address), "compile_fence");
+  B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, ADD, 0, 0), "compile_fence");
-  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address),
-        "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, counter_address), "compile_fence");
 
   // loop back to the comparison
-  emit_opcode_i32(compilation, JUMP,
-                  -(compilation->program->code_size - addr_loop_start), 0);
-  bc_exit_check->arg0.value.i =
-      compilation->program->code_size - addr_exit_check;
+  emit_opcode_i32(compilation, JUMP, -(compilation->program->code_size - addr_loop_start), 0);
+  bc_exit_check->arg0.value.i = compilation->program->code_size - addr_exit_check;
 
   return NONE;
 }
@@ -1300,12 +1239,9 @@ sen_error compile_on_matrix_stack(sen_compilation* compilation, sen_node* ast) {
   sen_result_bytecode result_bytecode;
   sen_error           err;
 
-  B_CHK(emit_opcode_i32(compilation, MTX_LOAD, 0, 0),
-        "compile_on_matrix_stack");
-  E_CHK(compile_rest(compilation, ast),
-        "compile_on_matrix_stack: compile_rest");
-  B_CHK(emit_opcode_i32(compilation, MTX_STORE, 0, 0),
-        "compile_on_matrix_stack");
+  B_CHK(emit_opcode_i32(compilation, MTX_LOAD, 0, 0), "compile_on_matrix_stack");
+  E_CHK(compile_rest(compilation, ast), "compile_on_matrix_stack: compile_rest");
+  B_CHK(emit_opcode_i32(compilation, MTX_STORE, 0, 0), "compile_on_matrix_stack");
 
   return NONE;
 }
@@ -1353,8 +1289,7 @@ sen_error register_top_level_fns(sen_compilation* compilation, sen_node* ast) {
     sen_fn_info* fn_info = &(compilation->program->fn_info[num_fns]);
     num_fns++;
     if (num_fns > MAX_TOP_LEVEL_FUNCTIONS) {
-      SEN_ERROR("Script has more than %d top-level functions\n",
-                MAX_TOP_LEVEL_FUNCTIONS);
+      SEN_ERROR("Script has more than %d top-level functions\n", MAX_TOP_LEVEL_FUNCTIONS);
       return ERROR_COMPILER_MAX_TOP_LEVEL_FUNCTIONS;
     }
 
@@ -1374,8 +1309,7 @@ sen_error register_top_level_fns(sen_compilation* compilation, sen_node* ast) {
   return NONE;
 }
 
-sen_error register_names_in_define(sen_compilation* compilation,
-                                   sen_node*        lhs) {
+sen_error register_names_in_define(sen_compilation* compilation, sen_node* lhs) {
   warn_if_alterable("register_names_in_define lhs", lhs);
   if (lhs->type == NODE_NAME) {
     // (define foo 42)
@@ -1402,8 +1336,7 @@ sen_error register_names_in_define(sen_compilation* compilation,
   return NONE;
 }
 
-sen_error register_top_level_defines(sen_compilation* compilation,
-                                     sen_node*        ast) {
+sen_error register_top_level_defines(sen_compilation* compilation, sen_node* ast) {
   // register top level fns
   while (ast != NULL) {
 
@@ -1415,8 +1348,7 @@ sen_error register_top_level_defines(sen_compilation* compilation,
     // warn_if_alterable("register_top_level_defines define_keyword", ast);
 
     sen_node* define_keyword = safe_first(ast->value.first_child);
-    if (!(define_keyword->type == NODE_NAME &&
-          define_keyword->value.i == INAME_DEFINE)) {
+    if (!(define_keyword->type == NODE_NAME && define_keyword->value.i == INAME_DEFINE)) {
       ast = safe_next(ast);
       continue;
     }
@@ -1427,8 +1359,7 @@ sen_error register_top_level_defines(sen_compilation* compilation,
       E_CHK(register_names_in_define(compilation, lhs),
             "register_top_level_defines: register_names_in_define");
       lhs = safe_next(lhs); // points to the value
-      lhs = safe_next(
-          lhs); // points to the next define statement if there multiple
+      lhs = safe_next(lhs); // points to the next define statement if there multiple
     }
 
     ast = safe_next(ast);
@@ -1457,8 +1388,7 @@ sen_error compile_fn(sen_compilation* compilation, sen_node* ast) {
   warn_if_alterable("compile_fn signature", signature);
   sen_node* fn_name = safe_first(signature->value.first_child);
 
-  sen_result_fn_info result_fn_info =
-      get_fn_info(fn_name, compilation->program);
+  sen_result_fn_info result_fn_info = get_fn_info(fn_name, compilation->program);
   if (is_result_fn_info_error(result_fn_info)) {
     SEN_ERROR("Unable to find fn_info for function %d", fn_name->value.i);
     return result_fn_info.error;
@@ -1470,10 +1400,10 @@ sen_error compile_fn(sen_compilation* compilation, sen_node* ast) {
   // the arguments
   // -------------
 
-  fn_info->arg_address = compilation->program->code_size;
-  sen_node*      args = safe_next(fn_name); // pairs of label/value declarations
-  i32            num_args                 = 0;
-  i32            counter                  = 0;
+  fn_info->arg_address    = compilation->program->code_size;
+  sen_node*      args     = safe_next(fn_name); // pairs of label/value declarations
+  i32            num_args = 0;
+  i32            counter  = 0;
   i32            argument_offsets_counter = 0;
   sen_result_i32 result_i32;
   while (args != NULL) {
@@ -1488,14 +1418,11 @@ sen_error compile_fn(sen_compilation* compilation, sen_node* ast) {
     fn_info->argument_offsets[argument_offsets_counter++] = label_i;
 
     // push pairs of label+value values onto the args stack
-    B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, label_i),
-          "compile_fn");
-    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++),
-          "compile_fn");
+    B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, label_i), "compile_fn");
+    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++), "compile_fn");
 
     N_CHK(compile(compilation, value), "compile_fn: compile");
-    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++),
-          "compile_fn");
+    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_ARGUMENT, counter++), "compile_fn");
 
     num_args++;
     args = safe_next(value);
@@ -1612,11 +1539,9 @@ sen_error compile_fn_invocation(sen_compilation* compilation, sen_node* ast,
   // prepare the MEM_SEG_ARGUMENT with default values
 
   // for the function address
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 666);
-        , "compile_fn_invocation");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 666);, "compile_fn_invocation");
   // for the num args
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 667);
-        , "compile_fn_invocation");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 667);, "compile_fn_invocation");
   B_CHK(emit_opcode_i32(compilation, CALL, fn_info_index, fn_info_index),
         "compile_fn_invocation");
 
@@ -1626,8 +1551,7 @@ sen_error compile_fn_invocation(sen_compilation* compilation, sen_node* ast,
   sen_result_i32 result_i32;
   while (args != NULL) {
     sen_node* label = args;
-    I_CHK(get_node_value_i32(label),
-          "compile_fn_invocation: get_node_value_i32");
+    I_CHK(get_node_value_i32(label), "compile_fn_invocation: get_node_value_i32");
 
     i32 label_i = result_i32.result;
 
@@ -1635,17 +1559,15 @@ sen_error compile_fn_invocation(sen_compilation* compilation, sen_node* ast,
 
     // push value
     N_CHK(compile(compilation, value), "compile_fn_invocation: compile");
-    B_CHK(
-        emit_opcode_i32(compilation, PLACEHOLDER_STORE, fn_info_index, label_i),
-        "compile_fn_invocation");
+    B_CHK(emit_opcode_i32(compilation, PLACEHOLDER_STORE, fn_info_index, label_i),
+          "compile_fn_invocation");
 
     args = safe_next(value);
   }
 
   // call the body of the function
   // for the function body address
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 668);
-        , "compile_fn_invocation");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 668);, "compile_fn_invocation");
   B_CHK(emit_opcode_i32(compilation, CALL_0, fn_info_index, fn_info_index),
         "compile_fn_invocation");
 
@@ -1665,14 +1587,12 @@ sen_error compile_2d_from_gene(sen_compilation* compilation, sen_node* ast) {
         "compile_2d_from_gene: emit_opcode_i32_f32");
   B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, b),
         "compile_2d_from_gene: emit_opcode_i32_f32");
-  B_CHK(emit_opcode_i32(compilation, SQUISH2, 0, 0),
-        "compile_2d_from_gene: emit_opcode_i32");
+  B_CHK(emit_opcode_i32(compilation, SQUISH2, 0, 0), "compile_2d_from_gene: emit_opcode_i32");
 
   return NONE;
 }
 
-sen_error compile_alterable_element(sen_compilation* compilation,
-                                    sen_node*        node) {
+sen_error compile_alterable_element(sen_compilation* compilation, sen_node* node) {
   sen_result_i32      result_i32;
   sen_result_f32      result_f32;
   sen_result_bytecode result_bytecode;
@@ -1696,8 +1616,7 @@ sen_error compile_alterable_element(sen_compilation* compilation,
       E_CHK(compile_2d_from_gene(compilation, node),
             "compile_alterable_element: compile_2d_from_gene");
     } else {
-      E_CHK(compile_vector(compilation, node),
-            "compile_alterable_element: compile_vector");
+      E_CHK(compile_vector(compilation, node), "compile_alterable_element: compile_vector");
     }
   }
 
@@ -1711,8 +1630,7 @@ sen_error compile_2d(sen_compilation* compilation, sen_node* ast) {
   sen_error       err;
   bool            use_gene = alterable(ast);
 
-  for (sen_node* node = safe_first_child(ast); node != NULL;
-       node           = safe_next(node)) {
+  for (sen_node* node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
     if (use_gene) {
       E_CHK(compile_alterable_element(compilation, node),
             "compile_2d: compile_alterable_element");
@@ -1742,8 +1660,7 @@ sen_error compile_vector(sen_compilation* compilation, sen_node* ast) {
   // from the genes
   bool use_gene = alterable(ast);
 
-  for (sen_node* node = safe_first_child(ast); node != NULL;
-       node           = safe_next(node)) {
+  for (sen_node* node = safe_first_child(ast); node != NULL; node = safe_next(node)) {
     if (use_gene) {
       E_CHK(compile_alterable_element(compilation, node),
             "compile_2d: compile_alterable_element");
@@ -1757,8 +1674,8 @@ sen_error compile_vector(sen_compilation* compilation, sen_node* ast) {
   return NONE;
 }
 
-sen_result_node compile_user_defined_name(sen_compilation* compilation,
-                                          sen_node* ast, i32 iname) {
+sen_result_node compile_user_defined_name(sen_compilation* compilation, sen_node* ast,
+                                          i32 iname) {
   sen_result_bytecode result_bytecode;
 
   sen_option_i32 option_i32 = get_local_mapping(compilation, iname);
@@ -1773,8 +1690,8 @@ sen_result_node compile_user_defined_name(sen_compilation* compilation,
     option_i32 = get_argument_mapping(compilation->current_fn_info, iname);
     if (is_option_i32_some(option_i32)) {
       i32 argument_mapping = option_i32.some;
-      result_bytecode = emit_opcode_i32(compilation, LOAD, MEM_SEG_ARGUMENT,
-                                        argument_mapping);
+      result_bytecode =
+          emit_opcode_i32(compilation, LOAD, MEM_SEG_ARGUMENT, argument_mapping);
       if (is_result_bytecode_error(result_bytecode)) {
         SEN_ERROR("compile_user_defined_name");
         return result_node_error(result_bytecode.error);
@@ -1786,8 +1703,7 @@ sen_result_node compile_user_defined_name(sen_compilation* compilation,
   option_i32 = get_global_mapping(compilation, iname);
   if (is_option_i32_some(option_i32)) {
     i32 global_mapping = option_i32.some;
-    result_bytecode =
-        emit_opcode_i32(compilation, LOAD, MEM_SEG_GLOBAL, global_mapping);
+    result_bytecode    = emit_opcode_i32(compilation, LOAD, MEM_SEG_GLOBAL, global_mapping);
     if (is_result_bytecode_error(result_bytecode)) {
       return result_node_error(result_bytecode.error);
     }
@@ -1800,8 +1716,7 @@ sen_result_node compile_user_defined_name(sen_compilation* compilation,
     return result_node_ok(safe_next(ast));
   }
 
-  SEN_ERROR("unknown mapping for: %s",
-            wlut_get_word(compilation->program->word_lut, iname));
+  SEN_ERROR("unknown mapping for: %s", wlut_get_word(compilation->program->word_lut, iname));
   return result_node_error(ERROR_COMPILER_UNKNOWN_MAPPING_FOR_NAME);
 
   // todo: this used to have the following line:
@@ -1836,8 +1751,7 @@ sen_result_node compile(sen_compilation* compilation, sen_node* ast) {
     } else {
       if (alterable(ast)) {
         warn_if_alterable("NODE_LIST", ast);
-        SEN_ERROR(
-            "given an alterable list that wasn't a colour constructor???");
+        SEN_ERROR("given an alterable list that wasn't a colour constructor???");
       }
       n = safe_first(ast->value.first_child);
 
@@ -1851,7 +1765,7 @@ sen_result_node compile(sen_compilation* compilation, sen_node* ast) {
       sen_option_i32 option_i32 = get_fn_info_index(name, compilation->program);
       if (is_option_i32_some(option_i32)) {
         i32 fn_info_index = option_i32.some;
-        err = compile_fn_invocation(compilation, name, fn_info_index);
+        err               = compile_fn_invocation(compilation, name, fn_info_index);
         if (is_error(err)) {
           SEN_ERROR("compile: compile_fn_invocation");
           return result_node_error(err);
@@ -1875,8 +1789,7 @@ sen_result_node compile(sen_compilation* compilation, sen_node* ast) {
     }
     f = result_f32.result;
 
-    result_bytecode =
-        emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, f);
+    result_bytecode = emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, f);
     if (is_result_bytecode_error(result_bytecode)) {
       return result_node_error(result_bytecode.error);
     }
@@ -1923,11 +1836,9 @@ sen_result_node compile(sen_compilation* compilation, sen_node* ast) {
     }
     i32 iname = result_i32.result;
 
-    if (iname >= WORD_START &&
-        iname < WORD_START + MAX_WORD_LOOKUPS) { // a user defined name
+    if (iname >= WORD_START && iname < WORD_START + MAX_WORD_LOOKUPS) { // a user defined name
       return compile_user_defined_name(compilation, ast, iname);
-    } else if (iname >= KEYWORD_START &&
-               iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
+    } else if (iname >= KEYWORD_START && iname < KEYWORD_START + MAX_KEYWORD_LOOKUPS) {
 
       switch (iname) {
       case INAME_DEFINE:
@@ -2080,8 +1991,7 @@ sen_result_node compile(sen_compilation* compilation, sen_node* ast) {
         // e.g. linear in (bezier line-width-mapping: linear)
         return compile_user_defined_name(compilation, ast, iname);
       };
-    } else if (iname >= NATIVE_START &&
-               iname < NATIVE_START + MAX_NATIVE_LOOKUPS) {
+    } else if (iname >= NATIVE_START && iname < NATIVE_START + MAX_NATIVE_LOOKUPS) {
       // NATIVE
 
       // note: how to count the stack delta? how many pop voids are required?
@@ -2096,9 +2006,8 @@ sen_result_node compile(sen_compilation* compilation, sen_node* ast) {
           SEN_ERROR("compile: get_node_value_i32");
           return result_node_error(result_i32.error);
         }
-        i = result_i32.result;
-        result_bytecode =
-            emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i);
+        i               = result_i32.result;
+        result_bytecode = emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i);
         if (is_result_bytecode_error(result_bytecode)) {
           return result_node_error(result_bytecode.error);
         }
@@ -2140,8 +2049,7 @@ bool is_list_beginning_with(sen_node* ast, i32 index) {
   return false;
 }
 
-sen_error compile_global_bind_node(sen_compilation* compilation, i32 iname,
-                                   sen_node* node) {
+sen_error compile_global_bind_node(sen_compilation* compilation, i32 iname, sen_node* node) {
   sen_result_node result_node;
   sen_result_i32  result_i32;
 
@@ -2151,8 +2059,7 @@ sen_error compile_global_bind_node(sen_compilation* compilation, i32 iname,
   return NONE;
 }
 
-sen_error compile_global_bind_i32(sen_compilation* compilation, i32 iname,
-                                  i32 value) {
+sen_error compile_global_bind_i32(sen_compilation* compilation, i32 iname, i32 value) {
   sen_result_bytecode result_bytecode;
   sen_result_i32      result_i32;
 
@@ -2163,8 +2070,7 @@ sen_error compile_global_bind_i32(sen_compilation* compilation, i32 iname,
   return NONE;
 }
 
-sen_error compile_global_bind_f32(sen_compilation* compilation, i32 iname,
-                                  f32 value) {
+sen_error compile_global_bind_f32(sen_compilation* compilation, i32 iname, f32 value) {
   sen_result_bytecode result_bytecode;
   sen_result_i32      result_i32;
 
@@ -2175,8 +2081,8 @@ sen_error compile_global_bind_f32(sen_compilation* compilation, i32 iname,
   return NONE;
 }
 
-sen_error compile_global_bind_col(sen_compilation* compilation, i32 iname,
-                                  f32 r, f32 g, f32 b, f32 a) {
+sen_error compile_global_bind_col(sen_compilation* compilation, i32 iname, f32 r, f32 g,
+                                  f32 b, f32 a) {
   sen_result_bytecode result_bytecode;
   sen_result_i32      result_i32;
 
@@ -2202,8 +2108,7 @@ sen_error compile_global_bind_col(sen_compilation* compilation, i32 iname,
 sen_error append_name(sen_compilation* compilation, i32 iname) {
   sen_result_bytecode result_bytecode;
 
-  B_CHK(emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, iname),
-        "append_name");
+  B_CHK(emit_opcode_i32_name(compilation, LOAD, MEM_SEG_CONSTANT, iname), "append_name");
   B_CHK(emit_opcode_i32(compilation, APPEND, 0, 0), "append_name");
 
   return NONE;
@@ -2219,13 +2124,13 @@ sen_error compile_global_bind_procedural_presets(sen_compilation* compilation) {
         "compile_global_bind_procedural_presets");
 
   // append the names
-  E_CHK(append_name(compilation, INAME_CHROME), "INAME_CHROME");
-  E_CHK(append_name(compilation, INAME_HOTLINE_MIAMI), "INAME_HOTLINE_MIAMI");
-  E_CHK(append_name(compilation, INAME_KNIGHT_RIDER), "INAME_KNIGHT_RIDER");
-  E_CHK(append_name(compilation, INAME_MARS), "INAME_MARS");
-  E_CHK(append_name(compilation, INAME_RAINBOW), "INAME_RAINBOW");
-  E_CHK(append_name(compilation, INAME_ROBOCOP), "INAME_ROBOCOP");
-  E_CHK(append_name(compilation, INAME_TRANSFORMERS), "INAME_TRANSFORMERS");
+  E_CHK(append_name(compilation, INAME_CHROME), "CHROME");
+  E_CHK(append_name(compilation, INAME_HOTLINE_MIAMI), "HOTLINE_MIAMI");
+  E_CHK(append_name(compilation, INAME_KNIGHT_RIDER), "KNIGHT_RIDER");
+  E_CHK(append_name(compilation, INAME_MARS), "MARS");
+  E_CHK(append_name(compilation, INAME_RAINBOW), "RAINBOW");
+  E_CHK(append_name(compilation, INAME_ROBOCOP), "ROBOCOP");
+  E_CHK(append_name(compilation, INAME_TRANSFORMERS), "TRANSFORMERS");
 
   I_CHK(store_globally(compilation, INAME_COL_PROCEDURAL_FN_PRESETS),
         "compile_global_bind_procedural_presets");
@@ -2243,67 +2148,42 @@ sen_error compile_global_bind_ease_presets(sen_compilation* compilation) {
         "compile_global_bind_ease_presets");
 
   // append the names
-  E_CHK(append_name(compilation, INAME_LINEAR), "INAME_LINEAR");
-  E_CHK(append_name(compilation, INAME_EASE_QUICK), "INAME_EASE_QUICK");
-  E_CHK(append_name(compilation, INAME_EASE_SLOW_IN), "INAME_EASE_SLOW_IN");
-  E_CHK(append_name(compilation, INAME_EASE_SLOW_IN_OUT),
-        "INAME_EASE_SLOW_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_QUADRATIC_IN),
-        "INAME_EASE_QUADRATIC_IN");
-  E_CHK(append_name(compilation, INAME_EASE_QUADRATIC_OUT),
-        "INAME_EASE_QUADRATIC_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_QUADRATIC_IN_OUT),
-        "INAME_EASE_QUADRATIC_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_CUBIC_IN), "INAME_EASE_CUBIC_IN");
-  E_CHK(append_name(compilation, INAME_EASE_CUBIC_OUT), "INAME_EASE_CUBIC_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_CUBIC_IN_OUT),
-        "INAME_EASE_CUBIC_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_QUARTIC_IN),
-        "INAME_EASE_QUARTIC_IN");
-  E_CHK(append_name(compilation, INAME_EASE_QUARTIC_OUT),
-        "INAME_EASE_QUARTIC_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_QUARTIC_IN_OUT),
-        "INAME_EASE_QUARTIC_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_QUINTIC_IN),
-        "INAME_EASE_QUINTIC_IN");
-  E_CHK(append_name(compilation, INAME_EASE_QUINTIC_OUT),
-        "INAME_EASE_QUINTIC_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_QUINTIC_IN_OUT),
-        "INAME_EASE_QUINTIC_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_SIN_IN), "INAME_EASE_SIN_IN");
-  E_CHK(append_name(compilation, INAME_EASE_SIN_OUT), "INAME_EASE_SIN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_SIN_IN_OUT),
-        "INAME_EASE_SIN_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_CIRCULAR_IN),
-        "INAME_EASE_CIRCULAR_IN");
-  E_CHK(append_name(compilation, INAME_EASE_CIRCULAR_OUT),
-        "INAME_EASE_CIRCULAR_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_CIRCULAR_IN_OUT),
-        "INAME_EASE_CIRCULAR_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_EXPONENTIAL_IN),
-        "INAME_EASE_EXPONENTIAL_IN");
-  E_CHK(append_name(compilation, INAME_EASE_EXPONENTIAL_OUT),
-        "INAME_EASE_EXPONENTIAL_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_EXPONENTIAL_IN_OUT),
-        "INAME_EASE_EXPONENTIAL_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_ELASTIC_IN),
-        "INAME_EASE_ELASTIC_IN");
-  E_CHK(append_name(compilation, INAME_EASE_ELASTIC_OUT),
-        "INAME_EASE_ELASTIC_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_ELASTIC_IN_OUT),
-        "INAME_EASE_ELASTIC_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_BACK_IN), "INAME_EASE_BACK_IN");
-  E_CHK(append_name(compilation, INAME_EASE_BACK_OUT), "INAME_EASE_BACK_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_BACK_IN_OUT),
-        "INAME_EASE_BACK_IN_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_BOUNCE_IN), "INAME_EASE_BOUNCE_IN");
-  E_CHK(append_name(compilation, INAME_EASE_BOUNCE_OUT),
-        "INAME_EASE_BOUNCE_OUT");
-  E_CHK(append_name(compilation, INAME_EASE_BOUNCE_IN_OUT),
-        "INAME_EASE_BOUNCE_IN_OUT");
+  E_CHK(append_name(compilation, INAME_LINEAR), "LINEAR");
+  E_CHK(append_name(compilation, INAME_EASE_QUICK), "EASE_QUICK");
+  E_CHK(append_name(compilation, INAME_EASE_SLOW_IN), "EASE_SLOW_IN");
+  E_CHK(append_name(compilation, INAME_EASE_SLOW_IN_OUT), "EASE_SLOW_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUADRATIC_IN), "EASE_QUADRATIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_QUADRATIC_OUT), "EASE_QUADRATIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUADRATIC_IN_OUT), "EASE_QUADRATIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_CUBIC_IN), "EASE_CUBIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_CUBIC_OUT), "EASE_CUBIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_CUBIC_IN_OUT), "EASE_CUBIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUARTIC_IN), "EASE_QUARTIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_QUARTIC_OUT), "EASE_QUARTIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUARTIC_IN_OUT), "EASE_QUARTIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUINTIC_IN), "EASE_QUINTIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_QUINTIC_OUT), "EASE_QUINTIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_QUINTIC_IN_OUT), "EASE_QUINTIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_SIN_IN), "EASE_SIN_IN");
+  E_CHK(append_name(compilation, INAME_EASE_SIN_OUT), "EASE_SIN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_SIN_IN_OUT), "EASE_SIN_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_CIRCULAR_IN), "EASE_CIRCULAR_IN");
+  E_CHK(append_name(compilation, INAME_EASE_CIRCULAR_OUT), "EASE_CIRCULAR_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_CIRCULAR_IN_OUT), "EASE_CIRCULAR_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_EXPONENTIAL_IN), "EASE_EXPONENTIAL_IN");
+  E_CHK(append_name(compilation, INAME_EASE_EXPONENTIAL_OUT), "EASE_EXPONENTIAL_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_EXPONENTIAL_IN_OUT), "EASE_EXPONENTIAL_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_ELASTIC_IN), "EASE_ELASTIC_IN");
+  E_CHK(append_name(compilation, INAME_EASE_ELASTIC_OUT), "EASE_ELASTIC_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_ELASTIC_IN_OUT), "EASE_ELASTIC_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_BACK_IN), "EASE_BACK_IN");
+  E_CHK(append_name(compilation, INAME_EASE_BACK_OUT), "EASE_BACK_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_BACK_IN_OUT), "EASE_BACK_IN_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_BOUNCE_IN), "EASE_BOUNCE_IN");
+  E_CHK(append_name(compilation, INAME_EASE_BOUNCE_OUT), "EASE_BOUNCE_OUT");
+  E_CHK(append_name(compilation, INAME_EASE_BOUNCE_IN_OUT), "EASE_BOUNCE_IN_OUT");
 
-  I_CHK(store_globally(compilation, INAME_EASE_PRESETS),
-        "compile_global_bind_ease_presets");
+  I_CHK(store_globally(compilation, INAME_EASE_PRESETS), "compile_global_bind_ease_presets");
 
   return NONE;
 }
@@ -2312,38 +2192,25 @@ sen_error compile_global_bind_ease_presets(sen_compilation* compilation) {
 sen_error register_top_level_preamble(sen_compilation* compilation) {
   sen_result_i32 result_i32;
 
-  I_CHK(add_global_mapping(compilation, INAME_GEN_INITIAL),
-        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_GEN_INITIAL), "register_top_level_preamble");
 
-  I_CHK(add_global_mapping(compilation, INAME_CANVAS_WIDTH),
-        "register_top_level_preamble");
-  I_CHK(add_global_mapping(compilation, INAME_CANVAS_HEIGHT),
-        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_CANVAS_WIDTH), "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_CANVAS_HEIGHT), "register_top_level_preamble");
 
-  I_CHK(add_global_mapping(compilation, INAME_MATH_TAU),
-        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_MATH_TAU), "register_top_level_preamble");
 
-  I_CHK(add_global_mapping(compilation, INAME_WHITE),
-        "register_top_level_preamble");
-  I_CHK(add_global_mapping(compilation, INAME_BLACK),
-        "register_top_level_preamble");
-  I_CHK(add_global_mapping(compilation, INAME_RED),
-        "register_top_level_preamble");
-  I_CHK(add_global_mapping(compilation, INAME_GREEN),
-        "register_top_level_preamble");
-  I_CHK(add_global_mapping(compilation, INAME_BLUE),
-        "register_top_level_preamble");
-  I_CHK(add_global_mapping(compilation, INAME_YELLOW),
-        "register_top_level_preamble");
-  I_CHK(add_global_mapping(compilation, INAME_MAGENTA),
-        "register_top_level_preamble");
-  I_CHK(add_global_mapping(compilation, INAME_CYAN),
-        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_WHITE), "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_BLACK), "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_RED), "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_GREEN), "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_BLUE), "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_YELLOW), "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_MAGENTA), "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_CYAN), "register_top_level_preamble");
 
   I_CHK(add_global_mapping(compilation, INAME_COL_PROCEDURAL_FN_PRESETS),
         "register_top_level_preamble");
-  I_CHK(add_global_mapping(compilation, INAME_EASE_PRESETS),
-        "register_top_level_preamble");
+  I_CHK(add_global_mapping(compilation, INAME_EASE_PRESETS), "register_top_level_preamble");
 
   return NONE;
 }
@@ -2354,44 +2221,34 @@ sen_error compile_preamble(sen_compilation* compilation) {
   // NOTE: each entry should have a corresponding entry in
   // register_top_level_preamble
   // ********************************************************************************
-  E_CHK(compile_global_bind_i32(compilation, INAME_GEN_INITIAL, 0),
-        "compile_preamble");
+  E_CHK(compile_global_bind_i32(compilation, INAME_GEN_INITIAL, 0), "compile_preamble");
   E_CHK(compile_global_bind_f32(compilation, INAME_CANVAS_WIDTH, 1000.0f),
         "compile_preamble");
   E_CHK(compile_global_bind_f32(compilation, INAME_CANVAS_HEIGHT, 1000.0f),
         "compile_preamble");
 
-  E_CHK(compile_global_bind_f32(compilation, INAME_MATH_TAU, TAU),
-        "compile_preamble");
+  E_CHK(compile_global_bind_f32(compilation, INAME_MATH_TAU, TAU), "compile_preamble");
 
-  E_CHK(
-      compile_global_bind_col(compilation, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f),
-      "compile_preamble");
-  E_CHK(
-      compile_global_bind_col(compilation, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f),
-      "compile_preamble");
+  E_CHK(compile_global_bind_col(compilation, INAME_WHITE, 1.0f, 1.0f, 1.0f, 1.0f),
+        "compile_preamble");
+  E_CHK(compile_global_bind_col(compilation, INAME_BLACK, 0.0f, 0.0f, 0.0f, 1.0f),
+        "compile_preamble");
 
   E_CHK(compile_global_bind_col(compilation, INAME_RED, 1.0f, 0.0f, 0.0f, 1.0f),
         "compile_preamble");
-  E_CHK(
-      compile_global_bind_col(compilation, INAME_GREEN, 0.0f, 1.0f, 0.0f, 1.0f),
-      "compile_preamble");
-  E_CHK(
-      compile_global_bind_col(compilation, INAME_BLUE, 0.0f, 0.0f, 1.0f, 1.0f),
-      "compile_preamble");
+  E_CHK(compile_global_bind_col(compilation, INAME_GREEN, 0.0f, 1.0f, 0.0f, 1.0f),
+        "compile_preamble");
+  E_CHK(compile_global_bind_col(compilation, INAME_BLUE, 0.0f, 0.0f, 1.0f, 1.0f),
+        "compile_preamble");
 
-  E_CHK(compile_global_bind_col(compilation, INAME_YELLOW, 1.0f, 1.0f, 0.0f,
-                                1.0f),
+  E_CHK(compile_global_bind_col(compilation, INAME_YELLOW, 1.0f, 1.0f, 0.0f, 1.0f),
         "compile_preamble");
-  E_CHK(compile_global_bind_col(compilation, INAME_MAGENTA, 1.0f, 0.0f, 1.0f,
-                                1.0f),
+  E_CHK(compile_global_bind_col(compilation, INAME_MAGENTA, 1.0f, 0.0f, 1.0f, 1.0f),
         "compile_preamble");
-  E_CHK(
-      compile_global_bind_col(compilation, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f),
-      "compile_preamble");
+  E_CHK(compile_global_bind_col(compilation, INAME_CYAN, 0.0f, 1.0f, 1.0f, 1.0f),
+        "compile_preamble");
 
-  E_CHK(compile_global_bind_procedural_presets(compilation),
-        "compile_preamble");
+  E_CHK(compile_global_bind_procedural_presets(compilation), "compile_preamble");
   E_CHK(compile_global_bind_ease_presets(compilation), "compile_preamble");
   // ********************************************************************************
   // NOTE: each entry should have a corresponding entry in
@@ -2410,16 +2267,13 @@ sen_error compile_common_prologue(sen_compilation* compilation, sen_node* ast) {
 
   E_CHK(register_top_level_preamble(compilation), "compile_common_prologue");
   E_CHK(register_top_level_fns(compilation, ast), "compile_common_prologue");
-  E_CHK(register_top_level_defines(compilation, ast),
-        "compile_common_prologue");
+  E_CHK(register_top_level_defines(compilation, ast), "compile_common_prologue");
 
   return NONE;
 }
 
-sen_error compile_common_top_level_fns(sen_compilation* compilation,
-                                       sen_node*        ast) {
-  sen_result_bytecode result_bytecode =
-      emit_opcode_i32(compilation, JUMP, 0, 0);
+sen_error compile_common_top_level_fns(sen_compilation* compilation, sen_node* ast) {
+  sen_result_bytecode result_bytecode = emit_opcode_i32(compilation, JUMP, 0, 0);
   if (is_result_bytecode_error(result_bytecode)) {
     return result_bytecode.error;
   }
@@ -2446,15 +2300,13 @@ sen_error compile_common_top_level_fns(sen_compilation* compilation,
   return NONE;
 }
 
-sen_error compile_common_top_level_defines(sen_compilation* compilation,
-                                           sen_node*        ast) {
+sen_error compile_common_top_level_defines(sen_compilation* compilation, sen_node* ast) {
   sen_error err;
 
   sen_node* n = ast;
   while (n != NULL) {
     if (is_list_beginning_with(n, INAME_DEFINE)) {
-      E_CHK(compile_define(compilation, safe_first(n->value.first_child),
-                           MEM_SEG_GLOBAL),
+      E_CHK(compile_define(compilation, safe_first(n->value.first_child), MEM_SEG_GLOBAL),
             "compile_common_top_level_defines: compile_define");
       n = safe_next(n);
     } else {
@@ -2465,8 +2317,7 @@ sen_error compile_common_top_level_defines(sen_compilation* compilation,
   return NONE;
 }
 
-sen_error compile_common_top_level_forms(sen_compilation* compilation,
-                                         sen_node*        ast) {
+sen_error compile_common_top_level_forms(sen_compilation* compilation, sen_node* ast) {
   sen_node*       n = ast;
   sen_result_node result_node;
   while (n != NULL) {
@@ -2483,8 +2334,7 @@ sen_error compile_common_top_level_forms(sen_compilation* compilation,
 }
 
 sen_error compile_common_epilogue(sen_compilation* compilation) {
-  sen_result_bytecode result_bytecode =
-      emit_opcode_i32(compilation, STOP, 0, 0);
+  sen_result_bytecode result_bytecode = emit_opcode_i32(compilation, STOP, 0, 0);
   if (is_result_bytecode_error(result_bytecode)) {
     return result_bytecode.error;
   }
@@ -2531,10 +2381,8 @@ sen_result_program compile_program(sen_program* program, sen_node* ast) {
   return result_program_ok(compilation.program);
 }
 
-sen_result_program compile_program_with_genotype(sen_program*  program,
-                                                 sen_word_lut* word_lut,
-                                                 sen_node*     ast,
-                                                 sen_genotype* genotype) {
+sen_result_program compile_program_with_genotype(sen_program* program, sen_word_lut* word_lut,
+                                                 sen_node* ast, sen_genotype* genotype) {
   g_use_genes = true;
 
   sen_error err = genotype_assign_to_ast(word_lut, genotype, ast);
@@ -2561,9 +2409,8 @@ sen_result_program compile_program_with_genotype(sen_program*  program,
   return result_program_ok(sen_program);
 }
 
-sen_result_program compile_program_for_trait(sen_program* program,
-                                             sen_node*    ast,
-                                             sen_node*    gen_initial_value) {
+sen_result_program compile_program_for_trait(sen_program* program, sen_node* ast,
+                                             sen_node* gen_initial_value) {
   sen_error err;
   g_use_genes = false;
 
@@ -2581,8 +2428,7 @@ sen_result_program compile_program_for_trait(sen_program* program,
 
   // this is a sub-program for a trait, bind the initial value to
   // gen/initial-value
-  err = compile_global_bind_node(&compilation, INAME_GEN_INITIAL,
-                                 gen_initial_value);
+  err = compile_global_bind_node(&compilation, INAME_GEN_INITIAL, gen_initial_value);
   if (is_error(err)) {
     return result_program_error(err);
   }

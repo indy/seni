@@ -24,9 +24,7 @@ SEN_POOL(sen_node, node)
 
 struct sen_node_pool* g_node_pool;
 
-void parser_subsystem_startup() {
-  g_node_pool = node_pool_allocate(1, 1000, 20);
-}
+void parser_subsystem_startup() { g_node_pool = node_pool_allocate(1, 1000, 20); }
 
 void parser_subsystem_shutdown() { node_pool_free(g_node_pool); }
 
@@ -54,14 +52,12 @@ bool is_whitespace(char c) {
 
 bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
-bool is_alpha(char c) {
-  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-}
+bool is_alpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
 
 bool is_symbol(char c) {
-  return c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '!' ||
-         c == '@' || c == '#' || c == '$' || c == '%' || c == '^' || c == '&' ||
-         c == '<' || c == '>' || c == '?';
+  return c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '!' || c == '@' ||
+         c == '#' || c == '$' || c == '%' || c == '^' || c == '&' || c == '<' || c == '>' ||
+         c == '?';
 }
 
 bool is_list_start(char c) { return c == '('; }
@@ -114,8 +110,8 @@ char* find_next(char* s, char target) {
   return NULL;
 }
 
-sen_result_i32 lookup_name(sen_string_ref* string_refs, i32 word_count,
-                           i32 offset, char* string, size_t len) {
+sen_result_i32 lookup_name(sen_string_ref* string_refs, i32 word_count, i32 offset,
+                           char* string, size_t len) {
   i32             i          = 0;
   sen_string_ref* string_ref = string_refs;
 
@@ -145,24 +141,22 @@ sen_result_i32 lookup_name(sen_string_ref* string_refs, i32 word_count,
   return result_i32_error(ERROR_WLUT_LOOKUP_FAILED);
 }
 
-sen_result_i32 word_lut_lookup_(sen_word_lut* word_lut, char* string,
-                                size_t len) {
+sen_result_i32 word_lut_lookup_(sen_word_lut* word_lut, char* string, size_t len) {
   sen_result_i32 result_i32;
 
-  result_i32 = lookup_name(word_lut->native_ref, word_lut->native_count,
-                           NATIVE_START, string, len);
+  result_i32 =
+      lookup_name(word_lut->native_ref, word_lut->native_count, NATIVE_START, string, len);
   if (is_result_i32_ok(result_i32)) {
     return result_i32;
   }
 
-  result_i32 = lookup_name(word_lut->keyword_ref, word_lut->keyword_count,
-                           KEYWORD_START, string, len);
+  result_i32 =
+      lookup_name(word_lut->keyword_ref, word_lut->keyword_count, KEYWORD_START, string, len);
   if (is_result_i32_ok(result_i32)) {
     return result_i32;
   }
 
-  result_i32 = lookup_name(word_lut->word_ref, word_lut->word_count, WORD_START,
-                           string, len);
+  result_i32 = lookup_name(word_lut->word_ref, word_lut->word_count, WORD_START, string, len);
   if (is_result_i32_ok(result_i32)) {
     return result_i32;
   }
@@ -170,8 +164,7 @@ sen_result_i32 word_lut_lookup_(sen_word_lut* word_lut, char* string,
   return result_i32_error(ERROR_WLUT_LOOKUP_FAILED);
 }
 
-sen_result_i32 word_lut_lookup_or_add(sen_word_lut* word_lut, char* string,
-                                      size_t len) {
+sen_result_i32 word_lut_lookup_or_add(sen_word_lut* word_lut, char* string, size_t len) {
   sen_result_i32 result_i32 = word_lut_lookup_(word_lut, string, len);
   if (result_i32.error == NONE) {
     return result_i32;
@@ -187,9 +180,8 @@ sen_result_i32 word_lut_lookup_or_add(sen_word_lut* word_lut, char* string,
   return result_i32_ok(res);
 }
 
-sen_result_node build_text_lookup_node_from_string(sen_word_lut* word_lut,
-                                                   sen_node_type type,
-                                                   char*         string) {
+sen_result_node build_text_lookup_node_from_string(sen_word_lut* word_lut, sen_node_type type,
+                                                   char* string) {
   sen_result_node result_node;
 
   sen_node* node = node_get_from_pool();
@@ -210,9 +202,8 @@ sen_result_node build_text_lookup_node_from_string(sen_word_lut* word_lut,
   return result_node_ok(node);
 }
 
-sen_result_node build_text_lookup_node_of_length(sen_word_lut* word_lut,
-                                                 char** src, sen_node_type type,
-                                                 size_t len) {
+sen_result_node build_text_lookup_node_of_length(sen_word_lut* word_lut, char** src,
+                                                 sen_node_type type, size_t len) {
   sen_result_node result_node;
 
   sen_node* node = node_get_from_pool();
@@ -255,8 +246,7 @@ sen_node* build_text_node_of_length(char** src, sen_node_type type,
 // allocate memory for comments and whitespace rather than using the lookup
 // table
 //
-sen_result_node build_text_node_of_length(char** src, sen_node_type type,
-                                          size_t len) {
+sen_result_node build_text_node_of_length(char** src, sen_node_type type, size_t len) {
   sen_node* node = node_get_from_pool();
   if (node == NULL) {
     return result_node_error(ERROR_NULL_NODE);
@@ -364,11 +354,9 @@ sen_result_node eat_alterable(sen_word_lut* word_lut, char** src) {
     }
   }
 
-  if (node->type != NODE_INT && node->type != NODE_FLOAT &&
-      node->type != NODE_NAME && node->type != NODE_LIST &&
-      node->type != NODE_VECTOR) {
-    SEN_ERROR("non-mutable node within curly brackets: %s",
-              node_type_name(node));
+  if (node->type != NODE_INT && node->type != NODE_FLOAT && node->type != NODE_NAME &&
+      node->type != NODE_LIST && node->type != NODE_VECTOR) {
+    SEN_ERROR("non-mutable node within curly brackets: %s", node_type_name(node));
     return result_node_error(ERROR_PARSE_NON_MUTABLE_NODE);
   }
 
@@ -402,8 +390,7 @@ sen_result_node eat_quoted_form(sen_word_lut* word_lut, char** src) {
 
   node->type = NODE_LIST;
 
-  result_node =
-      build_text_lookup_node_from_string(word_lut, NODE_NAME, "quote");
+  result_node = build_text_lookup_node_from_string(word_lut, NODE_NAME, "quote");
 
   if (is_result_node_error(result_node)) {
     return result_node;
@@ -489,8 +476,7 @@ sen_result_node eat_string(sen_word_lut* word_lut, char** src) {
 
   size_t string_len = next_quote - *src;
 
-  result_node =
-      build_text_lookup_node_of_length(word_lut, src, NODE_STRING, string_len);
+  result_node = build_text_lookup_node_of_length(word_lut, src, NODE_STRING, string_len);
   // "eat_string: build_text_lookup_node_of_length"
   if (is_result_node_error(result_node)) {
     return result_node;

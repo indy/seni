@@ -37,8 +37,7 @@ void sen_systems_shutdown() {
 
 sen_vm* sen_allocate_vm(i32 stack_size, i32 heap_size, i32 heap_min_size,
                         i32 vertex_packet_num_vertices) {
-  sen_vm* vm = vm_allocate(stack_size, heap_size, heap_min_size,
-                           vertex_packet_num_vertices);
+  sen_vm* vm = vm_allocate(stack_size, heap_size, heap_min_size, vertex_packet_num_vertices);
 
   return vm;
 }
@@ -55,8 +54,7 @@ sen_env* sen_allocate_env() {
 
 void sen_free_env(sen_env* env) { env_free(env); }
 
-sen_program* sen_compile_program(char* source, sen_word_lut* word_lut,
-                                 i32 program_max_size) {
+sen_program* sen_compile_program(char* source, sen_word_lut* word_lut, i32 program_max_size) {
   sen_result_node result_node = parser_parse(word_lut, source);
   sen_node*       ast         = result_node.result;
 
@@ -80,10 +78,8 @@ sen_program* sen_compile_program(char* source, sen_word_lut* word_lut,
   return program;
 }
 
-sen_program* sen_compile_program_with_genotype(char*         source,
-                                               sen_genotype* genotype,
-                                               sen_word_lut* word_lut,
-                                               i32           program_max_size) {
+sen_program* sen_compile_program_with_genotype(char* source, sen_genotype* genotype,
+                                               sen_word_lut* word_lut, i32 program_max_size) {
   sen_result_node result_node = parser_parse(word_lut, source);
   sen_node*       ast         = result_node.result;
 
@@ -96,8 +92,7 @@ sen_program* sen_compile_program_with_genotype(char*         source,
   sen_result_program result_program =
       compile_program_with_genotype(program, word_lut, ast, genotype);
   if (is_result_program_error(result_program)) {
-    SEN_ERROR(
-        "sen_compile_program_with_genotype: compile_program_with_genotype");
+    SEN_ERROR("sen_compile_program_with_genotype: compile_program_with_genotype");
     // todo: return an error code here
     return NULL;
   }
@@ -107,8 +102,8 @@ sen_program* sen_compile_program_with_genotype(char*         source,
   return result_program.result;
 }
 
-void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source,
-                               sen_genotype* genotype, sen_word_lut* word_lut) {
+void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source, sen_genotype* genotype,
+                               sen_word_lut* word_lut) {
   sen_result_node result_node = parser_parse(word_lut, source);
   sen_node*       ast         = result_node.result;
 
@@ -121,8 +116,7 @@ void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source,
   parser_return_nodes_to_pool(ast);
 }
 
-void sen_simplify_script(sen_cursor* out_cursor, char* source,
-                         sen_word_lut* word_lut) {
+void sen_simplify_script(sen_cursor* out_cursor, char* source, sen_word_lut* word_lut) {
   sen_result_node result_node = parser_parse(word_lut, source);
   sen_node*       ast         = result_node.result;
 
@@ -184,8 +178,7 @@ sen_trait_list* sen_deserialize_trait_list(sen_cursor* cursor) {
 
   bool res = trait_list_deserialize(trait_list, cursor);
   if (res == false) {
-    SEN_ERROR(
-        "sen_deserialize_trait_list: trait_list_deserialize returned false");
+    SEN_ERROR("sen_deserialize_trait_list: trait_list_deserialize returned false");
     return NULL;
   }
 

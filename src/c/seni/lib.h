@@ -14,17 +14,14 @@ void    sen_reset_vm(sen_vm* vm);
 sen_env* sen_allocate_env();
 void     sen_free_env(sen_env* env);
 
-sen_program* sen_compile_program(char* source, sen_word_lut* word_lut,
-                                 i32 program_max_size);
-sen_program* sen_compile_program_with_genotype(char*         source,
-                                               sen_genotype* genotype,
-                                               sen_word_lut* word_lut,
-                                               i32           program_max_size);
-void         sen_unparse_with_genotype(sen_cursor* out_cursor, char* source,
-                                       sen_genotype* genotype, sen_word_lut* word_lut);
+sen_program* sen_compile_program(char* source, sen_word_lut* word_lut, i32 program_max_size);
+sen_program* sen_compile_program_with_genotype(char* source, sen_genotype* genotype,
+                                               sen_word_lut* word_lut, i32 program_max_size);
+void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source, sen_genotype* genotype,
+                               sen_word_lut* word_lut);
 
 sen_genotype* sen_deserialize_genotype(sen_cursor* cursor);
 
 sen_trait_list* sen_compile_trait_list(char* source, sen_word_lut* word_lut);
-bool sen_serialize_trait_list(sen_trait_list* trait_list, sen_cursor* cursor);
+bool            sen_serialize_trait_list(sen_trait_list* trait_list, sen_cursor* cursor);
 sen_trait_list* sen_deserialize_trait_list(sen_cursor* cursor);

@@ -80,22 +80,20 @@ export void sen_startup() {
     sen_free_vm(g_vm);
   }
 
-  g_vm = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE,
-                         VERTEX_PACKET_NUM_VERTICES);
+  g_vm = sen_allocate_vm(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   g_e  = sen_allocate_env();
 
   g_source_buffer = (char*)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
 
   g_out_source_buffer = (char*)calloc(SOURCE_BUFFER_SIZE, sizeof(char));
-  g_out_source_cursor =
-      cursor_allocate(g_out_source_buffer, SOURCE_BUFFER_SIZE);
+  g_out_source_cursor = cursor_allocate(g_out_source_buffer, SOURCE_BUFFER_SIZE);
 
   g_traits_buffer = (char*)calloc(TRAITS_BUFFER_SIZE, sizeof(char));
   g_traits_cursor = cursor_allocate(g_traits_buffer, TRAITS_BUFFER_SIZE);
 
-  g_genotype_buffer = (char*)calloc(GENOTYPE_BUFFER_SIZE, sizeof(char));
-  g_genotype_cursor = cursor_allocate(g_genotype_buffer, GENOTYPE_BUFFER_SIZE);
-  g_genotype_list   = NULL;
+  g_genotype_buffer             = (char*)calloc(GENOTYPE_BUFFER_SIZE, sizeof(char));
+  g_genotype_cursor             = cursor_allocate(g_genotype_buffer, GENOTYPE_BUFFER_SIZE);
+  g_genotype_list               = NULL;
   g_use_genotype_when_compiling = false;
 }
 
@@ -139,12 +137,11 @@ export int compile_to_render_packets(void) {
 
   if (g_use_genotype_when_compiling) {
     sen_genotype* genotype = sen_deserialize_genotype(g_genotype_cursor);
-    program                = sen_compile_program_with_genotype(
-        g_source_buffer, genotype, g_e->word_lut, MAX_PROGRAM_SIZE);
+    program = sen_compile_program_with_genotype(g_source_buffer, genotype, g_e->word_lut,
+                                                MAX_PROGRAM_SIZE);
     genotype_return_to_pool(genotype);
   } else {
-    program =
-        sen_compile_program(g_source_buffer, g_e->word_lut, MAX_PROGRAM_SIZE);
+    program = sen_compile_program(g_source_buffer, g_e->word_lut, MAX_PROGRAM_SIZE);
   }
 
   vm_debug_info_reset(g_vm);
@@ -171,8 +168,7 @@ export int get_render_packet_num_vertices(int packet_number) {
   SEN_LOG("get_render_packet_num_vertices");
 #endif
 
-  sen_render_packet* render_packet =
-      get_render_packet(g_vm->render_data, packet_number);
+  sen_render_packet* render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return 0;
   }
@@ -185,8 +181,7 @@ export f32* get_render_packet_vbuf(int packet_number) {
   SEN_LOG("get_render_packet_vbuf");
 #endif
 
-  sen_render_packet* render_packet =
-      get_render_packet(g_vm->render_data, packet_number);
+  sen_render_packet* render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return NULL;
   }
@@ -199,8 +194,7 @@ export f32* get_render_packet_cbuf(int packet_number) {
   SEN_LOG("get_render_packet_cbuf");
 #endif
 
-  sen_render_packet* render_packet =
-      get_render_packet(g_vm->render_data, packet_number);
+  sen_render_packet* render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return NULL;
   }
@@ -213,8 +207,7 @@ export f32* get_render_packet_tbuf(int packet_number) {
   SEN_LOG("get_render_packet_tbuf");
 #endif
 
-  sen_render_packet* render_packet =
-      get_render_packet(g_vm->render_data, packet_number);
+  sen_render_packet* render_packet = get_render_packet(g_vm->render_data, packet_number);
   if (render_packet == NULL) {
     return NULL;
   }
@@ -232,9 +225,8 @@ export i32 build_traits() {
 
   // TIMING_UNIT timing_a = get_timing();
 
-  sen_trait_list* trait_list =
-      sen_compile_trait_list(g_source_buffer, g_e->word_lut);
-  bool res = sen_serialize_trait_list(trait_list, g_traits_cursor);
+  sen_trait_list* trait_list = sen_compile_trait_list(g_source_buffer, g_e->word_lut);
+  bool            res        = sen_serialize_trait_list(trait_list, g_traits_cursor);
   if (res == false) {
     SEN_ERROR("sen_serialize_trait_list returned false");
     return 0;
@@ -284,8 +276,8 @@ export i32 create_initial_generation(i32 population_size, i32 seed) {
     genotype_list_return_to_pool(g_genotype_list);
   }
 
-  g_genotype_list = genotype_list_create_initial_generation(
-      trait_list, population_size, seed);
+  g_genotype_list =
+      genotype_list_create_initial_generation(trait_list, population_size, seed);
   if (g_genotype_list == NULL) {
     trait_list_return_to_pool(trait_list);
     SEN_ERROR("create_initial_generation: "
@@ -392,8 +384,8 @@ export void next_generation_add_genotype() {
   genotype_list_add_genotype(g_genotype_list, genotype);
 }
 
-export bool next_generation_build(i32 parent_size, i32 population_size,
-                                  f32 mutation_rate, i32 rng) {
+export bool next_generation_build(i32 parent_size, i32 population_size, f32 mutation_rate,
+                                  i32 rng) {
 
   debug_size_traits_buffer();
 
@@ -409,8 +401,7 @@ export bool next_generation_build(i32 parent_size, i32 population_size,
   sen_trait_list* trait_list = sen_deserialize_trait_list(g_traits_cursor);
 
   sen_genotype_list* new_generation = genotype_list_next_generation(
-      g_genotype_list, parent_size, population_size, mutation_rate, rng,
-      trait_list);
+      g_genotype_list, parent_size, population_size, mutation_rate, rng, trait_list);
 
   trait_list_return_to_pool(trait_list);
 
@@ -429,8 +420,7 @@ export void unparse_with_genotype() {
 
   sen_genotype* genotype = sen_deserialize_genotype(g_genotype_cursor);
 
-  sen_unparse_with_genotype(g_out_source_cursor, g_source_buffer, genotype,
-                            g_e->word_lut);
+  sen_unparse_with_genotype(g_out_source_cursor, g_source_buffer, genotype, g_e->word_lut);
 
   genotype_return_to_pool(genotype);
 
