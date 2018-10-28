@@ -7,6 +7,16 @@
   [(+ (nth from: position n: 0) (* (prng/value from: rng) sc))
    (+ (nth from: position n: 1) (* (prng/value from: rng) sc))])
 
+;; calling offset-position with a small variance looks really good
+;;
+(fn (bg-circles position: [500 500] size: 20 focal-a: 0 focal-b: 0)
+  (define
+    focal-val (focal/value from: focal-b position: position))
+  (if (> focal-val -10)
+      (circle position: (offset-position position: position sc: (+ 2 (* 10 focal-val)))
+              radius: 3
+              colour: (col/rgb r: 0.9 g: 0.9 b: 0.9 alpha: 1.0))))
+
 (fn (bg position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (define
     focal-val (focal/value from: focal-a position: position))
@@ -45,10 +55,16 @@
   (scale scalar: 1)
 
   (grid density: 50
-        draw-fn: (address-of bg)
+        draw-fn: (address-of bg-circles)
         focal-a: (focal/build-point position: [0 0] distance: 400 transform-position: 0)
         focal-b: (focal/build-point position: [-200 -200] distance: 400 mapping: ease/slow-in-out transform-position: 0)
         size: {6 (gen/int min: 1 max: 10)})
+
+;  (grid density: 50
+;        draw-fn: (address-of bg)
+;        focal-a: (focal/build-point position: [0 0] distance: 400 transform-position: 0)
+;        focal-b: (focal/build-point position: [-200 -200] distance: 400 mapping: ease/slow-in-out transform-position: 0)
+;        size: {6 (gen/int min: 1 max: 10)})
 
   (grid density: 50
         draw-fn: (address-of h-rects)
@@ -63,10 +79,10 @@
         focal-b: (focal/build-point position: [-200 -200] distance: 800 mapping: ease/slow-in-out transform-position: 0)
         size: {6 (gen/int min: 1 max: 10)})
 
-;  (rect position: [0 0]
-;        width: 50
-;        height: 50
-;        colour: red)
+  ;  (rect position: [0 0]
+  ;        width: 50
+  ;        height: 50
+  ;        colour: red)
 
 
   )
