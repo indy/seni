@@ -18,20 +18,20 @@
 
 /* eslint-disable no-unused-vars */
 
-import CodeMirrorSen from './CodeMirrorSen';
+import CodeMirrorSeni from './CodeMirrorSeni';
 
 /* eslint-enable no-unused-vars */
 
-const modeName = 'sen';
+const modeName = 'seni';
 
-function defineSenMode() {
-  // return an instance of CodeMirror with Sen mode defined
-  CodeMirror.defineMode(modeName, CodeMirrorSen.senMode);
+function defineSeniMode() {
+  // return an instance of CodeMirror with Seni mode defined
+  CodeMirror.defineMode(modeName, CodeMirrorSeni.seniMode);
   return CodeMirror;
 }
 
 function createEditor(element, customConfig) {
-  const codeMirrorSenMode = defineSenMode();
+  const codeMirrorSeniMode = defineSeniMode();
   const defaultConfig = {
     lineNumbers: false,
     mode: modeName,
@@ -40,7 +40,7 @@ function createEditor(element, customConfig) {
   };
   const res = Object.assign({}, defaultConfig, customConfig);
 
-  return codeMirrorSenMode.fromTextArea(element, res);
+  return codeMirrorSeniMode.fromTextArea(element, res);
 }
 
 export default {

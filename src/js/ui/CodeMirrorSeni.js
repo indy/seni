@@ -19,7 +19,7 @@
 /* eslint-disable eqeqeq */
 /* eslint-disable no-cond-assign */
 
-function senMode() {
+function seniMode() {
   const BUILTIN = 'builtin';
   const COMMENT = 'comment';
   const STRING = 'string';
@@ -28,8 +28,8 @@ function senMode() {
   const PAREN = 'paren';      // ()
   const CURLY = 'curly';    // {}
   const BRACKET = 'bracket';    // []
-  const SENCOMMON = 'sen-common';
-  const PARAMETER = 'sen-parameter';
+  const SENICOMMON = 'seni-common';
+  const PARAMETER = 'seni-parameter';
 
   const INDENT_WORD_SKIP = 2;
 
@@ -39,17 +39,17 @@ function senMode() {
     return obj;
   }
 
-  // keywords are core to the sen language
+  // keywords are core to the seni language
   const keywords =
         makeKeywords('begin define fn if fence loop on-matrix-stack quote');
   const indentKeys = makeKeywords('define fence loop on-matrix-stack fn');
 
-  // functions from the common sen library
-  const senCommon = makeKeywords(`* + - / < = > append begin bezier
+  // functions from the common seni library
+  const seniCommon = makeKeywords(`* + - / < = > append begin bezier
 bezier-bulging bezier-trailing box canvas/centre canvas/height canvas/width
 circle circle-slice col/analagous col/bezier-fn col/complementary col/convert
 col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l
-col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsv col/lab col/lighten
+col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsluv col/hsv col/lab col/lighten
 col/procedural-fn col/quadratic-fn col/rgb col/set-alpha col/set-lab-a
 col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r
 col/split-complementary col/triad define degrees->radians fence fn focal/hline
@@ -269,8 +269,8 @@ stroked-bezier-rect take translate`);
 
           if (keywords.propertyIsEnumerable(stream.current())) {
             returnType = tokenType(BUILTIN, state);
-          } else if (senCommon.propertyIsEnumerable(stream.current())) {
-            returnType = tokenType(SENCOMMON, state);
+          } else if (seniCommon.propertyIsEnumerable(stream.current())) {
+            returnType = tokenType(SENICOMMON, state);
           } else if (isParameter(stream.current())) {
             returnType = tokenType(PARAMETER, state);
           } else returnType = tokenType('variable', state);
@@ -289,8 +289,8 @@ stroked-bezier-rect take translate`);
   };
 }
 
-const CodeMirrorSen = {
-  senMode
+const CodeMirrorSeni = {
+  seniMode
 };
 
-export default CodeMirrorSen;
+export default CodeMirrorSeni;
