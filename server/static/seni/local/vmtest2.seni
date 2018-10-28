@@ -1,3 +1,49 @@
-(circle position: [500 500]
-        radius: 100
-        colour: {red (gen/col alpha: 1.0)})
+;; sketch/1843-fields.seni
+
+
+(fn (h-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
+  ; treat the focal-a as a visibility mask
+  (define
+    focal-w (if (> {1 (gen/int max: 1)} 0) focal-a focal-b)
+    focal-h (if (> {1 (gen/int max: 1)} 0) focal-a focal-b))
+  (if (> (focal/value from: focal-a position: position) 0)
+      (rect position: position
+            width: (* {70 (gen/scalar min: 10 max: 200)} (focal/value from: focal-w position: position))
+            height: 5
+            colour: red)))
+
+(fn (v-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
+  ; treat the focal-a as a visibility mask
+  (define
+    focal-w (if (> {1 (gen/int max: 1)} 0) focal-a focal-b)
+    focal-h (if (> {1 (gen/int max: 1)} 0) focal-a focal-b))
+  (if (> (focal/value from: focal-a position: position) 0)
+      (rect position: position
+            width: 5
+            height: (* {49 (gen/scalar min: 10 max: 200)} (focal/value from: focal-h position: position))
+            colour: red)))
+
+(fn (grid density: 5 draw-fn: 0 size: 20 focal-a: 0 focal-b: 0)
+  (loop (y from: 0 upto: 1000 inc: (/ 1000 (- density 1)))
+    (loop (x from: 0 upto: 1000 inc: (/ 1000 (- density 1)))
+      (fn-call (draw-fn position: [x y]
+                        size: size
+                        focal-a: focal-a
+                        focal-b: focal-b)))))
+
+(grid density: 50
+      draw-fn: (address-of h-rects)
+      focal-a: (focal/build-point position: [500 500] distance: 400)
+      focal-b: (focal/build-hline position: [500 0] distance: 1000)
+      size: {6 (gen/int min: 1 max: 10)})
+(grid density: 50
+      draw-fn: (address-of v-rects)
+      focal-a: (focal/build-point position: [500 500] distance: 400)
+      focal-b: (focal/build-hline position: [500 0] distance: 1000)
+      size: {7 (gen/int min: 1 max: 10)})
+
+;(grid density: 100
+;      draw-fn: (address-of green-circle)
+;      focal-a: (focal/build-point position: [750 750] distance: 300)
+;      focal-b: (focal/build-point position: [750 750] distance: 300)
+;      size: 4)

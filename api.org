@@ -2,6 +2,7 @@
 |------------+-------------------------------------------------------------|
 | type       | description                                                 |
 |------------+-------------------------------------------------------------|
+| [[keywords]]   |                                                             |
 | [[misc]]       |                                                             |
 | [[shapes]]     | rendering functions                                         |
 | [[transforms]] | matrix operations                                           |
@@ -16,6 +17,13 @@
 |------------+-------------------------------------------------------------|
 
 * functions
+** keywords
+ | name  | description |
+ |-------+-------------|
+ | [[loop]]  |             |
+ | [[fence]] |             |
+ | [[nth]]   |             |
+
 ** misc
 
  | name          | description  |
@@ -172,6 +180,7 @@
  |               |             |
 
 * function descriptions
+** keywords
 ** misc
 
 *** debug/print
@@ -821,27 +830,31 @@
 
 *** focal/build-point
 
-    | parameter | default | description |
-    |-----------+---------+-------------|
-    | position  | [0 0]   |             |
-    | distance  | 1       |             |
-    | mapping   | linear  |             |
+    | parameter          | default | description                             |
+    |--------------------+---------+-----------------------------------------|
+    | position           | [0 0]   |                                         |
+    | distance           | 1       |                                         |
+    | mapping            | linear  | [[interpolation constant]]                  |
+    | transform-position | 1       | 0 to not apply current transform matrix |
+
 
 *** focal/build-vline
 
-    | parameter | default | description |
-    |-----------+---------+-------------|
-    | position  | [0 0]   |             |
-    | distance  | 1       |             |
-    | mapping   | linear  |             |
+    | parameter          | default | description                             |
+    |--------------------+---------+-----------------------------------------|
+    | position           | [0 0]   |                                         |
+    | distance           | 1       |                                         |
+    | mapping            | linear  | [[interpolation constant]]                  |
+    | transform-position | 1       | 0 to not apply current transform matrix |
 
 *** focal/build-hline
 
-    | parameter | default | description |
-    |-----------+---------+-------------|
-    | position  | [0 0]   |             |
-    | distance  | 1       |             |
-    | mapping   | linear  |             |
+    | parameter          | default | description                             |
+    |--------------------+---------+-----------------------------------------|
+    | position           | [0 0]   |                                         |
+    | distance           | 1       |                                         |
+    | mapping            | linear  | [[interpolation constant]]                  |
+    | transform-position | 1       | 0 to not apply current transform matrix |
 
 *** focal/value
 
@@ -919,3 +932,43 @@
     | parameter | default | description |
     |-----------+---------+-------------|
     | alpha     |         |             |
+
+* constants
+** interpolation constant
+
+   | name                    | description |
+   |-------------------------+-------------|
+   | linear                  |             |
+   | ease/quick              |             |
+   | ease/slow-in            |             |
+   | ease/slow-in-out        |             |
+   | ease/quadratic-in       |             |
+   | ease/quadratic-out      |             |
+   | ease/quadratic-in-out   |             |
+   | ease/cubic-in           |             |
+   | ease/cubic-out          |             |
+   | ease/cubic-in-out       |             |
+   | ease/quartic-in         |             |
+   | ease/quartic-out        |             |
+   | ease/quartic-in-out     |             |
+   | ease/quintic-in         |             |
+   | ease/quintic-out        |             |
+   | ease/quintic-in-out     |             |
+   | ease/sin-in             |             |
+   | ease/sin-out            |             |
+   | ease/sin-in-out         |             |
+   | ease/circular-in        |             |
+   | ease/circular-out       |             |
+   | ease/circular-in-out    |             |
+   | ease/exponential-in     |             |
+   | ease/exponential-out    |             |
+   | ease/exponential-in-out |             |
+   | ease/elastic-in         |             |
+   | ease/elastic-out        |             |
+   | ease/elastic-in-out     |             |
+   | ease/back-in            |             |
+   | ease/back-out           |             |
+   | ease/back-in-out        |             |
+   | ease/bounce-in          |             |
+   | ease/bounce-out         |             |
+   | ease/bounce-in-out      |             |

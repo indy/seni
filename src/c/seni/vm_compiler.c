@@ -935,12 +935,10 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
   sen_node* to_node        = NULL;
   sen_node* upto_node      = NULL;
   sen_node* increment_node = NULL;
-  sen_node* steps_node     = NULL;
   bool      have_from      = false;
   bool      have_to        = false;
   bool      have_upto      = false;
   bool      have_increment = false;
-  bool      have_steps     = false;
 
   sen_node*           node = name_node;
   sen_result_bytecode result_bytecode;
@@ -968,11 +966,6 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
     if (node->value.i == INAME_INC) {
       have_increment = true;
       increment_node = safe_next(node);
-    }
-    // todo: not working yet
-    if (node->value.i == INAME_STEPS) {
-      have_steps = true;
-      steps_node = safe_next(node);
     }
     node = safe_next(node); // the value part
   }
@@ -1046,10 +1039,6 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
 
   if (have_increment) {
     N_CHK(compile(compilation, increment_node), "compile_loop: compile");
-  } else if (have_steps) {
-    // (to - from) / steps
-    // (upto - from) / (steps - 1)
-    N_CHK(compile(compilation, steps_node), "compile_loop: compile");
   } else {
     B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f),
           "compile_loop: emit_opcode_i32_f32");

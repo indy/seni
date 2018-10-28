@@ -76,7 +76,7 @@ typedef struct {
 } sen_interp_state;
 
 // [ VAR_VECTOR ->
-//  (VAR_INT(structure_id) + x, y, distance) ->
+//  (VAR_INT(structure_id) + x, y, distance, transform_pos) ->
 //  (VAR_INT(type)) ->
 //  (VAR_INT(mapping))
 // ]
@@ -88,6 +88,7 @@ typedef struct {
   f32                     y;
   f32                     distance;
   i32                     mapping;
+  bool                    transform_pos;
 } sen_focal_state;
 
 // helper macros used by the bind code to parse arguments on the VM's stack
@@ -263,6 +264,7 @@ typedef struct {
     n.x            = value_1->f32_array[0]; \
     n.y            = value_1->f32_array[1]; \
     n.distance     = value_1->f32_array[2]; \
+    n.transform_pos= value_1->f32_array[3] > 0.0f; \
     value_1        = value_1->next;         \
     IS_I32(#n);                             \
     n.type  = value_1->value.i;             \
@@ -492,7 +494,7 @@ sen_var* bind_circle(sen_vm* vm, i32 num_args) {
 
   // if the radius has been defined then it overrides the width and height
   // parameters
-  if (radius > 0.0f) {
+  if (radius >= 0.0f) {
     width  = radius;
     height = radius;
   }
@@ -537,7 +539,7 @@ sen_var* bind_circle_slice(sen_vm* vm, i32 num_args) {
 
   // if the radius has been defined then it overrides the width and height
   // parameters
-  if (radius > 0.0f) {
+  if (radius >= 0.0f) {
     width  = radius;
     height = radius;
   }
@@ -2278,21 +2280,35 @@ sen_var* bind_focal_generic(sen_vm* vm, i32 num_args, sen_focal_type type) {
   f32 position[] = {0.0f, 0.0f};
   f32 distance   = 1.0f;
   i32 mapping    = INAME_LINEAR;
+  f32 transform_pos_f32 = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_VEC2(INAME_POSITION, position);
   READ_STACK_ARG_F32(INAME_DISTANCE, distance);
-  READ_STACK_ARG_NAME(INAME_MAPPING,
-                      mapping); // linear, quick, slow-in, slow-in-out
+  READ_STACK_ARG_NAME(INAME_MAPPING, mapping);
+  READ_STACK_ARG_F32(INAME_TRANSFORM_POSITION, transform_pos_f32);
   READ_STACK_ARGS_END;
 
   // store position in canvas space coordinates
   f32 x, y;
-  matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
+
+  if (transform_pos_f32 > 0.0f) {
+    matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
+    SEN_LOG("cool a");
+  } else {
+    x = position[0];
+    y = position[1];
+    SEN_LOG("cool b");
+  }
 
   // returns vector where:
-  // first item contains format in value.i, postion in f32_array[0,1] and
-  // distance in f32_array[2] second item contains mapping in value.i
+  // first item contains:
+  // - format in value.i
+  // - postion in f32_array[0,1]
+  // - distance in f32_array[2]
+  // - whether to transform the position in f32_array[3]
+  // second item contains type in value.i
+  // third item contains mapping in value.i
 
   sen_var* v;
 
@@ -2301,6 +2317,7 @@ sen_var* bind_focal_generic(sen_vm* vm, i32 num_args, sen_focal_type type) {
   v->f32_array[0] = x;
   v->f32_array[1] = y;
   v->f32_array[2] = distance;
+  v->f32_array[3] = transform_pos_f32;
   vector_append_i32(vm, &g_var_scratch, type);
   vector_append_i32(vm, &g_var_scratch, mapping);
 
@@ -2329,6 +2346,7 @@ sen_var* bind_focal_value(sen_vm* vm, i32 num_args) {
   from.x            = 0.0f;
   from.y            = 0.0f;
   from.mapping      = INAME_LINEAR;
+  from.transform_pos = true;
 
   READ_STACK_ARGS_BEGIN;
   READ_STACK_ARG_FOCAL(INAME_FROM, from);
@@ -2344,7 +2362,12 @@ sen_var* bind_focal_value(sen_vm* vm, i32 num_args) {
 
   // transform position to canvas space coordinates
   f32 x, y;
-  matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
+  if (from.transform_pos) {
+    matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
+  } else {
+    x = position[0];
+    y = position[1];
+  }
 
   switch (from.type) {
   case FOCAL_POINT:
