@@ -221,7 +221,7 @@ function logMode(mode) {
 export function createInitialState() {
   return {
     // the resolution of the high res image
-    highResolution: [4096, 4096],
+    highResolution: [2048, 2048], //[4096, 4096],
     placeholder: 'img/spinner.gif',
     populationSize: 24,
     mutationRate: 0.1,
