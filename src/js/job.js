@@ -144,7 +144,7 @@ function request(type, data) {
         worker.release();
       }
       // handle error
-      console.log(`worker: error of ${error}`);
+      console.error(`worker: error of ${error}`);
       reject(error);
     });
   });

@@ -114,7 +114,7 @@ function renderScript(config) {
       renderBuffers(memory, buffers, gDemandCanvasSize, gDemandCanvasSize);
     }).catch(error => {
       // handle error
-      console.log(`worker: error of ${error}`);
+      console.error(`worker: error of ${error}`);
     });
 }
 
@@ -156,7 +156,7 @@ function showSimplifiedScript(fullScript) {
     simplifiedScriptElement.textContent = script;
   }).catch(error => {
     // handle error
-    console.log(`worker: error of ${error}`);
+    console.error(`worker: error of ${error}`);
   });
 }
 
@@ -219,7 +219,7 @@ function performSlideshow() {
       gTimeoutId = window.setTimeout(performSlideshow, gSlideshowDelay);
     })
     .catch(error => {
-      console.log('performSlideshow error');
+      console.error('performSlideshow error');
       console.error(error);
     });
 }
@@ -393,7 +393,7 @@ export default function main() {
         showSimplifiedScript(script);
       })
       .catch(error => {
-        console.log('piece-eval click error');
+        console.error('piece-eval click error');
         console.error(error);
       });
   });

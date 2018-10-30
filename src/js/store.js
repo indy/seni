@@ -23,7 +23,7 @@ import { jobBuildTraits,
          jobInitialGeneration,
          jobNewGeneration } from './jobTypes';
 
-const logToConsole = true;
+const logToConsole = false;
 
 let currentState = undefined;
 
@@ -75,15 +75,13 @@ function actionSetScript(state, { script }) {
       resolveAsCurrentState(resolve, newState);
     }).catch(error => {
       // handle error
-      console.log(`worker: error of ${error}`);
+      console.error(`worker: error of ${error}`);
       reject(error);
     });
   });
 }
 
 function actionSetScriptId(state, { id }) {
-  console.log(`actionSetScriptId id: ${id}`);
-
   return new Promise((resolve, _reject) => {
     const newState = cloneState(state);
     newState.scriptId = id;
@@ -113,7 +111,7 @@ function actionInitialGeneration(state) {
       resolveAsCurrentState(resolve, newState);
     }).catch(error => {
       // handle error
-      console.log(`worker: error of ${error}`);
+      console.error(`worker: error of ${error}`);
       reject(error);
     });
   });
@@ -137,7 +135,7 @@ function actionShuffleGeneration(state, { rng }) {
         resolveAsCurrentState(resolve, s);
       }).catch(error1 => {
         // handle error
-        console.log(`worker: error of ${error1}`);
+        console.error(`worker: error of ${error1}`);
         reject(error1);
       });
     } else {
@@ -153,7 +151,7 @@ function actionShuffleGeneration(state, { rng }) {
         resolveAsCurrentState(resolve, newState);
       }).catch(error => {
         // handle error
-        console.log(`worker: error of ${error}`);
+        console.error(`worker: error of ${error}`);
         reject(error);
       });
     }
@@ -187,7 +185,7 @@ function actionNextGeneration(state, { rng }) {
       resolveAsCurrentState(resolve, newState);
     }).catch(error => {
       // handle error
-      console.log(`worker: error of ${error}`);
+      console.error(`worker: error of ${error}`);
       reject(error);
     });
   });

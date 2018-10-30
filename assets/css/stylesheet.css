@@ -352,53 +352,6 @@ button:disabled {
   float: left;
 }
 
-#konsole {
-  transition: height 0.2s ease;
-
-  position: fixed;
-  height: 50%;
-  width: 90%;
-
-  /* centre this fixed element on the screen */
-  left: 50%;
-  margin-left: -45%;            /* width / 2 */
-
-  z-index: 9990;
-}
-
-.cm-s-konsole {
-  background: rgba(0, 0, 0, 0.9);
-  color: rgba(255, 255, 215, 1.0);
-}
-.cm-s-konsole .CodeMirror-selected { background: #35493c !important; }
-
-.cm-s-konsole .CodeMirror-gutters { background: #002240; border-right: 1px solid #aaa; }
-.cm-s-konsole .CodeMirror-linenumber { color: #d0d0d0; }
-.cm-s-konsole .CodeMirror-cursor { border-left: 1px solid white !important; }
-
-.cm-s-konsole .cm-keyword {  color: #CC7832; }
-.cm-s-konsole .cm-atom { color: #FC0; }
-.cm-s-konsole .cm-number { color:  #FFEE98; }
-.cm-s-konsole .cm-def { color: #8DA6CE; }
-.cm-s-konsole span.cm-variable-2, .cm-s-cobalt span.cm-tag { color: #FFC66D }
-.cm-s-konsole span.cm-variable-3, .cm-s-cobalt span.cm-def { color: #FFC66D }
-.cm-s-konsole .cm-operator { color: #888; }
-.cm-s-konsole .cm-comment { color: gray; font-weight: bold; }
-.cm-s-konsole .cm-string { color:  #A5C25C }
-.cm-s-konsole .cm-string-2 { color: red }
-.cm-s-konsole .cm-meta { color: #D8FA3C; }
-.cm-s-konsole .cm-error { border-bottom: 1px solid red; }
-.cm-s-konsole .cm-builtin { color: #8DA6CE; }
-.cm-s-konsole .cm-tag { color: #8DA6CE; }
-.cm-s-konsole .cm-attribute { color: #8DA6CE; }
-.cm-s-konsole .cm-header { color: #FF6400; }
-.cm-s-konsole .cm-hr { color: #AEAEAE; }
-.cm-s-konsole .cm-link { color: blue; }
-
-button#console-btn {
-  display: none;
-}
-
 @media only screen and (min-width : 601px) {
 
   #navbar-buttons {
@@ -406,11 +359,6 @@ button#console-btn {
      (scrollbars appearing on OSX shift the buttons to the left)
    */
     margin-left: 50%;
-  }
-
-  button#console-btn {
-    display: block;
-    float: left;
   }
 
   #edit-container {

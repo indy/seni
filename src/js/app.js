@@ -20,9 +20,6 @@ import GLRenderer from './seni/GLRenderer';
 
 import History from './ui/History';
 import Editor from './ui/Editor';
-import Konsole from './ui/Konsole';
-import KonsoleCommander from './ui/KonsoleCommander';
-//import { addDefaultCommands } from './ui/KonsoleCommands';
 import { createStore, createInitialState } from './store';
 import { startTiming } from './timer';
 import { SeniMode } from './ui/SeniMode';
@@ -34,7 +31,6 @@ import { jobRender,
 
 let gUI = {};
 let gGLRenderer = undefined;
-let gKonsoleToggle = 0;
 
 function get(url) {
   return new Promise((resolve, reject) => {
@@ -255,15 +251,15 @@ function renderGeneration(state) {
         hackTitle = title;
       }).catch(error => {
         // handle error
-        console.log(`worker: error of ${error}`);
+        console.error(`worker: error of ${error}`);
       });
 
       promises.push(workerJob);
     }
 
     Promise.all(promises).then(() => {
-      stopFn(`renderGeneration-${hackTitle}`, gUI.konsole);
-    }).catch(error => console.log(`renderGeneration error: ${error}`));
+      stopFn(`renderGeneration-${hackTitle}`, console);
+    }).catch(error => console.error(`renderGeneration error: ${error}`));
 
     resolve();
   });
@@ -282,7 +278,7 @@ function setupEvolveUI(store) {
     }).then(state => {
       return resolve(state);
     }).catch(error => {
-      console.log(`setupEvolveUI error: ${error}`);
+      console.error(`setupEvolveUI error: ${error}`);
       reject(error);
     });
   });
@@ -303,10 +299,10 @@ function renderScript(state, imageElement) {
     scriptHash: state.scriptHash
   }).then(({ title, memory, buffers }) => {
     renderGeometryBuffers(memory, buffers, imageElement);
-    stopFn(`renderScript-${title}`, gUI.konsole);
+    stopFn(`renderScript-${title}`, console);
   }).catch(error => {
     // handle error
-    console.log(`worker: error of ${error}`);
+    console.error(`worker: error of ${error}`);
   });
 }
 
@@ -361,13 +357,13 @@ function ensureMode(store, mode) {
           // has the correct genotypes
           History.replaceState(latestState);
           resolve();
-        }).catch(error => console.log(`ensureMode error: ${error}`));
+        }).catch(error => console.error(`ensureMode error: ${error}`));
       } else {
         updateUI(state);
         resolve();
       }
     }).catch(error => {
-      console.log(`ensureMode error: ${error}`);
+      console.error(`ensureMode error: ${error}`);
       reject(error);
     });
   });
@@ -428,14 +424,14 @@ function renderHighRes(state, genotype) {
 
     renderGeometryBuffers(memory, buffers, image, width, height);
 
-    stopFn(`renderHighRes-${title}`, gUI.konsole);
+    stopFn(`renderHighRes-${title}`, console);
 
     image.classList.remove('hidden');
     loader.classList.add('hidden');
   }).catch(error => {
     // handle error
-    console.log(`worker: error of ${error}`);
-    gUI.konsole.log(error);
+    console.error(`worker: error of ${error}`);
+    console.error(error);
     image.classList.remove('hidden');
     loader.classList.add('hidden');
   });
@@ -461,7 +457,7 @@ function renderHighResSection(state, section) {
 
     renderGeometryBuffersSection(memory, buffers, image, width, height, section);
 
-    stopFn(`renderHighResSection-${title}-${section}`, gUI.konsole);
+    stopFn(`renderHighResSection-${title}-${section}`, console);
 
     image.classList.remove('hidden');
     const link = document.getElementById('high-res-link');
@@ -469,8 +465,8 @@ function renderHighResSection(state, section) {
     loader.classList.add('hidden');
   }).catch(error => {
     // handle error
-    console.log(`worker: error of ${error}`);
-    gUI.konsole.log(error);
+    console.error(`worker: error of ${error}`);
+    console.error(error);
     image.classList.remove('hidden');
     loader.classList.add('hidden');
   });
@@ -503,12 +499,12 @@ function showEditFromEvolve(store, element) {
           return ensureMode(store, SeniMode.edit);
         }).then(resolve).catch(e => {
           // handle error
-          console.log(`worker: error of ${e}`);
+          console.error(`worker: error of ${e}`);
           reject(e);
         });
       }).catch(error => {
         // handle error
-        console.log(`worker: error of ${error}`);
+        console.error(`worker: error of ${error}`);
         reject(error);
       });
     } else {
@@ -554,7 +550,7 @@ function onNextGen(store) {
     renderGeneration(state);
   }).catch(error => {
     // handle error
-    console.log(`error of ${error}`);
+    console.error(`error of ${error}`);
   });
 }
 
@@ -585,7 +581,7 @@ function restoreEvolveUI(store) {
       return renderGeneration(store.getState());
     }).then(resolve).catch(error => {
       // handle error
-      console.log(`restoreEvolveUI: error of ${error}`);
+      console.error(`restoreEvolveUI: error of ${error}`);
       reject(error);
     });
   });
@@ -603,7 +599,7 @@ function loadScriptWithId(store, id) {
     }).then(() => {
       return ensureMode(store, SeniMode.edit);
     }).then(resolve).catch(error => {
-      console.log(`loadScriptWithId error ${error}`);
+      console.error(`loadScriptWithId error ${error}`);
       reject(error);
     });
   });
@@ -632,56 +628,6 @@ function resizeContainers() {
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
-function createExtraKonsoleCommands(store, commander) {
-  const createExtraRenderCommand = (keyword, section) => {
-    return {
-      canHandle(command) {
-        const state = store.getState();
-        return state.currentMode === SeniMode.edit && command === keyword;
-      },
-      execute() {
-        toggleKonsole(); // konsole is visible, so hide it
-        renderHighResSection(store.getState(), section);
-        return "rendering sub-section of image";
-      }
-    };
-  };
-
-  const renderBL = createExtraRenderCommand('render-bl', 0);
-  const renderBR = createExtraRenderCommand('render-br', 1);
-  const renderTL = createExtraRenderCommand('render-tl', 2);
-  const renderTR = createExtraRenderCommand('render-tr', 3);
-  [renderBL, renderBR, renderTL, renderTR].forEach(c => commander.addCommand(c));
-}
-
-function createKonsole(store, element) {
-  const konsole = new Konsole(element, {
-    prompt: '> ',
-    historyLabel: 'cs-console-demo',
-    syntax: 'javascript',
-    initialValue: 'This is starting content\nalong with multi-lines!\n',
-    welcomeMessage: 'Welcome to the cs console demo',
-    autoFocus: true,
-    theme: 'konsole'
-  });
-
-  const commander = new KonsoleCommander();
-
-  createExtraKonsoleCommands(store, commander);
-
-  konsole.initCallbacks({
-    commandValidate(line) {
-      return line.length > 0;
-    },
-    commandHandle(line, report, prompt) {
-      console.log('commandHandle', line, report, prompt);
-      commander.commandHandle(line, report, prompt);
-    }
-  });
-
-  return konsole;
-}
-
 function createEditor(store, editorTextArea) {
   const blockIndent = function (editor, from, to) {
     editor.operation(() => {
@@ -696,19 +642,15 @@ function createEditor(store, editorTextArea) {
       setScript(store, getScriptFromEditor()).then(state => {
         return renderScript(state, gUI.renderImage);
       }).catch(error => {
-        console.log(`worker setScript error: ${error}`);
+        console.error(`worker setScript error: ${error}`);
       });
       return false;
     },
-    // make ctrl-m a noop, otherwise invoking the konsole will result in
-    // deleting a line from the editor
-    'Ctrl-M': () => false,
     'Ctrl-I': () => {
       const editor = gUI.editor;
-      const konsole = gUI.konsole;
       const numLines = editor.doc.size;
       blockIndent(editor, 0, numLines);
-      konsole.log(`indenting ${numLines} lines`);
+      console.log(`indenting ${numLines} lines`);
       return false;
     }
   };
@@ -721,7 +663,6 @@ function createEditor(store, editorTextArea) {
 
 function setupUI(store) {
   const d = document;
-  const konsoleElement = d.getElementById('konsole');
   const editorTextArea = d.getElementById('edit-textarea');
 
   gUI = {
@@ -733,11 +674,8 @@ function setupUI(store) {
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById('render-img'),
     // console CodeMirror element in the edit screen
-    konsole: createKonsole(store, konsoleElement),
     editor: createEditor(store, editorTextArea)
   };
-
-  konsoleElement.style.height = '0%';
 
   showButtonsFor(SeniMode.gallery);
 
@@ -753,7 +691,7 @@ function setupUI(store) {
       ensureMode(store, SeniMode.evolve);
     }).catch(error => {
       // handle error
-      console.log(`evolve-btn:click : error of ${error}`);
+      console.error(`evolve-btn:click : error of ${error}`);
     });
     event.preventDefault();
   });
@@ -770,7 +708,7 @@ function setupUI(store) {
       renderGeneration(state);
     }).catch(error => {
       // handle error
-      console.log(`shuffle-btn:click : error of ${error}`);
+      console.error(`shuffle-btn:click : error of ${error}`);
     });
     event.preventDefault();
   });
@@ -780,7 +718,7 @@ function setupUI(store) {
       renderScript(state, gUI.renderImage);
     }).catch(error => {
       // handle error
-      console.log(`eval-btn:click : error of ${error}`);
+      console.error(`eval-btn:click : error of ${error}`);
     });
     event.preventDefault();
   });
@@ -822,7 +760,9 @@ function setupUI(store) {
   addClickEvent('high-res-link', event => {
     const image = document.getElementById('high-res-image');
     const win = window.open();
+    win.document.open();
     win.document.write('<iframe src="' + image.src + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
+    win.document.close();
     event.preventDefault();
   });
 
@@ -902,7 +842,7 @@ function setupUI(store) {
         }
       }).catch(error => {
         // handle error
-        console.log(`SET_STATE: error of ${error}`);
+        console.error(`SET_STATE: error of ${error}`);
       });
     } else {
       // no event.state so behave as if the user has visited
@@ -911,36 +851,7 @@ function setupUI(store) {
     }
   });
 
-  document.onkeydown = evt_ => {
-    const evt = evt_ || window.event;
-
-    // Ctrl-M
-    if (evt.ctrlKey && evt.keyCode === 77) {
-      toggleKonsole();
-    }
-  };
-
-  addClickEvent('console-btn', toggleKonsole);
-
   return store;
-}
-
-function toggleKonsole() {
-  const konsolePanel = document.getElementById('konsole');
-  const konsoleButton = document.getElementById('console-btn');
-
-  gKonsoleToggle = 1 - gKonsoleToggle;
-  if (gKonsoleToggle === 1) {
-    konsolePanel.style.height = '50%';
-    konsoleButton.textContent = 'Hide Console';
-    gUI.konsole.focus();
-  } else {
-    gUI.editor.focus();
-    konsolePanel.style.height = '0%';
-    konsoleButton.textContent = 'Show Console';
-  }
-  gUI.konsole.refresh();
-  gUI.editor.refresh();
 }
 
 function getGallery(store) {
@@ -985,16 +896,6 @@ function getGallery(store) {
       reject(Error(`cannot connect to ${url}`));
     });
   });
-}
-
-// stops the konsole from briefly flashing at state startup
-// probably better to remove this and replace with some other
-// sort of CSS cleverness. (resorting to this since a CSS rule
-// of 'position: fixed;height:0;' for #konsole screws up Chrome
-// and requires a restart)
-function removeKonsoleInvisibility() {
-  const k = document.getElementById('konsole');
-  k.classList.remove('invisible');
 }
 
 function allocateWorkers(state) {
@@ -1056,7 +957,5 @@ export default function main() {
     } else {
       return ensureMode(store, SeniMode.gallery);
     }
-  }).then(() => {
-    return removeKonsoleInvisibility();
   }).catch(error => console.error(error));
 }
