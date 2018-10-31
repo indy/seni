@@ -426,8 +426,14 @@ sen_var* bind_line(sen_vm* vm, i32 num_args) {
   f32        width  = 4.0f;
   f32        from[] = {10.0f, 10.0f};
   f32        to[]   = {900.0f, 500.0f};
+  sen_colour from_colour;
+  sen_colour to_colour;
   sen_colour colour;
+  i32        brush         = INAME_BRUSH_FLAT;
+  f32        brush_subtype = 0.0f;
 
+  colour_set(&from_colour, RGB, -1.0f, -1.0f, -1.0f, 1.0f);
+  colour_set(&to_colour, RGB, -1.0f, -1.0f, -1.0f, 1.0f);
   colour_set(&colour, RGB, 0.0f, 0.0f, 0.0f, 1.0f);
 
   // update with values from stack
@@ -435,13 +441,25 @@ sen_var* bind_line(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_WIDTH, width);
   READ_STACK_ARG_VEC2(INAME_FROM, from);
   READ_STACK_ARG_VEC2(INAME_TO, to);
+  READ_STACK_ARG_COL(INAME_FROM_COLOUR, from_colour);
+  READ_STACK_ARG_COL(INAME_TO_COLOUR, to_colour);
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
+  READ_STACK_ARG_NAME(INAME_BRUSH, brush);
+  READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
   READ_STACK_ARGS_END;
 
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  render_line(render_data, matrix, from[0], from[1], to[0], to[1], width, &colour);
+  if (from_colour.element[0] == -1.0f && from_colour.element[1] == -1.0f && from_colour.element[2] == -1.0f) {
+    colour_clone_as(&from_colour, &colour, RGB);
+  }
+  if (to_colour.element[0] == -1.0f && to_colour.element[1] == -1.0f && to_colour.element[2] == -1.0f) {
+    colour_clone_as(&to_colour, &colour, RGB);
+  }
+
+  render_line(render_data, matrix, from[0], from[1], to[0], to[1],
+              width, &from_colour, &to_colour, brush, (i32)brush_subtype);
 
   return &g_var_true;
 }
@@ -601,7 +619,7 @@ sen_var* bind_bezier(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_T_END, t_end);
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARG_F32(INAME_TESSELLATION, tessellation);
-  READ_STACK_ARG_I32(INAME_BRUSH, brush);
+  READ_STACK_ARG_NAME(INAME_BRUSH, brush);
   READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
   READ_STACK_ARGS_END;
 
@@ -657,7 +675,7 @@ sen_var* bind_bezier_bulging(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_T_END, t_end);
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARG_F32(INAME_TESSELLATION, tessellation);
-  READ_STACK_ARG_I32(INAME_BRUSH, brush);
+  READ_STACK_ARG_NAME(INAME_BRUSH, brush);
   READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
   READ_STACK_ARGS_END;
 
@@ -710,7 +728,7 @@ sen_var* bind_stroked_bezier(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_COLOUR_VOLATILITY, colour_volatility);
   READ_STACK_ARG_F32(INAME_SEED, seed);
   READ_STACK_ARG_I32(INAME_LINE_WIDTH_MAPPING, line_width_mapping);
-  READ_STACK_ARG_I32(INAME_BRUSH, brush);
+  READ_STACK_ARG_NAME(INAME_BRUSH, brush);
   READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
   READ_STACK_ARGS_END;
 
@@ -758,7 +776,7 @@ sen_var* bind_stroked_bezier_rect(sen_vm* vm, i32 num_args) {
   READ_STACK_ARG_F32(INAME_STROKE_NOISE, stroke_noise);
   READ_STACK_ARG_COL(INAME_COLOUR, colour);
   READ_STACK_ARG_F32(INAME_COLOUR_VOLATILITY, colour_volatility);
-  READ_STACK_ARG_I32(INAME_BRUSH, brush);
+  READ_STACK_ARG_NAME(INAME_BRUSH, brush);
   READ_STACK_ARG_F32(INAME_BRUSH_SUBTYPE, brush_subtype);
   READ_STACK_ARGS_END;
 
@@ -2294,11 +2312,9 @@ sen_var* bind_focal_generic(sen_vm* vm, i32 num_args, sen_focal_type type) {
 
   if (transform_pos_f32 > 0.0f) {
     matrix_stack_transform_vec2(&x, &y, vm->matrix_stack, position[0], position[1]);
-    SEN_LOG("cool a");
   } else {
     x = position[0];
     y = position[1];
-    SEN_LOG("cool b");
   }
 
   // returns vector where:

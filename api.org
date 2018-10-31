@@ -207,12 +207,18 @@
 
 *** line
 
-    | parameter | default      | description |
-    |-----------+--------------+-------------|
-    | from      | [10 10]      |             |
-    | to        | [900 500]    |             |
-    | width     | 4            |             |
-    | colour    | RGB(0 0 0 1) |             |
+    | parameter     | default      | description |
+    |---------------+--------------+-------------|
+    | from          | [10 10]      |             |
+    | to            | [900 500]    |             |
+    | width         | 4            |             |
+    | colour        | RGB(0 0 0 1) |             |
+    | from-colour   | RGB(0 0 0 1) |             |
+    | to-colour     | RGB(0 0 0 1) |             |
+    | brush         | brush-flat   |             |
+    | brush-subtype | 0            |             |
+
+    either set 'colour' or both 'from-colour' and 'to-colour'
 
 *** rect
 

@@ -91,9 +91,16 @@ void prepare_to_add_triangle_strip(sen_render_data* render_data, sen_matrix* mat
   }
 }
 
-void render_line(sen_render_data* render_data, sen_matrix* matrix, f32 from_x, f32 from_y,
-                 f32 to_x, f32 to_y, f32 width, sen_colour* colour) {
-  sen_uv_mapping* uv = get_uv_mapping(BRUSH_FLAT, 0, true);
+void render_line(sen_render_data* render_data, sen_matrix* matrix,
+                 f32 from_x, f32 from_y,
+                 f32 to_x, f32 to_y,
+                 f32 width,
+                 sen_colour* from_colour, sen_colour* to_colour,
+                 i32 brush, i32 brush_subtype) {
+  // get the uv co-ordinates for the specified brush
+  //
+  sen_brush_type  brush_type = (sen_brush_type)(brush - INAME_BRUSH_FLAT);
+  sen_uv_mapping* uv         = get_uv_mapping(brush_type, brush_subtype, true);
 
   f32 hw = (width * uv->width_scale) / 2.0f;
 
@@ -101,24 +108,32 @@ void render_line(sen_render_data* render_data, sen_matrix* matrix, f32 from_x, f
   normal(&nx, &ny, from_x, from_y, to_x, to_y);
   opposite_normal(&n2x, &n2y, nx, ny);
 
-  sen_colour *rgb, rgb_colour;
-  if (colour->format == RGB) {
-    rgb = colour;
+  sen_colour *from_rgb, from_rgb_colour;
+  if (from_colour->format == RGB) {
+    from_rgb = from_colour;
   } else {
-    colour_clone_as(&rgb_colour, colour, RGB);
-    rgb = &rgb_colour;
+    colour_clone_as(&from_rgb_colour, from_colour, RGB);
+    from_rgb = &from_rgb_colour;
+  }
+
+  sen_colour *to_rgb, to_rgb_colour;
+  if (to_colour->format == RGB) {
+    to_rgb = to_colour;
+  } else {
+    colour_clone_as(&to_rgb_colour, to_colour, RGB);
+    to_rgb = &to_rgb_colour;
   }
 
   prepare_to_add_triangle_strip(render_data, matrix, 4, from_x + (hw * nx),
                                 from_y + (hw * ny));
   add_vertex(render_data->current_render_packet, matrix, from_x + (hw * nx),
-             from_y + (hw * ny), rgb, uv->map[0], uv->map[1]);
+             from_y + (hw * ny), from_rgb, uv->map[0], uv->map[1]);
   add_vertex(render_data->current_render_packet, matrix, from_x + (hw * n2x),
-             from_y + (hw * n2y), rgb, uv->map[2], uv->map[3]);
+             from_y + (hw * n2y), from_rgb, uv->map[2], uv->map[3]);
   add_vertex(render_data->current_render_packet, matrix, to_x + (hw * nx), to_y + (hw * ny),
-             rgb, uv->map[4], uv->map[5]);
+             to_rgb, uv->map[4], uv->map[5]);
   add_vertex(render_data->current_render_packet, matrix, to_x + (hw * n2x), to_y + (hw * n2y),
-             rgb, uv->map[6], uv->map[7]);
+             to_rgb, uv->map[6], uv->map[7]);
 }
 
 void render_rect(sen_render_data* render_data, sen_matrix* matrix, f32 x, f32 y, f32 width,
