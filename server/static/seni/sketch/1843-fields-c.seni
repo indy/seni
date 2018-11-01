@@ -1,0 +1,134 @@
+;; sketch/1843-fields.seni
+(define
+  rng (prng/build seed: {745 (gen/int min: 1 max: 9999)} min: -1 max: 1)
+  foc-a ({focal/build-hline (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))}
+         position: {[-201 -65] (gen/scalar min: -500 max: 500)}
+         distance: {434 (gen/scalar min: 100 max: 600)}
+         transform-position: 0)
+  foc-b ({focal/build-point (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))}
+         position: {[-366 -150] (gen/scalar min: -500 max: 500)}
+         distance: {481 (gen/scalar min: 100 max: 600)}
+         mapping: ease/slow-in-out
+         transform-position: 0)
+  col-h {77 (gen/scalar min: 0 max: 360)}
+  col-s {31 (gen/scalar min: 0 max: 100)}
+  col-l {64 (gen/scalar min: 0 max: 100)}
+  bg-col (col/hsluv h: col-h
+                    s: (math/clamp value: (- col-s 50) min: 0 max: 100)
+                    l: (math/clamp value: (- col-l 10) min: 0 max: 100)
+                    alpha: 0.2)
+  main-col (col/hsluv h: col-h s: col-s l: col-l alpha: 1.0))
+
+(fn (offset-position position: [500 500] sc: 1)
+  [(+ (nth from: position n: 0) (* (prng/value from: rng) sc))
+   (+ (nth from: position n: 1) (* (prng/value from: rng) sc))])
+
+;; calling offset-position with a small variance looks really good
+;; (todo: blend the bg colour towards the fg col, using focal-a)
+(fn (bg position: [500 500] size: 20 focal-a: 0 focal-b: 0)
+  (define
+    focal-val (focal/value from: focal-b position: position))
+  (circle position: (offset-position position: position sc: (+ 2 (* 8 focal-val)))
+          radius: 3
+          colour: (col/set-alpha colour: bg-col value: (* (- 1 focal-val) 0.1))))
+
+(fn (bg-cross position: [500 500] size: 20 focal-a: 0 focal-b: 0)
+  (define
+    focal-val (focal/value from: focal-b position: position))
+  (circle position: (offset-position position: position sc: (+ 2 (* 8 focal-val)))
+          radius: 3
+          colour: (col/set-alpha colour: bg-col value: (* (- 1 focal-val) 0.9))))
+
+(fn (h-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
+  (define
+    ww (* {60 (gen/scalar min: 10 max: 200)} (focal/value from: focal-b position: position))
+    check (focal/value from: focal-a position: position)
+    pos (offset-position position: position sc: 8))
+  (if (> check 0)
+      (h-brushed-rect position: pos
+                      width: ww
+                      height: 3
+                      colour: main-col)))
+
+(fn (v-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
+  (define
+    hh (* {85 (gen/scalar min: 10 max: 200)} (focal/value from: focal-b position: position))
+    check (focal/value from: focal-a position: position)
+    pos (offset-position position: position sc: 8))
+  (if (> check 0)
+      (v-brushed-rect position: pos
+                      height: hh
+                      width: 3
+                      colour: main-col)))
+
+(fn (grid density: 5 draw-fn: 0 focal-a: 0 focal-b: 0)
+  (fence (y from: -500 to: 500 num: density)
+    (fence (x from: -500 to: 500 num: density)
+      (fn-call (draw-fn position: [x y]
+                        focal-a: focal-a
+                        focal-b: focal-b)))))
+
+(fn (v-brushed-rect position: [500 500]
+                    height: 500
+                    width: 3
+                    colour: red
+                    brush-subtype: 1)
+  (define
+    x (nth from: position n: 0)
+    y-min (- (nth from: position n: 1) (/ height 2))
+    y-max (+ (nth from: position n: 1) (/ height 2))
+    y-delta (/ (- y-max y-min) 3))
+  (bezier tessellation: 10
+          line-width: width
+          coords: [[x y-min]
+                   [x (+ y-min y-delta)]
+                   [x (+ y-min y-delta y-delta)]
+                   [x y-max]]
+          colour: colour
+          brush: brush-c
+          brush-subtype: brush-subtype))
+
+(fn (h-brushed-rect position: [500 500]
+                    height: 3
+                    width: 500
+                    colour: red
+                    brush-subtype: 1)
+  (define
+    y (nth from: position n: 1)
+    x-min (- (nth from: position n: 0) (/ width 2))
+    x-max (+ (nth from: position n: 0) (/ width 2))
+    x-delta (/ (- x-max x-min) 3))
+  (bezier tessellation: 10
+          line-width: height
+          coords: [[x-min y]
+                   [(+ x-min x-delta) y]
+                   [(+ x-min x-delta x-delta) y]
+                   [x-max y]]
+          colour: colour
+          brush: brush-c
+          brush-subtype: brush-subtype))
+
+(on-matrix-stack
+  (translate vector: [500 500])
+  (rotate angle: 0)
+  (scale scalar: 1.0)
+
+  (grid density: 50
+        draw-fn: (address-of bg)
+        focal-a: foc-a
+        focal-b: foc-b)
+
+  (grid density: 10
+        draw-fn: (address-of bg-cross)
+        focal-a: foc-a
+        focal-b: foc-b)
+
+  (grid density: 50
+        draw-fn: (address-of h-rects)
+        focal-a: foc-a
+        focal-b: foc-b)
+
+  (grid density: 50
+        draw-fn: (address-of v-rects)
+        focal-a: foc-a
+        focal-b: foc-b))

@@ -8,8 +8,14 @@
                            distance: {400 (gen/scalar min: 100 max: 600)}
                            mapping: ease/slow-in-out
                            transform-position: 0)
-  bg-col {(col/rgb r: 0.9 g: 0.9 b: 0.9 alpha: 1.0) (gen/col)}
-  main-col {(col/rgb r: 0.0 g: 0.9 b: 0.0 alpha: 1.0) (gen/col)})
+  col-h {90 (gen/scalar min: 0 max: 360)}
+  col-s {90 (gen/scalar min: 0 max: 100)}
+  col-l {90 (gen/scalar min: 0 max: 100)}
+  bg-col (col/hsluv h: col-h
+                    s: (math/clamp value: (- col-s 50) min: 0 max: 100)
+                    l: (math/clamp value: (- col-l 10) min: 0 max: 100)
+                    alpha: 1.0)
+  main-col (col/hsluv h: col-h s: col-s l: col-l alpha: 1.0))
 
 (fn (offset-position position: [500 500] sc: 1)
   [(+ (nth from: position n: 0) (* (prng/value from: rng) sc))
@@ -19,11 +25,10 @@
 ;; (todo: blend the bg colour towards the fg col, using focal-a)
 (fn (bg position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (define
-    focal-val (focal/value from: focal-a position: position))
-  (if (> focal-val -10)
-      (circle position: (offset-position position: position sc: (+ 2 (* 8 focal-val)))
-              radius: 3
-              colour: bg-col)))
+    focal-val (focal/value from: focal-b position: position))
+  (circle position: (offset-position position: position sc: (+ 2 (* 8 focal-val)))
+          radius: 3
+          colour: (col/set-alpha colour: bg-col value: (- 1 focal-val))))
 
 (fn (h-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (if (> (focal/value from: focal-a position: position) 0)
