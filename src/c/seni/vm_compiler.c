@@ -1528,9 +1528,9 @@ sen_error compile_fn_invocation(sen_compilation* compilation, sen_node* ast,
   // prepare the MEM_SEG_ARGUMENT with default values
 
   // for the function address
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 666);, "compile_fn_invocation");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 666);, "address of called function");
   // for the num args
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 667);, "compile_fn_invocation");
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, 667);, "num args of called function");
   B_CHK(emit_opcode_i32(compilation, CALL, fn_info_index, fn_info_index),
         "compile_fn_invocation");
 

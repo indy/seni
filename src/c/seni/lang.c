@@ -1010,6 +1010,7 @@ void vm_reset(sen_vm* vm) {
   base_offset++; // the caller's frame pointer
   base_offset++; // the caller's ip
   base_offset++; // the num_args of the called function
+  base_offset++; // the caller's hop back
 
   vm->local = base_offset;
   base_offset += MEMORY_LOCAL_SIZE;

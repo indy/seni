@@ -10,6 +10,11 @@
 
 #include <math.h>
 
+#define FP_OFFSET_TO_LOCALS 4
+#define FP_OFFSET_TO_HOP_BACK 3
+#define FP_OFFSET_TO_NUM_ARGS 2
+#define FP_OFFSET_TO_IP 1
+
 bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program);
 
 void gc_mark_vector(sen_var* vector) {
@@ -153,6 +158,13 @@ void vm_function_call_default_arguments(sen_vm* vm, sen_fn_info* fn_info) {
   v->type    = VAR_INT;
   v->value.i = num_args;
 
+  // push hop back
+  v = stack_d;
+  stack_d++;
+  vm->sp++;
+  v->type    = VAR_INT;
+  v->value.i = 0;
+
   vm->ip    = fn_info->arg_address;
   vm->fp    = fp;
   vm->local = vm->sp;
@@ -175,7 +187,7 @@ void vm_function_call_body(sen_vm* vm, sen_fn_info* fn_info) {
   i32 stop_address = program_stop_location(vm->program);
 
   // set the correct return ip
-  vm->stack[vm->fp + 1].value.i = stop_address;
+  vm->stack[vm->fp + FP_OFFSET_TO_IP].value.i = stop_address;
 
   // leap to a location
   vm->ip = fn_info->body_address;
@@ -199,6 +211,7 @@ bool vm_run(sen_vm* vm, sen_env* env, sen_program* program) {
     SEN_ERROR("vm_run: get_preamble_program");
     return false;
   }
+
   sen_program* preamble = result_program.result;
 
   // setup the env with the global variables in preamble
@@ -233,6 +246,10 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
   register i32           sp      = vm->sp;
   register sen_var*      stack_d = &(vm->stack[sp]);
 
+// define to print out opcodes while the bytecode is being executed
+//
+// #define TRACE_PRINT_OPCODES
+
   i32 num_args, addr;
   i32 iname;
   i32 i;
@@ -243,6 +260,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
   // when calling functions)
   //
   i32 hop_back = 0;
+
   i32 local, fp;
   i32 stack_size = vm->stack_size;
 
@@ -297,6 +315,8 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
         // use the right frame i.e. we're using the caller function's ARG, not
         // the callee
         fp = vm->fp;
+
+        hop_back = vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i;
         for (i = 0; i < hop_back; i++) {
           fp = vm->stack[fp].value.i; // go back a frame
         }
@@ -304,7 +324,6 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
         src = &(vm->stack[fp - bc->arg1.value.i - 1]);
 #ifdef TRACE_PRINT_OPCODES
         var_pretty_print("---", src);
-        SEN_LOG("--- hop_back is %d fp is %d\n", hop_back, fp);
 #endif
 
         var_copy(v, src);
@@ -314,12 +333,18 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
         // if we're referencing a LOCAL in-between CALL and CALL_0 make sure we
         // use the right frame
         fp = vm->fp;
+
+        hop_back = vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i;
         for (i = 0; i < hop_back; i++) {
           fp = vm->stack[fp].value.i; // go back a frame
         }
-        local = fp + 3; // get the correct frame's local
+
+        local = fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
 
         src = &(vm->stack[local + bc->arg1.value.i]);
+
+        // var_pretty_print("--- LOAD LOCAL", src);
+        // SEN_LOG("local = %d, fp = %d", local, fp);
 
         var_copy(v, src);
 
@@ -355,10 +380,6 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
 
         // check the current value of dest,
         var_copy(dest, v);
-#ifdef TRACE_PRINT_OPCODES
-        var_pretty_print("---", dest);
-        SEN_LOG("--- fp is %d\n", vm->fp);
-#endif
       } else if (memory_segment_type == MEM_SEG_LOCAL) {
         dest = &(vm->stack[vm->local + bc->arg1.value.i]);
         // using a copy since we could have a define in a loop and so
@@ -419,6 +440,17 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       v->type    = VAR_INT;
       v->value.i = num_args;
 
+      // push hop back
+      STACK_PUSH;
+      v->type    = VAR_INT;
+
+      hop_back = vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i;
+      v->value.i = hop_back + 1;
+
+#ifdef TRACE_PRINT_OPCODES
+      SEN_LOG("CALL hop_back value previous frame = %d, new frame = %d", hop_back, v->value.i);
+#endif
+
       vm->ip    = addr;
       vm->fp    = fp;
       vm->local = sp;
@@ -449,7 +481,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       // ip
 
       // set the correct return ip
-      vm->stack[vm->fp + 1].value.i = ip;
+      vm->stack[vm->fp + FP_OFFSET_TO_IP].value.i = ip;
 
       // leap to a location
       ip     = addr;
@@ -457,15 +489,14 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
 
       // we're now executing the body of the function so don't
       // hop back when we push any arguments or locals onto the stack
-      hop_back = 0;
+      vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i = 0;
+
       break;
 
     case RET_0:
       // leap to the return ip
-      vm->ip = vm->stack[vm->fp + 1].value.i;
+      vm->ip = vm->stack[vm->fp + FP_OFFSET_TO_IP].value.i;
       ip     = vm->ip;
-
-      hop_back++;
 
       break;
 
@@ -476,13 +507,13 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       // grab whatever was the last value on the soon to be popped frame
       src = &(vm->stack[sp - 1]);
 
-      num_args = vm->stack[vm->fp + 2].value.i;
+      num_args = vm->stack[vm->fp + FP_OFFSET_TO_NUM_ARGS].value.i;
 
       // update vm
       vm->sp    = vm->fp - (num_args * 2);
-      vm->ip    = vm->stack[vm->fp + 1].value.i;
+      vm->ip    = vm->stack[vm->fp + FP_OFFSET_TO_IP].value.i;
       vm->fp    = vm->stack[vm->fp].value.i;
-      vm->local = vm->fp + 3;
+      vm->local = vm->fp + FP_OFFSET_TO_LOCALS;
 
       // sync registers with vm
       ip      = vm->ip;
@@ -532,6 +563,12 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       v->type    = VAR_INT;
       v->value.i = num_args;
 
+      // push hop back
+      STACK_PUSH;
+      v->type    = VAR_INT;
+      hop_back = vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i;
+      v->value.i = hop_back + 1;
+
       vm->ip    = addr;
       vm->fp    = fp;
       vm->local = sp;
@@ -567,7 +604,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       // ip
 
       // set the correct return ip
-      vm->stack[vm->fp + 1].value.i = ip;
+      vm->stack[vm->fp + FP_OFFSET_TO_IP].value.i = ip;
 
       // leap to a location
       ip     = addr;
@@ -575,7 +612,8 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
 
       // we're now executing the body of the function so don't
       // hop back when we push any arguments or locals onto the stack
-      hop_back = 0;
+      vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i = 0;
+
       break;
 
     case NATIVE:

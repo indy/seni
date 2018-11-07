@@ -824,6 +824,26 @@ void test_vm_callret(void) {
                  621.0f);
 }
 
+void test_vm_hop_back(void) {
+  /*
+    call-a invokes call-b and call-b's arguments invoke call-c and call-d.
+    the process of two function calls whilst setting up call-b makes use of the hop_back mechanism in the interpreter
+   */
+  VM_COMPILE_F32("(fn (call-d lambda: 994 omega: 993 theta: 992)"
+                 "  (* (+ lambda omega) theta))"
+                 "(fn (call-c epsilon: 995)"
+                 "  (+ epsilon epsilon))"
+                 "(fn (call-b delta: 997 gamma: 996)"
+                 "  (- gamma delta))"
+                 "(fn (call-a alpha: 999 beta: 998)"
+                 "  (call-b delta: (call-c epsilon: alpha)"
+                 "          gamma: (call-d lambda: 8 omega: beta theta: alpha)))"
+                 "(define res (call-a alpha: 2 beta: 5))"
+                 "res"
+                 , 22);
+}
+
+
 void test_vm_native(void) {
   // call native functions that have vector arguments (tests ref counting)
   VM_COMPILE_F32("(nth n: 0 from: [22 33])", 22);
@@ -2239,6 +2259,7 @@ int main(void) {
   RUN_TEST(test_vm_bugs);
   RUN_TEST(test_vm_bytecode);
   RUN_TEST(test_vm_callret);
+  RUN_TEST(test_vm_hop_back);
   RUN_TEST(test_vm_native);
   RUN_TEST(test_vm_destructure);
   RUN_TEST(test_vm_2d);
@@ -2277,7 +2298,7 @@ int main(void) {
   RUN_TEST(test_rgb_hsluv_conversion);
 
 #else
-  RUN_TEST(test_vm_callret_debugging);
+  // RUN_TEST(test_vm_bytecode);
 #endif
 
   return UNITY_END();

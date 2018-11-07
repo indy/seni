@@ -6,10 +6,6 @@
 //
 #define CHECK_STACK_ARGS
 
-// define to print out opcodes while the bytecode is being executed
-//
-// #define TRACE_PRINT_OPCODES
-
 #define MAX_WORD_LOOKUPS 128
 #define MAX_KEYWORD_LOOKUPS 192
 #define MAX_NATIVE_LOOKUPS 128
