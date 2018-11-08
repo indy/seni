@@ -5,6 +5,8 @@ seni-server.exe
 
 .DS_Store
 
+/.vs
+
 /app
 /dist
 /build_unix
