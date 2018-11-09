@@ -24,7 +24,7 @@ struct Piece {
 
 /// favicon handler
 fn favicon(_req: &HttpRequest) -> Result<fs::NamedFile> {
-    Ok(fs::NamedFile::open("assets/favicon.ico")?)
+    Ok(fs::NamedFile::open("client/www/assets/favicon.ico")?)
 }
 
 fn gallery(req: &HttpRequest) -> Result<HttpResponse> {
@@ -96,8 +96,8 @@ fn main() {
                     .finish()
             }))
         // static files
-            .handler("/dist", fs::StaticFiles::new("dist").unwrap())
-            .handler("/", fs::StaticFiles::new("assets").unwrap())
+            .handler("/dist", fs::StaticFiles::new("client/www/dist").unwrap())
+            .handler("/", fs::StaticFiles::new("client/www/assets").unwrap())
     }).bind(bind_addr)
         .unwrap()
         .shutdown_timeout(1)

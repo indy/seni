@@ -827,7 +827,8 @@ void test_vm_callret(void) {
 void test_vm_hop_back(void) {
   /*
     call-a invokes call-b and call-b's arguments invoke call-c and call-d.
-    the process of two function calls whilst setting up call-b makes use of the hop_back mechanism in the interpreter
+    the process of two function calls whilst setting up call-b makes use of the hop_back
+    mechanism in the interpreter
    */
   VM_COMPILE_F32("(fn (call-d lambda: 994 omega: 993 theta: 992)"
                  "  (* (+ lambda omega) theta))"
@@ -839,10 +840,9 @@ void test_vm_hop_back(void) {
                  "  (call-b delta: (call-c epsilon: alpha)"
                  "          gamma: (call-d lambda: 8 omega: beta theta: alpha)))"
                  "(define res (call-a alpha: 2 beta: 5))"
-                 "res"
-                 , 22);
+                 "res",
+                 22);
 }
-
 
 void test_vm_native(void) {
   // call native functions that have vector arguments (tests ref counting)

@@ -9,7 +9,6 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 ### Prerequisites:
 
 1. rust and node.js should be installed
-2. `npm install`
 
 ### Build:
 
@@ -20,41 +19,50 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 3. `cd ..`
 4. `cp server/target/release/seni-server .`
 
-#### Building for development:
+#### Building wasm file:
 
-1. `npm run build:js`
+1. `cd client`
 2. `npm run build:wasm`
-4. `./seni-server`
-5. visit http://localhost:3210
 
-#### Building for production:
+#### Building app for development:
 
-1. `npm run build:all:production`
-2. `./seni-server`
-3. visit http://localhost:3210
+1. `cd client/www`
+2. `npm run build:js`
+
+#### Building app for production:
+
+1. `cd client/www`
+2. `npm run build:js:production`
 
 #### Building for single piece gallery page on https://seni.app:
 
-1. `npm run build:js:piece`
-2. `npm run build:wasm`
+1. `cd client/www`
+2. `npm run build:js:piece`
 3. copy files from `dist` into appropriate folder of seni.app repo
 
 #### Building when developing single piece gallery page for https://seni.app:
 
-1. `npm run build:js:devpiece`
-2. `npm run build:wasm`
-4. `./seni-server`
-5. visit http://localhost:3210/piece.html
+1. `cd client/www`
+2. `npm run build:js:devpiece`
+3. start the server
+4. visit http://localhost:3210/piece.html
+
+#### Starting the server
+
+1. `./seni-server`
+2. visit http://localhost:3210
 
 ### Test:
 
 * compiling natively and running tests on Linux/MacOS:
 
-./make_unix.sh test
+`cd core`
+`./test_unix.sh`
 
 * compiling natively and running tests on Windows
 
-make_win.bat test
+`cd core`
+`./test_win.bat`
 
 ### Publishing
 

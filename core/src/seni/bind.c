@@ -255,23 +255,23 @@ typedef struct {
     value_1   = tmp_1;                      \
   }
 
-#define READ_STACK_ARG_FOCAL(k, n)          \
-  if (name_1 == k) {                        \
-    tmp_1   = value_1;                      \
-    value_1 = value_1->value.v;             \
-    IS_I32(#n);                             \
-    n.structure_id = value_1->value.i;      \
-    n.x            = value_1->f32_array[0]; \
-    n.y            = value_1->f32_array[1]; \
-    n.distance     = value_1->f32_array[2]; \
-    n.transform_pos= value_1->f32_array[3] > 0.0f; \
-    value_1        = value_1->next;         \
-    IS_I32(#n);                             \
-    n.type  = value_1->value.i;             \
-    value_1 = value_1->next;                \
-    IS_I32(#n);                             \
-    n.mapping = value_1->value.i;           \
-    value_1   = tmp_1;                      \
+#define READ_STACK_ARG_FOCAL(k, n)                  \
+  if (name_1 == k) {                                \
+    tmp_1   = value_1;                              \
+    value_1 = value_1->value.v;                     \
+    IS_I32(#n);                                     \
+    n.structure_id  = value_1->value.i;             \
+    n.x             = value_1->f32_array[0];        \
+    n.y             = value_1->f32_array[1];        \
+    n.distance      = value_1->f32_array[2];        \
+    n.transform_pos = value_1->f32_array[3] > 0.0f; \
+    value_1         = value_1->next;                \
+    IS_I32(#n);                                     \
+    n.type  = value_1->value.i;                     \
+    value_1 = value_1->next;                        \
+    IS_I32(#n);                                     \
+    n.mapping = value_1->value.i;                   \
+    value_1   = tmp_1;                              \
   }
 
 #define READ_STACK_ARG_COORD3(k, n) \
@@ -451,15 +451,17 @@ sen_var* bind_line(sen_vm* vm, i32 num_args) {
   sen_render_data* render_data = vm->render_data;
   sen_matrix*      matrix      = matrix_stack_peek(vm->matrix_stack);
 
-  if (from_colour.element[0] == -1.0f && from_colour.element[1] == -1.0f && from_colour.element[2] == -1.0f) {
+  if (from_colour.element[0] == -1.0f && from_colour.element[1] == -1.0f &&
+      from_colour.element[2] == -1.0f) {
     colour_clone_as(&from_colour, &colour, RGB);
   }
-  if (to_colour.element[0] == -1.0f && to_colour.element[1] == -1.0f && to_colour.element[2] == -1.0f) {
+  if (to_colour.element[0] == -1.0f && to_colour.element[1] == -1.0f &&
+      to_colour.element[2] == -1.0f) {
     colour_clone_as(&to_colour, &colour, RGB);
   }
 
-  render_line(render_data, matrix, from[0], from[1], to[0], to[1],
-              width, &from_colour, &to_colour, brush, (i32)brush_subtype);
+  render_line(render_data, matrix, from[0], from[1], to[0], to[1], width, &from_colour,
+              &to_colour, brush, (i32)brush_subtype);
 
   return &g_var_true;
 }
@@ -2295,9 +2297,9 @@ sen_var* bind_repeat_rotate_mirrored(sen_vm* vm, i32 num_args) {
 }
 
 sen_var* bind_focal_generic(sen_vm* vm, i32 num_args, sen_focal_type type) {
-  f32 position[] = {0.0f, 0.0f};
-  f32 distance   = 1.0f;
-  i32 mapping    = INAME_LINEAR;
+  f32 position[]        = {0.0f, 0.0f};
+  f32 distance          = 1.0f;
+  i32 mapping           = INAME_LINEAR;
   f32 transform_pos_f32 = 1.0f;
 
   READ_STACK_ARGS_BEGIN;
@@ -2356,12 +2358,12 @@ sen_var* bind_focal_value(sen_vm* vm, i32 num_args) {
   sen_focal_state from;
   f32             position[] = {0.0f, 0.0f};
 
-  from.structure_id = HEAP_STRUCTURE_UNDEFINED;
-  from.type         = FOCAL_UNKNOWN;
-  from.distance     = 0.0f;
-  from.x            = 0.0f;
-  from.y            = 0.0f;
-  from.mapping      = INAME_LINEAR;
+  from.structure_id  = HEAP_STRUCTURE_UNDEFINED;
+  from.type          = FOCAL_UNKNOWN;
+  from.distance      = 0.0f;
+  from.x             = 0.0f;
+  from.y             = 0.0f;
+  from.mapping       = INAME_LINEAR;
   from.transform_pos = true;
 
   READ_STACK_ARGS_BEGIN;

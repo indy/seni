@@ -246,9 +246,9 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
   register i32           sp      = vm->sp;
   register sen_var*      stack_d = &(vm->stack[sp]);
 
-// define to print out opcodes while the bytecode is being executed
-//
-// #define TRACE_PRINT_OPCODES
+  // define to print out opcodes while the bytecode is being executed
+  //
+  // #define TRACE_PRINT_OPCODES
 
   i32 num_args, addr;
   i32 iname;
@@ -442,13 +442,14 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
 
       // push hop back
       STACK_PUSH;
-      v->type    = VAR_INT;
+      v->type = VAR_INT;
 
-      hop_back = vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i;
+      hop_back   = vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i;
       v->value.i = hop_back + 1;
 
 #ifdef TRACE_PRINT_OPCODES
-      SEN_LOG("CALL hop_back value previous frame = %d, new frame = %d", hop_back, v->value.i);
+      SEN_LOG("CALL hop_back value previous frame = %d, new frame = %d", hop_back,
+              v->value.i);
 #endif
 
       vm->ip    = addr;
@@ -566,7 +567,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       // push hop back
       STACK_PUSH;
       v->type    = VAR_INT;
-      hop_back = vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i;
+      hop_back   = vm->stack[vm->fp + FP_OFFSET_TO_HOP_BACK].value.i;
       v->value.i = hop_back + 1;
 
       vm->ip    = addr;

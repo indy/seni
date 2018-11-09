@@ -7,11 +7,8 @@ seni-server.exe
 
 /.vs
 
-/app
-/dist
-/build_unix
-/build_wasm
-/build_win
+/client/www/dist
+/client/www/app
 
 /server/target
 
@@ -25,6 +22,9 @@ pids
 *.seed
 
 # Dependency directory
-node_modules
+/core/node_modules
+/core/test
+/client/node_modules
+/client/www/node_modules
 coverage
 tmp

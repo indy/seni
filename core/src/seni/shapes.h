@@ -4,12 +4,9 @@
 
 void shapes_subsystem_startup();
 
-void render_line(sen_render_data* render_data, sen_matrix* matrix,
-                 f32 from_x, f32 from_y,
-                 f32 to_x, f32 to_y,
-                 f32 width,
-                 sen_colour* from_colour, sen_colour* to_colour,
-                 i32 brush, i32 brush_subtype);
+void render_line(sen_render_data* render_data, sen_matrix* matrix, f32 from_x, f32 from_y,
+                 f32 to_x, f32 to_y, f32 width, sen_colour* from_colour,
+                 sen_colour* to_colour, i32 brush, i32 brush_subtype);
 
 void render_rect(sen_render_data* render_data, sen_matrix* matrix, f32 x, f32 y, f32 width,
                  f32 height, sen_colour* colour);

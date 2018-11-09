@@ -91,12 +91,9 @@ void prepare_to_add_triangle_strip(sen_render_data* render_data, sen_matrix* mat
   }
 }
 
-void render_line(sen_render_data* render_data, sen_matrix* matrix,
-                 f32 from_x, f32 from_y,
-                 f32 to_x, f32 to_y,
-                 f32 width,
-                 sen_colour* from_colour, sen_colour* to_colour,
-                 i32 brush, i32 brush_subtype) {
+void render_line(sen_render_data* render_data, sen_matrix* matrix, f32 from_x, f32 from_y,
+                 f32 to_x, f32 to_y, f32 width, sen_colour* from_colour,
+                 sen_colour* to_colour, i32 brush, i32 brush_subtype) {
   // get the uv co-ordinates for the specified brush
   //
   sen_brush_type  brush_type = (sen_brush_type)(brush - INAME_BRUSH_FLAT);

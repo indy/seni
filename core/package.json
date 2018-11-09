@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "format": "clang-format ../client/src/wasm.c ../native/src/native.c ../native/src/test.c --glob=src/seni/*.[ch] -i -style=file"
+  },
+  "devDependencies": {
+    "clang-format": "^1.2.3"
+  }
+}
