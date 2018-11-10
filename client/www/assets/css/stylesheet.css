@@ -174,7 +174,7 @@ body {
 }
 
 .card-holder.selected {
-  box-shadow: 0 2px 20px 10px rgba(92, 107, 192, 0.56);
+  box-shadow: inset 0px 0px 0px 9px #455a64;
 }
 
 .card-image {
