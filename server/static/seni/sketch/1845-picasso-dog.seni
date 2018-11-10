@@ -1,0 +1,43 @@
+;; Pablo Picasso's Dog
+;;
+(define
+  ;; co-ordinates from "Dog" by Jeremy Kun 2013
+  front-leg   [[180 280] [183 268] [186 256] [189 244]]
+  tummy       [[191 244] [290 244] [300 230] [339 245]]
+  back-leg    [[340 246] [350 290] [360 300] [355 210]]
+  tail        [[353 210] [370 207] [380 196] [375 193]]
+  back        [[375 193] [310 220] [190 220] [164 205]]
+  ear-start   [[164 205] [135 194] [135 265] [153 275]]
+  head        [[153 275] [168 275] [170 180] [150 190]]
+  nose-bridge [[149 190] [122 214] [142 204] [ 85 240]]
+  mouth       [[ 86 240] [100 247] [125 233] [140 238]]
+  dog [front-leg tummy back-leg tail back ear-start head nose-bridge mouth])
+
+;; renders a bezier curve with rounded end-points
+(fn (curve line-width: 2 colour: black coords: [])
+  (bezier coords: coords
+          colour: colour
+          line-width: line-width
+          tessellation: 50)
+  (circle position: (nth from: coords n: 0)
+          colour: colour
+          radius: (/ line-width 2))
+  (circle position: (nth from: coords n: 3)
+          colour: colour
+          radius: (/ line-width 2)))
+
+(on-matrix-stack
+  ;; scale coords from 500 limit to 1000 limit
+  (scale vector: [2 2])
+  ;; reverse y-coordinates
+  (translate vector: [0 500])
+  (scale vector: [1 -1])
+  (curve coords: front-leg)
+  (curve coords: tummy)
+  (curve coords: back-leg)
+  (curve coords: tail)
+  (curve coords: back)
+  (curve coords: ear-start)
+  (curve coords: head)
+  (curve coords: nose-bridge)
+  (curve coords: mouth))
