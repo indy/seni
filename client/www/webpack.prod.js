@@ -5,8 +5,8 @@ const common = require('./webpack.common.js');
 module.exports = merge(common, {
   mode: 'production',
   entry: {
-    seni: ['./src/js/index.js'],
-    worker: ['./src/js/worker.js']
+    seni: ['./src/index.js'],
+    worker: ['./src/worker.js']
   },
   plugins: [
     new webpack.DefinePlugin({

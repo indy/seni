@@ -17,7 +17,7 @@ module.exports = {
 
         // Skip any files outside of your project's `js` directory
         include: [
-          path.resolve(__dirname, 'src', 'js')
+          path.resolve(__dirname, 'src')
         ]
       }
     ]
