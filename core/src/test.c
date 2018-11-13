@@ -595,9 +595,10 @@ void test_strtof(void) {
 
 #define VM_COMPILE(EXPR)                                                             \
   sen_systems_startup();                                                             \
-  sen_env*     e    = env_allocate();                                                \
-  sen_program* prog = sen_compile_program(EXPR, e->word_lut, 256);                   \
-  sen_vm*      vm =                                                                  \
+  sen_env*           e           = env_allocate();                                   \
+  sen_result_program prog_result = sen_compile_program(EXPR, e->word_lut, 256);      \
+  sen_program*       prog        = prog_result.result;                               \
+  sen_vm*            vm =                                                            \
       vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES); \
   vm_debug_info_reset(vm);                                                           \
   vm_run(vm, e, prog)
@@ -1501,7 +1502,10 @@ void vm_compile_f32_with_2_genes(char* expr, int seed, f32 expected_res, f32 exp
   sen_env*      e        = env_allocate();
   sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
 
-  sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_result_program prog_result =
+      sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_program* prog = prog_result.result;
+
   sen_vm* vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
   TEST_ASSERT(genotype);
@@ -1534,7 +1538,10 @@ void vm_compile_f32_with_3_genes(char* expr, int seed, f32 expected_res, f32 exp
   sen_env*      e        = env_allocate();
   sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
 
-  sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_result_program prog_result =
+      sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_program* prog = prog_result.result;
+
   sen_vm* vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
   TEST_ASSERT(genotype);
@@ -1572,7 +1579,10 @@ void vm_compile_f32_with_4_genes(char* expr, int seed, f32 expected_res, f32 exp
   sen_env*      e        = env_allocate();
   sen_genotype* genotype = genotype_construct_initial_value(seed, expr);
 
-  sen_program* prog = sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_result_program prog_result =
+      sen_compile_program_with_genotype(expr, genotype, e->word_lut, 256);
+  sen_program* prog = prog_result.result;
+
   sen_vm* vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
 
   TEST_ASSERT(genotype);
@@ -1939,8 +1949,10 @@ void test_serialization(void) {
 void test_serialization_program(void) {
   parser_subsystem_startup();
 
-  sen_env*     env     = env_allocate();
-  sen_program* program = sen_compile_program("(gen/int min: 2 max: 6)", env->word_lut, 256);
+  sen_env*           env = env_allocate();
+  sen_result_program prog_result =
+      sen_compile_program("(gen/int min: 2 max: 6)", env->word_lut, 256);
+  sen_program* program = prog_result.result;
 
   i32   buffer_size = 4096;
   char* buffer      = (char*)calloc(buffer_size, sizeof(char));
@@ -2252,6 +2264,7 @@ int main(void) {
   RUN_TEST(test_macro_pool);
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
+  RUN_TEST(test_parser_failures);
   RUN_TEST(test_uv_mapper);
   RUN_TEST(test_colour);
   RUN_TEST(test_strtof);

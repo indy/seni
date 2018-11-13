@@ -24,6 +24,7 @@ pids
 # Dependency directory
 /core/node_modules
 /core/test
+/core/test.exe
 /client/node_modules
 /client/www/node_modules
 coverage

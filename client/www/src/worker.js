@@ -321,7 +321,7 @@ function render({ script /*, scriptHash*/, genotype }) {
   const wasmMemory = SeniWasm.instance.memory.buffer;
   const memory = wasmMemory.slice();
 
-  return [{ ok: true, logMessages }, { title, memory, buffers }];
+  return [{ logMessages }, { title, memory, buffers }];
 }
 
 function unparse({ script/*, scriptHash*/, genotype }) {
@@ -340,7 +340,7 @@ function unparse({ script/*, scriptHash*/, genotype }) {
 
   const logMessages = konsoleProxy.collectMessages();
 
-  return [{ ok: true, logMessages }, { script: newScript }];
+  return [{ logMessages }, { script: newScript }];
 }
 
 function buildTraits({ script /*, scriptHash */ }) {
@@ -348,15 +348,18 @@ function buildTraits({ script /*, scriptHash */ }) {
 
   SeniWasm.setString(SeniWasm.source_buffer, script);
 
-  // konsoleProxy.log('worker:buildTraits');
   const numTraits = SeniWasm.buildTraits();
-  // konsoleProxy.log(`built ${numTraits} traits`);
 
-  const traits = SeniWasm.getString(SeniWasm.traits_buffer);
+  const validTraits = numTraits === -1;
+
+  let traits = [];
+
+  if (validTraits) {
+    traits = SeniWasm.getString(SeniWasm.traits_buffer);
+  }
 
   const logMessages = konsoleProxy.collectMessages();
-
-  return [{ ok: true, logMessages }, { traits }];
+  return [{ logMessages }, { validTraits, traits }];
 }
 
 // transfers the contents of g_genotype_list from the wasm side
@@ -388,7 +391,7 @@ function createInitialGeneration({ populationSize, traits }) {
 
   const logMessages = konsoleProxy.collectMessages();
 
-  return [{ok: true, logMessages}, { genotypes }];
+  return [{ logMessages }, { genotypes }];
 }
 
 function singleGenotypeFromSeed({ seed, traits }) {
@@ -404,7 +407,7 @@ function singleGenotypeFromSeed({ seed, traits }) {
 
   const logMessages = konsoleProxy.collectMessages();
 
-  return [{ok: true, logMessages}, { genotype: genotypes[0] }];
+  return [{ logMessages }, { genotype: genotypes[0] }];
 }
 
 function simplifyScript({ script }) {
@@ -418,7 +421,7 @@ function simplifyScript({ script }) {
 
   const logMessages = konsoleProxy.collectMessages();
 
-      return [{ ok: true, logMessages }, { script: newScript }];
+  return [{ logMessages }, { script: newScript }];
 }
 
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
@@ -438,7 +441,7 @@ function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
 
   const logMessages = konsoleProxy.collectMessages();
 
-  return [{ok: true, logMessages }, { genotypes: newGenotypes }];
+  return [{ logMessages }, { genotypes: newGenotypes }];
 }
 
 const options = {
@@ -540,7 +543,6 @@ function messageHandler(type, data) {
 postMessage will always return an array of two items: [status, result]
 
 status = {
- ok: true
  error: { message: "something fucked up" }
  systemInitialised: true
  logMessages: []
@@ -563,6 +565,7 @@ addEventListener('message', e => {
       postMessage([status, result], transferrable);
     } else {
       const sendData = JSON.stringify([status, result]);
+      // console.log(`worker.js:sendData = ${sendData}`);
       postMessage(sendData);
     }
   } catch (error) {

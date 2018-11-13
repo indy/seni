@@ -133,16 +133,27 @@ export int compile_to_render_packets(void) {
 
   sen_reset_vm(g_vm);
 
-  sen_program* program = NULL;
+  sen_result_program result_program;
 
   if (g_use_genotype_when_compiling) {
     sen_genotype* genotype = sen_deserialize_genotype(g_genotype_cursor);
-    program = sen_compile_program_with_genotype(g_source_buffer, genotype, g_e->word_lut,
-                                                MAX_PROGRAM_SIZE);
+    result_program         = sen_compile_program_with_genotype(g_source_buffer, genotype,
+                                                       g_e->word_lut, MAX_PROGRAM_SIZE);
     genotype_return_to_pool(genotype);
+
+    if (is_result_program_error(result_program)) {
+      SEN_ERROR("compile_to_render_packets");
+      return 0;
+    }
   } else {
-    program = sen_compile_program(g_source_buffer, g_e->word_lut, MAX_PROGRAM_SIZE);
+    result_program = sen_compile_program(g_source_buffer, g_e->word_lut, MAX_PROGRAM_SIZE);
+    if (is_result_program_error(result_program)) {
+      SEN_ERROR("compile_to_render_packets");
+      return 0;
+    }
   }
+
+  sen_program* program = result_program.result;
 
   vm_debug_info_reset(g_vm);
   bool res = vm_run(g_vm, g_e, program);
@@ -225,11 +236,19 @@ export i32 build_traits() {
 
   // TIMING_UNIT timing_a = get_timing();
 
-  sen_trait_list* trait_list = sen_compile_trait_list(g_source_buffer, g_e->word_lut);
-  bool            res        = sen_serialize_trait_list(trait_list, g_traits_cursor);
+  sen_result_trait_list result_trait_list =
+      sen_compile_trait_list(g_source_buffer, g_e->word_lut);
+  if (is_result_trait_list_error(result_trait_list)) {
+    SEN_ERROR("build_traits");
+    return -1;
+  }
+
+  sen_trait_list* trait_list = result_trait_list.result;
+
+  bool res = sen_serialize_trait_list(trait_list, g_traits_cursor);
   if (res == false) {
     SEN_ERROR("sen_serialize_trait_list returned false");
-    return 0;
+    return -1;
   }
 
   i32 num_traits = trait_list_count(trait_list);
@@ -420,7 +439,13 @@ export void unparse_with_genotype() {
 
   sen_genotype* genotype = sen_deserialize_genotype(g_genotype_cursor);
 
-  sen_unparse_with_genotype(g_out_source_cursor, g_source_buffer, genotype, g_e->word_lut);
+  sen_error err = sen_unparse_with_genotype(g_out_source_cursor, g_source_buffer, genotype,
+                                            g_e->word_lut);
+  if (is_error(err)) {
+    SEN_ERROR("unparse_with_genotype: sen_unparse_with_genotype");
+    genotype_return_to_pool(genotype);
+    return;
+  }
 
   genotype_return_to_pool(genotype);
 
@@ -430,7 +455,11 @@ export void unparse_with_genotype() {
 export void simplify_script() {
   debug_size_source_buffer();
 
-  sen_simplify_script(g_out_source_cursor, g_source_buffer, g_e->word_lut);
+  sen_error err = sen_simplify_script(g_out_source_cursor, g_source_buffer, g_e->word_lut);
+
+  if (is_error(err)) {
+    SEN_ERROR("simplify_script: sen_simplify_script");
+  }
 
   debug_size_out_source_buffer();
 }

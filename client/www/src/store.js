@@ -70,8 +70,13 @@ function actionSetScript(state, { script }) {
     Job.request(jobBuildTraits, {
       script: newState.script,
       scriptHash: newState.scriptHash
-    }).then(({ traits }) => {
-      newState.traits = traits;
+    }).then(({ validTraits, traits }) => {
+      if (validTraits) {
+        newState.traits = traits;
+      } else {
+        newState.traits = [];
+      }
+
       resolveAsCurrentState(resolve, newState);
     }).catch(error => {
       // handle error

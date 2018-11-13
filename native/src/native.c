@@ -90,7 +90,13 @@ void execute_source(char* source) {
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  sen_program* program = sen_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
+  sen_program_result program_result =
+      sen_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR("execute_source");
+    return;
+  }
+  sen_program* program = program_result.result;
 
   TIMING_UNIT compilation_stop = get_timing();
 
@@ -236,7 +242,13 @@ void print_compiled_program(char* source) {
   sen_env* e = sen_allocate_env();
 
   // compile program
-  sen_program* program = sen_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
+  sen_program_result program_result =
+      sen_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR("print_compiled_program");
+    return;
+  }
+  sen_program* program = program_result.result;
 
   // print
   printf("%s\n", source);

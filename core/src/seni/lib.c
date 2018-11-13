@@ -54,9 +54,15 @@ sen_env* sen_allocate_env() {
 
 void sen_free_env(sen_env* env) { env_free(env); }
 
-sen_program* sen_compile_program(char* source, sen_word_lut* word_lut, i32 program_max_size) {
+sen_result_program sen_compile_program(char* source, sen_word_lut* word_lut,
+                                       i32 program_max_size) {
   sen_result_node result_node = parser_parse(word_lut, source);
-  sen_node*       ast         = result_node.result;
+  if (is_result_node_error(result_node)) {
+    SEN_ERROR("sen_compile_program: parser_parse error");
+    return result_program_error(result_node.error);
+  }
+
+  sen_node* ast = result_node.result;
 
   // ast_pretty_print(ast, word_lut);
 
@@ -66,22 +72,25 @@ sen_program* sen_compile_program(char* source, sen_word_lut* word_lut, i32 progr
 
   sen_program*       program        = program_construct(&compiler_config);
   sen_result_program result_program = compile_program(program, ast);
-  if (is_result_program_error(result_program)) {
-    SEN_ERROR("sen_compile_program: compile_program");
-    // todo: return an error here
-    return NULL;
-  }
-  program = result_program.result;
 
   parser_return_nodes_to_pool(ast);
 
-  return program;
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR("sen_compile_program: compile_program");
+  }
+  return result_program;
 }
 
-sen_program* sen_compile_program_with_genotype(char* source, sen_genotype* genotype,
-                                               sen_word_lut* word_lut, i32 program_max_size) {
+sen_result_program sen_compile_program_with_genotype(char* source, sen_genotype* genotype,
+                                                     sen_word_lut* word_lut,
+                                                     i32           program_max_size) {
   sen_result_node result_node = parser_parse(word_lut, source);
-  sen_node*       ast         = result_node.result;
+  if (is_result_node_error(result_node)) {
+    SEN_ERROR("sen_compile_program_with_genotype: parser_parse error");
+    return result_program_error(result_node.error);
+  }
+
+  sen_node* ast = result_node.result;
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = program_max_size;
@@ -91,21 +100,25 @@ sen_program* sen_compile_program_with_genotype(char* source, sen_genotype* genot
 
   sen_result_program result_program =
       compile_program_with_genotype(program, word_lut, ast, genotype);
-  if (is_result_program_error(result_program)) {
-    SEN_ERROR("sen_compile_program_with_genotype: compile_program_with_genotype");
-    // todo: return an error code here
-    return NULL;
-  }
 
   parser_return_nodes_to_pool(ast);
 
-  return result_program.result;
+  if (is_result_program_error(result_program)) {
+    SEN_ERROR("sen_compile_program_with_genotype: compile_program_with_genotype");
+  }
+
+  return result_program;
 }
 
-void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source, sen_genotype* genotype,
-                               sen_word_lut* word_lut) {
+sen_error sen_unparse_with_genotype(sen_cursor* out_cursor, char* source,
+                                    sen_genotype* genotype, sen_word_lut* word_lut) {
   sen_result_node result_node = parser_parse(word_lut, source);
-  sen_node*       ast         = result_node.result;
+  if (is_result_node_error(result_node)) {
+    SEN_ERROR("sen_unparse_with_genotype: parser_parse error");
+    return result_node.error;
+  }
+
+  sen_node* ast = result_node.result;
 
   cursor_reset(out_cursor);
 
@@ -114,11 +127,18 @@ void sen_unparse_with_genotype(sen_cursor* out_cursor, char* source, sen_genotyp
   cursor_write_null(out_cursor);
 
   parser_return_nodes_to_pool(ast);
+
+  return NONE;
 }
 
-void sen_simplify_script(sen_cursor* out_cursor, char* source, sen_word_lut* word_lut) {
+sen_error sen_simplify_script(sen_cursor* out_cursor, char* source, sen_word_lut* word_lut) {
   sen_result_node result_node = parser_parse(word_lut, source);
-  sen_node*       ast         = result_node.result;
+  if (is_result_node_error(result_node)) {
+    SEN_ERROR("sen_simplify_script: parser_parse error");
+    return result_node.error;
+  }
+
+  sen_node* ast = result_node.result;
 
   cursor_reset(out_cursor);
 
@@ -127,6 +147,8 @@ void sen_simplify_script(sen_cursor* out_cursor, char* source, sen_word_lut* wor
   cursor_write_null(out_cursor);
 
   parser_return_nodes_to_pool(ast);
+
+  return NONE;
 }
 
 sen_genotype* sen_deserialize_genotype(sen_cursor* cursor) {
@@ -142,9 +164,14 @@ sen_genotype* sen_deserialize_genotype(sen_cursor* cursor) {
   return genotype;
 }
 
-sen_trait_list* sen_compile_trait_list(char* source, sen_word_lut* word_lut) {
+sen_result_trait_list sen_compile_trait_list(char* source, sen_word_lut* word_lut) {
   sen_result_node result_node = parser_parse(word_lut, source);
-  sen_node*       ast         = result_node.result;
+  if (is_result_node_error(result_node)) {
+    SEN_ERROR("sen_compile_trait_list: parser_parse error");
+    return result_trait_list_error(result_node.error);
+  }
+
+  sen_node* ast = result_node.result;
 
   sen_compiler_config compiler_config;
   compiler_config.program_max_size = MAX_TRAIT_PROGRAM_SIZE;
@@ -154,7 +181,7 @@ sen_trait_list* sen_compile_trait_list(char* source, sen_word_lut* word_lut) {
 
   parser_return_nodes_to_pool(ast);
 
-  return trait_list;
+  return result_trait_list_ok(trait_list);
 }
 
 bool sen_serialize_trait_list(sen_trait_list* trait_list, sen_cursor* cursor) {

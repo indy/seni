@@ -18,11 +18,16 @@
 
 * functions
 ** keywords
- | name  | description |
- |-------+-------------|
- | [[loop]]  |             |
- | [[fence]] |             |
- | [[nth]]   |             |
+ | name       | description |
+ |------------+-------------|
+ | [[loop]]       |             |
+ | [[fence]]      |             |
+ | [[nth]]        |             |
+ | address-of |             |
+ | fn-call    |             |
+ | define     |             |
+ | fn         |             |
+ |            |             |
 
 ** misc
 

@@ -137,6 +137,7 @@ function request(type, data) {
       if (logToConsole) {
         console.log(`result ${type} id:${worker.getId()}`);
       }
+      // console.log(`job:request received: ${result}`);
       worker.release();
       resolve(result);
     }).catch(error => {
@@ -144,7 +145,7 @@ function request(type, data) {
         worker.release();
       }
       // handle error
-      console.error(`worker: error of ${error}`);
+      console.error(`worker (job:${type}): error of ${error}`);
       reject(error);
     });
   });
