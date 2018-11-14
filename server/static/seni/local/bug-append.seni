@@ -3,7 +3,7 @@
 ;;(debug/print value: bar)
 ;;(debug/print value: (vector/length vector: bar))
 
-(vector/append bar 54)
+(++ bar 54)
 
 ;;(debug/print value: bar)
 ;;(debug/print value: (vector/length vector: bar))

@@ -1,27 +1,27 @@
-(define 
+(define
   positions []
   colours []
   radii [])
 
 (define
-  random-axis-position (prng/range seed: {494 (gen/int min: 0 max: 999)} 
-                                   min: -500 
+  random-axis-position (prng/range seed: {494 (gen/int min: 0 max: 999)}
+                                   min: -500
                                    max: 500)
   col-fn (col/procedural-fn preset: "chrome")
-  random-radius (prng/range seed: {435 (gen/int min: 0 max: 999)} 
-                            min: 2 
+  random-radius (prng/range seed: {435 (gen/int min: 0 max: 999)}
+                            min: 2
                             max: {26 (gen/int min: 3 max: 40)}))
 
 (loop (x to: 800)
-  (vector/append positions [(random-axis-position) 
+  (++ positions [(random-axis-position)
                             (random-axis-position)])
-  (define 
+  (define
     ;dist (math/distance vec1: (vector/get from: positions nth: x) vec2: [0 0])
     ;colour (col-fn t: (/ dist 500))
     colour (col-fn t: (/ 1000 (+ 500 (random-axis-position)))))
 
-  (vector/append colours colour)
-  (vector/append radii (random-radius)))
+  (++ colours colour)
+  (++ radii (random-radius)))
 
 
 (fn (draw-shape position: [0 0]
@@ -44,10 +44,10 @@
                  colour: red
                  radius: 10
                  obj: [])
-  (define 
+  (define
     shadow-mult {1.030 (gen/scalar min: 1 max: 1.05)}
     pos (vector/multiply vector: position scalar: shadow-mult)
-    col: (col/set-alpha colour: (col/darken colour: colour 
+    col: (col/set-alpha colour: (col/darken colour: colour
                                             value: {46 (gen/int min: 0 max: 100)})
                         value: {0.849 (gen/scalar min: 0.2 max: 1)}))
   (draw-shape position: pos
@@ -62,7 +62,7 @@
               radius: (* radius 5)))
 
 (on-matrix-stack
-  (translate vector: [500 500])  
+  (translate vector: [500 500])
   (map fn: draw-pre-shadow
        position: positions
        colour: colours

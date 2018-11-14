@@ -1,33 +1,33 @@
-(define 
+(define
   data (vector))
 
 ;; create a bunch of positions around the origin
-(define 
+(define
   random-axis-position (prng/range seed: 42 min: -500 max: 500)
-  col-fn (col/procedural-fn preset: {"mars" 
+  col-fn (col/procedural-fn preset: {"mars"
                                      (gen/select from: col/procedural-fn-presets)})
   random-radius (prng/range seed: 42 min: 2 max: 30))
 
 (loop (x to: 800)
-  (define 
+  (define
     x-pos (random-axis-position)
     y-pos (random-axis-position)
     dist (math/distance vec1: [x-pos y-pos] vec2: [0 0])
     colour (col-fn t: (/ dist 500))
     radius (random-radius))
-  (vector/append data [x-pos y-pos colour radius]))
+  (++ data [x-pos y-pos colour radius]))
 
 (fn (draw-bg obj: [])
-  (define 
+  (define
     [x y colour radius] obj)
   (circle position: [x y]
-          colour: (col/set-alpha colour: colour 
+          colour: (col/set-alpha colour: colour
                                  value: {0.267 (gen/scalar min: 0 max: 0.4)})
           radius: (* radius {6 (gen/int min: 1 max: 8)})
           tessellation: 20))
 
 (fn (draw-body obj: [])
-  (define 
+  (define
     [x y colour radius] obj)
   (circle position: [x y]
           colour: colour
@@ -35,7 +35,7 @@
           tessellation: 20))
 
 (fn (draw-shadow obj: [])
-  (define 
+  (define
     [x y colour radius] obj
     offset {1.116 (gen/scalar min: 1 max: 2)})
   (circle position: [(* x offset) (* y offset)]
@@ -46,7 +46,7 @@
           tessellation: 20))
 
 (on-matrix-stack
-  (translate vector: [500 500])  
+  (translate vector: [500 500])
   (map fn: draw-bg obj: data)
   (map fn: draw-shadow obj: data)
   (map fn: draw-body obj: data))

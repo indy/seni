@@ -945,34 +945,34 @@ void test_vm_vector(void) {
 }
 
 void test_vm_vector_append(void) {
-  VM_COMPILE_F32("(define v []) (vector/append v 100) (vector/length vector: v)", 1);
-  VM_COMPILE_F32("(define v [1]) (vector/append v 100) (vector/length vector: v)", 2);
-  VM_COMPILE_F32("(define v [1 2]) (vector/append v 100) (vector/length vector: v)", 3);
-  VM_COMPILE_F32("(define v [1 2 3]) (vector/append v 100) (vector/length vector: v)", 4);
-  VM_COMPILE_F32("(define v [1 2 3 4]) (vector/append v 100) (vector/length vector: v)", 5);
+  VM_COMPILE_F32("(define v []) (++ v 100) (vector/length vector: v)", 1);
+  VM_COMPILE_F32("(define v [1]) (++ v 100) (vector/length vector: v)", 2);
+  VM_COMPILE_F32("(define v [1 2]) (++ v 100) (vector/length vector: v)", 3);
+  VM_COMPILE_F32("(define v [1 2 3]) (++ v 100) (vector/length vector: v)", 4);
+  VM_COMPILE_F32("(define v [1 2 3 4]) (++ v 100) (vector/length vector: v)", 5);
 }
 
 void test_vm_fence(void) {
-  f32v("(define v []) (fence (x from: 0 to: 10 num: 3) (vector/append v x)) v", 3, 0.0f, 5.0f,
+  f32v("(define v []) (fence (x from: 0 to: 10 num: 3) (++ v x)) v", 3, 0.0f, 5.0f,
        10.0f);
-  f32v("(define v []) (fence (x from: 10 to: 0 num: 3) (vector/append v x)) v", 3, 10.0f,
+  f32v("(define v []) (fence (x from: 10 to: 0 num: 3) (++ v x)) v", 3, 10.0f,
        5.0f, 0.0f);
-  f32v("(define v []) (fence (x num: 5) (vector/append v x)) v", 5, 0.0f, 0.25f, 0.5f, 0.75f,
+  f32v("(define v []) (fence (x num: 5) (++ v x)) v", 5, 0.0f, 0.25f, 0.5f, 0.75f,
        1.0f);
-  f32v("(define v []) (fence (x from: 100 to: 900 num: 10) (vector/append v "
+  f32v("(define v []) (fence (x from: 100 to: 900 num: 10) (++ v "
        "x)) v",
        10, 100.0000f, 188.8889f, 277.7778f, 366.6667f, 455.5555f, 544.4445f, 633.3333f,
        722.2222f, 811.1111f, 900.0000f);
 }
 
 void test_vm_loop(void) {
-  f32v("(define v []) (loop (x from: 0 to: 4) (vector/append v x)) v", 4, 0.0f, 1.0f, 2.0f,
+  f32v("(define v []) (loop (x from: 0 to: 4) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
        3.0f);
-  f32v("(define v []) (loop (x from: 0 upto: 4) (vector/append v x)) v", 5, 0.0f, 1.0f, 2.0f,
+  f32v("(define v []) (loop (x from: 0 upto: 4) (++ v x)) v", 5, 0.0f, 1.0f, 2.0f,
        3.0f, 4.0f);
-  f32v("(define v []) (loop (x from: 0 to: 10 inc: 2) (vector/append v x)) v", 5, 0.0f, 2.0f,
+  f32v("(define v []) (loop (x from: 0 to: 10 inc: 2) (++ v x)) v", 5, 0.0f, 2.0f,
        4.0f, 6.0f, 8.0f);
-  f32v("(define v []) (loop (x from: 0 upto: 10 inc: 2) (vector/append v x)) v", 6, 0.0f,
+  f32v("(define v []) (loop (x from: 0 upto: 10 inc: 2) (++ v x)) v", 6, 0.0f,
        2.0f, 4.0f, 6.0f, 8.0f, 10.0f);
 }
 
@@ -1127,21 +1127,21 @@ void test_vm_function_address(void) {
 
 void test_vm_repeat(void) {
   // angle is being sent to the function
-  f32v("(define v []) (fn (k angle: 0) (vector/append v angle)) (repeat/rotate "
+  f32v("(define v []) (fn (k angle: 0) (++ v angle)) (repeat/rotate "
        "fn: (address-of k) copies: 3) v",
        3, 0.0f, 120.0f, 240.0f);
 
   // num is being sent to the function
-  f32v("(define v []) (fn (k copy: 0) (vector/append v copy)) (repeat/rotate "
+  f32v("(define v []) (fn (k copy: 0) (++ v copy)) (repeat/rotate "
        "fn: (address-of k) copies: 3) v",
        3, 0.0f, 1.0f, 2.0f);
 
   // default arguments are being set
-  f32v("(define v []) (fn (k angle: 0 shabba: 5.0) (vector/append v (+ shabba "
+  f32v("(define v []) (fn (k angle: 0 shabba: 5.0) (++ v (+ shabba "
        "angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
        3, 5.0f, 125.0f, 245.0f);
 
-  f32v("(define v []) (fn (k copy: 0 angle: 0 shabba: 5.0) (vector/append v (+ "
+  f32v("(define v []) (fn (k copy: 0 angle: 0 shabba: 5.0) (++ v (+ "
        "copy shabba angle))) (repeat/rotate fn: (address-of k) copies: 3) v",
        3, 5.0f, 126.0f, 247.0f);
 }
@@ -2247,6 +2247,16 @@ void bug_f32_expr_with_genotype(void) {
       1111, 197.786041f, 110.821724f, 197.786041f);
 }
 
+void test_vm_each(void) {
+  f32v("(define v []) (loop (x from: 0 to: 4) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
+       3.0f);
+
+
+  // f32v("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
+  //      3.0f);
+
+}
+
 int main(void) {
   // timing();
 
@@ -2312,6 +2322,8 @@ int main(void) {
 
 #else
   // RUN_TEST(test_vm_bytecode);
+  RUN_TEST(test_vm_each);
+
 #endif
 
   return UNITY_END();

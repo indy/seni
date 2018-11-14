@@ -1,21 +1,21 @@
-(define 
+(define
   data (vector))
 
 ;; create a bunch of positions around the origin
-(define 
+(define
   random-axis-position (prng/range seed: 42 min: -500 max: 500)
-  col-fn (col/procedural-fn preset: {"robocop" 
+  col-fn (col/procedural-fn preset: {"robocop"
                                      (gen/select from: col/procedural-fn-presets)})
   random-radius (prng/range seed: 42 min: 2 max: 30))
 
 (loop (x to: 800)
-  (define 
+  (define
     x-pos (random-axis-position)
     y-pos (random-axis-position)
     dist (math/distance vec1: [x-pos y-pos] vec2: [0 0])
     colour (col-fn t: (/ dist 500))
     radius (random-radius))
-  (vector/append data [x-pos y-pos colour radius]))
+  (++ data [x-pos y-pos colour radius]))
 
 
 (fn (draw-shape position: [0 0]
@@ -27,7 +27,7 @@
           tessellation: 20))
 
 (fn (draw-body obj: [])
-  (define 
+  (define
     position [(vector/get from: obj nth: 0)
               (vector/get from: obj nth: 1)]
     colour: (vector/get from: obj nth: 2)
@@ -37,7 +37,7 @@
               radius: radius))
 
 (fn (draw-shadow obj: [])
-  (define 
+  (define
     position [(* (vector/get from: obj nth: 0) 1.05)
               (* (vector/get from: obj nth: 1) 1.05)]
     colour: (col/set-alpha colour: (vector/get from: obj nth: 2) value: 0.2)
@@ -47,7 +47,7 @@
               radius: radius))
 
 (on-matrix-stack
-  (translate vector: [500 500])  
+  (translate vector: [500 500])
   (map fn: draw-shadow
        vector: data
        bind: 'obj)

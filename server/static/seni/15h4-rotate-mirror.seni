@@ -29,10 +29,10 @@
                                    {[180.791 -209.762] (gen/stray-2d from: [180.791 -209.762] by: [25 25])}])
         c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
         c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
-      (vector/append coords p1)
-      (vector/append coords p2)
-      (vector/append colours c1)
-      (vector/append colours c2))
+      (++ coords p1)
+      (++ coords p2)
+      (++ colours c1)
+      (++ colours c2))
 
 (wash colour: (col/rgb r: 0.184 g: 0.605 b: 0.804 alpha: 0.163))
 

@@ -18,23 +18,23 @@
 
 * functions
 ** keywords
- | name       | description |
- |------------+-------------|
- | [[loop]]       |             |
- | [[fence]]      |             |
- | [[nth]]        |             |
- | address-of |             |
- | fn-call    |             |
- | define     |             |
- | fn         |             |
- |            |             |
+ | name       | description                               |
+ |------------+-------------------------------------------|
+ | each       | iterate through each item in a vector     |
+ | [[loop]]       | loop through a series of values           |
+ | [[fence]]      | loop through a series of values           |
+ | address-of | address of a function                     |
+ | fn-call    | invokes the function at the given address |
+ | define     | define a binding                          |
+ | fn         | define a function                         |
+ | [[++]]         | appends to a vector                       |
 
 ** misc
 
  | name          | description  |
  |---------------+--------------|
- | [[debug/print]]   | prints debug |
  | [[nth]]           |              |
+ | [[debug/print]]   | prints debug |
  | [[vector/length]] |              |
 
 ** shapes

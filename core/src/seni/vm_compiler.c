@@ -828,7 +828,7 @@ sen_error compile_vector_append(sen_compilation* compilation, sen_node* ast) {
   sen_result_bytecode result_bytecode;
   sen_result_i32      result_i32;
 
-  // (vector/append vector value)
+  // (++ vector value)
   sen_node* vector = safe_next(ast);
   N_CHK(compile(compilation, vector), "compile_vector_append: compile");
 
