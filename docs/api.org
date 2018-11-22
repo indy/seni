@@ -978,3 +978,167 @@
    | ease/bounce-in          |             |
    | ease/bounce-out         |             |
    | ease/bounce-in-out      |             |
+
+* internal
+
+** OPCODES
+*** LOAD
+    stack offset: 1
+
+    load (push) a sen_var onto the stack
+
+*** STORE
+    stack offset: -1
+
+    store (pop) a sen_var from the stack
+
+*** SQUISH2
+    stack offset: -1
+
+    pops the 2 f32 from the top of the stack,
+    combines them into one VAR_2D and pushes that onto the stack
+
+*** ADD
+    stack offset: -1
+
+*** SUB
+    stack offset: -1
+
+*** MUL
+    stack offset: -1
+
+*** DIV
+    stack offset: -1
+
+*** MOD
+    stack offset: -1
+
+*** NEG
+    stack offset: 0
+
+*** SQRT
+    stack offset: 0
+
+*** EQ
+    stack offset: -1
+
+*** GT
+    stack offset: -1
+
+*** LT
+    stack offset: -1
+
+*** AND
+    stack offset: -1
+
+*** OR
+    stack offset: -1
+
+*** NOT
+    stack offset: 0
+
+*** JUMP
+    stack offset: 0
+
+    Jump the instruction pointer [arg] forward.
+
+*** JUMP_IF
+    stack offset: -1
+
+    Pop and if not truthy then jump the instruction pointer [arg] forward.
+
+*** CALL
+    stack offset: -2
+
+    _0 == keep the existing frame, don't push/pop one
+
+    reads the function offset and num args from the stack
+
+*** CALL_0
+    stack offset: 0
+
+    reads the function's body offset from the stack (-1) and then push a return
+    value onto the stack (+1) => -1 + +1 == 0
+
+*** RET
+    stack offset: 0
+
+    RET will push the top value of the last frame onto the current frame
+
+*** RET_0
+    stack offset: 0
+
+*** CALL_F
+    stack offset: -1
+
+    like CALL and CALL_0 except it reads an index from the stack
+    then it indexes into program->fn_info[index]
+
+*** CALL_F_0
+    stack offset: 0
+
+    read index from stack (-1) then push a return value onto the stack (+1) => -1
+    + +1 == 0
+
+*** NATIVE
+    stack offset: 0
+
+    calls a native function, leaving the result on the stack
+    offset is 0 as the vm->opcode_offset is modified by the native helper
+    function
+
+*** APPEND
+    stack offset: -1
+
+    appends item at top to vector at top-1, leaves vector on stack
+
+*** PILE
+    stack offset: 0
+
+    given a vector on the stack this unpacks it's contents onto the stack
+    offset is 0 as the vm->opcode_offset depends on the size of the stack
+    can only be used if each element on the lhs is a NODE_NAME
+    the first arg of the bytecode is the expected length of the vector
+    vm->opcode_offset is modified by the compiler
+
+*** STORE_F
+    stack offset: -2
+
+    function look-up version of STORE
+    pop a value from the stack which is the index into program->fn_info
+    will then be used along with the argument's iname to find the index into the
+    MEM_SEG_ARGUMENT memory
+
+*** PLACEHOLDER_STORE
+    stack offset: -1
+
+    temporary opcodes which are replaced by their non-placeholder versions during
+    a compilation pass
+
+*** MTX_LOAD
+    stack offset: 0
+
+    push matrix stack
+
+*** MTX_STORE
+    stack offset: 0
+
+    pop matrix stack
+
+*** NOP
+    stack offset: 0
+
+*** STOP
+    stack offset: 0
+
+*** HAS_NEXT
+    stack offset: 1
+
+    is the var at the top of the stack a VAR_VECTOR and does it have a next value?
+    pushes a boolean result onto the stack
+
+*** NEXT
+    stack offset: 0
+
+    (assumption the top of the stack contains a VAR_VECTOR)
+    replaces the top value on the stack with the next value
