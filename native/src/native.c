@@ -90,13 +90,13 @@ void execute_source(char* source) {
   //
   TIMING_UNIT compilation_start = get_timing();
 
-  sen_program_result program_result =
+  sen_result_program result_program =
       sen_compile_program(source, env->word_lut, MAX_PROGRAM_SIZE);
   if (is_result_program_error(result_program)) {
     SEN_ERROR("execute_source");
     return;
   }
-  sen_program* program = program_result.result;
+  sen_program* program = result_program.result;
 
   TIMING_UNIT compilation_stop = get_timing();
 
@@ -242,13 +242,13 @@ void print_compiled_program(char* source) {
   sen_env* e = sen_allocate_env();
 
   // compile program
-  sen_program_result program_result =
+  sen_result_program result_program =
       sen_compile_program(source, e->word_lut, MAX_PROGRAM_SIZE);
   if (is_result_program_error(result_program)) {
     SEN_ERROR("print_compiled_program");
     return;
   }
-  sen_program* program = program_result.result;
+  sen_program* program = result_program.result;
 
   // print
   printf("%s\n", source);
@@ -265,18 +265,18 @@ void print_compiled_program(char* source) {
 void print_usage() {
 #ifdef SENI_BUILD_WINDOWS
   SEN_PRINT("native.exe                            << prints usage");
-  SEN_PRINT("native.exe seni\\c\\script.seni         << execute the script "
+  SEN_PRINT("native.exe seni\\c\\script.seni       << execute the script "
             "using defaults and give stats");
-  SEN_PRINT("native.exe seni\\c\\script.seni -s 43   << execute the script "
+  SEN_PRINT("native.exe seni\\c\\script.seni -s 43 << execute the script "
             "using the given seed and give stats");
-  SEN_PRINT("native.exe seni\\c\\script.seni -d      << debug - output the bytecode");
+  SEN_PRINT("native.exe seni\\c\\script.seni -d    << debug - output the bytecode");
 #else
-  SEN_PRINT("native                            << prints usage");
-  SEN_PRINT("native seni/c/script.sen         << execute the script using "
+  SEN_PRINT("native                                << prints usage");
+  SEN_PRINT("native seni/c/script.sen              << execute the script using "
             "defaults and give stats");
-  SEN_PRINT("native seni/c/script.seni -s 43   << execute the script using "
+  SEN_PRINT("native seni/c/script.seni -s 43       << execute the script using "
             "the given seed and give stats");
-  SEN_PRINT("native seni/c/script.seni -d      << debug - output the bytecode");
+  SEN_PRINT("native seni/c/script.seni -d          << debug - output the bytecode");
 #endif
 }
 
