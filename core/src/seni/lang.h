@@ -312,6 +312,7 @@ sen_var* vector_append_col(sen_vm* vm, sen_var* head, sen_colour* col);
 
 sen_var* var_get_from_heap(sen_vm* vm);
 void     var_copy(sen_var* dest, sen_var* src);
+void     var_copy_including_next_prev(sen_var* dest, sen_var* src);
 
 void vm_debug_info_reset(sen_vm* vm);
 void vm_debug_info_print(sen_vm* vm);

@@ -919,10 +919,116 @@ sen_error compile_quote(sen_compilation* compilation, sen_node* ast) {
   return NONE;
 }
 
+sen_error compile_each(sen_compilation* compilation, sen_node* ast) {
+
+  // (each (x from: [10 20 30 40 50])
+  //       (+ x x))
+
+  sen_node* parameters_node = safe_next(ast);
+  if (parameters_node->type != NODE_LIST) {
+    SEN_ERROR("expected a list that defines each parameters");
+    return ERROR_COMPILER_NO_STEP_PARAMETERS_FOR_LOOP;
+  }
+
+  warn_if_alterable("compile_each parameters_node", parameters_node);
+
+  // the looping variable x
+  sen_node* name_node = safe_first(parameters_node->value.first_child);
+
+  sen_node* from_node      = NULL;
+  bool      have_from      = false;
+
+  sen_node*           node = name_node;
+  sen_result_bytecode result_bytecode;
+  sen_result_node     result_node;
+  sen_result_i32      result_i32;
+  sen_error           err;
+
+  while (node) {
+    node = safe_next(node); // the label part
+    if (node == NULL) {
+      break;
+    }
+    if (node->value.i == INAME_FROM) {
+      have_from = true;
+      from_node = safe_next(node);
+    }
+    node = safe_next(node); // the value part
+  }
+
+
+  // set looping variable x to 'from' value
+  if (have_from) {
+    N_CHK(compile(compilation, from_node), "compile_each: compile")
+  } else {
+
+    // todo: ignore this, each should always have a from parameter
+
+    // else default to 0
+    B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f),
+          "compile_each: emit_opcode_i32_f32");
+  }
+
+  B_CHK(emit_opcode_i32(compilation, VEC_NON_EMPTY, 0, 0), "compile_each: emit_opcode_i32 VEC_NON_EMPTY");
+  i32 addr_exit_check_is_vec = compilation->program->code_size;
+  B_CHK(emit_opcode_i32(compilation, JUMP_IF, 0, 0), "compile_each: JUMP_IF");
+  sen_bytecode* bc_exit_check_is_vec = result_bytecode.result;
+
+  B_CHK(emit_opcode_i32(compilation, VEC_LOAD_FIRST, 0, 0), "compile_each: emit_opcode_i32 VEC_LOAD_FIRST");
+
+
+  // compare looping variable against exit condition
+  // and jump if looping variable >= exit value
+  i32 addr_loop_start = compilation->program->code_size;
+
+  I_CHK(store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL),
+        "compile_each: store_from_stack_to_memory");
+  i32 loop_variable_address = result_i32.result;
+
+  i32 pre_body_opcode_offset = compilation->opcode_offset;
+
+  // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
+  E_CHK(compile_rest(compilation, parameters_node), "compile_each: compile_rest");
+
+  i32 post_body_opcode_offset = compilation->opcode_offset;
+  i32 opcode_delta            = post_body_opcode_offset - pre_body_opcode_offset;
+
+  // pop off any values that the body might leave on the stack
+  for (i32 i = 0; i < opcode_delta; i++) {
+    B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_VOID, 0),
+          "compile_each: emit_opcode_i32");
+  }
+
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, loop_variable_address),
+        "compile_loop: emit_opcode_i32");
+
+  B_CHK(emit_opcode_i32(compilation, VEC_HAS_NEXT, 0, 0), "compile_each: emit_opcode_i32 VEC_HAS_NEXT");
+
+  i32 addr_exit_check = compilation->program->code_size;
+
+  B_CHK(emit_opcode_i32(compilation, JUMP_IF, 0, 0), "compile_each: JUMP_IF");
+  sen_bytecode* bc_exit_check = result_bytecode.result;
+
+
+  B_CHK(emit_opcode_i32(compilation, VEC_NEXT, 0, 0), "compile_each: VEC_NEXT");
+
+  // loop back to the comparison
+  B_CHK(emit_opcode_i32(compilation, JUMP,
+                        -(compilation->program->code_size - addr_loop_start), 0),
+        "compile_each: emit_opcode_i32");
+
+  bc_exit_check->arg0.value.i = compilation->program->code_size - addr_exit_check;
+
+  // fill in jump distance for the IS_VEC check
+  bc_exit_check_is_vec->arg0.value.i = compilation->program->code_size - addr_exit_check_is_vec;
+
+  return NONE;
+}
+
 sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
   sen_node* parameters_node = safe_next(ast);
   if (parameters_node->type != NODE_LIST) {
-    SEN_ERROR("expected a list that defines step parameters");
+    SEN_ERROR("expected a list that defines loop parameters");
     return ERROR_COMPILER_NO_STEP_PARAMETERS_FOR_LOOP;
   }
 
@@ -992,13 +1098,13 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
 
   I_CHK(store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL),
         "compile_loop: store_from_stack_to_memory");
-  i32 looper_address = result_i32.result;
+  i32 loop_variable_address = result_i32.result;
 
   // compare looping variable against exit condition
   // and jump if looping variable >= exit value
   i32 addr_loop_start = compilation->program->code_size;
 
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, looper_address),
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, loop_variable_address),
         "compile_loop: emit_opcode_i32");
 
   if (use_to) {
@@ -1034,7 +1140,7 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
   }
 
   // increment the looping variable
-  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, looper_address),
+  B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, loop_variable_address),
         "compile_loop: emit_opcode_i32");
 
   if (have_increment) {
@@ -1046,7 +1152,7 @@ sen_error compile_loop(sen_compilation* compilation, sen_node* ast) {
 
   B_CHK(emit_opcode_i32(compilation, ADD, 0, 0), "compile_loop: emit_opcode_i32");
 
-  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address),
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, loop_variable_address),
         "compile_loop: emit_opcode_i32");
 
   // loop back to the comparison
@@ -1121,7 +1227,7 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
         "compile_fence: STORE");
 
   // reserve a memory location in local memory for a counter from 0 to quantity
-  I_CHK(add_internal_local_mapping(compilation), "compile_loop: add_internal_local_mapping");
+  I_CHK(add_internal_local_mapping(compilation), "compile_fence: add_internal_local_mapping");
   i32 counter_address = result_i32.result;
 
   B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f), "compile_fence");
@@ -1148,7 +1254,7 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
   B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 1.0f), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, SUB, 0, 0), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, DIV, 0, 0), "compile_fence");
-  I_CHK(add_internal_local_mapping(compilation), "compile_loop: add_internal_local_mapping");
+  I_CHK(add_internal_local_mapping(compilation), "compile_fence: add_internal_local_mapping");
   i32 delta_address = result_i32.result;
   B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, delta_address), "compile_fence");
 
@@ -1160,7 +1266,7 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
     B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, 0.0f), "compile_fence");
   }
 
-  I_CHK(add_internal_local_mapping(compilation), "compile_loop: add_internal_local_mapping");
+  I_CHK(add_internal_local_mapping(compilation), "compile_fence: add_internal_local_mapping");
   i32 from_address = result_i32.result;
 
   B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, from_address), "compile_fence");
@@ -1169,8 +1275,8 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
   B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, from_address), "compile_fence");
 
   I_CHK(store_from_stack_to_memory(compilation, name_node, MEM_SEG_LOCAL),
-        "compile_loop: store_from_stack_to_memory");
-  i32 looper_address = result_i32.result;
+        "compile_fence: store_from_stack_to_memory");
+  i32 loop_variable_address = result_i32.result;
 
   // compare looping variable against exit condition
   // and jump if looping variable >= exit value
@@ -1196,12 +1302,12 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
   B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, delta_address), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, MUL, 0, 0), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, ADD, 0, 0), "compile_fence");
-  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, looper_address), "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, loop_variable_address), "compile_fence");
 
   i32 pre_body_opcode_offset = compilation->opcode_offset;
 
   // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-  E_CHK(compile_rest(compilation, parameters_node), "compile_loop: compile_rest");
+  E_CHK(compile_rest(compilation, parameters_node), "compile_fence: compile_rest");
 
   i32 post_body_opcode_offset = compilation->opcode_offset;
   i32 opcode_delta            = post_body_opcode_offset - pre_body_opcode_offset;
@@ -1840,6 +1946,12 @@ sen_result_node compile(sen_compilation* compilation, sen_node* ast) {
         return result_node_ok(NULL);
       case INAME_IF:
         err = compile_if(compilation, ast);
+        if (is_error(err)) {
+          return result_node_error(err);
+        }
+        return result_node_ok(safe_next(ast));
+      case INAME_EACH:
+        err = compile_each(compilation, ast);
         if (is_error(err)) {
           return result_node_error(err);
         }

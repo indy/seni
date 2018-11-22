@@ -264,6 +264,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
   i32 local, fp;
   i32 stack_size = vm->stack_size;
 
+#define STACK_PEEK2 v = stack_d - 2
 #define STACK_PEEK v = stack_d - 1
 #define STACK_POP \
   stack_d--;      \
@@ -756,6 +757,108 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       v->value.i      = 0;
       v->f32_array[0] = f1;
       v->f32_array[1] = f2;
+      break;
+
+    case VEC_NON_EMPTY:
+      STACK_PEEK;
+
+      i = 0;
+      if (v->type == VAR_VECTOR && v->value.v != NULL) {
+        // put a true on the stack
+        i = 1;
+      } else if (v->type == VAR_2D) {
+        // going to pretend that a VAR_2D is a vector and special case all the other VEC_* opcodes
+        i = 1;
+        // also going to hack in a counter value into f32_array[2]
+        v->f32_array[2] = 0.0f;
+      }
+
+      STACK_PUSH;
+      v->type    = VAR_INT;
+      v->value.i = i;
+
+      break;
+
+    case VEC_LOAD_FIRST:
+      // top of the stack has a vector
+      // push the first element to the top
+
+      STACK_PEEK;
+
+      src = v;
+
+      STACK_PUSH;
+
+      if (src->type == VAR_VECTOR) {
+        // the default case where we're dealing with a VAR_VECTOR
+        var_copy_including_next_prev(v, src->value.v);
+      } else if (src->type == VAR_2D) {
+        // the special case (i.e. hack)
+        v->value.f = src->f32_array[0];
+        v->type = VAR_FLOAT;
+      } else {
+        SEN_ERROR("VEC_LOAD_FIRST unexpected var type");
+        return false;
+      }
+
+      break;
+
+    case VEC_HAS_NEXT:
+
+      STACK_PEEK2;
+
+      // src == the original VAR_VECTOR or VAR_2D
+      src = v;
+
+      STACK_PEEK;
+
+      i = 0;
+      if (src->type == VAR_VECTOR) {
+        // we're in a vector
+        if (v->next != NULL) {
+          // put a true on the stack
+          i = 1;
+        }
+      } else if (src->type == VAR_2D) {
+        // the special case of a VAR_2D
+        // using f32_array[2] as a counter through both elements of a VAR_2D
+        if (src->f32_array[2] < 1.0f) {
+          i = 1;
+        }
+      } else {
+        SEN_ERROR("VEC_HAS_NEXT unexpected var type");
+        return false;
+      }
+
+      STACK_PUSH;
+      v->type    = VAR_INT;
+      v->value.i = i;
+
+      break;
+
+    case VEC_NEXT:
+      STACK_PEEK2;
+
+      // src == the original VAR_VECTOR or VAR_2D
+      src = v;
+
+      STACK_PEEK;
+      // peek here just to make sure v is the top of the stack
+      // otherwise we would need to do a STACK_POP followed by a STACK_PEEK
+
+      if (src->type == VAR_VECTOR) {
+        var_copy_including_next_prev(v, v->next);
+      } else if (src->type == VAR_2D) {
+        // the special case (i.e. hack)
+        v->value.f = src->f32_array[1];
+        v->type = VAR_FLOAT;
+        // the value used by VEC_HAS_NEXT to stop iterating through this VAR_2D
+        src->f32_array[2] = 1.0f;
+      } else {
+        SEN_ERROR("VEC_NEXT unexpected var type");
+        return false;
+      }
+
       break;
 
     case MTX_LOAD:

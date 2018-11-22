@@ -70,9 +70,24 @@ OPCODE(STORE_F, -2)
 // a compilation pass
 OPCODE(PLACEHOLDER_STORE, -1)
 
-// push/pop matrix stack
+// push matrix stack
 OPCODE(MTX_LOAD, 0)
+// pop matrix stack
 OPCODE(MTX_STORE, 0)
+
+// is the value at the top of the stack a non-empty vector?
+// pushes a boolean result onto the stack
+OPCODE(VEC_NON_EMPTY, 1)
+// top of the stack has a vector
+// push the first element to the top
+OPCODE(VEC_LOAD_FIRST, 1)
+// does the var at the top of the stack have a next value?
+// pushes a boolean result onto the stack
+OPCODE(VEC_HAS_NEXT, 1)
+// (assumption the top of the stack contains a VAR_VECTOR)
+// replaces the top value on the stack with the next value
+// (using a special var_copy that also copies the next/prev pointers)
+OPCODE(VEC_NEXT, 0)
 
 OPCODE(NOP, 0)
 OPCODE(STOP, 0)

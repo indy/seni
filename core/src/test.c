@@ -2248,13 +2248,13 @@ void bug_f32_expr_with_genotype(void) {
 }
 
 void test_vm_each(void) {
-  f32v("(define v []) (loop (x from: 0 to: 4) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
+
+  f32v("(define inp [] v []) (each (x from: inp) (++ v x)) v", 0);
+  f32v("(define inp [99] v []) (each (x from: inp) (++ v x)) v", 1, 99.0f);
+  // this tests the special case of VAR_2D rather than the default VAR_VECTOR:
+  f32v("(define inp [42 43] v []) (each (x from: inp) (++ v x)) v", 2, 42.0f, 43.0f);
+  f32v("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
        3.0f);
-
-
-  // f32v("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
-  //      3.0f);
-
 }
 
 int main(void) {
@@ -2270,7 +2270,7 @@ int main(void) {
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-#if 1
+#if 0
   RUN_TEST(test_macro_pool);
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);

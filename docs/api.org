@@ -1136,14 +1136,25 @@
 *** STOP
     stack offset: 0
 
-*** HAS_NEXT
+*** VEC_NON_EMPTY
+    is the value at the top of the stack a non-empty vector?
+    pushes a boolean result onto the stack
+
+    (+ hack to also treat a VAR_2D as a VAR_VECTOR)
+*** VEC_LOAD_FIRST
+    top of the stack has a vector
+    push the first element to the top
+*** VEC_HAS_NEXT
     stack offset: 1
 
     is the var at the top of the stack a VAR_VECTOR and does it have a next value?
     pushes a boolean result onto the stack
 
-*** NEXT
+    (+ hack to also treat a VAR_2D as a VAR_VECTOR)
+*** VEC_NEXT
     stack offset: 0
 
     (assumption the top of the stack contains a VAR_VECTOR)
     replaces the top value on the stack with the next value
+
+    (+ hack to also treat a VAR_2D as a VAR_VECTOR)

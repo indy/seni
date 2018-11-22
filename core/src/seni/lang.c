@@ -1224,6 +1224,12 @@ void var_copy(sen_var* dest, sen_var* src) {
   }
 }
 
+void var_copy_including_next_prev(sen_var* dest, sen_var* src) {
+  var_copy(dest, src);
+  dest->next = src->next;
+  dest->prev = src->prev;
+}
+
 #ifdef SEN_DEBUG_MODE
 
 void vm_debug_info_reset(sen_vm* vm) { vm->opcodes_executed = 0; }
