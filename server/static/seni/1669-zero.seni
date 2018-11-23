@@ -1,20 +1,20 @@
 (define
-  data (vector))
+  data [])
 
 ;; create a bunch of positions around the origin
 (define
-  random-axis-position (prng/range seed: 42 min: -500 max: 500)
-  col-fn (col/procedural-fn preset: {"mars"
+  random-axis-position (prng/build seed: 42 min: -500 max: 500)
+  col-fn (col/build-procedural preset: {mars
                                      (gen/select from: col/procedural-fn-presets)})
-  random-radius (prng/range seed: 42 min: 2 max: 30))
+  random-radius (prng/build seed: 42 min: 2 max: 30))
 
-(loop (x to: 800)
+(loop (x to: 180)
   (define
-    x-pos (random-axis-position)
-    y-pos (random-axis-position)
+    x-pos (prng/value from: random-axis-position)
+    y-pos (prng/value from: random-axis-position)
     dist (math/distance vec1: [x-pos y-pos] vec2: [0 0])
-    colour (col-fn t: (/ dist 500))
-    radius (random-radius))
+    colour (col/value from: col-fn t: (/ dist 500))
+    radius (prng/value from: random-radius))
   (++ data [x-pos y-pos colour radius]))
 
 (fn (draw-bg obj: [])
@@ -22,7 +22,7 @@
     [x y colour radius] obj)
   (circle position: [x y]
           colour: (col/set-alpha colour: colour
-                                 value: {0.267 (gen/scalar min: 0 max: 0.4)})
+                                 value: {0.0167 (gen/scalar min: 0 max: 0.4)})
           radius: (* radius {6 (gen/int min: 1 max: 8)})
           tessellation: 20))
 
@@ -37,7 +37,7 @@
 (fn (draw-shadow obj: [])
   (define
     [x y colour radius] obj
-    offset {1.116 (gen/scalar min: 1 max: 2)})
+    offset {1.03 (gen/scalar min: 1 max: 2)})
   (circle position: [(* x offset) (* y offset)]
           colour: (col/set-alpha colour: (col/darken colour: colour
                                                      value: {27 (gen/int min: 0 max: 100)})
@@ -46,7 +46,7 @@
           tessellation: 20))
 
 (on-matrix-stack
-  (translate vector: [500 500])
-  (map fn: draw-bg obj: data)
-  (map fn: draw-shadow obj: data)
-  (map fn: draw-body obj: data))
+ (translate vector: [500 500])
+ (each (x from: data) (draw-bg obj: x))
+ (each (x from: data) (draw-shadow obj: x))
+ (each (x from: data) (draw-body obj: x)))
