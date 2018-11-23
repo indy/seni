@@ -169,7 +169,11 @@ typedef enum {
 #define LCL 1
 #define ARG 2
 
-#define HEAP_SIZE 1024
+// these sizes are in terms of sen_var structures
+// currently (23/11/2018), each sen_var is 56 bytes
+// so 1MB can contain
+// (1048576 / 56) == 18,724 sen_var structures
+#define HEAP_SIZE 18724
 #define STACK_SIZE 1024
 
 // how low can the heap go before a GC is invoked
