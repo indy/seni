@@ -1146,6 +1146,16 @@ void test_vm_repeat(void) {
        3, 5.0f, 126.0f, 247.0f);
 }
 
+void test_vm_each(void) {
+  f32v("(define inp [] v []) (each (x from: inp) (++ v x)) v", 0);
+  f32v("(define inp [99] v []) (each (x from: inp) (++ v x)) v", 1, 99.0f);
+  // this tests the special case of VAR_2D rather than the default VAR_VECTOR:
+  f32v("(define inp [42 43] v []) (each (x from: inp) (++ v x)) v", 2, 42.0f, 43.0f);
+  f32v("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
+       3.0f);
+}
+
+
 sen_genotype* genotype_construct(i32 seed_value, char* source) {
   sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
   sen_env* env = env_allocate();
@@ -2247,16 +2257,6 @@ void bug_f32_expr_with_genotype(void) {
       1111, 197.786041f, 110.821724f, 197.786041f);
 }
 
-void test_vm_each(void) {
-
-  f32v("(define inp [] v []) (each (x from: inp) (++ v x)) v", 0);
-  f32v("(define inp [99] v []) (each (x from: inp) (++ v x)) v", 1, 99.0f);
-  // this tests the special case of VAR_2D rather than the default VAR_VECTOR:
-  f32v("(define inp [42 43] v []) (each (x from: inp) (++ v x)) v", 2, 42.0f, 43.0f);
-  f32v("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
-       3.0f);
-}
-
 int main(void) {
   // timing();
 
@@ -2270,7 +2270,7 @@ int main(void) {
   // RUN_TEST(test_prng);
   // todo: test READ_STACK_ARG_COORD4
 
-#if 0
+#if 1
   RUN_TEST(test_macro_pool);
   RUN_TEST(test_mathutil);
   RUN_TEST(test_parser);
@@ -2297,6 +2297,7 @@ int main(void) {
   RUN_TEST(test_vm_interp);
   RUN_TEST(test_vm_function_address);
   RUN_TEST(test_vm_repeat);
+  RUN_TEST(test_vm_each);
 
   RUN_TEST(test_genotype);
   RUN_TEST(test_genotype_stray);
@@ -2322,7 +2323,7 @@ int main(void) {
 
 #else
   // RUN_TEST(test_vm_bytecode);
-  RUN_TEST(test_vm_each);
+
 
 #endif
 
