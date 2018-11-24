@@ -778,7 +778,6 @@ sen_genotype_list* genotype_list_create_initial_generation(sen_trait_list* trait
   sen_genotype* genotype = genotype_build_from_initial_values(trait_list);
   genotype_list_add_genotype(genotype_list, genotype);
 
-  SEN_LOG("genotype_list_create_initial_generation seed: %d", seed);
   sen_prng_state prng_state;
   sen_prng_set_state(&prng_state, (u64)seed);
   i32 prng_min = 1 << 0;
@@ -791,7 +790,6 @@ sen_genotype_list* genotype_list_create_initial_generation(sen_trait_list* trait
 
   for (i32 i = 1; i < population_size; i++) {
     genotype_seed = sen_prng_i32_range(&prng_state, prng_min, prng_max);
-    SEN_LOG("%d genotype_seed %d", i, genotype_seed);
     genotype = genotype_build_from_trait_list(trait_list, vm, env, genotype_seed);
     genotype_list_add_genotype(genotype_list, genotype);
   }
