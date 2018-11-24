@@ -348,11 +348,9 @@ function buildTraits({ script /*, scriptHash */ }) {
 
   SeniWasm.setString(SeniWasm.source_buffer, script);
 
-  const numTraits = SeniWasm.buildTraits();
-
-  const validTraits = numTraits === -1;
-
   let traits = [];
+  const numTraits = SeniWasm.buildTraits();
+  const validTraits = numTraits !== -1;
 
   if (validTraits) {
     traits = SeniWasm.getString(SeniWasm.traits_buffer);
