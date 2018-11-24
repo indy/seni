@@ -61,6 +61,8 @@ void print_timings(f32 construct, f32 compile, f32 interpret) {
     SEN_PRINT("compile time     : %.2f ms\t(%.2f%%)", compile, percentage(total, compile));
     SEN_PRINT("interpret time   : %.2f ms\t(%.2f%%)", interpret,
               percentage(total, interpret));
+  } else {
+    SEN_PRINT("too quick to give time breakdown");
   }
 }
 
