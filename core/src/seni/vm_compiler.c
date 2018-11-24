@@ -935,8 +935,8 @@ sen_error compile_each(sen_compilation* compilation, sen_node* ast) {
   // the looping variable x
   sen_node* name_node = safe_first(parameters_node->value.first_child);
 
-  sen_node* from_node      = NULL;
-  bool      have_from      = false;
+  sen_node* from_node = NULL;
+  bool      have_from = false;
 
   sen_node*           node = name_node;
   sen_result_bytecode result_bytecode;
@@ -956,7 +956,6 @@ sen_error compile_each(sen_compilation* compilation, sen_node* ast) {
     node = safe_next(node); // the value part
   }
 
-
   // set looping variable x to 'from' value
   if (have_from) {
     N_CHK(compile(compilation, from_node), "compile_each: compile")
@@ -969,13 +968,14 @@ sen_error compile_each(sen_compilation* compilation, sen_node* ast) {
           "compile_each: emit_opcode_i32_f32");
   }
 
-  B_CHK(emit_opcode_i32(compilation, VEC_NON_EMPTY, 0, 0), "compile_each: emit_opcode_i32 VEC_NON_EMPTY");
+  B_CHK(emit_opcode_i32(compilation, VEC_NON_EMPTY, 0, 0),
+        "compile_each: emit_opcode_i32 VEC_NON_EMPTY");
   i32 addr_exit_check_is_vec = compilation->program->code_size;
   B_CHK(emit_opcode_i32(compilation, JUMP_IF, 0, 0), "compile_each: JUMP_IF");
   sen_bytecode* bc_exit_check_is_vec = result_bytecode.result;
 
-  B_CHK(emit_opcode_i32(compilation, VEC_LOAD_FIRST, 0, 0), "compile_each: emit_opcode_i32 VEC_LOAD_FIRST");
-
+  B_CHK(emit_opcode_i32(compilation, VEC_LOAD_FIRST, 0, 0),
+        "compile_each: emit_opcode_i32 VEC_LOAD_FIRST");
 
   // compare looping variable against exit condition
   // and jump if looping variable >= exit value
@@ -1002,13 +1002,13 @@ sen_error compile_each(sen_compilation* compilation, sen_node* ast) {
   B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, loop_variable_address),
         "compile_loop: emit_opcode_i32");
 
-  B_CHK(emit_opcode_i32(compilation, VEC_HAS_NEXT, 0, 0), "compile_each: emit_opcode_i32 VEC_HAS_NEXT");
+  B_CHK(emit_opcode_i32(compilation, VEC_HAS_NEXT, 0, 0),
+        "compile_each: emit_opcode_i32 VEC_HAS_NEXT");
 
   i32 addr_exit_check = compilation->program->code_size;
 
   B_CHK(emit_opcode_i32(compilation, JUMP_IF, 0, 0), "compile_each: JUMP_IF");
   sen_bytecode* bc_exit_check = result_bytecode.result;
-
 
   B_CHK(emit_opcode_i32(compilation, VEC_NEXT, 0, 0), "compile_each: VEC_NEXT");
 
@@ -1020,7 +1020,8 @@ sen_error compile_each(sen_compilation* compilation, sen_node* ast) {
   bc_exit_check->arg0.value.i = compilation->program->code_size - addr_exit_check;
 
   // fill in jump distance for the IS_VEC check
-  bc_exit_check_is_vec->arg0.value.i = compilation->program->code_size - addr_exit_check_is_vec;
+  bc_exit_check_is_vec->arg0.value.i =
+      compilation->program->code_size - addr_exit_check_is_vec;
 
   return NONE;
 }
@@ -1302,7 +1303,8 @@ sen_error compile_fence(sen_compilation* compilation, sen_node* ast) {
   B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_LOCAL, delta_address), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, MUL, 0, 0), "compile_fence");
   B_CHK(emit_opcode_i32(compilation, ADD, 0, 0), "compile_fence");
-  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, loop_variable_address), "compile_fence");
+  B_CHK(emit_opcode_i32(compilation, STORE, MEM_SEG_LOCAL, loop_variable_address),
+        "compile_fence");
 
   i32 pre_body_opcode_offset = compilation->opcode_offset;
 

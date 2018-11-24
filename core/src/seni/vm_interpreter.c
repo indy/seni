@@ -767,7 +767,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
         // put a true on the stack
         i = 1;
       } else if (v->type == VAR_2D) {
-        // going to pretend that a VAR_2D is a vector and special case all the other VEC_* opcodes
+        // pretend that VAR_2D is a vector and special case all the VEC_* opcodes
         i = 1;
         // also going to hack in a counter value into f32_array[2]
         v->f32_array[2] = 0.0f;
@@ -795,7 +795,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       } else if (src->type == VAR_2D) {
         // the special case (i.e. hack)
         v->value.f = src->f32_array[0];
-        v->type = VAR_FLOAT;
+        v->type    = VAR_FLOAT;
       } else {
         SEN_ERROR("VEC_LOAD_FIRST unexpected var type");
         return false;
@@ -851,7 +851,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       } else if (src->type == VAR_2D) {
         // the special case (i.e. hack)
         v->value.f = src->f32_array[1];
-        v->type = VAR_FLOAT;
+        v->type    = VAR_FLOAT;
         // the value used by VEC_HAS_NEXT to stop iterating through this VAR_2D
         src->f32_array[2] = 1.0f;
       } else {

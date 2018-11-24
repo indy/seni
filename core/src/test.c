@@ -953,12 +953,9 @@ void test_vm_vector_append(void) {
 }
 
 void test_vm_fence(void) {
-  f32v("(define v []) (fence (x from: 0 to: 10 num: 3) (++ v x)) v", 3, 0.0f, 5.0f,
-       10.0f);
-  f32v("(define v []) (fence (x from: 10 to: 0 num: 3) (++ v x)) v", 3, 10.0f,
-       5.0f, 0.0f);
-  f32v("(define v []) (fence (x num: 5) (++ v x)) v", 5, 0.0f, 0.25f, 0.5f, 0.75f,
-       1.0f);
+  f32v("(define v []) (fence (x from: 0 to: 10 num: 3) (++ v x)) v", 3, 0.0f, 5.0f, 10.0f);
+  f32v("(define v []) (fence (x from: 10 to: 0 num: 3) (++ v x)) v", 3, 10.0f, 5.0f, 0.0f);
+  f32v("(define v []) (fence (x num: 5) (++ v x)) v", 5, 0.0f, 0.25f, 0.5f, 0.75f, 1.0f);
   f32v("(define v []) (fence (x from: 100 to: 900 num: 10) (++ v "
        "x)) v",
        10, 100.0000f, 188.8889f, 277.7778f, 366.6667f, 455.5555f, 544.4445f, 633.3333f,
@@ -966,14 +963,13 @@ void test_vm_fence(void) {
 }
 
 void test_vm_loop(void) {
-  f32v("(define v []) (loop (x from: 0 to: 4) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
-       3.0f);
-  f32v("(define v []) (loop (x from: 0 upto: 4) (++ v x)) v", 5, 0.0f, 1.0f, 2.0f,
-       3.0f, 4.0f);
-  f32v("(define v []) (loop (x from: 0 to: 10 inc: 2) (++ v x)) v", 5, 0.0f, 2.0f,
-       4.0f, 6.0f, 8.0f);
-  f32v("(define v []) (loop (x from: 0 upto: 10 inc: 2) (++ v x)) v", 6, 0.0f,
-       2.0f, 4.0f, 6.0f, 8.0f, 10.0f);
+  f32v("(define v []) (loop (x from: 0 to: 4) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f, 3.0f);
+  f32v("(define v []) (loop (x from: 0 upto: 4) (++ v x)) v", 5, 0.0f, 1.0f, 2.0f, 3.0f,
+       4.0f);
+  f32v("(define v []) (loop (x from: 0 to: 10 inc: 2) (++ v x)) v", 5, 0.0f, 2.0f, 4.0f, 6.0f,
+       8.0f);
+  f32v("(define v []) (loop (x from: 0 upto: 10 inc: 2) (++ v x)) v", 6, 0.0f, 2.0f, 4.0f,
+       6.0f, 8.0f, 10.0f);
 }
 
 void test_vm_col_rgb(void) {
@@ -1154,7 +1150,6 @@ void test_vm_each(void) {
   f32v("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
        3.0f);
 }
-
 
 sen_genotype* genotype_construct(i32 seed_value, char* source) {
   sen_vm*  vm = vm_allocate(STACK_SIZE, HEAP_SIZE, HEAP_MIN_SIZE, VERTEX_PACKET_NUM_VERTICES);
@@ -2323,7 +2318,6 @@ int main(void) {
 
 #else
   // RUN_TEST(test_vm_bytecode);
-
 
 #endif
 
