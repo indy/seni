@@ -2,5 +2,7 @@
 name = "sen-core"
 version = "0.1.0"
 authors = ["Inderjit Gill <email@indy.io>"]
+license = "GPL-3.0+"
 
 [dependencies]
+failure = "0.1.1"
