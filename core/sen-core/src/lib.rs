@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names, excessive_precision))]
+#![allow(dead_code)]
 // Copyright (C) 2018 Inderjit Gill
 
 // This program is free software: you can redistribute it and/or modify
@@ -19,6 +20,7 @@
 extern crate failure;
 
 mod colour;
+mod lexer;
 
 pub mod error;
 

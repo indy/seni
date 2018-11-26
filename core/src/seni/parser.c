@@ -82,24 +82,6 @@ bool is_newline(char c) { return c == '\n'; }
 
 bool is_label(char* s, size_t word_len) { return s[word_len] == ':'; }
 
-bool has_period(char* s) {
-  size_t i = 0;
-  char   c = s[i];
-
-  while (c != 0) {
-    if (is_period(c)) {
-      return true;
-    }
-    if (is_whitespace(c)) {
-      return false;
-    }
-    i++;
-    c = s[i];
-  }
-
-  return false;
-}
-
 char* find_next(char* s, char target) {
   while (*s != 0) {
     if (*s == target) {

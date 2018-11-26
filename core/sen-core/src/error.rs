@@ -15,22 +15,27 @@
 
 use failure;
 
-/// A specialized `Result` type for the `skeleton` crate.
-pub type Result<T> = ::std::result::Result<T, ColourError>;
+pub type SenResult<T> = ::std::result::Result<T, SenError>;
 
 #[derive(Debug, Fail)]
-pub enum ColourError {
+pub enum SenError {
     #[fail(display = "General")]
     GeneralError,
 
-    #[fail(display = "IncorrectFormat")]
-    IncorrectFormat,
+    // colour
+    //
+    #[fail(display = "IncorrectColourFormat")]
+    IncorrectColourFormat,
+    #[fail(display = "InvalidColourHue")]
+    InvalidColourHue,
+    #[fail(display = "InvalidColourChannel")]
+    InvalidColourChannel,
 
-    #[fail(display = "InvalidHue")]
-    InvalidHue,
-
-    #[fail(display = "InvalidChannel")]
-    InvalidChannel,
+    // parser
+    #[fail(display = "ParserInvalidChar")]
+    ParserInvalidChar(char),
+    #[fail(display = "ParserInvalidLiteral")]
+    ParserInvalidLiteral,
 
     /// This allows you to produce any `failure::Error` within closures used by
     /// the skeleton crate. No errors of this kind will ever be produced by the
