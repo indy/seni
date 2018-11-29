@@ -13,36 +13,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use failure;
-
 pub type SenResult<T> = ::std::result::Result<T, SenError>;
 
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub enum SenError {
-    #[fail(display = "General")]
     GeneralError,
 
     // colour
     //
-    #[fail(display = "IncorrectColourFormat")]
     IncorrectColourFormat,
-    #[fail(display = "InvalidColourHue")]
     InvalidColourHue,
-    #[fail(display = "InvalidColourChannel")]
     InvalidColourChannel,
 
     // parser
-    #[fail(display = "ParserInvalidChar")]
     ParserInvalidChar(char),
-    #[fail(display = "ParserInvalidLiteral")]
     ParserInvalidLiteral,
-
-    /// This allows you to produce any `failure::Error` within closures used by
-    /// the skeleton crate. No errors of this kind will ever be produced by the
-    /// crate itself.
-    #[fail(display = "{}", inner)]
-    Custom {
-        /// The actual error that occurred.
-        inner: failure::Error,
-    },
 }
