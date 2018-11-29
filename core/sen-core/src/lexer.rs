@@ -17,24 +17,38 @@ use error::{SenResult, SenError};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Token<'a> {
-    ParenStart, // (
-    ParenEnd,   // )
-    SquareBracketStart, // [
-    SquareBracketEnd,   // ]
-    CurlyBracketStart, // {
-    CurleyBracketEnd,   // }
-    Whitespace(&'a str),
-    Colon, // :
-    Quote, // '
-    DoubleQuote, // "
-    BackQuote, // `
-    Number(&'a str),
+    BackQuote,
+    Colon,
     Comment(&'a str),
+    CurleyBracketEnd,
+    CurlyBracketStart,
+    DoubleQuote,
     Name(&'a str),
+    Number(&'a str),
+    ParenEnd,
+    ParenStart,
+    Quote,
+    SquareBracketEnd,
+    SquareBracketStart,
+    Whitespace(&'a str),
     End,
 }
 
-pub struct Lexer<'a> {
+pub fn tokenize(s: &str) -> SenResult<Vec<Token>> {
+    let mut lex = Lexer::new(s);
+    let mut res = Vec::new();
+
+    loop {
+        match lex.eat_token()? {
+            Token::End => break,
+            tok => res.push(tok),
+        }
+    }
+
+    Ok(res)
+}
+
+struct Lexer<'a> {
     input: &'a str,
     cur_pos: u32,
 }
@@ -178,70 +192,55 @@ fn eat_comment(input: &str) -> SenResult<(Token, usize)> {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
-
-    fn tokens(s: &str) -> Vec<Token> {
-        let mut lex = Lexer::new(s);
-        let mut res = Vec::new();
-
-        loop {
-            match lex.eat_token().unwrap() {
-                Token::End => break,
-                tok => res.push(tok),
-            }
-        }
-
-        res
-    }
 
     #[test]
     fn test_lexer() {
-        assert_eq!(tokens("()"),
+        assert_eq!(tokenize("()").unwrap(),
                    [Token::ParenStart,
                     Token::ParenEnd]);
 
-        assert_eq!(tokens("( )"),
+        assert_eq!(tokenize("( )").unwrap(),
                    [Token::ParenStart,
                     Token::Whitespace(" "),
                     Token::ParenEnd]);
 
-        assert_eq!(tokens("[]"),
+        assert_eq!(tokenize("[]").unwrap(),
                    [Token::SquareBracketStart,
                     Token::SquareBracketEnd]);
 
-        assert_eq!(tokens("{}"),
+        assert_eq!(tokenize("{}").unwrap(),
                    [Token::CurlyBracketStart,
                     Token::CurleyBracketEnd]);
 
 
-        assert_eq!(tokens("5"),
+        assert_eq!(tokenize("5").unwrap(),
                    [Token::Number("5")]);
-        assert_eq!(tokens("-3"),
+        assert_eq!(tokenize("-3").unwrap(),
                    [Token::Number("-3")]);
-        assert_eq!(tokens("3.14"),
+        assert_eq!(tokenize("3.14").unwrap(),
                    [Token::Number("3.14")]);
-        assert_eq!(tokens("-0.34"),
+        assert_eq!(tokenize("-0.34").unwrap(),
                    [Token::Number("-0.34")]);
 
-        assert_eq!(tokens("1 foo 3"),
+        assert_eq!(tokenize("1 foo 3").unwrap(),
                    [Token::Number("1"),
                     Token::Whitespace(" "),
                     Token::Name("foo"),
                     Token::Whitespace(" "),
                     Token::Number("3")]);
 
-        assert_eq!(tokens("hello\nworld"),
+        assert_eq!(tokenize("hello\nworld").unwrap(),
                    [Token::Name("hello"),
                     Token::Whitespace("\n"),
                     Token::Name("world")]);
 
-        assert_eq!(tokens("hello ; some comment"),
+        assert_eq!(tokenize("hello ; some comment").unwrap(),
                    [Token::Name("hello"),
                     Token::Whitespace(" "),
                     Token::Comment(" some comment")]);
 
-        assert_eq!(tokens("hello ; some comment\n(valid)"),
+        assert_eq!(tokenize("hello ; some comment\n(valid)").unwrap(),
                    [Token::Name("hello"),
                     Token::Whitespace(" "),
                     Token::Comment(" some comment"),
