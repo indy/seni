@@ -1,6 +1,6 @@
 [package]
 name = "sen-client"
-version = "0.1.0"
+version = "4.0.0"
 authors = ["Inderjit Gill <email@indy.io>"]
 
 [lib]

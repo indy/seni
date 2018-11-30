@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { say_hi } = wasm_bindgen;
+const { say_hi, lenlen } = wasm_bindgen;
 
 // import main from './app.js';
 
@@ -30,6 +30,7 @@ function compatibilityHacks() {
 
 function main() {
   console.log('hello from main');
+  lenlen();
   say_hi();
 }
 

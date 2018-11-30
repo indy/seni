@@ -17,7 +17,11 @@
 
 mod colour;
 mod lexer;
-
-pub mod error;
+mod parser;
+mod error;
 
 pub use colour::{Colour, Format};
+
+pub fn sen_parse(s: &str) -> i32 {
+    s.len() as i32
+}

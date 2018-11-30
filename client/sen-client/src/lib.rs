@@ -1,3 +1,17 @@
+// Copyright (C) 2018 Inderjit Gill
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(dead_code)]
 #![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names, too_many_arguments))]
 
@@ -9,6 +23,8 @@ mod utils;
 
 use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
+
+use sen_core::sen_parse;
 
 // use sokoban_core::audio::AudioConfig;
 // use sokoban_core::config::Config;
@@ -37,4 +53,9 @@ extern "C" {
 #[wasm_bindgen]
 pub fn say_hi() {
     log("hello from wasm world!!!");
+}
+
+#[wasm_bindgen]
+pub fn lenlen() {
+    log(&format!("hello has {} characters", sen_parse("hello")));
 }
