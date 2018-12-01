@@ -23,14 +23,13 @@ struct Gene {
 struct NodeMeta {
     gene: Option<Gene>,
     parameter_ast: Vec<Node>,
-    parameter_prefix: Vec<Node>,
+    parameter_prefix: Vec<Node>, // todo: couldn't this just be a String?
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Node {
     List(Vec<Node>),
     Vector(Vec<Node>),
-    Int(String),
     Float(f32),
     Name(String),
     Label(String),
@@ -69,6 +68,29 @@ fn eat_list<'a>(t: &'a [Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
     }
 }
 
+fn eat_vector<'a>(t: &'a [Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
+    let mut tokens = t;
+    let mut res: Vec<Node> = Vec::new();
+
+    loop {
+        match tokens[0] {
+            Token::SquareBracketEnd => return Ok(NodeAndRemainder {
+                node: Node::Vector(res),
+                tokens: &tokens[1..],
+            }),
+            _ => {
+                match eat_token(tokens) {
+                    Ok(nar) => {
+                        res.push(nar.node);
+                        tokens = nar.tokens;
+                    },
+                    Err(e) => return Err(e)
+                }
+            }
+        }
+    }
+}
+
 fn eat_token<'a>(tokens: &'a[Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
     match tokens[0] {
         Token::Name(txt) =>
@@ -83,10 +105,15 @@ fn eat_token<'a>(tokens: &'a[Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
                     tokens: &tokens[1..],
                 })
             },
-        Token::Number(txt) => Ok(NodeAndRemainder {
-            node: Node::Float(txt.parse().unwrap()), // todo: fix unwrap
-            tokens: &tokens[1..],
-        }),
+        Token::Number(txt) => {
+            match txt.parse::<f32>() {
+                Ok(f) => Ok(NodeAndRemainder {
+                    node: Node::Float(f),
+                    tokens: &tokens[1..],
+                }),
+                Err(_) => Err(SenError::ParserUnableToParseFloat(txt.to_string()))
+            }
+        },
         Token::Whitespace(ws) => Ok(NodeAndRemainder {
             node: Node::Whitespace(ws.to_string()),
             tokens: &tokens[1..],
@@ -96,9 +123,9 @@ fn eat_token<'a>(tokens: &'a[Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
             tokens: &tokens[1..],
         }),
         Token::ParenStart => eat_list(&tokens[1..]),
-        _ => Err(SenError::GeneralError),
+        Token::SquareBracketStart => eat_vector(&tokens[1..]),
+        _ => Err(SenError::ParserHandledToken),
     }
-
 }
 
 pub fn parse(s: &str) -> SenResult<Vec<Node>> {
@@ -167,6 +194,18 @@ mod tests {
                                                     Node::Float(2.0),
                                                     Node::Whitespace(" ".to_string()),
                                                     Node::Float(3.0)])])]);
+
+
+        assert_eq!(ast("(hello world [1 2 3])"),
+                   [Node::List(vec![Node::Name("hello".to_string()),
+                                    Node::Whitespace(" ".to_string()),
+                                    Node::Name("world".to_string()),
+                                    Node::Whitespace(" ".to_string()),
+                                    Node::Vector(vec![Node::Float(1.0),
+                                                      Node::Whitespace(" ".to_string()),
+                                                      Node::Float(2.0),
+                                                      Node::Whitespace(" ".to_string()),
+                                                      Node::Float(3.0)])])]);
 
     }
 }

@@ -28,4 +28,6 @@ pub enum SenError {
     // parser
     ParserInvalidChar(char),
     ParserInvalidLiteral,
+    ParserUnableToParseFloat(String),
+    ParserHandledToken,
 }
