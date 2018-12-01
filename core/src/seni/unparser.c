@@ -79,9 +79,6 @@ void format_node_value(sen_cursor* cursor, sen_word_lut* word_lut, sen_node* nod
   case NODE_VECTOR:
     SEN_ERROR("NODE_VECTOR ???");
     break;
-  case NODE_INT:
-    cursor_sprintf(cursor, "%d", node->value.i);
-    break;
   case NODE_FLOAT:
     format_float_using_node(cursor, node, node->value.f);
     break;

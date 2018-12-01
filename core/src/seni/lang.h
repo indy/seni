@@ -52,7 +52,6 @@ typedef enum {
 typedef enum {
   NODE_LIST = 0,
   NODE_VECTOR,
-  NODE_INT,
   NODE_FLOAT,
   NODE_NAME,
   NODE_LABEL,

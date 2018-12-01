@@ -1692,7 +1692,6 @@ sen_error compile_2d_from_gene(sen_compilation* compilation, sen_node* ast) {
 }
 
 sen_error compile_alterable_element(sen_compilation* compilation, sen_node* node) {
-  sen_result_i32      result_i32;
   sen_result_f32      result_f32;
   sen_result_bytecode result_bytecode;
   sen_error           err;
@@ -1703,12 +1702,6 @@ sen_error compile_alterable_element(sen_compilation* compilation, sen_node* node
 
     B_CHK(emit_opcode_i32_f32(compilation, LOAD, MEM_SEG_CONSTANT, f),
           "compile_alterable_element: emit_opcode_i32_f32");
-  } else if (node->type == NODE_INT) {
-
-    I_CHK(get_node_value_i32_from_gene(node), "compile_alterable_element");
-    i32 i = result_i32.result;
-    B_CHK(emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i),
-          "compile_alterable_element");
   } else if (node->type == NODE_VECTOR) {
 
     if (node_vector_length(node) == 2) {
@@ -1892,21 +1885,6 @@ sen_result_node compile(sen_compilation* compilation, sen_node* ast) {
     if (is_result_bytecode_error(result_bytecode)) {
       return result_node_error(result_bytecode.error);
     }
-    return result_node_ok(safe_next(ast));
-  }
-  if (ast->type == NODE_INT) {
-    result_i32 = get_node_value_i32(ast);
-    if (is_result_i32_error(result_i32)) {
-      SEN_ERROR("compile: get_node_value_i32");
-      return result_node_error(result_i32.error);
-    }
-    i = result_i32.result;
-
-    result_bytecode = emit_opcode_i32(compilation, LOAD, MEM_SEG_CONSTANT, i);
-    if (is_result_bytecode_error(result_bytecode)) {
-      return result_node_error(result_bytecode.error);
-    }
-
     return result_node_ok(safe_next(ast));
   }
   if (ast->type == NODE_VECTOR) {

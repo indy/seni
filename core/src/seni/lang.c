@@ -161,9 +161,6 @@ sen_value_in_use get_node_value_in_use(sen_node_type type) {
   case NODE_VECTOR:
     return USE_FIRST_CHILD; // ???
     break;
-  case NODE_INT:
-    return USE_I;
-    break;
   case NODE_FLOAT:
     return USE_F;
     break;
@@ -235,8 +232,6 @@ char* node_type_name(sen_node* node) {
     return "NODE_LIST";
   case NODE_VECTOR:
     return "NODE_VECTOR";
-  case NODE_INT:
-    return "NODE_INT";
   case NODE_FLOAT:
     return "NODE_FLOAT";
   case NODE_NAME:

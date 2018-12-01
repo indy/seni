@@ -336,7 +336,7 @@ sen_result_node eat_alterable(sen_word_lut* word_lut, char** src) {
     }
   }
 
-  if (node->type != NODE_INT && node->type != NODE_FLOAT && node->type != NODE_NAME &&
+  if (node->type != NODE_FLOAT && node->type != NODE_NAME &&
       node->type != NODE_LIST && node->type != NODE_VECTOR) {
     SEN_ERROR("non-mutable node within curly brackets: %s", node_type_name(node));
     return result_node_error(ERROR_PARSE_NON_MUTABLE_NODE);
