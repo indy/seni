@@ -20,7 +20,7 @@ pub enum Token<'a> {
     BackQuote,
     Colon,
     Comment(&'a str),
-    CurleyBracketEnd,
+    CurlyBracketEnd,
     CurlyBracketStart,
     DoubleQuote,
     Name(&'a str),
@@ -71,7 +71,7 @@ impl<'a> Lexer<'a> {
                 '[' => Ok((Token::SquareBracketStart, 1)),
                 ']' => Ok((Token::SquareBracketEnd, 1)),
                 '{' => Ok((Token::CurlyBracketStart, 1)),
-                '}' => Ok((Token::CurleyBracketEnd, 1)),
+                '}' => Ok((Token::CurlyBracketEnd, 1)),
                 ':' => Ok((Token::Colon, 1)),
                 '\'' => Ok((Token::Quote, 1)),
                 '"' => Ok((Token::DoubleQuote, 1)),
@@ -211,7 +211,7 @@ mod tests {
 
         assert_eq!(tokenize("{}").unwrap(),
                    [Token::CurlyBracketStart,
-                    Token::CurleyBracketEnd]);
+                    Token::CurlyBracketEnd]);
 
         assert_eq!(tokenize("'(1)").unwrap(),
                    [Token::Quote,
@@ -253,5 +253,25 @@ mod tests {
                     Token::ParenStart,
                     Token::Name("valid"),
                     Token::ParenEnd]);
+
+        assert_eq!(tokenize("{ 23 (gen/scalar min: 3 max: 100)}").unwrap(),
+                   [Token::CurlyBracketStart,
+                    Token::Whitespace(" "),
+                    Token::Number("23"),
+                    Token::Whitespace(" "),
+                    Token::ParenStart,
+                    Token::Name("gen/scalar"),
+                    Token::Whitespace(" "),
+                    Token::Name("min"),
+                    Token::Colon,
+                    Token::Whitespace(" "),
+                    Token::Number("3"),
+                    Token::Whitespace(" "),
+                    Token::Name("max"),
+                    Token::Colon,
+                    Token::Whitespace(" "),
+                    Token::Number("100"),
+                    Token::ParenEnd,
+                    Token::CurlyBracketEnd]);
     }
 }
