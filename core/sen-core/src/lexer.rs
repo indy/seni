@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use error::{SenResult, SenError};
+use error::{SenError, SenResult};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Token<'a> {
@@ -55,7 +55,7 @@ struct Lexer<'a> {
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &str) -> Lexer {
-        Lexer{
+        Lexer {
             input: input,
             cur_pos: 0,
         }
@@ -77,15 +77,15 @@ impl<'a> Lexer<'a> {
                 '"' => Ok((Token::DoubleQuote, 1)),
                 '`' => Ok((Token::BackQuote, 1)),
                 ';' => eat_comment(&self.input[ind..]),
-                '-' | '0' ... '9' => eat_number(&self.input[ind..]),
+                '-' | '0'...'9' => eat_number(&self.input[ind..]),
                 ch if ch.is_whitespace() => eat_whitespace(&self.input[ind..]),
                 _ if is_name(ch) => eat_name(&self.input[ind..]),
-                ch => Err(SenError::ParserInvalidChar(ch))
+                ch => Err(SenError::ParserInvalidChar(ch)),
             };
 
             let (tok, size) = match res {
                 Ok(v) => v,
-                Err(kind) => return Err(kind)
+                Err(kind) => return Err(kind),
             };
 
             self.cur_pos += size as u32;
@@ -105,10 +105,10 @@ fn is_name(ch: char) -> bool {
 
 fn is_symbol(ch: char) -> bool {
     match ch {
-        '+' | '-' | '*' | '/' | '=' | '!' | '@' |
-        '#' | '$' | '%' | '^' | '&' | '<' | '>' |
-        '?' => true,
-        _ => false
+        '+' | '-' | '*' | '/' | '=' | '!' | '@' | '#' | '$' | '%' | '^' | '&' | '<' | '>' | '?' => {
+            true
+        }
+        _ => false,
     }
 }
 
@@ -141,7 +141,7 @@ fn eat_number(input: &str) -> SenResult<(Token, usize)> {
         match input[1..].chars().next() {
             Some(ch) if ch.is_digit(10) => (1, &input[1..]),
             // Actually a name beginning with '-' rather a number
-            _ => return eat_name(input)
+            _ => return eat_name(input),
         }
     } else {
         (0, input)
@@ -173,12 +173,12 @@ fn eat_number(input: &str) -> SenResult<(Token, usize)> {
 }
 
 fn eat_comment(input: &str) -> SenResult<(Token, usize)> {
-    let rest = &input[1..];     // remove the first character (;)
+    let rest = &input[1..]; // remove the first character (;)
     let mut size = rest.len();
 
     for (ind, ch) in rest.char_indices() {
         match ch {
-            '\n' =>{
+            '\n' => {
                 size = ind;
                 break;
             }
@@ -196,82 +196,105 @@ mod tests {
 
     #[test]
     fn test_lexer() {
-        assert_eq!(tokenize("()").unwrap(),
-                   [Token::ParenStart,
-                    Token::ParenEnd]);
+        assert_eq!(
+            tokenize("()").unwrap(),
+            [Token::ParenStart, Token::ParenEnd]
+        );
 
-        assert_eq!(tokenize("( )").unwrap(),
-                   [Token::ParenStart,
-                    Token::Whitespace(" "),
-                    Token::ParenEnd]);
+        assert_eq!(
+            tokenize("( )").unwrap(),
+            [Token::ParenStart, Token::Whitespace(" "), Token::ParenEnd]
+        );
 
-        assert_eq!(tokenize("[]").unwrap(),
-                   [Token::SquareBracketStart,
-                    Token::SquareBracketEnd]);
+        assert_eq!(
+            tokenize("[]").unwrap(),
+            [Token::SquareBracketStart, Token::SquareBracketEnd]
+        );
 
-        assert_eq!(tokenize("{}").unwrap(),
-                   [Token::CurlyBracketStart,
-                    Token::CurlyBracketEnd]);
+        assert_eq!(
+            tokenize("{}").unwrap(),
+            [Token::CurlyBracketStart, Token::CurlyBracketEnd]
+        );
 
-        assert_eq!(tokenize("'(1)").unwrap(),
-                   [Token::Quote,
-                    Token::ParenStart,
-                    Token::Number("1"),
-                    Token::ParenEnd]);
+        assert_eq!(
+            tokenize("'(1)").unwrap(),
+            [
+                Token::Quote,
+                Token::ParenStart,
+                Token::Number("1"),
+                Token::ParenEnd
+            ]
+        );
 
-        assert_eq!(tokenize("5").unwrap(),
-                   [Token::Number("5")]);
-        assert_eq!(tokenize("-3").unwrap(),
-                   [Token::Number("-3")]);
-        assert_eq!(tokenize("3.14").unwrap(),
-                   [Token::Number("3.14")]);
-        assert_eq!(tokenize("-0.34").unwrap(),
-                   [Token::Number("-0.34")]);
+        assert_eq!(tokenize("5").unwrap(), [Token::Number("5")]);
+        assert_eq!(tokenize("-3").unwrap(), [Token::Number("-3")]);
+        assert_eq!(tokenize("3.14").unwrap(), [Token::Number("3.14")]);
+        assert_eq!(tokenize("-0.34").unwrap(), [Token::Number("-0.34")]);
 
-        assert_eq!(tokenize("1 foo 3").unwrap(),
-                   [Token::Number("1"),
-                    Token::Whitespace(" "),
-                    Token::Name("foo"),
-                    Token::Whitespace(" "),
-                    Token::Number("3")]);
+        assert_eq!(
+            tokenize("1 foo 3").unwrap(),
+            [
+                Token::Number("1"),
+                Token::Whitespace(" "),
+                Token::Name("foo"),
+                Token::Whitespace(" "),
+                Token::Number("3")
+            ]
+        );
 
-        assert_eq!(tokenize("hello\nworld").unwrap(),
-                   [Token::Name("hello"),
-                    Token::Whitespace("\n"),
-                    Token::Name("world")]);
+        assert_eq!(
+            tokenize("hello\nworld").unwrap(),
+            [
+                Token::Name("hello"),
+                Token::Whitespace("\n"),
+                Token::Name("world")
+            ]
+        );
 
-        assert_eq!(tokenize("hello ; some comment").unwrap(),
-                   [Token::Name("hello"),
-                    Token::Whitespace(" "),
-                    Token::Comment(" some comment")]);
+        assert_eq!(
+            tokenize("hello ; some comment").unwrap(),
+            [
+                Token::Name("hello"),
+                Token::Whitespace(" "),
+                Token::Comment(" some comment")
+            ]
+        );
 
-        assert_eq!(tokenize("hello ; some comment\n(valid)").unwrap(),
-                   [Token::Name("hello"),
-                    Token::Whitespace(" "),
-                    Token::Comment(" some comment"),
-                    Token::Whitespace("\n"),
-                    Token::ParenStart,
-                    Token::Name("valid"),
-                    Token::ParenEnd]);
+        assert_eq!(
+            tokenize("hello ; some comment\n(valid)").unwrap(),
+            [
+                Token::Name("hello"),
+                Token::Whitespace(" "),
+                Token::Comment(" some comment"),
+                Token::Whitespace("\n"),
+                Token::ParenStart,
+                Token::Name("valid"),
+                Token::ParenEnd
+            ]
+        );
 
-        assert_eq!(tokenize("{ 23 (gen/scalar min: 3 max: 100)}").unwrap(),
-                   [Token::CurlyBracketStart,
-                    Token::Whitespace(" "),
-                    Token::Number("23"),
-                    Token::Whitespace(" "),
-                    Token::ParenStart,
-                    Token::Name("gen/scalar"),
-                    Token::Whitespace(" "),
-                    Token::Name("min"),
-                    Token::Colon,
-                    Token::Whitespace(" "),
-                    Token::Number("3"),
-                    Token::Whitespace(" "),
-                    Token::Name("max"),
-                    Token::Colon,
-                    Token::Whitespace(" "),
-                    Token::Number("100"),
-                    Token::ParenEnd,
-                    Token::CurlyBracketEnd]);
+        assert_eq!(
+            tokenize("{ 23 (gen/scalar min: 3 max: 100)}").unwrap(),
+            [
+                Token::CurlyBracketStart,
+                Token::Whitespace(" "),
+                Token::Number("23"),
+                Token::Whitespace(" "),
+                Token::ParenStart,
+                Token::Name("gen/scalar"),
+                Token::Whitespace(" "),
+                Token::Name("min"),
+                Token::Colon,
+                Token::Whitespace(" "),
+                Token::Number("3"),
+                Token::Whitespace(" "),
+                Token::Name("max"),
+                Token::Colon,
+                Token::Whitespace(" "),
+                Token::Number("100"),
+                Token::ParenEnd,
+                Token::CurlyBracketEnd
+            ]
+        );
     }
 }

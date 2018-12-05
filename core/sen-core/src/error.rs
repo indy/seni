@@ -30,4 +30,10 @@ pub enum SenError {
     ParserInvalidLiteral,
     ParserUnableToParseFloat(String),
     ParserHandledToken,
+
+
+    // MemorySegmentType
+    MemorySegmentTypeUnmappableBytecodeArg,
+    MemorySegmentTypeUnmappableI32,
+
 }
