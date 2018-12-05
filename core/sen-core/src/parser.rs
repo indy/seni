@@ -43,6 +43,25 @@ struct NodeAndRemainder<'a> {
     tokens: &'a [Token<'a>],
 }
 
+pub fn parse(s: &str) -> SenResult<Vec<Node>> {
+    let t = tokenize(s)?;
+
+    let mut tokens = t.as_slice();
+    let mut res = Vec::new();
+
+    while tokens.len() > 0 {
+        match eat_token(tokens) {
+            Ok(nar) => {
+                res.push(nar.node);
+                tokens = nar.tokens;
+            },
+            Err(e) => return Err(e)
+        }
+    }
+
+    Ok(res)
+}
+
 // At the first token after a Token::ParenStart
 //
 fn eat_list<'a>(t: &'a [Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
@@ -91,6 +110,27 @@ fn eat_vector<'a>(t: &'a [Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
     }
 }
 
+fn eat_quoted_form<'a>(t: &'a[Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
+    let mut tokens = t;
+    let mut res: Vec<Node> = Vec::new();
+
+    res.push(Node::Name("quote".to_string()));
+    res.push(Node::Whitespace(" ".to_string()));
+
+    match eat_token(tokens) {
+        Ok(nar) => {
+            res.push(nar.node);
+            tokens = nar.tokens;
+        },
+        Err(e) => return Err(e)
+    }
+
+    Ok(NodeAndRemainder {
+        node: Node::List(res),
+        tokens: &tokens[..],
+    })
+}
+
 fn eat_token<'a>(tokens: &'a[Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
     match tokens[0] {
         Token::Name(txt) =>
@@ -122,29 +162,11 @@ fn eat_token<'a>(tokens: &'a[Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
             node: Node::Comment(comment.to_string()),
             tokens: &tokens[1..],
         }),
+        Token::Quote => eat_quoted_form(&tokens[1..]),
         Token::ParenStart => eat_list(&tokens[1..]),
         Token::SquareBracketStart => eat_vector(&tokens[1..]),
         _ => Err(SenError::ParserHandledToken),
     }
-}
-
-pub fn parse(s: &str) -> SenResult<Vec<Node>> {
-    let t = tokenize(s)?;
-
-    let mut tokens = t.as_slice();
-    let mut res = Vec::new();
-
-    while tokens.len() > 0 {
-        match eat_token(tokens) {
-            Ok(nar) => {
-                res.push(nar.node);
-                tokens = nar.tokens;
-            },
-            Err(e) => return Err(e)
-        }
-    }
-
-    Ok(res)
 }
 
 #[cfg(test)]
@@ -183,6 +205,11 @@ mod tests {
                    [Node::List(vec![Node::Name("hello".to_string()),
                                     Node::Whitespace(" ".to_string()),
                                     Node::Name("world".to_string())])]);
+
+        assert_eq!(ast("'3"),
+                   [Node::List(vec![Node::Name("quote".to_string()),
+                                    Node::Whitespace(" ".to_string()),
+                                    Node::Float(3.0)])]);
 
         assert_eq!(ast("(hello world (1 2 3))"),
                    [Node::List(vec![Node::Name("hello".to_string()),

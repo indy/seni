@@ -213,6 +213,11 @@ mod tests {
                    [Token::CurlyBracketStart,
                     Token::CurleyBracketEnd]);
 
+        assert_eq!(tokenize("'(1)").unwrap(),
+                   [Token::Quote,
+                    Token::ParenStart,
+                    Token::Number("1"),
+                    Token::ParenEnd]);
 
         assert_eq!(tokenize("5").unwrap(),
                    [Token::Number("5")]);
