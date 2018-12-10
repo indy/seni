@@ -29,6 +29,7 @@ const PLACEHOLDER: Placeholder = 0;
 
 const MEMORY_LOCAL_SIZE: usize = 40;
 
+#[derive(Clone, Copy)]
 pub enum MemorySegmentType {
     Argument = 0, // store the function's arguments
     Local = 1,    // store the function's local arguments
@@ -131,7 +132,7 @@ pub struct FnInfo {
     arg_address: i32,
     body_address: i32,
     num_args: i32,
-    argument_offsets: Vec<i32>,
+    argument_offsets: Vec<String>,
 }
 
 impl FnInfo {
@@ -146,6 +147,15 @@ impl FnInfo {
             num_args: 0,
             argument_offsets: Vec::new(),
         }
+    }
+
+    fn get_argument_mapping(&self, argument_name: &String) -> Option<usize> {
+        for (i, arg) in self.argument_offsets.iter().enumerate() {
+            if arg == argument_name {
+                return Some((i * 2) + 1)
+            }
+        }
+        None
     }
 }
 
@@ -177,6 +187,14 @@ impl Program {
     pub fn add_bytecode(&mut self, bc: Bytecode) -> SenResult<()> {
         self.code.push(bc);
         Ok(())
+    }
+
+    pub fn get_fn_info_index(&self, node: &Node) -> Option<usize> {
+        unimplemented!();
+    }
+
+    pub fn get_fn_info(&self, node: &Node) -> SenResult<&FnInfo> {
+        unimplemented!();
     }
 }
 
@@ -216,15 +234,33 @@ impl<'a> Compilation<'a> {
         self.global_mapping_marker = 0;
     }
 
+    fn add_global_mapping(&mut self, s: String) -> SenResult<i32> {
+        self.global_mappings.insert(s, self.global_mapping_marker);
+        self.global_mapping_marker += 1;
+        Ok(self.global_mapping_marker - 1)
+    }
+
     pub fn clear_local_mappings(&mut self) {
         self.local_mappings.clear();
         self.local_mapping_marker = 0;
     }
 
-    fn add_global_mapping(&mut self, s: String) -> SenResult<i32> {
-        self.global_mappings.insert(s, self.global_mapping_marker);
-        self.global_mapping_marker += 1;
-        Ok(self.global_mapping_marker - 1)
+    fn add_local_mapping(&mut self, s: String) -> SenResult<i32> {
+        self.local_mappings.insert(s, self.local_mapping_marker);
+        self.local_mapping_marker += 1;
+        Ok(self.local_mapping_marker - 1)
+    }
+
+    fn add_internal_local_mapping(&mut self, s: String) -> SenResult<i32> {
+        unimplemented!();
+    }
+
+    fn correct_function_addresses(&mut self) -> SenResult<()> {
+        unimplemented!();
+    }
+
+    fn get_fn_info_index(&self, node: &Node) -> Option<usize> {
+        unimplemented!();
     }
 
     fn register_top_level_preamble(&mut self) -> SenResult<()> {
@@ -350,6 +386,10 @@ impl<'a> Compilation<'a> {
 
     fn compile_common(&mut self, ast: &Vec<Node>) -> SenResult<()> {
         self.compile_common_prologue(ast)?;
+        self.compile_common_top_level_fns(ast)?;
+        self.compile_common_top_level_defines(ast)?;
+        self.compile_common_top_level_forms(ast)?;
+        self.compile_common_epilogue(ast)?;
         Ok(())
     }
 
@@ -365,6 +405,60 @@ impl<'a> Compilation<'a> {
         Ok(())
     }
 
+    fn compile_common_top_level_fns(&mut self, ast: &Vec<Node>) -> SenResult<()> {
+        // a placeholder, filled in at the end of this function
+        self.emit_opcode_i32(Opcode::JUMP, 0, 0)?;
+        let start_index = self.program.code.len() - 1;
+
+        // compile the top-level functions
+        let fn_keyword_string = keyword_to_string(Keyword::Fn);
+        for n in ast.iter() {
+            if is_list_beginning_with(n, &fn_keyword_string) {
+                self.compile(n)?;    // todo: the c-impl returns a node to continue from
+            }
+        }
+
+        // jump to the program's starting address
+        self.program.code[start_index] = Bytecode {
+            op: Opcode::JUMP,
+            arg0: BytecodeArg::Int(self.program.code.len() as i32),
+            arg1: BytecodeArg::Int(0),
+        };
+
+        Ok(())
+    }
+
+    fn compile_common_top_level_defines(&mut self, ast: &Vec<Node>) -> SenResult<()> {
+        let define_keyword_string = keyword_to_string(Keyword::Define);
+        for n in ast.iter() {
+            if is_list_beginning_with(n, &define_keyword_string) {
+                self.compile_define(n, MemorySegmentType::Global)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn compile_common_top_level_forms(&mut self, ast: &Vec<Node>) -> SenResult<()> {
+        let define_keyword_string = keyword_to_string(Keyword::Define);
+        let fn_keyword_string = keyword_to_string(Keyword::Fn);
+
+        for n in ast.iter() {
+            if !is_list_beginning_with(n, &define_keyword_string) && !is_list_beginning_with(n, &fn_keyword_string) {
+                self.compile(n)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn compile_common_epilogue(&mut self, ast: &Vec<Node>) -> SenResult<()> {
+        self.emit_opcode_i32(Opcode::STOP, 0, 0)?;
+
+        // now update the addreses used by CALL and CALL_0
+        self.correct_function_addresses()?;
+
+        Ok(())
+    }
+
     fn register_top_level_fns(&mut self, ast: &Vec<Node>) -> SenResult<()> {
         let fn_keyword_string = keyword_to_string(Keyword::Fn);
 
@@ -375,26 +469,24 @@ impl<'a> Compilation<'a> {
 
         // register top level fns
         for n in ast.iter() {
-            if let Node::List(nodes, _) = n {
-                // (fn (add-up a: 0 b: 0) (+ a b))
-                if nodes.len() > 2 { // 'fn' keyword + name-and-params + body
-                    let fn_keyword = &nodes[0];
-                    if let Node::Name(text, _) = fn_keyword {
-                        if text == &fn_keyword_string {
-                            // get the name of the fn
-                            let name_and_params = &nodes[1];
-                            if let Node::List(np_nodes, _) = name_and_params {
-                                if np_nodes.len() > 0 {
-                                    let name_node = &np_nodes[0];
-                                    if let Node::Name(text, _) = name_node {
-                                        // we have a named top-level fn declaration
-                                        //
-                                        // create and add a top level fn
-                                        let fn_info = FnInfo::new(text.to_string(), num_fns);
-                                        num_fns += 1;
-                                        self.program.fn_info.push(fn_info);
-                                    }
-                                }
+            if is_list_beginning_with(n, &fn_keyword_string) {
+                // get the name of the fn
+                if let Node::List(nodes, _) = n {
+                    if nodes.len() < 2 {
+                        // a list with just the 'fn' keyword ???
+                        return Err(SenError::GeneralError) // malformed function definition
+                    }
+                    let name_and_params = &nodes[1];
+                    if let Node::List(np_nodes, _) = name_and_params {
+                        if np_nodes.len() > 0 {
+                            let name_node = &np_nodes[0];
+                            if let Node::Name(text, _) = name_node {
+                                // we have a named top-level fn declaration
+                                //
+                                // create and add a top level fn
+                                let fn_info = FnInfo::new(text.to_string(), num_fns);
+                                num_fns += 1;
+                                self.program.fn_info.push(fn_info);
                             }
                         }
                     }
@@ -453,6 +545,71 @@ impl<'a> Compilation<'a> {
         Ok(())
     }
 
+    fn compile_define(&mut self, ast: &Node, mem: MemorySegmentType) -> SenResult<()> {
+        // ast is a list beginning with 'define'
+
+        // (define a 10 b 20 c 30)
+        if let Node::List(children, _) = ast {
+            let mut defs = &children[1..]; // remove the initial 'define'
+
+            if defs.len() % 2 != 0 {
+                // log: should be an even number of elements
+                return Err(SenError::GeneralError)
+            }
+
+            while defs.len() > 0 {
+                let lhs_node = &defs[0];
+                let value_node = &defs[1];
+
+                self.compile(&value_node)?;
+
+                match lhs_node {
+                    Node::Name(_, _) => {
+                        // define foo 10
+                        self.store_from_stack_to_memory(&lhs_node, mem)?;
+                    },
+                    Node::Vector(children, _) => {
+                        // define [a b] (something-that-returns-a-vector ...)
+
+                        // check if we can use the PILE opcode
+                        if all_children_are_name_nodes(lhs_node) {
+
+                            let num_children = children.len();
+
+                            // PILE will stack the elements in the rhs vector in order,
+                            // so the lhs values have to be popped in reverse order
+                            self.emit_opcode_i32(Opcode::PILE, num_children as i32, 0)?;
+                            self.opcode_offset = self.opcode_offset + num_children as i32 - 1;
+
+                            for c in children.iter().rev() {
+                                self.store_from_stack_to_memory(&c, mem)?;
+                            }
+                        } else {
+                            // all nodes in lhs vector definition should be names
+                            // note: this means that recursive name assignments aren't implemented
+                            // e.g. (define [a [b c]] something)
+                            return Err(SenError::GeneralError)
+                        }
+                    },
+                    _ => return Err(SenError::GeneralError)
+                }
+
+                defs = &defs[2..];
+            }
+        } else {
+            // expected a list beginning with 'define'
+            // should never get here because of earlier check
+            return Err(SenError::GeneralError)
+        }
+
+        Ok(())
+    }
+
+    fn compile(&mut self, _ast: &Node) -> SenResult<()> {
+        Ok(())
+    }
+
+
     fn compile_global_bind_i32(&mut self, s: String, value: i32) -> SenResult<()> {
         self.emit_opcode_i32(Opcode::LOAD, MemorySegmentType::Constant as i32, value)?;
         self.store_globally(s)?;
@@ -477,7 +634,17 @@ impl<'a> Compilation<'a> {
         Ok(())
     }
 
-    // store the given binding name in a global address
+    fn store_locally(&mut self, s: String) -> SenResult<i32> {
+        let address: i32 = match self.local_mappings.get(&s) {
+            Some(&local_mapping) => local_mapping, // already storing the binding name
+            None => self.add_local_mapping(s)?
+        };
+
+        self.emit_opcode_i32(Opcode::STORE, MemorySegmentType::Local as i32, address)?;
+
+        Ok(address)
+    }
+
     fn store_globally(&mut self, s: String) -> SenResult<i32> {
         let address: i32 = match self.global_mappings.get(&s) {
             Some(&global_mapping) => global_mapping, // already storing the binding name
@@ -487,6 +654,18 @@ impl<'a> Compilation<'a> {
         self.emit_opcode_i32(Opcode::STORE, MemorySegmentType::Global as i32, address)?;
 
         Ok(address)
+    }
+
+    fn store_from_stack_to_memory(&mut self, node: &Node, mem: MemorySegmentType) -> SenResult<i32> {
+        if let Node::Name(text, _) = node {
+            match mem {
+                MemorySegmentType::Local => self.store_locally(text.to_string()),
+                MemorySegmentType::Global => self.store_globally(text.to_string()),
+                _ => Err(SenError::GeneralError)
+            }
+        } else {
+            Err(SenError::GeneralError)
+        }
     }
 
     fn emit_opcode_i32(&mut self, op: Opcode, arg0: i32, arg1: i32) -> SenResult<()> {
@@ -542,6 +721,43 @@ impl<'a> Compilation<'a> {
     }
 }
 
+fn is_list_beginning_with(n: &Node, s: &String) -> bool {
+    if let Node::List(nodes, _) = n {
+        if nodes.len() > 0 {
+            if let Node::Name(ref text, _) = nodes[0] {
+                return text == s
+            }
+        }
+    }
+    false
+}
+
+// renamed all_children_have_type as it's only used with children of type NAME
+fn all_children_are_name_nodes(parent: &Node) -> bool {
+    match parent {
+        Node::List(children, _) | Node::Vector(children, _) => {
+            for n in children.iter() {
+                if let Node::Name(_, _) = n {
+                    continue
+                } else {
+                    return false
+                }
+            }
+            true
+        },
+        _ => false
+    }
+}
+
+fn count_children(parent: &Node) ->SenResult<usize> {
+    match parent {
+        Node::List(children, _) | Node::Vector(children, _) => {
+            Ok(children.len())
+        },
+        _ => Err(SenError::GeneralError)
+    }
+}
+
 pub struct Compiler {
     preamble: Option<Program>,
 }
@@ -567,11 +783,11 @@ fn clean_node(node: &Node) -> Option<Node> {
             Some(Node::Vector(vn, None))
         },
         Node::Float(f, _) => Some(Node::Float(*f, None)),
-        Node::Name(text, _) => Some(Node::Name(*text, None)),
-        Node::Label(text, _) => Some(Node::Label(*text, None)),
-        Node::String(text, _) => Some(Node::String(*text, None)),
-        Node::Whitespace(text, _) => None,
-        Node::Comment(text, _) => None,
+        Node::Name(text, _) => Some(Node::Name(text.to_string(), None)),
+        Node::Label(text, _) => Some(Node::Label(text.to_string(), None)),
+        Node::String(text, _) => Some(Node::String(text.to_string(), None)),
+        Node::Whitespace(_, _) => None,
+        Node::Comment(_, _) => None,
     }
 }
 
