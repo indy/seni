@@ -31,9 +31,12 @@ pub enum SenError {
     ParserUnableToParseFloat(String),
     ParserHandledToken,
 
+    // Mem
+    MemUnmappableBytecodeArg,
+    MemUnmappableI32,
 
-    // MemorySegmentType
-    MemorySegmentTypeUnmappableBytecodeArg,
-    MemorySegmentTypeUnmappableI32,
-
+    // Compiler
+    CompilerFnWithoutName,
+    CompilerFnDeclIncomplete,
+    Compiler(String),
 }

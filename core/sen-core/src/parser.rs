@@ -13,8 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::collections::HashMap;
+
 use error::{SenError, SenResult};
 use lexer::{tokenize, Token};
+use keywords::string_to_keyword;
 
 #[derive(Debug, PartialEq)]
 pub struct Gene {
@@ -33,8 +36,8 @@ pub enum Node {
     List(Vec<Node>, Option<NodeMeta>),
     Vector(Vec<Node>, Option<NodeMeta>),
     Float(f32, Option<NodeMeta>),
-    Name(String, Option<NodeMeta>),
-    Label(String, Option<NodeMeta>),
+    Name(String, i32, Option<NodeMeta>), // text, iname, meta
+    Label(String, i32, Option<NodeMeta>),// text, iname, meta
     String(String, Option<NodeMeta>),
     Whitespace(String, Option<NodeMeta>),
     Comment(String, Option<NodeMeta>),
@@ -45,14 +48,60 @@ struct NodeAndRemainder<'a> {
     tokens: &'a [Token<'a>],
 }
 
-pub fn parse(s: &str) -> SenResult<Vec<Node>> {
+pub struct WordLut {
+    // requires a native hashmap (function names reserved by the native api)
+    // a keyword hashmap (keywords + constants + common arguments to native api functions)
+    // a word hashmap (user defined names and labels)
+    word_ref: HashMap<String, i32>,
+    word_count: i32,
+}
+
+impl WordLut {
+    pub fn new() -> WordLut {
+        WordLut {
+            word_ref: HashMap::new(),
+            word_count: 0,
+        }
+    }
+
+    pub fn get(&mut self, s: &str) -> Option<i32> {
+
+        // todo: first check the native api
+
+        // 2nd check the keywords
+        if let Some(kw) = string_to_keyword(s) {
+            return Some(kw as i32)
+        }
+
+        // finally check/add to word_ref
+        if let Some(i) = self.word_ref.get(s) {
+            return Some(*i)
+        }
+
+        None
+    }
+
+    pub fn get_or_add(&mut self, s: &str) -> i32 {
+        if let Some(i) = self.get(s) {
+            return i;
+        }
+
+        self.word_ref.insert(s.to_string(), self.word_count);
+        self.word_count += 1;
+        self.word_count - 1
+    }
+}
+
+pub fn parse(s: &str) -> SenResult<(Vec<Node>, WordLut)> {
     let t = tokenize(s)?;
 
     let mut tokens = t.as_slice();
     let mut res = Vec::new();
 
+    let mut word_lut = WordLut::new();
+
     while tokens.len() > 0 {
-        match eat_token(tokens, None) {
+        match eat_token(tokens, None, &mut word_lut) {
             Ok(nar) => {
                 res.push(nar.node);
                 tokens = nar.tokens;
@@ -61,12 +110,12 @@ pub fn parse(s: &str) -> SenResult<Vec<Node>> {
         }
     }
 
-    Ok(res)
+    Ok((res, word_lut))
 }
 
 // At the first token after a Token::ParenStart
 //
-fn eat_list<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>) -> SenResult<NodeAndRemainder<'a>> {
+fn eat_list<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>, word_lut: &mut WordLut) -> SenResult<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
 
@@ -78,7 +127,7 @@ fn eat_list<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>) -> SenResult<NodeAnd
                     tokens: &tokens[1..],
                 })
             }
-            _ => match eat_token(tokens, None) {
+            _ => match eat_token(tokens, None, word_lut) {
                 Ok(nar) => {
                     res.push(nar.node);
                     tokens = nar.tokens;
@@ -89,7 +138,7 @@ fn eat_list<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>) -> SenResult<NodeAnd
     }
 }
 
-fn eat_vector<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>) -> SenResult<NodeAndRemainder<'a>> {
+fn eat_vector<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>, word_lut: &mut WordLut) -> SenResult<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
 
@@ -101,7 +150,7 @@ fn eat_vector<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>) -> SenResult<NodeA
                     tokens: &tokens[1..],
                 })
             }
-            _ => match eat_token(tokens, None) {
+            _ => match eat_token(tokens, None, word_lut) {
                 Ok(nar) => {
                     res.push(nar.node);
                     tokens = nar.tokens;
@@ -112,7 +161,7 @@ fn eat_vector<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>) -> SenResult<NodeA
     }
 }
 
-fn eat_alterable<'a>(t: &'a [Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
+fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> SenResult<NodeAndRemainder<'a>> {
     let mut tokens = t;
 
     // possible parameter_prefix
@@ -149,14 +198,14 @@ fn eat_alterable<'a>(t: &'a [Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
                     parameter_prefix: parameter_prefix,
                 });
 
-                let res = eat_token(main_token, meta)?;
+                let res = eat_token(main_token, meta, word_lut)?;
 
                 return Ok(NodeAndRemainder {
                     node: res.node,
                     tokens: &tokens[1..],
                 });
             }
-            _ => match eat_token(tokens, None) {
+            _ => match eat_token(tokens, None, word_lut) {
                 Ok(nar) => {
                     parameter_ast.push(nar.node);
                     tokens = nar.tokens;
@@ -172,14 +221,17 @@ fn eat_alterable<'a>(t: &'a [Token<'a>]) -> SenResult<NodeAndRemainder<'a>> {
 fn eat_quoted_form<'a>(
     t: &'a [Token<'a>],
     meta: Option<NodeMeta>,
+    word_lut: &mut WordLut,
 ) -> SenResult<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
 
-    res.push(Node::Name("quote".to_string(), None));
+    let q = "quote".to_string();
+    let qi = word_lut.get_or_add(&q);
+    res.push(Node::Name(q, qi, None));
     res.push(Node::Whitespace(" ".to_string(), None));
 
-    match eat_token(tokens, None) {
+    match eat_token(tokens, None, word_lut) {
         Ok(nar) => {
             res.push(nar.node);
             tokens = nar.tokens;
@@ -196,17 +248,20 @@ fn eat_quoted_form<'a>(
 fn eat_token<'a>(
     tokens: &'a [Token<'a>],
     meta: Option<NodeMeta>,
+    word_lut: &mut WordLut,
 ) -> SenResult<NodeAndRemainder<'a>> {
     match tokens[0] {
         Token::Name(txt) => {
+            let t = txt.to_string();
+            let ti = word_lut.get_or_add(&t);
             if tokens.len() > 1 && tokens[1] == Token::Colon {
                 Ok(NodeAndRemainder {
-                    node: Node::Label(txt.to_string(), meta),
+                    node: Node::Label(t, ti, meta),
                     tokens: &tokens[2..],
                 })
             } else {
                 Ok(NodeAndRemainder {
-                    node: Node::Name(txt.to_string(), meta),
+                    node: Node::Name(t, ti, meta),
                     tokens: &tokens[1..],
                 })
             }
@@ -226,10 +281,10 @@ fn eat_token<'a>(
             node: Node::Comment(comment.to_string(), None),
             tokens: &tokens[1..],
         }),
-        Token::Quote => eat_quoted_form(&tokens[1..], meta),
-        Token::ParenStart => eat_list(&tokens[1..], meta),
-        Token::SquareBracketStart => eat_vector(&tokens[1..], meta),
-        Token::CurlyBracketStart => eat_alterable(&tokens[1..]),
+        Token::Quote => eat_quoted_form(&tokens[1..], meta, word_lut),
+        Token::ParenStart => eat_list(&tokens[1..], meta, word_lut),
+        Token::SquareBracketStart => eat_vector(&tokens[1..], meta, word_lut),
+        Token::CurlyBracketStart => eat_alterable(&tokens[1..], word_lut),
         _ => Err(SenError::ParserHandledToken),
     }
 }
@@ -239,26 +294,27 @@ mod tests {
     use super::*;
 
     fn ast(s: &str) -> Vec<Node> {
-        parse(s).unwrap()
+        let (tree, _word_lut) = parse(s).unwrap();
+        tree
     }
 
     #[test]
     fn test_parser() {
-        assert_eq!(ast("hello"), [Node::Name("hello".to_string(), None)]);
+        assert_eq!(ast("hello"), [Node::Name("hello".to_string(), 0, None)]);
         assert_eq!(
             ast("hello world"),
             [
-                Node::Name("hello".to_string(), None),
+                Node::Name("hello".to_string(), 0, None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), None)
+                Node::Name("world".to_string(), 1, None)
             ]
         );
         assert_eq!(
             ast("hello: world"),
             [
-                Node::Label("hello".to_string(), None),
+                Node::Label("hello".to_string(), 0, None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), None)
+                Node::Name("world".to_string(), 1, None)
             ]
         );
         assert_eq!(
@@ -273,9 +329,9 @@ mod tests {
         assert_eq!(
             ast("hello world ; some comment"),
             [
-                Node::Name("hello".to_string(), None),
+                Node::Name("hello".to_string(), 0, None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), None),
+                Node::Name("world".to_string(), 1, None),
                 Node::Whitespace(" ".to_string(), None),
                 Node::Comment(" some comment".to_string(), None)
             ]
@@ -285,9 +341,9 @@ mod tests {
             ast("(hello world)"),
             [Node::List(
                 vec![
-                    Node::Name("hello".to_string(), None),
+                    Node::Name("hello".to_string(), 0, None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), None)
+                    Node::Name("world".to_string(), 1, None)
                 ],
                 None
             )]
@@ -297,7 +353,7 @@ mod tests {
             ast("'3"),
             [Node::List(
                 vec![
-                    Node::Name("quote".to_string(), None),
+                    Node::Name("quote".to_string(), 153, None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Float(3.0, None)
                 ],
@@ -309,9 +365,9 @@ mod tests {
             ast("(hello world (1 2 3))"),
             [Node::List(
                 vec![
-                    Node::Name("hello".to_string(), None),
+                    Node::Name("hello".to_string(), 0, None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), None),
+                    Node::Name("world".to_string(), 1, None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::List(
                         vec![
@@ -332,9 +388,9 @@ mod tests {
             ast("(hello world [1 2 3])"),
             [Node::List(
                 vec![
-                    Node::Name("hello".to_string(), None),
+                    Node::Name("hello".to_string(), 0, None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), None),
+                    Node::Name("world".to_string(), 1, None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Vector(
                         vec![
@@ -354,7 +410,7 @@ mod tests {
         assert_eq!(
             ast("hello { 5 (gen/scalar)}"),
             [
-                Node::Name("hello".to_string(), None),
+                Node::Name("hello".to_string(), 0, None),
                 Node::Whitespace(" ".to_string(), None),
                 Node::Float(
                     5.0,
@@ -362,7 +418,7 @@ mod tests {
                         gene: None,
                         parameter_ast: vec![
                             Node::Whitespace(" ".to_string(), None),
-                            Node::List(vec![Node::Name("gen/scalar".to_string(), None)], None)
+                            Node::List(vec![Node::Name("gen/scalar".to_string(), 1, None)], None)
                         ],
                         parameter_prefix: vec![Node::Whitespace(" ".to_string(), None)]
                     })

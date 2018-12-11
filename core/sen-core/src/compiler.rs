@@ -17,20 +17,16 @@ use std::collections::HashMap;
 use std::fmt;
 
 use error::*;
+use keywords::{keyword_to_string, string_to_keyword_hash, Keyword};
+use opcodes::{opcode_stack_offset, Opcode};
 use parser::Node;
-use opcodes::{Opcode, opcode_stack_offset};
-use keywords::{Keyword, keyword_to_string};
-
-type Placeholder = i32;
 
 const TAU: f32 = 6.283_185_307_179_586; // todo: move TAU to math
-
-const PLACEHOLDER: Placeholder = 0;
 
 const MEMORY_LOCAL_SIZE: usize = 40;
 
 #[derive(Clone, Copy)]
-pub enum MemorySegmentType {
+pub enum Mem {
     Argument = 0, // store the function's arguments
     Local = 1,    // store the function's local arguments
     Global = 2,   // global variables shared by all functions
@@ -38,35 +34,35 @@ pub enum MemorySegmentType {
     Void = 4,     // nothing
 }
 
-impl fmt::Display for MemorySegmentType {
+impl fmt::Display for Mem {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            MemorySegmentType::Argument => write!(f, "ARG"),
-            MemorySegmentType::Local => write!(f, "LOCAL"),
-            MemorySegmentType::Global => write!(f, "GLOBAL"),
-            MemorySegmentType::Constant => write!(f, "CONST"),
-            MemorySegmentType::Void => write!(f, "VOID"),
+            Mem::Argument => write!(f, "ARG"),
+            Mem::Local => write!(f, "LOCAL"),
+            Mem::Global => write!(f, "GLOBAL"),
+            Mem::Constant => write!(f, "CONST"),
+            Mem::Void => write!(f, "VOID"),
         }
     }
 }
 
-impl MemorySegmentType {
-    fn from_bytecode_arg(b: &BytecodeArg) -> SenResult<MemorySegmentType> {
+impl Mem {
+    fn from_bytecode_arg(b: &BytecodeArg) -> SenResult<Mem> {
         match b {
             BytecodeArg::Int(i) => match i {
-                0 => Ok(MemorySegmentType::Argument),
-                1 => Ok(MemorySegmentType::Local),
-                2 => Ok(MemorySegmentType::Global),
-                3 => Ok(MemorySegmentType::Constant),
-                4 => Ok(MemorySegmentType::Void),
-                _ => Err(SenError::MemorySegmentTypeUnmappableI32)
+                0 => Ok(Mem::Argument),
+                1 => Ok(Mem::Local),
+                2 => Ok(Mem::Global),
+                3 => Ok(Mem::Constant),
+                4 => Ok(Mem::Void),
+                _ => Err(SenError::MemUnmappableI32),
             },
-            _ => Err(SenError::MemorySegmentTypeUnmappableBytecodeArg)
+            _ => Err(SenError::MemUnmappableBytecodeArg),
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ColourFormat {
     Rgba,
 }
@@ -79,7 +75,7 @@ impl fmt::Display for ColourFormat {
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum BytecodeArg {
     Int(i32),
     Float(f32),
@@ -93,12 +89,14 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Int(i) => write!(f, "Int({})", i),
             BytecodeArg::Float(s) => write!(f, "Float({})", s),
             BytecodeArg::Name(i) => write!(f, "Name({})", i),
-            BytecodeArg::Colour(s, a, b, c, d) => write!(f, "Colour({} {} {} {} {})", s, a, b, c, d),
+            BytecodeArg::Colour(s, a, b, c, d) => {
+                write!(f, "Colour({} {} {} {} {})", s, a, b, c, d)
+            }
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Bytecode {
     pub op: Opcode,
     pub arg0: BytecodeArg,
@@ -109,11 +107,13 @@ impl fmt::Display for Bytecode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.op {
             Opcode::LOAD | Opcode::STORE | Opcode::STORE_F => {
-                let mem = MemorySegmentType::from_bytecode_arg(&self.arg0).map_err(|_| ::std::fmt::Error)?;
+                let mem = Mem::from_bytecode_arg(&self.arg0).map_err(|_| ::std::fmt::Error)?;
                 write!(f, "{}\t{}\t{}", self.op, mem, self.arg1)
-            },
+            }
             // todo: format JUMP and JUMP_IF
-            Opcode::JUMP | Opcode::JUMP_IF => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1),
+            Opcode::JUMP | Opcode::JUMP_IF => {
+                write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)
+            }
             // todo: format NATIVE
             Opcode::NATIVE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1),
             // todo: format PILE
@@ -125,23 +125,17 @@ impl fmt::Display for Bytecode {
 
 #[derive(Debug)]
 pub struct FnInfo {
-    active: bool,               // todo: probably not needed anymore
-    index: usize,
-    fn_name_str: String,
-    fn_name: i32,
-    arg_address: i32,
-    body_address: i32,
+    fn_name: String,
+    arg_address: usize,
+    body_address: usize,
     num_args: i32,
-    argument_offsets: Vec<String>,
+    argument_offsets: Vec<i32>,
 }
 
 impl FnInfo {
-    fn new(fn_name_str: String, index: usize) -> FnInfo {
+    fn new(fn_name: String) -> FnInfo {
         FnInfo {
-            active: true,
-            index: index,
-            fn_name_str: fn_name_str,
-            fn_name: 0,   // todo: fix/remove?
+            fn_name: fn_name,
             arg_address: 0,
             body_address: 0,
             num_args: 0,
@@ -149,10 +143,10 @@ impl FnInfo {
         }
     }
 
-    fn get_argument_mapping(&self, argument_name: &String) -> Option<usize> {
+    fn get_argument_mapping(&self, argument_iname: i32) -> Option<usize> {
         for (i, arg) in self.argument_offsets.iter().enumerate() {
-            if arg == argument_name {
-                return Some((i * 2) + 1)
+            if *arg == argument_iname {
+                return Some((i * 2) + 1);
             }
         }
         None
@@ -163,7 +157,6 @@ impl FnInfo {
 pub struct Program {
     code: Vec<Bytecode>,
     fn_info: Vec<FnInfo>,
-
     // word_lut
 }
 
@@ -190,11 +183,14 @@ impl Program {
     }
 
     pub fn get_fn_info_index(&self, node: &Node) -> Option<usize> {
-        unimplemented!();
-    }
-
-    pub fn get_fn_info(&self, node: &Node) -> SenResult<&FnInfo> {
-        unimplemented!();
+        if let Node::Name(text, _, _) = node {
+            for (i, fi) in self.fn_info.iter().enumerate() {
+                if fi.fn_name == *text {
+                    return Some(i)
+                }
+            }
+        }
+        None
     }
 }
 
@@ -209,7 +205,9 @@ struct Compilation<'a> {
     pub local_mappings: HashMap<String, i32>,
     pub local_mapping_marker: i32, // todo: check that it is < MEMORY_LOCAL_SIZE, as that constant is used in the interpreter
 
-    pub current_fn_info: Placeholder,
+    pub current_fn_info_index: Option<usize>,
+
+    pub string_to_keyword: HashMap<String, Keyword>,
 }
 
 impl<'a> Compilation<'a> {
@@ -225,13 +223,16 @@ impl<'a> Compilation<'a> {
             local_mappings: HashMap::new(),
             local_mapping_marker: 0,
 
-            current_fn_info: PLACEHOLDER,
+            current_fn_info_index: None,
+
+            string_to_keyword: string_to_keyword_hash(),
         }
     }
 
-    pub fn clear_global_mappings(&mut self) {
+    pub fn clear_global_mappings(&mut self) -> SenResult<()> {
         self.global_mappings.clear();
         self.global_mapping_marker = 0;
+        Ok(())
     }
 
     fn add_global_mapping(&mut self, s: String) -> SenResult<i32> {
@@ -240,9 +241,10 @@ impl<'a> Compilation<'a> {
         Ok(self.global_mapping_marker - 1)
     }
 
-    pub fn clear_local_mappings(&mut self) {
+    pub fn clear_local_mappings(&mut self) -> SenResult<()> {
         self.local_mappings.clear();
         self.local_mapping_marker = 0;
+        Ok(())
     }
 
     fn add_local_mapping(&mut self, s: String) -> SenResult<i32> {
@@ -251,16 +253,62 @@ impl<'a> Compilation<'a> {
         Ok(self.local_mapping_marker - 1)
     }
 
-    fn add_internal_local_mapping(&mut self, s: String) -> SenResult<i32> {
+    fn add_internal_local_mapping(&mut self, _s: String) -> SenResult<i32> {
         unimplemented!();
     }
 
     fn correct_function_addresses(&mut self) -> SenResult<()> {
-        unimplemented!();
-    }
+        let mut all_fixes: Vec<(usize, Opcode, i32, i32)> = Vec::new(); // tuple of index, op, arg0, arg1
+        let mut arg1_fixes: Vec<(usize, i32)> = Vec::new(); // tuple of index,value pairs
 
-    fn get_fn_info_index(&self, node: &Node) -> Option<usize> {
-        unimplemented!();
+        // go through the bytecode fixing up function call addresses
+        for (i, bc) in self.program.code.iter().enumerate() {
+            // replace the temporarily stored index in the args of CALL and CALL_0 with
+            // the actual values
+
+            match bc.op {
+                Opcode::CALL => {
+                    if let BytecodeArg::Int(fn_info_index) = bc.arg0 {
+                        let fn_info = &self.program.fn_info[fn_info_index as usize];
+
+                        // the previous two bytecodes will be LOADs of CONST.
+                        // i - 2 == the address to call
+                        // i - 1 == the number of arguments used by the function
+                        arg1_fixes.push((i-2, fn_info.arg_address as i32));
+                        arg1_fixes.push((i-1, fn_info.num_args as i32));
+                    }
+                },
+                Opcode::CALL_0 => {
+                    if let BytecodeArg::Int(fn_info_index) = bc.arg0 {
+                        let fn_info = &self.program.fn_info[fn_info_index as usize];
+                        arg1_fixes.push((i-1, fn_info.body_address as i32));
+                    }
+                },
+                Opcode::PLACEHOLDER_STORE => {
+                    // opcode's arg0 is the fn_info_index and arg1 is the label_value
+                    if let BytecodeArg::Int(fn_info_index) = bc.arg0 {
+                        let fn_info = &self.program.fn_info[fn_info_index as usize];
+                        if let BytecodeArg::Int(label_value) = bc.arg1 {
+                            if let Some(data_index) = fn_info.get_argument_mapping(label_value) {
+                                all_fixes.push((i, Opcode::STORE, Mem::Argument as i32, data_index as i32));
+                            } else {
+                                all_fixes.push((i, Opcode::STORE, Mem::Void as i32, 0));
+                            }
+                        }
+                    }
+                },
+                _ => ()
+            }
+        }
+
+        for (index, op, arg0, arg1) in all_fixes {
+            self.bytecode_modify(index, op, arg0, arg1)?;
+        }
+        for (index, arg1) in arg1_fixes {
+            self.bytecode_modify_arg1_i32(index, arg1)?;
+        }
+
+        Ok(())
     }
 
     fn register_top_level_preamble(&mut self) -> SenResult<()> {
@@ -282,6 +330,93 @@ impl<'a> Compilation<'a> {
 
         self.add_global_mapping(keyword_to_string(Keyword::ColProceduralFnPresets))?;
         self.add_global_mapping(keyword_to_string(Keyword::EasePresets))?;
+
+        Ok(())
+    }
+
+    fn register_top_level_fns(&mut self, ast: &Vec<Node>) -> SenResult<()> {
+        // clear all data
+        self.program.fn_info = Vec::new();
+
+        // register top level fns
+        for n in ast.iter() {
+            if self.is_list_beginning_with(n, Keyword::Fn) {
+                // get the name of the fn
+                if let Node::List(nodes, _) = n {
+                    if nodes.len() < 2 {
+                        // a list with just the 'fn' keyword ???
+                        return Err(SenError::Compiler(format!("malformed function definition")));
+                    }
+                    let name_and_params = &nodes[1];
+                    if let Node::List(np_nodes, _) = name_and_params {
+                        if np_nodes.len() > 0 {
+                            let name_node = &np_nodes[0];
+                            if let Node::Name(text, _, _) = name_node {
+                                // we have a named top-level fn declaration
+                                //
+                                // create and add a top level fn
+                                let fn_info = FnInfo::new(text.to_string());
+                                self.program.fn_info.push(fn_info);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn register_names_in_define(&mut self, lhs: &Node) -> SenResult<()> {
+        match lhs {
+            Node::Name(name, _, _) => {
+                // (define foo 42)
+                let s = name.to_string();
+                // todo: is this check necessary?
+                if let Some(_i) = self.global_mappings.get(name) {
+                    // name was already added to global_mappings
+                    return Ok(())
+                }
+
+                if let Err(e) = self.add_global_mapping(s) {
+                    return Err(e);
+                }
+            }
+            Node::List(nodes, _) | Node::Vector(nodes, _) => {
+                // (define [a b] (something))
+                // (define [a [x y]] (something))
+                for n in nodes.iter() {
+                    if let Err(e) = self.register_names_in_define(n) {
+                        return Err(e);
+                    }
+                }
+            }
+            _ => (),
+        }
+        Ok(())
+    }
+
+    fn register_top_level_defines(&mut self, ast: &Vec<Node>) -> SenResult<()> {
+        let define_keyword_string = keyword_to_string(Keyword::Define);
+
+        for n in ast.iter() {
+            if let Node::List(nodes, _) = n {
+                if nodes.len() > 0 {
+                    let define_keyword = &nodes[0];
+                    if let Node::Name(text, _, _) = define_keyword {
+                        if text == &define_keyword_string {
+                            let mut defs = &nodes[1..];
+                            while defs.len() > 1 {
+                                if let Err(e) = self.register_names_in_define(&defs[0]) {
+                                    return Err(e);
+                                }
+                                defs = &defs[2..];
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         Ok(())
     }
@@ -316,14 +451,14 @@ impl<'a> Compilation<'a> {
         // ********************************************************************************
 
         // slap a stop onto the end of this program
-        self.emit_opcode_i32(Opcode::STOP, 0, 0)?;
+        self.emit_opcode(Opcode::STOP)?;
 
         Ok(())
     }
 
     fn compile_global_bind_procedural_presets(&mut self) -> SenResult<()> {
         // create a vector
-        self.emit_opcode_i32(Opcode::LOAD, MemorySegmentType::Void as i32, 0)?;
+        self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
 
         // append the names
         self.append_keyword(Keyword::Chrome)?;
@@ -341,7 +476,7 @@ impl<'a> Compilation<'a> {
 
     fn compile_global_bind_ease_presets(&mut self) -> SenResult<()> {
         // create a vector
-        self.emit_opcode_i32(Opcode::LOAD, MemorySegmentType::Void as i32, 0)?;
+        self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
 
         // append the names
         self.append_keyword(Keyword::Linear)?;
@@ -394,8 +529,8 @@ impl<'a> Compilation<'a> {
     }
 
     fn compile_common_prologue(&mut self, ast: &Vec<Node>) -> SenResult<()> {
-        self.clear_global_mappings();
-        self.clear_local_mappings();
+        self.clear_global_mappings()?;
+        self.clear_local_mappings()?;
         // compilation->current_fn_info = NULL;
 
         self.register_top_level_preamble()?;
@@ -407,51 +542,48 @@ impl<'a> Compilation<'a> {
 
     fn compile_common_top_level_fns(&mut self, ast: &Vec<Node>) -> SenResult<()> {
         // a placeholder, filled in at the end of this function
-        self.emit_opcode_i32(Opcode::JUMP, 0, 0)?;
+        self.emit_opcode(Opcode::JUMP)?;
         let start_index = self.program.code.len() - 1;
 
         // compile the top-level functions
-        let fn_keyword_string = keyword_to_string(Keyword::Fn);
         for n in ast.iter() {
-            if is_list_beginning_with(n, &fn_keyword_string) {
-                self.compile(n)?;    // todo: the c-impl returns a node to continue from
+            if self.is_list_beginning_with(n, Keyword::Fn) {
+                self.compile(n)?; // todo: the c-impl returns a node to continue from
             }
         }
 
         // jump to the program's starting address
-        self.program.code[start_index] = Bytecode {
-            op: Opcode::JUMP,
-            arg0: BytecodeArg::Int(self.program.code.len() as i32),
-            arg1: BytecodeArg::Int(0),
-        };
+        let jump_address = self.program.code.len() as i32;
+        self.bytecode_modify_arg0_i32(start_index, jump_address)?;
 
         Ok(())
     }
 
     fn compile_common_top_level_defines(&mut self, ast: &Vec<Node>) -> SenResult<()> {
-        let define_keyword_string = keyword_to_string(Keyword::Define);
         for n in ast.iter() {
-            if is_list_beginning_with(n, &define_keyword_string) {
-                self.compile_define(n, MemorySegmentType::Global)?;
+            if self.is_list_beginning_with(n, Keyword::Define) {
+                if let Node::List(children, _) = n {
+                    return self.compile_define(&children[1..], Mem::Global);
+                }
+                return Err(SenError::Compiler(format!("can never get here")))
             }
         }
         Ok(())
     }
 
     fn compile_common_top_level_forms(&mut self, ast: &Vec<Node>) -> SenResult<()> {
-        let define_keyword_string = keyword_to_string(Keyword::Define);
-        let fn_keyword_string = keyword_to_string(Keyword::Fn);
-
         for n in ast.iter() {
-            if !is_list_beginning_with(n, &define_keyword_string) && !is_list_beginning_with(n, &fn_keyword_string) {
+            if !self.is_list_beginning_with(n, Keyword::Define)
+                && !self.is_list_beginning_with(n, Keyword::Fn)
+            {
                 self.compile(n)?;
             }
         }
         Ok(())
     }
 
-    fn compile_common_epilogue(&mut self, ast: &Vec<Node>) -> SenResult<()> {
-        self.emit_opcode_i32(Opcode::STOP, 0, 0)?;
+    fn compile_common_epilogue(&mut self, _ast: &Vec<Node>) -> SenResult<()> {
+        self.emit_opcode(Opcode::STOP)?;
 
         // now update the addreses used by CALL and CALL_0
         self.correct_function_addresses()?;
@@ -459,188 +591,414 @@ impl<'a> Compilation<'a> {
         Ok(())
     }
 
-    fn register_top_level_fns(&mut self, ast: &Vec<Node>) -> SenResult<()> {
-        let fn_keyword_string = keyword_to_string(Keyword::Fn);
+    fn compile_define(&mut self, children: &[Node], mem: Mem) -> SenResult<()> {
+        // children are an even number of nodes representing binding/value pairs
+        // (define a 10 b 20 c 30) -> a 10 b 20 c 30
 
-        let mut num_fns: usize = 0;
+        let mut defs = children;
 
-        // clear all data
-        self.program.fn_info = Vec::new();
+        if defs.len() % 2 != 0 {
+            // log: should be an even number of elements
+            return Err(SenError::Compiler(format!("should be an even number of elements")));
+        }
 
-        // register top level fns
-        for n in ast.iter() {
-            if is_list_beginning_with(n, &fn_keyword_string) {
-                // get the name of the fn
-                if let Node::List(nodes, _) = n {
-                    if nodes.len() < 2 {
-                        // a list with just the 'fn' keyword ???
-                        return Err(SenError::GeneralError) // malformed function definition
-                    }
-                    let name_and_params = &nodes[1];
-                    if let Node::List(np_nodes, _) = name_and_params {
-                        if np_nodes.len() > 0 {
-                            let name_node = &np_nodes[0];
-                            if let Node::Name(text, _) = name_node {
-                                // we have a named top-level fn declaration
-                                //
-                                // create and add a top level fn
-                                let fn_info = FnInfo::new(text.to_string(), num_fns);
-                                num_fns += 1;
-                                self.program.fn_info.push(fn_info);
-                            }
+        while defs.len() > 0 {
+            let lhs_node = &defs[0];
+            let value_node = &defs[1];
+
+            self.compile(&value_node)?;
+
+            match lhs_node {
+                Node::Name(_, _, _) => {
+                    // define foo 10
+                    self.store_from_stack_to_memory(&lhs_node, mem)?;
+                }
+                Node::Vector(kids, _) => {
+                    // define [a b] (something-that-returns-a-vector ...)
+
+                    // check if we can use the PILE opcode
+                    if all_children_are_name_nodes(lhs_node) {
+                        let num_kids = kids.len();
+
+                        // PILE will stack the elements in the rhs vector in order,
+                        // so the lhs values have to be popped in reverse order
+                        self.emit_opcode_i32_i32(Opcode::PILE, num_kids as i32, 0)?;
+                        self.opcode_offset = self.opcode_offset + num_kids as i32 - 1;
+
+                        for k in kids.iter().rev() {
+                            self.store_from_stack_to_memory(&k, mem)?;
                         }
+                    } else {
+                        // all nodes in lhs vector definition should be names
+                        // note: this means that recursive name assignments aren't implemented
+                        // e.g. (define [a [b c]] something)
+                        return Err(SenError::Compiler(format!("recursive name assignments aren't implemented")));
                     }
                 }
+                _ => return Err(SenError::Compiler(format!("compile_define"))),
             }
+
+            defs = &defs[2..];
         }
+
 
         Ok(())
     }
 
-    fn register_names_in_define(&mut self, lhs: &Node) -> SenResult<()> {
-        match lhs {
-            Node::Name(name, _) => {
-                // (define foo 42)
-                if let Err(e) = self.add_global_mapping(name.to_string()) {
-                    return Err(e)
+    fn compile(&mut self, ast: &Node) -> SenResult<()> {
+        // todo: move this out of compile and into the compilation struct
+
+        match ast {
+            Node::List(children, _) => self.compile_listy(children)?,
+            Node::Float(f, _) => return self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f),
+            Node::Vector(children, _) => {
+                if children.len() == 2 {
+                    return self.compile_2d(children);
+                } else {
+                    return self.compile_vector(children);
+                }
+            }
+            Node::Name(text, iname, _) => {
+                let found_name = self.compile_user_defined_name(&text, *iname)?;
+                if found_name {
+                    return Ok(())
+                } else {
+                    return Err(SenError::Compiler(format!("compile: can't find user defined name: {}", text)))
                 }
             },
-            Node::List(nodes, _) | Node::Vector(nodes, _) => {
-                // (define [a b] (something))
-                // (define [a [x y]] (something))
-                for n in nodes.iter() {
-                    if let Err(e) = self.register_names_in_define(n) {
-                        return Err(e)
+            _ => return Err(SenError::Compiler(format!("compile"))),
+        }
+
+        Ok(())
+    }
+
+    fn compile_listy(&mut self, children: &[Node]) -> SenResult<()> {
+        if children.len() == 0 {
+            // should this be an error?
+            return Err(SenError::Compiler(format!("compile_listy no children (should this be an error?)")));
+        }
+
+        match &children[0] {
+            Node::List(kids, _) => self.compile_listy(&kids)?,
+            Node::Name(text, iname, _) => {
+                let found_name = self.compile_user_defined_name(&text, *iname)?;
+                if found_name {
+                    return Ok(())
+                }
+
+                let mut found_keyword: bool = false;
+                let mut keyword: Keyword = Keyword::Define;
+                if let Some(kw) = self.string_to_keyword.get(text) {
+                    keyword = *kw;
+                    found_keyword = true;
+                }
+
+                if found_keyword {
+                    match keyword {
+                        Keyword::Define => self.compile_define(&children[1..], Mem::Local)?,
+                        Keyword::If => self.compile_if(&children[1..])?,
+                        Keyword::Each => unimplemented!(),
+                        Keyword::Loop => unimplemented!(),
+                        Keyword::Fence => unimplemented!(),
+                        Keyword::OnMatrixStack => unimplemented!(),
+                        Keyword::Fn => self.compile_fn(&children[1..])?,
+                        Keyword::Plus => self.compile_math(&children[1..], Opcode::ADD)?,
+                        Keyword::Minus => self.compile_math(&children[1..], Opcode::SUB)?,
+                        Keyword::Mult => self.compile_math(&children[1..], Opcode::MUL)?,
+                        Keyword::Divide => self.compile_math(&children[1..], Opcode::DIV)?,
+                        Keyword::Mod => self.compile_math(&children[1..], Opcode::MOD)?,
+                        Keyword::Equal => self.compile_math(&children[1..], Opcode::EQ)?,
+                        Keyword::Lt => self.compile_math(&children[1..], Opcode::LT)?,
+                        Keyword::Gt => self.compile_math(&children[1..], Opcode::GT)?,
+                        Keyword::And => self.compile_math(&children[1..], Opcode::AND)?,
+                        Keyword::Or => self.compile_math(&children[1..], Opcode::OR)?,
+                        Keyword::Not => self.compile_next_one(&children[1..], Opcode::NOT)?,
+                        Keyword::Sqrt => self.compile_next_one(&children[1..], Opcode::SQRT)?,
+                        Keyword::AddressOf => unimplemented!(),
+                        Keyword::FnCall => unimplemented!(),
+                        Keyword::VectorAppend => unimplemented!(),
+                        Keyword::Quote => unimplemented!(),
+                        _ => {
+                            // look up the name as a user defined variable
+                            // normally get here when a script contains variables
+                            // that have the same name as common parameters.
+                            // e.g. r, g, b, alpha
+                            // or if we're passing a pre-defined argument value
+                            // e.g. linear in (bezier line-width-mapping: linear)
+
+                            // todo: some version of compile_user_defined_name that
+                            // also looks at the string_to_keyword hash
+
+                        }
                     }
                 }
+                // check native api set
+
             },
-            _ => ()
-
+            _ => return Err(SenError::Compiler(format!("compile_listy strange child")))
         }
+
         Ok(())
     }
 
-    fn register_top_level_defines(&mut self, ast: &Vec<Node>) -> SenResult<()> {
-        let define_keyword_string = keyword_to_string(Keyword::Define);
+    fn compile_if(&mut self, children: &[Node]) -> SenResult<()> {
+        let if_node: &Node;
+        let then_node: &Node;
+        let else_node: Option<&Node>;
 
-        for n in ast.iter() {
-            if let Node::List(nodes, _) = n {
-                if nodes.len() > 0 {
-                    let define_keyword = &nodes[0];
-                    if let Node::Name(text, _) = define_keyword {
-                        if text == &define_keyword_string {
-                            let mut defs = &nodes[1..];
-                            while defs.len() > 1 {
-                                if let Err(e) = self.register_names_in_define(&defs[0]) {
-                                    return Err(e)
-                                }
-                                defs = &defs[2..];
-                            }
-                        }
+        let num_children = children.len();
+
+        if num_children == 2 {
+            if_node = &children[0];
+            then_node = &children[1];
+            else_node = None;
+        } else if num_children == 3 {
+            if_node = &children[0];
+            then_node = &children[1];
+            else_node = Some(&children[2]);
+        } else {
+            return Err(SenError::Compiler(format!("if clause requires 2 or 3 forms (given {})", num_children)))
+        }
+
+        self.compile(if_node)?;
+
+        // insert jump to after the 'then' node if not true
+        let addr_jump_then = self.program.code.len();
+        self.emit_opcode(Opcode::JUMP_IF)?;
+
+        // the offset after the if
+        let offset_after_if = self.opcode_offset;
+
+        self.compile(then_node)?;
+
+        let offset_after_then = self.opcode_offset;
+
+        if let Some(else_node) = else_node {
+            // logically we're now going to go down one of possibly two paths
+            // so we can't just continue to add the compilation->opcode_offset since
+            // that would result in the offset taking both of the conditional's paths
+            self.opcode_offset = offset_after_if;
+
+            // insert a bc_jump_else opcode
+            let addr_jump_else = self.program.code.len();
+
+            self.emit_opcode(Opcode::JUMP)?;
+
+            let addr_jump_then_offset = self.program.code.len() as i32 - addr_jump_then as i32;
+            self.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
+
+            self.compile(else_node)?;
+
+            let offset_after_else = self.opcode_offset;
+
+            if offset_after_then != offset_after_else {
+                // is this case actually going to happen?
+                // if so we can check which of the two paths has the lower opcode offset
+                // and pad out that path by inserting some LOAD CONST 9999 into the
+                // program
+                return Err(SenError::Compiler(format!("different opcode_offsets for the two paths in a conditional")))
+            }
+
+            let addr_jump_else_offset = self.program.code.len() as i32 - addr_jump_else as i32;
+            self.bytecode_modify_arg0_i32(addr_jump_else, addr_jump_else_offset)?;
+        } else {
+            let addr_jump_then_offset = self.program.code.len() as i32 - addr_jump_then as i32;
+            self.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
+        }
+
+        Ok(())
+    }
+
+    /*
+    - invoking code will first CALL into the arg_address to setup the
+      default values for all args
+    - the fn code will then return back to the invoking code
+    - invoking code will then overwrite specific data in arg memory
+    - invoking code will then CALL into the body_address
+     */
+    fn compile_fn(&mut self, children: &[Node]) -> SenResult<()> {
+        // fn (adder a: 0 b: 0) (+ a b)
+        self.clear_local_mappings()?;
+
+        let signature = &children[0]; // (addr a: 0 b: 0)
+        if let Node::List(kids, _) = signature {
+            if kids.len() == 0 {
+                // no fn name given
+                return Err(SenError::CompilerFnWithoutName)
+            }
+
+            let fn_name = &kids[0];
+            if let Some(index) = self.program.get_fn_info_index(&fn_name) {
+                self.current_fn_info_index = Some(index);
+
+                // -------------
+                // the arguments
+                // -------------
+                let mut updated_fn_info: FnInfo;
+                {
+                    let fn_info: &FnInfo = &self.program.fn_info[index];
+                    updated_fn_info = FnInfo::new(fn_info.fn_name.to_string());
+                }
+
+                updated_fn_info.arg_address = self.program.code.len();
+
+                // pairs of label/value declarations
+                let mut var_decls = &kids[1..];
+                let mut num_args = 0;
+                let mut counter = 0;
+
+                if var_decls.len() % 2 != 0 {
+                    return Err(SenError::Compiler(format!("fn declaration doesn't have matching arg/value pairs")))
+                }
+
+                while var_decls.len() > 0 {
+                    let label_node = &var_decls[0];
+                    let value_node = &var_decls[1];
+
+                    // get argument mapping
+                    if let Node::Label(_, label_i, _) = label_node {
+                        updated_fn_info.argument_offsets.push(*label_i);
+
+                        // if let Some(label_i) = self.global_mappings.get(text) {
+                        // } else {
+                        //     // should be impossible to get here, the global mappings for the
+                        //     // fn args should all have been registered in the
+                        //     // register_top_level_fns function
+                        // }
+
+                        self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, *label_i)?;
                     }
+
+                    self.emit_opcode_mem_i32(Opcode::STORE, Mem::Argument, counter)?;
+                    counter += 1;
+
+                    self.compile(value_node)?;
+                    self.emit_opcode_mem_i32(Opcode::STORE, Mem::Argument, counter)?;
+                    counter += 1;
+
+                    num_args += 1;
+                    var_decls = &var_decls[2..];
                 }
-            }
-        }
+                updated_fn_info.num_args = num_args;
 
-        Ok(())
-    }
+                self.emit_opcode(Opcode::RET_0)?;
 
-    fn compile_define(&mut self, ast: &Node, mem: MemorySegmentType) -> SenResult<()> {
-        // ast is a list beginning with 'define'
+                // --------
+                // the body
+                // --------
 
-        // (define a 10 b 20 c 30)
-        if let Node::List(children, _) = ast {
-            let mut defs = &children[1..]; // remove the initial 'define'
+                updated_fn_info.body_address = self.program.code.len();
 
-            if defs.len() % 2 != 0 {
-                // log: should be an even number of elements
-                return Err(SenError::GeneralError)
-            }
+                self.program.fn_info[index] = updated_fn_info;
 
-            while defs.len() > 0 {
-                let lhs_node = &defs[0];
-                let value_node = &defs[1];
+                // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
+                self.compile_rest(&children[1..])?;
 
-                self.compile(&value_node)?;
+                // Don't need any STORE, MEM_SEG_VOID instructions as the RET will
+                // pop the frame and blow the stack
+                self.emit_opcode(Opcode::RET)?;
 
-                match lhs_node {
-                    Node::Name(_, _) => {
-                        // define foo 10
-                        self.store_from_stack_to_memory(&lhs_node, mem)?;
-                    },
-                    Node::Vector(children, _) => {
-                        // define [a b] (something-that-returns-a-vector ...)
+                self.current_fn_info_index = None;
 
-                        // check if we can use the PILE opcode
-                        if all_children_are_name_nodes(lhs_node) {
 
-                            let num_children = children.len();
 
-                            // PILE will stack the elements in the rhs vector in order,
-                            // so the lhs values have to be popped in reverse order
-                            self.emit_opcode_i32(Opcode::PILE, num_children as i32, 0)?;
-                            self.opcode_offset = self.opcode_offset + num_children as i32 - 1;
-
-                            for c in children.iter().rev() {
-                                self.store_from_stack_to_memory(&c, mem)?;
-                            }
-                        } else {
-                            // all nodes in lhs vector definition should be names
-                            // note: this means that recursive name assignments aren't implemented
-                            // e.g. (define [a [b c]] something)
-                            return Err(SenError::GeneralError)
-                        }
-                    },
-                    _ => return Err(SenError::GeneralError)
-                }
-
-                defs = &defs[2..];
+            } else {
+                // todo: implement Display for Node
+                // return Err(SenError::Compiler(format!("cannot find fn_info for {}", fn_name)))
+                return Err(SenError::Compiler(format!("cannot find fn_info for node")))
             }
         } else {
-            // expected a list beginning with 'define'
-            // should never get here because of earlier check
-            return Err(SenError::GeneralError)
+            // first item in fn declaration needs to be a list of function name and args
+            return Err(SenError::CompilerFnDeclIncomplete)
+        }
+
+
+        Ok(())
+    }
+
+    fn compile_rest(&mut self, children: &[Node]) -> SenResult<()> {
+        for n in children {
+            self.compile(n)?;
+        }
+        Ok(())
+    }
+
+    fn compile_next_one(&mut self, children: &[Node], op: Opcode) -> SenResult<()> {
+        if children.len() < 1 {
+            return Err(SenError::Compiler(format!("compile_next_one")))
+        }
+
+        self.compile(&children[0])?;
+        self.emit_opcode(op)?;
+
+        Ok(())
+    }
+
+    fn compile_math(&mut self, children: &[Node], op: Opcode) -> SenResult<()> {
+        for n in children {
+            self.compile(n)?;
+        }
+        self.emit_opcode(op)?;
+        Ok(())
+    }
+
+    fn compile_2d(&mut self, children: &[Node]) -> SenResult<()> {
+        for n in children {
+            self.compile(n)?;
+        }
+        self.emit_opcode(Opcode::SQUISH2)?;
+        Ok(())
+    }
+
+    fn compile_vector(&mut self, children: &[Node]) -> SenResult<()> {
+        // pushing from the VOID means creating a new, empty vector
+        self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
+        for n in children {
+            self.compile(n)?;
+            self.emit_opcode(Opcode::APPEND)?;
         }
 
         Ok(())
     }
 
-    fn compile(&mut self, _ast: &Node) -> SenResult<()> {
-        Ok(())
-    }
-
-
     fn compile_global_bind_i32(&mut self, s: String, value: i32) -> SenResult<()> {
-        self.emit_opcode_i32(Opcode::LOAD, MemorySegmentType::Constant as i32, value)?;
+        self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, value)?;
         self.store_globally(s)?;
         Ok(())
     }
 
     fn compile_global_bind_f32(&mut self, s: String, value: f32) -> SenResult<()> {
-        self.emit_opcode_i32_f32(Opcode::LOAD, MemorySegmentType::Constant as i32, value)?;
+        self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, value)?;
         self.store_globally(s)?;
         Ok(())
     }
 
-    fn compile_global_bind_col(&mut self, s: String, r: f32, g: f32, b: f32, a: f32) -> SenResult<()> {
-        self.emit_opcode_i32_rgba(Opcode::LOAD, MemorySegmentType::Constant as i32, r, g, b, a)?;
+    fn compile_global_bind_col(
+        &mut self,
+        s: String,
+        r: f32,
+        g: f32,
+        b: f32,
+        a: f32,
+    ) -> SenResult<()> {
+        self.emit_opcode_mem_rgba(Opcode::LOAD, Mem::Constant, r, g, b, a)?;
         self.store_globally(s)?;
         Ok(())
     }
 
     fn append_keyword(&mut self, kw: Keyword) -> SenResult<()> {
-        self.emit_opcode_i32_name(Opcode::LOAD, MemorySegmentType::Constant as i32, kw as i32)?;
-        self.emit_opcode_i32(Opcode::APPEND, 0, 0)?;
+        self.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, kw as i32)?;
+        self.emit_opcode(Opcode::APPEND)?;
         Ok(())
     }
 
     fn store_locally(&mut self, s: String) -> SenResult<i32> {
         let address: i32 = match self.local_mappings.get(&s) {
             Some(&local_mapping) => local_mapping, // already storing the binding name
-            None => self.add_local_mapping(s)?
+            None => self.add_local_mapping(s)?,
         };
 
-        self.emit_opcode_i32(Opcode::STORE, MemorySegmentType::Local as i32, address)?;
+        self.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, address)?;
 
         Ok(address)
     }
@@ -648,31 +1006,160 @@ impl<'a> Compilation<'a> {
     fn store_globally(&mut self, s: String) -> SenResult<i32> {
         let address: i32 = match self.global_mappings.get(&s) {
             Some(&global_mapping) => global_mapping, // already storing the binding name
-            None => self.add_global_mapping(s)?
+            None => self.add_global_mapping(s)?,
         };
 
-        self.emit_opcode_i32(Opcode::STORE, MemorySegmentType::Global as i32, address)?;
+        self.emit_opcode_mem_i32(Opcode::STORE, Mem::Global, address)?;
 
         Ok(address)
     }
 
-    fn store_from_stack_to_memory(&mut self, node: &Node, mem: MemorySegmentType) -> SenResult<i32> {
-        if let Node::Name(text, _) = node {
+    fn store_from_stack_to_memory(&mut self, node: &Node, mem: Mem) -> SenResult<i32> {
+        if let Node::Name(text, _, _) = node {
             match mem {
-                MemorySegmentType::Local => self.store_locally(text.to_string()),
-                MemorySegmentType::Global => self.store_globally(text.to_string()),
-                _ => Err(SenError::GeneralError)
+                Mem::Local => self.store_locally(text.to_string()),
+                Mem::Global => self.store_globally(text.to_string()),
+                _ => Err(SenError::Compiler(format!("store_from_stack_to_memory invalid memory type"))),
             }
         } else {
-            Err(SenError::GeneralError)
+            Err(SenError::Compiler(format!("store_from_stack_to_memory")))
         }
     }
 
-    fn emit_opcode_i32(&mut self, op: Opcode, arg0: i32, arg1: i32) -> SenResult<()> {
+    fn compile_user_defined_name(&mut self, s: &str, iname: i32) -> SenResult<bool> {
+
+        let mut val: i32 = 0;
+        let mut found = false;
+
+        if let Some(local_mapping) = self.local_mappings.get(s) {
+            val = *local_mapping;
+            found = true;
+        }
+
+        if found {
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, val)?;
+            return Ok(true)
+        }
+
+
+        // check arguments if we're in a function
+        if let Some(current_fn_info_index) = self.current_fn_info_index {
+            let maybe_argument_mapping;
+            {
+                let fn_info = &self.program.fn_info[current_fn_info_index];
+                maybe_argument_mapping = fn_info.get_argument_mapping(iname);
+            }
+            if let Some(argument_mapping) = maybe_argument_mapping {
+                self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Argument, argument_mapping as i32)?;
+                return Ok(true)
+            }
+        }
+
+
+        if let Some(global_mapping) = self.global_mappings.get(s) {
+            val = *global_mapping;
+            found = true;
+        }
+        if found {
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Global, val)?;
+            return Ok(true)
+        }
+
+
+
+        // // could be a keyword such as linear, ease-in etc
+        // if let Some(keyword) = self.string_to_keyword.get(s) {
+        //     val = *keyword as i32;
+        //     found = true;
+        // }
+        // if found {
+        //     self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, val)?;
+        //     return Ok(true)
+        // }
+
+        // todo: log unknown mapping for s
+
+        Ok(false)
+    }
+
+    fn emit_opcode(&mut self, op: Opcode) -> SenResult<()> {
+        let b = Bytecode {
+            op: op,
+            arg0: BytecodeArg::Int(0),
+            arg1: BytecodeArg::Int(0),
+        };
+
+        self.program.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+
+    fn emit_opcode_i32_i32(&mut self, op: Opcode, arg0: i32, arg1: i32) -> SenResult<()> {
         let b = Bytecode {
             op: op,
             arg0: BytecodeArg::Int(arg0),
             arg1: BytecodeArg::Int(arg1),
+        };
+
+        self.program.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+
+    fn emit_opcode_mem_i32(&mut self, op: Opcode, arg0: Mem, arg1: i32) -> SenResult<()> {
+        let b = Bytecode {
+            op: op,
+            arg0: BytecodeArg::Int(arg0 as i32),
+            arg1: BytecodeArg::Int(arg1),
+        };
+
+        self.program.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+
+    fn emit_opcode_mem_name(&mut self, op: Opcode, arg0: Mem, arg1: i32) -> SenResult<()> {
+        let b = Bytecode {
+            op: op,
+            arg0: BytecodeArg::Int(arg0 as i32),
+            arg1: BytecodeArg::Name(arg1),
+        };
+
+        self.program.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+
+    fn emit_opcode_mem_f32(&mut self, op: Opcode, arg0: Mem, arg1: f32) -> SenResult<()> {
+        let b = Bytecode {
+            op: op,
+            arg0: BytecodeArg::Int(arg0 as i32),
+            arg1: BytecodeArg::Float(arg1),
+        };
+
+        self.program.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+
+    fn emit_opcode_mem_rgba(
+        &mut self,
+        op: Opcode,
+        arg0: Mem,
+        r: f32,
+        g: f32,
+        b: f32,
+        a: f32,
+    ) -> SenResult<()> {
+        let b = Bytecode {
+            op: op,
+            arg0: BytecodeArg::Int(arg0 as i32),
+            arg1: BytecodeArg::Colour(ColourFormat::Rgba, r, g, b, a),
         };
 
         self.program.add_bytecode(b)?;
@@ -707,7 +1194,15 @@ impl<'a> Compilation<'a> {
         Ok(())
     }
 
-    fn emit_opcode_i32_rgba(&mut self, op: Opcode, arg0: i32, r: f32, g: f32, b: f32, a: f32) -> SenResult<()> {
+    fn emit_opcode_i32_rgba(
+        &mut self,
+        op: Opcode,
+        arg0: i32,
+        r: f32,
+        g: f32,
+        b: f32,
+        a: f32,
+    ) -> SenResult<()> {
         let b = Bytecode {
             op: op,
             arg0: BytecodeArg::Int(arg0),
@@ -719,17 +1214,55 @@ impl<'a> Compilation<'a> {
 
         Ok(())
     }
-}
 
-fn is_list_beginning_with(n: &Node, s: &String) -> bool {
-    if let Node::List(nodes, _) = n {
-        if nodes.len() > 0 {
-            if let Node::Name(ref text, _) = nodes[0] {
-                return text == s
+    fn bytecode_modify(&mut self, index: usize, op: Opcode, arg0: i32, arg1: i32) -> SenResult<()> {
+        self.program.code[index] = Bytecode {
+            op: op,
+            arg0: BytecodeArg::Int(arg0),
+            arg1: BytecodeArg::Int(arg1),
+        };
+
+        Ok(())
+    }
+
+    fn bytecode_modify_arg0_i32(&mut self, index: usize, arg0: i32) -> SenResult<()> {
+        let arg1 = self.program.code[index].arg1;
+        let op = self.program.code[index].op;
+
+        self.program.code[index] = Bytecode {
+            op: op,
+            arg0: BytecodeArg::Int(arg0),
+            arg1: arg1,
+        };
+
+        Ok(())
+    }
+
+    fn bytecode_modify_arg1_i32(&mut self, index: usize, arg1: i32) -> SenResult<()> {
+        let arg0 = self.program.code[index].arg0;
+        let op = self.program.code[index].op;
+
+        self.program.code[index] = Bytecode {
+            op: op,
+            arg0: arg0,
+            arg1: BytecodeArg::Int(arg1),
+        };
+
+        Ok(())
+    }
+
+    fn is_list_beginning_with(&self, n: &Node, kw: Keyword) -> bool {
+        if let Node::List(nodes, _) = n {
+            if nodes.len() > 0 {
+                if let Node::Name(ref text, _, _) = nodes[0] {
+                    if let Some(name_kw) = self.string_to_keyword.get(text) {
+                        return *name_kw == kw;
+                    }
+                }
             }
         }
+        false
     }
-    false
 }
 
 // renamed all_children_have_type as it's only used with children of type NAME
@@ -737,29 +1270,23 @@ fn all_children_are_name_nodes(parent: &Node) -> bool {
     match parent {
         Node::List(children, _) | Node::Vector(children, _) => {
             for n in children.iter() {
-                if let Node::Name(_, _) = n {
-                    continue
+                if let Node::Name(_, _, _) = n {
+                    continue;
                 } else {
-                    return false
+                    return false;
                 }
             }
             true
-        },
-        _ => false
+        }
+        _ => false,
     }
 }
 
-fn count_children(parent: &Node) ->SenResult<usize> {
+fn count_children(parent: &Node) -> SenResult<usize> {
     match parent {
-        Node::List(children, _) | Node::Vector(children, _) => {
-            Ok(children.len())
-        },
-        _ => Err(SenError::GeneralError)
+        Node::List(children, _) | Node::Vector(children, _) => Ok(children.len()),
+        _ => Err(SenError::Compiler(format!("count_children"))),
     }
-}
-
-pub struct Compiler {
-    preamble: Option<Program>,
 }
 
 fn clean_node(node: &Node) -> Option<Node> {
@@ -770,68 +1297,293 @@ fn clean_node(node: &Node) -> Option<Node> {
                 if let Some(cleaned) = clean_node(n) {
                     vn.push(cleaned);
                 }
-            };
+            }
             Some(Node::List(vn, None))
-        },
+        }
         Node::Vector(nodes, _) => {
             let mut vn: Vec<Node> = Vec::new();
             for n in nodes.iter() {
                 if let Some(cleaned) = clean_node(n) {
                     vn.push(cleaned);
                 }
-            };
+            }
             Some(Node::Vector(vn, None))
-        },
+        }
         Node::Float(f, _) => Some(Node::Float(*f, None)),
-        Node::Name(text, _) => Some(Node::Name(text.to_string(), None)),
-        Node::Label(text, _) => Some(Node::Label(text.to_string(), None)),
+        Node::Name(text, i_text, _) => Some(Node::Name(text.to_string(), *i_text, None)),
+        Node::Label(text, i_text, _) => Some(Node::Label(text.to_string(), *i_text, None)),
         Node::String(text, _) => Some(Node::String(text.to_string(), None)),
         Node::Whitespace(_, _) => None,
         Node::Comment(_, _) => None,
     }
 }
 
-impl Compiler {
-    fn new() -> Self {
-        Compiler {
-            preamble: None
-        }
+pub fn compile_preamble() -> SenResult<Program> {
+    let mut program = Program::new();
+    {
+        let mut compilation = Compilation::new(&mut program);
+        compilation.register_top_level_preamble()?;
+        compilation.compile_preamble()?;
     }
 
-    pub fn compile_preamble() -> SenResult<Program> {
-        let mut program = Program::new();
-        {
-            let mut compilation = Compilation::new(&mut program);
-            compilation.register_top_level_preamble()?;
-            compilation.compile_preamble()?;
-        }
-
-        Ok(program)
-    }
-
-    pub fn compile_program(complete_ast: &Vec<Node>) -> SenResult<Program> {
-        let mut program = Program::new();
-        {
-            let mut compilation = Compilation::new(&mut program);
-
-            // clean the complete_ast of whitespace and comment nodes
-            //
-            let mut ast: Vec<Node> = Vec::new();
-            for n in complete_ast.iter() {
-                if let Some(useful_node) = clean_node(n) {
-                    ast.push(useful_node);
-                }
-            }
-
-            compilation.compile_common(&ast)?;
-        }
-
-        Ok(program)
-    }
-
+    Ok(program)
 }
 
-pub fn compile_program(_ast: Vec<Node>) -> SenResult<Program> {
-    //    Ok(Program { placeholder: 0 })
-    Err(SenError::GeneralError)
+pub fn compile_program(complete_ast: &Vec<Node>) -> SenResult<Program> {
+    let mut program = Program::new();
+    {
+        let mut compilation = Compilation::new(&mut program);
+
+        // clean the complete_ast of whitespace and comment nodes
+        //
+        let mut ast: Vec<Node> = Vec::new();
+        for n in complete_ast.iter() {
+            if let Some(useful_node) = clean_node(n) {
+                ast.push(useful_node);
+            }
+        }
+
+        compilation.compile_common(&ast)?;
+    }
+
+    Ok(program)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use parser::parse;
+
+    fn compile(s: &str) -> Program {
+        let (ast, _word_lut) = parse(s).unwrap();
+        compile_program(&ast).unwrap()
+    }
+
+    fn bytecode_from_opcode(op: Opcode) -> Bytecode {
+        Bytecode {
+            op: op,
+            arg0: BytecodeArg::Int(0),
+            arg1: BytecodeArg::Int(0),
+        }
+    }
+
+    fn add() -> Bytecode {
+        bytecode_from_opcode(Opcode::ADD)
+    }
+
+    fn append() -> Bytecode {
+        bytecode_from_opcode(Opcode::APPEND)
+    }
+
+    fn jump(delta: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::JUMP,
+            arg0: BytecodeArg::Int(delta),
+            arg1: BytecodeArg::Int(0),
+        }
+    }
+
+    fn jump_if(delta: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::JUMP_IF,
+            arg0: BytecodeArg::Int(delta),
+            arg1: BytecodeArg::Int(0),
+        }
+    }
+
+    fn load_arg(val: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::LOAD,
+            arg0: BytecodeArg::Int(Mem::Argument as i32),
+            arg1: BytecodeArg::Int(val),
+        }
+    }
+
+    fn load_const_f32(val: f32) -> Bytecode {
+        Bytecode {
+            op: Opcode::LOAD,
+            arg0: BytecodeArg::Int(Mem::Constant as i32),
+            arg1: BytecodeArg::Float(val),
+        }
+    }
+
+    fn load_const_i32(val: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::LOAD,
+            arg0: BytecodeArg::Int(Mem::Constant as i32),
+            arg1: BytecodeArg::Int(val),
+        }
+    }
+
+    fn load_global_i32(val: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::LOAD,
+            arg0: BytecodeArg::Int(Mem::Global as i32),
+            arg1: BytecodeArg::Int(val),
+        }
+    }
+
+    fn load_void() -> Bytecode {
+        Bytecode {
+            op: Opcode::LOAD,
+            arg0: BytecodeArg::Int(Mem::Void as i32),
+            arg1: BytecodeArg::Int(0),
+        }
+    }
+
+    fn lt() -> Bytecode {
+        bytecode_from_opcode(Opcode::LT)
+    }
+
+    fn ret() -> Bytecode {
+        bytecode_from_opcode(Opcode::RET)
+    }
+
+    fn ret_0() -> Bytecode {
+        bytecode_from_opcode(Opcode::RET_0)
+    }
+
+    fn sqrt() -> Bytecode {
+        bytecode_from_opcode(Opcode::SQRT)
+    }
+
+    fn squish2() -> Bytecode {
+        bytecode_from_opcode(Opcode::SQUISH2)
+    }
+
+    fn stop() -> Bytecode {
+        bytecode_from_opcode(Opcode::STOP)
+    }
+
+    fn store_arg(val: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::STORE,
+            arg0: BytecodeArg::Int(Mem::Argument as i32),
+            arg1: BytecodeArg::Int(val),
+        }
+    }
+
+    fn store_global(val: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::STORE,
+            arg0: BytecodeArg::Int(Mem::Global as i32),
+            arg1: BytecodeArg::Int(val),
+        }
+    }
+
+    #[test]
+    fn sanity_check_compile_preamble() {
+        // stupid, brittle test just to check that the preamble is creating something
+        let preamble = compile_preamble().unwrap();
+        assert_eq!(preamble.code.len(), 111);
+    }
+
+    #[test]
+    fn test_basics() {
+        // f32
+        assert_eq!(compile("34").code, [jump(1), load_const_f32(34.0), stop()]);
+        // 2d vector of f32
+        assert_eq!(
+            compile("[23 45]").code,
+            [
+                jump(1),
+                load_const_f32(23.0),
+                load_const_f32(45.0),
+                squish2(),
+                stop(),
+            ]
+        );
+        // vector of f32
+        assert_eq!(
+            compile("[23 45 67 89]").code,
+            [
+                jump(1),
+                load_void(),
+                load_const_f32(23.0),
+                append(),
+                load_const_f32(45.0),
+                append(),
+                load_const_f32(67.0),
+                append(),
+                load_const_f32(89.0),
+                append(),
+                stop(),
+            ]
+        );
+
+        assert_eq!(
+            compile("(sqrt 144)").code,
+            [
+                jump(1),
+                load_const_f32(144.0),
+                sqrt(),
+                stop(),
+            ]
+        );
+
+        assert_eq!(
+            compile("(define brush 9 b 10)").code,
+            [
+                jump(1),
+                load_const_f32(9.0),
+                store_global(14),
+                load_const_f32(10.0),
+                store_global(15),
+                stop(),
+            ]
+        );
+
+        assert_eq!(
+            compile("(define brush 9 b 10) (+ brush b)").code,
+            [
+                jump(1),
+                load_const_f32(9.0),
+                store_global(14),
+                load_const_f32(10.0),
+                store_global(15),
+                load_global_i32(14),
+                load_global_i32(15),
+                add(),
+                stop(),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_fn_declaration() {
+        assert_eq!(compile("(fn (foo a: 0 b: 0) (+ a b))").code,
+                   [
+                       jump(14),
+                       load_const_i32(222),
+                       store_arg(0),
+                       load_const_f32(0.0),
+                       store_arg(1),
+                       load_const_i32(223),
+                       store_arg(2),
+                       load_const_f32(0.0),
+                       store_arg(3),
+                       ret_0(),
+                       load_arg(1),
+                       load_arg(3),
+                       add(),
+                       ret(),
+                       stop()
+                   ]);
+    }
+
+    #[test]
+    fn test_if() {
+        assert_eq!(compile("(if (< 3 23) 4 5)").code,
+                   [
+                       jump(1),
+                       load_const_f32(3.0),
+                       load_const_f32(23.0),
+                       lt(),
+                       jump_if(3),
+                       load_const_f32(4.00),
+                       jump(2),
+                       load_const_f32(5.00),
+                       stop()
+                   ]);
+    }
 }

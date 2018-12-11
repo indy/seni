@@ -736,7 +736,6 @@ sen_error compile_math(sen_compilation* compilation, sen_node* ast, sen_opcode o
     N_CHK(compile(compilation, ast);, "compile_math: compile");
     ast = result_node.result;
 
-    // store the index into program->fn_info in the program
     B_CHK(emit_opcode_i32(compilation, opcode, 0, 0), "compile_math: opcode");
   }
   return NONE;

@@ -23,13 +23,13 @@
 mod colour;
 mod compiler;
 mod error;
+mod keywords;
 mod lexer;
 mod opcodes;
 mod parser;
-mod keywords;
 
-pub use error::*;
 pub use compiler::*;
+pub use error::*;
 
 pub fn sen_parse(s: &str) -> i32 {
     s.len() as i32

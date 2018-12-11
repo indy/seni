@@ -145,7 +145,6 @@ impl fmt::Display for Opcode {
     }
 }
 
-
 pub fn opcode_stack_offset(opcode: Opcode) -> i32 {
     match opcode {
         Opcode::LOAD => 1,
