@@ -253,8 +253,14 @@ impl<'a> Compilation<'a> {
         Ok(self.local_mapping_marker - 1)
     }
 
-    fn add_internal_local_mapping(&mut self, _s: String) -> SenResult<i32> {
-        unimplemented!();
+    // we want a local mapping that's going to be used to store an internal variable
+    // (e.g. during a fence loop)
+    // note: it's up to the caller to manage this reference
+    fn add_internal_local_mapping(&mut self) -> SenResult<i32> {
+        let s = "internal_local_mapping".to_string();
+        self.local_mappings.insert(s, self.local_mapping_marker);
+        self.local_mapping_marker += 1;
+        Ok(self.local_mapping_marker - 1)
     }
 
     fn correct_function_addresses(&mut self) -> SenResult<()> {
@@ -649,7 +655,7 @@ impl<'a> Compilation<'a> {
         // todo: move this out of compile and into the compilation struct
 
         match ast {
-            Node::List(children, _) => self.compile_listy(children)?,
+            Node::List(children, _) => self.compile_list(children)?,
             Node::Float(f, _) => return self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f),
             Node::Vector(children, _) => {
                 if children.len() == 2 {
@@ -672,15 +678,22 @@ impl<'a> Compilation<'a> {
         Ok(())
     }
 
-    fn compile_listy(&mut self, children: &[Node]) -> SenResult<()> {
+    fn compile_list(&mut self, children: &[Node]) -> SenResult<()> {
         if children.len() == 0 {
             // should this be an error?
-            return Err(SenError::Compiler(format!("compile_listy no children (should this be an error?)")));
+            return Err(SenError::Compiler(format!("compile_list no children (should this be an error?)")));
         }
 
         match &children[0] {
-            Node::List(kids, _) => self.compile_listy(&kids)?,
+            Node::List(kids, _) => self.compile_list(&kids)?,
             Node::Name(text, iname, _) => {
+
+                if let Some(fn_info_index) = self.program.get_fn_info_index(&children[0]) {
+                    // todo: get_fn_info_index is re-checking that this is a Node::Name
+                    self.compile_fn_invocation(&children[1..], fn_info_index)?;
+                    return Ok(())
+                }
+
                 let found_name = self.compile_user_defined_name(&text, *iname)?;
                 if found_name {
                     return Ok(())
@@ -700,7 +713,7 @@ impl<'a> Compilation<'a> {
                         Keyword::Each => unimplemented!(),
                         Keyword::Loop => unimplemented!(),
                         Keyword::Fence => unimplemented!(),
-                        Keyword::OnMatrixStack => unimplemented!(),
+                        Keyword::OnMatrixStack => self.compile_on_matrix_stack(&children[1..])?,
                         Keyword::Fn => self.compile_fn(&children[1..])?,
                         Keyword::Plus => self.compile_math(&children[1..], Opcode::ADD)?,
                         Keyword::Minus => self.compile_math(&children[1..], Opcode::SUB)?,
@@ -714,7 +727,7 @@ impl<'a> Compilation<'a> {
                         Keyword::Or => self.compile_math(&children[1..], Opcode::OR)?,
                         Keyword::Not => self.compile_next_one(&children[1..], Opcode::NOT)?,
                         Keyword::Sqrt => self.compile_next_one(&children[1..], Opcode::SQRT)?,
-                        Keyword::AddressOf => unimplemented!(),
+                        Keyword::AddressOf => self.compile_address_of(&children[1..])?,
                         Keyword::FnCall => unimplemented!(),
                         Keyword::VectorAppend => unimplemented!(),
                         Keyword::Quote => unimplemented!(),
@@ -735,9 +748,28 @@ impl<'a> Compilation<'a> {
                 // check native api set
 
             },
-            _ => return Err(SenError::Compiler(format!("compile_listy strange child")))
+            _ => return Err(SenError::Compiler(format!("compile_list strange child")))
         }
 
+        Ok(())
+    }
+
+    fn compile_address_of(&mut self, children: &[Node]) -> SenResult<()> {
+        // fn_name should be a defined function's name, it will be known at compile time
+        if let Some(fn_info_index) = self.program.get_fn_info_index(&children[0]) {
+            // store the index into program->fn_info in the program
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, fn_info_index as i32)?;
+            return Ok(())
+        }
+
+
+        Err(SenError::Compiler(format!("compile_address_of")))
+    }
+
+    fn compile_on_matrix_stack(&mut self, children: &[Node]) -> SenResult<()> {
+        self.emit_opcode(Opcode::MTX_LOAD)?;
+        self.compile_rest(children)?;
+        self.emit_opcode(Opcode::MTX_STORE)?;
         Ok(())
     }
 
@@ -912,6 +944,46 @@ impl<'a> Compilation<'a> {
             return Err(SenError::CompilerFnDeclIncomplete)
         }
 
+
+        Ok(())
+    }
+
+    // if (adder a: 10 b: 20) then children == a: 10 b: 20
+    fn compile_fn_invocation(&mut self, children: &[Node], fn_info_index: usize) -> SenResult<()> {
+
+        // NOTE: CALL and CALL_0 get their function offsets and num args from the
+        // stack so add some placeholder LOAD CONST opcodes and fill the CALL, CALL_0
+        // with fn_info indexes that can later be used to fill in the LOAD CONST
+        // opcodes with their correct offsets doing it this way enables functions to
+        // call other functions that are declared later in the script
+
+        // prepare the MEM_SEG_ARGUMENT with default values
+
+        // for the function address
+        self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, 666)?;
+        // for the num args
+        self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, 667)?;
+
+        self.emit_opcode_i32_i32(Opcode::CALL, fn_info_index as i32, fn_info_index as i32)?;
+
+        // overwrite the default arguments with the actual arguments given by the fn invocation
+        let mut arg_vals = &children[..];
+        while arg_vals.len() > 1 {
+            let arg = &arg_vals[0];
+            if let Node::Label(_, i_name, _) = arg {
+                let val = &arg_vals[1];
+                self.compile(val)?;
+                self.emit_opcode_i32_i32(Opcode::PLACEHOLDER_STORE, fn_info_index as i32, *i_name)?;
+            } else {
+                return Err(SenError::Compiler(format!("compile_fn_invocation")))
+            }
+
+            arg_vals = &arg_vals[2..];
+        }
+
+        // call the body of the function
+        self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, 668)?;
+        self.emit_opcode_i32_i32(Opcode::CALL_0, fn_info_index as i32, fn_info_index as i32)?;
 
         Ok(())
     }
@@ -1375,6 +1447,14 @@ mod tests {
         bytecode_from_opcode(Opcode::APPEND)
     }
 
+    fn call() -> Bytecode {
+        bytecode_from_opcode(Opcode::CALL)
+    }
+
+    fn call_0() -> Bytecode {
+        bytecode_from_opcode(Opcode::CALL_0)
+    }
+
     fn jump(delta: i32) -> Bytecode {
         Bytecode {
             op: Opcode::JUMP,
@@ -1583,6 +1663,39 @@ mod tests {
                        load_const_f32(4.00),
                        jump(2),
                        load_const_f32(5.00),
+                       stop()
+                   ]);
+    }
+
+    #[test]
+    fn test_fn_invocation() {
+        assert_eq!(compile("(fn (adder a: 99 b: 88)
+                                (+ a b))
+                            (adder a: 3 b: 7)").code,
+                   [
+                       jump(14),
+                       load_const_i32(222),
+                       store_arg(0),
+                       load_const_f32(99.0),
+                       store_arg(1),
+                       load_const_i32(223),
+                       store_arg(2),
+                       load_const_f32(88.0),
+                       store_arg(3),
+                       ret_0(),
+                       load_arg(1),
+                       load_arg(3),
+                       add(),
+                       ret(),
+                       load_const_i32(1),
+                       load_const_i32(2),
+                       call(),
+                       load_const_f32(3.0),
+                       store_arg(1),
+                       load_const_f32(7.0),
+                       store_arg(3),
+                       load_const_i32(10),
+                       call_0(),
                        stop()
                    ]);
     }
