@@ -710,9 +710,9 @@ impl<'a> Compilation<'a> {
                     match keyword {
                         Keyword::Define => self.compile_define(&children[1..], Mem::Local)?,
                         Keyword::If => self.compile_if(&children[1..])?,
-                        Keyword::Each => unimplemented!(),
-                        Keyword::Loop => unimplemented!(),
-                        Keyword::Fence => unimplemented!(),
+                        Keyword::Each => self.compile_each(&children[1..])?,
+                        Keyword::Loop => self.compile_loop(&children[1..])?,
+                        Keyword::Fence => self.compile_fence(&children[1..])?,
                         Keyword::OnMatrixStack => self.compile_on_matrix_stack(&children[1..])?,
                         Keyword::Fn => self.compile_fn(&children[1..])?,
                         Keyword::Plus => self.compile_math(&children[1..], Opcode::ADD)?,
@@ -728,9 +728,9 @@ impl<'a> Compilation<'a> {
                         Keyword::Not => self.compile_next_one(&children[1..], Opcode::NOT)?,
                         Keyword::Sqrt => self.compile_next_one(&children[1..], Opcode::SQRT)?,
                         Keyword::AddressOf => self.compile_address_of(&children[1..])?,
-                        Keyword::FnCall => unimplemented!(),
-                        Keyword::VectorAppend => unimplemented!(),
-                        Keyword::Quote => unimplemented!(),
+                        Keyword::FnCall => self.compile_fn_call(&children[1..])?,
+                        Keyword::VectorAppend => self.compile_vector_append(&children[1..])?,
+                        Keyword::Quote => self.compile_quote(&children[1..])?,
                         _ => {
                             // look up the name as a user defined variable
                             // normally get here when a script contains variables
@@ -752,6 +752,474 @@ impl<'a> Compilation<'a> {
         }
 
         Ok(())
+    }
+
+    fn compile_fence(&mut self, children: &[Node]) -> SenResult<()> {
+        // (fence (x from: 0 to: 5 num: 5) (+ 42 38))
+        if children.len() < 2 {
+            return Err(SenError::Compiler(format!("compile_fence requires at least 2 forms")))
+        }
+
+        let parameters_node = &children[0];
+        // todo: warn if alterable
+        if let Node::List(kids, _) = parameters_node {
+
+            // the looping variable x
+            let name_node = &kids[0];
+
+            let mut maybe_from_node: Option<&Node> = None;
+            let mut maybe_to_node: Option<&Node> = None;
+            let mut maybe_num_node: Option<&Node> = None;
+
+            let mut label_vals = &kids[1..];
+            while label_vals.len() > 1 {
+                let label = &label_vals[0];
+                let value = &label_vals[1];
+
+                if let Node::Label(_, iname, _) = label {
+                    if *iname == Keyword::From as i32 {
+                        maybe_from_node = Some(&value);
+                    } else if *iname == Keyword::To as i32 {
+                        maybe_to_node = Some(&value);
+                    } else if *iname == Keyword::Num as i32 {
+                        maybe_num_node = Some(&value);
+                    }
+                }
+
+                label_vals = &label_vals[2..];
+            }
+
+            // store the quantity
+            let num_address = self.add_internal_local_mapping()?;
+            if let Some(num_node) = maybe_num_node {
+                self.compile(num_node)?;
+            } else {
+                self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 2.0)?;
+            }
+
+            self.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, num_address)?;
+
+            // reserve a memory location in local memory for a counter from 0 to quantity
+            let counter_address = self.add_internal_local_mapping()?;
+
+            self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
+            self.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, counter_address)?;
+
+            // delta that needs to be added at every iteration
+            //
+            // (to - from) / (num - 1)
+            if let Some(to_node) = maybe_to_node {
+                self.compile(to_node)?;
+            } else {
+                // else default to 1
+                self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 1.0)?;
+            }
+
+            if let Some(from_node) = maybe_from_node {
+                self.compile(from_node)?;
+            } else {
+                // else default to 0
+                self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
+            }
+
+            self.emit_opcode(Opcode::SUB)?;
+
+            if let Some(num_node) = maybe_num_node {
+                self.compile(num_node)?;
+            } else {
+                // else default to 3
+                self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 3.0)?;
+            }
+            self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 1.0)?;
+            self.emit_opcode(Opcode::SUB)?;
+            self.emit_opcode(Opcode::DIV)?;
+            let delta_address = self.add_internal_local_mapping()?;
+            self.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, delta_address)?;
+
+            // set looping variable x to 'from' value
+            if let Some(from_node) = maybe_from_node {
+                self.compile(from_node)?;
+            } else {
+                // else default to 0
+                self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
+            }
+
+            let from_address = self.add_internal_local_mapping()?;
+
+            self.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, from_address)?;
+
+            // store the starting 'from' value in the locally scoped variable
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, from_address)?;
+
+            let loop_variable_address = self.store_from_stack_to_memory(name_node, Mem::Local)?;
+
+            // compare looping variable against exit condition
+            // and jump if looping variable >= exit value
+            let addr_loop_start = self.program.code.len();
+
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, counter_address)?;
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, num_address)?;
+
+            // exit check
+            self.emit_opcode(Opcode::LT)?;
+
+            let addr_exit_check = self.program.code.len();
+            self.emit_opcode(Opcode::JUMP_IF)?;
+
+            // looper = from + (counter * delta)
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, from_address)?;
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, counter_address)?;
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, delta_address)?;
+            self.emit_opcode(Opcode::MUL)?;
+            self.emit_opcode(Opcode::ADD)?;
+            self.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, loop_variable_address)?;
+
+            let pre_body_opcode_offset = self.opcode_offset;
+
+            // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
+            self.compile_rest(&children[1..])?;
+
+            let post_body_opcode_offset = self.opcode_offset;
+            let opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
+
+            // pop off any values that the body might leave on the stack
+            for _i in 0..opcode_delta {
+                self.emit_opcode_mem_i32(Opcode::STORE, Mem::Void, 0)?;
+            }
+
+            // increment counter
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, counter_address)?;
+            self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 1.0)?;
+            self.emit_opcode(Opcode::ADD)?;
+            self.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, counter_address)?;
+
+            // loop back to the comparison
+            let mut program_len = self.program.code.len() as i32;
+            self.emit_opcode_i32_i32(Opcode::JUMP, -(program_len - addr_loop_start as i32), 0)?;
+
+            program_len = self.program.code.len() as i32;
+            self.bytecode_modify_arg0_i32(addr_exit_check, program_len - addr_exit_check as i32)?;
+        }
+        Ok(())
+    }
+
+    fn compile_loop(&mut self, children: &[Node]) -> SenResult<()> {
+        // (loop (x from: 0 upto: 120 inc: 30) (body))
+        // compile_loop children == (x from: 0 upto: 120 inc: 30) (body)
+        //
+        if children.len() < 2 {
+            return Err(SenError::Compiler(format!("compile_loop requires at least 2 forms")))
+        }
+
+        let parameters_node = &children[0];
+        // todo: warn if alterable
+        if let Node::List(kids, _) = parameters_node {
+
+            // the looping variable y
+            let name_node = &kids[0];
+
+            let mut maybe_from_node: Option<&Node> = None;
+            let mut maybe_to_node: Option<&Node> = None;
+            let mut maybe_upto_node: Option<&Node> = None;
+            let mut maybe_increment_node: Option<&Node> = None;
+
+            let mut label_vals = &kids[1..];
+            while label_vals.len() > 1 {
+                let label = &label_vals[0];
+                let value = &label_vals[1];
+
+                if let Node::Label(_, iname, _) = label {
+                    if *iname == Keyword::From as i32 {
+                        maybe_from_node = Some(&value);
+                    } else if *iname == Keyword::To as i32 {
+                        maybe_to_node = Some(&value);
+                    } else if *iname == Keyword::Upto as i32 {
+                        maybe_upto_node = Some(&value);
+                    } else if *iname == Keyword::Inc as i32 {
+                        maybe_increment_node = Some(&value);
+                    }
+                }
+
+                label_vals = &label_vals[2..];
+            }
+
+            let mut use_to = false;
+            if maybe_to_node.is_some() {
+                use_to = true;
+            } else if maybe_upto_node.is_none() {
+                return Err(SenError::Compiler(format!("compile_loop requires either to or upto parameters")))
+            }
+
+            // set looping variable x to 'from' value
+            if let Some(from_node) = maybe_from_node {
+                self.compile(from_node)?;
+            } else {
+                // else default to 0
+                self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
+            }
+
+            let loop_variable_address = self.store_from_stack_to_memory(name_node, Mem::Local)?;
+
+            // compare looping variable against exit condition
+            // and jump if looping variable >= exit value
+            let addr_loop_start = self.program.code.len();
+
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, loop_variable_address)?;
+
+            if use_to {
+                // so jump if looping variable >= exit value
+                if let Some(to_node) = maybe_to_node {
+                    self.compile(to_node)?;
+                    self.emit_opcode(Opcode::LT)?;
+                }
+            } else {
+                // so jump if looping variable > exit value
+                if let Some(upto_node) = maybe_upto_node {
+                    self.compile(upto_node)?;
+                    self.emit_opcode(Opcode::GT)?;
+                    self.emit_opcode(Opcode::NOT)?;
+                }
+            }
+
+            let addr_exit_check = self.program.code.len();
+            self.emit_opcode(Opcode::JUMP_IF)?; // bc_exit_check
+
+            let pre_body_opcode_offset = self.opcode_offset;
+
+            // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
+            self.compile_rest(&children[1..])?;
+
+            let post_body_opcode_offset = self.opcode_offset;
+            let opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
+
+            // pop off any values that the body might leave on the stack
+            for _i in 0..opcode_delta {
+                self.emit_opcode_mem_i32(Opcode::STORE, Mem::Void, 0)?;
+            }
+
+            // increment the looping variable
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, loop_variable_address)?;
+
+            if let Some(increment_node) = maybe_increment_node {
+                self.compile(increment_node)?;
+            } else {
+                self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 1.0)?;
+            }
+
+            self.emit_opcode(Opcode::ADD)?;
+            self.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, loop_variable_address)?;
+            // loop back to the comparison
+            let mut program_len = self.program.code.len() as i32;
+            self.emit_opcode_i32_i32(Opcode::JUMP, -(program_len - addr_loop_start as i32), 0)?;
+
+            program_len = self.program.code.len() as i32;
+            self.bytecode_modify_arg0_i32(addr_exit_check, program_len - addr_exit_check as i32)?;
+        }
+        Ok(())
+    }
+
+    fn compile_each(&mut self, children: &[Node]) -> SenResult<()> {
+        // (each (x from: [10 20 30 40 50])
+        //       (+ x x))
+
+        if children.len() < 2 {
+            return Err(SenError::Compiler(format!("compile_each requires at least 2 forms")))
+        }
+
+        let parameters_node = &children[0];
+        if let Node::List(kids, _) = parameters_node {
+
+            // the looping variable x
+            let name_node = &kids[0];
+
+            let mut maybe_from_node: Option<&Node> = None;
+
+            let mut label_vals = &kids[1..];
+            while label_vals.len() > 1 {
+                let label = &label_vals[0];
+                let value = &label_vals[1];
+
+                if let Node::Label(_, iname, _) = label {
+                    if *iname == Keyword::From as i32 {
+                        maybe_from_node = Some(&value);
+                    }
+                }
+
+                label_vals = &label_vals[2..];
+            }
+
+            // set looping variable x to 'from' value
+            if let Some(from_node) = maybe_from_node {
+                self.compile(from_node)?;
+            } else {
+                // todo: ignore this, each should always have a from parameter
+                // else default to 0
+                self.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
+            }
+
+            self.emit_opcode(Opcode::VEC_NON_EMPTY)?;
+            let addr_exit_check_is_vec = self.program.code.len();
+            self.emit_opcode(Opcode::JUMP_IF)?;
+
+            self.emit_opcode(Opcode::VEC_LOAD_FIRST)?;
+
+            // compare looping variable against exit condition
+            // and jump if looping variable >= exit value
+            let addr_loop_start = self.program.code.len() as i32;
+
+            let loop_variable_address = self.store_from_stack_to_memory(name_node, Mem::Local)?;
+
+            let pre_body_opcode_offset = self.opcode_offset;
+
+            // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
+            self.compile_rest(&children[1..])?;
+
+            let post_body_opcode_offset = self.opcode_offset;
+            let opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
+
+            // pop off any values that the body might leave on the stack
+            for _i in 0..opcode_delta {
+                self.emit_opcode_mem_i32(Opcode::STORE, Mem::Void, 0)?;
+            }
+
+            self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, loop_variable_address)?;
+            self.emit_opcode(Opcode::VEC_HAS_NEXT)?;
+
+            let addr_exit_check = self.program.code.len();
+
+            self.emit_opcode(Opcode::JUMP_IF)?;
+
+            self.emit_opcode(Opcode::VEC_NEXT)?;
+
+            // loop back to the comparison
+            let mut program_len = self.program.code.len() as i32;
+            self.emit_opcode_i32_i32(Opcode::JUMP, -(program_len - addr_loop_start), 0)?;
+
+            program_len = self.program.code.len() as i32;
+            self.bytecode_modify_arg0_i32(addr_exit_check, program_len - addr_exit_check as i32)?;
+            // fill in jump distance for the IS_VEC check
+            self.bytecode_modify_arg0_i32(addr_exit_check_is_vec, program_len - addr_exit_check_is_vec as i32)?;
+        } else {
+            return Err(SenError::Compiler(format!("compile_each expected a list that defines parameters")))
+        }
+        Ok(())
+    }
+
+    fn compile_vector_in_quote(&mut self, list_node: &Node) -> SenResult<()> {
+        // pushing from the VOID means creating a new, empty vector
+        self.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
+
+        // todo: warn if alterable
+
+        if let Node::List(children, _) = list_node {
+            // slightly hackish
+            // if this is a form like: '(red green blue)
+            // the compiler should output the names rather than the colours that are
+            // actually referenced (compile_user_defined_name would genereate a
+            // MEM_SEG_GLOBAL LOAD code)
+            //
+
+            for n in children {
+                if let Node::Name(_, iname, _) = n {
+                    self.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, *iname)?;
+                } else {
+                    self.compile(n)?;
+                }
+                self.emit_opcode(Opcode::APPEND)?;
+            }
+            return Ok(())
+        }
+        Err(SenError::Compiler(format!("compile_vector_in_quote expected a Node::List")))
+    }
+
+    fn compile_quote(&mut self, children: &[Node]) -> SenResult<()> {
+        let quoted_form = &children[0];
+        match quoted_form {
+            Node::List(_, _) => self.compile_vector_in_quote(quoted_form)?,
+            Node::Name(_, iname, _) => self.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, *iname)?,
+            _ => self.compile(quoted_form)?,
+        }
+        Ok(())
+    }
+
+    // (++ vector value)
+    fn compile_vector_append(&mut self, children: &[Node]) -> SenResult<()> {
+        if children.len() != 2 {
+            return Err(SenError::Compiler(format!("compile_vector_append requires 2 args")))
+        }
+
+        let vector = &children[0];
+        self.compile(vector)?;
+
+        let value = &children[1];
+        self.compile(value)?;
+
+        self.emit_opcode(Opcode::APPEND)?;
+
+        if let Node::Name(text, _, _) = vector {
+            let mut mem_addr: Option<(Mem, i32)> = None;
+
+            if let Some(address) = self.local_mappings.get(text) {
+                mem_addr = Some((Mem::Local, *address));
+            }
+            if let Some(address) = self.global_mappings.get(text) {
+                mem_addr = Some((Mem::Global, *address));
+            }
+
+            if let Some((mem, addr)) = mem_addr {
+                self.emit_opcode_mem_i32(Opcode::STORE, mem, addr)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    // (fn-call (aj z: 44))
+    fn compile_fn_call(&mut self, children: &[Node]) -> SenResult<()> {
+        // fn_name should be a defined function's name
+        // it will be known at compile time
+
+        if let Node::List(kids, _) = &children[0] {
+            // todo: warn if alterable
+
+            let fn_info_index = &kids[0];
+            // place the fn_info_index onto the stack so that CALL_F can find the function
+            // offset and num args
+            self.compile(fn_info_index)?;
+            self.emit_opcode(Opcode::CALL_F)?;
+
+            // compile the rest of the arguments
+
+            // overwrite the default arguments with the actual arguments given by the fn invocation
+            let mut label_vals = &kids[1..];
+            while label_vals.len() > 1 {
+                let label = &label_vals[0];
+                let value = &label_vals[1];
+
+                // push value
+                self.compile(&value)?;
+
+                // push the actual fn_info index so that the _FLU opcode can find it
+                self.compile(fn_info_index)?;
+
+                if let Node::Label(_, iname, _) = label {
+                    self.emit_opcode_mem_i32(Opcode::STORE_F, Mem::Argument, *iname)?;
+                } else {
+                    return Err(SenError::Compiler(format!("compile_fn_call: label required")))
+                }
+
+                label_vals = &label_vals[2..];
+            }
+
+            // place the fn_info_index onto the stack so that CALL_F_0 can find the
+            // function's body offset
+            self.compile(fn_info_index)?;
+            self.emit_opcode(Opcode::CALL_F)?;
+
+            return Ok(())
+        }
+
+        return Err(SenError::Compiler(format!("compile_fn_call should be given a list as the first parameter")))
     }
 
     fn compile_address_of(&mut self, children: &[Node]) -> SenResult<()> {
@@ -1455,6 +1923,14 @@ mod tests {
         bytecode_from_opcode(Opcode::CALL_0)
     }
 
+    fn div() -> Bytecode {
+        bytecode_from_opcode(Opcode::DIV)
+    }
+
+    fn gt() -> Bytecode {
+        bytecode_from_opcode(Opcode::GT)
+    }
+
     fn jump(delta: i32) -> Bytecode {
         Bytecode {
             op: Opcode::JUMP,
@@ -1503,6 +1979,14 @@ mod tests {
         }
     }
 
+    fn load_local_i32(val: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::LOAD,
+            arg0: BytecodeArg::Int(Mem::Local as i32),
+            arg1: BytecodeArg::Int(val),
+        }
+    }
+
     fn load_void() -> Bytecode {
         Bytecode {
             op: Opcode::LOAD,
@@ -1513,6 +1997,14 @@ mod tests {
 
     fn lt() -> Bytecode {
         bytecode_from_opcode(Opcode::LT)
+    }
+
+    fn mul() -> Bytecode {
+        bytecode_from_opcode(Opcode::MUL)
+    }
+
+    fn not() -> Bytecode {
+        bytecode_from_opcode(Opcode::NOT)
     }
 
     fn ret() -> Bytecode {
@@ -1551,6 +2043,42 @@ mod tests {
         }
     }
 
+    fn store_local(val: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::STORE,
+            arg0: BytecodeArg::Int(Mem::Local as i32),
+            arg1: BytecodeArg::Int(val),
+        }
+    }
+
+    fn store_void(val: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::STORE,
+            arg0: BytecodeArg::Int(Mem::Void as i32),
+            arg1: BytecodeArg::Int(val),
+        }
+    }
+
+    fn sub() -> Bytecode {
+        bytecode_from_opcode(Opcode::SUB)
+    }
+
+    fn vec_has_next() -> Bytecode {
+        bytecode_from_opcode(Opcode::VEC_HAS_NEXT)
+    }
+
+    fn vec_load_first() -> Bytecode {
+        bytecode_from_opcode(Opcode::VEC_LOAD_FIRST)
+    }
+
+    fn vec_next() -> Bytecode {
+        bytecode_from_opcode(Opcode::VEC_NEXT)
+    }
+
+    fn vec_non_empty() -> Bytecode {
+        bytecode_from_opcode(Opcode::VEC_NON_EMPTY)
+    }
+
     #[test]
     fn sanity_check_compile_preamble() {
         // stupid, brittle test just to check that the preamble is creating something
@@ -1561,11 +2089,11 @@ mod tests {
     #[test]
     fn test_basics() {
         // f32
-        assert_eq!(compile("34").code, [jump(1), load_const_f32(34.0), stop()]);
+        assert_eq!(compile("34").code, vec![jump(1), load_const_f32(34.0), stop()]);
         // 2d vector of f32
         assert_eq!(
             compile("[23 45]").code,
-            [
+            vec![
                 jump(1),
                 load_const_f32(23.0),
                 load_const_f32(45.0),
@@ -1576,7 +2104,7 @@ mod tests {
         // vector of f32
         assert_eq!(
             compile("[23 45 67 89]").code,
-            [
+            vec![
                 jump(1),
                 load_void(),
                 load_const_f32(23.0),
@@ -1593,7 +2121,7 @@ mod tests {
 
         assert_eq!(
             compile("(sqrt 144)").code,
-            [
+            vec![
                 jump(1),
                 load_const_f32(144.0),
                 sqrt(),
@@ -1603,7 +2131,7 @@ mod tests {
 
         assert_eq!(
             compile("(define brush 9 b 10)").code,
-            [
+            vec![
                 jump(1),
                 load_const_f32(9.0),
                 store_global(14),
@@ -1615,7 +2143,7 @@ mod tests {
 
         assert_eq!(
             compile("(define brush 9 b 10) (+ brush b)").code,
-            [
+            vec![
                 jump(1),
                 load_const_f32(9.0),
                 store_global(14),
@@ -1632,7 +2160,7 @@ mod tests {
     #[test]
     fn test_fn_declaration() {
         assert_eq!(compile("(fn (foo a: 0 b: 0) (+ a b))").code,
-                   [
+                   vec![
                        jump(14),
                        load_const_i32(222),
                        store_arg(0),
@@ -1648,13 +2176,14 @@ mod tests {
                        add(),
                        ret(),
                        stop()
-                   ]);
+                   ]
+        );
     }
 
     #[test]
     fn test_if() {
         assert_eq!(compile("(if (< 3 23) 4 5)").code,
-                   [
+                   vec![
                        jump(1),
                        load_const_f32(3.0),
                        load_const_f32(23.0),
@@ -1664,7 +2193,8 @@ mod tests {
                        jump(2),
                        load_const_f32(5.00),
                        stop()
-                   ]);
+                   ]
+        );
     }
 
     #[test]
@@ -1672,7 +2202,7 @@ mod tests {
         assert_eq!(compile("(fn (adder a: 99 b: 88)
                                 (+ a b))
                             (adder a: 3 b: 7)").code,
-                   [
+                   vec![
                        jump(14),
                        load_const_i32(222),
                        store_arg(0),
@@ -1697,6 +2227,179 @@ mod tests {
                        load_const_i32(10),
                        call_0(),
                        stop()
-                   ]);
+                   ]
+        );
+    }
+
+    #[test]
+    fn test_each() {
+        assert_eq!(compile("(define data []) (each (x from: data) (+ x x))").code,
+                   vec![
+                       jump(1),
+                       load_void(),
+                       store_global(14),
+                       load_global_i32(14),
+                       vec_non_empty(),
+                       jump_if(12),
+                       vec_load_first(),
+                       store_local(0),
+                       load_local_i32(0),
+                       load_local_i32(0),
+                       add(),
+                       store_void(0),
+                       load_local_i32(0),
+                       vec_has_next(),
+                       jump_if(3),
+                       vec_next(),
+                       jump(-9),
+                       stop()
+                   ]
+        );
+
+        assert_eq!(compile("(fn (add-each by: 4)
+                                (define
+                                  data [7 8 9]
+                                  res [])
+                                (each (x from: data) (++ res (+ by x))))
+                            (add-each by: 99)").code,
+                   vec![
+                       jump(33),
+                       load_const_i32(244),
+                       store_arg(0),
+                       load_const_f32(4.0),
+                       store_arg(1),
+                       ret_0(),
+                       load_void(),
+                       load_const_f32(7.0),
+                       append(),
+                       load_const_f32(8.0),
+                       append(),
+                       load_const_f32(9.0),
+                       append(),
+                       store_local(0),
+                       load_void(),
+                       store_local(1),
+                       load_local_i32(0),
+                       vec_non_empty(),
+                       jump_if(14),
+                       vec_load_first(),
+                       store_local(2),
+                       load_local_i32(1),
+                       load_arg(1),
+                       load_local_i32(2),
+                       add(),
+                       append(),
+                       store_local(1),
+                       load_local_i32(2),
+                       vec_has_next(),
+                       jump_if(3),
+                       vec_next(),
+                       jump(-11),
+                       ret(),
+                       load_const_i32(1),
+                       load_const_i32(1),
+                       call(),
+                       load_const_f32(99.0),
+                       store_arg(1),
+                       load_const_i32(6),
+                       call_0(),
+                       stop()
+                   ]
+        );
+    }
+
+    #[test]
+    fn test_loop() {
+        assert_eq!(compile("(loop (y from: 0 upto: 10 inc: 2)
+                                  (+ y 3))").code,
+                   vec![
+                       jump(1),
+                       load_const_f32(0.0),
+                       store_local(0),
+                       load_local_i32(0),
+                       load_const_f32(10.0),
+                       gt(),
+                       not(),
+                       jump_if(10),
+                       load_local_i32(0),
+                       load_const_f32(3.0),
+                       add(),
+                       store_void(0),
+                       load_local_i32(0),
+                       load_const_f32(2.0),
+                       add(),
+                       store_local(0),
+                       jump(-13),
+                       stop()
+                   ]
+        );
+
+        assert_eq!(compile("(loop (y from: 2 to: 10)
+                                  (+ y 45))").code,
+                   vec![
+                       jump(1),
+                       load_const_f32(2.0),
+                       store_local(0),
+                       load_local_i32(0),
+                       load_const_f32(10.0),
+                       lt(),
+                       jump_if(10),
+                       load_local_i32(0),
+                       load_const_f32(45.0),
+                       add(),
+                       store_void(0),
+                       load_local_i32(0),
+                       load_const_f32(1.0),
+                       add(),
+                       store_local(0),
+                       jump(-12),
+                       stop()
+                   ]
+        );
+    }
+
+    #[test]
+    fn test_fence() {
+        assert_eq!(compile("(fence (x from: 0 to: 5 num: 5) (+ x x))").code,
+                   vec![
+                       jump(1),
+                       load_const_f32(5.0),
+                       store_local(0),
+                       load_const_f32(0.0),
+                       store_local(1),
+                       load_const_f32(5.0),
+                       load_const_f32(0.0),
+                       sub(),
+                       load_const_f32(5.0),
+                       load_const_f32(1.0),
+                       sub(),
+                       div(),
+                       store_local(2),
+                       load_const_f32(0.0),
+                       store_local(3),
+                       load_local_i32(3),
+                       store_local(4),
+                       load_local_i32(1),
+                       load_local_i32(0),
+                       lt(),
+                       jump_if(16),
+                       load_local_i32(3),
+                       load_local_i32(1),
+                       load_local_i32(2),
+                       mul(),
+                       add(),
+                       store_local(4),
+                       load_local_i32(4),
+                       load_local_i32(4),
+                       add(),
+                       store_void(0),
+                       load_local_i32(1),
+                       load_const_f32(1.0),
+                       add(),
+                       store_local(1),
+                       jump(-18),
+                       stop()
+                   ]
+        );
     }
 }
