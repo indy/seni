@@ -28,8 +28,8 @@ mod lexer;
 mod opcodes;
 mod parser;
 
-pub use compiler::*;
-pub use error::*;
+//pub use crate::compiler::*;
+pub use crate::error::*;
 
 pub fn sen_parse(s: &str) -> i32 {
     s.len() as i32

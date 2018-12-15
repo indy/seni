@@ -3,3 +3,4 @@ name = "sen-core"
 version = "4.0.0"
 authors = ["Inderjit Gill <email@indy.io>"]
 license = "GPL-3.0+"
+edition = "2018"

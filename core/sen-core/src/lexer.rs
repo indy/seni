@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use error::{SenError, SenResult};
+use crate::error::{SenError, SenResult};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Token<'a> {

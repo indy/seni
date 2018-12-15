@@ -15,9 +15,9 @@
 
 use std::collections::HashMap;
 
-use error::{SenError, SenResult};
-use lexer::{tokenize, Token};
-use keywords::string_to_keyword;
+use crate::error::{SenError, SenResult};
+use crate::lexer::{tokenize, Token};
+use crate::keywords::string_to_keyword;
 
 #[derive(Debug, PartialEq)]
 pub struct Gene {

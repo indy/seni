@@ -1,16 +1,8 @@
-extern crate actix;
-extern crate actix_web;
-extern crate clap;
-extern crate env_logger;
-extern crate serde;
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-
 use actix_web::http::{header, Method, StatusCode};
 use actix_web::{
     fs, middleware, server, App, HttpRequest, HttpResponse, Result
 };
+use serde_derive::Deserialize;
 
 // NOTE: Recompile the server everytime gallery.json is changed
 static GALLERY_JSON: &'static str = include_str!("../static/gallery.json");

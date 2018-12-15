@@ -16,10 +16,10 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use error::*;
-use keywords::{keyword_to_string, string_to_keyword_hash, Keyword};
-use opcodes::{opcode_stack_offset, Opcode};
-use parser::Node;
+use crate::error::*;
+use crate::keywords::{keyword_to_string, string_to_keyword_hash, Keyword};
+use crate::opcodes::{opcode_stack_offset, Opcode};
+use crate::parser::Node;
 
 const TAU: f32 = 6.283_185_307_179_586; // todo: move TAU to math
 
@@ -1892,7 +1892,7 @@ pub fn compile_program(complete_ast: &Vec<Node>) -> SenResult<Program> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use parser::parse;
+    use crate::parser::parse;
 
     fn compile(s: &str) -> Program {
         let (ast, _word_lut) = parse(s).unwrap();

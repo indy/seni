@@ -22,7 +22,7 @@
 // | LAB    | L 0..100  | A -128..128 | B -128..128 |
 // |--------+-----------+-------------+-------------|
 
-use error::{SenError, SenResult};
+use crate::error::{SenError, SenResult};
 use std;
 
 const REF_U: f64 = 0.197_830_006_642_836_807_64;

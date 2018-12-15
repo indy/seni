@@ -15,15 +15,10 @@
 #![allow(dead_code)]
 #![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names, too_many_arguments))]
 
-extern crate cfg_if;
-extern crate sen_core;
-extern crate wasm_bindgen;
-
 mod utils;
 
 use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
-
 use sen_core::sen_parse;
 
 // use sokoban_core::audio::AudioConfig;
