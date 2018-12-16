@@ -7,3 +7,4 @@ license = "GPL-3.0+"
 
 [dependencies]
 sen-core = { path = "../../core/sen-core" }
+clap = "2.32.0"

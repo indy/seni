@@ -25,6 +25,33 @@ const TAU: f32 = 6.283_185_307_179_586; // todo: move TAU to math
 
 const MEMORY_LOCAL_SIZE: usize = 40;
 
+pub fn compile_preamble() -> SenResult<Vec<Bytecode>> {
+    let mut compilation = Compilation::new();
+    let compiler = Compiler::new();
+    compiler.register_top_level_preamble(&mut compilation)?;
+    compiler.compile_preamble(&mut compilation)?;
+
+    Ok(compilation.code)
+}
+
+pub fn compile_program(complete_ast: &Vec<Node>) -> SenResult<Program> {
+    let mut compilation = Compilation::new();
+    let compiler = Compiler::new();
+
+    // clean the complete_ast of whitespace and comment nodes
+    //
+    let mut ast: Vec<Node> = Vec::new();
+    for n in complete_ast.iter() {
+        if let Some(useful_node) = clean_node(n) {
+            ast.push(useful_node);
+        }
+    }
+
+    compiler.compile_common(&mut compilation, &ast)?;
+
+    Ok(Program::new(compilation.code, compilation.fn_info))
+}
+
 #[derive(Clone, Copy)]
 pub enum Mem {
     Argument = 0, // store the function's arguments
@@ -86,11 +113,11 @@ pub enum BytecodeArg {
 impl fmt::Display for BytecodeArg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            BytecodeArg::Int(i) => write!(f, "Int({})", i),
-            BytecodeArg::Float(s) => write!(f, "Float({})", s),
+            BytecodeArg::Int(i) => write!(f, "{}", i),
+            BytecodeArg::Float(s) => write!(f, "{:.2}", s),
             BytecodeArg::Name(i) => write!(f, "Name({})", i),
             BytecodeArg::Colour(s, a, b, c, d) => {
-                write!(f, "Colour({} {} {} {} {})", s, a, b, c, d)
+                write!(f, "{}({} {} {} {})", s, a, b, c, d)
             }
         }
     }
@@ -108,23 +135,29 @@ impl fmt::Display for Bytecode {
         match self.op {
             Opcode::LOAD | Opcode::STORE | Opcode::STORE_F => {
                 let mem = Mem::from_bytecode_arg(&self.arg0).map_err(|_| ::std::fmt::Error)?;
-                write!(f, "{}\t{}\t{}", self.op, mem, self.arg1)
-            }
-            // todo: format JUMP and JUMP_IF
+                write!(f, "{}\t{}\t{}", self.op, mem, self.arg1)?;
+            },
             Opcode::JUMP | Opcode::JUMP_IF => {
-                write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)
-            }
+                if let BytecodeArg::Int(i) = self.arg0 {
+                    if i > 0 {
+                        write!(f, "{}\t+{}", self.op, self.arg0)?
+                    } else {
+                        write!(f, "{}\t{}", self.op, self.arg0)?
+                    }
+                }
+            },
             // todo: format NATIVE
-            Opcode::NATIVE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1),
+            Opcode::NATIVE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
             // todo: format PILE
-            Opcode::PILE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1),
-            _ => write!(f, "{}", self.op),
-        }
+            Opcode::PILE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
+            _ => write!(f, "{}", self.op)?,
+        };
+        Ok(())
     }
 }
 
 #[derive(Debug)]
-struct FnInfo {
+pub struct FnInfo {
     fn_name: String,
     arg_address: usize,
     body_address: usize,
@@ -150,6 +183,30 @@ impl FnInfo {
             }
         }
         None
+    }
+}
+
+#[derive(Debug)]
+pub struct Program {
+    pub code: Vec<Bytecode>,
+    pub fn_info: Vec<FnInfo>,
+}
+
+impl fmt::Display for Program {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for (i, b) in self.code.iter().enumerate() {
+            write!(f, "{}\t{}\n", i, b)?;
+        }
+        Ok(())
+    }
+}
+
+impl Program {
+    fn new(code: Vec<Bytecode>, fn_info: Vec<FnInfo>) -> Self {
+        Program {
+            code,
+            fn_info
+        }
     }
 }
 
@@ -1518,8 +1575,8 @@ impl Compiler {
                     let value_node = &var_decls[1];
 
                     // get argument mapping
-                    if let Node::Label(_, label_i, _) = label_node {
-                        updated_fn_info.argument_offsets.push(*label_i);
+                    if let Node::Label(_, iname, _) = label_node {
+                        updated_fn_info.argument_offsets.push(*iname);
 
                         // if let Some(label_i) = compilation.global_mappings.get(text) {
                         // } else {
@@ -1528,7 +1585,7 @@ impl Compiler {
                         //     // register_top_level_fns function
                         // }
 
-                        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, *label_i)?;
+                        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, *iname)?;
                     }
 
                     compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Argument, counter)?;
@@ -1600,10 +1657,10 @@ impl Compiler {
         let mut arg_vals = &children[..];
         while arg_vals.len() > 1 {
             let arg = &arg_vals[0];
-            if let Node::Label(_, i_name, _) = arg {
+            if let Node::Label(_, iname, _) = arg {
                 let val = &arg_vals[1];
                 self.compile(compilation, val)?;
-                compilation.emit_opcode_i32_i32(Opcode::PLACEHOLDER_STORE, fn_info_index as i32, *i_name)?;
+                compilation.emit_opcode_i32_i32(Opcode::PLACEHOLDER_STORE, fn_info_index as i32, *iname)?;
             } else {
                 return Err(SenError::Compiler(format!("compile_fn_invocation")))
             }
@@ -1731,19 +1788,11 @@ impl Compiler {
 
     fn compile_user_defined_name(&self, compilation: &mut Compilation, s: &str, iname: i32) -> SenResult<bool> {
 
-        let mut val: i32 = 0;
-        let mut found = false;
-
         if let Some(local_mapping) = compilation.local_mappings.get(s) {
-            val = *local_mapping;
-            found = true;
-        }
-
-        if found {
+            let val = *local_mapping;
             compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, val)?;
             return Ok(true)
         }
-
 
         // check arguments if we're in a function
         if let Some(current_fn_info_index) = compilation.current_fn_info_index {
@@ -1758,12 +1807,8 @@ impl Compiler {
             }
         }
 
-
         if let Some(global_mapping) = compilation.global_mappings.get(s) {
-            val = *global_mapping;
-            found = true;
-        }
-        if found {
+            let val = *global_mapping;
             compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Global, val)?;
             return Ok(true)
         }
@@ -1842,39 +1887,12 @@ fn clean_node(node: &Node) -> Option<Node> {
             Some(Node::Vector(vn, None))
         }
         Node::Float(f, _) => Some(Node::Float(*f, None)),
-        Node::Name(text, i_text, _) => Some(Node::Name(text.to_string(), *i_text, None)),
-        Node::Label(text, i_text, _) => Some(Node::Label(text.to_string(), *i_text, None)),
+        Node::Name(text, iname, _) => Some(Node::Name(text.to_string(), *iname, None)),
+        Node::Label(text, iname, _) => Some(Node::Label(text.to_string(), *iname, None)),
         Node::String(text, _) => Some(Node::String(text.to_string(), None)),
         Node::Whitespace(_, _) => None,
         Node::Comment(_, _) => None,
     }
-}
-
-pub fn compile_preamble() -> SenResult<Vec<Bytecode>> {
-    let mut compilation = Compilation::new();
-    let compiler = Compiler::new();
-    compiler.register_top_level_preamble(&mut compilation)?;
-    compiler.compile_preamble(&mut compilation)?;
-
-    Ok(compilation.code)
-}
-
-pub fn compile_program(complete_ast: &Vec<Node>) -> SenResult<Vec<Bytecode>> {
-    let mut compilation = Compilation::new();
-    let compiler = Compiler::new();
-
-    // clean the complete_ast of whitespace and comment nodes
-    //
-    let mut ast: Vec<Node> = Vec::new();
-    for n in complete_ast.iter() {
-        if let Some(useful_node) = clean_node(n) {
-            ast.push(useful_node);
-        }
-    }
-
-    compiler.compile_common(&mut compilation, &ast)?;
-
-    Ok(compilation.code)
 }
 
 #[cfg(test)]
@@ -1884,7 +1902,8 @@ mod tests {
 
     fn compile(s: &str) -> Vec<Bytecode> {
         let (ast, _word_lut) = parse(s).unwrap();
-        compile_program(&ast).unwrap()
+        let program = compile_program(&ast).unwrap();
+        program.code
     }
 
     fn bytecode_from_opcode(op: Opcode) -> Bytecode {

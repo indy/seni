@@ -27,9 +27,18 @@ mod keywords;
 mod lexer;
 mod opcodes;
 mod parser;
+mod vm;
 
-//pub use crate::compiler::*;
+use crate::parser::*;
+
 pub use crate::error::*;
+pub use crate::compiler::*;
+
+pub fn compile_str(s: &str) -> SenResult<Program> {
+    let (ast, _word_lut) = parse(s)?;
+    let result_program = compile_program(&ast);
+    result_program
+}
 
 pub fn sen_parse(s: &str) -> i32 {
     s.len() as i32
