@@ -31,10 +31,10 @@ mod vm;
 
 use crate::parser::*;
 
-pub use crate::error::*;
 pub use crate::compiler::*;
+pub use crate::error::*;
 
-pub fn compile_str(s: &str) -> SenResult<Program> {
+pub fn compile_str(s: &str) -> Result<Program> {
     let (ast, _word_lut) = parse(s)?;
     let result_program = compile_program(&ast);
     result_program

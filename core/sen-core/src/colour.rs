@@ -22,7 +22,7 @@
 // | LAB    | L 0..100  | A -128..128 | B -128..128 |
 // |--------+-----------+-------------+-------------|
 
-use crate::error::{SenError, SenResult};
+use crate::error::{Error, Result};
 use std;
 
 const REF_U: f64 = 0.197_830_006_642_836_807_64;
@@ -104,7 +104,7 @@ impl Colour {
         }
     }
 
-    pub fn clone_as(&self, format: Format) -> SenResult<Colour> {
+    pub fn clone_as(&self, format: Format) -> Result<Colour> {
         match *self {
             Colour::HSL(h, s, l, alpha) => match format {
                 Format::HSL => Ok(Colour::HSL(h, s, l, alpha)),
@@ -141,7 +141,7 @@ impl Colour {
                 Format::LAB => lab_from_xyz(xyz_from_rgb(*self)?),
                 Format::RGB => Ok(Colour::RGB(r, g, b, alpha)),
             },
-            _ => Err(SenError::IncorrectColourFormat),
+            _ => Err(Error::IncorrectColourFormat),
         }
     }
 }
@@ -162,7 +162,7 @@ fn axis_to_colour(a: f64) -> f64 {
     }
 }
 
-fn xyz_from_rgb(rgb: Colour) -> SenResult<Colour> {
+fn xyz_from_rgb(rgb: Colour) -> Result<Colour> {
     match rgb {
         Colour::RGB(r, g, b, alpha) => {
             let rr = colour_to_axis(r);
@@ -186,11 +186,11 @@ fn xyz_from_rgb(rgb: Colour) -> SenResult<Colour> {
 
             Ok(Colour::XYZ(x, y, z, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn rgb_from_xyz(xyz: Colour) -> SenResult<Colour> {
+fn rgb_from_xyz(xyz: Colour) -> Result<Colour> {
     match xyz {
         Colour::XYZ(x, y, z, alpha) => {
             let r = (x * 3.240_969_941_904_521_343_77)
@@ -209,7 +209,7 @@ fn rgb_from_xyz(xyz: Colour) -> SenResult<Colour> {
 
             Ok(Colour::RGB(rr, gg, bb, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
@@ -221,7 +221,7 @@ fn axis_to_lab_component(a: f64) -> f64 {
     }
 }
 
-fn lab_from_xyz(xyz: Colour) -> SenResult<Colour> {
+fn lab_from_xyz(xyz: Colour) -> Result<Colour> {
     match xyz {
         Colour::XYZ(x, y, z, alpha) => {
             let xr = x / WHITEPOINT_0;
@@ -238,7 +238,7 @@ fn lab_from_xyz(xyz: Colour) -> SenResult<Colour> {
 
             Ok(Colour::LAB(l, a, b, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
@@ -259,9 +259,9 @@ fn fmod(a: f64, b: f64) -> f64 {
 }
 
 // http://www.rapidtables.com/convert/color/rgb-to-hsl.htm
-fn hue(colour: Colour, max_chan: i32, chroma: f64) -> SenResult<f64> {
+fn hue(colour: Colour, max_chan: i32, chroma: f64) -> Result<f64> {
     if chroma == 0.0 {
-        // return Err(SenError::InvalidColourHue)
+        // return Err(Error::InvalidColourHue)
         return Ok(0.0);
     }
 
@@ -273,10 +273,10 @@ fn hue(colour: Colour, max_chan: i32, chroma: f64) -> SenResult<f64> {
                 0 => fmod((g - b) / chroma, 6.0),
                 1 => ((b - r) / chroma) + 2.0,
                 2 => ((r - g) / chroma) + 4.0,
-                _ => return Err(SenError::InvalidColourChannel),
+                _ => return Err(Error::InvalidColourChannel),
             }
         }
-        _ => return Err(SenError::IncorrectColourFormat),
+        _ => return Err(Error::IncorrectColourFormat),
     }
 
     angle *= 60.0;
@@ -289,7 +289,7 @@ fn hue(colour: Colour, max_chan: i32, chroma: f64) -> SenResult<f64> {
 }
 
 // http://www.rapidtables.com/convert/color/rgb-to-hsl.htm
-fn hsl_from_rgb(colour: Colour) -> SenResult<Colour> {
+fn hsl_from_rgb(colour: Colour) -> Result<Colour> {
     match colour {
         Colour::RGB(r, g, b, alpha) => {
             let min_val = r.min(g).min(b);
@@ -308,11 +308,11 @@ fn hsl_from_rgb(colour: Colour) -> SenResult<Colour> {
 
             Ok(Colour::HSL(h, saturation, lightness, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn hsv_from_rgb(colour: Colour) -> SenResult<Colour> {
+fn hsv_from_rgb(colour: Colour) -> Result<Colour> {
     match colour {
         Colour::RGB(r, g, b, alpha) => {
             let min_val = r.min(g).min(b);
@@ -331,7 +331,7 @@ fn hsv_from_rgb(colour: Colour) -> SenResult<Colour> {
 
             Ok(Colour::HSV(h, saturation, max_val, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
@@ -377,7 +377,7 @@ fn rgb_from_chm(chroma: f64, h: f64, m: f64, alpha: f64) -> Colour {
     Colour::RGB(r + m, g + m, b + m, alpha)
 }
 
-fn rgb_from_hsl(hsl: Colour) -> SenResult<Colour> {
+fn rgb_from_hsl(hsl: Colour) -> Result<Colour> {
     match hsl {
         Colour::HSL(h, s, l, alpha) => {
             let chroma = (1.0 - ((2.0 * l) - 1.0).abs()) * s;
@@ -388,7 +388,7 @@ fn rgb_from_hsl(hsl: Colour) -> SenResult<Colour> {
 
             Ok(rgb_from_chm(chroma, h, m, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
@@ -400,7 +400,7 @@ fn lab_component_to_axis(l: f64) -> f64 {
     }
 }
 
-fn xyz_from_lab(lab: Colour) -> SenResult<Colour> {
+fn xyz_from_lab(lab: Colour) -> Result<Colour> {
     match lab {
         Colour::LAB(l, a, b, alpha) => {
             let fy = (l + 16.0) / 116.0;
@@ -424,11 +424,11 @@ fn xyz_from_lab(lab: Colour) -> SenResult<Colour> {
                 alpha,
             ))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn rgb_from_hsv(hsv: Colour) -> SenResult<Colour> {
+fn rgb_from_hsv(hsv: Colour) -> Result<Colour> {
     match hsv {
         Colour::HSV(h, s, v, alpha) => {
             let chroma = v * s;
@@ -436,7 +436,7 @@ fn rgb_from_hsv(hsv: Colour) -> SenResult<Colour> {
 
             Ok(rgb_from_chm(chroma, h, m, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
@@ -555,7 +555,7 @@ fn l2y(l: f64) -> f64 {
     }
 }
 
-fn luv_from_xyz(xyz: Colour) -> SenResult<Colour> {
+fn luv_from_xyz(xyz: Colour) -> Result<Colour> {
     match xyz {
         Colour::XYZ(x, y, z, alpha) => {
             let var_u = (4.0 * x) / (x + (15.0 * y) + (3.0 * z));
@@ -570,11 +570,11 @@ fn luv_from_xyz(xyz: Colour) -> SenResult<Colour> {
                 Ok(Colour::LUV(l, u, v, alpha))
             }
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn xyz_from_luv(luv: Colour) -> SenResult<Colour> {
+fn xyz_from_luv(luv: Colour) -> Result<Colour> {
     match luv {
         Colour::LUV(l, u, v, alpha) => {
             if l <= 0.000_000_01 {
@@ -589,11 +589,11 @@ fn xyz_from_luv(luv: Colour) -> SenResult<Colour> {
 
             Ok(Colour::XYZ(x, y, z, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn lch_from_luv(luv: Colour) -> SenResult<Colour> {
+fn lch_from_luv(luv: Colour) -> Result<Colour> {
     match luv {
         Colour::LUV(l, u, v, alpha) => {
             let mut h: f64;
@@ -610,11 +610,11 @@ fn lch_from_luv(luv: Colour) -> SenResult<Colour> {
 
             Ok(Colour::LCH(l, c, h, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn luv_from_lch(lch: Colour) -> SenResult<Colour> {
+fn luv_from_lch(lch: Colour) -> Result<Colour> {
     match lch {
         Colour::LCH(l, c, h, alpha) => {
             let hrad = h * 0.017_453_292_519_943_295_77; /* (pi / 180.0) */
@@ -623,11 +623,11 @@ fn luv_from_lch(lch: Colour) -> SenResult<Colour> {
 
             Ok(Colour::LUV(l, u, v, alpha))
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn lch_from_hsluv(hsluv: Colour) -> SenResult<Colour> {
+fn lch_from_hsluv(hsluv: Colour) -> Result<Colour> {
     match hsluv {
         Colour::HSLuv(h, s, l, alpha) => {
             let c = if l > 99.999_999_9 || l < 0.000_000_01 {
@@ -642,11 +642,11 @@ fn lch_from_hsluv(hsluv: Colour) -> SenResult<Colour> {
                 Ok(Colour::LCH(l, c, h, alpha))
             }
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn hsluv_from_lch(lch: Colour) -> SenResult<Colour> {
+fn hsluv_from_lch(lch: Colour) -> Result<Colour> {
     match lch {
         Colour::LCH(l, c, h, alpha) => {
             let s = if l > 99.999_999_9 || l < 0.000_000_01 {
@@ -661,15 +661,15 @@ fn hsluv_from_lch(lch: Colour) -> SenResult<Colour> {
                 Ok(Colour::HSLuv(h, s, l, alpha))
             }
         }
-        _ => Err(SenError::IncorrectColourFormat),
+        _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn xyz_from_hsluv(hsluv: Colour) -> SenResult<Colour> {
+fn xyz_from_hsluv(hsluv: Colour) -> Result<Colour> {
     xyz_from_luv(luv_from_lch(lch_from_hsluv(hsluv)?)?)
 }
 
-fn hsluv_from_xyz(xyz: Colour) -> SenResult<Colour> {
+fn hsluv_from_xyz(xyz: Colour) -> Result<Colour> {
     hsluv_from_lch(lch_from_luv(luv_from_xyz(xyz)?)?)
 }
 

@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::error::{SenError, SenResult};
+use crate::error::{Error, Result};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Token<'a> {
@@ -34,7 +34,7 @@ pub enum Token<'a> {
     End,
 }
 
-pub fn tokenize(s: &str) -> SenResult<Vec<Token>> {
+pub fn tokenize(s: &str) -> Result<Vec<Token>> {
     let mut lex = Lexer::new(s);
     let mut res = Vec::new();
 
@@ -61,7 +61,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn eat_token(&mut self) -> SenResult<Token<'a>> {
+    pub fn eat_token(&mut self) -> Result<Token<'a>> {
         let mut chars = self.input.char_indices();
 
         while let Some((ind, ch)) = chars.next() {
@@ -80,7 +80,7 @@ impl<'a> Lexer<'a> {
                 '-' | '0'...'9' => eat_number(&self.input[ind..]),
                 ch if ch.is_whitespace() => eat_whitespace(&self.input[ind..]),
                 _ if is_name(ch) => eat_name(&self.input[ind..]),
-                ch => Err(SenError::ParserInvalidChar(ch)),
+                ch => Err(Error::ParserInvalidChar(ch)),
             };
 
             let (tok, size) = match res {
@@ -112,7 +112,7 @@ fn is_symbol(ch: char) -> bool {
     }
 }
 
-fn eat_name(input: &str) -> SenResult<(Token, usize)> {
+fn eat_name(input: &str) -> Result<(Token, usize)> {
     for (ind, ch) in input.char_indices() {
         if !is_name(ch) {
             return Ok((Token::Name(&input[..ind]), ind));
@@ -122,7 +122,7 @@ fn eat_name(input: &str) -> SenResult<(Token, usize)> {
     Ok((Token::Name(input), input.len()))
 }
 
-fn eat_whitespace(input: &str) -> SenResult<(Token, usize)> {
+fn eat_whitespace(input: &str) -> Result<(Token, usize)> {
     for (ind, ch) in input.char_indices() {
         if !ch.is_whitespace() {
             return Ok((Token::Whitespace(&input[..ind]), ind));
@@ -132,7 +132,7 @@ fn eat_whitespace(input: &str) -> SenResult<(Token, usize)> {
     Ok((Token::Whitespace(input), input.len()))
 }
 
-fn eat_number(input: &str) -> SenResult<(Token, usize)> {
+fn eat_number(input: &str) -> Result<(Token, usize)> {
     let mut digits = false;
     let mut dot = false;
     let mut size = input.len();
@@ -151,7 +151,7 @@ fn eat_number(input: &str) -> SenResult<(Token, usize)> {
         match ch {
             '.' => {
                 if dot {
-                    return Err(SenError::ParserInvalidLiteral);
+                    return Err(Error::ParserInvalidLiteral);
                 }
                 dot = true;
             }
@@ -166,13 +166,13 @@ fn eat_number(input: &str) -> SenResult<(Token, usize)> {
     }
 
     if !digits {
-        Err(SenError::ParserInvalidLiteral)
+        Err(Error::ParserInvalidLiteral)
     } else {
         Ok((Token::Number(&input[..size]), size))
     }
 }
 
-fn eat_comment(input: &str) -> SenResult<(Token, usize)> {
+fn eat_comment(input: &str) -> Result<(Token, usize)> {
     let rest = &input[1..]; // remove the first character (;)
     let mut size = rest.len();
 

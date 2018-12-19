@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub type SenResult<T> = ::std::result::Result<T, SenError>;
+pub type Result<T> = ::std::result::Result<T, Error>;
 
 #[derive(Debug)]
-pub enum SenError {
+pub enum Error {
     GeneralError,
 
     // colour

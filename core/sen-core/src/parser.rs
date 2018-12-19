@@ -15,9 +15,9 @@
 
 use std::collections::HashMap;
 
-use crate::error::{SenError, SenResult};
-use crate::lexer::{tokenize, Token};
+use crate::error::{Error, Result};
 use crate::keywords::string_to_keyword;
+use crate::lexer::{tokenize, Token};
 
 #[derive(Debug, PartialEq)]
 pub struct Gene {
@@ -36,8 +36,8 @@ pub enum Node {
     List(Vec<Node>, Option<NodeMeta>),
     Vector(Vec<Node>, Option<NodeMeta>),
     Float(f32, Option<NodeMeta>),
-    Name(String, i32, Option<NodeMeta>), // text, iname, meta
-    Label(String, i32, Option<NodeMeta>),// text, iname, meta
+    Name(String, i32, Option<NodeMeta>),  // text, iname, meta
+    Label(String, i32, Option<NodeMeta>), // text, iname, meta
     String(String, Option<NodeMeta>),
     Whitespace(String, Option<NodeMeta>),
     Comment(String, Option<NodeMeta>),
@@ -65,17 +65,16 @@ impl WordLut {
     }
 
     pub fn get(&mut self, s: &str) -> Option<i32> {
-
         // todo: first check the native api
 
         // 2nd check the keywords
         if let Some(kw) = string_to_keyword(s) {
-            return Some(kw as i32)
+            return Some(kw as i32);
         }
 
         // finally check/add to word_ref
         if let Some(i) = self.word_ref.get(s) {
-            return Some(*i)
+            return Some(*i);
         }
 
         None
@@ -92,7 +91,7 @@ impl WordLut {
     }
 }
 
-pub fn parse(s: &str) -> SenResult<(Vec<Node>, WordLut)> {
+pub fn parse(s: &str) -> Result<(Vec<Node>, WordLut)> {
     let t = tokenize(s)?;
 
     let mut tokens = t.as_slice();
@@ -115,7 +114,11 @@ pub fn parse(s: &str) -> SenResult<(Vec<Node>, WordLut)> {
 
 // At the first token after a Token::ParenStart
 //
-fn eat_list<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>, word_lut: &mut WordLut) -> SenResult<NodeAndRemainder<'a>> {
+fn eat_list<'a>(
+    t: &'a [Token<'a>],
+    meta: Option<NodeMeta>,
+    word_lut: &mut WordLut,
+) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
 
@@ -138,7 +141,11 @@ fn eat_list<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>, word_lut: &mut WordL
     }
 }
 
-fn eat_vector<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>, word_lut: &mut WordLut) -> SenResult<NodeAndRemainder<'a>> {
+fn eat_vector<'a>(
+    t: &'a [Token<'a>],
+    meta: Option<NodeMeta>,
+    word_lut: &mut WordLut,
+) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
 
@@ -161,7 +168,7 @@ fn eat_vector<'a>(t: &'a [Token<'a>], meta: Option<NodeMeta>, word_lut: &mut Wor
     }
 }
 
-fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> SenResult<NodeAndRemainder<'a>> {
+fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
 
     // possible parameter_prefix
@@ -215,14 +222,14 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> SenResult<No
         }
     }
 
-    // return Err(SenError::GeneralError)
+    // return Err(Error::GeneralError)
 }
 
 fn eat_quoted_form<'a>(
     t: &'a [Token<'a>],
     meta: Option<NodeMeta>,
     word_lut: &mut WordLut,
-) -> SenResult<NodeAndRemainder<'a>> {
+) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
 
@@ -249,7 +256,7 @@ fn eat_token<'a>(
     tokens: &'a [Token<'a>],
     meta: Option<NodeMeta>,
     word_lut: &mut WordLut,
-) -> SenResult<NodeAndRemainder<'a>> {
+) -> Result<NodeAndRemainder<'a>> {
     match tokens[0] {
         Token::Name(txt) => {
             let t = txt.to_string();
@@ -271,7 +278,7 @@ fn eat_token<'a>(
                 node: Node::Float(f, meta),
                 tokens: &tokens[1..],
             }),
-            Err(_) => Err(SenError::ParserUnableToParseFloat(txt.to_string())),
+            Err(_) => Err(Error::ParserUnableToParseFloat(txt.to_string())),
         },
         Token::Whitespace(ws) => Ok(NodeAndRemainder {
             node: Node::Whitespace(ws.to_string(), None),
@@ -285,7 +292,7 @@ fn eat_token<'a>(
         Token::ParenStart => eat_list(&tokens[1..], meta, word_lut),
         Token::SquareBracketStart => eat_vector(&tokens[1..], meta, word_lut),
         Token::CurlyBracketStart => eat_alterable(&tokens[1..], word_lut),
-        _ => Err(SenError::ParserHandledToken),
+        _ => Err(Error::ParserHandledToken),
     }
 }
 
