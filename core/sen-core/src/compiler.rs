@@ -34,7 +34,7 @@ pub fn compile_preamble() -> Result<Vec<Bytecode>> {
     Ok(compilation.code)
 }
 
-pub fn compile_program(complete_ast: &Vec<Node>) -> Result<Program> {
+pub fn compile_program(complete_ast: &[Node]) -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
 
@@ -166,7 +166,7 @@ pub struct FnInfo {
 impl FnInfo {
     fn new(fn_name: String) -> FnInfo {
         FnInfo {
-            fn_name: fn_name,
+            fn_name,
             arg_address: 0,
             body_address: 0,
             num_args: 0,
@@ -193,7 +193,7 @@ pub struct Program {
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (i, b) in self.code.iter().enumerate() {
-            write!(f, "{}\t{}\n", i, b)?;
+            writeln!(f, "{}\t{}", i, b)?;
         }
         Ok(())
     }
@@ -223,7 +223,7 @@ struct Compilation {
 impl fmt::Display for Compilation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (i, b) in self.code.iter().enumerate() {
-            write!(f, "{}\t{}\n", i, b)?;
+            writeln!(f, "{}\t{}", i, b)?;
         }
         Ok(())
     }
@@ -298,7 +298,7 @@ impl Compilation {
 
     fn emit_opcode(&mut self, op: Opcode) -> Result<()> {
         let b = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(0),
             arg1: BytecodeArg::Int(0),
         };
@@ -311,7 +311,7 @@ impl Compilation {
 
     fn emit_opcode_i32_i32(&mut self, op: Opcode, arg0: i32, arg1: i32) -> Result<()> {
         let b = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0),
             arg1: BytecodeArg::Int(arg1),
         };
@@ -324,7 +324,7 @@ impl Compilation {
 
     fn emit_opcode_mem_i32(&mut self, op: Opcode, arg0: Mem, arg1: i32) -> Result<()> {
         let b = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0 as i32),
             arg1: BytecodeArg::Int(arg1),
         };
@@ -337,7 +337,7 @@ impl Compilation {
 
     fn emit_opcode_mem_name(&mut self, op: Opcode, arg0: Mem, arg1: i32) -> Result<()> {
         let b = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0 as i32),
             arg1: BytecodeArg::Name(arg1),
         };
@@ -350,7 +350,7 @@ impl Compilation {
 
     fn emit_opcode_mem_f32(&mut self, op: Opcode, arg0: Mem, arg1: f32) -> Result<()> {
         let b = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0 as i32),
             arg1: BytecodeArg::Float(arg1),
         };
@@ -371,7 +371,7 @@ impl Compilation {
         a: f32,
     ) -> Result<()> {
         let b = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0 as i32),
             arg1: BytecodeArg::Colour(ColourFormat::Rgba, r, g, b, a),
         };
@@ -384,7 +384,7 @@ impl Compilation {
 
     fn emit_opcode_i32_f32(&mut self, op: Opcode, arg0: i32, arg1: f32) -> Result<()> {
         let b = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0),
             arg1: BytecodeArg::Float(arg1),
         };
@@ -397,7 +397,7 @@ impl Compilation {
 
     fn emit_opcode_i32_name(&mut self, op: Opcode, arg0: i32, arg1: i32) -> Result<()> {
         let b = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0),
             arg1: BytecodeArg::Name(arg1),
         };
@@ -418,7 +418,7 @@ impl Compilation {
         a: f32,
     ) -> Result<()> {
         let b = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0),
             arg1: BytecodeArg::Colour(ColourFormat::Rgba, r, g, b, a),
         };
@@ -431,7 +431,7 @@ impl Compilation {
 
     fn bytecode_modify(&mut self, index: usize, op: Opcode, arg0: i32, arg1: i32) -> Result<()> {
         self.code[index] = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0),
             arg1: BytecodeArg::Int(arg1),
         };
@@ -444,9 +444,9 @@ impl Compilation {
         let op = self.code[index].op;
 
         self.code[index] = Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(arg0),
-            arg1: arg1,
+            arg1,
         };
 
         Ok(())
@@ -457,8 +457,8 @@ impl Compilation {
         let op = self.code[index].op;
 
         self.code[index] = Bytecode {
-            op: op,
-            arg0: arg0,
+            op,
+            arg0,
             arg1: BytecodeArg::Int(arg1),
         };
 
@@ -559,7 +559,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn register_top_level_fns(&self, compilation: &mut Compilation, ast: &Vec<Node>) -> Result<()> {
+    fn register_top_level_fns(&self, compilation: &mut Compilation, ast: &[Node]) -> Result<()> {
         // clear all data
         compilation.fn_info = Vec::new();
 
@@ -570,11 +570,11 @@ impl Compiler {
                 if let Node::List(nodes, _) = n {
                     if nodes.len() < 2 {
                         // a list with just the 'fn' keyword ???
-                        return Err(Error::Compiler(format!("malformed function definition")));
+                        return Err(Error::Compiler("malformed function definition".to_string()));
                     }
                     let name_and_params = &nodes[1];
                     if let Node::List(np_nodes, _) = name_and_params {
-                        if np_nodes.len() > 0 {
+                        if !np_nodes.is_empty() {
                             let name_node = &np_nodes[0];
                             if let Node::Name(text, _, _) = name_node {
                                 // we have a named top-level fn declaration
@@ -624,13 +624,13 @@ impl Compiler {
     fn register_top_level_defines(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<Node>,
+        ast: &[Node],
     ) -> Result<()> {
         let define_keyword_string = keyword_to_string(Keyword::Define);
 
         for n in ast.iter() {
             if let Node::List(nodes, _) = n {
-                if nodes.len() > 0 {
+                if !nodes.is_empty() {
                     let define_keyword = &nodes[0];
                     if let Node::Name(text, _, _) = define_keyword {
                         if text == &define_keyword_string {
@@ -812,7 +812,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_common(&self, compilation: &mut Compilation, ast: &Vec<Node>) -> Result<()> {
+    fn compile_common(&self, compilation: &mut Compilation, ast: &[Node]) -> Result<()> {
         self.compile_common_prologue(compilation, ast)?;
         self.compile_common_top_level_fns(compilation, ast)?;
         self.compile_common_top_level_defines(compilation, ast)?;
@@ -824,7 +824,7 @@ impl Compiler {
     fn compile_common_prologue(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<Node>,
+        ast: &[Node],
     ) -> Result<()> {
         compilation.clear_global_mappings()?;
         compilation.clear_local_mappings()?;
@@ -840,7 +840,7 @@ impl Compiler {
     fn compile_common_top_level_fns(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<Node>,
+        ast: &[Node],
     ) -> Result<()> {
         // a placeholder, filled in at the end of this function
         compilation.emit_opcode(Opcode::JUMP)?;
@@ -863,14 +863,14 @@ impl Compiler {
     fn compile_common_top_level_defines(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<Node>,
+        ast: &[Node],
     ) -> Result<()> {
         for n in ast.iter() {
             if self.is_list_beginning_with(n, Keyword::Define) {
                 if let Node::List(children, _) = n {
                     return self.compile_define(compilation, &children[1..], Mem::Global);
                 }
-                return Err(Error::Compiler(format!("can never get here")));
+                return Err(Error::Compiler("can never get here".to_string()));
             }
         }
         Ok(())
@@ -879,7 +879,7 @@ impl Compiler {
     fn compile_common_top_level_forms(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<Node>,
+        ast: &[Node],
     ) -> Result<()> {
         for n in ast.iter() {
             if !self.is_list_beginning_with(n, Keyword::Define)
@@ -894,7 +894,7 @@ impl Compiler {
     fn compile_common_epilogue(
         &self,
         compilation: &mut Compilation,
-        _ast: &Vec<Node>,
+        _ast: &[Node],
     ) -> Result<()> {
         compilation.emit_opcode(Opcode::STOP)?;
 
@@ -930,18 +930,16 @@ impl Compiler {
                     )));
                 }
             }
-            _ => return Err(Error::Compiler(format!("compile"))),
+            _ => return Err(Error::Compiler("compile".to_string())),
         }
 
         Ok(())
     }
 
     fn compile_list(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
-        if children.len() == 0 {
+        if children.is_empty() {
             // should this be an error?
-            return Err(Error::Compiler(format!(
-                "compile_list no children (should this be an error?)"
-            )));
+            return Err(Error::Compiler("compile_list no children (should this be an error?)".to_string()));
         }
 
         match &children[0] {
@@ -1038,7 +1036,7 @@ impl Compiler {
                 }
                 // check native api set
             }
-            _ => return Err(Error::Compiler(format!("compile_list strange child"))),
+            _ => return Err(Error::Compiler("compile_list strange child".to_string())),
         }
 
         Ok(())
@@ -1057,12 +1055,10 @@ impl Compiler {
 
         if defs.len() % 2 != 0 {
             // log: should be an even number of elements
-            return Err(Error::Compiler(format!(
-                "should be an even number of elements"
-            )));
+            return Err(Error::Compiler("should be an even number of elements".to_string()));
         }
 
-        while defs.len() > 0 {
+        while !defs.is_empty() {
             let lhs_node = &defs[0];
             let value_node = &defs[1];
 
@@ -1092,12 +1088,10 @@ impl Compiler {
                         // all nodes in lhs vector definition should be names
                         // note: this means that recursive name assignments aren't implemented
                         // e.g. (define [a [b c]] something)
-                        return Err(Error::Compiler(format!(
-                            "recursive name assignments aren't implemented"
-                        )));
+                        return Err(Error::Compiler("recursive name assignments aren't implemented".to_string()));
                     }
                 }
-                _ => return Err(Error::Compiler(format!("compile_define"))),
+                _ => return Err(Error::Compiler("compile_define".to_string())),
             }
 
             defs = &defs[2..];
@@ -1109,9 +1103,7 @@ impl Compiler {
     fn compile_fence(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
         // (fence (x from: 0 to: 5 num: 5) (+ 42 38))
         if children.len() < 2 {
-            return Err(Error::Compiler(format!(
-                "compile_fence requires at least 2 forms"
-            )));
+            return Err(Error::Compiler("compile_fence requires at least 2 forms".to_string()));
         }
 
         let parameters_node = &children[0];
@@ -1269,9 +1261,7 @@ impl Compiler {
         // compile_loop children == (x from: 0 upto: 120 inc: 30) (body)
         //
         if children.len() < 2 {
-            return Err(Error::Compiler(format!(
-                "compile_loop requires at least 2 forms"
-            )));
+            return Err(Error::Compiler("compile_loop requires at least 2 forms".to_string()));
         }
 
         let parameters_node = &children[0];
@@ -1309,9 +1299,7 @@ impl Compiler {
             if maybe_to_node.is_some() {
                 use_to = true;
             } else if maybe_upto_node.is_none() {
-                return Err(Error::Compiler(format!(
-                    "compile_loop requires either to or upto parameters"
-                )));
+                return Err(Error::Compiler("compile_loop requires either to or upto parameters".to_string()));
             }
 
             // set looping variable x to 'from' value
@@ -1395,9 +1383,7 @@ impl Compiler {
         //       (+ x x))
 
         if children.len() < 2 {
-            return Err(Error::Compiler(format!(
-                "compile_each requires at least 2 forms"
-            )));
+            return Err(Error::Compiler("compile_each requires at least 2 forms".to_string()));
         }
 
         let parameters_node = &children[0];
@@ -1484,9 +1470,7 @@ impl Compiler {
                 compilation_len - addr_exit_check_is_vec as i32,
             )?;
         } else {
-            return Err(Error::Compiler(format!(
-                "compile_each expected a list that defines parameters"
-            )));
+            return Err(Error::Compiler("compile_each expected a list that defines parameters".to_string()));
         }
         Ok(())
     }
@@ -1519,9 +1503,7 @@ impl Compiler {
             }
             return Ok(());
         }
-        Err(Error::Compiler(format!(
-            "compile_vector_in_quote expected a Node::List"
-        )))
+        Err(Error::Compiler("compile_vector_in_quote expected a Node::List".to_string()))
     }
 
     fn compile_quote(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
@@ -1543,9 +1525,7 @@ impl Compiler {
         children: &[Node],
     ) -> Result<()> {
         if children.len() != 2 {
-            return Err(Error::Compiler(format!(
-                "compile_vector_append requires 2 args"
-            )));
+            return Err(Error::Compiler("compile_vector_append requires 2 args".to_string()));
         }
 
         let vector = &children[0];
@@ -1605,7 +1585,7 @@ impl Compiler {
                 if let Node::Label(_, iname, _) = label {
                     compilation.emit_opcode_mem_i32(Opcode::STORE_F, Mem::Argument, *iname)?;
                 } else {
-                    return Err(Error::Compiler(format!("compile_fn_call: label required")));
+                    return Err(Error::Compiler("compile_fn_call: label required".to_string()));
                 }
 
                 label_vals = &label_vals[2..];
@@ -1619,9 +1599,7 @@ impl Compiler {
             return Ok(());
         }
 
-        return Err(Error::Compiler(format!(
-            "compile_fn_call should be given a list as the first parameter"
-        )));
+        Err(Error::Compiler("compile_fn_call should be given a list as the first parameter".to_string()))
     }
 
     fn compile_address_of(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
@@ -1632,7 +1610,7 @@ impl Compiler {
             return Ok(());
         }
 
-        Err(Error::Compiler(format!("compile_address_of")))
+        Err(Error::Compiler("compile_address_of".to_string()))
     }
 
     fn compile_on_matrix_stack(
@@ -1704,9 +1682,7 @@ impl Compiler {
                 // if so we can check which of the two paths has the lower opcode offset
                 // and pad out that path by inserting some LOAD CONST 9999 into the
                 // compilation
-                return Err(Error::Compiler(format!(
-                    "different opcode_offsets for the two paths in a conditional"
-                )));
+                return Err(Error::Compiler("different opcode_offsets for the two paths in a conditional".to_string()));
             }
 
             let addr_jump_else_offset = compilation.code.len() as i32 - addr_jump_else as i32;
@@ -1732,7 +1708,7 @@ impl Compiler {
 
         let signature = &children[0]; // (addr a: 0 b: 0)
         if let Node::List(kids, _) = signature {
-            if kids.len() == 0 {
+            if kids.is_empty() {
                 // no fn name given
                 return Err(Error::CompilerFnWithoutName);
             }
@@ -1758,12 +1734,10 @@ impl Compiler {
                 let mut counter = 0;
 
                 if var_decls.len() % 2 != 0 {
-                    return Err(Error::Compiler(format!(
-                        "fn declaration doesn't have matching arg/value pairs"
-                    )));
+                    return Err(Error::Compiler("fn declaration doesn't have matching arg/value pairs".to_string()));
                 }
 
-                while var_decls.len() > 0 {
+                while !var_decls.is_empty() {
                     let label_node = &var_decls[0];
                     let value_node = &var_decls[1];
 
@@ -1814,7 +1788,7 @@ impl Compiler {
             } else {
                 // todo: implement Display for Node
                 // return Err(Error::Compiler(format!("cannot find fn_info for {}", fn_name)))
-                return Err(Error::Compiler(format!("cannot find fn_info for node")));
+                return Err(Error::Compiler("cannot find fn_info for node".to_string()));
             }
         } else {
             // first item in fn declaration needs to be a list of function name and args
@@ -1863,7 +1837,7 @@ impl Compiler {
                     *iname,
                 )?;
             } else {
-                return Err(Error::Compiler(format!("compile_fn_invocation")));
+                return Err(Error::Compiler("compile_fn_invocation".to_string()));
             }
 
             arg_vals = &arg_vals[2..];
@@ -1893,8 +1867,8 @@ impl Compiler {
         children: &[Node],
         op: Opcode,
     ) -> Result<()> {
-        if children.len() < 1 {
-            return Err(Error::Compiler(format!("compile_next_one")));
+        if children.is_empty() {
+            return Err(Error::Compiler("compile_next_one".to_string()));
         }
 
         self.compile(compilation, &children[0])?;
@@ -2009,12 +1983,10 @@ impl Compiler {
             match mem {
                 Mem::Local => self.store_locally(compilation, text.to_string()),
                 Mem::Global => self.store_globally(compilation, text.to_string()),
-                _ => Err(Error::Compiler(format!(
-                    "store_from_stack_to_memory invalid memory type"
-                ))),
+                _ => Err(Error::Compiler("store_from_stack_to_memory invalid memory type".to_string())),
             }
         } else {
-            Err(Error::Compiler(format!("store_from_stack_to_memory")))
+            Err(Error::Compiler("store_from_stack_to_memory".to_string()))
         }
     }
 
@@ -2070,7 +2042,7 @@ impl Compiler {
 
     fn is_list_beginning_with(&self, n: &Node, kw: Keyword) -> bool {
         if let Node::List(nodes, _) = n {
-            if nodes.len() > 0 {
+            if !nodes.is_empty() {
                 if let Node::Name(ref text, _, _) = nodes[0] {
                     if let Some(name_kw) = self.string_to_keyword.get(text) {
                         return *name_kw == kw;
@@ -2102,7 +2074,7 @@ fn all_children_are_name_nodes(parent: &Node) -> bool {
 fn count_children(parent: &Node) -> Result<usize> {
     match parent {
         Node::List(children, _) | Node::Vector(children, _) => Ok(children.len()),
-        _ => Err(Error::Compiler(format!("count_children"))),
+        _ => Err(Error::Compiler("count_children".to_string())),
     }
 }
 
@@ -2148,7 +2120,7 @@ mod tests {
 
     fn bytecode_from_opcode(op: Opcode) -> Bytecode {
         Bytecode {
-            op: op,
+            op,
             arg0: BytecodeArg::Int(0),
             arg1: BytecodeArg::Int(0),
         }

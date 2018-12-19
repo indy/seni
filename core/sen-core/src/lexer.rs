@@ -56,15 +56,18 @@ struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     pub fn new(input: &str) -> Lexer {
         Lexer {
-            input: input,
+            input,
             cur_pos: 0,
         }
     }
 
     pub fn eat_token(&mut self) -> Result<Token<'a>> {
-        let mut chars = self.input.char_indices();
+        if self.input.is_empty() {
+            self.input = &self.input[..0];
+            return Ok(Token::End)
+        }
 
-        while let Some((ind, ch)) = chars.next() {
+        if let Some(ch) = self.input.chars().nth(0) {
             let res = match ch {
                 '(' => Ok((Token::ParenStart, 1)),
                 ')' => Ok((Token::ParenEnd, 1)),
@@ -76,10 +79,10 @@ impl<'a> Lexer<'a> {
                 '\'' => Ok((Token::Quote, 1)),
                 '"' => Ok((Token::DoubleQuote, 1)),
                 '`' => Ok((Token::BackQuote, 1)),
-                ';' => eat_comment(&self.input[ind..]),
-                '-' | '0'...'9' => eat_number(&self.input[ind..]),
-                ch if ch.is_whitespace() => eat_whitespace(&self.input[ind..]),
-                _ if is_name(ch) => eat_name(&self.input[ind..]),
+                ';' => eat_comment(&self.input),
+                '-' | '0'...'9' => eat_number(&self.input),
+                ch if ch.is_whitespace() => eat_whitespace(&self.input),
+                _ if is_name(ch) => eat_name(&self.input),
                 ch => Err(Error::ParserInvalidChar(ch)),
             };
 
@@ -89,13 +92,12 @@ impl<'a> Lexer<'a> {
             };
 
             self.cur_pos += size as u32;
-            self.input = &self.input[ind + size..];
+            self.input = &self.input[size..];
 
-            return Ok(tok);
+            Ok(tok)
+        } else {
+            Err(Error::GeneralError)
         }
-
-        self.input = &self.input[..0];
-        Ok(Token::End)
     }
 }
 

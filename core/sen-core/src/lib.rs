@@ -1,6 +1,6 @@
 #![cfg_attr(
     feature = "cargo-clippy",
-    allow(many_single_char_names, excessive_precision)
+    allow(clippy::many_single_char_names, clippy::excessive_precision)
 )]
 #![allow(dead_code)]
 // todo: remove crate wide allowing of dead_code
@@ -36,8 +36,7 @@ pub use crate::error::*;
 
 pub fn compile_str(s: &str) -> Result<Program> {
     let (ast, _word_lut) = parse(s)?;
-    let result_program = compile_program(&ast);
-    result_program
+    compile_program(&ast)
 }
 
 pub fn sen_parse(s: &str) -> i32 {

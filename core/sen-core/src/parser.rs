@@ -99,7 +99,7 @@ pub fn parse(s: &str) -> Result<(Vec<Node>, WordLut)> {
 
     let mut word_lut = WordLut::new();
 
-    while tokens.len() > 0 {
+    while !tokens.is_empty() {
         match eat_token(tokens, None, &mut word_lut) {
             Ok(nar) => {
                 res.push(nar.node);
@@ -201,8 +201,8 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeA
                 // construct the NodeMeta
                 let meta = Some(NodeMeta {
                     gene: None,
-                    parameter_ast: parameter_ast,
-                    parameter_prefix: parameter_prefix,
+                    parameter_ast,
+                    parameter_prefix,
                 });
 
                 let res = eat_token(main_token, meta, word_lut)?;
