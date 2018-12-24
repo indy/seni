@@ -27,6 +27,7 @@ mod keywords;
 mod lexer;
 mod opcodes;
 mod parser;
+mod placeholder;
 mod vm;
 
 use crate::parser::*;

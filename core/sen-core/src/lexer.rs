@@ -55,16 +55,13 @@ struct Lexer<'a> {
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &str) -> Lexer {
-        Lexer {
-            input,
-            cur_pos: 0,
-        }
+        Lexer { input, cur_pos: 0 }
     }
 
     pub fn eat_token(&mut self) -> Result<Token<'a>> {
         if self.input.is_empty() {
             self.input = &self.input[..0];
-            return Ok(Token::End)
+            return Ok(Token::End);
         }
 
         if let Some(ch) = self.input.chars().nth(0) {

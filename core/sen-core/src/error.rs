@@ -39,4 +39,8 @@ pub enum Error {
     CompilerFnWithoutName,
     CompilerFnDeclIncomplete,
     Compiler(String),
+
+    // VM
+    VMStackUnderflow,
+    VMStackOverflow,
 }
