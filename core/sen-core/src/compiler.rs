@@ -52,7 +52,7 @@ pub fn compile_program(complete_ast: &[Node]) -> Result<Program> {
     Ok(Program::new(compilation.code, compilation.fn_info))
 }
 
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Mem {
     Argument = 0, // store the function's arguments
     Local = 1,    // store the function's local arguments
@@ -69,22 +69,6 @@ impl fmt::Display for Mem {
             Mem::Global => write!(f, "GLOBAL"),
             Mem::Constant => write!(f, "CONST"),
             Mem::Void => write!(f, "VOID"),
-        }
-    }
-}
-
-impl Mem {
-    fn from_bytecode_arg(b: &BytecodeArg) -> Result<Mem> {
-        match b {
-            BytecodeArg::Int(i) => match i {
-                0 => Ok(Mem::Argument),
-                1 => Ok(Mem::Local),
-                2 => Ok(Mem::Global),
-                3 => Ok(Mem::Constant),
-                4 => Ok(Mem::Void),
-                _ => Err(Error::MemUnmappableI32),
-            },
-            _ => Err(Error::MemUnmappableBytecodeArg),
         }
     }
 }
@@ -107,6 +91,7 @@ pub enum BytecodeArg {
     Int(i32),
     Float(f32),
     Name(i32),
+    Mem(Mem),
     Colour(ColourFormat, f32, f32, f32, f32),
 }
 
@@ -116,6 +101,7 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Int(i) => write!(f, "{}", i),
             BytecodeArg::Float(s) => write!(f, "{:.2}", s),
             BytecodeArg::Name(i) => write!(f, "Name({})", i),
+            BytecodeArg::Mem(m) => write!(f, "{}", m),
             BytecodeArg::Colour(s, a, b, c, d) => write!(f, "{}({} {} {} {})", s, a, b, c, d),
         }
     }
@@ -132,8 +118,7 @@ impl fmt::Display for Bytecode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.op {
             Opcode::LOAD | Opcode::STORE | Opcode::STORE_F => {
-                let mem = Mem::from_bytecode_arg(&self.arg0).map_err(|_| ::std::fmt::Error)?;
-                write!(f, "{}\t{}\t{}", self.op, mem, self.arg1)?;
+                write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?;
             }
             Opcode::JUMP | Opcode::JUMP_IF => {
                 if let BytecodeArg::Int(i) = self.arg0 {
@@ -325,7 +310,7 @@ impl Compilation {
     fn emit_opcode_mem_i32(&mut self, op: Opcode, arg0: Mem, arg1: i32) -> Result<()> {
         let b = Bytecode {
             op,
-            arg0: BytecodeArg::Int(arg0 as i32),
+            arg0: BytecodeArg::Mem(arg0),
             arg1: BytecodeArg::Int(arg1),
         };
 
@@ -338,7 +323,7 @@ impl Compilation {
     fn emit_opcode_mem_name(&mut self, op: Opcode, arg0: Mem, arg1: i32) -> Result<()> {
         let b = Bytecode {
             op,
-            arg0: BytecodeArg::Int(arg0 as i32),
+            arg0: BytecodeArg::Mem(arg0),
             arg1: BytecodeArg::Name(arg1),
         };
 
@@ -351,7 +336,7 @@ impl Compilation {
     fn emit_opcode_mem_f32(&mut self, op: Opcode, arg0: Mem, arg1: f32) -> Result<()> {
         let b = Bytecode {
             op,
-            arg0: BytecodeArg::Int(arg0 as i32),
+            arg0: BytecodeArg::Mem(arg0),
             arg1: BytecodeArg::Float(arg1),
         };
 
@@ -372,7 +357,7 @@ impl Compilation {
     ) -> Result<()> {
         let b = Bytecode {
             op,
-            arg0: BytecodeArg::Int(arg0 as i32),
+            arg0: BytecodeArg::Mem(arg0),
             arg1: BytecodeArg::Colour(ColourFormat::Rgba, r, g, b, a),
         };
 
@@ -439,6 +424,16 @@ impl Compilation {
         Ok(())
     }
 
+    fn bytecode_modify_mem(&mut self, index: usize, op: Opcode, arg0: Mem, arg1: i32) -> Result<()> {
+        self.code[index] = Bytecode {
+            op,
+            arg0: BytecodeArg::Mem(arg0),
+            arg1: BytecodeArg::Int(arg1),
+        };
+
+        Ok(())
+    }
+
     fn bytecode_modify_arg0_i32(&mut self, index: usize, arg0: i32) -> Result<()> {
         let arg1 = self.code[index].arg1;
         let op = self.code[index].op;
@@ -478,7 +473,7 @@ impl Compiler {
     }
 
     fn correct_function_addresses(&self, compilation: &mut Compilation) -> Result<()> {
-        let mut all_fixes: Vec<(usize, Opcode, i32, i32)> = Vec::new(); // tuple of index, op, arg0, arg1
+        let mut all_fixes: Vec<(usize, Opcode, Mem, i32)> = Vec::new(); // tuple of index, op, arg0, arg1
         let mut arg1_fixes: Vec<(usize, i32)> = Vec::new(); // tuple of index,value pairs
 
         // go through the bytecode fixing up function call addresses
@@ -513,11 +508,11 @@ impl Compiler {
                                 all_fixes.push((
                                     i,
                                     Opcode::STORE,
-                                    Mem::Argument as i32,
+                                    Mem::Argument,
                                     data_index as i32,
                                 ));
                             } else {
-                                all_fixes.push((i, Opcode::STORE, Mem::Void as i32, 0));
+                                all_fixes.push((i, Opcode::STORE, Mem::Void, 0));
                             }
                         }
                     }
@@ -527,7 +522,7 @@ impl Compiler {
         }
 
         for (index, op, arg0, arg1) in all_fixes {
-            compilation.bytecode_modify(index, op, arg0, arg1)?;
+            compilation.bytecode_modify_mem(index, op, arg0, arg1)?;
         }
         for (index, arg1) in arg1_fixes {
             compilation.bytecode_modify_arg1_i32(index, arg1)?;
@@ -2191,7 +2186,7 @@ mod tests {
     fn load_arg(val: i32) -> Bytecode {
         Bytecode {
             op: Opcode::LOAD,
-            arg0: BytecodeArg::Int(Mem::Argument as i32),
+            arg0: BytecodeArg::Mem(Mem::Argument),
             arg1: BytecodeArg::Int(val),
         }
     }
@@ -2199,7 +2194,7 @@ mod tests {
     fn load_const_f32(val: f32) -> Bytecode {
         Bytecode {
             op: Opcode::LOAD,
-            arg0: BytecodeArg::Int(Mem::Constant as i32),
+            arg0: BytecodeArg::Mem(Mem::Constant),
             arg1: BytecodeArg::Float(val),
         }
     }
@@ -2207,7 +2202,7 @@ mod tests {
     fn load_const_i32(val: i32) -> Bytecode {
         Bytecode {
             op: Opcode::LOAD,
-            arg0: BytecodeArg::Int(Mem::Constant as i32),
+            arg0: BytecodeArg::Mem(Mem::Constant),
             arg1: BytecodeArg::Int(val),
         }
     }
@@ -2215,7 +2210,7 @@ mod tests {
     fn load_global_i32(val: i32) -> Bytecode {
         Bytecode {
             op: Opcode::LOAD,
-            arg0: BytecodeArg::Int(Mem::Global as i32),
+            arg0: BytecodeArg::Mem(Mem::Global),
             arg1: BytecodeArg::Int(val),
         }
     }
@@ -2223,7 +2218,7 @@ mod tests {
     fn load_local_i32(val: i32) -> Bytecode {
         Bytecode {
             op: Opcode::LOAD,
-            arg0: BytecodeArg::Int(Mem::Local as i32),
+            arg0: BytecodeArg::Mem(Mem::Local),
             arg1: BytecodeArg::Int(val),
         }
     }
@@ -2231,7 +2226,7 @@ mod tests {
     fn load_void() -> Bytecode {
         Bytecode {
             op: Opcode::LOAD,
-            arg0: BytecodeArg::Int(Mem::Void as i32),
+            arg0: BytecodeArg::Mem(Mem::Void),
             arg1: BytecodeArg::Int(0),
         }
     }
@@ -2271,7 +2266,7 @@ mod tests {
     fn store_arg(val: i32) -> Bytecode {
         Bytecode {
             op: Opcode::STORE,
-            arg0: BytecodeArg::Int(Mem::Argument as i32),
+            arg0: BytecodeArg::Mem(Mem::Argument),
             arg1: BytecodeArg::Int(val),
         }
     }
@@ -2279,7 +2274,7 @@ mod tests {
     fn store_global(val: i32) -> Bytecode {
         Bytecode {
             op: Opcode::STORE,
-            arg0: BytecodeArg::Int(Mem::Global as i32),
+            arg0: BytecodeArg::Mem(Mem::Global),
             arg1: BytecodeArg::Int(val),
         }
     }
@@ -2287,7 +2282,7 @@ mod tests {
     fn store_local(val: i32) -> Bytecode {
         Bytecode {
             op: Opcode::STORE,
-            arg0: BytecodeArg::Int(Mem::Local as i32),
+            arg0: BytecodeArg::Mem(Mem::Local),
             arg1: BytecodeArg::Int(val),
         }
     }
@@ -2295,7 +2290,7 @@ mod tests {
     fn store_void(val: i32) -> Bytecode {
         Bytecode {
             op: Opcode::STORE,
-            arg0: BytecodeArg::Int(Mem::Void as i32),
+            arg0: BytecodeArg::Mem(Mem::Void),
             arg1: BytecodeArg::Int(val),
         }
     }
