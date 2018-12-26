@@ -192,6 +192,13 @@ impl Vm {
         Default::default()
     }
 
+    fn sp_inc_by(&self, delta: usize) -> Result<usize> {
+        if self.sp + delta >= self.stack_size {
+            return Err(Error::VMStackOverflow)
+        }
+        Ok(self.sp + delta)
+    }
+
     fn sp_inc(&self) -> Result<usize> {
         if self.sp + 1 >= self.stack_size {
             return Err(Error::VMStackOverflow)
@@ -236,10 +243,40 @@ impl Vm {
                 //Mem::Global => ,
                 Mem::Constant => self.stack[self.sp-1] = bytecode_arg_to_var(&bc.arg1)?,
                 //Mem::Void => ,
-                _ => return Err(Error::VM("fp is wrong type?".to_string()))
+                _ => return Err(Error::VM(format!("opcode_load unknown memory type: {}", mem)))
             }
         } else {
             return Err(Error::VM("LOAD requires arg0 to be Mem".to_string()))
+        }
+
+        Ok(())
+    }
+
+    fn opcode_store(&mut self, bc: &Bytecode) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        let popped = &self.stack[self.sp];
+
+        let mem;
+        if let BytecodeArg::Mem(mem_) = bc.arg0 {
+            mem = mem_;
+        } else {
+            return Err(Error::VM("opcode_store arg0 should be mem".to_string()))
+        }
+
+        match mem {
+            Mem::Argument => if let BytecodeArg::Int(offset) = bc.arg1 {
+                self.stack[self.fp - offset as usize - 1] = popped.clone();
+            },
+            Mem::Local => if let BytecodeArg::Int(offset) = bc.arg1 {
+                self.stack[self.local + offset as usize] = popped.clone();
+            },
+            Mem::Global => if let BytecodeArg::Int(offset) = bc.arg1 {
+                self.stack[self.global + offset as usize] = popped.clone();
+            },
+            Mem::Void => {
+                // pop from the stack and lose the value
+            },
+            _ => return Err(Error::VM(format!("opcode_store unknown memory type: {}", mem)))
         }
 
         Ok(())
@@ -372,6 +409,7 @@ impl Vm {
 
         Ok(())
     }
+
     fn opcode_and(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
         if let Var::Bool(b2, _) = &self.stack[self.sp] {
@@ -381,6 +419,154 @@ impl Vm {
                 self.stack[self.sp-1] = Var::Bool(*b1 && *b2, true);
             }
         }
+        Ok(())
+    }
+
+    fn opcode_jump(&mut self, bc: &Bytecode) -> Result<()> {
+        if let BytecodeArg::Int(i) = bc.arg0 {
+            println!("JUMP {}", i);
+            self.ip += i as usize - 1;
+        } else {
+            return Err(Error::VM("opcode_jump".to_string()))
+        }
+        Ok(())
+    }
+
+    fn opcode_jump_if(&mut self, bc: &Bytecode) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Bool(b, _) = &self.stack[self.sp] {
+            // jump if the top of the stack is false
+            if *b == false {
+                // assume that compiler will always emit a BytecodeArg::Int as arg0 for JUMP_IF
+                if let BytecodeArg::Int(i) = bc.arg0 {
+                    self.ip += i as usize - 1;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_call(&mut self) -> Result<()> {
+        let num_args;
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Int(num_args_, _) = &self.stack[self.sp] {
+            num_args = *num_args_;
+        } else {
+            return Err(Error::VM("opcode_call num_args_".to_string()))
+        }
+
+        let addr;
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Int(addr_, _) = &self.stack[self.sp] {
+            addr = *addr_;
+        } else {
+            return Err(Error::VM("opcode_call addr_".to_string()))
+        }
+
+        // make room for the labelled arguments
+        self.sp = self.sp_inc_by(num_args as usize * 2)?;
+        self.fp = self.sp;
+
+        // push the caller's fp
+        self.sp = self.sp_inc()?;  // stack push
+        self.stack[self.sp-1] = Var::Int(self.fp as i32, true);
+
+        // push the ip
+        self.sp = self.sp_inc()?;  // stack push
+        self.stack[self.sp-1] = Var::Int(self.ip as i32, true);
+
+        // push the num_args
+        self.sp = self.sp_inc()?;  // stack push
+        self.stack[self.sp-1] = Var::Int(num_args, true);
+
+        // push hop back
+        if let Var::Int(hop_back, _) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
+            self.sp = self.sp_inc()?;  // stack push
+            self.stack[self.sp-1] = Var::Int(hop_back + 1, true);
+        }
+
+        self.ip = addr as usize;
+        self.local = self.sp;
+
+        // clear the memory that's going to be used for locals
+        for _ in 0..MEMORY_LOCAL_SIZE {
+            // setting all memory as VAR_INT will prevent any weird ref count
+            // stuff when we deal with the RET opcodes later on
+            self.sp = self.sp_inc()?;
+            self.stack[self.sp-1] = Var::Int(0, true);
+        }
+
+        Ok(())
+    }
+
+    fn opcode_call_0(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+
+
+        let addr;
+        if let Var::Int(addr_, _) = &self.stack[self.sp] {
+            addr = *addr_;
+        } else {
+            return Err(Error::VM("opcode_call_0".to_string()))
+        }
+
+        // like CALL but keep the existing frame and just update the ip and return ip
+
+        // set the correct return ip
+        self.stack[self.fp + FP_OFFSET_TO_IP] = Var::Int(self.ip as i32, true);
+
+        // leap to a location
+        self.ip = addr as usize;
+
+        // we're now executing the body of the function so don't
+        // hop back when we push any arguments or locals onto the stack
+        self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] = Var::Int(0, true);
+
+        Ok(())
+    }
+
+    fn opcode_ret_0(&mut self) -> Result<()> {
+        // leap to the return ip
+        if let Var::Int(ip, _) = self.stack[self.fp + FP_OFFSET_TO_IP] {
+            self.ip = ip as usize;
+        } else {
+            return Err(Error::VM("opcode_ret_0".to_string()))
+        }
+        Ok(())
+    }
+
+    fn opcode_ret(&mut self) -> Result<()> {
+        // pop the frame
+        //
+
+        // grab whatever was the last value on the soon to be popped frame
+        let src = &self.stack[self.sp - 1];
+
+        let num_args: usize;
+        if let Var::Int(num_args_, _) = &self.stack[self.fp + FP_OFFSET_TO_NUM_ARGS] {
+            num_args = *num_args_ as usize;
+        } else {
+            return Err(Error::VM("opcode_ret num_args_".to_string()))
+        }
+
+        // update vm
+        self.sp = self.fp - (num_args * 2);
+        if let Var::Int(ip, _) = &self.stack[self.fp + FP_OFFSET_TO_IP] {
+            self.ip = *ip as usize;
+        } else {
+            return Err(Error::VM("opcode_ret ip".to_string()))
+        }
+        if let Var::Int(fp, _) = &self.stack[self.fp] {
+            self.fp = *fp as usize;
+        } else {
+            return Err(Error::VM("opcode_ret fp".to_string()))
+        }
+        self.local = self.fp + FP_OFFSET_TO_LOCALS;
+
+        // copy the previous frame's top stack value onto the current frame's stack
+        self.sp = self.sp_inc()?;  // stack push
+        self.stack[self.sp-1] = src.clone();
+
         Ok(())
     }
 
@@ -396,13 +582,16 @@ impl Vm {
         let mut bc;
 
         loop {
-            self.opcodes_executed += 1;
-
-            self.ip += 1;
             bc = &program.code[self.ip];
+
+            // println!("ip: {}", self.ip);
+            // if self.opcodes_executed > 500 {
+            //     return Err(Error::VM("too many opcode executed?".to_string()))
+            // }
 
             match bc.op {
                 Opcode::LOAD => self.opcode_load(bc)?,
+                Opcode::STORE => self.opcode_store(bc)?,
                 Opcode::ADD => self.opcode_add()?,
                 Opcode::SUB => self.opcode_sub()?,
                 Opcode::MUL => self.opcode_mul()?,
@@ -415,13 +604,21 @@ impl Vm {
                 Opcode::AND => self.opcode_and()?,
                 Opcode::OR => self.opcode_or()?,
                 Opcode::NOT => self.opcode_not()?,
+                Opcode::JUMP => self.opcode_jump(bc)?,
+                Opcode::JUMP_IF => self.opcode_jump_if(bc)?,
+                Opcode::CALL => self.opcode_call()?,
+                Opcode::CALL_0 => self.opcode_call_0()?,
+                Opcode::RET => self.opcode_ret()?,
+                Opcode::RET_0 => self.opcode_ret_0()?,
                 Opcode::STOP => {
                     // todo: execution time
                     //
                     return Ok(())
                 }
-                _ => return Err(Error::GeneralError)
+                _ => return Err(Error::VM(format!("unknown bytecode: {}", bc.op)))
             }
+            self.opcodes_executed += 1;
+            self.ip += 1;
         }
     }
 
@@ -429,9 +626,7 @@ impl Vm {
         let var = &self.stack[self.sp - 1];
         Ok(var.clone())
     }
-
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -464,18 +659,21 @@ mod tests {
     }
 
     #[test]
-    fn test_vm() {
+    fn test_vm_basics() {
         is_float("(+ 2 3)", 5.0);
         is_float("(- 10 3)", 7.0);
         is_float("(* 4 3)", 12.0);
         is_float("(/ 20 5)", 4.0);
         is_float("(% 10 3)", 1.0);
         is_float("(sqrt 144)", 12.0);
+
         is_bool("(= 4 4)", true);
         is_bool("(= 4 5)", false);
+
         is_bool("(> 100 99)", true);
         is_bool("(> 50 55)", false);
         is_bool("(> 50 50)", false);
+
         is_bool("(< 50 55)", true);
         is_bool("(< 100 99)", false);
         is_bool("(< 50 50)", false);
@@ -491,6 +689,13 @@ mod tests {
 
         is_bool("(not (> 1 0))", false);
         is_bool("(not (< 1 0))", true);
+
+        is_float("(if (< 5 10) 2 3)", 2.0);
+        is_float("(if (> 5 10) 2 3)", 3.0);
     }
 
+    #[test]
+    fn test_vm_callret() {
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8.0);
+    }
 }

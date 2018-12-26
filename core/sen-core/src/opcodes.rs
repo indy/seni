@@ -96,7 +96,6 @@ pub enum Opcode {
     // (using a special var_copy that also copies the next/prev pointers)
     VEC_NEXT,
 
-    NOP,
     STOP,
 }
 
@@ -137,7 +136,6 @@ impl fmt::Display for Opcode {
             Opcode::VEC_LOAD_FIRST => write!(f, "VEC_LOAD_FIRST"),
             Opcode::VEC_HAS_NEXT => write!(f, "VEC_HAS_NEXT"),
             Opcode::VEC_NEXT => write!(f, "VEC_NEXT"),
-            Opcode::NOP => write!(f, "NOP"),
             Opcode::STOP => write!(f, "STOP"),
         }
     }
@@ -179,7 +177,6 @@ pub fn opcode_stack_offset(opcode: Opcode) -> i32 {
         Opcode::VEC_LOAD_FIRST => 1,
         Opcode::VEC_HAS_NEXT => 1,
         Opcode::VEC_NEXT => 0,
-        Opcode::NOP => 0,
         Opcode::STOP => 0,
     }
 }
