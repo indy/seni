@@ -315,6 +315,75 @@ impl Vm {
         Ok(())
     }
 
+    fn opcode_eq(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Float(f2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Float(f1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Bool(f1 == f2, true);
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_gt(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Float(f2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Float(f1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Bool(f1 > f2, true);
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_lt(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Float(f2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Float(f1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Bool(f1 < f2, true);
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_or(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Bool(b2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Bool(b1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Bool(*b1 || *b2, true);
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_not(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Bool(b1, _) = &self.stack[self.sp] {
+            self.sp = self.sp_inc()?;  // stack push
+            self.stack[self.sp-1] = Var::Bool(!*b1, true);
+        }
+
+        Ok(())
+    }
+    fn opcode_and(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Bool(b2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Bool(b1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Bool(*b1 && *b2, true);
+            }
+        }
+        Ok(())
+    }
+
     // executes a program on a vm
     // returns Ok if we reached a STOP opcode
     pub fn interpret(&mut self, _env: &Env, program: &Program) -> Result<()> {
@@ -340,6 +409,12 @@ impl Vm {
                 Opcode::DIV => self.opcode_div()?,
                 Opcode::MOD => self.opcode_mod()?,
                 Opcode::SQRT => self.opcode_sqrt()?,
+                Opcode::EQ => self.opcode_eq()?,
+                Opcode::GT => self.opcode_gt()?,
+                Opcode::LT => self.opcode_lt()?,
+                Opcode::AND => self.opcode_and()?,
+                Opcode::OR => self.opcode_or()?,
+                Opcode::NOT => self.opcode_not()?,
                 Opcode::STOP => {
                     // todo: execution time
                     //
@@ -382,6 +457,12 @@ mod tests {
         }
     }
 
+    fn is_bool(s: &str, val: bool) {
+        if let Var::Bool(b, _) = vm_exec(s) {
+            assert_eq!(b, val)
+        }
+    }
+
     #[test]
     fn test_vm() {
         is_float("(+ 2 3)", 5.0);
@@ -390,6 +471,26 @@ mod tests {
         is_float("(/ 20 5)", 4.0);
         is_float("(% 10 3)", 1.0);
         is_float("(sqrt 144)", 12.0);
+        is_bool("(= 4 4)", true);
+        is_bool("(= 4 5)", false);
+        is_bool("(> 100 99)", true);
+        is_bool("(> 50 55)", false);
+        is_bool("(> 50 50)", false);
+        is_bool("(< 50 55)", true);
+        is_bool("(< 100 99)", false);
+        is_bool("(< 50 50)", false);
+
+        is_bool("(and (> 1 0) (> 1 0))", true);
+        is_bool("(and (> 1 0) (< 1 0))", false);
+        is_bool("(and (< 1 0) (> 1 0))", false);
+
+        is_bool("(or (> 1 0) (> 1 0))", true);
+        is_bool("(or (> 1 0) (< 1 0))", true);
+        is_bool("(or (< 1 0) (> 1 0))", true);
+        is_bool("(or (< 1 0) (< 1 0))", false);
+
+        is_bool("(not (> 1 0))", false);
+        is_bool("(not (< 1 0))", true);
     }
 
 }
