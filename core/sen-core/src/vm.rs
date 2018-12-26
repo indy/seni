@@ -13,16 +13,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::{Bytecode, FnInfo, Program};
+use crate::compiler::{Bytecode, Program, Mem, BytecodeArg, ColourFormat};
 use crate::error::{Error, Result};
 use crate::opcodes::Opcode;
-use crate::parser::WordLut;
+//use crate::parser::WordLut;
 use crate::placeholder::*;
 
-const FP_OFFSET_TO_LOCALS: i32 = 4;
-const FP_OFFSET_TO_HOP_BACK: i32 = 3;
-const FP_OFFSET_TO_NUM_ARGS: i32 = 2;
-const FP_OFFSET_TO_IP: i32 = 1;
+const FP_OFFSET_TO_LOCALS: usize = 4;
+const FP_OFFSET_TO_HOP_BACK: usize = 3;
+const FP_OFFSET_TO_NUM_ARGS: usize = 2;
+const FP_OFFSET_TO_IP: usize = 1;
 
 // known memory addresses
 
@@ -61,7 +61,7 @@ const MEMORY_LOCAL_SIZE: usize = 40;
 // bool vm_run(sen_vm* vm, sen_env* env, sen_program* program)
 // bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program)
 
-
+#[derive(Clone, Debug)]
 pub enum Var {
     Int(i32, bool),
     Float(f32, bool),
@@ -69,7 +69,7 @@ pub enum Var {
     Long(u64, bool),
     Name(i32, bool),
     Vector(Box<Var>, bool),
-    Colour(i32, f32, f32, f32, f32, bool),
+    Colour(ColourFormat, f32, f32, f32, f32, bool),
     V2D(f32, f32, bool),
 }
 
@@ -123,95 +123,10 @@ pub struct Vm {
     trait_within_vector_index: bool,
 }
 
-impl Vm {
-    pub fn new() -> Vm {
-        Default::default()
-    }
-
-    pub fn stack_top_mut(&mut self) -> &mut Var {
-        &mut self.stack[self.sp - 1]
-    }
-
-    pub fn stack_top(&mut self) -> &Var {
-        &self.stack[self.sp - 1]
-    }
-
-    pub fn stack_push(&mut self) -> Result<()> {
-        self.sp += 1;
-        if self.sp >= self.stack_size {
-            return Err(Error::VMStackOverflow)
-        }
-        Ok(())
-    }
-
-    pub fn stack_pop(&mut self) -> Result<()> {
-        if self.sp == 0 {
-            return Err(Error::VMStackUnderflow)
-        }
-        self.sp -= 1;
-        Ok(())
-    }
-
-    pub fn interpret(&mut self, env: &Env, program: &Program) -> Result<()> {
-        let mut bytecode_index: usize = 0;
-        let mut bc = &program.code[bytecode_index];
-
-        let mut stack_d: &Var = &self.stack[self.sp];
-        let mut v: &Var = &self.stack[self.sp];
-
-        loop {
-            self.opcodes_executed += 1;
-
-            self.ip += 1;
-            bc = &program.code[self.ip];
-
-            match bc.op {
-                Opcode::ADD => {
-                    // stack pop
-                    {
-                        if self.sp == 0 {
-                            return Err(Error::VMStackUnderflow)
-                        }
-                        self.sp -= 1;
-                        stack_d = &self.stack[self.sp];
-                        v = stack_d;
-                    }
-
-                    if let Var::Float(f2, _) = v {
-                        // stack pop
-                        {
-                            if self.sp == 0 {
-                                return Err(Error::VMStackUnderflow)
-                            }
-                            self.sp -= 1;
-                            stack_d = &self.stack[self.sp];
-                            v = stack_d;
-                        }
-                        if let Var::Float(f1, _) = v {
-                            // stack push
-                            {
-                                v = stack_d;
-                                self.sp += 1;
-                                if self.sp >= self.stack_size {
-                                    return Err(Error::VMStackOverflow)
-                                }
-                                stack_d = &self.stack[self.sp];
-                            }
-                            self.stack[self.sp-1] = Var::Float(f1 + f2, true);
-                        }
-                    }
-                },
-                _ => return Err(Error::GeneralError)
-            }
-        }
-
-        Ok(())
-    }
-}
-
 impl Default for Vm {
     fn default() -> Vm {
-        let stack_size = 50; // ???
+        let stack_size = 1024;
+        let stack = vec![Var::Int(0, true); stack_size];
 
         let mut base_offset: usize = 0;
         let global = base_offset;
@@ -246,7 +161,7 @@ impl Default for Vm {
             opcodes_executed: 0,
             execution_time: 0.0, // in msec
 
-            stack: Vec::with_capacity(stack_size),
+            stack,
             stack_size,
 
             fp, // frame pointer
@@ -262,84 +177,219 @@ impl Default for Vm {
     }
 }
 
-// executes a program on a vm
-// returns Ok if we reached a STOP opcode
-pub fn vm_interpret(vm: &mut Vm, env: &Env, program: &Program) -> Result<()> {
-    let mut bytecode_index: usize = 0;
-    let mut bc = &program.code[bytecode_index];
+fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
+    match bytecode_arg {
+        BytecodeArg::Int(i) => Ok(Var::Int(*i, true)),
+        BytecodeArg::Float(f) => Ok(Var::Float(*f, true)),
+        BytecodeArg::Name(iname) => Ok(Var::Name(*iname, true)),
+        BytecodeArg::Mem(_mem) => Err(Error::VM("bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string())),
+        BytecodeArg::Colour(format, e0, e1, e2, e3) => Ok(Var::Colour(*format, *e0, *e1, *e2, *e3, true)),
+    }
+}
 
-    let mut ip = vm.ip;
-    let mut sp = vm.sp;
-    let mut stack_d: &Var = &vm.stack[sp];
-    let mut v: &Var = &vm.stack[sp];
+impl Vm {
+    pub fn new() -> Vm {
+        Default::default()
+    }
 
-    /*
-        // stack pop
-        {
-            if sp == 0 {
-                return Err(Error::VMStackUnderflow)
-            }
-            sp -= 1;
-            stack_d = &vm.stack[sp];
-            v = stack_d;
+    fn sp_inc(&self) -> Result<usize> {
+        if self.sp + 1 >= self.stack_size {
+            return Err(Error::VMStackOverflow)
         }
+        Ok(self.sp + 1)
+    }
 
-        // stack push
-        {
-            v = stack_d;
-            sp += 1;
-            if sp >= vm.stack_size {
-                return Err(Error::VMStackOverflow)
-            }
-            stack_d = &vm.stack[sp];
+    fn sp_dec(&self) -> Result<usize> {
+        if self.sp == 0 {
+            return Err(Error::VMStackUnderflow)
         }
-    */
+        Ok(self.sp - 1)
+    }
 
-    loop {
-        vm.opcodes_executed += 1;
+    fn opcode_load(&mut self, bc: &Bytecode) -> Result<()> {
+        self.sp = self.sp_inc()?; // stack push
 
-        ip += 1;
-        bc = &program.code[ip];
-
-        match bc.op {
-            Opcode::ADD => {
-                // stack pop
-                {
-                    if sp == 0 {
-                        return Err(Error::VMStackUnderflow)
-                    }
-                    sp -= 1;
-                    stack_d = &vm.stack[sp];
-                    v = stack_d;
-                }
-
-                if let Var::Float(f2, _) = v {
-                    // stack pop
-                    {
-                        if sp == 0 {
-                            return Err(Error::VMStackUnderflow)
-                        }
-                        sp -= 1;
-                        stack_d = &vm.stack[sp];
-                        v = stack_d;
-                    }
-                    if let Var::Float(f1, _) = v {
-                        // stack push
-                        {
-                            v = stack_d;
-                            sp += 1;
-                            if sp >= vm.stack_size {
-                                return Err(Error::VMStackOverflow)
+        if let BytecodeArg::Mem(mem) = bc.arg0 {
+            match mem {
+                Mem::Argument => {
+                    // if we're referencing an ARG in-between CALL and CALL_0 make sure we
+                    // use the right frame i.e. we're using the caller function's ARG, not
+                    // the callee
+                    if let Var::Int(hop_back, _) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
+                        for _ in 0..hop_back {
+                            if let Var::Int(prev_fp, _) = self.stack[self.fp] {
+                                self.fp = prev_fp as usize; // go back a frame
+                            } else {
+                                return Err(Error::VM("fp is wrong type?".to_string()))
                             }
-                            stack_d = &vm.stack[sp];
                         }
-                        vm.stack[sp-1] = Var::Float(f1 + f2, true);
+                        if let BytecodeArg::Int(arg1) = bc.arg1 {
+                            let src = &self.stack[self.fp - arg1 as usize - 1];
+                            self.stack[self.sp - 1] = src.clone();
+                        }
+
+                    } else {
+                        return Err(Error::VM("fp is wrong type?".to_string()))
                     }
+                },
+                //Mem::Local => ,
+                //Mem::Global => ,
+                Mem::Constant => self.stack[self.sp-1] = bytecode_arg_to_var(&bc.arg1)?,
+                //Mem::Void => ,
+                _ => return Err(Error::VM("fp is wrong type?".to_string()))
+            }
+        } else {
+            return Err(Error::VM("LOAD requires arg0 to be Mem".to_string()))
+        }
+
+        Ok(())
+    }
+
+    fn opcode_add(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Float(f2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Float(f1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Float(f1 + f2, true);
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_sub(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Float(f2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Float(f1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Float(f1 - f2, true);
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_mul(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Float(f2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Float(f1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Float(f1 * f2, true);
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_div(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Float(f2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Float(f1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Float(f1 / f2, true);
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_mod(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Float(f2, _) = &self.stack[self.sp] {
+            self.sp = self.sp_dec()?; // stack pop
+            if let Var::Float(f1, _) = &self.stack[self.sp] {
+                self.sp = self.sp_inc()?;  // stack push
+                self.stack[self.sp-1] = Var::Float((*f1 as i32 % *f2 as i32) as f32, true);
+            }
+        }
+        Ok(())
+    }
+
+    fn opcode_sqrt(&mut self) -> Result<()> {
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Float(f1, _) = &self.stack[self.sp] {
+            self.sp = self.sp_inc()?;  // stack push
+            self.stack[self.sp-1] = Var::Float(f1.sqrt(), true);
+        }
+
+        Ok(())
+    }
+
+    // executes a program on a vm
+    // returns Ok if we reached a STOP opcode
+    pub fn interpret(&mut self, _env: &Env, program: &Program) -> Result<()> {
+        // sp == next free stack index
+        // do sp_inc or sp_dec before accessing values as these funcs do sanity checks
+        // means that a pop (via sp_dec) can reference stack[sp]
+        // and that a push (via sp_inc) requires stack[sp-1]
+
+        // let mut bytecode_index: usize = 0;
+        let mut bc;
+
+        loop {
+            self.opcodes_executed += 1;
+
+            self.ip += 1;
+            bc = &program.code[self.ip];
+
+            match bc.op {
+                Opcode::LOAD => self.opcode_load(bc)?,
+                Opcode::ADD => self.opcode_add()?,
+                Opcode::SUB => self.opcode_sub()?,
+                Opcode::MUL => self.opcode_mul()?,
+                Opcode::DIV => self.opcode_div()?,
+                Opcode::MOD => self.opcode_mod()?,
+                Opcode::SQRT => self.opcode_sqrt()?,
+                Opcode::STOP => {
+                    // todo: execution time
+                    //
+                    return Ok(())
                 }
-            },
-            _ => return Err(Error::GeneralError)
+                _ => return Err(Error::GeneralError)
+            }
         }
     }
 
-    Ok(())
+    pub fn top_stack_value(&self) -> Result<Var> {
+        let var = &self.stack[self.sp - 1];
+        Ok(var.clone())
+    }
+
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parser::parse;
+    use crate::compiler::{compile_program};
+
+    fn vm_exec(s: &str) -> Var {
+        let mut vm = Vm::new();
+        let env = Env::new();
+
+        let (ast, _word_lut) = parse(s).unwrap();
+        let program = compile_program(&ast).unwrap();
+
+        vm.interpret(&env, &program).unwrap();
+
+        vm.top_stack_value().unwrap()
+    }
+
+    fn is_float(s: &str, val: f32) {
+        if let Var::Float(f, _) = vm_exec(s) {
+            assert_eq!(f, val)
+        }
+    }
+
+    #[test]
+    fn test_vm() {
+        is_float("(+ 2 3)", 5.0);
+        is_float("(- 10 3)", 7.0);
+        is_float("(* 4 3)", 12.0);
+        is_float("(/ 20 5)", 4.0);
+        is_float("(% 10 3)", 1.0);
+        is_float("(sqrt 144)", 12.0);
+    }
+
 }

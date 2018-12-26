@@ -43,4 +43,5 @@ pub enum Error {
     // VM
     VMStackUnderflow,
     VMStackOverflow,
+    VM(String),
 }

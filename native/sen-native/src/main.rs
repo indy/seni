@@ -6,25 +6,26 @@ use std::io::prelude::*;
 use std::io::Error as IoError;
 
 #[derive(Debug)]
-pub enum Error {
+pub enum NativeError {
     GeneralError,
     NoneError,
     IoError,
     SenError,
 }
 
-impl From<IoError> for Error {
-    fn from(_e: IoError) -> Error {
-        Error::IoError
+impl From<IoError> for NativeError {
+    fn from(_e: IoError) -> NativeError {
+        NativeError::IoError
     }
 }
 
-impl From<SenError> for Error {
-    fn from(_e: SenError) -> Error {
-        Error::SenError
+impl From<sen_core::Error> for NativeError {
+    fn from(_e: sen_core::Error) -> NativeError {
+        NativeError::SenError
     }
 }
 
+pub type Result<T> = ::std::result::Result<T, NativeError>;
 
 fn main() {
     let matches = App::new("sen-native")
@@ -54,7 +55,7 @@ fn main() {
     }
 }
 
-fn run(matches: &ArgMatches) -> Result<(), Error> {
+fn run(matches: &ArgMatches) -> Result<()> {
     if let Some(script) = matches.value_of("SCRIPT") {
         // this should always pass as SCRIPT is required
         println!("Using script file: {}", script);
@@ -78,14 +79,14 @@ fn run(matches: &ArgMatches) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn read_script_file(filename: &str) -> Result<String, Error> {
+pub fn read_script_file(filename: &str) -> Result<String> {
     let mut f = File::open(filename)?;
     let mut contents = String::new();
     f.read_to_string(&mut contents)?;
     Ok(contents)
 }
 
-fn run_debug_script(script: &str) -> Result<(), Error> {
+fn run_debug_script(script: &str) -> Result<()> {
     let source = read_script_file(script)?;
 
     let program = compile_str(&source)?;
@@ -95,14 +96,14 @@ fn run_debug_script(script: &str) -> Result<(), Error> {
     Ok(())
 }
 
-fn run_debug_script_with_seed(_script: &str, _seed: u32) -> Result<(), Error> {
+fn run_debug_script_with_seed(_script: &str, _seed: u32) -> Result<()> {
     Ok(())
 }
 
-fn run_script(_script: &str) -> Result<(), Error> {
+fn run_script(_script: &str) -> Result<()> {
     Ok(())
 }
 
-fn run_script_with_seed(_script: &str, _seed: u32) -> Result<(), Error> {
+fn run_script_with_seed(_script: &str, _seed: u32) -> Result<()> {
     Ok(())
 }
