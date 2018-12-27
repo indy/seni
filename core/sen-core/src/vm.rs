@@ -851,6 +851,18 @@ mod tests {
 
         is_float("(if (< 5 10) 2 3)", 2.0);
         is_float("(if (> 5 10) 2 3)", 3.0);
+
+        is_float("(define a 42) (define b 52) 10", 10.0);
+        is_float("(define a 6) (define b 7) (+ a b)", 13.0);
+        is_float("(define a 8 b 9) (+ a b)", 17.0);
+
+        // is_float("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9.0);
+        // is_float("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9.0);
+    }
+
+    #[test]
+    fn test_vm_problem() {
+        is_float("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9.0);
     }
 
     #[test]

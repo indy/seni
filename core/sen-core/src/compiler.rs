@@ -865,9 +865,8 @@ impl Compiler {
         for n in ast.iter() {
             if self.is_list_beginning_with(n, Keyword::Define) {
                 if let Node::List(children, _) = n {
-                    return self.compile_define(compilation, &children[1..], Mem::Global);
+                    self.compile_define(compilation, &children[1..], Mem::Global)?;
                 }
-                return Err(Error::Compiler("can never get here".to_string()));
             }
         }
         Ok(())
