@@ -222,16 +222,17 @@ impl Vm {
                     // if we're referencing an ARG in-between CALL and CALL_0 make sure we
                     // use the right frame i.e. we're using the caller function's ARG, not
                     // the callee
-                    if let Var::Int(hop_back, _) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
+                    let mut fp = self.fp;
+                    if let Var::Int(hop_back, _) = self.stack[fp + FP_OFFSET_TO_HOP_BACK] {
                         for _ in 0..hop_back {
-                            if let Var::Int(prev_fp, _) = self.stack[self.fp] {
-                                self.fp = prev_fp as usize; // go back a frame
+                            if let Var::Int(prev_fp, _) = self.stack[fp] {
+                                fp = prev_fp as usize; // go back a frame
                             } else {
                                 return Err(Error::VM("fp is wrong type?".to_string()))
                             }
                         }
                         if let BytecodeArg::Int(arg1) = bc.arg1 {
-                            let src = &self.stack[self.fp - arg1 as usize - 1];
+                            let src = &self.stack[fp - arg1 as usize - 1];
                             self.stack[self.sp - 1] = src.clone();
                         }
 
@@ -239,10 +240,39 @@ impl Vm {
                         return Err(Error::VM("fp is wrong type?".to_string()))
                     }
                 },
-                //Mem::Local => ,
-                //Mem::Global => ,
+                Mem::Local => {
+                    // if we're referencing a LOCAL in-between CALL and CALL_0 make sure we
+                    // use the right frame
+
+                    let mut fp = self.fp;
+                    if let Var::Int(hop_back, _) = self.stack[fp + FP_OFFSET_TO_HOP_BACK] {
+                        for _ in 0..hop_back {
+                            if let Var::Int(prev_fp, _) = self.stack[fp] {
+                                fp = prev_fp as usize; // go back a frame
+                            } else {
+                                return Err(Error::VM("fp is wrong type?".to_string()))
+                            }
+                        }
+                        self.local = fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
+
+                        if let BytecodeArg::Int(arg1) = bc.arg1 {
+                            let src = &self.stack[self.local + arg1 as usize];
+                            self.stack[self.sp - 1] = src.clone();
+                        }
+
+                    } else {
+                        return Err(Error::VM("fp is wrong type?".to_string()))
+                    }
+                },
+                Mem::Global => {
+                    if let BytecodeArg::Int(arg1) = bc.arg1 {
+                        let src = &self.stack[self.global + arg1 as usize];
+                        self.stack[self.sp - 1] = src.clone();
+                    }
+
+                },
                 Mem::Constant => self.stack[self.sp-1] = bytecode_arg_to_var(&bc.arg1)?,
-                //Mem::Void => ,
+                // Mem::Void => ,
                 _ => return Err(Error::VM(format!("opcode_load unknown memory type: {}", mem)))
             }
         } else {
@@ -424,7 +454,6 @@ impl Vm {
 
     fn opcode_jump(&mut self, bc: &Bytecode) -> Result<()> {
         if let BytecodeArg::Int(i) = bc.arg0 {
-            println!("JUMP {}", i);
             self.ip += i as usize - 1;
         } else {
             return Err(Error::VM("opcode_jump".to_string()))
@@ -465,7 +494,8 @@ impl Vm {
 
         // make room for the labelled arguments
         self.sp = self.sp_inc_by(num_args as usize * 2)?;
-        self.fp = self.sp;
+
+        let fp = self.sp;
 
         // push the caller's fp
         self.sp = self.sp_inc()?;  // stack push
@@ -486,6 +516,7 @@ impl Vm {
         }
 
         self.ip = addr as usize;
+        self.fp = fp;
         self.local = self.sp;
 
         // clear the memory that's going to be used for locals
@@ -582,12 +613,15 @@ impl Vm {
         let mut bc;
 
         loop {
-            bc = &program.code[self.ip];
-
-            // println!("ip: {}", self.ip);
+            // println!("{}: ip: {}", self.opcodes_executed, self.ip);
             // if self.opcodes_executed > 500 {
             //     return Err(Error::VM("too many opcode executed?".to_string()))
             // }
+
+            self.opcodes_executed += 1;
+            bc = &program.code[self.ip];
+            self.ip += 1;
+
 
             match bc.op {
                 Opcode::LOAD => self.opcode_load(bc)?,
@@ -617,8 +651,6 @@ impl Vm {
                 }
                 _ => return Err(Error::VM(format!("unknown bytecode: {}", bc.op)))
             }
-            self.opcodes_executed += 1;
-            self.ip += 1;
         }
     }
 
@@ -697,5 +729,47 @@ mod tests {
     #[test]
     fn test_vm_callret() {
         is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8.0);
+
+
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))",
+                 12.0); // calc required for value
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)",
+                 13.0); // non-existent argument
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder)",
+                 17.0); // only default arguments
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)",
+                 18.0); // missing argument
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)",
+                 29.0); // missing argument
+
+        is_float("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))",
+                 20.0);
+        is_float("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15.0);
+        is_float("(fn (p2 a: 2) (+ a 5))(fn (p3 a: 3) (+ a 6))(fn (p4 a: 4) (+ a 7))(p2 a: (p3 a: (p4 a: 20)))",
+                 38.0);
+
+        // functions calling functions
+        is_float("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z))) (x)", 6.0);
+        is_float("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)", 10.0);
+        is_float("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12.0);
+
+        // function calling another function, passing on one of it's local variables
+        // (make use of the hop_back method of referring to the correct LOCAL frame)
+        is_float("(fn (z a: 1) (+ a 5)) (fn (y) (define x 10) (z a: x)) (y)", 15.0);
+        is_float("(fn (z a: 1) (+ a 5)) (fn (zz a: 1) (+ a 9))(fn (y) (define x 10) (z a: (zz a: x))) (y)", 24.0);
+
+        // function referencing a global
+        is_float("(define gs 30)(fn (foo at: 0) (+ at gs))(foo at: 10)", 40.0);
+
+        // global references a function, function references a global
+        is_float("(define a 5 b (acc n: 2)) (fn (acc n: 0) (+ n a)) (+ a b)", 12.0);
+
+        // using a function before it's been declared
+        is_float("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66)", 621.0);
+
+        // passing an argument to a function that isn't being used
+        // produces POP with VOID -1 args
+        is_float("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66 b: 8383)",
+                 621.0);
     }
 }
