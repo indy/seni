@@ -141,11 +141,11 @@ impl fmt::Display for Bytecode {
 
 #[derive(Debug)]
 pub struct FnInfo {
-    fn_name: String,
-    arg_address: usize,
-    body_address: usize,
-    num_args: i32,
-    argument_offsets: Vec<i32>,
+    pub fn_name: String,
+    pub arg_address: usize,
+    pub body_address: usize,
+    pub num_args: i32,
+    pub argument_offsets: Vec<i32>,
 }
 
 impl FnInfo {

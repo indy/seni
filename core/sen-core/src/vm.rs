@@ -556,16 +556,6 @@ impl Vm {
         Ok(())
     }
 
-    fn opcode_ret_0(&mut self) -> Result<()> {
-        // leap to the return ip
-        if let Var::Int(ip, _) = self.stack[self.fp + FP_OFFSET_TO_IP] {
-            self.ip = ip as usize;
-        } else {
-            return Err(Error::VM("opcode_ret_0".to_string()))
-        }
-        Ok(())
-    }
-
     fn opcode_ret(&mut self) -> Result<()> {
         // pop the frame
         //
@@ -597,6 +587,99 @@ impl Vm {
         // copy the previous frame's top stack value onto the current frame's stack
         self.sp = self.sp_inc()?;  // stack push
         self.stack[self.sp-1] = src.clone();
+
+        Ok(())
+    }
+
+    fn opcode_ret_0(&mut self) -> Result<()> {
+        // leap to the return ip
+        if let Var::Int(ip, _) = self.stack[self.fp + FP_OFFSET_TO_IP] {
+            self.ip = ip as usize;
+        } else {
+            return Err(Error::VM("opcode_ret_0".to_string()))
+        }
+        Ok(())
+    }
+
+    fn opcode_call_f(&mut self, program: &Program) -> Result<()> {
+        // like CALL but gets it's function information from program->fn_info
+
+        // read the index into program->fn_name
+        let fn_info_index;
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Int(fn_info_index_, _) = &self.stack[self.sp] {
+            fn_info_index = *fn_info_index_ as usize;
+        } else {
+            return Err(Error::VM("opcode_call_f fn_info_index_".to_string()))
+        }
+        let fn_info = &program.fn_info[fn_info_index];
+
+
+        let num_args = fn_info.num_args;
+        let addr = fn_info.arg_address;
+
+        // make room for the labelled arguments
+        self.sp = self.sp_inc_by(num_args as usize * 2)?;
+
+        let fp = self.sp;
+
+        // push the caller's fp
+        self.sp = self.sp_inc()?;  // stack push
+        self.stack[self.sp-1] = Var::Int(self.fp as i32, true);
+
+        // push the ip
+        self.sp = self.sp_inc()?;  // stack push
+        self.stack[self.sp-1] = Var::Int(self.ip as i32, true);
+
+        // push the num_args
+        self.sp = self.sp_inc()?;  // stack push
+        self.stack[self.sp-1] = Var::Int(num_args, true);
+
+        // push hop back
+        if let Var::Int(hop_back, _) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
+            self.sp = self.sp_inc()?;  // stack push
+            self.stack[self.sp-1] = Var::Int(hop_back + 1, true);
+        }
+
+        self.ip = addr as usize;
+        self.fp = fp;
+        self.local = self.sp;
+
+        // clear the memory that's going to be used for locals
+        for _ in 0..MEMORY_LOCAL_SIZE {
+            // setting all memory as VAR_INT will prevent any weird ref count
+            // stuff when we deal with the RET opcodes later on
+            self.sp = self.sp_inc()?;
+            self.stack[self.sp-1] = Var::Int(0, true);
+        }
+
+        Ok(())
+    }
+
+    fn opcode_call_f_0(&mut self, program: &Program) -> Result<()> {
+        // like CALL_0 but gets it's function information from program->fn_info
+        let fn_info_index;
+        self.sp = self.sp_dec()?; // stack pop
+        if let Var::Int(fn_info_index_, _) = &self.stack[self.sp] {
+            fn_info_index = *fn_info_index_ as usize;
+        } else {
+            return Err(Error::VM("opcode_call_f fn_info_index_".to_string()))
+        }
+        let fn_info = &program.fn_info[fn_info_index];
+
+        let addr = fn_info.body_address;
+
+        // like CALL but keep the existing frame and just update the ip and return ip
+
+        // set the correct return ip
+        self.stack[self.fp + FP_OFFSET_TO_IP] = Var::Int(self.ip as i32, true);
+
+        // leap to a location
+        self.ip = addr as usize;
+
+        // we're now executing the body of the function so don't
+        // hop back when we push any arguments or locals onto the stack
+        self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] = Var::Int(0, true);
 
         Ok(())
     }
@@ -644,6 +727,8 @@ impl Vm {
                 Opcode::CALL_0 => self.opcode_call_0()?,
                 Opcode::RET => self.opcode_ret()?,
                 Opcode::RET_0 => self.opcode_ret_0()?,
+                Opcode::CALL_F => self.opcode_call_f(program)?,
+                Opcode::CALL_F_0 => self.opcode_call_f_0(program)?,
                 Opcode::STOP => {
                     // todo: execution time
                     //
