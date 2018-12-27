@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::{Bytecode, Program, Mem, BytecodeArg, ColourFormat};
+use crate::compiler::{Bytecode, BytecodeArg, ColourFormat, Mem, Program};
 use crate::error::{Error, Result};
 use crate::opcodes::Opcode;
 //use crate::parser::WordLut;
@@ -182,8 +182,12 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
         BytecodeArg::Int(i) => Ok(Var::Int(*i, true)),
         BytecodeArg::Float(f) => Ok(Var::Float(*f, true)),
         BytecodeArg::Name(iname) => Ok(Var::Name(*iname, true)),
-        BytecodeArg::Mem(_mem) => Err(Error::VM("bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string())),
-        BytecodeArg::Colour(format, e0, e1, e2, e3) => Ok(Var::Colour(*format, *e0, *e1, *e2, *e3, true)),
+        BytecodeArg::Mem(_mem) => Err(Error::VM(
+            "bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string(),
+        )),
+        BytecodeArg::Colour(format, e0, e1, e2, e3) => {
+            Ok(Var::Colour(*format, *e0, *e1, *e2, *e3, true))
+        }
     }
 }
 
@@ -194,21 +198,21 @@ impl Vm {
 
     fn sp_inc_by(&self, delta: usize) -> Result<usize> {
         if self.sp + delta >= self.stack_size {
-            return Err(Error::VMStackOverflow)
+            return Err(Error::VMStackOverflow);
         }
         Ok(self.sp + delta)
     }
 
     fn sp_inc(&self) -> Result<usize> {
         if self.sp + 1 >= self.stack_size {
-            return Err(Error::VMStackOverflow)
+            return Err(Error::VMStackOverflow);
         }
         Ok(self.sp + 1)
     }
 
     fn sp_dec(&self) -> Result<usize> {
         if self.sp == 0 {
-            return Err(Error::VMStackUnderflow)
+            return Err(Error::VMStackUnderflow);
         }
         Ok(self.sp - 1)
     }
@@ -228,18 +232,17 @@ impl Vm {
                             if let Var::Int(prev_fp, _) = self.stack[fp] {
                                 fp = prev_fp as usize; // go back a frame
                             } else {
-                                return Err(Error::VM("fp is wrong type?".to_string()))
+                                return Err(Error::VM("fp is wrong type?".to_string()));
                             }
                         }
                         if let BytecodeArg::Int(arg1) = bc.arg1 {
                             let src = &self.stack[fp - arg1 as usize - 1];
                             self.stack[self.sp - 1] = src.clone();
                         }
-
                     } else {
-                        return Err(Error::VM("fp is wrong type?".to_string()))
+                        return Err(Error::VM("fp is wrong type?".to_string()));
                     }
-                },
+                }
                 Mem::Local => {
                     // if we're referencing a LOCAL in-between CALL and CALL_0 make sure we
                     // use the right frame
@@ -250,7 +253,7 @@ impl Vm {
                             if let Var::Int(prev_fp, _) = self.stack[fp] {
                                 fp = prev_fp as usize; // go back a frame
                             } else {
-                                return Err(Error::VM("fp is wrong type?".to_string()))
+                                return Err(Error::VM("fp is wrong type?".to_string()));
                             }
                         }
                         self.local = fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
@@ -259,24 +262,27 @@ impl Vm {
                             let src = &self.stack[self.local + arg1 as usize];
                             self.stack[self.sp - 1] = src.clone();
                         }
-
                     } else {
-                        return Err(Error::VM("fp is wrong type?".to_string()))
+                        return Err(Error::VM("fp is wrong type?".to_string()));
                     }
-                },
+                }
                 Mem::Global => {
                     if let BytecodeArg::Int(arg1) = bc.arg1 {
                         let src = &self.stack[self.global + arg1 as usize];
                         self.stack[self.sp - 1] = src.clone();
                     }
-
-                },
-                Mem::Constant => self.stack[self.sp-1] = bytecode_arg_to_var(&bc.arg1)?,
+                }
+                Mem::Constant => self.stack[self.sp - 1] = bytecode_arg_to_var(&bc.arg1)?,
                 // Mem::Void => ,
-                _ => return Err(Error::VM(format!("opcode_load unknown memory type: {}", mem)))
+                _ => {
+                    return Err(Error::VM(format!(
+                        "opcode_load unknown memory type: {}",
+                        mem
+                    )))
+                }
             }
         } else {
-            return Err(Error::VM("LOAD requires arg0 to be Mem".to_string()))
+            return Err(Error::VM("LOAD requires arg0 to be Mem".to_string()));
         }
 
         Ok(())
@@ -290,23 +296,34 @@ impl Vm {
         if let BytecodeArg::Mem(mem_) = bc.arg0 {
             mem = mem_;
         } else {
-            return Err(Error::VM("opcode_store arg0 should be mem".to_string()))
+            return Err(Error::VM("opcode_store arg0 should be mem".to_string()));
         }
 
         match mem {
-            Mem::Argument => if let BytecodeArg::Int(offset) = bc.arg1 {
-                self.stack[self.fp - offset as usize - 1] = popped.clone();
-            },
-            Mem::Local => if let BytecodeArg::Int(offset) = bc.arg1 {
-                self.stack[self.local + offset as usize] = popped.clone();
-            },
-            Mem::Global => if let BytecodeArg::Int(offset) = bc.arg1 {
-                self.stack[self.global + offset as usize] = popped.clone();
-            },
+            Mem::Argument => {
+                if let BytecodeArg::Int(offset) = bc.arg1 {
+                    self.stack[self.fp - offset as usize - 1] = popped.clone();
+                }
+            }
+            Mem::Local => {
+                if let BytecodeArg::Int(offset) = bc.arg1 {
+                    self.stack[self.local + offset as usize] = popped.clone();
+                }
+            }
+            Mem::Global => {
+                if let BytecodeArg::Int(offset) = bc.arg1 {
+                    self.stack[self.global + offset as usize] = popped.clone();
+                }
+            }
             Mem::Void => {
                 // pop from the stack and lose the value
-            },
-            _ => return Err(Error::VM(format!("opcode_store unknown memory type: {}", mem)))
+            }
+            _ => {
+                return Err(Error::VM(format!(
+                    "opcode_store unknown memory type: {}",
+                    mem
+                )))
+            }
         }
 
         Ok(())
@@ -317,8 +334,8 @@ impl Vm {
         if let Var::Float(f2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Float(f1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Float(f1 + f2, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Float(f1 + f2, true);
             }
         }
         Ok(())
@@ -329,8 +346,8 @@ impl Vm {
         if let Var::Float(f2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Float(f1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Float(f1 - f2, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Float(f1 - f2, true);
             }
         }
         Ok(())
@@ -341,8 +358,8 @@ impl Vm {
         if let Var::Float(f2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Float(f1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Float(f1 * f2, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Float(f1 * f2, true);
             }
         }
         Ok(())
@@ -353,8 +370,8 @@ impl Vm {
         if let Var::Float(f2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Float(f1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Float(f1 / f2, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Float(f1 / f2, true);
             }
         }
         Ok(())
@@ -365,8 +382,8 @@ impl Vm {
         if let Var::Float(f2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Float(f1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Float((*f1 as i32 % *f2 as i32) as f32, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Float((*f1 as i32 % *f2 as i32) as f32, true);
             }
         }
         Ok(())
@@ -375,8 +392,8 @@ impl Vm {
     fn opcode_sqrt(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
         if let Var::Float(f1, _) = &self.stack[self.sp] {
-            self.sp = self.sp_inc()?;  // stack push
-            self.stack[self.sp-1] = Var::Float(f1.sqrt(), true);
+            self.sp = self.sp_inc()?; // stack push
+            self.stack[self.sp - 1] = Var::Float(f1.sqrt(), true);
         }
 
         Ok(())
@@ -387,8 +404,8 @@ impl Vm {
         if let Var::Float(f2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Float(f1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Bool(f1 == f2, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Bool(f1 == f2, true);
             }
         }
         Ok(())
@@ -399,8 +416,8 @@ impl Vm {
         if let Var::Float(f2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Float(f1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Bool(f1 > f2, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Bool(f1 > f2, true);
             }
         }
         Ok(())
@@ -411,8 +428,8 @@ impl Vm {
         if let Var::Float(f2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Float(f1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Bool(f1 < f2, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Bool(f1 < f2, true);
             }
         }
         Ok(())
@@ -423,8 +440,8 @@ impl Vm {
         if let Var::Bool(b2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Bool(b1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Bool(*b1 || *b2, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Bool(*b1 || *b2, true);
             }
         }
         Ok(())
@@ -433,8 +450,8 @@ impl Vm {
     fn opcode_not(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
         if let Var::Bool(b1, _) = &self.stack[self.sp] {
-            self.sp = self.sp_inc()?;  // stack push
-            self.stack[self.sp-1] = Var::Bool(!*b1, true);
+            self.sp = self.sp_inc()?; // stack push
+            self.stack[self.sp - 1] = Var::Bool(!*b1, true);
         }
 
         Ok(())
@@ -445,8 +462,8 @@ impl Vm {
         if let Var::Bool(b2, _) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
             if let Var::Bool(b1, _) = &self.stack[self.sp] {
-                self.sp = self.sp_inc()?;  // stack push
-                self.stack[self.sp-1] = Var::Bool(*b1 && *b2, true);
+                self.sp = self.sp_inc()?; // stack push
+                self.stack[self.sp - 1] = Var::Bool(*b1 && *b2, true);
             }
         }
         Ok(())
@@ -456,7 +473,7 @@ impl Vm {
         if let BytecodeArg::Int(i) = bc.arg0 {
             self.ip += i as usize - 1;
         } else {
-            return Err(Error::VM("opcode_jump".to_string()))
+            return Err(Error::VM("opcode_jump".to_string()));
         }
         Ok(())
     }
@@ -481,7 +498,7 @@ impl Vm {
         if let Var::Int(num_args_, _) = &self.stack[self.sp] {
             num_args = *num_args_;
         } else {
-            return Err(Error::VM("opcode_call num_args_".to_string()))
+            return Err(Error::VM("opcode_call num_args_".to_string()));
         }
 
         let addr;
@@ -489,7 +506,7 @@ impl Vm {
         if let Var::Int(addr_, _) = &self.stack[self.sp] {
             addr = *addr_;
         } else {
-            return Err(Error::VM("opcode_call addr_".to_string()))
+            return Err(Error::VM("opcode_call addr_".to_string()));
         }
 
         // make room for the labelled arguments
@@ -498,21 +515,21 @@ impl Vm {
         let fp = self.sp;
 
         // push the caller's fp
-        self.sp = self.sp_inc()?;  // stack push
-        self.stack[self.sp-1] = Var::Int(self.fp as i32, true);
+        self.sp = self.sp_inc()?; // stack push
+        self.stack[self.sp - 1] = Var::Int(self.fp as i32, true);
 
         // push the ip
-        self.sp = self.sp_inc()?;  // stack push
-        self.stack[self.sp-1] = Var::Int(self.ip as i32, true);
+        self.sp = self.sp_inc()?; // stack push
+        self.stack[self.sp - 1] = Var::Int(self.ip as i32, true);
 
         // push the num_args
-        self.sp = self.sp_inc()?;  // stack push
-        self.stack[self.sp-1] = Var::Int(num_args, true);
+        self.sp = self.sp_inc()?; // stack push
+        self.stack[self.sp - 1] = Var::Int(num_args, true);
 
         // push hop back
         if let Var::Int(hop_back, _) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
-            self.sp = self.sp_inc()?;  // stack push
-            self.stack[self.sp-1] = Var::Int(hop_back + 1, true);
+            self.sp = self.sp_inc()?; // stack push
+            self.stack[self.sp - 1] = Var::Int(hop_back + 1, true);
         }
 
         self.ip = addr as usize;
@@ -524,7 +541,7 @@ impl Vm {
             // setting all memory as VAR_INT will prevent any weird ref count
             // stuff when we deal with the RET opcodes later on
             self.sp = self.sp_inc()?;
-            self.stack[self.sp-1] = Var::Int(0, true);
+            self.stack[self.sp - 1] = Var::Int(0, true);
         }
 
         Ok(())
@@ -533,12 +550,11 @@ impl Vm {
     fn opcode_call_0(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
 
-
         let addr;
         if let Var::Int(addr_, _) = &self.stack[self.sp] {
             addr = *addr_;
         } else {
-            return Err(Error::VM("opcode_call_0".to_string()))
+            return Err(Error::VM("opcode_call_0".to_string()));
         }
 
         // like CALL but keep the existing frame and just update the ip and return ip
@@ -567,7 +583,7 @@ impl Vm {
         if let Var::Int(num_args_, _) = &self.stack[self.fp + FP_OFFSET_TO_NUM_ARGS] {
             num_args = *num_args_ as usize;
         } else {
-            return Err(Error::VM("opcode_ret num_args_".to_string()))
+            return Err(Error::VM("opcode_ret num_args_".to_string()));
         }
 
         // update vm
@@ -575,18 +591,18 @@ impl Vm {
         if let Var::Int(ip, _) = &self.stack[self.fp + FP_OFFSET_TO_IP] {
             self.ip = *ip as usize;
         } else {
-            return Err(Error::VM("opcode_ret ip".to_string()))
+            return Err(Error::VM("opcode_ret ip".to_string()));
         }
         if let Var::Int(fp, _) = &self.stack[self.fp] {
             self.fp = *fp as usize;
         } else {
-            return Err(Error::VM("opcode_ret fp".to_string()))
+            return Err(Error::VM("opcode_ret fp".to_string()));
         }
         self.local = self.fp + FP_OFFSET_TO_LOCALS;
 
         // copy the previous frame's top stack value onto the current frame's stack
-        self.sp = self.sp_inc()?;  // stack push
-        self.stack[self.sp-1] = src.clone();
+        self.sp = self.sp_inc()?; // stack push
+        self.stack[self.sp - 1] = src.clone();
 
         Ok(())
     }
@@ -596,7 +612,7 @@ impl Vm {
         if let Var::Int(ip, _) = self.stack[self.fp + FP_OFFSET_TO_IP] {
             self.ip = ip as usize;
         } else {
-            return Err(Error::VM("opcode_ret_0".to_string()))
+            return Err(Error::VM("opcode_ret_0".to_string()));
         }
         Ok(())
     }
@@ -610,10 +626,9 @@ impl Vm {
         if let Var::Int(fn_info_index_, _) = &self.stack[self.sp] {
             fn_info_index = *fn_info_index_ as usize;
         } else {
-            return Err(Error::VM("opcode_call_f fn_info_index_".to_string()))
+            return Err(Error::VM("opcode_call_f fn_info_index_".to_string()));
         }
         let fn_info = &program.fn_info[fn_info_index];
-
 
         let num_args = fn_info.num_args;
         let addr = fn_info.arg_address;
@@ -624,21 +639,21 @@ impl Vm {
         let fp = self.sp;
 
         // push the caller's fp
-        self.sp = self.sp_inc()?;  // stack push
-        self.stack[self.sp-1] = Var::Int(self.fp as i32, true);
+        self.sp = self.sp_inc()?; // stack push
+        self.stack[self.sp - 1] = Var::Int(self.fp as i32, true);
 
         // push the ip
-        self.sp = self.sp_inc()?;  // stack push
-        self.stack[self.sp-1] = Var::Int(self.ip as i32, true);
+        self.sp = self.sp_inc()?; // stack push
+        self.stack[self.sp - 1] = Var::Int(self.ip as i32, true);
 
         // push the num_args
-        self.sp = self.sp_inc()?;  // stack push
-        self.stack[self.sp-1] = Var::Int(num_args, true);
+        self.sp = self.sp_inc()?; // stack push
+        self.stack[self.sp - 1] = Var::Int(num_args, true);
 
         // push hop back
         if let Var::Int(hop_back, _) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
-            self.sp = self.sp_inc()?;  // stack push
-            self.stack[self.sp-1] = Var::Int(hop_back + 1, true);
+            self.sp = self.sp_inc()?; // stack push
+            self.stack[self.sp - 1] = Var::Int(hop_back + 1, true);
         }
 
         self.ip = addr as usize;
@@ -650,7 +665,7 @@ impl Vm {
             // setting all memory as VAR_INT will prevent any weird ref count
             // stuff when we deal with the RET opcodes later on
             self.sp = self.sp_inc()?;
-            self.stack[self.sp-1] = Var::Int(0, true);
+            self.stack[self.sp - 1] = Var::Int(0, true);
         }
 
         Ok(())
@@ -663,7 +678,7 @@ impl Vm {
         if let Var::Int(fn_info_index_, _) = &self.stack[self.sp] {
             fn_info_index = *fn_info_index_ as usize;
         } else {
-            return Err(Error::VM("opcode_call_f fn_info_index_".to_string()))
+            return Err(Error::VM("opcode_call_f fn_info_index_".to_string()));
         }
         let fn_info = &program.fn_info[fn_info_index];
 
@@ -680,6 +695,33 @@ impl Vm {
         // we're now executing the body of the function so don't
         // hop back when we push any arguments or locals onto the stack
         self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] = Var::Int(0, true);
+
+        Ok(())
+    }
+
+    fn opcode_squish2(&mut self) -> Result<()> {
+        // combines two floats from the stack into a single Var::V2D
+
+        self.sp = self.sp_dec()?; // stack pop
+        let f2 = if let Var::Float(f2_, _) = &self.stack[self.sp] {
+            *f2_
+        } else {
+            return Err(Error::VM(
+                "opcode_squish2: f2 expected to be float".to_string(),
+            ));
+        };
+
+        self.sp = self.sp_dec()?; // stack pop
+        let f1 = if let Var::Float(f1_, _) = &self.stack[self.sp] {
+            *f1_
+        } else {
+            return Err(Error::VM(
+                "opcode_squish2: f1 expected to be float".to_string(),
+            ));
+        };
+
+        self.sp = self.sp_inc()?; // stack push
+        self.stack[self.sp - 1] = Var::V2D(f1, f2, true);
 
         Ok(())
     }
@@ -705,7 +747,6 @@ impl Vm {
             bc = &program.code[self.ip];
             self.ip += 1;
 
-
             match bc.op {
                 Opcode::LOAD => self.opcode_load(bc)?,
                 Opcode::STORE => self.opcode_store(bc)?,
@@ -729,12 +770,13 @@ impl Vm {
                 Opcode::RET_0 => self.opcode_ret_0()?,
                 Opcode::CALL_F => self.opcode_call_f(program)?,
                 Opcode::CALL_F_0 => self.opcode_call_f_0(program)?,
+                Opcode::SQUISH2 => self.opcode_squish2()?,
                 Opcode::STOP => {
                     // todo: execution time
                     //
-                    return Ok(())
+                    return Ok(());
                 }
-                _ => return Err(Error::VM(format!("unknown bytecode: {}", bc.op)))
+                _ => return Err(Error::VM(format!("unknown bytecode: {}", bc.op))),
             }
         }
     }
@@ -748,8 +790,8 @@ impl Vm {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::compiler::compile_program;
     use crate::parser::parse;
-    use crate::compiler::{compile_program};
 
     fn vm_exec(s: &str) -> Var {
         let mut vm = Vm::new();
@@ -815,46 +857,65 @@ mod tests {
     fn test_vm_callret() {
         is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8.0);
 
+        is_float(
+            "(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))",
+            12.0,
+        ); // calc required for value
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)", 13.0); // non-existent argument
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder)", 17.0); // only default arguments
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)", 18.0); // missing argument
+        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29.0); // missing argument
 
-        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))",
-                 12.0); // calc required for value
-        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)",
-                 13.0); // non-existent argument
-        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder)",
-                 17.0); // only default arguments
-        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 10)",
-                 18.0); // missing argument
-        is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)",
-                 29.0); // missing argument
-
-        is_float("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))",
-                 20.0);
-        is_float("(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))", 15.0);
+        is_float(
+            "(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))",
+            20.0,
+        );
+        is_float(
+            "(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))",
+            15.0,
+        );
         is_float("(fn (p2 a: 2) (+ a 5))(fn (p3 a: 3) (+ a 6))(fn (p4 a: 4) (+ a 7))(p2 a: (p3 a: (p4 a: 20)))",
                  38.0);
 
         // functions calling functions
         is_float("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z))) (x)", 6.0);
-        is_float("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)", 10.0);
-        is_float("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)", 12.0);
+        is_float(
+            "(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",
+            10.0,
+        );
+        is_float(
+            "(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)",
+            12.0,
+        );
 
         // function calling another function, passing on one of it's local variables
         // (make use of the hop_back method of referring to the correct LOCAL frame)
-        is_float("(fn (z a: 1) (+ a 5)) (fn (y) (define x 10) (z a: x)) (y)", 15.0);
+        is_float(
+            "(fn (z a: 1) (+ a 5)) (fn (y) (define x 10) (z a: x)) (y)",
+            15.0,
+        );
         is_float("(fn (z a: 1) (+ a 5)) (fn (zz a: 1) (+ a 9))(fn (y) (define x 10) (z a: (zz a: x))) (y)", 24.0);
 
         // function referencing a global
         is_float("(define gs 30)(fn (foo at: 0) (+ at gs))(foo at: 10)", 40.0);
 
         // global references a function, function references a global
-        is_float("(define a 5 b (acc n: 2)) (fn (acc n: 0) (+ n a)) (+ a b)", 12.0);
+        is_float(
+            "(define a 5 b (acc n: 2)) (fn (acc n: 0) (+ n a)) (+ a b)",
+            12.0,
+        );
 
         // using a function before it's been declared
-        is_float("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66)", 621.0);
+        is_float(
+            "(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66)",
+            621.0,
+        );
 
         // passing an argument to a function that isn't being used
         // produces POP with VOID -1 args
-        is_float("(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66 b: 8383)",
-                 621.0);
+        is_float(
+            "(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66 b: 8383)",
+            621.0,
+        );
     }
 }

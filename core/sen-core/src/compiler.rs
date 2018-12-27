@@ -424,7 +424,13 @@ impl Compilation {
         Ok(())
     }
 
-    fn bytecode_modify_mem(&mut self, index: usize, op: Opcode, arg0: Mem, arg1: i32) -> Result<()> {
+    fn bytecode_modify_mem(
+        &mut self,
+        index: usize,
+        op: Opcode,
+        arg0: Mem,
+        arg1: i32,
+    ) -> Result<()> {
         self.code[index] = Bytecode {
             op,
             arg0: BytecodeArg::Mem(arg0),
