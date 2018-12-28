@@ -70,7 +70,7 @@ pub enum Var {
     Bool(bool, bool),
     Long(u64, bool),
     Name(i32, bool),
-    Vector(Box<Var>, bool),
+    Vector(Box<Vec<Var>>, bool),
     Colour(ColourFormat, f32, f32, f32, f32, bool),
     V2D(f32, f32, bool),
 }
@@ -84,7 +84,9 @@ impl fmt::Display for Var {
             Var::Long(u, _) => write!(f, "Long({})", u),
             Var::Name(i, _) => write!(f, "Name({})", i),
             Var::Vector(_, _) => write!(f, "Vector(todo: implement Display)"),
-            Var::Colour(format, e0, e1, e2, e3, _) => write!(f, "Colour({}, {}, {}, {}, {})", format, e0, e1, e2, e3),
+            Var::Colour(format, e0, e1, e2, e3, _) => {
+                write!(f, "Colour({}, {}, {}, {}, {})", format, e0, e1, e2, e3)
+            }
             Var::V2D(fl1, fl2, _) => write!(f, "V2D({}, {})", fl1, fl2),
         }
     }
@@ -290,12 +292,9 @@ impl Vm {
                     }
                 }
                 Mem::Constant => self.stack[self.sp - 1] = bytecode_arg_to_var(&bc.arg1)?,
-                // Mem::Void => ,
-                _ => {
-                    return Err(Error::VM(format!(
-                        "opcode_load unknown memory type: {}",
-                        mem
-                    )))
+                Mem::Void => {
+                    // pushing from the void. i.e. create this object
+                    self.stack[self.sp - 1] = Var::Vector(Box::new(Vec::new()), true);
                 }
             }
         } else {
@@ -743,6 +742,30 @@ impl Vm {
         Ok(())
     }
 
+    fn opcode_append(&mut self) -> Result<()> {
+        // pops top two values: a value and a vector appends the value onto the vector
+
+        self.sp = self.sp_dec()?; // stack pop
+        let cloned_var_value = self.stack[self.sp].clone();
+
+        // a pop here to get the vector
+        // a push here to place the updated vector
+        // both of the above cancel out
+
+        if let Var::V2D(a, b, _) = &self.stack[self.sp - 1] {
+            // convert the VAR_2D into a VAR_VECTOR
+            self.stack[self.sp - 1] = Var::Vector(Box::new(vec!(Var::Float(*a, true),
+                                                                Var::Float(*b, true),
+                                                                cloned_var_value)), true);
+        } else if let Var::Vector(ref mut box_vec, _) = &mut self.stack[self.sp - 1] {
+            box_vec.push(cloned_var_value);
+        } else {
+            return Err(Error::VM("append requires either a Vector or V2D".to_string()))
+        }
+
+        Ok(())
+    }
+
     // executes a program on a vm
     // returns Ok if we reached a STOP opcode
     pub fn interpret(&mut self, _env: &Env, program: &Program) -> Result<()> {
@@ -788,6 +811,7 @@ impl Vm {
                 Opcode::CALL_F => self.opcode_call_f(program)?,
                 Opcode::CALL_F_0 => self.opcode_call_f_0(program)?,
                 Opcode::SQUISH2 => self.opcode_squish2()?,
+                Opcode::APPEND => self.opcode_append()?,
                 Opcode::STOP => {
                     // todo: execution time
                     //
@@ -834,6 +858,17 @@ mod tests {
         }
     }
 
+    fn is_vec_of_f32(s: &str, val: Vec<f32>) {
+        if let Var::Vector(box_vec, _) = vm_exec(s) {
+            assert_eq!(box_vec.len(), val.len());
+            for (i, f) in val.iter().enumerate() {
+                if let Some(Var::Float(ff, _)) = box_vec.get(i) {
+                    assert_eq!(ff, f);
+                }
+            }
+        }
+    }
+
     #[test]
     fn test_vm_basics() {
         is_float("(+ 2 3)", 5.0);
@@ -874,19 +909,20 @@ mod tests {
         is_float("(define a 8 b 9) (+ a b)", 17.0);
 
         is_float("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9.0);
-        is_float("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9.0);
+        is_float(
+            "(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9",
+            9.0,
+        );
     }
-
-    // #[test]
-    // fn test_vm_problem() {
-    // }
 
     #[test]
     fn test_vm_callret() {
         is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: 3)", 8.0);
 
         is_float(
-            "(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 b: (+ 3 4))",
+            "(fn (adder a: 9 b: 8)
+                 (+ a b))
+             (adder a: 5 b: (+ 3 4))",
             12.0,
         ); // calc required for value
         is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder a: 5 xxx: 3)", 13.0); // non-existent argument
@@ -895,55 +931,189 @@ mod tests {
         is_float("(fn (adder a: 9 b: 8) (+ a b)) (adder b: 20)", 29.0); // missing argument
 
         is_float(
-            "(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (+ (p2 a: 5) (p3 a: 10))",
+            "(fn (p2 a: 1) (+ a 2))
+             (fn (p3 a: 1) (+ a 3))
+             (+ (p2 a: 5) (p3 a: 10))",
             20.0,
         );
         is_float(
-            "(fn (p2 a: 1) (+ a 2)) (fn (p3 a: 1) (+ a 3)) (p2 a: (p3 a: 10))",
+            "(fn (p2 a: 1) (+ a 2))
+             (fn (p3 a: 1) (+ a 3))
+             (p2 a: (p3 a: 10))",
             15.0,
         );
-        is_float("(fn (p2 a: 2) (+ a 5))(fn (p3 a: 3) (+ a 6))(fn (p4 a: 4) (+ a 7))(p2 a: (p3 a: (p4 a: 20)))",
-                 38.0);
+        is_float(
+            "(fn (p2 a: 2) (+ a 5))
+             (fn (p3 a: 3) (+ a 6))
+             (fn (p4 a: 4) (+ a 7))
+             (p2 a: (p3 a: (p4 a: 20)))",
+            38.0,
+        );
 
         // functions calling functions
-        is_float("(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z))) (x)", 6.0);
         is_float(
-            "(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x)",
+            "(fn (z a: 1) (+ a 2))
+             (fn (x c: 3) (+ c (z)))
+             (x)",
+            6.0,
+        );
+        is_float(
+            "(fn (z a: 1) (+ a 2))
+             (fn (x c: 3) (+ c (z a: 5)))
+             (x)",
             10.0,
         );
         is_float(
-            "(fn (z a: 1) (+ a 2)) (fn (x c: 3) (+ c (z a: 5))) (x c: 5)",
+            "(fn (z a: 1) (+ a 2))
+             (fn (x c: 3) (+ c (z a: 5)))
+             (x c: 5)",
             12.0,
         );
-
         // function calling another function, passing on one of it's local variables
         // (make use of the hop_back method of referring to the correct LOCAL frame)
         is_float(
-            "(fn (z a: 1) (+ a 5)) (fn (y) (define x 10) (z a: x)) (y)",
+            "(fn (z a: 1) (+ a 5))
+             (fn (y)
+                 (define x 10)
+                 (z a: x))
+             (y)",
             15.0,
         );
-        is_float("(fn (z a: 1) (+ a 5)) (fn (zz a: 1) (+ a 9))(fn (y) (define x 10) (z a: (zz a: x))) (y)", 24.0);
-
+        is_float(
+            "(fn (z a: 1) (+ a 5))
+             (fn (zz a: 1) (+ a 9))
+             (fn (y)
+                 (define x 10)
+                 (z a: (zz a: x)))
+             (y)",
+            24.0,
+        );
         // function referencing a global
-        is_float("(define gs 30)(fn (foo at: 0) (+ at gs))(foo at: 10)", 40.0);
-
+        is_float(
+            "(define gs 30)
+             (fn (foo at: 0) (+ at gs))
+             (foo at: 10)",
+            40.0,
+        );
         // global references a function, function references a global
         is_float(
-            "(define a 5 b (acc n: 2)) (fn (acc n: 0) (+ n a)) (+ a b)",
+            "(define a 5 b (acc n: 2))
+             (fn (acc n: 0) (+ n a))
+             (+ a b)",
             12.0,
         );
-
         // using a function before it's been declared
         is_float(
-            "(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66)",
+            "(fn (x a: 33) (+ a (y c: 555)))
+             (fn (y c: 444) c)
+             (x a: 66)",
             621.0,
         );
-
         // passing an argument to a function that isn't being used
         // produces POP with VOID -1 args
         is_float(
-            "(fn (x a: 33) (+ a (y c: 555))) (fn (y c: 444) c)  (x a: 66 b: 8383)",
+            "(fn (x a: 33) (+ a (y c: 555)))
+             (fn (y c: 444) c)
+             (x a: 66 b: 8383)",
             621.0,
         );
     }
+
+    #[test]
+    fn test_vm_hop_back() {
+        /*
+        call-a invokes call-b and call-b's arguments invoke call-c and call-d.
+        the process of two function calls whilst setting up call-b makes use of the hop_back
+        mechanism in the interpreter
+         */
+        is_float(
+            "(fn (call-d lambda: 994 omega: 993 theta: 992)
+                 (* (+ lambda omega) theta))
+             (fn (call-c epsilon: 995)
+                 (+ epsilon epsilon))
+             (fn (call-b delta: 997 gamma: 996)
+                 (- gamma delta))
+             (fn (call-a alpha: 999 beta: 998)
+                 (call-b delta: (call-c epsilon: alpha)
+                         gamma: (call-d lambda: 8 omega: beta theta: alpha)))
+             (define res (call-a alpha: 2 beta: 5))
+             res",
+            22.0,
+        );
+    }
+
+    #[test]
+    fn text_vm_vector() {
+        is_vec_of_f32("[4 5 6 7 8]", vec!(4.0, 5.0, 6.0, 7.0, 8.0));
+
+        is_float("(loop (x from: 0 to: 5) [1 2 3 4 5]) 9", 9.0);
+
+        // explicitly defined vector is returned
+        is_vec_of_f32("(fn (f a: 3) [1 2 3 4 5]) (fn (x) (f)) (x)", vec!(1.0, 2.0, 3.0, 4.0, 5.0));
+
+        // local var in function is returned
+        is_vec_of_f32("(fn (f a: 3) (define b [1 2 3 4 5]) b) (fn (x) (f)) (x)", vec!(1.0, 2.0, 3.0, 4.0, 5.0));
+
+        // local var in function is not returned
+        is_float("(fn (f a: 3) (define b [1 2 3 4 5]) 55) (fn (x) (f)) (x)", 55.0);
+
+        // default argument for function is returned
+        is_vec_of_f32("(fn (f a: [1 2 3 4 5]) a) (fn (x) (f)) (x)", vec!(1.0, 2.0, 3.0, 4.0, 5.0));
+
+        // default argument for function is not returned
+        is_float("(fn (f a: [1 2 3 4 5]) 3) (fn (x) (f)) (x)", 3.0);
+
+        // default argument for function is not returned and
+        // it's called with an explicitly declared vector
+        is_float("(fn (f a: [1 2 3 4 5]) 3) (fn (x) (f a: [3 4])) (x)", 3.0);
+
+        // default argument for function is not returned and
+        // it's called with an unused argument
+        is_float("(fn (f a: [1 2 3 4 5]) 3) (fn (x) (f z: [3 4])) (x)", 3.0);
+
+        // default argument for function is not returned
+        is_float("(fn (f a: [1 2 3 4 5]) a) (fn (x) (f a: 5)) (x)", 5.0);
+
+        // argument into function is returned
+        is_vec_of_f32("(fn (f a: [3 4 5 6 7]) a) (fn (x) (f a: [1 2 3 4 5])) (x)", vec!(1.0, 2.0, 3.0, 4.0, 5.0));
+    }
+
+    #[test]
+    fn test_vm_vector_append() {
+        is_vec_of_f32("(define v []) (++ v 100) v", vec!(100.0));
+        is_vec_of_f32("(define v [1]) (++ v 100) v", vec!(1.0, 100.0));
+        is_vec_of_f32("(define v [1 2]) (++ v 100) v", vec!(1.0, 2.0, 100.0));
+        is_vec_of_f32("(define v [1 2 3]) (++ v 100) v", vec!(1.0, 2.0, 3.0, 100.0));
+        is_vec_of_f32("(define v [1 2 3 4]) (++ v 100) v", vec!(1.0, 2.0, 3.0, 4.0, 100.0));
+    }
+
+    #[test]
+    fn test_vm_fence() {
+        is_vec_of_f32("(define v []) (fence (x from: 0 to: 10 num: 3) (++ v x)) v", vec!(0.0, 5.0, 10.0));
+        is_vec_of_f32("(define v []) (fence (x from: 10 to: 0 num: 3) (++ v x)) v", vec!(10.0, 5.0, 0.0));
+        is_vec_of_f32("(define v []) (fence (x num: 5) (++ v x)) v", vec!(0.0, 0.25, 0.5, 0.75, 1.0));
+
+        is_vec_of_f32("(define v []) (fence (x from: 100 to: 900 num: 10) (++ v x)) v",
+                      vec!(100.0000, 188.88889, 277.77777, 366.66666, 455.55554, 544.44446, 633.33333,
+                           722.22217, 811.1111, 900.0000));
+    }
+
+    #[test]
+    fn test_vm_loop() {
+        is_vec_of_f32("(define v []) (loop (x from: 0 to: 4) (++ v x)) v", vec!(0.0, 1.0, 2.0, 3.0));
+        is_vec_of_f32("(define v []) (loop (x from: 0 upto: 4) (++ v x)) v", vec!(0.0, 1.0, 2.0, 3.0, 4.0));
+        is_vec_of_f32("(define v []) (loop (x from: 0 to: 10 inc: 2) (++ v x)) v", vec!(0.0, 2.0, 4.0, 6.0, 8.0));
+        is_vec_of_f32("(define v []) (loop (x from: 0 upto: 10 inc: 2) (++ v x)) v", vec!(0.0, 2.0, 4.0, 6.0, 8.0, 10.0));
+    }
+
+    // #[test]
+    // fn test_vm_each() {
+    //     is_vec_of_f32("(define inp [] v []) (each (x from: inp) (++ v x)) v", vec!());
+        // is_vec_of_f32("(define inp [99] v []) (each (x from: inp) (++ v x)) v", 1, 99.0f);
+        // // this tests the special case of VAR_2D rather than the default VAR_VECTOR:
+        // is_vec_of_f32("(define inp [42 43] v []) (each (x from: inp) (++ v x)) v", 2, 42.0f, 43.0f);
+        // is_vec_of_f32("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
+        //      3.0f);
+//    }
+
 }

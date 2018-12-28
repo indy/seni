@@ -47,7 +47,6 @@ pub fn compile_and_execute(s: &str) -> Result<Var> {
     vm.top_stack_value()
 }
 
-
 pub fn compile_str(s: &str) -> Result<Program> {
     let (ast, _word_lut) = parse(s)?;
     compile_program(&ast)
