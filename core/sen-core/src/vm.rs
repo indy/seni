@@ -19,6 +19,8 @@ use crate::opcodes::Opcode;
 //use crate::parser::WordLut;
 use crate::placeholder::*;
 
+use std::fmt;
+
 const FP_OFFSET_TO_LOCALS: usize = 4;
 const FP_OFFSET_TO_HOP_BACK: usize = 3;
 const FP_OFFSET_TO_NUM_ARGS: usize = 2;
@@ -71,6 +73,21 @@ pub enum Var {
     Vector(Box<Var>, bool),
     Colour(ColourFormat, f32, f32, f32, f32, bool),
     V2D(f32, f32, bool),
+}
+
+impl fmt::Display for Var {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Var::Int(i, _) => write!(f, "Int({})", i),
+            Var::Float(fl, _) => write!(f, "Float({})", fl),
+            Var::Bool(b, _) => write!(f, "Bool({})", b),
+            Var::Long(u, _) => write!(f, "Long({})", u),
+            Var::Name(i, _) => write!(f, "Name({})", i),
+            Var::Vector(_, _) => write!(f, "Vector(todo: implement Display)"),
+            Var::Colour(format, e0, e1, e2, e3, _) => write!(f, "Colour({}, {}, {}, {}, {})", format, e0, e1, e2, e3),
+            Var::V2D(fl1, fl2, _) => write!(f, "V2D({}, {})", fl1, fl2),
+        }
+    }
 }
 
 pub struct Env {
@@ -471,7 +488,7 @@ impl Vm {
 
     fn opcode_jump(&mut self, bc: &Bytecode) -> Result<()> {
         if let BytecodeArg::Int(i) = bc.arg0 {
-            self.ip += i as usize - 1;
+            self.ip = (self.ip as i32 + i - 1) as usize;
         } else {
             return Err(Error::VM("opcode_jump".to_string()));
         }
@@ -856,14 +873,13 @@ mod tests {
         is_float("(define a 6) (define b 7) (+ a b)", 13.0);
         is_float("(define a 8 b 9) (+ a b)", 17.0);
 
-        // is_float("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9.0);
-        // is_float("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9.0);
+        is_float("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9.0);
+        is_float("(loop (x from: 0 to: 5) (loop (y from: 0 to: 5) (+ 3 4))) 9", 9.0);
     }
 
-    #[test]
-    fn test_vm_problem() {
-        is_float("(loop (x from: 0 to: 5) (+ 42 38)) 9", 9.0);
-    }
+    // #[test]
+    // fn test_vm_problem() {
+    // }
 
     #[test]
     fn test_vm_callret() {
