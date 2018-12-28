@@ -68,7 +68,6 @@ fn run(matches: &ArgMatches) -> Result<()> {
                 run_debug_script(script)?;
             }
         } else {
-            println!("IMPLEMENT: non-debug path");
             if let Ok(seed) = value_t!(matches.value_of("seed"), u32) {
                 run_script_with_seed(script, seed)?;
             } else {
@@ -100,7 +99,10 @@ fn run_debug_script_with_seed(_script: &str, _seed: u32) -> Result<()> {
     Ok(())
 }
 
-fn run_script(_script: &str) -> Result<()> {
+fn run_script(script: &str) -> Result<()> {
+    let source = read_script_file(script)?;
+    let res = compile_and_execute(&source)?;
+    println!("res = {}", res);
     Ok(())
 }
 

@@ -34,6 +34,19 @@ use crate::parser::*;
 
 pub use crate::compiler::*;
 pub use crate::error::*;
+pub use crate::vm::*;
+
+pub fn compile_and_execute(s: &str) -> Result<Var> {
+    let mut vm = Vm::new();
+    let env = Env::new();
+
+    let (ast, _word_lut) = parse(s)?;
+    let program = compile_program(&ast)?;
+
+    vm.interpret(&env, &program)?;
+    vm.top_stack_value()
+}
+
 
 pub fn compile_str(s: &str) -> Result<Program> {
     let (ast, _word_lut) = parse(s)?;
