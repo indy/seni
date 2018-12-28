@@ -294,6 +294,16 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       gc_sweep(vm);
     }
 
+
+#define DEBUGGING_RUST
+
+#ifdef DEBUGGING_RUST
+    // isg-debug
+    if (vm->opcodes_executed >= 111) {
+      SEN_LOG("%d: ip: %d", vm->opcodes_executed - 111, ip);
+    }
+#endif
+
     vm->opcodes_executed++;
     bc = &(program->code[ip++]);
 
@@ -377,6 +387,9 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
 
       memory_segment_type = (sen_memory_segment_type)bc->arg0.value.i;
       if (memory_segment_type == MEM_SEG_ARGUMENT) {
+#ifdef DEBUGGING_RUST
+        SEN_LOG("fp: %d, offset: %d, ip: %d", vm->fp, bc->arg1.value.i, ip - 1);
+#endif
         dest = &(vm->stack[vm->fp - bc->arg1.value.i - 1]);
 
         // check the current value of dest,
@@ -454,6 +467,9 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
 #endif
 
       vm->ip    = addr;
+#ifdef DEBUGGING_RUST
+      SEN_LOG("vm->fp (CALL) set to: %d", fp);
+#endif
       vm->fp    = fp;
       vm->local = sp;
 
@@ -515,6 +531,10 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
       vm->sp    = vm->fp - (num_args * 2);
       vm->ip    = vm->stack[vm->fp + FP_OFFSET_TO_IP].value.i;
       vm->fp    = vm->stack[vm->fp].value.i;
+#ifdef DEBUGGING_RUST
+      // isg-debug
+      SEN_LOG("vm->fp (RET) set to: %d", vm->fp);
+#endif
       vm->local = vm->fp + FP_OFFSET_TO_LOCALS;
 
       // sync registers with vm
