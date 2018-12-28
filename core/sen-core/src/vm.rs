@@ -65,29 +65,29 @@ const MEMORY_LOCAL_SIZE: usize = 40;
 
 #[derive(Clone, Debug)]
 pub enum Var {
-    Int(i32, bool),
-    Float(f32, bool),
-    Bool(bool, bool),
-    Long(u64, bool),
-    Name(i32, bool),
-    Vector(Box<Vec<Var>>, bool),
-    Colour(ColourFormat, f32, f32, f32, f32, bool),
-    V2D(f32, f32, bool),
+    Int(i32),
+    Float(f32),
+    Bool(bool),
+    Long(u64),
+    Name(i32),
+    Vector(Box<Vec<Var>>),
+    Colour(ColourFormat, f32, f32, f32, f32),
+    V2D(f32, f32),
 }
 
 impl fmt::Display for Var {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Var::Int(i, _) => write!(f, "Int({})", i),
-            Var::Float(fl, _) => write!(f, "Float({})", fl),
-            Var::Bool(b, _) => write!(f, "Bool({})", b),
-            Var::Long(u, _) => write!(f, "Long({})", u),
-            Var::Name(i, _) => write!(f, "Name({})", i),
-            Var::Vector(_, _) => write!(f, "Vector(todo: implement Display)"),
-            Var::Colour(format, e0, e1, e2, e3, _) => {
+            Var::Int(i) => write!(f, "Int({})", i),
+            Var::Float(fl) => write!(f, "Float({})", fl),
+            Var::Bool(b) => write!(f, "Bool({})", b),
+            Var::Long(u) => write!(f, "Long({})", u),
+            Var::Name(i) => write!(f, "Name({})", i),
+            Var::Vector(_) => write!(f, "Vector(todo: implement Display)"),
+            Var::Colour(format, e0, e1, e2, e3) => {
                 write!(f, "Colour({}, {}, {}, {}, {})", format, e0, e1, e2, e3)
             }
-            Var::V2D(fl1, fl2, _) => write!(f, "V2D({}, {})", fl1, fl2),
+            Var::V2D(fl1, fl2) => write!(f, "V2D({}, {})", fl1, fl2),
         }
     }
 }
@@ -145,7 +145,7 @@ pub struct Vm {
 impl Default for Vm {
     fn default() -> Vm {
         let stack_size = 1024;
-        let stack = vec![Var::Int(0, true); stack_size];
+        let stack = vec![Var::Int(0); stack_size];
 
         let mut base_offset: usize = 0;
         let global = base_offset;
@@ -198,15 +198,13 @@ impl Default for Vm {
 
 fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
     match bytecode_arg {
-        BytecodeArg::Int(i) => Ok(Var::Int(*i, true)),
-        BytecodeArg::Float(f) => Ok(Var::Float(*f, true)),
-        BytecodeArg::Name(iname) => Ok(Var::Name(*iname, true)),
+        BytecodeArg::Int(i) => Ok(Var::Int(*i)),
+        BytecodeArg::Float(f) => Ok(Var::Float(*f)),
+        BytecodeArg::Name(iname) => Ok(Var::Name(*iname)),
         BytecodeArg::Mem(_mem) => Err(Error::VM(
             "bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string(),
         )),
-        BytecodeArg::Colour(format, e0, e1, e2, e3) => {
-            Ok(Var::Colour(*format, *e0, *e1, *e2, *e3, true))
-        }
+        BytecodeArg::Colour(format, e0, e1, e2, e3) => Ok(Var::Colour(*format, *e0, *e1, *e2, *e3)),
     }
 }
 
@@ -246,9 +244,9 @@ impl Vm {
                     // use the right frame i.e. we're using the caller function's ARG, not
                     // the callee
                     let mut fp = self.fp;
-                    if let Var::Int(hop_back, _) = self.stack[fp + FP_OFFSET_TO_HOP_BACK] {
+                    if let Var::Int(hop_back) = self.stack[fp + FP_OFFSET_TO_HOP_BACK] {
                         for _ in 0..hop_back {
-                            if let Var::Int(prev_fp, _) = self.stack[fp] {
+                            if let Var::Int(prev_fp) = self.stack[fp] {
                                 fp = prev_fp as usize; // go back a frame
                             } else {
                                 return Err(Error::VM("fp is wrong type?".to_string()));
@@ -267,9 +265,9 @@ impl Vm {
                     // use the right frame
 
                     let mut fp = self.fp;
-                    if let Var::Int(hop_back, _) = self.stack[fp + FP_OFFSET_TO_HOP_BACK] {
+                    if let Var::Int(hop_back) = self.stack[fp + FP_OFFSET_TO_HOP_BACK] {
                         for _ in 0..hop_back {
-                            if let Var::Int(prev_fp, _) = self.stack[fp] {
+                            if let Var::Int(prev_fp) = self.stack[fp] {
                                 fp = prev_fp as usize; // go back a frame
                             } else {
                                 return Err(Error::VM("fp is wrong type?".to_string()));
@@ -294,7 +292,7 @@ impl Vm {
                 Mem::Constant => self.stack[self.sp - 1] = bytecode_arg_to_var(&bc.arg1)?,
                 Mem::Void => {
                     // pushing from the void. i.e. create this object
-                    self.stack[self.sp - 1] = Var::Vector(Box::new(Vec::new()), true);
+                    self.stack[self.sp - 1] = Var::Vector(Box::new(Vec::new()));
                 }
             }
         } else {
@@ -347,11 +345,11 @@ impl Vm {
 
     fn opcode_add(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Float(f2, _) = &self.stack[self.sp] {
+        if let Var::Float(f2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Float(f1, _) = &self.stack[self.sp] {
+            if let Var::Float(f1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Float(f1 + f2, true);
+                self.stack[self.sp - 1] = Var::Float(f1 + f2);
             }
         }
         Ok(())
@@ -359,11 +357,11 @@ impl Vm {
 
     fn opcode_sub(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Float(f2, _) = &self.stack[self.sp] {
+        if let Var::Float(f2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Float(f1, _) = &self.stack[self.sp] {
+            if let Var::Float(f1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Float(f1 - f2, true);
+                self.stack[self.sp - 1] = Var::Float(f1 - f2);
             }
         }
         Ok(())
@@ -371,11 +369,11 @@ impl Vm {
 
     fn opcode_mul(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Float(f2, _) = &self.stack[self.sp] {
+        if let Var::Float(f2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Float(f1, _) = &self.stack[self.sp] {
+            if let Var::Float(f1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Float(f1 * f2, true);
+                self.stack[self.sp - 1] = Var::Float(f1 * f2);
             }
         }
         Ok(())
@@ -383,11 +381,11 @@ impl Vm {
 
     fn opcode_div(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Float(f2, _) = &self.stack[self.sp] {
+        if let Var::Float(f2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Float(f1, _) = &self.stack[self.sp] {
+            if let Var::Float(f1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Float(f1 / f2, true);
+                self.stack[self.sp - 1] = Var::Float(f1 / f2);
             }
         }
         Ok(())
@@ -395,11 +393,11 @@ impl Vm {
 
     fn opcode_mod(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Float(f2, _) = &self.stack[self.sp] {
+        if let Var::Float(f2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Float(f1, _) = &self.stack[self.sp] {
+            if let Var::Float(f1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Float((*f1 as i32 % *f2 as i32) as f32, true);
+                self.stack[self.sp - 1] = Var::Float((*f1 as i32 % *f2 as i32) as f32);
             }
         }
         Ok(())
@@ -407,9 +405,9 @@ impl Vm {
 
     fn opcode_sqrt(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Float(f1, _) = &self.stack[self.sp] {
+        if let Var::Float(f1) = &self.stack[self.sp] {
             self.sp = self.sp_inc()?; // stack push
-            self.stack[self.sp - 1] = Var::Float(f1.sqrt(), true);
+            self.stack[self.sp - 1] = Var::Float(f1.sqrt());
         }
 
         Ok(())
@@ -417,11 +415,11 @@ impl Vm {
 
     fn opcode_eq(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Float(f2, _) = &self.stack[self.sp] {
+        if let Var::Float(f2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Float(f1, _) = &self.stack[self.sp] {
+            if let Var::Float(f1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Bool(f1 == f2, true);
+                self.stack[self.sp - 1] = Var::Bool(f1 == f2);
             }
         }
         Ok(())
@@ -429,11 +427,11 @@ impl Vm {
 
     fn opcode_gt(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Float(f2, _) = &self.stack[self.sp] {
+        if let Var::Float(f2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Float(f1, _) = &self.stack[self.sp] {
+            if let Var::Float(f1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Bool(f1 > f2, true);
+                self.stack[self.sp - 1] = Var::Bool(f1 > f2);
             }
         }
         Ok(())
@@ -441,11 +439,11 @@ impl Vm {
 
     fn opcode_lt(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Float(f2, _) = &self.stack[self.sp] {
+        if let Var::Float(f2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Float(f1, _) = &self.stack[self.sp] {
+            if let Var::Float(f1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Bool(f1 < f2, true);
+                self.stack[self.sp - 1] = Var::Bool(f1 < f2);
             }
         }
         Ok(())
@@ -453,11 +451,11 @@ impl Vm {
 
     fn opcode_or(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Bool(b2, _) = &self.stack[self.sp] {
+        if let Var::Bool(b2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Bool(b1, _) = &self.stack[self.sp] {
+            if let Var::Bool(b1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Bool(*b1 || *b2, true);
+                self.stack[self.sp - 1] = Var::Bool(*b1 || *b2);
             }
         }
         Ok(())
@@ -465,9 +463,9 @@ impl Vm {
 
     fn opcode_not(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Bool(b1, _) = &self.stack[self.sp] {
+        if let Var::Bool(b1) = &self.stack[self.sp] {
             self.sp = self.sp_inc()?; // stack push
-            self.stack[self.sp - 1] = Var::Bool(!*b1, true);
+            self.stack[self.sp - 1] = Var::Bool(!*b1);
         }
 
         Ok(())
@@ -475,11 +473,11 @@ impl Vm {
 
     fn opcode_and(&mut self) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Bool(b2, _) = &self.stack[self.sp] {
+        if let Var::Bool(b2) = &self.stack[self.sp] {
             self.sp = self.sp_dec()?; // stack pop
-            if let Var::Bool(b1, _) = &self.stack[self.sp] {
+            if let Var::Bool(b1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
-                self.stack[self.sp - 1] = Var::Bool(*b1 && *b2, true);
+                self.stack[self.sp - 1] = Var::Bool(*b1 && *b2);
             }
         }
         Ok(())
@@ -496,7 +494,7 @@ impl Vm {
 
     fn opcode_jump_if(&mut self, bc: &Bytecode) -> Result<()> {
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Bool(b, _) = &self.stack[self.sp] {
+        if let Var::Bool(b) = &self.stack[self.sp] {
             // jump if the top of the stack is false
             if *b == false {
                 // assume that compiler will always emit a BytecodeArg::Int as arg0 for JUMP_IF
@@ -511,7 +509,7 @@ impl Vm {
     fn opcode_call(&mut self) -> Result<()> {
         let num_args;
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Int(num_args_, _) = &self.stack[self.sp] {
+        if let Var::Int(num_args_) = &self.stack[self.sp] {
             num_args = *num_args_;
         } else {
             return Err(Error::VM("opcode_call num_args_".to_string()));
@@ -519,7 +517,7 @@ impl Vm {
 
         let addr;
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Int(addr_, _) = &self.stack[self.sp] {
+        if let Var::Int(addr_) = &self.stack[self.sp] {
             addr = *addr_;
         } else {
             return Err(Error::VM("opcode_call addr_".to_string()));
@@ -532,20 +530,20 @@ impl Vm {
 
         // push the caller's fp
         self.sp = self.sp_inc()?; // stack push
-        self.stack[self.sp - 1] = Var::Int(self.fp as i32, true);
+        self.stack[self.sp - 1] = Var::Int(self.fp as i32);
 
         // push the ip
         self.sp = self.sp_inc()?; // stack push
-        self.stack[self.sp - 1] = Var::Int(self.ip as i32, true);
+        self.stack[self.sp - 1] = Var::Int(self.ip as i32);
 
         // push the num_args
         self.sp = self.sp_inc()?; // stack push
-        self.stack[self.sp - 1] = Var::Int(num_args, true);
+        self.stack[self.sp - 1] = Var::Int(num_args);
 
         // push hop back
-        if let Var::Int(hop_back, _) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
+        if let Var::Int(hop_back) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
             self.sp = self.sp_inc()?; // stack push
-            self.stack[self.sp - 1] = Var::Int(hop_back + 1, true);
+            self.stack[self.sp - 1] = Var::Int(hop_back + 1);
         }
 
         self.ip = addr as usize;
@@ -557,7 +555,7 @@ impl Vm {
             // setting all memory as VAR_INT will prevent any weird ref count
             // stuff when we deal with the RET opcodes later on
             self.sp = self.sp_inc()?;
-            self.stack[self.sp - 1] = Var::Int(0, true);
+            self.stack[self.sp - 1] = Var::Int(0);
         }
 
         Ok(())
@@ -567,7 +565,7 @@ impl Vm {
         self.sp = self.sp_dec()?; // stack pop
 
         let addr;
-        if let Var::Int(addr_, _) = &self.stack[self.sp] {
+        if let Var::Int(addr_) = &self.stack[self.sp] {
             addr = *addr_;
         } else {
             return Err(Error::VM("opcode_call_0".to_string()));
@@ -576,14 +574,14 @@ impl Vm {
         // like CALL but keep the existing frame and just update the ip and return ip
 
         // set the correct return ip
-        self.stack[self.fp + FP_OFFSET_TO_IP] = Var::Int(self.ip as i32, true);
+        self.stack[self.fp + FP_OFFSET_TO_IP] = Var::Int(self.ip as i32);
 
         // leap to a location
         self.ip = addr as usize;
 
         // we're now executing the body of the function so don't
         // hop back when we push any arguments or locals onto the stack
-        self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] = Var::Int(0, true);
+        self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] = Var::Int(0);
 
         Ok(())
     }
@@ -596,7 +594,7 @@ impl Vm {
         let src = &self.stack[self.sp - 1];
 
         let num_args: usize;
-        if let Var::Int(num_args_, _) = &self.stack[self.fp + FP_OFFSET_TO_NUM_ARGS] {
+        if let Var::Int(num_args_) = &self.stack[self.fp + FP_OFFSET_TO_NUM_ARGS] {
             num_args = *num_args_ as usize;
         } else {
             return Err(Error::VM("opcode_ret num_args_".to_string()));
@@ -604,12 +602,12 @@ impl Vm {
 
         // update vm
         self.sp = self.fp - (num_args * 2);
-        if let Var::Int(ip, _) = &self.stack[self.fp + FP_OFFSET_TO_IP] {
+        if let Var::Int(ip) = &self.stack[self.fp + FP_OFFSET_TO_IP] {
             self.ip = *ip as usize;
         } else {
             return Err(Error::VM("opcode_ret ip".to_string()));
         }
-        if let Var::Int(fp, _) = &self.stack[self.fp] {
+        if let Var::Int(fp) = &self.stack[self.fp] {
             self.fp = *fp as usize;
         } else {
             return Err(Error::VM("opcode_ret fp".to_string()));
@@ -625,7 +623,7 @@ impl Vm {
 
     fn opcode_ret_0(&mut self) -> Result<()> {
         // leap to the return ip
-        if let Var::Int(ip, _) = self.stack[self.fp + FP_OFFSET_TO_IP] {
+        if let Var::Int(ip) = self.stack[self.fp + FP_OFFSET_TO_IP] {
             self.ip = ip as usize;
         } else {
             return Err(Error::VM("opcode_ret_0".to_string()));
@@ -639,7 +637,7 @@ impl Vm {
         // read the index into program->fn_name
         let fn_info_index;
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Int(fn_info_index_, _) = &self.stack[self.sp] {
+        if let Var::Int(fn_info_index_) = &self.stack[self.sp] {
             fn_info_index = *fn_info_index_ as usize;
         } else {
             return Err(Error::VM("opcode_call_f fn_info_index_".to_string()));
@@ -656,20 +654,20 @@ impl Vm {
 
         // push the caller's fp
         self.sp = self.sp_inc()?; // stack push
-        self.stack[self.sp - 1] = Var::Int(self.fp as i32, true);
+        self.stack[self.sp - 1] = Var::Int(self.fp as i32);
 
         // push the ip
         self.sp = self.sp_inc()?; // stack push
-        self.stack[self.sp - 1] = Var::Int(self.ip as i32, true);
+        self.stack[self.sp - 1] = Var::Int(self.ip as i32);
 
         // push the num_args
         self.sp = self.sp_inc()?; // stack push
-        self.stack[self.sp - 1] = Var::Int(num_args, true);
+        self.stack[self.sp - 1] = Var::Int(num_args);
 
         // push hop back
-        if let Var::Int(hop_back, _) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
+        if let Var::Int(hop_back) = self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] {
             self.sp = self.sp_inc()?; // stack push
-            self.stack[self.sp - 1] = Var::Int(hop_back + 1, true);
+            self.stack[self.sp - 1] = Var::Int(hop_back + 1);
         }
 
         self.ip = addr as usize;
@@ -681,7 +679,7 @@ impl Vm {
             // setting all memory as VAR_INT will prevent any weird ref count
             // stuff when we deal with the RET opcodes later on
             self.sp = self.sp_inc()?;
-            self.stack[self.sp - 1] = Var::Int(0, true);
+            self.stack[self.sp - 1] = Var::Int(0);
         }
 
         Ok(())
@@ -691,7 +689,7 @@ impl Vm {
         // like CALL_0 but gets it's function information from program->fn_info
         let fn_info_index;
         self.sp = self.sp_dec()?; // stack pop
-        if let Var::Int(fn_info_index_, _) = &self.stack[self.sp] {
+        if let Var::Int(fn_info_index_) = &self.stack[self.sp] {
             fn_info_index = *fn_info_index_ as usize;
         } else {
             return Err(Error::VM("opcode_call_f fn_info_index_".to_string()));
@@ -703,14 +701,14 @@ impl Vm {
         // like CALL but keep the existing frame and just update the ip and return ip
 
         // set the correct return ip
-        self.stack[self.fp + FP_OFFSET_TO_IP] = Var::Int(self.ip as i32, true);
+        self.stack[self.fp + FP_OFFSET_TO_IP] = Var::Int(self.ip as i32);
 
         // leap to a location
         self.ip = addr as usize;
 
         // we're now executing the body of the function so don't
         // hop back when we push any arguments or locals onto the stack
-        self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] = Var::Int(0, true);
+        self.stack[self.fp + FP_OFFSET_TO_HOP_BACK] = Var::Int(0);
 
         Ok(())
     }
@@ -719,7 +717,7 @@ impl Vm {
         // combines two floats from the stack into a single Var::V2D
 
         self.sp = self.sp_dec()?; // stack pop
-        let f2 = if let Var::Float(f2_, _) = &self.stack[self.sp] {
+        let f2 = if let Var::Float(f2_) = &self.stack[self.sp] {
             *f2_
         } else {
             return Err(Error::VM(
@@ -728,7 +726,7 @@ impl Vm {
         };
 
         self.sp = self.sp_dec()?; // stack pop
-        let f1 = if let Var::Float(f1_, _) = &self.stack[self.sp] {
+        let f1 = if let Var::Float(f1_) = &self.stack[self.sp] {
             *f1_
         } else {
             return Err(Error::VM(
@@ -737,7 +735,7 @@ impl Vm {
         };
 
         self.sp = self.sp_inc()?; // stack push
-        self.stack[self.sp - 1] = Var::V2D(f1, f2, true);
+        self.stack[self.sp - 1] = Var::V2D(f1, f2);
 
         Ok(())
     }
@@ -752,15 +750,19 @@ impl Vm {
         // a push here to place the updated vector
         // both of the above cancel out
 
-        if let Var::V2D(a, b, _) = &self.stack[self.sp - 1] {
+        if let Var::V2D(a, b) = &self.stack[self.sp - 1] {
             // convert the VAR_2D into a VAR_VECTOR
-            self.stack[self.sp - 1] = Var::Vector(Box::new(vec!(Var::Float(*a, true),
-                                                                Var::Float(*b, true),
-                                                                cloned_var_value)), true);
-        } else if let Var::Vector(ref mut box_vec, _) = &mut self.stack[self.sp - 1] {
+            self.stack[self.sp - 1] = Var::Vector(Box::new(vec![
+                Var::Float(*a),
+                Var::Float(*b),
+                cloned_var_value,
+            ]));
+        } else if let Var::Vector(ref mut box_vec) = &mut self.stack[self.sp - 1] {
             box_vec.push(cloned_var_value);
         } else {
-            return Err(Error::VM("append requires either a Vector or V2D".to_string()))
+            return Err(Error::VM(
+                "append requires either a Vector or V2D".to_string(),
+            ));
         }
 
         Ok(())
@@ -847,22 +849,22 @@ mod tests {
     }
 
     fn is_float(s: &str, val: f32) {
-        if let Var::Float(f, _) = vm_exec(s) {
+        if let Var::Float(f) = vm_exec(s) {
             assert_eq!(f, val)
         }
     }
 
     fn is_bool(s: &str, val: bool) {
-        if let Var::Bool(b, _) = vm_exec(s) {
+        if let Var::Bool(b) = vm_exec(s) {
             assert_eq!(b, val)
         }
     }
 
     fn is_vec_of_f32(s: &str, val: Vec<f32>) {
-        if let Var::Vector(box_vec, _) = vm_exec(s) {
+        if let Var::Vector(box_vec) = vm_exec(s) {
             assert_eq!(box_vec.len(), val.len());
             for (i, f) in val.iter().enumerate() {
-                if let Some(Var::Float(ff, _)) = box_vec.get(i) {
+                if let Some(Var::Float(ff)) = box_vec.get(i) {
                     assert_eq!(ff, f);
                 }
             }
@@ -1044,21 +1046,33 @@ mod tests {
 
     #[test]
     fn text_vm_vector() {
-        is_vec_of_f32("[4 5 6 7 8]", vec!(4.0, 5.0, 6.0, 7.0, 8.0));
+        is_vec_of_f32("[4 5 6 7 8]", vec![4.0, 5.0, 6.0, 7.0, 8.0]);
 
         is_float("(loop (x from: 0 to: 5) [1 2 3 4 5]) 9", 9.0);
 
         // explicitly defined vector is returned
-        is_vec_of_f32("(fn (f a: 3) [1 2 3 4 5]) (fn (x) (f)) (x)", vec!(1.0, 2.0, 3.0, 4.0, 5.0));
+        is_vec_of_f32(
+            "(fn (f a: 3) [1 2 3 4 5]) (fn (x) (f)) (x)",
+            vec![1.0, 2.0, 3.0, 4.0, 5.0],
+        );
 
         // local var in function is returned
-        is_vec_of_f32("(fn (f a: 3) (define b [1 2 3 4 5]) b) (fn (x) (f)) (x)", vec!(1.0, 2.0, 3.0, 4.0, 5.0));
+        is_vec_of_f32(
+            "(fn (f a: 3) (define b [1 2 3 4 5]) b) (fn (x) (f)) (x)",
+            vec![1.0, 2.0, 3.0, 4.0, 5.0],
+        );
 
         // local var in function is not returned
-        is_float("(fn (f a: 3) (define b [1 2 3 4 5]) 55) (fn (x) (f)) (x)", 55.0);
+        is_float(
+            "(fn (f a: 3) (define b [1 2 3 4 5]) 55) (fn (x) (f)) (x)",
+            55.0,
+        );
 
         // default argument for function is returned
-        is_vec_of_f32("(fn (f a: [1 2 3 4 5]) a) (fn (x) (f)) (x)", vec!(1.0, 2.0, 3.0, 4.0, 5.0));
+        is_vec_of_f32(
+            "(fn (f a: [1 2 3 4 5]) a) (fn (x) (f)) (x)",
+            vec![1.0, 2.0, 3.0, 4.0, 5.0],
+        );
 
         // default argument for function is not returned
         is_float("(fn (f a: [1 2 3 4 5]) 3) (fn (x) (f)) (x)", 3.0);
@@ -1075,45 +1089,79 @@ mod tests {
         is_float("(fn (f a: [1 2 3 4 5]) a) (fn (x) (f a: 5)) (x)", 5.0);
 
         // argument into function is returned
-        is_vec_of_f32("(fn (f a: [3 4 5 6 7]) a) (fn (x) (f a: [1 2 3 4 5])) (x)", vec!(1.0, 2.0, 3.0, 4.0, 5.0));
+        is_vec_of_f32(
+            "(fn (f a: [3 4 5 6 7]) a) (fn (x) (f a: [1 2 3 4 5])) (x)",
+            vec![1.0, 2.0, 3.0, 4.0, 5.0],
+        );
     }
 
     #[test]
     fn test_vm_vector_append() {
-        is_vec_of_f32("(define v []) (++ v 100) v", vec!(100.0));
-        is_vec_of_f32("(define v [1]) (++ v 100) v", vec!(1.0, 100.0));
-        is_vec_of_f32("(define v [1 2]) (++ v 100) v", vec!(1.0, 2.0, 100.0));
-        is_vec_of_f32("(define v [1 2 3]) (++ v 100) v", vec!(1.0, 2.0, 3.0, 100.0));
-        is_vec_of_f32("(define v [1 2 3 4]) (++ v 100) v", vec!(1.0, 2.0, 3.0, 4.0, 100.0));
+        is_vec_of_f32("(define v []) (++ v 100) v", vec![100.0]);
+        is_vec_of_f32("(define v [1]) (++ v 100) v", vec![1.0, 100.0]);
+        is_vec_of_f32("(define v [1 2]) (++ v 100) v", vec![1.0, 2.0, 100.0]);
+        is_vec_of_f32(
+            "(define v [1 2 3]) (++ v 100) v",
+            vec![1.0, 2.0, 3.0, 100.0],
+        );
+        is_vec_of_f32(
+            "(define v [1 2 3 4]) (++ v 100) v",
+            vec![1.0, 2.0, 3.0, 4.0, 100.0],
+        );
     }
 
     #[test]
     fn test_vm_fence() {
-        is_vec_of_f32("(define v []) (fence (x from: 0 to: 10 num: 3) (++ v x)) v", vec!(0.0, 5.0, 10.0));
-        is_vec_of_f32("(define v []) (fence (x from: 10 to: 0 num: 3) (++ v x)) v", vec!(10.0, 5.0, 0.0));
-        is_vec_of_f32("(define v []) (fence (x num: 5) (++ v x)) v", vec!(0.0, 0.25, 0.5, 0.75, 1.0));
+        is_vec_of_f32(
+            "(define v []) (fence (x from: 0 to: 10 num: 3) (++ v x)) v",
+            vec![0.0, 5.0, 10.0],
+        );
+        is_vec_of_f32(
+            "(define v []) (fence (x from: 10 to: 0 num: 3) (++ v x)) v",
+            vec![10.0, 5.0, 0.0],
+        );
+        is_vec_of_f32(
+            "(define v []) (fence (x num: 5) (++ v x)) v",
+            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+        );
 
-        is_vec_of_f32("(define v []) (fence (x from: 100 to: 900 num: 10) (++ v x)) v",
-                      vec!(100.0000, 188.88889, 277.77777, 366.66666, 455.55554, 544.44446, 633.33333,
-                           722.22217, 811.1111, 900.0000));
+        is_vec_of_f32(
+            "(define v []) (fence (x from: 100 to: 900 num: 10) (++ v x)) v",
+            vec![
+                100.0000, 188.88889, 277.77777, 366.66666, 455.55554, 544.44446, 633.33333,
+                722.22217, 811.1111, 900.0000,
+            ],
+        );
     }
 
     #[test]
     fn test_vm_loop() {
-        is_vec_of_f32("(define v []) (loop (x from: 0 to: 4) (++ v x)) v", vec!(0.0, 1.0, 2.0, 3.0));
-        is_vec_of_f32("(define v []) (loop (x from: 0 upto: 4) (++ v x)) v", vec!(0.0, 1.0, 2.0, 3.0, 4.0));
-        is_vec_of_f32("(define v []) (loop (x from: 0 to: 10 inc: 2) (++ v x)) v", vec!(0.0, 2.0, 4.0, 6.0, 8.0));
-        is_vec_of_f32("(define v []) (loop (x from: 0 upto: 10 inc: 2) (++ v x)) v", vec!(0.0, 2.0, 4.0, 6.0, 8.0, 10.0));
+        is_vec_of_f32(
+            "(define v []) (loop (x from: 0 to: 4) (++ v x)) v",
+            vec![0.0, 1.0, 2.0, 3.0],
+        );
+        is_vec_of_f32(
+            "(define v []) (loop (x from: 0 upto: 4) (++ v x)) v",
+            vec![0.0, 1.0, 2.0, 3.0, 4.0],
+        );
+        is_vec_of_f32(
+            "(define v []) (loop (x from: 0 to: 10 inc: 2) (++ v x)) v",
+            vec![0.0, 2.0, 4.0, 6.0, 8.0],
+        );
+        is_vec_of_f32(
+            "(define v []) (loop (x from: 0 upto: 10 inc: 2) (++ v x)) v",
+            vec![0.0, 2.0, 4.0, 6.0, 8.0, 10.0],
+        );
     }
 
     // #[test]
     // fn test_vm_each() {
     //     is_vec_of_f32("(define inp [] v []) (each (x from: inp) (++ v x)) v", vec!());
-        // is_vec_of_f32("(define inp [99] v []) (each (x from: inp) (++ v x)) v", 1, 99.0f);
-        // // this tests the special case of VAR_2D rather than the default VAR_VECTOR:
-        // is_vec_of_f32("(define inp [42 43] v []) (each (x from: inp) (++ v x)) v", 2, 42.0f, 43.0f);
-        // is_vec_of_f32("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
-        //      3.0f);
-//    }
+    // is_vec_of_f32("(define inp [99] v []) (each (x from: inp) (++ v x)) v", 1, 99.0f);
+    // // this tests the special case of VAR_2D rather than the default VAR_VECTOR:
+    // is_vec_of_f32("(define inp [42 43] v []) (each (x from: inp) (++ v x)) v", 2, 42.0f, 43.0f);
+    // is_vec_of_f32("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
+    //      3.0f);
+    //    }
 
 }
