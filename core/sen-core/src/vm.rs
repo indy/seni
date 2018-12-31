@@ -776,7 +776,7 @@ impl Vm {
         if let BytecodeArg::Int(num_args_) = bc.arg0 {
             num_args = num_args_ as usize;
         } else {
-            return Err(Error::VM("opcode_pile arg0 should be Int".to_string()))
+            return Err(Error::VM("opcode_pile arg0 should be Int".to_string()));
         }
 
         self.sp = self.sp_dec()?; // stack pop
@@ -792,9 +792,12 @@ impl Vm {
                 self.stack[self.sp - 1] = Var::Float(y);
             } else {
                 // note: is this really an error? what if only 1 value from V2D is required?
-                return Err(Error::VM(format!("PILE: V2D num_args = {}, requires 2", num_args)));
+                return Err(Error::VM(format!(
+                    "PILE: V2D num_args = {}, requires 2",
+                    num_args
+                )));
             }
-            return Ok(())
+            return Ok(());
         }
 
         // note: extra clone here, is there a way of taking the vec from the Var::Vector(Box) ?
@@ -812,6 +815,122 @@ impl Vm {
             if let Some(var) = elems.get(i) {
                 self.stack[self.sp - 1] = var.clone()
             }
+        }
+
+        Ok(())
+    }
+
+    fn opcode_vec_non_empty(&mut self) -> Result<()> {
+        let top = &self.stack[self.sp - 1]; // peek
+
+        let mut non_empty = false;
+
+        if let Var::Vector(box_vec) = top {
+            if box_vec.is_empty() == false {
+                non_empty = true;
+            }
+        } else if let Var::V2D(_, _) = top {
+            // pretend that VAR_2D is a vector and special case all the VEC_* opcodes
+            non_empty = true;
+        } else {
+            return Err(Error::VM(
+                "VEC_NON_EMPTY requires either Vector or V2D on the stack".to_string(),
+            ));
+        }
+
+        // push
+        self.sp = self.sp_inc()?;
+        self.stack[self.sp - 1] = Var::Bool(non_empty);
+
+        Ok(())
+    }
+
+    fn opcode_vec_load_first(&mut self) -> Result<()> {
+        // top of the stack has a vector (currently self.sp - 1)
+        // going to push 2 elements onto the stack (index and first element)
+        // so the vector will be at self.sp - 3
+
+        // push the index (0)
+        self.sp = self.sp_inc()?;
+        self.stack[self.sp - 1] = Var::Int(0);
+
+        // push the first element to the top
+        self.sp = self.sp_inc()?;
+
+        if let Var::Vector(box_vec) = &self.stack[self.sp - 3] {
+            if let Some(elem) = box_vec.get(0) {
+                self.stack[self.sp - 1] = elem.clone();
+            }
+        } else if let Var::V2D(a, _b) = &self.stack[self.sp - 3] {
+            self.stack[self.sp - 1] = Var::Float(*a);
+        } else {
+            return Err(Error::VM(
+                "VEC_LOAD_FIRST requires either Vector or V2D on the stack".to_string(),
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn opcode_vec_has_next(&mut self) -> Result<()> {
+        // self.sp - 3 == the vector
+        // self.sp - 2 == the index
+        // self.sp - 1 == the element
+
+        let mut index = 0;
+        if let Var::Int(index_) = self.stack[self.sp - 2] {
+            index = index_;
+        }
+
+        let mut has_next = false;
+        if let Var::Vector(box_vec) = &self.stack[self.sp - 3] {
+            if box_vec.len() > index as usize + 1 {
+                has_next = true;
+            }
+        } else if let Var::V2D(_a, _b) = &self.stack[self.sp - 3] {
+            if index == 0 {
+                has_next = true;
+            }
+        } else {
+            return Err(Error::VM(
+                "VEC_HAS_NEXT requires either Vector or V2D on the stack".to_string(),
+            ));
+        }
+
+        self.sp = self.sp_inc()?;
+        self.stack[self.sp - 1] = Var::Bool(has_next);
+
+        Ok(())
+    }
+
+    fn opcode_vec_next(&mut self) -> Result<()> {
+        // self.sp - 3 == the vector
+        // self.sp - 2 == the index
+        // self.sp - 1 == the element
+
+        // increment the index
+        let mut index = 0;
+        if let Var::Int(index_) = self.stack[self.sp - 2] {
+            index = index_;
+        }
+        index = index + 1;
+        self.stack[self.sp - 2] = Var::Int(index);
+
+        // update the element at the top of the stack
+        if let Var::Vector(box_vec) = &self.stack[self.sp - 3] {
+            if let Some(elem) = box_vec.get(index as usize) {
+                self.stack[self.sp - 1] = elem.clone();
+            }
+        } else if let Var::V2D(_a, b) = &self.stack[self.sp - 3] {
+            if index == 1 {
+                self.stack[self.sp - 1] = Var::Float(*b);
+            } else {
+                return Err(Error::VM("VEC_NEXT impossible situation".to_string()));
+            }
+        } else {
+            return Err(Error::VM(
+                "VEC_NEXT requires either Vector or V2D on the stack".to_string(),
+            ));
         }
 
         Ok(())
@@ -864,6 +983,10 @@ impl Vm {
                 Opcode::SQUISH2 => self.opcode_squish2()?,
                 Opcode::APPEND => self.opcode_append()?,
                 Opcode::PILE => self.opcode_pile(bc)?,
+                Opcode::VEC_NON_EMPTY => self.opcode_vec_non_empty()?,
+                Opcode::VEC_LOAD_FIRST => self.opcode_vec_load_first()?,
+                Opcode::VEC_HAS_NEXT => self.opcode_vec_has_next()?,
+                Opcode::VEC_NEXT => self.opcode_vec_next()?,
                 Opcode::STOP => {
                     // todo: execution time
                     //
@@ -1204,14 +1327,25 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn test_vm_each() {
-    //     is_vec_of_f32("(define inp [] v []) (each (x from: inp) (++ v x)) v", vec!());
-    // is_vec_of_f32("(define inp [99] v []) (each (x from: inp) (++ v x)) v", 1, 99.0f);
-    // // this tests the special case of VAR_2D rather than the default VAR_VECTOR:
-    // is_vec_of_f32("(define inp [42 43] v []) (each (x from: inp) (++ v x)) v", 2, 42.0f, 43.0f);
-    // is_vec_of_f32("(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v", 4, 0.0f, 1.0f, 2.0f,
-    //      3.0f);
-    //    }
+    #[test]
+    fn test_vm_each() {
+        is_vec_of_f32(
+            "(define inp [] v []) (each (x from: inp) (++ v x)) v",
+            vec![],
+        );
+        is_vec_of_f32(
+            "(define inp [99] v []) (each (x from: inp) (++ v x)) v",
+            vec![99.0],
+        );
+        // this tests the special case of VAR_2D rather than the default VAR_VECTOR:
+        is_vec_of_f32(
+            "(define inp [42 43] v []) (each (x from: inp) (++ v x)) v",
+            vec![42.0, 43.0],
+        );
+        is_vec_of_f32(
+            "(define inp [0 1 2 3] v []) (each (x from: inp) (++ v x)) v",
+            vec![0.0, 1.0, 2.0, 3.0],
+        );
+    }
 
 }

@@ -174,7 +174,7 @@ pub fn opcode_stack_offset(opcode: Opcode) -> i32 {
         Opcode::MTX_LOAD => 0,
         Opcode::MTX_STORE => 0,
         Opcode::VEC_NON_EMPTY => 1,
-        Opcode::VEC_LOAD_FIRST => 1,
+        Opcode::VEC_LOAD_FIRST => 2,
         Opcode::VEC_HAS_NEXT => 1,
         Opcode::VEC_NEXT => 0,
         Opcode::STOP => 0,
