@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::{Bytecode, BytecodeArg, ColourFormat, Mem, Program};
+use crate::compiler::{Bytecode, BytecodeArg, ColourFormat, FnInfo, Mem, Program};
 use crate::error::{Error, Result};
 use crate::opcodes::Opcode;
 //use crate::parser::WordLut;
@@ -234,6 +234,27 @@ impl Vm {
         Ok(self.sp - 1)
     }
 
+    fn arg_memory_from_iname(
+        &self,
+        fn_info: &FnInfo,
+        iname: usize,
+        stack_index: usize,
+    ) -> Option<usize> {
+        let mut args = stack_index;
+
+        for _ in 0..fn_info.num_args {
+            if let Var::Int(ina) = self.stack[args] {
+                if ina as usize == iname {
+                    return Some(args - 1) // move from the label onto the arg's default value
+                }
+            }
+
+            args = args - 2; // move past this arg and the next arg's value
+        }
+
+        None
+    }
+
     fn opcode_load(&mut self, bc: &Bytecode) -> Result<()> {
         self.sp = self.sp_inc()?; // stack push
 
@@ -335,6 +356,54 @@ impl Vm {
             _ => {
                 return Err(Error::VM(format!(
                     "opcode_store unknown memory type: {}",
+                    mem
+                )))
+            }
+        }
+
+        Ok(())
+    }
+
+    fn opcode_store_f(&mut self, program: &Program, bc: &Bytecode) -> Result<()> {
+        // function look-up version of STORE
+        // pops the fn_info_index from the stack in order to determine the
+        // correct location to store an argument parameter
+
+        // pop
+        self.sp = self.sp_dec()?;
+        let i;
+        if let Var::Int(i_) = self.stack[self.sp] {
+            i = i_;
+        } else {
+            return Err(Error::VM("store_f".to_string()));
+        }
+
+        // pop the value
+        self.sp = self.sp_dec()?;
+
+        let mem;
+        if let BytecodeArg::Mem(mem_) = bc.arg0 {
+            mem = mem_;
+        } else {
+            return Err(Error::VM("opcode_store_f arg0 should be mem".to_string()));
+        }
+
+        match mem {
+            Mem::Argument => {
+                if let BytecodeArg::Int(iname) = bc.arg1 {
+                    let fn_info = &program.fn_info[i as usize];
+                    if let Some(dest_index) =
+                        self.arg_memory_from_iname(fn_info, iname as usize, self.fp - 1)
+                    {
+                        // copy popped into stack[dest_index]
+                        self.stack[dest_index] = self.stack[self.sp].clone();
+                    }
+                    // else this is trying to assign a parameter that doesn't exist for the function
+                }
+            }
+            _ => {
+                return Err(Error::VM(format!(
+                    "opcode_store_f unknown memory type: {}",
                     mem
                 )))
             }
@@ -960,6 +1029,7 @@ impl Vm {
             match bc.op {
                 Opcode::LOAD => self.opcode_load(bc)?,
                 Opcode::STORE => self.opcode_store(bc)?,
+                Opcode::STORE_F => self.opcode_store_f(program, bc)?,
                 Opcode::ADD => self.opcode_add()?,
                 Opcode::SUB => self.opcode_sub()?,
                 Opcode::MUL => self.opcode_mul()?,
@@ -1348,4 +1418,62 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_vm_function_address() {
+        is_float(
+            "(fn (k a: 5) (+ a a))
+             (fn (l a: 5) (+ a a))
+             (define foo (address-of l))
+             (fn-call (foo a: 99 b: 88))",
+            198.0,
+        );
+
+        // normal
+        is_float(
+            "(fn (dbl a: 5) (* a 2))
+             (fn (trp a: 5) (* a 3))
+             (define foo (address-of dbl))
+             (fn-call (foo a: 44))",
+            88.0,
+        );
+        is_float(
+            "(fn (dbl a: 5) (* a 2))
+             (fn (trp a: 5) (* a 3))
+             (define foo (address-of trp))
+             (fn-call (foo a: 44))",
+            132.0,
+        );
+
+        // invalid arguments - use defaults
+        is_float(
+            "(fn (dbl a: 5) (* a 2))
+             (fn (trp a: 5) (* a 3))
+             (define foo (address-of dbl))
+             (fn-call (foo z: 44))",
+            10.0,
+        );
+        is_float(
+            "(fn (dbl a: 5) (* a 2))
+             (fn (trp a: 5) (* a 3))
+             (define foo (address-of trp))
+             (fn-call (foo z: 44))",
+            15.0,
+        );
+
+        // some invalid arguments
+        is_float(
+            "(fn (dbl a: 5) (* a 2))
+             (fn (trp a: 5) (* a 3))
+             (define foo (address-of dbl))
+             (fn-call (foo z: 100 a: 44))",
+            88.0,
+        );
+        is_float(
+            "(fn (dbl a: 5) (* a 2))
+             (fn (trp a: 5) (* a 3))
+             (define foo (address-of trp))
+             (fn-call (foo z: 41 a: 44))",
+            132.0,
+        );
+    }
 }
