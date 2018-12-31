@@ -768,6 +768,55 @@ impl Vm {
         Ok(())
     }
 
+    fn opcode_pile(&mut self, bc: &Bytecode) -> Result<()> {
+        // pops the V2D/Vector from the top of the stack and pushes the
+        // given number of elements from the V2D/Vector onto the stack
+
+        let num_args;
+        if let BytecodeArg::Int(num_args_) = bc.arg0 {
+            num_args = num_args_ as usize;
+        } else {
+            return Err(Error::VM("opcode_pile arg0 should be Int".to_string()))
+        }
+
+        self.sp = self.sp_dec()?; // stack pop
+
+        if let Var::V2D(a, b) = &self.stack[self.sp] {
+            // top of the stack is a var_2d
+            let x = *a;
+            let y = *b;
+            if num_args == 2 {
+                // push both floats onto the stack
+                self.sp = self.sp_inc_by(2)?;
+                self.stack[self.sp - 2] = Var::Float(x);
+                self.stack[self.sp - 1] = Var::Float(y);
+            } else {
+                // note: is this really an error? what if only 1 value from V2D is required?
+                return Err(Error::VM(format!("PILE: V2D num_args = {}, requires 2", num_args)));
+            }
+            return Ok(())
+        }
+
+        // note: extra clone here, is there a way of taking the vec from the Var::Vector(Box) ?
+        let mut elems: Vec<Var> = Vec::with_capacity(num_args);
+        if let Var::Vector(box_vec) = &self.stack[self.sp] {
+            for v in box_vec.iter().take(num_args) {
+                elems.push(v.clone());
+            }
+        } else {
+            return Err(Error::VM("opcode_pile".to_string()));
+        }
+
+        for i in 0..num_args {
+            self.sp = self.sp_inc()?;
+            if let Some(var) = elems.get(i) {
+                self.stack[self.sp - 1] = var.clone()
+            }
+        }
+
+        Ok(())
+    }
+
     // executes a program on a vm
     // returns Ok if we reached a STOP opcode
     pub fn interpret(&mut self, _env: &Env, program: &Program) -> Result<()> {
@@ -814,6 +863,7 @@ impl Vm {
                 Opcode::CALL_F_0 => self.opcode_call_f_0(program)?,
                 Opcode::SQUISH2 => self.opcode_squish2()?,
                 Opcode::APPEND => self.opcode_append()?,
+                Opcode::PILE => self.opcode_pile(bc)?,
                 Opcode::STOP => {
                     // todo: execution time
                     //
