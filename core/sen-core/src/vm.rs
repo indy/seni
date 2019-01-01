@@ -26,42 +26,12 @@ const FP_OFFSET_TO_HOP_BACK: usize = 3;
 const FP_OFFSET_TO_NUM_ARGS: usize = 2;
 const FP_OFFSET_TO_IP: usize = 1;
 
-// known memory addresses
-
-const SP: usize = 0;
-const LCL: usize = 1;
-const ARG: usize = 2;
-
-// todo: update this comment + size constants
-// these sizes are in terms of sen_var structures
-// currently (23/11/2018), each sen_var is 56 bytes
-// so 1MB can contain
-// (1048576 / 56) == 18,724 sen_var structures
-const HEAP_SIZE: usize = 18724;
-const STACK_SIZE: usize = 1024;
-
-// how low can the heap go before a GC is invoked
-//
-const HEAP_MIN_SIZE: usize = 10;
 const MEMORY_GLOBAL_SIZE: usize = 40;
 const MEMORY_LOCAL_SIZE: usize = 40;
-
-// void gc_mark_vector(sen_var* vector)
-// void gc_mark(sen_vm* vm)
-// void gc_sweep(sen_vm* vm)
 
 // **************************************************
 // VM bytecode interpreter
 // **************************************************
-
-// sen_var* arg_memory_from_iname(sen_fn_info* fn_info, i32 iname, sen_var* args)
-// void vm_function_set_argument_to_var(sen_vm* vm, sen_fn_info* fn_info, i32 iname, sen_var* src)
-// void vm_function_set_argument_to_f32(sen_vm* vm, sen_fn_info* fn_info, i32 iname, f32 f)
-// void vm_function_set_argument_to_2d(sen_vm* vm, sen_fn_info* fn_info, i32 iname, f32 x, f32 y)
-// void vm_function_call_default_arguments(sen_vm* vm, sen_fn_info* fn_info)
-// void vm_function_call_body(sen_vm* vm, sen_fn_info* fn_info)
-// bool vm_run(sen_vm* vm, sen_env* env, sen_program* program)
-// bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program)
 
 #[derive(Clone, Debug)]
 pub enum Var {
@@ -70,7 +40,7 @@ pub enum Var {
     Bool(bool),
     Long(u64),
     Name(i32),
-    Vector(Box<Vec<Var>>),
+    Vector(Vec<Var>),
     Colour(ColourFormat, f32, f32, f32, f32),
     V2D(f32, f32),
 }
@@ -99,6 +69,12 @@ pub struct Env {
 
 impl Env {
     pub fn new() -> Self {
+        Default::default()
+    }
+}
+
+impl Default for Env {
+    fn default() -> Env {
         Env { function_ptr: 42 }
     }
 }
@@ -149,7 +125,7 @@ impl Default for Vm {
 
         let mut base_offset: usize = 0;
         let global = base_offset;
-        base_offset = base_offset + MEMORY_GLOBAL_SIZE;
+        base_offset += MEMORY_GLOBAL_SIZE;
         let fp = base_offset;
 
         // add some offsets so that the memory after fp matches a standard format
@@ -249,7 +225,7 @@ impl Vm {
                 }
             }
 
-            args = args - 2; // move past this arg and the next arg's value
+            args -= 2; // move past this arg and the next arg's value
         }
 
         None
@@ -313,7 +289,7 @@ impl Vm {
                 Mem::Constant => self.stack[self.sp - 1] = bytecode_arg_to_var(&bc.arg1)?,
                 Mem::Void => {
                     // pushing from the void. i.e. create this object
-                    self.stack[self.sp - 1] = Var::Vector(Box::new(Vec::new()));
+                    self.stack[self.sp - 1] = Var::Vector(Vec::new());
                 }
             }
         } else {
@@ -565,7 +541,7 @@ impl Vm {
         self.sp = self.sp_dec()?; // stack pop
         if let Var::Bool(b) = &self.stack[self.sp] {
             // jump if the top of the stack is false
-            if *b == false {
+            if !(*b) {
                 // assume that compiler will always emit a BytecodeArg::Int as arg0 for JUMP_IF
                 if let BytecodeArg::Int(i) = bc.arg0 {
                     self.ip += i as usize - 1;
@@ -821,13 +797,13 @@ impl Vm {
 
         if let Var::V2D(a, b) = &self.stack[self.sp - 1] {
             // convert the VAR_2D into a VAR_VECTOR
-            self.stack[self.sp - 1] = Var::Vector(Box::new(vec![
+            self.stack[self.sp - 1] = Var::Vector(vec![
                 Var::Float(*a),
                 Var::Float(*b),
                 cloned_var_value,
-            ]));
-        } else if let Var::Vector(ref mut box_vec) = &mut self.stack[self.sp - 1] {
-            box_vec.push(cloned_var_value);
+            ]);
+        } else if let Var::Vector(ref mut vec_vec) = &mut self.stack[self.sp - 1] {
+            vec_vec.push(cloned_var_value);
         } else {
             return Err(Error::VM(
                 "append requires either a Vector or V2D".to_string(),
@@ -869,10 +845,10 @@ impl Vm {
             return Ok(());
         }
 
-        // note: extra clone here, is there a way of taking the vec from the Var::Vector(Box) ?
+        // note: extra clone here, is there a way of taking the vec from the Var::Vector() ?
         let mut elems: Vec<Var> = Vec::with_capacity(num_args);
-        if let Var::Vector(box_vec) = &self.stack[self.sp] {
-            for v in box_vec.iter().take(num_args) {
+        if let Var::Vector(vec_vec) = &self.stack[self.sp] {
+            for v in vec_vec.iter().take(num_args) {
                 elems.push(v.clone());
             }
         } else {
@@ -892,20 +868,16 @@ impl Vm {
     fn opcode_vec_non_empty(&mut self) -> Result<()> {
         let top = &self.stack[self.sp - 1]; // peek
 
-        let mut non_empty = false;
-
-        if let Var::Vector(box_vec) = top {
-            if box_vec.is_empty() == false {
-                non_empty = true;
-            }
+        let non_empty = if let Var::Vector(vec_vec) = top {
+            !vec_vec.is_empty()
         } else if let Var::V2D(_, _) = top {
             // pretend that VAR_2D is a vector and special case all the VEC_* opcodes
-            non_empty = true;
+            true
         } else {
             return Err(Error::VM(
                 "VEC_NON_EMPTY requires either Vector or V2D on the stack".to_string(),
             ));
-        }
+        };
 
         // push
         self.sp = self.sp_inc()?;
@@ -926,8 +898,8 @@ impl Vm {
         // push the first element to the top
         self.sp = self.sp_inc()?;
 
-        if let Var::Vector(box_vec) = &self.stack[self.sp - 3] {
-            if let Some(elem) = box_vec.get(0) {
+        if let Var::Vector(vec_vec) = &self.stack[self.sp - 3] {
+            if let Some(elem) = vec_vec.get(0) {
                 self.stack[self.sp - 1] = elem.clone();
             }
         } else if let Var::V2D(a, _b) = &self.stack[self.sp - 3] {
@@ -952,8 +924,8 @@ impl Vm {
         }
 
         let mut has_next = false;
-        if let Var::Vector(box_vec) = &self.stack[self.sp - 3] {
-            if box_vec.len() > index as usize + 1 {
+        if let Var::Vector(vec_vec) = &self.stack[self.sp - 3] {
+            if vec_vec.len() > index as usize + 1 {
                 has_next = true;
             }
         } else if let Var::V2D(_a, _b) = &self.stack[self.sp - 3] {
@@ -982,12 +954,12 @@ impl Vm {
         if let Var::Int(index_) = self.stack[self.sp - 2] {
             index = index_;
         }
-        index = index + 1;
+        index += 1;
         self.stack[self.sp - 2] = Var::Int(index);
 
         // update the element at the top of the stack
-        if let Var::Vector(box_vec) = &self.stack[self.sp - 3] {
-            if let Some(elem) = box_vec.get(index as usize) {
+        if let Var::Vector(vec_vec) = &self.stack[self.sp - 3] {
+            if let Some(elem) = vec_vec.get(index as usize) {
                 self.stack[self.sp - 1] = elem.clone();
             }
         } else if let Var::V2D(_a, b) = &self.stack[self.sp - 3] {
@@ -1029,6 +1001,7 @@ impl Vm {
             match bc.op {
                 Opcode::LOAD => self.opcode_load(bc)?,
                 Opcode::STORE => self.opcode_store(bc)?,
+                Opcode::NATIVE => unimplemented!(),
                 Opcode::STORE_F => self.opcode_store_f(program, bc)?,
                 Opcode::ADD => self.opcode_add()?,
                 Opcode::SUB => self.opcode_sub()?,
@@ -1057,12 +1030,14 @@ impl Vm {
                 Opcode::VEC_LOAD_FIRST => self.opcode_vec_load_first()?,
                 Opcode::VEC_HAS_NEXT => self.opcode_vec_has_next()?,
                 Opcode::VEC_NEXT => self.opcode_vec_next()?,
+                Opcode::MTX_LOAD => unimplemented!(),
+                Opcode::MTX_STORE => unimplemented!(),
                 Opcode::STOP => {
                     // todo: execution time
                     //
                     return Ok(());
-                }
-                _ => return Err(Error::VM(format!("unknown bytecode: {}", bc.op))),
+                },
+                _ => return Err(Error::VM(format!("Invalid Opcode: {}", bc.op)))
             }
         }
     }
@@ -1104,10 +1079,10 @@ mod tests {
     }
 
     fn is_vec_of_f32(s: &str, val: Vec<f32>) {
-        if let Var::Vector(box_vec) = vm_exec(s) {
-            assert_eq!(box_vec.len(), val.len());
+        if let Var::Vector(vec_vec) = vm_exec(s) {
+            assert_eq!(vec_vec.len(), val.len());
             for (i, f) in val.iter().enumerate() {
-                if let Some(Var::Float(ff)) = box_vec.get(i) {
+                if let Some(Var::Float(ff)) = vec_vec.get(i) {
                     assert_eq!(ff, f);
                 }
             }
