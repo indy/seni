@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Inderjit Gill
+// Copyright (C) 2019 Inderjit Gill
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::vm::{Var, Vm};
+use crate::bind::*;
 use crate::compiler::Program;
 use crate::error::Result;
 use crate::keywords::Keyword;
-use crate::bind::*;
+use crate::vm::{Var, Vm};
 
 use std::collections::HashMap;
 use std::fmt;
@@ -252,7 +252,6 @@ impl fmt::Display for Native {
     }
 }
 
-
 pub fn string_to_native(s: &str) -> Option<Native> {
     match s {
         "debug/print" => Some(Native::DebugPrint),
@@ -346,7 +345,7 @@ pub fn string_to_native(s: &str) -> Option<Native> {
         "gen/2d" => Some(Native::Gen2D),
         "gen/select" => Some(Native::GenSelect),
         "gen/col" => Some(Native::GenCol),
-        _ => None
+        _ => None,
     }
 }
 

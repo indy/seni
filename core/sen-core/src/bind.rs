@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Inderjit Gill
+// Copyright (C) 2019 Inderjit Gill
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,14 +13,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::{Program};
-use crate::error::{Result};
+use crate::compiler::Program;
+use crate::error::Result;
 use crate::vm::{Var, Vm};
 
 pub fn bind_vector_length(_vm: &mut Vm, _program: &Program, _num_args: i32) -> Result<Var> {
     Ok(Var::Int(3))
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -28,9 +27,6 @@ mod tests {
 
     #[test]
     fn test_bind_vector_length() {
-        is_int(
-            "(define v []) (++ v 100) (vector/length vector: v)",
-            3,
-        );
+        is_int("(define v []) (++ v 100) (vector/length vector: v)", 3);
     }
 }

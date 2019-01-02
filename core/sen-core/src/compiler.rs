@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Inderjit Gill
+// Copyright (C) 2019 Inderjit Gill
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::error::{Error, Result};
-use crate::native::{string_to_native, Native};
 use crate::keywords::{keyword_to_string, string_to_keyword_hash, Keyword};
+use crate::native::{string_to_native, Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::parser::Node;
 

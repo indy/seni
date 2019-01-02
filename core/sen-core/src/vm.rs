@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Inderjit Gill
+// Copyright (C) 2019 Inderjit Gill
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,9 +15,9 @@
 
 use crate::compiler::{Bytecode, BytecodeArg, ColourFormat, FnInfo, Mem, Program};
 use crate::error::{Error, Result};
+use crate::native::{build_native_fn_hash, Native};
 use crate::opcodes::Opcode;
 use crate::placeholder::*;
-use crate::native::{Native, build_native_fn_hash};
 
 use std::collections::HashMap;
 use std::fmt;
@@ -215,7 +215,7 @@ impl Vm {
         for _ in 0..fn_info.num_args {
             if let Var::Int(ina) = self.stack[args] {
                 if ina as usize == iname {
-                    return Some(args - 1) // move from the label onto the arg's default value
+                    return Some(args - 1); // move from the label onto the arg's default value
                 }
             }
 
@@ -338,19 +338,25 @@ impl Vm {
         let num_args = if let BytecodeArg::Int(num_args_) = bc.arg1 {
             num_args_
         } else {
-            return Err(Error::VM("opcode native requires arg1 to be num_args".to_string()))
+            return Err(Error::VM(
+                "opcode native requires arg1 to be num_args".to_string(),
+            ));
         };
 
         let native = if let BytecodeArg::Native(native_) = bc.arg0 {
             native_
         } else {
-            return Err(Error::VM("opcode native requires arg0 to be a BytecodeArg::Native".to_string()))
+            return Err(Error::VM(
+                "opcode native requires arg0 to be a BytecodeArg::Native".to_string(),
+            ));
         };
 
         let var = if let Some(function) = self.native_fns.get(&native) {
             function(self, program, num_args)?
         } else {
-            return Err(Error::VM("opcode native can't find native function".to_string()))
+            return Err(Error::VM(
+                "opcode native can't find native function".to_string(),
+            ));
         };
 
         // push var onto the stack
@@ -817,11 +823,8 @@ impl Vm {
 
         if let Var::V2D(a, b) = &self.stack[self.sp - 1] {
             // convert the VAR_2D into a VAR_VECTOR
-            self.stack[self.sp - 1] = Var::Vector(vec![
-                Var::Float(*a),
-                Var::Float(*b),
-                cloned_var_value,
-            ]);
+            self.stack[self.sp - 1] =
+                Var::Vector(vec![Var::Float(*a), Var::Float(*b), cloned_var_value]);
         } else if let Var::Vector(ref mut vec_vec) = &mut self.stack[self.sp - 1] {
             vec_vec.push(cloned_var_value);
         } else {
@@ -1056,8 +1059,8 @@ impl Vm {
                     // todo: execution time
                     //
                     return Ok(());
-                },
-                _ => return Err(Error::VM(format!("Invalid Opcode: {}", bc.op)))
+                }
+                _ => return Err(Error::VM(format!("Invalid Opcode: {}", bc.op))),
             }
         }
     }

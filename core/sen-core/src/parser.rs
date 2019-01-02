@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Inderjit Gill
+// Copyright (C) 2019 Inderjit Gill
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 use std::collections::HashMap;
 
 use crate::error::{Error, Result};
-use crate::native::string_to_native;
 use crate::keywords::string_to_keyword;
 use crate::lexer::{tokenize, Token};
+use crate::native::string_to_native;
 
 #[derive(Debug, PartialEq)]
 pub struct Gene {
