@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::error::{Error, Result};
+use crate::native::{string_to_native, Native};
 use crate::keywords::{keyword_to_string, string_to_keyword_hash, Keyword};
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::parser::Node;
@@ -91,6 +92,7 @@ pub enum BytecodeArg {
     Int(i32),
     Float(f32),
     Name(i32),
+    Native(Native),
     Mem(Mem),
     Colour(ColourFormat, f32, f32, f32, f32),
 }
@@ -101,6 +103,7 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Int(i) => write!(f, "{}", i),
             BytecodeArg::Float(s) => write!(f, "{:.2}", s),
             BytecodeArg::Name(i) => write!(f, "Name({})", i),
+            BytecodeArg::Native(n) => write!(f, "{}", n),
             BytecodeArg::Mem(m) => write!(f, "{}", m),
             BytecodeArg::Colour(s, a, b, c, d) => write!(f, "{}({} {} {} {})", s, a, b, c, d),
         }
@@ -359,6 +362,19 @@ impl Compilation {
             op,
             arg0: BytecodeArg::Mem(arg0),
             arg1: BytecodeArg::Colour(ColourFormat::Rgba, r, g, b, a),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+
+    fn emit_opcode_native_i32(&mut self, op: Opcode, arg0: Native, arg1: i32) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Native(arg0),
+            arg1: BytecodeArg::Int(arg1),
         };
 
         self.add_bytecode(b)?;
@@ -950,15 +966,8 @@ impl Compiler {
                     return Ok(());
                 }
 
-                let mut found_keyword: bool = false;
-                let mut keyword: Keyword = Keyword::Define;
                 if let Some(kw) = self.string_to_keyword.get(text) {
-                    keyword = *kw;
-                    found_keyword = true;
-                }
-
-                if found_keyword {
-                    match keyword {
+                    match *kw {
                         Keyword::Define => {
                             self.compile_define(compilation, &children[1..], Mem::Local)?
                         }
@@ -1028,7 +1037,29 @@ impl Compiler {
                         }
                     }
                 }
+
                 // check native api set
+                if let Some(native) = string_to_native(text) {
+                    // NATIVE
+                    let mut num_args = 0;
+                    let mut label_vals = &children[1..];
+                    while label_vals.len() > 1 {
+                        let label = &label_vals[0];
+                        let value = &label_vals[1];
+
+                        if let Node::Label(_, iname, _) = label {
+                            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, *iname)?;
+                        }
+                        self.compile(compilation, &value)?;
+                        num_args += 1;
+
+                        label_vals = &label_vals[2..];
+                    }
+                    compilation.emit_opcode_native_i32(Opcode::NATIVE, native, num_args)?;
+
+                    // modify opcode_offset according to how many args were given
+                    compilation.opcode_offset -= (num_args * 2) - 1;
+                }
             }
             _ => return Err(Error::Compiler("compile_list strange child".to_string())),
         }

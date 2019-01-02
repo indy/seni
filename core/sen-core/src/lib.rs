@@ -20,11 +20,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+mod bind;
 mod colour;
 mod compiler;
 mod error;
 mod keywords;
 mod lexer;
+mod native;
 mod opcodes;
 mod parser;
 mod placeholder;

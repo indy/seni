@@ -16,6 +16,7 @@
 use std::collections::HashMap;
 
 use crate::error::{Error, Result};
+use crate::native::string_to_native;
 use crate::keywords::string_to_keyword;
 use crate::lexer::{tokenize, Token};
 
@@ -65,7 +66,10 @@ impl WordLut {
     }
 
     pub fn get(&mut self, s: &str) -> Option<i32> {
-        // todo: first check the native api
+        // first check the native api
+        if let Some(n) = string_to_native(s) {
+            return Some(n as i32);
+        }
 
         // 2nd check the keywords
         if let Some(kw) = string_to_keyword(s) {
@@ -425,7 +429,7 @@ mod tests {
                         gene: None,
                         parameter_ast: vec![
                             Node::Whitespace(" ".to_string(), None),
-                            Node::List(vec![Node::Name("gen/scalar".to_string(), 1, None)], None)
+                            Node::List(vec![Node::Name("gen/scalar".to_string(), 385, None)], None)
                         ],
                         parameter_prefix: vec![Node::Whitespace(" ".to_string(), None)]
                     })

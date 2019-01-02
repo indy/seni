@@ -16,9 +16,10 @@
 use crate::compiler::{Bytecode, BytecodeArg, ColourFormat, FnInfo, Mem, Program};
 use crate::error::{Error, Result};
 use crate::opcodes::Opcode;
-//use crate::parser::WordLut;
 use crate::placeholder::*;
+use crate::native::{Native, build_native_fn_hash};
 
+use std::collections::HashMap;
 use std::fmt;
 
 const FP_OFFSET_TO_LOCALS: usize = 4;
@@ -83,24 +84,10 @@ impl Default for Env {
 // in case any of the native functions had to invoke vm_interpret.
 // the rust version should just pass in these 2 extra args into the native functions
 pub struct Vm {
-    // store a reference to the program and env in the vm
-    // required in case any of the native functions need to invoke vm_interpret
-    // program: &'a Program,
-    // env: &'a Env,
     render_data: RenderData, // stores the generated vertex data
-
     matrix_stack: MatrixStack,
-
     prng_state: PrngState, // only used when evaluating bracket bindings
 
-    // heap_size: i32,
-    // heap_slab: Var,            // the contiguous block of allocated memory
-    // heap_avail: Var,           // doubly linked list of unallocated sen_vars from the
-    // // heap_slab
-    // heap_avail_size_before_gc: i32, // how small can the heap get before a gc is
-    // // invoked
-
-    // heap_avail_size: i32,
     opcodes_executed: u64,
     execution_time: f32, // in msec
 
@@ -116,6 +103,8 @@ pub struct Vm {
 
     building_with_trait_within_vector: bool,
     trait_within_vector_index: bool,
+
+    native_fns: HashMap<Native, fn(&mut Vm, &Program, i32) -> Result<Var>>,
 }
 
 impl Default for Vm {
@@ -168,6 +157,8 @@ impl Default for Vm {
 
             building_with_trait_within_vector: false,
             trait_within_vector_index: false,
+
+            native_fns: build_native_fn_hash(),
         }
     }
 }
@@ -179,6 +170,9 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
         BytecodeArg::Name(iname) => Ok(Var::Name(*iname)),
         BytecodeArg::Mem(_mem) => Err(Error::VM(
             "bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string(),
+        )),
+        BytecodeArg::Native(_native) => Err(Error::VM(
+            "bytecode_arg_to_var not implemented for BytecodeArg::Native".to_string(),
         )),
         BytecodeArg::Colour(format, e0, e1, e2, e3) => Ok(Var::Colour(*format, *e0, *e1, *e2, *e3)),
     }
@@ -336,6 +330,32 @@ impl Vm {
                 )))
             }
         }
+
+        Ok(())
+    }
+
+    fn opcode_native(&mut self, program: &Program, bc: &Bytecode) -> Result<()> {
+        let num_args = if let BytecodeArg::Int(num_args_) = bc.arg1 {
+            num_args_
+        } else {
+            return Err(Error::VM("opcode native requires arg1 to be num_args".to_string()))
+        };
+
+        let native = if let BytecodeArg::Native(native_) = bc.arg0 {
+            native_
+        } else {
+            return Err(Error::VM("opcode native requires arg0 to be a BytecodeArg::Native".to_string()))
+        };
+
+        let var = if let Some(function) = self.native_fns.get(&native) {
+            function(self, program, num_args)?
+        } else {
+            return Err(Error::VM("opcode native can't find native function".to_string()))
+        };
+
+        // push var onto the stack
+        self.sp = self.sp_inc()?;
+        self.stack[self.sp - 1] = var;
 
         Ok(())
     }
@@ -1001,7 +1021,7 @@ impl Vm {
             match bc.op {
                 Opcode::LOAD => self.opcode_load(bc)?,
                 Opcode::STORE => self.opcode_store(bc)?,
-                Opcode::NATIVE => unimplemented!(),
+                Opcode::NATIVE => self.opcode_native(program, bc)?,
                 Opcode::STORE_F => self.opcode_store_f(program, bc)?,
                 Opcode::ADD => self.opcode_add()?,
                 Opcode::SUB => self.opcode_sub()?,
@@ -1049,7 +1069,7 @@ impl Vm {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
     use crate::compiler::compile_program;
     use crate::parser::parse;
@@ -1069,6 +1089,12 @@ mod tests {
     fn is_float(s: &str, val: f32) {
         if let Var::Float(f) = vm_exec(s) {
             assert_eq!(f, val)
+        }
+    }
+
+    pub fn is_int(s: &str, val: i32) {
+        if let Var::Int(i) = vm_exec(s) {
+            assert_eq!(i, val)
         }
     }
 
