@@ -1092,7 +1092,7 @@ pub mod tests {
         vm.top_stack_value().unwrap()
     }
 
-    fn is_float(s: &str, val: f32) {
+    pub fn is_float(s: &str, val: f32) {
         if let Var::Float(f) = vm_exec(s) {
             assert_eq!(f, val)
         }
@@ -1104,13 +1104,13 @@ pub mod tests {
         }
     }
 
-    fn is_bool(s: &str, val: bool) {
+    pub fn is_bool(s: &str, val: bool) {
         if let Var::Bool(b) = vm_exec(s) {
             assert_eq!(b, val)
         }
     }
 
-    fn is_vec_of_f32(s: &str, val: Vec<f32>) {
+    pub fn is_vec_of_f32(s: &str, val: Vec<f32>) {
         if let Var::Vector(vec_vec) = vm_exec(s) {
             assert_eq!(vec_vec.len(), val.len());
             for (i, f) in val.iter().enumerate() {
