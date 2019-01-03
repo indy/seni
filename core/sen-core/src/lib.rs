@@ -25,6 +25,7 @@ mod compiler;
 mod error;
 mod keywords;
 mod lexer;
+mod mathutil;
 mod native;
 mod opcodes;
 mod parser;

@@ -18,11 +18,10 @@ use std::fmt;
 
 use crate::error::{Error, Result};
 use crate::keywords::{keyword_to_string, string_to_keyword_hash, Keyword};
+use crate::mathutil;
 use crate::native::{string_to_native, Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::parser::Node;
-
-const TAU: f32 = 6.283_185_307_179_586; // todo: move TAU to math
 
 const MEMORY_LOCAL_SIZE: usize = 40;
 
@@ -682,7 +681,11 @@ impl Compiler {
             1000.0,
         )?;
 
-        self.compile_global_bind_f32(compilation, keyword_to_string(Keyword::MathTau), TAU)?;
+        self.compile_global_bind_f32(
+            compilation,
+            keyword_to_string(Keyword::MathTau),
+            mathutil::TAU,
+        )?;
 
         self.compile_global_bind_col(
             compilation,

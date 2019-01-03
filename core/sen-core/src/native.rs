@@ -16,6 +16,7 @@
 use crate::compiler::Program;
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
+use crate::mathutil;
 use crate::vm::{Var, Vm};
 
 use std::collections::HashMap;
@@ -349,7 +350,8 @@ pub fn string_to_native(s: &str) -> Option<Native> {
 }
 
 pub fn build_native_fn_hash() -> HashMap<Native, fn(&mut Vm, &Program, usize) -> Result<Var>> {
-    let mut native_fns: HashMap<Native, fn(&mut Vm, &Program, usize) -> Result<Var>> = HashMap::new();
+    let mut native_fns: HashMap<Native, fn(&mut Vm, &Program, usize) -> Result<Var>> =
+        HashMap::new();
 
     // --------------------------------------------------
     // misc
@@ -423,12 +425,12 @@ pub fn build_native_fn_hash() -> HashMap<Native, fn(&mut Vm, &Program, usize) ->
     // --------------------------------------------------
     // math
     // --------------------------------------------------
-    // BIND("math/distance", bind_math_distance);
-    // BIND("math/normal", bind_math_normal);
-    // BIND("math/clamp", bind_math_clamp);
-    // BIND("math/radians->degrees", bind_math_radians_to_degrees);
-    // BIND("math/cos", bind_math_cos);
-    // BIND("math/sin", bind_math_sin);
+    native_fns.insert(Native::MathDistance, bind_math_distance);
+    native_fns.insert(Native::MathNormal, bind_math_normal);
+    native_fns.insert(Native::MathClamp, bind_math_clamp);
+    native_fns.insert(Native::MathRadiansDegrees, bind_math_radians_to_degrees);
+    native_fns.insert(Native::MathCos, bind_math_cos);
+    native_fns.insert(Native::MathSin, bind_math_sin);
 
     // --------------------------------------------------
     // prng
@@ -491,13 +493,10 @@ pub fn build_native_fn_hash() -> HashMap<Native, fn(&mut Vm, &Program, usize) ->
     // BIND("gen/select", bind_gen_select); // broken?
     // BIND("gen/col", bind_gen_col);
 
-
-
     native_fns
 }
 
 pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-
     let mut from: Option<&Var> = None;
     let mut n: Option<usize> = None;
 
@@ -509,7 +508,6 @@ pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var>
         args_pointer += 2;
 
         if let Var::Int(iname) = label {
-
             if *iname == Keyword::From as i32 {
                 from = Some(value);
             }
@@ -525,24 +523,25 @@ pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var>
     if let Some(from) = from {
         if let Var::Vector(vs) = from {
             if let Some(nth) = vs.get(n.unwrap_or(0)) {
-                return Ok(nth.clone())
+                return Ok(nth.clone());
             } else {
-                return Err(Error::Bind("bind_nth: n out of range".to_string()))
+                return Err(Error::Bind("bind_nth: n out of range".to_string()));
             }
         } else if let Var::V2D(a, b) = from {
             match n.unwrap_or(0) {
                 0 => return Ok(Var::Float(*a)),
                 1 => return Ok(Var::Float(*b)),
-                _ => return Err(Error::Bind("bind_nth: n out of range".to_string()))
+                _ => return Err(Error::Bind("bind_nth: n out of range".to_string())),
             }
         }
     }
 
-    return Err(Error::Bind("bind_nth requires vector argument in 'from'".to_string()))
+    return Err(Error::Bind(
+        "bind_nth requires vector argument in 'from'".to_string(),
+    ));
 }
 
 pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-
     let mut vector: Option<&Var> = None;
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -562,11 +561,205 @@ pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     if let Some(v) = vector {
         if let Var::Vector(vs) = v {
             let len = vs.len();
-            return Ok(Var::Int(len as i32))
+            return Ok(Var::Int(len as i32));
         }
     }
 
-    return Err(Error::Bind("bind_vector_length requires vector argument".to_string()))
+    return Err(Error::Bind(
+        "bind_vector_length requires vector argument".to_string(),
+    ));
+}
+
+pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut vec1: Option<&Var> = None;
+    let mut vec2: Option<&Var> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer + 0];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            if *iname == Keyword::Vec1 as i32 {
+                vec1 = Some(value);
+            }
+            if *iname == Keyword::Vec2 as i32 {
+                vec2 = Some(value);
+            }
+        }
+    }
+
+    if let Some(vec1_) = vec1 {
+        if let Var::V2D(x1, y1) = vec1_ {
+            if let Some(vec2_) = vec2 {
+                if let Var::V2D(x2, y2) = vec2_ {
+                    let distance = mathutil::distance_v2(*x1, *y1, *x2, *y2);
+                    return Ok(Var::Float(distance));
+                }
+            }
+        }
+    }
+
+    return Err(Error::Bind("bind error".to_string()));
+}
+
+pub fn bind_math_normal(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut vec1: Option<&Var> = None;
+    let mut vec2: Option<&Var> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer + 0];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            if *iname == Keyword::Vec1 as i32 {
+                vec1 = Some(value);
+            }
+            if *iname == Keyword::Vec2 as i32 {
+                vec2 = Some(value);
+            }
+        }
+    }
+
+    if let Some(vec1_) = vec1 {
+        if let Var::V2D(x1, y1) = vec1_ {
+            if let Some(vec2_) = vec2 {
+                if let Var::V2D(x2, y2) = vec2_ {
+                    let norm = mathutil::normal(*x1, *y1, *x2, *y2);
+                    return Ok(Var::V2D(norm.0, norm.1));
+                }
+            }
+        }
+    }
+
+    return Err(Error::Bind("bind error".to_string()));
+}
+
+pub fn bind_math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    // todo: try and move functions like this into ones that initially
+    // create and return a function that takes a single argument.
+    // e.g.
+    // (define my-clamp (math/clamp-fn min: 0.0 max: 42.0))
+    // (my-clamp val: 22)
+    //
+    // then optimize for single argument functions as these will be much faster to
+    // parse
+    //
+
+    let mut value: Option<f32> = None;
+    let mut min: Option<f32> = None;
+    let mut max: Option<f32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label_ = &vm.stack[args_pointer + 0];
+        let value_ = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname_) = label_ {
+            if *iname_ == Keyword::Value as i32 {
+                if let Var::Float(f) = value_ {
+                    value = Some(*f);
+                }
+            }
+            if *iname_ == Keyword::Min as i32 {
+                if let Var::Float(f) = value_ {
+                    min = Some(*f);
+                }
+            }
+            if *iname_ == Keyword::Max as i32 {
+                if let Var::Float(f) = value_ {
+                    max = Some(*f);
+                }
+            }
+        }
+    }
+
+    let res = mathutil::clamp(value.unwrap_or(0.0), min.unwrap_or(0.0), max.unwrap_or(0.0));
+
+    return Ok(Var::Float(res));
+}
+
+pub fn bind_math_radians_to_degrees(
+    vm: &mut Vm,
+    _program: &Program,
+    num_args: usize,
+) -> Result<Var> {
+    let mut angle: Option<f32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label_ = &vm.stack[args_pointer + 0];
+        let value_ = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname_) = label_ {
+            if *iname_ == Keyword::Angle as i32 {
+                if let Var::Float(f) = value_ {
+                    angle = Some(*f);
+                }
+            }
+        }
+    }
+
+    let res = mathutil::rad_to_deg(angle.unwrap_or(0.0));
+
+    return Ok(Var::Float(res));
+}
+
+pub fn bind_math_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut angle: Option<f32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label_ = &vm.stack[args_pointer + 0];
+        let value_ = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname_) = label_ {
+            if *iname_ == Keyword::Angle as i32 {
+                if let Var::Float(f) = value_ {
+                    angle = Some(*f);
+                }
+            }
+        }
+    }
+
+    let res = angle.unwrap_or(0.0).cos();
+
+    return Ok(Var::Float(res));
+}
+
+pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut angle: Option<f32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label_ = &vm.stack[args_pointer + 0];
+        let value_ = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname_) = label_ {
+            if *iname_ == Keyword::Angle as i32 {
+                if let Var::Float(f) = value_ {
+                    angle = Some(*f);
+                }
+            }
+        }
+    }
+
+    let res = angle.unwrap_or(0.0).sin();
+
+    return Ok(Var::Float(res));
 }
 
 #[cfg(test)]
@@ -590,8 +783,30 @@ mod tests {
         is_int("(define v [1]) (++ v 100) (vector/length vector: v)", 2);
         is_int("(define v [1 2]) (++ v 100) (vector/length vector: v)", 3);
         is_int("(define v [1 2 3]) (++ v 100) (vector/length vector: v)", 4);
-        is_int("(define v [1 2 3 4]) (++ v 100) (vector/length vector: v)", 5);
-        is_int("(define v []) (++ v 4) (++ v 3) (++ v 2) (++ v 1) (++ v 0) (vector/length vector: v)", 5);
-        is_int("(define v [1 2]) (++ v 98) (++ v 99) (++ v 100) (vector/length vector: v)", 5);
+        is_int(
+            "(define v [1 2 3 4]) (++ v 100) (vector/length vector: v)",
+            5,
+        );
+        is_int(
+            "(define v []) (++ v 4) (++ v 3) (++ v 2) (++ v 1) (++ v 0) (vector/length vector: v)",
+            5,
+        );
+        is_int(
+            "(define v [1 2]) (++ v 98) (++ v 99) (++ v 100) (vector/length vector: v)",
+            5,
+        );
     }
+
+    #[test]
+    fn test_bind_math() {
+        is_float("(math/clamp value: 3 min: 2 max: 5)", 3.0);
+        is_float("(math/clamp value: 1 min: 2 max: 5)", 2.0);
+        is_float("(math/clamp value: 8 min: 2 max: 5)", 5.0);
+
+        is_float("(math/radians->degrees angle: 0.3)", 17.188734);
+
+        is_float("(math/cos angle: 0.7)", 0.7648422);
+        is_float("(math/sin angle: 0.9)", 0.7833269);
+    }
+
 }

@@ -15,10 +15,10 @@
 
 use crate::compiler::{Bytecode, BytecodeArg, ColourFormat, FnInfo, Mem, Program};
 use crate::error::{Error, Result};
+use crate::keywords::Keyword;
 use crate::native::{build_native_fn_hash, Native};
 use crate::opcodes::Opcode;
 use crate::placeholder::*;
-use crate::keywords::Keyword;
 
 use std::collections::HashMap;
 use std::fmt;
