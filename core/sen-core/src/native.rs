@@ -349,8 +349,8 @@ pub fn string_to_native(s: &str) -> Option<Native> {
     }
 }
 
-pub fn build_native_fn_hash() -> HashMap<Native, fn(&mut Vm, &Program, i32) -> Result<Var>> {
-    let mut native_fns: HashMap<Native, fn(&mut Vm, &Program, i32) -> Result<Var>> = HashMap::new();
+pub fn build_native_fn_hash() -> HashMap<Native, fn(&mut Vm, &Program, usize) -> Result<Var>> {
+    let mut native_fns: HashMap<Native, fn(&mut Vm, &Program, usize) -> Result<Var>> = HashMap::new();
     native_fns.insert(Native::VectorLength, bind_vector_length);
 
     native_fns

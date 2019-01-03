@@ -14,8 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::collections::HashMap;
-
-// start at MAX_WORD_LOOKUPS
+use std::fmt;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Keyword {
@@ -219,6 +218,12 @@ pub enum Keyword {
     Width,
 
     KeywordEnd,
+}
+
+impl fmt::Display for Keyword {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", format!("{}", keyword_to_string(*self)))
+    }
 }
 
 pub fn string_to_keyword_hash() -> HashMap<String, Keyword> {

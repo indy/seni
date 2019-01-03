@@ -31,17 +31,20 @@ pub enum Error {
     ParserUnableToParseFloat(String),
     ParserHandledToken,
 
-    // Mem
+    // mem
     MemUnmappableBytecodeArg,
     MemUnmappableI32,
 
-    // Compiler
+    // compiler
     CompilerFnWithoutName,
     CompilerFnDeclIncomplete,
     Compiler(String),
 
-    // VM
+    // vm
     VMStackUnderflow,
     VMStackOverflow,
     VM(String),
+
+    // bind
+    Bind(String),
 }

@@ -18,6 +18,7 @@ use crate::error::{Error, Result};
 use crate::native::{build_native_fn_hash, Native};
 use crate::opcodes::Opcode;
 use crate::placeholder::*;
+use crate::keywords::Keyword;
 
 use std::collections::HashMap;
 use std::fmt;
@@ -39,6 +40,7 @@ pub enum Var {
     Int(i32),
     Float(f32),
     Bool(bool),
+    Keyword(Keyword),
     Long(u64),
     Name(i32),
     Vector(Vec<Var>),
@@ -52,6 +54,7 @@ impl fmt::Display for Var {
             Var::Int(i) => write!(f, "Int({})", i),
             Var::Float(fl) => write!(f, "Float({})", fl),
             Var::Bool(b) => write!(f, "Bool({})", b),
+            Var::Keyword(kw) => write!(f, "Keyword{}", kw),
             Var::Long(u) => write!(f, "Long({})", u),
             Var::Name(i) => write!(f, "Name({})", i),
             Var::Vector(_) => write!(f, "Vector(todo: implement Display)"),
@@ -84,27 +87,27 @@ impl Default for Env {
 // in case any of the native functions had to invoke vm_interpret.
 // the rust version should just pass in these 2 extra args into the native functions
 pub struct Vm {
-    render_data: RenderData, // stores the generated vertex data
-    matrix_stack: MatrixStack,
-    prng_state: PrngState, // only used when evaluating bracket bindings
+    pub render_data: RenderData, // stores the generated vertex data
+    pub matrix_stack: MatrixStack,
+    pub prng_state: PrngState, // only used when evaluating bracket bindings
 
-    opcodes_executed: u64,
-    execution_time: f32, // in msec
+    pub opcodes_executed: u64,
+    pub execution_time: f32, // in msec
 
-    stack: Vec<Var>,
-    stack_size: usize,
+    pub stack: Vec<Var>,
+    pub stack_size: usize,
 
-    fp: usize, // frame pointer
-    sp: usize, // stack pointer (points to the next free stack index)
-    ip: usize, // instruction pointer
+    pub fp: usize, // frame pointer
+    pub sp: usize, // stack pointer (points to the next free stack index)
+    pub ip: usize, // instruction pointer
 
-    global: usize, // single segment of memory at top of stack
-    local: usize,  // per-frame segment of memory for local variables
+    pub global: usize, // single segment of memory at top of stack
+    pub local: usize,  // per-frame segment of memory for local variables
 
-    building_with_trait_within_vector: bool,
-    trait_within_vector_index: bool,
+    pub building_with_trait_within_vector: bool,
+    pub trait_within_vector_index: bool,
 
-    native_fns: HashMap<Native, fn(&mut Vm, &Program, i32) -> Result<Var>>,
+    pub native_fns: HashMap<Native, fn(&mut Vm, &Program, usize) -> Result<Var>>,
 }
 
 impl Default for Vm {
@@ -336,7 +339,7 @@ impl Vm {
 
     fn opcode_native(&mut self, program: &Program, bc: &Bytecode) -> Result<()> {
         let num_args = if let BytecodeArg::Int(num_args_) = bc.arg1 {
-            num_args_
+            num_args_ as usize
         } else {
             return Err(Error::VM(
                 "opcode native requires arg1 to be num_args".to_string(),
