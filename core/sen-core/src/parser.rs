@@ -13,12 +13,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::str::FromStr;
 use std::collections::HashMap;
 
 use crate::error::{Error, Result};
-use crate::keywords::string_to_keyword;
+use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
-use crate::native::string_to_native;
+use crate::native::Native;
 
 #[derive(Debug, PartialEq)]
 pub struct Gene {
@@ -67,12 +68,12 @@ impl WordLut {
 
     pub fn get(&mut self, s: &str) -> Option<i32> {
         // first check the native api
-        if let Some(n) = string_to_native(s) {
+        if let Ok(n) = Native::from_str(s) {
             return Some(n as i32);
         }
 
         // 2nd check the keywords
-        if let Some(kw) = string_to_keyword(s) {
+        if let Ok(kw) = Keyword::from_str(s) {
             return Some(kw as i32);
         }
 

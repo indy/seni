@@ -14,749 +14,402 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::collections::HashMap;
-use std::fmt;
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+use strum::IntoEnumIterator;
+use strum_macros::{EnumString, Display, EnumIter};
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString, Display, EnumIter)]
 pub enum Keyword {
+    #[strum(serialize="UnreachableKeywordStart")]
     KeywordStart = 127,
+    #[strum(serialize="false")]
     False,
+    #[strum(serialize="true")]
     True,
+
 
     // mathematical special forms
     //
+    #[strum(serialize="+")]
     Plus,
+    #[strum(serialize="-")]
     Minus,
+    #[strum(serialize="*")]
     Mult,
+    #[strum(serialize="/")]
     Divide,
+    #[strum(serialize="=")]
     Equal,
+    #[strum(serialize=">")]
     Gt,
+    #[strum(serialize="<")]
     Lt,
+
 
     // built-in keywords/special-forms
     //
+    #[strum(serialize="++")]
     VectorAppend,
+    #[strum(serialize="sqrt")]
     Sqrt,
+    #[strum(serialize="mod")]
     Mod,
+    #[strum(serialize="and")]
     And,
+    #[strum(serialize="or")]
     Or,
+    #[strum(serialize="not")]
     Not,
+    #[strum(serialize="define")]
     Define,
+    #[strum(serialize="fn")]
     Fn,
+    #[strum(serialize="if")]
     If,
+    #[strum(serialize="each")]
     Each,
+    #[strum(serialize="loop")]
     Loop,
+    #[strum(serialize="fence")]
     Fence,
+    #[strum(serialize="on-matrix-stack")]
     OnMatrixStack,
+    #[strum(serialize="setq")]
     Setq,
+    #[strum(serialize="address-of")]
     AddressOf,
+    #[strum(serialize="fn-call")]
     FnCall,
+    #[strum(serialize="quote")]
     Quote,
+
 
     // pre-defined globals
     //
+    #[strum(serialize="#vars")]
     HashVars,
+    #[strum(serialize="canvas/width")]
     CanvasWidth,
+    #[strum(serialize="canvas/height")]
     CanvasHeight,
+    #[strum(serialize="math/TAU")]
     MathTau,
+
 
     // colour formats
     //
+    #[strum(serialize="RGB")]
     Rgb,
+    #[strum(serialize="HSL")]
     Hsl,
+    #[strum(serialize="HSLuv")]
     Hsluv,
+    #[strum(serialize="LAB")]
     Lab,
+    #[strum(serialize="HSV")]
     Hsv,
+
 
     // pre-defined colours
     //
+    #[strum(serialize="white")]
     White,
+    #[strum(serialize="black")]
     Black,
+    #[strum(serialize="red")]
     Red,
+    #[strum(serialize="green")]
     Green,
+    #[strum(serialize="blue")]
     Blue,
+    #[strum(serialize="yellow")]
     Yellow,
+    #[strum(serialize="magenta")]
     Magenta,
+    #[strum(serialize="cyan")]
     Cyan,
+
 
     // procedural colours
     //
+    #[strum(serialize="chrome")]
     Chrome,
+    #[strum(serialize="hotline-miami")]
     HotlineMiami,
+    #[strum(serialize="knight-rider")]
     KnightRider,
+    #[strum(serialize="mars")]
     Mars,
+    #[strum(serialize="rainbow")]
     Rainbow,
+    #[strum(serialize="robocop")]
     Robocop,
+    #[strum(serialize="transformers")]
     Transformers,
+    #[strum(serialize="col/procedural-fn-presets")]
     ColProceduralFnPresets,
+
 
     // brush types
     //
+    #[strum(serialize="brush-flat")]
     BrushFlat,
+    #[strum(serialize="brush-a")]
     BrushA,
+    #[strum(serialize="brush-b")]
     BrushB,
+    #[strum(serialize="brush-c")]
     BrushC,
+    #[strum(serialize="brush-d")]
     BrushD,
+    #[strum(serialize="brush-e")]
     BrushE,
+    #[strum(serialize="brush-f")]
     BrushF,
+    #[strum(serialize="brush-g")]
     BrushG,
+
 
     // interpolation
     //
+    #[strum(serialize="linear")]
     Linear,
+    #[strum(serialize="ease/quick")]
     EaseQuick,
+    #[strum(serialize="ease/slow-in")]
     EaseSlowIn,
+    #[strum(serialize="ease/slow-in-out")]
     EaseSlowInOut,
+    #[strum(serialize="ease/quadratic-in")]
     EaseQuadraticIn,
+    #[strum(serialize="ease/quadratic-out")]
     EaseQuadraticOut,
+    #[strum(serialize="ease/quadratic-in-out")]
     EaseQuadraticInOut,
+    #[strum(serialize="ease/cubic-in")]
     EaseCubicIn,
+    #[strum(serialize="ease/cubic-out")]
     EaseCubicOut,
+    #[strum(serialize="ease/cubic-in-out")]
     EaseCubicInOut,
+    #[strum(serialize="ease/quartic-in")]
     EaseQuarticIn,
+    #[strum(serialize="ease/quartic-out")]
     EaseQuarticOut,
+    #[strum(serialize="ease/quartic-in-out")]
     EaseQuarticInOut,
+    #[strum(serialize="ease/quintic-in")]
     EaseQuinticIn,
+    #[strum(serialize="ease/quintic-out")]
     EaseQuinticOut,
+    #[strum(serialize="ease/quintic-in-out")]
     EaseQuinticInOut,
+    #[strum(serialize="ease/sin-in")]
     EaseSinIn,
+    #[strum(serialize="ease/sin-out")]
     EaseSinOut,
+    #[strum(serialize="ease/sin-in-out")]
     EaseSinInOut,
+    #[strum(serialize="ease/circular-in")]
     EaseCircularIn,
+    #[strum(serialize="ease/circular-out")]
     EaseCircularOut,
+    #[strum(serialize="ease/circular-in-out")]
     EaseCircularInOut,
+    #[strum(serialize="ease/exponential-in")]
     EaseExponentialIn,
+    #[strum(serialize="ease/exponential-out")]
     EaseExponentialOut,
+    #[strum(serialize="ease/exponential-in-out")]
     EaseExponentialInOut,
+    #[strum(serialize="ease/elastic-in")]
     EaseElasticIn,
+    #[strum(serialize="ease/elastic-out")]
     EaseElasticOut,
+    #[strum(serialize="ease/elastic-in-out")]
     EaseElasticInOut,
+    #[strum(serialize="ease/back-in")]
     EaseBackIn,
+    #[strum(serialize="ease/back-out")]
     EaseBackOut,
+    #[strum(serialize="ease/back-in-out")]
     EaseBackInOut,
+    #[strum(serialize="ease/bounce-in")]
     EaseBounceIn,
+    #[strum(serialize="ease/bounce-out")]
     EaseBounceOut,
+    #[strum(serialize="ease/bounce-in-out")]
     EaseBounceInOut,
 
+    #[strum(serialize="ease/presets")]
     EasePresets,
+
 
     // common parameter labels
     //
+    #[strum(serialize="a")]
     A,
+    #[strum(serialize="b")]
     B,
+    #[strum(serialize="c")]
     C,
+    #[strum(serialize="d")]
     D,
+    #[strum(serialize="g")]
     G,
+    #[strum(serialize="h")]
     H,
+    #[strum(serialize="l")]
     L,
+    #[strum(serialize="n")]
     N,
+    #[strum(serialize="r")]
     R,
+    #[strum(serialize="s")]
     S,
+    #[strum(serialize="t")]
     T,
+    #[strum(serialize="v")]
     V,
+    #[strum(serialize="x")]
     X,
+    #[strum(serialize="y")]
     Y,
+    #[strum(serialize="z")]
     Z,
+    #[strum(serialize="alpha")]
     Alpha,
+    #[strum(serialize="amplitude")]
     Amplitude,
+    #[strum(serialize="angle")]
     Angle,
+    #[strum(serialize="angle-end")]
     AngleEnd,
+    #[strum(serialize="angle-start")]
     AngleStart,
+    #[strum(serialize="brush")]
     Brush,
+    #[strum(serialize="brush-subtype")]
     BrushSubtype,
+    #[strum(serialize="by")]
     By,
+    #[strum(serialize="clamping")]
     Clamping,
+    #[strum(serialize="colour")]
     Colour,
+    #[strum(serialize="colour-volatility")]
     ColourVolatility,
+    #[strum(serialize="colours")]
     Colours,
+    #[strum(serialize="coords")]
     Coords,
+    #[strum(serialize="copies")]
     Copies,
+    #[strum(serialize="copy")]
     Copy,
+    #[strum(serialize="direction")]
     Direction,
+    #[strum(serialize="distance")]
     Distance,
+    #[strum(serialize="format")]
     Format,
+    #[strum(serialize="frequency")]
     Frequency,
+    #[strum(serialize="from")]
     From,
+    #[strum(serialize="from-colour")]
     FromColour,
+    #[strum(serialize="gen/initial-value")]
     GenInitial,
+    #[strum(serialize="height")]
     Height,
+    #[strum(serialize="inc")]
     Inc,
+    #[strum(serialize="inner-height")]
     InnerHeight,
+    #[strum(serialize="inner-width")]
     InnerWidth,
+    #[strum(serialize="iterations")]
     Iterations,
+    #[strum(serialize="line-width")]
     LineWidth,
+    #[strum(serialize="line-width-end")]
     LineWidthEnd,
+    #[strum(serialize="line-width-mapping")]
     LineWidthMapping,
+    #[strum(serialize="line-width-start")]
     LineWidthStart,
+    #[strum(serialize="mapping")]
     Mapping,
+    #[strum(serialize="max")]
     Max,
+    #[strum(serialize="min")]
     Min,
+    #[strum(serialize="num")]
     Num,
+    #[strum(serialize="overlap")]
     Overlap,
+    #[strum(serialize="point")]
     Point,
+    #[strum(serialize="position")]
     Position,
+    #[strum(serialize="preset")]
     Preset,
+    #[strum(serialize="radius")]
     Radius,
+    #[strum(serialize="scalar")]
     Scalar,
+    #[strum(serialize="seed")]
     Seed,
+    #[strum(serialize="steps")]
     Steps,
+    #[strum(serialize="stroke-line-width-end")]
     StrokeLineWidthEnd,
+    #[strum(serialize="stroke-line-width-start")]
     StrokeLineWidthStart,
+    #[strum(serialize="stroke-noise")]
     StrokeNoise,
+    #[strum(serialize="stroke-tessellation")]
     StrokeTessellation,
+    #[strum(serialize="t-end")]
     TEnd,
+    #[strum(serialize="t-start")]
     TStart,
+    #[strum(serialize="tessellation")]
     Tessellation,
+    #[strum(serialize="transform-position")]
     TransformPosition,
+    #[strum(serialize="to")]
     To,
+    #[strum(serialize="to-colour")]
     ToColour,
+    #[strum(serialize="upto")]
     Upto,
+    #[strum(serialize="value")]
     Value,
+    #[strum(serialize="vec1")]
     Vec1,
+    #[strum(serialize="vec2")]
     Vec2,
+    #[strum(serialize="vector")]
     Vector,
+    #[strum(serialize="volatility")]
     Volatility,
+    #[strum(serialize="width")]
     Width,
 
+    #[strum(serialize="UnreachableKeywordEnd")]
     KeywordEnd,
-}
-
-impl fmt::Display for Keyword {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", format!("{}", keyword_to_string(*self)))
-    }
 }
 
 pub fn string_to_keyword_hash() -> HashMap<String, Keyword> {
     let mut hm: HashMap<String, Keyword> = HashMap::new();
 
-    let names = [
-        (Keyword::False, "false"),
-        (Keyword::True, "true"),
-        (Keyword::Plus, "+"),
-        (Keyword::Minus, "-"),
-        (Keyword::Mult, "*"),
-        (Keyword::Divide, "/"),
-        (Keyword::Equal, "="),
-        (Keyword::Gt, ">"),
-        (Keyword::Lt, "<"),
-        (Keyword::VectorAppend, "++"),
-        (Keyword::Sqrt, "sqrt"),
-        (Keyword::Mod, "mod"),
-        (Keyword::And, "and"),
-        (Keyword::Or, "or"),
-        (Keyword::Not, "not"),
-        (Keyword::Define, "define"),
-        (Keyword::Fn, "fn"),
-        (Keyword::If, "if"),
-        (Keyword::Each, "each"),
-        (Keyword::Loop, "loop"),
-        (Keyword::Fence, "fence"),
-        (Keyword::OnMatrixStack, "on-matrix-stack"),
-        (Keyword::Setq, "setq"),
-        (Keyword::AddressOf, "address-of"),
-        (Keyword::FnCall, "fn-call"),
-        (Keyword::Quote, "quote"),
-        (Keyword::HashVars, "#vars"),
-        (Keyword::CanvasWidth, "canvas/width"),
-        (Keyword::CanvasHeight, "canvas/height"),
-        (Keyword::MathTau, "math/TAU"),
-        (Keyword::Rgb, "RGB"),
-        (Keyword::Hsl, "HSL"),
-        (Keyword::Hsluv, "HSLuv"),
-        (Keyword::Lab, "LAB"),
-        (Keyword::Hsv, "HSV"),
-        (Keyword::White, "white"),
-        (Keyword::Black, "black"),
-        (Keyword::Red, "red"),
-        (Keyword::Green, "green"),
-        (Keyword::Blue, "blue"),
-        (Keyword::Yellow, "yellow"),
-        (Keyword::Magenta, "magenta"),
-        (Keyword::Cyan, "cyan"),
-        (Keyword::Chrome, "chrome"),
-        (Keyword::HotlineMiami, "hotline-miami"),
-        (Keyword::KnightRider, "knight-rider"),
-        (Keyword::Mars, "mars"),
-        (Keyword::Rainbow, "rainbow"),
-        (Keyword::Robocop, "robocop"),
-        (Keyword::Transformers, "transformers"),
-        (Keyword::ColProceduralFnPresets, "col/procedural-fn-presets"),
-        (Keyword::BrushFlat, "brush-flat"),
-        (Keyword::BrushA, "brush-a"),
-        (Keyword::BrushB, "brush-b"),
-        (Keyword::BrushC, "brush-c"),
-        (Keyword::BrushD, "brush-d"),
-        (Keyword::BrushE, "brush-e"),
-        (Keyword::BrushF, "brush-f"),
-        (Keyword::BrushG, "brush-g"),
-        (Keyword::Linear, "linear"),
-        (Keyword::EaseQuick, "ease/quick"),
-        (Keyword::EaseSlowIn, "ease/slow-in"),
-        (Keyword::EaseSlowInOut, "ease/slow-in-out"),
-        (Keyword::EaseQuadraticIn, "ease/quadratic-in"),
-        (Keyword::EaseQuadraticOut, "ease/quadratic-out"),
-        (Keyword::EaseQuadraticInOut, "ease/quadratic-in-out"),
-        (Keyword::EaseCubicIn, "ease/cubic-in"),
-        (Keyword::EaseCubicOut, "ease/cubic-out"),
-        (Keyword::EaseCubicInOut, "ease/cubic-in-out"),
-        (Keyword::EaseQuarticIn, "ease/quartic-in"),
-        (Keyword::EaseQuarticOut, "ease/quartic-out"),
-        (Keyword::EaseQuarticInOut, "ease/quartic-in-out"),
-        (Keyword::EaseQuinticIn, "ease/quintic-in"),
-        (Keyword::EaseQuinticOut, "ease/quintic-out"),
-        (Keyword::EaseQuinticInOut, "ease/quintic-in-out"),
-        (Keyword::EaseSinIn, "ease/sin-in"),
-        (Keyword::EaseSinOut, "ease/sin-out"),
-        (Keyword::EaseSinInOut, "ease/sin-in-out"),
-        (Keyword::EaseCircularIn, "ease/circular-in"),
-        (Keyword::EaseCircularOut, "ease/circular-out"),
-        (Keyword::EaseCircularInOut, "ease/circular-in-out"),
-        (Keyword::EaseExponentialIn, "ease/exponential-in"),
-        (Keyword::EaseExponentialOut, "ease/exponential-out"),
-        (Keyword::EaseExponentialInOut, "ease/exponential-in-out"),
-        (Keyword::EaseElasticIn, "ease/elastic-in"),
-        (Keyword::EaseElasticOut, "ease/elastic-out"),
-        (Keyword::EaseElasticInOut, "ease/elastic-in-out"),
-        (Keyword::EaseBackIn, "ease/back-in"),
-        (Keyword::EaseBackOut, "ease/back-out"),
-        (Keyword::EaseBackInOut, "ease/back-in-out"),
-        (Keyword::EaseBounceIn, "ease/bounce-in"),
-        (Keyword::EaseBounceOut, "ease/bounce-out"),
-        (Keyword::EaseBounceInOut, "ease/bounce-in-out"),
-        (Keyword::EasePresets, "ease/presets"),
-        (Keyword::A, "a"),
-        (Keyword::B, "b"),
-        (Keyword::C, "c"),
-        (Keyword::D, "d"),
-        (Keyword::G, "g"),
-        (Keyword::H, "h"),
-        (Keyword::L, "l"),
-        (Keyword::N, "n"),
-        (Keyword::R, "r"),
-        (Keyword::S, "s"),
-        (Keyword::T, "t"),
-        (Keyword::V, "v"),
-        (Keyword::X, "x"),
-        (Keyword::Y, "y"),
-        (Keyword::Z, "z"),
-        (Keyword::Alpha, "alpha"),
-        (Keyword::Amplitude, "amplitude"),
-        (Keyword::Angle, "angle"),
-        (Keyword::AngleEnd, "angle-end"),
-        (Keyword::AngleStart, "angle-start"),
-        (Keyword::Brush, "brush"),
-        (Keyword::BrushSubtype, "brush-subtype"),
-        (Keyword::By, "by"),
-        (Keyword::Clamping, "clamping"),
-        (Keyword::Colour, "colour"),
-        (Keyword::ColourVolatility, "colour-volatility"),
-        (Keyword::Colours, "colours"),
-        (Keyword::Coords, "coords"),
-        (Keyword::Copies, "copies"),
-        (Keyword::Copy, "copy"),
-        (Keyword::Direction, "direction"),
-        (Keyword::Distance, "distance"),
-        (Keyword::Format, "format"),
-        (Keyword::Frequency, "frequency"),
-        (Keyword::From, "from"),
-        (Keyword::FromColour, "from-colour"),
-        (Keyword::GenInitial, "gen/initial-value"),
-        (Keyword::Height, "height"),
-        (Keyword::Inc, "inc"),
-        (Keyword::InnerHeight, "inner-height"),
-        (Keyword::InnerWidth, "inner-width"),
-        (Keyword::Iterations, "iterations"),
-        (Keyword::LineWidth, "line-width"),
-        (Keyword::LineWidthEnd, "line-width-end"),
-        (Keyword::LineWidthMapping, "line-width-mapping"),
-        (Keyword::LineWidthStart, "line-width-start"),
-        (Keyword::Mapping, "mapping"),
-        (Keyword::Max, "max"),
-        (Keyword::Min, "min"),
-        (Keyword::Num, "num"),
-        (Keyword::Overlap, "overlap"),
-        (Keyword::Point, "point"),
-        (Keyword::Position, "position"),
-        (Keyword::Preset, "preset"),
-        (Keyword::Radius, "radius"),
-        (Keyword::Scalar, "scalar"),
-        (Keyword::Seed, "seed"),
-        (Keyword::Steps, "steps"),
-        (Keyword::StrokeLineWidthEnd, "stroke-line-width-end"),
-        (Keyword::StrokeLineWidthStart, "stroke-line-width-start"),
-        (Keyword::StrokeNoise, "stroke-noise"),
-        (Keyword::StrokeTessellation, "stroke-tessellation"),
-        (Keyword::TEnd, "t-end"),
-        (Keyword::TStart, "t-start"),
-        (Keyword::Tessellation, "tessellation"),
-        (Keyword::TransformPosition, "transform-position"),
-        (Keyword::To, "to"),
-        (Keyword::ToColour, "to-colour"),
-        (Keyword::Upto, "upto"),
-        (Keyword::Value, "value"),
-        (Keyword::Vec1, "vec1"),
-        (Keyword::Vec2, "vec2"),
-        (Keyword::Vector, "vector"),
-        (Keyword::Volatility, "volatility"),
-        (Keyword::Width, "width"),
-    ];
-
-    for (kw, s) in names.iter() {
-        hm.insert(s.to_string(), *kw);
+    for kw in Keyword::iter() {
+        hm.insert(kw.to_string(), kw);
     }
 
     hm
-}
-
-pub fn keyword_to_string(kw: Keyword) -> String {
-    match kw {
-        Keyword::KeywordStart => "KEYWORD_START".to_string(),
-        Keyword::False => "false".to_string(),
-        Keyword::True => "true".to_string(),
-        Keyword::Plus => "+".to_string(),
-        Keyword::Minus => "-".to_string(),
-        Keyword::Mult => "*".to_string(),
-        Keyword::Divide => "/".to_string(),
-        Keyword::Equal => "=".to_string(),
-        Keyword::Gt => ">".to_string(),
-        Keyword::Lt => "<".to_string(),
-        Keyword::VectorAppend => "++".to_string(),
-        Keyword::Sqrt => "sqrt".to_string(),
-        Keyword::Mod => "mod".to_string(),
-        Keyword::And => "and".to_string(),
-        Keyword::Or => "or".to_string(),
-        Keyword::Not => "not".to_string(),
-        Keyword::Define => "define".to_string(),
-        Keyword::Fn => "fn".to_string(),
-        Keyword::If => "if".to_string(),
-        Keyword::Each => "each".to_string(),
-        Keyword::Loop => "loop".to_string(),
-        Keyword::Fence => "fence".to_string(),
-        Keyword::OnMatrixStack => "on-matrix-stack".to_string(),
-        Keyword::Setq => "setq".to_string(),
-        Keyword::AddressOf => "address-of".to_string(),
-        Keyword::FnCall => "fn-call".to_string(),
-        Keyword::Quote => "quote".to_string(),
-        Keyword::HashVars => "#vars".to_string(),
-        Keyword::CanvasWidth => "canvas/width".to_string(),
-        Keyword::CanvasHeight => "canvas/height".to_string(),
-        Keyword::MathTau => "math/TAU".to_string(),
-        Keyword::Rgb => "RGB".to_string(),
-        Keyword::Hsl => "HSL".to_string(),
-        Keyword::Hsluv => "HSLuv".to_string(),
-        Keyword::Lab => "LAB".to_string(),
-        Keyword::Hsv => "HSV".to_string(),
-        Keyword::White => "white".to_string(),
-        Keyword::Black => "black".to_string(),
-        Keyword::Red => "red".to_string(),
-        Keyword::Green => "green".to_string(),
-        Keyword::Blue => "blue".to_string(),
-        Keyword::Yellow => "yellow".to_string(),
-        Keyword::Magenta => "magenta".to_string(),
-        Keyword::Cyan => "cyan".to_string(),
-        Keyword::Chrome => "chrome".to_string(),
-        Keyword::HotlineMiami => "hotline-miami".to_string(),
-        Keyword::KnightRider => "knight-rider".to_string(),
-        Keyword::Mars => "mars".to_string(),
-        Keyword::Rainbow => "rainbow".to_string(),
-        Keyword::Robocop => "robocop".to_string(),
-        Keyword::Transformers => "transformers".to_string(),
-        Keyword::ColProceduralFnPresets => "col/procedural-fn-presets".to_string(),
-        Keyword::BrushFlat => "brush-flat".to_string(),
-        Keyword::BrushA => "brush-a".to_string(),
-        Keyword::BrushB => "brush-b".to_string(),
-        Keyword::BrushC => "brush-c".to_string(),
-        Keyword::BrushD => "brush-d".to_string(),
-        Keyword::BrushE => "brush-e".to_string(),
-        Keyword::BrushF => "brush-f".to_string(),
-        Keyword::BrushG => "brush-g".to_string(),
-        Keyword::Linear => "linear".to_string(),
-        Keyword::EaseQuick => "ease/quick".to_string(),
-        Keyword::EaseSlowIn => "ease/slow-in".to_string(),
-        Keyword::EaseSlowInOut => "ease/slow-in-out".to_string(),
-        Keyword::EaseQuadraticIn => "ease/quadratic-in".to_string(),
-        Keyword::EaseQuadraticOut => "ease/quadratic-out".to_string(),
-        Keyword::EaseQuadraticInOut => "ease/quadratic-in-out".to_string(),
-        Keyword::EaseCubicIn => "ease/cubic-in".to_string(),
-        Keyword::EaseCubicOut => "ease/cubic-out".to_string(),
-        Keyword::EaseCubicInOut => "ease/cubic-in-out".to_string(),
-        Keyword::EaseQuarticIn => "ease/quartic-in".to_string(),
-        Keyword::EaseQuarticOut => "ease/quartic-out".to_string(),
-        Keyword::EaseQuarticInOut => "ease/quartic-in-out".to_string(),
-        Keyword::EaseQuinticIn => "ease/quintic-in".to_string(),
-        Keyword::EaseQuinticOut => "ease/quintic-out".to_string(),
-        Keyword::EaseQuinticInOut => "ease/quintic-in-out".to_string(),
-        Keyword::EaseSinIn => "ease/sin-in".to_string(),
-        Keyword::EaseSinOut => "ease/sin-out".to_string(),
-        Keyword::EaseSinInOut => "ease/sin-in-out".to_string(),
-        Keyword::EaseCircularIn => "ease/circular-in".to_string(),
-        Keyword::EaseCircularOut => "ease/circular-out".to_string(),
-        Keyword::EaseCircularInOut => "ease/circular-in-out".to_string(),
-        Keyword::EaseExponentialIn => "ease/exponential-in".to_string(),
-        Keyword::EaseExponentialOut => "ease/exponential-out".to_string(),
-        Keyword::EaseExponentialInOut => "ease/exponential-in-out".to_string(),
-        Keyword::EaseElasticIn => "ease/elastic-in".to_string(),
-        Keyword::EaseElasticOut => "ease/elastic-out".to_string(),
-        Keyword::EaseElasticInOut => "ease/elastic-in-out".to_string(),
-        Keyword::EaseBackIn => "ease/back-in".to_string(),
-        Keyword::EaseBackOut => "ease/back-out".to_string(),
-        Keyword::EaseBackInOut => "ease/back-in-out".to_string(),
-        Keyword::EaseBounceIn => "ease/bounce-in".to_string(),
-        Keyword::EaseBounceOut => "ease/bounce-out".to_string(),
-        Keyword::EaseBounceInOut => "ease/bounce-in-out".to_string(),
-        Keyword::EasePresets => "ease/presets".to_string(),
-        Keyword::A => "a".to_string(),
-        Keyword::B => "b".to_string(),
-        Keyword::C => "c".to_string(),
-        Keyword::D => "d".to_string(),
-        Keyword::G => "g".to_string(),
-        Keyword::H => "h".to_string(),
-        Keyword::L => "l".to_string(),
-        Keyword::N => "n".to_string(),
-        Keyword::R => "r".to_string(),
-        Keyword::S => "s".to_string(),
-        Keyword::T => "t".to_string(),
-        Keyword::V => "v".to_string(),
-        Keyword::X => "x".to_string(),
-        Keyword::Y => "y".to_string(),
-        Keyword::Z => "z".to_string(),
-        Keyword::Alpha => "alpha".to_string(),
-        Keyword::Amplitude => "amplitude".to_string(),
-        Keyword::Angle => "angle".to_string(),
-        Keyword::AngleEnd => "angle-end".to_string(),
-        Keyword::AngleStart => "angle-start".to_string(),
-        Keyword::Brush => "brush".to_string(),
-        Keyword::BrushSubtype => "brush-subtype".to_string(),
-        Keyword::By => "by".to_string(),
-        Keyword::Clamping => "clamping".to_string(),
-        Keyword::Colour => "colour".to_string(),
-        Keyword::ColourVolatility => "colour-volatility".to_string(),
-        Keyword::Colours => "colours".to_string(),
-        Keyword::Coords => "coords".to_string(),
-        Keyword::Copies => "copies".to_string(),
-        Keyword::Copy => "copy".to_string(),
-        Keyword::Direction => "direction".to_string(),
-        Keyword::Distance => "distance".to_string(),
-        Keyword::Format => "format".to_string(),
-        Keyword::Frequency => "frequency".to_string(),
-        Keyword::From => "from".to_string(),
-        Keyword::FromColour => "from-colour".to_string(),
-        Keyword::GenInitial => "gen/initial-value".to_string(),
-        Keyword::Height => "height".to_string(),
-        Keyword::Inc => "inc".to_string(),
-        Keyword::InnerHeight => "inner-height".to_string(),
-        Keyword::InnerWidth => "inner-width".to_string(),
-        Keyword::Iterations => "iterations".to_string(),
-        Keyword::LineWidth => "line-width".to_string(),
-        Keyword::LineWidthEnd => "line-width-end".to_string(),
-        Keyword::LineWidthMapping => "line-width-mapping".to_string(),
-        Keyword::LineWidthStart => "line-width-start".to_string(),
-        Keyword::Mapping => "mapping".to_string(),
-        Keyword::Max => "max".to_string(),
-        Keyword::Min => "min".to_string(),
-        Keyword::Num => "num".to_string(),
-        Keyword::Overlap => "overlap".to_string(),
-        Keyword::Point => "point".to_string(),
-        Keyword::Position => "position".to_string(),
-        Keyword::Preset => "preset".to_string(),
-        Keyword::Radius => "radius".to_string(),
-        Keyword::Scalar => "scalar".to_string(),
-        Keyword::Seed => "seed".to_string(),
-        Keyword::Steps => "steps".to_string(),
-        Keyword::StrokeLineWidthEnd => "stroke-line-width-end".to_string(),
-        Keyword::StrokeLineWidthStart => "stroke-line-width-start".to_string(),
-        Keyword::StrokeNoise => "stroke-noise".to_string(),
-        Keyword::StrokeTessellation => "stroke-tessellation".to_string(),
-        Keyword::TEnd => "t-end".to_string(),
-        Keyword::TStart => "t-start".to_string(),
-        Keyword::Tessellation => "tessellation".to_string(),
-        Keyword::TransformPosition => "transform-position".to_string(),
-        Keyword::To => "to".to_string(),
-        Keyword::ToColour => "to-colour".to_string(),
-        Keyword::Upto => "upto".to_string(),
-        Keyword::Value => "value".to_string(),
-        Keyword::Vec1 => "vec1".to_string(),
-        Keyword::Vec2 => "vec2".to_string(),
-        Keyword::Vector => "vector".to_string(),
-        Keyword::Volatility => "volatility".to_string(),
-        Keyword::Width => "width".to_string(),
-        Keyword::KeywordEnd => "KEYWORD_END".to_string(),
-    }
-}
-
-pub fn string_to_keyword(s: &str) -> Option<Keyword> {
-    match s {
-        "false" => Some(Keyword::False),
-        "true" => Some(Keyword::True),
-        "+" => Some(Keyword::Plus),
-        "-" => Some(Keyword::Minus),
-        "*" => Some(Keyword::Mult),
-        "/" => Some(Keyword::Divide),
-        "=" => Some(Keyword::Equal),
-        ">" => Some(Keyword::Gt),
-        "<" => Some(Keyword::Lt),
-        "++" => Some(Keyword::VectorAppend),
-        "sqrt" => Some(Keyword::Sqrt),
-        "mod" => Some(Keyword::Mod),
-        "and" => Some(Keyword::And),
-        "or" => Some(Keyword::Or),
-        "not" => Some(Keyword::Not),
-        "define" => Some(Keyword::Define),
-        "fn" => Some(Keyword::Fn),
-        "if" => Some(Keyword::If),
-        "each" => Some(Keyword::Each),
-        "loop" => Some(Keyword::Loop),
-        "fence" => Some(Keyword::Fence),
-        "on-matrix-stack" => Some(Keyword::OnMatrixStack),
-        "setq" => Some(Keyword::Setq),
-        "address-of" => Some(Keyword::AddressOf),
-        "fn-call" => Some(Keyword::FnCall),
-        "quote" => Some(Keyword::Quote),
-        "#vars" => Some(Keyword::HashVars),
-        "canvas/width" => Some(Keyword::CanvasWidth),
-        "canvas/height" => Some(Keyword::CanvasHeight),
-        "math/TAU" => Some(Keyword::MathTau),
-        "RGB" => Some(Keyword::Rgb),
-        "HSL" => Some(Keyword::Hsl),
-        "HSLuv" => Some(Keyword::Hsluv),
-        "LAB" => Some(Keyword::Lab),
-        "HSV" => Some(Keyword::Hsv),
-        "white" => Some(Keyword::White),
-        "black" => Some(Keyword::Black),
-        "red" => Some(Keyword::Red),
-        "green" => Some(Keyword::Green),
-        "blue" => Some(Keyword::Blue),
-        "yellow" => Some(Keyword::Yellow),
-        "magenta" => Some(Keyword::Magenta),
-        "cyan" => Some(Keyword::Cyan),
-        "chrome" => Some(Keyword::Chrome),
-        "hotline-miami" => Some(Keyword::HotlineMiami),
-        "knight-rider" => Some(Keyword::KnightRider),
-        "mars" => Some(Keyword::Mars),
-        "rainbow" => Some(Keyword::Rainbow),
-        "robocop" => Some(Keyword::Robocop),
-        "transformers" => Some(Keyword::Transformers),
-        "col/procedural-fn-presets" => Some(Keyword::ColProceduralFnPresets),
-        "brush-flat" => Some(Keyword::BrushFlat),
-        "brush-a" => Some(Keyword::BrushA),
-        "brush-b" => Some(Keyword::BrushB),
-        "brush-c" => Some(Keyword::BrushC),
-        "brush-d" => Some(Keyword::BrushD),
-        "brush-e" => Some(Keyword::BrushE),
-        "brush-f" => Some(Keyword::BrushF),
-        "brush-g" => Some(Keyword::BrushG),
-        "linear" => Some(Keyword::Linear),
-        "ease/quick" => Some(Keyword::EaseQuick),
-        "ease/slow-in" => Some(Keyword::EaseSlowIn),
-        "ease/slow-in-out" => Some(Keyword::EaseSlowInOut),
-        "ease/quadratic-in" => Some(Keyword::EaseQuadraticIn),
-        "ease/quadratic-out" => Some(Keyword::EaseQuadraticOut),
-        "ease/quadratic-in-out" => Some(Keyword::EaseQuadraticInOut),
-        "ease/cubic-in" => Some(Keyword::EaseCubicIn),
-        "ease/cubic-out" => Some(Keyword::EaseCubicOut),
-        "ease/cubic-in-out" => Some(Keyword::EaseCubicInOut),
-        "ease/quartic-in" => Some(Keyword::EaseQuarticIn),
-        "ease/quartic-out" => Some(Keyword::EaseQuarticOut),
-        "ease/quartic-in-out" => Some(Keyword::EaseQuarticInOut),
-        "ease/quintic-in" => Some(Keyword::EaseQuinticIn),
-        "ease/quintic-out" => Some(Keyword::EaseQuinticOut),
-        "ease/quintic-in-out" => Some(Keyword::EaseQuinticInOut),
-        "ease/sin-in" => Some(Keyword::EaseSinIn),
-        "ease/sin-out" => Some(Keyword::EaseSinOut),
-        "ease/sin-in-out" => Some(Keyword::EaseSinInOut),
-        "ease/circular-in" => Some(Keyword::EaseCircularIn),
-        "ease/circular-out" => Some(Keyword::EaseCircularOut),
-        "ease/circular-in-out" => Some(Keyword::EaseCircularInOut),
-        "ease/exponential-in" => Some(Keyword::EaseExponentialIn),
-        "ease/exponential-out" => Some(Keyword::EaseExponentialOut),
-        "ease/exponential-in-out" => Some(Keyword::EaseExponentialInOut),
-        "ease/elastic-in" => Some(Keyword::EaseElasticIn),
-        "ease/elastic-out" => Some(Keyword::EaseElasticOut),
-        "ease/elastic-in-out" => Some(Keyword::EaseElasticInOut),
-        "ease/back-in" => Some(Keyword::EaseBackIn),
-        "ease/back-out" => Some(Keyword::EaseBackOut),
-        "ease/back-in-out" => Some(Keyword::EaseBackInOut),
-        "ease/bounce-in" => Some(Keyword::EaseBounceIn),
-        "ease/bounce-out" => Some(Keyword::EaseBounceOut),
-        "ease/bounce-in-out" => Some(Keyword::EaseBounceInOut),
-        "ease/presets" => Some(Keyword::EasePresets),
-        "a" => Some(Keyword::A),
-        "b" => Some(Keyword::B),
-        "c" => Some(Keyword::C),
-        "d" => Some(Keyword::D),
-        "g" => Some(Keyword::G),
-        "h" => Some(Keyword::H),
-        "l" => Some(Keyword::L),
-        "n" => Some(Keyword::N),
-        "r" => Some(Keyword::R),
-        "s" => Some(Keyword::S),
-        "t" => Some(Keyword::T),
-        "v" => Some(Keyword::V),
-        "x" => Some(Keyword::X),
-        "y" => Some(Keyword::Y),
-        "z" => Some(Keyword::Z),
-        "alpha" => Some(Keyword::Alpha),
-        "amplitude" => Some(Keyword::Amplitude),
-        "angle" => Some(Keyword::Angle),
-        "angle-end" => Some(Keyword::AngleEnd),
-        "angle-start" => Some(Keyword::AngleStart),
-        "brush" => Some(Keyword::Brush),
-        "brush-subtype" => Some(Keyword::BrushSubtype),
-        "by" => Some(Keyword::By),
-        "clamping" => Some(Keyword::Clamping),
-        "colour" => Some(Keyword::Colour),
-        "colour-volatility" => Some(Keyword::ColourVolatility),
-        "colours" => Some(Keyword::Colours),
-        "coords" => Some(Keyword::Coords),
-        "copies" => Some(Keyword::Copies),
-        "copy" => Some(Keyword::Copy),
-        "direction" => Some(Keyword::Direction),
-        "distance" => Some(Keyword::Distance),
-        "format" => Some(Keyword::Format),
-        "frequency" => Some(Keyword::Frequency),
-        "from" => Some(Keyword::From),
-        "from-colour" => Some(Keyword::FromColour),
-        "gen/initial-value" => Some(Keyword::GenInitial),
-        "height" => Some(Keyword::Height),
-        "inc" => Some(Keyword::Inc),
-        "inner-height" => Some(Keyword::InnerHeight),
-        "inner-width" => Some(Keyword::InnerWidth),
-        "iterations" => Some(Keyword::Iterations),
-        "line-width" => Some(Keyword::LineWidth),
-        "line-width-end" => Some(Keyword::LineWidthEnd),
-        "line-width-mapping" => Some(Keyword::LineWidthMapping),
-        "line-width-start" => Some(Keyword::LineWidthStart),
-        "mapping" => Some(Keyword::Mapping),
-        "max" => Some(Keyword::Max),
-        "min" => Some(Keyword::Min),
-        "num" => Some(Keyword::Num),
-        "overlap" => Some(Keyword::Overlap),
-        "point" => Some(Keyword::Point),
-        "position" => Some(Keyword::Position),
-        "preset" => Some(Keyword::Preset),
-        "radius" => Some(Keyword::Radius),
-        "scalar" => Some(Keyword::Scalar),
-        "seed" => Some(Keyword::Seed),
-        "steps" => Some(Keyword::Steps),
-        "stroke-line-width-end" => Some(Keyword::StrokeLineWidthEnd),
-        "stroke-line-width-start" => Some(Keyword::StrokeLineWidthStart),
-        "stroke-noise" => Some(Keyword::StrokeNoise),
-        "stroke-tessellation" => Some(Keyword::StrokeTessellation),
-        "t-end" => Some(Keyword::TEnd),
-        "t-start" => Some(Keyword::TStart),
-        "tessellation" => Some(Keyword::Tessellation),
-        "transform-position" => Some(Keyword::TransformPosition),
-        "to" => Some(Keyword::To),
-        "to-colour" => Some(Keyword::ToColour),
-        "upto" => Some(Keyword::Upto),
-        "value" => Some(Keyword::Value),
-        "vec1" => Some(Keyword::Vec1),
-        "vec2" => Some(Keyword::Vec2),
-        "vector" => Some(Keyword::Vector),
-        "volatility" => Some(Keyword::Volatility),
-        "width" => Some(Keyword::Width),
-        _ => None,
-    }
 }
 
 #[cfg(test)]

@@ -13,13 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::str::FromStr;
 use std::collections::HashMap;
 use std::fmt;
 
 use crate::error::{Error, Result};
-use crate::keywords::{keyword_to_string, string_to_keyword_hash, Keyword};
+use crate::keywords::{string_to_keyword_hash, Keyword};
 use crate::mathutil;
-use crate::native::{string_to_native, Native};
+use crate::native::{Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::parser::Node;
 
@@ -102,7 +103,7 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Int(i) => write!(f, "{}", i),
             BytecodeArg::Float(s) => write!(f, "{:.2}", s),
             BytecodeArg::Name(i) => write!(f, "Name({})", i),
-            BytecodeArg::Native(n) => write!(f, "{}", n),
+            BytecodeArg::Native(n) => write!(f, "{:?}", n),
             BytecodeArg::Mem(m) => write!(f, "{}", m),
             BytecodeArg::Colour(s, a, b, c, d) => write!(f, "{}({} {} {} {})", s, a, b, c, d),
         }
@@ -553,24 +554,24 @@ impl Compiler {
     }
 
     fn register_top_level_preamble(&self, compilation: &mut Compilation) -> Result<()> {
-        compilation.add_global_mapping(keyword_to_string(Keyword::GenInitial))?;
+        compilation.add_global_mapping(Keyword::GenInitial.to_string())?;
 
-        compilation.add_global_mapping(keyword_to_string(Keyword::CanvasWidth))?;
-        compilation.add_global_mapping(keyword_to_string(Keyword::CanvasHeight))?;
+        compilation.add_global_mapping(Keyword::CanvasWidth.to_string())?;
+        compilation.add_global_mapping(Keyword::CanvasHeight.to_string())?;
 
-        compilation.add_global_mapping(keyword_to_string(Keyword::MathTau))?;
+        compilation.add_global_mapping(Keyword::MathTau.to_string())?;
 
-        compilation.add_global_mapping(keyword_to_string(Keyword::White))?;
-        compilation.add_global_mapping(keyword_to_string(Keyword::Black))?;
-        compilation.add_global_mapping(keyword_to_string(Keyword::Red))?;
-        compilation.add_global_mapping(keyword_to_string(Keyword::Green))?;
-        compilation.add_global_mapping(keyword_to_string(Keyword::Blue))?;
-        compilation.add_global_mapping(keyword_to_string(Keyword::Yellow))?;
-        compilation.add_global_mapping(keyword_to_string(Keyword::Magenta))?;
-        compilation.add_global_mapping(keyword_to_string(Keyword::Cyan))?;
+        compilation.add_global_mapping(Keyword::White.to_string())?;
+        compilation.add_global_mapping(Keyword::Black.to_string())?;
+        compilation.add_global_mapping(Keyword::Red.to_string())?;
+        compilation.add_global_mapping(Keyword::Green.to_string())?;
+        compilation.add_global_mapping(Keyword::Blue.to_string())?;
+        compilation.add_global_mapping(Keyword::Yellow.to_string())?;
+        compilation.add_global_mapping(Keyword::Magenta.to_string())?;
+        compilation.add_global_mapping(Keyword::Cyan.to_string())?;
 
-        compilation.add_global_mapping(keyword_to_string(Keyword::ColProceduralFnPresets))?;
-        compilation.add_global_mapping(keyword_to_string(Keyword::EasePresets))?;
+        compilation.add_global_mapping(Keyword::ColProceduralFnPresets.to_string())?;
+        compilation.add_global_mapping(Keyword::EasePresets.to_string())?;
 
         Ok(())
     }
@@ -642,7 +643,7 @@ impl Compiler {
         compilation: &mut Compilation,
         ast: &[Node],
     ) -> Result<()> {
-        let define_keyword_string = keyword_to_string(Keyword::Define);
+        let define_keyword_string = Keyword::Define.to_string();
 
         for n in ast.iter() {
             if let Node::List(nodes, _) = n {
@@ -672,24 +673,24 @@ impl Compiler {
         // NOTE: each entry should have a corresponding entry in
         // register_top_level_preamble
         // ********************************************************************************
-        self.compile_global_bind_i32(compilation, keyword_to_string(Keyword::GenInitial), 0)?;
+        self.compile_global_bind_i32(compilation, Keyword::GenInitial.to_string(), 0)?;
 
-        self.compile_global_bind_f32(compilation, keyword_to_string(Keyword::CanvasWidth), 1000.0)?;
+        self.compile_global_bind_f32(compilation, Keyword::CanvasWidth.to_string(), 1000.0)?;
         self.compile_global_bind_f32(
             compilation,
-            keyword_to_string(Keyword::CanvasHeight),
+            Keyword::CanvasHeight.to_string(),
             1000.0,
         )?;
 
         self.compile_global_bind_f32(
             compilation,
-            keyword_to_string(Keyword::MathTau),
+            Keyword::MathTau.to_string(),
             mathutil::TAU,
         )?;
 
         self.compile_global_bind_col(
             compilation,
-            keyword_to_string(Keyword::White),
+            Keyword::White.to_string(),
             1.0,
             1.0,
             1.0,
@@ -697,7 +698,7 @@ impl Compiler {
         )?;
         self.compile_global_bind_col(
             compilation,
-            keyword_to_string(Keyword::Black),
+            Keyword::Black.to_string(),
             0.0,
             0.0,
             0.0,
@@ -705,7 +706,7 @@ impl Compiler {
         )?;
         self.compile_global_bind_col(
             compilation,
-            keyword_to_string(Keyword::Red),
+            Keyword::Red.to_string(),
             1.0,
             0.0,
             0.0,
@@ -713,7 +714,7 @@ impl Compiler {
         )?;
         self.compile_global_bind_col(
             compilation,
-            keyword_to_string(Keyword::Green),
+            Keyword::Green.to_string(),
             0.0,
             1.0,
             0.0,
@@ -721,7 +722,7 @@ impl Compiler {
         )?;
         self.compile_global_bind_col(
             compilation,
-            keyword_to_string(Keyword::Blue),
+            Keyword::Blue.to_string(),
             0.0,
             0.0,
             1.0,
@@ -729,7 +730,7 @@ impl Compiler {
         )?;
         self.compile_global_bind_col(
             compilation,
-            keyword_to_string(Keyword::Yellow),
+            Keyword::Yellow.to_string(),
             1.0,
             1.0,
             0.0,
@@ -737,7 +738,7 @@ impl Compiler {
         )?;
         self.compile_global_bind_col(
             compilation,
-            keyword_to_string(Keyword::Magenta),
+            Keyword::Magenta.to_string(),
             1.0,
             0.0,
             1.0,
@@ -745,7 +746,7 @@ impl Compiler {
         )?;
         self.compile_global_bind_col(
             compilation,
-            keyword_to_string(Keyword::Cyan),
+            Keyword::Cyan.to_string(),
             0.0,
             1.0,
             1.0,
@@ -781,7 +782,7 @@ impl Compiler {
 
         self.store_globally(
             compilation,
-            keyword_to_string(Keyword::ColProceduralFnPresets),
+            Keyword::ColProceduralFnPresets.to_string(),
         )?;
 
         Ok(())
@@ -827,7 +828,7 @@ impl Compiler {
         self.append_keyword(compilation, Keyword::EaseBounceOut)?;
         self.append_keyword(compilation, Keyword::EaseBounceInOut)?;
 
-        self.store_globally(compilation, keyword_to_string(Keyword::EasePresets))?;
+        self.store_globally(compilation, Keyword::EasePresets.to_string())?;
 
         Ok(())
     }
@@ -1042,7 +1043,7 @@ impl Compiler {
                 }
 
                 // check native api set
-                if let Some(native) = string_to_native(text) {
+                if let Ok(native) = Native::from_str(text) {
                     // NATIVE
                     let mut num_args = 0;
                     let mut label_vals = &children[1..];

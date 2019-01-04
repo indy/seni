@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::fmt;
+use strum_macros::Display;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Display)]
 pub enum Opcode {
     // load (push) a sen_var onto the stack
     LOAD,
@@ -97,48 +97,6 @@ pub enum Opcode {
     VEC_NEXT,
 
     STOP,
-}
-
-impl fmt::Display for Opcode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Opcode::LOAD => write!(f, "LOAD"),
-            Opcode::STORE => write!(f, "STORE"),
-            Opcode::SQUISH2 => write!(f, "SQUISH2"),
-            Opcode::ADD => write!(f, "ADD"),
-            Opcode::SUB => write!(f, "SUB"),
-            Opcode::MUL => write!(f, "MUL"),
-            Opcode::DIV => write!(f, "DIV"),
-            Opcode::MOD => write!(f, "MOD"),
-            Opcode::SQRT => write!(f, "SQRT"),
-            Opcode::EQ => write!(f, "EQ"),
-            Opcode::GT => write!(f, "GT"),
-            Opcode::LT => write!(f, "LT"),
-            Opcode::AND => write!(f, "AND"),
-            Opcode::OR => write!(f, "OR"),
-            Opcode::NOT => write!(f, "NOT"),
-            Opcode::JUMP => write!(f, "JUMP"),
-            Opcode::JUMP_IF => write!(f, "JUMP_IF"),
-            Opcode::CALL => write!(f, "CALL"),
-            Opcode::CALL_0 => write!(f, "CALL_0"),
-            Opcode::RET => write!(f, "RET"),
-            Opcode::RET_0 => write!(f, "RET_0"),
-            Opcode::CALL_F => write!(f, "CALL_F"),
-            Opcode::CALL_F_0 => write!(f, "CALL_F_0"),
-            Opcode::NATIVE => write!(f, "NATIVE"),
-            Opcode::APPEND => write!(f, "APPEND"),
-            Opcode::PILE => write!(f, "PILE"),
-            Opcode::STORE_F => write!(f, "STORE_F"),
-            Opcode::PLACEHOLDER_STORE => write!(f, "PLACEHOLDER_STORE"),
-            Opcode::MTX_LOAD => write!(f, "MTX_LOAD"),
-            Opcode::MTX_STORE => write!(f, "MTX_STORE"),
-            Opcode::VEC_NON_EMPTY => write!(f, "VEC_NON_EMPTY"),
-            Opcode::VEC_LOAD_FIRST => write!(f, "VEC_LOAD_FIRST"),
-            Opcode::VEC_HAS_NEXT => write!(f, "VEC_HAS_NEXT"),
-            Opcode::VEC_NEXT => write!(f, "VEC_NEXT"),
-            Opcode::STOP => write!(f, "STOP"),
-        }
-    }
 }
 
 pub fn opcode_stack_offset(opcode: Opcode) -> i32 {
