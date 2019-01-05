@@ -7,6 +7,8 @@ use serde_derive::Deserialize;
 // NOTE: Recompile the server everytime gallery.json is changed
 static GALLERY_JSON: &'static str = include_str!("../static/gallery.json");
 
+const USE_RUST_IMPL: bool = true;
+
 #[derive(Deserialize)]
 struct Piece {
     id: u32,
@@ -16,7 +18,11 @@ struct Piece {
 
 /// favicon handler
 fn favicon(_req: &HttpRequest) -> Result<fs::NamedFile> {
-    Ok(fs::NamedFile::open("client/www/assets/favicon.ico")?)
+    if USE_RUST_IMPL {
+        Ok(fs::NamedFile::open("client/sen-client/www/favicon.ico")?)
+    } else {
+        Ok(fs::NamedFile::open("client/www/assets/favicon.ico")?)
+    }
 }
 
 fn gallery(req: &HttpRequest) -> Result<HttpResponse> {
@@ -72,7 +78,19 @@ fn main() {
 
     let sys = actix::System::new("seni-server");
 
-    server::new(|| {
+    if USE_RUST_IMPL {
+        println!("hello from the RUST_IMPL");
+    } else {
+        println!("using the older C_IMPL");
+    }
+
+    let home = if USE_RUST_IMPL {
+        "client/sen-client/www"
+    } else {
+        "client/www/assets"
+    };
+
+    server::new(move || {
         App::new()
         // enable logger
             .middleware(middleware::Logger::default())
@@ -89,7 +107,7 @@ fn main() {
             }))
         // static files
             .handler("/dist", fs::StaticFiles::new("client/www/dist").unwrap())
-            .handler("/", fs::StaticFiles::new("client/www/assets").unwrap())
+            .handler("/", fs::StaticFiles::new(home).unwrap())
     }).bind(bind_addr)
         .unwrap()
         .shutdown_timeout(1)

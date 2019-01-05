@@ -295,7 +295,7 @@ bool vm_interpret(sen_vm* vm, sen_env* env, sen_program* program) {
     }
 
 
-#define DEBUGGING_RUST
+// #define DEBUGGING_RUST
 
 #ifdef DEBUGGING_RUST
     // isg-debug
