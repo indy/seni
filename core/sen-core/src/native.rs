@@ -21,7 +21,6 @@ use crate::vm::{Var, Vm};
 
 use std::collections::HashMap;
 
-use strum;
 use strum_macros::EnumString;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString)]

@@ -17,10 +17,6 @@
  */
 
 
-// THIS IS A PLACEHOLDER FILE
-
-
-
 (function() {
     var wasm;
     const __exports = {};
@@ -44,18 +40,321 @@
         let varg0 = getStringFromWasm(arg0, arg1);
         console.log(varg0);
     };
-    /**
-    * @returns {void}
-    */
-    __exports.say_hi = function() {
-        return wasm.say_hi();
-    };
 
+    let cachedGlobalArgumentPtr = null;
+    function globalArgumentPtr() {
+        if (cachedGlobalArgumentPtr === null) {
+            cachedGlobalArgumentPtr = wasm.__wbindgen_global_argument_ptr();
+        }
+        return cachedGlobalArgumentPtr;
+    }
+
+    let cachegetUint32Memory = null;
+    function getUint32Memory() {
+        if (cachegetUint32Memory === null || cachegetUint32Memory.buffer !== wasm.memory.buffer) {
+            cachegetUint32Memory = new Uint32Array(wasm.memory.buffer);
+        }
+        return cachegetUint32Memory;
+    }
+
+    let cachedTextEncoder = new TextEncoder('utf-8');
+
+    let WASM_VECTOR_LEN = 0;
+
+    function passStringToWasm(arg) {
+
+        const buf = cachedTextEncoder.encode(arg);
+        const ptr = wasm.__wbindgen_malloc(buf.length);
+        getUint8Memory().set(buf, ptr);
+        WASM_VECTOR_LEN = buf.length;
+        return ptr;
+    }
+
+    function freeBridge(ptr) {
+
+        wasm.__wbg_bridge_free(ptr);
+    }
     /**
-    * @returns {void}
     */
-    __exports.lenlen = function() {
-        return wasm.lenlen();
+    class Bridge {
+
+        free() {
+            const ptr = this.ptr;
+            this.ptr = 0;
+            freeBridge(ptr);
+        }
+
+        /**
+        * @returns {}
+        */
+        constructor() {
+            this.ptr = wasm.bridge_new();
+        }
+        /**
+        * @returns {void}
+        */
+        say_hi() {
+            return wasm.bridge_say_hi(this.ptr);
+        }
+        /**
+        * @returns {void}
+        */
+        lenlen() {
+            return wasm.bridge_lenlen(this.ptr);
+        }
+        /**
+        * @returns {string}
+        */
+        get_genotype_buffer_string() {
+            const retptr = globalArgumentPtr();
+            wasm.bridge_get_genotype_buffer_string(retptr, this.ptr);
+            const mem = getUint32Memory();
+            const rustptr = mem[retptr / 4];
+            const rustlen = mem[retptr / 4 + 1];
+
+            const realRet = getStringFromWasm(rustptr, rustlen).slice();
+            wasm.__wbindgen_free(rustptr, rustlen * 1);
+            return realRet;
+
+        }
+        /**
+        * @param {string} arg0
+        * @returns {void}
+        */
+        set_genotype_buffer_string(arg0) {
+            const ptr0 = passStringToWasm(arg0);
+            const len0 = WASM_VECTOR_LEN;
+            try {
+                return wasm.bridge_set_genotype_buffer_string(this.ptr, ptr0, len0);
+
+            } finally {
+                wasm.__wbindgen_free(ptr0, len0 * 1);
+
+            }
+
+        }
+        /**
+        * @returns {string}
+        */
+        get_traits_buffer_string() {
+            const retptr = globalArgumentPtr();
+            wasm.bridge_get_traits_buffer_string(retptr, this.ptr);
+            const mem = getUint32Memory();
+            const rustptr = mem[retptr / 4];
+            const rustlen = mem[retptr / 4 + 1];
+
+            const realRet = getStringFromWasm(rustptr, rustlen).slice();
+            wasm.__wbindgen_free(rustptr, rustlen * 1);
+            return realRet;
+
+        }
+        /**
+        * @param {string} arg0
+        * @returns {void}
+        */
+        set_traits_buffer_string(arg0) {
+            const ptr0 = passStringToWasm(arg0);
+            const len0 = WASM_VECTOR_LEN;
+            try {
+                return wasm.bridge_set_traits_buffer_string(this.ptr, ptr0, len0);
+
+            } finally {
+                wasm.__wbindgen_free(ptr0, len0 * 1);
+
+            }
+
+        }
+        /**
+        * @returns {string}
+        */
+        get_out_source_buffer_string() {
+            const retptr = globalArgumentPtr();
+            wasm.bridge_get_out_source_buffer_string(retptr, this.ptr);
+            const mem = getUint32Memory();
+            const rustptr = mem[retptr / 4];
+            const rustlen = mem[retptr / 4 + 1];
+
+            const realRet = getStringFromWasm(rustptr, rustlen).slice();
+            wasm.__wbindgen_free(rustptr, rustlen * 1);
+            return realRet;
+
+        }
+        /**
+        * @param {string} arg0
+        * @returns {void}
+        */
+        set_out_source_buffer_string(arg0) {
+            const ptr0 = passStringToWasm(arg0);
+            const len0 = WASM_VECTOR_LEN;
+            try {
+                return wasm.bridge_set_out_source_buffer_string(this.ptr, ptr0, len0);
+
+            } finally {
+                wasm.__wbindgen_free(ptr0, len0 * 1);
+
+            }
+
+        }
+        /**
+        * @returns {string}
+        */
+        get_source_buffer_string() {
+            const retptr = globalArgumentPtr();
+            wasm.bridge_get_source_buffer_string(retptr, this.ptr);
+            const mem = getUint32Memory();
+            const rustptr = mem[retptr / 4];
+            const rustlen = mem[retptr / 4 + 1];
+
+            const realRet = getStringFromWasm(rustptr, rustlen).slice();
+            wasm.__wbindgen_free(rustptr, rustlen * 1);
+            return realRet;
+
+        }
+        /**
+        * @param {string} arg0
+        * @returns {void}
+        */
+        set_source_buffer_string(arg0) {
+            const ptr0 = passStringToWasm(arg0);
+            const len0 = WASM_VECTOR_LEN;
+            try {
+                return wasm.bridge_set_source_buffer_string(this.ptr, ptr0, len0);
+
+            } finally {
+                wasm.__wbindgen_free(ptr0, len0 * 1);
+
+            }
+
+        }
+        /**
+        * @returns {void}
+        */
+        sen_startup() {
+            return wasm.bridge_sen_startup(this.ptr);
+        }
+        /**
+        * @returns {void}
+        */
+        sen_shutdown() {
+            return wasm.bridge_sen_shutdown(this.ptr);
+        }
+        /**
+        * @returns {number}
+        */
+        compile_to_render_packets() {
+            return wasm.bridge_compile_to_render_packets(this.ptr);
+        }
+        /**
+        * @param {number} arg0
+        * @returns {number}
+        */
+        get_render_packet_num_vertices(arg0) {
+            return wasm.bridge_get_render_packet_num_vertices(this.ptr, arg0);
+        }
+        /**
+        * @param {number} arg0
+        * @returns {number}
+        */
+        get_render_packet_vbuf(arg0) {
+            return wasm.bridge_get_render_packet_vbuf(this.ptr, arg0);
+        }
+        /**
+        * @param {number} arg0
+        * @returns {number}
+        */
+        get_render_packet_cbuf(arg0) {
+            return wasm.bridge_get_render_packet_cbuf(this.ptr, arg0);
+        }
+        /**
+        * @param {number} arg0
+        * @returns {number}
+        */
+        get_render_packet_tbuf(arg0) {
+            return wasm.bridge_get_render_packet_tbuf(this.ptr, arg0);
+        }
+        /**
+        * @returns {number}
+        */
+        build_traits() {
+            return wasm.bridge_build_traits(this.ptr);
+        }
+        /**
+        * @param {number} arg0
+        * @returns {number}
+        */
+        single_genotype_from_seed(arg0) {
+            return wasm.bridge_single_genotype_from_seed(this.ptr, arg0);
+        }
+        /**
+        * @param {number} arg0
+        * @param {number} arg1
+        * @returns {number}
+        */
+        create_initial_generation(arg0, arg1) {
+            return wasm.bridge_create_initial_generation(this.ptr, arg0, arg1);
+        }
+        /**
+        * @param {number} arg0
+        * @returns {void}
+        */
+        genotype_move_to_buffer(arg0) {
+            return wasm.bridge_genotype_move_to_buffer(this.ptr, arg0);
+        }
+        /**
+        * @returns {void}
+        */
+        script_cleanup() {
+            return wasm.bridge_script_cleanup(this.ptr);
+        }
+        /**
+        * @param {boolean} arg0
+        * @returns {void}
+        */
+        use_genotype_when_compiling(arg0) {
+            return wasm.bridge_use_genotype_when_compiling(this.ptr, arg0);
+        }
+        /**
+        * @returns {void}
+        */
+        next_generation_prepare() {
+            return wasm.bridge_next_generation_prepare(this.ptr);
+        }
+        /**
+        * @returns {void}
+        */
+        next_generation_add_genotype() {
+            return wasm.bridge_next_generation_add_genotype(this.ptr);
+        }
+        /**
+        * @param {number} arg0
+        * @param {number} arg1
+        * @param {number} arg2
+        * @param {number} arg3
+        * @returns {boolean}
+        */
+        next_generation_build(arg0, arg1, arg2, arg3) {
+            return (wasm.bridge_next_generation_build(this.ptr, arg0, arg1, arg2, arg3)) !== 0;
+        }
+        /**
+        * @returns {void}
+        */
+        unparse_with_genotype() {
+            return wasm.bridge_unparse_with_genotype(this.ptr);
+        }
+        /**
+        * @returns {void}
+        */
+        simplify_script() {
+            return wasm.bridge_simplify_script(this.ptr);
+        }
+    }
+    __exports.Bridge = Bridge;
+
+    // ISG HACK
+    __exports.wasm = wasm;
+
+    __exports.__wbindgen_throw = function(ptr, len) {
+        throw new Error(getStringFromWasm(ptr, len));
     };
 
     function init(path_or_module) {
@@ -84,8 +383,15 @@
 self.wasm_bindgen = Object.assign(init, __exports);
 })();
 
-const { say_hi, lenlen } = wasm_bindgen;
+/*
 
+    // ISG HACK
+    __exports.wasm = wasm;
+
+*/
+
+// global state
+let gState = {};
 
 const jobRender = 'RENDER';
 const jobUnparse = 'UNPARSE';
@@ -95,8 +401,6 @@ const jobNewGeneration = 'NEW_GENERATION';
 const jobGenerateHelp = 'GENERATE_HELP';
 const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
 const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
-
-const SeniWasm = {};
 
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
@@ -130,17 +434,17 @@ const konsoleProxy = new KonsoleProxy();
 
 
 /*
-function pointerToFloat32Array(ptr, length) {
+  function pointerToFloat32Array(ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
   return SeniWasm.instance.memory.F32.subarray(pos, pos + length);
-}
+  }
 
-function pointerToArrayBufferCopy(ptr, length) {
+  function pointerToArrayBufferCopy(ptr, length) {
   const nByte = 4;
   const pos = ptr / nByte;
   return SeniWasm.instance.memory.F32.slice(pos, pos + length);
-}
+  }
 */
 
 function render({ script /*, scriptHash*/, genotype }) {
@@ -149,34 +453,34 @@ function render({ script /*, scriptHash*/, genotype }) {
 
   if (genotype) {
     // console.log(`renderWasm genotype: ${genotype}`);
-    SeniWasm.useGenotypeWhenCompiling(true);
-    SeniWasm.setString(SeniWasm.genotype_buffer, genotype);
+    gState.bridge.use_genotype_when_compiling(true);
+    gState.bridge.set_genotype_buffer_string(genotype);
   } else {
-    SeniWasm.useGenotypeWhenCompiling(false);
+    gState.bridge.use_genotype_when_compiling(false);
   }
 
   // need to setString before calling compileToRenderPackets
-  SeniWasm.setString(SeniWasm.source_buffer, script);
-  const numRenderPackets = SeniWasm.compileToRenderPackets();
+  gState.bridge.set_source_buffer_string(script);
+  const numRenderPackets = gState.bridge.compile_to_render_packets();
   // konsoleProxy.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
-    const numVertices = SeniWasm.getRenderPacketNumVertices(i);
+    const numVertices = gState.bridge.get_render_packet_num_vertices(i);
     // konsoleProxy.log(`render_packet ${i}: numVertices = ${numVertices}`);
 
     if (numVertices > 0) {
       const buffer = {};
 
-      buffer.vbufAddress = SeniWasm.getRenderPacketVBuf(i);
-      buffer.cbufAddress = SeniWasm.getRenderPacketCBuf(i);
-      buffer.tbufAddress = SeniWasm.getRenderPacketTBuf(i);
+      buffer.vbufAddress = gState.bridge.get_render_packet_vBuf(i);
+      buffer.cbufAddress = gState.bridge.get_render_packet_cBuf(i);
+      buffer.tbufAddress = gState.bridge.get_render_packet_tBuf(i);
 
       buffer.numVertices = numVertices;
       buffers.push(buffer);
     }
   }
 
-  SeniWasm.scriptCleanup();
+  gState.bridge.script_cleanup();
 
   const logMessages = konsoleProxy.collectMessages();
   const title = 'WASM woohoo';
@@ -190,7 +494,7 @@ function render({ script /*, scriptHash*/, genotype }) {
   // WTF note: Expected a perfomance cost in Chrome due to the slice operation
   // but it seemed to either have no effect or to make the rendering faster!?!
   //
-  const wasmMemory = SeniWasm.instance.memory.buffer;
+  const wasmMemory = gState.memory.buffer;
   const memory = wasmMemory.slice();
 
   return [{ logMessages }, { title, memory, buffers }];
@@ -202,11 +506,11 @@ function unparse({ script/*, scriptHash*/, genotype }) {
   // console.log(`genotype is ${genotype}`);
   // console.log(`script is ${script}`);
 
-  SeniWasm.setString(SeniWasm.source_buffer, script);
-  SeniWasm.setString(SeniWasm.genotype_buffer, genotype);
+  gState.bridge.set_source_buffer_string(script);
+  gState.bridge.set_genotype_buffer_string(genotype);
 
-  SeniWasm.unparseWithGenotype();
-  const newScript = SeniWasm.getString(SeniWasm.out_source_buffer);
+  gState.bridge.unparse_with_genotype();
+  const newScript = gState.bridge.get_out_source_buffer_string();
 
   // console.log(`new script: ${newScript}`);
 
@@ -218,14 +522,14 @@ function unparse({ script/*, scriptHash*/, genotype }) {
 function buildTraits({ script /*, scriptHash */ }) {
   konsoleProxy.clear();
 
-  SeniWasm.setString(SeniWasm.source_buffer, script);
+  gState.bridge.set_source_buffer_string(script);
 
   let traits = [];
-  const numTraits = SeniWasm.buildTraits();
+  const numTraits = gState.bridge.build_traits();
   const validTraits = numTraits !== -1;
 
   if (validTraits) {
-    traits = SeniWasm.getString(SeniWasm.traits_buffer);
+    traits = gState.bridge.get_traits_buffer_string();
   }
 
   const logMessages = konsoleProxy.collectMessages();
@@ -238,8 +542,8 @@ function getGenotypesFromWasm(populationSize) {
   let s;
 
   for (let i = 0; i < populationSize; i++) {
-    SeniWasm.genotypeMoveToBuffer(i);
-    s = SeniWasm.getString(SeniWasm.genotype_buffer);
+    gState.bridge.genotype_move_to_buffer(i);
+    s = gState.bridge.get_genotype_buffer_string();
     genotypes.push(s);
   }
 
@@ -249,13 +553,13 @@ function getGenotypesFromWasm(populationSize) {
 function createInitialGeneration({ populationSize, traits }) {
   konsoleProxy.clear();
 
-  SeniWasm.setString(SeniWasm.traits_buffer, traits);
+  gState.bridge.setString(gState.traits_buffer, traits);
 
   const seed = Math.floor(Math.random() * 1024);
   // konsoleProxy.log(`createInitialGeneration seed: ${seed}`);
   // konsoleProxy.log(`createInitialGeneration populationSize: ${populationSize}`);
 
-  SeniWasm.createInitialGeneration(populationSize, seed);
+  gState.bridge.create_initial_generation(populationSize, seed);
 
   const genotypes = getGenotypesFromWasm(populationSize);
 
@@ -267,11 +571,11 @@ function createInitialGeneration({ populationSize, traits }) {
 function singleGenotypeFromSeed({ seed, traits }) {
   konsoleProxy.clear();
 
-  SeniWasm.setString(SeniWasm.traits_buffer, traits);
+  gState.bridge.set_traits_buffer_string(traits);
 
   // konsoleProxy.log(`singleGenotypeFromSeed seed: ${seed}`);
 
-  SeniWasm.singleGenotypeFromSeed(seed);
+  gState.bridge.single_genotype_from_seed(seed);
 
   const genotypes = getGenotypesFromWasm(1);
 
@@ -283,11 +587,11 @@ function singleGenotypeFromSeed({ seed, traits }) {
 function simplifyScript({ script }) {
   konsoleProxy.clear();
 
-  SeniWasm.setString(SeniWasm.source_buffer, script);
+  gState.bridge.set_source_buffer_string(script);
 
-  SeniWasm.simplifyScript();
+  gState.bridge.simplify_script();
 
-  const newScript = SeniWasm.getString(SeniWasm.out_source_buffer);
+  const newScript = gState.bridge.get_out_source_buffer_string();
 
   const logMessages = konsoleProxy.collectMessages();
 
@@ -297,15 +601,15 @@ function simplifyScript({ script }) {
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   konsoleProxy.clear();
 
-  SeniWasm.nextGenerationPrepare();
+  gState.bridge.next_generation_prepare();
   for (let i = 0; i < genotypes.length; i++) {
-    SeniWasm.setString(SeniWasm.genotype_buffer, genotypes[i]);
-    SeniWasm.nextGenerationAddGenotype();
+    gState.bridge.set_genotype_buffer_string(genotypes[i]);
+    gState.bridge.next_generation_add_genotype();
   }
 
-  SeniWasm.setString(SeniWasm.traits_buffer, traits);
-  SeniWasm.nextGenerationBuild(genotypes.length, populationSize,
-                             mutationRate, rng);
+  gState.bridge.set_traits_buffer_string(traits);
+  gState.bridge.next_generation_build(genotypes.length, populationSize,
+                                      mutationRate, rng);
 
   const newGenotypes = getGenotypesFromWasm(populationSize);
 
@@ -315,61 +619,24 @@ function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
 }
 
 const options = {
-    imports: {
-      performance_now() {
-        return performance.now();
-      }
+  imports: {
+    performance_now() {
+      return performance.now();
     }
-  };
+  }
+};
 
-function configureWasmModule(wasmInstance) {
-  const w = wasmInstance;
-
-  SeniWasm.instance = w;
-
-  // declare string functions
-  SeniWasm.setString = w.memory.setString;
-  SeniWasm.getString = w.memory.getString;
-
-  // declare Sen's wasm insterface
-  SeniWasm.senStartup = w.exports.sen_startup;
-  SeniWasm.senShutdown = w.exports.sen_shutdown;
-  SeniWasm.scriptCleanup = w.exports.script_cleanup;
-
-  SeniWasm.compileToRenderPackets = w.exports.compile_to_render_packets;
-  SeniWasm.getRenderPacketNumVertices = w.exports.get_render_packet_num_vertices;
-  SeniWasm.getRenderPacketVBuf = w.exports.get_render_packet_vbuf;
-  SeniWasm.getRenderPacketCBuf = w.exports.get_render_packet_cbuf;
-  SeniWasm.getRenderPacketTBuf = w.exports.get_render_packet_tbuf;
-
-  SeniWasm.buildTraits = w.exports.build_traits;
-  SeniWasm.createInitialGeneration = w.exports.create_initial_generation;
-  SeniWasm.singleGenotypeFromSeed = w.exports.single_genotype_from_seed;
-  SeniWasm.genotypeMoveToBuffer = w.exports.genotype_move_to_buffer;
-  SeniWasm.useGenotypeWhenCompiling = w.exports.use_genotype_when_compiling;
-  SeniWasm.unparseWithGenotype = w.exports.unparse_with_genotype;
-  SeniWasm.simplifyScript = w.exports.simplify_script;
-
-  SeniWasm.nextGenerationPrepare = w.exports.next_generation_prepare;
-  SeniWasm.nextGenerationAddGenotype = w.exports.next_generation_add_genotype;
-  SeniWasm.nextGenerationBuild = w.exports.next_generation_build;
-
-  SeniWasm.getSourceBuffer = w.exports.get_source_buffer;
-  SeniWasm.getOutSourceBuffer = w.exports.get_out_source_buffer;
-  SeniWasm.getTraitsBuffer = w.exports.get_traits_buffer;
-  SeniWasm.getGenotypeBuffer = w.exports.get_genotype_buffer;
-}
 
 /*
-function freeModule() {
+  function freeModule() {
 
-  Module._free(SeniWasm.ptr);
-  Module._free(SeniWasm.vbuf);
-  Module._free(SeniWasm.cbuf);
-  Module._free(SeniWasm.tbuf);
+  Module._free(gState.bridge.ptr);
+  Module._free(gState.bridge.vbuf);
+  Module._free(gState.bridge.cbuf);
+  Module._free(gState.bridge.tbuf);
 
-  SeniWasm.senShutdown();
-}
+  gState.bridge.senShutdown();
+  }
 */
 
 
@@ -387,18 +654,25 @@ function freeModule() {
 function messageHandler(type, data) {
   switch (type) {
   case jobRender:
+    console.log("jobRender");
     return render(data);
   case jobUnparse:
+    console.log("jobUnparse");
     return unparse(data);
   case jobBuildTraits:
+    console.log("jobBuildTraits");
     return buildTraits(data);
   case jobInitialGeneration:
+    console.log("jobInitialGeneration");
     return createInitialGeneration(data);
   case jobSingleGenotypeFromSeed:
+    console.log("jobSingleGenotypeFromSeed");
     return singleGenotypeFromSeed(data);
   case jobSimplifyScript:
+    console.log("jobSimplifyScript");
     return simplifyScript(data);
   case jobNewGeneration:
+    console.log("jobNewGeneration");
     return newGeneration(data);
   default:
     // throw unknown type
@@ -407,13 +681,13 @@ function messageHandler(type, data) {
 }
 
 /*
-postMessage will always return an array of two items: [status, result]
+  postMessage will always return an array of two items: [status, result]
 
-status = {
- error: { message: "something fucked up" }
- systemInitialised: true
- logMessages: []
-}
+  status = {
+  error: { message: "something fucked up" }
+  systemInitialised: true
+  logMessages: []
+  }
 */
 
 addEventListener('message', e => {
@@ -440,37 +714,33 @@ addEventListener('message', e => {
   }
 });
 
-
-
-function main() {
-  console.log('hello from main');
-  lenlen();
-  say_hi();
-
-/*
-  configureWasmModule(wasmInstance);
-
-  SeniWasm.senStartup();
-  // get string buffers
-  SeniWasm.source_buffer = SeniWasm.getSourceBuffer();
-  SeniWasm.out_source_buffer = SeniWasm.getOutSourceBuffer();
-  SeniWasm.traits_buffer = SeniWasm.getTraitsBuffer();
-  SeniWasm.genotype_buffer = SeniWasm.getGenotypeBuffer();
-*/
-
-  // send the job system an initialised message so
-  // that it can start sending jobs to this worker
-  const sendData = JSON.stringify([{systemInitialised: true}]);
-  postMessage(sendData);
-
-}
-
 wasm_bindgen('./sen_client_bg.wasm')
   .then(() => {
     // hack to access the memory
     // the build.sh has a sed command to export the wasm object
     // replace the js renderer with a rust implmentation to get rid of this hack
     // memory = wasm_bindgen.wasm.memory;
-    main();
+
+    const { Bridge } = wasm_bindgen;
+    gState.bridge = new Bridge();
+    gState.memory = wasm_bindgen.wasm.memory;
+
+    gState.bridge.lenlen();
+    gState.bridge.say_hi();
+
+    let ts = gState.bridge.get_source_buffer_string();
+    console.log(`ts = ${ts}`);
+    gState.bridge.set_source_buffer_string("yabba dabba doo");
+
+    ts = gState.bridge.get_source_buffer_string();
+    console.log(`ts = ${ts}`);
+
+    gState.bridge.sen_startup();
+
+    // send the job system an initialised message so
+    // that it can start sending jobs to this worker
+    const sendData = JSON.stringify([{systemInitialised: true}]);
+    postMessage(sendData);
+
   })
   .catch(console.error);

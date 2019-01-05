@@ -20,6 +20,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
+
 mod colour;
 mod compiler;
 mod error;
@@ -37,6 +39,8 @@ use crate::parser::*;
 pub use crate::compiler::*;
 pub use crate::error::*;
 pub use crate::vm::*;
+
+pub mod geometry;
 
 pub fn compile_and_execute(s: &str) -> Result<Var> {
     let mut vm = Vm::new();
