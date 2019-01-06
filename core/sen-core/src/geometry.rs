@@ -15,7 +15,14 @@
 
 pub struct Geometry {
     pub geo: Vec<f32>,
-    pub crt: Vec<f32>,
+}
+
+fn tex_x(v: i32) -> f32 {
+    v as f32 / 1024.0
+}
+
+fn tex_y(v: i32) -> f32 {
+    v as f32 / 1024.0
 }
 
 impl Geometry {
@@ -23,15 +30,26 @@ impl Geometry {
         Geometry {
             // todo: work out reasonable defaults
             geo: Vec::with_capacity(4096),
-            crt: Vec::with_capacity(64),
         }
     }
 
-    pub fn geo_len(&self) -> usize {
+    pub fn test_render(&mut self) {
+        let x = 10.0;
+        let y = 10.0;
+        let w = 980.0;
+        let h = 980.0;
+
+        self.push(x,     y,     1.0, 0.0, 0.0, 1.0, tex_x(1), tex_y(1));
+        self.push(x + w, y,     1.0, 0.0, 0.0, 1.0, tex_x(2), tex_y(1));
+        self.push(x,     y + h, 1.0, 0.0, 0.0, 1.0, tex_x(1), tex_y(2));
+        self.push(x + w, y + h, 1.0, 0.0, 0.0, 1.0, tex_x(2), tex_y(2));
+    }
+
+    pub fn get_render_packet_geo_len(&self, _packet_number: i32) -> usize {
         self.geo.len()
     }
 
-    pub fn geo_ptr(&self) -> *const f32 {
+    pub fn get_render_packet_geo_ptr(&self, _packet_number: i32) -> *const f32 {
         self.geo.as_ptr() as *const f32
     }
 

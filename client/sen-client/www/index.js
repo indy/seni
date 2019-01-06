@@ -519,39 +519,40 @@ class GLRenderer {
     const glColourBuffer = this.glColourBuffer;
     const glTextureBuffer = this.glTextureBuffer;
 
+    const bytesin32bit = 4;
+
     const vertexItemSize = 2;
     const colourItemSize = 4;
     const textureItemSize = 2;
 
-    const vbuf = memorySubArray(memoryF32,
-                                buffer.vbufAddress,
-                                buffer.numVertices * vertexItemSize);
-    const cbuf = memorySubArray(memoryF32,
-                                buffer.cbufAddress,
-                                buffer.numVertices * colourItemSize);
-    const tbuf = memorySubArray(memoryF32,
-                                buffer.tbufAddress,
-                                buffer.numVertices * textureItemSize);
+    const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
+
+
+    const gbuf = memorySubArray(memoryF32, buffer.geo_ptr, buffer.geo_len);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vbuf, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
     gl.vertexAttribPointer(shaderProgram.positionAttribute,
                            vertexItemSize,
-                           gl.FLOAT, false, 0, 0);
+                           gl.FLOAT, false, totalSize * bytesin32bit,
+                           0 * bytesin32bit);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, cbuf, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
     gl.vertexAttribPointer(shaderProgram.colourAttribute,
                            colourItemSize,
-                           gl.FLOAT, false, 0, 0);
+                           gl.FLOAT, false, totalSize * bytesin32bit,
+                           vertexItemSize * bytesin32bit);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, tbuf, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
     gl.vertexAttribPointer(shaderProgram.textureAttribute,
                            textureItemSize,
-                           gl.FLOAT, false, 0, 0);
+                           gl.FLOAT, false, totalSize * bytesin32bit,
+                           (vertexItemSize + colourItemSize) * bytesin32bit);
 
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.numVertices);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
+
   }
 }
 

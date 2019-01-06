@@ -1,14 +1,10 @@
-rem cargo +nightly build --target wasm32-unknown-unknown
-rem wasm-bindgen target/wasm32-unknown-unknown/debug/sen_client.wasm --out-dir www --no-typescript --no-modules
-
-rem TODO: sed hack to enable acces to memory
-
 @echo off
 
 setlocal EnableDelayedExpansion
 
 
 if "%1" == "release" (
+   rem release build
     cargo +nightly build --release --target wasm32-unknown-unknown
     wasm-bindgen target/wasm32-unknown-unknown/release/sen_client.wasm --out-dir www --no-typescript --no-modules
 

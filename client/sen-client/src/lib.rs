@@ -20,7 +20,7 @@ mod utils;
 use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
-use sen_core::sen_parse;
+// use sen_core::sen_parse;
 use sen_core::geometry::Geometry;
 
 cfg_if! {
@@ -65,43 +65,43 @@ impl Bridge {
         }
     }
 
-    pub fn say_hi(&self) {
-        log("bridge: hello from wasm world!!!");
-    }
-
-    pub fn lenlen(&self) {
-        log(&format!("hello has {} characters", sen_parse("hello")));
-    }
-
     pub fn get_genotype_buffer_string(&self) -> String {
+        log("get_genotype_buffer_string");
         self.genotype_buffer.to_string()
     }
 
     pub fn set_genotype_buffer_string(&mut self, s: &str) {
+        log("set_genotype_buffer_string");
         self.genotype_buffer = s.to_string();
     }
 
     pub fn get_traits_buffer_string(&self) -> String {
+        log("get_traits_buffer_string");
         self.traits_buffer.to_string()
     }
 
     pub fn set_traits_buffer_string(&mut self, s: &str) {
+        log("set_traits_buffer_string");
         self.traits_buffer = s.to_string();
     }
 
     pub fn get_out_source_buffer_string(&self) -> String {
+        log("get_out_source_buffer_string");
         self.out_source_buffer.to_string()
     }
 
     pub fn set_out_source_buffer_string(&mut self, s: &str) {
+        log("set_out_source_buffer_string");
         self.out_source_buffer = s.to_string();
     }
 
     pub fn get_source_buffer_string(&self) -> String {
+        log("get_source_buffer_string");
         self.source_buffer.to_string()
     }
 
     pub fn set_source_buffer_string(&mut self, s: &str) {
+        log("set_source_buffer_string");
         self.source_buffer = s.to_string();
     }
 
@@ -113,60 +113,70 @@ impl Bridge {
         log("sen_shutdown");
     }
 
-    pub fn compile_to_render_packets(&self) -> i32 {
+    pub fn compile_to_render_packets(&mut self) -> i32 {
         log("compile_to_render_packets");
-        0
+        self.geometry.test_render();
+        1
     }
 
-    pub fn get_render_packet_num_vertices(&self, _packet_number: i32) -> i32 {
-        log("get_render_packet_num_vertices");
-        0
+    pub fn get_render_packet_geo_len(&self, packet_number: i32) -> usize {
+        self.geometry.get_render_packet_geo_len(packet_number)
     }
 
-    pub fn get_render_packet_vbuf(&self, _packet_number: i32) -> *const f32 {
-        // should be a pointer to f32 ???
-        0 as *const f32
-    }
-
-    pub fn get_render_packet_cbuf(&self, _packet_number: i32) -> *const f32 {
-        // should be a pointer to f32 ???
-        0 as *const f32
-    }
-
-    pub fn get_render_packet_tbuf(&self, _packet_number: i32) -> *const f32 {
-        // should be a pointer to f32 ???
-        0 as *const f32
+    pub fn get_render_packet_geo_ptr(&self, packet_number: i32) -> *const f32 {
+        self.geometry.get_render_packet_geo_ptr(packet_number)
     }
 
     pub fn build_traits(&self) -> i32 {
+        log("build_traits");
         0
     }
 
     pub fn single_genotype_from_seed(&self, _seed: i32) -> i32 {
+        log("single_genotype_from_seed");
         0
     }
 
     pub fn create_initial_generation(&self, _population_size: i32, _seed: i32) -> i32 {
+        log("create_initial_generation");
         0
     }
 
-    pub fn genotype_move_to_buffer(&self, _index: i32) {}
+    pub fn genotype_move_to_buffer(&self, _index: i32) {
+        log("genotype_move_to_buffer");
+    }
 
     pub fn script_cleanup(&self) {
         log("script_cleanup");
     }
 
-    pub fn use_genotype_when_compiling(&self, _use_genotype: bool) {}
+    pub fn use_genotype_when_compiling(&self, use_genotype: bool) {
+        if use_genotype {
+            log("use_genotype_when_compiling : using");
+        } else {
+            log("use_genotype_when_compiling : not using genotype");
+        }
 
-    pub fn next_generation_prepare(&self) {}
+    }
 
-    pub fn next_generation_add_genotype(&self) {}
+    pub fn next_generation_prepare(&self) {
+        log("next_generation_prepare");
+    }
+
+    pub fn next_generation_add_genotype(&self) {
+        log("next_generation_add_genotype");
+    }
 
     pub fn next_generation_build(&self, _parent_size: i32, _population_size: i32, _mutation_rate: f32, _rng: i32) -> bool {
+        log("next_generation_build");
         false
     }
 
-    pub fn unparse_with_genotype(&self) {}
+    pub fn unparse_with_genotype(&self) {
+        log("unparse_with_genotype");
+    }
 
-    pub fn simplify_script(&self) {}
+    pub fn simplify_script(&self) {
+        log("simplify_script");
+    }
 }

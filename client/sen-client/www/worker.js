@@ -91,18 +91,6 @@
             this.ptr = wasm.bridge_new();
         }
         /**
-        * @returns {void}
-        */
-        say_hi() {
-            return wasm.bridge_say_hi(this.ptr);
-        }
-        /**
-        * @returns {void}
-        */
-        lenlen() {
-            return wasm.bridge_lenlen(this.ptr);
-        }
-        /**
         * @returns {string}
         */
         get_genotype_buffer_string() {
@@ -248,29 +236,15 @@
         * @param {number} arg0
         * @returns {number}
         */
-        get_render_packet_num_vertices(arg0) {
-            return wasm.bridge_get_render_packet_num_vertices(this.ptr, arg0);
+        get_render_packet_geo_len(arg0) {
+            return wasm.bridge_get_render_packet_geo_len(this.ptr, arg0);
         }
         /**
         * @param {number} arg0
         * @returns {number}
         */
-        get_render_packet_vbuf(arg0) {
-            return wasm.bridge_get_render_packet_vbuf(this.ptr, arg0);
-        }
-        /**
-        * @param {number} arg0
-        * @returns {number}
-        */
-        get_render_packet_cbuf(arg0) {
-            return wasm.bridge_get_render_packet_cbuf(this.ptr, arg0);
-        }
-        /**
-        * @param {number} arg0
-        * @returns {number}
-        */
-        get_render_packet_tbuf(arg0) {
-            return wasm.bridge_get_render_packet_tbuf(this.ptr, arg0);
+        get_render_packet_geo_ptr(arg0) {
+            return wasm.bridge_get_render_packet_geo_ptr(this.ptr, arg0);
         }
         /**
         * @returns {number}
@@ -384,6 +358,7 @@ self.wasm_bindgen = Object.assign(init, __exports);
 })();
 
 /*
+  // copy this line into the wasm_bindgen object above whenever it's regenerated
 
     // ISG HACK
     __exports.wasm = wasm;
@@ -401,16 +376,6 @@ const jobNewGeneration = 'NEW_GENERATION';
 const jobGenerateHelp = 'GENERATE_HELP';
 const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
 const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
-
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-
 
 class KonsoleProxy {
   constructor() {
@@ -465,19 +430,27 @@ function render({ script /*, scriptHash*/, genotype }) {
   // konsoleProxy.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
-    const numVertices = gState.bridge.get_render_packet_num_vertices(i);
-    // konsoleProxy.log(`render_packet ${i}: numVertices = ${numVertices}`);
-
-    if (numVertices > 0) {
-      const buffer = {};
-
-      buffer.vbufAddress = gState.bridge.get_render_packet_vBuf(i);
-      buffer.cbufAddress = gState.bridge.get_render_packet_cBuf(i);
-      buffer.tbufAddress = gState.bridge.get_render_packet_tBuf(i);
-
-      buffer.numVertices = numVertices;
+    const buffer = {};
+    buffer.geo_len = gState.bridge.get_render_packet_geo_len(i);
+    if (buffer.geo_len > 0) {
+      buffer.geo_ptr = gState.bridge.get_render_packet_geo_ptr(i);
       buffers.push(buffer);
     }
+
+    // const numVertices = gState.bridge.get_render_packet_num_vertices(i);
+    // // konsoleProxy.log(`render_packet ${i}: numVertices = ${numVertices}`);
+
+    // if (numVertices > 0) {
+    //   const buffer = {};
+
+      // buffer.vbufAddress = gState.bridge.get_render_packet_vBuf(i);
+      // buffer.cbufAddress = gState.bridge.get_render_packet_cBuf(i);
+      // buffer.tbufAddress = gState.bridge.get_render_packet_tBuf(i);
+
+      // buffer.numVertices = numVertices;
+
+    //   buffers.push(buffer);
+    // }
   }
 
   gState.bridge.script_cleanup();
@@ -639,18 +612,6 @@ const options = {
   }
 */
 
-
-
-
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-
 function messageHandler(type, data) {
   switch (type) {
   case jobRender:
@@ -724,16 +685,6 @@ wasm_bindgen('./sen_client_bg.wasm')
     const { Bridge } = wasm_bindgen;
     gState.bridge = new Bridge();
     gState.memory = wasm_bindgen.wasm.memory;
-
-    gState.bridge.lenlen();
-    gState.bridge.say_hi();
-
-    let ts = gState.bridge.get_source_buffer_string();
-    console.log(`ts = ${ts}`);
-    gState.bridge.set_source_buffer_string("yabba dabba doo");
-
-    ts = gState.bridge.get_source_buffer_string();
-    console.log(`ts = ${ts}`);
 
     gState.bridge.sen_startup();
 
