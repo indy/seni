@@ -25,234 +25,225 @@ use strum_macros::EnumString;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString)]
 pub enum Native {
-    #[strum(serialize="UnreachableNativeStart")]
+    #[strum(serialize = "UnreachableNativeStart")]
     NativeStart = Keyword::KeywordEnd as isize,
 
     // misc
     //
-    #[strum(serialize="debug/print")]
+    #[strum(serialize = "debug/print")]
     DebugPrint,
-    #[strum(serialize="nth")]
+    #[strum(serialize = "nth")]
     Nth,
-    #[strum(serialize="vector/length")]
+    #[strum(serialize = "vector/length")]
     VectorLength,
-
 
     // shapes
     //
-    #[strum(serialize="line")]
+    #[strum(serialize = "line")]
     Line,
-    #[strum(serialize="rect")]
+    #[strum(serialize = "rect")]
     Rect,
-    #[strum(serialize="circle")]
+    #[strum(serialize = "circle")]
     Circle,
-    #[strum(serialize="circle-slice")]
+    #[strum(serialize = "circle-slice")]
     CircleSlice,
-    #[strum(serialize="poly")]
+    #[strum(serialize = "poly")]
     Poly,
-    #[strum(serialize="bezier")]
+    #[strum(serialize = "bezier")]
     Bezier,
-    #[strum(serialize="bezier-bulging")]
+    #[strum(serialize = "bezier-bulging")]
     BezierBulging,
-    #[strum(serialize="stroked-bezier")]
+    #[strum(serialize = "stroked-bezier")]
     StrokedBezier,
-    #[strum(serialize="stroked-bezier-rect")]
+    #[strum(serialize = "stroked-bezier-rect")]
     StrokedBezierRect,
-
 
     // transforms
     //
-    #[strum(serialize="translate")]
+    #[strum(serialize = "translate")]
     Translate,
-    #[strum(serialize="rotate")]
+    #[strum(serialize = "rotate")]
     Rotate,
-    #[strum(serialize="scale")]
+    #[strum(serialize = "scale")]
     Scale,
 
     // colour
     //
-    #[strum(serialize="col/convert")]
+    #[strum(serialize = "col/convert")]
     ColConvert,
-    #[strum(serialize="col/rgb")]
+    #[strum(serialize = "col/rgb")]
     ColRGB, // start of colour constructors
-    #[strum(serialize="col/hsl")]
+    #[strum(serialize = "col/hsl")]
     ColHSL,
-    #[strum(serialize="col/hsluv")]
+    #[strum(serialize = "col/hsluv")]
     ColHSLuv,
-    #[strum(serialize="col/hsv")]
+    #[strum(serialize = "col/hsv")]
     ColHSV,
-    #[strum(serialize="col/lab")]
+    #[strum(serialize = "col/lab")]
     ColLAB, // end of colour constructors
-    #[strum(serialize="col/complementary")]
+    #[strum(serialize = "col/complementary")]
     ColComplementary,
-    #[strum(serialize="col/split-complementary")]
+    #[strum(serialize = "col/split-complementary")]
     ColSplitComplementary,
-    #[strum(serialize="col/analagous")]
+    #[strum(serialize = "col/analagous")]
     ColAnalagous,
-    #[strum(serialize="col/triad")]
+    #[strum(serialize = "col/triad")]
     ColTriad,
-    #[strum(serialize="col/darken")]
+    #[strum(serialize = "col/darken")]
     ColDarken,
-    #[strum(serialize="col/lighten")]
+    #[strum(serialize = "col/lighten")]
     ColLighten,
-    #[strum(serialize="col/set-alpha")]
+    #[strum(serialize = "col/set-alpha")]
     ColSetAlpha,
-    #[strum(serialize="col/get-alpha")]
+    #[strum(serialize = "col/get-alpha")]
     ColGetAlpha,
-    #[strum(serialize="col/set-r")]
+    #[strum(serialize = "col/set-r")]
     ColSetR,
-    #[strum(serialize="col/get-r")]
+    #[strum(serialize = "col/get-r")]
     ColGetR,
-    #[strum(serialize="col/set-g")]
+    #[strum(serialize = "col/set-g")]
     ColSetG,
-    #[strum(serialize="col/get-g")]
+    #[strum(serialize = "col/get-g")]
     ColGetG,
-    #[strum(serialize="col/set-b")]
+    #[strum(serialize = "col/set-b")]
     ColSetB,
-    #[strum(serialize="col/get-b")]
+    #[strum(serialize = "col/get-b")]
     ColGetB,
-    #[strum(serialize="col/set-h")]
+    #[strum(serialize = "col/set-h")]
     ColSetH,
-    #[strum(serialize="col/get-h")]
+    #[strum(serialize = "col/get-h")]
     ColGetH,
-    #[strum(serialize="col/set-s")]
+    #[strum(serialize = "col/set-s")]
     ColSetS,
-    #[strum(serialize="col/get-s")]
+    #[strum(serialize = "col/get-s")]
     ColGetS,
-    #[strum(serialize="col/set-l")]
+    #[strum(serialize = "col/set-l")]
     ColSetL,
-    #[strum(serialize="col/get-l")]
+    #[strum(serialize = "col/get-l")]
     ColGetL,
-    #[strum(serialize="col/set-a")]
+    #[strum(serialize = "col/set-a")]
     ColSetA,
-    #[strum(serialize="col/get-a")]
+    #[strum(serialize = "col/get-a")]
     ColGetA,
-    #[strum(serialize="col/set-v")]
+    #[strum(serialize = "col/set-v")]
     ColSetV,
-    #[strum(serialize="col/get-v")]
+    #[strum(serialize = "col/get-v")]
     ColGetV,
-    #[strum(serialize="col/build-procedural")]
+    #[strum(serialize = "col/build-procedural")]
     ColBuildProcedural,
-    #[strum(serialize="col/build-bezier")]
+    #[strum(serialize = "col/build-bezier")]
     ColBuildBezier,
-    #[strum(serialize="col/value")]
+    #[strum(serialize = "col/value")]
     ColValue,
-
 
     // math
     //
-    #[strum(serialize="math/distance")]
+    #[strum(serialize = "math/distance")]
     MathDistance,
-    #[strum(serialize="math/normal")]
+    #[strum(serialize = "math/normal")]
     MathNormal,
-    #[strum(serialize="math/clamp")]
+    #[strum(serialize = "math/clamp")]
     MathClamp,
-    #[strum(serialize="math/radians->degrees")]
+    #[strum(serialize = "math/radians->degrees")]
     MathRadiansDegrees,
-    #[strum(serialize="math/cos")]
+    #[strum(serialize = "math/cos")]
     MathCos,
-    #[strum(serialize="math/sin")]
+    #[strum(serialize = "math/sin")]
     MathSin,
-
 
     // prng
     //
-    #[strum(serialize="prng/build")]
+    #[strum(serialize = "prng/build")]
     PrngBuild,
-    #[strum(serialize="prng/values")]
+    #[strum(serialize = "prng/values")]
     PrngValues,
-    #[strum(serialize="prng/value")]
+    #[strum(serialize = "prng/value")]
     PrngValue,
-    #[strum(serialize="prng/perlin")]
+    #[strum(serialize = "prng/perlin")]
     PrngPerlin,
-
 
     // interp
     //
-    #[strum(serialize="interp/build")]
+    #[strum(serialize = "interp/build")]
     InterpBuild,
-    #[strum(serialize="interp/value")]
+    #[strum(serialize = "interp/value")]
     InterpValue,
-    #[strum(serialize="interp/cos")]
+    #[strum(serialize = "interp/cos")]
     InterpCos,
-    #[strum(serialize="interp/sin")]
+    #[strum(serialize = "interp/sin")]
     InterpSin,
-    #[strum(serialize="interp/bezier")]
+    #[strum(serialize = "interp/bezier")]
     InterpBezier,
-    #[strum(serialize="interp/bezier-tangent")]
+    #[strum(serialize = "interp/bezier-tangent")]
     InterpBezierTangent,
-    #[strum(serialize="interp/ray")]
+    #[strum(serialize = "interp/ray")]
     InterpRay,
-    #[strum(serialize="interp/line")]
+    #[strum(serialize = "interp/line")]
     InterpLine,
-    #[strum(serialize="interp/circle")]
+    #[strum(serialize = "interp/circle")]
     InterpCircle,
-
 
     // path
     //
-    #[strum(serialize="path/linear")]
+    #[strum(serialize = "path/linear")]
     PathLinear,
-    #[strum(serialize="path/circle")]
+    #[strum(serialize = "path/circle")]
     PathCircle,
-    #[strum(serialize="path/spline")]
+    #[strum(serialize = "path/spline")]
     PathSpline,
-    #[strum(serialize="path/bezier")]
+    #[strum(serialize = "path/bezier")]
     PathBezier,
-
 
     // repeat
     //
-    #[strum(serialize="repeat/symmetry-vertical")]
+    #[strum(serialize = "repeat/symmetry-vertical")]
     RepeatSymmetryVertical,
-    #[strum(serialize="repeat/symmetry-horizontal")]
+    #[strum(serialize = "repeat/symmetry-horizontal")]
     RepeatSymmetryHorizontal,
-    #[strum(serialize="repeat/symmetry-4")]
+    #[strum(serialize = "repeat/symmetry-4")]
     RepeatSymmetry4,
-    #[strum(serialize="repeat/symmetry-8")]
+    #[strum(serialize = "repeat/symmetry-8")]
     RepeatSymmetry8,
-    #[strum(serialize="repeat/rotate")]
+    #[strum(serialize = "repeat/rotate")]
     RepeatRotate,
-    #[strum(serialize="repeat/rotate-mirrored")]
+    #[strum(serialize = "repeat/rotate-mirrored")]
     RepeatRotateMirror,
-
 
     // focal
     //
-    #[strum(serialize="focal/build-point")]
+    #[strum(serialize = "focal/build-point")]
     FocalBuildPoint,
-    #[strum(serialize="focal/build-vline")]
+    #[strum(serialize = "focal/build-vline")]
     FocalBuildVLine,
-    #[strum(serialize="focal/build-hline")]
+    #[strum(serialize = "focal/build-hline")]
     FocalBuildHLine,
-    #[strum(serialize="focal/value")]
+    #[strum(serialize = "focal/value")]
     FocalValue,
-
 
     // gen
     //
-    #[strum(serialize="gen/stray-int")]
+    #[strum(serialize = "gen/stray-int")]
     GenStrayInt,
-    #[strum(serialize="gen/stray")]
+    #[strum(serialize = "gen/stray")]
     GenStray,
-    #[strum(serialize="gen/stray-2d")]
+    #[strum(serialize = "gen/stray-2d")]
     GenStray2D,
-    #[strum(serialize="gen/stray-3d")]
+    #[strum(serialize = "gen/stray-3d")]
     GenStray3D,
-    #[strum(serialize="gen/stray-4d")]
+    #[strum(serialize = "gen/stray-4d")]
     GenStray4D,
-    #[strum(serialize="gen/int")]
+    #[strum(serialize = "gen/int")]
     GenInt,
-    #[strum(serialize="gen/scalar")]
+    #[strum(serialize = "gen/scalar")]
     GenScalar,
-    #[strum(serialize="gen/2d")]
+    #[strum(serialize = "gen/2d")]
     Gen2D,
-    #[strum(serialize="gen/select")]
+    #[strum(serialize = "gen/select")]
     GenSelect,
-    #[strum(serialize="gen/col")]
+    #[strum(serialize = "gen/col")]
     GenCol,
 
-    #[strum(serialize="UnreachableNativeEnd")]
+    #[strum(serialize = "UnreachableNativeEnd")]
     NativeEnd,
 }
 

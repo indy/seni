@@ -20,20 +20,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-
 mod colour;
 mod compiler;
 mod error;
 mod keywords;
 mod lexer;
 mod mathutil;
+mod matrix;
 mod native;
 mod opcodes;
 mod parser;
 mod placeholder;
-mod vm;
 mod uvmapper;
+mod vm;
 
 use crate::parser::*;
 

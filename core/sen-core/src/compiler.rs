@@ -13,14 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::str::FromStr;
 use std::collections::HashMap;
 use std::fmt;
+use std::str::FromStr;
 
 use crate::error::{Error, Result};
 use crate::keywords::{string_to_keyword_hash, Keyword};
 use crate::mathutil;
-use crate::native::{Native};
+use crate::native::Native;
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::parser::Node;
 
@@ -676,66 +676,16 @@ impl Compiler {
         self.compile_global_bind_i32(compilation, Keyword::GenInitial.to_string(), 0)?;
 
         self.compile_global_bind_f32(compilation, Keyword::CanvasWidth.to_string(), 1000.0)?;
-        self.compile_global_bind_f32(
-            compilation,
-            Keyword::CanvasHeight.to_string(),
-            1000.0,
-        )?;
+        self.compile_global_bind_f32(compilation, Keyword::CanvasHeight.to_string(), 1000.0)?;
 
-        self.compile_global_bind_f32(
-            compilation,
-            Keyword::MathTau.to_string(),
-            mathutil::TAU,
-        )?;
+        self.compile_global_bind_f32(compilation, Keyword::MathTau.to_string(), mathutil::TAU)?;
 
-        self.compile_global_bind_col(
-            compilation,
-            Keyword::White.to_string(),
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-        )?;
-        self.compile_global_bind_col(
-            compilation,
-            Keyword::Black.to_string(),
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-        )?;
-        self.compile_global_bind_col(
-            compilation,
-            Keyword::Red.to_string(),
-            1.0,
-            0.0,
-            0.0,
-            1.0,
-        )?;
-        self.compile_global_bind_col(
-            compilation,
-            Keyword::Green.to_string(),
-            0.0,
-            1.0,
-            0.0,
-            1.0,
-        )?;
-        self.compile_global_bind_col(
-            compilation,
-            Keyword::Blue.to_string(),
-            0.0,
-            0.0,
-            1.0,
-            1.0,
-        )?;
-        self.compile_global_bind_col(
-            compilation,
-            Keyword::Yellow.to_string(),
-            1.0,
-            1.0,
-            0.0,
-            1.0,
-        )?;
+        self.compile_global_bind_col(compilation, Keyword::White.to_string(), 1.0, 1.0, 1.0, 1.0)?;
+        self.compile_global_bind_col(compilation, Keyword::Black.to_string(), 0.0, 0.0, 0.0, 1.0)?;
+        self.compile_global_bind_col(compilation, Keyword::Red.to_string(), 1.0, 0.0, 0.0, 1.0)?;
+        self.compile_global_bind_col(compilation, Keyword::Green.to_string(), 0.0, 1.0, 0.0, 1.0)?;
+        self.compile_global_bind_col(compilation, Keyword::Blue.to_string(), 0.0, 0.0, 1.0, 1.0)?;
+        self.compile_global_bind_col(compilation, Keyword::Yellow.to_string(), 1.0, 1.0, 0.0, 1.0)?;
         self.compile_global_bind_col(
             compilation,
             Keyword::Magenta.to_string(),
@@ -744,14 +694,7 @@ impl Compiler {
             1.0,
             1.0,
         )?;
-        self.compile_global_bind_col(
-            compilation,
-            Keyword::Cyan.to_string(),
-            0.0,
-            1.0,
-            1.0,
-            1.0,
-        )?;
+        self.compile_global_bind_col(compilation, Keyword::Cyan.to_string(), 0.0, 1.0, 1.0, 1.0)?;
 
         self.compile_global_bind_procedural_presets(compilation)?;
         self.compile_global_bind_ease_presets(compilation)?;
@@ -780,10 +723,7 @@ impl Compiler {
         self.append_keyword(compilation, Keyword::Robocop)?;
         self.append_keyword(compilation, Keyword::Transformers)?;
 
-        self.store_globally(
-            compilation,
-            Keyword::ColProceduralFnPresets.to_string(),
-        )?;
+        self.store_globally(compilation, Keyword::ColProceduralFnPresets.to_string())?;
 
         Ok(())
     }

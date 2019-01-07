@@ -16,389 +16,380 @@
 use std::collections::HashMap;
 
 use strum::IntoEnumIterator;
-use strum_macros::{EnumString, Display, EnumIter};
+use strum_macros::{Display, EnumIter, EnumString};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString, Display, EnumIter)]
 pub enum Keyword {
-    #[strum(serialize="UnreachableKeywordStart")]
+    #[strum(serialize = "UnreachableKeywordStart")]
     KeywordStart = 127,
-    #[strum(serialize="false")]
+    #[strum(serialize = "false")]
     False,
-    #[strum(serialize="true")]
+    #[strum(serialize = "true")]
     True,
-
 
     // mathematical special forms
     //
-    #[strum(serialize="+")]
+    #[strum(serialize = "+")]
     Plus,
-    #[strum(serialize="-")]
+    #[strum(serialize = "-")]
     Minus,
-    #[strum(serialize="*")]
+    #[strum(serialize = "*")]
     Mult,
-    #[strum(serialize="/")]
+    #[strum(serialize = "/")]
     Divide,
-    #[strum(serialize="=")]
+    #[strum(serialize = "=")]
     Equal,
-    #[strum(serialize=">")]
+    #[strum(serialize = ">")]
     Gt,
-    #[strum(serialize="<")]
+    #[strum(serialize = "<")]
     Lt,
-
 
     // built-in keywords/special-forms
     //
-    #[strum(serialize="++")]
+    #[strum(serialize = "++")]
     VectorAppend,
-    #[strum(serialize="sqrt")]
+    #[strum(serialize = "sqrt")]
     Sqrt,
-    #[strum(serialize="mod")]
+    #[strum(serialize = "mod")]
     Mod,
-    #[strum(serialize="and")]
+    #[strum(serialize = "and")]
     And,
-    #[strum(serialize="or")]
+    #[strum(serialize = "or")]
     Or,
-    #[strum(serialize="not")]
+    #[strum(serialize = "not")]
     Not,
-    #[strum(serialize="define")]
+    #[strum(serialize = "define")]
     Define,
-    #[strum(serialize="fn")]
+    #[strum(serialize = "fn")]
     Fn,
-    #[strum(serialize="if")]
+    #[strum(serialize = "if")]
     If,
-    #[strum(serialize="each")]
+    #[strum(serialize = "each")]
     Each,
-    #[strum(serialize="loop")]
+    #[strum(serialize = "loop")]
     Loop,
-    #[strum(serialize="fence")]
+    #[strum(serialize = "fence")]
     Fence,
-    #[strum(serialize="on-matrix-stack")]
+    #[strum(serialize = "on-matrix-stack")]
     OnMatrixStack,
-    #[strum(serialize="setq")]
+    #[strum(serialize = "setq")]
     Setq,
-    #[strum(serialize="address-of")]
+    #[strum(serialize = "address-of")]
     AddressOf,
-    #[strum(serialize="fn-call")]
+    #[strum(serialize = "fn-call")]
     FnCall,
-    #[strum(serialize="quote")]
+    #[strum(serialize = "quote")]
     Quote,
-
 
     // pre-defined globals
     //
-    #[strum(serialize="#vars")]
+    #[strum(serialize = "#vars")]
     HashVars,
-    #[strum(serialize="canvas/width")]
+    #[strum(serialize = "canvas/width")]
     CanvasWidth,
-    #[strum(serialize="canvas/height")]
+    #[strum(serialize = "canvas/height")]
     CanvasHeight,
-    #[strum(serialize="math/TAU")]
+    #[strum(serialize = "math/TAU")]
     MathTau,
-
 
     // colour formats
     //
-    #[strum(serialize="RGB")]
+    #[strum(serialize = "RGB")]
     Rgb,
-    #[strum(serialize="HSL")]
+    #[strum(serialize = "HSL")]
     Hsl,
-    #[strum(serialize="HSLuv")]
+    #[strum(serialize = "HSLuv")]
     Hsluv,
-    #[strum(serialize="LAB")]
+    #[strum(serialize = "LAB")]
     Lab,
-    #[strum(serialize="HSV")]
+    #[strum(serialize = "HSV")]
     Hsv,
-
 
     // pre-defined colours
     //
-    #[strum(serialize="white")]
+    #[strum(serialize = "white")]
     White,
-    #[strum(serialize="black")]
+    #[strum(serialize = "black")]
     Black,
-    #[strum(serialize="red")]
+    #[strum(serialize = "red")]
     Red,
-    #[strum(serialize="green")]
+    #[strum(serialize = "green")]
     Green,
-    #[strum(serialize="blue")]
+    #[strum(serialize = "blue")]
     Blue,
-    #[strum(serialize="yellow")]
+    #[strum(serialize = "yellow")]
     Yellow,
-    #[strum(serialize="magenta")]
+    #[strum(serialize = "magenta")]
     Magenta,
-    #[strum(serialize="cyan")]
+    #[strum(serialize = "cyan")]
     Cyan,
-
 
     // procedural colours
     //
-    #[strum(serialize="chrome")]
+    #[strum(serialize = "chrome")]
     Chrome,
-    #[strum(serialize="hotline-miami")]
+    #[strum(serialize = "hotline-miami")]
     HotlineMiami,
-    #[strum(serialize="knight-rider")]
+    #[strum(serialize = "knight-rider")]
     KnightRider,
-    #[strum(serialize="mars")]
+    #[strum(serialize = "mars")]
     Mars,
-    #[strum(serialize="rainbow")]
+    #[strum(serialize = "rainbow")]
     Rainbow,
-    #[strum(serialize="robocop")]
+    #[strum(serialize = "robocop")]
     Robocop,
-    #[strum(serialize="transformers")]
+    #[strum(serialize = "transformers")]
     Transformers,
-    #[strum(serialize="col/procedural-fn-presets")]
+    #[strum(serialize = "col/procedural-fn-presets")]
     ColProceduralFnPresets,
-
 
     // brush types
     //
-    #[strum(serialize="brush-flat")]
+    #[strum(serialize = "brush-flat")]
     BrushFlat,
-    #[strum(serialize="brush-a")]
+    #[strum(serialize = "brush-a")]
     BrushA,
-    #[strum(serialize="brush-b")]
+    #[strum(serialize = "brush-b")]
     BrushB,
-    #[strum(serialize="brush-c")]
+    #[strum(serialize = "brush-c")]
     BrushC,
-    #[strum(serialize="brush-d")]
+    #[strum(serialize = "brush-d")]
     BrushD,
-    #[strum(serialize="brush-e")]
+    #[strum(serialize = "brush-e")]
     BrushE,
-    #[strum(serialize="brush-f")]
+    #[strum(serialize = "brush-f")]
     BrushF,
-    #[strum(serialize="brush-g")]
+    #[strum(serialize = "brush-g")]
     BrushG,
-
 
     // interpolation
     //
-    #[strum(serialize="linear")]
+    #[strum(serialize = "linear")]
     Linear,
-    #[strum(serialize="ease/quick")]
+    #[strum(serialize = "ease/quick")]
     EaseQuick,
-    #[strum(serialize="ease/slow-in")]
+    #[strum(serialize = "ease/slow-in")]
     EaseSlowIn,
-    #[strum(serialize="ease/slow-in-out")]
+    #[strum(serialize = "ease/slow-in-out")]
     EaseSlowInOut,
-    #[strum(serialize="ease/quadratic-in")]
+    #[strum(serialize = "ease/quadratic-in")]
     EaseQuadraticIn,
-    #[strum(serialize="ease/quadratic-out")]
+    #[strum(serialize = "ease/quadratic-out")]
     EaseQuadraticOut,
-    #[strum(serialize="ease/quadratic-in-out")]
+    #[strum(serialize = "ease/quadratic-in-out")]
     EaseQuadraticInOut,
-    #[strum(serialize="ease/cubic-in")]
+    #[strum(serialize = "ease/cubic-in")]
     EaseCubicIn,
-    #[strum(serialize="ease/cubic-out")]
+    #[strum(serialize = "ease/cubic-out")]
     EaseCubicOut,
-    #[strum(serialize="ease/cubic-in-out")]
+    #[strum(serialize = "ease/cubic-in-out")]
     EaseCubicInOut,
-    #[strum(serialize="ease/quartic-in")]
+    #[strum(serialize = "ease/quartic-in")]
     EaseQuarticIn,
-    #[strum(serialize="ease/quartic-out")]
+    #[strum(serialize = "ease/quartic-out")]
     EaseQuarticOut,
-    #[strum(serialize="ease/quartic-in-out")]
+    #[strum(serialize = "ease/quartic-in-out")]
     EaseQuarticInOut,
-    #[strum(serialize="ease/quintic-in")]
+    #[strum(serialize = "ease/quintic-in")]
     EaseQuinticIn,
-    #[strum(serialize="ease/quintic-out")]
+    #[strum(serialize = "ease/quintic-out")]
     EaseQuinticOut,
-    #[strum(serialize="ease/quintic-in-out")]
+    #[strum(serialize = "ease/quintic-in-out")]
     EaseQuinticInOut,
-    #[strum(serialize="ease/sin-in")]
+    #[strum(serialize = "ease/sin-in")]
     EaseSinIn,
-    #[strum(serialize="ease/sin-out")]
+    #[strum(serialize = "ease/sin-out")]
     EaseSinOut,
-    #[strum(serialize="ease/sin-in-out")]
+    #[strum(serialize = "ease/sin-in-out")]
     EaseSinInOut,
-    #[strum(serialize="ease/circular-in")]
+    #[strum(serialize = "ease/circular-in")]
     EaseCircularIn,
-    #[strum(serialize="ease/circular-out")]
+    #[strum(serialize = "ease/circular-out")]
     EaseCircularOut,
-    #[strum(serialize="ease/circular-in-out")]
+    #[strum(serialize = "ease/circular-in-out")]
     EaseCircularInOut,
-    #[strum(serialize="ease/exponential-in")]
+    #[strum(serialize = "ease/exponential-in")]
     EaseExponentialIn,
-    #[strum(serialize="ease/exponential-out")]
+    #[strum(serialize = "ease/exponential-out")]
     EaseExponentialOut,
-    #[strum(serialize="ease/exponential-in-out")]
+    #[strum(serialize = "ease/exponential-in-out")]
     EaseExponentialInOut,
-    #[strum(serialize="ease/elastic-in")]
+    #[strum(serialize = "ease/elastic-in")]
     EaseElasticIn,
-    #[strum(serialize="ease/elastic-out")]
+    #[strum(serialize = "ease/elastic-out")]
     EaseElasticOut,
-    #[strum(serialize="ease/elastic-in-out")]
+    #[strum(serialize = "ease/elastic-in-out")]
     EaseElasticInOut,
-    #[strum(serialize="ease/back-in")]
+    #[strum(serialize = "ease/back-in")]
     EaseBackIn,
-    #[strum(serialize="ease/back-out")]
+    #[strum(serialize = "ease/back-out")]
     EaseBackOut,
-    #[strum(serialize="ease/back-in-out")]
+    #[strum(serialize = "ease/back-in-out")]
     EaseBackInOut,
-    #[strum(serialize="ease/bounce-in")]
+    #[strum(serialize = "ease/bounce-in")]
     EaseBounceIn,
-    #[strum(serialize="ease/bounce-out")]
+    #[strum(serialize = "ease/bounce-out")]
     EaseBounceOut,
-    #[strum(serialize="ease/bounce-in-out")]
+    #[strum(serialize = "ease/bounce-in-out")]
     EaseBounceInOut,
 
-    #[strum(serialize="ease/presets")]
+    #[strum(serialize = "ease/presets")]
     EasePresets,
-
 
     // common parameter labels
     //
-    #[strum(serialize="a")]
+    #[strum(serialize = "a")]
     A,
-    #[strum(serialize="b")]
+    #[strum(serialize = "b")]
     B,
-    #[strum(serialize="c")]
+    #[strum(serialize = "c")]
     C,
-    #[strum(serialize="d")]
+    #[strum(serialize = "d")]
     D,
-    #[strum(serialize="g")]
+    #[strum(serialize = "g")]
     G,
-    #[strum(serialize="h")]
+    #[strum(serialize = "h")]
     H,
-    #[strum(serialize="l")]
+    #[strum(serialize = "l")]
     L,
-    #[strum(serialize="n")]
+    #[strum(serialize = "n")]
     N,
-    #[strum(serialize="r")]
+    #[strum(serialize = "r")]
     R,
-    #[strum(serialize="s")]
+    #[strum(serialize = "s")]
     S,
-    #[strum(serialize="t")]
+    #[strum(serialize = "t")]
     T,
-    #[strum(serialize="v")]
+    #[strum(serialize = "v")]
     V,
-    #[strum(serialize="x")]
+    #[strum(serialize = "x")]
     X,
-    #[strum(serialize="y")]
+    #[strum(serialize = "y")]
     Y,
-    #[strum(serialize="z")]
+    #[strum(serialize = "z")]
     Z,
-    #[strum(serialize="alpha")]
+    #[strum(serialize = "alpha")]
     Alpha,
-    #[strum(serialize="amplitude")]
+    #[strum(serialize = "amplitude")]
     Amplitude,
-    #[strum(serialize="angle")]
+    #[strum(serialize = "angle")]
     Angle,
-    #[strum(serialize="angle-end")]
+    #[strum(serialize = "angle-end")]
     AngleEnd,
-    #[strum(serialize="angle-start")]
+    #[strum(serialize = "angle-start")]
     AngleStart,
-    #[strum(serialize="brush")]
+    #[strum(serialize = "brush")]
     Brush,
-    #[strum(serialize="brush-subtype")]
+    #[strum(serialize = "brush-subtype")]
     BrushSubtype,
-    #[strum(serialize="by")]
+    #[strum(serialize = "by")]
     By,
-    #[strum(serialize="clamping")]
+    #[strum(serialize = "clamping")]
     Clamping,
-    #[strum(serialize="colour")]
+    #[strum(serialize = "colour")]
     Colour,
-    #[strum(serialize="colour-volatility")]
+    #[strum(serialize = "colour-volatility")]
     ColourVolatility,
-    #[strum(serialize="colours")]
+    #[strum(serialize = "colours")]
     Colours,
-    #[strum(serialize="coords")]
+    #[strum(serialize = "coords")]
     Coords,
-    #[strum(serialize="copies")]
+    #[strum(serialize = "copies")]
     Copies,
-    #[strum(serialize="copy")]
+    #[strum(serialize = "copy")]
     Copy,
-    #[strum(serialize="direction")]
+    #[strum(serialize = "direction")]
     Direction,
-    #[strum(serialize="distance")]
+    #[strum(serialize = "distance")]
     Distance,
-    #[strum(serialize="format")]
+    #[strum(serialize = "format")]
     Format,
-    #[strum(serialize="frequency")]
+    #[strum(serialize = "frequency")]
     Frequency,
-    #[strum(serialize="from")]
+    #[strum(serialize = "from")]
     From,
-    #[strum(serialize="from-colour")]
+    #[strum(serialize = "from-colour")]
     FromColour,
-    #[strum(serialize="gen/initial-value")]
+    #[strum(serialize = "gen/initial-value")]
     GenInitial,
-    #[strum(serialize="height")]
+    #[strum(serialize = "height")]
     Height,
-    #[strum(serialize="inc")]
+    #[strum(serialize = "inc")]
     Inc,
-    #[strum(serialize="inner-height")]
+    #[strum(serialize = "inner-height")]
     InnerHeight,
-    #[strum(serialize="inner-width")]
+    #[strum(serialize = "inner-width")]
     InnerWidth,
-    #[strum(serialize="iterations")]
+    #[strum(serialize = "iterations")]
     Iterations,
-    #[strum(serialize="line-width")]
+    #[strum(serialize = "line-width")]
     LineWidth,
-    #[strum(serialize="line-width-end")]
+    #[strum(serialize = "line-width-end")]
     LineWidthEnd,
-    #[strum(serialize="line-width-mapping")]
+    #[strum(serialize = "line-width-mapping")]
     LineWidthMapping,
-    #[strum(serialize="line-width-start")]
+    #[strum(serialize = "line-width-start")]
     LineWidthStart,
-    #[strum(serialize="mapping")]
+    #[strum(serialize = "mapping")]
     Mapping,
-    #[strum(serialize="max")]
+    #[strum(serialize = "max")]
     Max,
-    #[strum(serialize="min")]
+    #[strum(serialize = "min")]
     Min,
-    #[strum(serialize="num")]
+    #[strum(serialize = "num")]
     Num,
-    #[strum(serialize="overlap")]
+    #[strum(serialize = "overlap")]
     Overlap,
-    #[strum(serialize="point")]
+    #[strum(serialize = "point")]
     Point,
-    #[strum(serialize="position")]
+    #[strum(serialize = "position")]
     Position,
-    #[strum(serialize="preset")]
+    #[strum(serialize = "preset")]
     Preset,
-    #[strum(serialize="radius")]
+    #[strum(serialize = "radius")]
     Radius,
-    #[strum(serialize="scalar")]
+    #[strum(serialize = "scalar")]
     Scalar,
-    #[strum(serialize="seed")]
+    #[strum(serialize = "seed")]
     Seed,
-    #[strum(serialize="steps")]
+    #[strum(serialize = "steps")]
     Steps,
-    #[strum(serialize="stroke-line-width-end")]
+    #[strum(serialize = "stroke-line-width-end")]
     StrokeLineWidthEnd,
-    #[strum(serialize="stroke-line-width-start")]
+    #[strum(serialize = "stroke-line-width-start")]
     StrokeLineWidthStart,
-    #[strum(serialize="stroke-noise")]
+    #[strum(serialize = "stroke-noise")]
     StrokeNoise,
-    #[strum(serialize="stroke-tessellation")]
+    #[strum(serialize = "stroke-tessellation")]
     StrokeTessellation,
-    #[strum(serialize="t-end")]
+    #[strum(serialize = "t-end")]
     TEnd,
-    #[strum(serialize="t-start")]
+    #[strum(serialize = "t-start")]
     TStart,
-    #[strum(serialize="tessellation")]
+    #[strum(serialize = "tessellation")]
     Tessellation,
-    #[strum(serialize="transform-position")]
+    #[strum(serialize = "transform-position")]
     TransformPosition,
-    #[strum(serialize="to")]
+    #[strum(serialize = "to")]
     To,
-    #[strum(serialize="to-colour")]
+    #[strum(serialize = "to-colour")]
     ToColour,
-    #[strum(serialize="upto")]
+    #[strum(serialize = "upto")]
     Upto,
-    #[strum(serialize="value")]
+    #[strum(serialize = "value")]
     Value,
-    #[strum(serialize="vec1")]
+    #[strum(serialize = "vec1")]
     Vec1,
-    #[strum(serialize="vec2")]
+    #[strum(serialize = "vec2")]
     Vec2,
-    #[strum(serialize="vector")]
+    #[strum(serialize = "vector")]
     Vector,
-    #[strum(serialize="volatility")]
+    #[strum(serialize = "volatility")]
     Volatility,
-    #[strum(serialize="width")]
+    #[strum(serialize = "width")]
     Width,
 
-    #[strum(serialize="UnreachableKeywordEnd")]
+    #[strum(serialize = "UnreachableKeywordEnd")]
     KeywordEnd,
 }
 
