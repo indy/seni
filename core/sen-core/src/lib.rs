@@ -33,6 +33,7 @@ mod opcodes;
 mod parser;
 mod placeholder;
 mod vm;
+mod uvmapper;
 
 use crate::parser::*;
 

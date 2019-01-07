@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::uvmapper::{Mappings, BrushType};
+
 pub struct Geometry {
     pub geo: Vec<f32>,
 }
@@ -39,10 +41,14 @@ impl Geometry {
         let w = 980.0;
         let h = 980.0;
 
-        self.push(x,     y,     1.0, 0.0, 0.0, 1.0, tex_x(1), tex_y(1));
-        self.push(x + w, y,     1.0, 0.0, 0.0, 1.0, tex_x(2), tex_y(1));
-        self.push(x,     y + h, 1.0, 0.0, 0.0, 1.0, tex_x(1), tex_y(2));
-        self.push(x + w, y + h, 1.0, 0.0, 0.0, 1.0, tex_x(2), tex_y(2));
+        let mappings = Mappings::new();
+        let mapping = mappings.get_uv_mapping(BrushType::Flat, 0);
+        let map = mapping.map();
+
+        self.push(x,     y,     1.0, 0.0, 0.0, 1.0, map[0], map[1]);
+        self.push(x + w, y,     1.0, 0.0, 0.0, 1.0, map[2], map[3]);
+        self.push(x,     y + h, 1.0, 0.0, 0.0, 1.0, map[4], map[5]);
+        self.push(x + w, y + h, 1.0, 0.0, 0.0, 1.0, map[6], map[7]);
     }
 
     pub fn get_render_packet_geo_len(&self, _packet_number: i32) -> usize {
