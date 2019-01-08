@@ -22,6 +22,8 @@ use wasm_bindgen::prelude::*;
 
 // use sen_core::sen_parse;
 use sen_core::vm::{Vm, Env};
+use sen_core::parser::*;
+use sen_core::compiler::compile_program;
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -115,8 +117,28 @@ impl Bridge {
     }
 
     pub fn compile_to_render_packets(&mut self) -> i32 {
-        log("compile_to_render_packets");
-        self.vm.test_render().unwrap_or(0) as i32
+        // self.vm.test_render().unwrap_or(0) as i32
+
+        let env = Env::new();
+
+        let (ast, _word_lut) = if let Ok((ast_, _word_lut_)) = parse(&self.source_buffer) {
+            (ast_, _word_lut_)
+        } else {
+            return 0
+        };
+
+        let program = if let Ok(program_) = compile_program(&ast) {
+            program_
+        } else {
+            return 0
+        };
+
+        self.vm.reset();
+        if let Ok(_) = self.vm.interpret(&env, &program) {
+            self.vm.geometry.get_num_render_packets() as i32
+        } else {
+            0
+        }
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {

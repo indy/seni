@@ -13,11 +13,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::Program;
+use crate::compiler::{Program, ColourFormat};
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::mathutil;
 use crate::vm::{Var, Vm};
+use crate::uvmapper::BrushType;
+use crate::colour::Colour;
 
 use std::collections::HashMap;
 
@@ -287,7 +289,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // BIND("col/convert", bind_col_convert);
     // start of colour constructors
     // g_colour_constructor_start = word_lut->native_count;
-    // BIND("col/rgb", bind_col_rgb);
+    native_fns.insert(Native::ColRGB, bind_col_rgb);
     // BIND("col/hsl", bind_col_hsl);
     // BIND("col/hsluv", bind_col_hsluv);
     // BIND("col/hsv", bind_col_hsv);
@@ -471,7 +473,128 @@ pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> R
 }
 
 pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut vector: Option<&Var> = None;
+
+    let mut width: f32 = 4.0;
+    let mut from: (f32, f32) = (10.0, 10.0);
+    let mut to: (f32, f32) = (900.0, 900.0);
+    let mut from_colour: Option<(f32, f32, f32, f32)> = None;
+    let mut to_colour: Option<(f32, f32, f32, f32)> = None;
+    let mut colour: (f32, f32, f32, f32) = (0.0, 1.0, 0.0, 1.0);
+    let mut brush = BrushType::Flat;
+    let mut brush_subtype: usize = 0;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    // let mut s: String = "".to_string();
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            if *iname == Keyword::Width as i32 {
+                if let Var::Float(f) = value {
+                    width = *f;
+                }
+            }
+            if *iname == Keyword::From as i32 {
+                if let Var::V2D(x, y) = value {
+                    from = (*x, *y);
+                }
+            }
+            if *iname == Keyword::To as i32 {
+                if let Var::V2D(x, y) = value {
+                    to = (*x, *y);
+                }
+            }
+            if *iname == Keyword::FromColour as i32 {
+                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
+                    // hack for now
+                    if *fmt == ColourFormat::Rgba {
+                        from_colour = Some((*e0, *e1, *e2, *e3));
+                    }
+                }
+            }
+            if *iname == Keyword::ToColour as i32 {
+                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
+                    // hack for now
+                    if *fmt == ColourFormat::Rgba {
+                        to_colour = Some((*e0, *e1, *e2, *e3));
+                    }
+                }
+            }
+            if *iname == Keyword::Colour as i32 {
+                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
+                    // hack for now
+                    if *fmt == ColourFormat::Rgba {
+                        colour = (*e0, *e1, *e2, *e3);
+                    }
+                }
+            }
+
+            if *iname == Keyword::Brush as i32 {
+                if let Var::Keyword(n) = value {
+                    brush = match *n {
+                        Keyword::BrushFlat => BrushType::Flat,
+                        Keyword::BrushA  => BrushType::A,
+                        Keyword::BrushB  => BrushType::B,
+                        Keyword::BrushC  => BrushType::C,
+                        Keyword::BrushD  => BrushType::D,
+                        Keyword::BrushE  => BrushType::E,
+                        Keyword::BrushF  => BrushType::F,
+                        Keyword::BrushG  => BrushType::G,
+                        _ => BrushType::Flat,
+                    };
+                }
+            }
+
+            if *iname == Keyword::BrushSubtype as i32 {
+                if let Var::Float(f) = value {
+                    brush_subtype = *f as usize;
+                }
+            }
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind(
+            "bind_line matrix error".to_string(),
+        ))
+    };
+
+    let uvm = vm.mappings.get_uv_mapping(brush, brush_subtype);
+
+    let col = Colour::RGB(colour.0 as f64, colour.1 as f64, colour.2 as f64, colour.3 as f64);
+
+    let from_col = if let Some((fr, fg, fb, fa)) = from_colour {
+        Colour::RGB(fr as f64, fg as f64, fb as f64, fa as f64)
+    } else {
+        col
+    };
+
+    let to_col = if let Some((tr, tg, tb, ta)) = to_colour {
+        Colour::RGB(tr as f64, tg as f64, tb as f64, ta as f64)
+    } else {
+        col
+    };
+
+    vm.geometry.render_line(matrix, from.0, from.1, to.0, to.1, width, &from_col, &to_col, uvm)?;
+
+    Ok(Var::Bool(true))
+    // Ok(Var::Debug(format!("counter: {} num_args: {} colour: {:?} width: {}, from: {:?}, to: {:?}, from_col: {:?}, to_col: {:?}", counter, num_args, colour, width, from, to, from_col, to_col).to_string()))
+    //Ok(Var::Debug(format!("s: {}", s).to_string()))
+}
+
+pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+
+    let mut r: f32 = 0.0;
+    let mut g: f32 = 0.0;
+    let mut b: f32 = 0.0;
+    let mut alpha: f32 = 1.0;
 
     let mut args_pointer = vm.sp - (num_args * 2);
 
@@ -481,22 +604,30 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
         args_pointer += 2;
 
         if let Var::Int(iname) = label {
-            if *iname == Keyword::Vector as i32 {
-                vector = Some(value);
+            if *iname == Keyword::R as i32 {
+                if let Var::Float(f) = value {
+                    r = *f;
+                }
+            }
+            if *iname == Keyword::G as i32 {
+                if let Var::Float(f) = value {
+                    g = *f;
+                }
+            }
+            if *iname == Keyword::B as i32 {
+                if let Var::Float(f) = value {
+                    b = *f;
+                }
+            }
+            if *iname == Keyword::Alpha as i32 {
+                if let Var::Float(f) = value {
+                    alpha = *f;
+                }
             }
         }
     }
 
-    if let Some(v) = vector {
-        if let Var::Vector(vs) = v {
-            let len = vs.len();
-            return Ok(Var::Int(len as i32));
-        }
-    }
-
-    Err(Error::Bind(
-        "bind_vector_length requires vector argument".to_string(),
-    ))
+    Ok(Var::Colour(ColourFormat::Rgba, r, g, b, alpha))
 }
 
 pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -693,7 +824,49 @@ pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
 
 #[cfg(test)]
 mod tests {
+    use crate::compiler::ColourFormat;
+    use crate::vm::*;
     use crate::vm::tests::*;
+    use crate::geometry::RENDER_PACKET_FLOAT_PER_VERTEX;
+
+    fn is_col_rgb(s: &str, r: f32, g: f32, b: f32, alpha: f32) {
+        if let Var::Colour(fmt, e0, e1, e2, e3) = vm_exec(s) {
+            assert_eq!(fmt, ColourFormat::Rgba);
+            assert_eq!(e0, r);
+            assert_eq!(e1, g);
+            assert_eq!(e2, b);
+            assert_eq!(e3, alpha);
+        }
+    }
+
+    // get render packet 0's geometry length
+    fn rp0_num_vertices(vm: &Vm, expected_num_vertices: usize) {
+        assert_eq!(vm.get_render_packet_geo_len(0), expected_num_vertices * RENDER_PACKET_FLOAT_PER_VERTEX);
+    }
+
+    #[test]
+    fn test_bind_line() {
+        let mut vm = Vm::new();
+        // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
+
+        vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush-b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
+
+        // vm_run(&mut vm, "(line brush: brush-b)");
+
+        // let res = vm.top_stack_value().unwrap();
+        // if let Var::Debug(s) = res {
+        //     assert_eq!(s, "x");
+        // } else {
+        //     assert_eq!(false, true);
+        // }
+
+        rp0_num_vertices(&vm, 4);
+    }
+
+    #[test]
+    fn test_bind_col_rgb() {
+        is_col_rgb("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha: 0.4)", 0.1, 0.2, 0.3, 0.4);
+    }
 
     #[test]
     fn test_bind_nth() {

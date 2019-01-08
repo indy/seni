@@ -21,20 +21,20 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 mod colour;
-mod compiler;
 mod keywords;
 mod lexer;
 mod mathutil;
 mod matrix;
 mod native;
 mod opcodes;
-mod parser;
 mod placeholder;
 mod uvmapper;
 
+pub mod compiler;
 pub mod error;
 pub mod geometry;
 pub mod vm;
+pub mod parser;
 
 use crate::parser::*;
 use crate::error::*;

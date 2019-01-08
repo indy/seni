@@ -94,6 +94,7 @@ pub enum BytecodeArg {
     Name(i32),
     Native(Native),
     Mem(Mem),
+    Keyword(Keyword),
     Colour(ColourFormat, f32, f32, f32, f32),
 }
 
@@ -105,6 +106,7 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Name(i) => write!(f, "Name({})", i),
             BytecodeArg::Native(n) => write!(f, "{:?}", n),
             BytecodeArg::Mem(m) => write!(f, "{}", m),
+            BytecodeArg::Keyword(kw) => write!(f, "{}", kw),
             BytecodeArg::Colour(s, a, b, c, d) => write!(f, "{}({} {} {} {})", s, a, b, c, d),
         }
     }
@@ -315,6 +317,19 @@ impl Compilation {
             op,
             arg0: BytecodeArg::Mem(arg0),
             arg1: BytecodeArg::Int(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+
+    fn emit_opcode_mem_kw(&mut self, op: Opcode, arg0: Mem, arg1: Keyword) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Mem(arg0),
+            arg1: BytecodeArg::Keyword(arg1),
         };
 
         self.add_bytecode(b)?;
@@ -875,9 +890,12 @@ impl Compiler {
                 let found_name = self.compile_user_defined_name(compilation, &text, *iname)?;
                 if found_name {
                     return Ok(());
+                } else if let Some(kw) = self.string_to_keyword.get(text) {
+                    compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
+                    return Ok(());
                 } else {
                     return Err(Error::Compiler(format!(
-                        "compile: can't find user defined name: {}",
+                        "compile: can't find user defined name or keyword: {}",
                         text
                     )));
                 }

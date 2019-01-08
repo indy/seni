@@ -19,8 +19,8 @@ impl From<IoError> for NativeError {
     }
 }
 
-impl From<sen_core::Error> for NativeError {
-    fn from(_e: sen_core::Error) -> NativeError {
+impl From<sen_core::error::Error> for NativeError {
+    fn from(_e: sen_core::error::Error) -> NativeError {
         NativeError::SenError
     }
 }

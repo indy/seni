@@ -21,6 +21,7 @@ use crate::opcodes::Opcode;
 use crate::placeholder::*;
 use crate::uvmapper::Mappings;
 use crate::geometry::Geometry;
+use crate::matrix::MatrixStack;
 
 use std::collections::HashMap;
 use std::fmt;
@@ -48,6 +49,7 @@ pub enum Var {
     Vector(Vec<Var>),
     Colour(ColourFormat, f32, f32, f32, f32),
     V2D(f32, f32),
+    Debug(String),              // this is temporary REMOVE
 }
 
 impl fmt::Display for Var {
@@ -64,6 +66,7 @@ impl fmt::Display for Var {
                 write!(f, "Colour({}, {}, {}, {}, {})", format, e0, e1, e2, e3)
             }
             Var::V2D(fl1, fl2) => write!(f, "V2D({}, {})", fl1, fl2),
+            Var::Debug(s) => write!(f, "DEBUG: {}", s),
         }
     }
 }
@@ -138,7 +141,7 @@ impl Default for Vm {
         Vm {
             render_data: 0,
 
-            matrix_stack: 0,
+            matrix_stack: MatrixStack::new(),
 
             prng_state: 0,
 
@@ -179,6 +182,7 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
         BytecodeArg::Int(i) => Ok(Var::Int(*i)),
         BytecodeArg::Float(f) => Ok(Var::Float(*f)),
         BytecodeArg::Name(iname) => Ok(Var::Name(*iname)),
+        BytecodeArg::Keyword(keyword) => Ok(Var::Keyword(*keyword)),
         BytecodeArg::Mem(_mem) => Err(Error::VM(
             "bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string(),
         )),
@@ -204,6 +208,33 @@ impl Vm {
 
     pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
         self.geometry.get_render_packet_geo_ptr(packet_number)
+    }
+
+    pub fn reset(&mut self) {
+        let mut base_offset: usize = 0;
+        self.global = base_offset;
+        base_offset += MEMORY_GLOBAL_SIZE;
+
+        self.ip = 0;
+        self.fp = base_offset;
+        self.stack[self.fp] = Var::Int(0);
+
+        // add some offsets so that the memory after fp matches a standard format
+        base_offset += 1; // the caller's frame pointer
+        base_offset += 1; // the caller's ip
+        base_offset += 1; // the num_args of the called function
+        base_offset += 1; // the caller's hop back
+
+        self.local = base_offset;
+        base_offset += MEMORY_LOCAL_SIZE;
+        self.sp = base_offset;
+
+        self.matrix_stack.reset();
+        self.geometry.reset();
+
+        // todo
+        // vm->building_with_trait_within_vector = 0;
+        // vm->trait_within_vector_index         = 0;
     }
 
     fn sp_inc_by(&self, delta: usize) -> Result<usize> {
@@ -381,6 +412,9 @@ impl Vm {
                 "opcode native can't find native function".to_string(),
             ));
         };
+
+        // pop all of the arguments off the stack
+        self.sp -= num_args * 2;
 
         // push var onto the stack
         self.sp = self.sp_inc()?;
@@ -1100,17 +1134,22 @@ pub mod tests {
     use crate::compiler::compile_program;
     use crate::parser::parse;
 
-    fn vm_exec(s: &str) -> Var {
-        let mut vm = Vm::new();
+    pub fn vm_run(vm: &mut Vm, s: &str) {
         let env = Env::new();
 
         let (ast, _word_lut) = parse(s).unwrap();
         let program = compile_program(&ast).unwrap();
 
+        vm.reset();
         vm.interpret(&env, &program).unwrap();
+    }
 
+    pub fn vm_exec(s: &str) -> Var {
+        let mut vm = Vm::new();
+        vm_run(&mut vm, s);
         vm.top_stack_value().unwrap()
     }
+
 
     pub fn is_float(s: &str, val: f32) {
         if let Var::Float(f) = vm_exec(s) {

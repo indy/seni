@@ -21,7 +21,7 @@ use crate::colour::Colour;
 
 // todo: work out reasonable defaults
 const RENDER_PACKET_MAX_SIZE: usize = 4096;
-const RENDER_PACKET_FLOAT_PER_VERTEX: usize = 8;
+pub const RENDER_PACKET_FLOAT_PER_VERTEX: usize = 8;
 
 #[derive(Default)]
 pub struct RenderPacket {
@@ -111,11 +111,17 @@ impl Geometry {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.render_packets.clear();
+        self.render_packets.push(RenderPacket::new())
+    }
+
     pub fn test_render(&mut self, mappings: &Mappings) -> Result<(usize)> {
         let uvm = mappings.get_uv_mapping(BrushType::Flat, 0);
         self.render_line(&Matrix::identity(), 100.0, 100.0, 600.0, 600.0, 50.0,
                          &Colour::RGB(1.0, 0.0, 0.0, 1.0), &Colour::RGB(1.0, 1.0, 0.0, 1.0),
                          &uvm)?;
+
         let uvm2 = mappings.get_uv_mapping(BrushType::A, 0);
         self.render_line(&Matrix::identity(), 800.0, 700.0, 200.0, 100.0, 10.0,
                          &Colour::RGB(1.0, 0.0, 0.0, 1.0), &Colour::RGB(1.0, 0.0, 1.0, 1.0),
@@ -137,6 +143,10 @@ impl Geometry {
     pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
         let rp = &self.render_packets[packet_number];
         rp.geo.as_ptr() as *const f32
+    }
+
+    pub fn get_num_render_packets(&self) -> usize {
+        self.render_packets.len()
     }
 
     fn prepare_to_add_triangle_strip(&mut self, matrix: &Matrix, num_vertices: usize, x: f32, y: f32) {
