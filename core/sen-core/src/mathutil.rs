@@ -13,9 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub const PI: f32 = 3.141_592_653_589_793;
-pub const PI_BY_2: f32 = 1.570_796_326_794_896;
-pub const TAU: f32 = 6.283_185_307_179_586;
+
+pub const PI: f32 = std::f32::consts::PI;
+pub const PI_BY_2: f32 = std::f32::consts::FRAC_PI_2;
+pub const TAU: f32 = std::f32::consts::PI * 2.0;
 
 pub fn deg_to_rad(a: f32) -> f32 {
     a * (PI / 180.0)
@@ -40,12 +41,10 @@ pub fn unlerp(t: f32, a: f32, b: f32) -> f32 {
 pub fn clamp(x: f32, xmin: f32, xmax: f32) -> f32 {
     if x < xmin {
         xmin
+    } else if x > xmax {
+        xmax
     } else {
-        if x > xmax {
-            xmax
-        } else {
-            x
-        }
+        x
     }
 }
 
@@ -57,9 +56,7 @@ pub fn distance_v2(ax: f32, ay: f32, bx: f32, by: f32) -> f32 {
     let xdiff = ax - bx;
     let ydiff = ay - by;
 
-    let dist = length_v2(xdiff, ydiff);
-
-    dist
+    length_v2(xdiff, ydiff)
 }
 
 pub fn normalize(x: f32, y: f32) -> (f32, f32) {

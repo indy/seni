@@ -1,6 +1,6 @@
 #![cfg_attr(
     feature = "cargo-clippy",
-    allow(clippy::many_single_char_names, clippy::excessive_precision)
+    allow(clippy::many_single_char_names, clippy::excessive_precision, clippy::too_many_arguments)
 )]
 #![allow(dead_code)]
 // todo: remove crate wide allowing of dead_code
@@ -22,7 +22,6 @@
 
 mod colour;
 mod compiler;
-mod error;
 mod keywords;
 mod lexer;
 mod mathutil;
@@ -32,15 +31,16 @@ mod opcodes;
 mod parser;
 mod placeholder;
 mod uvmapper;
-mod vm;
+
+pub mod error;
+pub mod geometry;
+pub mod vm;
 
 use crate::parser::*;
+use crate::error::*;
+use crate::vm::*;
 
 pub use crate::compiler::*;
-pub use crate::error::*;
-pub use crate::vm::*;
-
-pub mod geometry;
 
 pub fn compile_and_execute(s: &str) -> Result<Var> {
     let mut vm = Vm::new();

@@ -119,10 +119,10 @@ impl Matrix {
     }
 
     pub fn translate(&mut self, x: f32, y: f32, z: f32) {
-        self.m[12] = self.m[0] * x + self.m[4] * y + self.m[8] * z + self.m[12];
-        self.m[13] = self.m[1] * x + self.m[5] * y + self.m[9] * z + self.m[13];
-        self.m[14] = self.m[2] * x + self.m[6] * y + self.m[10] * z + self.m[14];
-        self.m[15] = self.m[3] * x + self.m[7] * y + self.m[11] * z + self.m[15];
+        self.m[12] += self.m[0] * x + self.m[4] * y + self.m[8] * z;
+        self.m[13] += self.m[1] * x + self.m[5] * y + self.m[9] * z;
+        self.m[14] += self.m[2] * x + self.m[6] * y + self.m[10] * z;
+        self.m[15] += self.m[3] * x + self.m[7] * y + self.m[11] * z;
     }
 
     pub fn rotate_z(&mut self, rad: f32) {

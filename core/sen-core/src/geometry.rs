@@ -13,21 +13,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::error::*;
 use crate::uvmapper::{BrushType, UvMapping, Mappings};
 use crate::matrix::{Matrix};
 use crate::mathutil::*;
+use crate::colour::Colour;
 
 // todo: work out reasonable defaults
 const RENDER_PACKET_MAX_SIZE: usize = 4096;
 const RENDER_PACKET_FLOAT_PER_VERTEX: usize = 8;
 
+#[derive(Default)]
 pub struct RenderPacket {
     pub geo: Vec<f32>,
 }
 
+#[derive(Default)]
 pub struct Geometry {
     render_packets: Vec<RenderPacket>,
-    mappings: Mappings,
 }
 
 impl RenderPacket {
@@ -105,20 +108,25 @@ impl Geometry {
 
         Geometry {
             render_packets,
-            mappings: Mappings::new(),
         }
     }
 
-    pub fn test_render(&mut self) {
-        let mappings_ = Mappings::new();
-        let uvm = mappings_.get_uv_mapping(BrushType::Flat, 0);
-        self.render_line(&Matrix::identity(), 100.0, 100.0, 600.0, 600.0, 50.0, false, false, &uvm);
+    pub fn test_render(&mut self, mappings: &Mappings) -> Result<(usize)> {
+        let uvm = mappings.get_uv_mapping(BrushType::Flat, 0);
+        self.render_line(&Matrix::identity(), 100.0, 100.0, 600.0, 600.0, 50.0,
+                         &Colour::RGB(1.0, 0.0, 0.0, 1.0), &Colour::RGB(1.0, 1.0, 0.0, 1.0),
+                         &uvm)?;
+        let uvm2 = mappings.get_uv_mapping(BrushType::A, 0);
+        self.render_line(&Matrix::identity(), 800.0, 700.0, 200.0, 100.0, 10.0,
+                         &Colour::RGB(1.0, 0.0, 0.0, 1.0), &Colour::RGB(1.0, 0.0, 1.0, 1.0),
+                         &uvm2)?;
 
-        let uvm2 = mappings_.get_uv_mapping(BrushType::A, 0);
-        self.render_line(&Matrix::identity(), 800.0, 700.0, 200.0, 100.0, 10.0, false, false, &uvm2);
+        let uvm3 = mappings.get_uv_mapping(BrushType::B, 0);
+        self.render_line(&Matrix::identity(), 900.0, 100.0, 900.0, 900.0, 20.0,
+                         &Colour::RGB(1.0, 1.0, 0.0, 1.0), &Colour::RGB(1.0, 0.0, 1.0, 1.0),
+                         &uvm3)?;
 
-        let uvm3 = mappings_.get_uv_mapping(BrushType::B, 0);
-        self.render_line(&Matrix::identity(), 900.0, 100.0, 900.0, 900.0, 20.0, false, false, &uvm3);
+        Ok(self.render_packets.len())
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
@@ -145,36 +153,27 @@ impl Geometry {
         }
     }
 
-    pub fn render_line(&mut self, matrix: &Matrix, from_x: f32, from_y: f32, to_x: f32, to_y: f32, width: f32, _from_col: bool, _to_col: bool, uvm: &UvMapping) {
-        // get the uv co-ordinates for the specified brush
-        //
-        // let uv = self.mappings.get_uv_mapping(brush, brush_sub_type);
+    pub fn render_line(&mut self, matrix: &Matrix, from_x: f32, from_y: f32, to_x: f32, to_y: f32, width: f32, from_col: &Colour, to_col: &Colour, uvm: &UvMapping) -> Result<()> {
+
+        let (fr, fg, fb, fa) = from_col.to_rgba32_tuple()?;
+        let (tr, tg, tb, ta) = to_col.to_rgba32_tuple()?;
 
         let hw = (width * uvm.width_scale) / 2.0;
 
         let (nx, ny) = normal(from_x, from_y, to_x, to_y);
         let (n2x, n2y) = opposite_normal(nx, ny);
 
-        // colour hack
-        let fr_col_r = 1.0;
-        let fr_col_g = 0.0;
-        let fr_col_b = 0.0;
-        let fr_col_a = 1.0;
-        let to_col_r = 1.0;
-        let to_col_g = 0.0;
-        let to_col_b = 0.0;
-        let to_col_a = 1.0;
-
         self.prepare_to_add_triangle_strip(matrix, 4, from_x + (hw * nx), from_y + (hw * ny));
 
         let last = self.render_packets.len() - 1;
         let rp = &mut self.render_packets[last];
 
-        rp.add_vertex(matrix, from_x + (hw * nx), from_y + (hw * ny), fr_col_r, fr_col_g, fr_col_b, fr_col_a, uvm.map[0], uvm.map[1]);
-        rp.add_vertex(matrix, from_x + (hw * n2x), from_y + (hw * n2y), fr_col_r, fr_col_g, fr_col_b, fr_col_a, uvm.map[2], uvm.map[3]);
-        rp.add_vertex(matrix, to_x + (hw * nx), to_y + (hw * ny), to_col_r, to_col_g, to_col_b, to_col_a, uvm.map[4], uvm.map[5]);
-        rp.add_vertex(matrix, to_x + (hw * n2x), to_y + (hw * n2y), to_col_r, to_col_g, to_col_b, to_col_a, uvm.map[6], uvm.map[7]);
+        rp.add_vertex(matrix, from_x + (hw * nx), from_y + (hw * ny), fr, fg, fb, fa, uvm.map[0], uvm.map[1]);
+        rp.add_vertex(matrix, from_x + (hw * n2x), from_y + (hw * n2y), fr, fg, fb, fa, uvm.map[2], uvm.map[3]);
+        rp.add_vertex(matrix, to_x + (hw * nx), to_y + (hw * ny), tr, tg, tb, ta, uvm.map[4], uvm.map[5]);
+        rp.add_vertex(matrix, to_x + (hw * n2x), to_y + (hw * n2y), tr, tg, tb, ta, uvm.map[6], uvm.map[7]);
 
+        Ok(())
     }
 
 }

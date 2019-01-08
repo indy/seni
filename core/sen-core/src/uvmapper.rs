@@ -15,6 +15,7 @@
 
 const TEXTURE_DIM: f32 = 1024.0;
 
+#[derive(Copy, Clone)]
 pub enum BrushType {
     Flat = 0,
     A,
@@ -31,6 +32,7 @@ pub struct UvMapping {
     pub map: [f32; 8], // array of 8 (4 pairs of xy)
 }
 
+#[derive(Default)]
 pub struct Mappings {
     m: Vec<Vec<UvMapping>>,
 }

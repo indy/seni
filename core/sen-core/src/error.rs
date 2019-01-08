@@ -24,6 +24,7 @@ pub enum Error {
     IncorrectColourFormat,
     InvalidColourHue,
     InvalidColourChannel,
+    Colour(String),
 
     // parser
     ParserInvalidChar(char),
@@ -47,4 +48,7 @@ pub enum Error {
 
     // bind
     Bind(String),
+
+    // geometry
+    Geometry(String),
 }

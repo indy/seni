@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(dead_code)]
-#![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names, too_many_arguments))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::many_single_char_names, clippy::too_many_arguments))]
 
 mod utils;
 
@@ -21,7 +21,7 @@ use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
 // use sen_core::sen_parse;
-use sen_core::geometry::Geometry;
+use sen_core::vm::{Vm, Env};
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -39,10 +39,11 @@ extern "C" {
     fn log(s: &str);
 }
 
-
 #[wasm_bindgen]
+#[derive(Default)]
 pub struct Bridge {
-    geometry: Geometry,
+    vm: Vm,
+    env: Env,
 
     source_buffer: String,
     out_source_buffer: String,
@@ -54,10 +55,10 @@ pub struct Bridge {
 impl Bridge {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Bridge {
-        let geometry = Geometry::new();
-
         Bridge {
-            geometry,
+            vm: Vm::new(),
+            env: Env::new(),
+
             source_buffer: "source buffer".to_string(),
             out_source_buffer: "out_source buffer".to_string(),
             traits_buffer: "traits buffer".to_string(),
@@ -115,16 +116,15 @@ impl Bridge {
 
     pub fn compile_to_render_packets(&mut self) -> i32 {
         log("compile_to_render_packets");
-        self.geometry.test_render();
-        1
+        self.vm.test_render().unwrap_or(0) as i32
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
-        self.geometry.get_render_packet_geo_len(packet_number)
+        self.vm.get_render_packet_geo_len(packet_number)
     }
 
     pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
-        self.geometry.get_render_packet_geo_ptr(packet_number)
+        self.vm.get_render_packet_geo_ptr(packet_number)
     }
 
     pub fn build_traits(&self) -> i32 {

@@ -23,6 +23,8 @@ use std::collections::HashMap;
 
 use strum_macros::EnumString;
 
+pub type NativeCallback = fn(&mut Vm, &Program, usize) -> Result<Var>;
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString)]
 pub enum Native {
     #[strum(serialize = "UnreachableNativeStart")]
@@ -247,8 +249,8 @@ pub enum Native {
     NativeEnd,
 }
 
-pub fn build_native_fn_hash() -> HashMap<Native, fn(&mut Vm, &Program, usize) -> Result<Var>> {
-    let mut native_fns: HashMap<Native, fn(&mut Vm, &Program, usize) -> Result<Var>> =
+pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
+    let mut native_fns: HashMap<Native, NativeCallback> =
         HashMap::new();
 
     // --------------------------------------------------
@@ -262,7 +264,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, fn(&mut Vm, &Program, usize) ->
     // --------------------------------------------------
     // shapes
     // --------------------------------------------------
-    // BIND("line", bind_line);
+    native_fns.insert(Native::Line, bind_line);
     // BIND("rect", bind_rect);
     // BIND("circle", bind_circle);
     // BIND("circle-slice", bind_circle_slice);
@@ -401,7 +403,7 @@ pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var>
     let mut args_pointer = vm.sp - (num_args * 2);
 
     for _ in 0..num_args {
-        let label = &vm.stack[args_pointer + 0];
+        let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
@@ -434,9 +436,9 @@ pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var>
         }
     }
 
-    return Err(Error::Bind(
+    Err(Error::Bind(
         "bind_nth requires vector argument in 'from'".to_string(),
-    ));
+    ))
 }
 
 pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -445,7 +447,7 @@ pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     let mut args_pointer = vm.sp - (num_args * 2);
 
     for _ in 0..num_args {
-        let label = &vm.stack[args_pointer + 0];
+        let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
@@ -463,9 +465,38 @@ pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> R
         }
     }
 
-    return Err(Error::Bind(
+    Err(Error::Bind(
         "bind_vector_length requires vector argument".to_string(),
-    ));
+    ))
+}
+
+pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut vector: Option<&Var> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            if *iname == Keyword::Vector as i32 {
+                vector = Some(value);
+            }
+        }
+    }
+
+    if let Some(v) = vector {
+        if let Var::Vector(vs) = v {
+            let len = vs.len();
+            return Ok(Var::Int(len as i32));
+        }
+    }
+
+    Err(Error::Bind(
+        "bind_vector_length requires vector argument".to_string(),
+    ))
 }
 
 pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -475,7 +506,7 @@ pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     let mut args_pointer = vm.sp - (num_args * 2);
 
     for _ in 0..num_args {
-        let label = &vm.stack[args_pointer + 0];
+        let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
@@ -500,7 +531,7 @@ pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> R
         }
     }
 
-    return Err(Error::Bind("bind error".to_string()));
+    Err(Error::Bind("bind error".to_string()))
 }
 
 pub fn bind_math_normal(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -510,7 +541,7 @@ pub fn bind_math_normal(vm: &mut Vm, _program: &Program, num_args: usize) -> Res
     let mut args_pointer = vm.sp - (num_args * 2);
 
     for _ in 0..num_args {
-        let label = &vm.stack[args_pointer + 0];
+        let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
@@ -535,7 +566,7 @@ pub fn bind_math_normal(vm: &mut Vm, _program: &Program, num_args: usize) -> Res
         }
     }
 
-    return Err(Error::Bind("bind error".to_string()));
+    Err(Error::Bind("bind error".to_string()))
 }
 
 pub fn bind_math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -556,7 +587,7 @@ pub fn bind_math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
     let mut args_pointer = vm.sp - (num_args * 2);
 
     for _ in 0..num_args {
-        let label_ = &vm.stack[args_pointer + 0];
+        let label_ = &vm.stack[args_pointer];
         let value_ = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
@@ -581,7 +612,7 @@ pub fn bind_math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
 
     let res = mathutil::clamp(value.unwrap_or(0.0), min.unwrap_or(0.0), max.unwrap_or(0.0));
 
-    return Ok(Var::Float(res));
+    Ok(Var::Float(res))
 }
 
 pub fn bind_math_radians_to_degrees(
@@ -594,7 +625,7 @@ pub fn bind_math_radians_to_degrees(
     let mut args_pointer = vm.sp - (num_args * 2);
 
     for _ in 0..num_args {
-        let label_ = &vm.stack[args_pointer + 0];
+        let label_ = &vm.stack[args_pointer];
         let value_ = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
@@ -609,7 +640,7 @@ pub fn bind_math_radians_to_degrees(
 
     let res = mathutil::rad_to_deg(angle.unwrap_or(0.0));
 
-    return Ok(Var::Float(res));
+    Ok(Var::Float(res))
 }
 
 pub fn bind_math_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -618,7 +649,7 @@ pub fn bind_math_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
     let mut args_pointer = vm.sp - (num_args * 2);
 
     for _ in 0..num_args {
-        let label_ = &vm.stack[args_pointer + 0];
+        let label_ = &vm.stack[args_pointer];
         let value_ = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
@@ -633,7 +664,7 @@ pub fn bind_math_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
 
     let res = angle.unwrap_or(0.0).cos();
 
-    return Ok(Var::Float(res));
+    Ok(Var::Float(res))
 }
 
 pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -642,7 +673,7 @@ pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
     let mut args_pointer = vm.sp - (num_args * 2);
 
     for _ in 0..num_args {
-        let label_ = &vm.stack[args_pointer + 0];
+        let label_ = &vm.stack[args_pointer];
         let value_ = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
@@ -657,7 +688,7 @@ pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
 
     let res = angle.unwrap_or(0.0).sin();
 
-    return Ok(Var::Float(res));
+    Ok(Var::Float(res))
 }
 
 #[cfg(test)]

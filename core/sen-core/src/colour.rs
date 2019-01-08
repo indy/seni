@@ -104,6 +104,19 @@ impl Colour {
         }
     }
 
+    pub fn to_rgba32_tuple(&self) -> Result<(f32, f32, f32, f32)> {
+        match *self {
+            Colour::RGB(r, g, b, a) => Ok((r as f32, g as f32, b as f32, a as f32)),
+            _ => {
+                if let Colour::RGB(r, g, b, a) = self.clone_as(Format::RGB)? {
+                    Ok((r as f32, g as f32, b as f32, a as f32))
+                } else {
+                    Err(Error::Colour("col could not convert to RGB".to_string()))
+                }
+            }
+        }
+    }
+
     pub fn clone_as(&self, format: Format) -> Result<Colour> {
         match *self {
             Colour::HSL(h, s, l, alpha) => match format {

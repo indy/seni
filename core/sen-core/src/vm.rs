@@ -16,9 +16,11 @@
 use crate::compiler::{Bytecode, BytecodeArg, ColourFormat, FnInfo, Mem, Program};
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
-use crate::native::{build_native_fn_hash, Native};
+use crate::native::{build_native_fn_hash, Native, NativeCallback};
 use crate::opcodes::Opcode;
 use crate::placeholder::*;
+use crate::uvmapper::Mappings;
+use crate::geometry::Geometry;
 
 use std::collections::HashMap;
 use std::fmt;
@@ -91,6 +93,9 @@ pub struct Vm {
     pub matrix_stack: MatrixStack,
     pub prng_state: PrngState, // only used when evaluating bracket bindings
 
+    pub mappings: Mappings,
+    pub geometry: Geometry,
+
     pub opcodes_executed: u64,
     pub execution_time: f32, // in msec
 
@@ -107,7 +112,7 @@ pub struct Vm {
     pub building_with_trait_within_vector: bool,
     pub trait_within_vector_index: bool,
 
-    pub native_fns: HashMap<Native, fn(&mut Vm, &Program, usize) -> Result<Var>>,
+    pub native_fns: HashMap<Native, NativeCallback>,
 }
 
 impl Default for Vm {
@@ -136,6 +141,9 @@ impl Default for Vm {
             matrix_stack: 0,
 
             prng_state: 0,
+
+            mappings: Mappings::new(),
+            geometry: Geometry::new(),
 
             // heap_size: usize,
             // heap_slab: Var::new(),
@@ -184,6 +192,18 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
 impl Vm {
     pub fn new() -> Vm {
         Default::default()
+    }
+
+    pub fn test_render(&mut self) -> Result<(usize)> {
+        self.geometry.test_render(&self.mappings)
+    }
+
+    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
+        self.geometry.get_render_packet_geo_len(packet_number)
+    }
+
+    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
+        self.geometry.get_render_packet_geo_ptr(packet_number)
     }
 
     fn sp_inc_by(&self, delta: usize) -> Result<usize> {
