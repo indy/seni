@@ -119,11 +119,11 @@ impl Bridge {
         1
     }
 
-    pub fn get_render_packet_geo_len(&self, packet_number: i32) -> usize {
+    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
         self.geometry.get_render_packet_geo_len(packet_number)
     }
 
-    pub fn get_render_packet_geo_ptr(&self, packet_number: i32) -> *const f32 {
+    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
         self.geometry.get_render_packet_geo_ptr(packet_number)
     }
 

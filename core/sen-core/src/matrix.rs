@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-struct Matrix {
+pub struct Matrix {
     m: [f32; 16],
 }
 
-struct MatrixStack {
+pub struct MatrixStack {
     stack: Vec<Matrix>,
 }
 

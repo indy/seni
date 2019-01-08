@@ -73,3 +73,7 @@ pub fn normal(x1: f32, y1: f32, x2: f32, y2: f32) -> (f32, f32) {
 
     normalize(-dy, dx)
 }
+
+pub fn opposite_normal(x: f32, y: f32) -> (f32, f32) {
+    (-x, -y)
+}

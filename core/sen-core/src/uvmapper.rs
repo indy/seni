@@ -27,8 +27,8 @@ pub enum BrushType {
 }
 
 pub struct UvMapping {
-    width_scale: f32,
-    map: [f32; 8], // array of 8 (4 pairs of xy)
+    pub width_scale: f32,
+    pub map: [f32; 8], // array of 8 (4 pairs of xy)
 }
 
 pub struct Mappings {
