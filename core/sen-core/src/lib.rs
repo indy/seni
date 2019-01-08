@@ -1,6 +1,10 @@
 #![cfg_attr(
     feature = "cargo-clippy",
-    allow(clippy::many_single_char_names, clippy::excessive_precision, clippy::too_many_arguments)
+    allow(
+        clippy::many_single_char_names,
+        clippy::excessive_precision,
+        clippy::too_many_arguments
+    )
 )]
 #![allow(dead_code)]
 // todo: remove crate wide allowing of dead_code
@@ -33,11 +37,11 @@ mod uvmapper;
 pub mod compiler;
 pub mod error;
 pub mod geometry;
-pub mod vm;
 pub mod parser;
+pub mod vm;
 
-use crate::parser::*;
 use crate::error::*;
+use crate::parser::*;
 use crate::vm::*;
 
 pub use crate::compiler::*;

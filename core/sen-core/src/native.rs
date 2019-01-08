@@ -13,13 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::{Program, ColourFormat};
+use crate::compiler::{ColourFormat, Program};
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::mathutil;
-use crate::vm::{Var, Vm};
 use crate::uvmapper::BrushType;
-use crate::colour::Colour;
+use crate::vm::{Var, Vm};
 
 use std::collections::HashMap;
 
@@ -252,8 +251,7 @@ pub enum Native {
 }
 
 pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
-    let mut native_fns: HashMap<Native, NativeCallback> =
-        HashMap::new();
+    let mut native_fns: HashMap<Native, NativeCallback> = HashMap::new();
 
     // --------------------------------------------------
     // misc
@@ -473,7 +471,6 @@ pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> R
 }
 
 pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-
     let mut width: f32 = 4.0;
     let mut from: (f32, f32) = (10.0, 10.0);
     let mut to: (f32, f32) = (900.0, 900.0);
@@ -537,13 +534,13 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
                 if let Var::Keyword(n) = value {
                     brush = match *n {
                         Keyword::BrushFlat => BrushType::Flat,
-                        Keyword::BrushA  => BrushType::A,
-                        Keyword::BrushB  => BrushType::B,
-                        Keyword::BrushC  => BrushType::C,
-                        Keyword::BrushD  => BrushType::D,
-                        Keyword::BrushE  => BrushType::E,
-                        Keyword::BrushF  => BrushType::F,
-                        Keyword::BrushG  => BrushType::G,
+                        Keyword::BrushA => BrushType::A,
+                        Keyword::BrushB => BrushType::B,
+                        Keyword::BrushC => BrushType::C,
+                        Keyword::BrushD => BrushType::D,
+                        Keyword::BrushE => BrushType::E,
+                        Keyword::BrushF => BrushType::F,
+                        Keyword::BrushG => BrushType::G,
                         _ => BrushType::Flat,
                     };
                 }
@@ -560,28 +557,25 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
         matrix
     } else {
-        return Err(Error::Bind(
-            "bind_line matrix error".to_string(),
-        ))
+        return Err(Error::Bind("bind_line matrix error".to_string()));
     };
 
     let uvm = vm.mappings.get_uv_mapping(brush, brush_subtype);
 
-    let col = Colour::RGB(colour.0 as f64, colour.1 as f64, colour.2 as f64, colour.3 as f64);
-
     let from_col = if let Some((fr, fg, fb, fa)) = from_colour {
-        Colour::RGB(fr as f64, fg as f64, fb as f64, fa as f64)
+        (fr, fg, fb, fa)
     } else {
-        col
+        colour
     };
 
     let to_col = if let Some((tr, tg, tb, ta)) = to_colour {
-        Colour::RGB(tr as f64, tg as f64, tb as f64, ta as f64)
+        (tr, tg, tb, ta)
     } else {
-        col
+        colour
     };
 
-    vm.geometry.render_line(matrix, from.0, from.1, to.0, to.1, width, &from_col, &to_col, uvm)?;
+    vm.geometry
+        .render_line(matrix, from, to, width, from_col, to_col, uvm)?;
 
     Ok(Var::Bool(true))
     // Ok(Var::Debug(format!("counter: {} num_args: {} colour: {:?} width: {}, from: {:?}, to: {:?}, from_col: {:?}, to_col: {:?}", counter, num_args, colour, width, from, to, from_col, to_col).to_string()))
@@ -825,9 +819,9 @@ pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
 #[cfg(test)]
 mod tests {
     use crate::compiler::ColourFormat;
-    use crate::vm::*;
-    use crate::vm::tests::*;
     use crate::geometry::RENDER_PACKET_FLOAT_PER_VERTEX;
+    use crate::vm::tests::*;
+    use crate::vm::*;
 
     fn is_col_rgb(s: &str, r: f32, g: f32, b: f32, alpha: f32) {
         if let Var::Colour(fmt, e0, e1, e2, e3) = vm_exec(s) {
@@ -841,7 +835,10 @@ mod tests {
 
     // get render packet 0's geometry length
     fn rp0_num_vertices(vm: &Vm, expected_num_vertices: usize) {
-        assert_eq!(vm.get_render_packet_geo_len(0), expected_num_vertices * RENDER_PACKET_FLOAT_PER_VERTEX);
+        assert_eq!(
+            vm.get_render_packet_geo_len(0),
+            expected_num_vertices * RENDER_PACKET_FLOAT_PER_VERTEX
+        );
     }
 
     #[test]
@@ -865,7 +862,13 @@ mod tests {
 
     #[test]
     fn test_bind_col_rgb() {
-        is_col_rgb("(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha: 0.4)", 0.1, 0.2, 0.3, 0.4);
+        is_col_rgb(
+            "(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha: 0.4)",
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+        );
     }
 
     #[test]

@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 pub const PI: f32 = std::f32::consts::PI;
 pub const PI_BY_2: f32 = std::f32::consts::FRAC_PI_2;
 pub const TAU: f32 = std::f32::consts::PI * 2.0;

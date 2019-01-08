@@ -117,8 +117,6 @@ impl Bridge {
     }
 
     pub fn compile_to_render_packets(&mut self) -> i32 {
-        // self.vm.test_render().unwrap_or(0) as i32
-
         let env = Env::new();
 
         let (ast, _word_lut) = if let Ok((ast_, _word_lut_)) = parse(&self.source_buffer) {

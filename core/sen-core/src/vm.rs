@@ -15,13 +15,13 @@
 
 use crate::compiler::{Bytecode, BytecodeArg, ColourFormat, FnInfo, Mem, Program};
 use crate::error::{Error, Result};
+use crate::geometry::Geometry;
 use crate::keywords::Keyword;
+use crate::matrix::MatrixStack;
 use crate::native::{build_native_fn_hash, Native, NativeCallback};
 use crate::opcodes::Opcode;
 use crate::placeholder::*;
 use crate::uvmapper::Mappings;
-use crate::geometry::Geometry;
-use crate::matrix::MatrixStack;
 
 use std::collections::HashMap;
 use std::fmt;
@@ -49,7 +49,7 @@ pub enum Var {
     Vector(Vec<Var>),
     Colour(ColourFormat, f32, f32, f32, f32),
     V2D(f32, f32),
-    Debug(String),              // this is temporary REMOVE
+    Debug(String), // this is temporary REMOVE
 }
 
 impl fmt::Display for Var {
@@ -196,10 +196,6 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
 impl Vm {
     pub fn new() -> Vm {
         Default::default()
-    }
-
-    pub fn test_render(&mut self) -> Result<(usize)> {
-        self.geometry.test_render(&self.mappings)
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
@@ -1149,7 +1145,6 @@ pub mod tests {
         vm_run(&mut vm, s);
         vm.top_stack_value().unwrap()
     }
-
 
     pub fn is_float(s: &str, val: f32) {
         if let Var::Float(f) = vm_exec(s) {
