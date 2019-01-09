@@ -235,39 +235,88 @@ impl Geometry {
         let half_width = width / 2.0;
         let half_height = height / 2.0;
 
-        self.prepare_to_add_triangle_strip(matrix, 4, position.0 - half_width, position.1 - half_height);
+        self.prepare_to_add_triangle_strip(
+            matrix,
+            4,
+            position.0 - half_width,
+            position.1 - half_height,
+        );
 
         let last = self.render_packets.len() - 1;
         let rp = &mut self.render_packets[last];
 
         rp.add_vertex(
             matrix,
-            position.0 - half_width, position.1 - half_height,
+            position.0 - half_width,
+            position.1 - half_height,
             colour,
             uvm.map[0],
             uvm.map[1],
         );
         rp.add_vertex(
             matrix,
-            position.0 + half_width, position.1 - half_height,
+            position.0 + half_width,
+            position.1 - half_height,
             colour,
             uvm.map[2],
             uvm.map[3],
         );
         rp.add_vertex(
             matrix,
-            position.0 - half_width, position.1 + half_height,
+            position.0 - half_width,
+            position.1 + half_height,
             colour,
             uvm.map[4],
             uvm.map[5],
         );
         rp.add_vertex(
             matrix,
-            position.0 + half_width, position.1 + half_height,
+            position.0 + half_width,
+            position.1 + half_height,
             colour,
             uvm.map[6],
             uvm.map[7],
         );
+
+        Ok(())
+    }
+
+    pub fn render_circle(
+        &mut self,
+        matrix: &Matrix,
+        position: (f32, f32),
+        width: f32,
+        height: f32,
+        colour: (f32, f32, f32, f32),
+        tessellation: usize,
+        uvm: &UvMapping,
+    ) -> Result<()> {
+        self.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, position.0, position.1);
+
+        let unit_angle = TAU / tessellation as f32;
+
+        let last = self.render_packets.len() - 1;
+        let rp = &mut self.render_packets[last];
+
+        for i in 0..tessellation {
+            let angle = unit_angle * i as f32;
+            let vx = (angle.sin() * width) + position.0;
+            let vy = (angle.cos() * height) + position.1;
+
+            rp.add_vertex(
+                matrix, position.0, position.1, colour, uvm.map[4], uvm.map[5],
+            );
+            rp.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
+        }
+
+        let angle: f32 = 0.0;
+        let vx = (angle.sin() * width) + position.0;
+        let vy = (angle.cos() * height) + position.1;
+
+        rp.add_vertex(
+            matrix, position.0, position.1, colour, uvm.map[4], uvm.map[5],
+        );
+        rp.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
 
         Ok(())
     }

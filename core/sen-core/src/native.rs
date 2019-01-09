@@ -266,8 +266,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // --------------------------------------------------
     native_fns.insert(Native::Line, bind_line);
     native_fns.insert(Native::Rect, bind_rect);
-    // BIND("rect", bind_rect);
-    // BIND("circle", bind_circle);
+    native_fns.insert(Native::Circle, bind_circle);
     // BIND("circle-slice", bind_circle_slice);
     // BIND("poly", bind_poly);
     // BIND("bezier", bind_bezier);
@@ -631,7 +630,87 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
 
-    vm.geometry.render_rect(matrix, position, width, height, colour, uvm)?;
+    vm.geometry
+        .render_rect(matrix, position, width, height, colour, uvm)?;
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut width: f32 = 4.0;
+    let mut height: f32 = 10.0;
+    let mut position: (f32, f32) = (10.0, 10.0);
+    let mut colour: (f32, f32, f32, f32) = (0.0, 1.0, 0.0, 1.0);
+    let mut tessellation: f32 = 10.0;
+    let mut radius: Option<f32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            if *iname == Keyword::Width as i32 {
+                if let Var::Float(f) = value {
+                    width = *f;
+                }
+            }
+            if *iname == Keyword::Height as i32 {
+                if let Var::Float(f) = value {
+                    height = *f;
+                }
+            }
+            if *iname == Keyword::Position as i32 {
+                if let Var::V2D(x, y) = value {
+                    position = (*x, *y);
+                }
+            }
+            if *iname == Keyword::Colour as i32 {
+                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
+                    // hack for now
+                    if *fmt == ColourFormat::Rgba {
+                        colour = (*e0, *e1, *e2, *e3);
+                    }
+                }
+            }
+            if *iname == Keyword::Tessellation as i32 {
+                if let Var::Float(f) = value {
+                    tessellation = *f;
+                }
+            }
+            if *iname == Keyword::Radius as i32 {
+                if let Var::Float(f) = value {
+                    radius = Some(*f)
+                }
+            }
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind("bind_line matrix error".to_string()));
+    };
+
+    let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
+
+    // if the radius has been defined then it overrides the width and height parameters
+    if let Some(r) = radius {
+        width = r;
+        height = r;
+    }
+
+    vm.geometry.render_circle(
+        matrix,
+        position,
+        width,
+        height,
+        colour,
+        tessellation as usize,
+        uvm,
+    )?;
 
     Ok(Var::Bool(true))
 }
