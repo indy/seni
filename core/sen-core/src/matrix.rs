@@ -17,6 +17,7 @@ pub struct Matrix {
     m: [f32; 16],
 }
 
+#[derive(Default)]
 pub struct MatrixStack {
     stack: Vec<Matrix>,
 }

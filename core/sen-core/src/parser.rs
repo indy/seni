@@ -50,6 +50,7 @@ struct NodeAndRemainder<'a> {
     tokens: &'a [Token<'a>],
 }
 
+#[derive(Default)]
 pub struct WordLut {
     // requires a native hashmap (function names reserved by the native api)
     // a keyword hashmap (keywords + constants + common arguments to native api functions)

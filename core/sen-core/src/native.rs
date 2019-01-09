@@ -267,7 +267,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     native_fns.insert(Native::Line, bind_line);
     native_fns.insert(Native::Rect, bind_rect);
     native_fns.insert(Native::Circle, bind_circle);
-    // BIND("circle-slice", bind_circle_slice);
+    native_fns.insert(Native::CircleSlice, bind_circle_slice);
     // BIND("poly", bind_poly);
     // BIND("bezier", bind_bezier);
     // BIND("bezier-bulging", bind_bezier_bulging);
@@ -470,87 +470,118 @@ pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     ))
 }
 
+fn read_float(iname: i32, value: &Var, keyword: Keyword) -> Option<f32> {
+    if iname == keyword as i32 {
+        if let Var::Float(f) = value {
+            return Some(*f);
+        }
+    }
+    None
+}
+
+fn read_float_as_usize(iname: i32, value: &Var, keyword: Keyword) -> Option<usize> {
+    if iname == keyword as i32 {
+        if let Var::Float(f) = value {
+            return Some(*f as usize);
+        }
+    }
+    None
+}
+
+fn read_v2d(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32)> {
+    if iname == keyword as i32 {
+        if let Var::V2D(x, y) = value {
+            return Some((*x, *y));
+        }
+    }
+    None
+}
+
+fn read_col(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32, f32, f32)> {
+    if iname == keyword as i32 {
+        if let Var::Colour(fmt, e0, e1, e2, e3) = value {
+            // hack for now
+            if *fmt == ColourFormat::Rgba {
+                return Some((*e0, *e1, *e2, *e3));
+            }
+        }
+    }
+    None
+}
+
+fn read_brush(iname: i32, value: &Var, keyword: Keyword) -> Option<BrushType> {
+    if iname == keyword as i32 {
+        if let Var::Keyword(n) = value {
+            let brush = match *n {
+                Keyword::BrushFlat => BrushType::Flat,
+                Keyword::BrushA => BrushType::A,
+                Keyword::BrushB => BrushType::B,
+                Keyword::BrushC => BrushType::C,
+                Keyword::BrushD => BrushType::D,
+                Keyword::BrushE => BrushType::E,
+                Keyword::BrushF => BrushType::F,
+                Keyword::BrushG => BrushType::G,
+                _ => BrushType::Flat,
+            };
+            return Some(brush);
+        }
+    }
+    None
+}
+
+macro_rules! read_float {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_float(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_float_as_usize {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_float_as_usize(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_v2d {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_v2d(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_col {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_col(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_brush {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_brush(*$in, $v, $kw).or($i);
+    };
+}
+
 pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut width: f32 = 4.0;
-    let mut from: (f32, f32) = (10.0, 10.0);
-    let mut to: (f32, f32) = (900.0, 900.0);
+    let mut width: Option<f32> = Some(4.0);
+    let mut from: Option<(f32, f32)> = Some((10.0, 10.0));
+    let mut to: Option<(f32, f32)> = Some((900.0, 900.0));
     let mut from_colour: Option<(f32, f32, f32, f32)> = None;
     let mut to_colour: Option<(f32, f32, f32, f32)> = None;
-    let mut colour: (f32, f32, f32, f32) = (0.0, 1.0, 0.0, 1.0);
-    let mut brush = BrushType::Flat;
-    let mut brush_subtype: usize = 0;
+    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut brush: Option<BrushType> = Some(BrushType::Flat);
+    let mut brush_subtype: Option<usize> = Some(0);
+
+    let mut s: String = "".to_string();
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
-    // let mut s: String = "".to_string();
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
         if let Var::Int(iname) = label {
-            if *iname == Keyword::Width as i32 {
-                if let Var::Float(f) = value {
-                    width = *f;
-                }
-            }
-            if *iname == Keyword::From as i32 {
-                if let Var::V2D(x, y) = value {
-                    from = (*x, *y);
-                }
-            }
-            if *iname == Keyword::To as i32 {
-                if let Var::V2D(x, y) = value {
-                    to = (*x, *y);
-                }
-            }
-            if *iname == Keyword::FromColour as i32 {
-                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
-                    // hack for now
-                    if *fmt == ColourFormat::Rgba {
-                        from_colour = Some((*e0, *e1, *e2, *e3));
-                    }
-                }
-            }
-            if *iname == Keyword::ToColour as i32 {
-                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
-                    // hack for now
-                    if *fmt == ColourFormat::Rgba {
-                        to_colour = Some((*e0, *e1, *e2, *e3));
-                    }
-                }
-            }
-            if *iname == Keyword::Colour as i32 {
-                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
-                    // hack for now
-                    if *fmt == ColourFormat::Rgba {
-                        colour = (*e0, *e1, *e2, *e3);
-                    }
-                }
-            }
-
-            if *iname == Keyword::Brush as i32 {
-                if let Var::Keyword(n) = value {
-                    brush = match *n {
-                        Keyword::BrushFlat => BrushType::Flat,
-                        Keyword::BrushA => BrushType::A,
-                        Keyword::BrushB => BrushType::B,
-                        Keyword::BrushC => BrushType::C,
-                        Keyword::BrushD => BrushType::D,
-                        Keyword::BrushE => BrushType::E,
-                        Keyword::BrushF => BrushType::F,
-                        Keyword::BrushG => BrushType::G,
-                        _ => BrushType::Flat,
-                    };
-                }
-            }
-
-            if *iname == Keyword::BrushSubtype as i32 {
-                if let Var::Float(f) = value {
-                    brush_subtype = *f as usize;
-                }
-            }
+            read_float!(width, Keyword::Width, iname, value);
+            read_v2d!(from, Keyword::From, iname, value);
+            read_v2d!(to, Keyword::To, iname, value);
+            read_col!(from_colour, Keyword::FromColour, iname, value);
+            read_col!(to_colour, Keyword::ToColour, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
+            read_brush!(brush, Keyword::Brush, iname, value);
+            read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
         }
     }
 
@@ -560,65 +591,56 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
         return Err(Error::Bind("bind_line matrix error".to_string()));
     };
 
-    let uvm = vm.mappings.get_uv_mapping(brush, brush_subtype);
+    let uvm = vm
+        .mappings
+        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
 
     let from_col = if let Some((fr, fg, fb, fa)) = from_colour {
         (fr, fg, fb, fa)
     } else {
-        colour
+        colour.unwrap()
     };
 
     let to_col = if let Some((tr, tg, tb, ta)) = to_colour {
         (tr, tg, tb, ta)
     } else {
-        colour
+        colour.unwrap()
     };
 
-    vm.geometry
-        .render_line(matrix, from, to, width, from_col, to_col, uvm)?;
+    s += &width.unwrap().to_string();
 
-    Ok(Var::Bool(true))
+    vm.geometry.render_line(
+        matrix,
+        from.unwrap(),
+        to.unwrap(),
+        width.unwrap(),
+        from_col,
+        to_col,
+        uvm,
+    )?;
+
+    // Ok(Var::Bool(true))
     // Ok(Var::Debug(format!("counter: {} num_args: {} colour: {:?} width: {}, from: {:?}, to: {:?}, from_col: {:?}, to_col: {:?}", counter, num_args, colour, width, from, to, from_col, to_col).to_string()))
-    //Ok(Var::Debug(format!("s: {}", s).to_string()))
+    Ok(Var::Debug(format!("s: {}", s).to_string()))
 }
 
 pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut width: f32 = 4.0;
-    let mut height: f32 = 10.0;
-    let mut position: (f32, f32) = (10.0, 10.0);
-    let mut colour: (f32, f32, f32, f32) = (0.0, 1.0, 0.0, 1.0);
+    let mut width: Option<f32> = Some(4.0);
+    let mut height: Option<f32> = Some(10.0);
+    let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
+    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
         if let Var::Int(iname) = label {
-            if *iname == Keyword::Width as i32 {
-                if let Var::Float(f) = value {
-                    width = *f;
-                }
-            }
-            if *iname == Keyword::Height as i32 {
-                if let Var::Float(f) = value {
-                    height = *f;
-                }
-            }
-            if *iname == Keyword::Position as i32 {
-                if let Var::V2D(x, y) = value {
-                    position = (*x, *y);
-                }
-            }
-            if *iname == Keyword::Colour as i32 {
-                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
-                    // hack for now
-                    if *fmt == ColourFormat::Rgba {
-                        colour = (*e0, *e1, *e2, *e3);
-                    }
-                }
-            }
+            read_float!(width, Keyword::Width, iname, value);
+            read_float!(height, Keyword::Height, iname, value);
+            read_v2d!(position, Keyword::Position, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
         }
     }
 
@@ -630,61 +652,39 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
 
-    vm.geometry
-        .render_rect(matrix, position, width, height, colour, uvm)?;
+    vm.geometry.render_rect(
+        matrix,
+        position.unwrap(),
+        width.unwrap(),
+        height.unwrap(),
+        colour.unwrap(),
+        uvm,
+    )?;
 
     Ok(Var::Bool(true))
 }
 
 pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut width: f32 = 4.0;
-    let mut height: f32 = 10.0;
-    let mut position: (f32, f32) = (10.0, 10.0);
-    let mut colour: (f32, f32, f32, f32) = (0.0, 1.0, 0.0, 1.0);
-    let mut tessellation: f32 = 10.0;
+    let mut width: Option<f32> = Some(4.0);
+    let mut height: Option<f32> = Some(10.0);
+    let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
+    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut tessellation: Option<f32> = Some(10.0);
     let mut radius: Option<f32> = None;
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
         if let Var::Int(iname) = label {
-            if *iname == Keyword::Width as i32 {
-                if let Var::Float(f) = value {
-                    width = *f;
-                }
-            }
-            if *iname == Keyword::Height as i32 {
-                if let Var::Float(f) = value {
-                    height = *f;
-                }
-            }
-            if *iname == Keyword::Position as i32 {
-                if let Var::V2D(x, y) = value {
-                    position = (*x, *y);
-                }
-            }
-            if *iname == Keyword::Colour as i32 {
-                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
-                    // hack for now
-                    if *fmt == ColourFormat::Rgba {
-                        colour = (*e0, *e1, *e2, *e3);
-                    }
-                }
-            }
-            if *iname == Keyword::Tessellation as i32 {
-                if let Var::Float(f) = value {
-                    tessellation = *f;
-                }
-            }
-            if *iname == Keyword::Radius as i32 {
-                if let Var::Float(f) = value {
-                    radius = Some(*f)
-                }
-            }
+            read_float!(width, Keyword::Width, iname, value);
+            read_float!(height, Keyword::Height, iname, value);
+            read_v2d!(position, Keyword::Position, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
+            read_float!(tessellation, Keyword::Tessellation, iname, value);
+            read_float!(radius, Keyword::Radius, iname, value);
         }
     }
 
@@ -698,17 +698,80 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
 
     // if the radius has been defined then it overrides the width and height parameters
     if let Some(r) = radius {
-        width = r;
-        height = r;
+        width = Some(r);
+        height = Some(r);
     }
 
     vm.geometry.render_circle(
         matrix,
-        position,
-        width,
-        height,
-        colour,
-        tessellation as usize,
+        position.unwrap(),
+        width.unwrap(),
+        height.unwrap(),
+        colour.unwrap(),
+        tessellation.unwrap() as usize,
+        uvm,
+    )?;
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut width: Option<f32> = Some(4.0);
+    let mut height: Option<f32> = Some(10.0);
+    let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
+    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut tessellation: Option<f32> = Some(10.0);
+    let mut radius: Option<f32> = None;
+    let mut angle_start: Option<f32> = Some(0.0);
+    let mut angle_end: Option<f32> = Some(10.0);
+    let mut inner_width: Option<f32> = Some(1.0);
+    let mut inner_height: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(width, Keyword::Width, iname, value);
+            read_float!(height, Keyword::Height, iname, value);
+            read_v2d!(position, Keyword::Position, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
+            read_float!(tessellation, Keyword::Tessellation, iname, value);
+            read_float!(radius, Keyword::Radius, iname, value);
+            read_float!(angle_start, Keyword::AngleStart, iname, value);
+            read_float!(angle_end, Keyword::AngleEnd, iname, value);
+            read_float!(inner_width, Keyword::InnerWidth, iname, value);
+            read_float!(inner_height, Keyword::InnerHeight, iname, value);
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind("bind_line matrix error".to_string()));
+    };
+
+    let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
+
+    // if the radius has been defined then it overrides the width and height parameters
+    if let Some(r) = radius {
+        width = Some(r);
+        height = Some(r);
+    }
+
+    vm.geometry.render_circle_slice(
+        matrix,
+        position.unwrap(),
+        width.unwrap(),
+        height.unwrap(),
+        colour.unwrap(),
+        tessellation.unwrap() as usize,
+        angle_start.unwrap(),
+        angle_end.unwrap(),
+        inner_width.unwrap(),
+        inner_height.unwrap(),
         uvm,
     )?;
 
@@ -974,21 +1037,20 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_bind_line() {
+    // #[test]
+    fn dev_rendering_fns() {
         let mut vm = Vm::new();
-        // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
-
-        vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush-b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
-
+        vm_run(&mut vm, "(line width: 33 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
+        // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush-b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
         // vm_run(&mut vm, "(line brush: brush-b)");
+        // vm_run(&mut vm, "(line brush: brush-b) (rect width: 10 height: 30)");
 
-        // let res = vm.top_stack_value().unwrap();
-        // if let Var::Debug(s) = res {
-        //     assert_eq!(s, "x");
-        // } else {
-        //     assert_eq!(false, true);
-        // }
+        let res = vm.top_stack_value().unwrap();
+        if let Var::Debug(s) = res {
+            assert_eq!(s, "x");
+        } else {
+            assert_eq!(false, true);
+        }
 
         rp0_num_vertices(&vm, 4);
     }

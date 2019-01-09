@@ -132,7 +132,7 @@ impl Bridge {
         };
 
         self.vm.reset();
-        if let Ok(_) = self.vm.interpret(&env, &program) {
+        if self.vm.interpret(&env, &program).is_ok() {
             self.vm.geometry.get_num_render_packets() as i32
         } else {
             0
