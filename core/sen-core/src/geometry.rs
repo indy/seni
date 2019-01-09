@@ -222,4 +222,53 @@ impl Geometry {
 
         Ok(())
     }
+
+    pub fn render_rect(
+        &mut self,
+        matrix: &Matrix,
+        position: (f32, f32),
+        width: f32,
+        height: f32,
+        colour: (f32, f32, f32, f32),
+        uvm: &UvMapping,
+    ) -> Result<()> {
+        let half_width = width / 2.0;
+        let half_height = height / 2.0;
+
+        self.prepare_to_add_triangle_strip(matrix, 4, position.0 - half_width, position.1 - half_height);
+
+        let last = self.render_packets.len() - 1;
+        let rp = &mut self.render_packets[last];
+
+        rp.add_vertex(
+            matrix,
+            position.0 - half_width, position.1 - half_height,
+            colour,
+            uvm.map[0],
+            uvm.map[1],
+        );
+        rp.add_vertex(
+            matrix,
+            position.0 + half_width, position.1 - half_height,
+            colour,
+            uvm.map[2],
+            uvm.map[3],
+        );
+        rp.add_vertex(
+            matrix,
+            position.0 - half_width, position.1 + half_height,
+            colour,
+            uvm.map[4],
+            uvm.map[5],
+        );
+        rp.add_vertex(
+            matrix,
+            position.0 + half_width, position.1 + half_height,
+            colour,
+            uvm.map[6],
+            uvm.map[7],
+        );
+
+        Ok(())
+    }
 }

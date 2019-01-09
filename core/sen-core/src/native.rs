@@ -265,6 +265,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // shapes
     // --------------------------------------------------
     native_fns.insert(Native::Line, bind_line);
+    native_fns.insert(Native::Rect, bind_rect);
     // BIND("rect", bind_rect);
     // BIND("circle", bind_circle);
     // BIND("circle-slice", bind_circle_slice);
@@ -580,6 +581,59 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     Ok(Var::Bool(true))
     // Ok(Var::Debug(format!("counter: {} num_args: {} colour: {:?} width: {}, from: {:?}, to: {:?}, from_col: {:?}, to_col: {:?}", counter, num_args, colour, width, from, to, from_col, to_col).to_string()))
     //Ok(Var::Debug(format!("s: {}", s).to_string()))
+}
+
+pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut width: f32 = 4.0;
+    let mut height: f32 = 10.0;
+    let mut position: (f32, f32) = (10.0, 10.0);
+    let mut colour: (f32, f32, f32, f32) = (0.0, 1.0, 0.0, 1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            if *iname == Keyword::Width as i32 {
+                if let Var::Float(f) = value {
+                    width = *f;
+                }
+            }
+            if *iname == Keyword::Height as i32 {
+                if let Var::Float(f) = value {
+                    height = *f;
+                }
+            }
+            if *iname == Keyword::Position as i32 {
+                if let Var::V2D(x, y) = value {
+                    position = (*x, *y);
+                }
+            }
+            if *iname == Keyword::Colour as i32 {
+                if let Var::Colour(fmt, e0, e1, e2, e3) = value {
+                    // hack for now
+                    if *fmt == ColourFormat::Rgba {
+                        colour = (*e0, *e1, *e2, *e3);
+                    }
+                }
+            }
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind("bind_line matrix error".to_string()));
+    };
+
+    let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
+
+    vm.geometry.render_rect(matrix, position, width, height, colour, uvm)?;
+
+    Ok(Var::Bool(true))
 }
 
 pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
