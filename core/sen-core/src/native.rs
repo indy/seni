@@ -277,9 +277,9 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // --------------------------------------------------
     // transforms
     // --------------------------------------------------
-    // BIND("translate", bind_translate);
-    // BIND("rotate", bind_rotate);
-    // BIND("scale", bind_scale);
+    native_fns.insert(Native::Translate, bind_translate);
+    native_fns.insert(Native::Rotate, bind_rotate);
+    native_fns.insert(Native::Scale, bind_scale);
 
     // --------------------------------------------------
     // colour
@@ -774,6 +774,73 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
         inner_height.unwrap(),
         uvm,
     )?;
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_translate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut vector: Option<(f32, f32)> = Some((0.0, 0.0));
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_v2d!(vector, Keyword::Vector, iname, value);
+        }
+    }
+
+    if let Some((x, y)) = vector {
+        vm.matrix_stack.translate(x, y);
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_rotate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut angle: Option<f32> = Some(0.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(angle, Keyword::Angle, iname, value);
+        }
+    }
+
+    if let Some(a) = angle {
+        vm.matrix_stack.rotate(mathutil::deg_to_rad(a));
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_scale(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut vector: Option<(f32, f32)> = Some((1.0, 1.0));
+    let mut scalar: Option<f32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_v2d!(vector, Keyword::Vector, iname, value);
+            read_float!(scalar, Keyword::Scalar, iname, value);
+        }
+    }
+
+    if let Some(s) = scalar {
+        vm.matrix_stack.scale(s, s);
+    } else if let Some((sx, sy)) = vector {
+        vm.matrix_stack.scale(sx, sy);
+    }
 
     Ok(Var::Bool(true))
 }

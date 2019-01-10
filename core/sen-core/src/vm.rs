@@ -1053,6 +1053,16 @@ impl Vm {
         Ok(())
     }
 
+    fn opcode_mtx_load(&mut self) -> Result<()> {
+        self.matrix_stack.push();
+        Ok(())
+    }
+
+    fn opcode_mtx_store(&mut self) -> Result<()> {
+        self.matrix_stack.pop();
+        Ok(())
+    }
+
     // executes a program on a vm
     // returns Ok if we reached a STOP opcode
     pub fn interpret(&mut self, _env: &Env, program: &Program) -> Result<()> {
@@ -1106,8 +1116,8 @@ impl Vm {
                 Opcode::VEC_LOAD_FIRST => self.opcode_vec_load_first()?,
                 Opcode::VEC_HAS_NEXT => self.opcode_vec_has_next()?,
                 Opcode::VEC_NEXT => self.opcode_vec_next()?,
-                Opcode::MTX_LOAD => unimplemented!(),
-                Opcode::MTX_STORE => unimplemented!(),
+                Opcode::MTX_LOAD => self.opcode_mtx_load()?,
+                Opcode::MTX_STORE => self.opcode_mtx_store()?,
                 Opcode::STOP => {
                     // todo: execution time
                     //
