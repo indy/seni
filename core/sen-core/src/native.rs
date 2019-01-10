@@ -300,24 +300,24 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // BIND("col/triad", bind_col_triad);
     // BIND("col/darken", bind_col_darken);
     // BIND("col/lighten", bind_col_lighten);
-    // BIND("col/set-alpha", bind_col_set_alpha);
-    // BIND("col/get-alpha", bind_col_get_alpha);
-    // BIND("col/set-r", bind_col_set_r);
-    // BIND("col/get-r", bind_col_get_r);
-    // BIND("col/set-g", bind_col_set_g);
-    // BIND("col/get-g", bind_col_get_g);
-    // BIND("col/set-b", bind_col_set_b);
-    // BIND("col/get-b", bind_col_get_b);
-    // BIND("col/set-h", bind_col_set_h);
-    // BIND("col/get-h", bind_col_get_h);
-    // BIND("col/set-s", bind_col_set_s);
-    // BIND("col/get-s", bind_col_get_s);
-    // BIND("col/set-l", bind_col_set_l);
-    // BIND("col/get-l", bind_col_get_l);
-    // BIND("col/set-a", bind_col_set_a);
-    // BIND("col/get-a", bind_col_get_a);
-    // BIND("col/set-v", bind_col_set_v);
-    // BIND("col/get-v", bind_col_get_v);
+    native_fns.insert(Native::ColSetAlpha, bind_col_set_alpha);
+    native_fns.insert(Native::ColGetAlpha, bind_col_get_alpha);
+    native_fns.insert(Native::ColSetR, bind_col_set_r);
+    native_fns.insert(Native::ColGetR, bind_col_get_r);
+    native_fns.insert(Native::ColSetG, bind_col_set_g);
+    native_fns.insert(Native::ColGetG, bind_col_get_g);
+    native_fns.insert(Native::ColSetB, bind_col_set_b);
+    native_fns.insert(Native::ColGetB, bind_col_get_b);
+    native_fns.insert(Native::ColSetH, bind_col_set_h);
+    native_fns.insert(Native::ColGetH, bind_col_get_h);
+    native_fns.insert(Native::ColSetS, bind_col_set_s);
+    native_fns.insert(Native::ColGetS, bind_col_get_s);
+    native_fns.insert(Native::ColSetL, bind_col_set_l);
+    native_fns.insert(Native::ColGetL, bind_col_get_l);
+    native_fns.insert(Native::ColSetA, bind_col_set_a);
+    native_fns.insert(Native::ColGetA, bind_col_get_a);
+    native_fns.insert(Native::ColSetV, bind_col_set_v);
+    native_fns.insert(Native::ColGetV, bind_col_get_v);
     // BIND("col/build-procedural", bind_col_build_procedural);
     // BIND("col/build-bezier", bind_col_build_bezier);
     // BIND("col/value", bind_col_value);
@@ -497,13 +497,27 @@ fn read_v2d(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32)> {
     None
 }
 
-fn read_col(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32, f32, f32)> {
+fn read_rgb(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32, f32, f32)> {
     if iname == keyword as i32 {
         if let Var::Colour(fmt, e0, e1, e2, e3) = value {
             // hack for now
             if *fmt == ColourFormat::Rgba {
                 return Some((*e0, *e1, *e2, *e3));
             }
+            // todo: convert to rgb
+        }
+    }
+    None
+}
+
+fn read_col(
+    iname: i32,
+    value: &Var,
+    keyword: Keyword,
+) -> Option<(ColourFormat, f32, f32, f32, f32)> {
+    if iname == keyword as i32 {
+        if let Var::Colour(fmt, e0, e1, e2, e3) = value {
+            return Some((*fmt, *e0, *e1, *e2, *e3));
         }
     }
     None
@@ -544,6 +558,11 @@ macro_rules! read_v2d {
         $i = read_v2d(*$in, $v, $kw).or($i);
     };
 }
+macro_rules! read_rgb {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_rgb(*$in, $v, $kw).or($i);
+    };
+}
 macro_rules! read_col {
     ($i:ident, $kw:expr, $in:ident, $v:ident) => {
         $i = read_col(*$in, $v, $kw).or($i);
@@ -577,9 +596,9 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
             read_float!(width, Keyword::Width, iname, value);
             read_v2d!(from, Keyword::From, iname, value);
             read_v2d!(to, Keyword::To, iname, value);
-            read_col!(from_colour, Keyword::FromColour, iname, value);
-            read_col!(to_colour, Keyword::ToColour, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
+            read_rgb!(from_colour, Keyword::FromColour, iname, value);
+            read_rgb!(to_colour, Keyword::ToColour, iname, value);
+            read_rgb!(colour, Keyword::Colour, iname, value);
             read_brush!(brush, Keyword::Brush, iname, value);
             read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
         }
@@ -640,7 +659,7 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
             read_float!(width, Keyword::Width, iname, value);
             read_float!(height, Keyword::Height, iname, value);
             read_v2d!(position, Keyword::Position, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
+            read_rgb!(colour, Keyword::Colour, iname, value);
         }
     }
 
@@ -682,7 +701,7 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
             read_float!(width, Keyword::Width, iname, value);
             read_float!(height, Keyword::Height, iname, value);
             read_v2d!(position, Keyword::Position, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
+            read_rgb!(colour, Keyword::Colour, iname, value);
             read_float!(tessellation, Keyword::Tessellation, iname, value);
             read_float!(radius, Keyword::Radius, iname, value);
         }
@@ -737,7 +756,7 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
             read_float!(width, Keyword::Width, iname, value);
             read_float!(height, Keyword::Height, iname, value);
             read_v2d!(position, Keyword::Position, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
+            read_rgb!(colour, Keyword::Colour, iname, value);
             read_float!(tessellation, Keyword::Tessellation, iname, value);
             read_float!(radius, Keyword::Radius, iname, value);
             read_float!(angle_start, Keyword::AngleStart, iname, value);
@@ -867,7 +886,13 @@ pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         }
     }
 
-    Ok(Var::Colour(ColourFormat::Rgba, r.unwrap(), g.unwrap(), b.unwrap(), alpha.unwrap()))
+    Ok(Var::Colour(
+        ColourFormat::Rgba,
+        r.unwrap(),
+        g.unwrap(),
+        b.unwrap(),
+        alpha.unwrap(),
+    ))
 }
 
 pub fn bind_col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -890,7 +915,13 @@ pub fn bind_col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         }
     }
 
-    Ok(Var::Colour(ColourFormat::Hsl, h.unwrap(), s.unwrap(), l.unwrap(), alpha.unwrap()))
+    Ok(Var::Colour(
+        ColourFormat::Hsl,
+        h.unwrap(),
+        s.unwrap(),
+        l.unwrap(),
+        alpha.unwrap(),
+    ))
 }
 
 pub fn bind_col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -913,7 +944,13 @@ pub fn bind_col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
         }
     }
 
-    Ok(Var::Colour(ColourFormat::Hsluv, h.unwrap(), s.unwrap(), l.unwrap(), alpha.unwrap()))
+    Ok(Var::Colour(
+        ColourFormat::Hsluv,
+        h.unwrap(),
+        s.unwrap(),
+        l.unwrap(),
+        alpha.unwrap(),
+    ))
 }
 
 pub fn bind_col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -936,7 +973,13 @@ pub fn bind_col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         }
     }
 
-    Ok(Var::Colour(ColourFormat::Hsv, h.unwrap(), s.unwrap(), v.unwrap(), alpha.unwrap()))
+    Ok(Var::Colour(
+        ColourFormat::Hsv,
+        h.unwrap(),
+        s.unwrap(),
+        v.unwrap(),
+        alpha.unwrap(),
+    ))
 }
 
 pub fn bind_col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -959,7 +1002,154 @@ pub fn bind_col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         }
     }
 
-    Ok(Var::Colour(ColourFormat::Lab, l.unwrap(), a.unwrap(), b.unwrap(), alpha.unwrap()))
+    Ok(Var::Colour(
+        ColourFormat::Lab,
+        l.unwrap(),
+        a.unwrap(),
+        b.unwrap(),
+        alpha.unwrap(),
+    ))
+}
+
+pub fn bind_col_set_elem(
+    idx: usize,
+    vm: &mut Vm,
+    _program: &Program,
+    num_args: usize,
+) -> Result<Var> {
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
+        Some((ColourFormat::Rgba, 0.0, 0.0, 0.0, 1.0));
+    let mut val: Option<f32> = Some(0.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_col!(colour, Keyword::Colour, iname, value);
+            read_float!(val, Keyword::Value, iname, value);
+        }
+    }
+
+    if let Some((fmt, e0, e1, e2, e3)) = colour {
+        match idx {
+            0 => Ok(Var::Colour(fmt, val.unwrap(), e1, e2, e3)),
+            1 => Ok(Var::Colour(fmt, e0, val.unwrap(), e2, e3)),
+            2 => Ok(Var::Colour(fmt, e0, e1, val.unwrap(), e3)),
+            3 => Ok(Var::Colour(fmt, e0, e1, e2, val.unwrap())),
+            _ => Err(Error::Bind(
+                "bind_col_set_elem::idx out of range".to_string(),
+            )),
+        }
+    } else {
+        Err(Error::Bind("unreachable".to_string()))
+    }
+}
+
+pub fn bind_col_get_elem(
+    idx: usize,
+    vm: &mut Vm,
+    _program: &Program,
+    num_args: usize,
+) -> Result<Var> {
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
+        Some((ColourFormat::Rgba, 0.0, 0.0, 0.0, 1.0));
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_col!(colour, Keyword::Colour, iname, value);
+        }
+    }
+
+    let (_fmt, e0, e1, e2, e3) = colour.unwrap();
+    match idx {
+        0 => Ok(Var::Float(e0)),
+        1 => Ok(Var::Float(e1)),
+        2 => Ok(Var::Float(e2)),
+        3 => Ok(Var::Float(e3)),
+        _ => Err(Error::Bind(
+            "bind_col_get_elem::idx out of range".to_string(),
+        )),
+    }
+}
+
+pub fn bind_col_set_alpha(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_set_elem(3, vm, program, num_args)
+}
+
+pub fn bind_col_get_alpha(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_get_elem(3, vm, program, num_args)
+}
+
+pub fn bind_col_set_r(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_set_elem(0, vm, program, num_args)
+}
+
+pub fn bind_col_get_r(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_get_elem(0, vm, program, num_args)
+}
+
+pub fn bind_col_set_g(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_set_elem(1, vm, program, num_args)
+}
+
+pub fn bind_col_get_g(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_get_elem(1, vm, program, num_args)
+}
+
+pub fn bind_col_set_b(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_set_elem(2, vm, program, num_args)
+}
+
+pub fn bind_col_get_b(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_get_elem(2, vm, program, num_args)
+}
+
+pub fn bind_col_set_h(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_set_elem(0, vm, program, num_args)
+}
+
+pub fn bind_col_get_h(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_get_elem(0, vm, program, num_args)
+}
+
+pub fn bind_col_set_s(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_set_elem(1, vm, program, num_args)
+}
+
+pub fn bind_col_get_s(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_get_elem(1, vm, program, num_args)
+}
+
+pub fn bind_col_set_l(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_set_elem(2, vm, program, num_args)
+}
+
+pub fn bind_col_get_l(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_get_elem(2, vm, program, num_args)
+}
+
+pub fn bind_col_set_a(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_set_elem(1, vm, program, num_args)
+}
+
+pub fn bind_col_get_a(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_get_elem(1, vm, program, num_args)
+}
+
+pub fn bind_col_set_v(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_set_elem(2, vm, program, num_args)
+}
+
+pub fn bind_col_get_v(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    bind_col_get_elem(2, vm, program, num_args)
 }
 
 pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
