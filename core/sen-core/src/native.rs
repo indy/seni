@@ -854,7 +854,6 @@ pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
     let mut alpha: Option<f32> = Some(1.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
@@ -878,7 +877,6 @@ pub fn bind_col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
     let mut alpha: Option<f32> = Some(1.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
@@ -902,7 +900,6 @@ pub fn bind_col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     let mut alpha: Option<f32> = Some(1.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
@@ -926,7 +923,6 @@ pub fn bind_col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
     let mut alpha: Option<f32> = Some(1.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
@@ -950,7 +946,6 @@ pub fn bind_col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
     let mut alpha: Option<f32> = Some(1.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
@@ -968,73 +963,49 @@ pub fn bind_col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
 }
 
 pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut vec1: Option<&Var> = None;
-    let mut vec2: Option<&Var> = None;
+    let mut vec1: Option<(f32, f32)> = Some((0.0, 0.0));
+    let mut vec2: Option<(f32, f32)> = Some((0.0, 0.0));
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
         if let Var::Int(iname) = label {
-            if *iname == Keyword::Vec1 as i32 {
-                vec1 = Some(value);
-            }
-            if *iname == Keyword::Vec2 as i32 {
-                vec2 = Some(value);
-            }
+            read_v2d!(vec1, Keyword::Vec1, iname, value);
+            read_v2d!(vec2, Keyword::Vec2, iname, value);
         }
     }
 
-    if let Some(vec1_) = vec1 {
-        if let Var::V2D(x1, y1) = vec1_ {
-            if let Some(vec2_) = vec2 {
-                if let Var::V2D(x2, y2) = vec2_ {
-                    let distance = mathutil::distance_v2(*x1, *y1, *x2, *y2);
-                    return Ok(Var::Float(distance));
-                }
-            }
-        }
-    }
+    let v1 = vec1.unwrap();
+    let v2 = vec2.unwrap();
 
-    Err(Error::Bind("bind error".to_string()))
+    let distance = mathutil::distance_v2(v1.0, v1.1, v2.0, v2.1);
+    Ok(Var::Float(distance))
 }
 
 pub fn bind_math_normal(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut vec1: Option<&Var> = None;
-    let mut vec2: Option<&Var> = None;
+    let mut vec1: Option<(f32, f32)> = Some((0.0, 0.0));
+    let mut vec2: Option<(f32, f32)> = Some((0.0, 0.0));
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
         let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
         if let Var::Int(iname) = label {
-            if *iname == Keyword::Vec1 as i32 {
-                vec1 = Some(value);
-            }
-            if *iname == Keyword::Vec2 as i32 {
-                vec2 = Some(value);
-            }
+            read_v2d!(vec1, Keyword::Vec1, iname, value);
+            read_v2d!(vec2, Keyword::Vec2, iname, value);
         }
     }
 
-    if let Some(vec1_) = vec1 {
-        if let Var::V2D(x1, y1) = vec1_ {
-            if let Some(vec2_) = vec2 {
-                if let Var::V2D(x2, y2) = vec2_ {
-                    let norm = mathutil::normal(*x1, *y1, *x2, *y2);
-                    return Ok(Var::V2D(norm.0, norm.1));
-                }
-            }
-        }
-    }
+    let v1 = vec1.unwrap();
+    let v2 = vec2.unwrap();
 
-    Err(Error::Bind("bind error".to_string()))
+    let norm = mathutil::normal(v1.0, v1.1, v2.0, v2.1);
+    Ok(Var::V2D(norm.0, norm.1))
 }
 
 pub fn bind_math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -1048,38 +1019,24 @@ pub fn bind_math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
     // parse
     //
 
-    let mut value: Option<f32> = None;
-    let mut min: Option<f32> = None;
-    let mut max: Option<f32> = None;
+    let mut val: Option<f32> = Some(0.0);
+    let mut min: Option<f32> = Some(0.0);
+    let mut max: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
-        let label_ = &vm.stack[args_pointer];
-        let value_ = &vm.stack[args_pointer + 1];
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
-        if let Var::Int(iname_) = label_ {
-            if *iname_ == Keyword::Value as i32 {
-                if let Var::Float(f) = value_ {
-                    value = Some(*f);
-                }
-            }
-            if *iname_ == Keyword::Min as i32 {
-                if let Var::Float(f) = value_ {
-                    min = Some(*f);
-                }
-            }
-            if *iname_ == Keyword::Max as i32 {
-                if let Var::Float(f) = value_ {
-                    max = Some(*f);
-                }
-            }
+        if let Var::Int(iname) = label {
+            read_float!(val, Keyword::Value, iname, value);
+            read_float!(min, Keyword::Min, iname, value);
+            read_float!(max, Keyword::Max, iname, value);
         }
     }
 
-    let res = mathutil::clamp(value.unwrap_or(0.0), min.unwrap_or(0.0), max.unwrap_or(0.0));
-
+    let res = mathutil::clamp(val.unwrap(), min.unwrap(), max.unwrap());
     Ok(Var::Float(res))
 }
 
@@ -1088,74 +1045,56 @@ pub fn bind_math_radians_to_degrees(
     _program: &Program,
     num_args: usize,
 ) -> Result<Var> {
-    let mut angle: Option<f32> = None;
+    let mut angle: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
-        let label_ = &vm.stack[args_pointer];
-        let value_ = &vm.stack[args_pointer + 1];
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
-        if let Var::Int(iname_) = label_ {
-            if *iname_ == Keyword::Angle as i32 {
-                if let Var::Float(f) = value_ {
-                    angle = Some(*f);
-                }
-            }
+        if let Var::Int(iname) = label {
+            read_float!(angle, Keyword::Angle, iname, value);
         }
     }
 
-    let res = mathutil::rad_to_deg(angle.unwrap_or(0.0));
-
+    let res = mathutil::rad_to_deg(angle.unwrap());
     Ok(Var::Float(res))
 }
 
 pub fn bind_math_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut angle: Option<f32> = None;
+    let mut angle: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
-        let label_ = &vm.stack[args_pointer];
-        let value_ = &vm.stack[args_pointer + 1];
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
-        if let Var::Int(iname_) = label_ {
-            if *iname_ == Keyword::Angle as i32 {
-                if let Var::Float(f) = value_ {
-                    angle = Some(*f);
-                }
-            }
+        if let Var::Int(iname) = label {
+            read_float!(angle, Keyword::Angle, iname, value);
         }
     }
 
-    let res = angle.unwrap_or(0.0).cos();
-
+    let res = angle.unwrap().cos();
     Ok(Var::Float(res))
 }
 
 pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut angle: Option<f32> = None;
+    let mut angle: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
-
     for _ in 0..num_args {
-        let label_ = &vm.stack[args_pointer];
-        let value_ = &vm.stack[args_pointer + 1];
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
         args_pointer += 2;
 
-        if let Var::Int(iname_) = label_ {
-            if *iname_ == Keyword::Angle as i32 {
-                if let Var::Float(f) = value_ {
-                    angle = Some(*f);
-                }
-            }
+        if let Var::Int(iname) = label {
+            read_float!(angle, Keyword::Angle, iname, value);
         }
     }
 
-    let res = angle.unwrap_or(0.0).sin();
-
+    let res = angle.unwrap().sin();
     Ok(Var::Float(res))
 }
 
