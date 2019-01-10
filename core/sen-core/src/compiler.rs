@@ -77,12 +77,20 @@ impl fmt::Display for Mem {
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ColourFormat {
     Rgba,
+    Hsl,
+    Hsluv,
+    Hsv,
+    Lab,
 }
 
 impl fmt::Display for ColourFormat {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ColourFormat::Rgba => write!(f, "rgba"),
+            ColourFormat::Hsl => write!(f, "hsl"),
+            ColourFormat::Hsluv => write!(f, "hsluv"),
+            ColourFormat::Hsv => write!(f, "hsv"),
+            ColourFormat::Lab => write!(f, "lab"),
         }
     }
 }

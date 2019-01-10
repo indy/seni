@@ -288,10 +288,10 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // start of colour constructors
     // g_colour_constructor_start = word_lut->native_count;
     native_fns.insert(Native::ColRGB, bind_col_rgb);
-    // BIND("col/hsl", bind_col_hsl);
-    // BIND("col/hsluv", bind_col_hsluv);
-    // BIND("col/hsv", bind_col_hsv);
-    // BIND("col/lab", bind_col_lab);
+    native_fns.insert(Native::ColHSL, bind_col_hsl);
+    native_fns.insert(Native::ColHSLuv, bind_col_hsluv);
+    native_fns.insert(Native::ColHSV, bind_col_hsv);
+    native_fns.insert(Native::ColLAB, bind_col_lab);
     // g_colour_constructor_end = word_lut->native_count;
     // end of colour constructors
     // BIND("col/complementary", bind_col_complementary);
@@ -848,10 +848,10 @@ pub fn bind_scale(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
 pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
 
-    let mut r: f32 = 0.0;
-    let mut g: f32 = 0.0;
-    let mut b: f32 = 0.0;
-    let mut alpha: f32 = 1.0;
+    let mut r: Option<f32> = Some(0.0);
+    let mut g: Option<f32> = Some(0.0);
+    let mut b: Option<f32> = Some(0.0);
+    let mut alpha: Option<f32> = Some(1.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
 
@@ -861,30 +861,110 @@ pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         args_pointer += 2;
 
         if let Var::Int(iname) = label {
-            if *iname == Keyword::R as i32 {
-                if let Var::Float(f) = value {
-                    r = *f;
-                }
-            }
-            if *iname == Keyword::G as i32 {
-                if let Var::Float(f) = value {
-                    g = *f;
-                }
-            }
-            if *iname == Keyword::B as i32 {
-                if let Var::Float(f) = value {
-                    b = *f;
-                }
-            }
-            if *iname == Keyword::Alpha as i32 {
-                if let Var::Float(f) = value {
-                    alpha = *f;
-                }
-            }
+            read_float!(r, Keyword::R, iname, value);
+            read_float!(g, Keyword::G, iname, value);
+            read_float!(b, Keyword::B, iname, value);
+            read_float!(alpha, Keyword::Alpha, iname, value);
         }
     }
 
-    Ok(Var::Colour(ColourFormat::Rgba, r, g, b, alpha))
+    Ok(Var::Colour(ColourFormat::Rgba, r.unwrap(), g.unwrap(), b.unwrap(), alpha.unwrap()))
+}
+
+pub fn bind_col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut h: Option<f32> = Some(0.0);
+    let mut s: Option<f32> = Some(0.0);
+    let mut l: Option<f32> = Some(0.0);
+    let mut alpha: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(h, Keyword::H, iname, value);
+            read_float!(s, Keyword::S, iname, value);
+            read_float!(l, Keyword::L, iname, value);
+            read_float!(alpha, Keyword::Alpha, iname, value);
+        }
+    }
+
+    Ok(Var::Colour(ColourFormat::Hsl, h.unwrap(), s.unwrap(), l.unwrap(), alpha.unwrap()))
+}
+
+pub fn bind_col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut h: Option<f32> = Some(0.0);
+    let mut s: Option<f32> = Some(0.0);
+    let mut l: Option<f32> = Some(0.0);
+    let mut alpha: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(h, Keyword::H, iname, value);
+            read_float!(s, Keyword::S, iname, value);
+            read_float!(l, Keyword::L, iname, value);
+            read_float!(alpha, Keyword::Alpha, iname, value);
+        }
+    }
+
+    Ok(Var::Colour(ColourFormat::Hsluv, h.unwrap(), s.unwrap(), l.unwrap(), alpha.unwrap()))
+}
+
+pub fn bind_col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut h: Option<f32> = Some(0.0);
+    let mut s: Option<f32> = Some(0.0);
+    let mut v: Option<f32> = Some(0.0);
+    let mut alpha: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(h, Keyword::H, iname, value);
+            read_float!(s, Keyword::S, iname, value);
+            read_float!(v, Keyword::V, iname, value);
+            read_float!(alpha, Keyword::Alpha, iname, value);
+        }
+    }
+
+    Ok(Var::Colour(ColourFormat::Hsv, h.unwrap(), s.unwrap(), v.unwrap(), alpha.unwrap()))
+}
+
+pub fn bind_col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut l: Option<f32> = Some(0.0);
+    let mut a: Option<f32> = Some(0.0);
+    let mut b: Option<f32> = Some(0.0);
+    let mut alpha: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(l, Keyword::L, iname, value);
+            read_float!(a, Keyword::A, iname, value);
+            read_float!(b, Keyword::B, iname, value);
+            read_float!(alpha, Keyword::Alpha, iname, value);
+        }
+    }
+
+    Ok(Var::Colour(ColourFormat::Lab, l.unwrap(), a.unwrap(), b.unwrap(), alpha.unwrap()))
 }
 
 pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
