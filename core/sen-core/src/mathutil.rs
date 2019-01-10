@@ -47,6 +47,22 @@ pub fn clamp(x: f32, xmin: f32, xmax: f32) -> f32 {
     }
 }
 
+pub fn map_quick_ease(x: f32) -> f32 {
+  let x2 = x * x;
+  let x3 = x * x * x;
+
+  (3.0 * x2) - (2.0 * x3)
+}
+
+pub fn map_slow_ease_in(x: f32) -> f32 {
+  let s = (x * PI_BY_2).sin();
+  s * s * s * s
+}
+
+pub fn map_slow_ease_in_ease_out(x: f32) -> f32 {
+    x - ((x * TAU).sin() / TAU)
+}
+
 pub fn length_v2(x: f32, y: f32) -> f32 {
     ((x * x) + (y * y)).sqrt()
 }
@@ -72,4 +88,20 @@ pub fn normal(x1: f32, y1: f32, x2: f32, y2: f32) -> (f32, f32) {
 
 pub fn opposite_normal(x: f32, y: f32) -> (f32, f32) {
     (-x, -y)
+}
+
+pub fn quadratic_point(a: f32, b: f32, c: f32, t: f32) -> f32 {
+    let r = ((b - a) - 0.5 * (c - a)) / (0.5 * (0.5 - 1.0));
+    let s = c - a - r;
+
+    (r * t * t) + (s * t) + a
+}
+
+pub fn bezier_point(a: f32, b: f32, c: f32, d: f32, t: f32) -> f32 {
+    let t1 = 1.0 - t;
+    (a * t1 * t1 * t1) + (3.0 * b * t * t1 * t1) + (3.0 * c * t * t * t1) + (d * t * t * t)
+}
+
+pub fn bezier_tangent(a: f32, b: f32, c: f32, d: f32, t: f32) -> f32 {
+    3.0 * t * t * (-a + 3.0 * b - 3.0 * c + d) + 6.0 * t * (a - 2.0 * b + c) + 3.0 * (-a + b)
 }

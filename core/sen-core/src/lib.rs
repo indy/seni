@@ -25,6 +25,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 mod colour;
+mod ease;
 mod keywords;
 mod lexer;
 mod mathutil;
@@ -33,6 +34,7 @@ mod native;
 mod opcodes;
 mod placeholder;
 mod uvmapper;
+//mod path;
 
 pub mod compiler;
 pub mod error;
