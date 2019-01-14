@@ -32,9 +32,9 @@ mod mathutil;
 mod matrix;
 mod native;
 mod opcodes;
+mod path;
 mod placeholder;
 mod uvmapper;
-//mod path;
 
 pub mod compiler;
 pub mod error;

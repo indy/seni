@@ -116,6 +116,8 @@ pub struct Vm {
     pub trait_within_vector_index: bool,
 
     pub native_fns: HashMap<Native, NativeCallback>,
+
+    pub debug_str: String,
 }
 
 impl Default for Vm {
@@ -173,6 +175,8 @@ impl Default for Vm {
             trait_within_vector_index: false,
 
             native_fns: build_native_fn_hash(),
+
+            debug_str: "".to_string(),
         }
     }
 }
@@ -196,6 +200,17 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
 impl Vm {
     pub fn new() -> Vm {
         Default::default()
+    }
+
+    pub fn debug_str_clear(&mut self) {
+        self.debug_str = "".to_string();
+    }
+
+    pub fn debug_str_append(&mut self, text: &str) {
+        if !self.debug_str.is_empty() {
+            self.debug_str += &" ".to_string();
+        }
+        self.debug_str += &text.to_string();
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
@@ -233,6 +248,111 @@ impl Vm {
         // vm->trait_within_vector_index         = 0;
     }
 
+    pub fn function_call_default_arguments(
+        &mut self,
+        program: &Program,
+        fn_info: &FnInfo,
+    ) -> Result<()> {
+        let stop_address = program.stop_location();
+
+        // make room for the labelled arguments
+        self.sp = self.sp_inc_by((fn_info.num_args * 2) as usize)?;
+
+        let fp = self.sp;
+
+        // push the caller's fp
+        self.sp = self.sp_inc()?;
+        self.stack[self.sp - 1] = Var::Int(self.fp as i32);
+
+        // push stop address ip
+        self.sp = self.sp_inc()?;
+        self.stack[self.sp - 1] = Var::Int(stop_address as i32);
+
+        // push num_args
+        self.sp = self.sp_inc()?;
+        self.stack[self.sp - 1] = Var::Int(fn_info.num_args);
+
+        // push hop back
+        self.sp = self.sp_inc()?;
+        self.stack[self.sp - 1] = Var::Int(0);
+
+        self.ip = fn_info.arg_address;
+        self.fp = fp;
+        self.local = self.sp;
+
+        // clear the memory that's going to be used for locals
+        for _ in 0..MEMORY_LOCAL_SIZE {
+            // setting all memory as VAR_INT will prevent any weird ref count
+            // stuff when we deal with the RET opcodes later on
+            self.sp = self.sp_inc()?;
+            self.stack[self.sp - 1] = Var::Int(0);
+        }
+
+        // todo: remove this Env
+        let env = Env::new();
+
+        self.interpret(&env, program)?;
+
+        Ok(())
+    }
+
+    pub fn function_call_body(&mut self, program: &Program, fn_info: &FnInfo) -> Result<()> {
+        // push a frame onto the stack whose return address is the program's STOP
+        // instruction
+        let stop_address = program.stop_location();
+
+        // set the correct return ip
+        self.stack[self.fp + FP_OFFSET_TO_IP] = Var::Int(stop_address as i32);
+
+        // leap to a location
+        self.ip = fn_info.body_address;
+
+        // todo: remove this Env
+        let env = Env::new();
+
+        self.interpret(&env, program)?;
+
+        // the above vm_interpret will eventually hit a RET, pop the frame,
+        // push the function's result onto the stack and then jump to the stop_address
+        // so we'll need to pop that function's return value off the stack
+        self.sp = self.sp_dec()?;
+
+        Ok(())
+    }
+
+    fn arg_memory_from_iname(
+        &self,
+        fn_info: &FnInfo,
+        iname: usize,
+        stack_offset: usize,
+    ) -> Option<usize> {
+        let mut offset = stack_offset;
+
+        // search the ARG memory for iname
+        for _ in 0..fn_info.num_args {
+            if let Var::Int(vi) = self.stack[offset] {
+                if vi as usize == iname {
+                    return Some(offset - 1); // move from the label onto the arg's default value
+                }
+            }
+            offset -= 2; // skip past the value of the arg and the next label's iname
+        }
+
+        None
+    }
+
+    pub fn function_set_argument_to_f32(&mut self, fn_info: &FnInfo, iname: usize, f: f32) {
+        if let Some(offset) = self.arg_memory_from_iname(fn_info, iname, self.fp - 1) {
+            self.stack[offset] = Var::Float(f);
+        }
+    }
+
+    pub fn function_set_argument_to_2d(&mut self, fn_info: &FnInfo, iname: usize, x: f32, y: f32) {
+        if let Some(offset) = self.arg_memory_from_iname(fn_info, iname, self.fp - 1) {
+            self.stack[offset] = Var::V2D(x, y);
+        }
+    }
+
     fn sp_inc_by(&self, delta: usize) -> Result<usize> {
         if self.sp + delta >= self.stack_size {
             return Err(Error::VMStackOverflow);
@@ -252,27 +372,6 @@ impl Vm {
             return Err(Error::VMStackUnderflow);
         }
         Ok(self.sp - 1)
-    }
-
-    fn arg_memory_from_iname(
-        &self,
-        fn_info: &FnInfo,
-        iname: usize,
-        stack_index: usize,
-    ) -> Option<usize> {
-        let mut args = stack_index;
-
-        for _ in 0..fn_info.num_args {
-            if let Var::Int(ina) = self.stack[args] {
-                if ina as usize == iname {
-                    return Some(args - 1); // move from the label onto the arg's default value
-                }
-            }
-
-            args -= 2; // move past this arg and the next arg's value
-        }
-
-        None
     }
 
     fn opcode_load(&mut self, bc: &Bytecode) -> Result<()> {
@@ -1081,6 +1180,7 @@ impl Vm {
             // }
 
             self.opcodes_executed += 1;
+            // println!("interpreting ip: {}", self.ip);
             bc = &program.code[self.ip];
             self.ip += 1;
 
@@ -1150,32 +1250,35 @@ pub mod tests {
         vm.interpret(&env, &program).unwrap();
     }
 
-    pub fn vm_exec(s: &str) -> Var {
-        let mut vm = Vm::new();
+    pub fn vm_exec(mut vm: &mut Vm, s: &str) -> Var {
         vm_run(&mut vm, s);
         vm.top_stack_value().unwrap()
     }
 
     pub fn is_float(s: &str, val: f32) {
-        if let Var::Float(f) = vm_exec(s) {
+        let mut vm = Vm::new();
+        if let Var::Float(f) = vm_exec(&mut vm, s) {
             assert_eq!(f, val)
         }
     }
 
     pub fn is_int(s: &str, val: i32) {
-        if let Var::Int(i) = vm_exec(s) {
+        let mut vm = Vm::new();
+        if let Var::Int(i) = vm_exec(&mut vm, s) {
             assert_eq!(i, val)
         }
     }
 
     pub fn is_bool(s: &str, val: bool) {
-        if let Var::Bool(b) = vm_exec(s) {
+        let mut vm = Vm::new();
+        if let Var::Bool(b) = vm_exec(&mut vm, s) {
             assert_eq!(b, val)
         }
     }
 
     pub fn is_vec_of_f32(s: &str, val: Vec<f32>) {
-        if let Var::Vector(vec_vec) = vm_exec(s) {
+        let mut vm = Vm::new();
+        if let Var::Vector(vec_vec) = vm_exec(&mut vm, s) {
             assert_eq!(vec_vec.len(), val.len());
             for (i, f) in val.iter().enumerate() {
                 if let Some(Var::Float(ff)) = vec_vec.get(i) {
@@ -1183,6 +1286,12 @@ pub mod tests {
                 }
             }
         }
+    }
+
+    pub fn is_debug_str(s: &str, val: &str) {
+        let mut vm = Vm::new();
+        vm_exec(&mut vm, s);
+        assert_eq!(vm.debug_str, val);
     }
 
     #[test]

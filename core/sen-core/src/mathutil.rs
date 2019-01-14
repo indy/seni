@@ -48,15 +48,15 @@ pub fn clamp(x: f32, xmin: f32, xmax: f32) -> f32 {
 }
 
 pub fn map_quick_ease(x: f32) -> f32 {
-  let x2 = x * x;
-  let x3 = x * x * x;
+    let x2 = x * x;
+    let x3 = x * x * x;
 
-  (3.0 * x2) - (2.0 * x3)
+    (3.0 * x2) - (2.0 * x3)
 }
 
 pub fn map_slow_ease_in(x: f32) -> f32 {
-  let s = (x * PI_BY_2).sin();
-  s * s * s * s
+    let s = (x * PI_BY_2).sin();
+    s * s * s * s
 }
 
 pub fn map_slow_ease_in_ease_out(x: f32) -> f32 {

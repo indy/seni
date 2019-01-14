@@ -31,11 +31,12 @@
 
 ** misc
 
- | name          | description  |
- |---------------+--------------|
- | [[nth]]           |              |
- | [[debug/print]]   | prints debug |
- | [[vector/length]] |              |
+ | name          | description                                          |
+ |---------------+------------------------------------------------------|
+ | [[nth]]           |                                                      |
+ | [[debug/print]]   | prints debug                                         |
+ | [[vector/length]] |                                                      |
+ | probe         | writes to the vm's debug_str (used for testing only) |
 
 ** shapes
 
@@ -187,7 +188,6 @@
 * function descriptions
 ** keywords
 ** misc
-
 *** debug/print
 
     | parameter | default | description        |
@@ -207,6 +207,12 @@
     | parameter | default | description |
     |-----------+---------+-------------|
     | vector    | NULL    |             |
+
+*** probe
+
+    | parameter | default | description                     |
+    |-----------+---------+---------------------------------|
+    | scalar    | NULL    | appends value onto vm.debug_str |
 
 ** shapes
 
@@ -767,7 +773,7 @@
 
     | parameter | default | description |
     |-----------+---------+-------------|
-    | pos       |   [0 0] |             |
+    | position  |   [0 0] |             |
     | radius    |     100 |             |
     | steps     |      10 |             |
     | t-start   |       0 |             |

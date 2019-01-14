@@ -13,8 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::keywords::Keyword;
 use crate::mathutil;
 
+#[derive(Copy, Clone)]
 pub enum Easing {
     Linear,
     Quick,
@@ -50,6 +52,85 @@ pub enum Easing {
     BounceIn,
     BounceOut,
     BounceInOut,
+}
+
+pub fn easing_from_keyword(kw: Keyword) -> Option<Easing> {
+    match kw {
+        Keyword::Linear => Some(Easing::Linear),
+        Keyword::EaseQuick => Some(Easing::Quick),
+        Keyword::EaseSlowIn => Some(Easing::SlowIn),
+        Keyword::EaseSlowInOut => Some(Easing::SlowInOut),
+        Keyword::EaseQuadraticIn => Some(Easing::QuadraticIn),
+        Keyword::EaseQuadraticOut => Some(Easing::QuadraticOut),
+        Keyword::EaseQuadraticInOut => Some(Easing::QuadraticInOut),
+        Keyword::EaseCubicIn => Some(Easing::CubicIn),
+        Keyword::EaseCubicOut => Some(Easing::CubicOut),
+        Keyword::EaseCubicInOut => Some(Easing::CubicInOut),
+        Keyword::EaseQuarticIn => Some(Easing::QuarticIn),
+        Keyword::EaseQuarticOut => Some(Easing::QuarticOut),
+        Keyword::EaseQuarticInOut => Some(Easing::QuarticInOut),
+        Keyword::EaseQuinticIn => Some(Easing::QuinticIn),
+        Keyword::EaseQuinticOut => Some(Easing::QuinticOut),
+        Keyword::EaseQuinticInOut => Some(Easing::QuinticInOut),
+        Keyword::EaseSinIn => Some(Easing::SinIn),
+        Keyword::EaseSinOut => Some(Easing::SinOut),
+        Keyword::EaseSinInOut => Some(Easing::SinInOut),
+        Keyword::EaseCircularIn => Some(Easing::CircularIn),
+        Keyword::EaseCircularOut => Some(Easing::CircularOut),
+        Keyword::EaseCircularInOut => Some(Easing::CircularInOut),
+        Keyword::EaseExponentialIn => Some(Easing::ExponentialIn),
+        Keyword::EaseExponentialOut => Some(Easing::ExponentialOut),
+        Keyword::EaseExponentialInOut => Some(Easing::ExponentialInOut),
+        Keyword::EaseElasticIn => Some(Easing::ElasticIn),
+        Keyword::EaseElasticOut => Some(Easing::ElasticOut),
+        Keyword::EaseElasticInOut => Some(Easing::ElasticInOut),
+        Keyword::EaseBackIn => Some(Easing::BackIn),
+        Keyword::EaseBackOut => Some(Easing::BackOut),
+        Keyword::EaseBackInOut => Some(Easing::BackInOut),
+        Keyword::EaseBounceIn => Some(Easing::BounceIn),
+        Keyword::EaseBounceOut => Some(Easing::BounceOut),
+        Keyword::EaseBounceInOut => Some(Easing::BounceInOut),
+        _ => None,
+    }
+}
+
+pub fn easing(from: f32, easing: Easing) -> f32 {
+    match easing {
+        Easing::Linear => from,
+        Easing::Quick => mathutil::map_quick_ease(from),
+        Easing::SlowIn => mathutil::map_slow_ease_in(from),
+        Easing::SlowInOut => mathutil::map_slow_ease_in_ease_out(from),
+        Easing::QuadraticIn => quadratic_ease_in(from),
+        Easing::QuadraticOut => quadratic_ease_out(from),
+        Easing::QuadraticInOut => quadratic_ease_in_out(from),
+        Easing::CubicIn => cubic_ease_in(from),
+        Easing::CubicOut => cubic_ease_out(from),
+        Easing::CubicInOut => cubic_ease_in_out(from),
+        Easing::QuarticIn => quartic_ease_in(from),
+        Easing::QuarticOut => quartic_ease_out(from),
+        Easing::QuarticInOut => quartic_ease_in_out(from),
+        Easing::QuinticIn => quintic_ease_in(from),
+        Easing::QuinticOut => quintic_ease_out(from),
+        Easing::QuinticInOut => quintic_ease_in_out(from),
+        Easing::SinIn => sin_ease_in(from),
+        Easing::SinOut => sin_ease_out(from),
+        Easing::SinInOut => sin_ease_in_out(from),
+        Easing::CircularIn => circular_ease_in(from),
+        Easing::CircularOut => circular_ease_out(from),
+        Easing::CircularInOut => circular_ease_in_out(from),
+        Easing::ExponentialIn => exponential_ease_in(from),
+        Easing::ExponentialOut => exponential_ease_out(from),
+        Easing::ExponentialInOut => exponential_ease_in_out(from),
+        Easing::ElasticIn => elastic_ease_in(from),
+        Easing::ElasticOut => elastic_ease_out(from),
+        Easing::ElasticInOut => elastic_ease_in_out(from),
+        Easing::BackIn => back_ease_in(from),
+        Easing::BackOut => back_ease_out(from),
+        Easing::BackInOut => back_ease_in_out(from),
+        Easing::BounceIn => bounce_ease_in(from),
+        Easing::BounceOut => bounce_ease_out(from),
+        Easing::BounceInOut => bounce_ease_in_out(from),
+    }
 }
 
 // parabola y = x^2
@@ -279,44 +360,5 @@ fn bounce_ease_in_out(p: f32) -> f32 {
         0.5 * bounce_ease_in(p * 2.0)
     } else {
         0.5 * bounce_ease_out(p * 2.0 - 1.0) + 0.5
-    }
-}
-
-pub fn easing(from: f32, easing: Easing) -> f32 {
-    match easing {
-        Easing::Linear => from,
-        Easing::Quick => mathutil::map_quick_ease(from),
-        Easing::SlowIn => mathutil::map_slow_ease_in(from),
-        Easing::SlowInOut => mathutil::map_slow_ease_in_ease_out(from),
-        Easing::QuadraticIn => quadratic_ease_in(from),
-        Easing::QuadraticOut => quadratic_ease_out(from),
-        Easing::QuadraticInOut => quadratic_ease_in_out(from),
-        Easing::CubicIn => cubic_ease_in(from),
-        Easing::CubicOut => cubic_ease_out(from),
-        Easing::CubicInOut => cubic_ease_in_out(from),
-        Easing::QuarticIn => quartic_ease_in(from),
-        Easing::QuarticOut => quartic_ease_out(from),
-        Easing::QuarticInOut => quartic_ease_in_out(from),
-        Easing::QuinticIn => quintic_ease_in(from),
-        Easing::QuinticOut => quintic_ease_out(from),
-        Easing::QuinticInOut => quintic_ease_in_out(from),
-        Easing::SinIn => sin_ease_in(from),
-        Easing::SinOut => sin_ease_out(from),
-        Easing::SinInOut => sin_ease_in_out(from),
-        Easing::CircularIn => circular_ease_in(from),
-        Easing::CircularOut => circular_ease_out(from),
-        Easing::CircularInOut => circular_ease_in_out(from),
-        Easing::ExponentialIn => exponential_ease_in(from),
-        Easing::ExponentialOut => exponential_ease_out(from),
-        Easing::ExponentialInOut => exponential_ease_in_out(from),
-        Easing::ElasticIn => elastic_ease_in(from),
-        Easing::ElasticOut => elastic_ease_out(from),
-        Easing::ElasticInOut => elastic_ease_in_out(from),
-        Easing::BackIn => back_ease_in(from),
-        Easing::BackOut => back_ease_out(from),
-        Easing::BackInOut => back_ease_in_out(from),
-        Easing::BounceIn => bounce_ease_in(from),
-        Easing::BounceOut => bounce_ease_out(from),
-        Easing::BounceInOut => bounce_ease_in_out(from),
     }
 }

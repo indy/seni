@@ -19,6 +19,8 @@ use crate::keywords::Keyword;
 use crate::mathutil;
 use crate::uvmapper::BrushType;
 use crate::vm::{Var, Vm};
+use crate::path::*;
+use crate::ease::*;
 
 use std::collections::HashMap;
 
@@ -39,6 +41,8 @@ pub enum Native {
     Nth,
     #[strum(serialize = "vector/length")]
     VectorLength,
+    #[strum(serialize = "probe")]
+    Probe,
 
     // shapes
     //
@@ -259,6 +263,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // BIND("debug/print", bind_debug_print);
     native_fns.insert(Native::Nth, bind_nth);
     native_fns.insert(Native::VectorLength, bind_vector_length);
+    native_fns.insert(Native::Probe, bind_probe);
     // map (todo)
 
     // --------------------------------------------------
@@ -356,10 +361,10 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // --------------------------------------------------
     // path
     // --------------------------------------------------
-    // BIND("path/linear", bind_path_linear);
-    // BIND("path/circle", bind_path_circle);
-    // BIND("path/spline", bind_path_spline);
-    // BIND("path/bezier", bind_path_bezier);
+    native_fns.insert(Native::PathLinear, bind_path_linear);
+    native_fns.insert(Native::PathCircle, bind_path_circle);
+    native_fns.insert(Native::PathSpline, bind_path_spline);
+    native_fns.insert(Native::PathBezier, bind_path_bezier);
 
     // --------------------------------------------------
     // repeat
@@ -394,6 +399,179 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // BIND("gen/col", bind_gen_col);
 
     native_fns
+}
+
+fn read_i32(iname: i32, value: &Var, keyword: Keyword) -> Option<i32> {
+    if iname == keyword as i32 {
+        if let Var::Int(i) = value {
+            return Some(*i);
+        }
+    }
+    None
+}
+
+fn read_float(iname: i32, value: &Var, keyword: Keyword) -> Option<f32> {
+    if iname == keyword as i32 {
+        if let Var::Float(f) = value {
+            return Some(*f);
+        }
+    }
+    None
+}
+
+fn read_float_as_usize(iname: i32, value: &Var, keyword: Keyword) -> Option<usize> {
+    if iname == keyword as i32 {
+        if let Var::Float(f) = value {
+            return Some(*f as usize);
+        }
+    }
+    None
+}
+
+fn read_v2d(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32)> {
+    if iname == keyword as i32 {
+        if let Var::V2D(x, y) = value {
+            return Some((*x, *y));
+        }
+    }
+    None
+}
+
+fn read_vector(iname: i32, value: &Var, keyword: Keyword) -> Option<&Vec<Var>> {
+    if iname == keyword as i32 {
+        if let Var::Vector(vecs) = value {
+            return Some(vecs);
+        }
+    }
+    None
+}
+
+
+fn read_kw(iname: i32, value: &Var, keyword: Keyword) -> Option<Keyword> {
+    if iname == keyword as i32 {
+        if let Var::Keyword(kw) = value {
+            return Some(*kw);
+        }
+    }
+    None
+}
+
+fn read_rgb(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32, f32, f32)> {
+    if iname == keyword as i32 {
+        if let Var::Colour(fmt, e0, e1, e2, e3) = value {
+            // hack for now
+            if *fmt == ColourFormat::Rgba {
+                return Some((*e0, *e1, *e2, *e3));
+            }
+            // todo: convert to rgb
+        }
+    }
+    None
+}
+
+fn read_col(
+    iname: i32,
+    value: &Var,
+    keyword: Keyword,
+) -> Option<(ColourFormat, f32, f32, f32, f32)> {
+    if iname == keyword as i32 {
+        if let Var::Colour(fmt, e0, e1, e2, e3) = value {
+            return Some((*fmt, *e0, *e1, *e2, *e3));
+        }
+    }
+    None
+}
+
+fn read_brush(iname: i32, value: &Var, keyword: Keyword) -> Option<BrushType> {
+    if iname == keyword as i32 {
+        if let Var::Keyword(n) = value {
+            let brush = match *n {
+                Keyword::BrushFlat => BrushType::Flat,
+                Keyword::BrushA => BrushType::A,
+                Keyword::BrushB => BrushType::B,
+                Keyword::BrushC => BrushType::C,
+                Keyword::BrushD => BrushType::D,
+                Keyword::BrushE => BrushType::E,
+                Keyword::BrushF => BrushType::F,
+                Keyword::BrushG => BrushType::G,
+                _ => BrushType::Flat,
+            };
+            return Some(brush);
+        }
+    }
+    None
+}
+
+macro_rules! read_i32 {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_i32(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_float {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_float(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_float_as_usize {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_float_as_usize(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_v2d {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_v2d(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_vector {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_vector(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_kw {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_kw(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_rgb {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_rgb(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_col {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_col(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_brush {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_brush(*$in, $v, $kw).or($i);
+    };
+}
+
+fn array_6_f32_from_vec(float_pairs: &[Var]) -> [f32; 6] {
+    let mut res = [0.0; 6];
+
+    for i in 0..3 {
+        if let Var::V2D(x, y) = float_pairs[i] {
+            res[i * 2] = x;
+            res[(i * 2) + 1] = y;
+        }
+    }
+
+    res
+}
+
+fn array_8_f32_from_vec(float_pairs: &[Var]) -> [f32; 8] {
+    let mut res = [0.0; 8];
+
+    for i in 0..4 {
+        if let Var::V2D(x, y) = float_pairs[i] {
+            res[i * 2] = x;
+            res[(i * 2) + 1] = y;
+        }
+    }
+
+    res
 }
 
 pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -470,108 +648,31 @@ pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     ))
 }
 
-fn read_float(iname: i32, value: &Var, keyword: Keyword) -> Option<f32> {
-    if iname == keyword as i32 {
-        if let Var::Float(f) = value {
-            return Some(*f);
+pub fn bind_probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut scalar: Option<f32> = None;
+    let mut vector: Option<(f32, f32)> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(scalar, Keyword::Scalar, iname, value);
+            read_v2d!(vector, Keyword::Vector, iname, value);
         }
     }
-    None
-}
 
-fn read_float_as_usize(iname: i32, value: &Var, keyword: Keyword) -> Option<usize> {
-    if iname == keyword as i32 {
-        if let Var::Float(f) = value {
-            return Some(*f as usize);
-        }
+    if let Some(f) = scalar {
+        vm.debug_str_append(&format!("{}", f));
     }
-    None
-}
 
-fn read_v2d(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32)> {
-    if iname == keyword as i32 {
-        if let Var::V2D(x, y) = value {
-            return Some((*x, *y));
-        }
+    if let Some((x, y)) = vector {
+        vm.debug_str_append(&format!("({},{})", x, y));
     }
-    None
-}
 
-fn read_rgb(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32, f32, f32)> {
-    if iname == keyword as i32 {
-        if let Var::Colour(fmt, e0, e1, e2, e3) = value {
-            // hack for now
-            if *fmt == ColourFormat::Rgba {
-                return Some((*e0, *e1, *e2, *e3));
-            }
-            // todo: convert to rgb
-        }
-    }
-    None
-}
-
-fn read_col(
-    iname: i32,
-    value: &Var,
-    keyword: Keyword,
-) -> Option<(ColourFormat, f32, f32, f32, f32)> {
-    if iname == keyword as i32 {
-        if let Var::Colour(fmt, e0, e1, e2, e3) = value {
-            return Some((*fmt, *e0, *e1, *e2, *e3));
-        }
-    }
-    None
-}
-
-fn read_brush(iname: i32, value: &Var, keyword: Keyword) -> Option<BrushType> {
-    if iname == keyword as i32 {
-        if let Var::Keyword(n) = value {
-            let brush = match *n {
-                Keyword::BrushFlat => BrushType::Flat,
-                Keyword::BrushA => BrushType::A,
-                Keyword::BrushB => BrushType::B,
-                Keyword::BrushC => BrushType::C,
-                Keyword::BrushD => BrushType::D,
-                Keyword::BrushE => BrushType::E,
-                Keyword::BrushF => BrushType::F,
-                Keyword::BrushG => BrushType::G,
-                _ => BrushType::Flat,
-            };
-            return Some(brush);
-        }
-    }
-    None
-}
-
-macro_rules! read_float {
-    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
-        $i = read_float(*$in, $v, $kw).or($i);
-    };
-}
-macro_rules! read_float_as_usize {
-    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
-        $i = read_float_as_usize(*$in, $v, $kw).or($i);
-    };
-}
-macro_rules! read_v2d {
-    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
-        $i = read_v2d(*$in, $v, $kw).or($i);
-    };
-}
-macro_rules! read_rgb {
-    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
-        $i = read_rgb(*$in, $v, $kw).or($i);
-    };
-}
-macro_rules! read_col {
-    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
-        $i = read_col(*$in, $v, $kw).or($i);
-    };
-}
-macro_rules! read_brush {
-    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
-        $i = read_brush(*$in, $v, $kw).or($i);
-    };
+    Ok(Var::Bool(true))
 }
 
 pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -1288,6 +1389,155 @@ pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
     Ok(Var::Float(res))
 }
 
+pub fn bind_path_linear(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    // (path/linear fn: foo steps: 10 from: [0 0] to: [100 100])
+
+    let mut from_vec: Option<(f32, f32)> = Some((0.0, 0.0));
+    let mut to_vec: Option<(f32, f32)> = Some((10.0, 10.0));
+    let mut steps: Option<f32> = Some(10.0);
+    let mut t_start: Option<f32> = Some(0.0);
+    let mut t_end: Option<f32> = Some(1.0);
+    let mut fun: Option<i32> = Some(-1);
+    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_v2d!(from_vec, Keyword::From, iname, value);
+            read_v2d!(to_vec, Keyword::To, iname, value);
+            read_float!(steps, Keyword::Steps, iname, value);
+            read_float!(t_start, Keyword::TStart, iname, value);
+            read_float!(t_end, Keyword::TEnd, iname, value);
+            read_i32!(fun, Keyword::Fn, iname, value);
+            read_kw!(mapping, Keyword::Mapping, iname, value);
+        }
+    }
+
+    let fr = from_vec.unwrap();
+    let to = to_vec.unwrap();
+    let maybe_mapping = easing_from_keyword(mapping.unwrap());
+
+    if let Some(mapping) = maybe_mapping {
+        path_linear(vm, program, fun.unwrap() as usize, steps.unwrap() as i32, t_start.unwrap(), t_end.unwrap(), fr.0, fr.1, to.0, to.1, mapping)?;
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_path_circle(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    let mut position: Option<(f32, f32)> = Some((0.0, 0.0));
+    let mut radius: Option<f32> = Some(100.0);
+    let mut steps: Option<f32> = Some(10.0);
+    let mut t_start: Option<f32> = Some(0.0);
+    let mut t_end: Option<f32> = Some(1.0);
+    let mut fun: Option<i32> = Some(-1);
+    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_v2d!(position, Keyword::Position, iname, value);
+            read_float!(radius, Keyword::Radius, iname, value);
+            read_float!(steps, Keyword::Steps, iname, value);
+            read_float!(t_start, Keyword::TStart, iname, value);
+            read_float!(t_end, Keyword::TEnd, iname, value);
+            read_i32!(fun, Keyword::Fn, iname, value);
+            read_kw!(mapping, Keyword::Mapping, iname, value);
+        }
+    }
+
+    let pos = position.unwrap();
+    let maybe_mapping = easing_from_keyword(mapping.unwrap());
+
+    if let Some(mapping) = maybe_mapping {
+        path_circular(vm, program, fun.unwrap() as usize, steps.unwrap() as i32, t_start.unwrap(), t_end.unwrap(), pos.0, pos.1, radius.unwrap(), mapping)?;
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_path_spline(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    let mut coords: Option<&Vec<Var>> = None;
+
+    let mut steps: Option<f32> = Some(10.0);
+    let mut t_start: Option<f32> = Some(0.0);
+    let mut t_end: Option<f32> = Some(1.0);
+    let mut fun: Option<i32> = Some(-1);
+    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_vector!(coords, Keyword::Coords, iname, value);
+            read_float!(steps, Keyword::Steps, iname, value);
+            read_float!(t_start, Keyword::TStart, iname, value);
+            read_float!(t_end, Keyword::TEnd, iname, value);
+            read_i32!(fun, Keyword::Fn, iname, value);
+            read_kw!(mapping, Keyword::Mapping, iname, value);
+        }
+    }
+
+    if let Some(coords_) = coords {
+        let co = array_6_f32_from_vec(coords_);
+        let maybe_mapping = easing_from_keyword(mapping.unwrap());
+
+        if let Some(mapping) = maybe_mapping {
+            path_spline(vm, program, fun.unwrap() as usize, steps.unwrap() as i32, t_start.unwrap(), t_end.unwrap(), co, mapping)?;
+        }
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    let mut coords: Option<&Vec<Var>> = None;
+
+    let mut steps: Option<f32> = Some(10.0);
+    let mut t_start: Option<f32> = Some(0.0);
+    let mut t_end: Option<f32> = Some(1.0);
+    let mut fun: Option<i32> = Some(-1);
+    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_vector!(coords, Keyword::Coords, iname, value);
+            read_float!(steps, Keyword::Steps, iname, value);
+            read_float!(t_start, Keyword::TStart, iname, value);
+            read_float!(t_end, Keyword::TEnd, iname, value);
+            read_i32!(fun, Keyword::Fn, iname, value);
+            read_kw!(mapping, Keyword::Mapping, iname, value);
+        }
+    }
+
+    if let Some(coords_) = coords {
+        let co = array_8_f32_from_vec(coords_);
+        let maybe_mapping = easing_from_keyword(mapping.unwrap());
+
+        if let Some(mapping) = maybe_mapping {
+            path_bezier(vm, program, fun.unwrap() as usize, steps.unwrap() as i32, t_start.unwrap(), t_end.unwrap(), co, mapping)?;
+        }
+    }
+
+    Ok(Var::Bool(true))
+}
+
 #[cfg(test)]
 mod tests {
     use crate::compiler::ColourFormat;
@@ -1296,7 +1546,8 @@ mod tests {
     use crate::vm::*;
 
     fn is_col_rgb(s: &str, r: f32, g: f32, b: f32, alpha: f32) {
-        if let Var::Colour(fmt, e0, e1, e2, e3) = vm_exec(s) {
+        let mut vm = Vm::new();
+        if let Var::Colour(fmt, e0, e1, e2, e3) = vm_exec(&mut vm, s) {
             assert_eq!(fmt, ColourFormat::Rgba);
             assert_eq!(e0, r);
             assert_eq!(e1, g);
@@ -1329,6 +1580,12 @@ mod tests {
         }
 
         rp0_num_vertices(&vm, 4);
+    }
+
+    #[test]
+    fn test_probe() {
+        is_debug_str("(probe scalar: 0.4)", "0.4");
+        is_debug_str("(probe scalar: 0.4) (probe scalar: 0.7) (probe scalar: 0.9)", "0.4 0.7 0.9");
     }
 
     #[test]

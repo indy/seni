@@ -201,6 +201,11 @@ impl Program {
     fn new(code: Vec<Bytecode>, fn_info: Vec<FnInfo>) -> Self {
         Program { code, fn_info }
     }
+
+    pub fn stop_location(&self) -> usize {
+        // the final opcode in the program will always be a STOP
+        self.code.len() - 1
+    }
 }
 
 #[derive(Debug)]
