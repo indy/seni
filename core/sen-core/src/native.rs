@@ -13,14 +13,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::{ColourFormat, Program};
+use crate::colour::ColourFormat;
+use crate::compiler::Program;
+use crate::ease::*;
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::mathutil;
+use crate::path::*;
 use crate::uvmapper::BrushType;
 use crate::vm::{Var, Vm};
-use crate::path::*;
-use crate::ease::*;
 
 use std::collections::HashMap;
 
@@ -273,7 +274,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     native_fns.insert(Native::Rect, bind_rect);
     native_fns.insert(Native::Circle, bind_circle);
     native_fns.insert(Native::CircleSlice, bind_circle_slice);
-    // BIND("poly", bind_poly);
+    native_fns.insert(Native::Poly, bind_poly);
     // BIND("bezier", bind_bezier);
     // BIND("bezier-bulging", bind_bezier_bulging);
     // BIND("stroked-bezier", bind_stroked_bezier);
@@ -446,7 +447,6 @@ fn read_vector(iname: i32, value: &Var, keyword: Keyword) -> Option<&Vec<Var>> {
     None
 }
 
-
 fn read_kw(iname: i32, value: &Var, keyword: Keyword) -> Option<Keyword> {
     if iname == keyword as i32 {
         if let Var::Keyword(kw) = value {
@@ -460,7 +460,7 @@ fn read_rgb(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32, f32,
     if iname == keyword as i32 {
         if let Var::Colour(fmt, e0, e1, e2, e3) = value {
             // hack for now
-            if *fmt == ColourFormat::Rgba {
+            if *fmt == ColourFormat::Rgb {
                 return Some((*e0, *e1, *e2, *e3));
             }
             // todo: convert to rgb
@@ -898,6 +898,39 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
     Ok(Var::Bool(true))
 }
 
+pub fn bind_poly(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut coords: Option<&Vec<Var>> = None;
+    let mut colours: Option<&Vec<Var>> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_vector!(coords, Keyword::Coords, iname, value);
+            read_vector!(colours, Keyword::Colours, iname, value);
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind("bind_line matrix error".to_string()));
+    };
+
+    let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
+
+    if let Some(coords_) = coords {
+        if let Some(colours_) = colours {
+            vm.geometry.render_poly(matrix, coords_, colours_, uvm)?;
+        }
+    }
+
+    Ok(Var::Bool(true))
+}
+
 pub fn bind_translate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut vector: Option<(f32, f32)> = Some((0.0, 0.0));
 
@@ -988,7 +1021,7 @@ pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
     }
 
     Ok(Var::Colour(
-        ColourFormat::Rgba,
+        ColourFormat::Rgb,
         r.unwrap(),
         g.unwrap(),
         b.unwrap(),
@@ -1119,7 +1152,7 @@ pub fn bind_col_set_elem(
     num_args: usize,
 ) -> Result<Var> {
     let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgba, 0.0, 0.0, 0.0, 1.0));
+        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut val: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1156,7 +1189,7 @@ pub fn bind_col_get_elem(
     num_args: usize,
 ) -> Result<Var> {
     let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgba, 0.0, 0.0, 0.0, 1.0));
+        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
 
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -1422,7 +1455,19 @@ pub fn bind_path_linear(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
     if let Some(mapping) = maybe_mapping {
-        path_linear(vm, program, fun.unwrap() as usize, steps.unwrap() as i32, t_start.unwrap(), t_end.unwrap(), fr.0, fr.1, to.0, to.1, mapping)?;
+        path_linear(
+            vm,
+            program,
+            fun.unwrap() as usize,
+            steps.unwrap() as i32,
+            t_start.unwrap(),
+            t_end.unwrap(),
+            fr.0,
+            fr.1,
+            to.0,
+            to.1,
+            mapping,
+        )?;
     }
 
     Ok(Var::Bool(true))
@@ -1458,7 +1503,18 @@ pub fn bind_path_circle(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
     if let Some(mapping) = maybe_mapping {
-        path_circular(vm, program, fun.unwrap() as usize, steps.unwrap() as i32, t_start.unwrap(), t_end.unwrap(), pos.0, pos.1, radius.unwrap(), mapping)?;
+        path_circular(
+            vm,
+            program,
+            fun.unwrap() as usize,
+            steps.unwrap() as i32,
+            t_start.unwrap(),
+            t_end.unwrap(),
+            pos.0,
+            pos.1,
+            radius.unwrap(),
+            mapping,
+        )?;
     }
 
     Ok(Var::Bool(true))
@@ -1494,7 +1550,16 @@ pub fn bind_path_spline(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
         let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
         if let Some(mapping) = maybe_mapping {
-            path_spline(vm, program, fun.unwrap() as usize, steps.unwrap() as i32, t_start.unwrap(), t_end.unwrap(), co, mapping)?;
+            path_spline(
+                vm,
+                program,
+                fun.unwrap() as usize,
+                steps.unwrap() as i32,
+                t_start.unwrap(),
+                t_end.unwrap(),
+                co,
+                mapping,
+            )?;
         }
     }
 
@@ -1531,7 +1596,16 @@ pub fn bind_path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
         let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
         if let Some(mapping) = maybe_mapping {
-            path_bezier(vm, program, fun.unwrap() as usize, steps.unwrap() as i32, t_start.unwrap(), t_end.unwrap(), co, mapping)?;
+            path_bezier(
+                vm,
+                program,
+                fun.unwrap() as usize,
+                steps.unwrap() as i32,
+                t_start.unwrap(),
+                t_end.unwrap(),
+                co,
+                mapping,
+            )?;
         }
     }
 
@@ -1540,7 +1614,7 @@ pub fn bind_path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
 
 #[cfg(test)]
 mod tests {
-    use crate::compiler::ColourFormat;
+    use crate::colour::ColourFormat;
     use crate::geometry::RENDER_PACKET_FLOAT_PER_VERTEX;
     use crate::vm::tests::*;
     use crate::vm::*;
@@ -1548,7 +1622,7 @@ mod tests {
     fn is_col_rgb(s: &str, r: f32, g: f32, b: f32, alpha: f32) {
         let mut vm = Vm::new();
         if let Var::Colour(fmt, e0, e1, e2, e3) = vm_exec(&mut vm, s) {
-            assert_eq!(fmt, ColourFormat::Rgba);
+            assert_eq!(fmt, ColourFormat::Rgb);
             assert_eq!(e0, r);
             assert_eq!(e1, g);
             assert_eq!(e2, b);
@@ -1585,7 +1659,10 @@ mod tests {
     #[test]
     fn test_probe() {
         is_debug_str("(probe scalar: 0.4)", "0.4");
-        is_debug_str("(probe scalar: 0.4) (probe scalar: 0.7) (probe scalar: 0.9)", "0.4 0.7 0.9");
+        is_debug_str(
+            "(probe scalar: 0.4) (probe scalar: 0.7) (probe scalar: 0.9)",
+            "0.4 0.7 0.9",
+        );
     }
 
     #[test]

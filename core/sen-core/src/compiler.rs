@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
 
+use crate::colour::ColourFormat;
 use crate::error::{Error, Result};
 use crate::keywords::{string_to_keyword_hash, Keyword};
 use crate::mathutil;
@@ -70,27 +71,6 @@ impl fmt::Display for Mem {
             Mem::Global => write!(f, "GLOBAL"),
             Mem::Constant => write!(f, "CONST"),
             Mem::Void => write!(f, "VOID"),
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum ColourFormat {
-    Rgba,
-    Hsl,
-    Hsluv,
-    Hsv,
-    Lab,
-}
-
-impl fmt::Display for ColourFormat {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ColourFormat::Rgba => write!(f, "rgba"),
-            ColourFormat::Hsl => write!(f, "hsl"),
-            ColourFormat::Hsluv => write!(f, "hsluv"),
-            ColourFormat::Hsv => write!(f, "hsv"),
-            ColourFormat::Lab => write!(f, "lab"),
         }
     }
 }
@@ -389,7 +369,7 @@ impl Compilation {
         let b = Bytecode {
             op,
             arg0: BytecodeArg::Mem(arg0),
-            arg1: BytecodeArg::Colour(ColourFormat::Rgba, r, g, b, a),
+            arg1: BytecodeArg::Colour(ColourFormat::Rgb, r, g, b, a),
         };
 
         self.add_bytecode(b)?;
@@ -449,7 +429,7 @@ impl Compilation {
         let b = Bytecode {
             op,
             arg0: BytecodeArg::Int(arg0),
-            arg1: BytecodeArg::Colour(ColourFormat::Rgba, r, g, b, a),
+            arg1: BytecodeArg::Colour(ColourFormat::Rgb, r, g, b, a),
         };
 
         self.add_bytecode(b)?;
@@ -890,7 +870,7 @@ impl Compiler {
         match ast {
             Node::List(children, _) => self.compile_list(compilation, children)?,
             Node::Float(f, _) => {
-                return compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f)
+                return compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f);
             }
             Node::Vector(children, _) => {
                 if children.len() == 2 {

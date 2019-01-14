@@ -24,6 +24,7 @@
 
 use crate::error::{Error, Result};
 use std;
+use std::fmt;
 
 const REF_U: f64 = 0.197_830_006_642_836_807_64;
 const REF_V: f64 = 0.468_319_994_938_791_003_70;
@@ -57,13 +58,25 @@ const CIE_KAPPA: f64 = 903.3;
 // -0.9692660  1.8760108  0.0415560
 //  0.0556434 -0.2040259  1.0572252
 
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Format {
-    RGB,
-    HSLuv,
-    HSL,
-    LAB,
-    HSV,
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum ColourFormat {
+    Rgb,
+    Hsl,
+    Hsluv,
+    Hsv,
+    Lab,
+}
+
+impl fmt::Display for ColourFormat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ColourFormat::Rgb => write!(f, "rgb"),
+            ColourFormat::Hsl => write!(f, "hsl"),
+            ColourFormat::Hsluv => write!(f, "hsluv"),
+            ColourFormat::Hsv => write!(f, "hsv"),
+            ColourFormat::Lab => write!(f, "lab"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -79,25 +92,63 @@ pub enum Colour {
 }
 
 impl Colour {
-    pub fn is_format(&self, format: Format) -> bool {
+    pub fn build_colour_from_elements(
+        format: ColourFormat,
+        elements: &(f32, f32, f32, f32),
+    ) -> Self {
         match format {
-            Format::RGB => match *self {
+            ColourFormat::Rgb => Colour::RGB(
+                elements.0 as f64,
+                elements.1 as f64,
+                elements.2 as f64,
+                elements.3 as f64,
+            ),
+            ColourFormat::Hsluv => Colour::HSLuv(
+                elements.0 as f64,
+                elements.1 as f64,
+                elements.2 as f64,
+                elements.3 as f64,
+            ),
+            ColourFormat::Hsl => Colour::HSL(
+                elements.0 as f64,
+                elements.1 as f64,
+                elements.2 as f64,
+                elements.3 as f64,
+            ),
+            ColourFormat::Lab => Colour::LAB(
+                elements.0 as f64,
+                elements.1 as f64,
+                elements.2 as f64,
+                elements.3 as f64,
+            ),
+            ColourFormat::Hsv => Colour::HSV(
+                elements.0 as f64,
+                elements.1 as f64,
+                elements.2 as f64,
+                elements.3 as f64,
+            ),
+        }
+    }
+
+    pub fn is_format(&self, format: ColourFormat) -> bool {
+        match format {
+            ColourFormat::Rgb => match *self {
                 Colour::RGB(_, _, _, _) => true,
                 _ => false,
             },
-            Format::HSLuv => match *self {
+            ColourFormat::Hsluv => match *self {
                 Colour::HSLuv(_, _, _, _) => true,
                 _ => false,
             },
-            Format::HSL => match *self {
+            ColourFormat::Hsl => match *self {
                 Colour::HSL(_, _, _, _) => true,
                 _ => false,
             },
-            Format::LAB => match *self {
+            ColourFormat::Lab => match *self {
                 Colour::LAB(_, _, _, _) => true,
                 _ => false,
             },
-            Format::HSV => match *self {
+            ColourFormat::Hsv => match *self {
                 Colour::HSV(_, _, _, _) => true,
                 _ => false,
             },
@@ -108,7 +159,7 @@ impl Colour {
         match *self {
             Colour::RGB(r, g, b, a) => Ok((r as f32, g as f32, b as f32, a as f32)),
             _ => {
-                if let Colour::RGB(r, g, b, a) = self.clone_as(Format::RGB)? {
+                if let Colour::RGB(r, g, b, a) = self.clone_as(ColourFormat::Rgb)? {
                     Ok((r as f32, g as f32, b as f32, a as f32))
                 } else {
                     Err(Error::Colour("col could not convert to RGB".to_string()))
@@ -117,42 +168,42 @@ impl Colour {
         }
     }
 
-    pub fn clone_as(&self, format: Format) -> Result<Colour> {
+    pub fn clone_as(&self, format: ColourFormat) -> Result<Colour> {
         match *self {
             Colour::HSL(h, s, l, alpha) => match format {
-                Format::HSL => Ok(Colour::HSL(h, s, l, alpha)),
-                Format::HSLuv => hsluv_from_xyz(xyz_from_rgb(rgb_from_hsl(*self)?)?),
-                Format::HSV => hsv_from_rgb(rgb_from_hsl(*self)?),
-                Format::LAB => lab_from_xyz(xyz_from_rgb(rgb_from_hsl(*self)?)?),
-                Format::RGB => rgb_from_hsl(*self),
+                ColourFormat::Hsl => Ok(Colour::HSL(h, s, l, alpha)),
+                ColourFormat::Hsluv => hsluv_from_xyz(xyz_from_rgb(rgb_from_hsl(*self)?)?),
+                ColourFormat::Hsv => hsv_from_rgb(rgb_from_hsl(*self)?),
+                ColourFormat::Lab => lab_from_xyz(xyz_from_rgb(rgb_from_hsl(*self)?)?),
+                ColourFormat::Rgb => rgb_from_hsl(*self),
             },
             Colour::HSLuv(h, s, l, alpha) => match format {
-                Format::HSL => hsl_from_rgb(rgb_from_xyz(xyz_from_hsluv(*self)?)?),
-                Format::HSLuv => Ok(Colour::HSLuv(h, s, l, alpha)),
-                Format::HSV => hsv_from_rgb(rgb_from_xyz(xyz_from_hsluv(*self)?)?),
-                Format::LAB => lab_from_xyz(xyz_from_hsluv(*self)?),
-                Format::RGB => rgb_from_xyz(xyz_from_hsluv(*self)?),
+                ColourFormat::Hsl => hsl_from_rgb(rgb_from_xyz(xyz_from_hsluv(*self)?)?),
+                ColourFormat::Hsluv => Ok(Colour::HSLuv(h, s, l, alpha)),
+                ColourFormat::Hsv => hsv_from_rgb(rgb_from_xyz(xyz_from_hsluv(*self)?)?),
+                ColourFormat::Lab => lab_from_xyz(xyz_from_hsluv(*self)?),
+                ColourFormat::Rgb => rgb_from_xyz(xyz_from_hsluv(*self)?),
             },
             Colour::HSV(h, s, v, alpha) => match format {
-                Format::HSL => hsl_from_rgb(rgb_from_hsv(*self)?),
-                Format::HSLuv => hsluv_from_xyz(xyz_from_rgb(rgb_from_hsv(*self)?)?),
-                Format::HSV => Ok(Colour::HSV(h, s, v, alpha)),
-                Format::LAB => lab_from_xyz(xyz_from_rgb(rgb_from_hsv(*self)?)?),
-                Format::RGB => rgb_from_hsv(*self),
+                ColourFormat::Hsl => hsl_from_rgb(rgb_from_hsv(*self)?),
+                ColourFormat::Hsluv => hsluv_from_xyz(xyz_from_rgb(rgb_from_hsv(*self)?)?),
+                ColourFormat::Hsv => Ok(Colour::HSV(h, s, v, alpha)),
+                ColourFormat::Lab => lab_from_xyz(xyz_from_rgb(rgb_from_hsv(*self)?)?),
+                ColourFormat::Rgb => rgb_from_hsv(*self),
             },
             Colour::LAB(l, a, b, alpha) => match format {
-                Format::HSL => hsl_from_rgb(rgb_from_xyz(xyz_from_lab(*self)?)?),
-                Format::HSLuv => hsluv_from_xyz(xyz_from_lab(*self)?),
-                Format::HSV => hsv_from_rgb(rgb_from_xyz(xyz_from_lab(*self)?)?),
-                Format::LAB => Ok(Colour::LAB(l, a, b, alpha)),
-                Format::RGB => rgb_from_xyz(xyz_from_lab(*self)?),
+                ColourFormat::Hsl => hsl_from_rgb(rgb_from_xyz(xyz_from_lab(*self)?)?),
+                ColourFormat::Hsluv => hsluv_from_xyz(xyz_from_lab(*self)?),
+                ColourFormat::Hsv => hsv_from_rgb(rgb_from_xyz(xyz_from_lab(*self)?)?),
+                ColourFormat::Lab => Ok(Colour::LAB(l, a, b, alpha)),
+                ColourFormat::Rgb => rgb_from_xyz(xyz_from_lab(*self)?),
             },
             Colour::RGB(r, g, b, alpha) => match format {
-                Format::HSL => hsl_from_rgb(*self),
-                Format::HSLuv => hsluv_from_xyz(xyz_from_rgb(*self)?),
-                Format::HSV => hsv_from_rgb(*self),
-                Format::LAB => lab_from_xyz(xyz_from_rgb(*self)?),
-                Format::RGB => Ok(Colour::RGB(r, g, b, alpha)),
+                ColourFormat::Hsl => hsl_from_rgb(*self),
+                ColourFormat::Hsluv => hsluv_from_xyz(xyz_from_rgb(*self)?),
+                ColourFormat::Hsv => hsv_from_rgb(*self),
+                ColourFormat::Lab => lab_from_xyz(xyz_from_rgb(*self)?),
+                ColourFormat::Rgb => Ok(Colour::RGB(r, g, b, alpha)),
             },
             _ => Err(Error::IncorrectColourFormat),
         }
@@ -352,7 +403,7 @@ fn rgb_from_chm(chroma: f64, h: f64, m: f64, alpha: f64) -> Colour {
     // todo: validhue test
     //
     // if (c.get('validHue') === undefined) {
-    // return construct(Format.RGB, [m, m, m, element(c, ALPHA)]);
+    // return construct(ColourFormat.RGB, [m, m, m, element(c, ALPHA)]);
     //}
 
     let hprime = h / 60.0;
@@ -700,45 +751,45 @@ mod tests {
         )
     }
 
-    fn is_format(expected: Format, actual: Format) {
+    fn is_format(expected: ColourFormat, actual: ColourFormat) {
         assert!(
             expected == actual,
             format!("expected: {:?}, actual: {:?}", expected, actual)
         )
     }
 
-    fn assert_col(col: Colour, format: Format, c0: f64, c1: f64, c2: f64, c3: f64) {
+    fn assert_col(col: Colour, format: ColourFormat, c0: f64, c1: f64, c2: f64, c3: f64) {
         match col {
             Colour::HSL(h, s, l, alpha) => {
-                is_format(format, Format::HSL);
+                is_format(format, ColourFormat::Hsl);
                 f64_within(TOLERANCE, h, c0, "HSL H");
                 f64_within(TOLERANCE, s, c1, "HSL_S");
                 f64_within(TOLERANCE, l, c2, "HSL_L");
                 f64_within(TOLERANCE, alpha, c3, "HSL_alpha");
             }
             Colour::HSLuv(h, s, l, alpha) => {
-                is_format(format, Format::HSLuv);
+                is_format(format, ColourFormat::Hsluv);
                 f64_within(TOLERANCE, h, c0, "HSLuv H");
                 f64_within(TOLERANCE, s, c1, "HSLuv_S");
                 f64_within(TOLERANCE, l, c2, "HSLuv_L");
                 f64_within(TOLERANCE, alpha, c3, "HSLuv_alpha");
             }
             Colour::HSV(h, s, v, alpha) => {
-                is_format(format, Format::HSV);
+                is_format(format, ColourFormat::Hsv);
                 f64_within(TOLERANCE, h, c0, "HSV H");
                 f64_within(TOLERANCE, s, c1, "HSV_S");
                 f64_within(TOLERANCE, v, c2, "HSV_V");
                 f64_within(TOLERANCE, alpha, c3, "HSV_alpha");
             }
             Colour::LAB(l, a, b, alpha) => {
-                is_format(format, Format::LAB);
+                is_format(format, ColourFormat::Lab);
                 f64_within(TOLERANCE, l, c0, "LAB_L");
                 f64_within(TOLERANCE, a, c1, "LAB_A");
                 f64_within(TOLERANCE, b, c2, "LAB_B");
                 f64_within(TOLERANCE, alpha, c3, "LAB_alpha");
             }
             Colour::RGB(r, g, b, alpha) => {
-                is_format(format, Format::RGB);
+                is_format(format, ColourFormat::Rgb);
                 f64_within(TOLERANCE, r, c0, "RGB R");
                 f64_within(TOLERANCE, g, c1, "RGB_G");
                 f64_within(TOLERANCE, b, c2, "RGB_B");
@@ -750,11 +801,11 @@ mod tests {
 
     fn assert_colour_match(expected: Colour, col: Colour) {
         match expected {
-            Colour::HSL(h, s, l, alpha) => assert_col(col, Format::HSL, h, s, l, alpha),
-            Colour::HSLuv(h, s, l, alpha) => assert_col(col, Format::HSLuv, h, s, l, alpha),
-            Colour::HSV(h, s, v, alpha) => assert_col(col, Format::HSV, h, s, v, alpha),
-            Colour::LAB(l, a, b, alpha) => assert_col(col, Format::LAB, l, a, b, alpha),
-            Colour::RGB(r, g, b, alpha) => assert_col(col, Format::RGB, r, g, b, alpha),
+            Colour::HSL(h, s, l, alpha) => assert_col(col, ColourFormat::Hsl, h, s, l, alpha),
+            Colour::HSLuv(h, s, l, alpha) => assert_col(col, ColourFormat::Hsluv, h, s, l, alpha),
+            Colour::HSV(h, s, v, alpha) => assert_col(col, ColourFormat::Hsv, h, s, v, alpha),
+            Colour::LAB(l, a, b, alpha) => assert_col(col, ColourFormat::Lab, l, a, b, alpha),
+            Colour::RGB(r, g, b, alpha) => assert_col(col, ColourFormat::Rgb, r, g, b, alpha),
             _ => assert_eq!(true, false),
         }
     }
@@ -763,8 +814,8 @@ mod tests {
         let rgb = Colour::RGB(r, g, b, 1.0);
         let hsl = Colour::HSL(h, s, l, 1.0);
 
-        assert_colour_match(rgb, hsl.clone_as(Format::RGB).unwrap());
-        assert_colour_match(hsl, rgb.clone_as(Format::HSL).unwrap());
+        assert_colour_match(rgb, hsl.clone_as(ColourFormat::Rgb).unwrap());
+        assert_colour_match(hsl, rgb.clone_as(ColourFormat::Hsl).unwrap());
     }
 
     #[test]
@@ -778,17 +829,17 @@ mod tests {
             1.0,
         );
 
-        assert_colour_match(rgb, rgb.clone_as(Format::RGB).unwrap());
-        assert_colour_match(rgb, hsl.clone_as(Format::RGB).unwrap());
-        assert_colour_match(rgb, lab.clone_as(Format::RGB).unwrap());
+        assert_colour_match(rgb, rgb.clone_as(ColourFormat::Rgb).unwrap());
+        assert_colour_match(rgb, hsl.clone_as(ColourFormat::Rgb).unwrap());
+        assert_colour_match(rgb, lab.clone_as(ColourFormat::Rgb).unwrap());
 
-        assert_colour_match(hsl, rgb.clone_as(Format::HSL).unwrap());
-        assert_colour_match(hsl, hsl.clone_as(Format::HSL).unwrap());
-        assert_colour_match(hsl, lab.clone_as(Format::HSL).unwrap());
+        assert_colour_match(hsl, rgb.clone_as(ColourFormat::Hsl).unwrap());
+        assert_colour_match(hsl, hsl.clone_as(ColourFormat::Hsl).unwrap());
+        assert_colour_match(hsl, lab.clone_as(ColourFormat::Hsl).unwrap());
 
-        assert_colour_match(lab, rgb.clone_as(Format::LAB).unwrap());
-        assert_colour_match(lab, hsl.clone_as(Format::LAB).unwrap());
-        assert_colour_match(lab, lab.clone_as(Format::LAB).unwrap());
+        assert_colour_match(lab, rgb.clone_as(ColourFormat::Lab).unwrap());
+        assert_colour_match(lab, hsl.clone_as(ColourFormat::Lab).unwrap());
+        assert_colour_match(lab, lab.clone_as(ColourFormat::Lab).unwrap());
     }
 
     #[test]
@@ -796,8 +847,8 @@ mod tests {
         let rgb = Colour::RGB(0.066666, 0.8, 0.86666666, 1.0);
         let hsluv = Colour::HSLuv(205.7022764106217, 98.91247496876854, 75.15356872935901, 1.0);
 
-        assert_colour_match(rgb, hsluv.clone_as(Format::RGB).unwrap());
-        assert_colour_match(hsluv, rgb.clone_as(Format::HSLuv).unwrap());
+        assert_colour_match(rgb, hsluv.clone_as(ColourFormat::Rgb).unwrap());
+        assert_colour_match(hsluv, rgb.clone_as(ColourFormat::Hsluv).unwrap());
     }
 
     #[test]

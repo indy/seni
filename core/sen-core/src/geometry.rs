@@ -13,10 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::colour::{Colour, ColourFormat};
 use crate::error::*;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::uvmapper::UvMapping;
+use crate::vm::Var;
 
 // todo: work out reasonable defaults
 const RENDER_PACKET_MAX_SIZE: usize = 4096;
@@ -369,6 +371,48 @@ impl Geometry {
 
         rp.add_vertex(matrix, innervx, innervy, colour, uvm.map[4], uvm.map[5]);
         rp.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
+
+        Ok(())
+    }
+
+    pub fn render_poly(
+        &mut self,
+        matrix: &Matrix,
+        coords: &Vec<Var>,
+        colours: &Vec<Var>,
+        uvm: &UvMapping,
+    ) -> Result<()> {
+        let num_vertices = coords.len();
+        if colours.len() != num_vertices {
+            return Err(Error::Bind(
+                "render_poly: coords and colours length mismatch".to_string(),
+            ));
+        } else if num_vertices < 3 {
+            return Ok(());
+        }
+
+        if let Var::V2D(x, y) = coords[0] {
+            self.prepare_to_add_triangle_strip(matrix, num_vertices, x, y);
+        }
+
+        let last = self.render_packets.len() - 1;
+        let rp = &mut self.render_packets[last];
+
+        for i in 0..num_vertices {
+            if let Var::Colour(fmt, e0, e1, e2, e3) = colours[i] {
+                let mut colour: (f32, f32, f32, f32) = (e0, e1, e2, e3);
+
+                if fmt != ColourFormat::Rgb {
+                    // colour convert to rgb
+                    let some_col = Colour::build_colour_from_elements(fmt, &colour);
+                    colour = some_col.to_rgba32_tuple()?;
+                }
+
+                if let Var::V2D(x, y) = coords[i] {
+                    rp.add_vertex(matrix, x, y, colour, uvm.map[4], uvm.map[5])
+                }
+            }
+        }
 
         Ok(())
     }

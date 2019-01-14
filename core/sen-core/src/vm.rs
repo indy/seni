@@ -13,7 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::{Bytecode, BytecodeArg, ColourFormat, FnInfo, Mem, Program};
+use crate::colour::ColourFormat;
+use crate::compiler::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
 use crate::error::{Error, Result};
 use crate::geometry::Geometry;
 use crate::keywords::Keyword;
@@ -476,7 +477,7 @@ impl Vm {
                 return Err(Error::VM(format!(
                     "opcode_store unknown memory type: {}",
                     mem
-                )))
+                )));
             }
         }
 
@@ -559,7 +560,7 @@ impl Vm {
                 return Err(Error::VM(format!(
                     "opcode_store_f unknown memory type: {}",
                     mem
-                )))
+                )));
             }
         }
 

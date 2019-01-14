@@ -149,14 +149,14 @@ pub fn path_bezier(
     Ok(())
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::vm::tests::*;
 
     #[test]
     fn test_invocations() {
-        is_debug_str("(fn (point position: [500 500]
+        is_debug_str(
+            "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
                               (probe scalar: n))
@@ -164,12 +164,14 @@ mod tests {
                                        to: [50 50]
                                        fn: (address-of point)
                                        steps: 5)",
-                     "0 1 2 3 4");
+            "0 1 2 3 4",
+        );
     }
 
     #[test]
     fn test_linear() {
-        is_debug_str("(fn (point position: [500 500]
+        is_debug_str(
+            "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
                               (probe scalar: t))
@@ -177,9 +179,11 @@ mod tests {
                                        to: [50 50]
                                        fn: (address-of point)
                                        steps: 5)",
-                     "0 0.25 0.5 0.75 1");
+            "0 0.25 0.5 0.75 1",
+        );
 
-        is_debug_str("(fn (point position: [500 500]
+        is_debug_str(
+            "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
                               (probe scalar: t))
@@ -188,9 +192,11 @@ mod tests {
                                        fn: (address-of point)
                                        mapping: ease/quick
                                        steps: 5)",
-                     "0 0.15625 0.5 0.84375 1");
+            "0 0.15625 0.5 0.84375 1",
+        );
 
-        is_debug_str("(fn (point position: [500 500]
+        is_debug_str(
+            "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
                               (probe vector: position))
@@ -198,9 +204,9 @@ mod tests {
                                        to: [50 50]
                                        fn: (address-of point)
                                        steps: 5)",
-                     "(10,10) (20,20) (30,30) (40,40) (50,50)");
+            "(10,10) (20,20) (30,30) (40,40) (50,50)",
+        );
     }
-
 
     #[test]
     fn test_circular() {

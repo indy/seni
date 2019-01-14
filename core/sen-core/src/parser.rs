@@ -134,7 +134,7 @@ fn eat_list<'a>(
                 return Ok(NodeAndRemainder {
                     node: Node::List(res, meta),
                     tokens: &tokens[1..],
-                })
+                });
             }
             _ => match eat_token(tokens, None, word_lut) {
                 Ok(nar) => {
@@ -161,7 +161,7 @@ fn eat_vector<'a>(
                 return Ok(NodeAndRemainder {
                     node: Node::Vector(res, meta),
                     tokens: &tokens[1..],
-                })
+                });
             }
             _ => match eat_token(tokens, None, word_lut) {
                 Ok(nar) => {
