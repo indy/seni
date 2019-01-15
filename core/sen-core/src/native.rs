@@ -57,6 +57,8 @@ pub enum Native {
     CircleSlice,
     #[strum(serialize = "poly")]
     Poly,
+    #[strum(serialize = "quadratic")]
+    Quadratic,
     #[strum(serialize = "bezier")]
     Bezier,
     #[strum(serialize = "bezier-bulging")]
@@ -275,8 +277,9 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     native_fns.insert(Native::Circle, bind_circle);
     native_fns.insert(Native::CircleSlice, bind_circle_slice);
     native_fns.insert(Native::Poly, bind_poly);
-    // BIND("bezier", bind_bezier);
-    // BIND("bezier-bulging", bind_bezier_bulging);
+    native_fns.insert(Native::Quadratic, bind_quadratic);
+    native_fns.insert(Native::Bezier, bind_bezier);
+    native_fns.insert(Native::BezierBulging, bind_bezier_bulging);
     // BIND("stroked-bezier", bind_stroked_bezier);
     // BIND("stroked-bezier-rect", bind_stroked_bezier_rect);
 
@@ -548,7 +551,7 @@ macro_rules! read_brush {
     };
 }
 
-fn array_6_f32_from_vec(float_pairs: &[Var]) -> [f32; 6] {
+fn array_f32_6_from_vec(float_pairs: &[Var]) -> [f32; 6] {
     let mut res = [0.0; 6];
 
     for i in 0..3 {
@@ -561,7 +564,7 @@ fn array_6_f32_from_vec(float_pairs: &[Var]) -> [f32; 6] {
     res
 }
 
-fn array_8_f32_from_vec(float_pairs: &[Var]) -> [f32; 8] {
+fn array_f32_8_from_vec(float_pairs: &[Var]) -> [f32; 8] {
     let mut res = [0.0; 8];
 
     for i in 0..4 {
@@ -927,6 +930,209 @@ pub fn bind_poly(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
             vm.geometry.render_poly(matrix, coords_, colours_, uvm)?;
         }
     }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut line_width: Option<f32> = None;
+    let mut line_width_start: Option<f32> = Some(4.0);
+    let mut line_width_end: Option<f32> = Some(4.0);
+    let mut line_width_mapping: Option<Keyword> = Some(Keyword::Linear);
+    let mut coords: Option<&Vec<Var>> = None;
+    let mut t_start: Option<f32> = Some(0.0);
+    let mut t_end: Option<f32> = Some(1.0);
+    let mut tessellation: Option<f32> = Some(10.0);
+    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut brush: Option<BrushType> = Some(BrushType::Flat);
+    let mut brush_subtype: Option<usize> = Some(0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(line_width, Keyword::LineWidth, iname, value);
+            read_float!(line_width_start, Keyword::LineWidthStart, iname, value);
+            read_float!(line_width_end, Keyword::LineWidthEnd, iname, value);
+            read_kw!(line_width_mapping, Keyword::LineWidthMapping, iname, value);
+            read_vector!(coords, Keyword::Coords, iname, value);
+            read_float!(t_start, Keyword::TStart, iname, value);
+            read_float!(t_end, Keyword::TEnd, iname, value);
+            read_float!(tessellation, Keyword::Tessellation, iname, value);
+            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_brush!(brush, Keyword::Brush, iname, value);
+            read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind("bind_bezier matrix error".to_string()));
+    };
+
+    let uvm = vm.mappings.get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
+
+    // if the line has been defined then it overrides the line_width_start, line_width_end parameters
+    let width_start = if let Some(lw) = line_width {
+        lw
+    } else {
+        line_width_start.unwrap()
+    };
+    let width_end = if let Some(lw) = line_width {
+        lw
+    } else {
+        line_width_end.unwrap()
+    };
+
+    let co = array_f32_6_from_vec(coords.unwrap());
+
+    let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
+    if let Some(mapping) = maybe_mapping {
+        vm.geometry.render_quadratic(
+            matrix,
+            &co,
+            width_start,
+            width_end,
+            mapping,
+            t_start.unwrap(),
+            t_end.unwrap(),
+            colour.unwrap(),
+            tessellation.unwrap() as usize,
+            uvm,
+        )?;
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut line_width: Option<f32> = None;
+    let mut line_width_start: Option<f32> = Some(4.0);
+    let mut line_width_end: Option<f32> = Some(4.0);
+    let mut line_width_mapping: Option<Keyword> = Some(Keyword::Linear);
+    let mut coords: Option<&Vec<Var>> = None;
+    let mut t_start: Option<f32> = Some(0.0);
+    let mut t_end: Option<f32> = Some(1.0);
+    let mut tessellation: Option<f32> = Some(10.0);
+    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut brush: Option<BrushType> = Some(BrushType::Flat);
+    let mut brush_subtype: Option<usize> = Some(0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(line_width, Keyword::LineWidth, iname, value);
+            read_float!(line_width_start, Keyword::LineWidthStart, iname, value);
+            read_float!(line_width_end, Keyword::LineWidthEnd, iname, value);
+            read_kw!(line_width_mapping, Keyword::LineWidthMapping, iname, value);
+            read_vector!(coords, Keyword::Coords, iname, value);
+            read_float!(t_start, Keyword::TStart, iname, value);
+            read_float!(t_end, Keyword::TEnd, iname, value);
+            read_float!(tessellation, Keyword::Tessellation, iname, value);
+            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_brush!(brush, Keyword::Brush, iname, value);
+            read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind("bind_bezier matrix error".to_string()));
+    };
+
+    let uvm = vm.mappings.get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
+
+    // if the line has been defined then it overrides the line_width_start, line_width_end parameters
+    let width_start = if let Some(lw) = line_width {
+        lw
+    } else {
+        line_width_start.unwrap()
+    };
+    let width_end = if let Some(lw) = line_width {
+        lw
+    } else {
+        line_width_end.unwrap()
+    };
+
+    let co = array_f32_8_from_vec(coords.unwrap());
+
+    let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
+    if let Some(mapping) = maybe_mapping {
+        vm.geometry.render_bezier(
+            matrix,
+            &co,
+            width_start,
+            width_end,
+            mapping,
+            t_start.unwrap(),
+            t_end.unwrap(),
+            colour.unwrap(),
+            tessellation.unwrap() as usize,
+            uvm,
+        )?;
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut line_width: Option<f32> = Some(4.0);
+    let mut coords: Option<&Vec<Var>> = None;
+    let mut t_start: Option<f32> = Some(0.0);
+    let mut t_end: Option<f32> = Some(1.0);
+    let mut tessellation: Option<f32> = Some(10.0);
+    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut brush: Option<BrushType> = Some(BrushType::Flat);
+    let mut brush_subtype: Option<usize> = Some(0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(line_width, Keyword::LineWidth, iname, value);
+            read_vector!(coords, Keyword::Coords, iname, value);
+            read_float!(t_start, Keyword::TStart, iname, value);
+            read_float!(t_end, Keyword::TEnd, iname, value);
+            read_float!(tessellation, Keyword::Tessellation, iname, value);
+            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_brush!(brush, Keyword::Brush, iname, value);
+            read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind("bind_bezier matrix error".to_string()));
+    };
+
+    let uvm = vm.mappings.get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
+
+    let co = array_f32_8_from_vec(coords.unwrap());
+
+    vm.geometry.render_bezier_bulging(
+        matrix,
+        &co,
+        line_width.unwrap(),
+        t_start.unwrap(),
+        t_end.unwrap(),
+        colour.unwrap(),
+        tessellation.unwrap() as usize,
+        uvm,
+    )?;
+
 
     Ok(Var::Bool(true))
 }
@@ -1546,7 +1752,7 @@ pub fn bind_path_spline(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     }
 
     if let Some(coords_) = coords {
-        let co = array_6_f32_from_vec(coords_);
+        let co = array_f32_6_from_vec(coords_);
         let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
         if let Some(mapping) = maybe_mapping {
@@ -1592,7 +1798,7 @@ pub fn bind_path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     }
 
     if let Some(coords_) = coords {
-        let co = array_8_f32_from_vec(coords_);
+        let co = array_f32_8_from_vec(coords_);
         let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
         if let Some(mapping) = maybe_mapping {
@@ -1603,7 +1809,7 @@ pub fn bind_path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
                 steps.unwrap() as i32,
                 t_start.unwrap(),
                 t_end.unwrap(),
-                co,
+                &co,
                 mapping,
             )?;
         }

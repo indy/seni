@@ -47,6 +47,7 @@
  | [[circle]]              |                                 |
  | [[circle-slice]]        |                                 |
  | [[poly]]                |                                 |
+ | [[quadratic]]           |                                 |
  | [[bezier]]              |                                 |
  | [[bezier-bulging]]      |                                 |
  | [[stroked-bezier]]      |                                 |
@@ -272,6 +273,22 @@
     |-----------+---------+-------------|
     | coords    | NULL    |             |
     | colours   | NULL    |             |
+
+*** quadratic
+
+    | parameter          |      default | description |
+    |--------------------+--------------+-------------|
+    | line-width         |            4 |             |
+    | line-width-start   |            4 |             |
+    | line-width-end     |            4 |             |
+    | line-width-mapping |       linear |             |
+    | coords             |              |             |
+    | t-start            |            0 |             |
+    | t-end              |            1 |             |
+    | tessellation       |           10 |             |
+    | colour             | RGB(0 0 0 1) |             |
+    | brush              |   brush-flat |             |
+    | brush-subtype      |            0 |             |
 
 *** bezier
 

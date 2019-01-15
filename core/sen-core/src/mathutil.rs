@@ -17,6 +17,14 @@ pub const PI: f32 = std::f32::consts::PI;
 pub const PI_BY_2: f32 = std::f32::consts::FRAC_PI_2;
 pub const TAU: f32 = std::f32::consts::PI * 2.0;
 
+pub fn mc_m(xa: f32, ya: f32, xb: f32, yb: f32) -> f32 {
+    (ya - yb) / (xa - xb)
+}
+
+pub fn mc_c(xa: f32, ya: f32, m: f32) -> f32 {
+    ya - (m * xa)
+}
+
 pub fn deg_to_rad(a: f32) -> f32 {
     a * (PI / 180.0)
 }
