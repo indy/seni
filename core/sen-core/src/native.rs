@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::ColourFormat;
+use crate::colour::{Colour, ColourFormat};
 use crate::compiler::Program;
 use crate::ease::*;
 use crate::error::{Error, Result};
@@ -459,19 +459,6 @@ fn read_kw(iname: i32, value: &Var, keyword: Keyword) -> Option<Keyword> {
     None
 }
 
-fn read_rgb(iname: i32, value: &Var, keyword: Keyword) -> Option<(f32, f32, f32, f32)> {
-    if iname == keyword as i32 {
-        if let Var::Colour(fmt, e0, e1, e2, e3) = value {
-            // hack for now
-            if *fmt == ColourFormat::Rgb {
-                return Some((*e0, *e1, *e2, *e3));
-            }
-            // todo: convert to rgb
-        }
-    }
-    None
-}
-
 fn read_col(
     iname: i32,
     value: &Var,
@@ -535,11 +522,6 @@ macro_rules! read_kw {
         $i = read_kw(*$in, $v, $kw).or($i);
     };
 }
-macro_rules! read_rgb {
-    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
-        $i = read_rgb(*$in, $v, $kw).or($i);
-    };
-}
 macro_rules! read_col {
     ($i:ident, $kw:expr, $in:ident, $v:ident) => {
         $i = read_col(*$in, $v, $kw).or($i);
@@ -575,6 +557,17 @@ fn array_f32_8_from_vec(float_pairs: &[Var]) -> [f32; 8] {
     }
 
     res
+}
+
+fn rgb_tuples_from_colour_tuples(col: &(ColourFormat, f32, f32, f32, f32)) -> Result<(f32, f32, f32, f32)> {
+    let (fmt, e0, e1, e2, e3) = col;
+
+    if *fmt == ColourFormat::Rgb {
+        Ok((*e0, *e1, *e2, *e3))
+    } else {
+        let colour = Colour::build_colour_from_elements(*fmt, &(*e0, *e1, *e2, *e3));
+        colour.to_rgba32_tuple()
+    }
 }
 
 pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -682,13 +675,13 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let mut width: Option<f32> = Some(4.0);
     let mut from: Option<(f32, f32)> = Some((10.0, 10.0));
     let mut to: Option<(f32, f32)> = Some((900.0, 900.0));
-    let mut from_colour: Option<(f32, f32, f32, f32)> = None;
-    let mut to_colour: Option<(f32, f32, f32, f32)> = None;
-    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut from_colour: Option<(ColourFormat, f32, f32, f32, f32)> = None;
+    let mut to_colour: Option<(ColourFormat, f32, f32, f32, f32)> = None;
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
-    let mut s: String = "".to_string();
+    // let mut s: String = "".to_string();
 
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -700,9 +693,9 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
             read_float!(width, Keyword::Width, iname, value);
             read_v2d!(from, Keyword::From, iname, value);
             read_v2d!(to, Keyword::To, iname, value);
-            read_rgb!(from_colour, Keyword::FromColour, iname, value);
-            read_rgb!(to_colour, Keyword::ToColour, iname, value);
-            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_col!(from_colour, Keyword::FromColour, iname, value);
+            read_col!(to_colour, Keyword::ToColour, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
             read_brush!(brush, Keyword::Brush, iname, value);
             read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
         }
@@ -718,40 +711,41 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
         .mappings
         .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
 
-    let from_col = if let Some((fr, fg, fb, fa)) = from_colour {
-        (fr, fg, fb, fa)
+    let from_col = if let Some((fmt, fr, fg, fb, fa)) = from_colour {
+        (fmt, fr, fg, fb, fa)
     } else {
         colour.unwrap()
     };
 
-    let to_col = if let Some((tr, tg, tb, ta)) = to_colour {
-        (tr, tg, tb, ta)
+    let to_col = if let Some((fmt, tr, tg, tb, ta)) = to_colour {
+        (fmt, tr, tg, tb, ta)
     } else {
         colour.unwrap()
     };
 
-    s += &width.unwrap().to_string();
+    if let Ok(from_rgb_tuples) = rgb_tuples_from_colour_tuples(&from_col) {
+        if let Ok(to_rgb_tuples) = rgb_tuples_from_colour_tuples(&to_col) {
+            vm.geometry.render_line(
+                matrix,
+                from.unwrap(),
+                to.unwrap(),
+                width.unwrap(),
+                from_rgb_tuples,
+                to_rgb_tuples,
+                uvm,
+            )?;
+        }
+    }
 
-    vm.geometry.render_line(
-        matrix,
-        from.unwrap(),
-        to.unwrap(),
-        width.unwrap(),
-        from_col,
-        to_col,
-        uvm,
-    )?;
-
-    // Ok(Var::Bool(true))
-    // Ok(Var::Debug(format!("counter: {} num_args: {} colour: {:?} width: {}, from: {:?}, to: {:?}, from_col: {:?}, to_col: {:?}", counter, num_args, colour, width, from, to, from_col, to_col).to_string()))
-    Ok(Var::Debug(format!("s: {}", s).to_string()))
+    Ok(Var::Bool(true))
+    // Ok(Var::Debug(format!("s: {}", s).to_string()))
 }
 
 pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
 
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -763,7 +757,7 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
             read_float!(width, Keyword::Width, iname, value);
             read_float!(height, Keyword::Height, iname, value);
             read_v2d!(position, Keyword::Position, iname, value);
-            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
         }
     }
 
@@ -775,14 +769,17 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
 
-    vm.geometry.render_rect(
-        matrix,
-        position.unwrap(),
-        width.unwrap(),
-        height.unwrap(),
-        colour.unwrap(),
-        uvm,
-    )?;
+
+    if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+        vm.geometry.render_rect(
+            matrix,
+            position.unwrap(),
+            width.unwrap(),
+            height.unwrap(),
+            rgb_tuples,
+            uvm,
+        )?;
+    }
 
     Ok(Var::Bool(true))
 }
@@ -791,7 +788,7 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut tessellation: Option<f32> = Some(10.0);
     let mut radius: Option<f32> = None;
 
@@ -805,7 +802,7 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
             read_float!(width, Keyword::Width, iname, value);
             read_float!(height, Keyword::Height, iname, value);
             read_v2d!(position, Keyword::Position, iname, value);
-            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
             read_float!(tessellation, Keyword::Tessellation, iname, value);
             read_float!(radius, Keyword::Radius, iname, value);
         }
@@ -825,15 +822,17 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
         height = Some(r);
     }
 
-    vm.geometry.render_circle(
-        matrix,
-        position.unwrap(),
-        width.unwrap(),
-        height.unwrap(),
-        colour.unwrap(),
-        tessellation.unwrap() as usize,
-        uvm,
-    )?;
+    if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+        vm.geometry.render_circle(
+            matrix,
+            position.unwrap(),
+            width.unwrap(),
+            height.unwrap(),
+            rgb_tuples,
+            tessellation.unwrap() as usize,
+            uvm,
+        )?;
+    }
 
     Ok(Var::Bool(true))
 }
@@ -842,7 +841,7 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut tessellation: Option<f32> = Some(10.0);
     let mut radius: Option<f32> = None;
     let mut angle_start: Option<f32> = Some(0.0);
@@ -860,7 +859,7 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
             read_float!(width, Keyword::Width, iname, value);
             read_float!(height, Keyword::Height, iname, value);
             read_v2d!(position, Keyword::Position, iname, value);
-            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
             read_float!(tessellation, Keyword::Tessellation, iname, value);
             read_float!(radius, Keyword::Radius, iname, value);
             read_float!(angle_start, Keyword::AngleStart, iname, value);
@@ -884,19 +883,21 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
         height = Some(r);
     }
 
-    vm.geometry.render_circle_slice(
-        matrix,
-        position.unwrap(),
-        width.unwrap(),
-        height.unwrap(),
-        colour.unwrap(),
-        tessellation.unwrap() as usize,
-        angle_start.unwrap(),
-        angle_end.unwrap(),
-        inner_width.unwrap(),
-        inner_height.unwrap(),
-        uvm,
-    )?;
+    if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+        vm.geometry.render_circle_slice(
+            matrix,
+            position.unwrap(),
+            width.unwrap(),
+            height.unwrap(),
+            rgb_tuples,
+            tessellation.unwrap() as usize,
+            angle_start.unwrap(),
+            angle_end.unwrap(),
+            inner_width.unwrap(),
+            inner_height.unwrap(),
+            uvm,
+        )?;
+    }
 
     Ok(Var::Bool(true))
 }
@@ -943,7 +944,7 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     let mut t_start: Option<f32> = Some(0.0);
     let mut t_end: Option<f32> = Some(1.0);
     let mut tessellation: Option<f32> = Some(10.0);
-    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -962,7 +963,7 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
             read_float!(t_start, Keyword::TStart, iname, value);
             read_float!(t_end, Keyword::TEnd, iname, value);
             read_float!(tessellation, Keyword::Tessellation, iname, value);
-            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
             read_brush!(brush, Keyword::Brush, iname, value);
             read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
         }
@@ -992,18 +993,21 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
 
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
-        vm.geometry.render_quadratic(
-            matrix,
-            &co,
-            width_start,
-            width_end,
-            mapping,
-            t_start.unwrap(),
-            t_end.unwrap(),
-            colour.unwrap(),
-            tessellation.unwrap() as usize,
-            uvm,
-        )?;
+
+        if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+            vm.geometry.render_quadratic(
+                matrix,
+                &co,
+                width_start,
+                width_end,
+                mapping,
+                t_start.unwrap(),
+                t_end.unwrap(),
+                rgb_tuples,
+                tessellation.unwrap() as usize,
+                uvm,
+            )?;
+        }
     }
 
     Ok(Var::Bool(true))
@@ -1018,7 +1022,7 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     let mut t_start: Option<f32> = Some(0.0);
     let mut t_end: Option<f32> = Some(1.0);
     let mut tessellation: Option<f32> = Some(10.0);
-    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -1037,7 +1041,7 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
             read_float!(t_start, Keyword::TStart, iname, value);
             read_float!(t_end, Keyword::TEnd, iname, value);
             read_float!(tessellation, Keyword::Tessellation, iname, value);
-            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
             read_brush!(brush, Keyword::Brush, iname, value);
             read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
         }
@@ -1067,18 +1071,20 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
 
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
-        vm.geometry.render_bezier(
-            matrix,
-            &co,
-            width_start,
-            width_end,
-            mapping,
-            t_start.unwrap(),
-            t_end.unwrap(),
-            colour.unwrap(),
-            tessellation.unwrap() as usize,
-            uvm,
-        )?;
+        if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+            vm.geometry.render_bezier(
+                matrix,
+                &co,
+                width_start,
+                width_end,
+                mapping,
+                t_start.unwrap(),
+                t_end.unwrap(),
+                rgb_tuples,
+                tessellation.unwrap() as usize,
+                uvm,
+            )?;
+        }
     }
 
     Ok(Var::Bool(true))
@@ -1090,7 +1096,7 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
     let mut t_start: Option<f32> = Some(0.0);
     let mut t_end: Option<f32> = Some(1.0);
     let mut tessellation: Option<f32> = Some(10.0);
-    let mut colour: Option<(f32, f32, f32, f32)> = Some((0.0, 1.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -1106,7 +1112,7 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
             read_float!(t_start, Keyword::TStart, iname, value);
             read_float!(t_end, Keyword::TEnd, iname, value);
             read_float!(tessellation, Keyword::Tessellation, iname, value);
-            read_rgb!(colour, Keyword::Colour, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
             read_brush!(brush, Keyword::Brush, iname, value);
             read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
         }
@@ -1122,17 +1128,18 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
 
     let co = array_f32_8_from_vec(coords.unwrap());
 
-    vm.geometry.render_bezier_bulging(
-        matrix,
-        &co,
-        line_width.unwrap(),
-        t_start.unwrap(),
-        t_end.unwrap(),
-        colour.unwrap(),
-        tessellation.unwrap() as usize,
-        uvm,
-    )?;
-
+    if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+        vm.geometry.render_bezier_bulging(
+            matrix,
+            &co,
+            line_width.unwrap(),
+            t_start.unwrap(),
+            t_end.unwrap(),
+            rgb_tuples,
+            tessellation.unwrap() as usize,
+            uvm,
+        )?;
+    }
 
     Ok(Var::Bool(true))
 }
