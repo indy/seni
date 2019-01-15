@@ -19,6 +19,7 @@ use crate::ease::*;
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::mathutil;
+use crate::parametric::*;
 use crate::path::*;
 use crate::uvmapper::BrushType;
 use crate::vm::{Var, Vm};
@@ -298,15 +299,11 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // colour
     // --------------------------------------------------
     // BIND("col/convert", bind_col_convert);
-    // start of colour constructors
-    // g_colour_constructor_start = word_lut->native_count;
     native_fns.insert(Native::ColRGB, bind_col_rgb);
     native_fns.insert(Native::ColHSL, bind_col_hsl);
     native_fns.insert(Native::ColHSLuv, bind_col_hsluv);
     native_fns.insert(Native::ColHSV, bind_col_hsv);
     native_fns.insert(Native::ColLAB, bind_col_lab);
-    // g_colour_constructor_end = word_lut->native_count;
-    // end of colour constructors
     // BIND("col/complementary", bind_col_complementary);
     // BIND("col/split-complementary", bind_col_split_complementary);
     // BIND("col/analagous", bind_col_analagous);
@@ -358,13 +355,13 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // --------------------------------------------------
     // BIND("interp/build", bind_interp_build);
     // BIND("interp/value", bind_interp_value);
-    // BIND("interp/cos", bind_interp_cos);
-    // BIND("interp/sin", bind_interp_sin);
-    // BIND("interp/bezier", bind_interp_bezier);
-    // BIND("interp/bezier-tangent", bind_interp_bezier_tangent);
-    // BIND("interp/ray", bind_interp_ray);
-    // BIND("interp/line", bind_interp_line);
-    // BIND("interp/circle", bind_interp_circle);
+    native_fns.insert(Native::InterpCos, bind_interp_cos);
+    native_fns.insert(Native::InterpSin, bind_interp_sin);
+    native_fns.insert(Native::InterpBezier, bind_interp_bezier);
+    native_fns.insert(Native::InterpBezierTangent, bind_interp_bezier_tangent);
+    native_fns.insert(Native::InterpRay, bind_interp_ray);
+    native_fns.insert(Native::InterpLine, bind_interp_line);
+    native_fns.insert(Native::InterpCircle, bind_interp_circle);
 
     // --------------------------------------------------
     // path
@@ -1650,6 +1647,181 @@ pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
 
     let res = angle.unwrap().sin();
     Ok(Var::Float(res))
+}
+
+pub fn bind_interp_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut amplitude: Option<f32> = Some(1.0);
+    let mut frequency: Option<f32> = Some(1.0);
+    let mut t: Option<f32> = Some(1.0); // t goes from 0 to TAU
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(amplitude, Keyword::Amplitude, iname, value);
+            read_float!(frequency, Keyword::Frequency, iname, value);
+            read_float!(t, Keyword::T, iname, value);
+        }
+    }
+
+    let res = parametric_cos(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
+
+    Ok(Var::Float(res))
+}
+
+pub fn bind_interp_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut amplitude: Option<f32> = Some(1.0);
+    let mut frequency: Option<f32> = Some(1.0);
+    let mut t: Option<f32> = Some(1.0); // t goes from 0 to TAU
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(amplitude, Keyword::Amplitude, iname, value);
+            read_float!(frequency, Keyword::Frequency, iname, value);
+            read_float!(t, Keyword::T, iname, value);
+        }
+    }
+
+    let res = parametric_sin(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
+
+    Ok(Var::Float(res))
+}
+
+pub fn bind_interp_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut coords: Option<&Vec<Var>> = None;
+    let mut t: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_vector!(coords, Keyword::Coords, iname, value);
+            read_float!(t, Keyword::T, iname, value);
+        }
+    }
+
+    let co = array_f32_8_from_vec(coords.unwrap());
+    let (x, y) = parametric_bezier(&co, t.unwrap());
+
+    Ok(Var::V2D(x, y))
+}
+
+pub fn bind_interp_bezier_tangent(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut coords: Option<&Vec<Var>> = None;
+    let mut t: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_vector!(coords, Keyword::Coords, iname, value);
+            read_float!(t, Keyword::T, iname, value);
+        }
+    }
+
+    let co = array_f32_8_from_vec(coords.unwrap());
+    let (x, y) = parametric_bezier_tangent(&co, t.unwrap());
+
+    Ok(Var::V2D(x, y))
+}
+
+pub fn bind_interp_ray(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut point: Option<(f32, f32)> = Some((0.0, 0.0));
+    let mut direction: Option<(f32, f32)> = Some((1000.0, 1000.0));
+    let mut t: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_v2d!(point, Keyword::Point, iname, value);
+            read_v2d!(direction, Keyword::Direction, iname, value);
+            read_float!(t, Keyword::T, iname, value);
+        }
+    }
+
+    let (x, y) = parametric_ray(point.unwrap(), direction.unwrap(), t.unwrap());
+
+    Ok(Var::V2D(x, y))
+}
+
+pub fn bind_interp_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut from: Option<(f32, f32)> = Some((0.0, 0.0));
+    let mut to: Option<(f32, f32)> = Some((0.0, 0.0));
+    let mut clamping: Option<Keyword> = Some(Keyword::False);
+    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
+    let mut t: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_v2d!(from, Keyword::From, iname, value);
+            read_v2d!(to, Keyword::To, iname, value);
+            read_kw!(clamping, Keyword::Clamping, iname, value);
+            read_kw!(mapping, Keyword::Mapping, iname, value);
+            read_float!(t, Keyword::T, iname, value);
+        }
+    }
+
+    let maybe_mapping = easing_from_keyword(mapping.unwrap());
+    if let Some(mapping) = maybe_mapping {
+        let from_ = from.unwrap();
+        let to_ = to.unwrap();
+
+        let clamping_ = clamping.unwrap() == Keyword::True;
+        let t_ = t.unwrap();
+
+        let x = parametric_scalar(from_.0, to_.0, mapping, clamping_, t_);
+        let y = parametric_scalar(from_.1, to_.1, mapping, clamping_, t_);
+
+        return Ok(Var::V2D(x, y));
+    }
+
+    Err(Error::Bind("bind_interp_line".to_string()))
+}
+
+pub fn bind_interp_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut position: Option<(f32, f32)> = Some((0.0, 0.0));
+    let mut radius: Option<f32> = Some(1.0);
+    let mut t: Option<f32> = Some(0.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_v2d!(position, Keyword::Position, iname, value);
+            read_float!(radius, Keyword::Radius, iname, value);
+            read_float!(t, Keyword::T, iname, value);
+        }
+    }
+
+    let (x, y) = parametric_circle(position.unwrap(), radius.unwrap(), t.unwrap());
+
+    Ok(Var::V2D(x, y))
 }
 
 pub fn bind_path_linear(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {

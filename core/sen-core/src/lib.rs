@@ -32,6 +32,7 @@ mod mathutil;
 mod matrix;
 mod native;
 mod opcodes;
+mod parametric;
 mod path;
 mod placeholder;
 mod uvmapper;
