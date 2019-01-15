@@ -35,6 +35,7 @@ mod opcodes;
 mod parametric;
 mod path;
 mod placeholder;
+mod repeat;
 mod uvmapper;
 
 pub mod compiler;

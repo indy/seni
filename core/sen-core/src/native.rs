@@ -21,6 +21,7 @@ use crate::keywords::Keyword;
 use crate::mathutil;
 use crate::parametric::*;
 use crate::path::*;
+use crate::repeat::*;
 use crate::uvmapper::BrushType;
 use crate::vm::{Var, Vm};
 
@@ -222,7 +223,7 @@ pub enum Native {
     #[strum(serialize = "repeat/rotate")]
     RepeatRotate,
     #[strum(serialize = "repeat/rotate-mirrored")]
-    RepeatRotateMirror,
+    RepeatRotateMirrored,
 
     // focal
     //
@@ -374,12 +375,18 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // --------------------------------------------------
     // repeat
     // --------------------------------------------------
-    // BIND("repeat/symmetry-vertical", bind_repeat_symmetry_vertical);
-    // BIND("repeat/symmetry-horizontal", bind_repeat_symmetry_horizontal);
-    // BIND("repeat/symmetry-4", bind_repeat_symmetry_4);
-    // BIND("repeat/symmetry-8", bind_repeat_symmetry_8);
-    // BIND("repeat/rotate", bind_repeat_rotate);
-    // BIND("repeat/rotate-mirrored", bind_repeat_rotate_mirrored);
+    native_fns.insert(
+        Native::RepeatSymmetryVertical,
+        bind_repeat_symmetry_vertical,
+    );
+    native_fns.insert(
+        Native::RepeatSymmetryHorizontal,
+        bind_repeat_symmetry_horizontal,
+    );
+    native_fns.insert(Native::RepeatSymmetry4, bind_repeat_symmetry_4);
+    native_fns.insert(Native::RepeatSymmetry8, bind_repeat_symmetry_8);
+    native_fns.insert(Native::RepeatRotate, bind_repeat_rotate);
+    native_fns.insert(Native::RepeatRotateMirrored, bind_repeat_mirrored);
 
     // --------------------------------------------------
     // focal
@@ -2009,6 +2016,144 @@ pub fn bind_path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
                 mapping,
             )?;
         }
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_repeat_symmetry_vertical(
+    vm: &mut Vm,
+    program: &Program,
+    num_args: usize,
+) -> Result<Var> {
+    let mut fun: Option<i32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_i32!(fun, Keyword::Fn, iname, value);
+        }
+    }
+
+    if let Some(fun_) = fun {
+        repeat_symmetry_vertical(vm, program, fun_ as usize)?;
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_repeat_symmetry_horizontal(
+    vm: &mut Vm,
+    program: &Program,
+    num_args: usize,
+) -> Result<Var> {
+    let mut fun: Option<i32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_i32!(fun, Keyword::Fn, iname, value);
+        }
+    }
+
+    if let Some(fun_) = fun {
+        repeat_symmetry_horizontal(vm, program, fun_ as usize)?;
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_repeat_symmetry_4(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    let mut fun: Option<i32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_i32!(fun, Keyword::Fn, iname, value);
+        }
+    }
+
+    if let Some(fun_) = fun {
+        repeat_symmetry_4(vm, program, fun_ as usize)?;
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_repeat_symmetry_8(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    let mut fun: Option<i32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_i32!(fun, Keyword::Fn, iname, value);
+        }
+    }
+
+    if let Some(fun_) = fun {
+        repeat_symmetry_8(vm, program, fun_ as usize)?;
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_repeat_rotate(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    let mut fun: Option<i32> = None;
+    let mut copies: Option<f32> = Some(3.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_i32!(fun, Keyword::Fn, iname, value);
+            read_float!(copies, Keyword::Copies, iname, value);
+        }
+    }
+
+    if let Some(fun_) = fun {
+        repeat_rotate(vm, program, fun_ as usize, copies.unwrap() as usize)?;
+    }
+
+    Ok(Var::Bool(true))
+}
+
+pub fn bind_repeat_mirrored(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    let mut fun: Option<i32> = None;
+    let mut copies: Option<f32> = Some(3.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_i32!(fun, Keyword::Fn, iname, value);
+            read_float!(copies, Keyword::Copies, iname, value);
+        }
+    }
+
+    if let Some(fun_) = fun {
+        repeat_rotate_mirrored(vm, program, fun_ as usize, copies.unwrap() as usize)?;
     }
 
     Ok(Var::Bool(true))
