@@ -81,8 +81,10 @@ pub enum Native {
     //
     #[strum(serialize = "col/convert")]
     ColConvert,
+    #[strum(serialize = "__colour_constructor_start")]
+    ColConstructorStart_, // Special Enums required by the compiler to recognise colour constructors
     #[strum(serialize = "col/rgb")]
-    ColRGB, // start of colour constructors
+    ColRGB,
     #[strum(serialize = "col/hsl")]
     ColHSL,
     #[strum(serialize = "col/hsluv")]
@@ -90,7 +92,9 @@ pub enum Native {
     #[strum(serialize = "col/hsv")]
     ColHSV,
     #[strum(serialize = "col/lab")]
-    ColLAB, // end of colour constructors
+    ColLAB,
+    #[strum(serialize = "__colour_constructor_end")]
+    ColConstructorEnd_, // Special Enums required by the compiler to recognise colour constructors
     #[strum(serialize = "col/complementary")]
     ColComplementary,
     #[strum(serialize = "col/split-complementary")]
@@ -559,7 +563,9 @@ fn array_f32_8_from_vec(float_pairs: &[Var]) -> [f32; 8] {
     res
 }
 
-fn rgb_tuples_from_colour_tuples(col: &(ColourFormat, f32, f32, f32, f32)) -> Result<(f32, f32, f32, f32)> {
+fn rgb_tuples_from_colour_tuples(
+    col: &(ColourFormat, f32, f32, f32, f32),
+) -> Result<(f32, f32, f32, f32)> {
     let (fmt, e0, e1, e2, e3) = col;
 
     if *fmt == ColourFormat::Rgb {
@@ -677,7 +683,8 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let mut to: Option<(f32, f32)> = Some((900.0, 900.0));
     let mut from_colour: Option<(ColourFormat, f32, f32, f32, f32)> = None;
     let mut to_colour: Option<(ColourFormat, f32, f32, f32, f32)> = None;
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
+        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -745,7 +752,8 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
+        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
 
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -769,7 +777,6 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
 
-
     if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
         vm.geometry.render_rect(
             matrix,
@@ -788,7 +795,8 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
+        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut tessellation: Option<f32> = Some(10.0);
     let mut radius: Option<f32> = None;
 
@@ -841,7 +849,8 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
+        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut tessellation: Option<f32> = Some(10.0);
     let mut radius: Option<f32> = None;
     let mut angle_start: Option<f32> = Some(0.0);
@@ -944,7 +953,8 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     let mut t_start: Option<f32> = Some(0.0);
     let mut t_end: Option<f32> = Some(1.0);
     let mut tessellation: Option<f32> = Some(10.0);
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
+        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -975,7 +985,9 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
         return Err(Error::Bind("bind_bezier matrix error".to_string()));
     };
 
-    let uvm = vm.mappings.get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
+    let uvm = vm
+        .mappings
+        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
 
     // if the line has been defined then it overrides the line_width_start, line_width_end parameters
     let width_start = if let Some(lw) = line_width {
@@ -993,7 +1005,6 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
 
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
-
         if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
             vm.geometry.render_quadratic(
                 matrix,
@@ -1022,7 +1033,8 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     let mut t_start: Option<f32> = Some(0.0);
     let mut t_end: Option<f32> = Some(1.0);
     let mut tessellation: Option<f32> = Some(10.0);
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
+        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -1053,7 +1065,9 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
         return Err(Error::Bind("bind_bezier matrix error".to_string()));
     };
 
-    let uvm = vm.mappings.get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
+    let uvm = vm
+        .mappings
+        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
 
     // if the line has been defined then it overrides the line_width_start, line_width_end parameters
     let width_start = if let Some(lw) = line_width {
@@ -1096,7 +1110,8 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
     let mut t_start: Option<f32> = Some(0.0);
     let mut t_end: Option<f32> = Some(1.0);
     let mut tessellation: Option<f32> = Some(10.0);
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> = Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
+        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -1124,7 +1139,9 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
         return Err(Error::Bind("bind_bezier matrix error".to_string()));
     };
 
-    let uvm = vm.mappings.get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
+    let uvm = vm
+        .mappings
+        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
 
     let co = array_f32_8_from_vec(coords.unwrap());
 

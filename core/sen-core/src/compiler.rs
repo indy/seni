@@ -188,6 +188,22 @@ impl Program {
     }
 }
 
+fn is_node_colour_constructor(ast: &Node) -> bool {
+    if let Node::List(children, _) = ast {
+        if !children.is_empty() {
+            if let Node::Name(_, iname, _) = &children[0] {
+                let col_constructor_start = Native::ColConstructorStart_ as i32;
+                let col_constructor_end = Native::ColConstructorEnd_ as i32;
+
+                if *iname > col_constructor_start && *iname < col_constructor_end {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
 #[derive(Debug)]
 struct Compilation {
     code: Vec<Bytecode>,
