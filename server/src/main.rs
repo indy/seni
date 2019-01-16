@@ -1,28 +1,24 @@
 use actix_web::http::{header, Method, StatusCode};
-use actix_web::{
-    fs, middleware, server, App, HttpRequest, HttpResponse, Result
-};
+use actix_web::{fs, middleware, server, App, HttpRequest, HttpResponse, Result};
 use serde_derive::Deserialize;
 
 // NOTE: Recompile the server everytime gallery.json is changed
 static GALLERY_JSON: &'static str = include_str!("../static/gallery.json");
 
-const USE_RUST_IMPL: bool = true;
-
 #[derive(Deserialize)]
 struct Piece {
     id: u32,
     name: String,
-//    image: String,
+    //    image: String,
 }
 
 /// favicon handler
-fn favicon(_req: &HttpRequest) -> Result<fs::NamedFile> {
-    if USE_RUST_IMPL {
-        Ok(fs::NamedFile::open("client/sen-client/www/favicon.ico")?)
-    } else {
-        Ok(fs::NamedFile::open("client/www/assets/favicon.ico")?)
-    }
+// fn favicon_rust(_req: &HttpRequest) -> Result<fs::NamedFile> {
+//     Ok(fs::NamedFile::open("client/sen-client/www/favicon.ico")?)
+// }
+
+fn favicon_c(_req: &HttpRequest) -> Result<fs::NamedFile> {
+    Ok(fs::NamedFile::open("client/www/assets/favicon.ico")?)
 }
 
 fn gallery(req: &HttpRequest) -> Result<HttpResponse> {
@@ -39,7 +35,7 @@ fn get_piece_name_from_id(gallery: &Vec<Piece>, id: u32) -> Option<String> {
 
     match res {
         Some(r) => Some(r.name.clone()),
-        None => None
+        None => None,
     }
 }
 
@@ -57,7 +53,7 @@ fn gallery_item(req: &HttpRequest) -> Result<fs::NamedFile> {
 
 fn main() {
     ::std::env::set_var("RUST_LOG", "actix_web=debug"); // info
-//    ::std::env::set_var("RUST_BACKTRACE", "1");
+                                                        //    ::std::env::set_var("RUST_BACKTRACE", "1");
     env_logger::init();
 
     let matches = clap::App::new("Seni Server")
@@ -70,7 +66,16 @@ fn main() {
                 .long("port")
                 .help("The port number")
                 .takes_value(true),
-        ).get_matches();
+        )
+        .arg(
+            clap::Arg::with_name("c-client")
+                .short("c")
+                .multiple(false)
+                .help("use C version of client"),
+        )
+        .get_matches();
+
+    let using_c = matches.is_present("c-client");
 
     let port = matches.value_of("port").unwrap_or("8080");
     let bind_addr = ["127.0.0.1", port].join(":");
@@ -78,40 +83,43 @@ fn main() {
 
     let sys = actix::System::new("seni-server");
 
-    if USE_RUST_IMPL {
-        println!("hello from the RUST_IMPL");
-    } else {
+    if using_c {
         println!("using the older C_IMPL");
+    } else {
+        println!("hello from the RUST_IMPL");
     }
 
-    let home = if USE_RUST_IMPL {
-        "client/sen-client/www"
-    } else {
+    let home = if using_c {
         "client/www/assets"
+    } else {
+        "client/sen-client/www"
     };
 
     server::new(move || {
         App::new()
-        // enable logger
+            // enable logger
             .middleware(middleware::Logger::default())
-        // register favicon
-            .resource("/favicon", |r| r.f(favicon))
-        // static files
+            // register favicon
+            .resource("/favicon", |r| r.f(favicon_c))
+            // static files
             .resource("/gallery", |r| r.f(gallery))
             .resource("/gallery/{id}", |r| r.method(Method::GET).f(gallery_item))
-        // redirect
-            .resource("/", |r| r.method(Method::GET).f(|_req| {
-                HttpResponse::Found()
-                    .header(header::LOCATION, "/index.html")
-                    .finish()
-            }))
-        // static files
+            // redirect
+            .resource("/", |r| {
+                r.method(Method::GET).f(|_req| {
+                    HttpResponse::Found()
+                        .header(header::LOCATION, "/index.html")
+                        .finish()
+                })
+            })
+            // static files
             .handler("/dist", fs::StaticFiles::new("client/www/dist").unwrap())
             .handler("/", fs::StaticFiles::new(home).unwrap())
-    }).bind(bind_addr)
-        .unwrap()
-        .shutdown_timeout(1)
-        .start();
+    })
+    .bind(bind_addr)
+    .unwrap()
+    .shutdown_timeout(1)
+    .start();
 
     let _ = sys.run();
 }
