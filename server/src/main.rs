@@ -18,7 +18,7 @@ struct Piece {
 // }
 
 fn favicon_c(_req: &HttpRequest) -> Result<fs::NamedFile> {
-    Ok(fs::NamedFile::open("client/www/assets/favicon.ico")?)
+    Ok(fs::NamedFile::open("../client/www/assets/favicon.ico")?)
 }
 
 fn gallery(req: &HttpRequest) -> Result<HttpResponse> {
@@ -45,7 +45,7 @@ fn gallery_item(req: &HttpRequest) -> Result<fs::NamedFile> {
     let param_id = req.match_info().get("id").unwrap();
     let id: u32 = std::str::FromStr::from_str(param_id).unwrap();
     let name = get_piece_name_from_id(&g, id).unwrap();
-    let path = ["server/static/seni", &name].join("/");
+    let path = ["../server/static/seni", &name].join("/");
     let path_with_ext = [path, "seni".to_string()].join(".");
 
     Ok(fs::NamedFile::open(path_with_ext)?)
@@ -84,15 +84,15 @@ fn main() {
     let sys = actix::System::new("seni-server");
 
     if using_c {
-        println!("using the older C_IMPL");
+        println!("serving c client");
     } else {
-        println!("hello from the RUST_IMPL");
+        println!("serving rust client");
     }
 
     let home = if using_c {
-        "client/www/assets"
+        "../client/www/assets"
     } else {
-        "client/sen-client/www"
+        "../client/sen-client/www"
     };
 
     server::new(move || {
@@ -113,7 +113,7 @@ fn main() {
                 })
             })
             // static files
-            .handler("/dist", fs::StaticFiles::new("client/www/dist").unwrap())
+            .handler("/dist", fs::StaticFiles::new("../client/www/dist").unwrap())
             .handler("/", fs::StaticFiles::new(home).unwrap())
     })
     .bind(bind_addr)

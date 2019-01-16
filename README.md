@@ -16,8 +16,11 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 1. `cd server`
 2. `cargo build --release`'
-3. `cd ..`
-4. `cp server/target/release/seni-server .`
+
+#### Running the server:
+
+1. `cd server`
+2. `cargo run --release`
 
 #### Building wasm file:
 
