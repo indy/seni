@@ -36,7 +36,7 @@
  | [[nth]]           |                                                      |
  | [[debug/print]]   | prints debug                                         |
  | [[vector/length]] |                                                      |
- | probe         | writes to the vm's debug_str (used for testing only) |
+ | [[probe]]       | writes to the vm's debug_str (used for testing only) |
 
 ** shapes
 
@@ -211,9 +211,11 @@
 
 *** probe
 
-    | parameter | default | description                     |
-    |-----------+---------+---------------------------------|
-    | scalar    | NULL    | appends value onto vm.debug_str |
+    | parameter  | default | description                                 |
+    |------------+---------+---------------------------------------------|
+    | scalar     | NULL    | appends value onto vm.debug_str             |
+    | vector     | NULL    | appends v2d onto vm.debug_str               |
+    | worldspace | NULL    | appends v2d in worldspace onto vm.debug_str |
 
 ** shapes
 
@@ -821,6 +823,8 @@
     | mapping   |  linear |             |
 
 ** repeat
+
+   the given fn can accept a 'copy' parameter
 
 *** repeat/symmetry-vertical
 

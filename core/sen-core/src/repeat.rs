@@ -162,3 +162,87 @@ pub fn repeat_rotate_mirrored(
 
     Ok(())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use crate::vm::tests::*;
+
+    #[test]
+    fn test_symmetry_vertical() {
+        is_debug_str(
+            "(fn (f) (probe worldspace: [20 20]))
+             (repeat/symmetry-vertical fn: (address-of f))",
+            "(20,20) (-20,20)",
+        );
+    }
+
+    #[test]
+    fn test_symmetry_horizontal() {
+        is_debug_str(
+            "(fn (f) (probe worldspace: [20 20]))
+             (repeat/symmetry-horizontal fn: (address-of f))",
+            "(20,20) (20,-20)",
+        );
+    }
+
+    #[test]
+    fn test_symmetry_4() {
+        is_debug_str(
+            "(fn (f) (probe worldspace: [10 20]))
+             (repeat/symmetry-4 fn: (address-of f))",
+            "(10,20) (-10,20) (10,-20) (-10,-20)",
+        );
+    }
+
+    #[test]
+    fn test_symmetry_8() {
+        is_debug_str(
+            "(fn (f) (probe worldspace: [10 20]))
+             (repeat/symmetry-8 fn: (address-of f))",
+            "(10,20) (-10,20) (10,-20) (-10,-20) (-20,9.999999) (-20,-10.000001) (20,10.000001) (20,-9.999999)",
+        );
+    }
+
+    #[test]
+    fn test_rotate() {
+        is_debug_str(
+            "(fn (f angle: 0 copy: 0) (probe scalar: angle))
+             (repeat/rotate fn: (address-of f) copies: 3)",
+            "0 120 240",
+        );
+
+        is_debug_str(
+            "(fn (f angle: 0 copy: 0) (probe scalar: copy))
+             (repeat/rotate fn: (address-of f) copies: 3)",
+            "0 1 2",
+        );
+
+        is_debug_str(
+            "(fn (f) (probe worldspace: [0 1]))
+             (repeat/rotate fn: (address-of f) copies: 3)",
+            "(0,1) (-0.8660254,-0.50000006) (0.86602545,-0.4999999)",
+        );
+    }
+
+    #[test]
+    fn test_rotate_mirrored() {
+        is_debug_str(
+            "(fn (f angle: 0 copy: 0) (probe scalar: angle))
+             (repeat/rotate-mirrored fn: (address-of f) copies: 3)",
+            "0 120 240 0 -120 -240",
+        );
+
+        is_debug_str(
+            "(fn (f angle: 0 copy: 0) (probe scalar: copy))
+             (repeat/rotate-mirrored fn: (address-of f) copies: 3)",
+            "0 1 2 3 4 5",
+        );
+
+        is_debug_str(
+            "(fn (f) (probe worldspace: [0 1]))
+             (repeat/rotate-mirrored fn: (address-of f) copies: 3)",
+            "(0,1) (-0.8660254,-0.50000006) (0.86602545,-0.4999999) (0,1) (0.8660254,-0.50000006) (-0.86602545,-0.4999999)",
+        );
+    }
+}

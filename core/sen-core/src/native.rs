@@ -17,9 +17,9 @@ use crate::colour::{Colour, ColourFormat};
 use crate::compiler::Program;
 use crate::ease::*;
 use crate::error::{Error, Result};
+use crate::interp::*;
 use crate::keywords::Keyword;
 use crate::mathutil;
-use crate::parametric::*;
 use crate::path::*;
 use crate::repeat::*;
 use crate::uvmapper::BrushType;
@@ -657,6 +657,7 @@ pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> R
 pub fn bind_probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut scalar: Option<f32> = None;
     let mut vector: Option<(f32, f32)> = None;
+    let mut worldspace: Option<(f32, f32)> = None;
 
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -667,6 +668,7 @@ pub fn bind_probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
         if let Var::Int(iname) = label {
             read_float!(scalar, Keyword::Scalar, iname, value);
             read_v2d!(vector, Keyword::Vector, iname, value);
+            read_v2d!(worldspace, Keyword::WorldSpace, iname, value);
         }
     }
 
@@ -676,6 +678,13 @@ pub fn bind_probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
 
     if let Some((x, y)) = vector {
         vm.debug_str_append(&format!("({},{})", x, y));
+    }
+
+    if let Some((x, y)) = worldspace {
+        if let Some(matrix) = vm.matrix_stack.peek() {
+            let (nx, ny) = matrix.transform_vec2(x, y);
+            vm.debug_str_append(&format!("({},{})", nx, ny));
+        }
     }
 
     Ok(Var::Bool(true))
@@ -1674,7 +1683,7 @@ pub fn bind_interp_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
         }
     }
 
-    let res = parametric_cos(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
+    let res = interp_cos(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
 
     Ok(Var::Float(res))
 }
@@ -1697,7 +1706,7 @@ pub fn bind_interp_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
         }
     }
 
-    let res = parametric_sin(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
+    let res = interp_sin(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
 
     Ok(Var::Float(res))
 }
@@ -1719,7 +1728,7 @@ pub fn bind_interp_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     }
 
     let co = array_f32_8_from_vec(coords.unwrap());
-    let (x, y) = parametric_bezier(&co, t.unwrap());
+    let (x, y) = interp_bezier(&co, t.unwrap());
 
     Ok(Var::V2D(x, y))
 }
@@ -1741,7 +1750,7 @@ pub fn bind_interp_bezier_tangent(vm: &mut Vm, _program: &Program, num_args: usi
     }
 
     let co = array_f32_8_from_vec(coords.unwrap());
-    let (x, y) = parametric_bezier_tangent(&co, t.unwrap());
+    let (x, y) = interp_bezier_tangent(&co, t.unwrap());
 
     Ok(Var::V2D(x, y))
 }
@@ -1764,7 +1773,7 @@ pub fn bind_interp_ray(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
         }
     }
 
-    let (x, y) = parametric_ray(point.unwrap(), direction.unwrap(), t.unwrap());
+    let (x, y) = interp_ray(point.unwrap(), direction.unwrap(), t.unwrap());
 
     Ok(Var::V2D(x, y))
 }
@@ -1799,8 +1808,8 @@ pub fn bind_interp_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Res
         let clamping_ = clamping.unwrap() == Keyword::True;
         let t_ = t.unwrap();
 
-        let x = parametric_scalar(from_.0, to_.0, mapping, clamping_, t_);
-        let y = parametric_scalar(from_.1, to_.1, mapping, clamping_, t_);
+        let x = interp_scalar(from_.0, to_.0, mapping, clamping_, t_);
+        let y = interp_scalar(from_.1, to_.1, mapping, clamping_, t_);
 
         return Ok(Var::V2D(x, y));
     }
@@ -1826,7 +1835,7 @@ pub fn bind_interp_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> R
         }
     }
 
-    let (x, y) = parametric_circle(position.unwrap(), radius.unwrap(), t.unwrap());
+    let (x, y) = interp_circle(position.unwrap(), radius.unwrap(), t.unwrap());
 
     Ok(Var::V2D(x, y))
 }

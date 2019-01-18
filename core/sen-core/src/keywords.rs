@@ -388,6 +388,8 @@ pub enum Keyword {
     Volatility,
     #[strum(serialize = "width")]
     Width,
+    #[strum(serialize = "worldspace")]
+    WorldSpace,
 
     #[strum(serialize = "UnreachableKeywordEnd")]
     KeywordEnd,

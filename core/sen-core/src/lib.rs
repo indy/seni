@@ -26,13 +26,13 @@
 
 mod colour;
 mod ease;
+mod interp;
 mod keywords;
 mod lexer;
 mod mathutil;
 mod matrix;
 mod native;
 mod opcodes;
-mod parametric;
 mod path;
 mod placeholder;
 mod repeat;
