@@ -431,7 +431,14 @@ mod tests {
                         gene: None,
                         parameter_ast: vec![
                             Node::Whitespace(" ".to_string(), None),
-                            Node::List(vec![Node::Name("gen/scalar".to_string(), Native::GenScalar as i32, None)], None)
+                            Node::List(
+                                vec![Node::Name(
+                                    "gen/scalar".to_string(),
+                                    Native::GenScalar as i32,
+                                    None
+                                )],
+                                None
+                            )
                         ],
                         parameter_prefix: vec![Node::Whitespace(" ".to_string(), None)]
                     })

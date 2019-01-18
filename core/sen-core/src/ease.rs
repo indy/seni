@@ -16,7 +16,7 @@
 use crate::keywords::Keyword;
 use crate::mathutil;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Easing {
     Linear,
     Quick,

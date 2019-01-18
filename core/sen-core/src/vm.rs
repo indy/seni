@@ -15,6 +15,7 @@
 
 use crate::colour::ColourFormat;
 use crate::compiler::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
+use crate::ease::Easing;
 use crate::error::{Error, Result};
 use crate::geometry::Geometry;
 use crate::keywords::Keyword;
@@ -40,6 +41,31 @@ const MEMORY_LOCAL_SIZE: usize = 40;
 // **************************************************
 
 #[derive(Clone, Debug)]
+pub struct InterpStateStruct {
+    pub from_m: f32,
+    pub to_m: f32,
+    pub from_c: f32,
+    pub to_c: f32,
+    pub to: (f32, f32),
+    pub clamping: bool,
+    pub mapping: Easing,
+}
+
+impl Default for InterpStateStruct {
+    fn default() -> InterpStateStruct {
+        InterpStateStruct {
+            from_m: 0.0,
+            to_m: 0.0,
+            from_c: 0.0,
+            to_c: 0.0,
+            to: (0.0, 1.0),
+            clamping: false,
+            mapping: Easing::Linear,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub enum Var {
     Int(i32),
     Float(f32),
@@ -51,6 +77,7 @@ pub enum Var {
     Colour(ColourFormat, f32, f32, f32, f32),
     V2D(f32, f32),
     Debug(String), // this is temporary REMOVE
+    InterpState(InterpStateStruct),
 }
 
 impl fmt::Display for Var {
@@ -68,6 +95,7 @@ impl fmt::Display for Var {
             }
             Var::V2D(fl1, fl2) => write!(f, "V2D({}, {})", fl1, fl2),
             Var::Debug(s) => write!(f, "DEBUG: {}", s),
+            Var::InterpState(state) => write!(f, "InterpState({:?})", state),
         }
     }
 }

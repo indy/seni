@@ -108,6 +108,7 @@ pub fn repeat_rotate(vm: &mut Vm, program: &Program, fun: usize, copies: usize) 
         vm.function_call_body(program, fn_info)?;
 
         vm.matrix_stack.pop();
+
         vm.ip = ip;
     }
 
@@ -162,7 +163,6 @@ pub fn repeat_rotate_mirrored(
 
     Ok(())
 }
-
 
 #[cfg(test)]
 mod tests {

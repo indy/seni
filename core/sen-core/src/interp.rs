@@ -15,6 +15,25 @@
 
 use crate::ease::*;
 use crate::mathutil::*;
+use crate::vm::InterpStateStruct;
+
+pub fn interp_from_struct(t: f32, interp_state: &InterpStateStruct) -> f32 {
+    let from_interp = (interp_state.from_m * t) + interp_state.from_c;
+    let to_interp = easing(from_interp, interp_state.mapping);
+    let res = (interp_state.to_m * to_interp) + interp_state.to_c;
+
+    if interp_state.clamping {
+        return if from_interp < 0.0 {
+            interp_state.to.0
+        } else if from_interp > 1.0 {
+            interp_state.to.1
+        } else {
+            res
+        };
+    }
+
+    res
+}
 
 pub fn interp_scalar(a: f32, b: f32, mapping: Easing, clamping: bool, t: f32) -> f32 {
     let new_t = easing(t, mapping);
@@ -69,7 +88,6 @@ pub fn interp_ray(point: (f32, f32), direction: (f32, f32), t: f32) -> (f32, f32
     (point.0 + (direction.0 * t), point.1 + (direction.1 * t))
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::vm::tests::*;
@@ -111,4 +129,51 @@ mod tests {
             "0 0.98544973 0.3349882 -0.8715759 -0.6312667 0.6569866",
         );
     }
+
+    #[test]
+    fn test_interp_build() {
+        is_debug_str(
+            "(define i (interp/build from: [0 1] to: [0 100]))
+             (probe scalar: (interp/value from: i t: 0.5))",
+            "50",
+        );
+        is_debug_str(
+            "(define i (interp/build from: [10 20] to: [50 200]))
+             (probe scalar: (interp/value from: i t: 10.0))",
+            "50",
+        );
+        is_debug_str(
+            "(define i (interp/build from: [10 20] to: [50 200]))
+             (probe scalar: (interp/value from: i t: 20.0))",
+            "200",
+        );
+        is_debug_str(
+            "(define i (interp/build from: [50 10] to: [100 1000]))
+             (probe scalar: (interp/value from: i t: 50.0))",
+            "100",
+        );
+        is_debug_str(
+            "(define i (interp/build from: [50 10] to: [100 1000]))
+             (probe scalar: (interp/value from: i t: 10.0))",
+            "1000",
+        );
+
+        // clamping
+        is_debug_str(
+            "(define i (interp/build from: [0 1] to: [0 100] clamping: false))
+             (probe scalar: (interp/value from: i t: 2.0))",
+            "200",
+        );
+        is_debug_str(
+            "(define i (interp/build from: [0 1] to: [0 100] clamping: true))
+             (probe scalar: (interp/value from: i t: 2.0))",
+            "100",
+        );
+        is_debug_str(
+            "(define i (interp/build from: [0 1] to: [0 100] clamping: true))
+             (probe scalar: (interp/value from: i t: -2.0))",
+            "0",
+        );
+    }
+
 }

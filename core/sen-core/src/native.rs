@@ -23,7 +23,7 @@ use crate::mathutil;
 use crate::path::*;
 use crate::repeat::*;
 use crate::uvmapper::BrushType;
-use crate::vm::{Var, Vm};
+use crate::vm::{InterpStateStruct, Var, Vm};
 
 use std::collections::HashMap;
 
@@ -354,8 +354,8 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // --------------------------------------------------
     // interp
     // --------------------------------------------------
-    // BIND("interp/build", bind_interp_build);
-    // BIND("interp/value", bind_interp_value);
+    native_fns.insert(Native::InterpBuild, bind_interp_build);
+    native_fns.insert(Native::InterpValue, bind_interp_value);
     native_fns.insert(Native::InterpCos, bind_interp_cos);
     native_fns.insert(Native::InterpSin, bind_interp_sin);
     native_fns.insert(Native::InterpBezier, bind_interp_bezier);
@@ -480,6 +480,15 @@ fn read_col(
     None
 }
 
+fn read_interp(iname: i32, value: &Var, keyword: Keyword) -> Option<InterpStateStruct> {
+    if iname == keyword as i32 {
+        if let Var::InterpState(interp_state) = value {
+            return Some(interp_state.clone());
+        }
+    }
+    None
+}
+
 fn read_brush(iname: i32, value: &Var, keyword: Keyword) -> Option<BrushType> {
     if iname == keyword as i32 {
         if let Var::Keyword(n) = value {
@@ -533,6 +542,11 @@ macro_rules! read_kw {
 macro_rules! read_col {
     ($i:ident, $kw:expr, $in:ident, $v:ident) => {
         $i = read_col(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_interp {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_interp(*$in, $v, $kw).or($i);
     };
 }
 macro_rules! read_brush {
@@ -1663,6 +1677,76 @@ pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
 
     let res = angle.unwrap().sin();
     Ok(Var::Float(res))
+}
+
+pub fn bind_interp_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut from_: Option<(f32, f32)> = Some((0.0, 1.0));
+    let mut to_: Option<(f32, f32)> = Some((0.0, 100.0));
+    let mut clamping_: Option<Keyword> = Some(Keyword::False);
+    let mut mapping_: Option<Keyword> = Some(Keyword::Linear);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_v2d!(from_, Keyword::From, iname, value);
+            read_v2d!(to_, Keyword::To, iname, value);
+            read_kw!(clamping_, Keyword::Clamping, iname, value);
+            read_kw!(mapping_, Keyword::Mapping, iname, value);
+        }
+    }
+
+    if let Some(mapping) = easing_from_keyword(mapping_.unwrap()) {
+        let from = from_.unwrap();
+        let to = to_.unwrap();
+        let clamping = clamping_.unwrap() == Keyword::True;
+
+        let from_m = mathutil::mc_m(from.0, 0.0, from.1, 1.0);
+        let from_c = mathutil::mc_c(from.0, 0.0, from_m);
+        let to_m = mathutil::mc_m(0.0, to.0, 1.0, to.1);
+        let to_c = mathutil::mc_c(0.0, to.0, to_m);
+
+        return Ok(Var::InterpState(InterpStateStruct {
+            from_m,
+            to_m,
+            from_c,
+            to_c,
+            to,
+            clamping,
+            mapping,
+        }));
+    }
+
+    Err(Error::Bind("bind_interp_build".to_string()))
+}
+
+pub fn bind_interp_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut from: Option<InterpStateStruct> = None;
+    let mut t: Option<f32> = Some(0.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_interp!(from, Keyword::From, iname, value);
+            read_float!(t, Keyword::T, iname, value);
+        }
+    }
+
+    if let Some(interp_state) = from {
+        let t = t.unwrap();
+        let res = interp_from_struct(t, &interp_state);
+
+        return Ok(Var::Float(res));
+    }
+
+    Err(Error::Bind("bind_interp_value".to_string()))
 }
 
 pub fn bind_interp_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
