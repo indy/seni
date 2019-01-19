@@ -66,6 +66,25 @@ impl Default for InterpStateStruct {
 }
 
 #[derive(Clone, Debug)]
+pub struct ProcColourStateStruct {
+    pub a: [f32; 3],
+    pub b: [f32; 3],
+    pub c: [f32; 3],
+    pub alpha: f32,
+}
+
+impl Default for ProcColourStateStruct {
+    fn default() -> ProcColourStateStruct {
+        ProcColourStateStruct {
+            a: [0.0, 0.0, 0.0],
+            b: [0.0, 0.0, 0.0],
+            c: [0.0, 0.0, 0.0],
+            alpha: 1.0,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub enum Var {
     Int(i32),
     Float(f32),
@@ -78,6 +97,7 @@ pub enum Var {
     V2D(f32, f32),
     Debug(String), // this is temporary REMOVE
     InterpState(InterpStateStruct),
+    ProcColourState(ProcColourStateStruct),
 }
 
 impl fmt::Display for Var {
@@ -94,6 +114,7 @@ impl fmt::Display for Var {
             Var::V2D(fl1, fl2) => write!(f, "V2D({}, {})", fl1, fl2),
             Var::Debug(s) => write!(f, "DEBUG: {}", s),
             Var::InterpState(state) => write!(f, "InterpState({:?})", state),
+            Var::ProcColourState(state) => write!(f, "ProcColourState({:?})", state),
         }
     }
 }
