@@ -23,8 +23,14 @@
 // |--------+-----------+-------------+-------------|
 
 use crate::error::{Error, Result};
+use crate::mathutil;
+
 use std;
 use std::fmt;
+
+const COLOUR_UNIT_ANGLE: f64 = (360.0 / 12.0);
+const COLOUR_COMPLIMENTARY_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 6.0);
+const COLOUR_TRIAD_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 4.0);
 
 const REF_U: f64 = 0.197_830_006_642_836_807_64;
 const REF_V: f64 = 0.468_319_994_938_791_003_70;
@@ -79,8 +85,110 @@ impl fmt::Display for ColourFormat {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Colour {
+    pub format: ColourFormat,
+    pub e0: f32,
+    pub e1: f32,
+    pub e2: f32,
+    pub e3: f32,
+}
+
+impl fmt::Display for Colour {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.format {
+            ColourFormat::Rgb => write!(f, "rgb"),
+            ColourFormat::Hsl => write!(f, "hsl"),
+            ColourFormat::Hsluv => write!(f, "hsluv"),
+            ColourFormat::Hsv => write!(f, "hsv"),
+            ColourFormat::Lab => write!(f, "lab"),
+        }
+    }
+}
+
+impl Colour {
+    pub fn new(format: ColourFormat, e0: f32, e1: f32, e2: f32, e3: f32) -> Self {
+        Colour {
+            format,
+            e0,
+            e1,
+            e2,
+            e3,
+        }
+    }
+
+    // todo: could this be a mut instead of returning a new Colour?
+    pub fn to_rgb(&self) -> Result<Colour> {
+        if self.format == ColourFormat::Rgb {
+            Ok(self.clone())
+        } else {
+            let c = ConvertibleColour::build_convertible_colour_from_colour(&self);
+            let rgb = c.clone_as(ColourFormat::Rgb)?;
+            rgb.to_colour()
+        }
+    }
+
+    pub fn complementary(&self) -> Result<Colour> {
+        let c = ConvertibleColour::build_convertible_colour_from_colour(&self);
+        let c1 = c.complementary()?;
+
+        c1.to_colour()
+    }
+
+    pub fn split_complementary(&self) -> Result<(Colour, Colour)> {
+        let c = ConvertibleColour::build_convertible_colour_from_colour(&self);
+        let (c1, c2) = c.split_complementary()?;
+
+        Ok((c1.to_colour()?, c2.to_colour()?))
+    }
+
+    pub fn analagous(&self) -> Result<(Colour, Colour)> {
+        let c = ConvertibleColour::build_convertible_colour_from_colour(&self);
+        let (c1, c2) = c.analagous()?;
+
+        Ok((c1.to_colour()?, c2.to_colour()?))
+    }
+
+    pub fn triad(&self) -> Result<(Colour, Colour)> {
+        let c = ConvertibleColour::build_convertible_colour_from_colour(&self);
+        let (c1, c2) = c.triad()?;
+
+        Ok((c1.to_colour()?, c2.to_colour()?))
+    }
+
+    pub fn darken(&self, value: f32) -> Result<Colour> {
+        let col = ConvertibleColour::build_convertible_colour_from_colour(&self);
+        let lab = col.clone_as(ColourFormat::Lab)?;
+
+        let mut c = lab.to_colour()?;
+        c.e0 = mathutil::clamp(c.e0 - value, 0.0, 100.0);
+        Ok(c)
+    }
+
+    pub fn lighten(&self, value: f32) -> Result<Colour> {
+        let col = ConvertibleColour::build_convertible_colour_from_colour(&self);
+        let lab = col.clone_as(ColourFormat::Lab)?;
+
+        let mut c = lab.to_colour()?;
+        c.e0 = mathutil::clamp(c.e0 + value, 0.0, 100.0);
+        Ok(c)
+    }
+}
+
+impl Default for Colour {
+    fn default() -> Colour {
+        Colour {
+            format: ColourFormat::Rgb,
+            e0: 0.0,
+            e1: 0.0,
+            e2: 0.0,
+            e3: 1.0,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
-pub enum Colour {
+enum ConvertibleColour {
     RGB(f64, f64, f64, f64),
     HSLuv(f64, f64, f64, f64),
     HSL(f64, f64, f64, f64),
@@ -91,41 +199,86 @@ pub enum Colour {
     LCH(f64, f64, f64, f64),
 }
 
-impl Colour {
-    pub fn build_colour_from_elements(
-        format: ColourFormat,
-        elements: &(f32, f32, f32, f32),
-    ) -> Self {
-        match format {
-            ColourFormat::Rgb => Colour::RGB(
-                elements.0 as f64,
-                elements.1 as f64,
-                elements.2 as f64,
-                elements.3 as f64,
+impl ConvertibleColour {
+    fn add_angle_to_hsluv(&self, delta: f64) -> Result<ConvertibleColour> {
+        // rotate the hue by the given delta
+        if let ConvertibleColour::HSLuv(h, s, l, a) = self.clone_as(ColourFormat::Hsluv)? {
+            return Ok(ConvertibleColour::HSLuv((h + delta) % 360.0, s, l, a));
+        }
+        Err(Error::Colour("add_angle_to_hsluv".to_string()))
+    }
+
+    // Return the 2 colours either side of this that are 'ang' degrees away
+    //
+    fn pair(&self, ang: f64) -> Result<(ConvertibleColour, ConvertibleColour)> {
+        let c1 = self.add_angle_to_hsluv(-ang)?;
+        let c2 = self.add_angle_to_hsluv(ang)?;
+        Ok((c1, c2))
+    }
+
+    // Returns the colour at the opposite end of the wheel
+    //
+    fn complementary(&self) -> Result<ConvertibleColour> {
+        let c1 = self.add_angle_to_hsluv(COLOUR_COMPLIMENTARY_ANGLE)?;
+        Ok(c1)
+    }
+
+    // Returns the 2 colours next to a complementary colour.
+    // e.g. if the input colour is at the 12 o'clock position,
+    // this will return the 5 o'clock and 7 o'clock colours
+    //
+    fn split_complementary(&self) -> Result<(ConvertibleColour, ConvertibleColour)> {
+        let c = self.add_angle_to_hsluv(COLOUR_COMPLIMENTARY_ANGLE)?;
+        c.pair(COLOUR_UNIT_ANGLE)
+    }
+
+    // Returns the adjacent colours.
+    // e.g. given a colour at 3 o'clock this will return the
+    // colours at 2 o'clock and 4 o'clock
+    //
+    fn analagous(&self) -> Result<(ConvertibleColour, ConvertibleColour)> {
+        self.pair(COLOUR_UNIT_ANGLE)
+    }
+
+    // Returns the 2 colours that will result in all 3 colours
+    // being evenly spaced around the colour wheel.
+    // e.g. given 12 o'clock this will return 4 o'clock and 8 o'clock
+    //
+    fn triad(&self) -> Result<(ConvertibleColour, ConvertibleColour)> {
+        self.pair(COLOUR_TRIAD_ANGLE)
+    }
+
+    pub fn build_convertible_colour_from_colour(colour: &Colour) -> Self {
+        match colour.format {
+            ColourFormat::Rgb => ConvertibleColour::RGB(
+                colour.e0 as f64,
+                colour.e1 as f64,
+                colour.e2 as f64,
+                colour.e3 as f64,
             ),
-            ColourFormat::Hsluv => Colour::HSLuv(
-                elements.0 as f64,
-                elements.1 as f64,
-                elements.2 as f64,
-                elements.3 as f64,
+            ColourFormat::Hsluv => ConvertibleColour::HSLuv(
+                colour.e0 as f64,
+                colour.e1 as f64,
+                colour.e2 as f64,
+                colour.e3 as f64,
             ),
-            ColourFormat::Hsl => Colour::HSL(
-                elements.0 as f64,
-                elements.1 as f64,
-                elements.2 as f64,
-                elements.3 as f64,
+            ColourFormat::Hsl => ConvertibleColour::HSL(
+                colour.e0 as f64,
+                colour.e1 as f64,
+                colour.e2 as f64,
+                colour.e3 as f64,
             ),
-            ColourFormat::Lab => Colour::LAB(
-                elements.0 as f64,
-                elements.1 as f64,
-                elements.2 as f64,
-                elements.3 as f64,
+            ColourFormat::Lab => ConvertibleColour::LAB(
+                colour.e0 as f64,
+                colour.e1 as f64,
+                colour.e2 as f64,
+                colour.e3 as f64,
             ),
-            ColourFormat::Hsv => Colour::HSV(
-                elements.0 as f64,
-                elements.1 as f64,
-                elements.2 as f64,
-                elements.3 as f64,
+            ColourFormat::Hsv => ConvertibleColour::HSV(
+                colour.e0 as f64,
+                colour.e1 as f64,
+                colour.e2 as f64,
+                colour.e3 as f64,
             ),
         }
     }
@@ -133,77 +286,105 @@ impl Colour {
     pub fn is_format(&self, format: ColourFormat) -> bool {
         match format {
             ColourFormat::Rgb => match *self {
-                Colour::RGB(_, _, _, _) => true,
+                ConvertibleColour::RGB(_, _, _, _) => true,
                 _ => false,
             },
             ColourFormat::Hsluv => match *self {
-                Colour::HSLuv(_, _, _, _) => true,
+                ConvertibleColour::HSLuv(_, _, _, _) => true,
                 _ => false,
             },
             ColourFormat::Hsl => match *self {
-                Colour::HSL(_, _, _, _) => true,
+                ConvertibleColour::HSL(_, _, _, _) => true,
                 _ => false,
             },
             ColourFormat::Lab => match *self {
-                Colour::LAB(_, _, _, _) => true,
+                ConvertibleColour::LAB(_, _, _, _) => true,
                 _ => false,
             },
             ColourFormat::Hsv => match *self {
-                Colour::HSV(_, _, _, _) => true,
+                ConvertibleColour::HSV(_, _, _, _) => true,
                 _ => false,
             },
         }
     }
 
-    pub fn to_rgba32_tuple(&self) -> Result<(f32, f32, f32, f32)> {
+    pub fn to_colour(&self) -> Result<Colour> {
         match *self {
-            Colour::RGB(r, g, b, a) => Ok((r as f32, g as f32, b as f32, a as f32)),
-            _ => {
-                if let Colour::RGB(r, g, b, a) = self.clone_as(ColourFormat::Rgb)? {
-                    Ok((r as f32, g as f32, b as f32, a as f32))
-                } else {
-                    Err(Error::Colour("col could not convert to RGB".to_string()))
-                }
-            }
+            ConvertibleColour::RGB(r, g, b, a) => Ok(Colour::new(
+                ColourFormat::Rgb,
+                r as f32,
+                g as f32,
+                b as f32,
+                a as f32,
+            )),
+            ConvertibleColour::HSL(h, s, l, a) => Ok(Colour::new(
+                ColourFormat::Hsl,
+                h as f32,
+                s as f32,
+                l as f32,
+                a as f32,
+            )),
+            ConvertibleColour::HSLuv(h, s, l, a) => Ok(Colour::new(
+                ColourFormat::Hsluv,
+                h as f32,
+                s as f32,
+                l as f32,
+                a as f32,
+            )),
+            ConvertibleColour::HSV(h, s, v, a) => Ok(Colour::new(
+                ColourFormat::Hsv,
+                h as f32,
+                s as f32,
+                v as f32,
+                a as f32,
+            )),
+            ConvertibleColour::LAB(l, a, b, al) => Ok(Colour::new(
+                ColourFormat::Lab,
+                l as f32,
+                a as f32,
+                b as f32,
+                al as f32,
+            )),
+            _ => Err(Error::Colour("to_colour".to_string())),
         }
     }
 
-    pub fn clone_as(&self, format: ColourFormat) -> Result<Colour> {
+    pub fn clone_as(&self, format: ColourFormat) -> Result<ConvertibleColour> {
         match *self {
-            Colour::HSL(h, s, l, alpha) => match format {
-                ColourFormat::Hsl => Ok(Colour::HSL(h, s, l, alpha)),
+            ConvertibleColour::HSL(h, s, l, alpha) => match format {
+                ColourFormat::Hsl => Ok(ConvertibleColour::HSL(h, s, l, alpha)),
                 ColourFormat::Hsluv => hsluv_from_xyz(xyz_from_rgb(rgb_from_hsl(*self)?)?),
                 ColourFormat::Hsv => hsv_from_rgb(rgb_from_hsl(*self)?),
                 ColourFormat::Lab => lab_from_xyz(xyz_from_rgb(rgb_from_hsl(*self)?)?),
                 ColourFormat::Rgb => rgb_from_hsl(*self),
             },
-            Colour::HSLuv(h, s, l, alpha) => match format {
+            ConvertibleColour::HSLuv(h, s, l, alpha) => match format {
                 ColourFormat::Hsl => hsl_from_rgb(rgb_from_xyz(xyz_from_hsluv(*self)?)?),
-                ColourFormat::Hsluv => Ok(Colour::HSLuv(h, s, l, alpha)),
+                ColourFormat::Hsluv => Ok(ConvertibleColour::HSLuv(h, s, l, alpha)),
                 ColourFormat::Hsv => hsv_from_rgb(rgb_from_xyz(xyz_from_hsluv(*self)?)?),
                 ColourFormat::Lab => lab_from_xyz(xyz_from_hsluv(*self)?),
                 ColourFormat::Rgb => rgb_from_xyz(xyz_from_hsluv(*self)?),
             },
-            Colour::HSV(h, s, v, alpha) => match format {
+            ConvertibleColour::HSV(h, s, v, alpha) => match format {
                 ColourFormat::Hsl => hsl_from_rgb(rgb_from_hsv(*self)?),
                 ColourFormat::Hsluv => hsluv_from_xyz(xyz_from_rgb(rgb_from_hsv(*self)?)?),
-                ColourFormat::Hsv => Ok(Colour::HSV(h, s, v, alpha)),
+                ColourFormat::Hsv => Ok(ConvertibleColour::HSV(h, s, v, alpha)),
                 ColourFormat::Lab => lab_from_xyz(xyz_from_rgb(rgb_from_hsv(*self)?)?),
                 ColourFormat::Rgb => rgb_from_hsv(*self),
             },
-            Colour::LAB(l, a, b, alpha) => match format {
+            ConvertibleColour::LAB(l, a, b, alpha) => match format {
                 ColourFormat::Hsl => hsl_from_rgb(rgb_from_xyz(xyz_from_lab(*self)?)?),
                 ColourFormat::Hsluv => hsluv_from_xyz(xyz_from_lab(*self)?),
                 ColourFormat::Hsv => hsv_from_rgb(rgb_from_xyz(xyz_from_lab(*self)?)?),
-                ColourFormat::Lab => Ok(Colour::LAB(l, a, b, alpha)),
+                ColourFormat::Lab => Ok(ConvertibleColour::LAB(l, a, b, alpha)),
                 ColourFormat::Rgb => rgb_from_xyz(xyz_from_lab(*self)?),
             },
-            Colour::RGB(r, g, b, alpha) => match format {
+            ConvertibleColour::RGB(r, g, b, alpha) => match format {
                 ColourFormat::Hsl => hsl_from_rgb(*self),
                 ColourFormat::Hsluv => hsluv_from_xyz(xyz_from_rgb(*self)?),
                 ColourFormat::Hsv => hsv_from_rgb(*self),
                 ColourFormat::Lab => lab_from_xyz(xyz_from_rgb(*self)?),
-                ColourFormat::Rgb => Ok(Colour::RGB(r, g, b, alpha)),
+                ColourFormat::Rgb => Ok(ConvertibleColour::RGB(r, g, b, alpha)),
             },
             _ => Err(Error::IncorrectColourFormat),
         }
@@ -226,9 +407,9 @@ fn axis_to_colour(a: f64) -> f64 {
     }
 }
 
-fn xyz_from_rgb(rgb: Colour) -> Result<Colour> {
+fn xyz_from_rgb(rgb: ConvertibleColour) -> Result<ConvertibleColour> {
     match rgb {
-        Colour::RGB(r, g, b, alpha) => {
+        ConvertibleColour::RGB(r, g, b, alpha) => {
             let rr = colour_to_axis(r);
             let gg = colour_to_axis(g);
             let bb = colour_to_axis(b);
@@ -248,15 +429,15 @@ fn xyz_from_rgb(rgb: Colour) -> Result<Colour> {
                 + (gg * 0.119_194_779_794_625_987_91)
                 + (bb * 0.950_532_152_249_660_580_86);
 
-            Ok(Colour::XYZ(x, y, z, alpha))
+            Ok(ConvertibleColour::XYZ(x, y, z, alpha))
         }
         _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn rgb_from_xyz(xyz: Colour) -> Result<Colour> {
+fn rgb_from_xyz(xyz: ConvertibleColour) -> Result<ConvertibleColour> {
     match xyz {
-        Colour::XYZ(x, y, z, alpha) => {
+        ConvertibleColour::XYZ(x, y, z, alpha) => {
             let r = (x * 3.240_969_941_904_521_343_77)
                 + (y * -1.537_383_177_570_093_457_94)
                 + (z * -0.498_610_760_293_003_283_66);
@@ -271,7 +452,7 @@ fn rgb_from_xyz(xyz: Colour) -> Result<Colour> {
             let gg = axis_to_colour(g);
             let bb = axis_to_colour(b);
 
-            Ok(Colour::RGB(rr, gg, bb, alpha))
+            Ok(ConvertibleColour::RGB(rr, gg, bb, alpha))
         }
         _ => Err(Error::IncorrectColourFormat),
     }
@@ -285,9 +466,9 @@ fn axis_to_lab_component(a: f64) -> f64 {
     }
 }
 
-fn lab_from_xyz(xyz: Colour) -> Result<Colour> {
+fn lab_from_xyz(xyz: ConvertibleColour) -> Result<ConvertibleColour> {
     match xyz {
-        Colour::XYZ(x, y, z, alpha) => {
+        ConvertibleColour::XYZ(x, y, z, alpha) => {
             let xr = x / WHITEPOINT_0;
             let yr = y / WHITEPOINT_1;
             let zr = z / WHITEPOINT_2;
@@ -300,7 +481,7 @@ fn lab_from_xyz(xyz: Colour) -> Result<Colour> {
             let a = 500.0 * (fx - fy);
             let b = 200.0 * (fy - fz);
 
-            Ok(Colour::LAB(l, a, b, alpha))
+            Ok(ConvertibleColour::LAB(l, a, b, alpha))
         }
         _ => Err(Error::IncorrectColourFormat),
     }
@@ -323,16 +504,16 @@ fn fmod(a: f64, b: f64) -> f64 {
 }
 
 // http://www.rapidtables.com/convert/color/rgb-to-hsl.htm
-fn hue(colour: Colour, max_chan: i32, chroma: f64) -> Result<f64> {
+fn hue(colour: ConvertibleColour, max_chan: i32, chroma: f64) -> Result<f64> {
     if chroma == 0.0 {
-        // return Err(Error::InvalidColourHue)
+        // return Err(Error::InvalidConvertibleColourHue)
         return Ok(0.0);
     }
 
     let mut angle: f64;
 
     match colour {
-        Colour::RGB(r, g, b, _) => {
+        ConvertibleColour::RGB(r, g, b, _) => {
             angle = match max_chan {
                 0 => fmod((g - b) / chroma, 6.0),
                 1 => ((b - r) / chroma) + 2.0,
@@ -353,9 +534,9 @@ fn hue(colour: Colour, max_chan: i32, chroma: f64) -> Result<f64> {
 }
 
 // http://www.rapidtables.com/convert/color/rgb-to-hsl.htm
-fn hsl_from_rgb(colour: Colour) -> Result<Colour> {
+fn hsl_from_rgb(colour: ConvertibleColour) -> Result<ConvertibleColour> {
     match colour {
-        Colour::RGB(r, g, b, alpha) => {
+        ConvertibleColour::RGB(r, g, b, alpha) => {
             let min_val = r.min(g).min(b);
             let max_val = r.max(g).max(b);
             let max_ch = max_channel(r, g, b);
@@ -370,15 +551,15 @@ fn hsl_from_rgb(colour: Colour) -> Result<Colour> {
                 delta / (1.0 - ((2.0 * lightness) - 1.0).abs())
             };
 
-            Ok(Colour::HSL(h, saturation, lightness, alpha))
+            Ok(ConvertibleColour::HSL(h, saturation, lightness, alpha))
         }
         _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn hsv_from_rgb(colour: Colour) -> Result<Colour> {
+fn hsv_from_rgb(colour: ConvertibleColour) -> Result<ConvertibleColour> {
     match colour {
-        Colour::RGB(r, g, b, alpha) => {
+        ConvertibleColour::RGB(r, g, b, alpha) => {
             let min_val = r.min(g).min(b);
             let max_val = r.max(g).max(b);
             let max_ch = max_channel(r, g, b);
@@ -393,13 +574,13 @@ fn hsv_from_rgb(colour: Colour) -> Result<Colour> {
             // TODO: set valid_hue
             // return col.set('valid_hue', valid_hue);
 
-            Ok(Colour::HSV(h, saturation, max_val, alpha))
+            Ok(ConvertibleColour::HSV(h, saturation, max_val, alpha))
         }
         _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn rgb_from_chm(chroma: f64, h: f64, m: f64, alpha: f64) -> Colour {
+fn rgb_from_chm(chroma: f64, h: f64, m: f64, alpha: f64) -> ConvertibleColour {
     // todo: validhue test
     //
     // if (c.get('validHue') === undefined) {
@@ -438,12 +619,12 @@ fn rgb_from_chm(chroma: f64, h: f64, m: f64, alpha: f64) -> Colour {
         b = x;
     }
 
-    Colour::RGB(r + m, g + m, b + m, alpha)
+    ConvertibleColour::RGB(r + m, g + m, b + m, alpha)
 }
 
-fn rgb_from_hsl(hsl: Colour) -> Result<Colour> {
+fn rgb_from_hsl(hsl: ConvertibleColour) -> Result<ConvertibleColour> {
     match hsl {
-        Colour::HSL(h, s, l, alpha) => {
+        ConvertibleColour::HSL(h, s, l, alpha) => {
             let chroma = (1.0 - ((2.0 * l) - 1.0).abs()) * s;
             let m = l - (0.5 * chroma);
 
@@ -464,9 +645,9 @@ fn lab_component_to_axis(l: f64) -> f64 {
     }
 }
 
-fn xyz_from_lab(lab: Colour) -> Result<Colour> {
+fn xyz_from_lab(lab: ConvertibleColour) -> Result<ConvertibleColour> {
     match lab {
-        Colour::LAB(l, a, b, alpha) => {
+        ConvertibleColour::LAB(l, a, b, alpha) => {
             let fy = (l + 16.0) / 116.0;
             let fz = fy - (b / 200.0);
             let fx = (a / 500.0) + fy;
@@ -481,7 +662,7 @@ fn xyz_from_lab(lab: Colour) -> Result<Colour> {
             }
             let zr = lab_component_to_axis(fz);
 
-            Ok(Colour::XYZ(
+            Ok(ConvertibleColour::XYZ(
                 WHITEPOINT_0 * xr,
                 WHITEPOINT_1 * yr,
                 WHITEPOINT_2 * zr,
@@ -492,9 +673,9 @@ fn xyz_from_lab(lab: Colour) -> Result<Colour> {
     }
 }
 
-fn rgb_from_hsv(hsv: Colour) -> Result<Colour> {
+fn rgb_from_hsv(hsv: ConvertibleColour) -> Result<ConvertibleColour> {
     match hsv {
-        Colour::HSV(h, s, v, alpha) => {
+        ConvertibleColour::HSV(h, s, v, alpha) => {
             let chroma = v * s;
             let m = v - chroma;
 
@@ -619,9 +800,9 @@ fn l2y(l: f64) -> f64 {
     }
 }
 
-fn luv_from_xyz(xyz: Colour) -> Result<Colour> {
+fn luv_from_xyz(xyz: ConvertibleColour) -> Result<ConvertibleColour> {
     match xyz {
-        Colour::XYZ(x, y, z, alpha) => {
+        ConvertibleColour::XYZ(x, y, z, alpha) => {
             let var_u = (4.0 * x) / (x + (15.0 * y) + (3.0 * z));
             let var_v = (9.0 * y) / (x + (15.0 * y) + (3.0 * z));
             let l = y2l(y);
@@ -629,20 +810,20 @@ fn luv_from_xyz(xyz: Colour) -> Result<Colour> {
             let v = 13.0 * l * (var_v - REF_V);
 
             if l < 0.000_000_01 {
-                Ok(Colour::LUV(l, 0.0, 0.0, alpha))
+                Ok(ConvertibleColour::LUV(l, 0.0, 0.0, alpha))
             } else {
-                Ok(Colour::LUV(l, u, v, alpha))
+                Ok(ConvertibleColour::LUV(l, u, v, alpha))
             }
         }
         _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn xyz_from_luv(luv: Colour) -> Result<Colour> {
+fn xyz_from_luv(luv: ConvertibleColour) -> Result<ConvertibleColour> {
     match luv {
-        Colour::LUV(l, u, v, alpha) => {
+        ConvertibleColour::LUV(l, u, v, alpha) => {
             if l <= 0.000_000_01 {
-                return Ok(Colour::XYZ(0.0, 0.0, 0.0, alpha));
+                return Ok(ConvertibleColour::XYZ(0.0, 0.0, 0.0, alpha));
             }
 
             let var_u = u / (13.0 * l) + REF_U;
@@ -651,15 +832,15 @@ fn xyz_from_luv(luv: Colour) -> Result<Colour> {
             let x = -(9.0 * y * var_u) / ((var_u - 4.0) * var_v - var_u * var_v);
             let z = (9.0 * y - (15.0 * var_v * y) - (var_v * x)) / (3.0 * var_v);
 
-            Ok(Colour::XYZ(x, y, z, alpha))
+            Ok(ConvertibleColour::XYZ(x, y, z, alpha))
         }
         _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn lch_from_luv(luv: Colour) -> Result<Colour> {
+fn lch_from_luv(luv: ConvertibleColour) -> Result<ConvertibleColour> {
     match luv {
-        Colour::LUV(l, u, v, alpha) => {
+        ConvertibleColour::LUV(l, u, v, alpha) => {
             let mut h: f64;
             let c = (u * u + v * v).sqrt();
 
@@ -672,28 +853,28 @@ fn lch_from_luv(luv: Colour) -> Result<Colour> {
                 }
             }
 
-            Ok(Colour::LCH(l, c, h, alpha))
+            Ok(ConvertibleColour::LCH(l, c, h, alpha))
         }
         _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn luv_from_lch(lch: Colour) -> Result<Colour> {
+fn luv_from_lch(lch: ConvertibleColour) -> Result<ConvertibleColour> {
     match lch {
-        Colour::LCH(l, c, h, alpha) => {
+        ConvertibleColour::LCH(l, c, h, alpha) => {
             let hrad = h * 0.017_453_292_519_943_295_77; /* (pi / 180.0) */
             let u = hrad.cos() * c;
             let v = hrad.sin() * c;
 
-            Ok(Colour::LUV(l, u, v, alpha))
+            Ok(ConvertibleColour::LUV(l, u, v, alpha))
         }
         _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn lch_from_hsluv(hsluv: Colour) -> Result<Colour> {
+fn lch_from_hsluv(hsluv: ConvertibleColour) -> Result<ConvertibleColour> {
     match hsluv {
-        Colour::HSLuv(h, s, l, alpha) => {
+        ConvertibleColour::HSLuv(h, s, l, alpha) => {
             let c = if l > 99.999_999_9 || l < 0.000_000_01 {
                 0.0
             } else {
@@ -701,18 +882,18 @@ fn lch_from_hsluv(hsluv: Colour) -> Result<Colour> {
             };
 
             if s < 0.000_000_01 {
-                Ok(Colour::LCH(l, c, 0.0, alpha))
+                Ok(ConvertibleColour::LCH(l, c, 0.0, alpha))
             } else {
-                Ok(Colour::LCH(l, c, h, alpha))
+                Ok(ConvertibleColour::LCH(l, c, h, alpha))
             }
         }
         _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn hsluv_from_lch(lch: Colour) -> Result<Colour> {
+fn hsluv_from_lch(lch: ConvertibleColour) -> Result<ConvertibleColour> {
     match lch {
-        Colour::LCH(l, c, h, alpha) => {
+        ConvertibleColour::LCH(l, c, h, alpha) => {
             let s = if l > 99.999_999_9 || l < 0.000_000_01 {
                 0.0
             } else {
@@ -720,20 +901,20 @@ fn hsluv_from_lch(lch: Colour) -> Result<Colour> {
             };
 
             if c < 0.000_000_01 {
-                Ok(Colour::HSLuv(0.0, s, l, alpha))
+                Ok(ConvertibleColour::HSLuv(0.0, s, l, alpha))
             } else {
-                Ok(Colour::HSLuv(h, s, l, alpha))
+                Ok(ConvertibleColour::HSLuv(h, s, l, alpha))
             }
         }
         _ => Err(Error::IncorrectColourFormat),
     }
 }
 
-fn xyz_from_hsluv(hsluv: Colour) -> Result<Colour> {
+fn xyz_from_hsluv(hsluv: ConvertibleColour) -> Result<ConvertibleColour> {
     xyz_from_luv(luv_from_lch(lch_from_hsluv(hsluv)?)?)
 }
 
-fn hsluv_from_xyz(xyz: Colour) -> Result<Colour> {
+fn hsluv_from_xyz(xyz: ConvertibleColour) -> Result<ConvertibleColour> {
     hsluv_from_lch(lch_from_luv(luv_from_xyz(xyz)?)?)
 }
 
@@ -758,37 +939,44 @@ mod tests {
         )
     }
 
-    fn assert_col(col: Colour, format: ColourFormat, c0: f64, c1: f64, c2: f64, c3: f64) {
+    fn assert_col(
+        col: ConvertibleColour,
+        format: ColourFormat,
+        c0: f64,
+        c1: f64,
+        c2: f64,
+        c3: f64,
+    ) {
         match col {
-            Colour::HSL(h, s, l, alpha) => {
+            ConvertibleColour::HSL(h, s, l, alpha) => {
                 is_format(format, ColourFormat::Hsl);
                 f64_within(TOLERANCE, h, c0, "HSL H");
                 f64_within(TOLERANCE, s, c1, "HSL_S");
                 f64_within(TOLERANCE, l, c2, "HSL_L");
                 f64_within(TOLERANCE, alpha, c3, "HSL_alpha");
             }
-            Colour::HSLuv(h, s, l, alpha) => {
+            ConvertibleColour::HSLuv(h, s, l, alpha) => {
                 is_format(format, ColourFormat::Hsluv);
                 f64_within(TOLERANCE, h, c0, "HSLuv H");
                 f64_within(TOLERANCE, s, c1, "HSLuv_S");
                 f64_within(TOLERANCE, l, c2, "HSLuv_L");
                 f64_within(TOLERANCE, alpha, c3, "HSLuv_alpha");
             }
-            Colour::HSV(h, s, v, alpha) => {
+            ConvertibleColour::HSV(h, s, v, alpha) => {
                 is_format(format, ColourFormat::Hsv);
                 f64_within(TOLERANCE, h, c0, "HSV H");
                 f64_within(TOLERANCE, s, c1, "HSV_S");
                 f64_within(TOLERANCE, v, c2, "HSV_V");
                 f64_within(TOLERANCE, alpha, c3, "HSV_alpha");
             }
-            Colour::LAB(l, a, b, alpha) => {
+            ConvertibleColour::LAB(l, a, b, alpha) => {
                 is_format(format, ColourFormat::Lab);
                 f64_within(TOLERANCE, l, c0, "LAB_L");
                 f64_within(TOLERANCE, a, c1, "LAB_A");
                 f64_within(TOLERANCE, b, c2, "LAB_B");
                 f64_within(TOLERANCE, alpha, c3, "LAB_alpha");
             }
-            Colour::RGB(r, g, b, alpha) => {
+            ConvertibleColour::RGB(r, g, b, alpha) => {
                 is_format(format, ColourFormat::Rgb);
                 f64_within(TOLERANCE, r, c0, "RGB R");
                 f64_within(TOLERANCE, g, c1, "RGB_G");
@@ -799,20 +987,30 @@ mod tests {
         }
     }
 
-    fn assert_colour_match(expected: Colour, col: Colour) {
+    fn assert_colour_match(expected: ConvertibleColour, col: ConvertibleColour) {
         match expected {
-            Colour::HSL(h, s, l, alpha) => assert_col(col, ColourFormat::Hsl, h, s, l, alpha),
-            Colour::HSLuv(h, s, l, alpha) => assert_col(col, ColourFormat::Hsluv, h, s, l, alpha),
-            Colour::HSV(h, s, v, alpha) => assert_col(col, ColourFormat::Hsv, h, s, v, alpha),
-            Colour::LAB(l, a, b, alpha) => assert_col(col, ColourFormat::Lab, l, a, b, alpha),
-            Colour::RGB(r, g, b, alpha) => assert_col(col, ColourFormat::Rgb, r, g, b, alpha),
+            ConvertibleColour::HSL(h, s, l, alpha) => {
+                assert_col(col, ColourFormat::Hsl, h, s, l, alpha)
+            }
+            ConvertibleColour::HSLuv(h, s, l, alpha) => {
+                assert_col(col, ColourFormat::Hsluv, h, s, l, alpha)
+            }
+            ConvertibleColour::HSV(h, s, v, alpha) => {
+                assert_col(col, ColourFormat::Hsv, h, s, v, alpha)
+            }
+            ConvertibleColour::LAB(l, a, b, alpha) => {
+                assert_col(col, ColourFormat::Lab, l, a, b, alpha)
+            }
+            ConvertibleColour::RGB(r, g, b, alpha) => {
+                assert_col(col, ColourFormat::Rgb, r, g, b, alpha)
+            }
             _ => assert_eq!(true, false),
         }
     }
 
     fn assert_colour_rgb_hsl_match(r: f64, g: f64, b: f64, h: f64, s: f64, l: f64) {
-        let rgb = Colour::RGB(r, g, b, 1.0);
-        let hsl = Colour::HSL(h, s, l, 1.0);
+        let rgb = ConvertibleColour::RGB(r, g, b, 1.0);
+        let hsl = ConvertibleColour::HSL(h, s, l, 1.0);
 
         assert_colour_match(rgb, hsl.clone_as(ColourFormat::Rgb).unwrap());
         assert_colour_match(hsl, rgb.clone_as(ColourFormat::Hsl).unwrap());
@@ -820,9 +1018,9 @@ mod tests {
 
     #[test]
     fn test_colour() {
-        let rgb = Colour::RGB(0.2, 0.09803921568627451, 0.49019607843137253, 1.0);
-        let hsl = Colour::HSL(255.6, 0.6666, 0.294, 1.0);
-        let lab = Colour::LAB(
+        let rgb = ConvertibleColour::RGB(0.2, 0.09803921568627451, 0.49019607843137253, 1.0);
+        let hsl = ConvertibleColour::HSL(255.6, 0.6666, 0.294, 1.0);
+        let lab = ConvertibleColour::LAB(
             19.555676428108306,
             39.130689315704764,
             -51.76254071703564,
@@ -844,8 +1042,9 @@ mod tests {
 
     #[test]
     fn test_colour_2() {
-        let rgb = Colour::RGB(0.066666, 0.8, 0.86666666, 1.0);
-        let hsluv = Colour::HSLuv(205.7022764106217, 98.91247496876854, 75.15356872935901, 1.0);
+        let rgb = ConvertibleColour::RGB(0.066666, 0.8, 0.86666666, 1.0);
+        let hsluv =
+            ConvertibleColour::HSLuv(205.7022764106217, 98.91247496876854, 75.15356872935901, 1.0);
 
         assert_colour_match(rgb, hsluv.clone_as(ColourFormat::Rgb).unwrap());
         assert_colour_match(hsluv, rgb.clone_as(ColourFormat::Hsluv).unwrap());

@@ -50,25 +50,19 @@ impl RenderPacket {
         self.geo.as_ptr() as *const f32
     }
 
-    pub fn add_vertex(
-        &mut self,
-        matrix: &Matrix,
-        x: f32,
-        y: f32,
-        col: (f32, f32, f32, f32),
-        u: f32,
-        v: f32,
-    ) {
+    pub fn add_vertex(&mut self, matrix: &Matrix, x: f32, y: f32, col: &Colour, u: f32, v: f32) {
+        // assuming that col is ColourFormat::Rgb
+
         let (nx, ny) = matrix.transform_vec2(x, y);
         // pre-multiply the alpha
         // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
         self.geo.append(&mut vec![
             nx,
             ny,
-            col.0 * col.3,
-            col.1 * col.3,
-            col.2 * col.3,
-            col.3,
+            col.e0 * col.e3,
+            col.e1 * col.e3,
+            col.e2 * col.e3,
+            col.e3,
             u,
             v,
         ]);
@@ -79,7 +73,7 @@ impl RenderPacket {
         self.dup();
 
         // add the new vertex to complete the degenerate triangle
-        self.add_vertex(matrix, x, y, (0.0, 0.0, 0.0, 0.0), 0.0, 0.0);
+        self.add_vertex(matrix, x, y, &Colour::default(), 0.0, 0.0);
 
         // Note: still need to call addVertex on the first
         // vertex when we 'really' render the strip
@@ -173,13 +167,10 @@ impl Geometry {
         from: (f32, f32),
         to: (f32, f32),
         width: f32,
-        from_col: (f32, f32, f32, f32),
-        to_col: (f32, f32, f32, f32),
+        from_col: &Colour,
+        to_col: &Colour,
         uvm: &UvMapping,
     ) -> Result<()> {
-        // let (fr, fg, fb, fa) = from_col.to_rgba32_tuple()?;
-        // let (tr, tg, tb, ta) = to_col.to_rgba32_tuple()?;
-
         let hw = (width * uvm.width_scale) / 2.0;
 
         let (nx, ny) = normal(from.0, from.1, to.0, to.1);
@@ -232,7 +223,7 @@ impl Geometry {
         position: (f32, f32),
         width: f32,
         height: f32,
-        colour: (f32, f32, f32, f32),
+        colour: &Colour,
         uvm: &UvMapping,
     ) -> Result<()> {
         let half_width = width / 2.0;
@@ -290,7 +281,7 @@ impl Geometry {
         position: (f32, f32),
         width: f32,
         height: f32,
-        colour: (f32, f32, f32, f32),
+        colour: &Colour,
         tessellation: usize,
         uvm: &UvMapping,
     ) -> Result<()> {
@@ -330,7 +321,7 @@ impl Geometry {
         position: (f32, f32),
         width: f32,
         height: f32,
-        colour: (f32, f32, f32, f32),
+        colour: &Colour,
         tessellation: usize,
         angle_start: f32,
         angle_end: f32,
@@ -400,17 +391,16 @@ impl Geometry {
         let rp = &mut self.render_packets[last];
 
         for i in 0..num_vertices {
-            if let Var::Colour(fmt, e0, e1, e2, e3) = colours[i] {
-                let mut colour: (f32, f32, f32, f32) = (e0, e1, e2, e3);
-
-                if fmt != ColourFormat::Rgb {
-                    // colour convert to rgb
-                    let some_col = Colour::build_colour_from_elements(fmt, &colour);
-                    colour = some_col.to_rgba32_tuple()?;
-                }
-
-                if let Var::V2D(x, y) = coords[i] {
-                    rp.add_vertex(matrix, x, y, colour, uvm.map[4], uvm.map[5])
+            if let Var::Colour(col) = colours[i] {
+                if col.format == ColourFormat::Rgb {
+                    if let Var::V2D(x, y) = coords[i] {
+                        rp.add_vertex(matrix, x, y, &col, uvm.map[4], uvm.map[5])
+                    }
+                } else {
+                    let rgb = col.to_rgb()?;
+                    if let Var::V2D(x, y) = coords[i] {
+                        rp.add_vertex(matrix, x, y, &rgb, uvm.map[4], uvm.map[5])
+                    }
                 }
             }
         }
@@ -427,7 +417,7 @@ impl Geometry {
         width_mapping: Easing,
         t_start: f32,
         t_end: f32,
-        colour: (f32, f32, f32, f32),
+        colour: &Colour,
         tessellation: usize,
         uvm: &UvMapping,
     ) -> Result<()> {
@@ -560,7 +550,7 @@ impl Geometry {
         width_mapping: Easing,
         t_start: f32,
         t_end: f32,
-        colour: (f32, f32, f32, f32),
+        colour: &Colour,
         tessellation: usize,
         uvm: &UvMapping,
     ) -> Result<()> {
@@ -687,7 +677,7 @@ impl Geometry {
         line_width: f32,
         t_start: f32,
         t_end: f32,
-        colour: (f32, f32, f32, f32),
+        colour: &Colour,
         tessellation: usize,
         uvm: &UvMapping,
     ) -> Result<()> {

@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
 
-use crate::colour::ColourFormat;
+use crate::colour::{Colour, ColourFormat};
 use crate::error::{Error, Result};
 use crate::keywords::{string_to_keyword_hash, Keyword};
 use crate::mathutil;
@@ -83,7 +83,7 @@ pub enum BytecodeArg {
     Native(Native),
     Mem(Mem),
     Keyword(Keyword),
-    Colour(ColourFormat, f32, f32, f32, f32),
+    Colour(Colour),
 }
 
 impl fmt::Display for BytecodeArg {
@@ -95,7 +95,9 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Native(n) => write!(f, "{:?}", n),
             BytecodeArg::Mem(m) => write!(f, "{}", m),
             BytecodeArg::Keyword(kw) => write!(f, "{}", kw),
-            BytecodeArg::Colour(s, a, b, c, d) => write!(f, "{}({} {} {} {})", s, a, b, c, d),
+            BytecodeArg::Colour(c) => {
+                write!(f, "{}({} {} {} {})", c.format, c.e0, c.e1, c.e2, c.e3)
+            }
         }
     }
 }
@@ -385,7 +387,7 @@ impl Compilation {
         let b = Bytecode {
             op,
             arg0: BytecodeArg::Mem(arg0),
-            arg1: BytecodeArg::Colour(ColourFormat::Rgb, r, g, b, a),
+            arg1: BytecodeArg::Colour(Colour::new(ColourFormat::Rgb, r, g, b, a)),
         };
 
         self.add_bytecode(b)?;
@@ -445,7 +447,7 @@ impl Compilation {
         let b = Bytecode {
             op,
             arg0: BytecodeArg::Int(arg0),
-            arg1: BytecodeArg::Colour(ColourFormat::Rgb, r, g, b, a),
+            arg1: BytecodeArg::Colour(Colour::new(ColourFormat::Rgb, r, g, b, a)),
         };
 
         self.add_bytecode(b)?;

@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::{Colour, ColourFormat};
+use crate::colour::*;
 use crate::compiler::Program;
 use crate::ease::*;
 use crate::error::{Error, Result};
@@ -305,12 +305,12 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     native_fns.insert(Native::ColHSLuv, bind_col_hsluv);
     native_fns.insert(Native::ColHSV, bind_col_hsv);
     native_fns.insert(Native::ColLAB, bind_col_lab);
-    // BIND("col/complementary", bind_col_complementary);
-    // BIND("col/split-complementary", bind_col_split_complementary);
-    // BIND("col/analagous", bind_col_analagous);
-    // BIND("col/triad", bind_col_triad);
-    // BIND("col/darken", bind_col_darken);
-    // BIND("col/lighten", bind_col_lighten);
+    native_fns.insert(Native::ColComplementary, bind_col_complementary);
+    native_fns.insert(Native::ColSplitComplementary, bind_col_split_complementary);
+    native_fns.insert(Native::ColAnalagous, bind_col_analagous);
+    native_fns.insert(Native::ColTriad, bind_col_triad);
+    native_fns.insert(Native::ColDarken, bind_col_darken);
+    native_fns.insert(Native::ColLighten, bind_col_lighten);
     native_fns.insert(Native::ColSetAlpha, bind_col_set_alpha);
     native_fns.insert(Native::ColGetAlpha, bind_col_get_alpha);
     native_fns.insert(Native::ColSetR, bind_col_set_r);
@@ -467,14 +467,10 @@ fn read_kw(iname: i32, value: &Var, keyword: Keyword) -> Option<Keyword> {
     None
 }
 
-fn read_col(
-    iname: i32,
-    value: &Var,
-    keyword: Keyword,
-) -> Option<(ColourFormat, f32, f32, f32, f32)> {
+fn read_col(iname: i32, value: &Var, keyword: Keyword) -> Option<(Colour)> {
     if iname == keyword as i32 {
-        if let Var::Colour(fmt, e0, e1, e2, e3) = value {
-            return Some((*fmt, *e0, *e1, *e2, *e3));
+        if let Var::Colour(col) = value {
+            return Some(*col);
         }
     }
     None
@@ -579,19 +575,6 @@ fn array_f32_8_from_vec(float_pairs: &[Var]) -> [f32; 8] {
     }
 
     res
-}
-
-fn rgb_tuples_from_colour_tuples(
-    col: &(ColourFormat, f32, f32, f32, f32),
-) -> Result<(f32, f32, f32, f32)> {
-    let (fmt, e0, e1, e2, e3) = col;
-
-    if *fmt == ColourFormat::Rgb {
-        Ok((*e0, *e1, *e2, *e3))
-    } else {
-        let colour = Colour::build_colour_from_elements(*fmt, &(*e0, *e1, *e2, *e3));
-        colour.to_rgba32_tuple()
-    }
 }
 
 pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -708,10 +691,9 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let mut width: Option<f32> = Some(4.0);
     let mut from: Option<(f32, f32)> = Some((10.0, 10.0));
     let mut to: Option<(f32, f32)> = Some((900.0, 900.0));
-    let mut from_colour: Option<(ColourFormat, f32, f32, f32, f32)> = None;
-    let mut to_colour: Option<(ColourFormat, f32, f32, f32, f32)> = None;
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut from_colour: Option<Colour> = None;
+    let mut to_colour: Option<Colour> = None;
+    let mut colour: Option<Colour> = Some(Default::default());
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -745,27 +727,27 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
         .mappings
         .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
 
-    let from_col = if let Some((fmt, fr, fg, fb, fa)) = from_colour {
-        (fmt, fr, fg, fb, fa)
+    let from_col = if let Some(c) = from_colour {
+        c
     } else {
         colour.unwrap()
     };
 
-    let to_col = if let Some((fmt, tr, tg, tb, ta)) = to_colour {
-        (fmt, tr, tg, tb, ta)
+    let to_col = if let Some(c) = to_colour {
+        c
     } else {
         colour.unwrap()
     };
 
-    if let Ok(from_rgb_tuples) = rgb_tuples_from_colour_tuples(&from_col) {
-        if let Ok(to_rgb_tuples) = rgb_tuples_from_colour_tuples(&to_col) {
+    if let Ok(from_c) = from_col.to_rgb() {
+        if let Ok(to_c) = to_col.to_rgb() {
             vm.geometry.render_line(
                 matrix,
                 from.unwrap(),
                 to.unwrap(),
                 width.unwrap(),
-                from_rgb_tuples,
-                to_rgb_tuples,
+                &from_c,
+                &to_c,
                 uvm,
             )?;
         }
@@ -779,8 +761,7 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<Colour> = Some(Default::default());
 
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -804,13 +785,13 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
 
-    if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+    if let Ok(rgb_c) = colour.unwrap().to_rgb() {
         vm.geometry.render_rect(
             matrix,
             position.unwrap(),
             width.unwrap(),
             height.unwrap(),
-            rgb_tuples,
+            &rgb_c,
             uvm,
         )?;
     }
@@ -822,8 +803,7 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<Colour> = Some(Default::default());
     let mut tessellation: Option<f32> = Some(10.0);
     let mut radius: Option<f32> = None;
 
@@ -857,13 +837,13 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
         height = Some(r);
     }
 
-    if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+    if let Ok(rgb_c) = colour.unwrap().to_rgb() {
         vm.geometry.render_circle(
             matrix,
             position.unwrap(),
             width.unwrap(),
             height.unwrap(),
-            rgb_tuples,
+            &rgb_c,
             tessellation.unwrap() as usize,
             uvm,
         )?;
@@ -876,8 +856,7 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<Colour> = Some(Default::default());
     let mut tessellation: Option<f32> = Some(10.0);
     let mut radius: Option<f32> = None;
     let mut angle_start: Option<f32> = Some(0.0);
@@ -919,13 +898,13 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
         height = Some(r);
     }
 
-    if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+    if let Ok(rgb_c) = colour.unwrap().to_rgb() {
         vm.geometry.render_circle_slice(
             matrix,
             position.unwrap(),
             width.unwrap(),
             height.unwrap(),
-            rgb_tuples,
+            &rgb_c,
             tessellation.unwrap() as usize,
             angle_start.unwrap(),
             angle_end.unwrap(),
@@ -980,8 +959,7 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     let mut t_start: Option<f32> = Some(0.0);
     let mut t_end: Option<f32> = Some(1.0);
     let mut tessellation: Option<f32> = Some(10.0);
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<Colour> = Some(Default::default());
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -1032,7 +1010,7 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
 
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
-        if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+        if let Ok(rgb_c) = colour.unwrap().to_rgb() {
             vm.geometry.render_quadratic(
                 matrix,
                 &co,
@@ -1041,7 +1019,7 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
                 mapping,
                 t_start.unwrap(),
                 t_end.unwrap(),
-                rgb_tuples,
+                &rgb_c,
                 tessellation.unwrap() as usize,
                 uvm,
             )?;
@@ -1060,8 +1038,7 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     let mut t_start: Option<f32> = Some(0.0);
     let mut t_end: Option<f32> = Some(1.0);
     let mut tessellation: Option<f32> = Some(10.0);
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<Colour> = Some(Default::default());
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -1112,7 +1089,7 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
 
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
-        if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+        if let Ok(rgb_c) = colour.unwrap().to_rgb() {
             vm.geometry.render_bezier(
                 matrix,
                 &co,
@@ -1121,7 +1098,7 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
                 mapping,
                 t_start.unwrap(),
                 t_end.unwrap(),
-                rgb_tuples,
+                &rgb_c,
                 tessellation.unwrap() as usize,
                 uvm,
             )?;
@@ -1137,8 +1114,7 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
     let mut t_start: Option<f32> = Some(0.0);
     let mut t_end: Option<f32> = Some(1.0);
     let mut tessellation: Option<f32> = Some(10.0);
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<Colour> = Some(Default::default());
     let mut brush: Option<BrushType> = Some(BrushType::Flat);
     let mut brush_subtype: Option<usize> = Some(0);
 
@@ -1172,14 +1148,14 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
 
     let co = array_f32_8_from_vec(coords.unwrap());
 
-    if let Ok(rgb_tuples) = rgb_tuples_from_colour_tuples(&colour.unwrap()) {
+    if let Ok(rgb_c) = colour.unwrap().to_rgb() {
         vm.geometry.render_bezier_bulging(
             matrix,
             &co,
             line_width.unwrap(),
             t_start.unwrap(),
             t_end.unwrap(),
-            rgb_tuples,
+            &rgb_c,
             tessellation.unwrap() as usize,
             uvm,
         )?;
@@ -1277,13 +1253,13 @@ pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         }
     }
 
-    Ok(Var::Colour(
+    Ok(Var::Colour(Colour::new(
         ColourFormat::Rgb,
         r.unwrap(),
         g.unwrap(),
         b.unwrap(),
         alpha.unwrap(),
-    ))
+    )))
 }
 
 pub fn bind_col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -1306,13 +1282,13 @@ pub fn bind_col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         }
     }
 
-    Ok(Var::Colour(
+    Ok(Var::Colour(Colour::new(
         ColourFormat::Hsl,
         h.unwrap(),
         s.unwrap(),
         l.unwrap(),
         alpha.unwrap(),
-    ))
+    )))
 }
 
 pub fn bind_col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -1335,13 +1311,13 @@ pub fn bind_col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
         }
     }
 
-    Ok(Var::Colour(
+    Ok(Var::Colour(Colour::new(
         ColourFormat::Hsluv,
         h.unwrap(),
         s.unwrap(),
         l.unwrap(),
         alpha.unwrap(),
-    ))
+    )))
 }
 
 pub fn bind_col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -1364,13 +1340,13 @@ pub fn bind_col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         }
     }
 
-    Ok(Var::Colour(
+    Ok(Var::Colour(Colour::new(
         ColourFormat::Hsv,
         h.unwrap(),
         s.unwrap(),
         v.unwrap(),
         alpha.unwrap(),
-    ))
+    )))
 }
 
 pub fn bind_col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -1393,23 +1369,109 @@ pub fn bind_col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         }
     }
 
-    Ok(Var::Colour(
+    Ok(Var::Colour(Colour::new(
         ColourFormat::Lab,
         l.unwrap(),
         a.unwrap(),
         b.unwrap(),
         alpha.unwrap(),
-    ))
+    )))
 }
 
-pub fn bind_col_set_elem(
-    idx: usize,
+pub fn bind_col_complementary(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut colour: Option<Colour> = Some(Default::default());
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_col!(colour, Keyword::Colour, iname, value);
+        }
+    }
+
+    if let Some(col) = colour {
+        let c1 = col.complementary()?;
+        return Ok(Var::Colour(c1));
+    }
+
+    Err(Error::Bind("col_complementary".to_string()))
+}
+
+pub fn bind_col_split_complementary(
     vm: &mut Vm,
     _program: &Program,
     num_args: usize,
 ) -> Result<Var> {
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
+    let mut colour: Option<Colour> = Some(Default::default());
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_col!(colour, Keyword::Colour, iname, value);
+        }
+    }
+
+    if let Some(c) = colour {
+        let (col1, col2) = c.split_complementary()?;
+        return Ok(Var::Vector(vec![Var::Colour(col1), Var::Colour(col2)]));
+    }
+
+    Err(Error::Bind("col_split_complementary".to_string()))
+}
+
+pub fn bind_col_analagous(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut colour: Option<Colour> = Some(Default::default());
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_col!(colour, Keyword::Colour, iname, value);
+        }
+    }
+
+    if let Some(c) = colour {
+        let (col1, col2) = c.analagous()?;
+        return Ok(Var::Vector(vec![Var::Colour(col1), Var::Colour(col2)]));
+    }
+
+    Err(Error::Bind("col_analagous".to_string()))
+}
+
+pub fn bind_col_triad(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut colour: Option<Colour> = Some(Default::default());
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_col!(colour, Keyword::Colour, iname, value);
+        }
+    }
+
+    if let Some(c) = colour {
+        let (col1, col2) = c.triad()?;
+        return Ok(Var::Vector(vec![Var::Colour(col1), Var::Colour(col2)]));
+    }
+
+    Err(Error::Bind("col_triad".to_string()))
+}
+
+pub fn bind_col_darken(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut colour: Option<Colour> = Some(Default::default());
     let mut val: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1424,18 +1486,96 @@ pub fn bind_col_set_elem(
         }
     }
 
-    if let Some((fmt, e0, e1, e2, e3)) = colour {
-        match idx {
-            0 => Ok(Var::Colour(fmt, val.unwrap(), e1, e2, e3)),
-            1 => Ok(Var::Colour(fmt, e0, val.unwrap(), e2, e3)),
-            2 => Ok(Var::Colour(fmt, e0, e1, val.unwrap(), e3)),
-            3 => Ok(Var::Colour(fmt, e0, e1, e2, val.unwrap())),
-            _ => Err(Error::Bind(
-                "bind_col_set_elem::idx out of range".to_string(),
-            )),
+    if let Some(value) = val {
+        if let Some(col) = colour {
+            let darkened = col.darken(value)?;
+            return Ok(Var::Colour(darkened));
         }
-    } else {
-        Err(Error::Bind("unreachable".to_string()))
+    }
+
+    Err(Error::Bind("col_darken".to_string()))
+}
+
+pub fn bind_col_lighten(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut colour: Option<Colour> = Some(Default::default());
+    let mut val: Option<f32> = Some(0.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_col!(colour, Keyword::Colour, iname, value);
+            read_float!(val, Keyword::Value, iname, value);
+        }
+    }
+
+    if let Some(value) = val {
+        if let Some(col) = colour {
+            let lightened = col.lighten(value)?;
+            return Ok(Var::Colour(lightened));
+        }
+    }
+
+    Err(Error::Bind("col_lighten".to_string()))
+}
+
+pub fn bind_col_set_elem(
+    idx: usize,
+    vm: &mut Vm,
+    _program: &Program,
+    num_args: usize,
+) -> Result<Var> {
+    let mut colour: Option<Colour> = Some(Default::default());
+    let mut val: Option<f32> = Some(0.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_col!(colour, Keyword::Colour, iname, value);
+            read_float!(val, Keyword::Value, iname, value);
+        }
+    }
+
+    let col = colour.unwrap();
+    match idx {
+        0 => Ok(Var::Colour(Colour::new(
+            col.format,
+            val.unwrap(),
+            col.e1,
+            col.e2,
+            col.e3,
+        ))),
+        1 => Ok(Var::Colour(Colour::new(
+            col.format,
+            col.e0,
+            val.unwrap(),
+            col.e2,
+            col.e3,
+        ))),
+        2 => Ok(Var::Colour(Colour::new(
+            col.format,
+            col.e0,
+            col.e1,
+            val.unwrap(),
+            col.e3,
+        ))),
+        3 => Ok(Var::Colour(Colour::new(
+            col.format,
+            col.e0,
+            col.e1,
+            col.e2,
+            val.unwrap(),
+        ))),
+        _ => Err(Error::Bind(
+            "bind_col_set_elem::idx out of range".to_string(),
+        )),
     }
 }
 
@@ -1445,9 +1585,7 @@ pub fn bind_col_get_elem(
     _program: &Program,
     num_args: usize,
 ) -> Result<Var> {
-    let mut colour: Option<(ColourFormat, f32, f32, f32, f32)> =
-        Some((ColourFormat::Rgb, 0.0, 0.0, 0.0, 1.0));
-
+    let mut colour: Option<Colour> = Some(Default::default());
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
         let label = &vm.stack[args_pointer];
@@ -1459,12 +1597,12 @@ pub fn bind_col_get_elem(
         }
     }
 
-    let (_fmt, e0, e1, e2, e3) = colour.unwrap();
+    let col = colour.unwrap();
     match idx {
-        0 => Ok(Var::Float(e0)),
-        1 => Ok(Var::Float(e1)),
-        2 => Ok(Var::Float(e2)),
-        3 => Ok(Var::Float(e3)),
+        0 => Ok(Var::Float(col.e0)),
+        1 => Ok(Var::Float(col.e1)),
+        2 => Ok(Var::Float(col.e2)),
+        3 => Ok(Var::Float(col.e3)),
         _ => Err(Error::Bind(
             "bind_col_get_elem::idx out of range".to_string(),
         )),
@@ -2261,12 +2399,12 @@ mod tests {
 
     fn is_col_rgb(s: &str, r: f32, g: f32, b: f32, alpha: f32) {
         let mut vm = Vm::new();
-        if let Var::Colour(fmt, e0, e1, e2, e3) = vm_exec(&mut vm, s) {
-            assert_eq!(fmt, ColourFormat::Rgb);
-            assert_eq!(e0, r);
-            assert_eq!(e1, g);
-            assert_eq!(e2, b);
-            assert_eq!(e3, alpha);
+        if let Var::Colour(col) = vm_exec(&mut vm, s) {
+            assert_eq!(col.format, ColourFormat::Rgb);
+            assert_eq!(col.e0, r);
+            assert_eq!(col.e1, g);
+            assert_eq!(col.e2, b);
+            assert_eq!(col.e3, alpha);
         }
     }
 

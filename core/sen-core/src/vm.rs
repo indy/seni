@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::ColourFormat;
+use crate::colour::Colour;
 use crate::compiler::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
 use crate::ease::Easing;
 use crate::error::{Error, Result};
@@ -74,7 +74,7 @@ pub enum Var {
     Long(u64),
     Name(i32),
     Vector(Vec<Var>),
-    Colour(ColourFormat, f32, f32, f32, f32),
+    Colour(Colour),
     V2D(f32, f32),
     Debug(String), // this is temporary REMOVE
     InterpState(InterpStateStruct),
@@ -90,9 +90,7 @@ impl fmt::Display for Var {
             Var::Long(u) => write!(f, "Long({})", u),
             Var::Name(i) => write!(f, "Name({})", i),
             Var::Vector(_) => write!(f, "Vector(todo: implement Display)"),
-            Var::Colour(format, e0, e1, e2, e3) => {
-                write!(f, "Colour({}, {}, {}, {}, {})", format, e0, e1, e2, e3)
-            }
+            Var::Colour(col) => write!(f, "Colour({})", col),
             Var::V2D(fl1, fl2) => write!(f, "V2D({}, {})", fl1, fl2),
             Var::Debug(s) => write!(f, "DEBUG: {}", s),
             Var::InterpState(state) => write!(f, "InterpState({:?})", state),
@@ -222,7 +220,7 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
         BytecodeArg::Native(_native) => Err(Error::VM(
             "bytecode_arg_to_var not implemented for BytecodeArg::Native".to_string(),
         )),
-        BytecodeArg::Colour(format, e0, e1, e2, e3) => Ok(Var::Colour(*format, *e0, *e1, *e2, *e3)),
+        BytecodeArg::Colour(col) => Ok(Var::Colour(*col)),
     }
 }
 
