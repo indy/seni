@@ -299,7 +299,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // --------------------------------------------------
     // colour
     // --------------------------------------------------
-    // BIND("col/convert", bind_col_convert);
+    native_fns.insert(Native::ColConvert, bind_col_convert);
     native_fns.insert(Native::ColRGB, bind_col_rgb);
     native_fns.insert(Native::ColHSL, bind_col_hsl);
     native_fns.insert(Native::ColHSLuv, bind_col_hsluv);
@@ -739,8 +739,8 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
         colour.unwrap()
     };
 
-    if let Ok(from_c) = from_col.to_rgb() {
-        if let Ok(to_c) = to_col.to_rgb() {
+    if let Ok(from_c) = from_col.convert(ColourFormat::Rgb) {
+        if let Ok(to_c) = to_col.convert(ColourFormat::Rgb) {
             vm.geometry.render_line(
                 matrix,
                 from.unwrap(),
@@ -785,7 +785,7 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
 
-    if let Ok(rgb_c) = colour.unwrap().to_rgb() {
+    if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
         vm.geometry.render_rect(
             matrix,
             position.unwrap(),
@@ -837,7 +837,7 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
         height = Some(r);
     }
 
-    if let Ok(rgb_c) = colour.unwrap().to_rgb() {
+    if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
         vm.geometry.render_circle(
             matrix,
             position.unwrap(),
@@ -898,7 +898,7 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
         height = Some(r);
     }
 
-    if let Ok(rgb_c) = colour.unwrap().to_rgb() {
+    if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
         vm.geometry.render_circle_slice(
             matrix,
             position.unwrap(),
@@ -1010,7 +1010,7 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
 
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
-        if let Ok(rgb_c) = colour.unwrap().to_rgb() {
+        if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
             vm.geometry.render_quadratic(
                 matrix,
                 &co,
@@ -1089,7 +1089,7 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
 
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
-        if let Ok(rgb_c) = colour.unwrap().to_rgb() {
+        if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
             vm.geometry.render_bezier(
                 matrix,
                 &co,
@@ -1148,7 +1148,7 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
 
     let co = array_f32_8_from_vec(coords.unwrap());
 
-    if let Ok(rgb_c) = colour.unwrap().to_rgb() {
+    if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
         vm.geometry.render_bezier_bulging(
             matrix,
             &co,
@@ -1229,6 +1229,34 @@ pub fn bind_scale(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
     }
 
     Ok(Var::Bool(true))
+}
+
+pub fn bind_col_convert(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut format: Option<Keyword> = Some(Keyword::Rgb);
+    let mut colour: Option<Colour> = Some(Default::default());
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_kw!(format, Keyword::Format, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
+        }
+    }
+
+    let fmt = colour_format_from_keyword(format.unwrap());
+
+    if let Some(fmt) = fmt {
+        if let Some(colour) = colour {
+            let col = colour.convert(fmt)?;
+            return Ok(Var::Colour(col));
+        }
+    }
+
+    Err(Error::Bind("col_convert".to_string()))
 }
 
 pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {

@@ -23,6 +23,7 @@
 // |--------+-----------+-------------+-------------|
 
 use crate::error::{Error, Result};
+use crate::keywords::Keyword;
 use crate::mathutil;
 
 use std;
@@ -73,6 +74,17 @@ pub enum ColourFormat {
     Lab,
 }
 
+pub fn colour_format_from_keyword(kw: Keyword) -> Option<ColourFormat> {
+    match kw {
+        Keyword::Rgb => Some(ColourFormat::Rgb),
+        Keyword::Hsl => Some(ColourFormat::Hsl),
+        Keyword::Hsluv => Some(ColourFormat::Hsluv),
+        Keyword::Hsv => Some(ColourFormat::Hsv),
+        Keyword::Lab => Some(ColourFormat::Lab),
+        _ => None,
+    }
+}
+
 impl fmt::Display for ColourFormat {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -117,14 +129,14 @@ impl Colour {
         }
     }
 
-    // todo: could this be a mut instead of returning a new Colour?
-    pub fn to_rgb(&self) -> Result<Colour> {
-        if self.format == ColourFormat::Rgb {
+    pub fn convert(&self, format: ColourFormat) -> Result<Colour> {
+        if self.format == format {
+            // todo: can we just return self rather than clone?
             Ok(self.clone())
         } else {
             let c = ConvertibleColour::build_convertible_colour_from_colour(&self);
-            let rgb = c.clone_as(ColourFormat::Rgb)?;
-            rgb.to_colour()
+            let new_col = c.clone_as(format)?;
+            new_col.to_colour()
         }
     }
 

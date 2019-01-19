@@ -397,7 +397,7 @@ impl Geometry {
                         rp.add_vertex(matrix, x, y, &col, uvm.map[4], uvm.map[5])
                     }
                 } else {
-                    let rgb = col.to_rgb()?;
+                    let rgb = col.convert(ColourFormat::Rgb)?;
                     if let Var::V2D(x, y) = coords[i] {
                         rp.add_vertex(matrix, x, y, &rgb, uvm.map[4], uvm.map[5])
                     }
