@@ -70,6 +70,7 @@ pub struct ProcColourStateStruct {
     pub a: [f32; 3],
     pub b: [f32; 3],
     pub c: [f32; 3],
+    pub d: [f32; 3],
     pub alpha: f32,
 }
 
@@ -79,6 +80,7 @@ impl Default for ProcColourStateStruct {
             a: [0.0, 0.0, 0.0],
             b: [0.0, 0.0, 0.0],
             c: [0.0, 0.0, 0.0],
+            d: [0.0, 0.0, 0.0],
             alpha: 1.0,
         }
     }

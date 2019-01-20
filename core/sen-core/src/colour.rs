@@ -25,6 +25,7 @@
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::mathutil;
+use crate::vm::ProcColourStateStruct;
 
 use std;
 use std::fmt;
@@ -74,14 +75,16 @@ pub enum ColourFormat {
     Lab,
 }
 
-pub fn colour_format_from_keyword(kw: Keyword) -> Option<ColourFormat> {
-    match kw {
-        Keyword::Rgb => Some(ColourFormat::Rgb),
-        Keyword::Hsl => Some(ColourFormat::Hsl),
-        Keyword::Hsluv => Some(ColourFormat::Hsluv),
-        Keyword::Hsv => Some(ColourFormat::Hsv),
-        Keyword::Lab => Some(ColourFormat::Lab),
-        _ => None,
+impl ColourFormat {
+    pub fn from_keyword(kw: Keyword) -> Option<ColourFormat> {
+        match kw {
+            Keyword::Rgb => Some(ColourFormat::Rgb),
+            Keyword::Hsl => Some(ColourFormat::Hsl),
+            Keyword::Hsluv => Some(ColourFormat::Hsluv),
+            Keyword::Hsv => Some(ColourFormat::Hsv),
+            Keyword::Lab => Some(ColourFormat::Lab),
+            _ => None,
+        }
     }
 }
 
@@ -93,6 +96,89 @@ impl fmt::Display for ColourFormat {
             ColourFormat::Hsluv => write!(f, "hsluv"),
             ColourFormat::Hsv => write!(f, "hsv"),
             ColourFormat::Lab => write!(f, "lab"),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum ColourPreset {
+    Chrome,
+    HotlineMiami,
+    KnightRider,
+    Mars,
+    Rainbow,
+    Robocop,
+    Transformers,
+}
+
+impl ColourPreset {
+    pub fn from_keyword(kw: Keyword) -> Option<ColourPreset> {
+        match kw {
+            Keyword::Chrome => Some(ColourPreset::Chrome),
+            Keyword::HotlineMiami => Some(ColourPreset::HotlineMiami),
+            Keyword::KnightRider => Some(ColourPreset::KnightRider),
+            Keyword::Mars => Some(ColourPreset::Mars),
+            Keyword::Rainbow => Some(ColourPreset::Rainbow),
+            Keyword::Robocop => Some(ColourPreset::Robocop),
+            Keyword::Transformers => Some(ColourPreset::Transformers),
+            _ => None,
+        }
+    }
+
+    pub fn colour_procedural(proc: &ProcColourStateStruct, t: f32) -> Colour {
+        Colour::new(
+            ColourFormat::Rgb,
+            proc.a[0] + proc.b[0] * (mathutil::TAU * (proc.c[0] * t + proc.d[0])).cos(),
+            proc.a[1] + proc.b[1] * (mathutil::TAU * (proc.c[1] * t + proc.d[1])).cos(),
+            proc.a[2] + proc.b[2] * (mathutil::TAU * (proc.c[2] * t + proc.d[2])).cos(),
+            proc.alpha,
+        )
+    }
+
+    pub fn get_preset(&self) -> ([f32; 3], [f32; 3], [f32; 3], [f32; 3]) {
+        match *self {
+            ColourPreset::Chrome => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 1.0, 1.0],
+                [0.0, 0.1, 0.2],
+            ),
+            ColourPreset::HotlineMiami => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [2.0, 1.0, 0.0],
+                [0.5, 0.2, 0.25],
+            ),
+            ColourPreset::KnightRider => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 0.7, 0.4],
+                [0.0, 0.15, 0.2],
+            ),
+            ColourPreset::Mars => (
+                [0.8, 0.5, 0.4],
+                [0.2, 0.4, 0.2],
+                [2.0, 1.0, 1.0],
+                [0.0, 0.25, 0.25],
+            ),
+            ColourPreset::Rainbow => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 1.0, 1.0],
+                [0.0, 3.33, 6.67],
+            ),
+            ColourPreset::Robocop => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 1.0, 1.0],
+                [0.3, 0.2, 0.2],
+            ),
+            ColourPreset::Transformers => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 1.0, 0.5],
+                [0.8, 0.9, 0.3],
+            ),
         }
     }
 }

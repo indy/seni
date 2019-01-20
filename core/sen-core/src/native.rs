@@ -23,7 +23,7 @@ use crate::mathutil;
 use crate::path::*;
 use crate::repeat::*;
 use crate::uvmapper::BrushType;
-use crate::vm::{InterpStateStruct, Var, Vm};
+use crate::vm::{InterpStateStruct, ProcColourStateStruct, Var, Vm};
 
 use std::collections::HashMap;
 
@@ -329,9 +329,9 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     native_fns.insert(Native::ColGetA, bind_col_get_a);
     native_fns.insert(Native::ColSetV, bind_col_set_v);
     native_fns.insert(Native::ColGetV, bind_col_get_v);
-    // BIND("col/build-procedural", bind_col_build_procedural);
+    native_fns.insert(Native::ColBuildProcedural, bind_col_build_procedural);
     // BIND("col/build-bezier", bind_col_build_bezier);
-    // BIND("col/value", bind_col_value);
+    native_fns.insert(Native::ColValue, bind_col_value);
 
     // --------------------------------------------------
     // math
@@ -485,6 +485,15 @@ fn read_interp(iname: i32, value: &Var, keyword: Keyword) -> Option<InterpStateS
     None
 }
 
+fn read_proc_colour(iname: i32, value: &Var, keyword: Keyword) -> Option<ProcColourStateStruct> {
+    if iname == keyword as i32 {
+        if let Var::ProcColourState(proc_colour_state) = value {
+            return Some(proc_colour_state.clone());
+        }
+    }
+    None
+}
+
 fn read_brush(iname: i32, value: &Var, keyword: Keyword) -> Option<BrushType> {
     if iname == keyword as i32 {
         if let Var::Keyword(n) = value {
@@ -543,6 +552,11 @@ macro_rules! read_col {
 macro_rules! read_interp {
     ($i:ident, $kw:expr, $in:ident, $v:ident) => {
         $i = read_interp(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_proc_colour {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_proc_colour(*$in, $v, $kw).or($i);
     };
 }
 macro_rules! read_brush {
@@ -1247,9 +1261,7 @@ pub fn bind_col_convert(vm: &mut Vm, _program: &Program, num_args: usize) -> Res
         }
     }
 
-    let fmt = colour_format_from_keyword(format.unwrap());
-
-    if let Some(fmt) = fmt {
+    if let Some(fmt) = ColourFormat::from_keyword(format.unwrap()) {
         if let Some(colour) = colour {
             let col = colour.convert(fmt)?;
             return Ok(Var::Colour(col));
@@ -1707,6 +1719,93 @@ pub fn bind_col_set_v(vm: &mut Vm, program: &Program, num_args: usize) -> Result
 
 pub fn bind_col_get_v(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     bind_col_get_elem(2, vm, program, num_args)
+}
+
+fn to_f32_3(v: Option<&Vec<Var>>) -> Result<[f32; 3]> {
+    if let Some(vecs) = v {
+        if let Var::Float(a) = vecs[0] {
+            if let Var::Float(b) = vecs[1] {
+                if let Var::Float(c) = vecs[2] {
+                    return Ok([a, b, c]);
+                }
+            }
+        }
+    }
+
+    Err(Error::Bind("to_f32_3".to_string()))
+}
+
+pub fn bind_col_build_procedural(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut preset: Option<Keyword> = None;
+    let mut alpha: Option<f32> = Some(1.0);
+    let mut a: Option<&Vec<Var>> = None;
+    let mut b: Option<&Vec<Var>> = None;
+    let mut c: Option<&Vec<Var>> = None;
+    let mut d: Option<&Vec<Var>> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_kw!(preset, Keyword::Preset, iname, value);
+            read_float!(alpha, Keyword::Alpha, iname, value);
+            read_vector!(a, Keyword::A, iname, value);
+            read_vector!(b, Keyword::B, iname, value);
+            read_vector!(c, Keyword::C, iname, value);
+            read_vector!(d, Keyword::D, iname, value);
+        }
+    }
+
+    if let Some(preset_keyword) = preset {
+        if let Some(preset) = ColourPreset::from_keyword(preset_keyword) {
+            let (a, b, c, d) = preset.get_preset();
+
+            return Ok(Var::ProcColourState(ProcColourStateStruct {
+                a,
+                b,
+                c,
+                d,
+                alpha: alpha.unwrap(),
+            }));
+        }
+    }
+
+    Ok(Var::ProcColourState(ProcColourStateStruct {
+        a: to_f32_3(a)?,
+        b: to_f32_3(b)?,
+        c: to_f32_3(c)?,
+        d: to_f32_3(d)?,
+        alpha: alpha.unwrap(),
+    }))
+}
+
+pub fn bind_col_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut from: Option<ProcColourStateStruct> = None;
+    let mut t: Option<f32> = Some(0.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_proc_colour!(from, Keyword::From, iname, value);
+            read_float!(t, Keyword::T, iname, value);
+        }
+    }
+
+    if let Some(proc_colour) = from {
+        let t = t.unwrap();
+        let res = ColourPreset::colour_procedural(&proc_colour, t);
+
+        return Ok(Var::Colour(res));
+    }
+
+    Err(Error::Bind("bind_col_value".to_string()))
 }
 
 pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
