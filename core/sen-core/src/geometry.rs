@@ -370,8 +370,8 @@ impl Geometry {
     pub fn render_poly(
         &mut self,
         matrix: &Matrix,
-        coords: &Vec<Var>,
-        colours: &Vec<Var>,
+        coords: &[Var],
+        colours: &[Var],
         uvm: &UvMapping,
     ) -> Result<()> {
         let num_vertices = coords.len();

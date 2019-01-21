@@ -13,20 +13,78 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::ease::*;
-use crate::mathutil::*;
-use crate::vm::InterpStateStruct;
+use crate::ease;
+use crate::mathutil;
 
-pub fn interp_from_struct(t: f32, interp_state: &InterpStateStruct) -> f32 {
-    let from_interp = (interp_state.from_m * t) + interp_state.from_c;
-    let to_interp = easing(from_interp, interp_state.mapping);
-    let res = (interp_state.to_m * to_interp) + interp_state.to_c;
+#[derive(Clone, Debug)]
+pub struct InterpStateStruct {
+    pub from_m: f32,
+    pub to_m: f32,
+    pub from_c: f32,
+    pub to_c: f32,
+    pub to: (f32, f32),
+    pub clamping: bool,
+    pub mapping: ease::Easing,
+}
 
-    if interp_state.clamping {
+impl Default for InterpStateStruct {
+    fn default() -> InterpStateStruct {
+        InterpStateStruct {
+            from_m: 0.0,
+            to_m: 0.0,
+            from_c: 0.0,
+            to_c: 0.0,
+            to: (0.0, 1.0),
+            clamping: false,
+            mapping: ease::Easing::Linear,
+        }
+    }
+}
+
+impl InterpStateStruct {
+    pub fn value(&self, t: f32) -> f32 {
+        let from_interp = (self.from_m * t) + self.from_c;
+        let to_interp = ease::easing(from_interp, self.mapping);
+        let res = (self.to_m * to_interp) + self.to_c;
+
+        if self.clamping {
+            if from_interp < 0.0 {
+                self.to.0
+            } else if from_interp > 1.0 {
+                self.to.1
+            } else {
+                res
+            }
+        } else {
+            res
+        }
+    }
+}
+
+pub fn parametric(
+    val: f32,
+    from_a: f32,
+    from_b: f32,
+    to_a: f32,
+    to_b: f32,
+    mapping: ease::Easing,
+    clamping: bool,
+) -> f32 {
+    let from_m = mathutil::mc_m(from_a, 0.0, from_b, 1.0);
+    let from_c = mathutil::mc_c(from_a, 0.0, from_m);
+
+    let to_m = mathutil::mc_m(0.0, to_a, 1.0, to_b);
+    let to_c = mathutil::mc_c(0.0, to_a, to_m);
+
+    let from_interp = (from_m * val) + from_c;
+    let to_interp = ease::easing(from_interp, mapping);
+    let res = (to_m * to_interp) + to_c;
+
+    if clamping {
         return if from_interp < 0.0 {
-            interp_state.to.0
+            to_a
         } else if from_interp > 1.0 {
-            interp_state.to.1
+            to_b
         } else {
             res
         };
@@ -35,9 +93,9 @@ pub fn interp_from_struct(t: f32, interp_state: &InterpStateStruct) -> f32 {
     res
 }
 
-pub fn interp_scalar(a: f32, b: f32, mapping: Easing, clamping: bool, t: f32) -> f32 {
-    let new_t = easing(t, mapping);
-    let res = lerp(new_t, a, b);
+pub fn scalar(a: f32, b: f32, mapping: ease::Easing, clamping: bool, t: f32) -> f32 {
+    let new_t = ease::easing(t, mapping);
+    let res = mathutil::lerp(new_t, a, b);
 
     if clamping {
         if new_t < 0.0 {
@@ -49,33 +107,33 @@ pub fn interp_scalar(a: f32, b: f32, mapping: Easing, clamping: bool, t: f32) ->
         }
     }
 
-    return res;
+    res
 }
 
-pub fn interp_cos(amplitude: f32, frequency: f32, t: f32) -> f32 {
+pub fn cos(amplitude: f32, frequency: f32, t: f32) -> f32 {
     amplitude * (t * frequency).cos()
 }
 
-pub fn interp_sin(amplitude: f32, frequency: f32, t: f32) -> f32 {
+pub fn sin(amplitude: f32, frequency: f32, t: f32) -> f32 {
     amplitude * (t * frequency).sin()
 }
 
-pub fn interp_bezier(coords: &[f32; 8], t: f32) -> (f32, f32) {
+pub fn bezier(coords: &[f32; 8], t: f32) -> (f32, f32) {
     (
-        bezier_point(coords[0], coords[2], coords[4], coords[6], t),
-        bezier_point(coords[1], coords[3], coords[5], coords[7], t),
+        mathutil::bezier_point(coords[0], coords[2], coords[4], coords[6], t),
+        mathutil::bezier_point(coords[1], coords[3], coords[5], coords[7], t),
     )
 }
 
-pub fn interp_bezier_tangent(coords: &[f32; 8], t: f32) -> (f32, f32) {
+pub fn bezier_tangent(coords: &[f32; 8], t: f32) -> (f32, f32) {
     (
-        bezier_tangent(coords[0], coords[2], coords[4], coords[6], t),
-        bezier_tangent(coords[1], coords[3], coords[5], coords[7], t),
+        mathutil::bezier_tangent(coords[0], coords[2], coords[4], coords[6], t),
+        mathutil::bezier_tangent(coords[1], coords[3], coords[5], coords[7], t),
     )
 }
 
-pub fn interp_circle(position: (f32, f32), radius: f32, t: f32) -> (f32, f32) {
-    let angle = t * TAU;
+pub fn circle(position: (f32, f32), radius: f32, t: f32) -> (f32, f32) {
+    let angle = t * mathutil::TAU;
 
     (
         (angle.sin() * radius) + position.0,
@@ -83,7 +141,7 @@ pub fn interp_circle(position: (f32, f32), radius: f32, t: f32) -> (f32, f32) {
     )
 }
 
-pub fn interp_ray(point: (f32, f32), direction: (f32, f32), t: f32) -> (f32, f32) {
+pub fn ray(point: (f32, f32), direction: (f32, f32), t: f32) -> (f32, f32) {
     // direction should be a normalized vector
     (point.0 + (direction.0 * t), point.1 + (direction.1 * t))
 }

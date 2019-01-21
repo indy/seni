@@ -23,7 +23,7 @@ use crate::keywords::{string_to_keyword_hash, Keyword};
 use crate::mathutil;
 use crate::native::Native;
 use crate::opcodes::{opcode_stack_offset, Opcode};
-use crate::parser::Node;
+use crate::parser::{Node, NodeMeta};
 
 const MEMORY_LOCAL_SIZE: usize = 40;
 
@@ -190,8 +190,17 @@ impl Program {
     }
 }
 
-fn is_node_colour_constructor(ast: &Node) -> bool {
-    if let Node::List(children, _) = ast {
+fn is_node_colour_constructor(node_meta: &NodeMeta) -> bool {
+    // get first Node::List from node_meta.parameter_ast
+    let ast = node_meta.parameter_ast.iter().find(|&n| {
+        if let Node::List(_, _) = n {
+            true
+        } else {
+            false
+        }
+    });
+
+    if let Some(Node::List(children, _)) = ast {
         if !children.is_empty() {
             if let Node::Name(_, iname, _) = &children[0] {
                 let col_constructor_start = Native::ColConstructorStart_ as i32;
@@ -886,7 +895,22 @@ impl Compiler {
         // todo: move this out of compile and into the compilation struct
 
         match ast {
-            Node::List(children, _) => self.compile_list(compilation, children)?,
+            Node::List(children, meta) => {
+                if let Some(node_meta) = meta {
+                    if is_node_colour_constructor(node_meta) {
+                        if let Some(_gene) = &node_meta.gene {
+                            unimplemented!();
+                        }
+                    } else {
+                        return Err(Error::Compiler(
+                            "given an alterable list that wasn't a colour constructor???"
+                                .to_string(),
+                        ));
+                    }
+                } else {
+                    self.compile_list(compilation, children)?
+                }
+            }
             Node::Float(f, _) => {
                 return compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f);
             }

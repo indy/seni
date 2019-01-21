@@ -26,6 +26,7 @@
 
 mod colour;
 mod ease;
+mod focal;
 mod interp;
 mod keywords;
 mod lexer;

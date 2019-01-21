@@ -47,15 +47,15 @@ fn flip(vm: &mut Vm, program: &Program, fun: usize, sx: f32, sy: f32, copy_val: 
     Ok(())
 }
 
-pub fn repeat_symmetry_vertical(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
+pub fn symmetry_vertical(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
     flip(vm, program, fun, -1.0, 1.0, 0)
 }
 
-pub fn repeat_symmetry_horizontal(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
+pub fn symmetry_horizontal(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
     flip(vm, program, fun, 1.0, -1.0, 0)
 }
 
-pub fn repeat_symmetry_4_copy_offset(
+pub fn symmetry_4_copy_offset(
     vm: &mut Vm,
     program: &Program,
     fun: usize,
@@ -73,24 +73,24 @@ pub fn repeat_symmetry_4_copy_offset(
     Ok(())
 }
 
-pub fn repeat_symmetry_4(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
-    repeat_symmetry_4_copy_offset(vm, program, fun, 0)
+pub fn symmetry_4(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
+    symmetry_4_copy_offset(vm, program, fun, 0)
 }
 
-pub fn repeat_symmetry_8(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
+pub fn symmetry_8(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
     vm.matrix_stack.push();
-    repeat_symmetry_4_copy_offset(vm, program, fun, 0)?;
+    symmetry_4_copy_offset(vm, program, fun, 0)?;
     vm.matrix_stack.pop();
 
     vm.matrix_stack.push();
     vm.matrix_stack.rotate(PI_BY_2);
-    repeat_symmetry_4_copy_offset(vm, program, fun, 4)?;
+    symmetry_4_copy_offset(vm, program, fun, 4)?;
     vm.matrix_stack.pop();
 
     Ok(())
 }
 
-pub fn repeat_rotate(vm: &mut Vm, program: &Program, fun: usize, copies: usize) -> Result<()> {
+pub fn rotate(vm: &mut Vm, program: &Program, fun: usize, copies: usize) -> Result<()> {
     let fn_info = &program.fn_info[fun];
     let ip = vm.ip;
 
@@ -115,12 +115,7 @@ pub fn repeat_rotate(vm: &mut Vm, program: &Program, fun: usize, copies: usize) 
     Ok(())
 }
 
-pub fn repeat_rotate_mirrored(
-    vm: &mut Vm,
-    program: &Program,
-    fun: usize,
-    copies: usize,
-) -> Result<()> {
+pub fn rotate_mirrored(vm: &mut Vm, program: &Program, fun: usize, copies: usize) -> Result<()> {
     let fn_info = &program.fn_info[fun];
     let ip = vm.ip;
 

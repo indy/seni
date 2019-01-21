@@ -15,15 +15,16 @@
 
 use crate::colour::*;
 use crate::compiler::Program;
-use crate::ease::*;
+use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
-use crate::interp::*;
+use crate::focal;
+use crate::interp;
 use crate::keywords::Keyword;
 use crate::mathutil;
-use crate::path::*;
-use crate::repeat::*;
+use crate::path;
+use crate::repeat;
 use crate::uvmapper::BrushType;
-use crate::vm::{InterpStateStruct, ProcColourStateStruct, Var, Vm};
+use crate::vm::{Var, Vm};
 
 use std::collections::HashMap;
 
@@ -264,153 +265,147 @@ pub enum Native {
 }
 
 pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
-    let mut native_fns: HashMap<Native, NativeCallback> = HashMap::new();
+    let mut h: HashMap<Native, NativeCallback> = HashMap::new();
 
     // --------------------------------------------------
     // misc
     // --------------------------------------------------
-    // BIND("debug/print", bind_debug_print);
-    native_fns.insert(Native::Nth, bind_nth);
-    native_fns.insert(Native::VectorLength, bind_vector_length);
-    native_fns.insert(Native::Probe, bind_probe);
+    // BIND("debug/print", debug_print);
+    h.insert(Native::Nth, nth);
+    h.insert(Native::VectorLength, vector_length);
+    h.insert(Native::Probe, probe);
     // map (todo)
 
     // --------------------------------------------------
     // shapes
     // --------------------------------------------------
-    native_fns.insert(Native::Line, bind_line);
-    native_fns.insert(Native::Rect, bind_rect);
-    native_fns.insert(Native::Circle, bind_circle);
-    native_fns.insert(Native::CircleSlice, bind_circle_slice);
-    native_fns.insert(Native::Poly, bind_poly);
-    native_fns.insert(Native::Quadratic, bind_quadratic);
-    native_fns.insert(Native::Bezier, bind_bezier);
-    native_fns.insert(Native::BezierBulging, bind_bezier_bulging);
-    // BIND("stroked-bezier", bind_stroked_bezier);
-    // BIND("stroked-bezier-rect", bind_stroked_bezier_rect);
+    h.insert(Native::Line, line);
+    h.insert(Native::Rect, rect);
+    h.insert(Native::Circle, circle);
+    h.insert(Native::CircleSlice, circle_slice);
+    h.insert(Native::Poly, poly);
+    h.insert(Native::Quadratic, quadratic);
+    h.insert(Native::Bezier, bezier);
+    h.insert(Native::BezierBulging, bezier_bulging);
+    // BIND("stroked-bezier", stroked_bezier);
+    // BIND("stroked-bezier-rect", stroked_bezier_rect);
 
     // --------------------------------------------------
     // transforms
     // --------------------------------------------------
-    native_fns.insert(Native::Translate, bind_translate);
-    native_fns.insert(Native::Rotate, bind_rotate);
-    native_fns.insert(Native::Scale, bind_scale);
+    h.insert(Native::Translate, translate);
+    h.insert(Native::Rotate, rotate);
+    h.insert(Native::Scale, scale);
 
     // --------------------------------------------------
     // colour
     // --------------------------------------------------
-    native_fns.insert(Native::ColConvert, bind_col_convert);
-    native_fns.insert(Native::ColRGB, bind_col_rgb);
-    native_fns.insert(Native::ColHSL, bind_col_hsl);
-    native_fns.insert(Native::ColHSLuv, bind_col_hsluv);
-    native_fns.insert(Native::ColHSV, bind_col_hsv);
-    native_fns.insert(Native::ColLAB, bind_col_lab);
-    native_fns.insert(Native::ColComplementary, bind_col_complementary);
-    native_fns.insert(Native::ColSplitComplementary, bind_col_split_complementary);
-    native_fns.insert(Native::ColAnalagous, bind_col_analagous);
-    native_fns.insert(Native::ColTriad, bind_col_triad);
-    native_fns.insert(Native::ColDarken, bind_col_darken);
-    native_fns.insert(Native::ColLighten, bind_col_lighten);
-    native_fns.insert(Native::ColSetAlpha, bind_col_set_alpha);
-    native_fns.insert(Native::ColGetAlpha, bind_col_get_alpha);
-    native_fns.insert(Native::ColSetR, bind_col_set_r);
-    native_fns.insert(Native::ColGetR, bind_col_get_r);
-    native_fns.insert(Native::ColSetG, bind_col_set_g);
-    native_fns.insert(Native::ColGetG, bind_col_get_g);
-    native_fns.insert(Native::ColSetB, bind_col_set_b);
-    native_fns.insert(Native::ColGetB, bind_col_get_b);
-    native_fns.insert(Native::ColSetH, bind_col_set_h);
-    native_fns.insert(Native::ColGetH, bind_col_get_h);
-    native_fns.insert(Native::ColSetS, bind_col_set_s);
-    native_fns.insert(Native::ColGetS, bind_col_get_s);
-    native_fns.insert(Native::ColSetL, bind_col_set_l);
-    native_fns.insert(Native::ColGetL, bind_col_get_l);
-    native_fns.insert(Native::ColSetA, bind_col_set_a);
-    native_fns.insert(Native::ColGetA, bind_col_get_a);
-    native_fns.insert(Native::ColSetV, bind_col_set_v);
-    native_fns.insert(Native::ColGetV, bind_col_get_v);
-    native_fns.insert(Native::ColBuildProcedural, bind_col_build_procedural);
-    // BIND("col/build-bezier", bind_col_build_bezier);
-    native_fns.insert(Native::ColValue, bind_col_value);
+    h.insert(Native::ColConvert, col_convert);
+    h.insert(Native::ColRGB, col_rgb);
+    h.insert(Native::ColHSL, col_hsl);
+    h.insert(Native::ColHSLuv, col_hsluv);
+    h.insert(Native::ColHSV, col_hsv);
+    h.insert(Native::ColLAB, col_lab);
+    h.insert(Native::ColComplementary, col_complementary);
+    h.insert(Native::ColSplitComplementary, col_split_complementary);
+    h.insert(Native::ColAnalagous, col_analagous);
+    h.insert(Native::ColTriad, col_triad);
+    h.insert(Native::ColDarken, col_darken);
+    h.insert(Native::ColLighten, col_lighten);
+    h.insert(Native::ColSetAlpha, col_set_alpha);
+    h.insert(Native::ColGetAlpha, col_get_alpha);
+    h.insert(Native::ColSetR, col_set_r);
+    h.insert(Native::ColGetR, col_get_r);
+    h.insert(Native::ColSetG, col_set_g);
+    h.insert(Native::ColGetG, col_get_g);
+    h.insert(Native::ColSetB, col_set_b);
+    h.insert(Native::ColGetB, col_get_b);
+    h.insert(Native::ColSetH, col_set_h);
+    h.insert(Native::ColGetH, col_get_h);
+    h.insert(Native::ColSetS, col_set_s);
+    h.insert(Native::ColGetS, col_get_s);
+    h.insert(Native::ColSetL, col_set_l);
+    h.insert(Native::ColGetL, col_get_l);
+    h.insert(Native::ColSetA, col_set_a);
+    h.insert(Native::ColGetA, col_get_a);
+    h.insert(Native::ColSetV, col_set_v);
+    h.insert(Native::ColGetV, col_get_v);
+    h.insert(Native::ColBuildProcedural, col_build_procedural);
+    // BIND("col/build-bezier", col_build_bezier);
+    h.insert(Native::ColValue, col_value);
 
     // --------------------------------------------------
     // math
     // --------------------------------------------------
-    native_fns.insert(Native::MathDistance, bind_math_distance);
-    native_fns.insert(Native::MathNormal, bind_math_normal);
-    native_fns.insert(Native::MathClamp, bind_math_clamp);
-    native_fns.insert(Native::MathRadiansDegrees, bind_math_radians_to_degrees);
-    native_fns.insert(Native::MathCos, bind_math_cos);
-    native_fns.insert(Native::MathSin, bind_math_sin);
+    h.insert(Native::MathDistance, math_distance);
+    h.insert(Native::MathNormal, math_normal);
+    h.insert(Native::MathClamp, math_clamp);
+    h.insert(Native::MathRadiansDegrees, math_radians_to_degrees);
+    h.insert(Native::MathCos, math_cos);
+    h.insert(Native::MathSin, math_sin);
 
     // --------------------------------------------------
     // prng
     // --------------------------------------------------
-    // BIND("prng/build", bind_prng_build);
-    // BIND("prng/values", bind_prng_values);
-    // BIND("prng/value", bind_prng_value);
-    // BIND("prng/perlin", bind_prng_perlin);
+    // BIND("prng/build", prng_build);
+    // BIND("prng/values", prng_values);
+    // BIND("prng/value", prng_value);
+    // BIND("prng/perlin", prng_perlin);
 
     // --------------------------------------------------
     // interp
     // --------------------------------------------------
-    native_fns.insert(Native::InterpBuild, bind_interp_build);
-    native_fns.insert(Native::InterpValue, bind_interp_value);
-    native_fns.insert(Native::InterpCos, bind_interp_cos);
-    native_fns.insert(Native::InterpSin, bind_interp_sin);
-    native_fns.insert(Native::InterpBezier, bind_interp_bezier);
-    native_fns.insert(Native::InterpBezierTangent, bind_interp_bezier_tangent);
-    native_fns.insert(Native::InterpRay, bind_interp_ray);
-    native_fns.insert(Native::InterpLine, bind_interp_line);
-    native_fns.insert(Native::InterpCircle, bind_interp_circle);
+    h.insert(Native::InterpBuild, interp_build);
+    h.insert(Native::InterpValue, interp_value);
+    h.insert(Native::InterpCos, interp_cos);
+    h.insert(Native::InterpSin, interp_sin);
+    h.insert(Native::InterpBezier, interp_bezier);
+    h.insert(Native::InterpBezierTangent, interp_bezier_tangent);
+    h.insert(Native::InterpRay, interp_ray);
+    h.insert(Native::InterpLine, interp_line);
+    h.insert(Native::InterpCircle, interp_circle);
 
     // --------------------------------------------------
     // path
     // --------------------------------------------------
-    native_fns.insert(Native::PathLinear, bind_path_linear);
-    native_fns.insert(Native::PathCircle, bind_path_circle);
-    native_fns.insert(Native::PathSpline, bind_path_spline);
-    native_fns.insert(Native::PathBezier, bind_path_bezier);
+    h.insert(Native::PathLinear, path_linear);
+    h.insert(Native::PathCircle, path_circle);
+    h.insert(Native::PathSpline, path_spline);
+    h.insert(Native::PathBezier, path_bezier);
 
     // --------------------------------------------------
     // repeat
     // --------------------------------------------------
-    native_fns.insert(
-        Native::RepeatSymmetryVertical,
-        bind_repeat_symmetry_vertical,
-    );
-    native_fns.insert(
-        Native::RepeatSymmetryHorizontal,
-        bind_repeat_symmetry_horizontal,
-    );
-    native_fns.insert(Native::RepeatSymmetry4, bind_repeat_symmetry_4);
-    native_fns.insert(Native::RepeatSymmetry8, bind_repeat_symmetry_8);
-    native_fns.insert(Native::RepeatRotate, bind_repeat_rotate);
-    native_fns.insert(Native::RepeatRotateMirrored, bind_repeat_mirrored);
+    h.insert(Native::RepeatSymmetryVertical, repeat_symmetry_vertical);
+    h.insert(Native::RepeatSymmetryHorizontal, repeat_symmetry_horizontal);
+    h.insert(Native::RepeatSymmetry4, repeat_symmetry_4);
+    h.insert(Native::RepeatSymmetry8, repeat_symmetry_8);
+    h.insert(Native::RepeatRotate, repeat_rotate);
+    h.insert(Native::RepeatRotateMirrored, repeat_mirrored);
 
     // --------------------------------------------------
     // focal
     // --------------------------------------------------
-    // BIND("focal/build-point", bind_focal_build_point);
-    // BIND("focal/build-vline", bind_focal_build_vline);
-    // BIND("focal/build-hline", bind_focal_build_hline);
-    // BIND("focal/value", bind_focal_value);
+    h.insert(Native::FocalBuildPoint, focal_build_point);
+    h.insert(Native::FocalBuildHLine, focal_build_hline);
+    h.insert(Native::FocalBuildVLine, focal_build_vline);
+    h.insert(Native::FocalValue, focal_value);
 
     // --------------------------------------------------
     // gen
     // --------------------------------------------------
-    // BIND("gen/stray-int", bind_gen_stray_int);
-    // BIND("gen/stray", bind_gen_stray);
-    // BIND("gen/stray-2d", bind_gen_stray_2d);
-    // BIND("gen/stray-3d", bind_gen_stray_3d);
-    // BIND("gen/stray-4d", bind_gen_stray_4d);
-    // BIND("gen/int", bind_gen_int);
-    // BIND("gen/scalar", bind_gen_scalar);
-    // BIND("gen/2d", bind_gen_2d);
-    // BIND("gen/select", bind_gen_select); // broken?
-    // BIND("gen/col", bind_gen_col);
+    // BIND("gen/stray-int", gen_stray_int);
+    // BIND("gen/stray", gen_stray);
+    // BIND("gen/stray-2d", gen_stray_2d);
+    // BIND("gen/stray-3d", gen_stray_3d);
+    // BIND("gen/stray-4d", gen_stray_4d);
+    // BIND("gen/int", gen_int);
+    // BIND("gen/scalar", gen_scalar);
+    // BIND("gen/2d", gen_2d);
+    // BIND("gen/select", gen_select); // broken?
+    // BIND("gen/col", gen_col);
 
-    native_fns
+    h
 }
 
 fn read_i32(iname: i32, value: &Var, keyword: Keyword) -> Option<i32> {
@@ -476,7 +471,7 @@ fn read_col(iname: i32, value: &Var, keyword: Keyword) -> Option<(Colour)> {
     None
 }
 
-fn read_interp(iname: i32, value: &Var, keyword: Keyword) -> Option<InterpStateStruct> {
+fn read_interp(iname: i32, value: &Var, keyword: Keyword) -> Option<interp::InterpStateStruct> {
     if iname == keyword as i32 {
         if let Var::InterpState(interp_state) = value {
             return Some(interp_state.clone());
@@ -489,6 +484,15 @@ fn read_proc_colour(iname: i32, value: &Var, keyword: Keyword) -> Option<ProcCol
     if iname == keyword as i32 {
         if let Var::ProcColourState(proc_colour_state) = value {
             return Some(proc_colour_state.clone());
+        }
+    }
+    None
+}
+
+fn read_focal(iname: i32, value: &Var, keyword: Keyword) -> Option<focal::FocalStateStruct> {
+    if iname == keyword as i32 {
+        if let Var::FocalState(focal_state) = value {
+            return Some(focal_state.clone());
         }
     }
     None
@@ -559,6 +563,11 @@ macro_rules! read_proc_colour {
         $i = read_proc_colour(*$in, $v, $kw).or($i);
     };
 }
+macro_rules! read_focal {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_focal(*$in, $v, $kw).or($i);
+    };
+}
 macro_rules! read_brush {
     ($i:ident, $kw:expr, $in:ident, $v:ident) => {
         $i = read_brush(*$in, $v, $kw).or($i);
@@ -591,7 +600,7 @@ fn array_f32_8_from_vec(float_pairs: &[Var]) -> [f32; 8] {
     res
 }
 
-pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut from: Option<&Var> = None;
     let mut n: Option<usize> = None;
 
@@ -620,23 +629,23 @@ pub fn bind_nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var>
             if let Some(nth) = vs.get(n.unwrap_or(0)) {
                 return Ok(nth.clone());
             } else {
-                return Err(Error::Bind("bind_nth: n out of range".to_string()));
+                return Err(Error::Bind("nth: n out of range".to_string()));
             }
         } else if let Var::V2D(a, b) = from {
             match n.unwrap_or(0) {
                 0 => return Ok(Var::Float(*a)),
                 1 => return Ok(Var::Float(*b)),
-                _ => return Err(Error::Bind("bind_nth: n out of range".to_string())),
+                _ => return Err(Error::Bind("nth: n out of range".to_string())),
             }
         }
     }
 
     Err(Error::Bind(
-        "bind_nth requires vector argument in 'from'".to_string(),
+        "nth requires vector argument in 'from'".to_string(),
     ))
 }
 
-pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut vector: Option<&Var> = None;
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -661,11 +670,11 @@ pub fn bind_vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     }
 
     Err(Error::Bind(
-        "bind_vector_length requires vector argument".to_string(),
+        "vector_length requires vector argument".to_string(),
     ))
 }
 
-pub fn bind_probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut scalar: Option<f32> = None;
     let mut vector: Option<(f32, f32)> = None;
     let mut worldspace: Option<(f32, f32)> = None;
@@ -701,7 +710,7 @@ pub fn bind_probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
     Ok(Var::Bool(true))
 }
 
-pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut width: Option<f32> = Some(4.0);
     let mut from: Option<(f32, f32)> = Some((10.0, 10.0));
     let mut to: Option<(f32, f32)> = Some((900.0, 900.0));
@@ -734,7 +743,7 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
         matrix
     } else {
-        return Err(Error::Bind("bind_line matrix error".to_string()));
+        return Err(Error::Bind("line matrix error".to_string()));
     };
 
     let uvm = vm
@@ -771,7 +780,7 @@ pub fn bind_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     // Ok(Var::Debug(format!("s: {}", s).to_string()))
 }
 
-pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
@@ -794,7 +803,7 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
         matrix
     } else {
-        return Err(Error::Bind("bind_line matrix error".to_string()));
+        return Err(Error::Bind("line matrix error".to_string()));
     };
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
@@ -813,7 +822,7 @@ pub fn bind_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     Ok(Var::Bool(true))
 }
 
-pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
@@ -840,7 +849,7 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
         matrix
     } else {
-        return Err(Error::Bind("bind_line matrix error".to_string()));
+        return Err(Error::Bind("line matrix error".to_string()));
     };
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
@@ -866,7 +875,7 @@ pub fn bind_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     Ok(Var::Bool(true))
 }
 
-pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut width: Option<f32> = Some(4.0);
     let mut height: Option<f32> = Some(10.0);
     let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
@@ -901,7 +910,7 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
     let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
         matrix
     } else {
-        return Err(Error::Bind("bind_line matrix error".to_string()));
+        return Err(Error::Bind("line matrix error".to_string()));
     };
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
@@ -931,7 +940,7 @@ pub fn bind_circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
     Ok(Var::Bool(true))
 }
 
-pub fn bind_poly(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn poly(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut coords: Option<&Vec<Var>> = None;
     let mut colours: Option<&Vec<Var>> = None;
 
@@ -950,7 +959,7 @@ pub fn bind_poly(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
         matrix
     } else {
-        return Err(Error::Bind("bind_line matrix error".to_string()));
+        return Err(Error::Bind("line matrix error".to_string()));
     };
 
     let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
@@ -964,7 +973,7 @@ pub fn bind_poly(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     Ok(Var::Bool(true))
 }
 
-pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut line_width: Option<f32> = None;
     let mut line_width_start: Option<f32> = Some(4.0);
     let mut line_width_end: Option<f32> = Some(4.0);
@@ -1001,7 +1010,7 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
         matrix
     } else {
-        return Err(Error::Bind("bind_bezier matrix error".to_string()));
+        return Err(Error::Bind("bezier matrix error".to_string()));
     };
 
     let uvm = vm
@@ -1043,7 +1052,7 @@ pub fn bind_quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     Ok(Var::Bool(true))
 }
 
-pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut line_width: Option<f32> = None;
     let mut line_width_start: Option<f32> = Some(4.0);
     let mut line_width_end: Option<f32> = Some(4.0);
@@ -1080,7 +1089,7 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
         matrix
     } else {
-        return Err(Error::Bind("bind_bezier matrix error".to_string()));
+        return Err(Error::Bind("bezier matrix error".to_string()));
     };
 
     let uvm = vm
@@ -1122,7 +1131,7 @@ pub fn bind_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     Ok(Var::Bool(true))
 }
 
-pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut line_width: Option<f32> = Some(4.0);
     let mut coords: Option<&Vec<Var>> = None;
     let mut t_start: Option<f32> = Some(0.0);
@@ -1153,7 +1162,7 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
     let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
         matrix
     } else {
-        return Err(Error::Bind("bind_bezier matrix error".to_string()));
+        return Err(Error::Bind("bezier matrix error".to_string()));
     };
 
     let uvm = vm
@@ -1178,7 +1187,7 @@ pub fn bind_bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> 
     Ok(Var::Bool(true))
 }
 
-pub fn bind_translate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn translate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut vector: Option<(f32, f32)> = Some((0.0, 0.0));
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1199,7 +1208,7 @@ pub fn bind_translate(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     Ok(Var::Bool(true))
 }
 
-pub fn bind_rotate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn rotate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut angle: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1220,7 +1229,7 @@ pub fn bind_rotate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
     Ok(Var::Bool(true))
 }
 
-pub fn bind_scale(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn scale(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut vector: Option<(f32, f32)> = Some((1.0, 1.0));
     let mut scalar: Option<f32> = None;
 
@@ -1245,7 +1254,7 @@ pub fn bind_scale(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
     Ok(Var::Bool(true))
 }
 
-pub fn bind_col_convert(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_convert(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut format: Option<Keyword> = Some(Keyword::Rgb);
     let mut colour: Option<Colour> = Some(Default::default());
 
@@ -1271,7 +1280,7 @@ pub fn bind_col_convert(vm: &mut Vm, _program: &Program, num_args: usize) -> Res
     Err(Error::Bind("col_convert".to_string()))
 }
 
-pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
 
     let mut r: Option<f32> = Some(0.0);
@@ -1302,7 +1311,7 @@ pub fn bind_col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
     )))
 }
 
-pub fn bind_col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut h: Option<f32> = Some(0.0);
     let mut s: Option<f32> = Some(0.0);
     let mut l: Option<f32> = Some(0.0);
@@ -1331,7 +1340,7 @@ pub fn bind_col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
     )))
 }
 
-pub fn bind_col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut h: Option<f32> = Some(0.0);
     let mut s: Option<f32> = Some(0.0);
     let mut l: Option<f32> = Some(0.0);
@@ -1360,7 +1369,7 @@ pub fn bind_col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     )))
 }
 
-pub fn bind_col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut h: Option<f32> = Some(0.0);
     let mut s: Option<f32> = Some(0.0);
     let mut v: Option<f32> = Some(0.0);
@@ -1389,7 +1398,7 @@ pub fn bind_col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
     )))
 }
 
-pub fn bind_col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut l: Option<f32> = Some(0.0);
     let mut a: Option<f32> = Some(0.0);
     let mut b: Option<f32> = Some(0.0);
@@ -1418,7 +1427,7 @@ pub fn bind_col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
     )))
 }
 
-pub fn bind_col_complementary(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_complementary(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut colour: Option<Colour> = Some(Default::default());
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1440,11 +1449,7 @@ pub fn bind_col_complementary(vm: &mut Vm, _program: &Program, num_args: usize) 
     Err(Error::Bind("col_complementary".to_string()))
 }
 
-pub fn bind_col_split_complementary(
-    vm: &mut Vm,
-    _program: &Program,
-    num_args: usize,
-) -> Result<Var> {
+pub fn col_split_complementary(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut colour: Option<Colour> = Some(Default::default());
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1466,7 +1471,7 @@ pub fn bind_col_split_complementary(
     Err(Error::Bind("col_split_complementary".to_string()))
 }
 
-pub fn bind_col_analagous(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_analagous(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut colour: Option<Colour> = Some(Default::default());
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1488,7 +1493,7 @@ pub fn bind_col_analagous(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     Err(Error::Bind("col_analagous".to_string()))
 }
 
-pub fn bind_col_triad(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_triad(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut colour: Option<Colour> = Some(Default::default());
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1510,7 +1515,7 @@ pub fn bind_col_triad(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     Err(Error::Bind("col_triad".to_string()))
 }
 
-pub fn bind_col_darken(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_darken(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut colour: Option<Colour> = Some(Default::default());
     let mut val: Option<f32> = Some(0.0);
 
@@ -1536,7 +1541,7 @@ pub fn bind_col_darken(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
     Err(Error::Bind("col_darken".to_string()))
 }
 
-pub fn bind_col_lighten(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_lighten(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut colour: Option<Colour> = Some(Default::default());
     let mut val: Option<f32> = Some(0.0);
 
@@ -1562,12 +1567,7 @@ pub fn bind_col_lighten(vm: &mut Vm, _program: &Program, num_args: usize) -> Res
     Err(Error::Bind("col_lighten".to_string()))
 }
 
-pub fn bind_col_set_elem(
-    idx: usize,
-    vm: &mut Vm,
-    _program: &Program,
-    num_args: usize,
-) -> Result<Var> {
+pub fn col_set_elem(idx: usize, vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut colour: Option<Colour> = Some(Default::default());
     let mut val: Option<f32> = Some(0.0);
 
@@ -1613,18 +1613,11 @@ pub fn bind_col_set_elem(
             col.e2,
             val.unwrap(),
         ))),
-        _ => Err(Error::Bind(
-            "bind_col_set_elem::idx out of range".to_string(),
-        )),
+        _ => Err(Error::Bind("col_set_elem::idx out of range".to_string())),
     }
 }
 
-pub fn bind_col_get_elem(
-    idx: usize,
-    vm: &mut Vm,
-    _program: &Program,
-    num_args: usize,
-) -> Result<Var> {
+pub fn col_get_elem(idx: usize, vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut colour: Option<Colour> = Some(Default::default());
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -1643,82 +1636,80 @@ pub fn bind_col_get_elem(
         1 => Ok(Var::Float(col.e1)),
         2 => Ok(Var::Float(col.e2)),
         3 => Ok(Var::Float(col.e3)),
-        _ => Err(Error::Bind(
-            "bind_col_get_elem::idx out of range".to_string(),
-        )),
+        _ => Err(Error::Bind("col_get_elem::idx out of range".to_string())),
     }
 }
 
-pub fn bind_col_set_alpha(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_set_elem(3, vm, program, num_args)
+pub fn col_set_alpha(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_set_elem(3, vm, program, num_args)
 }
 
-pub fn bind_col_get_alpha(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_get_elem(3, vm, program, num_args)
+pub fn col_get_alpha(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_get_elem(3, vm, program, num_args)
 }
 
-pub fn bind_col_set_r(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_set_elem(0, vm, program, num_args)
+pub fn col_set_r(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_set_elem(0, vm, program, num_args)
 }
 
-pub fn bind_col_get_r(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_get_elem(0, vm, program, num_args)
+pub fn col_get_r(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_get_elem(0, vm, program, num_args)
 }
 
-pub fn bind_col_set_g(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_set_elem(1, vm, program, num_args)
+pub fn col_set_g(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_set_elem(1, vm, program, num_args)
 }
 
-pub fn bind_col_get_g(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_get_elem(1, vm, program, num_args)
+pub fn col_get_g(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_get_elem(1, vm, program, num_args)
 }
 
-pub fn bind_col_set_b(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_set_elem(2, vm, program, num_args)
+pub fn col_set_b(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_set_elem(2, vm, program, num_args)
 }
 
-pub fn bind_col_get_b(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_get_elem(2, vm, program, num_args)
+pub fn col_get_b(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_get_elem(2, vm, program, num_args)
 }
 
-pub fn bind_col_set_h(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_set_elem(0, vm, program, num_args)
+pub fn col_set_h(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_set_elem(0, vm, program, num_args)
 }
 
-pub fn bind_col_get_h(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_get_elem(0, vm, program, num_args)
+pub fn col_get_h(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_get_elem(0, vm, program, num_args)
 }
 
-pub fn bind_col_set_s(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_set_elem(1, vm, program, num_args)
+pub fn col_set_s(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_set_elem(1, vm, program, num_args)
 }
 
-pub fn bind_col_get_s(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_get_elem(1, vm, program, num_args)
+pub fn col_get_s(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_get_elem(1, vm, program, num_args)
 }
 
-pub fn bind_col_set_l(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_set_elem(2, vm, program, num_args)
+pub fn col_set_l(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_set_elem(2, vm, program, num_args)
 }
 
-pub fn bind_col_get_l(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_get_elem(2, vm, program, num_args)
+pub fn col_get_l(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_get_elem(2, vm, program, num_args)
 }
 
-pub fn bind_col_set_a(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_set_elem(1, vm, program, num_args)
+pub fn col_set_a(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_set_elem(1, vm, program, num_args)
 }
 
-pub fn bind_col_get_a(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_get_elem(1, vm, program, num_args)
+pub fn col_get_a(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_get_elem(1, vm, program, num_args)
 }
 
-pub fn bind_col_set_v(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_set_elem(2, vm, program, num_args)
+pub fn col_set_v(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_set_elem(2, vm, program, num_args)
 }
 
-pub fn bind_col_get_v(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    bind_col_get_elem(2, vm, program, num_args)
+pub fn col_get_v(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+    col_get_elem(2, vm, program, num_args)
 }
 
 fn to_f32_3(v: Option<&Vec<Var>>) -> Result<[f32; 3]> {
@@ -1735,7 +1726,7 @@ fn to_f32_3(v: Option<&Vec<Var>>) -> Result<[f32; 3]> {
     Err(Error::Bind("to_f32_3".to_string()))
 }
 
-pub fn bind_col_build_procedural(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_build_procedural(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut preset: Option<Keyword> = None;
     let mut alpha: Option<f32> = Some(1.0);
     let mut a: Option<&Vec<Var>> = None;
@@ -1782,7 +1773,7 @@ pub fn bind_col_build_procedural(vm: &mut Vm, _program: &Program, num_args: usiz
     }))
 }
 
-pub fn bind_col_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn col_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut from: Option<ProcColourStateStruct> = None;
     let mut t: Option<f32> = Some(0.0);
 
@@ -1800,15 +1791,15 @@ pub fn bind_col_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
 
     if let Some(proc_colour) = from {
         let t = t.unwrap();
-        let res = ColourPreset::colour_procedural(&proc_colour, t);
+        let res = proc_colour.colour(t);
 
         return Ok(Var::Colour(res));
     }
 
-    Err(Error::Bind("bind_col_value".to_string()))
+    Err(Error::Bind("col_value".to_string()))
 }
 
-pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut vec1: Option<(f32, f32)> = Some((0.0, 0.0));
     let mut vec2: Option<(f32, f32)> = Some((0.0, 0.0));
 
@@ -1831,7 +1822,7 @@ pub fn bind_math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     Ok(Var::Float(distance))
 }
 
-pub fn bind_math_normal(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn math_normal(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut vec1: Option<(f32, f32)> = Some((0.0, 0.0));
     let mut vec2: Option<(f32, f32)> = Some((0.0, 0.0));
 
@@ -1854,7 +1845,7 @@ pub fn bind_math_normal(vm: &mut Vm, _program: &Program, num_args: usize) -> Res
     Ok(Var::V2D(norm.0, norm.1))
 }
 
-pub fn bind_math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     // todo: try and move functions like this into ones that initially
     // create and return a function that takes a single argument.
     // e.g.
@@ -1886,11 +1877,7 @@ pub fn bind_math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
     Ok(Var::Float(res))
 }
 
-pub fn bind_math_radians_to_degrees(
-    vm: &mut Vm,
-    _program: &Program,
-    num_args: usize,
-) -> Result<Var> {
+pub fn math_radians_to_degrees(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut angle: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1908,7 +1895,7 @@ pub fn bind_math_radians_to_degrees(
     Ok(Var::Float(res))
 }
 
-pub fn bind_math_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn math_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut angle: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1926,7 +1913,7 @@ pub fn bind_math_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
     Ok(Var::Float(res))
 }
 
-pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut angle: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -1944,7 +1931,7 @@ pub fn bind_math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
     Ok(Var::Float(res))
 }
 
-pub fn bind_interp_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn interp_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut from_: Option<(f32, f32)> = Some((0.0, 1.0));
     let mut to_: Option<(f32, f32)> = Some((0.0, 100.0));
     let mut clamping_: Option<Keyword> = Some(Keyword::False);
@@ -1974,7 +1961,7 @@ pub fn bind_interp_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
         let to_m = mathutil::mc_m(0.0, to.0, 1.0, to.1);
         let to_c = mathutil::mc_c(0.0, to.0, to_m);
 
-        return Ok(Var::InterpState(InterpStateStruct {
+        return Ok(Var::InterpState(interp::InterpStateStruct {
             from_m,
             to_m,
             from_c,
@@ -1985,11 +1972,11 @@ pub fn bind_interp_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
         }));
     }
 
-    Err(Error::Bind("bind_interp_build".to_string()))
+    Err(Error::Bind("interp_build".to_string()))
 }
 
-pub fn bind_interp_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut from: Option<InterpStateStruct> = None;
+pub fn interp_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut from: Option<interp::InterpStateStruct> = None;
     let mut t: Option<f32> = Some(0.0);
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -2006,15 +1993,15 @@ pub fn bind_interp_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Re
 
     if let Some(interp_state) = from {
         let t = t.unwrap();
-        let res = interp_from_struct(t, &interp_state);
+        let res = interp_state.value(t);
 
         return Ok(Var::Float(res));
     }
 
-    Err(Error::Bind("bind_interp_value".to_string()))
+    Err(Error::Bind("interp_value".to_string()))
 }
 
-pub fn bind_interp_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn interp_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut amplitude: Option<f32> = Some(1.0);
     let mut frequency: Option<f32> = Some(1.0);
     let mut t: Option<f32> = Some(1.0); // t goes from 0 to TAU
@@ -2032,12 +2019,12 @@ pub fn bind_interp_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
         }
     }
 
-    let res = interp_cos(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
+    let res = interp::cos(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
 
     Ok(Var::Float(res))
 }
 
-pub fn bind_interp_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn interp_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut amplitude: Option<f32> = Some(1.0);
     let mut frequency: Option<f32> = Some(1.0);
     let mut t: Option<f32> = Some(1.0); // t goes from 0 to TAU
@@ -2055,12 +2042,12 @@ pub fn bind_interp_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
         }
     }
 
-    let res = interp_sin(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
+    let res = interp::sin(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
 
     Ok(Var::Float(res))
 }
 
-pub fn bind_interp_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn interp_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut coords: Option<&Vec<Var>> = None;
     let mut t: Option<f32> = Some(1.0);
 
@@ -2077,12 +2064,12 @@ pub fn bind_interp_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> R
     }
 
     let co = array_f32_8_from_vec(coords.unwrap());
-    let (x, y) = interp_bezier(&co, t.unwrap());
+    let (x, y) = interp::bezier(&co, t.unwrap());
 
     Ok(Var::V2D(x, y))
 }
 
-pub fn bind_interp_bezier_tangent(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn interp_bezier_tangent(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut coords: Option<&Vec<Var>> = None;
     let mut t: Option<f32> = Some(1.0);
 
@@ -2099,12 +2086,12 @@ pub fn bind_interp_bezier_tangent(vm: &mut Vm, _program: &Program, num_args: usi
     }
 
     let co = array_f32_8_from_vec(coords.unwrap());
-    let (x, y) = interp_bezier_tangent(&co, t.unwrap());
+    let (x, y) = interp::bezier_tangent(&co, t.unwrap());
 
     Ok(Var::V2D(x, y))
 }
 
-pub fn bind_interp_ray(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn interp_ray(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut point: Option<(f32, f32)> = Some((0.0, 0.0));
     let mut direction: Option<(f32, f32)> = Some((1000.0, 1000.0));
     let mut t: Option<f32> = Some(1.0);
@@ -2122,12 +2109,12 @@ pub fn bind_interp_ray(vm: &mut Vm, _program: &Program, num_args: usize) -> Resu
         }
     }
 
-    let (x, y) = interp_ray(point.unwrap(), direction.unwrap(), t.unwrap());
+    let (x, y) = interp::ray(point.unwrap(), direction.unwrap(), t.unwrap());
 
     Ok(Var::V2D(x, y))
 }
 
-pub fn bind_interp_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn interp_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut from: Option<(f32, f32)> = Some((0.0, 0.0));
     let mut to: Option<(f32, f32)> = Some((0.0, 0.0));
     let mut clamping: Option<Keyword> = Some(Keyword::False);
@@ -2157,16 +2144,16 @@ pub fn bind_interp_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Res
         let clamping_ = clamping.unwrap() == Keyword::True;
         let t_ = t.unwrap();
 
-        let x = interp_scalar(from_.0, to_.0, mapping, clamping_, t_);
-        let y = interp_scalar(from_.1, to_.1, mapping, clamping_, t_);
+        let x = interp::scalar(from_.0, to_.0, mapping, clamping_, t_);
+        let y = interp::scalar(from_.1, to_.1, mapping, clamping_, t_);
 
         return Ok(Var::V2D(x, y));
     }
 
-    Err(Error::Bind("bind_interp_line".to_string()))
+    Err(Error::Bind("interp_line".to_string()))
 }
 
-pub fn bind_interp_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+pub fn interp_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut position: Option<(f32, f32)> = Some((0.0, 0.0));
     let mut radius: Option<f32> = Some(1.0);
     let mut t: Option<f32> = Some(0.0);
@@ -2184,12 +2171,12 @@ pub fn bind_interp_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> R
         }
     }
 
-    let (x, y) = interp_circle(position.unwrap(), radius.unwrap(), t.unwrap());
+    let (x, y) = interp::circle(position.unwrap(), radius.unwrap(), t.unwrap());
 
     Ok(Var::V2D(x, y))
 }
 
-pub fn bind_path_linear(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+pub fn path_linear(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     // (path/linear fn: foo steps: 10 from: [0 0] to: [100 100])
 
     let mut from_vec: Option<(f32, f32)> = Some((0.0, 0.0));
@@ -2222,7 +2209,7 @@ pub fn bind_path_linear(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
     if let Some(mapping) = maybe_mapping {
-        path_linear(
+        path::linear(
             vm,
             program,
             fun.unwrap() as usize,
@@ -2240,7 +2227,7 @@ pub fn bind_path_linear(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     Ok(Var::Bool(true))
 }
 
-pub fn bind_path_circle(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+pub fn path_circle(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     let mut position: Option<(f32, f32)> = Some((0.0, 0.0));
     let mut radius: Option<f32> = Some(100.0);
     let mut steps: Option<f32> = Some(10.0);
@@ -2270,7 +2257,7 @@ pub fn bind_path_circle(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
     if let Some(mapping) = maybe_mapping {
-        path_circular(
+        path::circular(
             vm,
             program,
             fun.unwrap() as usize,
@@ -2287,7 +2274,7 @@ pub fn bind_path_circle(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     Ok(Var::Bool(true))
 }
 
-pub fn bind_path_spline(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+pub fn path_spline(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     let mut coords: Option<&Vec<Var>> = None;
 
     let mut steps: Option<f32> = Some(10.0);
@@ -2317,7 +2304,7 @@ pub fn bind_path_spline(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
         let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
         if let Some(mapping) = maybe_mapping {
-            path_spline(
+            path::spline(
                 vm,
                 program,
                 fun.unwrap() as usize,
@@ -2333,7 +2320,7 @@ pub fn bind_path_spline(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     Ok(Var::Bool(true))
 }
 
-pub fn bind_path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+pub fn path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     let mut coords: Option<&Vec<Var>> = None;
 
     let mut steps: Option<f32> = Some(10.0);
@@ -2363,7 +2350,7 @@ pub fn bind_path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
         let maybe_mapping = easing_from_keyword(mapping.unwrap());
 
         if let Some(mapping) = maybe_mapping {
-            path_bezier(
+            path::bezier(
                 vm,
                 program,
                 fun.unwrap() as usize,
@@ -2379,11 +2366,7 @@ pub fn bind_path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Resu
     Ok(Var::Bool(true))
 }
 
-pub fn bind_repeat_symmetry_vertical(
-    vm: &mut Vm,
-    program: &Program,
-    num_args: usize,
-) -> Result<Var> {
+pub fn repeat_symmetry_vertical(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     let mut fun: Option<i32> = None;
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -2398,17 +2381,13 @@ pub fn bind_repeat_symmetry_vertical(
     }
 
     if let Some(fun_) = fun {
-        repeat_symmetry_vertical(vm, program, fun_ as usize)?;
+        repeat::symmetry_vertical(vm, program, fun_ as usize)?;
     }
 
     Ok(Var::Bool(true))
 }
 
-pub fn bind_repeat_symmetry_horizontal(
-    vm: &mut Vm,
-    program: &Program,
-    num_args: usize,
-) -> Result<Var> {
+pub fn repeat_symmetry_horizontal(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     let mut fun: Option<i32> = None;
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -2423,13 +2402,13 @@ pub fn bind_repeat_symmetry_horizontal(
     }
 
     if let Some(fun_) = fun {
-        repeat_symmetry_horizontal(vm, program, fun_ as usize)?;
+        repeat::symmetry_horizontal(vm, program, fun_ as usize)?;
     }
 
     Ok(Var::Bool(true))
 }
 
-pub fn bind_repeat_symmetry_4(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+pub fn repeat_symmetry_4(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     let mut fun: Option<i32> = None;
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -2444,13 +2423,13 @@ pub fn bind_repeat_symmetry_4(vm: &mut Vm, program: &Program, num_args: usize) -
     }
 
     if let Some(fun_) = fun {
-        repeat_symmetry_4(vm, program, fun_ as usize)?;
+        repeat::symmetry_4(vm, program, fun_ as usize)?;
     }
 
     Ok(Var::Bool(true))
 }
 
-pub fn bind_repeat_symmetry_8(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+pub fn repeat_symmetry_8(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     let mut fun: Option<i32> = None;
 
     let mut args_pointer = vm.sp - (num_args * 2);
@@ -2465,13 +2444,13 @@ pub fn bind_repeat_symmetry_8(vm: &mut Vm, program: &Program, num_args: usize) -
     }
 
     if let Some(fun_) = fun {
-        repeat_symmetry_8(vm, program, fun_ as usize)?;
+        repeat::symmetry_8(vm, program, fun_ as usize)?;
     }
 
     Ok(Var::Bool(true))
 }
 
-pub fn bind_repeat_rotate(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+pub fn repeat_rotate(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     let mut fun: Option<i32> = None;
     let mut copies: Option<f32> = Some(3.0);
 
@@ -2488,13 +2467,13 @@ pub fn bind_repeat_rotate(vm: &mut Vm, program: &Program, num_args: usize) -> Re
     }
 
     if let Some(fun_) = fun {
-        repeat_rotate(vm, program, fun_ as usize, copies.unwrap() as usize)?;
+        repeat::rotate(vm, program, fun_ as usize, copies.unwrap() as usize)?;
     }
 
     Ok(Var::Bool(true))
 }
 
-pub fn bind_repeat_mirrored(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
+pub fn repeat_mirrored(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     let mut fun: Option<i32> = None;
     let mut copies: Option<f32> = Some(3.0);
 
@@ -2511,10 +2490,89 @@ pub fn bind_repeat_mirrored(vm: &mut Vm, program: &Program, num_args: usize) -> 
     }
 
     if let Some(fun_) = fun {
-        repeat_rotate_mirrored(vm, program, fun_ as usize, copies.unwrap() as usize)?;
+        repeat::rotate_mirrored(vm, program, fun_ as usize, copies.unwrap() as usize)?;
     }
 
     Ok(Var::Bool(true))
+}
+
+pub fn focal_build_generic(
+    vm: &mut Vm,
+    num_args: usize,
+    focal_type: focal::FocalType,
+) -> Result<Var> {
+    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
+    let mut position: Option<(f32, f32)> = Some((0.0, 1.0));
+    let mut distance: Option<f32> = Some(1.0);
+    let mut transform_pos: Option<Keyword> = Some(Keyword::False);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_kw!(mapping, Keyword::Mapping, iname, value);
+            read_v2d!(position, Keyword::Position, iname, value);
+            read_float!(distance, Keyword::Distance, iname, value);
+            read_kw!(transform_pos, Keyword::TransformPosition, iname, value);
+        }
+    }
+
+    if let Some(mapping) = easing_from_keyword(mapping.unwrap()) {
+        let position = position.unwrap();
+        let distance = distance.unwrap();
+        let transform_pos = transform_pos.unwrap() == Keyword::True;
+
+        return Ok(Var::FocalState(focal::FocalStateStruct {
+            focal_type,
+            mapping,
+            position,
+            distance,
+            transform_pos,
+        }));
+    }
+
+    Err(Error::Bind("focal_build_generic".to_string()))
+}
+
+pub fn focal_build_point(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    focal_build_generic(vm, num_args, focal::FocalType::Point)
+}
+
+pub fn focal_build_hline(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    focal_build_generic(vm, num_args, focal::FocalType::HLine)
+}
+
+pub fn focal_build_vline(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    focal_build_generic(vm, num_args, focal::FocalType::VLine)
+}
+
+pub fn focal_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut from: Option<focal::FocalStateStruct> = None;
+    let mut position: Option<(f32, f32)> = Some((0.0, 0.0));
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_focal!(from, Keyword::From, iname, value);
+            read_v2d!(position, Keyword::Position, iname, value);
+        }
+    }
+
+    if let Some(focal) = from {
+        let position = position.unwrap();
+        let res = focal.value(vm, position);
+
+        return Ok(Var::Float(res));
+    }
+
+    Err(Error::Bind("focal_value".to_string()))
 }
 
 #[cfg(test)]
@@ -2571,7 +2629,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bind_col_rgb() {
+    fn test_col_rgb() {
         is_col_rgb(
             "(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha: 0.4)",
             0.1,
@@ -2582,7 +2640,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bind_nth() {
+    fn test_nth() {
         is_float("(define v [1 2 3 4]) (nth from: v n: 0)", 1.0);
         is_float("(define v [1 2 3 4]) (nth from: v n: 1)", 2.0);
         is_float("(define v [1 2 3 4]) (nth from: v n: 2)", 3.0);
@@ -2593,7 +2651,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bind_vector_length() {
+    fn test_vector_length() {
         is_int("(define v []) (++ v 100) (vector/length vector: v)", 1);
         is_int("(define v [1]) (++ v 100) (vector/length vector: v)", 2);
         is_int("(define v [1 2]) (++ v 100) (vector/length vector: v)", 3);
@@ -2613,7 +2671,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bind_math() {
+    fn test_math() {
         is_float("(math/clamp value: 3 min: 2 max: 5)", 3.0);
         is_float("(math/clamp value: 1 min: 2 max: 5)", 2.0);
         is_float("(math/clamp value: 8 min: 2 max: 5)", 5.0);

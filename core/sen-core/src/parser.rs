@@ -28,9 +28,9 @@ pub struct Gene {
 
 #[derive(Debug, PartialEq)]
 pub struct NodeMeta {
-    gene: Option<Gene>,
-    parameter_ast: Vec<Node>,
-    parameter_prefix: Vec<Node>, // todo: couldn't this just be a String?
+    pub gene: Option<Gene>,
+    pub parameter_ast: Vec<Node>,
+    pub parameter_prefix: Vec<Node>, // todo: couldn't this just be a String?
 }
 
 #[derive(Debug, PartialEq)]

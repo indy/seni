@@ -25,7 +25,6 @@
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::mathutil;
-use crate::vm::ProcColourStateStruct;
 
 use std;
 use std::fmt;
@@ -34,8 +33,8 @@ const COLOUR_UNIT_ANGLE: f64 = (360.0 / 12.0);
 const COLOUR_COMPLIMENTARY_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 6.0);
 const COLOUR_TRIAD_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 4.0);
 
-const REF_U: f64 = 0.197_830_006_642_836_807_64;
-const REF_V: f64 = 0.468_319_994_938_791_003_70;
+const REF_U: f64 = 0.197_830_006_642_836_807_640;
+const REF_V: f64 = 0.468_319_994_938_791_003_700;
 
 //  http://www.brucelindbloom.com/index.html?Equations.html
 //  http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
@@ -125,18 +124,8 @@ impl ColourPreset {
         }
     }
 
-    pub fn colour_procedural(proc: &ProcColourStateStruct, t: f32) -> Colour {
-        Colour::new(
-            ColourFormat::Rgb,
-            proc.a[0] + proc.b[0] * (mathutil::TAU * (proc.c[0] * t + proc.d[0])).cos(),
-            proc.a[1] + proc.b[1] * (mathutil::TAU * (proc.c[1] * t + proc.d[1])).cos(),
-            proc.a[2] + proc.b[2] * (mathutil::TAU * (proc.c[2] * t + proc.d[2])).cos(),
-            proc.alpha,
-        )
-    }
-
-    pub fn get_preset(&self) -> ([f32; 3], [f32; 3], [f32; 3], [f32; 3]) {
-        match *self {
+    pub fn get_preset(self) -> ([f32; 3], [f32; 3], [f32; 3], [f32; 3]) {
+        match self {
             ColourPreset::Chrome => (
                 [0.5, 0.5, 0.5],
                 [0.5, 0.5, 0.5],
@@ -183,6 +172,39 @@ impl ColourPreset {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct ProcColourStateStruct {
+    pub a: [f32; 3],
+    pub b: [f32; 3],
+    pub c: [f32; 3],
+    pub d: [f32; 3],
+    pub alpha: f32,
+}
+
+impl Default for ProcColourStateStruct {
+    fn default() -> ProcColourStateStruct {
+        ProcColourStateStruct {
+            a: [0.0, 0.0, 0.0],
+            b: [0.0, 0.0, 0.0],
+            c: [0.0, 0.0, 0.0],
+            d: [0.0, 0.0, 0.0],
+            alpha: 1.0,
+        }
+    }
+}
+
+impl ProcColourStateStruct {
+    pub fn colour(&self, t: f32) -> Colour {
+        Colour::new(
+            ColourFormat::Rgb,
+            self.a[0] + self.b[0] * (mathutil::TAU * (self.c[0] * t + self.d[0])).cos(),
+            self.a[1] + self.b[1] * (mathutil::TAU * (self.c[1] * t + self.d[1])).cos(),
+            self.a[2] + self.b[2] * (mathutil::TAU * (self.c[2] * t + self.d[2])).cos(),
+            self.alpha,
+        )
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Colour {
     pub format: ColourFormat,
@@ -218,7 +240,7 @@ impl Colour {
     pub fn convert(&self, format: ColourFormat) -> Result<Colour> {
         if self.format == format {
             // todo: can we just return self rather than clone?
-            Ok(self.clone())
+            Ok(*self)
         } else {
             let c = ConvertibleColour::build_convertible_colour_from_colour(&self);
             let new_col = c.clone_as(format)?;
@@ -349,34 +371,34 @@ impl ConvertibleColour {
     pub fn build_convertible_colour_from_colour(colour: &Colour) -> Self {
         match colour.format {
             ColourFormat::Rgb => ConvertibleColour::RGB(
-                colour.e0 as f64,
-                colour.e1 as f64,
-                colour.e2 as f64,
-                colour.e3 as f64,
+                f64::from(colour.e0),
+                f64::from(colour.e1),
+                f64::from(colour.e2),
+                f64::from(colour.e3),
             ),
             ColourFormat::Hsluv => ConvertibleColour::HSLuv(
-                colour.e0 as f64,
-                colour.e1 as f64,
-                colour.e2 as f64,
-                colour.e3 as f64,
+                f64::from(colour.e0),
+                f64::from(colour.e1),
+                f64::from(colour.e2),
+                f64::from(colour.e3),
             ),
             ColourFormat::Hsl => ConvertibleColour::HSL(
-                colour.e0 as f64,
-                colour.e1 as f64,
-                colour.e2 as f64,
-                colour.e3 as f64,
+                f64::from(colour.e0),
+                f64::from(colour.e1),
+                f64::from(colour.e2),
+                f64::from(colour.e3),
             ),
             ColourFormat::Lab => ConvertibleColour::LAB(
-                colour.e0 as f64,
-                colour.e1 as f64,
-                colour.e2 as f64,
-                colour.e3 as f64,
+                f64::from(colour.e0),
+                f64::from(colour.e1),
+                f64::from(colour.e2),
+                f64::from(colour.e3),
             ),
             ColourFormat::Hsv => ConvertibleColour::HSV(
-                colour.e0 as f64,
-                colour.e1 as f64,
-                colour.e2 as f64,
-                colour.e3 as f64,
+                f64::from(colour.e0),
+                f64::from(colour.e1),
+                f64::from(colour.e2),
+                f64::from(colour.e3),
             ),
         }
     }

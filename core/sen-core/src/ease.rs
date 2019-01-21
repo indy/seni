@@ -270,7 +270,7 @@ fn exponential_ease_in(p: f32) -> f32 {
 
 // exponential function y = -2^(-10x) + 1
 fn exponential_ease_out(p: f32) -> f32 {
-    if p == 1.0 {
+    if (p - 1.0).abs() < std::f32::EPSILON {
         p
     } else {
         1.0 - 2.0_f32.powf(-10.0 * p)
@@ -281,7 +281,7 @@ fn exponential_ease_out(p: f32) -> f32 {
 // y = (1/2)2^(10(2x - 1))         ; [0,0.5)
 // y = -(1/2)*2^(-10(2x - 1))) + 1 ; [0.5,1]
 fn exponential_ease_in_out(p: f32) -> f32 {
-    if p == 0.0 || p == 1.0 {
+    if p.abs() < std::f32::EPSILON || (p - 1.0).abs() < std::f32::EPSILON {
         return p;
     }
 

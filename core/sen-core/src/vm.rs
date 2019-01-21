@@ -13,11 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::Colour;
+use crate::colour::{Colour, ProcColourStateStruct};
 use crate::compiler::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
-use crate::ease::Easing;
 use crate::error::{Error, Result};
+use crate::focal::FocalStateStruct;
 use crate::geometry::Geometry;
+use crate::interp::InterpStateStruct;
 use crate::keywords::Keyword;
 use crate::matrix::MatrixStack;
 use crate::native::{build_native_fn_hash, Native, NativeCallback};
@@ -41,52 +42,6 @@ const MEMORY_LOCAL_SIZE: usize = 40;
 // **************************************************
 
 #[derive(Clone, Debug)]
-pub struct InterpStateStruct {
-    pub from_m: f32,
-    pub to_m: f32,
-    pub from_c: f32,
-    pub to_c: f32,
-    pub to: (f32, f32),
-    pub clamping: bool,
-    pub mapping: Easing,
-}
-
-impl Default for InterpStateStruct {
-    fn default() -> InterpStateStruct {
-        InterpStateStruct {
-            from_m: 0.0,
-            to_m: 0.0,
-            from_c: 0.0,
-            to_c: 0.0,
-            to: (0.0, 1.0),
-            clamping: false,
-            mapping: Easing::Linear,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct ProcColourStateStruct {
-    pub a: [f32; 3],
-    pub b: [f32; 3],
-    pub c: [f32; 3],
-    pub d: [f32; 3],
-    pub alpha: f32,
-}
-
-impl Default for ProcColourStateStruct {
-    fn default() -> ProcColourStateStruct {
-        ProcColourStateStruct {
-            a: [0.0, 0.0, 0.0],
-            b: [0.0, 0.0, 0.0],
-            c: [0.0, 0.0, 0.0],
-            d: [0.0, 0.0, 0.0],
-            alpha: 1.0,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
 pub enum Var {
     Int(i32),
     Float(f32),
@@ -100,6 +55,7 @@ pub enum Var {
     Debug(String), // this is temporary REMOVE
     InterpState(InterpStateStruct),
     ProcColourState(ProcColourStateStruct),
+    FocalState(FocalStateStruct),
 }
 
 impl fmt::Display for Var {
@@ -117,6 +73,7 @@ impl fmt::Display for Var {
             Var::Debug(s) => write!(f, "DEBUG: {}", s),
             Var::InterpState(state) => write!(f, "InterpState({:?})", state),
             Var::ProcColourState(state) => write!(f, "ProcColourState({:?})", state),
+            Var::FocalState(state) => write!(f, "FocalState({:?})", state),
         }
     }
 }

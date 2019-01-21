@@ -45,7 +45,7 @@ fn invoke_function(
     Ok(())
 }
 
-pub fn path_linear(
+pub fn linear(
     vm: &mut Vm,
     program: &Program,
     fun: usize,
@@ -73,7 +73,7 @@ pub fn path_linear(
     Ok(())
 }
 
-pub fn path_circular(
+pub fn circular(
     vm: &mut Vm,
     program: &Program,
     fun: usize,
@@ -101,7 +101,7 @@ pub fn path_circular(
     Ok(())
 }
 
-pub fn path_spline(
+pub fn spline(
     vm: &mut Vm,
     program: &Program,
     fun: usize,
@@ -125,7 +125,7 @@ pub fn path_spline(
     Ok(())
 }
 
-pub fn path_bezier(
+pub fn bezier(
     vm: &mut Vm,
     program: &Program,
     fun: usize,
