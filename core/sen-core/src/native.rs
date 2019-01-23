@@ -22,11 +22,14 @@ use crate::interp;
 use crate::keywords::Keyword;
 use crate::mathutil;
 use crate::path;
+use crate::prng;
 use crate::repeat;
 use crate::uvmapper::BrushType;
 use crate::vm::{Var, Vm};
 
+use std::cell::{RefCell, RefMut};
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use strum_macros::EnumString;
 
@@ -347,9 +350,9 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     // --------------------------------------------------
     // prng
     // --------------------------------------------------
-    // BIND("prng/build", prng_build);
-    // BIND("prng/values", prng_values);
-    // BIND("prng/value", prng_value);
+    h.insert(Native::PrngBuild, prng_build);
+    h.insert(Native::PrngValues, prng_values);
+    h.insert(Native::PrngValue, prng_value);
     // BIND("prng/perlin", prng_perlin);
 
     // --------------------------------------------------
@@ -498,6 +501,15 @@ fn read_focal(iname: i32, value: &Var, keyword: Keyword) -> Option<focal::FocalS
     None
 }
 
+fn read_prng(iname: i32, value: &Var, keyword: Keyword) -> Option<RefMut<prng::PrngStateStruct>> {
+    if iname == keyword as i32 {
+        if let Var::PrngState(prng_state) = value {
+            return Some(prng_state.borrow_mut());
+        }
+    }
+    None
+}
+
 fn read_brush(iname: i32, value: &Var, keyword: Keyword) -> Option<BrushType> {
     if iname == keyword as i32 {
         if let Var::Keyword(n) = value {
@@ -566,6 +578,11 @@ macro_rules! read_proc_colour {
 macro_rules! read_focal {
     ($i:ident, $kw:expr, $in:ident, $v:ident) => {
         $i = read_focal(*$in, $v, $kw).or($i);
+    };
+}
+macro_rules! read_prng {
+    ($i:ident, $kw:expr, $in:ident, $v:ident) => {
+        $i = read_prng(*$in, $v, $kw).or($i);
     };
 }
 macro_rules! read_brush {
@@ -1929,6 +1946,104 @@ pub fn math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var>
 
     let res = angle.unwrap().sin();
     Ok(Var::Float(res))
+}
+
+pub fn prng_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut seed: Option<f32> = Some(1.0);
+    let mut min: Option<f32> = Some(0.0);
+    let mut max: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(seed, Keyword::Seed, iname, value);
+            read_float!(min, Keyword::Min, iname, value);
+            read_float!(max, Keyword::Max, iname, value);
+        }
+    }
+
+    let s32 = seed.unwrap() as i32;
+
+    fn as_u8(i: i32) -> u8 {
+        (i % (1 << 8)) as u8
+    }
+
+    let seedy: [u8; 16] = [
+        as_u8(s32),
+        as_u8(s32 + 1),
+        as_u8(s32 + s32 - 2),
+        as_u8(s32 + 3),
+        as_u8(s32 + s32 - 4),
+        as_u8(s32 + 5),
+        as_u8(s32 + s32 - 6),
+        as_u8(s32 + 7),
+        as_u8(s32 + s32 - 8),
+        as_u8(s32 + 9),
+        as_u8(s32 + s32 - 10),
+        as_u8(s32 + 11),
+        as_u8(s32 + s32 - 12),
+        as_u8(s32 + 13),
+        as_u8(s32 + s32 - 14),
+        as_u8(s32 + 15),
+    ];
+
+    let prng_state_struct = prng::PrngStateStruct::new(seedy, min.unwrap(), max.unwrap());
+
+    Ok(Var::PrngState(Rc::new(RefCell::new(prng_state_struct))))
+}
+
+pub fn prng_values(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut ref_mut_prng_state: Option<RefMut<prng::PrngStateStruct>> = None;
+    let mut num: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(num, Keyword::Num, iname, value);
+            read_prng!(ref_mut_prng_state, Keyword::From, iname, value);
+        }
+    }
+
+    let mut vs: Vec<Var> = Vec::new();
+
+    if let Some(ref mut prng_state) = ref_mut_prng_state {
+        for _ in 0..(num.unwrap() as i32) {
+            let f = prng_state.prng_f32();
+            vs.push(Var::Float(f))
+        }
+    }
+
+    return Ok(Var::Vector(vs));
+}
+
+pub fn prng_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut ref_mut_prng_state: Option<RefMut<prng::PrngStateStruct>> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_prng!(ref_mut_prng_state, Keyword::From, iname, value);
+        }
+    }
+
+    if let Some(ref mut prng_state) = ref_mut_prng_state {
+        let f = prng_state.prng_f32();
+        return Ok(Var::Float(f));
+    }
+
+    Err(Error::Bind("prng_value".to_string()))
 }
 
 pub fn interp_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {

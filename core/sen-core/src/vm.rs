@@ -24,10 +24,13 @@ use crate::matrix::MatrixStack;
 use crate::native::{build_native_fn_hash, Native, NativeCallback};
 use crate::opcodes::Opcode;
 use crate::placeholder::*;
+use crate::prng::PrngStateStruct;
 use crate::uvmapper::Mappings;
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
+use std::rc::Rc;
 
 const FP_OFFSET_TO_LOCALS: usize = 4;
 const FP_OFFSET_TO_HOP_BACK: usize = 3;
@@ -56,6 +59,7 @@ pub enum Var {
     InterpState(InterpStateStruct),
     ProcColourState(ProcColourStateStruct),
     FocalState(FocalStateStruct),
+    PrngState(Rc<RefCell<PrngStateStruct>>),
 }
 
 impl fmt::Display for Var {
@@ -74,6 +78,7 @@ impl fmt::Display for Var {
             Var::InterpState(state) => write!(f, "InterpState({:?})", state),
             Var::ProcColourState(state) => write!(f, "ProcColourState({:?})", state),
             Var::FocalState(state) => write!(f, "FocalState({:?})", state),
+            Var::PrngState(state) => write!(f, "PrngState({:?})", state),
         }
     }
 }

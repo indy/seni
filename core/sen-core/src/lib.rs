@@ -36,6 +36,7 @@ mod native;
 mod opcodes;
 mod path;
 mod placeholder;
+mod prng;
 mod repeat;
 mod uvmapper;
 
