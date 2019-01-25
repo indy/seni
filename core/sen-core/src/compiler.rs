@@ -27,13 +27,14 @@ use crate::parser::{Node, NodeMeta};
 
 const MEMORY_LOCAL_SIZE: usize = 40;
 
-pub fn compile_preamble() -> Result<Vec<Bytecode>> {
+pub fn compile_preamble() -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
+
     compiler.register_top_level_preamble(&mut compilation)?;
     compiler.compile_preamble(&mut compilation)?;
 
-    Ok(compilation.code)
+    Ok(Program::new(compilation.code, compilation.fn_info))
 }
 
 pub fn compile_program(complete_ast: &[Node]) -> Result<Program> {
@@ -2351,8 +2352,8 @@ mod tests {
     #[test]
     fn sanity_check_compile_preamble() {
         // stupid, brittle test just to check that the preamble is creating something
-        let preamble = compile_preamble().unwrap();
-        assert_eq!(preamble.len(), 111);
+        let preamble_program = compile_preamble().unwrap();
+        assert_eq!(preamble_program.code.len(), 111);
     }
 
     #[test]

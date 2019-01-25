@@ -21,9 +21,8 @@ use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
 // use sen_core::sen_parse;
+use sen_core;
 use sen_core::vm::{Vm, Env};
-use sen_core::parser::*;
-use sen_core::compiler::compile_program;
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -117,23 +116,8 @@ impl Bridge {
     }
 
     pub fn compile_to_render_packets(&mut self) -> i32 {
-        let env = Env::new();
-
-        let (ast, _word_lut) = if let Ok((ast_, _word_lut_)) = parse(&self.source_buffer) {
-            (ast_, _word_lut_)
-        } else {
-            return 0
-        };
-
-        let program = if let Ok(program_) = compile_program(&ast) {
-            program_
-        } else {
-            return 0
-        };
-
-        self.vm.reset();
-        if self.vm.interpret(&env, &program).is_ok() {
-            self.vm.geometry.get_num_render_packets() as i32
+        if let Ok(res) = sen_core::compile_to_render_packets(&mut self.vm, &self.source_buffer) {
+            res
         } else {
             0
         }
