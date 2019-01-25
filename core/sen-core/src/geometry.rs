@@ -23,7 +23,7 @@ use crate::uvmapper::UvMapping;
 use crate::vm::Var;
 
 // todo: work out reasonable defaults
-const RENDER_PACKET_MAX_SIZE: usize = 4096;
+const RENDER_PACKET_MAX_SIZE: usize = 40096;
 pub const RENDER_PACKET_FLOAT_PER_VERTEX: usize = 8;
 
 #[derive(Default)]
@@ -456,8 +456,7 @@ impl Geometry {
 
         let tex_t = 1.0 / tessellation as f32;
 
-        // ASSUMING RGB COLOURS GIVEN FOR THE MOMENT
-        let rgb = colour;
+        let rgb = colour.convert(ColourFormat::Rgb)?;
 
         let x_r = ((x1 - x0) - 0.5 * (x2 - x0)) / (0.5 * (0.5 - 1.0));
         let x_s = x2 - x0 - x_r;
@@ -510,10 +509,10 @@ impl Geometry {
             let uv_t = tex_t * (i as f32);
             let u = lerp(uv_t, bu, du);
             let v = lerp(uv_t, bv, dv);
-            rp.add_vertex(matrix, v1x, v1y, rgb, u, v);
+            rp.add_vertex(matrix, v1x, v1y, &rgb, u, v);
             let u = lerp(uv_t, au, cu);
             let v = lerp(uv_t, av, cv);
-            rp.add_vertex(matrix, v2x, v2y, rgb, u, v);
+            rp.add_vertex(matrix, v2x, v2y, &rgb, u, v);
         }
 
         // final 2 vertices for the end point
@@ -535,9 +534,9 @@ impl Geometry {
         let v2x = (n2x * half_width_end) + xs_next;
         let v2y = (n2y * half_width_end) + ys_next;
 
-        rp.add_vertex(matrix, v1x, v1y, rgb, du, dv);
+        rp.add_vertex(matrix, v1x, v1y, &rgb, du, dv);
 
-        rp.add_vertex(matrix, v2x, v2y, rgb, cu, cv);
+        rp.add_vertex(matrix, v2x, v2y, &rgb, cu, cv);
 
         Ok(())
     }
@@ -591,8 +590,8 @@ impl Geometry {
 
         let tex_t = 1.0 / tessellation as f32;
 
-        // ASSUMING RGB COLOURS GIVEN FOR THE MOMENT
-        let rgb = colour;
+
+        let rgb = colour.convert(ColourFormat::Rgb)?;
 
         // this chunk of code is just to calc the initial verts for prepare_to_add_triangle_strip
         // and to get the appropriate render packet
@@ -639,10 +638,10 @@ impl Geometry {
             let uv_t = tex_t * (i as f32);
             let u = lerp(uv_t, bu, du);
             let v = lerp(uv_t, bv, dv);
-            rp.add_vertex(matrix, v1x, v1y, rgb, u, v);
+            rp.add_vertex(matrix, v1x, v1y, &rgb, u, v);
             let u = lerp(uv_t, au, cu);
             let v = lerp(uv_t, av, cv);
-            rp.add_vertex(matrix, v2x, v2y, rgb, u, v);
+            rp.add_vertex(matrix, v2x, v2y, &rgb, u, v);
         }
 
         // final 2 vertices for the end point
@@ -664,9 +663,9 @@ impl Geometry {
         let v2x = (n2x * half_width_end) + xs_next;
         let v2y = (n2y * half_width_end) + ys_next;
 
-        rp.add_vertex(matrix, v1x, v1y, rgb, du, dv);
+        rp.add_vertex(matrix, v1x, v1y, &rgb, du, dv);
 
-        rp.add_vertex(matrix, v2x, v2y, rgb, cu, cv);
+        rp.add_vertex(matrix, v2x, v2y, &rgb, cu, cv);
 
         Ok(())
     }
@@ -819,7 +818,6 @@ impl Geometry {
         let mut half_alpha_col = colour.convert(ColourFormat::Lab)?;
         half_alpha_col.e3 *= 0.5;
 
-        // todo: modify s using seed
         let mut prng = prng::PrngStateStruct::new(seed, 0.0, 1.0);
 
         let iiterations = iterations as i32;
