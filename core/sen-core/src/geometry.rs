@@ -18,6 +18,7 @@ use crate::ease::{easing, Easing};
 use crate::error::*;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
+use crate::prng;
 use crate::uvmapper::UvMapping;
 use crate::vm::Var;
 
@@ -712,6 +713,189 @@ impl Geometry {
             uvm,
         )?;
 
+        Ok(())
+    }
+
+    pub fn render_stroked_bezier(
+        &mut self,
+        matrix: &Matrix,
+        tessellation: usize,
+        coords: &[f32; 8],
+        stroke_tessellation: usize,
+        stroke_noise: f32,
+        stroke_line_width_start: f32,
+        stroke_line_width_end: f32,
+        colour: &Colour,
+        colour_volatility: f32,
+        seed: f32,
+        mapping: Easing,
+        uvm: &UvMapping,
+    ) -> Result<()> {
+        let x1 = coords[0];
+        let x2 = coords[2];
+        let x3 = coords[4];
+        let x4 = coords[6];
+        let y1 = coords[1];
+        let y2 = coords[3];
+        let y3 = coords[5];
+        let y4 = coords[7];
+
+        let si_num = tessellation + 2;
+        let si_unit = 1.0 / (si_num as f32 - 1.0);
+
+        let mut lab = colour.convert(ColourFormat::Lab)?;
+        let lab_l = lab.e0;
+
+        for i in 0..tessellation {
+            let tvals0 = (i + 0) as f32 * si_unit;
+            let tvals1 = (i + 1) as f32 * si_unit;
+            let tvals2 = (i + 2) as f32 * si_unit;
+
+            // get 3 points on the bezier curve
+            let xx1 = bezier_point(x1, x2, x3, x4, tvals0);
+            let xx2 = bezier_point(x1, x2, x3, x4, tvals1);
+            let xx3 = bezier_point(x1, x2, x3, x4, tvals2);
+
+            let yy1 = bezier_point(y1, y2, y3, y4, tvals0);
+            let yy2 = bezier_point(y1, y2, y3, y4, tvals1);
+            let yy3 = bezier_point(y1, y2, y3, y4, tvals2);
+
+            let ns = stroke_noise;
+
+            lab.e0 = lab_l + (prng::perlin(xx1, xx1, xx1) * colour_volatility);
+
+            let quad_coords: [f32; 6] = [
+                xx1 + (ns * prng::perlin(xx1, xx1, seed)),
+                yy1 + (ns * prng::perlin(yy1, yy1, seed)),
+                xx2 + (ns * prng::perlin(xx2, xx1, seed)),
+                yy2 + (ns * prng::perlin(yy2, yy1, seed)),
+                xx3 + (ns * prng::perlin(xx3, xx1, seed)),
+                yy3 + (ns * prng::perlin(yy3, yy1, seed)),
+            ];
+
+            self.render_quadratic(
+                matrix,
+                &quad_coords,
+                stroke_line_width_start,
+                stroke_line_width_end,
+                mapping,
+                0.0,
+                1.0,
+                &lab,
+                stroke_tessellation,
+                uvm,
+            )?;
+        }
+        Ok(())
+    }
+
+    pub fn render_stroked_bezier_rect(
+        &mut self,
+        matrix: &Matrix,
+        position: (f32, f32),
+        width: f32,
+        height: f32,
+        volatility: f32,
+        overlap: f32,
+        iterations: f32,
+        seed: i32,
+        tessellation: usize,
+        stroke_tessellation: usize,
+        stroke_noise: f32,
+        colour: &Colour,
+        colour_volatility: f32,
+        uvm: &UvMapping,
+    ) -> Result<()> {
+        let x = position.0;
+        let y = position.1;
+
+        let x_start = x - (width / 2.0);
+        let y_start = y - (height / 2.0);
+
+        let th_width = width / 3.0;
+        let th_height = height / 3.0;
+        let vol = volatility;
+
+        let mut half_alpha_col = colour.convert(ColourFormat::Lab)?;
+        half_alpha_col.e3 *= 0.5;
+
+        // todo: modify s using seed
+        let mut prng = prng::PrngStateStruct::new(seed, 0.0, 1.0);
+
+        let iiterations = iterations as i32;
+
+        // sum of all strip thicknesses
+        let sum_thicknesses = height + ((iterations - 1.0) * overlap);
+        let stroke_thickness = sum_thicknesses / iterations;
+        let stroke_half_thickness = stroke_thickness / 2.0;
+        let stroke_offset_factor = (height - overlap) / iterations;
+
+        // horizontal strokes
+        //
+        for i in 0..iiterations {
+            let h = y_start + stroke_half_thickness + (i as f32 * stroke_offset_factor);
+
+            let coords: [f32; 8] = [
+                (prng.prng_f32_range(-1.0, 1.0) * vol) + x_start + (0.0 * th_width),
+                h + (prng.prng_f32_range(-1.0, 1.0) * vol),
+                (prng.prng_f32_range(-1.0, 1.0) * vol) + x_start + (1.0 * th_width),
+                h + (prng.prng_f32_range(-1.0, 1.0) * vol),
+                (prng.prng_f32_range(-1.0, 1.0) * vol) + x_start + (2.0 * th_width),
+                h + (prng.prng_f32_range(-1.0, 1.0) * vol),
+                (prng.prng_f32_range(-1.0, 1.0) * vol) + x_start + (3.0 * th_width),
+                h + (prng.prng_f32_range(-1.0, 1.0) * vol),
+            ];
+
+            self.render_stroked_bezier(
+                matrix,
+                tessellation,
+                &coords,
+                stroke_tessellation,
+                stroke_noise,
+                stroke_thickness,
+                stroke_thickness,
+                &half_alpha_col,
+                colour_volatility,
+                prng.prng_f32(),
+                Easing::Linear,
+                uvm,
+            )?;
+        }
+
+        let sum_thicknesses = width + ((iterations - 1.0) * overlap);
+        let stroke_thickness = sum_thicknesses / iterations;
+        let stroke_half_thickness = stroke_thickness / 2.0;
+        let stroke_offset_factor = (width - overlap) / iterations;
+
+        for i in 0..iiterations {
+            let v = x_start + stroke_half_thickness + (i as f32 * stroke_offset_factor);
+
+            let coords: [f32; 8] = [
+                v + (prng.prng_f32_range(-1.0, 1.0) * vol),
+                (prng.prng_f32_range(-1.0, 1.0) * vol) + y_start + (0.0 * th_height),
+                v + (prng.prng_f32_range(-1.0, 1.0) * vol),
+                (prng.prng_f32_range(-1.0, 1.0) * vol) + y_start + (1.0 * th_height),
+                v + (prng.prng_f32_range(-1.0, 1.0) * vol),
+                (prng.prng_f32_range(-1.0, 1.0) * vol) + y_start + (2.0 * th_height),
+                v + (prng.prng_f32_range(-1.0, 1.0) * vol),
+                (prng.prng_f32_range(-1.0, 1.0) * vol) + y_start + (3.0 * th_height),
+            ];
+
+            self.render_stroked_bezier(
+                matrix,
+                tessellation,
+                &coords,
+                stroke_tessellation,
+                stroke_noise,
+                stroke_thickness,
+                stroke_thickness,
+                &half_alpha_col,
+                colour_volatility,
+                prng.prng_f32(),
+                Easing::Linear,
+                uvm,
+            )?;
+        }
         Ok(())
     }
 }

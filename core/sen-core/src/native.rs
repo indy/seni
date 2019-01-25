@@ -290,8 +290,8 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     h.insert(Native::Quadratic, quadratic);
     h.insert(Native::Bezier, bezier);
     h.insert(Native::BezierBulging, bezier_bulging);
-    // BIND("stroked-bezier", stroked_bezier);
-    // BIND("stroked-bezier-rect", stroked_bezier_rect);
+    h.insert(Native::StrokedBezier, stroked_bezier);
+    h.insert(Native::StrokedBezierRect, stroked_bezier_rect);
 
     // --------------------------------------------------
     // transforms
@@ -353,7 +353,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     h.insert(Native::PrngBuild, prng_build);
     h.insert(Native::PrngValues, prng_values);
     h.insert(Native::PrngValue, prng_value);
-    // BIND("prng/perlin", prng_perlin);
+    h.insert(Native::PrngPerlin, prng_perlin);
 
     // --------------------------------------------------
     // interp
@@ -1204,6 +1204,173 @@ pub fn bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
     Ok(Var::Bool(true))
 }
 
+pub fn stroked_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut tessellation: Option<f32> = Some(15.0);
+    let mut coords: Option<&Vec<Var>> = None;
+    let mut stroke_tessellation: Option<f32> = Some(10.0);
+    let mut stroke_noise: Option<f32> = Some(25.0);
+    let mut stroke_line_width_start: Option<f32> = Some(1.0);
+    let mut stroke_line_width_end: Option<f32> = Some(1.0);
+    let mut colour: Option<Colour> = Some(Default::default());
+    let mut colour_volatility: Option<f32> = Some(0.0);
+    let mut seed: Option<f32> = Some(0.0);
+    let mut line_width_mapping: Option<Keyword> = Some(Keyword::Linear);
+    let mut brush: Option<BrushType> = Some(BrushType::Flat);
+    let mut brush_subtype: Option<usize> = Some(0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(tessellation, Keyword::Tessellation, iname, value);
+            read_vector!(coords, Keyword::Coords, iname, value);
+            read_float!(
+                stroke_tessellation,
+                Keyword::StrokeTessellation,
+                iname,
+                value
+            );
+            read_float!(stroke_noise, Keyword::StrokeNoise, iname, value);
+            read_float!(
+                stroke_line_width_start,
+                Keyword::StrokeLineWidthStart,
+                iname,
+                value
+            );
+            read_float!(
+                stroke_line_width_end,
+                Keyword::StrokeLineWidthEnd,
+                iname,
+                value
+            );
+            read_col!(colour, Keyword::Colour, iname, value);
+            read_float!(colour_volatility, Keyword::ColourVolatility, iname, value);
+            read_float!(seed, Keyword::Seed, iname, value);
+            read_kw!(line_width_mapping, Keyword::LineWidthMapping, iname, value);
+            read_brush!(brush, Keyword::Brush, iname, value);
+            read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind("bezier matrix error".to_string()));
+    };
+
+    let uvm = vm
+        .mappings
+        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
+
+    let co = array_f32_8_from_vec(coords.unwrap());
+
+    let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
+    if let Some(mapping) = maybe_mapping {
+        if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
+            vm.geometry.render_stroked_bezier(
+                matrix,
+                tessellation.unwrap() as usize,
+                &co,
+                stroke_tessellation.unwrap() as usize,
+                stroke_noise.unwrap(),
+                stroke_line_width_start.unwrap(),
+                stroke_line_width_end.unwrap(),
+                &rgb_c,
+                colour_volatility.unwrap(),
+                seed.unwrap(),
+                mapping,
+                uvm,
+            )?;
+
+            return Ok(Var::Bool(true));
+        }
+    }
+
+    Ok(Var::Bool(false))
+}
+
+pub fn stroked_bezier_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut position: Option<(f32, f32)> = Some((100.0, 100.0));
+    let mut width: Option<f32> = Some(800.0);
+    let mut height: Option<f32> = Some(600.0);
+    let mut volatility: Option<f32> = Some(30.0);
+    let mut overlap: Option<f32> = Some(0.0);
+    let mut iterations: Option<f32> = Some(10.0);
+    let mut seed: Option<f32> = Some(0.0);
+    let mut tessellation: Option<f32> = Some(15.0);
+    let mut stroke_tessellation: Option<f32> = Some(10.0);
+    let mut stroke_noise: Option<f32> = Some(25.0);
+    let mut colour: Option<Colour> = Some(Default::default());
+    let mut colour_volatility: Option<f32> = Some(0.0);
+    let mut brush: Option<BrushType> = Some(BrushType::Flat);
+    let mut brush_subtype: Option<usize> = Some(0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_v2d!(position, Keyword::Position, iname, value);
+            read_float!(width, Keyword::Width, iname, value);
+            read_float!(height, Keyword::Height, iname, value);
+            read_float!(volatility, Keyword::Volatility, iname, value);
+            read_float!(overlap, Keyword::Overlap, iname, value);
+            read_float!(iterations, Keyword::Iterations, iname, value);
+            read_float!(seed, Keyword::Seed, iname, value);
+            read_float!(tessellation, Keyword::Tessellation, iname, value);
+            read_float!(
+                stroke_tessellation,
+                Keyword::StrokeTessellation,
+                iname,
+                value
+            );
+            read_float!(stroke_noise, Keyword::StrokeNoise, iname, value);
+            read_col!(colour, Keyword::Colour, iname, value);
+            read_float!(colour_volatility, Keyword::ColourVolatility, iname, value);
+            read_brush!(brush, Keyword::Brush, iname, value);
+            read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
+        }
+    }
+
+    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        matrix
+    } else {
+        return Err(Error::Bind("bezier matrix error".to_string()));
+    };
+
+    let uvm = vm
+        .mappings
+        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
+
+    if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
+        vm.geometry.render_stroked_bezier_rect(
+            matrix,
+            position.unwrap(),
+            width.unwrap(),
+            height.unwrap(),
+            volatility.unwrap(),
+            overlap.unwrap(),
+            iterations.unwrap(),
+            seed.unwrap() as i32,
+            tessellation.unwrap() as usize,
+            stroke_tessellation.unwrap() as usize,
+            stroke_noise.unwrap(),
+            &rgb_c,
+            colour_volatility.unwrap(),
+            uvm,
+        )?;
+
+        return Ok(Var::Bool(true));
+    }
+
+    Ok(Var::Bool(false))
+}
+
 pub fn translate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut vector: Option<(f32, f32)> = Some((0.0, 0.0));
 
@@ -1966,32 +2133,7 @@ pub fn prng_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
         }
     }
 
-    let s32 = seed.unwrap() as i32;
-
-    fn as_u8(i: i32) -> u8 {
-        (i % (1 << 8)) as u8
-    }
-
-    let seedy: [u8; 16] = [
-        as_u8(s32),
-        as_u8(s32 + 1),
-        as_u8(s32 + s32 - 2),
-        as_u8(s32 + 3),
-        as_u8(s32 + s32 - 4),
-        as_u8(s32 + 5),
-        as_u8(s32 + s32 - 6),
-        as_u8(s32 + 7),
-        as_u8(s32 + s32 - 8),
-        as_u8(s32 + 9),
-        as_u8(s32 + s32 - 10),
-        as_u8(s32 + 11),
-        as_u8(s32 + s32 - 12),
-        as_u8(s32 + 13),
-        as_u8(s32 + s32 - 14),
-        as_u8(s32 + 15),
-    ];
-
-    let prng_state_struct = prng::PrngStateStruct::new(seedy, min.unwrap(), max.unwrap());
+    let prng_state_struct = prng::PrngStateStruct::new(seed.unwrap() as i32, min.unwrap(), max.unwrap());
 
     Ok(Var::PrngState(Rc::new(RefCell::new(prng_state_struct))))
 }
@@ -2044,6 +2186,29 @@ pub fn prng_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
     }
 
     Err(Error::Bind("prng_value".to_string()))
+}
+
+pub fn prng_perlin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut x: Option<f32> = Some(1.0);
+    let mut y: Option<f32> = Some(1.0);
+    let mut z: Option<f32> = Some(1.0);
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(x, Keyword::X, iname, value);
+            read_float!(y, Keyword::Y, iname, value);
+            read_float!(z, Keyword::Z, iname, value);
+        }
+    }
+
+    let res = prng::perlin(x.unwrap(), y.unwrap(), z.unwrap());
+
+    Ok(Var::Float(res))
 }
 
 pub fn interp_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {

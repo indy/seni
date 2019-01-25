@@ -76,10 +76,34 @@ pub struct PrngStateStruct {
     max: f32,
 }
 
+fn as_u8(i: i32) -> u8 {
+    (i % (1 << 8)) as u8
+}
+
 impl PrngStateStruct {
-    pub fn new(seed: [u8; 16], min: f32, max: f32) -> Self {
+
+    pub fn new(seed: i32, min: f32, max: f32) -> Self {
+        let seedy: [u8; 16] = [
+            as_u8(seed),
+            as_u8(seed + 1),
+            as_u8(seed + seed - 2),
+            as_u8(seed + 3),
+            as_u8(seed + seed - 4),
+            as_u8(seed + 5),
+            as_u8(seed + seed - 6),
+            as_u8(seed + 7),
+            as_u8(seed + seed - 8),
+            as_u8(seed + 9),
+            as_u8(seed + seed - 10),
+            as_u8(seed + 11),
+            as_u8(seed + seed - 12),
+            as_u8(seed + 13),
+            as_u8(seed + seed - 14),
+            as_u8(seed + 15),
+        ];
+
         PrngStateStruct {
-            rng: XorShiftRng::from_seed(seed),
+            rng: XorShiftRng::from_seed(seedy),
             min,
             max,
         }
@@ -129,18 +153,18 @@ fn grad(hash: usize, x: f32, y: f32, z: f32) -> f32 {
 // reference implementation of improved noise (C) 2002
 
 // returns a value in the range -1..1
-pub fn perlin(x_: f32, y_: f32, z_: f32) -> f32 {
-    let x_floor = x_.floor() as i32;
-    let y_floor = y_.floor() as i32;
-    let z_floor = z_.floor() as i32;
+pub fn perlin(x: f32, y: f32, z: f32) -> f32 {
+    let x_floor = x.floor() as i32;
+    let y_floor = y.floor() as i32;
+    let z_floor = z.floor() as i32;
 
     let xf = (x_floor & 255) as usize;
     let yf = (y_floor & 255) as usize;
     let zf = (z_floor & 255) as usize;
 
-    let x = x_ - x_floor as f32;
-    let y = y_ - y_floor as f32;
-    let z = z_ - z_floor as f32;
+    let x = x - x_floor as f32;
+    let y = y - y_floor as f32;
+    let z = z - z_floor as f32;
 
     let u = fade(x);
     let v = fade(y);
@@ -220,15 +244,14 @@ pub mod tests {
 
     #[test]
     pub fn test_prng_state_struct() {
-        let seed = [1, 2, 3, 4, 5, 6, 7, 8, 5, 4, 3, 2, 6, 4, 3, 2];
-        let mut prng = PrngStateStruct::new(seed, 0.0, 1.0);
+        let mut prng = PrngStateStruct::new(542, 0.0, 1.0);
 
         for _ in 0..100 {
             let f = prng.prng_f32();
             println!("{}", f);
         }
 
-        assert_eq!(prng.prng_f32(), 0.89063483);
+        assert_eq!(prng.prng_f32(), 0.7896869);
     }
 
 }
