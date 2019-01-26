@@ -193,11 +193,8 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeA
         }
     }
 
-    // the main node
-    let main_token = &tokens[..1];
-
-    // skip the main node
-    tokens = &tokens[1..];
+    let default_expression = eat_token(tokens, None, word_lut)?;
+    tokens = default_expression.tokens;
 
     // parameter ast (incl. whitespace, comments etc)
     let mut parameter_ast: Vec<Node> = Vec::new();
@@ -211,10 +208,20 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeA
                     parameter_prefix,
                 });
 
-                let res = eat_token(main_token, meta, word_lut)?;
+                // add the correct meta information to the parsed default node
+                let default_with_meta = match default_expression.node {
+                    Node::List(ns, _) => Node::List(ns, meta),
+                    Node::Vector(ns, _) => Node::Vector(ns, meta),
+                    Node::Float(f, _) => Node::Float(f, meta),
+                    Node::Name(s, i, _) => Node::Name(s, i, meta),
+                    Node::Label(s, i, _) => Node::Label(s, i, meta),
+                    Node::String(s, _) => Node::String(s, meta),
+                    Node::Whitespace(s, _) => Node::Whitespace(s, meta),
+                    Node::Comment(s, _) => Node::Comment(s, meta),
+                };
 
                 return Ok(NodeAndRemainder {
-                    node: res.node,
+                    node: default_with_meta,
                     tokens: &tokens[1..],
                 });
             }
@@ -298,7 +305,7 @@ fn eat_token<'a>(
         Token::ParenStart => eat_list(&tokens[1..], meta, word_lut),
         Token::SquareBracketStart => eat_vector(&tokens[1..], meta, word_lut),
         Token::CurlyBracketStart => eat_alterable(&tokens[1..], word_lut),
-        _ => Err(Error::ParserHandledToken),
+        _ => Err(Error::ParserHandledToken(format!("{:?}", tokens[0]))),
     }
 }
 
@@ -309,6 +316,20 @@ mod tests {
     fn ast(s: &str) -> Vec<Node> {
         let (tree, _word_lut) = parse(s).unwrap();
         tree
+    }
+
+    #[test]
+    fn bug_alterable_square_brackets() {
+        let s = "
+(define
+  coords1 {[[1 2]
+            [3 4]]
+           (gen/2d min: -500 max: 500)})
+";
+        match parse(s) {
+            Ok((_ast, _word_lut)) => assert_eq!(true, true),
+            Err(_e) => assert_eq!(false, false),
+        };
     }
 
     #[test]
