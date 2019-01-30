@@ -17,14 +17,10 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use crate::error::{Error, Result};
+use crate::genetic::Gene;
 use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
 use crate::native::Native;
-
-#[derive(Debug, PartialEq)]
-pub struct Gene {
-    this_is_a_placeholder: i32,
-}
 
 #[derive(Debug, PartialEq)]
 pub struct NodeMeta {

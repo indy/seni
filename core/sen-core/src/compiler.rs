@@ -55,6 +55,61 @@ pub fn compile_program(complete_ast: &[Node]) -> Result<Program> {
     Ok(Program::new(compilation.code, compilation.fn_info))
 }
 
+pub fn compile_program_1(complete_ast: &Node) -> Result<Program> {
+    let mut compilation = Compilation::new();
+    let compiler = Compiler::new();
+
+    // clean the complete_ast of whitespace and comment nodes
+    //
+    let mut ast: Vec<Node> = Vec::new();
+    if let Some(useful_node) = clean_node(complete_ast) {
+        ast.push(useful_node);
+    }
+
+    compiler.compile_common(&mut compilation, &ast)?;
+
+    Ok(Program::new(compilation.code, compilation.fn_info))
+}
+
+pub fn compile_program_for_trait(
+    complete_ast: &[Node],
+    gen_initial_value: &Node,
+) -> Result<Program> {
+    let mut compilation = Compilation::new();
+    let compiler = Compiler::new();
+
+    // clean the complete_ast of whitespace and comment nodes
+    //
+    let mut ast: Vec<Node> = Vec::new();
+    for n in complete_ast.iter() {
+        if let Some(useful_node) = clean_node(n) {
+            ast.push(useful_node);
+        }
+    }
+
+    // clean the gen_initial_value of whitespace and comment nodes
+    let mut initial_value_node: Node;
+    if let Some(useful_node) = clean_node(gen_initial_value) {
+        initial_value_node = useful_node;
+    } else {
+        return Err(Error::Compiler("cannot simplify gen_initial_value in compile_program_for_trait".to_string()));
+    }
+
+    compiler.compile_common_prologue(&mut compilation, &ast)?;
+    compiler.compile_common_top_level_fns(&mut compilation, &ast)?;
+    // this is a sub-program for a trait, bind the initial value to gen/initial-value
+    compiler.compile_global_bind_node(
+        &mut compilation,
+        Keyword::GenInitial.to_string(),
+        &initial_value_node,
+    )?;
+    compiler.compile_common_top_level_defines(&mut compilation, &ast)?;
+    compiler.compile_common_top_level_forms(&mut compilation, &ast)?;
+    compiler.compile_common_epilogue(&mut compilation, &ast)?;
+
+    Ok(Program::new(compilation.code, compilation.fn_info))
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Mem {
     Argument = 0, // store the function's arguments
@@ -936,7 +991,7 @@ impl Compiler {
                     )));
                 }
             }
-            _ => return Err(Error::Compiler("compile".to_string())),
+            _ => return Err(Error::Compiler(format!("compile ast: {:?}", ast))),
         }
 
         Ok(())
@@ -1955,6 +2010,17 @@ impl Compiler {
             compilation.emit_opcode(Opcode::APPEND)?;
         }
 
+        Ok(())
+    }
+
+    fn compile_global_bind_node(
+        &self,
+        compilation: &mut Compilation,
+        s: String,
+        node: &Node,
+    ) -> Result<()> {
+        self.compile(compilation, node)?;
+        self.store_globally(compilation, s)?;
         Ok(())
     }
 

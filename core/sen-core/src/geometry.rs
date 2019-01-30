@@ -590,7 +590,6 @@ impl Geometry {
 
         let tex_t = 1.0 / tessellation as f32;
 
-
         let rgb = colour.convert(ColourFormat::Rgb)?;
 
         // this chunk of code is just to calc the initial verts for prepare_to_add_triangle_strip

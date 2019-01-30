@@ -81,7 +81,6 @@ fn as_u8(i: i32) -> u8 {
 }
 
 impl PrngStateStruct {
-
     pub fn new(seed: i32, min: f32, max: f32) -> Self {
         let seedy: [u8; 16] = [
             as_u8(seed),

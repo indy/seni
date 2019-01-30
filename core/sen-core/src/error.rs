@@ -30,7 +30,7 @@ pub enum Error {
     ParserInvalidChar(char),
     ParserInvalidLiteral,
     ParserUnableToParseFloat(String),
-    ParserHandledToken,
+    ParserHandledToken(String),
 
     // mem
     MemUnmappableBytecodeArg,

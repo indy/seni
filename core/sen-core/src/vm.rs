@@ -23,7 +23,6 @@ use crate::keywords::Keyword;
 use crate::matrix::MatrixStack;
 use crate::native::{build_native_fn_hash, Native, NativeCallback};
 use crate::opcodes::Opcode;
-use crate::placeholder::*;
 use crate::prng::PrngStateStruct;
 use crate::uvmapper::Mappings;
 
@@ -83,8 +82,9 @@ impl fmt::Display for Var {
     }
 }
 
+// todo: what is the point of Env?
 pub struct Env {
-    function_ptr: Placeholder,
+    function_ptr: i32,
     // word_lut: WordLut,
 }
 
@@ -104,9 +104,8 @@ impl Default for Env {
 // in case any of the native functions had to invoke vm_interpret.
 // the rust version should just pass in these 2 extra args into the native functions
 pub struct Vm {
-    pub render_data: RenderData, // stores the generated vertex data
     pub matrix_stack: MatrixStack,
-    pub prng_state: PrngState, // only used when evaluating bracket bindings
+    pub prng_state: PrngStateStruct, // only used when evaluating bracket bindings
 
     pub mappings: Mappings,
     pub geometry: Geometry,
@@ -125,7 +124,7 @@ pub struct Vm {
     pub local: usize,  // per-frame segment of memory for local variables
 
     pub building_with_trait_within_vector: bool,
-    pub trait_within_vector_index: bool,
+    pub trait_within_vector_index: usize,
 
     pub native_fns: HashMap<Native, NativeCallback>,
 
@@ -153,11 +152,9 @@ impl Default for Vm {
         let sp = base_offset;
 
         Vm {
-            render_data: 0,
-
             matrix_stack: MatrixStack::new(),
 
-            prng_state: 0,
+            prng_state: PrngStateStruct::new(10, 0.0, 1.0),
 
             mappings: Mappings::new(),
             geometry: Geometry::new(),
@@ -184,7 +181,7 @@ impl Default for Vm {
             local,
 
             building_with_trait_within_vector: false,
-            trait_within_vector_index: false,
+            trait_within_vector_index: 0,
 
             native_fns: build_native_fn_hash(),
 
