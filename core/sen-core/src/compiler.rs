@@ -92,7 +92,9 @@ pub fn compile_program_for_trait(
     if let Some(useful_node) = clean_node(gen_initial_value) {
         initial_value_node = useful_node;
     } else {
-        return Err(Error::Compiler("cannot simplify gen_initial_value in compile_program_for_trait".to_string()));
+        return Err(Error::Compiler(
+            "cannot simplify gen_initial_value in compile_program_for_trait".to_string(),
+        ));
     }
 
     compiler.compile_common_prologue(&mut compilation, &ast)?;

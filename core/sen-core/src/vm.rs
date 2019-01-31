@@ -82,6 +82,15 @@ impl fmt::Display for Var {
     }
 }
 
+impl Var {
+    pub fn get_float_value(var: &Var) -> Result<f32> {
+        match var {
+            Var::Float(f) => Ok(*f),
+            _ => Err(Error::NotedError("expected a Var::Float".to_string())),
+        }
+    }
+}
+
 // todo: what is the point of Env?
 pub struct Env {
     function_ptr: i32,

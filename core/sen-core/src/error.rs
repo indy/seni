@@ -17,7 +17,9 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
+    // these are lazy errors, used during dev as basically placeholder errors. remove them
     GeneralError,
+    NotedError(String),
 
     // colour
     //
@@ -51,4 +53,7 @@ pub enum Error {
 
     // geometry
     Geometry(String),
+
+    // gene
+    Gene(String),
 }

@@ -27,7 +27,7 @@
 mod colour;
 mod ease;
 mod focal;
-mod genetic;
+mod gene;
 mod interp;
 mod keywords;
 mod lexer;
@@ -38,6 +38,7 @@ mod opcodes;
 mod path;
 mod prng;
 mod repeat;
+mod trait_list;
 mod uvmapper;
 
 pub mod compiler;
@@ -51,6 +52,9 @@ use crate::parser::*;
 use crate::vm::*;
 
 pub use crate::compiler::*;
+pub use crate::gene::Genotype;
+pub use crate::trait_list::TraitList;
+pub use crate::vm::{Env, Vm};
 
 pub fn run_program_with_preamble(vm: &mut Vm, program: &Program) -> Result<Var> {
     let env = Env::new();
@@ -75,6 +79,14 @@ pub fn compile_to_render_packets(vm: &mut Vm, s: &str) -> Result<i32> {
     // todo: cache the preamble program
 
     Ok(vm.geometry.get_num_render_packets() as i32)
+}
+
+pub fn build_traits(s: &str) -> Result<TraitList> {
+    let (ast, _) = parse(s)?;
+
+    let trait_list = TraitList::compile(&ast)?;
+
+    Ok(trait_list)
 }
 
 pub fn compile_and_execute(s: &str) -> Result<Var> {

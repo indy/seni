@@ -400,13 +400,13 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     h.insert(Native::GenStrayInt, gen_stray_int);
     h.insert(Native::GenStray, gen_stray);
     h.insert(Native::GenStray2D, gen_stray_2d);
-    // BIND("gen/stray-3d", gen_stray_3d);
-    // BIND("gen/stray-4d", gen_stray_4d);
+    h.insert(Native::GenStray3D, gen_stray_3d);
+    h.insert(Native::GenStray4D, gen_stray_4d);
     h.insert(Native::GenInt, gen_int);
     h.insert(Native::GenScalar, gen_scalar);
     h.insert(Native::Gen2D, gen_2d);
-    // BIND("gen/select", gen_select); // broken?
-    // BIND("gen/col", gen_col);
+    h.insert(Native::GenSelect, gen_select); // not implemented
+    h.insert(Native::GenCol, gen_col);
 
     h
 }
@@ -2159,7 +2159,7 @@ pub fn prng_values(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
 
     if let Some(ref mut prng_state) = ref_mut_prng_state {
         for _ in 0..(num.unwrap() as i32) {
-            let f = prng_state.prng_f32();
+            let f = prng_state.prng_f32_defined_range();
             vs.push(Var::Float(f))
         }
     }
@@ -2182,7 +2182,7 @@ pub fn prng_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
     }
 
     if let Some(ref mut prng_state) = ref_mut_prng_state {
-        let f = prng_state.prng_f32();
+        let f = prng_state.prng_f32_defined_range();
         return Ok(Var::Float(f));
     }
 
@@ -2861,7 +2861,7 @@ pub fn focal_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
 //
 pub fn gen_stray_int(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut from: Option<f32> = Some(1.0);
-    let mut by : Option<f32> = Some(0.2);
+    let mut by: Option<f32> = Some(0.2);
 
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -2885,7 +2885,7 @@ pub fn gen_stray_int(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
 
 pub fn gen_stray(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let mut from: Option<f32> = Some(1.0);
-    let mut by : Option<f32> = Some(0.2);
+    let mut by: Option<f32> = Some(0.2);
 
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -2910,11 +2910,14 @@ pub fn gen_stray(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
 
 pub fn gen_stray_2d(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     if !vm.building_with_trait_within_vector {
-        return Err(Error::Bind("gen_stray_2d should always be called with vm.building_with_trait_within_vector".to_string()))
+        return Err(Error::Bind(
+            "gen_stray_2d should always be called with vm.building_with_trait_within_vector"
+                .to_string(),
+        ));
     }
 
     let mut from: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut by : Option<(f32, f32)> = Some((1.0, 1.0));
+    let mut by: Option<(f32, f32)> = Some((1.0, 1.0));
 
     let mut args_pointer = vm.sp - (num_args * 2);
     for _ in 0..num_args {
@@ -2941,11 +2944,121 @@ pub fn gen_stray_2d(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         by_index = mathutil::absf(by.1);
         from_index = from.1;
     } else {
-        return Err(Error::Bind("gen_stray_2d invalid trait_within_vector_index value".to_string()));
+        return Err(Error::Bind(
+            "gen_stray_2d invalid trait_within_vector_index value".to_string(),
+        ));
     }
 
     // pick a scalar between min and max
-    let value = vm.prng_state.prng_f32_range(from_index - by_index, from_index + by_index);
+    let value = vm
+        .prng_state
+        .prng_f32_range(from_index - by_index, from_index + by_index);
+
+    Ok(Var::Float(value))
+}
+
+pub fn gen_stray_3d(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    if !vm.building_with_trait_within_vector {
+        return Err(Error::Bind(
+            "gen_stray_3d should always be called with vm.building_with_trait_within_vector"
+                .to_string(),
+        ));
+    }
+
+    let mut from: Option<&Vec<Var>> = None;
+    let mut by: Option<&Vec<Var>> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_vector!(from, Keyword::From, iname, value);
+            read_vector!(by, Keyword::By, iname, value);
+        }
+    }
+
+    if from.is_none() || by.is_none() {
+        return Err(Error::Bind(
+            "gen_stray_3d requires both from and by parameters".to_string(),
+        ));
+    }
+
+    let index = vm.trait_within_vector_index;
+
+    let from = if let Some(var) = from.unwrap().get(index) {
+        Var::get_float_value(&var)?
+    } else {
+        return Err(Error::Bind(
+            "gen_stray_3d requires both from and by parameters".to_string(),
+        ));
+    };
+
+    let by = if let Some(var) = by.unwrap().get(index) {
+        Var::get_float_value(&var)?
+    } else {
+        return Err(Error::Bind(
+            "gen_stray_3d requires both from and by parameters".to_string(),
+        ));
+    };
+
+    // pick a scalar between min and max
+    let value = vm.prng_state.prng_f32_range(from - by, from + by);
+
+    Ok(Var::Float(value))
+}
+
+pub fn gen_stray_4d(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    if !vm.building_with_trait_within_vector {
+        return Err(Error::Bind(
+            "gen_stray_4d should always be called with vm.building_with_trait_within_vector"
+                .to_string(),
+        ));
+    }
+
+    let mut from: Option<&Vec<Var>> = None;
+    let mut by: Option<&Vec<Var>> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_vector!(from, Keyword::From, iname, value);
+            read_vector!(by, Keyword::By, iname, value);
+        }
+    }
+
+    if from.is_none() || by.is_none() {
+        return Err(Error::Bind(
+            "gen_stray_4d requires both from and by parameters".to_string(),
+        ));
+    }
+
+    let index = vm.trait_within_vector_index;
+
+    let from = if let Some(var) = from.unwrap().get(index) {
+        Var::get_float_value(&var)?
+    } else {
+        return Err(Error::Bind(
+            "gen_stray_4d requires both from and by parameters".to_string(),
+        ));
+    };
+
+    let by = if let Some(var) = by.unwrap().get(index) {
+        Var::get_float_value(&var)?
+    } else {
+        return Err(Error::Bind(
+            "gen_stray_4d requires both from and by parameters".to_string(),
+        ));
+    };
+
+    // pick a scalar between min and max
+    let value = vm.prng_state.prng_f32_range(from - by, from + by);
 
     Ok(Var::Float(value))
 }
@@ -2967,7 +3080,9 @@ pub fn gen_int(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> 
     }
 
     // pick a scalar between min and max
-    let value = vm.prng_state.prng_f32_range(min.unwrap(), max.unwrap() + 1.0);
+    let value = vm
+        .prng_state
+        .prng_f32_range(min.unwrap(), max.unwrap() + 1.0);
 
     // todo: c-version returned f32, is it ok to cast this to i32?
     Ok(Var::Float(value.floor()))
@@ -3015,6 +3130,59 @@ pub fn gen_2d(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let y = vm.prng_state.prng_f32_range(min.unwrap(), max.unwrap());
 
     Ok(Var::V2D(x, y))
+}
+
+pub fn gen_select(_vm: &mut Vm, _program: &Program, _num_args: usize) -> Result<Var> {
+    // 'from' parameter should be a list
+    // i.e. (gen/select from: '(1 2 3 4 5))
+    //
+    // this prevents any confusion between a vector and vec_2d
+    // e.g. (gen/select from: [1 2 3 4 5]) vs. (gen/select from: [1 2])
+
+    // let mut from: Option<&Var> = None;
+
+    // let mut args_pointer = vm.sp - (num_args * 2);
+    // for _ in 0..num_args {
+    //     let label = &vm.stack[args_pointer];
+    //     let value = &vm.stack[args_pointer + 1];
+    //     args_pointer += 2;
+
+    //     if let Var::Int(iname) = label {
+    //         // read_???!(from, Keyword::From, iname, value);
+    //     }
+    // }
+
+    unimplemented!();
+}
+
+pub fn gen_col(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+    let mut alpha: Option<f32> = None;
+
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
+
+        if let Var::Int(iname) = label {
+            read_float!(alpha, Keyword::Alpha, iname, value);
+        }
+    }
+
+    let alpha = if let Some(alpha) = alpha {
+        alpha
+    } else {
+        // no alpha was given so generate a random value
+        vm.prng_state.prng_f32_range(0.0, 1.0)
+    };
+
+    Ok(Var::Colour(Colour::new(
+        ColourFormat::Rgb,
+        vm.prng_state.prng_f32_range(0.0, 1.0),
+        vm.prng_state.prng_f32_range(0.0, 1.0),
+        vm.prng_state.prng_f32_range(0.0, 1.0),
+        alpha,
+    )))
 }
 
 #[cfg(test)]

@@ -82,6 +82,49 @@ fn as_u8(i: i32) -> u8 {
 
 impl PrngStateStruct {
     pub fn new(seed: i32, min: f32, max: f32) -> Self {
+        PrngStateStruct {
+            rng: PrngStateStruct::make_xor_shift_rng(seed),
+            min,
+            max,
+        }
+    }
+
+    pub fn set_state(&mut self, seed: i32) {
+        self.rng = PrngStateStruct::make_xor_shift_rng(seed);
+    }
+
+    // pub fn prng_i32_range(&mut self, min: i32, max: i32) -> i32 {
+    //     self.rnd_pcg_range(min, max)
+    // }
+
+    // 0..1
+    pub fn prng_f32(&mut self) -> f32 {
+        let a = self.rng.next_u32();
+
+        a as f32 / std::u32::MAX as f32
+    }
+
+    pub fn prng_f32_range(&mut self, min: f32, max: f32) -> f32 {
+        let value = self.prng_f32();
+        (value * (max - min)) + min
+    }
+
+    pub fn prng_f32_defined_range(&mut self) -> f32 {
+        let value = self.prng_f32();
+        (value * (self.max - self.min)) + self.min
+    }
+
+    pub fn prng_f32_around(&mut self, val: f32, percent: f32, min: f32, max: f32) -> f32 {
+        let value = self.prng_f32();
+        let range = ((max - min) / 100.0) * percent;
+        let lowest = val - range;
+        let highest = val + range;
+        let res = (value * (highest - lowest)) + lowest;
+
+        clamp(res, min, max)
+    }
+
+    fn make_xor_shift_rng(seed: i32) -> XorShiftRng {
         let seedy: [u8; 16] = [
             as_u8(seed),
             as_u8(seed + 1),
@@ -101,41 +144,7 @@ impl PrngStateStruct {
             as_u8(seed + 15),
         ];
 
-        PrngStateStruct {
-            rng: XorShiftRng::from_seed(seedy),
-            min,
-            max,
-        }
-    }
-
-    // pub fn prng_set_state(&mut self, seed: [u8; 16]) {
-    //     self.rnd_pcg_seed(seed)
-    // }
-
-    // pub fn prng_i32_range(&mut self, min: i32, max: i32) -> i32 {
-    //     self.rnd_pcg_range(min, max)
-    // }
-
-    // 0..1
-    pub fn prng_f32(&mut self) -> f32 {
-        let a = self.rng.next_u32();
-
-        a as f32 / std::u32::MAX as f32
-    }
-
-    pub fn prng_f32_range(&mut self, min: f32, max: f32) -> f32 {
-        let value = self.prng_f32();
-        (value * (max - min)) + min
-    }
-
-    pub fn prng_f32_around(&mut self, val: f32, percent: f32, min: f32, max: f32) -> f32 {
-        let value = self.prng_f32();
-        let range = ((max - min) / 100.0) * percent;
-        let lowest = val - range;
-        let highest = val + range;
-        let res = (value * (highest - lowest)) + lowest;
-
-        clamp(res, min, max)
+        XorShiftRng::from_seed(seedy)
     }
 }
 
@@ -226,6 +235,23 @@ pub mod tests {
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))",
             "0.36151162 0.4412291 0.37725854 0.5783009 0.65834785 0.48318255 0.7342905 0.44944018 0.56456256",
+        );
+    }
+
+    #[test]
+    pub fn test_prng_value2() {
+        is_debug_str(
+            "(define p (prng/build seed: 5938 min: 3 max: 9))
+             (probe scalar: (prng/value from: p))
+             (probe scalar: (prng/value from: p))
+             (probe scalar: (prng/value from: p))
+             (probe scalar: (prng/value from: p))
+             (probe scalar: (prng/value from: p))
+             (probe scalar: (prng/value from: p))
+             (probe scalar: (prng/value from: p))
+             (probe scalar: (prng/value from: p))
+             (probe scalar: (prng/value from: p))",
+            "5.3797703 7.0697656 4.541839 7.1620464 6.7335386 3.5603561 3.4189374 3.1284251 8.890152",
         );
     }
 

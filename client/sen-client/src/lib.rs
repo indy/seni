@@ -20,9 +20,7 @@ mod utils;
 use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
-// use sen_core::sen_parse;
 use sen_core;
-use sen_core::vm::{Vm, Env};
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -43,13 +41,18 @@ extern "C" {
 #[wasm_bindgen]
 #[derive(Default)]
 pub struct Bridge {
-    vm: Vm,
-    env: Env,
+    vm: sen_core::Vm,
+    env: sen_core::Env,
 
     source_buffer: String,
     out_source_buffer: String,
     traits_buffer: String,
     genotype_buffer: String,
+
+    genotype_list: Option<Vec<sen_core::Genotype>>,
+
+    // temporary, these will all be removed eventually
+    trait_list: Option<sen_core::TraitList>,
 }
 
 #[wasm_bindgen]
@@ -57,13 +60,17 @@ impl Bridge {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Bridge {
         Bridge {
-            vm: Vm::new(),
-            env: Env::new(),
+            vm: sen_core::Vm::new(),
+            env: sen_core::Env::new(),
 
             source_buffer: "source buffer".to_string(),
             out_source_buffer: "out_source buffer".to_string(),
             traits_buffer: "traits buffer".to_string(),
             genotype_buffer: "genotype buffer".to_string(),
+
+            genotype_list: None,
+
+            trait_list: None,
         }
     }
 
@@ -131,23 +138,52 @@ impl Bridge {
         self.vm.get_render_packet_geo_ptr(packet_number)
     }
 
-    pub fn build_traits(&self) -> i32 {
-        log("build_traits");
-        0
+    // todo: is bool the best return type?
+    pub fn build_traits(&mut self) -> bool {
+        if let Ok(trait_list) = sen_core::build_traits(&self.source_buffer) {
+            self.trait_list = Some(trait_list);
+            // todo: serialize trait_list
+            true
+        } else {
+            false
+        }
     }
 
-    pub fn single_genotype_from_seed(&self, _seed: i32) -> i32 {
-        log("single_genotype_from_seed");
-        0
+    pub fn single_genotype_from_seed(&mut self, seed: i32) -> bool {
+        // todo: deserialize trait_list from traits_buffer
+        // for the moment using self.trait_list THIS IS WRONG!!!
+        if let Some(ref trait_list) = self.trait_list {
+            if let Ok(genotype) = sen_core::Genotype::build_from_seed(trait_list, seed) {
+                self.genotype_list = Some(vec![genotype]);
+                return true
+            }
+        }
+        false
     }
 
-    pub fn create_initial_generation(&self, _population_size: i32, _seed: i32) -> i32 {
-        log("create_initial_generation");
-        0
+    // todo: is bool the best return type?
+    pub fn create_initial_generation(&mut self, population_size: i32, seed: i32) -> bool {
+        // todo: deserialize trait_list from traits_buffer
+        // for the moment using self.trait_list THIS IS WRONG!!!
+        if let Some(ref trait_list) = self.trait_list {
+            if let Ok(genotype_list) = sen_core::Genotype::build_genotypes(&trait_list, population_size, seed) {
+                self.genotype_list = Some(genotype_list);
+                return true
+            }
+        }
+
+        false
     }
 
-    pub fn genotype_move_to_buffer(&self, _index: i32) {
-        log("genotype_move_to_buffer");
+    pub fn genotype_move_to_buffer(&mut self, index: usize) -> bool {
+        if let Some(ref genotype_list) = self.genotype_list {
+            if let Some(ref _genotype) = genotype_list.get(index) {
+                // todo: serialize into genotype_buffer
+                unimplemented!();
+                // return true
+            }
+        }
+        false
     }
 
     pub fn script_cleanup(&self) {

@@ -13,10 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::Colour;
 use crate::compiler::{compile_program_1, compile_program_for_trait, Program};
 use crate::error::Result;
-use crate::keywords::Keyword;
 use crate::parser::{Node, NodeMeta};
 use crate::run_program_with_preamble;
 use crate::vm::{Var, Vm};
@@ -26,13 +24,13 @@ pub struct Trait {
     // todo: replace within_vector and index with a single Option<usize>
 
     // true == instantiated as one of multiple traits within a vector
-    within_vector: bool,
+    pub within_vector: bool,
 
     // if within_vector then this is the index within the parent vector
-    index: usize,
+    pub index: usize,
 
-    initial_value: Var,
-    program: Program,
+    pub initial_value: Var,
+    pub program: Program,
 }
 
 impl Trait {
@@ -87,19 +85,20 @@ impl Trait {
 
 #[derive(Debug)]
 pub struct TraitList {
-    traits: Vec<Trait>,
-    seed_value: i32,
+    pub traits: Vec<Trait>,
+    pub seed_value: i32,
 }
 
 impl TraitList {
     fn new() -> Self {
         TraitList {
             traits: Vec::new(),
+            // todo: when is the seed_value set properly?
             seed_value: 42,
         }
     }
 
-    fn compile(ast: &[Node]) -> Result<Self> {
+    pub fn compile(ast: &[Node]) -> Result<Self> {
         let mut trait_list = TraitList::new();
 
         for n in ast {
@@ -170,7 +169,7 @@ impl TraitList {
             match n {
                 Node::Whitespace(_, _) | Node::Comment(_, _) => {
                     // ignoring whitespace and comments
-                },
+                }
                 _ => {
                     let t = Trait::compile(n, &meta.parameter_ast, Some(i))?;
                     self.traits.push(t);
@@ -181,45 +180,6 @@ impl TraitList {
 
         Ok(())
     }
-}
-
-/*
-GeneVar is a subset of the Var enum. Since Gene is a member of NodeMeta it
-needs the PartialEq trait and prng (which is used in the Var enum) uses
-XorShiftRng which doesn't implement PartialEq
-*/
-// todo: conversion between GeneVar and Var
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum GeneVar {
-    Int(i32),
-    Float(f32),
-    Bool(bool),
-    Keyword(Keyword),
-    Long(u64),
-    Name(i32),
-    Vector(Vec<GeneVar>),
-    Colour(Colour),
-    V2D(f32, f32),
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Gene {
-    base: GeneVar,
-}
-
-#[derive(Debug)]
-pub struct Genotype {
-    genes: Vec<Gene>,
-
-    // set/get by compiler when compiling program with a genotype
-    // todo: ????
-    current_gene: Gene, // how is this going to work?
-}
-
-#[derive(Debug)]
-pub struct GenotypeList {
-    genotypes: Vec<Genotype>,
 }
 
 #[cfg(test)]
@@ -280,7 +240,7 @@ mod tests {
                 assert_eq!(trait_list.traits.len(), 2);
                 trait_multiple_v2d(&trait_list.traits[0], 0.1, 0.2, 0);
                 trait_multiple_v2d(&trait_list.traits[1], 0.3, 0.4, 1);
-            },
+            }
             Err(_) => assert!(false),
         };
     }

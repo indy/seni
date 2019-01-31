@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use crate::error::{Error, Result};
-use crate::genetic::Gene;
+use crate::gene::Gene;
 use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
 use crate::native::Native;
