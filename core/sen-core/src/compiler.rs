@@ -19,6 +19,7 @@ use std::str::FromStr;
 
 use crate::colour::{Colour, ColourFormat};
 use crate::error::{Error, Result};
+use crate::gene::Genotype;
 use crate::keywords::{string_to_keyword_hash, Keyword};
 use crate::mathutil;
 use crate::native::Native;
@@ -37,65 +38,27 @@ pub fn compile_preamble() -> Result<Program> {
     Ok(Program::new(compilation.code, compilation.fn_info))
 }
 
-pub fn compile_program(complete_ast: &[Node]) -> Result<Program> {
+pub fn compile_program(ast: &[Node]) -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
-
-    // clean the complete_ast of whitespace and comment nodes
-    //
-    let mut ast: Vec<Node> = Vec::new();
-    for n in complete_ast.iter() {
-        if let Some(useful_node) = clean_node(n) {
-            ast.push(useful_node);
-        }
-    }
 
     compiler.compile_common(&mut compilation, &ast)?;
 
     Ok(Program::new(compilation.code, compilation.fn_info))
 }
 
-pub fn compile_program_1(complete_ast: &Node) -> Result<Program> {
+pub fn compile_program_1(ast_node: &Node) -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
 
-    // clean the complete_ast of whitespace and comment nodes
-    //
-    let mut ast: Vec<Node> = Vec::new();
-    if let Some(useful_node) = clean_node(complete_ast) {
-        ast.push(useful_node);
-    }
-
-    compiler.compile_common(&mut compilation, &ast)?;
+    compiler.compile_common_1(&mut compilation, &ast_node)?;
 
     Ok(Program::new(compilation.code, compilation.fn_info))
 }
 
-pub fn compile_program_for_trait(
-    complete_ast: &[Node],
-    gen_initial_value: &Node,
-) -> Result<Program> {
+pub fn compile_program_for_trait(ast: &[Node], gen_initial_value: &Node) -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
-
-    // clean the complete_ast of whitespace and comment nodes
-    //
-    let mut ast: Vec<Node> = Vec::new();
-    for n in complete_ast.iter() {
-        if let Some(useful_node) = clean_node(n) {
-            ast.push(useful_node);
-        }
-    }
-
-    // clean the gen_initial_value of whitespace and comment nodes
-    let mut initial_value_node: Node;
-    if let Some(useful_node) = clean_node(gen_initial_value) {
-        initial_value_node = useful_node;
-    } else {
-        return Err(Error::Compiler(
-            "cannot simplify gen_initial_value in compile_program_for_trait".to_string(),
-        ));
-    }
 
     compiler.compile_common_prologue(&mut compilation, &ast)?;
     compiler.compile_common_top_level_fns(&mut compilation, &ast)?;
@@ -103,11 +66,20 @@ pub fn compile_program_for_trait(
     compiler.compile_global_bind_node(
         &mut compilation,
         Keyword::GenInitial.to_string(),
-        &initial_value_node,
+        &gen_initial_value,
     )?;
     compiler.compile_common_top_level_defines(&mut compilation, &ast)?;
     compiler.compile_common_top_level_forms(&mut compilation, &ast)?;
-    compiler.compile_common_epilogue(&mut compilation, &ast)?;
+    compiler.compile_common_epilogue(&mut compilation)?;
+
+    Ok(Program::new(compilation.code, compilation.fn_info))
+}
+
+pub fn compile_program_with_genotype(ast: &[Node], _genotype: &Genotype) -> Result<Program> {
+    let mut compilation = Compilation::new();
+    let compiler = Compiler::new();
+
+    compiler.compile_common(&mut compilation, &ast)?;
 
     Ok(Program::new(compilation.code, compilation.fn_info))
 }
@@ -259,8 +231,10 @@ fn is_node_colour_constructor(node_meta: &NodeMeta) -> bool {
     });
 
     if let Some(Node::List(children, _)) = ast {
+        let children = semantic_children(children);
+
         if !children.is_empty() {
-            if let Node::Name(_, iname, _) = &children[0] {
+            if let Node::Name(_, iname, _) = children[0] {
                 let col_constructor_start = Native::ColConstructorStart_ as i32;
                 let col_constructor_end = Native::ColConstructorEnd_ as i32;
 
@@ -675,31 +649,43 @@ impl Compiler {
 
         // register top level fns
         for n in ast.iter() {
-            if self.is_list_beginning_with(n, Keyword::Fn) {
-                // get the name of the fn
-                if let Node::List(nodes, _) = n {
-                    if nodes.len() < 2 {
-                        // a list with just the 'fn' keyword ???
-                        return Err(Error::Compiler("malformed function definition".to_string()));
-                    }
-                    let name_and_params = &nodes[1];
-                    if let Node::List(np_nodes, _) = name_and_params {
-                        if !np_nodes.is_empty() {
-                            let name_node = &np_nodes[0];
-                            if let Node::Name(text, _, _) = name_node {
-                                // we have a named top-level fn declaration
-                                //
-                                // create and add a top level fn
-                                let fn_info = FnInfo::new(text.to_string());
-                                compilation.fn_info.push(fn_info);
-                            }
+            if let Some(fn_info) = self.register_top_level_fns_1(n)? {
+                compilation.fn_info.push(fn_info);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn register_top_level_fns_1(&self, n: &Node) -> Result<Option<FnInfo>> {
+        if self.is_list_beginning_with(n, Keyword::Fn) {
+            // get the name of the fn
+            if let Node::List(nodes, _) = n {
+                let nodes = semantic_children(nodes);
+
+                if nodes.len() < 2 {
+                    // a list with just the 'fn' keyword ???
+                    return Err(Error::Compiler("malformed function definition".to_string()));
+                }
+                let name_and_params = nodes[1];
+                if let Node::List(np_nodes, _) = name_and_params {
+                    let np_nodes = semantic_children(np_nodes);
+
+                    if !np_nodes.is_empty() {
+                        let name_node = &np_nodes[0];
+                        if let Node::Name(text, _, _) = name_node {
+                            // we have a named top-level fn declaration
+                            //
+                            // create and add a top level fn
+                            let fn_info = FnInfo::new(text.to_string());
+                            return Ok(Some(fn_info));
                         }
                     }
                 }
             }
         }
 
-        Ok(())
+        Ok(None)
     }
 
     fn register_names_in_define(&self, compilation: &mut Compilation, lhs: &Node) -> Result<()> {
@@ -720,7 +706,9 @@ impl Compiler {
             Node::List(nodes, _) | Node::Vector(nodes, _) => {
                 // (define [a b] (something))
                 // (define [a [x y]] (something))
-                for n in nodes.iter() {
+                let nodes = semantic_children(nodes);
+
+                for n in nodes {
                     if let Err(e) = self.register_names_in_define(compilation, n) {
                         return Err(e);
                     }
@@ -739,25 +727,35 @@ impl Compiler {
         let define_keyword_string = Keyword::Define.to_string();
 
         for n in ast.iter() {
-            if let Node::List(nodes, _) = n {
-                if !nodes.is_empty() {
-                    let define_keyword = &nodes[0];
-                    if let Node::Name(text, _, _) = define_keyword {
-                        if text == &define_keyword_string {
-                            let mut defs = &nodes[1..];
-                            while defs.len() > 1 {
-                                if let Err(e) = self.register_names_in_define(compilation, &defs[0])
-                                {
-                                    return Err(e);
-                                }
-                                defs = &defs[2..];
+            self.register_top_level_defines_1(compilation, n, &define_keyword_string)?;
+        }
+
+        Ok(())
+    }
+
+    fn register_top_level_defines_1(
+        &self,
+        compilation: &mut Compilation,
+        n: &Node,
+        define_keyword_string: &str,
+    ) -> Result<()> {
+        if let Node::List(nodes, _) = n {
+            let nodes = semantic_children(nodes);
+            if !nodes.is_empty() {
+                let define_keyword = &nodes[0];
+                if let Node::Name(text, _, _) = define_keyword {
+                    if text == &define_keyword_string {
+                        let mut defs = &nodes[1..];
+                        while defs.len() > 1 {
+                            if let Err(e) = self.register_names_in_define(compilation, &defs[0]) {
+                                return Err(e);
                             }
+                            defs = &defs[2..];
                         }
                     }
                 }
             }
         }
-
         Ok(())
     }
 
@@ -871,7 +869,66 @@ impl Compiler {
         self.compile_common_top_level_fns(compilation, ast)?;
         self.compile_common_top_level_defines(compilation, ast)?;
         self.compile_common_top_level_forms(compilation, ast)?;
-        self.compile_common_epilogue(compilation, ast)?;
+        self.compile_common_epilogue(compilation)?;
+        Ok(())
+    }
+
+    fn compile_common_1(&self, compilation: &mut Compilation, n: &Node) -> Result<()> {
+        //// single node version of self.compile_common_prologue(compilation, ast)?;
+        {
+            compilation.clear_global_mappings()?;
+            compilation.clear_local_mappings()?;
+
+            self.register_top_level_preamble(compilation)?;
+
+            // single node version of self.register_top_level_fns(compilation, ast)?;
+            compilation.fn_info = Vec::new();
+            if let Some(fn_info) = self.register_top_level_fns_1(n)? {
+                compilation.fn_info.push(fn_info);
+            }
+
+            // single node version of self.register_top_level_defines(compilation, ast)?;
+            let define_keyword_string = Keyword::Define.to_string();
+            self.register_top_level_defines_1(compilation, n, &define_keyword_string)?;
+        }
+
+        //// single node version of self.compile_common_top_level_fns(compilation, ast)?;
+        {
+            // a placeholder, filled in at the end of this function
+            compilation.emit_opcode(Opcode::JUMP)?;
+            let start_index = compilation.code.len() - 1;
+
+            // compile the top-level functions
+            if self.is_list_beginning_with(n, Keyword::Fn) {
+                self.compile(compilation, n)?; // todo: the c-impl returns a node to continue from
+            }
+
+            // jump to the compilation's starting address
+            let jump_address = compilation.code.len() as i32;
+            compilation.bytecode_modify_arg0_i32(start_index, jump_address)?;
+        }
+
+        //// single node version of self.compile_common_top_level_defines(compilation, ast)?;
+        {
+            if self.is_list_beginning_with(n, Keyword::Define) {
+                if let Node::List(children, _) = n {
+                    let children = semantic_children(children);
+                    self.compile_define(compilation, &children[1..], Mem::Global)?;
+                }
+            }
+        }
+
+        //// single node version of self.compile_common_top_level_forms(compilation, ast)?;
+        {
+            if !self.is_list_beginning_with(n, Keyword::Define)
+                && !self.is_list_beginning_with(n, Keyword::Fn)
+            {
+                self.compile(compilation, n)?;
+            }
+        }
+
+        self.compile_common_epilogue(compilation)?;
+
         Ok(())
     }
 
@@ -918,6 +975,7 @@ impl Compiler {
         for n in ast.iter() {
             if self.is_list_beginning_with(n, Keyword::Define) {
                 if let Node::List(children, _) = n {
+                    let children = semantic_children(children);
                     self.compile_define(compilation, &children[1..], Mem::Global)?;
                 }
             }
@@ -940,7 +998,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_common_epilogue(&self, compilation: &mut Compilation, _ast: &[Node]) -> Result<()> {
+    fn compile_common_epilogue(&self, compilation: &mut Compilation) -> Result<()> {
         compilation.emit_opcode(Opcode::STOP)?;
 
         // now update the addreses used by CALL and CALL_0
@@ -952,13 +1010,15 @@ impl Compiler {
     fn compile(&self, compilation: &mut Compilation, ast: &Node) -> Result<()> {
         // todo: move this out of compile and into the compilation struct
 
+        dbg!(ast);
+
         match ast {
             Node::List(children, meta) => {
                 if let Some(node_meta) = meta {
                     if is_node_colour_constructor(node_meta) {
-                        if let Some(_gene) = &node_meta.gene {
-                            unimplemented!();
-                        }
+                        //if let Some(_gene) = &node_meta.gene {
+                        unimplemented!();
+                    //}
                     } else {
                         return Err(Error::Compiler(
                             "given an alterable list that wasn't a colour constructor???"
@@ -966,17 +1026,19 @@ impl Compiler {
                         ));
                     }
                 } else {
-                    self.compile_list(compilation, children)?
+                    let children = semantic_children(children);
+                    self.compile_list(compilation, &children[..])?
                 }
             }
             Node::Float(f, _) => {
                 return compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f);
             }
             Node::Vector(children, _) => {
+                let children = semantic_children(children);
                 if children.len() == 2 {
-                    return self.compile_2d(compilation, children);
+                    return self.compile_2d(compilation, &children[..]);
                 } else {
-                    return self.compile_vector(compilation, children);
+                    return self.compile_vector(compilation, &children[..]);
                 }
             }
             Node::Name(text, iname, _) => {
@@ -993,13 +1055,17 @@ impl Compiler {
                     )));
                 }
             }
+            Node::Comment(_, _) | Node::Whitespace(_, _) => {
+                // ignoring comments and whitespace
+                return Ok(());
+            }
             _ => return Err(Error::Compiler(format!("compile ast: {:?}", ast))),
         }
 
         Ok(())
     }
 
-    fn compile_list(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_list(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         if children.is_empty() {
             // should this be an error?
             return Err(Error::Compiler(
@@ -1008,7 +1074,10 @@ impl Compiler {
         }
 
         match &children[0] {
-            Node::List(kids, _) => self.compile_list(compilation, &kids)?,
+            Node::List(kids, _) => {
+                let kids = semantic_children(kids);
+                self.compile_list(compilation, &kids[..])?
+            }
             Node::Name(text, iname, _) => {
                 if let Some(fn_info_index) = compilation.get_fn_info_index(&children[0]) {
                     // todo: get_fn_info_index is re-checking that this is a Node::Name
@@ -1116,6 +1185,10 @@ impl Compiler {
                     compilation.opcode_offset -= (num_args * 2) - 1;
                 }
             }
+            Node::Comment(_, _) | Node::Whitespace(_, _) => {
+                // ignoring comments and whitespace
+                return Ok(());
+            }
             _ => return Err(Error::Compiler("compile_list strange child".to_string())),
         }
 
@@ -1125,13 +1198,12 @@ impl Compiler {
     fn compile_define(
         &self,
         compilation: &mut Compilation,
-        children: &[Node],
+        children: &[&Node],
         mem: Mem,
     ) -> Result<()> {
-        // children are an even number of nodes representing binding/value pairs
-        // (define a 10 b 20 c 30) -> a 10 b 20 c 30
-
         let mut defs = children;
+        // defs are an even number of nodes representing binding/value pairs
+        // (define a 10 b 20 c 30) -> a 10 b 20 c 30
 
         if defs.len() % 2 != 0 {
             // log: should be an even number of elements
@@ -1152,6 +1224,8 @@ impl Compiler {
                     self.store_from_stack_to_memory(compilation, &lhs_node, mem)?;
                 }
                 Node::Vector(kids, _) => {
+                    let kids = semantic_children(kids);
+
                     // define [a b] (something-that-returns-a-vector ...)
 
                     // check if we can use the PILE opcode
@@ -1184,7 +1258,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_fence(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_fence(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         // (fence (x from: 0 to: 5 num: 5) (+ 42 38))
         if children.len() < 2 {
             return Err(Error::Compiler(
@@ -1195,6 +1269,8 @@ impl Compiler {
         let parameters_node = &children[0];
         // todo: warn if alterable
         if let Node::List(kids, _) = parameters_node {
+            let kids = semantic_children(kids);
+
             // the looping variable x
             let name_node = &kids[0];
 
@@ -1342,7 +1418,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_loop(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_loop(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         // (loop (x from: 0 upto: 120 inc: 30) (body))
         // compile_loop children == (x from: 0 upto: 120 inc: 30) (body)
         //
@@ -1355,6 +1431,8 @@ impl Compiler {
         let parameters_node = &children[0];
         // todo: warn if alterable
         if let Node::List(kids, _) = parameters_node {
+            let kids = semantic_children(kids);
+
             // the looping variable y
             let name_node = &kids[0];
 
@@ -1468,7 +1546,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_each(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_each(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         // (each (x from: [10 20 30 40 50])
         //       (+ x x))
 
@@ -1480,6 +1558,8 @@ impl Compiler {
 
         let parameters_node = &children[0];
         if let Node::List(kids, _) = parameters_node {
+            let kids = semantic_children(kids);
+
             // the looping variable x
             let name_node = &kids[0];
 
@@ -1587,6 +1667,7 @@ impl Compiler {
             // MEM_SEG_GLOBAL LOAD code)
             //
 
+            let children = semantic_children(children);
             for n in children {
                 if let Node::Name(_, iname, _) = n {
                     compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, *iname)?;
@@ -1602,7 +1683,7 @@ impl Compiler {
         ))
     }
 
-    fn compile_quote(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_quote(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         let quoted_form = &children[0];
         match quoted_form {
             Node::List(_, _) => self.compile_vector_in_quote(compilation, quoted_form)?,
@@ -1618,7 +1699,7 @@ impl Compiler {
     fn compile_vector_append(
         &self,
         compilation: &mut Compilation,
-        children: &[Node],
+        children: &[&Node],
     ) -> Result<()> {
         if children.len() != 2 {
             return Err(Error::Compiler(
@@ -1653,11 +1734,13 @@ impl Compiler {
     }
 
     // (fn-call (aj z: 44))
-    fn compile_fn_call(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_fn_call(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         // fn_name should be a defined function's name
         // it will be known at compile time
 
         if let Node::List(kids, _) = &children[0] {
+            let kids = semantic_children(kids);
+
             // todo: warn if alterable
 
             let fn_info_index = &kids[0];
@@ -1704,7 +1787,7 @@ impl Compiler {
         ))
     }
 
-    fn compile_address_of(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_address_of(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         // fn_name should be a defined function's name, it will be known at compile time
         if let Some(fn_info_index) = compilation.get_fn_info_index(&children[0]) {
             // store the index into compilation->fn_info in the compilation
@@ -1718,7 +1801,7 @@ impl Compiler {
     fn compile_on_matrix_stack(
         &self,
         compilation: &mut Compilation,
-        children: &[Node],
+        children: &[&Node],
     ) -> Result<()> {
         compilation.emit_opcode(Opcode::MTX_LOAD)?;
         self.compile_rest(compilation, children)?;
@@ -1726,7 +1809,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_if(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_if(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         let if_node: &Node;
         let then_node: &Node;
         let else_node: Option<&Node>;
@@ -1806,12 +1889,14 @@ impl Compiler {
     - invoking code will then overwrite specific data in arg memory
     - invoking code will then CALL into the body_address
      */
-    fn compile_fn(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_fn(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         // fn (adder a: 0 b: 0) (+ a b)
         compilation.clear_local_mappings()?;
 
         let signature = &children[0]; // (addr a: 0 b: 0)
         if let Node::List(kids, _) = signature {
+            let kids = semantic_children(kids);
+
             if kids.is_empty() {
                 // no fn name given
                 return Err(Error::CompilerFnWithoutName);
@@ -1908,7 +1993,7 @@ impl Compiler {
     fn compile_fn_invocation(
         &self,
         compilation: &mut Compilation,
-        children: &[Node],
+        children: &[&Node],
         fn_info_index: usize,
     ) -> Result<()> {
         // NOTE: CALL and CALL_0 get their function offsets and num args from the
@@ -1960,7 +2045,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_rest(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_rest(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         for n in children {
             self.compile(compilation, n)?;
         }
@@ -1970,7 +2055,7 @@ impl Compiler {
     fn compile_next_one(
         &self,
         compilation: &mut Compilation,
-        children: &[Node],
+        children: &[&Node],
         op: Opcode,
     ) -> Result<()> {
         if children.is_empty() {
@@ -1986,7 +2071,7 @@ impl Compiler {
     fn compile_math(
         &self,
         compilation: &mut Compilation,
-        children: &[Node],
+        children: &[&Node],
         op: Opcode,
     ) -> Result<()> {
         for n in children {
@@ -1996,7 +2081,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_2d(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_2d(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         for n in children {
             self.compile(compilation, n)?;
         }
@@ -2004,7 +2089,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_vector(&self, compilation: &mut Compilation, children: &[Node]) -> Result<()> {
+    fn compile_vector(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         // pushing from the VOID means creating a new, empty vector
         compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
         for n in children {
@@ -2161,6 +2246,8 @@ impl Compiler {
 
     fn is_list_beginning_with(&self, n: &Node, kw: Keyword) -> bool {
         if let Node::List(nodes, _) = n {
+            let nodes = semantic_children(nodes);
+
             if !nodes.is_empty() {
                 if let Node::Name(ref text, _, _) = nodes[0] {
                     if let Some(name_kw) = self.string_to_keyword.get(text) {
@@ -2173,11 +2260,31 @@ impl Compiler {
     }
 }
 
+fn alterable(node: &Node, genotype: &Option<Genotype>) -> bool {
+    match node {
+        Node::List(_, meta)
+        | Node::Vector(_, meta)
+        | Node::Float(_, meta)
+        | Node::Name(_, _, meta)
+        | Node::Label(_, _, meta)
+        | Node::String(_, meta)
+        | Node::Whitespace(_, meta)
+        | Node::Comment(_, meta) => {
+            if meta.is_some() && genotype.is_some() {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 // renamed all_children_have_type as it's only used with children of type NAME
 fn all_children_are_name_nodes(parent: &Node) -> bool {
     match parent {
         Node::List(children, _) | Node::Vector(children, _) => {
-            for n in children.iter() {
+            let children = semantic_children(children);
+
+            for n in children {
                 if let Node::Name(_, _, _) = n {
                     continue;
                 } else {
@@ -2192,38 +2299,17 @@ fn all_children_are_name_nodes(parent: &Node) -> bool {
 
 fn count_children(parent: &Node) -> Result<usize> {
     match parent {
-        Node::List(children, _) | Node::Vector(children, _) => Ok(children.len()),
+        Node::List(children, _) | Node::Vector(children, _) => {
+            let children = semantic_children(children);
+            Ok(children.len())
+        }
         _ => Err(Error::Compiler("count_children".to_string())),
     }
 }
 
-fn clean_node(node: &Node) -> Option<Node> {
-    match node {
-        Node::List(nodes, _) => {
-            let mut vn: Vec<Node> = Vec::new();
-            for n in nodes.iter() {
-                if let Some(cleaned) = clean_node(n) {
-                    vn.push(cleaned);
-                }
-            }
-            Some(Node::List(vn, None))
-        }
-        Node::Vector(nodes, _) => {
-            let mut vn: Vec<Node> = Vec::new();
-            for n in nodes.iter() {
-                if let Some(cleaned) = clean_node(n) {
-                    vn.push(cleaned);
-                }
-            }
-            Some(Node::Vector(vn, None))
-        }
-        Node::Float(f, _) => Some(Node::Float(*f, None)),
-        Node::Name(text, iname, _) => Some(Node::Name(text.to_string(), *iname, None)),
-        Node::Label(text, iname, _) => Some(Node::Label(text.to_string(), *iname, None)),
-        Node::String(text, _) => Some(Node::String(text.to_string(), None)),
-        Node::Whitespace(_, _) => None,
-        Node::Comment(_, _) => None,
-    }
+fn semantic_children(children: &[Node]) -> Vec<&Node> {
+    let ns: Vec<&Node> = children.iter().filter(|n| n.is_semantic()).collect();
+    ns
 }
 
 #[cfg(test)]
@@ -2439,6 +2525,7 @@ mod tests {
                 stop(),
             ]
         );
+
         // vector of f32
         assert_eq!(
             compile("[23 45 67 89]"),

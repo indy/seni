@@ -17,14 +17,12 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use crate::error::{Error, Result};
-use crate::gene::Gene;
 use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
 use crate::native::Native;
 
 #[derive(Debug, PartialEq)]
 pub struct NodeMeta {
-    pub gene: Option<Gene>,
     pub parameter_ast: Vec<Node>,
     pub parameter_prefix: Vec<Node>, // todo: couldn't this just be a String?
 }
@@ -39,6 +37,15 @@ pub enum Node {
     String(String, Option<NodeMeta>),
     Whitespace(String, Option<NodeMeta>),
     Comment(String, Option<NodeMeta>),
+}
+
+impl Node {
+    pub fn is_semantic(&self) -> bool {
+        match *self {
+            Node::Comment(_, _) | Node::Whitespace(_, _) => false,
+            _ => true,
+        }
+    }
 }
 
 struct NodeAndRemainder<'a> {
@@ -199,7 +206,6 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeA
             Token::CurlyBracketEnd => {
                 // construct the NodeMeta
                 let meta = Some(NodeMeta {
-                    gene: None,
                     parameter_ast,
                     parameter_prefix,
                 });
@@ -445,7 +451,6 @@ mod tests {
                 Node::Float(
                     5.0,
                     Some(NodeMeta {
-                        gene: None,
                         parameter_ast: vec![
                             Node::Whitespace(" ".to_string(), None),
                             Node::List(

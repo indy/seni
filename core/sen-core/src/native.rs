@@ -2164,7 +2164,7 @@ pub fn prng_values(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
         }
     }
 
-    return Ok(Var::Vector(vs));
+    Ok(Var::Vector(vs))
 }
 
 pub fn prng_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
