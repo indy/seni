@@ -16,15 +16,28 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
+use crate::colour::Colour;
 use crate::error::{Error, Result};
+use crate::gene::Gene;
 use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
 use crate::native::Native;
 
 #[derive(Debug, PartialEq)]
 pub struct NodeMeta {
+    pub gene: Option<Gene>,
     pub parameter_ast: Vec<Node>,
     pub parameter_prefix: Vec<Node>, // todo: couldn't this just be a String?
+}
+
+impl NodeMeta {
+    pub fn new_with_gene(gene: Gene) -> Self {
+        NodeMeta {
+            gene: Some(gene),
+            parameter_ast: Vec::new(),
+            parameter_prefix: Vec::new(),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -44,6 +57,98 @@ impl Node {
         match *self {
             Node::Comment(_, _) | Node::Whitespace(_, _) => false,
             _ => true,
+        }
+    }
+
+    pub fn get_float(&self, use_genes: bool) -> Result<f32> {
+        if let Node::Float(f, meta) = self {
+            if use_genes && meta.is_some() {
+                if let Some(meta) = meta {
+                    if let Some(gene) = &meta.gene {
+                        match gene {
+                            Gene::Float(f) => return Ok(*f),
+                            _ => {
+                                return Err(Error::Compiler(
+                                    "Node::get_float incompatible gene".to_string(),
+                                ));
+                            }
+                        }
+                    }
+                }
+            } else {
+                return Ok(*f);
+            }
+        }
+        Err(Error::Compiler(format!(
+            "Node::get_float expected Node::Float not {:?}",
+            self
+        )))
+    }
+
+    pub fn get_label_iname(&self, use_genes: bool) -> Result<i32> {
+        if let Node::Label(_, iname, meta) = self {
+            if use_genes && meta.is_some() {
+                if let Some(meta) = meta {
+                    if let Some(gene) = &meta.gene {
+                        match gene {
+                            // todo: what type of gene would a Node::Label have?
+                            Gene::Int(i) => return Ok(*i),
+                            Gene::Name(i) => return Ok(*i),
+                            _ => {
+                                return Err(Error::Compiler(
+                                    "Node::get_label_iname incompatible gene".to_string(),
+                                ));
+                            }
+                        }
+                    }
+                }
+            } else {
+                return Ok(*iname);
+            }
+        }
+        Err(Error::Compiler(format!(
+            "Node::get_label_iname expected Node::Label not {:?}",
+            self
+        )))
+    }
+
+    pub fn get_colour(&self, use_genes: bool) -> Result<Colour> {
+        if let Node::List(_, meta) = self {
+            if use_genes && meta.is_some() {
+                if let Some(meta) = meta {
+                    if let Some(gene) = &meta.gene {
+                        match gene {
+                            Gene::Colour(col) => return Ok(*col),
+                            _ => {
+                                return Err(Error::Compiler(
+                                    "Node::get_colour incompatible gene".to_string(),
+                                ));
+                            }
+                        }
+                    }
+                }
+            } else {
+                return Err(Error::Compiler(
+                    "Node::get_colour expected to use gene".to_string(),
+                ));
+            }
+        }
+        Err(Error::Compiler(format!(
+            "Node::get_colour expected Node::List not {:?}",
+            self
+        )))
+    }
+
+    pub fn is_alterable(&self) -> bool {
+        match self {
+            Node::List(_, meta)
+            | Node::Vector(_, meta)
+            | Node::Float(_, meta)
+            | Node::Name(_, _, meta)
+            | Node::Label(_, _, meta)
+            | Node::String(_, meta)
+            | Node::Whitespace(_, meta)
+            | Node::Comment(_, meta) => return meta.is_some(),
         }
     }
 }
@@ -206,6 +311,7 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeA
             Token::CurlyBracketEnd => {
                 // construct the NodeMeta
                 let meta = Some(NodeMeta {
+                    gene: None,
                     parameter_ast,
                     parameter_prefix,
                 });
@@ -451,6 +557,7 @@ mod tests {
                 Node::Float(
                     5.0,
                     Some(NodeMeta {
+                        gene: None,
                         parameter_ast: vec![
                             Node::Whitespace(" ".to_string(), None),
                             Node::List(

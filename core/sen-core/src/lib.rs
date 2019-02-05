@@ -98,6 +98,18 @@ pub fn compile_and_execute(s: &str) -> Result<Var> {
     run_program_with_preamble(&mut vm, &program)
 }
 
+pub fn compile_and_execute_with_seeded_genotype(s: &str, seed: i32) -> Result<Var> {
+    let mut vm = Vm::new();
+    // todo: cache the preamble program
+    let (mut ast, _word_lut) = parse(s)?;
+
+    let trait_list = TraitList::compile(&ast)?;
+    let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
+    let program = compile_program_with_genotype(&mut ast, &mut genotype)?;
+
+    run_program_with_preamble(&mut vm, &program)
+}
+
 pub fn compile_str(s: &str) -> Result<Program> {
     let (ast, _word_lut) = parse(s)?;
     compile_program(&ast)

@@ -33,8 +33,7 @@ pub enum Gene {
     Bool(bool),
     Keyword(Keyword),
     Long(u64),
-    Name(i32),
-    // Vector(Vec<Gene>),
+    Name(i32), // todo: how do names work with genes? should the String also be here?
     Colour(Colour),
     V2D(f32, f32),
 }
@@ -48,7 +47,6 @@ impl Gene {
             Var::Keyword(kw) => Ok(Gene::Keyword(*kw)),
             Var::Long(u) => Ok(Gene::Long(*u)),
             Var::Name(i) => Ok(Gene::Name(*i)),
-            //Var::Vector() => Ok(Gene::Vector(_)),
             Var::Colour(col) => Ok(Gene::Colour(*col)),
             Var::V2D(fl1, fl2) => Ok(Gene::V2D(*fl1, *fl2)),
             _ => Err(Error::Gene("from_var: incompatible input var".to_string())),
@@ -75,8 +73,8 @@ impl Gene {
 
 #[derive(Debug)]
 pub struct Genotype {
-    genes: Vec<Gene>,
-    current_gene_index: usize,
+    pub genes: Vec<Gene>,
+    pub current_gene_index: usize,
 }
 
 impl Genotype {
@@ -135,7 +133,23 @@ impl Genotype {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::colour::*;
     use crate::parser::parse;
+    use crate::{compile_and_execute, compile_program_with_genotype, run_program_with_preamble};
+
+    pub fn run_with_seeded_genotype(s: &str, seed: i32) -> Result<(Var, Genotype)> {
+        let mut vm = Vm::new();
+        // todo: cache the preamble program
+        let (mut ast, _word_lut) = parse(s)?;
+
+        let trait_list = TraitList::compile(&ast)?;
+        let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
+        let program = compile_program_with_genotype(&mut ast, &mut genotype)?;
+
+        let var = run_program_with_preamble(&mut vm, &program)?;
+
+        Ok((var, genotype))
+    }
 
     fn compile_trait_list(s: &str) -> Result<TraitList> {
         let (ast, _) = parse(s).unwrap();
@@ -207,5 +221,95 @@ mod tests {
         assert_eq!(genotype.genes.len(), 2);
         gene_2d(&genotype.genes[0], 59.75697, 56.067802);
         gene_2d(&genotype.genes[1], 55.85068, 57.474014);
+    }
+
+    fn is_float(var: &Var, expected: f32) {
+        if let Var::Float(f) = var {
+            assert_eq!(*f, expected);
+        } else {
+            assert!(false);
+        }
+    }
+
+    fn is_col(var: &Var, expected: &Colour) {
+        if let Var::Colour(col) = var {
+            assert_eq!(col.format, expected.format);
+            assert_eq!(col.e0, expected.e0);
+            assert_eq!(col.e1, expected.e1);
+            assert_eq!(col.e2, expected.e2);
+            assert_eq!(col.e3, expected.e3);
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn genotype_col() {
+        let s = "{(col/rgb r: 0.1) (gen/col alpha: 0.3)}";
+
+        let res = compile_and_execute(s).unwrap();
+        is_col(&res, &Colour::new(ColourFormat::Rgb, 0.1, 0.0, 0.0, 1.0));
+
+        let (res, genotype) = run_with_seeded_genotype(s, 432).unwrap();
+        is_col(
+            &res,
+            &Colour::new(ColourFormat::Rgb, 0.97569704, 0.6067802, 0.585068, 0.3),
+        );
+        assert_eq!(genotype.genes.len(), 1);
+    }
+
+    #[test]
+    fn genotype_compile() {
+        {
+            let s = "(+ {3 (gen/scalar min: 10 max: 20)} {4 (gen/scalar min: 100 max: 105)})";
+
+            let res = compile_and_execute(s).unwrap();
+            is_float(&res, 7.0);
+
+            let (res, genotype) = run_with_seeded_genotype(s, 432).unwrap();
+            is_float(&res, 122.79086);
+            assert_eq!(genotype.genes.len(), 2);
+        }
+        {
+            let s = "(+ 6 {3 (gen/int min: 1 max: 100)})";
+
+            let res = compile_and_execute(s).unwrap();
+            is_float(&res, 9.0);
+
+            let (res, genotype) = run_with_seeded_genotype(s, 432).unwrap();
+            is_float(&res, 104.0);
+            assert_eq!(genotype.genes.len(), 1);
+        }
+        {
+            let s = "(+ 6 {3 (gen/scalar min: 1 max: 100)})";
+
+            let res = compile_and_execute(s).unwrap();
+            is_float(&res, 9.0);
+
+            let (res, genotype) = run_with_seeded_genotype(s, 432).unwrap();
+            is_float(&res, 103.59401);
+            assert_eq!(genotype.genes.len(), 1);
+        }
+        // different seeds
+        {
+            let s = "(+ 6 {3 (gen/int min: 1 max: 100)})";
+
+            let res = compile_and_execute(s).unwrap();
+            is_float(&res, 9.0);
+
+            let (res, genotype) = run_with_seeded_genotype(s, 874).unwrap();
+            is_float(&res, 60.0);
+            assert_eq!(genotype.genes.len(), 1);
+        }
+        {
+            let s = "(+ 6 {3 (gen/scalar min: 1 max: 100)})";
+
+            let res = compile_and_execute(s).unwrap();
+            is_float(&res, 9.0);
+
+            let (res, genotype) = run_with_seeded_genotype(s, 874).unwrap();
+            is_float(&res, 59.47561);
+            assert_eq!(genotype.genes.len(), 1);
+        }
     }
 }
