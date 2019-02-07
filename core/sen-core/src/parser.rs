@@ -23,7 +23,7 @@ use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
 use crate::native::Native;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct NodeMeta {
     pub gene: Option<Gene>,
     pub parameter_ast: Vec<Node>,
@@ -40,7 +40,7 @@ impl NodeMeta {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Node {
     List(Vec<Node>, Option<NodeMeta>),
     Vector(Vec<Node>, Option<NodeMeta>),
@@ -139,16 +139,62 @@ impl Node {
         )))
     }
 
+    pub fn get_2d(&self, use_genes: bool) -> Result<(f32, f32)> {
+        if let Node::Vector(_, meta) = self {
+            if use_genes && meta.is_some() {
+                if let Some(meta) = meta {
+                    if let Some(gene) = &meta.gene {
+                        match gene {
+                            Gene::V2D(x, y) => return Ok((*x, *y)),
+                            _ => {
+                                return Err(Error::Compiler(
+                                    "Node::get_2d incompatible gene".to_string(),
+                                ));
+                            }
+                        }
+                    }
+                }
+            } else {
+                return Err(Error::Compiler(
+                    "Node::get_2d expected to use gene".to_string(),
+                ));
+            }
+        }
+        Err(Error::Compiler(format!(
+            "Node::get_2d expected Node::Vector not {:?}",
+            self
+        )))
+    }
+
     pub fn is_alterable(&self) -> bool {
         match self {
             Node::List(_, meta)
-            | Node::Vector(_, meta)
+                | Node::Vector(_, meta)
             | Node::Float(_, meta)
             | Node::Name(_, _, meta)
             | Node::Label(_, _, meta)
             | Node::String(_, meta)
             | Node::Whitespace(_, meta)
             | Node::Comment(_, meta) => return meta.is_some(),
+        }
+    }
+
+    pub fn has_gene(&self) -> bool {
+        match self {
+            Node::List(_, meta)
+                | Node::Vector(_, meta)
+                | Node::Float(_, meta)
+                | Node::Name(_, _, meta)
+                | Node::Label(_, _, meta)
+                | Node::String(_, meta)
+                | Node::Whitespace(_, meta)
+                | Node::Comment(_, meta) => {
+                    if let Some(meta) = meta {
+                        return meta.gene.is_some()
+                    } else {
+                        false
+                    }
+                }
         }
     }
 }

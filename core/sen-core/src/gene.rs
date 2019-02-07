@@ -151,6 +151,36 @@ mod tests {
         Ok((var, genotype))
     }
 
+    fn geno_test(
+        expr: &str,
+        seed: i32,
+        genotype_length: usize,
+        expected_normal: f32,
+        expected_variant: f32,
+    ) {
+        let res = compile_and_execute(expr).unwrap();
+        is_float(&res, expected_normal);
+
+        let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
+        assert_eq!(genotype.genes.len(), genotype_length);
+        is_float(&res, expected_variant);
+    }
+
+    fn geno_test_2d(
+        expr: &str,
+        seed: i32,
+        genotype_length: usize,
+        expected_normal: (f32, f32),
+        expected_variant: (f32, f32),
+    ) {
+        let res = compile_and_execute(expr).unwrap();
+        is_2d(&res, expected_normal);
+
+        let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
+        assert_eq!(genotype.genes.len(), genotype_length);
+        is_2d(&res, expected_variant);
+    }
+
     fn compile_trait_list(s: &str) -> Result<TraitList> {
         let (ast, _) = parse(s).unwrap();
         TraitList::compile(&ast)
@@ -231,6 +261,15 @@ mod tests {
         }
     }
 
+    fn is_2d(var: &Var, expected: (f32, f32)) {
+        if let Var::V2D(x, y) = var {
+            assert_eq!(*x, expected.0);
+            assert_eq!(*y, expected.1);
+        } else {
+            assert!(false);
+        }
+    }
+
     fn is_col(var: &Var, expected: &Colour) {
         if let Var::Colour(col) = var {
             assert_eq!(col.format, expected.format);
@@ -260,56 +299,138 @@ mod tests {
 
     #[test]
     fn genotype_compile() {
+        geno_test(
+            "(+ {3 (gen/scalar min: 10 max: 20)} {4 (gen/scalar min: 100 max: 105)})",
+            432,
+            2,
+            7.0,
+            122.79086,
+        );
+        geno_test("(+ 6 {3 (gen/int min: 1 max: 100)})", 432, 1, 9.0, 104.0);
+        geno_test(
+            "(+ 6 {3 (gen/scalar min: 1 max: 100)})",
+            432,
+            1,
+            9.0,
+            103.59401,
+        );
+        geno_test("(+ 6 {3 (gen/int min: 1 max: 100)})", 874, 1, 9.0, 60.0);
+        geno_test(
+            "(+ 6 {3 (gen/scalar min: 1 max: 100)})",
+            874,
+            1,
+            9.0,
+            59.47561,
+        );
+    }
+
+    #[test]
+    fn genotype_compile_stray() {
+        geno_test("{3 (gen/stray from: 3 by: 0.5)}", 432, 1, 3.0, 3.475697);
+        geno_test("{3 (gen/stray-int from: 3 by: 0.5)}", 432, 1, 3.0, 3.0);
+    }
+
+    #[test]
+    fn genotype_compile_stray_2d() {
+        // genotype has a length of 2
+        geno_test_2d(
+            "{[100 200] (gen/stray-2d from: [100 200] by: [10 10])}",
+            7524,
+            2,
+            (100.0, 200.0),
+            (93.04805, 197.49728),
+        );
+    }
+
+    #[test]
+    fn genotype_compile_vectors() {
+        // gen/2d in this expr will produce a genotype with 2 genes, each gene will be a V2D
+
         {
-            let s = "(+ {3 (gen/scalar min: 10 max: 20)} {4 (gen/scalar min: 100 max: 105)})";
+            let expr = "{[[0.1 0.2] [0.3 0.4]] (gen/2d)}";
+            let seed = 752;
 
-            let res = compile_and_execute(s).unwrap();
-            is_float(&res, 7.0);
+            // assert the default case [0.1 0.2] [0.3 0.4]:
+            let res = compile_and_execute(expr).unwrap();
+            if let Var::Vector(vs) = res {
+                assert_eq!(vs.len(), 2);
+                is_2d(&vs[0], (0.1, 0.2));
+                is_2d(&vs[1], (0.3, 0.4));
+            } else {
+                assert!(false);
+            }
 
-            let (res, genotype) = run_with_seeded_genotype(s, 432).unwrap();
-            is_float(&res, 122.79086);
+            let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
+            if let Var::Vector(vs) = res {
+                assert_eq!(vs.len(), 2);
+                is_2d(&vs[0], (0.9825403, 0.85869956));
+                is_2d(&vs[1], (0.59191173, 0.999328));
+            } else {
+                assert!(false);
+            }
+
             assert_eq!(genotype.genes.len(), 2);
         }
+
         {
-            let s = "(+ 6 {3 (gen/int min: 1 max: 100)})";
+            let expr = "{[[0.1 0.2] [0.3 0.4]] (gen/2d min: 50 max: 60)}";
+            let seed = 752;
 
-            let res = compile_and_execute(s).unwrap();
-            is_float(&res, 9.0);
+            // assert the default case [0.1 0.2] [0.3 0.4]:
+            let res = compile_and_execute(expr).unwrap();
+            if let Var::Vector(vs) = res {
+                assert_eq!(vs.len(), 2);
+                is_2d(&vs[0], (0.1, 0.2));
+                is_2d(&vs[1], (0.3, 0.4));
+            } else {
+                assert!(false);
+            }
 
-            let (res, genotype) = run_with_seeded_genotype(s, 432).unwrap();
-            is_float(&res, 104.0);
-            assert_eq!(genotype.genes.len(), 1);
-        }
-        {
-            let s = "(+ 6 {3 (gen/scalar min: 1 max: 100)})";
+            let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
+            if let Var::Vector(vs) = res {
+                assert_eq!(vs.len(), 2);
+                is_2d(&vs[0], (59.8254, 58.586998));
+                is_2d(&vs[1], (55.919117, 59.99328));
+            } else {
+                assert!(false);
+            }
 
-            let res = compile_and_execute(s).unwrap();
-            is_float(&res, 9.0);
-
-            let (res, genotype) = run_with_seeded_genotype(s, 432).unwrap();
-            is_float(&res, 103.59401);
-            assert_eq!(genotype.genes.len(), 1);
-        }
-        // different seeds
-        {
-            let s = "(+ 6 {3 (gen/int min: 1 max: 100)})";
-
-            let res = compile_and_execute(s).unwrap();
-            is_float(&res, 9.0);
-
-            let (res, genotype) = run_with_seeded_genotype(s, 874).unwrap();
-            is_float(&res, 60.0);
-            assert_eq!(genotype.genes.len(), 1);
-        }
-        {
-            let s = "(+ 6 {3 (gen/scalar min: 1 max: 100)})";
-
-            let res = compile_and_execute(s).unwrap();
-            is_float(&res, 9.0);
-
-            let (res, genotype) = run_with_seeded_genotype(s, 874).unwrap();
-            is_float(&res, 59.47561);
-            assert_eq!(genotype.genes.len(), 1);
+            assert_eq!(genotype.genes.len(), 2);
         }
     }
+
+
+    #[test]
+    fn genotype_compile_multiple_floats() {
+        // gen/2d in this expr will produce a genotype with 2 genes, each gene will be a V2D
+
+        {
+            let expr = "{[0.977 0.416 0.171] (gen/scalar)}";
+            let seed = 922;
+
+            let res = compile_and_execute(expr).unwrap();
+            if let Var::Vector(vs) = res {
+                assert_eq!(vs.len(), 3);
+                is_float(&vs[0], 0.977);
+                is_float(&vs[1], 0.416);
+                is_float(&vs[2], 0.171);
+            } else {
+                assert!(false);
+            }
+
+            let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
+            if let Var::Vector(vs) = res {
+                assert_eq!(vs.len(), 3);
+                is_float(&vs[0], 0.6279464);
+                is_float(&vs[1], 0.46001887);
+                is_float(&vs[2], 0.51953447);
+            } else {
+                assert!(false);
+            }
+
+            assert_eq!(genotype.genes.len(), 3);
+        }
+
+    }
+
 }

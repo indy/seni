@@ -24,7 +24,7 @@ use crate::keywords::{string_to_keyword_hash, Keyword};
 use crate::mathutil;
 use crate::native::Native;
 use crate::opcodes::{opcode_stack_offset, Opcode};
-use crate::parser::Node;
+use crate::parser::{Node, NodeMeta};
 
 const MEMORY_LOCAL_SIZE: usize = 40;
 
@@ -95,13 +95,53 @@ pub fn assign_genotype_to_ast(ast: &mut [Node], genotype: &mut Genotype) -> Resu
     genotype.current_gene_index = 0;
 
     for n in ast {
-        assign_genes_to_nodes(n, genotype);
+        assign_genes_to_nodes(n, genotype)?;
     }
 
     Ok(())
 }
 
-fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) {
+fn hacky_assign_genes_to_each_node_in_vector(
+    elements: &mut Vec<Node>,
+    genotype: &mut Genotype,
+) -> Vec<Node> {
+    let mut res: Vec<Node> = Vec::new();
+
+    for n in elements {
+        match n {
+            Node::Vector(ns, _) => {
+                res.push(Node::Vector(
+                    ns.clone(),
+                    Some(NodeMeta::new_with_gene(
+                        genotype.genes[genotype.current_gene_index].clone(),
+                    )),
+                ));
+                genotype.current_gene_index += 1;
+            }
+            Node::Float(f, _) => {
+                res.push(Node::Float(
+                    *f,
+                    Some(NodeMeta::new_with_gene(
+                        genotype.genes[genotype.current_gene_index].clone(),
+                    )),
+                ));
+                genotype.current_gene_index += 1;
+            }
+            _ => {}
+        }
+    }
+
+    res
+}
+
+fn hacky_assign_genes_to_each_node_in_vector2(ns: &mut Vec<Node>, res: Vec<Node>) {
+    ns.clear();
+    for n in res {
+        ns.push(n);
+    }
+}
+
+fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()> {
     match node {
         Node::List(ref mut ns, meta) => {
             if let Some(ref mut node_meta) = meta {
@@ -109,54 +149,27 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) {
                 genotype.current_gene_index += 1;
             }
             for n in ns {
-                assign_genes_to_nodes(n, genotype);
+                assign_genes_to_nodes(n, genotype)?;
             }
         }
-        Node::Vector(ref mut ns, _meta) => {
-            /*
-                        // grab a gene for every element in this vector
-                        if let Some(ref mut _node_meta) = meta {
-                            for n in ns {
-                                // add the meta
-                                match n {
-                                    Node::List(_, ref mut meta) => {
-                                        meta = &mut Some(NodeMeta::new_with_gene(genotype.genes[genotype.current_gene_index].clone()));
-                                        genotype.current_gene_index += 1;
-                                    }
-                                    Node::Vector(_, ref mut meta) => {
-                                        meta = &mut Some(NodeMeta::new_with_gene(genotype.genes[genotype.current_gene_index].clone()));
-                                        genotype.current_gene_index += 1;
-                                    }
-                                    Node::Float(_, ref mut meta) => {
-                                        meta = &mut Some(NodeMeta::new_with_gene(genotype.genes[genotype.current_gene_index].clone()));
-                                        genotype.current_gene_index += 1;
-                                    }
-                                    Node::Name(_, _, ref mut meta) => {
-                                        meta = &mut Some(NodeMeta::new_with_gene(genotype.genes[genotype.current_gene_index].clone()));
-                                        genotype.current_gene_index += 1;
-                                    }
-                                    Node::Label(_, _, ref mut meta) => {
-                                        meta = &mut Some(NodeMeta::new_with_gene(genotype.genes[genotype.current_gene_index].clone()));
-                                        genotype.current_gene_index += 1;
-                                    }
-                                    Node::String(_, ref mut meta) => {
-                                        meta = &mut Some(NodeMeta::new_with_gene(genotype.genes[genotype.current_gene_index].clone()));
-                                        genotype.current_gene_index += 1;
-                                    }
-                                    Node::Whitespace(_, ref mut meta) => {
-                                        meta = &mut Some(NodeMeta::new_with_gene(genotype.genes[genotype.current_gene_index].clone()));
-                                        genotype.current_gene_index += 1;
-                                    }
-                                    Node::Comment(_, ref mut meta) => {
-                                        meta = &mut Some(NodeMeta::new_with_gene(genotype.genes[genotype.current_gene_index].clone()));
-                                        genotype.current_gene_index += 1;
-                                    }
-                                }
-                            }
-                        }
-            */
-            for n in ns {
-                assign_genes_to_nodes(n, genotype);
+        Node::Vector(ref mut ns, meta) => {
+            if meta.is_some() {
+                // if this just has 2 floats assign a gene to each node
+                // let children = semantic_children(ns);
+                // if children.len() == 2 && both_children_are_floats(&children) {
+                //     let res = hacky_assign_genes_to_each_node_in_vector(ns, genotype);
+                //     hacky_assign_genes_to_each_node_in_vector2(ns, res);
+                // } else {
+                //     let res = hacky_assign_genes_to_each_node_in_vector(ns, genotype);
+                //     hacky_assign_genes_to_each_node_in_vector2(ns, res);
+                // }
+
+                let res = hacky_assign_genes_to_each_node_in_vector(ns, genotype);
+                hacky_assign_genes_to_each_node_in_vector2(ns, res);
+            } else {
+                for n in ns {
+                    assign_genes_to_nodes(n, genotype)?;
+                }
             }
         }
         Node::Float(_, ref mut meta) => {
@@ -196,6 +209,8 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) {
             }
         }
     }
+
+    Ok(())
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -1140,10 +1155,11 @@ impl Compiler {
             }
             Node::Vector(children, _) => {
                 let children = semantic_children(children);
-                if children.len() == 2 {
-                    return self.compile_2d(compilation, &children[..]);
+
+                if children.len() == 2 && both_children_are_floats(&children) {
+                    return self.compile_2d(compilation, ast, &children[..]);
                 } else {
-                    return self.compile_vector(compilation, &children[..]);
+                    return self.compile_vector(compilation, ast, &children[..]);
                 }
             }
             Node::Name(text, iname, _) => {
@@ -2186,19 +2202,82 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_2d(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
-        for n in children {
-            self.compile(compilation, n)?;
+    fn compile_alterable_element(&self, compilation: &mut Compilation, node: &Node) -> Result<()> {
+        match node {
+            Node::Float(_, _) => {
+                let f = self.get_float(node)?;
+                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, f)?;
+            }
+            Node::Vector(elements, _) => {
+                // TODO: this codepath is never executed??
+                let elements = semantic_children(elements);
+                if elements.len() == 2 && both_children_are_floats(&elements) {
+                    let (a, b) = self.get_2d(node)?;
+                    compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, a)?;
+                    compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, b)?;
+                    compilation.emit_opcode(Opcode::SQUISH2)?;
+                } else {
+                    return Err(Error::Compiler(
+                        "compile_alterable_element: expected a vector of length 2".to_string(),
+                    ));
+                }
+            }
+            _ => {
+                return Err(Error::Compiler(
+                    "compile_alterable_element: expected either a float element or a vector"
+                        .to_string(),
+                ));
+            }
         }
-        compilation.emit_opcode(Opcode::SQUISH2)?;
+
         Ok(())
     }
 
-    fn compile_vector(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
+    fn compile_2d(
+        &self,
+        compilation: &mut Compilation,
+        node: &Node,
+        children: &[&Node],
+    ) -> Result<()> {
+        // the node may contain alterable info
+        let use_gene = node.is_alterable() && self.use_genes;
+
+        if node.has_gene() && use_gene {
+            let (a, b) = self.get_2d(node)?;
+            compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, a)?;
+            compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, b)?;
+        } else {
+            for n in children {
+                if use_gene {
+                    self.compile_alterable_element(compilation, n)?;
+                } else {
+                    self.compile(compilation, n)?;
+                }
+            }
+        }
+        compilation.emit_opcode(Opcode::SQUISH2)?;
+
+        Ok(())
+    }
+
+    fn compile_vector(
+        &self,
+        compilation: &mut Compilation,
+        node: &Node,
+        children: &[&Node],
+    ) -> Result<()> {
         // pushing from the VOID means creating a new, empty vector
         compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
+
+        // if this is an alterable vector, we'll have to pull values for each element from the genes
+        let use_gene = node.has_gene() && self.use_genes;
+
         for n in children {
-            self.compile(compilation, n)?;
+            if use_gene {
+                self.compile_alterable_element(compilation, n)?;
+            } else {
+                self.compile(compilation, n)?;
+            }
             compilation.emit_opcode(Opcode::APPEND)?;
         }
 
@@ -2379,6 +2458,10 @@ impl Compiler {
     fn get_colour(&self, n: &Node) -> Result<Colour> {
         n.get_colour(self.use_genes)
     }
+
+    fn get_2d(&self, n: &Node) -> Result<(f32, f32)> {
+        n.get_2d(self.use_genes)
+    }
 }
 
 fn error_if_alterable(n: &Node, s: &str) -> Result<()> {
@@ -2421,6 +2504,15 @@ fn count_children(parent: &Node) -> Result<usize> {
 fn semantic_children(children: &[Node]) -> Vec<&Node> {
     let ns: Vec<&Node> = children.iter().filter(|n| n.is_semantic()).collect();
     ns
+}
+
+fn both_children_are_floats(children: &Vec<&Node>) -> bool {
+    if let Node::Float(_, _) = children[0] {
+        if let Node::Float(_, _) = children[1] {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
