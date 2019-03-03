@@ -93,7 +93,7 @@ pub enum Opcode {
     VEC_HAS_NEXT,
     // (assumption the top of the stack contains a VAR_VECTOR)
     // replaces the top value on the stack with the next value
-    // (using a special var_copy that also copies the next/prev pointers)
+    // (+ hack to also treat a VAR_2D as a VAR_VECTOR)
     VEC_NEXT,
 
     STOP,

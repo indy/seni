@@ -24,6 +24,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+/*!
+The sen-core crate provides the basic functionality of the Seni system
+*/
+
 mod colour;
 mod ease;
 mod focal;
@@ -41,11 +45,15 @@ mod repeat;
 mod trait_list;
 mod uvmapper;
 
+
+pub mod seni_language;
 pub mod compiler;
 pub mod error;
 pub mod geometry;
 pub mod parser;
 pub mod vm;
+
+
 
 use crate::error::*;
 use crate::parser::*;

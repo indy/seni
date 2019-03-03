@@ -109,12 +109,14 @@ impl Default for Env {
     }
 }
 
-// the c-impl of vm (sen_vm) had pointers to env and program. these were required
-// in case any of the native functions had to invoke vm_interpret.
-// the rust version should just pass in these 2 extra args into the native functions
+/// The Seni VM
+/// the c-impl of vm (sen_vm) had pointers to env and program. these were required
+/// in case any of the native functions had to invoke vm_interpret.
+/// the rust version should just pass in these 2 extra args into the native functions
 pub struct Vm {
     pub matrix_stack: MatrixStack,
-    pub prng_state: PrngStateStruct, // only used when evaluating bracket bindings
+    /// only used when evaluating bracket bindings
+    pub prng_state: PrngStateStruct,
 
     pub mappings: Mappings,
     pub geometry: Geometry,
@@ -125,12 +127,17 @@ pub struct Vm {
     pub stack: Vec<Var>,
     pub stack_size: usize,
 
-    pub fp: usize, // frame pointer
-    pub sp: usize, // stack pointer (points to the next free stack index)
-    pub ip: usize, // instruction pointer
+    /// frame pointer
+    pub fp: usize,
+    /// stack pointer (points to the next free stack index)
+    pub sp: usize,
+    /// instruction pointer
+    pub ip: usize,
 
-    pub global: usize, // single segment of memory at top of stack
-    pub local: usize,  // per-frame segment of memory for local variables
+    /// single segment of memory at top of stack
+    pub global: usize,
+    /// per-frame segment of memory for local variables
+    pub local: usize,
 
     pub building_with_trait_within_vector: bool,
     pub trait_within_vector_index: usize,
