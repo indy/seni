@@ -399,7 +399,6 @@ mod tests {
         }
     }
 
-
     #[test]
     fn genotype_compile_multiple_floats() {
         // gen/2d in this expr will produce a genotype with 2 genes, each gene will be a V2D
@@ -430,7 +429,6 @@ mod tests {
 
             assert_eq!(genotype.genes.len(), 3);
         }
-
     }
 
 }

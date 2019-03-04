@@ -29,9 +29,12 @@ The sen-core crate provides the basic functionality of the Seni system
 */
 
 mod colour;
+mod compiler;
 mod ease;
+mod error;
 mod focal;
 mod gene;
+mod geometry;
 mod interp;
 mod keywords;
 mod lexer;
@@ -39,21 +42,15 @@ mod mathutil;
 mod matrix;
 mod native;
 mod opcodes;
+mod parser;
 mod path;
 mod prng;
 mod repeat;
 mod trait_list;
 mod uvmapper;
-
+mod vm;
 
 pub mod seni_language;
-pub mod compiler;
-pub mod error;
-pub mod geometry;
-pub mod parser;
-pub mod vm;
-
-
 
 use crate::error::*;
 use crate::parser::*;

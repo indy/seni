@@ -169,7 +169,7 @@ impl Node {
     pub fn is_alterable(&self) -> bool {
         match self {
             Node::List(_, meta)
-                | Node::Vector(_, meta)
+            | Node::Vector(_, meta)
             | Node::Float(_, meta)
             | Node::Name(_, _, meta)
             | Node::Label(_, _, meta)
@@ -182,19 +182,19 @@ impl Node {
     pub fn has_gene(&self) -> bool {
         match self {
             Node::List(_, meta)
-                | Node::Vector(_, meta)
-                | Node::Float(_, meta)
-                | Node::Name(_, _, meta)
-                | Node::Label(_, _, meta)
-                | Node::String(_, meta)
-                | Node::Whitespace(_, meta)
-                | Node::Comment(_, meta) => {
-                    if let Some(meta) = meta {
-                        return meta.gene.is_some()
-                    } else {
-                        false
-                    }
+            | Node::Vector(_, meta)
+            | Node::Float(_, meta)
+            | Node::Name(_, _, meta)
+            | Node::Label(_, _, meta)
+            | Node::String(_, meta)
+            | Node::Whitespace(_, meta)
+            | Node::Comment(_, meta) => {
+                if let Some(meta) = meta {
+                    return meta.gene.is_some();
+                } else {
+                    false
                 }
+            }
         }
     }
 }
