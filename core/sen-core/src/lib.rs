@@ -31,7 +31,7 @@ The sen-core crate provides the basic functionality of the Seni system
 mod colour;
 mod compiler;
 mod ease;
-mod error;
+pub mod error; // for native
 mod focal;
 mod gene;
 mod geometry;
@@ -46,17 +46,16 @@ mod parser;
 mod path;
 mod prng;
 mod repeat;
+pub mod seni_language;
 mod trait_list;
 mod uvmapper;
 mod vm;
 
-pub mod seni_language;
-
+use crate::compiler::{compile_preamble, compile_program, compile_program_with_genotype, Program};
 use crate::error::*;
 use crate::parser::*;
 use crate::vm::*;
 
-pub use crate::compiler::*;
 pub use crate::gene::Genotype;
 pub use crate::trait_list::TraitList;
 pub use crate::vm::{Env, Vm};

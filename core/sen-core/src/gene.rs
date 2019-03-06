@@ -347,55 +347,59 @@ mod tests {
         // gen/2d in this expr will produce a genotype with 2 genes, each gene will be a V2D
 
         {
-            let expr = "{[[0.1 0.2] [0.3 0.4]] (gen/2d)}";
+            let expr = "{[[0.1 0.2] [0.3 0.4] [0.5 0.6]] (gen/2d)}";
             let seed = 752;
 
-            // assert the default case [0.1 0.2] [0.3 0.4]:
+            // assert the default case [0.1 0.2] [0.3 0.4] [0.5 0.6]:
             let res = compile_and_execute(expr).unwrap();
             if let Var::Vector(vs) = res {
-                assert_eq!(vs.len(), 2);
+                assert_eq!(vs.len(), 3);
                 is_2d(&vs[0], (0.1, 0.2));
                 is_2d(&vs[1], (0.3, 0.4));
+                is_2d(&vs[2], (0.5, 0.6));
             } else {
                 assert!(false);
             }
 
             let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
             if let Var::Vector(vs) = res {
-                assert_eq!(vs.len(), 2);
+                assert_eq!(vs.len(), 3);
                 is_2d(&vs[0], (0.9825403, 0.85869956));
                 is_2d(&vs[1], (0.59191173, 0.999328));
+                is_2d(&vs[2], (0.22858822, 0.4880673));
             } else {
                 assert!(false);
             }
 
-            assert_eq!(genotype.genes.len(), 2);
+            assert_eq!(genotype.genes.len(), 3);
         }
 
         {
-            let expr = "{[[0.1 0.2] [0.3 0.4]] (gen/2d min: 50 max: 60)}";
+            let expr = "{[[0.1 0.2] [0.3 0.4] [0.5 0.6]] (gen/2d min: 50 max: 60)}";
             let seed = 752;
 
             // assert the default case [0.1 0.2] [0.3 0.4]:
             let res = compile_and_execute(expr).unwrap();
             if let Var::Vector(vs) = res {
-                assert_eq!(vs.len(), 2);
+                assert_eq!(vs.len(), 3);
                 is_2d(&vs[0], (0.1, 0.2));
                 is_2d(&vs[1], (0.3, 0.4));
+                is_2d(&vs[2], (0.5, 0.6));
             } else {
                 assert!(false);
             }
 
             let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
             if let Var::Vector(vs) = res {
-                assert_eq!(vs.len(), 2);
+                assert_eq!(vs.len(), 3);
                 is_2d(&vs[0], (59.8254, 58.586998));
                 is_2d(&vs[1], (55.919117, 59.99328));
+                is_2d(&vs[2], (52.28588, 54.880672));
             } else {
                 assert!(false);
             }
 
-            assert_eq!(genotype.genes.len(), 2);
+            assert_eq!(genotype.genes.len(), 3);
         }
     }
 

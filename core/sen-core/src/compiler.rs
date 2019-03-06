@@ -154,16 +154,6 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()>
         }
         Node::Vector(ref mut ns, meta) => {
             if meta.is_some() {
-                // if this just has 2 floats assign a gene to each node
-                // let children = semantic_children(ns);
-                // if children.len() == 2 && both_children_are_floats(&children) {
-                //     let res = hacky_assign_genes_to_each_node_in_vector(ns, genotype);
-                //     hacky_assign_genes_to_each_node_in_vector2(ns, res);
-                // } else {
-                //     let res = hacky_assign_genes_to_each_node_in_vector(ns, genotype);
-                //     hacky_assign_genes_to_each_node_in_vector2(ns, res);
-                // }
-
                 let res = hacky_assign_genes_to_each_node_in_vector(ns, genotype);
                 hacky_assign_genes_to_each_node_in_vector2(ns, res);
             } else {
@@ -1156,7 +1146,7 @@ impl Compiler {
             Node::Vector(children, _) => {
                 let children = semantic_children(children);
 
-                if children.len() == 2 && both_children_are_floats(&children) {
+                if children.len() == 2 {
                     return self.compile_2d(compilation, ast, &children[..]);
                 } else {
                     return self.compile_vector(compilation, ast, &children[..]);
@@ -2208,19 +2198,8 @@ impl Compiler {
                 let f = self.get_float(node)?;
                 compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, f)?;
             }
-            Node::Vector(elements, _) => {
-                // TODO: this codepath is never executed??
-                let elements = semantic_children(elements);
-                if elements.len() == 2 && both_children_are_floats(&elements) {
-                    let (a, b) = self.get_2d(node)?;
-                    compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, a)?;
-                    compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, b)?;
-                    compilation.emit_opcode(Opcode::SQUISH2)?;
-                } else {
-                    return Err(Error::Compiler(
-                        "compile_alterable_element: expected a vector of length 2".to_string(),
-                    ));
-                }
+            Node::Vector(_elements, _) => {
+                unimplemented!();
             }
             _ => {
                 return Err(Error::Compiler(
@@ -2504,15 +2483,6 @@ fn count_children(parent: &Node) -> Result<usize> {
 fn semantic_children(children: &[Node]) -> Vec<&Node> {
     let ns: Vec<&Node> = children.iter().filter(|n| n.is_semantic()).collect();
     ns
-}
-
-fn both_children_are_floats(children: &Vec<&Node>) -> bool {
-    if let Node::Float(_, _) = children[0] {
-        if let Node::Float(_, _) = children[1] {
-            return true;
-        }
-    }
-    false
 }
 
 #[cfg(test)]
