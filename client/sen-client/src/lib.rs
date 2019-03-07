@@ -123,11 +123,16 @@ impl Bridge {
     }
 
     pub fn compile_to_render_packets(&mut self) -> i32 {
-        if let Ok(res) = sen_core::compile_to_render_packets(&mut self.vm, &self.source_buffer) {
+        let num_render_packets = if let Ok(res) = sen_core::compile_to_render_packets(&mut self.vm, &self.source_buffer) {
             res
         } else {
             0
-        }
+        };
+
+        log(&self.vm.debug_str);
+        self.vm.debug_str_clear();
+
+        num_render_packets
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
