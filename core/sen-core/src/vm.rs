@@ -1013,7 +1013,6 @@ impl Vm {
         } else if let Var::Vector(ref mut vec_vec) = &mut self.stack[self.sp - 1] {
             vec_vec.push(cloned_var_value);
         } else {
-            println!("{:?}", &self.stack[self.sp - 1]);
             return Err(Error::VM(
                 "append requires either a Vector or V2D".to_string(),
             ));

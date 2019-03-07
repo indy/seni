@@ -2185,10 +2185,11 @@ impl Compiler {
         children: &[&Node],
         op: Opcode,
     ) -> Result<()> {
-        for n in children {
+        self.compile(compilation, children[0])?;
+        for n in &children[1..] {
             self.compile(compilation, n)?;
+            compilation.emit_opcode(op)?;
         }
-        compilation.emit_opcode(op)?;
         Ok(())
     }
 
@@ -2787,6 +2788,28 @@ mod tests {
                 load_const_f32(4.00),
                 jump(2),
                 load_const_f32(5.00),
+                stop()
+            ]
+        );
+    }
+
+    #[test]
+    fn test_adding_multiple_numbers() {
+        assert_eq!(
+            compile(
+                "(+ 5 6 7 8 9)"
+            ),
+            vec![
+                jump(1),
+                load_const_f32(5.0),
+                load_const_f32(6.0),
+                add(),
+                load_const_f32(7.0),
+                add(),
+                load_const_f32(8.0),
+                add(),
+                load_const_f32(9.0),
+                add(),
                 stop()
             ]
         );
