@@ -136,8 +136,6 @@ pub struct Vm {
 
     /// single segment of memory at top of stack
     pub global: usize,
-    /// per-frame segment of memory for local variables
-    pub local: usize,
 
     pub building_with_trait_within_vector: bool,
     pub trait_within_vector_index: usize,
@@ -163,7 +161,6 @@ impl Default for Vm {
         base_offset += 1; // the num_args of the called function
         base_offset += 1; // the caller's hop back
 
-        let local = base_offset;
         base_offset += MEMORY_LOCAL_SIZE;
         let sp = base_offset;
 
@@ -194,7 +191,6 @@ impl Default for Vm {
             ip: 0,
 
             global,
-            local,
 
             building_with_trait_within_vector: false,
             trait_within_vector_index: 0,
@@ -261,7 +257,6 @@ impl Vm {
         base_offset += 1; // the num_args of the called function
         base_offset += 1; // the caller's hop back
 
-        self.local = base_offset;
         base_offset += MEMORY_LOCAL_SIZE;
         self.sp = base_offset;
 
@@ -303,7 +298,6 @@ impl Vm {
 
         self.ip = fn_info.arg_address;
         self.fp = fp;
-        self.local = self.sp;
 
         // clear the memory that's going to be used for locals
         for _ in 0..MEMORY_LOCAL_SIZE {
@@ -414,7 +408,9 @@ impl Vm {
                             if let Var::Int(prev_fp) = self.stack[fp] {
                                 fp = prev_fp as usize; // go back a frame
                             } else {
-                                return Err(Error::VM("fp is wrong type?".to_string()));
+                                return Err(Error::VM(
+                                    "Mem::Argument (hopback) fp is not Var::Int?".to_string(),
+                                ));
                             }
                         }
                         if let BytecodeArg::Int(arg1) = bc.arg1 {
@@ -422,7 +418,7 @@ impl Vm {
                             self.stack[self.sp - 1] = src.clone();
                         }
                     } else {
-                        return Err(Error::VM("fp is wrong type?".to_string()));
+                        return Err(Error::VM("Mem::Argument: fp is not Var::Int?".to_string()));
                     }
                 }
                 Mem::Local => {
@@ -435,17 +431,19 @@ impl Vm {
                             if let Var::Int(prev_fp) = self.stack[fp] {
                                 fp = prev_fp as usize; // go back a frame
                             } else {
-                                return Err(Error::VM("fp is wrong type?".to_string()));
+                                return Err(Error::VM(
+                                    "Mem::Local (hopback): fp is not Var::Int?".to_string(),
+                                ));
                             }
                         }
-                        self.local = fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
+                        let local = fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
 
-                        if let BytecodeArg::Int(arg1) = bc.arg1 {
-                            let src = &self.stack[self.local + arg1 as usize];
+                        if let BytecodeArg::Int(offset) = bc.arg1 {
+                            let src = &self.stack[local + offset as usize];
                             self.stack[self.sp - 1] = src.clone();
                         }
                     } else {
-                        return Err(Error::VM("fp is wrong type?".to_string()));
+                        return Err(Error::VM("Mem::Local: fp is not Var::Int?".to_string()));
                     }
                 }
                 Mem::Global => {
@@ -454,7 +452,9 @@ impl Vm {
                         self.stack[self.sp - 1] = src.clone();
                     }
                 }
-                Mem::Constant => self.stack[self.sp - 1] = bytecode_arg_to_var(&bc.arg1)?,
+                Mem::Constant => {
+                    self.stack[self.sp - 1] = bytecode_arg_to_var(&bc.arg1)?
+                }
                 Mem::Void => {
                     // pushing from the void. i.e. create this object
                     self.stack[self.sp - 1] = Var::Vector(Vec::new());
@@ -485,8 +485,10 @@ impl Vm {
                 }
             }
             Mem::Local => {
+                let local = self.fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
+
                 if let BytecodeArg::Int(offset) = bc.arg1 {
-                    self.stack[self.local + offset as usize] = popped.clone();
+                    self.stack[local + offset as usize] = popped.clone();
                 }
             }
             Mem::Global => {
@@ -692,8 +694,17 @@ impl Vm {
             if let Var::Float(f1) = &self.stack[self.sp] {
                 self.sp = self.sp_inc()?; // stack push
                 self.stack[self.sp - 1] = Var::Bool(f1 < f2);
+            } else {
+                return Err(Error::VM(
+                    "opcode_lt expected float at top-1 of stack".to_string(),
+                ));
             }
+        } else {
+            return Err(Error::VM(
+                "opcode_lt expected float at top of stack".to_string(),
+            ));
         }
+
         Ok(())
     }
 
@@ -796,7 +807,6 @@ impl Vm {
 
         self.ip = addr as usize;
         self.fp = fp;
-        self.local = self.sp;
 
         // clear the memory that's going to be used for locals
         for _ in 0..MEMORY_LOCAL_SIZE {
@@ -860,7 +870,6 @@ impl Vm {
         } else {
             return Err(Error::VM("opcode_ret fp".to_string()));
         }
-        self.local = self.fp + FP_OFFSET_TO_LOCALS;
 
         // copy the previous frame's top stack value onto the current frame's stack
         self.sp = self.sp_inc()?; // stack push
@@ -920,7 +929,6 @@ impl Vm {
 
         self.ip = addr as usize;
         self.fp = fp;
-        self.local = self.sp;
 
         // clear the memory that's going to be used for locals
         for _ in 0..MEMORY_LOCAL_SIZE {
@@ -1005,6 +1013,7 @@ impl Vm {
         } else if let Var::Vector(ref mut vec_vec) = &mut self.stack[self.sp - 1] {
             vec_vec.push(cloned_var_value);
         } else {
+            println!("{:?}", &self.stack[self.sp - 1]);
             return Err(Error::VM(
                 "append requires either a Vector or V2D".to_string(),
             ));
@@ -1205,7 +1214,7 @@ impl Vm {
             // }
 
             self.opcodes_executed += 1;
-            // println!("interpreting ip: {}", self.ip);
+            // println!("interpreting ip: {} fp: {}", self.ip, self.fp);
             bc = &program.code[self.ip];
             self.ip += 1;
 
