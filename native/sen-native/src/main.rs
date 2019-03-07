@@ -9,19 +9,19 @@ use std::io::Error as IoError;
 pub enum NativeError {
     GeneralError,
     NoneError,
-    IoError,
-    SenError,
+    IoError(IoError),
+    SenError(sen_core::error::Error),
 }
 
 impl From<IoError> for NativeError {
-    fn from(_e: IoError) -> NativeError {
-        NativeError::IoError
+    fn from(e: IoError) -> NativeError {
+        NativeError::IoError(e)
     }
 }
 
 impl From<sen_core::error::Error> for NativeError {
-    fn from(_e: sen_core::error::Error) -> NativeError {
-        NativeError::SenError
+    fn from(e: sen_core::error::Error) -> NativeError {
+        NativeError::SenError(e)
     }
 }
 
@@ -32,10 +32,11 @@ fn main() {
         .version("0.1.0")
         .author("Inderjit Gill <email@indy.io>")
         .about("native cli build of seni")
-        .arg(Arg::with_name("SCRIPT")
-             .help("Sets the input seni script to use")
-             .required(true)
-             .index(1))
+        .arg(
+            Arg::with_name("SCRIPT")
+                .help("Sets the input seni script to use")
+                .required(true)
+                .index(1))
         .arg(
             Arg::with_name("seed")
                 .short("s")
