@@ -1912,9 +1912,9 @@ impl Compiler {
         compilation: &mut Compilation,
         children: &[&Node],
     ) -> Result<()> {
-        compilation.emit_opcode(Opcode::MTX_LOAD)?;
+        compilation.emit_opcode(Opcode::MTX_PUSH)?;
         self.compile_rest(compilation, children)?;
-        compilation.emit_opcode(Opcode::MTX_STORE)?;
+        compilation.emit_opcode(Opcode::MTX_POP)?;
         Ok(())
     }
 

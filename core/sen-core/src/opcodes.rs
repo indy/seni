@@ -78,9 +78,9 @@ pub enum Opcode {
     // a compilation pass
     PLACEHOLDER_STORE,
     // push matrix stack
-    MTX_LOAD,
+    MTX_PUSH,
     // pop matrix stack
-    MTX_STORE,
+    MTX_POP,
 
     // is the value at the top of the stack a non-empty vector?
     // pushes a boolean result onto the stack
@@ -129,8 +129,8 @@ pub fn opcode_stack_offset(opcode: Opcode) -> i32 {
         Opcode::PILE => 0,
         Opcode::STORE_F => -2,
         Opcode::PLACEHOLDER_STORE => -1,
-        Opcode::MTX_LOAD => 0,
-        Opcode::MTX_STORE => 0,
+        Opcode::MTX_PUSH => 0,
+        Opcode::MTX_POP => 0,
         Opcode::VEC_NON_EMPTY => 1,
         Opcode::VEC_LOAD_FIRST => 2,
         Opcode::VEC_HAS_NEXT => 1,
