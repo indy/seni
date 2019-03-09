@@ -452,9 +452,7 @@ impl Vm {
                         self.stack[self.sp - 1] = src.clone();
                     }
                 }
-                Mem::Constant => {
-                    self.stack[self.sp - 1] = bytecode_arg_to_var(&bc.arg1)?
-                }
+                Mem::Constant => self.stack[self.sp - 1] = bytecode_arg_to_var(&bc.arg1)?,
                 Mem::Void => {
                     // pushing from the void. i.e. create this object
                     self.stack[self.sp - 1] = Var::Vector(Vec::new());

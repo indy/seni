@@ -2796,9 +2796,7 @@ mod tests {
     #[test]
     fn test_adding_multiple_numbers() {
         assert_eq!(
-            compile(
-                "(+ 5 6 7 8 9)"
-            ),
+            compile("(+ 5 6 7 8 9)"),
             vec![
                 jump(1),
                 load_const_f32(5.0),
