@@ -15,6 +15,7 @@
 
 use crate::compiler::{compile_program_1, compile_program_for_trait, Program};
 use crate::error::Result;
+use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
 use crate::run_program_with_preamble;
 use crate::vm::{Var, Vm};
@@ -31,6 +32,39 @@ pub struct Trait {
 
     pub initial_value: Var,
     pub program: Program,
+}
+
+impl Packable for Trait {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        Mule::pack_bool_sp(cursor, self.within_vector);
+        Mule::pack_usize_sp(cursor, self.index);
+
+        self.initial_value.pack(cursor)?;
+        Mule::pack_space(cursor);
+
+        self.program.pack(cursor)?;
+
+        Ok(())
+    }
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let (within_vector, rem) = Mule::unpack_bool_sp(cursor)?;
+
+        let (index, rem) = Mule::unpack_usize_sp(rem)?;
+
+        let (initial_value, rem) = Var::unpack(rem)?;
+        let rem = Mule::skip_space(rem);
+
+        let (program, rem) = Program::unpack(rem)?;
+
+        let new_trait;
+        if within_vector {
+            new_trait = Trait::new(initial_value, program, Some(index));
+        } else {
+            new_trait = Trait::new(initial_value, program, None);
+        }
+
+        Ok((new_trait, rem))
+    }
 }
 
 impl Trait {
@@ -179,6 +213,47 @@ impl TraitList {
         }
 
         Ok(())
+    }
+
+    fn push_trait_during_unpack(&mut self, a_trait: Trait) {
+        self.traits.push(a_trait);
+    }
+
+    fn set_seed_during_unpack(&mut self, seed_value: i32) {
+        self.seed_value = seed_value;
+    }
+}
+
+impl Packable for TraitList {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        Mule::pack_i32_sp(cursor, self.seed_value);
+        Mule::pack_usize(cursor, self.traits.len());
+
+        for t in &self.traits {
+            Mule::pack_space(cursor);
+            t.pack(cursor)?;
+        }
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let mut trait_list = TraitList::new();
+
+        let (seed_value, rem) = Mule::unpack_i32_sp(cursor)?;
+        trait_list.set_seed_during_unpack(seed_value);
+
+        let (num_traits, rem) = Mule::unpack_usize(rem)?;
+
+        let mut r = rem;
+        for _ in 0..num_traits {
+            r = Mule::skip_space(r);
+            let (a_trait, rem) = Trait::unpack(r)?;
+            r = rem;
+            trait_list.push_trait_during_unpack(a_trait);
+        }
+
+        Ok((trait_list, rem))
     }
 }
 

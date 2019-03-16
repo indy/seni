@@ -21,6 +21,7 @@ use crate::focal;
 use crate::interp;
 use crate::keywords::Keyword;
 use crate::mathutil;
+use crate::packable::{Mule, Packable};
 use crate::path;
 use crate::prng;
 use crate::repeat;
@@ -31,11 +32,11 @@ use std::cell::{RefCell, RefMut};
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use strum_macros::EnumString;
+use strum_macros::{Display, EnumString};
 
 pub type NativeCallback = fn(&mut Vm, &Program, usize) -> Result<Var>;
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Display, EnumString)]
 pub enum Native {
     #[strum(serialize = "UnreachableNativeStart")]
     NativeStart = Keyword::KeywordEnd as isize,
@@ -265,6 +266,22 @@ pub enum Native {
 
     #[strum(serialize = "UnreachableNativeEnd")]
     NativeEnd,
+}
+
+impl Packable for Native {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        Mule::pack_label(cursor, &self.to_string());
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let ns = Mule::next_space(cursor);
+        let sub = &cursor[0..ns];
+        let res = sub.parse::<Native>()?;
+
+        Ok((res, &cursor[ns..]))
+    }
 }
 
 pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
@@ -3187,6 +3204,8 @@ pub fn gen_col(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> 
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use crate::colour::ColourFormat;
     use crate::geometry::RENDER_PACKET_FLOAT_PER_VERTEX;
     use crate::vm::tests::*;
@@ -3227,6 +3246,19 @@ mod tests {
         }
 
         rp0_num_vertices(&vm, 4);
+    }
+
+    #[test]
+    fn test_native_pack() {
+        let mut res: String = "".to_string();
+        Native::ColGetAlpha.pack(&mut res).unwrap();
+        assert_eq!("col/get-alpha", res);
+    }
+
+    #[test]
+    fn test_native_unpack() {
+        let (res, _rem) = Native::unpack("col/get-alpha").unwrap();
+        assert_eq!(res, Native::ColGetAlpha);
     }
 
     #[test]

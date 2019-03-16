@@ -50,12 +50,11 @@ pub fn tokenize(s: &str) -> Result<Vec<Token>> {
 
 struct Lexer<'a> {
     input: &'a str,
-    cur_pos: u32,
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &str) -> Lexer {
-        Lexer { input, cur_pos: 0 }
+        Lexer { input }
     }
 
     pub fn eat_token(&mut self) -> Result<Token<'a>> {
@@ -88,7 +87,6 @@ impl<'a> Lexer<'a> {
                 Err(kind) => return Err(kind),
             };
 
-            self.cur_pos += size as u32;
             self.input = &self.input[size..];
 
             Ok(tok)

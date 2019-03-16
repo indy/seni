@@ -147,7 +147,10 @@ impl Bridge {
     pub fn build_traits(&mut self) -> bool {
         if let Ok(trait_list) = sen_core::build_traits(&self.source_buffer) {
             self.trait_list = Some(trait_list);
+
             // todo: serialize trait_list
+            self.traits_buffer = "hello build_traits".to_string();
+
             true
         } else {
             false

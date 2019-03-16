@@ -503,6 +503,7 @@ function buildTraits({ script /*, scriptHash */ }) {
 
   if (validTraits) {
     traits = gState.bridge.get_traits_buffer_string();
+    // console.log(traits);
   }
 
   const logMessages = konsoleProxy.collectMessages();

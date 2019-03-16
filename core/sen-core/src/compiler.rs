@@ -24,6 +24,7 @@ use crate::keywords::{string_to_keyword_hash, Keyword};
 use crate::mathutil;
 use crate::native::Native;
 use crate::opcodes::{opcode_stack_offset, Opcode};
+use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
 
 const MEMORY_LOCAL_SIZE: usize = 40;
@@ -224,6 +225,33 @@ impl fmt::Display for Mem {
     }
 }
 
+impl Packable for Mem {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        Mule::pack_i32(cursor, *self as i32);
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let (res_i32, rem) = Mule::unpack_i32(cursor)?;
+
+        let res = match res_i32 {
+            0 => Mem::Argument,
+            1 => Mem::Local,
+            2 => Mem::Global,
+            3 => Mem::Constant,
+            4 => Mem::Void,
+            _ => {
+                return Err(Error::Packable(format!(
+                    "Mem::unpack invalid value: {}",
+                    res_i32
+                )));
+            }
+        };
+
+        Ok((res, rem))
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum BytecodeArg {
     Int(i32),
@@ -247,6 +275,67 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Colour(c) => {
                 write!(f, "{}({} {} {} {})", c.format, c.e0, c.e1, c.e2, c.e3)
             }
+        }
+    }
+}
+
+impl Packable for BytecodeArg {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        match self {
+            BytecodeArg::Int(i) => cursor.push_str(&format!("INT {}", i)),
+            BytecodeArg::Float(f) => cursor.push_str(&format!("FLOAT {}", f)),
+            BytecodeArg::Name(i) => cursor.push_str(&format!("NAME {}", i)),
+            BytecodeArg::Native(native) => {
+                cursor.push_str("NATIVE ");
+                native.pack(cursor)?;
+            }
+            BytecodeArg::Mem(mem) => {
+                cursor.push_str("MEM ");
+                mem.pack(cursor)?;
+            }
+            BytecodeArg::Keyword(kw) => {
+                cursor.push_str("KW ");
+                kw.pack(cursor)?;
+            }
+            BytecodeArg::Colour(col) => {
+                cursor.push_str("COLOUR ");
+                col.pack(cursor)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        if cursor.starts_with("INT ") {
+            let rem = Mule::skip_forward(cursor, "INT ".len());
+            let (val, rem) = Mule::unpack_i32(rem)?;
+            Ok((BytecodeArg::Int(val), rem))
+        } else if cursor.starts_with("FLOAT ") {
+            let rem = Mule::skip_forward(cursor, "FLOAT ".len());
+            let (val, rem) = Mule::unpack_f32(rem)?;
+            Ok((BytecodeArg::Float(val), rem))
+        } else if cursor.starts_with("NAME ") {
+            let rem = Mule::skip_forward(cursor, "NAME ".len());
+            let (val, rem) = Mule::unpack_i32(rem)?;
+            Ok((BytecodeArg::Name(val), rem))
+        } else if cursor.starts_with("NATIVE ") {
+            let rem = Mule::skip_forward(cursor, "NATIVE ".len());
+            let (val, rem) = Native::unpack(rem)?;
+            Ok((BytecodeArg::Native(val), rem))
+        } else if cursor.starts_with("MEM ") {
+            let rem = Mule::skip_forward(cursor, "MEM ".len());
+            let (val, rem) = Mem::unpack(rem)?;
+            Ok((BytecodeArg::Mem(val), rem))
+        } else if cursor.starts_with("KW ") {
+            let rem = Mule::skip_forward(cursor, "KW ".len());
+            let (val, rem) = Keyword::unpack(rem)?;
+            Ok((BytecodeArg::Keyword(val), rem))
+        } else if cursor.starts_with("COLOUR ") {
+            let rem = Mule::skip_forward(cursor, "COLOUR ".len());
+            let (val, rem) = Colour::unpack(rem)?;
+            Ok((BytecodeArg::Colour(val), rem))
+        } else {
+            Err(Error::Packable("BytecodeArg::unpack".to_string()))
         }
     }
 }
@@ -280,6 +369,30 @@ impl fmt::Display for Bytecode {
             _ => write!(f, "{}", self.op)?,
         };
         Ok(())
+    }
+}
+
+impl Packable for Bytecode {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        self.op.pack(cursor)?;
+        Mule::pack_space(cursor);
+        self.arg0.pack(cursor)?;
+        Mule::pack_space(cursor);
+        self.arg1.pack(cursor)?;
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let (op, rem) = Opcode::unpack(cursor)?;
+        let rem = Mule::skip_space(rem);
+
+        let (arg0, rem) = BytecodeArg::unpack(rem)?;
+        let rem = Mule::skip_space(rem);
+
+        let (arg1, rem) = BytecodeArg::unpack(rem)?;
+
+        Ok((Bytecode { op, arg0, arg1 }, rem))
     }
 }
 
@@ -325,6 +438,38 @@ impl fmt::Display for Program {
             writeln!(f, "{}\t{}", i, b)?;
         }
         Ok(())
+    }
+}
+
+impl Packable for Program {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        Mule::pack_usize(cursor, self.code.len());
+        for b in &self.code {
+            Mule::pack_space(cursor);
+            b.pack(cursor)?;
+        }
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let (codesize, rem) = Mule::unpack_usize(cursor)?;
+        // note: current assumption is that
+        // fn_info isn't used after a program has been unpacked
+        let fn_info: Vec<FnInfo> = Vec::new();
+
+        let mut code: Vec<Bytecode> = Vec::new();
+
+        let mut r = rem;
+        for _ in 0..codesize {
+            r = Mule::skip_space(r);
+            let (bc, rem) = Bytecode::unpack(r)?;
+            r = rem;
+            code.push(bc);
+        }
+
+        let program = Program::new(code, fn_info);
+        Ok((program, rem))
     }
 }
 
@@ -2675,6 +2820,60 @@ mod tests {
 
     fn vec_non_empty() -> Bytecode {
         bytecode_from_opcode(Opcode::VEC_NON_EMPTY)
+    }
+
+    #[test]
+    fn test_mem_pack() {
+        let mut res: String = "".to_string();
+        Mem::Constant.pack(&mut res).unwrap();
+        assert_eq!("3", res);
+    }
+
+    #[test]
+    fn test_mem_unpack() {
+        let (res, _rem) = Mem::unpack("3").unwrap();
+        assert_eq!(res, Mem::Constant);
+    }
+
+    #[test]
+    fn test_bytecode_arg_pack() {
+        let mut res: String = "".to_string();
+        BytecodeArg::Native(Native::Circle).pack(&mut res).unwrap();
+        assert_eq!("NATIVE circle", res);
+    }
+
+    #[test]
+    fn test_bytecode_arg_unpack() {
+        let (res, _rem) = BytecodeArg::unpack("NATIVE circle").unwrap();
+        assert_eq!(res, BytecodeArg::Native(Native::Circle));
+
+        let (res, rem) = BytecodeArg::unpack("NATIVE col/triad otherstuff here").unwrap();
+        assert_eq!(res, BytecodeArg::Native(Native::ColTriad));
+        assert_eq!(rem, " otherstuff here");
+    }
+
+    #[test]
+    fn test_bytecode_pack() {
+        let mut res: String = "".to_string();
+
+        // a nonsense bytecode
+        let bc = Bytecode {
+            op: Opcode::APPEND,
+            arg0: BytecodeArg::Int(42),
+            arg1: BytecodeArg::Mem(Mem::Global),
+        };
+
+        bc.pack(&mut res).unwrap();
+        assert_eq!("APPEND INT 42 MEM 2", res);
+    }
+
+    #[test]
+    fn test_bytecode_unpack() {
+        let (res, _rem) = Bytecode::unpack("APPEND INT 42 MEM 2").unwrap();
+
+        assert_eq!(res.op, Opcode::APPEND);
+        assert_eq!(res.arg0, BytecodeArg::Int(42));
+        assert_eq!(res.arg1, BytecodeArg::Mem(Mem::Global));
     }
 
     #[test]

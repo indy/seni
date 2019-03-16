@@ -18,6 +18,9 @@ use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
+use crate::error::Result;
+use crate::packable::{Mule, Packable};
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString, Display, EnumIter)]
 pub enum Keyword {
     #[strum(serialize = "UnreachableKeywordStart")]
@@ -397,6 +400,22 @@ pub enum Keyword {
     KeywordEnd,
 }
 
+impl Packable for Keyword {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        Mule::pack_label(cursor, &self.to_string());
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let ns = Mule::next_space(cursor);
+        let sub = &cursor[0..ns];
+        let res = sub.parse::<Keyword>()?;
+
+        Ok((res, &cursor[ns..]))
+    }
+}
+
 pub fn string_to_keyword_hash() -> HashMap<String, Keyword> {
     let mut hm: HashMap<String, Keyword> = HashMap::new();
 
@@ -418,4 +437,16 @@ mod tests {
         assert_eq!(Keyword::Width as i32, 297);
     }
 
+    #[test]
+    fn test_keyword_pack() {
+        let mut res: String = "".to_string();
+        Keyword::Volatility.pack(&mut res).unwrap();
+        assert_eq!("volatility", res);
+    }
+
+    #[test]
+    fn test_keyword_unpack() {
+        let (res, _rem) = Keyword::unpack("volatility").unwrap();
+        assert_eq!(res, Keyword::Volatility);
+    }
 }

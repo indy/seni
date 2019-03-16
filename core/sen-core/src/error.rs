@@ -21,6 +21,11 @@ pub enum Error {
     GeneralError,
     NotedError(String),
 
+    // conversions from other errors
+    ParseIntError(std::num::ParseIntError),
+    ParseFloatError(std::num::ParseFloatError),
+    ParseStrumError(strum::ParseError),
+
     // colour
     //
     IncorrectColourFormat,
@@ -56,4 +61,25 @@ pub enum Error {
 
     // gene
     Gene(String),
+
+    // packable
+    Packable(String),
+}
+
+impl From<std::num::ParseIntError> for Error {
+    fn from(e: std::num::ParseIntError) -> Error {
+        Error::ParseIntError(e)
+    }
+}
+
+impl From<std::num::ParseFloatError> for Error {
+    fn from(e: std::num::ParseFloatError) -> Error {
+        Error::ParseFloatError(e)
+    }
+}
+
+impl From<strum::ParseError> for Error {
+    fn from(e: strum::ParseError) -> Error {
+        Error::ParseStrumError(e)
+    }
 }

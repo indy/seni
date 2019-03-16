@@ -13,10 +13,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use strum_macros::Display;
+use strum_macros::{Display, EnumString};
+
+use crate::error::Result;
+use crate::packable::{Mule, Packable};
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Display)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Display, EnumString)]
 pub enum Opcode {
     // load (push) a sen_var onto the stack
     LOAD,
@@ -136,5 +139,21 @@ pub fn opcode_stack_offset(opcode: Opcode) -> i32 {
         Opcode::VEC_HAS_NEXT => 1,
         Opcode::VEC_NEXT => 0,
         Opcode::STOP => 0,
+    }
+}
+
+impl Packable for Opcode {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        Mule::pack_label(cursor, &self.to_string());
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let ns = Mule::next_space(cursor);
+        let sub = &cursor[0..ns];
+        let res = sub.parse::<Opcode>()?;
+
+        Ok((res, &cursor[ns..]))
     }
 }

@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches, value_t};
+use clap::{value_t, App, Arg, ArgMatches};
 use sen_core::*;
 
 use std::fs::File;
@@ -36,20 +36,30 @@ fn main() {
             Arg::with_name("SCRIPT")
                 .help("Sets the input seni script to use")
                 .required(true)
-                .index(1))
+                .index(1),
+        )
         .arg(
             Arg::with_name("seed")
                 .short("s")
                 .long("seed")
                 .help("The seed to use")
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("debug")
                 .short("d")
                 .long("debug")
                 .help("debug mode")
                 .takes_value(false),
-        ).get_matches();
+        )
+        .arg(
+            Arg::with_name("packed_trait_list")
+                .short("t")
+                .long("packed_trait_list")
+                .help("print the packed trait list")
+                .takes_value(false),
+        )
+        .get_matches();
 
     if let Err(e) = run(&matches) {
         println!("Application error: {:?}", e);
@@ -61,8 +71,9 @@ fn run(matches: &ArgMatches) -> Result<()> {
         // this should always pass as SCRIPT is required
         println!("Using script file: {}", script);
 
-
-        if matches.is_present("debug") {
+        if matches.is_present("packed_trait_list") {
+            print_packed_trait_list(script)?;
+        } else if matches.is_present("debug") {
             if let Ok(seed) = value_t!(matches.value_of("seed"), u32) {
                 run_debug_script_with_seed(script, seed)?;
             } else {
@@ -79,7 +90,7 @@ fn run(matches: &ArgMatches) -> Result<()> {
     Ok(())
 }
 
-pub fn read_script_file(filename: &str) -> Result<String> {
+fn read_script_file(filename: &str) -> Result<String> {
     let mut f = File::open(filename)?;
     let mut contents = String::new();
     f.read_to_string(&mut contents)?;
@@ -108,5 +119,19 @@ fn run_script(script: &str) -> Result<()> {
 }
 
 fn run_script_with_seed(_script: &str, _seed: u32) -> Result<()> {
+    Ok(())
+}
+
+fn print_packed_trait_list(script: &str) -> Result<()> {
+    println!("should print the packed trait_list");
+
+    let source = read_script_file(script)?;
+    let trait_list = build_traits(&source)?;
+
+    let mut packed: String = "".to_string();
+    trait_list.pack(&mut packed)?;
+
+    println!("{}", packed);
+
     Ok(())
 }

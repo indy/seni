@@ -25,6 +25,7 @@
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::mathutil;
+use crate::packable::{Mule, Packable};
 
 use std;
 use std::fmt;
@@ -212,6 +213,55 @@ pub struct Colour {
     pub e1: f32,
     pub e2: f32,
     pub e3: f32,
+}
+
+impl Packable for Colour {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        match self.format {
+            ColourFormat::Rgb => Mule::pack_label_sp(cursor, "RGB"),
+            ColourFormat::Hsl => Mule::pack_label_sp(cursor, "HSL"),
+            ColourFormat::Hsluv => Mule::pack_label_sp(cursor, "HSLUV"),
+            ColourFormat::Hsv => Mule::pack_label_sp(cursor, "HSV"),
+            ColourFormat::Lab => Mule::pack_label_sp(cursor, "LAB"),
+        };
+
+        Mule::pack_f32_sp(cursor, self.e0);
+        Mule::pack_f32_sp(cursor, self.e1);
+        Mule::pack_f32_sp(cursor, self.e2);
+        Mule::pack_f32(cursor, self.e3);
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let mut rem = cursor;
+
+        let format = if rem.starts_with("RGB ") {
+            rem = Mule::skip_forward(rem, "RGB ".len());
+            ColourFormat::Rgb
+        } else if rem.starts_with("HSL ") {
+            rem = Mule::skip_forward(rem, "HSL ".len());
+            ColourFormat::Hsl
+        } else if rem.starts_with("HSLUV ") {
+            rem = Mule::skip_forward(rem, "HSLUV ".len());
+            ColourFormat::Hsluv
+        } else if rem.starts_with("HSV ") {
+            rem = Mule::skip_forward(rem, "HSV ".len());
+            ColourFormat::Hsv
+        } else if rem.starts_with("LAB ") {
+            rem = Mule::skip_forward(rem, "LAB ".len());
+            ColourFormat::Lab
+        } else {
+            return Err(Error::Packable("Colour::unpack invalid format".to_string()));
+        };
+
+        let (e0, rem) = Mule::unpack_f32_sp(rem)?;
+        let (e1, rem) = Mule::unpack_f32_sp(rem)?;
+        let (e2, rem) = Mule::unpack_f32_sp(rem)?;
+        let (e3, rem) = Mule::unpack_f32(rem)?;
+
+        Ok((Colour::new(format, e0, e1, e2, e3), rem))
+    }
 }
 
 impl fmt::Display for Colour {
@@ -1189,4 +1239,23 @@ mod tests {
         assert_colour_rgb_hsl_match(0.0, 0.5, 0.5, 180.0, 1.0, 0.25);
         assert_colour_rgb_hsl_match(0.0, 0.0, 0.5, 240.0, 1.0, 0.25);
     }
+
+    #[test]
+    fn test_colour_pack() {
+        let mut res: String = "".to_string();
+        let col = Colour::new(ColourFormat::Rgb, 1.1, 2.2, 3.3, 4.4);
+        col.pack(&mut res).unwrap();
+        assert_eq!("RGB 1.1 2.2 3.3 4.4", res);
+    }
+
+    #[test]
+    fn test_colour_unpack() {
+        let (res, _rem) = Colour::unpack("RGB 1.1 2.2 3.3 4.4").unwrap();
+        assert_eq!(res.format, ColourFormat::Rgb);
+        assert_eq!(res.e0, 1.1);
+        assert_eq!(res.e1, 2.2);
+        assert_eq!(res.e2, 3.3);
+        assert_eq!(res.e3, 4.4);
+    }
+
 }

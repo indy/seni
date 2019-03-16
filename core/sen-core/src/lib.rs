@@ -42,6 +42,7 @@ mod mathutil;
 mod matrix;
 mod native;
 mod opcodes;
+mod packable;
 mod parser;
 mod path;
 mod prng;
@@ -59,6 +60,7 @@ use crate::vm::*;
 pub use crate::gene::Genotype;
 pub use crate::trait_list::TraitList;
 pub use crate::vm::{Env, Vm};
+pub use crate::packable::Packable;
 
 pub fn run_program_with_preamble(vm: &mut Vm, program: &Program) -> Result<Var> {
     let env = Env::new();

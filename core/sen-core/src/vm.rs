@@ -23,6 +23,7 @@ use crate::keywords::Keyword;
 use crate::matrix::MatrixStack;
 use crate::native::{build_native_fn_hash, Native, NativeCallback};
 use crate::opcodes::Opcode;
+use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
 use crate::uvmapper::Mappings;
 
@@ -59,6 +60,63 @@ pub enum Var {
     ProcColourState(ProcColourStateStruct),
     FocalState(FocalStateStruct),
     PrngState(Rc<RefCell<PrngStateStruct>>),
+}
+
+impl Packable for Var {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        match self {
+            Var::Int(i) => cursor.push_str(&format!("INT {}", i)),
+            Var::Float(fl) => cursor.push_str(&format!("FLOAT {}", fl)),
+            Var::Bool(b) => Mule::pack_label_bool(cursor, "BOOLEAN", *b),
+            // Var::Keyword(kw) =>
+            Var::Long(u) => cursor.push_str(&format!("LONG {}", u)),
+            Var::Name(i) => cursor.push_str(&format!("NAME {}", i)),
+            // Var::Vector(_) =>
+            Var::Colour(col) => {
+                cursor.push_str("COLOUR ");
+                col.pack(cursor)?;
+            }
+            Var::V2D(fl1, fl2) => cursor.push_str(&format!("2D {} {}", fl1, fl2)),
+            _ => return Err(Error::Packable("Var::pack".to_string())),
+        }
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        if cursor.starts_with("INT ") {
+            let rem = Mule::skip_forward(cursor, "INT ".len());
+            let (val, rem) = Mule::unpack_i32(rem)?;
+            Ok((Var::Int(val), rem))
+        } else if cursor.starts_with("FLOAT ") {
+            let rem = Mule::skip_forward(cursor, "FLOAT ".len());
+            let (val, rem) = Mule::unpack_f32(rem)?;
+            Ok((Var::Float(val), rem))
+        } else if cursor.starts_with("BOOLEAN ") {
+            let rem = Mule::skip_forward(cursor, "BOOLEAN ".len());
+            let (val, rem) = Mule::unpack_bool(rem)?;
+            Ok((Var::Bool(val), rem))
+        } else if cursor.starts_with("LONG ") {
+            let rem = Mule::skip_forward(cursor, "LONG ".len());
+            let (val, rem) = Mule::unpack_u64(rem)?;
+            Ok((Var::Long(val), rem))
+        } else if cursor.starts_with("NAME ") {
+            let rem = Mule::skip_forward(cursor, "NAME ".len());
+            let (val, rem) = Mule::unpack_i32(rem)?;
+            Ok((Var::Name(val), rem))
+        } else if cursor.starts_with("COLOUR ") {
+            let rem = Mule::skip_forward(cursor, "COLOUR ".len());
+            let (val, rem) = Colour::unpack(rem)?;
+            Ok((Var::Colour(val), rem))
+        } else if cursor.starts_with("2D ") {
+            let rem = Mule::skip_forward(cursor, "2D ".len());
+            let (val0, rem) = Mule::unpack_f32_sp(rem)?;
+            let (val1, rem) = Mule::unpack_f32(rem)?;
+            Ok((Var::V2D(val0, val1), rem))
+        } else {
+            Err(Error::Packable("Var::unpack".to_string()))
+        }
+    }
 }
 
 impl fmt::Display for Var {
@@ -1686,5 +1744,118 @@ pub mod tests {
              (fn-call (foo z: 41 a: 44))",
             132.0,
         );
+    }
+
+    fn pack_compare(var: Var, expected: &str) {
+        let mut res: String = "".to_string();
+        var.pack(&mut res).unwrap();
+        assert_eq!(expected, res);
+    }
+
+    fn unpack_compare_var_int(inp: &str, expected_val: i32, expected_rem: &str) {
+        let (res, actual_rem) = Var::unpack(inp).unwrap();
+
+        if let Var::Int(actual_val) = res {
+            assert_eq!(actual_val, expected_val);
+            assert_eq!(actual_rem, expected_rem);
+        } else {
+            assert_eq!(false, true);
+        }
+    }
+
+    fn unpack_compare_var_float(inp: &str, expected_val: f32, expected_rem: &str) {
+        let (res, actual_rem) = Var::unpack(inp).unwrap();
+
+        if let Var::Float(actual_val) = res {
+            assert_eq!(actual_val, expected_val);
+            assert_eq!(actual_rem, expected_rem);
+        } else {
+            assert_eq!(false, true);
+        }
+    }
+
+    fn unpack_compare_var_bool(inp: &str, expected_val: bool, expected_rem: &str) {
+        let (res, actual_rem) = Var::unpack(inp).unwrap();
+
+        if let Var::Bool(actual_val) = res {
+            assert_eq!(actual_val, expected_val);
+            assert_eq!(actual_rem, expected_rem);
+        } else {
+            assert_eq!(false, true);
+        }
+    }
+
+    fn unpack_compare_var_long(inp: &str, expected_val: u64, expected_rem: &str) {
+        let (res, actual_rem) = Var::unpack(inp).unwrap();
+
+        if let Var::Long(actual_val) = res {
+            assert_eq!(actual_val, expected_val);
+            assert_eq!(actual_rem, expected_rem);
+        } else {
+            assert_eq!(false, true);
+        }
+    }
+
+    fn unpack_compare_var_name(inp: &str, expected_val: i32, expected_rem: &str) {
+        let (res, actual_rem) = Var::unpack(inp).unwrap();
+
+        if let Var::Name(actual_val) = res {
+            assert_eq!(actual_val, expected_val);
+            assert_eq!(actual_rem, expected_rem);
+        } else {
+            assert_eq!(false, true);
+        }
+    }
+
+    fn unpack_compare_var_v2d(
+        inp: &str,
+        expected_val0: f32,
+        expected_val1: f32,
+        expected_rem: &str,
+    ) {
+        let (res, actual_rem) = Var::unpack(inp).unwrap();
+
+        if let Var::V2D(actual_val0, actual_val1) = res {
+            assert_eq!(actual_val0, expected_val0);
+            assert_eq!(actual_val1, expected_val1);
+            assert_eq!(actual_rem, expected_rem);
+        } else {
+            assert_eq!(false, true);
+        }
+    }
+
+    #[test]
+    fn test_var_pack() {
+        pack_compare(Var::Int(42), "INT 42");
+        pack_compare(Var::Float(3.14), "FLOAT 3.14");
+        pack_compare(Var::Bool(true), "BOOLEAN 1");
+        pack_compare(Var::Bool(false), "BOOLEAN 0");
+        pack_compare(Var::Long(544), "LONG 544");
+        pack_compare(Var::Name(65), "NAME 65");
+        pack_compare(Var::V2D(5.67, 8.90), "2D 5.67 8.9");
+    }
+
+    #[test]
+    fn test_var_unpack() {
+        unpack_compare_var_int("INT 42", 42, "");
+        unpack_compare_var_int("INT 42 ", 42, " ");
+        unpack_compare_var_int("INT 42 shabba", 42, " shabba");
+
+        unpack_compare_var_float("FLOAT 42.33", 42.33, "");
+        unpack_compare_var_float("FLOAT 42.33 ", 42.33, " ");
+        unpack_compare_var_float("FLOAT 42.33 shabba", 42.33, " shabba");
+
+        unpack_compare_var_bool("BOOLEAN 0", false, "");
+        unpack_compare_var_bool("BOOLEAN 1", true, "");
+
+        unpack_compare_var_long("LONG 42", 42, "");
+        unpack_compare_var_long("LONG 42 ", 42, " ");
+        unpack_compare_var_long("LONG 42 shabba", 42, " shabba");
+
+        unpack_compare_var_name("NAME 42", 42, "");
+        unpack_compare_var_name("NAME 42 ", 42, " ");
+        unpack_compare_var_name("NAME 42 shabba", 42, " shabba");
+
+        unpack_compare_var_v2d("2D 1.23 4.56", 1.23, 4.56, "");
     }
 }
