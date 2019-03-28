@@ -13,14 +13,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(dead_code)]
-#![cfg_attr(feature = "cargo-clippy", allow(clippy::many_single_char_names, clippy::too_many_arguments))]
+#![cfg_attr(
+    feature = "cargo-clippy",
+    allow(clippy::many_single_char_names, clippy::too_many_arguments)
+)]
 
 mod utils;
 
 use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
-use sen_core;
+use sen_core::{build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets};
+use sen_core::{Env, Genotype, Packable, TraitList, Vm};
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -41,18 +45,17 @@ extern "C" {
 #[wasm_bindgen]
 #[derive(Default)]
 pub struct Bridge {
-    vm: sen_core::Vm,
-    env: sen_core::Env,
+    vm: Vm,
+    env: Env,
 
     source_buffer: String,
     out_source_buffer: String,
     traits_buffer: String,
     genotype_buffer: String,
 
-    genotype_list: Option<Vec<sen_core::Genotype>>,
+    genotype_list: Option<Vec<Genotype>>,
 
-    // temporary, these will all be removed eventually
-    trait_list: Option<sen_core::TraitList>,
+    use_genotype: bool,
 }
 
 #[wasm_bindgen]
@@ -60,8 +63,8 @@ impl Bridge {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Bridge {
         Bridge {
-            vm: sen_core::Vm::new(),
-            env: sen_core::Env::new(),
+            vm: Vm::new(),
+            env: Env::new(),
 
             source_buffer: "source buffer".to_string(),
             out_source_buffer: "out_source buffer".to_string(),
@@ -70,7 +73,7 @@ impl Bridge {
 
             genotype_list: None,
 
-            trait_list: None,
+            use_genotype: false,
         }
     }
 
@@ -123,11 +126,30 @@ impl Bridge {
     }
 
     pub fn compile_to_render_packets(&mut self) -> i32 {
-        let num_render_packets = if let Ok(res) = sen_core::compile_to_render_packets(&mut self.vm, &self.source_buffer) {
-            res
+        let mut num_render_packets = 0;
+
+        if self.use_genotype {
+            if let Ok((mut genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
+                num_render_packets = if let Ok(res) = compile_with_genotype_to_render_packets(
+                    &mut self.vm,
+                    &self.source_buffer,
+                    &mut genotype,
+                ) {
+                    res
+                } else {
+                    0
+                };
+            } else {
+                log("compile_to_render_packets: Genotype failed to unpack");
+            }
         } else {
-            0
-        };
+            num_render_packets =
+                if let Ok(res) = compile_to_render_packets(&mut self.vm, &self.source_buffer) {
+                    res
+                } else {
+                    0
+                };
+        }
 
         log(&self.vm.debug_str);
         self.vm.debug_str_clear();
@@ -145,50 +167,64 @@ impl Bridge {
 
     // todo: is bool the best return type?
     pub fn build_traits(&mut self) -> bool {
-        if let Ok(trait_list) = sen_core::build_traits(&self.source_buffer) {
-            self.trait_list = Some(trait_list);
+        match build_traits(&self.source_buffer) {
+            Ok(trait_list) => {
+                self.traits_buffer = "".to_string();
+                let packed_trait_list_res = trait_list.pack(&mut self.traits_buffer);
 
-            // todo: serialize trait_list
-            self.traits_buffer = "hello build_traits".to_string();
-
-            true
-        } else {
-            false
+                return packed_trait_list_res.is_ok();
+            }
+            Err(e) => log(&format!("{:?}", e)),
         }
+
+        false
     }
 
     pub fn single_genotype_from_seed(&mut self, seed: i32) -> bool {
-        // todo: deserialize trait_list from traits_buffer
-        // for the moment using self.trait_list THIS IS WRONG!!!
-        if let Some(ref trait_list) = self.trait_list {
-            if let Ok(genotype) = sen_core::Genotype::build_from_seed(trait_list, seed) {
+        log("single_genotype_from_seed");
+
+        if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
+            if let Ok(genotype) = Genotype::build_from_seed(&trait_list, seed) {
                 self.genotype_list = Some(vec![genotype]);
-                return true
+                return true;
+            } else {
+                log("single_genotype_from_seed: can't build genotype from unpacked TraitList");
+                return false;
             }
+        } else {
+            log("single_genotype_from_seed: TraitList failed to unpack");
+            return false;
         }
-        false
     }
 
     // todo: is bool the best return type?
     pub fn create_initial_generation(&mut self, population_size: i32, seed: i32) -> bool {
-        // todo: deserialize trait_list from traits_buffer
-        // for the moment using self.trait_list THIS IS WRONG!!!
-        if let Some(ref trait_list) = self.trait_list {
-            if let Ok(genotype_list) = sen_core::Genotype::build_genotypes(&trait_list, population_size, seed) {
-                self.genotype_list = Some(genotype_list);
-                return true
-            }
-        }
+        log("create_initial_generation 22");
+        log(&self.traits_buffer);
 
-        false
+        if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
+            log("create_initial_generation: TraitList unpacked !!!!!");
+            if let Ok(genotype_list) = Genotype::build_genotypes(&trait_list, population_size, seed)
+            {
+                self.genotype_list = Some(genotype_list);
+                return true;
+            } else {
+                log("create_initial_generation: can't build genotypes from unpacked TraitList");
+                return false;
+            }
+        } else {
+            log("create_initial_generation: TraitList failed to unpack");
+            return false;
+        }
     }
 
     pub fn genotype_move_to_buffer(&mut self, index: usize) -> bool {
         if let Some(ref genotype_list) = self.genotype_list {
-            if let Some(ref _genotype) = genotype_list.get(index) {
-                // todo: serialize into genotype_buffer
-                unimplemented!();
-                // return true
+            if let Some(ref genotype) = genotype_list.get(index) {
+                self.genotype_buffer = "".to_string();
+                let res = genotype.pack(&mut self.genotype_buffer);
+
+                return res.is_ok();
             }
         }
         false
@@ -198,13 +234,13 @@ impl Bridge {
         log("script_cleanup");
     }
 
-    pub fn use_genotype_when_compiling(&self, use_genotype: bool) {
-        if use_genotype {
-            log("use_genotype_when_compiling : using");
-        } else {
-            log("use_genotype_when_compiling : not using genotype");
-        }
-
+    pub fn use_genotype_when_compiling(&mut self, use_genotype: bool) {
+        self.use_genotype = use_genotype;
+        // if use_genotype {
+        //     log("use_genotype_when_compiling : using");
+        // } else {
+        //     log("use_genotype_when_compiling : not using genotype");
+        // }
     }
 
     pub fn next_generation_prepare(&self) {
@@ -215,7 +251,13 @@ impl Bridge {
         log("next_generation_add_genotype");
     }
 
-    pub fn next_generation_build(&self, _parent_size: i32, _population_size: i32, _mutation_rate: f32, _rng: i32) -> bool {
+    pub fn next_generation_build(
+        &self,
+        _parent_size: i32,
+        _population_size: i32,
+        _mutation_rate: f32,
+        _rng: i32,
+    ) -> bool {
         log("next_generation_build");
         false
     }

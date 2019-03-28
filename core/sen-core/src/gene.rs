@@ -16,6 +16,7 @@
 use crate::colour::Colour;
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
+use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
 use crate::trait_list::{Trait, TraitList};
 use crate::vm::{Env, Var, Vm};
@@ -68,6 +69,68 @@ impl Gene {
         vm.trait_within_vector_index = 0;
 
         Gene::from_var(&var)
+    }
+}
+
+impl Packable for Gene {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        match self {
+            Gene::Int(i) => cursor.push_str(&format!("INT {}", i)),
+            Gene::Float(fl) => cursor.push_str(&format!("FLOAT {}", fl)),
+            Gene::Bool(b) => Mule::pack_label_bool(cursor, "BOOLEAN", *b),
+            Gene::Keyword(kw) => {
+                cursor.push_str("KW ");
+                kw.pack(cursor)?;
+            }
+            Gene::Long(u) => cursor.push_str(&format!("LONG {}", u)),
+            Gene::Name(i) => cursor.push_str(&format!("NAME {}", i)),
+            Gene::Colour(col) => {
+                cursor.push_str("COLOUR ");
+                col.pack(cursor)?;
+            }
+            Gene::V2D(fl1, fl2) => cursor.push_str(&format!("2D {} {}", fl1, fl2)),
+        }
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        if cursor.starts_with("INT ") {
+            let rem = Mule::skip_forward(cursor, "INT ".len());
+            let (val, rem) = Mule::unpack_i32(rem)?;
+            Ok((Gene::Int(val), rem))
+        } else if cursor.starts_with("FLOAT ") {
+            let rem = Mule::skip_forward(cursor, "FLOAT ".len());
+            let (val, rem) = Mule::unpack_f32(rem)?;
+            Ok((Gene::Float(val), rem))
+        } else if cursor.starts_with("BOOLEAN ") {
+            let rem = Mule::skip_forward(cursor, "BOOLEAN ".len());
+            let (val, rem) = Mule::unpack_bool(rem)?;
+            Ok((Gene::Bool(val), rem))
+        } else if cursor.starts_with("KW ") {
+            let rem = Mule::skip_forward(cursor, "KW ".len());
+            let (val, rem) = Keyword::unpack(rem)?;
+            Ok((Gene::Keyword(val), rem))
+        } else if cursor.starts_with("LONG ") {
+            let rem = Mule::skip_forward(cursor, "LONG ".len());
+            let (val, rem) = Mule::unpack_u64(rem)?;
+            Ok((Gene::Long(val), rem))
+        } else if cursor.starts_with("NAME ") {
+            let rem = Mule::skip_forward(cursor, "NAME ".len());
+            let (val, rem) = Mule::unpack_i32(rem)?;
+            Ok((Gene::Name(val), rem))
+        } else if cursor.starts_with("COLOUR ") {
+            let rem = Mule::skip_forward(cursor, "COLOUR ".len());
+            let (val, rem) = Colour::unpack(rem)?;
+            Ok((Gene::Colour(val), rem))
+        } else if cursor.starts_with("2D ") {
+            let rem = Mule::skip_forward(cursor, "2D ".len());
+            let (val0, rem) = Mule::unpack_f32_sp(rem)?;
+            let (val1, rem) = Mule::unpack_f32(rem)?;
+            Ok((Gene::V2D(val0, val1), rem))
+        } else {
+            Err(Error::Packable("Gene::unpack".to_string()))
+        }
     }
 }
 
@@ -127,7 +190,40 @@ impl Genotype {
         Ok(genotype)
     }
 
+    fn push_gene_during_unpack(&mut self, a_gene: Gene) {
+        self.genes.push(a_gene);
+    }
+
     // crossover
+}
+
+impl Packable for Genotype {
+    fn pack(&self, cursor: &mut String) -> Result<()> {
+        Mule::pack_usize(cursor, self.genes.len());
+
+        for g in &self.genes {
+            Mule::pack_space(cursor);
+            g.pack(cursor)?;
+        }
+
+        Ok(())
+    }
+
+    fn unpack(cursor: &str) -> Result<(Self, &str)> {
+        let mut genotype = Genotype::new();
+
+        let (num_genes, rem) = Mule::unpack_usize(cursor)?;
+
+        let mut r = rem;
+        for _ in 0..num_genes {
+            r = Mule::skip_space(r);
+            let (a_gene, rem) = Gene::unpack(r)?;
+            r = rem;
+            genotype.push_gene_during_unpack(a_gene);
+        }
+
+        Ok((genotype, r))
+    }
 }
 
 #[cfg(test)]

@@ -253,7 +253,7 @@ impl Packable for TraitList {
             trait_list.push_trait_during_unpack(a_trait);
         }
 
-        Ok((trait_list, rem))
+        Ok((trait_list, r))
     }
 }
 
@@ -318,5 +318,40 @@ mod tests {
             }
             Err(_) => assert!(false),
         };
+    }
+
+    #[test]
+    fn pack_unpack_trait_list() {
+        let trait_list =
+            compile_trait_list("(bezier tessellation: 30
+        line-width-start: {50 (gen/scalar min: 30 max: 60)}
+        line-width-end: {10 (gen/scalar min: 5 max: 20)}
+        brush: brush-c
+        coords: [[0 500] [200 900] [400 100] [600 500]]
+        colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))")
+            .unwrap();
+
+        assert_eq!(trait_list.traits.len(), 2);
+        trait_single_float(&trait_list.traits[0], 50.0);
+        trait_single_float(&trait_list.traits[1], 10.0);
+
+        let mut packed = "".to_string();
+        let packed_res = trait_list.pack(&mut packed);
+        assert!(packed_res.is_ok());
+
+        assert_eq!(packed, "42 2 0 0 FLOAT 50 9 JUMP INT 1 INT 0 LOAD MEM 3 FLOAT 50 STORE MEM 2 INT 0 LOAD MEM 3 INT 270 LOAD MEM 3 FLOAT 30 LOAD MEM 3 INT 269 LOAD MEM 3 FLOAT 60 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 9 JUMP INT 1 INT 0 LOAD MEM 3 FLOAT 10 STORE MEM 2 INT 0 LOAD MEM 3 INT 270 LOAD MEM 3 FLOAT 5 LOAD MEM 3 INT 269 LOAD MEM 3 FLOAT 20 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
+
+        let res = TraitList::unpack(&packed);
+        match res {
+            Ok((unpacked_trait_list, _)) => {
+                assert_eq!(unpacked_trait_list.traits.len(), 2);
+                trait_single_float(&unpacked_trait_list.traits[0], 50.0);
+                trait_single_float(&unpacked_trait_list.traits[1], 10.0);
+            },
+            Err(e) => {
+                println!("{:?}", e);
+                assert_eq!(false, true);
+            },
+        }
     }
 }

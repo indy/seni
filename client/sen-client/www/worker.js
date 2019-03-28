@@ -417,10 +417,12 @@ function render({ script /*, scriptHash*/, genotype }) {
   const buffers = [];
 
   if (genotype) {
+    console.log("render: using a genotype");
     // console.log(`renderWasm genotype: ${genotype}`);
     gState.bridge.use_genotype_when_compiling(true);
     gState.bridge.set_genotype_buffer_string(genotype);
   } else {
+    console.log("render: not using a genotype");
     gState.bridge.use_genotype_when_compiling(false);
   }
 
@@ -527,7 +529,10 @@ function getGenotypesFromWasm(populationSize) {
 function createInitialGeneration({ populationSize, traits }) {
   konsoleProxy.clear();
 
-  gState.bridge.setString(gState.traits_buffer, traits);
+  console.log("createInitialGeneration: using traits:");
+  console.log(traits);
+
+  gState.bridge.set_traits_buffer_string(traits);
 
   const seed = Math.floor(Math.random() * 1024);
   // konsoleProxy.log(`createInitialGeneration seed: ${seed}`);
@@ -535,7 +540,9 @@ function createInitialGeneration({ populationSize, traits }) {
 
   gState.bridge.create_initial_generation(populationSize, seed);
 
+  console.log("createInitialGeneration: before getGenotypesFromWasm");
   const genotypes = getGenotypesFromWasm(populationSize);
+  console.log("createInitialGeneration: after getGenotypesFromWasm");
 
   const logMessages = konsoleProxy.collectMessages();
 

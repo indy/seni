@@ -454,6 +454,7 @@ impl Packable for Program {
 
     fn unpack(cursor: &str) -> Result<(Self, &str)> {
         let (codesize, rem) = Mule::unpack_usize(cursor)?;
+
         // note: current assumption is that
         // fn_info isn't used after a program has been unpacked
         let fn_info: Vec<FnInfo> = Vec::new();
@@ -469,7 +470,7 @@ impl Packable for Program {
         }
 
         let program = Program::new(code, fn_info);
-        Ok((program, rem))
+        Ok((program, r))
     }
 }
 

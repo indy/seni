@@ -87,6 +87,17 @@ pub fn compile_to_render_packets(vm: &mut Vm, s: &str) -> Result<i32> {
     Ok(vm.geometry.get_num_render_packets() as i32)
 }
 
+// todo: remove mut from genotype
+pub fn compile_with_genotype_to_render_packets(vm: &mut Vm, s: &str, genotype: &mut Genotype) -> Result<i32> {
+    let (mut ast, _word_lut) = parse(s)?;
+    let program = compile_program_with_genotype(&mut ast, genotype)?;
+    let _ = run_program_with_preamble(vm, &program)?;
+
+    // todo: cache the preamble program
+
+    Ok(vm.geometry.get_num_render_packets() as i32)
+}
+
 pub fn build_traits(s: &str) -> Result<TraitList> {
     let (ast, _) = parse(s)?;
 

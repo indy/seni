@@ -68,7 +68,10 @@ impl Packable for Var {
             Var::Int(i) => cursor.push_str(&format!("INT {}", i)),
             Var::Float(fl) => cursor.push_str(&format!("FLOAT {}", fl)),
             Var::Bool(b) => Mule::pack_label_bool(cursor, "BOOLEAN", *b),
-            // Var::Keyword(kw) =>
+            Var::Keyword(kw) => {
+                cursor.push_str("KW ");
+                kw.pack(cursor)?;
+            }
             Var::Long(u) => cursor.push_str(&format!("LONG {}", u)),
             Var::Name(i) => cursor.push_str(&format!("NAME {}", i)),
             // Var::Vector(_) =>
@@ -96,6 +99,10 @@ impl Packable for Var {
             let rem = Mule::skip_forward(cursor, "BOOLEAN ".len());
             let (val, rem) = Mule::unpack_bool(rem)?;
             Ok((Var::Bool(val), rem))
+        } else if cursor.starts_with("KW ") {
+            let rem = Mule::skip_forward(cursor, "KW ".len());
+            let (val, rem) = Keyword::unpack(rem)?;
+            Ok((Var::Keyword(val), rem))
         } else if cursor.starts_with("LONG ") {
             let rem = Mule::skip_forward(cursor, "LONG ".len());
             let (val, rem) = Mule::unpack_u64(rem)?;
