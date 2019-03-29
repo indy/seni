@@ -199,11 +199,7 @@ impl Bridge {
 
     // todo: is bool the best return type?
     pub fn create_initial_generation(&mut self, population_size: i32, seed: i32) -> bool {
-        log("create_initial_generation 22");
-        log(&self.traits_buffer);
-
         if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
-            log("create_initial_generation: TraitList unpacked !!!!!");
             if let Ok(genotype_list) = Genotype::build_genotypes(&trait_list, population_size, seed)
             {
                 self.genotype_list = Some(genotype_list);

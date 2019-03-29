@@ -322,14 +322,15 @@ mod tests {
 
     #[test]
     fn pack_unpack_trait_list() {
-        let trait_list =
-            compile_trait_list("(bezier tessellation: 30
+        let trait_list = compile_trait_list(
+            "(bezier tessellation: 30
         line-width-start: {50 (gen/scalar min: 30 max: 60)}
         line-width-end: {10 (gen/scalar min: 5 max: 20)}
         brush: brush-c
         coords: [[0 500] [200 900] [400 100] [600 500]]
-        colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))")
-            .unwrap();
+        colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))",
+        )
+        .unwrap();
 
         assert_eq!(trait_list.traits.len(), 2);
         trait_single_float(&trait_list.traits[0], 50.0);
@@ -347,11 +348,11 @@ mod tests {
                 assert_eq!(unpacked_trait_list.traits.len(), 2);
                 trait_single_float(&unpacked_trait_list.traits[0], 50.0);
                 trait_single_float(&unpacked_trait_list.traits[1], 10.0);
-            },
+            }
             Err(e) => {
                 println!("{:?}", e);
                 assert_eq!(false, true);
-            },
+            }
         }
     }
 }

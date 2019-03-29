@@ -58,9 +58,9 @@ use crate::parser::*;
 use crate::vm::*;
 
 pub use crate::gene::Genotype;
+pub use crate::packable::Packable;
 pub use crate::trait_list::TraitList;
 pub use crate::vm::{Env, Vm};
-pub use crate::packable::Packable;
 
 pub fn run_program_with_preamble(vm: &mut Vm, program: &Program) -> Result<Var> {
     let env = Env::new();
@@ -88,7 +88,11 @@ pub fn compile_to_render_packets(vm: &mut Vm, s: &str) -> Result<i32> {
 }
 
 // todo: remove mut from genotype
-pub fn compile_with_genotype_to_render_packets(vm: &mut Vm, s: &str, genotype: &mut Genotype) -> Result<i32> {
+pub fn compile_with_genotype_to_render_packets(
+    vm: &mut Vm,
+    s: &str,
+    genotype: &mut Genotype,
+) -> Result<i32> {
     let (mut ast, _word_lut) = parse(s)?;
     let program = compile_program_with_genotype(&mut ast, genotype)?;
     let _ = run_program_with_preamble(vm, &program)?;

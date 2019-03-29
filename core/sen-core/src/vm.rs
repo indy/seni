@@ -74,7 +74,15 @@ impl Packable for Var {
             }
             Var::Long(u) => cursor.push_str(&format!("LONG {}", u)),
             Var::Name(i) => cursor.push_str(&format!("NAME {}", i)),
-            // Var::Vector(_) =>
+            Var::Vector(vars) => {
+                cursor.push_str("VEC ");
+                Mule::pack_usize(cursor, vars.len());
+
+                for v in vars {
+                    Mule::pack_space(cursor);
+                    v.pack(cursor)?;
+                }
+            }
             Var::Colour(col) => {
                 cursor.push_str("COLOUR ");
                 col.pack(cursor)?;
@@ -115,6 +123,18 @@ impl Packable for Var {
             let rem = Mule::skip_forward(cursor, "COLOUR ".len());
             let (val, rem) = Colour::unpack(rem)?;
             Ok((Var::Colour(val), rem))
+        } else if cursor.starts_with("VEC ") {
+            let rem = Mule::skip_forward(cursor, "VEC ".len());
+            let mut var_list = vec![];
+            let (num_vars, rem) = Mule::unpack_usize(rem)?;
+            let mut r = rem;
+            for _ in 0..num_vars {
+                r = Mule::skip_space(r);
+                let (a_var, rem) = Var::unpack(r)?;
+                r = rem;
+                var_list.push(a_var);
+            }
+            Ok((Var::Vector(var_list), r))
         } else if cursor.starts_with("2D ") {
             let rem = Mule::skip_forward(cursor, "2D ".len());
             let (val0, rem) = Mule::unpack_f32_sp(rem)?;
