@@ -132,6 +132,10 @@ impl TraitList {
         }
     }
 
+    pub fn get_trait(&self, idx: usize) -> &Trait {
+        &self.traits[idx]
+    }
+
     pub fn compile(ast: &[Node]) -> Result<Self> {
         let mut trait_list = TraitList::new();
 

@@ -93,9 +93,9 @@ impl PrngStateStruct {
         self.rng = PrngStateStruct::make_xor_shift_rng(seed);
     }
 
-    // pub fn prng_i32_range(&mut self, min: i32, max: i32) -> i32 {
-    //     self.rnd_pcg_range(min, max)
-    // }
+    pub fn clone_rng(&mut self, other: PrngStateStruct) {
+        self.rng = other.rng.clone();
+    }
 
     // 0..1
     pub fn prng_f32(&mut self) -> f32 {
@@ -107,6 +107,10 @@ impl PrngStateStruct {
     pub fn prng_f32_range(&mut self, min: f32, max: f32) -> f32 {
         let value = self.prng_f32();
         (value * (max - min)) + min
+    }
+
+    pub fn prng_usize_range(&mut self, min: usize, max: usize) -> usize {
+        self.prng_f32_range(min as f32, max as f32) as usize
     }
 
     pub fn prng_f32_defined_range(&mut self) -> f32 {

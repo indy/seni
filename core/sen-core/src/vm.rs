@@ -319,6 +319,10 @@ impl Vm {
         self.debug_str += &text.to_string();
     }
 
+    pub fn set_prng_state(&mut self, prng: PrngStateStruct) {
+        self.prng_state = prng;
+    }
+
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
         self.geometry.get_render_packet_geo_len(packet_number)
     }

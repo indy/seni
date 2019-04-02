@@ -23,7 +23,10 @@ mod utils;
 use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
-use sen_core::{build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets};
+use sen_core::{
+    build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets,
+    next_generation,
+};
 use sen_core::{Env, Genotype, Packable, TraitList, Vm};
 
 cfg_if! {
@@ -53,7 +56,7 @@ pub struct Bridge {
     traits_buffer: String,
     genotype_buffer: String,
 
-    genotype_list: Option<Vec<Genotype>>,
+    genotype_list: Vec<Genotype>,
 
     use_genotype: bool,
 }
@@ -71,7 +74,7 @@ impl Bridge {
             traits_buffer: "traits buffer".to_string(),
             genotype_buffer: "genotype buffer".to_string(),
 
-            genotype_list: None,
+            genotype_list: vec![],
 
             use_genotype: false,
         }
@@ -185,7 +188,7 @@ impl Bridge {
 
         if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
             if let Ok(genotype) = Genotype::build_from_seed(&trait_list, seed) {
-                self.genotype_list = Some(vec![genotype]);
+                self.genotype_list = vec![genotype];
                 return true;
             } else {
                 log("single_genotype_from_seed: can't build genotype from unpacked TraitList");
@@ -202,7 +205,7 @@ impl Bridge {
         if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
             if let Ok(genotype_list) = Genotype::build_genotypes(&trait_list, population_size, seed)
             {
-                self.genotype_list = Some(genotype_list);
+                self.genotype_list = genotype_list;
                 return true;
             } else {
                 log("create_initial_generation: can't build genotypes from unpacked TraitList");
@@ -215,14 +218,13 @@ impl Bridge {
     }
 
     pub fn genotype_move_to_buffer(&mut self, index: usize) -> bool {
-        if let Some(ref genotype_list) = self.genotype_list {
-            if let Some(ref genotype) = genotype_list.get(index) {
-                self.genotype_buffer = "".to_string();
-                let res = genotype.pack(&mut self.genotype_buffer);
+        if let Some(ref genotype) = self.genotype_list.get(index) {
+            self.genotype_buffer = "".to_string();
+            let res = genotype.pack(&mut self.genotype_buffer);
 
-                return res.is_ok();
-            }
+            return res.is_ok();
         }
+
         false
     }
 
@@ -232,30 +234,65 @@ impl Bridge {
 
     pub fn use_genotype_when_compiling(&mut self, use_genotype: bool) {
         self.use_genotype = use_genotype;
-        // if use_genotype {
-        //     log("use_genotype_when_compiling : using");
-        // } else {
-        //     log("use_genotype_when_compiling : not using genotype");
-        // }
     }
 
-    pub fn next_generation_prepare(&self) {
+    pub fn next_generation_prepare(&mut self) {
         log("next_generation_prepare");
+
+        self.genotype_list = vec![];
     }
 
-    pub fn next_generation_add_genotype(&self) {
+    pub fn next_generation_add_genotype(&mut self) {
         log("next_generation_add_genotype");
+
+        if let Ok((genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
+            self.genotype_list.push(genotype);
+        } else {
+            log("next_generation_add_genotype: Genotype failed to unpack");
+        }
     }
 
+    // todo: population_size should be usize
     pub fn next_generation_build(
-        &self,
-        _parent_size: i32,
-        _population_size: i32,
-        _mutation_rate: f32,
-        _rng: i32,
+        &mut self,
+        parent_size: usize,
+        population_size: i32,
+        mutation_rate: f32,
+        rng: i32,
     ) -> bool {
         log("next_generation_build");
-        false
+
+        // confirm that we have parent_size genotypes in self.genotype_list
+        if self.genotype_list.len() != parent_size {
+            log(&format!(
+                "next_generation_build: parent_size ({}) mismatch with genotypes given ({})",
+                parent_size,
+                self.genotype_list.len()
+            ));
+            return false;
+        }
+
+        if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
+            match next_generation(
+                &self.genotype_list,
+                population_size as usize,
+                mutation_rate,
+                rng,
+                &trait_list,
+            ) {
+                Ok(new_generation) => {
+                    self.genotype_list = new_generation;
+                    return true;
+                }
+                Err(e) => {
+                    log(&format!("{:?}", e));
+                    return false;
+                }
+            }
+        } else {
+            log("next_generation_build: TraitList failed to unpack");
+            return false;
+        }
     }
 
     pub fn unparse_with_genotype(&self) {

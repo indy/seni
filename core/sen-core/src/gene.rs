@@ -134,7 +134,7 @@ impl Packable for Gene {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Genotype {
     pub genes: Vec<Gene>,
     pub current_gene_index: usize,
@@ -146,6 +146,10 @@ impl Genotype {
             genes: Vec::new(),
             current_gene_index: 0,
         }
+    }
+
+    pub fn num_genes(&self) -> usize {
+        self.genes.len()
     }
 
     pub fn build_genotypes(
@@ -190,11 +194,60 @@ impl Genotype {
         Ok(genotype)
     }
 
-    fn push_gene_during_unpack(&mut self, a_gene: Gene) {
+    fn push_gene(&mut self, a_gene: Gene) {
         self.genes.push(a_gene);
     }
 
-    // crossover
+    pub fn crossover(&self, other: &Genotype, prng: &mut PrngStateStruct) -> Result<Self> {
+        let mut child = Genotype::new();
+
+        let num_genes = self.genes.len();
+        let crossover_index: usize = prng.prng_usize_range(0, num_genes);
+
+        for i in 0..crossover_index {
+            child.push_gene(self.genes[i].clone())
+        }
+
+        for i in crossover_index..num_genes {
+            child.push_gene(other.genes[i].clone())
+        }
+
+        Ok(child)
+    }
+
+    pub fn possibly_mutate(
+        &mut self,
+        mutation_rate: f32,
+        prng: &mut PrngStateStruct,
+        trait_list: &TraitList,
+    ) -> Result<()> {
+        let num_genes = self.genes.len();
+
+        for i in 0..num_genes {
+            let r = prng.prng_f32();
+            if r < mutation_rate {
+                self.gene_generate_new_var(i, prng, trait_list)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn gene_generate_new_var(
+        &mut self,
+        idx: usize,
+        prng: &mut PrngStateStruct,
+        trait_list: &TraitList,
+    ) -> Result<()> {
+        let mut vm = Vm::new();
+        let t = trait_list.get_trait(idx);
+
+        vm.set_prng_state(prng.clone());
+        self.genes[idx] = Gene::build_from_trait(&mut vm, t)?;
+        prng.clone_rng(vm.prng_state);
+
+        Ok(())
+    }
 }
 
 impl Packable for Genotype {
@@ -219,11 +272,60 @@ impl Packable for Genotype {
             r = Mule::skip_space(r);
             let (a_gene, rem) = Gene::unpack(r)?;
             r = rem;
-            genotype.push_gene_during_unpack(a_gene);
+            genotype.push_gene(a_gene);
         }
 
         Ok((genotype, r))
     }
+}
+
+pub fn next_generation(
+    parents: &Vec<Genotype>,
+    population_size: usize,
+    mutation_rate: f32,
+    rng_seed: i32,
+    trait_list: &TraitList,
+) -> Result<Vec<Genotype>> {
+    if parents.is_empty() {
+        return Err(Error::NotedError(
+            "next_generation: no parents given".to_string(),
+        ));
+    }
+
+    // todo: should the children vector be declared with capacity of population_size?
+
+    // copy the parents onto the new generation
+    let num_parents = parents.len();
+    let mut children: Vec<Genotype> = parents[..].to_vec();
+
+    let mut rng = PrngStateStruct::new(rng_seed, 0.0, 1.0);
+    let retry_count = 10;
+
+    for _ in 0..(population_size - num_parents) {
+        // select 2 different parents
+        let a_index = rng.prng_usize_range(0, num_parents - 1);
+
+        let mut b_index = a_index;
+        for _ in 0..retry_count {
+            b_index = rng.prng_usize_range(0, num_parents - 1);
+            if b_index != a_index {
+                break;
+            }
+        }
+        if b_index == a_index {
+            b_index = (a_index + 1) % num_parents;
+        }
+
+        let a = &parents[a_index];
+        let b = &parents[b_index];
+
+        let mut child = a.crossover(&b, &mut rng)?;
+        child.possibly_mutate(mutation_rate, &mut rng, trait_list)?;
+
+        children.push(child);
+    }
+
+    Ok(children)
 }
 
 #[cfg(test)]
@@ -441,7 +543,6 @@ mod tests {
     #[test]
     fn genotype_compile_vectors() {
         // gen/2d in this expr will produce a genotype with 2 genes, each gene will be a V2D
-
         {
             let expr = "{[[0.1 0.2] [0.3 0.4] [0.5 0.6]] (gen/2d)}";
             let seed = 752;
@@ -501,34 +602,85 @@ mod tests {
 
     #[test]
     fn genotype_compile_multiple_floats() {
-        // gen/2d in this expr will produce a genotype with 2 genes, each gene will be a V2D
+        let expr = "{[0.977 0.416 0.171] (gen/scalar)}";
+        let seed = 922;
 
-        {
-            let expr = "{[0.977 0.416 0.171] (gen/scalar)}";
-            let seed = 922;
-
-            let res = compile_and_execute(expr).unwrap();
-            if let Var::Vector(vs) = res {
-                assert_eq!(vs.len(), 3);
-                is_float(&vs[0], 0.977);
-                is_float(&vs[1], 0.416);
-                is_float(&vs[2], 0.171);
-            } else {
-                assert!(false);
-            }
-
-            let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
-            if let Var::Vector(vs) = res {
-                assert_eq!(vs.len(), 3);
-                is_float(&vs[0], 0.6279464);
-                is_float(&vs[1], 0.46001887);
-                is_float(&vs[2], 0.51953447);
-            } else {
-                assert!(false);
-            }
-
-            assert_eq!(genotype.genes.len(), 3);
+        let res = compile_and_execute(expr).unwrap();
+        if let Var::Vector(vs) = res {
+            assert_eq!(vs.len(), 3);
+            is_float(&vs[0], 0.977);
+            is_float(&vs[1], 0.416);
+            is_float(&vs[2], 0.171);
+        } else {
+            assert!(false);
         }
+
+        let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
+        if let Var::Vector(vs) = res {
+            assert_eq!(vs.len(), 3);
+            is_float(&vs[0], 0.6279464);
+            is_float(&vs[1], 0.46001887);
+            is_float(&vs[2], 0.51953447);
+        } else {
+            assert!(false);
+        }
+
+        assert_eq!(genotype.genes.len(), 3);
     }
 
+    #[test]
+    fn next_generation_test() {
+        let expr = "{[0.977 0.416 0.171] (gen/scalar)}";
+
+        let (ast, _) = parse(expr).unwrap();
+        let trait_list = TraitList::compile(&ast).unwrap();
+
+        let seed_a = 9876;
+        let seed_b = 1234;
+
+        let (_, genotype_a) = run_with_seeded_genotype(expr, seed_a).unwrap();
+        let (_, genotype_b) = run_with_seeded_genotype(expr, seed_b).unwrap();
+
+        assert_eq!(genotype_a.genes.len(), 3);
+        gene_float(&genotype_a.genes[0], 0.000778846);
+        gene_float(&genotype_a.genes[1], 0.5599265);
+        gene_float(&genotype_a.genes[2], 0.8937246);
+
+        assert_eq!(genotype_b.genes.len(), 3);
+        gene_float(&genotype_b.genes[0], 0.1344259);
+        gene_float(&genotype_b.genes[1], 0.052326918);
+        gene_float(&genotype_b.genes[2], 0.024050714);
+
+        let parents = vec![genotype_a, genotype_b];
+        let children = next_generation(&parents, 5, 0.2, 234, &trait_list).unwrap();
+
+        // first 2 children should be clones of the parents
+        assert_eq!(children[0].genes.len(), 3);
+        gene_float(&children[0].genes[0], 0.000778846);
+        gene_float(&children[0].genes[1], 0.5599265);
+        gene_float(&children[0].genes[2], 0.8937246);
+
+        assert_eq!(children[1].genes.len(), 3);
+        gene_float(&children[1].genes[0], 0.1344259);
+        gene_float(&children[1].genes[1], 0.052326918);
+        gene_float(&children[1].genes[2], 0.024050714);
+
+        // 3 children
+        assert_eq!(children[2].genes.len(), 3);
+        gene_float(&children[2].genes[0], 0.6867611);    // mutation
+        gene_float(&children[2].genes[1], 0.052326918);  // b
+        gene_float(&children[2].genes[2], 0.024050714);  // b
+
+        assert_eq!(children[3].genes.len(), 3);
+        gene_float(&children[3].genes[0], 0.000778846);  // a
+        gene_float(&children[3].genes[1], 0.5599265);    // a
+        gene_float(&children[3].genes[2], 0.024050714);  // b
+
+        assert_eq!(children[4].genes.len(), 3);
+        gene_float(&children[4].genes[0], 0.000778846);  // a
+        gene_float(&children[4].genes[1], 0.052326918);  // b
+        gene_float(&children[4].genes[2], 0.024050714);  // b
+
+        assert_eq!(children.len(), 5);
+    }
 }
