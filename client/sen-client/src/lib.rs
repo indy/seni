@@ -81,42 +81,42 @@ impl Bridge {
     }
 
     pub fn get_genotype_buffer_string(&self) -> String {
-        log("get_genotype_buffer_string");
+        // log("get_genotype_buffer_string");
         self.genotype_buffer.to_string()
     }
 
     pub fn set_genotype_buffer_string(&mut self, s: &str) {
-        log("set_genotype_buffer_string");
+        // log("set_genotype_buffer_string");
         self.genotype_buffer = s.to_string();
     }
 
     pub fn get_traits_buffer_string(&self) -> String {
-        log("get_traits_buffer_string");
+        // log("get_traits_buffer_string");
         self.traits_buffer.to_string()
     }
 
     pub fn set_traits_buffer_string(&mut self, s: &str) {
-        log("set_traits_buffer_string");
+        // log("set_traits_buffer_string");
         self.traits_buffer = s.to_string();
     }
 
     pub fn get_out_source_buffer_string(&self) -> String {
-        log("get_out_source_buffer_string");
+        // log("get_out_source_buffer_string");
         self.out_source_buffer.to_string()
     }
 
     pub fn set_out_source_buffer_string(&mut self, s: &str) {
-        log("set_out_source_buffer_string");
+        // log("set_out_source_buffer_string");
         self.out_source_buffer = s.to_string();
     }
 
     pub fn get_source_buffer_string(&self) -> String {
-        log("get_source_buffer_string");
+        // log("get_source_buffer_string");
         self.source_buffer.to_string()
     }
 
     pub fn set_source_buffer_string(&mut self, s: &str) {
-        log("set_source_buffer_string");
+        // log("set_source_buffer_string");
         self.source_buffer = s.to_string();
     }
 
@@ -125,7 +125,7 @@ impl Bridge {
     }
 
     pub fn sen_shutdown(&self) {
-        log("sen_shutdown");
+        // log("sen_shutdown");
     }
 
     pub fn compile_to_render_packets(&mut self) -> i32 {
@@ -184,7 +184,7 @@ impl Bridge {
     }
 
     pub fn single_genotype_from_seed(&mut self, seed: i32) -> bool {
-        log("single_genotype_from_seed");
+        // log("single_genotype_from_seed");
 
         if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
             if let Ok(genotype) = Genotype::build_from_seed(&trait_list, seed) {
@@ -229,7 +229,7 @@ impl Bridge {
     }
 
     pub fn script_cleanup(&self) {
-        log("script_cleanup");
+        // log("script_cleanup");
     }
 
     pub fn use_genotype_when_compiling(&mut self, use_genotype: bool) {
@@ -237,13 +237,12 @@ impl Bridge {
     }
 
     pub fn next_generation_prepare(&mut self) {
-        log("next_generation_prepare");
-
+        // log("next_generation_prepare");
         self.genotype_list = vec![];
     }
 
     pub fn next_generation_add_genotype(&mut self) {
-        log("next_generation_add_genotype");
+        // log("next_generation_add_genotype");
 
         if let Ok((genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
             self.genotype_list.push(genotype);
@@ -260,7 +259,7 @@ impl Bridge {
         mutation_rate: f32,
         rng: i32,
     ) -> bool {
-        log("next_generation_build");
+        // log("next_generation_build");
 
         // confirm that we have parent_size genotypes in self.genotype_list
         if self.genotype_list.len() != parent_size {

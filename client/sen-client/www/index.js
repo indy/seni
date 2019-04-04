@@ -1784,7 +1784,11 @@ function renderScript(state, imageElement) {
     scriptHash: state.scriptHash
   }).then(({ title, memory, buffers }) => {
     renderGeometryBuffers(memory, buffers, imageElement);
-    stopFn(`renderScript-${title}`, console);
+    if (title === '') {
+      stopFn(`renderScript`, console);
+    } else {
+      stopFn(`renderScript-${title}`, console);
+    }
   }).catch(error => {
     // handle error
     console.error(`worker: error of ${error}`);

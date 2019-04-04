@@ -426,6 +426,16 @@ pub fn string_to_keyword_hash() -> HashMap<String, Keyword> {
     hm
 }
 
+pub fn i32_to_keyword_hash() -> HashMap<i32, Keyword> {
+    let mut hm: HashMap<i32, Keyword> = HashMap::new();
+
+    for kw in Keyword::iter() {
+        hm.insert(kw as i32, kw);
+    }
+
+    hm
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

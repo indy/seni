@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::colour::Colour;
+use crate::compiler::compile_preamble;
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::packable::{Mule, Packable};
@@ -61,6 +62,12 @@ impl Gene {
 
         vm.building_with_trait_within_vector = t.within_vector;
         vm.trait_within_vector_index = t.index;
+
+        // setup the env with the global variables in preamble
+        let preamble = compile_preamble()?;
+        vm.interpret(&env, &preamble)?;
+
+        vm.ip = 0;
 
         vm.interpret(&env, &t.program)?;
         let var = vm.top_stack_value()?;
@@ -336,7 +343,6 @@ mod tests {
     use crate::{compile_and_execute, compile_program_with_genotype, run_program_with_preamble};
 
     pub fn run_with_seeded_genotype(s: &str, seed: i32) -> Result<(Var, Genotype)> {
-        let mut vm = Vm::new();
         // todo: cache the preamble program
         let (mut ast, _word_lut) = parse(s)?;
 
@@ -344,6 +350,7 @@ mod tests {
         let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
         let program = compile_program_with_genotype(&mut ast, &mut genotype)?;
 
+        let mut vm = Vm::new();
         let var = run_program_with_preamble(&mut vm, &program)?;
 
         Ok((var, genotype))
@@ -478,6 +485,55 @@ mod tests {
         } else {
             assert!(false);
         }
+    }
+
+    fn is_keyword(var: &Var, expected: Keyword) {
+        if let Var::Keyword(kw) = var {
+            assert_eq!(*kw, expected);
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn gen_select_preamble_variable() {
+        let s = "{transformers (gen/select from: col/procedural-fn-presets)}";
+        let res = compile_and_execute(s).unwrap();
+
+        is_keyword(&res, Keyword::Transformers);
+
+        {
+            let (res, genotype) = run_with_seeded_genotype(s, 56534).unwrap();
+            assert_eq!(genotype.genes.len(), 1);
+            is_keyword(&res, Keyword::KnightRider);
+        }
+        {
+            let (res, genotype) = run_with_seeded_genotype(s, 6534).unwrap();
+            assert_eq!(genotype.genes.len(), 1);
+            is_keyword(&res, Keyword::HotlineMiami);
+        }
+        {
+            let (res, genotype) = run_with_seeded_genotype(s, 2009).unwrap();
+            assert_eq!(genotype.genes.len(), 1);
+            is_keyword(&res, Keyword::Rainbow);
+        }
+    }
+
+    #[test]
+    fn gen_select_explicit_list() {
+        let s = "{1.23 (gen/select from: '(1.1 2.2 3.3 4.4))}";
+        let res = compile_and_execute(s).unwrap();
+
+        is_float(&res, 1.23);
+
+        let seed = 6445;
+        let genotype_length = 1;
+
+        let (res, genotype) = run_with_seeded_genotype(s, seed).unwrap();
+        assert_eq!(genotype.genes.len(), genotype_length);
+
+        is_float(&res, 4.4);
+        // dbg!(&genotype.genes[0]);
     }
 
     #[test]
@@ -667,19 +723,19 @@ mod tests {
 
         // 3 children
         assert_eq!(children[2].genes.len(), 3);
-        gene_float(&children[2].genes[0], 0.6867611);    // mutation
-        gene_float(&children[2].genes[1], 0.052326918);  // b
-        gene_float(&children[2].genes[2], 0.024050714);  // b
+        gene_float(&children[2].genes[0], 0.6867611); // mutation
+        gene_float(&children[2].genes[1], 0.052326918); // b
+        gene_float(&children[2].genes[2], 0.024050714); // b
 
         assert_eq!(children[3].genes.len(), 3);
-        gene_float(&children[3].genes[0], 0.000778846);  // a
-        gene_float(&children[3].genes[1], 0.5599265);    // a
-        gene_float(&children[3].genes[2], 0.024050714);  // b
+        gene_float(&children[3].genes[0], 0.000778846); // a
+        gene_float(&children[3].genes[1], 0.5599265); // a
+        gene_float(&children[3].genes[2], 0.024050714); // b
 
         assert_eq!(children[4].genes.len(), 3);
-        gene_float(&children[4].genes[0], 0.000778846);  // a
-        gene_float(&children[4].genes[1], 0.052326918);  // b
-        gene_float(&children[4].genes[2], 0.024050714);  // b
+        gene_float(&children[4].genes[0], 0.000778846); // a
+        gene_float(&children[4].genes[1], 0.052326918); // b
+        gene_float(&children[4].genes[2], 0.024050714); // b
 
         assert_eq!(children.len(), 5);
     }

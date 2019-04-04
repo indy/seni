@@ -20,7 +20,7 @@ use std::str::FromStr;
 use crate::colour::{Colour, ColourFormat};
 use crate::error::{Error, Result};
 use crate::gene::Genotype;
-use crate::keywords::{string_to_keyword_hash, Keyword};
+use crate::keywords::{i32_to_keyword_hash, string_to_keyword_hash, Keyword};
 use crate::mathutil;
 use crate::native::Native;
 use crate::opcodes::{opcode_stack_offset, Opcode};
@@ -796,6 +796,7 @@ impl Compilation {
 
 struct Compiler {
     string_to_keyword: HashMap<String, Keyword>,
+    i32_to_keyword: HashMap<i32, Keyword>,
     use_genes: bool,
 }
 
@@ -803,6 +804,7 @@ impl Compiler {
     fn new() -> Self {
         Compiler {
             string_to_keyword: string_to_keyword_hash(),
+            i32_to_keyword: i32_to_keyword_hash(),
             use_genes: false,
         }
     }
@@ -1302,14 +1304,18 @@ impl Compiler {
                 let found_name = self.compile_user_defined_name(compilation, &text, *iname)?;
                 if found_name {
                     return Ok(());
-                } else if let Some(kw) = self.string_to_keyword.get(text) {
-                    compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
-                    return Ok(());
                 } else {
-                    return Err(Error::Compiler(format!(
-                        "compile: can't find user defined name or keyword: {}",
-                        text
-                    )));
+                    // the name should refer to a keyword
+                    let i = self.get_iname(ast)?;
+                    if let Some(kw) = self.i32_to_keyword.get(&i) {
+                        compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
+                        return Ok(());
+                    } else {
+                        return Err(Error::Compiler(format!(
+                            "compile: can't find user defined name or keyword: {}",
+                            text
+                        )));
+                    }
                 }
             }
             _ => return Err(Error::Compiler(format!("compile ast: {:?}", ast))),
@@ -1343,7 +1349,7 @@ impl Compiler {
                     return Ok(());
                 }
 
-                if let Some(kw) = self.string_to_keyword.get(text) {
+                if let Some(kw) = self.i32_to_keyword.get(iname) {
                     match *kw {
                         Keyword::Define => {
                             self.compile_define(compilation, &children[1..], Mem::Local)?
@@ -2563,8 +2569,9 @@ impl Compiler {
             let nodes = semantic_children(nodes);
 
             if !nodes.is_empty() {
-                if let Node::Name(ref text, _, _) = nodes[0] {
-                    if let Some(name_kw) = self.string_to_keyword.get(text) {
+                if let Node::Name(_, iname, _) = nodes[0] {
+                    // todo: could just cast kw to i32 and compare directly with iname
+                    if let Some(name_kw) = self.i32_to_keyword.get(iname) {
                         return *name_kw == kw;
                     }
                 }
@@ -2575,6 +2582,10 @@ impl Compiler {
 
     fn get_float(&self, n: &Node) -> Result<f32> {
         n.get_float(self.use_genes)
+    }
+
+    fn get_iname(&self, n: &Node) -> Result<i32> {
+        n.get_iname(self.use_genes)
     }
 
     fn get_label_iname(&self, n: &Node) -> Result<i32> {

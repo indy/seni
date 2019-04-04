@@ -422,7 +422,7 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     h.insert(Native::GenInt, gen_int);
     h.insert(Native::GenScalar, gen_scalar);
     h.insert(Native::Gen2D, gen_2d);
-    h.insert(Native::GenSelect, gen_select); // not implemented
+    h.insert(Native::GenSelect, gen_select);
     h.insert(Native::GenCol, gen_col);
 
     h
@@ -3149,27 +3149,34 @@ pub fn gen_2d(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     Ok(Var::V2D(x, y))
 }
 
-pub fn gen_select(_vm: &mut Vm, _program: &Program, _num_args: usize) -> Result<Var> {
+pub fn gen_select(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     // 'from' parameter should be a list
     // i.e. (gen/select from: '(1 2 3 4 5))
     //
     // this prevents any confusion between a vector and vec_2d
     // e.g. (gen/select from: [1 2 3 4 5]) vs. (gen/select from: [1 2])
 
-    // let mut from: Option<&Var> = None;
+    let mut from: Option<&Vec<Var>> = None;
 
-    // let mut args_pointer = vm.sp - (num_args * 2);
-    // for _ in 0..num_args {
-    //     let label = &vm.stack[args_pointer];
-    //     let value = &vm.stack[args_pointer + 1];
-    //     args_pointer += 2;
+    let mut args_pointer = vm.sp - (num_args * 2);
+    for _ in 0..num_args {
+        let label = &vm.stack[args_pointer];
+        let value = &vm.stack[args_pointer + 1];
+        args_pointer += 2;
 
-    //     if let Var::Int(iname) = label {
-    //         // read_???!(from, Keyword::From, iname, value);
-    //     }
-    // }
+        if let Var::Int(iname) = label {
+            read_vector!(from, Keyword::From, iname, value);
+        }
+    }
 
-    unimplemented!();
+    if let Some(from) = from {
+        let index = vm.prng_state.prng_usize_range(0, from.len());
+        Ok(from[index].clone())
+    } else {
+        Err(Error::Bind(
+            "gen_select: no from parameter given".to_string(),
+        ))
+    }
 }
 
 pub fn gen_col(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {

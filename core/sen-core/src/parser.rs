@@ -85,6 +85,31 @@ impl Node {
         )))
     }
 
+    pub fn get_iname(&self, use_genes: bool) -> Result<i32> {
+        if let Node::Name(_text, iname, meta) = self {
+            if use_genes && meta.is_some() {
+                if let Some(meta) = meta {
+                    if let Some(gene) = &meta.gene {
+                        match gene {
+                            Gene::Name(i) => return Ok(*i),
+                            _ => {
+                                return Err(Error::Compiler(
+                                    "Node::get_iname incompatible gene".to_string(),
+                                ));
+                            }
+                        }
+                    }
+                }
+            } else {
+                return Ok(*iname);
+            }
+        }
+        Err(Error::Compiler(format!(
+            "Node::get_iname expected Node::Name not {:?}",
+            self
+        )))
+    }
+
     pub fn get_label_iname(&self, use_genes: bool) -> Result<i32> {
         if let Node::Label(_, iname, meta) = self {
             if use_genes && meta.is_some() {

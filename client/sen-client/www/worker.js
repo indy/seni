@@ -417,12 +417,11 @@ function render({ script /*, scriptHash*/, genotype }) {
   const buffers = [];
 
   if (genotype) {
-    console.log("render: using a genotype");
-    // console.log(`renderWasm genotype: ${genotype}`);
+    // console.log("render: using a genotype");
     gState.bridge.use_genotype_when_compiling(true);
     gState.bridge.set_genotype_buffer_string(genotype);
   } else {
-    console.log("render: not using a genotype");
+    // console.log("render: not using a genotype");
     gState.bridge.use_genotype_when_compiling(false);
   }
 
@@ -458,7 +457,7 @@ function render({ script /*, scriptHash*/, genotype }) {
   gState.bridge.script_cleanup();
 
   const logMessages = konsoleProxy.collectMessages();
-  const title = 'WASM woohoo';
+  const title = '';
 
   // make a copy of the wasm memory
   //
@@ -529,8 +528,8 @@ function getGenotypesFromWasm(populationSize) {
 function createInitialGeneration({ populationSize, traits }) {
   konsoleProxy.clear();
 
-  console.log("createInitialGeneration: using traits:");
-  console.log(traits);
+  // console.log("createInitialGeneration: using traits:");
+  // console.log(traits);
 
   gState.bridge.set_traits_buffer_string(traits);
 
@@ -540,10 +539,7 @@ function createInitialGeneration({ populationSize, traits }) {
 
   gState.bridge.create_initial_generation(populationSize, seed);
 
-  console.log("createInitialGeneration: before getGenotypesFromWasm");
   const genotypes = getGenotypesFromWasm(populationSize);
-  console.log("createInitialGeneration: after getGenotypesFromWasm");
-
   const logMessages = konsoleProxy.collectMessages();
 
   return [{ logMessages }, { genotypes }];
@@ -623,25 +619,25 @@ const options = {
 function messageHandler(type, data) {
   switch (type) {
   case jobRender:
-    console.log("jobRender");
+    // console.log("jobRender");
     return render(data);
   case jobUnparse:
-    console.log("jobUnparse");
+    // console.log("jobUnparse");
     return unparse(data);
   case jobBuildTraits:
-    console.log("jobBuildTraits");
+    // console.log("jobBuildTraits");
     return buildTraits(data);
   case jobInitialGeneration:
-    console.log("jobInitialGeneration");
+    // console.log("jobInitialGeneration");
     return createInitialGeneration(data);
   case jobSingleGenotypeFromSeed:
-    console.log("jobSingleGenotypeFromSeed");
+    // console.log("jobSingleGenotypeFromSeed");
     return singleGenotypeFromSeed(data);
   case jobSimplifyScript:
-    console.log("jobSimplifyScript");
+    // console.log("jobSimplifyScript");
     return simplifyScript(data);
   case jobNewGeneration:
-    console.log("jobNewGeneration");
+    // console.log("jobNewGeneration");
     return newGeneration(data);
   default:
     // throw unknown type

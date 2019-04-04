@@ -57,7 +57,7 @@ use crate::error::*;
 use crate::parser::*;
 use crate::vm::*;
 
-pub use crate::gene::{Genotype, next_generation};
+pub use crate::gene::{next_generation, Genotype};
 pub use crate::packable::Packable;
 pub use crate::trait_list::TraitList;
 pub use crate::vm::{Env, Vm};
