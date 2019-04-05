@@ -13,7 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::{compile_program_1, compile_program_for_trait, Program};
+use std::collections::BTreeMap;
+
+use crate::compiler::{
+    compile_program_1, compile_program_for_trait, Compilation, Compiler, Program,
+};
 use crate::error::Result;
 use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
@@ -87,7 +91,12 @@ impl Trait {
         }
     }
 
-    fn compile(node: &Node, parameter_ast: &Vec<Node>, index: Option<usize>) -> Result<Self> {
+    fn compile(
+        node: &Node,
+        parameter_ast: &Vec<Node>,
+        global_mapping: &BTreeMap<i32, i32>,
+        index: Option<usize>,
+    ) -> Result<Self> {
         // todo: what about NODE_LABEL and NODE_STRING?
         /*
          * Why is NODE_NAME a special case?
@@ -111,7 +120,7 @@ impl Trait {
             }
         };
 
-        let program = compile_program_for_trait(parameter_ast, node)?;
+        let program = compile_program_for_trait(parameter_ast, node, global_mapping)?;
 
         Ok(Trait::new(initial_value, program, index))
     }
@@ -121,6 +130,7 @@ impl Trait {
 pub struct TraitList {
     pub traits: Vec<Trait>,
     pub seed_value: i32,
+    pub global_mapping: BTreeMap<i32, i32>,
 }
 
 impl TraitList {
@@ -129,6 +139,7 @@ impl TraitList {
             traits: Vec::new(),
             // todo: when is the seed_value set properly?
             seed_value: 42,
+            global_mapping: BTreeMap::new(),
         }
     }
 
@@ -137,7 +148,14 @@ impl TraitList {
     }
 
     pub fn compile(ast: &[Node]) -> Result<Self> {
+        // this top-level compilation is only to get the user defined global mappings
+        let mut compilation = Compilation::new();
+        let compiler = Compiler::new();
+        compiler.compile_common(&mut compilation, &ast)?;
+
         let mut trait_list = TraitList::new();
+
+        trait_list.global_mapping = compilation.get_user_defined_globals();
 
         for n in ast {
             trait_list.ga_traverse(&n)?;
@@ -194,7 +212,7 @@ impl TraitList {
     }
 
     fn add_single_trait(&mut self, node: &Node, meta: &NodeMeta) -> Result<()> {
-        let t = Trait::compile(node, &meta.parameter_ast, None)?;
+        let t = Trait::compile(node, &meta.parameter_ast, &self.global_mapping, None)?;
 
         self.traits.push(t);
 
@@ -209,7 +227,7 @@ impl TraitList {
                     // ignoring whitespace and comments
                 }
                 _ => {
-                    let t = Trait::compile(n, &meta.parameter_ast, Some(i))?;
+                    let t = Trait::compile(n, &meta.parameter_ast, &self.global_mapping, Some(i))?;
                     self.traits.push(t);
                     i += 1;
                 }
@@ -231,8 +249,14 @@ impl TraitList {
 impl Packable for TraitList {
     fn pack(&self, cursor: &mut String) -> Result<()> {
         Mule::pack_i32_sp(cursor, self.seed_value);
-        Mule::pack_usize(cursor, self.traits.len());
 
+        Mule::pack_usize_sp(cursor, self.global_mapping.len());
+        for (iname, map_val) in &self.global_mapping {
+            Mule::pack_i32_sp(cursor, *iname);
+            Mule::pack_i32_sp(cursor, *map_val);
+        }
+
+        Mule::pack_usize(cursor, self.traits.len());
         for t in &self.traits {
             Mule::pack_space(cursor);
             t.pack(cursor)?;
@@ -247,7 +271,19 @@ impl Packable for TraitList {
         let (seed_value, rem) = Mule::unpack_i32_sp(cursor)?;
         trait_list.set_seed_during_unpack(seed_value);
 
-        let (num_traits, rem) = Mule::unpack_usize(rem)?;
+        let mut global_mapping = BTreeMap::new();
+        let (num_mappings, rem) = Mule::unpack_usize_sp(rem)?;
+        let mut r = rem;
+        for _ in 0..num_mappings {
+            let (iname, rem) = Mule::unpack_i32_sp(r)?;
+            r = rem;
+            let (map_val, rem) = Mule::unpack_i32_sp(r)?;
+            r = rem;
+            global_mapping.insert(iname, map_val);
+        }
+        trait_list.global_mapping = global_mapping;
+
+        let (num_traits, rem) = Mule::unpack_usize(r)?;
 
         let mut r = rem;
         for _ in 0..num_traits {
@@ -344,7 +380,45 @@ mod tests {
         let packed_res = trait_list.pack(&mut packed);
         assert!(packed_res.is_ok());
 
-        assert_eq!(packed, "42 2 0 0 FLOAT 50 9 JUMP INT 1 INT 0 LOAD MEM 3 FLOAT 50 STORE MEM 2 INT 0 LOAD MEM 3 INT 270 LOAD MEM 3 FLOAT 30 LOAD MEM 3 INT 269 LOAD MEM 3 FLOAT 60 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 9 JUMP INT 1 INT 0 LOAD MEM 3 FLOAT 10 STORE MEM 2 INT 0 LOAD MEM 3 INT 270 LOAD MEM 3 FLOAT 5 LOAD MEM 3 INT 269 LOAD MEM 3 FLOAT 20 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
+        assert_eq!(packed, "42 0 2 0 0 FLOAT 50 9 JUMP INT 1 INT 0 LOAD MEM 3 FLOAT 50 STORE MEM 2 INT 0 LOAD MEM 3 INT 270 LOAD MEM 3 FLOAT 30 LOAD MEM 3 INT 269 LOAD MEM 3 FLOAT 60 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 9 JUMP INT 1 INT 0 LOAD MEM 3 FLOAT 10 STORE MEM 2 INT 0 LOAD MEM 3 INT 270 LOAD MEM 3 FLOAT 5 LOAD MEM 3 INT 269 LOAD MEM 3 FLOAT 20 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
+
+        let res = TraitList::unpack(&packed);
+        match res {
+            Ok((unpacked_trait_list, _)) => {
+                assert_eq!(unpacked_trait_list.traits.len(), 2);
+                trait_single_float(&unpacked_trait_list.traits[0], 50.0);
+                trait_single_float(&unpacked_trait_list.traits[1], 10.0);
+            }
+            Err(e) => {
+                println!("{:?}", e);
+                assert_eq!(false, true);
+            }
+        }
+    }
+
+    #[test]
+    fn pack_unpack_trait_list_2() {
+        // this contains some global defines which will be packed
+        let trait_list = compile_trait_list(
+            "(define aaa 97 bbb 98 ccc 99)
+        (bezier tessellation: 30
+        line-width-start: {50 (gen/scalar min: 30 max: 60)}
+        line-width-end: {10 (gen/scalar min: 5 max: 20)}
+        brush: brush-c
+        coords: [[0 500] [200 900] [400 100] [600 500]]
+        colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))",
+        )
+        .unwrap();
+
+        assert_eq!(trait_list.traits.len(), 2);
+        trait_single_float(&trait_list.traits[0], 50.0);
+        trait_single_float(&trait_list.traits[1], 10.0);
+
+        let mut packed = "".to_string();
+        let packed_res = trait_list.pack(&mut packed);
+        assert!(packed_res.is_ok());
+
+        assert_eq!(packed, "42 3 0 14 1 15 2 16 2 0 0 FLOAT 50 9 JUMP INT 1 INT 0 LOAD MEM 3 FLOAT 50 STORE MEM 2 INT 0 LOAD MEM 3 INT 270 LOAD MEM 3 FLOAT 30 LOAD MEM 3 INT 269 LOAD MEM 3 FLOAT 60 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 9 JUMP INT 1 INT 0 LOAD MEM 3 FLOAT 10 STORE MEM 2 INT 0 LOAD MEM 3 INT 270 LOAD MEM 3 FLOAT 5 LOAD MEM 3 INT 269 LOAD MEM 3 FLOAT 20 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
 
         let res = TraitList::unpack(&packed);
         match res {

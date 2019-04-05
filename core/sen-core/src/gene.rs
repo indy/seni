@@ -530,67 +530,49 @@ mod tests {
         {
             let (res, genotype) = run_with_seeded_genotype(s, 211).unwrap(); // 222
             assert_eq!(genotype.genes.len(), 1);
-            dbg!(&genotype.genes[0]);
             is_float(&res, 12.3);
 
             let (res, genotype) = run_with_seeded_genotype(s, 25).unwrap(); // 224
             assert_eq!(genotype.genes.len(), 1);
-            dbg!(&genotype.genes[0]);
             is_float(&res, 14.5);
 
             let (res, genotype) = run_with_seeded_genotype(s, 37).unwrap(); // 223
             assert_eq!(genotype.genes.len(), 1);
-            dbg!(&genotype.genes[0]);
             is_float(&res, 13.4);
 
             let (res, genotype) = run_with_seeded_genotype(s, 45).unwrap(); // 225
             assert_eq!(genotype.genes.len(), 1);
-            dbg!(&genotype.genes[0]);
             is_float(&res, 15.6);
         }
     }
 
-    // #[test]
-    fn bug_gen_select_variable_2() {
-        /*
-         compiling traits will require access to the entire ast, not just the parts inside the {}
-         the iname from the trait needs to match up with the correct iname from the whole script
-
-        e.g.
-        (define aa 2.3 bb 3.4 cc 4.5 dd 5.6)
-        {bb (gen/select from: '(bb cc dd))}
-
-        if just the form in brackets was evaluated, then the inames wouldn't match when compared to the whole ast
-         */
-
+    #[test]
+    fn gen_select_custom_globals() {
         let s = "(define aa 2.3 bb 3.4 cc 4.5 dd 5.6)
                  (+ 10.0 {aa (gen/select from: '(aa bb cc dd))})";
         let res = compile_and_execute(s).unwrap();
-
         is_float(&res, 12.3);
 
         {
             let (res, genotype) = run_with_seeded_genotype(s, 211).unwrap();
             assert_eq!(genotype.genes.len(), 1);
-            dbg!(&genotype.genes[0]);
             is_float(&res, 12.3);
 
             let (res, genotype) = run_with_seeded_genotype(s, 25).unwrap();
             assert_eq!(genotype.genes.len(), 1);
-            dbg!(&genotype.genes[0]);
             is_float(&res, 14.5);
 
             let (res, genotype) = run_with_seeded_genotype(s, 37).unwrap();
             assert_eq!(genotype.genes.len(), 1);
-            dbg!(&genotype.genes[0]);
             is_float(&res, 13.4);
 
             let (res, genotype) = run_with_seeded_genotype(s, 45).unwrap();
             assert_eq!(genotype.genes.len(), 1);
-            dbg!(&genotype.genes[0]);
             is_float(&res, 15.6);
         }
     }
+
+    // bug_gen_select_custom_locals
 
     #[test]
     fn gen_select_explicit_list() {
@@ -606,7 +588,6 @@ mod tests {
         assert_eq!(genotype.genes.len(), genotype_length);
 
         is_float(&res, 4.4);
-        // dbg!(&genotype.genes[0]);
     }
 
     #[test]
