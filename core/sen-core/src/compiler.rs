@@ -68,7 +68,7 @@ pub fn compile_program_for_trait(ast: &[Node], gen_initial_value: &Node) -> Resu
     // this is a sub-program for a trait, bind the initial value to gen/initial-value
     compiler.compile_global_bind_node(
         &mut compilation,
-        Keyword::GenInitial.to_string(),
+        Keyword::GenInitial as i32,
         &gen_initial_value,
     )?;
     compiler.compile_common_top_level_defines(&mut compilation, &ast)?;
@@ -507,10 +507,10 @@ struct Compilation {
     current_fn_info_index: Option<usize>,
     opcode_offset: i32,
 
-    global_mappings: HashMap<String, i32>,
+    global_mappings: HashMap<i32, i32>, // iname -> global mapping index
     global_mapping_marker: i32,
 
-    local_mappings: HashMap<String, i32>,
+    local_mappings: HashMap<i32, i32>, // iname -> local mapping index
     local_mapping_marker: i32, // todo: check that it is < MEMORY_LOCAL_SIZE, as that constant is used in the interpreter
 }
 
@@ -546,10 +546,15 @@ impl Compilation {
         Ok(())
     }
 
-    fn add_global_mapping(&mut self, s: String) -> Result<i32> {
-        self.global_mappings.insert(s, self.global_mapping_marker);
+    fn add_global_mapping(&mut self, iname: i32) -> Result<i32> {
+        self.global_mappings
+            .insert(iname, self.global_mapping_marker);
         self.global_mapping_marker += 1;
         Ok(self.global_mapping_marker - 1)
+    }
+
+    fn add_global_mapping_for_keyword(&mut self, kw: Keyword) -> Result<i32> {
+        self.add_global_mapping(kw as i32)
     }
 
     fn clear_local_mappings(&mut self) -> Result<()> {
@@ -558,8 +563,8 @@ impl Compilation {
         Ok(())
     }
 
-    fn add_local_mapping(&mut self, s: String) -> Result<i32> {
-        self.local_mappings.insert(s, self.local_mapping_marker);
+    fn add_local_mapping(&mut self, iname: i32) -> Result<i32> {
+        self.local_mappings.insert(iname, self.local_mapping_marker);
         self.local_mapping_marker += 1;
         Ok(self.local_mapping_marker - 1)
     }
@@ -568,8 +573,10 @@ impl Compilation {
     // (e.g. during a fence loop)
     // note: it's up to the caller to manage this reference
     fn add_internal_local_mapping(&mut self) -> Result<i32> {
-        let s = "internal_local_mapping".to_string();
-        self.local_mappings.insert(s, self.local_mapping_marker);
+        // todo: is this right???
+        let i = 9999;
+        // let s = "internal_local_mapping".to_string();
+        self.local_mappings.insert(i, self.local_mapping_marker);
         self.local_mapping_marker += 1;
         Ok(self.local_mapping_marker - 1)
     }
@@ -869,24 +876,24 @@ impl Compiler {
     }
 
     fn register_top_level_preamble(&self, compilation: &mut Compilation) -> Result<()> {
-        compilation.add_global_mapping(Keyword::GenInitial.to_string())?;
+        compilation.add_global_mapping_for_keyword(Keyword::GenInitial)?;
 
-        compilation.add_global_mapping(Keyword::CanvasWidth.to_string())?;
-        compilation.add_global_mapping(Keyword::CanvasHeight.to_string())?;
+        compilation.add_global_mapping_for_keyword(Keyword::CanvasWidth)?;
+        compilation.add_global_mapping_for_keyword(Keyword::CanvasHeight)?;
 
-        compilation.add_global_mapping(Keyword::MathTau.to_string())?;
+        compilation.add_global_mapping_for_keyword(Keyword::MathTau)?;
 
-        compilation.add_global_mapping(Keyword::White.to_string())?;
-        compilation.add_global_mapping(Keyword::Black.to_string())?;
-        compilation.add_global_mapping(Keyword::Red.to_string())?;
-        compilation.add_global_mapping(Keyword::Green.to_string())?;
-        compilation.add_global_mapping(Keyword::Blue.to_string())?;
-        compilation.add_global_mapping(Keyword::Yellow.to_string())?;
-        compilation.add_global_mapping(Keyword::Magenta.to_string())?;
-        compilation.add_global_mapping(Keyword::Cyan.to_string())?;
+        compilation.add_global_mapping_for_keyword(Keyword::White)?;
+        compilation.add_global_mapping_for_keyword(Keyword::Black)?;
+        compilation.add_global_mapping_for_keyword(Keyword::Red)?;
+        compilation.add_global_mapping_for_keyword(Keyword::Green)?;
+        compilation.add_global_mapping_for_keyword(Keyword::Blue)?;
+        compilation.add_global_mapping_for_keyword(Keyword::Yellow)?;
+        compilation.add_global_mapping_for_keyword(Keyword::Magenta)?;
+        compilation.add_global_mapping_for_keyword(Keyword::Cyan)?;
 
-        compilation.add_global_mapping(Keyword::ColProceduralFnPresets.to_string())?;
-        compilation.add_global_mapping(Keyword::EasePresets.to_string())?;
+        compilation.add_global_mapping_for_keyword(Keyword::ColProceduralFnPresets)?;
+        compilation.add_global_mapping_for_keyword(Keyword::EasePresets)?;
 
         Ok(())
     }
@@ -944,16 +951,16 @@ impl Compiler {
         error_if_alterable(&lhs, "register_names_in_define")?;
 
         match lhs {
-            Node::Name(name, _, _) => {
+            Node::Name(_, _, _) => {
                 // (define foo 42)
-                let s = name.to_string();
-                // todo: is this check necessary?
-                if let Some(_i) = compilation.global_mappings.get(name) {
+                //let s = name.to_string();
+                let iname = self.get_iname(lhs)?;
+                if let Some(_i) = compilation.global_mappings.get(&iname) {
                     // name was already added to global_mappings
                     return Ok(());
                 }
 
-                if let Err(e) = compilation.add_global_mapping(s) {
+                if let Err(e) = compilation.add_global_mapping(iname) {
                     return Err(e);
                 }
             }
@@ -1018,28 +1025,21 @@ impl Compiler {
         // NOTE: each entry should have a corresponding entry in
         // register_top_level_preamble
         // ********************************************************************************
-        self.compile_global_bind_i32(compilation, Keyword::GenInitial.to_string(), 0)?;
+        self.compile_global_bind_kw_i32(compilation, Keyword::GenInitial, 0)?;
 
-        self.compile_global_bind_f32(compilation, Keyword::CanvasWidth.to_string(), 1000.0)?;
-        self.compile_global_bind_f32(compilation, Keyword::CanvasHeight.to_string(), 1000.0)?;
+        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasWidth, 1000.0)?;
+        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasHeight, 1000.0)?;
 
-        self.compile_global_bind_f32(compilation, Keyword::MathTau.to_string(), mathutil::TAU)?;
+        self.compile_global_bind_kw_f32(compilation, Keyword::MathTau, mathutil::TAU)?;
 
-        self.compile_global_bind_col(compilation, Keyword::White.to_string(), 1.0, 1.0, 1.0, 1.0)?;
-        self.compile_global_bind_col(compilation, Keyword::Black.to_string(), 0.0, 0.0, 0.0, 1.0)?;
-        self.compile_global_bind_col(compilation, Keyword::Red.to_string(), 1.0, 0.0, 0.0, 1.0)?;
-        self.compile_global_bind_col(compilation, Keyword::Green.to_string(), 0.0, 1.0, 0.0, 1.0)?;
-        self.compile_global_bind_col(compilation, Keyword::Blue.to_string(), 0.0, 0.0, 1.0, 1.0)?;
-        self.compile_global_bind_col(compilation, Keyword::Yellow.to_string(), 1.0, 1.0, 0.0, 1.0)?;
-        self.compile_global_bind_col(
-            compilation,
-            Keyword::Magenta.to_string(),
-            1.0,
-            0.0,
-            1.0,
-            1.0,
-        )?;
-        self.compile_global_bind_col(compilation, Keyword::Cyan.to_string(), 0.0, 1.0, 1.0, 1.0)?;
+        self.compile_global_bind_kw_col(compilation, Keyword::White, 1.0, 1.0, 1.0, 1.0)?;
+        self.compile_global_bind_kw_col(compilation, Keyword::Black, 0.0, 0.0, 0.0, 1.0)?;
+        self.compile_global_bind_kw_col(compilation, Keyword::Red, 1.0, 0.0, 0.0, 1.0)?;
+        self.compile_global_bind_kw_col(compilation, Keyword::Green, 0.0, 1.0, 0.0, 1.0)?;
+        self.compile_global_bind_kw_col(compilation, Keyword::Blue, 0.0, 0.0, 1.0, 1.0)?;
+        self.compile_global_bind_kw_col(compilation, Keyword::Yellow, 1.0, 1.0, 0.0, 1.0)?;
+        self.compile_global_bind_kw_col(compilation, Keyword::Magenta, 1.0, 0.0, 1.0, 1.0)?;
+        self.compile_global_bind_kw_col(compilation, Keyword::Cyan, 0.0, 1.0, 1.0, 1.0)?;
 
         self.compile_global_bind_procedural_presets(compilation)?;
         self.compile_global_bind_ease_presets(compilation)?;
@@ -1068,7 +1068,7 @@ impl Compiler {
         self.append_keyword(compilation, Keyword::Robocop)?;
         self.append_keyword(compilation, Keyword::Transformers)?;
 
-        self.store_globally(compilation, Keyword::ColProceduralFnPresets.to_string())?;
+        self.store_globally(compilation, Keyword::ColProceduralFnPresets as i32)?;
 
         Ok(())
     }
@@ -1113,7 +1113,7 @@ impl Compiler {
         self.append_keyword(compilation, Keyword::EaseBounceOut)?;
         self.append_keyword(compilation, Keyword::EaseBounceInOut)?;
 
-        self.store_globally(compilation, Keyword::EasePresets.to_string())?;
+        self.store_globally(compilation, Keyword::EasePresets as i32)?;
 
         Ok(())
     }
@@ -1300,14 +1300,15 @@ impl Compiler {
                     return self.compile_vector(compilation, ast, &children[..]);
                 }
             }
-            Node::Name(text, iname, _) => {
-                let found_name = self.compile_user_defined_name(compilation, &text, *iname)?;
+            Node::Name(text, _, _) => {
+                let found_name = self.compile_user_defined_name(compilation, ast)?;
                 if found_name {
+                    dbg!("shabba");
                     return Ok(());
                 } else {
                     // the name should refer to a keyword
-                    let i = self.get_iname(ast)?;
-                    if let Some(kw) = self.i32_to_keyword.get(&i) {
+                    let iname = self.get_iname(ast)?;
+                    if let Some(kw) = self.i32_to_keyword.get(&iname) {
                         compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
                         return Ok(());
                     } else {
@@ -1344,7 +1345,7 @@ impl Compiler {
                     return Ok(());
                 }
 
-                let found_name = self.compile_user_defined_name(compilation, &text, *iname)?;
+                let found_name = self.compile_user_defined_name(compilation, &children[0])?;
                 if found_name {
                     return Ok(());
                 }
@@ -1974,13 +1975,13 @@ impl Compiler {
 
         compilation.emit_opcode(Opcode::APPEND)?;
 
-        if let Node::Name(text, _, _) = vector {
+        if let Node::Name(_, iname, _) = vector {
             let mut mem_addr: Option<(Mem, i32)> = None;
 
-            if let Some(address) = compilation.local_mappings.get(text) {
+            if let Some(address) = compilation.local_mappings.get(iname) {
                 mem_addr = Some((Mem::Local, *address));
             }
-            if let Some(address) = compilation.global_mappings.get(text) {
+            if let Some(address) = compilation.global_mappings.get(iname) {
                 mem_addr = Some((Mem::Global, *address));
             }
 
@@ -2419,40 +2420,40 @@ impl Compiler {
     fn compile_global_bind_node(
         &self,
         compilation: &mut Compilation,
-        s: String,
+        iname: i32,
         node: &Node,
     ) -> Result<()> {
         self.compile(compilation, node)?;
-        self.store_globally(compilation, s)?;
+        self.store_globally(compilation, iname)?;
         Ok(())
     }
 
-    fn compile_global_bind_i32(
+    fn compile_global_bind_kw_i32(
         &self,
         compilation: &mut Compilation,
-        s: String,
+        kw: Keyword,
         value: i32,
     ) -> Result<()> {
         compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, value)?;
-        self.store_globally(compilation, s)?;
+        self.store_globally(compilation, kw as i32)?;
         Ok(())
     }
 
-    fn compile_global_bind_f32(
+    fn compile_global_bind_kw_f32(
         &self,
         compilation: &mut Compilation,
-        s: String,
+        kw: Keyword,
         value: f32,
     ) -> Result<()> {
         compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, value)?;
-        self.store_globally(compilation, s)?;
+        self.store_globally(compilation, kw as i32)?;
         Ok(())
     }
 
-    fn compile_global_bind_col(
+    fn compile_global_bind_kw_col(
         &self,
         compilation: &mut Compilation,
-        s: String,
+        kw: Keyword,
         r: f32,
         g: f32,
         b: f32,
@@ -2463,7 +2464,7 @@ impl Compiler {
             Mem::Constant,
             Colour::new(ColourFormat::Rgb, r, g, b, a),
         )?;
-        self.store_globally(compilation, s)?;
+        self.store_globally(compilation, kw as i32)?;
         Ok(())
     }
 
@@ -2473,10 +2474,10 @@ impl Compiler {
         Ok(())
     }
 
-    fn store_locally(&self, compilation: &mut Compilation, s: String) -> Result<i32> {
-        let address: i32 = match compilation.local_mappings.get(&s) {
+    fn store_locally(&self, compilation: &mut Compilation, iname: i32) -> Result<i32> {
+        let address: i32 = match compilation.local_mappings.get(&iname) {
             Some(&local_mapping) => local_mapping, // already storing the binding name
-            None => compilation.add_local_mapping(s)?,
+            None => compilation.add_local_mapping(iname)?,
         };
 
         compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, address)?;
@@ -2484,10 +2485,10 @@ impl Compiler {
         Ok(address)
     }
 
-    fn store_globally(&self, compilation: &mut Compilation, s: String) -> Result<i32> {
-        let address: i32 = match compilation.global_mappings.get(&s) {
+    fn store_globally(&self, compilation: &mut Compilation, iname: i32) -> Result<i32> {
+        let address: i32 = match compilation.global_mappings.get(&iname) {
             Some(&global_mapping) => global_mapping, // already storing the binding name
-            None => compilation.add_global_mapping(s)?,
+            None => compilation.add_global_mapping(iname)?,
         };
 
         compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Global, address)?;
@@ -2501,10 +2502,10 @@ impl Compiler {
         node: &Node,
         mem: Mem,
     ) -> Result<i32> {
-        if let Node::Name(text, _, _) = node {
+        if let Node::Name(_, iname, _) = node {
             match mem {
-                Mem::Local => self.store_locally(compilation, text.to_string()),
-                Mem::Global => self.store_globally(compilation, text.to_string()),
+                Mem::Local => self.store_locally(compilation, *iname),
+                Mem::Global => self.store_globally(compilation, *iname),
                 _ => Err(Error::Compiler(
                     "store_from_stack_to_memory invalid memory type".to_string(),
                 )),
@@ -2514,52 +2515,51 @@ impl Compiler {
         }
     }
 
-    fn compile_user_defined_name(
-        &self,
-        compilation: &mut Compilation,
-        s: &str,
-        iname: i32,
-    ) -> Result<bool> {
-        if let Some(local_mapping) = compilation.local_mappings.get(s) {
-            let val = *local_mapping;
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, val)?;
-            return Ok(true);
-        }
+    fn compile_user_defined_name(&self, compilation: &mut Compilation, ast: &Node) -> Result<bool> {
+        if let Node::Name(_, _, _) = ast {
+            let iname = self.get_iname(ast)?;
 
-        // check arguments if we're in a function
-        if let Some(current_fn_info_index) = compilation.current_fn_info_index {
-            let maybe_argument_mapping;
-            {
-                let fn_info = &compilation.fn_info[current_fn_info_index];
-                maybe_argument_mapping = fn_info.get_argument_mapping(iname);
-            }
-            if let Some(argument_mapping) = maybe_argument_mapping {
-                compilation.emit_opcode_mem_i32(
-                    Opcode::LOAD,
-                    Mem::Argument,
-                    argument_mapping as i32,
-                )?;
+            if let Some(local_mapping) = compilation.local_mappings.get(&iname) {
+                let val = *local_mapping;
+                compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, val)?;
                 return Ok(true);
             }
+
+            // check arguments if we're in a function
+            if let Some(current_fn_info_index) = compilation.current_fn_info_index {
+                let maybe_argument_mapping;
+                {
+                    let fn_info = &compilation.fn_info[current_fn_info_index];
+                    maybe_argument_mapping = fn_info.get_argument_mapping(iname);
+                }
+                if let Some(argument_mapping) = maybe_argument_mapping {
+                    compilation.emit_opcode_mem_i32(
+                        Opcode::LOAD,
+                        Mem::Argument,
+                        argument_mapping as i32,
+                    )?;
+                    return Ok(true);
+                }
+            }
+
+            if let Some(global_mapping) = compilation.global_mappings.get(&iname) {
+                let val = *global_mapping;
+                compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Global, val)?;
+                return Ok(true);
+            }
+
+            // // could be a keyword such as linear, ease-in etc
+            // if let Some(keyword) = self.string_to_keyword.get(s) {
+            //     val = *keyword as i32;
+            //     found = true;
+            // }
+            // if found {
+            //     compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, val)?;
+            //     return Ok(true)
+            // }
+
+            // todo: log unknown mapping for s
         }
-
-        if let Some(global_mapping) = compilation.global_mappings.get(s) {
-            let val = *global_mapping;
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Global, val)?;
-            return Ok(true);
-        }
-
-        // // could be a keyword such as linear, ease-in etc
-        // if let Some(keyword) = self.string_to_keyword.get(s) {
-        //     val = *keyword as i32;
-        //     found = true;
-        // }
-        // if found {
-        //     compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, val)?;
-        //     return Ok(true)
-        // }
-
-        // todo: log unknown mapping for s
 
         Ok(false)
     }
