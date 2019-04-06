@@ -513,8 +513,8 @@ pub struct Compilation {
     global_mappings: HashMap<i32, i32>, // iname -> global mapping index
     global_mapping_marker: i32,
 
-    // using BTreeMap as this will be given to a TraitList which will be packed, for testing purposes having a
-    // consistent ordering is important
+    // using BTreeMap as this will be given to a TraitList which will be packed,
+    // for testing purposes having a consistent ordering is important
     user_defined_globals: BTreeMap<i32, i32>, // iname -> global mapping index
 }
 
