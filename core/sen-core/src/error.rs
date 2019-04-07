@@ -64,6 +64,8 @@ pub enum Error {
 
     // packable
     Packable(String),
+
+    Unparser(String),
 }
 
 impl From<std::num::ParseIntError> for Error {

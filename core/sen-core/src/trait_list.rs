@@ -184,7 +184,7 @@ impl TraitList {
                     self.ga_traverse(n)?;
                 }
             }
-            Node::Float(_, meta) => {
+            Node::Float(_, _, meta) => {
                 if let Some(meta) = meta {
                     self.add_single_trait(&node, &meta)?;
                 }

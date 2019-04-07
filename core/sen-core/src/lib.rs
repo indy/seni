@@ -49,6 +49,7 @@ mod prng;
 mod repeat;
 pub mod seni_language;
 mod trait_list;
+mod unparser;
 mod uvmapper;
 mod vm;
 
@@ -60,6 +61,7 @@ use crate::vm::*;
 pub use crate::gene::{next_generation, Genotype};
 pub use crate::packable::Packable;
 pub use crate::trait_list::TraitList;
+pub use crate::unparser::{simplified_unparse, unparse};
 pub use crate::vm::{Env, Vm};
 
 pub fn run_program_with_preamble(vm: &mut Vm, program: &Program) -> Result<Var> {

@@ -23,6 +23,8 @@ use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
 use crate::native::Native;
 
+use strum::IntoEnumIterator;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct NodeMeta {
     pub gene: Option<Gene>,
@@ -44,7 +46,7 @@ impl NodeMeta {
 pub enum Node {
     List(Vec<Node>, Option<NodeMeta>),
     Vector(Vec<Node>, Option<NodeMeta>),
-    Float(f32, Option<NodeMeta>),
+    Float(f32, String, Option<NodeMeta>),
     Name(String, i32, Option<NodeMeta>),  // text, iname, meta
     Label(String, i32, Option<NodeMeta>), // text, iname, meta
     String(String, Option<NodeMeta>),
@@ -61,7 +63,7 @@ impl Node {
     }
 
     pub fn get_float(&self, use_genes: bool) -> Result<f32> {
-        if let Node::Float(f, meta) = self {
+        if let Node::Float(f, _, meta) = self {
             if use_genes && meta.is_some() {
                 if let Some(meta) = meta {
                     if let Some(gene) = &meta.gene {
@@ -195,7 +197,7 @@ impl Node {
         match self {
             Node::List(_, meta)
             | Node::Vector(_, meta)
-            | Node::Float(_, meta)
+            | Node::Float(_, _, meta)
             | Node::Name(_, _, meta)
             | Node::Label(_, _, meta)
             | Node::String(_, meta)
@@ -208,7 +210,7 @@ impl Node {
         match self {
             Node::List(_, meta)
             | Node::Vector(_, meta)
-            | Node::Float(_, meta)
+            | Node::Float(_, _, meta)
             | Node::Name(_, _, meta)
             | Node::Label(_, _, meta)
             | Node::String(_, meta)
@@ -229,24 +231,69 @@ struct NodeAndRemainder<'a> {
     tokens: &'a [Token<'a>],
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct WordLut {
     // requires a native hashmap (function names reserved by the native api)
     // a keyword hashmap (keywords + constants + common arguments to native api functions)
     // a word hashmap (user defined names and labels)
-    word_ref: HashMap<String, i32>,
+    word_to_iname: HashMap<String, i32>,
     word_count: i32,
+
+    iname_to_word: HashMap<i32, String>,
+    iname_to_native: HashMap<i32, String>,
+    iname_to_keyword: HashMap<i32, String>,
 }
 
 impl WordLut {
     pub fn new() -> WordLut {
+        // native
+        let mut n: HashMap<i32, String> = HashMap::new();
+        for nat in Native::iter() {
+            n.insert(nat as i32, nat.to_string());
+        }
+
+        // keyword
+        let mut k: HashMap<i32, String> = HashMap::new();
+        for kw in Keyword::iter() {
+            k.insert(kw as i32, kw.to_string());
+        }
+
         WordLut {
-            word_ref: HashMap::new(),
+            word_to_iname: HashMap::new(),
             word_count: 0,
+
+            iname_to_word: HashMap::new(),
+            iname_to_native: n,
+            iname_to_keyword: k,
         }
     }
 
-    pub fn get(&mut self, s: &str) -> Option<i32> {
+    pub fn get_string_from_i32(&self, i: i32) -> Option<&String> {
+        if let Some(s) = self.iname_to_native.get(&i) {
+            // first check the native api
+            Some(s)
+        } else if let Some(s) = self.iname_to_keyword.get(&i) {
+            // 2nd check the keywords
+            Some(s)
+        } else {
+            // finally check the iname_to_word
+            self.iname_to_word.get(&i)
+        }
+    }
+
+    fn get_or_add(&mut self, s: &str) -> i32 {
+        if let Some(i) = self.get_i32_from_string(s) {
+            return i;
+        }
+
+        self.word_to_iname.insert(s.to_string(), self.word_count);
+        self.iname_to_word.insert(self.word_count, s.to_string());
+        self.word_count += 1;
+
+        self.word_count - 1
+    }
+
+    fn get_i32_from_string(&self, s: &str) -> Option<i32> {
         // first check the native api
         if let Ok(n) = Native::from_str(s) {
             return Some(n as i32);
@@ -257,22 +304,12 @@ impl WordLut {
             return Some(kw as i32);
         }
 
-        // finally check/add to word_ref
-        if let Some(i) = self.word_ref.get(s) {
+        // finally check/add to word_to_iname
+        if let Some(i) = self.word_to_iname.get(s) {
             return Some(*i);
         }
 
         None
-    }
-
-    pub fn get_or_add(&mut self, s: &str) -> i32 {
-        if let Some(i) = self.get(s) {
-            return i;
-        }
-
-        self.word_ref.insert(s.to_string(), self.word_count);
-        self.word_count += 1;
-        self.word_count - 1
     }
 }
 
@@ -391,7 +428,7 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeA
                 let default_with_meta = match default_expression.node {
                     Node::List(ns, _) => Node::List(ns, meta),
                     Node::Vector(ns, _) => Node::Vector(ns, meta),
-                    Node::Float(f, _) => Node::Float(f, meta),
+                    Node::Float(f, s, _) => Node::Float(f, s, meta),
                     Node::Name(s, i, _) => Node::Name(s, i, meta),
                     Node::Label(s, i, _) => Node::Label(s, i, meta),
                     Node::String(s, _) => Node::String(s, meta),
@@ -467,7 +504,7 @@ fn eat_token<'a>(
         }
         Token::Number(txt) => match txt.parse::<f32>() {
             Ok(f) => Ok(NodeAndRemainder {
-                node: Node::Float(f, meta),
+                node: Node::Float(f, txt.to_string(), meta),
                 tokens: &tokens[1..],
             }),
             Err(_) => Err(Error::ParserUnableToParseFloat(txt.to_string())),
@@ -533,9 +570,9 @@ mod tests {
         assert_eq!(
             ast("42 102"),
             [
-                Node::Float(42.0, None),
+                Node::Float(42.0, "42".to_string(), None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Float(102.0, None)
+                Node::Float(102.0, "102".to_string(), None)
             ]
         );
 
@@ -568,7 +605,7 @@ mod tests {
                 vec![
                     Node::Name("quote".to_string(), 153, None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Float(3.0, None)
+                    Node::Float(3.0, "3".to_string(), None)
                 ],
                 None
             )]
@@ -584,11 +621,11 @@ mod tests {
                     Node::Whitespace(" ".to_string(), None),
                     Node::List(
                         vec![
-                            Node::Float(1.0, None),
+                            Node::Float(1.0, "1".to_string(), None),
                             Node::Whitespace(" ".to_string(), None),
-                            Node::Float(2.0, None),
+                            Node::Float(2.0, "2".to_string(), None),
                             Node::Whitespace(" ".to_string(), None),
-                            Node::Float(3.0, None)
+                            Node::Float(3.0, "3".to_string(), None)
                         ],
                         None
                     )
@@ -607,11 +644,11 @@ mod tests {
                     Node::Whitespace(" ".to_string(), None),
                     Node::Vector(
                         vec![
-                            Node::Float(1.0, None),
+                            Node::Float(1.0, "1".to_string(), None),
                             Node::Whitespace(" ".to_string(), None),
-                            Node::Float(2.0, None),
+                            Node::Float(2.0, "2".to_string(), None),
                             Node::Whitespace(" ".to_string(), None),
-                            Node::Float(3.0, None)
+                            Node::Float(3.0, "3".to_string(), None)
                         ],
                         None
                     )
@@ -627,6 +664,7 @@ mod tests {
                 Node::Whitespace(" ".to_string(), None),
                 Node::Float(
                     5.0,
+                    "5".to_string(),
                     Some(NodeMeta {
                         gene: None,
                         parameter_ast: vec![

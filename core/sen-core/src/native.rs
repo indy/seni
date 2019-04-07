@@ -32,11 +32,11 @@ use std::cell::{RefCell, RefMut};
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use strum_macros::{Display, EnumString};
+use strum_macros::{Display, EnumIter, EnumString};
 
 pub type NativeCallback = fn(&mut Vm, &Program, usize) -> Result<Var>;
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Display, EnumString)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Display, EnumString, EnumIter)]
 pub enum Native {
     #[strum(serialize = "UnreachableNativeStart")]
     NativeStart = Keyword::KeywordEnd as isize,

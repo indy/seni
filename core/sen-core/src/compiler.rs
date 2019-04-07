@@ -65,7 +65,7 @@ pub fn compile_program_for_trait(
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
 
-    let ast = semantic_children(ast);
+    let ast = only_semantic_nodes(ast);
 
     compiler.compile_common_prologue(&mut compilation, &ast)?;
     compiler.compile_common_top_level_fns(&mut compilation, &ast)?;
@@ -119,9 +119,10 @@ fn hacky_assign_genes_to_each_node_in_vector(
                 ));
                 genotype.current_gene_index += 1;
             }
-            Node::Float(f, _) => {
+            Node::Float(f, s, _) => {
                 res.push(Node::Float(
                     *f,
+                    s.to_string(),
                     Some(NodeMeta::new_with_gene(
                         genotype.genes[genotype.current_gene_index].clone(),
                     )),
@@ -163,7 +164,7 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()>
                 }
             }
         }
-        Node::Float(_, ref mut meta) => {
+        Node::Float(_, _, ref mut meta) => {
             if let Some(ref mut node_meta) = meta {
                 node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
@@ -950,7 +951,7 @@ impl Compiler {
         if self.is_list_beginning_with(n, Keyword::Fn) {
             // get the name of the fn
             if let Node::List(nodes, _) = n {
-                let nodes = semantic_children(nodes);
+                let nodes = only_semantic_nodes(nodes);
 
                 if nodes.len() < 2 {
                     // a list with just the 'fn' keyword ???
@@ -958,7 +959,7 @@ impl Compiler {
                 }
                 let name_and_params = nodes[1];
                 if let Node::List(np_nodes, _) = name_and_params {
-                    let np_nodes = semantic_children(np_nodes);
+                    let np_nodes = only_semantic_nodes(np_nodes);
 
                     if !np_nodes.is_empty() {
                         let name_node = &np_nodes[0];
@@ -997,7 +998,7 @@ impl Compiler {
             Node::List(nodes, _) | Node::Vector(nodes, _) => {
                 // (define [a b] (something))
                 // (define [a [x y]] (something))
-                let nodes = semantic_children(nodes);
+                let nodes = only_semantic_nodes(nodes);
 
                 for n in nodes {
                     if let Err(e) = self.register_names_in_define(compilation, n) {
@@ -1031,7 +1032,7 @@ impl Compiler {
         define_keyword_string: &str,
     ) -> Result<()> {
         if let Node::List(nodes, _) = n {
-            let nodes = semantic_children(nodes);
+            let nodes = only_semantic_nodes(nodes);
             if !nodes.is_empty() {
                 let define_keyword = &nodes[0];
                 if let Node::Name(text, _, _) = define_keyword {
@@ -1149,7 +1150,7 @@ impl Compiler {
     }
 
     pub fn compile_common(&self, compilation: &mut Compilation, ast: &[Node]) -> Result<()> {
-        let ast = semantic_children(ast);
+        let ast = only_semantic_nodes(ast);
         self.compile_common_prologue(compilation, &ast)?;
         self.compile_common_top_level_fns(compilation, &ast)?;
         self.compile_common_top_level_defines(compilation, &ast)?;
@@ -1197,7 +1198,7 @@ impl Compiler {
         {
             if self.is_list_beginning_with(n, Keyword::Define) {
                 if let Node::List(children, _) = n {
-                    let children = semantic_children(children);
+                    let children = only_semantic_nodes(children);
                     self.compile_define(compilation, &children[1..], Mem::Global)?;
                 }
             }
@@ -1275,7 +1276,7 @@ impl Compiler {
         for n in ast.iter() {
             if self.is_list_beginning_with(n, Keyword::Define) {
                 if let Node::List(children, _) = n {
-                    let children = semantic_children(children);
+                    let children = only_semantic_nodes(children);
                     self.compile_define(compilation, &children[1..], Mem::Global)?;
                 }
             }
@@ -1311,7 +1312,7 @@ impl Compiler {
         // todo: move this out of compile and into the compilation struct
         match ast {
             Node::List(children, meta) => {
-                let children = semantic_children(children);
+                let children = only_semantic_nodes(children);
 
                 if self.use_genes && meta.is_some() && is_node_colour_constructor(&children[..]) {
                     // we have an alterable colour constructor so just load in the colour value stored in the gene
@@ -1328,12 +1329,12 @@ impl Compiler {
                     self.compile_list(compilation, &children[..])?
                 }
             }
-            Node::Float(_, _) => {
+            Node::Float(_, _, _) => {
                 let f = self.get_float(ast)?;
                 return compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, f);
             }
             Node::Vector(children, _) => {
-                let children = semantic_children(children);
+                let children = only_semantic_nodes(children);
 
                 if children.len() == 2 {
                     return self.compile_2d(compilation, ast, &children[..]);
@@ -1375,7 +1376,7 @@ impl Compiler {
 
         match &children[0] {
             Node::List(kids, _) => {
-                let kids = semantic_children(kids);
+                let kids = only_semantic_nodes(kids);
                 self.compile_list(compilation, &kids[..])?
             }
             Node::Name(text, iname, _) => {
@@ -1520,7 +1521,7 @@ impl Compiler {
                     self.store_from_stack_to_memory(compilation, &lhs_node, mem)?;
                 }
                 Node::Vector(kids, _) => {
-                    let kids = semantic_children(kids);
+                    let kids = only_semantic_nodes(kids);
 
                     // define [a b] (something-that-returns-a-vector ...)
 
@@ -1566,7 +1567,7 @@ impl Compiler {
         error_if_alterable(&parameters_node, "compile_fence")?;
 
         if let Node::List(kids, _) = parameters_node {
-            let kids = semantic_children(kids);
+            let kids = only_semantic_nodes(kids);
 
             // the looping variable x
             let name_node = &kids[0];
@@ -1729,7 +1730,7 @@ impl Compiler {
         error_if_alterable(&parameters_node, "compile_loop")?;
 
         if let Node::List(kids, _) = parameters_node {
-            let kids = semantic_children(kids);
+            let kids = only_semantic_nodes(kids);
 
             // the looping variable y
             let name_node = &kids[0];
@@ -1858,7 +1859,7 @@ impl Compiler {
         error_if_alterable(&parameters_node, "compile_each")?;
 
         if let Node::List(kids, _) = parameters_node {
-            let kids = semantic_children(kids);
+            let kids = only_semantic_nodes(kids);
 
             // the looping variable x
             let name_node = &kids[0];
@@ -1967,7 +1968,7 @@ impl Compiler {
             // MEM_SEG_GLOBAL LOAD code)
             //
 
-            let children = semantic_children(children);
+            let children = only_semantic_nodes(children);
             for n in children {
                 if let Node::Name(_, iname, _) = n {
                     compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, *iname)?;
@@ -2041,7 +2042,7 @@ impl Compiler {
         if let Node::List(kids, _) = &children[0] {
             error_if_alterable(&children[0], "compile_fn_call")?;
 
-            let kids = semantic_children(kids);
+            let kids = only_semantic_nodes(kids);
 
             // todo: warn if alterable
 
@@ -2199,7 +2200,7 @@ impl Compiler {
         error_if_alterable(&signature, "compile_fn")?;
 
         if let Node::List(kids, _) = signature {
-            let kids = semantic_children(kids);
+            let kids = only_semantic_nodes(kids);
 
             if kids.is_empty() {
                 // no fn name given
@@ -2388,7 +2389,7 @@ impl Compiler {
 
     fn compile_alterable_element(&self, compilation: &mut Compilation, node: &Node) -> Result<()> {
         match node {
-            Node::Float(_, _) => {
+            Node::Float(_, _, _) => {
                 let f = self.get_float(node)?;
                 compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, f)?;
             }
@@ -2607,7 +2608,7 @@ impl Compiler {
 
     fn is_list_beginning_with(&self, n: &Node, kw: Keyword) -> bool {
         if let Node::List(nodes, _) = n {
-            let nodes = semantic_children(nodes);
+            let nodes = only_semantic_nodes(nodes);
 
             if !nodes.is_empty() {
                 if let Node::Name(_, iname, _) = nodes[0] {
@@ -2654,7 +2655,7 @@ fn error_if_alterable(n: &Node, s: &str) -> Result<()> {
 fn all_children_are_name_nodes(parent: &Node) -> bool {
     match parent {
         Node::List(children, _) | Node::Vector(children, _) => {
-            let children = semantic_children(children);
+            let children = only_semantic_nodes(children);
 
             for n in children {
                 if let Node::Name(_, _, _) = n {
@@ -2672,14 +2673,14 @@ fn all_children_are_name_nodes(parent: &Node) -> bool {
 fn count_children(parent: &Node) -> Result<usize> {
     match parent {
         Node::List(children, _) | Node::Vector(children, _) => {
-            let children = semantic_children(children);
+            let children = only_semantic_nodes(children);
             Ok(children.len())
         }
         _ => Err(Error::Compiler("count_children".to_string())),
     }
 }
 
-fn semantic_children(children: &[Node]) -> Vec<&Node> {
+fn only_semantic_nodes(children: &[Node]) -> Vec<&Node> {
     let ns: Vec<&Node> = children.iter().filter(|n| n.is_semantic()).collect();
     ns
 }

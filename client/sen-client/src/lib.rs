@@ -25,7 +25,7 @@ use wasm_bindgen::prelude::*;
 
 use sen_core::{
     build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets,
-    next_generation,
+    next_generation, unparse,
 };
 use sen_core::{Env, Genotype, Packable, TraitList, Vm};
 
@@ -294,11 +294,19 @@ impl Bridge {
         }
     }
 
-    pub fn unparse_with_genotype(&self) {
-        log("unparse_with_genotype");
+    pub fn unparse_with_genotype(&mut self) {
+        if let Ok((mut genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
+            if let Ok(out_source) = unparse(&self.source_buffer, &mut genotype) {
+                self.out_source_buffer = out_source;
+            } else {
+                log("unparse_with_genotype: unparse failed");
+            }
+        } else {
+            log("unparse_with_genotype: Genotype failed to unpack");
+        }
     }
 
-    pub fn simplify_script(&self) {
+    pub fn simplify_script(&mut self) {
         log("simplify_script");
     }
 }
