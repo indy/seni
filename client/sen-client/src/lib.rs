@@ -25,7 +25,7 @@ use wasm_bindgen::prelude::*;
 
 use sen_core::{
     build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets,
-    next_generation, unparse,
+    next_generation, simplified_unparse, unparse,
 };
 use sen_core::{Env, Genotype, Packable, TraitList, Vm};
 
@@ -307,6 +307,10 @@ impl Bridge {
     }
 
     pub fn simplify_script(&mut self) {
-        log("simplify_script");
+        if let Ok(out_source) = simplified_unparse(&self.source_buffer) {
+            self.out_source_buffer = out_source;
+        } else {
+            log("simplify_script: failed");
+        }
     }
 }

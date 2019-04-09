@@ -514,11 +514,15 @@ max: 670)})",
     fn test_simplified_unparser() {
         simplify_check("(+ 1 1)", "(+ 1 1)");
         simplify_check("(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 3)");
-        simplify_check("(col/rgb r: {0.4 (gen/scalar)} g: 0.1)",
-                       "(col/rgb r: 0.4 g: 0.1)");
+        simplify_check(
+            "(col/rgb r: {0.4 (gen/scalar)} g: 0.1)",
+            "(col/rgb r: 0.4 g: 0.1)",
+        );
         simplify_check("{b (gen/select from: '(a b c))}", "b");
-        simplify_check("{robocop (gen/select from: col/procedural-fn-presets)}",
-                       "robocop");
+        simplify_check(
+            "{robocop (gen/select from: col/procedural-fn-presets)}",
+            "robocop",
+        );
         simplify_check("{50 (gen/stray from: 50 by: 20)}", "50");
     }
 }
