@@ -1,9 +1,0 @@
-{
-  "scripts": {
-    "build:wasm": "mkdirp www/dist && wa compile -D SEN_BUILD_WASM -o www/dist/seni-wasm.wasm src/wasm.c -i ../core/src/seni/bind.c -i ../core/src/seni/colour.c -i ../core/src/seni/colour_scheme.c -i ../core/src/seni/cursor.c -i ../core/src/seni/ease.c -i ../core/src/seni/error.c -i ../core/src/seni/focal.c -i ../core/src/seni/genetic.c -i ../core/src/seni/lang.c -i ../core/src/seni/lib.c -i ../core/src/seni/mathutil.c -i ../core/src/seni/matrix.c -i ../core/src/seni/multistring.c -i ../core/src/seni/parametric.c -i ../core/src/seni/parser.c -i ../core/src/seni/path.c -i ../core/src/seni/printf.c -i ../core/src/seni/prng.c -i ../core/src/seni/render_packet.c -i ../core/src/seni/result_functions.c -i ../core/src/seni/repeat.c -i ../core/src/seni/shapes.c -i ../core/src/seni/strtof.c -i ../core/src/seni/timing.c -i ../core/src/seni/unparser.c -i ../core/src/seni/uv_mapper.c -i ../core/src/seni/vm_compiler.c -i ../core/src/seni/vm_interpreter.c -I ../core/src"
-  },
-  "devDependencies": {
-    "webassembly": "^0.11.0",
-    "mkdirp": "0.5.1"
-  }
-}

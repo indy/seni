@@ -1,0 +1,10 @@
+[package]
+name = "sen-native"
+version = "4.1.0"
+authors = ["Inderjit Gill <email@indy.io>"]
+edition = "2018"
+license = "GPL-3.0+"
+
+[dependencies]
+sen-core = { path = "../sen-core" }
+clap = "2.32.0"

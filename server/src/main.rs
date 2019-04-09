@@ -18,7 +18,7 @@ struct Piece {
 // }
 
 fn favicon_c(_req: &HttpRequest) -> Result<fs::NamedFile> {
-    Ok(fs::NamedFile::open("../client/www/assets/favicon.ico")?)
+    Ok(fs::NamedFile::open("../sen-client/www/favicon.ico")?)
 }
 
 fn gallery(req: &HttpRequest) -> Result<HttpResponse> {
@@ -67,33 +67,14 @@ fn main() {
                 .help("The port number")
                 .takes_value(true),
         )
-        .arg(
-            clap::Arg::with_name("c-client")
-                .short("c")
-                .multiple(false)
-                .help("use C version of client"),
-        )
         .get_matches();
-
-    let using_c = matches.is_present("c-client");
 
     let port = matches.value_of("port").unwrap_or("8080");
     let bind_addr = ["127.0.0.1", port].join(":");
     println!("bind_addr is {}", bind_addr);
 
     let sys = actix::System::new("seni-server");
-
-    if using_c {
-        println!("serving c client");
-    } else {
-        println!("serving rust client");
-    }
-
-    let home = if using_c {
-        "../client/www/assets"
-    } else {
-        "../client/sen-client/www"
-    };
+    let home = "../sen-client/www";
 
     server::new(move || {
         App::new()
@@ -113,7 +94,6 @@ fn main() {
                 })
             })
             // static files
-            .handler("/dist", fs::StaticFiles::new("../client/www/dist").unwrap())
             .handler("/", fs::StaticFiles::new(home).unwrap())
     })
     .bind(bind_addr)
