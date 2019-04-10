@@ -428,6 +428,242 @@ pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
     h
 }
 
+struct ArgBindings<'a> {
+    i32kw_to_var: HashMap<i32, Option<&'a Var>>,
+}
+
+impl<'a> ArgBindings<'a> {
+    fn create(
+        vm: &'a Vm,
+        num_args: usize,
+        binding_decls: Vec<(Keyword, Option<&'a Var>)>,
+    ) -> Result<Self> {
+        let mut i32kw_to_var: HashMap<i32, Option<&Var>> = HashMap::new();
+
+        for bd in binding_decls {
+            i32kw_to_var.insert(bd.0 as i32, bd.1);
+        }
+
+        let mut args_pointer = vm.sp - (num_args * 2);
+        for _ in 0..num_args {
+            let label = &vm.stack[args_pointer];
+            let value = &vm.stack[args_pointer + 1];
+            args_pointer += 2;
+
+            if let Var::Int(iname) = label {
+                i32kw_to_var.insert(*iname, Some(value));
+            }
+        }
+
+        Ok(ArgBindings { i32kw_to_var })
+    }
+
+    fn get_kw(&self, kw: Keyword) -> Result<Keyword> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Keyword(kw) = var {
+                    return Ok(*kw);
+                }
+            }
+        }
+        Err(Error::Bind("ArgBindings::get_kw".to_string()))
+    }
+
+    fn get_option_kw(&self, kw: Keyword) -> Option<Keyword> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Keyword(kw) = var {
+                    return Some(*kw);
+                }
+            }
+        }
+        None
+    }
+
+    fn get_i32(&self, kw: Keyword) -> Result<i32> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Int(i) = var {
+                    return Ok(*i);
+                }
+            }
+        }
+        Err(Error::Bind("ArgBindings::get_i32".to_string()))
+    }
+
+    fn get_option_i32(&self, kw: Keyword) -> Option<i32> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Int(i) = var {
+                    return Some(*i);
+                }
+            }
+        }
+        None
+    }
+
+    fn get_f32(&self, kw: Keyword) -> Result<f32> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Float(f) = var {
+                    return Ok(*f);
+                }
+            }
+        }
+        Err(Error::Bind("ArgBindings::get_f32".to_string()))
+    }
+
+    fn get_option_f32(&self, kw: Keyword) -> Option<f32> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Float(f) = var {
+                    return Some(*f);
+                }
+            }
+        }
+        None
+    }
+
+    fn get_v2d(&self, kw: Keyword) -> Result<(f32, f32)> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::V2D(x, y) = var {
+                    return Ok((*x, *y));
+                }
+            }
+        }
+        Err(Error::Bind("ArgBindings::get_v2d".to_string()))
+    }
+
+    fn get_option_v2d(&self, kw: Keyword) -> Option<(f32, f32)> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::V2D(x, y) = var {
+                    return Some((*x, *y));
+                }
+            }
+        }
+        None
+    }
+
+    fn get_usize(&self, kw: Keyword) -> Result<usize> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Float(f) = var {
+                    return Ok(*f as usize);
+                }
+            }
+        }
+        Err(Error::Bind("ArgBindings::get_usize".to_string()))
+    }
+
+    fn get_col(&self, kw: Keyword) -> Result<Colour> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Colour(col) = var {
+                    return Ok(*col);
+                }
+            }
+        }
+        Err(Error::Bind("ArgBindings::get_col".to_string()))
+    }
+
+    fn get_option_col(&self, kw: Keyword) -> Option<Colour> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Colour(col) = var {
+                    return Some(*col);
+                }
+            }
+        }
+        None
+    }
+
+    // get kw_preferred, if it doesn't exist fallback to kw_fallback
+    fn get_preferred_col(&self, kw_preferred: Keyword, kw_fallback: Keyword) -> Result<Colour> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw_preferred as i32)) {
+            if let Some(var) = var {
+                if let Var::Colour(col) = var {
+                    return Ok(*col);
+                }
+            } else {
+                if let Some(var) = self.i32kw_to_var.get(&(kw_fallback as i32)) {
+                    if let Some(var) = var {
+                        if let Var::Colour(col) = var {
+                            return Ok(*col);
+                        }
+                    }
+                }
+            }
+        }
+        Err(Error::Bind("ArgBindings::get_preferred_col".to_string()))
+    }
+
+    // assume that the value in the hashmap isn't None
+    fn get_var(&self, kw: Keyword) -> Result<&Var> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                return Ok(var);
+            }
+        }
+        Err(Error::Bind("ArgBindings::get_var".to_string()))
+    }
+
+    // returns the entire Option<&Var> value from the hashmap
+    fn get_option_var(&self, kw: Keyword) -> Option<&Var> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            return *var;
+        }
+        None
+    }
+
+    fn get_brush(&self, kw: Keyword) -> Result<BrushType> {
+        if let Some(var) = self.i32kw_to_var.get(&(kw as i32)) {
+            if let Some(var) = var {
+                if let Var::Keyword(n) = var {
+                    let brush = match *n {
+                        Keyword::BrushFlat => BrushType::Flat,
+                        Keyword::BrushA => BrushType::A,
+                        Keyword::BrushB => BrushType::B,
+                        Keyword::BrushC => BrushType::C,
+                        Keyword::BrushD => BrushType::D,
+                        Keyword::BrushE => BrushType::E,
+                        Keyword::BrushF => BrushType::F,
+                        Keyword::BrushG => BrushType::G,
+                        _ => BrushType::Flat,
+                    };
+                    return Ok(brush);
+                }
+            }
+        }
+        Err(Error::Bind("ArgBindings::get_brush".to_string()))
+    }
+}
+
+macro_rules! arg_usize {
+    ($kw:expr, $val:expr) => {
+        ($kw, Some(&Var::Float($val as f32)))
+    };
+}
+
+macro_rules! arg_f32 {
+    ($kw:expr, $val:expr) => {
+        ($kw, Some(&Var::Float($val)))
+    };
+}
+
+macro_rules! arg_v2d {
+    ($kw:expr, $val:expr) => {
+        ($kw, Some(&Var::V2D($val.0, $val.1)))
+    };
+}
+
+macro_rules! arg_kw {
+    ($kw:expr, $val:expr) => {
+        ($kw, Some(&Var::Keyword($val)))
+    };
+}
+
 fn read_i32(iname: i32, value: &Var, keyword: Keyword) -> Option<i32> {
     if iname == keyword as i32 {
         if let Var::Int(i) = value {
@@ -675,24 +911,10 @@ pub fn nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
 }
 
 pub fn vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut vector: Option<&Var> = None;
+    let bindings = ArgBindings::create(vm, num_args, vec![(Keyword::Vector, None)])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            if *iname == Keyword::Vector as i32 {
-                vector = Some(value);
-            }
-        }
-    }
-
-    if let Some(v) = vector {
-        if let Var::Vector(vs) = v {
+    if let Some(var) = bindings.get_option_var(Keyword::Vector) {
+        if let Var::Vector(vs) = var {
             let len = vs.len();
             return Ok(Var::Int(len as i32));
         }
@@ -704,32 +926,36 @@ pub fn vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
 }
 
 pub fn probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut scalar: Option<f32> = None;
-    let mut vector: Option<(f32, f32)> = None;
-    let mut worldspace: Option<(f32, f32)> = None;
+    // slightly different way of dealing with arguments.
+    // This is because debug_str_append requires a mutable reference
+    // and the bindings use an immutable reference to vm.
+    let (scalar, v, ws) = {
+        let bindings = ArgBindings::create(
+            vm,
+            num_args,
+            vec![
+                (Keyword::Scalar, None),
+                (Keyword::Vector, None),
+                (Keyword::WorldSpace, None),
+            ],
+        )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(scalar, Keyword::Scalar, iname, value);
-            read_v2d!(vector, Keyword::Vector, iname, value);
-            read_v2d!(worldspace, Keyword::WorldSpace, iname, value);
-        }
-    }
+        (
+            bindings.get_option_f32(Keyword::Scalar),
+            bindings.get_option_v2d(Keyword::Vector),
+            bindings.get_option_v2d(Keyword::WorldSpace),
+        )
+    };
 
     if let Some(f) = scalar {
         vm.debug_str_append(&format!("{}", f));
     }
 
-    if let Some((x, y)) = vector {
+    if let Some((x, y)) = v {
         vm.debug_str_append(&format!("({},{})", x, y));
     }
 
-    if let Some((x, y)) = worldspace {
+    if let Some((x, y)) = ws {
         if let Some(matrix) = vm.matrix_stack.peek() {
             let (nx, ny) = matrix.transform_vec2(x, y);
             vm.debug_str_append(&format!("({},{})", nx, ny));
@@ -740,111 +966,64 @@ pub fn probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
 }
 
 pub fn line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut width: Option<f32> = Some(4.0);
-    let mut from: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut to: Option<(f32, f32)> = Some((900.0, 900.0));
-    let mut from_colour: Option<Colour> = None;
-    let mut to_colour: Option<Colour> = None;
-    let mut colour: Option<Colour> = Some(Default::default());
-    let mut brush: Option<BrushType> = Some(BrushType::Flat);
-    let mut brush_subtype: Option<usize> = Some(0);
+    let default_colour = Var::Colour(Default::default());
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::Width, 4.0),
+            arg_v2d!(Keyword::From, (10.0, 10.0)),
+            arg_v2d!(Keyword::To, (900.0, 900.0)),
+            (Keyword::FromColour, None),
+            (Keyword::ToColour, None),
+            (Keyword::Colour, Some(&default_colour)),
+            (Keyword::Brush, Some(&Var::Keyword(Keyword::BrushFlat))),
+            arg_usize!(Keyword::BrushSubtype, 0),
+        ],
+    )?;
 
-    // let mut s: String = "".to_string();
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(width, Keyword::Width, iname, value);
-            read_v2d!(from, Keyword::From, iname, value);
-            read_v2d!(to, Keyword::To, iname, value);
-            read_col!(from_colour, Keyword::FromColour, iname, value);
-            read_col!(to_colour, Keyword::ToColour, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
-            read_brush!(brush, Keyword::Brush, iname, value);
-            read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
-        }
-    }
-
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Bind("line matrix error".to_string()));
-    };
-
-    let uvm = vm
-        .mappings
-        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
-
-    let from_col = if let Some(c) = from_colour {
-        c
-    } else {
-        colour.unwrap()
-    };
-
-    let to_col = if let Some(c) = to_colour {
-        c
-    } else {
-        colour.unwrap()
-    };
+    let from_col = bindings.get_preferred_col(Keyword::FromColour, Keyword::Colour)?;
+    let to_col = bindings.get_preferred_col(Keyword::ToColour, Keyword::Colour)?;
 
     if let Ok(from_c) = from_col.convert(ColourFormat::Rgb) {
         if let Ok(to_c) = to_col.convert(ColourFormat::Rgb) {
-            vm.geometry.render_line(
-                matrix,
-                from.unwrap(),
-                to.unwrap(),
-                width.unwrap(),
+            vm.render_line(
+                bindings.get_v2d(Keyword::From)?,
+                bindings.get_v2d(Keyword::To)?,
+                bindings.get_f32(Keyword::Width)?,
                 &from_c,
                 &to_c,
-                uvm,
+                bindings.get_brush(Keyword::Brush)?,
+                bindings.get_usize(Keyword::BrushSubtype)?,
             )?;
         }
     }
 
     Ok(Var::Bool(true))
-    // Ok(Var::Debug(format!("s: {}", s).to_string()))
 }
 
 pub fn rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut width: Option<f32> = Some(4.0);
-    let mut height: Option<f32> = Some(10.0);
-    let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<Colour> = Some(Default::default());
+    let default_colour = Var::Colour(Default::default());
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::Width, 4.0),
+            arg_f32!(Keyword::Height, 10.0),
+            arg_v2d!(Keyword::Position, (10.0, 10.0)),
+            (Keyword::Colour, Some(&default_colour)),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(width, Keyword::Width, iname, value);
-            read_float!(height, Keyword::Height, iname, value);
-            read_v2d!(position, Keyword::Position, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
-        }
-    }
-
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Bind("line matrix error".to_string()));
-    };
-
-    let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
-
-    if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
-        vm.geometry.render_rect(
-            matrix,
-            position.unwrap(),
-            width.unwrap(),
-            height.unwrap(),
-            &rgb_c,
-            uvm,
+    if let Ok(rgb) = bindings
+        .get_col(Keyword::Colour)?
+        .convert(ColourFormat::Rgb)
+    {
+        vm.render_rect(
+            bindings.get_v2d(Keyword::Position)?,
+            bindings.get_f32(Keyword::Width)?,
+            bindings.get_f32(Keyword::Height)?,
+            &rgb,
         )?;
     }
 
@@ -852,52 +1031,40 @@ pub fn rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
 }
 
 pub fn circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut width: Option<f32> = Some(4.0);
-    let mut height: Option<f32> = Some(10.0);
-    let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<Colour> = Some(Default::default());
-    let mut tessellation: Option<f32> = Some(10.0);
-    let mut radius: Option<f32> = None;
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(width, Keyword::Width, iname, value);
-            read_float!(height, Keyword::Height, iname, value);
-            read_v2d!(position, Keyword::Position, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
-            read_float!(tessellation, Keyword::Tessellation, iname, value);
-            read_float!(radius, Keyword::Radius, iname, value);
-        }
-    }
-
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Bind("line matrix error".to_string()));
-    };
-
-    let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
+    let default_colour = Var::Colour(Default::default());
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::Width, 4.0),
+            arg_f32!(Keyword::Height, 10.0),
+            arg_v2d!(Keyword::Position, (10.0, 10.0)),
+            (Keyword::Colour, Some(&default_colour)),
+            arg_f32!(Keyword::Tessellation, 10.0),
+            (Keyword::Radius, None),
+        ],
+    )?;
 
     // if the radius has been defined then it overrides the width and height parameters
-    if let Some(r) = radius {
-        width = Some(r);
-        height = Some(r);
-    }
+    let (width, height) = if let Some(r) = bindings.get_option_f32(Keyword::Radius) {
+        (r, r)
+    } else {
+        (
+            bindings.get_f32(Keyword::Width)?,
+            bindings.get_f32(Keyword::Height)?,
+        )
+    };
 
-    if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
-        vm.geometry.render_circle(
-            matrix,
-            position.unwrap(),
-            width.unwrap(),
-            height.unwrap(),
-            &rgb_c,
-            tessellation.unwrap() as usize,
-            uvm,
+    if let Ok(rgb) = bindings
+        .get_col(Keyword::Colour)?
+        .convert(ColourFormat::Rgb)
+    {
+        vm.render_circle(
+            bindings.get_v2d(Keyword::Position)?,
+            width,
+            height,
+            &rgb,
+            bindings.get_usize(Keyword::Tessellation)?,
         )?;
     }
 
@@ -905,64 +1072,48 @@ pub fn circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
 }
 
 pub fn circle_slice(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut width: Option<f32> = Some(4.0);
-    let mut height: Option<f32> = Some(10.0);
-    let mut position: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut colour: Option<Colour> = Some(Default::default());
-    let mut tessellation: Option<f32> = Some(10.0);
-    let mut radius: Option<f32> = None;
-    let mut angle_start: Option<f32> = Some(0.0);
-    let mut angle_end: Option<f32> = Some(10.0);
-    let mut inner_width: Option<f32> = Some(1.0);
-    let mut inner_height: Option<f32> = Some(1.0);
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(width, Keyword::Width, iname, value);
-            read_float!(height, Keyword::Height, iname, value);
-            read_v2d!(position, Keyword::Position, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
-            read_float!(tessellation, Keyword::Tessellation, iname, value);
-            read_float!(radius, Keyword::Radius, iname, value);
-            read_float!(angle_start, Keyword::AngleStart, iname, value);
-            read_float!(angle_end, Keyword::AngleEnd, iname, value);
-            read_float!(inner_width, Keyword::InnerWidth, iname, value);
-            read_float!(inner_height, Keyword::InnerHeight, iname, value);
-        }
-    }
-
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Bind("line matrix error".to_string()));
-    };
-
-    let uvm = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
+    let default_colour = Var::Colour(Default::default());
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::Width, 4.0),
+            arg_f32!(Keyword::Height, 10.0),
+            arg_v2d!(Keyword::Position, (10.0, 10.0)),
+            (Keyword::Colour, Some(&default_colour)),
+            arg_f32!(Keyword::Tessellation, 10.0),
+            (Keyword::Radius, None),
+            arg_f32!(Keyword::AngleStart, 0.0),
+            arg_f32!(Keyword::AngleEnd, 10.0),
+            arg_f32!(Keyword::InnerWidth, 1.0),
+            arg_f32!(Keyword::InnerHeight, 1.0),
+        ],
+    )?;
 
     // if the radius has been defined then it overrides the width and height parameters
-    if let Some(r) = radius {
-        width = Some(r);
-        height = Some(r);
-    }
+    let (width, height) = if let Some(r) = bindings.get_option_f32(Keyword::Radius) {
+        (r, r)
+    } else {
+        (
+            bindings.get_f32(Keyword::Width)?,
+            bindings.get_f32(Keyword::Height)?,
+        )
+    };
 
-    if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
-        vm.geometry.render_circle_slice(
-            matrix,
-            position.unwrap(),
-            width.unwrap(),
-            height.unwrap(),
-            &rgb_c,
-            tessellation.unwrap() as usize,
-            angle_start.unwrap(),
-            angle_end.unwrap(),
-            inner_width.unwrap(),
-            inner_height.unwrap(),
-            uvm,
+    if let Ok(rgb) = bindings
+        .get_col(Keyword::Colour)?
+        .convert(ColourFormat::Rgb)
+    {
+        vm.render_circle_slice(
+            bindings.get_v2d(Keyword::Position)?,
+            width,
+            height,
+            &rgb,
+            bindings.get_usize(Keyword::Tessellation)?,
+            bindings.get_f32(Keyword::AngleStart)?,
+            bindings.get_f32(Keyword::AngleEnd)?,
+            bindings.get_f32(Keyword::InnerWidth)?,
+            bindings.get_f32(Keyword::InnerHeight)?,
         )?;
     }
 
@@ -1036,16 +1187,6 @@ pub fn quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
         }
     }
 
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Bind("bezier matrix error".to_string()));
-    };
-
-    let uvm = vm
-        .mappings
-        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
-
     // if the line has been defined then it overrides the line_width_start, line_width_end parameters
     let width_start = if let Some(lw) = line_width {
         lw
@@ -1063,8 +1204,7 @@ pub fn quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
         if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
-            vm.geometry.render_quadratic(
-                matrix,
+            vm.render_quadratic(
                 &co,
                 width_start,
                 width_end,
@@ -1073,7 +1213,10 @@ pub fn quadratic(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
                 t_end.unwrap(),
                 &rgb_c,
                 tessellation.unwrap() as usize,
-                uvm,
+                // TODO
+                BrushType::Flat,
+                0, // bindings.get_brush(Keyword::Brush)?,
+                   // bindings.get_usize(Keyword::BrushSubtype)?
             )?;
         }
     }
@@ -1115,16 +1258,6 @@ pub fn bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
         }
     }
 
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Bind("bezier matrix error".to_string()));
-    };
-
-    let uvm = vm
-        .mappings
-        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
-
     // if the line has been defined then it overrides the line_width_start, line_width_end parameters
     let width_start = if let Some(lw) = line_width {
         lw
@@ -1142,8 +1275,7 @@ pub fn bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
         if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
-            vm.geometry.render_bezier(
-                matrix,
+            vm.render_bezier(
                 &co,
                 width_start,
                 width_end,
@@ -1152,7 +1284,10 @@ pub fn bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
                 t_end.unwrap(),
                 &rgb_c,
                 tessellation.unwrap() as usize,
-                uvm,
+                // TODO
+                BrushType::Flat,
+                0, //bindings.get_brush(Keyword::Brush)?,
+                   //bindings.get_usize(Keyword::BrushSubtype)?
             )?;
         }
     }
@@ -1188,28 +1323,20 @@ pub fn bezier_bulging(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
         }
     }
 
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Bind("bezier matrix error".to_string()));
-    };
-
-    let uvm = vm
-        .mappings
-        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
-
     let co = array_f32_8_from_vec(coords.unwrap());
 
     if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
-        vm.geometry.render_bezier_bulging(
-            matrix,
+        vm.render_bezier_bulging(
             &co,
             line_width.unwrap(),
             t_start.unwrap(),
             t_end.unwrap(),
             &rgb_c,
             tessellation.unwrap() as usize,
-            uvm,
+            // TODO
+            BrushType::Flat,
+            0, // bindings.get_brush(Keyword::Brush)?,
+               // bindings.get_usize(Keyword::BrushSubtype)?
         )?;
     }
 
@@ -1267,23 +1394,12 @@ pub fn stroked_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
         }
     }
 
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Bind("bezier matrix error".to_string()));
-    };
-
-    let uvm = vm
-        .mappings
-        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
-
     let co = array_f32_8_from_vec(coords.unwrap());
 
     let maybe_mapping = easing_from_keyword(line_width_mapping.unwrap());
     if let Some(mapping) = maybe_mapping {
         if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
-            vm.geometry.render_stroked_bezier(
-                matrix,
+            vm.render_stroked_bezier(
                 tessellation.unwrap() as usize,
                 &co,
                 stroke_tessellation.unwrap() as usize,
@@ -1294,7 +1410,10 @@ pub fn stroked_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
                 colour_volatility.unwrap(),
                 seed.unwrap(),
                 mapping,
-                uvm,
+                // TODO
+                BrushType::Flat,
+                0, // bindings.get_brush(Keyword::Brush)?,
+                   // bindings.get_usize(Keyword::BrushSubtype)?
             )?;
 
             return Ok(Var::Bool(true));
@@ -1305,145 +1424,87 @@ pub fn stroked_bezier(vm: &mut Vm, _program: &Program, num_args: usize) -> Resul
 }
 
 pub fn stroked_bezier_rect(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut position: Option<(f32, f32)> = Some((100.0, 100.0));
-    let mut width: Option<f32> = Some(800.0);
-    let mut height: Option<f32> = Some(600.0);
-    let mut volatility: Option<f32> = Some(30.0);
-    let mut overlap: Option<f32> = Some(0.0);
-    let mut iterations: Option<f32> = Some(10.0);
-    let mut seed: Option<f32> = Some(0.0);
-    let mut tessellation: Option<f32> = Some(15.0);
-    let mut stroke_tessellation: Option<f32> = Some(10.0);
-    let mut stroke_noise: Option<f32> = Some(25.0);
-    let mut colour: Option<Colour> = Some(Default::default());
-    let mut colour_volatility: Option<f32> = Some(0.0);
-    let mut brush: Option<BrushType> = Some(BrushType::Flat);
-    let mut brush_subtype: Option<usize> = Some(0);
+    let default_colour = Var::Colour(Default::default());
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::Position, (100.0, 100.0)),
+            arg_f32!(Keyword::Width, 80.0),
+            arg_f32!(Keyword::Height, 600.0),
+            arg_f32!(Keyword::Volatility, 30.0),
+            arg_f32!(Keyword::Overlap, 0.0),
+            arg_f32!(Keyword::Iterations, 10.0),
+            arg_f32!(Keyword::Seed, 0.0),
+            arg_usize!(Keyword::Tessellation, 15),
+            arg_usize!(Keyword::StrokeTessellation, 10),
+            arg_f32!(Keyword::StrokeNoise, 25.0),
+            (Keyword::Colour, Some(&default_colour)),
+            arg_f32!(Keyword::ColourVolatility, 0.0),
+            (Keyword::Brush, Some(&Var::Keyword(Keyword::BrushFlat))),
+            arg_usize!(Keyword::BrushSubtype, 0),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(position, Keyword::Position, iname, value);
-            read_float!(width, Keyword::Width, iname, value);
-            read_float!(height, Keyword::Height, iname, value);
-            read_float!(volatility, Keyword::Volatility, iname, value);
-            read_float!(overlap, Keyword::Overlap, iname, value);
-            read_float!(iterations, Keyword::Iterations, iname, value);
-            read_float!(seed, Keyword::Seed, iname, value);
-            read_float!(tessellation, Keyword::Tessellation, iname, value);
-            read_float!(
-                stroke_tessellation,
-                Keyword::StrokeTessellation,
-                iname,
-                value
-            );
-            read_float!(stroke_noise, Keyword::StrokeNoise, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
-            read_float!(colour_volatility, Keyword::ColourVolatility, iname, value);
-            read_brush!(brush, Keyword::Brush, iname, value);
-            read_float_as_usize!(brush_subtype, Keyword::BrushSubtype, iname, value);
-        }
-    }
-
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Bind("bezier matrix error".to_string()));
-    };
-
-    let uvm = vm
-        .mappings
-        .get_uv_mapping(brush.unwrap(), brush_subtype.unwrap());
-
-    if let Ok(rgb_c) = colour.unwrap().convert(ColourFormat::Rgb) {
-        vm.geometry.render_stroked_bezier_rect(
-            matrix,
-            position.unwrap(),
-            width.unwrap(),
-            height.unwrap(),
-            volatility.unwrap(),
-            overlap.unwrap(),
-            iterations.unwrap(),
-            seed.unwrap() as i32,
-            tessellation.unwrap() as usize,
-            stroke_tessellation.unwrap() as usize,
-            stroke_noise.unwrap(),
-            &rgb_c,
-            colour_volatility.unwrap(),
-            uvm,
+    if let Ok(rgb) = bindings
+        .get_col(Keyword::Colour)?
+        .convert(ColourFormat::Rgb)
+    {
+        vm.render_stroked_bezier_rect(
+            bindings.get_v2d(Keyword::Position)?,
+            bindings.get_f32(Keyword::Width)?,
+            bindings.get_f32(Keyword::Height)?,
+            bindings.get_f32(Keyword::Volatility)?,
+            bindings.get_f32(Keyword::Overlap)?,
+            bindings.get_f32(Keyword::Iterations)?,
+            bindings.get_f32(Keyword::Seed)? as i32,
+            bindings.get_usize(Keyword::Tessellation)?,
+            bindings.get_usize(Keyword::StrokeTessellation)?,
+            bindings.get_f32(Keyword::StrokeNoise)?,
+            &rgb,
+            bindings.get_f32(Keyword::ColourVolatility)?,
+            bindings.get_brush(Keyword::Brush)?,
+            bindings.get_usize(Keyword::BrushSubtype)?,
         )?;
 
-        return Ok(Var::Bool(true));
+        Ok(Var::Bool(true))
+    } else {
+        Ok(Var::Bool(false))
     }
-
-    Ok(Var::Bool(false))
 }
 
 pub fn translate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut vector: Option<(f32, f32)> = Some((0.0, 0.0));
+    let bindings = ArgBindings::create(vm, num_args, vec![arg_v2d!(Keyword::Vector, (0.0, 0.0))])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(vector, Keyword::Vector, iname, value);
-        }
-    }
-
-    if let Some((x, y)) = vector {
-        vm.matrix_stack.translate(x, y);
-    }
+    let (x, y) = bindings.get_v2d(Keyword::Vector)?;
+    vm.matrix_stack.translate(x, y);
 
     Ok(Var::Bool(true))
 }
 
 pub fn rotate(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut angle: Option<f32> = Some(0.0);
+    let bindings = ArgBindings::create(vm, num_args, vec![arg_f32!(Keyword::Angle, 0.0)])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(angle, Keyword::Angle, iname, value);
-        }
-    }
-
-    if let Some(a) = angle {
-        vm.matrix_stack.rotate(mathutil::deg_to_rad(a));
-    }
+    vm.matrix_stack
+        .rotate(mathutil::deg_to_rad(bindings.get_f32(Keyword::Angle)?));
 
     Ok(Var::Bool(true))
 }
 
 pub fn scale(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut vector: Option<(f32, f32)> = Some((1.0, 1.0));
-    let mut scalar: Option<f32> = None;
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::Vector, (1.0, 1.0)),
+            (Keyword::Scalar, None),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(vector, Keyword::Vector, iname, value);
-            read_float!(scalar, Keyword::Scalar, iname, value);
-        }
-    }
-
-    if let Some(s) = scalar {
+    if let Some(s) = bindings.get_option_f32(Keyword::Scalar) {
         vm.matrix_stack.scale(s, s);
-    } else if let Some((sx, sy)) = vector {
+    } else {
+        let (sx, sy) = bindings.get_v2d(Keyword::Vector)?;
         vm.matrix_stack.scale(sx, sy);
     }
 
@@ -1451,339 +1512,225 @@ pub fn scale(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
 }
 
 pub fn col_convert(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut format: Option<Keyword> = Some(Keyword::Rgb);
-    let mut colour: Option<Colour> = Some(Default::default());
+    let default_colour = Var::Colour(Default::default());
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_kw!(Keyword::Format, Keyword::Rgb),
+            (Keyword::Colour, Some(&default_colour)),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    if let Some(fmt) = ColourFormat::from_keyword(bindings.get_kw(Keyword::Format)?) {
+        let colour = bindings.get_col(Keyword::Colour)?;
+        let col = colour.convert(fmt)?;
 
-        if let Var::Int(iname) = label {
-            read_kw!(format, Keyword::Format, iname, value);
-            read_col!(colour, Keyword::Colour, iname, value);
-        }
+        Ok(Var::Colour(col))
+    } else {
+        Err(Error::Bind("col_convert".to_string()))
     }
-
-    if let Some(fmt) = ColourFormat::from_keyword(format.unwrap()) {
-        if let Some(colour) = colour {
-            let col = colour.convert(fmt)?;
-            return Ok(Var::Colour(col));
-        }
-    }
-
-    Err(Error::Bind("col_convert".to_string()))
 }
 
 pub fn col_rgb(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    // (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
-
-    let mut r: Option<f32> = Some(0.0);
-    let mut g: Option<f32> = Some(0.0);
-    let mut b: Option<f32> = Some(0.0);
-    let mut alpha: Option<f32> = Some(1.0);
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(r, Keyword::R, iname, value);
-            read_float!(g, Keyword::G, iname, value);
-            read_float!(b, Keyword::B, iname, value);
-            read_float!(alpha, Keyword::Alpha, iname, value);
-        }
-    }
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::R, 0.0),
+            arg_f32!(Keyword::G, 0.0),
+            arg_f32!(Keyword::B, 0.0),
+            arg_f32!(Keyword::Alpha, 1.0),
+        ],
+    )?;
 
     Ok(Var::Colour(Colour::new(
         ColourFormat::Rgb,
-        r.unwrap(),
-        g.unwrap(),
-        b.unwrap(),
-        alpha.unwrap(),
+        bindings.get_f32(Keyword::R)?,
+        bindings.get_f32(Keyword::G)?,
+        bindings.get_f32(Keyword::B)?,
+        bindings.get_f32(Keyword::Alpha)?,
     )))
 }
 
 pub fn col_hsl(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut h: Option<f32> = Some(0.0);
-    let mut s: Option<f32> = Some(0.0);
-    let mut l: Option<f32> = Some(0.0);
-    let mut alpha: Option<f32> = Some(1.0);
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(h, Keyword::H, iname, value);
-            read_float!(s, Keyword::S, iname, value);
-            read_float!(l, Keyword::L, iname, value);
-            read_float!(alpha, Keyword::Alpha, iname, value);
-        }
-    }
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::H, 0.0),
+            arg_f32!(Keyword::S, 0.0),
+            arg_f32!(Keyword::L, 0.0),
+            arg_f32!(Keyword::Alpha, 1.0),
+        ],
+    )?;
 
     Ok(Var::Colour(Colour::new(
         ColourFormat::Hsl,
-        h.unwrap(),
-        s.unwrap(),
-        l.unwrap(),
-        alpha.unwrap(),
+        bindings.get_f32(Keyword::H)?,
+        bindings.get_f32(Keyword::S)?,
+        bindings.get_f32(Keyword::L)?,
+        bindings.get_f32(Keyword::Alpha)?,
     )))
 }
 
 pub fn col_hsluv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut h: Option<f32> = Some(0.0);
-    let mut s: Option<f32> = Some(0.0);
-    let mut l: Option<f32> = Some(0.0);
-    let mut alpha: Option<f32> = Some(1.0);
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(h, Keyword::H, iname, value);
-            read_float!(s, Keyword::S, iname, value);
-            read_float!(l, Keyword::L, iname, value);
-            read_float!(alpha, Keyword::Alpha, iname, value);
-        }
-    }
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::H, 0.0),
+            arg_f32!(Keyword::S, 0.0),
+            arg_f32!(Keyword::L, 0.0),
+            arg_f32!(Keyword::Alpha, 1.0),
+        ],
+    )?;
 
     Ok(Var::Colour(Colour::new(
         ColourFormat::Hsluv,
-        h.unwrap(),
-        s.unwrap(),
-        l.unwrap(),
-        alpha.unwrap(),
+        bindings.get_f32(Keyword::H)?,
+        bindings.get_f32(Keyword::S)?,
+        bindings.get_f32(Keyword::L)?,
+        bindings.get_f32(Keyword::Alpha)?,
     )))
 }
 
 pub fn col_hsv(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut h: Option<f32> = Some(0.0);
-    let mut s: Option<f32> = Some(0.0);
-    let mut v: Option<f32> = Some(0.0);
-    let mut alpha: Option<f32> = Some(1.0);
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(h, Keyword::H, iname, value);
-            read_float!(s, Keyword::S, iname, value);
-            read_float!(v, Keyword::V, iname, value);
-            read_float!(alpha, Keyword::Alpha, iname, value);
-        }
-    }
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::H, 0.0),
+            arg_f32!(Keyword::S, 0.0),
+            arg_f32!(Keyword::V, 0.0),
+            arg_f32!(Keyword::Alpha, 1.0),
+        ],
+    )?;
 
     Ok(Var::Colour(Colour::new(
         ColourFormat::Hsv,
-        h.unwrap(),
-        s.unwrap(),
-        v.unwrap(),
-        alpha.unwrap(),
+        bindings.get_f32(Keyword::H)?,
+        bindings.get_f32(Keyword::S)?,
+        bindings.get_f32(Keyword::V)?,
+        bindings.get_f32(Keyword::Alpha)?,
     )))
 }
 
 pub fn col_lab(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut l: Option<f32> = Some(0.0);
-    let mut a: Option<f32> = Some(0.0);
-    let mut b: Option<f32> = Some(0.0);
-    let mut alpha: Option<f32> = Some(1.0);
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(l, Keyword::L, iname, value);
-            read_float!(a, Keyword::A, iname, value);
-            read_float!(b, Keyword::B, iname, value);
-            read_float!(alpha, Keyword::Alpha, iname, value);
-        }
-    }
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::L, 0.0),
+            arg_f32!(Keyword::A, 0.0),
+            arg_f32!(Keyword::B, 0.0),
+            arg_f32!(Keyword::Alpha, 1.0),
+        ],
+    )?;
 
     Ok(Var::Colour(Colour::new(
         ColourFormat::Lab,
-        l.unwrap(),
-        a.unwrap(),
-        b.unwrap(),
-        alpha.unwrap(),
+        bindings.get_f32(Keyword::L)?,
+        bindings.get_f32(Keyword::A)?,
+        bindings.get_f32(Keyword::B)?,
+        bindings.get_f32(Keyword::Alpha)?,
     )))
 }
 
 pub fn col_complementary(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut colour: Option<Colour> = Some(Default::default());
+    let default_colour = Var::Colour(Default::default());
+    let bindings =
+        ArgBindings::create(vm, num_args, vec![(Keyword::Colour, Some(&default_colour))])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    let col = bindings.get_col(Keyword::Colour)?;
+    let c1 = col.complementary()?;
 
-        if let Var::Int(iname) = label {
-            read_col!(colour, Keyword::Colour, iname, value);
-        }
-    }
-
-    if let Some(col) = colour {
-        let c1 = col.complementary()?;
-        return Ok(Var::Colour(c1));
-    }
-
-    Err(Error::Bind("col_complementary".to_string()))
+    Ok(Var::Colour(c1))
 }
 
 pub fn col_split_complementary(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut colour: Option<Colour> = Some(Default::default());
+    let default_colour = Var::Colour(Default::default());
+    let bindings =
+        ArgBindings::create(vm, num_args, vec![(Keyword::Colour, Some(&default_colour))])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    let col = bindings.get_col(Keyword::Colour)?;
+    let (col1, col2) = col.split_complementary()?;
 
-        if let Var::Int(iname) = label {
-            read_col!(colour, Keyword::Colour, iname, value);
-        }
-    }
-
-    if let Some(c) = colour {
-        let (col1, col2) = c.split_complementary()?;
-        return Ok(Var::Vector(vec![Var::Colour(col1), Var::Colour(col2)]));
-    }
-
-    Err(Error::Bind("col_split_complementary".to_string()))
+    Ok(Var::Vector(vec![Var::Colour(col1), Var::Colour(col2)]))
 }
 
 pub fn col_analagous(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut colour: Option<Colour> = Some(Default::default());
+    let default_colour = Var::Colour(Default::default());
+    let bindings =
+        ArgBindings::create(vm, num_args, vec![(Keyword::Colour, Some(&default_colour))])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    let col = bindings.get_col(Keyword::Colour)?;
+    let (col1, col2) = col.analagous()?;
 
-        if let Var::Int(iname) = label {
-            read_col!(colour, Keyword::Colour, iname, value);
-        }
-    }
-
-    if let Some(c) = colour {
-        let (col1, col2) = c.analagous()?;
-        return Ok(Var::Vector(vec![Var::Colour(col1), Var::Colour(col2)]));
-    }
-
-    Err(Error::Bind("col_analagous".to_string()))
+    Ok(Var::Vector(vec![Var::Colour(col1), Var::Colour(col2)]))
 }
 
 pub fn col_triad(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut colour: Option<Colour> = Some(Default::default());
+    let default_colour = Var::Colour(Default::default());
+    let bindings =
+        ArgBindings::create(vm, num_args, vec![(Keyword::Colour, Some(&default_colour))])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    let col = bindings.get_col(Keyword::Colour)?;
+    let (col1, col2) = col.triad()?;
 
-        if let Var::Int(iname) = label {
-            read_col!(colour, Keyword::Colour, iname, value);
-        }
-    }
-
-    if let Some(c) = colour {
-        let (col1, col2) = c.triad()?;
-        return Ok(Var::Vector(vec![Var::Colour(col1), Var::Colour(col2)]));
-    }
-
-    Err(Error::Bind("col_triad".to_string()))
+    Ok(Var::Vector(vec![Var::Colour(col1), Var::Colour(col2)]))
 }
 
 pub fn col_darken(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut colour: Option<Colour> = Some(Default::default());
-    let mut val: Option<f32> = Some(0.0);
+    let default_colour = Var::Colour(Default::default());
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            (Keyword::Colour, Some(&default_colour)),
+            arg_f32!(Keyword::Value, 0.0),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    let col = bindings.get_col(Keyword::Colour)?;
+    let darkened = col.darken(bindings.get_f32(Keyword::Value)?)?;
 
-        if let Var::Int(iname) = label {
-            read_col!(colour, Keyword::Colour, iname, value);
-            read_float!(val, Keyword::Value, iname, value);
-        }
-    }
-
-    if let Some(value) = val {
-        if let Some(col) = colour {
-            let darkened = col.darken(value)?;
-            return Ok(Var::Colour(darkened));
-        }
-    }
-
-    Err(Error::Bind("col_darken".to_string()))
+    Ok(Var::Colour(darkened))
 }
 
 pub fn col_lighten(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut colour: Option<Colour> = Some(Default::default());
-    let mut val: Option<f32> = Some(0.0);
+    let default_colour = Var::Colour(Default::default());
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            (Keyword::Colour, Some(&default_colour)),
+            arg_f32!(Keyword::Value, 0.0),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    let col = bindings.get_col(Keyword::Colour)?;
+    let lightened = col.lighten(bindings.get_f32(Keyword::Value)?)?;
 
-        if let Var::Int(iname) = label {
-            read_col!(colour, Keyword::Colour, iname, value);
-            read_float!(val, Keyword::Value, iname, value);
-        }
-    }
-
-    if let Some(value) = val {
-        if let Some(col) = colour {
-            let lightened = col.lighten(value)?;
-            return Ok(Var::Colour(lightened));
-        }
-    }
-
-    Err(Error::Bind("col_lighten".to_string()))
+    Ok(Var::Colour(lightened))
 }
 
 pub fn col_set_elem(idx: usize, vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut colour: Option<Colour> = Some(Default::default());
-    let mut val: Option<f32> = Some(0.0);
+    let default_colour = Var::Colour(Default::default());
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            (Keyword::Colour, Some(&default_colour)),
+            arg_f32!(Keyword::Value, 0.0),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_col!(colour, Keyword::Colour, iname, value);
-            read_float!(val, Keyword::Value, iname, value);
-        }
-    }
-
-    let col = colour.unwrap();
+    let col = bindings.get_col(Keyword::Colour)?;
     match idx {
         0 => Ok(Var::Colour(Colour::new(
             col.format,
-            val.unwrap(),
+            bindings.get_f32(Keyword::Value)?,
             col.e1,
             col.e2,
             col.e3,
@@ -1791,7 +1738,7 @@ pub fn col_set_elem(idx: usize, vm: &mut Vm, _program: &Program, num_args: usize
         1 => Ok(Var::Colour(Colour::new(
             col.format,
             col.e0,
-            val.unwrap(),
+            bindings.get_f32(Keyword::Value)?,
             col.e2,
             col.e3,
         ))),
@@ -1799,7 +1746,7 @@ pub fn col_set_elem(idx: usize, vm: &mut Vm, _program: &Program, num_args: usize
             col.format,
             col.e0,
             col.e1,
-            val.unwrap(),
+            bindings.get_f32(Keyword::Value)?,
             col.e3,
         ))),
         3 => Ok(Var::Colour(Colour::new(
@@ -1807,26 +1754,18 @@ pub fn col_set_elem(idx: usize, vm: &mut Vm, _program: &Program, num_args: usize
             col.e0,
             col.e1,
             col.e2,
-            val.unwrap(),
+            bindings.get_f32(Keyword::Value)?,
         ))),
         _ => Err(Error::Bind("col_set_elem::idx out of range".to_string())),
     }
 }
 
 pub fn col_get_elem(idx: usize, vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut colour: Option<Colour> = Some(Default::default());
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    let default_colour = Var::Colour(Default::default());
+    let bindings =
+        ArgBindings::create(vm, num_args, vec![(Keyword::Colour, Some(&default_colour))])?;
 
-        if let Var::Int(iname) = label {
-            read_col!(colour, Keyword::Colour, iname, value);
-        }
-    }
-
-    let col = colour.unwrap();
+    let col = bindings.get_col(Keyword::Colour)?;
     match idx {
         0 => Ok(Var::Float(col.e0)),
         1 => Ok(Var::Float(col.e1)),
@@ -1996,48 +1935,36 @@ pub fn col_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var
 }
 
 pub fn math_distance(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut vec1: Option<(f32, f32)> = Some((0.0, 0.0));
-    let mut vec2: Option<(f32, f32)> = Some((0.0, 0.0));
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::Vec1, (0.0, 0.0)),
+            arg_v2d!(Keyword::Vec2, (0.0, 0.0)),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(vec1, Keyword::Vec1, iname, value);
-            read_v2d!(vec2, Keyword::Vec2, iname, value);
-        }
-    }
-
-    let v1 = vec1.unwrap();
-    let v2 = vec2.unwrap();
-
+    let v1 = bindings.get_v2d(Keyword::Vec1)?;
+    let v2 = bindings.get_v2d(Keyword::Vec2)?;
     let distance = mathutil::distance_v2(v1.0, v1.1, v2.0, v2.1);
+
     Ok(Var::Float(distance))
 }
 
 pub fn math_normal(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut vec1: Option<(f32, f32)> = Some((0.0, 0.0));
-    let mut vec2: Option<(f32, f32)> = Some((0.0, 0.0));
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::Vec1, (0.0, 0.0)),
+            arg_v2d!(Keyword::Vec2, (0.0, 0.0)),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(vec1, Keyword::Vec1, iname, value);
-            read_v2d!(vec2, Keyword::Vec2, iname, value);
-        }
-    }
-
-    let v1 = vec1.unwrap();
-    let v2 = vec2.unwrap();
-
+    let v1 = bindings.get_v2d(Keyword::Vec1)?;
+    let v2 = bindings.get_v2d(Keyword::Vec2)?;
     let norm = mathutil::normal(v1.0, v1.1, v2.0, v2.1);
+
     Ok(Var::V2D(norm.0, norm.1))
 }
 
@@ -2051,102 +1978,61 @@ pub fn math_clamp(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
     // then optimize for single argument functions as these will be much faster to
     // parse
     //
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::Value, 0.0),
+            arg_f32!(Keyword::Min, 0.0),
+            arg_f32!(Keyword::Max, 0.0),
+        ],
+    )?;
 
-    let mut val: Option<f32> = Some(0.0);
-    let mut min: Option<f32> = Some(0.0);
-    let mut max: Option<f32> = Some(0.0);
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(val, Keyword::Value, iname, value);
-            read_float!(min, Keyword::Min, iname, value);
-            read_float!(max, Keyword::Max, iname, value);
-        }
-    }
-
-    let res = mathutil::clamp(val.unwrap(), min.unwrap(), max.unwrap());
+    let res = mathutil::clamp(
+        bindings.get_f32(Keyword::Value)?,
+        bindings.get_f32(Keyword::Min)?,
+        bindings.get_f32(Keyword::Max)?,
+    );
     Ok(Var::Float(res))
 }
 
 pub fn math_radians_to_degrees(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut angle: Option<f32> = Some(0.0);
+    let bindings = ArgBindings::create(vm, num_args, vec![arg_f32!(Keyword::Angle, 0.0)])?;
+    let res = mathutil::rad_to_deg(bindings.get_f32(Keyword::Angle)?);
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(angle, Keyword::Angle, iname, value);
-        }
-    }
-
-    let res = mathutil::rad_to_deg(angle.unwrap());
     Ok(Var::Float(res))
 }
 
 pub fn math_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut angle: Option<f32> = Some(0.0);
+    let bindings = ArgBindings::create(vm, num_args, vec![arg_f32!(Keyword::Angle, 0.0)])?;
+    let res = bindings.get_f32(Keyword::Angle)?.cos();
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(angle, Keyword::Angle, iname, value);
-        }
-    }
-
-    let res = angle.unwrap().cos();
     Ok(Var::Float(res))
 }
 
 pub fn math_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut angle: Option<f32> = Some(0.0);
+    let bindings = ArgBindings::create(vm, num_args, vec![arg_f32!(Keyword::Angle, 0.0)])?;
+    let res = bindings.get_f32(Keyword::Angle)?.sin();
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(angle, Keyword::Angle, iname, value);
-        }
-    }
-
-    let res = angle.unwrap().sin();
     Ok(Var::Float(res))
 }
 
 pub fn prng_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut seed: Option<f32> = Some(1.0);
-    let mut min: Option<f32> = Some(0.0);
-    let mut max: Option<f32> = Some(1.0);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::Seed, 1.0),
+            arg_f32!(Keyword::Min, 0.0),
+            arg_f32!(Keyword::Max, 1.0),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(seed, Keyword::Seed, iname, value);
-            read_float!(min, Keyword::Min, iname, value);
-            read_float!(max, Keyword::Max, iname, value);
-        }
-    }
-
-    let prng_state_struct =
-        prng::PrngStateStruct::new(seed.unwrap() as i32, min.unwrap(), max.unwrap());
+    let prng_state_struct = prng::PrngStateStruct::new(
+        bindings.get_f32(Keyword::Seed)? as i32,
+        bindings.get_f32(Keyword::Min)?,
+        bindings.get_f32(Keyword::Max)?,
+    );
 
     Ok(Var::PrngState(Rc::new(RefCell::new(prng_state_struct))))
 }
@@ -2202,59 +2088,48 @@ pub fn prng_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
 }
 
 pub fn prng_perlin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut x: Option<f32> = Some(1.0);
-    let mut y: Option<f32> = Some(1.0);
-    let mut z: Option<f32> = Some(1.0);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::X, 1.0),
+            arg_f32!(Keyword::Y, 1.0),
+            arg_f32!(Keyword::Z, 1.0),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(x, Keyword::X, iname, value);
-            read_float!(y, Keyword::Y, iname, value);
-            read_float!(z, Keyword::Z, iname, value);
-        }
-    }
-
-    let res = prng::perlin(x.unwrap(), y.unwrap(), z.unwrap());
+    let res = prng::perlin(
+        bindings.get_f32(Keyword::X)?,
+        bindings.get_f32(Keyword::Y)?,
+        bindings.get_f32(Keyword::Z)?,
+    );
 
     Ok(Var::Float(res))
 }
 
 pub fn interp_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut from_: Option<(f32, f32)> = Some((0.0, 1.0));
-    let mut to_: Option<(f32, f32)> = Some((0.0, 100.0));
-    let mut clamping_: Option<Keyword> = Some(Keyword::False);
-    let mut mapping_: Option<Keyword> = Some(Keyword::Linear);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::From, (0.0, 1.0)),
+            arg_v2d!(Keyword::To, (0.0, 100.0)),
+            arg_kw!(Keyword::Clamping, Keyword::False),
+            arg_kw!(Keyword::Mapping, Keyword::Linear),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(from_, Keyword::From, iname, value);
-            read_v2d!(to_, Keyword::To, iname, value);
-            read_kw!(clamping_, Keyword::Clamping, iname, value);
-            read_kw!(mapping_, Keyword::Mapping, iname, value);
-        }
-    }
-
-    if let Some(mapping) = easing_from_keyword(mapping_.unwrap()) {
-        let from = from_.unwrap();
-        let to = to_.unwrap();
-        let clamping = clamping_.unwrap() == Keyword::True;
+    if let Some(mapping) = easing_from_keyword(bindings.get_kw(Keyword::Mapping)?) {
+        let from = bindings.get_v2d(Keyword::From)?;
+        let to = bindings.get_v2d(Keyword::To)?;
+        let clamping = bindings.get_kw(Keyword::Clamping)? == Keyword::True;
 
         let from_m = mathutil::mc_m(from.0, 0.0, from.1, 1.0);
         let from_c = mathutil::mc_c(from.0, 0.0, from_m);
         let to_m = mathutil::mc_m(0.0, to.0, 1.0, to.1);
         let to_c = mathutil::mc_c(0.0, to.0, to_m);
 
-        return Ok(Var::InterpState(interp::InterpStateStruct {
+        Ok(Var::InterpState(interp::InterpStateStruct {
             from_m,
             to_m,
             from_c,
@@ -2262,10 +2137,10 @@ pub fn interp_build(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
             to,
             clamping,
             mapping,
-        }));
+        }))
+    } else {
+        Err(Error::Bind("interp_build".to_string()))
     }
-
-    Err(Error::Bind("interp_build".to_string()))
 }
 
 pub fn interp_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -2295,47 +2170,41 @@ pub fn interp_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
 }
 
 pub fn interp_cos(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut amplitude: Option<f32> = Some(1.0);
-    let mut frequency: Option<f32> = Some(1.0);
-    let mut t: Option<f32> = Some(1.0); // t goes from 0 to TAU
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::Amplitude, 1.0),
+            arg_f32!(Keyword::Frequency, 1.0),
+            arg_f32!(Keyword::T, 1.0), // t goes from 0 to TAU
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(amplitude, Keyword::Amplitude, iname, value);
-            read_float!(frequency, Keyword::Frequency, iname, value);
-            read_float!(t, Keyword::T, iname, value);
-        }
-    }
-
-    let res = interp::cos(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
+    let res = interp::cos(
+        bindings.get_f32(Keyword::Amplitude)?,
+        bindings.get_f32(Keyword::Frequency)?,
+        bindings.get_f32(Keyword::T)?,
+    );
 
     Ok(Var::Float(res))
 }
 
 pub fn interp_sin(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut amplitude: Option<f32> = Some(1.0);
-    let mut frequency: Option<f32> = Some(1.0);
-    let mut t: Option<f32> = Some(1.0); // t goes from 0 to TAU
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_f32!(Keyword::Amplitude, 1.0),
+            arg_f32!(Keyword::Frequency, 1.0),
+            arg_f32!(Keyword::T, 1.0), // t goes from 0 to TAU
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(amplitude, Keyword::Amplitude, iname, value);
-            read_float!(frequency, Keyword::Frequency, iname, value);
-            read_float!(t, Keyword::T, iname, value);
-        }
-    }
-
-    let res = interp::sin(amplitude.unwrap(), frequency.unwrap(), t.unwrap());
+    let res = interp::sin(
+        bindings.get_f32(Keyword::Amplitude)?,
+        bindings.get_f32(Keyword::Frequency)?,
+        bindings.get_f32(Keyword::T)?,
+    );
 
     Ok(Var::Float(res))
 }
@@ -2385,185 +2254,145 @@ pub fn interp_bezier_tangent(vm: &mut Vm, _program: &Program, num_args: usize) -
 }
 
 pub fn interp_ray(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut point: Option<(f32, f32)> = Some((0.0, 0.0));
-    let mut direction: Option<(f32, f32)> = Some((1000.0, 1000.0));
-    let mut t: Option<f32> = Some(1.0);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::Point, (0.0, 0.0)),
+            arg_v2d!(Keyword::Direction, (1000.0, 1000.0)),
+            arg_f32!(Keyword::T, 1.0),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(point, Keyword::Point, iname, value);
-            read_v2d!(direction, Keyword::Direction, iname, value);
-            read_float!(t, Keyword::T, iname, value);
-        }
-    }
-
-    let (x, y) = interp::ray(point.unwrap(), direction.unwrap(), t.unwrap());
+    let (x, y) = interp::ray(
+        bindings.get_v2d(Keyword::Point)?,
+        bindings.get_v2d(Keyword::Direction)?,
+        bindings.get_f32(Keyword::T)?,
+    );
 
     Ok(Var::V2D(x, y))
 }
 
 pub fn interp_line(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut from: Option<(f32, f32)> = Some((0.0, 0.0));
-    let mut to: Option<(f32, f32)> = Some((0.0, 0.0));
-    let mut clamping: Option<Keyword> = Some(Keyword::False);
-    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
-    let mut t: Option<f32> = Some(1.0);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::From, (0.0, 0.0)),
+            arg_v2d!(Keyword::To, (0.0, 0.0)),
+            arg_kw!(Keyword::Clamping, Keyword::False),
+            arg_kw!(Keyword::Mapping, Keyword::Linear),
+            arg_f32!(Keyword::T, 1.0),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    if let Some(mapping) = easing_from_keyword(bindings.get_kw(Keyword::Mapping)?) {
+        let from = bindings.get_v2d(Keyword::From)?;
+        let to = bindings.get_v2d(Keyword::To)?;
+        let clamping = bindings.get_kw(Keyword::Clamping)? == Keyword::True;
+        let t = bindings.get_f32(Keyword::T)?;
 
-        if let Var::Int(iname) = label {
-            read_v2d!(from, Keyword::From, iname, value);
-            read_v2d!(to, Keyword::To, iname, value);
-            read_kw!(clamping, Keyword::Clamping, iname, value);
-            read_kw!(mapping, Keyword::Mapping, iname, value);
-            read_float!(t, Keyword::T, iname, value);
-        }
+        let x = interp::scalar(from.0, to.0, mapping, clamping, t);
+        let y = interp::scalar(from.1, to.1, mapping, clamping, t);
+
+        Ok(Var::V2D(x, y))
+    } else {
+        Err(Error::Bind("interp_line".to_string()))
     }
-
-    let maybe_mapping = easing_from_keyword(mapping.unwrap());
-    if let Some(mapping) = maybe_mapping {
-        let from_ = from.unwrap();
-        let to_ = to.unwrap();
-
-        let clamping_ = clamping.unwrap() == Keyword::True;
-        let t_ = t.unwrap();
-
-        let x = interp::scalar(from_.0, to_.0, mapping, clamping_, t_);
-        let y = interp::scalar(from_.1, to_.1, mapping, clamping_, t_);
-
-        return Ok(Var::V2D(x, y));
-    }
-
-    Err(Error::Bind("interp_line".to_string()))
 }
 
 pub fn interp_circle(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut position: Option<(f32, f32)> = Some((0.0, 0.0));
-    let mut radius: Option<f32> = Some(1.0);
-    let mut t: Option<f32> = Some(0.0);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::Position, (0.0, 0.0)),
+            arg_f32!(Keyword::Radius, 1.0),
+            arg_f32!(Keyword::T, 0.0),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(position, Keyword::Position, iname, value);
-            read_float!(radius, Keyword::Radius, iname, value);
-            read_float!(t, Keyword::T, iname, value);
-        }
-    }
-
-    let (x, y) = interp::circle(position.unwrap(), radius.unwrap(), t.unwrap());
+    let (x, y) = interp::circle(
+        bindings.get_v2d(Keyword::Position)?,
+        bindings.get_f32(Keyword::Radius)?,
+        bindings.get_f32(Keyword::T)?,
+    );
 
     Ok(Var::V2D(x, y))
 }
 
 pub fn path_linear(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
     // (path/linear fn: foo steps: 10 from: [0 0] to: [100 100])
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::From, (0.0, 0.0)),
+            arg_v2d!(Keyword::To, (10.0, 10.0)),
+            arg_f32!(Keyword::Steps, 10.0),
+            arg_f32!(Keyword::TStart, 0.0),
+            arg_f32!(Keyword::TEnd, 1.0),
+            (Keyword::Fn, None),
+            arg_kw!(Keyword::Mapping, Keyword::Linear),
+        ],
+    )?;
 
-    let mut from_vec: Option<(f32, f32)> = Some((0.0, 0.0));
-    let mut to_vec: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut steps: Option<f32> = Some(10.0);
-    let mut t_start: Option<f32> = Some(0.0);
-    let mut t_end: Option<f32> = Some(1.0);
-    let mut fun: Option<i32> = Some(-1);
-    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
+    if let Some(mapping) = easing_from_keyword(bindings.get_kw(Keyword::Mapping)?) {
+        if let Some(fun) = bindings.get_option_i32(Keyword::Fn) {
+            let fr = bindings.get_v2d(Keyword::From)?;
+            let to = bindings.get_v2d(Keyword::To)?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(from_vec, Keyword::From, iname, value);
-            read_v2d!(to_vec, Keyword::To, iname, value);
-            read_float!(steps, Keyword::Steps, iname, value);
-            read_float!(t_start, Keyword::TStart, iname, value);
-            read_float!(t_end, Keyword::TEnd, iname, value);
-            read_i32!(fun, Keyword::Fn, iname, value);
-            read_kw!(mapping, Keyword::Mapping, iname, value);
+            path::linear(
+                vm,
+                program,
+                fun as usize,
+                bindings.get_f32(Keyword::Steps)? as i32,
+                bindings.get_f32(Keyword::TStart)?,
+                bindings.get_f32(Keyword::TEnd)?,
+                fr.0,
+                fr.1,
+                to.0,
+                to.1,
+                mapping,
+            )?;
         }
     }
-
-    let fr = from_vec.unwrap();
-    let to = to_vec.unwrap();
-    let maybe_mapping = easing_from_keyword(mapping.unwrap());
-
-    if let Some(mapping) = maybe_mapping {
-        path::linear(
-            vm,
-            program,
-            fun.unwrap() as usize,
-            steps.unwrap() as i32,
-            t_start.unwrap(),
-            t_end.unwrap(),
-            fr.0,
-            fr.1,
-            to.0,
-            to.1,
-            mapping,
-        )?;
-    }
-
     Ok(Var::Bool(true))
 }
 
 pub fn path_circle(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    let mut position: Option<(f32, f32)> = Some((0.0, 0.0));
-    let mut radius: Option<f32> = Some(100.0);
-    let mut steps: Option<f32> = Some(10.0);
-    let mut t_start: Option<f32> = Some(0.0);
-    let mut t_end: Option<f32> = Some(1.0);
-    let mut fun: Option<i32> = Some(-1);
-    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::Position, (0.0, 0.0)),
+            arg_f32!(Keyword::Radius, 100.0),
+            arg_f32!(Keyword::Steps, 10.0),
+            arg_f32!(Keyword::TStart, 0.0),
+            arg_f32!(Keyword::TEnd, 1.0),
+            (Keyword::Fn, None),
+            arg_kw!(Keyword::Mapping, Keyword::Linear),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    if let Some(mapping) = easing_from_keyword(bindings.get_kw(Keyword::Mapping)?) {
+        if let Some(fun) = bindings.get_option_i32(Keyword::Fn) {
+            let pos = bindings.get_v2d(Keyword::Position)?;
 
-        if let Var::Int(iname) = label {
-            read_v2d!(position, Keyword::Position, iname, value);
-            read_float!(radius, Keyword::Radius, iname, value);
-            read_float!(steps, Keyword::Steps, iname, value);
-            read_float!(t_start, Keyword::TStart, iname, value);
-            read_float!(t_end, Keyword::TEnd, iname, value);
-            read_i32!(fun, Keyword::Fn, iname, value);
-            read_kw!(mapping, Keyword::Mapping, iname, value);
+            path::circular(
+                vm,
+                program,
+                fun as usize,
+                bindings.get_f32(Keyword::Steps)? as i32,
+                bindings.get_f32(Keyword::TStart)?,
+                bindings.get_f32(Keyword::TEnd)?,
+                pos.0,
+                pos.1,
+                bindings.get_f32(Keyword::Radius)?,
+                mapping,
+            )?;
         }
     }
-
-    let pos = position.unwrap();
-    let maybe_mapping = easing_from_keyword(mapping.unwrap());
-
-    if let Some(mapping) = maybe_mapping {
-        path::circular(
-            vm,
-            program,
-            fun.unwrap() as usize,
-            steps.unwrap() as i32,
-            t_start.unwrap(),
-            t_end.unwrap(),
-            pos.0,
-            pos.1,
-            radius.unwrap(),
-            mapping,
-        )?;
-    }
-
     Ok(Var::Bool(true))
 }
 
@@ -2660,130 +2489,78 @@ pub fn path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Va
 }
 
 pub fn repeat_symmetry_vertical(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    let mut fun: Option<i32> = None;
+    let bindings = ArgBindings::create(vm, num_args, vec![(Keyword::Fn, None)])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_i32!(fun, Keyword::Fn, iname, value);
-        }
-    }
-
-    if let Some(fun_) = fun {
-        repeat::symmetry_vertical(vm, program, fun_ as usize)?;
+    if let Some(fun) = bindings.get_option_i32(Keyword::Fn) {
+        repeat::symmetry_vertical(vm, program, fun as usize)?;
     }
 
     Ok(Var::Bool(true))
 }
 
 pub fn repeat_symmetry_horizontal(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    let mut fun: Option<i32> = None;
+    let bindings = ArgBindings::create(vm, num_args, vec![(Keyword::Fn, None)])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_i32!(fun, Keyword::Fn, iname, value);
-        }
-    }
-
-    if let Some(fun_) = fun {
-        repeat::symmetry_horizontal(vm, program, fun_ as usize)?;
+    if let Some(fun) = bindings.get_option_i32(Keyword::Fn) {
+        repeat::symmetry_horizontal(vm, program, fun as usize)?;
     }
 
     Ok(Var::Bool(true))
 }
 
 pub fn repeat_symmetry_4(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    let mut fun: Option<i32> = None;
+    let bindings = ArgBindings::create(vm, num_args, vec![(Keyword::Fn, None)])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_i32!(fun, Keyword::Fn, iname, value);
-        }
-    }
-
-    if let Some(fun_) = fun {
-        repeat::symmetry_4(vm, program, fun_ as usize)?;
+    if let Some(fun) = bindings.get_option_i32(Keyword::Fn) {
+        repeat::symmetry_4(vm, program, fun as usize)?;
     }
 
     Ok(Var::Bool(true))
 }
 
 pub fn repeat_symmetry_8(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    let mut fun: Option<i32> = None;
+    let bindings = ArgBindings::create(vm, num_args, vec![(Keyword::Fn, None)])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_i32!(fun, Keyword::Fn, iname, value);
-        }
-    }
-
-    if let Some(fun_) = fun {
-        repeat::symmetry_8(vm, program, fun_ as usize)?;
+    if let Some(fun) = bindings.get_option_i32(Keyword::Fn) {
+        repeat::symmetry_8(vm, program, fun as usize)?;
     }
 
     Ok(Var::Bool(true))
 }
 
 pub fn repeat_rotate(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    let mut fun: Option<i32> = None;
-    let mut copies: Option<f32> = Some(3.0);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![(Keyword::Fn, None), arg_usize!(Keyword::Copies, 3)],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_i32!(fun, Keyword::Fn, iname, value);
-            read_float!(copies, Keyword::Copies, iname, value);
-        }
-    }
-
-    if let Some(fun_) = fun {
-        repeat::rotate(vm, program, fun_ as usize, copies.unwrap() as usize)?;
+    if let Some(fun) = bindings.get_option_i32(Keyword::Fn) {
+        repeat::rotate(
+            vm,
+            program,
+            fun as usize,
+            bindings.get_usize(Keyword::Copies)?,
+        )?;
     }
 
     Ok(Var::Bool(true))
 }
 
 pub fn repeat_mirrored(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Var> {
-    let mut fun: Option<i32> = None;
-    let mut copies: Option<f32> = Some(3.0);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![(Keyword::Fn, None), arg_usize!(Keyword::Copies, 3)],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_i32!(fun, Keyword::Fn, iname, value);
-            read_float!(copies, Keyword::Copies, iname, value);
-        }
-    }
-
-    if let Some(fun_) = fun {
-        repeat::rotate_mirrored(vm, program, fun_ as usize, copies.unwrap() as usize)?;
+    if let Some(fun) = bindings.get_option_i32(Keyword::Fn) {
+        repeat::rotate_mirrored(
+            vm,
+            program,
+            fun as usize,
+            bindings.get_usize(Keyword::Copies)?,
+        )?;
     }
 
     Ok(Var::Bool(true))
@@ -2794,40 +2571,28 @@ pub fn focal_build_generic(
     num_args: usize,
     focal_type: focal::FocalType,
 ) -> Result<Var> {
-    let mut mapping: Option<Keyword> = Some(Keyword::Linear);
-    let mut position: Option<(f32, f32)> = Some((0.0, 1.0));
-    let mut distance: Option<f32> = Some(1.0);
-    let mut transform_pos: Option<Keyword> = Some(Keyword::False);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_kw!(Keyword::Mapping, Keyword::Linear),
+            arg_v2d!(Keyword::Position, (0.0, 0.0)),
+            arg_f32!(Keyword::Distance, 1.0),
+            arg_kw!(Keyword::TransformPosition, Keyword::False),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_kw!(mapping, Keyword::Mapping, iname, value);
-            read_v2d!(position, Keyword::Position, iname, value);
-            read_float!(distance, Keyword::Distance, iname, value);
-            read_kw!(transform_pos, Keyword::TransformPosition, iname, value);
-        }
-    }
-
-    if let Some(mapping) = easing_from_keyword(mapping.unwrap()) {
-        let position = position.unwrap();
-        let distance = distance.unwrap();
-        let transform_pos = transform_pos.unwrap() == Keyword::True;
-
-        return Ok(Var::FocalState(focal::FocalStateStruct {
+    if let Some(mapping) = easing_from_keyword(bindings.get_kw(Keyword::Mapping)?) {
+        Ok(Var::FocalState(focal::FocalStateStruct {
             focal_type,
             mapping,
-            position,
-            distance,
-            transform_pos,
-        }));
+            position: bindings.get_v2d(Keyword::Position)?,
+            distance: bindings.get_f32(Keyword::Distance)?,
+            transform_pos: bindings.get_kw(Keyword::TransformPosition)? == Keyword::True
+        }))
+    } else {
+        Err(Error::Bind("focal_build_generic".to_string()))
     }
-
-    Err(Error::Bind("focal_build_generic".to_string()))
 }
 
 pub fn focal_build_point(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
@@ -2872,23 +2637,14 @@ pub fn focal_value(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<V
 // float as sen scripts won't produce any real ints
 //
 pub fn gen_stray_int(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut from: Option<f32> = Some(1.0);
-    let mut by: Option<f32> = Some(0.2);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![arg_f32!(Keyword::From, 1.0), arg_f32!(Keyword::By, 0.2)],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(from, Keyword::From, iname, value);
-            read_float!(by, Keyword::By, iname, value);
-        }
-    }
-
-    let from = from.unwrap();
-    let by = mathutil::absf(by.unwrap());
+    let from = bindings.get_f32(Keyword::From)?;
+    let by = mathutil::absf(bindings.get_f32(Keyword::By)?);
 
     let value = vm.prng_state.prng_f32_range(from - by, from + by);
 
@@ -2896,25 +2652,15 @@ pub fn gen_stray_int(vm: &mut Vm, _program: &Program, num_args: usize) -> Result
 }
 
 pub fn gen_stray(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut from: Option<f32> = Some(1.0);
-    let mut by: Option<f32> = Some(0.2);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![arg_f32!(Keyword::From, 1.0), arg_f32!(Keyword::By, 0.2)],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
+    let from = bindings.get_f32(Keyword::From)?;
+    let by = mathutil::absf(bindings.get_f32(Keyword::By)?);
 
-        if let Var::Int(iname) = label {
-            read_float!(from, Keyword::From, iname, value);
-            read_float!(by, Keyword::By, iname, value);
-        }
-    }
-
-    let from = from.unwrap();
-    let by = mathutil::absf(by.unwrap());
-
-    // pick a scalar between min and max
     let value = vm.prng_state.prng_f32_range(from - by, from + by);
 
     Ok(Var::Float(value))
@@ -2928,23 +2674,17 @@ pub fn gen_stray_2d(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
         ));
     }
 
-    let mut from: Option<(f32, f32)> = Some((10.0, 10.0));
-    let mut by: Option<(f32, f32)> = Some((1.0, 1.0));
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![
+            arg_v2d!(Keyword::From, (10.0, 10.0)),
+            arg_v2d!(Keyword::By, (1.0, 1.0)),
+        ],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_v2d!(from, Keyword::From, iname, value);
-            read_v2d!(by, Keyword::By, iname, value);
-        }
-    }
-
-    let from = from.unwrap();
-    let by = by.unwrap();
+    let from = bindings.get_v2d(Keyword::From)?;
+    let by = bindings.get_v2d(Keyword::By)?;
 
     let index = vm.trait_within_vector_index;
     let by_index;
@@ -3076,70 +2816,48 @@ pub fn gen_stray_4d(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<
 }
 
 pub fn gen_int(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut min: Option<f32> = Some(0.0);
-    let mut max: Option<f32> = Some(1000.0);
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(min, Keyword::Min, iname, value);
-            read_float!(max, Keyword::Max, iname, value);
-        }
-    }
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![arg_f32!(Keyword::Min, 0.0), arg_f32!(Keyword::Max, 1000.0)],
+    )?;
 
     // pick a scalar between min and max
-    let value = vm
-        .prng_state
-        .prng_f32_range(min.unwrap(), max.unwrap() + 1.0);
+    let value = vm.prng_state.prng_f32_range(
+        bindings.get_f32(Keyword::Min)?,
+        bindings.get_f32(Keyword::Max)? + 1.0,
+    );
 
-    // todo: c-version returned f32, is it ok to cast this to i32?
     Ok(Var::Float(value.floor()))
 }
 
 pub fn gen_scalar(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut min: Option<f32> = Some(0.0);
-    let mut max: Option<f32> = Some(1.0);
-
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(min, Keyword::Min, iname, value);
-            read_float!(max, Keyword::Max, iname, value);
-        }
-    }
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![arg_f32!(Keyword::Min, 0.0), arg_f32!(Keyword::Max, 1.0)],
+    )?;
 
     // pick a scalar between min and max
-    let value = vm.prng_state.prng_f32_range(min.unwrap(), max.unwrap());
+    let value = vm.prng_state.prng_f32_range(
+        bindings.get_f32(Keyword::Min)?,
+        bindings.get_f32(Keyword::Max)?,
+    );
 
     Ok(Var::Float(value))
 }
 
 pub fn gen_2d(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut min: Option<f32> = Some(0.0);
-    let mut max: Option<f32> = Some(1.0);
+    let bindings = ArgBindings::create(
+        vm,
+        num_args,
+        vec![arg_f32!(Keyword::Min, 0.0), arg_f32!(Keyword::Max, 1.0)],
+    )?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(min, Keyword::Min, iname, value);
-            read_float!(max, Keyword::Max, iname, value);
-        }
-    }
-
-    let x = vm.prng_state.prng_f32_range(min.unwrap(), max.unwrap());
-    let y = vm.prng_state.prng_f32_range(min.unwrap(), max.unwrap());
+    let min = bindings.get_f32(Keyword::Min)?;
+    let max = bindings.get_f32(Keyword::Max)?;
+    let x = vm.prng_state.prng_f32_range(min, max);
+    let y = vm.prng_state.prng_f32_range(min, max);
 
     Ok(Var::V2D(x, y))
 }
@@ -3175,20 +2893,9 @@ pub fn gen_select(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Va
 }
 
 pub fn gen_col(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
-    let mut alpha: Option<f32> = None;
+    let bindings = ArgBindings::create(vm, num_args, vec![(Keyword::Alpha, None)])?;
 
-    let mut args_pointer = vm.sp - (num_args * 2);
-    for _ in 0..num_args {
-        let label = &vm.stack[args_pointer];
-        let value = &vm.stack[args_pointer + 1];
-        args_pointer += 2;
-
-        if let Var::Int(iname) = label {
-            read_float!(alpha, Keyword::Alpha, iname, value);
-        }
-    }
-
-    let alpha = if let Some(alpha) = alpha {
+    let alpha = if let Some(alpha) = bindings.get_option_f32(Keyword::Alpha) {
         alpha
     } else {
         // no alpha was given so generate a random value
@@ -3324,6 +3031,12 @@ mod tests {
 
         is_float("(math/cos angle: 0.7)", 0.7648422);
         is_float("(math/sin angle: 0.9)", 0.7833269);
+    }
+    #[test]
+    fn dev_new_args() {
+        is_float("(math/clamp value: 3 min: 2 max: 5)", 3.0);
+        is_float("(math/clamp value: 1 min: 2 max: 5)", 2.0);
+        is_float("(math/clamp value: 8 min: 2 max: 5)", 5.0);
     }
 
 }

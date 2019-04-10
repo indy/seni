@@ -36,7 +36,7 @@
         return cachedTextDecoder.decode(getUint8Memory().subarray(ptr, ptr + len));
     }
 
-    __exports.__wbg_log_00db1e67318cc0fd = function(arg0, arg1) {
+    __exports.__wbg_log_71c040d88e754893 = function(arg0, arg1) {
         let varg0 = getStringFromWasm(arg0, arg1);
         console.log(varg0);
     };
@@ -247,32 +247,32 @@
             return wasm.bridge_get_render_packet_geo_ptr(this.ptr, arg0);
         }
         /**
-        * @returns {number}
+        * @returns {boolean}
         */
         build_traits() {
-            return wasm.bridge_build_traits(this.ptr);
+            return (wasm.bridge_build_traits(this.ptr)) !== 0;
         }
         /**
         * @param {number} arg0
-        * @returns {number}
+        * @returns {boolean}
         */
         single_genotype_from_seed(arg0) {
-            return wasm.bridge_single_genotype_from_seed(this.ptr, arg0);
+            return (wasm.bridge_single_genotype_from_seed(this.ptr, arg0)) !== 0;
         }
         /**
         * @param {number} arg0
         * @param {number} arg1
-        * @returns {number}
+        * @returns {boolean}
         */
         create_initial_generation(arg0, arg1) {
-            return wasm.bridge_create_initial_generation(this.ptr, arg0, arg1);
+            return (wasm.bridge_create_initial_generation(this.ptr, arg0, arg1)) !== 0;
         }
         /**
         * @param {number} arg0
-        * @returns {void}
+        * @returns {boolean}
         */
         genotype_move_to_buffer(arg0) {
-            return wasm.bridge_genotype_move_to_buffer(this.ptr, arg0);
+            return (wasm.bridge_genotype_move_to_buffer(this.ptr, arg0)) !== 0;
         }
         /**
         * @returns {void}
@@ -327,7 +327,7 @@
     // ISG HACK
     __exports.wasm = wasm;
 
-    __exports.__wbindgen_throw = function(ptr, len) {
+  __exports.__wbindgen_throw = function(ptr, len) {
         throw new Error(getStringFromWasm(ptr, len));
     };
 
@@ -356,6 +356,7 @@
 };
 self.wasm_bindgen = Object.assign(init, __exports);
 })();
+
 
 /*
   // copy this line into the wasm_bindgen object above whenever it's regenerated
@@ -685,7 +686,6 @@ wasm_bindgen('./sen_client_bg.wasm')
     // the build.sh has a sed command to export the wasm object
     // replace the js renderer with a rust implmentation to get rid of this hack
     // memory = wasm_bindgen.wasm.memory;
-
     const { Bridge } = wasm_bindgen;
     gState.bridge = new Bridge();
     gState.memory = wasm_bindgen.wasm.memory;

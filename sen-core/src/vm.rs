@@ -15,6 +15,7 @@
 
 use crate::colour::{Colour, ProcColourStateStruct};
 use crate::compiler::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
+use crate::ease::Easing;
 use crate::error::{Error, Result};
 use crate::focal::FocalStateStruct;
 use crate::geometry::Geometry;
@@ -25,7 +26,7 @@ use crate::native::{build_native_fn_hash, Native, NativeCallback};
 use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
-use crate::uvmapper::Mappings;
+use crate::uvmapper::{BrushType, Mappings};
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -317,6 +318,274 @@ impl Vm {
             self.debug_str += &" ".to_string();
         }
         self.debug_str += &text.to_string();
+    }
+
+    pub fn render_line(
+        &mut self,
+        from: (f32, f32),
+        to: (f32, f32),
+        width: f32,
+        from_col: &Colour,
+        to_col: &Colour,
+        brush_type: BrushType,
+        brush_subtype: usize,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+
+            self.geometry
+                .render_line(matrix, from, to, width, from_col, to_col, uvm)
+        } else {
+            Err(Error::VM("no matrix for render_line".to_string()))
+        }
+    }
+    pub fn render_rect(
+        &mut self,
+        position: (f32, f32),
+        width: f32,
+        height: f32,
+        colour: &Colour,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
+            self.geometry
+                .render_rect(matrix, position, width, height, colour, uvm)
+        } else {
+            Err(Error::VM("no matrix for render_rect".to_string()))
+        }
+    }
+
+    pub fn render_circle(
+        &mut self,
+        position: (f32, f32),
+        width: f32,
+        height: f32,
+        colour: &Colour,
+        tessellation: usize,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
+            self.geometry
+                .render_circle(matrix, position, width, height, colour, tessellation, uvm)
+        } else {
+            Err(Error::VM("no matrix for render_circle".to_string()))
+        }
+    }
+
+    pub fn render_circle_slice(
+        &mut self,
+        position: (f32, f32),
+        width: f32,
+        height: f32,
+        colour: &Colour,
+        tessellation: usize,
+        angle_start: f32,
+        angle_end: f32,
+        inner_width: f32,
+        inner_height: f32,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
+            self.geometry.render_circle_slice(
+                matrix,
+                position,
+                width,
+                height,
+                colour,
+                tessellation,
+                angle_start,
+                angle_end,
+                inner_width,
+                inner_height,
+                uvm,
+            )
+        } else {
+            Err(Error::VM("no matrix for render_circle_slice".to_string()))
+        }
+    }
+
+    pub fn render_poly(&mut self, coords: &[Var], colours: &[Var]) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
+            self.geometry.render_poly(matrix, coords, colours, uvm)
+        } else {
+            Err(Error::VM("no matrix for render_poly".to_string()))
+        }
+    }
+
+    pub fn render_quadratic(
+        &mut self,
+        coords: &[f32; 6],
+        width_start: f32,
+        width_end: f32,
+        width_mapping: Easing,
+        t_start: f32,
+        t_end: f32,
+        colour: &Colour,
+        tessellation: usize,
+        brush_type: BrushType,
+        brush_subtype: usize,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+
+            self.geometry.render_quadratic(
+                matrix,
+                coords,
+                width_start,
+                width_end,
+                width_mapping,
+                t_start,
+                t_end,
+                colour,
+                tessellation,
+                uvm,
+            )
+        } else {
+            Err(Error::VM("no matrix for render_quadratic".to_string()))
+        }
+    }
+
+    pub fn render_bezier(
+        &mut self,
+        coords: &[f32; 8],
+        width_start: f32,
+        width_end: f32,
+        width_mapping: Easing,
+        t_start: f32,
+        t_end: f32,
+        colour: &Colour,
+        tessellation: usize,
+        brush_type: BrushType,
+        brush_subtype: usize,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+
+            self.geometry.render_bezier(
+                matrix,
+                coords,
+                width_start,
+                width_end,
+                width_mapping,
+                t_start,
+                t_end,
+                colour,
+                tessellation,
+                uvm,
+            )
+        } else {
+            Err(Error::VM("no matrix for render_bezier".to_string()))
+        }
+    }
+
+    pub fn render_bezier_bulging(
+        &mut self,
+        coords: &[f32; 8],
+        line_width: f32,
+        t_start: f32,
+        t_end: f32,
+        colour: &Colour,
+        tessellation: usize,
+        brush_type: BrushType,
+        brush_subtype: usize,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+
+            self.geometry.render_bezier_bulging(
+                matrix,
+                coords,
+                line_width,
+                t_start,
+                t_end,
+                colour,
+                tessellation,
+                uvm,
+            )
+        } else {
+            Err(Error::VM("no matrix for render_bezier_bulging".to_string()))
+        }
+    }
+
+    pub fn render_stroked_bezier(
+        &mut self,
+        tessellation: usize,
+        coords: &[f32; 8],
+        stroke_tessellation: usize,
+        stroke_noise: f32,
+        stroke_line_width_start: f32,
+        stroke_line_width_end: f32,
+        colour: &Colour,
+        colour_volatility: f32,
+        seed: f32,
+        mapping: Easing,
+        brush_type: BrushType,
+        brush_subtype: usize,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+
+            self.geometry.render_stroked_bezier(
+                matrix,
+                tessellation,
+                coords,
+                stroke_tessellation,
+                stroke_noise,
+                stroke_line_width_start,
+                stroke_line_width_end,
+                colour,
+                colour_volatility,
+                seed,
+                mapping,
+                uvm,
+            )
+        } else {
+            Err(Error::VM("no matrix for render_stroked_bezier".to_string()))
+        }
+    }
+
+    pub fn render_stroked_bezier_rect(
+        &mut self,
+        position: (f32, f32),
+        width: f32,
+        height: f32,
+        volatility: f32,
+        overlap: f32,
+        iterations: f32,
+        seed: i32,
+        tessellation: usize,
+        stroke_tessellation: usize,
+        stroke_noise: f32,
+        colour: &Colour,
+        colour_volatility: f32,
+        brush_type: BrushType,
+        brush_subtype: usize,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+
+            self.geometry.render_stroked_bezier_rect(
+                matrix,
+                position,
+                width,
+                height,
+                volatility,
+                overlap,
+                iterations,
+                seed,
+                tessellation,
+                stroke_tessellation,
+                stroke_noise,
+                colour,
+                colour_volatility,
+                uvm,
+            )
+        } else {
+            Err(Error::VM(
+                "no matrix for render_stroked_bezier_rect".to_string(),
+            ))
+        }
     }
 
     pub fn set_prng_state(&mut self, prng: PrngStateStruct) {
