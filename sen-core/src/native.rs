@@ -649,12 +649,7 @@ pub fn nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
             if *iname == Keyword::From as i32 {
                 from = Some(value);
             }
-
-            if *iname == Keyword::N as i32 {
-                if let Var::Float(f) = value {
-                    n = Some(*f as usize);
-                }
-            }
+            read_float_as_usize!(n, Keyword::N, iname, value);
         }
     }
 
