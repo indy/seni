@@ -1,5 +1,5 @@
 [package]
-name = "sen-client"
+name = "client"
 version = "4.1.0"
 authors = ["Inderjit Gill <email@indy.io>"]
 edition = "2018"
@@ -13,7 +13,7 @@ default = ["console_error_panic_hook"]
 [dependencies]
 cfg-if = "0.1.2"
 wasm-bindgen = "0.2"
-sen-core = { path = "../sen-core" }
+core = { path = "../core" }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

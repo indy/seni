@@ -1,5 +1,5 @@
 use clap::{value_t, App, Arg, ArgMatches};
-use sen_core::*;
+use core::*;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -10,7 +10,7 @@ pub enum NativeError {
     GeneralError,
     NoneError,
     IoError(IoError),
-    SenError(sen_core::error::Error),
+    SenError(core::error::Error),
 }
 
 impl From<IoError> for NativeError {
@@ -19,8 +19,8 @@ impl From<IoError> for NativeError {
     }
 }
 
-impl From<sen_core::error::Error> for NativeError {
-    fn from(e: sen_core::error::Error) -> NativeError {
+impl From<core::error::Error> for NativeError {
+    fn from(e: core::error::Error) -> NativeError {
         NativeError::SenError(e)
     }
 }
@@ -28,7 +28,7 @@ impl From<sen_core::error::Error> for NativeError {
 pub type Result<T> = ::std::result::Result<T, NativeError>;
 
 fn main() {
-    let matches = App::new("sen-native")
+    let matches = App::new("seni-cli")
         .version("0.1.0")
         .author("Inderjit Gill <email@indy.io>")
         .about("native cli build of seni")

@@ -18,7 +18,7 @@ struct Piece {
 // }
 
 fn favicon_c(_req: &HttpRequest) -> Result<fs::NamedFile> {
-    Ok(fs::NamedFile::open("../sen-client/www/favicon.ico")?)
+    Ok(fs::NamedFile::open("../client/www/favicon.ico")?)
 }
 
 fn gallery(req: &HttpRequest) -> Result<HttpResponse> {
@@ -74,7 +74,7 @@ fn main() {
     println!("bind_addr is {}", bind_addr);
 
     let sys = actix::System::new("seni-server");
-    let home = "../sen-client/www";
+    let home = "../client/www";
 
     server::new(move || {
         App::new()

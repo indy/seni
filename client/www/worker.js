@@ -36,7 +36,7 @@
         return cachedTextDecoder.decode(getUint8Memory().subarray(ptr, ptr + len));
     }
 
-    __exports.__wbg_log_71c040d88e754893 = function(arg0, arg1) {
+    __exports.__wbg_log_d456f8db0027ba21 = function(arg0, arg1) {
         let varg0 = getStringFromWasm(arg0, arg1);
         console.log(varg0);
     };
@@ -327,13 +327,13 @@
     // ISG HACK
     __exports.wasm = wasm;
 
-  __exports.__wbindgen_throw = function(ptr, len) {
+    __exports.__wbindgen_throw = function(ptr, len) {
         throw new Error(getStringFromWasm(ptr, len));
     };
 
     function init(path_or_module) {
         let instantiation;
-        const imports = { './sen_client': __exports };
+        const imports = { './client': __exports };
         if (path_or_module instanceof WebAssembly.Module) {
             instantiation = WebAssembly.instantiate(path_or_module, imports)
             .then(instance => {
@@ -356,7 +356,6 @@
 };
 self.wasm_bindgen = Object.assign(init, __exports);
 })();
-
 
 /*
   // copy this line into the wasm_bindgen object above whenever it's regenerated
@@ -680,7 +679,7 @@ addEventListener('message', e => {
   }
 });
 
-wasm_bindgen('./sen_client_bg.wasm')
+wasm_bindgen('./client_bg.wasm')
   .then(() => {
     // hack to access the memory
     // the build.sh has a sed command to export the wasm object

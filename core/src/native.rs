@@ -2588,7 +2588,7 @@ pub fn focal_build_generic(
             mapping,
             position: bindings.get_v2d(Keyword::Position)?,
             distance: bindings.get_f32(Keyword::Distance)?,
-            transform_pos: bindings.get_kw(Keyword::TransformPosition)? == Keyword::True
+            transform_pos: bindings.get_kw(Keyword::TransformPosition)? == Keyword::True,
         }))
     } else {
         Err(Error::Bind("focal_build_generic".to_string()))

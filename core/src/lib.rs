@@ -25,7 +25,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 /*!
-The sen-core crate provides the basic functionality of the Seni system
+The core crate provides the basic functionality of the Seni system
 */
 
 mod colour;

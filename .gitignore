@@ -1,16 +1,4 @@
-serve
-serve.exe
-seni-server
-seni-server.exe
-
 .DS_Store
-
-/.vs
-
-/client/www/dist
-/client/www/app
-
-/server/target
 
 # Logs
 logs
@@ -20,12 +8,3 @@ logs
 pids
 *.pid
 *.seed
-
-# Dependency directory
-/core/node_modules
-/core/test
-/core/test.exe
-/client/node_modules
-/client/www/node_modules
-coverage
-tmp

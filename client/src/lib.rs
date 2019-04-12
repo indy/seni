@@ -23,11 +23,11 @@ mod utils;
 use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
-use sen_core::{
+use core::{
     build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets,
     next_generation, simplified_unparse, unparse,
 };
-use sen_core::{Env, Genotype, Packable, TraitList, Vm};
+use core::{Env, Genotype, Packable, TraitList, Vm};
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
