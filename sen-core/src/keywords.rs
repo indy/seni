@@ -416,16 +416,6 @@ impl Packable for Keyword {
     }
 }
 
-pub fn string_to_keyword_hash() -> HashMap<String, Keyword> {
-    let mut hm: HashMap<String, Keyword> = HashMap::new();
-
-    for kw in Keyword::iter() {
-        hm.insert(kw.to_string(), kw);
-    }
-
-    hm
-}
-
 pub fn i32_to_keyword_hash() -> HashMap<i32, Keyword> {
     let mut hm: HashMap<i32, Keyword> = HashMap::new();
 

@@ -20,7 +20,7 @@ use std::str::FromStr;
 use crate::colour::{Colour, ColourFormat};
 use crate::error::{Error, Result};
 use crate::gene::Genotype;
-use crate::keywords::{i32_to_keyword_hash, string_to_keyword_hash, Keyword};
+use crate::keywords::{i32_to_keyword_hash, Keyword};
 use crate::mathutil;
 use crate::native::Native;
 use crate::opcodes::{opcode_stack_offset, Opcode};
@@ -833,7 +833,6 @@ impl Compilation {
 }
 
 pub struct Compiler {
-    string_to_keyword: HashMap<String, Keyword>,
     i32_to_keyword: HashMap<i32, Keyword>,
     use_genes: bool,
 }
@@ -841,7 +840,6 @@ pub struct Compiler {
 impl Compiler {
     pub fn new() -> Self {
         Compiler {
-            string_to_keyword: string_to_keyword_hash(),
             i32_to_keyword: i32_to_keyword_hash(),
             use_genes: false,
         }
