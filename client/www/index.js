@@ -1355,6 +1355,19 @@ class PromiseWorker {
   constructor(id, workerUrl) {
     const self = this;
 
+    // <2019-04-13 Sat>
+    // would be good to use module syntax in the worker.js file.
+    // this would enable a more modern way of instantiating the wasm module
+    // see https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html?highlight=export,memory#without-a-bundler
+    //
+    // This should be enabled with:
+    // this.worker = new Worker(workerUrl, {type:'module'});
+    //
+    // unfortunately there is a bug in Chromium preventing this:
+    // https://bugs.chromium.org/p/chromium/issues/detail?id=680046
+    // original info from:
+    // https://www.codedread.com/blog/archives/2017/10/19/web-workers-can-be-es6-modules-too/
+
     this.worker = new Worker(workerUrl);
     this.id = id;
     this.initialised = false; // true when the worker has loaded it's wasm file
