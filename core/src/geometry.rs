@@ -745,7 +745,7 @@ impl Geometry {
         let lab_l = lab.e0;
 
         for i in 0..tessellation {
-            let tvals0 = (i + 0) as f32 * si_unit;
+            let tvals0 = i as f32 * si_unit;
             let tvals1 = (i + 1) as f32 * si_unit;
             let tvals2 = (i + 2) as f32 * si_unit;
 

@@ -147,12 +147,18 @@ pub struct Genotype {
     pub current_gene_index: usize,
 }
 
-impl Genotype {
-    pub fn new() -> Self {
+impl Default for Genotype {
+    fn default() -> Genotype {
         Genotype {
             genes: Vec::new(),
             current_gene_index: 0,
         }
+    }
+}
+
+impl Genotype {
+    pub fn new() -> Self {
+        Default::default()
     }
 
     pub fn num_genes(&self) -> usize {
@@ -165,7 +171,7 @@ impl Genotype {
         seed: i32,
     ) -> Result<Vec<Self>> {
         let mut genotypes: Vec<Genotype> = Vec::new();
-        let mut prng = PrngStateStruct::new(seed, 1.0, 655536.0);
+        let mut prng = PrngStateStruct::new(seed, 1.0, 655_536.0);
 
         for _ in 0..population_size {
             let genotype_seed = prng.prng_f32_defined_range() as i32;
@@ -287,7 +293,7 @@ impl Packable for Genotype {
 }
 
 pub fn next_generation(
-    parents: &Vec<Genotype>,
+    parents: &[Genotype],
     population_size: usize,
     mutation_rate: f32,
     rng_seed: i32,

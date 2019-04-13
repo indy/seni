@@ -586,12 +586,10 @@ impl<'a> ArgBindings<'a> {
                 if let Var::Colour(col) = var {
                     return Ok(*col);
                 }
-            } else {
-                if let Some(var) = self.i32kw_to_var.get(&(kw_fallback as i32)) {
-                    if let Some(var) = var {
-                        if let Var::Colour(col) = var {
-                            return Ok(*col);
-                        }
+            } else if let Some(var) = self.i32kw_to_var.get(&(kw_fallback as i32)) {
+                if let Some(var) = var {
+                    if let Var::Colour(col) = var {
+                        return Ok(*col);
                     }
                 }
             }

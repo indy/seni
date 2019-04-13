@@ -60,12 +60,11 @@ impl Packable for Trait {
 
         let (program, rem) = Program::unpack(rem)?;
 
-        let new_trait;
-        if within_vector {
-            new_trait = Trait::new(initial_value, program, Some(index));
+        let new_trait = if within_vector {
+            Trait::new(initial_value, program, Some(index))
         } else {
-            new_trait = Trait::new(initial_value, program, None);
-        }
+            Trait::new(initial_value, program, None)
+        };
 
         Ok((new_trait, rem))
     }
@@ -93,7 +92,7 @@ impl Trait {
 
     fn compile(
         node: &Node,
-        parameter_ast: &Vec<Node>,
+        parameter_ast: &[Node],
         global_mapping: &BTreeMap<i32, i32>,
         index: Option<usize>,
     ) -> Result<Self> {
@@ -219,7 +218,7 @@ impl TraitList {
         Ok(())
     }
 
-    fn add_multiple_traits(&mut self, nodes: &Vec<Node>, meta: &NodeMeta) -> Result<()> {
+    fn add_multiple_traits(&mut self, nodes: &[Node], meta: &NodeMeta) -> Result<()> {
         let mut i: usize = 0;
         for n in nodes.iter() {
             match n {

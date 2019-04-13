@@ -181,7 +181,7 @@ fn simplified_unparse_ast_node(cursor: &mut String, word_lut: &WordLut, ast: &No
     }
 }
 
-fn index_of_quote_keyword(ns: &Vec<Node>) -> Option<usize> {
+fn index_of_quote_keyword(ns: &[Node]) -> Option<usize> {
     for (i, n) in ns.iter().enumerate() {
         if let Node::Name(_, iname, _) = n {
             if *iname == Keyword::Quote as i32 {
@@ -206,7 +206,7 @@ fn format_node_value(node: &Node) -> Result<String> {
 }
 
 fn count_decimals(s: &str) -> usize {
-    if let Some(index) = s.find(".") {
+    if let Some(index) = s.find('.') {
         s.len() - index - 1
     } else {
         0
@@ -271,11 +271,11 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
                         Node::Float(_, s, _) => {
                             let num_decimals = count_decimals(s);
 
-                            if used_x == false {
+                            if used_x {
+                                res.push_str(&format!("{:.*}", num_decimals, y));
+                            } else {
                                 res.push_str(&format!("{:.*}", num_decimals, x));
                                 used_x = true;
-                            } else {
-                                res.push_str(&format!("{:.*}", num_decimals, y));
                             }
                         }
                         _ => {

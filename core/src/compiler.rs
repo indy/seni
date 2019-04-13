@@ -930,7 +930,7 @@ impl Compiler {
     fn register_top_level_fns(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<&Node>,
+        ast: &[&Node],
     ) -> Result<()> {
         // clear all data
         compilation.fn_info = Vec::new();
@@ -1012,7 +1012,7 @@ impl Compiler {
     fn register_top_level_defines(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<&Node>,
+        ast: &[&Node],
     ) -> Result<()> {
         let define_keyword_string = Keyword::Define.to_string();
 
@@ -1034,7 +1034,7 @@ impl Compiler {
             if !nodes.is_empty() {
                 let define_keyword = &nodes[0];
                 if let Node::Name(text, _, _) = define_keyword {
-                    if text == &define_keyword_string {
+                    if text == define_keyword_string {
                         let mut defs = &nodes[1..];
                         while defs.len() > 1 {
                             if let Err(e) = self.register_names_in_define(compilation, &defs[0]) {
@@ -1219,7 +1219,7 @@ impl Compiler {
     fn compile_common_prologue(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<&Node>,
+        ast: &[&Node],
     ) -> Result<()> {
         compilation.clear_global_mappings()?;
         compilation.clear_local_mappings()?;
@@ -1235,7 +1235,7 @@ impl Compiler {
     fn compile_common_top_level_fns(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<&Node>,
+        ast: &[&Node],
     ) -> Result<()> {
         // a placeholder, filled in at the end of this function
         compilation.emit_opcode(Opcode::JUMP)?;
@@ -1269,7 +1269,7 @@ impl Compiler {
     fn compile_common_top_level_defines(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<&Node>,
+        ast: &[&Node],
     ) -> Result<()> {
         for n in ast.iter() {
             if self.is_list_beginning_with(n, Keyword::Define) {
@@ -1285,7 +1285,7 @@ impl Compiler {
     fn compile_common_top_level_forms(
         &self,
         compilation: &mut Compilation,
-        ast: &Vec<&Node>,
+        ast: &[&Node],
     ) -> Result<()> {
         for n in ast.iter() {
             if !self.is_list_beginning_with(n, Keyword::Define)

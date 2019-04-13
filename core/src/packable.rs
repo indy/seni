@@ -33,9 +33,9 @@ impl Mule {
 
     pub fn pack_bool(cursor: &mut String, val: bool) {
         if val {
-            cursor.push_str(&format!("1"));
+            cursor.push_str(&"1".to_string());
         } else {
-            cursor.push_str(&format!("0"));
+            cursor.push_str(&"0".to_string());
         }
     }
 
@@ -80,7 +80,7 @@ impl Mule {
     }
 
     pub fn pack_label(cursor: &mut String, val: &str) {
-        cursor.push_str(&format!("{}", val));
+        cursor.push_str(&val.to_string());
     }
 
     pub fn pack_space(cursor: &mut String) {

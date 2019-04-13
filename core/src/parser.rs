@@ -202,7 +202,7 @@ impl Node {
             | Node::Label(_, _, meta)
             | Node::String(_, meta)
             | Node::Whitespace(_, meta)
-            | Node::Comment(_, meta) => return meta.is_some(),
+            | Node::Comment(_, meta) => meta.is_some(),
         }
     }
 

@@ -189,7 +189,7 @@ pub fn perlin(x: f32, y: f32, z: f32) -> f32 {
     let ba = PERMUTATIONS[b] + zf;
     let bb = PERMUTATIONS[b + 1] + zf;
 
-    return lerp(
+    lerp(
         w,
         lerp(
             v,
@@ -217,7 +217,7 @@ pub fn perlin(x: f32, y: f32, z: f32) -> f32 {
                 grad(PERMUTATIONS[bb + 1], x - 1.0, y - 1.0, z - 1.0),
             ),
         ),
-    );
+    )
 }
 
 #[cfg(test)]
