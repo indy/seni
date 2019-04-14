@@ -20,7 +20,7 @@ use crate::keywords::Keyword;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
 use crate::trait_list::{Trait, TraitList};
-use crate::vm::{Env, Var, Vm};
+use crate::vm::{Var, Vm};
 
 /*
 GeneVar is a subset of the Var enum. Since Gene is a member of NodeMeta it
@@ -56,8 +56,6 @@ impl Gene {
     }
 
     pub fn build_from_trait(vm: &mut Vm, t: &Trait) -> Result<Self> {
-        let env = Env::new();
-
         vm.reset();
 
         vm.building_with_trait_within_vector = t.within_vector;
@@ -65,11 +63,11 @@ impl Gene {
 
         // setup the env with the global variables in preamble
         let preamble = compile_preamble()?;
-        vm.interpret(&env, &preamble)?;
+        vm.interpret(&preamble)?;
 
         vm.ip = 0;
 
-        vm.interpret(&env, &t.program)?;
+        vm.interpret(&t.program)?;
         let var = vm.top_stack_value()?;
 
         vm.building_with_trait_within_vector = false;

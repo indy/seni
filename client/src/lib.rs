@@ -27,7 +27,15 @@ use core::{
     build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets,
     next_generation, simplified_unparse, unparse,
 };
-use core::{Env, Genotype, Packable, TraitList, Vm};
+use core::{Genotype, Packable, TraitList, Vm};
+
+const LOG_METHODS: bool = false;
+
+fn debug_log(msg: &str) {
+    if LOG_METHODS {
+        log(msg);
+    }
+}
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -49,7 +57,6 @@ extern "C" {
 #[derive(Default)]
 pub struct Bridge {
     vm: Vm,
-    env: Env,
 
     source_buffer: String,
     out_source_buffer: String,
@@ -67,7 +74,6 @@ impl Bridge {
     pub fn new() -> Bridge {
         Bridge {
             vm: Vm::new(),
-            env: Env::new(),
 
             source_buffer: "source buffer".to_string(),
             out_source_buffer: "out_source buffer".to_string(),

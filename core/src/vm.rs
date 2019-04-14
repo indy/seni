@@ -177,24 +177,6 @@ impl Var {
     }
 }
 
-// todo: what is the point of Env?
-pub struct Env {
-    function_ptr: i32,
-    // word_lut: WordLut,
-}
-
-impl Env {
-    pub fn new() -> Self {
-        Default::default()
-    }
-}
-
-impl Default for Env {
-    fn default() -> Env {
-        Env { function_ptr: 42 }
-    }
-}
-
 /// The Seni VM
 /// the c-impl of vm (sen_vm) had pointers to env and program. these were required
 /// in case any of the native functions had to invoke vm_interpret.
@@ -665,10 +647,7 @@ impl Vm {
             self.stack[self.sp - 1] = Var::Int(0);
         }
 
-        // todo: remove this Env
-        let env = Env::new();
-
-        self.interpret(&env, program)?;
+        self.interpret(program)?;
 
         Ok(())
     }
@@ -684,10 +663,7 @@ impl Vm {
         // leap to a location
         self.ip = fn_info.body_address;
 
-        // todo: remove this Env
-        let env = Env::new();
-
-        self.interpret(&env, program)?;
+        self.interpret(program)?;
 
         // the above vm_interpret will eventually hit a RET, pop the frame,
         // push the function's result onto the stack and then jump to the stop_address
@@ -1553,7 +1529,7 @@ impl Vm {
 
     // executes a program on a vm
     // returns Ok if we reached a STOP opcode
-    pub fn interpret(&mut self, _env: &Env, program: &Program) -> Result<()> {
+    pub fn interpret(&mut self, program: &Program) -> Result<()> {
         // sp == next free stack index
         // do sp_inc or sp_dec before accessing values as these funcs do sanity checks
         // means that a pop (via sp_dec) can reference stack[sp]
@@ -1630,13 +1606,11 @@ pub mod tests {
     use crate::parser::parse;
 
     pub fn vm_run(vm: &mut Vm, s: &str) {
-        let env = Env::new();
-
         let (ast, _word_lut) = parse(s).unwrap();
         let program = compile_program(&ast).unwrap();
 
         vm.reset();
-        vm.interpret(&env, &program).unwrap();
+        vm.interpret(&program).unwrap();
     }
 
     pub fn vm_exec(mut vm: &mut Vm, s: &str) -> Var {

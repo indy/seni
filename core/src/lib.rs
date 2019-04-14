@@ -62,20 +62,18 @@ pub use crate::gene::{next_generation, Genotype};
 pub use crate::packable::Packable;
 pub use crate::trait_list::TraitList;
 pub use crate::unparser::{simplified_unparse, unparse};
-pub use crate::vm::{Env, Vm};
+pub use crate::vm::Vm;
 
 pub fn run_program_with_preamble(vm: &mut Vm, program: &Program) -> Result<Var> {
-    let env = Env::new();
-
     vm.reset();
 
     // setup the env with the global variables in preamble
     let preamble = compile_preamble()?;
-    vm.interpret(&env, &preamble)?;
+    vm.interpret(&preamble)?;
 
     vm.ip = 0;
 
-    vm.interpret(&env, &program)?;
+    vm.interpret(&program)?;
     vm.top_stack_value()
 }
 
