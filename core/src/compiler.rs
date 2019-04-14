@@ -1344,7 +1344,7 @@ impl Compiler {
             Node::Name(text, _, _) => {
                 let iname = self.get_iname(ast)?;
 
-                return if self.compile_user_defined_name(compilation, ast)? {
+                return if self.compile_user_defined_name(compilation, iname)? {
                     Ok(())
                 } else if let Some(kw) = self.i32_to_keyword.get(&iname) {
                     compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
@@ -1387,12 +1387,9 @@ impl Compiler {
                     return Ok(());
                 }
 
-                let found_name = self.compile_user_defined_name(compilation, &children[0])?;
-                if found_name {
+                if self.compile_user_defined_name(compilation, iname)? {
                     return Ok(());
-                }
-
-                if let Some(kw) = self.i32_to_keyword.get(&iname) {
+                } else if let Some(kw) = self.i32_to_keyword.get(&iname) {
                     match *kw {
                         Keyword::Define => {
                             self.compile_define(compilation, &children[1..], Mem::Local)?
@@ -1462,10 +1459,7 @@ impl Compiler {
 
                         }
                     }
-                }
-
-                // check native api set
-                if let Some(native) = self.i32_to_native.get(&iname) {
+                } else if let Some(native) = self.i32_to_native.get(&iname) {
                     // NATIVE
                     let mut num_args = 0;
                     let mut label_vals = &children[1..];
@@ -2570,39 +2564,36 @@ impl Compiler {
         }
     }
 
-    fn compile_user_defined_name(&self, compilation: &mut Compilation, ast: &Node) -> Result<bool> {
-        if let Node::Name(_, _, _) = ast {
-            let iname = self.get_iname(ast)?;
+    fn compile_user_defined_name(&self, compilation: &mut Compilation, iname: i32) -> Result<bool> {
+        if let Some(local_mapping) = compilation.get_local_mapping(iname) {
+            let val = *local_mapping;
+            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, val)?;
+            return Ok(true);
+        }
 
-            if let Some(local_mapping) = compilation.get_local_mapping(iname) {
-                let val = *local_mapping;
-                compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, val)?;
-                return Ok(true);
+        // check arguments if we're in a function
+        if let Some(current_fn_info_index) = compilation.current_fn_info_index {
+            let maybe_argument_mapping;
+            {
+                let fn_info = &compilation.fn_info[current_fn_info_index];
+                maybe_argument_mapping = fn_info.get_argument_mapping(iname);
             }
-
-            // check arguments if we're in a function
-            if let Some(current_fn_info_index) = compilation.current_fn_info_index {
-                let maybe_argument_mapping;
-                {
-                    let fn_info = &compilation.fn_info[current_fn_info_index];
-                    maybe_argument_mapping = fn_info.get_argument_mapping(iname);
-                }
-                if let Some(argument_mapping) = maybe_argument_mapping {
-                    compilation.emit_opcode_mem_i32(
-                        Opcode::LOAD,
-                        Mem::Argument,
-                        argument_mapping as i32,
-                    )?;
-                    return Ok(true);
-                }
-            }
-
-            if let Some(global_mapping) = compilation.get_global_mapping(iname) {
-                let val = *global_mapping;
-                compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Global, val)?;
+            if let Some(argument_mapping) = maybe_argument_mapping {
+                compilation.emit_opcode_mem_i32(
+                    Opcode::LOAD,
+                    Mem::Argument,
+                    argument_mapping as i32,
+                )?;
                 return Ok(true);
             }
         }
+
+        if let Some(global_mapping) = compilation.get_global_mapping(iname) {
+            let val = *global_mapping;
+            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Global, val)?;
+            return Ok(true);
+        }
+
 
         Ok(false)
     }
