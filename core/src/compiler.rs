@@ -15,14 +15,13 @@
 
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
-use std::str::FromStr;
 
 use crate::colour::{Colour, ColourFormat};
 use crate::error::{Error, Result};
 use crate::gene::Genotype;
 use crate::keywords::{i32_to_keyword_hash, Keyword};
 use crate::mathutil;
-use crate::native::Native;
+use crate::native::{i32_to_native_hash, Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
@@ -834,6 +833,7 @@ impl Compilation {
 
 pub struct Compiler {
     i32_to_keyword: HashMap<i32, Keyword>,
+    i32_to_native: HashMap<i32, Native>,
     use_genes: bool,
 }
 
@@ -841,6 +841,7 @@ impl Compiler {
     pub fn new() -> Self {
         Compiler {
             i32_to_keyword: i32_to_keyword_hash(),
+            i32_to_native: i32_to_native_hash(),
             use_genes: false,
         }
     }
@@ -1341,22 +1342,22 @@ impl Compiler {
                 }
             }
             Node::Name(text, _, _) => {
-                let found_name = self.compile_user_defined_name(compilation, ast)?;
-                if found_name {
-                    return Ok(());
+                let iname = self.get_iname(ast)?;
+
+                return if self.compile_user_defined_name(compilation, ast)? {
+                    Ok(())
+                } else if let Some(kw) = self.i32_to_keyword.get(&iname) {
+                    compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
+                    Ok(())
+                } else if let Some(native) = self.i32_to_native.get(&iname) {
+                    compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, 0)?;
+                    Ok(())
                 } else {
-                    // the name should refer to a keyword
-                    let iname = self.get_iname(ast)?;
-                    if let Some(kw) = self.i32_to_keyword.get(&iname) {
-                        compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
-                        return Ok(());
-                    } else {
-                        return Err(Error::Compiler(format!(
-                            "compile: can't find user defined name or keyword: {}",
-                            text
-                        )));
-                    }
-                }
+                    Err(Error::Compiler(format!(
+                        "compile: can't find user defined name or keyword: {}",
+                        text
+                    )))
+                };
             }
             _ => return Err(Error::Compiler(format!("compile ast: {:?}", ast))),
         }
@@ -1377,7 +1378,9 @@ impl Compiler {
                 let kids = only_semantic_nodes(kids);
                 self.compile_list(compilation, &kids[..])?
             }
-            Node::Name(text, iname, _) => {
+            Node::Name(_, _, _) => {
+                let iname = self.get_iname(&children[0])?;
+
                 if let Some(fn_info_index) = compilation.get_fn_info_index(&children[0]) {
                     // todo: get_fn_info_index is re-checking that this is a Node::Name
                     self.compile_fn_invocation(compilation, &children[1..], fn_info_index)?;
@@ -1389,7 +1392,7 @@ impl Compiler {
                     return Ok(());
                 }
 
-                if let Some(kw) = self.i32_to_keyword.get(iname) {
+                if let Some(kw) = self.i32_to_keyword.get(&iname) {
                     match *kw {
                         Keyword::Define => {
                             self.compile_define(compilation, &children[1..], Mem::Local)?
@@ -1462,7 +1465,7 @@ impl Compiler {
                 }
 
                 // check native api set
-                if let Ok(native) = Native::from_str(text) {
+                if let Some(native) = self.i32_to_native.get(&iname) {
                     // NATIVE
                     let mut num_args = 0;
                     let mut label_vals = &children[1..];
@@ -1478,7 +1481,7 @@ impl Compiler {
 
                         label_vals = &label_vals[2..];
                     }
-                    compilation.emit_opcode_native_i32(Opcode::NATIVE, native, num_args)?;
+                    compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, num_args)?;
 
                     // modify opcode_offset according to how many args were given
                     compilation.opcode_offset -= (num_args * 2) - 1;

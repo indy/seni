@@ -32,6 +32,7 @@ use std::cell::{RefCell, RefMut};
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
 pub type NativeCallback = fn(&mut Vm, &Program, usize) -> Result<Var>;
@@ -282,6 +283,16 @@ impl Packable for Native {
 
         Ok((res, &cursor[ns..]))
     }
+}
+
+pub fn i32_to_native_hash() -> HashMap<i32, Native> {
+    let mut hm: HashMap<i32, Native> = HashMap::new();
+
+    for n in Native::iter() {
+        hm.insert(n as i32, n);
+    }
+
+    hm
 }
 
 pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {

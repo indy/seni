@@ -344,15 +344,32 @@ mod tests {
     use super::*;
     use crate::colour::*;
     use crate::parser::parse;
+    use crate::compiler::{BytecodeArg, Program};
     use crate::{compile_and_execute, compile_program_with_genotype, run_program_with_preamble};
 
-    pub fn run_with_seeded_genotype(s: &str, seed: i32) -> Result<(Var, Genotype)> {
+    use crate::native::Native;
+    use crate::opcodes::Opcode;
+
+    pub fn program_with_seeded_genotype(s: &str, seed: i32) -> Result<(Program, Genotype)> {
         // todo: cache the preamble program
         let (mut ast, _word_lut) = parse(s)?;
 
         let trait_list = TraitList::compile(&ast)?;
         let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
         let program = compile_program_with_genotype(&mut ast, &mut genotype)?;
+
+        Ok((program, genotype))
+    }
+
+    pub fn run_with_seeded_genotype(s: &str, seed: i32) -> Result<(Var, Genotype)> {
+        let (program, genotype) = program_with_seeded_genotype(s, seed)?;
+
+        // // todo: cache the preamble program
+        // let (mut ast, _word_lut) = parse(s)?;
+
+        // let trait_list = TraitList::compile(&ast)?;
+        // let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
+        // let program = compile_program_with_genotype(&mut ast, &mut genotype)?;
 
         let mut vm = Vm::new();
         let var = run_program_with_preamble(&mut vm, &program)?;
@@ -547,6 +564,43 @@ mod tests {
             let (res, genotype) = run_with_seeded_genotype(s, 45).unwrap(); // 225
             assert_eq!(genotype.genes.len(), 1);
             is_float(&res, 15.6);
+        }
+    }
+
+    fn assert_native_opcode_in_program(program: &Program, native: Native) {
+        // find the first NATIVE opcode in the program and check if it's calling the given native function
+        let mut iter = program.code.iter();
+        if let Some(res) = iter.find(|&bc| bc.op == Opcode::NATIVE) {
+            if let BytecodeArg::Native(n) = res.arg0 {
+                assert_eq!(native, n, "program should call native function {}", native);
+            } else {
+                assert!(false, format!("arg fail for {} in {}", native, program));
+            }
+        } else {
+            assert!(false, format!("find fail for {} in {}", native, program));
+        }
+    }
+
+    #[test]
+    fn gen_select_natives() {
+        let s = "({rect (gen/select from: '(rect circle circle-slice))} position: [100 100])";
+        {
+            // dbg!(Native::Rect as i32);
+            // seed 6 == genotype[0].name: 305  Rect
+            let (program, _genotype) = program_with_seeded_genotype(s, 6).unwrap();
+            assert_native_opcode_in_program(&program, Native::Rect);
+        }
+        {
+            // dbg!(Native::Circle as i32);
+            // seed 5 == genotype[0].name: 306  Circle
+            let (program, _genotype) = program_with_seeded_genotype(s, 5).unwrap();
+            assert_native_opcode_in_program(&program, Native::Circle);
+        }
+        {
+            // dbg!(Native::CircleSlice as i32);
+            // seed 14 == genotype[0].name: 307  CircleSlice
+            let (program, _genotype) = program_with_seeded_genotype(s, 14).unwrap();
+            assert_native_opcode_in_program(&program, Native::CircleSlice);
         }
     }
 
