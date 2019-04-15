@@ -18,8 +18,6 @@
     allow(clippy::many_single_char_names, clippy::too_many_arguments)
 )]
 
-mod utils;
-
 use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
@@ -29,11 +27,32 @@ use core::{
 };
 use core::{Genotype, Packable, TraitList, Vm};
 
-const LOG_METHODS: bool = false;
+use log::{info, trace, error};
 
-fn debug_log(msg: &str) {
-    if LOG_METHODS {
-        log(msg);
+cfg_if! {
+    // When the `console_error_panic_hook` feature is enabled, we can call the
+    // `set_panic_hook` function at least once during initialization, and then
+    // we will get better error messages if our code ever panics.
+    //
+    // For more details see
+    // https://github.com/rustwasm/console_error_panic_hook#readme
+    if #[cfg(feature = "console_error_panic_hook")] {
+        extern crate console_error_panic_hook;
+        pub use self::console_error_panic_hook::set_once as set_panic_hook;
+    } else {
+        #[inline]
+        pub fn set_panic_hook() {}
+    }
+}
+
+cfg_if! {
+    if #[cfg(feature = "console_log")] {
+        fn init_log() {
+            use log::Level;
+            console_log::init_with_level(Level::Trace).expect("error initializing log");
+        }
+    } else {
+        fn init_log() {}
     }
 }
 
@@ -45,12 +64,6 @@ cfg_if! {
         #[global_allocator]
         static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
     }
-}
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
 }
 
 #[wasm_bindgen]
@@ -66,6 +79,12 @@ pub struct Bridge {
     genotype_list: Vec<Genotype>,
 
     use_genotype: bool,
+}
+
+#[wasm_bindgen]
+pub fn init_client_system() {
+    init_log();
+    info!("init_client_system: It works!");
 }
 
 #[wasm_bindgen]
@@ -87,55 +106,56 @@ impl Bridge {
     }
 
     pub fn get_genotype_buffer_string(&self) -> String {
-        debug_log("get_genotype_buffer_string");
+        trace!("get_genotype_buffer_string");
+
         self.genotype_buffer.to_string()
     }
 
     pub fn set_genotype_buffer_string(&mut self, s: &str) {
-        debug_log("set_genotype_buffer_string");
+        trace!("set_genotype_buffer_string");
+
         self.genotype_buffer = s.to_string();
     }
 
     pub fn get_traits_buffer_string(&self) -> String {
-        debug_log("get_traits_buffer_string");
+        trace!("get_traits_buffer_string");
+
         self.traits_buffer.to_string()
     }
 
     pub fn set_traits_buffer_string(&mut self, s: &str) {
-        debug_log("set_traits_buffer_string");
+        trace!("set_traits_buffer_string");
+
         self.traits_buffer = s.to_string();
     }
 
     pub fn get_out_source_buffer_string(&self) -> String {
-        debug_log("get_out_source_buffer_string");
+        trace!("get_out_source_buffer_string");
+
         self.out_source_buffer.to_string()
     }
 
     pub fn set_out_source_buffer_string(&mut self, s: &str) {
-        debug_log("set_out_source_buffer_string");
+        trace!("set_out_source_buffer_string");
+
         self.out_source_buffer = s.to_string();
     }
 
     pub fn get_source_buffer_string(&self) -> String {
-        debug_log("get_source_buffer_string");
+        trace!("get_source_buffer_string");
+
         self.source_buffer.to_string()
     }
 
     pub fn set_source_buffer_string(&mut self, s: &str) {
-        debug_log("set_source_buffer_string");
+        trace!("set_source_buffer_string");
+
         self.source_buffer = s.to_string();
     }
 
-    pub fn sen_startup(&self) {
-        debug_log("sen_startup");
-    }
-
-    pub fn sen_shutdown(&self) {
-        debug_log("sen_shutdown");
-    }
-
     pub fn compile_to_render_packets(&mut self) -> i32 {
-        debug_log("compile_to_render_packets");
+        trace!("compile_to_render_packets");
+
         let mut num_render_packets = 0;
 
         if self.use_genotype {
@@ -150,7 +170,7 @@ impl Bridge {
                     0
                 };
             } else {
-                log("compile_to_render_packets: Genotype failed to unpack");
+                error!("compile_to_render_packets: Genotype failed to unpack");
             }
         } else {
             num_render_packets =
@@ -161,27 +181,30 @@ impl Bridge {
                 };
         }
 
-        if !self.vm.debug_str.is_empty() {
-            log(&self.vm.debug_str);
-        }
+        // if !self.vm.debug_str.is_empty() {
+        //     log(&self.vm.debug_str);
+        // }
         self.vm.debug_str_clear();
 
         num_render_packets
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
-        debug_log("get_render_packet_geo_len");
+        trace!("get_render_packet_geo_len");
+
         self.vm.get_render_packet_geo_len(packet_number)
     }
 
     pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
-        debug_log("get_render_packet_geo_ptr");
+        trace!("get_render_packet_geo_ptr");
+
         self.vm.get_render_packet_geo_ptr(packet_number)
     }
 
     // todo: is bool the best return type?
     pub fn build_traits(&mut self) -> bool {
-        debug_log("build_traits");
+        trace!("build_traits");
+
         match build_traits(&self.source_buffer) {
             Ok(trait_list) => {
                 self.traits_buffer = "".to_string();
@@ -189,49 +212,51 @@ impl Bridge {
 
                 return packed_trait_list_res.is_ok();
             }
-            Err(e) => log(&format!("{:?}", e)),
+            Err(e) => error!("{:?}", e),
         }
 
         false
     }
 
     pub fn single_genotype_from_seed(&mut self, seed: i32) -> bool {
-        debug_log("single_genotype_from_seed");
+        trace!("single_genotype_from_seed");
 
         if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
             if let Ok(genotype) = Genotype::build_from_seed(&trait_list, seed) {
                 self.genotype_list = vec![genotype];
                 return true;
             } else {
-                log("single_genotype_from_seed: can't build genotype from unpacked TraitList");
+                error!("single_genotype_from_seed: can't build genotype from unpacked TraitList");
                 return false;
             }
         } else {
-            log("single_genotype_from_seed: TraitList failed to unpack");
+            error!("single_genotype_from_seed: TraitList failed to unpack");
             return false;
         }
     }
 
     // todo: is bool the best return type?
     pub fn create_initial_generation(&mut self, population_size: i32, seed: i32) -> bool {
-        debug_log("create_initial_generation");
+        trace!("create_initial_generation");
+
         if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
             if let Ok(genotype_list) = Genotype::build_genotypes(&trait_list, population_size, seed)
             {
                 self.genotype_list = genotype_list;
                 return true;
             } else {
-                log("create_initial_generation: can't build genotypes from unpacked TraitList");
+                error!("create_initial_generation: can't build genotypes from unpacked TraitList");
                 return false;
             }
         } else {
-            log("create_initial_generation: TraitList failed to unpack");
+            error!("create_initial_generation: TraitList failed to unpack");
             return false;
         }
     }
 
     pub fn genotype_move_to_buffer(&mut self, index: usize) -> bool {
-        debug_log("genotype_move_to_buffer");
+        trace!("genotype_move_to_buffer");
+
         if let Some(ref genotype) = self.genotype_list.get(index) {
             self.genotype_buffer = "".to_string();
             let res = genotype.pack(&mut self.genotype_buffer);
@@ -243,26 +268,28 @@ impl Bridge {
     }
 
     pub fn script_cleanup(&self) {
-        debug_log("script_cleanup");
+        trace!("script_cleanup");
     }
 
     pub fn use_genotype_when_compiling(&mut self, use_genotype: bool) {
-        debug_log("use_genotype_when_compiling");
+        trace!("use_genotype_when_compiling");
+
         self.use_genotype = use_genotype;
     }
 
     pub fn next_generation_prepare(&mut self) {
-        debug_log("next_generation_prepare");
+        trace!("next_generation_prepare");
+
         self.genotype_list = vec![];
     }
 
     pub fn next_generation_add_genotype(&mut self) {
-        debug_log("next_generation_add_genotype");
+        trace!("next_generation_add_genotype");
 
         if let Ok((genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
             self.genotype_list.push(genotype);
         } else {
-            log("next_generation_add_genotype: Genotype failed to unpack");
+            error!("next_generation_add_genotype: Genotype failed to unpack");
         }
     }
 
@@ -274,15 +301,15 @@ impl Bridge {
         mutation_rate: f32,
         rng: i32,
     ) -> bool {
-        debug_log("next_generation_build");
+        trace!("next_generation_build");
 
         // confirm that we have parent_size genotypes in self.genotype_list
         if self.genotype_list.len() != parent_size {
-            log(&format!(
+            error!(
                 "next_generation_build: parent_size ({}) mismatch with genotypes given ({})",
                 parent_size,
                 self.genotype_list.len()
-            ));
+            );
             return false;
         }
 
@@ -299,35 +326,37 @@ impl Bridge {
                     return true;
                 }
                 Err(e) => {
-                    log(&format!("{:?}", e));
+                    error!("{:?}", e);
                     return false;
                 }
             }
         } else {
-            log("next_generation_build: TraitList failed to unpack");
+            error!("next_generation_build: TraitList failed to unpack");
             return false;
         }
     }
 
     pub fn unparse_with_genotype(&mut self) {
-        debug_log("unparse_with_genotype");
+        trace!("unparse_with_genotype");
+
         if let Ok((mut genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
             if let Ok(out_source) = unparse(&self.source_buffer, &mut genotype) {
                 self.out_source_buffer = out_source;
             } else {
-                log("unparse_with_genotype: unparse failed");
+                error!("unparse_with_genotype: unparse failed");
             }
         } else {
-            log("unparse_with_genotype: Genotype failed to unpack");
+            error!("unparse_with_genotype: Genotype failed to unpack");
         }
     }
 
     pub fn simplify_script(&mut self) {
-        debug_log("simplify_script");
+        trace!("simplify_script");
+
         if let Ok(out_source) = simplified_unparse(&self.source_buffer) {
             self.out_source_buffer = out_source;
         } else {
-            log("simplify_script: failed");
+            error!("simplify_script: failed");
         }
     }
 }

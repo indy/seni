@@ -33,6 +33,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
 
+use log::info;
+
 const FP_OFFSET_TO_LOCALS: usize = 4;
 const FP_OFFSET_TO_HOP_BACK: usize = 3;
 const FP_OFFSET_TO_NUM_ARGS: usize = 2;
@@ -215,6 +217,8 @@ pub struct Vm {
 
 impl Default for Vm {
     fn default() -> Vm {
+        info!("we're making a vm!!!");
+
         let stack_size = 1024;
         let stack = vec![Var::Int(0); stack_size];
 

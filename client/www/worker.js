@@ -335,11 +335,13 @@ addEventListener('message', e => {
 
 wasm_bindgen('./client_bg.wasm')
   .then(client_bg => {
-    const { Bridge } = wasm_bindgen;
+    const { Bridge, init_client_system } = wasm_bindgen;
+
+    init_client_system();
+
     gState.bridge = new Bridge();
     gState.memory = client_bg.memory;
 
-    gState.bridge.sen_startup();
     // send the job system an initialised message so
     // that it can start sending jobs to this worker
     const sendData = JSON.stringify([{systemInitialised: true}]);

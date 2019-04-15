@@ -5,6 +5,9 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::Error as IoError;
 
+use log::{info, trace, error};
+use env_logger;
+
 #[derive(Debug)]
 pub enum NativeError {
     GeneralError,
@@ -61,15 +64,20 @@ fn main() {
         )
         .get_matches();
 
+    env_logger::init();
+    info!("env_logger initialised");
+
     if let Err(e) = run(&matches) {
-        println!("Application error: {:?}", e);
+        error!("Application error: {:?}", e);
     }
 }
 
 fn run(matches: &ArgMatches) -> Result<()> {
+    trace!("run");
+
     if let Some(script) = matches.value_of("SCRIPT") {
         // this should always pass as SCRIPT is required
-        println!("Using script file: {}", script);
+        info!("Using script file: {}", script);
 
         if matches.is_present("packed_trait_list") {
             print_packed_trait_list(script)?;
@@ -87,20 +95,26 @@ fn run(matches: &ArgMatches) -> Result<()> {
             }
         }
     }
+
     Ok(())
 }
 
 fn read_script_file(filename: &str) -> Result<String> {
+    trace!("read_script_file");
+
     let mut f = File::open(filename)?;
     let mut contents = String::new();
     f.read_to_string(&mut contents)?;
+
     Ok(contents)
 }
 
 fn run_debug_script(script: &str) -> Result<()> {
-    let source = read_script_file(script)?;
+    trace!("run_debug_script");
 
+    let source = read_script_file(script)?;
     let program = compile_str(&source)?;
+
     println!("{}", &source);
     println!("{}", &program);
 
@@ -108,29 +122,36 @@ fn run_debug_script(script: &str) -> Result<()> {
 }
 
 fn run_debug_script_with_seed(_script: &str, _seed: u32) -> Result<()> {
+    trace!("run_debug_script_with_seed");
+
     Ok(())
 }
 
 fn run_script(script: &str) -> Result<()> {
+    trace!("run_script");
+
     let source = read_script_file(script)?;
     let res = compile_and_execute(&source)?;
+
     println!("res = {}", res);
+
     Ok(())
 }
 
 fn run_script_with_seed(_script: &str, _seed: u32) -> Result<()> {
+    trace!("run_script_with_seed");
+
     Ok(())
 }
 
 fn print_packed_trait_list(script: &str) -> Result<()> {
-    println!("should print the packed trait_list");
+    trace!("print_packed_trait_list");
 
     let source = read_script_file(script)?;
     let trait_list = build_traits(&source)?;
-
     let mut packed: String = "".to_string();
-    trait_list.pack(&mut packed)?;
 
+    trait_list.pack(&mut packed)?;
     println!("{}", packed);
 
     Ok(())
