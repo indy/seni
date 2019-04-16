@@ -919,6 +919,11 @@ pub fn nth(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     ))
 }
 
+// pub fn dummy_fn(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
+//     let _bindings = ArgBindings::create(vm, num_args, vec![(Keyword::Vector, None)])?;
+//     Ok(Var::Bool(false))
+// }
+
 pub fn vector_length(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     let bindings = ArgBindings::create(vm, num_args, vec![(Keyword::Vector, None)])?;
 

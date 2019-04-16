@@ -7,7 +7,6 @@
     )
 )]
 #![allow(dead_code)]
-// todo: remove crate wide allowing of dead_code
 
 // Copyright (C) 2019 Inderjit Gill
 
@@ -53,16 +52,15 @@ mod unparser;
 mod uvmapper;
 mod vm;
 
-use crate::compiler::{compile_preamble, compile_program, compile_program_with_genotype, Program};
-use crate::error::*;
-use crate::parser::*;
-use crate::vm::*;
+pub use crate::compiler::{compile_preamble, compile_program, compile_program_with_genotype, Program};
+pub use crate::error::*;
+pub use crate::parser::*;
+pub use crate::vm::*;
 
 pub use crate::gene::{next_generation, Genotype};
 pub use crate::packable::Packable;
 pub use crate::trait_list::TraitList;
 pub use crate::unparser::{simplified_unparse, unparse};
-pub use crate::vm::Vm;
 
 pub fn run_program_with_preamble(vm: &mut Vm, program: &Program) -> Result<Var> {
     vm.reset();

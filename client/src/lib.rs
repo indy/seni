@@ -27,7 +27,7 @@ use core::{
 };
 use core::{Genotype, Packable, TraitList, Vm};
 
-use log::{info, trace, error};
+use log::{info, error};
 
 cfg_if! {
     // When the `console_error_panic_hook` feature is enabled, we can call the
@@ -106,55 +106,55 @@ impl Bridge {
     }
 
     pub fn get_genotype_buffer_string(&self) -> String {
-        trace!("get_genotype_buffer_string");
+        info!("get_genotype_buffer_string");
 
         self.genotype_buffer.to_string()
     }
 
     pub fn set_genotype_buffer_string(&mut self, s: &str) {
-        trace!("set_genotype_buffer_string");
+        info!("set_genotype_buffer_string");
 
         self.genotype_buffer = s.to_string();
     }
 
     pub fn get_traits_buffer_string(&self) -> String {
-        trace!("get_traits_buffer_string");
+        info!("get_traits_buffer_string");
 
         self.traits_buffer.to_string()
     }
 
     pub fn set_traits_buffer_string(&mut self, s: &str) {
-        trace!("set_traits_buffer_string");
+        info!("set_traits_buffer_string");
 
         self.traits_buffer = s.to_string();
     }
 
     pub fn get_out_source_buffer_string(&self) -> String {
-        trace!("get_out_source_buffer_string");
+        info!("get_out_source_buffer_string");
 
         self.out_source_buffer.to_string()
     }
 
     pub fn set_out_source_buffer_string(&mut self, s: &str) {
-        trace!("set_out_source_buffer_string");
+        info!("set_out_source_buffer_string");
 
         self.out_source_buffer = s.to_string();
     }
 
     pub fn get_source_buffer_string(&self) -> String {
-        trace!("get_source_buffer_string");
+        info!("get_source_buffer_string");
 
         self.source_buffer.to_string()
     }
 
     pub fn set_source_buffer_string(&mut self, s: &str) {
-        trace!("set_source_buffer_string");
+        info!("set_source_buffer_string");
 
         self.source_buffer = s.to_string();
     }
 
     pub fn compile_to_render_packets(&mut self) -> i32 {
-        trace!("compile_to_render_packets");
+        info!("compile_to_render_packets");
 
         let mut num_render_packets = 0;
 
@@ -190,20 +190,20 @@ impl Bridge {
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
-        trace!("get_render_packet_geo_len");
+        info!("get_render_packet_geo_len");
 
         self.vm.get_render_packet_geo_len(packet_number)
     }
 
     pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
-        trace!("get_render_packet_geo_ptr");
+        info!("get_render_packet_geo_ptr");
 
         self.vm.get_render_packet_geo_ptr(packet_number)
     }
 
     // todo: is bool the best return type?
     pub fn build_traits(&mut self) -> bool {
-        trace!("build_traits");
+        info!("build_traits");
 
         match build_traits(&self.source_buffer) {
             Ok(trait_list) => {
@@ -219,7 +219,7 @@ impl Bridge {
     }
 
     pub fn single_genotype_from_seed(&mut self, seed: i32) -> bool {
-        trace!("single_genotype_from_seed");
+        info!("single_genotype_from_seed");
 
         if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
             if let Ok(genotype) = Genotype::build_from_seed(&trait_list, seed) {
@@ -237,7 +237,7 @@ impl Bridge {
 
     // todo: is bool the best return type?
     pub fn create_initial_generation(&mut self, population_size: i32, seed: i32) -> bool {
-        trace!("create_initial_generation");
+        info!("create_initial_generation");
 
         if let Ok((trait_list, _)) = TraitList::unpack(&self.traits_buffer) {
             if let Ok(genotype_list) = Genotype::build_genotypes(&trait_list, population_size, seed)
@@ -255,7 +255,7 @@ impl Bridge {
     }
 
     pub fn genotype_move_to_buffer(&mut self, index: usize) -> bool {
-        trace!("genotype_move_to_buffer");
+        info!("genotype_move_to_buffer");
 
         if let Some(ref genotype) = self.genotype_list.get(index) {
             self.genotype_buffer = "".to_string();
@@ -268,23 +268,23 @@ impl Bridge {
     }
 
     pub fn script_cleanup(&self) {
-        trace!("script_cleanup");
+        info!("script_cleanup");
     }
 
     pub fn use_genotype_when_compiling(&mut self, use_genotype: bool) {
-        trace!("use_genotype_when_compiling");
+        info!("use_genotype_when_compiling");
 
         self.use_genotype = use_genotype;
     }
 
     pub fn next_generation_prepare(&mut self) {
-        trace!("next_generation_prepare");
+        info!("next_generation_prepare");
 
         self.genotype_list = vec![];
     }
 
     pub fn next_generation_add_genotype(&mut self) {
-        trace!("next_generation_add_genotype");
+        info!("next_generation_add_genotype");
 
         if let Ok((genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
             self.genotype_list.push(genotype);
@@ -301,7 +301,7 @@ impl Bridge {
         mutation_rate: f32,
         rng: i32,
     ) -> bool {
-        trace!("next_generation_build");
+        info!("next_generation_build");
 
         // confirm that we have parent_size genotypes in self.genotype_list
         if self.genotype_list.len() != parent_size {
@@ -337,7 +337,7 @@ impl Bridge {
     }
 
     pub fn unparse_with_genotype(&mut self) {
-        trace!("unparse_with_genotype");
+        info!("unparse_with_genotype");
 
         if let Ok((mut genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
             if let Ok(out_source) = unparse(&self.source_buffer, &mut genotype) {
@@ -351,7 +351,7 @@ impl Bridge {
     }
 
     pub fn simplify_script(&mut self) {
-        trace!("simplify_script");
+        info!("simplify_script");
 
         if let Ok(out_source) = simplified_unparse(&self.source_buffer) {
             self.out_source_buffer = out_source;

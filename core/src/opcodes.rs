@@ -13,13 +13,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use strum_macros::{Display, EnumString};
+use strum_macros::{Display, EnumIter, EnumString};
 
 use crate::error::Result;
 use crate::packable::{Mule, Packable};
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Display, EnumString)]
+#[derive(Hash, Copy, Clone, Debug, Eq, PartialEq, Display, EnumString, EnumIter)]
 pub enum Opcode {
     // load (push) a sen_var onto the stack
     LOAD,

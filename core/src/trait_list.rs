@@ -13,8 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::BTreeMap;
-
 use crate::compiler::{
     compile_program_1, compile_program_for_trait, Compilation, Compiler, Program,
 };
@@ -23,6 +21,8 @@ use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
 use crate::run_program_with_preamble;
 use crate::vm::{Var, Vm};
+
+use std::collections::BTreeMap;
 
 #[derive(Debug)]
 pub struct Trait {
@@ -148,14 +148,12 @@ impl TraitList {
 
     pub fn compile(ast: &[Node]) -> Result<Self> {
         // this top-level compilation is only to get the user defined global mappings
+        let mut trait_list = TraitList::new();
         let mut compilation = Compilation::new();
         let compiler = Compiler::new();
+
         compiler.compile_common(&mut compilation, &ast)?;
-
-        let mut trait_list = TraitList::new();
-
         trait_list.global_mapping = compilation.get_user_defined_globals();
-
         for n in ast {
             trait_list.ga_traverse(&n)?;
         }
@@ -198,12 +196,6 @@ impl TraitList {
                     self.add_single_trait(&node, &meta)?;
                 }
             }
-            // Node::String(s, meta) => {
-            // },
-            // Node::Whitespace(s, meta) => if let Some(meta) = meta {
-            // },
-            // Node::Comment(s, meta) => if let Some(meta) = meta {
-            // },
             _ => {}
         };
 

@@ -217,8 +217,6 @@ pub struct Vm {
 
 impl Default for Vm {
     fn default() -> Vm {
-        info!("we're making a vm!!!");
-
         let stack_size = 1024;
         let stack = vec![Var::Int(0); stack_size];
 
@@ -865,6 +863,8 @@ impl Vm {
 
         let var = if let Some(function) = self.native_fns.get(&native) {
             function(self, program, num_args)?
+            // dummy_fn(self, program, num_args)?
+            //Var::Bool(false)
         } else {
             return Err(Error::VM(
                 "opcode native can't find native function".to_string(),
@@ -1538,18 +1538,10 @@ impl Vm {
         // do sp_inc or sp_dec before accessing values as these funcs do sanity checks
         // means that a pop (via sp_dec) can reference stack[sp]
         // and that a push (via sp_inc) requires stack[sp-1]
-
-        // let mut bytecode_index: usize = 0;
         let mut bc;
 
         loop {
-            // println!("{}: ip: {}", self.opcodes_executed, self.ip);
-            // if self.opcodes_executed > 500 {
-            //     return Err(Error::VM("too many opcode executed?".to_string()))
-            // }
-
             self.opcodes_executed += 1;
-            // println!("interpreting ip: {} fp: {}", self.ip, self.fp);
             bc = &program.code[self.ip];
             self.ip += 1;
 

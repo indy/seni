@@ -4,6 +4,7 @@ use core::*;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Error as IoError;
+use std::time::Instant;
 
 use log::{info, trace, error};
 use env_logger;
@@ -31,6 +32,7 @@ impl From<core::error::Error> for NativeError {
 pub type Result<T> = ::std::result::Result<T, NativeError>;
 
 fn main() {
+    let start = Instant::now();
     let matches = App::new("seni-cli")
         .version("0.1.0")
         .author("Inderjit Gill <email@indy.io>")
@@ -65,11 +67,11 @@ fn main() {
         .get_matches();
 
     env_logger::init();
-    info!("env_logger initialised");
-
     if let Err(e) = run(&matches) {
         error!("Application error: {:?}", e);
     }
+    let duration = start.elapsed();
+    info!("Complete time elapsed: {:?}", duration);
 }
 
 fn run(matches: &ArgMatches) -> Result<()> {
@@ -130,8 +132,47 @@ fn run_debug_script_with_seed(_script: &str, _seed: u32) -> Result<()> {
 fn run_script(script: &str) -> Result<()> {
     trace!("run_script");
 
+    // --------------------------------------------------------------------------------
+
+    let time_read_script_file = Instant::now();
     let source = read_script_file(script)?;
-    let res = compile_and_execute(&source)?;
+    info!("read_script_file: {:?}", time_read_script_file.elapsed());
+
+    let mut vm = Vm::new();
+
+    // --------------------------------------------------------------------------------
+
+    let time_parse = Instant::now();
+    let (ast, _word_lut) = parse(&source)?;
+    info!("parse: {:?}", time_parse.elapsed());
+
+    // --------------------------------------------------------------------------------
+
+    let time_compile_program = Instant::now();
+    let program = compile_program(&ast)?;
+    info!("compile_program: {:?}", time_compile_program.elapsed());
+
+    // --------------------------------------------------------------------------------
+
+    let time_run_program = Instant::now();
+
+    vm.reset();
+
+    // setup the env with the global variables in preamble
+    let time_preamble = Instant::now();
+    let preamble = compile_preamble()?;
+    vm.interpret(&preamble)?;
+    info!("preamble: {:?}", time_preamble.elapsed());
+
+    vm.ip = 0;
+    let time_interpret = Instant::now();
+    vm.interpret(&program)?;
+    let res = vm.top_stack_value()?;
+    info!("interpret {:?}", time_interpret.elapsed());
+
+    // vm.opcode_profiler_report();
+
+    info!("run_program: {:?}", time_run_program.elapsed());
 
     println!("res = {}", res);
 
