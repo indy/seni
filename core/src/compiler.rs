@@ -22,9 +22,13 @@ use crate::error::{Error, Result};
 use crate::gene::Genotype;
 use crate::keywords::{i32_to_keyword_hash, Keyword};
 use crate::mathutil;
+use crate::native::{i32_to_native_hash, parameter_info, Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
+use crate::vm::Var;
+
+use log::warn;
 
 const MEMORY_LOCAL_SIZE: usize = 40;
 
@@ -257,6 +261,7 @@ pub enum BytecodeArg {
     Int(i32),
     Float(f32),
     Name(i32),
+    Native(Native),
     Builtin(Builtin),
     Mem(Mem),
     Keyword(Keyword),
@@ -269,7 +274,8 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Int(i) => write!(f, "{}", i),
             BytecodeArg::Float(s) => write!(f, "{:.2}", s),
             BytecodeArg::Name(i) => write!(f, "Name({})", i),
-            BytecodeArg::Builtin(n) => write!(f, "{:?}", n),
+            BytecodeArg::Native(n) => write!(f, "{:?}", n),
+            BytecodeArg::Builtin(b) => write!(f, "{:?}", b),
             BytecodeArg::Mem(m) => write!(f, "{}", m),
             BytecodeArg::Keyword(kw) => write!(f, "{}", kw),
             BytecodeArg::Colour(c) => {
@@ -285,6 +291,10 @@ impl Packable for BytecodeArg {
             BytecodeArg::Int(i) => cursor.push_str(&format!("INT {}", i)),
             BytecodeArg::Float(f) => cursor.push_str(&format!("FLOAT {}", f)),
             BytecodeArg::Name(i) => cursor.push_str(&format!("NAME {}", i)),
+            BytecodeArg::Native(native) => {
+                cursor.push_str("NATIVE ");
+                native.pack(cursor)?;
+            }
             BytecodeArg::Builtin(builtin) => {
                 cursor.push_str("BUILTIN ");
                 builtin.pack(cursor)?;
@@ -364,6 +374,7 @@ impl fmt::Display for Bytecode {
             }
             // todo: format BUILTIN
             Opcode::BUILTIN => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
+            Opcode::NATIVE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
             // todo: format PILE
             Opcode::PILE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
             _ => write!(f, "{}", self.op)?,
@@ -718,6 +729,19 @@ impl Compilation {
         Ok(())
     }
 
+    fn emit_opcode_native_i32(&mut self, op: Opcode, arg0: Native, arg1: i32) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Native(arg0),
+            arg1: BytecodeArg::Int(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+
     fn emit_opcode_builtin_i32(&mut self, op: Opcode, arg0: Builtin, arg1: i32) -> Result<()> {
         let b = Bytecode {
             op,
@@ -833,6 +857,7 @@ impl Compilation {
 
 pub struct Compiler {
     i32_to_keyword: HashMap<i32, Keyword>,
+    i32_to_native: HashMap<i32, Native>,
     i32_to_builtin: HashMap<i32, Builtin>,
     use_genes: bool,
 }
@@ -841,6 +866,7 @@ impl Compiler {
     pub fn new() -> Self {
         Compiler {
             i32_to_keyword: i32_to_keyword_hash(),
+            i32_to_native: i32_to_native_hash(),
             i32_to_builtin: i32_to_builtin_hash(),
             use_genes: false,
         }
@@ -1341,6 +1367,9 @@ impl Compiler {
                 } else if let Some(kw) = self.i32_to_keyword.get(&iname) {
                     compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
                     Ok(())
+                } else if let Some(native) = self.i32_to_native.get(&iname) {
+                    compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, 0)?;
+                    Ok(())
                 } else if let Some(builtin) = self.i32_to_builtin.get(&iname) {
                     compilation.emit_opcode_builtin_i32(Opcode::BUILTIN, *builtin, 0)?;
                     Ok(())
@@ -1451,6 +1480,41 @@ impl Compiler {
 
                         }
                     }
+                } else if let Some(native) = self.i32_to_native.get(&iname) {
+                    // get the list of arguments
+                    // match up the nodes and compile them in argument order
+
+                    let (args, stack_offset) = parameter_info(native)?;
+
+                    let num_args = args.len();
+                    let label_vals = &children[1..];
+
+                    // write the default_mask at the bottom of the stack
+                    let mut default_mask: i32 = 0;
+                    for (i, (kw, _)) in args.iter().enumerate() {
+                        if self.get_parameter_index(label_vals, *kw).is_none() {
+                            default_mask |= 1 << i;
+                        }
+                    }
+                    compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, default_mask)?;
+
+                    // iterating in reverse so that when the native function
+                    // is run it can pop the arguments from the stack in the
+                    // order it specified
+                    // now add the arguments to the stack
+                    for (kw, default_value) in args.iter().rev() {
+                        if let Some(idx) = self.get_parameter_index(label_vals, *kw) {
+                            // todo: does this need to be self?
+                            // compile the node at the given index
+                            self.compile(compilation, label_vals[idx])?;
+                        } else {
+                            // compile the default argument value from the Var in args
+                            self.compile_var_as_load(compilation, default_value)?;
+                        }
+                    }
+
+                    compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, num_args as i32)?;
+                    compilation.opcode_offset += stack_offset;
                 } else if let Some(builtin) = self.i32_to_builtin.get(&iname) {
                     // BUILTIN
                     let mut num_args = 0;
@@ -1470,6 +1534,8 @@ impl Compiler {
                     compilation.emit_opcode_builtin_i32(Opcode::BUILTIN, *builtin, num_args)?;
 
                     // modify opcode_offset according to how many args were given
+
+                    // the vm's opcode_builtin function will modify the stack in the following way.
                     compilation.opcode_offset -= (num_args * 2) - 1;
                 }
             }
@@ -1477,6 +1543,65 @@ impl Compiler {
         }
 
         Ok(())
+    }
+
+    fn get_parameter_index(&self, label_vals: &[&Node], kw: Keyword) -> Option<usize> {
+        let ikw = kw as i32;
+
+        for (i, node) in label_vals.iter().enumerate() {
+            if i & 1 == 0 {
+                // a label
+                if let Node::Label(_, iname, _) = node {
+                    if *iname == ikw {
+                        return Some(i + 1);
+                    }
+                } else {
+                    warn!("expected a label node in every odd position");
+                }
+            } else {
+                // a value
+            }
+        }
+
+        None
+    }
+
+    fn compile_var_as_load(&self, compilation: &mut Compilation, var: &Var) -> Result<()> {
+        match var {
+            Var::Float(f) => compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f),
+            Var::V2D(x, y) => {
+                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *x)?;
+                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *y)?;
+                compilation.emit_opcode(Opcode::SQUISH2)
+            }
+            Var::Colour(colour) => {
+                // todo: this is dependent on how col/rgb is handled,
+                // change the code once it becomes a NATIVE and not a BUILTIN
+
+                // hack: for now assume that the colour is in RGB format
+                compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, Keyword::R as i32)?;
+                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e0)?;
+                compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, Keyword::G as i32)?;
+                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e1)?;
+                compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, Keyword::B as i32)?;
+                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e2)?;
+                compilation.emit_opcode_mem_name(
+                    Opcode::LOAD,
+                    Mem::Constant,
+                    Keyword::Alpha as i32,
+                )?;
+                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e3)?;
+                compilation.emit_opcode_builtin_i32(Opcode::BUILTIN, Builtin::ColRGB, 4)?;
+
+                // now update the opcode offset since this is using the BUILTIN
+                // todo: once col/rgb is a NATIVE this hack can go away
+                let num_args = 4;
+                compilation.opcode_offset -= (num_args * 2) - 1;
+
+                Ok(())
+            }
+            _ => return Err(Error::Compiler("unimplemented var compilation".to_string())),
+        }
     }
 
     fn compile_define(

@@ -56,6 +56,9 @@ pub enum Error {
     // bind
     Bind(String),
 
+    // native
+    Native(String),
+
     // geometry
     Geometry(String),
 

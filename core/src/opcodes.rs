@@ -64,6 +64,10 @@ pub enum Opcode {
     // offset is 0 as the vm->opcode_offset is modified by the builtin helper
     // function
     BUILTIN,
+    // calls a native function, leaving the result on the stack
+    // offset is 0 as the vm->opcode_offset is modified by the native helper
+    // function
+    NATIVE,
     // appends item at top to vector at top-1, leaves vector on stack
     APPEND,
     // given a vector on the stack this unpacks it's contents onto the stack
@@ -128,6 +132,7 @@ pub fn opcode_stack_offset(opcode: Opcode) -> i32 {
         Opcode::CALL_F => -1,
         Opcode::CALL_F_0 => 0,
         Opcode::BUILTIN => 0,
+        Opcode::NATIVE => 0,
         Opcode::APPEND => -1,
         Opcode::PILE => 0,
         Opcode::STORE_F => -2,

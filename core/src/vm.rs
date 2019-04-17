@@ -23,6 +23,7 @@ use crate::geometry::Geometry;
 use crate::interp::InterpStateStruct;
 use crate::keywords::Keyword;
 use crate::matrix::MatrixStack;
+use crate::native::execute_native;
 use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
@@ -278,6 +279,9 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
         BytecodeArg::Keyword(keyword) => Ok(Var::Keyword(*keyword)),
         BytecodeArg::Mem(_mem) => Err(Error::VM(
             "bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string(),
+        )),
+        BytecodeArg::Native(_native) => Err(Error::VM(
+            "bytecode_arg_to_var not implemented for BytecodeArg::Native".to_string(),
         )),
         BytecodeArg::Builtin(_builtin) => Err(Error::VM(
             "bytecode_arg_to_var not implemented for BytecodeArg::Builtin".to_string(),
@@ -842,6 +846,46 @@ impl Vm {
         Ok(())
     }
 
+    pub fn stack_peek_i32(&self, offset: usize) -> Result<i32> {
+        if let Var::Int(i) = &self.stack[self.sp - offset] {
+            Ok(*i)
+        } else {
+            Err(Error::VM("stack_peek expected i32".to_string()))
+        }
+    }
+
+    pub fn stack_peek_f32(&self, offset: usize) -> Result<f32> {
+        if let Var::Float(f) = &self.stack[self.sp - offset] {
+            Ok(*f)
+        } else {
+            Err(Error::VM("stack_peek expected f32".to_string()))
+        }
+    }
+
+    pub fn stack_peek_v2d(&self, offset: usize) -> Result<(f32, f32)> {
+        if let Var::V2D(x, y) = &self.stack[self.sp - offset] {
+            Ok((*x, *y))
+        } else {
+            Err(Error::VM("stack_peek expected v2d".to_string()))
+        }
+    }
+
+    pub fn stack_peek_col(&self, offset: usize) -> Result<Colour> {
+        if let Var::Colour(c) = &self.stack[self.sp - offset] {
+            Ok(*c)
+        } else {
+            Err(Error::VM("stack_peek expected col".to_string()))
+        }
+    }
+
+    fn opcode_native(&mut self, _program: &Program, bc: &Bytecode) -> Result<()> {
+        if let BytecodeArg::Native(native) = bc.arg0 {
+            execute_native(self, &native)
+        } else {
+            Err(Error::VM("opcode_native".to_string()))
+        }
+    }
+
     fn opcode_builtin(&mut self, program: &Program, bc: &Bytecode) -> Result<()> {
         let num_args = if let BytecodeArg::Int(num_args_) = bc.arg1 {
             num_args_ as usize
@@ -1086,6 +1130,7 @@ impl Vm {
     }
 
     fn opcode_jump_if(&mut self, bc: &Bytecode) -> Result<()> {
+        // println!("opcode_jump_if {}", self.sp);
         self.sp = self.sp_dec()?; // stack pop
         if let Var::Bool(b) = &self.stack[self.sp] {
             // jump if the top of the stack is false
@@ -1546,6 +1591,7 @@ impl Vm {
             match bc.op {
                 Opcode::LOAD => self.opcode_load(bc)?,
                 Opcode::STORE => self.opcode_store(bc)?,
+                Opcode::NATIVE => self.opcode_native(program, bc)?,
                 Opcode::BUILTIN => self.opcode_builtin(program, bc)?,
                 Opcode::STORE_F => self.opcode_store_f(program, bc)?,
                 Opcode::ADD => self.opcode_add()?,

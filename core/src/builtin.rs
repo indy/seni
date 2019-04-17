@@ -57,7 +57,7 @@ pub enum Builtin {
     //
     #[strum(serialize = "line")]
     Line,
-    #[strum(serialize = "rect")]
+    #[strum(serialize = "BUILTIN-rect")]
     Rect,
     #[strum(serialize = "circle")]
     Circle,
