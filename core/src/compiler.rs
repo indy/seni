@@ -16,12 +16,12 @@
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 
+use crate::builtin::{i32_to_builtin_hash, Builtin};
 use crate::colour::{Colour, ColourFormat};
 use crate::error::{Error, Result};
 use crate::gene::Genotype;
 use crate::keywords::{i32_to_keyword_hash, Keyword};
 use crate::mathutil;
-use crate::native::{i32_to_native_hash, Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
@@ -257,7 +257,7 @@ pub enum BytecodeArg {
     Int(i32),
     Float(f32),
     Name(i32),
-    Native(Native),
+    Builtin(Builtin),
     Mem(Mem),
     Keyword(Keyword),
     Colour(Colour),
@@ -269,7 +269,7 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Int(i) => write!(f, "{}", i),
             BytecodeArg::Float(s) => write!(f, "{:.2}", s),
             BytecodeArg::Name(i) => write!(f, "Name({})", i),
-            BytecodeArg::Native(n) => write!(f, "{:?}", n),
+            BytecodeArg::Builtin(n) => write!(f, "{:?}", n),
             BytecodeArg::Mem(m) => write!(f, "{}", m),
             BytecodeArg::Keyword(kw) => write!(f, "{}", kw),
             BytecodeArg::Colour(c) => {
@@ -285,9 +285,9 @@ impl Packable for BytecodeArg {
             BytecodeArg::Int(i) => cursor.push_str(&format!("INT {}", i)),
             BytecodeArg::Float(f) => cursor.push_str(&format!("FLOAT {}", f)),
             BytecodeArg::Name(i) => cursor.push_str(&format!("NAME {}", i)),
-            BytecodeArg::Native(native) => {
-                cursor.push_str("NATIVE ");
-                native.pack(cursor)?;
+            BytecodeArg::Builtin(builtin) => {
+                cursor.push_str("BUILTIN ");
+                builtin.pack(cursor)?;
             }
             BytecodeArg::Mem(mem) => {
                 cursor.push_str("MEM ");
@@ -318,10 +318,10 @@ impl Packable for BytecodeArg {
             let rem = Mule::skip_forward(cursor, "NAME ".len());
             let (val, rem) = Mule::unpack_i32(rem)?;
             Ok((BytecodeArg::Name(val), rem))
-        } else if cursor.starts_with("NATIVE ") {
-            let rem = Mule::skip_forward(cursor, "NATIVE ".len());
-            let (val, rem) = Native::unpack(rem)?;
-            Ok((BytecodeArg::Native(val), rem))
+        } else if cursor.starts_with("BUILTIN ") {
+            let rem = Mule::skip_forward(cursor, "BUILTIN ".len());
+            let (val, rem) = Builtin::unpack(rem)?;
+            Ok((BytecodeArg::Builtin(val), rem))
         } else if cursor.starts_with("MEM ") {
             let rem = Mule::skip_forward(cursor, "MEM ".len());
             let (val, rem) = Mem::unpack(rem)?;
@@ -362,8 +362,8 @@ impl fmt::Display for Bytecode {
                     }
                 }
             }
-            // todo: format NATIVE
-            Opcode::NATIVE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
+            // todo: format BUILTIN
+            Opcode::BUILTIN => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
             // todo: format PILE
             Opcode::PILE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
             _ => write!(f, "{}", self.op)?,
@@ -488,8 +488,8 @@ impl Program {
 fn is_node_colour_constructor(children: &[&Node]) -> bool {
     if !children.is_empty() {
         if let Node::Name(_, iname, _) = children[0] {
-            let col_constructor_start = Native::ColConstructorStart_ as i32;
-            let col_constructor_end = Native::ColConstructorEnd_ as i32;
+            let col_constructor_start = Builtin::ColConstructorStart_ as i32;
+            let col_constructor_end = Builtin::ColConstructorEnd_ as i32;
 
             if *iname > col_constructor_start && *iname < col_constructor_end {
                 return true;
@@ -718,10 +718,10 @@ impl Compilation {
         Ok(())
     }
 
-    fn emit_opcode_native_i32(&mut self, op: Opcode, arg0: Native, arg1: i32) -> Result<()> {
+    fn emit_opcode_builtin_i32(&mut self, op: Opcode, arg0: Builtin, arg1: i32) -> Result<()> {
         let b = Bytecode {
             op,
-            arg0: BytecodeArg::Native(arg0),
+            arg0: BytecodeArg::Builtin(arg0),
             arg1: BytecodeArg::Int(arg1),
         };
 
@@ -833,7 +833,7 @@ impl Compilation {
 
 pub struct Compiler {
     i32_to_keyword: HashMap<i32, Keyword>,
-    i32_to_native: HashMap<i32, Native>,
+    i32_to_builtin: HashMap<i32, Builtin>,
     use_genes: bool,
 }
 
@@ -841,7 +841,7 @@ impl Compiler {
     pub fn new() -> Self {
         Compiler {
             i32_to_keyword: i32_to_keyword_hash(),
-            i32_to_native: i32_to_native_hash(),
+            i32_to_builtin: i32_to_builtin_hash(),
             use_genes: false,
         }
     }
@@ -928,11 +928,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn register_top_level_fns(
-        &self,
-        compilation: &mut Compilation,
-        ast: &[&Node],
-    ) -> Result<()> {
+    fn register_top_level_fns(&self, compilation: &mut Compilation, ast: &[&Node]) -> Result<()> {
         // clear all data
         compilation.fn_info = Vec::new();
 
@@ -1217,11 +1213,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_common_prologue(
-        &self,
-        compilation: &mut Compilation,
-        ast: &[&Node],
-    ) -> Result<()> {
+    fn compile_common_prologue(&self, compilation: &mut Compilation, ast: &[&Node]) -> Result<()> {
         compilation.clear_global_mappings()?;
         compilation.clear_local_mappings()?;
         // compilation->current_fn_info = NULL;
@@ -1349,8 +1341,8 @@ impl Compiler {
                 } else if let Some(kw) = self.i32_to_keyword.get(&iname) {
                     compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
                     Ok(())
-                } else if let Some(native) = self.i32_to_native.get(&iname) {
-                    compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, 0)?;
+                } else if let Some(builtin) = self.i32_to_builtin.get(&iname) {
+                    compilation.emit_opcode_builtin_i32(Opcode::BUILTIN, *builtin, 0)?;
                     Ok(())
                 } else {
                     Err(Error::Compiler(format!(
@@ -1459,8 +1451,8 @@ impl Compiler {
 
                         }
                     }
-                } else if let Some(native) = self.i32_to_native.get(&iname) {
-                    // NATIVE
+                } else if let Some(builtin) = self.i32_to_builtin.get(&iname) {
+                    // BUILTIN
                     let mut num_args = 0;
                     let mut label_vals = &children[1..];
                     while label_vals.len() > 1 {
@@ -1475,7 +1467,7 @@ impl Compiler {
 
                         label_vals = &label_vals[2..];
                     }
-                    compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, num_args)?;
+                    compilation.emit_opcode_builtin_i32(Opcode::BUILTIN, *builtin, num_args)?;
 
                     // modify opcode_offset according to how many args were given
                     compilation.opcode_offset -= (num_args * 2) - 1;
@@ -2594,7 +2586,6 @@ impl Compiler {
             return Ok(true);
         }
 
-
         Ok(false)
     }
 
@@ -2884,17 +2875,19 @@ mod tests {
     #[test]
     fn test_bytecode_arg_pack() {
         let mut res: String = "".to_string();
-        BytecodeArg::Native(Native::Circle).pack(&mut res).unwrap();
-        assert_eq!("NATIVE circle", res);
+        BytecodeArg::Builtin(Builtin::Circle)
+            .pack(&mut res)
+            .unwrap();
+        assert_eq!("BUILTIN circle", res);
     }
 
     #[test]
     fn test_bytecode_arg_unpack() {
-        let (res, _rem) = BytecodeArg::unpack("NATIVE circle").unwrap();
-        assert_eq!(res, BytecodeArg::Native(Native::Circle));
+        let (res, _rem) = BytecodeArg::unpack("BUILTIN circle").unwrap();
+        assert_eq!(res, BytecodeArg::Builtin(Builtin::Circle));
 
-        let (res, rem) = BytecodeArg::unpack("NATIVE col/triad otherstuff here").unwrap();
-        assert_eq!(res, BytecodeArg::Native(Native::ColTriad));
+        let (res, rem) = BytecodeArg::unpack("BUILTIN col/triad otherstuff here").unwrap();
+        assert_eq!(res, BytecodeArg::Builtin(Builtin::ColTriad));
         assert_eq!(rem, " otherstuff here");
     }
 

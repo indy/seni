@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::builtin::{build_builtin_fn_hash, Builtin, BuiltinCallback};
 use crate::colour::{Colour, ProcColourStateStruct};
 use crate::compiler::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
 use crate::ease::Easing;
@@ -22,7 +23,6 @@ use crate::geometry::Geometry;
 use crate::interp::InterpStateStruct;
 use crate::keywords::Keyword;
 use crate::matrix::MatrixStack;
-use crate::native::{build_native_fn_hash, Native, NativeCallback};
 use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
@@ -32,8 +32,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
-
-use log::info;
 
 const FP_OFFSET_TO_LOCALS: usize = 4;
 const FP_OFFSET_TO_HOP_BACK: usize = 3;
@@ -181,8 +179,8 @@ impl Var {
 
 /// The Seni VM
 /// the c-impl of vm (sen_vm) had pointers to env and program. these were required
-/// in case any of the native functions had to invoke vm_interpret.
-/// the rust version should just pass in these 2 extra args into the native functions
+/// in case any of the builtin functions had to invoke vm_interpret.
+/// the rust version should just pass in these 2 extra args into the builtin functions
 pub struct Vm {
     pub matrix_stack: MatrixStack,
     /// only used when evaluating bracket bindings
@@ -210,7 +208,7 @@ pub struct Vm {
     pub building_with_trait_within_vector: bool,
     pub trait_within_vector_index: usize,
 
-    pub native_fns: HashMap<Native, NativeCallback>,
+    pub builtin_fns: HashMap<Builtin, BuiltinCallback>,
 
     pub debug_str: String,
 }
@@ -265,7 +263,7 @@ impl Default for Vm {
             building_with_trait_within_vector: false,
             trait_within_vector_index: 0,
 
-            native_fns: build_native_fn_hash(),
+            builtin_fns: build_builtin_fn_hash(),
 
             debug_str: "".to_string(),
         }
@@ -281,8 +279,8 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
         BytecodeArg::Mem(_mem) => Err(Error::VM(
             "bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string(),
         )),
-        BytecodeArg::Native(_native) => Err(Error::VM(
-            "bytecode_arg_to_var not implemented for BytecodeArg::Native".to_string(),
+        BytecodeArg::Builtin(_builtin) => Err(Error::VM(
+            "bytecode_arg_to_var not implemented for BytecodeArg::Builtin".to_string(),
         )),
         BytecodeArg::Colour(col) => Ok(Var::Colour(*col)),
     }
@@ -844,30 +842,30 @@ impl Vm {
         Ok(())
     }
 
-    fn opcode_native(&mut self, program: &Program, bc: &Bytecode) -> Result<()> {
+    fn opcode_builtin(&mut self, program: &Program, bc: &Bytecode) -> Result<()> {
         let num_args = if let BytecodeArg::Int(num_args_) = bc.arg1 {
             num_args_ as usize
         } else {
             return Err(Error::VM(
-                "opcode native requires arg1 to be num_args".to_string(),
+                "opcode builtin requires arg1 to be num_args".to_string(),
             ));
         };
 
-        let native = if let BytecodeArg::Native(native_) = bc.arg0 {
-            native_
+        let builtin = if let BytecodeArg::Builtin(builtin_) = bc.arg0 {
+            builtin_
         } else {
             return Err(Error::VM(
-                "opcode native requires arg0 to be a BytecodeArg::Native".to_string(),
+                "opcode builtin requires arg0 to be a BytecodeArg::Builtin".to_string(),
             ));
         };
 
-        let var = if let Some(function) = self.native_fns.get(&native) {
+        let var = if let Some(function) = self.builtin_fns.get(&builtin) {
             function(self, program, num_args)?
-            // dummy_fn(self, program, num_args)?
-            //Var::Bool(false)
+        // dummy_fn(self, program, num_args)?
+        //Var::Bool(false)
         } else {
             return Err(Error::VM(
-                "opcode native can't find native function".to_string(),
+                "opcode builtin can't find builtin function".to_string(),
             ));
         };
 
@@ -1548,7 +1546,7 @@ impl Vm {
             match bc.op {
                 Opcode::LOAD => self.opcode_load(bc)?,
                 Opcode::STORE => self.opcode_store(bc)?,
-                Opcode::NATIVE => self.opcode_native(program, bc)?,
+                Opcode::BUILTIN => self.opcode_builtin(program, bc)?,
                 Opcode::STORE_F => self.opcode_store_f(program, bc)?,
                 Opcode::ADD => self.opcode_add()?,
                 Opcode::SUB => self.opcode_sub()?,

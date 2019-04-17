@@ -35,12 +35,12 @@ use std::rc::Rc;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
-pub type NativeCallback = fn(&mut Vm, &Program, usize) -> Result<Var>;
+pub type BuiltinCallback = fn(&mut Vm, &Program, usize) -> Result<Var>;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Display, EnumString, EnumIter)]
-pub enum Native {
-    #[strum(serialize = "UnreachableNativeStart")]
-    NativeStart = Keyword::KeywordEnd as isize,
+pub enum Builtin {
+    #[strum(serialize = "UnreachableBuiltinStart")]
+    BuiltinStart = Keyword::KeywordEnd as isize,
 
     // misc
     //
@@ -265,11 +265,11 @@ pub enum Native {
     #[strum(serialize = "gen/col")]
     GenCol,
 
-    #[strum(serialize = "UnreachableNativeEnd")]
-    NativeEnd,
+    #[strum(serialize = "UnreachableBuiltinEnd")]
+    BuiltinEnd,
 }
 
-impl Packable for Native {
+impl Packable for Builtin {
     fn pack(&self, cursor: &mut String) -> Result<()> {
         Mule::pack_label(cursor, &self.to_string());
 
@@ -279,162 +279,165 @@ impl Packable for Native {
     fn unpack(cursor: &str) -> Result<(Self, &str)> {
         let ns = Mule::next_space(cursor);
         let sub = &cursor[0..ns];
-        let res = sub.parse::<Native>()?;
+        let res = sub.parse::<Builtin>()?;
 
         Ok((res, &cursor[ns..]))
     }
 }
 
-pub fn i32_to_native_hash() -> HashMap<i32, Native> {
-    let mut hm: HashMap<i32, Native> = HashMap::new();
+pub fn i32_to_builtin_hash() -> HashMap<i32, Builtin> {
+    let mut hm: HashMap<i32, Builtin> = HashMap::new();
 
-    for n in Native::iter() {
+    for n in Builtin::iter() {
         hm.insert(n as i32, n);
     }
 
     hm
 }
 
-pub fn build_native_fn_hash() -> HashMap<Native, NativeCallback> {
-    let mut h: HashMap<Native, NativeCallback> = HashMap::new();
+pub fn build_builtin_fn_hash() -> HashMap<Builtin, BuiltinCallback> {
+    let mut h: HashMap<Builtin, BuiltinCallback> = HashMap::new();
 
     // --------------------------------------------------
     // misc
     // --------------------------------------------------
     // BIND("debug/print", debug_print);
-    h.insert(Native::Nth, nth);
-    h.insert(Native::VectorLength, vector_length);
-    h.insert(Native::Probe, probe);
+    h.insert(Builtin::Nth, nth);
+    h.insert(Builtin::VectorLength, vector_length);
+    h.insert(Builtin::Probe, probe);
     // map (todo)
 
     // --------------------------------------------------
     // shapes
     // --------------------------------------------------
-    h.insert(Native::Line, line);
-    h.insert(Native::Rect, rect);
-    h.insert(Native::Circle, circle);
-    h.insert(Native::CircleSlice, circle_slice);
-    h.insert(Native::Poly, poly);
-    h.insert(Native::Quadratic, quadratic);
-    h.insert(Native::Bezier, bezier);
-    h.insert(Native::BezierBulging, bezier_bulging);
-    h.insert(Native::StrokedBezier, stroked_bezier);
-    h.insert(Native::StrokedBezierRect, stroked_bezier_rect);
+    h.insert(Builtin::Line, line);
+    h.insert(Builtin::Rect, rect);
+    h.insert(Builtin::Circle, circle);
+    h.insert(Builtin::CircleSlice, circle_slice);
+    h.insert(Builtin::Poly, poly);
+    h.insert(Builtin::Quadratic, quadratic);
+    h.insert(Builtin::Bezier, bezier);
+    h.insert(Builtin::BezierBulging, bezier_bulging);
+    h.insert(Builtin::StrokedBezier, stroked_bezier);
+    h.insert(Builtin::StrokedBezierRect, stroked_bezier_rect);
 
     // --------------------------------------------------
     // transforms
     // --------------------------------------------------
-    h.insert(Native::Translate, translate);
-    h.insert(Native::Rotate, rotate);
-    h.insert(Native::Scale, scale);
+    h.insert(Builtin::Translate, translate);
+    h.insert(Builtin::Rotate, rotate);
+    h.insert(Builtin::Scale, scale);
 
     // --------------------------------------------------
     // colour
     // --------------------------------------------------
-    h.insert(Native::ColConvert, col_convert);
-    h.insert(Native::ColRGB, col_rgb);
-    h.insert(Native::ColHSL, col_hsl);
-    h.insert(Native::ColHSLuv, col_hsluv);
-    h.insert(Native::ColHSV, col_hsv);
-    h.insert(Native::ColLAB, col_lab);
-    h.insert(Native::ColComplementary, col_complementary);
-    h.insert(Native::ColSplitComplementary, col_split_complementary);
-    h.insert(Native::ColAnalagous, col_analagous);
-    h.insert(Native::ColTriad, col_triad);
-    h.insert(Native::ColDarken, col_darken);
-    h.insert(Native::ColLighten, col_lighten);
-    h.insert(Native::ColSetAlpha, col_set_alpha);
-    h.insert(Native::ColGetAlpha, col_get_alpha);
-    h.insert(Native::ColSetR, col_set_r);
-    h.insert(Native::ColGetR, col_get_r);
-    h.insert(Native::ColSetG, col_set_g);
-    h.insert(Native::ColGetG, col_get_g);
-    h.insert(Native::ColSetB, col_set_b);
-    h.insert(Native::ColGetB, col_get_b);
-    h.insert(Native::ColSetH, col_set_h);
-    h.insert(Native::ColGetH, col_get_h);
-    h.insert(Native::ColSetS, col_set_s);
-    h.insert(Native::ColGetS, col_get_s);
-    h.insert(Native::ColSetL, col_set_l);
-    h.insert(Native::ColGetL, col_get_l);
-    h.insert(Native::ColSetA, col_set_a);
-    h.insert(Native::ColGetA, col_get_a);
-    h.insert(Native::ColSetV, col_set_v);
-    h.insert(Native::ColGetV, col_get_v);
-    h.insert(Native::ColBuildProcedural, col_build_procedural);
+    h.insert(Builtin::ColConvert, col_convert);
+    h.insert(Builtin::ColRGB, col_rgb);
+    h.insert(Builtin::ColHSL, col_hsl);
+    h.insert(Builtin::ColHSLuv, col_hsluv);
+    h.insert(Builtin::ColHSV, col_hsv);
+    h.insert(Builtin::ColLAB, col_lab);
+    h.insert(Builtin::ColComplementary, col_complementary);
+    h.insert(Builtin::ColSplitComplementary, col_split_complementary);
+    h.insert(Builtin::ColAnalagous, col_analagous);
+    h.insert(Builtin::ColTriad, col_triad);
+    h.insert(Builtin::ColDarken, col_darken);
+    h.insert(Builtin::ColLighten, col_lighten);
+    h.insert(Builtin::ColSetAlpha, col_set_alpha);
+    h.insert(Builtin::ColGetAlpha, col_get_alpha);
+    h.insert(Builtin::ColSetR, col_set_r);
+    h.insert(Builtin::ColGetR, col_get_r);
+    h.insert(Builtin::ColSetG, col_set_g);
+    h.insert(Builtin::ColGetG, col_get_g);
+    h.insert(Builtin::ColSetB, col_set_b);
+    h.insert(Builtin::ColGetB, col_get_b);
+    h.insert(Builtin::ColSetH, col_set_h);
+    h.insert(Builtin::ColGetH, col_get_h);
+    h.insert(Builtin::ColSetS, col_set_s);
+    h.insert(Builtin::ColGetS, col_get_s);
+    h.insert(Builtin::ColSetL, col_set_l);
+    h.insert(Builtin::ColGetL, col_get_l);
+    h.insert(Builtin::ColSetA, col_set_a);
+    h.insert(Builtin::ColGetA, col_get_a);
+    h.insert(Builtin::ColSetV, col_set_v);
+    h.insert(Builtin::ColGetV, col_get_v);
+    h.insert(Builtin::ColBuildProcedural, col_build_procedural);
     // BIND("col/build-bezier", col_build_bezier);
-    h.insert(Native::ColValue, col_value);
+    h.insert(Builtin::ColValue, col_value);
 
     // --------------------------------------------------
     // math
     // --------------------------------------------------
-    h.insert(Native::MathDistance, math_distance);
-    h.insert(Native::MathNormal, math_normal);
-    h.insert(Native::MathClamp, math_clamp);
-    h.insert(Native::MathRadiansDegrees, math_radians_to_degrees);
-    h.insert(Native::MathCos, math_cos);
-    h.insert(Native::MathSin, math_sin);
+    h.insert(Builtin::MathDistance, math_distance);
+    h.insert(Builtin::MathNormal, math_normal);
+    h.insert(Builtin::MathClamp, math_clamp);
+    h.insert(Builtin::MathRadiansDegrees, math_radians_to_degrees);
+    h.insert(Builtin::MathCos, math_cos);
+    h.insert(Builtin::MathSin, math_sin);
 
     // --------------------------------------------------
     // prng
     // --------------------------------------------------
-    h.insert(Native::PrngBuild, prng_build);
-    h.insert(Native::PrngValues, prng_values);
-    h.insert(Native::PrngValue, prng_value);
-    h.insert(Native::PrngPerlin, prng_perlin);
+    h.insert(Builtin::PrngBuild, prng_build);
+    h.insert(Builtin::PrngValues, prng_values);
+    h.insert(Builtin::PrngValue, prng_value);
+    h.insert(Builtin::PrngPerlin, prng_perlin);
 
     // --------------------------------------------------
     // interp
     // --------------------------------------------------
-    h.insert(Native::InterpBuild, interp_build);
-    h.insert(Native::InterpValue, interp_value);
-    h.insert(Native::InterpCos, interp_cos);
-    h.insert(Native::InterpSin, interp_sin);
-    h.insert(Native::InterpBezier, interp_bezier);
-    h.insert(Native::InterpBezierTangent, interp_bezier_tangent);
-    h.insert(Native::InterpRay, interp_ray);
-    h.insert(Native::InterpLine, interp_line);
-    h.insert(Native::InterpCircle, interp_circle);
+    h.insert(Builtin::InterpBuild, interp_build);
+    h.insert(Builtin::InterpValue, interp_value);
+    h.insert(Builtin::InterpCos, interp_cos);
+    h.insert(Builtin::InterpSin, interp_sin);
+    h.insert(Builtin::InterpBezier, interp_bezier);
+    h.insert(Builtin::InterpBezierTangent, interp_bezier_tangent);
+    h.insert(Builtin::InterpRay, interp_ray);
+    h.insert(Builtin::InterpLine, interp_line);
+    h.insert(Builtin::InterpCircle, interp_circle);
 
     // --------------------------------------------------
     // path
     // --------------------------------------------------
-    h.insert(Native::PathLinear, path_linear);
-    h.insert(Native::PathCircle, path_circle);
-    h.insert(Native::PathSpline, path_spline);
-    h.insert(Native::PathBezier, path_bezier);
+    h.insert(Builtin::PathLinear, path_linear);
+    h.insert(Builtin::PathCircle, path_circle);
+    h.insert(Builtin::PathSpline, path_spline);
+    h.insert(Builtin::PathBezier, path_bezier);
 
     // --------------------------------------------------
     // repeat
     // --------------------------------------------------
-    h.insert(Native::RepeatSymmetryVertical, repeat_symmetry_vertical);
-    h.insert(Native::RepeatSymmetryHorizontal, repeat_symmetry_horizontal);
-    h.insert(Native::RepeatSymmetry4, repeat_symmetry_4);
-    h.insert(Native::RepeatSymmetry8, repeat_symmetry_8);
-    h.insert(Native::RepeatRotate, repeat_rotate);
-    h.insert(Native::RepeatRotateMirrored, repeat_mirrored);
+    h.insert(Builtin::RepeatSymmetryVertical, repeat_symmetry_vertical);
+    h.insert(
+        Builtin::RepeatSymmetryHorizontal,
+        repeat_symmetry_horizontal,
+    );
+    h.insert(Builtin::RepeatSymmetry4, repeat_symmetry_4);
+    h.insert(Builtin::RepeatSymmetry8, repeat_symmetry_8);
+    h.insert(Builtin::RepeatRotate, repeat_rotate);
+    h.insert(Builtin::RepeatRotateMirrored, repeat_mirrored);
 
     // --------------------------------------------------
     // focal
     // --------------------------------------------------
-    h.insert(Native::FocalBuildPoint, focal_build_point);
-    h.insert(Native::FocalBuildHLine, focal_build_hline);
-    h.insert(Native::FocalBuildVLine, focal_build_vline);
-    h.insert(Native::FocalValue, focal_value);
+    h.insert(Builtin::FocalBuildPoint, focal_build_point);
+    h.insert(Builtin::FocalBuildHLine, focal_build_hline);
+    h.insert(Builtin::FocalBuildVLine, focal_build_vline);
+    h.insert(Builtin::FocalValue, focal_value);
 
     // --------------------------------------------------
     // gen
     // --------------------------------------------------
-    h.insert(Native::GenStrayInt, gen_stray_int);
-    h.insert(Native::GenStray, gen_stray);
-    h.insert(Native::GenStray2D, gen_stray_2d);
-    h.insert(Native::GenStray3D, gen_stray_3d);
-    h.insert(Native::GenStray4D, gen_stray_4d);
-    h.insert(Native::GenInt, gen_int);
-    h.insert(Native::GenScalar, gen_scalar);
-    h.insert(Native::Gen2D, gen_2d);
-    h.insert(Native::GenSelect, gen_select);
-    h.insert(Native::GenCol, gen_col);
+    h.insert(Builtin::GenStrayInt, gen_stray_int);
+    h.insert(Builtin::GenStray, gen_stray);
+    h.insert(Builtin::GenStray2D, gen_stray_2d);
+    h.insert(Builtin::GenStray3D, gen_stray_3d);
+    h.insert(Builtin::GenStray4D, gen_stray_4d);
+    h.insert(Builtin::GenInt, gen_int);
+    h.insert(Builtin::GenScalar, gen_scalar);
+    h.insert(Builtin::Gen2D, gen_2d);
+    h.insert(Builtin::GenSelect, gen_select);
+    h.insert(Builtin::GenCol, gen_col);
 
     h
 }
@@ -2972,16 +2975,16 @@ mod tests {
     }
 
     #[test]
-    fn test_native_pack() {
+    fn test_builtin_pack() {
         let mut res: String = "".to_string();
-        Native::ColGetAlpha.pack(&mut res).unwrap();
+        Builtin::ColGetAlpha.pack(&mut res).unwrap();
         assert_eq!("col/get-alpha", res);
     }
 
     #[test]
-    fn test_native_unpack() {
-        let (res, _rem) = Native::unpack("col/get-alpha").unwrap();
-        assert_eq!(res, Native::ColGetAlpha);
+    fn test_builtin_unpack() {
+        let (res, _rem) = Builtin::unpack("col/get-alpha").unwrap();
+        assert_eq!(res, Builtin::ColGetAlpha);
     }
 
     #[test]

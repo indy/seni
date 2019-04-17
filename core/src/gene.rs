@@ -343,11 +343,11 @@ pub fn next_generation(
 mod tests {
     use super::*;
     use crate::colour::*;
-    use crate::parser::parse;
     use crate::compiler::{BytecodeArg, Program};
+    use crate::parser::parse;
     use crate::{compile_and_execute, compile_program_with_genotype, run_program_with_preamble};
 
-    use crate::native::Native;
+    use crate::builtin::Builtin;
     use crate::opcodes::Opcode;
 
     pub fn program_with_seeded_genotype(s: &str, seed: i32) -> Result<(Program, Genotype)> {
@@ -567,40 +567,44 @@ mod tests {
         }
     }
 
-    fn assert_native_opcode_in_program(program: &Program, native: Native) {
-        // find the first NATIVE opcode in the program and check if it's calling the given native function
+    fn assert_builtin_opcode_in_program(program: &Program, builtin: Builtin) {
+        // find the first BUILTIN opcode in the program and check if it's calling the given builtin function
         let mut iter = program.code.iter();
-        if let Some(res) = iter.find(|&bc| bc.op == Opcode::NATIVE) {
-            if let BytecodeArg::Native(n) = res.arg0 {
-                assert_eq!(native, n, "program should call native function {}", native);
+        if let Some(res) = iter.find(|&bc| bc.op == Opcode::BUILTIN) {
+            if let BytecodeArg::Builtin(n) = res.arg0 {
+                assert_eq!(
+                    builtin, n,
+                    "program should call builtin function {}",
+                    builtin
+                );
             } else {
-                assert!(false, format!("arg fail for {} in {}", native, program));
+                assert!(false, format!("arg fail for {} in {}", builtin, program));
             }
         } else {
-            assert!(false, format!("find fail for {} in {}", native, program));
+            assert!(false, format!("find fail for {} in {}", builtin, program));
         }
     }
 
     #[test]
-    fn gen_select_natives() {
+    fn gen_select_builtins() {
         let s = "({rect (gen/select from: '(rect circle circle-slice))} position: [100 100])";
         {
-            // dbg!(Native::Rect as i32);
+            // dbg!(Builtin::Rect as i32);
             // seed 6 == genotype[0].name: 305  Rect
             let (program, _genotype) = program_with_seeded_genotype(s, 6).unwrap();
-            assert_native_opcode_in_program(&program, Native::Rect);
+            assert_builtin_opcode_in_program(&program, Builtin::Rect);
         }
         {
-            // dbg!(Native::Circle as i32);
+            // dbg!(Builtin::Circle as i32);
             // seed 5 == genotype[0].name: 306  Circle
             let (program, _genotype) = program_with_seeded_genotype(s, 5).unwrap();
-            assert_native_opcode_in_program(&program, Native::Circle);
+            assert_builtin_opcode_in_program(&program, Builtin::Circle);
         }
         {
-            // dbg!(Native::CircleSlice as i32);
+            // dbg!(Builtin::CircleSlice as i32);
             // seed 14 == genotype[0].name: 307  CircleSlice
             let (program, _genotype) = program_with_seeded_genotype(s, 14).unwrap();
-            assert_native_opcode_in_program(&program, Native::CircleSlice);
+            assert_builtin_opcode_in_program(&program, Builtin::CircleSlice);
         }
     }
 

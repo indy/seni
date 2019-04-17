@@ -7,7 +7,6 @@
     )
 )]
 #![allow(dead_code)]
-
 // Copyright (C) 2019 Inderjit Gill
 
 // This program is free software: you can redistribute it and/or modify
@@ -27,6 +26,7 @@
 The core crate provides the basic functionality of the Seni system
 */
 
+mod builtin;
 mod colour;
 mod compiler;
 mod ease;
@@ -39,7 +39,6 @@ mod keywords;
 mod lexer;
 mod mathutil;
 mod matrix;
-mod native;
 mod opcodes;
 mod packable;
 mod parser;
@@ -52,7 +51,9 @@ mod unparser;
 mod uvmapper;
 mod vm;
 
-pub use crate::compiler::{compile_preamble, compile_program, compile_program_with_genotype, Program};
+pub use crate::compiler::{
+    compile_preamble, compile_program, compile_program_with_genotype, Program,
+};
 pub use crate::error::*;
 pub use crate::parser::*;
 pub use crate::vm::*;

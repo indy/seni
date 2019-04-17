@@ -16,12 +16,12 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
+use crate::builtin::Builtin;
 use crate::colour::Colour;
 use crate::error::{Error, Result};
 use crate::gene::Gene;
 use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
-use crate::native::Native;
 
 use strum::IntoEnumIterator;
 
@@ -233,23 +233,23 @@ struct NodeAndRemainder<'a> {
 
 #[derive(Default, Debug)]
 pub struct WordLut {
-    // requires a native hashmap (function names reserved by the native api)
-    // a keyword hashmap (keywords + constants + common arguments to native api functions)
+    // requires a builtin hashmap (function names reserved by the builtin api)
+    // a keyword hashmap (keywords + constants + common arguments to builtin api functions)
     // a word hashmap (user defined names and labels)
     word_to_iname: HashMap<String, i32>,
     word_count: i32,
 
     iname_to_word: HashMap<i32, String>,
-    iname_to_native: HashMap<i32, String>,
+    iname_to_builtin: HashMap<i32, String>,
     iname_to_keyword: HashMap<i32, String>,
 }
 
 impl WordLut {
     pub fn new() -> WordLut {
-        // native
-        let mut n: HashMap<i32, String> = HashMap::new();
-        for nat in Native::iter() {
-            n.insert(nat as i32, nat.to_string());
+        // builtin
+        let mut b: HashMap<i32, String> = HashMap::new();
+        for bin in Builtin::iter() {
+            b.insert(bin as i32, bin.to_string());
         }
 
         // keyword
@@ -263,14 +263,14 @@ impl WordLut {
             word_count: 0,
 
             iname_to_word: HashMap::new(),
-            iname_to_native: n,
+            iname_to_builtin: b,
             iname_to_keyword: k,
         }
     }
 
     pub fn get_string_from_i32(&self, i: i32) -> Option<&String> {
-        if let Some(s) = self.iname_to_native.get(&i) {
-            // first check the native api
+        if let Some(s) = self.iname_to_builtin.get(&i) {
+            // first check the builtin api
             Some(s)
         } else if let Some(s) = self.iname_to_keyword.get(&i) {
             // 2nd check the keywords
@@ -294,9 +294,9 @@ impl WordLut {
     }
 
     fn get_i32_from_string(&self, s: &str) -> Option<i32> {
-        // first check the native api
-        if let Ok(n) = Native::from_str(s) {
-            return Some(n as i32);
+        // first check the builtin api
+        if let Ok(b) = Builtin::from_str(s) {
+            return Some(b as i32);
         }
 
         // 2nd check the keywords
@@ -672,7 +672,7 @@ mod tests {
                             Node::List(
                                 vec![Node::Name(
                                     "gen/scalar".to_string(),
-                                    Native::GenScalar as i32,
+                                    Builtin::GenScalar as i32,
                                     None
                                 )],
                                 None
