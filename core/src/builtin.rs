@@ -55,25 +55,25 @@ pub enum Builtin {
 
     // shapes
     //
-    #[strum(serialize = "line")]
+    #[strum(serialize = "BUILTIN-line")]
     Line,
     #[strum(serialize = "BUILTIN-rect")]
     Rect,
-    #[strum(serialize = "circle")]
+    #[strum(serialize = "BUILTIN-circle")]
     Circle,
-    #[strum(serialize = "circle-slice")]
+    #[strum(serialize = "BUILTIN-circle-slice")]
     CircleSlice,
-    #[strum(serialize = "poly")]
+    #[strum(serialize = "BUILTIN-poly")]
     Poly,
-    #[strum(serialize = "quadratic")]
+    #[strum(serialize = "BUILTIN-quadratic")]
     Quadratic,
-    #[strum(serialize = "bezier")]
+    #[strum(serialize = "BUILTIN-bezier")]
     Bezier,
-    #[strum(serialize = "bezier-bulging")]
+    #[strum(serialize = "BUILTIN-bezier-bulging")]
     BezierBulging,
-    #[strum(serialize = "stroked-bezier")]
+    #[strum(serialize = "BUILTIN-stroked-bezier")]
     StrokedBezier,
-    #[strum(serialize = "stroked-bezier-rect")]
+    #[strum(serialize = "BUILTIN-stroked-bezier-rect")]
     StrokedBezierRect,
 
     // transforms

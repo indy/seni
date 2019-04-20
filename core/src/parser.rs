@@ -705,10 +705,10 @@ mod tests {
     #[test]
     fn test_parser_native() {
         assert_eq!(
-            ast("(native-rect width: 300)"),
+            ast("(rect width: 300)"),
             [Node::List(
                 vec![
-                    Node::Name("native-rect".to_string(), Native::Rect as i32, None),
+                    Node::Name("rect".to_string(), Native::Rect as i32, None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Label("width".to_string(), Keyword::Width as i32, None),
                     Node::Whitespace(" ".to_string(), None),

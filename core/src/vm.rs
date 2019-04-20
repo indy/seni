@@ -846,6 +846,14 @@ impl Vm {
         Ok(())
     }
 
+    pub fn stack_peek_kw(&self, offset: usize) -> Result<Keyword> {
+        if let Var::Keyword(kw) = &self.stack[self.sp - offset] {
+            Ok(*kw)
+        } else {
+            Err(Error::VM("stack_peek expected kw".to_string()))
+        }
+    }
+
     pub fn stack_peek_i32(&self, offset: usize) -> Result<i32> {
         if let Var::Int(i) = &self.stack[self.sp - offset] {
             Ok(*i)
@@ -857,6 +865,15 @@ impl Vm {
     pub fn stack_peek_f32(&self, offset: usize) -> Result<f32> {
         if let Var::Float(f) = &self.stack[self.sp - offset] {
             Ok(*f)
+        } else {
+            self.show_stack_around_sp();
+            Err(Error::VM(format!("stack_peek expected f32 at offset {}", offset)))
+        }
+    }
+
+    pub fn stack_peek_f32_as_usize(&self, offset: usize) -> Result<usize> {
+        if let Var::Float(f) = &self.stack[self.sp - offset] {
+            Ok(*f as usize)
         } else {
             Err(Error::VM("stack_peek expected f32".to_string()))
         }
@@ -876,6 +893,22 @@ impl Vm {
         } else {
             Err(Error::VM("stack_peek expected col".to_string()))
         }
+    }
+
+    pub fn show_stack_around_sp(&self) {
+        // dbg!(self.sp);
+
+        // let lowest = if self.sp > 4 {
+        //     self.sp - 4
+        // } else {
+        //     0
+        // };
+
+        // for i in (lowest..self.sp).rev() {
+        //     dbg!(i);
+        //     dbg!(&self.stack[i]);
+        // }
+
     }
 
     fn opcode_native(&mut self, _program: &Program, bc: &Bytecode) -> Result<()> {

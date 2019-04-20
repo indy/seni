@@ -62,7 +62,6 @@ pub fn compile_program_1(ast_node: &Node) -> Result<Program> {
 
 pub fn compile_program_for_trait(
     ast: &[Node],
-    gen_initial_value: &Node,
     global_mapping: &BTreeMap<i32, i32>,
 ) -> Result<Program> {
     let mut compilation = Compilation::new();
@@ -73,8 +72,11 @@ pub fn compile_program_for_trait(
     compiler.compile_common_prologue(&mut compilation, &ast)?;
     compiler.compile_common_top_level_fns(&mut compilation, &ast)?;
     compiler.compile_global_mappings_for_trait(&mut compilation, global_mapping)?;
+
     // this is a sub-program for a trait, bind the initial value to gen/initial-value
-    compiler.compile_global_bind_node(&mut compilation, Keyword::GenInitial, &gen_initial_value)?;
+    // compiler.compile_global_bind_node(&mut compilation, Keyword::GenInitial, &gen_initial_value)?;
+
+
     compiler.compile_common_top_level_defines(&mut compilation, &ast)?;
     compiler.compile_common_top_level_forms(&mut compilation, &ast)?;
     compiler.compile_common_epilogue(&mut compilation)?;
@@ -328,6 +330,10 @@ impl Packable for BytecodeArg {
             let rem = Mule::skip_forward(cursor, "NAME ".len());
             let (val, rem) = Mule::unpack_i32(rem)?;
             Ok((BytecodeArg::Name(val), rem))
+        } else if cursor.starts_with("NATIVE ") {
+            let rem = Mule::skip_forward(cursor, "NATIVE ".len());
+            let (val, rem) = Native::unpack(rem)?;
+            Ok((BytecodeArg::Native(val), rem))
         } else if cursor.starts_with("BUILTIN ") {
             let rem = Mule::skip_forward(cursor, "BUILTIN ".len());
             let (val, rem) = Builtin::unpack(rem)?;
@@ -1568,11 +1574,11 @@ impl Compiler {
 
     fn compile_var_as_load(&self, compilation: &mut Compilation, var: &Var) -> Result<()> {
         match var {
-            Var::Float(f) => compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f),
+            Var::Float(f) => compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f)?,
             Var::V2D(x, y) => {
                 compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *x)?;
                 compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *y)?;
-                compilation.emit_opcode(Opcode::SQUISH2)
+                compilation.emit_opcode(Opcode::SQUISH2)?;
             }
             Var::Colour(colour) => {
                 // todo: this is dependent on how col/rgb is handled,
@@ -1597,11 +1603,22 @@ impl Compiler {
                 // todo: once col/rgb is a NATIVE this hack can go away
                 let num_args = 4;
                 compilation.opcode_offset -= (num_args * 2) - 1;
-
-                Ok(())
             }
-            _ => return Err(Error::Compiler("unimplemented var compilation".to_string())),
-        }
+            Var::Keyword(kw) => {
+                compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?
+            }
+            // Var::Vector(vs) => {
+            //     // pushing from the VOID means creating a new, empty vector
+            //     compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
+            //     for v in vs {
+            //         self.compile_var_as_load(compilation, v)?;
+            //         compilation.emit_opcode(Opcode::APPEND)?;
+            //     }
+            // }
+            _ => return Err(Error::Compiler(format!("unimplemented var compilation {:?}", var))),
+        };
+
+        Ok(())
     }
 
     fn compile_define(
@@ -3000,16 +3017,16 @@ mod tests {
     #[test]
     fn test_bytecode_arg_pack() {
         let mut res: String = "".to_string();
-        BytecodeArg::Builtin(Builtin::Circle)
+        BytecodeArg::Native(Native::Circle)
             .pack(&mut res)
             .unwrap();
-        assert_eq!("BUILTIN circle", res);
+        assert_eq!("NATIVE circle", res);
     }
 
     #[test]
     fn test_bytecode_arg_unpack() {
-        let (res, _rem) = BytecodeArg::unpack("BUILTIN circle").unwrap();
-        assert_eq!(res, BytecodeArg::Builtin(Builtin::Circle));
+        let (res, _rem) = BytecodeArg::unpack("NATIVE circle").unwrap();
+        assert_eq!(res, BytecodeArg::Native(Native::Circle));
 
         let (res, rem) = BytecodeArg::unpack("BUILTIN col/triad otherstuff here").unwrap();
         assert_eq!(res, BytecodeArg::Builtin(Builtin::ColTriad));

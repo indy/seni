@@ -57,7 +57,6 @@ impl Gene {
 
     pub fn build_from_trait(vm: &mut Vm, t: &Trait) -> Result<Self> {
         vm.reset();
-
         vm.building_with_trait_within_vector = t.within_vector;
         vm.trait_within_vector_index = t.index;
 
@@ -347,7 +346,7 @@ mod tests {
     use crate::parser::parse;
     use crate::{compile_and_execute, compile_program_with_genotype, run_program_with_preamble};
 
-    use crate::builtin::Builtin;
+    use crate::native::Native;
     use crate::opcodes::Opcode;
 
     pub fn program_with_seeded_genotype(s: &str, seed: i32) -> Result<(Program, Genotype)> {
@@ -567,44 +566,44 @@ mod tests {
         }
     }
 
-    fn assert_builtin_opcode_in_program(program: &Program, builtin: Builtin) {
-        // find the first BUILTIN opcode in the program and check if it's calling the given builtin function
+    fn assert_native_opcode_in_program(program: &Program, native: Native) {
+        // find the first NATIVE opcode in the program and check if it's calling the given native function
         let mut iter = program.code.iter();
-        if let Some(res) = iter.find(|&bc| bc.op == Opcode::BUILTIN) {
-            if let BytecodeArg::Builtin(n) = res.arg0 {
+        if let Some(res) = iter.find(|&bc| bc.op == Opcode::NATIVE) {
+            if let BytecodeArg::Native(n) = res.arg0 {
                 assert_eq!(
-                    builtin, n,
-                    "program should call builtin function {}",
-                    builtin
+                    native, n,
+                    "program should call native function {}",
+                    native
                 );
             } else {
-                assert!(false, format!("arg fail for {} in {}", builtin, program));
+                assert!(false, format!("arg fail for {} in {}", native, program));
             }
         } else {
-            assert!(false, format!("find fail for {} in {}", builtin, program));
+            assert!(false, format!("find fail for {} in {}", native, program));
         }
     }
 
     #[test]
-    fn gen_select_builtins() {
+    fn gen_select_natives() {
         let s = "({rect (gen/select from: '(rect circle circle-slice))} position: [100 100])";
         {
-            // dbg!(Builtin::Rect as i32);
+            // dbg!(Native::Rect as i32);
             // seed 6 == genotype[0].name: 305  Rect
             let (program, _genotype) = program_with_seeded_genotype(s, 6).unwrap();
-            assert_builtin_opcode_in_program(&program, Builtin::Rect);
+            assert_native_opcode_in_program(&program, Native::Rect);
         }
         {
-            // dbg!(Builtin::Circle as i32);
+            // dbg!(Native::Circle as i32);
             // seed 5 == genotype[0].name: 306  Circle
             let (program, _genotype) = program_with_seeded_genotype(s, 5).unwrap();
-            assert_builtin_opcode_in_program(&program, Builtin::Circle);
+            assert_native_opcode_in_program(&program, Native::Circle);
         }
         {
-            // dbg!(Builtin::CircleSlice as i32);
+            // dbg!(Native::CircleSlice as i32);
             // seed 14 == genotype[0].name: 307  CircleSlice
             let (program, _genotype) = program_with_seeded_genotype(s, 14).unwrap();
-            assert_builtin_opcode_in_program(&program, Builtin::CircleSlice);
+            assert_native_opcode_in_program(&program, Native::CircleSlice);
         }
     }
 
