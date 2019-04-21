@@ -72,11 +72,6 @@ pub fn compile_program_for_trait(
     compiler.compile_common_prologue(&mut compilation, &ast)?;
     compiler.compile_common_top_level_fns(&mut compilation, &ast)?;
     compiler.compile_global_mappings_for_trait(&mut compilation, global_mapping)?;
-
-    // this is a sub-program for a trait, bind the initial value to gen/initial-value
-    // compiler.compile_global_bind_node(&mut compilation, Keyword::GenInitial, &gen_initial_value)?;
-
-
     compiler.compile_common_top_level_defines(&mut compilation, &ast)?;
     compiler.compile_common_top_level_forms(&mut compilation, &ast)?;
     compiler.compile_common_epilogue(&mut compilation)?;
@@ -938,8 +933,6 @@ impl Compiler {
     }
 
     fn register_top_level_preamble(&self, compilation: &mut Compilation) -> Result<()> {
-        compilation.add_global_mapping_for_keyword(Keyword::GenInitial)?;
-
         compilation.add_global_mapping_for_keyword(Keyword::CanvasWidth)?;
         compilation.add_global_mapping_for_keyword(Keyword::CanvasHeight)?;
 
@@ -1083,8 +1076,6 @@ impl Compiler {
         // NOTE: each entry should have a corresponding entry in
         // register_top_level_preamble
         // ********************************************************************************
-        self.compile_global_bind_kw_i32(compilation, Keyword::GenInitial, 0)?;
-
         self.compile_global_bind_kw_f32(compilation, Keyword::CanvasWidth, 1000.0)?;
         self.compile_global_bind_kw_f32(compilation, Keyword::CanvasHeight, 1000.0)?;
 
@@ -2587,17 +2578,6 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_global_bind_node(
-        &self,
-        compilation: &mut Compilation,
-        kw: Keyword,
-        node: &Node,
-    ) -> Result<()> {
-        self.compile(compilation, node)?;
-        self.store_globally_kw(compilation, kw)?;
-        Ok(())
-    }
-
     fn compile_global_bind_kw_i32(
         &self,
         compilation: &mut Compilation,
@@ -3061,7 +3041,7 @@ mod tests {
     fn sanity_check_compile_preamble() {
         // stupid, brittle test just to check that the preamble is creating something
         let preamble_program = compile_preamble().unwrap();
-        assert_eq!(preamble_program.code.len(), 111);
+        assert_eq!(preamble_program.code.len(), 109);
     }
 
     #[test]
@@ -3108,9 +3088,9 @@ mod tests {
             vec![
                 jump(1),
                 load_const_f32(9.0),
-                store_global(14),
+                store_global(13),
                 load_const_f32(10.0),
-                store_global(15),
+                store_global(14),
                 stop(),
             ]
         );
@@ -3120,11 +3100,11 @@ mod tests {
             vec![
                 jump(1),
                 load_const_f32(9.0),
-                store_global(14),
+                store_global(13),
                 load_const_f32(10.0),
-                store_global(15),
+                store_global(14),
+                load_global_i32(13),
                 load_global_i32(14),
-                load_global_i32(15),
                 add(),
                 stop(),
             ]
@@ -3237,8 +3217,8 @@ mod tests {
             vec![
                 jump(1),
                 load_void(),
-                store_global(14),
-                load_global_i32(14),
+                store_global(13),
+                load_global_i32(13),
                 vec_non_empty(),
                 jump_if(12),
                 vec_load_first(),
@@ -3308,7 +3288,8 @@ mod tests {
                 call_0(),
                 stop()
             ]
-        );
+        )
+            ;
     }
 
     #[test]
