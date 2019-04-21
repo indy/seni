@@ -503,8 +503,8 @@ impl Program {
 fn is_node_colour_constructor(children: &[&Node]) -> bool {
     if !children.is_empty() {
         if let Node::Name(_, iname, _) = children[0] {
-            let col_constructor_start = Builtin::ColConstructorStart_ as i32;
-            let col_constructor_end = Builtin::ColConstructorEnd_ as i32;
+            let col_constructor_start = Native::ColConstructorStart_ as i32;
+            let col_constructor_end = Native::ColConstructorEnd_ as i32;
 
             if *iname > col_constructor_start && *iname < col_constructor_end {
                 return true;
@@ -1574,28 +1574,17 @@ impl Compiler {
                 compilation.emit_opcode(Opcode::SQUISH2)?;
             }
             Var::Colour(colour) => {
-                // todo: this is dependent on how col/rgb is handled,
-                // change the code once it becomes a NATIVE and not a BUILTIN
-
-                // hack: for now assume that the colour is in RGB format
-                compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, Keyword::R as i32)?;
+                // the default_mask
+                compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, 0)?;
                 compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e0)?;
-                compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, Keyword::G as i32)?;
                 compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e1)?;
-                compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, Keyword::B as i32)?;
                 compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e2)?;
-                compilation.emit_opcode_mem_name(
-                    Opcode::LOAD,
-                    Mem::Constant,
-                    Keyword::Alpha as i32,
-                )?;
                 compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e3)?;
-                compilation.emit_opcode_builtin_i32(Opcode::BUILTIN, Builtin::ColRGB, 4)?;
-
-                // now update the opcode offset since this is using the BUILTIN
-                // todo: once col/rgb is a NATIVE this hack can go away
+                compilation.emit_opcode_native_i32(Opcode::NATIVE, Native::ColRGB, 4)?;
+                // now update the opcode offset since this is using the NATIVE
                 let num_args = 4;
-                compilation.opcode_offset -= (num_args * 2) - 1;
+                // subtract the 4 args + 1 default mask, but then add back the return value
+                compilation.opcode_offset -= (num_args + 1) - 1;
             }
             Var::Keyword(kw) => compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?,
             // Var::Vector(vs) => {
@@ -3011,8 +3000,8 @@ mod tests {
         let (res, _rem) = BytecodeArg::unpack("NATIVE circle").unwrap();
         assert_eq!(res, BytecodeArg::Native(Native::Circle));
 
-        let (res, rem) = BytecodeArg::unpack("BUILTIN col/triad otherstuff here").unwrap();
-        assert_eq!(res, BytecodeArg::Builtin(Builtin::ColTriad));
+        let (res, rem) = BytecodeArg::unpack("NATIVE col/triad otherstuff here").unwrap();
+        assert_eq!(res, BytecodeArg::Native(Native::ColTriad));
         assert_eq!(rem, " otherstuff here");
     }
 

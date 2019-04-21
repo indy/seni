@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::builtin::Builtin;
-use crate::colour::ColourFormat;
+use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
 use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
@@ -41,10 +41,10 @@ pub enum Native {
     // DebugPrint,
     #[strum(serialize = "nth")]
     Nth,
-    // #[strum(serialize = "vector/length")]
-    // VectorLength,
-    // #[strum(serialize = "probe")]
-    // Probe,
+    #[strum(serialize = "vector/length")]
+    VectorLength,
+    #[strum(serialize = "probe")]
+    Probe,
 
     // shapes
     //
@@ -78,78 +78,78 @@ pub enum Native {
     #[strum(serialize = "scale")]
     Scale,
 
-    // // colour
-    // //
-    // #[strum(serialize = "col/convert")]
-    // ColConvert,
-    // #[strum(serialize = "__colour_constructor_start")]
-    // ColConstructorStart_, // Special Enums required by the compiler to recognise colour constructors
-    // #[strum(serialize = "col/rgb")]
-    // ColRGB,
-    // #[strum(serialize = "col/hsl")]
-    // ColHSL,
-    // #[strum(serialize = "col/hsluv")]
-    // ColHSLuv,
-    // #[strum(serialize = "col/hsv")]
-    // ColHSV,
-    // #[strum(serialize = "col/lab")]
-    // ColLAB,
-    // #[strum(serialize = "__colour_constructor_end")]
-    // ColConstructorEnd_, // Special Enums required by the compiler to recognise colour constructors
-    // #[strum(serialize = "col/complementary")]
-    // ColComplementary,
-    // #[strum(serialize = "col/split-complementary")]
-    // ColSplitComplementary,
-    // #[strum(serialize = "col/analagous")]
-    // ColAnalagous,
-    // #[strum(serialize = "col/triad")]
-    // ColTriad,
-    // #[strum(serialize = "col/darken")]
-    // ColDarken,
-    // #[strum(serialize = "col/lighten")]
-    // ColLighten,
-    // #[strum(serialize = "col/set-alpha")]
-    // ColSetAlpha,
-    // #[strum(serialize = "col/get-alpha")]
-    // ColGetAlpha,
-    // #[strum(serialize = "col/set-r")]
-    // ColSetR,
-    // #[strum(serialize = "col/get-r")]
-    // ColGetR,
-    // #[strum(serialize = "col/set-g")]
-    // ColSetG,
-    // #[strum(serialize = "col/get-g")]
-    // ColGetG,
-    // #[strum(serialize = "col/set-b")]
-    // ColSetB,
-    // #[strum(serialize = "col/get-b")]
-    // ColGetB,
-    // #[strum(serialize = "col/set-h")]
-    // ColSetH,
-    // #[strum(serialize = "col/get-h")]
-    // ColGetH,
-    // #[strum(serialize = "col/set-s")]
-    // ColSetS,
-    // #[strum(serialize = "col/get-s")]
-    // ColGetS,
-    // #[strum(serialize = "col/set-l")]
-    // ColSetL,
-    // #[strum(serialize = "col/get-l")]
-    // ColGetL,
-    // #[strum(serialize = "col/set-a")]
-    // ColSetA,
-    // #[strum(serialize = "col/get-a")]
-    // ColGetA,
-    // #[strum(serialize = "col/set-v")]
-    // ColSetV,
-    // #[strum(serialize = "col/get-v")]
-    // ColGetV,
-    // #[strum(serialize = "col/build-procedural")]
-    // ColBuildProcedural,
+    // colour
+    //
+    #[strum(serialize = "col/convert")]
+    ColConvert,
+    #[strum(serialize = "__colour_constructor_start")]
+    ColConstructorStart_, // Special Enums required by the compiler to recognise colour constructors
+    #[strum(serialize = "col/rgb")]
+    ColRGB,
+    #[strum(serialize = "col/hsl")]
+    ColHSL,
+    #[strum(serialize = "col/hsluv")]
+    ColHSLuv,
+    #[strum(serialize = "col/hsv")]
+    ColHSV,
+    #[strum(serialize = "col/lab")]
+    ColLAB,
+    #[strum(serialize = "__colour_constructor_end")]
+    ColConstructorEnd_, // Special Enums required by the compiler to recognise colour constructors
+    #[strum(serialize = "col/complementary")]
+    ColComplementary,
+    #[strum(serialize = "col/split-complementary")]
+    ColSplitComplementary,
+    #[strum(serialize = "col/analagous")]
+    ColAnalagous,
+    #[strum(serialize = "col/triad")]
+    ColTriad,
+    #[strum(serialize = "col/darken")]
+    ColDarken,
+    #[strum(serialize = "col/lighten")]
+    ColLighten,
+    #[strum(serialize = "col/set-alpha")]
+    ColSetAlpha,
+    #[strum(serialize = "col/get-alpha")]
+    ColGetAlpha,
+    #[strum(serialize = "col/set-r")]
+    ColSetR,
+    #[strum(serialize = "col/get-r")]
+    ColGetR,
+    #[strum(serialize = "col/set-g")]
+    ColSetG,
+    #[strum(serialize = "col/get-g")]
+    ColGetG,
+    #[strum(serialize = "col/set-b")]
+    ColSetB,
+    #[strum(serialize = "col/get-b")]
+    ColGetB,
+    #[strum(serialize = "col/set-h")]
+    ColSetH,
+    #[strum(serialize = "col/get-h")]
+    ColGetH,
+    #[strum(serialize = "col/set-s")]
+    ColSetS,
+    #[strum(serialize = "col/get-s")]
+    ColGetS,
+    #[strum(serialize = "col/set-l")]
+    ColSetL,
+    #[strum(serialize = "col/get-l")]
+    ColGetL,
+    #[strum(serialize = "col/set-a")]
+    ColSetA,
+    #[strum(serialize = "col/get-a")]
+    ColGetA,
+    #[strum(serialize = "col/set-v")]
+    ColSetV,
+    #[strum(serialize = "col/get-v")]
+    ColGetV,
+    #[strum(serialize = "col/build-procedural")]
+    ColBuildProcedural,
     // #[strum(serialize = "col/build-bezier")]
     // ColBuildBezier,
-    // #[strum(serialize = "col/value")]
-    // ColValue,
+    #[strum(serialize = "col/value")]
+    ColValue,
 
     // // math
     // //
@@ -284,6 +284,8 @@ impl Packable for Native {
 pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
     match native {
         Native::Nth => nth_parameter_info(),
+        Native::VectorLength => vector_length_parameter_info(),
+        Native::Probe => probe_parameter_info(),
         Native::Line => line_parameter_info(),
         Native::Rect => rect_parameter_info(),
         Native::Circle => circle_parameter_info(),
@@ -295,6 +297,38 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::Translate => translate_parameter_info(),
         Native::Rotate => rotate_parameter_info(),
         Native::Scale => scale_parameter_info(),
+        Native::ColConvert => col_convert_parameter_info(),
+        Native::ColRGB => col_rgb_parameter_info(),
+        Native::ColHSL => col_hsl_parameter_info(),
+        Native::ColHSLuv => col_hsluv_parameter_info(),
+        Native::ColHSV => col_hsv_parameter_info(),
+        Native::ColLAB => col_lab_parameter_info(),
+        Native::ColComplementary => col_complementary_parameter_info(),
+        Native::ColSplitComplementary => col_split_complementary_parameter_info(),
+        Native::ColAnalagous => col_analagous_parameter_info(),
+        Native::ColTriad => col_triad_parameter_info(),
+        Native::ColDarken => common_colour_value_parameter_info(),
+        Native::ColLighten => common_colour_value_parameter_info(),
+        Native::ColSetAlpha => common_colour_value_parameter_info(),
+        Native::ColGetAlpha => common_colour_only_parameter_info(),
+        Native::ColSetR => common_colour_value_parameter_info(),
+        Native::ColGetR => common_colour_only_parameter_info(),
+        Native::ColSetG => common_colour_value_parameter_info(),
+        Native::ColGetG => common_colour_only_parameter_info(),
+        Native::ColSetB => common_colour_value_parameter_info(),
+        Native::ColGetB => common_colour_only_parameter_info(),
+        Native::ColSetH => common_colour_value_parameter_info(),
+        Native::ColGetH => common_colour_only_parameter_info(),
+        Native::ColSetS => common_colour_value_parameter_info(),
+        Native::ColGetS => common_colour_only_parameter_info(),
+        Native::ColSetL => common_colour_value_parameter_info(),
+        Native::ColGetL => common_colour_only_parameter_info(),
+        Native::ColSetA => common_colour_value_parameter_info(),
+        Native::ColGetA => common_colour_only_parameter_info(),
+        Native::ColSetV => common_colour_value_parameter_info(),
+        Native::ColGetV => common_colour_only_parameter_info(),
+        Native::ColBuildProcedural => col_build_procedural_parameter_info(),
+        Native::ColValue => col_value_parameter_info(),
         _ => Err(Error::Native("parameter_info".to_string())),
     }
 }
@@ -302,6 +336,8 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
 pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
     match native {
         Native::Nth => nth_execute(vm),
+        Native::VectorLength => vector_length_execute(vm),
+        Native::Probe => probe_execute(vm),
         Native::Line => line_execute(vm),
         Native::Rect => rect_execute(vm),
         Native::Circle => circle_execute(vm),
@@ -313,6 +349,38 @@ pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
         Native::Translate => translate_execute(vm),
         Native::Rotate => rotate_execute(vm),
         Native::Scale => scale_execute(vm),
+        Native::ColConvert => col_convert_execute(vm),
+        Native::ColRGB => col_rgb_execute(vm),
+        Native::ColHSL => col_hsl_execute(vm),
+        Native::ColHSLuv => col_hsluv_execute(vm),
+        Native::ColHSV => col_hsv_execute(vm),
+        Native::ColLAB => col_lab_execute(vm),
+        Native::ColComplementary => col_complementary_execute(vm),
+        Native::ColSplitComplementary => col_split_complementary_execute(vm),
+        Native::ColAnalagous => col_analagous_execute(vm),
+        Native::ColTriad => col_triad_execute(vm),
+        Native::ColDarken => col_darken_execute(vm),
+        Native::ColLighten => col_lighten_execute(vm),
+        Native::ColSetAlpha => col_set_elem_execute(vm, 3),
+        Native::ColGetAlpha => col_get_elem_execute(vm, 3),
+        Native::ColSetR => col_set_elem_execute(vm, 0),
+        Native::ColGetR => col_get_elem_execute(vm, 0),
+        Native::ColSetG => col_set_elem_execute(vm, 1),
+        Native::ColGetG => col_get_elem_execute(vm, 1),
+        Native::ColSetB => col_set_elem_execute(vm, 2),
+        Native::ColGetB => col_get_elem_execute(vm, 2),
+        Native::ColSetH => col_set_elem_execute(vm, 0),
+        Native::ColGetH => col_get_elem_execute(vm, 0),
+        Native::ColSetS => col_set_elem_execute(vm, 1),
+        Native::ColGetS => col_get_elem_execute(vm, 1),
+        Native::ColSetL => col_set_elem_execute(vm, 2), // bug: will fail when called for LAB colour
+        Native::ColGetL => col_get_elem_execute(vm, 2),
+        Native::ColSetA => col_set_elem_execute(vm, 1),
+        Native::ColGetA => col_get_elem_execute(vm, 1),
+        Native::ColSetV => col_set_elem_execute(vm, 2),
+        Native::ColGetV => col_get_elem_execute(vm, 2),
+        Native::ColBuildProcedural => col_build_procedural_execute(vm),
+        Native::ColValue => col_value_execute(vm),
         _ => Err(Error::Native("execute_native".to_string())),
     }
 }
@@ -423,6 +491,77 @@ fn nth_execute(vm: &mut Vm) -> Result<Option<Var>> {
     };
 
     Ok(res)
+}
+
+fn vector_length_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Vector, Var::Bool(false))],
+        // stack offset
+        1,
+    ))
+}
+
+fn vector_length_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(2)?;
+    let vector_offset = 1;
+
+    // require a 'vector' argument
+    if !is_arg_given(default_mask, vector_offset) {
+        return Err(Error::Native(
+            "vector/length requires vector parameter".to_string(),
+        ));
+    }
+
+    // vector is either a Vector or a V2D
+    let res = match &vm.stack[vm.sp - vector_offset] {
+        Var::Vector(vs) => Some(Var::Int(vs.len() as i32)),
+        Var::V2D(_, _) => Some(Var::Int(2)),
+        _ => {
+            return Err(Error::Native(
+                "vector/length only accepts Vector or V2D in 'vector' parameter".to_string(),
+            ))
+        }
+    };
+
+    Ok(res)
+}
+
+fn probe_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Scalar, Var::Float(0.0)),
+            (Keyword::Vector, Var::V2D(0.0, 0.0)),
+            (Keyword::WorldSpace, Var::V2D(0.0, 0.0)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn probe_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(4)?;
+
+    if is_arg_given(default_mask, 1) {
+        let scalar = vm.stack_peek_f32(1)?;
+        vm.debug_str_append(&format!("{}", scalar));
+    }
+
+    if is_arg_given(default_mask, 2) {
+        let (x, y) = vm.stack_peek_v2d(2)?;
+        vm.debug_str_append(&format!("({},{})", x, y));
+    }
+
+    if is_arg_given(default_mask, 3) {
+        let (x, y) = vm.stack_peek_v2d(3)?;
+        if let Some(matrix) = vm.matrix_stack.peek() {
+            let (nx, ny) = matrix.transform_vec2(x, y);
+            vm.debug_str_append(&format!("({},{})", nx, ny));
+        }
+    }
+
+    Ok(None)
 }
 
 fn line_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -1120,6 +1259,430 @@ fn scale_execute(vm: &mut Vm) -> Result<Option<Var>> {
     Ok(None)
 }
 
+fn col_convert_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Format, Var::Bool(false)),
+            (Keyword::Colour, Var::Colour(Default::default())),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_convert_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let format = vm.stack_peek_kw(1)?;
+    let col = vm.stack_peek_col(2)?;
+
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        Err(Error::Native(
+            "col/convert requires format argument".to_string(),
+        ))
+    } else if let Some(format) = ColourFormat::from_keyword(format) {
+        let col = col.convert(format)?;
+        Ok(Some(Var::Colour(col)))
+    } else {
+        Err(Error::Native("col/convert".to_string()))
+    }
+}
+
+fn col_rgb_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::R, Var::Float(0.0)),
+            (Keyword::G, Var::Float(0.0)),
+            (Keyword::B, Var::Float(0.0)),
+            (Keyword::Alpha, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_rgb_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let r = vm.stack_peek_f32(1)?;
+    let g = vm.stack_peek_f32(2)?;
+    let b = vm.stack_peek_f32(3)?;
+    let alpha = vm.stack_peek_f32(4)?;
+
+    Ok(Some(Var::Colour(Colour::new(
+        ColourFormat::Rgb,
+        r,
+        g,
+        b,
+        alpha,
+    ))))
+}
+
+fn col_hsl_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::H, Var::Float(0.0)),
+            (Keyword::S, Var::Float(0.0)),
+            (Keyword::L, Var::Float(0.0)),
+            (Keyword::Alpha, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_hsl_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let h = vm.stack_peek_f32(1)?;
+    let s = vm.stack_peek_f32(2)?;
+    let l = vm.stack_peek_f32(3)?;
+    let alpha = vm.stack_peek_f32(4)?;
+
+    Ok(Some(Var::Colour(Colour::new(
+        ColourFormat::Hsl,
+        h,
+        s,
+        l,
+        alpha,
+    ))))
+}
+
+fn col_hsluv_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::H, Var::Float(0.0)),
+            (Keyword::S, Var::Float(0.0)),
+            (Keyword::L, Var::Float(0.0)),
+            (Keyword::Alpha, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_hsluv_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let h = vm.stack_peek_f32(1)?;
+    let s = vm.stack_peek_f32(2)?;
+    let l = vm.stack_peek_f32(3)?;
+    let alpha = vm.stack_peek_f32(4)?;
+
+    Ok(Some(Var::Colour(Colour::new(
+        ColourFormat::Hsluv,
+        h,
+        s,
+        l,
+        alpha,
+    ))))
+}
+
+fn col_hsv_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::H, Var::Float(0.0)),
+            (Keyword::S, Var::Float(0.0)),
+            (Keyword::V, Var::Float(0.0)),
+            (Keyword::Alpha, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_hsv_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let h = vm.stack_peek_f32(1)?;
+    let s = vm.stack_peek_f32(2)?;
+    let v = vm.stack_peek_f32(3)?;
+    let alpha = vm.stack_peek_f32(4)?;
+
+    Ok(Some(Var::Colour(Colour::new(
+        ColourFormat::Hsv,
+        h,
+        s,
+        v,
+        alpha,
+    ))))
+}
+
+fn col_lab_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::L, Var::Float(0.0)),
+            (Keyword::A, Var::Float(0.0)),
+            (Keyword::B, Var::Float(0.0)),
+            (Keyword::Alpha, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_lab_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let l = vm.stack_peek_f32(1)?;
+    let a = vm.stack_peek_f32(2)?;
+    let b = vm.stack_peek_f32(3)?;
+    let alpha = vm.stack_peek_f32(4)?;
+
+    Ok(Some(Var::Colour(Colour::new(
+        ColourFormat::Lab,
+        l,
+        a,
+        b,
+        alpha,
+    ))))
+}
+
+fn col_complementary_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Colour, Var::Colour(Default::default()))],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_complementary_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let col = vm.stack_peek_col(1)?;
+
+    Ok(Some(Var::Colour(col.complementary()?)))
+}
+
+fn col_split_complementary_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Colour, Var::Colour(Default::default()))],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_split_complementary_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let col = vm.stack_peek_col(1)?;
+    let (col1, col2) = col.split_complementary()?;
+
+    Ok(Some(Var::Vector(vec![
+        Var::Colour(col1),
+        Var::Colour(col2),
+    ])))
+}
+
+fn col_analagous_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Colour, Var::Colour(Default::default()))],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_analagous_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let col = vm.stack_peek_col(1)?;
+    let (col1, col2) = col.analagous()?;
+
+    Ok(Some(Var::Vector(vec![
+        Var::Colour(col1),
+        Var::Colour(col2),
+    ])))
+}
+
+fn col_triad_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Colour, Var::Colour(Default::default()))],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_triad_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let col = vm.stack_peek_col(1)?;
+    let (col1, col2) = col.triad()?;
+
+    Ok(Some(Var::Vector(vec![
+        Var::Colour(col1),
+        Var::Colour(col2),
+    ])))
+}
+
+fn common_colour_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Colour, Var::Colour(Default::default())),
+            (Keyword::Value, Var::Float(0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+fn common_colour_only_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Colour, Var::Colour(Default::default()))],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_darken_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let col = vm.stack_peek_col(1)?;
+    let value = vm.stack_peek_f32(2)?;
+
+    Ok(Some(Var::Colour(col.darken(value)?)))
+}
+
+fn col_lighten_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let col = vm.stack_peek_col(1)?;
+    let value = vm.stack_peek_f32(2)?;
+
+    Ok(Some(Var::Colour(col.lighten(value)?)))
+}
+
+fn col_set_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
+    let col = vm.stack_peek_col(1)?;
+    let value = vm.stack_peek_f32(2)?;
+
+    let res = match idx {
+        0 => Colour::new(col.format, value, col.e1, col.e2, col.e3),
+        1 => Colour::new(col.format, col.e0, value, col.e2, col.e3),
+        2 => Colour::new(col.format, col.e0, col.e1, value, col.e3),
+        3 => Colour::new(col.format, col.e0, col.e1, col.e2, value),
+        _ => {
+            return Err(Error::Bind(
+                "col_set_elem_execute::idx out of range".to_string(),
+            ))
+        }
+    };
+
+    Ok(Some(Var::Colour(res)))
+}
+
+fn col_get_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
+    let col = vm.stack_peek_col(1)?;
+
+    let res = match idx {
+        0 => col.e0,
+        1 => col.e1,
+        2 => col.e2,
+        3 => col.e3,
+        _ => {
+            return Err(Error::Bind(
+                "col_get_elem_execute::idx out of range".to_string(),
+            ))
+        }
+    };
+
+    Ok(Some(Var::Float(res)))
+}
+
+fn col_build_procedural_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Preset, Var::Keyword(Keyword::Robocop)),
+            (Keyword::Alpha, Var::Float(1.0)),
+            (Keyword::A, Var::Float(0.0)),
+            (Keyword::B, Var::Float(0.0)),
+            (Keyword::C, Var::Float(0.0)),
+            (Keyword::D, Var::Float(0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn to_f32_3(vecs: &Vec<Var>) -> Result<[f32; 3]> {
+    if let Var::Float(a) = vecs[0] {
+        if let Var::Float(b) = vecs[1] {
+            if let Var::Float(c) = vecs[2] {
+                return Ok([a, b, c]);
+            }
+        }
+    }
+
+    Err(Error::Native("to_f32_3".to_string()))
+}
+
+fn col_build_procedural_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(7)?;
+
+    let alpha = vm.stack_peek_f32(2)?;
+
+    let (a, b, c, d) = if is_arg_given(default_mask, 1) {
+        // preset given
+        let preset_kw = vm.stack_peek_kw(1)?;
+        if let Some(preset) = ColourPreset::from_keyword(preset_kw) {
+            preset.get_preset()
+        } else {
+            return Err(Error::Native("col_build_procedural_execute".to_string()));
+        }
+    } else if is_arg_given(default_mask, 3)
+        && is_arg_given(default_mask, 4)
+        && is_arg_given(default_mask, 5)
+        && is_arg_given(default_mask, 6)
+    {
+        (
+            to_f32_3(stack_peek_vars(&vm.stack, vm.sp, 3)?)?,
+            to_f32_3(stack_peek_vars(&vm.stack, vm.sp, 4)?)?,
+            to_f32_3(stack_peek_vars(&vm.stack, vm.sp, 5)?)?,
+            to_f32_3(stack_peek_vars(&vm.stack, vm.sp, 6)?)?,
+        )
+    } else {
+        return Err(Error::Native("col_build_procedural_execute".to_string()));
+    };
+
+    Ok(Some(Var::ProcColourState(ProcColourStateStruct {
+        a,
+        b,
+        c,
+        d,
+        alpha,
+    })))
+}
+
+fn col_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::T, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn stack_peek_proc_colour_state_struct(
+    stack: &Vec<Var>,
+    sp: usize,
+    offset: usize,
+) -> Result<&ProcColourStateStruct> {
+    if let Var::ProcColourState(pcss) = &stack[sp - offset] {
+        Ok(pcss)
+    } else {
+        return Err(Error::VM("expected Var::ProcColourState".to_string()));
+    }
+}
+
+fn col_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "col_value_execute requires from parameter".to_string(),
+        ));
+    }
+
+    let from = stack_peek_proc_colour_state_struct(&vm.stack, vm.sp, 1)?;
+    let t = vm.stack_peek_f32(2)?;
+
+    let res = from.colour(t);
+
+    Ok(Some(Var::Colour(res)))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1167,16 +1730,16 @@ mod tests {
     }
 
     #[test]
-    fn test_builtin_pack() {
+    fn test_native_pack() {
         let mut res: String = "".to_string();
-        Builtin::ColGetAlpha.pack(&mut res).unwrap();
+        Native::ColGetAlpha.pack(&mut res).unwrap();
         assert_eq!("col/get-alpha", res);
     }
 
     #[test]
-    fn test_builtin_unpack() {
-        let (res, _rem) = Builtin::unpack("col/get-alpha").unwrap();
-        assert_eq!(res, Builtin::ColGetAlpha);
+    fn test_native_unpack() {
+        let (res, _rem) = Native::unpack("col/get-alpha").unwrap();
+        assert_eq!(res, Native::ColGetAlpha);
     }
 
     #[test]

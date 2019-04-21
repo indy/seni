@@ -48,9 +48,9 @@ pub enum Builtin {
     DebugPrint,
     #[strum(serialize = "BUILTIN-nth")]
     Nth,
-    #[strum(serialize = "vector/length")]
+    #[strum(serialize = "BUILTIN-vector/length")]
     VectorLength,
-    #[strum(serialize = "probe")]
+    #[strum(serialize = "BUILTIN-probe")]
     Probe,
 
     // shapes
@@ -87,75 +87,71 @@ pub enum Builtin {
 
     // colour
     //
-    #[strum(serialize = "col/convert")]
+    #[strum(serialize = "BUILTIN-col/convert")]
     ColConvert,
-    #[strum(serialize = "__colour_constructor_start")]
-    ColConstructorStart_, // Special Enums required by the compiler to recognise colour constructors
-    #[strum(serialize = "col/rgb")]
+    #[strum(serialize = "BUILTIN-col/rgb")]
     ColRGB,
-    #[strum(serialize = "col/hsl")]
+    #[strum(serialize = "BUILTIN-col/hsl")]
     ColHSL,
-    #[strum(serialize = "col/hsluv")]
+    #[strum(serialize = "BUILTIN-col/hsluv")]
     ColHSLuv,
-    #[strum(serialize = "col/hsv")]
+    #[strum(serialize = "BUILTIN-col/hsv")]
     ColHSV,
-    #[strum(serialize = "col/lab")]
+    #[strum(serialize = "BUILTIN-col/lab")]
     ColLAB,
-    #[strum(serialize = "__colour_constructor_end")]
-    ColConstructorEnd_, // Special Enums required by the compiler to recognise colour constructors
-    #[strum(serialize = "col/complementary")]
+    #[strum(serialize = "BUILTIN-col/complementary")]
     ColComplementary,
-    #[strum(serialize = "col/split-complementary")]
+    #[strum(serialize = "BUILTIN-col/split-complementary")]
     ColSplitComplementary,
-    #[strum(serialize = "col/analagous")]
+    #[strum(serialize = "BUILTIN-col/analagous")]
     ColAnalagous,
-    #[strum(serialize = "col/triad")]
+    #[strum(serialize = "BUILTIN-col/triad")]
     ColTriad,
-    #[strum(serialize = "col/darken")]
+    #[strum(serialize = "BUILTIN-col/darken")]
     ColDarken,
-    #[strum(serialize = "col/lighten")]
+    #[strum(serialize = "BUILTIN-col/lighten")]
     ColLighten,
-    #[strum(serialize = "col/set-alpha")]
+    #[strum(serialize = "BUILTIN-col/set-alpha")]
     ColSetAlpha,
-    #[strum(serialize = "col/get-alpha")]
+    #[strum(serialize = "BUILTIN-col/get-alpha")]
     ColGetAlpha,
-    #[strum(serialize = "col/set-r")]
+    #[strum(serialize = "BUILTIN-col/set-r")]
     ColSetR,
-    #[strum(serialize = "col/get-r")]
+    #[strum(serialize = "BUILTIN-col/get-r")]
     ColGetR,
-    #[strum(serialize = "col/set-g")]
+    #[strum(serialize = "BUILTIN-col/set-g")]
     ColSetG,
-    #[strum(serialize = "col/get-g")]
+    #[strum(serialize = "BUILTIN-col/get-g")]
     ColGetG,
-    #[strum(serialize = "col/set-b")]
+    #[strum(serialize = "BUILTIN-col/set-b")]
     ColSetB,
-    #[strum(serialize = "col/get-b")]
+    #[strum(serialize = "BUILTIN-col/get-b")]
     ColGetB,
-    #[strum(serialize = "col/set-h")]
+    #[strum(serialize = "BUILTIN-col/set-h")]
     ColSetH,
-    #[strum(serialize = "col/get-h")]
+    #[strum(serialize = "BUILTIN-col/get-h")]
     ColGetH,
-    #[strum(serialize = "col/set-s")]
+    #[strum(serialize = "BUILTIN-col/set-s")]
     ColSetS,
-    #[strum(serialize = "col/get-s")]
+    #[strum(serialize = "BUILTIN-col/get-s")]
     ColGetS,
-    #[strum(serialize = "col/set-l")]
+    #[strum(serialize = "BUILTIN-col/set-l")]
     ColSetL,
-    #[strum(serialize = "col/get-l")]
+    #[strum(serialize = "BUILTIN-col/get-l")]
     ColGetL,
-    #[strum(serialize = "col/set-a")]
+    #[strum(serialize = "BUILTIN-col/set-a")]
     ColSetA,
-    #[strum(serialize = "col/get-a")]
+    #[strum(serialize = "BUILTIN-col/get-a")]
     ColGetA,
-    #[strum(serialize = "col/set-v")]
+    #[strum(serialize = "BUILTIN-col/set-v")]
     ColSetV,
-    #[strum(serialize = "col/get-v")]
+    #[strum(serialize = "BUILTIN-col/get-v")]
     ColGetV,
-    #[strum(serialize = "col/build-procedural")]
+    #[strum(serialize = "BUILTIN-col/build-procedural")]
     ColBuildProcedural,
     #[strum(serialize = "col/build-bezier")]
     ColBuildBezier,
-    #[strum(serialize = "col/value")]
+    #[strum(serialize = "BUILTIN-col/value")]
     ColValue,
 
     // math

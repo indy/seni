@@ -567,8 +567,8 @@ mod tests {
     }
 
     fn assert_native_opcode_in_program(program: &Program, native: Native) {
-        // find the first NATIVE opcode in the program and check if it's calling the given native function
-        let mut iter = program.code.iter();
+        // find the last NATIVE opcode in the program and check if it's calling the given native function
+        let mut iter = program.code.iter().rev();
         if let Some(res) = iter.find(|&bc| bc.op == Opcode::NATIVE) {
             if let BytecodeArg::Native(n) = res.arg0 {
                 assert_eq!(native, n, "program should call native function {}", native);
