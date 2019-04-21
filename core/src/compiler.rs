@@ -69,7 +69,10 @@ pub fn compile_program_for_trait(
 
     let ast = only_semantic_nodes(ast);
 
-    compiler.compile_common_prologue(&mut compilation, &ast)?;
+    compiler.compile_common_prologue(&mut compilation)?;
+    compiler.register_top_level_fns(&mut compilation, &ast)?;
+    compiler.register_top_level_defines(&mut compilation, &ast)?;
+
     compiler.compile_common_top_level_fns(&mut compilation, &ast)?;
     compiler.compile_global_mappings_for_trait(&mut compilation, global_mapping)?;
     compiler.compile_common_top_level_defines(&mut compilation, &ast)?;
@@ -1169,7 +1172,11 @@ impl Compiler {
 
     pub fn compile_common(&self, compilation: &mut Compilation, ast: &[Node]) -> Result<()> {
         let ast = only_semantic_nodes(ast);
-        self.compile_common_prologue(compilation, &ast)?;
+        self.compile_common_prologue(compilation)?;
+
+        self.register_top_level_fns(compilation, &ast)?;
+        self.register_top_level_defines(compilation, &ast)?;
+
         self.compile_common_top_level_fns(compilation, &ast)?;
         self.compile_common_top_level_defines(compilation, &ast)?;
         self.compile_common_top_level_forms(compilation, &ast)?;
@@ -1178,23 +1185,17 @@ impl Compiler {
     }
 
     fn compile_common_1(&self, compilation: &mut Compilation, n: &Node) -> Result<()> {
-        //// single node version of self.compile_common_prologue(compilation, ast)?;
-        {
-            compilation.clear_global_mappings()?;
-            compilation.clear_local_mappings()?;
+        self.compile_common_prologue(compilation)?;
 
-            self.register_top_level_preamble(compilation)?;
-
-            // single node version of self.register_top_level_fns(compilation, ast)?;
-            compilation.fn_info = Vec::new();
-            if let Some(fn_info) = self.register_top_level_fns_1(n)? {
-                compilation.fn_info.push(fn_info);
-            }
-
-            // single node version of self.register_top_level_defines(compilation, ast)?;
-            let define_keyword_string = Keyword::Define.to_string();
-            self.register_top_level_defines_1(compilation, n, &define_keyword_string)?;
+        // single node version of self.register_top_level_fns(compilation, ast)?;
+        compilation.fn_info = Vec::new();
+        if let Some(fn_info) = self.register_top_level_fns_1(n)? {
+            compilation.fn_info.push(fn_info);
         }
+
+        // single node version of self.register_top_level_defines(compilation, ast)?;
+        let define_keyword_string = Keyword::Define.to_string();
+        self.register_top_level_defines_1(compilation, n, &define_keyword_string)?;
 
         //// single node version of self.compile_common_top_level_fns(compilation, ast)?;
         {
@@ -1236,14 +1237,12 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_common_prologue(&self, compilation: &mut Compilation, ast: &[&Node]) -> Result<()> {
+    fn compile_common_prologue(&self, compilation: &mut Compilation) -> Result<()> {
         compilation.clear_global_mappings()?;
         compilation.clear_local_mappings()?;
         // compilation->current_fn_info = NULL;
 
         self.register_top_level_preamble(compilation)?;
-        self.register_top_level_fns(compilation, ast)?;
-        self.register_top_level_defines(compilation, ast)?;
 
         Ok(())
     }
