@@ -867,7 +867,10 @@ impl Vm {
             Ok(*f)
         } else {
             self.show_stack_around_sp();
-            Err(Error::VM(format!("stack_peek expected f32 at offset {}", offset)))
+            Err(Error::VM(format!(
+                "stack_peek expected f32 at offset {}",
+                offset
+            )))
         }
     }
 
@@ -912,11 +915,30 @@ impl Vm {
     }
 
     fn opcode_native(&mut self, _program: &Program, bc: &Bytecode) -> Result<()> {
-        if let BytecodeArg::Native(native) = bc.arg0 {
-            execute_native(self, &native)
+        let num_args = if let BytecodeArg::Int(num_args_) = bc.arg1 {
+            num_args_ as usize
         } else {
-            Err(Error::VM("opcode_native".to_string()))
+            return Err(Error::VM(
+                "opcode native requires arg1 to be num_args".to_string(),
+            ));
+        };
+
+        let res = if let BytecodeArg::Native(native) = bc.arg0 {
+            execute_native(self, &native)?
+        } else {
+            return Err(Error::VM("opcode_native".to_string()));
+        };
+
+        // pop all of the arguments off the stack as well as the default mask
+        self.sp -= num_args + 1;
+
+        if let Some(var) = res {
+            // push var onto the stack
+            self.sp = self.sp_inc()?;
+            self.stack[self.sp - 1] = var;
         }
+
+        Ok(())
     }
 
     fn opcode_builtin(&mut self, program: &Program, bc: &Bytecode) -> Result<()> {

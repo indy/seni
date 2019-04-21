@@ -272,6 +272,28 @@ pub mod tests {
     }
 
     #[test]
+    fn test_nth_individually() {
+        is_float(
+            "(define p (prng/build seed: 5 min: 0 max: 1))
+             (define vs (prng/values from: p num: 3))
+             (nth from: vs n: 0)",
+            0.36151162,
+        );
+        is_float(
+            "(define p (prng/build seed: 5 min: 0 max: 1))
+             (define vs (prng/values from: p num: 3))
+             (nth from: vs n: 1)",
+            0.4412291,
+        );
+        is_float(
+            "(define p (prng/build seed: 5 min: 0 max: 1))
+             (define vs (prng/values from: p num: 3))
+             (nth from: vs n: 2)",
+            0.37725854,
+        );
+    }
+
+    #[test]
     pub fn test_prng_state_struct() {
         let mut prng = PrngStateStruct::new(542, 0.0, 1.0);
 

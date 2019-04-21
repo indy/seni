@@ -46,7 +46,7 @@ pub enum Builtin {
     //
     #[strum(serialize = "debug/print")]
     DebugPrint,
-    #[strum(serialize = "nth")]
+    #[strum(serialize = "BUILTIN-nth")]
     Nth,
     #[strum(serialize = "vector/length")]
     VectorLength,
@@ -78,11 +78,11 @@ pub enum Builtin {
 
     // transforms
     //
-    #[strum(serialize = "translate")]
+    #[strum(serialize = "BUILTIN-translate")]
     Translate,
-    #[strum(serialize = "rotate")]
+    #[strum(serialize = "BUILTIN-rotate")]
     Rotate,
-    #[strum(serialize = "scale")]
+    #[strum(serialize = "BUILTIN-scale")]
     Scale,
 
     // colour
@@ -946,6 +946,7 @@ pub fn probe(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> {
     // slightly different way of dealing with arguments.
     // This is because debug_str_append requires a mutable reference
     // and the bindings use an immutable reference to vm.
+
     let (scalar, v, ws) = {
         let bindings = ArgBindings::create(
             vm,
@@ -2926,134 +2927,4 @@ pub fn gen_col(vm: &mut Vm, _program: &Program, num_args: usize) -> Result<Var> 
         vm.prng_state.prng_f32_range(0.0, 1.0),
         alpha,
     )))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    use crate::colour::ColourFormat;
-    use crate::geometry::RENDER_PACKET_FLOAT_PER_VERTEX;
-    use crate::vm::tests::*;
-    use crate::vm::*;
-
-    fn is_col_rgb(s: &str, r: f32, g: f32, b: f32, alpha: f32) {
-        let mut vm = Vm::new();
-        if let Var::Colour(col) = vm_exec(&mut vm, s) {
-            assert_eq!(col.format, ColourFormat::Rgb);
-            assert_eq!(col.e0, r);
-            assert_eq!(col.e1, g);
-            assert_eq!(col.e2, b);
-            assert_eq!(col.e3, alpha);
-        }
-    }
-
-    // get render packet 0's geometry length
-    fn rp0_num_vertices(vm: &Vm, expected_num_vertices: usize) {
-        assert_eq!(
-            vm.get_render_packet_geo_len(0),
-            expected_num_vertices * RENDER_PACKET_FLOAT_PER_VERTEX
-        );
-    }
-
-    // #[test]
-    fn dev_rendering_fns() {
-        let mut vm = Vm::new();
-        vm_run(&mut vm, "(line width: 33 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
-        // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush-b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
-        // vm_run(&mut vm, "(line brush: brush-b)");
-        // vm_run(&mut vm, "(line brush: brush-b) (rect width: 10 height: 30)");
-
-        let res = vm.top_stack_value().unwrap();
-        if let Var::Debug(s) = res {
-            assert_eq!(s, "x");
-        } else {
-            assert_eq!(false, true);
-        }
-
-        rp0_num_vertices(&vm, 4);
-    }
-
-    #[test]
-    fn test_builtin_pack() {
-        let mut res: String = "".to_string();
-        Builtin::ColGetAlpha.pack(&mut res).unwrap();
-        assert_eq!("col/get-alpha", res);
-    }
-
-    #[test]
-    fn test_builtin_unpack() {
-        let (res, _rem) = Builtin::unpack("col/get-alpha").unwrap();
-        assert_eq!(res, Builtin::ColGetAlpha);
-    }
-
-    #[test]
-    fn test_probe() {
-        is_debug_str("(probe scalar: 0.4)", "0.4");
-        is_debug_str(
-            "(probe scalar: 0.4) (probe scalar: 0.7) (probe scalar: 0.9)",
-            "0.4 0.7 0.9",
-        );
-    }
-
-    #[test]
-    fn test_col_rgb() {
-        is_col_rgb(
-            "(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha: 0.4)",
-            0.1,
-            0.2,
-            0.3,
-            0.4,
-        );
-    }
-
-    #[test]
-    fn test_nth() {
-        is_float("(define v [1 2 3 4]) (nth from: v n: 0)", 1.0);
-        is_float("(define v [1 2 3 4]) (nth from: v n: 1)", 2.0);
-        is_float("(define v [1 2 3 4]) (nth from: v n: 2)", 3.0);
-        is_float("(define v [1 2 3 4]) (nth from: v n: 3)", 4.0);
-
-        is_float("(define v [9 8]) (nth from: v n: 0)", 9.0);
-        is_float("(define v [9 8]) (nth from: v n: 1)", 8.0);
-    }
-
-    #[test]
-    fn test_vector_length() {
-        is_int("(define v []) (++ v 100) (vector/length vector: v)", 1);
-        is_int("(define v [1]) (++ v 100) (vector/length vector: v)", 2);
-        is_int("(define v [1 2]) (++ v 100) (vector/length vector: v)", 3);
-        is_int("(define v [1 2 3]) (++ v 100) (vector/length vector: v)", 4);
-        is_int(
-            "(define v [1 2 3 4]) (++ v 100) (vector/length vector: v)",
-            5,
-        );
-        is_int(
-            "(define v []) (++ v 4) (++ v 3) (++ v 2) (++ v 1) (++ v 0) (vector/length vector: v)",
-            5,
-        );
-        is_int(
-            "(define v [1 2]) (++ v 98) (++ v 99) (++ v 100) (vector/length vector: v)",
-            5,
-        );
-    }
-
-    #[test]
-    fn test_math() {
-        is_float("(math/clamp value: 3 min: 2 max: 5)", 3.0);
-        is_float("(math/clamp value: 1 min: 2 max: 5)", 2.0);
-        is_float("(math/clamp value: 8 min: 2 max: 5)", 5.0);
-
-        is_float("(math/radians->degrees angle: 0.3)", 17.188734);
-
-        is_float("(math/cos angle: 0.7)", 0.7648422);
-        is_float("(math/sin angle: 0.9)", 0.7833269);
-    }
-    #[test]
-    fn dev_new_args() {
-        is_float("(math/clamp value: 3 min: 2 max: 5)", 3.0);
-        is_float("(math/clamp value: 1 min: 2 max: 5)", 2.0);
-        is_float("(math/clamp value: 8 min: 2 max: 5)", 5.0);
-    }
-
 }

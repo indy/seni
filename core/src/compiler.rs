@@ -1510,7 +1510,10 @@ impl Compiler {
                     }
 
                     compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, num_args as i32)?;
-                    compilation.opcode_offset += stack_offset;
+
+                    // the vm's opcode_native will modify the stack, no need for the compiler to add STORE VOID opcodes
+                    // subtract num_args and the default_mask, also take into account that a value might be returned
+                    compilation.opcode_offset -= (num_args as i32 + 1) - stack_offset;
                 } else if let Some(builtin) = self.i32_to_builtin.get(&iname) {
                     // BUILTIN
                     let mut num_args = 0;
@@ -1594,9 +1597,7 @@ impl Compiler {
                 let num_args = 4;
                 compilation.opcode_offset -= (num_args * 2) - 1;
             }
-            Var::Keyword(kw) => {
-                compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?
-            }
+            Var::Keyword(kw) => compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?,
             // Var::Vector(vs) => {
             //     // pushing from the VOID means creating a new, empty vector
             //     compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
@@ -1605,7 +1606,12 @@ impl Compiler {
             //         compilation.emit_opcode(Opcode::APPEND)?;
             //     }
             // }
-            _ => return Err(Error::Compiler(format!("unimplemented var compilation {:?}", var))),
+            _ => {
+                return Err(Error::Compiler(format!(
+                    "unimplemented var compilation {:?}",
+                    var
+                )))
+            }
         };
 
         Ok(())
@@ -2996,9 +3002,7 @@ mod tests {
     #[test]
     fn test_bytecode_arg_pack() {
         let mut res: String = "".to_string();
-        BytecodeArg::Native(Native::Circle)
-            .pack(&mut res)
-            .unwrap();
+        BytecodeArg::Native(Native::Circle).pack(&mut res).unwrap();
         assert_eq!("NATIVE circle", res);
     }
 
@@ -3287,8 +3291,7 @@ mod tests {
                 call_0(),
                 stop()
             ]
-        )
-            ;
+        );
     }
 
     #[test]

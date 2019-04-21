@@ -867,7 +867,6 @@ impl Geometry {
             return Err(Error::Geometry("coords 3 should be a Vec::V2D".to_string()));
         };
 
-
         let unit = (t_end - t_start) / (tessellation as f32 - 1.0);
 
         let tex_t = 1.0 / tessellation as f32;

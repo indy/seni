@@ -571,11 +571,7 @@ mod tests {
         let mut iter = program.code.iter();
         if let Some(res) = iter.find(|&bc| bc.op == Opcode::NATIVE) {
             if let BytecodeArg::Native(n) = res.arg0 {
-                assert_eq!(
-                    native, n,
-                    "program should call native function {}",
-                    native
-                );
+                assert_eq!(native, n, "program should call native function {}", native);
             } else {
                 assert!(false, format!("arg fail for {} in {}", native, program));
             }

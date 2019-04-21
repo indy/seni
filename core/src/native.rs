@@ -13,11 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::ease::easing_from_keyword;
 use crate::builtin::Builtin;
 use crate::colour::ColourFormat;
+use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
+use crate::mathutil;
 use crate::packable::{Mule, Packable};
 use crate::vm::{Var, Vm};
 
@@ -38,15 +39,15 @@ pub enum Native {
     // //
     // #[strum(serialize = "debug/print")]
     // DebugPrint,
-    // #[strum(serialize = "nth")]
-    // Nth,
+    #[strum(serialize = "nth")]
+    Nth,
     // #[strum(serialize = "vector/length")]
     // VectorLength,
     // #[strum(serialize = "probe")]
     // Probe,
 
     // shapes
-
+    //
     #[strum(serialize = "line")]
     Line,
     #[strum(serialize = "rect")]
@@ -68,14 +69,14 @@ pub enum Native {
     #[strum(serialize = "stroked-bezier-rect")]
     StrokedBezierRect,
 
-    // // transforms
-    // //
-    // #[strum(serialize = "translate")]
-    // Translate,
-    // #[strum(serialize = "rotate")]
-    // Rotate,
-    // #[strum(serialize = "scale")]
-    // Scale,
+    // transforms
+    //
+    #[strum(serialize = "translate")]
+    Translate,
+    #[strum(serialize = "rotate")]
+    Rotate,
+    #[strum(serialize = "scale")]
+    Scale,
 
     // // colour
     // //
@@ -276,6 +277,46 @@ impl Packable for Native {
     }
 }
 
+// return a tuple
+// .0 == input arguments as a vector of (name, default value) pairs
+// .1 == how the native function affects the vm's stack in terms of opcode offset
+//
+pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
+    match native {
+        Native::Nth => nth_parameter_info(),
+        Native::Line => line_parameter_info(),
+        Native::Rect => rect_parameter_info(),
+        Native::Circle => circle_parameter_info(),
+        Native::CircleSlice => circle_slice_parameter_info(),
+        Native::Poly => poly_parameter_info(),
+        Native::Quadratic => quadratic_parameter_info(),
+        Native::Bezier => bezier_parameter_info(),
+        Native::BezierBulging => bezier_bulging_parameter_info(),
+        Native::Translate => translate_parameter_info(),
+        Native::Rotate => rotate_parameter_info(),
+        Native::Scale => scale_parameter_info(),
+        _ => Err(Error::Native("parameter_info".to_string())),
+    }
+}
+
+pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
+    match native {
+        Native::Nth => nth_execute(vm),
+        Native::Line => line_execute(vm),
+        Native::Rect => rect_execute(vm),
+        Native::Circle => circle_execute(vm),
+        Native::CircleSlice => circle_slice_execute(vm),
+        Native::Poly => poly_execute(vm),
+        Native::Quadratic => quadratic_execute(vm),
+        Native::Bezier => bezier_execute(vm),
+        Native::BezierBulging => bezier_bulging_execute(vm),
+        Native::Translate => translate_execute(vm),
+        Native::Rotate => rotate_execute(vm),
+        Native::Scale => scale_execute(vm),
+        _ => Err(Error::Native("execute_native".to_string())),
+    }
+}
+
 pub fn i32_to_native_hash() -> HashMap<i32, Native> {
     let mut hm: HashMap<i32, Native> = HashMap::new();
 
@@ -317,45 +358,72 @@ fn read_brush(kw: Keyword) -> BrushType {
     }
 }
 
-// return a tuple
-// .0 == input arguments as a vector of (name, default value) pairs
-// .1 == how the native function affects the vm's stack in terms of opcode offset
-//
-pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
-    match native {
-        Native::Line => line_parameter_info(),
-        Native::Rect => rect_parameter_info(),
-        Native::Circle => circle_parameter_info(),
-        Native::CircleSlice => circle_slice_parameter_info(),
-        Native::Poly => poly_parameter_info(),
-        Native::Quadratic => quadratic_parameter_info(),
-        Native::Bezier => bezier_parameter_info(),
-        Native::BezierBulging => bezier_bulging_parameter_info(),
-        _ => Err(Error::Native("parameter_info".to_string())),
-    }
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+fn nth_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::N, Var::Float(0.0)),
+        ],
+        // stack offset
+        1,
+    ))
 }
 
-pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<()> {
-    match native {
-        Native::Line => line_execute(vm),
-        Native::Rect => rect_execute(vm),
-        Native::Circle => circle_execute(vm),
-        Native::CircleSlice => circle_slice_execute(vm),
-        Native::Poly => poly_execute(vm),
-        Native::Quadratic => quadratic_execute(vm),
-        Native::Bezier => bezier_execute(vm),
-        Native::BezierBulging => bezier_bulging_execute(vm),
-        _ => Err(Error::Native("execute_native".to_string())),
-    }
-}
+fn nth_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(3)?;
 
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
+    // require a 'from' argument
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native("nth requires from parameter".to_string()));
+    }
+    // require an 'n' argument
+    if !is_arg_given(default_mask, 2) {
+        return Err(Error::Native("nth requires n parameter".to_string()));
+    }
+
+    let n = vm.stack_peek_f32_as_usize(2)?;
+
+    // from is either a Vector or a V2D
+    let from_offset = 1;
+
+    let res = match &vm.stack[vm.sp - from_offset] {
+        Var::Vector(vs) => {
+            if let Some(nth) = vs.get(n) {
+                // optimisation: most of the values will be floats
+                // or v2d so try and avoid calling clone
+                match nth {
+                    Var::Float(f) => Some(Var::Float(*f)),
+                    Var::V2D(x, y) => Some(Var::V2D(*x, *y)),
+                    // todo: try and get rid of the clone call to nth
+                    _ => Some(nth.clone()),
+                }
+            } else {
+                return Err(Error::Native("nth: n out of range".to_string()));
+            }
+        }
+        Var::V2D(x, y) => match n {
+            0 => Some(Var::Float(*x)),
+            1 => Some(Var::Float(*y)),
+            _ => return Err(Error::Native("nth indexing V2D out of range".to_string())),
+        },
+        _ => {
+            return Err(Error::Native(
+                "nth only accepts Vector or V2D in from parameter".to_string(),
+            ))
+        }
+    };
+
+    Ok(res)
+}
 
 fn line_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
@@ -375,7 +443,7 @@ fn line_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn line_execute(vm: &mut Vm) -> Result<()> {
+fn line_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let line_width = vm.stack_peek_f32(1)?;
     let line_from = vm.stack_peek_v2d(2)?;
     let line_to = vm.stack_peek_v2d(3)?;
@@ -391,10 +459,28 @@ fn line_execute(vm: &mut Vm) -> Result<()> {
 
     // if the from-colour and to-colour parameters are given
     if is_arg_given(default_mask, 4) && is_arg_given(default_mask, 5) {
-        vm.render_line(line_from, line_to, line_width, &from_col, &to_col, brush_type, brush_subtype)
+        vm.render_line(
+            line_from,
+            line_to,
+            line_width,
+            &from_col,
+            &to_col,
+            brush_type,
+            brush_subtype,
+        )?;
     } else {
-        vm.render_line(line_from, line_to, line_width, &col, &col, brush_type, brush_subtype)
-    }
+        vm.render_line(
+            line_from,
+            line_to,
+            line_width,
+            &col,
+            &col,
+            brush_type,
+            brush_subtype,
+        )?;
+    };
+
+    Ok(None)
 }
 
 fn rect_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -411,17 +497,19 @@ fn rect_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn rect_execute(vm: &mut Vm) -> Result<()> {
+fn rect_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let width = vm.stack_peek_f32(1)?;
     let height = vm.stack_peek_f32(2)?;
     let position = vm.stack_peek_v2d(3)?;
     let col = vm.stack_peek_col(4)?;
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        vm.render_rect(position, width, height, &rgb)
+        vm.render_rect(position, width, height, &rgb)?;
     } else {
-        Err(Error::Native("rect".to_string()))
+        return Err(Error::Native("rect".to_string()));
     }
+
+    Ok(None)
 }
 
 fn circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -440,7 +528,7 @@ fn circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn circle_execute(vm: &mut Vm) -> Result<()> {
+fn circle_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let width = vm.stack_peek_f32(1)?;
     let height = vm.stack_peek_f32(2)?;
     let position = vm.stack_peek_v2d(3)?;
@@ -453,14 +541,16 @@ fn circle_execute(vm: &mut Vm) -> Result<()> {
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
         if is_arg_given(default_mask, 6) {
             // given a radius value
-            vm.render_circle(position, radius, radius, &rgb, tessellation)
+            vm.render_circle(position, radius, radius, &rgb, tessellation)?;
         } else {
             // radius was not explicitly specified
-            vm.render_circle(position, width, height, &rgb, tessellation)
+            vm.render_circle(position, width, height, &rgb, tessellation)?;
         }
     } else {
-        Err(Error::Native("circle".to_string()))
+        return Err(Error::Native("circle".to_string()));
     }
+
+    Ok(None)
 }
 
 fn circle_slice_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -483,7 +573,7 @@ fn circle_slice_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn circle_slice_execute(vm: &mut Vm) -> Result<()> {
+fn circle_slice_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let width = vm.stack_peek_f32(1)?;
     let height = vm.stack_peek_f32(2)?;
     let position = vm.stack_peek_v2d(3)?;
@@ -510,7 +600,7 @@ fn circle_slice_execute(vm: &mut Vm) -> Result<()> {
                 angle_end,
                 inner_width,
                 inner_height,
-            )
+            )?;
         } else {
             // radius was not explicitly specified
             vm.render_circle_slice(
@@ -523,11 +613,13 @@ fn circle_slice_execute(vm: &mut Vm) -> Result<()> {
                 angle_end,
                 inner_width,
                 inner_height,
-            )
+            )?;
         }
     } else {
-        Err(Error::Native("circle_slice".to_string()))
+        return Err(Error::Native("circle_slice".to_string()));
     }
+
+    Ok(None)
 }
 
 fn poly_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -542,7 +634,7 @@ fn poly_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn poly_execute(vm: &mut Vm) -> Result<()> {
+fn poly_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask = vm.stack_peek_i32(3)?;
 
     if !is_arg_given(default_mask, 1) || !is_arg_given(default_mask, 2) {
@@ -565,7 +657,7 @@ fn poly_execute(vm: &mut Vm) -> Result<()> {
 
     geo.render_poly(matrix, coords, colours, uv_mapping)?;
 
-    Ok(())
+    Ok(None)
 }
 
 fn quadratic_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -589,7 +681,7 @@ fn quadratic_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn quadratic_execute(vm: &mut Vm) -> Result<()> {
+fn quadratic_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let line_width = vm.stack_peek_f32(1)?;
     let line_width_start = vm.stack_peek_f32(2)?;
     let line_width_end = vm.stack_peek_f32(3)?;
@@ -609,7 +701,6 @@ fn quadratic_execute(vm: &mut Vm) -> Result<()> {
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-
         let geo = &mut vm.geometry;
         let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
             matrix
@@ -633,7 +724,7 @@ fn quadratic_execute(vm: &mut Vm) -> Result<()> {
                     &rgb,
                     tessellation,
                     uv_mapping,
-                )
+                )?;
             } else {
                 // not given a line width value
                 geo.render_quadratic_vars(
@@ -647,14 +738,16 @@ fn quadratic_execute(vm: &mut Vm) -> Result<()> {
                     &rgb,
                     tessellation,
                     uv_mapping,
-                )
+                )?;
             }
         } else {
-            Err(Error::Native("quadratic: invalid mapping".to_string()))
+            return Err(Error::Native("quadratic: invalid mapping".to_string()));
         }
     } else {
-        Err(Error::Native("quadratic: colour conversion".to_string()))
+        return Err(Error::Native("quadratic: colour conversion".to_string()));
     }
+
+    Ok(None)
 }
 
 fn bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -678,7 +771,7 @@ fn bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn bezier_execute(vm: &mut Vm) -> Result<()> {
+fn bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let line_width = vm.stack_peek_f32(1)?;
     let line_width_start = vm.stack_peek_f32(2)?;
     let line_width_end = vm.stack_peek_f32(3)?;
@@ -698,7 +791,6 @@ fn bezier_execute(vm: &mut Vm) -> Result<()> {
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-
         let geo = &mut vm.geometry;
         let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
             matrix
@@ -722,7 +814,7 @@ fn bezier_execute(vm: &mut Vm) -> Result<()> {
                     &rgb,
                     tessellation,
                     uv_mapping,
-                )
+                )?;
             } else {
                 // not given a line width value
                 geo.render_bezier_vars(
@@ -736,14 +828,16 @@ fn bezier_execute(vm: &mut Vm) -> Result<()> {
                     &rgb,
                     tessellation,
                     uv_mapping,
-                )
+                )?;
             }
         } else {
-            Err(Error::Native("bezier: invalid mapping".to_string()))
+            return Err(Error::Native("bezier: invalid mapping".to_string()));
         }
     } else {
-        Err(Error::Native("bezier: colour conversion".to_string()))
+        return Err(Error::Native("bezier: colour conversion".to_string()));
     }
+
+    Ok(None)
 }
 
 fn bezier_bulging_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -764,7 +858,7 @@ fn bezier_bulging_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn bezier_bulging_execute(vm: &mut Vm) -> Result<()> {
+fn bezier_bulging_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let line_width = vm.stack_peek_f32(1)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 2)?;
     let t_start = vm.stack_peek_f32(3)?;
@@ -781,7 +875,6 @@ fn bezier_bulging_execute(vm: &mut Vm) -> Result<()> {
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-
         let geo = &mut vm.geometry;
         let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
             matrix
@@ -798,10 +891,15 @@ fn bezier_bulging_execute(vm: &mut Vm) -> Result<()> {
             t_end,
             &rgb,
             tessellation,
-            uv_mapping)
+            uv_mapping,
+        )?;
     } else {
-        Err(Error::Native("bezier_bulging: colour conversion".to_string()))
+        return Err(Error::Native(
+            "bezier_bulging: colour conversion".to_string(),
+        ));
     }
+
+    Ok(None)
 }
 
 fn stroked_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -826,7 +924,7 @@ fn stroked_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn stroked_bezier_execute(vm: &mut Vm) -> Result<()> {
+fn stroked_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let tessellation = vm.stack_peek_f32_as_usize(1)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 2)?;
     let stroke_tessellation = vm.stack_peek_f32_as_usize(3)?;
@@ -847,7 +945,6 @@ fn stroked_bezier_execute(vm: &mut Vm) -> Result<()> {
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-
         let geo = &mut vm.geometry;
         let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
             matrix
@@ -871,13 +968,17 @@ fn stroked_bezier_execute(vm: &mut Vm) -> Result<()> {
                 seed,
                 mapping,
                 uv_mapping,
-            )
+            )?
         } else {
-            Err(Error::Native("stroked bezier: invalid mapping".to_string()))
+            return Err(Error::Native("stroked bezier: invalid mapping".to_string()));
         }
     } else {
-        Err(Error::Native("stroked bezier: colour conversion".to_string()))
+        return Err(Error::Native(
+            "stroked bezier: colour conversion".to_string(),
+        ));
     }
+
+    Ok(None)
 }
 
 fn stroked_bezier_rect_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -904,7 +1005,7 @@ fn stroked_bezier_rect_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn stroked_bezier_rect_execute(vm: &mut Vm) -> Result<()> {
+fn stroked_bezier_rect_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let position = vm.stack_peek_v2d(1)?;
     let width = vm.stack_peek_f32(2)?;
     let height = vm.stack_peek_f32(3)?;
@@ -925,7 +1026,9 @@ fn stroked_bezier_rect_execute(vm: &mut Vm) -> Result<()> {
         let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
             matrix
         } else {
-            return Err(Error::Native("stroked bezier rect: matrix required".to_string()));
+            return Err(Error::Native(
+                "stroked bezier rect: matrix required".to_string(),
+            ));
         };
         let brush_type = read_brush(brush);
         let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
@@ -945,8 +1048,213 @@ fn stroked_bezier_rect_execute(vm: &mut Vm) -> Result<()> {
             &rgb,
             col_volatility,
             uv_mapping,
-        )
+        )?;
     } else {
-        Err(Error::Native("stroked bezier rect: colour conversion".to_string()))
+        return Err(Error::Native(
+            "stroked bezier rect: colour conversion".to_string(),
+        ));
     }
+
+    Ok(None)
+}
+
+fn translate_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Vector, Var::V2D(0.0, 0.0))],
+        // stack offset
+        0,
+    ))
+}
+
+fn translate_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let (x, y) = vm.stack_peek_v2d(1)?;
+
+    vm.matrix_stack.translate(x, y);
+
+    Ok(None)
+}
+
+fn rotate_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Angle, Var::Float(0.0))],
+        // stack offset
+        0,
+    ))
+}
+
+fn rotate_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let angle = vm.stack_peek_f32(1)?;
+
+    vm.matrix_stack.rotate(mathutil::deg_to_rad(angle));
+
+    Ok(None)
+}
+
+fn scale_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Vector, Var::V2D(1.0, 1.0)),
+            (Keyword::Scalar, Var::Float(1.0)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn scale_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let (x, y) = vm.stack_peek_v2d(1)?;
+    let scalar = vm.stack_peek_f32(2)?;
+
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if is_arg_given(default_mask, 2) {
+        // scalar was specified in the script
+        vm.matrix_stack.scale(scalar, scalar);
+    } else {
+        vm.matrix_stack.scale(x, y);
+    }
+
+    Ok(None)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::colour::ColourFormat;
+    use crate::geometry::RENDER_PACKET_FLOAT_PER_VERTEX;
+    use crate::vm::tests::*;
+    use crate::vm::*;
+
+    fn is_col_rgb(s: &str, r: f32, g: f32, b: f32, alpha: f32) {
+        let mut vm = Vm::new();
+        if let Var::Colour(col) = vm_exec(&mut vm, s) {
+            assert_eq!(col.format, ColourFormat::Rgb);
+            assert_eq!(col.e0, r);
+            assert_eq!(col.e1, g);
+            assert_eq!(col.e2, b);
+            assert_eq!(col.e3, alpha);
+        }
+    }
+
+    // get render packet 0's geometry length
+    fn rp0_num_vertices(vm: &Vm, expected_num_vertices: usize) {
+        assert_eq!(
+            vm.get_render_packet_geo_len(0),
+            expected_num_vertices * RENDER_PACKET_FLOAT_PER_VERTEX
+        );
+    }
+
+    // #[test]
+    fn dev_rendering_fns() {
+        let mut vm = Vm::new();
+        vm_run(&mut vm, "(line width: 33 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
+        // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush-b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
+        // vm_run(&mut vm, "(line brush: brush-b)");
+        // vm_run(&mut vm, "(line brush: brush-b) (rect width: 10 height: 30)");
+
+        let res = vm.top_stack_value().unwrap();
+        if let Var::Debug(s) = res {
+            assert_eq!(s, "x");
+        } else {
+            assert_eq!(false, true);
+        }
+
+        rp0_num_vertices(&vm, 4);
+    }
+
+    #[test]
+    fn test_builtin_pack() {
+        let mut res: String = "".to_string();
+        Builtin::ColGetAlpha.pack(&mut res).unwrap();
+        assert_eq!("col/get-alpha", res);
+    }
+
+    #[test]
+    fn test_builtin_unpack() {
+        let (res, _rem) = Builtin::unpack("col/get-alpha").unwrap();
+        assert_eq!(res, Builtin::ColGetAlpha);
+    }
+
+    #[test]
+    fn test_probe() {
+        is_debug_str("(probe scalar: 0.4)", "0.4");
+        is_debug_str(
+            "(probe scalar: 0.4) (probe scalar: 0.7) (probe scalar: 0.9)",
+            "0.4 0.7 0.9",
+        );
+    }
+
+    #[test]
+    fn test_col_rgb() {
+        is_col_rgb(
+            "(col/rgb r: 0.1 g: 0.2 b: 0.3 alpha: 0.4)",
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+        );
+    }
+
+    #[test]
+    fn test_nth() {
+        is_float("(define v [1 2 3 4]) (nth from: v n: 0)", 1.0);
+        is_float("(define v [1 2 3 4]) (nth from: v n: 1)", 2.0);
+        is_float("(define v [1 2 3 4]) (nth from: v n: 2)", 3.0);
+        is_float("(define v [1 2 3 4]) (nth from: v n: 3)", 4.0);
+
+        is_float("(define v [9 8]) (nth from: v n: 0)", 9.0);
+        is_float("(define v [9 8]) (nth from: v n: 1)", 8.0);
+    }
+
+    #[test]
+    pub fn bug_nth() {
+        is_debug_str(
+            "(define vs [5 6 7])
+             (probe scalar: (nth from: vs n: 0))",
+            "5",
+        );
+    }
+
+    #[test]
+    fn test_vector_length() {
+        is_int("(define v []) (++ v 100) (vector/length vector: v)", 1);
+        is_int("(define v [1]) (++ v 100) (vector/length vector: v)", 2);
+        is_int("(define v [1 2]) (++ v 100) (vector/length vector: v)", 3);
+        is_int("(define v [1 2 3]) (++ v 100) (vector/length vector: v)", 4);
+        is_int(
+            "(define v [1 2 3 4]) (++ v 100) (vector/length vector: v)",
+            5,
+        );
+        is_int(
+            "(define v []) (++ v 4) (++ v 3) (++ v 2) (++ v 1) (++ v 0) (vector/length vector: v)",
+            5,
+        );
+        is_int(
+            "(define v [1 2]) (++ v 98) (++ v 99) (++ v 100) (vector/length vector: v)",
+            5,
+        );
+    }
+
+    #[test]
+    fn test_math() {
+        is_float("(math/clamp value: 3 min: 2 max: 5)", 3.0);
+        is_float("(math/clamp value: 1 min: 2 max: 5)", 2.0);
+        is_float("(math/clamp value: 8 min: 2 max: 5)", 5.0);
+
+        is_float("(math/radians->degrees angle: 0.3)", 17.188734);
+
+        is_float("(math/cos angle: 0.7)", 0.7648422);
+        is_float("(math/sin angle: 0.9)", 0.7833269);
+    }
+    #[test]
+    fn dev_new_args() {
+        is_float("(math/clamp value: 3 min: 2 max: 5)", 3.0);
+        is_float("(math/clamp value: 1 min: 2 max: 5)", 2.0);
+        is_float("(math/clamp value: 8 min: 2 max: 5)", 5.0);
+    }
+
 }
