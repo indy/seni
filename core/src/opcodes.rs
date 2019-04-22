@@ -60,10 +60,6 @@ pub enum Opcode {
     // read index from stack (-1) then push a return value onto the stack (+1) => -1
     // + +1 == 0
     CALL_F_0,
-    // calls a builtin function, leaving the result on the stack
-    // offset is 0 as the vm->opcode_offset is modified by the builtin helper
-    // function
-    BUILTIN,
     // calls a native function, leaving the result on the stack
     // offset is 0 as the vm->opcode_offset is modified by the native helper
     // function
@@ -131,7 +127,6 @@ pub fn opcode_stack_offset(opcode: Opcode) -> i32 {
         Opcode::RET_0 => 0,
         Opcode::CALL_F => -1,
         Opcode::CALL_F_0 => 0,
-        Opcode::BUILTIN => 0,
         Opcode::NATIVE => 0,
         Opcode::APPEND => -1,
         Opcode::PILE => 0,

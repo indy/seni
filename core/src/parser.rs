@@ -16,7 +16,6 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use crate::builtin::Builtin;
 use crate::colour::Colour;
 use crate::error::{Error, Result};
 use crate::gene::Gene;
@@ -241,19 +240,12 @@ pub struct WordLut {
     word_count: i32,
 
     iname_to_word: HashMap<i32, String>,
-    iname_to_builtin: HashMap<i32, String>,
     iname_to_native: HashMap<i32, String>,
     iname_to_keyword: HashMap<i32, String>,
 }
 
 impl WordLut {
     pub fn new() -> WordLut {
-        // builtin
-        let mut b: HashMap<i32, String> = HashMap::new();
-        for bin in Builtin::iter() {
-            b.insert(bin as i32, bin.to_string());
-        }
-
         // native
         let mut n: HashMap<i32, String> = HashMap::new();
         for nat in Native::iter() {
@@ -271,7 +263,6 @@ impl WordLut {
             word_count: 0,
 
             iname_to_word: HashMap::new(),
-            iname_to_builtin: b,
             iname_to_native: n,
             iname_to_keyword: k,
         }
@@ -281,11 +272,8 @@ impl WordLut {
         if let Some(s) = self.iname_to_native.get(&i) {
             // 1st check the native api
             Some(s)
-        } else if let Some(s) = self.iname_to_builtin.get(&i) {
-            // 2nd check the builtin api
-            Some(s)
         } else if let Some(s) = self.iname_to_keyword.get(&i) {
-            // 3rd check the keywords
+            // 2nd check the keywords
             Some(s)
         } else {
             // finally check the iname_to_word
@@ -311,12 +299,7 @@ impl WordLut {
             return Some(n as i32);
         }
 
-        // 2nd check the builtin api
-        if let Ok(b) = Builtin::from_str(s) {
-            return Some(b as i32);
-        }
-
-        // 3rd check the keywords
+        // 2nd check the keywords
         if let Ok(kw) = Keyword::from_str(s) {
             return Some(kw as i32);
         }

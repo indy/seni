@@ -26,7 +26,6 @@
 The core crate provides the basic functionality of the Seni system
 */
 
-mod builtin;
 mod colour;
 mod compiler;
 mod ease;

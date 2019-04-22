@@ -16,7 +16,6 @@
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 
-use crate::builtin::{i32_to_builtin_hash, Builtin};
 use crate::colour::{Colour, ColourFormat};
 use crate::error::{Error, Result};
 use crate::gene::Genotype;
@@ -262,7 +261,6 @@ pub enum BytecodeArg {
     Float(f32),
     Name(i32),
     Native(Native),
-    Builtin(Builtin),
     Mem(Mem),
     Keyword(Keyword),
     Colour(Colour),
@@ -275,7 +273,6 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Float(s) => write!(f, "{:.2}", s),
             BytecodeArg::Name(i) => write!(f, "Name({})", i),
             BytecodeArg::Native(n) => write!(f, "{:?}", n),
-            BytecodeArg::Builtin(b) => write!(f, "{:?}", b),
             BytecodeArg::Mem(m) => write!(f, "{}", m),
             BytecodeArg::Keyword(kw) => write!(f, "{}", kw),
             BytecodeArg::Colour(c) => {
@@ -294,10 +291,6 @@ impl Packable for BytecodeArg {
             BytecodeArg::Native(native) => {
                 cursor.push_str("NATIVE ");
                 native.pack(cursor)?;
-            }
-            BytecodeArg::Builtin(builtin) => {
-                cursor.push_str("BUILTIN ");
-                builtin.pack(cursor)?;
             }
             BytecodeArg::Mem(mem) => {
                 cursor.push_str("MEM ");
@@ -332,10 +325,6 @@ impl Packable for BytecodeArg {
             let rem = Mule::skip_forward(cursor, "NATIVE ".len());
             let (val, rem) = Native::unpack(rem)?;
             Ok((BytecodeArg::Native(val), rem))
-        } else if cursor.starts_with("BUILTIN ") {
-            let rem = Mule::skip_forward(cursor, "BUILTIN ".len());
-            let (val, rem) = Builtin::unpack(rem)?;
-            Ok((BytecodeArg::Builtin(val), rem))
         } else if cursor.starts_with("MEM ") {
             let rem = Mule::skip_forward(cursor, "MEM ".len());
             let (val, rem) = Mem::unpack(rem)?;
@@ -376,8 +365,6 @@ impl fmt::Display for Bytecode {
                     }
                 }
             }
-            // todo: format BUILTIN
-            Opcode::BUILTIN => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
             Opcode::NATIVE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
             // todo: format PILE
             Opcode::PILE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
@@ -746,19 +733,6 @@ impl Compilation {
         Ok(())
     }
 
-    fn emit_opcode_builtin_i32(&mut self, op: Opcode, arg0: Builtin, arg1: i32) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Builtin(arg0),
-            arg1: BytecodeArg::Int(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
     fn emit_opcode_i32_f32(&mut self, op: Opcode, arg0: i32, arg1: f32) -> Result<()> {
         let b = Bytecode {
             op,
@@ -862,7 +836,6 @@ impl Compilation {
 pub struct Compiler {
     i32_to_keyword: HashMap<i32, Keyword>,
     i32_to_native: HashMap<i32, Native>,
-    i32_to_builtin: HashMap<i32, Builtin>,
     use_genes: bool,
 }
 
@@ -871,7 +844,6 @@ impl Compiler {
         Compiler {
             i32_to_keyword: i32_to_keyword_hash(),
             i32_to_native: i32_to_native_hash(),
-            i32_to_builtin: i32_to_builtin_hash(),
             use_genes: false,
         }
     }
@@ -1366,9 +1338,6 @@ impl Compiler {
                 } else if let Some(native) = self.i32_to_native.get(&iname) {
                     compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, 0)?;
                     Ok(())
-                } else if let Some(builtin) = self.i32_to_builtin.get(&iname) {
-                    compilation.emit_opcode_builtin_i32(Opcode::BUILTIN, *builtin, 0)?;
-                    Ok(())
                 } else {
                     Err(Error::Compiler(format!(
                         "compile: can't find user defined name or keyword: {}",
@@ -1514,28 +1483,6 @@ impl Compiler {
                     // the vm's opcode_native will modify the stack, no need for the compiler to add STORE VOID opcodes
                     // subtract num_args and the default_mask, also take into account that a value might be returned
                     compilation.opcode_offset -= (num_args as i32 + 1) - stack_offset;
-                } else if let Some(builtin) = self.i32_to_builtin.get(&iname) {
-                    // BUILTIN
-                    let mut num_args = 0;
-                    let mut label_vals = &children[1..];
-                    while label_vals.len() > 1 {
-                        let label = &label_vals[0];
-                        let value = &label_vals[1];
-
-                        if let Node::Label(_, iname, _) = label {
-                            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, *iname)?;
-                        }
-                        self.compile(compilation, &value)?;
-                        num_args += 1;
-
-                        label_vals = &label_vals[2..];
-                    }
-                    compilation.emit_opcode_builtin_i32(Opcode::BUILTIN, *builtin, num_args)?;
-
-                    // modify opcode_offset according to how many args were given
-
-                    // the vm's opcode_builtin function will modify the stack in the following way.
-                    compilation.opcode_offset -= (num_args * 2) - 1;
                 }
             }
             _ => return Err(Error::Compiler("compile_list strange child".to_string())),

@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::builtin::Builtin;
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
 use crate::compiler::Program;
 use crate::ease::easing_from_keyword;
@@ -41,7 +40,7 @@ use strum_macros::{Display, EnumIter, EnumString};
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Display, EnumString, EnumIter)]
 pub enum Native {
     #[strum(serialize = "UnreachableNativeStart")]
-    NativeStart = Builtin::BuiltinEnd as isize,
+    NativeStart = Keyword::KeywordEnd as isize,
 
     // // misc
     // //
