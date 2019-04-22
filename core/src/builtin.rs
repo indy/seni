@@ -156,17 +156,17 @@ pub enum Builtin {
 
     // math
     //
-    #[strum(serialize = "math/distance")]
+    #[strum(serialize = "BUILTIN-math/distance")]
     MathDistance,
-    #[strum(serialize = "math/normal")]
+    #[strum(serialize = "BUILTIN-math/normal")]
     MathNormal,
-    #[strum(serialize = "math/clamp")]
+    #[strum(serialize = "BUILTIN-math/clamp")]
     MathClamp,
-    #[strum(serialize = "math/radians->degrees")]
+    #[strum(serialize = "BUILTIN-math/radians->degrees")]
     MathRadiansDegrees,
-    #[strum(serialize = "math/cos")]
+    #[strum(serialize = "BUILTIN-math/cos")]
     MathCos,
-    #[strum(serialize = "math/sin")]
+    #[strum(serialize = "BUILTIN-math/sin")]
     MathSin,
 
     // prng

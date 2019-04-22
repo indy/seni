@@ -151,20 +151,20 @@ pub enum Native {
     #[strum(serialize = "col/value")]
     ColValue,
 
-    // // math
-    // //
-    // #[strum(serialize = "math/distance")]
-    // MathDistance,
-    // #[strum(serialize = "math/normal")]
-    // MathNormal,
-    // #[strum(serialize = "math/clamp")]
-    // MathClamp,
-    // #[strum(serialize = "math/radians->degrees")]
-    // MathRadiansDegrees,
-    // #[strum(serialize = "math/cos")]
-    // MathCos,
-    // #[strum(serialize = "math/sin")]
-    // MathSin,
+    // math
+    //
+    #[strum(serialize = "math/distance")]
+    MathDistance,
+    #[strum(serialize = "math/normal")]
+    MathNormal,
+    #[strum(serialize = "math/clamp")]
+    MathClamp,
+    #[strum(serialize = "math/radians->degrees")]
+    MathRadiansDegrees,
+    #[strum(serialize = "math/cos")]
+    MathCos,
+    #[strum(serialize = "math/sin")]
+    MathSin,
 
     // // prng
     // //
@@ -283,9 +283,11 @@ impl Packable for Native {
 //
 pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
     match native {
+        // misc
         Native::Nth => nth_parameter_info(),
         Native::VectorLength => vector_length_parameter_info(),
         Native::Probe => probe_parameter_info(),
+        // shapes
         Native::Line => line_parameter_info(),
         Native::Rect => rect_parameter_info(),
         Native::Circle => circle_parameter_info(),
@@ -294,9 +296,11 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::Quadratic => quadratic_parameter_info(),
         Native::Bezier => bezier_parameter_info(),
         Native::BezierBulging => bezier_bulging_parameter_info(),
+        // transforms
         Native::Translate => translate_parameter_info(),
         Native::Rotate => rotate_parameter_info(),
         Native::Scale => scale_parameter_info(),
+        // colour
         Native::ColConvert => col_convert_parameter_info(),
         Native::ColRGB => col_rgb_parameter_info(),
         Native::ColHSL => col_hsl_parameter_info(),
@@ -329,15 +333,25 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::ColGetV => common_colour_only_parameter_info(),
         Native::ColBuildProcedural => col_build_procedural_parameter_info(),
         Native::ColValue => col_value_parameter_info(),
+        // math
+        Native::MathDistance => math_distance_parameter_info(),
+        Native::MathNormal => math_normal_parameter_info(),
+        Native::MathClamp => math_clamp_parameter_info(),
+        Native::MathRadiansDegrees => math_radians_degrees_parameter_info(),
+        Native::MathCos => math_cos_parameter_info(),
+        Native::MathSin => math_sin_parameter_info(),
+
         _ => Err(Error::Native("parameter_info".to_string())),
     }
 }
 
 pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
     match native {
+        // misc
         Native::Nth => nth_execute(vm),
         Native::VectorLength => vector_length_execute(vm),
         Native::Probe => probe_execute(vm),
+        // shapes
         Native::Line => line_execute(vm),
         Native::Rect => rect_execute(vm),
         Native::Circle => circle_execute(vm),
@@ -346,9 +360,11 @@ pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
         Native::Quadratic => quadratic_execute(vm),
         Native::Bezier => bezier_execute(vm),
         Native::BezierBulging => bezier_bulging_execute(vm),
+        // transforms
         Native::Translate => translate_execute(vm),
         Native::Rotate => rotate_execute(vm),
         Native::Scale => scale_execute(vm),
+        // colours
         Native::ColConvert => col_convert_execute(vm),
         Native::ColRGB => col_rgb_execute(vm),
         Native::ColHSL => col_hsl_execute(vm),
@@ -381,6 +397,14 @@ pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
         Native::ColGetV => col_get_elem_execute(vm, 2),
         Native::ColBuildProcedural => col_build_procedural_execute(vm),
         Native::ColValue => col_value_execute(vm),
+        // math
+        Native::MathDistance => math_distance_execute(vm),
+        Native::MathNormal => math_normal_execute(vm),
+        Native::MathClamp => math_clamp_execute(vm),
+        Native::MathRadiansDegrees => math_radians_degrees_execute(vm),
+        Native::MathCos => math_cos_execute(vm),
+        Native::MathSin => math_sin_execute(vm),
+
         _ => Err(Error::Native("execute_native".to_string())),
     }
 }
@@ -1681,6 +1705,131 @@ fn col_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let res = from.colour(t);
 
     Ok(Some(Var::Colour(res)))
+}
+
+fn math_distance_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Vec1, Var::V2D(0.0, 0.0)),
+            (Keyword::Vec2, Var::V2D(0.0, 0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn math_distance_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let (x1, y1) = vm.stack_peek_v2d(1)?;
+    let (x2, y2) = vm.stack_peek_v2d(2)?;
+
+    let distance = mathutil::distance_v2(x1, y1, x2, y2);
+
+    Ok(Some(Var::Float(distance)))
+}
+
+fn math_normal_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Vec1, Var::V2D(0.0, 0.0)),
+            (Keyword::Vec2, Var::V2D(0.0, 0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn math_normal_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let (x1, y1) = vm.stack_peek_v2d(1)?;
+    let (x2, y2) = vm.stack_peek_v2d(2)?;
+
+    let distance = mathutil::normal(x1, y1, x2, y2);
+
+    Ok(Some(Var::V2D(distance.0, distance.1)))
+}
+
+fn math_clamp_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Value, Var::Float(0.0)),
+            (Keyword::Min, Var::Float(0.0)),
+            (Keyword::Max, Var::Float(0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn math_clamp_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    // todo: try and move functions like this into ones that initially
+    // create and return a function that takes a single argument.
+    // e.g.
+    // (define my-clamp (math/clamp-fn min: 0.0 max: 42.0))
+    // (my-clamp val: 22)
+    //
+    // then optimize for single argument functions as these will be much faster to
+    // parse
+    //
+    let value = vm.stack_peek_f32(1)?;
+    let min = vm.stack_peek_f32(2)?;
+    let max = vm.stack_peek_f32(3)?;
+
+    let clamped = mathutil::clamp(value, min, max);
+
+    Ok(Some(Var::Float(clamped)))
+}
+
+fn math_radians_degrees_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Angle, Var::Float(0.0))],
+        // stack offset
+        1,
+    ))
+}
+
+fn math_radians_degrees_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let rad_angle = vm.stack_peek_f32(1)?;
+
+    let deg_angle = mathutil::rad_to_deg(rad_angle);
+
+    Ok(Some(Var::Float(deg_angle)))
+}
+
+fn math_cos_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Angle, Var::Float(0.0))],
+        // stack offset
+        1,
+    ))
+}
+
+fn math_cos_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let angle = vm.stack_peek_f32(1)?;
+
+    let c = angle.cos();
+
+    Ok(Some(Var::Float(c)))
+}
+
+fn math_sin_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Angle, Var::Float(0.0))],
+        // stack offset
+        1,
+    ))
+}
+
+fn math_sin_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let angle = vm.stack_peek_f32(1)?;
+
+    let s = angle.sin();
+
+    Ok(Some(Var::Float(s)))
 }
 
 #[cfg(test)]
