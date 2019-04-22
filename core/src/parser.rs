@@ -689,7 +689,7 @@ mod tests {
                             Node::List(
                                 vec![Node::Name(
                                     "gen/scalar".to_string(),
-                                    Builtin::GenScalar as i32,
+                                    Native::GenScalar as i32,
                                     None
                                 )],
                                 None

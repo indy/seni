@@ -243,28 +243,28 @@ pub enum Native {
     #[strum(serialize = "focal/value")]
     FocalValue,
 
-    // // gen
-    // //
-    // #[strum(serialize = "gen/stray-int")]
-    // GenStrayInt,
-    // #[strum(serialize = "gen/stray")]
-    // GenStray,
-    // #[strum(serialize = "gen/stray-2d")]
-    // GenStray2D,
-    // #[strum(serialize = "gen/stray-3d")]
-    // GenStray3D,
-    // #[strum(serialize = "gen/stray-4d")]
-    // GenStray4D,
-    // #[strum(serialize = "gen/int")]
-    // GenInt,
-    // #[strum(serialize = "gen/scalar")]
-    // GenScalar,
-    // #[strum(serialize = "gen/2d")]
-    // Gen2D,
-    // #[strum(serialize = "gen/select")]
-    // GenSelect,
-    // #[strum(serialize = "gen/col")]
-    // GenCol,
+    // gen
+    //
+    #[strum(serialize = "gen/stray-int")]
+    GenStrayInt,
+    #[strum(serialize = "gen/stray")]
+    GenStray,
+    #[strum(serialize = "gen/stray-2d")]
+    GenStray2D,
+    #[strum(serialize = "gen/stray-3d")]
+    GenStray3D,
+    #[strum(serialize = "gen/stray-4d")]
+    GenStray4D,
+    #[strum(serialize = "gen/int")]
+    GenInt,
+    #[strum(serialize = "gen/scalar")]
+    GenScalar,
+    #[strum(serialize = "gen/2d")]
+    Gen2D,
+    #[strum(serialize = "gen/select")]
+    GenSelect,
+    #[strum(serialize = "gen/col")]
+    GenCol,
     #[strum(serialize = "UnreachableNativeEnd")]
     NativeEnd,
 }
@@ -380,7 +380,17 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::FocalBuildVLine => focal_build_generic_parameter_info(),
         Native::FocalBuildHLine => focal_build_generic_parameter_info(),
         Native::FocalValue => focal_value_parameter_info(),
-
+        // gen
+        Native::GenStrayInt => gen_stray_int_parameter_info(),
+        Native::GenStray => gen_stray_parameter_info(),
+        Native::GenStray2D => gen_stray_2d_parameter_info(),
+        Native::GenStray3D => gen_stray_3d_parameter_info(),
+        Native::GenStray4D => gen_stray_4d_parameter_info(),
+        Native::GenInt => gen_int_parameter_info(),
+        Native::GenScalar => gen_scalar_parameter_info(),
+        Native::Gen2D => gen_2d_parameter_info(),
+        Native::GenSelect => gen_select_parameter_info(),
+        Native::GenCol => gen_col_parameter_info(),
         _ => Err(Error::Native("parameter_info".to_string())),
     }
 }
@@ -476,6 +486,17 @@ pub fn execute_native(vm: &mut Vm, program: &Program, native: &Native) -> Result
         Native::FocalBuildVLine => focal_build_vline_execute(vm),
         Native::FocalBuildHLine => focal_build_hline_execute(vm),
         Native::FocalValue => focal_value_execute(vm),
+        // gen
+        Native::GenStrayInt => gen_stray_int_execute(vm),
+        Native::GenStray => gen_stray_execute(vm),
+        Native::GenStray2D => gen_stray_2d_execute(vm),
+        Native::GenStray3D => gen_stray_3d_execute(vm),
+        Native::GenStray4D => gen_stray_4d_execute(vm),
+        Native::GenInt => gen_int_execute(vm),
+        Native::GenScalar => gen_scalar_execute(vm),
+        Native::Gen2D => gen_2d_execute(vm),
+        Native::GenSelect => gen_select_execute(vm),
+        Native::GenCol => gen_col_execute(vm),
 
         _ => Err(Error::Native("execute_native".to_string())),
     }
@@ -2854,6 +2875,335 @@ fn focal_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let res = focal_state_struct.value(vm, position);
 
     Ok(Some(Var::Float(res)))
+}
+
+fn gen_stray_int_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Float(1.0)),
+            (Keyword::By, Var::Float(0.2)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_stray_int_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let from = vm.stack_peek_f32(1)?;
+    let by = vm.stack_peek_f32(2)?;
+
+    let by = mathutil::absf(by);
+    let value = vm.prng_state.prng_f32_range(from - by, from + by);
+    let value = value.floor();
+
+    Ok(Some(Var::Float(value)))
+}
+
+fn gen_stray_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Float(1.0)),
+            (Keyword::By, Var::Float(0.2)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_stray_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let from = vm.stack_peek_f32(1)?;
+    let by = vm.stack_peek_f32(2)?;
+
+    let by = mathutil::absf(by);
+    let value = vm.prng_state.prng_f32_range(from - by, from + by);
+
+    Ok(Some(Var::Float(value)))
+}
+
+fn gen_stray_2d_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::V2D(10.0, 10.0)),
+            (Keyword::By, Var::V2D(1.0, 1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_stray_2d_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    if !vm.building_with_trait_within_vector {
+        return Err(Error::Native(
+            "gen_stray_2d should always be called with vm.building_with_trait_within_vector"
+                .to_string(),
+        ));
+    }
+
+    let from = vm.stack_peek_v2d(1)?;
+    let by = vm.stack_peek_v2d(2)?;
+
+    let index = vm.trait_within_vector_index;
+    let by_index;
+    let from_index;
+    if index == 0 {
+        by_index = mathutil::absf(by.0);
+        from_index = from.0;
+    } else if index == 1 {
+        by_index = mathutil::absf(by.1);
+        from_index = from.1;
+    } else {
+        return Err(Error::Native(
+            "gen_stray_2d invalid trait_within_vector_index value".to_string(),
+        ));
+    }
+
+    // pick a scalar between min and max
+    let value = vm
+        .prng_state
+        .prng_f32_range(from_index - by_index, from_index + by_index);
+
+    Ok(Some(Var::Float(value)))
+}
+
+fn gen_stray_3d_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::By, Var::Bool(false)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_stray_3d_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    if !vm.building_with_trait_within_vector {
+        return Err(Error::Native(
+            "gen_stray_3d should always be called with vm.building_with_trait_within_vector"
+                .to_string(),
+        ));
+    }
+
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "gen/stray-3d requires a from parameter".to_string(),
+        ));
+    }
+    if !is_arg_given(default_mask, 2) {
+        return Err(Error::Native(
+            "gen/stray-3d requires a by parameter".to_string(),
+        ));
+    }
+
+    let from = stack_peek_vars(&vm.stack, vm.sp, 1)?;
+    let by = stack_peek_vars(&vm.stack, vm.sp, 2)?;
+
+    let index = vm.trait_within_vector_index;
+
+    let from = if let Some(var) = from.get(index) {
+        Var::get_float_value(&var)?
+    } else {
+        return Err(Error::Native(
+            "gen_stray_3d requires both from and by parameters".to_string(),
+        ));
+    };
+
+    let by = if let Some(var) = by.get(index) {
+        Var::get_float_value(&var)?
+    } else {
+        return Err(Error::Native(
+            "gen_stray_3d requires both from and by parameters".to_string(),
+        ));
+    };
+
+    // pick a scalar between min and max
+    let value = vm.prng_state.prng_f32_range(from - by, from + by);
+
+    Ok(Some(Var::Float(value)))
+}
+
+fn gen_stray_4d_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::By, Var::Bool(false)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_stray_4d_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    if !vm.building_with_trait_within_vector {
+        return Err(Error::Native(
+            "gen_stray_4d should always be called with vm.building_with_trait_within_vector"
+                .to_string(),
+        ));
+    }
+
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "gen/stray-4d requires a from parameter".to_string(),
+        ));
+    }
+    if !is_arg_given(default_mask, 2) {
+        return Err(Error::Native(
+            "gen/stray-4d requires a by parameter".to_string(),
+        ));
+    }
+
+    let from = stack_peek_vars(&vm.stack, vm.sp, 1)?;
+    let by = stack_peek_vars(&vm.stack, vm.sp, 2)?;
+
+    let index = vm.trait_within_vector_index;
+
+    let from = if let Some(var) = from.get(index) {
+        Var::get_float_value(&var)?
+    } else {
+        return Err(Error::Native(
+            "gen_stray_4d requires both from and by parameters".to_string(),
+        ));
+    };
+
+    let by = if let Some(var) = by.get(index) {
+        Var::get_float_value(&var)?
+    } else {
+        return Err(Error::Native(
+            "gen_stray_4d requires both from and by parameters".to_string(),
+        ));
+    };
+
+    // pick a scalar between min and max
+    let value = vm.prng_state.prng_f32_range(from - by, from + by);
+
+    Ok(Some(Var::Float(value)))
+}
+
+fn gen_int_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Min, Var::Float(0.0)),
+            (Keyword::Max, Var::Float(1000.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_int_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let min = vm.stack_peek_f32(1)?;
+    let max = vm.stack_peek_f32(2)?;
+
+    // pick a scalar between min and max
+    let value = vm.prng_state.prng_f32_range(min, max + 1.0);
+
+    Ok(Some(Var::Float(value.floor())))
+}
+
+fn gen_scalar_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Min, Var::Float(0.0)),
+            (Keyword::Max, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_scalar_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let min = vm.stack_peek_f32(1)?;
+    let max = vm.stack_peek_f32(2)?;
+
+    // pick a scalar between min and max
+    let value = vm.prng_state.prng_f32_range(min, max);
+
+    Ok(Some(Var::Float(value)))
+}
+
+fn gen_2d_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Min, Var::Float(0.0)),
+            (Keyword::Max, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_2d_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let min = vm.stack_peek_f32(1)?;
+    let max = vm.stack_peek_f32(2)?;
+
+    let x = vm.prng_state.prng_f32_range(min, max);
+    let y = vm.prng_state.prng_f32_range(min, max);
+
+    Ok(Some(Var::V2D(x, y)))
+}
+
+fn gen_select_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::From, Var::Bool(false))],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_select_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(2)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "gen/select requires a from parameter".to_string(),
+        ));
+    }
+
+    let from = stack_peek_vars(&vm.stack, vm.sp, 1)?;
+    let index = vm.prng_state.prng_usize_range(0, from.len());
+
+    Ok(Some(from[index].clone()))
+}
+
+fn gen_col_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::Alpha, Var::Float(1.0))],
+        // stack offset
+        1,
+    ))
+}
+
+fn gen_col_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(2)?;
+
+    let alpha = if is_arg_given(default_mask, 1) {
+        vm.stack_peek_f32(1)?
+    } else {
+        // no alpha was given so generate a random value
+        vm.prng_state.prng_f32_range(0.0, 1.0)
+    };
+
+    Ok(Some(Var::Colour(Colour::new(
+        ColourFormat::Rgb,
+        vm.prng_state.prng_f32_range(0.0, 1.0),
+        vm.prng_state.prng_f32_range(0.0, 1.0),
+        vm.prng_state.prng_f32_range(0.0, 1.0),
+        alpha,
+    ))))
 }
 
 #[cfg(test)]

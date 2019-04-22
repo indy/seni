@@ -240,25 +240,25 @@ pub enum Builtin {
 
     // gen
     //
-    #[strum(serialize = "gen/stray-int")]
+    #[strum(serialize = "BUILTIN-gen/stray-int")]
     GenStrayInt,
-    #[strum(serialize = "gen/stray")]
+    #[strum(serialize = "BUILTIN-gen/stray")]
     GenStray,
-    #[strum(serialize = "gen/stray-2d")]
+    #[strum(serialize = "BUILTIN-gen/stray-2d")]
     GenStray2D,
-    #[strum(serialize = "gen/stray-3d")]
+    #[strum(serialize = "BUILTIN-gen/stray-3d")]
     GenStray3D,
-    #[strum(serialize = "gen/stray-4d")]
+    #[strum(serialize = "BUILTIN-gen/stray-4d")]
     GenStray4D,
-    #[strum(serialize = "gen/int")]
+    #[strum(serialize = "BUILTIN-gen/int")]
     GenInt,
-    #[strum(serialize = "gen/scalar")]
+    #[strum(serialize = "BUILTIN-gen/scalar")]
     GenScalar,
-    #[strum(serialize = "gen/2d")]
+    #[strum(serialize = "BUILTIN-gen/2d")]
     Gen2D,
-    #[strum(serialize = "gen/select")]
+    #[strum(serialize = "BUILTIN-gen/select")]
     GenSelect,
-    #[strum(serialize = "gen/col")]
+    #[strum(serialize = "BUILTIN-gen/col")]
     GenCol,
 
     #[strum(serialize = "UnreachableBuiltinEnd")]
