@@ -13,18 +13,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::Program;
 use crate::builtin::Builtin;
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
+use crate::compiler::Program;
 use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
 use crate::interp;
-use crate::repeat;
 use crate::keywords::Keyword;
 use crate::mathutil;
-use crate::path;
 use crate::packable::{Mule, Packable};
+use crate::path;
 use crate::prng;
+use crate::repeat;
 use crate::vm::{Var, Vm};
 
 use crate::uvmapper::BrushType;
@@ -969,12 +969,28 @@ fn quadratic_execute(vm: &mut Vm) -> Result<Option<Var>> {
         let brush_type = read_brush(brush);
         let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
 
+        let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+            (x, y)
+        } else {
+            return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+        };
+        let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+            (x, y)
+        } else {
+            return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+        };
+        let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+            (x, y)
+        } else {
+            return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+        };
+
         if let Some(mapping) = easing_from_keyword(line_width_mapping) {
             if is_arg_given(default_mask, 1) {
                 // given a line width value
-                geo.render_quadratic_vars(
+                geo.render_quadratic(
                     matrix,
-                    coords,
+                    &[x0, y0, x1, y1, x2, y2],
                     line_width,
                     line_width,
                     mapping,
@@ -986,9 +1002,9 @@ fn quadratic_execute(vm: &mut Vm) -> Result<Option<Var>> {
                 )?;
             } else {
                 // not given a line width value
-                geo.render_quadratic_vars(
+                geo.render_quadratic(
                     matrix,
-                    coords,
+                    &[x0, y0, x1, y1, x2, y2],
                     line_width_start,
                     line_width_end,
                     mapping,
@@ -1060,11 +1076,32 @@ fn bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
         let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         if let Some(mapping) = easing_from_keyword(line_width_mapping) {
+            let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+                (x, y)
+            } else {
+                return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+            };
+            let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+                (x, y)
+            } else {
+                return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+            };
+            let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+                (x, y)
+            } else {
+                return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+            };
+            let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+                (x, y)
+            } else {
+                return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+            };
+
             if is_arg_given(default_mask, 1) {
                 // given a line width value
-                geo.render_bezier_vars(
+                geo.render_bezier(
                     matrix,
-                    coords,
+                    &[x0, y0, x1, y1, x2, y2, x3, y3],
                     line_width,
                     line_width,
                     mapping,
@@ -1076,9 +1113,9 @@ fn bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
                 )?;
             } else {
                 // not given a line width value
-                geo.render_bezier_vars(
+                geo.render_bezier(
                     matrix,
-                    coords,
+                    &[x0, y0, x1, y1, x2, y2, x3, y3],
                     line_width_start,
                     line_width_end,
                     mapping,
@@ -1142,9 +1179,31 @@ fn bezier_bulging_execute(vm: &mut Vm) -> Result<Option<Var>> {
         };
         let brush_type = read_brush(brush);
         let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
-        geo.render_bezier_bulging_vars(
+
+        let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+            (x, y)
+        } else {
+            return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+        };
+        let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+            (x, y)
+        } else {
+            return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+        };
+        let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+            (x, y)
+        } else {
+            return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+        };
+        let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+            (x, y)
+        } else {
+            return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+        };
+
+        geo.render_bezier_bulging(
             matrix,
-            coords,
+            &[x0, y0, x1, y1, x2, y2, x3, y3],
             line_width,
             t_start,
             t_end,
@@ -1214,10 +1273,31 @@ fn stroked_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
         let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         if let Some(mapping) = easing_from_keyword(line_width_mapping) {
-            geo.render_stroked_bezier_vars(
+            let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+                (x, y)
+            } else {
+                return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+            };
+            let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+                (x, y)
+            } else {
+                return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+            };
+            let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+                (x, y)
+            } else {
+                return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+            };
+            let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+                (x, y)
+            } else {
+                return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+            };
+
+            geo.render_stroked_bezier(
                 matrix,
                 tessellation,
-                coords,
+                &[x0, y0, x1, y1, x2, y2, x3, y3],
                 stroke_tessellation,
                 stroke_noise,
                 stroke_line_width_start,
@@ -2282,7 +2362,7 @@ fn path_linear_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
             (Keyword::TStart, Var::Float(0.0)),
             (Keyword::TEnd, Var::Float(1.0)),
             (Keyword::Fn, Var::Bool(false)),
-            (Keyword::Mapping, Var::Keyword(Keyword::Linear))
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear)),
         ],
         // stack offset
         0,
@@ -2293,7 +2373,9 @@ fn path_linear_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     let default_mask = vm.stack_peek_i32(8)?;
 
     if !is_arg_given(default_mask, 6) {
-        return Err(Error::Native("path_linear_execute requires fn argument".to_string()))
+        return Err(Error::Native(
+            "path_linear_execute requires fn argument".to_string(),
+        ));
     }
 
     let from = vm.stack_peek_v2d(1)?;
@@ -2333,7 +2415,7 @@ fn path_circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
             (Keyword::TStart, Var::Float(0.0)),
             (Keyword::TEnd, Var::Float(1.0)),
             (Keyword::Fn, Var::Bool(false)),
-            (Keyword::Mapping, Var::Keyword(Keyword::Linear))
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear)),
         ],
         // stack offset
         0,
@@ -2344,7 +2426,9 @@ fn path_circle_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     let default_mask = vm.stack_peek_i32(8)?;
 
     if !is_arg_given(default_mask, 6) {
-         return Err(Error::Native("path_circle_execute requires fn argument".to_string()))
+        return Err(Error::Native(
+            "path_circle_execute requires fn argument".to_string(),
+        ));
     }
 
     let position = vm.stack_peek_v2d(1)?;
@@ -2382,7 +2466,7 @@ fn path_spline_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
             (Keyword::TStart, Var::Float(0.0)),
             (Keyword::TEnd, Var::Float(1.0)),
             (Keyword::Fn, Var::Bool(false)),
-            (Keyword::Mapping, Var::Keyword(Keyword::Linear))
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear)),
         ],
         // stack offset
         0,
@@ -2393,10 +2477,14 @@ fn path_spline_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     let default_mask = vm.stack_peek_i32(7)?;
 
     if !is_arg_given(default_mask, 1) {
-         return Err(Error::Native("path_spline_execute requires coords argument".to_string()))
+        return Err(Error::Native(
+            "path_spline_execute requires coords argument".to_string(),
+        ));
     }
     if !is_arg_given(default_mask, 5) {
-         return Err(Error::Native("path_spline_execute requires fn argument".to_string()))
+        return Err(Error::Native(
+            "path_spline_execute requires fn argument".to_string(),
+        ));
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
@@ -2447,7 +2535,7 @@ fn path_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
             (Keyword::TStart, Var::Float(0.0)),
             (Keyword::TEnd, Var::Float(1.0)),
             (Keyword::Fn, Var::Bool(false)),
-            (Keyword::Mapping, Var::Keyword(Keyword::Linear))
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear)),
         ],
         // stack offset
         0,
@@ -2458,10 +2546,14 @@ fn path_bezier_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     let default_mask = vm.stack_peek_i32(7)?;
 
     if !is_arg_given(default_mask, 1) {
-         return Err(Error::Native("path_bezier_execute requires coords argument".to_string()))
+        return Err(Error::Native(
+            "path_bezier_execute requires coords argument".to_string(),
+        ));
     }
     if !is_arg_given(default_mask, 5) {
-         return Err(Error::Native("path_bezier_execute requires fn argument".to_string()))
+        return Err(Error::Native(
+            "path_bezier_execute requires fn argument".to_string(),
+        ));
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
@@ -2511,9 +2603,7 @@ fn path_bezier_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
 fn repeat_symmetry_vertical_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::Fn, Var::Bool(false)),
-        ],
+        vec![(Keyword::Fn, Var::Bool(false))],
         // stack offset
         0,
     ))
@@ -2523,7 +2613,9 @@ fn repeat_symmetry_vertical_execute(vm: &mut Vm, program: &Program) -> Result<Op
     let default_mask = vm.stack_peek_i32(2)?;
 
     if !is_arg_given(default_mask, 1) {
-         return Err(Error::Native("repeat_symmetry_vertical requires fn argument".to_string()))
+        return Err(Error::Native(
+            "repeat_symmetry_vertical requires fn argument".to_string(),
+        ));
     }
 
     let fun = vm.stack_peek_i32(1)?;
@@ -2536,9 +2628,7 @@ fn repeat_symmetry_vertical_execute(vm: &mut Vm, program: &Program) -> Result<Op
 fn repeat_symmetry_horizontal_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::Fn, Var::Bool(false)),
-        ],
+        vec![(Keyword::Fn, Var::Bool(false))],
         // stack offset
         0,
     ))
@@ -2548,7 +2638,9 @@ fn repeat_symmetry_horizontal_execute(vm: &mut Vm, program: &Program) -> Result<
     let default_mask = vm.stack_peek_i32(2)?;
 
     if !is_arg_given(default_mask, 1) {
-         return Err(Error::Native("repeat_symmetry_horizontal requires fn argument".to_string()))
+        return Err(Error::Native(
+            "repeat_symmetry_horizontal requires fn argument".to_string(),
+        ));
     }
 
     let fun = vm.stack_peek_i32(1)?;
@@ -2561,9 +2653,7 @@ fn repeat_symmetry_horizontal_execute(vm: &mut Vm, program: &Program) -> Result<
 fn repeat_symmetry_4_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::Fn, Var::Bool(false)),
-        ],
+        vec![(Keyword::Fn, Var::Bool(false))],
         // stack offset
         0,
     ))
@@ -2573,7 +2663,9 @@ fn repeat_symmetry_4_execute(vm: &mut Vm, program: &Program) -> Result<Option<Va
     let default_mask = vm.stack_peek_i32(2)?;
 
     if !is_arg_given(default_mask, 1) {
-         return Err(Error::Native("repeat_symmetry_4 requires fn argument".to_string()))
+        return Err(Error::Native(
+            "repeat_symmetry_4 requires fn argument".to_string(),
+        ));
     }
 
     let fun = vm.stack_peek_i32(1)?;
@@ -2586,9 +2678,7 @@ fn repeat_symmetry_4_execute(vm: &mut Vm, program: &Program) -> Result<Option<Va
 fn repeat_symmetry_8_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::Fn, Var::Bool(false)),
-        ],
+        vec![(Keyword::Fn, Var::Bool(false))],
         // stack offset
         0,
     ))
@@ -2598,7 +2688,9 @@ fn repeat_symmetry_8_execute(vm: &mut Vm, program: &Program) -> Result<Option<Va
     let default_mask = vm.stack_peek_i32(2)?;
 
     if !is_arg_given(default_mask, 1) {
-         return Err(Error::Native("repeat_symmetry_8 requires fn argument".to_string()))
+        return Err(Error::Native(
+            "repeat_symmetry_8 requires fn argument".to_string(),
+        ));
     }
 
     let fun = vm.stack_peek_i32(1)?;
@@ -2624,12 +2716,13 @@ fn repeat_rotate_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> 
     let default_mask = vm.stack_peek_i32(3)?;
 
     if !is_arg_given(default_mask, 1) {
-         return Err(Error::Native("repeat_rotate requires fn argument".to_string()))
+        return Err(Error::Native(
+            "repeat_rotate requires fn argument".to_string(),
+        ));
     }
 
     let fun = vm.stack_peek_i32(1)?;
     let copies = vm.stack_peek_f32_as_usize(2)?;
-
 
     repeat::rotate(vm, program, fun as usize, copies)?;
 
@@ -2652,7 +2745,9 @@ fn repeat_rotate_mirrored_execute(vm: &mut Vm, program: &Program) -> Result<Opti
     let default_mask = vm.stack_peek_i32(3)?;
 
     if !is_arg_given(default_mask, 1) {
-         return Err(Error::Native("repeat_rotate_mirrored requires fn argument".to_string()))
+        return Err(Error::Native(
+            "repeat_rotate_mirrored requires fn argument".to_string(),
+        ));
     }
 
     let fun = vm.stack_peek_i32(1)?;
