@@ -288,7 +288,7 @@ impl Packable for Native {
 // .0 == input arguments as a vector of (name, default value) pairs
 // .1 == how the native function affects the vm's stack in terms of opcode offset
 //
-pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
+pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
     match native {
         // misc
         Native::Nth => nth_parameter_info(),
@@ -394,7 +394,7 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
     }
 }
 
-pub fn execute_native(vm: &mut Vm, program: &Program, native: &Native) -> Result<Option<Var>> {
+pub fn execute_native(vm: &mut Vm, program: &Program, native: Native) -> Result<Option<Var>> {
     match native {
         // misc
         Native::Nth => nth_execute(vm),
@@ -520,7 +520,7 @@ fn is_arg_given(bits: i32, position: usize) -> bool {
 }
 
 // can't have this as a member of Vm thanks to the borrow checker
-fn stack_peek_vars(stack: &Vec<Var>, sp: usize, offset: usize) -> Result<&Vec<Var>> {
+fn stack_peek_vars(stack: &[Var], sp: usize, offset: usize) -> Result<&Vec<Var>> {
     if let Var::Vector(vs) = &stack[sp - offset] {
         Ok(vs)
     } else {
@@ -543,7 +543,7 @@ fn read_brush(kw: Keyword) -> BrushType {
 }
 
 fn stack_peek_proc_colour_state_struct(
-    stack: &Vec<Var>,
+    stack: &[Var],
     sp: usize,
     offset: usize,
 ) -> Result<&ProcColourStateStruct> {
@@ -555,7 +555,7 @@ fn stack_peek_proc_colour_state_struct(
 }
 
 fn stack_peek_interp_state_struct(
-    stack: &Vec<Var>,
+    stack: &[Var],
     sp: usize,
     offset: usize,
 ) -> Result<&interp::InterpStateStruct> {
@@ -567,7 +567,7 @@ fn stack_peek_interp_state_struct(
 }
 
 fn stack_peek_focal_state_struct(
-    stack: &Vec<Var>,
+    stack: &[Var],
     sp: usize,
     offset: usize,
 ) -> Result<&focal::FocalStateStruct> {
@@ -579,7 +579,7 @@ fn stack_peek_focal_state_struct(
 }
 
 fn ref_mut_prng_state_struct(
-    stack: &Vec<Var>,
+    stack: &[Var],
     sp: usize,
     offset: usize,
 ) -> Result<RefMut<prng::PrngStateStruct>> {
@@ -1837,7 +1837,7 @@ fn col_build_procedural_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn to_f32_3(vecs: &Vec<Var>) -> Result<[f32; 3]> {
+fn to_f32_3(vecs: &[Var]) -> Result<[f32; 3]> {
     if let Var::Float(a) = vecs[0] {
         if let Var::Float(b) = vecs[1] {
             if let Var::Float(c) = vecs[2] {
@@ -2284,7 +2284,28 @@ fn interp_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
     let t = vm.stack_peek_f32(2)?;
 
-    let (x, y) = interp::bezier_vars(coords, t)?;
+    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+        (x, y)
+    } else {
+        return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+    };
+    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+        (x, y)
+    } else {
+        return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+    };
+    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+        (x, y)
+    } else {
+        return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+    };
+    let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+        (x, y)
+    } else {
+        return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+    };
+
+    let (x, y) = interp::bezier(&[x0, y0, x1, y1, x2, y2, x3, y3], t);
 
     Ok(Some(Var::V2D(x, y)))
 }
@@ -2313,7 +2334,28 @@ fn interp_bezier_tangent_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
     let t = vm.stack_peek_f32(2)?;
 
-    let (x, y) = interp::bezier_tangent_vars(coords, t)?;
+    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+        (x, y)
+    } else {
+        return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+    };
+    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+        (x, y)
+    } else {
+        return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+    };
+    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+        (x, y)
+    } else {
+        return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+    };
+    let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+        (x, y)
+    } else {
+        return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+    };
+
+    let (x, y) = interp::bezier_tangent(&[x0, y0, x1, y1, x2, y2, x3, y3], t);
 
     Ok(Some(Var::V2D(x, y)))
 }

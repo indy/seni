@@ -89,12 +89,10 @@ fn run(matches: &ArgMatches) -> Result<()> {
             } else {
                 run_debug_script(script)?;
             }
+        } else if let Ok(seed) = value_t!(matches.value_of("seed"), u32) {
+            run_script_with_seed(script, seed)?;
         } else {
-            if let Ok(seed) = value_t!(matches.value_of("seed"), u32) {
-                run_script_with_seed(script, seed)?;
-            } else {
-                run_script(script)?;
-            }
+            run_script(script)?;
         }
     }
 

@@ -14,9 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::ease;
-use crate::error::*;
 use crate::mathutil;
-use crate::vm::Var;
 
 #[derive(Clone, Debug)]
 pub struct InterpStateStruct {
@@ -127,67 +125,11 @@ pub fn bezier(coords: &[f32; 8], t: f32) -> (f32, f32) {
     )
 }
 
-pub fn bezier_vars(coords: &Vec<Var>, t: f32) -> Result<(f32, f32)> {
-    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
-        (x, y)
-    } else {
-        return Err(Error::Interp("coords 0 should be a Vec::V2D".to_string()));
-    };
-    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
-        (x, y)
-    } else {
-        return Err(Error::Interp("coords 1 should be a Vec::V2D".to_string()));
-    };
-    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
-        (x, y)
-    } else {
-        return Err(Error::Interp("coords 2 should be a Vec::V2D".to_string()));
-    };
-    let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
-        (x, y)
-    } else {
-        return Err(Error::Interp("coords 2 should be a Vec::V2D".to_string()));
-    };
-
-    Ok((
-        mathutil::bezier_point(x0, x1, x2, x3, t),
-        mathutil::bezier_point(y0, y1, y2, y3, t),
-    ))
-}
-
 pub fn bezier_tangent(coords: &[f32; 8], t: f32) -> (f32, f32) {
     (
         mathutil::bezier_tangent(coords[0], coords[2], coords[4], coords[6], t),
         mathutil::bezier_tangent(coords[1], coords[3], coords[5], coords[7], t),
     )
-}
-
-pub fn bezier_tangent_vars(coords: &Vec<Var>, t: f32) -> Result<(f32, f32)> {
-    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
-        (x, y)
-    } else {
-        return Err(Error::Interp("coords 0 should be a Vec::V2D".to_string()));
-    };
-    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
-        (x, y)
-    } else {
-        return Err(Error::Interp("coords 1 should be a Vec::V2D".to_string()));
-    };
-    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
-        (x, y)
-    } else {
-        return Err(Error::Interp("coords 2 should be a Vec::V2D".to_string()));
-    };
-    let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
-        (x, y)
-    } else {
-        return Err(Error::Interp("coords 2 should be a Vec::V2D".to_string()));
-    };
-
-    Ok((
-        mathutil::bezier_tangent(x0, x1, x2, x3, t),
-        mathutil::bezier_tangent(y0, y1, y2, y3, t),
-    ))
 }
 
 pub fn circle(position: (f32, f32), radius: f32, t: f32) -> (f32, f32) {

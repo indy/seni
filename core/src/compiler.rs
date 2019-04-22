@@ -1449,7 +1449,7 @@ impl Compiler {
                     // get the list of arguments
                     // match up the nodes and compile them in argument order
 
-                    let (args, stack_offset) = parameter_info(native)?;
+                    let (args, stack_offset) = parameter_info(*native)?;
 
                     let num_args = args.len();
                     let label_vals = &children[1..];

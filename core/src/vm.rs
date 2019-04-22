@@ -915,7 +915,7 @@ impl Vm {
         };
 
         let res = if let BytecodeArg::Native(native) = bc.arg0 {
-            execute_native(self, program, &native)?
+            execute_native(self, program, native)?
         } else {
             return Err(Error::VM("opcode_native".to_string()));
         };

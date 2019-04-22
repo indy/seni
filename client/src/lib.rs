@@ -49,7 +49,7 @@ cfg_if! {
     if #[cfg(feature = "console_log")] {
         fn init_log() {
             use log::Level;
-            console_log::init_with_level(Level::Trace).expect("error initializing log");
+            console_log::init_with_level(Level::Warn).expect("error initializing log");
         }
     } else {
         fn init_log() {}
