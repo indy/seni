@@ -229,13 +229,13 @@ pub enum Builtin {
 
     // focal
     //
-    #[strum(serialize = "focal/build-point")]
+    #[strum(serialize = "BUILTIN-focal/build-point")]
     FocalBuildPoint,
-    #[strum(serialize = "focal/build-vline")]
+    #[strum(serialize = "BUILTIN-focal/build-vline")]
     FocalBuildVLine,
-    #[strum(serialize = "focal/build-hline")]
+    #[strum(serialize = "BUILTIN-focal/build-hline")]
     FocalBuildHLine,
-    #[strum(serialize = "focal/value")]
+    #[strum(serialize = "BUILTIN-focal/value")]
     FocalValue,
 
     // gen

@@ -18,6 +18,7 @@ use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
 use crate::compiler::Program;
 use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
+use crate::focal;
 use crate::interp;
 use crate::keywords::Keyword;
 use crate::mathutil;
@@ -231,16 +232,16 @@ pub enum Native {
     #[strum(serialize = "repeat/rotate-mirrored")]
     RepeatRotateMirrored,
 
-    // // focal
-    // //
-    // #[strum(serialize = "focal/build-point")]
-    // FocalBuildPoint,
-    // #[strum(serialize = "focal/build-vline")]
-    // FocalBuildVLine,
-    // #[strum(serialize = "focal/build-hline")]
-    // FocalBuildHLine,
-    // #[strum(serialize = "focal/value")]
-    // FocalValue,
+    // focal
+    //
+    #[strum(serialize = "focal/build-point")]
+    FocalBuildPoint,
+    #[strum(serialize = "focal/build-vline")]
+    FocalBuildVLine,
+    #[strum(serialize = "focal/build-hline")]
+    FocalBuildHLine,
+    #[strum(serialize = "focal/value")]
+    FocalValue,
 
     // // gen
     // //
@@ -374,6 +375,11 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::RepeatSymmetry8 => repeat_symmetry_8_parameter_info(),
         Native::RepeatRotate => repeat_rotate_parameter_info(),
         Native::RepeatRotateMirrored => repeat_rotate_mirrored_parameter_info(),
+        // focal
+        Native::FocalBuildPoint => focal_build_generic_parameter_info(),
+        Native::FocalBuildVLine => focal_build_generic_parameter_info(),
+        Native::FocalBuildHLine => focal_build_generic_parameter_info(),
+        Native::FocalValue => focal_value_parameter_info(),
 
         _ => Err(Error::Native("parameter_info".to_string())),
     }
@@ -465,6 +471,12 @@ pub fn execute_native(vm: &mut Vm, program: &Program, native: &Native) -> Result
         Native::RepeatSymmetry8 => repeat_symmetry_8_execute(vm, program),
         Native::RepeatRotate => repeat_rotate_execute(vm, program),
         Native::RepeatRotateMirrored => repeat_rotate_mirrored_execute(vm, program),
+        // focal
+        Native::FocalBuildPoint => focal_build_point_execute(vm),
+        Native::FocalBuildVLine => focal_build_vline_execute(vm),
+        Native::FocalBuildHLine => focal_build_hline_execute(vm),
+        Native::FocalValue => focal_value_execute(vm),
+
         _ => Err(Error::Native("execute_native".to_string())),
     }
 }
@@ -531,6 +543,18 @@ fn stack_peek_interp_state_struct(
         Ok(iss)
     } else {
         return Err(Error::VM("expected Var::InterpState".to_string()));
+    }
+}
+
+fn stack_peek_focal_state_struct(
+    stack: &Vec<Var>,
+    sp: usize,
+    offset: usize,
+) -> Result<&focal::FocalStateStruct> {
+    if let Var::FocalState(fss) = &stack[sp - offset] {
+        Ok(fss)
+    } else {
+        return Err(Error::VM("expected Var::FocalState".to_string()));
     }
 }
 
@@ -2756,6 +2780,80 @@ fn repeat_rotate_mirrored_execute(vm: &mut Vm, program: &Program) -> Result<Opti
     repeat::rotate_mirrored(vm, program, fun as usize, copies)?;
 
     Ok(None)
+}
+
+fn focal_build_generic_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear)),
+            (Keyword::Position, Var::V2D(0.0, 0.0)),
+            (Keyword::Distance, Var::Float(1.0)),
+            (Keyword::TransformPosition, Var::Keyword(Keyword::False)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn focal_build_generic_execute(vm: &mut Vm, focal_type: focal::FocalType) -> Result<Option<Var>> {
+    let mapping = vm.stack_peek_kw(1)?;
+    let position = vm.stack_peek_v2d(2)?;
+    let distance = vm.stack_peek_f32(3)?;
+    let transform_pos = vm.stack_peek_kw(4)? == Keyword::True;
+
+    if let Some(mapping) = easing_from_keyword(mapping) {
+        Ok(Some(Var::FocalState(focal::FocalStateStruct {
+            focal_type,
+            mapping,
+            position,
+            distance,
+            transform_pos,
+        })))
+    } else {
+        Err(Error::Native("focal_build_generic _execute".to_string()))
+    }
+}
+
+fn focal_build_point_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    focal_build_generic_execute(vm, focal::FocalType::Point)
+}
+
+fn focal_build_vline_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    focal_build_generic_execute(vm, focal::FocalType::VLine)
+}
+
+fn focal_build_hline_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    focal_build_generic_execute(vm, focal::FocalType::HLine)
+}
+
+fn focal_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::Position, Var::V2D(0.0, 0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn focal_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "focal/value requires a from parameter".to_string(),
+        ));
+    }
+
+    let focal_state_struct = stack_peek_focal_state_struct(&vm.stack, vm.sp, 1)?;
+    let position = vm.stack_peek_v2d(2)?;
+
+    let res = focal_state_struct.value(vm, position);
+
+    Ok(Some(Var::Float(res)))
 }
 
 #[cfg(test)]
