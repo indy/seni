@@ -203,7 +203,7 @@ pub enum Builtin {
 
     // path
     //
-    #[strum(serialize = "path/linear")]
+    #[strum(serialize = "BUILTIN-path/linear")]
     PathLinear,
     #[strum(serialize = "path/circle")]
     PathCircle,
@@ -2493,7 +2493,7 @@ pub fn path_bezier(vm: &mut Vm, program: &Program, num_args: usize) -> Result<Va
                 steps.unwrap() as i32,
                 t_start.unwrap(),
                 t_end.unwrap(),
-                &co,
+                co,
                 mapping,
             )?;
         }

@@ -132,7 +132,7 @@ pub fn bezier(
     steps: i32,
     t_start: f32,
     t_end: f32,
-    coords: &[f32; 8],
+    coords: [f32; 8],
     mapping: Easing,
 ) -> Result<()> {
     let unit = (t_end - t_start) / (steps as f32 - 1.0);

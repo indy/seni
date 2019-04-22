@@ -62,6 +62,9 @@ pub enum Error {
     // interp
     Interp(String),
 
+    // path
+    Path(String),
+
     // geometry
     Geometry(String),
 

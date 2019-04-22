@@ -914,7 +914,7 @@ impl Vm {
 
     }
 
-    fn opcode_native(&mut self, _program: &Program, bc: &Bytecode) -> Result<()> {
+    fn opcode_native(&mut self, program: &Program, bc: &Bytecode) -> Result<()> {
         let num_args = if let BytecodeArg::Int(num_args_) = bc.arg1 {
             num_args_ as usize
         } else {
@@ -924,7 +924,7 @@ impl Vm {
         };
 
         let res = if let BytecodeArg::Native(native) = bc.arg0 {
-            execute_native(self, &native)?
+            execute_native(self, program, &native)?
         } else {
             return Err(Error::VM("opcode_native".to_string()));
         };

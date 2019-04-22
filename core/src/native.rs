@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::compiler::Program;
 use crate::builtin::Builtin;
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
 use crate::ease::easing_from_keyword;
@@ -20,6 +21,7 @@ use crate::error::{Error, Result};
 use crate::interp;
 use crate::keywords::Keyword;
 use crate::mathutil;
+use crate::path;
 use crate::packable::{Mule, Packable};
 use crate::prng;
 use crate::vm::{Var, Vm};
@@ -202,16 +204,16 @@ pub enum Native {
     #[strum(serialize = "interp/circle")]
     InterpCircle,
 
-    // // path
-    // //
-    // #[strum(serialize = "path/linear")]
-    // PathLinear,
-    // #[strum(serialize = "path/circle")]
-    // PathCircle,
-    // #[strum(serialize = "path/spline")]
-    // PathSpline,
-    // #[strum(serialize = "path/bezier")]
-    // PathBezier,
+    // path
+    //
+    #[strum(serialize = "path/linear")]
+    PathLinear,
+    #[strum(serialize = "path/circle")]
+    PathCircle,
+    #[strum(serialize = "path/spline")]
+    PathSpline,
+    #[strum(serialize = "path/bezier")]
+    PathBezier,
 
     // // repeat
     // //
@@ -359,11 +361,16 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::InterpRay => interp_ray_parameter_info(),
         Native::InterpLine => interp_line_parameter_info(),
         Native::InterpCircle => interp_circle_parameter_info(),
+        // path
+        Native::PathLinear => path_linear_parameter_info(),
+        Native::PathCircle => path_circle_parameter_info(),
+        Native::PathSpline => path_spline_parameter_info(),
+        Native::PathBezier => path_bezier_parameter_info(),
         _ => Err(Error::Native("parameter_info".to_string())),
     }
 }
 
-pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
+pub fn execute_native(vm: &mut Vm, program: &Program, native: &Native) -> Result<Option<Var>> {
     match native {
         // misc
         Native::Nth => nth_execute(vm),
@@ -437,6 +444,11 @@ pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
         Native::InterpRay => interp_ray_execute(vm),
         Native::InterpLine => interp_line_execute(vm),
         Native::InterpCircle => interp_circle_execute(vm),
+        // path
+        Native::PathLinear => path_linear_execute(vm, program),
+        Native::PathCircle => path_circle_execute(vm, program),
+        Native::PathSpline => path_spline_execute(vm, program),
+        Native::PathBezier => path_bezier_execute(vm, program),
         _ => Err(Error::Native("execute_native".to_string())),
     }
 }
@@ -2242,6 +2254,242 @@ fn interp_circle_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let (x, y) = interp::circle(position, radius, t);
 
     Ok(Some(Var::V2D(x, y)))
+}
+
+fn path_linear_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::V2D(0.0, 0.0)),
+            (Keyword::To, Var::V2D(10.0, 10.0)),
+            (Keyword::Steps, Var::Float(10.0)),
+            (Keyword::TStart, Var::Float(0.0)),
+            (Keyword::TEnd, Var::Float(1.0)),
+            (Keyword::Fn, Var::Bool(false)),
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear))
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn path_linear_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(8)?;
+
+    if !is_arg_given(default_mask, 6) {
+        return Err(Error::Native("path_linear_execute requires fn argument".to_string()))
+    }
+
+    let from = vm.stack_peek_v2d(1)?;
+    let to = vm.stack_peek_v2d(2)?;
+    let steps = vm.stack_peek_f32(3)?;
+    let t_start = vm.stack_peek_f32(4)?;
+    let t_end = vm.stack_peek_f32(5)?;
+    let fun = vm.stack_peek_i32(6)?;
+    let mapping = vm.stack_peek_kw(7)?;
+
+    if let Some(mapping) = easing_from_keyword(mapping) {
+        path::linear(
+            vm,
+            program,
+            fun as usize,
+            steps as i32,
+            t_start,
+            t_end,
+            from.0,
+            from.1,
+            to.0,
+            to.1,
+            mapping,
+        )?;
+    }
+
+    Ok(None)
+}
+
+fn path_circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Position, Var::V2D(0.0, 0.0)),
+            (Keyword::Radius, Var::Float(100.0)),
+            (Keyword::Steps, Var::Float(10.0)),
+            (Keyword::TStart, Var::Float(0.0)),
+            (Keyword::TEnd, Var::Float(1.0)),
+            (Keyword::Fn, Var::Bool(false)),
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear))
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn path_circle_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(8)?;
+
+    if !is_arg_given(default_mask, 6) {
+         return Err(Error::Native("path_circle_execute requires fn argument".to_string()))
+    }
+
+    let position = vm.stack_peek_v2d(1)?;
+    let radius = vm.stack_peek_f32(2)?;
+    let steps = vm.stack_peek_f32(3)?;
+    let t_start = vm.stack_peek_f32(4)?;
+    let t_end = vm.stack_peek_f32(5)?;
+    let fun = vm.stack_peek_i32(6)?;
+    let mapping = vm.stack_peek_kw(7)?;
+
+    if let Some(mapping) = easing_from_keyword(mapping) {
+        path::circular(
+            vm,
+            program,
+            fun as usize,
+            steps as i32,
+            t_start,
+            t_end,
+            position.0,
+            position.1,
+            radius,
+            mapping,
+        )?;
+    }
+
+    Ok(None)
+}
+
+fn path_spline_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Coords, Var::Bool(false)),
+            (Keyword::Steps, Var::Float(10.0)),
+            (Keyword::TStart, Var::Float(0.0)),
+            (Keyword::TEnd, Var::Float(1.0)),
+            (Keyword::Fn, Var::Bool(false)),
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear))
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn path_spline_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(7)?;
+
+    if !is_arg_given(default_mask, 1) {
+         return Err(Error::Native("path_spline_execute requires coords argument".to_string()))
+    }
+    if !is_arg_given(default_mask, 5) {
+         return Err(Error::Native("path_spline_execute requires fn argument".to_string()))
+    }
+
+    let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
+    let steps = vm.stack_peek_f32(2)?;
+    let t_start = vm.stack_peek_f32(3)?;
+    let t_end = vm.stack_peek_f32(4)?;
+    let fun = vm.stack_peek_i32(5)?;
+    let mapping = vm.stack_peek_kw(6)?;
+
+    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+        (x, y)
+    } else {
+        return Err(Error::Path("coords 0 should be a Vec::V2D".to_string()));
+    };
+    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+        (x, y)
+    } else {
+        return Err(Error::Path("coords 1 should be a Vec::V2D".to_string()));
+    };
+    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+        (x, y)
+    } else {
+        return Err(Error::Path("coords 2 should be a Vec::V2D".to_string()));
+    };
+
+    if let Some(mapping) = easing_from_keyword(mapping) {
+        path::spline(
+            vm,
+            program,
+            fun as usize,
+            steps as i32,
+            t_start,
+            t_end,
+            [x0, y0, x1, y1, x2, y2],
+            mapping,
+        )?;
+    }
+
+    Ok(None)
+}
+
+fn path_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Coords, Var::Bool(false)),
+            (Keyword::Steps, Var::Float(10.0)),
+            (Keyword::TStart, Var::Float(0.0)),
+            (Keyword::TEnd, Var::Float(1.0)),
+            (Keyword::Fn, Var::Bool(false)),
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear))
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn path_bezier_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(7)?;
+
+    if !is_arg_given(default_mask, 1) {
+         return Err(Error::Native("path_bezier_execute requires coords argument".to_string()))
+    }
+    if !is_arg_given(default_mask, 5) {
+         return Err(Error::Native("path_bezier_execute requires fn argument".to_string()))
+    }
+
+    let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
+    let steps = vm.stack_peek_f32(2)?;
+    let t_start = vm.stack_peek_f32(3)?;
+    let t_end = vm.stack_peek_f32(4)?;
+    let fun = vm.stack_peek_i32(5)?;
+    let mapping = vm.stack_peek_kw(6)?;
+
+    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+        (x, y)
+    } else {
+        return Err(Error::Path("coords 0 should be a Vec::V2D".to_string()));
+    };
+    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+        (x, y)
+    } else {
+        return Err(Error::Path("coords 1 should be a Vec::V2D".to_string()));
+    };
+    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+        (x, y)
+    } else {
+        return Err(Error::Path("coords 2 should be a Vec::V2D".to_string()));
+    };
+    let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+        (x, y)
+    } else {
+        return Err(Error::Path("coords 2 should be a Vec::V2D".to_string()));
+    };
+
+    if let Some(mapping) = easing_from_keyword(mapping) {
+        path::bezier(
+            vm,
+            program,
+            fun as usize,
+            steps as i32,
+            t_start,
+            t_end,
+            [x0, y0, x1, y1, x2, y2, x3, y3],
+            mapping,
+        )?;
+    }
+
+    Ok(None)
 }
 
 #[cfg(test)]
