@@ -205,26 +205,26 @@ pub enum Builtin {
     //
     #[strum(serialize = "BUILTIN-path/linear")]
     PathLinear,
-    #[strum(serialize = "path/circle")]
+    #[strum(serialize = "BUILTIN-path/circle")]
     PathCircle,
-    #[strum(serialize = "path/spline")]
+    #[strum(serialize = "BUILTIN-path/spline")]
     PathSpline,
-    #[strum(serialize = "path/bezier")]
+    #[strum(serialize = "BUILTIN-path/bezier")]
     PathBezier,
 
     // repeat
     //
-    #[strum(serialize = "repeat/symmetry-vertical")]
+    #[strum(serialize = "BUILTIN-repeat/symmetry-vertical")]
     RepeatSymmetryVertical,
-    #[strum(serialize = "repeat/symmetry-horizontal")]
+    #[strum(serialize = "BUILTIN-repeat/symmetry-horizontal")]
     RepeatSymmetryHorizontal,
-    #[strum(serialize = "repeat/symmetry-4")]
+    #[strum(serialize = "BUILTIN-repeat/symmetry-4")]
     RepeatSymmetry4,
-    #[strum(serialize = "repeat/symmetry-8")]
+    #[strum(serialize = "BUILTIN-repeat/symmetry-8")]
     RepeatSymmetry8,
-    #[strum(serialize = "repeat/rotate")]
+    #[strum(serialize = "BUILTIN-repeat/rotate")]
     RepeatRotate,
-    #[strum(serialize = "repeat/rotate-mirrored")]
+    #[strum(serialize = "BUILTIN-repeat/rotate-mirrored")]
     RepeatRotateMirrored,
 
     // focal

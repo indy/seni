@@ -19,6 +19,7 @@ use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
 use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
 use crate::interp;
+use crate::repeat;
 use crate::keywords::Keyword;
 use crate::mathutil;
 use crate::path;
@@ -215,20 +216,20 @@ pub enum Native {
     #[strum(serialize = "path/bezier")]
     PathBezier,
 
-    // // repeat
-    // //
-    // #[strum(serialize = "repeat/symmetry-vertical")]
-    // RepeatSymmetryVertical,
-    // #[strum(serialize = "repeat/symmetry-horizontal")]
-    // RepeatSymmetryHorizontal,
-    // #[strum(serialize = "repeat/symmetry-4")]
-    // RepeatSymmetry4,
-    // #[strum(serialize = "repeat/symmetry-8")]
-    // RepeatSymmetry8,
-    // #[strum(serialize = "repeat/rotate")]
-    // RepeatRotate,
-    // #[strum(serialize = "repeat/rotate-mirrored")]
-    // RepeatRotateMirrored,
+    // repeat
+    //
+    #[strum(serialize = "repeat/symmetry-vertical")]
+    RepeatSymmetryVertical,
+    #[strum(serialize = "repeat/symmetry-horizontal")]
+    RepeatSymmetryHorizontal,
+    #[strum(serialize = "repeat/symmetry-4")]
+    RepeatSymmetry4,
+    #[strum(serialize = "repeat/symmetry-8")]
+    RepeatSymmetry8,
+    #[strum(serialize = "repeat/rotate")]
+    RepeatRotate,
+    #[strum(serialize = "repeat/rotate-mirrored")]
+    RepeatRotateMirrored,
 
     // // focal
     // //
@@ -366,6 +367,14 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::PathCircle => path_circle_parameter_info(),
         Native::PathSpline => path_spline_parameter_info(),
         Native::PathBezier => path_bezier_parameter_info(),
+        // repeat
+        Native::RepeatSymmetryVertical => repeat_symmetry_vertical_parameter_info(),
+        Native::RepeatSymmetryHorizontal => repeat_symmetry_horizontal_parameter_info(),
+        Native::RepeatSymmetry4 => repeat_symmetry_4_parameter_info(),
+        Native::RepeatSymmetry8 => repeat_symmetry_8_parameter_info(),
+        Native::RepeatRotate => repeat_rotate_parameter_info(),
+        Native::RepeatRotateMirrored => repeat_rotate_mirrored_parameter_info(),
+
         _ => Err(Error::Native("parameter_info".to_string())),
     }
 }
@@ -449,6 +458,13 @@ pub fn execute_native(vm: &mut Vm, program: &Program, native: &Native) -> Result
         Native::PathCircle => path_circle_execute(vm, program),
         Native::PathSpline => path_spline_execute(vm, program),
         Native::PathBezier => path_bezier_execute(vm, program),
+        // repeat
+        Native::RepeatSymmetryVertical => repeat_symmetry_vertical_execute(vm, program),
+        Native::RepeatSymmetryHorizontal => repeat_symmetry_horizontal_execute(vm, program),
+        Native::RepeatSymmetry4 => repeat_symmetry_4_execute(vm, program),
+        Native::RepeatSymmetry8 => repeat_symmetry_8_execute(vm, program),
+        Native::RepeatRotate => repeat_rotate_execute(vm, program),
+        Native::RepeatRotateMirrored => repeat_rotate_mirrored_execute(vm, program),
         _ => Err(Error::Native("execute_native".to_string())),
     }
 }
@@ -2488,6 +2504,161 @@ fn path_bezier_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
             mapping,
         )?;
     }
+
+    Ok(None)
+}
+
+fn repeat_symmetry_vertical_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Fn, Var::Bool(false)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn repeat_symmetry_vertical_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(2)?;
+
+    if !is_arg_given(default_mask, 1) {
+         return Err(Error::Native("repeat_symmetry_vertical requires fn argument".to_string()))
+    }
+
+    let fun = vm.stack_peek_i32(1)?;
+
+    repeat::symmetry_vertical(vm, program, fun as usize)?;
+
+    Ok(None)
+}
+
+fn repeat_symmetry_horizontal_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Fn, Var::Bool(false)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn repeat_symmetry_horizontal_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(2)?;
+
+    if !is_arg_given(default_mask, 1) {
+         return Err(Error::Native("repeat_symmetry_horizontal requires fn argument".to_string()))
+    }
+
+    let fun = vm.stack_peek_i32(1)?;
+
+    repeat::symmetry_horizontal(vm, program, fun as usize)?;
+
+    Ok(None)
+}
+
+fn repeat_symmetry_4_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Fn, Var::Bool(false)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn repeat_symmetry_4_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(2)?;
+
+    if !is_arg_given(default_mask, 1) {
+         return Err(Error::Native("repeat_symmetry_4 requires fn argument".to_string()))
+    }
+
+    let fun = vm.stack_peek_i32(1)?;
+
+    repeat::symmetry_4(vm, program, fun as usize)?;
+
+    Ok(None)
+}
+
+fn repeat_symmetry_8_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Fn, Var::Bool(false)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn repeat_symmetry_8_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(2)?;
+
+    if !is_arg_given(default_mask, 1) {
+         return Err(Error::Native("repeat_symmetry_8 requires fn argument".to_string()))
+    }
+
+    let fun = vm.stack_peek_i32(1)?;
+
+    repeat::symmetry_8(vm, program, fun as usize)?;
+
+    Ok(None)
+}
+
+fn repeat_rotate_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Fn, Var::Bool(false)),
+            (Keyword::Copies, Var::Float(3.0)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn repeat_rotate_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+         return Err(Error::Native("repeat_rotate requires fn argument".to_string()))
+    }
+
+    let fun = vm.stack_peek_i32(1)?;
+    let copies = vm.stack_peek_f32_as_usize(2)?;
+
+
+    repeat::rotate(vm, program, fun as usize, copies)?;
+
+    Ok(None)
+}
+
+fn repeat_rotate_mirrored_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Fn, Var::Bool(false)),
+            (Keyword::Copies, Var::Float(3.0)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn repeat_rotate_mirrored_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+         return Err(Error::Native("repeat_rotate_mirrored requires fn argument".to_string()))
+    }
+
+    let fun = vm.stack_peek_i32(1)?;
+    let copies = vm.stack_peek_f32_as_usize(2)?;
+
+    repeat::rotate_mirrored(vm, program, fun as usize, copies)?;
 
     Ok(None)
 }
