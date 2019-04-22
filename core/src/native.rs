@@ -20,11 +20,14 @@ use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::mathutil;
 use crate::packable::{Mule, Packable};
+use crate::prng;
 use crate::vm::{Var, Vm};
 
 use crate::uvmapper::BrushType;
 
+use std::cell::{RefCell, RefMut};
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
@@ -166,16 +169,16 @@ pub enum Native {
     #[strum(serialize = "math/sin")]
     MathSin,
 
-    // // prng
-    // //
-    // #[strum(serialize = "prng/build")]
-    // PrngBuild,
-    // #[strum(serialize = "prng/values")]
-    // PrngValues,
-    // #[strum(serialize = "prng/value")]
-    // PrngValue,
-    // #[strum(serialize = "prng/perlin")]
-    // PrngPerlin,
+    // prng
+    //
+    #[strum(serialize = "prng/build")]
+    PrngBuild,
+    #[strum(serialize = "prng/values")]
+    PrngValues,
+    #[strum(serialize = "prng/value")]
+    PrngValue,
+    #[strum(serialize = "prng/perlin")]
+    PrngPerlin,
 
     // // interp
     // //
@@ -340,7 +343,11 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::MathRadiansDegrees => math_radians_degrees_parameter_info(),
         Native::MathCos => math_cos_parameter_info(),
         Native::MathSin => math_sin_parameter_info(),
-
+        // prng
+        Native::PrngBuild => prng_build_parameter_info(),
+        Native::PrngValues => prng_values_parameter_info(),
+        Native::PrngValue => prng_value_parameter_info(),
+        Native::PrngPerlin => prng_perlin_parameter_info(),
         _ => Err(Error::Native("parameter_info".to_string())),
     }
 }
@@ -404,6 +411,11 @@ pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
         Native::MathRadiansDegrees => math_radians_degrees_execute(vm),
         Native::MathCos => math_cos_execute(vm),
         Native::MathSin => math_sin_execute(vm),
+        // prng
+        Native::PrngBuild => prng_build_execute(vm),
+        Native::PrngValues => prng_values_execute(vm),
+        Native::PrngValue => prng_value_execute(vm),
+        Native::PrngPerlin => prng_perlin_execute(vm),
 
         _ => Err(Error::Native("execute_native".to_string())),
     }
@@ -447,6 +459,30 @@ fn read_brush(kw: Keyword) -> BrushType {
         Keyword::BrushF => BrushType::F,
         Keyword::BrushG => BrushType::G,
         _ => BrushType::Flat,
+    }
+}
+
+fn stack_peek_proc_colour_state_struct(
+    stack: &Vec<Var>,
+    sp: usize,
+    offset: usize,
+) -> Result<&ProcColourStateStruct> {
+    if let Var::ProcColourState(pcss) = &stack[sp - offset] {
+        Ok(pcss)
+    } else {
+        return Err(Error::VM("expected Var::ProcColourState".to_string()));
+    }
+}
+
+fn ref_mut_prng_state_struct(
+    stack: &Vec<Var>,
+    sp: usize,
+    offset: usize,
+) -> Result<RefMut<prng::PrngStateStruct>> {
+    if let Var::PrngState(prng_state_struct) = &stack[sp - offset] {
+        Ok(prng_state_struct.borrow_mut())
+    } else {
+        return Err(Error::VM("expected Var::PrngState".to_string()));
     }
 }
 
@@ -1678,18 +1714,6 @@ fn col_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn stack_peek_proc_colour_state_struct(
-    stack: &Vec<Var>,
-    sp: usize,
-    offset: usize,
-) -> Result<&ProcColourStateStruct> {
-    if let Var::ProcColourState(pcss) = &stack[sp - offset] {
-        Ok(pcss)
-    } else {
-        return Err(Error::VM("expected Var::ProcColourState".to_string()));
-    }
-}
-
 fn col_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask = vm.stack_peek_i32(3)?;
 
@@ -1830,6 +1854,111 @@ fn math_sin_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let s = angle.sin();
 
     Ok(Some(Var::Float(s)))
+}
+
+fn prng_build_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Seed, Var::Float(1.0)),
+            (Keyword::Min, Var::Float(0.0)),
+            (Keyword::Max, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn prng_build_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let seed = vm.stack_peek_f32(1)?;
+    let min = vm.stack_peek_f32(2)?;
+    let max = vm.stack_peek_f32(3)?;
+
+    let prng_state_struct = prng::PrngStateStruct::new(seed as i32, min, max);
+
+    Ok(Some(Var::PrngState(Rc::new(RefCell::new(
+        prng_state_struct,
+    )))))
+}
+
+fn prng_values_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::Num, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn prng_values_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "prng/values requires a from parameter".to_string(),
+        ));
+    }
+
+    let mut ref_mut_prng_state = ref_mut_prng_state_struct(&vm.stack, vm.sp, 1)?;
+    let num = vm.stack_peek_f32(2)? as i32;
+
+    let mut vs: Vec<Var> = Vec::new();
+    for _ in 0..num {
+        let f = ref_mut_prng_state.prng_f32_defined_range();
+        vs.push(Var::Float(f))
+    }
+
+    Ok(Some(Var::Vector(vs)))
+}
+
+fn prng_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::From, Var::Bool(false))],
+        // stack offset
+        1,
+    ))
+}
+
+fn prng_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(2)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "prng/value requires a from parameter".to_string(),
+        ));
+    }
+
+    let mut ref_mut_prng_state = ref_mut_prng_state_struct(&vm.stack, vm.sp, 1)?;
+    let res = ref_mut_prng_state.prng_f32_defined_range();
+
+    Ok(Some(Var::Float(res)))
+}
+
+fn prng_perlin_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::X, Var::Float(1.0)),
+            (Keyword::Y, Var::Float(1.0)),
+            (Keyword::Z, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn prng_perlin_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let x = vm.stack_peek_f32(1)?;
+    let y = vm.stack_peek_f32(2)?;
+    let z = vm.stack_peek_f32(3)?;
+
+    let res = prng::perlin(x, y, z);
+
+    Ok(Some(Var::Float(res)))
 }
 
 #[cfg(test)]

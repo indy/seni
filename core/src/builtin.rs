@@ -171,13 +171,13 @@ pub enum Builtin {
 
     // prng
     //
-    #[strum(serialize = "prng/build")]
+    #[strum(serialize = "BUILTIN-prng/build")]
     PrngBuild,
-    #[strum(serialize = "prng/values")]
+    #[strum(serialize = "BUILTIN-prng/values")]
     PrngValues,
-    #[strum(serialize = "prng/value")]
+    #[strum(serialize = "BUILTIN-prng/value")]
     PrngValue,
-    #[strum(serialize = "prng/perlin")]
+    #[strum(serialize = "BUILTIN-prng/perlin")]
     PrngPerlin,
 
     // interp
