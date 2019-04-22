@@ -17,6 +17,7 @@ use crate::builtin::Builtin;
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
 use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
+use crate::interp;
 use crate::keywords::Keyword;
 use crate::mathutil;
 use crate::packable::{Mule, Packable};
@@ -180,26 +181,26 @@ pub enum Native {
     #[strum(serialize = "prng/perlin")]
     PrngPerlin,
 
-    // // interp
-    // //
-    // #[strum(serialize = "interp/build")]
-    // InterpBuild,
-    // #[strum(serialize = "interp/value")]
-    // InterpValue,
-    // #[strum(serialize = "interp/cos")]
-    // InterpCos,
-    // #[strum(serialize = "interp/sin")]
-    // InterpSin,
-    // #[strum(serialize = "interp/bezier")]
-    // InterpBezier,
-    // #[strum(serialize = "interp/bezier-tangent")]
-    // InterpBezierTangent,
-    // #[strum(serialize = "interp/ray")]
-    // InterpRay,
-    // #[strum(serialize = "interp/line")]
-    // InterpLine,
-    // #[strum(serialize = "interp/circle")]
-    // InterpCircle,
+    // interp
+    //
+    #[strum(serialize = "interp/build")]
+    InterpBuild,
+    #[strum(serialize = "interp/value")]
+    InterpValue,
+    #[strum(serialize = "interp/cos")]
+    InterpCos,
+    #[strum(serialize = "interp/sin")]
+    InterpSin,
+    #[strum(serialize = "interp/bezier")]
+    InterpBezier,
+    #[strum(serialize = "interp/bezier-tangent")]
+    InterpBezierTangent,
+    #[strum(serialize = "interp/ray")]
+    InterpRay,
+    #[strum(serialize = "interp/line")]
+    InterpLine,
+    #[strum(serialize = "interp/circle")]
+    InterpCircle,
 
     // // path
     // //
@@ -348,6 +349,16 @@ pub fn parameter_info(native: &Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::PrngValues => prng_values_parameter_info(),
         Native::PrngValue => prng_value_parameter_info(),
         Native::PrngPerlin => prng_perlin_parameter_info(),
+        // interp
+        Native::InterpBuild => interp_build_parameter_info(),
+        Native::InterpValue => interp_value_parameter_info(),
+        Native::InterpCos => interp_cos_parameter_info(),
+        Native::InterpSin => interp_sin_parameter_info(),
+        Native::InterpBezier => interp_bezier_parameter_info(),
+        Native::InterpBezierTangent => interp_bezier_tangent_parameter_info(),
+        Native::InterpRay => interp_ray_parameter_info(),
+        Native::InterpLine => interp_line_parameter_info(),
+        Native::InterpCircle => interp_circle_parameter_info(),
         _ => Err(Error::Native("parameter_info".to_string())),
     }
 }
@@ -416,7 +427,16 @@ pub fn execute_native(vm: &mut Vm, native: &Native) -> Result<Option<Var>> {
         Native::PrngValues => prng_values_execute(vm),
         Native::PrngValue => prng_value_execute(vm),
         Native::PrngPerlin => prng_perlin_execute(vm),
-
+        // interp
+        Native::InterpBuild => interp_build_execute(vm),
+        Native::InterpValue => interp_value_execute(vm),
+        Native::InterpCos => interp_cos_execute(vm),
+        Native::InterpSin => interp_sin_execute(vm),
+        Native::InterpBezier => interp_bezier_execute(vm),
+        Native::InterpBezierTangent => interp_bezier_tangent_execute(vm),
+        Native::InterpRay => interp_ray_execute(vm),
+        Native::InterpLine => interp_line_execute(vm),
+        Native::InterpCircle => interp_circle_execute(vm),
         _ => Err(Error::Native("execute_native".to_string())),
     }
 }
@@ -471,6 +491,18 @@ fn stack_peek_proc_colour_state_struct(
         Ok(pcss)
     } else {
         return Err(Error::VM("expected Var::ProcColourState".to_string()));
+    }
+}
+
+fn stack_peek_interp_state_struct(
+    stack: &Vec<Var>,
+    sp: usize,
+    offset: usize,
+) -> Result<&interp::InterpStateStruct> {
+    if let Var::InterpState(iss) = &stack[sp - offset] {
+        Ok(iss)
+    } else {
+        return Err(Error::VM("expected Var::InterpState".to_string()));
     }
 }
 
@@ -1959,6 +1991,257 @@ fn prng_perlin_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let res = prng::perlin(x, y, z);
 
     Ok(Some(Var::Float(res)))
+}
+
+fn interp_build_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::V2D(0.0, 1.0)),
+            (Keyword::To, Var::V2D(0.0, 100.0)),
+            (Keyword::Clamping, Var::Keyword(Keyword::False)),
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn interp_build_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let from = vm.stack_peek_v2d(1)?;
+    let to = vm.stack_peek_v2d(2)?;
+    let clamping = vm.stack_peek_kw(3)? == Keyword::True;
+    let mapping = vm.stack_peek_kw(4)?;
+
+    if let Some(mapping) = easing_from_keyword(mapping) {
+        let from_m = mathutil::mc_m(from.0, 0.0, from.1, 1.0);
+        let from_c = mathutil::mc_c(from.0, 0.0, from_m);
+        let to_m = mathutil::mc_m(0.0, to.0, 1.0, to.1);
+        let to_c = mathutil::mc_c(0.0, to.0, to_m);
+
+        Ok(Some(Var::InterpState(interp::InterpStateStruct {
+            from_m,
+            to_m,
+            from_c,
+            to_c,
+            to,
+            clamping,
+            mapping,
+        })))
+    } else {
+        Err(Error::Native("interp_build_execute".to_string()))
+    }
+}
+
+fn interp_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::T, Var::Float(0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn interp_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "interp/value requires a from parameter".to_string(),
+        ));
+    }
+
+    let interp_state = stack_peek_interp_state_struct(&vm.stack, vm.sp, 1)?;
+    let t = vm.stack_peek_f32(2)?;
+
+    let res = interp_state.value(t);
+
+    Ok(Some(Var::Float(res)))
+}
+
+fn interp_cos_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Amplitude, Var::Float(1.0)),
+            (Keyword::Frequency, Var::Float(1.0)),
+            (Keyword::T, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn interp_cos_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let amplitude = vm.stack_peek_f32(1)?;
+    let frequency = vm.stack_peek_f32(2)?;
+    let t = vm.stack_peek_f32(3)?;
+
+    let res = interp::cos(amplitude, frequency, t);
+
+    Ok(Some(Var::Float(res)))
+}
+
+fn interp_sin_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Amplitude, Var::Float(1.0)),
+            (Keyword::Frequency, Var::Float(1.0)),
+            (Keyword::T, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn interp_sin_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let amplitude = vm.stack_peek_f32(1)?;
+    let frequency = vm.stack_peek_f32(2)?;
+    let t = vm.stack_peek_f32(3)?;
+
+    let res = interp::sin(amplitude, frequency, t);
+
+    Ok(Some(Var::Float(res)))
+}
+
+fn interp_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Coords, Var::Bool(false)),
+            (Keyword::T, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn interp_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "interp/bezier requires coords parameter".to_string(),
+        ));
+    }
+
+    let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
+    let t = vm.stack_peek_f32(2)?;
+
+    let (x, y) = interp::bezier_vars(coords, t)?;
+
+    Ok(Some(Var::V2D(x, y)))
+}
+
+fn interp_bezier_tangent_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Coords, Var::Bool(false)),
+            (Keyword::T, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn interp_bezier_tangent_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask = vm.stack_peek_i32(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "interp/bezier requires coords parameter".to_string(),
+        ));
+    }
+
+    let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
+    let t = vm.stack_peek_f32(2)?;
+
+    let (x, y) = interp::bezier_tangent_vars(coords, t)?;
+
+    Ok(Some(Var::V2D(x, y)))
+}
+
+fn interp_ray_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Point, Var::V2D(0.0, 0.0)),
+            (Keyword::Direction, Var::V2D(1000.0, 1000.0)),
+            (Keyword::T, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn interp_ray_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let point = vm.stack_peek_v2d(1)?;
+    let direction = vm.stack_peek_v2d(2)?;
+    let t = vm.stack_peek_f32(3)?;
+
+    let (x, y) = interp::ray(point, direction, t);
+
+    Ok(Some(Var::V2D(x, y)))
+}
+
+fn interp_line_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::V2D(0.0, 0.0)),
+            (Keyword::To, Var::V2D(0.0, 0.0)),
+            (Keyword::Clamping, Var::Keyword(Keyword::False)),
+            (Keyword::Mapping, Var::Keyword(Keyword::Linear)),
+            (Keyword::T, Var::Float(1.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn interp_line_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let from = vm.stack_peek_v2d(1)?;
+    let to = vm.stack_peek_v2d(2)?;
+    let clamping = vm.stack_peek_kw(3)? == Keyword::True;
+    let mapping = vm.stack_peek_kw(4)?;
+    let t = vm.stack_peek_f32(5)?;
+
+    if let Some(mapping) = easing_from_keyword(mapping) {
+        let x = interp::scalar(from.0, to.0, mapping, clamping, t);
+        let y = interp::scalar(from.1, to.1, mapping, clamping, t);
+
+        Ok(Some(Var::V2D(x, y)))
+    } else {
+        Err(Error::Native("interp_line_execute".to_string()))
+    }
+}
+
+fn interp_circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Position, Var::V2D(0.0, 0.0)),
+            (Keyword::Radius, Var::Float(1.0)),
+            (Keyword::T, Var::Float(0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn interp_circle_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let position = vm.stack_peek_v2d(1)?;
+    let radius = vm.stack_peek_f32(2)?;
+    let t = vm.stack_peek_f32(3)?;
+
+    let (x, y) = interp::circle(position, radius, t);
+
+    Ok(Some(Var::V2D(x, y)))
 }
 
 #[cfg(test)]

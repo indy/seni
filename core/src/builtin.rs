@@ -182,23 +182,23 @@ pub enum Builtin {
 
     // interp
     //
-    #[strum(serialize = "interp/build")]
+    #[strum(serialize = "BUILTIN-interp/build")]
     InterpBuild,
-    #[strum(serialize = "interp/value")]
+    #[strum(serialize = "BUILTIN-interp/value")]
     InterpValue,
-    #[strum(serialize = "interp/cos")]
+    #[strum(serialize = "BUILTIN-interp/cos")]
     InterpCos,
-    #[strum(serialize = "interp/sin")]
+    #[strum(serialize = "BUILTIN-interp/sin")]
     InterpSin,
-    #[strum(serialize = "interp/bezier")]
+    #[strum(serialize = "BUILTIN-interp/bezier")]
     InterpBezier,
-    #[strum(serialize = "interp/bezier-tangent")]
+    #[strum(serialize = "BUILTIN-interp/bezier-tangent")]
     InterpBezierTangent,
-    #[strum(serialize = "interp/ray")]
+    #[strum(serialize = "BUILTIN-interp/ray")]
     InterpRay,
-    #[strum(serialize = "interp/line")]
+    #[strum(serialize = "BUILTIN-interp/line")]
     InterpLine,
-    #[strum(serialize = "interp/circle")]
+    #[strum(serialize = "BUILTIN-interp/circle")]
     InterpCircle,
 
     // path

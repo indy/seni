@@ -59,6 +59,9 @@ pub enum Error {
     // native
     Native(String),
 
+    // interp
+    Interp(String),
+
     // geometry
     Geometry(String),
 
