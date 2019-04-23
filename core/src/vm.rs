@@ -837,58 +837,6 @@ impl Vm {
         Ok(())
     }
 
-    pub fn stack_peek_kw(&self, offset: usize) -> Result<Keyword> {
-        if let Var::Keyword(kw) = &self.stack[self.sp - offset] {
-            Ok(*kw)
-        } else {
-            Err(Error::VM("stack_peek expected kw".to_string()))
-        }
-    }
-
-    pub fn stack_peek_i32(&self, offset: usize) -> Result<i32> {
-        if let Var::Int(i) = &self.stack[self.sp - offset] {
-            Ok(*i)
-        } else {
-            Err(Error::VM("stack_peek expected i32".to_string()))
-        }
-    }
-
-    pub fn stack_peek_f32(&self, offset: usize) -> Result<f32> {
-        if let Var::Float(f) = &self.stack[self.sp - offset] {
-            Ok(*f)
-        } else {
-            self.show_stack_around_sp();
-            Err(Error::VM(format!(
-                "stack_peek expected f32 at offset {}",
-                offset
-            )))
-        }
-    }
-
-    pub fn stack_peek_f32_as_usize(&self, offset: usize) -> Result<usize> {
-        if let Var::Float(f) = &self.stack[self.sp - offset] {
-            Ok(*f as usize)
-        } else {
-            Err(Error::VM("stack_peek expected f32".to_string()))
-        }
-    }
-
-    pub fn stack_peek_v2d(&self, offset: usize) -> Result<(f32, f32)> {
-        if let Var::V2D(x, y) = &self.stack[self.sp - offset] {
-            Ok((*x, *y))
-        } else {
-            Err(Error::VM("stack_peek expected v2d".to_string()))
-        }
-    }
-
-    pub fn stack_peek_col(&self, offset: usize) -> Result<Colour> {
-        if let Var::Colour(c) = &self.stack[self.sp - offset] {
-            Ok(*c)
-        } else {
-            Err(Error::VM("stack_peek expected col".to_string()))
-        }
-    }
-
     pub fn show_stack_around_sp(&self) {
         // dbg!(self.sp);
 
@@ -1644,6 +1592,70 @@ impl Vm {
     pub fn top_stack_value(&self) -> Result<Var> {
         let var = &self.stack[self.sp - 1];
         Ok(var.clone())
+    }
+}
+
+pub trait StackPeek<T> {
+    fn stack_peek(&self, offset: usize) -> Result<T>;
+}
+
+impl StackPeek<Keyword> for Vm {
+    fn stack_peek(&self, offset: usize) -> Result<Keyword> {
+        if let Var::Keyword(kw) = &self.stack[self.sp - offset] {
+            Ok(*kw)
+        } else {
+            Err(Error::VM("stack_peek expected Var::Keyword".to_string()))
+        }
+    }
+}
+
+impl StackPeek<i32> for Vm {
+    fn stack_peek(&self, offset: usize) -> Result<i32> {
+        if let Var::Int(i) = &self.stack[self.sp - offset] {
+            Ok(*i)
+        } else {
+            Err(Error::VM("stack_peek expected Var::Int".to_string()))
+        }
+    }
+}
+
+impl StackPeek<f32> for Vm {
+    fn stack_peek(&self, offset: usize) -> Result<f32> {
+        if let Var::Float(f) = &self.stack[self.sp - offset] {
+            Ok(*f)
+        } else {
+            Err(Error::VM("stack_peek expected Var::Float".to_string()))
+        }
+    }
+}
+
+impl StackPeek<usize> for Vm {
+    fn stack_peek(&self, offset: usize) -> Result<usize> {
+        if let Var::Float(f) = &self.stack[self.sp - offset] {
+            Ok(*f as usize)
+        } else {
+            Err(Error::VM("stack_peek expected Var::Float".to_string()))
+        }
+    }
+}
+
+impl StackPeek<(f32, f32)> for Vm {
+    fn stack_peek(&self, offset: usize) -> Result<(f32, f32)> {
+        if let Var::V2D(x, y) = &self.stack[self.sp - offset] {
+            Ok((*x, *y))
+        } else {
+            Err(Error::VM("stack_peek expected Var::V2D".to_string()))
+        }
+    }
+}
+
+impl StackPeek<Colour> for Vm {
+    fn stack_peek(&self, offset: usize) -> Result<Colour> {
+        if let Var::Colour(col) = &self.stack[self.sp - offset] {
+            Ok(*col)
+        } else {
+            Err(Error::VM("stack_peek expected Var::Colour".to_string()))
+        }
     }
 }
 

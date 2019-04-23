@@ -25,7 +25,7 @@ use crate::packable::{Mule, Packable};
 use crate::path;
 use crate::prng;
 use crate::repeat;
-use crate::vm::{Var, Vm};
+use crate::vm::{StackPeek, Var, Vm};
 
 use crate::uvmapper::BrushType;
 
@@ -611,7 +611,7 @@ fn nth_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn nth_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     // require a 'from' argument
     if !is_arg_given(default_mask, 1) {
@@ -622,7 +622,7 @@ fn nth_execute(vm: &mut Vm) -> Result<Option<Var>> {
         return Err(Error::Native("nth requires n parameter".to_string()));
     }
 
-    let n = vm.stack_peek_f32_as_usize(2)?;
+    let n: usize = vm.stack_peek(2)?;
 
     // from is either a Vector or a V2D
     let from_offset = 1;
@@ -667,7 +667,7 @@ fn vector_length_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn vector_length_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(2)?;
+    let default_mask: i32 = vm.stack_peek(2)?;
     let vector_offset = 1;
 
     // require a 'vector' argument
@@ -705,20 +705,20 @@ fn probe_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn probe_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(4)?;
+    let default_mask: i32 = vm.stack_peek(4)?;
 
     if is_arg_given(default_mask, 1) {
-        let scalar = vm.stack_peek_f32(1)?;
+        let scalar: f32 = vm.stack_peek(1)?;
         vm.debug_str_append(&format!("{}", scalar));
     }
 
     if is_arg_given(default_mask, 2) {
-        let (x, y) = vm.stack_peek_v2d(2)?;
+        let (x, y): (f32, f32) = vm.stack_peek(2)?;
         vm.debug_str_append(&format!("({},{})", x, y));
     }
 
     if is_arg_given(default_mask, 3) {
-        let (x, y) = vm.stack_peek_v2d(3)?;
+        let (x, y): (f32, f32) = vm.stack_peek(3)?;
         if let Some(matrix) = vm.matrix_stack.peek() {
             let (nx, ny) = matrix.transform_vec2(x, y);
             vm.debug_str_append(&format!("({},{})", nx, ny));
@@ -747,16 +747,16 @@ fn line_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn line_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let line_width = vm.stack_peek_f32(1)?;
-    let line_from = vm.stack_peek_v2d(2)?;
-    let line_to = vm.stack_peek_v2d(3)?;
-    let from_col = vm.stack_peek_col(4)?;
-    let to_col = vm.stack_peek_col(5)?;
-    let col = vm.stack_peek_col(6)?;
-    let brush = vm.stack_peek_kw(7)?;
-    let brush_subtype = vm.stack_peek_f32_as_usize(8)?;
+    let line_width: f32 = vm.stack_peek(1)?;
+    let line_from: (f32, f32) = vm.stack_peek(2)?;
+    let line_to: (f32, f32) = vm.stack_peek(3)?;
+    let from_col: Colour = vm.stack_peek(4)?;
+    let to_col: Colour = vm.stack_peek(5)?;
+    let col: Colour = vm.stack_peek(6)?;
+    let brush: Keyword = vm.stack_peek(7)?;
+    let brush_subtype: usize = vm.stack_peek(8)?;
 
-    let default_mask = vm.stack_peek_i32(9)?;
+    let default_mask: i32 = vm.stack_peek(9)?;
 
     let brush_type = read_brush(brush);
 
@@ -801,10 +801,10 @@ fn rect_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn rect_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let width = vm.stack_peek_f32(1)?;
-    let height = vm.stack_peek_f32(2)?;
-    let position = vm.stack_peek_v2d(3)?;
-    let col = vm.stack_peek_col(4)?;
+    let width: f32 = vm.stack_peek(1)?;
+    let height: f32 = vm.stack_peek(2)?;
+    let position: (f32, f32) = vm.stack_peek(3)?;
+    let col: Colour = vm.stack_peek(4)?;
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
         vm.render_rect(position, width, height, &rgb)?;
@@ -832,14 +832,14 @@ fn circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn circle_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let width = vm.stack_peek_f32(1)?;
-    let height = vm.stack_peek_f32(2)?;
-    let position = vm.stack_peek_v2d(3)?;
-    let col = vm.stack_peek_col(4)?;
-    let tessellation = vm.stack_peek_f32_as_usize(5)?;
-    let radius = vm.stack_peek_f32(6)?;
+    let width: f32 = vm.stack_peek(1)?;
+    let height: f32 = vm.stack_peek(2)?;
+    let position: (f32, f32) = vm.stack_peek(3)?;
+    let col: Colour = vm.stack_peek(4)?;
+    let tessellation: usize = vm.stack_peek(5)?;
+    let radius: f32 = vm.stack_peek(6)?;
 
-    let default_mask = vm.stack_peek_i32(7)?;
+    let default_mask: i32 = vm.stack_peek(7)?;
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
         if is_arg_given(default_mask, 6) {
@@ -877,18 +877,18 @@ fn circle_slice_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn circle_slice_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let width = vm.stack_peek_f32(1)?;
-    let height = vm.stack_peek_f32(2)?;
-    let position = vm.stack_peek_v2d(3)?;
-    let col = vm.stack_peek_col(4)?;
-    let tessellation = vm.stack_peek_f32_as_usize(5)?;
-    let radius = vm.stack_peek_f32(6)?;
-    let angle_start = vm.stack_peek_f32(7)?;
-    let angle_end = vm.stack_peek_f32(8)?;
-    let inner_width = vm.stack_peek_f32(9)?;
-    let inner_height = vm.stack_peek_f32(10)?;
+    let width: f32 = vm.stack_peek(1)?;
+    let height: f32 = vm.stack_peek(2)?;
+    let position: (f32, f32) = vm.stack_peek(3)?;
+    let col: Colour = vm.stack_peek(4)?;
+    let tessellation: usize = vm.stack_peek(5)?;
+    let radius: f32 = vm.stack_peek(6)?;
+    let angle_start: f32 = vm.stack_peek(7)?;
+    let angle_end: f32 = vm.stack_peek(8)?;
+    let inner_width: f32 = vm.stack_peek(9)?;
+    let inner_height: f32 = vm.stack_peek(10)?;
 
-    let default_mask = vm.stack_peek_i32(11)?;
+    let default_mask: i32 = vm.stack_peek(11)?;
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
         if is_arg_given(default_mask, 6) {
@@ -938,7 +938,7 @@ fn poly_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn poly_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) || !is_arg_given(default_mask, 2) {
         return Err(Error::Native(
@@ -985,19 +985,19 @@ fn quadratic_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn quadratic_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let line_width = vm.stack_peek_f32(1)?;
-    let line_width_start = vm.stack_peek_f32(2)?;
-    let line_width_end = vm.stack_peek_f32(3)?;
-    let line_width_mapping = vm.stack_peek_kw(4)?;
+    let line_width: f32 = vm.stack_peek(1)?;
+    let line_width_start: f32 = vm.stack_peek(2)?;
+    let line_width_end: f32 = vm.stack_peek(3)?;
+    let line_width_mapping: Keyword = vm.stack_peek(4)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 5)?;
-    let t_start = vm.stack_peek_f32(6)?;
-    let t_end = vm.stack_peek_f32(7)?;
-    let tessellation = vm.stack_peek_f32_as_usize(8)?;
-    let col = vm.stack_peek_col(9)?;
-    let brush = vm.stack_peek_kw(10)?;
-    let brush_subtype = vm.stack_peek_f32_as_usize(11)?;
+    let t_start: f32 = vm.stack_peek(6)?;
+    let t_end: f32 = vm.stack_peek(7)?;
+    let tessellation: usize = vm.stack_peek(8)?;
+    let col: Colour = vm.stack_peek(9)?;
+    let brush: Keyword = vm.stack_peek(10)?;
+    let brush_subtype: usize = vm.stack_peek(11)?;
 
-    let default_mask = vm.stack_peek_i32(12)?;
+    let default_mask: i32 = vm.stack_peek(12)?;
 
     if !is_arg_given(default_mask, 5) {
         return Err(Error::Native("quadratic requires coords".to_string()));
@@ -1091,19 +1091,19 @@ fn bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let line_width = vm.stack_peek_f32(1)?;
-    let line_width_start = vm.stack_peek_f32(2)?;
-    let line_width_end = vm.stack_peek_f32(3)?;
-    let line_width_mapping = vm.stack_peek_kw(4)?;
+    let line_width: f32 = vm.stack_peek(1)?;
+    let line_width_start: f32 = vm.stack_peek(2)?;
+    let line_width_end: f32 = vm.stack_peek(3)?;
+    let line_width_mapping: Keyword = vm.stack_peek(4)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 5)?;
-    let t_start = vm.stack_peek_f32(6)?;
-    let t_end = vm.stack_peek_f32(7)?;
-    let tessellation = vm.stack_peek_f32_as_usize(8)?;
-    let col = vm.stack_peek_col(9)?;
-    let brush = vm.stack_peek_kw(10)?;
-    let brush_subtype = vm.stack_peek_f32_as_usize(11)?;
+    let t_start: f32 = vm.stack_peek(6)?;
+    let t_end: f32 = vm.stack_peek(7)?;
+    let tessellation: usize = vm.stack_peek(8)?;
+    let col: Colour = vm.stack_peek(9)?;
+    let brush: Keyword = vm.stack_peek(10)?;
+    let brush_subtype: usize = vm.stack_peek(11)?;
 
-    let default_mask = vm.stack_peek_i32(12)?;
+    let default_mask: i32 = vm.stack_peek(12)?;
 
     if !is_arg_given(default_mask, 5) {
         return Err(Error::Native("bezier requires coords".to_string()));
@@ -1199,16 +1199,16 @@ fn bezier_bulging_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn bezier_bulging_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let line_width = vm.stack_peek_f32(1)?;
+    let line_width: f32 = vm.stack_peek(1)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 2)?;
-    let t_start = vm.stack_peek_f32(3)?;
-    let t_end = vm.stack_peek_f32(4)?;
-    let tessellation = vm.stack_peek_f32_as_usize(5)?;
-    let col = vm.stack_peek_col(6)?;
-    let brush = vm.stack_peek_kw(7)?;
-    let brush_subtype = vm.stack_peek_f32_as_usize(8)?;
+    let t_start: f32 = vm.stack_peek(3)?;
+    let t_end: f32 = vm.stack_peek(4)?;
+    let tessellation: usize = vm.stack_peek(5)?;
+    let col: Colour = vm.stack_peek(6)?;
+    let brush: Keyword = vm.stack_peek(7)?;
+    let brush_subtype: usize = vm.stack_peek(8)?;
 
-    let default_mask = vm.stack_peek_i32(9)?;
+    let default_mask: i32 = vm.stack_peek(9)?;
 
     if !is_arg_given(default_mask, 2) {
         return Err(Error::Native("bezier_bulging requires coords".to_string()));
@@ -1287,20 +1287,20 @@ fn stroked_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn stroked_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let tessellation = vm.stack_peek_f32_as_usize(1)?;
+    let tessellation: usize = vm.stack_peek(1)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 2)?;
-    let stroke_tessellation = vm.stack_peek_f32_as_usize(3)?;
-    let stroke_noise = vm.stack_peek_f32(4)?;
-    let stroke_line_width_start = vm.stack_peek_f32(5)?;
-    let stroke_line_width_end = vm.stack_peek_f32(6)?;
-    let col = vm.stack_peek_col(7)?;
-    let col_volatility = vm.stack_peek_f32(8)?;
-    let seed = vm.stack_peek_f32(9)?;
-    let line_width_mapping = vm.stack_peek_kw(10)?;
-    let brush = vm.stack_peek_kw(11)?;
-    let brush_subtype = vm.stack_peek_f32_as_usize(12)?;
+    let stroke_tessellation: usize = vm.stack_peek(3)?;
+    let stroke_noise: f32 = vm.stack_peek(4)?;
+    let stroke_line_width_start: f32 = vm.stack_peek(5)?;
+    let stroke_line_width_end: f32 = vm.stack_peek(6)?;
+    let col: Colour = vm.stack_peek(7)?;
+    let col_volatility: f32 = vm.stack_peek(8)?;
+    let seed: f32 = vm.stack_peek(9)?;
+    let line_width_mapping: Keyword = vm.stack_peek(10)?;
+    let brush: Keyword = vm.stack_peek(11)?;
+    let brush_subtype: usize = vm.stack_peek(12)?;
 
-    let default_mask = vm.stack_peek_i32(13)?;
+    let default_mask: i32 = vm.stack_peek(13)?;
 
     if !is_arg_given(default_mask, 2) {
         return Err(Error::Native("stroked bezier requires coords".to_string()));
@@ -1389,20 +1389,20 @@ fn stroked_bezier_rect_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn stroked_bezier_rect_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let position = vm.stack_peek_v2d(1)?;
-    let width = vm.stack_peek_f32(2)?;
-    let height = vm.stack_peek_f32(3)?;
-    let volatility = vm.stack_peek_f32(4)?;
-    let overlap = vm.stack_peek_f32(5)?;
-    let iterations = vm.stack_peek_f32(6)?;
-    let seed = vm.stack_peek_f32(7)?;
-    let tessellation = vm.stack_peek_f32_as_usize(8)?;
-    let stroke_tessellation = vm.stack_peek_f32_as_usize(9)?;
-    let stroke_noise = vm.stack_peek_f32(10)?;
-    let col = vm.stack_peek_col(11)?;
-    let col_volatility = vm.stack_peek_f32(12)?;
-    let brush = vm.stack_peek_kw(13)?;
-    let brush_subtype = vm.stack_peek_f32_as_usize(14)?;
+    let position: (f32, f32) = vm.stack_peek(1)?;
+    let width: f32 = vm.stack_peek(2)?;
+    let height: f32 = vm.stack_peek(3)?;
+    let volatility: f32 = vm.stack_peek(4)?;
+    let overlap: f32 = vm.stack_peek(5)?;
+    let iterations: f32 = vm.stack_peek(6)?;
+    let seed: f32 = vm.stack_peek(7)?;
+    let tessellation: usize = vm.stack_peek(8)?;
+    let stroke_tessellation: usize = vm.stack_peek(9)?;
+    let stroke_noise: f32 = vm.stack_peek(10)?;
+    let col: Colour = vm.stack_peek(11)?;
+    let col_volatility: f32 = vm.stack_peek(12)?;
+    let brush: Keyword = vm.stack_peek(13)?;
+    let brush_subtype: usize = vm.stack_peek(14)?;
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
         let geo = &mut vm.geometry;
@@ -1451,7 +1451,7 @@ fn translate_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn translate_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let (x, y) = vm.stack_peek_v2d(1)?;
+    let (x, y): (f32, f32) = vm.stack_peek(1)?;
 
     vm.matrix_stack.translate(x, y);
 
@@ -1468,7 +1468,7 @@ fn rotate_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn rotate_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let angle = vm.stack_peek_f32(1)?;
+    let angle: f32 = vm.stack_peek(1)?;
 
     vm.matrix_stack.rotate(mathutil::deg_to_rad(angle));
 
@@ -1488,10 +1488,10 @@ fn scale_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn scale_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let (x, y) = vm.stack_peek_v2d(1)?;
-    let scalar = vm.stack_peek_f32(2)?;
+    let (x, y): (f32, f32) = vm.stack_peek(1)?;
+    let scalar: f32 = vm.stack_peek(2)?;
 
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if is_arg_given(default_mask, 2) {
         // scalar was specified in the script
@@ -1516,10 +1516,10 @@ fn col_convert_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_convert_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let format = vm.stack_peek_kw(1)?;
-    let col = vm.stack_peek_col(2)?;
+    let format: Keyword = vm.stack_peek(1)?;
+    let col: Colour = vm.stack_peek(2)?;
 
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         Err(Error::Native(
@@ -1548,10 +1548,10 @@ fn col_rgb_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_rgb_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let r = vm.stack_peek_f32(1)?;
-    let g = vm.stack_peek_f32(2)?;
-    let b = vm.stack_peek_f32(3)?;
-    let alpha = vm.stack_peek_f32(4)?;
+    let r: f32 = vm.stack_peek(1)?;
+    let g: f32 = vm.stack_peek(2)?;
+    let b: f32 = vm.stack_peek(3)?;
+    let alpha: f32 = vm.stack_peek(4)?;
 
     Ok(Some(Var::Colour(Colour::new(
         ColourFormat::Rgb,
@@ -1577,10 +1577,10 @@ fn col_hsl_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_hsl_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let h = vm.stack_peek_f32(1)?;
-    let s = vm.stack_peek_f32(2)?;
-    let l = vm.stack_peek_f32(3)?;
-    let alpha = vm.stack_peek_f32(4)?;
+    let h: f32 = vm.stack_peek(1)?;
+    let s: f32 = vm.stack_peek(2)?;
+    let l: f32 = vm.stack_peek(3)?;
+    let alpha: f32 = vm.stack_peek(4)?;
 
     Ok(Some(Var::Colour(Colour::new(
         ColourFormat::Hsl,
@@ -1606,10 +1606,10 @@ fn col_hsluv_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_hsluv_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let h = vm.stack_peek_f32(1)?;
-    let s = vm.stack_peek_f32(2)?;
-    let l = vm.stack_peek_f32(3)?;
-    let alpha = vm.stack_peek_f32(4)?;
+    let h: f32 = vm.stack_peek(1)?;
+    let s: f32 = vm.stack_peek(2)?;
+    let l: f32 = vm.stack_peek(3)?;
+    let alpha: f32 = vm.stack_peek(4)?;
 
     Ok(Some(Var::Colour(Colour::new(
         ColourFormat::Hsluv,
@@ -1635,10 +1635,10 @@ fn col_hsv_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_hsv_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let h = vm.stack_peek_f32(1)?;
-    let s = vm.stack_peek_f32(2)?;
-    let v = vm.stack_peek_f32(3)?;
-    let alpha = vm.stack_peek_f32(4)?;
+    let h: f32 = vm.stack_peek(1)?;
+    let s: f32 = vm.stack_peek(2)?;
+    let v: f32 = vm.stack_peek(3)?;
+    let alpha: f32 = vm.stack_peek(4)?;
 
     Ok(Some(Var::Colour(Colour::new(
         ColourFormat::Hsv,
@@ -1664,10 +1664,10 @@ fn col_lab_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_lab_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let l = vm.stack_peek_f32(1)?;
-    let a = vm.stack_peek_f32(2)?;
-    let b = vm.stack_peek_f32(3)?;
-    let alpha = vm.stack_peek_f32(4)?;
+    let l: f32 = vm.stack_peek(1)?;
+    let a: f32 = vm.stack_peek(2)?;
+    let b: f32 = vm.stack_peek(3)?;
+    let alpha: f32 = vm.stack_peek(4)?;
 
     Ok(Some(Var::Colour(Colour::new(
         ColourFormat::Lab,
@@ -1688,7 +1688,7 @@ fn col_complementary_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_complementary_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let col = vm.stack_peek_col(1)?;
+    let col: Colour = vm.stack_peek(1)?;
 
     Ok(Some(Var::Colour(col.complementary()?)))
 }
@@ -1703,7 +1703,7 @@ fn col_split_complementary_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)
 }
 
 fn col_split_complementary_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let col = vm.stack_peek_col(1)?;
+    let col: Colour = vm.stack_peek(1)?;
     let (col1, col2) = col.split_complementary()?;
 
     Ok(Some(Var::Vector(vec![
@@ -1722,7 +1722,7 @@ fn col_analagous_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_analagous_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let col = vm.stack_peek_col(1)?;
+    let col: Colour = vm.stack_peek(1)?;
     let (col1, col2) = col.analagous()?;
 
     Ok(Some(Var::Vector(vec![
@@ -1741,7 +1741,7 @@ fn col_triad_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_triad_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let col = vm.stack_peek_col(1)?;
+    let col: Colour = vm.stack_peek(1)?;
     let (col1, col2) = col.triad()?;
 
     Ok(Some(Var::Vector(vec![
@@ -1771,22 +1771,22 @@ fn common_colour_only_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_darken_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let col = vm.stack_peek_col(1)?;
-    let value = vm.stack_peek_f32(2)?;
+    let col: Colour = vm.stack_peek(1)?;
+    let value: f32 = vm.stack_peek(2)?;
 
     Ok(Some(Var::Colour(col.darken(value)?)))
 }
 
 fn col_lighten_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let col = vm.stack_peek_col(1)?;
-    let value = vm.stack_peek_f32(2)?;
+    let col: Colour = vm.stack_peek(1)?;
+    let value: f32 = vm.stack_peek(2)?;
 
     Ok(Some(Var::Colour(col.lighten(value)?)))
 }
 
 fn col_set_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
-    let col = vm.stack_peek_col(1)?;
-    let value = vm.stack_peek_f32(2)?;
+    let col: Colour = vm.stack_peek(1)?;
+    let value: f32 = vm.stack_peek(2)?;
 
     let res = match idx {
         0 => Colour::new(col.format, value, col.e1, col.e2, col.e3),
@@ -1804,7 +1804,7 @@ fn col_set_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
 }
 
 fn col_get_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
-    let col = vm.stack_peek_col(1)?;
+    let col: Colour = vm.stack_peek(1)?;
 
     let res = match idx {
         0 => col.e0,
@@ -1850,13 +1850,13 @@ fn to_f32_3(vecs: &[Var]) -> Result<[f32; 3]> {
 }
 
 fn col_build_procedural_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(7)?;
+    let default_mask: i32 = vm.stack_peek(7)?;
 
-    let alpha = vm.stack_peek_f32(2)?;
+    let alpha: f32 = vm.stack_peek(2)?;
 
     let (a, b, c, d) = if is_arg_given(default_mask, 1) {
         // preset given
-        let preset_kw = vm.stack_peek_kw(1)?;
+        let preset_kw: Keyword = vm.stack_peek(1)?;
         if let Some(preset) = ColourPreset::from_keyword(preset_kw) {
             preset.get_preset()
         } else {
@@ -1899,7 +1899,7 @@ fn col_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn col_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -1908,7 +1908,7 @@ fn col_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     let from = stack_peek_proc_colour_state_struct(&vm.stack, vm.sp, 1)?;
-    let t = vm.stack_peek_f32(2)?;
+    let t: f32 = vm.stack_peek(2)?;
 
     let res = from.colour(t);
 
@@ -1928,8 +1928,8 @@ fn math_distance_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn math_distance_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let (x1, y1) = vm.stack_peek_v2d(1)?;
-    let (x2, y2) = vm.stack_peek_v2d(2)?;
+    let (x1, y1): (f32, f32) = vm.stack_peek(1)?;
+    let (x2, y2): (f32, f32) = vm.stack_peek(2)?;
 
     let distance = mathutil::distance_v2(x1, y1, x2, y2);
 
@@ -1949,8 +1949,8 @@ fn math_normal_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn math_normal_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let (x1, y1) = vm.stack_peek_v2d(1)?;
-    let (x2, y2) = vm.stack_peek_v2d(2)?;
+    let (x1, y1): (f32, f32) = vm.stack_peek(1)?;
+    let (x2, y2): (f32, f32) = vm.stack_peek(2)?;
 
     let distance = mathutil::normal(x1, y1, x2, y2);
 
@@ -1980,9 +1980,9 @@ fn math_clamp_execute(vm: &mut Vm) -> Result<Option<Var>> {
     // then optimize for single argument functions as these will be much faster to
     // parse
     //
-    let value = vm.stack_peek_f32(1)?;
-    let min = vm.stack_peek_f32(2)?;
-    let max = vm.stack_peek_f32(3)?;
+    let value: f32 = vm.stack_peek(1)?;
+    let min: f32 = vm.stack_peek(2)?;
+    let max: f32 = vm.stack_peek(3)?;
 
     let clamped = mathutil::clamp(value, min, max);
 
@@ -1999,7 +1999,7 @@ fn math_radians_degrees_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn math_radians_degrees_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let rad_angle = vm.stack_peek_f32(1)?;
+    let rad_angle: f32 = vm.stack_peek(1)?;
 
     let deg_angle = mathutil::rad_to_deg(rad_angle);
 
@@ -2016,7 +2016,7 @@ fn math_cos_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn math_cos_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let angle = vm.stack_peek_f32(1)?;
+    let angle: f32 = vm.stack_peek(1)?;
 
     let c = angle.cos();
 
@@ -2033,7 +2033,7 @@ fn math_sin_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn math_sin_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let angle = vm.stack_peek_f32(1)?;
+    let angle: f32 = vm.stack_peek(1)?;
 
     let s = angle.sin();
 
@@ -2054,9 +2054,9 @@ fn prng_build_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn prng_build_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let seed = vm.stack_peek_f32(1)?;
-    let min = vm.stack_peek_f32(2)?;
-    let max = vm.stack_peek_f32(3)?;
+    let seed: f32 = vm.stack_peek(1)?;
+    let min: f32 = vm.stack_peek(2)?;
+    let max: f32 = vm.stack_peek(3)?;
 
     let prng_state_struct = prng::PrngStateStruct::new(seed as i32, min, max);
 
@@ -2078,7 +2078,7 @@ fn prng_values_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn prng_values_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2087,7 +2087,8 @@ fn prng_values_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     let mut ref_mut_prng_state = ref_mut_prng_state_struct(&vm.stack, vm.sp, 1)?;
-    let num = vm.stack_peek_f32(2)? as i32;
+    let num: f32 = vm.stack_peek(2)?;
+    let num = num as i32;
 
     let mut vs: Vec<Var> = Vec::new();
     for _ in 0..num {
@@ -2108,7 +2109,7 @@ fn prng_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn prng_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(2)?;
+    let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2136,9 +2137,9 @@ fn prng_perlin_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn prng_perlin_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let x = vm.stack_peek_f32(1)?;
-    let y = vm.stack_peek_f32(2)?;
-    let z = vm.stack_peek_f32(3)?;
+    let x: f32 = vm.stack_peek(1)?;
+    let y: f32 = vm.stack_peek(2)?;
+    let z: f32 = vm.stack_peek(3)?;
 
     let res = prng::perlin(x, y, z);
 
@@ -2160,10 +2161,12 @@ fn interp_build_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn interp_build_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let from = vm.stack_peek_v2d(1)?;
-    let to = vm.stack_peek_v2d(2)?;
-    let clamping = vm.stack_peek_kw(3)? == Keyword::True;
-    let mapping = vm.stack_peek_kw(4)?;
+    let from: (f32, f32) = vm.stack_peek(1)?;
+    let to: (f32, f32) = vm.stack_peek(2)?;
+    let clamping: Keyword = vm.stack_peek(3)?;
+    let mapping: Keyword = vm.stack_peek(4)?;
+
+    let clamping = clamping == Keyword::True;
 
     if let Some(mapping) = easing_from_keyword(mapping) {
         let from_m = mathutil::mc_m(from.0, 0.0, from.1, 1.0);
@@ -2198,7 +2201,7 @@ fn interp_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn interp_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2207,7 +2210,7 @@ fn interp_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     let interp_state = stack_peek_interp_state_struct(&vm.stack, vm.sp, 1)?;
-    let t = vm.stack_peek_f32(2)?;
+    let t: f32 = vm.stack_peek(2)?;
 
     let res = interp_state.value(t);
 
@@ -2228,9 +2231,9 @@ fn interp_cos_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn interp_cos_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let amplitude = vm.stack_peek_f32(1)?;
-    let frequency = vm.stack_peek_f32(2)?;
-    let t = vm.stack_peek_f32(3)?;
+    let amplitude: f32 = vm.stack_peek(1)?;
+    let frequency: f32 = vm.stack_peek(2)?;
+    let t: f32 = vm.stack_peek(3)?;
 
     let res = interp::cos(amplitude, frequency, t);
 
@@ -2251,9 +2254,9 @@ fn interp_sin_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn interp_sin_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let amplitude = vm.stack_peek_f32(1)?;
-    let frequency = vm.stack_peek_f32(2)?;
-    let t = vm.stack_peek_f32(3)?;
+    let amplitude: f32 = vm.stack_peek(1)?;
+    let frequency: f32 = vm.stack_peek(2)?;
+    let t: f32 = vm.stack_peek(3)?;
 
     let res = interp::sin(amplitude, frequency, t);
 
@@ -2273,7 +2276,7 @@ fn interp_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn interp_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2282,7 +2285,7 @@ fn interp_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
-    let t = vm.stack_peek_f32(2)?;
+    let t: f32 = vm.stack_peek(2)?;
 
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
@@ -2323,7 +2326,7 @@ fn interp_bezier_tangent_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> 
 }
 
 fn interp_bezier_tangent_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2332,7 +2335,7 @@ fn interp_bezier_tangent_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
-    let t = vm.stack_peek_f32(2)?;
+    let t: f32 = vm.stack_peek(2)?;
 
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
@@ -2374,9 +2377,9 @@ fn interp_ray_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn interp_ray_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let point = vm.stack_peek_v2d(1)?;
-    let direction = vm.stack_peek_v2d(2)?;
-    let t = vm.stack_peek_f32(3)?;
+    let point: (f32, f32) = vm.stack_peek(1)?;
+    let direction: (f32, f32) = vm.stack_peek(2)?;
+    let t: f32 = vm.stack_peek(3)?;
 
     let (x, y) = interp::ray(point, direction, t);
 
@@ -2399,11 +2402,13 @@ fn interp_line_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn interp_line_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let from = vm.stack_peek_v2d(1)?;
-    let to = vm.stack_peek_v2d(2)?;
-    let clamping = vm.stack_peek_kw(3)? == Keyword::True;
-    let mapping = vm.stack_peek_kw(4)?;
-    let t = vm.stack_peek_f32(5)?;
+    let from: (f32, f32) = vm.stack_peek(1)?;
+    let to: (f32, f32) = vm.stack_peek(2)?;
+    let clamping: Keyword = vm.stack_peek(3)?;
+    let mapping: Keyword = vm.stack_peek(4)?;
+    let t: f32 = vm.stack_peek(5)?;
+
+    let clamping = clamping == Keyword::True;
 
     if let Some(mapping) = easing_from_keyword(mapping) {
         let x = interp::scalar(from.0, to.0, mapping, clamping, t);
@@ -2429,9 +2434,9 @@ fn interp_circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn interp_circle_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let position = vm.stack_peek_v2d(1)?;
-    let radius = vm.stack_peek_f32(2)?;
-    let t = vm.stack_peek_f32(3)?;
+    let position: (f32, f32) = vm.stack_peek(1)?;
+    let radius: f32 = vm.stack_peek(2)?;
+    let t: f32 = vm.stack_peek(3)?;
 
     let (x, y) = interp::circle(position, radius, t);
 
@@ -2456,7 +2461,7 @@ fn path_linear_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn path_linear_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(8)?;
+    let default_mask: i32 = vm.stack_peek(8)?;
 
     if !is_arg_given(default_mask, 6) {
         return Err(Error::Native(
@@ -2464,13 +2469,13 @@ fn path_linear_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
         ));
     }
 
-    let from = vm.stack_peek_v2d(1)?;
-    let to = vm.stack_peek_v2d(2)?;
-    let steps = vm.stack_peek_f32(3)?;
-    let t_start = vm.stack_peek_f32(4)?;
-    let t_end = vm.stack_peek_f32(5)?;
-    let fun = vm.stack_peek_i32(6)?;
-    let mapping = vm.stack_peek_kw(7)?;
+    let from: (f32, f32) = vm.stack_peek(1)?;
+    let to: (f32, f32) = vm.stack_peek(2)?;
+    let steps: f32 = vm.stack_peek(3)?;
+    let t_start: f32 = vm.stack_peek(4)?;
+    let t_end: f32 = vm.stack_peek(5)?;
+    let fun: i32 = vm.stack_peek(6)?;
+    let mapping: Keyword = vm.stack_peek(7)?;
 
     if let Some(mapping) = easing_from_keyword(mapping) {
         path::linear(
@@ -2509,7 +2514,7 @@ fn path_circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn path_circle_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(8)?;
+    let default_mask: i32 = vm.stack_peek(8)?;
 
     if !is_arg_given(default_mask, 6) {
         return Err(Error::Native(
@@ -2517,13 +2522,13 @@ fn path_circle_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
         ));
     }
 
-    let position = vm.stack_peek_v2d(1)?;
-    let radius = vm.stack_peek_f32(2)?;
-    let steps = vm.stack_peek_f32(3)?;
-    let t_start = vm.stack_peek_f32(4)?;
-    let t_end = vm.stack_peek_f32(5)?;
-    let fun = vm.stack_peek_i32(6)?;
-    let mapping = vm.stack_peek_kw(7)?;
+    let position: (f32, f32) = vm.stack_peek(1)?;
+    let radius: f32 = vm.stack_peek(2)?;
+    let steps: f32 = vm.stack_peek(3)?;
+    let t_start: f32 = vm.stack_peek(4)?;
+    let t_end: f32 = vm.stack_peek(5)?;
+    let fun: i32 = vm.stack_peek(6)?;
+    let mapping: Keyword = vm.stack_peek(7)?;
 
     if let Some(mapping) = easing_from_keyword(mapping) {
         path::circular(
@@ -2560,7 +2565,7 @@ fn path_spline_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn path_spline_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(7)?;
+    let default_mask: i32 = vm.stack_peek(7)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2574,11 +2579,11 @@ fn path_spline_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
-    let steps = vm.stack_peek_f32(2)?;
-    let t_start = vm.stack_peek_f32(3)?;
-    let t_end = vm.stack_peek_f32(4)?;
-    let fun = vm.stack_peek_i32(5)?;
-    let mapping = vm.stack_peek_kw(6)?;
+    let steps: f32 = vm.stack_peek(2)?;
+    let t_start: f32 = vm.stack_peek(3)?;
+    let t_end: f32 = vm.stack_peek(4)?;
+    let fun: i32 = vm.stack_peek(5)?;
+    let mapping: Keyword = vm.stack_peek(6)?;
 
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
@@ -2629,7 +2634,7 @@ fn path_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn path_bezier_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(7)?;
+    let default_mask: i32 = vm.stack_peek(7)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2643,11 +2648,11 @@ fn path_bezier_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
-    let steps = vm.stack_peek_f32(2)?;
-    let t_start = vm.stack_peek_f32(3)?;
-    let t_end = vm.stack_peek_f32(4)?;
-    let fun = vm.stack_peek_i32(5)?;
-    let mapping = vm.stack_peek_kw(6)?;
+    let steps: f32 = vm.stack_peek(2)?;
+    let t_start: f32 = vm.stack_peek(3)?;
+    let t_end: f32 = vm.stack_peek(4)?;
+    let fun: i32 = vm.stack_peek(5)?;
+    let mapping: Keyword = vm.stack_peek(6)?;
 
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
@@ -2696,7 +2701,7 @@ fn repeat_symmetry_vertical_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32
 }
 
 fn repeat_symmetry_vertical_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(2)?;
+    let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2704,7 +2709,7 @@ fn repeat_symmetry_vertical_execute(vm: &mut Vm, program: &Program) -> Result<Op
         ));
     }
 
-    let fun = vm.stack_peek_i32(1)?;
+    let fun: i32 = vm.stack_peek(1)?;
 
     repeat::symmetry_vertical(vm, program, fun as usize)?;
 
@@ -2721,7 +2726,7 @@ fn repeat_symmetry_horizontal_parameter_info() -> Result<(Vec<(Keyword, Var)>, i
 }
 
 fn repeat_symmetry_horizontal_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(2)?;
+    let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2729,7 +2734,7 @@ fn repeat_symmetry_horizontal_execute(vm: &mut Vm, program: &Program) -> Result<
         ));
     }
 
-    let fun = vm.stack_peek_i32(1)?;
+    let fun: i32 = vm.stack_peek(1)?;
 
     repeat::symmetry_horizontal(vm, program, fun as usize)?;
 
@@ -2746,7 +2751,7 @@ fn repeat_symmetry_4_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn repeat_symmetry_4_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(2)?;
+    let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2754,7 +2759,7 @@ fn repeat_symmetry_4_execute(vm: &mut Vm, program: &Program) -> Result<Option<Va
         ));
     }
 
-    let fun = vm.stack_peek_i32(1)?;
+    let fun: i32 = vm.stack_peek(1)?;
 
     repeat::symmetry_4(vm, program, fun as usize)?;
 
@@ -2771,7 +2776,7 @@ fn repeat_symmetry_8_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn repeat_symmetry_8_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(2)?;
+    let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2779,7 +2784,7 @@ fn repeat_symmetry_8_execute(vm: &mut Vm, program: &Program) -> Result<Option<Va
         ));
     }
 
-    let fun = vm.stack_peek_i32(1)?;
+    let fun: i32 = vm.stack_peek(1)?;
 
     repeat::symmetry_8(vm, program, fun as usize)?;
 
@@ -2799,7 +2804,7 @@ fn repeat_rotate_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn repeat_rotate_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2807,8 +2812,8 @@ fn repeat_rotate_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> 
         ));
     }
 
-    let fun = vm.stack_peek_i32(1)?;
-    let copies = vm.stack_peek_f32_as_usize(2)?;
+    let fun: i32 = vm.stack_peek(1)?;
+    let copies: usize = vm.stack_peek(2)?;
 
     repeat::rotate(vm, program, fun as usize, copies)?;
 
@@ -2828,7 +2833,7 @@ fn repeat_rotate_mirrored_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)>
 }
 
 fn repeat_rotate_mirrored_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2836,8 +2841,8 @@ fn repeat_rotate_mirrored_execute(vm: &mut Vm, program: &Program) -> Result<Opti
         ));
     }
 
-    let fun = vm.stack_peek_i32(1)?;
-    let copies = vm.stack_peek_f32_as_usize(2)?;
+    let fun: i32 = vm.stack_peek(1)?;
+    let copies: usize = vm.stack_peek(2)?;
 
     repeat::rotate_mirrored(vm, program, fun as usize, copies)?;
 
@@ -2859,10 +2864,12 @@ fn focal_build_generic_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn focal_build_generic_execute(vm: &mut Vm, focal_type: focal::FocalType) -> Result<Option<Var>> {
-    let mapping = vm.stack_peek_kw(1)?;
-    let position = vm.stack_peek_v2d(2)?;
-    let distance = vm.stack_peek_f32(3)?;
-    let transform_pos = vm.stack_peek_kw(4)? == Keyword::True;
+    let mapping: Keyword = vm.stack_peek(1)?;
+    let position: (f32, f32) = vm.stack_peek(2)?;
+    let distance: f32 = vm.stack_peek(3)?;
+    let transform_pos: Keyword = vm.stack_peek(4)?;
+
+    let transform_pos = transform_pos == Keyword::True;
 
     if let Some(mapping) = easing_from_keyword(mapping) {
         Ok(Some(Var::FocalState(focal::FocalStateStruct {
@@ -2902,7 +2909,7 @@ fn focal_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn focal_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -2911,7 +2918,7 @@ fn focal_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     let focal_state_struct = stack_peek_focal_state_struct(&vm.stack, vm.sp, 1)?;
-    let position = vm.stack_peek_v2d(2)?;
+    let position: (f32, f32) = vm.stack_peek(2)?;
 
     let res = focal_state_struct.value(vm, position);
 
@@ -2931,8 +2938,8 @@ fn gen_stray_int_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn gen_stray_int_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let from = vm.stack_peek_f32(1)?;
-    let by = vm.stack_peek_f32(2)?;
+    let from: f32 = vm.stack_peek(1)?;
+    let by: f32 = vm.stack_peek(2)?;
 
     let by = mathutil::absf(by);
     let value = vm.prng_state.prng_f32_range(from - by, from + by);
@@ -2954,8 +2961,8 @@ fn gen_stray_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn gen_stray_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let from = vm.stack_peek_f32(1)?;
-    let by = vm.stack_peek_f32(2)?;
+    let from: f32 = vm.stack_peek(1)?;
+    let by: f32 = vm.stack_peek(2)?;
 
     let by = mathutil::absf(by);
     let value = vm.prng_state.prng_f32_range(from - by, from + by);
@@ -2983,8 +2990,8 @@ fn gen_stray_2d_execute(vm: &mut Vm) -> Result<Option<Var>> {
         ));
     }
 
-    let from = vm.stack_peek_v2d(1)?;
-    let by = vm.stack_peek_v2d(2)?;
+    let from: (f32, f32) = vm.stack_peek(1)?;
+    let by: (f32, f32) = vm.stack_peek(2)?;
 
     let index = vm.trait_within_vector_index;
     let by_index;
@@ -3029,7 +3036,7 @@ fn gen_stray_3d_execute(vm: &mut Vm) -> Result<Option<Var>> {
         ));
     }
 
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -3089,7 +3096,7 @@ fn gen_stray_4d_execute(vm: &mut Vm) -> Result<Option<Var>> {
         ));
     }
 
-    let default_mask = vm.stack_peek_i32(3)?;
+    let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -3142,8 +3149,8 @@ fn gen_int_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn gen_int_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let min = vm.stack_peek_f32(1)?;
-    let max = vm.stack_peek_f32(2)?;
+    let min: f32 = vm.stack_peek(1)?;
+    let max: f32 = vm.stack_peek(2)?;
 
     // pick a scalar between min and max
     let value = vm.prng_state.prng_f32_range(min, max + 1.0);
@@ -3164,8 +3171,8 @@ fn gen_scalar_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn gen_scalar_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let min = vm.stack_peek_f32(1)?;
-    let max = vm.stack_peek_f32(2)?;
+    let min: f32 = vm.stack_peek(1)?;
+    let max: f32 = vm.stack_peek(2)?;
 
     // pick a scalar between min and max
     let value = vm.prng_state.prng_f32_range(min, max);
@@ -3186,8 +3193,8 @@ fn gen_2d_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn gen_2d_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let min = vm.stack_peek_f32(1)?;
-    let max = vm.stack_peek_f32(2)?;
+    let min: f32 = vm.stack_peek(1)?;
+    let max: f32 = vm.stack_peek(2)?;
 
     let x = vm.prng_state.prng_f32_range(min, max);
     let y = vm.prng_state.prng_f32_range(min, max);
@@ -3205,7 +3212,7 @@ fn gen_select_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn gen_select_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(2)?;
+    let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
         return Err(Error::Native(
@@ -3229,10 +3236,10 @@ fn gen_col_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn gen_col_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    let default_mask = vm.stack_peek_i32(2)?;
+    let default_mask: i32 = vm.stack_peek(2)?;
 
-    let alpha = if is_arg_given(default_mask, 1) {
-        vm.stack_peek_f32(1)?
+    let alpha: f32 = if is_arg_given(default_mask, 1) {
+        vm.stack_peek(1)?
     } else {
         // no alpha was given so generate a random value
         vm.prng_state.prng_f32_range(0.0, 1.0)
