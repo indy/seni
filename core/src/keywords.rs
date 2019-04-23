@@ -19,6 +19,7 @@ use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
 use crate::error::Result;
+use crate::name::Name;
 use crate::packable::{Mule, Packable};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString, Display, EnumIter)]
@@ -414,11 +415,11 @@ impl Packable for Keyword {
     }
 }
 
-pub fn i32_to_keyword_hash() -> HashMap<i32, Keyword> {
-    let mut hm: HashMap<i32, Keyword> = HashMap::new();
+pub fn name_to_keyword_hash() -> HashMap<Name, Keyword> {
+    let mut hm: HashMap<Name, Keyword> = HashMap::new();
 
     for kw in Keyword::iter() {
-        hm.insert(kw as i32, kw);
+        hm.insert(Name::from(kw), kw);
     }
 
     hm

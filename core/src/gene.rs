@@ -17,6 +17,7 @@ use crate::colour::Colour;
 use crate::compiler::compile_preamble;
 use crate::error::{Error, Result};
 use crate::keywords::Keyword;
+use crate::name::Name;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
 use crate::trait_list::{Trait, TraitList};
@@ -35,7 +36,7 @@ pub enum Gene {
     Bool(bool),
     Keyword(Keyword),
     Long(u64),
-    Name(i32), // todo: how do names work with genes? should the String also be here?
+    Name(Name),
     Colour(Colour),
     V2D(f32, f32),
 }
@@ -121,7 +122,7 @@ impl Packable for Gene {
             Ok((Gene::Long(val), rem))
         } else if cursor.starts_with("NAME ") {
             let rem = Mule::skip_forward(cursor, "NAME ".len());
-            let (val, rem) = Mule::unpack_i32(rem)?;
+            let (val, rem) = Name::unpack(rem)?;
             Ok((Gene::Name(val), rem))
         } else if cursor.starts_with("COLOUR ") {
             let rem = Mule::skip_forward(cursor, "COLOUR ".len());

@@ -17,6 +17,7 @@ use crate::colour::ColourFormat;
 use crate::error::{Error, Result};
 use crate::gene::{Gene, Genotype};
 use crate::keywords::Keyword;
+use crate::name::Name;
 use crate::parser::{parse, Node, NodeMeta, WordLut};
 
 pub fn unparse(source: &str, genotype: &mut Genotype) -> Result<String> {
@@ -184,7 +185,7 @@ fn simplified_unparse_ast_node(cursor: &mut String, word_lut: &WordLut, ast: &No
 fn index_of_quote_keyword(ns: &[Node]) -> Option<usize> {
     for (i, n) in ns.iter().enumerate() {
         if let Node::Name(_, iname, _) = n {
-            if *iname == Keyword::Quote as i32 {
+            if *iname == Name::from(Keyword::Quote) {
                 return Some(i);
             }
         }
@@ -229,7 +230,7 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
             }
         }
         Gene::Name(i) => {
-            if let Some(s) = word_lut.get_string_from_i32(*i) {
+            if let Some(s) = word_lut.get_string_from_name(*i) {
                 Ok(s.to_string())
             } else {
                 dbg!(*i);

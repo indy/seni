@@ -21,6 +21,7 @@ use crate::error::{Error, Result};
 use crate::gene::Gene;
 use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
+use crate::name::Name;
 use crate::native::Native;
 
 use strum::IntoEnumIterator;
@@ -47,8 +48,8 @@ pub enum Node {
     List(Vec<Node>, Option<NodeMeta>),
     Vector(Vec<Node>, Option<NodeMeta>),
     Float(f32, String, Option<NodeMeta>),
-    Name(String, i32, Option<NodeMeta>),  // text, iname, meta
-    Label(String, i32, Option<NodeMeta>), // text, iname, meta
+    Name(String, Name, Option<NodeMeta>),  // text, iname, meta
+    Label(String, Name, Option<NodeMeta>), // text, iname, meta
     String(String, Option<NodeMeta>),
     Whitespace(String, Option<NodeMeta>),
     Comment(String, Option<NodeMeta>),
@@ -87,7 +88,7 @@ impl Node {
         )))
     }
 
-    pub fn get_iname(&self, use_genes: bool) -> Result<i32> {
+    pub fn get_iname(&self, use_genes: bool) -> Result<Name> {
         if let Node::Name(_text, iname, meta) = self {
             if use_genes && meta.is_some() {
                 if let Some(meta) = meta {
@@ -112,14 +113,14 @@ impl Node {
         )))
     }
 
-    pub fn get_label_iname(&self, use_genes: bool) -> Result<i32> {
+    pub fn get_label_iname(&self, use_genes: bool) -> Result<Name> {
         if let Node::Label(_, iname, meta) = self {
             if use_genes && meta.is_some() {
                 if let Some(meta) = meta {
                     if let Some(gene) = &meta.gene {
                         match gene {
                             // todo: what type of gene would a Node::Label have?
-                            Gene::Int(i) => return Ok(*i),
+                            Gene::Int(i) => return Ok(Name::new(*i)),
                             Gene::Name(i) => return Ok(*i),
                             _ => {
                                 return Err(Error::Compiler(
@@ -236,26 +237,26 @@ pub struct WordLut {
     // requires a builtin hashmap (function names reserved by the builtin api)
     // a keyword hashmap (keywords + constants + common arguments to builtin api functions)
     // a word hashmap (user defined names and labels)
-    word_to_iname: HashMap<String, i32>,
+    word_to_iname: HashMap<String, Name>,
     word_count: i32,
 
-    iname_to_word: HashMap<i32, String>,
-    iname_to_native: HashMap<i32, String>,
-    iname_to_keyword: HashMap<i32, String>,
+    iname_to_word: HashMap<Name, String>,
+    iname_to_native: HashMap<Name, String>,
+    iname_to_keyword: HashMap<Name, String>,
 }
 
 impl WordLut {
     pub fn new() -> WordLut {
         // native
-        let mut n: HashMap<i32, String> = HashMap::new();
+        let mut n: HashMap<Name, String> = HashMap::new();
         for nat in Native::iter() {
-            n.insert(nat as i32, nat.to_string());
+            n.insert(Name::from(nat), nat.to_string());
         }
 
         // keyword
-        let mut k: HashMap<i32, String> = HashMap::new();
+        let mut k: HashMap<Name, String> = HashMap::new();
         for kw in Keyword::iter() {
-            k.insert(kw as i32, kw.to_string());
+            k.insert(Name::from(kw), kw.to_string());
         }
 
         WordLut {
@@ -268,40 +269,41 @@ impl WordLut {
         }
     }
 
-    pub fn get_string_from_i32(&self, i: i32) -> Option<&String> {
-        if let Some(s) = self.iname_to_native.get(&i) {
+    pub fn get_string_from_name(&self, name: Name) -> Option<&String> {
+        if let Some(s) = self.iname_to_native.get(&name) {
             // 1st check the native api
             Some(s)
-        } else if let Some(s) = self.iname_to_keyword.get(&i) {
+        } else if let Some(s) = self.iname_to_keyword.get(&name) {
             // 2nd check the keywords
             Some(s)
         } else {
             // finally check the iname_to_word
-            self.iname_to_word.get(&i)
+            self.iname_to_word.get(&name)
         }
     }
 
-    fn get_or_add(&mut self, s: &str) -> i32 {
-        if let Some(i) = self.get_i32_from_string(s) {
+    fn get_or_add(&mut self, s: &str) -> Name {
+        if let Some(i) = self.get_name_from_string(s) {
             return i;
         }
 
-        self.word_to_iname.insert(s.to_string(), self.word_count);
-        self.iname_to_word.insert(self.word_count, s.to_string());
+        let name = Name::new(self.word_count);
+        self.word_to_iname.insert(s.to_string(), name);
+        self.iname_to_word.insert(name, s.to_string());
         self.word_count += 1;
 
-        self.word_count - 1
+        Name::new(self.word_count - 1)
     }
 
-    fn get_i32_from_string(&self, s: &str) -> Option<i32> {
+    fn get_name_from_string(&self, s: &str) -> Option<Name> {
         // 1st check the native api
         if let Ok(n) = Native::from_str(s) {
-            return Some(n as i32);
+            return Some(Name::from(n));
         }
 
         // 2nd check the keywords
         if let Ok(kw) = Keyword::from_str(s) {
-            return Some(kw as i32);
+            return Some(Name::from(kw));
         }
 
         // finally check/add to word_to_iname
@@ -550,21 +552,24 @@ mod tests {
 
     #[test]
     fn test_parser() {
-        assert_eq!(ast("hello"), [Node::Name("hello".to_string(), 0, None)]);
+        assert_eq!(
+            ast("hello"),
+            [Node::Name("hello".to_string(), Name::new(0), None)]
+        );
         assert_eq!(
             ast("hello world"),
             [
-                Node::Name("hello".to_string(), 0, None),
+                Node::Name("hello".to_string(), Name::new(0), None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), 1, None)
+                Node::Name("world".to_string(), Name::new(1), None)
             ]
         );
         assert_eq!(
             ast("hello: world"),
             [
-                Node::Label("hello".to_string(), 0, None),
+                Node::Label("hello".to_string(), Name::new(0), None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), 1, None)
+                Node::Name("world".to_string(), Name::new(1), None)
             ]
         );
         assert_eq!(
@@ -579,9 +584,9 @@ mod tests {
         assert_eq!(
             ast("hello world ; some comment"),
             [
-                Node::Name("hello".to_string(), 0, None),
+                Node::Name("hello".to_string(), Name::new(0), None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), 1, None),
+                Node::Name("world".to_string(), Name::new(1), None),
                 Node::Whitespace(" ".to_string(), None),
                 Node::Comment(" some comment".to_string(), None)
             ]
@@ -591,9 +596,9 @@ mod tests {
             ast("(hello world)"),
             [Node::List(
                 vec![
-                    Node::Name("hello".to_string(), 0, None),
+                    Node::Name("hello".to_string(), Name::new(0), None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), 1, None)
+                    Node::Name("world".to_string(), Name::new(1), None)
                 ],
                 None
             )]
@@ -603,7 +608,7 @@ mod tests {
             ast("'3"),
             [Node::List(
                 vec![
-                    Node::Name("quote".to_string(), 153, None),
+                    Node::Name("quote".to_string(), Name::new(153), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Float(3.0, "3".to_string(), None)
                 ],
@@ -615,9 +620,9 @@ mod tests {
             ast("(hello world (1 2 3))"),
             [Node::List(
                 vec![
-                    Node::Name("hello".to_string(), 0, None),
+                    Node::Name("hello".to_string(), Name::new(0), None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), 1, None),
+                    Node::Name("world".to_string(), Name::new(1), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::List(
                         vec![
@@ -638,9 +643,9 @@ mod tests {
             ast("(hello world [1 2 3])"),
             [Node::List(
                 vec![
-                    Node::Name("hello".to_string(), 0, None),
+                    Node::Name("hello".to_string(), Name::new(0), None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), 1, None),
+                    Node::Name("world".to_string(), Name::new(1), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Vector(
                         vec![
@@ -660,7 +665,7 @@ mod tests {
         assert_eq!(
             ast("hello { 5 (gen/scalar)}"),
             [
-                Node::Name("hello".to_string(), 0, None),
+                Node::Name("hello".to_string(), Name::new(0), None),
                 Node::Whitespace(" ".to_string(), None),
                 Node::Float(
                     5.0,
@@ -672,7 +677,7 @@ mod tests {
                             Node::List(
                                 vec![Node::Name(
                                     "gen/scalar".to_string(),
-                                    Native::GenScalar as i32,
+                                    Name::from(Native::GenScalar),
                                     None
                                 )],
                                 None
@@ -691,9 +696,9 @@ mod tests {
             ast("(rect width: 300)"),
             [Node::List(
                 vec![
-                    Node::Name("rect".to_string(), Native::Rect as i32, None),
+                    Node::Name("rect".to_string(), Name::from(Native::Rect), None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Label("width".to_string(), Keyword::Width as i32, None),
+                    Node::Label("width".to_string(), Name::from(Keyword::Width), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Float(300.0, "300".to_string(), None),
                 ],

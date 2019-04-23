@@ -18,6 +18,7 @@ use crate::ease::{easing, Easing};
 use crate::error::*;
 use crate::keywords::Keyword;
 use crate::mathutil::{bezier_point, quadratic_point, TAU};
+use crate::name::Name;
 use crate::vm::*;
 
 // invoke a function with 3 args: step, position and t
@@ -35,9 +36,9 @@ fn invoke_function(
     let fn_info = &program.fn_info[fun];
 
     vm.function_call_default_arguments(program, fn_info)?;
-    vm.function_set_argument_to_f32(fn_info, Keyword::N as usize, step);
-    vm.function_set_argument_to_f32(fn_info, Keyword::T as usize, t);
-    vm.function_set_argument_to_2d(fn_info, Keyword::Position as usize, x, y);
+    vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::N), step);
+    vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::T), t);
+    vm.function_set_argument_to_2d(fn_info, Name::from(Keyword::Position), x, y);
     vm.function_call_body(program, fn_info)?;
 
     vm.ip = ip;

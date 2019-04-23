@@ -17,6 +17,7 @@ use crate::compiler::Program;
 use crate::error::*;
 use crate::keywords::Keyword;
 use crate::mathutil::*;
+use crate::name::Name;
 use crate::vm::*;
 
 fn flip(vm: &mut Vm, program: &Program, fun: usize, sx: f32, sy: f32, copy_val: i32) -> Result<()> {
@@ -27,7 +28,7 @@ fn flip(vm: &mut Vm, program: &Program, fun: usize, sx: f32, sy: f32, copy_val: 
     vm.matrix_stack.push();
     {
         vm.function_call_default_arguments(program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Keyword::Copy as usize, copy as f32);
+        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), copy as f32);
         vm.function_call_body(program, fn_info)?;
     }
     vm.matrix_stack.pop();
@@ -38,7 +39,7 @@ fn flip(vm: &mut Vm, program: &Program, fun: usize, sx: f32, sy: f32, copy_val: 
     {
         vm.matrix_stack.scale(sx, sy);
         vm.function_call_default_arguments(program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Keyword::Copy as usize, copy as f32);
+        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), copy as f32);
         vm.function_call_body(program, fn_info)?;
     }
     vm.matrix_stack.pop();
@@ -103,8 +104,8 @@ pub fn rotate(vm: &mut Vm, program: &Program, fun: usize, copies: usize) -> Resu
         vm.matrix_stack.rotate(angle);
 
         vm.function_call_default_arguments(program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Keyword::Angle as usize, rad_to_deg(angle));
-        vm.function_set_argument_to_f32(fn_info, Keyword::Copy as usize, i as f32);
+        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Angle), rad_to_deg(angle));
+        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), i as f32);
         vm.function_call_body(program, fn_info)?;
 
         vm.matrix_stack.pop();
@@ -128,8 +129,8 @@ pub fn rotate_mirrored(vm: &mut Vm, program: &Program, fun: usize, copies: usize
         vm.matrix_stack.rotate(angle);
 
         vm.function_call_default_arguments(program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Keyword::Angle as usize, rad_to_deg(angle));
-        vm.function_set_argument_to_f32(fn_info, Keyword::Copy as usize, i as f32);
+        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Angle), rad_to_deg(angle));
+        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), i as f32);
         vm.function_call_body(program, fn_info)?;
 
         vm.matrix_stack.pop();
@@ -146,8 +147,8 @@ pub fn rotate_mirrored(vm: &mut Vm, program: &Program, fun: usize, copies: usize
         vm.matrix_stack.rotate(angle);
 
         vm.function_call_default_arguments(program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Keyword::Angle as usize, -rad_to_deg(angle));
-        vm.function_set_argument_to_f32(fn_info, Keyword::Copy as usize, (copies + i) as f32);
+        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Angle), -rad_to_deg(angle));
+        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), (copies + i) as f32);
         vm.function_call_body(program, fn_info)?;
 
         vm.matrix_stack.pop();
@@ -196,6 +197,15 @@ mod tests {
             "(fn (f) (probe worldspace: [10 20]))
              (repeat/symmetry-8 fn: (address-of f))",
             "(10,20) (-10,20) (10,-20) (-10,-20) (-20,9.999999) (-20,-10.000001) (20,10.000001) (20,-9.999999)",
+        );
+    }
+
+    #[test]
+    fn shabba_test_rotate() {
+        is_debug_str(
+            "(fn (f angle: 0 copy: 0) (probe scalar: angle))
+             (repeat/rotate fn: (address-of f) copies: 3)",
+            "0 120 240",
         );
     }
 

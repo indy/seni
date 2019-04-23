@@ -21,6 +21,7 @@ use crate::focal;
 use crate::interp;
 use crate::keywords::Keyword;
 use crate::mathutil;
+use crate::name::Name;
 use crate::packable::{Mule, Packable};
 use crate::path;
 use crate::prng;
@@ -501,11 +502,11 @@ pub fn execute_native(vm: &mut Vm, program: &Program, native: Native) -> Result<
     }
 }
 
-pub fn i32_to_native_hash() -> HashMap<i32, Native> {
-    let mut hm: HashMap<i32, Native> = HashMap::new();
+pub fn name_to_native_hash() -> HashMap<Name, Native> {
+    let mut hm: HashMap<Name, Native> = HashMap::new();
 
     for n in Native::iter() {
-        hm.insert(n as i32, n);
+        hm.insert(Name::from(n), n);
     }
 
     hm

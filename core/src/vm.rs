@@ -22,6 +22,7 @@ use crate::geometry::Geometry;
 use crate::interp::InterpStateStruct;
 use crate::keywords::Keyword;
 use crate::matrix::MatrixStack;
+use crate::name::Name;
 use crate::native::execute_native;
 use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
@@ -51,7 +52,7 @@ pub enum Var {
     Bool(bool),
     Keyword(Keyword),
     Long(u64),
-    Name(i32),
+    Name(Name),
     Vector(Vec<Var>),
     Colour(Colour),
     V2D(f32, f32),
@@ -117,7 +118,7 @@ impl Packable for Var {
             Ok((Var::Long(val), rem))
         } else if cursor.starts_with("NAME ") {
             let rem = Mule::skip_forward(cursor, "NAME ".len());
-            let (val, rem) = Mule::unpack_i32(rem)?;
+            let (val, rem) = Name::unpack(rem)?;
             Ok((Var::Name(val), rem))
         } else if cursor.starts_with("COLOUR ") {
             let rem = Mule::skip_forward(cursor, "COLOUR ".len());
@@ -671,15 +672,15 @@ impl Vm {
     fn arg_memory_from_iname(
         &self,
         fn_info: &FnInfo,
-        iname: usize,
+        iname: Name,
         stack_offset: usize,
     ) -> Option<usize> {
         let mut offset = stack_offset;
 
         // search the ARG memory for iname
         for _ in 0..fn_info.num_args {
-            if let Var::Int(vi) = self.stack[offset] {
-                if vi as usize == iname {
+            if let Var::Name(vi) = self.stack[offset] {
+                if vi == iname {
                     return Some(offset - 1); // move from the label onto the arg's default value
                 }
             }
@@ -689,13 +690,13 @@ impl Vm {
         None
     }
 
-    pub fn function_set_argument_to_f32(&mut self, fn_info: &FnInfo, iname: usize, f: f32) {
+    pub fn function_set_argument_to_f32(&mut self, fn_info: &FnInfo, iname: Name, f: f32) {
         if let Some(offset) = self.arg_memory_from_iname(fn_info, iname, self.fp - 1) {
             self.stack[offset] = Var::Float(f);
         }
     }
 
-    pub fn function_set_argument_to_2d(&mut self, fn_info: &FnInfo, iname: usize, x: f32, y: f32) {
+    pub fn function_set_argument_to_2d(&mut self, fn_info: &FnInfo, iname: Name, x: f32, y: f32) {
         if let Some(offset) = self.arg_memory_from_iname(fn_info, iname, self.fp - 1) {
             self.stack[offset] = Var::V2D(x, y);
         }
@@ -906,10 +907,10 @@ impl Vm {
 
         match mem {
             Mem::Argument => {
-                if let BytecodeArg::Int(iname) = bc.arg1 {
+                if let BytecodeArg::Name(iname) = bc.arg1 {
                     let fn_info = &program.fn_info[i as usize];
                     if let Some(dest_index) =
-                        self.arg_memory_from_iname(fn_info, iname as usize, self.fp - 1)
+                        self.arg_memory_from_iname(fn_info, iname, self.fp - 1)
                     {
                         // copy popped into stack[dest_index]
                         self.stack[dest_index] = self.stack[self.sp].clone();
@@ -2130,7 +2131,7 @@ pub mod tests {
         }
     }
 
-    fn unpack_compare_var_name(inp: &str, expected_val: i32, expected_rem: &str) {
+    fn unpack_compare_var_name(inp: &str, expected_val: Name, expected_rem: &str) {
         let (res, actual_rem) = Var::unpack(inp).unwrap();
 
         if let Var::Name(actual_val) = res {
@@ -2165,7 +2166,7 @@ pub mod tests {
         pack_compare(Var::Bool(true), "BOOLEAN 1");
         pack_compare(Var::Bool(false), "BOOLEAN 0");
         pack_compare(Var::Long(544), "LONG 544");
-        pack_compare(Var::Name(65), "NAME 65");
+        pack_compare(Var::Name(Name::new(65)), "NAME 65");
         pack_compare(Var::V2D(5.67, 8.90), "2D 5.67 8.9");
     }
 
@@ -2186,9 +2187,9 @@ pub mod tests {
         unpack_compare_var_long("LONG 42 ", 42, " ");
         unpack_compare_var_long("LONG 42 shabba", 42, " shabba");
 
-        unpack_compare_var_name("NAME 42", 42, "");
-        unpack_compare_var_name("NAME 42 ", 42, " ");
-        unpack_compare_var_name("NAME 42 shabba", 42, " shabba");
+        unpack_compare_var_name("NAME 42", Name::new(42), "");
+        unpack_compare_var_name("NAME 42 ", Name::new(42), " ");
+        unpack_compare_var_name("NAME 42 shabba", Name::new(42), " shabba");
 
         unpack_compare_var_v2d("2D 1.23 4.56", 1.23, 4.56, "");
     }

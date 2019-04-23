@@ -38,6 +38,7 @@ mod keywords;
 mod lexer;
 mod mathutil;
 mod matrix;
+mod name;
 mod native;
 mod opcodes;
 mod packable;
