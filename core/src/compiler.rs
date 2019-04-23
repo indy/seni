@@ -630,157 +630,6 @@ impl Compilation {
         None
     }
 
-    fn emit_opcode(&mut self, op: Opcode) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Int(0),
-            arg1: BytecodeArg::Int(0),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_i32_i32(&mut self, op: Opcode, arg0: i32, arg1: i32) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Int(arg0),
-            arg1: BytecodeArg::Int(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_mem_i32(&mut self, op: Opcode, arg0: Mem, arg1: i32) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Mem(arg0),
-            arg1: BytecodeArg::Int(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_mem_kw(&mut self, op: Opcode, arg0: Mem, arg1: Keyword) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Mem(arg0),
-            arg1: BytecodeArg::Keyword(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_mem_name(&mut self, op: Opcode, arg0: Mem, arg1: Name) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Mem(arg0),
-            arg1: BytecodeArg::Name(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_mem_f32(&mut self, op: Opcode, arg0: Mem, arg1: f32) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Mem(arg0),
-            arg1: BytecodeArg::Float(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_mem_col(&mut self, op: Opcode, arg0: Mem, arg1: Colour) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Mem(arg0),
-            arg1: BytecodeArg::Colour(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_native_i32(&mut self, op: Opcode, arg0: Native, arg1: i32) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Native(arg0),
-            arg1: BytecodeArg::Int(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_i32_f32(&mut self, op: Opcode, arg0: i32, arg1: f32) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Int(arg0),
-            arg1: BytecodeArg::Float(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_i32_name(&mut self, op: Opcode, arg0: i32, arg1: Name) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Int(arg0),
-            arg1: BytecodeArg::Name(arg1),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
-    fn emit_opcode_i32_rgba(
-        &mut self,
-        op: Opcode,
-        arg0: i32,
-        r: f32,
-        g: f32,
-        b: f32,
-        a: f32,
-    ) -> Result<()> {
-        let b = Bytecode {
-            op,
-            arg0: BytecodeArg::Int(arg0),
-            arg1: BytecodeArg::Colour(Colour::new(ColourFormat::Rgb, r, g, b, a)),
-        };
-
-        self.add_bytecode(b)?;
-        self.opcode_offset += opcode_stack_offset(op);
-
-        Ok(())
-    }
-
     fn bytecode_modify(&mut self, index: usize, op: Opcode, arg0: i32, arg1: i32) -> Result<()> {
         self.code[index] = Bytecode {
             op,
@@ -829,6 +678,190 @@ impl Compilation {
             arg0,
             arg1: BytecodeArg::Int(arg1),
         };
+
+        Ok(())
+    }
+}
+
+trait EmitOpcode<T, U> {
+    fn emit(&mut self, op: Opcode, arg0: T, arg1: U) -> Result<()>;
+}
+
+impl EmitOpcode<i32, i32> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: i32, arg1: i32) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Int(arg0),
+            arg1: BytecodeArg::Int(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<usize, i32> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: usize, arg1: i32) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Int(arg0 as i32),
+            arg1: BytecodeArg::Int(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<usize, usize> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: usize, arg1: usize) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Int(arg0 as i32),
+            arg1: BytecodeArg::Int(arg1 as i32),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<Mem, i32> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: Mem, arg1: i32) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Mem(arg0),
+            arg1: BytecodeArg::Int(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<Mem, Keyword> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: Mem, arg1: Keyword) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Mem(arg0),
+            arg1: BytecodeArg::Keyword(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<Mem, Name> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: Mem, arg1: Name) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Mem(arg0),
+            arg1: BytecodeArg::Name(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<Mem, f32> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: Mem, arg1: f32) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Mem(arg0),
+            arg1: BytecodeArg::Float(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<Mem, Colour> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: Mem, arg1: Colour) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Mem(arg0),
+            arg1: BytecodeArg::Colour(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<Native, i32> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: Native, arg1: i32) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Native(arg0),
+            arg1: BytecodeArg::Int(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<Native, usize> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: Native, arg1: usize) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Native(arg0),
+            arg1: BytecodeArg::Int(arg1 as i32),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<i32, f32> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: i32, arg1: f32) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Int(arg0),
+            arg1: BytecodeArg::Float(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<usize, Name> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: usize, arg1: Name) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Int(arg0 as i32),
+            arg1: BytecodeArg::Name(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
 
         Ok(())
     }
@@ -1075,14 +1108,14 @@ impl Compiler {
         // ********************************************************************************
 
         // slap a stop onto the end of this compilation
-        compilation.emit_opcode(Opcode::STOP)?;
+        compilation.emit(Opcode::STOP, 0, 0)?;
 
         Ok(())
     }
 
     fn compile_global_bind_procedural_presets(&self, compilation: &mut Compilation) -> Result<()> {
         // create a vector
-        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
+        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
 
         // append the names
         self.append_keyword(compilation, Keyword::Chrome)?;
@@ -1100,7 +1133,7 @@ impl Compiler {
 
     fn compile_global_bind_ease_presets(&self, compilation: &mut Compilation) -> Result<()> {
         // create a vector
-        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
+        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
 
         // append the names
         self.append_keyword(compilation, Keyword::Linear)?;
@@ -1173,7 +1206,7 @@ impl Compiler {
         //// single node version of self.compile_common_top_level_fns(compilation, ast)?;
         {
             // a placeholder, filled in at the end of this function
-            compilation.emit_opcode(Opcode::JUMP)?;
+            compilation.emit(Opcode::JUMP, 0, 0)?;
             let start_index = compilation.code.len() - 1;
 
             // compile the top-level functions
@@ -1226,7 +1259,7 @@ impl Compiler {
         ast: &[&Node],
     ) -> Result<()> {
         // a placeholder, filled in at the end of this function
-        compilation.emit_opcode(Opcode::JUMP)?;
+        compilation.emit(Opcode::JUMP, 0, 0)?;
         let start_index = compilation.code.len() - 1;
 
         // compile the top-level functions
@@ -1286,7 +1319,7 @@ impl Compiler {
     }
 
     fn compile_common_epilogue(&self, compilation: &mut Compilation) -> Result<()> {
-        compilation.emit_opcode(Opcode::STOP)?;
+        compilation.emit(Opcode::STOP, 0, 0)?;
 
         // now update the addreses used by CALL and CALL_0
         self.correct_function_addresses(compilation)?;
@@ -1304,7 +1337,7 @@ impl Compiler {
                     // we have an alterable colour constructor so just load in the colour value stored in the gene
                     //
                     let col = self.get_colour(ast)?;
-                    compilation.emit_opcode_mem_col(Opcode::LOAD, Mem::Constant, col)?;
+                    compilation.emit(Opcode::LOAD, Mem::Constant, col)?;
                 } else {
                     if self.use_genes && meta.is_some() {
                         return Err(Error::Compiler(
@@ -1317,7 +1350,7 @@ impl Compiler {
             }
             Node::Float(_, _, _) => {
                 let f = self.get_float(ast)?;
-                return compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, f);
+                return compilation.emit(Opcode::LOAD, Mem::Constant, f);
             }
             Node::Vector(children, _) => {
                 let children = only_semantic_nodes(children);
@@ -1334,10 +1367,10 @@ impl Compiler {
                 return if self.compile_user_defined_name(compilation, iname)? {
                     Ok(())
                 } else if let Some(kw) = self.name_to_keyword.get(&iname) {
-                    compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?;
+                    compilation.emit(Opcode::LOAD, Mem::Constant, *kw)?;
                     Ok(())
                 } else if let Some(native) = self.name_to_native.get(&iname) {
-                    compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, 0)?;
+                    compilation.emit(Opcode::NATIVE, *native, 0)?;
                     Ok(())
                 } else {
                     Err(Error::Compiler(format!(
@@ -1462,7 +1495,7 @@ impl Compiler {
                             default_mask |= 1 << i;
                         }
                     }
-                    compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, default_mask)?;
+                    compilation.emit(Opcode::LOAD, Mem::Constant, default_mask)?;
 
                     // iterating in reverse so that when the native function
                     // is run it can pop the arguments from the stack in the
@@ -1479,7 +1512,7 @@ impl Compiler {
                         }
                     }
 
-                    compilation.emit_opcode_native_i32(Opcode::NATIVE, *native, num_args as i32)?;
+                    compilation.emit(Opcode::NATIVE, *native, num_args)?;
 
                     // the vm's opcode_native will modify the stack, no need for the compiler to add STORE VOID opcodes
                     // subtract num_args and the default_mask, also take into account that a value might be returned
@@ -1515,32 +1548,32 @@ impl Compiler {
 
     fn compile_var_as_load(&self, compilation: &mut Compilation, var: &Var) -> Result<()> {
         match var {
-            Var::Float(f) => compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *f)?,
+            Var::Float(f) => compilation.emit(Opcode::LOAD, Mem::Constant, *f)?,
             Var::V2D(x, y) => {
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *x)?;
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, *y)?;
-                compilation.emit_opcode(Opcode::SQUISH2)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, *x)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, *y)?;
+                compilation.emit(Opcode::SQUISH2, 0, 0)?;
             }
             Var::Colour(colour) => {
                 // the default_mask
-                compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, 0)?;
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e0)?;
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e1)?;
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e2)?;
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, colour.e3)?;
-                compilation.emit_opcode_native_i32(Opcode::NATIVE, Native::ColRGB, 4)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, 0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, colour.e0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, colour.e1)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, colour.e2)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, colour.e3)?;
+                compilation.emit(Opcode::NATIVE, Native::ColRGB, 4)?;
                 // now update the opcode offset since this is using the NATIVE
                 let num_args = 4;
                 // subtract the 4 args + 1 default mask, but then add back the return value
                 compilation.opcode_offset -= (num_args + 1) - 1;
             }
-            Var::Keyword(kw) => compilation.emit_opcode_mem_kw(Opcode::LOAD, Mem::Constant, *kw)?,
+            Var::Keyword(kw) => compilation.emit(Opcode::LOAD, Mem::Constant, *kw)?,
             // Var::Vector(vs) => {
             //     // pushing from the VOID means creating a new, empty vector
-            //     compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
+            //     compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
             //     for v in vs {
             //         self.compile_var_as_load(compilation, v)?;
-            //         compilation.emit_opcode(Opcode::APPEND)?;
+            //         compilation.emit(Opcode::APPEND, 0, 0)?;
             //     }
             // }
             _ => {
@@ -1593,7 +1626,7 @@ impl Compiler {
 
                         // PILE will stack the elements in the rhs vector in order,
                         // so the lhs values have to be popped in reverse order
-                        compilation.emit_opcode_i32_i32(Opcode::PILE, num_kids as i32, 0)?;
+                        compilation.emit(Opcode::PILE, num_kids, 0)?;
                         compilation.opcode_offset = compilation.opcode_offset + num_kids as i32 - 1;
 
                         for k in kids.iter().rev() {
@@ -1661,16 +1694,16 @@ impl Compiler {
             if let Some(num_node) = maybe_num_node {
                 self.compile(compilation, num_node)?;
             } else {
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 2.0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, 2.0)?;
             }
 
-            compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, num_address)?;
+            compilation.emit(Opcode::STORE, Mem::Local, num_address)?;
 
             // reserve a memory location in local memory for a counter from 0 to quantity
             let counter_address = compilation.add_internal_local_mapping()?;
 
-            compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
-            compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, counter_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
+            compilation.emit(Opcode::STORE, Mem::Local, counter_address)?;
 
             // delta that needs to be added at every iteration
             //
@@ -1679,44 +1712,44 @@ impl Compiler {
                 self.compile(compilation, to_node)?;
             } else {
                 // else default to 1
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 1.0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
             }
 
             if let Some(from_node) = maybe_from_node {
                 self.compile(compilation, from_node)?;
             } else {
                 // else default to 0
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
             }
 
-            compilation.emit_opcode(Opcode::SUB)?;
+            compilation.emit(Opcode::SUB, 0, 0)?;
 
             if let Some(num_node) = maybe_num_node {
                 self.compile(compilation, num_node)?;
             } else {
                 // else default to 3
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 3.0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, 3.0)?;
             }
-            compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 1.0)?;
-            compilation.emit_opcode(Opcode::SUB)?;
-            compilation.emit_opcode(Opcode::DIV)?;
+            compilation.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
+            compilation.emit(Opcode::SUB, 0, 0)?;
+            compilation.emit(Opcode::DIV, 0, 0)?;
             let delta_address = compilation.add_internal_local_mapping()?;
-            compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, delta_address)?;
+            compilation.emit(Opcode::STORE, Mem::Local, delta_address)?;
 
             // set looping variable x to 'from' value
             if let Some(from_node) = maybe_from_node {
                 self.compile(compilation, from_node)?;
             } else {
                 // else default to 0
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
             }
 
             let from_address = compilation.add_internal_local_mapping()?;
 
-            compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, from_address)?;
+            compilation.emit(Opcode::STORE, Mem::Local, from_address)?;
 
             // store the starting 'from' value in the locally scoped variable
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, from_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, from_address)?;
 
             let loop_variable_address =
                 self.store_from_stack_to_memory(compilation, name_node, Mem::Local)?;
@@ -1725,22 +1758,22 @@ impl Compiler {
             // and jump if looping variable >= exit value
             let addr_loop_start = compilation.code.len();
 
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, counter_address)?;
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, num_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, counter_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, num_address)?;
 
             // exit check
-            compilation.emit_opcode(Opcode::LT)?;
+            compilation.emit(Opcode::LT, 0, 0)?;
 
             let addr_exit_check = compilation.code.len();
-            compilation.emit_opcode(Opcode::JUMP_IF)?;
+            compilation.emit(Opcode::JUMP_IF, 0, 0)?;
 
             // looper = from + (counter * delta)
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, from_address)?;
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, counter_address)?;
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, delta_address)?;
-            compilation.emit_opcode(Opcode::MUL)?;
-            compilation.emit_opcode(Opcode::ADD)?;
-            compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, loop_variable_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, from_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, counter_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, delta_address)?;
+            compilation.emit(Opcode::MUL, 0, 0)?;
+            compilation.emit(Opcode::ADD, 0, 0)?;
+            compilation.emit(Opcode::STORE, Mem::Local, loop_variable_address)?;
 
             let pre_body_opcode_offset = compilation.opcode_offset;
 
@@ -1752,22 +1785,18 @@ impl Compiler {
 
             // pop off any values that the body might leave on the stack
             for _i in 0..opcode_delta {
-                compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Void, 0)?;
+                compilation.emit(Opcode::STORE, Mem::Void, 0)?;
             }
 
             // increment counter
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, counter_address)?;
-            compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 1.0)?;
-            compilation.emit_opcode(Opcode::ADD)?;
-            compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, counter_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, counter_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
+            compilation.emit(Opcode::ADD, 0, 0)?;
+            compilation.emit(Opcode::STORE, Mem::Local, counter_address)?;
 
             // loop back to the comparison
             let mut compilation_len = compilation.code.len() as i32;
-            compilation.emit_opcode_i32_i32(
-                Opcode::JUMP,
-                -(compilation_len - addr_loop_start as i32),
-                0,
-            )?;
+            compilation.emit(Opcode::JUMP, -(compilation_len - addr_loop_start as i32), 0)?;
 
             compilation_len = compilation.code.len() as i32;
             compilation.bytecode_modify_arg0_i32(
@@ -1836,7 +1865,7 @@ impl Compiler {
                 self.compile(compilation, from_node)?;
             } else {
                 // else default to 0
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
             }
 
             let loop_variable_address =
@@ -1846,25 +1875,25 @@ impl Compiler {
             // and jump if looping variable >= exit value
             let addr_loop_start = compilation.code.len();
 
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, loop_variable_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, loop_variable_address)?;
 
             if use_to {
                 // so jump if looping variable >= exit value
                 if let Some(to_node) = maybe_to_node {
                     self.compile(compilation, to_node)?;
-                    compilation.emit_opcode(Opcode::LT)?;
+                    compilation.emit(Opcode::LT, 0, 0)?;
                 }
             } else {
                 // so jump if looping variable > exit value
                 if let Some(upto_node) = maybe_upto_node {
                     self.compile(compilation, upto_node)?;
-                    compilation.emit_opcode(Opcode::GT)?;
-                    compilation.emit_opcode(Opcode::NOT)?;
+                    compilation.emit(Opcode::GT, 0, 0)?;
+                    compilation.emit(Opcode::NOT, 0, 0)?;
                 }
             }
 
             let addr_exit_check = compilation.code.len();
-            compilation.emit_opcode(Opcode::JUMP_IF)?; // bc_exit_check
+            compilation.emit(Opcode::JUMP_IF, 0, 0)?; // bc_exit_check
 
             let pre_body_opcode_offset = compilation.opcode_offset;
 
@@ -1876,27 +1905,23 @@ impl Compiler {
 
             // pop off any values that the body might leave on the stack
             for _i in 0..opcode_delta {
-                compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Void, 0)?;
+                compilation.emit(Opcode::STORE, Mem::Void, 0)?;
             }
 
             // increment the looping variable
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, loop_variable_address)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, loop_variable_address)?;
 
             if let Some(increment_node) = maybe_increment_node {
                 self.compile(compilation, increment_node)?;
             } else {
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 1.0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
             }
 
-            compilation.emit_opcode(Opcode::ADD)?;
-            compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, loop_variable_address)?;
+            compilation.emit(Opcode::ADD, 0, 0)?;
+            compilation.emit(Opcode::STORE, Mem::Local, loop_variable_address)?;
             // loop back to the comparison
             let mut compilation_len = compilation.code.len() as i32;
-            compilation.emit_opcode_i32_i32(
-                Opcode::JUMP,
-                -(compilation_len - addr_loop_start as i32),
-                0,
-            )?;
+            compilation.emit(Opcode::JUMP, -(compilation_len - addr_loop_start as i32), 0)?;
 
             compilation_len = compilation.code.len() as i32;
             compilation.bytecode_modify_arg0_i32(
@@ -1948,14 +1973,14 @@ impl Compiler {
             } else {
                 // todo: ignore this, each should always have a from parameter
                 // else default to 0
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, 0.0)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
             }
 
-            compilation.emit_opcode(Opcode::VEC_NON_EMPTY)?;
+            compilation.emit(Opcode::VEC_NON_EMPTY, 0, 0)?;
             let addr_exit_check_is_vec = compilation.code.len();
-            compilation.emit_opcode(Opcode::JUMP_IF)?;
+            compilation.emit(Opcode::JUMP_IF, 0, 0)?;
 
-            compilation.emit_opcode(Opcode::VEC_LOAD_FIRST)?;
+            compilation.emit(Opcode::VEC_LOAD_FIRST, 0, 0)?;
 
             // compare looping variable against exit condition
             // and jump if looping variable >= exit value
@@ -1974,25 +1999,21 @@ impl Compiler {
 
             // pop off any values that the body might leave on the stack
             for _i in 0..opcode_delta {
-                compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Void, 0)?;
+                compilation.emit(Opcode::STORE, Mem::Void, 0)?;
             }
 
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, loop_variable_address)?;
-            compilation.emit_opcode(Opcode::VEC_HAS_NEXT)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, loop_variable_address)?;
+            compilation.emit(Opcode::VEC_HAS_NEXT, 0, 0)?;
 
             let addr_exit_check = compilation.code.len();
 
-            compilation.emit_opcode(Opcode::JUMP_IF)?;
+            compilation.emit(Opcode::JUMP_IF, 0, 0)?;
 
-            compilation.emit_opcode(Opcode::VEC_NEXT)?;
+            compilation.emit(Opcode::VEC_NEXT, 0, 0)?;
 
             // loop back to the comparison
             let mut compilation_len = compilation.code.len() as i32;
-            compilation.emit_opcode_i32_i32(
-                Opcode::JUMP,
-                -(compilation_len - addr_loop_start),
-                0,
-            )?;
+            compilation.emit(Opcode::JUMP, -(compilation_len - addr_loop_start), 0)?;
 
             compilation_len = compilation.code.len() as i32;
             compilation.bytecode_modify_arg0_i32(
@@ -2018,7 +2039,7 @@ impl Compiler {
         list_node: &Node,
     ) -> Result<()> {
         // pushing from the VOID means creating a new, empty vector
-        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
+        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
 
         if let Node::List(children, _) = list_node {
             error_if_alterable(list_node, "compile_vector_in_quote")?;
@@ -2033,11 +2054,11 @@ impl Compiler {
             let children = only_semantic_nodes(children);
             for n in children {
                 if let Node::Name(_, iname, _) = n {
-                    compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, *iname)?;
+                    compilation.emit(Opcode::LOAD, Mem::Constant, *iname)?;
                 } else {
                     self.compile(compilation, n)?;
                 }
-                compilation.emit_opcode(Opcode::APPEND)?;
+                compilation.emit(Opcode::APPEND, 0, 0)?;
             }
             return Ok(());
         }
@@ -2050,9 +2071,7 @@ impl Compiler {
         let quoted_form = &children[0];
         match quoted_form {
             Node::List(_, _) => self.compile_vector_in_quote(compilation, quoted_form)?,
-            Node::Name(_, iname, _) => {
-                compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, *iname)?
-            }
+            Node::Name(_, iname, _) => compilation.emit(Opcode::LOAD, Mem::Constant, *iname)?,
             _ => self.compile(compilation, quoted_form)?,
         }
         Ok(())
@@ -2076,7 +2095,7 @@ impl Compiler {
         let value = &children[1];
         self.compile(compilation, value)?;
 
-        compilation.emit_opcode(Opcode::APPEND)?;
+        compilation.emit(Opcode::APPEND, 0, 0)?;
 
         if let Node::Name(_, iname, _) = vector {
             let mut mem_addr: Option<(Mem, i32)> = None;
@@ -2089,7 +2108,7 @@ impl Compiler {
             }
 
             if let Some((mem, addr)) = mem_addr {
-                compilation.emit_opcode_mem_i32(Opcode::STORE, mem, addr)?;
+                compilation.emit(Opcode::STORE, mem, addr)?;
             }
         }
 
@@ -2112,7 +2131,7 @@ impl Compiler {
             // place the fn_info_index onto the stack so that CALL_F can find the function
             // offset and num args
             self.compile(compilation, fn_info_index)?;
-            compilation.emit_opcode(Opcode::CALL_F)?;
+            compilation.emit(Opcode::CALL_F, 0, 0)?;
 
             // compile the rest of the arguments
 
@@ -2129,7 +2148,7 @@ impl Compiler {
                 self.compile(compilation, fn_info_index)?;
 
                 if let Node::Label(_, iname, _) = label {
-                    compilation.emit_opcode_mem_name(Opcode::STORE_F, Mem::Argument, *iname)?;
+                    compilation.emit(Opcode::STORE_F, Mem::Argument, *iname)?;
                 } else {
                     return Err(Error::Compiler(
                         "compile_fn_call: label required".to_string(),
@@ -2142,7 +2161,7 @@ impl Compiler {
             // place the fn_info_index onto the stack so that CALL_F_0 can find the
             // function's body offset
             self.compile(compilation, fn_info_index)?;
-            compilation.emit_opcode(Opcode::CALL_F)?;
+            compilation.emit(Opcode::CALL_F, 0, 0)?;
 
             return Ok(());
         }
@@ -2156,7 +2175,7 @@ impl Compiler {
         // fn_name should be a defined function's name, it will be known at compile time
         if let Some(fn_info_index) = compilation.get_fn_info_index(&children[0]) {
             // store the index into compilation->fn_info in the compilation
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, fn_info_index as i32)?;
+            compilation.emit(Opcode::LOAD, Mem::Constant, fn_info_index as i32)?;
             return Ok(());
         }
 
@@ -2168,9 +2187,9 @@ impl Compiler {
         compilation: &mut Compilation,
         children: &[&Node],
     ) -> Result<()> {
-        compilation.emit_opcode(Opcode::MTX_PUSH)?;
+        compilation.emit(Opcode::MTX_PUSH, 0, 0)?;
         self.compile_rest(compilation, children)?;
-        compilation.emit_opcode(Opcode::MTX_POP)?;
+        compilation.emit(Opcode::MTX_POP, 0, 0)?;
         Ok(())
     }
 
@@ -2200,7 +2219,7 @@ impl Compiler {
 
         // insert jump to after the 'then' node if not true
         let addr_jump_then = compilation.code.len();
-        compilation.emit_opcode(Opcode::JUMP_IF)?;
+        compilation.emit(Opcode::JUMP_IF, 0, 0)?;
 
         // the offset after the if
         let offset_after_if = compilation.opcode_offset;
@@ -2218,7 +2237,7 @@ impl Compiler {
             // insert a bc_jump_else opcode
             let addr_jump_else = compilation.code.len();
 
-            compilation.emit_opcode(Opcode::JUMP)?;
+            compilation.emit(Opcode::JUMP, 0, 0)?;
 
             let addr_jump_then_offset = compilation.code.len() as i32 - addr_jump_then as i32;
             compilation.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
@@ -2311,13 +2330,13 @@ impl Compiler {
                     //     // register_top_level_fns function
                     // }
 
-                    compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, iname)?;
+                    compilation.emit(Opcode::LOAD, Mem::Constant, iname)?;
 
-                    compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Argument, counter)?;
+                    compilation.emit(Opcode::STORE, Mem::Argument, counter)?;
                     counter += 1;
 
                     self.compile(compilation, value_node)?;
-                    compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Argument, counter)?;
+                    compilation.emit(Opcode::STORE, Mem::Argument, counter)?;
                     counter += 1;
 
                     num_args += 1;
@@ -2325,7 +2344,7 @@ impl Compiler {
                 }
                 updated_fn_info.num_args = num_args;
 
-                compilation.emit_opcode(Opcode::RET_0)?;
+                compilation.emit(Opcode::RET_0, 0, 0)?;
 
                 // --------
                 // the body
@@ -2340,7 +2359,7 @@ impl Compiler {
 
                 // Don't need any STORE, MEM_SEG_VOID instructions as the RET will
                 // pop the frame and blow the stack
-                compilation.emit_opcode(Opcode::RET)?;
+                compilation.emit(Opcode::RET, 0, 0)?;
 
                 compilation.current_fn_info_index = None;
             } else {
@@ -2372,15 +2391,11 @@ impl Compiler {
         // prepare the MEM_SEG_ARGUMENT with default values
 
         // for the function address
-        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, 666)?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, 666)?;
         // for the num args
-        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, 667)?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, 667)?;
 
-        compilation.emit_opcode_i32_i32(
-            Opcode::CALL,
-            fn_info_index as i32,
-            fn_info_index as i32,
-        )?;
+        compilation.emit(Opcode::CALL, fn_info_index, fn_info_index)?;
 
         // overwrite the default arguments with the actual arguments given by the fn invocation
         let mut arg_vals = &children[..];
@@ -2389,11 +2404,7 @@ impl Compiler {
             if let Node::Label(_, iname, _) = arg {
                 let val = &arg_vals[1];
                 self.compile(compilation, val)?;
-                compilation.emit_opcode_i32_name(
-                    Opcode::PLACEHOLDER_STORE,
-                    fn_info_index as i32,
-                    *iname,
-                )?;
+                compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
             } else {
                 return Err(Error::Compiler("compile_fn_invocation".to_string()));
             }
@@ -2402,12 +2413,8 @@ impl Compiler {
         }
 
         // call the body of the function
-        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, 668)?;
-        compilation.emit_opcode_i32_i32(
-            Opcode::CALL_0,
-            fn_info_index as i32,
-            fn_info_index as i32,
-        )?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, 668)?;
+        compilation.emit(Opcode::CALL_0, fn_info_index, fn_info_index)?;
 
         Ok(())
     }
@@ -2430,7 +2437,7 @@ impl Compiler {
         }
 
         self.compile(compilation, &children[0])?;
-        compilation.emit_opcode(op)?;
+        compilation.emit(op, 0, 0)?;
 
         Ok(())
     }
@@ -2444,7 +2451,7 @@ impl Compiler {
         self.compile(compilation, children[0])?;
         for n in &children[1..] {
             self.compile(compilation, n)?;
-            compilation.emit_opcode(op)?;
+            compilation.emit(op, 0, 0)?;
         }
         Ok(())
     }
@@ -2453,7 +2460,7 @@ impl Compiler {
         match node {
             Node::Float(_, _, _) => {
                 let f = self.get_float(node)?;
-                compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, f)?;
+                compilation.emit(Opcode::LOAD, Mem::Constant, f)?;
             }
             Node::Vector(_elements, _) => {
                 unimplemented!();
@@ -2480,8 +2487,8 @@ impl Compiler {
 
         if node.has_gene() && use_gene {
             let (a, b) = self.get_2d(node)?;
-            compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, a)?;
-            compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, b)?;
+            compilation.emit(Opcode::LOAD, Mem::Constant, a)?;
+            compilation.emit(Opcode::LOAD, Mem::Constant, b)?;
         } else {
             for n in children {
                 if use_gene {
@@ -2491,7 +2498,7 @@ impl Compiler {
                 }
             }
         }
-        compilation.emit_opcode(Opcode::SQUISH2)?;
+        compilation.emit(Opcode::SQUISH2, 0, 0)?;
 
         Ok(())
     }
@@ -2503,7 +2510,7 @@ impl Compiler {
         children: &[&Node],
     ) -> Result<()> {
         // pushing from the VOID means creating a new, empty vector
-        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Void, 0)?;
+        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
 
         // if this is an alterable vector, we'll have to pull values for each element from the genes
         let use_gene = node.has_gene() && self.use_genes;
@@ -2514,7 +2521,7 @@ impl Compiler {
             } else {
                 self.compile(compilation, n)?;
             }
-            compilation.emit_opcode(Opcode::APPEND)?;
+            compilation.emit(Opcode::APPEND, 0, 0)?;
         }
 
         Ok(())
@@ -2526,7 +2533,7 @@ impl Compiler {
         kw: Keyword,
         value: i32,
     ) -> Result<()> {
-        compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Constant, value)?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, value)?;
         self.store_globally_kw(compilation, kw)?;
         Ok(())
     }
@@ -2537,7 +2544,7 @@ impl Compiler {
         kw: Keyword,
         value: f32,
     ) -> Result<()> {
-        compilation.emit_opcode_mem_f32(Opcode::LOAD, Mem::Constant, value)?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, value)?;
         self.store_globally_kw(compilation, kw)?;
         Ok(())
     }
@@ -2551,7 +2558,7 @@ impl Compiler {
         b: f32,
         a: f32,
     ) -> Result<()> {
-        compilation.emit_opcode_mem_col(
+        compilation.emit(
             Opcode::LOAD,
             Mem::Constant,
             Colour::new(ColourFormat::Rgb, r, g, b, a),
@@ -2561,8 +2568,8 @@ impl Compiler {
     }
 
     fn append_keyword(&self, compilation: &mut Compilation, kw: Keyword) -> Result<()> {
-        compilation.emit_opcode_mem_name(Opcode::LOAD, Mem::Constant, Name::from(kw))?;
-        compilation.emit_opcode(Opcode::APPEND)?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, Name::from(kw))?;
+        compilation.emit(Opcode::APPEND, 0, 0)?;
         Ok(())
     }
 
@@ -2572,7 +2579,7 @@ impl Compiler {
             None => compilation.add_local_mapping(iname)?,
         };
 
-        compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Local, address)?;
+        compilation.emit(Opcode::STORE, Mem::Local, address)?;
 
         Ok(address)
     }
@@ -2584,7 +2591,7 @@ impl Compiler {
             None => compilation.add_global_mapping_for_keyword(kw)?,
         };
 
-        compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Global, address)?;
+        compilation.emit(Opcode::STORE, Mem::Global, address)?;
 
         Ok(address)
     }
@@ -2595,7 +2602,7 @@ impl Compiler {
             None => compilation.add_global_mapping(iname)?,
         };
 
-        compilation.emit_opcode_mem_i32(Opcode::STORE, Mem::Global, address)?;
+        compilation.emit(Opcode::STORE, Mem::Global, address)?;
 
         Ok(address)
     }
@@ -2627,7 +2634,7 @@ impl Compiler {
     ) -> Result<bool> {
         if let Some(local_mapping) = compilation.get_local_mapping(iname) {
             let val = *local_mapping;
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Local, val)?;
+            compilation.emit(Opcode::LOAD, Mem::Local, val)?;
             return Ok(true);
         }
 
@@ -2639,18 +2646,14 @@ impl Compiler {
                 maybe_argument_mapping = fn_info.get_argument_mapping(iname);
             }
             if let Some(argument_mapping) = maybe_argument_mapping {
-                compilation.emit_opcode_mem_i32(
-                    Opcode::LOAD,
-                    Mem::Argument,
-                    argument_mapping as i32,
-                )?;
+                compilation.emit(Opcode::LOAD, Mem::Argument, argument_mapping as i32)?;
                 return Ok(true);
             }
         }
 
         if let Some(global_mapping) = compilation.get_global_mapping(iname) {
             let val = *global_mapping;
-            compilation.emit_opcode_mem_i32(Opcode::LOAD, Mem::Global, val)?;
+            compilation.emit(Opcode::LOAD, Mem::Global, val)?;
             return Ok(true);
         }
 
