@@ -8,3 +8,8 @@ logs
 pids
 *.pid
 *.seed
+
+# profiling
+flame.svg
+perf.data
+perf.data.old
