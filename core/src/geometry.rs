@@ -55,6 +55,7 @@ impl RenderPacket {
         // assuming that col is ColourFormat::Rgb
 
         let (nx, ny) = matrix.transform_vec2(x, y);
+
         // pre-multiply the alpha
         // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
         self.geo.append(&mut vec![

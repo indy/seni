@@ -6,8 +6,8 @@ use std::io::prelude::*;
 use std::io::Error as IoError;
 use std::time::Instant;
 
-use log::{info, trace, error};
 use env_logger;
+use log::{error, info, trace};
 
 #[derive(Debug)]
 pub enum NativeError {

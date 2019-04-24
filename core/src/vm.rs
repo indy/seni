@@ -33,6 +33,8 @@ use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
 
+// use log::{trace, debug};
+
 const FP_OFFSET_TO_LOCALS: usize = 4;
 const FP_OFFSET_TO_HOP_BACK: usize = 3;
 const FP_OFFSET_TO_NUM_ARGS: usize = 2;
@@ -724,9 +726,13 @@ impl Vm {
     }
 
     fn opcode_load(&mut self, bc: &Bytecode) -> Result<()> {
+        let arg0 = bc.arg0;
+        let arg1 = bc.arg1;
+
+
         self.sp = self.sp_inc()?; // stack push
 
-        if let BytecodeArg::Mem(mem) = bc.arg0 {
+        if let BytecodeArg::Mem(mem) = arg0 {
             match mem {
                 Mem::Argument => {
                     // if we're referencing an ARG in-between CALL and CALL_0 make sure we
@@ -743,7 +749,7 @@ impl Vm {
                                 ));
                             }
                         }
-                        if let BytecodeArg::Int(arg1) = bc.arg1 {
+                        if let BytecodeArg::Int(arg1) = arg1 {
                             let src = &self.stack[fp - arg1 as usize - 1];
                             self.stack[self.sp - 1] = src.clone();
                         }
@@ -768,7 +774,7 @@ impl Vm {
                         }
                         let local = fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
 
-                        if let BytecodeArg::Int(offset) = bc.arg1 {
+                        if let BytecodeArg::Int(offset) = arg1 {
                             let src = &self.stack[local + offset as usize];
                             self.stack[self.sp - 1] = src.clone();
                         }
@@ -777,12 +783,12 @@ impl Vm {
                     }
                 }
                 Mem::Global => {
-                    if let BytecodeArg::Int(arg1) = bc.arg1 {
+                    if let BytecodeArg::Int(arg1) = arg1 {
                         let src = &self.stack[self.global + arg1 as usize];
                         self.stack[self.sp - 1] = src.clone();
                     }
                 }
-                Mem::Constant => self.stack[self.sp - 1] = bytecode_arg_to_var(&bc.arg1)?,
+                Mem::Constant => self.stack[self.sp - 1] = bytecode_arg_to_var(&arg1)?,
                 Mem::Void => {
                     // pushing from the void. i.e. create this object
                     self.stack[self.sp - 1] = Var::Vector(Vec::new());
