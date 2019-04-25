@@ -605,10 +605,6 @@ select:focus {
   border: 1px solid #33C3F0;
   outline: 0; }
 label,
-legend {
-  display: block;
-  margin-bottom: .5rem;
-  font-weight: 600; }
 fieldset {
   padding: 0;
   border-width: 0; }

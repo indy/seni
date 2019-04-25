@@ -256,8 +256,30 @@ class GLRenderer {
     });
   }
 
-  getImageData() {
-    return this.glDomElement.toDataURL();
+  copyImageDataTo(elem) {
+    this.glDomElement.toBlob(blob => {
+      elem.src = window.URL.createObjectURL(blob);
+    });
+  }
+
+  localDownload(filename) {
+    this.glDomElement.toBlob(function(blob) {
+
+      const url = window.URL.createObjectURL(blob);
+
+      let element = document.createElement('a');
+      element.setAttribute('href', url);
+      // element.setAttribute('target', '_blank');
+      element.setAttribute('download', filename);
+
+      element.style.display = 'none';
+      document.body.appendChild(element);
+
+      element.click();
+
+      document.body.removeChild(element);
+
+    });
   }
 
   preDrawScene(destWidth, destHeight, section) {
@@ -758,6 +780,15 @@ function hashCode(string) {
   return hash;
 }
 
+function actionSetGenotype(state, { genotype }) {
+  return new Promise((resolve, reject) => {
+    const newState = cloneState(state);
+
+    newState.genotype = genotype;
+    resolveAsCurrentState(resolve, newState);
+  });
+}
+
 function actionSetScript(state, { script }) {
   return new Promise((resolve, reject) => {
     const newState = cloneState(state);
@@ -921,7 +952,7 @@ function logMode(mode) {
 function createInitialState() {
   return {
     // the resolution of the high res image
-    highResolution: [2048, 2048], //[4096, 4096],
+    highResolution: [2048, 2048], // [4096, 4096],
     placeholder: 'img/spinner.gif',
     populationSize: 24,
     mutationRate: 0.1,
@@ -934,7 +965,9 @@ function createInitialState() {
     script: undefined,
     scriptHash: undefined,
     genotypes: [],
-    traits: []
+    traits: [],
+
+    genotype: undefined,
   };
 }
 
@@ -948,6 +981,11 @@ function createStore(initialState) {
         logMode(action.mode);
       }
       return actionSetMode(state, action);
+    case 'SET_GENOTYPE':
+      // SET_GENOTYPE is only used during the high-res rendering
+      // when the render button is clicked on an image in the evolve gallery
+      //
+      return actionSetGenotype(state, action);
     case 'SET_SCRIPT':
       return actionSetScript(state, action);
     case 'SET_SCRIPT_ID':
@@ -1418,7 +1456,7 @@ function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
     gGLRenderer.drawBuffer(memoryF32, buffer);
   });
 
-  imageElement.src = gGLRenderer.getImageData();
+  gGLRenderer.copyImageDataTo(imageElement);
 }
 
 function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, section) {
@@ -1440,7 +1478,7 @@ function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, secti
     gGLRenderer.drawBuffer(memoryF32, buffer);
   });
 
-  imageElement.src = gGLRenderer.getImageData();
+  gGLRenderer.copyImageDataTo(imageElement);
 }
 
 function renderGeneration(state) {
@@ -1627,43 +1665,15 @@ function getPhenoIdFromDom(element) {
   return getIdNumberFromDom(element, /pheno-(\d+)/);
 }
 
-function renderHighRes(state, genotype) {
+function downloadDialog(state, genotype) {
   const container = document.getElementById('high-res-container');
-  const loader = document.getElementById('high-res-loader');
-  const image = document.getElementById('high-res-image');
-
   container.classList.remove('hidden');
-  loader.classList.remove('hidden');
-  image.classList.add('hidden');
-
-  const stopFn = startTiming();
-
-  Job.request(jobRender, {
-    script: state.script,
-    scriptHash: state.scriptHash,
-    genotype: genotype ? genotype : undefined
-  }).then(({ title, memory, buffers }) => {
-    const [width, height] = state.highResolution;
-
-    renderGeometryBuffers(memory, buffers, image, width, height);
-
-    stopFn(`renderHighRes-${title}`, console);
-
-    image.classList.remove('hidden');
-    loader.classList.add('hidden');
-  }).catch(error => {
-    // handle error
-    console.error(`worker: error of ${error}`);
-    console.error(error);
-    image.classList.remove('hidden');
-    loader.classList.add('hidden');
-  });
 }
 
 function renderHighResSection(state, section) {
   const container = document.getElementById('high-res-container');
   const loader = document.getElementById('high-res-loader');
-  const image = document.getElementById('high-res-image');
+  const image = document.getElementById('render-img');
 
   container.classList.remove('hidden');
   loader.classList.remove('hidden');
@@ -1683,8 +1693,6 @@ function renderHighResSection(state, section) {
     stopFn(`renderHighResSection-${title}-${section}`, console);
 
     image.classList.remove('hidden');
-    const link = document.getElementById('high-res-link');
-    link.href = image.src;
     loader.classList.add('hidden');
   }).catch(error => {
     // handle error
@@ -1693,6 +1701,10 @@ function renderHighResSection(state, section) {
     image.classList.remove('hidden');
     loader.classList.add('hidden');
   });
+}
+
+function setGenotype(store, genotype) {
+  return store.dispatch({type: 'SET_GENOTYPE', genotype});
 }
 
 // updates the store's script variable and then generates the traits
@@ -1884,6 +1896,14 @@ function createEditor(store, editorTextArea) {
   });
 }
 
+function ensureFilenameIsPNG(filename) {
+  if(filename.endsWith(".png")) {
+    return filename;
+  } else {
+    return filename + ".png";
+  }
+}
+
 function setupUI(store) {
   const d = document;
   const editorTextArea = d.getElementById('edit-textarea');
@@ -1920,7 +1940,7 @@ function setupUI(store) {
   });
 
   addClickEvent('render-btn', event => {
-    renderHighRes(store.getState());
+    downloadDialog();
     event.preventDefault();
   });
 
@@ -1964,7 +1984,10 @@ function setupUI(store) {
       if (index !== -1) {
         const genotypes = store.getState().genotypes;
         const genotype = genotypes[index];
-        renderHighRes(store.getState(), genotype);
+
+        setGenotype(store, genotype).then(() => {
+          downloadDialog();
+        });
       }
     } else if (target.classList.contains('edit')) {
       showEditFromEvolve(store, target);
@@ -1980,27 +2003,49 @@ function setupUI(store) {
     onNextGen(store);
   });
 
-  addClickEvent('high-res-link', event => {
-    const image = document.getElementById('high-res-image');
-    const win = window.open();
-    win.document.open();
-    win.document.write('<iframe src="' + image.src + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
-    win.document.close();
-    event.preventDefault();
-  });
-
   addClickEvent('high-res-download', event => {
-    const highResLink = document.getElementById('high-res-link');
+    const state = store.getState();
 
-    // remove target='_blank' and add a download attribute
-    highResLink.removeAttribute('target');
-    highResLink.setAttribute('download', 'seni-image.png');
+    const loader = document.getElementById('high-res-loader');
+    const image = document.getElementById('render-img');
 
-    highResLink.click();
+    const image_resolution_elem = document.getElementById('high-res-resolution');
+    let image_resolution = parseInt(image_resolution_elem.value, 10);
 
-    // restore attributes
-    highResLink.removeAttribute('download');
-    highResLink.setAttribute('target', '_blank');
+    const image_dim_elem = document.getElementById('high-res-tiledim');
+    let image_dim = parseInt(image_dim_elem.value, 10);
+
+    loader.classList.remove('hidden');
+
+    const stopFn = startTiming();
+
+    Job.request(jobRender, {
+      script: state.script,
+      scriptHash: state.scriptHash,
+      genotype: state.genotype
+    }).then(({ title, memory, buffers }) => {
+      // const [width, height] = state.highResolution;
+      const [width, height] = [image_resolution, image_resolution];
+
+      renderGeometryBuffers(memory, buffers, image, width, height);
+
+      stopFn(`renderHighRes-${title}`, console);
+
+      loader.classList.add('hidden');
+
+      const image_name_elem = document.getElementById('high-res-filename');
+      const filename = ensureFilenameIsPNG(image_name_elem.value);
+      gGLRenderer.localDownload(filename);
+
+      // todo: is this the best place to reset the genotype?
+      setGenotype(store, undefined);
+
+    }).catch(error => {
+      // handle error
+      console.error(`worker: error of ${error}`);
+      console.error(error);
+      loader.classList.add('hidden');
+    });
 
     event.preventDefault();
   });

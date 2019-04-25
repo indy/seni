@@ -50,14 +50,16 @@
     <div id="high-res-container" class="hidden">
       <div id="holder">
         <div class="high-res-card-holder">
-          <div id="high-res-loader"></div>
-          <a id="high-res-link" target="_blank" href="">
-            <img id="high-res-image" class="card-image">
-          </a>
+          <div id="high-res-loader" class="hidden"></div>
           <div class="card-action">
+            <label for="high-res-filename">Filename:</label>
+            <input id="high-res-filename" name="high-res-filename" value="shabba.png">
+            <label for="high-res-resolution">Resolution:</label>
+            <input type="number" id="high-res-resolution" name="high-res-resolution" value="2048">
+            <label for="high-res-tiledim">TileDim:</label>
+            <input type="number" id="high-res-tiledim" name="high-res-tiledim" value="1">
             <a id="high-res-download" class="left-more" href="#">Download</a>
             <a id="high-res-close" class="right-more" href="#">Close</a>
-            <p id="high-res-image-note">(click on image to open in new tab)</p>
           </div>
         </div>
       </div>

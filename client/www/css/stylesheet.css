@@ -259,7 +259,7 @@ button:disabled {
 }
 
 .left-more {
-  float: left;
+  /* float: left; */
   margin-left: 9rem;
 }
 
@@ -269,7 +269,7 @@ button:disabled {
 }
 
 .right-more {
-  float: right;
+  /* float: right; */
   margin-right: 9rem;
 }
 
