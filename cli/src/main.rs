@@ -54,7 +54,14 @@ fn main() {
             Arg::with_name("debug")
                 .short("d")
                 .long("debug")
-                .help("debug mode")
+                .help("print bytecode")
+                .takes_value(false),
+        )
+        .arg(
+            Arg::with_name("profiling")
+                .short("p")
+                .long("profiling")
+                .help("Show opcode count")
                 .takes_value(false),
         )
         .arg(
@@ -81,18 +88,20 @@ fn run(matches: &ArgMatches) -> Result<()> {
         // this should always pass as SCRIPT is required
         info!("Using script file: {}", script);
 
+        let profiling = if matches.is_present("profiling") {
+            VMProfiling::On
+        } else {
+            VMProfiling::Off
+        };
+
+        let debug = matches.is_present("debug");
+
         if matches.is_present("packed_trait_list") {
             print_packed_trait_list(script)?;
-        } else if matches.is_present("debug") {
-            if let Ok(seed) = value_t!(matches.value_of("seed"), u32) {
-                run_debug_script_with_seed(script, seed)?;
-            } else {
-                run_debug_script(script)?;
-            }
         } else if let Ok(seed) = value_t!(matches.value_of("seed"), u32) {
-            run_script_with_seed(script, seed)?;
+            run_script_with_seed(script, seed, profiling, debug)?;
         } else {
-            run_script(script)?;
+            run_script(script, profiling, debug)?;
         }
     }
 
@@ -109,31 +118,14 @@ fn read_script_file(filename: &str) -> Result<String> {
     Ok(contents)
 }
 
-fn run_debug_script(script: &str) -> Result<()> {
-    trace!("run_debug_script");
-
-    let source = read_script_file(script)?;
-    let program = compile_str(&source)?;
-
-    println!("{}", &source);
-    println!("{}", &program);
-
-    Ok(())
-}
-
-fn run_debug_script_with_seed(_script: &str, _seed: u32) -> Result<()> {
-    trace!("run_debug_script_with_seed");
-
-    Ok(())
-}
-
-fn run_script(script: &str) -> Result<()> {
+fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
     trace!("run_script");
 
     // --------------------------------------------------------------------------------
 
     let time_read_script_file = Instant::now();
     let source = read_script_file(script)?;
+
     info!("read_script_file: {:?}", time_read_script_file.elapsed());
 
     let mut vm = Vm::new();
@@ -162,7 +154,9 @@ fn run_script(script: &str) -> Result<()> {
     vm.interpret(&preamble)?;
     info!("preamble: {:?}", time_preamble.elapsed());
 
-    vm.ip = 0;
+    // reset the ip and setup any profiling of the main program
+    vm.init_for_main_program(&program, profiling)?;
+
     let time_interpret = Instant::now();
     vm.interpret(&program)?;
     let res = vm.top_stack_value()?;
@@ -172,12 +166,19 @@ fn run_script(script: &str) -> Result<()> {
 
     info!("run_program: {:?}", time_run_program.elapsed());
 
+    if profiling == VMProfiling::On {
+        vm.println_profiling(&program)?;
+    } else if debug {
+        println!("{}", source);
+        println!("{}", program);
+    }
+
     println!("res = {}", res);
 
     Ok(())
 }
 
-fn run_script_with_seed(_script: &str, _seed: u32) -> Result<()> {
+fn run_script_with_seed(_script: &str, _seed: u32, _profiling: VMProfiling, _debug: bool) -> Result<()> {
     trace!("run_script_with_seed");
 
     Ok(())
