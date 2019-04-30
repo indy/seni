@@ -71,7 +71,8 @@ pub fn run_program_with_preamble(vm: &mut Vm, program: &Program) -> Result<Var> 
     let preamble = compile_preamble()?;
     vm.interpret(&preamble)?;
 
-    vm.ip = 0;
+    // reset the ip and setup any profiling of the main program
+    vm.init_for_main_program(&program, VMProfiling::Off)?;
 
     vm.interpret(&program)?;
     vm.top_stack_value()

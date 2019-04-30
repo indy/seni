@@ -21,7 +21,7 @@ use crate::name::Name;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
 use crate::trait_list::{Trait, TraitList};
-use crate::vm::{Var, Vm};
+use crate::vm::{Var, Vm, VMProfiling};
 
 /*
 GeneVar is a subset of the Var enum. Since Gene is a member of NodeMeta it
@@ -65,8 +65,8 @@ impl Gene {
         let preamble = compile_preamble()?;
         vm.interpret(&preamble)?;
 
-        vm.ip = 0;
-
+        // reset the ip and setup any profiling of the main program
+        vm.init_for_main_program(&t.program, VMProfiling::Off)?;
         vm.interpret(&t.program)?;
         let var = vm.top_stack_value()?;
 
@@ -139,19 +139,10 @@ impl Packable for Gene {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct Genotype {
     pub genes: Vec<Gene>,
     pub current_gene_index: usize,
-}
-
-impl Default for Genotype {
-    fn default() -> Genotype {
-        Genotype {
-            genes: Vec::new(),
-            current_gene_index: 0,
-        }
-    }
 }
 
 impl Genotype {

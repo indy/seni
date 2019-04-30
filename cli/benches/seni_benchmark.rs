@@ -27,7 +27,8 @@ fn interpret_script(source: &str) {
     let preamble = compile_preamble().unwrap();
     vm.interpret(&preamble).unwrap();
 
-    vm.ip = 0;
+    // reset the ip and setup any profiling of the main program
+    vm.init_for_main_program(&program, VMProfiling::Off).unwrap();
     vm.interpret(&program).unwrap();
     let _res = vm.top_stack_value().unwrap();
 }

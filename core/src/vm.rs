@@ -43,6 +43,12 @@ const FP_OFFSET_TO_IP: usize = 1;
 const MEMORY_GLOBAL_SIZE: usize = 40;
 const MEMORY_LOCAL_SIZE: usize = 40;
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum VMProfiling {
+    On,
+    Off
+}
+
 // **************************************************
 // VM bytecode interpreter
 // **************************************************
@@ -191,6 +197,8 @@ pub struct Vm {
     pub mappings: Mappings,
     pub geometry: Geometry,
 
+    pub profiling: VMProfiling,
+    pub opcode_count: Vec<u64>,
     pub opcodes_executed: u64,
     pub execution_time: f32, // in msec
 
@@ -240,14 +248,9 @@ impl Default for Vm {
             mappings: Mappings::new(),
             geometry: Geometry::new(),
 
-            // heap_size: usize,
-            // heap_slab: Var::new(),
-            // heap_avail: Var,           // doubly linked list of unallocated sen_vars from the
-            // // heap_slab
-            // heap_avail_size_before_gc: usize, // how small can the heap get before a gc is
-            // // invoked
 
-            // heap_avail_size: usize,
+            profiling: VMProfiling::Off,
+            opcode_count: vec![],
             opcodes_executed: 0,
             execution_time: 0.0, // in msec
 
@@ -1538,6 +1541,22 @@ impl Vm {
         Ok(())
     }
 
+    // called before the top level interpret is invoked
+    pub fn init_for_main_program(&mut self, program: &Program, profiling: VMProfiling) -> Result<()> {
+        self.profiling = profiling;
+        self.ip = 0;
+
+        if self.profiling == VMProfiling::On {
+            self.opcodes_executed = 0;
+            self.opcode_count = Vec::with_capacity(program.code.len());
+            for _ in 0..program.code.len() {
+                self.opcode_count.push(0);
+            }
+        }
+
+        Ok(())
+    }
+
     // executes a program on a vm
     // returns Ok if we reached a STOP opcode
     pub fn interpret(&mut self, program: &Program) -> Result<()> {
@@ -1548,7 +1567,11 @@ impl Vm {
         let mut bc;
 
         loop {
-            self.opcodes_executed += 1;
+            if self.profiling == VMProfiling::On {
+                self.opcodes_executed += 1;
+                self.opcode_count[self.ip] += 1;
+            }
+
             bc = &program.code[self.ip];
             self.ip += 1;
 
@@ -1594,6 +1617,15 @@ impl Vm {
                 _ => return Err(Error::VM(format!("Invalid Opcode: {}", bc.op))),
             }
         }
+    }
+
+    pub fn println_profiling(&self, program: &Program) -> Result<()> {
+
+        for (i, line) in self.opcode_count.iter().enumerate() {
+            println!("{:>4}: {:>6}:      {}", i+1, line, program.code[i]);
+        }
+
+        Ok(())
     }
 
     pub fn top_stack_value(&self) -> Result<Var> {
