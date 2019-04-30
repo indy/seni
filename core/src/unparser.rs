@@ -14,11 +14,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::colour::ColourFormat;
-use crate::error::{Error, Result};
+use crate::error::Error;
 use crate::gene::{Gene, Genotype};
 use crate::keywords::Keyword;
 use crate::name::Name;
 use crate::parser::{parse, Node, NodeMeta, WordLut};
+use crate::result::Result;
 
 pub fn unparse(source: &str, genotype: &mut Genotype) -> Result<String> {
     let (ast, word_lut) = parse(source)?;

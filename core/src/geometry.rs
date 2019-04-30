@@ -15,10 +15,11 @@
 
 use crate::colour::{Colour, ColourFormat};
 use crate::ease::{easing, Easing};
-use crate::error::*;
+use crate::error::Error;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::prng;
+use crate::result::Result;
 use crate::uvmapper::UvMapping;
 use crate::vm::Var;
 

@@ -22,10 +22,11 @@
 // | LAB    | L 0..100  | A -128..128 | B -128..128 |
 // |--------+-----------+-------------+-------------|
 
-use crate::error::{Error, Result};
+use crate::error::Error;
 use crate::keywords::Keyword;
 use crate::mathutil;
 use crate::packable::{Mule, Packable};
+use crate::result::Result;
 
 use std;
 use std::fmt;

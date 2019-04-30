@@ -46,6 +46,7 @@ mod parser;
 mod path;
 mod prng;
 mod repeat;
+mod result;
 pub mod seni_language;
 mod trait_list;
 mod unparser;
@@ -55,8 +56,9 @@ mod vm;
 pub use crate::compiler::{
     compile_preamble, compile_program, compile_program_with_genotype, Program,
 };
-pub use crate::error::*;
+pub use crate::error::Error;
 pub use crate::parser::*;
+pub use crate::result::Result;
 pub use crate::vm::*;
 
 pub use crate::gene::{next_generation, Genotype};

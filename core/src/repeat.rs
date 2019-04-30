@@ -14,10 +14,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::compiler::Program;
-use crate::error::*;
 use crate::keywords::Keyword;
 use crate::mathutil::*;
 use crate::name::Name;
+use crate::result::Result;
 use crate::vm::*;
 
 fn flip(vm: &mut Vm, program: &Program, fun: usize, sx: f32, sy: f32, copy_val: i32) -> Result<()> {

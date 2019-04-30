@@ -17,12 +17,13 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use crate::colour::Colour;
-use crate::error::{Error, Result};
+use crate::error::Error;
 use crate::gene::Gene;
 use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
 use crate::name::Name;
 use crate::native::Native;
+use crate::result::Result;
 
 use strum::IntoEnumIterator;
 

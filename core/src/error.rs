@@ -13,8 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub type Result<T> = ::std::result::Result<T, Error>;
-
 #[derive(Debug)]
 pub enum Error {
     // these are lazy errors, used during dev as basically placeholder errors. remove them

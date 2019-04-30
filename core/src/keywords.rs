@@ -18,9 +18,9 @@ use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
-use crate::error::Result;
 use crate::name::Name;
 use crate::packable::{Mule, Packable};
+use crate::result::Result;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString, Display, EnumIter)]
 pub enum Keyword {

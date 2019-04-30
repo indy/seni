@@ -17,7 +17,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 
 use crate::colour::{Colour, ColourFormat};
-use crate::error::{Error, Result};
+use crate::error::Error;
 use crate::gene::Genotype;
 use crate::keywords::{name_to_keyword_hash, Keyword};
 use crate::mathutil;
@@ -26,6 +26,7 @@ use crate::native::{name_to_native_hash, parameter_info, Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
+use crate::result::Result;
 use crate::vm::Var;
 
 use log::warn;

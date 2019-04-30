@@ -13,7 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::error::{Error, Result};
+use crate::error::Error;
+use crate::result::Result;
 
 /// convert Rust structures into a compact text format suitable for transferring over to the JS side
 pub trait Packable {

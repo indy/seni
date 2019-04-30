@@ -16,7 +16,7 @@
 use crate::colour::{Colour, ProcColourStateStruct};
 use crate::compiler::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
 use crate::ease::Easing;
-use crate::error::{Error, Result};
+use crate::error::Error;
 use crate::focal::FocalStateStruct;
 use crate::geometry::Geometry;
 use crate::interp::InterpStateStruct;
@@ -27,6 +27,7 @@ use crate::native::execute_native;
 use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
+use crate::result::Result;
 use crate::uvmapper::{BrushType, Mappings};
 
 use std::cell::RefCell;
@@ -46,7 +47,7 @@ const MEMORY_LOCAL_SIZE: usize = 40;
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VMProfiling {
     On,
-    Off
+    Off,
 }
 
 // **************************************************
@@ -253,7 +254,6 @@ impl Default for Vm {
 
             mappings: Mappings::new(),
             geometry: Geometry::new(),
-
 
             profiling: VMProfiling::Off,
             opcode_count: vec![],
@@ -737,7 +737,6 @@ impl Vm {
     fn opcode_load(&mut self, bc: &Bytecode) -> Result<()> {
         let arg0 = bc.arg0;
         let arg1 = bc.arg1;
-
 
         self.sp = self.sp_inc()?; // stack push
 
@@ -1548,7 +1547,11 @@ impl Vm {
     }
 
     // called before the top level interpret is invoked
-    pub fn init_for_main_program(&mut self, program: &Program, profiling: VMProfiling) -> Result<()> {
+    pub fn init_for_main_program(
+        &mut self,
+        program: &Program,
+        profiling: VMProfiling,
+    ) -> Result<()> {
         self.profiling = profiling;
         self.ip = 0;
 
@@ -1626,9 +1629,8 @@ impl Vm {
     }
 
     pub fn println_profiling(&self, program: &Program) -> Result<()> {
-
         for (i, line) in self.opcode_count.iter().enumerate() {
-            println!("{:>4}: {:>6}:      {}", i+1, line, program.code[i]);
+            println!("{:>4}: {:>6}:      {}", i + 1, line, program.code[i]);
         }
 
         Ok(())

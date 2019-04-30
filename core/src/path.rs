@@ -15,10 +15,10 @@
 
 use crate::compiler::Program;
 use crate::ease::{easing, Easing};
-use crate::error::*;
 use crate::keywords::Keyword;
 use crate::mathutil::{bezier_point, quadratic_point, TAU};
 use crate::name::Name;
+use crate::result::Result;
 use crate::vm::*;
 
 // invoke a function with 3 args: step, position and t

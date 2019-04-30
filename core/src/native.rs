@@ -16,7 +16,7 @@
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
 use crate::compiler::Program;
 use crate::ease::easing_from_keyword;
-use crate::error::{Error, Result};
+use crate::error::Error;
 use crate::focal;
 use crate::interp;
 use crate::keywords::Keyword;
@@ -26,6 +26,7 @@ use crate::packable::{Mule, Packable};
 use crate::path;
 use crate::prng;
 use crate::repeat;
+use crate::result::Result;
 use crate::vm::{StackPeek, Var, Vm};
 
 use crate::uvmapper::BrushType;

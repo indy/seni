@@ -15,10 +15,10 @@
 
 use std::fmt;
 
-use crate::error::Result;
 use crate::keywords::Keyword;
 use crate::native::Native;
 use crate::packable::{Mule, Packable};
+use crate::result::Result;
 
 #[derive(Copy, Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Name(i32);

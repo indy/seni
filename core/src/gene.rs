@@ -15,13 +15,14 @@
 
 use crate::colour::Colour;
 use crate::compiler::compile_preamble;
-use crate::error::{Error, Result};
+use crate::error::Error;
 use crate::keywords::Keyword;
 use crate::name::Name;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
+use crate::result::Result;
 use crate::trait_list::{Trait, TraitList};
-use crate::vm::{Var, Vm, VMProfiling};
+use crate::vm::{VMProfiling, Var, Vm};
 
 /*
 GeneVar is a subset of the Var enum. Since Gene is a member of NodeMeta it

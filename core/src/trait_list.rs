@@ -16,10 +16,10 @@
 use crate::compiler::{
     compile_program_1, compile_program_for_trait, Compilation, Compiler, Program,
 };
-use crate::error::Result;
 use crate::name::Name;
 use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
+use crate::result::Result;
 use crate::run_program_with_preamble;
 use crate::vm::{Var, Vm};
 
