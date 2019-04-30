@@ -3,33 +3,12 @@ use core::*;
 
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::Error as IoError;
 use std::time::Instant;
 
 use env_logger;
 use log::{error, info, trace};
 
-#[derive(Debug)]
-pub enum NativeError {
-    GeneralError,
-    NoneError,
-    IoError(IoError),
-    SenError(core::error::Error),
-}
-
-impl From<IoError> for NativeError {
-    fn from(e: IoError) -> NativeError {
-        NativeError::IoError(e)
-    }
-}
-
-impl From<core::error::Error> for NativeError {
-    fn from(e: core::error::Error) -> NativeError {
-        NativeError::SenError(e)
-    }
-}
-
-pub type Result<T> = ::std::result::Result<T, NativeError>;
+type Result<T> = ::std::result::Result<T, Box<::std::error::Error>>;
 
 fn main() {
     let start = Instant::now();
