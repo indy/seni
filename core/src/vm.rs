@@ -238,6 +238,12 @@ impl Default for Vm {
         base_offset += 1; // the caller's hop back
 
         base_offset += MEMORY_LOCAL_SIZE;
+        // Q: why are we adding MEMORY_LOCAL_SIZE to the base_offset when there
+        // is no function being called and we're in a global scope?
+        // A: Constructs like the loop keyword compile down to bytecode that
+        // uses STORE LOCAL opcodes. Since it's very common for scripts to use
+        // the loop keyword at the top-level we'll need to reserve some of the
+        // stack for 'local' variables even on the global scope.
         let sp = base_offset;
 
         Vm {
