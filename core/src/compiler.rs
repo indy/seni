@@ -2162,7 +2162,7 @@ impl Compiler {
             // place the fn_info_index onto the stack so that CALL_F_0 can find the
             // function's body offset
             self.compile(compilation, fn_info_index)?;
-            compilation.emit(Opcode::CALL_F, 0, 0)?;
+            compilation.emit(Opcode::CALL_F_0, 0, 0)?;
 
             return Ok(());
         }
