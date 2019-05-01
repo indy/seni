@@ -33,11 +33,11 @@
 
 ;; render the background grid
 (define
-  focal-bg-a (focal/point position: [{463 (gen/int min: 400 max: 600)} 
+  focal-bg-a (focal/build-point position: [{463 (gen/int min: 400 max: 600)}
                                      {230 (gen/int min: 100 max: 400)}]
                           distance: {898 (gen/int min: 700 max: 1000)}
                           falloff: "linear")
-  focal-bg-b (focal/point position: [{554 (gen/int min: 400 max: 600)} 
+  focal-bg-b (focal/build-point position: [{554 (gen/int min: 400 max: 600)}
                                      {709 (gen/int min: 600 max: 900)}]
                           distance: {733 (gen/int min: 700 max: 1000)}
                           falloff: "linear")
@@ -53,4 +53,3 @@
                               width: {33 (gen/int min: 30 max: 60)}
                               height: {482 (gen/int min: 400 max: 500)}
                               col-fn: col-fn-bg))
-

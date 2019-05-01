@@ -1,4 +1,4 @@
-(define 
+(define
   title "164f-vhs"
   initial-seed (prng/range seed: {384 (gen/int max: 1000)})
   coords1 {[[304.553 -275.573]
@@ -26,7 +26,7 @@
                               b: {[0.565 0.806 0.712] (gen/scalar)}
                               c: {[0.260 0.205 0.216] (gen/scalar)}
                               d: {[0.940 0.123 0.942] (gen/scalar)}
-                              alpha: 0.08)) 
+                              alpha: 0.08))
 
 (fn (wash variation: 200
           line-width: 70
@@ -37,7 +37,7 @@
   (fn (v x: 0 y: 0 z: 0 scale: 1)
     (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
-  (define 
+  (define
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
 
@@ -62,7 +62,7 @@
                         colour: red
                         seed: "yabba dabba dooo"
                         radius: 300)
-  (define 
+  (define
     rng (prng/range seed: seed)
     outer-exterior (prng/range seed: (rng) min: 170 max: 210)
     outer-interior (prng/range seed: (rng) min: 80 max: 170)
@@ -101,7 +101,7 @@
     ;; centre fill
     (circle-slice tessellation: 10
                   position: [0 0]
-                  colour: (col/lighten colour: colour 
+                  colour: (col/lighten colour: colour
                                        value: (* {66 (gen/int min: 5 max: 200)} (srng)))
                   angle-start: 0
                   angle-end: 360
@@ -127,13 +127,13 @@
 
 
 (fn (bg2)
-  (define 
+  (define
     seed-radius {7.055 (gen/scalar min: 6 max: 8)}
     scale-factor 4
     phi (/ (sqrt {5.428 (gen/scalar min: 4 max: 6)}) {8.036 (gen/scalar min: 8 max: 10)})
     seeds 200
-    focalpoint ({focal/point (gen/select from: ['focal/point 'focal/hline 'focal/vline])} 
-                position: [{430 (gen/int max: canvas/width)} 
+    focalpoint ({focal/build-point (gen/select from: ['focal/build-point 'focal/build-hline 'focal/build-vline])}
+                position: [{430 (gen/int max: canvas/width)}
                            {533 (gen/int max: canvas/height)}]
                 distance: {651 (gen/int min: (/ canvas/width 2) max: canvas/width)}))
 
@@ -141,7 +141,7 @@
     (translate vector: [500 0])
     (scale scalar: 20)
     (loop (i from: seeds to: 0)
-      (define 
+      (define
         theta (/ (* i math/TAU) phi)
         r (* scale-factor (sqrt i))
         position [(* r (math/cos angle: theta))
@@ -160,5 +160,3 @@
 (wash colour: (col-fn-1 t: 0.1))
 (bg2)
 (fg1)
-
-

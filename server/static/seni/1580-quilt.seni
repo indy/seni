@@ -173,15 +173,15 @@
                 p1]
                (gen/select from: '(p1 p2 p3 p4 p5 p6 p7 p8 p9))})
 
-(define 
+(define
   rots ['(1 1) '(1 -1) '(-1 1) '(-1 -1)]
   rots/length (list/length of: rots)
 
-  focal-point (focal/point position: [{500 (gen/int max: 1000)}
-                                      {500 (gen/int max: 1000)}]
-                           distance: {800 (gen/int max: 1000)})
-  brightness-remapper (interp/fn from: '(0 1) 
-                                 to: '({20 (gen/int min: 0 max: 100)} 
+  focal-point (focal/build-point position: [{500 (gen/int max: 1000)}
+                                            {500 (gen/int max: 1000)}]
+                                 distance: {800 (gen/int max: 1000)})
+  brightness-remapper (interp/fn from: '(0 1)
+                                 to: '({20 (gen/int min: 0 max: 100)}
                                        {80 (gen/int min: 0 max: 100)})))
 
 (rect position: canvas/centre
@@ -191,7 +191,7 @@
 
 (loop (y from: 0 to: 10)
   (loop (x from: 0 to: 10)
-    (define 
+    (define
       index (+ x (* y 10))
       draw-fn (list/get from: funct nth: index)
       pos [(+ 50 (* x 100)) (+ 50 (* y 100))]

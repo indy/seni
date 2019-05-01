@@ -123,36 +123,40 @@ fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
 
     // --------------------------------------------------------------------------------
 
-    let time_run_program = Instant::now();
-
-    vm.reset();
-
-    // setup the env with the global variables in preamble
-    let time_preamble = Instant::now();
-    let preamble = compile_preamble()?;
-    vm.interpret(&preamble)?;
-    info!("preamble: {:?}", time_preamble.elapsed());
-
-    // reset the ip and setup any profiling of the main program
-    vm.init_for_main_program(&program, profiling)?;
-
-    let time_interpret = Instant::now();
-    vm.interpret(&program)?;
-    let res = vm.top_stack_value()?;
-    info!("interpret {:?}", time_interpret.elapsed());
-
-    // vm.opcode_profiler_report();
-
-    info!("run_program: {:?}", time_run_program.elapsed());
-
-    if profiling == VMProfiling::On {
-        vm.println_profiling(&program)?;
-    } else if debug {
+    if debug {
+        // print the source and bytecode without trying to run the code
+        // as the debug option will often be used with buggy source
         println!("{}", source);
         println!("{}", program);
-    }
+    } else {
+        let time_run_program = Instant::now();
 
-    println!("res = {}", res);
+        vm.reset();
+
+        // setup the env with the global variables in preamble
+        let time_preamble = Instant::now();
+        let preamble = compile_preamble()?;
+        vm.interpret(&preamble)?;
+        info!("preamble: {:?}", time_preamble.elapsed());
+
+        // reset the ip and setup any profiling of the main program
+        vm.init_for_main_program(&program, profiling)?;
+
+        let time_interpret = Instant::now();
+        vm.interpret(&program)?;
+        let res = vm.top_stack_value()?;
+        info!("interpret {:?}", time_interpret.elapsed());
+
+        // vm.opcode_profiler_report();
+
+        info!("run_program: {:?}", time_run_program.elapsed());
+
+        if profiling == VMProfiling::On {
+            vm.println_profiling(&program)?;
+        }
+
+        println!("res = {}", res);
+    }
 
     Ok(())
 }

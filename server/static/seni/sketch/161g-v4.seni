@@ -1,8 +1,8 @@
 (define
-  focal-fg-1 (focal/point position: {[508 674] (gen/int min: 0 max: 1000)}
+  focal-fg-1 (focal/build-point position: {[508 674] (gen/int min: 0 max: 1000)}
                           distance: {957 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
-  focal-fg-2 (focal/point position: {[598 653] (gen/int min: 0 max: 1000)}
+  focal-fg-2 (focal/build-point position: {[598 653] (gen/int min: 0 max: 1000)}
                           distance: {355 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
   col-fn-fg (col/bezier-fn a: {(col/rgb r: 0.525 g: 0.007 b: 0.541 alpha: 0.932) (gen/col)}
@@ -10,10 +10,10 @@
                            c: {(col/rgb r: 0.473 g: 0.995 b: 0.516 alpha: 0.216) (gen/col)}
                            d: {(col/rgb r: 0.427 g: 0.140 b: 0.390 alpha: 0.725) (gen/col)})
 
-  focal-bg-1 (focal/point position: {[184 128] (gen/int min: 0 max: 1000)}
+  focal-bg-1 (focal/build-point position: {[184 128] (gen/int min: 0 max: 1000)}
                           distance: {223 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
-  focal-bg-2 (focal/point position: {[932 237] (gen/int min: 0 max: 1000)}
+  focal-bg-2 (focal/build-point position: {[932 237] (gen/int min: 0 max: 1000)}
                           distance: {265 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
   col-fn-bg (col/bezier-fn a: {(col/rgb r: 0.693 g: 0.073 b: 0.065 alpha: 0.044) (gen/col)}
@@ -24,7 +24,7 @@
   ;; fade out any lines which are far away from the focal points
   interest (interp/fn from: [0.2 1.5] to: [0 1] clamping: true))
 
-;; evenly spaces out the canvas into nXn chunks and invokes the 
+;; evenly spaces out the canvas into nXn chunks and invokes the
 ;; function 'fun' for each chunk, passing in the centre position
 ;;
 (fn (good-grid n: 10 fun: (fn (a) 1))

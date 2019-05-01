@@ -33,11 +33,11 @@
 
 ;; render the background grid
 (define
-  focal-bg-a (focal/point position: [{409 (gen/int min: 400 max: 600)} 
+  focal-bg-a (focal/build-point position: [{409 (gen/int min: 400 max: 600)}
                                      {137 (gen/int min: 100 max: 400)}]
                           distance: {847 (gen/int min: 700 max: 1000)}
                           falloff: "linear")
-  focal-bg-b (focal/point position: [{496 (gen/int min: 400 max: 600)} 
+  focal-bg-b (focal/build-point position: [{496 (gen/int min: 400 max: 600)}
                                      {695 (gen/int min: 600 max: 900)}]
                           distance: {930 (gen/int min: 700 max: 1000)}
                           falloff: "linear")
@@ -56,10 +56,10 @@
 
 ;; render the foreground
 (define
-  focal-fg-a (focal/point position: {[902 918] (gen/int min: 0 max: 1000)}
+  focal-fg-a (focal/build-point position: {[902 918] (gen/int min: 0 max: 1000)}
                           distance: {245 (gen/int min: 0 max: 500)}
                           falloff: "linear")
-  focal-fg-b (focal/point position: {[2 846] (gen/int min: 0 max: 1000)}
+  focal-fg-b (focal/build-point position: {[2 846] (gen/int min: 0 max: 1000)}
                           distance: {29 (gen/int min: 0 max: 600)}
                           falloff: "linear")
   col-fn-fg (col/bezier-fn a: {(col/rgb r: 0.377 g: 0.011 b: 0.136 alpha: 0.501) (gen/col)}

@@ -11,10 +11,10 @@
                      c: {[2.00 1.00 1.00] (gen/scalar)}
                      d: {[0.00 0.25 0.25] (gen/scalar)}))
 
-(define focalpoint ({focal/point (gen/select from: ['focal/point
-                                                    'focal/hline
-                                                    'focal/vline])} 
-                    position: [{500 (gen/int max: canvas/width)} 
+(define focalpoint ({focal/build-point (gen/select from: ['focal/build-point
+                                                    'focal/build-hline
+                                                    'focal/build-vline])}
+                    position: [{500 (gen/int max: canvas/width)}
                                   {500 (gen/int max: canvas/height)}]
                     distance: {800 (gen/int min: (/ canvas/width 2) max: canvas/width)}))
 
@@ -59,7 +59,7 @@
     ;; centre fill
     (circle-slice tessellation: 10
                   position: [0 0]
-                colour: (col/lighten colour: colour 
+                colour: (col/lighten colour: colour
                                      delta: (* {10 (gen/int min: 5 max: 20)} (srng)))
                 angle-start: 0
                 angle-end: 360

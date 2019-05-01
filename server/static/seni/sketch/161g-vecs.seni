@@ -1,8 +1,8 @@
 (define
-  focal-fn-1 (focal/point position: {[655 446] (gen/int min: 0 max: 1000)}
+  focal-fn-1 (focal/build-point position: {[655 446] (gen/int min: 0 max: 1000)}
                           distance: {342 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
-  focal-fn-2 (focal/point position: {[889 337] (gen/int min: 0 max: 1000)}
+  focal-fn-2 (focal/build-point position: {[889 337] (gen/int min: 0 max: 1000)}
                           distance: {574 (gen/int min: 0 max: 1000)}
                           falloff: "linear")
   col-fn-2 (col/bezier-fn a: {(col/rgb r: 0.648 g: 0.717 b: 0.807 alpha: 0.141) (gen/col)}
@@ -14,7 +14,7 @@
   interest (interp/fn from: [0.2 1.5] to: [0 1] clamping: true)
   )
 
-;; evenly spaces out the canvas into nXn chunks and invokes the 
+;; evenly spaces out the canvas into nXn chunks and invokes the
 ;; function 'fun' for each chunk, passing in the centre position
 ;;
 (fn (good-grid n: 10 fun: (fn (a) 1))

@@ -28,7 +28,7 @@ impl Name {
         Name(i)
     }
 
-    pub fn enclosed_by(&self, a: Name, b: Name) -> bool {
+    pub fn enclosed_by(self, a: Name, b: Name) -> bool {
         self.0 > a.0 && self.0 < b.0
     }
 }

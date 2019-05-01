@@ -1,5 +1,5 @@
 
-(define focal-point (focal/point position: [500 500]
+(define focal-point (focal/build-point position: [500 500]
                                  distance: 300
                                  mapping: linear))
 

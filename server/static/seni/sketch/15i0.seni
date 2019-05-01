@@ -6,9 +6,9 @@
                                  c: {[0.783 0.005 0.826] (gen/scalar)}
                                  d: {[0.165 0.397 0.991] (gen/scalar)})
 
-  focalpoint ({focal/hline (gen/select from: ['focal/point
-                                          'focal/hline
-                                          'focal/vline])}
+  focalpoint ({focal/build-hline (gen/select from: ['focal/build-point
+                                          'focal/build-hline
+                                          'focal/build-vline])}
               position: [{-188 (gen/int min: -300 max: 300)}
                          {-74 (gen/int min: -300 max: 300)}]
               distance: {880 (gen/int min: 300 max: 900)}))

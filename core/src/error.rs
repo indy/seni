@@ -97,8 +97,7 @@ impl From<strum::ParseError> for Error {
 }
 
 // don't need to implement any of the trait's methods
-impl error::Error for Error {
-}
+impl error::Error for Error {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -114,7 +113,9 @@ impl fmt::Display for Error {
             Error::Colour(s) => write!(f, "seni core: Colour {}", s),
             Error::ParserInvalidChar(c) => write!(f, "seni core: ParserInvalidChar: {}", c),
             Error::ParserInvalidLiteral => write!(f, "seni core: ParserInvalidLiteral"),
-            Error::ParserUnableToParseFloat(s) => write!(f, "seni core: ParserUnableToParseFloat {}", s),
+            Error::ParserUnableToParseFloat(s) => {
+                write!(f, "seni core: ParserUnableToParseFloat {}", s)
+            }
             Error::ParserHandledToken(s) => write!(f, "seni core: ParserHandledToken {}", s),
             Error::MemUnmappableBytecodeArg => write!(f, "seni core: MemUnmappableBytecodeArg"),
             Error::MemUnmappableI32 => write!(f, "seni core: MemUnmappableI32"),

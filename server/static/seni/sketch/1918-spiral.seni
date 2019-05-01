@@ -1,0 +1,31 @@
+(define
+  coords []
+  colours []
+  num-elements {78 (gen/int min: 5 max: 100)})
+
+(fn (setup)
+  (define
+    prngx (prng/build seed: 23 min: -500 max: 500)
+    prngy (prng/build seed: 764 min: -500 max: 500))
+  (fence (t num: num-elements)
+    (++ coords [(prng/value from: prngx) (prng/value from: prngy)])
+    (++ colours red)))
+
+
+(fn (draw alpha: 0.9)
+  (loop (i to: num-elements)
+    (circle position: (nth from: coords n: i)
+            colour: (col/set-alpha colour: (nth from: colours n: i) value: alpha)
+            radius: 54
+            tessellation: 30)))
+
+
+(setup)
+(on-matrix-stack
+  (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+  (loop (i to: 100)
+    (scale scalar: 0.98)
+    (rotate angle: 1)
+    (draw alpha: 0.01)
+    )
+  )

@@ -1,4 +1,4 @@
-(define 
+(define
   seed-radius {3.200 (gen/scalar min: 3 max: 5)}
   scale-factor 4
   phi (/ (sqrt {5 (gen/scalar min: 4 max: 6)}) {8 (gen/scalar min: 1 max: 10)})
@@ -8,8 +8,8 @@
                                  c: {[2 1 1] (gen/scalar)}
                                  d: {[0 0.250 0.250] (gen/scalar)})
 
-  focalpoint ({focal/point (gen/select from: ['focal/point 'focal/hline 'focal/vline])} 
-              position: [{500 (gen/int max: canvas/width)} 
+  focalpoint ({focal/build-point (gen/select from: ['focal/build-point 'focal/build-hline 'focal/build-vline])}
+              position: [{500 (gen/int max: canvas/width)}
                          {500 (gen/int max: canvas/height)}]
               distance: {800 (gen/int min: (/ canvas/width 2) max: canvas/width)}))
 
@@ -18,7 +18,7 @@
                    seed: "yabba dabba dooo"
                    radius: 300)
   (circle tessellation: 30
-          position: (vector/multiply vector: position 
+          position: (vector/multiply vector: position
                                      scalar: {1.010 (gen/scalar min: 1 max: 1.05)})
           colour: (col/darken colour: colour value: {20 (gen/int min: 0 max: 40)})
           radius: (* {1 (gen/scalar min: 1 max: 1.1)} radius)))
@@ -49,7 +49,7 @@
                         colour: red
                         seed: "yabba dabba dooo"
                         radius: 300)
-  (define 
+  (define
     rng (prng/range seed: seed)
     outer-exterior (prng/range seed: (rng) min: 170 max: 210)
     outer-interior (prng/range seed: (rng) min: 80 max: 170)
@@ -87,7 +87,7 @@
     ;; centre fill
     (circle-slice tessellation: 10
                   position: [0 0]
-                  colour: (col/lighten colour: colour 
+                  colour: (col/lighten colour: colour
                                        value: (* {10 (gen/int min: 5 max: 20)} (srng)))
                   angle-start: 0
                   angle-end: 360
@@ -102,7 +102,7 @@
   (translate vector: canvas/centre)
   (scale scalar: 8)
   (loop (i to: seeds)
-    (define 
+    (define
       theta (/ (* i math/TAU) phi)
       r (* scale-factor (sqrt i))
       position [(* r (math/cos angle: theta))
@@ -117,7 +117,7 @@
   (translate vector: canvas/centre)
   (scale scalar: 8)
   (loop (i to: seeds)
-    (define 
+    (define
       theta (/ (* i math/TAU) phi)
       r (* scale-factor (sqrt i))
       position [(* r (math/cos angle: theta))
@@ -132,7 +132,7 @@
   (translate vector: canvas/centre)
   (scale scalar: 8)
   (loop (i to: seeds)
-    (define 
+    (define
       theta (/ (* i math/TAU) phi)
       r (* scale-factor (sqrt i))
       position [(* r (math/cos angle: theta))
