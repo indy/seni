@@ -76,12 +76,6 @@ const Matrix = {
 // --------------------------------------------------------------------------------
 // renderer
 
-function memorySubArray(mem, ptr, length) {
-  const nByte = 4;
-  const pos = ptr / nByte;
-  return mem.subarray(pos, pos + length);
-}
-
 function initGL(canvas) {
   try {
     const gl = canvas.getContext('experimental-webgl', {
@@ -330,7 +324,7 @@ class GLRenderer {
                         this.mvMatrix);
   }
 
-  drawBuffer(memoryF32, buffer) {
+  drawBuffer(memory, buffer) {
     const gl = this.gl;
     const shaderProgram = this.shaderProgram;
 
@@ -346,8 +340,9 @@ class GLRenderer {
 
     const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
 
-
-    const gbuf = memorySubArray(memoryF32, buffer.geo_ptr, buffer.geo_len);
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
+    // a new typed array view is created that views the specified ArrayBuffer
+    const gbuf = new Float32Array(memory, buffer.geo_ptr, buffer.geo_len);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
@@ -1450,11 +1445,15 @@ function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
 
   gGLRenderer.preDrawScene(destWidth, destHeight);
 
-  const memoryF32 = new Float32Array(memory);
+  const stopFn = startTiming();
 
   buffers.forEach(buffer => {
-    gGLRenderer.drawBuffer(memoryF32, buffer);
+    gGLRenderer.drawBuffer(memory, buffer);
   });
+
+  console.log(`${buffers.length} buffers`);
+  stopFn("rendering all buffers", console);
+
 
   gGLRenderer.copyImageDataTo(imageElement);
 }
@@ -1472,10 +1471,8 @@ function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, secti
 
   gGLRenderer.preDrawScene(destWidth, destHeight, section);
 
-  const memoryF32 = new Float32Array(memory);
-
   buffers.forEach(buffer => {
-    gGLRenderer.drawBuffer(memoryF32, buffer);
+    gGLRenderer.drawBuffer(memory, buffer);
   });
 
   gGLRenderer.copyImageDataTo(imageElement);
