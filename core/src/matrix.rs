@@ -17,11 +17,6 @@ pub struct Matrix {
     m: [f32; 16],
 }
 
-#[derive(Default)]
-pub struct MatrixStack {
-    stack: Vec<Matrix>,
-}
-
 impl Matrix {
     pub fn identity() -> Self {
         Matrix {
@@ -167,15 +162,21 @@ impl Matrix {
     }
 }
 
-impl MatrixStack {
-    pub fn new() -> Self {
+pub struct MatrixStack {
+    stack: Vec<Matrix>,
+}
+
+impl Default for MatrixStack {
+    fn default() -> MatrixStack {
         let mut ms = MatrixStack {
             stack: Vec::with_capacity(16),
         };
         ms.reset();
         ms
     }
+}
 
+impl MatrixStack {
     pub fn reset(&mut self) {
         self.stack.clear();
         // add an identity matrix onto the stack so that further

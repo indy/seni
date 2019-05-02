@@ -147,10 +147,6 @@ pub struct Genotype {
 }
 
 impl Genotype {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
     pub fn num_genes(&self) -> usize {
         self.genes.len()
     }
@@ -174,7 +170,7 @@ impl Genotype {
     // build_from_trait_list
     pub fn build_from_seed(trait_list: &TraitList, seed: i32) -> Result<Self> {
         let mut vm = Vm::new();
-        let mut genotype = Genotype::new();
+        let mut genotype: Genotype = Default::default();
 
         // the seed is set once per genotype (should it be once per-gene?)
         //
@@ -188,7 +184,7 @@ impl Genotype {
     }
 
     pub fn build_from_initial_values(trait_list: &TraitList) -> Result<Self> {
-        let mut genotype = Genotype::new();
+        let mut genotype: Genotype = Default::default();
 
         for t in &trait_list.traits {
             genotype.genes.push(Gene::from_var(&t.initial_value)?);
@@ -202,7 +198,7 @@ impl Genotype {
     }
 
     pub fn crossover(&self, other: &Genotype, prng: &mut PrngStateStruct) -> Result<Self> {
-        let mut child = Genotype::new();
+        let mut child: Genotype = Default::default();
 
         let num_genes = self.genes.len();
         let crossover_index: usize = prng.prng_usize_range(0, num_genes);
@@ -266,7 +262,7 @@ impl Packable for Genotype {
     }
 
     fn unpack(cursor: &str) -> Result<(Self, &str)> {
-        let mut genotype = Genotype::new();
+        let mut genotype: Genotype = Default::default();
 
         let (num_genes, rem) = Mule::unpack_usize(cursor)?;
 

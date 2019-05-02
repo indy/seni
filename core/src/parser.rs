@@ -233,7 +233,7 @@ struct NodeAndRemainder<'a> {
     tokens: &'a [Token<'a>],
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct WordLut {
     // requires a builtin hashmap (function names reserved by the builtin api)
     // a keyword hashmap (keywords + constants + common arguments to builtin api functions)
@@ -246,8 +246,8 @@ pub struct WordLut {
     iname_to_keyword: HashMap<Name, String>,
 }
 
-impl WordLut {
-    pub fn new() -> WordLut {
+impl Default for WordLut {
+    fn default() -> WordLut {
         // native
         let mut n: HashMap<Name, String> = HashMap::new();
         for nat in Native::iter() {
@@ -269,7 +269,9 @@ impl WordLut {
             iname_to_keyword: k,
         }
     }
+}
 
+impl WordLut {
     pub fn get_string_from_name(&self, name: Name) -> Option<&String> {
         if let Some(s) = self.iname_to_native.get(&name) {
             // 1st check the native api
@@ -322,7 +324,7 @@ pub fn parse(s: &str) -> Result<(Vec<Node>, WordLut)> {
     let mut tokens = t.as_slice();
     let mut res = Vec::new();
 
-    let mut word_lut = WordLut::new();
+    let mut word_lut: WordLut = Default::default();
 
     while !tokens.is_empty() {
         match eat_token(tokens, None, &mut word_lut) {

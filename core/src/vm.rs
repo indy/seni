@@ -186,10 +186,6 @@ impl Var {
     }
 }
 
-/// The Seni VM
-/// the c-impl of vm (sen_vm) had pointers to env and program. these were required
-/// in case any of the native functions had to invoke vm_interpret.
-/// the rust version should just pass in these 2 extra args into the native functions
 pub struct Vm {
     pub matrix_stack: MatrixStack,
     /// only used when evaluating bracket bindings
@@ -248,12 +244,12 @@ impl Default for Vm {
         let sp = base_offset;
 
         Vm {
-            matrix_stack: MatrixStack::new(),
+            matrix_stack: Default::default(),
 
             prng_state: PrngStateStruct::new(10, 0.0, 1.0),
 
-            mappings: Mappings::new(),
-            geometry: Geometry::new(),
+            mappings: Default::default(),
+            geometry: Default::default(),
 
             profiling: VMProfiling::Off,
             opcode_count: vec![],

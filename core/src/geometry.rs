@@ -27,23 +27,19 @@ use crate::vm::Var;
 const RENDER_PACKET_MAX_SIZE: usize = 40096;
 pub const RENDER_PACKET_FLOAT_PER_VERTEX: usize = 8;
 
-#[derive(Default)]
 pub struct RenderPacket {
     pub geo: Vec<f32>,
 }
 
-#[derive(Default)]
-pub struct Geometry {
-    render_packets: Vec<RenderPacket>,
-}
-
-impl RenderPacket {
-    pub fn new() -> Self {
+impl Default for RenderPacket {
+    fn default() -> RenderPacket {
         RenderPacket {
             geo: Vec::with_capacity(RENDER_PACKET_MAX_SIZE),
         }
     }
+}
 
+impl RenderPacket {
     pub fn get_geo_len(&self) -> usize {
         self.geo.len()
     }
@@ -117,17 +113,23 @@ impl RenderPacket {
     }
 }
 
-impl Geometry {
-    pub fn new() -> Geometry {
+pub struct Geometry {
+    render_packets: Vec<RenderPacket>,
+}
+
+impl Default for Geometry {
+    fn default() -> Geometry {
         let mut render_packets: Vec<RenderPacket> = Vec::new();
-        render_packets.push(RenderPacket::new());
+        render_packets.push(Default::default());
 
         Geometry { render_packets }
     }
+}
 
+impl Geometry {
     pub fn reset(&mut self) {
         self.render_packets.clear();
-        self.render_packets.push(RenderPacket::new())
+        self.render_packets.push(Default::default())
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
@@ -154,7 +156,7 @@ impl Geometry {
         let mut last = self.render_packets.len() - 1;
         let mut rp = &mut self.render_packets[last];
         if !rp.can_vertices_fit(num_vertices) {
-            self.render_packets.push(RenderPacket::new());
+            self.render_packets.push(Default::default());
             last += 1;
         }
 

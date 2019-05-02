@@ -32,11 +32,6 @@ pub struct UvMapping {
     pub map: [f32; 8], // array of 8 (4 pairs of xy)
 }
 
-#[derive(Default)]
-pub struct Mappings {
-    m: Vec<Vec<UvMapping>>,
-}
-
 fn brush_index(brush_type: BrushType) -> usize {
     match brush_type {
         BrushType::Flat => 0,
@@ -72,8 +67,12 @@ impl UvMapping {
     }
 }
 
-impl Mappings {
-    pub fn new() -> Self {
+pub struct Mappings {
+    m: Vec<Vec<UvMapping>>,
+}
+
+impl Default for Mappings {
+    fn default() -> Mappings {
         // flat
         let flat = vec![UvMapping::new(1.0, 1, 1, 2, 2)];
         let a = vec![UvMapping::new(1.2, 0, 781, 976, 1023)];
@@ -108,7 +107,9 @@ impl Mappings {
             m: vec![flat, a, b, c, d, e, f, g],
         }
     }
+}
 
+impl Mappings {
     pub fn get_uv_mapping(&self, brush_type: BrushType, sub_type: usize) -> &UvMapping {
         // always wrap sub_type
         let index = brush_index(brush_type);
