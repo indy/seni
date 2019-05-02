@@ -1536,16 +1536,6 @@ impl Vm {
         Ok(())
     }
 
-    fn opcode_mtx_push(&mut self) -> Result<()> {
-        self.matrix_stack.push();
-        Ok(())
-    }
-
-    fn opcode_mtx_pop(&mut self) -> Result<()> {
-        self.matrix_stack.pop();
-        Ok(())
-    }
-
     // called before the top level interpret is invoked
     pub fn init_for_main_program(
         &mut self,
@@ -1616,8 +1606,6 @@ impl Vm {
                 Opcode::VEC_LOAD_FIRST => self.opcode_vec_load_first()?,
                 Opcode::VEC_HAS_NEXT => self.opcode_vec_has_next()?,
                 Opcode::VEC_NEXT => self.opcode_vec_next()?,
-                Opcode::MTX_PUSH => self.opcode_mtx_push()?,
-                Opcode::MTX_POP => self.opcode_mtx_pop()?,
                 Opcode::STOP => {
                     // todo: execution time
                     //

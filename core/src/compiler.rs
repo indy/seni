@@ -2183,14 +2183,34 @@ impl Compiler {
         Err(Error::Compiler("compile_address_of".to_string()))
     }
 
+    fn compile_explicit_0_arg_native_call(
+        &self,
+        compilation: &mut Compilation,
+        native: Native,
+    ) -> Result<()> {
+        let default_mask = 0;
+
+        let (args, stack_offset) = parameter_info(native)?;
+        let num_args = args.len();
+
+        compilation.emit(Opcode::LOAD, Mem::Constant, default_mask)?;
+        compilation.emit(Opcode::NATIVE, native, num_args)?;
+
+        // the vm's opcode_native will modify the stack, no need for the compiler to add STORE VOID opcodes
+        // subtract num_args and the default_mask, also take into account that a value might be returned
+        compilation.opcode_offset -= (num_args as i32 + 1) - stack_offset; // should be -= 1
+
+        Ok(())
+    }
+
     fn compile_on_matrix_stack(
         &self,
         compilation: &mut Compilation,
         children: &[&Node],
     ) -> Result<()> {
-        compilation.emit(Opcode::MTX_PUSH, 0, 0)?;
+        self.compile_explicit_0_arg_native_call(compilation, Native::MatrixPush)?;
         self.compile_rest(compilation, children)?;
-        compilation.emit(Opcode::MTX_POP, 0, 0)?;
+        self.compile_explicit_0_arg_native_call(compilation, Native::MatrixPop)?;
         Ok(())
     }
 

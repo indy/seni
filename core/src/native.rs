@@ -78,8 +78,12 @@ pub enum Native {
     #[strum(serialize = "stroked-bezier-rect")]
     StrokedBezierRect,
 
-    // transforms
+    // matrix transforms
     //
+    #[strum(serialize = "__matrix_push")]
+    MatrixPush, // special native function invoked by the compiler for on-matrix-stack
+    #[strum(serialize = "__matrix_pop")]
+    MatrixPop, // special native function invoked by the compiler for on-matrix-stack
     #[strum(serialize = "translate")]
     Translate,
     #[strum(serialize = "rotate")]
@@ -306,6 +310,8 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::Bezier => bezier_parameter_info(),
         Native::BezierBulging => bezier_bulging_parameter_info(),
         // transforms
+        Native::MatrixPush => matrix_push_parameter_info(),
+        Native::MatrixPop => matrix_pop_parameter_info(),
         Native::Translate => translate_parameter_info(),
         Native::Rotate => rotate_parameter_info(),
         Native::Scale => scale_parameter_info(),
@@ -412,6 +418,8 @@ pub fn execute_native(vm: &mut Vm, program: &Program, native: Native) -> Result<
         Native::Bezier => bezier_execute(vm),
         Native::BezierBulging => bezier_bulging_execute(vm),
         // transforms
+        Native::MatrixPush => matrix_push_execute(vm),
+        Native::MatrixPop => matrix_pop_execute(vm),
         Native::Translate => translate_execute(vm),
         Native::Rotate => rotate_execute(vm),
         Native::Scale => scale_execute(vm),
@@ -1439,6 +1447,36 @@ fn stroked_bezier_rect_execute(vm: &mut Vm) -> Result<Option<Var>> {
             "stroked bezier rect: colour conversion".to_string(),
         ));
     }
+
+    Ok(None)
+}
+
+fn matrix_push_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![],
+        // stack offset
+        0,
+    ))
+}
+
+fn matrix_push_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    vm.matrix_stack.push();
+
+    Ok(None)
+}
+
+fn matrix_pop_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![],
+        // stack offset
+        0,
+    ))
+}
+
+fn matrix_pop_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    vm.matrix_stack.pop();
 
     Ok(None)
 }
