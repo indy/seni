@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::compiler::Program;
+use crate::context::Context;
 use crate::ease::{easing, Easing};
 use crate::keywords::Keyword;
 use crate::mathutil::{bezier_point, quadratic_point, TAU};
@@ -24,6 +25,7 @@ use crate::vm::*;
 // invoke a function with 3 args: step, position and t
 fn invoke_function(
     vm: &mut Vm,
+    context: &mut Context,
     program: &Program,
     fun: usize,
     step: f32,
@@ -35,11 +37,11 @@ fn invoke_function(
 
     let fn_info = &program.fn_info[fun];
 
-    vm.function_call_default_arguments(program, fn_info)?;
+    vm.function_call_default_arguments(context, program, fn_info)?;
     vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::N), step);
     vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::T), t);
     vm.function_set_argument_to_2d(fn_info, Name::from(Keyword::Position), x, y);
-    vm.function_call_body(program, fn_info)?;
+    vm.function_call_body(context, program, fn_info)?;
 
     vm.ip = ip;
 
@@ -48,6 +50,7 @@ fn invoke_function(
 
 pub fn linear(
     vm: &mut Vm,
+    context: &mut Context,
     program: &Program,
     fun: usize,
     steps: i32,
@@ -68,7 +71,7 @@ pub fn linear(
         let x = a_x + (t * (b_x - a_x));
         let y = a_y + (t * (b_y - a_y));
 
-        invoke_function(vm, program, fun, step, t, x, y)?;
+        invoke_function(vm, context, program, fun, step, t, x, y)?;
     }
 
     Ok(())
@@ -76,6 +79,7 @@ pub fn linear(
 
 pub fn circular(
     vm: &mut Vm,
+    context: &mut Context,
     program: &Program,
     fun: usize,
     steps: i32,
@@ -96,7 +100,7 @@ pub fn circular(
         let vy = (angle.cos() * radius) + pos_y;
         let t = easing(t_start + (unit * step), mapping);
 
-        invoke_function(vm, program, fun, step, t, vx, vy)?;
+        invoke_function(vm, context, program, fun, step, t, vx, vy)?;
     }
 
     Ok(())
@@ -104,6 +108,7 @@ pub fn circular(
 
 pub fn spline(
     vm: &mut Vm,
+    context: &mut Context,
     program: &Program,
     fun: usize,
     steps: i32,
@@ -120,7 +125,7 @@ pub fn spline(
         let x = quadratic_point(coords[0], coords[2], coords[4], t);
         let y = quadratic_point(coords[1], coords[3], coords[5], t);
 
-        invoke_function(vm, program, fun, i as f32, t, x, y)?;
+        invoke_function(vm, context, program, fun, i as f32, t, x, y)?;
     }
 
     Ok(())
@@ -128,6 +133,7 @@ pub fn spline(
 
 pub fn bezier(
     vm: &mut Vm,
+    context: &mut Context,
     program: &Program,
     fun: usize,
     steps: i32,
@@ -144,7 +150,7 @@ pub fn bezier(
         let x = bezier_point(coords[0], coords[2], coords[4], coords[6], t);
         let y = bezier_point(coords[1], coords[3], coords[5], coords[7], t);
 
-        invoke_function(vm, program, fun, i as f32, t, x, y)?;
+        invoke_function(vm, context, program, fun, i as f32, t, x, y)?;
     }
 
     Ok(())

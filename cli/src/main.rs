@@ -107,7 +107,8 @@ fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
 
     info!("read_script_file: {:?}", time_read_script_file.elapsed());
 
-    let mut vm = Vm::new();
+    let mut vm: Vm = Default::default();
+    let mut context: Context = Default::default();
 
     // --------------------------------------------------------------------------------
 
@@ -131,19 +132,20 @@ fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
     } else {
         let time_run_program = Instant::now();
 
+        context.reset();
         vm.reset();
 
         // setup the env with the global variables in preamble
         let time_preamble = Instant::now();
         let preamble = compile_preamble()?;
-        vm.interpret(&preamble)?;
+        vm.interpret(&mut context, &preamble)?;
         info!("preamble: {:?}", time_preamble.elapsed());
 
         // reset the ip and setup any profiling of the main program
         vm.init_for_main_program(&program, profiling)?;
 
         let time_interpret = Instant::now();
-        vm.interpret(&program)?;
+        vm.interpret(&mut context, &program)?;
         let res = vm.top_stack_value()?;
         info!("interpret {:?}", time_interpret.elapsed());
 

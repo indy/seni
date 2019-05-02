@@ -15,6 +15,7 @@
 
 use crate::colour::Colour;
 use crate::compiler::compile_preamble;
+use crate::context::Context;
 use crate::error::Error;
 use crate::keywords::Keyword;
 use crate::name::Name;
@@ -57,18 +58,19 @@ impl Gene {
         }
     }
 
-    pub fn build_from_trait(vm: &mut Vm, t: &Trait) -> Result<Self> {
+    pub fn build_from_trait(vm: &mut Vm, context: &mut Context, t: &Trait) -> Result<Self> {
+        context.reset();
         vm.reset();
         vm.building_with_trait_within_vector = t.within_vector;
         vm.trait_within_vector_index = t.index;
 
         // setup the env with the global variables in preamble
         let preamble = compile_preamble()?;
-        vm.interpret(&preamble)?;
+        vm.interpret(context, &preamble)?;
 
         // reset the ip and setup any profiling of the main program
         vm.init_for_main_program(&t.program, VMProfiling::Off)?;
-        vm.interpret(&t.program)?;
+        vm.interpret(context, &t.program)?;
         let var = vm.top_stack_value()?;
 
         vm.building_with_trait_within_vector = false;
@@ -169,7 +171,8 @@ impl Genotype {
 
     // build_from_trait_list
     pub fn build_from_seed(trait_list: &TraitList, seed: i32) -> Result<Self> {
-        let mut vm = Vm::new();
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
         let mut genotype: Genotype = Default::default();
 
         // the seed is set once per genotype (should it be once per-gene?)
@@ -177,7 +180,9 @@ impl Genotype {
         vm.prng_state.set_state(seed);
 
         for t in &trait_list.traits {
-            genotype.genes.push(Gene::build_from_trait(&mut vm, t)?);
+            genotype
+                .genes
+                .push(Gene::build_from_trait(&mut vm, &mut context, t)?);
         }
 
         Ok(genotype)
@@ -238,11 +243,12 @@ impl Genotype {
         prng: &mut PrngStateStruct,
         trait_list: &TraitList,
     ) -> Result<()> {
-        let mut vm = Vm::new();
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
         let t = trait_list.get_trait(idx);
 
         vm.set_prng_state(prng.clone());
-        self.genes[idx] = Gene::build_from_trait(&mut vm, t)?;
+        self.genes[idx] = Gene::build_from_trait(&mut vm, &mut context, t)?;
         prng.clone_rng(vm.prng_state);
 
         Ok(())
@@ -359,8 +365,9 @@ mod tests {
         // let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
         // let program = compile_program_with_genotype(&mut ast, &mut genotype)?;
 
-        let mut vm = Vm::new();
-        let var = run_program_with_preamble(&mut vm, &program)?;
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
+        let var = run_program_with_preamble(&mut vm, &mut context, &program)?;
 
         Ok((var, genotype))
     }

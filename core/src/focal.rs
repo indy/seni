@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::context::Context;
 use crate::ease::Easing;
 use crate::interp;
 use crate::mathutil;
-use crate::vm::Vm;
 
 #[derive(Copy, Clone, Debug)]
 pub enum FocalType {
@@ -47,10 +47,10 @@ impl Default for FocalStateStruct {
 }
 
 impl FocalStateStruct {
-    pub fn value(&self, vm: &Vm, position: (f32, f32)) -> f32 {
+    pub fn value(&self, context: &Context, position: (f32, f32)) -> f32 {
         // transform position to canvas space coordinates
         let (x, y) = if self.transform_pos {
-            vm.matrix_stack.transform_vec2(position.0, position.1)
+            context.matrix_stack.transform_vec2(position.0, position.1)
         } else {
             position
         };

@@ -15,6 +15,7 @@
 
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
 use crate::compiler::Program;
+use crate::context::Context;
 use crate::ease::easing_from_keyword;
 use crate::error::Error;
 use crate::focal;
@@ -402,27 +403,32 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
     }
 }
 
-pub fn execute_native(vm: &mut Vm, program: &Program, native: Native) -> Result<Option<Var>> {
+pub fn execute_native(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+    native: Native,
+) -> Result<Option<Var>> {
     match native {
         // misc
         Native::Nth => nth_execute(vm),
         Native::VectorLength => vector_length_execute(vm),
-        Native::Probe => probe_execute(vm),
+        Native::Probe => probe_execute(vm, context),
         // shapes
-        Native::Line => line_execute(vm),
-        Native::Rect => rect_execute(vm),
-        Native::Circle => circle_execute(vm),
-        Native::CircleSlice => circle_slice_execute(vm),
-        Native::Poly => poly_execute(vm),
-        Native::Quadratic => quadratic_execute(vm),
-        Native::Bezier => bezier_execute(vm),
-        Native::BezierBulging => bezier_bulging_execute(vm),
+        Native::Line => line_execute(vm, context),
+        Native::Rect => rect_execute(vm, context),
+        Native::Circle => circle_execute(vm, context),
+        Native::CircleSlice => circle_slice_execute(vm, context),
+        Native::Poly => poly_execute(vm, context),
+        Native::Quadratic => quadratic_execute(vm, context),
+        Native::Bezier => bezier_execute(vm, context),
+        Native::BezierBulging => bezier_bulging_execute(vm, context),
         // transforms
-        Native::MatrixPush => matrix_push_execute(vm),
-        Native::MatrixPop => matrix_pop_execute(vm),
-        Native::Translate => translate_execute(vm),
-        Native::Rotate => rotate_execute(vm),
-        Native::Scale => scale_execute(vm),
+        Native::MatrixPush => matrix_push_execute(vm, context),
+        Native::MatrixPop => matrix_pop_execute(vm, context),
+        Native::Translate => translate_execute(vm, context),
+        Native::Rotate => rotate_execute(vm, context),
+        Native::Scale => scale_execute(vm, context),
         // colours
         Native::ColConvert => col_convert_execute(vm),
         Native::ColRGB => col_rgb_execute(vm),
@@ -479,22 +485,24 @@ pub fn execute_native(vm: &mut Vm, program: &Program, native: Native) -> Result<
         Native::InterpLine => interp_line_execute(vm),
         Native::InterpCircle => interp_circle_execute(vm),
         // path
-        Native::PathLinear => path_linear_execute(vm, program),
-        Native::PathCircle => path_circle_execute(vm, program),
-        Native::PathSpline => path_spline_execute(vm, program),
-        Native::PathBezier => path_bezier_execute(vm, program),
+        Native::PathLinear => path_linear_execute(vm, context, program),
+        Native::PathCircle => path_circle_execute(vm, context, program),
+        Native::PathSpline => path_spline_execute(vm, context, program),
+        Native::PathBezier => path_bezier_execute(vm, context, program),
         // repeat
-        Native::RepeatSymmetryVertical => repeat_symmetry_vertical_execute(vm, program),
-        Native::RepeatSymmetryHorizontal => repeat_symmetry_horizontal_execute(vm, program),
-        Native::RepeatSymmetry4 => repeat_symmetry_4_execute(vm, program),
-        Native::RepeatSymmetry8 => repeat_symmetry_8_execute(vm, program),
-        Native::RepeatRotate => repeat_rotate_execute(vm, program),
-        Native::RepeatRotateMirrored => repeat_rotate_mirrored_execute(vm, program),
+        Native::RepeatSymmetryVertical => repeat_symmetry_vertical_execute(vm, context, program),
+        Native::RepeatSymmetryHorizontal => {
+            repeat_symmetry_horizontal_execute(vm, context, program)
+        }
+        Native::RepeatSymmetry4 => repeat_symmetry_4_execute(vm, context, program),
+        Native::RepeatSymmetry8 => repeat_symmetry_8_execute(vm, context, program),
+        Native::RepeatRotate => repeat_rotate_execute(vm, context, program),
+        Native::RepeatRotateMirrored => repeat_rotate_mirrored_execute(vm, context, program),
         // focal
         Native::FocalBuildPoint => focal_build_point_execute(vm),
         Native::FocalBuildVLine => focal_build_vline_execute(vm),
         Native::FocalBuildHLine => focal_build_hline_execute(vm),
-        Native::FocalValue => focal_value_execute(vm),
+        Native::FocalValue => focal_value_execute(vm, context),
         // gen
         Native::GenStrayInt => gen_stray_int_execute(vm),
         Native::GenStray => gen_stray_execute(vm),
@@ -714,7 +722,7 @@ fn probe_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn probe_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn probe_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(4)?;
 
     if is_arg_given(default_mask, 1) {
@@ -729,7 +737,7 @@ fn probe_execute(vm: &mut Vm) -> Result<Option<Var>> {
 
     if is_arg_given(default_mask, 3) {
         let (x, y): (f32, f32) = vm.stack_peek(3)?;
-        if let Some(matrix) = vm.matrix_stack.peek() {
+        if let Some(matrix) = context.matrix_stack.peek() {
             let (nx, ny) = matrix.transform_vec2(x, y);
             vm.debug_str_append(&format!("({},{})", nx, ny));
         }
@@ -756,7 +764,7 @@ fn line_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn line_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn line_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let line_width: f32 = vm.stack_peek(1)?;
     let line_from: (f32, f32) = vm.stack_peek(2)?;
     let line_to: (f32, f32) = vm.stack_peek(3)?;
@@ -772,7 +780,7 @@ fn line_execute(vm: &mut Vm) -> Result<Option<Var>> {
 
     // if the from-colour and to-colour parameters are given
     if is_arg_given(default_mask, 4) && is_arg_given(default_mask, 5) {
-        vm.render_line(
+        context.render_line(
             line_from,
             line_to,
             line_width,
@@ -782,7 +790,7 @@ fn line_execute(vm: &mut Vm) -> Result<Option<Var>> {
             brush_subtype,
         )?;
     } else {
-        vm.render_line(
+        context.render_line(
             line_from,
             line_to,
             line_width,
@@ -810,14 +818,14 @@ fn rect_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn rect_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn rect_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let width: f32 = vm.stack_peek(1)?;
     let height: f32 = vm.stack_peek(2)?;
     let position: (f32, f32) = vm.stack_peek(3)?;
     let col: Colour = vm.stack_peek(4)?;
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        vm.render_rect(position, width, height, &rgb)?;
+        context.render_rect(position, width, height, &rgb)?;
     } else {
         return Err(Error::Native("rect".to_string()));
     }
@@ -841,7 +849,7 @@ fn circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn circle_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn circle_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let width: f32 = vm.stack_peek(1)?;
     let height: f32 = vm.stack_peek(2)?;
     let position: (f32, f32) = vm.stack_peek(3)?;
@@ -854,10 +862,10 @@ fn circle_execute(vm: &mut Vm) -> Result<Option<Var>> {
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
         if is_arg_given(default_mask, 6) {
             // given a radius value
-            vm.render_circle(position, radius, radius, &rgb, tessellation)?;
+            context.render_circle(position, radius, radius, &rgb, tessellation)?;
         } else {
             // radius was not explicitly specified
-            vm.render_circle(position, width, height, &rgb, tessellation)?;
+            context.render_circle(position, width, height, &rgb, tessellation)?;
         }
     } else {
         return Err(Error::Native("circle".to_string()));
@@ -886,7 +894,7 @@ fn circle_slice_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn circle_slice_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn circle_slice_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let width: f32 = vm.stack_peek(1)?;
     let height: f32 = vm.stack_peek(2)?;
     let position: (f32, f32) = vm.stack_peek(3)?;
@@ -903,7 +911,7 @@ fn circle_slice_execute(vm: &mut Vm) -> Result<Option<Var>> {
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
         if is_arg_given(default_mask, 6) {
             // given a radius value
-            vm.render_circle_slice(
+            context.render_circle_slice(
                 position,
                 radius,
                 radius,
@@ -916,7 +924,7 @@ fn circle_slice_execute(vm: &mut Vm) -> Result<Option<Var>> {
             )?;
         } else {
             // radius was not explicitly specified
-            vm.render_circle_slice(
+            context.render_circle_slice(
                 position,
                 width,
                 height,
@@ -947,7 +955,7 @@ fn poly_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn poly_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn poly_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) || !is_arg_given(default_mask, 2) {
@@ -960,13 +968,13 @@ fn poly_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
     let colours = stack_peek_vars(&vm.stack, vm.sp, 2)?;
 
-    let geo = &mut vm.geometry;
-    let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+    let geo = &mut context.geometry;
+    let matrix = if let Some(matrix) = context.matrix_stack.peek() {
         matrix
     } else {
         return Err(Error::Native("poly_execute: matrix required".to_string()));
     };
-    let uv_mapping = vm.mappings.get_uv_mapping(BrushType::Flat, 0);
+    let uv_mapping = context.mappings.get_uv_mapping(BrushType::Flat, 0);
 
     geo.render_poly(matrix, coords, colours, uv_mapping)?;
 
@@ -994,7 +1002,7 @@ fn quadratic_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn quadratic_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let line_width: f32 = vm.stack_peek(1)?;
     let line_width_start: f32 = vm.stack_peek(2)?;
     let line_width_end: f32 = vm.stack_peek(3)?;
@@ -1014,14 +1022,14 @@ fn quadratic_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut vm.geometry;
-        let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        let geo = &mut context.geometry;
+        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
             matrix
         } else {
             return Err(Error::Native("quadratic: matrix required".to_string()));
         };
         let brush_type = read_brush(brush);
-        let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
+        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
             (x, y)
@@ -1100,7 +1108,7 @@ fn bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let line_width: f32 = vm.stack_peek(1)?;
     let line_width_start: f32 = vm.stack_peek(2)?;
     let line_width_end: f32 = vm.stack_peek(3)?;
@@ -1120,14 +1128,14 @@ fn bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut vm.geometry;
-        let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        let geo = &mut context.geometry;
+        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
             matrix
         } else {
             return Err(Error::Native("bezier: matrix required".to_string()));
         };
         let brush_type = read_brush(brush);
-        let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
+        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         if let Some(mapping) = easing_from_keyword(line_width_mapping) {
             let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
@@ -1208,7 +1216,7 @@ fn bezier_bulging_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn bezier_bulging_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn bezier_bulging_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let line_width: f32 = vm.stack_peek(1)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 2)?;
     let t_start: f32 = vm.stack_peek(3)?;
@@ -1225,14 +1233,14 @@ fn bezier_bulging_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut vm.geometry;
-        let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        let geo = &mut context.geometry;
+        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
             matrix
         } else {
             return Err(Error::Native("bezier_bulging: matrix required".to_string()));
         };
         let brush_type = read_brush(brush);
-        let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
+        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
             (x, y)
@@ -1296,7 +1304,7 @@ fn stroked_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn stroked_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let tessellation: usize = vm.stack_peek(1)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 2)?;
     let stroke_tessellation: usize = vm.stack_peek(3)?;
@@ -1317,14 +1325,14 @@ fn stroked_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut vm.geometry;
-        let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        let geo = &mut context.geometry;
+        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
             matrix
         } else {
             return Err(Error::Native("stroked bezier: matrix required".to_string()));
         };
         let brush_type = read_brush(brush);
-        let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
+        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         if let Some(mapping) = easing_from_keyword(line_width_mapping) {
             let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
@@ -1398,7 +1406,7 @@ fn stroked_bezier_rect_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn stroked_bezier_rect_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn stroked_bezier_rect_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let position: (f32, f32) = vm.stack_peek(1)?;
     let width: f32 = vm.stack_peek(2)?;
     let height: f32 = vm.stack_peek(3)?;
@@ -1415,8 +1423,8 @@ fn stroked_bezier_rect_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let brush_subtype: usize = vm.stack_peek(14)?;
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut vm.geometry;
-        let matrix = if let Some(matrix) = vm.matrix_stack.peek() {
+        let geo = &mut context.geometry;
+        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
             matrix
         } else {
             return Err(Error::Native(
@@ -1424,7 +1432,7 @@ fn stroked_bezier_rect_execute(vm: &mut Vm) -> Result<Option<Var>> {
             ));
         };
         let brush_type = read_brush(brush);
-        let uv_mapping = vm.mappings.get_uv_mapping(brush_type, brush_subtype);
+        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         geo.render_stroked_bezier_rect(
             matrix,
@@ -1460,8 +1468,8 @@ fn matrix_push_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn matrix_push_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    vm.matrix_stack.push();
+fn matrix_push_execute(_vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
+    context.matrix_stack.push();
 
     Ok(None)
 }
@@ -1475,8 +1483,8 @@ fn matrix_pop_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn matrix_pop_execute(vm: &mut Vm) -> Result<Option<Var>> {
-    vm.matrix_stack.pop();
+fn matrix_pop_execute(_vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
+    context.matrix_stack.pop();
 
     Ok(None)
 }
@@ -1490,10 +1498,10 @@ fn translate_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn translate_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn translate_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let (x, y): (f32, f32) = vm.stack_peek(1)?;
 
-    vm.matrix_stack.translate(x, y);
+    context.matrix_stack.translate(x, y);
 
     Ok(None)
 }
@@ -1507,10 +1515,10 @@ fn rotate_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn rotate_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn rotate_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let angle: f32 = vm.stack_peek(1)?;
 
-    vm.matrix_stack.rotate(mathutil::deg_to_rad(angle));
+    context.matrix_stack.rotate(mathutil::deg_to_rad(angle));
 
     Ok(None)
 }
@@ -1527,7 +1535,7 @@ fn scale_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn scale_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn scale_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let (x, y): (f32, f32) = vm.stack_peek(1)?;
     let scalar: f32 = vm.stack_peek(2)?;
 
@@ -1535,9 +1543,9 @@ fn scale_execute(vm: &mut Vm) -> Result<Option<Var>> {
 
     if is_arg_given(default_mask, 2) {
         // scalar was specified in the script
-        vm.matrix_stack.scale(scalar, scalar);
+        context.matrix_stack.scale(scalar, scalar);
     } else {
-        vm.matrix_stack.scale(x, y);
+        context.matrix_stack.scale(x, y);
     }
 
     Ok(None)
@@ -2500,7 +2508,11 @@ fn path_linear_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn path_linear_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn path_linear_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(8)?;
 
     if !is_arg_given(default_mask, 6) {
@@ -2520,6 +2532,7 @@ fn path_linear_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     if let Some(mapping) = easing_from_keyword(mapping) {
         path::linear(
             vm,
+            context,
             program,
             fun as usize,
             steps as i32,
@@ -2553,7 +2566,11 @@ fn path_circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn path_circle_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn path_circle_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(8)?;
 
     if !is_arg_given(default_mask, 6) {
@@ -2573,6 +2590,7 @@ fn path_circle_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     if let Some(mapping) = easing_from_keyword(mapping) {
         path::circular(
             vm,
+            context,
             program,
             fun as usize,
             steps as i32,
@@ -2604,7 +2622,11 @@ fn path_spline_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn path_spline_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn path_spline_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(7)?;
 
     if !is_arg_given(default_mask, 1) {
@@ -2644,6 +2666,7 @@ fn path_spline_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     if let Some(mapping) = easing_from_keyword(mapping) {
         path::spline(
             vm,
+            context,
             program,
             fun as usize,
             steps as i32,
@@ -2673,7 +2696,11 @@ fn path_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn path_bezier_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn path_bezier_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(7)?;
 
     if !is_arg_given(default_mask, 1) {
@@ -2718,6 +2745,7 @@ fn path_bezier_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
     if let Some(mapping) = easing_from_keyword(mapping) {
         path::bezier(
             vm,
+            context,
             program,
             fun as usize,
             steps as i32,
@@ -2740,7 +2768,11 @@ fn repeat_symmetry_vertical_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32
     ))
 }
 
-fn repeat_symmetry_vertical_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn repeat_symmetry_vertical_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
@@ -2751,7 +2783,7 @@ fn repeat_symmetry_vertical_execute(vm: &mut Vm, program: &Program) -> Result<Op
 
     let fun: i32 = vm.stack_peek(1)?;
 
-    repeat::symmetry_vertical(vm, program, fun as usize)?;
+    repeat::symmetry_vertical(vm, context, program, fun as usize)?;
 
     Ok(None)
 }
@@ -2765,7 +2797,11 @@ fn repeat_symmetry_horizontal_parameter_info() -> Result<(Vec<(Keyword, Var)>, i
     ))
 }
 
-fn repeat_symmetry_horizontal_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn repeat_symmetry_horizontal_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
@@ -2776,7 +2812,7 @@ fn repeat_symmetry_horizontal_execute(vm: &mut Vm, program: &Program) -> Result<
 
     let fun: i32 = vm.stack_peek(1)?;
 
-    repeat::symmetry_horizontal(vm, program, fun as usize)?;
+    repeat::symmetry_horizontal(vm, context, program, fun as usize)?;
 
     Ok(None)
 }
@@ -2790,7 +2826,11 @@ fn repeat_symmetry_4_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn repeat_symmetry_4_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn repeat_symmetry_4_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
@@ -2801,7 +2841,7 @@ fn repeat_symmetry_4_execute(vm: &mut Vm, program: &Program) -> Result<Option<Va
 
     let fun: i32 = vm.stack_peek(1)?;
 
-    repeat::symmetry_4(vm, program, fun as usize)?;
+    repeat::symmetry_4(vm, context, program, fun as usize)?;
 
     Ok(None)
 }
@@ -2815,7 +2855,11 @@ fn repeat_symmetry_8_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn repeat_symmetry_8_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn repeat_symmetry_8_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
@@ -2826,7 +2870,7 @@ fn repeat_symmetry_8_execute(vm: &mut Vm, program: &Program) -> Result<Option<Va
 
     let fun: i32 = vm.stack_peek(1)?;
 
-    repeat::symmetry_8(vm, program, fun as usize)?;
+    repeat::symmetry_8(vm, context, program, fun as usize)?;
 
     Ok(None)
 }
@@ -2843,7 +2887,11 @@ fn repeat_rotate_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn repeat_rotate_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn repeat_rotate_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
@@ -2855,7 +2903,7 @@ fn repeat_rotate_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> 
     let fun: i32 = vm.stack_peek(1)?;
     let copies: usize = vm.stack_peek(2)?;
 
-    repeat::rotate(vm, program, fun as usize, copies)?;
+    repeat::rotate(vm, context, program, fun as usize, copies)?;
 
     Ok(None)
 }
@@ -2872,7 +2920,11 @@ fn repeat_rotate_mirrored_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)>
     ))
 }
 
-fn repeat_rotate_mirrored_execute(vm: &mut Vm, program: &Program) -> Result<Option<Var>> {
+fn repeat_rotate_mirrored_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
@@ -2884,7 +2936,7 @@ fn repeat_rotate_mirrored_execute(vm: &mut Vm, program: &Program) -> Result<Opti
     let fun: i32 = vm.stack_peek(1)?;
     let copies: usize = vm.stack_peek(2)?;
 
-    repeat::rotate_mirrored(vm, program, fun as usize, copies)?;
+    repeat::rotate_mirrored(vm, context, program, fun as usize, copies)?;
 
     Ok(None)
 }
@@ -2948,7 +3000,7 @@ fn focal_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn focal_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
+fn focal_value_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
@@ -2960,7 +3012,7 @@ fn focal_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let focal_state_struct = stack_peek_focal_state_struct(&vm.stack, vm.sp, 1)?;
     let position: (f32, f32) = vm.stack_peek(2)?;
 
-    let res = focal_state_struct.value(vm, position);
+    let res = focal_state_struct.value(context, position);
 
     Ok(Some(Var::Float(res)))
 }
@@ -3304,8 +3356,9 @@ mod tests {
     use crate::vm::*;
 
     fn is_col_rgb(s: &str, r: f32, g: f32, b: f32, alpha: f32) {
-        let mut vm = Vm::new();
-        if let Var::Colour(col) = vm_exec(&mut vm, s) {
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
+        if let Var::Colour(col) = vm_exec(&mut vm, &mut context, s) {
             assert_eq!(col.format, ColourFormat::Rgb);
             assert_eq!(col.e0, r);
             assert_eq!(col.e1, g);
@@ -3315,17 +3368,18 @@ mod tests {
     }
 
     // get render packet 0's geometry length
-    fn rp0_num_vertices(vm: &Vm, expected_num_vertices: usize) {
+    fn rp0_num_vertices(context: &Context, expected_num_vertices: usize) {
         assert_eq!(
-            vm.get_render_packet_geo_len(0),
+            context.get_render_packet_geo_len(0),
             expected_num_vertices * RENDER_PACKET_FLOAT_PER_VERTEX
         );
     }
 
     // #[test]
     fn dev_rendering_fns() {
-        let mut vm = Vm::new();
-        vm_run(&mut vm, "(line width: 33 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
+        vm_run(&mut vm, &mut context, "(line width: 33 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
         // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush-b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
         // vm_run(&mut vm, "(line brush: brush-b)");
         // vm_run(&mut vm, "(line brush: brush-b) (rect width: 10 height: 30)");
@@ -3337,7 +3391,7 @@ mod tests {
             assert_eq!(false, true);
         }
 
-        rp0_num_vertices(&vm, 4);
+        rp0_num_vertices(&context, 4);
     }
 
     #[test]

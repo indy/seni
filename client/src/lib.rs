@@ -25,7 +25,7 @@ use core::{
     build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets,
     next_generation, simplified_unparse, unparse,
 };
-use core::{Genotype, Packable, TraitList, Vm};
+use core::{Genotype, Packable, TraitList, Vm, Context};
 
 use log::{info, error};
 
@@ -70,6 +70,7 @@ cfg_if! {
 #[derive(Default)]
 pub struct Bridge {
     vm: Vm,
+    context: Context,
 
     source_buffer: String,
     out_source_buffer: String,
@@ -92,7 +93,8 @@ impl Bridge {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Bridge {
         Bridge {
-            vm: Vm::new(),
+            vm: Default::default(),
+            context: Default::default(),
 
             source_buffer: "source buffer".to_string(),
             out_source_buffer: "out_source buffer".to_string(),
@@ -162,6 +164,7 @@ impl Bridge {
             if let Ok((mut genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
                 num_render_packets = if let Ok(res) = compile_with_genotype_to_render_packets(
                     &mut self.vm,
+                    &mut self.context,
                     &self.source_buffer,
                     &mut genotype,
                 ) {
@@ -174,7 +177,7 @@ impl Bridge {
             }
         } else {
             num_render_packets =
-                if let Ok(res) = compile_to_render_packets(&mut self.vm, &self.source_buffer) {
+                if let Ok(res) = compile_to_render_packets(&mut self.vm, &mut self.context, &self.source_buffer) {
                     res
                 } else {
                     0
@@ -192,13 +195,13 @@ impl Bridge {
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
         info!("get_render_packet_geo_len");
 
-        self.vm.get_render_packet_geo_len(packet_number)
+        self.context.get_render_packet_geo_len(packet_number)
     }
 
     pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
         info!("get_render_packet_geo_ptr");
 
-        self.vm.get_render_packet_geo_ptr(packet_number)
+        self.context.get_render_packet_geo_ptr(packet_number)
     }
 
     // todo: is bool the best return type?

@@ -28,6 +28,7 @@ The core crate provides the basic functionality of the Seni system
 
 mod colour;
 mod compiler;
+mod context;
 mod ease;
 pub mod error; // for cli
 mod focal;
@@ -56,53 +57,60 @@ mod vm;
 pub use crate::compiler::{
     compile_preamble, compile_program, compile_program_with_genotype, Program,
 };
+pub use crate::context::Context;
 pub use crate::error::Error;
 pub use crate::parser::*;
 pub use crate::result::Result;
-pub use crate::vm::*;
+pub use crate::vm::{VMProfiling, Var, Vm};
 
 pub use crate::gene::{next_generation, Genotype};
 pub use crate::packable::Packable;
 pub use crate::trait_list::TraitList;
 pub use crate::unparser::{simplified_unparse, unparse};
 
-pub fn run_program_with_preamble(vm: &mut Vm, program: &Program) -> Result<Var> {
+pub fn run_program_with_preamble(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Var> {
+    context.reset();
     vm.reset();
 
     // setup the env with the global variables in preamble
     let preamble = compile_preamble()?;
-    vm.interpret(&preamble)?;
+    vm.interpret(context, &preamble)?;
 
     // reset the ip and setup any profiling of the main program
     vm.init_for_main_program(&program, VMProfiling::Off)?;
 
-    vm.interpret(&program)?;
+    vm.interpret(context, &program)?;
     vm.top_stack_value()
 }
 
-pub fn compile_to_render_packets(vm: &mut Vm, s: &str) -> Result<i32> {
+pub fn compile_to_render_packets(vm: &mut Vm, context: &mut Context, s: &str) -> Result<i32> {
     let (ast, _word_lut) = parse(s)?;
     let program = compile_program(&ast)?;
-    let _ = run_program_with_preamble(vm, &program)?;
+    let _ = run_program_with_preamble(vm, context, &program)?;
 
     // todo: cache the preamble program
 
-    Ok(vm.geometry.get_num_render_packets() as i32)
+    Ok(context.geometry.get_num_render_packets() as i32)
 }
 
 // todo: remove mut from genotype
 pub fn compile_with_genotype_to_render_packets(
     vm: &mut Vm,
+    context: &mut Context,
     s: &str,
     genotype: &mut Genotype,
 ) -> Result<i32> {
     let (mut ast, _word_lut) = parse(s)?;
     let program = compile_program_with_genotype(&mut ast, genotype)?;
-    let _ = run_program_with_preamble(vm, &program)?;
+    let _ = run_program_with_preamble(vm, context, &program)?;
 
     // todo: cache the preamble program
 
-    Ok(vm.geometry.get_num_render_packets() as i32)
+    Ok(context.geometry.get_num_render_packets() as i32)
 }
 
 pub fn build_traits(s: &str) -> Result<TraitList> {
@@ -114,16 +122,20 @@ pub fn build_traits(s: &str) -> Result<TraitList> {
 }
 
 pub fn compile_and_execute(s: &str) -> Result<Var> {
-    let mut vm = Vm::new();
+    let mut vm: Vm = Default::default();
+    let mut context: Context = Default::default();
+
     // todo: cache the preamble program
     let (ast, _word_lut) = parse(s)?;
     let program = compile_program(&ast)?;
 
-    run_program_with_preamble(&mut vm, &program)
+    run_program_with_preamble(&mut vm, &mut context, &program)
 }
 
 pub fn compile_and_execute_with_seeded_genotype(s: &str, seed: i32) -> Result<Var> {
-    let mut vm = Vm::new();
+    let mut vm: Vm = Default::default();
+    let mut context: Context = Default::default();
+
     // todo: cache the preamble program
     let (mut ast, _word_lut) = parse(s)?;
 
@@ -131,7 +143,7 @@ pub fn compile_and_execute_with_seeded_genotype(s: &str, seed: i32) -> Result<Va
     let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
     let program = compile_program_with_genotype(&mut ast, &mut genotype)?;
 
-    run_program_with_preamble(&mut vm, &program)
+    run_program_with_preamble(&mut vm, &mut context, &program)
 }
 
 pub fn compile_str(s: &str) -> Result<Program> {
@@ -147,11 +159,16 @@ pub fn sen_parse(s: &str) -> i32 {
 pub mod tests {
     use super::*;
 
-    fn is_rendering_num_verts(vm: &mut Vm, s: &str, expected_num_verts: usize) {
-        if let Ok(res) = compile_to_render_packets(vm, s) {
+    fn is_rendering_num_verts(
+        vm: &mut Vm,
+        context: &mut Context,
+        s: &str,
+        expected_num_verts: usize,
+    ) {
+        if let Ok(res) = compile_to_render_packets(vm, context, s) {
             assert_eq!(1, res);
 
-            let num_floats = vm.get_render_packet_geo_len(0);
+            let num_floats = context.get_render_packet_geo_len(0);
             let floats_per_vert = 8;
             assert_eq!(expected_num_verts, num_floats / floats_per_vert);
         } else {
@@ -162,15 +179,18 @@ pub mod tests {
     #[test]
     fn bug_running_preamble_crashed_vm() {
         // vm.ip wasn't being set to 0 in-between running the preamble and running the user's program
-        let mut vm = Vm::new();
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
         let s = "(rect)";
-        is_rendering_num_verts(&mut vm, &s, 4);
+
+        is_rendering_num_verts(&mut vm, &mut context, &s, 4);
     }
 
     // #[test]
     fn explore_1() {
         // vm.ip wasn't being set to 0 in-between running the preamble and running the user's program
-        let mut vm = Vm::new();
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
         let s = "
 
 (define
@@ -223,6 +243,6 @@ pub mod tests {
 
 (render)
 ";
-        is_rendering_num_verts(&mut vm, &s, 1246);
+        is_rendering_num_verts(&mut vm, &mut context, &s, 1246);
     }
 }

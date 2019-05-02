@@ -17,7 +17,7 @@ fn compile_ast(ast: &[Node]) {
 }
 
 fn interpret_script(source: &str) {
-    let mut vm = Vm::new();
+    let mut vm: Vm = Default::default();
     let (ast, _word_lut) = parse(&source).unwrap();
     let program = compile_program(&ast).unwrap();
 

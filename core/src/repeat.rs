@@ -14,84 +14,110 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::compiler::Program;
+use crate::context::Context;
 use crate::keywords::Keyword;
 use crate::mathutil::*;
 use crate::name::Name;
 use crate::result::Result;
 use crate::vm::*;
 
-fn flip(vm: &mut Vm, program: &Program, fun: usize, sx: f32, sy: f32, copy_val: i32) -> Result<()> {
+fn flip(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+    fun: usize,
+    sx: f32,
+    sy: f32,
+    copy_val: i32,
+) -> Result<()> {
     let fn_info = &program.fn_info[fun];
     let ip = vm.ip;
 
     let copy = copy_val;
-    vm.matrix_stack.push();
+    context.matrix_stack.push();
     {
-        vm.function_call_default_arguments(program, fn_info)?;
+        vm.function_call_default_arguments(context, program, fn_info)?;
         vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), copy as f32);
-        vm.function_call_body(program, fn_info)?;
+        vm.function_call_body(context, program, fn_info)?;
     }
-    vm.matrix_stack.pop();
+    context.matrix_stack.pop();
     vm.ip = ip;
 
     let copy = copy_val + 1;
-    vm.matrix_stack.push();
+    context.matrix_stack.push();
     {
-        vm.matrix_stack.scale(sx, sy);
-        vm.function_call_default_arguments(program, fn_info)?;
+        context.matrix_stack.scale(sx, sy);
+        vm.function_call_default_arguments(context, program, fn_info)?;
         vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), copy as f32);
-        vm.function_call_body(program, fn_info)?;
+        vm.function_call_body(context, program, fn_info)?;
     }
-    vm.matrix_stack.pop();
+    context.matrix_stack.pop();
     vm.ip = ip;
 
     Ok(())
 }
 
-pub fn symmetry_vertical(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
-    flip(vm, program, fun, -1.0, 1.0, 0)
+pub fn symmetry_vertical(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+    fun: usize,
+) -> Result<()> {
+    flip(vm, context, program, fun, -1.0, 1.0, 0)
 }
 
-pub fn symmetry_horizontal(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
-    flip(vm, program, fun, 1.0, -1.0, 0)
+pub fn symmetry_horizontal(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+    fun: usize,
+) -> Result<()> {
+    flip(vm, context, program, fun, 1.0, -1.0, 0)
 }
 
 pub fn symmetry_4_copy_offset(
     vm: &mut Vm,
+    context: &mut Context,
     program: &Program,
     fun: usize,
     copy_offset: i32,
 ) -> Result<()> {
-    vm.matrix_stack.push();
-    flip(vm, program, fun, -1.0, 1.0, copy_offset)?;
-    vm.matrix_stack.pop();
+    context.matrix_stack.push();
+    flip(vm, context, program, fun, -1.0, 1.0, copy_offset)?;
+    context.matrix_stack.pop();
 
-    vm.matrix_stack.push();
-    vm.matrix_stack.scale(1.0, -1.0);
-    flip(vm, program, fun, -1.0, 1.0, copy_offset + 2)?;
-    vm.matrix_stack.pop();
-
-    Ok(())
-}
-
-pub fn symmetry_4(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
-    symmetry_4_copy_offset(vm, program, fun, 0)
-}
-
-pub fn symmetry_8(vm: &mut Vm, program: &Program, fun: usize) -> Result<()> {
-    vm.matrix_stack.push();
-    symmetry_4_copy_offset(vm, program, fun, 0)?;
-    vm.matrix_stack.pop();
-
-    vm.matrix_stack.push();
-    vm.matrix_stack.rotate(PI_BY_2);
-    symmetry_4_copy_offset(vm, program, fun, 4)?;
-    vm.matrix_stack.pop();
+    context.matrix_stack.push();
+    context.matrix_stack.scale(1.0, -1.0);
+    flip(vm, context, program, fun, -1.0, 1.0, copy_offset + 2)?;
+    context.matrix_stack.pop();
 
     Ok(())
 }
 
-pub fn rotate(vm: &mut Vm, program: &Program, fun: usize, copies: usize) -> Result<()> {
+pub fn symmetry_4(vm: &mut Vm, context: &mut Context, program: &Program, fun: usize) -> Result<()> {
+    symmetry_4_copy_offset(vm, context, program, fun, 0)
+}
+
+pub fn symmetry_8(vm: &mut Vm, context: &mut Context, program: &Program, fun: usize) -> Result<()> {
+    context.matrix_stack.push();
+    symmetry_4_copy_offset(vm, context, program, fun, 0)?;
+    context.matrix_stack.pop();
+
+    context.matrix_stack.push();
+    context.matrix_stack.rotate(PI_BY_2);
+    symmetry_4_copy_offset(vm, context, program, fun, 4)?;
+    context.matrix_stack.pop();
+
+    Ok(())
+}
+
+pub fn rotate(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+    fun: usize,
+    copies: usize,
+) -> Result<()> {
     let fn_info = &program.fn_info[fun];
     let ip = vm.ip;
 
@@ -100,15 +126,15 @@ pub fn rotate(vm: &mut Vm, program: &Program, fun: usize, copies: usize) -> Resu
     for i in 0..copies {
         let angle = delta * i as f32;
 
-        vm.matrix_stack.push();
-        vm.matrix_stack.rotate(angle);
+        context.matrix_stack.push();
+        context.matrix_stack.rotate(angle);
 
-        vm.function_call_default_arguments(program, fn_info)?;
+        vm.function_call_default_arguments(context, program, fn_info)?;
         vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Angle), rad_to_deg(angle));
         vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), i as f32);
-        vm.function_call_body(program, fn_info)?;
+        vm.function_call_body(context, program, fn_info)?;
 
-        vm.matrix_stack.pop();
+        context.matrix_stack.pop();
 
         vm.ip = ip;
     }
@@ -116,7 +142,13 @@ pub fn rotate(vm: &mut Vm, program: &Program, fun: usize, copies: usize) -> Resu
     Ok(())
 }
 
-pub fn rotate_mirrored(vm: &mut Vm, program: &Program, fun: usize, copies: usize) -> Result<()> {
+pub fn rotate_mirrored(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+    fun: usize,
+    copies: usize,
+) -> Result<()> {
     let fn_info = &program.fn_info[fun];
     let ip = vm.ip;
 
@@ -125,37 +157,37 @@ pub fn rotate_mirrored(vm: &mut Vm, program: &Program, fun: usize, copies: usize
     for i in 0..copies {
         let angle = delta * i as f32;
 
-        vm.matrix_stack.push();
-        vm.matrix_stack.rotate(angle);
+        context.matrix_stack.push();
+        context.matrix_stack.rotate(angle);
 
-        vm.function_call_default_arguments(program, fn_info)?;
+        vm.function_call_default_arguments(context, program, fn_info)?;
         vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Angle), rad_to_deg(angle));
         vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), i as f32);
-        vm.function_call_body(program, fn_info)?;
+        vm.function_call_body(context, program, fn_info)?;
 
-        vm.matrix_stack.pop();
+        context.matrix_stack.pop();
         vm.ip = ip;
     }
 
-    vm.matrix_stack.push();
-    vm.matrix_stack.scale(-1.0, 1.0);
+    context.matrix_stack.push();
+    context.matrix_stack.scale(-1.0, 1.0);
 
     for i in 0..copies {
         let angle = delta * i as f32;
 
-        vm.matrix_stack.push();
-        vm.matrix_stack.rotate(angle);
+        context.matrix_stack.push();
+        context.matrix_stack.rotate(angle);
 
-        vm.function_call_default_arguments(program, fn_info)?;
+        vm.function_call_default_arguments(context, program, fn_info)?;
         vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Angle), -rad_to_deg(angle));
         vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), (copies + i) as f32);
-        vm.function_call_body(program, fn_info)?;
+        vm.function_call_body(context, program, fn_info)?;
 
-        vm.matrix_stack.pop();
+        context.matrix_stack.pop();
         vm.ip = ip;
     }
 
-    vm.matrix_stack.pop();
+    context.matrix_stack.pop();
 
     Ok(())
 }

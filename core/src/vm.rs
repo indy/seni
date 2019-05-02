@@ -15,20 +15,17 @@
 
 use crate::colour::{Colour, ProcColourStateStruct};
 use crate::compiler::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
-use crate::ease::Easing;
+use crate::context::Context;
 use crate::error::Error;
 use crate::focal::FocalStateStruct;
-use crate::geometry::Geometry;
 use crate::interp::InterpStateStruct;
 use crate::keywords::Keyword;
-use crate::matrix::MatrixStack;
 use crate::name::Name;
 use crate::native::execute_native;
 use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
 use crate::result::Result;
-use crate::uvmapper::{BrushType, Mappings};
 
 use std::cell::RefCell;
 use std::fmt;
@@ -187,12 +184,8 @@ impl Var {
 }
 
 pub struct Vm {
-    pub matrix_stack: MatrixStack,
     /// only used when evaluating bracket bindings
     pub prng_state: PrngStateStruct,
-
-    pub mappings: Mappings,
-    pub geometry: Geometry,
 
     pub profiling: VMProfiling,
     pub opcode_count: Vec<u64>,
@@ -244,12 +237,7 @@ impl Default for Vm {
         let sp = base_offset;
 
         Vm {
-            matrix_stack: Default::default(),
-
             prng_state: PrngStateStruct::new(10, 0.0, 1.0),
-
-            mappings: Default::default(),
-            geometry: Default::default(),
 
             profiling: VMProfiling::Off,
             opcode_count: vec![],
@@ -290,10 +278,6 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
 }
 
 impl Vm {
-    pub fn new() -> Vm {
-        Default::default()
-    }
-
     pub fn debug_str_clear(&mut self) {
         self.debug_str = "".to_string();
     }
@@ -305,284 +289,8 @@ impl Vm {
         self.debug_str += &text.to_string();
     }
 
-    pub fn render_line(
-        &mut self,
-        from: (f32, f32),
-        to: (f32, f32),
-        width: f32,
-        from_col: &Colour,
-        to_col: &Colour,
-        brush_type: BrushType,
-        brush_subtype: usize,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
-
-            self.geometry
-                .render_line(matrix, from, to, width, from_col, to_col, uvm)
-        } else {
-            Err(Error::VM("no matrix for render_line".to_string()))
-        }
-    }
-    pub fn render_rect(
-        &mut self,
-        position: (f32, f32),
-        width: f32,
-        height: f32,
-        colour: &Colour,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            self.geometry
-                .render_rect(matrix, position, width, height, colour, uvm)
-        } else {
-            Err(Error::VM("no matrix for render_rect".to_string()))
-        }
-    }
-
-    pub fn render_circle(
-        &mut self,
-        position: (f32, f32),
-        width: f32,
-        height: f32,
-        colour: &Colour,
-        tessellation: usize,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            self.geometry
-                .render_circle(matrix, position, width, height, colour, tessellation, uvm)
-        } else {
-            Err(Error::VM("no matrix for render_circle".to_string()))
-        }
-    }
-
-    pub fn render_circle_slice(
-        &mut self,
-        position: (f32, f32),
-        width: f32,
-        height: f32,
-        colour: &Colour,
-        tessellation: usize,
-        angle_start: f32,
-        angle_end: f32,
-        inner_width: f32,
-        inner_height: f32,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            self.geometry.render_circle_slice(
-                matrix,
-                position,
-                width,
-                height,
-                colour,
-                tessellation,
-                angle_start,
-                angle_end,
-                inner_width,
-                inner_height,
-                uvm,
-            )
-        } else {
-            Err(Error::VM("no matrix for render_circle_slice".to_string()))
-        }
-    }
-
-    pub fn render_poly(&mut self, coords: &[Var], colours: &[Var]) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            self.geometry.render_poly(matrix, coords, colours, uvm)
-        } else {
-            Err(Error::VM("no matrix for render_poly".to_string()))
-        }
-    }
-
-    pub fn render_quadratic(
-        &mut self,
-        coords: &[f32; 6],
-        width_start: f32,
-        width_end: f32,
-        width_mapping: Easing,
-        t_start: f32,
-        t_end: f32,
-        colour: &Colour,
-        tessellation: usize,
-        brush_type: BrushType,
-        brush_subtype: usize,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
-
-            self.geometry.render_quadratic(
-                matrix,
-                coords,
-                width_start,
-                width_end,
-                width_mapping,
-                t_start,
-                t_end,
-                colour,
-                tessellation,
-                uvm,
-            )
-        } else {
-            Err(Error::VM("no matrix for render_quadratic".to_string()))
-        }
-    }
-
-    pub fn render_bezier(
-        &mut self,
-        coords: &[f32; 8],
-        width_start: f32,
-        width_end: f32,
-        width_mapping: Easing,
-        t_start: f32,
-        t_end: f32,
-        colour: &Colour,
-        tessellation: usize,
-        brush_type: BrushType,
-        brush_subtype: usize,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
-
-            self.geometry.render_bezier(
-                matrix,
-                coords,
-                width_start,
-                width_end,
-                width_mapping,
-                t_start,
-                t_end,
-                colour,
-                tessellation,
-                uvm,
-            )
-        } else {
-            Err(Error::VM("no matrix for render_bezier".to_string()))
-        }
-    }
-
-    pub fn render_bezier_bulging(
-        &mut self,
-        coords: &[f32; 8],
-        line_width: f32,
-        t_start: f32,
-        t_end: f32,
-        colour: &Colour,
-        tessellation: usize,
-        brush_type: BrushType,
-        brush_subtype: usize,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
-
-            self.geometry.render_bezier_bulging(
-                matrix,
-                coords,
-                line_width,
-                t_start,
-                t_end,
-                colour,
-                tessellation,
-                uvm,
-            )
-        } else {
-            Err(Error::VM("no matrix for render_bezier_bulging".to_string()))
-        }
-    }
-
-    pub fn render_stroked_bezier(
-        &mut self,
-        tessellation: usize,
-        coords: &[f32; 8],
-        stroke_tessellation: usize,
-        stroke_noise: f32,
-        stroke_line_width_start: f32,
-        stroke_line_width_end: f32,
-        colour: &Colour,
-        colour_volatility: f32,
-        seed: f32,
-        mapping: Easing,
-        brush_type: BrushType,
-        brush_subtype: usize,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
-
-            self.geometry.render_stroked_bezier(
-                matrix,
-                tessellation,
-                coords,
-                stroke_tessellation,
-                stroke_noise,
-                stroke_line_width_start,
-                stroke_line_width_end,
-                colour,
-                colour_volatility,
-                seed,
-                mapping,
-                uvm,
-            )
-        } else {
-            Err(Error::VM("no matrix for render_stroked_bezier".to_string()))
-        }
-    }
-
-    pub fn render_stroked_bezier_rect(
-        &mut self,
-        position: (f32, f32),
-        width: f32,
-        height: f32,
-        volatility: f32,
-        overlap: f32,
-        iterations: f32,
-        seed: i32,
-        tessellation: usize,
-        stroke_tessellation: usize,
-        stroke_noise: f32,
-        colour: &Colour,
-        colour_volatility: f32,
-        brush_type: BrushType,
-        brush_subtype: usize,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
-
-            self.geometry.render_stroked_bezier_rect(
-                matrix,
-                position,
-                width,
-                height,
-                volatility,
-                overlap,
-                iterations,
-                seed,
-                tessellation,
-                stroke_tessellation,
-                stroke_noise,
-                colour,
-                colour_volatility,
-                uvm,
-            )
-        } else {
-            Err(Error::VM(
-                "no matrix for render_stroked_bezier_rect".to_string(),
-            ))
-        }
-    }
-
     pub fn set_prng_state(&mut self, prng: PrngStateStruct) {
         self.prng_state = prng;
-    }
-
-    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
-        self.geometry.get_render_packet_geo_len(packet_number)
-    }
-
-    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
-        self.geometry.get_render_packet_geo_ptr(packet_number)
     }
 
     pub fn reset(&mut self) {
@@ -603,9 +311,6 @@ impl Vm {
         base_offset += MEMORY_LOCAL_SIZE;
         self.sp = base_offset;
 
-        self.matrix_stack.reset();
-        self.geometry.reset();
-
         // todo
         // vm->building_with_trait_within_vector = 0;
         // vm->trait_within_vector_index         = 0;
@@ -613,6 +318,7 @@ impl Vm {
 
     pub fn function_call_default_arguments(
         &mut self,
+        context: &mut Context,
         program: &Program,
         fn_info: &FnInfo,
     ) -> Result<()> {
@@ -650,12 +356,17 @@ impl Vm {
             self.stack[self.sp - 1] = Var::Int(0);
         }
 
-        self.interpret(program)?;
+        self.interpret(context, program)?;
 
         Ok(())
     }
 
-    pub fn function_call_body(&mut self, program: &Program, fn_info: &FnInfo) -> Result<()> {
+    pub fn function_call_body(
+        &mut self,
+        context: &mut Context,
+        program: &Program,
+        fn_info: &FnInfo,
+    ) -> Result<()> {
         // push a frame onto the stack whose return address is the program's STOP
         // instruction
         let stop_address = program.stop_location();
@@ -666,7 +377,7 @@ impl Vm {
         // leap to a location
         self.ip = fn_info.body_address;
 
-        self.interpret(program)?;
+        self.interpret(context, program)?;
 
         // the above vm_interpret will eventually hit a RET, pop the frame,
         // push the function's result onto the stack and then jump to the stop_address
@@ -864,7 +575,12 @@ impl Vm {
 
     }
 
-    fn opcode_native(&mut self, program: &Program, bc: &Bytecode) -> Result<()> {
+    fn opcode_native(
+        &mut self,
+        context: &mut Context,
+        program: &Program,
+        bc: &Bytecode,
+    ) -> Result<()> {
         let num_args = if let BytecodeArg::Int(num_args_) = bc.arg1 {
             num_args_ as usize
         } else {
@@ -874,7 +590,7 @@ impl Vm {
         };
 
         let res = if let BytecodeArg::Native(native) = bc.arg0 {
-            execute_native(self, program, native)?
+            execute_native(self, context, program, native)?
         } else {
             return Err(Error::VM("opcode_native".to_string()));
         };
@@ -1554,7 +1270,7 @@ impl Vm {
 
     // executes a program on a vm
     // returns Ok if we reached a STOP opcode
-    pub fn interpret(&mut self, program: &Program) -> Result<()> {
+    pub fn interpret(&mut self, context: &mut Context, program: &Program) -> Result<()> {
         // sp == next free stack index
         // do sp_inc or sp_dec before accessing values as these funcs do sanity checks
         // means that a pop (via sp_dec) can reference stack[sp]
@@ -1573,7 +1289,7 @@ impl Vm {
             match bc.op {
                 Opcode::LOAD => self.opcode_load(bc)?,
                 Opcode::STORE => self.opcode_store(bc)?,
-                Opcode::NATIVE => self.opcode_native(program, bc)?,
+                Opcode::NATIVE => self.opcode_native(context, program, bc)?,
                 Opcode::STORE_F => self.opcode_store_f(program, bc)?,
                 Opcode::ADD => self.opcode_add()?,
                 Opcode::SUB => self.opcode_sub()?,
@@ -1696,43 +1412,52 @@ pub mod tests {
     use crate::compiler::compile_program;
     use crate::parser::parse;
 
-    pub fn vm_run(vm: &mut Vm, s: &str) {
+    pub fn vm_run(vm: &mut Vm, context: &mut Context, s: &str) {
         let (ast, _word_lut) = parse(s).unwrap();
         let program = compile_program(&ast).unwrap();
 
+        context.reset();
         vm.reset();
-        vm.interpret(&program).unwrap();
+        vm.interpret(context, &program).unwrap();
     }
 
-    pub fn vm_exec(mut vm: &mut Vm, s: &str) -> Var {
-        vm_run(&mut vm, s);
+    pub fn vm_exec(vm: &mut Vm, context: &mut Context, s: &str) -> Var {
+        vm_run(vm, context, s);
         vm.top_stack_value().unwrap()
     }
 
     pub fn is_float(s: &str, val: f32) {
-        let mut vm = Vm::new();
-        if let Var::Float(f) = vm_exec(&mut vm, s) {
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
+
+        if let Var::Float(f) = vm_exec(&mut vm, &mut context, s) {
             assert_eq!(f, val)
         }
     }
 
     pub fn is_int(s: &str, val: i32) {
-        let mut vm = Vm::new();
-        if let Var::Int(i) = vm_exec(&mut vm, s) {
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
+
+        if let Var::Int(i) = vm_exec(&mut vm, &mut context, s) {
             assert_eq!(i, val)
         }
     }
 
     pub fn is_bool(s: &str, val: bool) {
-        let mut vm = Vm::new();
-        if let Var::Bool(b) = vm_exec(&mut vm, s) {
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
+
+        if let Var::Bool(b) = vm_exec(&mut vm, &mut context, s) {
             assert_eq!(b, val)
         }
     }
 
     pub fn is_vec_of_f32(s: &str, val: Vec<f32>) {
-        let mut vm = Vm::new();
-        if let Var::Vector(vec_vec) = vm_exec(&mut vm, s) {
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
+
+        if let Var::Vector(vec_vec) = vm_exec(&mut vm, &mut context, s) {
             assert_eq!(vec_vec.len(), val.len());
             for (i, f) in val.iter().enumerate() {
                 if let Some(Var::Float(ff)) = vec_vec.get(i) {
@@ -1743,8 +1468,10 @@ pub mod tests {
     }
 
     pub fn is_debug_str(s: &str, val: &str) {
-        let mut vm = Vm::new();
-        vm_exec(&mut vm, s);
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
+
+        vm_exec(&mut vm, &mut context, s);
         assert_eq!(vm.debug_str, val);
     }
 

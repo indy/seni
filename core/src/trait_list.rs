@@ -16,6 +16,7 @@
 use crate::compiler::{
     compile_program_1, compile_program_for_trait, Compilation, Compiler, Program,
 };
+use crate::context::Context;
 use crate::name::Name;
 use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
@@ -114,9 +115,10 @@ impl Trait {
             Node::Name(_, i, _) => Var::Name(*i),
             _ => {
                 let program = compile_program_1(node)?;
-                let mut vm = Vm::new();
+                let mut vm: Vm = Default::default();
+                let mut context: Context = Default::default();
 
-                run_program_with_preamble(&mut vm, &program)?
+                run_program_with_preamble(&mut vm, &mut context, &program)?
             }
         };
 
