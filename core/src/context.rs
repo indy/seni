@@ -16,7 +16,7 @@
 use crate::colour::Colour;
 use crate::ease::Easing;
 use crate::error::Error;
-use crate::geometry::Geometry;
+use crate::geometry;
 use crate::matrix::MatrixStack;
 use crate::result::Result;
 use crate::uvmapper::{BrushType, Mappings};
@@ -26,7 +26,7 @@ use crate::vm::Var;
 pub struct Context {
     pub matrix_stack: MatrixStack,
     pub mappings: Mappings,
-    pub geometry: Geometry,
+    pub geometry: geometry::Geometry,
 }
 
 impl Context {
@@ -56,8 +56,16 @@ impl Context {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
 
-            self.geometry
-                .render_line(matrix, from, to, width, from_col, to_col, uvm)
+            geometry::line::render(
+                &mut self.geometry,
+                matrix,
+                from,
+                to,
+                width,
+                from_col,
+                to_col,
+                uvm,
+            )
         } else {
             Err(Error::VM("no matrix for render_line".to_string()))
         }
@@ -71,8 +79,16 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            self.geometry
-                .render_rect(matrix, position, width, height, colour, uvm)
+
+            geometry::rect::render(
+                &mut self.geometry,
+                matrix,
+                position,
+                width,
+                height,
+                colour,
+                uvm,
+            )
         } else {
             Err(Error::VM("no matrix for render_rect".to_string()))
         }
@@ -88,8 +104,17 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            self.geometry
-                .render_circle(matrix, position, width, height, colour, tessellation, uvm)
+
+            geometry::circle::render(
+                &mut self.geometry,
+                matrix,
+                position,
+                width,
+                height,
+                colour,
+                tessellation,
+                uvm,
+            )
         } else {
             Err(Error::VM("no matrix for render_circle".to_string()))
         }
@@ -109,7 +134,8 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            self.geometry.render_circle_slice(
+            geometry::circle_slice::render(
+                &mut self.geometry,
                 matrix,
                 position,
                 width,
@@ -130,7 +156,7 @@ impl Context {
     pub fn render_poly(&mut self, coords: &[Var], colours: &[Var]) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            self.geometry.render_poly(matrix, coords, colours, uvm)
+            geometry::poly::render(&mut self.geometry, matrix, coords, colours, uvm)
         } else {
             Err(Error::VM("no matrix for render_poly".to_string()))
         }
@@ -152,7 +178,8 @@ impl Context {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
 
-            self.geometry.render_quadratic(
+            geometry::quadratic::render(
+                &mut self.geometry,
                 matrix,
                 coords,
                 width_start,
@@ -185,7 +212,8 @@ impl Context {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
 
-            self.geometry.render_bezier(
+            geometry::bezier::render(
+                &mut self.geometry,
                 matrix,
                 coords,
                 width_start,
@@ -216,7 +244,8 @@ impl Context {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
 
-            self.geometry.render_bezier_bulging(
+            geometry::bezier_bulging::render(
+                &mut self.geometry,
                 matrix,
                 coords,
                 line_width,
@@ -249,7 +278,8 @@ impl Context {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
 
-            self.geometry.render_stroked_bezier(
+            geometry::stroked_bezier::render(
+                &mut self.geometry,
                 matrix,
                 tessellation,
                 coords,
@@ -288,7 +318,8 @@ impl Context {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
 
-            self.geometry.render_stroked_bezier_rect(
+            geometry::stroked_bezier_rect::render(
+                &mut self.geometry,
                 matrix,
                 position,
                 width,

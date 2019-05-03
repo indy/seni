@@ -18,18 +18,21 @@ fn compile_ast(ast: &[Node]) {
 
 fn interpret_script(source: &str) {
     let mut vm: Vm = Default::default();
+    let mut context: Context = Default::default();
+
     let (ast, _word_lut) = parse(&source).unwrap();
     let program = compile_program(&ast).unwrap();
 
+    context.reset();
     vm.reset();
 
     // setup the env with the global variables in preamble
     let preamble = compile_preamble().unwrap();
-    vm.interpret(&preamble).unwrap();
+    vm.interpret(&mut context, &preamble).unwrap();
 
     // reset the ip and setup any profiling of the main program
     vm.init_for_main_program(&program, VMProfiling::Off).unwrap();
-    vm.interpret(&program).unwrap();
+    vm.interpret(&mut context, &program).unwrap();
     let _res = vm.top_stack_value().unwrap();
 }
 

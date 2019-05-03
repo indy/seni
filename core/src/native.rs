@@ -968,15 +968,7 @@ fn poly_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
     let colours = stack_peek_vars(&vm.stack, vm.sp, 2)?;
 
-    let geo = &mut context.geometry;
-    let matrix = if let Some(matrix) = context.matrix_stack.peek() {
-        matrix
-    } else {
-        return Err(Error::Native("poly_execute: matrix required".to_string()));
-    };
-    let uv_mapping = context.mappings.get_uv_mapping(BrushType::Flat, 0);
-
-    geo.render_poly(matrix, coords, colours, uv_mapping)?;
+    context.render_poly(coords, colours)?;
 
     Ok(None)
 }
@@ -1022,15 +1014,6 @@ fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> 
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut context.geometry;
-        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
-            matrix
-        } else {
-            return Err(Error::Native("quadratic: matrix required".to_string()));
-        };
-        let brush_type = read_brush(brush);
-        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
-
         let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
             (x, y)
         } else {
@@ -1047,11 +1030,12 @@ fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> 
             return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
         };
 
+        let brush_type = read_brush(brush);
+
         if let Some(mapping) = easing_from_keyword(line_width_mapping) {
             if is_arg_given(default_mask, 1) {
                 // given a line width value
-                geo.render_quadratic(
-                    matrix,
+                context.render_quadratic(
                     &[x0, y0, x1, y1, x2, y2],
                     line_width,
                     line_width,
@@ -1060,12 +1044,12 @@ fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> 
                     t_end,
                     &rgb,
                     tessellation,
-                    uv_mapping,
+                    brush_type,
+                    brush_subtype,
                 )?;
             } else {
                 // not given a line width value
-                geo.render_quadratic(
-                    matrix,
+                context.render_quadratic(
                     &[x0, y0, x1, y1, x2, y2],
                     line_width_start,
                     line_width_end,
@@ -1074,7 +1058,8 @@ fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> 
                     t_end,
                     &rgb,
                     tessellation,
-                    uv_mapping,
+                    brush_type,
+                    brush_subtype,
                 )?;
             }
         } else {
@@ -1128,14 +1113,7 @@ fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut context.geometry;
-        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
-            matrix
-        } else {
-            return Err(Error::Native("bezier: matrix required".to_string()));
-        };
         let brush_type = read_brush(brush);
-        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         if let Some(mapping) = easing_from_keyword(line_width_mapping) {
             let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
@@ -1161,8 +1139,7 @@ fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
 
             if is_arg_given(default_mask, 1) {
                 // given a line width value
-                geo.render_bezier(
-                    matrix,
+                context.render_bezier(
                     &[x0, y0, x1, y1, x2, y2, x3, y3],
                     line_width,
                     line_width,
@@ -1171,12 +1148,12 @@ fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
                     t_end,
                     &rgb,
                     tessellation,
-                    uv_mapping,
+                    brush_type,
+                    brush_subtype,
                 )?;
             } else {
                 // not given a line width value
-                geo.render_bezier(
-                    matrix,
+                context.render_bezier(
                     &[x0, y0, x1, y1, x2, y2, x3, y3],
                     line_width_start,
                     line_width_end,
@@ -1185,7 +1162,8 @@ fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
                     t_end,
                     &rgb,
                     tessellation,
-                    uv_mapping,
+                    brush_type,
+                    brush_subtype,
                 )?;
             }
         } else {
@@ -1233,14 +1211,7 @@ fn bezier_bulging_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut context.geometry;
-        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
-            matrix
-        } else {
-            return Err(Error::Native("bezier_bulging: matrix required".to_string()));
-        };
         let brush_type = read_brush(brush);
-        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
             (x, y)
@@ -1263,15 +1234,15 @@ fn bezier_bulging_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
             return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
         };
 
-        geo.render_bezier_bulging(
-            matrix,
+        context.render_bezier_bulging(
             &[x0, y0, x1, y1, x2, y2, x3, y3],
             line_width,
             t_start,
             t_end,
             &rgb,
             tessellation,
-            uv_mapping,
+            brush_type,
+            brush_subtype,
         )?;
     } else {
         return Err(Error::Native(
@@ -1325,14 +1296,7 @@ fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut context.geometry;
-        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
-            matrix
-        } else {
-            return Err(Error::Native("stroked bezier: matrix required".to_string()));
-        };
         let brush_type = read_brush(brush);
-        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
 
         if let Some(mapping) = easing_from_keyword(line_width_mapping) {
             let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
@@ -1356,8 +1320,7 @@ fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
                 return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
             };
 
-            geo.render_stroked_bezier(
-                matrix,
+            context.render_stroked_bezier(
                 tessellation,
                 &[x0, y0, x1, y1, x2, y2, x3, y3],
                 stroke_tessellation,
@@ -1368,7 +1331,8 @@ fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
                 col_volatility,
                 seed,
                 mapping,
-                uv_mapping,
+                brush_type,
+                brush_subtype,
             )?
         } else {
             return Err(Error::Native("stroked bezier: invalid mapping".to_string()));
@@ -1423,19 +1387,9 @@ fn stroked_bezier_rect_execute(vm: &mut Vm, context: &mut Context) -> Result<Opt
     let brush_subtype: usize = vm.stack_peek(14)?;
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let geo = &mut context.geometry;
-        let matrix = if let Some(matrix) = context.matrix_stack.peek() {
-            matrix
-        } else {
-            return Err(Error::Native(
-                "stroked bezier rect: matrix required".to_string(),
-            ));
-        };
         let brush_type = read_brush(brush);
-        let uv_mapping = context.mappings.get_uv_mapping(brush_type, brush_subtype);
 
-        geo.render_stroked_bezier_rect(
-            matrix,
+        context.render_stroked_bezier_rect(
             position,
             width,
             height,
@@ -1448,7 +1402,8 @@ fn stroked_bezier_rect_execute(vm: &mut Vm, context: &mut Context) -> Result<Opt
             stroke_noise,
             &rgb,
             col_volatility,
-            uv_mapping,
+            brush_type,
+            brush_subtype,
         )?;
     } else {
         return Err(Error::Native(
