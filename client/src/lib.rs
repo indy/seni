@@ -49,7 +49,7 @@ cfg_if! {
     if #[cfg(feature = "console_log")] {
         fn init_log() {
             use log::Level;
-            console_log::init_with_level(Level::Warn).expect("error initializing log");
+            console_log::init_with_level(Level::Info).expect("error initializing log");
         }
     } else {
         fn init_log() {}
@@ -202,6 +202,15 @@ impl Bridge {
         info!("get_render_packet_geo_ptr");
 
         self.context.get_render_packet_geo_ptr(packet_number)
+    }
+
+    pub fn add_rgba_bitmap(&mut self, name: &str, width: usize, height: usize, data: Vec<u8>) {
+        info!("{}", name);
+        info!("{} {}", width, height);
+        info!("{}", data[0]);
+        info!("{}", data[1]);
+        info!("{}", data[2]);
+        info!("{}", data[3]);
     }
 
     // todo: is bool the best return type?

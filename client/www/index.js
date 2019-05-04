@@ -1145,20 +1145,12 @@ class PromiseWorker {
     this.resolve = undefined;
 
     this.worker.addEventListener('message', event => {
-      // string data is always going to be in JSON formation
-      // otherwise it will be a string encoded in an ArrayBuffer
-      let status = undefined;
-      let result = undefined;
 
-      if (typeof(event.data) === 'string') {
-        [status, result] = JSON.parse(event.data);
+      const [status, result] = event.data;
 
-        if (status.systemInitialised) {
-          self.initialised = true;
-          return;
-        }
-      } else {                  // ArrayBuffer
-        [status, result] = event.data;
+      if (status.systemInitialised) {
+        self.initialised = true;
+        return;
       }
 
       if (status.logMessages && status.logMessages.length > 0) {
@@ -1179,7 +1171,13 @@ class PromiseWorker {
     return new Promise((resolve, reject) => {
       self.resolve = resolve;
       self.reject = reject;
-      self.worker.postMessage(JSON.stringify({ type, data }));
+
+      if (type === jobReceiveBitmapData) {
+        // ImageData is not a transferrable type
+        self.worker.postMessage({ type, data });
+      } else {
+        self.worker.postMessage({ type, data });
+      }
     });
   }
 
@@ -1222,6 +1220,33 @@ function findAvailableWorker() {
   });
 }
 
+// a crappy findAllWorkers, use sparingly
+function crappyFindAllWorkers() {
+  return new Promise((resolve, reject) => {
+    setTimeout(function go() {
+
+      let allWorkers = [];
+
+      for (let i=0;i<numWorkers;i++) {
+        if (promiseWorkers[i].isInitialised() === true &&
+            promiseWorkers[i].isWorking() === false) {
+          allWorkers.push(promiseWorkers[i]);
+        }
+      }
+
+      if (allWorkers.length === promiseWorkers.length) {
+        for (let i=0;i<numWorkers;i++) {
+          allWorkers[i].employ();
+        }
+        resolve(allWorkers);
+        return;
+      }
+
+      setTimeout(go, 100);
+    });
+  });
+}
+
 const Job = {
   request: function(type, data) {
     return new Promise((resolve, reject) => {
@@ -1246,6 +1271,35 @@ const Job = {
         }
         // handle error
         console.error(`worker (job:${type}): error of ${error}`);
+        reject(error);
+      });
+    });
+  },
+
+  broadcast: function(type, data) {
+    return new Promise((resolve, reject) => {
+      let workers = undefined;
+
+      crappyFindAllWorkers().then(workers_ => {
+        workers = workers_;
+
+        let promises = [];
+        for (let i = 0; i < workers.length; i++) {
+          promises.push(workers[i].postMessage(type, data));
+        }
+        return Promise.all(promises);
+      }).then(results => {
+        for (let i = 0; i < workers.length; i++) {
+          workers[i].release();
+        }
+        resolve(results);
+      }).catch(error => {
+        if (workers !== undefined) {
+          for (let i = 0; i < workers.length; i++) {
+            workers[i].release();
+          }
+        }
+        // handle error
         reject(error);
       });
     });
@@ -1277,6 +1331,7 @@ const jobNewGeneration = 'NEW_GENERATION';
 const jobGenerateHelp = 'GENERATE_HELP';
 const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
 const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
+const jobReceiveBitmapData = 'RECEIVE_BITMAP_DATA';
 
 // --------------------------------------------------------------------------------
 // main
@@ -2209,6 +2264,51 @@ function compatibilityHacks() {
   }
 }
 
+// todo: is this the best way of getting image data for a web worker?
+// is there a way for the webworker to do this without having to interact with the DOM?
+// note: don't call this on a sequence of bitmaps
+function loadBitmapImageData(url) {
+  return new Promise(function(resolve, reject) {
+    const element = document.getElementById('bitmap-canvas');
+    const context = element.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      element.width = img.width;
+      element.height = img.height;
+
+      context.drawImage(img, 0, 0);
+
+      const imageData = context.getImageData(0, 0, element.width, element.height);
+
+      // imageData.data = UInt8ClampedArray (width x height x 4)
+      // imageData.width
+      // imageData.height
+
+      resolve(imageData);
+    };
+    img.onerror = () => {
+      reject();
+    };
+
+    img.src = url;
+  });
+}
+
+function devBitmapImageLoader(filename) {
+  loadBitmapImageData(filename)
+    .then(imageData => {
+      return Job.broadcast(jobReceiveBitmapData, { filename, imageData });
+    })
+    .then(results => {
+      console.log(results);
+    })
+    .catch(error => {
+      // handle error
+      console.error(`worker: error of ${error}`);
+    });
+}
+
 function main() {
   setupResizeability();
 
@@ -2216,6 +2316,8 @@ function main() {
   const store = createStore(state);
 
   allocateWorkers(state);
+
+  devBitmapImageLoader('img/bitmap1.png');
 
   const canvasElement = document.getElementById('render-canvas');
   gGLRenderer = new GLRenderer(canvasElement);

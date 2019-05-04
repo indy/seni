@@ -29,6 +29,7 @@ const jobNewGeneration = 'NEW_GENERATION';
 const jobGenerateHelp = 'GENERATE_HELP';
 const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
 const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
+const jobReceiveBitmapData = 'RECEIVE_BITMAP_DATA';
 
 class KonsoleProxy {
   constructor() {
@@ -249,6 +250,30 @@ function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   return [{ logMessages }, { genotypes: newGenotypes }];
 }
 
+function receiveBitmapData( { filename, imageData } ) {
+  konsoleProxy.clear();
+
+  // todo: see if the imageData.data can be transferred across
+  const pixels = [];
+  const numElements = imageData.width * imageData.height * 4;
+  for (i = 0; i < numElements; i++) {
+    pixels.push(imageData.data[i]);
+  }
+
+  gState.bridge.add_rgba_bitmap(filename, imageData.width, imageData.height, pixels);
+
+  console.log(imageData.data.length); // 500 x 500 x 4
+  console.log(imageData.data[0]);
+  console.log(imageData.data[1]);
+  console.log(imageData.data[2]);
+  console.log(imageData);
+  console.log("loaded in worker");
+
+  const logMessages = konsoleProxy.collectMessages();
+
+  return [{ logMessages }, { result: "shabba" }];
+}
+
 const options = {
   imports: {
     performance_now() {
@@ -293,6 +318,10 @@ function messageHandler(type, data) {
   case jobNewGeneration:
     // console.log("jobNewGeneration");
     return newGeneration(data);
+  case jobReceiveBitmapData:
+    // console.log("jobReceiveBitmapData");
+    return receiveBitmapData(data);
+
   default:
     // throw unknown type
     throw new Error(`worker.js: Unknown type: ${type}`);
@@ -309,9 +338,9 @@ function messageHandler(type, data) {
   }
 */
 
-addEventListener('message', e => {
+addEventListener('message', event => {
   try {
-    const { type, data } = JSON.parse(e.data);
+    const {type, data} = event.data;
 
     const [status, result] = messageHandler(type, data);
 
@@ -322,14 +351,16 @@ addEventListener('message', e => {
         transferrable.push(result.memory);
       }
 
+      // possible bug?: if result.memory is transferred over to the main thread,
+      // does that mean that future uses of memory by the worker are unsafe?
+      // Is it currently working just through sheer luck?
+      //
       postMessage([status, result], transferrable);
     } else {
-      const sendData = JSON.stringify([status, result]);
-      // console.log(`worker.js:sendData = ${sendData}`);
-      postMessage(sendData);
+      postMessage([status, result]);
     }
   } catch (error) {
-    postMessage(JSON.stringify([{error: {message: error.message}}, undefined]));
+    postMessage([{error: {message: error.message}}, undefined]);
   }
 });
 
@@ -344,8 +375,7 @@ wasm_bindgen('./client_bg.wasm')
 
     // send the job system an initialised message so
     // that it can start sending jobs to this worker
-    const sendData = JSON.stringify([{systemInitialised: true}]);
-    postMessage(sendData);
+    postMessage([{systemInitialised: true}, undefined]);
 
   })
   .catch(console.error);
