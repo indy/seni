@@ -15,11 +15,11 @@
 
 use crate::colour::{Colour, ColourFormat};
 use crate::ease::Easing;
+use crate::geometry::stroked_bezier;
 use crate::geometry::Geometry;
 use crate::matrix::Matrix;
 use crate::prng;
 use crate::result::Result;
-use crate::geometry::stroked_bezier;
 use crate::uvmapper::UvMapping;
 
 pub fn render(

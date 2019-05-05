@@ -15,10 +15,10 @@
 
 use crate::colour::Colour;
 use crate::ease::Easing;
+use crate::geometry::bezier;
 use crate::geometry::Geometry;
 use crate::matrix::Matrix;
 use crate::result::Result;
-use crate::geometry::bezier;
 use crate::uvmapper::UvMapping;
 
 pub fn render(

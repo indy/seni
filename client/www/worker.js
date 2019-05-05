@@ -260,14 +260,9 @@ function receiveBitmapData( { filename, imageData } ) {
     pixels.push(imageData.data[i]);
   }
 
+  console.log("before");
   gState.bridge.add_rgba_bitmap(filename, imageData.width, imageData.height, pixels);
-
-  console.log(imageData.data.length); // 500 x 500 x 4
-  console.log(imageData.data[0]);
-  console.log(imageData.data[1]);
-  console.log(imageData.data[2]);
-  console.log(imageData);
-  console.log("loaded in worker");
+  console.log("after");
 
   const logMessages = konsoleProxy.collectMessages();
 

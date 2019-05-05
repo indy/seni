@@ -26,6 +26,8 @@
 The core crate provides the basic functionality of the Seni system
 */
 
+mod bitmap;
+mod bitmap_cache;
 mod colour;
 mod compiler;
 mod context;
@@ -54,19 +56,19 @@ mod unparser;
 mod uvmapper;
 mod vm;
 
+pub use crate::bitmap_cache::{BitmapCache, BitmapInfo};
 pub use crate::compiler::{
     compile_preamble, compile_program, compile_program_with_genotype, Program,
 };
 pub use crate::context::Context;
 pub use crate::error::Error;
-pub use crate::parser::*;
-pub use crate::result::Result;
-pub use crate::vm::{VMProfiling, Var, Vm};
-
 pub use crate::gene::{next_generation, Genotype};
 pub use crate::packable::Packable;
+pub use crate::parser::*;
+pub use crate::result::Result;
 pub use crate::trait_list::TraitList;
 pub use crate::unparser::{simplified_unparse, unparse};
+pub use crate::vm::{VMProfiling, Var, Vm};
 
 pub fn run_program_with_preamble(
     vm: &mut Vm,

@@ -1,9 +1,23 @@
+(fn (drawer a: 0 b: 0 c: 0 d: 0 position: [100 100])
+    (circle position: [0 0]
+            radius: 1
+            colour: red)
+    )
+
+(bitmap/each from: 1
+             position: [0 0]
+             width: 0
+             height: 0
+             fn: (address-of drawer))
+
 (bezier tessellation: 30
         line-width-start: {50 (gen/scalar min: 30 max: 60)}
         line-width-end: {10 (gen/scalar min: 5 max: 20)}
         brush: brush-c
         coords: [[0 500] [200 900] [400 100] [600 500]]
         colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))
+
+
 
 ;; (bezier-bulging tessellation: 30
 ;;         line-width: 50

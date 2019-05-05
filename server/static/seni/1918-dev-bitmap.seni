@@ -1,0 +1,17 @@
+(define PI 3.14159)
+
+(fn (drawer a: 0 b: 0 c: 0 d: 0 position: [100 100])
+  (circle position: [0 0]
+          radius: 0.5
+        colour: (col/rgb r: a g: b b: c alpha: 1)))
+
+(rect position: [500 500]
+      width: 900
+      height: 900
+      colour: green)
+
+(bitmap/each from: 1
+             position: [500 500]
+             width: 900
+             height: 900
+             fn: (address-of drawer))

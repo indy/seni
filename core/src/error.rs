@@ -27,6 +27,9 @@ pub enum Error {
     ParseFloatError(std::num::ParseFloatError),
     ParseStrumError(strum::ParseError),
 
+    // bitmap cache
+    BitmapCache(String),
+
     // colour
     //
     IncorrectColourFormat,
@@ -117,6 +120,7 @@ impl fmt::Display for Error {
                 write!(f, "seni core: ParserUnableToParseFloat {}", s)
             }
             Error::ParserHandledToken(s) => write!(f, "seni core: ParserHandledToken {}", s),
+            Error::BitmapCache(s) => write!(f, "seni core: BitmapCache {}", s),
             Error::MemUnmappableBytecodeArg => write!(f, "seni core: MemUnmappableBytecodeArg"),
             Error::MemUnmappableI32 => write!(f, "seni core: MemUnmappableI32"),
             Error::CompilerFnWithoutName => write!(f, "seni core: CompilerFnWithoutName"),

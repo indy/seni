@@ -25,7 +25,7 @@ use core::{
     build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets,
     next_generation, simplified_unparse, unparse,
 };
-use core::{Genotype, Packable, TraitList, Vm, Context};
+use core::{Genotype, Packable, TraitList, Vm, Context, BitmapInfo};
 
 use log::{info, error};
 
@@ -205,12 +205,14 @@ impl Bridge {
     }
 
     pub fn add_rgba_bitmap(&mut self, name: &str, width: usize, height: usize, data: Vec<u8>) {
-        info!("{}", name);
-        info!("{} {}", width, height);
-        info!("{}", data[0]);
-        info!("{}", data[1]);
-        info!("{}", data[2]);
-        info!("{}", data[3]);
+        let bitmap_info = BitmapInfo {
+            width,
+            height,
+            data,
+            ..Default::default()
+        };
+
+        self.context.bitmap_cache.insert(name, bitmap_info).unwrap();
     }
 
     // todo: is bool the best return type?

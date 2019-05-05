@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::bitmap_cache::BitmapCache;
 use crate::colour::Colour;
 use crate::ease::Easing;
 use crate::error::Error;
@@ -27,6 +28,7 @@ pub struct Context {
     pub matrix_stack: MatrixStack,
     pub mappings: Mappings,
     pub geometry: geometry::Geometry,
+    pub bitmap_cache: BitmapCache,
 }
 
 impl Context {

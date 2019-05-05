@@ -2281,10 +2281,6 @@ function loadBitmapImageData(url) {
 
       const imageData = context.getImageData(0, 0, element.width, element.height);
 
-      // imageData.data = UInt8ClampedArray (width x height x 4)
-      // imageData.width
-      // imageData.height
-
       resolve(imageData);
     };
     img.onerror = () => {

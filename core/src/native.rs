@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::bitmap;
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
 use crate::compiler::Program;
 use crate::context::Context;
@@ -249,6 +250,11 @@ pub enum Native {
     #[strum(serialize = "focal/value")]
     FocalValue,
 
+    // bitmap
+    //
+    #[strum(serialize = "bitmap/each")]
+    BitmapEach,
+
     // gen
     //
     #[strum(serialize = "gen/stray-int")]
@@ -388,6 +394,8 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::FocalBuildVLine => focal_build_generic_parameter_info(),
         Native::FocalBuildHLine => focal_build_generic_parameter_info(),
         Native::FocalValue => focal_value_parameter_info(),
+        // bitmap
+        Native::BitmapEach => bitmap_each_parameter_info(),
         // gen
         Native::GenStrayInt => gen_stray_int_parameter_info(),
         Native::GenStray => gen_stray_parameter_info(),
@@ -503,6 +511,8 @@ pub fn execute_native(
         Native::FocalBuildVLine => focal_build_vline_execute(vm),
         Native::FocalBuildHLine => focal_build_hline_execute(vm),
         Native::FocalValue => focal_value_execute(vm, context),
+        // bitmap
+        Native::BitmapEach => bitmap_each_execute(vm, context, program),
         // gen
         Native::GenStrayInt => gen_stray_int_execute(vm),
         Native::GenStray => gen_stray_execute(vm),
@@ -2970,6 +2980,59 @@ fn focal_value_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>
     let res = focal_state_struct.value(context, position);
 
     Ok(Some(Var::Float(res)))
+}
+
+fn bitmap_each_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::Position, Var::V2D(500.0, 500.0)),
+            (Keyword::Width, Var::Float(1000.0)),
+            (Keyword::Height, Var::Float(1000.0)),
+            (Keyword::Fn, Var::Bool(false)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn bitmap_each_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
+    let default_mask: i32 = vm.stack_peek(6)?;
+
+    if !is_arg_given(default_mask, 1) {
+        return Err(Error::Native(
+            "bitmap/each requires a from parameter".to_string(),
+        ));
+    }
+    if !is_arg_given(default_mask, 5) {
+        return Err(Error::Native(
+            "bitmap/each requires a fn parameter".to_string(),
+        ));
+    }
+
+    let from: f32 = vm.stack_peek(1)?;
+    let position: (f32, f32) = vm.stack_peek(2)?;
+    let width: f32 = vm.stack_peek(3)?;
+    let height: f32 = vm.stack_peek(4)?;
+    let fun: i32 = vm.stack_peek(5)?;
+
+    bitmap::each(
+        vm,
+        context,
+        program,
+        fun as usize,
+        from as usize,
+        position,
+        width,
+        height,
+    )?;
+
+    Ok(None)
 }
 
 fn gen_stray_int_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
