@@ -23,7 +23,7 @@ pub enum Token<'a> {
     Comment(&'a str),
     CurlyBracketEnd,
     CurlyBracketStart,
-    DoubleQuote,
+    String(&'a str),
     Name(&'a str),
     Number(&'a str),
     ParenEnd,
@@ -74,8 +74,8 @@ impl<'a> Lexer<'a> {
                 '}' => Ok((Token::CurlyBracketEnd, 1)),
                 ':' => Ok((Token::Colon, 1)),
                 '\'' => Ok((Token::Quote, 1)),
-                '"' => Ok((Token::DoubleQuote, 1)),
                 '`' => Ok((Token::BackQuote, 1)),
+                '"' => eat_string(&self.input),
                 ';' => eat_comment(&self.input),
                 '-' | '0'...'9' => eat_number(&self.input),
                 ch if ch.is_whitespace() => eat_whitespace(&self.input),
@@ -170,6 +170,24 @@ fn eat_number(input: &str) -> Result<(Token, usize)> {
     }
 }
 
+fn eat_string(input: &str) -> Result<(Token, usize)> {
+    let rest = &input[1..]; // remove the first doublequote
+    let mut size = rest.len();
+
+    for (ind, ch) in rest.char_indices() {
+        match ch {
+            '"' => {
+                size = ind;
+                break;
+            }
+            _ => {
+                continue;
+            }
+        }
+    }
+    Ok((Token::String(&rest[..size]), size + 2))
+}
+
 fn eat_comment(input: &str) -> Result<(Token, usize)> {
     let rest = &input[1..]; // remove the first character (;)
     let mut size = rest.len();
@@ -253,6 +271,15 @@ mod tests {
             tokenize("hello ; some comment").unwrap(),
             [
                 Token::Name("hello"),
+                Token::Whitespace(" "),
+                Token::Comment(" some comment")
+            ]
+        );
+
+        assert_eq!(
+            tokenize("\"hello.png\" ; some comment").unwrap(),
+            [
+                Token::String("hello.png"),
                 Token::Whitespace(" "),
                 Token::Comment(" some comment")
             ]
