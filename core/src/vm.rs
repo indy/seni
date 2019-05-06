@@ -14,7 +14,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::colour::{Colour, ProcColourStateStruct};
-use crate::compiler::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
 use crate::context::Context;
 use crate::error::Error;
 use crate::focal::FocalStateStruct;
@@ -25,6 +24,7 @@ use crate::native::execute_native;
 use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
+use crate::program::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
 use crate::result::Result;
 
 use std::cell::RefCell;

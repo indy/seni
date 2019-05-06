@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::Program;
 use crate::context::Context;
 use crate::keywords::Keyword;
 use crate::mathutil::*;
 use crate::name::Name;
+use crate::program::Program;
 use crate::result::Result;
 use crate::vm::*;
 

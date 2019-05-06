@@ -48,6 +48,7 @@ mod packable;
 mod parser;
 mod path;
 mod prng;
+mod program;
 mod repeat;
 mod result;
 pub mod seni_language;
@@ -57,14 +58,13 @@ mod uvmapper;
 mod vm;
 
 pub use crate::bitmap_cache::{BitmapCache, BitmapInfo};
-pub use crate::compiler::{
-    compile_preamble, compile_program, compile_program_with_genotype, Program,
-};
+pub use crate::compiler::{compile_preamble, compile_program, compile_program_with_genotype};
 pub use crate::context::Context;
 pub use crate::error::Error;
 pub use crate::gene::{next_generation, Genotype};
 pub use crate::packable::Packable;
 pub use crate::parser::*;
+pub use crate::program::Program;
 pub use crate::result::Result;
 pub use crate::trait_list::TraitList;
 pub use crate::unparser::{simplified_unparse, unparse};

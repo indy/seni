@@ -506,7 +506,7 @@ fn eat_token<'a>(
                     tokens: &tokens[1..],
                 })
             }
-        },
+        }
         Token::String(txt) => {
             let t = txt.to_string();
             let ti = word_lut.get_or_add(&t);
@@ -515,7 +515,7 @@ fn eat_token<'a>(
                 node: Node::String(t, ti, meta),
                 tokens: &tokens[1..],
             })
-        },
+        }
         Token::Number(txt) => match txt.parse::<f32>() {
             Ok(f) => Ok(NodeAndRemainder {
                 node: Node::Float(f, txt.to_string(), meta),

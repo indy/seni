@@ -388,6 +388,8 @@ mod tests {
         basic_unparse_check("(define aaa [1 2 3 4])");
 
         basic_unparse_check("(define aaa 1.2) (define bbb 54) (define ccc 9.0909)");
+
+        basic_unparse_check("(bitmap \"foo.png\")");
     }
 
     #[test]

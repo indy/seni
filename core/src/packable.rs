@@ -84,6 +84,11 @@ impl Mule {
         cursor.push_str(&val.to_string());
     }
 
+    pub fn pack_string(cursor: &mut String, val: &str) {
+        Mule::pack_usize_sp(cursor, val.len());
+        cursor.push_str(&val.to_string());
+    }
+
     pub fn pack_space(cursor: &mut String) {
         cursor.push_str(" ");
     }
@@ -180,6 +185,13 @@ impl Mule {
     pub fn unpack_bool_sp(cursor: &str) -> Result<(bool, &str)> {
         let (res, rem) = Mule::unpack_bool(cursor)?;
         let rem = Mule::skip_space(rem);
+        Ok((res, rem))
+    }
+
+    pub fn unpack_string(cursor: &str) -> Result<(String, &str)> {
+        let (string_len, rem) = Mule::unpack_usize_sp(cursor)?;
+        let res = rem[0..string_len].to_string();
+        let rem = Mule::skip_forward(rem, string_len);
         Ok((res, rem))
     }
 }

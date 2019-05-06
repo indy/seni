@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::Program;
 use crate::context::Context;
 use crate::ease::{easing, Easing};
 use crate::keywords::Keyword;
 use crate::mathutil::{bezier_point, quadratic_point, TAU};
 use crate::name::Name;
+use crate::program::Program;
 use crate::result::Result;
 use crate::vm::*;
 

@@ -15,7 +15,6 @@
 
 use crate::bitmap;
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
-use crate::compiler::Program;
 use crate::context::Context;
 use crate::ease::easing_from_keyword;
 use crate::error::Error;
@@ -27,6 +26,7 @@ use crate::name::Name;
 use crate::packable::{Mule, Packable};
 use crate::path;
 use crate::prng;
+use crate::program::Program;
 use crate::repeat;
 use crate::result::Result;
 use crate::vm::{StackPeek, Var, Vm};

@@ -337,8 +337,8 @@ pub fn next_generation(
 mod tests {
     use super::*;
     use crate::colour::*;
-    use crate::compiler::{BytecodeArg, Program};
     use crate::parser::parse;
+    use crate::program::{BytecodeArg, Program};
     use crate::{compile_and_execute, compile_program_with_genotype, run_program_with_preamble};
 
     use crate::native::Native;

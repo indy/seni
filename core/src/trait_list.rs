@@ -13,13 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::compiler::{
-    compile_program_1, compile_program_for_trait, Compilation, Compiler, Program,
-};
+use crate::compiler::{compile_program_1, compile_program_for_trait, Compilation, Compiler};
 use crate::context::Context;
 use crate::name::Name;
 use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta};
+use crate::program::Program;
 use crate::result::Result;
 use crate::run_program_with_preamble;
 use crate::vm::{Var, Vm};
@@ -377,7 +376,7 @@ mod tests {
         let packed_res = trait_list.pack(&mut packed);
         assert!(packed_res.is_ok());
 
-        assert_eq!(packed, "42 0 2 0 0 FLOAT 50 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 60 LOAD MEM 3 FLOAT 30 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 20 LOAD MEM 3 FLOAT 5 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
+        assert_eq!(packed, "42 0 2 0 0 FLOAT 50 0 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 60 LOAD MEM 3 FLOAT 30 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 0 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 20 LOAD MEM 3 FLOAT 5 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
 
         let res = TraitList::unpack(&packed);
         match res {
@@ -415,7 +414,7 @@ mod tests {
         let packed_res = trait_list.pack(&mut packed);
         assert!(packed_res.is_ok());
 
-        assert_eq!(packed, "42 3 0 13 1 14 2 15 2 0 0 FLOAT 50 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 60 LOAD MEM 3 FLOAT 30 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 20 LOAD MEM 3 FLOAT 5 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
+        assert_eq!(packed, "42 3 0 13 1 14 2 15 2 0 0 FLOAT 50 0 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 60 LOAD MEM 3 FLOAT 30 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 0 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 20 LOAD MEM 3 FLOAT 5 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
 
         let res = TraitList::unpack(&packed);
         match res {
