@@ -277,6 +277,15 @@ mod tests {
         );
 
         assert_eq!(
+            tokenize("hello\n\"world\"").unwrap(),
+            [
+                Token::Name("hello"),
+                Token::Whitespace("\n"),
+                Token::String("world")
+            ]
+        );
+
+        assert_eq!(
             tokenize("\"hello.png\" ; some comment").unwrap(),
             [
                 Token::String("hello.png"),

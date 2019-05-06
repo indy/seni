@@ -96,7 +96,7 @@ fn unparse_ast_node(
         Node::Label(_, _, meta) if meta.is_some() => {
             unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
         }
-        Node::String(_, meta) if meta.is_some() => {
+        Node::String(_, _, meta) if meta.is_some() => {
             unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
         }
         Node::Whitespace(_, meta) if meta.is_some() => {
@@ -201,7 +201,7 @@ fn format_node_value(node: &Node) -> Result<String> {
         Node::Float(_, s, _) => Ok(s.to_string()),
         Node::Name(s, _, _) => Ok(s.to_string()),
         Node::Label(s, _, _) => Ok(s.to_string() + ":"),
-        Node::String(s, _) => Ok("\"".to_owned() + &s.to_string() + "\""),
+        Node::String(s, _, _) => Ok("\"".to_owned() + &s.to_string() + "\""),
         Node::Whitespace(s, _) => Ok(s.to_string()),
         Node::Comment(s, _) => Ok(";".to_owned() + &s.to_string()),
     }

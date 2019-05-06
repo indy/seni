@@ -51,7 +51,7 @@ pub enum Node {
     Float(f32, String, Option<NodeMeta>),
     Name(String, Name, Option<NodeMeta>),  // text, iname, meta
     Label(String, Name, Option<NodeMeta>), // text, iname, meta
-    String(String, Option<NodeMeta>),
+    String(String, Name, Option<NodeMeta>),
     Whitespace(String, Option<NodeMeta>),
     Comment(String, Option<NodeMeta>),
 }
@@ -202,7 +202,7 @@ impl Node {
             | Node::Float(_, _, meta)
             | Node::Name(_, _, meta)
             | Node::Label(_, _, meta)
-            | Node::String(_, meta)
+            | Node::String(_, _, meta)
             | Node::Whitespace(_, meta)
             | Node::Comment(_, meta) => meta.is_some(),
         }
@@ -215,7 +215,7 @@ impl Node {
             | Node::Float(_, _, meta)
             | Node::Name(_, _, meta)
             | Node::Label(_, _, meta)
-            | Node::String(_, meta)
+            | Node::String(_, _, meta)
             | Node::Whitespace(_, meta)
             | Node::Comment(_, meta) => {
                 if let Some(meta) = meta {
@@ -436,7 +436,7 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeA
                     Node::Float(f, s, _) => Node::Float(f, s, meta),
                     Node::Name(s, i, _) => Node::Name(s, i, meta),
                     Node::Label(s, i, _) => Node::Label(s, i, meta),
-                    Node::String(s, _) => Node::String(s, meta),
+                    Node::String(s, i, _) => Node::String(s, i, meta),
                     Node::Whitespace(s, _) => Node::Whitespace(s, meta),
                     Node::Comment(s, _) => Node::Comment(s, meta),
                 };
@@ -506,7 +506,16 @@ fn eat_token<'a>(
                     tokens: &tokens[1..],
                 })
             }
-        }
+        },
+        Token::String(txt) => {
+            let t = txt.to_string();
+            let ti = word_lut.get_or_add(&t);
+
+            Ok(NodeAndRemainder {
+                node: Node::String(t, ti, meta),
+                tokens: &tokens[1..],
+            })
+        },
         Token::Number(txt) => match txt.parse::<f32>() {
             Ok(f) => Ok(NodeAndRemainder {
                 node: Node::Float(f, txt.to_string(), meta),
@@ -602,6 +611,18 @@ mod tests {
                     Node::Name("hello".to_string(), Name::new(0), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Name("world".to_string(), Name::new(1), None)
+                ],
+                None
+            )]
+        );
+
+        assert_eq!(
+            ast("(bitmap \"foo.png\")"),
+            [Node::List(
+                vec![
+                    Node::Name("bitmap".to_string(), Name::new(0), None),
+                    Node::Whitespace(" ".to_string(), None),
+                    Node::String("foo.png".to_string(), Name::new(1), None)
                 ],
                 None
             )]

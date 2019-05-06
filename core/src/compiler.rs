@@ -186,7 +186,7 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()>
                 genotype.current_gene_index += 1;
             }
         }
-        Node::String(_, meta) => {
+        Node::String(_, _, meta) => {
             if let Some(ref mut node_meta) = meta {
                 node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
