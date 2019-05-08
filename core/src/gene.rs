@@ -39,6 +39,7 @@ pub enum Gene {
     Keyword(Keyword),
     Long(u64),
     Name(Name),
+    String(Name),
     Colour(Colour),
     V2D(f32, f32),
 }
@@ -52,6 +53,7 @@ impl Gene {
             Var::Keyword(kw) => Ok(Gene::Keyword(*kw)),
             Var::Long(u) => Ok(Gene::Long(*u)),
             Var::Name(i) => Ok(Gene::Name(*i)),
+            Var::String(i) => Ok(Gene::String(*i)),
             Var::Colour(col) => Ok(Gene::Colour(*col)),
             Var::V2D(fl1, fl2) => Ok(Gene::V2D(*fl1, *fl2)),
             _ => Err(Error::Gene("from_var: incompatible input var".to_string())),
@@ -92,6 +94,7 @@ impl Packable for Gene {
             }
             Gene::Long(u) => cursor.push_str(&format!("LONG {}", u)),
             Gene::Name(i) => cursor.push_str(&format!("NAME {}", i)),
+            Gene::String(i) => cursor.push_str(&format!("STRING {}", i)),
             Gene::Colour(col) => {
                 cursor.push_str("COLOUR ");
                 col.pack(cursor)?;
@@ -127,6 +130,10 @@ impl Packable for Gene {
             let rem = Mule::skip_forward(cursor, "NAME ".len());
             let (val, rem) = Name::unpack(rem)?;
             Ok((Gene::Name(val), rem))
+        } else if cursor.starts_with("STRING ") {
+            let rem = Mule::skip_forward(cursor, "STRING ".len());
+            let (val, rem) = Name::unpack(rem)?;
+            Ok((Gene::String(val), rem))
         } else if cursor.starts_with("COLOUR ") {
             let rem = Mule::skip_forward(cursor, "COLOUR ".len());
             let (val, rem) = Colour::unpack(rem)?;
@@ -346,11 +353,11 @@ mod tests {
 
     pub fn program_with_seeded_genotype(s: &str, seed: i32) -> Result<(Program, Genotype)> {
         // todo: cache the preamble program
-        let (mut ast, _word_lut) = parse(s)?;
+        let (mut ast, word_lut) = parse(s)?;
 
-        let trait_list = TraitList::compile(&ast)?;
+        let trait_list = TraitList::compile(&ast, &word_lut)?;
         let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
-        let program = compile_program_with_genotype(&mut ast, &mut genotype)?;
+        let program = compile_program_with_genotype(&mut ast, &word_lut, &mut genotype)?;
 
         Ok((program, genotype))
     }
@@ -403,8 +410,8 @@ mod tests {
     }
 
     fn compile_trait_list(s: &str) -> Result<TraitList> {
-        let (ast, _) = parse(s).unwrap();
-        TraitList::compile(&ast)
+        let (ast, word_lut) = parse(s).unwrap();
+        TraitList::compile(&ast, &word_lut)
     }
 
     fn gene_float(g: &Gene, expected: f32) {
@@ -795,8 +802,8 @@ mod tests {
     fn next_generation_test() {
         let expr = "{[0.977 0.416 0.171] (gen/scalar)}";
 
-        let (ast, _) = parse(expr).unwrap();
-        let trait_list = TraitList::compile(&ast).unwrap();
+        let (ast, word_lut) = parse(expr).unwrap();
+        let trait_list = TraitList::compile(&ast, &word_lut).unwrap();
 
         let seed_a = 9876;
         let seed_b = 1234;

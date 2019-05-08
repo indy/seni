@@ -59,6 +59,7 @@ pub enum Var {
     Keyword(Keyword),
     Long(u64),
     Name(Name),
+    String(Name),
     Vector(Vec<Var>),
     Colour(Colour),
     V2D(f32, f32),
@@ -81,6 +82,7 @@ impl Packable for Var {
             }
             Var::Long(u) => cursor.push_str(&format!("LONG {}", u)),
             Var::Name(i) => cursor.push_str(&format!("NAME {}", i)),
+            Var::String(i) => cursor.push_str(&format!("STRING {}", i)),
             Var::Vector(vars) => {
                 cursor.push_str("VEC ");
                 Mule::pack_usize(cursor, vars.len());
@@ -126,6 +128,10 @@ impl Packable for Var {
             let rem = Mule::skip_forward(cursor, "NAME ".len());
             let (val, rem) = Name::unpack(rem)?;
             Ok((Var::Name(val), rem))
+        } else if cursor.starts_with("STRING ") {
+            let rem = Mule::skip_forward(cursor, "STRING ".len());
+            let (val, rem) = Name::unpack(rem)?;
+            Ok((Var::String(val), rem))
         } else if cursor.starts_with("COLOUR ") {
             let rem = Mule::skip_forward(cursor, "COLOUR ".len());
             let (val, rem) = Colour::unpack(rem)?;
@@ -162,6 +168,7 @@ impl fmt::Display for Var {
             Var::Keyword(kw) => write!(f, "Keyword{}", kw),
             Var::Long(u) => write!(f, "Long({})", u),
             Var::Name(i) => write!(f, "Name({})", i),
+            Var::String(i) => write!(f, "String({})", i),
             Var::Vector(_) => write!(f, "Vector(todo: implement Display)"),
             Var::Colour(col) => write!(f, "Colour({})", col),
             Var::V2D(fl1, fl2) => write!(f, "V2D({}, {})", fl1, fl2),
@@ -266,6 +273,7 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
         BytecodeArg::Int(i) => Ok(Var::Int(*i)),
         BytecodeArg::Float(f) => Ok(Var::Float(*f)),
         BytecodeArg::Name(iname) => Ok(Var::Name(*iname)),
+        BytecodeArg::String(iname) => Ok(Var::String(*iname)),
         BytecodeArg::Keyword(keyword) => Ok(Var::Keyword(*keyword)),
         BytecodeArg::Mem(_mem) => Err(Error::VM(
             "bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string(),
@@ -1396,6 +1404,20 @@ impl StackPeek<(f32, f32)> for Vm {
     }
 }
 
+impl StackPeek<Name> for Vm {
+    fn stack_peek(&self, offset: usize) -> Result<Name> {
+        if let Var::Name(n) = &self.stack[self.sp - offset] {
+            Ok(*n)
+        } else if let Var::String(n) = &self.stack[self.sp - offset] {
+            Ok(*n)
+        } else {
+            Err(Error::VM(
+                "stack_peek expected Var::Name or Var::String".to_string(),
+            ))
+        }
+    }
+}
+
 impl StackPeek<Colour> for Vm {
     fn stack_peek(&self, offset: usize) -> Result<Colour> {
         if let Var::Colour(col) = &self.stack[self.sp - offset] {
@@ -1413,8 +1435,8 @@ pub mod tests {
     use crate::parser::parse;
 
     pub fn vm_run(vm: &mut Vm, context: &mut Context, s: &str) {
-        let (ast, _word_lut) = parse(s).unwrap();
-        let program = compile_program(&ast).unwrap();
+        let (ast, word_lut) = parse(s).unwrap();
+        let program = compile_program(&ast, &word_lut).unwrap();
 
         context.reset();
         vm.reset();
@@ -1899,6 +1921,17 @@ pub mod tests {
         }
     }
 
+    fn unpack_compare_var_string(inp: &str, expected_val: Name, expected_rem: &str) {
+        let (res, actual_rem) = Var::unpack(inp).unwrap();
+
+        if let Var::String(actual_val) = res {
+            assert_eq!(actual_val, expected_val);
+            assert_eq!(actual_rem, expected_rem);
+        } else {
+            assert_eq!(false, true);
+        }
+    }
+
     fn unpack_compare_var_v2d(
         inp: &str,
         expected_val0: f32,
@@ -1924,6 +1957,7 @@ pub mod tests {
         pack_compare(Var::Bool(false), "BOOLEAN 0");
         pack_compare(Var::Long(544), "LONG 544");
         pack_compare(Var::Name(Name::new(65)), "NAME 65");
+        pack_compare(Var::String(Name::new(33)), "STRING 33");
         pack_compare(Var::V2D(5.67, 8.90), "2D 5.67 8.9");
     }
 
@@ -1947,6 +1981,10 @@ pub mod tests {
         unpack_compare_var_name("NAME 42", Name::new(42), "");
         unpack_compare_var_name("NAME 42 ", Name::new(42), " ");
         unpack_compare_var_name("NAME 42 shabba", Name::new(42), " shabba");
+
+        unpack_compare_var_string("STRING 42", Name::new(42), "");
+        unpack_compare_var_string("STRING 42 ", Name::new(42), " ");
+        unpack_compare_var_string("STRING 42 shabba", Name::new(42), " shabba");
 
         unpack_compare_var_v2d("2D 1.23 4.56", 1.23, 4.56, "");
     }

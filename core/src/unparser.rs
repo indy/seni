@@ -329,9 +329,9 @@ mod tests {
     use crate::trait_list::TraitList;
 
     fn ast_and_genotype(source: &str, seed: i32) -> Result<(Vec<Node>, Genotype)> {
-        let (ast, _word_lut) = parse(source)?;
+        let (ast, word_lut) = parse(source)?;
 
-        let trait_list = TraitList::compile(&ast)?;
+        let trait_list = TraitList::compile(&ast, &word_lut)?;
         let genotype = Genotype::build_from_seed(&trait_list, seed)?;
 
         Ok((ast, genotype))

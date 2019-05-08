@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt;
 
 use crate::colour::Colour;
@@ -78,6 +78,7 @@ pub enum BytecodeArg {
     Int(i32),
     Float(f32),
     Name(Name),
+    String(Name),
     Native(Native),
     Mem(Mem),
     Keyword(Keyword),
@@ -90,6 +91,7 @@ impl fmt::Display for BytecodeArg {
             BytecodeArg::Int(i) => write!(f, "{}", i),
             BytecodeArg::Float(s) => write!(f, "{:.2}", s),
             BytecodeArg::Name(n) => write!(f, "Name({})", n),
+            BytecodeArg::String(n) => write!(f, "String({})", n),
             BytecodeArg::Native(n) => write!(f, "{:?}", n),
             BytecodeArg::Mem(m) => write!(f, "{}", m),
             BytecodeArg::Keyword(kw) => write!(f, "{}", kw),
@@ -106,6 +108,7 @@ impl Packable for BytecodeArg {
             BytecodeArg::Int(i) => cursor.push_str(&format!("INT {}", i)),
             BytecodeArg::Float(f) => cursor.push_str(&format!("FLOAT {}", f)),
             BytecodeArg::Name(i) => cursor.push_str(&format!("NAME {}", i)),
+            BytecodeArg::String(i) => cursor.push_str(&format!("STRING {}", i)),
             BytecodeArg::Native(native) => {
                 cursor.push_str("NATIVE ");
                 native.pack(cursor)?;
@@ -139,6 +142,10 @@ impl Packable for BytecodeArg {
             let rem = Mule::skip_forward(cursor, "NAME ".len());
             let (val, rem) = Name::unpack(rem)?;
             Ok((BytecodeArg::Name(val), rem))
+        } else if cursor.starts_with("STRING ") {
+            let rem = Mule::skip_forward(cursor, "STRING ".len());
+            let (val, rem) = Name::unpack(rem)?;
+            Ok((BytecodeArg::String(val), rem))
         } else if cursor.starts_with("NATIVE ") {
             let rem = Mule::skip_forward(cursor, "NATIVE ".len());
             let (val, rem) = Native::unpack(rem)?;
@@ -251,13 +258,13 @@ impl FnInfo {
 #[derive(Debug)]
 pub struct Data {
     // the sub-section of WordLut::iname_to_word that stores Node::String
-    pub strings: HashMap<Name, String>,
+    pub strings: BTreeMap<Name, String>,
 }
 
 impl Default for Data {
     fn default() -> Data {
         Data {
-            strings: HashMap::new(),
+            strings: BTreeMap::new(),
         }
     }
 }
@@ -278,7 +285,7 @@ impl Packable for Data {
     fn unpack(cursor: &str) -> Result<(Self, &str)> {
         let (strings_size, rem) = Mule::unpack_usize(cursor)?;
 
-        let mut strings: HashMap<Name, String> = HashMap::new();
+        let mut strings: BTreeMap<Name, String> = BTreeMap::new();
 
         let mut r = rem;
         for _ in 0..strings_size {

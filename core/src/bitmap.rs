@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::context::Context;
+use crate::error::Error;
 use crate::keywords::Keyword;
 use crate::name::Name;
 use crate::program::Program;
@@ -30,9 +31,9 @@ fn invoke_function(
     x: usize,
     y: usize,
     index: usize,
-    _from: usize,
+    from_string: &str,
 ) -> Result<()> {
-    let bitmap_info = context.bitmap_cache.get("img/bitmap1.png")?;
+    let bitmap_info = context.bitmap_cache.get(from_string)?;
 
     let ip = vm.ip;
 
@@ -61,7 +62,7 @@ pub fn each(
     context: &mut Context,
     program: &Program,
     fun: usize,
-    from: usize,
+    from: Name,
     dst_position: (f32, f32),
     dst_width: f32,
     dst_height: f32,
@@ -70,8 +71,18 @@ pub fn each(
     // hardcoded: normally use 'from' to lookup string value in program's data struct
     // let bitmap_info = context.bitmap_cache.get("img/bitmap1.png")?;
 
+    let from_string = if let Some(from_string) = program.data.strings.get(&from) {
+        //info!("found string: {}", from_string);
+        from_string
+    } else {
+        return Err(Error::Bitmap(format!(
+            "unable to find string from iname: {}",
+            from
+        )));
+    };
+
     let (width, height) = {
-        let bitmap_info = context.bitmap_cache.get("img/bitmap1.png")?;
+        let bitmap_info = context.bitmap_cache.get(from_string)?;
         (bitmap_info.width, bitmap_info.height)
     };
 
@@ -96,7 +107,7 @@ pub fn each(
                 // assuming that the bitmap is in u8rgba format
                 let index = ((height - y - 1) * width * 4) + (x * 4);
 
-                invoke_function(vm, context, program, fun, x, y, index, from)?;
+                invoke_function(vm, context, program, fun, x, y, index, from_string)?;
             }
             context.matrix_stack.pop();
         }

@@ -17,7 +17,7 @@ use crate::compiler::{compile_program_1, compile_program_for_trait, Compilation,
 use crate::context::Context;
 use crate::name::Name;
 use crate::packable::{Mule, Packable};
-use crate::parser::{Node, NodeMeta};
+use crate::parser::{Node, NodeMeta, WordLut};
 use crate::program::Program;
 use crate::result::Result;
 use crate::run_program_with_preamble;
@@ -93,6 +93,7 @@ impl Trait {
 
     fn compile(
         node: &Node,
+        word_lut: &WordLut,
         parameter_ast: &[Node],
         global_mapping: &BTreeMap<Name, i32>,
         index: Option<usize>,
@@ -113,7 +114,7 @@ impl Trait {
         let initial_value = match node {
             Node::Name(_, i, _) => Var::Name(*i),
             _ => {
-                let program = compile_program_1(node)?;
+                let program = compile_program_1(node, word_lut)?;
                 let mut vm: Vm = Default::default();
                 let mut context: Context = Default::default();
 
@@ -121,7 +122,7 @@ impl Trait {
             }
         };
 
-        let program = compile_program_for_trait(parameter_ast, global_mapping)?;
+        let program = compile_program_for_trait(parameter_ast, word_lut, global_mapping)?;
 
         Ok(Trait::new(initial_value, program, index))
     }
@@ -148,7 +149,7 @@ impl TraitList {
         &self.traits[idx]
     }
 
-    pub fn compile(ast: &[Node]) -> Result<Self> {
+    pub fn compile(ast: &[Node], word_lut: &WordLut) -> Result<Self> {
         // this top-level compilation is only to get the user defined global mappings
         let mut trait_list = TraitList::new();
         let mut compilation = Compilation::new();
@@ -157,45 +158,45 @@ impl TraitList {
         compiler.compile_common(&mut compilation, &ast)?;
         trait_list.global_mapping = compilation.get_user_defined_globals();
         for n in ast {
-            trait_list.ga_traverse(&n)?;
+            trait_list.ga_traverse(&n, word_lut)?;
         }
 
         Ok(trait_list)
     }
 
-    fn ga_traverse(&mut self, node: &Node) -> Result<()> {
+    fn ga_traverse(&mut self, node: &Node, word_lut: &WordLut) -> Result<()> {
         match node {
             Node::List(ns, meta) => {
                 if let Some(meta) = meta {
-                    self.add_single_trait(&node, &meta)?;
+                    self.add_single_trait(&node, &meta, word_lut)?;
                 };
 
                 for n in ns {
-                    self.ga_traverse(n)?;
+                    self.ga_traverse(n, word_lut)?;
                 }
             }
             Node::Vector(ns, meta) => {
                 if let Some(meta) = meta {
-                    self.add_multiple_traits(ns, &meta)?;
+                    self.add_multiple_traits(ns, &meta, word_lut)?;
                 }
 
                 for n in ns {
-                    self.ga_traverse(n)?;
+                    self.ga_traverse(n, word_lut)?;
                 }
             }
             Node::Float(_, _, meta) => {
                 if let Some(meta) = meta {
-                    self.add_single_trait(&node, &meta)?;
+                    self.add_single_trait(&node, &meta, word_lut)?;
                 }
             }
             Node::Name(_, _, meta) => {
                 if let Some(meta) = meta {
-                    self.add_single_trait(&node, &meta)?;
+                    self.add_single_trait(&node, &meta, word_lut)?;
                 }
             }
             Node::Label(_, _, meta) => {
                 if let Some(meta) = meta {
-                    self.add_single_trait(&node, &meta)?;
+                    self.add_single_trait(&node, &meta, word_lut)?;
                 }
             }
             _ => {}
@@ -204,15 +205,26 @@ impl TraitList {
         Ok(())
     }
 
-    fn add_single_trait(&mut self, node: &Node, meta: &NodeMeta) -> Result<()> {
-        let t = Trait::compile(node, &meta.parameter_ast, &self.global_mapping, None)?;
+    fn add_single_trait(&mut self, node: &Node, meta: &NodeMeta, word_lut: &WordLut) -> Result<()> {
+        let t = Trait::compile(
+            node,
+            word_lut,
+            &meta.parameter_ast,
+            &self.global_mapping,
+            None,
+        )?;
 
         self.traits.push(t);
 
         Ok(())
     }
 
-    fn add_multiple_traits(&mut self, nodes: &[Node], meta: &NodeMeta) -> Result<()> {
+    fn add_multiple_traits(
+        &mut self,
+        nodes: &[Node],
+        meta: &NodeMeta,
+        word_lut: &WordLut,
+    ) -> Result<()> {
         let mut i: usize = 0;
         for n in nodes.iter() {
             match n {
@@ -220,7 +232,13 @@ impl TraitList {
                     // ignoring whitespace and comments
                 }
                 _ => {
-                    let t = Trait::compile(n, &meta.parameter_ast, &self.global_mapping, Some(i))?;
+                    let t = Trait::compile(
+                        n,
+                        word_lut,
+                        &meta.parameter_ast,
+                        &self.global_mapping,
+                        Some(i),
+                    )?;
                     self.traits.push(t);
                     i += 1;
                 }
@@ -299,8 +317,8 @@ mod tests {
     use crate::parser::parse;
 
     fn compile_trait_list(s: &str) -> Result<TraitList> {
-        let (ast, _) = parse(s).unwrap();
-        TraitList::compile(&ast)
+        let (ast, word_lut) = parse(s).unwrap();
+        TraitList::compile(&ast, &word_lut)
     }
 
     fn trait_single_float(t: &Trait, expected: f32) {
@@ -414,7 +432,7 @@ mod tests {
         let packed_res = trait_list.pack(&mut packed);
         assert!(packed_res.is_ok());
 
-        assert_eq!(packed, "42 3 0 13 1 14 2 15 2 0 0 FLOAT 50 0 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 60 LOAD MEM 3 FLOAT 30 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 0 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 20 LOAD MEM 3 FLOAT 5 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
+        assert_eq!(packed, "42 3 0 13 1 14 2 15 2 0 0 FLOAT 50 3 0 3 aaa 1 3 bbb 2 3 ccc 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 60 LOAD MEM 3 FLOAT 30 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 3 0 3 aaa 1 3 bbb 2 3 ccc 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 20 LOAD MEM 3 FLOAT 5 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
 
         let res = TraitList::unpack(&packed);
         match res {

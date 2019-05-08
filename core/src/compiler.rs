@@ -24,8 +24,8 @@ use crate::mathutil;
 use crate::name::Name;
 use crate::native::{name_to_native_hash, parameter_info, Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
-use crate::parser::{Node, NodeMeta};
-use crate::program::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
+use crate::parser::{Node, NodeMeta, WordLut};
+use crate::program::{Bytecode, BytecodeArg, Data, FnInfo, Mem, Program};
 use crate::result::Result;
 use crate::vm::Var;
 
@@ -47,34 +47,43 @@ pub fn compile_preamble() -> Result<Program> {
     })
 }
 
-pub fn compile_program(ast: &[Node]) -> Result<Program> {
+pub fn compile_program(ast: &[Node], word_lut: &WordLut) -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
 
     compiler.compile_common(&mut compilation, &ast)?;
 
+    let mut data: Data = Default::default();
+    data.strings = word_lut.get_script_inames();
+
     Ok(Program {
         code: compilation.code,
         fn_info: compilation.fn_info,
+        data,
         ..Default::default()
     })
 }
 
-pub fn compile_program_1(ast_node: &Node) -> Result<Program> {
+pub fn compile_program_1(ast_node: &Node, word_lut: &WordLut) -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
 
     compiler.compile_common_1(&mut compilation, &ast_node)?;
 
+    let mut data: Data = Default::default();
+    data.strings = word_lut.get_script_inames();
+
     Ok(Program {
         code: compilation.code,
         fn_info: compilation.fn_info,
+        data,
         ..Default::default()
     })
 }
 
 pub fn compile_program_for_trait(
     ast: &[Node],
+    word_lut: &WordLut,
     global_mapping: &BTreeMap<Name, i32>,
 ) -> Result<Program> {
     let mut compilation = Compilation::new();
@@ -92,14 +101,22 @@ pub fn compile_program_for_trait(
     compiler.compile_common_top_level_forms(&mut compilation, &ast)?;
     compiler.compile_common_epilogue(&mut compilation)?;
 
+    let mut data: Data = Default::default();
+    data.strings = word_lut.get_script_inames();
+
     Ok(Program {
         code: compilation.code,
         fn_info: compilation.fn_info,
+        data,
         ..Default::default()
     })
 }
 
-pub fn compile_program_with_genotype(ast: &mut [Node], genotype: &mut Genotype) -> Result<Program> {
+pub fn compile_program_with_genotype(
+    ast: &mut [Node],
+    word_lut: &WordLut,
+    genotype: &mut Genotype,
+) -> Result<Program> {
     let mut compilation = Compilation::new();
     let mut compiler = Compiler::new();
     compiler.use_genes = true;
@@ -108,9 +125,13 @@ pub fn compile_program_with_genotype(ast: &mut [Node], genotype: &mut Genotype) 
 
     compiler.compile_common(&mut compilation, &ast)?;
 
+    let mut data: Data = Default::default();
+    data.strings = word_lut.get_script_inames();
+
     Ok(Program {
         code: compilation.code,
         fn_info: compilation.fn_info,
+        data,
         ..Default::default()
     })
 }
@@ -420,6 +441,19 @@ impl Compilation {
             arg0,
             arg1: BytecodeArg::Int(arg1),
         };
+
+        Ok(())
+    }
+
+    fn emit_name_as_string(&mut self, op: Opcode, arg0: Mem, arg1: Name) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Mem(arg0),
+            arg1: BytecodeArg::String(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
 
         Ok(())
     }
@@ -1105,6 +1139,10 @@ impl Compiler {
                 } else {
                     return self.compile_vector(compilation, ast, &children[..]);
                 }
+            }
+            Node::String(_, _, _) => {
+                let iname = self.get_iname(ast)?;
+                return compilation.emit_name_as_string(Opcode::LOAD, Mem::Constant, iname);
             }
             Node::Name(text, _, _) => {
                 let iname = self.get_iname(ast)?;
@@ -2515,8 +2553,8 @@ mod tests {
     use crate::program::Mem;
 
     fn compile(s: &str) -> Vec<Bytecode> {
-        let (ast, _word_lut) = parse(s).unwrap();
-        let program = compile_program(&ast).unwrap();
+        let (ast, word_lut) = parse(s).unwrap();
+        let program = compile_program(&ast, &word_lut).unwrap();
         program.code
     }
 

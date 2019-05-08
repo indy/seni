@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 
 use crate::colour::Colour;
@@ -90,26 +90,53 @@ impl Node {
     }
 
     pub fn get_iname(&self, use_genes: bool) -> Result<Name> {
-        if let Node::Name(_text, iname, meta) = self {
-            if use_genes && meta.is_some() {
-                if let Some(meta) = meta {
-                    if let Some(gene) = &meta.gene {
-                        match gene {
-                            Gene::Name(i) => return Ok(*i),
-                            _ => {
-                                return Err(Error::Compiler(
-                                    "Node::get_iname incompatible gene".to_string(),
-                                ));
+        match self {
+            Node::Name(_text, iname, meta) => {
+                if use_genes && meta.is_some() {
+                    if let Some(meta) = meta {
+                        if let Some(gene) = &meta.gene {
+                            match gene {
+                                Gene::Name(i) => return Ok(*i),
+                                _ => {
+                                    return Err(Error::Compiler(
+                                        "Node::get_iname incompatible gene for Name".to_string(),
+                                    ));
+                                }
                             }
                         }
                     }
+                } else {
+                    return Ok(*iname);
                 }
-            } else {
-                return Ok(*iname);
+            }
+            Node::String(_text, iname, meta) => {
+                if use_genes && meta.is_some() {
+                    if let Some(meta) = meta {
+                        if let Some(gene) = &meta.gene {
+                            match gene {
+                                Gene::String(i) => return Ok(*i),
+                                _ => {
+                                    return Err(Error::Compiler(
+                                        "Node::get_iname incompatible gene for String".to_string(),
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    return Ok(*iname);
+                }
+            }
+            _ => {
+                return Err(Error::Compiler(format!(
+                    "Node::get_iname expected Node::Name or Node::String not {:?}",
+                    self
+                )))
             }
         }
+
         Err(Error::Compiler(format!(
-            "Node::get_iname expected Node::Name not {:?}",
+            "Node::get_iname expected Node::Name or Node::String not {:?}",
             self
         )))
     }
@@ -315,6 +342,17 @@ impl WordLut {
         }
 
         None
+    }
+
+    // used to populate Program.Data.strings
+    pub fn get_script_inames(&self) -> BTreeMap<Name, String> {
+        let mut res: BTreeMap<Name, String> = BTreeMap::new();
+
+        for (k, v) in &self.iname_to_word {
+            res.insert(*k, v.clone());
+        }
+
+        res
     }
 }
 

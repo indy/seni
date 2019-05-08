@@ -39,7 +39,8 @@ use std::rc::Rc;
 
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
-// use log::error;
+
+// use log::info;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Display, EnumString, EnumIter)]
 pub enum Native {
@@ -3015,7 +3016,7 @@ fn bitmap_each_execute(
         ));
     }
 
-    let from: f32 = vm.stack_peek(1)?;
+    let from: Name = vm.stack_peek(1)?;
     let position: (f32, f32) = vm.stack_peek(2)?;
     let width: f32 = vm.stack_peek(3)?;
     let height: f32 = vm.stack_peek(4)?;
@@ -3026,7 +3027,7 @@ fn bitmap_each_execute(
         context,
         program,
         fun as usize,
-        from as usize,
+        from,
         position,
         width,
         height,
