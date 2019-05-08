@@ -16,8 +16,8 @@
 use crate::colour::ColourFormat;
 use crate::error::Error;
 use crate::gene::{Gene, Genotype};
+use crate::iname::Iname;
 use crate::keywords::Keyword;
-use crate::name::Name;
 use crate::parser::{parse, Node, NodeMeta, WordLut};
 use crate::result::Result;
 
@@ -186,7 +186,7 @@ fn simplified_unparse_ast_node(cursor: &mut String, word_lut: &WordLut, ast: &No
 fn index_of_quote_keyword(ns: &[Node]) -> Option<usize> {
     for (i, n) in ns.iter().enumerate() {
         if let Node::Name(_, iname, _) = n {
-            if *iname == Name::from(Keyword::Quote) {
+            if *iname == Iname::from(Keyword::Quote) {
                 return Some(i);
             }
         }

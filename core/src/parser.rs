@@ -19,9 +19,9 @@ use std::str::FromStr;
 use crate::colour::Colour;
 use crate::error::Error;
 use crate::gene::Gene;
+use crate::iname::Iname;
 use crate::keywords::Keyword;
 use crate::lexer::{tokenize, Token};
-use crate::name::Name;
 use crate::native::Native;
 use crate::result::Result;
 
@@ -49,9 +49,9 @@ pub enum Node {
     List(Vec<Node>, Option<NodeMeta>),
     Vector(Vec<Node>, Option<NodeMeta>),
     Float(f32, String, Option<NodeMeta>),
-    Name(String, Name, Option<NodeMeta>),  // text, iname, meta
-    Label(String, Name, Option<NodeMeta>), // text, iname, meta
-    String(String, Name, Option<NodeMeta>),
+    Name(String, Iname, Option<NodeMeta>),  // text, iname, meta
+    Label(String, Iname, Option<NodeMeta>), // text, iname, meta
+    String(String, Iname, Option<NodeMeta>),
     Whitespace(String, Option<NodeMeta>),
     Comment(String, Option<NodeMeta>),
 }
@@ -89,7 +89,7 @@ impl Node {
         )))
     }
 
-    pub fn get_iname(&self, use_genes: bool) -> Result<Name> {
+    pub fn get_iname(&self, use_genes: bool) -> Result<Iname> {
         match self {
             Node::Name(_text, iname, meta) => {
                 if use_genes && meta.is_some() {
@@ -141,14 +141,14 @@ impl Node {
         )))
     }
 
-    pub fn get_label_iname(&self, use_genes: bool) -> Result<Name> {
+    pub fn get_label_iname(&self, use_genes: bool) -> Result<Iname> {
         if let Node::Label(_, iname, meta) = self {
             if use_genes && meta.is_some() {
                 if let Some(meta) = meta {
                     if let Some(gene) = &meta.gene {
                         match gene {
                             // todo: what type of gene would a Node::Label have?
-                            Gene::Int(i) => return Ok(Name::new(*i)),
+                            Gene::Int(i) => return Ok(Iname::new(*i)),
                             Gene::Name(i) => return Ok(*i),
                             _ => {
                                 return Err(Error::Compiler(
@@ -265,26 +265,26 @@ pub struct WordLut {
     // requires a builtin hashmap (function names reserved by the builtin api)
     // a keyword hashmap (keywords + constants + common arguments to builtin api functions)
     // a word hashmap (user defined names and labels)
-    word_to_iname: HashMap<String, Name>,
+    word_to_iname: HashMap<String, Iname>,
     word_count: i32,
 
-    iname_to_word: HashMap<Name, String>,
-    iname_to_native: HashMap<Name, String>,
-    iname_to_keyword: HashMap<Name, String>,
+    iname_to_word: HashMap<Iname, String>,
+    iname_to_native: HashMap<Iname, String>,
+    iname_to_keyword: HashMap<Iname, String>,
 }
 
 impl Default for WordLut {
     fn default() -> WordLut {
         // native
-        let mut n: HashMap<Name, String> = HashMap::new();
+        let mut n: HashMap<Iname, String> = HashMap::new();
         for nat in Native::iter() {
-            n.insert(Name::from(nat), nat.to_string());
+            n.insert(Iname::from(nat), nat.to_string());
         }
 
         // keyword
-        let mut k: HashMap<Name, String> = HashMap::new();
+        let mut k: HashMap<Iname, String> = HashMap::new();
         for kw in Keyword::iter() {
-            k.insert(Name::from(kw), kw.to_string());
+            k.insert(Iname::from(kw), kw.to_string());
         }
 
         WordLut {
@@ -299,7 +299,7 @@ impl Default for WordLut {
 }
 
 impl WordLut {
-    pub fn get_string_from_name(&self, name: Name) -> Option<&String> {
+    pub fn get_string_from_name(&self, name: Iname) -> Option<&String> {
         if let Some(s) = self.iname_to_native.get(&name) {
             // 1st check the native api
             Some(s)
@@ -312,28 +312,28 @@ impl WordLut {
         }
     }
 
-    fn get_or_add(&mut self, s: &str) -> Name {
+    fn get_or_add(&mut self, s: &str) -> Iname {
         if let Some(i) = self.get_name_from_string(s) {
             return i;
         }
 
-        let name = Name::new(self.word_count);
+        let name = Iname::new(self.word_count);
         self.word_to_iname.insert(s.to_string(), name);
         self.iname_to_word.insert(name, s.to_string());
         self.word_count += 1;
 
-        Name::new(self.word_count - 1)
+        Iname::new(self.word_count - 1)
     }
 
-    fn get_name_from_string(&self, s: &str) -> Option<Name> {
+    fn get_name_from_string(&self, s: &str) -> Option<Iname> {
         // 1st check the native api
         if let Ok(n) = Native::from_str(s) {
-            return Some(Name::from(n));
+            return Some(Iname::from(n));
         }
 
         // 2nd check the keywords
         if let Ok(kw) = Keyword::from_str(s) {
-            return Some(Name::from(kw));
+            return Some(Iname::from(kw));
         }
 
         // finally check/add to word_to_iname
@@ -345,8 +345,8 @@ impl WordLut {
     }
 
     // used to populate Program.Data.strings
-    pub fn get_script_inames(&self) -> BTreeMap<Name, String> {
-        let mut res: BTreeMap<Name, String> = BTreeMap::new();
+    pub fn get_script_inames(&self) -> BTreeMap<Iname, String> {
+        let mut res: BTreeMap<Iname, String> = BTreeMap::new();
 
         for (k, v) in &self.iname_to_word {
             res.insert(*k, v.clone());
@@ -604,22 +604,22 @@ mod tests {
     fn test_parser() {
         assert_eq!(
             ast("hello"),
-            [Node::Name("hello".to_string(), Name::new(0), None)]
+            [Node::Name("hello".to_string(), Iname::new(0), None)]
         );
         assert_eq!(
             ast("hello world"),
             [
-                Node::Name("hello".to_string(), Name::new(0), None),
+                Node::Name("hello".to_string(), Iname::new(0), None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), Name::new(1), None)
+                Node::Name("world".to_string(), Iname::new(1), None)
             ]
         );
         assert_eq!(
             ast("hello: world"),
             [
-                Node::Label("hello".to_string(), Name::new(0), None),
+                Node::Label("hello".to_string(), Iname::new(0), None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), Name::new(1), None)
+                Node::Name("world".to_string(), Iname::new(1), None)
             ]
         );
         assert_eq!(
@@ -634,9 +634,9 @@ mod tests {
         assert_eq!(
             ast("hello world ; some comment"),
             [
-                Node::Name("hello".to_string(), Name::new(0), None),
+                Node::Name("hello".to_string(), Iname::new(0), None),
                 Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), Name::new(1), None),
+                Node::Name("world".to_string(), Iname::new(1), None),
                 Node::Whitespace(" ".to_string(), None),
                 Node::Comment(" some comment".to_string(), None)
             ]
@@ -646,9 +646,9 @@ mod tests {
             ast("(hello world)"),
             [Node::List(
                 vec![
-                    Node::Name("hello".to_string(), Name::new(0), None),
+                    Node::Name("hello".to_string(), Iname::new(0), None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), Name::new(1), None)
+                    Node::Name("world".to_string(), Iname::new(1), None)
                 ],
                 None
             )]
@@ -658,9 +658,9 @@ mod tests {
             ast("(bitmap \"foo.png\")"),
             [Node::List(
                 vec![
-                    Node::Name("bitmap".to_string(), Name::new(0), None),
+                    Node::Name("bitmap".to_string(), Iname::new(0), None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::String("foo.png".to_string(), Name::new(1), None)
+                    Node::String("foo.png".to_string(), Iname::new(1), None)
                 ],
                 None
             )]
@@ -670,7 +670,7 @@ mod tests {
             ast("'3"),
             [Node::List(
                 vec![
-                    Node::Name("quote".to_string(), Name::new(153), None),
+                    Node::Name("quote".to_string(), Iname::new(153), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Float(3.0, "3".to_string(), None)
                 ],
@@ -682,9 +682,9 @@ mod tests {
             ast("(hello world (1 2 3))"),
             [Node::List(
                 vec![
-                    Node::Name("hello".to_string(), Name::new(0), None),
+                    Node::Name("hello".to_string(), Iname::new(0), None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), Name::new(1), None),
+                    Node::Name("world".to_string(), Iname::new(1), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::List(
                         vec![
@@ -705,9 +705,9 @@ mod tests {
             ast("(hello world [1 2 3])"),
             [Node::List(
                 vec![
-                    Node::Name("hello".to_string(), Name::new(0), None),
+                    Node::Name("hello".to_string(), Iname::new(0), None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), Name::new(1), None),
+                    Node::Name("world".to_string(), Iname::new(1), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Vector(
                         vec![
@@ -727,7 +727,7 @@ mod tests {
         assert_eq!(
             ast("hello { 5 (gen/scalar)}"),
             [
-                Node::Name("hello".to_string(), Name::new(0), None),
+                Node::Name("hello".to_string(), Iname::new(0), None),
                 Node::Whitespace(" ".to_string(), None),
                 Node::Float(
                     5.0,
@@ -739,7 +739,7 @@ mod tests {
                             Node::List(
                                 vec![Node::Name(
                                     "gen/scalar".to_string(),
-                                    Name::from(Native::GenScalar),
+                                    Iname::from(Native::GenScalar),
                                     None
                                 )],
                                 None
@@ -758,9 +758,9 @@ mod tests {
             ast("(rect width: 300)"),
             [Node::List(
                 vec![
-                    Node::Name("rect".to_string(), Name::from(Native::Rect), None),
+                    Node::Name("rect".to_string(), Iname::from(Native::Rect), None),
                     Node::Whitespace(" ".to_string(), None),
-                    Node::Label("width".to_string(), Name::from(Keyword::Width), None),
+                    Node::Label("width".to_string(), Iname::from(Keyword::Width), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Float(300.0, "300".to_string(), None),
                 ],

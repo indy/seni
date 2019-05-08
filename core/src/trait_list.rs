@@ -15,7 +15,7 @@
 
 use crate::compiler::{compile_program_1, compile_program_for_trait, Compilation, Compiler};
 use crate::context::Context;
-use crate::name::Name;
+use crate::iname::Iname;
 use crate::packable::{Mule, Packable};
 use crate::parser::{Node, NodeMeta, WordLut};
 use crate::program::Program;
@@ -95,7 +95,7 @@ impl Trait {
         node: &Node,
         word_lut: &WordLut,
         parameter_ast: &[Node],
-        global_mapping: &BTreeMap<Name, i32>,
+        global_mapping: &BTreeMap<Iname, i32>,
         index: Option<usize>,
     ) -> Result<Self> {
         // todo: what about NODE_LABEL and NODE_STRING?
@@ -132,7 +132,7 @@ impl Trait {
 pub struct TraitList {
     pub traits: Vec<Trait>,
     pub seed_value: i32,
-    pub global_mapping: BTreeMap<Name, i32>,
+    pub global_mapping: BTreeMap<Iname, i32>,
 }
 
 impl TraitList {
@@ -288,7 +288,7 @@ impl Packable for TraitList {
         let (num_mappings, rem) = Mule::unpack_usize_sp(rem)?;
         let mut r = rem;
         for _ in 0..num_mappings {
-            let (iname, rem) = Name::unpack(r)?;
+            let (iname, rem) = Iname::unpack(r)?;
             let rem = Mule::skip_space(rem);
             r = rem;
             let (map_val, rem) = Mule::unpack_i32_sp(r)?;

@@ -19,10 +19,10 @@ use crate::context::Context;
 use crate::ease::easing_from_keyword;
 use crate::error::Error;
 use crate::focal;
+use crate::iname::Iname;
 use crate::interp;
 use crate::keywords::Keyword;
 use crate::mathutil;
-use crate::name::Name;
 use crate::packable::{Mule, Packable};
 use crate::path;
 use crate::prng;
@@ -530,11 +530,11 @@ pub fn execute_native(
     }
 }
 
-pub fn name_to_native_hash() -> HashMap<Name, Native> {
-    let mut hm: HashMap<Name, Native> = HashMap::new();
+pub fn name_to_native_hash() -> HashMap<Iname, Native> {
+    let mut hm: HashMap<Iname, Native> = HashMap::new();
 
     for n in Native::iter() {
-        hm.insert(Name::from(n), n);
+        hm.insert(Iname::from(n), n);
     }
 
     hm
@@ -3016,7 +3016,7 @@ fn bitmap_each_execute(
         ));
     }
 
-    let from: Name = vm.stack_peek(1)?;
+    let from: Iname = vm.stack_peek(1)?;
     let position: (f32, f32) = vm.stack_peek(2)?;
     let width: f32 = vm.stack_peek(3)?;
     let height: f32 = vm.stack_peek(4)?;

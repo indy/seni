@@ -15,9 +15,9 @@
 
 use crate::context::Context;
 use crate::ease::{easing, Easing};
+use crate::iname::Iname;
 use crate::keywords::Keyword;
 use crate::mathutil::{bezier_point, quadratic_point, TAU};
-use crate::name::Name;
 use crate::program::Program;
 use crate::result::Result;
 use crate::vm::*;
@@ -38,9 +38,9 @@ fn invoke_function(
     let fn_info = &program.fn_info[fun];
 
     vm.function_call_default_arguments(context, program, fn_info)?;
-    vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::N), step);
-    vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::T), t);
-    vm.function_set_argument_to_2d(fn_info, Name::from(Keyword::Position), x, y);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::N), step);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::T), t);
+    vm.function_set_argument_to_2d(fn_info, Iname::from(Keyword::Position), x, y);
     vm.function_call_body(context, program, fn_info)?;
 
     vm.ip = ip;

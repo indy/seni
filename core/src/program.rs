@@ -18,8 +18,8 @@ use std::fmt;
 
 use crate::colour::Colour;
 use crate::error::Error;
+use crate::iname::Iname;
 use crate::keywords::Keyword;
-use crate::name::Name;
 use crate::native::Native;
 use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
@@ -77,8 +77,8 @@ impl Packable for Mem {
 pub enum BytecodeArg {
     Int(i32),
     Float(f32),
-    Name(Name),
-    String(Name),
+    Name(Iname),
+    String(Iname),
     Native(Native),
     Mem(Mem),
     Keyword(Keyword),
@@ -140,11 +140,11 @@ impl Packable for BytecodeArg {
             Ok((BytecodeArg::Float(val), rem))
         } else if cursor.starts_with("NAME ") {
             let rem = Mule::skip_forward(cursor, "NAME ".len());
-            let (val, rem) = Name::unpack(rem)?;
+            let (val, rem) = Iname::unpack(rem)?;
             Ok((BytecodeArg::Name(val), rem))
         } else if cursor.starts_with("STRING ") {
             let rem = Mule::skip_forward(cursor, "STRING ".len());
-            let (val, rem) = Name::unpack(rem)?;
+            let (val, rem) = Iname::unpack(rem)?;
             Ok((BytecodeArg::String(val), rem))
         } else if cursor.starts_with("NATIVE ") {
             let rem = Mule::skip_forward(cursor, "NATIVE ".len());
@@ -229,7 +229,7 @@ pub struct FnInfo {
     pub arg_address: usize,
     pub body_address: usize,
     pub num_args: i32,
-    pub argument_offsets: Vec<Name>,
+    pub argument_offsets: Vec<Iname>,
 }
 
 impl Default for FnInfo {
@@ -245,7 +245,7 @@ impl Default for FnInfo {
 }
 
 impl FnInfo {
-    pub fn get_argument_mapping(&self, argument_iname: Name) -> Option<usize> {
+    pub fn get_argument_mapping(&self, argument_iname: Iname) -> Option<usize> {
         for (i, arg) in self.argument_offsets.iter().enumerate() {
             if *arg == argument_iname {
                 return Some((i * 2) + 1);
@@ -258,7 +258,7 @@ impl FnInfo {
 #[derive(Debug)]
 pub struct Data {
     // the sub-section of WordLut::iname_to_word that stores Node::String
-    pub strings: BTreeMap<Name, String>,
+    pub strings: BTreeMap<Iname, String>,
 }
 
 impl Default for Data {
@@ -285,13 +285,13 @@ impl Packable for Data {
     fn unpack(cursor: &str) -> Result<(Self, &str)> {
         let (strings_size, rem) = Mule::unpack_usize(cursor)?;
 
-        let mut strings: BTreeMap<Name, String> = BTreeMap::new();
+        let mut strings: BTreeMap<Iname, String> = BTreeMap::new();
 
         let mut r = rem;
         for _ in 0..strings_size {
             r = Mule::skip_space(r);
 
-            let (iname, rem) = Name::unpack(r)?;
+            let (iname, rem) = Iname::unpack(r)?;
             let rem = Mule::skip_space(rem);
             let (string, rem) = Mule::unpack_string(rem)?;
             r = rem;

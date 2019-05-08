@@ -14,9 +14,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::context::Context;
+use crate::iname::Iname;
 use crate::keywords::Keyword;
 use crate::mathutil::*;
-use crate::name::Name;
 use crate::program::Program;
 use crate::result::Result;
 use crate::vm::*;
@@ -37,7 +37,7 @@ fn flip(
     context.matrix_stack.push();
     {
         vm.function_call_default_arguments(context, program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), copy as f32);
+        vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::Copy), copy as f32);
         vm.function_call_body(context, program, fn_info)?;
     }
     context.matrix_stack.pop();
@@ -48,7 +48,7 @@ fn flip(
     {
         context.matrix_stack.scale(sx, sy);
         vm.function_call_default_arguments(context, program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), copy as f32);
+        vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::Copy), copy as f32);
         vm.function_call_body(context, program, fn_info)?;
     }
     context.matrix_stack.pop();
@@ -130,8 +130,8 @@ pub fn rotate(
         context.matrix_stack.rotate(angle);
 
         vm.function_call_default_arguments(context, program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Angle), rad_to_deg(angle));
-        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), i as f32);
+        vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::Angle), rad_to_deg(angle));
+        vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::Copy), i as f32);
         vm.function_call_body(context, program, fn_info)?;
 
         context.matrix_stack.pop();
@@ -161,8 +161,8 @@ pub fn rotate_mirrored(
         context.matrix_stack.rotate(angle);
 
         vm.function_call_default_arguments(context, program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Angle), rad_to_deg(angle));
-        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), i as f32);
+        vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::Angle), rad_to_deg(angle));
+        vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::Copy), i as f32);
         vm.function_call_body(context, program, fn_info)?;
 
         context.matrix_stack.pop();
@@ -179,8 +179,8 @@ pub fn rotate_mirrored(
         context.matrix_stack.rotate(angle);
 
         vm.function_call_default_arguments(context, program, fn_info)?;
-        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Angle), -rad_to_deg(angle));
-        vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::Copy), (copies + i) as f32);
+        vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::Angle), -rad_to_deg(angle));
+        vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::Copy), (copies + i) as f32);
         vm.function_call_body(context, program, fn_info)?;
 
         context.matrix_stack.pop();

@@ -19,9 +19,9 @@ use std::fmt;
 use crate::colour::{Colour, ColourFormat};
 use crate::error::Error;
 use crate::gene::Genotype;
+use crate::iname::Iname;
 use crate::keywords::{name_to_keyword_hash, Keyword};
 use crate::mathutil;
-use crate::name::Name;
 use crate::native::{name_to_native_hash, parameter_info, Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::parser::{Node, NodeMeta, WordLut};
@@ -84,7 +84,7 @@ pub fn compile_program_1(ast_node: &Node, word_lut: &WordLut) -> Result<Program>
 pub fn compile_program_for_trait(
     ast: &[Node],
     word_lut: &WordLut,
-    global_mapping: &BTreeMap<Name, i32>,
+    global_mapping: &BTreeMap<Iname, i32>,
 ) -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
@@ -254,8 +254,8 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()>
 fn is_node_colour_constructor(children: &[&Node]) -> bool {
     if !children.is_empty() {
         if let Node::Name(_, iname, _) = children[0] {
-            let col_constructor_start = Name::from(Native::ColConstructorStart_);
-            let col_constructor_end = Name::from(Native::ColConstructorEnd_);
+            let col_constructor_start = Iname::from(Native::ColConstructorStart_);
+            let col_constructor_end = Iname::from(Native::ColConstructorEnd_);
 
             return iname.enclosed_by(col_constructor_start, col_constructor_end);
         }
@@ -271,15 +271,15 @@ pub struct Compilation {
     current_fn_info_index: Option<usize>,
     opcode_offset: i32,
 
-    local_mappings: HashMap<Name, i32>, // iname -> local mapping index
+    local_mappings: HashMap<Iname, i32>, // iname -> local mapping index
     local_mapping_marker: i32, // todo: check that it is < MEMORY_LOCAL_SIZE, as that constant is used in the interpreter
 
-    global_mappings: HashMap<Name, i32>, // iname -> global mapping index
+    global_mappings: HashMap<Iname, i32>, // iname -> global mapping index
     global_mapping_marker: i32,
 
     // using BTreeMap as this will be given to a TraitList which will be packed,
     // for testing purposes having a consistent ordering is important
-    user_defined_globals: BTreeMap<Name, i32>, // iname -> global mapping index
+    user_defined_globals: BTreeMap<Iname, i32>, // iname -> global mapping index
 }
 
 impl fmt::Display for Compilation {
@@ -318,11 +318,11 @@ impl Compilation {
     }
 
     // used when adding explicit global mappings during a trait compilation
-    fn add_explicit_global_mapping(&mut self, iname: Name, map_val: i32) {
+    fn add_explicit_global_mapping(&mut self, iname: Iname, map_val: i32) {
         self.global_mappings.insert(iname, map_val);
     }
 
-    fn add_global_mapping(&mut self, iname: Name) -> Result<i32> {
+    fn add_global_mapping(&mut self, iname: Iname) -> Result<i32> {
         self.user_defined_globals
             .insert(iname, self.global_mapping_marker);
         self.global_mappings
@@ -334,16 +334,16 @@ impl Compilation {
     fn add_global_mapping_for_keyword(&mut self, kw: Keyword) -> Result<i32> {
         // self.add_global_mapping(kw as i32)
         self.global_mappings
-            .insert(Name::from(kw), self.global_mapping_marker);
+            .insert(Iname::from(kw), self.global_mapping_marker);
         self.global_mapping_marker += 1;
         Ok(self.global_mapping_marker - 1)
     }
 
-    fn get_global_mapping(&self, iname: Name) -> Option<&i32> {
+    fn get_global_mapping(&self, iname: Iname) -> Option<&i32> {
         self.global_mappings.get(&iname)
     }
 
-    pub fn get_user_defined_globals(self) -> BTreeMap<Name, i32> {
+    pub fn get_user_defined_globals(self) -> BTreeMap<Iname, i32> {
         self.user_defined_globals
     }
 
@@ -353,13 +353,13 @@ impl Compilation {
         Ok(())
     }
 
-    fn add_local_mapping(&mut self, iname: Name) -> Result<i32> {
+    fn add_local_mapping(&mut self, iname: Iname) -> Result<i32> {
         self.local_mappings.insert(iname, self.local_mapping_marker);
         self.local_mapping_marker += 1;
         Ok(self.local_mapping_marker - 1)
     }
 
-    fn get_local_mapping(&self, iname: Name) -> Option<&i32> {
+    fn get_local_mapping(&self, iname: Iname) -> Option<&i32> {
         self.local_mappings.get(&iname)
     }
 
@@ -369,7 +369,7 @@ impl Compilation {
     fn add_internal_local_mapping(&mut self) -> Result<i32> {
         // todo: is this right???
         let i = 9999;
-        let n = Name::new(i);
+        let n = Iname::new(i);
 
         // let s = "internal_local_mapping".to_string();
         self.local_mappings.insert(n, self.local_mapping_marker);
@@ -445,7 +445,7 @@ impl Compilation {
         Ok(())
     }
 
-    fn emit_name_as_string(&mut self, op: Opcode, arg0: Mem, arg1: Name) -> Result<()> {
+    fn emit_name_as_string(&mut self, op: Opcode, arg0: Mem, arg1: Iname) -> Result<()> {
         let b = Bytecode {
             op,
             arg0: BytecodeArg::Mem(arg0),
@@ -538,8 +538,8 @@ impl EmitOpcode<Mem, Keyword> for Compilation {
     }
 }
 
-impl EmitOpcode<Mem, Name> for Compilation {
-    fn emit(&mut self, op: Opcode, arg0: Mem, arg1: Name) -> Result<()> {
+impl EmitOpcode<Mem, Iname> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: Mem, arg1: Iname) -> Result<()> {
         let b = Bytecode {
             op,
             arg0: BytecodeArg::Mem(arg0),
@@ -628,8 +628,8 @@ impl EmitOpcode<i32, f32> for Compilation {
     }
 }
 
-impl EmitOpcode<usize, Name> for Compilation {
-    fn emit(&mut self, op: Opcode, arg0: usize, arg1: Name) -> Result<()> {
+impl EmitOpcode<usize, Iname> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: usize, arg1: Iname) -> Result<()> {
         let b = Bytecode {
             op,
             arg0: BytecodeArg::Int(arg0 as i32),
@@ -644,8 +644,8 @@ impl EmitOpcode<usize, Name> for Compilation {
 }
 
 pub struct Compiler {
-    name_to_keyword: HashMap<Name, Keyword>,
-    name_to_native: HashMap<Name, Native>,
+    name_to_keyword: HashMap<Iname, Keyword>,
+    name_to_native: HashMap<Iname, Native>,
     use_genes: bool,
 }
 
@@ -1058,7 +1058,7 @@ impl Compiler {
     fn compile_global_mappings_for_trait(
         &self,
         compilation: &mut Compilation,
-        global_mapping: &BTreeMap<Name, i32>,
+        global_mapping: &BTreeMap<Iname, i32>,
     ) -> Result<()> {
         for (iname, map_val) in global_mapping {
             compilation.add_explicit_global_mapping(*iname, *map_val);
@@ -1309,7 +1309,7 @@ impl Compiler {
     }
 
     fn get_parameter_index(&self, label_vals: &[&Node], kw: Keyword) -> Option<usize> {
-        let kw_name = Name::from(kw);
+        let kw_name = Iname::from(kw);
 
         for (i, node) in label_vals.iter().enumerate() {
             if i & 1 == 0 {
@@ -1460,11 +1460,11 @@ impl Compiler {
                 let value = &label_vals[1];
 
                 if let Node::Label(_, iname, _) = label {
-                    if *iname == Name::from(Keyword::From) {
+                    if *iname == Iname::from(Keyword::From) {
                         maybe_from_node = Some(&value);
-                    } else if *iname == Name::from(Keyword::To) {
+                    } else if *iname == Iname::from(Keyword::To) {
                         maybe_to_node = Some(&value);
-                    } else if *iname == Name::from(Keyword::Num) {
+                    } else if *iname == Iname::from(Keyword::Num) {
                         maybe_num_node = Some(&value);
                     }
                 }
@@ -1620,13 +1620,13 @@ impl Compiler {
                 let value = &label_vals[1];
 
                 if let Node::Label(_, iname, _) = label {
-                    if *iname == Name::from(Keyword::From) {
+                    if *iname == Iname::from(Keyword::From) {
                         maybe_from_node = Some(&value);
-                    } else if *iname == Name::from(Keyword::To) {
+                    } else if *iname == Iname::from(Keyword::To) {
                         maybe_to_node = Some(&value);
-                    } else if *iname == Name::from(Keyword::Upto) {
+                    } else if *iname == Iname::from(Keyword::Upto) {
                         maybe_upto_node = Some(&value);
-                    } else if *iname == Name::from(Keyword::Inc) {
+                    } else if *iname == Iname::from(Keyword::Inc) {
                         maybe_increment_node = Some(&value);
                     }
                 }
@@ -1742,7 +1742,7 @@ impl Compiler {
                 let value = &label_vals[1];
 
                 if let Node::Label(_, iname, _) = label {
-                    if *iname == Name::from(Keyword::From) {
+                    if *iname == Iname::from(Keyword::From) {
                         maybe_from_node = Some(&value);
                     }
                 }
@@ -2374,12 +2374,12 @@ impl Compiler {
     }
 
     fn append_keyword(&self, compilation: &mut Compilation, kw: Keyword) -> Result<()> {
-        compilation.emit(Opcode::LOAD, Mem::Constant, Name::from(kw))?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, Iname::from(kw))?;
         compilation.emit(Opcode::APPEND, 0, 0)?;
         Ok(())
     }
 
-    fn store_locally(&self, compilation: &mut Compilation, iname: Name) -> Result<i32> {
+    fn store_locally(&self, compilation: &mut Compilation, iname: Iname) -> Result<i32> {
         let address: i32 = match compilation.get_local_mapping(iname) {
             Some(&local_mapping) => local_mapping, // already storing the binding name
             None => compilation.add_local_mapping(iname)?,
@@ -2391,7 +2391,7 @@ impl Compiler {
     }
 
     fn store_globally_kw(&self, compilation: &mut Compilation, kw: Keyword) -> Result<i32> {
-        let iname = Name::from(kw);
+        let iname = Iname::from(kw);
         let address: i32 = match compilation.get_global_mapping(iname) {
             Some(&global_mapping) => global_mapping, // already storing the binding name
             None => compilation.add_global_mapping_for_keyword(kw)?,
@@ -2402,7 +2402,7 @@ impl Compiler {
         Ok(address)
     }
 
-    fn store_globally(&self, compilation: &mut Compilation, iname: Name) -> Result<i32> {
+    fn store_globally(&self, compilation: &mut Compilation, iname: Iname) -> Result<i32> {
         let address: i32 = match compilation.get_global_mapping(iname) {
             Some(&global_mapping) => global_mapping, // already storing the binding name
             None => compilation.add_global_mapping(iname)?,
@@ -2436,7 +2436,7 @@ impl Compiler {
     fn compile_user_defined_name(
         &self,
         compilation: &mut Compilation,
-        iname: Name,
+        iname: Iname,
     ) -> Result<bool> {
         if let Some(local_mapping) = compilation.get_local_mapping(iname) {
             let val = *local_mapping;
@@ -2486,11 +2486,11 @@ impl Compiler {
         n.get_float(self.use_genes)
     }
 
-    fn get_iname(&self, n: &Node) -> Result<Name> {
+    fn get_iname(&self, n: &Node) -> Result<Iname> {
         n.get_iname(self.use_genes)
     }
 
-    fn get_label_iname(&self, n: &Node) -> Result<Name> {
+    fn get_label_iname(&self, n: &Node) -> Result<Iname> {
         n.get_label_iname(self.use_genes)
     }
 
@@ -2626,7 +2626,7 @@ mod tests {
         Bytecode {
             op: Opcode::LOAD,
             arg0: BytecodeArg::Mem(Mem::Constant),
-            arg1: BytecodeArg::Name(Name::new(val)),
+            arg1: BytecodeArg::Name(Iname::new(val)),
         }
     }
 

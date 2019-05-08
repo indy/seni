@@ -36,12 +36,12 @@ pub mod error; // for cli
 mod focal;
 mod gene;
 mod geometry;
+mod iname;
 mod interp;
 mod keywords;
 mod lexer;
 mod mathutil;
 mod matrix;
-mod name;
 mod native;
 mod opcodes;
 mod packable;

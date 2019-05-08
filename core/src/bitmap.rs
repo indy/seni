@@ -15,8 +15,8 @@
 
 use crate::context::Context;
 use crate::error::Error;
+use crate::iname::Iname;
 use crate::keywords::Keyword;
-use crate::name::Name;
 use crate::program::Program;
 use crate::result::Result;
 use crate::vm::Vm;
@@ -45,11 +45,11 @@ fn invoke_function(
     let e3 = bitmap_info.data[index + 2];
 
     vm.function_call_default_arguments(context, program, fn_info)?;
-    vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::A), e0 as f32 / 255.0);
-    vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::B), e1 as f32 / 255.0);
-    vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::C), e2 as f32 / 255.0);
-    vm.function_set_argument_to_f32(fn_info, Name::from(Keyword::D), e3 as f32 / 255.0);
-    vm.function_set_argument_to_2d(fn_info, Name::from(Keyword::Position), x as f32, y as f32);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::A), e0 as f32 / 255.0);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::B), e1 as f32 / 255.0);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::C), e2 as f32 / 255.0);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::D), e3 as f32 / 255.0);
+    vm.function_set_argument_to_2d(fn_info, Iname::from(Keyword::Position), x as f32, y as f32);
     vm.function_call_body(context, program, fn_info)?;
 
     vm.ip = ip;
@@ -62,7 +62,7 @@ pub fn each(
     context: &mut Context,
     program: &Program,
     fun: usize,
-    from: Name,
+    from: Iname,
     dst_position: (f32, f32),
     dst_width: f32,
     dst_height: f32,

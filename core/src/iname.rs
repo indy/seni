@@ -21,25 +21,25 @@ use crate::packable::{Mule, Packable};
 use crate::result::Result;
 
 #[derive(Copy, Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
-pub struct Name(i32);
+pub struct Iname(i32);
 
-impl Name {
+impl Iname {
     pub fn new(i: i32) -> Self {
-        Name(i)
+        Iname(i)
     }
 
-    pub fn enclosed_by(self, a: Name, b: Name) -> bool {
+    pub fn enclosed_by(self, a: Iname, b: Iname) -> bool {
         self.0 > a.0 && self.0 < b.0
     }
 }
 
-impl fmt::Display for Name {
+impl fmt::Display for Iname {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl Packable for Name {
+impl Packable for Iname {
     fn pack(&self, cursor: &mut String) -> Result<()> {
         cursor.push_str(&format!("{}", self.0));
         Ok(())
@@ -47,18 +47,18 @@ impl Packable for Name {
 
     fn unpack(cursor: &str) -> Result<(Self, &str)> {
         let (val, rem) = Mule::unpack_i32(cursor)?;
-        Ok((Name(val), rem))
+        Ok((Iname(val), rem))
     }
 }
 
-impl From<Keyword> for Name {
-    fn from(kw: Keyword) -> Name {
-        Name(kw as i32)
+impl From<Keyword> for Iname {
+    fn from(kw: Keyword) -> Iname {
+        Iname(kw as i32)
     }
 }
 
-impl From<Native> for Name {
-    fn from(n: Native) -> Name {
-        Name(n as i32)
+impl From<Native> for Iname {
+    fn from(n: Native) -> Iname {
+        Iname(n as i32)
     }
 }

@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
-use crate::name::Name;
+use crate::iname::Iname;
 use crate::packable::{Mule, Packable};
 use crate::result::Result;
 
@@ -415,11 +415,11 @@ impl Packable for Keyword {
     }
 }
 
-pub fn name_to_keyword_hash() -> HashMap<Name, Keyword> {
-    let mut hm: HashMap<Name, Keyword> = HashMap::new();
+pub fn name_to_keyword_hash() -> HashMap<Iname, Keyword> {
+    let mut hm: HashMap<Iname, Keyword> = HashMap::new();
 
     for kw in Keyword::iter() {
-        hm.insert(Name::from(kw), kw);
+        hm.insert(Iname::from(kw), kw);
     }
 
     hm
