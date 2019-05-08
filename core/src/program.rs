@@ -304,6 +304,16 @@ impl Packable for Data {
     }
 }
 
+impl Data {
+    pub fn bitmap_strings(&self) -> Vec<String> {
+        self.strings
+            .values()
+            .cloned()
+            .filter(|s| s.ends_with(".png"))
+            .collect()
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Program {
     pub data: Data,
@@ -368,5 +378,78 @@ impl Program {
     pub fn stop_location(&self) -> usize {
         // the final opcode in the program will always be a STOP
         self.code.len() - 1
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_data_bitmap_strings() {
+        let mut d: Data = Default::default();
+
+        d.strings.insert(Iname::new(3), "hello".to_string());
+        d.strings.insert(Iname::new(4), "image.png".to_string());
+        d.strings.insert(Iname::new(5), "bitmap.png".to_string());
+        let res = d.bitmap_strings();
+
+        assert_eq!(res.len(), 2);
+        assert_eq!(res[0], "image.png".to_string());
+        assert_eq!(res[1], "bitmap.png".to_string());
+    }
+
+    #[test]
+    fn test_mem_pack() {
+        let mut res: String = "".to_string();
+        Mem::Constant.pack(&mut res).unwrap();
+        assert_eq!("3", res);
+    }
+
+    #[test]
+    fn test_mem_unpack() {
+        let (res, _rem) = Mem::unpack("3").unwrap();
+        assert_eq!(res, Mem::Constant);
+    }
+
+    #[test]
+    fn test_bytecode_arg_pack() {
+        let mut res: String = "".to_string();
+        BytecodeArg::Native(Native::Circle).pack(&mut res).unwrap();
+        assert_eq!("NATIVE circle", res);
+    }
+
+    #[test]
+    fn test_bytecode_arg_unpack() {
+        let (res, _rem) = BytecodeArg::unpack("NATIVE circle").unwrap();
+        assert_eq!(res, BytecodeArg::Native(Native::Circle));
+
+        let (res, rem) = BytecodeArg::unpack("NATIVE col/triad otherstuff here").unwrap();
+        assert_eq!(res, BytecodeArg::Native(Native::ColTriad));
+        assert_eq!(rem, " otherstuff here");
+    }
+
+    #[test]
+    fn test_bytecode_pack() {
+        let mut res: String = "".to_string();
+
+        // a nonsense bytecode
+        let bc = Bytecode {
+            op: Opcode::APPEND,
+            arg0: BytecodeArg::Int(42),
+            arg1: BytecodeArg::Mem(Mem::Global),
+        };
+
+        bc.pack(&mut res).unwrap();
+        assert_eq!("APPEND INT 42 MEM 2", res);
+    }
+
+    #[test]
+    fn test_bytecode_unpack() {
+        let (res, _rem) = Bytecode::unpack("APPEND INT 42 MEM 2").unwrap();
+
+        assert_eq!(res.op, Opcode::APPEND);
+        assert_eq!(res.arg0, BytecodeArg::Int(42));
+        assert_eq!(res.arg1, BytecodeArg::Mem(Mem::Global));
     }
 }

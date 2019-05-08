@@ -1150,6 +1150,7 @@ class PromiseWorker {
 
       if (status.systemInitialised) {
         self.initialised = true;
+        console.log(`worker ${self.id} initialised`);
         return;
       }
 
@@ -1172,7 +1173,7 @@ class PromiseWorker {
       self.resolve = resolve;
       self.reject = reject;
 
-      if (type === jobReceiveBitmapData) {
+      if (type === jobRender_2_ReceiveBitmapData) {
         // ImageData is not a transferrable type
         self.worker.postMessage({ type, data });
       } else {
@@ -1220,33 +1221,6 @@ function findAvailableWorker() {
   });
 }
 
-// a crappy findAllWorkers, use sparingly
-function crappyFindAllWorkers() {
-  return new Promise((resolve, reject) => {
-    setTimeout(function go() {
-
-      let allWorkers = [];
-
-      for (let i=0;i<numWorkers;i++) {
-        if (promiseWorkers[i].isInitialised() === true &&
-            promiseWorkers[i].isWorking() === false) {
-          allWorkers.push(promiseWorkers[i]);
-        }
-      }
-
-      if (allWorkers.length === promiseWorkers.length) {
-        for (let i=0;i<numWorkers;i++) {
-          allWorkers[i].employ();
-        }
-        resolve(allWorkers);
-        return;
-      }
-
-      setTimeout(go, 100);
-    });
-  });
-}
-
 const Job = {
   request: function(type, data) {
     return new Promise((resolve, reject) => {
@@ -1263,7 +1237,13 @@ const Job = {
           console.log(`result ${type} id:${worker.getId()}`);
         }
         // console.log(`job:request received: ${result}`);
-        worker.release();
+
+        if(!data.__retain) {
+          worker.release();
+        }
+
+        result.__worker_id = worker.getId();
+
         resolve(result);
       }).catch(error => {
         if (worker !== undefined) {
@@ -1276,30 +1256,30 @@ const Job = {
     });
   },
 
-  broadcast: function(type, data) {
+  request_explicit: function(type, id, data) {
     return new Promise((resolve, reject) => {
-      let workers = undefined;
 
-      crappyFindAllWorkers().then(workers_ => {
-        workers = workers_;
+      let worker = promiseWorkers[id];
 
-        let promises = [];
-        for (let i = 0; i < workers.length; i++) {
-          promises.push(workers[i].postMessage(type, data));
+      worker.postMessage(type, data)
+        .then(result => {
+        if (logToConsole) {
+          console.log(`result ${type} id:${worker.getId()}`);
         }
-        return Promise.all(promises);
-      }).then(results => {
-        for (let i = 0; i < workers.length; i++) {
-          workers[i].release();
+
+        if(!data.__retain) {
+          worker.release();
         }
-        resolve(results);
+
+        result.__worker_id = worker.getId();
+
+        resolve(result);
       }).catch(error => {
-        if (workers !== undefined) {
-          for (let i = 0; i < workers.length; i++) {
-            workers[i].release();
-          }
+        if (worker !== undefined) {
+          worker.release();
         }
         // handle error
+        console.error(`worker (job:${type}): error of ${error}`);
         reject(error);
       });
     });
@@ -1323,7 +1303,9 @@ const Job = {
 // --------------------------------------------------------------------------------
 // jobTypes
 
-const jobRender = 'RENDER';
+const jobRender_1_Compile = 'RENDER_1_COMPILE';
+const jobRender_2_ReceiveBitmapData = 'RENDER_2_RECEIVEBITMAPDATA';
+const jobRender_3_RenderPackets = 'RENDER_3_RENDERPACKETS';
 const jobUnparse = 'UNPARSE';
 const jobBuildTraits = 'BUILD_TRAITS';
 const jobInitialGeneration = 'INITIAL_GENERATION';
@@ -1331,7 +1313,7 @@ const jobNewGeneration = 'NEW_GENERATION';
 const jobGenerateHelp = 'GENERATE_HELP';
 const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
 const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
-const jobReceiveBitmapData = 'RECEIVE_BITMAP_DATA';
+
 
 // --------------------------------------------------------------------------------
 // main
@@ -1506,7 +1488,6 @@ function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
     gGLRenderer.drawBuffer(memory, buffer);
   });
 
-  console.log(`${buffers.length} buffers`);
   stopFn("rendering all buffers", console);
 
 
@@ -1550,17 +1531,15 @@ function renderGeneration(state) {
     const stopFn = startTiming();
 
     for (let i = 0; i < phenotypes.length; i++) {
-      const workerJob = Job.request(jobRender, {
+
+      const workerJob = renderJob({
         script,
         scriptHash,
-        genotype: genotypes[i]
-      }).then(({ title , memory, buffers }) => {
+        genotype: genotypes[i],
+      }, (title, memory, buffers) => {
         const imageElement = phenotypes[i].imageElement;
         renderGeometryBuffers(memory, buffers, imageElement);
         hackTitle = title;
-      }).catch(error => {
-        // handle error
-        console.error(`worker: error of ${error}`);
       });
 
       promises.push(workerJob);
@@ -1600,23 +1579,90 @@ function showScriptInEditor(state) {
   editor.refresh();
 }
 
+// based on code from:
+// https://hackernoon.com/functional-javascript-resolving-promises-sequentially-7aac18c4431e
+function sequentialPromises(funcs) {
+  return funcs.reduce((promise, func) =>
+    promise.then(result => func().then(Array.prototype.concat.bind(result))),
+    Promise.resolve([]));
+}
+
+// todo: is this the best way of getting image data for a web worker?
+// is there a way for the webworker to do this without having to interact with the DOM?
+// note: don't call this on a sequence of bitmaps
+function loadBitmapImageData(url) {
+  return new Promise(function(resolve, reject) {
+    const element = document.getElementById('bitmap-canvas');
+    const context = element.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      element.width = img.width;
+      element.height = img.height;
+
+      context.drawImage(img, 0, 0);
+
+      const imageData = context.getImageData(0, 0, element.width, element.height);
+
+      resolve(imageData);
+    };
+    img.onerror = () => {
+      reject();
+    };
+
+    img.src = url;
+  });
+}
+
+function renderJob(parameters, callback) {
+  // 1. compile the program in a web worker
+  // 2. (retain the id for this worker)
+  // 3. after compilation, the worker will return a list of bitmaps that are
+  //    required by the program and are not in the web worker's bitmap-cache
+  // 4. sequentially load in the bitmaps and send their data to the worker
+  // 5. can now request a render which will return the render packets
+
+  parameters.__retain = true;
+
+  return Job.request(jobRender_1_Compile, parameters)
+    .then(({ bitmapsToTransfer, __worker_id }) => {
+      // convert each bitmap path to a function that returns a promise
+      const bitmap_loading_funcs = bitmapsToTransfer.map(filename => () => {
+      return loadBitmapImageData(filename)
+        .then(imageData => {
+          return Job.request_explicit(jobRender_2_ReceiveBitmapData, __worker_id, { filename, imageData, __retain: true });
+        });
+    });
+
+    sequentialPromises(bitmap_loading_funcs)
+      .then(() => {
+        // note: no __retain as we want the worker to be returned to the available pool
+        return Job.request_explicit(jobRender_3_RenderPackets, __worker_id, {});
+      })
+      .then(({ title, memory, buffers }) => {
+        callback(title, memory, buffers);
+      });
+  }).catch(error => {
+    // handle error
+    console.error(`worker: error of ${error}`);
+  });
+}
+
 function renderScript(state, imageElement) {
   const stopFn = startTiming();
 
-  Job.request(jobRender, {
+  renderJob({
     script: state.script,
     scriptHash: state.scriptHash
-  }).then(({ title, memory, buffers }) => {
+  }, (title, memory, buffers) => {
     renderGeometryBuffers(memory, buffers, imageElement);
     if (title === '') {
       stopFn(`renderScript`, console);
     } else {
       stopFn(`renderScript-${title}`, console);
     }
-  }).catch(error => {
-    // handle error
-    console.error(`worker: error of ${error}`);
   });
+
 }
 
 // function that takes a read-only state and updates the UI
@@ -1733,23 +1779,17 @@ function renderHighResSection(state, section) {
 
   const stopFn = startTiming();
 
-  Job.request(jobRender, {
+  renderJob({
     script: state.script,
     scriptHash: state.scriptHash,
-    genotype: undefined
-  }).then(({ title, memory, buffers }) => {
+    genotype: undefined,
+  }, (title, memory, buffers) => {
     const [width, height] = state.highResolution;
 
     renderGeometryBuffersSection(memory, buffers, image, width, height, section);
 
     stopFn(`renderHighResSection-${title}-${section}`, console);
 
-    image.classList.remove('hidden');
-    loader.classList.add('hidden');
-  }).catch(error => {
-    // handle error
-    console.error(`worker: error of ${error}`);
-    console.error(error);
     image.classList.remove('hidden');
     loader.classList.add('hidden');
   });
@@ -2071,12 +2111,11 @@ function setupUI(store) {
 
     const stopFn = startTiming();
 
-    Job.request(jobRender, {
+    renderJob({
       script: state.script,
       scriptHash: state.scriptHash,
-      genotype: state.genotype
-    }).then(({ title, memory, buffers }) => {
-      // const [width, height] = state.highResolution;
+      genotype: state.genotype,
+    }, (title, memory, buffers) => {
       const [width, height] = [image_resolution, image_resolution];
 
       renderGeometryBuffers(memory, buffers, image, width, height);
@@ -2091,12 +2130,6 @@ function setupUI(store) {
 
       // todo: is this the best place to reset the genotype?
       setGenotype(store, undefined);
-
-    }).catch(error => {
-      // handle error
-      console.error(`worker: error of ${error}`);
-      console.error(error);
-      loader.classList.add('hidden');
     });
 
     event.preventDefault();
@@ -2264,47 +2297,6 @@ function compatibilityHacks() {
   }
 }
 
-// todo: is this the best way of getting image data for a web worker?
-// is there a way for the webworker to do this without having to interact with the DOM?
-// note: don't call this on a sequence of bitmaps
-function loadBitmapImageData(url) {
-  return new Promise(function(resolve, reject) {
-    const element = document.getElementById('bitmap-canvas');
-    const context = element.getContext('2d');
-    const img = new Image();
-
-    img.onload = () => {
-      element.width = img.width;
-      element.height = img.height;
-
-      context.drawImage(img, 0, 0);
-
-      const imageData = context.getImageData(0, 0, element.width, element.height);
-
-      resolve(imageData);
-    };
-    img.onerror = () => {
-      reject();
-    };
-
-    img.src = url;
-  });
-}
-
-function devBitmapImageLoader(filename) {
-  loadBitmapImageData(filename)
-    .then(imageData => {
-      return Job.broadcast(jobReceiveBitmapData, { filename, imageData });
-    })
-    .then(results => {
-      console.log(results);
-    })
-    .catch(error => {
-      // handle error
-      console.error(`worker: error of ${error}`);
-    });
-}
-
 function main() {
   setupResizeability();
 
@@ -2312,8 +2304,6 @@ function main() {
   const store = createStore(state);
 
   allocateWorkers(state);
-
-  devBitmapImageLoader('img/bitmap1.png');
 
   const canvasElement = document.getElementById('render-canvas');
   gGLRenderer = new GLRenderer(canvasElement);

@@ -22,10 +22,15 @@ use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
 use core::{
-    build_traits, compile_to_render_packets, compile_with_genotype_to_render_packets,
+    build_traits,
+    compile_to_render_packets,
+    compile_with_genotype_to_render_packets,
+    program_from_source,
+    program_from_source_and_genotype,
     next_generation, simplified_unparse, unparse,
+    run_program_with_preamble,
 };
-use core::{Genotype, Packable, TraitList, Vm, Context, BitmapInfo};
+use core::{Genotype, Packable, TraitList, Vm, Context, BitmapInfo, Program};
 
 use log::{info, error};
 
@@ -80,12 +85,15 @@ pub struct Bridge {
     genotype_list: Vec<Genotype>,
 
     use_genotype: bool,
+
+    // only used during sequence of calls for rendering
+    program: Option<Program>,
 }
 
 #[wasm_bindgen]
 pub fn init_client_system() {
     init_log();
-    info!("init_client_system: It works!");
+    // info!("init_client_system");
 }
 
 #[wasm_bindgen]
@@ -104,6 +112,8 @@ impl Bridge {
             genotype_list: vec![],
 
             use_genotype: false,
+
+            program: None,
         }
     }
 
@@ -192,14 +202,87 @@ impl Bridge {
         num_render_packets
     }
 
+    // --------------------------------------------------------------------------------
+    // new rendering api
+    pub fn compile_program_from_source(&mut self) -> bool {
+        let res = if self.use_genotype {
+            if let Ok((mut genotype, _)) = Genotype::unpack(&self.genotype_buffer) {
+                program_from_source_and_genotype(&self.source_buffer, &mut genotype)
+            } else {
+                error!("program_from_source: Genotype failed to unpack");
+                return false
+            }
+        } else {
+            program_from_source(&self.source_buffer)
+        };
+
+        match res {
+            Ok(program) => {
+                self.program = Some(program);
+                true
+            },
+            Err(e) => {
+                error!("{}", e);
+                false
+            },
+        }
+    }
+
+    pub fn get_bitmap_transfers_as_json(&mut self) -> String {
+        // todo: check that we're in the RENDER state
+
+        if let Some(program) = &self.program {
+            // the bitmaps used by the current program
+            let bitmap_strings = program.data.bitmap_strings();
+
+            // keep the names that aren't already in the bitmap_cache
+            let bitmaps_to_transfer = self.context.bitmap_cache.uncached(bitmap_strings);
+
+            let mut res: String = "[".to_string();
+            for (i, b) in bitmaps_to_transfer.iter().enumerate() {
+                res.push_str(&format!("\"{}\"", b));
+                if i < bitmaps_to_transfer.len() - 1 {
+                    res.push_str(", ");
+                }
+            }
+            res.push_str("]");
+            res
+        } else {
+            "[]".to_string()
+        }
+    }
+
+    // the program has been compiled,
+    // all required bitmaps have been loaded
+    pub fn run_program(&mut self) -> usize {
+        // todo: check that we're in the RENDER state
+
+        if let Some(program) = &self.program {
+            match run_program_with_preamble(&mut self.vm, &mut self.context, &program) {
+                Ok(_) => {
+                    self.vm.debug_str_clear();
+                    self.context.geometry.get_num_render_packets()
+                },
+                Err(e) => {
+                    error!("{}", e);
+                    0
+                }
+            }
+        } else {
+            0
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
-        info!("get_render_packet_geo_len");
+        // info!("get_render_packet_geo_len");
 
         self.context.get_render_packet_geo_len(packet_number)
     }
 
     pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
-        info!("get_render_packet_geo_ptr");
+        // info!("get_render_packet_geo_ptr");
 
         self.context.get_render_packet_geo_ptr(packet_number)
     }

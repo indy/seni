@@ -21,7 +21,9 @@ importScripts('client.js');
 // global state
 let gState = {};
 
-const jobRender = 'RENDER';
+const jobRender_1_Compile = 'RENDER_1_COMPILE';
+const jobRender_2_ReceiveBitmapData = 'RENDER_2_RECEIVEBITMAPDATA';
+const jobRender_3_RenderPackets = 'RENDER_3_RENDERPACKETS';
 const jobUnparse = 'UNPARSE';
 const jobBuildTraits = 'BUILD_TRAITS';
 const jobInitialGeneration = 'INITIAL_GENERATION';
@@ -66,9 +68,8 @@ const konsoleProxy = new KonsoleProxy();
   }
 */
 
-function render({ script /*, scriptHash*/, genotype }) {
+function compile({ script /*, scriptHash*/, genotype }) {
   konsoleProxy.clear();
-  const buffers = [];
 
   if (genotype) {
     // console.log("render: using a genotype");
@@ -81,8 +82,41 @@ function render({ script /*, scriptHash*/, genotype }) {
 
   // need to setString before calling compileToRenderPackets
   gState.bridge.set_source_buffer_string(script);
-  const numRenderPackets = gState.bridge.compile_to_render_packets();
-  // konsoleProxy.log(`numRenderPackets = ${numRenderPackets}`);
+
+  // --------------------------------------------------------------------------------
+
+  gState.bridge.compile_program_from_source();
+
+  const bitmapsToTransfer = JSON.parse(gState.bridge.get_bitmap_transfers_as_json());
+
+  const logMessages = konsoleProxy.collectMessages();
+
+  return [{ logMessages }, { bitmapsToTransfer }];
+}
+
+function receiveBitmapData( { filename, imageData } ) {
+  konsoleProxy.clear();
+
+  // todo: see if the imageData.data can be transferred across
+  const pixels = [];
+  const numElements = imageData.width * imageData.height * 4;
+  for (i = 0; i < numElements; i++) {
+    pixels.push(imageData.data[i]);
+  }
+
+  gState.bridge.add_rgba_bitmap(filename, imageData.width, imageData.height, pixels);
+
+  const logMessages = konsoleProxy.collectMessages();
+
+  return [{ logMessages }, { result: "shabba" }];
+}
+
+function renderPackets({  }) {
+  konsoleProxy.clear();
+  const buffers = [];
+
+  const numRenderPackets = gState.bridge.run_program();
+  console.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
     const buffer = {};
@@ -91,21 +125,6 @@ function render({ script /*, scriptHash*/, genotype }) {
       buffer.geo_ptr = gState.bridge.get_render_packet_geo_ptr(i);
       buffers.push(buffer);
     }
-
-    // const numVertices = gState.bridge.get_render_packet_num_vertices(i);
-    // // konsoleProxy.log(`render_packet ${i}: numVertices = ${numVertices}`);
-
-    // if (numVertices > 0) {
-    //   const buffer = {};
-
-      // buffer.vbufAddress = gState.bridge.get_render_packet_vBuf(i);
-      // buffer.cbufAddress = gState.bridge.get_render_packet_cBuf(i);
-      // buffer.tbufAddress = gState.bridge.get_render_packet_tBuf(i);
-
-      // buffer.numVertices = numVertices;
-
-    //   buffers.push(buffer);
-    // }
   }
 
   gState.bridge.script_cleanup();
@@ -128,6 +147,7 @@ function render({ script /*, scriptHash*/, genotype }) {
 
   return [{ logMessages }, { title, memory, buffers }];
 }
+
 
 function unparse({ script/*, scriptHash*/, genotype }) {
   konsoleProxy.clear();
@@ -250,23 +270,6 @@ function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   return [{ logMessages }, { genotypes: newGenotypes }];
 }
 
-function receiveBitmapData( { filename, imageData } ) {
-  konsoleProxy.clear();
-
-  // todo: see if the imageData.data can be transferred across
-  const pixels = [];
-  const numElements = imageData.width * imageData.height * 4;
-  for (i = 0; i < numElements; i++) {
-    pixels.push(imageData.data[i]);
-  }
-
-  gState.bridge.add_rgba_bitmap(filename, imageData.width, imageData.height, pixels);
-
-  const logMessages = konsoleProxy.collectMessages();
-
-  return [{ logMessages }, { result: "shabba" }];
-}
-
 const options = {
   imports: {
     performance_now() {
@@ -274,7 +277,6 @@ const options = {
     }
   }
 };
-
 
 /*
   function freeModule() {
@@ -290,9 +292,15 @@ const options = {
 
 function messageHandler(type, data) {
   switch (type) {
-  case jobRender:
-    // console.log("jobRender");
-    return render(data);
+  case jobRender_1_Compile:
+    // console.log("jobRender_1_Compile");
+    return compile(data);
+  case jobRender_2_ReceiveBitmapData:
+    // console.log("jobRender_2_ReceiveBitmapData");
+    return receiveBitmapData(data);
+  case jobRender_3_RenderPackets:
+    // console.log("jobRender_3_RenderPackets");
+    return renderPackets(data);
   case jobUnparse:
     // console.log("jobUnparse");
     return unparse(data);
@@ -311,9 +319,6 @@ function messageHandler(type, data) {
   case jobNewGeneration:
     // console.log("jobNewGeneration");
     return newGeneration(data);
-  case jobReceiveBitmapData:
-    // console.log("jobReceiveBitmapData");
-    return receiveBitmapData(data);
 
   default:
     // throw unknown type
@@ -337,7 +342,7 @@ addEventListener('message', event => {
 
     const [status, result] = messageHandler(type, data);
 
-    if (type === jobRender) {
+    if (type === jobRender_3_RenderPackets) {
       const transferrable = [];
 
       if (result.buffers && result.buffers.length > 0) {

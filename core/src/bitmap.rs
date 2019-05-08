@@ -21,6 +21,8 @@ use crate::program::Program;
 use crate::result::Result;
 use crate::vm::Vm;
 
+// use log::info;
+
 // invoke a function with args: x, y, r, g, b, a
 // colour values are normalized to 0..1
 fn invoke_function(
@@ -67,12 +69,7 @@ pub fn each(
     dst_width: f32,
     dst_height: f32,
 ) -> Result<()> {
-    // get the bitmap from the context
-    // hardcoded: normally use 'from' to lookup string value in program's data struct
-    // let bitmap_info = context.bitmap_cache.get("img/bitmap1.png")?;
-
     let from_string = if let Some(from_string) = program.data.strings.get(&from) {
-        //info!("found string: {}", from_string);
         from_string
     } else {
         return Err(Error::Bitmap(format!(

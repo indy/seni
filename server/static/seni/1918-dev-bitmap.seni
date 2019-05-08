@@ -10,7 +10,7 @@
       height: 900
       colour: green)
 
-(bitmap/each from: "img/bitmap1.png"
+(bitmap/each from: "img/einstein.png"
              position: [500 500]
              width: 900
              height: 900

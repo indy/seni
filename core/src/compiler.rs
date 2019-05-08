@@ -2747,60 +2747,6 @@ mod tests {
     }
 
     #[test]
-    fn test_mem_pack() {
-        let mut res: String = "".to_string();
-        Mem::Constant.pack(&mut res).unwrap();
-        assert_eq!("3", res);
-    }
-
-    #[test]
-    fn test_mem_unpack() {
-        let (res, _rem) = Mem::unpack("3").unwrap();
-        assert_eq!(res, Mem::Constant);
-    }
-
-    #[test]
-    fn test_bytecode_arg_pack() {
-        let mut res: String = "".to_string();
-        BytecodeArg::Native(Native::Circle).pack(&mut res).unwrap();
-        assert_eq!("NATIVE circle", res);
-    }
-
-    #[test]
-    fn test_bytecode_arg_unpack() {
-        let (res, _rem) = BytecodeArg::unpack("NATIVE circle").unwrap();
-        assert_eq!(res, BytecodeArg::Native(Native::Circle));
-
-        let (res, rem) = BytecodeArg::unpack("NATIVE col/triad otherstuff here").unwrap();
-        assert_eq!(res, BytecodeArg::Native(Native::ColTriad));
-        assert_eq!(rem, " otherstuff here");
-    }
-
-    #[test]
-    fn test_bytecode_pack() {
-        let mut res: String = "".to_string();
-
-        // a nonsense bytecode
-        let bc = Bytecode {
-            op: Opcode::APPEND,
-            arg0: BytecodeArg::Int(42),
-            arg1: BytecodeArg::Mem(Mem::Global),
-        };
-
-        bc.pack(&mut res).unwrap();
-        assert_eq!("APPEND INT 42 MEM 2", res);
-    }
-
-    #[test]
-    fn test_bytecode_unpack() {
-        let (res, _rem) = Bytecode::unpack("APPEND INT 42 MEM 2").unwrap();
-
-        assert_eq!(res.op, Opcode::APPEND);
-        assert_eq!(res.arg0, BytecodeArg::Int(42));
-        assert_eq!(res.arg1, BytecodeArg::Mem(Mem::Global));
-    }
-
-    #[test]
     fn sanity_check_compile_preamble() {
         // stupid, brittle test just to check that the preamble is creating something
         let preamble_program = compile_preamble().unwrap();

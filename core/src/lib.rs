@@ -32,7 +32,7 @@ mod colour;
 mod compiler;
 mod context;
 mod ease;
-pub mod error; // for cli
+mod error;
 mod focal;
 mod gene;
 mod geometry;
@@ -89,13 +89,30 @@ pub fn run_program_with_preamble(
     vm.top_stack_value()
 }
 
-pub fn compile_to_render_packets(vm: &mut Vm, context: &mut Context, s: &str) -> Result<i32> {
+pub fn program_from_source(s: &str) -> Result<Program> {
     let (ast, word_lut) = parse(s)?;
     let program = compile_program(&ast, &word_lut)?;
 
-    let _ = run_program_with_preamble(vm, context, &program)?;
+    Ok(program)
+}
 
-    // todo: cache the preamble program
+pub fn program_from_source_and_genotype(s: &str, genotype: &mut Genotype) -> Result<Program> {
+    let (mut ast, word_lut) = parse(s)?;
+    let program = compile_program_with_genotype(&mut ast, &word_lut, genotype)?;
+
+    Ok(program)
+}
+
+pub fn build_traits(s: &str) -> Result<TraitList> {
+    let (ast, word_lut) = parse(s)?;
+    let trait_list = TraitList::compile(&ast, &word_lut)?;
+
+    Ok(trait_list)
+}
+
+pub fn compile_to_render_packets(vm: &mut Vm, context: &mut Context, s: &str) -> Result<i32> {
+    let program = program_from_source(s)?;
+    let _ = run_program_with_preamble(vm, context, &program)?;
 
     Ok(context.geometry.get_num_render_packets() as i32)
 }
@@ -107,30 +124,17 @@ pub fn compile_with_genotype_to_render_packets(
     s: &str,
     genotype: &mut Genotype,
 ) -> Result<i32> {
-    let (mut ast, word_lut) = parse(s)?;
-    let program = compile_program_with_genotype(&mut ast, &word_lut, genotype)?;
+    let program = program_from_source_and_genotype(s, genotype)?;
     let _ = run_program_with_preamble(vm, context, &program)?;
 
-    // todo: cache the preamble program
-
     Ok(context.geometry.get_num_render_packets() as i32)
-}
-
-pub fn build_traits(s: &str) -> Result<TraitList> {
-    let (ast, word_lut) = parse(s)?;
-
-    let trait_list = TraitList::compile(&ast, &word_lut)?;
-
-    Ok(trait_list)
 }
 
 pub fn compile_and_execute(s: &str) -> Result<Var> {
     let mut vm: Vm = Default::default();
     let mut context: Context = Default::default();
 
-    // todo: cache the preamble program
-    let (ast, word_lut) = parse(s)?;
-    let program = compile_program(&ast, &word_lut)?;
+    let program = program_from_source(s)?;
 
     run_program_with_preamble(&mut vm, &mut context, &program)
 }
@@ -139,12 +143,9 @@ pub fn compile_and_execute_with_seeded_genotype(s: &str, seed: i32) -> Result<Va
     let mut vm: Vm = Default::default();
     let mut context: Context = Default::default();
 
-    // todo: cache the preamble program
-    let (mut ast, word_lut) = parse(s)?;
-
-    let trait_list = TraitList::compile(&ast, &word_lut)?;
+    let trait_list = build_traits(s)?;
     let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
-    let program = compile_program_with_genotype(&mut ast, &word_lut, &mut genotype)?;
+    let program = program_from_source_and_genotype(s, &mut genotype)?;
 
     run_program_with_preamble(&mut vm, &mut context, &program)
 }

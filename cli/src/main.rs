@@ -113,13 +113,13 @@ fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
     // --------------------------------------------------------------------------------
 
     let time_parse = Instant::now();
-    let (ast, _word_lut) = parse(&source)?;
+    let (ast, word_lut) = parse(&source)?;
     info!("parse: {:?}", time_parse.elapsed());
 
     // --------------------------------------------------------------------------------
 
     let time_compile_program = Instant::now();
-    let program = compile_program(&ast)?;
+    let program = compile_program(&ast, &word_lut)?;
     info!("compile_program: {:?}", time_compile_program.elapsed());
 
     // --------------------------------------------------------------------------------

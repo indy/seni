@@ -42,6 +42,19 @@ impl BitmapCache {
             None => Err(Error::BitmapCache(format!("can't find bitmap: {}", name))),
         }
     }
+
+    // returns the subset of bitmap_names which aren't in this cache
+    pub fn uncached(&self, bitmap_names: Vec<String>) -> Vec<String> {
+        let mut res = vec![];
+
+        for bitmap_name in bitmap_names {
+            if !self.info.contains_key(&bitmap_name) {
+                res.push(bitmap_name)
+            }
+        }
+
+        res
+    }
 }
 
 #[derive(Default)]

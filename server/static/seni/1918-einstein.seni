@@ -24,25 +24,25 @@
         width: (- 1.0 a)
         colour: (col/rgb r: a g: b b: c alpha: 0.2)))
 
-(bitmap/each from: "img/bitmap1.png"
+(bitmap/each from: "img/einstein.png"
              position: [500 500]
              width: 1000
              height: 1000
              fn: (address-of drawer-a))
 
-(bitmap/each from: "img/bitmap1.png"
+(bitmap/each from: "img/einstein.png"
              position: [500 500]
              width: 1000
              height: 1000
              fn: (address-of drawer-b))
 
-(bitmap/each from: "img/bitmap1.png"
+(bitmap/each from: "img/einstein.png"
              position: [500 500]
              width: 1000
              height: 1000
              fn: (address-of drawer-c))
 
-(bitmap/each from: "img/bitmap1.png"
+(bitmap/each from: "img/einstein.png"
              position: [500 500]
              width: 1000
              height: 1000
