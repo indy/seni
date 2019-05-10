@@ -250,9 +250,10 @@ class GLRenderer {
     });
   }
 
-  copyImageDataTo(elem) {
+  copyImageDataTo(elem, callback) {
     this.glDomElement.toBlob(blob => {
       elem.src = window.URL.createObjectURL(blob);
+      callback();
     });
   }
 
@@ -1299,7 +1300,6 @@ const Job = {
   },
 };
 
-
 // --------------------------------------------------------------------------------
 // jobTypes
 
@@ -1313,7 +1313,6 @@ const jobNewGeneration = 'NEW_GENERATION';
 const jobGenerateHelp = 'GENERATE_HELP';
 const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
 const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
-
 
 // --------------------------------------------------------------------------------
 // main
@@ -1480,18 +1479,17 @@ function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
     destHeight = imageElement.clientHeight;
   }
 
-  gGLRenderer.preDrawScene(destWidth, destHeight);
-
   const stopFn = startTiming();
+
+  gGLRenderer.preDrawScene(destWidth, destHeight);
 
   buffers.forEach(buffer => {
     gGLRenderer.drawBuffer(memory, buffer);
   });
 
-  stopFn("rendering all buffers", console);
-
-
-  gGLRenderer.copyImageDataTo(imageElement);
+  gGLRenderer.copyImageDataTo(imageElement, () => {
+    stopFn("rendering all buffers", console);
+  });
 }
 
 function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, section) {
@@ -1505,13 +1503,17 @@ function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, secti
     destHeight = imageElement.clientHeight;
   }
 
+  const stopFn = startTiming();
+
   gGLRenderer.preDrawScene(destWidth, destHeight, section);
 
   buffers.forEach(buffer => {
     gGLRenderer.drawBuffer(memory, buffer);
   });
 
-  gGLRenderer.copyImageDataTo(imageElement);
+  gGLRenderer.copyImageDataTo(imageElement, () => {
+    stopFn(`rendering all buffers for section ${section}`, console);
+  });
 }
 
 function renderGeneration(state) {
@@ -1628,24 +1630,25 @@ function renderJob(parameters, callback) {
     .then(({ bitmapsToTransfer, __worker_id }) => {
       // convert each bitmap path to a function that returns a promise
       const bitmap_loading_funcs = bitmapsToTransfer.map(filename => () => {
-      return loadBitmapImageData(filename)
-        .then(imageData => {
-          return Job.request_explicit(jobRender_2_ReceiveBitmapData, __worker_id, { filename, imageData, __retain: true });
-        });
-    });
-
-    sequentialPromises(bitmap_loading_funcs)
-      .then(() => {
-        // note: no __retain as we want the worker to be returned to the available pool
-        return Job.request_explicit(jobRender_3_RenderPackets, __worker_id, {});
-      })
-      .then(({ title, memory, buffers }) => {
-        callback(title, memory, buffers);
+        return loadBitmapImageData(filename)
+          .then(imageData => {
+            console.log(`worker ${__worker_id}: bitmap request: ${filename}`);
+            return Job.request_explicit(jobRender_2_ReceiveBitmapData, __worker_id, { filename, imageData, __retain: true });
+          });
       });
-  }).catch(error => {
-    // handle error
-    console.error(`worker: error of ${error}`);
-  });
+
+      sequentialPromises(bitmap_loading_funcs)
+        .then(() => {
+          // note: no __retain as we want the worker to be returned to the available pool
+          return Job.request_explicit(jobRender_3_RenderPackets, __worker_id, {});
+        })
+        .then(({ title, memory, buffers }) => {
+          callback(title, memory, buffers);
+        });
+    }).catch(error => {
+      // handle error
+      console.error(`worker: error of ${error}`);
+    });
 }
 
 function renderScript(state, imageElement) {

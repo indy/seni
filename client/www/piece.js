@@ -19,39 +19,10 @@
 const logToConsole = false;
 
 // --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-
 // matrix
 
 function create() {
   const out = new Float32Array(16);
-  out[0] = 1;
-  out[1] = 0;
-  out[2] = 0;
-  out[3] = 0;
-  out[4] = 0;
-  out[5] = 1;
-  out[6] = 0;
-  out[7] = 0;
-  out[8] = 0;
-  out[9] = 0;
-  out[10] = 1;
-  out[11] = 0;
-  out[12] = 0;
-  out[13] = 0;
-  out[14] = 0;
-  out[15] = 1;
-
-  return out;
-}
-
-function identity(out) {
   out[0] = 1;
   out[1] = 0;
   out[2] = 0;
@@ -97,185 +68,12 @@ function ortho(out, left, right, bottom, top, near, far) {
   return out;
 }
 
-function clone(a) {
-  const out = new Float32Array(16);
-  out[0] = a[0];
-  out[1] = a[1];
-  out[2] = a[2];
-  out[3] = a[3];
-  out[4] = a[4];
-  out[5] = a[5];
-  out[6] = a[6];
-  out[7] = a[7];
-  out[8] = a[8];
-  out[9] = a[9];
-  out[10] = a[10];
-  out[11] = a[11];
-  out[12] = a[12];
-  out[13] = a[13];
-  out[14] = a[14];
-  out[15] = a[15];
-
-  return out;
-}
-
-function scale(out, a, v) {
-  const x = v[0], y = v[1], z = v[2];
-
-  out[0] = a[0] * x;
-  out[1] = a[1] * x;
-  out[2] = a[2] * x;
-  out[3] = a[3] * x;
-  out[4] = a[4] * y;
-  out[5] = a[5] * y;
-  out[6] = a[6] * y;
-  out[7] = a[7] * y;
-  out[8] = a[8] * z;
-  out[9] = a[9] * z;
-  out[10] = a[10] * z;
-  out[11] = a[11] * z;
-  out[12] = a[12];
-  out[13] = a[13];
-  out[14] = a[14];
-  out[15] = a[15];
-
-  return out;
-}
-
-function multiply(out, a, b) {
-  const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
-  const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
-  const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
-  const a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
-
-  // Cache only the current line of the second matrix
-  const b0  = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
-  out[0] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
-  out[1] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
-  out[2] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
-  out[3] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
-
-  b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7];
-  out[4] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
-  out[5] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
-  out[6] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
-  out[7] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
-
-  b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11];
-  out[8] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
-  out[9] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
-  out[10] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
-  out[11] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
-
-  b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15];
-  out[12] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
-  out[13] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
-  out[14] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
-  out[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
-
-  return out;
-}
-
-function translate(out, a, v) {
-  const x = v[0], y = v[1], z = v[2];
-  // let a00, a01, a02, a03, a10, a11, a12, a13, a20, a21, a22, a23;
-
-  if (a === out) {
-    out[12] = a[0] * x + a[4] * y + a[8] * z + a[12];
-    out[13] = a[1] * x + a[5] * y + a[9] * z + a[13];
-    out[14] = a[2] * x + a[6] * y + a[10] * z + a[14];
-    out[15] = a[3] * x + a[7] * y + a[11] * z + a[15];
-  } else {
-    const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
-    const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
-    const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
-
-    out[0] = a00; out[1] = a01; out[2] = a02; out[3] = a03;
-    out[4] = a10; out[5] = a11; out[6] = a12; out[7] = a13;
-    out[8] = a20; out[9] = a21; out[10] = a22; out[11] = a23;
-
-    out[12] = a00 * x + a10 * y + a20 * z + a[12];
-    out[13] = a01 * x + a11 * y + a21 * z + a[13];
-    out[14] = a02 * x + a12 * y + a22 * z + a[14];
-    out[15] = a03 * x + a13 * y + a23 * z + a[15];
-  }
-
-  return out;
-}
-
-function rotateZ(out, a, rad) {
-  const s = Math.sin(rad), c = Math.cos(rad);
-  const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
-  const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
-
-  if (a !== out) {
-    out[8] = a[8];
-    out[9] = a[9];
-    out[10] = a[10];
-    out[11] = a[11];
-    out[12] = a[12];
-    out[13] = a[13];
-    out[14] = a[14];
-    out[15] = a[15];
-  }
-
-  // Perform axis-specific matrix multiplication
-  out[0] = a00 * c + a10 * s;
-  out[1] = a01 * c + a11 * s;
-  out[2] = a02 * c + a12 * s;
-  out[3] = a03 * c + a13 * s;
-  out[4] = a10 * c - a00 * s;
-  out[5] = a11 * c - a01 * s;
-  out[6] = a12 * c - a02 * s;
-  out[7] = a13 * c - a03 * s;
-
-  return out;
-}
-
-function transformVec2(out, a, m) {
-  const x = a[0];
-  const y = a[1];
-  out[0] = m[0] * x + m[4] * y + m[12];
-  out[1] = m[1] * x + m[5] * y + m[13];
-
-  return out;
-}
-
-function transformVec3(out, a, m) {
-  const x = a[0], y = a[1], z = a[2];
-  let w = m[3] * x + m[7] * y + m[11] * z + m[15];
-  w = w || 1.0;
-  out[0] = (m[0] * x + m[4] * y + m[8] * z + m[12]) / w;
-  out[1] = (m[1] * x + m[5] * y + m[9] * z + m[13]) / w;
-  out[2] = (m[2] * x + m[6] * y + m[10] * z + m[14]) / w;
-
-  return out;
-}
-
 const Matrix = {
   create,
-  identity,
   ortho,
-  clone,
-  scale,
-  multiply,
-  translate,
-  rotateZ,
-  transformVec2,
-  transformVec3
 };
 
-
-
 // --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-
 // renderer
 
 function initGL(canvas) {
@@ -452,8 +250,31 @@ class GLRenderer {
     });
   }
 
-  getImageData() {
-    return this.glDomElement.toDataURL();
+  copyImageDataTo(elem, callback) {
+    this.glDomElement.toBlob(blob => {
+      elem.src = window.URL.createObjectURL(blob);
+      callback();
+    });
+  }
+
+  localDownload(filename) {
+    this.glDomElement.toBlob(function(blob) {
+
+      const url = window.URL.createObjectURL(blob);
+
+      let element = document.createElement('a');
+      element.setAttribute('href', url);
+      // element.setAttribute('target', '_blank');
+      element.setAttribute('download', filename);
+
+      element.style.display = 'none';
+      document.body.appendChild(element);
+
+      element.click();
+
+      document.body.removeChild(element);
+
+    });
   }
 
   preDrawScene(destWidth, destHeight, section) {
@@ -550,14 +371,6 @@ class GLRenderer {
   }
 }
 
-
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 
 /// /seni/Util
@@ -576,15 +389,6 @@ function hashCode(string) {
 }
 
 // --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-
-
 // job
 
 let numWorkers = 0;
@@ -594,6 +398,19 @@ class PromiseWorker {
   constructor(id, workerUrl) {
     const self = this;
 
+    // <2019-04-13 Sat>
+    // would be good to use module syntax in the worker.js file.
+    // this would enable a more modern way of instantiating the wasm module
+    // see https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html?highlight=export,memory#without-a-bundler
+    //
+    // This should be enabled with:
+    // this.worker = new Worker(workerUrl, {type:'module'});
+    //
+    // unfortunately there is a bug in Chromium preventing this:
+    // https://bugs.chromium.org/p/chromium/issues/detail?id=680046
+    // original info from:
+    // https://www.codedread.com/blog/archives/2017/10/19/web-workers-can-be-es6-modules-too/
+
     this.worker = new Worker(workerUrl);
     this.id = id;
     this.initialised = false; // true when the worker has loaded it's wasm file
@@ -602,20 +419,13 @@ class PromiseWorker {
     this.resolve = undefined;
 
     this.worker.addEventListener('message', event => {
-      // string data is always going to be in JSON formation
-      // otherwise it will be a string encoded in an ArrayBuffer
-      let status = undefined;
-      let result = undefined;
 
-      if (typeof(event.data) === 'string') {
-        [status, result] = JSON.parse(event.data);
+      const [status, result] = event.data;
 
-        if (status.systemInitialised) {
-          self.initialised = true;
-          return;
-        }
-      } else {                  // ArrayBuffer
-        [status, result] = event.data;
+      if (status.systemInitialised) {
+        self.initialised = true;
+        console.log(`worker ${self.id} initialised`);
+        return;
       }
 
       if (status.logMessages && status.logMessages.length > 0) {
@@ -636,7 +446,13 @@ class PromiseWorker {
     return new Promise((resolve, reject) => {
       self.resolve = resolve;
       self.reject = reject;
-      self.worker.postMessage(JSON.stringify({ type, data }));
+
+      if (type === jobRender_2_ReceiveBitmapData) {
+        // ImageData is not a transferrable type
+        self.worker.postMessage({ type, data });
+      } else {
+        self.worker.postMessage({ type, data });
+      }
     });
   }
 
@@ -695,7 +511,42 @@ const Job = {
           console.log(`result ${type} id:${worker.getId()}`);
         }
         // console.log(`job:request received: ${result}`);
-        worker.release();
+
+        if(!data.__retain) {
+          worker.release();
+        }
+
+        result.__worker_id = worker.getId();
+
+        resolve(result);
+      }).catch(error => {
+        if (worker !== undefined) {
+          worker.release();
+        }
+        // handle error
+        console.error(`worker (job:${type}): error of ${error}`);
+        reject(error);
+      });
+    });
+  },
+
+  request_explicit: function(type, id, data) {
+    return new Promise((resolve, reject) => {
+
+      let worker = promiseWorkers[id];
+
+      worker.postMessage(type, data)
+        .then(result => {
+        if (logToConsole) {
+          console.log(`result ${type} id:${worker.getId()}`);
+        }
+
+        if(!data.__retain) {
+          worker.release();
+        }
+
+        result.__worker_id = worker.getId();
+
         resolve(result);
       }).catch(error => {
         if (worker !== undefined) {
@@ -722,19 +573,12 @@ const Job = {
   },
 };
 
-
 // --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-
 // jobTypes
 
-const jobRender = 'RENDER';
+const jobRender_1_Compile = 'RENDER_1_COMPILE';
+const jobRender_2_ReceiveBitmapData = 'RENDER_2_RECEIVEBITMAPDATA';
+const jobRender_3_RenderPackets = 'RENDER_3_RENDERPACKETS';
 const jobUnparse = 'UNPARSE';
 const jobBuildTraits = 'BUILD_TRAITS';
 const jobInitialGeneration = 'INITIAL_GENERATION';
@@ -743,18 +587,9 @@ const jobGenerateHelp = 'GENERATE_HELP';
 const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
 const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
 
-
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 
 let gGLRenderer = undefined;
-
 
 let gLogDebug = false;
 let gTimeoutId = undefined;
@@ -781,10 +616,6 @@ function updatePieceDimensions(pieceImg, canvas, w, h) {
   pieceImg.height = h;
 }
 
-function updatePieceData(pieceImg) {
-  pieceImg.src = gGLRenderer.getImageData();
-}
-
 function displayOnImageElements() {
   const canvas = getRequiredElement('piece-canvas');
   const pieceImg0 = getRequiredElement('piece-img-0');
@@ -792,30 +623,33 @@ function displayOnImageElements() {
 
   if (gNumTransitions === 0) {
     // have just switched modes, so make sure the images are correctly positioned
-    setOpacity('piece-img-0', 1);
+
     updatePieceDimensions(pieceImg0, canvas, gDemandCanvasSize, gDemandCanvasSize);
     updatePieceDimensions(pieceImg1, canvas, gDemandCanvasSize, gDemandCanvasSize);
+
+    setOpacity('piece-img-0', 1);
   }
 
   if (gActiveImageElement === 0) {
-    updatePieceData(pieceImg0);
-    if (gNumTransitions > 0) {
-      if (gMode === "normal") {
-        addClass('piece-img-1', 'seni-fade-out');
-      } else {
-        addClass('piece-img-1', 'seni-fade-out-slideshow');
+    gGLRenderer.copyImageDataTo(pieceImg0, () => {
+      if (gNumTransitions > 0) {
+        if (gMode === "normal") {
+          addClass('piece-img-1', 'seni-fade-out');
+        } else {
+          addClass('piece-img-1', 'seni-fade-out-slideshow');
+        }
       }
-    }
-
+    });
   } else {
-    updatePieceData(pieceImg1);
-    if (gNumTransitions > 0) {
-      if (gMode === "normal") {
-        addClass('piece-img-1', 'seni-fade-in');
-      } else {
-        addClass('piece-img-1', 'seni-fade-in-slideshow');
+    gGLRenderer.copyImageDataTo(pieceImg1, () => {
+      if (gNumTransitions > 0) {
+        if (gMode === "normal") {
+          addClass('piece-img-1', 'seni-fade-in');
+        } else {
+          addClass('piece-img-1', 'seni-fade-in-slideshow');
+        }
       }
-    }
+    });
   }
 
   gActiveImageElement = 1 - gActiveImageElement;
@@ -834,14 +668,80 @@ function renderBuffers(memory, buffers, w, h) {
   displayOnImageElements();
 }
 
-function renderScript(config) {
-  return Job.request(jobRender, config)
-    .then(({ memory, buffers }) => {
-      renderBuffers(memory, buffers, gDemandCanvasSize, gDemandCanvasSize);
+// based on code from:
+// https://hackernoon.com/functional-javascript-resolving-promises-sequentially-7aac18c4431e
+function sequentialPromises(funcs) {
+  return funcs.reduce((promise, func) =>
+    promise.then(result => func().then(Array.prototype.concat.bind(result))),
+    Promise.resolve([]));
+}
+
+// todo: is this the best way of getting image data for a web worker?
+// is there a way for the webworker to do this without having to interact with the DOM?
+// note: don't call this on a sequence of bitmaps
+function loadBitmapImageData(url) {
+  return new Promise(function(resolve, reject) {
+    const element = document.getElementById('bitmap-canvas');
+    const context = element.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      element.width = img.width;
+      element.height = img.height;
+
+      context.drawImage(img, 0, 0);
+
+      const imageData = context.getImageData(0, 0, element.width, element.height);
+
+      resolve(imageData);
+    };
+    img.onerror = () => {
+      reject();
+    };
+
+    img.src = url;
+  });
+}
+
+function renderJob(parameters, callback) {
+  // 1. compile the program in a web worker
+  // 2. (retain the id for this worker)
+  // 3. after compilation, the worker will return a list of bitmaps that are
+  //    required by the program and are not in the web worker's bitmap-cache
+  // 4. sequentially load in the bitmaps and send their data to the worker
+  // 5. can now request a render which will return the render packets
+
+  parameters.__retain = true;
+
+  return Job.request(jobRender_1_Compile, parameters)
+    .then(({ bitmapsToTransfer, __worker_id }) => {
+      // convert each bitmap path to a function that returns a promise
+      const bitmap_loading_funcs = bitmapsToTransfer.map(filename => () => {
+        return loadBitmapImageData(filename)
+          .then(imageData => {
+            console.log(`worker ${__worker_id}: bitmap request: ${filename}`);
+            return Job.request_explicit(jobRender_2_ReceiveBitmapData, __worker_id, { filename, imageData, __retain: true });
+          });
+      });
+
+      sequentialPromises(bitmap_loading_funcs)
+        .then(() => {
+          // note: no __retain as we want the worker to be returned to the available pool
+          return Job.request_explicit(jobRender_3_RenderPackets, __worker_id, {});
+        })
+        .then(({ title, memory, buffers }) => {
+          callback(title, memory, buffers);
+        });
     }).catch(error => {
       // handle error
       console.error(`worker: error of ${error}`);
     });
+}
+
+function renderScript(config) {
+  return renderJob(config, (title, memory, buffers) => {
+    renderBuffers(memory, buffers, gDemandCanvasSize, gDemandCanvasSize);
+  });
 }
 
 function buildTraits(config) {
@@ -879,8 +779,8 @@ function showSimplifiedScript(fullScript) {
   }).then(({ script }) => {
     const simplifiedScriptElement =
           getRequiredElement('piece-simplified-script');
-    console.log(fullScript);
-    console.log(script);
+    //    console.log(fullScript);
+    //    console.log(script);
     simplifiedScriptElement.textContent = script;
   }).catch(error => {
     // handle error

@@ -116,7 +116,7 @@ function renderPackets({  }) {
   const buffers = [];
 
   const numRenderPackets = gState.bridge.run_program();
-  console.log(`numRenderPackets = ${numRenderPackets}`);
+  // console.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
     const buffer = {};
