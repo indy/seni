@@ -231,7 +231,7 @@ class GLRenderer {
   loadTexture(src) {
     let that = this;
 
-    return new Promise(function(resolve, reject) {
+    return new Promise((resolve, reject) => {
 
       const gl = that.gl;
       that.texture = gl.createTexture();
@@ -250,10 +250,16 @@ class GLRenderer {
     });
   }
 
-  copyImageDataTo(elem, callback) {
-    this.glDomElement.toBlob(blob => {
-      elem.src = window.URL.createObjectURL(blob);
-      callback();
+  copyImageDataTo(elem) {
+    return new Promise((resolve, reject) => {
+      try {
+        this.glDomElement.toBlob(blob => {
+          elem.src = window.URL.createObjectURL(blob);
+          return resolve();
+        });
+      } catch (error) {
+        return reject(error);
+      }
     });
   }
 
@@ -727,7 +733,7 @@ const Editor = {
 // --------------------------------------------------------------------------------
 // store
 
-let currentState = undefined;
+let gCurrentState = undefined;
 
 function cloneState(state) {
   const clone = {};
@@ -750,17 +756,12 @@ function cloneState(state) {
   return clone;
 }
 
-function resolveAsCurrentState(resolve, state) {
-  currentState = state;
-  resolve(currentState);
-}
+async function actionSetMode(state, { mode }) { // note: this doesn't need to be async?
+  const newState = cloneState(state);
+  newState.currentMode = mode;
 
-function actionSetMode(state, { mode }) {
-  return new Promise((resolve, _reject) => {
-    const newState = cloneState(state);
-    newState.currentMode = mode;
-    resolveAsCurrentState(resolve, newState);
-  });
+  gCurrentState = newState;
+  return gCurrentState;
 }
 
 // from http://werxltd.com/wp/2010/05/13/ (cont'd next line)
@@ -776,154 +777,131 @@ function hashCode(string) {
   return hash;
 }
 
-function actionSetGenotype(state, { genotype }) {
-  return new Promise((resolve, reject) => {
-    const newState = cloneState(state);
+async function actionSetGenotype(state, { genotype }) {
+  const newState = cloneState(state);
+  newState.genotype = genotype;
 
-    newState.genotype = genotype;
-    resolveAsCurrentState(resolve, newState);
-  });
+  gCurrentState = newState;
+  return gCurrentState;
 }
 
-function actionSetScript(state, { script }) {
-  return new Promise((resolve, reject) => {
-    const newState = cloneState(state);
-    newState.script = script;
-    newState.scriptHash = hashCode(script);
+async function actionSetScript(state, { script }) {
+  const newState = cloneState(state);
+  newState.script = script;
+  newState.scriptHash = hashCode(script);
 
-    Job.request(jobBuildTraits, {
-      script: newState.script,
-      scriptHash: newState.scriptHash
-    }).then(({ validTraits, traits }) => {
-      if (validTraits) {
-        newState.traits = traits;
-      } else {
-        newState.traits = [];
-      }
-
-      resolveAsCurrentState(resolve, newState);
-    }).catch(error => {
-      // handle error
-      console.error(`worker: error of ${error}`);
-      reject(error);
-    });
+  const { validTraits, traits } = await Job.request(jobBuildTraits, {
+    script: newState.script,
+    scriptHash: newState.scriptHash
   });
+
+  if (validTraits) {
+    newState.traits = traits;
+  } else {
+    newState.traits = [];
+  }
+
+  gCurrentState = newState;
+  return gCurrentState;
 }
 
-function actionSetScriptId(state, { id }) {
-  return new Promise((resolve, _reject) => {
-    const newState = cloneState(state);
-    newState.scriptId = id;
-    resolveAsCurrentState(resolve, newState);
-  });
+async function actionSetScriptId(state, { id }) {
+  const newState = cloneState(state);
+  newState.scriptId = id;
+
+  gCurrentState = newState;
+  return gCurrentState;
 }
 
-function actionSetSelectedIndices(state, { selectedIndices }) {
-  return new Promise((resolve, _reject) => {
-    const newState = cloneState(state);
-    newState.selectedIndices = selectedIndices || [];
-    resolveAsCurrentState(resolve, newState);
-  });
+async function actionSetSelectedIndices(state, { selectedIndices }) {
+  const newState = cloneState(state);
+  newState.selectedIndices = selectedIndices || [];
+
+  gCurrentState = newState;
+  return gCurrentState;
 }
 
 // todo: should populationSize be passed in the action?
-function actionInitialGeneration(state) {
-  return new Promise((resolve, reject) => {
-    const newState = cloneState(state);
-    Job.request(jobInitialGeneration, {
-      traits: newState.traits,
-      populationSize: newState.populationSize
-    }).then(({ genotypes }) => {
-      newState.genotypes = genotypes;
-      newState.previouslySelectedGenotypes = [];
-      newState.selectedIndices = [];
-      resolveAsCurrentState(resolve, newState);
-    }).catch(error => {
-      // handle error
-      console.error(`worker: error of ${error}`);
-      reject(error);
-    });
+async function actionInitialGeneration(state) {
+  const newState = cloneState(state);
+  let { genotypes } = await Job.request(jobInitialGeneration, {
+    traits: newState.traits,
+    populationSize: newState.populationSize
   });
+
+  newState.genotypes = genotypes;
+  newState.previouslySelectedGenotypes = [];
+  newState.selectedIndices = [];
+
+  gCurrentState = newState;
+  return gCurrentState;
 }
 
-function actionGalleryIsLoaded(state) {
-  return new Promise((resolve, _reject) => {
-    const newState = cloneState(state);
-    newState.galleryLoaded = true;
-    resolveAsCurrentState(resolve, newState);
-  });
+async function actionGalleryIsLoaded(state) {
+  const newState = cloneState(state);
+  newState.galleryLoaded = true;
+
+  gCurrentState = newState;
+  return gCurrentState;
 }
 
-function actionShuffleGeneration(state, { rng }) {
-  return new Promise((resolve, reject) => {
-    const newState = cloneState(state);
-    const prev = newState.previouslySelectedGenotypes;
+async function actionShuffleGeneration(state, { rng }) {
+  const newState = cloneState(state);
+  const prev = newState.previouslySelectedGenotypes;
 
-    if (prev.length === 0) {
-      actionInitialGeneration(newState).then(s => {
-        resolveAsCurrentState(resolve, s);
-      }).catch(error1 => {
-        // handle error
-        console.error(`worker: error of ${error1}`);
-        reject(error1);
-      });
-    } else {
-      Job.request(jobNewGeneration, {
-        genotypes: prev,
-        populationSize: newState.populationSize,
-        traits: newState.traits,
-        mutationRate: newState.mutationRate,
-        rng
-      }).then(({ genotypes }) => {
-        newState.genotypes = genotypes;
-        newState.selectedIndices = [];
-        resolveAsCurrentState(resolve, newState);
-      }).catch(error => {
-        // handle error
-        console.error(`worker: error of ${error}`);
-        reject(error);
-      });
-    }
-  });
-}
+  if (prev.length === 0) {
+    const s = await actionInitialGeneration(newState);
 
-function actionNextGeneration(state, { rng }) {
-  return new Promise((resolve, reject) => {
-    const newState = cloneState(state);
-    const pg = newState.genotypes;
-    const selectedIndices = newState.selectedIndices;
-    const selectedGenos = [];
-    for (let i = 0; i < selectedIndices.length; i++) {
-      selectedGenos.push(pg[selectedIndices[i]]);
-    }
-
-    Job.request(jobNewGeneration, {
-      genotypes: selectedGenos,
+    gCurrentState = s;
+    return gCurrentState;
+  } else {
+    const { genotypes } = await Job.request(jobNewGeneration, {
+      genotypes: prev,
       populationSize: newState.populationSize,
       traits: newState.traits,
       mutationRate: newState.mutationRate,
       rng
-    }).then(({ genotypes }) => {
-      const previouslySelectedGenotypes =
-            genotypes.slice(0, selectedIndices.length);
-
-      newState.genotypes = genotypes;
-      newState.previouslySelectedGenotypes = previouslySelectedGenotypes;
-      newState.selectedIndices = [];
-
-      resolveAsCurrentState(resolve, newState);
-    }).catch(error => {
-      // handle error
-      console.error(`worker: error of ${error}`);
-      reject(error);
     });
-  });
+
+    newState.genotypes = genotypes;
+    newState.selectedIndices = [];
+
+    gCurrentState = newState;
+    return gCurrentState;
+  }
 }
 
-function wrapInPromise(state) {
-  return new Promise((resolve, _reject) => {
-    resolveAsCurrentState(resolve, state);
+async function actionNextGeneration(state, { rng }) {
+  const newState = cloneState(state);
+  const pg = newState.genotypes;
+  const selectedIndices = newState.selectedIndices;
+  const selectedGenos = [];
+
+  for (let i = 0; i < selectedIndices.length; i++) {
+    selectedGenos.push(pg[selectedIndices[i]]);
+  }
+
+  const { genotypes } = await Job.request(jobNewGeneration, {
+    genotypes: selectedGenos,
+    populationSize: newState.populationSize,
+    traits: newState.traits,
+    mutationRate: newState.mutationRate,
+    rng
   });
+
+  const previouslySelectedGenotypes = genotypes.slice(0, selectedIndices.length);
+
+  newState.genotypes = genotypes;
+  newState.previouslySelectedGenotypes = previouslySelectedGenotypes;
+  newState.selectedIndices = [];
+
+  gCurrentState = newState;
+  return gCurrentState;
+}
+
+async function actionSetState(newState) {
+  gCurrentState = newState;
+  return gCurrentState;
 }
 
 function logMode(mode) {
@@ -968,7 +946,7 @@ function createInitialState() {
 }
 
 function createStore(initialState) {
-  currentState = initialState;
+  gCurrentState = initialState;
 
   function reducer(state, action) {
     switch (action.type) {
@@ -998,23 +976,23 @@ function createStore(initialState) {
       if (logToConsole) {
         console.log(`SET_STATE: ${action.state}`);
       }
-      return wrapInPromise(action.state);
+      return actionSetState(action.state);
     case 'GALLERY_LOADED':
       return actionGalleryIsLoaded(state, action);
     default:
-      return wrapInPromise(state);
+      return actionSetState(state);
     }
   }
 
   function getState() {
-    return currentState;
+    return gCurrentState;
   }
 
   function dispatch(action) {
     if (logToConsole) {
       console.log(`dispatch: action = ${action.type}`);
     }
-    return reducer(currentState, action);
+    return reducer(gCurrentState, action);
   }
 
   return {
@@ -1223,67 +1201,38 @@ function findAvailableWorker() {
 }
 
 const Job = {
-  request: function(type, data) {
-    return new Promise((resolve, reject) => {
+  request: async function(type, data, worker_id) {
+    try {
       let worker = undefined;
-
-      findAvailableWorker().then(worker_ => {
-        worker = worker_;
+      if (worker_id === undefined) {
+        worker = await findAvailableWorker();
         if (logToConsole) {
           console.log(`assigning ${type} to worker ${worker.getId()}`);
         }
-        return worker.postMessage(type, data);
-      }).then(result => {
+      } else {
+        worker = promiseWorkers[worker_id];
         if (logToConsole) {
-          console.log(`result ${type} id:${worker.getId()}`);
+          console.log(`explicitly assigning ${type} to worker ${worker.getId()}`);
         }
-        // console.log(`job:request received: ${result}`);
+      }
 
-        if(!data.__retain) {
-          worker.release();
-        }
+      const result = await worker.postMessage(type, data);
+      if (logToConsole) {
+        console.log(`result ${type} id:${worker.getId()}`);
+      }
 
-        result.__worker_id = worker.getId();
+      if(!data.__retain) {
+        worker.release();
+      }
 
-        resolve(result);
-      }).catch(error => {
-        if (worker !== undefined) {
-          worker.release();
-        }
-        // handle error
-        console.error(`worker (job:${type}): error of ${error}`);
-        reject(error);
-      });
-    });
-  },
+      result.__worker_id = worker.getId();
 
-  request_explicit: function(type, id, data) {
-    return new Promise((resolve, reject) => {
-
-      let worker = promiseWorkers[id];
-
-      worker.postMessage(type, data)
-        .then(result => {
-        if (logToConsole) {
-          console.log(`result ${type} id:${worker.getId()}`);
-        }
-
-        if(!data.__retain) {
-          worker.release();
-        }
-
-        result.__worker_id = worker.getId();
-
-        resolve(result);
-      }).catch(error => {
-        if (worker !== undefined) {
-          worker.release();
-        }
-        // handle error
-        console.error(`worker (job:${type}): error of ${error}`);
-        reject(error);
-      });
-    });
+      return result;
+    } catch (error) {
+      // handle error
+      console.error(`worker (job:${type}): error of ${error}`);
+      return undefined;         // ???
+    }
   },
 
   setup: function(numWorkersParam, path) {
@@ -1320,36 +1269,10 @@ const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
 let gUI = {};
 let gGLRenderer = undefined;
 
-function get(url) {
-  return new Promise((resolve, reject) => {
-    const req = new XMLHttpRequest();
-    req.open('GET', url);
-
-    req.onload = () => {
-      // This is called even on 404 etc
-      // so check the status
-      if (req.status === 200) {
-        // Resolve the promise with the response text
-        resolve(req.response);
-      } else {
-        // Otherwise reject with the status text
-        // which will hopefully be a meaningful error
-        reject(Error(req.statusText));
-      }
-    };
-
-    // Handle network errors
-    req.onerror = () => {
-      reject(Error('Network Error'));
-    };
-
-    // Make the request
-    req.send();
-  });
-}
-
-function getJSON(url) {
-  return get(url).then(JSON.parse);
+async function getJSON(url) {
+  const res = await fetch(url);
+  const json = await res.json();
+  return json;
 }
 
 function getScriptFromEditor() {
@@ -1468,7 +1391,7 @@ function updateSelectionUI(state) {
   });
 }
 
-function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
+async function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
   let destWidth = undefined;
   let destHeight = undefined;
   if (w !== undefined && h !== undefined) {
@@ -1487,12 +1410,12 @@ function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
     gGLRenderer.drawBuffer(memory, buffer);
   });
 
-  gGLRenderer.copyImageDataTo(imageElement, () => {
-    stopFn("rendering all buffers", console);
-  });
+  await gGLRenderer.copyImageDataTo(imageElement);
+
+  stopFn("rendering all buffers", console);
 }
 
-function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, section) {
+async function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, section) {
   let destWidth = undefined;
   let destHeight = undefined;
   if (w !== undefined && h !== undefined) {
@@ -1511,67 +1434,46 @@ function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, secti
     gGLRenderer.drawBuffer(memory, buffer);
   });
 
-  gGLRenderer.copyImageDataTo(imageElement, () => {
-    stopFn(`rendering all buffers for section ${section}`, console);
-  });
+  await gGLRenderer.copyImageDataTo(imageElement);
+
+  stopFn(`rendering all buffers for section ${section}`, console);
 }
 
-function renderGeneration(state) {
-  return new Promise((resolve, _reject) => {
-    const script = state.script;
-    const scriptHash = state.scriptHash;
+async function renderGeneration(state) {
+  // TODO: stop generating  if the user has switched to edit mode
+  const script = state.script;
+  const scriptHash = state.scriptHash;
+  const genotypes = state.genotypes;
+  const phenotypes = gUI.phenotypes;
+  let hackTitle = scriptHash;
+  const promises = [];
 
-    const genotypes = state.genotypes;
+  const stopFn = startTiming();
 
-    // TODO: stop generating  if the user has switched to edit mode
-    const phenotypes = gUI.phenotypes;
+  for (let i = 0; i < phenotypes.length; i++) {
+    const workerJob = renderScript({
+      script,
+      scriptHash,
+      genotype: genotypes[i],
+    }, phenotypes[i].imageElement);
 
-    let hackTitle = scriptHash;
+    promises.push(workerJob);
+  }
 
-    const promises = [];
+  await Promise.all(promises);
 
-    const stopFn = startTiming();
-
-    for (let i = 0; i < phenotypes.length; i++) {
-
-      const workerJob = renderJob({
-        script,
-        scriptHash,
-        genotype: genotypes[i],
-      }, (title, memory, buffers) => {
-        const imageElement = phenotypes[i].imageElement;
-        renderGeometryBuffers(memory, buffers, imageElement);
-        hackTitle = title;
-      });
-
-      promises.push(workerJob);
-    }
-
-    Promise.all(promises).then(() => {
-      stopFn(`renderGeneration-${hackTitle}`, console);
-    }).catch(error => console.error(`renderGeneration error: ${error}`));
-
-    resolve();
-  });
+  stopFn(`renderGeneration-${hackTitle}`, console);
 }
 
 // invoked when the evolve screen is displayed after the edit screen
-function setupEvolveUI(store) {
-  return new Promise((resolve, reject) => {
-    afterLoadingPlaceholderImages(store.getState()).then(() => {
-      return store.dispatch({type: 'INITIAL_GENERATION'});
-    }).then(state => {
-      // render the phenotypes
-      updateSelectionUI(state);
-      renderGeneration(state);
-      return state;
-    }).then(state => {
-      return resolve(state);
-    }).catch(error => {
-      console.error(`setupEvolveUI error: ${error}`);
-      reject(error);
-    });
-  });
+async function setupEvolveUI(store) {
+  await afterLoadingPlaceholderImages(store.getState());
+  const state = await store.dispatch({type: 'INITIAL_GENERATION'});
+  // render the phenotypes
+  updateSelectionUI(state);
+  await renderGeneration(state);
+
+  return state;
 }
 
 function showScriptInEditor(state) {
@@ -1593,7 +1495,7 @@ function sequentialPromises(funcs) {
 // is there a way for the webworker to do this without having to interact with the DOM?
 // note: don't call this on a sequence of bitmaps
 function loadBitmapImageData(url) {
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     const element = document.getElementById('bitmap-canvas');
     const context = element.getContext('2d');
     const img = new Image();
@@ -1616,7 +1518,20 @@ function loadBitmapImageData(url) {
   });
 }
 
-function renderJob(parameters, callback) {
+async function renderScript(parameters, imageElement) {
+  const stopFn = startTiming();
+
+  let { title, memory, buffers } = await renderJob(parameters);
+  await renderGeometryBuffers(memory, buffers, imageElement);
+
+  if (title === '') {
+    stopFn(`renderScript`, console);
+  } else {
+    stopFn(`renderScript-${title}`, console);
+  }
+}
+
+async function renderJob(parameters) {
   // 1. compile the program in a web worker
   // 2. (retain the id for this worker)
   // 3. after compilation, the worker will return a list of bitmaps that are
@@ -1624,53 +1539,42 @@ function renderJob(parameters, callback) {
   // 4. sequentially load in the bitmaps and send their data to the worker
   // 5. can now request a render which will return the render packets
 
+  // request a compile job but make sure to retain the worker as it will be performing the rendering
+  //
   parameters.__retain = true;
+  const { bitmapsToTransfer, __worker_id } = await Job.request(jobRender_1_Compile, parameters);
 
-  return Job.request(jobRender_1_Compile, parameters)
-    .then(({ bitmapsToTransfer, __worker_id }) => {
-      // convert each bitmap path to a function that returns a promise
-      const bitmap_loading_funcs = bitmapsToTransfer.map(filename => () => {
-        return loadBitmapImageData(filename)
-          .then(imageData => {
-            console.log(`worker ${__worker_id}: bitmap request: ${filename}`);
-            return Job.request_explicit(jobRender_2_ReceiveBitmapData, __worker_id, { filename, imageData, __retain: true });
-          });
-      });
-
-      sequentialPromises(bitmap_loading_funcs)
-        .then(() => {
-          // note: no __retain as we want the worker to be returned to the available pool
-          return Job.request_explicit(jobRender_3_RenderPackets, __worker_id, {});
-        })
-        .then(({ title, memory, buffers }) => {
-          callback(title, memory, buffers);
-        });
-    }).catch(error => {
-      // handle error
-      console.error(`worker: error of ${error}`);
-    });
-}
-
-function renderScript(state, imageElement) {
-  const stopFn = startTiming();
-
-  renderJob({
-    script: state.script,
-    scriptHash: state.scriptHash
-  }, (title, memory, buffers) => {
-    renderGeometryBuffers(memory, buffers, imageElement);
-    if (title === '') {
-      stopFn(`renderScript`, console);
-    } else {
-      stopFn(`renderScript-${title}`, console);
-    }
+  // convert each bitmap path to a function that returns a promise
+  //
+  const bitmap_loading_funcs = bitmapsToTransfer.map(filename => async () => {
+    const imageData = await loadBitmapImageData(filename);
+    console.log(`worker ${__worker_id}: bitmap request: ${filename}`);
+    // make an explicit job request to the same worker
+    return Job.request(jobRender_2_ReceiveBitmapData, { filename, imageData, __retain: true }, __worker_id);
   });
 
+  // seqentially execute the promises that load in bitmaps and send the bitmap data to a particular worker
+  //
+  await sequentialPromises(bitmap_loading_funcs);
+
+  // now make an explicit job request to the same worker that has recieved the bitmap data
+  // note: no __retain as we want the worker to be returned to the available pool
+  const renderPacketsResult = await Job.request(jobRender_3_RenderPackets, {}, __worker_id);
+
+  return renderPacketsResult;
+}
+
+async function renderEditorScript(state) {
+  const imageElement = gUI.renderImage;
+  await renderScript({
+    script: state.script,
+    scriptHash: state.scriptHash
+  }, imageElement);
 }
 
 // function that takes a read-only state and updates the UI
 //
-function updateUI(state) {
+async function updateUI(state) {
   showCurrentMode(state);
 
   switch (state.currentMode) {
@@ -1678,7 +1582,7 @@ function updateUI(state) {
     break;
   case SeniMode.edit :
     showScriptInEditor(state);
-    renderScript(state, gUI.renderImage);
+    await renderEditorScript(state);
     break;
   case SeniMode.evolve :
     // will only get here from History.restoreState
@@ -1690,45 +1594,29 @@ function updateUI(state) {
   }
 }
 
-function ensureMode(store, mode) {
-
+async function ensureMode(store, mode) {
   if (mode === SeniMode.gallery && store.getState().galleryLoaded === false) {
     // want to show the gallery but it hasn't been loaded yet. This occurs when
     // editing a particular piece by loading it's id directly into the URL
     // e.g. http://localhost:3210/#61
     //
-    return getGallery(store).then(() => {
-      // gallery is loaded now so call this again to return the Promise below
-      return ensureMode(store, mode);
-    });
+    await getGallery(store);
   }
 
-  return new Promise((resolve, reject) => {
-    if (store.getState().currentMode === mode) {
-      resolve();
-      return;
+  if (store.getState().currentMode !== mode) {
+    const state = await store.dispatch({type: 'SET_MODE', mode});
+    History.pushState(state);
+
+    if (mode === SeniMode.evolve) {
+      showCurrentMode(state);
+      const latestState = await setupEvolveUI(store);
+      // make sure that the history for the first evolve generation
+      // has the correct genotypes
+      History.replaceState(latestState);
+    } else {
+      await updateUI(state);
     }
-
-    store.dispatch({type: 'SET_MODE', mode}).then(state => {
-      History.pushState(state);
-
-      if (mode === SeniMode.evolve) {
-        showCurrentMode(state);
-        setupEvolveUI(store).then(latestState => {
-          // make sure that the history for the first evolve generation
-          // has the correct genotypes
-          History.replaceState(latestState);
-          resolve();
-        }).catch(error => console.error(`ensureMode error: ${error}`));
-      } else {
-        updateUI(state);
-        resolve();
-      }
-    }).catch(error => {
-      console.error(`ensureMode error: ${error}`);
-      reject(error);
-    });
-  });
+  }
 }
 
 function addClickEvent(id, fn) {
@@ -1771,7 +1659,7 @@ function downloadDialog(state, genotype) {
   container.classList.remove('hidden');
 }
 
-function renderHighResSection(state, section) {
+async function renderHighResSection(state, section) {
   const container = document.getElementById('high-res-container');
   const loader = document.getElementById('high-res-loader');
   const image = document.getElementById('render-img');
@@ -1782,20 +1670,16 @@ function renderHighResSection(state, section) {
 
   const stopFn = startTiming();
 
-  renderJob({
+  const { title, memory, buffers } = await renderJob({
     script: state.script,
     scriptHash: state.scriptHash,
     genotype: undefined,
-  }, (title, memory, buffers) => {
-    const [width, height] = state.highResolution;
-
-    renderGeometryBuffersSection(memory, buffers, image, width, height, section);
-
-    stopFn(`renderHighResSection-${title}-${section}`, console);
-
-    image.classList.remove('hidden');
-    loader.classList.add('hidden');
   });
+  const [width, height] = state.highResolution;
+  await renderGeometryBuffersSection(memory, buffers, image, width, height, section);
+  stopFn(`renderHighResSection-${title}-${section}`, console);
+  image.classList.remove('hidden');
+  loader.classList.add('hidden');
 }
 
 function setGenotype(store, genotype) {
@@ -1813,54 +1697,42 @@ function setScriptId(store, id) {
   return store.dispatch({type: 'SET_SCRIPT_ID', id});
 }
 
-function showEditFromEvolve(store, element) {
-  return new Promise((resolve, reject) => {
-    const [index, _] = getPhenoIdFromDom(element);
-    if (index !== -1) {
-      const state = store.getState();
-      const genotypes = state.genotypes;
+async function showEditFromEvolve(store, element) {
+  console.log('showEditFromEvolve');
+  const [index, _] = getPhenoIdFromDom(element);
 
-      Job.request(jobUnparse, {
-        script: state.script,
-        scriptHash: state.scriptHash,
-        genotype: genotypes[index]
-      }).then(({ script }) => {
-        setScript(store, script).then(() => {
-          return ensureMode(store, SeniMode.edit);
-        }).then(resolve).catch(e => {
-          // handle error
-          console.error(`worker: error of ${e}`);
-          reject(e);
-        });
-      }).catch(error => {
-        // handle error
-        console.error(`worker: error of ${error}`);
-        reject(error);
-      });
-    } else {
-      resolve();
-    }
-  });
+  if (index !== -1) {
+    const state = store.getState();
+    const genotypes = state.genotypes;
+    const { script } = await Job.request(jobUnparse, {
+      script: state.script,
+      scriptHash: state.scriptHash,
+      genotype: genotypes[index]
+    });
+
+    await setScript(store, script);
+    await ensureMode(store, SeniMode.edit);
+  }
 }
 
-function onNextGen(store) {
-  // get the selected genotypes for the next generation
-  const populationSize = store.getState().populationSize;
-  const phenotypes = gUI.phenotypes;
-  const selectedIndices = [];
+async function onNextGen(store) {
+  try {
+    // get the selected genotypes for the next generation
+    const populationSize = store.getState().populationSize;
+    const phenotypes = gUI.phenotypes;
+    const selectedIndices = [];
 
-  for (let i = 0; i < populationSize; i++) {
-    const element = phenotypes[i].phenotypeElement;
-    if (element.classList.contains('selected')) {
-      selectedIndices.push(i);
+    for (let i = 0; i < populationSize; i++) {
+      const element = phenotypes[i].phenotypeElement;
+      if (element.classList.contains('selected')) {
+        selectedIndices.push(i);
+      }
     }
-  }
 
-  const command = {type: 'SET_SELECTED_INDICES', selectedIndices};
-  store.dispatch(command).then(state => {
+    let state = await store.dispatch({type: 'SET_SELECTED_INDICES', selectedIndices});
     if (selectedIndices.length === 0) {
       // no phenotypes were selected
-      return undefined;
+      return;
     }
 
     // update the last history state
@@ -1868,8 +1740,7 @@ function onNextGen(store) {
 
     showPlaceholderImages(state);
 
-    return store.dispatch({type: 'NEXT_GENERATION', rng: 4242});
-  }).then(state => {
+    state = await store.dispatch({type: 'NEXT_GENERATION', rng: 4242});
     if (state === undefined) {
       return;
     }
@@ -1877,11 +1748,12 @@ function onNextGen(store) {
     History.pushState(state);
     // render the genotypes
     updateSelectionUI(state);
-    renderGeneration(state);
-  }).catch(error => {
+    await renderGeneration(state);
+
+  } catch(error) {
     // handle error
     console.error(`error of ${error}`);
-  });
+  }
 }
 
 function createPhenotypeElement(id, placeholderImage) {
@@ -1903,49 +1775,28 @@ function createPhenotypeElement(id, placeholderImage) {
 }
 
 // invoked when restoring the evolve screen from the history api
-function restoreEvolveUI(store) {
-  return new Promise((resolve, reject) => { // todo: implement reject
-    afterLoadingPlaceholderImages(store.getState()).then(() => {
-      // render the phenotypes
-      updateSelectionUI(store.getState());
-      return renderGeneration(store.getState());
-    }).then(resolve).catch(error => {
-      // handle error
-      console.error(`restoreEvolveUI: error of ${error}`);
-      reject(error);
-    });
-  });
+async function restoreEvolveUI(store) {
+  await afterLoadingPlaceholderImages(store.getState());
+  updateSelectionUI(store.getState());
+  // render the phenotypes
+  await renderGeneration(store.getState());
 }
 
-function loadScriptWithId(store, id) {
-  return new Promise((resolve, reject) => {
-    const url = `gallery/${id}`;
-    get(url).catch(() => {
-      reject(Error(`cannot connect to ${url}`));
-    }).then(data => {
-      return setScript(store, data);
-    }).then(() => {
-      return setScriptId(store, id);
-    }).then(() => {
-      return ensureMode(store, SeniMode.edit);
-    }).then(resolve).catch(error => {
-      console.error(`loadScriptWithId error ${error}`);
-      reject(error);
-    });
-  });
+async function loadScriptWithId(store, id) {
+  const response = await fetch(`gallery/${id}`);
+  const text = await response.text();
+
+  await setScript(store, text);
+  await setScriptId(store, id);
+  await ensureMode(store, SeniMode.edit);
 }
 
-function showEditFromGallery(store, element) {
-  return new Promise((resolve, reject) => {
-    const [index, _] = getIdNumberFromDom(element, /gallery-item-(\d+)/);
-    if (index !== -1) {
-      return loadScriptWithId(store, index);
-    } else {
-      resolve();
-    }
-  });
+async function showEditFromGallery(store, element) {
+  const [index, _] = getIdNumberFromDom(element, /gallery-item-(\d+)/);
+  if (index !== -1) {
+    await loadScriptWithId(store, index);
+  }
 }
-/* eslint-enable no-unused-vars */
 
 // take the height of the navbar into consideration
 function resizeContainers() {
@@ -1968,12 +1819,13 @@ function createEditor(store, editorTextArea) {
   };
 
   const extraKeys = {
-    'Ctrl-E': () => {
-      setScript(store, getScriptFromEditor()).then(state => {
-        return renderScript(state, gUI.renderImage);
-      }).catch(error => {
+    'Ctrl-E': async () => {
+      try {
+        const state = await setScript(store, getScriptFromEditor());
+        await renderEditorScript(state);
+      } catch (error) {
         console.error(`worker setScript error: ${error}`);
-      });
+      }
       return false;
     },
     'Ctrl-I': () => {
@@ -2017,20 +1869,21 @@ function setupUI(store) {
 
   showButtonsFor(SeniMode.gallery);
 
-  addClickEvent('home', event => {
-    ensureMode(store, SeniMode.gallery);
+  addClickEvent('home', async event => {
+    await ensureMode(store, SeniMode.gallery);
     event.preventDefault();
   });
 
-  addClickEvent('evolve-btn', event => {
-    // get the latest script from the editor
-    setScript(store, getScriptFromEditor()).then(state => {
+  addClickEvent('evolve-btn', async event => {
+    try {
+      // get the latest script from the editor
+      const state = await setScript(store, getScriptFromEditor());
       History.replaceState(state);
-      ensureMode(store, SeniMode.evolve);
-    }).catch(error => {
+      await ensureMode(store, SeniMode.evolve);
+    } catch (error) {
       // handle error
       console.error(`evolve-btn:click : error of ${error}`);
-    });
+    }
     event.preventDefault();
   });
 
@@ -2039,39 +1892,40 @@ function setupUI(store) {
     event.preventDefault();
   });
 
-  addClickEvent('shuffle-btn', event => {
-    showPlaceholderImages(store.getState());
-    store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11}).then(state => {
+  addClickEvent('shuffle-btn', async event => {
+    try {
+      showPlaceholderImages(store.getState());
+      const state = await store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11});
       updateSelectionUI(state);
-      renderGeneration(state);
-    }).catch(error => {
+      await renderGeneration(state);
+    } catch (error) {
       // handle error
       console.error(`shuffle-btn:click : error of ${error}`);
-    });
+    }
+
     event.preventDefault();
   });
 
-  addClickEvent('eval-btn', event => {
-    setScript(store, getScriptFromEditor()).then(state => {
-      renderScript(state, gUI.renderImage);
-    }).catch(error => {
+  addClickEvent('eval-btn', async event => {
+    try {
+      const state = await setScript(store, getScriptFromEditor());
+      await renderEditorScript(state);
+    } catch (error) {
       // handle error
       console.error(`eval-btn:click : error of ${error}`);
-    });
-    event.preventDefault();
-  });
-
-  addClickEvent('gallery-container', event => {
-    const target = event.target;
-    if (target.classList.contains('show-edit')) {
-      showEditFromGallery(store, target).catch(error => {
-        console.error(error);
-      });
     }
     event.preventDefault();
   });
 
-  addClickEvent('evolve-container', event => {
+  addClickEvent('gallery-container', async event => {
+    const target = event.target;
+    if (target.classList.contains('show-edit')) {
+      await showEditFromGallery(store, target);
+    }
+    event.preventDefault();
+  });
+
+  addClickEvent('evolve-container', async event => {
     const target = event.target;
     const [index, phenoElement] = getPhenoIdFromDom(target);
 
@@ -2080,9 +1934,9 @@ function setupUI(store) {
         const genotypes = store.getState().genotypes;
         const genotype = genotypes[index];
 
-        setGenotype(store, genotype).then(() => {
-          downloadDialog();
-        });
+        await setGenotype(store, genotype);
+
+        downloadDialog();
       }
     } else if (target.classList.contains('edit')) {
       showEditFromEvolve(store, target);
@@ -2098,7 +1952,7 @@ function setupUI(store) {
     onNextGen(store);
   });
 
-  addClickEvent('high-res-download', event => {
+  addClickEvent('high-res-download', async event => {
     const state = store.getState();
 
     const loader = document.getElementById('high-res-loader');
@@ -2114,26 +1968,26 @@ function setupUI(store) {
 
     const stopFn = startTiming();
 
-    renderJob({
+    const { title, memory, buffers } = await renderJob({
       script: state.script,
       scriptHash: state.scriptHash,
       genotype: state.genotype,
-    }, (title, memory, buffers) => {
-      const [width, height] = [image_resolution, image_resolution];
-
-      renderGeometryBuffers(memory, buffers, image, width, height);
-
-      stopFn(`renderHighRes-${title}`, console);
-
-      loader.classList.add('hidden');
-
-      const image_name_elem = document.getElementById('high-res-filename');
-      const filename = ensureFilenameIsPNG(image_name_elem.value);
-      gGLRenderer.localDownload(filename);
-
-      // todo: is this the best place to reset the genotype?
-      setGenotype(store, undefined);
     });
+
+    const [width, height] = [image_resolution, image_resolution];
+
+    await renderGeometryBuffers(memory, buffers, image, width, height);
+
+    stopFn(`renderHighRes-${title}`, console);
+
+    loader.classList.add('hidden');
+
+    const image_name_elem = document.getElementById('high-res-filename');
+    const filename = ensureFilenameIsPNG(image_name_elem.value);
+    gGLRenderer.localDownload(filename);
+
+    // todo: is this the best place to reset the genotype?
+    await setGenotype(store, undefined);
 
     event.preventDefault();
   });
@@ -2188,29 +2042,30 @@ function setupUI(store) {
 
   gUI.phenotypes = phenotypes;
 
-  window.addEventListener('popstate', event => {
-    if (event.state) {
-      const savedState = History.restoreState(event.state);
-      store.dispatch({type: 'SET_STATE', state: savedState}).then(state => {
-        updateUI(state);
+  window.addEventListener('popstate', async event => {
+    try {
+      if (event.state) {
+        const savedState = History.restoreState(event.state);
+        const state = await store.dispatch({type: 'SET_STATE', state: savedState});
+        await updateUI(state);
         if (state.currentMode === SeniMode.evolve) {
-          restoreEvolveUI(store);
+          await restoreEvolveUI(store);
         }
-      }).catch(error => {
+      } else {
+        // no event.state so behave as if the user has visited
+        // the '/' of the state
+        await ensureMode(store, SeniMode.gallery);
+      }
+    } catch (error) {
         // handle error
         console.error(`SET_STATE: error of ${error}`);
-      });
-    } else {
-      // no event.state so behave as if the user has visited
-      // the '/' of the state
-      ensureMode(store, SeniMode.gallery);
     }
   });
 
   return store;
 }
 
-function getGallery(store) {
+async function getGallery(store) {
   const createGalleryElement = galleryItem => {
     const container = document.createElement('div');
 
@@ -2229,29 +2084,23 @@ function getGallery(store) {
     return container;
   };
 
-  return new Promise((resolve, reject) => {
-    const list = document.getElementById('gallery-container');
-    list.innerHTML = '';
+  const list = document.getElementById('gallery-container');
+  list.innerHTML = '';
 
-    const row = document.createElement('div');
-    row.className = 'cards';
-    list.appendChild(row);
+  const row = document.createElement('div');
+  row.className = 'cards';
+  list.appendChild(row);
 
-    const url = 'gallery';
-    getJSON(url).then(galleryItems => {
-      // gets an array of gallery items
-      galleryItems.forEach(item => {
-        const e = createGalleryElement(item);
-        row.appendChild(e);
-      });
+  const url = 'gallery';
+  const galleryItems = await getJSON(url);
 
-      return store.dispatch({type: 'GALLERY_LOADED'});
-    }).then(() => {
-      resolve();
-    }).catch(() => {
-      reject(Error(`cannot connect to ${url}`));
-    });
+  // gets an array of gallery items
+  galleryItems.forEach(item => {
+    const e = createGalleryElement(item);
+    row.appendChild(e);
   });
+
+  await store.dispatch({type: 'GALLERY_LOADED'});
 }
 
 function allocateWorkers(state) {
@@ -2300,7 +2149,7 @@ function compatibilityHacks() {
   }
 }
 
-function main() {
+async function main() {
   setupResizeability();
 
   const state = createInitialState();
@@ -2311,17 +2160,21 @@ function main() {
   const canvasElement = document.getElementById('render-canvas');
   gGLRenderer = new GLRenderer(canvasElement);
 
-  gGLRenderer.loadTexture('img/texture.png').then(() => {
+  try {
+    await gGLRenderer.loadTexture('img/texture.png');
+
     setupUI(store);
 
     const matched = window.location.hash.match(/^\#(\d+)/);
     if (window.location.pathname === '/' && matched) {
       const id = parseInt(matched[1], 10);
-      return loadScriptWithId(store, id);
+      await loadScriptWithId(store, id);
     } else {
-      return ensureMode(store, SeniMode.gallery);
+      await ensureMode(store, SeniMode.gallery);
     }
-  }).catch(error => console.error(error));
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

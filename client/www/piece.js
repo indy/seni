@@ -250,10 +250,16 @@ class GLRenderer {
     });
   }
 
-  copyImageDataTo(elem, callback) {
-    this.glDomElement.toBlob(blob => {
-      elem.src = window.URL.createObjectURL(blob);
-      callback();
+  copyImageDataTo(elem) {
+    return new Promise((resolve, reject) => {
+      try {
+        this.glDomElement.toBlob(blob => {
+          elem.src = window.URL.createObjectURL(blob);
+          return resolve();
+        });
+      } catch (error) {
+        return reject(error);
+      }
     });
   }
 
@@ -496,67 +502,38 @@ function findAvailableWorker() {
 }
 
 const Job = {
-  request: function(type, data) {
-    return new Promise((resolve, reject) => {
+  request: async function(type, data, worker_id) {
+    try {
       let worker = undefined;
-
-      findAvailableWorker().then(worker_ => {
-        worker = worker_;
+      if (worker_id === undefined) {
+        worker = await findAvailableWorker();
         if (logToConsole) {
           console.log(`assigning ${type} to worker ${worker.getId()}`);
         }
-        return worker.postMessage(type, data);
-      }).then(result => {
+      } else {
+        worker = promiseWorkers[worker_id];
         if (logToConsole) {
-          console.log(`result ${type} id:${worker.getId()}`);
+          console.log(`explicitly assigning ${type} to worker ${worker.getId()}`);
         }
-        // console.log(`job:request received: ${result}`);
+      }
 
-        if(!data.__retain) {
-          worker.release();
-        }
+      const result = await worker.postMessage(type, data);
+      if (logToConsole) {
+        console.log(`result ${type} id:${worker.getId()}`);
+      }
 
-        result.__worker_id = worker.getId();
+      if(!data.__retain) {
+        worker.release();
+      }
 
-        resolve(result);
-      }).catch(error => {
-        if (worker !== undefined) {
-          worker.release();
-        }
-        // handle error
-        console.error(`worker (job:${type}): error of ${error}`);
-        reject(error);
-      });
-    });
-  },
+      result.__worker_id = worker.getId();
 
-  request_explicit: function(type, id, data) {
-    return new Promise((resolve, reject) => {
-
-      let worker = promiseWorkers[id];
-
-      worker.postMessage(type, data)
-        .then(result => {
-        if (logToConsole) {
-          console.log(`result ${type} id:${worker.getId()}`);
-        }
-
-        if(!data.__retain) {
-          worker.release();
-        }
-
-        result.__worker_id = worker.getId();
-
-        resolve(result);
-      }).catch(error => {
-        if (worker !== undefined) {
-          worker.release();
-        }
-        // handle error
-        console.error(`worker (job:${type}): error of ${error}`);
-        reject(error);
-      });
-    });
+      return result;
+    } catch (error) {
+      // handle error
+      console.error(`worker (job:${type}): error of ${error}`);
+      return undefined;         // ???
+    }
   },
 
   setup: function(numWorkersParam, path) {
@@ -616,7 +593,7 @@ function updatePieceDimensions(pieceImg, canvas, w, h) {
   pieceImg.height = h;
 }
 
-function displayOnImageElements() {
+async function displayOnImageElements() {
   const canvas = getRequiredElement('piece-canvas');
   const pieceImg0 = getRequiredElement('piece-img-0');
   const pieceImg1 = getRequiredElement('piece-img-1');
@@ -631,25 +608,23 @@ function displayOnImageElements() {
   }
 
   if (gActiveImageElement === 0) {
-    gGLRenderer.copyImageDataTo(pieceImg0, () => {
-      if (gNumTransitions > 0) {
-        if (gMode === "normal") {
-          addClass('piece-img-1', 'seni-fade-out');
-        } else {
-          addClass('piece-img-1', 'seni-fade-out-slideshow');
-        }
+    await gGLRenderer.copyImageDataTo(pieceImg0);
+    if (gNumTransitions > 0) {
+      if (gMode === "normal") {
+        addClass('piece-img-1', 'seni-fade-out');
+      } else {
+        addClass('piece-img-1', 'seni-fade-out-slideshow');
       }
-    });
+    }
   } else {
-    gGLRenderer.copyImageDataTo(pieceImg1, () => {
-      if (gNumTransitions > 0) {
-        if (gMode === "normal") {
-          addClass('piece-img-1', 'seni-fade-in');
-        } else {
-          addClass('piece-img-1', 'seni-fade-in-slideshow');
-        }
+    await gGLRenderer.copyImageDataTo(pieceImg1);
+    if (gNumTransitions > 0) {
+      if (gMode === "normal") {
+        addClass('piece-img-1', 'seni-fade-in');
+      } else {
+        addClass('piece-img-1', 'seni-fade-in-slideshow');
       }
-    });
+    }
   }
 
   gActiveImageElement = 1 - gActiveImageElement;
@@ -657,7 +632,7 @@ function displayOnImageElements() {
   logDebug("displayOnImageElements");
 }
 
-function renderBuffers(memory, buffers, w, h) {
+async function renderBuffers(memory, buffers, w, h) {
   // this will update the size of the piece-canvas element
   gGLRenderer.preDrawScene(w, h);
 
@@ -665,7 +640,7 @@ function renderBuffers(memory, buffers, w, h) {
     gGLRenderer.drawBuffer(memory, buffer);
   });
 
-  displayOnImageElements();
+  await displayOnImageElements();
 }
 
 // based on code from:
@@ -703,7 +678,7 @@ function loadBitmapImageData(url) {
   });
 }
 
-function renderJob(parameters, callback) {
+async function renderJob(parameters) {
   // 1. compile the program in a web worker
   // 2. (retain the id for this worker)
   // 3. after compilation, the worker will return a list of bitmaps that are
@@ -711,49 +686,34 @@ function renderJob(parameters, callback) {
   // 4. sequentially load in the bitmaps and send their data to the worker
   // 5. can now request a render which will return the render packets
 
+  // request a compile job but make sure to retain the worker as it will be performing the rendering
+  //
   parameters.__retain = true;
+  const { bitmapsToTransfer, __worker_id } = await Job.request(jobRender_1_Compile, parameters);
 
-  return Job.request(jobRender_1_Compile, parameters)
-    .then(({ bitmapsToTransfer, __worker_id }) => {
-      // convert each bitmap path to a function that returns a promise
-      const bitmap_loading_funcs = bitmapsToTransfer.map(filename => () => {
-        return loadBitmapImageData(filename)
-          .then(imageData => {
-            console.log(`worker ${__worker_id}: bitmap request: ${filename}`);
-            return Job.request_explicit(jobRender_2_ReceiveBitmapData, __worker_id, { filename, imageData, __retain: true });
-          });
-      });
-
-      sequentialPromises(bitmap_loading_funcs)
-        .then(() => {
-          // note: no __retain as we want the worker to be returned to the available pool
-          return Job.request_explicit(jobRender_3_RenderPackets, __worker_id, {});
-        })
-        .then(({ title, memory, buffers }) => {
-          callback(title, memory, buffers);
-        });
-    }).catch(error => {
-      // handle error
-      console.error(`worker: error of ${error}`);
-    });
-}
-
-function renderScript(config) {
-  return renderJob(config, (title, memory, buffers) => {
-    renderBuffers(memory, buffers, gDemandCanvasSize, gDemandCanvasSize);
+  // convert each bitmap path to a function that returns a promise
+  //
+  const bitmap_loading_funcs = bitmapsToTransfer.map(filename => async () => {
+    const imageData = await loadBitmapImageData(filename);
+    console.log(`worker ${__worker_id}: bitmap request: ${filename}`);
+    // make an explicit job request to the same worker
+    return Job.request(jobRender_2_ReceiveBitmapData, { filename, imageData, __retain: true }, __worker_id);
   });
+
+  // seqentially execute the promises that load in bitmaps and send the bitmap data to a particular worker
+  //
+  await sequentialPromises(bitmap_loading_funcs);
+
+  // now make an explicit job request to the same worker that has recieved the bitmap data
+  // note: no __retain as we want the worker to be returned to the available pool
+  const renderPacketsResult = await Job.request(jobRender_3_RenderPackets, {}, __worker_id);
+
+  return renderPacketsResult;
 }
 
-function buildTraits(config) {
-  return Job.request(jobBuildTraits, config);
-}
-
-function buildGenotype(config) {
-  return Job.request(jobSingleGenotypeFromSeed, config);
-}
-
-function unparse(config) {
-  return Job.request(jobUnparse, config);
+async function renderScript(parameters) {
+  let { title, memory, buffers } = await renderJob(parameters);
+  await renderBuffers(memory, buffers, gDemandCanvasSize, gDemandCanvasSize);
 }
 
 function getSeedValue(element) {
@@ -761,8 +721,9 @@ function getSeedValue(element) {
   return res;
 }
 
-function fetchScript(id) {
-  return fetch(`/gallery/${id}`).then(response => response.text());
+async function fetchScript(id) {
+  const response = await fetch(`/gallery/${id}`);
+  return response.text();
 }
 
 function getRequiredElement(id) {
@@ -773,19 +734,15 @@ function getRequiredElement(id) {
   return element;
 }
 
-function showSimplifiedScript(fullScript) {
-  Job.request(jobSimplifyScript, {
+async function showSimplifiedScript(fullScript) {
+  const { script } = await Job.request(jobSimplifyScript, {
     script: fullScript
-  }).then(({ script }) => {
-    const simplifiedScriptElement =
-          getRequiredElement('piece-simplified-script');
-    //    console.log(fullScript);
-    //    console.log(script);
-    simplifiedScriptElement.textContent = script;
-  }).catch(error => {
-    // handle error
-    console.error(`worker: error of ${error}`);
   });
+
+  const simplifiedScriptElement = getRequiredElement('piece-simplified-script');
+  //    console.log(fullScript);
+  //    console.log(script);
+  simplifiedScriptElement.textContent = script;
 }
 
 function useLargeCanvas() {
@@ -820,7 +777,7 @@ function setOpacity(id, opacity) {
   e.style.opacity = opacity;
 }
 
-function performSlideshow() {
+async function performSlideshow() {
   gNumTransitions += 1;
   const scriptElement = getRequiredElement('piece-script');
   const seedElement = getRequiredElement('piece-seed');
@@ -834,27 +791,23 @@ function performSlideshow() {
   seedElement.value = parseInt(newSeed, 10);
 
   const seedValue = getSeedValue(seedElement);
-  buildTraits({ script: originalScript, scriptHash })
-    .then(({ traits }) => buildGenotype({ traits, seed: seedValue }))
-    .then(({ genotype }) => {
-      const config = { script: originalScript, scriptHash };
-      if (seedValue !== 0) {
-        config.genotype = genotype;
-      }
-      return renderScript(config);
-    })
-    .then(() => {
-      gTimeoutId = window.setTimeout(performSlideshow, gSlideshowDelay);
-    })
-    .catch(error => {
-      console.error('performSlideshow error');
-      console.error(error);
-    });
+
+  const { traits } = await Job.request(jobBuildTraits, { script: originalScript, scriptHash });
+  const { genotype } = await Job.request(jobSingleGenotypeFromSeed, { traits, seed: seedValue });
+
+  const config = { script: originalScript, scriptHash };
+  if (seedValue !== 0) {
+    config.genotype = genotype;
+  }
+
+  await renderScript(config);
+
+  gTimeoutId = window.setTimeout(performSlideshow, gSlideshowDelay);
 }
 
 // returns true if the mode was actually changed
 //
-function setMode(newMode) {
+async function setMode(newMode) {
   if (newMode === "normal" && gMode !== "normal") {
     gMode = "normal";
     window.clearTimeout(gTimeoutId); // stop the slideshow
@@ -881,9 +834,9 @@ function setMode(newMode) {
     const script = scriptElement.textContent;
     const originalScript = script.slice();
 
-    renderScript({ script: originalScript, scriptHash });
+    await renderScript({ script: originalScript, scriptHash });
     scriptElement.textContent = originalScript;
-    showSimplifiedScript(originalScript);
+    await showSimplifiedScript(originalScript);
     originalButton.disabled = true;
 
     return true;
@@ -937,7 +890,7 @@ function compatibilityHacks() {
   }
 }
 
-function main() {
+async function main() {
 
   const texturePathElement = getRequiredElement('piece-texture-path');
   const workerPathElement = getRequiredElement('piece-worker-path');
@@ -962,17 +915,18 @@ function main() {
   if (LOAD_FOR_SENI_APP_GALLERY === false) {
     // not really required, hack to load in other pieces
     const loadIdElement = getRequiredElement('piece-load-id');
-    loadIdElement.addEventListener('change', event => {
+    loadIdElement.addEventListener('change', async event => {
       console.log('loadidelement');
       const iVal = parseInt(event.target.value, 10);
 
-      fetchScript(iVal).then(code => {
-        script = code;
-        originalScript = script.slice();
-        scriptElement.textContent = script;
-        showSimplifiedScript(script);
-        return renderScript({ script, scriptHash });
-      }).catch(error => console.error(error));
+      const code = await fetchScript(iVal);
+
+      script = code;
+      originalScript = script.slice();
+      scriptElement.textContent = script;
+      await showSimplifiedScript(script);
+      await renderScript({ script, scriptHash });
+
     });
   }
 
@@ -984,66 +938,62 @@ function main() {
 
   const script = scriptElement.textContent;
   const originalScript = script.slice();
-  showSimplifiedScript(script);
+  await showSimplifiedScript(script);
 
   logDebug("init");
 
   gGLRenderer.loadTexture(texturePathElement.textContent)
-    .then(() => renderScript({ script, scriptHash }))
+    .then(async () => await renderScript({ script, scriptHash }))
     .catch(error => console.error(error));
 
-  originalButton.addEventListener('click', () => {
-    setMode("normal");
-    renderScript({ script: originalScript, scriptHash });
-    scriptElement.textContent = originalScript;
-    showSimplifiedScript(originalScript);
+  originalButton.addEventListener('click', async () => {
     originalButton.disabled = true;
+    await setMode("normal");
+    await renderScript({ script: originalScript, scriptHash });
+    scriptElement.textContent = originalScript;
+    await showSimplifiedScript(originalScript);
   });
 
-  slideshowButton.addEventListener('click', () => {
-    setMode("slideshow");
-    renderScript({ script: originalScript, scriptHash });
-    scriptElement.textContent = originalScript;
-    showSimplifiedScript(originalScript);
+  slideshowButton.addEventListener('click', async () => {
     originalButton.disabled = true;
+    await setMode("slideshow");
+    await renderScript({ script: originalScript, scriptHash });
+    scriptElement.textContent = originalScript;
+    await showSimplifiedScript(originalScript);
   });
 
-  evalButton.addEventListener('click', () => {
+  evalButton.addEventListener('click', async () => {
     gNumTransitions += 1;
     originalButton.disabled = false;
     const newSeed = Math.random() * (1 << 30);
     seedElement.value = parseInt(newSeed, 10);
 
     const seedValue = getSeedValue(seedElement);
-    buildTraits({ script: originalScript, scriptHash })
-      .then(({ traits }) => buildGenotype({ traits, seed: seedValue }))
-      .then(({ genotype }) => {
-        const config = { script: originalScript, scriptHash };
-        if (seedValue !== 0) {
-          config.genotype = genotype;
-        }
-        renderScript(config);
 
-        return unparse({ script: originalScript, genotype });
-      })
-      .then(({ script }) => {
-        scriptElement.textContent = script;
-        showSimplifiedScript(script);
-      })
-      .catch(error => {
-        console.error('piece-eval click error');
-        console.error(error);
-      });
+    const { traits } = await Job.request(jobBuildTraits, { script: originalScript, scriptHash });
+    const { genotype } = await Job.request(jobSingleGenotypeFromSeed, { traits, seed: seedValue });
+
+    const config = { script: originalScript, scriptHash };
+    if (seedValue !== 0) {
+      config.genotype = genotype;
+    }
+
+    await renderScript(config);
+
+    const { script } = await Job.request(jobUnparse, { script: originalScript, genotype });
+
+    scriptElement.textContent = script;
+    await showSimplifiedScript(script);
   });
 
-  canvasImageElement1.addEventListener('click', () => {
-    setMode("normal");
+  canvasImageElement1.addEventListener('click', async () => {
+    await setMode("normal");
   });
 
   const escapeKey = 27;
-  document.addEventListener('keydown', event => {
+  document.addEventListener('keydown', async event => {
     if (event.keyCode === escapeKey && gMode === 'slideshow') {
-      setMode('normal');
+      await setMode('normal');
       event.preventDefault();
     }
   }, false);
