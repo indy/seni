@@ -731,197 +731,18 @@ const Editor = {
 };
 
 // --------------------------------------------------------------------------------
-// store
+// controller
 
-let gCurrentState = undefined;
-
-function cloneState(state) {
-  const clone = {};
-
-  clone.highResolution = state.highResolution;
-  clone.placeholder = state.placeholder;
-  clone.populationSize = state.populationSize;
-  clone.mutationRate = state.mutationRate;
-
-  clone.currentMode = state.currentMode;
-  clone.galleryLoaded = state.galleryLoaded;
-  clone.previouslySelectedGenotypes = state.previouslySelectedGenotypes;
-  clone.selectedIndices = state.selectedIndices;
-  clone.scriptId = state.scriptId;
-  clone.script = state.script;
-  clone.scriptHash = state.scriptHash;
-  clone.genotypes = state.genotypes;
-  clone.traits = state.traits;
-
-  return clone;
-}
-
-async function actionSetMode(state, { mode }) { // note: this doesn't need to be async?
-  const newState = cloneState(state);
-  newState.currentMode = mode;
-
-  gCurrentState = newState;
-  return gCurrentState;
-}
-
-// from http://werxltd.com/wp/2010/05/13/ (cont'd next line)
-// javascript-implementation-of-javas-string-hashcode-method/
-function hashCode(string) {
-  let hash = 0, i, len;
-  if (string.length === 0) return hash;
-  for (i = 0, len = string.length; i < len; i++) {
-    const chr = string.charCodeAt(i);
-    hash = ((hash << 5) - hash) + chr;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash;
-}
-
-async function actionSetGenotype(state, { genotype }) {
-  const newState = cloneState(state);
-  newState.genotype = genotype;
-
-  gCurrentState = newState;
-  return gCurrentState;
-}
-
-async function actionSetScript(state, { script }) {
-  const newState = cloneState(state);
-  newState.script = script;
-  newState.scriptHash = hashCode(script);
-
-  const { validTraits, traits } = await Job.request(jobBuildTraits, {
-    script: newState.script,
-    scriptHash: newState.scriptHash
-  });
-
-  if (validTraits) {
-    newState.traits = traits;
-  } else {
-    newState.traits = [];
-  }
-
-  gCurrentState = newState;
-  return gCurrentState;
-}
-
-async function actionSetScriptId(state, { id }) {
-  const newState = cloneState(state);
-  newState.scriptId = id;
-
-  gCurrentState = newState;
-  return gCurrentState;
-}
-
-async function actionSetSelectedIndices(state, { selectedIndices }) {
-  const newState = cloneState(state);
-  newState.selectedIndices = selectedIndices || [];
-
-  gCurrentState = newState;
-  return gCurrentState;
-}
-
-// todo: should populationSize be passed in the action?
-async function actionInitialGeneration(state) {
-  const newState = cloneState(state);
-  let { genotypes } = await Job.request(jobInitialGeneration, {
-    traits: newState.traits,
-    populationSize: newState.populationSize
-  });
-
-  newState.genotypes = genotypes;
-  newState.previouslySelectedGenotypes = [];
-  newState.selectedIndices = [];
-
-  gCurrentState = newState;
-  return gCurrentState;
-}
-
-async function actionGalleryIsLoaded(state) {
-  const newState = cloneState(state);
-  newState.galleryLoaded = true;
-
-  gCurrentState = newState;
-  return gCurrentState;
-}
-
-async function actionShuffleGeneration(state, { rng }) {
-  const newState = cloneState(state);
-  const prev = newState.previouslySelectedGenotypes;
-
-  if (prev.length === 0) {
-    const s = await actionInitialGeneration(newState);
-
-    gCurrentState = s;
-    return gCurrentState;
-  } else {
-    const { genotypes } = await Job.request(jobNewGeneration, {
-      genotypes: prev,
-      populationSize: newState.populationSize,
-      traits: newState.traits,
-      mutationRate: newState.mutationRate,
-      rng
-    });
-
-    newState.genotypes = genotypes;
-    newState.selectedIndices = [];
-
-    gCurrentState = newState;
-    return gCurrentState;
-  }
-}
-
-async function actionNextGeneration(state, { rng }) {
-  const newState = cloneState(state);
-  const pg = newState.genotypes;
-  const selectedIndices = newState.selectedIndices;
-  const selectedGenos = [];
-
-  for (let i = 0; i < selectedIndices.length; i++) {
-    selectedGenos.push(pg[selectedIndices[i]]);
-  }
-
-  const { genotypes } = await Job.request(jobNewGeneration, {
-    genotypes: selectedGenos,
-    populationSize: newState.populationSize,
-    traits: newState.traits,
-    mutationRate: newState.mutationRate,
-    rng
-  });
-
-  const previouslySelectedGenotypes = genotypes.slice(0, selectedIndices.length);
-
-  newState.genotypes = genotypes;
-  newState.previouslySelectedGenotypes = previouslySelectedGenotypes;
-  newState.selectedIndices = [];
-
-  gCurrentState = newState;
-  return gCurrentState;
-}
-
-async function actionSetState(newState) {
-  gCurrentState = newState;
-  return gCurrentState;
-}
-
-function logMode(mode) {
-  let name = '';
-  switch (mode) {
-  case SeniMode.gallery:
-    name = 'gallery';
-    break;
-  case SeniMode.edit:
-    name = 'edit';
-    break;
-  case SeniMode.evolve:
-    name = 'evolve';
-    break;
-  default:
-    name = 'unknown';
-    break;
-  }
-  console.log(`SET_MODE: ${name}`);
-}
+const actionSetMode = 'SET_MODE';
+const actionSetGenotype = 'SET_GENOTYPE';
+const actionSetScript = 'SET_SCRIPT';
+const actionSetScriptId = 'SET_SCRIPT_ID';
+const actionSetSelectedIndices = 'SET_SELECTED_INDICES';
+const actionInitialGeneration = 'INITIAL_GENERATION';
+const actionNextGeneration = 'NEXT_GENERATION';
+const actionShuffleGeneration = 'SHUFFLE_GENERATION';
+const actionSetState = 'SET_STATE';
+const actionGalleryLoaded = 'GALLERY_LOADED';
 
 function createInitialState() {
   return {
@@ -945,62 +766,252 @@ function createInitialState() {
   };
 }
 
-function createStore(initialState) {
-  gCurrentState = initialState;
+class Controller {
+  constructor(initialState) {
+    this.currentState = initialState;
+  }
 
-  function reducer(state, action) {
-    switch (action.type) {
-    case 'SET_MODE':
-      if (logToConsole) {
-        logMode(action.mode);
+  cloneState(state) {
+    const clone = {};
+
+    clone.highResolution = state.highResolution;
+    clone.placeholder = state.placeholder;
+    clone.populationSize = state.populationSize;
+    clone.mutationRate = state.mutationRate;
+
+    clone.currentMode = state.currentMode;
+    clone.galleryLoaded = state.galleryLoaded;
+    clone.previouslySelectedGenotypes = state.previouslySelectedGenotypes;
+    clone.selectedIndices = state.selectedIndices;
+    clone.scriptId = state.scriptId;
+    clone.script = state.script;
+    clone.scriptHash = state.scriptHash;
+    clone.genotypes = state.genotypes;
+    clone.traits = state.traits;
+
+    return clone;
+  }
+
+  async applySetMode(state, { mode }) { // note: this doesn't need to be async?
+    const newState = this.cloneState(state);
+    newState.currentMode = mode;
+
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  async applySetGenotype(state, { genotype }) {
+    const newState = this.cloneState(state);
+    newState.genotype = genotype;
+
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  async applySetScript(state, { script }) {
+
+    // from http://werxltd.com/wp/2010/05/13/ (cont'd next line)
+    // javascript-implementation-of-javas-string-hashcode-method/
+    function hashCode(string) {
+      let hash = 0, i, len;
+      if (string.length === 0) return hash;
+      for (i = 0, len = string.length; i < len; i++) {
+        const chr = string.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
       }
-      return actionSetMode(state, action);
-    case 'SET_GENOTYPE':
+      return hash;
+    }
+
+    const newState = this.cloneState(state);
+    newState.script = script;
+    newState.scriptHash = hashCode(script);
+
+    const { validTraits, traits } = await Job.request(jobBuildTraits, {
+      script: newState.script,
+      scriptHash: newState.scriptHash
+    });
+
+    if (validTraits) {
+      newState.traits = traits;
+    } else {
+      newState.traits = [];
+    }
+
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  async applySetScriptId(state, { id }) {
+    const newState = this.cloneState(state);
+    newState.scriptId = id;
+
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  async applySetSelectedIndices(state, { selectedIndices }) {
+    const newState = this.cloneState(state);
+    newState.selectedIndices = selectedIndices || [];
+
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  // todo: should populationSize be passed in the action?
+  async applyInitialGeneration(state) {
+    const newState = this.cloneState(state);
+    let { genotypes } = await Job.request(jobInitialGeneration, {
+      traits: newState.traits,
+      populationSize: newState.populationSize
+    });
+
+    newState.genotypes = genotypes;
+    newState.previouslySelectedGenotypes = [];
+    newState.selectedIndices = [];
+
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  async applyGalleryIsLoaded(state) {
+    const newState = this.cloneState(state);
+    newState.galleryLoaded = true;
+
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  async applyShuffleGeneration(state, { rng }) {
+    const newState = this.cloneState(state);
+    const prev = newState.previouslySelectedGenotypes;
+
+    if (prev.length === 0) {
+      const s = await this.applyInitialGeneration(newState);
+
+      this.currentState = s;
+      return this.currentState;
+    } else {
+      const { genotypes } = await Job.request(jobNewGeneration, {
+        genotypes: prev,
+        populationSize: newState.populationSize,
+        traits: newState.traits,
+        mutationRate: newState.mutationRate,
+        rng
+      });
+
+      newState.genotypes = genotypes;
+      newState.selectedIndices = [];
+
+      this.currentState = newState;
+      return this.currentState;
+    }
+  }
+
+  async applyNextGeneration(state, { rng }) {
+    const newState = this.cloneState(state);
+    const pg = newState.genotypes;
+    const selectedIndices = newState.selectedIndices;
+    const selectedGenos = [];
+
+    for (let i = 0; i < selectedIndices.length; i++) {
+      selectedGenos.push(pg[selectedIndices[i]]);
+    }
+
+    const { genotypes } = await Job.request(jobNewGeneration, {
+      genotypes: selectedGenos,
+      populationSize: newState.populationSize,
+      traits: newState.traits,
+      mutationRate: newState.mutationRate,
+      rng
+    });
+
+    const previouslySelectedGenotypes = genotypes.slice(0, selectedIndices.length);
+
+    newState.genotypes = genotypes;
+    newState.previouslySelectedGenotypes = previouslySelectedGenotypes;
+    newState.selectedIndices = [];
+
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  async applySetState(newState) {
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  logMode(mode) {
+    let name = '';
+    switch (mode) {
+    case SeniMode.gallery:
+      name = 'gallery';
+      break;
+    case SeniMode.edit:
+      name = 'edit';
+      break;
+    case SeniMode.evolve:
+      name = 'evolve';
+      break;
+    default:
+      name = 'unknown';
+      break;
+    }
+    console.log(`${actionSetMode}: ${name}`);
+  }
+
+  reducer(state, action) {
+    switch (action.__type) {
+    case actionSetMode:
+      if (logToConsole) {
+        this.logMode(action.mode);
+      }
+      return this.applySetMode(state, action);
+    case actionSetGenotype:
       // SET_GENOTYPE is only used during the high-res rendering
       // when the render button is clicked on an image in the evolve gallery
       //
-      return actionSetGenotype(state, action);
-    case 'SET_SCRIPT':
-      return actionSetScript(state, action);
-    case 'SET_SCRIPT_ID':
-      return actionSetScriptId(state, action);
-    case 'SET_SELECTED_INDICES':
-      return actionSetSelectedIndices(state, action);
-    case 'INITIAL_GENERATION':
-      return actionInitialGeneration(state);
-    case 'NEXT_GENERATION':
-      return actionNextGeneration(state, action);
-    case 'SHUFFLE_GENERATION':
-      return actionShuffleGeneration(state, action);
-    case 'SET_STATE':
+      return this.applySetGenotype(state, action);
+    case actionSetScript:
+      return this.applySetScript(state, action);
+    case actionSetScriptId:
+      return this.applySetScriptId(state, action);
+    case actionSetSelectedIndices:
+      return this.applySetSelectedIndices(state, action);
+    case actionInitialGeneration:
+      return this.applyInitialGeneration(state);
+    case actionNextGeneration:
+      return this.applyNextGeneration(state, action);
+    case actionShuffleGeneration:
+      return this.applyShuffleGeneration(state, action);
+    case actionSetState:
       if (logToConsole) {
-        console.log(`SET_STATE: ${action.state}`);
+        console.log(`${actionSetState}: ${action.state}`);
       }
-      return actionSetState(action.state);
-    case 'GALLERY_LOADED':
-      return actionGalleryIsLoaded(state, action);
+      return this.applySetState(action.state);
+    case actionGalleryLoaded:
+      return this.applyGalleryIsLoaded(state, action);
     default:
-      return actionSetState(state);
+      return this.applySetState(state);
     }
   }
 
-  function getState() {
-    return gCurrentState;
+  getState() {
+    return this.currentState;
   }
 
-  function dispatch(action) {
+  dispatch(action, data) {
+    if (data === undefined) {
+      data = {};
+    }
+    data.__type = action;
+
     if (logToConsole) {
-      console.log(`dispatch: action = ${action.type}`);
+      console.log(`dispatch: action = ${data.__type}`);
     }
-    return reducer(gCurrentState, action);
+    return this.reducer(this.currentState, data);
   }
-
-  return {
-    getState,
-    dispatch
-  };
 }
-
 
 // --------------------------------------------------------------------------------
 // timer
@@ -1340,7 +1351,7 @@ function showPlaceholderImages(state) {
   }
 }
 
-// needs the store since imageLoadHandler rebinds store.getState()
+// needs the controller since imageLoadHandler rebinds controller.getState()
 // on every image load
 //
 function afterLoadingPlaceholderImages(state) {
@@ -1466,9 +1477,9 @@ async function renderGeneration(state) {
 }
 
 // invoked when the evolve screen is displayed after the edit screen
-async function setupEvolveUI(store) {
-  await afterLoadingPlaceholderImages(store.getState());
-  const state = await store.dispatch({type: 'INITIAL_GENERATION'});
+async function setupEvolveUI(controller) {
+  await afterLoadingPlaceholderImages(controller.getState());
+  const state = await controller.dispatch(actionInitialGeneration);
   // render the phenotypes
   updateSelectionUI(state);
   await renderGeneration(state);
@@ -1594,22 +1605,22 @@ async function updateUI(state) {
   }
 }
 
-async function ensureMode(store, mode) {
-  if (mode === SeniMode.gallery && store.getState().galleryLoaded === false) {
+async function ensureMode(controller, mode) {
+  if (mode === SeniMode.gallery && controller.getState().galleryLoaded === false) {
     // want to show the gallery but it hasn't been loaded yet. This occurs when
     // editing a particular piece by loading it's id directly into the URL
     // e.g. http://localhost:3210/#61
     //
-    await getGallery(store);
+    await getGallery(controller);
   }
 
-  if (store.getState().currentMode !== mode) {
-    const state = await store.dispatch({type: 'SET_MODE', mode});
+  if (controller.getState().currentMode !== mode) {
+    const state = await controller.dispatch(actionSetMode, { mode });
     History.pushState(state);
 
     if (mode === SeniMode.evolve) {
       showCurrentMode(state);
-      const latestState = await setupEvolveUI(store);
+      const latestState = await setupEvolveUI(controller);
       // make sure that the history for the first evolve generation
       // has the correct genotypes
       History.replaceState(latestState);
@@ -1682,27 +1693,19 @@ async function renderHighResSection(state, section) {
   loader.classList.add('hidden');
 }
 
-function setGenotype(store, genotype) {
-  return store.dispatch({type: 'SET_GENOTYPE', genotype});
-}
-
-// updates the store's script variable and then generates the traits
-// in a ww and updates the store again
+// updates the controller's script variable and then generates the traits
+// in a ww and updates the controller again
 //
-function setScript(store, script) {
-  return store.dispatch({type: 'SET_SCRIPT', script});
+function setScript(controller, script) {
+  return controller.dispatch(actionSetScript, { script });
 }
 
-function setScriptId(store, id) {
-  return store.dispatch({type: 'SET_SCRIPT_ID', id});
-}
-
-async function showEditFromEvolve(store, element) {
+async function showEditFromEvolve(controller, element) {
   console.log('showEditFromEvolve');
   const [index, _] = getPhenoIdFromDom(element);
 
   if (index !== -1) {
-    const state = store.getState();
+    const state = controller.getState();
     const genotypes = state.genotypes;
     const { script } = await Job.request(jobUnparse, {
       script: state.script,
@@ -1710,15 +1713,15 @@ async function showEditFromEvolve(store, element) {
       genotype: genotypes[index]
     });
 
-    await setScript(store, script);
-    await ensureMode(store, SeniMode.edit);
+    await controller.dispatch(actionSetScript, { script });
+    await ensureMode(controller, SeniMode.edit);
   }
 }
 
-async function onNextGen(store) {
+async function onNextGen(controller) {
   try {
     // get the selected genotypes for the next generation
-    const populationSize = store.getState().populationSize;
+    const populationSize = controller.getState().populationSize;
     const phenotypes = gUI.phenotypes;
     const selectedIndices = [];
 
@@ -1729,7 +1732,7 @@ async function onNextGen(store) {
       }
     }
 
-    let state = await store.dispatch({type: 'SET_SELECTED_INDICES', selectedIndices});
+    let state = await controller.dispatch(actionSetSelectedIndices, { selectedIndices });
     if (selectedIndices.length === 0) {
       // no phenotypes were selected
       return;
@@ -1740,7 +1743,7 @@ async function onNextGen(store) {
 
     showPlaceholderImages(state);
 
-    state = await store.dispatch({type: 'NEXT_GENERATION', rng: 4242});
+    state = await controller.dispatch(actionNextGeneration, { rng: 4242 });
     if (state === undefined) {
       return;
     }
@@ -1775,26 +1778,26 @@ function createPhenotypeElement(id, placeholderImage) {
 }
 
 // invoked when restoring the evolve screen from the history api
-async function restoreEvolveUI(store) {
-  await afterLoadingPlaceholderImages(store.getState());
-  updateSelectionUI(store.getState());
+async function restoreEvolveUI(controller) {
+  await afterLoadingPlaceholderImages(controller.getState());
+  updateSelectionUI(controller.getState());
   // render the phenotypes
-  await renderGeneration(store.getState());
+  await renderGeneration(controller.getState());
 }
 
-async function loadScriptWithId(store, id) {
+async function loadScriptWithId(controller, id) {
   const response = await fetch(`gallery/${id}`);
-  const text = await response.text();
+  const script = await response.text();
 
-  await setScript(store, text);
-  await setScriptId(store, id);
-  await ensureMode(store, SeniMode.edit);
+  await controller.dispatch(actionSetScript, { script });
+  await controller.dispatch(actionSetScriptId, { id });
+  await ensureMode(controller, SeniMode.edit);
 }
 
-async function showEditFromGallery(store, element) {
+async function showEditFromGallery(controller, element) {
   const [index, _] = getIdNumberFromDom(element, /gallery-item-(\d+)/);
   if (index !== -1) {
-    await loadScriptWithId(store, index);
+    await loadScriptWithId(controller, index);
   }
 }
 
@@ -1809,7 +1812,17 @@ function resizeContainers() {
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
-function createEditor(store, editorTextArea) {
+async function evalMainScript() {
+  try {
+    const script = getScriptFromEditor();
+    const state = await controller.dispatch(actionSetScript, { script });
+    await renderEditorScript(state);
+  } catch (error) {
+    console.error(`evalMainScript error: ${error}`);
+  }
+}
+
+function createEditor(controller, editorTextArea) {
   const blockIndent = function (editor, from, to) {
     editor.operation(() => {
       for (let i = from; i < to; ++i) {
@@ -1820,12 +1833,7 @@ function createEditor(store, editorTextArea) {
 
   const extraKeys = {
     'Ctrl-E': async () => {
-      try {
-        const state = await setScript(store, getScriptFromEditor());
-        await renderEditorScript(state);
-      } catch (error) {
-        console.error(`worker setScript error: ${error}`);
-      }
+      await evalMainScript();
       return false;
     },
     'Ctrl-I': () => {
@@ -1851,7 +1859,7 @@ function ensureFilenameIsPNG(filename) {
   }
 }
 
-function setupUI(store) {
+function setupUI(controller) {
   const d = document;
   const editorTextArea = d.getElementById('edit-textarea');
 
@@ -1864,22 +1872,23 @@ function setupUI(store) {
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById('render-img'),
     // console CodeMirror element in the edit screen
-    editor: createEditor(store, editorTextArea)
+    editor: createEditor(controller, editorTextArea)
   };
 
   showButtonsFor(SeniMode.gallery);
 
   addClickEvent('home', async event => {
-    await ensureMode(store, SeniMode.gallery);
+    await ensureMode(controller, SeniMode.gallery);
     event.preventDefault();
   });
 
   addClickEvent('evolve-btn', async event => {
     try {
       // get the latest script from the editor
-      const state = await setScript(store, getScriptFromEditor());
+      const script = getScriptFromEditor();
+      const state = await controller.dispatch(actionSetScript, { script });
       History.replaceState(state);
-      await ensureMode(store, SeniMode.evolve);
+      await ensureMode(controller, SeniMode.evolve);
     } catch (error) {
       // handle error
       console.error(`evolve-btn:click : error of ${error}`);
@@ -1894,8 +1903,8 @@ function setupUI(store) {
 
   addClickEvent('shuffle-btn', async event => {
     try {
-      showPlaceholderImages(store.getState());
-      const state = await store.dispatch({type: 'SHUFFLE_GENERATION', rng: 11});
+      showPlaceholderImages(controller.getState());
+      const state = await controller.dispatch(actionShuffleGeneration, { rng: 11 });
       updateSelectionUI(state);
       await renderGeneration(state);
     } catch (error) {
@@ -1907,20 +1916,14 @@ function setupUI(store) {
   });
 
   addClickEvent('eval-btn', async event => {
-    try {
-      const state = await setScript(store, getScriptFromEditor());
-      await renderEditorScript(state);
-    } catch (error) {
-      // handle error
-      console.error(`eval-btn:click : error of ${error}`);
-    }
+    await evalMainScript();
     event.preventDefault();
   });
 
   addClickEvent('gallery-container', async event => {
     const target = event.target;
     if (target.classList.contains('show-edit')) {
-      await showEditFromGallery(store, target);
+      await showEditFromGallery(controller, target);
     }
     event.preventDefault();
   });
@@ -1931,15 +1934,15 @@ function setupUI(store) {
 
     if (target.classList.contains('render')) {
       if (index !== -1) {
-        const genotypes = store.getState().genotypes;
+        const genotypes = controller.getState().genotypes;
         const genotype = genotypes[index];
 
-        await setGenotype(store, genotype);
+        await controller.dispatch(actionSetGenotype, { genotype });
 
         downloadDialog();
       }
     } else if (target.classList.contains('edit')) {
-      showEditFromEvolve(store, target);
+      showEditFromEvolve(controller, target);
     } else {
       if (index !== -1) {
         phenoElement.classList.toggle('selected');
@@ -1949,11 +1952,11 @@ function setupUI(store) {
   });
 
   addClickEvent('next-btn', () => {
-    onNextGen(store);
+    onNextGen(controller);
   });
 
   addClickEvent('high-res-download', async event => {
-    const state = store.getState();
+    const state = controller.getState();
 
     const loader = document.getElementById('high-res-loader');
     const image = document.getElementById('render-img');
@@ -1987,7 +1990,7 @@ function setupUI(store) {
     gGLRenderer.localDownload(filename);
 
     // todo: is this the best place to reset the genotype?
-    await setGenotype(store, undefined);
+    await controller.dispatch(actionSetGenotype, { genotype: undefined });
 
     event.preventDefault();
   });
@@ -2002,9 +2005,9 @@ function setupUI(store) {
   const dKey = 68;
   document.addEventListener('keydown', event => {
     if (event.ctrlKey && event.keyCode === dKey &&
-        store.getState().currentMode === SeniMode.evolve) {
+        controller.getState().currentMode === SeniMode.evolve) {
       event.preventDefault();
-      onNextGen(store);
+      onNextGen(controller);
     }
   }, false);
 
@@ -2021,7 +2024,7 @@ function setupUI(store) {
   row.className = 'cards';
   evolveGallery.appendChild(row);
 
-  const populationSize = store.getState().populationSize;
+  const populationSize = controller.getState().populationSize;
   const phenotypes = [];
   for (let i = 0; i < populationSize; i++) {
     const phenotypeElement = createPhenotypeElement(i, '');
@@ -2046,26 +2049,26 @@ function setupUI(store) {
     try {
       if (event.state) {
         const savedState = History.restoreState(event.state);
-        const state = await store.dispatch({type: 'SET_STATE', state: savedState});
+        const state = await controller.dispatch('SET_STATE', { state: savedState });
         await updateUI(state);
         if (state.currentMode === SeniMode.evolve) {
-          await restoreEvolveUI(store);
+          await restoreEvolveUI(controller);
         }
       } else {
         // no event.state so behave as if the user has visited
         // the '/' of the state
-        await ensureMode(store, SeniMode.gallery);
+        await ensureMode(controller, SeniMode.gallery);
       }
     } catch (error) {
         // handle error
-        console.error(`SET_STATE: error of ${error}`);
+        console.error(`${actionSetState}: error of ${error}`);
     }
   });
 
-  return store;
+  return controller;
 }
 
-async function getGallery(store) {
+async function getGallery(controller) {
   const createGalleryElement = galleryItem => {
     const container = document.createElement('div');
 
@@ -2100,7 +2103,7 @@ async function getGallery(store) {
     row.appendChild(e);
   });
 
-  await store.dispatch({type: 'GALLERY_LOADED'});
+  await controller.dispatch(actionGalleryLoaded);
 }
 
 function allocateWorkers(state) {
@@ -2153,7 +2156,7 @@ async function main() {
   setupResizeability();
 
   const state = createInitialState();
-  const store = createStore(state);
+  const controller = new Controller(state);
 
   allocateWorkers(state);
 
@@ -2163,14 +2166,14 @@ async function main() {
   try {
     await gGLRenderer.loadTexture('img/texture.png');
 
-    setupUI(store);
+    setupUI(controller);
 
     const matched = window.location.hash.match(/^\#(\d+)/);
     if (window.location.pathname === '/' && matched) {
       const id = parseInt(matched[1], 10);
-      await loadScriptWithId(store, id);
+      await loadScriptWithId(controller, id);
     } else {
-      await ensureMode(store, SeniMode.gallery);
+      await ensureMode(controller, SeniMode.gallery);
     }
   } catch (error) {
     console.error(error);
