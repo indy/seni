@@ -168,7 +168,8 @@ impl Genotype {
         let mut genotypes: Vec<Genotype> = Vec::new();
         let mut prng = PrngStateStruct::new(seed, 1.0, 655_536.0);
 
-        for _ in 0..population_size {
+        genotypes.push(Genotype::build_from_initial_values(trait_list)?);
+        for _ in 1..population_size {
             let genotype_seed = prng.prng_f32_defined_range() as i32;
             genotypes.push(Genotype::build_from_seed(trait_list, genotype_seed)?);
         }
