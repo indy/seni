@@ -434,10 +434,6 @@ class PromiseWorker {
         return;
       }
 
-      if (status.logMessages && status.logMessages.length > 0) {
-        console.log(status.logMessages);
-      }
-
       if (status.error) {
         self.reject(new Error(status.error.message));
       } else {

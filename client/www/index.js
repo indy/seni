@@ -16,7 +16,16 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const logToConsole = false;
+// --------------------------------------------------------------------------------
+// log
+
+let logToConsole = false;
+
+function log(msg) {
+  if (logToConsole) {
+    console.log(msg);
+  }
+}
 
 // --------------------------------------------------------------------------------
 // matrix
@@ -288,15 +297,11 @@ class GLRenderer {
     const domElement = this.glDomElement;
 
     if (domElement.width !== destWidth) {
-      if (logToConsole) {
-        console.log('GL width from', domElement.width, 'to', destWidth);
-      }
+      log('GL width from', domElement.width, 'to', destWidth);
       domElement.width = destWidth;
     }
     if (this.glDomElement.height !== destHeight) {
-      if (logToConsole) {
-        console.log('GL height from', domElement.height, 'to', destHeight);
-      }
+      log('GL height from', domElement.height, 'to', destHeight);
       domElement.height = destHeight;
     }
     // gl.drawingBufferWidth, gl.drawingBufferHeight hold the actual
@@ -405,23 +410,16 @@ function buildState(appState) {
 const History = {
   pushState: function(appState) {
     const [state, uri] = buildState(appState);
-    if (logToConsole) {
-      console.log('historyPushState', state);
-    }
+    log('historyPushState', state);
     history.pushState(state, null, uri);
   },
   replaceState: function(appState) {
     const [state, uri] = buildState(appState);
-    if (logToConsole) {
-      console.log('historyReplace', state);
-    }
+    log('historyReplace', state);
     history.replaceState(state, null, uri);
   },
   restoreState: function(state) {
-    if (logToConsole) {
-      console.log('historyRestore', state);
-    }
-
+    log('historyRestore', state);
     return state;
   }
 };
@@ -957,7 +955,7 @@ class Controller {
       name = 'unknown';
       break;
     }
-    console.log(`${actionSetMode}: ${name}`);
+    log(`${actionSetMode}: ${name}`);
   }
 
   reducer(state, action) {
@@ -985,9 +983,7 @@ class Controller {
     case actionShuffleGeneration:
       return this.applyShuffleGeneration(state, action);
     case actionSetState:
-      if (logToConsole) {
-        console.log(`${actionSetState}: ${action.state}`);
-      }
+      log(`${actionSetState}: ${action.state}`);
       return this.applySetState(action.state);
     case actionGalleryLoaded:
       return this.applyGalleryIsLoaded(state, action);
@@ -1006,9 +1002,7 @@ class Controller {
     }
     data.__type = action;
 
-    if (logToConsole) {
-      console.log(`dispatch: action = ${data.__type}`);
-    }
+    log(`dispatch: action = ${data.__type}`);
     return this.reducer(this.currentState, data);
   }
 }
@@ -1062,32 +1056,37 @@ function useDBEntry(id) {
 }
 
 function startTiming() {
-  const before = performance.now();
-  // return the 'stop' function
-  return (id, konsole) => {
-    const entry = useDBEntry(id);
+  if (logToConsole) {
+    const before = performance.now();
+    // return the 'stop' function
+    return (id) => {
+      const entry = useDBEntry(id);
 
-    const after = performance.now();
-    const duration = after - before;
+      const after = performance.now();
+      const duration = after - before;
 
-    addTiming(entry, duration);
+      addTiming(entry, duration);
 
-    const stats = getStats(entry);
+      const stats = getStats(entry);
 
-    if (konsole && stats) {
-      const eid = entry.id;
-      const cur = stats.current.toFixed(printPrecision);
-      const avg = stats.average.toFixed(printPrecision);
-      const min = stats.min.toFixed(printPrecision);
-      const max = stats.max.toFixed(printPrecision);
-      const num = stats.num;
+      if (stats) {
+        const eid = entry.id;
+        const cur = stats.current.toFixed(printPrecision);
+        const avg = stats.average.toFixed(printPrecision);
+        const min = stats.min.toFixed(printPrecision);
+        const max = stats.max.toFixed(printPrecision);
+        const num = stats.num;
 
-      const msg1 = `${eid}: ${cur}ms `;
-      const msg2 = `(Mean: ${avg}, Min: ${min}, Max: ${max} N:${num})`;
+        const msg1 = `${eid}: ${cur}ms `;
+        const msg2 = `(Mean: ${avg}, Min: ${min}, Max: ${max} N:${num})`;
 
-      konsole.log(msg1 + msg2);
-    }
-  };
+        log(msg1 + msg2);
+      }
+    };
+  } else {
+    // do nothing
+    return (id) => {};
+  }
 }
 
 function getTimingEntry(id) {
@@ -1140,12 +1139,8 @@ class PromiseWorker {
 
       if (status.systemInitialised) {
         self.initialised = true;
-        console.log(`worker ${self.id} initialised`);
+        log(`worker ${self.id} initialised`);
         return;
-      }
-
-      if (status.logMessages && status.logMessages.length > 0) {
-        console.log(status.logMessages);
       }
 
       if (status.error) {
@@ -1217,20 +1212,14 @@ const Job = {
       let worker = undefined;
       if (worker_id === undefined) {
         worker = await findAvailableWorker();
-        if (logToConsole) {
-          console.log(`assigning ${type} to worker ${worker.getId()}`);
-        }
+        log(`assigning ${type} to worker ${worker.getId()}`);
       } else {
         worker = promiseWorkers[worker_id];
-        if (logToConsole) {
-          console.log(`explicitly assigning ${type} to worker ${worker.getId()}`);
-        }
+        log(`explicitly assigning ${type} to worker ${worker.getId()}`);
       }
 
       const result = await worker.postMessage(type, data);
-      if (logToConsole) {
-        console.log(`result ${type} id:${worker.getId()}`);
-      }
+      log(`result ${type} id:${worker.getId()}`);
 
       if(!data.__retain) {
         worker.release();
@@ -1249,10 +1238,8 @@ const Job = {
   setup: function(numWorkersParam, path) {
     numWorkers = numWorkersParam;
 
-    if (logToConsole) {
-      console.log(`workers::path = ${path}`);
-      console.log(`workers::numWorkers = ${numWorkers}`);
-    }
+    log(`workers::path = ${path}`);
+    log(`workers::numWorkers = ${numWorkers}`);
 
     for (let i = 0; i < numWorkers; i++) {
       promiseWorkers[i] = new PromiseWorker(i, path);
@@ -1324,7 +1311,7 @@ function showButtonsFor(mode) {
     shuffleBtn.classList.remove('hidden');
     break;
   default:
-    console.log('unknown sen mode');
+    log('unknown sen mode');
     break;
   }
 }
@@ -1423,7 +1410,7 @@ async function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
 
   await gGLRenderer.copyImageDataTo(imageElement);
 
-  stopFn("rendering all buffers", console);
+  stopFn("rendering all buffers");
 }
 
 async function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, section) {
@@ -1447,7 +1434,7 @@ async function renderGeometryBuffersSection(memory, buffers, imageElement, w, h,
 
   await gGLRenderer.copyImageDataTo(imageElement);
 
-  stopFn(`rendering all buffers for section ${section}`, console);
+  stopFn(`rendering all buffers for section ${section}`);
 }
 
 async function renderGeneration(state) {
@@ -1473,7 +1460,7 @@ async function renderGeneration(state) {
 
   await Promise.all(promises);
 
-  stopFn(`renderGeneration-${hackTitle}`, console);
+  stopFn(`renderGeneration-${hackTitle}`);
 }
 
 // invoked when the evolve screen is displayed after the edit screen
@@ -1536,9 +1523,9 @@ async function renderScript(parameters, imageElement) {
   await renderGeometryBuffers(memory, buffers, imageElement);
 
   if (title === '') {
-    stopFn(`renderScript`, console);
+    stopFn(`renderScript`);
   } else {
-    stopFn(`renderScript-${title}`, console);
+    stopFn(`renderScript-${title}`);
   }
 }
 
@@ -1559,7 +1546,7 @@ async function renderJob(parameters) {
   //
   const bitmap_loading_funcs = bitmapsToTransfer.map(filename => async () => {
     const imageData = await loadBitmapImageData(filename);
-    console.log(`worker ${__worker_id}: bitmap request: ${filename}`);
+    log(`worker ${__worker_id}: bitmap request: ${filename}`);
     // make an explicit job request to the same worker
     return Job.request(jobRender_2_ReceiveBitmapData, { filename, imageData, __retain: true }, __worker_id);
   });
@@ -1600,7 +1587,7 @@ async function updateUI(state) {
     // NOTE: the popstate event listener is handling this case
     break;
   default:
-    console.log('unknown SeniMode');
+    log('unknown SeniMode');
     break;
   }
 }
@@ -1688,7 +1675,7 @@ async function renderHighResSection(state, section) {
   });
   const [width, height] = state.highResolution;
   await renderGeometryBuffersSection(memory, buffers, image, width, height, section);
-  stopFn(`renderHighResSection-${title}-${section}`, console);
+  stopFn(`renderHighResSection-${title}-${section}`);
   image.classList.remove('hidden');
   loader.classList.add('hidden');
 }
@@ -1701,7 +1688,6 @@ function setScript(controller, script) {
 }
 
 async function showEditFromEvolve(controller, element) {
-  console.log('showEditFromEvolve');
   const [index, _] = getPhenoIdFromDom(element);
 
   if (index !== -1) {
@@ -1812,7 +1798,7 @@ function resizeContainers() {
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
 }
 
-async function evalMainScript() {
+async function evalMainScript(controller) {
   try {
     const script = getScriptFromEditor();
     const state = await controller.dispatch(actionSetScript, { script });
@@ -1833,14 +1819,14 @@ function createEditor(controller, editorTextArea) {
 
   const extraKeys = {
     'Ctrl-E': async () => {
-      await evalMainScript();
+      await evalMainScript(controller);
       return false;
     },
     'Ctrl-I': () => {
       const editor = gUI.editor;
       const numLines = editor.doc.size;
       blockIndent(editor, 0, numLines);
-      console.log(`indenting ${numLines} lines`);
+      log(`indenting ${numLines} lines`);
       return false;
     }
   };
@@ -1917,7 +1903,7 @@ function setupUI(controller) {
   });
 
   addClickEvent('eval-btn', async event => {
-    await evalMainScript();
+    await evalMainScript(controller);
     event.preventDefault();
   });
 
@@ -1982,7 +1968,7 @@ function setupUI(controller) {
 
     await renderGeometryBuffers(memory, buffers, image, width, height);
 
-    stopFn(`renderHighRes-${title}`, console);
+    stopFn(`renderHighRes-${title}`);
 
     loader.classList.add('hidden');
 
@@ -2110,7 +2096,6 @@ async function getGallery(controller) {
 function allocateWorkers(state) {
   const defaultNumWorkers = 4;
   let numWorkers = navigator.hardwareConcurrency || defaultNumWorkers;
-  // console.log("setting numWorkers to 1");
   // let numWorkers = 1;
   if (numWorkers > state.populationSize) {
     // don't allocate more workers than necessary

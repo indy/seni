@@ -33,44 +33,7 @@ const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
 const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
 const jobReceiveBitmapData = 'RECEIVE_BITMAP_DATA';
 
-class KonsoleProxy {
-  constructor() {
-    this.messages = [];
-  }
-
-  clear() {
-    this.messages = [];
-  }
-
-  log(msg) {
-    this.messages.push(msg);
-  }
-
-  collectMessages() {
-    return this.messages.join('\n');
-  }
-}
-
-const konsoleProxy = new KonsoleProxy();
-
-
-/*
-  function pointerToFloat32Array(ptr, length) {
-  const nByte = 4;
-  const pos = ptr / nByte;
-  return SeniWasm.instance.memory.F32.subarray(pos, pos + length);
-  }
-
-  function pointerToArrayBufferCopy(ptr, length) {
-  const nByte = 4;
-  const pos = ptr / nByte;
-  return SeniWasm.instance.memory.F32.slice(pos, pos + length);
-  }
-*/
-
 function compile({ script /*, scriptHash*/, genotype }) {
-  konsoleProxy.clear();
-
   if (genotype) {
     // console.log("render: using a genotype");
     gState.bridge.use_genotype_when_compiling(true);
@@ -89,14 +52,10 @@ function compile({ script /*, scriptHash*/, genotype }) {
 
   const bitmapsToTransfer = JSON.parse(gState.bridge.get_bitmap_transfers_as_json());
 
-  const logMessages = konsoleProxy.collectMessages();
-
-  return [{ logMessages }, { bitmapsToTransfer }];
+  return [{}, { bitmapsToTransfer }];
 }
 
 function receiveBitmapData( { filename, imageData } ) {
-  konsoleProxy.clear();
-
   // todo: see if the imageData.data can be transferred across
   const pixels = [];
   const numElements = imageData.width * imageData.height * 4;
@@ -106,13 +65,10 @@ function receiveBitmapData( { filename, imageData } ) {
 
   gState.bridge.add_rgba_bitmap(filename, imageData.width, imageData.height, pixels);
 
-  const logMessages = konsoleProxy.collectMessages();
-
-  return [{ logMessages }, { result: "shabba" }];
+  return [{}, { result: "shabba" }];
 }
 
 function renderPackets({  }) {
-  konsoleProxy.clear();
   const buffers = [];
 
   const numRenderPackets = gState.bridge.run_program();
@@ -129,7 +85,6 @@ function renderPackets({  }) {
 
   gState.bridge.script_cleanup();
 
-  const logMessages = konsoleProxy.collectMessages();
   const title = '';
 
   // make a copy of the wasm memory
@@ -145,13 +100,11 @@ function renderPackets({  }) {
   const wasmMemory = gState.memory.buffer;
   const memory = wasmMemory.slice();
 
-  return [{ logMessages }, { title, memory, buffers }];
+  return [{}, { title, memory, buffers }];
 }
 
 
 function unparse({ script/*, scriptHash*/, genotype }) {
-  konsoleProxy.clear();
-
   // console.log(`genotype is ${genotype}`);
   // console.log(`script is ${script}`);
 
@@ -163,14 +116,10 @@ function unparse({ script/*, scriptHash*/, genotype }) {
 
   // console.log(`new script: ${newScript}`);
 
-  const logMessages = konsoleProxy.collectMessages();
-
-  return [{ logMessages }, { script: newScript }];
+  return [{}, { script: newScript }];
 }
 
 function buildTraits({ script /*, scriptHash */ }) {
-  konsoleProxy.clear();
-
   gState.bridge.set_source_buffer_string(script);
 
   let traits = [];
@@ -182,8 +131,7 @@ function buildTraits({ script /*, scriptHash */ }) {
     // console.log(traits);
   }
 
-  const logMessages = konsoleProxy.collectMessages();
-  return [{ logMessages }, { validTraits, traits }];
+  return [{}, { validTraits, traits }];
 }
 
 // transfers the contents of g_genotype_list from the wasm side
@@ -201,58 +149,41 @@ function getGenotypesFromWasm(populationSize) {
 }
 
 function createInitialGeneration({ populationSize, traits }) {
-  konsoleProxy.clear();
-
   // console.log("createInitialGeneration: using traits:");
   // console.log(traits);
 
   gState.bridge.set_traits_buffer_string(traits);
 
   const seed = Math.floor(Math.random() * 1024);
-  // konsoleProxy.log(`createInitialGeneration seed: ${seed}`);
-  // konsoleProxy.log(`createInitialGeneration populationSize: ${populationSize}`);
 
   gState.bridge.create_initial_generation(populationSize, seed);
 
   const genotypes = getGenotypesFromWasm(populationSize);
-  const logMessages = konsoleProxy.collectMessages();
 
-  return [{ logMessages }, { genotypes }];
+  return [{}, { genotypes }];
 }
 
 function singleGenotypeFromSeed({ seed, traits }) {
-  konsoleProxy.clear();
-
   gState.bridge.set_traits_buffer_string(traits);
-
-  // konsoleProxy.log(`singleGenotypeFromSeed seed: ${seed}`);
 
   gState.bridge.single_genotype_from_seed(seed);
 
   const genotypes = getGenotypesFromWasm(1);
 
-  const logMessages = konsoleProxy.collectMessages();
-
-  return [{ logMessages }, { genotype: genotypes[0] }];
+  return [{}, { genotype: genotypes[0] }];
 }
 
 function simplifyScript({ script }) {
-  konsoleProxy.clear();
-
   gState.bridge.set_source_buffer_string(script);
 
   gState.bridge.simplify_script();
 
   const newScript = gState.bridge.get_out_source_buffer_string();
 
-  const logMessages = konsoleProxy.collectMessages();
-
-  return [{ logMessages }, { script: newScript }];
+  return [{}, { script: newScript }];
 }
 
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
-  konsoleProxy.clear();
-
   gState.bridge.next_generation_prepare();
   for (let i = 0; i < genotypes.length; i++) {
     gState.bridge.set_genotype_buffer_string(genotypes[i]);
@@ -265,9 +196,7 @@ function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
 
   const newGenotypes = getGenotypesFromWasm(populationSize);
 
-  const logMessages = konsoleProxy.collectMessages();
-
-  return [{ logMessages }, { genotypes: newGenotypes }];
+  return [{}, { genotypes: newGenotypes }];
 }
 
 const options = {
@@ -330,9 +259,8 @@ function messageHandler(type, data) {
   postMessage will always return an array of two items: [status, result]
 
   status = {
-  error: { message: "something fucked up" }
-  systemInitialised: true
-  logMessages: []
+    error: { message: "something fucked up" }
+    systemInitialised: true
   }
 */
 
