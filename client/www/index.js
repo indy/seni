@@ -1904,7 +1904,8 @@ function setupUI(controller) {
   addClickEvent('shuffle-btn', async event => {
     try {
       showPlaceholderImages(controller.getState());
-      const state = await controller.dispatch(actionShuffleGeneration, { rng: 11 });
+      const rng = Math.random() * 9999;
+      const state = await controller.dispatch(actionShuffleGeneration, { rng });
       updateSelectionUI(state);
       await renderGeneration(state);
     } catch (error) {
