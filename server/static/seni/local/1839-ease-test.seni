@@ -5,7 +5,7 @@
   w (- canvas/width (* x-off 2))
   wid (/ w (* segments 1.2))
 
-  easer (interp/build from: [0 1] to: [0 w] mapping: {linear (gen/select from: ease/presets)})
+  easer (interp/build from: [0 1] to: [0 w] mapping: {linear (gen/select from: ease/*)})
   )
 
 (fence (t num: segments)

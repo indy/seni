@@ -208,7 +208,7 @@ width         | 4            |
 colour        | RGB(0 0 0 1) |
 from-colour   | RGB(0 0 0 1) |
 to-colour     | RGB(0 0 0 1) |
-brush         | brush-flat   |
+brush         | brush/flat   |
 brush-subtype | 0            |
 
 either set 'colour' or both 'from-colour' and 'to-colour'
@@ -268,7 +268,7 @@ Parameter | Default | Description
 | t-end              |            1 |             |
 | tessellation       |           10 |             |
 | colour             | RGB(0 0 0 1) |             |
-| brush              |   brush-flat |             |
+| brush              |   brush/flat |             |
 | brush-subtype      |            0 |             |
 
 ## bezier
@@ -284,7 +284,7 @@ Parameter | Default | Description
 | t-end              |            1 |             |
 | tessellation       |           10 |             |
 | colour             | RGB(0 0 0 1) |             |
-| brush              |   brush-flat |             |
+| brush              |   brush/flat |             |
 | brush-subtype      |            0 |             |
 
 ## bezier-bulging
@@ -297,7 +297,7 @@ Parameter | Default | Description
 | t-end         |            1 |             |
 | tessellation  |           10 |             |
 | colour        | RGB(0 0 0 1) |             |
-| brush         |   brush-flat |             |
+| brush         |   brush/flat |             |
 | brush-subtype |            0 |             |
 
 ## stroked-bezier
@@ -314,7 +314,7 @@ Parameter | Default | Description
 | colour-volatility       |            0 |             |
 | seed                    |            0 |             |
 | line-width-mapping      |       linear |             |
-| brush                   |   brush-flat |             |
+| brush                   |   brush/flat |             |
 | brush-subtype           |            0 |             |
 
 ## stroked-bezier-rect
@@ -333,7 +333,7 @@ Parameter | Default | Description
 | stroke-noise        |           25 |             |
 | colour              | RGB(0 0 0 1) |             |
 | colour-volatility   |            0 |             |
-| brush               |   brush-flat |             |
+| brush               |   brush/flat |             |
 | brush-subtype       |            0 |             |
 
 # Transform functions

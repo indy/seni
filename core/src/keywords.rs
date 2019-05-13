@@ -93,6 +93,8 @@ pub enum Keyword {
     CanvasWidth,
     #[strum(serialize = "canvas/height")]
     CanvasHeight,
+    #[strum(serialize = "math/PI")]
+    MathPi,
     #[strum(serialize = "math/TAU")]
     MathTau,
 
@@ -144,27 +146,29 @@ pub enum Keyword {
     Robocop,
     #[strum(serialize = "transformers")]
     Transformers,
-    #[strum(serialize = "col/procedural-fn-presets")]
+    #[strum(serialize = "col/procedural-fn-presets")] // globally mapped in preamble
     ColProceduralFnPresets,
 
     // brush types
     //
-    #[strum(serialize = "brush-flat")]
+    #[strum(serialize = "brush/flat")]
     BrushFlat,
-    #[strum(serialize = "brush-a")]
+    #[strum(serialize = "brush/a")]
     BrushA,
-    #[strum(serialize = "brush-b")]
+    #[strum(serialize = "brush/b")]
     BrushB,
-    #[strum(serialize = "brush-c")]
+    #[strum(serialize = "brush/c")]
     BrushC,
-    #[strum(serialize = "brush-d")]
+    #[strum(serialize = "brush/d")]
     BrushD,
-    #[strum(serialize = "brush-e")]
+    #[strum(serialize = "brush/e")]
     BrushE,
-    #[strum(serialize = "brush-f")]
+    #[strum(serialize = "brush/f")]
     BrushF,
-    #[strum(serialize = "brush-g")]
+    #[strum(serialize = "brush/g")]
     BrushG,
+    #[strum(serialize = "brush/*")] // globally mapped in preamble
+    BrushAll,
 
     // interpolation
     //
@@ -237,8 +241,8 @@ pub enum Keyword {
     #[strum(serialize = "ease/bounce-in-out")]
     EaseBounceInOut,
 
-    #[strum(serialize = "ease/presets")]
-    EasePresets,
+    #[strum(serialize = "ease/*")] // globally mapped in preamble
+    EaseAll,
 
     // common parameter labels
     //
@@ -433,7 +437,7 @@ mod tests {
     fn test_keyword_enums() {
         assert_eq!(Keyword::False as i32, 128);
         assert_eq!(Keyword::True as i32, 129);
-        assert_eq!(Keyword::Width as i32, 296);
+        assert_eq!(Keyword::Width as i32, 298);
     }
 
     #[test]

@@ -380,7 +380,7 @@ mod tests {
             "(bezier tessellation: 30
         line-width-start: {50 (gen/scalar min: 30 max: 60)}
         line-width-end: {10 (gen/scalar min: 5 max: 20)}
-        brush: brush-c
+        brush: brush/c
         coords: [[0 500] [200 900] [400 100] [600 500]]
         colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))",
         )
@@ -418,7 +418,7 @@ mod tests {
         (bezier tessellation: 30
         line-width-start: {50 (gen/scalar min: 30 max: 60)}
         line-width-end: {10 (gen/scalar min: 5 max: 20)}
-        brush: brush-c
+        brush: brush/c
         coords: [[0 500] [200 900] [400 100] [600 500]]
         colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))",
         )
@@ -432,7 +432,7 @@ mod tests {
         let packed_res = trait_list.pack(&mut packed);
         assert!(packed_res.is_ok());
 
-        assert_eq!(packed, "42 3 0 13 1 14 2 15 2 0 0 FLOAT 50 3 0 3 aaa 1 3 bbb 2 3 ccc 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 60 LOAD MEM 3 FLOAT 30 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 3 0 3 aaa 1 3 bbb 2 3 ccc 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 20 LOAD MEM 3 FLOAT 5 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
+        assert_eq!(packed, "42 3 0 15 1 16 2 17 2 0 0 FLOAT 50 3 0 3 aaa 1 3 bbb 2 3 ccc 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 60 LOAD MEM 3 FLOAT 30 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0 0 0 FLOAT 10 3 0 3 aaa 1 3 bbb 2 3 ccc 6 JUMP INT 1 INT 0 LOAD MEM 3 INT 0 LOAD MEM 3 FLOAT 20 LOAD MEM 3 FLOAT 5 NATIVE NATIVE gen/scalar INT 2 STOP INT 0 INT 0");
 
         let res = TraitList::unpack(&packed);
         match res {

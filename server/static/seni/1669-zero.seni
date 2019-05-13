@@ -13,7 +13,7 @@
 (bezier tessellation: 30
         line-width-start: {50 (gen/scalar min: 30 max: 60)}
         line-width-end: {10 (gen/scalar min: 5 max: 20)}
-        brush: brush-c
+        brush: brush/c
         coords: [[0 500] [200 900] [400 100] [600 500]]
         colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))
 
@@ -21,7 +21,7 @@
 
 ;; (bezier-bulging tessellation: 30
 ;;         line-width: 50
-;;         brush: brush-c
+;;         brush: brush/c
 ;;         coords: [[200 800] [400 1200] [600 400] [800 800]]
 ;;         colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))
 

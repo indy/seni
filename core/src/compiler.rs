@@ -721,6 +721,7 @@ impl Compiler {
         compilation.add_global_mapping_for_keyword(Keyword::CanvasWidth)?;
         compilation.add_global_mapping_for_keyword(Keyword::CanvasHeight)?;
 
+        compilation.add_global_mapping_for_keyword(Keyword::MathPi)?;
         compilation.add_global_mapping_for_keyword(Keyword::MathTau)?;
 
         compilation.add_global_mapping_for_keyword(Keyword::White)?;
@@ -733,7 +734,8 @@ impl Compiler {
         compilation.add_global_mapping_for_keyword(Keyword::Cyan)?;
 
         compilation.add_global_mapping_for_keyword(Keyword::ColProceduralFnPresets)?;
-        compilation.add_global_mapping_for_keyword(Keyword::EasePresets)?;
+        compilation.add_global_mapping_for_keyword(Keyword::EaseAll)?;
+        compilation.add_global_mapping_for_keyword(Keyword::BrushAll)?;
 
         Ok(())
     }
@@ -867,6 +869,7 @@ impl Compiler {
         self.compile_global_bind_kw_f32(compilation, Keyword::CanvasWidth, 1000.0)?;
         self.compile_global_bind_kw_f32(compilation, Keyword::CanvasHeight, 1000.0)?;
 
+        self.compile_global_bind_kw_f32(compilation, Keyword::MathPi, mathutil::PI)?;
         self.compile_global_bind_kw_f32(compilation, Keyword::MathTau, mathutil::TAU)?;
 
         self.compile_global_bind_kw_col(compilation, Keyword::White, 1.0, 1.0, 1.0, 1.0)?;
@@ -879,7 +882,8 @@ impl Compiler {
         self.compile_global_bind_kw_col(compilation, Keyword::Cyan, 0.0, 1.0, 1.0, 1.0)?;
 
         self.compile_global_bind_procedural_presets(compilation)?;
-        self.compile_global_bind_ease_presets(compilation)?;
+        self.compile_global_bind_ease_all(compilation)?;
+        self.compile_global_bind_brush_all(compilation)?;
 
         // ********************************************************************************
         // NOTE: each entry should have a corresponding entry in
@@ -910,7 +914,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_global_bind_ease_presets(&self, compilation: &mut Compilation) -> Result<()> {
+    fn compile_global_bind_ease_all(&self, compilation: &mut Compilation) -> Result<()> {
         // create a vector
         compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
 
@@ -950,7 +954,26 @@ impl Compiler {
         self.append_keyword(compilation, Keyword::EaseBounceOut)?;
         self.append_keyword(compilation, Keyword::EaseBounceInOut)?;
 
-        self.store_globally_kw(compilation, Keyword::EasePresets)?;
+        self.store_globally_kw(compilation, Keyword::EaseAll)?;
+
+        Ok(())
+    }
+
+    fn compile_global_bind_brush_all(&self, compilation: &mut Compilation) -> Result<()> {
+        // create a vector
+        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
+
+        // append the names
+        self.append_keyword(compilation, Keyword::BrushFlat)?;
+        self.append_keyword(compilation, Keyword::BrushA)?;
+        self.append_keyword(compilation, Keyword::BrushB)?;
+        self.append_keyword(compilation, Keyword::BrushC)?;
+        self.append_keyword(compilation, Keyword::BrushD)?;
+        self.append_keyword(compilation, Keyword::BrushE)?;
+        self.append_keyword(compilation, Keyword::BrushF)?;
+        self.append_keyword(compilation, Keyword::BrushG)?;
+
+        self.store_globally_kw(compilation, Keyword::BrushAll)?;
 
         Ok(())
     }
@@ -2750,7 +2773,7 @@ mod tests {
     fn sanity_check_compile_preamble() {
         // stupid, brittle test just to check that the preamble is creating something
         let preamble_program = compile_preamble().unwrap();
-        assert_eq!(preamble_program.code.len(), 109);
+        assert_eq!(preamble_program.code.len(), 129);
     }
 
     #[test]
@@ -2797,9 +2820,9 @@ mod tests {
             vec![
                 jump(1),
                 load_const_f32(9.0),
-                store_global(13),
+                store_global(15),
                 load_const_f32(10.0),
-                store_global(14),
+                store_global(16),
                 stop(),
             ]
         );
@@ -2809,11 +2832,11 @@ mod tests {
             vec![
                 jump(1),
                 load_const_f32(9.0),
-                store_global(13),
+                store_global(15),
                 load_const_f32(10.0),
-                store_global(14),
-                load_global_i32(13),
-                load_global_i32(14),
+                store_global(16),
+                load_global_i32(15),
+                load_global_i32(16),
                 add(),
                 stop(),
             ]
@@ -2826,11 +2849,11 @@ mod tests {
             compile("(fn (foo a: 0 b: 0) (+ a b))"),
             vec![
                 jump(14),
-                load_const_name(222),
+                load_const_name(224),
                 store_arg(0),
                 load_const_f32(0.0),
                 store_arg(1),
-                load_const_name(223),
+                load_const_name(225),
                 store_arg(2),
                 load_const_f32(0.0),
                 store_arg(3),
@@ -2892,11 +2915,11 @@ mod tests {
             ),
             vec![
                 jump(14),
-                load_const_name(222),
+                load_const_name(224),
                 store_arg(0),
                 load_const_f32(99.0),
                 store_arg(1),
-                load_const_name(223),
+                load_const_name(225),
                 store_arg(2),
                 load_const_f32(88.0),
                 store_arg(3),
@@ -2926,8 +2949,8 @@ mod tests {
             vec![
                 jump(1),
                 load_void(),
-                store_global(13),
-                load_global_i32(13),
+                store_global(15),
+                load_global_i32(15),
                 vec_non_empty(),
                 jump_if(12),
                 vec_load_first(),
@@ -2956,7 +2979,7 @@ mod tests {
             ),
             vec![
                 jump(33),
-                load_const_name(244),
+                load_const_name(246),
                 store_arg(0),
                 load_const_f32(4.0),
                 store_arg(1),

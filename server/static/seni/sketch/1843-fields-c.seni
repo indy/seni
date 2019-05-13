@@ -85,7 +85,7 @@
                    [x (+ y-min y-delta y-delta)]
                    [x y-max]]
           colour: colour
-          brush: brush-c
+          brush: brush/c
           brush-subtype: brush-subtype))
 
 (fn (h-brushed-rect position: [500 500]
@@ -105,7 +105,7 @@
                    [(+ x-min x-delta x-delta) y]
                    [x-max y]]
           colour: colour
-          brush: brush-c
+          brush: brush/c
           brush-subtype: brush-subtype))
 
 (on-matrix-stack

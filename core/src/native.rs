@@ -3399,9 +3399,9 @@ mod tests {
         let mut vm: Vm = Default::default();
         let mut context: Context = Default::default();
         vm_run(&mut vm, &mut context, "(line width: 33 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
-        // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush-b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
-        // vm_run(&mut vm, "(line brush: brush-b)");
-        // vm_run(&mut vm, "(line brush: brush-b) (rect width: 10 height: 30)");
+        // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush/b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
+        // vm_run(&mut vm, "(line brush: brush/b)");
+        // vm_run(&mut vm, "(line brush: brush/b) (rect width: 10 height: 30)");
 
         let res = vm.top_stack_value().unwrap();
         if let Var::Debug(s) = res {
