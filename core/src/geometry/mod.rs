@@ -27,9 +27,10 @@ pub mod rect;
 pub mod stroked_bezier;
 pub mod stroked_bezier_rect;
 
-// todo: work out reasonable defaults
-const RENDER_PACKET_MAX_SIZE: usize = 40096;
+const RENDER_PACKET_MAX_SIZE: usize = 262144;
 pub const RENDER_PACKET_FLOAT_PER_VERTEX: usize = 8;
+// 262144 * 4 == 1MB per render packet
+// 262144 / 8 == 32768 vertices per render packet
 
 pub struct RenderPacket {
     pub geo: Vec<f32>,
