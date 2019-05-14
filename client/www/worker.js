@@ -36,19 +36,11 @@ const jobReceiveBitmapData = 'RECEIVE_BITMAP_DATA';
 function compile({ script /*, scriptHash*/, genotype }) {
   if (genotype) {
     // console.log("render: using a genotype");
-    gState.bridge.use_genotype_when_compiling(true);
-    gState.bridge.set_genotype_buffer_string(genotype);
+    gState.bridge.compile_program_from_source_and_genotype(script, genotype);
+
   } else {
-    // console.log("render: not using a genotype");
-    gState.bridge.use_genotype_when_compiling(false);
+    gState.bridge.compile_program_from_source(script);
   }
-
-  // need to setString before calling compileToRenderPackets
-  gState.bridge.set_source_buffer_string(script);
-
-  // --------------------------------------------------------------------------------
-
-  gState.bridge.compile_program_from_source();
 
   const bitmapsToTransfer = JSON.parse(gState.bridge.get_bitmap_transfers_as_json());
 
@@ -105,31 +97,14 @@ function renderPackets({  }) {
 
 
 function unparse({ script/*, scriptHash*/, genotype }) {
-  // console.log(`genotype is ${genotype}`);
-  // console.log(`script is ${script}`);
-
-  gState.bridge.set_source_buffer_string(script);
-  gState.bridge.set_genotype_buffer_string(genotype);
-
-  gState.bridge.unparse_with_genotype();
-  const newScript = gState.bridge.get_out_source_buffer_string();
-
-  // console.log(`new script: ${newScript}`);
+  const newScript = gState.bridge.unparse_with_genotype(script, genotype);
 
   return [{}, { script: newScript }];
 }
 
 function buildTraits({ script /*, scriptHash */ }) {
-  gState.bridge.set_source_buffer_string(script);
-
-  let traits = [];
-  const numTraits = gState.bridge.build_traits();
-  const validTraits = numTraits !== -1;
-
-  if (validTraits) {
-    traits = gState.bridge.get_traits_buffer_string();
-    // console.log(traits);
-  }
+  const traits = gState.bridge.build_traits(script);
+  const validTraits = traits !== "";
 
   return [{}, { validTraits, traits }];
 }
@@ -140,8 +115,10 @@ function getGenotypesFromWasm(populationSize) {
   let s;
 
   for (let i = 0; i < populationSize; i++) {
-    gState.bridge.genotype_move_to_buffer(i);
-    s = gState.bridge.get_genotype_buffer_string();
+    s = gState.bridge.get_genotype(i);
+    if (s === "") {
+      console.error(`getGenotypesFromWasm: error getting genotype: ${i}`);
+    }
     genotypes.push(s);
   }
 
@@ -149,14 +126,9 @@ function getGenotypesFromWasm(populationSize) {
 }
 
 function createInitialGeneration({ populationSize, traits }) {
-  // console.log("createInitialGeneration: using traits:");
-  // console.log(traits);
-
-  gState.bridge.set_traits_buffer_string(traits);
-
   const seed = Math.floor(Math.random() * 1024);
 
-  gState.bridge.create_initial_generation(populationSize, seed);
+  gState.bridge.create_initial_generation(traits, populationSize, seed);
 
   const genotypes = getGenotypesFromWasm(populationSize);
 
@@ -164,9 +136,7 @@ function createInitialGeneration({ populationSize, traits }) {
 }
 
 function singleGenotypeFromSeed({ seed, traits }) {
-  gState.bridge.set_traits_buffer_string(traits);
-
-  gState.bridge.single_genotype_from_seed(seed);
+  gState.bridge.single_genotype_from_seed(traits, seed);
 
   const genotypes = getGenotypesFromWasm(1);
 
@@ -174,11 +144,7 @@ function singleGenotypeFromSeed({ seed, traits }) {
 }
 
 function simplifyScript({ script }) {
-  gState.bridge.set_source_buffer_string(script);
-
-  gState.bridge.simplify_script();
-
-  const newScript = gState.bridge.get_out_source_buffer_string();
+  const newScript = gState.bridge.simplify_script(script);
 
   return [{}, { script: newScript }];
 }
@@ -186,12 +152,11 @@ function simplifyScript({ script }) {
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
   gState.bridge.next_generation_prepare();
   for (let i = 0; i < genotypes.length; i++) {
-    gState.bridge.set_genotype_buffer_string(genotypes[i]);
-    gState.bridge.next_generation_add_genotype();
+    gState.bridge.next_generation_add_genotype(genotypes[i]);
   }
 
-  gState.bridge.set_traits_buffer_string(traits);
-  gState.bridge.next_generation_build(genotypes.length, populationSize,
+  gState.bridge.next_generation_build(traits,
+                                      genotypes.length, populationSize,
                                       mutationRate, rng);
 
   const newGenotypes = getGenotypesFromWasm(populationSize);

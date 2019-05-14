@@ -110,26 +110,6 @@ pub fn build_traits(s: &str) -> Result<TraitList> {
     Ok(trait_list)
 }
 
-pub fn compile_to_render_packets(vm: &mut Vm, context: &mut Context, s: &str) -> Result<i32> {
-    let program = program_from_source(s)?;
-    let _ = run_program_with_preamble(vm, context, &program)?;
-
-    Ok(context.geometry.get_num_render_packets() as i32)
-}
-
-// todo: remove mut from genotype
-pub fn compile_with_genotype_to_render_packets(
-    vm: &mut Vm,
-    context: &mut Context,
-    s: &str,
-    genotype: &mut Genotype,
-) -> Result<i32> {
-    let program = program_from_source_and_genotype(s, genotype)?;
-    let _ = run_program_with_preamble(vm, context, &program)?;
-
-    Ok(context.geometry.get_num_render_packets() as i32)
-}
-
 pub fn compile_and_execute(s: &str) -> Result<Var> {
     let mut vm: Vm = Default::default();
     let mut context: Context = Default::default();
@@ -170,15 +150,14 @@ pub mod tests {
         s: &str,
         expected_num_verts: usize,
     ) {
-        if let Ok(res) = compile_to_render_packets(vm, context, s) {
-            assert_eq!(1, res);
+        let program = program_from_source(s).unwrap();
+        let _ = run_program_with_preamble(vm, context, &program).unwrap();
 
-            let num_floats = context.get_render_packet_geo_len(0);
-            let floats_per_vert = 8;
-            assert_eq!(expected_num_verts, num_floats / floats_per_vert);
-        } else {
-            assert_eq!(true, false);
-        }
+        assert_eq!(1, context.geometry.get_num_render_packets() as i32);
+
+        let num_floats = context.get_render_packet_geo_len(0);
+        let floats_per_vert = 8;
+        assert_eq!(expected_num_verts, num_floats / floats_per_vert);
     }
 
     #[test]
