@@ -188,6 +188,13 @@ impl Var {
             _ => Err(Error::NotedError("expected a Var::Float".to_string())),
         }
     }
+
+    pub fn is_var_float(var: &Var) -> bool {
+        match var {
+            Var::Float(_) => true,
+            _ => false
+        }
+    }
 }
 
 pub struct Vm {
@@ -1041,28 +1048,29 @@ impl Vm {
     }
 
     fn opcode_squish2(&mut self) -> Result<()> {
-        // combines two floats from the stack into a single Var::V2D
+        if Var::is_var_float(&self.stack[self.sp - 1]) && Var::is_var_float(&self.stack[self.sp - 2]) {
+            // combines two floats from the stack into a single Var::V2D
 
-        self.sp = self.sp_dec()?; // stack pop
-        let f2 = if let Var::Float(f2_) = &self.stack[self.sp] {
-            *f2_
+            self.sp = self.sp_dec()?; // stack pop
+            let f2 = Var::get_float_value(&self.stack[self.sp])?;
+
+            self.sp = self.sp_dec()?; // stack pop
+            let f1 = Var::get_float_value(&self.stack[self.sp])?;
+
+            self.sp = self.sp_inc()?; // stack push
+            self.stack[self.sp - 1] = Var::V2D(f1, f2);
         } else {
-            return Err(Error::VM(
-                "opcode_squish2: f2 expected to be float".to_string(),
-            ));
-        };
+            // pop the two vars and combine them as a Var::Vec
 
-        self.sp = self.sp_dec()?; // stack pop
-        let f1 = if let Var::Float(f1_) = &self.stack[self.sp] {
-            *f1_
-        } else {
-            return Err(Error::VM(
-                "opcode_squish2: f1 expected to be float".to_string(),
-            ));
-        };
+            self.sp = self.sp_dec()?; // stack pop
+            let e1 = self.stack[self.sp].clone();
 
-        self.sp = self.sp_inc()?; // stack push
-        self.stack[self.sp - 1] = Var::V2D(f1, f2);
+            self.sp = self.sp_dec()?; // stack pop
+            let e0 = self.stack[self.sp].clone();
+
+            self.sp = self.sp_inc()?; // stack push
+            self.stack[self.sp - 1] = Var::Vector(vec!(e0, e1));
+        }
 
         Ok(())
     }

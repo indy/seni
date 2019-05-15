@@ -1,7 +1,6 @@
 (define texture "skull-a.png")
 (define per-pixel-funcs [(address-of pass-0)
-                         (address-of pass-1)
-                         (address-of pass-dummy)])
+                         (address-of pass-1)])
 
 (each (per-pixel-func from: per-pixel-funcs)
       (bitmap/each from: texture
@@ -31,5 +30,3 @@
         brush: brush/d
         brush-subtype: 1
         colour: (col/rgb r: b g: b b: 0 alpha: 0.07)))
-
-(fn (pass-dummy a: 0 b: 0 c: 0 d: 0 position: [100 100]))
