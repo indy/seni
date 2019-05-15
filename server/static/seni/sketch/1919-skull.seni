@@ -1,0 +1,20 @@
+(bitmap/each from: "skull-c.png"
+             position: [500 500]
+             width: 900
+             height: 900
+             fn: (address-of per-pixel))
+
+(fn (per-pixel a: 0 b: 0 c: 0 d: 0 position: [100 100])
+  (define angle (* a math/PI))
+  (if (> a {0.7 (gen/scalar min: 0.1 max: 0.9)})
+      (line from: [(* {4 (gen/scalar min: -5 max: 5)} (math/cos angle: angle))
+                   (* {-1 (gen/scalar min: -5 max: 5)} (math/sin angle: angle))]
+            to: [(* {-5 (gen/scalar min: -5 max: 5)} (math/cos angle: angle))
+                 (* {-1 (gen/scalar min: -5 max: 5)} (math/sin angle: angle))]
+            width: (- {3.8 (gen/scalar min: 0.1 max: 15)} a)
+            colour: (col/rgb r: a g: 0 b: 0 alpha: 0.2)
+            brush: brush/a
+            brush-subtype: 2)
+      (circle position: [0 0]
+              radius: 0.5
+              colour: (col/rgb r: 0.9 g: 0.5 b: 0.5 alpha: 1))))

@@ -1512,8 +1512,15 @@ function loadBitmapImageData(url) {
       reject();
     };
 
-    img.src = url;
+    img.src = normalize_bitmap_url(url);
   });
+}
+
+function normalize_bitmap_url(url) {
+  // todo: this should:
+  // 1. do nothing if the url is a valid url
+  // 2. if it's just a filename, prefix the img/ path (specific to seni web app)
+  return "img/" + url;
 }
 
 async function renderScript(parameters, imageElement) {
@@ -1545,8 +1552,8 @@ async function renderJob(parameters) {
   // convert each bitmap path to a function that returns a promise
   //
   const bitmap_loading_funcs = bitmapsToTransfer.map(filename => async () => {
-    const imageData = await loadBitmapImageData(filename);
     log(`worker ${__worker_id}: bitmap request: ${filename}`);
+    const imageData = await loadBitmapImageData(filename);
     // make an explicit job request to the same worker
     return Job.request(jobRender_2_ReceiveBitmapData, { filename, imageData, __retain: true }, __worker_id);
   });

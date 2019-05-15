@@ -1,50 +1,50 @@
-(define PI 3.14159)
+(define texture "einstein.png")
+(define per-pixel-funcs [(address-of pass-1)
+                         (address-of pass-2)
+                         (address-of pass-3)
+                         (address-of pass-0)])
 
-(fn (drawer-a a: 0 b: 0 c: 0 d: 0 position: [100 100])
-  (line from: [(* {0 (gen/scalar min: -15 max: 15)} (math/cos angle: (* a PI))) (* {-7 (gen/scalar min: -15 max: 15)} (math/sin angle: (* a PI)))]
-        to: [(* {4 (gen/scalar min: -15 max: 15)} (math/cos angle: (* a PI))) (* {-10 (gen/scalar min: -15 max: 15)} (math/sin angle: (* a PI)))]
-        width: (- {2.1 (gen/scalar min: 0.1 max: 15)} a)
-        colour: (col/rgb r: a g: b b: c alpha: 0.2)))
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   position: [500 500]
+                   width: 1000
+                   height: 1000
+                   fn: per-pixel-func))
 
+(fn (pass-0 a: 0 b: 0 c: 0 d: 0 position: [100 100])
+  (per-pixel a: a
+             width: 1.0
+             from: [0 0]
+             to: [1 1]))
 
-(fn (drawer-b a: 0 b: 0 c: 0 d: 0 position: [100 100])
-  (line from: [(* {-2 (gen/scalar min: -15 max: 15)} (math/cos angle: (* a PI))) (* {-7 (gen/scalar min: -15 max: 15)} (math/sin angle: (* a PI)))]
-        to: [(* {-4 (gen/scalar min: -15 max: 15)} (math/cos angle: (* a PI))) (* {2 (gen/scalar min: -15 max: 15)} (math/sin angle: (* a PI)))]
-        width: (- {8.0 (gen/scalar min: 0.1 max: 15)} a)
-        colour: (col/rgb r: a g: b b: c alpha: 0.2)))
+(fn (pass-1 a: 0 b: 0 c: 0 d: 0 position: [100 100])
+  (per-pixel a: a
+             width: {2.1 (gen/scalar min: 0.1 max: 15)}
+             from: [{0 (gen/scalar min: -15 max: 15)}
+                    {-7 (gen/scalar min: -15 max: 15)}]
+             to: [{4 (gen/scalar min: -15 max: 15)}
+                  {-10 (gen/scalar min: -15 max: 15)}]))
 
-(fn (drawer-c a: 0 b: 0 c: 0 d: 0 position: [100 100])
-  (line from: [(* {-4 (gen/scalar min: -15 max: 15)} (math/cos angle: (* a PI))) (* {-3 (gen/scalar min: -15 max: 15)} (math/sin angle: (* a PI)))]
-        to: [(* {-5 (gen/scalar min: -15 max: 15)} (math/cos angle: (* a PI))) (* {-7 (gen/scalar min: -15 max: 15)} (math/sin angle: (* a PI)))]
-        width: (- {8.8 (gen/scalar min: 0.1 max: 15)} a)
-        colour: (col/rgb r: a g: b b: c alpha: 0.2)))
+(fn (pass-2 a: 0 b: 0 c: 0 d: 0 position: [100 100])
+  (per-pixel a: a
+             width: {8 (gen/scalar min: 0.1 max: 15)}
+             from: [{-2 (gen/scalar min: -15 max: 15)}
+                    {-7 (gen/scalar min: -15 max: 15)}]
+             to: [{-4 (gen/scalar min: -15 max: 15)}
+                  {2 (gen/scalar min: -15 max: 15)}]))
 
-(fn (drawer a: 0 b: 0 c: 0 d: 0 position: [100 100])
-  (line from: [0 0]
-        to: [(math/cos angle: (* a PI)) (math/sin angle: (* a PI))]
-        width: (- 1.0 a)
-        colour: (col/rgb r: a g: b b: c alpha: 0.2)))
+(fn (pass-3 a: 0 b: 0 c: 0 d: 0 position: [100 100])
+  (per-pixel a: a
+             width: {8.8 (gen/scalar min: 0.1 max: 15)}
+             from: [{-4 (gen/scalar min: -15 max: 15)}
+                    {-3 (gen/scalar min: -15 max: 15)}]
+             to: [{-5 (gen/scalar min: -15 max: 15)}
+                  {-7 (gen/scalar min: -15 max: 15)}]))
 
-(bitmap/each from: "img/einstein.png"
-             position: [500 500]
-             width: 1000
-             height: 1000
-             fn: (address-of drawer-a))
-
-(bitmap/each from: "img/einstein.png"
-             position: [500 500]
-             width: 1000
-             height: 1000
-             fn: (address-of drawer-b))
-
-(bitmap/each from: "img/einstein.png"
-             position: [500 500]
-             width: 1000
-             height: 1000
-             fn: (address-of drawer-c))
-
-(bitmap/each from: "img/einstein.png"
-             position: [500 500]
-             width: 1000
-             height: 1000
-             fn: (address-of drawer))
+(fn (per-pixel a: 0 width: 0 from: [0 0] to: [0 0])
+  (line from: [(* (nth from: from n: 0) (math/cos angle: (* a math/PI)))
+               (* (nth from: from n: 1) (math/sin angle: (* a math/PI)))]
+        to: [(* (nth from: to n: 0) (math/cos angle: (* a math/PI)))
+             (* (nth from: to n: 1) (math/sin angle: (* a math/PI)))]
+        width: (- width a)
+        colour: (col/rgb r: a g: a b: a alpha: 0.2)))
