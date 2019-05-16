@@ -1871,12 +1871,13 @@ function setupUI(controller) {
   showButtonsFor(SeniMode.gallery);
 
   addClickEvent('home', async event => {
-    await ensureMode(controller, SeniMode.gallery);
     event.preventDefault();
+    await ensureMode(controller, SeniMode.gallery);
   });
 
   addClickEvent('evolve-btn', async event => {
     try {
+      event.preventDefault();
       // get the latest script from the editor
       const script = getScriptFromEditor();
       const state = await controller.dispatch(actionSetScript, { script });
@@ -1886,7 +1887,6 @@ function setupUI(controller) {
       // handle error
       console.error(`evolve-btn:click : error of ${error}`);
     }
-    event.preventDefault();
   });
 
   addClickEvent('render-btn', event => {
@@ -1896,6 +1896,7 @@ function setupUI(controller) {
 
   addClickEvent('shuffle-btn', async event => {
     try {
+      event.preventDefault();
       showPlaceholderImages(controller.getState());
       const rng = Math.random() * 9999;
       const state = await controller.dispatch(actionShuffleGeneration, { rng });
@@ -1905,27 +1906,26 @@ function setupUI(controller) {
       // handle error
       console.error(`shuffle-btn:click : error of ${error}`);
     }
-
-    event.preventDefault();
   });
 
   addClickEvent('eval-btn', async event => {
-    await evalMainScript(controller);
     event.preventDefault();
+    await evalMainScript(controller);
   });
 
   addClickEvent('gallery-container', async event => {
+    event.preventDefault();
     const target = event.target;
     if (target.classList.contains('show-edit')) {
       await showEditFromGallery(controller, target);
     }
-    event.preventDefault();
   });
 
   addClickEvent('evolve-container', async event => {
     const target = event.target;
     const [index, phenoElement] = getPhenoIdFromDom(target);
 
+    event.preventDefault();
     if (target.classList.contains('render')) {
       if (index !== -1) {
         const genotypes = controller.getState().genotypes;
@@ -1942,7 +1942,6 @@ function setupUI(controller) {
         phenoElement.classList.toggle('selected');
       }
     }
-    event.preventDefault();
   });
 
   addClickEvent('next-btn', () => {
@@ -1950,6 +1949,9 @@ function setupUI(controller) {
   });
 
   addClickEvent('high-res-download', async event => {
+    // in an async function so call preventDefault before the first await
+    event.preventDefault();
+
     const state = controller.getState();
 
     const loader = document.getElementById('high-res-loader');
@@ -1985,8 +1987,6 @@ function setupUI(controller) {
 
     // todo: is this the best place to reset the genotype?
     await controller.dispatch(actionSetGenotype, { genotype: undefined });
-
-    event.preventDefault();
   });
 
   addClickEvent('high-res-close', event => {
