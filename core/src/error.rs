@@ -50,6 +50,9 @@ pub enum Error {
     MemUnmappableBytecodeArg,
     MemUnmappableI32,
 
+    // program
+    Program(String),
+
     // compiler
     CompilerFnWithoutName,
     CompilerFnDeclIncomplete,
@@ -127,6 +130,7 @@ impl fmt::Display for Error {
             Error::BitmapCache(s) => write!(f, "seni core: BitmapCache {}", s),
             Error::MemUnmappableBytecodeArg => write!(f, "seni core: MemUnmappableBytecodeArg"),
             Error::MemUnmappableI32 => write!(f, "seni core: MemUnmappableI32"),
+            Error::Program(s) => write!(f, "seni core: Program: {}", s),
             Error::CompilerFnWithoutName => write!(f, "seni core: CompilerFnWithoutName"),
             Error::CompilerFnDeclIncomplete => write!(f, "seni core: CompilerFnDeclIncomplete"),
             Error::Compiler(s) => write!(f, "seni core: Compiler {}", s),

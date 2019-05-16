@@ -25,9 +25,8 @@ pub enum Opcode {
     LOAD,
     // store (pop) a sen_var from the stack
     STORE,
-    // pops the 2 f32 from the top of the stack,
-    // combines them into one VAR_2D and pushes that onto the stack
-    SQUISH2,
+    // pop n vars from the stack, if they're 2 floats push a V2D, otherwise push a Vec
+    SQUISH,
     ADD,
     SUB,
     MUL,
@@ -102,7 +101,7 @@ pub fn opcode_stack_offset(opcode: Opcode) -> i32 {
     match opcode {
         Opcode::LOAD => 1,
         Opcode::STORE => -1,
-        Opcode::SQUISH2 => -1,
+        Opcode::SQUISH => 0,
         Opcode::ADD => -1,
         Opcode::SUB => -1,
         Opcode::MUL => -1,

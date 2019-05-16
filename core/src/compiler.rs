@@ -457,6 +457,14 @@ impl Compilation {
 
         Ok(())
     }
+
+    fn emit_squish(&mut self, num: i32) -> Result<()> {
+        self.emit(Opcode::SQUISH, num, 0)?;
+        self.opcode_offset -= num; // squish takes values from the stack
+        self.opcode_offset += 1; // squish pushes result
+
+        Ok(())
+    }
 }
 
 trait EmitOpcode<T, U> {
@@ -896,85 +904,99 @@ impl Compiler {
         Ok(())
     }
 
+    fn store_global_keyword_vector(
+        &self,
+        compilation: &mut Compilation,
+        global_name: Keyword,
+        kws: Vec<Keyword>,
+    ) -> Result<()> {
+        let len = kws.len() as i32;
+        for kw in kws {
+            compilation.emit(Opcode::LOAD, Mem::Constant, Iname::from(kw))?;
+        }
+        compilation.emit_squish(len)?;
+
+        self.store_globally_kw(compilation, global_name)?;
+
+        Ok(())
+    }
+
     fn compile_global_bind_procedural_presets(&self, compilation: &mut Compilation) -> Result<()> {
-        // create a vector
-        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
-
-        // append the names
-        self.append_keyword(compilation, Keyword::Chrome)?;
-        self.append_keyword(compilation, Keyword::HotlineMiami)?;
-        self.append_keyword(compilation, Keyword::KnightRider)?;
-        self.append_keyword(compilation, Keyword::Mars)?;
-        self.append_keyword(compilation, Keyword::Rainbow)?;
-        self.append_keyword(compilation, Keyword::Robocop)?;
-        self.append_keyword(compilation, Keyword::Transformers)?;
-
-        self.store_globally_kw(compilation, Keyword::ColProceduralFnPresets)?;
-
+        self.store_global_keyword_vector(
+            compilation,
+            Keyword::ColProceduralFnPresets,
+            vec![
+                Keyword::Chrome,
+                Keyword::HotlineMiami,
+                Keyword::KnightRider,
+                Keyword::Mars,
+                Keyword::Rainbow,
+                Keyword::Robocop,
+                Keyword::Transformers,
+            ],
+        )?;
         Ok(())
     }
 
     fn compile_global_bind_ease_all(&self, compilation: &mut Compilation) -> Result<()> {
-        // create a vector
-        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
-
-        // append the names
-        self.append_keyword(compilation, Keyword::Linear)?;
-        self.append_keyword(compilation, Keyword::EaseQuick)?;
-        self.append_keyword(compilation, Keyword::EaseSlowIn)?;
-        self.append_keyword(compilation, Keyword::EaseSlowInOut)?;
-        self.append_keyword(compilation, Keyword::EaseQuadraticIn)?;
-        self.append_keyword(compilation, Keyword::EaseQuadraticOut)?;
-        self.append_keyword(compilation, Keyword::EaseQuadraticInOut)?;
-        self.append_keyword(compilation, Keyword::EaseCubicIn)?;
-        self.append_keyword(compilation, Keyword::EaseCubicOut)?;
-        self.append_keyword(compilation, Keyword::EaseCubicInOut)?;
-        self.append_keyword(compilation, Keyword::EaseQuarticIn)?;
-        self.append_keyword(compilation, Keyword::EaseQuarticOut)?;
-        self.append_keyword(compilation, Keyword::EaseQuarticInOut)?;
-        self.append_keyword(compilation, Keyword::EaseQuinticIn)?;
-        self.append_keyword(compilation, Keyword::EaseQuinticOut)?;
-        self.append_keyword(compilation, Keyword::EaseQuinticInOut)?;
-        self.append_keyword(compilation, Keyword::EaseSinIn)?;
-        self.append_keyword(compilation, Keyword::EaseSinOut)?;
-        self.append_keyword(compilation, Keyword::EaseSinInOut)?;
-        self.append_keyword(compilation, Keyword::EaseCircularIn)?;
-        self.append_keyword(compilation, Keyword::EaseCircularOut)?;
-        self.append_keyword(compilation, Keyword::EaseCircularInOut)?;
-        self.append_keyword(compilation, Keyword::EaseExponentialIn)?;
-        self.append_keyword(compilation, Keyword::EaseExponentialOut)?;
-        self.append_keyword(compilation, Keyword::EaseExponentialInOut)?;
-        self.append_keyword(compilation, Keyword::EaseElasticIn)?;
-        self.append_keyword(compilation, Keyword::EaseElasticOut)?;
-        self.append_keyword(compilation, Keyword::EaseElasticInOut)?;
-        self.append_keyword(compilation, Keyword::EaseBackIn)?;
-        self.append_keyword(compilation, Keyword::EaseBackOut)?;
-        self.append_keyword(compilation, Keyword::EaseBackInOut)?;
-        self.append_keyword(compilation, Keyword::EaseBounceIn)?;
-        self.append_keyword(compilation, Keyword::EaseBounceOut)?;
-        self.append_keyword(compilation, Keyword::EaseBounceInOut)?;
-
-        self.store_globally_kw(compilation, Keyword::EaseAll)?;
-
+        self.store_global_keyword_vector(
+            compilation,
+            Keyword::EaseAll,
+            vec![
+                Keyword::Linear,
+                Keyword::EaseQuick,
+                Keyword::EaseSlowIn,
+                Keyword::EaseSlowInOut,
+                Keyword::EaseQuadraticIn,
+                Keyword::EaseQuadraticOut,
+                Keyword::EaseQuadraticInOut,
+                Keyword::EaseCubicIn,
+                Keyword::EaseCubicOut,
+                Keyword::EaseCubicInOut,
+                Keyword::EaseQuarticIn,
+                Keyword::EaseQuarticOut,
+                Keyword::EaseQuarticInOut,
+                Keyword::EaseQuinticIn,
+                Keyword::EaseQuinticOut,
+                Keyword::EaseQuinticInOut,
+                Keyword::EaseSinIn,
+                Keyword::EaseSinOut,
+                Keyword::EaseSinInOut,
+                Keyword::EaseCircularIn,
+                Keyword::EaseCircularOut,
+                Keyword::EaseCircularInOut,
+                Keyword::EaseExponentialIn,
+                Keyword::EaseExponentialOut,
+                Keyword::EaseExponentialInOut,
+                Keyword::EaseElasticIn,
+                Keyword::EaseElasticOut,
+                Keyword::EaseElasticInOut,
+                Keyword::EaseBackIn,
+                Keyword::EaseBackOut,
+                Keyword::EaseBackInOut,
+                Keyword::EaseBounceIn,
+                Keyword::EaseBounceOut,
+                Keyword::EaseBounceInOut,
+            ],
+        )?;
         Ok(())
     }
 
     fn compile_global_bind_brush_all(&self, compilation: &mut Compilation) -> Result<()> {
-        // create a vector
-        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
-
-        // append the names
-        self.append_keyword(compilation, Keyword::BrushFlat)?;
-        self.append_keyword(compilation, Keyword::BrushA)?;
-        self.append_keyword(compilation, Keyword::BrushB)?;
-        self.append_keyword(compilation, Keyword::BrushC)?;
-        self.append_keyword(compilation, Keyword::BrushD)?;
-        self.append_keyword(compilation, Keyword::BrushE)?;
-        self.append_keyword(compilation, Keyword::BrushF)?;
-        self.append_keyword(compilation, Keyword::BrushG)?;
-
-        self.store_globally_kw(compilation, Keyword::BrushAll)?;
-
+        self.store_global_keyword_vector(
+            compilation,
+            Keyword::BrushAll,
+            vec![
+                Keyword::BrushFlat,
+                Keyword::BrushA,
+                Keyword::BrushB,
+                Keyword::BrushC,
+                Keyword::BrushD,
+                Keyword::BrushE,
+                Keyword::BrushF,
+                Keyword::BrushG,
+            ],
+        )?;
         Ok(())
     }
 
@@ -1358,7 +1380,7 @@ impl Compiler {
             Var::V2D(x, y) => {
                 compilation.emit(Opcode::LOAD, Mem::Constant, *x)?;
                 compilation.emit(Opcode::LOAD, Mem::Constant, *y)?;
-                compilation.emit(Opcode::SQUISH2, 0, 0)?;
+                compilation.emit_squish(2)?;
             }
             Var::Colour(colour) => {
                 // the default_mask
@@ -1844,9 +1866,6 @@ impl Compiler {
         compilation: &mut Compilation,
         list_node: &Node,
     ) -> Result<()> {
-        // pushing from the VOID means creating a new, empty vector
-        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
-
         if let Node::List(children, _) = list_node {
             error_if_alterable(list_node, "compile_vector_in_quote")?;
 
@@ -1858,14 +1877,16 @@ impl Compiler {
             //
 
             let children = only_semantic_nodes(children);
+            let len = children.len() as i32;
             for n in children {
                 if let Node::Name(_, iname, _) = n {
                     compilation.emit(Opcode::LOAD, Mem::Constant, *iname)?;
                 } else {
                     self.compile(compilation, n)?;
                 }
-                compilation.emit(Opcode::APPEND, 0, 0)?;
             }
+
+            compilation.emit_squish(len)?;
             return Ok(());
         }
         Err(Error::Compiler(
@@ -2327,7 +2348,7 @@ impl Compiler {
                 }
             }
         }
-        compilation.emit(Opcode::SQUISH2, 0, 0)?;
+        compilation.emit_squish(2)?;
 
         Ok(())
     }
@@ -2338,11 +2359,9 @@ impl Compiler {
         node: &Node,
         children: &[&Node],
     ) -> Result<()> {
-        // pushing from the VOID means creating a new, empty vector
-        compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
-
         // if this is an alterable vector, we'll have to pull values for each element from the genes
         let use_gene = node.has_gene() && self.use_genes;
+        let len = children.len() as i32;
 
         for n in children {
             if use_gene {
@@ -2350,8 +2369,9 @@ impl Compiler {
             } else {
                 self.compile(compilation, n)?;
             }
-            compilation.emit(Opcode::APPEND, 0, 0)?;
         }
+
+        compilation.emit_squish(len)?;
 
         Ok(())
     }
@@ -2393,12 +2413,6 @@ impl Compiler {
             Colour::new(ColourFormat::Rgb, r, g, b, a),
         )?;
         self.store_globally_kw(compilation, kw)?;
-        Ok(())
-    }
-
-    fn append_keyword(&self, compilation: &mut Compilation, kw: Keyword) -> Result<()> {
-        compilation.emit(Opcode::LOAD, Mem::Constant, Iname::from(kw))?;
-        compilation.emit(Opcode::APPEND, 0, 0)?;
         Ok(())
     }
 
@@ -2709,8 +2723,12 @@ mod tests {
         bytecode_from_opcode(Opcode::SQRT)
     }
 
-    fn squish2() -> Bytecode {
-        bytecode_from_opcode(Opcode::SQUISH2)
+    fn squish(num: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::SQUISH,
+            arg0: BytecodeArg::Int(num),
+            arg1: BytecodeArg::Int(0),
+        }
     }
 
     fn stop() -> Bytecode {
@@ -2773,7 +2791,7 @@ mod tests {
     fn sanity_check_compile_preamble() {
         // stupid, brittle test just to check that the preamble is creating something
         let preamble_program = compile_preamble().unwrap();
-        assert_eq!(preamble_program.code.len(), 129);
+        assert_eq!(preamble_program.code.len(), 80);
     }
 
     #[test]
@@ -2787,25 +2805,20 @@ mod tests {
                 jump(1),
                 load_const_f32(23.0),
                 load_const_f32(45.0),
-                squish2(),
+                squish(2),
                 stop(),
             ]
         );
 
-        // vector of f32
         assert_eq!(
             compile("[23 45 67 89]"),
             vec![
                 jump(1),
-                load_void(),
                 load_const_f32(23.0),
-                append(),
                 load_const_f32(45.0),
-                append(),
                 load_const_f32(67.0),
-                append(),
                 load_const_f32(89.0),
-                append(),
+                squish(4),
                 stop(),
             ]
         );
@@ -2948,7 +2961,7 @@ mod tests {
             compile("(define data []) (each (x from: data) (+ x x))"),
             vec![
                 jump(1),
-                load_void(),
+                squish(0),
                 store_global(15),
                 load_global_i32(15),
                 vec_non_empty(),
@@ -2978,21 +2991,18 @@ mod tests {
                             (add-each by: 99)"
             ),
             vec![
-                jump(33),
+                jump(30),
                 load_const_name(246),
                 store_arg(0),
                 load_const_f32(4.0),
                 store_arg(1),
                 ret_0(),
-                load_void(),
                 load_const_f32(7.0),
-                append(),
                 load_const_f32(8.0),
-                append(),
                 load_const_f32(9.0),
-                append(),
+                squish(3),
                 store_local(0),
-                load_void(),
+                squish(0),
                 store_local(1),
                 load_local_i32(0),
                 vec_non_empty(),

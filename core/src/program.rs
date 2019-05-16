@@ -85,6 +85,22 @@ pub enum BytecodeArg {
     Colour(Colour),
 }
 
+impl BytecodeArg {
+    pub fn get_int(&self) -> Result<i32> {
+        match self {
+            BytecodeArg::Int(i) => Ok(*i),
+            _ => Err(Error::Program("BytecodeArg expected to be int".to_string())),
+        }
+    }
+
+    pub fn is_int(&self, val: i32) -> bool {
+        match self {
+            BytecodeArg::Int(i) => *i == val,
+            _ => false,
+        }
+    }
+}
+
 impl fmt::Display for BytecodeArg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

@@ -31,7 +31,7 @@ use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
 
-// use log::{trace, debug};
+// use log::error;
 
 const FP_OFFSET_TO_LOCALS: usize = 4;
 const FP_OFFSET_TO_HOP_BACK: usize = 3;
@@ -189,10 +189,10 @@ impl Var {
         }
     }
 
-    pub fn is_var_float(var: &Var) -> bool {
-        match var {
+    pub fn is_float(&self) -> bool {
+        match self {
             Var::Float(_) => true,
-            _ => false
+            _ => false,
         }
     }
 }
@@ -479,10 +479,8 @@ impl Vm {
                                 ));
                             }
                         }
-                        if let BytecodeArg::Int(arg1) = arg1 {
-                            let src = &self.stack[fp - arg1 as usize - 1];
-                            self.stack[self.sp - 1] = src.clone();
-                        }
+                        let src = &self.stack[fp - arg1.get_int()? as usize - 1];
+                        self.stack[self.sp - 1] = src.clone();
                     } else {
                         return Err(Error::VM("Mem::Argument: fp is not Var::Int?".to_string()));
                     }
@@ -503,20 +501,16 @@ impl Vm {
                             }
                         }
                         let local = fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
+                        let src = &self.stack[local + arg1.get_int()? as usize];
 
-                        if let BytecodeArg::Int(offset) = arg1 {
-                            let src = &self.stack[local + offset as usize];
-                            self.stack[self.sp - 1] = src.clone();
-                        }
+                        self.stack[self.sp - 1] = src.clone();
                     } else {
                         return Err(Error::VM("Mem::Local: fp is not Var::Int?".to_string()));
                     }
                 }
                 Mem::Global => {
-                    if let BytecodeArg::Int(arg1) = arg1 {
-                        let src = &self.stack[self.global + arg1 as usize];
-                        self.stack[self.sp - 1] = src.clone();
-                    }
+                    let src = &self.stack[self.global + arg1.get_int()? as usize];
+                    self.stack[self.sp - 1] = src.clone();
                 }
                 Mem::Constant => self.stack[self.sp - 1] = bytecode_arg_to_var(&arg1)?,
                 Mem::Void => {
@@ -542,23 +536,18 @@ impl Vm {
             return Err(Error::VM("opcode_store arg0 should be mem".to_string()));
         }
 
+        let arg1 = bc.arg1.get_int()? as usize;
+
         match mem {
             Mem::Argument => {
-                if let BytecodeArg::Int(offset) = bc.arg1 {
-                    self.stack[self.fp - offset as usize - 1] = popped.clone();
-                }
+                self.stack[self.fp - arg1 - 1] = popped.clone();
             }
             Mem::Local => {
                 let local = self.fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
-
-                if let BytecodeArg::Int(offset) = bc.arg1 {
-                    self.stack[local + offset as usize] = popped.clone();
-                }
+                self.stack[local + arg1] = popped.clone();
             }
             Mem::Global => {
-                if let BytecodeArg::Int(offset) = bc.arg1 {
-                    self.stack[self.global + offset as usize] = popped.clone();
-                }
+                self.stack[self.global + arg1] = popped.clone();
             }
             Mem::Void => {
                 // pop from the stack and lose the value
@@ -596,13 +585,11 @@ impl Vm {
         program: &Program,
         bc: &Bytecode,
     ) -> Result<()> {
-        let num_args = if let BytecodeArg::Int(num_args_) = bc.arg1 {
-            num_args_ as usize
-        } else {
-            return Err(Error::VM(
-                "opcode native requires arg1 to be num_args".to_string(),
-            ));
-        };
+        let num_args = bc
+            .arg1
+            .get_int()
+            .map_err(|_| Error::VM("opcode native requires arg1 to be num_args".to_string()))?
+            as usize;
 
         let res = if let BytecodeArg::Native(native) = bc.arg0 {
             execute_native(self, context, program, native)?
@@ -820,24 +807,20 @@ impl Vm {
     }
 
     fn opcode_jump(&mut self, bc: &Bytecode) -> Result<()> {
-        if let BytecodeArg::Int(i) = bc.arg0 {
-            self.ip = (self.ip as i32 + i - 1) as usize;
-        } else {
-            return Err(Error::VM("opcode_jump".to_string()));
-        }
+        let jump = bc.arg0.get_int()?;
+
+        self.ip = (self.ip as i32 + jump - 1) as usize;
+
         Ok(())
     }
 
     fn opcode_jump_if(&mut self, bc: &Bytecode) -> Result<()> {
-        // println!("opcode_jump_if {}", self.sp);
         self.sp = self.sp_dec()?; // stack pop
         if let Var::Bool(b) = &self.stack[self.sp] {
             // jump if the top of the stack is false
             if !(*b) {
                 // assume that compiler will always emit a BytecodeArg::Int as arg0 for JUMP_IF
-                if let BytecodeArg::Int(i) = bc.arg0 {
-                    self.ip += i as usize - 1;
-                }
+                self.ip += bc.arg0.get_int()? as usize - 1;
             }
         }
         Ok(())
@@ -1047,8 +1030,11 @@ impl Vm {
         Ok(())
     }
 
-    fn opcode_squish2(&mut self) -> Result<()> {
-        if Var::is_var_float(&self.stack[self.sp - 1]) && Var::is_var_float(&self.stack[self.sp - 2]) {
+    fn opcode_squish(&mut self, bc: &Bytecode) -> Result<()> {
+        if bc.arg0.is_int(2)
+            && self.stack[self.sp - 1].is_float()
+            && self.stack[self.sp - 2].is_float()
+        {
             // combines two floats from the stack into a single Var::V2D
 
             self.sp = self.sp_dec()?; // stack pop
@@ -1060,18 +1046,20 @@ impl Vm {
             self.sp = self.sp_inc()?; // stack push
             self.stack[self.sp - 1] = Var::V2D(f1, f2);
         } else {
-            // pop the two vars and combine them as a Var::Vec
+            // pop the vars and combine them into a Var::Vec
 
-            self.sp = self.sp_dec()?; // stack pop
-            let e1 = self.stack[self.sp].clone();
+            let num = bc.arg0.get_int()? as usize;
+            let mut v: Vec<Var> = Vec::with_capacity(num);
 
-            self.sp = self.sp_dec()?; // stack pop
-            let e0 = self.stack[self.sp].clone();
+            for _ in 0..num {
+                self.sp = self.sp_dec()?; // stack pop
+                v.push(self.stack[self.sp].clone());
+            }
+            v.reverse();
 
             self.sp = self.sp_inc()?; // stack push
-            self.stack[self.sp - 1] = Var::Vector(vec!(e0, e1));
+            self.stack[self.sp - 1] = Var::Vector(v);
         }
-
         Ok(())
     }
 
@@ -1104,12 +1092,11 @@ impl Vm {
         // pops the V2D/Vector from the top of the stack and pushes the
         // given number of elements from the V2D/Vector onto the stack
 
-        let num_args;
-        if let BytecodeArg::Int(num_args_) = bc.arg0 {
-            num_args = num_args_ as usize;
-        } else {
-            return Err(Error::VM("opcode_pile arg0 should be Int".to_string()));
-        }
+        let num_args = bc
+            .arg0
+            .get_int()
+            .map_err(|_| Error::VM("opcode_pile arg0 should be Int".to_string()))?
+            as usize;
 
         self.sp = self.sp_dec()?; // stack pop
 
@@ -1327,7 +1314,7 @@ impl Vm {
                 Opcode::RET_0 => self.opcode_ret_0()?,
                 Opcode::CALL_F => self.opcode_call_f(program)?,
                 Opcode::CALL_F_0 => self.opcode_call_f_0(program)?,
-                Opcode::SQUISH2 => self.opcode_squish2()?,
+                Opcode::SQUISH => self.opcode_squish(bc)?,
                 Opcode::APPEND => self.opcode_append()?,
                 Opcode::PILE => self.opcode_pile(bc)?,
                 Opcode::VEC_NON_EMPTY => self.opcode_vec_non_empty()?,
