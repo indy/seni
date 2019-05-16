@@ -449,6 +449,13 @@ impl Vm {
         Ok(self.sp + 1)
     }
 
+    fn sp_dec_by(&self, delta: usize) -> Result<usize> {
+        if delta > self.sp {
+            return Err(Error::VMStackUnderflow);
+        }
+        Ok(self.sp - delta)
+    }
+
     fn sp_dec(&self) -> Result<usize> {
         if self.sp == 0 {
             return Err(Error::VMStackUnderflow);
@@ -1051,11 +1058,10 @@ impl Vm {
             let num = bc.arg0.get_int()? as usize;
             let mut v: Vec<Var> = Vec::with_capacity(num);
 
-            for _ in 0..num {
-                self.sp = self.sp_dec()?; // stack pop
-                v.push(self.stack[self.sp].clone());
+            for i in 0..num {
+                v.push(self.stack[(self.sp - num) + i].clone());
             }
-            v.reverse();
+            self.sp = self.sp_dec_by(num)?;
 
             self.sp = self.sp_inc()?; // stack push
             self.stack[self.sp - 1] = Var::Vector(v);
