@@ -317,6 +317,8 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::Quadratic => quadratic_parameter_info(),
         Native::Bezier => bezier_parameter_info(),
         Native::BezierBulging => bezier_bulging_parameter_info(),
+        Native::StrokedBezier => stroked_bezier_parameter_info(),
+        Native::StrokedBezierRect => stroked_bezier_rect_parameter_info(),
         // transforms
         Native::MatrixPush => matrix_push_parameter_info(),
         Native::MatrixPop => matrix_pop_parameter_info(),
@@ -432,6 +434,8 @@ pub fn execute_native(
         Native::Quadratic => quadratic_execute(vm, context),
         Native::Bezier => bezier_execute(vm, context),
         Native::BezierBulging => bezier_bulging_execute(vm, context),
+        Native::StrokedBezier => stroked_bezier_execute(vm, context),
+        Native::StrokedBezierRect => stroked_bezier_rect_execute(vm, context),
         // transforms
         Native::MatrixPush => matrix_push_execute(vm, context),
         Native::MatrixPop => matrix_pop_execute(vm, context),

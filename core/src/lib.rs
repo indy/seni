@@ -6,7 +6,6 @@
         clippy::too_many_arguments
     )
 )]
-#![allow(dead_code)]
 // Copyright (C) 2019 Inderjit Gill
 
 // This program is free software: you can redistribute it and/or modify

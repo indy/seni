@@ -39,7 +39,7 @@ const FP_OFFSET_TO_NUM_ARGS: usize = 2;
 const FP_OFFSET_TO_IP: usize = 1;
 
 const MEMORY_GLOBAL_SIZE: usize = 40;
-const MEMORY_LOCAL_SIZE: usize = 40;
+pub const MEMORY_LOCAL_SIZE: usize = 40;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VMProfiling {

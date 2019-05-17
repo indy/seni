@@ -176,12 +176,6 @@ impl Mule {
         Ok((res, rem))
     }
 
-    pub fn unpack_u64_sp(cursor: &str) -> Result<(u64, &str)> {
-        let (res, rem) = Mule::unpack_u64(cursor)?;
-        let rem = Mule::skip_space(rem);
-        Ok((res, rem))
-    }
-
     pub fn unpack_bool_sp(cursor: &str) -> Result<(bool, &str)> {
         let (res, rem) = Mule::unpack_bool(cursor)?;
         let rem = Mule::skip_space(rem);

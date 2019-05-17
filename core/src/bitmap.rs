@@ -47,10 +47,10 @@ fn invoke_function(
     let e3 = bitmap_info.data[index + 2];
 
     vm.function_call_default_arguments(context, program, fn_info)?;
-    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::A), e0 as f32 / 255.0);
-    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::B), e1 as f32 / 255.0);
-    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::C), e2 as f32 / 255.0);
-    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::D), e3 as f32 / 255.0);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::A), f32::from(e0) / 255.0);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::B), f32::from(e1) / 255.0);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::C), f32::from(e2) / 255.0);
+    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::D), f32::from(e3) / 255.0);
     vm.function_set_argument_to_2d(fn_info, Iname::from(Keyword::Position), x as f32, y as f32);
     vm.function_call_body(context, program, fn_info)?;
 

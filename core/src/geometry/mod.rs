@@ -27,7 +27,7 @@ pub mod rect;
 pub mod stroked_bezier;
 pub mod stroked_bezier_rect;
 
-const RENDER_PACKET_MAX_SIZE: usize = 262144;
+const RENDER_PACKET_MAX_SIZE: usize = 262_144;
 pub const RENDER_PACKET_FLOAT_PER_VERTEX: usize = 8;
 // 262144 * 4 == 1MB per render packet
 // 262144 / 8 == 32768 vertices per render packet

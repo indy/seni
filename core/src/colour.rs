@@ -454,31 +454,6 @@ impl ConvertibleColour {
         }
     }
 
-    pub fn is_format(&self, format: ColourFormat) -> bool {
-        match format {
-            ColourFormat::Rgb => match *self {
-                ConvertibleColour::RGB(_, _, _, _) => true,
-                _ => false,
-            },
-            ColourFormat::Hsluv => match *self {
-                ConvertibleColour::HSLuv(_, _, _, _) => true,
-                _ => false,
-            },
-            ColourFormat::Hsl => match *self {
-                ConvertibleColour::HSL(_, _, _, _) => true,
-                _ => false,
-            },
-            ColourFormat::Lab => match *self {
-                ConvertibleColour::LAB(_, _, _, _) => true,
-                _ => false,
-            },
-            ColourFormat::Hsv => match *self {
-                ConvertibleColour::HSV(_, _, _, _) => true,
-                _ => false,
-            },
-        }
-    }
-
     pub fn to_colour(&self) -> Result<Colour> {
         match *self {
             ConvertibleColour::RGB(r, g, b, a) => Ok(Colour::new(

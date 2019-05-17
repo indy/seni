@@ -95,7 +95,7 @@ impl Trait {
         node: &Node,
         word_lut: &WordLut,
         parameter_ast: &[Node],
-        global_mapping: &BTreeMap<Iname, i32>,
+        global_mapping: &BTreeMap<Iname, usize>,
         index: Option<usize>,
     ) -> Result<Self> {
         // todo: what about NODE_LABEL and NODE_STRING?
@@ -132,7 +132,7 @@ impl Trait {
 pub struct TraitList {
     pub traits: Vec<Trait>,
     pub seed_value: i32,
-    pub global_mapping: BTreeMap<Iname, i32>,
+    pub global_mapping: BTreeMap<Iname, usize>,
 }
 
 impl TraitList {
@@ -266,7 +266,7 @@ impl Packable for TraitList {
             iname.pack(cursor)?;
             Mule::pack_space(cursor);
 
-            Mule::pack_i32_sp(cursor, *map_val);
+            Mule::pack_usize_sp(cursor, *map_val);
         }
 
         Mule::pack_usize(cursor, self.traits.len());
@@ -291,7 +291,7 @@ impl Packable for TraitList {
             let (iname, rem) = Iname::unpack(r)?;
             let rem = Mule::skip_space(rem);
             r = rem;
-            let (map_val, rem) = Mule::unpack_i32_sp(r)?;
+            let (map_val, rem) = Mule::unpack_usize_sp(r)?;
             r = rem;
             global_mapping.insert(iname, map_val);
         }

@@ -27,11 +27,9 @@ use crate::opcodes::{opcode_stack_offset, Opcode};
 use crate::parser::{Node, NodeMeta, WordLut};
 use crate::program::{Bytecode, BytecodeArg, Data, FnInfo, Mem, Program};
 use crate::result::Result;
-use crate::vm::Var;
+use crate::vm::{Var, MEMORY_LOCAL_SIZE};
 
 use log::warn;
-
-const MEMORY_LOCAL_SIZE: usize = 40;
 
 pub fn compile_preamble() -> Result<Program> {
     let mut compilation = Compilation::new();
@@ -60,7 +58,6 @@ pub fn compile_program(ast: &[Node], word_lut: &WordLut) -> Result<Program> {
         code: compilation.code,
         fn_info: compilation.fn_info,
         data,
-        ..Default::default()
     })
 }
 
@@ -77,14 +74,13 @@ pub fn compile_program_1(ast_node: &Node, word_lut: &WordLut) -> Result<Program>
         code: compilation.code,
         fn_info: compilation.fn_info,
         data,
-        ..Default::default()
     })
 }
 
 pub fn compile_program_for_trait(
     ast: &[Node],
     word_lut: &WordLut,
-    global_mapping: &BTreeMap<Iname, i32>,
+    global_mapping: &BTreeMap<Iname, usize>,
 ) -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
@@ -108,7 +104,6 @@ pub fn compile_program_for_trait(
         code: compilation.code,
         fn_info: compilation.fn_info,
         data,
-        ..Default::default()
     })
 }
 
@@ -132,7 +127,6 @@ pub fn compile_program_with_genotype(
         code: compilation.code,
         fn_info: compilation.fn_info,
         data,
-        ..Default::default()
     })
 }
 
@@ -271,15 +265,15 @@ pub struct Compilation {
     current_fn_info_index: Option<usize>,
     opcode_offset: i32,
 
-    local_mappings: HashMap<Iname, i32>, // iname -> local mapping index
-    local_mapping_marker: i32, // todo: check that it is < MEMORY_LOCAL_SIZE, as that constant is used in the interpreter
+    local_mappings: HashMap<Iname, usize>, // iname -> local mapping index
+    local_mapping_marker: usize,
 
-    global_mappings: HashMap<Iname, i32>, // iname -> global mapping index
-    global_mapping_marker: i32,
+    global_mappings: HashMap<Iname, usize>, // iname -> global mapping index
+    global_mapping_marker: usize,
 
     // using BTreeMap as this will be given to a TraitList which will be packed,
     // for testing purposes having a consistent ordering is important
-    user_defined_globals: BTreeMap<Iname, i32>, // iname -> global mapping index
+    user_defined_globals: BTreeMap<Iname, usize>, // iname -> global mapping index
 }
 
 impl fmt::Display for Compilation {
@@ -318,11 +312,11 @@ impl Compilation {
     }
 
     // used when adding explicit global mappings during a trait compilation
-    fn add_explicit_global_mapping(&mut self, iname: Iname, map_val: i32) {
+    fn add_explicit_global_mapping(&mut self, iname: Iname, map_val: usize) {
         self.global_mappings.insert(iname, map_val);
     }
 
-    fn add_global_mapping(&mut self, iname: Iname) -> Result<i32> {
+    fn add_global_mapping(&mut self, iname: Iname) -> Result<usize> {
         self.user_defined_globals
             .insert(iname, self.global_mapping_marker);
         self.global_mappings
@@ -331,7 +325,7 @@ impl Compilation {
         Ok(self.global_mapping_marker - 1)
     }
 
-    fn add_global_mapping_for_keyword(&mut self, kw: Keyword) -> Result<i32> {
+    fn add_global_mapping_for_keyword(&mut self, kw: Keyword) -> Result<usize> {
         // self.add_global_mapping(kw as i32)
         self.global_mappings
             .insert(Iname::from(kw), self.global_mapping_marker);
@@ -339,11 +333,11 @@ impl Compilation {
         Ok(self.global_mapping_marker - 1)
     }
 
-    fn get_global_mapping(&self, iname: Iname) -> Option<&i32> {
+    fn get_global_mapping(&self, iname: Iname) -> Option<&usize> {
         self.global_mappings.get(&iname)
     }
 
-    pub fn get_user_defined_globals(self) -> BTreeMap<Iname, i32> {
+    pub fn get_user_defined_globals(self) -> BTreeMap<Iname, usize> {
         self.user_defined_globals
     }
 
@@ -353,20 +347,27 @@ impl Compilation {
         Ok(())
     }
 
-    fn add_local_mapping(&mut self, iname: Iname) -> Result<i32> {
+    fn add_local_mapping(&mut self, iname: Iname) -> Result<usize> {
         self.local_mappings.insert(iname, self.local_mapping_marker);
         self.local_mapping_marker += 1;
-        Ok(self.local_mapping_marker - 1)
+
+        if self.local_mapping_marker >= MEMORY_LOCAL_SIZE {
+            Err(Error::Compiler(
+                "add_local_mapping: exceeded MEMORY_LOCAL_SIZE".to_string(),
+            ))
+        } else {
+            Ok(self.local_mapping_marker - 1)
+        }
     }
 
-    fn get_local_mapping(&self, iname: Iname) -> Option<&i32> {
+    fn get_local_mapping(&self, iname: Iname) -> Option<&usize> {
         self.local_mappings.get(&iname)
     }
 
     // we want a local mapping that's going to be used to store an internal variable
     // (e.g. during a fence loop)
     // note: it's up to the caller to manage this reference
-    fn add_internal_local_mapping(&mut self) -> Result<i32> {
+    fn add_internal_local_mapping(&mut self) -> Result<usize> {
         // todo: is this right???
         let i = 9999;
         let n = Iname::new(i);
@@ -374,7 +375,14 @@ impl Compilation {
         // let s = "internal_local_mapping".to_string();
         self.local_mappings.insert(n, self.local_mapping_marker);
         self.local_mapping_marker += 1;
-        Ok(self.local_mapping_marker - 1)
+
+        if self.local_mapping_marker >= MEMORY_LOCAL_SIZE {
+            Err(Error::Compiler(
+                "add_internal_local_mapping: exceeded MEMORY_LOCAL_SIZE".to_string(),
+            ))
+        } else {
+            Ok(self.local_mapping_marker - 1)
+        }
     }
 
     fn add_bytecode(&mut self, bc: Bytecode) -> Result<()> {
@@ -391,16 +399,6 @@ impl Compilation {
             }
         }
         None
-    }
-
-    fn bytecode_modify(&mut self, index: usize, op: Opcode, arg0: i32, arg1: i32) -> Result<()> {
-        self.code[index] = Bytecode {
-            op,
-            arg0: BytecodeArg::Int(arg0),
-            arg1: BytecodeArg::Int(arg1),
-        };
-
-        Ok(())
     }
 
     fn bytecode_modify_mem(
@@ -522,6 +520,21 @@ impl EmitOpcode<Mem, i32> for Compilation {
             op,
             arg0: BytecodeArg::Mem(arg0),
             arg1: BytecodeArg::Int(arg1),
+        };
+
+        self.add_bytecode(b)?;
+        self.opcode_offset += opcode_stack_offset(op);
+
+        Ok(())
+    }
+}
+
+impl EmitOpcode<Mem, usize> for Compilation {
+    fn emit(&mut self, op: Opcode, arg0: Mem, arg1: usize) -> Result<()> {
+        let b = Bytecode {
+            op,
+            arg0: BytecodeArg::Mem(arg0),
+            arg1: BytecodeArg::Int(arg1 as i32),
         };
 
         self.add_bytecode(b)?;
@@ -1103,7 +1116,7 @@ impl Compiler {
     fn compile_global_mappings_for_trait(
         &self,
         compilation: &mut Compilation,
-        global_mapping: &BTreeMap<Iname, i32>,
+        global_mapping: &BTreeMap<Iname, usize>,
     ) -> Result<()> {
         for (iname, map_val) in global_mapping {
             compilation.add_explicit_global_mapping(*iname, *map_val);
@@ -1925,7 +1938,7 @@ impl Compiler {
         compilation.emit(Opcode::APPEND, 0, 0)?;
 
         if let Node::Name(_, iname, _) = vector {
-            let mut mem_addr: Option<(Mem, i32)> = None;
+            let mut mem_addr: Option<(Mem, usize)> = None;
 
             if let Some(address) = compilation.get_local_mapping(*iname) {
                 mem_addr = Some((Mem::Local, *address));
@@ -2376,17 +2389,6 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_global_bind_kw_i32(
-        &self,
-        compilation: &mut Compilation,
-        kw: Keyword,
-        value: i32,
-    ) -> Result<()> {
-        compilation.emit(Opcode::LOAD, Mem::Constant, value)?;
-        self.store_globally_kw(compilation, kw)?;
-        Ok(())
-    }
-
     fn compile_global_bind_kw_f32(
         &self,
         compilation: &mut Compilation,
@@ -2416,8 +2418,8 @@ impl Compiler {
         Ok(())
     }
 
-    fn store_locally(&self, compilation: &mut Compilation, iname: Iname) -> Result<i32> {
-        let address: i32 = match compilation.get_local_mapping(iname) {
+    fn store_locally(&self, compilation: &mut Compilation, iname: Iname) -> Result<usize> {
+        let address: usize = match compilation.get_local_mapping(iname) {
             Some(&local_mapping) => local_mapping, // already storing the binding name
             None => compilation.add_local_mapping(iname)?,
         };
@@ -2427,9 +2429,9 @@ impl Compiler {
         Ok(address)
     }
 
-    fn store_globally_kw(&self, compilation: &mut Compilation, kw: Keyword) -> Result<i32> {
+    fn store_globally_kw(&self, compilation: &mut Compilation, kw: Keyword) -> Result<usize> {
         let iname = Iname::from(kw);
-        let address: i32 = match compilation.get_global_mapping(iname) {
+        let address: usize = match compilation.get_global_mapping(iname) {
             Some(&global_mapping) => global_mapping, // already storing the binding name
             None => compilation.add_global_mapping_for_keyword(kw)?,
         };
@@ -2439,8 +2441,8 @@ impl Compiler {
         Ok(address)
     }
 
-    fn store_globally(&self, compilation: &mut Compilation, iname: Iname) -> Result<i32> {
-        let address: i32 = match compilation.get_global_mapping(iname) {
+    fn store_globally(&self, compilation: &mut Compilation, iname: Iname) -> Result<usize> {
+        let address: usize = match compilation.get_global_mapping(iname) {
             Some(&global_mapping) => global_mapping, // already storing the binding name
             None => compilation.add_global_mapping(iname)?,
         };
@@ -2455,7 +2457,7 @@ impl Compiler {
         compilation: &mut Compilation,
         node: &Node,
         mem: Mem,
-    ) -> Result<i32> {
+    ) -> Result<usize> {
         if let Node::Name(_, iname, _) = node {
             match mem {
                 Mem::Local => self.store_locally(compilation, *iname),
@@ -2564,16 +2566,6 @@ fn all_children_are_name_nodes(parent: &Node) -> bool {
             true
         }
         _ => false,
-    }
-}
-
-fn count_children(parent: &Node) -> Result<usize> {
-    match parent {
-        Node::List(children, _) | Node::Vector(children, _) => {
-            let children = only_semantic_nodes(children);
-            Ok(children.len())
-        }
-        _ => Err(Error::Compiler("count_children".to_string())),
     }
 }
 
