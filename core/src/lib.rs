@@ -25,6 +25,9 @@
 The core crate provides the basic functionality of the Seni system
 */
 
+// this is just for documentation
+pub mod seni_language;
+
 mod bitmap;
 mod bitmap_cache;
 mod colour;
@@ -50,7 +53,6 @@ mod prng;
 mod program;
 mod repeat;
 mod result;
-pub mod seni_language;
 mod trait_list;
 mod unparser;
 mod uvmapper;
@@ -62,7 +64,7 @@ pub use crate::context::Context;
 pub use crate::error::Error;
 pub use crate::gene::{next_generation, Genotype};
 pub use crate::packable::Packable;
-pub use crate::parser::*;
+pub use crate::parser::{parse, WordLut};
 pub use crate::program::Program;
 pub use crate::result::Result;
 pub use crate::trait_list::TraitList;
@@ -100,6 +102,16 @@ pub fn program_from_source_and_genotype(s: &str, genotype: &mut Genotype) -> Res
     let program = compile_program_with_genotype(&mut ast, &word_lut, genotype)?;
 
     Ok(program)
+}
+
+pub fn bitmaps_to_transfer(program: &Program, context: &Context) -> Vec<String> {
+    // the bitmaps used by the current program
+    let bitmap_strings = program.data.bitmap_strings();
+
+    // keep the names that aren't already in the bitmap_cache
+    let bitmaps_to_transfer = context.bitmap_cache.uncached(bitmap_strings);
+
+    bitmaps_to_transfer
 }
 
 pub fn build_traits(s: &str) -> Result<TraitList> {

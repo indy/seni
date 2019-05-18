@@ -1,8 +1,8 @@
 use core::*;
 
 use criterion::black_box;
-use criterion::{Criterion, ParameterizedBenchmark};
 use criterion::{criterion_group, criterion_main};
+use criterion::{Criterion, ParameterizedBenchmark};
 
 fn parse_script_old(source: &str) {
     let (_ast, _word_lut) = parse(&source).unwrap();
@@ -31,11 +31,11 @@ fn interpret_script(source: &str) {
     vm.interpret(&mut context, &preamble).unwrap();
 
     // reset the ip and setup any profiling of the main program
-    vm.init_for_main_program(&program, VMProfiling::Off).unwrap();
+    vm.init_for_main_program(&program, VMProfiling::Off)
+        .unwrap();
     vm.interpret(&mut context, &program).unwrap();
     let _res = vm.top_stack_value().unwrap();
 }
-
 
 fn benchmark_parse_comparison(c: &mut Criterion) {
     let small_src = "(define
@@ -54,10 +54,15 @@ fn benchmark_parse_comparison(c: &mut Criterion) {
 
     c.bench(
         "parse",
-        ParameterizedBenchmark::new("old-method", move |b, i| b.iter(|| parse_script_old(black_box(*i))), input)
-            .with_function("new-method", |b, i| b.iter(|| parse_script_new(black_box(*i)))),
+        ParameterizedBenchmark::new(
+            "old-method",
+            move |b, i| b.iter(|| parse_script_old(black_box(*i))),
+            input,
+        )
+        .with_function("new-method", |b, i| {
+            b.iter(|| parse_script_new(black_box(*i)))
+        }),
     );
-
 }
 
 fn benchmark_compile(c: &mut Criterion) {
@@ -73,8 +78,10 @@ fn benchmark_interpret(c: &mut Criterion) {
     c.bench_function("interpret", move |b| b.iter(|| interpret_script(&source)));
 }
 
-criterion_group!(benches,
-                 benchmark_parse_comparison,
-                 benchmark_interpret,
-                 benchmark_compile);
+criterion_group!(
+    benches,
+    benchmark_parse_comparison,
+    benchmark_interpret,
+    benchmark_compile
+);
 criterion_main!(benches);

@@ -1,12 +1,16 @@
 use clap::{value_t, App, Arg, ArgMatches};
-use core::*;
+use env_logger;
+use image::GenericImageView;
+use log::{error, info, trace};
 
 use std::fs::File;
 use std::io::prelude::*;
 use std::time::Instant;
 
-use env_logger;
-use log::{error, info, trace};
+use core::{
+    bitmaps_to_transfer, build_traits, compile_preamble, compile_program, parse, BitmapInfo, Context, Packable,
+    Program, VMProfiling, Vm,
+};
 
 type Result<T> = ::std::result::Result<T, Box<::std::error::Error>>;
 
@@ -97,6 +101,66 @@ fn read_script_file(filename: &str) -> Result<String> {
     Ok(contents)
 }
 
+fn quantity(amount: usize, s: &str) -> String {
+    if amount == 1 {
+        return format!("{} {}", amount, s);
+    } else {
+        return format!("{} {}s", amount, s);
+    }
+}
+
+fn load_bitmap(filename: String, context: &mut Context) -> Result<()> {
+    let image = image::open(&filename)?;
+
+    let (w, h) = image.dimensions();
+    let width = w as usize;
+    let height = h as usize;
+    let mut data: Vec<u8> = Vec::with_capacity(width * height * 4);
+
+    info!("loading bitmap {} of size {} x {}", filename, width, height);
+
+    for (_, _, rgba) in image.pixels() {
+        data.push(rgba.data[0]);
+        data.push(rgba.data[1]);
+        data.push(rgba.data[2]);
+        data.push(rgba.data[3]);
+    }
+
+    let bitmap_info = BitmapInfo {
+        width,
+        height,
+        data,
+        ..Default::default()
+    };
+
+    context.bitmap_cache.insert(&filename, bitmap_info)?;
+
+    Ok(())
+}
+
+fn load_bitmaps(program: &Program, context: &mut Context) -> Result<()> {
+    let time_to_load_bitmaps = Instant::now();
+
+    let bitmaps_to_transfer = bitmaps_to_transfer(&program, &context);
+    let len = bitmaps_to_transfer.len();
+
+    if len == 0 {
+        return Ok(());
+    }
+
+    for f in bitmaps_to_transfer {
+        load_bitmap(f, context)?;
+    }
+
+    info!(
+        "loading {}: {:?}",
+        quantity(len, "bitmap"),
+        time_to_load_bitmaps.elapsed()
+    );
+
+    Ok(())
+}
+
 fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
     trace!("run_script");
 
@@ -130,6 +194,8 @@ fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
         println!("{}", source);
         println!("{}", program);
     } else {
+        load_bitmaps(&program, &mut context)?;
+
         let time_run_program = Instant::now();
 
         context.reset();
@@ -163,7 +229,12 @@ fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
     Ok(())
 }
 
-fn run_script_with_seed(_script: &str, _seed: u32, _profiling: VMProfiling, _debug: bool) -> Result<()> {
+fn run_script_with_seed(
+    _script: &str,
+    _seed: u32,
+    _profiling: VMProfiling,
+    _debug: bool,
+) -> Result<()> {
     trace!("run_script_with_seed");
 
     Ok(())

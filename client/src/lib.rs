@@ -23,7 +23,7 @@ use wasm_bindgen::prelude::*;
 
 use core::{
     build_traits, next_generation, program_from_source, program_from_source_and_genotype,
-    run_program_with_preamble, simplified_unparse, unparse,
+    run_program_with_preamble, simplified_unparse, unparse, bitmaps_to_transfer
 };
 use core::{BitmapInfo, Context, Genotype, Packable, Program, TraitList, Vm};
 
@@ -134,15 +134,13 @@ impl Bridge {
         }
     }
 
+    // return the list of required bitmaps to the host system
+    // it will send the bitmap data back here via the add_rgba_bitmap function
     pub fn get_bitmap_transfers_as_json(&mut self) -> String {
         // todo: check that we're in the RENDER state
 
         if let Some(program) = &self.program {
-            // the bitmaps used by the current program
-            let bitmap_strings = program.data.bitmap_strings();
-
-            // keep the names that aren't already in the bitmap_cache
-            let bitmaps_to_transfer = self.context.bitmap_cache.uncached(bitmap_strings);
+            let bitmaps_to_transfer = bitmaps_to_transfer(program, &self.context);
 
             let mut res: String = "[".to_string();
             for (i, b) in bitmaps_to_transfer.iter().enumerate() {
