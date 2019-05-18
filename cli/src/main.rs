@@ -1,21 +1,24 @@
 use clap::{value_t, App, Arg, ArgMatches};
+use config;
 use env_logger;
 use image::GenericImageView;
 use log::{error, info, trace};
 
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
 use std::time::Instant;
 
 use core::{
-    bitmaps_to_transfer, build_traits, compile_preamble, compile_program, parse, BitmapInfo, Context, Packable,
-    Program, VMProfiling, Vm,
+    bitmaps_to_transfer, build_traits, compile_preamble, compile_program, parse, BitmapInfo,
+    Context, Packable, Program, VMProfiling, Vm,
 };
 
 type Result<T> = ::std::result::Result<T, Box<::std::error::Error>>;
 
 fn main() {
     let start = Instant::now();
+
     let matches = App::new("seni-cli")
         .version("0.1.0")
         .author("Inderjit Gill <email@indy.io>")
@@ -67,24 +70,32 @@ fn main() {
 fn run(matches: &ArgMatches) -> Result<()> {
     trace!("run");
 
+    // Add in `./Settings.toml`
+    // Add in settings from the environment (with a prefix of SENI)
+    // Eg.. `SENI_DEBUG=1 ./target/app` would set the `debug` key
+    let mut settings = config::Config::default();
+    settings
+        .merge(config::File::with_name("Settings"))?
+        .merge(config::Environment::with_prefix("SENI"))?;
+
     if let Some(script) = matches.value_of("SCRIPT") {
         // this should always pass as SCRIPT is required
         info!("Using script file: {}", script);
 
-        let profiling = if matches.is_present("profiling") {
-            VMProfiling::On
-        } else {
-            VMProfiling::Off
-        };
+        if matches.is_present("profiling") {
+            settings.set("profiling", true)?;
+        }
 
-        let debug = matches.is_present("debug");
+        if matches.is_present("debug") {
+            settings.set("debug", true)?;
+        }
 
         if matches.is_present("packed_trait_list") {
             print_packed_trait_list(script)?;
         } else if let Ok(seed) = value_t!(matches.value_of("seed"), u32) {
-            run_script_with_seed(script, seed, profiling, debug)?;
+            run_script_with_seed(script, seed, &settings)?;
         } else {
-            run_script(script, profiling, debug)?;
+            run_script(script, &settings)?;
         }
     }
 
@@ -109,8 +120,10 @@ fn quantity(amount: usize, s: &str) -> String {
     }
 }
 
-fn load_bitmap(filename: String, context: &mut Context) -> Result<()> {
-    let image = image::open(&filename)?;
+fn load_bitmap(asset_prefix: &String, filename: &String, context: &mut Context) -> Result<()> {
+    let path = Path::new(asset_prefix).join(filename);
+    info!("load_bitmap: {:?}", path);
+    let image = image::open(&path)?;
 
     let (w, h) = image.dimensions();
     let width = w as usize;
@@ -138,7 +151,7 @@ fn load_bitmap(filename: String, context: &mut Context) -> Result<()> {
     Ok(())
 }
 
-fn load_bitmaps(program: &Program, context: &mut Context) -> Result<()> {
+fn load_bitmaps(program: &Program, context: &mut Context, asset_prefix: &String) -> Result<()> {
     let time_to_load_bitmaps = Instant::now();
 
     let bitmaps_to_transfer = bitmaps_to_transfer(&program, &context);
@@ -149,7 +162,7 @@ fn load_bitmaps(program: &Program, context: &mut Context) -> Result<()> {
     }
 
     for f in bitmaps_to_transfer {
-        load_bitmap(f, context)?;
+        load_bitmap(asset_prefix, &f, context)?;
     }
 
     info!(
@@ -161,7 +174,7 @@ fn load_bitmaps(program: &Program, context: &mut Context) -> Result<()> {
     Ok(())
 }
 
-fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
+fn run_script(script: &str, settings: &config::Config) -> Result<()> {
     trace!("run_script");
 
     // --------------------------------------------------------------------------------
@@ -188,13 +201,14 @@ fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
 
     // --------------------------------------------------------------------------------
 
-    if debug {
+    if settings.get_bool("debug")? {
         // print the source and bytecode without trying to run the code
         // as the debug option will often be used with buggy source
         println!("{}", source);
         println!("{}", program);
     } else {
-        load_bitmaps(&program, &mut context)?;
+        let asset_prefix = settings.get_str("assets")?;
+        load_bitmaps(&program, &mut context, &asset_prefix)?;
 
         let time_run_program = Instant::now();
 
@@ -208,6 +222,11 @@ fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
         info!("preamble: {:?}", time_preamble.elapsed());
 
         // reset the ip and setup any profiling of the main program
+        let profiling = if settings.get_bool("profiling")? {
+            VMProfiling::On
+        } else {
+            VMProfiling::Off
+        };
         vm.init_for_main_program(&program, profiling)?;
 
         let time_interpret = Instant::now();
@@ -229,12 +248,7 @@ fn run_script(script: &str, profiling: VMProfiling, debug: bool) -> Result<()> {
     Ok(())
 }
 
-fn run_script_with_seed(
-    _script: &str,
-    _seed: u32,
-    _profiling: VMProfiling,
-    _debug: bool,
-) -> Result<()> {
+fn run_script_with_seed(_script: &str, _seed: u32, _settings: &config::Config) -> Result<()> {
     trace!("run_script_with_seed");
 
     Ok(())
