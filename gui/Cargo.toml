@@ -1,13 +1,18 @@
 [package]
 name = "seni-gui"
-version = "0.1.0"
+version = "4.1.0"
 authors = ["Inderjit Gill <email@indy.io>"]
 edition = "2018"
 license = "GPL-3.0+"
 
 [dependencies]
-imgui = "0.0.22"
-sdl2 = "0.32.1"
-imgui-sdl2 = "0.5"
+clap = "2.32.0"
+config = "0.9"
+core = { path = "../core" }
+env_logger = "0.6"
 gl = "0.10.0"
+imgui = "0.0.22"
 imgui-opengl-renderer = "0.4"
+imgui-sdl2 = "0.5"
+log = "0.4"
+sdl2 = "0.32.1"

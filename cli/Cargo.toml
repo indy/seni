@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "seni-cli"
 version = "4.1.0"
 authors = ["Inderjit Gill <email@indy.io>"]
 edition = "2018"
