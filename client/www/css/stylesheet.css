@@ -273,9 +273,9 @@ button:disabled {
   margin-right: 9rem;
 }
 
-/* ---------------------- high-res-container ------------------------------- */
+/* ---------------------- download dialog ------------------------------- */
 
-#high-res-container {
+#download-dialog {
   z-index: 1000;
   position: fixed;
   top: 0px;                     /* ??? */
@@ -292,7 +292,7 @@ button:disabled {
   width: 35em;
 }
 
-.high-res-card-holder {
+.download-dialog-card-holder {
   padding: 1em;
   order: 1;
   background: white;
@@ -301,7 +301,7 @@ button:disabled {
   text-align: center;
 }
 
-#high-res-loader {
+#download-dialog-loader {
   display: inline-block;
 
   border: 1px solid #eef;
@@ -322,15 +322,6 @@ button:disabled {
 @keyframes loaderSpin {
   0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); } }
-
-
-#high-res-image-note {
-  clear: both;
-  color: #aaa;
-  font-size: smaller;
-  margin-bottom: 0;
-}
-
 
 .navbar-container {
   position: relative;

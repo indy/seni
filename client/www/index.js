@@ -289,6 +289,7 @@ class GLRenderer {
 
       document.body.removeChild(element);
 
+      downloadDialogHide();
     });
   }
 
@@ -966,7 +967,7 @@ class Controller {
       }
       return this.applySetMode(state, action);
     case actionSetGenotype:
-      // SET_GENOTYPE is only used during the high-res rendering
+      // SET_GENOTYPE is only used during the download dialog rendering
       // when the render button is clicked on an image in the evolve gallery
       //
       return this.applySetGenotype(state, action);
@@ -1659,14 +1660,19 @@ function getPhenoIdFromDom(element) {
   return getIdNumberFromDom(element, /pheno-(\d+)/);
 }
 
-function downloadDialog(state, genotype) {
-  const container = document.getElementById('high-res-container');
+function downloadDialogShow() {
+  const container = document.getElementById('download-dialog');
   container.classList.remove('hidden');
 }
 
+function downloadDialogHide() {
+  const container = document.getElementById('download-dialog');
+  container.classList.add('hidden');
+}
+
 async function renderHighResSection(state, section) {
-  const container = document.getElementById('high-res-container');
-  const loader = document.getElementById('high-res-loader');
+  const container = document.getElementById('download-dialog');
+  const loader = document.getElementById('download-dialog-loader');
   const image = document.getElementById('render-img');
 
   container.classList.remove('hidden');
@@ -1890,7 +1896,7 @@ function setupUI(controller) {
   });
 
   addClickEvent('render-btn', event => {
-    downloadDialog();
+    downloadDialogShow();
     event.preventDefault();
   });
 
@@ -1933,7 +1939,7 @@ function setupUI(controller) {
 
         await controller.dispatch(actionSetGenotype, { genotype });
 
-        downloadDialog();
+        downloadDialogShow();
       }
     } else if (target.classList.contains('edit')) {
       showEditFromEvolve(controller, target);
@@ -1948,19 +1954,19 @@ function setupUI(controller) {
     onNextGen(controller);
   });
 
-  addClickEvent('high-res-download', async event => {
+  addClickEvent('download-dialog-button-ok', async event => {
     // in an async function so call preventDefault before the first await
     event.preventDefault();
 
     const state = controller.getState();
 
-    const loader = document.getElementById('high-res-loader');
+    const loader = document.getElementById('download-dialog-loader');
     const image = document.getElementById('render-img');
 
-    const image_resolution_elem = document.getElementById('high-res-resolution');
+    const image_resolution_elem = document.getElementById('download-dialog-field-resolution');
     let image_resolution = parseInt(image_resolution_elem.value, 10);
 
-    const image_dim_elem = document.getElementById('high-res-tiledim');
+    const image_dim_elem = document.getElementById('download-dialog-field-tiledim');
     let image_dim = parseInt(image_dim_elem.value, 10);
 
     loader.classList.remove('hidden');
@@ -1981,7 +1987,7 @@ function setupUI(controller) {
 
     loader.classList.add('hidden');
 
-    const image_name_elem = document.getElementById('high-res-filename');
+    const image_name_elem = document.getElementById('download-dialog-field-filename');
     const filename = ensureFilenameIsPNG(image_name_elem.value);
     gGLRenderer.localDownload(filename);
 
@@ -1989,9 +1995,8 @@ function setupUI(controller) {
     await controller.dispatch(actionSetGenotype, { genotype: undefined });
   });
 
-  addClickEvent('high-res-close', event => {
-    const highResContainer = document.getElementById('high-res-container');
-    highResContainer.classList.add('hidden');
+  addClickEvent('download-dialog-button-close', event => {
+    downloadDialogHide();
     event.preventDefault();
   });
 
