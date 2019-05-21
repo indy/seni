@@ -20,6 +20,7 @@ use crate::keywords::Keyword;
 use crate::program::Program;
 use crate::result::Result;
 use crate::vm::Vm;
+use crate::colour::{Colour, ColourFormat};
 
 use log::error;
 
@@ -36,21 +37,16 @@ fn invoke_function(
     from_string: &str,
 ) -> Result<()> {
     let bitmap_info = context.bitmap_cache.get(from_string)?;
-
     let ip = vm.ip;
-
     let fn_info = &program.fn_info[fun];
-
-    let e0 = bitmap_info.data[index];
-    let e1 = bitmap_info.data[index + 1];
-    let e2 = bitmap_info.data[index + 2];
-    let e3 = bitmap_info.data[index + 2];
+    let colour = Colour::new(ColourFormat::Rgb,
+                             f32::from(bitmap_info.data[index]) / 255.0,
+                             f32::from(bitmap_info.data[index + 1]) / 255.0,
+                             f32::from(bitmap_info.data[index + 2]) / 255.0,
+                             f32::from(bitmap_info.data[index + 3]) / 255.0);
 
     vm.function_call_default_arguments(context, program, fn_info)?;
-    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::A), f32::from(e0) / 255.0);
-    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::B), f32::from(e1) / 255.0);
-    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::C), f32::from(e2) / 255.0);
-    vm.function_set_argument_to_f32(fn_info, Iname::from(Keyword::D), f32::from(e3) / 255.0);
+    vm.function_set_argument_to_col(fn_info, Iname::from(Keyword::Colour), &colour);
     vm.function_set_argument_to_2d(fn_info, Iname::from(Keyword::Position), x as f32, y as f32);
     vm.function_call_body(context, program, fn_info)?;
 

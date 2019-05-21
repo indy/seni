@@ -11,30 +11,30 @@
                    height: 1000
                    fn: per-pixel-func))
 
-(fn (pass-0 a: 0 b: 0 c: 0 d: 0 position: [100 100])
-  (per-pixel a: a
+(fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
              width: 1.0
              from: [0 0]
              to: [1 1]))
 
-(fn (pass-1 a: 0 b: 0 c: 0 d: 0 position: [100 100])
-  (per-pixel a: a
+(fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
              width: {14.3 (gen/scalar min: 0.1 max: 15)}
              from: [{10 (gen/scalar min: -15 max: 15)}
                     {5 (gen/scalar min: -15 max: 15)}]
              to: [{-9 (gen/scalar min: -15 max: 15)}
                   {-1 (gen/scalar min: -15 max: 15)}]))
 
-(fn (pass-2 a: 0 b: 0 c: 0 d: 0 position: [100 100])
-  (per-pixel a: a
+(fn (pass-2 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
              width: {2.4 (gen/scalar min: 0.1 max: 15)}
              from: [{15 (gen/scalar min: -15 max: 15)}
                     {-5 (gen/scalar min: -15 max: 15)}]
              to: [{-0 (gen/scalar min: -15 max: 15)}
                   {-2 (gen/scalar min: -15 max: 15)}]))
 
-(fn (pass-3 a: 0 b: 0 c: 0 d: 0 position: [100 100])
-  (per-pixel a: a
+(fn (pass-3 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
              width: {4.8 (gen/scalar min: 0.1 max: 15)}
              from: [{-5 (gen/scalar min: -15 max: 15)}
                     {-2 (gen/scalar min: -15 max: 15)}]

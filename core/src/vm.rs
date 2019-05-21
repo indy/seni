@@ -432,6 +432,12 @@ impl Vm {
         None
     }
 
+    pub fn function_set_argument_to_col(&mut self, fn_info: &FnInfo, iname: Iname, colour: &Colour) {
+        if let Some(offset) = self.arg_memory_from_iname(fn_info, iname, self.fp - 1) {
+            self.stack[offset] = Var::Colour(*colour);
+        }
+    }
+
     pub fn function_set_argument_to_f32(&mut self, fn_info: &FnInfo, iname: Iname, f: f32) {
         if let Some(offset) = self.arg_memory_from_iname(fn_info, iname, self.fp - 1) {
             self.stack[offset] = Var::Float(f);
