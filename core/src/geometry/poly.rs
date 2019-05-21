@@ -21,6 +21,8 @@ use crate::result::Result;
 use crate::uvmapper::UvMapping;
 use crate::vm::Var;
 
+use log::error;
+
 pub fn render(
     geometry: &mut Geometry,
     matrix: &Matrix,
@@ -30,9 +32,8 @@ pub fn render(
 ) -> Result<()> {
     let num_vertices = coords.len();
     if colours.len() != num_vertices {
-        return Err(Error::Bind(
-            "render_poly: coords and colours length mismatch".to_string(),
-        ));
+        error!("render_poly: coords and colours length mismatch");
+        return Err(Error::Geometry);
     } else if num_vertices < 3 {
         return Ok(());
     }

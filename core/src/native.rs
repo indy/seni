@@ -40,7 +40,7 @@ use std::rc::Rc;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
-// use log::info;
+use log::error;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Display, EnumString, EnumIter)]
 pub enum Native {
@@ -410,7 +410,10 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::Gen2D => gen_2d_parameter_info(),
         Native::GenSelect => gen_select_parameter_info(),
         Native::GenCol => gen_col_parameter_info(),
-        _ => Err(Error::Native("parameter_info".to_string())),
+        _ => {
+            error!("parameter_info");
+            Err(Error::Native)
+        }
     }
 }
 
@@ -530,7 +533,10 @@ pub fn execute_native(
         Native::GenSelect => gen_select_execute(vm),
         Native::GenCol => gen_col_execute(vm),
 
-        _ => Err(Error::Native("execute_native".to_string())),
+        _ => {
+            error!("execute_native");
+            Err(Error::Native)
+        }
     }
 }
 
@@ -557,7 +563,8 @@ fn stack_peek_vars(stack: &[Var], sp: usize, offset: usize) -> Result<&Vec<Var>>
     if let Var::Vector(vs) = &stack[sp - offset] {
         Ok(vs)
     } else {
-        return Err(Error::VM("expected Var::Vector".to_string()));
+        error!("expected Var::Vector");
+        return Err(Error::Native);
     }
 }
 
@@ -583,7 +590,8 @@ fn stack_peek_proc_colour_state_struct(
     if let Var::ProcColourState(pcss) = &stack[sp - offset] {
         Ok(pcss)
     } else {
-        return Err(Error::VM("expected Var::ProcColourState".to_string()));
+        error!("expected Var::ProcColourState");
+        return Err(Error::Native);
     }
 }
 
@@ -595,7 +603,8 @@ fn stack_peek_interp_state_struct(
     if let Var::InterpState(iss) = &stack[sp - offset] {
         Ok(iss)
     } else {
-        return Err(Error::VM("expected Var::InterpState".to_string()));
+        error!("expected Var::InterpState");
+        return Err(Error::Native);
     }
 }
 
@@ -607,7 +616,8 @@ fn stack_peek_focal_state_struct(
     if let Var::FocalState(fss) = &stack[sp - offset] {
         Ok(fss)
     } else {
-        return Err(Error::VM("expected Var::FocalState".to_string()));
+        error!("expected Var::FocalState");
+        return Err(Error::Native);
     }
 }
 
@@ -619,17 +629,10 @@ fn ref_mut_prng_state_struct(
     if let Var::PrngState(prng_state_struct) = &stack[sp - offset] {
         Ok(prng_state_struct.borrow_mut())
     } else {
-        return Err(Error::VM("expected Var::PrngState".to_string()));
+        error!("expected Var::PrngState");
+        return Err(Error::Native);
     }
 }
-
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------
 
 fn nth_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
@@ -648,11 +651,13 @@ fn nth_execute(vm: &mut Vm) -> Result<Option<Var>> {
 
     // require a 'from' argument
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native("nth requires from parameter".to_string()));
+        error!("nth requires from parameter");
+        return Err(Error::Native);
     }
     // require an 'n' argument
     if !is_arg_given(default_mask, 2) {
-        return Err(Error::Native("nth requires n parameter".to_string()));
+        error!("nth requires n parameter");
+        return Err(Error::Native);
     }
 
     let n: usize = vm.stack_peek(2)?;
@@ -672,18 +677,21 @@ fn nth_execute(vm: &mut Vm) -> Result<Option<Var>> {
                     _ => Some(nth.clone()),
                 }
             } else {
-                return Err(Error::Native("nth: n out of range".to_string()));
+                error!("nth: n out of range");
+                return Err(Error::Native);
             }
         }
         Var::V2D(x, y) => match n {
             0 => Some(Var::Float(*x)),
             1 => Some(Var::Float(*y)),
-            _ => return Err(Error::Native("nth indexing V2D out of range".to_string())),
+            _ => {
+                error!("nth indexing V2D out of range");
+                return Err(Error::Native);
+            }
         },
         _ => {
-            return Err(Error::Native(
-                "nth only accepts Vector or V2D in from parameter".to_string(),
-            ))
+            error!("nth only accepts Vector or V2D in from parameter");
+            return Err(Error::Native);
         }
     };
 
@@ -705,9 +713,8 @@ fn vector_length_execute(vm: &mut Vm) -> Result<Option<Var>> {
 
     // require a 'vector' argument
     if !is_arg_given(default_mask, vector_offset) {
-        return Err(Error::Native(
-            "vector/length requires vector parameter".to_string(),
-        ));
+        error!("vector/length requires vector parameter");
+        return Err(Error::Native);
     }
 
     // vector is either a Vector or a V2D
@@ -715,9 +722,8 @@ fn vector_length_execute(vm: &mut Vm) -> Result<Option<Var>> {
         Var::Vector(vs) => Some(Var::Int(vs.len() as i32)),
         Var::V2D(_, _) => Some(Var::Int(2)),
         _ => {
-            return Err(Error::Native(
-                "vector/length only accepts Vector or V2D in 'vector' parameter".to_string(),
-            ))
+            error!("vector/length only accepts Vector or V2D in 'vector' parameter");
+            return Err(Error::Native);
         }
     };
 
@@ -842,7 +848,8 @@ fn rect_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
         context.render_rect(position, width, height, &rgb)?;
     } else {
-        return Err(Error::Native("rect".to_string()));
+        error!("rect");
+        return Err(Error::Native);
     }
 
     Ok(None)
@@ -883,7 +890,8 @@ fn circle_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
             context.render_circle(position, width, height, &rgb, tessellation)?;
         }
     } else {
-        return Err(Error::Native("circle".to_string()));
+        error!("circle");
+        return Err(Error::Native);
     }
 
     Ok(None)
@@ -952,7 +960,8 @@ fn circle_slice_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var
             )?;
         }
     } else {
-        return Err(Error::Native("circle_slice".to_string()));
+        error!("circle_slice");
+        return Err(Error::Native);
     }
 
     Ok(None)
@@ -974,9 +983,8 @@ fn poly_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) || !is_arg_given(default_mask, 2) {
-        return Err(Error::Native(
-            "poly requires both coords and colours".to_string(),
-        ));
+        error!("poly requires both coords and colours");
+        return Err(Error::Native);
     }
 
     // code looks like this thanks to the borrow checker being anal
@@ -1025,24 +1033,28 @@ fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> 
     let default_mask: i32 = vm.stack_peek(12)?;
 
     if !is_arg_given(default_mask, 5) {
-        return Err(Error::Native("quadratic requires coords".to_string()));
+        error!("quadratic requires coords");
+        return Err(Error::Native);
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
         let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
             (x, y)
         } else {
-            return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+            error!("coords 0 should be a Vec::V2D");
+            return Err(Error::Native);
         };
         let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
             (x, y)
         } else {
-            return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+            error!("coords 1 should be a Vec::V2D");
+            return Err(Error::Native);
         };
         let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
             (x, y)
         } else {
-            return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+            error!("coords 2 should be a Vec::V2D");
+            return Err(Error::Native);
         };
 
         let brush_type = read_brush(brush);
@@ -1078,10 +1090,12 @@ fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> 
                 )?;
             }
         } else {
-            return Err(Error::Native("quadratic: invalid mapping".to_string()));
+            error!("quadratic: invalid mapping");
+            return Err(Error::Native);
         }
     } else {
-        return Err(Error::Native("quadratic: colour conversion".to_string()));
+        error!("quadratic: colour conversion");
+        return Err(Error::Native);
     }
 
     Ok(None)
@@ -1124,7 +1138,8 @@ fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(12)?;
 
     if !is_arg_given(default_mask, 5) {
-        return Err(Error::Native("bezier requires coords".to_string()));
+        error!("bezier requires coords");
+        return Err(Error::Native);
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
@@ -1134,22 +1149,26 @@ fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
             let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
                 (x, y)
             } else {
-                return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+                error!("coords 0 should be a Vec::V2D");
+                return Err(Error::Native);
             };
             let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
                 (x, y)
             } else {
-                return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+                error!("coords 1 should be a Vec::V2D");
+                return Err(Error::Native);
             };
             let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
                 (x, y)
             } else {
-                return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+                error!("coords 2 should be a Vec::V2D");
+                return Err(Error::Native);
             };
             let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
                 (x, y)
             } else {
-                return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+                error!("coords 3 should be a Vec::V2D");
+                return Err(Error::Native);
             };
 
             if is_arg_given(default_mask, 1) {
@@ -1182,10 +1201,12 @@ fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
                 )?;
             }
         } else {
-            return Err(Error::Native("bezier: invalid mapping".to_string()));
+            error!("bezier: invalid mapping");
+            return Err(Error::Native);
         }
     } else {
-        return Err(Error::Native("bezier: colour conversion".to_string()));
+        error!("bezier: colour conversion");
+        return Err(Error::Native);
     }
 
     Ok(None)
@@ -1222,7 +1243,8 @@ fn bezier_bulging_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
     let default_mask: i32 = vm.stack_peek(9)?;
 
     if !is_arg_given(default_mask, 2) {
-        return Err(Error::Native("bezier_bulging requires coords".to_string()));
+        error!("bezier_bulging requires coords");
+        return Err(Error::Native);
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
@@ -1231,22 +1253,26 @@ fn bezier_bulging_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
         let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
             (x, y)
         } else {
-            return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+            error!("coords 0 should be a Vec::V2D");
+            return Err(Error::Native);
         };
         let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
             (x, y)
         } else {
-            return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+            error!("coords 1 should be a Vec::V2D");
+            return Err(Error::Native);
         };
         let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
             (x, y)
         } else {
-            return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+            error!("coords 2 should be a Vec::V2D");
+            return Err(Error::Native);
         };
         let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
             (x, y)
         } else {
-            return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+            error!("coords 3 should be a Vec::V2D");
+            return Err(Error::Native);
         };
 
         context.render_bezier_bulging(
@@ -1260,9 +1286,8 @@ fn bezier_bulging_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
             brush_subtype,
         )?;
     } else {
-        return Err(Error::Native(
-            "bezier_bulging: colour conversion".to_string(),
-        ));
+        error!("bezier_bulging: colour conversion");
+        return Err(Error::Native);
     }
 
     Ok(None)
@@ -1307,7 +1332,8 @@ fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
     let default_mask: i32 = vm.stack_peek(13)?;
 
     if !is_arg_given(default_mask, 2) {
-        return Err(Error::Native("stroked bezier requires coords".to_string()));
+        error!("stroked bezier requires coords");
+        return Err(Error::Native);
     }
 
     if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
@@ -1317,22 +1343,26 @@ fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
             let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
                 (x, y)
             } else {
-                return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+                error!("coords 0 should be a Vec::V2D");
+                return Err(Error::Native);
             };
             let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
                 (x, y)
             } else {
-                return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+                error!("coords 1 should be a Vec::V2D");
+                return Err(Error::Native);
             };
             let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
                 (x, y)
             } else {
-                return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+                error!("coords 2 should be a Vec::V2D");
+                return Err(Error::Native);
             };
             let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
                 (x, y)
             } else {
-                return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+                error!("coords 3 should be a Vec::V2D");
+                return Err(Error::Native);
             };
 
             context.render_stroked_bezier(
@@ -1350,12 +1380,12 @@ fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
                 brush_subtype,
             )?
         } else {
-            return Err(Error::Native("stroked bezier: invalid mapping".to_string()));
+            error!("stroked bezier: invalid mapping");
+            return Err(Error::Native);
         }
     } else {
-        return Err(Error::Native(
-            "stroked bezier: colour conversion".to_string(),
-        ));
+        error!("stroked bezier: colour conversion");
+        return Err(Error::Native);
     }
 
     Ok(None)
@@ -1421,9 +1451,8 @@ fn stroked_bezier_rect_execute(vm: &mut Vm, context: &mut Context) -> Result<Opt
             brush_subtype,
         )?;
     } else {
-        return Err(Error::Native(
-            "stroked bezier rect: colour conversion".to_string(),
-        ));
+        error!("stroked bezier rect: colour conversion");
+        return Err(Error::Native);
     }
 
     Ok(None)
@@ -1540,14 +1569,14 @@ fn col_convert_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        Err(Error::Native(
-            "col/convert requires format argument".to_string(),
-        ))
+        error!("col/convert requires format argument");
+        Err(Error::Native)
     } else if let Some(format) = ColourFormat::from_keyword(format) {
         let col = col.convert(format)?;
         Ok(Some(Var::Colour(col)))
     } else {
-        Err(Error::Native("col/convert".to_string()))
+        error!("col/convert");
+        Err(Error::Native)
     }
 }
 
@@ -1812,9 +1841,8 @@ fn col_set_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
         2 => Colour::new(col.format, col.e0, col.e1, value, col.e3),
         3 => Colour::new(col.format, col.e0, col.e1, col.e2, value),
         _ => {
-            return Err(Error::Bind(
-                "col_set_elem_execute::idx out of range".to_string(),
-            ))
+            error!("col_set_elem_execute::idx out of range");
+            return Err(Error::Native);
         }
     };
 
@@ -1830,9 +1858,8 @@ fn col_get_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
         2 => col.e2,
         3 => col.e3,
         _ => {
-            return Err(Error::Bind(
-                "col_get_elem_execute::idx out of range".to_string(),
-            ))
+            error!("col_get_elem_execute::idx out of range");
+            return Err(Error::Native);
         }
     };
 
@@ -1864,7 +1891,8 @@ fn to_f32_3(vecs: &[Var]) -> Result<[f32; 3]> {
         }
     }
 
-    Err(Error::Native("to_f32_3".to_string()))
+    error!("to_f32_3");
+    Err(Error::Native)
 }
 
 fn col_build_procedural_execute(vm: &mut Vm) -> Result<Option<Var>> {
@@ -1878,7 +1906,8 @@ fn col_build_procedural_execute(vm: &mut Vm) -> Result<Option<Var>> {
         if let Some(preset) = ColourPreset::from_keyword(preset_kw) {
             preset.get_preset()
         } else {
-            return Err(Error::Native("col_build_procedural_execute".to_string()));
+            error!("col_build_procedural_execute");
+            return Err(Error::Native);
         }
     } else if is_arg_given(default_mask, 3)
         && is_arg_given(default_mask, 4)
@@ -1892,7 +1921,8 @@ fn col_build_procedural_execute(vm: &mut Vm) -> Result<Option<Var>> {
             to_f32_3(stack_peek_vars(&vm.stack, vm.sp, 6)?)?,
         )
     } else {
-        return Err(Error::Native("col_build_procedural_execute".to_string()));
+        error!("col_build_procedural_execute");
+        return Err(Error::Native);
     };
 
     Ok(Some(Var::ProcColourState(ProcColourStateStruct {
@@ -1920,9 +1950,8 @@ fn col_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "col_value_execute requires from parameter".to_string(),
-        ));
+        error!("col_value_execute requires from parameter");
+        return Err(Error::Native);
     }
 
     let from = stack_peek_proc_colour_state_struct(&vm.stack, vm.sp, 1)?;
@@ -2099,9 +2128,8 @@ fn prng_values_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "prng/values requires a from parameter".to_string(),
-        ));
+        error!("prng/values requires a from parameter");
+        return Err(Error::Native);
     }
 
     let mut ref_mut_prng_state = ref_mut_prng_state_struct(&vm.stack, vm.sp, 1)?;
@@ -2130,9 +2158,8 @@ fn prng_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "prng/value requires a from parameter".to_string(),
-        ));
+        error!("prng/value requires a from parameter");
+        return Err(Error::Native);
     }
 
     let mut ref_mut_prng_state = ref_mut_prng_state_struct(&vm.stack, vm.sp, 1)?;
@@ -2202,7 +2229,8 @@ fn interp_build_execute(vm: &mut Vm) -> Result<Option<Var>> {
             mapping,
         })))
     } else {
-        Err(Error::Native("interp_build_execute".to_string()))
+        error!("interp_build_execute");
+        Err(Error::Native)
     }
 }
 
@@ -2222,9 +2250,8 @@ fn interp_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "interp/value requires a from parameter".to_string(),
-        ));
+        error!("interp/value requires a from parameter");
+        return Err(Error::Native);
     }
 
     let interp_state = stack_peek_interp_state_struct(&vm.stack, vm.sp, 1)?;
@@ -2297,9 +2324,8 @@ fn interp_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "interp/bezier requires coords parameter".to_string(),
-        ));
+        error!("interp/bezier requires coords parameter");
+        return Err(Error::Native);
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
@@ -2308,22 +2334,26 @@ fn interp_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
     } else {
-        return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+        error!("coords 0 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
         (x, y)
     } else {
-        return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+        error!("coords 1 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
         (x, y)
     } else {
-        return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+        error!("coords 2 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
         (x, y)
     } else {
-        return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+        error!("coords 3 should be a Vec::V2D");
+        return Err(Error::Native);
     };
 
     let (x, y) = interp::bezier(&[x0, y0, x1, y1, x2, y2, x3, y3], t);
@@ -2347,9 +2377,8 @@ fn interp_bezier_tangent_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "interp/bezier requires coords parameter".to_string(),
-        ));
+        error!("interp/bezier requires coords parameter");
+        return Err(Error::Native);
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
@@ -2358,22 +2387,26 @@ fn interp_bezier_tangent_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
     } else {
-        return Err(Error::Native("coords 0 should be a Vec::V2D".to_string()));
+        error!("coords 0 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
         (x, y)
     } else {
-        return Err(Error::Native("coords 1 should be a Vec::V2D".to_string()));
+        error!("coords 1 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
         (x, y)
     } else {
-        return Err(Error::Native("coords 2 should be a Vec::V2D".to_string()));
+        error!("coords 2 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
         (x, y)
     } else {
-        return Err(Error::Native("coords 3 should be a Vec::V2D".to_string()));
+        error!("coords 3 should be a Vec::V2D");
+        return Err(Error::Native);
     };
 
     let (x, y) = interp::bezier_tangent(&[x0, y0, x1, y1, x2, y2, x3, y3], t);
@@ -2434,7 +2467,8 @@ fn interp_line_execute(vm: &mut Vm) -> Result<Option<Var>> {
 
         Ok(Some(Var::V2D(x, y)))
     } else {
-        Err(Error::Native("interp_line_execute".to_string()))
+        error!("interp_line_execute");
+        Err(Error::Native)
     }
 }
 
@@ -2486,9 +2520,8 @@ fn path_linear_execute(
     let default_mask: i32 = vm.stack_peek(8)?;
 
     if !is_arg_given(default_mask, 6) {
-        return Err(Error::Native(
-            "path_linear_execute requires fn argument".to_string(),
-        ));
+        error!("path_linear_execute requires fn argument");
+        return Err(Error::Native);
     }
 
     let from: (f32, f32) = vm.stack_peek(1)?;
@@ -2544,9 +2577,8 @@ fn path_circle_execute(
     let default_mask: i32 = vm.stack_peek(8)?;
 
     if !is_arg_given(default_mask, 6) {
-        return Err(Error::Native(
-            "path_circle_execute requires fn argument".to_string(),
-        ));
+        error!("path_circle_execute requires fn argument");
+        return Err(Error::Native);
     }
 
     let position: (f32, f32) = vm.stack_peek(1)?;
@@ -2600,14 +2632,12 @@ fn path_spline_execute(
     let default_mask: i32 = vm.stack_peek(7)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "path_spline_execute requires coords argument".to_string(),
-        ));
+        error!("path_spline_execute requires coords argument");
+        return Err(Error::Native);
     }
     if !is_arg_given(default_mask, 5) {
-        return Err(Error::Native(
-            "path_spline_execute requires fn argument".to_string(),
-        ));
+        error!("path_spline_execute requires fn argument");
+        return Err(Error::Native);
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
@@ -2620,17 +2650,20 @@ fn path_spline_execute(
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
     } else {
-        return Err(Error::Path("coords 0 should be a Vec::V2D".to_string()));
+        error!("coords 0 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
         (x, y)
     } else {
-        return Err(Error::Path("coords 1 should be a Vec::V2D".to_string()));
+        error!("coords 1 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
         (x, y)
     } else {
-        return Err(Error::Path("coords 2 should be a Vec::V2D".to_string()));
+        error!("coords 2 should be a Vec::V2D");
+        return Err(Error::Native);
     };
 
     if let Some(mapping) = easing_from_keyword(mapping) {
@@ -2674,14 +2707,12 @@ fn path_bezier_execute(
     let default_mask: i32 = vm.stack_peek(7)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "path_bezier_execute requires coords argument".to_string(),
-        ));
+        error!("path_bezier_execute requires coords argument");
+        return Err(Error::Native);
     }
     if !is_arg_given(default_mask, 5) {
-        return Err(Error::Native(
-            "path_bezier_execute requires fn argument".to_string(),
-        ));
+        error!("path_bezier_execute requires fn argument");
+        return Err(Error::Native);
     }
 
     let coords = stack_peek_vars(&vm.stack, vm.sp, 1)?;
@@ -2694,22 +2725,26 @@ fn path_bezier_execute(
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
     } else {
-        return Err(Error::Path("coords 0 should be a Vec::V2D".to_string()));
+        error!("coords 0 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
         (x, y)
     } else {
-        return Err(Error::Path("coords 1 should be a Vec::V2D".to_string()));
+        error!("coords 1 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
         (x, y)
     } else {
-        return Err(Error::Path("coords 2 should be a Vec::V2D".to_string()));
+        error!("coords 2 should be a Vec::V2D");
+        return Err(Error::Native);
     };
     let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
         (x, y)
     } else {
-        return Err(Error::Path("coords 2 should be a Vec::V2D".to_string()));
+        error!("coords 3 should be a Vec::V2D");
+        return Err(Error::Native);
     };
 
     if let Some(mapping) = easing_from_keyword(mapping) {
@@ -2746,9 +2781,8 @@ fn repeat_symmetry_vertical_execute(
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "repeat_symmetry_vertical requires fn argument".to_string(),
-        ));
+        error!("repeat_symmetry_vertical requires fn argument");
+        return Err(Error::Native);
     }
 
     let fun: i32 = vm.stack_peek(1)?;
@@ -2775,9 +2809,8 @@ fn repeat_symmetry_horizontal_execute(
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "repeat_symmetry_horizontal requires fn argument".to_string(),
-        ));
+        error!("repeat_symmetry_horizontal requires fn argument");
+        return Err(Error::Native);
     }
 
     let fun: i32 = vm.stack_peek(1)?;
@@ -2804,9 +2837,8 @@ fn repeat_symmetry_4_execute(
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "repeat_symmetry_4 requires fn argument".to_string(),
-        ));
+        error!("repeat_symmetry_4 requires fn argument");
+        return Err(Error::Native);
     }
 
     let fun: i32 = vm.stack_peek(1)?;
@@ -2833,9 +2865,8 @@ fn repeat_symmetry_8_execute(
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "repeat_symmetry_8 requires fn argument".to_string(),
-        ));
+        error!("repeat_symmetry_8 requires fn argument");
+        return Err(Error::Native);
     }
 
     let fun: i32 = vm.stack_peek(1)?;
@@ -2865,9 +2896,8 @@ fn repeat_rotate_execute(
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "repeat_rotate requires fn argument".to_string(),
-        ));
+        error!("repeat_rotate requires fn argument");
+        return Err(Error::Native);
     }
 
     let fun: i32 = vm.stack_peek(1)?;
@@ -2898,9 +2928,8 @@ fn repeat_rotate_mirrored_execute(
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "repeat_rotate_mirrored requires fn argument".to_string(),
-        ));
+        error!("repeat_rotate_mirrored requires fn argument");
+        return Err(Error::Native);
     }
 
     let fun: i32 = vm.stack_peek(1)?;
@@ -2942,7 +2971,8 @@ fn focal_build_generic_execute(vm: &mut Vm, focal_type: focal::FocalType) -> Res
             transform_pos,
         })))
     } else {
-        Err(Error::Native("focal_build_generic _execute".to_string()))
+        error!("focal_build_generic _execute");
+        Err(Error::Native)
     }
 }
 
@@ -2974,9 +3004,8 @@ fn focal_value_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "focal/value requires a from parameter".to_string(),
-        ));
+        error!("focal/value requires a from parameter");
+        return Err(Error::Native);
     }
 
     let focal_state_struct = stack_peek_focal_state_struct(&vm.stack, vm.sp, 1)?;
@@ -3010,14 +3039,12 @@ fn bitmap_each_execute(
     let default_mask: i32 = vm.stack_peek(6)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "bitmap/each requires a from parameter".to_string(),
-        ));
+        error!("bitmap/each requires a from parameter");
+        return Err(Error::Native);
     }
     if !is_arg_given(default_mask, 5) {
-        return Err(Error::Native(
-            "bitmap/each requires a fn parameter".to_string(),
-        ));
+        error!("bitmap/each requires a fn parameter");
+        return Err(Error::Native);
     }
 
     let from: Iname = vm.stack_peek(1)?;
@@ -3099,10 +3126,8 @@ fn gen_stray_2d_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 
 fn gen_stray_2d_execute(vm: &mut Vm) -> Result<Option<Var>> {
     if !vm.building_with_trait_within_vector {
-        return Err(Error::Native(
-            "gen_stray_2d should always be called with vm.building_with_trait_within_vector"
-                .to_string(),
-        ));
+        error!("gen_stray_2d should always be called with vm.building_with_trait_within_vector");
+        return Err(Error::Native);
     }
 
     let from: (f32, f32) = vm.stack_peek(1)?;
@@ -3118,9 +3143,8 @@ fn gen_stray_2d_execute(vm: &mut Vm) -> Result<Option<Var>> {
         by_index = mathutil::absf(by.1);
         from_index = from.1;
     } else {
-        return Err(Error::Native(
-            "gen_stray_2d invalid trait_within_vector_index value".to_string(),
-        ));
+        error!("gen_stray_2d invalid trait_within_vector_index value");
+        return Err(Error::Native);
     }
 
     // pick a scalar between min and max
@@ -3145,23 +3169,19 @@ fn gen_stray_3d_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 
 fn gen_stray_3d_execute(vm: &mut Vm) -> Result<Option<Var>> {
     if !vm.building_with_trait_within_vector {
-        return Err(Error::Native(
-            "gen_stray_3d should always be called with vm.building_with_trait_within_vector"
-                .to_string(),
-        ));
+        error!("gen_stray_3d should always be called with vm.building_with_trait_within_vector");
+        return Err(Error::Native);
     }
 
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "gen/stray-3d requires a from parameter".to_string(),
-        ));
+        error!("gen/stray-3d requires a from parameter");
+        return Err(Error::Native);
     }
     if !is_arg_given(default_mask, 2) {
-        return Err(Error::Native(
-            "gen/stray-3d requires a by parameter".to_string(),
-        ));
+        error!("gen/stray-3d requires a by parameter");
+        return Err(Error::Native);
     }
 
     let from = stack_peek_vars(&vm.stack, vm.sp, 1)?;
@@ -3172,17 +3192,15 @@ fn gen_stray_3d_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let from = if let Some(var) = from.get(index) {
         Var::get_float_value(&var)?
     } else {
-        return Err(Error::Native(
-            "gen_stray_3d requires both from and by parameters".to_string(),
-        ));
+        error!("gen_stray_3d requires both from and by parameters");
+        return Err(Error::Native);
     };
 
     let by = if let Some(var) = by.get(index) {
         Var::get_float_value(&var)?
     } else {
-        return Err(Error::Native(
-            "gen_stray_3d requires both from and by parameters".to_string(),
-        ));
+        error!("gen_stray_3d requires both from and by parameters");
+        return Err(Error::Native);
     };
 
     // pick a scalar between min and max
@@ -3205,23 +3223,19 @@ fn gen_stray_4d_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 
 fn gen_stray_4d_execute(vm: &mut Vm) -> Result<Option<Var>> {
     if !vm.building_with_trait_within_vector {
-        return Err(Error::Native(
-            "gen_stray_4d should always be called with vm.building_with_trait_within_vector"
-                .to_string(),
-        ));
+        error!("gen_stray_4d should always be called with vm.building_with_trait_within_vector");
+        return Err(Error::Native);
     }
 
     let default_mask: i32 = vm.stack_peek(3)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "gen/stray-4d requires a from parameter".to_string(),
-        ));
+        error!("gen/stray-4d requires a from parameter");
+        return Err(Error::Native);
     }
     if !is_arg_given(default_mask, 2) {
-        return Err(Error::Native(
-            "gen/stray-4d requires a by parameter".to_string(),
-        ));
+        error!("gen/stray-4d requires a by parameter");
+        return Err(Error::Native);
     }
 
     let from = stack_peek_vars(&vm.stack, vm.sp, 1)?;
@@ -3232,17 +3246,15 @@ fn gen_stray_4d_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let from = if let Some(var) = from.get(index) {
         Var::get_float_value(&var)?
     } else {
-        return Err(Error::Native(
-            "gen_stray_4d requires both from and by parameters".to_string(),
-        ));
+        error!("gen_stray_4d requires both from and by parameters");
+        return Err(Error::Native);
     };
 
     let by = if let Some(var) = by.get(index) {
         Var::get_float_value(&var)?
     } else {
-        return Err(Error::Native(
-            "gen_stray_4d requires both from and by parameters".to_string(),
-        ));
+        error!("gen_stray_4d requires both from and by parameters");
+        return Err(Error::Native);
     };
 
     // pick a scalar between min and max
@@ -3330,9 +3342,8 @@ fn gen_select_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(2)?;
 
     if !is_arg_given(default_mask, 1) {
-        return Err(Error::Native(
-            "gen/select requires a from parameter".to_string(),
-        ));
+        error!("gen/select requires a from parameter");
+        return Err(Error::Native);
     }
 
     let from = stack_peek_vars(&vm.stack, vm.sp, 1)?;

@@ -29,7 +29,7 @@ use crate::program::{Bytecode, BytecodeArg, Data, FnInfo, Mem, Program};
 use crate::result::Result;
 use crate::vm::{Var, MEMORY_LOCAL_SIZE};
 
-use log::warn;
+use log::{error, warn};
 
 pub fn compile_preamble() -> Result<Program> {
     let mut compilation = Compilation::new();
@@ -352,9 +352,8 @@ impl Compilation {
         self.local_mapping_marker += 1;
 
         if self.local_mapping_marker >= MEMORY_LOCAL_SIZE {
-            Err(Error::Compiler(
-                "add_local_mapping: exceeded MEMORY_LOCAL_SIZE".to_string(),
-            ))
+            error!("add_local_mapping: exceeded MEMORY_LOCAL_SIZE");
+            Err(Error::Compiler)
         } else {
             Ok(self.local_mapping_marker - 1)
         }
@@ -377,9 +376,8 @@ impl Compilation {
         self.local_mapping_marker += 1;
 
         if self.local_mapping_marker >= MEMORY_LOCAL_SIZE {
-            Err(Error::Compiler(
-                "add_internal_local_mapping: exceeded MEMORY_LOCAL_SIZE".to_string(),
-            ))
+            error!("add_internal_local_mapping: exceeded MEMORY_LOCAL_SIZE");
+            Err(Error::Compiler)
         } else {
             Ok(self.local_mapping_marker - 1)
         }
@@ -783,7 +781,8 @@ impl Compiler {
 
                 if nodes.len() < 2 {
                     // a list with just the 'fn' keyword ???
-                    return Err(Error::Compiler("malformed function definition".to_string()));
+                    error!("malformed function definition");
+                    return Err(Error::Compiler);
                 }
                 let name_and_params = nodes[1];
                 if let Node::List(np_nodes, _) = name_and_params {
@@ -1177,10 +1176,8 @@ impl Compiler {
                     compilation.emit(Opcode::LOAD, Mem::Constant, col)?;
                 } else {
                     if self.use_genes && meta.is_some() {
-                        return Err(Error::Compiler(
-                            "given an alterable list that wasn't a colour constructor???"
-                                .to_string(),
-                        ));
+                        error!("given an alterable list that wasn't a colour constructor???");
+                        return Err(Error::Compiler);
                     }
                     self.compile_list(compilation, &children[..])?
                 }
@@ -1214,13 +1211,14 @@ impl Compiler {
                     compilation.emit(Opcode::NATIVE, *native, 0)?;
                     Ok(())
                 } else {
-                    Err(Error::Compiler(format!(
-                        "compile: can't find user defined name or keyword: {}",
-                        text
-                    )))
+                    error!("compile: can't find user defined name or keyword: {}", text);
+                    Err(Error::Compiler)
                 };
             }
-            _ => return Err(Error::Compiler(format!("compile ast: {:?}", ast))),
+            _ => {
+                error!("compile ast: {:?}", ast);
+                return Err(Error::Compiler);
+            }
         }
 
         Ok(())
@@ -1229,9 +1227,8 @@ impl Compiler {
     fn compile_list(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         if children.is_empty() {
             // should this be an error?
-            return Err(Error::Compiler(
-                "compile_list no children (should this be an error?)".to_string(),
-            ));
+            error!("compile_list no children (should this be an error?)");
+            return Err(Error::Compiler);
         }
 
         match &children[0] {
@@ -1360,7 +1357,10 @@ impl Compiler {
                     compilation.opcode_offset -= (num_args as i32 + 1) - stack_offset;
                 }
             }
-            _ => return Err(Error::Compiler("compile_list strange child".to_string())),
+            _ => {
+                error!("compile_list strange child");
+                return Err(Error::Compiler);
+            }
         }
 
         Ok(())
@@ -1418,10 +1418,8 @@ impl Compiler {
             //     }
             // }
             _ => {
-                return Err(Error::Compiler(format!(
-                    "unimplemented var compilation {:?}",
-                    var
-                )))
+                error!("unimplemented var compilation {:?}", var);
+                return Err(Error::Compiler);
             }
         };
 
@@ -1439,10 +1437,8 @@ impl Compiler {
         // (define a 10 b 20 c 30) -> a 10 b 20 c 30
 
         if defs.len() % 2 != 0 {
-            // log: should be an even number of elements
-            return Err(Error::Compiler(
-                "should be an even number of elements".to_string(),
-            ));
+            error!("should be an even number of elements");
+            return Err(Error::Compiler);
         }
 
         while !defs.is_empty() {
@@ -1477,12 +1473,15 @@ impl Compiler {
                         // all nodes in lhs vector definition should be names
                         // note: this means that recursive name assignments aren't implemented
                         // e.g. (define [a [b c]] something)
-                        return Err(Error::Compiler(
-                            "recursive name assignments aren't implemented".to_string(),
-                        ));
+
+                        error!("recursive name assignments aren't implemented");
+                        return Err(Error::Compiler);
                     }
                 }
-                _ => return Err(Error::Compiler("compile_define".to_string())),
+                _ => {
+                    error!("compile_define");
+                    return Err(Error::Compiler);
+                }
             }
 
             defs = &defs[2..];
@@ -1494,9 +1493,8 @@ impl Compiler {
     fn compile_fence(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         // (fence (x from: 0 to: 5 num: 5) (+ 42 38))
         if children.len() < 2 {
-            return Err(Error::Compiler(
-                "compile_fence requires at least 2 forms".to_string(),
-            ));
+            error!("compile_fence requires at least 2 forms");
+            return Err(Error::Compiler);
         }
 
         let parameters_node = &children[0];
@@ -1653,9 +1651,8 @@ impl Compiler {
         // compile_loop children == (x from: 0 upto: 120 inc: 30) (body)
         //
         if children.len() < 2 {
-            return Err(Error::Compiler(
-                "compile_loop requires at least 2 forms".to_string(),
-            ));
+            error!("compile_loop requires at least 2 forms");
+            return Err(Error::Compiler);
         }
 
         let parameters_node = &children[0];
@@ -1696,9 +1693,8 @@ impl Compiler {
             if maybe_to_node.is_some() {
                 use_to = true;
             } else if maybe_upto_node.is_none() {
-                return Err(Error::Compiler(
-                    "compile_loop requires either to or upto parameters".to_string(),
-                ));
+                error!("compile_loop requires either to or upto parameters");
+                return Err(Error::Compiler);
             }
 
             // set looping variable x to 'from' value
@@ -1778,9 +1774,8 @@ impl Compiler {
         //       (+ x x))
 
         if children.len() < 2 {
-            return Err(Error::Compiler(
-                "compile_each requires at least 2 forms".to_string(),
-            ));
+            error!("compile_each requires at least 2 forms");
+            return Err(Error::Compiler);
         }
 
         let parameters_node = &children[0];
@@ -1867,9 +1862,8 @@ impl Compiler {
                 compilation_len - addr_exit_check_is_vec as i32,
             )?;
         } else {
-            return Err(Error::Compiler(
-                "compile_each expected a list that defines parameters".to_string(),
-            ));
+            error!("compile_each expected a list that defines parameters");
+            return Err(Error::Compiler);
         }
         Ok(())
     }
@@ -1900,11 +1894,12 @@ impl Compiler {
             }
 
             compilation.emit_squish(len)?;
-            return Ok(());
+
+            Ok(())
+        } else {
+            error!("compile_vector_in_quote expected a Node::List");
+            Err(Error::Compiler)
         }
-        Err(Error::Compiler(
-            "compile_vector_in_quote expected a Node::List".to_string(),
-        ))
     }
 
     fn compile_quote(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
@@ -1924,9 +1919,8 @@ impl Compiler {
         children: &[&Node],
     ) -> Result<()> {
         if children.len() != 2 {
-            return Err(Error::Compiler(
-                "compile_vector_append requires 2 args".to_string(),
-            ));
+            error!("compile_vector_append requires 2 args");
+            return Err(Error::Compiler);
         }
 
         let vector = &children[0];
@@ -1990,9 +1984,8 @@ impl Compiler {
                 if let Node::Label(_, iname, _) = label {
                     compilation.emit(Opcode::STORE_F, Mem::Argument, *iname)?;
                 } else {
-                    return Err(Error::Compiler(
-                        "compile_fn_call: label required".to_string(),
-                    ));
+                    error!("compile_fn_call: label required");
+                    return Err(Error::Compiler);
                 }
 
                 label_vals = &label_vals[2..];
@@ -2006,9 +1999,8 @@ impl Compiler {
             return Ok(());
         }
 
-        Err(Error::Compiler(
-            "compile_fn_call should be given a list as the first parameter".to_string(),
-        ))
+        error!("compile_fn_call should be given a list as the first parameter");
+        Err(Error::Compiler)
     }
 
     fn compile_address_of(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
@@ -2019,7 +2011,8 @@ impl Compiler {
             return Ok(());
         }
 
-        Err(Error::Compiler("compile_address_of".to_string()))
+        error!("compile_address_of");
+        Err(Error::Compiler)
     }
 
     fn compile_explicit_0_arg_native_call(
@@ -2069,10 +2062,8 @@ impl Compiler {
             then_node = &children[1];
             else_node = Some(&children[2]);
         } else {
-            return Err(Error::Compiler(format!(
-                "if clause requires 2 or 3 forms (given {})",
-                num_children
-            )));
+            error!("if clause requires 2 or 3 forms (given {})", num_children);
+            return Err(Error::Compiler);
         }
 
         self.compile(compilation, if_node)?;
@@ -2111,9 +2102,8 @@ impl Compiler {
                 // if so we can check which of the two paths has the lower opcode offset
                 // and pad out that path by inserting some LOAD CONST 9999 into the
                 // compilation
-                return Err(Error::Compiler(
-                    "different opcode_offsets for the two paths in a conditional".to_string(),
-                ));
+                error!("different opcode_offsets for the two paths in a conditional");
+                return Err(Error::Compiler);
             }
 
             let addr_jump_else_offset = compilation.code.len() as i32 - addr_jump_else as i32;
@@ -2145,7 +2135,8 @@ impl Compiler {
 
             if kids.is_empty() {
                 // no fn name given
-                return Err(Error::CompilerFnWithoutName);
+                error!("FnWithoutName");
+                return Err(Error::Compiler);
             }
 
             let fn_name = &kids[0];
@@ -2172,9 +2163,8 @@ impl Compiler {
                 let mut counter = 0;
 
                 if var_decls.len() % 2 != 0 {
-                    return Err(Error::Compiler(
-                        "fn declaration doesn't have matching arg/value pairs".to_string(),
-                    ));
+                    error!("fn declaration doesn't have matching arg/value pairs");
+                    return Err(Error::Compiler);
                 }
 
                 while !var_decls.is_empty() {
@@ -2226,13 +2216,13 @@ impl Compiler {
 
                 compilation.current_fn_info_index = None;
             } else {
-                // todo: implement Display for Node
-                // return Err(Error::Compiler(format!("cannot find fn_info for {}", fn_name)))
-                return Err(Error::Compiler("cannot find fn_info for node".to_string()));
+                error!("cannot find fn_info for node");
+                return Err(Error::Compiler);
             }
         } else {
             // first item in fn declaration needs to be a list of function name and args
-            return Err(Error::CompilerFnDeclIncomplete);
+            error!("FnDeclIncomplete");
+            return Err(Error::Compiler);
         }
 
         Ok(())
@@ -2269,7 +2259,8 @@ impl Compiler {
                 self.compile(compilation, val)?;
                 compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
             } else {
-                return Err(Error::Compiler("compile_fn_invocation".to_string()));
+                error!("compile_fn_invocation");
+                return Err(Error::Compiler);
             }
 
             arg_vals = &arg_vals[2..];
@@ -2296,7 +2287,8 @@ impl Compiler {
         op: Opcode,
     ) -> Result<()> {
         if children.is_empty() {
-            return Err(Error::Compiler("compile_next_one".to_string()));
+            error!("compile_next_one");
+            return Err(Error::Compiler);
         }
 
         self.compile(compilation, &children[0])?;
@@ -2329,10 +2321,8 @@ impl Compiler {
                 unimplemented!();
             }
             _ => {
-                return Err(Error::Compiler(
-                    "compile_alterable_element: expected either a float element or a vector"
-                        .to_string(),
-                ));
+                error!("compile_alterable_element: expected either a float element or a vector");
+                return Err(Error::Compiler);
             }
         }
 
@@ -2463,12 +2453,14 @@ impl Compiler {
                 Mem::Local => self.store_locally(compilation, *iname),
                 // a call with mem == global means that this is a user defined global
                 Mem::Global => self.store_globally(compilation, *iname),
-                _ => Err(Error::Compiler(
-                    "store_from_stack_to_memory invalid memory type".to_string(),
-                )),
+                _ => {
+                    error!("store_from_stack_to_memory invalid memory type");
+                    return Err(Error::Compiler);
+                }
             }
         } else {
-            Err(Error::Compiler("store_from_stack_to_memory".to_string()))
+            error!("store_from_stack_to_memory");
+            Err(Error::Compiler)
         }
     }
 
@@ -2544,7 +2536,8 @@ impl Compiler {
 
 fn error_if_alterable(n: &Node, s: &str) -> Result<()> {
     if n.is_alterable() {
-        Err(Error::Compiler(format!("Alterable error: {} {:?}", s, n)))
+        error!("Alterable error: {} {:?}", s, n);
+        Err(Error::Compiler)
     } else {
         Ok(())
     }

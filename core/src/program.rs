@@ -25,6 +25,8 @@ use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
 use crate::result::Result;
 
+use log::error;
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Mem {
     Argument = 0, // store the function's arguments
@@ -62,10 +64,8 @@ impl Packable for Mem {
             3 => Mem::Constant,
             4 => Mem::Void,
             _ => {
-                return Err(Error::Packable(format!(
-                    "Mem::unpack invalid value: {}",
-                    res_i32
-                )));
+                error!("Mem::unpack invalid value: {}", res_i32);
+                return Err(Error::Packable);
             }
         };
 
@@ -89,7 +89,10 @@ impl BytecodeArg {
     pub fn get_int(&self) -> Result<i32> {
         match self {
             BytecodeArg::Int(i) => Ok(*i),
-            _ => Err(Error::Program("BytecodeArg expected to be int".to_string())),
+            _ => {
+                error!("BytecodeArg expected to be int");
+                Err(Error::Program)
+            }
         }
     }
 
@@ -179,7 +182,8 @@ impl Packable for BytecodeArg {
             let (val, rem) = Colour::unpack(rem)?;
             Ok((BytecodeArg::Colour(val), rem))
         } else {
-            Err(Error::Packable("BytecodeArg::unpack".to_string()))
+            error!("BytecodeArg::unpack");
+            Err(Error::Packable)
         }
     }
 }

@@ -31,7 +31,7 @@ use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
 
-// use log::error;
+use log::error;
 
 const FP_OFFSET_TO_LOCALS: usize = 4;
 const FP_OFFSET_TO_HOP_BACK: usize = 3;
@@ -97,7 +97,10 @@ impl Packable for Var {
                 col.pack(cursor)?;
             }
             Var::V2D(fl1, fl2) => cursor.push_str(&format!("2D {} {}", fl1, fl2)),
-            _ => return Err(Error::Packable("Var::pack".to_string())),
+            _ => {
+                error!("Var::pack");
+                return Err(Error::Packable);
+            }
         }
 
         Ok(())
@@ -154,7 +157,8 @@ impl Packable for Var {
             let (val1, rem) = Mule::unpack_f32(rem)?;
             Ok((Var::V2D(val0, val1), rem))
         } else {
-            Err(Error::Packable("Var::unpack".to_string()))
+            error!("Var::unpack");
+            Err(Error::Packable)
         }
     }
 }
@@ -185,7 +189,10 @@ impl Var {
     pub fn get_float_value(var: &Var) -> Result<f32> {
         match var {
             Var::Float(f) => Ok(*f),
-            _ => Err(Error::NotedError("expected a Var::Float".to_string())),
+            _ => {
+                error!("expected a Var::Float");
+                Err(Error::VM)
+            }
         }
     }
 
@@ -282,12 +289,14 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
         BytecodeArg::Name(iname) => Ok(Var::Name(*iname)),
         BytecodeArg::String(iname) => Ok(Var::String(*iname)),
         BytecodeArg::Keyword(keyword) => Ok(Var::Keyword(*keyword)),
-        BytecodeArg::Mem(_mem) => Err(Error::VM(
-            "bytecode_arg_to_var not implemented for BytecodeArg::Mem".to_string(),
-        )),
-        BytecodeArg::Native(_native) => Err(Error::VM(
-            "bytecode_arg_to_var not implemented for BytecodeArg::Native".to_string(),
-        )),
+        BytecodeArg::Mem(_mem) => {
+            error!("bytecode_arg_to_var not implemented for BytecodeArg::Mem");
+            Err(Error::VM)
+        }
+        BytecodeArg::Native(_native) => {
+            error!("bytecode_arg_to_var not implemented for BytecodeArg::Native");
+            Err(Error::VM)
+        }
         BytecodeArg::Colour(col) => Ok(Var::Colour(*col)),
     }
 }
@@ -437,28 +446,32 @@ impl Vm {
 
     fn sp_inc_by(&self, delta: usize) -> Result<usize> {
         if self.sp + delta >= self.stack_size {
-            return Err(Error::VMStackOverflow);
+            error!("StackOverflow");
+            return Err(Error::VM);
         }
         Ok(self.sp + delta)
     }
 
     fn sp_inc(&self) -> Result<usize> {
         if self.sp + 1 >= self.stack_size {
-            return Err(Error::VMStackOverflow);
+            error!("StackOverflow");
+            return Err(Error::VM);
         }
         Ok(self.sp + 1)
     }
 
     fn sp_dec_by(&self, delta: usize) -> Result<usize> {
         if delta > self.sp {
-            return Err(Error::VMStackUnderflow);
+            error!("StackUnderflow");
+            return Err(Error::VM);
         }
         Ok(self.sp - delta)
     }
 
     fn sp_dec(&self) -> Result<usize> {
         if self.sp == 0 {
-            return Err(Error::VMStackUnderflow);
+            error!("StackUnderflow");
+            return Err(Error::VM);
         }
         Ok(self.sp - 1)
     }
@@ -481,15 +494,15 @@ impl Vm {
                             if let Var::Int(prev_fp) = self.stack[fp] {
                                 fp = prev_fp as usize; // go back a frame
                             } else {
-                                return Err(Error::VM(
-                                    "Mem::Argument (hopback) fp is not Var::Int?".to_string(),
-                                ));
+                                error!("Mem::Argument (hopback) fp is not Var::Int?");
+                                return Err(Error::VM);
                             }
                         }
                         let src = &self.stack[fp - arg1.get_int()? as usize - 1];
                         self.stack[self.sp - 1] = src.clone();
                     } else {
-                        return Err(Error::VM("Mem::Argument: fp is not Var::Int?".to_string()));
+                        error!("Mem::Argument: fp is not Var::Int?");
+                        return Err(Error::VM);
                     }
                 }
                 Mem::Local => {
@@ -502,9 +515,8 @@ impl Vm {
                             if let Var::Int(prev_fp) = self.stack[fp] {
                                 fp = prev_fp as usize; // go back a frame
                             } else {
-                                return Err(Error::VM(
-                                    "Mem::Local (hopback): fp is not Var::Int?".to_string(),
-                                ));
+                                error!("Mem::Local (hopback): fp is not Var::Int?");
+                                return Err(Error::VM);
                             }
                         }
                         let local = fp + FP_OFFSET_TO_LOCALS; // get the correct frame's local
@@ -512,7 +524,8 @@ impl Vm {
 
                         self.stack[self.sp - 1] = src.clone();
                     } else {
-                        return Err(Error::VM("Mem::Local: fp is not Var::Int?".to_string()));
+                        error!("Mem::Local: fp is not Var::Int?");
+                        return Err(Error::VM);
                     }
                 }
                 Mem::Global => {
@@ -526,7 +539,8 @@ impl Vm {
                 }
             }
         } else {
-            return Err(Error::VM("LOAD requires arg0 to be Mem".to_string()));
+            error!("LOAD requires arg0 to be Mem");
+            return Err(Error::VM);
         }
 
         Ok(())
@@ -540,7 +554,8 @@ impl Vm {
         if let BytecodeArg::Mem(mem_) = bc.arg0 {
             mem = mem_;
         } else {
-            return Err(Error::VM("opcode_store arg0 should be mem".to_string()));
+            error!("opcode_store arg0 should be mem");
+            return Err(Error::VM);
         }
 
         let arg1 = bc.arg1.get_int()? as usize;
@@ -560,10 +575,8 @@ impl Vm {
                 // pop from the stack and lose the value
             }
             _ => {
-                return Err(Error::VM(format!(
-                    "opcode_store unknown memory type: {}",
-                    mem
-                )));
+                error!("opcode_store unknown memory type: {}", mem);
+                return Err(Error::VM);
             }
         }
 
@@ -592,16 +605,16 @@ impl Vm {
         program: &Program,
         bc: &Bytecode,
     ) -> Result<()> {
-        let num_args = bc
-            .arg1
-            .get_int()
-            .map_err(|_| Error::VM("opcode native requires arg1 to be num_args".to_string()))?
-            as usize;
+        let num_args = bc.arg1.get_int().map_err(|_| {
+            error!("opcode native requires arg1 to be num_args");
+            Error::VM
+        })? as usize;
 
         let res = if let BytecodeArg::Native(native) = bc.arg0 {
             execute_native(self, context, program, native)?
         } else {
-            return Err(Error::VM("opcode_native".to_string()));
+            error!("opcode_native");
+            return Err(Error::VM);
         };
 
         // pop all of the arguments off the stack as well as the default mask
@@ -627,7 +640,8 @@ impl Vm {
         if let Var::Int(i_) = self.stack[self.sp] {
             i = i_;
         } else {
-            return Err(Error::VM("store_f".to_string()));
+            error!("store_f");
+            return Err(Error::VM);
         }
 
         // pop the value
@@ -637,7 +651,8 @@ impl Vm {
         if let BytecodeArg::Mem(mem_) = bc.arg0 {
             mem = mem_;
         } else {
-            return Err(Error::VM("opcode_store_f arg0 should be mem".to_string()));
+            error!("opcode_store_f arg0 should be mem");
+            return Err(Error::VM);
         }
 
         match mem {
@@ -654,10 +669,8 @@ impl Vm {
                 }
             }
             _ => {
-                return Err(Error::VM(format!(
-                    "opcode_store_f unknown memory type: {}",
-                    mem
-                )));
+                error!("opcode_store_f unknown memory type: {}", mem);
+                return Err(Error::VM);
             }
         }
 
@@ -766,14 +779,12 @@ impl Vm {
                 self.sp = self.sp_inc()?; // stack push
                 self.stack[self.sp - 1] = Var::Bool(f1 < f2);
             } else {
-                return Err(Error::VM(
-                    "opcode_lt expected float at top-1 of stack".to_string(),
-                ));
+                error!("opcode_lt expected float at top-1 of stack");
+                return Err(Error::VM);
             }
         } else {
-            return Err(Error::VM(
-                "opcode_lt expected float at top of stack".to_string(),
-            ));
+            error!("opcode_lt expected float at top of stack");
+            return Err(Error::VM);
         }
 
         Ok(())
@@ -839,7 +850,8 @@ impl Vm {
         if let Var::Int(num_args_) = &self.stack[self.sp] {
             num_args = *num_args_;
         } else {
-            return Err(Error::VM("opcode_call num_args_".to_string()));
+            error!("opcode_call num_args_");
+            return Err(Error::VM);
         }
 
         let addr;
@@ -847,7 +859,8 @@ impl Vm {
         if let Var::Int(addr_) = &self.stack[self.sp] {
             addr = *addr_;
         } else {
-            return Err(Error::VM("opcode_call addr_".to_string()));
+            error!("opcode_call addr_");
+            return Err(Error::VM);
         }
 
         // make room for the labelled arguments
@@ -894,7 +907,8 @@ impl Vm {
         if let Var::Int(addr_) = &self.stack[self.sp] {
             addr = *addr_;
         } else {
-            return Err(Error::VM("opcode_call_0".to_string()));
+            error!("opcode_call_0");
+            return Err(Error::VM);
         }
 
         // like CALL but keep the existing frame and just update the ip and return ip
@@ -923,7 +937,8 @@ impl Vm {
         if let Var::Int(num_args_) = &self.stack[self.fp + FP_OFFSET_TO_NUM_ARGS] {
             num_args = *num_args_ as usize;
         } else {
-            return Err(Error::VM("opcode_ret num_args_".to_string()));
+            error!("opcode_ret num_args");
+            return Err(Error::VM);
         }
 
         // update vm
@@ -931,12 +946,14 @@ impl Vm {
         if let Var::Int(ip) = &self.stack[self.fp + FP_OFFSET_TO_IP] {
             self.ip = *ip as usize;
         } else {
-            return Err(Error::VM("opcode_ret ip".to_string()));
+            error!("opcode_ret ip");
+            return Err(Error::VM);
         }
         if let Var::Int(fp) = &self.stack[self.fp] {
             self.fp = *fp as usize;
         } else {
-            return Err(Error::VM("opcode_ret fp".to_string()));
+            error!("opcode_ret fp");
+            return Err(Error::VM);
         }
 
         // copy the previous frame's top stack value onto the current frame's stack
@@ -950,10 +967,11 @@ impl Vm {
         // leap to the return ip
         if let Var::Int(ip) = self.stack[self.fp + FP_OFFSET_TO_IP] {
             self.ip = ip as usize;
+            Ok(())
         } else {
-            return Err(Error::VM("opcode_ret_0".to_string()));
+            error!("opcode_ret_0");
+            Err(Error::VM)
         }
-        Ok(())
     }
 
     fn opcode_call_f(&mut self, program: &Program) -> Result<()> {
@@ -965,7 +983,8 @@ impl Vm {
         if let Var::Int(fn_info_index_) = &self.stack[self.sp] {
             fn_info_index = *fn_info_index_ as usize;
         } else {
-            return Err(Error::VM("opcode_call_f fn_info_index_".to_string()));
+            error!("opcode_call_f fn_info_index_");
+            return Err(Error::VM);
         }
         let fn_info = &program.fn_info[fn_info_index];
 
@@ -1016,7 +1035,8 @@ impl Vm {
         if let Var::Int(fn_info_index_) = &self.stack[self.sp] {
             fn_info_index = *fn_info_index_ as usize;
         } else {
-            return Err(Error::VM("opcode_call_f fn_info_index_".to_string()));
+            error!("opcode_call_f fn_info_index_");
+            return Err(Error::VM);
         }
         let fn_info = &program.fn_info[fn_info_index];
 
@@ -1086,9 +1106,8 @@ impl Vm {
         } else if let Var::Vector(ref mut vec_vec) = &mut self.stack[self.sp - 1] {
             vec_vec.push(cloned_var_value);
         } else {
-            return Err(Error::VM(
-                "append requires either a Vector or V2D".to_string(),
-            ));
+            error!("append requires either a Vector or V2D");
+            return Err(Error::VM);
         }
 
         Ok(())
@@ -1098,11 +1117,10 @@ impl Vm {
         // pops the V2D/Vector from the top of the stack and pushes the
         // given number of elements from the V2D/Vector onto the stack
 
-        let num_args = bc
-            .arg0
-            .get_int()
-            .map_err(|_| Error::VM("opcode_pile arg0 should be Int".to_string()))?
-            as usize;
+        let num_args = bc.arg0.get_int().map_err(|_| {
+            error!("opcode_pile arg0 should be Int");
+            Error::VM
+        })? as usize;
 
         self.sp = self.sp_dec()?; // stack pop
 
@@ -1117,10 +1135,8 @@ impl Vm {
                 self.stack[self.sp - 1] = Var::Float(y);
             } else {
                 // note: is this really an error? what if only 1 value from V2D is required?
-                return Err(Error::VM(format!(
-                    "PILE: V2D num_args = {}, requires 2",
-                    num_args
-                )));
+                error!("PILE: V2D num_args = {}, requires 2", num_args);
+                return Err(Error::VM);
             }
             return Ok(());
         }
@@ -1132,7 +1148,8 @@ impl Vm {
                 elems.push(v.clone());
             }
         } else {
-            return Err(Error::VM("opcode_pile".to_string()));
+            error!("opcode_pile");
+            return Err(Error::VM);
         }
 
         for i in 0..num_args {
@@ -1154,9 +1171,8 @@ impl Vm {
             // pretend that VAR_2D is a vector and special case all the VEC_* opcodes
             true
         } else {
-            return Err(Error::VM(
-                "VEC_NON_EMPTY requires either Vector or V2D on the stack".to_string(),
-            ));
+            error!("VEC_NON_EMPTY requires either Vector or V2D on the stack");
+            return Err(Error::VM);
         };
 
         // push
@@ -1185,9 +1201,8 @@ impl Vm {
         } else if let Var::V2D(a, _b) = &self.stack[self.sp - 3] {
             self.stack[self.sp - 1] = Var::Float(*a);
         } else {
-            return Err(Error::VM(
-                "VEC_LOAD_FIRST requires either Vector or V2D on the stack".to_string(),
-            ));
+            error!("VEC_LOAD_FIRST requires either Vector or V2D on the stack");
+            return Err(Error::VM);
         }
 
         Ok(())
@@ -1213,9 +1228,8 @@ impl Vm {
                 has_next = true;
             }
         } else {
-            return Err(Error::VM(
-                "VEC_HAS_NEXT requires either Vector or V2D on the stack".to_string(),
-            ));
+            error!("VEC_HAS_NEXT requires either Vector or V2D on the stack");
+            return Err(Error::VM);
         }
 
         self.sp = self.sp_inc()?;
@@ -1246,12 +1260,12 @@ impl Vm {
             if index == 1 {
                 self.stack[self.sp - 1] = Var::Float(*b);
             } else {
-                return Err(Error::VM("VEC_NEXT impossible situation".to_string()));
+                error!("VEC_NEXT impossible situation");
+                return Err(Error::VM);
             }
         } else {
-            return Err(Error::VM(
-                "VEC_NEXT requires either Vector or V2D on the stack".to_string(),
-            ));
+            error!("VEC_NEXT requires either Vector or V2D on the stack");
+            return Err(Error::VM);
         }
 
         Ok(())
@@ -1332,7 +1346,10 @@ impl Vm {
                     //
                     return Ok(());
                 }
-                _ => return Err(Error::VM(format!("Invalid Opcode: {}", bc.op))),
+                _ => {
+                    error!("Invalid Opcode: {}", bc.op);
+                    return Err(Error::VM);
+                }
             }
         }
     }
@@ -1360,7 +1377,8 @@ impl StackPeek<Keyword> for Vm {
         if let Var::Keyword(kw) = &self.stack[self.sp - offset] {
             Ok(*kw)
         } else {
-            Err(Error::VM("stack_peek expected Var::Keyword".to_string()))
+            error!("stack_peek expected Var::Keyword");
+            Err(Error::VM)
         }
     }
 }
@@ -1370,7 +1388,8 @@ impl StackPeek<i32> for Vm {
         if let Var::Int(i) = &self.stack[self.sp - offset] {
             Ok(*i)
         } else {
-            Err(Error::VM("stack_peek expected Var::Int".to_string()))
+            error!("stack_peek expected Var::Int");
+            Err(Error::VM)
         }
     }
 }
@@ -1380,7 +1399,8 @@ impl StackPeek<f32> for Vm {
         if let Var::Float(f) = &self.stack[self.sp - offset] {
             Ok(*f)
         } else {
-            Err(Error::VM("stack_peek expected Var::Float".to_string()))
+            error!("stack_peek expected Var::Float");
+            Err(Error::VM)
         }
     }
 }
@@ -1390,7 +1410,8 @@ impl StackPeek<usize> for Vm {
         if let Var::Float(f) = &self.stack[self.sp - offset] {
             Ok(*f as usize)
         } else {
-            Err(Error::VM("stack_peek expected Var::Float".to_string()))
+            error!("stack_peek expected Var::Float");
+            Err(Error::VM)
         }
     }
 }
@@ -1400,7 +1421,8 @@ impl StackPeek<(f32, f32)> for Vm {
         if let Var::V2D(x, y) = &self.stack[self.sp - offset] {
             Ok((*x, *y))
         } else {
-            Err(Error::VM("stack_peek expected Var::V2D".to_string()))
+            error!("stack_peek expected Var::V2D");
+            Err(Error::VM)
         }
     }
 }
@@ -1412,9 +1434,8 @@ impl StackPeek<Iname> for Vm {
         } else if let Var::String(n) = &self.stack[self.sp - offset] {
             Ok(*n)
         } else {
-            Err(Error::VM(
-                "stack_peek expected Var::Name or Var::String".to_string(),
-            ))
+            error!("stack_peek expected Var::Name or Var::String");
+            Err(Error::VM)
         }
     }
 }
@@ -1424,7 +1445,8 @@ impl StackPeek<Colour> for Vm {
         if let Var::Colour(col) = &self.stack[self.sp - offset] {
             Ok(*col)
         } else {
-            Err(Error::VM("stack_peek expected Var::Colour".to_string()))
+            error!("stack_peek expected Var::Colour");
+            Err(Error::VM)
         }
     }
 }

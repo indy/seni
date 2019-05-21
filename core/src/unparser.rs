@@ -21,6 +21,8 @@ use crate::keywords::Keyword;
 use crate::parser::{parse, Node, NodeMeta, WordLut};
 use crate::result::Result;
 
+use log::error;
+
 pub fn unparse(source: &str, genotype: &mut Genotype) -> Result<String> {
     let (ast, word_lut) = parse(source)?;
     let mut s: String = "".to_string();
@@ -196,8 +198,14 @@ fn index_of_quote_keyword(ns: &[Node]) -> Option<usize> {
 
 fn format_node_value(node: &Node) -> Result<String> {
     match node {
-        Node::List(_, _) => Err(Error::Unparser("Node::List ???".to_string())),
-        Node::Vector(_, _) => Err(Error::Unparser("Node::Vector ???".to_string())),
+        Node::List(_, _) => {
+            error!("Node::List ???");
+            Err(Error::Unparser)
+        }
+        Node::Vector(_, _) => {
+            error!("Node::Vector ???");
+            Err(Error::Unparser)
+        }
         Node::Float(_, s, _) => Ok(s.to_string()),
         Node::Name(s, _, _) => Ok(s.to_string()),
         Node::Label(s, _, _) => Ok(s.to_string() + ":"),
@@ -225,19 +233,16 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
                 let num_decimals = count_decimals(s);
                 Ok(format!("{:.*}", num_decimals, f))
             } else {
-                Err(Error::Unparser(
-                    "format_var_value Gene::Float not linked to Node::Float".to_string(),
-                ))
+                error!("format_var_value Gene::Float not linked to Node::Float");
+                Err(Error::Unparser)
             }
         }
         Gene::Name(i) => {
             if let Some(s) = word_lut.get_string_from_name(*i) {
                 Ok(s.to_string())
             } else {
-                dbg!(*i);
-                Err(Error::Unparser(
-                    "format_var_value Gene::Name iname has no string".to_string(),
-                ))
+                error!("format_var_value Gene::Name iname has no string");
+                Err(Error::Unparser)
             }
         }
         Gene::Colour(c) => match c.format {
@@ -292,9 +297,10 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
 
             Ok(res)
         }
-        _ => Err(Error::Unparser(
-            "format_var_value: unsupported gene type".to_string(),
-        )),
+        _ => {
+            error!("format_var_value: unsupported gene type");
+            Err(Error::Unparser)
+        }
     }
 }
 
@@ -317,9 +323,8 @@ fn unparse_alterable_vector(
 
         Ok(res)
     } else {
-        Err(Error::Unparser(
-            "unparse_alterable_vector requires a Node::Vector".to_string(),
-        ))
+        error!("unparse_alterable_vector requires a Node::Vector");
+        Err(Error::Unparser)
     }
 }
 

@@ -31,6 +31,8 @@ use crate::result::Result;
 use std;
 use std::fmt;
 
+use log::error;
+
 const COLOUR_UNIT_ANGLE: f64 = (360.0 / 12.0);
 const COLOUR_COMPLIMENTARY_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 6.0);
 const COLOUR_TRIAD_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 4.0);
@@ -253,7 +255,8 @@ impl Packable for Colour {
             rem = Mule::skip_forward(rem, "LAB ".len());
             ColourFormat::Lab
         } else {
-            return Err(Error::Packable("Colour::unpack invalid format".to_string()));
+            error!("Colour::unpack invalid format");
+            return Err(Error::Packable);
         };
 
         let (e0, rem) = Mule::unpack_f32_sp(rem)?;
@@ -374,9 +377,11 @@ impl ConvertibleColour {
     fn add_angle_to_hsluv(&self, delta: f64) -> Result<ConvertibleColour> {
         // rotate the hue by the given delta
         if let ConvertibleColour::HSLuv(h, s, l, a) = self.clone_as(ColourFormat::Hsluv)? {
-            return Ok(ConvertibleColour::HSLuv((h + delta) % 360.0, s, l, a));
+            Ok(ConvertibleColour::HSLuv((h + delta) % 360.0, s, l, a))
+        } else {
+            error!("add_angle_to_hsluv");
+            Err(Error::Colour)
         }
-        Err(Error::Colour("add_angle_to_hsluv".to_string()))
     }
 
     // Return the 2 colours either side of this that are 'ang' degrees away
@@ -491,7 +496,10 @@ impl ConvertibleColour {
                 b as f32,
                 al as f32,
             )),
-            _ => Err(Error::Colour("to_colour".to_string())),
+            _ => {
+                error!("to_colour");
+                Err(Error::Colour)
+            }
         }
     }
 
@@ -532,7 +540,7 @@ impl ConvertibleColour {
                 ColourFormat::Lab => lab_from_xyz(xyz_from_rgb(*self)?),
                 ColourFormat::Rgb => Ok(ConvertibleColour::RGB(r, g, b, alpha)),
             },
-            _ => Err(Error::IncorrectColourFormat),
+            _ => Err(Error::Colour),
         }
     }
 }
@@ -577,7 +585,7 @@ fn xyz_from_rgb(rgb: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(ConvertibleColour::XYZ(x, y, z, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -600,7 +608,7 @@ fn rgb_from_xyz(xyz: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(ConvertibleColour::RGB(rr, gg, bb, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -629,7 +637,7 @@ fn lab_from_xyz(xyz: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(ConvertibleColour::LAB(l, a, b, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -664,10 +672,13 @@ fn hue(colour: ConvertibleColour, max_chan: i32, chroma: f64) -> Result<f64> {
                 0 => fmod((g - b) / chroma, 6.0),
                 1 => ((b - r) / chroma) + 2.0,
                 2 => ((r - g) / chroma) + 4.0,
-                _ => return Err(Error::InvalidColourChannel),
+                _ => {
+                    error!("invalid colour channel");
+                    return Err(Error::Colour);
+                }
             }
         }
-        _ => return Err(Error::IncorrectColourFormat),
+        _ => return Err(Error::Colour),
     }
 
     angle *= 60.0;
@@ -699,7 +710,7 @@ fn hsl_from_rgb(colour: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(ConvertibleColour::HSL(h, saturation, lightness, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -722,7 +733,7 @@ fn hsv_from_rgb(colour: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(ConvertibleColour::HSV(h, saturation, max_val, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -779,7 +790,7 @@ fn rgb_from_hsl(hsl: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(rgb_from_chm(chroma, h, m, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -815,7 +826,7 @@ fn xyz_from_lab(lab: ConvertibleColour) -> Result<ConvertibleColour> {
                 alpha,
             ))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -827,7 +838,7 @@ fn rgb_from_hsv(hsv: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(rgb_from_chm(chroma, h, m, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -961,7 +972,7 @@ fn luv_from_xyz(xyz: ConvertibleColour) -> Result<ConvertibleColour> {
                 Ok(ConvertibleColour::LUV(l, u, v, alpha))
             }
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -980,7 +991,7 @@ fn xyz_from_luv(luv: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(ConvertibleColour::XYZ(x, y, z, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -1001,7 +1012,7 @@ fn lch_from_luv(luv: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(ConvertibleColour::LCH(l, c, h, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -1014,7 +1025,7 @@ fn luv_from_lch(lch: ConvertibleColour) -> Result<ConvertibleColour> {
 
             Ok(ConvertibleColour::LUV(l, u, v, alpha))
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -1033,7 +1044,7 @@ fn lch_from_hsluv(hsluv: ConvertibleColour) -> Result<ConvertibleColour> {
                 Ok(ConvertibleColour::LCH(l, c, h, alpha))
             }
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 
@@ -1052,7 +1063,7 @@ fn hsluv_from_lch(lch: ConvertibleColour) -> Result<ConvertibleColour> {
                 Ok(ConvertibleColour::HSLuv(h, s, l, alpha))
             }
         }
-        _ => Err(Error::IncorrectColourFormat),
+        _ => Err(Error::Colour),
     }
 }
 

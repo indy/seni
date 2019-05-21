@@ -23,6 +23,8 @@ use crate::result::Result;
 use crate::uvmapper::{BrushType, Mappings};
 use crate::vm::Var;
 
+use log::error;
+
 #[derive(Default)]
 pub struct Context {
     pub matrix_stack: MatrixStack,
@@ -69,7 +71,8 @@ impl Context {
                 uvm,
             )
         } else {
-            Err(Error::VM("no matrix for render_line".to_string()))
+            error!("no matrix for render_line");
+            Err(Error::Context)
         }
     }
     pub fn render_rect(
@@ -92,7 +95,8 @@ impl Context {
                 uvm,
             )
         } else {
-            Err(Error::VM("no matrix for render_rect".to_string()))
+            error!("no matrix for render_rect");
+            Err(Error::Context)
         }
     }
 
@@ -118,7 +122,8 @@ impl Context {
                 uvm,
             )
         } else {
-            Err(Error::VM("no matrix for render_circle".to_string()))
+            error!("no matrix for render_circle");
+            Err(Error::Context)
         }
     }
 
@@ -151,7 +156,8 @@ impl Context {
                 uvm,
             )
         } else {
-            Err(Error::VM("no matrix for render_circle_slice".to_string()))
+            error!("no matrix for render_circle_slice");
+            Err(Error::Context)
         }
     }
 
@@ -160,7 +166,8 @@ impl Context {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
             geometry::poly::render(&mut self.geometry, matrix, coords, colours, uvm)
         } else {
-            Err(Error::VM("no matrix for render_poly".to_string()))
+            error!("no matrix for render_poly");
+            Err(Error::Context)
         }
     }
 
@@ -194,7 +201,8 @@ impl Context {
                 uvm,
             )
         } else {
-            Err(Error::VM("no matrix for render_quadratic".to_string()))
+            error!("no matrix for render_quadratic");
+            Err(Error::Context)
         }
     }
 
@@ -228,7 +236,8 @@ impl Context {
                 uvm,
             )
         } else {
-            Err(Error::VM("no matrix for render_bezier".to_string()))
+            error!("no matrix for render_bezier");
+            Err(Error::Context)
         }
     }
 
@@ -258,7 +267,8 @@ impl Context {
                 uvm,
             )
         } else {
-            Err(Error::VM("no matrix for render_bezier_bulging".to_string()))
+            error!("no matrix for render_bezier_bulging");
+            Err(Error::Context)
         }
     }
 
@@ -296,7 +306,8 @@ impl Context {
                 uvm,
             )
         } else {
-            Err(Error::VM("no matrix for render_stroked_bezier".to_string()))
+            error!("no matrix for render_stroked_bezier");
+            Err(Error::Context)
         }
     }
 
@@ -338,9 +349,8 @@ impl Context {
                 uvm,
             )
         } else {
-            Err(Error::VM(
-                "no matrix for render_stroked_bezier_rect".to_string(),
-            ))
+            error!("no matrix for render_stroked_bezier_rect");
+            Err(Error::Context)
         }
     }
 }

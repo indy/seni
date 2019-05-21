@@ -21,7 +21,7 @@ use crate::program::Program;
 use crate::result::Result;
 use crate::vm::Vm;
 
-// use log::info;
+use log::error;
 
 // invoke a function with args: x, y, r, g, b, a
 // colour values are normalized to 0..1
@@ -72,10 +72,8 @@ pub fn each(
     let from_string = if let Some(from_string) = program.data.strings.get(&from) {
         from_string
     } else {
-        return Err(Error::Bitmap(format!(
-            "unable to find string from iname: {}",
-            from
-        )));
+        error!("unable to find string from iname: {}", from);
+        return Err(Error::Bitmap);
     };
 
     let (width, height) = {

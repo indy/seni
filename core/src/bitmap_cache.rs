@@ -18,6 +18,8 @@ use crate::result::Result;
 
 use std::collections::HashMap;
 
+use log::error;
+
 pub struct BitmapCache {
     pub info: HashMap<String, BitmapInfo>,
 }
@@ -39,7 +41,10 @@ impl BitmapCache {
     pub fn get(&self, name: &str) -> Result<&BitmapInfo> {
         match self.info.get(name) {
             Some(bitmap_info) => Ok(bitmap_info),
-            None => Err(Error::BitmapCache(format!("can't find bitmap: {}", name))),
+            None => {
+                error!("can't find bitmap: {}", name);
+                Err(Error::BitmapCache)
+            }
         }
     }
 

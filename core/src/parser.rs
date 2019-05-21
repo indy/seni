@@ -27,6 +27,8 @@ use crate::result::Result;
 
 use strum::IntoEnumIterator;
 
+use log::error;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct NodeMeta {
     pub gene: Option<Gene>,
@@ -72,9 +74,8 @@ impl Node {
                         match gene {
                             Gene::Float(f) => return Ok(*f),
                             _ => {
-                                return Err(Error::Compiler(
-                                    "Node::get_float incompatible gene".to_string(),
-                                ));
+                                error!("Node::get_float incompatible gene");
+                                return Err(Error::Parser);
                             }
                         }
                     }
@@ -83,10 +84,8 @@ impl Node {
                 return Ok(*f);
             }
         }
-        Err(Error::Compiler(format!(
-            "Node::get_float expected Node::Float not {:?}",
-            self
-        )))
+        error!("Node::get_float expected Node::Float not {:?}", self);
+        Err(Error::Parser)
     }
 
     pub fn get_iname(&self, use_genes: bool) -> Result<Iname> {
@@ -98,9 +97,8 @@ impl Node {
                             match gene {
                                 Gene::Name(i) => return Ok(*i),
                                 _ => {
-                                    return Err(Error::Compiler(
-                                        "Node::get_iname incompatible gene for Name".to_string(),
-                                    ));
+                                    error!("Node::get_iname incompatible gene for Name");
+                                    return Err(Error::Parser);
                                 }
                             }
                         }
@@ -116,9 +114,8 @@ impl Node {
                             match gene {
                                 Gene::String(i) => return Ok(*i),
                                 _ => {
-                                    return Err(Error::Compiler(
-                                        "Node::get_iname incompatible gene for String".to_string(),
-                                    ));
+                                    error!("Node::get_iname incompatible gene for String");
+                                    return Err(Error::Parser);
                                 }
                             }
                         }
@@ -128,17 +125,19 @@ impl Node {
                 }
             }
             _ => {
-                return Err(Error::Compiler(format!(
+                error!(
                     "Node::get_iname expected Node::Name or Node::String not {:?}",
                     self
-                )))
+                );
+                return Err(Error::Parser);
             }
         }
 
-        Err(Error::Compiler(format!(
+        error!(
             "Node::get_iname expected Node::Name or Node::String not {:?}",
             self
-        )))
+        );
+        Err(Error::Parser)
     }
 
     pub fn get_label_iname(&self, use_genes: bool) -> Result<Iname> {
@@ -151,9 +150,8 @@ impl Node {
                             Gene::Int(i) => return Ok(Iname::new(*i)),
                             Gene::Name(i) => return Ok(*i),
                             _ => {
-                                return Err(Error::Compiler(
-                                    "Node::get_label_iname incompatible gene".to_string(),
-                                ));
+                                error!("Node::get_label_iname incompatible gene");
+                                return Err(Error::Parser);
                             }
                         }
                     }
@@ -162,10 +160,8 @@ impl Node {
                 return Ok(*iname);
             }
         }
-        Err(Error::Compiler(format!(
-            "Node::get_label_iname expected Node::Label not {:?}",
-            self
-        )))
+        error!("Node::get_label_iname expected Node::Label not {:?}", self);
+        Err(Error::Parser)
     }
 
     pub fn get_colour(&self, use_genes: bool) -> Result<Colour> {
@@ -176,23 +172,19 @@ impl Node {
                         match gene {
                             Gene::Colour(col) => return Ok(*col),
                             _ => {
-                                return Err(Error::Compiler(
-                                    "Node::get_colour incompatible gene".to_string(),
-                                ));
+                                error!("Node::get_colour incompatible gene");
+                                return Err(Error::Parser);
                             }
                         }
                     }
                 }
             } else {
-                return Err(Error::Compiler(
-                    "Node::get_colour expected to use gene".to_string(),
-                ));
+                error!("Node::get_colour expected to use gene");
+                return Err(Error::Parser);
             }
         }
-        Err(Error::Compiler(format!(
-            "Node::get_colour expected Node::List not {:?}",
-            self
-        )))
+        error!("Node::get_colour expected Node::List not {:?}", self);
+        Err(Error::Parser)
     }
 
     pub fn get_2d(&self, use_genes: bool) -> Result<(f32, f32)> {
@@ -203,23 +195,19 @@ impl Node {
                         match gene {
                             Gene::V2D(x, y) => return Ok((*x, *y)),
                             _ => {
-                                return Err(Error::Compiler(
-                                    "Node::get_2d incompatible gene".to_string(),
-                                ));
+                                error!("Node::get_2d incompatible gene");
+                                return Err(Error::Parser);
                             }
                         }
                     }
                 }
             } else {
-                return Err(Error::Compiler(
-                    "Node::get_2d expected to use gene".to_string(),
-                ));
+                error!("Node::get_2d expected to use gene");
+                return Err(Error::Parser);
             }
         }
-        Err(Error::Compiler(format!(
-            "Node::get_2d expected Node::Vector not {:?}",
-            self
-        )))
+        error!("Node::get_2d expected Node::Vector not {:?}", self);
+        Err(Error::Parser)
     }
 
     pub fn is_alterable(&self) -> bool {
@@ -493,8 +481,6 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeA
             },
         }
     }
-
-    // return Err(Error::GeneralError)
 }
 
 fn eat_quoted_form<'a>(
@@ -559,7 +545,10 @@ fn eat_token<'a>(
                 node: Node::Float(f, txt.to_string(), meta),
                 tokens: &tokens[1..],
             }),
-            Err(_) => Err(Error::ParserUnableToParseFloat(txt.to_string())),
+            Err(_) => {
+                error!("Parser unable to parse float: {}", txt);
+                Err(Error::Parser)
+            }
         },
         Token::Whitespace(ws) => Ok(NodeAndRemainder {
             node: Node::Whitespace(ws.to_string(), None),
@@ -573,7 +562,10 @@ fn eat_token<'a>(
         Token::ParenStart => eat_list(&tokens[1..], meta, word_lut),
         Token::SquareBracketStart => eat_vector(&tokens[1..], meta, word_lut),
         Token::CurlyBracketStart => eat_alterable(&tokens[1..], word_lut),
-        _ => Err(Error::ParserHandledToken(format!("{:?}", tokens[0]))),
+        _ => {
+            error!("ParserHandledToken {:?}", tokens[0]);
+            Err(Error::Parser)
+        }
     }
 }
 

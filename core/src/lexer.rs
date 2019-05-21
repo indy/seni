@@ -16,6 +16,8 @@
 use crate::error::Error;
 use crate::result::Result;
 
+use log::error;
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Token<'a> {
     BackQuote,
@@ -80,7 +82,10 @@ impl<'a> Lexer<'a> {
                 '-' | '0'...'9' => eat_number(&self.input),
                 ch if ch.is_whitespace() => eat_whitespace(&self.input),
                 _ if is_name(ch) => eat_name(&self.input),
-                ch => Err(Error::ParserInvalidChar(ch)),
+                ch => {
+                    error!("Parser invalid char {}", ch);
+                    Err(Error::Lexer)
+                }
             };
 
             let (tok, size) = match res {
@@ -92,7 +97,7 @@ impl<'a> Lexer<'a> {
 
             Ok(tok)
         } else {
-            Err(Error::GeneralError)
+            Err(Error::Lexer)
         }
     }
 }
@@ -149,7 +154,8 @@ fn eat_number(input: &str) -> Result<(Token, usize)> {
         match ch {
             '.' => {
                 if dot {
-                    return Err(Error::ParserInvalidLiteral);
+                    error!("ParserInvalidLiteral");
+                    return Err(Error::Lexer);
                 }
                 dot = true;
             }
@@ -164,7 +170,8 @@ fn eat_number(input: &str) -> Result<(Token, usize)> {
     }
 
     if !digits {
-        Err(Error::ParserInvalidLiteral)
+        error!("ParserInvalidLiteral");
+        Err(Error::Lexer)
     } else {
         Ok((Token::Number(&input[..size]), size))
     }

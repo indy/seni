@@ -16,6 +16,8 @@
 use crate::error::Error;
 use crate::result::Result;
 
+use log::error;
+
 /// convert Rust structures into a compact text format suitable for transferring over to the JS side
 pub trait Packable {
     fn pack(&self, cursor: &mut String) -> Result<()>;
@@ -154,7 +156,8 @@ impl Mule {
         } else if res == 1 {
             Ok((true, &cursor[ns..]))
         } else {
-            Err(Error::Packable(format!("unpack_bool given {}", res)))
+            error!("unpack_bool given {}", res);
+            Err(Error::Packable)
         }
     }
 

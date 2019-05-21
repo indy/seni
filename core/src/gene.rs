@@ -25,6 +25,8 @@ use crate::result::Result;
 use crate::trait_list::{Trait, TraitList};
 use crate::vm::{VMProfiling, Var, Vm};
 
+use log::error;
+
 /*
 GeneVar is a subset of the Var enum. Since Gene is a member of NodeMeta it
 needs the PartialEq trait and prng (which is used in the Var enum) uses
@@ -56,7 +58,10 @@ impl Gene {
             Var::String(i) => Ok(Gene::String(*i)),
             Var::Colour(col) => Ok(Gene::Colour(*col)),
             Var::V2D(fl1, fl2) => Ok(Gene::V2D(*fl1, *fl2)),
-            _ => Err(Error::Gene("from_var: incompatible input var".to_string())),
+            _ => {
+                error!("from_var: incompatible input var");
+                Err(Error::Gene)
+            }
         }
     }
 
@@ -144,7 +149,8 @@ impl Packable for Gene {
             let (val1, rem) = Mule::unpack_f32(rem)?;
             Ok((Gene::V2D(val0, val1), rem))
         } else {
-            Err(Error::Packable("Gene::unpack".to_string()))
+            error!("Gene::unpack");
+            Err(Error::Packable)
         }
     }
 }
@@ -300,9 +306,8 @@ pub fn next_generation(
     trait_list: &TraitList,
 ) -> Result<Vec<Genotype>> {
     if parents.is_empty() {
-        return Err(Error::NotedError(
-            "next_generation: no parents given".to_string(),
-        ));
+        error!("next_generation: no parents given");
+        return Err(Error::Gene);
     }
 
     // todo: should the children vector be declared with capacity of population_size?
