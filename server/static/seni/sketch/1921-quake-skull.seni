@@ -1,16 +1,20 @@
 ;; retro looking image, reminded of 90's era games (Doom, Quake, Descent)
 ;; the red skull appears to be almost in front of the blue layer by a couple of millimeters
 ;;
+;; todo: bitmap/each requires a shuffle-seed parameter
+;;
 (define
   texture "skull-a.png"
-  rng (prng/build seed: 3434 min: 0 max: 1))
+  rng (prng/build seed: 3434 min: 0 max: 1)
+  per-pixel-funcs [(address-of pass-0)
+                   (address-of pass-1)])
 
-
-(bitmap/each from: texture
-             position: [500 500]
-             width: 1000
-             height: 1000
-             fn: (address-of pass-0))
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   position: [500 500]
+                   width: 1000
+                   height: 1000
+                   fn: per-pixel-func))
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define r (col/get-r colour: colour)
@@ -22,12 +26,6 @@
               width: 2
               height: 2
               colour: (col/rgb r: 0.1 g: 0.1 b: (prng/value from: rng) alpha: 1)))))
-
-(bitmap/each from: texture
-             position: [500 500]
-             width: 1000
-             height: 1000
-             fn: (address-of pass-1))
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define r (col/get-r colour: colour)
