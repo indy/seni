@@ -10,9 +10,15 @@ clap = "2.32.0"
 config = "0.9"
 core = { path = "../core" }
 env_logger = "0.6"
-gl = "0.10.0"
+gl = { path = "lib/gl" }
 imgui = "0.0.22"
 imgui-opengl-renderer = "0.4"
 imgui-sdl2 = "0.5"
 log = "0.4"
 sdl2 = "0.32.1"
+
+[build-dependencies]
+walkdir = "2.1"
+
+[features]
+gl_debug = ["gl/debug"]

@@ -16,12 +16,34 @@
 use std::error;
 use std::fmt;
 
+pub type Result<T> = ::std::result::Result<T, Error>;
+
 #[derive(Debug)]
 pub enum Error {
+    Placeholder(String),        // temp placeholder error
+
     ConfigError(config::ConfigError),
     StringError(String),
     SDL2WindowBuildError(sdl2::video::WindowBuildError),
-}
+    FFINulError(std::ffi::NulError),
+    Io(std::io::Error),
+    FileContainsNil,
+    FailedToGetExePath,
+    ResourceLoad {
+        name: String,
+//        inner: Error,
+    },
+    CanNotDetermineShaderTypeForResource {
+        name: String,
+    },
+    CompileError {
+        name: String,
+        message: String,
+    },
+    LinkError {
+        name: String,
+        message: String,
+    },}
 
 impl From<config::ConfigError> for Error {
     fn from(e: config::ConfigError) -> Error {
@@ -41,15 +63,36 @@ impl From<sdl2::video::WindowBuildError> for Error {
     }
 }
 
+impl From<std::ffi::NulError> for Error {
+    fn from(e: std::ffi::NulError) -> Error {
+        Error::FFINulError(e)
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(other: std::io::Error) -> Self {
+        Error::Io(other)
+    }
+}
+
 // don't need to implement any of the trait's methods
 impl error::Error for Error {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Error::Placeholder(s) => write!(f, "seni gui: Placeholder: {:?}", s),
             Error::ConfigError(c) => write!(f, "seni gui: Config Error: {:?}", c),
             Error::StringError(s) => write!(f, "seni gui: String Error: {}", s),
             Error::SDL2WindowBuildError(e) => write!(f, "seni gui: SDL2WindowBuildError: {:?}", e),
+            Error::FFINulError(e) => write!(f, "seni gui: std::ffi:NulError: {:?}", e),
+            Error::Io(e) => write!(f, "seni gui: Io: {:?}", e),
+            Error::FileContainsNil => write!(f, "seni gui: FileContainsNil"),
+            Error::FailedToGetExePath => write!(f, "seni gui: FailedToGetExePath"),
+            Error::ResourceLoad{name} => write!(f, "seni gui: {}", name),
+            Error::CanNotDetermineShaderTypeForResource{name} => write!(f, "seni gui: {}", name),
+            Error::CompileError{name, message} => write!(f, "seni gui: {} {}", name, message),
+            Error::LinkError{name, message} => write!(f, "seni gui: {} {}", name, message),
         }
     }
 }
