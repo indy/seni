@@ -13,16 +13,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::colour::{Colour, ColourFormat};
 use crate::context::Context;
 use crate::error::Error;
 use crate::iname::Iname;
 use crate::keywords::Keyword;
+use crate::prng::PrngStateStruct;
 use crate::program::Program;
 use crate::result::Result;
 use crate::vm::Vm;
-use crate::colour::{Colour, ColourFormat};
 
 use log::error;
+use rand::seq::SliceRandom;
 
 // invoke a function with args: x, y, r, g, b, a
 // colour values are normalized to 0..1
@@ -39,11 +41,13 @@ fn invoke_function(
     let bitmap_info = context.bitmap_cache.get(from_string)?;
     let ip = vm.ip;
     let fn_info = &program.fn_info[fun];
-    let colour = Colour::new(ColourFormat::Rgb,
-                             f32::from(bitmap_info.data[index]) / 255.0,
-                             f32::from(bitmap_info.data[index + 1]) / 255.0,
-                             f32::from(bitmap_info.data[index + 2]) / 255.0,
-                             f32::from(bitmap_info.data[index + 3]) / 255.0);
+    let colour = Colour::new(
+        ColourFormat::Rgb,
+        f32::from(bitmap_info.data[index]) / 255.0,
+        f32::from(bitmap_info.data[index + 1]) / 255.0,
+        f32::from(bitmap_info.data[index + 2]) / 255.0,
+        f32::from(bitmap_info.data[index + 3]) / 255.0,
+    );
 
     vm.function_call_default_arguments(context, program, fn_info)?;
     vm.function_set_argument_to_col(fn_info, Iname::from(Keyword::Colour), &colour);
@@ -51,6 +55,37 @@ fn invoke_function(
     vm.function_call_body(context, program, fn_info)?;
 
     vm.ip = ip;
+
+    Ok(())
+}
+
+fn per_pixel(
+    pos: (usize, usize),
+    context: &mut Context,
+    bitmap_dim: (usize, usize),
+    origin: (f32, f32),
+    scale_factor: (f32, f32),
+    vm: &mut Vm,
+    program: &Program,
+    fun: usize,
+    from_string: &String,
+) -> Result<()> {
+    // setup matrix stack
+    context.matrix_stack.push();
+    {
+        //  origin  + pixel location  + offset to center each pixel
+        context.matrix_stack.translate(
+            origin.0 + (scale_factor.0 * pos.0 as f32) + (scale_factor.0 / 2.0),
+            origin.1 + (scale_factor.1 * pos.1 as f32) + (scale_factor.1 / 2.0),
+        );
+        context.matrix_stack.scale(scale_factor.0, scale_factor.1);
+
+        // assuming that the bitmap is in u8rgba format
+        let index = ((bitmap_dim.1 - pos.1 - 1) * bitmap_dim.0 * 4) + (pos.0 * 4);
+
+        invoke_function(vm, context, program, fun, pos.0, pos.1, index, from_string)?;
+    }
+    context.matrix_stack.pop();
 
     Ok(())
 }
@@ -64,6 +99,7 @@ pub fn each(
     dst_position: (f32, f32),
     dst_width: f32,
     dst_height: f32,
+    shuffle_seed: Option<f32>,
 ) -> Result<()> {
     let from_string = if let Some(from_string) = program.data.strings.get(&from) {
         from_string
@@ -72,35 +108,61 @@ pub fn each(
         return Err(Error::Bitmap);
     };
 
-    let (width, height) = {
+    let bitmap_dim = {
         let bitmap_info = context.bitmap_cache.get(from_string)?;
         (bitmap_info.width, bitmap_info.height)
     };
 
-    let tx = dst_width / width as f32;
-    let ty = dst_height / height as f32;
+    let scale_factor: (f32, f32) = (
+        dst_width / bitmap_dim.0 as f32,
+        dst_height / bitmap_dim.1 as f32,
+    );
 
-    let originx = dst_position.0 - (dst_width / 2.0);
-    let originy = dst_position.1 - (dst_height / 2.0);
+    let origin: (f32, f32) = (
+        dst_position.0 - (dst_width / 2.0),
+        dst_position.1 - (dst_height / 2.0),
+    );
 
-    for y in 0..height {
-        for x in 0..width {
-            // setup matrix stack
-            context.matrix_stack.push();
-            {
-                //  origin  + pixel location  + offset to center each pixel
-                context.matrix_stack.translate(
-                    originx + (tx * x as f32) + (tx / 2.0),
-                    originy + (ty * y as f32) + (ty / 2.0),
-                );
-                context.matrix_stack.scale(tx, ty);
+    if let Some(seed) = shuffle_seed {
+        let mut prng = PrngStateStruct::new(seed as i32, 0.0, 1.0);
+        let mut coords: Vec<(usize, usize)> = Vec::with_capacity(bitmap_dim.0 * bitmap_dim.1);
 
-                // assuming that the bitmap is in u8rgba format
-                let index = ((height - y - 1) * width * 4) + (x * 4);
-
-                invoke_function(vm, context, program, fun, x, y, index, from_string)?;
+        for y in 0..bitmap_dim.1 {
+            for x in 0..bitmap_dim.0 {
+                coords.push((x, y))
             }
-            context.matrix_stack.pop();
+        }
+        // using rand crate's shuffle, if this is too expensive write my own version
+        coords.shuffle(&mut prng.rng);
+
+        for coord in coords {
+            per_pixel(
+                coord,
+                context,
+                bitmap_dim,
+                origin,
+                scale_factor,
+                vm,
+                program,
+                fun,
+                from_string,
+            )?;
+        }
+    } else {
+        for y in 0..bitmap_dim.1 {
+            for x in 0..bitmap_dim.0 {
+                per_pixel(
+                    (x, y),
+                    context,
+                    bitmap_dim,
+                    origin,
+                    scale_factor,
+                    vm,
+                    program,
+                    fun,
+                    from_string,
+                )?;
+            }
         }
     }
 

@@ -360,6 +360,8 @@ pub enum Keyword {
     Scalars,
     #[strum(serialize = "seed")]
     Seed,
+    #[strum(serialize = "shuffle-seed")]
+    ShuffleSeed,
     #[strum(serialize = "steps")]
     Steps,
     #[strum(serialize = "stroke-line-width-end")]

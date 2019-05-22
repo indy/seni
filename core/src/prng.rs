@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::mathutil::{clamp, lerp};
-use rand_core::{RngCore, SeedableRng};
+use rand::{RngCore, SeedableRng};
 use rand_xorshift::XorShiftRng;
 
 const PERMUTATIONS: [usize; 512] = [
@@ -71,7 +71,7 @@ const INDICES: [usize; 64] = [
 
 #[derive(Clone, Debug)]
 pub struct PrngStateStruct {
-    rng: XorShiftRng,
+    pub rng: XorShiftRng,
     min: f32,
     max: f32,
 }

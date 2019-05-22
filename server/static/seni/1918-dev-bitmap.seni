@@ -34,31 +34,3 @@
             brush: {brush/e (gen/select from: brush/*)}
             brush-subtype: {0 (gen/int min: 0 max: 10)}
             colour: (col/rgb r: b g: b b: 0 alpha: 0.07))))
-
-
-
-;; (fn (drawer* a: 0 b: 0 c: 0 d: 0 position: [100 100])
-;;   (circle position: [610 410]
-;;           radius: 220.5
-;;         colour: (col/rgb r: a g: b b: c alpha: 1)))
-
-;; (drawer*)
-
-;; (rect position: [500 500]
-;;       width: 900
-;;       height: 900
-;;       colour: green)
-
-;; (bitmap/each from: "img/einstein.png"
-;;              position: [500 500]
-;;              width: 900
-;;              height: 900
-;;              fn: (address-of drawer))
-
-
-;; (line from: [200 200]
-;;       to: [800 800]
-;;       width: 90
-;;       colour: red
-;;       brush: {brush/b (gen/select from: brush/*)}
-;;       brush-subtype: 1)

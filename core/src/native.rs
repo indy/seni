@@ -3025,6 +3025,7 @@ fn bitmap_each_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
             (Keyword::Width, Var::Float(1000.0)),
             (Keyword::Height, Var::Float(1000.0)),
             (Keyword::Fn, Var::Bool(false)),
+            (Keyword::ShuffleSeed, Var::Float(0.0)),
         ],
         // stack offset
         0,
@@ -3036,7 +3037,7 @@ fn bitmap_each_execute(
     context: &mut Context,
     program: &Program,
 ) -> Result<Option<Var>> {
-    let default_mask: i32 = vm.stack_peek(6)?;
+    let default_mask: i32 = vm.stack_peek(7)?;
 
     if !is_arg_given(default_mask, 1) {
         error!("bitmap/each requires a from parameter");
@@ -3053,6 +3054,13 @@ fn bitmap_each_execute(
     let height: f32 = vm.stack_peek(4)?;
     let fun: i32 = vm.stack_peek(5)?;
 
+    let shuffle_seed: Option<f32> = if is_arg_given(default_mask, 6) {
+        let seed: f32 = vm.stack_peek(6)?;
+        Some(seed)
+    } else {
+        None
+    };
+
     bitmap::each(
         vm,
         context,
@@ -3062,6 +3070,7 @@ fn bitmap_each_execute(
         position,
         width,
         height,
+        shuffle_seed,
     )?;
 
     Ok(None)
