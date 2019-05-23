@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::mathutil::{clamp, lerp};
-use rand::{RngCore, SeedableRng};
+use rand_core::{RngCore, SeedableRng};
 use rand_xorshift::XorShiftRng;
 
 const PERMUTATIONS: [usize; 512] = [
@@ -95,6 +95,11 @@ impl PrngStateStruct {
 
     pub fn clone_rng(&mut self, other: PrngStateStruct) {
         self.rng = other.rng.clone();
+    }
+
+    pub fn gen_range(&mut self, low: u32, high: u32) -> u32 {
+        let a = self.rng.next_u32();
+        (a % (high - low)) + low
     }
 
     // 0..1

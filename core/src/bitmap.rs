@@ -24,7 +24,6 @@ use crate::result::Result;
 use crate::vm::Vm;
 
 use log::error;
-use rand::seq::SliceRandom;
 
 // invoke a function with args: x, y, r, g, b, a
 // colour values are normalized to 0..1
@@ -132,8 +131,15 @@ pub fn each(
                 coords.push((x, y))
             }
         }
-        // using rand crate's shuffle, if this is too expensive write my own version
-        coords.shuffle(&mut prng.rng);
+
+        // shuffle code based on rand crate's Rng::shuffle
+        let mut i = coords.len();
+        while i >= 2 {
+            // invariant: elements with index >= i have been locked in place.
+            i -= 1;
+            // lock element i in place.
+            coords.swap(i, prng.gen_range(0, i as u32 + 1) as usize);
+        }
 
         for coord in coords {
             per_pixel(
