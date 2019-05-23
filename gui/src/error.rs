@@ -20,7 +20,7 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
-    Placeholder(String),        // temp placeholder error
+    Placeholder(String), // temp placeholder error
 
     ConfigError(config::ConfigError),
     StringError(String),
@@ -31,7 +31,7 @@ pub enum Error {
     FailedToGetExePath,
     ResourceLoad {
         name: String,
-//        inner: Error,
+        //        inner: Error,
     },
     CanNotDetermineShaderTypeForResource {
         name: String,
@@ -43,7 +43,8 @@ pub enum Error {
     LinkError {
         name: String,
         message: String,
-    },}
+    },
+}
 
 impl From<config::ConfigError> for Error {
     fn from(e: config::ConfigError) -> Error {
@@ -89,10 +90,10 @@ impl fmt::Display for Error {
             Error::Io(e) => write!(f, "seni gui: Io: {:?}", e),
             Error::FileContainsNil => write!(f, "seni gui: FileContainsNil"),
             Error::FailedToGetExePath => write!(f, "seni gui: FailedToGetExePath"),
-            Error::ResourceLoad{name} => write!(f, "seni gui: {}", name),
-            Error::CanNotDetermineShaderTypeForResource{name} => write!(f, "seni gui: {}", name),
-            Error::CompileError{name, message} => write!(f, "seni gui: {} {}", name, message),
-            Error::LinkError{name, message} => write!(f, "seni gui: {} {}", name, message),
+            Error::ResourceLoad { name } => write!(f, "seni gui: {}", name),
+            Error::CanNotDetermineShaderTypeForResource { name } => write!(f, "seni gui: {}", name),
+            Error::CompileError { name, message } => write!(f, "seni gui: {} {}", name, message),
+            Error::LinkError { name, message } => write!(f, "seni gui: {} {}", name, message),
         }
     }
 }

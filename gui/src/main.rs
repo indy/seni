@@ -109,34 +109,22 @@ fn run(_config: &config::Config) -> Result<()> {
 
     let mut imgui_sdl2 = imgui_sdl2::ImguiSdl2::new(&mut imgui);
 
-
     let renderer =
         imgui_opengl_renderer::Renderer::new(&mut imgui, |s| video.gl_get_proc_address(s) as _);
 
-
     // --------------------------------------------------------------------------------
     // set up shader program
-
+    //
     let shader_program = render_gl::Program::from_res(&gl, &res, "shaders/triangle").unwrap();
 
-
-    // use std::ffi::CString;
-    // let vert_shader =
-    //     render_gl::Shader::from_vert_source(&gl, &CString::new(include_str!("triangle.vert"))?)?;
-
-    // let frag_shader =
-    //     render_gl::Shader::from_frag_source(&gl, &CString::new(include_str!("triangle.frag"))?)?;
-
-
-    // let shader_program = render_gl::Program::from_shaders(&gl, &[vert_shader, frag_shader])?;
-
     // set up vertex buffer object
-
+    //
     let vertices: Vec<f32> = vec![
-        // positions      // colors
-        0.5, -0.5, 0.0, 1.0, 0.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, // bottom left
-        0.0, 0.5, 0.0, 0.0, 0.0, 1.0, // top
+        // pos      // colour           // uv
+        // x,  y,   r,   g,   b,   a,   u,   v
+        0.5, -0.5, 1.0, 0.0, 0.0, 0.1, 0.0, 0.0, // bottom right
+        -0.5, -0.5, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, // bottom left
+        0.0, 0.5, 0.0, 0.0, 1.0, 0.1, 1.0, 1.0, // top
     ];
 
     let mut vbo: gl::types::GLuint = 0;
@@ -169,20 +157,29 @@ fn run(_config: &config::Config) -> Result<()> {
         gl.EnableVertexAttribArray(0); // this is "layout (location = 0)" in vertex shader
         gl.VertexAttribPointer(
             0,         // index of the generic vertex attribute ("layout (location = 0)")
-            3,         // the number of components per generic vertex attribute
+            2,         // the number of components per generic vertex attribute
             gl::FLOAT, // data type
             gl::FALSE, // normalized (int-to-float conversion)
-            (6 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
+            (8 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
             std::ptr::null(),                                     // offset of the first component
         );
-        gl.EnableVertexAttribArray(1); // this is "layout (location = 0)" in vertex shader
+        gl.EnableVertexAttribArray(1); // this is "layout (location = 1)" in vertex shader
         gl.VertexAttribPointer(
-            1,         // index of the generic vertex attribute ("layout (location = 0)")
-            3,         // the number of components per generic vertex attribute
+            1,         // index of the generic vertex attribute ("layout (location = 1)")
+            4,         // the number of components per generic vertex attribute
             gl::FLOAT, // data type
             gl::FALSE, // normalized (int-to-float conversion)
-            (6 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
-            (3 * std::mem::size_of::<f32>()) as *const gl::types::GLvoid, // offset of the first component
+            (8 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
+            (2 * std::mem::size_of::<f32>()) as *const gl::types::GLvoid, // offset of the first component
+        );
+        gl.EnableVertexAttribArray(2); // this is "layout (location = 2)" in vertex shader
+        gl.VertexAttribPointer(
+            2,         // index of the generic vertex attribute ("layout (location = 2)")
+            2,         // the number of components per generic vertex attribute
+            gl::FLOAT, // data type
+            gl::FALSE, // normalized (int-to-float conversion)
+            (8 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
+            (6 * std::mem::size_of::<f32>()) as *const gl::types::GLvoid, // offset of the first component
         );
 
         gl.BindBuffer(gl::ARRAY_BUFFER, 0);
@@ -195,9 +192,7 @@ fn run(_config: &config::Config) -> Result<()> {
         gl.ClearColor(0.3, 0.3, 0.5, 1.0);
     }
 
-
     // --------------------------------------------------------------------------------
-
 
     let mut event_pump = sdl_context.event_pump()?;
 

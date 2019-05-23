@@ -2,8 +2,8 @@ use gl;
 use std;
 use std::ffi::{CStr, CString};
 
-use crate::resources::Resources;
 use crate::error::{Error, Result};
+use crate::resources::Resources;
 
 pub struct Program {
     gl: gl::Gl,
@@ -126,11 +126,7 @@ impl Shader {
         })
     }
 
-    pub fn from_source(
-        gl: &gl::Gl,
-        source: &CStr,
-        kind: gl::types::GLenum,
-    ) -> Result<Shader> {
+    pub fn from_source(gl: &gl::Gl, source: &CStr, kind: gl::types::GLenum) -> Result<Shader> {
         let id = shader_from_source(gl, source, kind)?;
         Ok(Shader { gl: gl.clone(), id })
     }
