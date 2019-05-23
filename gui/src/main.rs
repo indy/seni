@@ -122,17 +122,22 @@ fn run(_config: &config::Config) -> Result<()> {
     let vertices: Vec<f32> = vec![
         // pos      // colour           // uv
         // x,  y,   r,   g,   b,   a,   u,   v
-        0.5, -0.5, 1.0, 0.0, 0.0, 0.1, 0.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, // bottom left
-        0.0, 0.5, 0.0, 0.0, 1.0, 0.1, 1.0, 1.0, // top
+        0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom right
+        -0.5, -0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, // bottom left
+        0.0, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, // top
+
+        1.0, -0.75, 1.0, 0.0, 0.0, 0.1, 0.0, 0.0, // bottom right
+        0.0, -0.75, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, // bottom left
+        0.5, 0.25, 0.0, 0.0, 1.0, 0.1, 1.0, 1.0, // top
     ];
 
     let mut vbo: gl::types::GLuint = 0;
-    unsafe {
-        gl.GenBuffers(1, &mut vbo);
-    }
+    let mut vao: gl::types::GLuint = 0;
 
     unsafe {
+        // set up vertex buffer object
+        //
+        gl.GenBuffers(1, &mut vbo);
         gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
         gl.BufferData(
             gl::ARRAY_BUFFER,                                                       // target
@@ -141,16 +146,10 @@ fn run(_config: &config::Config) -> Result<()> {
             gl::STATIC_DRAW,                               // usage
         );
         gl.BindBuffer(gl::ARRAY_BUFFER, 0);
-    }
 
-    // set up vertex array object
-
-    let mut vao: gl::types::GLuint = 0;
-    unsafe {
+        // set up vertex array object
+        //
         gl.GenVertexArrays(1, &mut vao);
-    }
-
-    unsafe {
         gl.BindVertexArray(vao);
         gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
 
@@ -184,12 +183,17 @@ fn run(_config: &config::Config) -> Result<()> {
 
         gl.BindBuffer(gl::ARRAY_BUFFER, 0);
         gl.BindVertexArray(0);
-    }
-    // set up shared state for window
 
-    unsafe {
+        // set up shared state for window
+        //
         gl.Viewport(0, 0, 900, 700);
         gl.ClearColor(0.3, 0.3, 0.5, 1.0);
+
+        // assuming that we'll be using pre-multiplied alpha
+        // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
+        gl.Enable(gl::BLEND);
+        gl.BlendEquation(gl::FUNC_ADD);
+        gl.BlendFunc(gl::ONE, gl::ONE_MINUS_SRC_ALPHA);
     }
 
     // --------------------------------------------------------------------------------
@@ -220,7 +224,7 @@ fn run(_config: &config::Config) -> Result<()> {
         ui.show_demo_window(&mut true);
 
         unsafe {
-            gl.Clear(gl::COLOR_BUFFER_BIT);
+            gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
         // draw triangle
@@ -231,7 +235,7 @@ fn run(_config: &config::Config) -> Result<()> {
             gl.DrawArrays(
                 gl::TRIANGLES, // mode
                 0,             // starting index in the enabled arrays
-                3,             // number of indices to be rendered
+                6,             // number of indices to be rendered
             );
         }
 
