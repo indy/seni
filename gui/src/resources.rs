@@ -20,8 +20,12 @@ impl Resources {
         })
     }
 
-    pub fn from_exe_path() -> Result<Resources> {
-        Resources::from_relative_exe_path(Path::new(""))
+    // pub fn from_exe_path() -> Result<Resources> {
+    //     Resources::from_relative_exe_path(Path::new(""))
+    // }
+
+    pub fn resource_path(&self, resource_name: &str) -> Result<PathBuf> {
+        Ok(resource_name_to_path(&self.root_path, resource_name))
     }
 
     pub fn load_cstring(&self, resource_name: &str) -> Result<ffi::CString> {

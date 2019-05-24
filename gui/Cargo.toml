@@ -11,6 +11,7 @@ config = "0.9"
 core = { path = "../core" }
 env_logger = "0.6"
 gl = { path = "lib/gl" }
+image = "0.21.1"
 imgui = "0.0.22"
 imgui-opengl-renderer = "0.4"
 imgui-sdl2 = "0.5"

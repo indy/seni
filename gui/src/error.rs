@@ -27,6 +27,7 @@ pub enum Error {
     SDL2WindowBuildError(sdl2::video::WindowBuildError),
     FFINulError(std::ffi::NulError),
     Io(std::io::Error),
+    ImageError(image::ImageError),
     FileContainsNil,
     FailedToGetExePath,
     ResourceLoad {
@@ -76,6 +77,12 @@ impl From<std::io::Error> for Error {
     }
 }
 
+impl From<image::ImageError> for Error {
+    fn from(other: image::ImageError) -> Self {
+        Error::ImageError(other)
+    }
+}
+
 // don't need to implement any of the trait's methods
 impl error::Error for Error {}
 
@@ -88,6 +95,7 @@ impl fmt::Display for Error {
             Error::SDL2WindowBuildError(e) => write!(f, "seni gui: SDL2WindowBuildError: {:?}", e),
             Error::FFINulError(e) => write!(f, "seni gui: std::ffi:NulError: {:?}", e),
             Error::Io(e) => write!(f, "seni gui: Io: {:?}", e),
+            Error::ImageError(e) => write!(f, "seni gui: ImageError: {:?}", e),
             Error::FileContainsNil => write!(f, "seni gui: FileContainsNil"),
             Error::FailedToGetExePath => write!(f, "seni gui: FailedToGetExePath"),
             Error::ResourceLoad { name } => write!(f, "seni gui: {}", name),

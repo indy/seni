@@ -20,6 +20,7 @@ mod resources;
 use clap::{value_t, App, Arg};
 use config;
 use env_logger;
+use image::GenericImageView;
 use log::info;
 
 use gl;
@@ -31,6 +32,8 @@ use sdl2;
 use crate::error::Result;
 use crate::resources::Resources;
 use std::path::Path;
+
+use core::BitmapInfo;
 
 fn main() -> Result<()> {
     // Add in `./Config.toml`
@@ -78,8 +81,40 @@ fn main() -> Result<()> {
     run(&config)
 }
 
+fn load_texture(res: &Resources, name: &str) -> Result<BitmapInfo> {
+    let path = res.resource_path(name)?;
+
+    info!("load_bitmap: {:?}", path);
+    let image = image::open(&path)?;
+
+    let (w, h) = image.dimensions();
+    let width = w as usize;
+    let height = h as usize;
+    let mut data: Vec<u8> = Vec::with_capacity(width * height * 4);
+
+    info!("loading bitmap {} of size {} x {}", name, width, height);
+
+    for (_, _, rgba) in image.pixels() {
+        data.push(rgba.data[0]);
+        data.push(rgba.data[1]);
+        data.push(rgba.data[2]);
+        data.push(rgba.data[3]);
+    }
+
+    let bitmap_info = BitmapInfo {
+        width,
+        height,
+        data,
+        ..Default::default()
+    };
+
+    Ok(bitmap_info)
+}
+
 fn run(_config: &config::Config) -> Result<()> {
-    let res = Resources::from_relative_exe_path(Path::new("assets")).unwrap();
+    let res = Resources::from_relative_exe_path(Path::new("assets"))?;
+
+    let _bitmap_info = load_texture(&res, "textures/texture.png")?;
 
     let sdl_context = sdl2::init()?;
     let video = sdl_context.video()?;
@@ -115,7 +150,7 @@ fn run(_config: &config::Config) -> Result<()> {
     // --------------------------------------------------------------------------------
     // set up shader program
     //
-    let shader_program = render_gl::Program::from_res(&gl, &res, "shaders/triangle").unwrap();
+    let shader_program = render_gl::Program::from_res(&gl, &res, "shaders/triangle")?;
 
     // set up vertex buffer object
     //
@@ -125,7 +160,6 @@ fn run(_config: &config::Config) -> Result<()> {
         0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom right
         -0.5, -0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, // bottom left
         0.0, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, // top
-
         1.0, -0.75, 1.0, 0.0, 0.0, 0.1, 0.0, 0.0, // bottom right
         0.0, -0.75, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, // bottom left
         0.5, 0.25, 0.0, 0.0, 1.0, 0.1, 1.0, 1.0, // top
