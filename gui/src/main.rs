@@ -35,6 +35,13 @@ use std::path::Path;
 
 use core::BitmapInfo;
 
+use std::ffi;
+macro_rules! c_str {
+    ($literal:expr) => {
+        ffi::CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
+    }
+}
+
 fn main() -> Result<()> {
     // Add in `./Config.toml`
     // Add in config from the environment (with a prefix of SENI)
@@ -114,7 +121,7 @@ fn load_texture(res: &Resources, name: &str) -> Result<BitmapInfo> {
 fn run(_config: &config::Config) -> Result<()> {
     let res = Resources::from_relative_exe_path(Path::new("assets"))?;
 
-    let _bitmap_info = load_texture(&res, "textures/texture.png")?;
+    let bitmap_info = load_texture(&res, "textures/texture.png")?;
 
     let sdl_context = sdl2::init()?;
     let video = sdl_context.video()?;
@@ -167,7 +174,9 @@ fn run(_config: &config::Config) -> Result<()> {
 
     let mut vbo: gl::types::GLuint = 0;
     let mut vao: gl::types::GLuint = 0;
+    let mut tex: gl::types::GLuint = 0;
 
+    shader_program.set_used();
     unsafe {
         // set up vertex buffer object
         //
@@ -221,13 +230,29 @@ fn run(_config: &config::Config) -> Result<()> {
         // set up shared state for window
         //
         gl.Viewport(0, 0, 900, 700);
-        gl.ClearColor(0.3, 0.3, 0.5, 1.0);
+        gl.ClearColor(1.0, 1.0, 1.0, 1.0);
 
         // assuming that we'll be using pre-multiplied alpha
         // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
         gl.Enable(gl::BLEND);
         gl.BlendEquation(gl::FUNC_ADD);
         gl.BlendFunc(gl::ONE, gl::ONE_MINUS_SRC_ALPHA);
+
+        gl.GenTextures(1, &mut tex);
+        // "Bind" the newly created texture : all future texture functions will modify this texture
+        gl.BindTexture(gl::TEXTURE_2D, tex);
+
+        // Give the image to OpenGL
+        gl.TexImage2D(gl::TEXTURE_2D, 0, gl::RGBA as i32, bitmap_info.width as i32, bitmap_info.height as i32, 0, gl::RGBA, gl::UNSIGNED_BYTE, bitmap_info.data.as_ptr() as *const gl::types::GLvoid);
+
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR_MIPMAP_LINEAR as i32);
+        gl.GenerateMipmap(gl::TEXTURE_2D);
+
+        gl.ActiveTexture(gl::TEXTURE0);
+
+        let loc = gl.GetUniformLocation(shader_program.id(), c_str!("myTextureSampler").as_ptr());
+        gl.Uniform1i(loc, 0);
     }
 
     // --------------------------------------------------------------------------------
@@ -254,16 +279,20 @@ fn run(_config: &config::Config) -> Result<()> {
             }
         }
 
+
+
         let ui = imgui_sdl2.frame(&window, &mut imgui, &event_pump.mouse_state());
         ui.show_demo_window(&mut true);
 
+        let (window_width, window_height) = window.size();
         unsafe {
+            gl.Viewport(0, 0, window_width as i32, window_height as i32);
             gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
         // draw triangle
 
-        shader_program.set_used();
+        // shader_program.set_used();
         unsafe {
             gl.BindVertexArray(vao);
             gl.DrawArrays(

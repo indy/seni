@@ -80,9 +80,9 @@ impl Program {
         })
     }
 
-    // pub fn id(&self) -> gl::types::GLuint {
-    //     self.id
-    // }
+    pub fn id(&self) -> gl::types::GLuint {
+        self.id
+    }
 
     pub fn set_used(&self) {
         unsafe {
