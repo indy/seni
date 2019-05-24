@@ -118,10 +118,61 @@ fn load_texture(res: &Resources, name: &str) -> Result<BitmapInfo> {
     Ok(bitmap_info)
 }
 
+fn identity() -> [f32; 16] {
+    let out: [f32; 16] = [1.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          1.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          1.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          1.0];
+    out
+}
+
+fn ortho(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) -> [f32; 16] {
+    let lr = 1.0 / (left - right);
+    let bt = 1.0 / (bottom - top);
+    let nf = 1.0 / (near - far);
+
+    let out: [f32; 16] = [
+        -2.0 * lr,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -2.0 * bt,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.0 * nf,
+        0.0,
+        (left + right) * lr,
+        (top + bottom) * bt,
+        (far + near) * nf,
+        1.0];
+
+    out
+}
+
 fn run(_config: &config::Config) -> Result<()> {
     let res = Resources::from_relative_exe_path(Path::new("assets"))?;
 
     let bitmap_info = load_texture(&res, "textures/texture.png")?;
+
+
+    let projection_matrix = ortho(0.0, 1920.0, 0.0, 1062.0, 10.0, -10.0);
+    // let projection_matrix = ortho(0.0, 1000.0, 0.0, 1000.0, 10.0, -10.0);
+    let model_view_matrix = identity();
 
     let sdl_context = sdl2::init()?;
     let video = sdl_context.video()?;
@@ -164,17 +215,20 @@ fn run(_config: &config::Config) -> Result<()> {
     let vertices: Vec<f32> = vec![
         // pos      // colour           // uv
         // x,  y,   r,   g,   b,   a,   u,   v
-        0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, // bottom left
-        0.0, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, // top
-        1.0, -0.75, 1.0, 0.0, 0.0, 0.1, 0.0, 0.0, // bottom right
-        0.0, -0.75, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, // bottom left
-        0.5, 0.25, 0.0, 0.0, 1.0, 0.1, 1.0, 1.0, // top
+        1.0 * 700.0, 0.5 * 700.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom right
+        0.0 * 700.0, 0.5 * 700.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, // bottom left
+        0.5 * 700.0, 1.5 * 700.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, // top
+        1.5 * 700.0, 0.25 * 700.0, 1.0, 0.0, 0.0, 0.1, 0.0, 0.0, // bottom right
+        0.5 * 700.0, 0.25 * 700.0, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, // bottom left
+        1.0 * 700.0, 1.25 * 700.0, 0.0, 0.0, 1.0, 0.1, 1.0, 1.0, // top
     ];
 
     let mut vbo: gl::types::GLuint = 0;
     let mut vao: gl::types::GLuint = 0;
     let mut tex: gl::types::GLuint = 0;
+
+    let gl_int_p_matrix: gl::types::GLint;
+    let gl_int_mv_matrix: gl::types::GLint;
 
     shader_program.set_used();
     unsafe {
@@ -253,6 +307,12 @@ fn run(_config: &config::Config) -> Result<()> {
 
         let loc = gl.GetUniformLocation(shader_program.id(), c_str!("myTextureSampler").as_ptr());
         gl.Uniform1i(loc, 0);
+
+        gl_int_p_matrix = gl.GetUniformLocation(shader_program.id(), c_str!("uPMatrix").as_ptr());
+        gl.UniformMatrix4fv(gl_int_p_matrix, 1, gl::FALSE, projection_matrix.as_ptr());
+
+        gl_int_mv_matrix = gl.GetUniformLocation(shader_program.id(), c_str!("uMVMatrix").as_ptr());
+        gl.UniformMatrix4fv(gl_int_mv_matrix, 1, gl::FALSE, model_view_matrix.as_ptr());
     }
 
     // --------------------------------------------------------------------------------
@@ -278,8 +338,6 @@ fn run(_config: &config::Config) -> Result<()> {
                 _ => {}
             }
         }
-
-
 
         let ui = imgui_sdl2.frame(&window, &mut imgui, &event_pump.mouse_state());
         ui.show_demo_window(&mut true);

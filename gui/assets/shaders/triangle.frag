@@ -18,6 +18,4 @@ void main()
   Colour.g = tex.r * IN.Colour.g;
   Colour.b = tex.r * IN.Colour.b;
   Colour.a = tex.r * IN.Colour.a;
-
-  // Colour = IN.Colour;
 }
