@@ -364,7 +364,7 @@ fn run(config: &config::Config) -> Result<()> {
     let mut event_pump = sdl_context.event_pump()?;
 
     'running: loop {
-        use sdl2::event::Event;
+        use sdl2::event::{Event, WindowEvent};
         use sdl2::keyboard::Keycode;
 
         for event in event_pump.poll_iter() {
@@ -379,14 +379,12 @@ fn run(config: &config::Config) -> Result<()> {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
-                // http://nercury.github.io/rust/opengl/tutorial/2018/07/27/opengl-in-rust-from-scratch-13-safe-triangle-nalgebra.html
-                // Event::Window {
-                //     win_event: WindowEvent::Resized(w, h),
-                //     ..
-                // } => {
-                //     viewport.update_size(w, h);
-                //     viewport.set_used(&gl);
-                // },
+                Event::Window {
+                    win_event: WindowEvent::Resized(w, h),
+                    ..
+                } => unsafe {
+                    gl.Viewport(0, 0, w as i32, h as i32);
+                },
                 _ => {}
             }
         }
@@ -394,9 +392,7 @@ fn run(config: &config::Config) -> Result<()> {
         let ui = imgui_sdl2.frame(&window, &mut imgui, &event_pump.mouse_state());
         ui.show_demo_window(&mut true);
 
-        let (window_width, window_height) = window.size();
         unsafe {
-            gl.Viewport(0, 0, window_width as i32, window_height as i32);
             gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
