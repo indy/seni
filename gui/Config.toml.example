@@ -1,3 +1,9 @@
-assets = "/home/indy/code/seni/client/www/img"
+# the default script if none is supplied on the command line
+script = "1918-einstein.seni"
+
+assets_path = "/home/indy/code/seni/gui/assets"
+scripts_path = "/home/indy/code/seni/server/static/seni"
+bitmaps_path = "/home/indy/code/seni/client/www/img"
+
 profiling = false
 debug = false

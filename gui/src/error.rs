@@ -22,6 +22,8 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 pub enum Error {
     Placeholder(String), // temp placeholder error
 
+    CoreError(core::Error),
+
     ConfigError(config::ConfigError),
     StringError(String),
     SDL2WindowBuildError(sdl2::video::WindowBuildError),
@@ -33,6 +35,12 @@ pub enum Error {
     CanNotDetermineShaderType { name: String },
     CompileError { name: String, message: String },
     LinkError { name: String, message: String },
+}
+
+impl From<core::Error> for Error {
+    fn from(e: core::Error) -> Error {
+        Error::CoreError(e)
+    }
 }
 
 impl From<config::ConfigError> for Error {
@@ -78,6 +86,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Placeholder(s) => write!(f, "seni gui: Placeholder: {:?}", s),
+            Error::CoreError(c) => write!(f, "seni gui: Core Error: {:?}", c),
             Error::ConfigError(c) => write!(f, "seni gui: Config Error: {:?}", c),
             Error::StringError(s) => write!(f, "seni gui: String Error: {}", s),
             Error::SDL2WindowBuildError(e) => write!(f, "seni gui: SDL2WindowBuildError: {:?}", e),
