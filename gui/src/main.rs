@@ -15,7 +15,6 @@
 
 mod error;
 mod render_gl;
-mod resources;
 
 use clap::{value_t, App, Arg};
 use config;
@@ -30,16 +29,17 @@ use imgui_sdl2;
 use sdl2;
 
 use crate::error::Result;
-use crate::resources::Resources;
 use std::path::Path;
 
 use core::BitmapInfo;
 
 use std::ffi;
+
+#[macro_export]
 macro_rules! c_str {
     ($literal:expr) => {
         ffi::CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
-    }
+    };
 }
 
 fn main() -> Result<()> {
@@ -88,8 +88,8 @@ fn main() -> Result<()> {
     run(&config)
 }
 
-fn load_texture(res: &Resources, name: &str) -> Result<BitmapInfo> {
-    let path = res.resource_path(name)?;
+fn load_texture(ppath: &Path, name: &str) -> Result<BitmapInfo> {
+    let path = ppath.join(name);
 
     info!("load_bitmap: {:?}", path);
     let image = image::open(&path)?;
@@ -119,22 +119,9 @@ fn load_texture(res: &Resources, name: &str) -> Result<BitmapInfo> {
 }
 
 fn identity() -> [f32; 16] {
-    let out: [f32; 16] = [1.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          1.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          1.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          1.0];
+    let out: [f32; 16] = [
+        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ];
     out
 }
 
@@ -159,16 +146,17 @@ fn ortho(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) -> [
         (left + right) * lr,
         (top + bottom) * bt,
         (far + near) * nf,
-        1.0];
+        1.0,
+    ];
 
     out
 }
 
-fn run(_config: &config::Config) -> Result<()> {
-    let res = Resources::from_relative_exe_path(Path::new("assets"))?;
+fn run(config: &config::Config) -> Result<()> {
+    let assets_location = config.get_str("assets")?;
+    let assets_path = Path::new(&assets_location);
 
-    let bitmap_info = load_texture(&res, "textures/texture.png")?;
-
+    let bitmap_info = load_texture(&assets_path, "textures/texture.png")?;
 
     let projection_matrix = ortho(0.0, 1920.0, 0.0, 1062.0, 10.0, -10.0);
     // let projection_matrix = ortho(0.0, 1000.0, 0.0, 1000.0, 10.0, -10.0);
@@ -208,19 +196,61 @@ fn run(_config: &config::Config) -> Result<()> {
     // --------------------------------------------------------------------------------
     // set up shader program
     //
-    let shader_program = render_gl::Program::from_res(&gl, &res, "shaders/triangle")?;
+    let shader_program = render_gl::Program::from_path(&gl, &assets_path, "shaders/triangle")?;
 
     // set up vertex buffer object
     //
     let vertices: Vec<f32> = vec![
         // pos      // colour           // uv
         // x,  y,   r,   g,   b,   a,   u,   v
-        1.0 * 700.0, 0.5 * 700.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom right
-        0.0 * 700.0, 0.5 * 700.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, // bottom left
-        0.5 * 700.0, 1.5 * 700.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, // top
-        1.5 * 700.0, 0.25 * 700.0, 1.0, 0.0, 0.0, 0.1, 0.0, 0.0, // bottom right
-        0.5 * 700.0, 0.25 * 700.0, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, // bottom left
-        1.0 * 700.0, 1.25 * 700.0, 0.0, 0.0, 1.0, 0.1, 1.0, 1.0, // top
+        1.0 * 700.0,
+        0.5 * 700.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0, // bottom right
+        0.0 * 700.0,
+        0.5 * 700.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+        1.0,
+        0.0, // bottom left
+        0.5 * 700.0,
+        1.5 * 700.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0, // top
+        1.5 * 700.0,
+        0.25 * 700.0,
+        1.0,
+        0.0,
+        0.0,
+        0.1,
+        0.0,
+        0.0, // bottom right
+        0.5 * 700.0,
+        0.25 * 700.0,
+        0.0,
+        1.0,
+        0.0,
+        0.1,
+        1.0,
+        0.0, // bottom left
+        1.0 * 700.0,
+        1.25 * 700.0,
+        0.0,
+        0.0,
+        1.0,
+        0.1,
+        1.0,
+        1.0, // top
     ];
 
     let mut vbo: gl::types::GLuint = 0;
@@ -297,10 +327,24 @@ fn run(_config: &config::Config) -> Result<()> {
         gl.BindTexture(gl::TEXTURE_2D, tex);
 
         // Give the image to OpenGL
-        gl.TexImage2D(gl::TEXTURE_2D, 0, gl::RGBA as i32, bitmap_info.width as i32, bitmap_info.height as i32, 0, gl::RGBA, gl::UNSIGNED_BYTE, bitmap_info.data.as_ptr() as *const gl::types::GLvoid);
+        gl.TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA as i32,
+            bitmap_info.width as i32,
+            bitmap_info.height as i32,
+            0,
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+            bitmap_info.data.as_ptr() as *const gl::types::GLvoid,
+        );
 
         gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR_MIPMAP_LINEAR as i32);
+        gl.TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_MIN_FILTER,
+            gl::LINEAR_MIPMAP_LINEAR as i32,
+        );
         gl.GenerateMipmap(gl::TEXTURE_2D);
 
         gl.ActiveTexture(gl::TEXTURE0);
@@ -335,6 +379,14 @@ fn run(_config: &config::Config) -> Result<()> {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
+                // http://nercury.github.io/rust/opengl/tutorial/2018/07/27/opengl-in-rust-from-scratch-13-safe-triangle-nalgebra.html
+                // Event::Window {
+                //     win_event: WindowEvent::Resized(w, h),
+                //     ..
+                // } => {
+                //     viewport.update_size(w, h);
+                //     viewport.set_used(&gl);
+                // },
                 _ => {}
             }
         }

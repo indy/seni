@@ -1,9 +1,13 @@
+use std::ffi;
+use std::fs;
+use std::io::Read;
+use std::path::Path;
+
 use gl;
 use std;
 use std::ffi::{CStr, CString};
 
 use crate::error::{Error, Result};
-use crate::resources::Resources;
 
 pub struct Program {
     gl: gl::Gl,
@@ -11,7 +15,7 @@ pub struct Program {
 }
 
 impl Program {
-    pub fn from_res(gl: &gl::Gl, res: &Resources, name: &str) -> Result<Program> {
+    pub fn from_path(gl: &gl::Gl, path: &Path, name: &str) -> Result<Program> {
         const POSSIBLE_EXT: [&str; 2] = [".vert", ".frag"];
 
         let resource_names = POSSIBLE_EXT
@@ -21,7 +25,7 @@ impl Program {
 
         let shaders = resource_names
             .iter()
-            .map(|resource_name| Shader::from_res(gl, res, resource_name))
+            .map(|resource_name| Shader::from_path(gl, path, resource_name))
             .collect::<Result<Vec<Shader>>>()?;
 
         Program::from_shaders(gl, &shaders[..]).map_err(|message| Error::LinkError {
@@ -105,7 +109,7 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn from_res(gl: &gl::Gl, res: &Resources, name: &str) -> Result<Shader> {
+    pub fn from_path(gl: &gl::Gl, path: &Path, name: &str) -> Result<Shader> {
         const POSSIBLE_EXT: [(&str, gl::types::GLenum); 2] =
             [(".vert", gl::VERTEX_SHADER), (".frag", gl::FRAGMENT_SHADER)];
 
@@ -113,9 +117,9 @@ impl Shader {
             .iter()
             .find(|&&(file_extension, _)| name.ends_with(file_extension))
             .map(|&(_, kind)| kind)
-            .ok_or_else(|| Error::CanNotDetermineShaderTypeForResource { name: name.into() })?;
+            .ok_or_else(|| Error::CanNotDetermineShaderType { name: name.into() })?;
 
-        let source = res.load_cstring(name).map_err(|_e| Error::ResourceLoad {
+        let source = load_cstring(path, name).map_err(|_e| Error::AssetLoad {
             name: name.into(),
             //            inner: e,
         })?;
@@ -130,14 +134,6 @@ impl Shader {
         let id = shader_from_source(gl, source, kind)?;
         Ok(Shader { gl: gl.clone(), id })
     }
-
-    // pub fn from_vert_source(gl: &gl::Gl, source: &CStr) -> Result<Shader> {
-    //     Shader::from_source(gl, source, gl::VERTEX_SHADER)
-    // }
-
-    // pub fn from_frag_source(gl: &gl::Gl, source: &CStr) -> Result<Shader> {
-    //     Shader::from_source(gl, source, gl::FRAGMENT_SHADER)
-    // }
 
     pub fn id(&self) -> gl::types::GLuint {
         self.id
@@ -198,4 +194,19 @@ fn create_whitespace_cstring_with_len(len: usize) -> CString {
     buffer.extend([b' '].iter().cycle().take(len));
     // convert buffer to CString
     unsafe { CString::from_vec_unchecked(buffer) }
+}
+
+fn load_cstring(path: &Path, resource_name: &str) -> Result<ffi::CString> {
+    let mut file = fs::File::open(path.join(resource_name))?;
+
+    // allocate buffer of the same size as file
+    let mut buffer: Vec<u8> = Vec::with_capacity(file.metadata()?.len() as usize + 1);
+    file.read_to_end(&mut buffer)?;
+
+    // check for nul byte
+    if buffer.iter().find(|i| **i == 0).is_some() {
+        return Err(Error::FileContainsNil);
+    }
+
+    Ok(unsafe { ffi::CString::from_vec_unchecked(buffer) })
 }

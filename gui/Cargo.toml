@@ -18,8 +18,5 @@ imgui-sdl2 = "0.5"
 log = "0.4"
 sdl2 = "0.32.1"
 
-[build-dependencies]
-walkdir = "2.1"
-
 [features]
 gl_debug = ["gl/debug"]

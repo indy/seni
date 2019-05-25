@@ -29,22 +29,10 @@ pub enum Error {
     Io(std::io::Error),
     ImageError(image::ImageError),
     FileContainsNil,
-    FailedToGetExePath,
-    ResourceLoad {
-        name: String,
-        //        inner: Error,
-    },
-    CanNotDetermineShaderTypeForResource {
-        name: String,
-    },
-    CompileError {
-        name: String,
-        message: String,
-    },
-    LinkError {
-        name: String,
-        message: String,
-    },
+    AssetLoad { name: String },
+    CanNotDetermineShaderType { name: String },
+    CompileError { name: String, message: String },
+    LinkError { name: String, message: String },
 }
 
 impl From<config::ConfigError> for Error {
@@ -97,9 +85,8 @@ impl fmt::Display for Error {
             Error::Io(e) => write!(f, "seni gui: Io: {:?}", e),
             Error::ImageError(e) => write!(f, "seni gui: ImageError: {:?}", e),
             Error::FileContainsNil => write!(f, "seni gui: FileContainsNil"),
-            Error::FailedToGetExePath => write!(f, "seni gui: FailedToGetExePath"),
-            Error::ResourceLoad { name } => write!(f, "seni gui: {}", name),
-            Error::CanNotDetermineShaderTypeForResource { name } => write!(f, "seni gui: {}", name),
+            Error::AssetLoad { name } => write!(f, "seni gui: {}", name),
+            Error::CanNotDetermineShaderType { name } => write!(f, "seni gui: {}", name),
             Error::CompileError { name, message } => write!(f, "seni gui: {} {}", name, message),
             Error::LinkError { name, message } => write!(f, "seni gui: {} {}", name, message),
         }
