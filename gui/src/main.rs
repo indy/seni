@@ -15,6 +15,8 @@
 
 mod error;
 mod render_gl;
+mod render_imgui;
+mod input_imgui;
 
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -34,8 +36,6 @@ use core::{
 
 use gl;
 use imgui;
-use imgui_opengl_renderer;
-use imgui_sdl2;
 use sdl2;
 
 use crate::error::Result;
@@ -136,10 +136,10 @@ fn run(config: &config::Config) -> Result<()> {
     let mut imgui = imgui::ImGui::init();
     imgui.set_ini_filename(None);
 
-    let mut imgui_sdl2 = imgui_sdl2::ImguiSdl2::new(&mut imgui);
+    let mut input_imgui = input_imgui::ImguiSdl2::new(&mut imgui);
 
     let renderer =
-        imgui_opengl_renderer::Renderer::new(&mut imgui, |s| video.gl_get_proc_address(s) as _);
+        render_imgui::Renderer::new(&mut imgui, |s| video.gl_get_proc_address(s) as _);
 
     // --------------------------------------------------------------------------------
     // set up shader program
@@ -264,8 +264,8 @@ fn run(config: &config::Config) -> Result<()> {
         use sdl2::keyboard::Keycode;
 
         for event in event_pump.poll_iter() {
-            imgui_sdl2.handle_event(&mut imgui, &event);
-            if imgui_sdl2.ignore_event(&event) {
+            input_imgui.handle_event(&mut imgui, &event);
+            if input_imgui.ignore_event(&event) {
                 continue;
             }
 
@@ -285,7 +285,7 @@ fn run(config: &config::Config) -> Result<()> {
             }
         }
 
-        let ui = imgui_sdl2.frame(&window, &mut imgui, &event_pump.mouse_state());
+        let ui = input_imgui.frame(&window, &mut imgui, &event_pump.mouse_state());
         ui.show_demo_window(&mut true);
 
         unsafe {
