@@ -187,6 +187,8 @@ fn shader_from_source(
     Ok(id)
 }
 
+// todo: move these into gl_util or replace them
+
 fn create_whitespace_cstring_with_len(len: usize) -> CString {
     // allocate buffer of correct size
     let mut buffer: Vec<u8> = Vec::with_capacity(len + 1);
