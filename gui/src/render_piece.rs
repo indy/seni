@@ -59,7 +59,7 @@ impl Drop for Renderer {
 
 impl Renderer {
     pub fn new(gl: &gl::Gl, assets_path: &Path, bitmaps_path: &Path) -> Result<Renderer> {
-        let program = render_gl::Program::from_path(gl, assets_path, "shaders/triangle")?;
+        let program = render_gl::Program::from_path(gl, assets_path, "shaders/piece")?;
         let bitmap_info = gl_util::load_texture(&bitmaps_path, "texture.png")?;
 
         let mut vao: gl::types::GLuint = 0;
@@ -164,7 +164,7 @@ impl Renderer {
                 std::ptr::null(), // offset of the first component
             );
             gl.VertexAttribPointer(
-                locations.colour, // index of the generic vertex attribute ("layout (location = 1)")
+                locations.colour,
                 4,                // the number of components per generic vertex attribute
                 gl::FLOAT,        // data type
                 gl::FALSE,        // normalized (int-to-float conversion)
@@ -172,7 +172,7 @@ impl Renderer {
                 (2 * std::mem::size_of::<f32>()) as *const gl::types::GLvoid, // offset of the first component
             );
             gl.VertexAttribPointer(
-                locations.uv, // index of the generic vertex attribute ("layout (location = 2)")
+                locations.uv,
                 2,            // the number of components per generic vertex attribute
                 gl::FLOAT,    // data type
                 gl::FALSE,    // normalized (int-to-float conversion)
