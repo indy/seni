@@ -22,6 +22,7 @@ mod input_imgui;
 mod render_gl;
 mod render_imgui;
 mod render_piece;
+mod render_square;
 mod seni;
 
 use std::path::Path;
@@ -34,7 +35,9 @@ use imgui;
 use log::info;
 use sdl2;
 
-use crate::error::Result;
+use crate::error::{Error, Result};
+
+use log::error;
 
 fn main() -> Result<()> {
     // Add in `./Config.toml`
@@ -82,6 +85,90 @@ fn main() -> Result<()> {
     run(&config)
 }
 
+fn create_framebuffer(gl: &gl::Gl) -> gl::types::GLuint {
+    let mut framebuffer_id: gl::types::GLuint = 0;
+
+    unsafe {
+        gl.GenFramebuffers(1, &mut framebuffer_id);
+    }
+
+    framebuffer_id
+}
+
+fn create_texture(gl: &gl::Gl, width: usize, height: usize) -> gl::types::GLuint {
+    let mut texture_id: gl::types::GLuint = 0;
+
+    unsafe {
+        gl.GenTextures(1, &mut texture_id);
+        // "Bind" the newly created texture : all future texture functions will modify this texture
+        gl.BindTexture(gl::TEXTURE_2D, texture_id);
+        // Give an empty image to OpenGL ( the last "0" )
+        gl.TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA as _,
+            width as _,
+            height as _,
+            0,
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+            0 as *const gl::types::GLvoid,
+        );
+
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as _);
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as _);
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as _);
+    }
+
+    texture_id
+}
+
+fn attach_texture_to_framebuffer(
+    gl: &gl::Gl,
+    framebuffer_id: gl::types::GLuint,
+    texture_id: gl::types::GLuint,
+) {
+    unsafe {
+        gl.BindFramebuffer(gl::FRAMEBUFFER, framebuffer_id);
+        gl.FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            gl::TEXTURE_2D,
+            texture_id,
+            0,
+        );
+    }
+}
+
+fn is_framebuffer_ok(gl: &gl::Gl) -> Result<()> {
+    unsafe {
+        if gl.CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
+            Err(Error::GLError("Framebuffer is not complete".to_string()))
+        } else {
+            Ok(())
+        }
+    }
+}
+
+fn bind_framebuffer(
+    gl: &gl::Gl,
+    framebuffer_id: gl::types::GLuint,
+    viewport_width: usize,
+    viewport_height: usize,
+) {
+    unsafe {
+        gl.BindFramebuffer(gl::FRAMEBUFFER, framebuffer_id);
+        gl.Viewport(0, 0, viewport_width as _, viewport_height as _);
+    }
+}
+
+fn update_viewport(gl: &gl::Gl, viewport_width: usize, viewport_height: usize) {
+    unsafe {
+        gl.Viewport(0, 0, viewport_width as _, viewport_height as _);
+    }
+}
+
 fn run(config: &config::Config) -> Result<()> {
     let assets_location = config.get_str("assets_path")?;
     let assets_path = Path::new(&assets_location);
@@ -121,14 +208,12 @@ fn run(config: &config::Config) -> Result<()> {
 
     let mut input_imgui = input_imgui::ImguiSdl2::new(&mut imgui);
 
-    let imgui_renderer =
-        render_imgui::Renderer::new(&mut imgui, |s| video.gl_get_proc_address(s) as _);
-    let piece_renderer = render_piece::Renderer::new(&gl, &assets_path, &bitmaps_path)?;
+    let mut viewport_width: usize = 900;
+    let mut viewport_height: usize = 700;
 
     unsafe {
         // set up shared state for window
         //
-        gl.Viewport(0, 0, 900, 700);
         gl.ClearColor(1.0, 1.0, 1.0, 1.0);
 
         // assuming that we'll be using pre-multiplied alpha
@@ -137,6 +222,26 @@ fn run(config: &config::Config) -> Result<()> {
         gl.BlendEquation(gl::FUNC_ADD);
         gl.BlendFunc(gl::ONE, gl::ONE_MINUS_SRC_ALPHA);
     }
+
+    let imgui_renderer = render_imgui::Renderer::new(&gl, &assets_path, &mut imgui)?;
+    let piece_renderer = render_piece::Renderer::new(&gl, &assets_path, &bitmaps_path)?;
+
+    let render_texture_id = create_texture(&gl, 1024, 1024);
+    let framebuffer_id = create_framebuffer(&gl);
+    attach_texture_to_framebuffer(&gl, framebuffer_id, render_texture_id);
+    is_framebuffer_ok(&gl)?;
+    bind_framebuffer(&gl, framebuffer_id, 1024, 1024);
+
+    unsafe {
+        gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+    }
+    piece_renderer.render(&seni_context.geometry);
+
+    bind_framebuffer(&gl, 0, viewport_width, viewport_height);
+
+    let square_renderer = render_square::Renderer::new(&gl, &assets_path, render_texture_id)?;
+
+    update_viewport(&gl, viewport_width, viewport_height);
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -159,9 +264,11 @@ fn run(config: &config::Config) -> Result<()> {
                 Event::Window {
                     win_event: WindowEvent::Resized(w, h),
                     ..
-                } => unsafe {
-                    gl.Viewport(0, 0, w as i32, h as i32);
-                },
+                } => {
+                    viewport_width = w as _;
+                    viewport_height = h as _;
+                    update_viewport(&gl, viewport_width, viewport_height);
+                }
                 _ => {}
             }
         }
@@ -173,7 +280,8 @@ fn run(config: &config::Config) -> Result<()> {
             gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
-        piece_renderer.render(&seni_context.geometry);
+        // piece_renderer.render(&seni_context.geometry);
+        square_renderer.render(viewport_width, viewport_height);
         imgui_renderer.render(ui);
 
         window.gl_swap_window();

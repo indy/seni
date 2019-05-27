@@ -17,8 +17,6 @@ use gl::types::*;
 
 use std::path::Path;
 
-use core::Geometry;
-
 use crate::error::Result;
 use crate::gl_util;
 use crate::render_gl;
@@ -26,19 +24,7 @@ use crate::render_gl;
 struct GeometryLayout {
     stride: usize,
     position_num_elements: usize,
-    colour_num_elements: usize,
     texture_num_elements: usize,
-}
-
-pub struct Renderer {
-    gl: gl::Gl,
-    program: render_gl::Program,
-
-    vao: GLuint, // todo: render_imgui recreates this on every call to render. why???
-    vbo: GLuint,
-
-    texture: GLuint,
-    // locations: RendererLocations,
 }
 
 struct RendererLocations {
@@ -47,8 +33,21 @@ struct RendererLocations {
     modelview_mtx: GLint,
 
     position: GLuint,
-    colour: GLuint,
     uv: GLuint,
+}
+
+pub struct Renderer {
+    gl: gl::Gl,
+    program: render_gl::Program,
+
+    vao: GLuint,
+    vbo: GLuint,
+
+    texture: GLuint,
+
+    geometry: Vec<f32>,
+
+    locations: RendererLocations,
 }
 
 impl Drop for Renderer {
@@ -65,19 +64,16 @@ impl Drop for Renderer {
 }
 
 impl Renderer {
-    pub fn new(gl: &gl::Gl, assets_path: &Path, bitmaps_path: &Path) -> Result<Renderer> {
-        let program = render_gl::Program::from_path(gl, assets_path, "shaders/piece")?;
-        let bitmap_info = gl_util::load_texture(&bitmaps_path, "texture.png")?;
+    pub fn new(gl: &gl::Gl, assets_path: &Path, texture: gl::types::GLuint) -> Result<Renderer> {
+        let program = render_gl::Program::from_path(gl, assets_path, "shaders/blit")?;
 
         let mut vao: gl::types::GLuint = 0;
         let mut vbo: gl::types::GLuint = 0;
-        let mut texture: gl::types::GLuint = 0;
 
         let location_texture: gl::types::GLint;
         let location_projection_mtx: gl::types::GLint;
         let location_modelview_mtx: gl::types::GLint;
         let location_position: gl::types::GLuint;
-        let location_colour: gl::types::GLuint;
         let location_uv: gl::types::GLuint;
 
         program.set_used();
@@ -102,25 +98,9 @@ impl Renderer {
 
             location_position =
                 gl.GetAttribLocation(program.id(), c_str!("Position").as_ptr()) as _;
-            location_colour = gl.GetAttribLocation(program.id(), c_str!("Colour").as_ptr()) as _;
             location_uv = gl.GetAttribLocation(program.id(), c_str!("UV").as_ptr()) as _;
 
-            gl.GenTextures(1, &mut texture);
-            // "Bind" the newly created texture : all future texture functions will modify this texture
             gl.BindTexture(gl::TEXTURE_2D, texture);
-
-            // Give the image to OpenGL
-            gl.TexImage2D(
-                gl::TEXTURE_2D,
-                0,
-                gl::RGBA as i32,
-                bitmap_info.width as i32,
-                bitmap_info.height as i32,
-                0,
-                gl::RGBA,
-                gl::UNSIGNED_BYTE,
-                bitmap_info.data.as_ptr() as *const gl::types::GLvoid,
-            );
 
             gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
             gl.TexParameteri(
@@ -136,17 +116,17 @@ impl Renderer {
             projection_mtx: location_projection_mtx,
             modelview_mtx: location_modelview_mtx,
             position: location_position,
-            colour: location_colour,
             uv: location_uv,
         };
 
         let projection_matrix = gl_util::ortho(0.0, 1000.0, 0.0, 1000.0, 10.0, -10.0);
-        let model_view_matrix = gl_util::identity();
+        let mut model_view_matrix = gl_util::identity();
+        gl_util::scale(&mut model_view_matrix, 400.0, 400.0, 1.0);
+        gl_util::translate(&mut model_view_matrix, 300.0, 100.0, 0.0);
 
         let layout = GeometryLayout {
-            stride: 8, // x, y, r, g, b, a, u, v
+            stride: 4, // x, y, u, v
             position_num_elements: 2,
-            colour_num_elements: 4,
             texture_num_elements: 2,
         };
 
@@ -166,7 +146,6 @@ impl Renderer {
             );
 
             gl.EnableVertexAttribArray(locations.position);
-            gl.EnableVertexAttribArray(locations.colour);
             gl.EnableVertexAttribArray(locations.uv);
 
             gl.VertexAttribPointer(
@@ -178,16 +157,7 @@ impl Renderer {
                 std::ptr::null(),                    // offset of the first component
             );
 
-            let colour_offset = layout.position_num_elements;
-            gl.VertexAttribPointer(
-                locations.colour,
-                layout.colour_num_elements as i32, // the number of components per generic vertex attribute
-                gl::FLOAT,                         // data type
-                gl::FALSE,                         // normalized (int-to-float conversion)
-                (layout.stride * std::mem::size_of::<f32>()) as gl::types::GLint, // stride
-                (colour_offset * std::mem::size_of::<f32>()) as *const gl::types::GLvoid, // offset of the first component
-            );
-            let texture_offset = layout.position_num_elements + layout.colour_num_elements;
+            let texture_offset = layout.position_num_elements;
             gl.VertexAttribPointer(
                 locations.uv,
                 layout.texture_num_elements as i32, // the number of components per generic vertex attribute
@@ -198,18 +168,42 @@ impl Renderer {
             );
         }
 
+        // generate geometry
+        let geometry: Vec<f32> = vec![
+            0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+        ];
+
+        unsafe {
+            gl.BufferData(
+                gl::ARRAY_BUFFER,                                                       // target
+                (geometry.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr, // size of data in bytes
+                geometry.as_ptr() as *const gl::types::GLvoid, // pointer to data
+                gl::STATIC_DRAW,                               // usage
+            );
+        }
+
         Ok(Renderer {
             gl: gl.clone(),
             program,
             vao,
             vbo,
             texture,
-            // locations,
+            geometry,
+            locations,
         })
     }
 
-    pub fn render(&self, geometry: &Geometry) {
+    pub fn render(&self, viewport_width: usize, viewport_height: usize) {
         let gl = &self.gl;
+
+        let projection_matrix = gl_util::ortho(
+            0.0,
+            viewport_width as f32,
+            0.0,
+            viewport_height as f32,
+            10.0,
+            -10.0,
+        );
 
         unsafe {
             gl.ActiveTexture(gl::TEXTURE0);
@@ -218,22 +212,19 @@ impl Renderer {
             gl.UseProgram(self.program.id());
 
             gl.BindVertexArray(self.vao);
-            gl.BindBuffer(gl::ARRAY_BUFFER, self.vbo);
 
-            for rp in &geometry.render_packets {
-                gl.BufferData(
-                    gl::ARRAY_BUFFER,                                                     // target
-                    (rp.geo.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr, // size of data in bytes
-                    rp.geo.as_ptr() as *const gl::types::GLvoid, // pointer to data
-                    gl::STATIC_DRAW,                             // usage
-                );
+            gl.UniformMatrix4fv(
+                self.locations.projection_mtx,
+                1,
+                gl::FALSE,
+                projection_matrix.as_ptr(),
+            );
 
-                gl.DrawArrays(
-                    gl::TRIANGLE_STRIP,  // mode
-                    0,                   // starting index in the enabled arrays
-                    rp.geo.len() as i32, // number of indices to be rendered
-                );
-            }
+            gl.DrawArrays(
+                gl::TRIANGLE_STRIP,         // mode
+                0,                          // starting index in the enabled arrays
+                self.geometry.len() as i32, // number of indices to be rendered
+            );
         }
     }
 }

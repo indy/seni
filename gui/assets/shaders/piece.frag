@@ -8,7 +8,7 @@ in VS_OUTPUT {
 // Values that stay constant for the whole mesh.
 uniform sampler2D myTextureSampler;
 
-out vec4 Colour;
+layout(location = 0) out vec4 Colour;
 
 void main()
 {

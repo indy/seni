@@ -24,6 +24,7 @@ pub enum Error {
 
     CoreError(core::Error),
 
+    GLError(String),
     ConfigError(config::ConfigError),
     StringError(String),
     SDL2WindowBuildError(sdl2::video::WindowBuildError),
@@ -87,6 +88,7 @@ impl fmt::Display for Error {
         match self {
             Error::Placeholder(s) => write!(f, "seni gui: Placeholder: {:?}", s),
             Error::CoreError(c) => write!(f, "seni gui: Core Error: {:?}", c),
+            Error::GLError(s) => write!(f, "seni gui: OpenGL Error: {:?}", s),
             Error::ConfigError(c) => write!(f, "seni gui: Config Error: {:?}", c),
             Error::StringError(s) => write!(f, "seni gui: String Error: {}", s),
             Error::SDL2WindowBuildError(e) => write!(f, "seni gui: SDL2WindowBuildError: {:?}", e),

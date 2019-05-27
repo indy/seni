@@ -113,3 +113,15 @@ pub fn ortho(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) 
 
     out
 }
+
+pub fn scale(mat: &mut [f32; 16], x: f32, y: f32, z: f32) {
+    mat[0] *= x;
+    mat[5] *= y;
+    mat[10] *= z;
+}
+
+pub fn translate(mat: &mut [f32; 16], x: f32, y: f32, z: f32) {
+    mat[12] += x;
+    mat[13] += y;
+    mat[14] += z;
+}

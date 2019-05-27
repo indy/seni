@@ -3,15 +3,18 @@
 // licensed under MIT/Apache 2.0
 //
 use std::mem;
+use std::path::Path;
 
 use gl::types::*;
 use imgui::{ImGui, Ui};
 
+use crate::error::Result;
 use crate::gl_util::return_param;
+use crate::render_gl;
 
 pub struct Renderer {
     gl: gl::Gl,
-    program: GLuint,
+    program: render_gl::Program,
     locs: Locs,
     vbo: GLuint,
     ebo: GLuint,
@@ -27,90 +30,18 @@ struct Locs {
 }
 
 impl Renderer {
-    pub fn new<F>(imgui: &mut ImGui, load_fn: F) -> Self
-    where
-        F: FnMut(&'static str) -> *const ::std::os::raw::c_void,
-    {
-        let gl = gl::Gl::load_with(load_fn);
+    pub fn new(gl: &gl::Gl, assets_path: &Path, imgui: &mut ImGui) -> Result<Renderer> {
+        let gl = gl.clone();
+
+        let program = render_gl::Program::from_path(&gl, assets_path, "shaders/imgui")?;
 
         unsafe {
-            #[cfg(target_os = "macos")]
-            let glsl_version = b"#version 150\n\0";
-            #[cfg(not(target_os = "macos"))]
-            let glsl_version = b"#version 130\n\0";
-
-            let vert_source = b"
-        uniform mat4 ProjMtx;
-        in vec2 Position;
-        in vec2 UV;
-        in vec4 Color;
-        out vec2 Frag_UV;
-        out vec4 Frag_Color;
-        void main()
-        {
-          Frag_UV = UV;
-          Frag_Color = Color;
-          gl_Position = ProjMtx * vec4(Position.xy,0,1);
-        }
-      \0";
-
-            let frag_source = b"
-        uniform sampler2D Texture;
-        in vec2 Frag_UV;
-        in vec4 Frag_Color;
-        out vec4 Out_Color;
-        void main()
-        {
-          Out_Color = Frag_Color * texture(Texture, Frag_UV.st);
-        }
-      \0";
-
-            let vert_sources = [
-                glsl_version.as_ptr() as *const GLchar,
-                vert_source.as_ptr() as *const GLchar,
-            ];
-            let vert_sources_len = [
-                glsl_version.len() as GLint - 1,
-                vert_source.len() as GLint - 1,
-            ];
-            let frag_sources = [
-                glsl_version.as_ptr() as *const GLchar,
-                frag_source.as_ptr() as *const GLchar,
-            ];
-            let frag_sources_len = [
-                glsl_version.len() as GLint - 1,
-                frag_source.len() as GLint - 1,
-            ];
-
-            let program = gl.CreateProgram();
-            let vert_shader = gl.CreateShader(gl::VERTEX_SHADER);
-            let frag_shader = gl.CreateShader(gl::FRAGMENT_SHADER);
-            gl.ShaderSource(
-                vert_shader,
-                2,
-                vert_sources.as_ptr(),
-                vert_sources_len.as_ptr(),
-            );
-            gl.ShaderSource(
-                frag_shader,
-                2,
-                frag_sources.as_ptr(),
-                frag_sources_len.as_ptr(),
-            );
-            gl.CompileShader(vert_shader);
-            gl.CompileShader(frag_shader);
-            gl.AttachShader(program, vert_shader);
-            gl.AttachShader(program, frag_shader);
-            gl.LinkProgram(program);
-            gl.DeleteShader(vert_shader);
-            gl.DeleteShader(frag_shader);
-
             let locs = Locs {
-                texture: gl.GetUniformLocation(program, c_str!("Texture").as_ptr() as _),
-                proj_mtx: gl.GetUniformLocation(program, c_str!("ProjMtx").as_ptr() as _),
-                position: gl.GetAttribLocation(program, c_str!("Position").as_ptr() as _) as _,
-                uv: gl.GetAttribLocation(program, c_str!("UV").as_ptr() as _) as _,
-                color: gl.GetAttribLocation(program, c_str!("Color").as_ptr() as _) as _,
+                texture: gl.GetUniformLocation(program.id(), c_str!("Texture").as_ptr() as _),
+                proj_mtx: gl.GetUniformLocation(program.id(), c_str!("ProjMtx").as_ptr() as _),
+                position: gl.GetAttribLocation(program.id(), c_str!("Position").as_ptr() as _) as _,
+                uv: gl.GetAttribLocation(program.id(), c_str!("UV").as_ptr() as _) as _,
+                color: gl.GetAttribLocation(program.id(), c_str!("Color").as_ptr() as _) as _,
             };
 
             let vbo = return_param(|x| gl.GenBuffers(1, x));
@@ -143,14 +74,14 @@ impl Renderer {
 
             imgui.set_font_texture_id((font_texture as usize).into());
 
-            Self {
+            Ok(Self {
                 gl,
                 program,
                 locs,
                 vbo,
                 ebo,
                 font_texture,
-            }
+            })
         }
     }
 
@@ -212,7 +143,7 @@ impl Renderer {
                 [0.0, 0.0, -1.0, 0.0],
                 [-1.0, 1.0, 0.0, 1.0],
             ];
-            gl.UseProgram(self.program);
+            gl.UseProgram(self.program.id());
             gl.Uniform1i(self.locs.texture, 0);
             gl.UniformMatrix4fv(self.locs.proj_mtx, 1, gl::FALSE, matrix.as_ptr() as _);
             if gl.BindSampler.is_loaded() {
@@ -362,9 +293,6 @@ impl Drop for Renderer {
         unsafe {
             gl.DeleteBuffers(1, &self.vbo);
             gl.DeleteBuffers(1, &self.ebo);
-
-            gl.DeleteProgram(self.program);
-
             gl.DeleteTextures(1, &self.font_texture);
         }
     }
