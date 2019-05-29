@@ -331,7 +331,7 @@ class GLRenderer {
                         this.mvMatrix);
   }
 
-  drawBuffer(memory, buffer) {
+  setupBuffer(memory, buffer) {
     const gl = this.gl;
     const shaderProgram = this.shaderProgram;
 
@@ -371,9 +371,30 @@ class GLRenderer {
                            textureItemSize,
                            gl.FLOAT, false, totalSize * bytesin32bit,
                            (vertexItemSize + colourItemSize) * bytesin32bit);
+  }
+
+  drawBuffer(buffer) {
+    const gl = this.gl;
+
+    const vertexItemSize = 2;
+    const colourItemSize = 4;
+    const textureItemSize = 2;
+
+    const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
+  }
 
+  drawBufferPartial(buffer, first, count) {
+    const gl = this.gl;
+
+    const vertexItemSize = 2;
+    const colourItemSize = 4;
+    const textureItemSize = 2;
+
+    const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, first / totalSize, count / totalSize);
   }
 }
 
@@ -572,6 +593,15 @@ let gMode = "normal";           // normal | slideshow
 let gActiveImageElement = 0;
 let gNumTransitions = 0;        // reset after every mode switch
 
+let gSketchMemory = undefined;
+let gSketchBuffers = undefined;
+let gSketchBufferIndex = 0;
+let gSketchGeoIndex = 0;
+let gSketchAmount = 0;
+let gSketchTimeStart = 0;
+// note: desiredDuration will always be a slight underestimation of actual duration
+// as some transitions aren't going to be using the full amount of vertices
+let gSketchDesiredDuration = 40;
 
 function logDebug(msg) {
   if (gLogDebug) {
@@ -583,6 +613,8 @@ function logDebug(msg) {
 }
 
 function updatePieceDimensions(pieceImg, canvas, w, h) {
+  // console.log(`top: ${canvas.offsetTop} left: ${canvas.offsetLeft} width: ${w} height: ${h}`);
+
   pieceImg.style.top = canvas.offsetTop + "px";
   pieceImg.style.left = canvas.offsetLeft + "px";
   pieceImg.width = w;
@@ -590,35 +622,29 @@ function updatePieceDimensions(pieceImg, canvas, w, h) {
 }
 
 async function displayOnImageElements() {
-  const canvas = getRequiredElement('piece-canvas');
-  const pieceImg0 = getRequiredElement('piece-img-0');
-  const pieceImg1 = getRequiredElement('piece-img-1');
-
-  if (gNumTransitions === 0) {
-    // have just switched modes, so make sure the images are correctly positioned
-
-    updatePieceDimensions(pieceImg0, canvas, gDemandCanvasSize, gDemandCanvasSize);
-    updatePieceDimensions(pieceImg1, canvas, gDemandCanvasSize, gDemandCanvasSize);
-
-    setOpacity('piece-img-0', 1);
-  }
-
   if (gActiveImageElement === 0) {
+    const pieceImg0 = getRequiredElement('piece-img-0');
     await gGLRenderer.copyImageDataTo(pieceImg0);
+
     if (gNumTransitions > 0) {
       if (gMode === "normal") {
         addClass('piece-img-1', 'seni-fade-out');
-      } else {
+      } else if (gMode === "slideshow") {
         addClass('piece-img-1', 'seni-fade-out-slideshow');
+      } else if (gMode === "sketch") {
+        addClass('piece-img-1', 'seni-fade-out-sketch');
       }
     }
   } else {
+    const pieceImg1 = getRequiredElement('piece-img-1');
     await gGLRenderer.copyImageDataTo(pieceImg1);
     if (gNumTransitions > 0) {
       if (gMode === "normal") {
         addClass('piece-img-1', 'seni-fade-in');
-      } else {
+      } else if (gMode === "slideshow") {
         addClass('piece-img-1', 'seni-fade-in-slideshow');
+      } else if (gMode === "sketch") {
+        addClass('piece-img-1', 'seni-fade-in-sketch');
       }
     }
   }
@@ -633,7 +659,8 @@ async function renderBuffers(memory, buffers, w, h) {
   gGLRenderer.preDrawScene(w, h);
 
   buffers.forEach(buffer => {
-    gGLRenderer.drawBuffer(memory, buffer);
+    gGLRenderer.setupBuffer(memory, buffer);
+    gGLRenderer.drawBuffer(buffer);
   });
 
   await displayOnImageElements();
@@ -670,8 +697,15 @@ function loadBitmapImageData(url) {
       reject();
     };
 
-    img.src = url;
+    img.src = normalize_bitmap_url(url);
   });
+}
+
+function normalize_bitmap_url(url) {
+  // todo: this should:
+  // 1. do nothing if the url is a valid url
+  // 2. if it's just a filename, prefix the img/ path (specific to seni web app)
+  return "img/" + url;
 }
 
 async function renderJob(parameters) {
@@ -741,13 +775,24 @@ async function showSimplifiedScript(fullScript) {
   simplifiedScriptElement.textContent = script;
 }
 
+function updatePiecesUsingCanvasSize() {
+  const canvas = getRequiredElement('piece-canvas');
+  const pieceImg0 = getRequiredElement('piece-img-0');
+  const pieceImg1 = getRequiredElement('piece-img-1');
+  updatePieceDimensions(pieceImg0, canvas, gDemandCanvasSize, gDemandCanvasSize);
+  updatePieceDimensions(pieceImg1, canvas, gDemandCanvasSize, gDemandCanvasSize);
+}
+
 function useLargeCanvas() {
   gDemandCanvasSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
   gDemandCanvasSize *= 0.9;
+
+  updatePiecesUsingCanvasSize();
 }
 
 function useNormalCanvas() {
   gDemandCanvasSize = 500;
+  updatePiecesUsingCanvasSize();
 }
 
 function addClass(id, clss) {
@@ -801,27 +846,169 @@ async function performSlideshow() {
   gTimeoutId = window.setTimeout(performSlideshow, gSlideshowDelay);
 }
 
+function getCSSAnimationDuration(className) {
+  const indyioCSSStylesheet = 0; // note: update this if more than one stylesheet is used
+
+  const styleSheet = document.styleSheets[indyioCSSStylesheet];
+
+  let cssRules = undefined;
+  for(let i = 0; i < styleSheet.cssRules.length; i++) {
+    if (styleSheet.cssRules[i].selectorText === className) {
+      cssRules = styleSheet.cssRules[i];
+      return parseFloat(cssRules.style.animationDuration);
+    }
+  }
+  return undefined;
+}
+
+async function performSketch() {
+  const scriptElement = getRequiredElement('piece-script');
+  const seedElement = getRequiredElement('piece-seed');
+
+  const scriptHash = hashCode('whatever');
+
+  const script = scriptElement.textContent;
+  const originalScript = script.slice();
+
+  const config = { script: originalScript, scriptHash };
+
+  let { title, memory, buffers } = await renderJob(config);
+
+  gSketchMemory = memory;
+  gSketchBuffers = buffers;
+  gSketchBufferIndex = 0;
+  gSketchGeoIndex = 0;
+
+  let i = 0;
+  buffers.forEach(b => {
+    console.log(`buffer ${i} size: ${b.geo_len}`);
+    i += 1;
+  });
+
+  let numElements = buffers.reduce((acc, buffer) => acc + buffer.geo_len, 0);
+  let numVertices = numElements / 8;
+
+  let cssTimeFadeIn = getCSSAnimationDuration(".seni-fade-in-sketch");
+  let cssTimeFadeOut = getCSSAnimationDuration(".seni-fade-out-sketch");
+  let transitionTime = cssTimeFadeIn > cssTimeFadeOut ? cssTimeFadeIn : cssTimeFadeOut;
+  // the number of transitions that the piece should be divided into
+  let numTransitions = gSketchDesiredDuration / transitionTime;
+  let vertsPerTransition = numVertices / numTransitions;
+
+
+  // divide numVertices by the animation length and round up to be divisible by 8
+  // gSketchAmount = 2000 * 8;
+  gSketchAmount = Math.round(vertsPerTransition) * 8;
+  console.log(`gSketchAmount = ${gSketchAmount}`);
+
+
+  const canvas = getRequiredElement('piece-canvas');
+  const pieceImg0 = getRequiredElement('piece-img-0');
+  const pieceImg1 = getRequiredElement('piece-img-1');
+
+  gGLRenderer.preDrawScene(gDemandCanvasSize, gDemandCanvasSize);
+  await gGLRenderer.copyImageDataTo(pieceImg0);
+  await gGLRenderer.copyImageDataTo(pieceImg1);
+
+  if(buffers.length > 0) {
+    gSketchTimeStart = performance.now();
+    gGLRenderer.setupBuffer(memory, buffers[0]);
+    gTimeoutId = window.setTimeout(animateSketch);
+  }
+}
+
+// the animationEndListener is responsible for calling animateSketch.
+// This way we can specify the length of each fade in css
+async function animateSketch() {
+  let currentBuffer = gSketchBuffers[gSketchBufferIndex];
+
+  if (gSketchGeoIndex + gSketchAmount < currentBuffer.geo_len) {
+    // can draw geometry from the current buffer
+    gGLRenderer.drawBufferPartial(currentBuffer, gSketchGeoIndex, gSketchAmount);
+    console.log(`animateSketch ${gSketchBufferIndex} gSketchGeoIndex: ${gSketchGeoIndex} gSketchAmount: ${gSketchAmount} sum: ${gSketchGeoIndex + gSketchAmount}`);
+    gSketchGeoIndex += gSketchAmount;
+  } else {
+    // render the remaining geometry
+    const remaining = currentBuffer.geo_len - gSketchGeoIndex;
+    gGLRenderer.drawBufferPartial(currentBuffer, gSketchGeoIndex, remaining);
+    console.log(`animateSketch ${gSketchBufferIndex} gSketchGeoIndex: ${gSketchGeoIndex} remaining: ${remaining} sum: ${gSketchGeoIndex + remaining}`);
+    console.log("");
+
+    // move onto the next buffer
+    gSketchBufferIndex += 1;
+    gSketchGeoIndex = 0;
+
+    if (gSketchBufferIndex < gSketchBuffers.length) {
+      gGLRenderer.setupBuffer(gSketchMemory, gSketchBuffers[gSketchBufferIndex]);
+    } else {
+      // finished the animation
+      let endTime = performance.now();
+      let duration = endTime - gSketchTimeStart;
+      console.log(`finished. duration: ${duration}`);
+      return;
+    }
+  }
+
+  gNumTransitions += 1;
+
+  await displayOnImageElements();
+}
+
+
+function resetImageElements() {
+  setOpacity('piece-img-1', 0);
+  gActiveImageElement = 0;
+  gNumTransitions = 0;
+}
+
+function styleForNormalPiece() {
+  addClass('piece-content', 'piece-content-wrap');
+  showId('header');
+  showId('seni-piece-controls');
+  showId('code-content-wrap');
+  showId('seni-title');
+  showId('seni-date');
+  showId('piece-hideable-for-slideshow');
+  removeClass('piece-canvas-container', 'seni-centre-canvas');
+
+  useNormalCanvas();
+
+  resetImageElements();
+}
+
+function styleForLargePiece() {
+  removeClass('piece-content', 'piece-content-wrap');
+  hideId('header');
+  hideId('seni-piece-controls');
+  hideId('code-content-wrap');
+  hideId('seni-title');
+  hideId('seni-date');
+  hideId('piece-hideable-for-slideshow');
+  addClass('piece-canvas-container', 'seni-centre-canvas');
+
+  useLargeCanvas();
+
+  resetImageElements();
+}
+
+
+function updateToMode(newMode) {
+  if (gMode === newMode) {
+    return false;
+  }
+
+  gMode = newMode;
+  return true;
+}
+
 // returns true if the mode was actually changed
 //
 async function setMode(newMode) {
-  if (newMode === "normal" && gMode !== "normal") {
-    gMode = "normal";
-    window.clearTimeout(gTimeoutId); // stop the slideshow
-    addClass('piece-content', 'piece-content-wrap');
-    useNormalCanvas();
-    showId('header');
-    showId('seni-piece-controls');
-    showId('code-content-wrap');
-    showId('seni-title');
-    showId('seni-date');
-    showId('piece-hideable-for-slideshow');
-    removeClass('piece-canvas-container', 'seni-centre-canvas');
+  console.log("setMode " + newMode);
+  if (newMode === "normal" && updateToMode(newMode)) {
+    window.clearTimeout(gTimeoutId); // stop the slideshow/sketch
 
-    setOpacity('piece-img-0', 0);
-    setOpacity('piece-img-1', 0);
-    gActiveImageElement = 0;
-    gNumTransitions = 0;
-
+    styleForNormalPiece();
 
     const originalButton = getRequiredElement('piece-eval-original');
     const scriptElement = getRequiredElement('piece-script');
@@ -836,27 +1023,16 @@ async function setMode(newMode) {
     originalButton.disabled = true;
 
     return true;
-  } else if (newMode === "slideshow" && gMode !== "slideshow") {
-    gMode = "slideshow";
-
-    removeClass('piece-content', 'piece-content-wrap');
-    useLargeCanvas();
-    hideId('header');
-    hideId('seni-piece-controls');
-    hideId('code-content-wrap');
-    hideId('seni-title');
-    hideId('seni-date');
-    hideId('piece-hideable-for-slideshow');
-    addClass('piece-canvas-container', 'seni-centre-canvas');
-
-    setOpacity('piece-img-0', 0);
-    setOpacity('piece-img-1', 0);
-    gActiveImageElement = 0;
-    gNumTransitions = 0;
-
+  } else if (newMode === "slideshow" && updateToMode(newMode)) {
+    styleForLargePiece();
     gTimeoutId = window.setTimeout(performSlideshow, 1500);
     return true;
+  } else if (newMode === "sketch" && updateToMode(newMode)) {
+    styleForLargePiece();
+    await performSketch();
+    return true;
   }
+
   return false;
 }
 
@@ -864,13 +1040,19 @@ function animationEndListener(event, id) {
   if (event.animationName === 'senifadeout') {
     removeClass(id, 'seni-fade-out');
     removeClass(id, 'seni-fade-out-slideshow');
+    removeClass(id, 'seni-fade-out-sketch');
     setOpacity(id, 0);
   }
 
   if (event.animationName === 'senifadein') {
     removeClass(id, 'seni-fade-in');
     removeClass(id, 'seni-fade-in-slideshow');
+    removeClass(id, 'seni-fade-in-sketch');
     setOpacity(id, 1);
+  }
+
+  if (gMode === "sketch") {
+    gTimeoutId = window.setTimeout(animateSketch);
   }
 }
 
@@ -896,6 +1078,7 @@ async function main() {
   const originalButton = getRequiredElement('piece-eval-original');
   const evalButton = getRequiredElement('piece-eval');
   const slideshowButton = getRequiredElement('piece-eval-slideshow');
+  const sketchButton = getRequiredElement('piece-eval-sketch');
   const scriptElement = getRequiredElement('piece-script');
   const canvasElement = getRequiredElement('piece-canvas');
   const canvasImageElement0 = getRequiredElement('piece-img-0');
@@ -903,7 +1086,6 @@ async function main() {
   const seedElement = getRequiredElement('piece-seed');
 
   canvasImageElement1.addEventListener("animationend", animationEndListener1, false);
-  setOpacity('piece-img-0', 0);
   setOpacity('piece-img-1', 0);
 
   const LOAD_FOR_SENI_APP_GALLERY = true;
@@ -927,6 +1109,7 @@ async function main() {
   }
 
   gMode = "normal";
+  useNormalCanvas();
 
   const scriptHash = hashCode('whatever');
 
@@ -954,6 +1137,13 @@ async function main() {
     originalButton.disabled = true;
     await setMode("slideshow");
     await renderScript({ script: originalScript, scriptHash });
+    scriptElement.textContent = originalScript;
+    await showSimplifiedScript(originalScript);
+  });
+
+  sketchButton.addEventListener('click', async () => {
+    originalButton.disabled = true;
+    await setMode("sketch");
     scriptElement.textContent = originalScript;
     await showSimplifiedScript(originalScript);
   });

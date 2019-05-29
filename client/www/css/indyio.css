@@ -2916,6 +2916,11 @@ figure.highlight,
     animation-name: senifadeout;
   }
 
+  .seni-fade-out-sketch {
+    animation-duration: 2.0s;
+    animation-name: senifadeout;
+  }
+
   @keyframes senifadeout {
     from {
       opacity: 1.0;
@@ -2932,6 +2937,11 @@ figure.highlight,
   }
 
   .seni-fade-in-slideshow {
+    animation-duration: 2.0s;
+    animation-name: senifadein;
+  }
+
+  .seni-fade-in-sketch {
     animation-duration: 2.0s;
     animation-name: senifadein;
   }

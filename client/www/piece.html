@@ -54,7 +54,7 @@
 
                   <div id="piece-texture-path" style="display: none;">/img/texture.png</div>
                   <div id="piece-worker-path" style="display: none;">worker.js</div>
-                  <canvas id="bitmap-canvas" class="hidden"></canvas>
+                  <canvas id="bitmap-canvas" style="display: none;"></canvas>
                   <div id="piece-canvas-container">
                     <canvas id="piece-canvas"></canvas>
                     <img id="piece-img-0"/>
@@ -66,63 +66,50 @@
                     <button id="piece-eval" class="navbar-button eval-btn seni-button">Generate variation</button>
                     <button id="piece-eval-original" class="navbar-button eval-btn seni-button" disabled>Show Original</button>
                     <button id="piece-eval-slideshow" class="navbar-button eval-btn seni-button">Slideshow</button>
+                    <button id="piece-eval-sketch" class="navbar-button eval-btn seni-button">Sketch</button>
                     <input id="piece-seed" style="display: none;" type="number" value="3">
                   </div> <!-- seni-piece-controls -->
 
                   <div id="code-content-wrap">
                     <pre><code id="piece-simplified-script"></code></pre>
                     <pre><code id="piece-script">
-(define
-  coords1 [{[-194.420 69.683] (gen/stray-2d from: [-194.420 69.683] by: [5 5])}
-           {[396.583 297.035] (gen/stray-2d from: [396.583 297.035] by: [5 5])}
-           {[349.477 358.412] (gen/stray-2d from: [349.477 358.412] by: [5 5])}
-           {[-182.800 -180.599] (gen/stray-2d from: [-182.800 -180.599] by: [5 5])}]
+(define texture "skull-a.png")
+(define per-pixel-funcs [(address-of pass-0)
+                         (address-of pass-1)])
 
-  coords2 [{[-440.678 -445.335] (gen/stray-2d from: [-440.678 -445.335] by: [5 5])}
-           {[-60.835 -458.364] (gen/stray-2d from: [-60.835 -458.364] by: [5 5])}
-           {[36.323 -84.673] (gen/stray-2d from: [36.323 -84.673] by: [5 5])}
-           {[-356.908 -38.967] (gen/stray-2d from: [-356.908 -38.967] by: [5 5])}]
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   position: [500 500]
+                   width: 1000
+                   height: 1000
+                   shuffle-seed: 9384
+                   fn: per-pixel-func))
 
-  coords3 [{[-475.413 -484.113] (gen/stray-2d from: [-475.413 -484.113] by: [5 5])}
-           {[192.121 -108.005] (gen/stray-2d from: [192.121 -108.005] by: [5 5])}
-           {[-144.686 386.498] (gen/stray-2d from: [-144.686 386.498] by: [5 5])}
-           {[-451.110 -454.492] (gen/stray-2d from: [-451.110 -454.492] by: [5 5])}]
+(fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (define a (col/get-r colour: colour)
+    angle (+ {2.58 (gen/scalar min: 0 max: 8)} (* a math/PI)))
+  (line from: [(* {2 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
+               (* {8 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
+        to: [(* {-7 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
+             (* {6 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
+        width: (- {8.7 (gen/scalar min: 0.1 max: 15)} a)
+        brush: brush/d
+        brush-subtype: 1
+        colour: (col/rgb r: a g: 0 b: 0 alpha: 0.07)))
 
+(fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (define
+    b (col/get-b colour: colour)
+    angle (+ {3.30 (gen/scalar min: 0 max: 8)} (* b math/PI)))
+  (line from: [(* {11 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
+               (* {9 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
+        to: [(* {-3 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
+             (* {-9 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
+        width: (- {0.9 (gen/scalar min: 0.1 max: 15)} b)
+        brush: brush/d
+        brush-subtype: 1
+        colour: (col/rgb r: b g: b b: 0 alpha: 0.07)))
 
-  col-fn-1 (col/build-procedural preset: {mars (gen/select from: col/procedural-fn-presets)}
-                                 alpha: 0.08)
-  col-fn-2 (col/build-procedural preset: {knight-rider (gen/select from: col/procedural-fn-presets)}
-                                 alpha: 0.08)
-  col-fn-3 (col/build-procedural preset: {mars (gen/select from: col/procedural-fn-presets)}
-                                 alpha: 0.08)
-
-  num-copies {24 (gen/int min: 22 max: 26)}
-  squish (interp/build from: [0 (- num-copies 1)]
-                       to: [{1.3 (gen/scalar min: 1.0 max: 1.5)} {1.53 (gen/scalar min: 1.4 max: 1.6)}]))
-
-(fn (draw angle: 0 copy: 0)
-  (scale vector: [(interp/value from: squish t: copy)
-                  (interp/value from: squish t: copy)])
-  (fence (t num: 200)
-    (poly coords: [(interp/bezier t: t coords: coords1)
-                   (interp/bezier t: t coords: coords2)
-                   (interp/bezier t: t coords: coords3)]
-          colours: [(col/value from: col-fn-1 t: t)
-                    (col/value from: col-fn-2 t: t)
-                    (col/value from: col-fn-3 t: t)])))
-
-(fn (render)
-  (rect position: [500 500]
-        width: 1000
-        height: 1000
-        colour: (col/value from: col-fn-1 t: 0.5))
-  (on-matrix-stack
-    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
-    (scale vector: [0.8 0.8])
-    (repeat/rotate-mirrored fn: (address-of draw)
-                            copies: num-copies)))
-
-(render)
                     </code></pre>
                   </div> <!-- code-content-wrap -->
 
