@@ -1,36 +1,42 @@
-(define texture "skull-a.png")
-(define per-pixel-funcs [(address-of pass-0)
-                         (address-of pass-1)])
+(define
+  texture "skull-a.png"
+  rng (prng/build seed: {342 (gen/scalar min: 1 max: 5000)} min: 0 max: 10)
+  pass-0-colour (col/hsluv h: { 0 (gen/scalar max: 360)} s: {90 (gen/scalar max: 100)} l: 100 alpha: 0.07)
+  pass-1-colour (col/hsluv h: {90 (gen/scalar max: 360)} s: {90 (gen/scalar max: 100)} l: 100 alpha: 0.07)
+  per-pixel-funcs [(address-of pass-0)
+                   (address-of pass-1)])
+
 
 (each (per-pixel-func from: per-pixel-funcs)
       (bitmap/each from: texture
                    position: [500 500]
                    width: 1000
                    height: 1000
+                   shuffle-seed: 321
                    fn: per-pixel-func))
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
-  (define r (col/get-r colour: colour)
-    angle (+ {3.38 (gen/scalar min: 0 max: 8)} (* r math/PI)))
-  (if (> r 0)
-      (line from: [(* {-9 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
-                   (* {-13 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
-            to: [(* {-12 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
-                 (* {0 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
-            width: (- {5.1 (gen/scalar min: 0.1 max: 8)} r)
-            brush: {brush/f (gen/select from: brush/*)}
-            brush-subtype: {8 (gen/int min: 0 max: 10)}
-            colour: (col/rgb r: r g: 0 b: 0 alpha: 0.07))))
+  (define
+    a (col/get-r colour: colour)
+    angle (+ {2.58 (gen/scalar min: 0 max: 8)} (* a math/PI)))
+  (line from: [(* {2 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
+               (* {8 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
+        to: [(* {-7 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
+             (* {6 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
+        width: (- {8.7 (gen/scalar min: 0.1 max: 15)} a)
+        brush: {brush/d (gen/select from: brush/*)}
+        brush-subtype: (prng/value from: rng)
+        colour: (col/set-l colour: pass-0-colour value: (* a 100))))
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
-  (define b (col/get-b colour: colour)
-    angle (+ {1.39 (gen/scalar min: 0 max: 8)} (* b math/PI)))
-  (if (> b 0)
-      (line from: [(* {-1 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
-                   (* {3 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
-            to: [(* {10 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
-                 (* {4 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
-            width: (- {2.0 (gen/scalar min: 0.1 max: 3)} b)
-            brush: {brush/e (gen/select from: brush/*)}
-            brush-subtype: {0 (gen/int min: 0 max: 10)}
-            colour: (col/rgb r: b g: b b: 0 alpha: 0.07))))
+  (define
+    b (col/get-b colour: colour)
+    angle (+ {3.30 (gen/scalar min: 0 max: 8)} (* b math/PI)))
+  (line from: [(* {11 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
+               (* {9 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
+        to: [(* {-3 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
+             (* {-9 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
+        width: (- {0.9 (gen/scalar min: 0.1 max: 15)} b)
+        brush: {brush/d (gen/select from: brush/*)}
+        brush-subtype: (prng/value from: rng)
+        colour: (col/set-l colour: pass-1-colour value: (* b 100))))
