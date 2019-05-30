@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::Colour;
 use crate::ease::Easing;
 use crate::geometry::bezier;
 use crate::geometry::Geometry;
 use crate::matrix::Matrix;
 use crate::result::Result;
+use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
 pub fn render(
@@ -28,7 +28,7 @@ pub fn render(
     line_width: f32,
     t_start: f32,
     t_end: f32,
-    colour: &Colour,
+    colour: &Rgb,
     tessellation: usize,
     uvm: &UvMapping,
 ) -> Result<()> {

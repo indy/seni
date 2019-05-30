@@ -20,6 +20,7 @@ use crate::error::Error;
 use crate::geometry;
 use crate::matrix::MatrixStack;
 use crate::result::Result;
+use crate::rgb::Rgb;
 use crate::uvmapper::{BrushType, Mappings};
 use crate::vm::Var;
 
@@ -59,6 +60,8 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+            let from_col = Rgb::from_colour(from_col)?;
+            let to_col = Rgb::from_colour(to_col)?;
 
             geometry::line::render(
                 &mut self.geometry,
@@ -66,8 +69,8 @@ impl Context {
                 from,
                 to,
                 width,
-                from_col,
-                to_col,
+                &from_col,
+                &to_col,
                 uvm,
             )
         } else {
@@ -84,6 +87,7 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
+            let colour = Rgb::from_colour(colour)?;
 
             geometry::rect::render(
                 &mut self.geometry,
@@ -91,7 +95,7 @@ impl Context {
                 position,
                 width,
                 height,
-                colour,
+                &colour,
                 uvm,
             )
         } else {
@@ -110,6 +114,7 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
+            let colour = Rgb::from_colour(colour)?;
 
             geometry::circle::render(
                 &mut self.geometry,
@@ -117,7 +122,7 @@ impl Context {
                 position,
                 width,
                 height,
-                colour,
+                &colour,
                 tessellation,
                 uvm,
             )
@@ -141,13 +146,15 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
+            let colour = Rgb::from_colour(colour)?;
+
             geometry::circle_slice::render(
                 &mut self.geometry,
                 matrix,
                 position,
                 width,
                 height,
-                colour,
+                &colour,
                 tessellation,
                 angle_start,
                 angle_end,
@@ -162,9 +169,16 @@ impl Context {
     }
 
     pub fn render_poly(&mut self, coords: &[Var], colours: &[Var]) -> Result<()> {
+        let coords: Result<Vec<(f32, f32)>> =
+            coords.into_iter().map(|c| var_to_f32_pair(c)).collect();
+        let coords = coords?;
+
+        let colours: Result<Vec<Rgb>> = colours.into_iter().map(|c| var_to_rgb(c)).collect();
+        let colours = colours?;
+
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            geometry::poly::render(&mut self.geometry, matrix, coords, colours, uvm)
+            geometry::poly::render(&mut self.geometry, matrix, &coords, &colours, uvm)
         } else {
             error!("no matrix for render_poly");
             Err(Error::Context)
@@ -186,6 +200,7 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+            let colour = Rgb::from_colour(colour)?;
 
             geometry::quadratic::render(
                 &mut self.geometry,
@@ -196,7 +211,7 @@ impl Context {
                 width_mapping,
                 t_start,
                 t_end,
-                colour,
+                &colour,
                 tessellation,
                 uvm,
             )
@@ -221,6 +236,7 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+            let colour = Rgb::from_colour(colour)?;
 
             geometry::bezier::render(
                 &mut self.geometry,
@@ -231,7 +247,7 @@ impl Context {
                 width_mapping,
                 t_start,
                 t_end,
-                colour,
+                &colour,
                 tessellation,
                 uvm,
             )
@@ -254,6 +270,7 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+            let colour = Rgb::from_colour(colour)?;
 
             geometry::bezier_bulging::render(
                 &mut self.geometry,
@@ -262,7 +279,7 @@ impl Context {
                 line_width,
                 t_start,
                 t_end,
-                colour,
+                &colour,
                 tessellation,
                 uvm,
             )
@@ -289,6 +306,7 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+            let colour = Rgb::from_colour(colour)?;
 
             geometry::stroked_bezier::render(
                 &mut self.geometry,
@@ -299,7 +317,7 @@ impl Context {
                 stroke_noise,
                 stroke_line_width_start,
                 stroke_line_width_end,
-                colour,
+                &colour,
                 colour_volatility,
                 seed,
                 mapping,
@@ -330,6 +348,7 @@ impl Context {
     ) -> Result<()> {
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
+            let colour = Rgb::from_colour(colour)?;
 
             geometry::stroked_bezier_rect::render(
                 &mut self.geometry,
@@ -344,7 +363,7 @@ impl Context {
                 tessellation,
                 stroke_tessellation,
                 stroke_noise,
-                colour,
+                &colour,
                 colour_volatility,
                 uvm,
             )
@@ -352,5 +371,24 @@ impl Context {
             error!("no matrix for render_stroked_bezier_rect");
             Err(Error::Context)
         }
+    }
+}
+
+fn var_to_f32_pair(v: &Var) -> Result<(f32, f32)> {
+    if let Var::V2D(x, y) = v {
+        Ok((*x, *y))
+    } else {
+        error!("var_to_f32_pair");
+        Err(Error::Context)
+    }
+}
+
+fn var_to_rgb(v: &Var) -> Result<(Rgb)> {
+    if let Var::Colour(col) = v {
+        let rgb = Rgb::from_colour(&col)?;
+        Ok(rgb)
+    } else {
+        error!("var_to_rgb");
+        Err(Error::Context)
     }
 }

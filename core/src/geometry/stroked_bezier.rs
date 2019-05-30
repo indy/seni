@@ -21,6 +21,7 @@ use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::prng;
 use crate::result::Result;
+use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
 pub fn render(
@@ -32,7 +33,7 @@ pub fn render(
     stroke_noise: f32,
     stroke_line_width_start: f32,
     stroke_line_width_end: f32,
-    colour: &Colour,
+    colour: &Rgb,
     colour_volatility: f32,
     seed: f32,
     mapping: Easing,
@@ -50,7 +51,11 @@ pub fn render(
     let si_num = tessellation + 2;
     let si_unit = 1.0 / (si_num as f32 - 1.0);
 
-    let mut lab = colour.convert(ColourFormat::Lab)?;
+    // todo: this lab colour manipulation is probably happening at the wrong level
+    // everything within geometry should really only be using Rgb
+    //
+    let cc = Colour::new(ColourFormat::Rgb, colour.0, colour.1, colour.2, colour.3);
+    let mut lab = cc.convert(ColourFormat::Lab)?;
     let lab_l = lab.e0;
 
     for i in 0..tessellation {
@@ -80,6 +85,7 @@ pub fn render(
             yy3 + (ns * prng::perlin(yy3, yy1, seed)),
         ];
 
+        let rgb_from_lab = Rgb::from_colour(&lab)?;
         quadratic::render(
             geometry,
             matrix,
@@ -89,7 +95,7 @@ pub fn render(
             mapping,
             0.0,
             1.0,
-            &lab,
+            &rgb_from_lab,
             stroke_tessellation,
             uvm,
         )?;

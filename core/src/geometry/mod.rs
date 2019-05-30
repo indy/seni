@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::Colour;
 use crate::matrix::Matrix;
+use crate::rgb::Rgb;
 
 pub mod bezier;
 pub mod bezier_bulging;
@@ -53,7 +53,7 @@ impl RenderPacket {
         self.geo.as_ptr() as *const f32
     }
 
-    pub fn add_vertex(&mut self, matrix: &Matrix, x: f32, y: f32, col: &Colour, u: f32, v: f32) {
+    pub fn add_vertex(&mut self, matrix: &Matrix, x: f32, y: f32, col: &Rgb, u: f32, v: f32) {
         // assuming that col is ColourFormat::Rgb
 
         let (nx, ny) = matrix.transform_vec2(x, y);
@@ -63,10 +63,10 @@ impl RenderPacket {
         self.geo.append(&mut vec![
             nx,
             ny,
-            col.e0 * col.e3,
-            col.e1 * col.e3,
-            col.e2 * col.e3,
-            col.e3,
+            col.0 * col.3,
+            col.1 * col.3,
+            col.2 * col.3,
+            col.3,
             u,
             v,
         ]);
@@ -77,7 +77,8 @@ impl RenderPacket {
         self.dup();
 
         // add the new vertex to complete the degenerate triangle
-        self.add_vertex(matrix, x, y, &Colour::default(), 0.0, 0.0);
+        let rgb = Rgb::new(0.0, 0.0, 0.0, 0.0);
+        self.add_vertex(matrix, x, y, &rgb, 0.0, 0.0);
 
         // Note: still need to call addVertex on the first
         // vertex when we 'really' render the strip

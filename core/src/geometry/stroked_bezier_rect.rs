@@ -20,6 +20,7 @@ use crate::geometry::Geometry;
 use crate::matrix::Matrix;
 use crate::prng;
 use crate::result::Result;
+use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
 pub fn render(
@@ -35,7 +36,7 @@ pub fn render(
     tessellation: usize,
     stroke_tessellation: usize,
     stroke_noise: f32,
-    colour: &Colour,
+    colour: &Rgb,
     colour_volatility: f32,
     uvm: &UvMapping,
 ) -> Result<()> {
@@ -49,8 +50,13 @@ pub fn render(
     let th_height = height / 3.0;
     let vol = volatility;
 
-    let mut half_alpha_col = colour.convert(ColourFormat::Lab)?;
+    // todo: this lab colour manipulation is probably happening at the wrong level
+    // everything within geometry should really only be using Rgb
+    //
+    let cc = Colour::new(ColourFormat::Rgb, colour.0, colour.1, colour.2, colour.3);
+    let mut half_alpha_col = cc.convert(ColourFormat::Lab)?;
     half_alpha_col.e3 *= 0.5;
+    let rgb_from_lab = Rgb::from_colour(&half_alpha_col)?;
 
     let mut prng = prng::PrngStateStruct::new(seed, 0.0, 1.0);
 
@@ -87,7 +93,7 @@ pub fn render(
             stroke_noise,
             stroke_thickness,
             stroke_thickness,
-            &half_alpha_col,
+            &rgb_from_lab,
             colour_volatility,
             prng.prng_f32(),
             Easing::Linear,
@@ -123,7 +129,7 @@ pub fn render(
             stroke_noise,
             stroke_thickness,
             stroke_thickness,
-            &half_alpha_col,
+            &rgb_from_lab,
             colour_volatility,
             prng.prng_f32(),
             Easing::Linear,

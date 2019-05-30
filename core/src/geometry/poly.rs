@@ -13,21 +13,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::ColourFormat;
 use crate::error::Error;
 use crate::geometry::Geometry;
 use crate::matrix::Matrix;
 use crate::result::Result;
+use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
-use crate::vm::Var;
 
 use log::error;
 
 pub fn render(
     geometry: &mut Geometry,
     matrix: &Matrix,
-    coords: &[Var],
-    colours: &[Var],
+    coords: &[(f32, f32)],
+    colours: &[Rgb],
     uvm: &UvMapping,
 ) -> Result<()> {
     let num_vertices = coords.len();
@@ -38,26 +37,15 @@ pub fn render(
         return Ok(());
     }
 
-    if let Var::V2D(x, y) = coords[0] {
-        geometry.prepare_to_add_triangle_strip(matrix, num_vertices, x, y);
-    }
+    let (x, y) = coords[0];
+    geometry.prepare_to_add_triangle_strip(matrix, num_vertices, x, y);
 
     let last = geometry.render_packets.len() - 1;
     let rp = &mut geometry.render_packets[last];
 
     for i in 0..num_vertices {
-        if let Var::Colour(col) = colours[i] {
-            if col.format == ColourFormat::Rgb {
-                if let Var::V2D(x, y) = coords[i] {
-                    rp.add_vertex(matrix, x, y, &col, uvm.map[4], uvm.map[5])
-                }
-            } else {
-                let rgb = col.convert(ColourFormat::Rgb)?;
-                if let Var::V2D(x, y) = coords[i] {
-                    rp.add_vertex(matrix, x, y, &rgb, uvm.map[4], uvm.map[5])
-                }
-            }
-        }
+        let (x, y) = coords[i];
+        rp.add_vertex(matrix, x, y, &colours[i], uvm.map[4], uvm.map[5])
     }
 
     Ok(())

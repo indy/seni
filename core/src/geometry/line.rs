@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::Colour;
 use crate::geometry::Geometry;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::result::Result;
+use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
 pub fn render(
@@ -26,8 +26,8 @@ pub fn render(
     from: (f32, f32),
     to: (f32, f32),
     width: f32,
-    from_col: &Colour,
-    to_col: &Colour,
+    from_col: &Rgb,
+    to_col: &Rgb,
     uvm: &UvMapping,
 ) -> Result<()> {
     let hw = (width * uvm.width_scale) / 2.0;

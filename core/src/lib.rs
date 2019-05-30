@@ -53,6 +53,7 @@ mod prng;
 mod program;
 mod repeat;
 mod result;
+mod rgb;
 mod trait_list;
 mod unparser;
 mod uvmapper;

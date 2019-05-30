@@ -845,12 +845,7 @@ fn rect_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let position: (f32, f32) = vm.stack_peek(3)?;
     let col: Colour = vm.stack_peek(4)?;
 
-    if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        context.render_rect(position, width, height, &rgb)?;
-    } else {
-        error!("rect");
-        return Err(Error::Native);
-    }
+    context.render_rect(position, width, height, &col)?;
 
     Ok(None)
 }
@@ -881,17 +876,12 @@ fn circle_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
 
     let default_mask: i32 = vm.stack_peek(7)?;
 
-    if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        if is_arg_given(default_mask, 6) {
-            // given a radius value
-            context.render_circle(position, radius, radius, &rgb, tessellation)?;
-        } else {
-            // radius was not explicitly specified
-            context.render_circle(position, width, height, &rgb, tessellation)?;
-        }
+    if is_arg_given(default_mask, 6) {
+        // given a radius value
+        context.render_circle(position, radius, radius, &col, tessellation)?;
     } else {
-        error!("circle");
-        return Err(Error::Native);
+        // radius was not explicitly specified
+        context.render_circle(position, width, height, &col, tessellation)?;
     }
 
     Ok(None)
@@ -918,8 +908,8 @@ fn circle_slice_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn circle_slice_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
-    let width: f32 = vm.stack_peek(1)?;
-    let height: f32 = vm.stack_peek(2)?;
+    let mut width: f32 = vm.stack_peek(1)?;
+    let mut height: f32 = vm.stack_peek(2)?;
     let position: (f32, f32) = vm.stack_peek(3)?;
     let col: Colour = vm.stack_peek(4)?;
     let tessellation: usize = vm.stack_peek(5)?;
@@ -931,38 +921,23 @@ fn circle_slice_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var
 
     let default_mask: i32 = vm.stack_peek(11)?;
 
-    if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        if is_arg_given(default_mask, 6) {
-            // given a radius value
-            context.render_circle_slice(
-                position,
-                radius,
-                radius,
-                &rgb,
-                tessellation,
-                angle_start,
-                angle_end,
-                inner_width,
-                inner_height,
-            )?;
-        } else {
-            // radius was not explicitly specified
-            context.render_circle_slice(
-                position,
-                width,
-                height,
-                &rgb,
-                tessellation,
-                angle_start,
-                angle_end,
-                inner_width,
-                inner_height,
-            )?;
-        }
-    } else {
-        error!("circle_slice");
-        return Err(Error::Native);
+    if is_arg_given(default_mask, 6) {
+        // given a radius value
+        width = radius;
+        height = radius;
     }
+
+    context.render_circle_slice(
+        position,
+        width,
+        height,
+        &col,
+        tessellation,
+        angle_start,
+        angle_end,
+        inner_width,
+        inner_height,
+    )?;
 
     Ok(None)
 }
@@ -1019,8 +994,8 @@ fn quadratic_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 
 fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let line_width: f32 = vm.stack_peek(1)?;
-    let line_width_start: f32 = vm.stack_peek(2)?;
-    let line_width_end: f32 = vm.stack_peek(3)?;
+    let mut line_width_start: f32 = vm.stack_peek(2)?;
+    let mut line_width_end: f32 = vm.stack_peek(3)?;
     let line_width_mapping: Keyword = vm.stack_peek(4)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 5)?;
     let t_start: f32 = vm.stack_peek(6)?;
@@ -1037,64 +1012,48 @@ fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> 
         return Err(Error::Native);
     }
 
-    if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
-            (x, y)
-        } else {
-            error!("coords 0 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
-            (x, y)
-        } else {
-            error!("coords 1 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
-            (x, y)
-        } else {
-            error!("coords 2 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-
-        let brush_type = read_brush(brush);
-
-        if let Some(mapping) = easing_from_keyword(line_width_mapping) {
-            if is_arg_given(default_mask, 1) {
-                // given a line width value
-                context.render_quadratic(
-                    &[x0, y0, x1, y1, x2, y2],
-                    line_width,
-                    line_width,
-                    mapping,
-                    t_start,
-                    t_end,
-                    &rgb,
-                    tessellation,
-                    brush_type,
-                    brush_subtype,
-                )?;
-            } else {
-                // not given a line width value
-                context.render_quadratic(
-                    &[x0, y0, x1, y1, x2, y2],
-                    line_width_start,
-                    line_width_end,
-                    mapping,
-                    t_start,
-                    t_end,
-                    &rgb,
-                    tessellation,
-                    brush_type,
-                    brush_subtype,
-                )?;
-            }
-        } else {
-            error!("quadratic: invalid mapping");
-            return Err(Error::Native);
-        }
+    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+        (x, y)
     } else {
-        error!("quadratic: colour conversion");
+        error!("coords 0 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+        (x, y)
+    } else {
+        error!("coords 1 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+        (x, y)
+    } else {
+        error!("coords 2 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+
+    let brush_type = read_brush(brush);
+
+    if let Some(mapping) = easing_from_keyword(line_width_mapping) {
+        if is_arg_given(default_mask, 1) {
+            // given a line width value
+            line_width_start = line_width;
+            line_width_end = line_width;
+        }
+
+        context.render_quadratic(
+            &[x0, y0, x1, y1, x2, y2],
+            line_width_start,
+            line_width_end,
+            mapping,
+            t_start,
+            t_end,
+            &col,
+            tessellation,
+            brush_type,
+            brush_subtype,
+        )?;
+    } else {
+        error!("quadratic: invalid mapping");
         return Err(Error::Native);
     }
 
@@ -1124,8 +1083,8 @@ fn bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 
 fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     let line_width: f32 = vm.stack_peek(1)?;
-    let line_width_start: f32 = vm.stack_peek(2)?;
-    let line_width_end: f32 = vm.stack_peek(3)?;
+    let mut line_width_start: f32 = vm.stack_peek(2)?;
+    let mut line_width_end: f32 = vm.stack_peek(3)?;
     let line_width_mapping: Keyword = vm.stack_peek(4)?;
     let coords = stack_peek_vars(&vm.stack, vm.sp, 5)?;
     let t_start: f32 = vm.stack_peek(6)?;
@@ -1142,70 +1101,54 @@ fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
         return Err(Error::Native);
     }
 
-    if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let brush_type = read_brush(brush);
+    let brush_type = read_brush(brush);
 
-        if let Some(mapping) = easing_from_keyword(line_width_mapping) {
-            let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
-                (x, y)
-            } else {
-                error!("coords 0 should be a Vec::V2D");
-                return Err(Error::Native);
-            };
-            let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
-                (x, y)
-            } else {
-                error!("coords 1 should be a Vec::V2D");
-                return Err(Error::Native);
-            };
-            let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
-                (x, y)
-            } else {
-                error!("coords 2 should be a Vec::V2D");
-                return Err(Error::Native);
-            };
-            let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
-                (x, y)
-            } else {
-                error!("coords 3 should be a Vec::V2D");
-                return Err(Error::Native);
-            };
-
-            if is_arg_given(default_mask, 1) {
-                // given a line width value
-                context.render_bezier(
-                    &[x0, y0, x1, y1, x2, y2, x3, y3],
-                    line_width,
-                    line_width,
-                    mapping,
-                    t_start,
-                    t_end,
-                    &rgb,
-                    tessellation,
-                    brush_type,
-                    brush_subtype,
-                )?;
-            } else {
-                // not given a line width value
-                context.render_bezier(
-                    &[x0, y0, x1, y1, x2, y2, x3, y3],
-                    line_width_start,
-                    line_width_end,
-                    mapping,
-                    t_start,
-                    t_end,
-                    &rgb,
-                    tessellation,
-                    brush_type,
-                    brush_subtype,
-                )?;
-            }
+    if let Some(mapping) = easing_from_keyword(line_width_mapping) {
+        let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+            (x, y)
         } else {
-            error!("bezier: invalid mapping");
+            error!("coords 0 should be a Vec::V2D");
             return Err(Error::Native);
+        };
+        let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+            (x, y)
+        } else {
+            error!("coords 1 should be a Vec::V2D");
+            return Err(Error::Native);
+        };
+        let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+            (x, y)
+        } else {
+            error!("coords 2 should be a Vec::V2D");
+            return Err(Error::Native);
+        };
+        let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+            (x, y)
+        } else {
+            error!("coords 3 should be a Vec::V2D");
+            return Err(Error::Native);
+        };
+
+        if is_arg_given(default_mask, 1) {
+            // given a line width value
+            line_width_start = line_width;
+            line_width_end = line_width;
         }
+
+        context.render_bezier(
+            &[x0, y0, x1, y1, x2, y2, x3, y3],
+            line_width_start,
+            line_width_end,
+            mapping,
+            t_start,
+            t_end,
+            &col,
+            tessellation,
+            brush_type,
+            brush_subtype,
+        )?;
     } else {
-        error!("bezier: colour conversion");
+        error!("bezier: invalid mapping");
         return Err(Error::Native);
     }
 
@@ -1247,48 +1190,43 @@ fn bezier_bulging_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
         return Err(Error::Native);
     }
 
-    if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let brush_type = read_brush(brush);
+    let brush_type = read_brush(brush);
 
-        let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
-            (x, y)
-        } else {
-            error!("coords 0 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
-            (x, y)
-        } else {
-            error!("coords 1 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
-            (x, y)
-        } else {
-            error!("coords 2 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
-            (x, y)
-        } else {
-            error!("coords 3 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-
-        context.render_bezier_bulging(
-            &[x0, y0, x1, y1, x2, y2, x3, y3],
-            line_width,
-            t_start,
-            t_end,
-            &rgb,
-            tessellation,
-            brush_type,
-            brush_subtype,
-        )?;
+    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+        (x, y)
     } else {
-        error!("bezier_bulging: colour conversion");
+        error!("coords 0 should be a Vec::V2D");
         return Err(Error::Native);
-    }
+    };
+    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+        (x, y)
+    } else {
+        error!("coords 1 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+        (x, y)
+    } else {
+        error!("coords 2 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+    let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+        (x, y)
+    } else {
+        error!("coords 3 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+
+    context.render_bezier_bulging(
+        &[x0, y0, x1, y1, x2, y2, x3, y3],
+        line_width,
+        t_start,
+        t_end,
+        &col,
+        tessellation,
+        brush_type,
+        brush_subtype,
+    )?;
 
     Ok(None)
 }
@@ -1336,55 +1274,50 @@ fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
         return Err(Error::Native);
     }
 
-    if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let brush_type = read_brush(brush);
+    let brush_type = read_brush(brush);
 
-        if let Some(mapping) = easing_from_keyword(line_width_mapping) {
-            let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
-                (x, y)
-            } else {
-                error!("coords 0 should be a Vec::V2D");
-                return Err(Error::Native);
-            };
-            let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
-                (x, y)
-            } else {
-                error!("coords 1 should be a Vec::V2D");
-                return Err(Error::Native);
-            };
-            let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
-                (x, y)
-            } else {
-                error!("coords 2 should be a Vec::V2D");
-                return Err(Error::Native);
-            };
-            let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
-                (x, y)
-            } else {
-                error!("coords 3 should be a Vec::V2D");
-                return Err(Error::Native);
-            };
-
-            context.render_stroked_bezier(
-                tessellation,
-                &[x0, y0, x1, y1, x2, y2, x3, y3],
-                stroke_tessellation,
-                stroke_noise,
-                stroke_line_width_start,
-                stroke_line_width_end,
-                &rgb,
-                col_volatility,
-                seed,
-                mapping,
-                brush_type,
-                brush_subtype,
-            )?
+    if let Some(mapping) = easing_from_keyword(line_width_mapping) {
+        let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+            (x, y)
         } else {
-            error!("stroked bezier: invalid mapping");
+            error!("coords 0 should be a Vec::V2D");
             return Err(Error::Native);
-        }
+        };
+        let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+            (x, y)
+        } else {
+            error!("coords 1 should be a Vec::V2D");
+            return Err(Error::Native);
+        };
+        let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+            (x, y)
+        } else {
+            error!("coords 2 should be a Vec::V2D");
+            return Err(Error::Native);
+        };
+        let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+            (x, y)
+        } else {
+            error!("coords 3 should be a Vec::V2D");
+            return Err(Error::Native);
+        };
+
+        context.render_stroked_bezier(
+            tessellation,
+            &[x0, y0, x1, y1, x2, y2, x3, y3],
+            stroke_tessellation,
+            stroke_noise,
+            stroke_line_width_start,
+            stroke_line_width_end,
+            &col,
+            col_volatility,
+            seed,
+            mapping,
+            brush_type,
+            brush_subtype,
+        )?
     } else {
-        error!("stroked bezier: colour conversion");
+        error!("stroked bezier: invalid mapping");
         return Err(Error::Native);
     }
 
@@ -1431,29 +1364,24 @@ fn stroked_bezier_rect_execute(vm: &mut Vm, context: &mut Context) -> Result<Opt
     let brush: Keyword = vm.stack_peek(13)?;
     let brush_subtype: usize = vm.stack_peek(14)?;
 
-    if let Ok(rgb) = col.convert(ColourFormat::Rgb) {
-        let brush_type = read_brush(brush);
+    let brush_type = read_brush(brush);
 
-        context.render_stroked_bezier_rect(
-            position,
-            width,
-            height,
-            volatility,
-            overlap,
-            iterations,
-            seed as i32,
-            tessellation,
-            stroke_tessellation,
-            stroke_noise,
-            &rgb,
-            col_volatility,
-            brush_type,
-            brush_subtype,
-        )?;
-    } else {
-        error!("stroked bezier rect: colour conversion");
-        return Err(Error::Native);
-    }
+    context.render_stroked_bezier_rect(
+        position,
+        width,
+        height,
+        volatility,
+        overlap,
+        iterations,
+        seed as i32,
+        tessellation,
+        stroke_tessellation,
+        stroke_noise,
+        &col,
+        col_volatility,
+        brush_type,
+        brush_subtype,
+    )?;
 
     Ok(None)
 }
@@ -1658,13 +1586,9 @@ fn col_hsluv_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let l: f32 = vm.stack_peek(3)?;
     let alpha: f32 = vm.stack_peek(4)?;
 
-    Ok(Some(Var::Colour(Colour::new(
-        ColourFormat::Hsluv,
-        h,
-        s,
-        l,
-        alpha,
-    ))))
+    let colour = Colour::new(ColourFormat::Hsluv, h, s, l, alpha);
+    // error!("col/hsluv: {:?}", &colour);
+    Ok(Some(Var::Colour(colour)))
 }
 
 fn col_hsv_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -2258,6 +2182,8 @@ fn interp_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let t: f32 = vm.stack_peek(2)?;
 
     let res = interp_state.value(t);
+
+    // error!("interp/value = {:?} t: {} interp_state: {:?}", res, t, &interp_state);
 
     Ok(Some(Var::Float(res)))
 }
@@ -3012,6 +2938,8 @@ fn focal_value_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>
     let position: (f32, f32) = vm.stack_peek(2)?;
 
     let res = focal_state_struct.value(context, position);
+
+    // error!("focal/value: {} position: {:?} focal_state_struct: {:?}", res, &position, &focal_state_struct);
 
     Ok(Some(Var::Float(res)))
 }

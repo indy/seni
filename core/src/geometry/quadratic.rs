@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::colour::{Colour, ColourFormat};
 use crate::ease::{easing, Easing};
 use crate::geometry::Geometry;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::result::Result;
+use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
 pub fn render(
@@ -30,7 +30,7 @@ pub fn render(
     width_mapping: Easing,
     t_start: f32,
     t_end: f32,
-    colour: &Colour,
+    colour: &Rgb,
     tessellation: usize,
     uvm: &UvMapping,
 ) -> Result<()> {
@@ -67,8 +67,6 @@ pub fn render(
     let unit = (t_end - t_start) / (tessellation as f32 - 1.0);
 
     let tex_t = 1.0 / tessellation as f32;
-
-    let rgb = colour.convert(ColourFormat::Rgb)?;
 
     let x_r = ((x1 - x0) - 0.5 * (x2 - x0)) / (0.5 * (0.5 - 1.0));
     let x_s = x2 - x0 - x_r;
@@ -121,10 +119,10 @@ pub fn render(
         let uv_t = tex_t * (i as f32);
         let u = lerp(uv_t, bu, du);
         let v = lerp(uv_t, bv, dv);
-        rp.add_vertex(matrix, v1x, v1y, &rgb, u, v);
+        rp.add_vertex(matrix, v1x, v1y, &colour, u, v);
         let u = lerp(uv_t, au, cu);
         let v = lerp(uv_t, av, cv);
-        rp.add_vertex(matrix, v2x, v2y, &rgb, u, v);
+        rp.add_vertex(matrix, v2x, v2y, &colour, u, v);
     }
 
     // final 2 vertices for the end point
@@ -146,9 +144,9 @@ pub fn render(
     let v2x = (n2x * half_width_end) + xs_next;
     let v2y = (n2y * half_width_end) + ys_next;
 
-    rp.add_vertex(matrix, v1x, v1y, &rgb, du, dv);
+    rp.add_vertex(matrix, v1x, v1y, &colour, du, dv);
 
-    rp.add_vertex(matrix, v2x, v2y, &rgb, cu, cv);
+    rp.add_vertex(matrix, v2x, v2y, &colour, cu, cv);
 
     Ok(())
 }
