@@ -5,10 +5,7 @@ authors = ["Inderjit Gill <email@indy.io>"]
 license = "GPL-3.0+"
 edition = "2018"
 
-
 [dependencies]
-rand_core = "0.4.0"
-rand_xorshift = "0.1.1"
 strum = "0.13.0"
 strum_macros = "0.13.0"
 log = "0.4"

@@ -176,7 +176,7 @@ impl Genotype {
 
         genotypes.push(Genotype::build_from_initial_values(trait_list)?);
         for _ in 1..population_size {
-            let genotype_seed = prng.prng_f32_defined_range() as i32;
+            let genotype_seed = prng.next_f32_defined_range() as i32;
             genotypes.push(Genotype::build_from_seed(trait_list, genotype_seed)?);
         }
 
@@ -220,7 +220,7 @@ impl Genotype {
         let mut child: Genotype = Default::default();
 
         let num_genes = self.genes.len();
-        let crossover_index: usize = prng.prng_usize_range(0, num_genes);
+        let crossover_index: usize = prng.next_usize_range(0, num_genes);
 
         for i in 0..crossover_index {
             child.push_gene(self.genes[i].clone())
@@ -242,7 +242,7 @@ impl Genotype {
         let num_genes = self.genes.len();
 
         for i in 0..num_genes {
-            let r = prng.prng_f32();
+            let r = prng.next_f32();
             if r < mutation_rate {
                 self.gene_generate_new_var(i, prng, trait_list)?;
             }
@@ -321,11 +321,11 @@ pub fn next_generation(
 
     for _ in 0..(population_size - num_parents) {
         // select 2 different parents
-        let a_index = rng.prng_usize_range(0, num_parents - 1);
+        let a_index = rng.next_usize_range(0, num_parents - 1);
 
         let mut b_index = a_index;
         for _ in 0..retry_count {
-            b_index = rng.prng_usize_range(0, num_parents - 1);
+            b_index = rng.next_usize_range(0, num_parents - 1);
             if b_index != a_index {
                 break;
             }
@@ -471,8 +471,8 @@ mod tests {
         let genotype = Genotype::build_from_seed(&trait_list, 432).unwrap();
 
         assert_eq!(genotype.genes.len(), 2);
-        gene_float(&genotype.genes[0], 8.82988);
-        gene_float(&genotype.genes[1], 6.2474613);
+        gene_float(&genotype.genes[0], 6.74415);
+        gene_float(&genotype.genes[1], 7.869932);
     }
 
     #[test]
@@ -483,8 +483,8 @@ mod tests {
         let genotype = Genotype::build_from_seed(&trait_list, 432).unwrap();
 
         assert_eq!(genotype.genes.len(), 2);
-        gene_2d(&genotype.genes[0], 59.75697, 56.067802);
-        gene_2d(&genotype.genes[1], 55.85068, 57.474014);
+        gene_2d(&genotype.genes[0], 56.77736, 58.385616);
+        gene_2d(&genotype.genes[1], 51.329006, 58.351044);
     }
 
     fn is_float(var: &Var, expected: f32) {
@@ -532,19 +532,19 @@ mod tests {
         is_keyword(&res, Keyword::Transformers);
 
         {
-            let (res, genotype) = run_with_seeded_genotype(s, 56534).unwrap();
+            let (res, genotype) = run_with_seeded_genotype(s, 6534).unwrap();
+            assert_eq!(genotype.genes.len(), 1);
+            is_keyword(&res, Keyword::Chrome);
+        }
+        {
+            let (res, genotype) = run_with_seeded_genotype(s, 1534).unwrap();
             assert_eq!(genotype.genes.len(), 1);
             is_keyword(&res, Keyword::KnightRider);
         }
         {
-            let (res, genotype) = run_with_seeded_genotype(s, 6534).unwrap();
-            assert_eq!(genotype.genes.len(), 1);
-            is_keyword(&res, Keyword::HotlineMiami);
-        }
-        {
             let (res, genotype) = run_with_seeded_genotype(s, 2009).unwrap();
             assert_eq!(genotype.genes.len(), 1);
-            is_keyword(&res, Keyword::Rainbow);
+            is_keyword(&res, Keyword::Mars);
         }
     }
 
@@ -555,24 +555,21 @@ mod tests {
         let res = compile_and_execute(s).unwrap();
         is_float(&res, 12.3);
 
-        // a = 222 b = 223 c = 224 d = 225
-        {
-            let (res, genotype) = run_with_seeded_genotype(s, 211).unwrap(); // 222
-            assert_eq!(genotype.genes.len(), 1);
-            is_float(&res, 12.3);
+        let (res, genotype) = run_with_seeded_genotype(s, 211).unwrap(); // 222
+        assert_eq!(genotype.genes.len(), 1);
+        is_float(&res, 12.3);
 
-            let (res, genotype) = run_with_seeded_genotype(s, 25).unwrap(); // 224
-            assert_eq!(genotype.genes.len(), 1);
-            is_float(&res, 14.5);
+        let (res, genotype) = run_with_seeded_genotype(s, 25).unwrap(); // 224
+        assert_eq!(genotype.genes.len(), 1);
+        is_float(&res, 12.3);
 
-            let (res, genotype) = run_with_seeded_genotype(s, 37).unwrap(); // 223
-            assert_eq!(genotype.genes.len(), 1);
-            is_float(&res, 13.4);
+        let (res, genotype) = run_with_seeded_genotype(s, 37).unwrap(); // 223
+        assert_eq!(genotype.genes.len(), 1);
+        is_float(&res, 14.5);
 
-            let (res, genotype) = run_with_seeded_genotype(s, 45).unwrap(); // 225
-            assert_eq!(genotype.genes.len(), 1);
-            is_float(&res, 15.6);
-        }
+        let (res, genotype) = run_with_seeded_genotype(s, 45).unwrap(); // 225
+        assert_eq!(genotype.genes.len(), 1);
+        is_float(&res, 15.6);
     }
 
     fn assert_native_opcode_in_program(program: &Program, native: Native) {
@@ -590,25 +587,19 @@ mod tests {
     }
 
     #[test]
-    fn gen_select_natives() {
+    fn gen_select_natives_xx() {
         let s = "({rect (gen/select from: '(rect circle circle-slice))} position: [100 100])";
         {
-            // dbg!(Native::Rect as i32);
-            // seed 6 == genotype[0].name: 305  Rect
-            let (program, _genotype) = program_with_seeded_genotype(s, 6).unwrap();
+            let (program, _genotype) = program_with_seeded_genotype(s, 7).unwrap();
             assert_native_opcode_in_program(&program, Native::Rect);
         }
         {
-            // dbg!(Native::Circle as i32);
-            // seed 5 == genotype[0].name: 306  Circle
-            let (program, _genotype) = program_with_seeded_genotype(s, 5).unwrap();
-            assert_native_opcode_in_program(&program, Native::Circle);
+            let (program, _genotype) = program_with_seeded_genotype(s, 5800).unwrap();
+            assert_native_opcode_in_program(&program, Native::CircleSlice);
         }
         {
-            // dbg!(Native::CircleSlice as i32);
-            // seed 14 == genotype[0].name: 307  CircleSlice
-            let (program, _genotype) = program_with_seeded_genotype(s, 14).unwrap();
-            assert_native_opcode_in_program(&program, Native::CircleSlice);
+            let (program, _genotype) = program_with_seeded_genotype(s, 19).unwrap();
+            assert_native_opcode_in_program(&program, Native::Circle);
         }
     }
 
@@ -619,23 +610,21 @@ mod tests {
         let res = compile_and_execute(s).unwrap();
         is_float(&res, 12.3);
 
-        {
-            let (res, genotype) = run_with_seeded_genotype(s, 211).unwrap();
-            assert_eq!(genotype.genes.len(), 1);
-            is_float(&res, 12.3);
+        let (res, genotype) = run_with_seeded_genotype(s, 211).unwrap();
+        assert_eq!(genotype.genes.len(), 1);
+        is_float(&res, 12.3);
 
-            let (res, genotype) = run_with_seeded_genotype(s, 25).unwrap();
-            assert_eq!(genotype.genes.len(), 1);
-            is_float(&res, 14.5);
+        let (res, genotype) = run_with_seeded_genotype(s, 27).unwrap();
+        assert_eq!(genotype.genes.len(), 1);
+        is_float(&res, 13.4);
 
-            let (res, genotype) = run_with_seeded_genotype(s, 37).unwrap();
-            assert_eq!(genotype.genes.len(), 1);
-            is_float(&res, 13.4);
+        let (res, genotype) = run_with_seeded_genotype(s, 37).unwrap();
+        assert_eq!(genotype.genes.len(), 1);
+        is_float(&res, 14.5);
 
-            let (res, genotype) = run_with_seeded_genotype(s, 45).unwrap();
-            assert_eq!(genotype.genes.len(), 1);
-            is_float(&res, 15.6);
-        }
+        let (res, genotype) = run_with_seeded_genotype(s, 45).unwrap();
+        assert_eq!(genotype.genes.len(), 1);
+        is_float(&res, 15.6);
     }
 
     // bug_gen_select_custom_locals
@@ -653,7 +642,7 @@ mod tests {
         let (res, genotype) = run_with_seeded_genotype(s, seed).unwrap();
         assert_eq!(genotype.genes.len(), genotype_length);
 
-        is_float(&res, 4.4);
+        is_float(&res, 1.1);
     }
 
     #[test]
@@ -666,41 +655,41 @@ mod tests {
         let (res, genotype) = run_with_seeded_genotype(s, 432).unwrap();
         is_col(
             &res,
-            &Colour::new(ColourFormat::Rgb, 0.97569704, 0.6067802, 0.585068, 0.3),
+            &Colour::new(ColourFormat::Rgb, 0.67773575, 0.8385617, 0.13290067, 0.3),
         );
         assert_eq!(genotype.genes.len(), 1);
     }
 
     #[test]
-    fn genotype_compile() {
+    fn genotype_compile_xxx() {
         geno_test(
             "(+ {3 (gen/scalar min: 10 max: 20)} {4 (gen/scalar min: 100 max: 105)})",
             432,
             2,
             7.0,
-            122.79086,
+            120.97017,
         );
-        geno_test("(+ 6 {3 (gen/int min: 1 max: 100)})", 432, 1, 9.0, 104.0);
+        geno_test("(+ 6 {3 (gen/int min: 1 max: 100)})", 432, 1, 9.0, 74.0);
         geno_test(
             "(+ 6 {3 (gen/scalar min: 1 max: 100)})",
             432,
             1,
             9.0,
-            103.59401,
+            74.09584,
         );
-        geno_test("(+ 6 {3 (gen/int min: 1 max: 100)})", 874, 1, 9.0, 60.0);
+        geno_test("(+ 6 {3 (gen/int min: 1 max: 100)})", 874, 1, 9.0, 81.0);
         geno_test(
             "(+ 6 {3 (gen/scalar min: 1 max: 100)})",
             874,
             1,
             9.0,
-            59.47561,
+            81.0833,
         );
     }
 
     #[test]
     fn genotype_compile_stray() {
-        geno_test("{3 (gen/stray from: 3 by: 0.5)}", 432, 1, 3.0, 3.475697);
+        geno_test("{3 (gen/stray from: 3 by: 0.5)}", 432, 1, 3.0, 3.1777358);
         geno_test("{3 (gen/stray-int from: 3 by: 0.5)}", 432, 1, 3.0, 3.0);
     }
 
@@ -712,7 +701,7 @@ mod tests {
             7524,
             2,
             (100.0, 200.0),
-            (93.04805, 197.49728),
+            (94.410095, 202.5176),
         );
     }
 
@@ -737,9 +726,9 @@ mod tests {
             let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
             if let Var::Vector(vs) = res {
                 assert_eq!(vs.len(), 3);
-                is_2d(&vs[0], (0.9825403, 0.85869956));
-                is_2d(&vs[1], (0.59191173, 0.999328));
-                is_2d(&vs[2], (0.22858822, 0.4880673));
+                is_2d(&vs[0], (0.9590588, 0.9022932));
+                is_2d(&vs[1], (0.8897112, 0.013709899));
+                is_2d(&vs[2], (0.85696673, 0.5854448));
             } else {
                 assert!(false);
             }
@@ -765,9 +754,9 @@ mod tests {
             let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
             if let Var::Vector(vs) = res {
                 assert_eq!(vs.len(), 3);
-                is_2d(&vs[0], (59.8254, 58.586998));
-                is_2d(&vs[1], (55.919117, 59.99328));
-                is_2d(&vs[2], (52.28588, 54.880672));
+                is_2d(&vs[0], (59.590588, 59.022934));
+                is_2d(&vs[1], (58.89711, 50.1371));
+                is_2d(&vs[2], (58.569668, 55.854446));
             } else {
                 assert!(false);
             }
@@ -794,9 +783,9 @@ mod tests {
         let (res, genotype) = run_with_seeded_genotype(expr, seed).unwrap();
         if let Var::Vector(vs) = res {
             assert_eq!(vs.len(), 3);
-            is_float(&vs[0], 0.6279464);
-            is_float(&vs[1], 0.46001887);
-            is_float(&vs[2], 0.51953447);
+            is_float(&vs[0], 0.12203506);
+            is_float(&vs[1], 0.8389967);
+            is_float(&vs[2], 0.6913055);
         } else {
             assert!(false);
         }
@@ -818,44 +807,44 @@ mod tests {
         let (_, genotype_b) = run_with_seeded_genotype(expr, seed_b).unwrap();
 
         assert_eq!(genotype_a.genes.len(), 3);
-        gene_float(&genotype_a.genes[0], 0.000778846);
-        gene_float(&genotype_a.genes[1], 0.5599265);
-        gene_float(&genotype_a.genes[2], 0.8937246);
+        gene_float(&genotype_a.genes[0], 0.12962966);
+        gene_float(&genotype_a.genes[1], 0.66991657);
+        gene_float(&genotype_a.genes[2], 0.056645457);
 
         assert_eq!(genotype_b.genes.len(), 3);
-        gene_float(&genotype_b.genes[0], 0.1344259);
-        gene_float(&genotype_b.genes[1], 0.052326918);
-        gene_float(&genotype_b.genes[2], 0.024050714);
+        gene_float(&genotype_b.genes[0], 0.49113372);
+        gene_float(&genotype_b.genes[1], 0.8261006);
+        gene_float(&genotype_b.genes[2], 0.9936072);
 
         let parents = vec![genotype_a, genotype_b];
         let children = next_generation(&parents, 5, 0.2, 234, &trait_list).unwrap();
 
         // first 2 children should be clones of the parents
         assert_eq!(children[0].genes.len(), 3);
-        gene_float(&children[0].genes[0], 0.000778846);
-        gene_float(&children[0].genes[1], 0.5599265);
-        gene_float(&children[0].genes[2], 0.8937246);
+        gene_float(&children[0].genes[0], 0.12962966);
+        gene_float(&children[0].genes[1], 0.66991657);
+        gene_float(&children[0].genes[2], 0.056645457);
 
         assert_eq!(children[1].genes.len(), 3);
-        gene_float(&children[1].genes[0], 0.1344259);
-        gene_float(&children[1].genes[1], 0.052326918);
-        gene_float(&children[1].genes[2], 0.024050714);
+        gene_float(&children[1].genes[0], 0.49113372);
+        gene_float(&children[1].genes[1], 0.8261006);
+        gene_float(&children[1].genes[2], 0.9936072);
 
         // 3 children
         assert_eq!(children[2].genes.len(), 3);
-        gene_float(&children[2].genes[0], 0.6867611); // mutation
-        gene_float(&children[2].genes[1], 0.052326918); // b
-        gene_float(&children[2].genes[2], 0.024050714); // b
+        gene_float(&children[2].genes[0], 0.49113372); // mutation
+        gene_float(&children[2].genes[1], 0.8261006); // b
+        gene_float(&children[2].genes[2], 0.9936072); // b
 
         assert_eq!(children[3].genes.len(), 3);
-        gene_float(&children[3].genes[0], 0.000778846); // a
-        gene_float(&children[3].genes[1], 0.5599265); // a
-        gene_float(&children[3].genes[2], 0.024050714); // b
+        gene_float(&children[3].genes[0], 0.12962966); // a
+        gene_float(&children[3].genes[1], 0.8261006); // a
+        gene_float(&children[3].genes[2], 0.463081); // b
 
         assert_eq!(children[4].genes.len(), 3);
-        gene_float(&children[4].genes[0], 0.000778846); // a
-        gene_float(&children[4].genes[1], 0.052326918); // b
-        gene_float(&children[4].genes[2], 0.024050714); // b
+        gene_float(&children[4].genes[0], 0.21231069); // a
+        gene_float(&children[4].genes[1], 0.29541624); // b
+        gene_float(&children[4].genes[2], 0.9936072); // b
 
         assert_eq!(children.len(), 5);
     }

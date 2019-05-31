@@ -402,35 +402,35 @@ mod tests {
         seeded_unparse_check(
             975,
             "(+ 6 {3 (gen/int min: 1 max: 50)})",
-            "(+ 6 {46 (gen/int min: 1 max: 50)})",
+            "(+ 6 {42 (gen/int min: 1 max: 50)})",
         );
         seeded_unparse_check(
             975,
             "{rainbow (gen/select from: col/procedural-fn-presets)}",
-            "{transformers (gen/select from: col/procedural-fn-presets)}",
+            "{robocop (gen/select from: col/procedural-fn-presets)}",
         );
         seeded_unparse_check(
             342,
             "[8 {3 (gen/int min: 0 max: 9)}]",
-            "[8 {4 (gen/int min: 0 max: 9)}]",
+            "[8 {5 (gen/int min: 0 max: 9)}]",
         );
 
         seeded_unparse_check(
             764,
             "{3.45 (gen/scalar min: 0 max: 9)}",
-            "{2.38 (gen/scalar min: 0 max: 9)}",
+            "{4.08 (gen/scalar min: 0 max: 9)}",
         );
 
         seeded_unparse_check(
             764,
             "{3.4 (gen/scalar min: 0 max: 9)}",
-            "{2.4 (gen/scalar min: 0 max: 9)}",
+            "{4.1 (gen/scalar min: 0 max: 9)}",
         );
 
         seeded_unparse_check(
             764,
             "(col/rgb r: {0.4 (gen/scalar)} g: 0.1)",
-            "(col/rgb r: {0.3 (gen/scalar)} g: 0.1)",
+            "(col/rgb r: {0.5 (gen/scalar)} g: 0.1)",
         );
 
         seeded_unparse_check(
@@ -447,30 +447,25 @@ mod tests {
 (gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red
 width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80
 max: 670)})",
-            "(rect position: [500 500] colour: red width: {164 (gen/int min: 80 max:
-400)} height: {562 (gen/int min: 80 max: 670)}) (rect position: [500
-500] colour: red width: {289 (gen/int min: 80 max: 400)} height: {663
-(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red
-width: {210 (gen/int min: 80 max: 400)} height: {148 (gen/int min: 80
-max: 670)})",
+            "(rect position: [500 500] colour: red width: {225 (gen/int min: 80 max:\n400)} height: {466 (gen/int min: 80 max: 670)}) (rect position: [500\n500] colour: red width: {135 (gen/int min: 80 max: 400)} height: {603\n(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red\nwidth: {192 (gen/int min: 80 max: 400)} height: {624 (gen/int min: 80\nmax: 670)})",
         );
 
         seeded_unparse_check(
             764,
             "{b (gen/select from: '(a b c))}",
-            "{a (gen/select from: '(a b c))}",
+            "{b (gen/select from: '(a b c))}",
         );
 
         seeded_unparse_check(
             764,
             "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col)}",
-            "{(col/rgb r: 0.82 g: 0.65 b: 0.99 alpha: 0.26) (gen/col)}",
+            "{(col/rgb r: 0.65 g: 0.17 b: 0.89 alpha: 0.45) (gen/col)}",
         );
 
         seeded_unparse_check(
             653,
             "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}",
-            "{(col/rgb r: 0.78 g: 0.97 b: 0.89 alpha: 1.00) (gen/col alpha: 1)}",
+            "{(col/rgb r: 0.75 g: 0.59 b: 0.33 alpha: 1.00) (gen/col alpha: 1)}",
         );
     }
 
@@ -479,25 +474,25 @@ max: 670)})",
         seeded_unparse_check(
             653,
             "{[[1.00 2.00] [3.00 4.00]] (gen/2d)}",
-            "{[[0.78 0.97] [0.89 0.11]] (gen/2d)}",
+            "{[[0.75 0.59] [0.33 0.85]] (gen/2d)}",
         );
 
         seeded_unparse_check(
             653,
             "{[[  1.00   2.00  ] [  3.00   4.00  ]] (gen/2d)}",
-            "{[[  0.78   0.97  ] [  0.89   0.11  ]] (gen/2d)}",
+            "{[[  0.75   0.59  ] [  0.33   0.85  ]] (gen/2d)}",
         );
 
         seeded_unparse_check(
             653,
             "{[[10 20] [30 40]] (gen/2d min: 60 max: 70)}",
-            "{[[68 70] [69 61]] (gen/2d min: 60 max: 70)}",
+            "{[[67 66] [63 69]] (gen/2d min: 60 max: 70)}",
         );
 
         seeded_unparse_check(
             653,
             "{ [ [ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/2d min: 40 max: 90) }",
-            "{ [ [ 79.1 88.54 ] [ 84.577 45.4872 ]] (gen/2d min: 40 max: 90) }",
+            "{ [ [ 77.3 69.69 ] [ 56.680 82.6415 ]] (gen/2d min: 40 max: 90) }",
         );
     }
 
@@ -506,7 +501,7 @@ max: 670)})",
         seeded_unparse_check(
             764,
             "{[10 20] (gen/stray-2d from: [10 20] by: [5 5])}",
-            "{[8 23] (gen/stray-2d from: [10 20] by: [5 5])}",
+            "{[10 22] (gen/stray-2d from: [10 20] by: [5 5])}",
         );
     }
 
@@ -515,7 +510,7 @@ max: 670)})",
         seeded_unparse_check(
             764,
             "{[0.977 0.416 0.171] (gen/scalar)}",
-            "{[0.265 0.816 0.654] (gen/scalar)}",
+            "{[0.454 0.653 0.172] (gen/scalar)}",
         );
     }
 

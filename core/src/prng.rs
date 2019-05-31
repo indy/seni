@@ -13,9 +13,99 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::num::Wrapping as wrap;
+
 use crate::mathutil::{clamp, lerp};
-use rand_core::{RngCore, SeedableRng};
-use rand_xorshift::XorShiftRng;
+
+#[derive(Clone, Debug)]
+pub struct PrngStateStruct {
+    seed0: u64,
+    seed1: u64,
+    min: f32,
+    max: f32,
+}
+
+impl PrngStateStruct {
+    pub fn new(seed: i32, min: f32, max: f32) -> Self {
+        let mut prng = PrngStateStruct {
+            seed0: 0,
+            seed1: 0,
+            min,
+            max,
+        };
+        prng.set_state(seed);
+        prng
+    }
+
+    pub fn set_state(&mut self, seed: i32) {
+        self.seed0 = seed as u64 * seed as u64;
+        self.seed1 = (seed + 3145) as u64;
+
+        // warm up
+        self.next_f32();
+        self.next_f32();
+        self.next_f32();
+        self.next_f32();
+        self.next_f32();
+    }
+
+    pub fn clone_rng(&mut self, other: PrngStateStruct) {
+        self.seed0 = other.seed0;
+        self.seed1 = other.seed1;
+        self.min = other.min;
+        self.max = other.max;
+    }
+
+    // 0..1
+    pub fn next_f32(&mut self) -> f32 {
+        let a = self.next_u32();
+        a as f32 / std::u32::MAX as f32
+    }
+
+    pub fn next_u32(&mut self) -> u32 {
+        self.next_u64() as u32
+    }
+
+    #[inline]
+    pub fn next_u64(&mut self) -> u64 {
+        let mut s1 = wrap(self.seed0);
+        let s0 = wrap(self.seed1);
+        let result = s0 + s1;
+        self.seed0 = s0.0;
+        s1 ^= s1 << 23;
+        self.seed1 = (s1 ^ s0 ^ (s1 >> 18) ^ (s0 >> 5)).0;
+        result.0
+    }
+
+    pub fn next_u32_range(&mut self, low: u32, high: u32) -> u32 {
+        let a = self.next_u32();
+        (a % (high - low)) + low
+    }
+
+    pub fn next_f32_range(&mut self, min: f32, max: f32) -> f32 {
+        let value = self.next_f32();
+        (value * (max - min)) + min
+    }
+
+    pub fn next_usize_range(&mut self, min: usize, max: usize) -> usize {
+        self.next_f32_range(min as f32, max as f32) as usize
+    }
+
+    pub fn next_f32_defined_range(&mut self) -> f32 {
+        let value = self.next_f32();
+        (value * (self.max - self.min)) + self.min
+    }
+
+    pub fn next_f32_around(&mut self, val: f32, percent: f32, min: f32, max: f32) -> f32 {
+        let value = self.next_f32();
+        let range = ((max - min) / 100.0) * percent;
+        let lowest = val - range;
+        let highest = val + range;
+        let res = (value * (highest - lowest)) + lowest;
+
+        clamp(res, min, max)
+    }
+}
 
 const PERMUTATIONS: [usize; 512] = [
     151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69,
@@ -68,94 +158,6 @@ const INDICES: [usize; 64] = [
     2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7,
     8, 9, 10, 11,
 ];
-
-#[derive(Clone, Debug)]
-pub struct PrngStateStruct {
-    pub rng: XorShiftRng,
-    min: f32,
-    max: f32,
-}
-
-fn as_u8(i: i32) -> u8 {
-    (i % (1 << 8)) as u8
-}
-
-impl PrngStateStruct {
-    pub fn new(seed: i32, min: f32, max: f32) -> Self {
-        PrngStateStruct {
-            rng: PrngStateStruct::make_xor_shift_rng(seed),
-            min,
-            max,
-        }
-    }
-
-    pub fn set_state(&mut self, seed: i32) {
-        self.rng = PrngStateStruct::make_xor_shift_rng(seed);
-    }
-
-    pub fn clone_rng(&mut self, other: PrngStateStruct) {
-        self.rng = other.rng.clone();
-    }
-
-    pub fn gen_range(&mut self, low: u32, high: u32) -> u32 {
-        let a = self.rng.next_u32();
-        (a % (high - low)) + low
-    }
-
-    // 0..1
-    pub fn prng_f32(&mut self) -> f32 {
-        let a = self.rng.next_u32();
-
-        a as f32 / std::u32::MAX as f32
-    }
-
-    pub fn prng_f32_range(&mut self, min: f32, max: f32) -> f32 {
-        let value = self.prng_f32();
-        (value * (max - min)) + min
-    }
-
-    pub fn prng_usize_range(&mut self, min: usize, max: usize) -> usize {
-        self.prng_f32_range(min as f32, max as f32) as usize
-    }
-
-    pub fn prng_f32_defined_range(&mut self) -> f32 {
-        let value = self.prng_f32();
-        (value * (self.max - self.min)) + self.min
-    }
-
-    pub fn prng_f32_around(&mut self, val: f32, percent: f32, min: f32, max: f32) -> f32 {
-        let value = self.prng_f32();
-        let range = ((max - min) / 100.0) * percent;
-        let lowest = val - range;
-        let highest = val + range;
-        let res = (value * (highest - lowest)) + lowest;
-
-        clamp(res, min, max)
-    }
-
-    fn make_xor_shift_rng(seed: i32) -> XorShiftRng {
-        let seedy: [u8; 16] = [
-            as_u8(seed),
-            as_u8(seed + 1),
-            as_u8(seed + seed - 2),
-            as_u8(seed + 3),
-            as_u8(seed + seed - 4),
-            as_u8(seed + 5),
-            as_u8(seed + seed - 6),
-            as_u8(seed + 7),
-            as_u8(seed + seed - 8),
-            as_u8(seed + 9),
-            as_u8(seed + seed - 10),
-            as_u8(seed + 11),
-            as_u8(seed + seed - 12),
-            as_u8(seed + 13),
-            as_u8(seed + seed - 14),
-            as_u8(seed + 15),
-        ];
-
-        XorShiftRng::from_seed(seedy)
-    }
-}
 
 fn fade(t: f32) -> f32 {
     t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
@@ -243,7 +245,7 @@ pub mod tests {
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))",
-            "0.36151162 0.4412291 0.37725854 0.5783009 0.65834785 0.48318255 0.7342905 0.44944018 0.56456256",
+            "0.16439326 0.58795106 0.12325332 0.039127756 0.9678266 0.8247009 0.787962 0.13722154 0.94319534",
         );
     }
 
@@ -260,7 +262,7 @@ pub mod tests {
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))",
-            "5.3797703 7.0697656 4.541839 7.1620464 6.7335386 3.5603561 3.4189374 3.1284251 8.890152",
+            "7.696081 6.462363 6.579473 4.650559 5.4763083 4.6319327 8.11852 6.7570615 5.3803825",
         );
     }
 
@@ -272,7 +274,7 @@ pub mod tests {
              (probe scalar: (nth from: vs n: 0))
              (probe scalar: (nth from: vs n: 1))
              (probe scalar: (nth from: vs n: 2))",
-            "0.36151162 0.4412291 0.37725854",
+            "0.16439326 0.58795106 0.12325332",
         );
     }
 
@@ -282,19 +284,19 @@ pub mod tests {
             "(define p (prng/build seed: 5 min: 0 max: 1))
              (define vs (prng/values from: p num: 3))
              (nth from: vs n: 0)",
-            0.36151162,
+            0.16439326,
         );
         is_float(
             "(define p (prng/build seed: 5 min: 0 max: 1))
              (define vs (prng/values from: p num: 3))
              (nth from: vs n: 1)",
-            0.4412291,
+            0.58795106,
         );
         is_float(
             "(define p (prng/build seed: 5 min: 0 max: 1))
              (define vs (prng/values from: p num: 3))
              (nth from: vs n: 2)",
-            0.37725854,
+            0.12325332,
         );
     }
 
@@ -303,11 +305,10 @@ pub mod tests {
         let mut prng = PrngStateStruct::new(542, 0.0, 1.0);
 
         for _ in 0..100 {
-            let f = prng.prng_f32();
+            let f = prng.next_f32();
             println!("{}", f);
         }
 
-        assert_eq!(prng.prng_f32(), 0.7896869);
+        assert_eq!(prng.next_f32(), 0.49469042);
     }
-
 }

@@ -74,14 +74,14 @@ pub fn render(
         let h = y_start + stroke_half_thickness + (i as f32 * stroke_offset_factor);
 
         let coords: [f32; 8] = [
-            (prng.prng_f32_range(-1.0, 1.0) * vol) + x_start + (0.0 * th_width),
-            h + (prng.prng_f32_range(-1.0, 1.0) * vol),
-            (prng.prng_f32_range(-1.0, 1.0) * vol) + x_start + (1.0 * th_width),
-            h + (prng.prng_f32_range(-1.0, 1.0) * vol),
-            (prng.prng_f32_range(-1.0, 1.0) * vol) + x_start + (2.0 * th_width),
-            h + (prng.prng_f32_range(-1.0, 1.0) * vol),
-            (prng.prng_f32_range(-1.0, 1.0) * vol) + x_start + (3.0 * th_width),
-            h + (prng.prng_f32_range(-1.0, 1.0) * vol),
+            (prng.next_f32_range(-1.0, 1.0) * vol) + x_start + (0.0 * th_width),
+            h + (prng.next_f32_range(-1.0, 1.0) * vol),
+            (prng.next_f32_range(-1.0, 1.0) * vol) + x_start + (1.0 * th_width),
+            h + (prng.next_f32_range(-1.0, 1.0) * vol),
+            (prng.next_f32_range(-1.0, 1.0) * vol) + x_start + (2.0 * th_width),
+            h + (prng.next_f32_range(-1.0, 1.0) * vol),
+            (prng.next_f32_range(-1.0, 1.0) * vol) + x_start + (3.0 * th_width),
+            h + (prng.next_f32_range(-1.0, 1.0) * vol),
         ];
 
         stroked_bezier::render(
@@ -95,7 +95,7 @@ pub fn render(
             stroke_thickness,
             &rgb_from_lab,
             colour_volatility,
-            prng.prng_f32(),
+            prng.next_f32(),
             Easing::Linear,
             uvm,
         )?;
@@ -110,14 +110,14 @@ pub fn render(
         let v = x_start + stroke_half_thickness + (i as f32 * stroke_offset_factor);
 
         let coords: [f32; 8] = [
-            v + (prng.prng_f32_range(-1.0, 1.0) * vol),
-            (prng.prng_f32_range(-1.0, 1.0) * vol) + y_start + (0.0 * th_height),
-            v + (prng.prng_f32_range(-1.0, 1.0) * vol),
-            (prng.prng_f32_range(-1.0, 1.0) * vol) + y_start + (1.0 * th_height),
-            v + (prng.prng_f32_range(-1.0, 1.0) * vol),
-            (prng.prng_f32_range(-1.0, 1.0) * vol) + y_start + (2.0 * th_height),
-            v + (prng.prng_f32_range(-1.0, 1.0) * vol),
-            (prng.prng_f32_range(-1.0, 1.0) * vol) + y_start + (3.0 * th_height),
+            v + (prng.next_f32_range(-1.0, 1.0) * vol),
+            (prng.next_f32_range(-1.0, 1.0) * vol) + y_start + (0.0 * th_height),
+            v + (prng.next_f32_range(-1.0, 1.0) * vol),
+            (prng.next_f32_range(-1.0, 1.0) * vol) + y_start + (1.0 * th_height),
+            v + (prng.next_f32_range(-1.0, 1.0) * vol),
+            (prng.next_f32_range(-1.0, 1.0) * vol) + y_start + (2.0 * th_height),
+            v + (prng.next_f32_range(-1.0, 1.0) * vol),
+            (prng.next_f32_range(-1.0, 1.0) * vol) + y_start + (3.0 * th_height),
         ];
 
         stroked_bezier::render(
@@ -131,7 +131,7 @@ pub fn render(
             stroke_thickness,
             &rgb_from_lab,
             colour_volatility,
-            prng.prng_f32(),
+            prng.next_f32(),
             Easing::Linear,
             uvm,
         )?;

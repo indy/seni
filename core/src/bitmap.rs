@@ -138,7 +138,7 @@ pub fn each(
             // invariant: elements with index >= i have been locked in place.
             i -= 1;
             // lock element i in place.
-            coords.swap(i, prng.gen_range(0, i as u32 + 1) as usize);
+            coords.swap(i, prng.next_u32_range(0, i as u32 + 1) as usize);
         }
 
         for coord in coords {

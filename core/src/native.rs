@@ -2062,7 +2062,7 @@ fn prng_values_execute(vm: &mut Vm) -> Result<Option<Var>> {
 
     let mut vs: Vec<Var> = Vec::new();
     for _ in 0..num {
-        let f = ref_mut_prng_state.prng_f32_defined_range();
+        let f = ref_mut_prng_state.next_f32_defined_range();
         vs.push(Var::Float(f))
     }
 
@@ -2087,7 +2087,7 @@ fn prng_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     let mut ref_mut_prng_state = ref_mut_prng_state_struct(&vm.stack, vm.sp, 1)?;
-    let res = ref_mut_prng_state.prng_f32_defined_range();
+    let res = ref_mut_prng_state.next_f32_defined_range();
 
     Ok(Some(Var::Float(res)))
 }
@@ -3021,7 +3021,7 @@ fn gen_stray_int_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let by: f32 = vm.stack_peek(2)?;
 
     let by = mathutil::absf(by);
-    let value = vm.prng_state.prng_f32_range(from - by, from + by);
+    let value = vm.prng_state.next_f32_range(from - by, from + by);
     let value = value.floor();
 
     Ok(Some(Var::Float(value)))
@@ -3044,7 +3044,7 @@ fn gen_stray_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let by: f32 = vm.stack_peek(2)?;
 
     let by = mathutil::absf(by);
-    let value = vm.prng_state.prng_f32_range(from - by, from + by);
+    let value = vm.prng_state.next_f32_range(from - by, from + by);
 
     Ok(Some(Var::Float(value)))
 }
@@ -3087,7 +3087,7 @@ fn gen_stray_2d_execute(vm: &mut Vm) -> Result<Option<Var>> {
     // pick a scalar between min and max
     let value = vm
         .prng_state
-        .prng_f32_range(from_index - by_index, from_index + by_index);
+        .next_f32_range(from_index - by_index, from_index + by_index);
 
     Ok(Some(Var::Float(value)))
 }
@@ -3141,7 +3141,7 @@ fn gen_stray_3d_execute(vm: &mut Vm) -> Result<Option<Var>> {
     };
 
     // pick a scalar between min and max
-    let value = vm.prng_state.prng_f32_range(from - by, from + by);
+    let value = vm.prng_state.next_f32_range(from - by, from + by);
 
     Ok(Some(Var::Float(value)))
 }
@@ -3195,7 +3195,7 @@ fn gen_stray_4d_execute(vm: &mut Vm) -> Result<Option<Var>> {
     };
 
     // pick a scalar between min and max
-    let value = vm.prng_state.prng_f32_range(from - by, from + by);
+    let value = vm.prng_state.next_f32_range(from - by, from + by);
 
     Ok(Some(Var::Float(value)))
 }
@@ -3217,7 +3217,7 @@ fn gen_int_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let max: f32 = vm.stack_peek(2)?;
 
     // pick a scalar between min and max
-    let value = vm.prng_state.prng_f32_range(min, max + 1.0);
+    let value = vm.prng_state.next_f32_range(min, max + 1.0);
 
     Ok(Some(Var::Float(value.floor())))
 }
@@ -3239,7 +3239,7 @@ fn gen_scalar_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let max: f32 = vm.stack_peek(2)?;
 
     // pick a scalar between min and max
-    let value = vm.prng_state.prng_f32_range(min, max);
+    let value = vm.prng_state.next_f32_range(min, max);
 
     Ok(Some(Var::Float(value)))
 }
@@ -3260,8 +3260,8 @@ fn gen_2d_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let min: f32 = vm.stack_peek(1)?;
     let max: f32 = vm.stack_peek(2)?;
 
-    let x = vm.prng_state.prng_f32_range(min, max);
-    let y = vm.prng_state.prng_f32_range(min, max);
+    let x = vm.prng_state.next_f32_range(min, max);
+    let y = vm.prng_state.next_f32_range(min, max);
 
     Ok(Some(Var::V2D(x, y)))
 }
@@ -3284,7 +3284,7 @@ fn gen_select_execute(vm: &mut Vm) -> Result<Option<Var>> {
     }
 
     let from = stack_peek_vars(&vm.stack, vm.sp, 1)?;
-    let index = vm.prng_state.prng_usize_range(0, from.len());
+    let index = vm.prng_state.next_usize_range(0, from.len());
 
     Ok(Some(from[index].clone()))
 }
@@ -3305,14 +3305,14 @@ fn gen_col_execute(vm: &mut Vm) -> Result<Option<Var>> {
         vm.stack_peek(1)?
     } else {
         // no alpha was given so generate a random value
-        vm.prng_state.prng_f32_range(0.0, 1.0)
+        vm.prng_state.next_f32_range(0.0, 1.0)
     };
 
     Ok(Some(Var::Colour(Colour::new(
         ColourFormat::Rgb,
-        vm.prng_state.prng_f32_range(0.0, 1.0),
-        vm.prng_state.prng_f32_range(0.0, 1.0),
-        vm.prng_state.prng_f32_range(0.0, 1.0),
+        vm.prng_state.next_f32_range(0.0, 1.0),
+        vm.prng_state.next_f32_range(0.0, 1.0),
+        vm.prng_state.next_f32_range(0.0, 1.0),
         alpha,
     ))))
 }
