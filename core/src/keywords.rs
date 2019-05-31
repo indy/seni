@@ -439,7 +439,7 @@ mod tests {
     fn test_keyword_enums() {
         assert_eq!(Keyword::False as i32, 128);
         assert_eq!(Keyword::True as i32, 129);
-        assert_eq!(Keyword::Width as i32, 298);
+        assert_eq!(Keyword::Width as i32, 299);
     }
 
     #[test]
