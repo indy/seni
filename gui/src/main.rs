@@ -34,6 +34,7 @@ use config;
 use env_logger;
 use gl;
 use imgui;
+use imgui::im_str;
 use log::info;
 use sdl2;
 
@@ -94,7 +95,8 @@ fn run(config: &config::Config) -> Result<()> {
 
     let script_filename = config.get_str("script")?;
 
-    let seni_context = seni::run_script(&script_filename, &config)?;
+    let seni_source = seni::load_script(&script_filename, &config)?;
+    let seni_context = seni::run_source(&seni_source, &config)?;
 
     let sdl_context = sdl2::init()?;
     let video = sdl_context.video()?;
@@ -177,6 +179,28 @@ fn run(config: &config::Config) -> Result<()> {
 
         let ui = input_imgui.frame(&window, &mut imgui, &event_pump.mouse_state());
         ui.show_demo_window(&mut true);
+
+        // ~/repos/rust/imgui-rs/imgui-glium-examples/examples/test_window_impl.rs
+        ui.window(im_str!("Seni"))
+            .position((0.0, 0.0), imgui::ImGuiCond::FirstUseEver)
+            .size((800.0, 600.0), imgui::ImGuiCond::FirstUseEver)
+            .build(|| {
+                if ui.button(im_str!("Load.."), (0.0, 0.0)) {
+                    ui.open_popup(im_str!("modal"));
+                }
+
+                ui.popup_modal(im_str!("modal")).build(|| {
+                    ui.text("Content of my modal");
+                    if ui.button(im_str!("OK"), (0.0, 0.0)) {
+                        ui.close_current_popup();
+                    }
+                });
+
+                ui.separator();
+                if ui.collapsing_header(im_str!("script")).build() {
+                    ui.text(im_str!("{}", seni_source));
+                }
+            });
 
         unsafe {
             gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
