@@ -1,0 +1,42 @@
+(define
+  texture "skull-a.png"
+  rng (prng/build seed: {342 (gen/scalar min: 1 max: 5000)} min: 0 max: 10)
+  pass-0-colour (col/hsluv h: { 134 (gen/scalar max: 360)} s: {90 (gen/scalar max: 100)} l: 100 alpha: 0.07)
+  pass-1-colour (col/hsluv h: {296 (gen/scalar max: 360)} s: {30 (gen/scalar max: 100)} l: 100 alpha: 0.07)
+  per-pixel-funcs [(address-of pass-0)
+                   (address-of pass-1)])
+
+
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   position: [500 500]
+                   width: 1000
+                   height: 1000
+                   shuffle-seed: 321
+                   fn: per-pixel-func))
+
+(fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (define
+    a (col/get-r colour: colour)
+    angle (+ {0.37 (gen/scalar min: 0 max: 8)} (* a math/PI)))
+  (line from: [(* {6 (gen/scalar min: 5 max: 10)} (math/cos angle: angle))
+               (* {13 (gen/scalar min: 10 max: 15)} (math/sin angle: angle))]
+        to: [(* {-5 (gen/scalar min: -10 max: 0)} (math/cos angle: angle))
+             (* {-6 (gen/scalar min: -10 max: 0)} (math/sin angle: angle))]
+        width: (- {1.9 (gen/scalar min: 0.1 max: 3)} a)
+        brush: {brush/g (gen/select from: brush/*)}
+        brush-subtype: (prng/value from: rng)
+        colour: (col/set-l colour: pass-0-colour value: (* a 100))))
+
+(fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (define
+    b (col/get-b colour: colour)
+    angle (+ {6.12 (gen/scalar min: 0 max: 8)} (* b math/PI)))
+  (line from: [(* {-2 (gen/scalar min: -5 max: 2)} (math/cos angle: angle))
+               (* {11 (gen/scalar min: 7 max: 15)} (math/sin angle: angle))]
+        to: [(* {14 (gen/scalar min: 10 max: 15)} (math/cos angle: angle))
+             (* {4 (gen/scalar min: 0 max: 5)} (math/sin angle: angle))]
+        width: (- {3.2 (gen/scalar min: 2.1 max: 5)} b)
+        brush: {brush/b (gen/select from: brush/*)}
+        brush-subtype: (prng/value from: rng)
+        colour: (col/set-l colour: pass-1-colour value: (* b 100))))

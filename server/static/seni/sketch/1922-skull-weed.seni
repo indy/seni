@@ -1,0 +1,34 @@
+(define texture "skull-b.png")
+(define per-pixel-funcs [(address-of pass-2)
+                         (address-of pass-3)])
+
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   position: [500 500]
+                   width: 1000
+                   height: 1000
+                   fn: per-pixel-func))
+
+(fn (pass-2 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
+             width: {11.8 (gen/scalar min: 11 max: 13)}
+             from: [{13 (gen/scalar min: 10 max: 15)}
+                    {-6 (gen/scalar min: -10 max: -3)}]
+             to: [{5 (gen/scalar min: 3 max: 9)}
+                  {6 (gen/scalar min: 2 max: 8)}]))
+
+(fn (pass-3 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
+             width: {1.3 (gen/scalar min: 0.1 max: 4)}
+             from: [{5 (gen/scalar min: 2 max: 8)}
+                    {8 (gen/scalar min: 5 max: 11)}]
+             to: [{-6 (gen/scalar min: -10 max: -4)}
+                  {-11 (gen/scalar min: -13 max: -8)}]))
+
+(fn (per-pixel a: 0 width: 0 from: [0 0] to: [0 0])
+  (line from: [(* (nth from: from n: 0) (math/cos angle: (* a math/PI)))
+               (* (nth from: from n: 1) (math/sin angle: (* a math/PI)))]
+        to: [(* (nth from: to n: 0) (math/cos angle: (* a math/PI)))
+             (* (nth from: to n: 1) (math/sin angle: (* a math/PI)))]
+        width: (- width a)
+        colour: (col/rgb r: a g: a b: a alpha: 0.2)))
