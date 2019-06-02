@@ -23,6 +23,7 @@ mod input_imgui;
 mod render_gl;
 mod render_imgui;
 mod render_piece;
+mod render_seni;
 mod render_square;
 mod seni;
 
@@ -139,22 +140,8 @@ fn run(config: &config::Config) -> Result<()> {
     }
 
     let imgui_renderer = render_imgui::Renderer::new(&gl, &assets_path, &mut imgui)?;
-    let piece_renderer = render_piece::Renderer::new(&gl, &assets_path, &bitmaps_path)?;
-
-    let render_texture_id = gl_util::create_texture(&gl, 1024, 1024);
-    let framebuffer_id = gl_util::create_framebuffer(&gl);
-    gl_util::attach_texture_to_framebuffer(&gl, framebuffer_id, render_texture_id);
-    gl_util::is_framebuffer_ok(&gl)?;
-    gl_util::bind_framebuffer(&gl, framebuffer_id, 1024, 1024);
-
-    unsafe {
-        gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-    }
-    piece_renderer.render(&seni_context.geometry, 1000, 1000);
-
-    gl_util::bind_framebuffer(&gl, 0, viewport_width, viewport_height);
-
-    let square_renderer = render_square::Renderer::new(&gl, &assets_path, render_texture_id)?;
+    let seni_renderer =
+        render_seni::Renderer::new(&gl, &assets_path, &bitmaps_path, &seni_context)?;
 
     gl_util::update_viewport(&gl, viewport_width, viewport_height);
 
@@ -195,7 +182,7 @@ fn run(config: &config::Config) -> Result<()> {
             gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
-        square_renderer.render(viewport_width, viewport_height);
+        seni_renderer.render(viewport_width, viewport_height);
         imgui_renderer.render(ui);
 
         window.gl_swap_window();
