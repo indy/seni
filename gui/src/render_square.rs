@@ -18,22 +18,13 @@ use gl::types::*;
 use std::path::Path;
 
 use crate::error::Result;
-use crate::gl_util;
+use crate::matrix_util;
 use crate::render_gl;
 
 struct GeometryLayout {
     stride: usize,
     position_num_elements: usize,
     texture_num_elements: usize,
-}
-
-struct RendererLocations {
-    texture: GLint,
-    projection_mtx: GLint,
-    modelview_mtx: GLint,
-
-    position: GLuint,
-    uv: GLuint,
 }
 
 pub struct Renderer {
@@ -48,6 +39,15 @@ pub struct Renderer {
     geometry: Vec<f32>,
 
     locations: RendererLocations,
+}
+
+struct RendererLocations {
+    texture: GLint,
+    projection_mtx: GLint,
+    modelview_mtx: GLint,
+
+    position: GLuint,
+    uv: GLuint,
 }
 
 impl Drop for Renderer {
@@ -119,10 +119,11 @@ impl Renderer {
             uv: location_uv,
         };
 
-        let projection_matrix = gl_util::ortho(0.0, 1000.0, 0.0, 1000.0, 10.0, -10.0);
-        let mut model_view_matrix = gl_util::identity();
-        gl_util::scale(&mut model_view_matrix, 400.0, 400.0, 1.0);
-        gl_util::translate(&mut model_view_matrix, 300.0, 100.0, 0.0);
+        let projection_matrix =
+            matrix_util::create_ortho_matrix(0.0, 1000.0, 0.0, 1000.0, 10.0, -10.0);
+        let mut model_view_matrix = matrix_util::create_identity_matrix();
+        matrix_util::matrix_scale(&mut model_view_matrix, 800.0, 800.0, 1.0);
+        matrix_util::matrix_translate(&mut model_view_matrix, 100.0, 100.0, 0.0);
 
         let layout = GeometryLayout {
             stride: 4, // x, y, u, v
@@ -196,7 +197,7 @@ impl Renderer {
     pub fn render(&self, viewport_width: usize, viewport_height: usize) {
         let gl = &self.gl;
 
-        let projection_matrix = gl_util::ortho(
+        let projection_matrix = matrix_util::create_ortho_matrix(
             0.0,
             viewport_width as f32,
             0.0,

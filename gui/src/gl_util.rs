@@ -18,10 +18,11 @@ use std::mem;
 use std::path::Path;
 
 use core::BitmapInfo;
+use gl;
 use image::GenericImageView;
 use log::info;
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 #[macro_export]
 macro_rules! c_str {
@@ -80,48 +81,86 @@ pub fn load_texture(ppath: &Path, name: &str) -> Result<BitmapInfo> {
     Ok(bitmap_info)
 }
 
-pub fn identity() -> [f32; 16] {
-    let out: [f32; 16] = [
-        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-    ];
-    out
+pub fn create_framebuffer(gl: &gl::Gl) -> gl::types::GLuint {
+    let mut framebuffer_id: gl::types::GLuint = 0;
+
+    unsafe {
+        gl.GenFramebuffers(1, &mut framebuffer_id);
+    }
+
+    framebuffer_id
 }
 
-pub fn ortho(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) -> [f32; 16] {
-    let lr = 1.0 / (left - right);
-    let bt = 1.0 / (bottom - top);
-    let nf = 1.0 / (near - far);
+pub fn create_texture(gl: &gl::Gl, width: usize, height: usize) -> gl::types::GLuint {
+    let mut texture_id: gl::types::GLuint = 0;
 
-    let out: [f32; 16] = [
-        -2.0 * lr,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        -2.0 * bt,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        2.0 * nf,
-        0.0,
-        (left + right) * lr,
-        (top + bottom) * bt,
-        (far + near) * nf,
-        1.0,
-    ];
+    unsafe {
+        gl.GenTextures(1, &mut texture_id);
+        // "Bind" the newly created texture : all future texture functions will modify this texture
+        gl.BindTexture(gl::TEXTURE_2D, texture_id);
+        // Give an empty image to OpenGL ( the last "0" )
+        gl.TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA as _,
+            width as _,
+            height as _,
+            0,
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+            0 as *const gl::types::GLvoid,
+        );
 
-    out
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as _);
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as _);
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as _);
+        gl.TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as _);
+    }
+
+    texture_id
 }
 
-pub fn scale(mat: &mut [f32; 16], x: f32, y: f32, z: f32) {
-    mat[0] *= x;
-    mat[5] *= y;
-    mat[10] *= z;
+pub fn attach_texture_to_framebuffer(
+    gl: &gl::Gl,
+    framebuffer_id: gl::types::GLuint,
+    texture_id: gl::types::GLuint,
+) {
+    unsafe {
+        gl.BindFramebuffer(gl::FRAMEBUFFER, framebuffer_id);
+        gl.FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            gl::TEXTURE_2D,
+            texture_id,
+            0,
+        );
+    }
 }
 
-pub fn translate(mat: &mut [f32; 16], x: f32, y: f32, z: f32) {
-    mat[12] += x;
-    mat[13] += y;
-    mat[14] += z;
+pub fn is_framebuffer_ok(gl: &gl::Gl) -> Result<()> {
+    unsafe {
+        if gl.CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
+            Err(Error::GLError("Framebuffer is not complete".to_string()))
+        } else {
+            Ok(())
+        }
+    }
+}
+
+pub fn bind_framebuffer(
+    gl: &gl::Gl,
+    framebuffer_id: gl::types::GLuint,
+    viewport_width: usize,
+    viewport_height: usize,
+) {
+    unsafe {
+        gl.BindFramebuffer(gl::FRAMEBUFFER, framebuffer_id);
+        gl.Viewport(0, 0, viewport_width as _, viewport_height as _);
+    }
+}
+
+pub fn update_viewport(gl: &gl::Gl, viewport_width: usize, viewport_height: usize) {
+    unsafe {
+        gl.Viewport(0, 0, viewport_width as _, viewport_height as _);
+    }
 }

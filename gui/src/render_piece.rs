@@ -21,6 +21,7 @@ use core::Geometry;
 
 use crate::error::Result;
 use crate::gl_util;
+use crate::matrix_util;
 use crate::render_gl;
 
 struct GeometryLayout {
@@ -38,7 +39,7 @@ pub struct Renderer {
     vbo: GLuint,
 
     texture: GLuint,
-    // locations: RendererLocations,
+    locations: RendererLocations,
 }
 
 struct RendererLocations {
@@ -140,8 +141,9 @@ impl Renderer {
             uv: location_uv,
         };
 
-        let projection_matrix = gl_util::ortho(0.0, 1000.0, 0.0, 1000.0, 10.0, -10.0);
-        let model_view_matrix = gl_util::identity();
+        let projection_matrix =
+            matrix_util::create_ortho_matrix(0.0, 1000.0, 0.0, 1000.0, 10.0, -10.0);
+        let model_view_matrix = matrix_util::create_identity_matrix();
 
         let layout = GeometryLayout {
             stride: 8, // x, y, r, g, b, a, u, v
@@ -204,12 +206,21 @@ impl Renderer {
             vao,
             vbo,
             texture,
-            // locations,
+            locations,
         })
     }
 
-    pub fn render(&self, geometry: &Geometry) {
+    pub fn render(&self, geometry: &Geometry, viewport_width: usize, viewport_height: usize) {
         let gl = &self.gl;
+
+        let projection_matrix = matrix_util::create_ortho_matrix(
+            0.0,
+            viewport_width as f32,
+            0.0,
+            viewport_height as f32,
+            10.0,
+            -10.0,
+        );
 
         unsafe {
             gl.ActiveTexture(gl::TEXTURE0);
@@ -218,6 +229,14 @@ impl Renderer {
             gl.UseProgram(self.program.id());
 
             gl.BindVertexArray(self.vao);
+
+            gl.UniformMatrix4fv(
+                self.locations.projection_mtx,
+                1,
+                gl::FALSE,
+                projection_matrix.as_ptr(),
+            );
+
             gl.BindBuffer(gl::ARRAY_BUFFER, self.vbo);
 
             for rp in &geometry.render_packets {
