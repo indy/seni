@@ -120,6 +120,15 @@ pub fn create_texture(gl: &gl::Gl, width: usize, height: usize) -> gl::types::GL
     texture_id
 }
 
+pub fn delete_texture(gl: &gl::Gl, id: gl::types::GLuint) {
+    // todo: is this the right way of deleting textures? needs testing
+    let u = [id].as_ptr();
+
+    unsafe {
+        gl.DeleteTextures(1, u as *const u32);
+    }
+}
+
 pub fn attach_texture_to_framebuffer(
     gl: &gl::Gl,
     framebuffer_id: gl::types::GLuint,

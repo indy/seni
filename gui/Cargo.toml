@@ -15,6 +15,7 @@ image = "0.21.1"
 imgui = "0.0.22"
 log = "0.4"
 sdl2 = "0.32.1"
+notify = "4.0.12"
 
 [features]
 gl_debug = ["gl/debug"]

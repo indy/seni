@@ -24,10 +24,10 @@ use crate::render_piece;
 use crate::render_square;
 
 pub struct Renderer {
-    //piece_renderer: render_piece::Renderer,
+    piece_renderer: render_piece::Renderer,
     square_renderer: render_square::Renderer,
-    //render_texture_id: gl::types::GLuint,
-    //framebuffer_id: gl::types::GLuint,
+    render_texture_id: gl::types::GLuint,
+    framebuffer_id: gl::types::GLuint,
 }
 
 impl Renderer {
@@ -53,14 +53,47 @@ impl Renderer {
         // putting in nonsense viewport figures since a gl_util::upate_viewport is called after this constructor
         gl_util::bind_framebuffer(&gl, 0, 1, 1);
 
+        println!(
+            "render_seni: new: render_texture_id = {}",
+            render_texture_id
+        );
         let square_renderer = render_square::Renderer::new(&gl, &assets_path, render_texture_id)?;
 
         Ok(Renderer {
-            //piece_renderer,
+            piece_renderer,
             square_renderer,
-            //render_texture_id,
-            //framebuffer_id,
+            render_texture_id,
+            framebuffer_id,
         })
+    }
+
+    pub fn rebake(&mut self, gl: &gl::Gl, assets_path: &Path, context: &Context) -> Result<()> {
+        gl_util::delete_texture(&gl, self.render_texture_id);
+        self.render_texture_id = gl_util::create_texture(&gl, 1024, 1024);
+        // unsafe {
+        //     gl.BindTexture(gl::TEXTURE_2D, self.render_texture_id);
+        // }
+
+        gl_util::attach_texture_to_framebuffer(&gl, self.framebuffer_id, self.render_texture_id);
+        gl_util::is_framebuffer_ok(&gl)?;
+        gl_util::bind_framebuffer(&gl, self.framebuffer_id, 1024, 1024);
+
+        unsafe {
+            gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        }
+        self.piece_renderer.render(&context.geometry, 1000, 1000);
+
+        // putting in nonsense viewport figures since a gl_util::upate_viewport is called after this constructor
+        gl_util::bind_framebuffer(&gl, 0, 1, 1);
+
+        println!(
+            "render_seni: rebake: render_texture_id = {}",
+            self.render_texture_id
+        );
+        self.square_renderer =
+            render_square::Renderer::new(&gl, &assets_path, self.render_texture_id)?;
+
+        Ok(())
     }
 
     pub fn render(&self, viewport_width: usize, viewport_height: usize) {

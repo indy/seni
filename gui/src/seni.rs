@@ -101,10 +101,9 @@ fn quantity(amount: usize, s: &str) -> String {
     }
 }
 
-pub fn load_script(script: &str, settings: &config::Config) -> Result<String> {
+pub fn load_script(script: &PathBuf) -> Result<String> {
     let time_read_script_file = Instant::now();
-    let scripts_directory = settings.get_str("scripts_path")?;
-    let source = read_script_file(&Path::new(&scripts_directory).join(script))?;
+    let source = read_script_file(script)?;
 
     info!("read_script_file: {:?}", time_read_script_file.elapsed());
 
