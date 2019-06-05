@@ -1,6 +1,8 @@
 (define texture "skull-a.png")
+
 (define per-pixel-funcs [(address-of pass-0)
                          (address-of pass-1)])
+
 
 (each (per-pixel-func from: per-pixel-funcs)
       (bitmap/each from: texture
