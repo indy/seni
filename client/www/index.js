@@ -509,16 +509,25 @@ stroked-bezier-rect take translate`);
       if (state.curlyCounter === 1) {
         usePrefix = false;
         // this is the first element in the curlys
+
+        state.curlyedFirstChildIsString = (token === STRING);
         state.curlyedFirstChildIsParen = (token === PAREN);
+
         if (state.curlyedFirstChildIsParen) {
           // special case of the first child in curlys being a s-exp.
           // we'll need to keep count of parenDepth
           state.firstParenCurlyDepth = state.parenDepth;
         }
       } else {
-        // normally grey out, except if we're curlyedFirstChildIsParen
-        if (state.curlyedFirstChildIsParen &&
-            state.firstParenCurlyDepth <= state.parenDepth) {
+        if (state.curlyedFirstChildIsString) {
+          usePrefix = false;
+          if (token === STRING) {
+            state.curlyedFirstChildIsString = false;
+          }
+        } else if (state.curlyedFirstChildIsParen &&
+                 state.firstParenCurlyDepth <= state.parenDepth) {
+          // normally grey out, except if we're curlyedFirstChildIsParen
+
           // keep on colouring as normal
           usePrefix = false;
 
@@ -559,7 +568,8 @@ stroked-bezier-rect take translate`);
         insideCurly: false,
         curlyCounter: 0,
         firstParenCurlyDepth: 0,
-        curlyedFirstChildIsParen: false
+        curlyedFirstChildIsParen: false,
+        curlyedFirstChildIsString: false
       };
       return state;
     },
