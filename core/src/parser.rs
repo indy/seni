@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::str::FromStr;
 
 use crate::colour::Colour;
@@ -248,6 +248,16 @@ struct NodeAndRemainder<'a> {
     tokens: &'a [Token<'a>],
 }
 
+fn is_name_or_keyword(s: &str) -> bool {
+    if let Ok(_) = Native::from_str(s) {
+        return true
+    }
+    if let Ok(_) = Keyword::from_str(s) {
+        return true
+    }
+    false
+}
+
 #[derive(Debug)]
 pub struct WordLut {
     // requires a builtin hashmap (function names reserved by the builtin api)
@@ -287,6 +297,39 @@ impl Default for WordLut {
 }
 
 impl WordLut {
+    pub fn new(tokens: &[Token]) -> Self {
+        let mut word_lut: WordLut = Default::default();
+        let mut words: HashSet<String> = HashSet::new();
+
+        for t in tokens {
+            match t {
+                Token::Name(txt) if !is_name_or_keyword(&txt) => {
+                    words.insert(txt.to_string());
+                },
+                Token::String(txt) if !is_name_or_keyword(&txt) => {
+                    words.insert(txt.to_string());
+                }
+                _ => {}
+            }
+        }
+
+        // sort the set of words into alphabetical order before assigning Inames
+        // this ensures that they get the same Iname regardless of their position
+        // in the script (which could change depending on the genotype used)
+        //
+
+        let mut word_list: Vec<&String> = words.iter().collect();
+        word_list.sort();
+
+        for (i, word) in word_list.iter().enumerate() {
+            let iname = Iname::new(i as i32);
+            word_lut.word_to_iname.insert(word.to_string(), iname);
+            word_lut.iname_to_word.insert(iname, word.to_string());
+        }
+
+        word_lut
+    }
+
     pub fn get_string_from_name(&self, name: Iname) -> Option<&String> {
         if let Some(s) = self.iname_to_native.get(&name) {
             // 1st check the native api
@@ -300,17 +343,12 @@ impl WordLut {
         }
     }
 
-    fn get_or_add(&mut self, s: &str) -> Iname {
+    fn get(&self, s: &str) -> Result<Iname> {
         if let Some(i) = self.get_name_from_string(s) {
-            return i;
+            return Ok(i);
         }
 
-        let name = Iname::new(self.word_count);
-        self.word_to_iname.insert(s.to_string(), name);
-        self.iname_to_word.insert(name, s.to_string());
-        self.word_count += 1;
-
-        Iname::new(self.word_count - 1)
+        Err(Error::Parser)
     }
 
     fn get_name_from_string(&self, s: &str) -> Option<Iname> {
@@ -324,7 +362,7 @@ impl WordLut {
             return Some(Iname::from(kw));
         }
 
-        // finally check/add to word_to_iname
+        // finally check word_to_iname
         if let Some(i) = self.word_to_iname.get(s) {
             return Some(*i);
         }
@@ -350,10 +388,10 @@ pub fn parse(s: &str) -> Result<(Vec<Node>, WordLut)> {
     let mut tokens = t.as_slice();
     let mut res = Vec::new();
 
-    let mut word_lut: WordLut = Default::default();
+    let word_lut = WordLut::new(tokens);
 
     while !tokens.is_empty() {
-        match eat_token(tokens, None, &mut word_lut) {
+        match eat_token(tokens, None, &word_lut) {
             Ok(nar) => {
                 res.push(nar.node);
                 tokens = nar.tokens;
@@ -370,7 +408,7 @@ pub fn parse(s: &str) -> Result<(Vec<Node>, WordLut)> {
 fn eat_list<'a>(
     t: &'a [Token<'a>],
     meta: Option<NodeMeta>,
-    word_lut: &mut WordLut,
+    word_lut: &WordLut,
 ) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
@@ -397,7 +435,7 @@ fn eat_list<'a>(
 fn eat_vector<'a>(
     t: &'a [Token<'a>],
     meta: Option<NodeMeta>,
-    word_lut: &mut WordLut,
+    word_lut: &WordLut,
 ) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
@@ -421,7 +459,7 @@ fn eat_vector<'a>(
     }
 }
 
-fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeAndRemainder<'a>> {
+fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &WordLut) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
 
     // possible parameter_prefix
@@ -486,13 +524,13 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &mut WordLut) -> Result<NodeA
 fn eat_quoted_form<'a>(
     t: &'a [Token<'a>],
     meta: Option<NodeMeta>,
-    word_lut: &mut WordLut,
+    word_lut: &WordLut,
 ) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
 
     let q = "quote".to_string();
-    let qi = word_lut.get_or_add(&q);
+    let qi = word_lut.get(&q)?;
     res.push(Node::Name(q, qi, None));
     res.push(Node::Whitespace(" ".to_string(), None));
 
@@ -513,12 +551,12 @@ fn eat_quoted_form<'a>(
 fn eat_token<'a>(
     tokens: &'a [Token<'a>],
     meta: Option<NodeMeta>,
-    word_lut: &mut WordLut,
+    word_lut: &WordLut,
 ) -> Result<NodeAndRemainder<'a>> {
     match tokens[0] {
         Token::Name(txt) => {
             let t = txt.to_string();
-            let ti = word_lut.get_or_add(&t);
+            let ti = word_lut.get(&t)?;
             if tokens.len() > 1 && tokens[1] == Token::Colon {
                 Ok(NodeAndRemainder {
                     node: Node::Label(t, ti, meta),
@@ -533,7 +571,7 @@ fn eat_token<'a>(
         }
         Token::String(txt) => {
             let t = txt.to_string();
-            let ti = word_lut.get_or_add(&t);
+            let ti = word_lut.get(&t)?;
 
             Ok(NodeAndRemainder {
                 node: Node::String(t, ti, meta),
