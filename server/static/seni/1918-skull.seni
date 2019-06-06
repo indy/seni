@@ -1,4 +1,4 @@
-(define texture "skull-a.png")
+(define texture {"skull-a.png" (gen/select from: '("skull-a.png" "skull-b.png" "skull-c.png"))})
 
 (define per-pixel-funcs [(address-of pass-0)
                          (address-of pass-1)])
