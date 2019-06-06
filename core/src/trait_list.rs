@@ -199,6 +199,11 @@ impl TraitList {
                     self.add_single_trait(&node, &meta, word_lut)?;
                 }
             }
+            Node::String(_, _, meta) => {
+                if let Some(meta) = meta {
+                    self.add_single_trait(&node, &meta, word_lut)?;
+                }
+            }
             _ => {}
         };
 

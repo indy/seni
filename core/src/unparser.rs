@@ -237,9 +237,17 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
                 Err(Error::Unparser)
             }
         }
-        Gene::Name(i) => {
-            if let Some(s) = word_lut.get_string_from_name(*i) {
+        Gene::Name(iname) => {
+            if let Some(s) = word_lut.get_string_from_name(*iname) {
                 Ok(s.to_string())
+            } else {
+                error!("format_var_value Gene::Name iname has no string");
+                Err(Error::Unparser)
+            }
+        }
+        Gene::String(iname) => {
+            if let Some(s) = word_lut.get_string_from_name(*iname) {
+                Ok(format!("\"{}\"", s.to_string()))
             } else {
                 error!("format_var_value Gene::Name iname has no string");
                 Err(Error::Unparser)
@@ -395,6 +403,15 @@ mod tests {
         basic_unparse_check("(define aaa 1.2) (define bbb 54) (define ccc 9.0909)");
 
         basic_unparse_check("(bitmap \"foo.png\")");
+    }
+
+    #[test]
+    fn test_unparser_seeded_string() {
+        seeded_unparse_check(
+            653,
+            "{\"shabba\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}",
+            "{\"ghi\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}",
+        );
     }
 
     #[test]

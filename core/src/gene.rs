@@ -420,6 +420,14 @@ mod tests {
         TraitList::compile(&ast, &word_lut)
     }
 
+    fn gene_string(g: &Gene, expected_iname: i32) {
+        if let Gene::String(iname) = g {
+            assert_eq!(iname, &Iname::new(expected_iname));
+        } else {
+            assert!(false);
+        }
+    }
+
     fn gene_float(g: &Gene, expected: f32) {
         if let Gene::Float(f) = g {
             assert_eq!(*f, expected);
@@ -463,6 +471,15 @@ mod tests {
     }
 
     #[test]
+    fn genotype_from_initial_values_3() {
+        let trait_list = compile_trait_list("{\"hello\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}").unwrap();
+        let genotype = Genotype::build_from_initial_values(&trait_list).unwrap();
+
+        assert_eq!(genotype.genes.len(), 1);
+        gene_string(&genotype.genes[0], 3); // inames are sorted alphabetically so hello is index 3
+    }
+
+    #[test]
     fn genotype_from_seed_1() {
         let trait_list =
             compile_trait_list("(+ {4 (gen/scalar min: 2 max: 9)}) {6 (gen/scalar min: 2 max: 9)}")
@@ -485,6 +502,15 @@ mod tests {
         assert_eq!(genotype.genes.len(), 2);
         gene_2d(&genotype.genes[0], 56.77736, 58.385616);
         gene_2d(&genotype.genes[1], 51.329006, 58.351044);
+    }
+
+    #[test]
+    fn genotype_from_seed_3() {
+        let trait_list = compile_trait_list("{\"hello\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}").unwrap();
+        let genotype = Genotype::build_from_seed(&trait_list, 432).unwrap();
+
+        assert_eq!(genotype.genes.len(), 1);
+        gene_string(&genotype.genes[0], 2);
     }
 
     fn is_float(var: &Var, expected: f32) {
