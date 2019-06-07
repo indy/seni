@@ -751,7 +751,8 @@ const actionInitialGeneration = 'INITIAL_GENERATION';
 const actionNextGeneration = 'NEXT_GENERATION';
 const actionShuffleGeneration = 'SHUFFLE_GENERATION';
 const actionSetState = 'SET_STATE';
-const actionGalleryLoaded = 'GALLERY_LOADED';
+const actionSetGalleryItems = "SET_GALLERY_ITEMS";
+const actionGalleryOldestToDisplay = 'GALLERY_OLDEST_TO_DISPLAY';
 
 function createInitialState() {
   return {
@@ -762,7 +763,12 @@ function createInitialState() {
     mutationRate: 0.1,
 
     currentMode: SeniMode.gallery,
+
     galleryLoaded: false,
+    galleryOldestToDisplay: 9999,
+    galleryItems: {},
+    galleryDisplaySize: 20,     // the number of gallery pieces to display everytime 'load more' is clicked
+
     previouslySelectedGenotypes: [],
     selectedIndices: [],
     scriptId: undefined,
@@ -789,7 +795,12 @@ class Controller {
     clone.mutationRate = state.mutationRate;
 
     clone.currentMode = state.currentMode;
+
     clone.galleryLoaded = state.galleryLoaded;
+    clone.galleryOldestToDisplay = state.galleryOldestToDisplay;
+    clone.galleryItems = state.galleryItems;
+    clone.galleryDisplaySize = state.galleryDisplaySize;
+
     clone.previouslySelectedGenotypes = state.previouslySelectedGenotypes;
     clone.selectedIndices = state.selectedIndices;
     clone.scriptId = state.scriptId;
@@ -883,9 +894,27 @@ class Controller {
     return this.currentState;
   }
 
-  async applyGalleryIsLoaded(state) {
+  async applyGalleryOldestToDisplay(state, { oldestId }) {
     const newState = this.cloneState(state);
+    newState.galleryOldestToDisplay = oldestId;
+
+    this.currentState = newState;
+    return this.currentState;
+  }
+
+  async applySetGalleryItems(state, { galleryItems }) {
+    const newState = this.cloneState(state);
+
+    newState.galleryItems = {};
+    galleryItems.forEach(item => {
+      newState.galleryItems[item.id] = item;
+    });
+    if (galleryItems.length === 0)  {
+      console.error("galleryItems is empty?");
+    }
+
     newState.galleryLoaded = true;
+    newState.galleryOldestToDisplay = galleryItems[0].id;
 
     this.currentState = newState;
     return this.currentState;
@@ -996,8 +1025,10 @@ class Controller {
     case actionSetState:
       log(`${actionSetState}: ${action.state}`);
       return this.applySetState(action.state);
-    case actionGalleryLoaded:
-      return this.applyGalleryIsLoaded(state, action);
+    case actionGalleryOldestToDisplay:
+      return this.applyGalleryOldestToDisplay(state, action);
+    case actionSetGalleryItems:
+      return this.applySetGalleryItems(state, action);
     default:
       return this.applySetState(state);
     }
@@ -1929,7 +1960,7 @@ function setupUI(controller) {
     await evalMainScript(controller);
   });
 
-  addClickEvent('gallery-container', async event => {
+  addClickEvent('gallery-list', async event => {
     event.preventDefault();
     const target = event.target;
     if (target.classList.contains('show-edit')) {
@@ -1962,6 +1993,10 @@ function setupUI(controller) {
 
   addClickEvent('next-btn', () => {
     onNextGen(controller);
+  });
+
+  addClickEvent('gallery-more-btn', () => {
+    createGalleryDisplayChunk(controller);
   });
 
   addClickEvent('download-dialog-button-ok', async event => {
@@ -2078,6 +2113,14 @@ function setupUI(controller) {
 }
 
 async function getGallery(controller) {
+  const galleryItems = await getJSON('gallery');
+
+  await controller.dispatch(actionSetGalleryItems, { galleryItems });
+  await createGalleryDisplayChunk(controller);
+}
+
+async function createGalleryDisplayChunk(controller) {
+
   const createGalleryElement = galleryItem => {
     const container = document.createElement('div');
 
@@ -2096,23 +2139,24 @@ async function getGallery(controller) {
     return container;
   };
 
-  const list = document.getElementById('gallery-container');
-  list.innerHTML = '';
+  const row = document.getElementById('gallery-list-cards');
 
-  const row = document.createElement('div');
-  row.className = 'cards';
-  list.appendChild(row);
-
-  const url = 'gallery';
-  const galleryItems = await getJSON(url);
-
-  // gets an array of gallery items
-  galleryItems.forEach(item => {
+  const state = controller.getState();
+  let least = Math.max(state.galleryOldestToDisplay - state.galleryDisplaySize, 0);
+  for (let i=state.galleryOldestToDisplay; i>least; i--) {
+    // console.log(`creating element ${i}`);
+    const item = state.galleryItems[i];
     const e = createGalleryElement(item);
     row.appendChild(e);
-  });
+  }
+  // console.log(`oldest id to display is now ${least}`);
 
-  await controller.dispatch(actionGalleryLoaded);
+  if (least === 0) {
+    // hide the button
+    document.getElementById('gallery-more-btn').classList.add('hidden');;
+  }
+
+  await controller.dispatch(actionGalleryOldestToDisplay, { oldestId: least});
 }
 
 function allocateWorkers(state) {
