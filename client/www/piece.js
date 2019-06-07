@@ -180,7 +180,7 @@ function setupShaders(gl) {
 }
 
 function setupGLState(gl) {
-  gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  gl.clearColor(1.0, 1.0, 1.0, 0.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.BLEND);
 
@@ -226,6 +226,10 @@ class GLRenderer {
     this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
     Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
+  }
+
+  clear() {
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
   }
 
   loadTexture(src) {
@@ -399,23 +403,6 @@ class GLRenderer {
 }
 
 // --------------------------------------------------------------------------------
-
-/// /seni/Util
-
-  // from http://werxltd.com/wp/2010/05/13/ (cont'd next line)
-  // javascript-implementation-of-javas-string-hashcode-method/
-function hashCode(string) {
-  let hash = 0, i, len;
-  if (string.length === 0) return hash;
-  for (i = 0, len = string.length; i < len; i++) {
-    const chr = string.charCodeAt(i);
-    hash = ((hash << 5) - hash) + chr;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash;
-}
-
-// --------------------------------------------------------------------------------
 // job
 
 let numWorkers = 0;
@@ -583,36 +570,57 @@ const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
 
 // --------------------------------------------------------------------------------
 
-let gGLRenderer = undefined;
+const PAGE = "piece.html";
 
-let gLogDebug = false;
-let gTimeoutId = undefined;
-let gSlideshowDelay = 5000;
-let gDemandCanvasSize = 500;
-let gMode = "normal";           // normal | slideshow
-let gActiveImageElement = 0;
-let gNumTransitions = 0;        // reset after every mode switch
+const URI_SEED = "seed";
+const URI_MODE = "mode";
 
-let gSketchMemory = undefined;
-let gSketchBuffers = undefined;
-let gSketchBufferIndex = 0;
-let gSketchGeoIndex = 0;
-let gSketchAmount = 0;
-let gSketchTimeStart = 0;
+const MODE_NORMAL = "normal";
+const MODE_SKETCH = "sketch";
+const MODE_SLIDESHOW = "slideshow";
+
+// either display the generated image asap or fade it in
+const DISPLAY_SNAP = 0;
+const DISPLAY_FADE = 1;
+
+const IMG_0 = 'piece-img-0';
+const IMG_1 = 'piece-img-1';
+
+let gState = {
+  glRenderer: undefined,
+  logDebug: false,
+  timoutId: undefined,
+
+  slideshowDelay: 5000,
+  demandCanvasSize: 500,
+  mode: MODE_NORMAL,
+  seed: undefined,
+  activeImageElement: 0,
+  lastDisplay: DISPLAY_SNAP,
+
+  sketchMemory: undefined,
+  sketchBuffers: undefined,
+  sketchBufferIndex: 0,
+  sketchGeoIndex: 0,
+  sketchAmount: 0,
+  sketchTimeStart: 0,
 // note: desiredDuration will always be a slight underestimation of actual duration
 // as some transitions aren't going to be using the full amount of vertices
-let gSketchDesiredDuration = 40;
+  sketchDesiredDuration: 40,
+
+  deleteme: false
+};
 
 function logDebug(msg) {
-  if (gLogDebug) {
-    const op0 = getRequiredElement('piece-img-0').style.opacity;
-    const op1 = getRequiredElement('piece-img-1').style.opacity;
+  if (gState.logDebug) {
+    const op0 = getRequiredElement(IMG_0).style.opacity;
+    const op1 = getRequiredElement(IMG_1).style.opacity;
 
-    console.log(`${msg} ${gMode} gNumTransitions: ${gNumTransitions} img-0 opacity: ${op0}, img-1 opacity: ${op1} activeImageElement: ${gActiveImageElement}`);
+    console.log(`${msg} ${gState.mode} img-0 opacity: ${op0}, img-1 opacity: ${op1} activeImageElement: ${gState.activeImageElement}`);
   }
 }
 
-function updatePieceDimensions(pieceImg, canvas, w, h) {
+function resizeImgDimensions(pieceImg, canvas, w, h) {
   // console.log(`top: ${canvas.offsetTop} left: ${canvas.offsetLeft} width: ${w} height: ${h}`);
 
   pieceImg.style.top = canvas.offsetTop + "px";
@@ -621,49 +629,58 @@ function updatePieceDimensions(pieceImg, canvas, w, h) {
   pieceImg.height = h;
 }
 
-async function displayOnImageElements() {
-  if (gActiveImageElement === 0) {
-    const pieceImg0 = getRequiredElement('piece-img-0');
-    await gGLRenderer.copyImageDataTo(pieceImg0);
+async function displayOnImageElements(display) {
+  // required to check that an endAnimation doesn't fade in piece-img-1
+  gState.lastDisplay = display;
 
-    if (gNumTransitions > 0) {
-      if (gMode === "normal") {
-        addClass('piece-img-1', 'seni-fade-out');
-      } else if (gMode === "slideshow") {
-        addClass('piece-img-1', 'seni-fade-out-slideshow');
-      } else if (gMode === "sketch") {
-        addClass('piece-img-1', 'seni-fade-out-sketch');
-      }
-    }
+  if (display === DISPLAY_SNAP) {
+    resetImageElements();
+
+    const pieceImg0 = getRequiredElement(IMG_0);
+    await gState.glRenderer.copyImageDataTo(pieceImg0);
   } else {
-    const pieceImg1 = getRequiredElement('piece-img-1');
-    await gGLRenderer.copyImageDataTo(pieceImg1);
-    if (gNumTransitions > 0) {
-      if (gMode === "normal") {
-        addClass('piece-img-1', 'seni-fade-in');
-      } else if (gMode === "slideshow") {
-        addClass('piece-img-1', 'seni-fade-in-slideshow');
-      } else if (gMode === "sketch") {
-        addClass('piece-img-1', 'seni-fade-in-sketch');
-      }
-    }
-  }
+    if (gState.activeImageElement === 0) {
+      const pieceImg0 = getRequiredElement(IMG_0);
+      await gState.glRenderer.copyImageDataTo(pieceImg0);
 
-  gActiveImageElement = 1 - gActiveImageElement;
+      if (gState.mode === MODE_NORMAL) {
+        addClass(IMG_1, 'seni-fade-out');
+      } else if (gState.mode === MODE_SLIDESHOW) {
+        addClass(IMG_1, 'seni-fade-out-slideshow');
+      } else if (gState.mode === MODE_SKETCH) {
+        addClass(IMG_1, 'seni-fade-out-sketch');
+      }
+
+    } else {
+      const pieceImg1 = getRequiredElement(IMG_1);
+      await gState.glRenderer.copyImageDataTo(pieceImg1);
+
+      if (gState.mode === MODE_NORMAL) {
+        addClass(IMG_1, 'seni-fade-in');
+      } else if (gState.mode === MODE_SLIDESHOW) {
+        addClass(IMG_1, 'seni-fade-in-slideshow');
+      } else if (gState.mode === MODE_SKETCH) {
+        addClass(IMG_1, 'seni-fade-in-sketch');
+      }
+
+    }
+
+    gState.activeImageElement = 1 - gState.activeImageElement;
+  }
 
   logDebug("displayOnImageElements");
 }
 
-async function renderBuffers(memory, buffers, w, h) {
+async function renderBuffers(memory, buffers, w, h, display) {
   // this will update the size of the piece-canvas element
-  gGLRenderer.preDrawScene(w, h);
+  gState.glRenderer.preDrawScene(w, h);
 
   buffers.forEach(buffer => {
-    gGLRenderer.setupBuffer(memory, buffer);
-    gGLRenderer.drawBuffer(buffer);
+    gState.glRenderer.setupBuffer(memory, buffer);
+    gState.glRenderer.drawBuffer(buffer);
   });
 
-  await displayOnImageElements();
+  await displayOnImageElements(display);
 }
 
 // based on code from:
@@ -741,9 +758,9 @@ async function renderJob(parameters) {
   return renderPacketsResult;
 }
 
-async function renderScript(parameters) {
+async function renderScript(parameters, display) {
   let { title, memory, buffers } = await renderJob(parameters);
-  await renderBuffers(memory, buffers, gDemandCanvasSize, gDemandCanvasSize);
+  await renderBuffers(memory, buffers, gState.demandCanvasSize, gState.demandCanvasSize, display);
 }
 
 function getSeedValue(element) {
@@ -770,29 +787,27 @@ async function showSimplifiedScript(fullScript) {
   });
 
   const simplifiedScriptElement = getRequiredElement('piece-simplified-script');
-  //    console.log(fullScript);
-  //    console.log(script);
   simplifiedScriptElement.textContent = script;
 }
 
-function updatePiecesUsingCanvasSize() {
+function resizeImgsUsingCanvasSize() {
   const canvas = getRequiredElement('piece-canvas');
-  const pieceImg0 = getRequiredElement('piece-img-0');
-  const pieceImg1 = getRequiredElement('piece-img-1');
-  updatePieceDimensions(pieceImg0, canvas, gDemandCanvasSize, gDemandCanvasSize);
-  updatePieceDimensions(pieceImg1, canvas, gDemandCanvasSize, gDemandCanvasSize);
+  const pieceImg0 = getRequiredElement(IMG_0);
+  const pieceImg1 = getRequiredElement(IMG_1);
+  resizeImgDimensions(pieceImg0, canvas, gState.demandCanvasSize, gState.demandCanvasSize);
+  resizeImgDimensions(pieceImg1, canvas, gState.demandCanvasSize, gState.demandCanvasSize);
 }
 
-function useLargeCanvas() {
-  gDemandCanvasSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
-  gDemandCanvasSize *= 0.9;
+function resizeCanvasToLarge() {
+  gState.demandCanvasSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
+  gState.demandCanvasSize *= 0.9;
 
-  updatePiecesUsingCanvasSize();
+  resizeImgsUsingCanvasSize();
 }
 
-function useNormalCanvas() {
-  gDemandCanvasSize = 500;
-  updatePiecesUsingCanvasSize();
+function resizeCanvasToNormal() {
+  gState.demandCanvasSize = 500;
+  resizeImgsUsingCanvasSize();
 }
 
 function addClass(id, clss) {
@@ -819,31 +834,20 @@ function setOpacity(id, opacity) {
 }
 
 async function performSlideshow() {
-  gNumTransitions += 1;
-  const scriptElement = getRequiredElement('piece-script');
-  const seedElement = getRequiredElement('piece-seed');
+  if (gState.mode === MODE_SLIDESHOW) {
+    const scriptElement = getRequiredElement('piece-script');
+    const seedElement = getRequiredElement('piece-seed');
+    const script = scriptElement.textContent;
+    const originalScript = script.slice();
 
-  const scriptHash = hashCode('whatever');
+    const newSeed = Math.random() * (1 << 30);
+    seedElement.value = parseInt(newSeed, 10);
+    gState.seed = getSeedValue(seedElement);
 
-  const script = scriptElement.textContent;
-  const originalScript = script.slice();
-
-  const newSeed = Math.random() * (1 << 30);
-  seedElement.value = parseInt(newSeed, 10);
-
-  const seedValue = getSeedValue(seedElement);
-
-  const { traits } = await Job.request(jobBuildTraits, { script: originalScript, scriptHash });
-  const { genotype } = await Job.request(jobSingleGenotypeFromSeed, { traits, seed: seedValue });
-
-  const config = { script: originalScript, scriptHash };
-  if (seedValue !== 0) {
-    config.genotype = genotype;
+    updateURIFromGlobals();
+    await updatePiece(DISPLAY_FADE);
+    gState.timeoutId = window.setTimeout(performSlideshow, gState.slideshowDelay);
   }
-
-  await renderScript(config);
-
-  gTimeoutId = window.setTimeout(performSlideshow, gSlideshowDelay);
 }
 
 function getCSSAnimationDuration(className) {
@@ -861,104 +865,49 @@ function getCSSAnimationDuration(className) {
   return undefined;
 }
 
-async function performSketch() {
-  const scriptElement = getRequiredElement('piece-script');
-  const seedElement = getRequiredElement('piece-seed');
-
-  const scriptHash = hashCode('whatever');
-
-  const script = scriptElement.textContent;
-  const originalScript = script.slice();
-
-  const config = { script: originalScript, scriptHash };
-
-  let { title, memory, buffers } = await renderJob(config);
-
-  gSketchMemory = memory;
-  gSketchBuffers = buffers;
-  gSketchBufferIndex = 0;
-  gSketchGeoIndex = 0;
-
-  let i = 0;
-  buffers.forEach(b => {
-    console.log(`buffer ${i} size: ${b.geo_len}`);
-    i += 1;
-  });
-
-  let numElements = buffers.reduce((acc, buffer) => acc + buffer.geo_len, 0);
-  let numVertices = numElements / 8;
-
-  let cssTimeFadeIn = getCSSAnimationDuration(".seni-fade-in-sketch");
-  let cssTimeFadeOut = getCSSAnimationDuration(".seni-fade-out-sketch");
-  let transitionTime = cssTimeFadeIn > cssTimeFadeOut ? cssTimeFadeIn : cssTimeFadeOut;
-  // the number of transitions that the piece should be divided into
-  let numTransitions = gSketchDesiredDuration / transitionTime;
-  let vertsPerTransition = numVertices / numTransitions;
-
-
-  // divide numVertices by the animation length and round up to be divisible by 8
-  // gSketchAmount = 2000 * 8;
-  gSketchAmount = Math.round(vertsPerTransition) * 8;
-  console.log(`gSketchAmount = ${gSketchAmount}`);
-
-
-  const canvas = getRequiredElement('piece-canvas');
-  const pieceImg0 = getRequiredElement('piece-img-0');
-  const pieceImg1 = getRequiredElement('piece-img-1');
-
-  gGLRenderer.preDrawScene(gDemandCanvasSize, gDemandCanvasSize);
-  await gGLRenderer.copyImageDataTo(pieceImg0);
-  await gGLRenderer.copyImageDataTo(pieceImg1);
-
-  if(buffers.length > 0) {
-    gSketchTimeStart = performance.now();
-    gGLRenderer.setupBuffer(memory, buffers[0]);
-    gTimeoutId = window.setTimeout(animateSketch);
-  }
-}
-
 // the animationEndListener is responsible for calling animateSketch.
 // This way we can specify the length of each fade in css
 async function animateSketch() {
-  let currentBuffer = gSketchBuffers[gSketchBufferIndex];
+  let currentBuffer = gState.sketchBuffers[gState.sketchBufferIndex];
 
-  if (gSketchGeoIndex + gSketchAmount < currentBuffer.geo_len) {
+  if (gState.sketchGeoIndex + gState.sketchAmount < currentBuffer.geo_len) {
     // can draw geometry from the current buffer
-    gGLRenderer.drawBufferPartial(currentBuffer, gSketchGeoIndex, gSketchAmount);
-    console.log(`animateSketch ${gSketchBufferIndex} gSketchGeoIndex: ${gSketchGeoIndex} gSketchAmount: ${gSketchAmount} sum: ${gSketchGeoIndex + gSketchAmount}`);
-    gSketchGeoIndex += gSketchAmount;
+    gState.glRenderer.drawBufferPartial(currentBuffer, gState.sketchGeoIndex, gState.sketchAmount);
+    console.log(`animateSketch ${gState.sketchBufferIndex} gState.sketchGeoIndex: ${gState.sketchGeoIndex} gState.sketchAmount: ${gState.sketchAmount} sum: ${gState.sketchGeoIndex + gState.sketchAmount}`);
+    gState.sketchGeoIndex += gState.sketchAmount;
   } else {
     // render the remaining geometry
-    const remaining = currentBuffer.geo_len - gSketchGeoIndex;
-    gGLRenderer.drawBufferPartial(currentBuffer, gSketchGeoIndex, remaining);
-    console.log(`animateSketch ${gSketchBufferIndex} gSketchGeoIndex: ${gSketchGeoIndex} remaining: ${remaining} sum: ${gSketchGeoIndex + remaining}`);
+    const remaining = currentBuffer.geo_len - gState.sketchGeoIndex;
+    gState.glRenderer.drawBufferPartial(currentBuffer, gState.sketchGeoIndex, remaining);
+    console.log(`animateSketch ${gState.sketchBufferIndex} gState.sketchGeoIndex: ${gState.sketchGeoIndex} remaining: ${remaining} sum: ${gState.sketchGeoIndex + remaining}`);
     console.log("");
 
     // move onto the next buffer
-    gSketchBufferIndex += 1;
-    gSketchGeoIndex = 0;
+    gState.sketchBufferIndex += 1;
+    gState.sketchGeoIndex = 0;
 
-    if (gSketchBufferIndex < gSketchBuffers.length) {
-      gGLRenderer.setupBuffer(gSketchMemory, gSketchBuffers[gSketchBufferIndex]);
+    if (gState.sketchBufferIndex < gState.sketchBuffers.length) {
+      gState.glRenderer.setupBuffer(gState.sketchMemory, gState.sketchBuffers[gState.sketchBufferIndex]);
     } else {
       // finished the animation
       let endTime = performance.now();
-      let duration = endTime - gSketchTimeStart;
+      let duration = endTime - gState.sketchTimeStart;
       console.log(`finished. duration: ${duration}`);
       return;
     }
   }
 
-  gNumTransitions += 1;
-
-  await displayOnImageElements();
+  await displayOnImageElements(DISPLAY_FADE);
 }
 
 
 function resetImageElements() {
-  setOpacity('piece-img-1', 0);
-  gActiveImageElement = 0;
-  gNumTransitions = 0;
+  setOpacity(IMG_1, 0);
+  gState.activeImageElement = 0;
+
+  removeClass(IMG_1, 'seni-fade-in');
+  removeClass(IMG_1, 'seni-fade-in-slideshow');
+  removeClass(IMG_1, 'seni-fade-in-sketch');
 }
 
 function styleForNormalPiece() {
@@ -971,7 +920,7 @@ function styleForNormalPiece() {
   showId('piece-hideable-for-slideshow');
   removeClass('piece-canvas-container', 'seni-centre-canvas');
 
-  useNormalCanvas();
+  resizeCanvasToNormal();
 
   resetImageElements();
 }
@@ -986,78 +935,60 @@ function styleForLargePiece() {
   hideId('piece-hideable-for-slideshow');
   addClass('piece-canvas-container', 'seni-centre-canvas');
 
-  useLargeCanvas();
+  resizeCanvasToLarge();
 
   resetImageElements();
 }
 
 
-function updateToMode(newMode) {
-  if (gMode === newMode) {
+async function updateToMode(newMode) {
+  if (gState.mode === newMode) {
     return false;
   }
 
-  gMode = newMode;
+  gState.mode = newMode;
+
+  gState.glRenderer.clear();
+
+  const pieceImg0 = getRequiredElement(IMG_0);
+  await gState.glRenderer.copyImageDataTo(pieceImg0);
+  const pieceImg1 = getRequiredElement(IMG_1);
+  await gState.glRenderer.copyImageDataTo(pieceImg1);
+
+  if (gState.mode === MODE_SLIDESHOW || gState.mode === MODE_SKETCH) {
+    styleForLargePiece();
+  } else if (gState.mode === MODE_NORMAL) {
+    window.clearTimeout(gState.timeoutId); // stop the slideshow/sketch
+    styleForNormalPiece();
+  }
+
   return true;
 }
 
-// returns true if the mode was actually changed
-//
-async function setMode(newMode) {
-  console.log("setMode " + newMode);
-  if (newMode === "normal" && updateToMode(newMode)) {
-    window.clearTimeout(gTimeoutId); // stop the slideshow/sketch
-
-    styleForNormalPiece();
-
-    const originalButton = getRequiredElement('piece-eval-original');
-    const scriptElement = getRequiredElement('piece-script');
-
-    const scriptHash = hashCode('whatever');
-    const script = scriptElement.textContent;
-    const originalScript = script.slice();
-
-    await renderScript({ script: originalScript, scriptHash });
-    scriptElement.textContent = originalScript;
-    await showSimplifiedScript(originalScript);
-    originalButton.disabled = true;
-
-    return true;
-  } else if (newMode === "slideshow" && updateToMode(newMode)) {
-    styleForLargePiece();
-    gTimeoutId = window.setTimeout(performSlideshow, 1500);
-    return true;
-  } else if (newMode === "sketch" && updateToMode(newMode)) {
-    styleForLargePiece();
-    await performSketch();
-    return true;
-  }
-
-  return false;
-}
-
-function animationEndListener(event, id) {
+function animationEndListener1(event) {
   if (event.animationName === 'senifadeout') {
-    removeClass(id, 'seni-fade-out');
-    removeClass(id, 'seni-fade-out-slideshow');
-    removeClass(id, 'seni-fade-out-sketch');
-    setOpacity(id, 0);
+    removeClass(IMG_1, 'seni-fade-out');
+    removeClass(IMG_1, 'seni-fade-out-slideshow');
+    removeClass(IMG_1, 'seni-fade-out-sketch');
+    setOpacity(IMG_1, 0);
   }
 
   if (event.animationName === 'senifadein') {
-    removeClass(id, 'seni-fade-in');
-    removeClass(id, 'seni-fade-in-slideshow');
-    removeClass(id, 'seni-fade-in-sketch');
-    setOpacity(id, 1);
+    removeClass(IMG_1, 'seni-fade-in');
+    removeClass(IMG_1, 'seni-fade-in-slideshow');
+    removeClass(IMG_1, 'seni-fade-in-sketch');
+    if (gState.lastDisplay === DISPLAY_SNAP) {
+      // if we were in a sketch or slideshow and the user pressed escape to go back to a normal render
+      // the fade animation that was playing for the previous mode has now finished
+      setOpacity(IMG_1, 0);
+    } else {
+      setOpacity(IMG_1, 1);
+    }
   }
 
-  if (gMode === "sketch") {
-    gTimeoutId = window.setTimeout(animateSketch);
+  if (gState.mode === MODE_SKETCH) {
+    gState.timeoutId = window.setTimeout(animateSketch);
   }
-}
-
-function animationEndListener1(event) {
-  animationEndListener(event, 'piece-img-1');
 }
 
 function compatibilityHacks() {
@@ -1068,7 +999,149 @@ function compatibilityHacks() {
   }
 }
 
+function getURIParameters() {
+  const argPairs = window.location.search.substring(1).split("&");
+
+  return argPairs.reduce((acc, kv) => {
+    let [key, value] = kv.split("=");
+    if (key === URI_SEED) {
+      acc[key] = parseInt(value, 10);
+    } else {
+      acc[key] = value;
+    }
+
+    return acc;
+  }, {});
+}
+
+function updateGlobalsFromURI() {
+  const uriParameters = getURIParameters();
+
+  if (uriParameters.hasOwnProperty(URI_SEED)) {
+    gState.seed = uriParameters[URI_SEED];
+  } else {
+    gState.seed = undefined;
+  }
+
+  if (uriParameters[URI_MODE] === MODE_SKETCH) {
+    updateToMode(MODE_SKETCH);
+  } else if (uriParameters[URI_MODE] === MODE_SLIDESHOW) {
+    updateToMode(MODE_SLIDESHOW);
+  } else {
+    // absence of mode parameter in URI means MODE_NORMAL
+    updateToMode(MODE_NORMAL);
+  }
+  // console.log(`updateGlobalsFromURI mode: ${gState.mode}, seed: ${gState.seed}`);
+}
+
+function updateURIFromGlobals() {
+  let params = [];
+  if (gState.mode != MODE_NORMAL) {
+    params.push("mode=" + gState.mode);
+  }
+  if (gState.seed !== undefined) {
+    params.push("seed=" + gState.seed);
+  }
+
+  let page_uri = PAGE;
+  if (params.length > 0) {
+    page_uri += "?" + params.join("&");
+  }
+
+  history.pushState({}, null, page_uri);
+}
+
+async function renderSketch(_display) {
+  const scriptElement = getRequiredElement('piece-script');
+  const script = scriptElement.textContent.slice();
+
+  if (gState.seed === undefined) {
+    let { title, memory, buffers } = await renderJob({ script });
+
+    gState.sketchMemory = memory;
+    gState.sketchBuffers = buffers;
+  } else {
+    const { traits } = await Job.request(jobBuildTraits, { script });
+    const { genotype } = await Job.request(jobSingleGenotypeFromSeed, { traits, seed: gState.seed });
+    let { title, memory, buffers } = await renderJob({ script, genotype });
+
+    gState.sketchMemory = memory;
+    gState.sketchBuffers = buffers;
+  }
+  gState.sketchBufferIndex = 0;
+  gState.sketchGeoIndex = 0;
+
+  let i = 0;
+  gState.sketchBuffers.forEach(b => {
+    console.log(`buffer ${i} size: ${b.geo_len}`);
+    i += 1;
+  });
+
+  let numElements = gState.sketchBuffers.reduce((acc, buffer) => acc + buffer.geo_len, 0);
+  let numVertices = numElements / 8;
+
+  let cssTimeFadeIn = getCSSAnimationDuration(".seni-fade-in-sketch");
+  let cssTimeFadeOut = getCSSAnimationDuration(".seni-fade-out-sketch");
+  let transitionTime = cssTimeFadeIn > cssTimeFadeOut ? cssTimeFadeIn : cssTimeFadeOut;
+  // the number of transitions that the piece should be divided into
+  let numTransitions = gState.sketchDesiredDuration / transitionTime;
+  let vertsPerTransition = numVertices / numTransitions;
+
+
+  // divide numVertices by the animation length and round up to be divisible by 8
+  // gState.sketchAmount = 2000 * 8;
+  gState.sketchAmount = Math.round(vertsPerTransition) * 8;
+  console.log(`gState.sketchAmount = ${gState.sketchAmount}`);
+
+
+  const canvas = getRequiredElement('piece-canvas');
+  const pieceImg0 = getRequiredElement(IMG_0);
+  const pieceImg1 = getRequiredElement(IMG_1);
+
+  gState.glRenderer.preDrawScene(gState.demandCanvasSize, gState.demandCanvasSize);
+  await gState.glRenderer.copyImageDataTo(pieceImg0);
+  await gState.glRenderer.copyImageDataTo(pieceImg1);
+
+  if(gState.sketchBuffers.length > 0) {
+    gState.sketchTimeStart = performance.now();
+    gState.glRenderer.setupBuffer(gState.sketchMemory, gState.sketchBuffers[0]);
+    if (gState.mode === MODE_SKETCH) {
+      gState.timeoutId = window.setTimeout(animateSketch);
+    }
+  }
+}
+
+async function renderNormal(display) {
+  const scriptElement = getRequiredElement('piece-script');
+  const script = scriptElement.textContent.slice();
+
+  if (gState.seed === undefined) {
+    await showSimplifiedScript(script);
+    await renderScript({ script }, display);
+  } else {
+    const { traits } = await Job.request(jobBuildTraits, { script });
+    const { genotype } = await Job.request(jobSingleGenotypeFromSeed, { traits, seed: gState.seed });
+
+    const unparsed = await Job.request(jobUnparse, { script, genotype });
+    await showSimplifiedScript(unparsed.script);
+    await renderScript({ script, genotype }, display);
+  }
+}
+
+async function updatePiece(display) {
+  console.log(`updatePiece mode: ${gState.mode}, seed: ${gState.seed}`);
+
+  if (gState.mode === MODE_NORMAL) {
+    await renderNormal(display);
+  } else if (gState.mode === MODE_SKETCH) {
+    await renderSketch(display);
+  } else if (gState.mode === MODE_SLIDESHOW) {
+    await renderNormal(display);
+  }
+}
+
 async function main() {
+  updateGlobalsFromURI();
 
   const texturePathElement = getRequiredElement('piece-texture-path');
   const workerPathElement = getRequiredElement('piece-worker-path');
@@ -1076,110 +1149,108 @@ async function main() {
   Job.setup(2, workerPathElement.textContent);
 
   const originalButton = getRequiredElement('piece-eval-original');
-  const evalButton = getRequiredElement('piece-eval');
+  const variationButton = getRequiredElement('piece-eval-variation');
   const slideshowButton = getRequiredElement('piece-eval-slideshow');
   const sketchButton = getRequiredElement('piece-eval-sketch');
   const scriptElement = getRequiredElement('piece-script');
   const canvasElement = getRequiredElement('piece-canvas');
-  const canvasImageElement0 = getRequiredElement('piece-img-0');
-  const canvasImageElement1 = getRequiredElement('piece-img-1');
-  const seedElement = getRequiredElement('piece-seed');
+  const canvasImageElement0 = getRequiredElement(IMG_0);
+  const canvasImageElement1 = getRequiredElement(IMG_1);
 
   canvasImageElement1.addEventListener("animationend", animationEndListener1, false);
-  setOpacity('piece-img-1', 0);
+  setOpacity(IMG_1, 0);
 
-  const LOAD_FOR_SENI_APP_GALLERY = true;
+  resizeCanvasToNormal();
 
-  if (LOAD_FOR_SENI_APP_GALLERY === false) {
-    // not really required, hack to load in other pieces
-    const loadIdElement = getRequiredElement('piece-load-id');
-    loadIdElement.addEventListener('change', async event => {
-      console.log('loadidelement');
-      const iVal = parseInt(event.target.value, 10);
-
-      const code = await fetchScript(iVal);
-
-      script = code;
-      originalScript = script.slice();
-      scriptElement.textContent = script;
-      await showSimplifiedScript(script);
-      await renderScript({ script, scriptHash });
-
-    });
-  }
-
-  gMode = "normal";
-  useNormalCanvas();
-
-  const scriptHash = hashCode('whatever');
-
-  gGLRenderer = new GLRenderer(canvasElement);
+  gState.glRenderer = new GLRenderer(canvasElement);
 
   const script = scriptElement.textContent;
   const originalScript = script.slice();
-  await showSimplifiedScript(script);
 
   logDebug("init");
 
-  gGLRenderer.loadTexture(texturePathElement.textContent)
-    .then(async () => await renderScript({ script, scriptHash }))
+  gState.glRenderer.loadTexture(texturePathElement.textContent)
+    .then(async () => await updatePiece(DISPLAY_SNAP))
     .catch(error => console.error(error));
 
   originalButton.addEventListener('click', async () => {
     originalButton.disabled = true;
-    await setMode("normal");
-    await renderScript({ script: originalScript, scriptHash });
-    scriptElement.textContent = originalScript;
-    await showSimplifiedScript(originalScript);
+
+    gState.seed = undefined;
+    updateToMode(MODE_NORMAL);
+
+    updateURIFromGlobals();
+
+    await updatePiece(DISPLAY_FADE);
   });
 
   slideshowButton.addEventListener('click', async () => {
     originalButton.disabled = true;
-    await setMode("slideshow");
-    await renderScript({ script: originalScript, scriptHash });
-    scriptElement.textContent = originalScript;
-    await showSimplifiedScript(originalScript);
+
+    if (updateToMode(MODE_SLIDESHOW)) {
+      await updatePiece(DISPLAY_SNAP);
+      const pieceImg1 = getRequiredElement(IMG_1);
+      await gState.glRenderer.copyImageDataTo(pieceImg1);
+
+      // only call updatePiece if we're actually switching to SLIDESHOW mode as this will create a settimeout
+      gState.timeoutId = window.setTimeout(performSlideshow, 0);
+    }
+    updateURIFromGlobals();
+
   });
 
   sketchButton.addEventListener('click', async () => {
     originalButton.disabled = true;
-    await setMode("sketch");
-    scriptElement.textContent = originalScript;
-    await showSimplifiedScript(originalScript);
+
+    updateToMode(MODE_SKETCH);
+
+    updateURIFromGlobals();
+
+    // note: updatePiece when MODE_SKETCH calls renderSketch
+    // which ignores the display parameter and behaves as if
+    // DISPLAY_FADE was given
+    //
+    await updatePiece(DISPLAY_FADE);
   });
 
-  evalButton.addEventListener('click', async () => {
-    gNumTransitions += 1;
+  variationButton.addEventListener('click', async () => {
     originalButton.disabled = false;
+
+    const seedElement = getRequiredElement('piece-seed');
     const newSeed = Math.random() * (1 << 30);
     seedElement.value = parseInt(newSeed, 10);
+    gState.seed = getSeedValue(seedElement);
 
-    const seedValue = getSeedValue(seedElement);
+    updateToMode(MODE_NORMAL);
 
-    const { traits } = await Job.request(jobBuildTraits, { script: originalScript, scriptHash });
-    const { genotype } = await Job.request(jobSingleGenotypeFromSeed, { traits, seed: seedValue });
+    updateURIFromGlobals();
 
-    const config = { script: originalScript, scriptHash };
-    if (seedValue !== 0) {
-      config.genotype = genotype;
-    }
+    await updatePiece(DISPLAY_FADE);
+  });
 
-    await renderScript(config);
-
-    const { script } = await Job.request(jobUnparse, { script: originalScript, genotype });
-
-    scriptElement.textContent = script;
-    await showSimplifiedScript(script);
+  window.addEventListener('popstate', async event => {
+    updateGlobalsFromURI();
+    await updatePiece(DISPLAY_SNAP);
   });
 
   canvasImageElement1.addEventListener('click', async () => {
-    await setMode("normal");
+    updateToMode(MODE_NORMAL);
+
+    updateURIFromGlobals();
+
+    await updatePiece(DISPLAY_SNAP);
   });
 
   const escapeKey = 27;
   document.addEventListener('keydown', async event => {
-    if (event.keyCode === escapeKey && gMode === 'slideshow') {
-      await setMode('normal');
+    if (event.keyCode === escapeKey && gState.mode !== MODE_NORMAL) {
+
+      updateToMode(MODE_NORMAL);
+
+      updateURIFromGlobals();
+
+      await updatePiece(DISPLAY_SNAP);
+
       event.preventDefault();
     }
   }, false);

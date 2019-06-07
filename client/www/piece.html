@@ -63,7 +63,7 @@
 
                   <div id="seni-piece-controls">
                     <input id="piece-load-id" type="number" value="62">
-                    <button id="piece-eval" class="navbar-button eval-btn seni-button">Generate variation</button>
+                    <button id="piece-eval-variation" class="navbar-button eval-btn seni-button">Generate variation</button>
                     <button id="piece-eval-original" class="navbar-button eval-btn seni-button" disabled>Show Original</button>
                     <button id="piece-eval-slideshow" class="navbar-button eval-btn seni-button">Slideshow</button>
                     <button id="piece-eval-sketch" class="navbar-button eval-btn seni-button">Sketch</button>
@@ -71,7 +71,9 @@
                   </div> <!-- seni-piece-controls -->
 
                   <div id="code-content-wrap">
+                    <!-- the current version of the script with alterable syntax removed -->
                     <pre><code id="piece-simplified-script"></code></pre>
+                    <!-- the original version of the script, will never be altered -->
                     <pre><code id="piece-script">
 (define texture "skull-a.png")
 (define per-pixel-funcs [(address-of pass-0)
