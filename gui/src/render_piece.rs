@@ -240,6 +240,11 @@ impl Renderer {
             gl.BindBuffer(gl::ARRAY_BUFFER, self.vbo);
 
             for rp in &geometry.render_packets {
+                // println!("rp.geo.len = {}", rp.geo.len());
+                // for (i, e) in rp.geo.iter().enumerate() {
+                //     println!("{} {}", i, e);
+                // }
+
                 gl.BufferData(
                     gl::ARRAY_BUFFER,                                                     // target
                     (rp.geo.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr, // size of data in bytes

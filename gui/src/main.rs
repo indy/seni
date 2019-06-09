@@ -165,12 +165,12 @@ fn run_watch(config: &config::Config) -> Result<()> {
 
     gl_util::update_viewport(&gl, viewport_width, viewport_height);
 
-    // allow `num` to be shared across threads (Arc) and modified
+    // allow `last_modified_script` to be shared across threads (Arc) and modified
     // (Mutex) safely without a data race.
-    let num: Arc<Mutex<Option<PathBuf>>> = Arc::new(Mutex::new(None));
+    let last_modified_script: Arc<Mutex<Option<PathBuf>>> = Arc::new(Mutex::new(None));
 
-    // create a cloned reference before moving `num` into the thread.
-    let num_clone = num.clone();
+    // create a cloned reference before moving `last_modified_script` into the thread.
+    let last_modified_script_clone = last_modified_script.clone();
 
     thread::spawn(move || {
         // some work here
@@ -193,11 +193,11 @@ fn run_watch(config: &config::Config) -> Result<()> {
             match rx.recv() {
                 Ok(DebouncedEvent::NoticeWrite(pathbuf)) => {
                     println!("noticed write: {:?}", pathbuf);
-                    *num.lock().unwrap() = Some(pathbuf);
+                    *last_modified_script.lock().unwrap() = Some(pathbuf);
                 }
                 // Ok(DebouncedEvent::Write(pathbuf)) => {
                 //     println!("write: {:?}", pathbuf);
-                //     *num.lock().unwrap() = Some(pathbuf);
+                //     *last_modified_script.lock().unwrap() = Some(pathbuf);
                 // },
                 Ok(event) => println!("other {:#?}", event),
                 Err(e) => println!("watch error: {:?}", e),
@@ -263,14 +263,13 @@ fn run_watch(config: &config::Config) -> Result<()> {
         //         }
         //     });
 
-        let mutex_guard = num_clone.lock().unwrap().clone();
+        let mutex_guard = last_modified_script_clone.lock().unwrap().clone();
         if let Some(ref pathbuf) = mutex_guard {
             let seni_source = seni::load_script(&pathbuf)?;
             let seni_context = seni::run_source(&seni_source, &config)?;
-            seni_renderer.rebake(&gl, &assets_path, &seni_context)?;
-
-            println!("some pathbuf: {:?}", pathbuf);
-            *num_clone.lock().unwrap() = None;
+            seni_renderer.rebake(&gl, &seni_context, viewport_width, viewport_height)?;
+            // println!("some pathbuf: {:?}", pathbuf);
+            *last_modified_script_clone.lock().unwrap() = None;
         }
 
         unsafe {
