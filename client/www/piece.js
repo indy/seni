@@ -917,7 +917,6 @@ function styleForNormalPiece() {
   showId('code-content-wrap');
   showId('seni-title');
   showId('seni-date');
-  showId('piece-hideable-for-slideshow');
   removeClass('piece-canvas-container', 'seni-centre-canvas');
 
   resizeCanvasToNormal();
@@ -932,7 +931,6 @@ function styleForLargePiece() {
   hideId('code-content-wrap');
   hideId('seni-title');
   hideId('seni-date');
-  hideId('piece-hideable-for-slideshow');
   addClass('piece-canvas-container', 'seni-centre-canvas');
 
   resizeCanvasToLarge();
@@ -1043,12 +1041,16 @@ function updateURIFromGlobals() {
     params.push("seed=" + gState.seed);
   }
 
-  let page_uri = PAGE;
+  let search = "";
   if (params.length > 0) {
-    page_uri += "?" + params.join("&");
+    search = "?" + params.join("&");
   }
 
-  history.pushState({}, null, page_uri);
+  if (window.location.search !== search) {
+    // desired uri is different from current one
+    const page_uri = PAGE + search;
+    history.pushState({}, null, page_uri);
+  }
 }
 
 async function renderSketch(_display) {
