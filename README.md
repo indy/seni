@@ -9,7 +9,10 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 
 ### Prerequisites
 
-wasm-bindgen:
+- the rust toolchain (see https://rustup.rs/)
+- wasm32-unknown-unknown target:
+`rustup target add wasm32-unknown-unknown`
+- wasm-bindgen:
 `cargo install -f wasm-bindgen-cli`
 
 ### Building web client:
