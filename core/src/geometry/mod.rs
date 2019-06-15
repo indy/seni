@@ -58,14 +58,13 @@ impl RenderPacket {
 
         let (nx, ny) = matrix.transform_vec2(x, y);
 
-        // pre-multiply the alpha
-        // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
+        // note: the shader should pre-multiply the r,g,b elements by alpha
         self.geo.append(&mut vec![
             nx,
             ny,
-            col.0 * col.3,
-            col.1 * col.3,
-            col.2 * col.3,
+            col.0,
+            col.1,
+            col.2,
             col.3,
             u,
             v,

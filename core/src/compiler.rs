@@ -2570,7 +2570,6 @@ fn only_semantic_nodes(children: &[Node]) -> Vec<&Node> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::packable::Packable;
     use crate::parser::parse;
     use crate::program::Mem;
 

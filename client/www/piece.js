@@ -108,6 +108,8 @@ function compileShader(gl, type, src) {
 function setupShaders(gl) {
   const shaderProgram = gl.createProgram();
 
+  // pre-multiply the alpha in the shader
+  // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
   const fragmentSrc = `
   precision mediump float;
   varying vec4 vColor;
@@ -118,9 +120,9 @@ function setupShaders(gl) {
   void main(void) {
     vec4 tex = texture2D(uSampler, vTextureCoord);
 
-    gl_FragColor.r = tex.r * vColor.r;
-    gl_FragColor.g = tex.r * vColor.g;
-    gl_FragColor.b = tex.r * vColor.b;
+    gl_FragColor.r = tex.r * vColor.r * vColor.a;
+    gl_FragColor.g = tex.r * vColor.g * vColor.a;
+    gl_FragColor.b = tex.r * vColor.b * vColor.a;
     gl_FragColor.a = tex.r * vColor.a;
 
   }

@@ -187,11 +187,20 @@ impl MatrixStack {
     pub fn peek(&self) -> Option<&Matrix> {
         self.stack.last()
     }
+
+
     pub fn push(&mut self) {
+        let mut head: Option<Matrix> = None;
+
         if let Some(top) = self.peek() {
-            self.stack.push(Matrix::copy_matrix(top));
+            head = Some(Matrix::copy_matrix(top));
+        }
+
+        if let Some(m) = head {
+            self.stack.push(m);
         }
     }
+
     pub fn pop(&mut self) -> Option<Matrix> {
         self.stack.pop()
     }
