@@ -1,0 +1,68 @@
+(define
+  coords1 [{[-3.718 -69.162] (gen/stray-2d from: [-3.718 -69.162] by: [5 5])}
+           {[463.301 -57.804] (gen/stray-2d from: [463.301 -57.804] by: [5 5])}
+           {[456.097 -315.570] (gen/stray-2d from: [456.097 -315.570] by: [5 5])}
+           {[318.683 -384.297] (gen/stray-2d from: [318.683 -384.297] by: [5 5])}]
+
+  coords2 [{[424.112 19.779] (gen/stray-2d from: [424.112 19.779] by: [5 5])}
+           {[2.641 246.678] (gen/stray-2d from: [2.641 246.678] by: [5 5])}
+           {[-449.001 -79.842] (gen/stray-2d from: [-449.001 -79.842] by: [5 5])}
+           {[37.301 206.818] (gen/stray-2d from: [37.301 206.818] by: [5 5])}]
+
+  coords3 [{[83.331 -282.954] (gen/stray-2d from: [83.331 -282.954] by: [5 5])}
+           {[92.716 -393.120] (gen/stray-2d from: [92.716 -393.120] by: [5 5])}
+           {[426.686 -420.284] (gen/stray-2d from: [426.686 -420.284] by: [5 5])}
+           {[-29.734 335.671] (gen/stray-2d from: [-29.734 335.671] by: [5 5])}]
+
+  col-fn-1 (col/build-procedural preset: {transformers (gen/select from: col/procedural-fn-presets)}
+                                 alpha: 0.08)
+  col-fn-2 (col/build-procedural preset: {mars (gen/select from: col/procedural-fn-presets)}
+                                 alpha: 0.08)
+  col-fn-3 (col/build-procedural preset: {knight-rider (gen/select from: col/procedural-fn-presets)}
+                                 alpha: 0.08)
+
+  num-copies {28 (gen/int min: 25 max: 30)}
+  squish (interp/build from: [0 (- num-copies 1)] to: [{1.2 (gen/scalar min: 1.0 max: 1.5)} {0.45 (gen/scalar min: 0.3 max: 1)}]))
+
+(fn (draw angle: 0 copy: 0)
+  (scale vector: [(interp/value from: squish t: copy) (interp/value from: squish t: copy)])
+  (fence (t num: 200)
+    (poly coords: [(interp/bezier t: t coords: coords1)
+                   (interp/bezier t: t coords: coords2)
+                   (interp/bezier t: t coords: coords3)]
+          colours: [(col/value from: col-fn-1 t: t)
+                    (col/value from: col-fn-2 t: t)
+                    (col/value from: col-fn-3 t: t)])))
+
+(on-matrix-stack
+    (translate vector: [360 510])
+    (scale vector: [0.25 0.25])
+    (repeat/rotate-mirrored fn: (address-of draw)
+                            copies: num-copies))
+(on-matrix-stack
+    (translate vector: [600 510])
+    (scale vector: [-0.25 0.25])
+    (repeat/rotate-mirrored fn: (address-of draw)
+                            copies: num-copies))
+
+
+(bitmap/each from: "skull-c.png"
+             position: [500 500]
+             width: 900
+             height: 900
+             fn: (address-of per-pixel))
+
+(fn (per-pixel colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (define
+    a (col/get-r colour: colour)
+    angle (* a math/PI))
+  (if (< a {0.7 (gen/scalar min: 0.1 max: 0.9)})
+      (line from: [(* {4 (gen/scalar min: -5 max: 5)} (math/cos angle: angle))
+                   (* {-1 (gen/scalar min: -5 max: 5)} (math/sin angle: angle))]
+            to: [(* {-5 (gen/scalar min: -5 max: 5)} (math/cos angle: angle))
+                 (* {-1 (gen/scalar min: -5 max: 5)} (math/sin angle: angle))]
+            width: (- {3.8 (gen/scalar min: 0.1 max: 15)} a)
+            colour: (col/rgb r: a g: 0 b: 0 alpha: 0.2)
+            brush: brush/a
+            brush-subtype: 2)
+))
