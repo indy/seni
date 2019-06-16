@@ -255,6 +255,12 @@ pub enum Native {
     //
     #[strum(serialize = "bitmap/each")]
     BitmapEach,
+    #[strum(serialize = "bitmap/value")]
+    BitmapValue,
+    #[strum(serialize = "bitmap/width")]
+    BitmapWidth,
+    #[strum(serialize = "bitmap/height")]
+    BitmapHeight,
 
     // gen
     //
@@ -399,6 +405,9 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::FocalValue => focal_value_parameter_info(),
         // bitmap
         Native::BitmapEach => bitmap_each_parameter_info(),
+        Native::BitmapValue => bitmap_value_parameter_info(),
+        Native::BitmapWidth => bitmap_width_parameter_info(),
+        Native::BitmapHeight => bitmap_height_parameter_info(),
         // gen
         Native::GenStrayInt => gen_stray_int_parameter_info(),
         Native::GenStray => gen_stray_parameter_info(),
@@ -521,6 +530,9 @@ pub fn execute_native(
         Native::FocalValue => focal_value_execute(vm, context),
         // bitmap
         Native::BitmapEach => bitmap_each_execute(vm, context, program),
+        Native::BitmapValue => bitmap_value_execute(vm, context, program),
+        Native::BitmapWidth => bitmap_width_execute(vm, context, program),
+        Native::BitmapHeight => bitmap_height_execute(vm, context, program),
         // gen
         Native::GenStrayInt => gen_stray_int_execute(vm),
         Native::GenStray => gen_stray_execute(vm),
@@ -3002,6 +3014,98 @@ fn bitmap_each_execute(
     )?;
 
     Ok(None)
+}
+
+fn bitmap_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::Position, Var::V2D(0.0, 0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn bitmap_value_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
+    let default_mask: i32 = vm.stack_peek(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        error!("bitmap/value requires a from parameter");
+        return Err(Error::Native);
+    }
+
+    let from: Iname = vm.stack_peek(1)?;
+    let position: (f32, f32) = vm.stack_peek(2)?;
+
+    let col = bitmap::value(context, program, from, position)?;
+
+    Ok(Some(Var::Colour(col)))
+}
+
+fn bitmap_width_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn bitmap_width_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
+    let default_mask: i32 = vm.stack_peek(2)?;
+
+    if !is_arg_given(default_mask, 1) {
+        error!("bitmap/width requires a from parameter");
+        return Err(Error::Native);
+    }
+
+    let from: Iname = vm.stack_peek(1)?;
+
+    let width = bitmap::width(context, program, from)?;
+
+    Ok(Some(Var::Float(width)))
+}
+
+fn bitmap_height_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn bitmap_height_execute(
+    vm: &mut Vm,
+    context: &mut Context,
+    program: &Program,
+) -> Result<Option<Var>> {
+    let default_mask: i32 = vm.stack_peek(2)?;
+
+    if !is_arg_given(default_mask, 1) {
+        error!("bitmap/height requires a from parameter");
+        return Err(Error::Native);
+    }
+
+    let from: Iname = vm.stack_peek(1)?;
+
+    let height = bitmap::height(context, program, from)?;
+
+    Ok(Some(Var::Float(height)))
 }
 
 fn gen_stray_int_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {

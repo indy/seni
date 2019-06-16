@@ -472,7 +472,9 @@ mod tests {
 
     #[test]
     fn genotype_from_initial_values_3() {
-        let trait_list = compile_trait_list("{\"hello\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}").unwrap();
+        let trait_list =
+            compile_trait_list("{\"hello\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}")
+                .unwrap();
         let genotype = Genotype::build_from_initial_values(&trait_list).unwrap();
 
         assert_eq!(genotype.genes.len(), 1);
@@ -506,7 +508,9 @@ mod tests {
 
     #[test]
     fn genotype_from_seed_3() {
-        let trait_list = compile_trait_list("{\"hello\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}").unwrap();
+        let trait_list =
+            compile_trait_list("{\"hello\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}")
+                .unwrap();
         let genotype = Genotype::build_from_seed(&trait_list, 432).unwrap();
 
         assert_eq!(genotype.genes.len(), 1);

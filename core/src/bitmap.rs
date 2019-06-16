@@ -67,7 +67,7 @@ fn per_pixel(
     vm: &mut Vm,
     program: &Program,
     fun: usize,
-    from_string: &String,
+    from_string: &str,
 ) -> Result<()> {
     // setup matrix stack
     context.matrix_stack.push();
@@ -89,6 +89,15 @@ fn per_pixel(
     Ok(())
 }
 
+fn string_from_iname(program: &Program, from: Iname) -> Result<&str> {
+    if let Some(from_string) = program.data.strings.get(&from) {
+        Ok(from_string)
+    } else {
+        error!("unable to find string from iname: {}", from);
+        Err(Error::Bitmap)
+    }
+}
+
 pub fn each(
     vm: &mut Vm,
     context: &mut Context,
@@ -100,23 +109,15 @@ pub fn each(
     dst_height: f32,
     shuffle_seed: Option<f32>,
 ) -> Result<()> {
-    let from_string = if let Some(from_string) = program.data.strings.get(&from) {
-        from_string
-    } else {
-        error!("unable to find string from iname: {}", from);
-        return Err(Error::Bitmap);
-    };
-
+    let from_string = string_from_iname(program, from)?;
     let bitmap_dim = {
         let bitmap_info = context.bitmap_cache.get(from_string)?;
         (bitmap_info.width, bitmap_info.height)
     };
-
     let scale_factor: (f32, f32) = (
         dst_width / bitmap_dim.0 as f32,
         dst_height / bitmap_dim.1 as f32,
     );
-
     let origin: (f32, f32) = (
         dst_position.0 - (dst_width / 2.0),
         dst_position.1 - (dst_height / 2.0),
@@ -173,4 +174,68 @@ pub fn each(
     }
 
     Ok(())
+}
+
+pub fn value(
+    context: &mut Context,
+    program: &Program,
+    from: Iname,
+    position: (f32, f32),
+) -> Result<Colour> {
+    let from_string = string_from_iname(program, from)?;
+    let bitmap_info = context.bitmap_cache.get(from_string)?;
+
+    let x = position.0 as usize;
+    let y = position.1 as usize;
+
+    if x >= bitmap_info.width {
+        error!(
+            "bitmap value: x {} >= bitmap width {}",
+            x, bitmap_info.width
+        );
+        return Err(Error::Bitmap);
+    }
+    if y >= bitmap_info.height {
+        error!(
+            "bitmap value: y {} >= bitmap height {}",
+            y, bitmap_info.height
+        );
+        return Err(Error::Bitmap);
+    }
+
+    // flip the y as seni has the origin in the lower left
+    // whilst the bitmap has origin at the top left
+    let index = ((bitmap_info.height - y - 1) * bitmap_info.width * 4) + (x * 4);
+
+    let colour = Colour::new(
+        ColourFormat::Rgb,
+        f32::from(bitmap_info.data[index]) / 255.0,
+        f32::from(bitmap_info.data[index + 1]) / 255.0,
+        f32::from(bitmap_info.data[index + 2]) / 255.0,
+        f32::from(bitmap_info.data[index + 3]) / 255.0,
+    );
+
+    Ok(colour)
+}
+
+pub fn width(
+    context: &mut Context,
+    program: &Program,
+    from: Iname,
+) -> Result<f32> {
+    let from_string = string_from_iname(program, from)?;
+    let bitmap_info = context.bitmap_cache.get(from_string)?;
+
+    Ok(bitmap_info.width as f32)
+}
+
+pub fn height(
+    context: &mut Context,
+    program: &Program,
+    from: Iname,
+) -> Result<f32> {
+    let from_string = string_from_iname(program, from)?;
+    let bitmap_info = context.bitmap_cache.get(from_string)?;
+
+    Ok(bitmap_info.height as f32)
 }

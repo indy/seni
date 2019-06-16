@@ -188,7 +188,6 @@ impl MatrixStack {
         self.stack.last()
     }
 
-
     pub fn push(&mut self) {
         let mut head: Option<Matrix> = None;
 

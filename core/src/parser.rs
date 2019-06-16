@@ -250,10 +250,10 @@ struct NodeAndRemainder<'a> {
 
 fn is_name_or_keyword(s: &str) -> bool {
     if let Ok(_) = Native::from_str(s) {
-        return true
+        return true;
     }
     if let Ok(_) = Keyword::from_str(s) {
-        return true
+        return true;
     }
     false
 }
@@ -305,7 +305,7 @@ impl WordLut {
             match t {
                 Token::Name(txt) if !is_name_or_keyword(&txt) => {
                     words.insert(txt.to_string());
-                },
+                }
                 Token::String(txt) if !is_name_or_keyword(&txt) => {
                     words.insert(txt.to_string());
                 }
