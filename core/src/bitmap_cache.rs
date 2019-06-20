@@ -62,9 +62,32 @@ impl BitmapCache {
     }
 }
 
+// given pixel data as u8 in sRGB colour space
+// this converts to in internal linear colour space representation in f32 (range 0..1)
 #[derive(Default)]
 pub struct BitmapInfo {
     pub width: usize,
     pub height: usize,
-    pub data: Vec<u8>,
+    pub data: Vec<f32>,
+}
+
+// https://en.wikipedia.org/wiki/SRGB
+fn into_linear_space(c: u8) -> f32 {
+    let v = f32::from(c) / 255.0;
+
+    if v > 0.04045 {
+        ((v + 0.055) / 1.055).powf(2.4)
+    } else {
+        v / 12.92
+    }
+}
+
+impl BitmapInfo {
+    pub fn new(width: usize, height: usize, data: Vec<u8>) -> Self {
+        BitmapInfo {
+            width,
+            height,
+            data: data.into_iter().map(into_linear_space).collect(),
+        }
+    }
 }

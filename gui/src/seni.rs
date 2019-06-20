@@ -48,12 +48,7 @@ fn load_bitmap(asset_prefix: &String, filename: &String, context: &mut Context) 
         data.push(rgba.data[3]);
     }
 
-    let bitmap_info = BitmapInfo {
-        width,
-        height,
-        data,
-        ..Default::default()
-    };
+    let bitmap_info = BitmapInfo::new(width, height, data);
 
     context.bitmap_cache.insert(&filename, bitmap_info)?;
 

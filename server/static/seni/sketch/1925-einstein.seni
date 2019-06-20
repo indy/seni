@@ -1,0 +1,67 @@
+(define texture "einstein.png")
+(define per-pixel-funcs [(address-of pass-0)
+                         (address-of pass-1)
+                         (address-of pass-2)
+                         (address-of pass-3)])
+(define rng (prng/build seed: {343 (gen/scalar min: 42 max: 666)}
+                        min: 0
+                        max: 1))
+
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   position: [500 500]
+                   width: 1000
+                   height: 1000
+                   fn: per-pixel-func))
+
+(fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
+             alpha: 0.2
+             width: 1.0
+             from: [0 0]
+             to: [1 1]))
+
+(fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
+             alpha: 0.1
+             width: {14.3 (gen/scalar min: 0.1 max: 15)}
+             from: [{10 (gen/scalar min: -15 max: 15)}
+                    {5 (gen/scalar min: -15 max: 15)}]
+             to: [{-9 (gen/scalar min: -15 max: 15)}
+                  {-1 (gen/scalar min: -15 max: 15)}]))
+
+(fn (pass-2 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
+             alpha: 0.05
+             width: {2.4 (gen/scalar min: 0.1 max: 15)}
+             from: [{15 (gen/scalar min: -15 max: 15)}
+                    {-5 (gen/scalar min: -15 max: 15)}]
+             to: [{0 (gen/scalar min: -15 max: 15)}
+                  {-2 (gen/scalar min: -15 max: 15)}]))
+
+(fn (pass-3 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/get-r colour: colour)
+             alpha: 0.025
+             width: {4.8 (gen/scalar min: 0.1 max: 15)}
+             from: [{-5 (gen/scalar min: -15 max: 15)}
+                    {-2 (gen/scalar min: -15 max: 15)}]
+             to: [{-7 (gen/scalar min: -15 max: 15)}
+                  {-3 (gen/scalar min: -15 max: 15)}]))
+
+(fn (per-pixel a: 0 alpha: 1 width: 0 from: [0 0] to: [0 0])
+  (line from: [(* (nth from: from n: 0) (math/cos angle: (* a math/PI)))
+               (* (nth from: from n: 1) (math/sin angle: (* a math/PI)))]
+        to: [(* (nth from: to n: 0) (math/cos angle: (* a math/PI)))
+             (* (nth from: to n: 1) (math/sin angle: (* a math/PI)))]
+        width: (+ 0 (- width a))
+        brush: brush/b
+        colour: (col/rgb r: a g: a b: a alpha: alpha)))
+
+(fn (per-pixel-rng a: 0 alpha: 1 width: 0 from: [0 0] to: [0 0])
+  (line from: [(* (prng/value from: rng) (nth from: from n: 0) (math/cos angle: (* a math/PI)))
+               (* (prng/value from: rng) (nth from: from n: 1) (math/sin angle: (* a math/PI)))]
+        to: [(* (prng/value from: rng) (nth from: to n: 0) (math/cos angle: (* a math/PI)))
+             (* (prng/value from: rng) (nth from: to n: 1) (math/sin angle: (* a math/PI)))]
+        width: (+ 0 (- width a))
+        brush: brush/b
+        colour: (col/rgb r: a g: a b: a alpha: alpha)))

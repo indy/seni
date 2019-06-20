@@ -381,26 +381,26 @@ fn run(config: &config::Config) -> Result<()> {
         // ui.show_demo_window(&mut true);
 
         // ~/repos/rust/imgui-rs/imgui-glium-examples/examples/test_window_impl.rs
-        ui.window(im_str!("Seni"))
-            .position((0.0, 0.0), imgui::ImGuiCond::FirstUseEver)
-            .size((800.0, 600.0), imgui::ImGuiCond::FirstUseEver)
-            .build(|| {
-                if ui.button(im_str!("Load.."), (0.0, 0.0)) {
-                    ui.open_popup(im_str!("modal"));
-                }
+        // ui.window(im_str!("Seni"))
+        //     .position((0.0, 0.0), imgui::ImGuiCond::FirstUseEver)
+        //     .size((800.0, 600.0), imgui::ImGuiCond::FirstUseEver)
+        //     .build(|| {
+        //         if ui.button(im_str!("Load.."), (0.0, 0.0)) {
+        //             ui.open_popup(im_str!("modal"));
+        //         }
 
-                ui.popup_modal(im_str!("modal")).build(|| {
-                    ui.text("Content of my modal");
-                    if ui.button(im_str!("OK"), (0.0, 0.0)) {
-                        ui.close_current_popup();
-                    }
-                });
+        //         ui.popup_modal(im_str!("modal")).build(|| {
+        //             ui.text("Content of my modal");
+        //             if ui.button(im_str!("OK"), (0.0, 0.0)) {
+        //                 ui.close_current_popup();
+        //             }
+        //         });
 
-                ui.separator();
-                if ui.collapsing_header(im_str!("script")).build() {
-                    ui.text(im_str!("{}", seni_source));
-                }
-            });
+        //         ui.separator();
+        //         if ui.collapsing_header(im_str!("script")).build() {
+        //             ui.text(im_str!("{}", seni_source));
+        //         }
+        //     });
 
         unsafe {
             gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);

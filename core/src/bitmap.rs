@@ -42,10 +42,10 @@ fn invoke_function(
     let fn_info = &program.fn_info[fun];
     let colour = Colour::new(
         ColourFormat::Rgb,
-        f32::from(bitmap_info.data[index]) / 255.0,
-        f32::from(bitmap_info.data[index + 1]) / 255.0,
-        f32::from(bitmap_info.data[index + 2]) / 255.0,
-        f32::from(bitmap_info.data[index + 3]) / 255.0,
+        bitmap_info.data[index],
+        bitmap_info.data[index + 1],
+        bitmap_info.data[index + 2],
+        bitmap_info.data[index + 3],
     );
 
     vm.function_call_default_arguments(context, program, fn_info)?;
@@ -209,10 +209,10 @@ pub fn value(
 
     let colour = Colour::new(
         ColourFormat::Rgb,
-        f32::from(bitmap_info.data[index]) / 255.0,
-        f32::from(bitmap_info.data[index + 1]) / 255.0,
-        f32::from(bitmap_info.data[index + 2]) / 255.0,
-        f32::from(bitmap_info.data[index + 3]) / 255.0,
+        bitmap_info.data[index],
+        bitmap_info.data[index + 1],
+        bitmap_info.data[index + 2],
+        bitmap_info.data[index + 3],
     );
 
     Ok(colour)

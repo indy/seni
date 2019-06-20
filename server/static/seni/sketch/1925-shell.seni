@@ -1,0 +1,48 @@
+(define
+  coords1 [{[-7.987 -70.872] (gen/stray-2d from: [-3.718 -69.162] by: [5 5])}
+           {[459.069 -55.678] (gen/stray-2d from: [463.301 -57.804] by: [5 5])}
+           {[453.886 -313.444] (gen/stray-2d from: [456.097 -315.570] by: [5 5])}
+           {[318.958 -379.619] (gen/stray-2d from: [318.683 -384.297] by: [5 5])}]
+
+  coords2 [{[422.457 21.162] (gen/stray-2d from: [424.112 19.779] by: [5 5])}
+           {[-0.227 248.540] (gen/stray-2d from: [2.641 246.678] by: [5 5])}
+           {[-444.511 -82.728] (gen/stray-2d from: [-449.001 -79.842] by: [5 5])}
+           {[38.476 209.605] (gen/stray-2d from: [37.301 206.818] by: [5 5])}]
+
+  coords3 [{[82.956 -286.186] (gen/stray-2d from: [83.331 -282.954] by: [5 5])}
+           {[88.479 -396.479] (gen/stray-2d from: [92.716 -393.120] by: [5 5])}
+           {[423.226 -421.275] (gen/stray-2d from: [426.686 -420.284] by: [5 5])}
+           {[-32.486 338.664] (gen/stray-2d from: [-29.734 335.671] by: [5 5])}]
+
+  col-fn-1 (col/build-procedural preset: {transformers (gen/select from: col/procedural-fn-presets)}
+                                 alpha: 0.08)
+  col-fn-2 (col/build-procedural preset: {chrome (gen/select from: col/procedural-fn-presets)}
+                                 alpha: 0.08)
+  col-fn-3 (col/build-procedural preset: {knight-rider (gen/select from: col/procedural-fn-presets)}
+                                 alpha: 0.08)
+
+  num-copies {25 (gen/int min: 25 max: 30)}
+  squish (interp/build from: [0 (- num-copies 1)] to: [{1.2 (gen/scalar min: 1.0 max: 1.5)} {0.79 (gen/scalar min: 0.3 max: 1)}]))
+
+(fn (draw angle: 0 copy: 0)
+  (scale vector: [(interp/value from: squish t: copy) (interp/value from: squish t: copy)])
+  (fence (t num: 200)
+    (poly coords: [(interp/bezier t: t coords: coords1)
+                   (interp/bezier t: t coords: coords2)
+                   (interp/bezier t: t coords: coords3)]
+          colours: [(col/value from: col-fn-1 t: t)
+                    (col/value from: col-fn-2 t: t)
+                    (col/value from: col-fn-3 t: t)])))
+
+(fn (render)
+  (rect position: [500 500]
+        width: 1000
+        height: 1000
+        colour: (col/value from: col-fn-1 t: 0.5))
+  (on-matrix-stack
+    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (scale vector: [0.8 0.8])
+    (repeat/rotate-mirrored fn: (address-of draw)
+                            copies: num-copies)))
+
+(render)

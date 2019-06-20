@@ -17,12 +17,20 @@ use std::mem;
 
 use std::path::Path;
 
-use core::BitmapInfo;
 use gl;
 use image::GenericImageView;
 use log::info;
 
 use crate::error::{Error, Result};
+
+
+
+#[derive(Default)]
+pub struct BitmapU8Info {
+    pub width: usize,
+    pub height: usize,
+    pub data: Vec<u8>,
+}
 
 #[macro_export]
 macro_rules! c_str {
@@ -40,7 +48,7 @@ where
     val
 }
 
-pub fn load_texture(ppath: &Path, name: &str) -> Result<BitmapInfo> {
+pub fn load_texture(ppath: &Path, name: &str) -> Result<BitmapU8Info> {
     let path = ppath.join(name);
 
     info!("load_bitmap: {:?}", path);
@@ -71,7 +79,7 @@ pub fn load_texture(ppath: &Path, name: &str) -> Result<BitmapInfo> {
         }
     }
 
-    let bitmap_info = BitmapInfo {
+    let bitmap_info = BitmapU8Info {
         width,
         height,
         data: data_flipped,

@@ -192,12 +192,7 @@ impl Bridge {
     }
 
     pub fn add_rgba_bitmap(&mut self, name: &str, width: usize, height: usize, data: Vec<u8>) {
-        let bitmap_info = BitmapInfo {
-            width,
-            height,
-            data,
-            ..Default::default()
-        };
+        let bitmap_info = BitmapInfo::new(width, height, data);
 
         self.context.bitmap_cache.insert(name, bitmap_info).unwrap();
     }

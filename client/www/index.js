@@ -109,19 +109,21 @@ function compileShader(gl, type, src) {
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     //alert(gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
     return null;
   }
   return shader;
 }
 
-function setupShaders(gl) {
-  const shaderProgram = gl.createProgram();
+function setupPieceShaders(gl) {
+  const shader = {};
 
+  shader.program = gl.createProgram();
 
   // pre-multiply the alpha in the shader
   // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
   const fragmentSrc = `
-  precision mediump float;
+  precision highp float;
   varying vec4 vColor;
   varying highp vec2 vTextureCoord;
 
@@ -134,7 +136,6 @@ function setupShaders(gl) {
     gl_FragColor.g = tex.r * vColor.g * vColor.a;
     gl_FragColor.b = tex.r * vColor.b * vColor.a;
     gl_FragColor.a = tex.r * vColor.a;
-
   }
   `;
 
@@ -159,36 +160,108 @@ function setupShaders(gl) {
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
   const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
 
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
+  gl.attachShader(shader.program, vertexShader);
+  gl.attachShader(shader.program, fragmentShader);
 
-  gl.linkProgram(shaderProgram);
+  gl.linkProgram(shader.program);
 
-  // commented out because of jshint
-  //  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-  //alert('Could not initialise shaders');
-  //  }
+  if (!gl.getProgramParameter(shader.program, gl.LINK_STATUS)) {
+    let lastError = gl.getProgramInfoLog(shader.program);
 
-  gl.useProgram(shaderProgram);
+    alert(`Could not initialise shaders: ${lastError}`);;
+    gl.deleteProgram(shader.program);
+    return null;
+  }
 
-  shaderProgram.positionAttribute =
-    gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-  gl.enableVertexAttribArray(shaderProgram.positionAttribute);
+  shader.positionAttribute = gl.getAttribLocation(shader.program, 'aVertexPosition');
+  shader.colourAttribute = gl.getAttribLocation(shader.program, 'aVertexColor');
+  shader.textureAttribute = gl.getAttribLocation(shader.program, 'aVertexTexture');
 
-  shaderProgram.colourAttribute =
-    gl.getAttribLocation(shaderProgram, 'aVertexColor');
-  gl.enableVertexAttribArray(shaderProgram.colourAttribute);
+  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
+  shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
+  shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
 
-  shaderProgram.textureAttribute =
-    gl.getAttribLocation(shaderProgram, 'aVertexTexture');
-  gl.enableVertexAttribArray(shaderProgram.textureAttribute);
+  return shader;
+}
 
-  shaderProgram.pMatrixUniform =
-    gl.getUniformLocation(shaderProgram, 'uPMatrix');
-  shaderProgram.mvMatrixUniform =
-    gl.getUniformLocation(shaderProgram, 'uMVMatrix');
+function setupBlitShaders(gl) {
+  const shader = {};
 
-  return shaderProgram;
+  shader.program = gl.createProgram();
+
+  const fragmentSrc = `
+  precision highp float;
+
+  varying vec2 vTextureCoord;
+
+  uniform sampler2D uSampler;
+
+  // https:en.wikipedia.org/wiki/SRGB
+  vec3 linear_to_srgb(vec3 linear) {
+      float a = 0.055;
+      float b = 0.0031308;
+      vec3 srgb_lo = 12.92 * linear;
+      vec3 srgb_hi = (1.0 + a) * pow(linear, vec3(1.0/2.4)) - vec3(a);
+      return vec3(
+          linear.r > b ? srgb_hi.r : srgb_lo.r,
+          linear.g > b ? srgb_hi.g : srgb_lo.g,
+          linear.b > b ? srgb_hi.b : srgb_lo.b);
+  }
+
+  // https:twitter.com/jimhejl/status/633777619998130176
+  vec3 ToneMapFilmic_Hejl2015(vec3 hdr, float whitePt) {
+      vec4 vh = vec4(hdr, whitePt);
+      vec4 va = 1.425 * vh + 0.05;
+      vec4 vf = (vh * va + 0.004) / (vh * (va + 0.55) + 0.0491) - 0.0821;
+      return vf.rgb / vf.www;
+  }
+
+  void main()
+  {
+     vec4 col = texture2D( uSampler, vTextureCoord );
+     gl_FragColor = vec4(linear_to_srgb(col.rgb), 1.0);
+  }
+  `;
+
+  const vertexSrc = `
+  attribute vec2 aVertexPosition;
+  attribute vec2 aVertexTexture;
+
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+
+  varying highp vec2 vTextureCoord;
+
+  void main(void) {
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
+    vTextureCoord = aVertexTexture;
+  }
+  `;
+
+  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
+  const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
+
+  gl.attachShader(shader.program, vertexShader);
+  gl.attachShader(shader.program, fragmentShader);
+
+  gl.linkProgram(shader.program);
+
+  if (!gl.getProgramParameter(shader.program, gl.LINK_STATUS)) {
+    let lastError = gl.getProgramInfoLog(shader.program);
+
+    alert(`Could not initialise shaders: ${lastError}`);;
+    gl.deleteProgram(shader.program);
+    return null;
+  }
+
+  shader.positionAttribute = gl.getAttribLocation(shader.program, 'aVertexPosition');
+  shader.textureAttribute = gl.getAttribLocation(shader.program, 'aVertexTexture');
+
+  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
+  shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
+  shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
+
+  return shader;
 }
 
 function setupGLState(gl) {
@@ -205,7 +278,7 @@ function setupGLState(gl) {
 }
 
 
-function handleTextureLoaded(gl, image, texture, shaderProgram) {
+function handleTextureLoaded(gl, image, texture) {
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -217,8 +290,69 @@ function handleTextureLoaded(gl, image, texture, shaderProgram) {
 
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.uniform1i(gl.getUniformLocation(shaderProgram, 'uSampler'), 0);
 }
+
+function createRenderTexture(gl, config) {
+  // create to render to
+  const targetTextureWidth = config.render_texture_width;
+  const targetTextureHeight = config.render_texture_height;
+
+  const targetTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+
+  {
+    // define size and format of level 0
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const border = 0;
+    const format = gl.RGBA;
+    const type = gl.UNSIGNED_BYTE;
+    const data = null;
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                  targetTextureWidth, targetTextureHeight, border,
+                  format, type, data);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+
+  return targetTexture;
+}
+
+function createFrameBuffer(gl, targetTexture) {
+  // Create and bind the framebuffer
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+  // attach the texture as the first color attachment
+  const attachmentPoint = gl.COLOR_ATTACHMENT0;
+  const level = 0;
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+
+  return fb;
+}
+
+function checkFramebufferStatus(gl) {
+  let res = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  switch(res) {
+  case gl.FRAMEBUFFER_COMPLETE: console.log("gl.FRAMEBUFFER_COMPLETE"); break;
+  case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT: console.log("gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT"); break;
+  case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: console.log("gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"); break;
+  case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS: console.log("gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS"); break;
+  case gl.FRAMEBUFFER_UNSUPPORTED: console.log("gl.FRAMEBUFFER_UNSUPPORTED"); break;
+  case gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: console.log("gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE"); break;
+  case gl.RENDERBUFFER_SAMPLES: console.log("gl.RENDERBUFFER_SAMPLE"); break;
+  }
+}
+
+const gConfig = {
+  render_texture_width: 1024,
+  render_texture_height: 1024,
+};
 
 class GLRenderer {
   constructor(canvasElement) {
@@ -228,7 +362,9 @@ class GLRenderer {
     const gl = initGL(this.glDomElement);
     this.gl = gl;
 
-    this.shaderProgram = setupShaders(gl);
+    this.pieceShader = setupPieceShaders(gl);
+    this.blitShader = setupBlitShaders(gl);
+
     setupGLState(gl);
 
     this.glVertexBuffer = gl.createBuffer();
@@ -237,7 +373,12 @@ class GLRenderer {
 
     this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
-    Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
+
+    this.renderTexture = createRenderTexture(gl, gConfig);
+    this.framebuffer = createFrameBuffer(gl, this.renderTexture);
+
+    // render to the canvas
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
   loadTexture(src) {
@@ -250,7 +391,7 @@ class GLRenderer {
       const image = new Image();
 
       image.addEventListener('load', () => {
-        handleTextureLoaded(that.gl, image, that.texture, that.shaderProgram);
+        handleTextureLoaded(that.gl, image, that.texture);
         resolve();
       });
 
@@ -260,6 +401,180 @@ class GLRenderer {
 
       image.src = src;
     });
+  }
+
+
+  renderGeometryToTexture(destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
+    const gl = this.gl;
+
+    let shader = this.pieceShader;
+
+    // render to texture attached to framebuffer
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+    //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.viewport(0, 0, destTextureWidth, destTextureHeight);
+
+    gl.useProgram(shader.program);
+
+    gl.enableVertexAttribArray(shader.positionAttribute);
+    gl.enableVertexAttribArray(shader.colourAttribute);
+    gl.enableVertexAttribArray(shader.textureAttribute);
+
+    // gl.clearColor(0.0, 0.0, 1.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    if (section === undefined) {
+      // render the entirety of the scene
+      Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
+    } else {
+      switch (section) {
+        // bottom left
+      case 0: Matrix.ortho(this.pMatrix,   0,  500,   0,  500, 10, -10); break;
+        // bottom right
+      case 1: Matrix.ortho(this.pMatrix, 500, 1000,   0,  500, 10, -10); break;
+        // top left
+      case 2: Matrix.ortho(this.pMatrix,   0,  500, 500, 1000, 10, -10); break;
+        // top right
+      case 3: Matrix.ortho(this.pMatrix, 500, 1000, 500, 1000, 10, -10); break;
+      }
+    }
+
+    gl.uniformMatrix4fv(shader.pMatrixUniform,
+                        false,
+                        this.pMatrix);
+
+    gl.uniformMatrix4fv(shader.mvMatrixUniform,
+                        false,
+                        this.mvMatrix);
+
+    gl.uniform1i(shader.textureUniform, 0);
+
+
+    const glVertexBuffer = this.glVertexBuffer;
+    const glColourBuffer = this.glColourBuffer;
+    const glTextureBuffer = this.glTextureBuffer;
+
+    const bytesin32bit = 4;
+
+    const vertexItemSize = 2;
+    const colourItemSize = 4;
+    const textureItemSize = 2;
+    const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
+
+
+    buffers.forEach(buffer => {
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
+      // a new typed array view is created that views the specified ArrayBuffer
+      const gbuf = new Float32Array(memoryF32, buffer.geo_ptr, buffer.geo_len);
+
+      //const gbuf = memorySubArray(memoryF32, geo_ptr, geo_len);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
+      gl.vertexAttribPointer(shader.positionAttribute,
+                             vertexItemSize,
+                             gl.FLOAT, false, totalSize * bytesin32bit,
+                             0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
+      gl.vertexAttribPointer(shader.colourAttribute,
+                             colourItemSize,
+                             gl.FLOAT, false, totalSize * bytesin32bit,
+                             vertexItemSize * bytesin32bit);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
+      gl.vertexAttribPointer(shader.textureAttribute,
+                             textureItemSize,
+                             gl.FLOAT, false, totalSize * bytesin32bit,
+                             (vertexItemSize + colourItemSize) * bytesin32bit);
+
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
+
+    });
+
+  }
+
+  renderTextureToScreen(canvasWidth, canvasHeight) {
+    const gl = this.gl;
+    const domElement = this.glDomElement;
+
+
+    if (domElement.width !== canvasWidth) {
+      domElement.width = canvasWidth;
+    }
+    if (domElement.height !== canvasHeight) {
+      domElement.height = canvasHeight;
+    }
+
+    let shader = this.blitShader;
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, this.renderTexture);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.useProgram(shader.program);
+
+    // console.log(shader);
+    gl.enableVertexAttribArray(shader.positionAttribute);
+    gl.enableVertexAttribArray(shader.textureAttribute);
+
+    // gl.clearColor(0.0, 0.0, 1.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // render the entirety of the scene
+    Matrix.ortho(this.pMatrix, 0, canvasWidth, 0, canvasHeight, 10, -10);
+
+    // add some uniforms for canvas width and height
+
+    gl.uniformMatrix4fv(shader.pMatrixUniform,
+                        false,
+                        this.pMatrix);
+
+    gl.uniformMatrix4fv(shader.mvMatrixUniform,
+                        false,
+                        this.mvMatrix);
+
+    gl.uniform1i(shader.textureUniform, 0);
+
+    const glVertexBuffer = this.glVertexBuffer;
+    const glColourBuffer = this.glColourBuffer;
+    const glTextureBuffer = this.glTextureBuffer;
+
+    // x, y, u, v
+    const jsData = [
+      0.0, 0.0, 0.0, 0.0,
+      canvasWidth, 0.0, 1.0, 0.0,
+      0.0, canvasHeight, 0.0, 1.0,
+      canvasWidth, canvasHeight, 1.0, 1.0
+    ];
+    const data = Float32Array.from(jsData);
+
+
+    const bytesin32bit = 4;
+
+    const vertexItemSize = 2;
+    const textureItemSize = 2;
+    const totalSize = (vertexItemSize + textureItemSize);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shader.positionAttribute,
+                           vertexItemSize,
+                           gl.FLOAT, false, totalSize * 4,
+                           0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shader.textureAttribute,
+                           textureItemSize,
+                           gl.FLOAT, false, totalSize * 4,
+                           (vertexItemSize) * 4);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, jsData.length / totalSize);
   }
 
   copyImageDataTo(elem) {
@@ -296,94 +611,6 @@ class GLRenderer {
     });
   }
 
-  preDrawScene(destWidth, destHeight, section) {
-    const gl = this.gl;
-    const domElement = this.glDomElement;
-
-    if (domElement.width !== destWidth) {
-      //log('GL width from', domElement.width, 'to', destWidth);
-      domElement.width = destWidth;
-    }
-    if (this.glDomElement.height !== destHeight) {
-      //log('GL height from', domElement.height, 'to', destHeight);
-      domElement.height = destHeight;
-    }
-    // gl.drawingBufferWidth, gl.drawingBufferHeight hold the actual
-    // size of the rendering element
-
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-
-    if (section === undefined) {
-      // render the entirety of the scene
-      Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
-    } else {
-      switch (section) {
-        // bottom left
-      case 0: Matrix.ortho(this.pMatrix,   0,  500,   0,  500, 10, -10); break;
-        // bottom right
-      case 1: Matrix.ortho(this.pMatrix, 500, 1000,   0,  500, 10, -10); break;
-        // top left
-      case 2: Matrix.ortho(this.pMatrix,   0,  500, 500, 1000, 10, -10); break;
-        // top right
-      case 3: Matrix.ortho(this.pMatrix, 500, 1000, 500, 1000, 10, -10); break;
-      }
-    }
-
-    gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform,
-                        false,
-                        this.pMatrix);
-
-    gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform,
-                        false,
-                        this.mvMatrix);
-  }
-
-  drawBuffer(memory, buffer) {
-    const gl = this.gl;
-    const shaderProgram = this.shaderProgram;
-
-    const glVertexBuffer = this.glVertexBuffer;
-    const glColourBuffer = this.glColourBuffer;
-    const glTextureBuffer = this.glTextureBuffer;
-
-    const bytesin32bit = 4;
-
-    const vertexItemSize = 2;
-    const colourItemSize = 4;
-    const textureItemSize = 2;
-
-    const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
-
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
-    // a new typed array view is created that views the specified ArrayBuffer
-    const gbuf = new Float32Array(memory, buffer.geo_ptr, buffer.geo_len);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.positionAttribute,
-                           vertexItemSize,
-                           gl.FLOAT, false, totalSize * bytesin32bit,
-                           0 * bytesin32bit);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.colourAttribute,
-                           colourItemSize,
-                           gl.FLOAT, false, totalSize * bytesin32bit,
-                           vertexItemSize * bytesin32bit);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.textureAttribute,
-                           textureItemSize,
-                           gl.FLOAT, false, totalSize * bytesin32bit,
-                           (vertexItemSize + colourItemSize) * bytesin32bit);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
-
-  }
 }
 
 // --------------------------------------------------------------------------------
@@ -1447,11 +1674,8 @@ async function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
 
   const stopFn = startTiming();
 
-  gGLRenderer.preDrawScene(destWidth, destHeight);
-
-  buffers.forEach(buffer => {
-    gGLRenderer.drawBuffer(memory, buffer);
-  });
+  gGLRenderer.renderGeometryToTexture(gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers);
+  gGLRenderer.renderTextureToScreen(destWidth, destHeight);
 
   await gGLRenderer.copyImageDataTo(imageElement);
 
@@ -1471,11 +1695,8 @@ async function renderGeometryBuffersSection(memory, buffers, imageElement, w, h,
 
   const stopFn = startTiming();
 
-  gGLRenderer.preDrawScene(destWidth, destHeight, section);
-
-  buffers.forEach(buffer => {
-    gGLRenderer.drawBuffer(memory, buffer);
-  });
+  gGLRenderer.renderGeometryToTexture(gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers, section);
+  gGLRenderer.renderTextureToScreen(destWidth, destHeight);
 
   await gGLRenderer.copyImageDataTo(imageElement);
 
