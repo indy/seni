@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define
   focal-fg-1 (focal/build-point position: {[508 674] (gen/int min: 0 max: 1000)}
                           distance: {957 (gen/int min: 0 max: 1000)}

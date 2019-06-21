@@ -1,4 +1,7 @@
-(define 
+(meta linear-colour-space: 1)
+
+
+(define
   coords1 {[[387.847 -37.134]
             [181.220 -402.972]
             [-42.039 -341.684]
@@ -38,4 +41,3 @@
                              copies: {2 (gen/int min: 1 max: 8)})))
 
 (render)
-

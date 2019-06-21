@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (bitmap/each from: "skull-c.png"
              position: [500 500]
              width: 900

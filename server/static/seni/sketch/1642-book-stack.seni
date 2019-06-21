@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (wash colour:  {(col/rgb r: 0.876 g: 0.917 b: 0.040 alpha: 0.443) (gen/col)})
 (tri-hsl alpha: {0.691 (gen/scalar)})
 (tri-lab alpha: {0.112 (gen/scalar)})

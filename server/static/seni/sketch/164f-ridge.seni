@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define
   title "164f-ridge"
   initial-seed (prng/range seed: {647 (gen/int max: 1000)})

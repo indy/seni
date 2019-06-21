@@ -1,3 +1,5 @@
+(meta linear-colour-space: 1)
+
 (fn (drawer a: 0 b: 0 c: 0 d: 0 position: [100 100])
     (circle position: [0 0]
             radius: 1

@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 
 (fn (hsl-grid)
     (define fn-h (interp/fn from: [0 1000]
@@ -10,8 +13,8 @@
               (rect position: [x y]
                     width: 50
                     height: 50
-                    colour: (col/hsl h: (fn-h val: y) 
-                                     s: 1 
+                    colour: (col/hsl h: (fn-h val: y)
+                                     s: 1
                                      l: (fn-l val: x))))))
 
 
@@ -27,8 +30,8 @@
           (rect position: [x y]
             width: 50
             height: 50
-            colour: (col/hsv h: 320 
-                             s: 1 
+            colour: (col/hsv h: 320
+                             s: 1
                              v: 0.76)))))
 
 

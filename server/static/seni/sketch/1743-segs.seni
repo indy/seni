@@ -1,4 +1,7 @@
-(define 
+(meta linear-colour-space: 1)
+
+
+(define
   coords1 {[[-191.644 73.790]
             [395.937 295.903]
             [353.429 -314.465]
@@ -23,11 +26,11 @@
                                  alpha: 0.08)
 
   num-copies {27 (gen/int min: 1 max: 28)}
-  squish (interp/build from: [0 (- num-copies 1)] 
+  squish (interp/build from: [0 (- num-copies 1)]
                        to: [{1.7 (gen/scalar max: 2)} {1.87 (gen/scalar max: 2)}]))
 
 (fn (draw angle: 0 copy: 0)
-  (scale vector: [(interp/value from: squish t: copy) 
+  (scale vector: [(interp/value from: squish t: copy)
                   (interp/value from: squish t: copy)])
   (fence (t num: 200)
     (poly coords: [(interp/bezier t: t coords: coords1)

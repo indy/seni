@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 define
   r (interp/build from: [0 1000] to: [0 math/TAU]))
 

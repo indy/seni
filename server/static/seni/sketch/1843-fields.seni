@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 ;; sketch/1843-fields.seni
 (define
   rng (prng/build seed: 123 min: -1 max: 1)

@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define
   title "cryst")
 
@@ -21,9 +24,9 @@
                      stroke-tessellation: {3 (gen/int min: 3 max: 20)}
                      stroke-noise: {97 (gen/int min: 0 max: 100)}
 
-                     colour: (col/rgb r: {0.072 (gen/scalar max: 0.3)} 
-                                      g: {0.194 (gen/scalar max: 0.3)} 
-                                      b: {0.298 (gen/scalar max: 0.3)} 
+                     colour: (col/rgb r: {0.072 (gen/scalar max: 0.3)}
+                                      g: {0.194 (gen/scalar max: 0.3)}
+                                      b: {0.298 (gen/scalar max: 0.3)}
                                       alpha: 0.9)
                      colour-volatility: {121 (gen/int min: 0 max: 140)}
 

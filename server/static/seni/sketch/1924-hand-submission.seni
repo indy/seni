@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define
   texture "hand.png"
   bmx (interp/build from: [0 canvas/width] to: [0 (bitmap/width from: texture)])

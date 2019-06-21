@@ -1,3 +1,5 @@
+(meta linear-colour-space: 1)
+
 ;; a variation of 15fe-rotate-mirror with wash added as a background
 
 (define

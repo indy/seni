@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define coords3 [[440 800]
                  [533 1100]
                  [766 600]
@@ -31,5 +34,3 @@
                    (interp/circle position: [500 500]
                                   radius: {400 (gen/int max: 1000)}
                                   t: (+ t {0.4 (gen/scalar)}))]))
-
-

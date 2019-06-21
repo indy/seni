@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 
 (loop (t from: 0 to: 1 steps: {16 (gen/int min: 1 max: 20)})
   (stroked-bezier colour: {(col/rgb r: 0.1 g: 0.4 b: 0.9 alpha: 0.7) (gen/col)}

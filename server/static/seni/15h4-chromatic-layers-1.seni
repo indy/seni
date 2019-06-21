@@ -1,4 +1,6 @@
-(define 
+(meta linear-colour-space: 1)
+
+(define
   coords1 {[[590.900 678.580]
             [875.606 764.629]
             [455.791 134.117]
@@ -38,5 +40,3 @@
         colours: [(col/value from: col-fn-1 t: t)
                   (col/value from: col-fn-2 t: t)
                   (col/value from: col-fn-3 t: t)]))
-
-

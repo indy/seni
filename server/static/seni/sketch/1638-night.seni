@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define
   ;; fade out any lines which are far away from the focal points
   interest (interp/build from: [0.2 1.5] to: [0 1] clamping: true))

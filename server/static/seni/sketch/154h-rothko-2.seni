@@ -1,9 +1,12 @@
+(meta linear-colour-space: 1)
+
+
 (background)
 (top-section)
 (middle-section)
 (lower-section)
 
-(define 
+(define
   background-colour (col/rgb r: {0.2 (gen/scalar)}
                              g: {0.2 (gen/scalar)}
                              b: {0.5 (gen/scalar)}
@@ -20,7 +23,7 @@
                       alpha: 0.7))
 
 (fn (top-section-highlights)
-  (define 
+  (define
     iterations {5 (gen/int min: 1 max: 30)}
     overlap {1 (gen/int min: 1 max: 20)}
     tessellation {35 (gen/int min: 1 max: 50)}
@@ -102,7 +105,7 @@
                        seed: {44 (gen/int)}))
 
 (fn (lower-section)
-  (define 
+  (define
     colour (col/set-l colour: mid-colour
                       value: (- (col/get-l
                                  colour: mid-colour)

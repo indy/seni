@@ -1,3 +1,5 @@
+(meta linear-colour-space: 1)
+
 (define
   coords1 [{[335.200 112.444] (gen/stray-2d from: [335.200 112.444] by: [10 10])}
            {[-431.964 -91.473] (gen/stray-2d from: [-431.964 -91.473] by: [10 10])}

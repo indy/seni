@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 
 (define coords [[{  0 (gen/int max: canvas/width)} {500 (gen/int max: canvas/height)}]
                 [{333 (gen/int max: canvas/width)} {100 (gen/int max: canvas/height)}]
@@ -46,7 +49,7 @@
    ;; centre fill
    (circle-slice tessellation: 10
                  position: [0 0]
-                 colour: (col/lighten colour: colour 
+                 colour: (col/lighten colour: colour
                                       delta: (* {10 (gen/int min: 5 max: 20)} (srng)))
                  angle-start: 0
                  angle-end: 360
@@ -83,7 +86,7 @@
   (define
     [tx ty] (interp/bezier-tangent t: t coords: coords)
     angle (- (math/atan2 x: tx y: ty) half-pi))
-  
+
 ;  (interesting-circle position: position
 ;                      radius: 20
 ;                      colour: blue)

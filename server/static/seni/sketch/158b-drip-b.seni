@@ -1,8 +1,11 @@
+(meta linear-colour-space: 1)
+
+
 ;; imitating Karl Gerstner's Polychrome of Pure Colors (1956-58)
 
 ;; http://www.theguardian.com/science/alexs-adventures-in-numberland/2015/dec/02/why-the-history-of-maths-is-also-the-history-of-art
 
-(define 
+(define
   steps 14
   ;; assuming a square canvas
   box-dim (/ canvas/width steps)
@@ -21,7 +24,7 @@
   (loop (x from: 0 to: steps)
     (define
       checked (if (= (mod y 2) 1) (mod x 2) (- 1 (mod x 2)))
-      colour (if (= checked 0) 
+      colour (if (= checked 0)
                  (col-fn-1 t: (remap val: x))
                  (col-fn-1 t: (remap val: x))))
     (rect colour: colour

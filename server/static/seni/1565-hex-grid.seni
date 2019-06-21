@@ -1,4 +1,6 @@
-(define 
+(meta linear-colour-space: 1)
+
+(define
   scalefactor {1.7 (gen/scalar min: 0.5 max: 3)}
   hex-size {21 (gen/int min: 10 max: 100)}
 
@@ -17,7 +19,7 @@
              colour: black
              size: 100)
   (circle colour: colour
-          radius: (* size 0.95) 
+          radius: (* size 0.95)
           position: position
           tessellation: 6))
 

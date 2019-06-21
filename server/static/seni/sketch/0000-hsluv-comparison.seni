@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 ;; boxes to compare colour transitions
 
 (define
@@ -5,7 +8,7 @@
   right-x 900
   width 95
   height 100
-  
+
   left-rgb {(col/rgb r: 0.9 g: 1.0 b: 0 alpha: 1) (gen/col alpha: 1)}
   right-rgb {(col/rgb r: 0.1 g: 0.0 b: 1 alpha: 1) (gen/col alpha: 1)}
 
@@ -14,7 +17,7 @@
   interp-hsluv-h (interp/build from: [left-x right-x] to: [(col/get-h colour: left-hsluv) (col/get-h colour: right-hsluv)])
   interp-hsluv-s (interp/build from: [left-x right-x] to: [(col/get-s colour: left-hsluv) (col/get-s colour: right-hsluv)])
   interp-hsluv-l (interp/build from: [left-x right-x] to: [(col/get-l colour: left-hsluv) (col/get-l colour: right-hsluv)])
-  
+
   left-hsl (col/convert colour: left-rgb format: HSL)
   right-hsl (col/convert colour: right-rgb format: HSL)
   interp-hsl-h (interp/build from: [left-x right-x] to: [(col/get-h colour: left-hsl) (col/get-h colour: right-hsl)])

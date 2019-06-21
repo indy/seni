@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 ;; Pablo Picasso's Dog
 ;;
 (define
@@ -27,7 +30,7 @@
           radius: (/ line-width 2)))
 
 (on-matrix-stack
-  ;; scale coords from 500 limit to 1000 limit 
+  ;; scale coords from 500 limit to 1000 limit
   (scale vector: [2 2])
   ;; reverse y-coordinates
   (translate vector: [0 500])

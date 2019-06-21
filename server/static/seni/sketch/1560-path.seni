@@ -1,10 +1,13 @@
-; apply a full-canvas dark texture
+(meta linear-colour-space: 1)
+
+                                        ;
+apply a full-canvas dark texture
 (stroked-bezier-rect position: [(/ canvas/width 2) (/ canvas/height 2)]
                      overlap: 90
                      iterations: 80
                      tessellation: 20
                      stroke-noise: 20
-                     width: 1100 
+                     width: 1100
                      height: 1100
                      colour: (col/rgb r: 0 g: 0 b: 0.1 alpha: 0.9))
 
@@ -14,7 +17,7 @@
       colour: (col/rgb r: 0 g: 0 b: 0.0 alpha: 0.5))
 
 ;; the coords that the bezier path will take
-(define 
+(define
   coords {[[0 500] [333 100] [666 900] [999 500]]
           (gen/2d min: 0 max: 1000)}
 
@@ -175,4 +178,3 @@
 (path/bezier fn: (address-of fn6)
              steps: steps
              coords: coords)
-

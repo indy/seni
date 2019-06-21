@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (on-matrix-stack
   (scale scalar: 1.1)
   (rotate angle: 3)

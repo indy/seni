@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define math/TAU 6.283185)
 
 (wash)
@@ -38,7 +41,7 @@
             sc: 1.0)
   (on-matrix-stack
     (scale scalar: sc)
-    (define 
+    (define
       strokes petals
       colcol (col/set-alpha colour: colour value: 0.3)
       rem (interp/build from: [0 strokes] to: [0 math/TAU]))
@@ -50,7 +53,7 @@
             sc: 1.0)
   (on-matrix-stack
     (scale scalar: sc)
-    (define 
+    (define
       strokes petals
       colcol (col/set-alpha colour: colour value: 0.4)
       rem (interp/build from: [0 strokes] to: [0 math/TAU]))
@@ -81,7 +84,7 @@
           line-segments: 5
           colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
           seed: 272)
-  (define 
+  (define
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
   (loop (d from: -20 to: 1020 inc: 20)

@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define title "hello world")
 
 (define rng (prng/irange min: 0 max: 9 seed: 54))
@@ -79,10 +82,9 @@
               x2: x2
               y2: y2
               colour: colour)
-  
+
   (box-stroke x1: x1
               y1: y1
               x2: x2
               y2: y2
               colour: complementary))
-

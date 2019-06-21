@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define texture {"skull-b.png" (gen/select from: '("skull-a.png" "skull-b.png" "skull-c.png"))})
 
 (define per-pixel-funcs [(address-of pass-0)

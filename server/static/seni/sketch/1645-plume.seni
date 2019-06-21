@@ -1,4 +1,7 @@
-(define 
+(meta linear-colour-space: 1)
+
+
+(define
   coords1 {[[-27.353 -445.964]
             [-133.737 154.563]
             [344.920 251.936]
@@ -41,7 +44,7 @@
   (fn (v x: 0 y: 0 z: 0 scale: 1)
     (+ y (* scale (prng/perlin-signed x: x y: y z: z))))
 
-  (define 
+  (define
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
 

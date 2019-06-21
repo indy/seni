@@ -1,4 +1,7 @@
-(define 
+(meta linear-colour-space: 1)
+
+
+(define
   coords1 {[[425.692 624.319]
             [757.931 206.374]
             [320.989 231.681]

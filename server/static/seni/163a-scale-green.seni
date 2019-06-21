@@ -1,3 +1,5 @@
+(meta linear-colour-space: 1)
+
 (define
   step-y (/ 1000 {8 (gen/int min: 6 max: 10)})
   step-x (/ 1000 {10 (gen/int min: 8 max: 12)}))

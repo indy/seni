@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define centre [500 500])
 (define master-radius {50 (gen/scalar min: 30 max: 80)})
 (define corner-square-mult {0.5 (gen/scalar min: 0.3 max: 1.0)})
@@ -9,7 +12,7 @@
                       colour: black)
   (on-matrix-stack
    (translate vector: position)
-   (rotate angle: (/ math/TAU 16)) ; align 
+   (rotate angle: (/ math/TAU 16)) ; align
    (circle position: [0 0]
            tessellation: 8
            width: radius
@@ -38,7 +41,7 @@
   (define main-col {yellow (gen/col alpha: 1)}
     (triad-b triad-c) ({col/analagous (gen/select from: ['col/analagous
                                                      'col/split-complementary
-                                                     'col/triad])} 
+                                                     'col/triad])}
                                   colour: main-col))
   (rect position: [500 500]
         width: 1000

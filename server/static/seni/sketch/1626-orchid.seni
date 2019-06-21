@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 ;; some of the interp functions accept defining parameters as well as a 't' value
 ;; but interp/build returns a structure that's used by interp/values and interp/value
 

@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define
   ;; fade out any lines which are far away from the focal points
   interest (interp/build from: [0.2 1.5] to: [0 1] clamping: true))
@@ -14,11 +17,11 @@
 
 ;; render the background grid
 (define
-  focal-bg-a (focal/build-point position: [{587 (gen/int min: 400 max: 600)} 
+  focal-bg-a (focal/build-point position: [{587 (gen/int min: 400 max: 600)}
                                            {323 (gen/int min: 100 max: 400)}]
                                 distance: {820 (gen/int min: 700 max: 1000)}
                                 falloff: linear)
-  focal-bg-b (focal/build-point position: [{545 (gen/int min: 400 max: 600)} 
+  focal-bg-b (focal/build-point position: [{545 (gen/int min: 400 max: 600)}
                                            {830 (gen/int min: 600 max: 900)}]
                                 distance: {730 (gen/int min: 700 max: 1000)}
                                 falloff: linear)

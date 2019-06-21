@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (rect position: [(/ canvas/width 2) (/ canvas/height 2)]
       width: canvas/width
       height: canvas/height
@@ -18,9 +21,9 @@
                      stroke-tessellation: {5 (gen/int min: 3 max: 20)}
                      stroke-noise: {50 (gen/int min: 0 max: 100)}
 
-                     colour: (col/rgb r: {0.2 (gen/scalar max: 0.3)} 
-                                      g: {0.0 (gen/scalar max: 0.3)} 
-                                      b: {0.1 (gen/scalar max: 0.3)} 
+                     colour: (col/rgb r: {0.2 (gen/scalar max: 0.3)}
+                                      g: {0.0 (gen/scalar max: 0.3)}
+                                      b: {0.1 (gen/scalar max: 0.3)}
                                       alpha: 0.9)
                      colour-volatility: {100 (gen/int min: 0 max: 140)}
 

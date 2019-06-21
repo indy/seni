@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define
   title "164f-vhs"
   initial-seed (prng/range seed: {384 (gen/int max: 1000)})

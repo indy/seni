@@ -1,3 +1,6 @@
+(meta linear-colour-space: 1)
+
+
 (define
   seed-radius {3.2 (gen/scalar min: 3 max: 5)}
   scale-factor 4

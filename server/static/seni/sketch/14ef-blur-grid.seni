@@ -1,4 +1,7 @@
-(define 
+(meta linear-colour-space: 1)
+
+
+(define
   num-squares-to-render 13
   gap-size 30
   num-squares (+ 2 num-squares-to-render)
@@ -9,7 +12,7 @@
 
 (loop (y from: 1 to: (- num-squares 1))
   (loop (x from: 1 to: (- num-squares 1))
-    (define 
+    (define
       x-pos (map-to-position at: x)
       y-pos (map-to-position at: y))
     (accumulated-rect x: x-pos
@@ -17,10 +20,10 @@
                       passes: 20
                       volatility: (/ (math/distance vec1: [(/ canvas/width 2)
                                                            (/ canvas/height 2)]
-                                                    vec2: [x-pos y-pos]) 
+                                                    vec2: [x-pos y-pos])
                                      250)
                       seed: (+ x (* y num-squares))
-                      width: square-size 
+                      width: square-size
                       height: square-size
                       colour: (col/rgb r: 1.0 g: 0.0 b: 0.4 alpha: 1.0))))
 
@@ -54,7 +57,7 @@
           line-segments: 5
           colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
           seed: 272)
-  (define 
+  (define
     w/3 (/ canvas/width 3)
     h/3 (/ canvas/height 3))
   (loop (d from: -20 to: 1020 inc: 20)

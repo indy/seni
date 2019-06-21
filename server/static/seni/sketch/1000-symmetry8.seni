@@ -1,12 +1,15 @@
+(meta linear-colour-space: 1)
+
+
 (render)
 
 (fn (render-half)
     (bezier coords: [[0 0]
-                     [{ 100 (gen/int min: -500 max: 500)} 
+                     [{ 100 (gen/int min: -500 max: 500)}
                       { 100 (gen/int min: -500 max: 500)}]
-                     [{ 200 (gen/int min: -500 max: 500)} 
+                     [{ 200 (gen/int min: -500 max: 500)}
                       {-200 (gen/int min: -500 max: 500)}]
-                     [{ 300 (gen/int min: -500 max: 500)} 
+                     [{ 300 (gen/int min: -500 max: 500)}
                       {-200 (gen/int min: -500 max: 500)}]]))
 
 (fn (render)
