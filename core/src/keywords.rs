@@ -328,6 +328,8 @@ pub enum Keyword {
     InnerWidth,
     #[strum(serialize = "iterations")]
     Iterations,
+    #[strum(serialize = "linear-colour-space")]
+    LinearColourSpace,
     #[strum(serialize = "line-width")]
     LineWidth,
     #[strum(serialize = "line-width-end")]
@@ -439,7 +441,7 @@ mod tests {
     fn test_keyword_enums() {
         assert_eq!(Keyword::False as i32, 128);
         assert_eq!(Keyword::True as i32, 129);
-        assert_eq!(Keyword::Width as i32, 299);
+        assert_eq!(Keyword::Width as i32, 300);
     }
 
     #[test]

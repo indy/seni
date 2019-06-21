@@ -177,6 +177,10 @@ impl Bridge {
         }
     }
 
+    pub fn output_linear_colour_space(&self) -> bool {
+        self.context.output_linear_colour_space
+    }
+
     // --------------------------------------------------------------------------------
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {

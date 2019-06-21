@@ -32,6 +32,7 @@ pub struct Context {
     pub mappings: Mappings,
     pub geometry: geometry::Geometry,
     pub bitmap_cache: BitmapCache,
+    pub output_linear_colour_space: bool, // derive Default sets bool to false
 }
 
 impl Context {

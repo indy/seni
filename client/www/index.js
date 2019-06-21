@@ -195,6 +195,7 @@ function setupBlitShaders(gl) {
   varying vec2 vTextureCoord;
 
   uniform sampler2D uSampler;
+  uniform bool uOutputLinearColourSpace;
 
   // https:en.wikipedia.org/wiki/SRGB
   vec3 linear_to_srgb(vec3 linear) {
@@ -219,7 +220,17 @@ function setupBlitShaders(gl) {
   void main()
   {
      vec4 col = texture2D( uSampler, vTextureCoord );
-     gl_FragColor = vec4(linear_to_srgb(col.rgb), 1.0);
+
+     // note: you _never_ want uOutputLinearColourSpace to be set to true
+     // it's only here because some of the older pieces didn't correctly
+     // convert from linear colour space to sRGB colour space during rendering
+     // and this shader needs to reproduce them as intended at time of creation
+     //
+     if (uOutputLinearColourSpace) {
+       gl_FragColor = col;
+     } else {
+       gl_FragColor = vec4(linear_to_srgb(col.rgb), 1.0);
+     }
   }
   `;
 
@@ -260,6 +271,11 @@ function setupBlitShaders(gl) {
   shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
   shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
   shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
+
+  // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
+  // in order to retain the look of these older pieces we can't carry out the linear -> sRGB conversion
+  //
+  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
 
   return shader;
 }
@@ -498,7 +514,7 @@ class GLRenderer {
 
   }
 
-  renderTextureToScreen(canvasWidth, canvasHeight) {
+  renderTextureToScreen(meta, canvasWidth, canvasHeight) {
     const gl = this.gl;
     const domElement = this.glDomElement;
 
@@ -539,6 +555,9 @@ class GLRenderer {
                         this.mvMatrix);
 
     gl.uniform1i(shader.textureUniform, 0);
+
+    gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
+
 
     const glVertexBuffer = this.glVertexBuffer;
     const glColourBuffer = this.glColourBuffer;
@@ -680,7 +699,7 @@ function seniMode() {
 
   // keywords are core to the seni language
   const keywords =
-        makeKeywords('begin define fn if fence loop on-matrix-stack quote');
+        makeKeywords('begin define fn if fence loop on-matrix-stack quote meta');
   const indentKeys = makeKeywords('define fence loop on-matrix-stack fn');
 
   // functions from the common seni library
@@ -1661,7 +1680,7 @@ function updateSelectionUI(state) {
   });
 }
 
-async function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
+async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h) {
   let destWidth = undefined;
   let destHeight = undefined;
   if (w !== undefined && h !== undefined) {
@@ -1675,14 +1694,14 @@ async function renderGeometryBuffers(memory, buffers, imageElement, w, h) {
   const stopFn = startTiming();
 
   gGLRenderer.renderGeometryToTexture(gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers);
-  gGLRenderer.renderTextureToScreen(destWidth, destHeight);
+  gGLRenderer.renderTextureToScreen(meta, destWidth, destHeight);
 
   await gGLRenderer.copyImageDataTo(imageElement);
 
   stopFn("rendering all buffers");
 }
 
-async function renderGeometryBuffersSection(memory, buffers, imageElement, w, h, section) {
+async function renderGeometryBuffersSection(meta, memory, buffers, imageElement, w, h, section) {
   let destWidth = undefined;
   let destHeight = undefined;
   if (w !== undefined && h !== undefined) {
@@ -1696,7 +1715,7 @@ async function renderGeometryBuffersSection(memory, buffers, imageElement, w, h,
   const stopFn = startTiming();
 
   gGLRenderer.renderGeometryToTexture(gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers, section);
-  gGLRenderer.renderTextureToScreen(destWidth, destHeight);
+  gGLRenderer.renderTextureToScreen(meta, destWidth, destHeight);
 
   await gGLRenderer.copyImageDataTo(imageElement);
 
@@ -1792,13 +1811,13 @@ function normalize_bitmap_url(url) {
 async function renderScript(parameters, imageElement) {
   const stopFn = startTiming();
 
-  let { title, memory, buffers } = await renderJob(parameters);
-  await renderGeometryBuffers(memory, buffers, imageElement);
+  let { meta, memory, buffers } = await renderJob(parameters);
+  await renderGeometryBuffers(meta, memory, buffers, imageElement);
 
-  if (title === '') {
+  if (meta.title === '') {
     stopFn(`renderScript`);
   } else {
-    stopFn(`renderScript-${title}`);
+    stopFn(`renderScript-${meta.title}`);
   }
 }
 
@@ -1946,14 +1965,14 @@ async function renderHighResSection(state, section) {
 
   const stopFn = startTiming();
 
-  const { title, memory, buffers } = await renderJob({
+  const { meta, memory, buffers } = await renderJob({
     script: state.script,
     scriptHash: state.scriptHash,
     genotype: undefined,
   });
   const [width, height] = state.highResolution;
-  await renderGeometryBuffersSection(memory, buffers, image, width, height, section);
-  stopFn(`renderHighResSection-${title}-${section}`);
+  await renderGeometryBuffersSection(meta, memory, buffers, image, width, height, section);
+  stopFn(`renderHighResSection-${meta.title}-${section}`);
   image.classList.remove('hidden');
   loader.classList.add('hidden');
 }
@@ -2242,7 +2261,7 @@ function setupUI(controller) {
 
     const stopFn = startTiming();
 
-    const { title, memory, buffers } = await renderJob({
+    const { meta, memory, buffers } = await renderJob({
       script: state.script,
       scriptHash: state.scriptHash,
       genotype: state.genotype,
@@ -2250,9 +2269,9 @@ function setupUI(controller) {
 
     const [width, height] = [image_resolution, image_resolution];
 
-    await renderGeometryBuffers(memory, buffers, image, width, height);
+    await renderGeometryBuffers(meta, memory, buffers, image, width, height);
 
-    stopFn(`renderHighRes-${title}`);
+    stopFn(`renderHighRes-${meta.title}`);
 
     loader.classList.add('hidden');
 

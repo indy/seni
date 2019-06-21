@@ -75,9 +75,12 @@ function renderPackets({  }) {
     }
   }
 
-  gState.bridge.script_cleanup();
+  const meta = {
+    title: '',
+    output_linear_colour_space: gState.bridge.output_linear_colour_space()
+  };
 
-  const title = '';
+  gState.bridge.script_cleanup();
 
   // make a copy of the wasm memory
   //
@@ -88,11 +91,10 @@ function renderPackets({  }) {
   // WTF note: Expected a perfomance cost in Chrome due to the slice operation
   // but it seemed to either have no effect or to make the rendering faster!
   //
-
   const wasmMemory = gState.memory.buffer;
   const memory = wasmMemory.slice();
 
-  return [{}, { title, memory, buffers }];
+  return [{}, { meta, memory, buffers }];
 }
 
 

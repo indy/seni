@@ -57,6 +57,8 @@ pub enum Native {
     VectorLength,
     #[strum(serialize = "probe")]
     Probe,
+    #[strum(serialize = "meta")]
+    Meta,
 
     // shapes
     //
@@ -314,6 +316,7 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::Nth => nth_parameter_info(),
         Native::VectorLength => vector_length_parameter_info(),
         Native::Probe => probe_parameter_info(),
+        Native::Meta => meta_parameter_info(),
         // shapes
         Native::Line => line_parameter_info(),
         Native::Rect => rect_parameter_info(),
@@ -437,6 +440,7 @@ pub fn execute_native(
         Native::Nth => nth_execute(vm),
         Native::VectorLength => vector_length_execute(vm),
         Native::Probe => probe_execute(vm, context),
+        Native::Meta => meta_execute(vm, context),
         // shapes
         Native::Line => line_execute(vm, context),
         Native::Rect => rect_execute(vm, context),
@@ -774,6 +778,28 @@ fn probe_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
             let (nx, ny) = matrix.transform_vec2(x, y);
             vm.debug_str_append(&format!("({},{})", nx, ny));
         }
+    }
+
+    Ok(None)
+}
+
+fn meta_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::LinearColourSpace, Var::Float(0.0)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn meta_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
+    let default_mask: i32 = vm.stack_peek(2)?;
+
+    if is_arg_given(default_mask, 1) {
+        let scalar: f32 = vm.stack_peek(1)?;
+        context.output_linear_colour_space = scalar > 0.0;
     }
 
     Ok(None)
