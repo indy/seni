@@ -1049,7 +1049,7 @@ function getCSSAnimationDuration(className) {
 
 function resetImageElements() {
   setOpacity(IMG_1, 0);
-  gState.activeImageElement = 0;
+  gState.activeImageElement = 1;
 
   removeClass(IMG_1, 'seni-fade-in');
   removeClass(IMG_1, 'seni-fade-in-slideshow');
@@ -1166,7 +1166,6 @@ function updateGlobalsFromURI() {
     // absence of mode parameter in URI means MODE_NORMAL
     updateToMode(MODE_NORMAL);
   }
-  // console.log(`updateGlobalsFromURI mode: ${gState.mode}, seed: ${gState.seed}`);
 }
 
 function updateURIFromGlobals() {
@@ -1208,13 +1207,7 @@ async function renderNormal(display) {
 }
 
 async function updatePiece(display) {
-  console.log(`updatePiece mode: ${gState.mode}, seed: ${gState.seed}`);
-
-  if (gState.mode === MODE_NORMAL) {
-    await renderNormal(display);
-  } else if (gState.mode === MODE_SLIDESHOW) {
-    await renderNormal(display);
-  }
+  await renderNormal(display);
 }
 
 async function main() {
