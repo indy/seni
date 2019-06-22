@@ -603,93 +603,6 @@ class GLRenderer {
       }
     });
   }
-
-  setupBuffer(destTextureWidth, destTextureHeight, memoryF32, buffer) {
-    const gl = this.gl;
-
-    let shader = this.pieceShader;
-
-    // render to texture attached to framebuffer
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
-    //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.viewport(0, 0, destTextureWidth, destTextureHeight);
-
-    gl.useProgram(shader.program);
-
-    gl.enableVertexAttribArray(shader.positionAttribute);
-    gl.enableVertexAttribArray(shader.colourAttribute);
-    gl.enableVertexAttribArray(shader.textureAttribute);
-
-    // gl.clearColor(0.0, 0.0, 1.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    // render the entirety of the scene
-    Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
-
-    gl.uniformMatrix4fv(shader.pMatrixUniform,
-                        false,
-                        this.pMatrix);
-
-    gl.uniformMatrix4fv(shader.mvMatrixUniform,
-                        false,
-                        this.mvMatrix);
-
-    gl.uniform1i(shader.textureUniform, 0);
-
-
-    const glVertexBuffer = this.glVertexBuffer;
-    const glColourBuffer = this.glColourBuffer;
-    const glTextureBuffer = this.glTextureBuffer;
-
-    const bytesin32bit = 4;
-
-    const vertexItemSize = 2;
-    const colourItemSize = 4;
-    const textureItemSize = 2;
-    const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
-
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
-    // a new typed array view is created that views the specified ArrayBuffer
-    const gbuf = new Float32Array(memoryF32, buffer.geo_ptr, buffer.geo_len);
-
-    //const gbuf = memorySubArray(memoryF32, geo_ptr, geo_len);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shader.positionAttribute,
-                           vertexItemSize,
-                           gl.FLOAT, false, totalSize * bytesin32bit,
-                           0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shader.colourAttribute,
-                           colourItemSize,
-                           gl.FLOAT, false, totalSize * bytesin32bit,
-                           vertexItemSize * bytesin32bit);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shader.textureAttribute,
-                           textureItemSize,
-                           gl.FLOAT, false, totalSize * bytesin32bit,
-                           (vertexItemSize + colourItemSize) * bytesin32bit);
-  }
-
-  drawBufferPartial(buffer, first, count) {
-    const gl = this.gl;
-
-    const vertexItemSize = 2;
-    const colourItemSize = 4;
-    const textureItemSize = 2;
-
-    const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, first / totalSize, count / totalSize);
-  }
-
 }
 
 // --------------------------------------------------------------------------------
@@ -866,7 +779,6 @@ const URI_SEED = "seed";
 const URI_MODE = "mode";
 
 const MODE_NORMAL = "normal";
-const MODE_SKETCH = "sketch";
 const MODE_SLIDESHOW = "slideshow";
 
 // either display the generated image asap or fade it in
@@ -890,19 +802,6 @@ let gState = {
 
   render_texture_width: 1024,
   render_texture_height: 1024,
-
-  sketchMemory: undefined,
-  sketchBuffers: undefined,
-  sketchMeta: undefined,
-  sketchBufferIndex: 0,
-  sketchGeoIndex: 0,
-  sketchAmount: 0,
-  sketchTimeStart: 0,
-// note: desiredDuration will always be a slight underestimation of actual duration
-// as some transitions aren't going to be using the full amount of vertices
-  sketchDesiredDuration: 40,
-
-  deleteme: false
 };
 
 function logDebug(msg) {
@@ -941,10 +840,7 @@ async function displayOnImageElements(display) {
         addClass(IMG_1, 'seni-fade-out');
       } else if (gState.mode === MODE_SLIDESHOW) {
         addClass(IMG_1, 'seni-fade-out-slideshow');
-      } else if (gState.mode === MODE_SKETCH) {
-        addClass(IMG_1, 'seni-fade-out-sketch');
       }
-
     } else {
       const pieceImg1 = getRequiredElement(IMG_1);
       await gState.glRenderer.copyImageDataTo(pieceImg1);
@@ -953,10 +849,7 @@ async function displayOnImageElements(display) {
         addClass(IMG_1, 'seni-fade-in');
       } else if (gState.mode === MODE_SLIDESHOW) {
         addClass(IMG_1, 'seni-fade-in-slideshow');
-      } else if (gState.mode === MODE_SKETCH) {
-        addClass(IMG_1, 'seni-fade-in-sketch');
       }
-
     }
 
     gState.activeImageElement = 1 - gState.activeImageElement;
@@ -1154,68 +1047,12 @@ function getCSSAnimationDuration(className) {
   return undefined;
 }
 
-
-//  gState.glRenderer.renderGeometryToTexture(gState.render_texture_width, gState.render_texture_height, memory, buffers);
-//  gState.glRenderer.renderTextureToScreen(gState.sketchMeta, gState.demandCanvasSize, gState.demandCanvasSize);
-
-
-
-// the animationEndListener is responsible for calling animateSketch.
-// This way we can specify the length of each fade in css
-async function animateSketch() {
-  let currentBuffer = gState.sketchBuffers[gState.sketchBufferIndex];
-
-
-
-  gState.glRenderer.setupBuffer(gState.render_texture_width,
-                                gState.render_texture_height,
-                                gState.sketchMemory,
-                                gState.sketchBuffers[gState.sketchBufferIndex]);
-
-
-  if (gState.sketchGeoIndex + gState.sketchAmount < currentBuffer.geo_len) {
-    // can draw geometry from the current buffer
-    gState.glRenderer.drawBufferPartial(currentBuffer, gState.sketchGeoIndex, gState.sketchAmount);
-    //console.log(`animateSketch ${gState.sketchBufferIndex} gState.sketchGeoIndex: ${gState.sketchGeoIndex} gState.sketchAmount: ${gState.sketchAmount} sum: ${gState.sketchGeoIndex + gState.sketchAmount}`);
-    gState.sketchGeoIndex += gState.sketchAmount;
-  } else {
-    // render the remaining geometry
-    const remaining = currentBuffer.geo_len - gState.sketchGeoIndex;
-    gState.glRenderer.drawBufferPartial(currentBuffer, gState.sketchGeoIndex, remaining);
-    //console.log(`animateSketch ${gState.sketchBufferIndex} gState.sketchGeoIndex: ${gState.sketchGeoIndex} remaining: ${remaining} sum: ${gState.sketchGeoIndex + remaining}`);
-    //console.log("");
-
-    // move onto the next buffer
-    gState.sketchBufferIndex += 1;
-    gState.sketchGeoIndex = 0;
-
-    if (gState.sketchBufferIndex < gState.sketchBuffers.length) {
-      // gState.glRenderer.setupBuffer(gState.render_texture_width,
-      //                               gState.render_texture_height,
-      //                               gState.sketchMemory,
-      //                               gState.sketchBuffers[gState.sketchBufferIndex]);
-    } else {
-      // finished the animation
-      let endTime = performance.now();
-      let duration = endTime - gState.sketchTimeStart;
-      console.log(`finished. duration: ${duration}`);
-      return;
-    }
-  }
-
-  gState.glRenderer.renderTextureToScreen(gState.sketchMeta, gState.demandCanvasSize, gState.demandCanvasSize);
-
-  await displayOnImageElements(DISPLAY_FADE);
-}
-
-
 function resetImageElements() {
   setOpacity(IMG_1, 0);
   gState.activeImageElement = 0;
 
   removeClass(IMG_1, 'seni-fade-in');
   removeClass(IMG_1, 'seni-fade-in-slideshow');
-  removeClass(IMG_1, 'seni-fade-in-sketch');
 }
 
 function styleForNormalPiece() {
@@ -1261,10 +1098,10 @@ async function updateToMode(newMode) {
   const pieceImg1 = getRequiredElement(IMG_1);
   await gState.glRenderer.copyImageDataTo(pieceImg1);
 
-  if (gState.mode === MODE_SLIDESHOW || gState.mode === MODE_SKETCH) {
+  if (gState.mode === MODE_SLIDESHOW) {
     styleForLargePiece();
   } else if (gState.mode === MODE_NORMAL) {
-    window.clearTimeout(gState.timeoutId); // stop the slideshow/sketch
+    window.clearTimeout(gState.timeoutId); // stop the slideshow
     styleForNormalPiece();
   }
 
@@ -1275,25 +1112,19 @@ function animationEndListener1(event) {
   if (event.animationName === 'senifadeout') {
     removeClass(IMG_1, 'seni-fade-out');
     removeClass(IMG_1, 'seni-fade-out-slideshow');
-    removeClass(IMG_1, 'seni-fade-out-sketch');
     setOpacity(IMG_1, 0);
   }
 
   if (event.animationName === 'senifadein') {
     removeClass(IMG_1, 'seni-fade-in');
     removeClass(IMG_1, 'seni-fade-in-slideshow');
-    removeClass(IMG_1, 'seni-fade-in-sketch');
     if (gState.lastDisplay === DISPLAY_SNAP) {
-      // if we were in a sketch or slideshow and the user pressed escape to go back to a normal render
+      // if we were in a slideshow and the user pressed escape to go back to a normal render
       // the fade animation that was playing for the previous mode has now finished
       setOpacity(IMG_1, 0);
     } else {
       setOpacity(IMG_1, 1);
     }
-  }
-
-  if (gState.mode === MODE_SKETCH) {
-    gState.timeoutId = window.setTimeout(animateSketch);
   }
 }
 
@@ -1329,9 +1160,7 @@ function updateGlobalsFromURI() {
     gState.seed = undefined;
   }
 
-  if (uriParameters[URI_MODE] === MODE_SKETCH) {
-    updateToMode(MODE_SKETCH);
-  } else if (uriParameters[URI_MODE] === MODE_SLIDESHOW) {
+  if (uriParameters[URI_MODE] === MODE_SLIDESHOW) {
     updateToMode(MODE_SLIDESHOW);
   } else {
     // absence of mode parameter in URI means MODE_NORMAL
@@ -1361,71 +1190,6 @@ function updateURIFromGlobals() {
   }
 }
 
-async function renderSketch(_display) {
-  const scriptElement = getRequiredElement('piece-script');
-  const script = scriptElement.textContent.slice();
-
-  if (gState.seed === undefined) {
-    let { meta, memory, buffers } = await renderJob({ script });
-
-    gState.sketchMemory = memory;
-    gState.sketchBuffers = buffers;
-    gState.sketchMeta = meta;
-  } else {
-    const { traits } = await Job.request(jobBuildTraits, { script });
-    const { genotype } = await Job.request(jobSingleGenotypeFromSeed, { traits, seed: gState.seed });
-    let { meta, memory, buffers } = await renderJob({ script, genotype });
-
-    gState.sketchMemory = memory;
-    gState.sketchBuffers = buffers;
-    gState.sketchMeta = meta;
-  }
-  gState.sketchBufferIndex = 0;
-  gState.sketchGeoIndex = 0;
-
-  let i = 0;
-  gState.sketchBuffers.forEach(b => {
-    console.log(`buffer ${i} size: ${b.geo_len}`);
-    i += 1;
-  });
-
-  let numElements = gState.sketchBuffers.reduce((acc, buffer) => acc + buffer.geo_len, 0);
-  let numVertices = numElements / 8;
-
-  let cssTimeFadeIn = getCSSAnimationDuration(".seni-fade-in-sketch");
-  let cssTimeFadeOut = getCSSAnimationDuration(".seni-fade-out-sketch");
-  let transitionTime = cssTimeFadeIn > cssTimeFadeOut ? cssTimeFadeIn : cssTimeFadeOut;
-  // the number of transitions that the piece should be divided into
-  let numTransitions = gState.sketchDesiredDuration / transitionTime;
-  let vertsPerTransition = numVertices / numTransitions;
-
-
-  // divide numVertices by the animation length and round up to be divisible by 8
-  // gState.sketchAmount = 2000 * 8;
-  gState.sketchAmount = Math.round(vertsPerTransition) * 8;
-  console.log(`gState.sketchAmount = ${gState.sketchAmount}`);
-
-
-  const canvas = getRequiredElement('piece-canvas');
-  const pieceImg0 = getRequiredElement(IMG_0);
-  const pieceImg1 = getRequiredElement(IMG_1);
-
-  //  gState.glRenderer.preDrawScene(gState.demandCanvasSize, gState.demandCanvasSize);
-  await gState.glRenderer.copyImageDataTo(pieceImg0);
-  await gState.glRenderer.copyImageDataTo(pieceImg1);
-
-  if(gState.sketchBuffers.length > 0) {
-    gState.sketchTimeStart = performance.now();
-    gState.glRenderer.setupBuffer(gState.render_texture_width,
-                                  gState.render_texture_height,
-                                  gState.sketchMemory,
-                                  gState.sketchBuffers[0]);
-    if (gState.mode === MODE_SKETCH) {
-      gState.timeoutId = window.setTimeout(animateSketch);
-    }
-  }
-}
-
 async function renderNormal(display) {
   const scriptElement = getRequiredElement('piece-script');
   const script = scriptElement.textContent.slice();
@@ -1448,8 +1212,6 @@ async function updatePiece(display) {
 
   if (gState.mode === MODE_NORMAL) {
     await renderNormal(display);
-  } else if (gState.mode === MODE_SKETCH) {
-    await renderSketch(display);
   } else if (gState.mode === MODE_SLIDESHOW) {
     await renderNormal(display);
   }
@@ -1466,7 +1228,6 @@ async function main() {
   const originalButton = getRequiredElement('piece-eval-original');
   const variationButton = getRequiredElement('piece-eval-variation');
   const slideshowButton = getRequiredElement('piece-eval-slideshow');
-  // const sketchButton = getRequiredElement('piece-eval-sketch');
   const scriptElement = getRequiredElement('piece-script');
   const canvasElement = getRequiredElement('piece-canvas');
   const canvasImageElement0 = getRequiredElement(IMG_0);
@@ -1513,22 +1274,6 @@ async function main() {
     updateURIFromGlobals();
 
   });
-
-  /*
-  sketchButton.addEventListener('click', async () => {
-    originalButton.disabled = true;
-
-    updateToMode(MODE_SKETCH);
-
-    updateURIFromGlobals();
-
-    // note: updatePiece when MODE_SKETCH calls renderSketch
-    // which ignores the display parameter and behaves as if
-    // DISPLAY_FADE was given
-    //
-    await updatePiece(DISPLAY_FADE);
-  });
-  */
 
   variationButton.addEventListener('click', async () => {
     originalButton.disabled = false;
