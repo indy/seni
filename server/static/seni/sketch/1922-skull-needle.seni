@@ -29,10 +29,10 @@
                     {-11 (gen/scalar min: -12 max: -10)}]))
 
 (fn (per-pixel-1 a: 0 width: 0 from: [0 0] to: [0 0])
-  (line from: [(* (nth from: from n: 0) (math/cos angle: (* a math/PI)))
-               (* (nth from: from n: 1) (math/sin angle: (* a math/PI)))]
-        to: [(* (nth from: to n: 0) (math/cos angle: (* a math/PI)))
-             (* (nth from: to n: 1) (math/sin angle: (* a math/PI)))]
+  (line from: [(* (x from: from) (math/cos angle: (* a math/PI)))
+               (* (y from: from) (math/sin angle: (* a math/PI)))]
+        to: [(* (x from: to) (math/cos angle: (* a math/PI)))
+             (* (y from: to) (math/sin angle: (* a math/PI)))]
         width: (- width a)
         brush: {brush/c (gen/select from: brush/*)}
         brush-subtype: (prng/value from: rng)
@@ -40,10 +40,10 @@
 
 (fn (per-pixel-2 a: 0 width: 0 from: [0 0] to: [0 0])
   (define th {2.3 (gen/scalar min: 0 max: 6)})
-  (line from: [(* (nth from: from n: 0) (math/cos angle: (+ th (* a math/PI))))
-               (* (nth from: from n: 1) (math/sin angle: (+ th (* a math/PI))))]
-        to: [(* (nth from: to n: 0) (math/cos angle: (+ th (* a math/PI))))
-             (* (nth from: to n: 1) (math/sin angle: (+ th (* a math/PI))))]
+  (line from: [(* (x from: from) (math/cos angle: (+ th (* a math/PI))))
+               (* (y from: from) (math/sin angle: (+ th (* a math/PI))))]
+        to: [(* (x from: to) (math/cos angle: (+ th (* a math/PI))))
+             (* (y from: to) (math/sin angle: (+ th (* a math/PI))))]
         width: (- width a)
         brush: {brush/c (gen/select from: brush/*)}
         brush-subtype: (prng/value from: rng)

@@ -21,8 +21,8 @@
   main-col (col/hsluv h: col-h s: col-s l: col-l alpha: 1.0))
 
 (fn (offset-position position: [500 500] sc: 1)
-  [(+ (nth from: position n: 0) (* (prng/value from: rng) sc))
-   (+ (nth from: position n: 1) (* (prng/value from: rng) sc))])
+    [(+ (x from: position) (* (prng/value from: rng) sc))
+     (+ (y from: position) (* (prng/value from: rng) sc))])
 
 ;; calling offset-position with a small variance looks really good
 ;; (todo: blend the bg colour towards the fg col, using focal-a)

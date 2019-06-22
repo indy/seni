@@ -38,8 +38,8 @@
   (loop (i to: num-curves)
     (define
       t (interp/value from: remap t: i)
-      pa [(+ (nth from: source-pos n: 0) (prng/value from: source-rng))
-          (+ (nth from: source-pos n: 1) (prng/value from: source-rng))]
+      pa [(+ (x from: source-pos) (prng/value from: source-rng))
+          (+ (y from: source-pos) (prng/value from: source-rng))]
 
       pd (interp/bezier coords: dest-curve t: t)
 
@@ -95,10 +95,10 @@
     )
   (loop (i to: num-curves)
     (define
-      pa [(+ (nth from: source-pos n: 0) (prng/value from: source-rng))
-          (+ (nth from: source-pos n: 1) (prng/value from: source-rng))]
-      pd [(+ (nth from: dest-pos n: 0) (prng/value from: dest-rng))
-          (+ (nth from: dest-pos n: 1) (prng/value from: dest-rng))]
+      pa [(+ (x from: source-pos) (prng/value from: source-rng))
+          (+ (y from: source-pos) (prng/value from: source-rng))]
+      pd [(+ (x from: dest-pos) (prng/value from: dest-rng))
+          (+ (y from: dest-pos) (prng/value from: dest-rng))]
       norm (math/normal vec1: pa vec2: pd)
       pb (interp/ray point: (interp/line from: pa to: pd t: 0.333)
                      direction: norm t: 150)
