@@ -281,7 +281,7 @@ function setupBlitShaders(gl) {
 }
 
 function setupGLState(gl) {
-  gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  gl.clearColor(1.0, 1.0, 1.0, 0.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   // assuming that we'll be using pre-multiplied alpha
