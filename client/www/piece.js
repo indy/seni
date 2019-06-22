@@ -100,18 +100,21 @@ function compileShader(gl, type, src) {
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     //alert(gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
     return null;
   }
   return shader;
 }
 
-function setupShaders(gl) {
-  const shaderProgram = gl.createProgram();
+function setupPieceShaders(gl) {
+  const shader = {};
+
+  shader.program = gl.createProgram();
 
   // pre-multiply the alpha in the shader
   // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
   const fragmentSrc = `
-  precision mediump float;
+  precision highp float;
   varying vec4 vColor;
   varying highp vec2 vTextureCoord;
 
@@ -124,7 +127,6 @@ function setupShaders(gl) {
     gl_FragColor.g = tex.r * vColor.g * vColor.a;
     gl_FragColor.b = tex.r * vColor.b * vColor.a;
     gl_FragColor.a = tex.r * vColor.a;
-
   }
   `;
 
@@ -149,36 +151,124 @@ function setupShaders(gl) {
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
   const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
 
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
+  gl.attachShader(shader.program, vertexShader);
+  gl.attachShader(shader.program, fragmentShader);
 
-  gl.linkProgram(shaderProgram);
+  gl.linkProgram(shader.program);
 
-  // commented out because of jshint
-  //  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-  //alert('Could not initialise shaders');
-  //  }
+  if (!gl.getProgramParameter(shader.program, gl.LINK_STATUS)) {
+    let lastError = gl.getProgramInfoLog(shader.program);
 
-  gl.useProgram(shaderProgram);
+    alert(`Could not initialise shaders: ${lastError}`);;
+    gl.deleteProgram(shader.program);
+    return null;
+  }
 
-  shaderProgram.positionAttribute =
-    gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-  gl.enableVertexAttribArray(shaderProgram.positionAttribute);
+  shader.positionAttribute = gl.getAttribLocation(shader.program, 'aVertexPosition');
+  shader.colourAttribute = gl.getAttribLocation(shader.program, 'aVertexColor');
+  shader.textureAttribute = gl.getAttribLocation(shader.program, 'aVertexTexture');
 
-  shaderProgram.colourAttribute =
-    gl.getAttribLocation(shaderProgram, 'aVertexColor');
-  gl.enableVertexAttribArray(shaderProgram.colourAttribute);
+  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
+  shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
+  shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
 
-  shaderProgram.textureAttribute =
-    gl.getAttribLocation(shaderProgram, 'aVertexTexture');
-  gl.enableVertexAttribArray(shaderProgram.textureAttribute);
+  return shader;
+}
 
-  shaderProgram.pMatrixUniform =
-    gl.getUniformLocation(shaderProgram, 'uPMatrix');
-  shaderProgram.mvMatrixUniform =
-    gl.getUniformLocation(shaderProgram, 'uMVMatrix');
+function setupBlitShaders(gl) {
+  const shader = {};
 
-  return shaderProgram;
+  shader.program = gl.createProgram();
+
+  const fragmentSrc = `
+  precision highp float;
+
+  varying vec2 vTextureCoord;
+
+  uniform sampler2D uSampler;
+  uniform bool uOutputLinearColourSpace;
+
+  // https:en.wikipedia.org/wiki/SRGB
+  vec3 linear_to_srgb(vec3 linear) {
+      float a = 0.055;
+      float b = 0.0031308;
+      vec3 srgb_lo = 12.92 * linear;
+      vec3 srgb_hi = (1.0 + a) * pow(linear, vec3(1.0/2.4)) - vec3(a);
+      return vec3(
+          linear.r > b ? srgb_hi.r : srgb_lo.r,
+          linear.g > b ? srgb_hi.g : srgb_lo.g,
+          linear.b > b ? srgb_hi.b : srgb_lo.b);
+  }
+
+  // https:twitter.com/jimhejl/status/633777619998130176
+  vec3 ToneMapFilmic_Hejl2015(vec3 hdr, float whitePt) {
+      vec4 vh = vec4(hdr, whitePt);
+      vec4 va = 1.425 * vh + 0.05;
+      vec4 vf = (vh * va + 0.004) / (vh * (va + 0.55) + 0.0491) - 0.0821;
+      return vf.rgb / vf.www;
+  }
+
+  void main()
+  {
+     vec4 col = texture2D( uSampler, vTextureCoord );
+
+     // note: you _never_ want uOutputLinearColourSpace to be set to true
+     // it's only here because some of the older pieces didn't correctly
+     // convert from linear colour space to sRGB colour space during rendering
+     // and this shader needs to reproduce them as intended at time of creation
+     //
+     if (uOutputLinearColourSpace) {
+       gl_FragColor = col;
+     } else {
+       gl_FragColor = vec4(linear_to_srgb(col.rgb), 1.0);
+     }
+  }
+  `;
+
+  const vertexSrc = `
+  attribute vec2 aVertexPosition;
+  attribute vec2 aVertexTexture;
+
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+
+  varying highp vec2 vTextureCoord;
+
+  void main(void) {
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
+    vTextureCoord = aVertexTexture;
+  }
+  `;
+
+  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
+  const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
+
+  gl.attachShader(shader.program, vertexShader);
+  gl.attachShader(shader.program, fragmentShader);
+
+  gl.linkProgram(shader.program);
+
+  if (!gl.getProgramParameter(shader.program, gl.LINK_STATUS)) {
+    let lastError = gl.getProgramInfoLog(shader.program);
+
+    alert(`Could not initialise shaders: ${lastError}`);;
+    gl.deleteProgram(shader.program);
+    return null;
+  }
+
+  shader.positionAttribute = gl.getAttribLocation(shader.program, 'aVertexPosition');
+  shader.textureAttribute = gl.getAttribLocation(shader.program, 'aVertexTexture');
+
+  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
+  shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
+  shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
+
+  // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
+  // in order to retain the look of these older pieces we can't carry out the linear -> sRGB conversion
+  //
+  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
+
+  return shader;
 }
 
 function setupGLState(gl) {
@@ -195,7 +285,7 @@ function setupGLState(gl) {
 }
 
 
-function handleTextureLoaded(gl, image, texture, shaderProgram) {
+function handleTextureLoaded(gl, image, texture) {
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -207,8 +297,69 @@ function handleTextureLoaded(gl, image, texture, shaderProgram) {
 
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.uniform1i(gl.getUniformLocation(shaderProgram, 'uSampler'), 0);
 }
+
+function createRenderTexture(gl, config) {
+  // create to render to
+  const targetTextureWidth = config.render_texture_width;
+  const targetTextureHeight = config.render_texture_height;
+
+  const targetTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+
+  {
+    // define size and format of level 0
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const border = 0;
+    const format = gl.RGBA;
+    const type = gl.UNSIGNED_BYTE;
+    const data = null;
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                  targetTextureWidth, targetTextureHeight, border,
+                  format, type, data);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+
+  return targetTexture;
+}
+
+function createFrameBuffer(gl, targetTexture) {
+  // Create and bind the framebuffer
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+  // attach the texture as the first color attachment
+  const attachmentPoint = gl.COLOR_ATTACHMENT0;
+  const level = 0;
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+
+  return fb;
+}
+
+function checkFramebufferStatus(gl) {
+  let res = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  switch(res) {
+  case gl.FRAMEBUFFER_COMPLETE: console.log("gl.FRAMEBUFFER_COMPLETE"); break;
+  case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT: console.log("gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT"); break;
+  case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: console.log("gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"); break;
+  case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS: console.log("gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS"); break;
+  case gl.FRAMEBUFFER_UNSUPPORTED: console.log("gl.FRAMEBUFFER_UNSUPPORTED"); break;
+  case gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: console.log("gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE"); break;
+  case gl.RENDERBUFFER_SAMPLES: console.log("gl.RENDERBUFFER_SAMPLE"); break;
+  }
+}
+
+const gConfig = {
+  render_texture_width: 1024,
+  render_texture_height: 1024,
+};
 
 class GLRenderer {
   constructor(canvasElement) {
@@ -218,7 +369,9 @@ class GLRenderer {
     const gl = initGL(this.glDomElement);
     this.gl = gl;
 
-    this.shaderProgram = setupShaders(gl);
+    this.pieceShader = setupPieceShaders(gl);
+    this.blitShader = setupBlitShaders(gl);
+
     setupGLState(gl);
 
     this.glVertexBuffer = gl.createBuffer();
@@ -227,9 +380,15 @@ class GLRenderer {
 
     this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
-    Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
+
+    this.renderTexture = createRenderTexture(gl, gConfig);
+    this.framebuffer = createFrameBuffer(gl, this.renderTexture);
+
+    // render to the canvas
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
+  // isg
   clear() {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
   }
@@ -244,7 +403,7 @@ class GLRenderer {
       const image = new Image();
 
       image.addEventListener('load', () => {
-        handleTextureLoaded(that.gl, image, that.texture, that.shaderProgram);
+        handleTextureLoaded(that.gl, image, that.texture);
         resolve();
       });
 
@@ -256,61 +415,26 @@ class GLRenderer {
     });
   }
 
-  copyImageDataTo(elem) {
-    return new Promise((resolve, reject) => {
-      try {
-        this.glDomElement.toBlob(blob => {
-          elem.src = window.URL.createObjectURL(blob);
-          return resolve();
-        });
-      } catch (error) {
-        return reject(error);
-      }
-    });
-  }
-
-  localDownload(filename) {
-    this.glDomElement.toBlob(function(blob) {
-
-      const url = window.URL.createObjectURL(blob);
-
-      let element = document.createElement('a');
-      element.setAttribute('href', url);
-      // element.setAttribute('target', '_blank');
-      element.setAttribute('download', filename);
-
-      element.style.display = 'none';
-      document.body.appendChild(element);
-
-      element.click();
-
-      document.body.removeChild(element);
-
-    });
-  }
-
-  preDrawScene(destWidth, destHeight, section) {
+  renderGeometryToTexture(destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
     const gl = this.gl;
-    const domElement = this.glDomElement;
 
-    if (domElement.width !== destWidth) {
-      if (logToConsole) {
-        console.log('GL width from', domElement.width, 'to', destWidth);
-      }
-      domElement.width = destWidth;
-    }
-    if (this.glDomElement.height !== destHeight) {
-      if (logToConsole) {
-        console.log('GL height from', domElement.height, 'to', destHeight);
-      }
-      domElement.height = destHeight;
-    }
-    // gl.drawingBufferWidth, gl.drawingBufferHeight hold the actual
-    // size of the rendering element
+    let shader = this.pieceShader;
 
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    // render to texture attached to framebuffer
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+    //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.viewport(0, 0, destTextureWidth, destTextureHeight);
+
+    gl.useProgram(shader.program);
+
+    gl.enableVertexAttribArray(shader.positionAttribute);
+    gl.enableVertexAttribArray(shader.colourAttribute);
+    gl.enableVertexAttribArray(shader.textureAttribute);
+
+    // gl.clearColor(0.0, 0.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
 
     if (section === undefined) {
       // render the entirety of the scene
@@ -328,18 +452,16 @@ class GLRenderer {
       }
     }
 
-    gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform,
+    gl.uniformMatrix4fv(shader.pMatrixUniform,
                         false,
                         this.pMatrix);
 
-    gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform,
+    gl.uniformMatrix4fv(shader.mvMatrixUniform,
                         false,
                         this.mvMatrix);
-  }
 
-  setupBuffer(memory, buffer) {
-    const gl = this.gl;
-    const shaderProgram = this.shaderProgram;
+    gl.uniform1i(shader.textureUniform, 0);
+
 
     const glVertexBuffer = this.glVertexBuffer;
     const glColourBuffer = this.glColourBuffer;
@@ -350,45 +472,210 @@ class GLRenderer {
     const vertexItemSize = 2;
     const colourItemSize = 4;
     const textureItemSize = 2;
+    const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
 
+
+    buffers.forEach(buffer => {
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
+      // a new typed array view is created that views the specified ArrayBuffer
+      const gbuf = new Float32Array(memoryF32, buffer.geo_ptr, buffer.geo_len);
+
+      //const gbuf = memorySubArray(memoryF32, geo_ptr, geo_len);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
+      gl.vertexAttribPointer(shader.positionAttribute,
+                             vertexItemSize,
+                             gl.FLOAT, false, totalSize * bytesin32bit,
+                             0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
+      gl.vertexAttribPointer(shader.colourAttribute,
+                             colourItemSize,
+                             gl.FLOAT, false, totalSize * bytesin32bit,
+                             vertexItemSize * bytesin32bit);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
+      gl.vertexAttribPointer(shader.textureAttribute,
+                             textureItemSize,
+                             gl.FLOAT, false, totalSize * bytesin32bit,
+                             (vertexItemSize + colourItemSize) * bytesin32bit);
+
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
+
+    });
+
+  }
+
+  renderTextureToScreen(meta, canvasWidth, canvasHeight) {
+    const gl = this.gl;
+    const domElement = this.glDomElement;
+
+
+    if (domElement.width !== canvasWidth) {
+      domElement.width = canvasWidth;
+    }
+    if (domElement.height !== canvasHeight) {
+      domElement.height = canvasHeight;
+    }
+
+    let shader = this.blitShader;
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, this.renderTexture);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.useProgram(shader.program);
+
+    // console.log(shader);
+    gl.enableVertexAttribArray(shader.positionAttribute);
+    gl.enableVertexAttribArray(shader.textureAttribute);
+
+    // gl.clearColor(0.0, 0.0, 1.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // render the entirety of the scene
+    Matrix.ortho(this.pMatrix, 0, canvasWidth, 0, canvasHeight, 10, -10);
+
+    // add some uniforms for canvas width and height
+
+    gl.uniformMatrix4fv(shader.pMatrixUniform,
+                        false,
+                        this.pMatrix);
+
+    gl.uniformMatrix4fv(shader.mvMatrixUniform,
+                        false,
+                        this.mvMatrix);
+
+    gl.uniform1i(shader.textureUniform, 0);
+
+    gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
+
+
+    const glVertexBuffer = this.glVertexBuffer;
+    const glColourBuffer = this.glColourBuffer;
+    const glTextureBuffer = this.glTextureBuffer;
+
+    // x, y, u, v
+    const jsData = [
+      0.0, 0.0, 0.0, 0.0,
+      canvasWidth, 0.0, 1.0, 0.0,
+      0.0, canvasHeight, 0.0, 1.0,
+      canvasWidth, canvasHeight, 1.0, 1.0
+    ];
+    const data = Float32Array.from(jsData);
+
+
+    const bytesin32bit = 4;
+
+    const vertexItemSize = 2;
+    const textureItemSize = 2;
+    const totalSize = (vertexItemSize + textureItemSize);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shader.positionAttribute,
+                           vertexItemSize,
+                           gl.FLOAT, false, totalSize * 4,
+                           0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shader.textureAttribute,
+                           textureItemSize,
+                           gl.FLOAT, false, totalSize * 4,
+                           (vertexItemSize) * 4);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, jsData.length / totalSize);
+  }
+
+  copyImageDataTo(elem) {
+    return new Promise((resolve, reject) => {
+      try {
+        this.glDomElement.toBlob(blob => {
+          elem.src = window.URL.createObjectURL(blob);
+          return resolve();
+        });
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  }
+
+  setupBuffer(destTextureWidth, destTextureHeight, memoryF32, buffer) {
+    const gl = this.gl;
+
+    let shader = this.pieceShader;
+
+    // render to texture attached to framebuffer
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+    //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.viewport(0, 0, destTextureWidth, destTextureHeight);
+
+    gl.useProgram(shader.program);
+
+    gl.enableVertexAttribArray(shader.positionAttribute);
+    gl.enableVertexAttribArray(shader.colourAttribute);
+    gl.enableVertexAttribArray(shader.textureAttribute);
+
+    // gl.clearColor(0.0, 0.0, 1.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // render the entirety of the scene
+    Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
+
+    gl.uniformMatrix4fv(shader.pMatrixUniform,
+                        false,
+                        this.pMatrix);
+
+    gl.uniformMatrix4fv(shader.mvMatrixUniform,
+                        false,
+                        this.mvMatrix);
+
+    gl.uniform1i(shader.textureUniform, 0);
+
+
+    const glVertexBuffer = this.glVertexBuffer;
+    const glColourBuffer = this.glColourBuffer;
+    const glTextureBuffer = this.glTextureBuffer;
+
+    const bytesin32bit = 4;
+
+    const vertexItemSize = 2;
+    const colourItemSize = 4;
+    const textureItemSize = 2;
     const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
     // a new typed array view is created that views the specified ArrayBuffer
-    const gbuf = new Float32Array(memory, buffer.geo_ptr, buffer.geo_len);
+    const gbuf = new Float32Array(memoryF32, buffer.geo_ptr, buffer.geo_len);
+
+    //const gbuf = memorySubArray(memoryF32, geo_ptr, geo_len);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.positionAttribute,
+    gl.vertexAttribPointer(shader.positionAttribute,
                            vertexItemSize,
                            gl.FLOAT, false, totalSize * bytesin32bit,
-                           0 * bytesin32bit);
+                           0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.colourAttribute,
+    gl.vertexAttribPointer(shader.colourAttribute,
                            colourItemSize,
                            gl.FLOAT, false, totalSize * bytesin32bit,
                            vertexItemSize * bytesin32bit);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(shaderProgram.textureAttribute,
+    gl.vertexAttribPointer(shader.textureAttribute,
                            textureItemSize,
                            gl.FLOAT, false, totalSize * bytesin32bit,
                            (vertexItemSize + colourItemSize) * bytesin32bit);
-  }
-
-  drawBuffer(buffer) {
-    const gl = this.gl;
-
-    const vertexItemSize = 2;
-    const colourItemSize = 4;
-    const textureItemSize = 2;
-
-    const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
   }
 
   drawBufferPartial(buffer, first, count) {
@@ -402,6 +689,7 @@ class GLRenderer {
 
     gl.drawArrays(gl.TRIANGLE_STRIP, first / totalSize, count / totalSize);
   }
+
 }
 
 // --------------------------------------------------------------------------------
@@ -600,8 +888,12 @@ let gState = {
   activeImageElement: 0,
   lastDisplay: DISPLAY_SNAP,
 
+  render_texture_width: 1024,
+  render_texture_height: 1024,
+
   sketchMemory: undefined,
   sketchBuffers: undefined,
+  sketchMeta: undefined,
   sketchBufferIndex: 0,
   sketchGeoIndex: 0,
   sketchAmount: 0,
@@ -673,14 +965,9 @@ async function displayOnImageElements(display) {
   logDebug("displayOnImageElements");
 }
 
-async function renderBuffers(memory, buffers, w, h, display) {
-  // this will update the size of the piece-canvas element
-  gState.glRenderer.preDrawScene(w, h);
-
-  buffers.forEach(buffer => {
-    gState.glRenderer.setupBuffer(memory, buffer);
-    gState.glRenderer.drawBuffer(buffer);
-  });
+async function renderGeometryBuffers(meta, memory, buffers, destWidth, destHeight, display) {
+  gState.glRenderer.renderGeometryToTexture(gState.render_texture_width, gState.render_texture_height, memory, buffers);
+  gState.glRenderer.renderTextureToScreen(meta, destWidth, destHeight);
 
   await displayOnImageElements(display);
 }
@@ -761,8 +1048,8 @@ async function renderJob(parameters) {
 }
 
 async function renderScript(parameters, display) {
-  let { title, memory, buffers } = await renderJob(parameters);
-  await renderBuffers(memory, buffers, gState.demandCanvasSize, gState.demandCanvasSize, display);
+  let { meta, memory, buffers } = await renderJob(parameters);
+  await renderGeometryBuffers(meta, memory, buffers, gState.demandCanvasSize, gState.demandCanvasSize, display);
 }
 
 function getSeedValue(element) {
@@ -867,29 +1154,46 @@ function getCSSAnimationDuration(className) {
   return undefined;
 }
 
+
+//  gState.glRenderer.renderGeometryToTexture(gState.render_texture_width, gState.render_texture_height, memory, buffers);
+//  gState.glRenderer.renderTextureToScreen(gState.sketchMeta, gState.demandCanvasSize, gState.demandCanvasSize);
+
+
+
 // the animationEndListener is responsible for calling animateSketch.
 // This way we can specify the length of each fade in css
 async function animateSketch() {
   let currentBuffer = gState.sketchBuffers[gState.sketchBufferIndex];
 
+
+
+  gState.glRenderer.setupBuffer(gState.render_texture_width,
+                                gState.render_texture_height,
+                                gState.sketchMemory,
+                                gState.sketchBuffers[gState.sketchBufferIndex]);
+
+
   if (gState.sketchGeoIndex + gState.sketchAmount < currentBuffer.geo_len) {
     // can draw geometry from the current buffer
     gState.glRenderer.drawBufferPartial(currentBuffer, gState.sketchGeoIndex, gState.sketchAmount);
-    console.log(`animateSketch ${gState.sketchBufferIndex} gState.sketchGeoIndex: ${gState.sketchGeoIndex} gState.sketchAmount: ${gState.sketchAmount} sum: ${gState.sketchGeoIndex + gState.sketchAmount}`);
+    //console.log(`animateSketch ${gState.sketchBufferIndex} gState.sketchGeoIndex: ${gState.sketchGeoIndex} gState.sketchAmount: ${gState.sketchAmount} sum: ${gState.sketchGeoIndex + gState.sketchAmount}`);
     gState.sketchGeoIndex += gState.sketchAmount;
   } else {
     // render the remaining geometry
     const remaining = currentBuffer.geo_len - gState.sketchGeoIndex;
     gState.glRenderer.drawBufferPartial(currentBuffer, gState.sketchGeoIndex, remaining);
-    console.log(`animateSketch ${gState.sketchBufferIndex} gState.sketchGeoIndex: ${gState.sketchGeoIndex} remaining: ${remaining} sum: ${gState.sketchGeoIndex + remaining}`);
-    console.log("");
+    //console.log(`animateSketch ${gState.sketchBufferIndex} gState.sketchGeoIndex: ${gState.sketchGeoIndex} remaining: ${remaining} sum: ${gState.sketchGeoIndex + remaining}`);
+    //console.log("");
 
     // move onto the next buffer
     gState.sketchBufferIndex += 1;
     gState.sketchGeoIndex = 0;
 
     if (gState.sketchBufferIndex < gState.sketchBuffers.length) {
-      gState.glRenderer.setupBuffer(gState.sketchMemory, gState.sketchBuffers[gState.sketchBufferIndex]);
+      // gState.glRenderer.setupBuffer(gState.render_texture_width,
+      //                               gState.render_texture_height,
+      //                               gState.sketchMemory,
+      //                               gState.sketchBuffers[gState.sketchBufferIndex]);
     } else {
       // finished the animation
       let endTime = performance.now();
@@ -898,6 +1202,8 @@ async function animateSketch() {
       return;
     }
   }
+
+  gState.glRenderer.renderTextureToScreen(gState.sketchMeta, gState.demandCanvasSize, gState.demandCanvasSize);
 
   await displayOnImageElements(DISPLAY_FADE);
 }
@@ -1060,17 +1366,19 @@ async function renderSketch(_display) {
   const script = scriptElement.textContent.slice();
 
   if (gState.seed === undefined) {
-    let { title, memory, buffers } = await renderJob({ script });
+    let { meta, memory, buffers } = await renderJob({ script });
 
     gState.sketchMemory = memory;
     gState.sketchBuffers = buffers;
+    gState.sketchMeta = meta;
   } else {
     const { traits } = await Job.request(jobBuildTraits, { script });
     const { genotype } = await Job.request(jobSingleGenotypeFromSeed, { traits, seed: gState.seed });
-    let { title, memory, buffers } = await renderJob({ script, genotype });
+    let { meta, memory, buffers } = await renderJob({ script, genotype });
 
     gState.sketchMemory = memory;
     gState.sketchBuffers = buffers;
+    gState.sketchMeta = meta;
   }
   gState.sketchBufferIndex = 0;
   gState.sketchGeoIndex = 0;
@@ -1102,13 +1410,16 @@ async function renderSketch(_display) {
   const pieceImg0 = getRequiredElement(IMG_0);
   const pieceImg1 = getRequiredElement(IMG_1);
 
-  gState.glRenderer.preDrawScene(gState.demandCanvasSize, gState.demandCanvasSize);
+  //  gState.glRenderer.preDrawScene(gState.demandCanvasSize, gState.demandCanvasSize);
   await gState.glRenderer.copyImageDataTo(pieceImg0);
   await gState.glRenderer.copyImageDataTo(pieceImg1);
 
   if(gState.sketchBuffers.length > 0) {
     gState.sketchTimeStart = performance.now();
-    gState.glRenderer.setupBuffer(gState.sketchMemory, gState.sketchBuffers[0]);
+    gState.glRenderer.setupBuffer(gState.render_texture_width,
+                                  gState.render_texture_height,
+                                  gState.sketchMemory,
+                                  gState.sketchBuffers[0]);
     if (gState.mode === MODE_SKETCH) {
       gState.timeoutId = window.setTimeout(animateSketch);
     }
@@ -1155,7 +1466,7 @@ async function main() {
   const originalButton = getRequiredElement('piece-eval-original');
   const variationButton = getRequiredElement('piece-eval-variation');
   const slideshowButton = getRequiredElement('piece-eval-slideshow');
-  const sketchButton = getRequiredElement('piece-eval-sketch');
+  // const sketchButton = getRequiredElement('piece-eval-sketch');
   const scriptElement = getRequiredElement('piece-script');
   const canvasElement = getRequiredElement('piece-canvas');
   const canvasImageElement0 = getRequiredElement(IMG_0);
@@ -1203,6 +1514,7 @@ async function main() {
 
   });
 
+  /*
   sketchButton.addEventListener('click', async () => {
     originalButton.disabled = true;
 
@@ -1216,6 +1528,7 @@ async function main() {
     //
     await updatePiece(DISPLAY_FADE);
   });
+  */
 
   variationButton.addEventListener('click', async () => {
     originalButton.disabled = false;

@@ -66,7 +66,9 @@
                     <button id="piece-eval-variation" class="navbar-button eval-btn seni-button">Generate variation</button>
                     <button id="piece-eval-original" class="navbar-button eval-btn seni-button" disabled>Show Original</button>
                     <button id="piece-eval-slideshow" class="navbar-button eval-btn seni-button">Slideshow</button>
+                    <!--
                     <button id="piece-eval-sketch" class="navbar-button eval-btn seni-button">Sketch</button>
+                    -->
                     <input id="piece-seed" style="display: none;" type="number" value="3">
                   </div> <!-- seni-piece-controls -->
 
@@ -75,16 +77,20 @@
                     <pre><code id="piece-simplified-script"></code></pre>
                     <!-- the original version of the script, will never be altered -->
                     <pre><code id="piece-script">
-(define texture "skull-a.png")
+(meta linear-colour-space: 1)
+
+(define texture {"skull-a.png" (gen/select from: '("skull-a.png" "skull-b.png" "skull-c.png"))})
+
 (define per-pixel-funcs [(address-of pass-0)
                          (address-of pass-1)])
+
 
 (each (per-pixel-func from: per-pixel-funcs)
       (bitmap/each from: texture
                    position: [500 500]
                    width: 1000
                    height: 1000
-                   shuffle-seed: 9384
+                   shuffle-seed: 321
                    fn: per-pixel-func))
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
@@ -111,7 +117,6 @@
         brush: brush/d
         brush-subtype: 1
         colour: (col/rgb r: b g: b b: 0 alpha: 0.07)))
-
                     </code></pre>
                   </div> <!-- code-content-wrap -->
                 </div> <!-- piece-holder -->
