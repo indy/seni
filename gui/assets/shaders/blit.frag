@@ -38,12 +38,12 @@ void main()
   // Colour = texture( myTextureSampler, IN.TextureCoord );
   // Colour = vec4(clamp(Colour.r, 0.0, 1.0), clamp(Colour.g, 0.0, 1.0), clamp(Colour.b, 0.0, 1.0), 1.0);
 
-  // vec4 pieceColour = texture( myTextureSampler, IN.TextureCoord );
-  // Colour = vec4(linear_to_srgb(ToneMapFilmic_Hejl2015(pieceColour.rgb, 1.0)), 1.0);
+  // vec4 sketchColour = texture( myTextureSampler, IN.TextureCoord );
+  // Colour = vec4(linear_to_srgb(ToneMapFilmic_Hejl2015(sketchColour.rgb, 1.0)), 1.0);
 
-  vec4 pieceColour = texture( myTextureSampler, IN.TextureCoord );
-  Colour = vec4(linear_to_srgb(pieceColour.rgb), 1.0);
+  vec4 sketchColour = texture( myTextureSampler, IN.TextureCoord );
+  Colour = vec4(linear_to_srgb(sketchColour.rgb), 1.0);
 
-  // vec4 pieceColour = texture( myTextureSampler, IN.TextureCoord );
-  // Colour = vec4(ToneMapFilmic_Hejl2015(pieceColour.rgb, 1.0), 1.0);
+  // vec4 sketchColour = texture( myTextureSampler, IN.TextureCoord );
+  // Colour = vec4(ToneMapFilmic_Hejl2015(sketchColour.rgb, 1.0), 1.0);
 }

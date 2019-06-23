@@ -20,11 +20,11 @@ use gl;
 
 use crate::error::Result;
 use crate::gl_util;
-use crate::render_piece;
+use crate::render_sketch;
 use crate::render_square;
 
 pub struct Renderer {
-    piece_renderer: render_piece::Renderer,
+    sketch_renderer: render_sketch::Renderer,
     square_renderer: render_square::Renderer,
     render_texture_id: gl::types::GLuint,
     framebuffer_id: gl::types::GLuint,
@@ -37,7 +37,7 @@ impl Renderer {
         bitmaps_path: &Path,
         context: &Context,
     ) -> Result<Renderer> {
-        let piece_renderer = render_piece::Renderer::new(&gl, &assets_path, &bitmaps_path)?;
+        let sketch_renderer = render_sketch::Renderer::new(&gl, &assets_path, &bitmaps_path)?;
 
         let render_texture_id = gl_util::create_texture(&gl, 1024, 1024);
         let framebuffer_id = gl_util::create_framebuffer(&gl);
@@ -48,7 +48,7 @@ impl Renderer {
         unsafe {
             gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
-        piece_renderer.render(&context.geometry, 1000, 1000);
+        sketch_renderer.render(&context.geometry, 1000, 1000);
 
         // putting in nonsense viewport figures since a gl_util::upate_viewport is called after this constructor
         gl_util::bind_framebuffer(&gl, 0, 1, 1);
@@ -56,7 +56,7 @@ impl Renderer {
         let square_renderer = render_square::Renderer::new(&gl, &assets_path, render_texture_id)?;
 
         Ok(Renderer {
-            piece_renderer,
+            sketch_renderer,
             square_renderer,
             render_texture_id,
             framebuffer_id,
@@ -75,7 +75,7 @@ impl Renderer {
         unsafe {
             gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
-        self.piece_renderer.render(&context.geometry, 1000, 1000);
+        self.sketch_renderer.render(&context.geometry, 1000, 1000);
 
         // bind back to the default rendering output
         gl_util::bind_framebuffer(&gl, 0, viewport_width, viewport_height);

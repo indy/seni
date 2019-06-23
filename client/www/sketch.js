@@ -106,7 +106,7 @@ function compileShader(gl, type, src) {
   return shader;
 }
 
-function setupPieceShaders(gl) {
+function setupSketchShaders(gl) {
   const shader = {};
 
   shader.program = gl.createProgram();
@@ -138,7 +138,7 @@ function setupPieceShaders(gl) {
     vec4 tex = texture2D(uSampler, vTextureCoord);
 
     // note: you _never_ want uOutputLinearColourSpace to be set to true
-    // it's only here because some of the older pieces didn't correctly
+    // it's only here because some of the older sketchs didn't correctly
     // convert from linear colour space to sRGB colour space during rendering
     // and this shader needs to reproduce them as intended at time of creation
     //
@@ -200,7 +200,7 @@ function setupPieceShaders(gl) {
   shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
-  // in order to retain the look of these older pieces we can't carry out the linear -> sRGB conversion
+  // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
   //
   shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
 
@@ -245,7 +245,7 @@ function setupBlitShaders(gl) {
      vec4 col = texture2D( uSampler, vTextureCoord );
 
      // note: you _never_ want uOutputLinearColourSpace to be set to true
-     // it's only here because some of the older pieces didn't correctly
+     // it's only here because some of the older sketchs didn't correctly
      // convert from linear colour space to sRGB colour space during rendering
      // and this shader needs to reproduce them as intended at time of creation
      //
@@ -296,7 +296,7 @@ function setupBlitShaders(gl) {
   shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
-  // in order to retain the look of these older pieces we can't carry out the linear -> sRGB conversion
+  // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
   //
   shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
 
@@ -401,7 +401,7 @@ class GLRenderer {
     const gl = initGL(this.glDomElement);
     this.gl = gl;
 
-    this.pieceShader = setupPieceShaders(gl);
+    this.sketchShader = setupSketchShaders(gl);
     this.blitShader = setupBlitShaders(gl);
 
     setupGLState(gl);
@@ -450,7 +450,7 @@ class GLRenderer {
   renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
     const gl = this.gl;
 
-    let shader = this.pieceShader;
+    let shader = this.sketchShader;
 
     // render to texture attached to framebuffer
 
@@ -806,7 +806,7 @@ const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
 
 // --------------------------------------------------------------------------------
 
-const PAGE = "piece.html";
+const PAGE = "sketch.html";
 
 const URI_SEED = "seed";
 const URI_MODE = "mode";
@@ -818,8 +818,8 @@ const MODE_SLIDESHOW = "slideshow";
 const DISPLAY_SNAP = 0;
 const DISPLAY_FADE = 1;
 
-const IMG_0 = 'piece-img-0';
-const IMG_1 = 'piece-img-1';
+const IMG_0 = 'sketch-img-0';
+const IMG_1 = 'sketch-img-1';
 
 let gState = {
   glRenderer: undefined,
@@ -846,28 +846,28 @@ function logDebug(msg) {
   }
 }
 
-function resizeImgDimensions(pieceImg, canvas, w, h) {
+function resizeImgDimensions(sketchImg, canvas, w, h) {
   // console.log(`top: ${canvas.offsetTop} left: ${canvas.offsetLeft} width: ${w} height: ${h}`);
 
-  pieceImg.style.top = canvas.offsetTop + "px";
-  pieceImg.style.left = canvas.offsetLeft + "px";
-  pieceImg.width = w;
-  pieceImg.height = h;
+  sketchImg.style.top = canvas.offsetTop + "px";
+  sketchImg.style.left = canvas.offsetLeft + "px";
+  sketchImg.width = w;
+  sketchImg.height = h;
 }
 
 async function displayOnImageElements(display) {
-  // required to check that an endAnimation doesn't fade in piece-img-1
+  // required to check that an endAnimation doesn't fade in sketch-img-1
   gState.lastDisplay = display;
 
   if (display === DISPLAY_SNAP) {
     resetImageElements();
 
-    const pieceImg0 = getRequiredElement(IMG_0);
-    await gState.glRenderer.copyImageDataTo(pieceImg0);
+    const sketchImg0 = getRequiredElement(IMG_0);
+    await gState.glRenderer.copyImageDataTo(sketchImg0);
   } else {
     if (gState.activeImageElement === 0) {
-      const pieceImg0 = getRequiredElement(IMG_0);
-      await gState.glRenderer.copyImageDataTo(pieceImg0);
+      const sketchImg0 = getRequiredElement(IMG_0);
+      await gState.glRenderer.copyImageDataTo(sketchImg0);
 
       if (gState.mode === MODE_NORMAL) {
         addClass(IMG_1, 'seni-fade-out');
@@ -875,8 +875,8 @@ async function displayOnImageElements(display) {
         addClass(IMG_1, 'seni-fade-out-slideshow');
       }
     } else {
-      const pieceImg1 = getRequiredElement(IMG_1);
-      await gState.glRenderer.copyImageDataTo(pieceImg1);
+      const sketchImg1 = getRequiredElement(IMG_1);
+      await gState.glRenderer.copyImageDataTo(sketchImg1);
 
       if (gState.mode === MODE_NORMAL) {
         addClass(IMG_1, 'seni-fade-in');
@@ -1001,16 +1001,16 @@ async function showSimplifiedScript(fullScript) {
     script: fullScript
   });
 
-  const simplifiedScriptElement = getRequiredElement('piece-simplified-script');
+  const simplifiedScriptElement = getRequiredElement('sketch-simplified-script');
   simplifiedScriptElement.textContent = script;
 }
 
 function resizeImgsUsingCanvasSize() {
-  const canvas = getRequiredElement('piece-canvas');
-  const pieceImg0 = getRequiredElement(IMG_0);
-  const pieceImg1 = getRequiredElement(IMG_1);
-  resizeImgDimensions(pieceImg0, canvas, gState.demandCanvasSize, gState.demandCanvasSize);
-  resizeImgDimensions(pieceImg1, canvas, gState.demandCanvasSize, gState.demandCanvasSize);
+  const canvas = getRequiredElement('sketch-canvas');
+  const sketchImg0 = getRequiredElement(IMG_0);
+  const sketchImg1 = getRequiredElement(IMG_1);
+  resizeImgDimensions(sketchImg0, canvas, gState.demandCanvasSize, gState.demandCanvasSize);
+  resizeImgDimensions(sketchImg1, canvas, gState.demandCanvasSize, gState.demandCanvasSize);
 }
 
 function resizeCanvasToLarge() {
@@ -1050,8 +1050,8 @@ function setOpacity(id, opacity) {
 
 async function performSlideshow() {
   if (gState.mode === MODE_SLIDESHOW) {
-    const scriptElement = getRequiredElement('piece-script');
-    const seedElement = getRequiredElement('piece-seed');
+    const scriptElement = getRequiredElement('sketch-script');
+    const seedElement = getRequiredElement('sketch-seed');
     const script = scriptElement.textContent;
     const originalScript = script.slice();
 
@@ -1060,7 +1060,7 @@ async function performSlideshow() {
     gState.seed = getSeedValue(seedElement);
 
     updateURIFromGlobals();
-    await updatePiece(DISPLAY_FADE);
+    await updateSketch(DISPLAY_FADE);
     gState.timeoutId = window.setTimeout(performSlideshow, gState.slideshowDelay);
   }
 }
@@ -1088,28 +1088,28 @@ function resetImageElements() {
   removeClass(IMG_1, 'seni-fade-in-slideshow');
 }
 
-function styleForNormalPiece() {
-  addClass('piece-content', 'piece-content-wrap');
+function styleForNormalSketch() {
+  addClass('sketch-content', 'sketch-content-wrap');
   showId('header');
-  showId('seni-piece-controls');
+  showId('seni-sketch-controls');
   showId('code-content-wrap');
   showId('seni-title');
   showId('seni-date');
-  removeClass('piece-canvas-container', 'seni-centre-canvas');
+  removeClass('sketch-canvas-container', 'seni-centre-canvas');
 
   resizeCanvasToNormal();
 
   resetImageElements();
 }
 
-function styleForLargePiece() {
-  removeClass('piece-content', 'piece-content-wrap');
+function styleForLargeSketch() {
+  removeClass('sketch-content', 'sketch-content-wrap');
   hideId('header');
-  hideId('seni-piece-controls');
+  hideId('seni-sketch-controls');
   hideId('code-content-wrap');
   hideId('seni-title');
   hideId('seni-date');
-  addClass('piece-canvas-container', 'seni-centre-canvas');
+  addClass('sketch-canvas-container', 'seni-centre-canvas');
 
   resizeCanvasToLarge();
 
@@ -1126,16 +1126,16 @@ async function updateToMode(newMode) {
 
   gState.glRenderer.clear();
 
-  const pieceImg0 = getRequiredElement(IMG_0);
-  await gState.glRenderer.copyImageDataTo(pieceImg0);
-  const pieceImg1 = getRequiredElement(IMG_1);
-  await gState.glRenderer.copyImageDataTo(pieceImg1);
+  const sketchImg0 = getRequiredElement(IMG_0);
+  await gState.glRenderer.copyImageDataTo(sketchImg0);
+  const sketchImg1 = getRequiredElement(IMG_1);
+  await gState.glRenderer.copyImageDataTo(sketchImg1);
 
   if (gState.mode === MODE_SLIDESHOW) {
-    styleForLargePiece();
+    styleForLargeSketch();
   } else if (gState.mode === MODE_NORMAL) {
     window.clearTimeout(gState.timeoutId); // stop the slideshow
-    styleForNormalPiece();
+    styleForNormalSketch();
   }
 
   return true;
@@ -1223,7 +1223,7 @@ function updateURIFromGlobals() {
 }
 
 async function renderNormal(display) {
-  const scriptElement = getRequiredElement('piece-script');
+  const scriptElement = getRequiredElement('sketch-script');
   const script = scriptElement.textContent.slice();
 
   if (gState.seed === undefined) {
@@ -1239,23 +1239,23 @@ async function renderNormal(display) {
   }
 }
 
-async function updatePiece(display) {
+async function updateSketch(display) {
   await renderNormal(display);
 }
 
 async function main() {
   updateGlobalsFromURI();
 
-  const texturePathElement = getRequiredElement('piece-texture-path');
-  const workerPathElement = getRequiredElement('piece-worker-path');
+  const texturePathElement = getRequiredElement('sketch-texture-path');
+  const workerPathElement = getRequiredElement('sketch-worker-path');
 
   Job.setup(2, workerPathElement.textContent);
 
-  const originalButton = getRequiredElement('piece-eval-original');
-  const variationButton = getRequiredElement('piece-eval-variation');
-  const slideshowButton = getRequiredElement('piece-eval-slideshow');
-  const scriptElement = getRequiredElement('piece-script');
-  const canvasElement = getRequiredElement('piece-canvas');
+  const originalButton = getRequiredElement('sketch-eval-original');
+  const variationButton = getRequiredElement('sketch-eval-variation');
+  const slideshowButton = getRequiredElement('sketch-eval-slideshow');
+  const scriptElement = getRequiredElement('sketch-script');
+  const canvasElement = getRequiredElement('sketch-canvas');
   const canvasImageElement0 = getRequiredElement(IMG_0);
   const canvasImageElement1 = getRequiredElement(IMG_1);
 
@@ -1272,7 +1272,7 @@ async function main() {
   logDebug("init");
 
   gState.glRenderer.loadTexture(texturePathElement.textContent)
-    .then(async () => await updatePiece(DISPLAY_SNAP))
+    .then(async () => await updateSketch(DISPLAY_SNAP))
     .catch(error => console.error(error));
 
   originalButton.addEventListener('click', async () => {
@@ -1283,18 +1283,18 @@ async function main() {
 
     updateURIFromGlobals();
 
-    await updatePiece(DISPLAY_FADE);
+    await updateSketch(DISPLAY_FADE);
   });
 
   slideshowButton.addEventListener('click', async () => {
     originalButton.disabled = true;
 
     if (updateToMode(MODE_SLIDESHOW)) {
-      await updatePiece(DISPLAY_SNAP);
-      const pieceImg1 = getRequiredElement(IMG_1);
-      await gState.glRenderer.copyImageDataTo(pieceImg1);
+      await updateSketch(DISPLAY_SNAP);
+      const sketchImg1 = getRequiredElement(IMG_1);
+      await gState.glRenderer.copyImageDataTo(sketchImg1);
 
-      // only call updatePiece if we're actually switching to SLIDESHOW mode as this will create a settimeout
+      // only call updateSketch if we're actually switching to SLIDESHOW mode as this will create a settimeout
       gState.timeoutId = window.setTimeout(performSlideshow, 0);
     }
     updateURIFromGlobals();
@@ -1304,7 +1304,7 @@ async function main() {
   variationButton.addEventListener('click', async () => {
     originalButton.disabled = false;
 
-    const seedElement = getRequiredElement('piece-seed');
+    const seedElement = getRequiredElement('sketch-seed');
     const newSeed = Math.random() * (1 << 30);
     seedElement.value = parseInt(newSeed, 10);
     gState.seed = getSeedValue(seedElement);
@@ -1313,12 +1313,12 @@ async function main() {
 
     updateURIFromGlobals();
 
-    await updatePiece(DISPLAY_FADE);
+    await updateSketch(DISPLAY_FADE);
   });
 
   window.addEventListener('popstate', async event => {
     updateGlobalsFromURI();
-    await updatePiece(DISPLAY_SNAP);
+    await updateSketch(DISPLAY_SNAP);
   });
 
   canvasImageElement1.addEventListener('click', async () => {
@@ -1326,7 +1326,7 @@ async function main() {
 
     updateURIFromGlobals();
 
-    await updatePiece(DISPLAY_SNAP);
+    await updateSketch(DISPLAY_SNAP);
   });
 
   const escapeKey = 27;
@@ -1337,7 +1337,7 @@ async function main() {
 
       updateURIFromGlobals();
 
-      await updatePiece(DISPLAY_SNAP);
+      await updateSketch(DISPLAY_SNAP);
 
       event.preventDefault();
     }

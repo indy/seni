@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>seni piece</title>
+    <title>seni sketch</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport"
@@ -44,31 +44,31 @@
 
           </div>
             <div class="seni-content markdown" itemprop="articleBody">
-              <div id="piece-content" class="piece-content-wrap">
-                <div class="piece-holder">
+              <div id="sketch-content" class="sketch-content-wrap">
+                <div class="sketch-holder">
 
-                  <div id="piece-texture-path" style="display: none;">/img/texture.png</div>
-                  <div id="piece-worker-path" style="display: none;">worker.js</div>
+                  <div id="sketch-texture-path" style="display: none;">/img/texture.png</div>
+                  <div id="sketch-worker-path" style="display: none;">worker.js</div>
                   <canvas id="bitmap-canvas" style="display: none;"></canvas>
-                  <div id="piece-canvas-container">
-                    <canvas id="piece-canvas"></canvas>
-                    <img id="piece-img-0"/>
-                    <img id="piece-img-1"/>
-                  </div> <!-- piece-canvas-container -->
+                  <div id="sketch-canvas-container">
+                    <canvas id="sketch-canvas"></canvas>
+                    <img id="sketch-img-0"/>
+                    <img id="sketch-img-1"/>
+                  </div> <!-- sketch-canvas-container -->
 
-                  <div id="seni-piece-controls">
-                    <input id="piece-load-id" type="number" value="62">
-                    <button id="piece-eval-variation" class="navbar-button eval-btn seni-button">Generate variation</button>
-                    <button id="piece-eval-original" class="navbar-button eval-btn seni-button" disabled>Show Original</button>
-                    <button id="piece-eval-slideshow" class="navbar-button eval-btn seni-button">Slideshow</button>
-                    <input id="piece-seed" style="display: none;" type="number" value="3">
-                  </div> <!-- seni-piece-controls -->
+                  <div id="seni-sketch-controls">
+                    <input id="sketch-load-id" type="number" value="62">
+                    <button id="sketch-eval-variation" class="navbar-button eval-btn seni-button">Generate variation</button>
+                    <button id="sketch-eval-original" class="navbar-button eval-btn seni-button" disabled>Show Original</button>
+                    <button id="sketch-eval-slideshow" class="navbar-button eval-btn seni-button">Slideshow</button>
+                    <input id="sketch-seed" style="display: none;" type="number" value="3">
+                  </div> <!-- seni-sketch-controls -->
 
                   <div id="code-content-wrap">
                     <!-- the current version of the script with alterable syntax removed -->
-                    <pre><code id="piece-simplified-script"></code></pre>
+                    <pre><code id="sketch-simplified-script"></code></pre>
                     <!-- the original version of the script, will never be altered -->
-                    <pre><code id="piece-script">
+                    <pre><code id="sketch-script">
 (meta linear-colour-space: 1)
 
 (define texture "skull-a.png")
@@ -110,7 +110,7 @@
         colour: (col/rgb r: b g: b b: 0 alpha: 0.07)))
                     </code></pre>
                   </div> <!-- code-content-wrap -->
-                </div> <!-- piece-holder -->
+                </div> <!-- sketch-holder -->
               </div>
           </div>
         </article>
@@ -121,6 +121,6 @@
 </footer>
       </div>
     </div>
-    <script src='piece.js'></script>
+    <script src='sketch.js'></script>
   </body>
 </html>

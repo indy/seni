@@ -2823,7 +2823,7 @@ figure.highlight,
     color: #0086b3; }
 
 
-  #piece-script {
+  #sketch-script {
     display: none;
   }
 
@@ -2874,7 +2874,7 @@ figure.highlight,
     display: none !important;
   }
 
-  #seni-piece-controls {
+  #seni-sketch-controls {
     padding-top: 1em;
   }
   .seni-button {
@@ -2946,27 +2946,27 @@ figure.highlight,
     }
   }
 
-  #piece-canvas-container {
+  #sketch-canvas-container {
     position: relative;
   }
 
-  #piece-canvas {
+  #sketch-canvas {
     opacity: 0.0;
   }
 
-  #piece-img-0 {
+  #sketch-img-0 {
     position: absolute;
     top: 0;
     left: 0;
   }
 
-  #piece-img-1 {
+  #sketch-img-1 {
     position: absolute;
     top: 0;
     left: 0;
   }
 
-  .piece-content-wrap {
+  .sketch-content-wrap {
     display: block;
     max-width: 700px;
     margin: 0 auto;
@@ -2974,7 +2974,7 @@ figure.highlight,
     padding-left: 20px;
     text-align: justify; }
 
-  .piece-holder {
+  .sketch-holder {
     display: block;
     margin: 0 auto;
     width: 500px; }

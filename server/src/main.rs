@@ -6,7 +6,7 @@ use serde_derive::Deserialize;
 static GALLERY_JSON: &'static str = include_str!("../static/gallery.json");
 
 #[derive(Deserialize)]
-struct Piece {
+struct Sketch {
     id: u32,
     name: String,
     //    image: String,
@@ -30,8 +30,8 @@ fn gallery(req: &HttpRequest) -> Result<HttpResponse> {
         .body(GALLERY_JSON))
 }
 
-fn get_piece_name_from_id(gallery: &Vec<Piece>, id: u32) -> Option<String> {
-    let res: Option<&Piece> = gallery.iter().find(|&piece| piece.id == id);
+fn get_sketch_name_from_id(gallery: &Vec<Sketch>, id: u32) -> Option<String> {
+    let res: Option<&Sketch> = gallery.iter().find(|&sketch| sketch.id == id);
 
     match res {
         Some(r) => Some(r.name.clone()),
@@ -41,10 +41,10 @@ fn get_piece_name_from_id(gallery: &Vec<Piece>, id: u32) -> Option<String> {
 
 fn gallery_item(req: &HttpRequest) -> Result<fs::NamedFile> {
     // println!("{:?}", req);
-    let g: Vec<Piece> = serde_json::from_str(GALLERY_JSON).unwrap();
+    let g: Vec<Sketch> = serde_json::from_str(GALLERY_JSON).unwrap();
     let param_id = req.match_info().get("id").unwrap();
     let id: u32 = std::str::FromStr::from_str(param_id).unwrap();
-    let name = get_piece_name_from_id(&g, id).unwrap();
+    let name = get_sketch_name_from_id(&g, id).unwrap();
     let path = ["../server/static/seni", &name].join("/");
     let path_with_ext = [path, "seni".to_string()].join(".");
 

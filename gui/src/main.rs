@@ -22,7 +22,7 @@ mod error;
 mod input_imgui;
 mod render_gl;
 mod render_imgui;
-mod render_piece;
+mod render_sketch;
 mod render_seni;
 mod render_square;
 mod seni;

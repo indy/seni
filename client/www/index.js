@@ -115,7 +115,7 @@ function compileShader(gl, type, src) {
   return shader;
 }
 
-function setupPieceShaders(gl) {
+function setupSketchShaders(gl) {
   const shader = {};
 
   shader.program = gl.createProgram();
@@ -148,7 +148,7 @@ function setupPieceShaders(gl) {
     vec4 tex = texture2D(uSampler, vTextureCoord);
 
     // note: you _never_ want uOutputLinearColourSpace to be set to true
-    // it's only here because some of the older pieces didn't correctly
+    // it's only here because some of the older sketchs didn't correctly
     // convert from linear colour space to sRGB colour space during rendering
     // and this shader needs to reproduce them as intended at time of creation
     //
@@ -210,7 +210,7 @@ function setupPieceShaders(gl) {
   shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
-  // in order to retain the look of these older pieces we can't carry out the linear -> sRGB conversion
+  // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
   //
   shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
 
@@ -255,7 +255,7 @@ function setupBlitShaders(gl) {
      vec4 col = texture2D( uSampler, vTextureCoord );
 
      // note: you _never_ want uOutputLinearColourSpace to be set to true
-     // it's only here because some of the older pieces didn't correctly
+     // it's only here because some of the older sketchs didn't correctly
      // convert from linear colour space to sRGB colour space during rendering
      // and this shader needs to reproduce them as intended at time of creation
      //
@@ -306,7 +306,7 @@ function setupBlitShaders(gl) {
   shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
-  // in order to retain the look of these older pieces we can't carry out the linear -> sRGB conversion
+  // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
   //
   shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
 
@@ -411,7 +411,7 @@ class GLRenderer {
     const gl = initGL(this.glDomElement);
     this.gl = gl;
 
-    this.pieceShader = setupPieceShaders(gl);
+    this.sketchShader = setupSketchShaders(gl);
     this.blitShader = setupBlitShaders(gl);
 
     setupGLState(gl);
@@ -456,7 +456,7 @@ class GLRenderer {
   renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
     const gl = this.gl;
 
-    let shader = this.pieceShader;
+    let shader = this.sketchShader;
 
     // render to texture attached to framebuffer
 
@@ -1050,7 +1050,7 @@ function createInitialState() {
     galleryLoaded: false,
     galleryOldestToDisplay: 9999,
     galleryItems: {},
-    galleryDisplaySize: 20,     // the number of gallery pieces to display everytime 'load more' is clicked
+    galleryDisplaySize: 20,     // the number of gallery sketchs to display everytime 'load more' is clicked
 
     previouslySelectedGenotypes: [],
     selectedIndices: [],
@@ -1921,7 +1921,7 @@ async function updateUI(state) {
 async function ensureMode(controller, mode) {
   if (mode === SeniMode.gallery && controller.getState().galleryLoaded === false) {
     // want to show the gallery but it hasn't been loaded yet. This occurs when
-    // editing a particular piece by loading it's id directly into the URL
+    // editing a particular sketch by loading it's id directly into the URL
     // e.g. http://localhost:3210/#61
     //
     await getGallery(controller);
