@@ -63,7 +63,7 @@ impl BitmapCache {
 }
 
 // given pixel data as u8 in sRGB colour space
-// this converts to in internal linear colour space representation in f32 (range 0..1)
+// this converts it to the 0..1 range
 #[derive(Default)]
 pub struct BitmapInfo {
     pub width: usize,
@@ -71,15 +71,8 @@ pub struct BitmapInfo {
     pub data: Vec<f32>,
 }
 
-// https://en.wikipedia.org/wiki/SRGB
-fn into_linear_space(c: u8) -> f32 {
-    let v = f32::from(c) / 255.0;
-
-    if v > 0.04045 {
-        ((v + 0.055) / 1.055).powf(2.4)
-    } else {
-        v / 12.92
-    }
+fn normalize_colour_range(c: u8) -> f32 {
+    f32::from(c) / 255.0
 }
 
 impl BitmapInfo {
@@ -87,7 +80,7 @@ impl BitmapInfo {
         BitmapInfo {
             width,
             height,
-            data: data.into_iter().map(into_linear_space).collect(),
+            data: data.into_iter().map(normalize_colour_range).collect(),
         }
     }
 }

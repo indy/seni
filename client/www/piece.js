@@ -113,20 +113,47 @@ function setupPieceShaders(gl) {
 
   // pre-multiply the alpha in the shader
   // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
+  // this needs to happen in linear colour space
   const fragmentSrc = `
   precision highp float;
   varying vec4 vColor;
   varying highp vec2 vTextureCoord;
 
   uniform sampler2D uSampler;
+  uniform bool uOutputLinearColourSpace;
+
+  // https://en.wikipedia.org/wiki/SRGB
+  vec3 srgb_to_linear(vec3 srgb) {
+      float a = 0.055;
+      float b = 0.04045;
+      vec3 linear_lo = srgb / 12.92;
+      vec3 linear_hi = pow((srgb + vec3(a)) / (1.0 + a), vec3(2.4));
+      return vec3(
+          srgb.r > b ? linear_hi.r : linear_lo.r,
+          srgb.g > b ? linear_hi.g : linear_lo.g,
+          srgb.b > b ? linear_hi.b : linear_lo.b);
+  }
 
   void main(void) {
     vec4 tex = texture2D(uSampler, vTextureCoord);
 
-    gl_FragColor.r = tex.r * vColor.r * vColor.a;
-    gl_FragColor.g = tex.r * vColor.g * vColor.a;
-    gl_FragColor.b = tex.r * vColor.b * vColor.a;
-    gl_FragColor.a = tex.r * vColor.a;
+    // note: you _never_ want uOutputLinearColourSpace to be set to true
+    // it's only here because some of the older pieces didn't correctly
+    // convert from linear colour space to sRGB colour space during rendering
+    // and this shader needs to reproduce them as intended at time of creation
+    //
+    if (uOutputLinearColourSpace) {
+      gl_FragColor.r = tex.r * vColor.r * vColor.a;
+      gl_FragColor.g = tex.r * vColor.g * vColor.a;
+      gl_FragColor.b = tex.r * vColor.b * vColor.a;
+      gl_FragColor.a = tex.r * vColor.a;
+    } else {
+      vec4 linearColour = vec4(srgb_to_linear(vColor.rgb), vColor.a);
+      gl_FragColor.r = tex.r * linearColour.r * linearColour.a;
+      gl_FragColor.g = tex.r * linearColour.g * linearColour.a;
+      gl_FragColor.b = tex.r * linearColour.b * linearColour.a;
+      gl_FragColor.a = tex.r * linearColour.a;
+    }
   }
   `;
 
@@ -171,6 +198,11 @@ function setupPieceShaders(gl) {
   shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
   shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
   shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
+
+  // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
+  // in order to retain the look of these older pieces we can't carry out the linear -> sRGB conversion
+  //
+  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
 
   return shader;
 }
@@ -415,7 +447,7 @@ class GLRenderer {
     });
   }
 
-  renderGeometryToTexture(destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
+  renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
     const gl = this.gl;
 
     let shader = this.pieceShader;
@@ -462,6 +494,7 @@ class GLRenderer {
 
     gl.uniform1i(shader.textureUniform, 0);
 
+    gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
 
     const glVertexBuffer = this.glVertexBuffer;
     const glColourBuffer = this.glColourBuffer;
@@ -859,7 +892,7 @@ async function displayOnImageElements(display) {
 }
 
 async function renderGeometryBuffers(meta, memory, buffers, destWidth, destHeight, display) {
-  gState.glRenderer.renderGeometryToTexture(gState.render_texture_width, gState.render_texture_height, memory, buffers);
+  gState.glRenderer.renderGeometryToTexture(meta, gState.render_texture_width, gState.render_texture_height, memory, buffers);
   gState.glRenderer.renderTextureToScreen(meta, destWidth, destHeight);
 
   await displayOnImageElements(display);

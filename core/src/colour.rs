@@ -78,6 +78,47 @@ pub enum ColourFormat {
     Lab,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Colour {
+    pub format: ColourFormat,
+    pub e0: f32,
+    pub e1: f32,
+    pub e2: f32,
+    pub e3: f32,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum ColourPreset {
+    Chrome,
+    HotlineMiami,
+    KnightRider,
+    Mars,
+    Rainbow,
+    Robocop,
+    Transformers,
+}
+
+#[derive(Clone, Debug)]
+pub struct ProcColourStateStruct {
+    pub a: [f32; 3],
+    pub b: [f32; 3],
+    pub c: [f32; 3],
+    pub d: [f32; 3],
+    pub alpha: f32,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum ConvertibleColour {
+    RGB(f64, f64, f64, f64),
+    HSLuv(f64, f64, f64, f64),
+    HSL(f64, f64, f64, f64),
+    LAB(f64, f64, f64, f64),
+    HSV(f64, f64, f64, f64),
+    XYZ(f64, f64, f64, f64),
+    LUV(f64, f64, f64, f64),
+    LCH(f64, f64, f64, f64),
+}
+
 impl ColourFormat {
     pub fn from_keyword(kw: Keyword) -> Option<ColourFormat> {
         match kw {
@@ -101,121 +142,6 @@ impl fmt::Display for ColourFormat {
             ColourFormat::Lab => write!(f, "lab"),
         }
     }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum ColourPreset {
-    Chrome,
-    HotlineMiami,
-    KnightRider,
-    Mars,
-    Rainbow,
-    Robocop,
-    Transformers,
-}
-
-impl ColourPreset {
-    pub fn from_keyword(kw: Keyword) -> Option<ColourPreset> {
-        match kw {
-            Keyword::Chrome => Some(ColourPreset::Chrome),
-            Keyword::HotlineMiami => Some(ColourPreset::HotlineMiami),
-            Keyword::KnightRider => Some(ColourPreset::KnightRider),
-            Keyword::Mars => Some(ColourPreset::Mars),
-            Keyword::Rainbow => Some(ColourPreset::Rainbow),
-            Keyword::Robocop => Some(ColourPreset::Robocop),
-            Keyword::Transformers => Some(ColourPreset::Transformers),
-            _ => None,
-        }
-    }
-
-    pub fn get_preset(self) -> ([f32; 3], [f32; 3], [f32; 3], [f32; 3]) {
-        match self {
-            ColourPreset::Chrome => (
-                [0.5, 0.5, 0.5],
-                [0.5, 0.5, 0.5],
-                [1.0, 1.0, 1.0],
-                [0.0, 0.1, 0.2],
-            ),
-            ColourPreset::HotlineMiami => (
-                [0.5, 0.5, 0.5],
-                [0.5, 0.5, 0.5],
-                [2.0, 1.0, 0.0],
-                [0.5, 0.2, 0.25],
-            ),
-            ColourPreset::KnightRider => (
-                [0.5, 0.5, 0.5],
-                [0.5, 0.5, 0.5],
-                [1.0, 0.7, 0.4],
-                [0.0, 0.15, 0.2],
-            ),
-            ColourPreset::Mars => (
-                [0.8, 0.5, 0.4],
-                [0.2, 0.4, 0.2],
-                [2.0, 1.0, 1.0],
-                [0.0, 0.25, 0.25],
-            ),
-            ColourPreset::Rainbow => (
-                [0.5, 0.5, 0.5],
-                [0.5, 0.5, 0.5],
-                [1.0, 1.0, 1.0],
-                [0.0, 3.33, 6.67],
-            ),
-            ColourPreset::Robocop => (
-                [0.5, 0.5, 0.5],
-                [0.5, 0.5, 0.5],
-                [1.0, 1.0, 1.0],
-                [0.3, 0.2, 0.2],
-            ),
-            ColourPreset::Transformers => (
-                [0.5, 0.5, 0.5],
-                [0.5, 0.5, 0.5],
-                [1.0, 1.0, 0.5],
-                [0.8, 0.9, 0.3],
-            ),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct ProcColourStateStruct {
-    pub a: [f32; 3],
-    pub b: [f32; 3],
-    pub c: [f32; 3],
-    pub d: [f32; 3],
-    pub alpha: f32,
-}
-
-impl Default for ProcColourStateStruct {
-    fn default() -> ProcColourStateStruct {
-        ProcColourStateStruct {
-            a: [0.0, 0.0, 0.0],
-            b: [0.0, 0.0, 0.0],
-            c: [0.0, 0.0, 0.0],
-            d: [0.0, 0.0, 0.0],
-            alpha: 1.0,
-        }
-    }
-}
-
-impl ProcColourStateStruct {
-    pub fn colour(&self, t: f32) -> Colour {
-        Colour::new(
-            ColourFormat::Rgb,
-            self.a[0] + self.b[0] * (mathutil::TAU * (self.c[0] * t + self.d[0])).cos(),
-            self.a[1] + self.b[1] * (mathutil::TAU * (self.c[1] * t + self.d[1])).cos(),
-            self.a[2] + self.b[2] * (mathutil::TAU * (self.c[2] * t + self.d[2])).cos(),
-            self.alpha,
-        )
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Colour {
-    pub format: ColourFormat,
-    pub e0: f32,
-    pub e1: f32,
-    pub e2: f32,
-    pub e3: f32,
 }
 
 impl Packable for Colour {
@@ -280,6 +206,12 @@ impl fmt::Display for Colour {
     }
 }
 
+
+fn normalised_colour_from_hex_string(hex_component: &str) -> Result<f32> {
+    let value = i32::from_str_radix(hex_component, 16)?;
+    Ok(value as f32 / 255.0)
+}
+
 impl Colour {
     pub fn new(format: ColourFormat, e0: f32, e1: f32, e2: f32, e3: f32) -> Self {
         Colour {
@@ -289,6 +221,20 @@ impl Colour {
             e2,
             e3,
         }
+    }
+
+    pub fn from_rgb_hex(hex: &str) -> Result<Self> {
+        // hex in the form: "#ff00ff"
+        if hex.len() != 7 {
+            error!("Colour::from_rgb_hex expects hex in form #rrggbb, actual: {}", hex);
+            return Err(Error::Colour)
+        }
+
+        Ok(Colour::new(ColourFormat::Rgb,
+                       normalised_colour_from_hex_string(&hex[1..3])?,
+                       normalised_colour_from_hex_string(&hex[3..5])?,
+                       normalised_colour_from_hex_string(&hex[5..])?,
+                       1.0))
     }
 
     pub fn convert(&self, format: ColourFormat) -> Result<Colour> {
@@ -361,16 +307,90 @@ impl Default for Colour {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum ConvertibleColour {
-    RGB(f64, f64, f64, f64),
-    HSLuv(f64, f64, f64, f64),
-    HSL(f64, f64, f64, f64),
-    LAB(f64, f64, f64, f64),
-    HSV(f64, f64, f64, f64),
-    XYZ(f64, f64, f64, f64),
-    LUV(f64, f64, f64, f64),
-    LCH(f64, f64, f64, f64),
+impl ColourPreset {
+    pub fn from_keyword(kw: Keyword) -> Option<ColourPreset> {
+        match kw {
+            Keyword::Chrome => Some(ColourPreset::Chrome),
+            Keyword::HotlineMiami => Some(ColourPreset::HotlineMiami),
+            Keyword::KnightRider => Some(ColourPreset::KnightRider),
+            Keyword::Mars => Some(ColourPreset::Mars),
+            Keyword::Rainbow => Some(ColourPreset::Rainbow),
+            Keyword::Robocop => Some(ColourPreset::Robocop),
+            Keyword::Transformers => Some(ColourPreset::Transformers),
+            _ => None,
+        }
+    }
+
+    pub fn get_preset(self) -> ([f32; 3], [f32; 3], [f32; 3], [f32; 3]) {
+        match self {
+            ColourPreset::Chrome => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 1.0, 1.0],
+                [0.0, 0.1, 0.2],
+            ),
+            ColourPreset::HotlineMiami => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [2.0, 1.0, 0.0],
+                [0.5, 0.2, 0.25],
+            ),
+            ColourPreset::KnightRider => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 0.7, 0.4],
+                [0.0, 0.15, 0.2],
+            ),
+            ColourPreset::Mars => (
+                [0.8, 0.5, 0.4],
+                [0.2, 0.4, 0.2],
+                [2.0, 1.0, 1.0],
+                [0.0, 0.25, 0.25],
+            ),
+            ColourPreset::Rainbow => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 1.0, 1.0],
+                [0.0, 3.33, 6.67],
+            ),
+            ColourPreset::Robocop => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 1.0, 1.0],
+                [0.3, 0.2, 0.2],
+            ),
+            ColourPreset::Transformers => (
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [1.0, 1.0, 0.5],
+                [0.8, 0.9, 0.3],
+            ),
+        }
+    }
+}
+
+impl Default for ProcColourStateStruct {
+    fn default() -> ProcColourStateStruct {
+        ProcColourStateStruct {
+            a: [0.0, 0.0, 0.0],
+            b: [0.0, 0.0, 0.0],
+            c: [0.0, 0.0, 0.0],
+            d: [0.0, 0.0, 0.0],
+            alpha: 1.0,
+        }
+    }
+}
+
+impl ProcColourStateStruct {
+    pub fn colour(&self, t: f32) -> Colour {
+        Colour::new(
+            ColourFormat::Rgb,
+            self.a[0] + self.b[0] * (mathutil::TAU * (self.c[0] * t + self.d[0])).cos(),
+            self.a[1] + self.b[1] * (mathutil::TAU * (self.c[1] * t + self.d[1])).cos(),
+            self.a[2] + self.b[2] * (mathutil::TAU * (self.c[2] * t + self.d[2])).cos(),
+            self.alpha,
+        )
+    }
 }
 
 impl ConvertibleColour {
@@ -1096,6 +1116,32 @@ mod tests {
         )
     }
 
+    fn assert_colour(col: Colour,
+                     format: ColourFormat,
+                     e0: f32,
+                     e1: f32,
+                     e2: f32,
+                     e3: f32) {
+        is_format(col.format, format);
+        assert_eq!(col.e0, e0);
+        assert_eq!(col.e1, e1);
+        assert_eq!(col.e2, e2);
+        assert_eq!(col.e3, e3);
+    }
+
+    fn assert_hex_colour(hex: &str,
+                         format: ColourFormat,
+                         e0: f32,
+                         e1: f32,
+                         e2: f32,
+                         e3: f32) {
+        if let Ok(col) = Colour::from_rgb_hex(hex) {
+            assert_colour(col, format, e0, e1, e2, e3);
+        } else {
+            assert!(false);
+        }
+    }
+
     fn assert_col(
         col: ConvertibleColour,
         format: ColourFormat,
@@ -1238,11 +1284,12 @@ mod tests {
     #[test]
     fn test_colour_unpack() {
         let (res, _rem) = Colour::unpack("RGB 1.1 2.2 3.3 4.4").unwrap();
-        assert_eq!(res.format, ColourFormat::Rgb);
-        assert_eq!(res.e0, 1.1);
-        assert_eq!(res.e1, 2.2);
-        assert_eq!(res.e2, 3.3);
-        assert_eq!(res.e3, 4.4);
+        assert_colour(res, ColourFormat::Rgb, 1.1, 2.2, 3.3, 4.4);
+    }
+
+    #[test]
+    fn test_hex_colour_parsing() {
+        assert_hex_colour("#ff00ff", ColourFormat::Rgb, 1.0, 0.0, 1.0, 1.0);
     }
 
 }

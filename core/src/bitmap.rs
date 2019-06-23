@@ -218,22 +218,14 @@ pub fn value(
     Ok(colour)
 }
 
-pub fn width(
-    context: &mut Context,
-    program: &Program,
-    from: Iname,
-) -> Result<f32> {
+pub fn width(context: &mut Context, program: &Program, from: Iname) -> Result<f32> {
     let from_string = string_from_iname(program, from)?;
     let bitmap_info = context.bitmap_cache.get(from_string)?;
 
     Ok(bitmap_info.width as f32)
 }
 
-pub fn height(
-    context: &mut Context,
-    program: &Program,
-    from: Iname,
-) -> Result<f32> {
+pub fn height(context: &mut Context, program: &Program, from: Iname) -> Result<f32> {
     let from_string = string_from_iname(program, from)?;
     let bitmap_info = context.bitmap_cache.get(from_string)?;
 

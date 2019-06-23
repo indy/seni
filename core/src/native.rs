@@ -794,9 +794,7 @@ fn probe_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
 fn meta_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::LinearColourSpace, Var::Float(0.0)),
-        ],
+        vec![(Keyword::LinearColourSpace, Var::Float(0.0))],
         // stack offset
         0,
     ))
@@ -816,9 +814,7 @@ fn meta_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
 fn x_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::From, Var::V2D(0.0, 0.0)),
-        ],
+        vec![(Keyword::From, Var::V2D(0.0, 0.0))],
         // stack offset
         1,
     ))
@@ -844,9 +840,7 @@ fn x_execute(vm: &mut Vm, _context: &mut Context) -> Result<Option<Var>> {
 fn y_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::From, Var::V2D(0.0, 0.0)),
-        ],
+        vec![(Keyword::From, Var::V2D(0.0, 0.0))],
         // stack offset
         1,
     ))
@@ -3141,9 +3135,7 @@ fn bitmap_value_execute(
 fn bitmap_width_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::From, Var::Bool(false)),
-        ],
+        vec![(Keyword::From, Var::Bool(false))],
         // stack offset
         1,
     ))
@@ -3171,9 +3163,7 @@ fn bitmap_width_execute(
 fn bitmap_height_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::From, Var::Bool(false)),
-        ],
+        vec![(Keyword::From, Var::Bool(false))],
         // stack offset
         1,
     ))
