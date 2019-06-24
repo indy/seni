@@ -172,6 +172,8 @@ pub enum Native {
     // ColBuildBezier,
     #[strum(serialize = "col/value")]
     ColValue,
+    #[strum(serialize = "col/palette")]
+    ColPalette,
 
     // math
     //
@@ -373,6 +375,7 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::ColGetV => common_colour_only_parameter_info(),
         Native::ColBuildProcedural => col_build_procedural_parameter_info(),
         Native::ColValue => col_value_parameter_info(),
+        Native::ColPalette => col_palette_parameter_info(),
         // math
         Native::MathDistance => math_distance_parameter_info(),
         Native::MathNormal => math_normal_parameter_info(),
@@ -499,6 +502,7 @@ pub fn execute_native(
         Native::ColGetV => col_get_elem_execute(vm, 2),
         Native::ColBuildProcedural => col_build_procedural_execute(vm),
         Native::ColValue => col_value_execute(vm),
+        Native::ColPalette => col_palette_execute(vm),
         // math
         Native::MathDistance => math_distance_execute(vm),
         Native::MathNormal => math_normal_execute(vm),
@@ -1980,6 +1984,36 @@ fn col_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let res = from.colour(t);
 
     Ok(Some(Var::Colour(res)))
+}
+
+fn col_palette_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::Index, Var::Float(0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_palette_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let default_mask: i32 = vm.stack_peek(2)?;
+
+    if !is_arg_given(default_mask, 1) {
+        error!("col_palette_execute requires index parameter");
+        return Err(Error::Native);
+    }
+
+    let index: f32 = vm.stack_peek(1)?;
+    let palette = Colour::palette(index as usize)?;
+
+    let mut vs: Vec<Var> = Vec::new();
+    for colour in palette {
+        vs.push(Var::Colour(colour));
+    }
+
+    Ok(Some(Var::Vector(vs)))
 }
 
 fn math_distance_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {

@@ -28,6 +28,8 @@ use crate::mathutil;
 use crate::packable::{Mule, Packable};
 use crate::result::Result;
 
+use crate::colour_palettes::COLOUR_PALETTES;
+
 use std;
 use std::fmt;
 
@@ -206,7 +208,6 @@ impl fmt::Display for Colour {
     }
 }
 
-
 fn normalised_colour_from_hex_string(hex_component: &str) -> Result<f32> {
     let value = i32::from_str_radix(hex_component, 16)?;
     Ok(value as f32 / 255.0)
@@ -223,17 +224,28 @@ impl Colour {
         }
     }
 
+    // return the 5 colour palette at the given index
+    pub fn palette(index: usize) -> Result<Vec<Colour>> {
+        Ok(vec![
+            Colour::from_rgb_hex(COLOUR_PALETTES[index][0])?,
+            Colour::from_rgb_hex(COLOUR_PALETTES[index][1])?,
+            Colour::from_rgb_hex(COLOUR_PALETTES[index][2])?,
+            Colour::from_rgb_hex(COLOUR_PALETTES[index][3])?,
+            Colour::from_rgb_hex(COLOUR_PALETTES[index][4])?,
+        ])
+    }
+
+    // hex in the form: "ff00ff"
     pub fn from_rgb_hex(hex: &str) -> Result<Self> {
-        // hex in the form: "#ff00ff"
-        if hex.len() != 7 {
-            error!("Colour::from_rgb_hex expects hex in form #rrggbb, actual: {}", hex);
+        if hex.len() != 6 {
+            error!("Colour::from_rgb_hex expects input as 6 hex digits, actual: {}", hex);
             return Err(Error::Colour)
         }
 
         Ok(Colour::new(ColourFormat::Rgb,
-                       normalised_colour_from_hex_string(&hex[1..3])?,
-                       normalised_colour_from_hex_string(&hex[3..5])?,
-                       normalised_colour_from_hex_string(&hex[5..])?,
+                       normalised_colour_from_hex_string(&hex[0..2])?,
+                       normalised_colour_from_hex_string(&hex[2..4])?,
+                       normalised_colour_from_hex_string(&hex[4..])?,
                        1.0))
     }
 
@@ -1289,7 +1301,7 @@ mod tests {
 
     #[test]
     fn test_hex_colour_parsing() {
-        assert_hex_colour("#ff00ff", ColourFormat::Rgb, 1.0, 0.0, 1.0, 1.0);
+        assert_hex_colour("ff00ff", ColourFormat::Rgb, 1.0, 0.0, 1.0, 1.0);
     }
 
 }
