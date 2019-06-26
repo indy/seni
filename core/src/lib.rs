@@ -30,12 +30,12 @@ pub mod seni_language;
 
 mod bitmap;
 mod bitmap_cache;
-mod colour;
+pub mod colour;
 mod colour_palettes;
 mod compiler;
 mod context;
 mod ease;
-mod error;
+pub mod error;
 mod focal;
 mod gene;
 mod geometry;

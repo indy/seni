@@ -1,0 +1,11 @@
+[package]
+name = "palette-maker"
+version = "4.1.0"
+authors = ["Inderjit Gill <email@indy.io>"]
+edition = "2018"
+license = "GPL-3.0+"
+
+[dependencies]
+clap = "2.32.0"
+core = { path = "../../core" }
+serde_json = "1.0.39"
