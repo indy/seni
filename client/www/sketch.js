@@ -304,7 +304,8 @@ function setupBlitShaders(gl) {
 }
 
 function setupGLState(gl) {
-  gl.clearColor(1.0, 1.0, 1.0, 0.0);
+  // clear colour alpha is 1.0 as we want to treat a blank canvas as opaque white
+  gl.clearColor(1.0, 1.0, 1.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.BLEND);
 
