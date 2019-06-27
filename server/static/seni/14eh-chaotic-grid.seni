@@ -71,17 +71,17 @@
 
       rng (prng/build min: -1 max: 1 seed: seed)
 
-      half-alpha (/ (col/get-alpha colour: colour) 2)
-      lab-colour (col/set-alpha colour: (col/convert format: LAB colour: colour)
+      half-alpha (/ (col/alpha from: colour) 2)
+      lab-colour (col/set-alpha from: (col/convert format: LAB colour: colour)
                                 value: half-alpha))
 
     ; horizontal strips
     (loop (i to: iterations)
       (define
         [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/values num: 8 from: rng)
-        lightness (+ (col/get-l colour: lab-colour)
+        lightness (+ (col/e2 from: lab-colour)
                      (* colour-volatility (prng/value from: rng)))
-        current-colour (col/set-l colour: lab-colour value: lightness))
+        current-colour (col/set-e2 from: lab-colour value: lightness))
       (bezier tessellation: 10
               line-width: (+ overlap h-strip-width)
               coords: [[(+ (+ (* rx1 vol) start-x)
@@ -108,9 +108,9 @@
     (loop (i to: iterations)
       (define
         [rx1 ry1 rx2 ry2 rx3 ry3 rx4 ry4] (prng/values num: 8 from: rng)
-        lightness (+ (col/get-l colour: lab-colour)
+        lightness (+ (col/e2 from: lab-colour)
                      (* colour-volatility (prng/value from: rng)))
-        current-colour (col/set-l colour: lab-colour value: lightness))
+        current-colour (col/set-e2 from: lab-colour value: lightness))
       (bezier tessellation: 10
               line-width: (+ overlap v-strip-width)
               coords: [[(+ (+ (* i v-delta) (* rx1 vol) start-x)

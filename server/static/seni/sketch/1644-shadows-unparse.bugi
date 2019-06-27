@@ -43,7 +43,7 @@
   (define
     position [(* (vector/get from: obj nth: 0) 1.05)
               (* (vector/get from: obj nth: 1) 1.05)]
-    colour: (col/set-alpha colour: (vector/get from: obj nth: 2) value: 0.2)
+    colour: (col/set-alpha from: (vector/get from: obj nth: 2) value: 0.2)
     radius: (vector/get from: obj nth: 3))
   (draw-shape position: position
               colour: colour

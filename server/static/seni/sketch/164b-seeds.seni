@@ -33,19 +33,19 @@
                        radius: 300)
   (circle tessellation: 10
           position: position
-          colour: (col/set-alpha colour: colour value: 0.01)
+          colour: (col/set-alpha from: colour value: 0.01)
           radius: (* 10.1 radius))
   (circle tessellation: 10
           position: position
-          colour: (col/set-alpha colour: colour value: 0.05)
+          colour: (col/set-alpha from: colour value: 0.05)
           radius: (* 1.8 radius))
   (circle tessellation: 10
           position: position
-          colour: (col/set-alpha colour: colour value: 0.05)
+          colour: (col/set-alpha from: colour value: 0.05)
           radius: (* 1.5 radius))
   (circle tessellation: 10
           position: position
-          colour: (col/set-alpha colour: colour value: 0.05)
+          colour: (col/set-alpha from: colour value: 0.05)
           radius: (* 1.2 radius)))
 
 (fn (interesting-circle position: [500 500]

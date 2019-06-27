@@ -50,8 +50,8 @@
 
 (fn (left-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
-                             colour: (col/set-s value: (* 100 strength)
-                                                colour: (col/convert format: HSLuv colour: colour))))
+                          from: (col/set-e1 value: (* 100 strength)
+                                            from: (col/convert format: HSLuv colour: colour))))
   (on-matrix-stack
     (translate vector: [x y])
     (rotate angle: (prng/value from: ra))
@@ -63,8 +63,8 @@
 
 (fn (right-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
-                             colour: (col/set-s value: (* 100 strength)
-                                                colour: (col/convert format: HSLuv colour: colour))))
+                          from: (col/set-e1 value: (* 100 strength)
+                                            from: (col/convert format: HSLuv colour: colour))))
   (on-matrix-stack
     (translate vector: [x y])
     (rotate angle: (prng/value from: ra))
@@ -78,24 +78,24 @@
   (loop (y from: 0 to: canvas/height inc: (* 2 h))
     (loop (x from: 0 to: canvas/width inc: (* 4 w))
       (define
-        c2 (col/set-l colour: hslcol2 value: (+ (col/get-l colour: hslcol2) (prng/value from: hslrng)))
-        c3 (col/set-l colour: hslcol3 value: (+ (col/get-l colour: hslcol3) (prng/value from: hslrng)))
+        c2 (col/set-e2 from: hslcol2 value: (+ (col/e2 from: hslcol2) (prng/value from: hslrng)))
+        c3 (col/set-e2 from: hslcol3 value: (+ (col/e2 from: hslcol3) (prng/value from: hslrng)))
         col-bm (bitmap/value from: texture position: [(interp/value from: bmx t: x)
                                                       (interp/value from: bmy t: y)]))
-      (left-side  x: x         y: y w: w h: h colour: c2 strength: (col/get-r colour: col-bm))
-      (right-side x: (+ x w w) y: y w: w h: h colour: c3 strength: (col/get-r colour: col-bm)))))
+      (left-side  x: x         y: y w: w h: h colour: c2 strength: (col/e0 from: col-bm))
+      (right-side x: (+ x w w) y: y w: w h: h colour: c3 strength: (col/e0 from: col-bm)))))
 
 (fn (tri-hsl alpha: 1)
   (loop (y from: 0 to: canvas/height inc: (* 2 h))
     (loop (x from: 0 to: canvas/width inc: (* 4 w))
       (define
-        c4 (col/set-l colour: hslcol4 value: (+ (col/get-l colour: hslcol4) (prng/value from: hslrng)))
-        c5 (col/set-l colour: hslcol5 value: (+ (col/get-l colour: hslcol5) (prng/value from: hslrng)))
+        c4 (col/set-e2 from: hslcol4 value: (+ (col/e2 from: hslcol4) (prng/value from: hslrng)))
+        c5 (col/set-e2 from: hslcol5 value: (+ (col/e2 from: hslcol5) (prng/value from: hslrng)))
 
         col-bm (bitmap/value from: texture position: [(interp/value from: bmx t: x)
                                                       (interp/value from: bmy t: y)]))
-      (left-side  x: x         y: y w: w h: h colour: c4 strength: (col/get-r colour: col-bm))
-      (right-side x: (+ x w w) y: y w: w h: h colour: c5 strength: (col/get-r colour: col-bm)))))
+      (left-side  x: x         y: y w: w h: h colour: c4 strength: (col/e0 from: col-bm))
+      (right-side x: (+ x w w) y: y w: w h: h colour: c5 strength: (col/e0 from: col-bm)))))
 
 
 (fn (wash vol: 200

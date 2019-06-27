@@ -31,7 +31,7 @@
     focal-val (focal/value from: focal-b position: position))
   (circle position: (offset-position position: position sc: (+ 2 (* 8 focal-val)))
           radius: 3
-          colour: (col/set-alpha colour: bg-col value: (- 1 focal-val))))
+          colour: (col/set-alpha from: bg-col value: (- 1 focal-val))))
 
 (fn (h-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (if (> (focal/value from: focal-a position: position) 0)

@@ -40,7 +40,7 @@
                  to: (+ tx width)
                  inc: width)
               (hexagon size: size
-                       colour: (col/set-alpha colour: colour
+                       colour: (col/set-alpha from: colour
                                               value: (focal/value from: focalpoint position: [x y]))
                        position: [x y])))
 
@@ -51,7 +51,7 @@
                  to: (+ tx width)
                  inc: width)
               (hexagon size: size
-                       colour: (col/set-alpha colour: colour
+                       colour: (col/set-alpha from: colour
                                               value: (focal/value from: focalpoint position: [x y]))
                        position: [x y]))))
 

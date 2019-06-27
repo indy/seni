@@ -42,7 +42,7 @@
     (scale scalar: sc)
     (define
       strokes petals
-      colcol (col/set-alpha colour: colour value: 0.3)
+      colcol (col/set-alpha from: colour value: 0.3)
       rem (interp/build from: [0 strokes] to: [0 math/TAU]))
     (loop (i from: 0 to: strokes)
           (petal-1 angle: (interp/value from: rem t: i) colour: colcol))))
@@ -54,7 +54,7 @@
     (scale scalar: sc)
     (define
       strokes petals
-      colcol (col/set-alpha colour: colour value: 0.4)
+      colcol (col/set-alpha from: colour value: 0.4)
       rem (interp/build from: [0 strokes] to: [0 math/TAU]))
     (loop (i from: 0 to: strokes)
           (petal-2 angle: (interp/value from: rem t: i) colour: colcol))))

@@ -19,7 +19,7 @@
                    shuffle-seed: 423))
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
-  (define r (col/get-r colour: colour)
+  (define r (col/e0 from: colour)
     angle (+ {3.38 (gen/scalar min: 0 max: 8)} (* r math/PI)))
   (if (= r 0)
       (on-matrix-stack
@@ -30,7 +30,7 @@
               colour: (col/rgb r: 0.1 g: 0.1 b: (prng/value from: rng) alpha: 1)))))
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
-  (define r (col/get-r colour: colour)
+  (define r (col/e0 from: colour)
     angle (+ {3.38 (gen/scalar min: 0 max: 8)} (* r math/PI)))
   (if (> r 0)
       (on-matrix-stack

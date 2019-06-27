@@ -42,7 +42,7 @@
       (translate vector: position)
       (rotate angle: (* combined-interest {334 (gen/stray-int from: 334 by: 30)}))
       (circle position: [0 0]
-              colour: (col/set-alpha colour: (col/value from: col-fn-bg t: interest-a) value: alpha)
+              colour: (col/set-alpha from: (col/value from: col-fn-bg t: interest-a) value: alpha)
               width: {41 (gen/stray-int from: 41 by: 20)}
               height: {461 (gen/stray-int from: 461 by: 50)}
               tessellation: 20)))
@@ -73,7 +73,7 @@
       (translate vector: position)
       (rotate angle: (* combined-interest {151 (gen/stray-int from: 151 by: 30)}))
       (circle position: [0 0]
-              colour: (col/set-alpha colour: (col/value from: col-fn-fg t: interest-a) value: alpha)
+              colour: (col/set-alpha from: (col/value from: col-fn-fg t: interest-a) value: alpha)
               width: {13 (gen/stray-int from: 13 by: 7)}
               height: {263 (gen/stray-int from: 263 by: 50)}
               tessellation: 20)))

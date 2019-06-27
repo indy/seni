@@ -81,24 +81,14 @@ The public API for the Seni language
 - [col/triad](#coltriad)
 - [col/darken](#coldarken)
 - [col/lighten](#collighten)
+- [col/e0](#cole0)
+- [col/e1](#cole1)
+- [col/e2](#cole2)
+- [col/alpha](#colealpha)
+- [col/set-e0](#colset-e0)
+- [col/set-e1](#colset-e1)
+- [col/set-e2](#colset-e2)
 - [col/set-alpha](#colset-alpha)
-- [col/get-alpha](#colget-alpha)
-- [col/set-r](#colset-r)
-- [col/get-r](#colget-r)
-- [col/set-g](#colset-g)
-- [col/get-g](#colget-g)
-- [col/set-b](#colset-b)
-- [col/get-b](#colget-b)
-- [col/set-h](#colset-h)
-- [col/get-h](#colget-h)
-- [col/set-s](#colset-s)
-- [col/get-s](#colget-s)
-- [col/set-l](#colset-l)
-- [col/get-l](#colget-l)
-- [col/set-a](#colset-a)
-- [col/get-a](#colget-a)
-- [col/set-v](#colset-v)
-- [col/get-v](#colget-v)
 - [col/build-procedural](#colbuild-procedural)
 - [col/build-bezier](#colbuild-bezier)
 - [col/value](#colvalue)
@@ -458,122 +448,57 @@ Parameter | Default | Description
     | colour    | RGB(0 0 0 1) |             |
     | value     | 0            |      0..100 |
 
+## col/e0
+
+Parameter | Default | Description
+--- | --- | ---
+    | from    | RGB(0 0 0 1) |             |
+
+## col/e1
+
+Parameter | Default | Description
+--- | --- | ---
+    | from    | RGB(0 0 0 1) |             |
+
+## col/e2
+
+Parameter | Default | Description
+--- | --- | ---
+    | from    | RGB(0 0 0 1) |             |
+
+## col/alpha
+
+Parameter | Default | Description
+--- | --- | ---
+    | from    | RGB(0 0 0 1) |             |
+
+## col/set-e0
+
+Parameter | Default | Description
+--- | --- | ---
+    | from      | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+## col/set-e1
+
+Parameter | Default | Description
+--- | --- | ---
+    | from      | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+## col/set-e2
+
+Parameter | Default | Description
+--- | --- | ---
+    | from      | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
 ## col/set-alpha
 
 Parameter | Default | Description
 --- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-    | value     | 0            |      0..100 |
-
-## col/get-alpha
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-
-## col/set-r
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
+    | from      | RGB(0 0 0 1) |             |
     | value     | 0            |             |
-
-## col/get-r
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-
-## col/set-g
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-    | value     | 0            |             |
-
-## col/get-g
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-
-## col/set-b
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-    | value     | 0            |             |
-
-## col/get-b
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-
-## col/set-h
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-    | value     | 0            |             |
-
-## col/get-h
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-
-## col/set-s
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-    | value     | 0            |             |
-
-## col/get-s
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-
-## col/set-l
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-    | value     | 0            |             |
-
-## col/get-l
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-
-## col/set-a
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-    | value     | 0            |             |
-
-## col/get-a
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-
-## col/set-v
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
-    | value     | 0            |             |
-
-## col/get-v
-
-Parameter | Default | Description
---- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
 
 ## col/build-procedural
 

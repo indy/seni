@@ -34,8 +34,8 @@
     y 750
     width 200
     height 300
-    colour (col/set-l colour: top-colour
-                      value: (+ (col/get-l colour: top-colour)
+    colour (col/set-e2 from: top-colour
+                      value: (+ (col/e2 from: top-colour)
                                 {10.5 (gen/scalar min: 0.0 max: 20.0)})))
 
   (stroked-bezier-rect position: [250 y]
@@ -106,10 +106,9 @@
 
 (fn (lower-section)
   (define
-    colour (col/set-l colour: mid-colour
-                      value: (- (col/get-l
-                                 colour: mid-colour)
-                                {20.5 (gen/scalar min: 0.0 max: 20.0)})))
+    colour (col/set-e2 from: mid-colour
+                       value: (- (col/e2 from: mid-colour)
+                                 {20.5 (gen/scalar min: 0.0 max: 20.0)})))
   (stroked-bezier-rect position: [500 200]
                        width: 900
                        height: 300

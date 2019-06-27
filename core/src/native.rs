@@ -130,42 +130,22 @@ pub enum Native {
     ColDarken,
     #[strum(serialize = "col/lighten")]
     ColLighten,
+    #[strum(serialize = "col/set-e0")]
+    ColSetE0,
+    #[strum(serialize = "col/e0")]
+    ColE0,
+    #[strum(serialize = "col/set-e1")]
+    ColSetE1,
+    #[strum(serialize = "col/e1")]
+    ColE1,
+    #[strum(serialize = "col/set-e2")]
+    ColSetE2,
+    #[strum(serialize = "col/e2")]
+    ColE2,
     #[strum(serialize = "col/set-alpha")]
     ColSetAlpha,
-    #[strum(serialize = "col/get-alpha")]
-    ColGetAlpha,
-    #[strum(serialize = "col/set-r")]
-    ColSetR,
-    #[strum(serialize = "col/get-r")]
-    ColGetR,
-    #[strum(serialize = "col/set-g")]
-    ColSetG,
-    #[strum(serialize = "col/get-g")]
-    ColGetG,
-    #[strum(serialize = "col/set-b")]
-    ColSetB,
-    #[strum(serialize = "col/get-b")]
-    ColGetB,
-    #[strum(serialize = "col/set-h")]
-    ColSetH,
-    #[strum(serialize = "col/get-h")]
-    ColGetH,
-    #[strum(serialize = "col/set-s")]
-    ColSetS,
-    #[strum(serialize = "col/get-s")]
-    ColGetS,
-    #[strum(serialize = "col/set-l")]
-    ColSetL,
-    #[strum(serialize = "col/get-l")]
-    ColGetL,
-    #[strum(serialize = "col/set-a")]
-    ColSetA,
-    #[strum(serialize = "col/get-a")]
-    ColGetA,
-    #[strum(serialize = "col/set-v")]
-    ColSetV,
-    #[strum(serialize = "col/get-v")]
-    ColGetV,
+    #[strum(serialize = "col/alpha")]
+    ColAlpha,
     #[strum(serialize = "col/build-procedural")]
     ColBuildProcedural,
     // #[strum(serialize = "col/build-bezier")]
@@ -355,24 +335,14 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::ColTriad => col_triad_parameter_info(),
         Native::ColDarken => common_colour_value_parameter_info(),
         Native::ColLighten => common_colour_value_parameter_info(),
-        Native::ColSetAlpha => common_colour_value_parameter_info(),
-        Native::ColGetAlpha => common_colour_only_parameter_info(),
-        Native::ColSetR => common_colour_value_parameter_info(),
-        Native::ColGetR => common_colour_only_parameter_info(),
-        Native::ColSetG => common_colour_value_parameter_info(),
-        Native::ColGetG => common_colour_only_parameter_info(),
-        Native::ColSetB => common_colour_value_parameter_info(),
-        Native::ColGetB => common_colour_only_parameter_info(),
-        Native::ColSetH => common_colour_value_parameter_info(),
-        Native::ColGetH => common_colour_only_parameter_info(),
-        Native::ColSetS => common_colour_value_parameter_info(),
-        Native::ColGetS => common_colour_only_parameter_info(),
-        Native::ColSetL => common_colour_value_parameter_info(),
-        Native::ColGetL => common_colour_only_parameter_info(),
-        Native::ColSetA => common_colour_value_parameter_info(),
-        Native::ColGetA => common_colour_only_parameter_info(),
-        Native::ColSetV => common_colour_value_parameter_info(),
-        Native::ColGetV => common_colour_only_parameter_info(),
+        Native::ColSetE0 => col_set_parameter_info(),
+        Native::ColE0 => col_get_parameter_info(),
+        Native::ColSetE1 => col_set_parameter_info(),
+        Native::ColE1 => col_get_parameter_info(),
+        Native::ColSetE2 => col_set_parameter_info(),
+        Native::ColE2 => col_get_parameter_info(),
+        Native::ColSetAlpha => col_set_parameter_info(),
+        Native::ColAlpha => col_get_parameter_info(),
         Native::ColBuildProcedural => col_build_procedural_parameter_info(),
         Native::ColValue => col_value_parameter_info(),
         Native::ColPalette => col_palette_parameter_info(),
@@ -482,24 +452,14 @@ pub fn execute_native(
         Native::ColTriad => col_triad_execute(vm),
         Native::ColDarken => col_darken_execute(vm),
         Native::ColLighten => col_lighten_execute(vm),
-        Native::ColSetAlpha => col_set_elem_execute(vm, 3),
-        Native::ColGetAlpha => col_get_elem_execute(vm, 3),
-        Native::ColSetR => col_set_elem_execute(vm, 0),
-        Native::ColGetR => col_get_elem_execute(vm, 0),
-        Native::ColSetG => col_set_elem_execute(vm, 1),
-        Native::ColGetG => col_get_elem_execute(vm, 1),
-        Native::ColSetB => col_set_elem_execute(vm, 2),
-        Native::ColGetB => col_get_elem_execute(vm, 2),
-        Native::ColSetH => col_set_elem_execute(vm, 0),
-        Native::ColGetH => col_get_elem_execute(vm, 0),
-        Native::ColSetS => col_set_elem_execute(vm, 1),
-        Native::ColGetS => col_get_elem_execute(vm, 1),
-        Native::ColSetL => col_set_elem_execute(vm, 2), // bug: will fail when called for LAB colour
-        Native::ColGetL => col_get_elem_execute(vm, 2),
-        Native::ColSetA => col_set_elem_execute(vm, 1),
-        Native::ColGetA => col_get_elem_execute(vm, 1),
-        Native::ColSetV => col_set_elem_execute(vm, 2),
-        Native::ColGetV => col_get_elem_execute(vm, 2),
+        Native::ColSetE0 => col_set_execute(vm, 0),
+        Native::ColE0 => col_get_execute(vm, 0),
+        Native::ColSetE1 => col_set_execute(vm, 1),
+        Native::ColE1 => col_get_execute(vm, 1),
+        Native::ColSetE2 => col_set_execute(vm, 2),
+        Native::ColE2 => col_get_execute(vm, 2),
+        Native::ColSetAlpha => col_set_execute(vm, 3),
+        Native::ColAlpha => col_get_execute(vm, 3),
         Native::ColBuildProcedural => col_build_procedural_execute(vm),
         Native::ColValue => col_value_execute(vm),
         Native::ColPalette => col_palette_execute(vm),
@@ -1832,14 +1792,6 @@ fn common_colour_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
         1,
     ))
 }
-fn common_colour_only_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
-    Ok((
-        // input arguments
-        vec![(Keyword::Colour, Var::Colour(Default::default()))],
-        // stack offset
-        1,
-    ))
-}
 
 fn col_darken_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let col: Colour = vm.stack_peek(1)?;
@@ -1855,7 +1807,27 @@ fn col_lighten_execute(vm: &mut Vm) -> Result<Option<Var>> {
     Ok(Some(Var::Colour(col.lighten(value)?)))
 }
 
-fn col_set_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
+fn col_set_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Colour(Default::default())),
+            (Keyword::Value, Var::Float(0.0)),
+        ],
+        // stack offset
+        1,
+    ))
+}
+fn col_get_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![(Keyword::From, Var::Colour(Default::default()))],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_set_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
     let col: Colour = vm.stack_peek(1)?;
     let value: f32 = vm.stack_peek(2)?;
 
@@ -1865,7 +1837,7 @@ fn col_set_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
         2 => Colour::new(col.format, col.e0, col.e1, value, col.e3),
         3 => Colour::new(col.format, col.e0, col.e1, col.e2, value),
         _ => {
-            error!("col_set_elem_execute::idx out of range");
+            error!("col_set_execute::idx out of range");
             return Err(Error::Native);
         }
     };
@@ -1873,7 +1845,7 @@ fn col_set_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
     Ok(Some(Var::Colour(res)))
 }
 
-fn col_get_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
+fn col_get_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
     let col: Colour = vm.stack_peek(1)?;
 
     let res = match idx {
@@ -1882,7 +1854,7 @@ fn col_get_elem_execute(vm: &mut Vm, idx: usize) -> Result<Option<Var>> {
         2 => col.e2,
         3 => col.e3,
         _ => {
-            error!("col_get_elem_execute::idx out of range");
+            error!("col_get_execute::idx out of range");
             return Err(Error::Native);
         }
     };

@@ -24,7 +24,7 @@
   (define
     [x y colour radius] obj)
   (circle position: [x y]
-          colour: (col/set-alpha colour: colour
+          colour: (col/set-alpha from: colour
                                  value: {0.267 (gen/scalar min: 0 max: 0.4)})
           radius: (* radius {6 (gen/int min: 1 max: 8)})
           tessellation: 20))
@@ -42,7 +42,7 @@
     [x y colour radius] obj
     offset {1.116 (gen/scalar min: 1 max: 2)})
   (circle position: [(* x offset) (* y offset)]
-          colour: (col/set-alpha colour: (col/darken colour: colour
+          colour: (col/set-alpha from: (col/darken colour: colour
                                                      value: {27 (gen/int min: 0 max: 100)})
                                  value: {0.236 (gen/scalar max: 0.5)})
           radius: radius

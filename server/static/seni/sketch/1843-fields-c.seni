@@ -33,14 +33,14 @@
     focal-val (focal/value from: focal-b position: position))
   (circle position: (offset-position position: position sc: (+ 2 (* 8 focal-val)))
           radius: 3
-          colour: (col/set-alpha colour: bg-col value: (* (- 1 focal-val) 0.1))))
+          colour: (col/set-alpha from: bg-col value: (* (- 1 focal-val) 0.1))))
 
 (fn (bg-cross position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (define
     focal-val (focal/value from: focal-b position: position))
   (circle position: (offset-position position: position sc: (+ 2 (* 8 focal-val)))
           radius: 3
-          colour: (col/set-alpha colour: bg-col value: (* (- 1 focal-val) 0.9))))
+          colour: (col/set-alpha from: bg-col value: (* (- 1 focal-val) 0.9))))
 
 (fn (h-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (define

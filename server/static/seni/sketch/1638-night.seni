@@ -43,7 +43,7 @@
       (translate vector: position)
       (rotate angle: (* combined-interest {334 (gen/int min: 300 max: 400)}))
       (circle position: [0 0]
-              colour: (col/set-alpha colour: (col/value from: col-fn-bg t: interest-a) value: alpha)
+              colour: (col/set-alpha from: (col/value from: col-fn-bg t: interest-a) value: alpha)
               width: {41 (gen/int min: 30 max: 60)}
               height: {461 (gen/int min: 400 max: 500)}
               tessellation: 20)))
@@ -74,7 +74,7 @@
       (translate vector: position)
       (rotate angle: (* combined-interest {151 (gen/int min: 1 max: 200)}))
       (circle position: [0 0]
-              colour: (col/set-alpha colour: (col/value from: col-fn-fg t: interest-a) value: alpha)
+              colour: (col/set-alpha from: (col/value from: col-fn-fg t: interest-a) value: alpha)
               width: {13 (gen/int min: 10 max: 30)}
               height: {263 (gen/int min: 100 max: 300)}
               tessellation: 20)))

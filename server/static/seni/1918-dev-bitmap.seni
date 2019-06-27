@@ -14,13 +14,13 @@
                    fn: per-pixel-func))
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
-  (per-pixel-1 a: (col/get-r colour: colour)
+  (per-pixel-1 a: (col/e0 from: colour)
                width: 11.8
                from: [13 -6]
                to: [5 6]))
 
 (fn (pass-2 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
-  (per-pixel-2 a: (col/get-r colour: colour)
+  (per-pixel-2 a: (col/e0 from: colour)
                width: {1.3 (gen/scalar min: 1 max: 2)}
                from: [{5 (gen/scalar min: 4 max: 6)}
                       {8 (gen/scalar min: 7 max: 9)}]

@@ -149,7 +149,7 @@
         r (* scale-factor (sqrt i))
         position [(* r (math/cos angle: theta))
                   (* r (math/sin angle: theta))]
-        colour (col/set-alpha colour: (col-fn-1 t: (focalpoint position: position))
+        colour (col/set-alpha from: (col-fn-1 t: (focalpoint position: position))
                               value: 0.4))
       ;; don't render some of the offscreen circles
       (if (> (vector/get from: position nth: 1) -10)

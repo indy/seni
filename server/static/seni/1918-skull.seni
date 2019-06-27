@@ -15,7 +15,7 @@
                    fn: per-pixel-func))
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
-  (define a (col/get-r colour: colour)
+  (define a (col/e0 from: colour)
     angle (+ {2.58 (gen/scalar min: 0 max: 8)} (* a math/PI)))
   (line from: [(* {2 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
                (* {8 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]
@@ -28,7 +28,7 @@
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
-    b (col/get-b colour: colour)
+    b (col/e2 from: colour)
     angle (+ {3.30 (gen/scalar min: 0 max: 8)} (* b math/PI)))
   (line from: [(* {11 (gen/scalar min: -15 max: 15)} (math/cos angle: angle))
                (* {9 (gen/scalar min: -15 max: 15)} (math/sin angle: angle))]

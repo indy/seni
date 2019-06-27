@@ -13,7 +13,7 @@
       colour (col/value from: make-colour
                         t: (focal/value from: focalpoint position: position)))
     (draw-tile position: [(+ px 5) (- py 5)]
-               colour: (col/set-l colour: (col/convert colour: colour
+               colour: (col/set-e2 from: (col/convert colour: colour
                                                        format: LAB)
                                   value: 50))
     (draw-tile position: position

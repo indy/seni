@@ -84,11 +84,11 @@
          col-1 (col/lab l: (interp/value from: li t: (prng/value from: r))
                         a: (interp/value from: rma t: (+ x (* (prng/value from: colour-offset) colour-scale)))
                         b: b
-                        alpha: (* alpha (- 1 (col/get-r colour: col-bm))))
+                        alpha: (* alpha (- 1 (col/e0 from: col-bm))))
          col-2 (col/lab l: (interp/value from: li t: (prng/value from: r))
                         a: (interp/value from: rma t: (+ x w (* (prng/value from: colour-offset) colour-scale)))
                         b: b
-                        alpha: (* alpha (- 1 (col/get-r colour: col-bm)))))
+                        alpha: (* alpha (- 1 (col/e0 from: col-bm)))))
        (left-side  x: x         y: y w: w h: h colour: col-1)
        (right-side x: (+ x w w) y: y w: w h: h colour: col-2))))
 
@@ -110,9 +110,9 @@
                                                        (interp/value from: bmy t: y)])
          b  (interp/value from: fn-l t: (+ y (* (prng/value from: colour-offset) colour-scale)))
          col-1 (col/hsl h: (interp/value from: fn-h t: (+ x (* (prng/value from: colour-offset) colour-scale)))
-                        s: 1 l: b alpha: (* alpha (col/get-r colour: col-bm)))
+                        s: 1 l: b alpha: (* alpha (col/e0 from: col-bm)))
          col-2 (col/hsl h: (interp/value from: fn-h t: (+ x w (* (prng/value from: colour-offset) colour-scale)))
-                        s: 1 l: b alpha: (* alpha (col/get-r colour: col-bm))))
+                        s: 1 l: b alpha: (* alpha (col/e0 from: col-bm))))
        (left-side  x: x         y: y w: w h: h colour: col-1)
        (right-side x: (+ x w w) y: y w: w h: h colour: col-2))))
 

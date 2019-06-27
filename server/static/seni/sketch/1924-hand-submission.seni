@@ -41,8 +41,8 @@
 
 (fn (left-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
-                             colour: (col/set-s value: (* 100 strength)
-                                                colour: (col/convert format: HSLuv colour: colour))))
+                          from: (col/set-e1 value: (* 100 strength)
+                                            from: (col/convert format: HSLuv colour: colour))))
   (on-matrix-stack
     (translate vector: [x y])
     (rotate angle: (prng/value from: ra))
@@ -54,8 +54,8 @@
 
 (fn (right-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
-                             colour: (col/set-s value: (* 100 strength)
-                                                colour: (col/convert format: HSLuv colour: colour))))
+                          from: (col/set-e1 value: (* 100 strength)
+                                            from: (col/convert format: HSLuv colour: colour))))
   (on-matrix-stack
     (translate vector: [x y])
     (rotate angle: (prng/value from: ra))
@@ -95,8 +95,8 @@
                        a: (interp/value from: rma t: (+ x w (* (prng/value from: colour-offset) colour-scale)))
                        b: b
                        alpha: alpha))
-      (left-side  x: x         y: y w: w h: h colour: col-1 strength: (col/get-r colour: col-bm))
-      (right-side x: (+ x w w) y: y w: w h: h colour: col-2 strength: (col/get-r colour: col-bm)))))
+      (left-side  x: x         y: y w: w h: h colour: col-1 strength: (col/e0 from: col-bm))
+      (right-side x: (+ x w w) y: y w: w h: h colour: col-2 strength: (col/e0 from: col-bm)))))
 
 (fn (tri-hsl alpha: 1)
   (define
@@ -119,8 +119,8 @@
                        s: 1 l: b alpha: alpha)
         col-2 (col/hsl h: (interp/value from: fn-h t: (+ x w (* (prng/value from: colour-offset) colour-scale)))
                        s: 1 l: b alpha: alpha))
-      (left-side  x: x         y: y w: w h: h colour: col-1 strength: (col/get-r colour: col-bm))
-      (right-side x: (+ x w w) y: y w: w h: h colour: col-2 strength: (col/get-r colour: col-bm)))))
+      (left-side  x: x         y: y w: w h: h colour: col-1 strength: (col/e0 from: col-bm))
+      (right-side x: (+ x w w) y: y w: w h: h colour: col-2 strength: (col/e0 from: col-bm)))))
 
 
 (fn (wash vol: 200

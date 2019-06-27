@@ -56,7 +56,7 @@
 
 (fn (per-pixel colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
-    a (col/get-r colour: colour)
+    a (col/e0 from: colour)
     angle (* a math/PI))
   (if (< a {0.7 (gen/scalar min: 0.1 max: 0.9)})
       (line from: [(* {4 (gen/scalar min: -5 max: 5)} (math/cos angle: angle))

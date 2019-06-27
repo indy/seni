@@ -46,8 +46,8 @@
     base-col (col/hsluv h: (interp/value from: interp-h t: (focal/value from: focal-hue position: position))
                         s: (interp/value from: interp-s t: (focal/value from: focal-sat position: position))
                         l: (interp/value from: interp-l t: 0.7))
-    fill-colour (col/set-alpha colour: base-col value: alpha-factor)
-    line-colour (col/set-alpha colour: base-col value: alpha-factor)
+    fill-colour (col/set-alpha from: base-col value: alpha-factor)
+    line-colour (col/set-alpha from: base-col value: alpha-factor)
     half-size+ (/ (* size-factor square-size) 2)
     half-size- (* half-size+ -1)
     thickness {2.3 (gen/scalar min: 0.9 max: 3.0)}

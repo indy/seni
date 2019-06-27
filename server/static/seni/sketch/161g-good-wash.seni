@@ -37,7 +37,7 @@
     (translate vector: position)
     (rotate angle: (* combined-interest {348 (gen/int min: 1 max: 400)}))
     (circle position: [0 0]
-            colour: (col/set-alpha colour: (col-fn-2 t: interest-1) value: alpha)
+            colour: (col/set-alpha from: (col-fn-2 t: interest-1) value: alpha)
             width: {54 (gen/int min: 10 max: 200)}
             height: {467 (gen/int min: 20 max: 500)})))
 

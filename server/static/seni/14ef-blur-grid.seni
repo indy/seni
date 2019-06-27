@@ -37,8 +37,8 @@
                       volatility: 0
                       passes: 1
                       seed: 341)
-    (define alpha (col/get-alpha colour: colour)
-      pass-colour (col/set-alpha colour: colour value: (/ alpha passes))
+    (define alpha (col/alpha from: colour)
+      pass-colour (col/set-alpha from: colour value: (/ alpha passes))
       rng (prng/build min: -1 max: 1 seed: seed))
     (on-matrix-stack
      (translate vector: [x y])

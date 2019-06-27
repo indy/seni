@@ -18,7 +18,7 @@
 (fn (draw alpha: 0.9)
   (loop (i to: num-elements)
     (circle position: (nth from: coords n: i)
-            colour: (col/set-alpha colour: (nth from: colours n: i) value: alpha)
+            colour: (col/set-alpha from: (nth from: colours n: i) value: alpha)
             radius: 54
             tessellation: 30)))
 
