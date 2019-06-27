@@ -1989,9 +1989,7 @@ fn col_value_execute(vm: &mut Vm) -> Result<Option<Var>> {
 fn col_palette_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![
-            (Keyword::Index, Var::Float(0.0)),
-        ],
+        vec![(Keyword::Index, Var::Float(0.0))],
         // stack offset
         1,
     ))

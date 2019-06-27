@@ -238,15 +238,20 @@ impl Colour {
     // hex in the form: "ff00ff"
     pub fn from_rgb_hex(hex: &str) -> Result<Self> {
         if hex.len() != 6 {
-            error!("Colour::from_rgb_hex expects input as 6 hex digits, actual: {}", hex);
-            return Err(Error::Colour)
+            error!(
+                "Colour::from_rgb_hex expects input as 6 hex digits, actual: {}",
+                hex
+            );
+            return Err(Error::Colour);
         }
 
-        Ok(Colour::new(ColourFormat::Rgb,
-                       normalised_colour_from_hex_string(&hex[0..2])?,
-                       normalised_colour_from_hex_string(&hex[2..4])?,
-                       normalised_colour_from_hex_string(&hex[4..])?,
-                       1.0))
+        Ok(Colour::new(
+            ColourFormat::Rgb,
+            normalised_colour_from_hex_string(&hex[0..2])?,
+            normalised_colour_from_hex_string(&hex[2..4])?,
+            normalised_colour_from_hex_string(&hex[4..])?,
+            1.0,
+        ))
     }
 
     pub fn convert(&self, format: ColourFormat) -> Result<Colour> {
@@ -1128,12 +1133,7 @@ mod tests {
         )
     }
 
-    fn assert_colour(col: Colour,
-                     format: ColourFormat,
-                     e0: f32,
-                     e1: f32,
-                     e2: f32,
-                     e3: f32) {
+    fn assert_colour(col: Colour, format: ColourFormat, e0: f32, e1: f32, e2: f32, e3: f32) {
         is_format(col.format, format);
         assert_eq!(col.e0, e0);
         assert_eq!(col.e1, e1);
@@ -1141,12 +1141,7 @@ mod tests {
         assert_eq!(col.e3, e3);
     }
 
-    fn assert_hex_colour(hex: &str,
-                         format: ColourFormat,
-                         e0: f32,
-                         e1: f32,
-                         e2: f32,
-                         e3: f32) {
+    fn assert_hex_colour(hex: &str, format: ColourFormat, e0: f32, e1: f32, e2: f32, e3: f32) {
         if let Ok(col) = Colour::from_rgb_hex(hex) {
             assert_colour(col, format, e0, e1, e2, e3);
         } else {

@@ -13,6 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+/// read in a json file from https://github.com/Jam3/nice-color-palettes.git
+/// and output a rust file which lists the palettes in hsluv colour space
+
 use clap::{App, Arg};
 use core::colour::{Colour, ColourFormat};
 use serde_json;
@@ -49,25 +52,22 @@ fn main() -> Result<()> {
 
 fn run(json_filename: &str, rs_filename: &str) -> Result<()> {
     let contents = std::fs::read_to_string(json_filename)?;
-
-    let rgb_palettes: Vec<Vec<String>> = serde_json::from_str(&contents)?;
-    let hsluv_palettes: Vec<Vec<Colour>> = convert_palettes(rgb_palettes)?;
-    // println!("{:#?}", hsluv_palettes);
-
-    let source_code = build_source(&hsluv_palettes)?;
+    let json_palettes: Vec<Vec<String>> = serde_json::from_str(&contents)?;
+    let converted_palettes: Vec<Vec<Colour>> = convert_palettes(json_palettes)?;
+    let source_code = build_source(&converted_palettes)?;
 
     std::fs::write(rs_filename, source_code)?;
 
     Ok(())
 }
 
-fn build_source(hsluv_palettes: &Vec<Vec<Colour>>) -> Result<String> {
-    let source_size = estimate_output_size(hsluv_palettes.len());
+fn build_source(palettes: &Vec<Vec<Colour>>) -> Result<String> {
+    let source_size = estimate_output_size(palettes.len());
     let mut source = String::with_capacity(source_size);
 
     source.push_str(get_header());
 
-    for palette in hsluv_palettes {
+    for palette in palettes {
         source.push_str("    &[\n");
         for colour in palette {
             source.push_str("        Colour {\n");
