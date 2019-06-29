@@ -3525,45 +3525,45 @@ mod tests {
             assert_eq!(col.e3, alpha);
         }
     }
-
-    // get render packet 0's geometry length
-    fn rp0_num_vertices(context: &Context, expected_num_vertices: usize) {
-        assert_eq!(
-            context.get_render_packet_geo_len(0),
-            expected_num_vertices * RENDER_PACKET_FLOAT_PER_VERTEX
-        );
-    }
-
-    // #[test]
-    fn dev_rendering_fns() {
-        let mut vm: Vm = Default::default();
-        let mut context: Context = Default::default();
-        vm_run(&mut vm, &mut context, "(line width: 33 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
-        // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush/b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
-        // vm_run(&mut vm, "(line brush: brush/b)");
-        // vm_run(&mut vm, "(line brush: brush/b) (rect width: 10 height: 30)");
-
-        let res = vm.top_stack_value().unwrap();
-        if let Var::Debug(s) = res {
-            assert_eq!(s, "x");
-        } else {
-            assert_eq!(false, true);
+    /*
+        // get render packet 0's geometry length
+        fn rp0_num_vertices(context: &Context, expected_num_vertices: usize) {
+            assert_eq!(
+                context.get_render_packet_geo_len(0),
+                expected_num_vertices * RENDER_PACKET_FLOAT_PER_VERTEX
+            );
         }
 
-        rp0_num_vertices(&context, 4);
-    }
+        // #[test]
+        fn dev_rendering_fns() {
+            let mut vm: Vm = Default::default();
+            let mut context: Context = Default::default();
+            vm_run(&mut vm, &mut context, "(line width: 33 from: [2 3] to: [400 500] colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
+            // vm_run(&mut vm, "(line width: 0 from: [2 3] to: [400 500] brush: brush/b colour: (col/rgb r: 0 g: 0.1 b: 0.2 alpha: 0.3))");
+            // vm_run(&mut vm, "(line brush: brush/b)");
+            // vm_run(&mut vm, "(line brush: brush/b) (rect width: 10 height: 30)");
 
+            let res = vm.top_stack_value().unwrap();
+            if let Var::Debug(s) = res {
+                assert_eq!(s, "x");
+            } else {
+                assert_eq!(false, true);
+            }
+
+            rp0_num_vertices(&context, 4);
+        }
+    */
     #[test]
     fn test_native_pack() {
         let mut res: String = "".to_string();
-        Native::ColGetAlpha.pack(&mut res).unwrap();
-        assert_eq!("col/get-alpha", res);
+        Native::ColAlpha.pack(&mut res).unwrap();
+        assert_eq!("col/alpha", res);
     }
 
     #[test]
     fn test_native_unpack() {
-        let (res, _rem) = Native::unpack("col/get-alpha").unwrap();
-        assert_eq!(res, Native::ColGetAlpha);
+        let (res, _rem) = Native::unpack("col/alpha").unwrap();
+        assert_eq!(res, Native::ColAlpha);
     }
 
     #[test]

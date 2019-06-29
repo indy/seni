@@ -2675,14 +2675,6 @@ mod tests {
         }
     }
 
-    fn load_void() -> Bytecode {
-        Bytecode {
-            op: Opcode::LOAD,
-            arg0: BytecodeArg::Mem(Mem::Void),
-            arg1: BytecodeArg::Int(0),
-        }
-    }
-
     fn lt() -> Bytecode {
         bytecode_from_opcode(Opcode::LT)
     }

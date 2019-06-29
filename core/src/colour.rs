@@ -689,9 +689,8 @@ fn max_channel(r: f64, g: f64, b: f64) -> i32 {
     }
 }
 
-// TODO: implement a better fmod, this one is not exact
 fn fmod(a: f64, b: f64) -> f64 {
-    a - b * (a / b).floor()
+    a - b * (a / b).trunc()
 }
 
 // http://www.rapidtables.com/convert/color/rgb-to-hsl.htm
@@ -1297,6 +1296,32 @@ mod tests {
     #[test]
     fn test_hex_colour_parsing() {
         assert_hex_colour("ff00ff", ColourFormat::Rgb, 1.0, 0.0, 1.0, 1.0);
+    }
+
+    fn assert_equal_f64(a: f64, b: f64) {
+        let diff = (a - b).abs();
+        let delta: f64 = 0.0001;
+
+        assert!(diff < delta, "a = {}, b = {}", a, b);
+    }
+
+    #[test]
+    fn test_fmod() {
+        assert_equal_f64(3.0, fmod(3.0, 10.0));
+        assert_equal_f64(1.0, fmod(10.0, 3.0));
+
+        assert_equal_f64(45.0, fmod(45.0, 360.0));
+        assert_equal_f64(0.0, fmod(360.0, 360.0));
+        assert_equal_f64(1.0, fmod(361.0, 360.0));
+        assert_equal_f64(359.9, fmod(359.9, 360.0));
+
+        assert_equal_f64(0.0, fmod(0.0, 6.0));
+        assert_equal_f64(-0.5, fmod(-0.5, 6.0));
+        assert_equal_f64(-2.0, fmod(-2.0, 6.0));
+        assert_equal_f64(-5.9, fmod(-5.9, 6.0));
+        assert_equal_f64(0.0, fmod(-6.0, 6.0));
+        assert_equal_f64(-0.1, fmod(-6.1, 6.0));
+        assert_equal_f64(-1.0, fmod(-7.0, 6.0));
     }
 
 }

@@ -335,15 +335,15 @@ mod tests {
         }
     }
 
-    fn trait_multiple_float(t: &Trait, expected: f32, index: usize) {
-        assert_eq!(t.within_vector, true);
-        assert_eq!(t.index, index);
-        if let Var::Float(f) = t.initial_value {
-            assert_eq!(f, expected);
-        } else {
-            assert!(false);
-        }
-    }
+    // fn trait_multiple_float(t: &Trait, expected: f32, index: usize) {
+    //     assert_eq!(t.within_vector, true);
+    //     assert_eq!(t.index, index);
+    //     if let Var::Float(f) = t.initial_value {
+    //         assert_eq!(f, expected);
+    //     } else {
+    //         assert!(false);
+    //     }
+    // }
 
     fn trait_multiple_v2d(t: &Trait, expected_x: f32, expected_y: f32, index: usize) {
         assert_eq!(t.within_vector, true);
