@@ -116,7 +116,7 @@ function setupSketchShaders(gl) {
   // this needs to happen in linear colour space
   const fragmentSrc = `
   precision highp float;
-  varying vec4 vColor;
+  varying vec4 vColour;
   varying highp vec2 vTextureCoord;
 
   uniform sampler2D uSampler;
@@ -143,12 +143,12 @@ function setupSketchShaders(gl) {
     // and this shader needs to reproduce them as intended at time of creation
     //
     if (uOutputLinearColourSpace) {
-      gl_FragColor.r = tex.r * vColor.r * vColor.a;
-      gl_FragColor.g = tex.r * vColor.g * vColor.a;
-      gl_FragColor.b = tex.r * vColor.b * vColor.a;
-      gl_FragColor.a = tex.r * vColor.a;
+      gl_FragColor.r = tex.r * vColour.r * vColour.a;
+      gl_FragColor.g = tex.r * vColour.g * vColour.a;
+      gl_FragColor.b = tex.r * vColour.b * vColour.a;
+      gl_FragColor.a = tex.r * vColour.a;
     } else {
-      vec4 linearColour = vec4(srgb_to_linear(vColor.rgb), vColor.a);
+      vec4 linearColour = vec4(srgb_to_linear(vColour.rgb), vColour.a);
       gl_FragColor.r = tex.r * linearColour.r * linearColour.a;
       gl_FragColor.g = tex.r * linearColour.g * linearColour.a;
       gl_FragColor.b = tex.r * linearColour.b * linearColour.a;
@@ -159,18 +159,18 @@ function setupSketchShaders(gl) {
 
   const vertexSrc = `
   attribute vec2 aVertexPosition;
-  attribute vec4 aVertexColor;
+  attribute vec4 aVertexColour;
   attribute vec2 aVertexTexture;
 
   uniform mat4 uMVMatrix;
   uniform mat4 uPMatrix;
 
-  varying vec4 vColor;
+  varying vec4 vColour;
   varying highp vec2 vTextureCoord;
 
   void main(void) {
     gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
-    vColor = aVertexColor;
+    vColour = aVertexColour;
     vTextureCoord = aVertexTexture;
   }
   `;
@@ -192,7 +192,7 @@ function setupSketchShaders(gl) {
   }
 
   shader.positionAttribute = gl.getAttribLocation(shader.program, 'aVertexPosition');
-  shader.colourAttribute = gl.getAttribLocation(shader.program, 'aVertexColor');
+  shader.colourAttribute = gl.getAttribLocation(shader.program, 'aVertexColour');
   shader.textureAttribute = gl.getAttribLocation(shader.program, 'aVertexTexture');
 
   shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
