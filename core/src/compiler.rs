@@ -31,6 +31,8 @@ use crate::vm::{Var, MEMORY_LOCAL_SIZE};
 
 use log::error;
 
+const NONSENSE: i32 = 666;
+
 pub fn compile_preamble() -> Result<Program> {
     let mut compilation = Compilation::new();
     let compiler = Compiler::new();
@@ -2245,30 +2247,34 @@ impl Compiler {
         // prepare the MEM_SEG_ARGUMENT with default values
 
         // for the function address
-        compilation.emit(Opcode::LOAD, Mem::Constant, 666)?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
         // for the num args
-        compilation.emit(Opcode::LOAD, Mem::Constant, 667)?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
 
         compilation.emit(Opcode::CALL, fn_info_index, fn_info_index)?;
 
         // overwrite the default arguments with the actual arguments given by the fn invocation
         let mut arg_vals = &children[..];
-        while arg_vals.len() > 1 {
+        while arg_vals.len() > 0 {
             let arg = &arg_vals[0];
             if let Node::Label(_, iname, _) = arg {
                 let val = &arg_vals[1];
                 self.compile(compilation, val)?;
                 compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
+                arg_vals = &arg_vals[2..];
+            } else if let Node::Name(_, iname, _) = arg {
+                let val = &arg_vals[0];
+                self.compile(compilation, val)?;
+                compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
+                arg_vals = &arg_vals[1..];
             } else {
                 error!("compile_fn_invocation");
                 return Err(Error::Compiler);
             }
-
-            arg_vals = &arg_vals[2..];
         }
 
         // call the body of the function
-        compilation.emit(Opcode::LOAD, Mem::Constant, 668)?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
         compilation.emit(Opcode::CALL_0, fn_info_index, fn_info_index)?;
 
         Ok(())
@@ -3156,4 +3162,66 @@ mod tests {
             expected_bytecode
         );
     }
+
+    #[test]
+    fn test_fn_invocation_2() {
+        let expected_bytecode = vec![
+            jump(14),
+            load_const_name(224),
+            store_arg(0),
+            load_const_f32(99.0),
+            store_arg(1),
+            load_const_name(225),
+            store_arg(2),
+            load_const_f32(88.0),
+            store_arg(3),
+            ret_0(),
+            load_arg(1),
+            load_arg(3),
+            add(),
+            ret(),
+            load_const_f32(1.0),
+            store_global(15),
+            load_const_f32(2.0),
+            store_global(16),
+            load_const_i32(1),
+            load_const_i32(2),
+            call(),
+            load_global_i32(15),
+            store_arg(1),
+            load_global_i32(16),
+            store_arg(3),
+            load_const_i32(10),
+            call_0(),
+            stop(),
+        ];
+
+        assert_eq!(
+            compile(
+                "(define x 1 y 2)
+                 (fn (adder a: 99 b: 88) (+ a b))
+                 (adder a: x b: y)"
+            ),
+            expected_bytecode
+        );
+
+        assert_eq!(
+            compile(
+                "(define a 1 b 2)
+                 (fn (adder a: 99 b: 88) (+ a b))
+                 (adder a: a b: b)"
+            ),
+            expected_bytecode
+        );
+
+        assert_eq!(
+            compile(
+                "(define a 1 b 2)
+                 (fn (adder a: 99 b: 88) (+ a b))
+                 (adder a b)"
+            ),
+            expected_bytecode
+        );
+    }
+
 }

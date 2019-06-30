@@ -1836,6 +1836,43 @@ pub mod tests {
     }
 
     #[test]
+    fn test_vm_implied_args() {
+        // explicit argument syntax
+        is_float(
+            "(define x 1 y 2)
+             (fn (adder a: 99 b: 88) (+ a b))
+             (adder a: x b: y)",
+            3.0,
+        );
+
+        // explicit argument syntax, same names
+        is_float(
+            "(define a 1 b 2)
+             (fn (adder a: 99 b: 88) (+ a b))
+             (adder a: a b: b)",
+            3.0,
+        );
+
+        // implied argument syntax
+        is_float(
+            "(define a 1 b 2)
+             (fn (adder a: 99 b: 88) (+ a b))
+             (adder a b)",
+            3.0,
+        );
+
+        // default argument value plus the value of b is set to the global a
+        // if implied argument syntax is going to mess up, it will mess up here
+        //
+        is_float(
+            "(define a 5 b 10)
+             (fn (adder a: 99 b: 88) (+ a b))
+             (adder b: a)",
+            104.0,
+        );
+    }
+
+    #[test]
     fn test_vm_function_address() {
         is_float(
             "(fn (k a: 5) (+ a a))
