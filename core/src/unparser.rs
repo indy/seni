@@ -403,6 +403,14 @@ mod tests {
         basic_unparse_check("(define aaa 1.2) (define bbb 54) (define ccc 9.0909)");
 
         basic_unparse_check("(bitmap \"foo.png\")");
+
+        basic_unparse_check("(define a 1 b 2)
+                             (fn (adder a: 99 b: 88) (+ a b))
+                             (adder a b)");
+
+        basic_unparse_check("(define a 1 b 2)
+                             (fn (adder a: 99 b: 88) (+ a b))
+                             (adder a: a b: b)");
     }
 
     #[test]
