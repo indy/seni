@@ -29,7 +29,7 @@ use crate::program::{Bytecode, BytecodeArg, Data, FnInfo, Mem, Program};
 use crate::result::Result;
 use crate::vm::{Var, MEMORY_LOCAL_SIZE};
 
-use log::{error, warn};
+use log::error;
 
 pub fn compile_preamble() -> Result<Program> {
     let mut compilation = Compilation::new();
@@ -846,27 +846,22 @@ impl Compiler {
         compilation: &mut Compilation,
         ast: &[&Node],
     ) -> Result<()> {
-        let define_keyword_string = Keyword::Define.to_string();
-
         for n in ast.iter() {
-            self.register_top_level_defines_1(compilation, n, &define_keyword_string)?;
+            self.register_top_level_defines_1(compilation, n)?;
         }
 
         Ok(())
     }
 
-    fn register_top_level_defines_1(
-        &self,
-        compilation: &mut Compilation,
-        n: &Node,
-        define_keyword_string: &str,
-    ) -> Result<()> {
+    fn register_top_level_defines_1(&self, compilation: &mut Compilation, n: &Node) -> Result<()> {
+        let define_keyword_string = Keyword::Define.to_string();
+
         if let Node::List(nodes, _) = n {
             let nodes = only_semantic_nodes(nodes);
             if !nodes.is_empty() {
                 let define_keyword = &nodes[0];
                 if let Node::Name(text, _, _) = define_keyword {
-                    if text == define_keyword_string {
+                    if text == &define_keyword_string {
                         let mut defs = &nodes[1..];
                         while defs.len() > 1 {
                             if let Err(e) = self.register_names_in_define(compilation, &defs[0]) {
@@ -1036,8 +1031,7 @@ impl Compiler {
         }
 
         // single node version of self.register_top_level_defines(compilation, ast)?;
-        let define_keyword_string = Keyword::Define.to_string();
-        self.register_top_level_defines_1(compilation, n, &define_keyword_string)?;
+        self.register_top_level_defines_1(compilation, n)?;
 
         //// single node version of self.compile_common_top_level_fns(compilation, ast)?;
         {
@@ -1369,18 +1363,25 @@ impl Compiler {
     fn get_parameter_index(&self, label_vals: &[&Node], kw: Keyword) -> Option<usize> {
         let kw_name = Iname::from(kw);
 
+        let mut preceding_node_was_label = false;
+
         for (i, node) in label_vals.iter().enumerate() {
-            if i & 1 == 0 {
-                // a label
-                if let Node::Label(_, iname, _) = node {
-                    if *iname == kw_name {
-                        return Some(i + 1);
-                    }
-                } else {
-                    warn!("expected a label node in every odd position");
+            // a label
+            if let Node::Label(_, iname, _) = node {
+                if *iname == kw_name {
+                    return Some(i + 1);
                 }
+                preceding_node_was_label = true;
+            } else if let Node::Name(_, iname, _) = node {
+                // possibly using the shortened syntax:
+                // (some-fn arg1) that's equivalent to (some-fn arg1: arg1)
+                //
+                if !preceding_node_was_label && *iname == kw_name {
+                    return Some(i);
+                }
+                preceding_node_was_label = false;
             } else {
-                // a value
+                preceding_node_was_label = false;
             }
         }
 
@@ -2675,6 +2676,14 @@ mod tests {
         }
     }
 
+    fn native(n: Native, args: i32) -> Bytecode {
+        Bytecode {
+            op: Opcode::NATIVE,
+            arg0: BytecodeArg::Native(n),
+            arg1: BytecodeArg::Int(args),
+        }
+    }
+
     fn lt() -> Bytecode {
         bytecode_from_opcode(Opcode::LT)
     }
@@ -3108,6 +3117,43 @@ mod tests {
                 jump(-18),
                 stop()
             ]
+        );
+    }
+
+    #[test]
+    fn test_native() {
+        let expected_bytecode = vec![
+            jump(1),
+            load_const_i32(15),
+            load_const_f32(1.0),
+            load_const_f32(0.0),
+            load_const_f32(0.0),
+            load_const_f32(0.0),
+            native(Native::ColRGB, 4),
+            store_global(15),
+            load_const_i32(0),
+            load_const_f32(0.5),
+            load_global_i32(15),
+            native(Native::ColSetAlpha, 2),
+            stop(),
+        ];
+
+        assert_eq!(
+            compile("(define c (col/rgb)) (col/set-alpha from: c value: 0.5)"),
+            expected_bytecode
+        );
+
+        // the implied label name syntax should produce the same output
+        assert_eq!(
+            compile("(define from (col/rgb)) (col/set-alpha from value: 0.5)"),
+            expected_bytecode
+        );
+
+        // compiler should handle cases where an argument value has the same
+        // name as another argument
+        assert_eq!(
+            compile("(define value (col/rgb)) (col/set-alpha from: value value: 0.5)"),
+            expected_bytecode
         );
     }
 }

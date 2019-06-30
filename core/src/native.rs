@@ -3510,7 +3510,7 @@ mod tests {
     use super::*;
 
     use crate::colour::ColourFormat;
-    use crate::geometry::RENDER_PACKET_FLOAT_PER_VERTEX;
+    // use crate::geometry::RENDER_PACKET_FLOAT_PER_VERTEX;
     use crate::vm::tests::*;
     use crate::vm::*;
 
