@@ -1,6 +1,3 @@
-(meta linear-colour-space: 1)
-
-
 ;; Pablo Picasso's Dog
 ;;
 (define
@@ -18,16 +15,10 @@
 
 ;; renders a bezier curve with rounded end-points
 (fn (curve line-width: 2 colour: black coords: [])
-  (bezier coords: coords
-          colour: colour
-          line-width: line-width
-          tessellation: 50)
-  (circle position: (nth from: coords n: 0)
-          colour: colour
-          radius: (/ line-width 2))
-  (circle position: (nth from: coords n: 3)
-          colour: colour
-          radius: (/ line-width 2)))
+  (define radius (/ line-width 2))
+  (bezier coords colour line-width tessellation: 50)
+  (circle position: (nth from: coords n: 0) colour radius)
+  (circle position: (nth from: coords n: 3) colour radius))
 
 (on-matrix-stack
   ;; scale coords from 500 limit to 1000 limit
