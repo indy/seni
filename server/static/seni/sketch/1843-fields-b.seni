@@ -15,8 +15,8 @@
   col-s {90 (gen/scalar min: 0 max: 100)}
   col-l {90 (gen/scalar min: 0 max: 100)}
   bg-col (col/hsluv h: col-h
-                    s: (math/clamp value: (- col-s 50) min: 0 max: 100)
-                    l: (math/clamp value: (- col-l 10) min: 0 max: 100)
+                    s: (math/clamp from: (- col-s 50) min: 0 max: 100)
+                    l: (math/clamp from: (- col-l 10) min: 0 max: 100)
                     alpha: 1.0)
   main-col (col/hsluv h: col-h s: col-s l: col-l alpha: 1.0))
 

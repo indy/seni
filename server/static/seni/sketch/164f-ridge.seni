@@ -82,7 +82,7 @@
         ;; outer ring
         (circle-slice tessellation: 30
                       position: [0 0]
-                      colour: (col/lighten colour: colour
+                      colour: (col/lighten from: colour
                                            value: (* {145 (gen/int min: 20 max: 600)} (srng)))
                       angle-start: 0
                       angle-end: 320
@@ -93,7 +93,7 @@
         ;; inner ring
         (circle-slice tessellation: 10
                       position: [0 0]
-                      colour: (col/lighten colour: colour
+                      colour: (col/lighten from: colour
                                            value: (* {35 (gen/int min: 10 max: 400)} (srng)))
                       angle-start: 0
                       angle-end: 320
@@ -104,7 +104,7 @@
     ;; centre fill
     (circle-slice tessellation: 10
                   position: [0 0]
-                  colour: (col/lighten colour: colour
+                  colour: (col/lighten from: colour
                                        value: (* {60 (gen/int min: 5 max: 200)} (srng)))
                   angle-start: 0
                   angle-end: 360
@@ -147,8 +147,8 @@
       (define
         theta (/ (* i math/TAU) phi)
         r (* scale-factor (sqrt i))
-        position [(* r (math/cos angle: theta))
-                  (* r (math/sin angle: theta))]
+        position [(* r (math/cos from: theta))
+                  (* r (math/sin from: theta))]
         colour (col/set-alpha from: (col-fn-1 t: (focalpoint position: position))
                               value: 0.4))
       ;; don't render some of the offscreen circles

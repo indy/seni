@@ -50,7 +50,7 @@
   (define
     shadow-mult {1.030 (gen/scalar min: 1 max: 1.05)}
     pos (vector/multiply vector: position scalar: shadow-mult)
-    col: (col/set-alpha from: (col/darken colour: colour
+    col: (col/set-alpha from: (col/darken from: colour
                                             value: {46 (gen/int min: 0 max: 100)})
                         value: {0.849 (gen/scalar min: 0.2 max: 1)}))
   (draw-shape position: pos

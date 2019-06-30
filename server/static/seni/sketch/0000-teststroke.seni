@@ -58,7 +58,7 @@
 
 (fn (box-stroke x1: 0 y1: 0 x2: 100 y2: 100 colour: red)
   (loop (x from: x1 to: x2 inc: 50)
-    (brush-line colour: (col/lighten colour: colour
+    (brush-line colour: (col/lighten from: colour
                                      value: (* (rng) 0.5))
                 width: 60
                 from: [x y1]
@@ -66,7 +66,7 @@
                 brush-type: "brushC"
                 brush-subtype: (rng)))
   (loop (y from: y1 to: y2 inc: 50)
-    (brush-line colour: (col/lighten colour: colour
+    (brush-line colour: (col/lighten from: colour
                                      value: (* (rng) 0.5))
                 width: 60
                 from: [x1 y]
@@ -76,7 +76,7 @@
 
 
 (fn (boxy x1: 0 y1: 0 x2: 100 y2: 100 colour: red)
-  (define complementary (col/complementary colour: colour))
+    (define complementary (col/complementary from: colour))
   (box-stroke x1: x1
               y1: y1
               x2: x2

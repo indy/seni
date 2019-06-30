@@ -42,7 +42,7 @@
     (triad-b triad-c) ({col/analagous (gen/select from: ['col/analagous
                                                      'col/split-complementary
                                                      'col/triad])}
-                                  colour: main-col))
+                       from: main-col))
   (rect position: [500 500]
         width: 1000
         height: 1000

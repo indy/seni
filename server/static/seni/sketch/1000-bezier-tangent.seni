@@ -23,7 +23,7 @@
           ;; outer ring
           (circle-slice tessellation: 20
                         position: [0 0]
-                        colour: (col/lighten colour: colour
+                        colour: (col/lighten from: colour
                                              delta: (* {30 (gen/int min: 20 max: 60)} (srng)))
                         angle-start: 0
                         angle-end: 320
@@ -34,7 +34,7 @@
           ;; inner ring
           (circle-slice tessellation: 10
                         position: [0 0]
-                        colour: (col/lighten colour: colour
+                        colour: (col/lighten from: colour
                                              delta: (* {20 (gen/int min: 10 max: 40)} (srng)))
                         angle-start: 0
                         angle-end: 320
@@ -45,7 +45,7 @@
    ;; centre fill
    (circle-slice tessellation: 10
                  position: [0 0]
-                 colour: (col/lighten colour: colour
+                 colour: (col/lighten from: colour
                                       delta: (* {10 (gen/int min: 5 max: 20)} (srng)))
                  angle-start: 0
                  angle-end: 360
@@ -60,8 +60,8 @@
 (fn (tentacle position: [0 0]
                   angle: 0)
   (define [x y] position
-          cosa (math/cos angle: angle)
-          sina (math/sin angle: angle)
+          cosa (math/cos from: angle)
+          sina (math/sin from: angle)
           min-pos-rad 28
           max-pos-rad 300
           rem (interp/fn from: [min-pos-rad max-pos-rad]

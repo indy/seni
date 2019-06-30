@@ -1,9 +1,9 @@
 (define bar [])
 
 ;;(debug/print value: bar)
-;;(debug/print value: (vector/length vector: bar))
+;;(debug/print value: (vector/length from: bar))
 
 (++ bar 54)
 
 ;;(debug/print value: bar)
-;;(debug/print value: (vector/length vector: bar))
+;;(debug/print value: (vector/length from: bar))

@@ -35,7 +35,7 @@
         ;; outer ring
         (circle-slice tessellation: 20
                       position: [0 0]
-                      colour: (col/lighten colour: colour
+                      colour: (col/lighten from: colour
                                            value: (* {30 (gen/int min: 20 max: 60)} (prng/value from: srng)))
                       angle-start: 0
                       angle-end: 320
@@ -46,7 +46,7 @@
         ;; inner ring
         (circle-slice tessellation: 10
                       position: [0 0]
-                      colour: (col/lighten colour: colour
+                      colour: (col/lighten from: colour
                                            value: (* {20 (gen/int min: 10 max: 40)} (prng/value from: srng)))
                       angle-start: 0
                       angle-end: 320
@@ -57,7 +57,7 @@
     ;; centre fill
     (circle-slice tessellation: 10
                   position: [0 0]
-                  colour: (col/lighten colour: colour
+                  colour: (col/lighten from: colour
                                        value: (* {10 (gen/int min: 5 max: 20)} (prng/value from: srng)))
                   angle-start: 0
                   angle-end: 360
@@ -76,8 +76,8 @@
     (define
       theta (/ (* i math/TAU) phi)
       r (* scale-factor (sqrt i))
-      position [(* r (math/cos angle: theta))
-                (* r (math/sin angle: theta))]
+      position [(* r (math/cos from: theta))
+                (* r (math/sin from: theta))]
       colour (col/value from: make-colour t: (focal/value from: focalpoint position: position)))
     (interesting-circle position: position
                         radius: seed-radius

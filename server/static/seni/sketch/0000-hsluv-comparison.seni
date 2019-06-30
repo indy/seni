@@ -12,27 +12,27 @@
   left-rgb {(col/rgb r: 0.9 g: 1.0 b: 0 alpha: 1) (gen/col alpha: 1)}
   right-rgb {(col/rgb r: 0.1 g: 0.0 b: 1 alpha: 1) (gen/col alpha: 1)}
 
-  left-hsluv (col/convert colour: left-rgb format: HSLuv)
-  right-hsluv (col/convert colour: right-rgb format: HSLuv)
+  left-hsluv (col/convert from: left-rgb format: HSLuv)
+  right-hsluv (col/convert from: right-rgb format: HSLuv)
   interp-hsluv-h (interp/build from: [left-x right-x] to: [(col/e0 from: left-hsluv) (col/e0 from: right-hsluv)])
   interp-hsluv-s (interp/build from: [left-x right-x] to: [(col/e1 from: left-hsluv) (col/e1 from: right-hsluv)])
   interp-hsluv-l (interp/build from: [left-x right-x] to: [(col/e2 from: left-hsluv) (col/e2 from: right-hsluv)])
 
-  left-hsl (col/convert colour: left-rgb format: HSL)
-  right-hsl (col/convert colour: right-rgb format: HSL)
+  left-hsl (col/convert from: left-rgb format: HSL)
+  right-hsl (col/convert from: right-rgb format: HSL)
   interp-hsl-h (interp/build from: [left-x right-x] to: [(col/e0 from: left-hsl) (col/e0 from: right-hsl)])
   interp-hsl-s (interp/build from: [left-x right-x] to: [(col/e1 from: left-hsl) (col/e1 from: right-hsl)])
   interp-hsl-l (interp/build from: [left-x right-x] to: [(col/e2 from: left-hsl) (col/e2 from: right-hsl)])
 
-  left-hsv (col/convert colour: left-rgb format: HSV)
-  right-hsv (col/convert colour: right-rgb format: HSV)
+  left-hsv (col/convert from: left-rgb format: HSV)
+  right-hsv (col/convert from: right-rgb format: HSV)
   interp-hsv-h (interp/build from: [left-x right-x] to: [(col/e0 from: left-hsv) (col/e0 from: right-hsv)])
   interp-hsv-s (interp/build from: [left-x right-x] to: [(col/e1 from: left-hsv) (col/e1 from: right-hsv)])
   interp-hsv-v (interp/build from: [left-x right-x] to: [(col/e2 from: left-hsv) (col/e2 from: right-hsv)])
 
 
-  left-lab (col/convert colour: left-rgb format: LAB)
-  right-lab (col/convert colour: right-rgb format: LAB)
+  left-lab (col/convert from: left-rgb format: LAB)
+  right-lab (col/convert from: right-rgb format: LAB)
   interp-lab-l (interp/build from: [left-x right-x] to: [(col/e2 from: left-lab) (col/e2 from: right-lab)])
   interp-lab-a (interp/build from: [left-x right-x] to: [(col/e1 from: left-lab) (col/e1 from: right-lab)])
   interp-lab-b (interp/build from: [left-x right-x] to: [(col/e2 from: left-lab) (col/e2 from: right-lab)]))

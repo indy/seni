@@ -27,7 +27,7 @@
                             vec1: [{500 (gen/int min:0 max: canvas/width)}
                                    {800 (gen/int min:0 max: canvas/height)}]
                             vec2: [x-pos y-pos])
-      volatility (math/clamp value: (/ (- (/ canvas/width 2)
+      volatility (math/clamp from: (/ (- (/ canvas/width 2)
                                           distance-from-centre)
                                        {12 (gen/int min:5 max: 50)})
                              min: 0
@@ -73,7 +73,7 @@
       rng (prng/build min: -1 max: 1 seed: seed)
 
       half-alpha (/ (col/alpha from: colour) 2)
-      lab-colour (col/set-alpha from: (col/convert format: LAB colour: colour)
+      lab-colour (col/set-alpha from: (col/convert format: LAB from: colour)
                                 value: half-alpha))
 
     ; horizontal strips

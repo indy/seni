@@ -2,11 +2,11 @@
 
   [col1 col2 col3 col4 col5] (col/palette index: {0 (gen/scalar min: 0 max: 200)})
 
-  hslcol1 (col/convert colour: col1 format: HSLuv)
-  hslcol2 (col/convert colour: col2 format: HSLuv)
-  hslcol3 (col/convert colour: col3 format: HSLuv)
-  hslcol4 (col/convert colour: col4 format: HSLuv)
-  hslcol5 (col/convert colour: col5 format: HSLuv)
+  hslcol1 (col/convert from: col1 format: HSLuv)
+  hslcol2 (col/convert from: col2 format: HSLuv)
+  hslcol3 (col/convert from: col3 format: HSLuv)
+  hslcol4 (col/convert from: col4 format: HSLuv)
+  hslcol5 (col/convert from: col5 format: HSLuv)
   hslrng (prng/build seed: 42
                      min: -10
                      max: 10)
@@ -51,7 +51,7 @@
 (fn (left-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
                           from: (col/set-e1 value: (* 100 strength)
-                                            from: (col/convert format: HSLuv colour: colour))))
+                                            from: (col/convert format: HSLuv from: colour))))
   (on-matrix-stack
     (translate vector: [x y])
     (rotate angle: (prng/value from: ra))
@@ -64,7 +64,7 @@
 (fn (right-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
                           from: (col/set-e1 value: (* 100 strength)
-                                            from: (col/convert format: HSLuv colour: colour))))
+                                            from: (col/convert format: HSLuv from: colour))))
   (on-matrix-stack
     (translate vector: [x y])
     (rotate angle: (prng/value from: ra))

@@ -46,7 +46,7 @@
      (loop (i from: 0 to: passes)
            (define [rr rx ry] (prng/values num: 3 from: rng))
            (on-matrix-stack
-            (rotate angle: (math/radians->degrees angle: (* rr 0.02 volatility)))
+            (rotate angle: (math/radians->degrees from: (* rr 0.02 volatility)))
             (rect position: [(* rx 5 volatility) (* ry 5 volatility)]
                   width: width
                   height: height

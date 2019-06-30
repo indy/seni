@@ -42,7 +42,7 @@
 (fn (left-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
                           from: (col/set-e1 value: (* 100 strength)
-                                            from: (col/convert format: HSLuv colour: colour))))
+                                            from: (col/convert format: HSLuv from: colour))))
   (on-matrix-stack
     (translate vector: [x y])
     (rotate angle: (prng/value from: ra))
@@ -55,7 +55,7 @@
 (fn (right-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
                           from: (col/set-e1 value: (* 100 strength)
-                                            from: (col/convert format: HSLuv colour: colour))))
+                                            from: (col/convert format: HSLuv from: colour))))
   (on-matrix-stack
     (translate vector: [x y])
     (rotate angle: (prng/value from: ra))

@@ -42,7 +42,7 @@
     [x y colour radius] obj
     offset {1.116 (gen/scalar min: 1 max: 2)})
   (circle position: [(* x offset) (* y offset)]
-          colour: (col/set-alpha from: (col/darken colour: colour
+          colour: (col/set-alpha from: (col/darken from: colour
                                                      value: {27 (gen/int min: 0 max: 100)})
                                  value: {0.236 (gen/scalar max: 0.5)})
           radius: radius

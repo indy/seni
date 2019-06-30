@@ -49,19 +49,19 @@
                   {-3 (gen/scalar min: -15 max: 15)}]))
 
 (fn (per-pixel a: 0 alpha: 1 width: 0 from: [0 0] to: [0 0])
-  (line from: [(* (x from: from) (math/cos angle: (* a math/PI)))
-               (* (y from: from) (math/sin angle: (* a math/PI)))]
-        to: [(* (x from: to) (math/cos angle: (* a math/PI)))
-             (* (y from: to) (math/sin angle: (* a math/PI)))]
+  (line from: [(* (x from: from) (math/cos from: (* a math/PI)))
+               (* (y from: from) (math/sin from: (* a math/PI)))]
+        to: [(* (x from: to) (math/cos from: (* a math/PI)))
+             (* (y from: to) (math/sin from: (* a math/PI)))]
         width: (+ 0 (- width a))
         brush: brush/b
         colour: (col/rgb r: a g: a b: a alpha: alpha)))
 
 (fn (per-pixel-rng a: 0 alpha: 1 width: 0 from: [0 0] to: [0 0])
-  (line from: [(* (prng/value from: rng) (x from: from) (math/cos angle: (* a math/PI)))
-               (* (prng/value from: rng) (y from: from) (math/sin angle: (* a math/PI)))]
-        to: [(* (prng/value from: rng) (x from: to) (math/cos angle: (* a math/PI)))
-             (* (prng/value from: rng) (y from: to) (math/sin angle: (* a math/PI)))]
+  (line from: [(* (prng/value from: rng) (x from: from) (math/cos from: (* a math/PI)))
+               (* (prng/value from: rng) (y from: from) (math/sin from: (* a math/PI)))]
+        to: [(* (prng/value from: rng) (x from: to) (math/cos from: (* a math/PI)))
+             (* (prng/value from: rng) (y from: to) (math/sin from: (* a math/PI)))]
         width: (+ 0 (- width a))
         brush: brush/b
         colour: (col/rgb r: a g: a b: a alpha: alpha)))

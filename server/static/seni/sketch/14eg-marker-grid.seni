@@ -64,7 +64,7 @@
       rng (prng/build min: -1 max: 1 seed: seed)
 
       half-alpha (/ (col/alpha from: colour) 2)
-      lab-colour (col/set-alpha from: (col/convert format: LAB colour: colour)
+      lab-colour (col/set-alpha from: (col/convert format: LAB from: colour)
                                 value: half-alpha))
 
     ; horizontal strips

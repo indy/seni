@@ -176,7 +176,7 @@ n | 0 | 0 based index
 
 Parameter | Default | Description
 --- | --- | ---
-value | NULL |
+from | NULL |
 
 ## probe
 
@@ -354,7 +354,7 @@ Parameter | Default | Description
 Parameter | Default | Description
 --- | --- | ---
     | format    | RGB          |             |
-    | colour    | RGB(0 0 0 1) |             |
+    | from      | RGB(0 0 0 1) |             |
 
 ## col/rgb
 
@@ -408,7 +408,7 @@ returns the complimentary colour
 
 Parameter | Default | Description
 --- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
+    | from    | RGB(0 0 0 1) |             |
 
 ## col/split-complementary
 
@@ -416,7 +416,7 @@ returns a vector of 2 colours
 
 Parameter | Default | Description
 --- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
+    | from    | RGB(0 0 0 1) |             |
 
 ## col/analagous
 
@@ -424,7 +424,7 @@ returns a vector of 2 colours
 
 Parameter | Default | Description
 --- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
+    | from    | RGB(0 0 0 1) |             |
 
 ## col/triad
 
@@ -432,20 +432,20 @@ returns a vector of 2 colours
 
 Parameter | Default | Description
 --- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
+    | from    | RGB(0 0 0 1) |             |
 
 ## col/darken
 
 Parameter | Default | Description
 --- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
+    | from    | RGB(0 0 0 1) |             |
     | value     | 0            |      0..100 |
 
 ## col/lighten
 
 Parameter | Default | Description
 --- | --- | ---
-    | colour    | RGB(0 0 0 1) |             |
+    | from    | RGB(0 0 0 1) |             |
     | value     | 0            |      0..100 |
 
 ## col/e0
@@ -551,7 +551,7 @@ Parameter | Default | Description
 
 Parameter | Default | Description
 --- | --- | ---
-    | value     |       0 |             |
+    | from      |       0 |             |
     | min       |       0 |             |
     | max       |       1 |             |
 
@@ -559,19 +559,19 @@ Parameter | Default | Description
 
 Parameter | Default | Description
 --- | --- | ---
-    | angle     | 0       |             |
+    | from     | 0       |             |
 
 ## math/cos
 
 Parameter | Default | Description
 --- | --- | ---
-    | angle     | 0       |             |
+    | from     | 0       |             |
 
 ## math/sin
 
 Parameter | Default | Description
 --- | --- | ---
-    | angle     | 0       |             |
+    | from     | 0       |             |
 
 # Prng Functions
 

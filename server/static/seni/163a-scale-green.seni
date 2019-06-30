@@ -25,7 +25,7 @@
         ;; outer ring
         (circle-slice tessellation: 30
                       position: [0 0]
-                      colour: (col/lighten colour: colour
+                      colour: (col/lighten from: colour
                                            value: (* {411 (gen/stray-int from: 411 by: 10)} (prng/value from: srng)))
                       angle-start: 0
                       angle-end: 320
@@ -36,7 +36,7 @@
         ;; inner ring
         (circle-slice tessellation: 10
                       position: [0 0]
-                      colour: (col/lighten colour: colour
+                      colour: (col/lighten from: colour
                                            value: (* {24 (gen/stray-int from: 24 by: 10)} (prng/value from: srng)))
                       angle-start: 0
                       angle-end: 320
@@ -47,7 +47,7 @@
     ;; centre fill
     (circle-slice tessellation: 10
                   position: [0 0]
-                  colour: (col/lighten colour: colour
+                  colour: (col/lighten from: colour
                                        value: (* {140 (gen/stray-int from: 140 by: 10)} (prng/value from: srng)))
                   angle-start: 0
                   angle-end: 360

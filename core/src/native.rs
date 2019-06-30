@@ -689,7 +689,7 @@ fn nth_execute(vm: &mut Vm) -> Result<Option<Var>> {
 fn vector_length_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![(Keyword::Vector, Var::Bool(false))],
+        vec![(Keyword::From, Var::Bool(false))],
         // stack offset
         1,
     ))
@@ -701,7 +701,7 @@ fn vector_length_execute(vm: &mut Vm) -> Result<Option<Var>> {
 
     // require a 'vector' argument
     if !is_arg_given(default_mask, vector_offset) {
-        error!("vector/length requires vector parameter");
+        error!("vector/length requires from parameter");
         return Err(Error::Native);
     }
 
@@ -710,7 +710,7 @@ fn vector_length_execute(vm: &mut Vm) -> Result<Option<Var>> {
         Var::Vector(vs) => Some(Var::Int(vs.len() as i32)),
         Var::V2D(_, _) => Some(Var::Int(2)),
         _ => {
-            error!("vector/length only accepts Vector or V2D in 'vector' parameter");
+            error!("vector/length only accepts Vector or V2D in 'from' parameter");
             return Err(Error::Native);
         }
     };
@@ -1543,7 +1543,7 @@ fn col_convert_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
         // input arguments
         vec![
             (Keyword::Format, Var::Bool(false)),
-            (Keyword::Colour, Var::Colour(Default::default())),
+            (Keyword::From, Var::Colour(Default::default())),
         ],
         // stack offset
         1,
@@ -1712,7 +1712,7 @@ fn col_lab_execute(vm: &mut Vm) -> Result<Option<Var>> {
 fn col_complementary_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![(Keyword::Colour, Var::Colour(Default::default()))],
+        vec![(Keyword::From, Var::Colour(Default::default()))],
         // stack offset
         1,
     ))
@@ -1727,7 +1727,7 @@ fn col_complementary_execute(vm: &mut Vm) -> Result<Option<Var>> {
 fn col_split_complementary_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![(Keyword::Colour, Var::Colour(Default::default()))],
+        vec![(Keyword::From, Var::Colour(Default::default()))],
         // stack offset
         1,
     ))
@@ -1746,7 +1746,7 @@ fn col_split_complementary_execute(vm: &mut Vm) -> Result<Option<Var>> {
 fn col_analagous_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![(Keyword::Colour, Var::Colour(Default::default()))],
+        vec![(Keyword::From, Var::Colour(Default::default()))],
         // stack offset
         1,
     ))
@@ -1765,7 +1765,7 @@ fn col_analagous_execute(vm: &mut Vm) -> Result<Option<Var>> {
 fn col_triad_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![(Keyword::Colour, Var::Colour(Default::default()))],
+        vec![(Keyword::From, Var::Colour(Default::default()))],
         // stack offset
         1,
     ))
@@ -1785,7 +1785,7 @@ fn common_colour_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
         vec![
-            (Keyword::Colour, Var::Colour(Default::default())),
+            (Keyword::From, Var::Colour(Default::default())),
             (Keyword::Value, Var::Float(0.0)),
         ],
         // stack offset
@@ -2032,7 +2032,7 @@ fn math_clamp_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
         vec![
-            (Keyword::Value, Var::Float(0.0)),
+            (Keyword::From, Var::Float(0.0)),
             (Keyword::Min, Var::Float(0.0)),
             (Keyword::Max, Var::Float(0.0)),
         ],
@@ -2063,7 +2063,7 @@ fn math_clamp_execute(vm: &mut Vm) -> Result<Option<Var>> {
 fn math_radians_degrees_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![(Keyword::Angle, Var::Float(0.0))],
+        vec![(Keyword::From, Var::Float(0.0))],
         // stack offset
         1,
     ))
@@ -2080,7 +2080,7 @@ fn math_radians_degrees_execute(vm: &mut Vm) -> Result<Option<Var>> {
 fn math_cos_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![(Keyword::Angle, Var::Float(0.0))],
+        vec![(Keyword::From, Var::Float(0.0))],
         // stack offset
         1,
     ))
@@ -2097,7 +2097,7 @@ fn math_cos_execute(vm: &mut Vm) -> Result<Option<Var>> {
 fn math_sin_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![(Keyword::Angle, Var::Float(0.0))],
+        vec![(Keyword::From, Var::Float(0.0))],
         // stack offset
         1,
     ))
@@ -3608,40 +3608,40 @@ mod tests {
 
     #[test]
     fn test_vector_length() {
-        is_int("(define v []) (++ v 100) (vector/length vector: v)", 1);
-        is_int("(define v [1]) (++ v 100) (vector/length vector: v)", 2);
-        is_int("(define v [1 2]) (++ v 100) (vector/length vector: v)", 3);
-        is_int("(define v [1 2 3]) (++ v 100) (vector/length vector: v)", 4);
+        is_int("(define v []) (++ v 100) (vector/length from: v)", 1);
+        is_int("(define v [1]) (++ v 100) (vector/length from: v)", 2);
+        is_int("(define v [1 2]) (++ v 100) (vector/length from: v)", 3);
+        is_int("(define v [1 2 3]) (++ v 100) (vector/length from: v)", 4);
         is_int(
-            "(define v [1 2 3 4]) (++ v 100) (vector/length vector: v)",
+            "(define v [1 2 3 4]) (++ v 100) (vector/length from: v)",
             5,
         );
         is_int(
-            "(define v []) (++ v 4) (++ v 3) (++ v 2) (++ v 1) (++ v 0) (vector/length vector: v)",
+            "(define v []) (++ v 4) (++ v 3) (++ v 2) (++ v 1) (++ v 0) (vector/length from: v)",
             5,
         );
         is_int(
-            "(define v [1 2]) (++ v 98) (++ v 99) (++ v 100) (vector/length vector: v)",
+            "(define v [1 2]) (++ v 98) (++ v 99) (++ v 100) (vector/length from: v)",
             5,
         );
     }
 
     #[test]
     fn test_math() {
-        is_float("(math/clamp value: 3 min: 2 max: 5)", 3.0);
-        is_float("(math/clamp value: 1 min: 2 max: 5)", 2.0);
-        is_float("(math/clamp value: 8 min: 2 max: 5)", 5.0);
+        is_float("(math/clamp from: 3 min: 2 max: 5)", 3.0);
+        is_float("(math/clamp from: 1 min: 2 max: 5)", 2.0);
+        is_float("(math/clamp from: 8 min: 2 max: 5)", 5.0);
 
-        is_float("(math/radians->degrees angle: 0.3)", 17.188734);
+        is_float("(math/radians->degrees from: 0.3)", 17.188734);
 
-        is_float("(math/cos angle: 0.7)", 0.7648422);
-        is_float("(math/sin angle: 0.9)", 0.7833269);
+        is_float("(math/cos from: 0.7)", 0.7648422);
+        is_float("(math/sin from: 0.9)", 0.7833269);
     }
     #[test]
     fn dev_new_args() {
-        is_float("(math/clamp value: 3 min: 2 max: 5)", 3.0);
-        is_float("(math/clamp value: 1 min: 2 max: 5)", 2.0);
-        is_float("(math/clamp value: 8 min: 2 max: 5)", 5.0);
+        is_float("(math/clamp from: 3 min: 2 max: 5)", 3.0);
+        is_float("(math/clamp from: 1 min: 2 max: 5)", 2.0);
+        is_float("(math/clamp from: 8 min: 2 max: 5)", 5.0);
     }
 
 }
