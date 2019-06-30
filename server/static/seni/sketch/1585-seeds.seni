@@ -1,15 +1,12 @@
-(meta linear-colour-space: 1)
-
-
 (define
   seed-radius {3.2 (gen/scalar min: 3 max: 5)}
   scale-factor 4
   phi (/ (sqrt {5 (gen/scalar min: 4 max: 6)}) {8 (gen/scalar min: 1 max: 10)})
   seeds 200
   make-colour (col/build-procedural a: {[0.80 0.50 0.40] (gen/scalar)}
-                                   b: {[0.20 0.40 0.20] (gen/scalar)}
-                                   c: {[2.00 1.00 1.00] (gen/scalar)}
-                                   d: {[0.00 0.25 0.25] (gen/scalar)})
+                                    b: {[0.20 0.40 0.20] (gen/scalar)}
+                                    c: {[2.00 1.00 1.00] (gen/scalar)}
+                                    d: {[0.00 0.25 0.25] (gen/scalar)})
 
   focalpoint ({focal/build-point (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))}
               position: [{500 (gen/int max: canvas/width)}
@@ -32,7 +29,7 @@
     (scale scalar: (/ radius 210))
     (loop (i to: 3)
       (on-matrix-stack
-       (rotate angle: (* 360 (prng/value from: rng)))
+        (rotate angle: (* 360 (prng/value from: rng)))
         ;; outer ring
         (circle-slice tessellation: 20
                       position: [0 0]
@@ -70,17 +67,13 @@
       height: canvas/height
       colour: {white (gen/col)})
 
-(on-matrix-stack
- (translate vector: [500 500])
- (scale scalar: 8)
-  (loop (i to: seeds)
-    (define
-      theta (/ (* i math/TAU) phi)
-      r (* scale-factor (sqrt i))
-      position [(* r (math/cos from: theta))
-                (* r (math/sin from: theta))]
-      colour (col/value from: make-colour t: (focal/value from: focalpoint position: position)))
-    (interesting-circle position: position
-                        radius: seed-radius
-                        colour: colour
-                        seed: i)))
+(loop (seed to: seeds)
+  (define
+    zoom 8
+    radius (* zoom seed-radius)
+    theta (/ (* seed math/TAU) phi)
+    r (* scale-factor (sqrt seed))
+    position [(+ 500 (* r zoom (math/cos from: theta)))
+              (+ 500 (* r zoom (math/sin from: theta)))]
+    colour (col/value from: make-colour t: (focal/value from: focalpoint position: position)))
+  (interesting-circle position radius colour seed))

@@ -1,17 +1,17 @@
 (define
-  seed-radius {3.2 (gen/scalar min: 3 max: 5)}
+  seed-radius {4.5 (gen/scalar min: 3 max: 5)}
   scale-factor 4
   phi (/ (sqrt {5 (gen/scalar min: 4 max: 6)}) {8 (gen/scalar min: 1 max: 10)})
-  seeds 200
-  make-colour (col/build-procedural a: {[0.80 0.50 0.40] (gen/scalar)}
-                                    b: {[0.20 0.40 0.20] (gen/scalar)}
-                                    c: {[2.00 1.00 1.00] (gen/scalar)}
-                                    d: {[0.00 0.25 0.25] (gen/scalar)})
+  seeds 2000
+  make-colour (col/build-procedural a: {[0.47 0.45 0.47] (gen/scalar)}
+                                    b: {[0.91 0.07 0.05] (gen/scalar)}
+                                    c: {[0.60 0.52 0.83] (gen/scalar)}
+                                    d: {[0.67 0.96 0.68] (gen/scalar)})
 
-  focalpoint ({focal/build-point (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))}
-              position: [{500 (gen/int max: canvas/width)}
-                         {500 (gen/int max: canvas/height)}]
-              distance: {800 (gen/int min: (/ canvas/width 2) max: canvas/width)}))
+  focalpoint ({focal/build-vline (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))}
+              position: [{170 (gen/int max: canvas/width)}
+                         {587 (gen/int max: canvas/height)}]
+              distance: {737 (gen/int min: (/ canvas/width 2) max: canvas/width)}))
 
 (fn (interesting-circle position: [500 500]
                         colour: red
@@ -26,7 +26,7 @@
     srng (prng/build min: -1 max: 1 seed: seed))
   (on-matrix-stack
     (translate vector: position)
-    (scale scalar: (/ radius 210))
+    (scale scalar: (+ (* 0.2 (/ seed seeds)) (/ radius 210)))
     (loop (i to: 3)
       (on-matrix-stack
         (rotate angle: (* 360 (prng/value from: rng)))
@@ -34,7 +34,7 @@
         (circle-slice tessellation: 20
                       position: [0 0]
                       colour: (col/lighten from: colour
-                                           value: (* {30 (gen/int min: 20 max: 60)} (prng/value from: srng)))
+                                           value: (* {22 (gen/int min: 20 max: 60)} (prng/value from: srng)))
                       angle-start: 0
                       angle-end: 320
                       width: (prng/value from: outer-exterior)
@@ -45,7 +45,7 @@
         (circle-slice tessellation: 10
                       position: [0 0]
                       colour: (col/lighten from: colour
-                                           value: (* {20 (gen/int min: 10 max: 40)} (prng/value from: srng)))
+                                           value: (* {18 (gen/int min: 10 max: 40)} (prng/value from: srng)))
                       angle-start: 0
                       angle-end: 320
                       width: (prng/value from: inner-exterior)
@@ -56,7 +56,7 @@
     (circle-slice tessellation: 10
                   position: [0 0]
                   colour: (col/lighten from: colour
-                                       value: (* {10 (gen/int min: 5 max: 20)} (prng/value from: srng)))
+                                       value: (* {6 (gen/int min: 5 max: 20)} (prng/value from: srng)))
                   angle-start: 0
                   angle-end: 360
                   radius: 30)))
@@ -65,11 +65,11 @@
 (rect position: [500 500]
       width: canvas/width
       height: canvas/height
-      colour: {(col/rgb r: 1 g: 1 b: 1 alpha: 1) (gen/col)})
+      colour: {(col/rgb r: 0.95 g: 0.66 b: 0.41 alpha: 0.66) (gen/col)})
 
 (loop (seed to: seeds)
   (define
-    zoom 8
+    zoom 4
     radius (* zoom seed-radius)
     theta (/ (* seed math/TAU) phi)
     r (* scale-factor (sqrt seed))

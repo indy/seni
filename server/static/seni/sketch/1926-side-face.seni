@@ -1,0 +1,28 @@
+(define
+  texture "side-face.png"
+  bmx (interp/build from: [0 canvas/width]
+                    to: [0 (bitmap/width from: texture)])
+  bmy (interp/build from: [0 canvas/height]
+                    to: [0 (bitmap/height from: texture)]))
+
+
+(fn (on-face position: [0 0])
+  (define mask (bitmap/value from: texture
+                             position))
+  (< (col/e0 from: mask) 0.3))
+
+(loop (y from: 0 to: 1000 inc: 5)
+  (loop (x from: 0 to: 1000 inc: 5)
+    (rect position: [x y]
+          width: 3 height: 3
+          colour: (if (on-face position: [(interp/value from: bmx t: x)
+                                          (interp/value from: bmy t: y)])
+                      red yellow))))
+
+(loop (y from: 0 to: 1000 inc: 5)
+  (loop (x from: 0 to: 1000 inc: 5)
+    (if (on-face position: [(interp/value from: bmx t: x)
+                            (interp/value from: bmy t: y)])
+        (rect position: [x y]
+              width: 3 height: 3
+              colour: red))))
