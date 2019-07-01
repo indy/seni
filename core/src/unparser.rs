@@ -405,13 +405,28 @@ mod tests {
 
         basic_unparse_check("(bitmap \"foo.png\")");
 
-        basic_unparse_check("(define a 1 b 2)
+        basic_unparse_check(
+            "(define a 1 b 2)
                              (fn (adder a: 99 b: 88) (+ a b))
-                             (adder a b)");
+                             (adder a b)",
+        );
 
-        basic_unparse_check("(define a 1 b 2)
+        basic_unparse_check(
+            "(define a 1 b 2)
                              (fn (adder a: 99 b: 88) (+ a b))
-                             (adder a: a b: b)");
+                             (adder a: a b: b)",
+        );
+
+        basic_unparse_check(
+            "(define some-vec [10 20 30 40 50 60 70 80])
+                             (some-vec.nth n: 2)",
+        );
+
+        basic_unparse_check(
+            "(define x 33)
+                             (fn (increase from: 99 by: 88) (+ from by))
+                             (x.increase by: 10)",
+        );
     }
 
     #[test]

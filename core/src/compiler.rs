@@ -1264,13 +1264,60 @@ impl Compiler {
                     return Err(Error::Compiler);
                 }
 
-                if let Some(fn_info_index) = compilation.get_fn_info_index(&children[1]) {
+                let iname = self.get_iname(&children[1])?;
 
+                if let Some(fn_info_index) = compilation.get_fn_info_index(&children[1]) {
                     self.compile_fn_invocation_prologue(compilation, fn_info_index)?;
-                    self.compile_fn_invocation_implicit_from(compilation, fn_info_index, &children[0])?;
+                    self.compile_fn_invocation_implicit_from(
+                        compilation,
+                        fn_info_index,
+                        &children[0],
+                    )?;
                     self.compile_fn_invocation_args(compilation, &children[2..], fn_info_index)?;
                     self.compile_fn_invocation_epilogue(compilation, fn_info_index)?;
+                } else if let Some(native) = self.name_to_native.get(&iname) {
+                    // get the list of arguments
+                    // match up the nodes and compile them in argument order
 
+                    let (args, stack_offset) = parameter_info(*native)?;
+
+                    let num_args = args.len();
+                    let label_vals = &children[2..];
+
+                    // write the default_mask at the bottom of the stack
+                    let mut default_mask: i32 = 0;
+                    for (i, (kw, _)) in args.iter().enumerate() {
+                        // ignore the from keyword, we're going to set it later on
+                        if *kw != Keyword::From
+                            && self.get_parameter_index(label_vals, *kw).is_none()
+                        {
+                            default_mask |= 1 << i;
+                        }
+                    }
+                    compilation.emit(Opcode::LOAD, Mem::Constant, default_mask)?;
+
+                    // iterating in reverse so that when the native function
+                    // is run it can pop the arguments from the stack in the
+                    // order it specified
+                    // now add the arguments to the stack
+                    for (kw, default_value) in args.iter().rev() {
+                        if *kw == Keyword::From {
+                            self.compile(compilation, &children[0])?;
+                        } else if let Some(idx) = self.get_parameter_index(label_vals, *kw) {
+                            // todo: does this need to be self?
+                            // compile the node at the given index
+                            self.compile(compilation, label_vals[idx])?;
+                        } else {
+                            // compile the default argument value from the Var in args
+                            self.compile_var_as_load(compilation, default_value)?;
+                        }
+                    }
+
+                    compilation.emit(Opcode::NATIVE, *native, num_args)?;
+
+                    // the vm's opcode_native will modify the stack, no need for the compiler to add STORE VOID opcodes
+                    // subtract num_args and the default_mask, also take into account that a value might be returned
+                    compilation.opcode_offset -= (num_args as i32 + 1) - stack_offset;
                 }
             }
             Node::Name(_, _, _) => {
@@ -1282,7 +1329,6 @@ impl Compiler {
                     self.compile_fn_invocation_prologue(compilation, fn_info_index)?;
                     self.compile_fn_invocation_args(compilation, &children[1..], fn_info_index)?;
                     self.compile_fn_invocation_epilogue(compilation, fn_info_index)?;
-
                 } else if let Some(kw) = self.name_to_keyword.get(&iname) {
                     match *kw {
                         Keyword::Define => {
@@ -2271,10 +2317,11 @@ impl Compiler {
         Ok(())
     }
 
-
-    fn compile_fn_invocation_prologue(&self,
-                                      compilation: &mut Compilation,
-                                      fn_info_index: usize) -> Result<()> {
+    fn compile_fn_invocation_prologue(
+        &self,
+        compilation: &mut Compilation,
+        fn_info_index: usize,
+    ) -> Result<()> {
         // NOTE: CALL and CALL_0 get their function offsets and num args from the
         // stack so add some placeholder LOAD CONST opcodes and fill the CALL, CALL_0
         // with fn_info indexes that can later be used to fill in the LOAD CONST
@@ -2299,7 +2346,6 @@ impl Compiler {
         fn_info_index: usize,
         from_name: &Node,
     ) -> Result<()> {
-
         self.compile(compilation, from_name)?;
         let from_iname = Iname::from(Keyword::From);
         compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, from_iname)?;
@@ -2335,9 +2381,11 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_fn_invocation_epilogue(&self,
-                                      compilation: &mut Compilation,
-                                      fn_info_index: usize) -> Result<()> {
+    fn compile_fn_invocation_epilogue(
+        &self,
+        compilation: &mut Compilation,
+        fn_info_index: usize,
+    ) -> Result<()> {
         // call the body of the function
         compilation.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
         compilation.emit(Opcode::CALL_0, fn_info_index, fn_info_index)?;

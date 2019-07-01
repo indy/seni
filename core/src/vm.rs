@@ -1873,6 +1873,24 @@ pub mod tests {
     }
 
     #[test]
+    fn test_vm_implicit_from() {
+        // implicit from for a user defined function
+        is_float(
+            "(define x 33)
+             (fn (increase from: 99 by: 88) (+ from by))
+             (x.increase by: 10)",
+            43.0,
+        );
+
+        // implicit from for a native function
+        is_float(
+            "(define some-vec [10 20 30 40 50 60 70 80])
+             (some-vec.nth n: 2)",
+            30.0,
+        );
+    }
+
+    #[test]
     fn test_vm_function_address() {
         is_float(
             "(fn (k a: 5) (+ a a))

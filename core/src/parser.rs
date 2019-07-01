@@ -51,9 +51,9 @@ pub enum Node {
     List(Vec<Node>, Option<NodeMeta>),
     Vector(Vec<Node>, Option<NodeMeta>),
     Float(f32, String, Option<NodeMeta>),
-    FromName(String, Iname, Option<NodeMeta>),  // text, iname, meta
-    Name(String, Iname, Option<NodeMeta>),  // text, iname, meta
-    Label(String, Iname, Option<NodeMeta>), // text, iname, meta
+    FromName(String, Iname, Option<NodeMeta>), // text, iname, meta
+    Name(String, Iname, Option<NodeMeta>),     // text, iname, meta
+    Label(String, Iname, Option<NodeMeta>),    // text, iname, meta
     String(String, Iname, Option<NodeMeta>),
     Whitespace(String, Option<NodeMeta>),
     Comment(String, Option<NodeMeta>),
@@ -231,7 +231,7 @@ impl Node {
     pub fn is_name(&self) -> bool {
         match self {
             Node::Name(_, _, _) => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -839,7 +839,11 @@ mod tests {
             [Node::List(
                 vec![
                     Node::FromName("some-vector".to_string(), Iname::new(0), None),
-                    Node::Name("vector/length".to_string(), Iname::from(Native::VectorLength), None),
+                    Node::Name(
+                        "vector/length".to_string(),
+                        Iname::from(Native::VectorLength),
+                        None
+                    ),
                 ],
                 None
             )]

@@ -3614,10 +3614,7 @@ mod tests {
         is_int("(define v [1]) (++ v 100) (vector/length from: v)", 2);
         is_int("(define v [1 2]) (++ v 100) (vector/length from: v)", 3);
         is_int("(define v [1 2 3]) (++ v 100) (vector/length from: v)", 4);
-        is_int(
-            "(define v [1 2 3 4]) (++ v 100) (vector/length from: v)",
-            5,
-        );
+        is_int("(define v [1 2 3 4]) (++ v 100) (vector/length from: v)", 5);
         is_int(
             "(define v []) (++ v 4) (++ v 3) (++ v 2) (++ v 1) (++ v 0) (vector/length from: v)",
             5,
