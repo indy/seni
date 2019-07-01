@@ -1,6 +1,3 @@
-(meta linear-colour-space: 1)
-
-
 (define
   texture "hand.png"
   bmx (interp/build from: [0 canvas/width] to: [0 (bitmap/width from: texture)])
@@ -41,29 +38,29 @@
 
 (fn (left-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
-                          from: (col/set-e1 value: (* 100 strength)
-                                            from: (col/convert format: HSLuv from: colour))))
+                             from: (col/set-e1 value: (* 100 strength)
+                                               from: (colour.col/convert format: HSLuv))))
   (on-matrix-stack
     (translate vector: [x y])
-    (rotate angle: (prng/value from: ra))
-    (left x: 0 y: 0 w: w h: h colour: col)
+    (rotate angle: (ra.prng/value))
+    (left x: 0 y: 0 w h colour: col)
     (loop (i to: 3)
       (scale scalar: sc)
-      (rotate angle: (prng/value from: ra))
-      (left x: 0 y: 0 w: w h: h colour: col))))
+      (rotate angle: (ra.prng/value))
+      (left x: 0 y: 0 w h colour: col))))
 
 (fn (right-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
   (define col (col/set-alpha value: strength
-                          from: (col/set-e1 value: (* 100 strength)
-                                            from: (col/convert format: HSLuv from: colour))))
+                             from: (col/set-e1 value: (* 100 strength)
+                                               from: (colour.col/convert format: HSLuv))))
   (on-matrix-stack
     (translate vector: [x y])
-    (rotate angle: (prng/value from: ra))
-    (right x: 0 y: 0 w: w h: h colour: col)
+    (rotate angle: (ra.prng/value))
+    (right x: 0 y: 0 w h colour: col)
     (loop (i to: 3)
       (scale scalar: sc)
-      (rotate angle: (prng/value from: ra))
-      (right x: 0 y: 0 w: w h: h colour: col))))
+      (rotate angle: (ra.prng/value))
+      (right x: 0 y: 0 w h colour: col))))
 
 (fn (tri-lab alpha: 1)
   (define
@@ -72,31 +69,25 @@
     colour-scale {771 (gen/int min: 700 max: 900)}
     colour-offset (prng/build min: -1 max: 1)
     li (interp/build from: [0 1]
-                     to: [{68 (gen/int min: 40 max: 120)}
-                          {11 (gen/int min: 0 max: 70)}])
+                     to: [{68 (gen/int min: 40 max: 120)} {11 (gen/int min: 0 max: 70)}])
     rma (interp/build from: [0 canvas/width]
-                      to: [{9 (gen/int min: -10 max: 30)}
-                           {29 (gen/int min: -10 max: 30)}])
+                      to: [{9 (gen/int min: -10 max: 30)} {29 (gen/int min: -10 max: 30)}])
     rmb (interp/build from: [0 canvas/height]
-                      to: [{96 (gen/int min: 60 max: 120)}
-                           {8 (gen/int min: 0 max: 60)}]))
+                      to: [{96 (gen/int min: 60 max: 120)} {8 (gen/int min: 0 max: 60)}]))
 
   (loop (y from: 0 to: canvas/height inc: (* 2 h))
     (loop (x from: 0 to: canvas/width inc: (* 4 w))
       (define
-        col-bm (bitmap/value from: texture position: [(interp/value from: bmx t: x)
-                                                      (interp/value from: bmy t: y)])
-        b (interp/value from: rmb t: (+ y (* (prng/value from: colour-offset) colour-scale)))
-        col-1 (col/lab l: (interp/value from: li t: (prng/value from: r))
-                       a: (interp/value from: rma t: (+ x (* (prng/value from: colour-offset) colour-scale)))
-                       b: b
-                       alpha: alpha)
-        col-2 (col/lab l: (interp/value from: li t: (prng/value from: r))
-                       a: (interp/value from: rma t: (+ x w (* (prng/value from: colour-offset) colour-scale)))
-                       b: b
-                       alpha: alpha))
-      (left-side  x: x         y: y w: w h: h colour: col-1 strength: (col/e0 from: col-bm))
-      (right-side x: (+ x w w) y: y w: w h: h colour: col-2 strength: (col/e0 from: col-bm)))))
+        col-bm (texture.bitmap/value position: [(bmx.interp/value t: x)
+                                                (bmy.interp/value t: y)])
+        strength (col-bm.col/e0)
+        l (li.interp/value t: (r.prng/value))
+        a (rma.interp/value t: (+ x (* (colour-offset.prng/value) colour-scale)))
+        b (rmb.interp/value t: (+ y (* (colour-offset.prng/value) colour-scale)))
+        col-1 (col/lab l a b alpha)
+        col-2 (col/lab l a b alpha))
+      (left-side  x            y w h colour: col-1 strength)
+      (right-side x: (+ x w w) y w h colour: col-2 strength))))
 
 (fn (tri-hsl alpha: 1)
   (define
@@ -112,15 +103,18 @@
   (loop (y from: 0 to: canvas/height inc: (* 2 h))
     (loop (x from: 0 to: canvas/width inc: (* 4 w))
       (define
-        col-bm (bitmap/value from: texture position: [(interp/value from: bmx t: x)
-                                                      (interp/value from: bmy t: y)])
-        b  (interp/value from: fn-l t: (+ y (* (prng/value from: colour-offset) colour-scale)))
-        col-1 (col/hsl h: (interp/value from: fn-h t: (+ x (* (prng/value from: colour-offset) colour-scale)))
-                       s: 1 l: b alpha: alpha)
-        col-2 (col/hsl h: (interp/value from: fn-h t: (+ x w (* (prng/value from: colour-offset) colour-scale)))
-                       s: 1 l: b alpha: alpha))
-      (left-side  x: x         y: y w: w h: h colour: col-1 strength: (col/e0 from: col-bm))
-      (right-side x: (+ x w w) y: y w: w h: h colour: col-2 strength: (col/e0 from: col-bm)))))
+        col-bm (texture.bitmap/value position: [(bmx.interp/value t: x)
+                                                (bmy.interp/value t: y)])
+        strength (col-bm.col/e0)
+        s 1
+        l (fn-l.interp/value t: (+ y (* (colour-offset.prng/value) colour-scale)))
+
+        col-1 (col/hsl h: (fn-h.interp/value t: (+ x (* (colour-offset.prng/value) colour-scale)))
+                       s l alpha)
+        col-2 (col/hsl h: (fn-h.interp/value t: (+ x w (* (colour-offset.prng/value) colour-scale)))
+                       s l alpha))
+      (left-side  x            y w h colour: col-1 strength)
+      (right-side x: (+ x w w) y w h colour: col-2 strength))))
 
 
 (fn (wash vol: 200
@@ -130,23 +124,24 @@
           seed: 272)
   (define
     w/3 (/ canvas/width 3)
-    h/3 (/ canvas/height 3))
+    h/3 (/ canvas/height 3)
+    tessellation line-segments)
   (loop (d from: -20 to: 1020 inc: 20)
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: [[0            (wash-n x: 0            d: d seed: seed vol: vol)]
-                     [w/3          (wash-n x: w/3          d: d seed: seed vol: vol)]
-                     [(* w/3 2)    (wash-n x: (* w/3 2)    d: d seed: seed vol: vol)]
-                     [canvas/width (wash-n x: canvas/width d: d seed: seed vol: vol)]]
-            colour: colour)
+    (bezier tessellation
+            line-width
+            coords: [[0            (wash-n x: 0            d seed vol)]
+                     [w/3          (wash-n x: w/3          d seed vol)]
+                     [(* w/3 2)    (wash-n x: (* w/3 2)    d seed vol)]
+                     [canvas/width (wash-n x: canvas/width d seed vol)]]
+            colour)
 
-    (bezier tessellation: line-segments
-            line-width: line-width
-            coords: [[(wash-n x: 0             d: d seed: seed vol: vol) 0]
-                     [(wash-n x: h/3           d: d seed: seed vol: vol) h/3]
-                     [(wash-n x: (* h/3 2)     d: d seed: seed vol: vol) (* h/3 2)]
-                     [(wash-n x: canvas/height d: d seed: seed vol: vol) canvas/height]]
-            colour: colour)))
+    (bezier tessellation
+            line-width
+            coords: [[(wash-n x: 0             d seed vol) 0]
+                     [(wash-n x: h/3           d seed vol) h/3]
+                     [(wash-n x: (* h/3 2)     d seed vol) (* h/3 2)]
+                     [(wash-n x: canvas/height d seed vol) canvas/height]]
+            colour)))
 
 (fn (wash-n x: 0 d: 0 seed: 0 vol: 1)
-  (+ d (* vol (prng/perlin x: x y: d z: seed))))
+  (+ d (* vol (prng/perlin x y: d z: seed))))
