@@ -400,8 +400,8 @@ function checkFramebufferStatus(gl) {
 }
 
 const gConfig = {
-  render_texture_width: 1024,
-  render_texture_height: 1024,
+  render_texture_width: 2048,
+  render_texture_height: 2048,
 };
 
 class GLRenderer {
