@@ -224,6 +224,10 @@ impl Colour {
         }
     }
 
+    pub fn clear_colour() -> Self {
+        Colour::new(ColourFormat::Rgb, 0.0, 0.0, 0.0, 0.0)
+    }
+
     // return the 5 colour palette at the given index
     pub fn palette(index: usize) -> Result<Vec<Colour>> {
         Ok(vec![

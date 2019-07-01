@@ -3110,6 +3110,7 @@ fn bitmap_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
         vec![
             (Keyword::From, Var::Bool(false)),
             (Keyword::Position, Var::V2D(0.0, 0.0)),
+            (Keyword::DefaultColour, Var::Colour(Colour::clear_colour())),
         ],
         // stack offset
         1,
@@ -3121,7 +3122,7 @@ fn bitmap_value_execute(
     context: &mut Context,
     program: &Program,
 ) -> Result<Option<Var>> {
-    let default_mask: i32 = vm.stack_peek(3)?;
+    let default_mask: i32 = vm.stack_peek(4)?;
 
     if !is_arg_given(default_mask, 1) {
         error!("bitmap/value requires a from parameter");
@@ -3130,8 +3131,9 @@ fn bitmap_value_execute(
 
     let from: Iname = vm.stack_peek(1)?;
     let position: (f32, f32) = vm.stack_peek(2)?;
+    let default_colour: Colour = vm.stack_peek(3)?;
 
-    let col = bitmap::value(context, program, from, position)?;
+    let col = bitmap::value(context, program, from, position, default_colour)?;
 
     Ok(Some(Var::Colour(col)))
 }

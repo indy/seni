@@ -181,6 +181,7 @@ pub fn value(
     program: &Program,
     from: Iname,
     position: (f32, f32),
+    default_colour: Colour,
 ) -> Result<Colour> {
     let from_string = string_from_iname(program, from)?;
     let bitmap_info = context.bitmap_cache.get(from_string)?;
@@ -189,18 +190,10 @@ pub fn value(
     let y = position.1 as usize;
 
     if x >= bitmap_info.width {
-        error!(
-            "bitmap value: x {} >= bitmap width {}",
-            x, bitmap_info.width
-        );
-        return Err(Error::Bitmap);
+        return Ok(default_colour);
     }
     if y >= bitmap_info.height {
-        error!(
-            "bitmap value: y {} >= bitmap height {}",
-            y, bitmap_info.height
-        );
-        return Err(Error::Bitmap);
+        return Ok(default_colour);
     }
 
     // flip the y as seni has the origin in the lower left

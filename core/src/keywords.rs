@@ -306,6 +306,8 @@ pub enum Keyword {
     Copies,
     #[strum(serialize = "copy")]
     Copy,
+    #[strum(serialize = "default-colour")]
+    DefaultColour,
     #[strum(serialize = "direction")]
     Direction,
     #[strum(serialize = "distance")]
@@ -443,7 +445,7 @@ mod tests {
     fn test_keyword_enums() {
         assert_eq!(Keyword::False as i32, 128);
         assert_eq!(Keyword::True as i32, 129);
-        assert_eq!(Keyword::Width as i32, 301);
+        assert_eq!(Keyword::Width as i32, 302);
     }
 
     #[test]
