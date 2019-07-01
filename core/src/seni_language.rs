@@ -89,6 +89,10 @@ The public API for the Seni language
 - [col/set-e1](#colset-e1)
 - [col/set-e2](#colset-e2)
 - [col/set-alpha](#colset-alpha)
+- [col/add-e0](#coladd-e0)
+- [col/add-e1](#coladd-e1)
+- [col/add-e2](#coladd-e2)
+- [col/add-alpha](#coladd-alpha)
 - [col/build-procedural](#colbuild-procedural)
 - [col/build-bezier](#colbuild-bezier)
 - [col/value](#colvalue)
@@ -494,6 +498,34 @@ Parameter | Default | Description
     | value     | 0            |             |
 
 ## col/set-alpha
+
+Parameter | Default | Description
+--- | --- | ---
+    | from      | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+## col/add-e0
+
+Parameter | Default | Description
+--- | --- | ---
+    | from      | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+## col/add-e1
+
+Parameter | Default | Description
+--- | --- | ---
+    | from      | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+## col/add-e2
+
+Parameter | Default | Description
+--- | --- | ---
+    | from      | RGB(0 0 0 1) |             |
+    | value     | 0            |             |
+
+## col/add-alpha
 
 Parameter | Default | Description
 --- | --- | ---
