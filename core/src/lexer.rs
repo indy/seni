@@ -25,6 +25,7 @@ pub enum Token<'a> {
     Comment(&'a str),
     CurlyBracketEnd,
     CurlyBracketStart,
+    Dot,
     String(&'a str),
     Name(&'a str),
     Number(&'a str),
@@ -74,6 +75,7 @@ impl<'a> Lexer<'a> {
                 ']' => Ok((Token::SquareBracketEnd, 1)),
                 '{' => Ok((Token::CurlyBracketStart, 1)),
                 '}' => Ok((Token::CurlyBracketEnd, 1)),
+                '.' => Ok((Token::Dot, 1)),
                 ':' => Ok((Token::Colon, 1)),
                 '\'' => Ok((Token::Quote, 1)),
                 '`' => Ok((Token::BackQuote, 1)),
@@ -246,6 +248,15 @@ mod tests {
                 Token::ParenStart,
                 Token::Number("1"),
                 Token::ParenEnd
+            ]
+        );
+
+        assert_eq!(
+            tokenize("some-vector.vec/length").unwrap(),
+            [
+                Token::Name("some-vector"),
+                Token::Dot,
+                Token::Name("vec/length")
             ]
         );
 

@@ -51,6 +51,7 @@ pub enum Node {
     List(Vec<Node>, Option<NodeMeta>),
     Vector(Vec<Node>, Option<NodeMeta>),
     Float(f32, String, Option<NodeMeta>),
+    FromName(String, Iname, Option<NodeMeta>),  // text, iname, meta
     Name(String, Iname, Option<NodeMeta>),  // text, iname, meta
     Label(String, Iname, Option<NodeMeta>), // text, iname, meta
     String(String, Iname, Option<NodeMeta>),
@@ -98,6 +99,23 @@ impl Node {
                                 Gene::Name(i) => return Ok(*i),
                                 _ => {
                                     error!("Node::get_iname incompatible gene for Name");
+                                    return Err(Error::Parser);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    return Ok(*iname);
+                }
+            }
+            Node::FromName(_text, iname, meta) => {
+                if use_genes && meta.is_some() {
+                    if let Some(meta) = meta {
+                        if let Some(gene) = &meta.gene {
+                            match gene {
+                                Gene::Name(i) => return Ok(*i),
+                                _ => {
+                                    error!("Node::get_iname incompatible gene for FromName");
                                     return Err(Error::Parser);
                                 }
                             }
@@ -210,11 +228,19 @@ impl Node {
         Err(Error::Parser)
     }
 
+    pub fn is_name(&self) -> bool {
+        match self {
+            Node::Name(_, _, _) => true,
+            _ => false
+        }
+    }
+
     pub fn is_alterable(&self) -> bool {
         match self {
             Node::List(_, meta)
             | Node::Vector(_, meta)
             | Node::Float(_, _, meta)
+            | Node::FromName(_, _, meta)
             | Node::Name(_, _, meta)
             | Node::Label(_, _, meta)
             | Node::String(_, _, meta)
@@ -228,6 +254,7 @@ impl Node {
             Node::List(_, meta)
             | Node::Vector(_, meta)
             | Node::Float(_, _, meta)
+            | Node::FromName(_, _, meta)
             | Node::Name(_, _, meta)
             | Node::Label(_, _, meta)
             | Node::String(_, _, meta)
@@ -498,6 +525,7 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &WordLut) -> Result<NodeAndRe
                     Node::List(ns, _) => Node::List(ns, meta),
                     Node::Vector(ns, _) => Node::Vector(ns, meta),
                     Node::Float(f, s, _) => Node::Float(f, s, meta),
+                    Node::FromName(s, i, _) => Node::FromName(s, i, meta),
                     Node::Name(s, i, _) => Node::Name(s, i, meta),
                     Node::Label(s, i, _) => Node::Label(s, i, meta),
                     Node::String(s, i, _) => Node::String(s, i, meta),
@@ -560,6 +588,11 @@ fn eat_token<'a>(
             if tokens.len() > 1 && tokens[1] == Token::Colon {
                 Ok(NodeAndRemainder {
                     node: Node::Label(t, ti, meta),
+                    tokens: &tokens[2..],
+                })
+            } else if tokens.len() > 1 && tokens[1] == Token::Dot {
+                Ok(NodeAndRemainder {
+                    node: Node::FromName(t, ti, meta),
                     tokens: &tokens[2..],
                 })
             } else {
@@ -793,6 +826,20 @@ mod tests {
                     Node::Label("width".to_string(), Iname::from(Keyword::Width), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::Float(300.0, "300".to_string(), None),
+                ],
+                None
+            )]
+        );
+    }
+
+    #[test]
+    fn test_parser_from_name() {
+        assert_eq!(
+            ast("(some-vector.vector/length)"),
+            [Node::List(
+                vec![
+                    Node::FromName("some-vector".to_string(), Iname::new(0), None),
+                    Node::Name("vector/length".to_string(), Iname::from(Native::VectorLength), None),
                 ],
                 None
             )]

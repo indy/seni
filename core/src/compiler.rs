@@ -212,6 +212,12 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()>
                 genotype.current_gene_index += 1;
             }
         }
+        Node::FromName(_, _, meta) => {
+            if let Some(ref mut node_meta) = meta {
+                node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+                genotype.current_gene_index += 1;
+            }
+        }
         Node::Name(_, _, meta) => {
             if let Some(ref mut node_meta) = meta {
                 node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
@@ -1211,6 +1217,22 @@ impl Compiler {
                     Err(Error::Compiler)
                 };
             }
+            Node::FromName(text, _, _) => {
+                let iname = self.get_iname(ast)?;
+
+                return if self.compile_user_defined_name(compilation, iname)? {
+                    Ok(())
+                } else if let Some(kw) = self.name_to_keyword.get(&iname) {
+                    compilation.emit(Opcode::LOAD, Mem::Constant, *kw)?;
+                    Ok(())
+                } else if let Some(native) = self.name_to_native.get(&iname) {
+                    compilation.emit(Opcode::NATIVE, *native, 0)?;
+                    Ok(())
+                } else {
+                    error!("compile: can't find user defined name or keyword: {}", text);
+                    Err(Error::Compiler)
+                };
+            }
             _ => {
                 error!("compile ast: {:?}", ast);
                 return Err(Error::Compiler);
@@ -1232,17 +1254,35 @@ impl Compiler {
                 let kids = only_semantic_nodes(kids);
                 self.compile_list(compilation, &kids[..])?
             }
+            Node::FromName(_, _, _) => {
+                // syntax sugar for the 'from' parameter
+                // e.g. (some-vec.vector/length)
+                // is equivalent to (vector/length from: some-vec)
+
+                if children.len() == 1 || !children[1].is_name() {
+                    error!("Node::FromName should always be followed by a Node::Name");
+                    return Err(Error::Compiler);
+                }
+
+                if let Some(fn_info_index) = compilation.get_fn_info_index(&children[1]) {
+
+                    self.compile_fn_invocation_prologue(compilation, fn_info_index)?;
+                    self.compile_fn_invocation_implicit_from(compilation, fn_info_index, &children[0])?;
+                    self.compile_fn_invocation_args(compilation, &children[2..], fn_info_index)?;
+                    self.compile_fn_invocation_epilogue(compilation, fn_info_index)?;
+
+                }
+            }
             Node::Name(_, _, _) => {
                 let iname = self.get_iname(&children[0])?;
 
                 if let Some(fn_info_index) = compilation.get_fn_info_index(&children[0]) {
                     // todo: get_fn_info_index is re-checking that this is a Node::Name
-                    self.compile_fn_invocation(compilation, &children[1..], fn_info_index)?;
-                    return Ok(());
-                }
 
-                if self.compile_user_defined_name(compilation, iname)? {
-                    return Ok(());
+                    self.compile_fn_invocation_prologue(compilation, fn_info_index)?;
+                    self.compile_fn_invocation_args(compilation, &children[1..], fn_info_index)?;
+                    self.compile_fn_invocation_epilogue(compilation, fn_info_index)?;
+
                 } else if let Some(kw) = self.name_to_keyword.get(&iname) {
                     match *kw {
                         Keyword::Define => {
@@ -2231,13 +2271,10 @@ impl Compiler {
         Ok(())
     }
 
-    // if (adder a: 10 b: 20) then children == a: 10 b: 20
-    fn compile_fn_invocation(
-        &self,
-        compilation: &mut Compilation,
-        children: &[&Node],
-        fn_info_index: usize,
-    ) -> Result<()> {
+
+    fn compile_fn_invocation_prologue(&self,
+                                      compilation: &mut Compilation,
+                                      fn_info_index: usize) -> Result<()> {
         // NOTE: CALL and CALL_0 get their function offsets and num args from the
         // stack so add some placeholder LOAD CONST opcodes and fill the CALL, CALL_0
         // with fn_info indexes that can later be used to fill in the LOAD CONST
@@ -2253,6 +2290,29 @@ impl Compiler {
 
         compilation.emit(Opcode::CALL, fn_info_index, fn_info_index)?;
 
+        Ok(())
+    }
+
+    fn compile_fn_invocation_implicit_from(
+        &self,
+        compilation: &mut Compilation,
+        fn_info_index: usize,
+        from_name: &Node,
+    ) -> Result<()> {
+
+        self.compile(compilation, from_name)?;
+        let from_iname = Iname::from(Keyword::From);
+        compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, from_iname)?;
+
+        Ok(())
+    }
+
+    fn compile_fn_invocation_args(
+        &self,
+        compilation: &mut Compilation,
+        children: &[&Node],
+        fn_info_index: usize,
+    ) -> Result<()> {
         // overwrite the default arguments with the actual arguments given by the fn invocation
         let mut arg_vals = &children[..];
         while arg_vals.len() > 0 {
@@ -2272,7 +2332,12 @@ impl Compiler {
                 return Err(Error::Compiler);
             }
         }
+        Ok(())
+    }
 
+    fn compile_fn_invocation_epilogue(&self,
+                                      compilation: &mut Compilation,
+                                      fn_info_index: usize) -> Result<()> {
         // call the body of the function
         compilation.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
         compilation.emit(Opcode::CALL_0, fn_info_index, fn_info_index)?;
@@ -3219,6 +3284,58 @@ mod tests {
                 "(define a 1 b 2)
                  (fn (adder a: 99 b: 88) (+ a b))
                  (adder a b)"
+            ),
+            expected_bytecode
+        );
+    }
+
+    #[test]
+    fn test_fromname_fn_invocation() {
+        let expected_bytecode = vec![
+            jump(14),
+            load_const_name(259),
+            store_arg(0),
+            load_const_f32(99.0),
+            store_arg(1),
+            load_const_name(246),
+            store_arg(2),
+            load_const_f32(88.0),
+            store_arg(3),
+            ret_0(),
+            load_arg(1),
+            load_arg(3),
+            add(),
+            ret(),
+            load_const_f32(33.0),
+            store_global(15),
+            load_const_i32(1),
+            load_const_i32(2),
+            call(),
+            load_global_i32(15),
+            store_arg(1),
+            load_const_f32(10.0),
+            store_arg(3),
+            load_const_i32(10),
+            call_0(),
+            stop(),
+        ];
+
+        // traditional syntax
+        assert_eq!(
+            compile(
+                "(define x 33)
+                 (fn (increase from: 99 by: 88) (+ from by))
+                 (increase from: x by: 10)"
+            ),
+            expected_bytecode
+        );
+
+        // fromname syntax
+        assert_eq!(
+            compile(
+                "(define x 33)
+                 (fn (increase from: 99 by: 88) (+ from by))
+                 (x.increase by: 10)"
             ),
             expected_bytecode
         );

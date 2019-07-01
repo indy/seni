@@ -207,6 +207,7 @@ fn format_node_value(node: &Node) -> Result<String> {
             Err(Error::Unparser)
         }
         Node::Float(_, s, _) => Ok(s.to_string()),
+        Node::FromName(s, _, _) => Ok(s.to_string() + "."),
         Node::Name(s, _, _) => Ok(s.to_string()),
         Node::Label(s, _, _) => Ok(s.to_string() + ":"),
         Node::String(s, _, _) => Ok("\"".to_owned() + &s.to_string() + "\""),
