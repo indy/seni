@@ -211,7 +211,6 @@ impl fmt::Display for Bytecode {
                 }
             }
             Opcode::NATIVE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
-            // todo: format PILE
             Opcode::PILE => write!(f, "{}\t{}\t{}", self.op, self.arg0, self.arg1)?,
             _ => write!(f, "{}", self.op)?,
         };

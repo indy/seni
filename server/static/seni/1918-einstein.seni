@@ -44,9 +44,11 @@
                   {-3 (gen/scalar min: -15 max: 15)}]))
 
 (fn (per-pixel a: 0 width: 0 from: [0 0] to: [0 0])
-  (line from: [(* (x from: from) (math/cos from: (* a math/PI)))
-               (* (y from: from) (math/sin from: (* a math/PI)))]
-        to: [(* (x from: to) (math/cos from: (* a math/PI)))
-             (* (y from: to) (math/sin from: (* a math/PI)))]
+  (define
+    angle (* a math/PI)
+    angle-cos (angle.math/cos)
+    angle-sin (angle.math/sin))
+  (line from: [(* (from.get-x) angle-cos) (* (from.get-y) angle-sin)]
+        to: [(* (to.get-x) angle-cos) (* (to.get-y) angle-sin)]
         width: (- width a)
         colour: (col/rgb r: a g: a b: a alpha: 0.2)))

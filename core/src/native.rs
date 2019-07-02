@@ -59,10 +59,10 @@ pub enum Native {
     Probe,
     #[strum(serialize = "meta")]
     Meta,
-    #[strum(serialize = "x")]
-    X,
-    #[strum(serialize = "y")]
-    Y,
+    #[strum(serialize = "get-x")]
+    GetX,
+    #[strum(serialize = "get-y")]
+    GetY,
 
     // shapes
     //
@@ -311,8 +311,8 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::VectorLength => vector_length_parameter_info(),
         Native::Probe => probe_parameter_info(),
         Native::Meta => meta_parameter_info(),
-        Native::X => x_parameter_info(),
-        Native::Y => y_parameter_info(),
+        Native::GetX => get_x_parameter_info(),
+        Native::GetY => get_y_parameter_info(),
         // shapes
         Native::Line => line_parameter_info(),
         Native::Rect => rect_parameter_info(),
@@ -432,8 +432,8 @@ pub fn execute_native(
         Native::VectorLength => vector_length_execute(vm),
         Native::Probe => probe_execute(vm, context),
         Native::Meta => meta_execute(vm, context),
-        Native::X => x_execute(vm, context),
-        Native::Y => y_execute(vm, context),
+        Native::GetX => get_x_execute(vm, context),
+        Native::GetY => get_y_execute(vm, context),
         // shapes
         Native::Line => line_execute(vm, context),
         Native::Rect => rect_execute(vm, context),
@@ -791,7 +791,7 @@ fn meta_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     Ok(None)
 }
 
-fn x_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+fn get_x_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
         vec![(Keyword::From, Var::V2D(0.0, 0.0))],
@@ -802,12 +802,12 @@ fn x_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 
 // only works with V2D
 //
-fn x_execute(vm: &mut Vm, _context: &mut Context) -> Result<Option<Var>> {
+fn get_x_execute(vm: &mut Vm, _context: &mut Context) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(2)?;
 
     // require a 'from' argument
     if !is_arg_given(default_mask, 1) {
-        error!("x requires from parameter");
+        error!("get-x requires from parameter");
         return Err(Error::Native);
     }
 
@@ -817,7 +817,7 @@ fn x_execute(vm: &mut Vm, _context: &mut Context) -> Result<Option<Var>> {
     Ok(res)
 }
 
-fn y_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+fn get_y_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
         vec![(Keyword::From, Var::V2D(0.0, 0.0))],
@@ -828,12 +828,12 @@ fn y_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 
 // only works with V2D
 //
-fn y_execute(vm: &mut Vm, _context: &mut Context) -> Result<Option<Var>> {
+fn get_y_execute(vm: &mut Vm, _context: &mut Context) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(2)?;
 
     // require a 'from' argument
     if !is_arg_given(default_mask, 1) {
-        error!("x requires from parameter");
+        error!("get-y requires from parameter");
         return Err(Error::Native);
     }
 

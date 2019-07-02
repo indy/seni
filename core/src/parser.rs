@@ -358,11 +358,11 @@ impl WordLut {
     }
 
     pub fn get_string_from_name(&self, name: Iname) -> Option<&String> {
-        if let Some(s) = self.iname_to_native.get(&name) {
-            // 1st check the native api
+        if let Some(s) = self.iname_to_keyword.get(&name) {
+            // 1st check the keywords
             Some(s)
-        } else if let Some(s) = self.iname_to_keyword.get(&name) {
-            // 2nd check the keywords
+        } else if let Some(s) = self.iname_to_native.get(&name) {
+            // 2nd check the native api
             Some(s)
         } else {
             // finally check the iname_to_word
@@ -379,14 +379,14 @@ impl WordLut {
     }
 
     fn get_name_from_string(&self, s: &str) -> Option<Iname> {
-        // 1st check the native api
-        if let Ok(n) = Native::from_str(s) {
-            return Some(Iname::from(n));
-        }
-
-        // 2nd check the keywords
+        // 1st check the keywords
         if let Ok(kw) = Keyword::from_str(s) {
             return Some(Iname::from(kw));
+        }
+
+        // 2nd check the native api
+        if let Ok(n) = Native::from_str(s) {
+            return Some(Iname::from(n));
         }
 
         // finally check word_to_iname

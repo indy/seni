@@ -82,7 +82,6 @@ fn unparse_ast_node(
     genotype: &mut Genotype,
 ) -> Result<()> {
     match ast {
-        // todo: this is ugly, is there a cleaner way?
         Node::List(_, ref meta) if meta.is_some() => {
             unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
         }

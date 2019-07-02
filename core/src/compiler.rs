@@ -132,9 +132,7 @@ pub fn compile_program_with_genotype(
     })
 }
 
-// todo: don't make public
-// todo: return errors when applicable
-pub fn assign_genotype_to_ast(ast: &mut [Node], genotype: &mut Genotype) -> Result<()> {
+fn assign_genotype_to_ast(ast: &mut [Node], genotype: &mut Genotype) -> Result<()> {
     genotype.current_gene_index = 0;
 
     for n in ast {
@@ -3096,7 +3094,7 @@ mod tests {
             ),
             vec![
                 jump(30),
-                load_const_name(246),
+                load_const_name(247),
                 store_arg(0),
                 load_const_f32(4.0),
                 store_arg(1),
@@ -3341,11 +3339,11 @@ mod tests {
     fn test_fromname_fn_invocation() {
         let expected_bytecode = vec![
             jump(14),
-            load_const_name(259),
+            load_const_name(260),
             store_arg(0),
             load_const_f32(99.0),
             store_arg(1),
-            load_const_name(246),
+            load_const_name(247),
             store_arg(2),
             load_const_f32(88.0),
             store_arg(3),

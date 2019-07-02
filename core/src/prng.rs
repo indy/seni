@@ -311,4 +311,18 @@ pub mod tests {
 
         assert_eq!(prng.next_f32(), 0.49469042);
     }
+
+    #[test]
+    pub fn test_prng_perlin() {
+        assert_eq!(
+            [0.0, 0.083736, 0.106848, 0.07514882, -0.00770368],
+            [
+                perlin(0.0, 0.0, 0.0),
+                perlin(0.1, 0.1, 0.0),
+                perlin(0.0, 0.0, 0.1),
+                perlin(9.4, 100.2, 32.1),
+                perlin(-192.0, 32.1, 4.0),
+            ]
+        );
+    }
 }

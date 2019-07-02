@@ -268,6 +268,8 @@ pub enum Keyword {
     S,
     #[strum(serialize = "t")]
     T,
+    #[strum(serialize = "u")]
+    U,
     #[strum(serialize = "v")]
     V,
     #[strum(serialize = "x")]
@@ -445,7 +447,7 @@ mod tests {
     fn test_keyword_enums() {
         assert_eq!(Keyword::False as i32, 128);
         assert_eq!(Keyword::True as i32, 129);
-        assert_eq!(Keyword::Width as i32, 302);
+        assert_eq!(Keyword::Width as i32, 303);
     }
 
     #[test]
