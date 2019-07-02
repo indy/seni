@@ -6,7 +6,8 @@
       colour: (col/rgb r: 0 g: 0 b: 0 alpha: 1))
 (wash colour: (col/rgb r: 0.15 g: 0.1 b: 0.2 alpha: 0.1))
 
-(stroked-bezier-rect position: [(/ canvas/width 2) 600]
+
+(stroked-bezier-rect position: [500 600]
                      width: 800 height: 600
                      colour-volatility: {90 (gen/int min: 0 max: 60)}
                      colour: (col/rgb r: {0.8 (gen/scalar)}
@@ -29,6 +30,97 @@
                      iterations: {90 (gen/int min: 0 max: 100)}
                      seed: {42 (gen/int min: 0 max: 100)}
                      overlap: {10.0 (gen/scalar min: 0 max: 5.0)})
+
+(fn (stroked-bezier-rect position: [100 100]
+                         width: 80
+                         height: 600
+                         volatility: 30
+                         overlap: 0
+                         iterations: 10
+                         seed: 0
+
+                         tessellation: 15
+                         stroke-tessellation: 10
+                         stroke-noise: 25
+
+                         colour: (col/rgb r: 0.0 g: 1.0 b: 0.0 alpha: 0.5)
+                         colour-volatility: 0
+
+                         brush: brush/flat
+                         brush-subtype: 1)
+  (define
+    [x y] position
+
+    x-start (- x (/ width 2.0))
+    y-start (- y (/ height 2.0))
+
+    th-width (/ width 3.0)
+    th-height (/ height 3.0)
+
+    vol volatility
+
+    cc-lab(colour.col/convert format: LAB)
+    half-alpha-col (col/set-alpha from: cc-lab value: (* 0.5 (cc-lab.col/alpha)))
+
+    prng (prng/build seed min: -1 max: 1)
+
+    sum-thickness (+ height (* (- iterations 1.0) overlap))
+    stroke-thickness (/ sum-thickness iterations)
+    stroke-half-thickness (/ stroke-thickness 2.0)
+    stroke-offset-factor (/ (- height overlap) iterations)
+
+    v-sum-thickness (+ width (* (- iterations 1.0) overlap))
+    v-stroke-thickness (/ v-sum-thickness iterations)
+    v-stroke-half-thickness (/ v-stroke-thickness 2.0)
+    v-stroke-offset-factor (/ (- width overlap) iterations))
+
+  ;; horizontal strokes
+  (loop (i to: iterations)
+    (define
+      h (+ y-start stroke-half-thickness (* i stroke-offset-factor))
+      coords [[(+ (* (prng.prng/value) vol) x-start (* 0 th-width))
+               (+ h (* (prng.prng/value) vol))]
+              [(+ (* (prng.prng/value) vol) x-start (* 1 th-width))
+               (+ h (* (prng.prng/value) vol))]
+              [(+ (* (prng.prng/value) vol) x-start (* 2 th-width))
+               (+ h (* (prng.prng/value) vol))]
+              [(+ (* (prng.prng/value) vol) x-start (* 3 th-width))
+               (+ h (* (prng.prng/value) vol))]])
+    (stroked-bezier tessellation
+                    coords
+                    stroke-tessellation
+                    stroke-noise
+                    stroke-line-width-start: stroke-thickness
+                    stroke-line-width-end: stroke-thickness
+                    colour: half-alpha-col
+                    colour-volatility
+                    seed: (prng.prng/value)
+                    brush
+                    brush-subtype))
+
+  ;; vertical strokes
+  (loop (i to: iterations)
+    (define
+      v (+ x-start v-stroke-half-thickness (* i v-stroke-offset-factor))
+      coords [[(+ v (* (prng.prng/value) vol))
+               (+ (* (prng.prng/value) vol) y-start (* 0 th-height))]
+              [(+ v (* (prng.prng/value) vol))
+               (+ (* (prng.prng/value) vol) y-start (* 1 th-height))]
+              [(+ v (* (prng.prng/value) vol))
+               (+ (* (prng.prng/value) vol) y-start (* 2 th-height))]
+              [(+ v (* (prng.prng/value) vol))
+               (+ (* (prng.prng/value) vol) y-start (* 3 th-height))]])
+    (stroked-bezier tessellation
+                    coords
+                    stroke-tessellation
+                    stroke-noise
+                    stroke-line-width-start: stroke-thickness
+                    stroke-line-width-end: stroke-thickness
+                    colour: half-alpha-col
+                    colour-volatility
+                    seed: (prng.prng/value)
+                    brush
+                    brush-subtype)))
 
 (fn (wash vol: 200
           line-width: 70

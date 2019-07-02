@@ -329,50 +329,6 @@ impl Context {
             Err(Error::Context)
         }
     }
-
-    pub fn render_stroked_bezier_rect(
-        &mut self,
-        position: (f32, f32),
-        width: f32,
-        height: f32,
-        volatility: f32,
-        overlap: f32,
-        iterations: f32,
-        seed: i32,
-        tessellation: usize,
-        stroke_tessellation: usize,
-        stroke_noise: f32,
-        colour: &Colour,
-        colour_volatility: f32,
-        brush_type: BrushType,
-        brush_subtype: usize,
-    ) -> Result<()> {
-        if let Some(matrix) = self.matrix_stack.peek() {
-            let uvm = self.mappings.get_uv_mapping(brush_type, brush_subtype);
-            let colour = Rgb::from_colour(colour)?;
-
-            geometry::stroked_bezier_rect::render(
-                &mut self.geometry,
-                matrix,
-                position,
-                width,
-                height,
-                volatility,
-                overlap,
-                iterations,
-                seed,
-                tessellation,
-                stroke_tessellation,
-                stroke_noise,
-                &colour,
-                colour_volatility,
-                uvm,
-            )
-        } else {
-            error!("no matrix for render_stroked_bezier_rect");
-            Err(Error::Context)
-        }
-    }
 }
 
 fn var_to_f32_pair(v: &Var) -> Result<(f32, f32)> {

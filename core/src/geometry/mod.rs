@@ -25,7 +25,6 @@ pub mod poly;
 pub mod quadratic;
 pub mod rect;
 pub mod stroked_bezier;
-pub mod stroked_bezier_rect;
 
 const RENDER_PACKET_MAX_SIZE: usize = 262_144;
 pub const RENDER_PACKET_FLOAT_PER_VERTEX: usize = 8;

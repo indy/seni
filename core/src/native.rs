@@ -84,8 +84,6 @@ pub enum Native {
     BezierBulging,
     #[strum(serialize = "stroked-bezier")]
     StrokedBezier,
-    #[strum(serialize = "stroked-bezier-rect")]
-    StrokedBezierRect,
 
     // matrix transforms
     //
@@ -323,7 +321,6 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::Bezier => bezier_parameter_info(),
         Native::BezierBulging => bezier_bulging_parameter_info(),
         Native::StrokedBezier => stroked_bezier_parameter_info(),
-        Native::StrokedBezierRect => stroked_bezier_rect_parameter_info(),
         // transforms
         Native::MatrixPush => matrix_push_parameter_info(),
         Native::MatrixPop => matrix_pop_parameter_info(),
@@ -444,7 +441,6 @@ pub fn execute_native(
         Native::Bezier => bezier_execute(vm, context),
         Native::BezierBulging => bezier_bulging_execute(vm, context),
         Native::StrokedBezier => stroked_bezier_execute(vm, context),
-        Native::StrokedBezierRect => stroked_bezier_rect_execute(vm, context),
         // transforms
         Native::MatrixPush => matrix_push_execute(vm, context),
         Native::MatrixPop => matrix_pop_execute(vm, context),
@@ -1396,68 +1392,6 @@ fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
         error!("stroked bezier: invalid mapping");
         return Err(Error::Native);
     }
-
-    Ok(None)
-}
-
-fn stroked_bezier_rect_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
-    Ok((
-        // input arguments
-        vec![
-            (Keyword::Position, Var::V2D(100.0, 100.0)),
-            (Keyword::Width, Var::Float(80.0)),
-            (Keyword::Height, Var::Float(600.0)),
-            (Keyword::Volatility, Var::Float(30.0)),
-            (Keyword::Overlap, Var::Float(0.0)),
-            (Keyword::Iterations, Var::Float(10.0)),
-            (Keyword::Seed, Var::Float(0.0)),
-            (Keyword::Tessellation, Var::Float(15.0)),
-            (Keyword::StrokeTessellation, Var::Float(10.0)),
-            (Keyword::StrokeNoise, Var::Float(25.0)),
-            (Keyword::Colour, Var::Colour(Default::default())),
-            (Keyword::ColourVolatility, Var::Float(0.0)),
-            (Keyword::Brush, Var::Keyword(Keyword::BrushFlat)),
-            (Keyword::BrushSubtype, Var::Float(1.0)),
-        ],
-        // stack offset
-        0,
-    ))
-}
-
-fn stroked_bezier_rect_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
-    let position: (f32, f32) = vm.stack_peek(1)?;
-    let width: f32 = vm.stack_peek(2)?;
-    let height: f32 = vm.stack_peek(3)?;
-    let volatility: f32 = vm.stack_peek(4)?;
-    let overlap: f32 = vm.stack_peek(5)?;
-    let iterations: f32 = vm.stack_peek(6)?;
-    let seed: f32 = vm.stack_peek(7)?;
-    let tessellation: usize = vm.stack_peek(8)?;
-    let stroke_tessellation: usize = vm.stack_peek(9)?;
-    let stroke_noise: f32 = vm.stack_peek(10)?;
-    let col: Colour = vm.stack_peek(11)?;
-    let col_volatility: f32 = vm.stack_peek(12)?;
-    let brush: Keyword = vm.stack_peek(13)?;
-    let brush_subtype: usize = vm.stack_peek(14)?;
-
-    let brush_type = read_brush(brush);
-
-    context.render_stroked_bezier_rect(
-        position,
-        width,
-        height,
-        volatility,
-        overlap,
-        iterations,
-        seed as i32,
-        tessellation,
-        stroke_tessellation,
-        stroke_noise,
-        &col,
-        col_volatility,
-        brush_type,
-        brush_subtype,
-    )?;
 
     Ok(None)
 }

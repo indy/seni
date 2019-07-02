@@ -47,6 +47,9 @@ The public API for the Seni language
 - [nth](#nth)
 - [vector/length](#vectorlength)
 - [probe](#probe) : writes to the vm's debug_str (used for testing only)
+- [get-x](#getx)
+- [get-y](#gety)
+
 
 # Shapes
 
@@ -59,7 +62,6 @@ The public API for the Seni language
  - [bezier](#bezier)
  - [bezier-bulging](#bezier-bulging)
  - [stroked-bezier](#stroked-bezier)
- - [stroked-bezier-rect](#stroked-bezier-rect)
 
 # Transforms
 
@@ -190,6 +192,18 @@ scalar | NULL | appends value onto vm.debug_str
 vector | NULL | appends v2d onto vm.debug_str
 worldspace | NULL | appends v2d in worldspace onto vm.debug_str
 
+## get-x
+
+Parameter | Default | Description
+--- | --- | ---
+from | NULL |
+
+## get-y
+
+Parameter | Default | Description
+--- | --- | ---
+from | NULL |
+
 # Shape functions
 
 ## line
@@ -310,25 +324,6 @@ Parameter | Default | Description
 | line-width-mapping      |       linear |             |
 | brush                   |   brush/flat |             |
 | brush-subtype           |            0 |             |
-
-## stroked-bezier-rect
-
-Parameter | Default | Description
---- | --- | ---
-| position            |    [100 100] |             |
-| width               |          800 |             |
-| height              |          600 |             |
-| volatility          |           30 |             |
-| overlap             |            0 |             |
-| iterations          |           10 |             |
-| seed                |            0 |             |
-| tessellation        |           10 |             |
-| stroke-tessellation |           10 |             |
-| stroke-noise        |           25 |             |
-| colour              | RGB(0 0 0 1) |             |
-| colour-volatility   |            0 |             |
-| brush               |   brush/flat |             |
-| brush-subtype       |            0 |             |
 
 # Transform functions
 

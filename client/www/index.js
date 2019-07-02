@@ -741,11 +741,9 @@ function seniMode() {
   const seniCommon = makeKeywords(`* + - / < = > append begin bezier
 bezier-bulging bezier-trailing box canvas/centre canvas/height canvas/width
 circle circle-slice col/analagous col/bezier-fn col/complementary col/convert
-col/darken col/get-alpha col/get-lab-a col/get-lab-b col/get-lab-l
-col/get-rgb-b col/get-rgb-g col/get-rgb-r col/hsl col/hsluv col/hsv col/lab col/lighten
-col/procedural-fn col/quadratic-fn col/rgb col/set-alpha col/set-lab-a
-col/set-lab-b col/set-lab-l col/set-rgb-b col/set-rgb-g col/set-rgb-r
-col/split-complementary col/triad define degrees->radians fence fn focal/hline
+col/darken col/alpha col/hsl col/hsluv col/hsv col/lab col/lighten
+col/procedural-fn col/quadratic-fn col/rgb col/set-alpha col/e0 col/e1 col/e2 col/set-e0 col/set-e1 col/set-e2
+col/split-complementary col/triad define math/degrees->radians fence fn focal/hline
 focal/point focal/vline if interp/bezier interp/bezier-fn interp/bezier-tangent
 interp/bezier-tangent-fn interp/circle interp/fn line list list/get list/length
 log loop math/PI math/TAU math/atan2 math/clamp math/cos math/distance-2d
@@ -754,7 +752,7 @@ poly pop-matrix print prng/perlin-signed prng/perlin-unsigned prng/range
 push-matrix quote radians->degrees rect repeat/rotate repeat/rotate-mirrored
 repeat/symmetry-4 repeat/symmetry-8 repeat/symmetry-horizontal
 repeat/symmetry-vertical rotate scale spline sqrt stroked-bezier
-stroked-bezier-rect take translate`);
+take translate`);
 
   function StateStack(indent, type, prev) { // represents a state stack object
     this.indent = indent;
