@@ -1,0 +1,127 @@
+(define
+  [col1 col2 col3 col4 col5] (col/palette index: {0 (gen/scalar min: 0 max: 200)})
+
+  hslcol1 (col1.col/convert format: HSLuv)
+  hslcol2 (col2.col/convert format: HSLuv)
+  hslcol3 (col3.col/convert format: HSLuv)
+  hslcol4 (col4.col/convert format: HSLuv)
+  hslcol5 (col5.col/convert format: HSLuv)
+  hslrng (prng/build seed: 42 min: -10 max: 10)
+
+  texture "hand.png"
+  bmx (interp/build from: [0 canvas/width] to: [0 (bitmap/width from: texture)])
+  bmy (interp/build from: [0 canvas/height] to: [0 (bitmap/height from: texture)]))
+
+(on-matrix-stack
+  (scale scalar: 1.1)
+  (rotate angle: 3)
+  (wash colour: col1))
+
+(on-matrix-stack
+  (scale scalar: 1.05)
+  (tri-hsl alpha: {0.118 (gen/scalar)})
+  (tri-lab alpha: {0.062 (gen/scalar)}))
+
+(define
+  ra (prng/build seed: 42
+                 min: {-5.472 (gen/stray from: -4 by: 4)}
+                 max: {3.869 (gen/stray from: 4 by: 4)})
+  sc {0.801 (gen/scalar min: 0.8 max: 1.1)}
+  wh {5 (gen/int min: 5 max: 20)}
+  w wh
+  h wh)
+
+(fn (left x: 0 y: 0 w: 0 h: 0 colour: red)
+  (poly coords: [[(- x w) (+ y h h)]
+                 [(+ x w) (+ y h)]
+                 [(- x w) (+ y 0)]
+                 [(+ x w) (- y h)]]
+        colours: [colour colour colour colour]))
+
+(fn (right x: 0 y: 0 w: 0 h: 0 colour: red)
+  (poly coords: [[(+ x w) (+ y h h)]
+                 [(- x w) (+ y h)]
+                 [(+ x w) (+ y 0)]
+                 [(- x w) (- y h)]]
+        colours: [colour colour colour colour]))
+
+(fn (left-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
+  (define col (col/set-alpha value: strength
+                             from: (col/set-e1 value: (* 100 strength)
+                                               from: (colour.col/convert format: HSLuv))))
+  (on-matrix-stack
+    (translate vector: [x y])
+    (rotate angle: (ra.prng/value))
+    (left x: 0 y: 0 w: w h: h colour: col)
+    (loop (i to: 3)
+      (scale scalar: sc)
+      (rotate angle: (ra.prng/value))
+      (left x: 0 y: 0 w: w h: h colour: col))))
+
+(fn (right-side x: 0 y: 0 w: 0 h: 0 colour: red strength: 1)
+  (define col (col/set-alpha value: strength
+                             from: (col/set-e1 value: (* 100 strength)
+                                               from: (colour.col/convert format: HSLuv))))
+  (on-matrix-stack
+    (translate vector: [x y])
+    (rotate angle: (ra.prng/value))
+    (right x: 0 y: 0 w: w h: h colour: col)
+    (loop (i to: 3)
+      (scale scalar: sc)
+      (rotate angle: (ra.prng/value))
+      (right x: 0 y: 0 w: w h: h colour: col))))
+
+
+(fn (tri-lab alpha: 1)
+  (loop (y from: 0 to: canvas/height inc: (* 2 h))
+    (loop (x from: 0 to: canvas/width inc: (* 4 w))
+      (define
+        c2 (hslcol2.col/add-e2 value: (hslrng.prng/value))
+        c3 (hslcol3.col/add-e2 value: (hslrng.prng/value))
+        col-bm (texture.bitmap/value position: [(bmx.interp/value t: x)
+                                                (bmy.interp/value t: y)]))
+      (left-side  x            y w h colour: c2 strength: (col-bm.col/e0))
+      (right-side x: (+ x w w) y w h colour: c3 strength: (col-bm.col/e0)))))
+
+
+(fn (tri-hsl alpha: 1)
+  (loop (y from: 0 to: canvas/height inc: (* 2 h))
+    (loop (x from: 0 to: canvas/width inc: (* 4 w))
+      (define
+        c4 (hslcol4.col/add-e2 value: (hslrng.prng/value))
+        c5 (hslcol5.col/add-e2 value: (hslrng.prng/value))
+        col-bm (texture.bitmap/value position: [(bmx.interp/value t: x)
+                                                (bmy.interp/value t: y)]))
+      (left-side  x            y w h colour: c4 strength: (col-bm.col/e0))
+      (right-side x: (+ x w w) y w h colour: c5 strength: (col-bm.col/e0)))))
+
+
+(fn (wash vol: 200
+          line-width: 70
+          line-segments: 5
+          colour: (col/rgb r: 0.627 g: 0.627 b: 0.627 alpha: 0.4)
+          seed: 272)
+  (define
+    w/3 (/ canvas/width 3)
+    h/3 (/ canvas/height 3)
+    tessellation line-segments
+    z seed)
+  (loop (y from: -20 to: 1020 inc: 20)
+    (bezier tessellation
+            line-width
+            coords: [[0            (wash-n x: 0            y z vol)]
+                     [w/3          (wash-n x: w/3          y z vol)]
+                     [(* w/3 2)    (wash-n x: (* w/3 2)    y z vol)]
+                     [canvas/width (wash-n x: canvas/width y z vol)]]
+            colour)
+
+    (bezier tessellation-segments
+            line-width-width
+            coords: [[(wash-n x: 0             y z vol) 0]
+                     [(wash-n x: h/3           y z vol) h/3]
+                     [(wash-n x: (* h/3 2)     y z vol) (* h/3 2)]
+                     [(wash-n x: canvas/height y z vol) canvas/height]]
+            colour)))
+
+(fn (wash-n x: 0 y: 0 z: 0 vol: 1)
+  (+ y (* vol (prng/perlin x y z))))
