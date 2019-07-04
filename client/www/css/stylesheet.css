@@ -113,8 +113,6 @@ body {
 }
 
 #render-img {
-  width: 300px;
-  height: 300px;
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
 }
 
@@ -367,11 +365,6 @@ button:disabled {
     flex-direction: column;
   }
 
-  #render-img {
-    width: 550px;
-    height: 550px;
-  }
-
   #render-panel {
     display: -webkit-flex;
     display: flex;
@@ -413,11 +406,6 @@ button:disabled {
     display: flex;
     -webkit-flex-direction: row;
     flex-direction: row;
-  }
-
-  #render-img {
-    width: 550px;
-    height: 550px;
   }
 
   #render-panel {

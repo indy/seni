@@ -1904,6 +1904,7 @@ async function updateUI(state) {
   case SeniMode.gallery :
     break;
   case SeniMode.edit :
+    fitRenderImgToRenderPanel();
     showScriptInEditor(state);
     await renderEditorScript(state);
     break;
@@ -2126,6 +2127,8 @@ function resizeContainers() {
 
   const evolve = document.getElementById('evolve-container');
   evolve.style.height = `${window.innerHeight - navbar.offsetHeight}px`;
+
+  fitRenderImgToRenderPanel();
 }
 
 async function evalMainScript(controller) {
@@ -2175,6 +2178,19 @@ function ensureFilenameIsPNG(filename) {
   }
 }
 
+function fitRenderImgToRenderPanel() {
+  let smallestDim = gUI.renderPanel.clientHeight;
+  if (gUI.renderPanel.clientWidth < smallestDim) {
+    smallestDim = gUI.renderPanel.clientWidth;
+  }
+
+  // reduce the dimensions by 5% to provide a nicer looking gap between the renderImg and renderPanel
+  smallestDim *= 0.95;
+
+  gUI.renderImage.width = smallestDim;
+  gUI.renderImage.height = smallestDim;
+}
+
 function setupUI(controller) {
   const d = document;
   const editorTextArea = d.getElementById('edit-textarea');
@@ -2187,9 +2203,12 @@ function setupUI(controller) {
     navbar: d.getElementById('seni-navbar'),
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById('render-img'),
+    renderPanel: d.getElementById('render-panel'),
     // console CodeMirror element in the edit screen
     editor: createEditor(controller, editorTextArea)
   };
+
+  setupResizeability();
 
   showButtonsFor(SeniMode.gallery);
 
@@ -2481,8 +2500,6 @@ function compatibilityHacks() {
 }
 
 async function main() {
-  setupResizeability();
-
   const state = createInitialState();
   const controller = new Controller(state);
 
