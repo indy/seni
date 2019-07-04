@@ -2185,7 +2185,7 @@ function fitRenderImgToRenderPanel() {
   }
 
   // reduce the dimensions by 5% to provide a nicer looking gap between the renderImg and renderPanel
-  smallestDim *= 0.95;
+  smallestDim *= gUI.renderImageSizeFactor;
 
   gUI.renderImage.width = smallestDim;
   gUI.renderImage.height = smallestDim;
@@ -2204,6 +2204,7 @@ function setupUI(controller) {
     // the img destination that shows the rendered script in edit mode
     renderImage: d.getElementById('render-img'),
     renderPanel: d.getElementById('render-panel'),
+    renderImageSizeFactor: 0.9,
     // console CodeMirror element in the edit screen
     editor: createEditor(controller, editorTextArea)
   };

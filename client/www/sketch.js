@@ -547,7 +547,6 @@ class GLRenderer {
     const gl = this.gl;
     const domElement = this.glDomElement;
 
-
     if (domElement.width !== canvasWidth) {
       domElement.width = canvasWidth;
     }
@@ -847,15 +846,6 @@ function logDebug(msg) {
   }
 }
 
-function resizeImgDimensions(sketchImg, canvas, w, h) {
-  // console.log(`top: ${canvas.offsetTop} left: ${canvas.offsetLeft} width: ${w} height: ${h}`);
-
-  sketchImg.style.top = canvas.offsetTop + "px";
-  sketchImg.style.left = canvas.offsetLeft + "px";
-  sketchImg.width = w;
-  sketchImg.height = h;
-}
-
 async function displayOnImageElements(display) {
   // required to check that an endAnimation doesn't fade in sketch-img-1
   gState.lastDisplay = display;
@@ -975,6 +965,7 @@ async function renderJob(parameters) {
 }
 
 async function renderScript(parameters, display) {
+  console.log(`renderScript  (demandCanvasSize = ${gState.demandCanvasSize})`);
   let { meta, memory, buffers } = await renderJob(parameters);
   await renderGeometryBuffers(meta, memory, buffers, gState.demandCanvasSize, gState.demandCanvasSize, display);
 }
@@ -1004,26 +995,6 @@ async function showSimplifiedScript(fullScript) {
 
   const simplifiedScriptElement = getRequiredElement('sketch-simplified-script');
   simplifiedScriptElement.textContent = script;
-}
-
-function resizeImgsUsingCanvasSize() {
-  const canvas = getRequiredElement('sketch-canvas');
-  const sketchImg0 = getRequiredElement(IMG_0);
-  const sketchImg1 = getRequiredElement(IMG_1);
-  resizeImgDimensions(sketchImg0, canvas, gState.demandCanvasSize, gState.demandCanvasSize);
-  resizeImgDimensions(sketchImg1, canvas, gState.demandCanvasSize, gState.demandCanvasSize);
-}
-
-function resizeCanvasToLarge() {
-  gState.demandCanvasSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
-  gState.demandCanvasSize *= 0.9;
-
-  resizeImgsUsingCanvasSize();
-}
-
-function resizeCanvasToNormal() {
-  gState.demandCanvasSize = 500;
-  resizeImgsUsingCanvasSize();
 }
 
 function addClass(id, clss) {
@@ -1089,30 +1060,58 @@ function resetImageElements() {
   removeClass(IMG_1, 'seni-fade-in-slideshow');
 }
 
-function styleForNormalSketch() {
-  addClass('sketch-content', 'sketch-content-wrap');
-  showId('header');
-  showId('seni-sketch-controls');
-  showId('code-content-wrap');
-  showId('seni-title');
-  showId('seni-date');
-  removeClass('sketch-canvas-container', 'seni-centre-canvas');
 
-  resizeCanvasToNormal();
+
+
+function moveContainerInsideParent(parentId, forceLargest) {
+  const canvasContainerId = 'sketch-canvas-container';
+  const canvasContainer = getRequiredElement(canvasContainerId);
+
+  const parent = getRequiredElement(parentId);
+  parent.appendChild(canvasContainer);
+
+  let dim = 0;
+  if (forceLargest) {
+    let forceWidth = document.documentElement.clientWidth;
+    let forceHeight = document.documentElement.clientHeight;
+    dim = forceWidth < forceHeight ? forceWidth : forceHeight;
+
+
+    let marginLeft = (forceWidth - dim) / 2;
+    canvasContainer.style.marginLeft = "" + marginLeft + "px";
+
+  } else {
+    dim = parent.clientWidth < parent.clientHeight ? parent.clientWidth : parent.clientHeight;
+    canvasContainer.style.marginLeft = "0px";
+  }
+
+  canvasContainer.width = dim;
+  canvasContainer.height = dim;
+  gState.demandCanvasSize = dim;
+
+  const img0 = getRequiredElement('sketch-img-0');
+  img0.width = dim;
+  img0.height = dim;
+
+  const img1 = getRequiredElement('sketch-img-1');
+  img1.width = dim;
+  img1.height = dim;
+}
+
+function styleForNormalSketch() {
+  showId('header');
+  showId('main');
+
+  moveContainerInsideParent('sketch-normal-anchor');
 
   resetImageElements();
 }
 
 function styleForLargeSketch() {
-  removeClass('sketch-content', 'sketch-content-wrap');
   hideId('header');
-  hideId('seni-sketch-controls');
-  hideId('code-content-wrap');
-  hideId('seni-title');
-  hideId('seni-date');
-  addClass('sketch-canvas-container', 'seni-centre-canvas');
+  hideId('main');
 
-  resizeCanvasToLarge();
+  moveContainerInsideParent('sketch-large-anchor', true);
 
   resetImageElements();
 }
@@ -1262,8 +1261,6 @@ async function main() {
 
   canvasImageElement1.addEventListener("animationend", animationEndListener1, false);
   setOpacity(IMG_1, 0);
-
-  resizeCanvasToNormal();
 
   gState.glRenderer = new GLRenderer(canvasElement);
 

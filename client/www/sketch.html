@@ -10,10 +10,12 @@
     <meta name="mobile-web-app-capable" content="yes">
 
     <link rel="stylesheet" href="css/indyio.css">
+
   </head>
 
   <body>
-
+    <div id="sketch-large-anchor">
+    </div>
     <div id="blog">
       <header id="header" data-behavior="4">
         <i id="btn-open-sidebar">
@@ -50,11 +52,14 @@
                   <div id="sketch-texture-path" style="display: none;">/img/texture.png</div>
                   <div id="sketch-worker-path" style="display: none;">worker.js</div>
                   <canvas id="bitmap-canvas" style="display: none;"></canvas>
-                  <div id="sketch-canvas-container">
-                    <canvas id="sketch-canvas"></canvas>
-                    <img id="sketch-img-0"/>
-                    <img id="sketch-img-1"/>
-                  </div> <!-- sketch-canvas-container -->
+
+                  <div id="sketch-normal-anchor">
+                    <div id="sketch-canvas-container">
+                      <canvas id="sketch-canvas"></canvas>
+                      <img id="sketch-img-0"/>
+                      <img id="sketch-img-1"/>
+                    </div> <!-- sketch-canvas-container -->
+                  </div>
 
                   <div id="seni-sketch-controls">
                     <input id="sketch-load-id" type="number" value="62">
