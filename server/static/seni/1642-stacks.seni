@@ -22,7 +22,7 @@
                            {-38 (gen/int min: -120 max: 120)}]))
 
   (loop (y from: 0 upto: canvas/height inc: 30)
-    !(loop (x from: 0 upto: canvas/width inc: (* 2 w))
+    (loop (x from: 0 upto: canvas/width inc: (* 2 w))
       (define
         a (interp/value from: rma t: (+ x (* (prng/value from: colour-offset) colour-scale)))
         b (interp/value from: rmb t: (+ y (* (prng/value from: colour-offset) colour-scale))))
