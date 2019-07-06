@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::bitmap;
-use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct};
+use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct, ProcColourType};
 use crate::context::Context;
 use crate::ease::easing_from_keyword;
 use crate::error::Error;
@@ -154,8 +154,8 @@ pub enum Native {
     ColAddAlpha,
     #[strum(serialize = "col/build-procedural")]
     ColBuildProcedural,
-    // #[strum(serialize = "col/build-bezier")]
-    // ColBuildBezier,
+    #[strum(serialize = "col/build-bezier")]
+    ColBuildBezier,
     #[strum(serialize = "col/value")]
     ColValue,
     #[strum(serialize = "col/palette")]
@@ -353,6 +353,7 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::ColAddE2 => col_add_parameter_info(),
         Native::ColAddAlpha => col_add_parameter_info(),
         Native::ColBuildProcedural => col_build_procedural_parameter_info(),
+        Native::ColBuildBezier => col_build_bezier_parameter_info(),
         Native::ColValue => col_value_parameter_info(),
         Native::ColPalette => col_palette_parameter_info(),
         // math
@@ -473,6 +474,7 @@ pub fn execute_native(
         Native::ColAddE2 => col_add_execute(vm, 2),
         Native::ColAddAlpha => col_add_execute(vm, 3),
         Native::ColBuildProcedural => col_build_procedural_execute(vm),
+        Native::ColBuildBezier => col_build_bezier_execute(vm),
         Native::ColValue => col_value_execute(vm),
         Native::ColPalette => col_palette_execute(vm),
         // math
@@ -632,6 +634,19 @@ fn ref_mut_prng_state_struct(
         error!("expected Var::PrngState");
         return Err(Error::Native);
     }
+}
+
+fn to_f32_3(vecs: &[Var]) -> Result<[f32; 3]> {
+    if let Var::Float(a) = vecs[0] {
+        if let Var::Float(b) = vecs[1] {
+            if let Var::Float(c) = vecs[2] {
+                return Ok([a, b, c]);
+            }
+        }
+    }
+
+    error!("to_f32_3");
+    Err(Error::Native)
 }
 
 fn nth_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -1859,19 +1874,6 @@ fn col_build_procedural_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     ))
 }
 
-fn to_f32_3(vecs: &[Var]) -> Result<[f32; 3]> {
-    if let Var::Float(a) = vecs[0] {
-        if let Var::Float(b) = vecs[1] {
-            if let Var::Float(c) = vecs[2] {
-                return Ok([a, b, c]);
-            }
-        }
-    }
-
-    error!("to_f32_3");
-    Err(Error::Native)
-}
-
 fn col_build_procedural_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let default_mask: i32 = vm.stack_peek(7)?;
 
@@ -1903,11 +1905,42 @@ fn col_build_procedural_execute(vm: &mut Vm) -> Result<Option<Var>> {
     };
 
     Ok(Some(Var::ProcColourState(ProcColourStateStruct {
+        proc_colour_type: ProcColourType::ProceduralColour,
         a,
         b,
         c,
         d,
-        alpha,
+        alpha: [alpha, 0.0, 0.0, 0.0],
+    })))
+}
+
+fn col_build_bezier_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::A, Var::Colour(Default::default())),
+            (Keyword::B, Var::Colour(Default::default())),
+            (Keyword::C, Var::Colour(Default::default())),
+            (Keyword::D, Var::Colour(Default::default())),
+        ],
+        // stack offset
+        1,
+    ))
+}
+
+fn col_build_bezier_execute(vm: &mut Vm) -> Result<Option<Var>> {
+    let col_a: Colour = vm.stack_peek(1)?;
+    let col_b: Colour = vm.stack_peek(2)?;
+    let col_c: Colour = vm.stack_peek(3)?;
+    let col_d: Colour = vm.stack_peek(4)?;
+
+    Ok(Some(Var::ProcColourState(ProcColourStateStruct {
+        proc_colour_type: ProcColourType::BezierColour,
+        a: [col_a.e0, col_a.e1, col_a.e2],
+        b: [col_b.e0, col_b.e1, col_b.e2],
+        c: [col_c.e0, col_c.e1, col_c.e2],
+        d: [col_d.e0, col_d.e1, col_d.e2],
+        alpha: [col_a.e3, col_b.e3, col_c.e3, col_d.e3],
     })))
 }
 

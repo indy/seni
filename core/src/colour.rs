@@ -101,12 +101,21 @@ pub enum ColourPreset {
 }
 
 #[derive(Clone, Debug)]
+pub enum ProcColourType {
+    ProceduralColour,
+    BezierColour,
+}
+
+// ProceduralColour: a = rgb + alpha[0], b = rgb + alpha[0], c = rgb + alpha[0], d = rgb + alpha[0]
+// BezierColour: a = rgb + alpha[0], b = rgb + alpha[1], c = rgb + alpha[2], d = rgb + alpha[3]
+#[derive(Clone, Debug)]
 pub struct ProcColourStateStruct {
+    pub proc_colour_type: ProcColourType,
     pub a: [f32; 3],
     pub b: [f32; 3],
     pub c: [f32; 3],
     pub d: [f32; 3],
-    pub alpha: f32,
+    pub alpha: [f32; 4],
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -393,24 +402,36 @@ impl ColourPreset {
 impl Default for ProcColourStateStruct {
     fn default() -> ProcColourStateStruct {
         ProcColourStateStruct {
+            proc_colour_type: ProcColourType::ProceduralColour,
             a: [0.0, 0.0, 0.0],
             b: [0.0, 0.0, 0.0],
             c: [0.0, 0.0, 0.0],
             d: [0.0, 0.0, 0.0],
-            alpha: 1.0,
+            alpha: [1.0, 0.0, 0.0, 0.0],
         }
     }
 }
 
 impl ProcColourStateStruct {
     pub fn colour(&self, t: f32) -> Colour {
-        Colour::new(
-            ColourFormat::Rgb,
-            self.a[0] + self.b[0] * (mathutil::TAU * (self.c[0] * t + self.d[0])).cos(),
-            self.a[1] + self.b[1] * (mathutil::TAU * (self.c[1] * t + self.d[1])).cos(),
-            self.a[2] + self.b[2] * (mathutil::TAU * (self.c[2] * t + self.d[2])).cos(),
-            self.alpha,
-        )
+        match self.proc_colour_type {
+            ProcColourType::ProceduralColour => {
+                Colour::new(
+                    ColourFormat::Rgb,
+                    self.a[0] + self.b[0] * (mathutil::TAU * (self.c[0] * t + self.d[0])).cos(),
+                    self.a[1] + self.b[1] * (mathutil::TAU * (self.c[1] * t + self.d[1])).cos(),
+                    self.a[2] + self.b[2] * (mathutil::TAU * (self.c[2] * t + self.d[2])).cos(),
+                    self.alpha[0],
+                )
+            },
+            ProcColourType::BezierColour => {
+                let r = mathutil::bezier_point(self.a[0], self.b[0], self.c[0], self.d[0], t);
+                let g = mathutil::bezier_point(self.a[1], self.b[1], self.c[1], self.d[1], t);
+                let b = mathutil::bezier_point(self.a[2], self.b[2], self.c[2], self.d[2], t);
+                let alpha = mathutil::bezier_point(self.alpha[0], self.alpha[1], self.alpha[2], self.alpha[3], t);
+                Colour::new(ColourFormat::Rgb, r, g, b, alpha)
+            }
+        }
     }
 }
 
