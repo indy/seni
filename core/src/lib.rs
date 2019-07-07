@@ -28,6 +28,7 @@ The core crate provides the basic functionality of the Seni system
 // this is just for documentation
 pub mod seni_language;
 
+// mod ast_checker;
 mod bitmap;
 mod bitmap_cache;
 pub mod colour;

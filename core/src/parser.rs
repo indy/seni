@@ -235,6 +235,15 @@ impl Node {
         }
     }
 
+    pub fn is_name_with_iname(&self, iname: &Iname) -> bool {
+        match self {
+            Node::Name(_, name_iname, _) => {
+                name_iname == iname
+            },
+            _ => false,
+        }
+    }
+
     pub fn is_alterable(&self) -> bool {
         match self {
             Node::List(_, meta)
@@ -598,6 +607,7 @@ fn eat_token<'a>(
             } else {
                 Ok(NodeAndRemainder {
                     node: Node::Name(t, ti, meta),
+
                     tokens: &tokens[1..],
                 })
             }
@@ -664,7 +674,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parser() {
+    fn test_parser_names() {
         assert_eq!(
             ast("hello"),
             [Node::Name("hello".to_string(), Iname::new(0), None)]
@@ -677,6 +687,11 @@ mod tests {
                 Node::Name("world".to_string(), Iname::new(1), None)
             ]
         );
+    }
+
+    #[test]
+    fn test_parser_label() {
+
         assert_eq!(
             ast("hello: world"),
             [
@@ -685,6 +700,10 @@ mod tests {
                 Node::Name("world".to_string(), Iname::new(1), None)
             ]
         );
+    }
+
+    #[test]
+    fn test_parser_numbers() {
         assert_eq!(
             ast("42 102"),
             [
@@ -693,7 +712,10 @@ mod tests {
                 Node::Float(102.0, "102".to_string(), None)
             ]
         );
+    }
 
+    #[test]
+    fn test_parser_comment() {
         assert_eq!(
             ast("hello world ; some comment"),
             [
@@ -704,7 +726,10 @@ mod tests {
                 Node::Comment(" some comment".to_string(), None)
             ]
         );
+    }
 
+    #[test]
+    fn test_parser_list() {
         assert_eq!(
             ast("(hello world)"),
             [Node::List(
@@ -724,18 +749,6 @@ mod tests {
                     Node::Name("bitmap".to_string(), Iname::new(0), None),
                     Node::Whitespace(" ".to_string(), None),
                     Node::String("foo.png".to_string(), Iname::new(1), None)
-                ],
-                None
-            )]
-        );
-
-        assert_eq!(
-            ast("'3"),
-            [Node::List(
-                vec![
-                    Node::Name("quote".to_string(), Iname::new(153), None),
-                    Node::Whitespace(" ".to_string(), None),
-                    Node::Float(3.0, "3".to_string(), None)
                 ],
                 None
             )]
@@ -786,7 +799,25 @@ mod tests {
                 None
             )]
         );
+    }
 
+    #[test]
+    fn test_parser_quote() {
+        assert_eq!(
+            ast("'3"),
+            [Node::List(
+                vec![
+                    Node::Name("quote".to_string(), Iname::new(153), None),
+                    Node::Whitespace(" ".to_string(), None),
+                    Node::Float(3.0, "3".to_string(), None)
+                ],
+                None
+            )]
+        );
+    }
+
+    #[test]
+    fn test_parser_alterable() {
         assert_eq!(
             ast("hello { 5 (gen/scalar)}"),
             [

@@ -1873,6 +1873,30 @@ pub mod tests {
     }
 
     #[test]
+    fn test_vm_redefine() {
+        // can use a define and then redefine it
+        is_float(
+            "(fn (something)
+                 (define a 10)
+                 (define b (+ a 2))
+                 (define a 100)
+                 b)
+             (something)",
+            12.0,
+        );
+
+        is_float(
+            "(fn (something)
+                 (define a 10)
+                 (define b (+ a 2))
+                 (define a 100)
+                 (+ a b))
+             (something)",
+            112.0,
+        );
+    }
+
+    #[test]
     fn test_vm_implicit_from() {
         // implicit from for a user defined function
         is_float(
