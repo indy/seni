@@ -332,10 +332,10 @@ function handleTextureLoaded(gl, image, texture) {
   gl.bindTexture(gl.TEXTURE_2D, texture);
 }
 
-function createRenderTexture(gl, config) {
+function createRenderTexture(gl) {
   // create to render to
-  const targetTextureWidth = config.render_texture_width;
-  const targetTextureHeight = config.render_texture_height;
+  const targetTextureWidth = gState.render_texture_width;
+  const targetTextureHeight = gState.render_texture_height;
 
   const targetTexture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, targetTexture);
@@ -389,11 +389,6 @@ function checkFramebufferStatus(gl) {
   }
 }
 
-const gConfig = {
-  render_texture_width: 1024,
-  render_texture_height: 1024,
-};
-
 class GLRenderer {
   constructor(canvasElement) {
     this.glDomElement = canvasElement;
@@ -414,7 +409,7 @@ class GLRenderer {
     this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
 
-    this.renderTexture = createRenderTexture(gl, gConfig);
+    this.renderTexture = createRenderTexture(gl);
     this.framebuffer = createFrameBuffer(gl, this.renderTexture);
 
     // render to the canvas
@@ -806,7 +801,8 @@ const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
 
 // --------------------------------------------------------------------------------
 
-const PAGE = "sketch.html";
+const RUNNING_ON_STATIC_SITE = false;
+const PAGE = RUNNING_ON_STATIC_SITE ? "index.html" : "sketch.html";
 
 const URI_SEED = "seed";
 const URI_MODE = "mode";
@@ -928,7 +924,9 @@ function normalize_bitmap_url(url) {
   // todo: this should:
   // 1. do nothing if the url is a valid url
   // 2. if it's just a filename, prefix the img/ path (specific to seni web app)
-  return "img/" + url;
+
+  // note: setting an absolute path as this works with static site generation for seni.indy.io
+  return "/img/" + url;
 }
 
 async function renderJob(parameters) {
@@ -1031,7 +1029,7 @@ async function performSlideshow() {
     seedElement.value = parseInt(newSeed, 10);
     gState.seed = getSeedValue(seedElement);
 
-    updateURIFromGlobals();
+    updateURIFromGlobals(false);
     await updateSketch(DISPLAY_FADE);
     gState.timeoutId = window.setTimeout(performSlideshow, gState.slideshowDelay);
   }
@@ -1201,7 +1199,7 @@ function updateGlobalsFromURI() {
   }
 }
 
-function updateURIFromGlobals() {
+function updateURIFromGlobals(updateHistory) {
   let params = [];
   if (gState.mode != MODE_NORMAL) {
     params.push("mode=" + gState.mode);
@@ -1215,7 +1213,7 @@ function updateURIFromGlobals() {
     search = "?" + params.join("&");
   }
 
-  if (window.location.search !== search) {
+  if (updateHistory && window.location.search !== search) {
     // desired uri is different from current one
     const page_uri = PAGE + search;
     history.pushState({}, null, page_uri);
@@ -1279,7 +1277,7 @@ async function main() {
     gState.seed = undefined;
     updateToMode(MODE_NORMAL);
 
-    updateURIFromGlobals();
+    updateURIFromGlobals(true);
 
     await updateSketch(DISPLAY_FADE);
   });
@@ -1295,7 +1293,7 @@ async function main() {
       // only call updateSketch if we're actually switching to SLIDESHOW mode as this will create a settimeout
       gState.timeoutId = window.setTimeout(performSlideshow, 0);
     }
-    updateURIFromGlobals();
+    updateURIFromGlobals(true);
 
   });
 
@@ -1309,7 +1307,7 @@ async function main() {
 
     updateToMode(MODE_NORMAL);
 
-    updateURIFromGlobals();
+    updateURIFromGlobals(true);
 
     await updateSketch(DISPLAY_FADE);
   });
@@ -1322,7 +1320,7 @@ async function main() {
   canvasImageElement1.addEventListener('click', async () => {
     updateToMode(MODE_NORMAL);
 
-    updateURIFromGlobals();
+    updateURIFromGlobals(true);
 
     await updateSketch(DISPLAY_SNAP);
   });
@@ -1333,7 +1331,7 @@ async function main() {
 
       updateToMode(MODE_NORMAL);
 
-      updateURIFromGlobals();
+      updateURIFromGlobals(true);
 
       await updateSketch(DISPLAY_SNAP);
 
