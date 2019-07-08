@@ -1055,7 +1055,6 @@ function createInitialState() {
     selectedIndices: [],
     scriptId: undefined,
     script: undefined,
-    scriptHash: undefined,
     genotypes: [],
     traits: [],
 
@@ -1087,7 +1086,6 @@ class Controller {
     clone.selectedIndices = state.selectedIndices;
     clone.scriptId = state.scriptId;
     clone.script = state.script;
-    clone.scriptHash = state.scriptHash;
     clone.genotypes = state.genotypes;
     clone.traits = state.traits;
 
@@ -1112,26 +1110,11 @@ class Controller {
 
   async applySetScript(state, { script }) {
 
-    // from http://werxltd.com/wp/2010/05/13/ (cont'd next line)
-    // javascript-implementation-of-javas-string-hashcode-method/
-    function hashCode(string) {
-      let hash = 0, i, len;
-      if (string.length === 0) return hash;
-      for (i = 0, len = string.length; i < len; i++) {
-        const chr = string.charCodeAt(i);
-        hash = ((hash << 5) - hash) + chr;
-        hash |= 0; // Convert to 32bit integer
-      }
-      return hash;
-    }
-
     const newState = this.cloneState(state);
     newState.script = script;
-    newState.scriptHash = hashCode(script);
 
     const { validTraits, traits } = await Job.request(jobBuildTraits, {
-      script: newState.script,
-      scriptHash: newState.scriptHash
+      script: newState.script
     });
 
     if (validTraits) {
@@ -1758,10 +1741,9 @@ async function renderGeometryBuffersSection(meta, memory, buffers, imageElement,
 async function renderGeneration(state) {
   // TODO: stop generating  if the user has switched to edit mode
   const script = state.script;
-  const scriptHash = state.scriptHash;
   const genotypes = state.genotypes;
   const phenotypes = gUI.phenotypes;
-  let hackTitle = scriptHash;
+  let hackTitle = "hackTitle";
   const promises = [];
 
   const stopFn = startTiming();
@@ -1769,7 +1751,6 @@ async function renderGeneration(state) {
   for (let i = 0; i < phenotypes.length; i++) {
     const workerJob = renderScript({
       script,
-      scriptHash,
       genotype: genotypes[i],
     }, phenotypes[i].imageElement);
 
@@ -1890,8 +1871,7 @@ async function renderJob(parameters) {
 async function renderEditorScript(state) {
   const imageElement = gUI.renderImage;
   await renderScript({
-    script: state.script,
-    scriptHash: state.scriptHash
+    script: state.script
   }, imageElement);
 }
 
@@ -2001,7 +1981,6 @@ async function renderHighResSection(state, section) {
 
   const { meta, memory, buffers } = await renderJob({
     script: state.script,
-    scriptHash: state.scriptHash,
     genotype: undefined,
   });
   const [width, height] = state.highResolution;
@@ -2026,7 +2005,6 @@ async function showEditFromEvolve(controller, element) {
     const genotypes = state.genotypes;
     const { script } = await Job.request(jobUnparse, {
       script: state.script,
-      scriptHash: state.scriptHash,
       genotype: genotypes[index]
     });
 
@@ -2316,7 +2294,6 @@ function setupUI(controller) {
 
     const { meta, memory, buffers } = await renderJob({
       script: state.script,
-      scriptHash: state.scriptHash,
       genotype: state.genotype,
     });
 

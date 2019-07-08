@@ -33,7 +33,7 @@ const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
 const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
 const jobReceiveBitmapData = 'RECEIVE_BITMAP_DATA';
 
-function compile({ script /*, scriptHash*/, genotype }) {
+function compile({ script, genotype }) {
   if (genotype) {
     // console.log("render: using a genotype");
     gState.bridge.compile_program_from_source_and_genotype(script, genotype);
@@ -97,14 +97,13 @@ function renderPackets({  }) {
   return [{}, { meta, memory, buffers }];
 }
 
-
-function unparse({ script/*, scriptHash*/, genotype }) {
+function unparse({ script, genotype }) {
   const newScript = gState.bridge.unparse_with_genotype(script, genotype);
 
   return [{}, { script: newScript }];
 }
 
-function buildTraits({ script /*, scriptHash */ }) {
+function buildTraits({ script }) {
   const traits = gState.bridge.build_traits(script);
   const validTraits = traits !== "";
 
